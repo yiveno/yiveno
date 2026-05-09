@@ -243,10 +243,12 @@ export const useAuth = () => {
         console.log('[useAuth] 🔔 通知 Chrome 扩展同步 session...')
         try {
           // 检查是否安装了扩展
-          if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+          // @ts-expect-error - chrome API 仅在浏览器环境中可用
+          if (typeof chrome !== 'undefined' && chrome?.runtime?.sendMessage) {
             // 获取扩展 ID（需要在环境变量中配置）
             const extensionId = 'YOUR_EXTENSION_ID' // TODO: 从环境变量读取
             
+            // @ts-expect-error - chrome API 仅在浏览器环境中可用
             await chrome.runtime.sendMessage(extensionId, {
               type: 'SYNC_AUTH_SESSION',
               payload: {
@@ -268,9 +270,11 @@ export const useAuth = () => {
       if (event === 'SIGNED_OUT') {
         console.log('[useAuth] 🔔 通知 Chrome 扩展清除 session...')
         try {
-          if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+          // @ts-expect-error - chrome API 仅在浏览器环境中可用
+          if (typeof chrome !== 'undefined' && chrome?.runtime?.sendMessage) {
             const extensionId = 'YOUR_EXTENSION_ID' // TODO: 从环境变量读取
             
+            // @ts-expect-error - chrome API 仅在浏览器环境中可用
             await chrome.runtime.sendMessage(extensionId, {
               type: 'CLEAR_AUTH_SESSION'
             })
