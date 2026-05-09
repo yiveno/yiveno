@@ -190,6 +190,22 @@ if (fs.existsSync(imagesSrc)) {
   }
 }
 
+// 复制 _locales 文件夹（国际化翻译文件）
+const localesSrc = path.join(__dirname, '../public/_locales');
+const localesDest = path.join(distDir, '_locales');
+if (fs.existsSync(localesSrc)) {
+  try {
+    // 强制删除已存在的 _locales 文件夹，确保干净的复制
+    if (fs.existsSync(localesDest)) {
+      fs.rmSync(localesDest, { recursive: true, force: true });
+    }
+    fs.cpSync(localesSrc, localesDest, { recursive: true });
+    __scriptLogger__.info('✅ 复制 _locales 文件夹');
+  } catch (err) {
+    __scriptLogger__.warn('⚠️ 复制 _locales 文件夹失败:', err.message);
+  }
+}
+
 // // 复制background.js
 // const backgroundSrc = path.join(rootDir, 'background.js')
 // const backgroundDest = path.join(distDir, 'background.js')

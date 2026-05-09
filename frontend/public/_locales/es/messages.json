@@ -38,9 +38,6 @@
   "settings_tab_embeddings": {
     "message": "Incrustaciones"
   },
-  "settings_tab_vectorize": {
-    "message": "Búsqueda Vectorial"
-  },
   "settings_tab_notifications": {
     "message": "Notificaciones"
   },
@@ -56,9 +53,6 @@
   "settings_title_embeddings": {
     "message": "Embeddings"
   },
-  "settings_title_vectorize": {
-    "message": "Búsqueda vectorial"
-  },
   "settings_title_notifications": {
     "message": "Notificaciones"
   },
@@ -73,9 +67,6 @@
   },
   "settings_desc_embeddings": {
     "message": "Modelos y caché para embeddings de texto."
-  },
-  "settings_desc_vectorize": {
-    "message": "Índice vectorial y comportamiento de consultas."
   },
   "settings_desc_notifications": {
     "message": "Reglas de notificaciones toast y del sistema."
@@ -1601,7 +1592,6 @@
   "language_selector_select": {
     "message": "Seleccionar idioma"
   },
-
   "language_name_zh_CN": {
     "message": "简体中文"
   },
@@ -2064,33 +2054,6 @@
   "settings_general_save_failed": {
     "message": "Error al guardar: $1"
   },
-  "settings_vectorize_title": {
-    "message": "Vectorize"
-  },
-  "settings_vectorize_auto_sync": {
-    "message": "Sincronización Automática"
-  },
-  "settings_vectorize_auto_sync_tooltip_title": {
-    "message": "Sincronización Automática:"
-  },
-  "settings_vectorize_auto_sync_tooltip_1": {
-    "message": "Sincronizar automáticamente datos de marcadores a Cloudflare Vectorize"
-  },
-  "settings_vectorize_auto_sync_tooltip_2": {
-    "message": "Soportar búsqueda vectorial en la nube y compartir datos entre dispositivos"
-  },
-  "settings_vectorize_auto_sync_tooltip_3": {
-    "message": "Asegurar que el índice vectorial se actualice en tiempo real"
-  },
-  "settings_vectorize_auto_sync_note": {
-    "message": "Nota: Se requiere configuración de cuenta de Cloudflare."
-  },
-  "settings_vectorize_auto_sync_enabled": {
-    "message": "Sincronización automática: Habilitada"
-  },
-  "settings_vectorize_auto_sync_disabled": {
-    "message": "Sincronización automática: Deshabilitada"
-  },
   "onboarding_performance_title": {
     "message": "Ultrarrápido, Incluso con Miles"
   },
@@ -2491,98 +2454,6 @@
   "settings_subscription_select_yearly": {
     "message": "Seleccionar plan anual",
     "description": "Settings: settings_subscription_select_yearly"
-  },
-  "settings_embedding_title": {
-    "message": "Incrustaciones",
-    "description": "EmbeddingSettings: settings_embedding_title"
-  },
-  "settings_embedding_auto_generate": {
-    "message": "Generar automáticamente",
-    "description": "EmbeddingSettings: settings_embedding_auto_generate"
-  },
-  "settings_embedding_auto_generate_tooltip_title": {
-    "message": "Función de generación automática:",
-    "description": "EmbeddingSettings: settings_embedding_auto_generate_tooltip_title"
-  },
-  "settings_embedding_auto_generate_tooltip_1": {
-    "message": "Generar automáticamente vectores semánticos (Embeddings) para nuevos marcadores",
-    "description": "EmbeddingSettings: settings_embedding_auto_generate_tooltip_1"
-  },
-  "settings_embedding_auto_generate_tooltip_2": {
-    "message": "Admite búsqueda inteligente y recomendaciones basadas en contenido",
-    "description": "EmbeddingSettings: settings_embedding_auto_generate_tooltip_2"
-  },
-  "settings_embedding_auto_generate_tooltip_3": {
-    "message": "No se requiere activación manual, procesado automáticamente en segundo plano",
-    "description": "EmbeddingSettings: settings_embedding_auto_generate_tooltip_3"
-  },
-  "settings_embedding_daily_quota": {
-    "message": "Cuota diaria",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota"
-  },
-  "settings_embedding_daily_quota_tooltip_title": {
-    "message": "Función de cuota diaria:",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota_tooltip_title"
-  },
-  "settings_embedding_daily_quota_tooltip_1": {
-    "message": "Limitar el número de marcadores para la generación de vectores por día",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota_tooltip_1"
-  },
-  "settings_embedding_daily_quota_tooltip_2": {
-    "message": "Evitar el consumo excesivo de cuota de API",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota_tooltip_2"
-  },
-  "settings_embedding_daily_quota_tooltip_3": {
-    "message": "Predeterminado 300 por día, ajustable según sea necesario",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota_tooltip_3"
-  },
-  "settings_embedding_daily_quota_placeholder": {
-    "message": "Predeterminado 300",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota_placeholder"
-  },
-  "settings_embedding_per_run_max": {
-    "message": "Máximo por ejecución",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max"
-  },
-  "settings_embedding_per_run_max_tooltip_title": {
-    "message": "Función máxima por ejecución:",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max_tooltip_title"
-  },
-  "settings_embedding_per_run_max_tooltip_1": {
-    "message": "Número máximo de marcadores procesados por ejecución",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max_tooltip_1"
-  },
-  "settings_embedding_per_run_max_tooltip_2": {
-    "message": "Evitar la ocupación de recursos a largo plazo",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max_tooltip_2"
-  },
-  "settings_embedding_per_run_max_tooltip_3": {
-    "message": "Predeterminado 150, el procesamiento por lotes es más estable",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max_tooltip_3"
-  },
-  "settings_embedding_per_run_max_placeholder": {
-    "message": "Predeterminado 150",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max_placeholder"
-  },
-  "settings_embedding_night_idle_only": {
-    "message": "Solo noche/inactivo",
-    "description": "EmbeddingSettings: settings_embedding_night_idle_only"
-  },
-  "settings_embedding_night_idle_only_tooltip_title": {
-    "message": "Función solo noche/inactivo:",
-    "description": "EmbeddingSettings: settings_embedding_night_idle_only_tooltip_title"
-  },
-  "settings_embedding_night_idle_only_tooltip_1": {
-    "message": "Generar vectores solo durante el tiempo inactivo del sistema o la noche",
-    "description": "EmbeddingSettings: settings_embedding_night_idle_only_tooltip_1"
-  },
-  "settings_embedding_night_idle_only_tooltip_2": {
-    "message": "Evitar afectar la experiencia de uso diario",
-    "description": "EmbeddingSettings: settings_embedding_night_idle_only_tooltip_2"
-  },
-  "settings_embedding_night_idle_only_tooltip_3": {
-    "message": "Se recomienda habilitar para un proceso de generación más inteligente",
-    "description": "EmbeddingSettings: settings_embedding_night_idle_only_tooltip_3"
   },
   "settings_shortcut_label_execute_action": {
     "message": "Activar extensión/Alternar ventana emergente",

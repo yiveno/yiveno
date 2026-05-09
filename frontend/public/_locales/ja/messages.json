@@ -38,9 +38,6 @@
   "settings_tab_embeddings": {
     "message": "埋め込み"
   },
-  "settings_tab_vectorize": {
-    "message": "ベクトル検索"
-  },
   "settings_tab_notifications": {
     "message": "通知"
   },
@@ -56,9 +53,6 @@
   "settings_title_embeddings": {
     "message": "埋め込み"
   },
-  "settings_title_vectorize": {
-    "message": "ベクター検索"
-  },
   "settings_title_notifications": {
     "message": "通知"
   },
@@ -73,9 +67,6 @@
   },
   "settings_desc_embeddings": {
     "message": "テキスト埋め込みのモデルとキャッシュ。"
-  },
-  "settings_desc_vectorize": {
-    "message": "ベクター索引とクエリの設定。"
   },
   "settings_desc_notifications": {
     "message": "トーストとシステム通知のルール。"
@@ -1601,7 +1592,6 @@
   "language_selector_select": {
     "message": "言語を選択"
   },
-
   "language_name_zh_CN": {
     "message": "简体中文"
   },
@@ -2064,33 +2054,6 @@
   "settings_general_save_failed": {
     "message": "保存に失敗しました: $1"
   },
-  "settings_vectorize_title": {
-    "message": "Vectorize"
-  },
-  "settings_vectorize_auto_sync": {
-    "message": "自動同期"
-  },
-  "settings_vectorize_auto_sync_tooltip_title": {
-    "message": "自動同期："
-  },
-  "settings_vectorize_auto_sync_tooltip_1": {
-    "message": "ブックマークデータを Cloudflare Vectorize に自動的に同期"
-  },
-  "settings_vectorize_auto_sync_tooltip_2": {
-    "message": "クラウドベクトル検索とマルチデバイスデータ共有をサポート"
-  },
-  "settings_vectorize_auto_sync_tooltip_3": {
-    "message": "ベクトルインデックスがリアルタイムで更新されることを確保"
-  },
-  "settings_vectorize_auto_sync_note": {
-    "message": "注意：Cloudflare アカウントの設定が必要です。"
-  },
-  "settings_vectorize_auto_sync_enabled": {
-    "message": "自動同期：有効"
-  },
-  "settings_vectorize_auto_sync_disabled": {
-    "message": "自動同期：無効"
-  },
   "onboarding_performance_title": {
     "message": "数千件でも超高速"
   },
@@ -2491,98 +2454,6 @@
   "settings_subscription_select_yearly": {
     "message": "年間プランを選択",
     "description": "Settings: settings_subscription_select_yearly"
-  },
-  "settings_embedding_title": {
-    "message": "埋め込み",
-    "description": "EmbeddingSettings: settings_embedding_title"
-  },
-  "settings_embedding_auto_generate": {
-    "message": "自動生成",
-    "description": "EmbeddingSettings: settings_embedding_auto_generate"
-  },
-  "settings_embedding_auto_generate_tooltip_title": {
-    "message": "自動生成機能：",
-    "description": "EmbeddingSettings: settings_embedding_auto_generate_tooltip_title"
-  },
-  "settings_embedding_auto_generate_tooltip_1": {
-    "message": "新しいブックマークの意味ベクトル（Embeddings）を自動生成",
-    "description": "EmbeddingSettings: settings_embedding_auto_generate_tooltip_1"
-  },
-  "settings_embedding_auto_generate_tooltip_2": {
-    "message": "コンテンツベースのインテリジェント検索と推奨をサポート",
-    "description": "EmbeddingSettings: settings_embedding_auto_generate_tooltip_2"
-  },
-  "settings_embedding_auto_generate_tooltip_3": {
-    "message": "手動トリガー不要、バックグラウンドで自動処理",
-    "description": "EmbeddingSettings: settings_embedding_auto_generate_tooltip_3"
-  },
-  "settings_embedding_daily_quota": {
-    "message": "1日の割り当て",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota"
-  },
-  "settings_embedding_daily_quota_tooltip_title": {
-    "message": "1日の割り当て機能：",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota_tooltip_title"
-  },
-  "settings_embedding_daily_quota_tooltip_1": {
-    "message": "1日あたりのベクトル生成のブックマーク数を制限",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota_tooltip_1"
-  },
-  "settings_embedding_daily_quota_tooltip_2": {
-    "message": "API割り当ての過剰消費を回避",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota_tooltip_2"
-  },
-  "settings_embedding_daily_quota_tooltip_3": {
-    "message": "デフォルト300件/日、必要に応じて調整可能",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota_tooltip_3"
-  },
-  "settings_embedding_daily_quota_placeholder": {
-    "message": "デフォルト300",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota_placeholder"
-  },
-  "settings_embedding_per_run_max": {
-    "message": "1回の最大",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max"
-  },
-  "settings_embedding_per_run_max_tooltip_title": {
-    "message": "1回の最大機能：",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max_tooltip_title"
-  },
-  "settings_embedding_per_run_max_tooltip_1": {
-    "message": "1回の実行で処理されるブックマークの最大数",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max_tooltip_1"
-  },
-  "settings_embedding_per_run_max_tooltip_2": {
-    "message": "長期的なリソース占有を回避",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max_tooltip_2"
-  },
-  "settings_embedding_per_run_max_tooltip_3": {
-    "message": "デフォルト150、バッチ処理がより安定",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max_tooltip_3"
-  },
-  "settings_embedding_per_run_max_placeholder": {
-    "message": "デフォルト150",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max_placeholder"
-  },
-  "settings_embedding_night_idle_only": {
-    "message": "夜間/アイドル時のみ",
-    "description": "EmbeddingSettings: settings_embedding_night_idle_only"
-  },
-  "settings_embedding_night_idle_only_tooltip_title": {
-    "message": "夜間/アイドル時のみ機能：",
-    "description": "EmbeddingSettings: settings_embedding_night_idle_only_tooltip_title"
-  },
-  "settings_embedding_night_idle_only_tooltip_1": {
-    "message": "システムアイドル時または夜間のみベクトルを生成",
-    "description": "EmbeddingSettings: settings_embedding_night_idle_only_tooltip_1"
-  },
-  "settings_embedding_night_idle_only_tooltip_2": {
-    "message": "日常の使用体験に影響を与えないようにする",
-    "description": "EmbeddingSettings: settings_embedding_night_idle_only_tooltip_2"
-  },
-  "settings_embedding_night_idle_only_tooltip_3": {
-    "message": "より賢い生成プロセスのために有効にすることをお勧めします",
-    "description": "EmbeddingSettings: settings_embedding_night_idle_only_tooltip_3"
   },
   "settings_shortcut_label_execute_action": {
     "message": "拡張機能を有効化/ポップアップを切り替え",

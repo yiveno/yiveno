@@ -23,10 +23,42 @@
           </label>
           <div class="field-description">
             <p class="field-description__text">
-              开启后，添加书签时自动推荐最佳文件夹并直接保存，无需手动选择。
+              开启后,添加书签时自动推荐最佳文件夹并直接保存,无需手动选择。
             </p>
             <p class="field-description__hint">
-              关闭后，每次添加书签都会弹出对话框让你手动选择文件夹。
+              关闭后,每次添加书签都会弹出对话框让你手动选择文件夹。
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 语义搜索 -->
+      <div class="row">
+        <div class="label">
+          <LucideIcon name="brain" :size="16" />
+          {{ t('settings_general_semantic_search') }}
+        </div>
+        <div class="field">
+          <label class="toggle-switch" :class="{ 'toggle-switch--disabled': !isPro }">
+            <input
+              v-model="semanticSearchEnabled"
+              type="checkbox"
+              class="toggle-input"
+              :disabled="!isPro"
+              @change="handleSemanticSearchToggle"
+            />
+            <span class="toggle-slider"></span>
+          </label>
+          <div class="field-description">
+            <p class="field-description__text">
+              {{ t('settings_general_semantic_search_description') }}
+            </p>
+            <p class="field-description__hint">
+              后台自动生成语义向量，完全本地化，无需联网。
+            </p>
+            <p v-if="!isPro" class="field-description__hint field-description__hint--warning">
+              <LucideIcon name="crown" :size="12" />
+              {{ t('settings_general_semantic_search_pro_only') }}
             </p>
           </div>
         </div>
@@ -57,32 +89,57 @@ import { LucideIcon } from '@/components'
 import { t } from '@/utils/i18n-helpers'
 import { computed, onMounted, ref } from 'vue'
 import { logger } from '@/infrastructure/logging/logger'
+import { useSubscription } from '@/composables'
 
 defineOptions({
   name: 'GeneralSettings'
 })
 
+// 会员状态
+const { isPro } = useSubscription()
+
 // AI 自动归纳开关状态
 const aiAutoEnabled = ref(true) // 默认开启
+
+// 语义搜索开关状态
+const semanticSearchEnabled = ref(false) // 默认关闭
 
 // 加载设置
 onMounted(async () => {
   try {
-    const result = await chrome.storage.local.get('aiAutoBookmark')
+    const result = await chrome.storage.local.get(['aiAutoBookmark', 'semanticSearchEnabled'])
     aiAutoEnabled.value = result.aiAutoBookmark !== false // 默认 true
-    logger.info('GeneralSettings', 'AI 自动归纳设置已加载', { enabled: aiAutoEnabled.value })
+    semanticSearchEnabled.value = result.semanticSearchEnabled === true // 默认 false
+    logger.info('GeneralSettings', '设置已加载', {
+      aiAuto: aiAutoEnabled.value,
+      semanticSearch: semanticSearchEnabled.value,
+      isPro: isPro.value
+    })
   } catch (error) {
-    logger.error('GeneralSettings', '加载 AI 自动归纳设置失败', error)
+    logger.error('GeneralSettings', '加载设置失败', error)
   }
 })
 
-// 处理开关切换
+// 处理 AI 自动归纳开关切换
 async function handleAIAutoToggle() {
   try {
     await chrome.storage.local.set({ aiAutoBookmark: aiAutoEnabled.value })
     logger.info('GeneralSettings', 'AI 自动归纳设置已更新', { enabled: aiAutoEnabled.value })
   } catch (error) {
     logger.error('GeneralSettings', '保存 AI 自动归纳设置失败', error)
+  }
+}
+
+// 处理语义搜索开关切换
+async function handleSemanticSearchToggle() {
+  try {
+    await chrome.storage.local.set({ semanticSearchEnabled: semanticSearchEnabled.value })
+    logger.info('GeneralSettings', '语义搜索设置已更新', {
+      enabled: semanticSearchEnabled.value,
+      isPro: isPro.value
+    })
+  } catch (error) {
+    logger.error('GeneralSettings', '保存语义搜索设置失败', error)
   }
 }
 
@@ -167,10 +224,19 @@ const currentLanguageName = computed(() => {
   height: 24px;
 }
 
+.toggle-switch--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .toggle-input {
   width: 0;
   height: 0;
   opacity: 0;
+}
+
+.toggle-input:disabled {
+  cursor: not-allowed;
 }
 
 .toggle-slider {
@@ -180,6 +246,10 @@ const currentLanguageName = computed(() => {
   background-color: var(--color-border);
   cursor: pointer;
   transition: background-color 0.3s ease;
+}
+
+.toggle-input:disabled + .toggle-slider {
+  cursor: not-allowed;
 }
 
 .toggle-slider::before {
@@ -198,12 +268,16 @@ const currentLanguageName = computed(() => {
   background-color: var(--color-primary);
 }
 
-.toggle-input:checked + .toggle-slider::before {
-  transform: translateX(20px);
-}
-
 .toggle-input:focus + .toggle-slider {
   box-shadow: 0 0 0 3px var(--color-primary-bg);
+}
+
+.toggle-input:disabled:checked + .toggle-slider {
+  background-color: var(--color-border);
+}
+
+.toggle-input:checked + .toggle-slider::before {
+  transform: translateX(20px);
 }
 
 /* Field Description */
@@ -220,9 +294,16 @@ const currentLanguageName = computed(() => {
 }
 
 .field-description__hint {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
   margin: 0;
   font-size: var(--text-xs);
   color: var(--color-text-secondary);
+}
+
+.field-description__hint--warning {
+  color: var(--color-semantic-warning);
 }
 
 /* 语言信息 */

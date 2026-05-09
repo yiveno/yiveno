@@ -45,10 +45,7 @@ const props = defineProps<{
 const { isAuthenticated } = useSupabaseAuth()
 const isLoggedIn = computed(() => isAuthenticated.value)
 
-const descMap: Record<string, string> = {
-  embeddings: '内容嵌入分析需要 PRO 会员，升级后自动开启深度内容理解能力。',
-  vectorize: '语义向量检索需要 PRO 会员，升级后用自然语言精准找到相关书签。'
-}
+const descMap: Record<string, string> = {}
 
 const desc = computed(() => descMap[props.tab] ?? '此功能需要 PRO 会员，升级后立即解锁。')
 

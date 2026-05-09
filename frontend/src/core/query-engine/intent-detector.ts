@@ -14,6 +14,12 @@ const TECH_KEYWORDS = new Set([
   'svg', 'png', 'pdf', 'json', 'xml', 'rss', 'ssh', 'ftp', 'dns', 'ip'
 ])
 
+/** 语义关键词集合（命中则倾向 Semantic/Hybrid） */
+const SEMANTIC_KEYWORDS = new Set([
+  '代码', '编程', '开发', '技术', '教程', '文档', '博客', '学习',
+  'code', 'programming', 'development', 'tutorial', 'documentation', 'blog', 'learning'
+])
+
 /** 自然语言触发词（命中则倾向 Semantic） */
 const NATURAL_TRIGGERS = [
   /怎么|如何|什么是|为什么|哪里|哪个|推荐|教程|学习|入门|指南/,
@@ -21,7 +27,7 @@ const NATURAL_TRIGGERS = [
 ]
 
 /** 最小触发语义搜索的字符数 */
-const MIN_SEMANTIC_LENGTH = 3
+const MIN_SEMANTIC_LENGTH = 2  // 降低到 2，支持"代码"这样的短词
 
 export type QueryIntent = 'fuse' | 'semantic' | 'hybrid'
 
@@ -51,6 +57,11 @@ export function detectIntent(query: string): IntentResult {
   // 单个技术词 → Fuse
   if (wordCount === 1 && TECH_KEYWORDS.has(lower)) {
     return { intent: 'fuse', confidence: 0.95, reason: 'tech_keyword' }
+  }
+
+  // 语义关键词（如"代码"、"编程"）→ Hybrid（结合 Fuse 和 Semantic）
+  if (SEMANTIC_KEYWORDS.has(lower) || words.some(w => SEMANTIC_KEYWORDS.has(w))) {
+    return { intent: 'hybrid', confidence: 0.9, reason: 'semantic_keyword' }
   }
 
   // 含特殊符号（域名/路径/版本号）→ Fuse

@@ -38,9 +38,6 @@
   "settings_tab_embeddings": {
     "message": "嵌入"
   },
-  "settings_tab_vectorize": {
-    "message": "向量检索"
-  },
   "settings_tab_notifications": {
     "message": "通知"
   },
@@ -56,9 +53,6 @@
   "settings_title_embeddings": {
     "message": "嵌入设置"
   },
-  "settings_title_vectorize": {
-    "message": "向量检索"
-  },
   "settings_title_notifications": {
     "message": "通知设置"
   },
@@ -73,9 +67,6 @@
   },
   "settings_desc_embeddings": {
     "message": "文本嵌入的模型与缓存策略。"
-  },
-  "settings_desc_vectorize": {
-    "message": "向量索引与查询相关设置。"
   },
   "settings_desc_notifications": {
     "message": "Toast 与系统通知规则。"
@@ -538,6 +529,18 @@
   },
   "settings_general_language": {
     "message": "语言"
+  },
+  "settings_general_semantic_search": {
+    "message": "语义搜索"
+  },
+  "settings_general_semantic_search_description": {
+    "message": "使用 AI 理解搜索意图，提供更智能的搜索结果"
+  },
+  "settings_general_semantic_search_hint": {
+    "message": "开启后，搜索时会自动使用语义理解技术，找到更相关的书签"
+  },
+  "settings_general_semantic_search_pro_only": {
+    "message": "此功能仅限 PRO 会员使用"
   },
   "settings_general_theme": {
     "message": "主题"
@@ -1601,7 +1604,6 @@
   "language_selector_select": {
     "message": "选择语言"
   },
-
   "language_name_zh_CN": {
     "message": "简体中文"
   },
@@ -2059,34 +2061,8 @@
     "message": "已关闭自动跟随系统主题"
   },
   "settings_general_save_failed": {
-    "message": "设置失败: $1"
-  },
-  "settings_vectorize_title": {
-    "message": "Vectorize"
-  },
-  "settings_vectorize_auto_sync": {
-    "message": "自动同步"
-  },
-  "settings_vectorize_auto_sync_tooltip_title": {
-    "message": "自动同步的作用："
-  },
-  "settings_vectorize_auto_sync_tooltip_1": {
-    "message": "自动将书签数据同步到 Cloudflare Vectorize"
-  },
-  "settings_vectorize_auto_sync_tooltip_2": {
-    "message": "支持云端向量搜索和多设备数据共享"
-  },
-  "settings_vectorize_auto_sync_tooltip_3": {
-    "message": "确保向量索引实时更新"
-  },
-  "settings_vectorize_auto_sync_note": {
-    "message": "注意：需要配置 Cloudflare 账户信息。"
-  },
-  "settings_vectorize_auto_sync_enabled": {
-    "message": "自动同步：开启"
-  },
-  "settings_vectorize_auto_sync_disabled": {
-    "message": "自动同步：关闭"
+    "message": "保存失败：$1",
+    "description": "General Settings: Save failed error message"
   },
   "onboarding_performance_title": {
     "message": "即使数千个也超快"
@@ -2493,98 +2469,6 @@
     "message": "选择年度计划",
     "description": "Settings: settings_subscription_select_yearly"
   },
-  "settings_embedding_title": {
-    "message": "嵌入（Embeddings）",
-    "description": "EmbeddingSettings: settings_embedding_title"
-  },
-  "settings_embedding_auto_generate": {
-    "message": "自动生成",
-    "description": "EmbeddingSettings: settings_embedding_auto_generate"
-  },
-  "settings_embedding_auto_generate_tooltip_title": {
-    "message": "自动生成的作用：",
-    "description": "EmbeddingSettings: settings_embedding_auto_generate_tooltip_title"
-  },
-  "settings_embedding_auto_generate_tooltip_1": {
-    "message": "自动为新书签生成语义向量（Embeddings）",
-    "description": "EmbeddingSettings: settings_embedding_auto_generate_tooltip_1"
-  },
-  "settings_embedding_auto_generate_tooltip_2": {
-    "message": "支持基于内容的智能搜索和推荐",
-    "description": "EmbeddingSettings: settings_embedding_auto_generate_tooltip_2"
-  },
-  "settings_embedding_auto_generate_tooltip_3": {
-    "message": "无需手动触发，后台自动处理",
-    "description": "EmbeddingSettings: settings_embedding_auto_generate_tooltip_3"
-  },
-  "settings_embedding_daily_quota": {
-    "message": "每日配额",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota"
-  },
-  "settings_embedding_daily_quota_tooltip_title": {
-    "message": "每日配额的作用：",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota_tooltip_title"
-  },
-  "settings_embedding_daily_quota_tooltip_1": {
-    "message": "限制每天生成向量的书签数量",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota_tooltip_1"
-  },
-  "settings_embedding_daily_quota_tooltip_2": {
-    "message": "避免过度消耗 API 配额",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota_tooltip_2"
-  },
-  "settings_embedding_daily_quota_tooltip_3": {
-    "message": "默认 300 条/天，可根据需求调整",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota_tooltip_3"
-  },
-  "settings_embedding_daily_quota_placeholder": {
-    "message": "默认300",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota_placeholder"
-  },
-  "settings_embedding_per_run_max": {
-    "message": "单次最大",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max"
-  },
-  "settings_embedding_per_run_max_tooltip_title": {
-    "message": "单次最大的作用：",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max_tooltip_title"
-  },
-  "settings_embedding_per_run_max_tooltip_1": {
-    "message": "每次运行最多处理的书签数量",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max_tooltip_1"
-  },
-  "settings_embedding_per_run_max_tooltip_2": {
-    "message": "避免长时间占用资源",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max_tooltip_2"
-  },
-  "settings_embedding_per_run_max_tooltip_3": {
-    "message": "默认 150 条，分批处理更稳定",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max_tooltip_3"
-  },
-  "settings_embedding_per_run_max_placeholder": {
-    "message": "默认150",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max_placeholder"
-  },
-  "settings_embedding_night_idle_only": {
-    "message": "仅夜间/空闲",
-    "description": "EmbeddingSettings: settings_embedding_night_idle_only"
-  },
-  "settings_embedding_night_idle_only_tooltip_title": {
-    "message": "仅夜间/空闲的作用：",
-    "description": "EmbeddingSettings: settings_embedding_night_idle_only_tooltip_title"
-  },
-  "settings_embedding_night_idle_only_tooltip_1": {
-    "message": "只在系统空闲或夜间时段生成向量",
-    "description": "EmbeddingSettings: settings_embedding_night_idle_only_tooltip_1"
-  },
-  "settings_embedding_night_idle_only_tooltip_2": {
-    "message": "避免影响日常使用体验",
-    "description": "EmbeddingSettings: settings_embedding_night_idle_only_tooltip_2"
-  },
-  "settings_embedding_night_idle_only_tooltip_3": {
-    "message": "推荐开启，让生成过程更加智能",
-    "description": "EmbeddingSettings: settings_embedding_night_idle_only_tooltip_3"
-  },
   "settings_shortcut_label_execute_action": {
     "message": "激活扩展/切换弹出页",
     "description": "ShortcutSettings: settings_shortcut_label_execute_action"
@@ -2864,9 +2748,5 @@
   "settings_general_language_reload_prompt": {
     "message": "需要刷新页面才能使语言更改生效。现在刷新吗？",
     "description": "General Settings: Language reload prompt"
-  },
-  "settings_general_save_failed": {
-    "message": "保存失败：$1",
-    "description": "General Settings: Save failed error message"
   }
 }

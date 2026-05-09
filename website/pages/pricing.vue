@@ -41,7 +41,24 @@
         <h2 class="sr-only">价格方案</h2>
         <div class="plans-grid">
           <!-- Free Plan -->
-          <Card class="p-6 flex flex-col h-full border-white/10">
+          <Card 
+            class="p-6 flex flex-col h-full relative"
+            :class="{
+              'border-white/10': isPro || !isInitialized,
+              'plan-card--current': !isPro && isInitialized
+            }"
+          >
+            <!-- 当前方案徽章 -->
+            <div v-if="!isPro && isInitialized" class="absolute -top-3 left-1/2 -translate-x-1/2">
+              <Badge
+                variant="default"
+                class="bg-green-500 text-white border-none shadow-lg shadow-green-500/40 px-3 text-xs flex items-center gap-1.5"
+              >
+                <CheckCircle class="w-3.5 h-3.5" />
+                <span>当前方案</span>
+              </Badge>
+            </div>
+            
             <div class="mb-6">
               <div class="text-sm font-medium text-content-muted mb-1">Free</div>
               <div class="text-3xl font-bold mb-3">免费</div>
@@ -55,8 +72,10 @@
               to="/download"
               :as="NuxtLink"
               class="mb-6"
-              >立即下载</Button
+              :disabled="!isPro && isInitialized"
             >
+              {{ !isPro && isInitialized ? '已激活' : '立即下载' }}
+            </Button>
             <ul class="space-y-3 flex-1">
               <li
                 v-for="feature in plans[0]?.features"
@@ -71,16 +90,32 @@
 
           <!-- Pro Plan -->
           <Card
-            class="p-6 flex flex-col h-full relative border-primary-500/50 bg-bg-surface/60 shadow-2xl shadow-primary-500/10"
+            class="p-6 flex flex-col h-full relative"
+            :class="{
+              'border-primary-500/50 bg-bg-surface/60 shadow-2xl shadow-primary-500/10': !isPro || !isInitialized,
+              'plan-card--current plan-card--current-pro': isPro && isInitialized
+            }"
             hover
           >
-            <div class="absolute -top-3 left-1/2 -translate-x-1/2">
+            <!-- 推荐徽章（非 PRO 用户显示） -->
+            <div v-if="!isPro || !isInitialized" class="absolute -top-3 left-1/2 -translate-x-1/2">
               <Badge
                 variant="default"
                 class="bg-primary-500 text-white border-none shadow-lg shadow-primary-500/40 px-3 text-xs"
-                >最受欢迎</Badge
-              >
+              >最受欢迎</Badge>
             </div>
+            
+            <!-- 当前方案徽章（PRO 用户显示） -->
+            <div v-else class="absolute -top-3 left-1/2 -translate-x-1/2">
+              <Badge
+                variant="default"
+                class="bg-gradient-to-r from-yellow-400 to-yellow-500 text-black border-none shadow-lg shadow-yellow-500/40 px-3 text-xs font-semibold flex items-center gap-1.5"
+              >
+                <CheckCircle class="w-3.5 h-3.5" />
+                <span>当前方案</span>
+              </Badge>
+            </div>
+            
             <div class="mb-6">
               <div class="text-sm font-bold text-primary-400 mb-1">Pro</div>
               <div class="flex items-baseline gap-1 mb-1">
@@ -97,11 +132,13 @@
             <Button
               variant="primary"
               block
-              to="/pricing"
+              :to="isPro && isInitialized ? '/account' : '/pricing'"
               :as="NuxtLink"
               class="mb-6"
-              >升级到 Pro</Button
+              :disabled="isPro && isInitialized"
             >
+              {{ isPro && isInitialized ? '已激活' : '升级到 Pro' }}
+            </Button>
             <ul class="space-y-3 flex-1">
               <li
                 v-for="feature in plans[1]?.features"
@@ -231,12 +268,15 @@
 </template>
 
 <script setup lang="ts">
-import { Check, ChevronDown } from 'lucide-vue-next'
+import { Check, ChevronDown, CheckCircle } from 'lucide-vue-next'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import Badge from '@/components/ui/Badge.vue'
 
 const NuxtLink = resolveComponent('NuxtLink')
+
+// 获取用户订阅状态
+const { isPro, isInitialized } = useSubscription()
 
 const metas = [
   { value: '免费', label: '个人核心功能' },
@@ -335,9 +375,105 @@ useSeoMeta({
   margin: 0 auto;
 }
 
+/* 当前方案高亮样式 - Free（绿色） */
+.plan-card--current {
+  border: 2px solid rgb(34 197 94 / 0.5) !important;
+  background: linear-gradient(
+    135deg,
+    rgb(34 197 94 / 0.08) 0%,
+    transparent 100%
+  ) !important;
+  box-shadow: 0 8px 24px rgb(34 197 94 / 0.15) !important;
+  animation: cardPulseGreen 3s ease-in-out infinite, cardFadeIn 0.6s ease-out;
+}
+
+/* 当前方案高亮样式 - Pro（金色） */
+.plan-card--current-pro {
+  border: 2px solid rgb(251 191 36 / 0.6) !important;
+  background: linear-gradient(
+    135deg,
+    rgb(251 191 36 / 0.1) 0%,
+    transparent 100%
+  ) !important;
+  box-shadow: 0 8px 32px rgb(251 191 36 / 0.25) !important;
+  animation: cardPulseGold 3s ease-in-out infinite, cardFadeIn 0.6s ease-out;
+}
+
+/* 卡片脉冲动画 - 绿色 */
+@keyframes cardPulseGreen {
+  0%, 100% {
+    box-shadow: 0 8px 24px rgb(34 197 94 / 0.15);
+  }
+  50% {
+    box-shadow: 0 8px 32px rgb(34 197 94 / 0.3), 0 0 0 4px rgb(34 197 94 / 0.1);
+  }
+}
+
+/* 卡片脉冲动画 - 金色 */
+@keyframes cardPulseGold {
+  0%, 100% {
+    box-shadow: 0 8px 32px rgb(251 191 36 / 0.25);
+  }
+  50% {
+    box-shadow: 0 8px 40px rgb(251 191 36 / 0.4), 0 0 0 4px rgb(251 191 36 / 0.15);
+  }
+}
+
+/* 卡片淡入动画 */
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 徽章脉冲动画 - 应用到徽章元素 */
+.plan-card--current :deep(.bg-green-500),
+.plan-card--current-pro :deep(.bg-gradient-to-r) {
+  animation: badgePulse 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* 悬停时暂停动画，增强交互感 */
+.plan-card--current:hover,
+.plan-card--current-pro:hover {
+  animation-play-state: paused;
+}
+
+.plan-card--current:hover :deep(.bg-green-500),
+.plan-card--current-pro:hover :deep(.bg-gradient-to-r) {
+  animation-play-state: paused;
+  transform: scale(1.05);
+}
+
 @media (max-width: 768px) {
   .plans-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* 减弱移动端动画，节省性能 */
+@media (prefers-reduced-motion: reduce) {
+  .plan-card--current,
+  .plan-card--current-pro {
+    animation: cardFadeIn 0.6s ease-out;
+  }
+  
+  .plan-card--current :deep(.bg-green-500),
+  .plan-card--current-pro :deep(.bg-gradient-to-r) {
+    animation: none;
   }
 }
 </style>

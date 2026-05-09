@@ -198,9 +198,12 @@ async function handleMessage(
         sendResponse({ installed: true, version: chrome.runtime.getManifest().version })
         return
       }
-      case 'AUTH_STATE_CHANGED': {
-        // 官网通知插件：用户认证状态已变化
-        await handleAuthStateChanged(sendResponse)
+      case 'SYNC_AUTH_SESSION': {
+        await handleSyncAuthSession(message, sendResponse)
+        return
+      }
+      case 'CLEAR_AUTH_SESSION': {
+        await handleClearAuthSession(sendResponse)
         return
       }
       default: {
@@ -1335,34 +1338,97 @@ async function handleBatchDeleteByTrait(
 }
 
 /**
- * 处理认证状态变化通知
+ * 处理同步认证 session 消息
  * 
- * 当官网通知插件用户认证状态已变化时：
- * 1. 广播消息到所有插件页面
- * 2. 插件页面收到消息后，调用 supabase.auth.getSession() 刷新状态
+ * 从 Content Script 接收官网的 Supabase session，存储到 Chrome Storage
  * 
+ * @param message - 消息对象（包含 access_token、refresh_token、expires_at、user）
  * @param sendResponse - 响应回调函数
  */
-async function handleAuthStateChanged(
+async function handleSyncAuthSession(
+  message: RuntimeMessage,
   sendResponse: AsyncResponse
 ): Promise<void> {
   try {
-    logger.info('BackgroundMessaging', '🔐 收到认证状态变化通知')
+    console.log('[BackgroundMessaging] 📨 收到 SYNC_AUTH_SESSION 消息')
+    console.log('[BackgroundMessaging] message.data:', message.data)
+    
+    const data = message.data as {
+      access_token: string
+      refresh_token: string
+      expires_at: number
+      user: Record<string, unknown>
+    } | undefined
 
-    // 广播到所有插件页面，让它们刷新认证状态
-    await chrome.storage.session.set({
-      __authStateChanged: {
-        timestamp: Date.now()
-      }
+    if (!data || !data.access_token || !data.refresh_token) {
+      console.error('[BackgroundMessaging] ❌ Session 数据不完整:', data)
+      logger.error('BackgroundMessaging', '❌ Session 数据不完整', data)
+      sendResponse({ success: false, error: 'Session 数据不完整' })
+      return
+    }
+
+    console.log('[BackgroundMessaging] 🔑 Session 数据完整，开始存储...')
+    logger.info('BackgroundMessaging', '🔑 同步 session 到 Chrome Storage', {
+      userId: data.user?.id,
+      expiresAt: new Date(data.expires_at * 1000).toISOString()
     })
 
-    logger.info('BackgroundMessaging', '✅ 已广播认证状态变化通知')
+    // 存储到 Chrome Storage Local（持久化）
+    const sessionData = {
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      expires_at: data.expires_at,
+      user: data.user
+    }
+    
+    console.log('[BackgroundMessaging] 准备存储的 session:', {
+      hasAccessToken: !!sessionData.access_token,
+      hasRefreshToken: !!sessionData.refresh_token,
+      userId: sessionData.user?.id
+    })
+    
+    await chrome.storage.local.set({
+      'supabase.auth.token': JSON.stringify(sessionData)
+    })
+
+    console.log('[BackgroundMessaging] ✅ Session 已存储到 Chrome Storage')
+    logger.info('BackgroundMessaging', '✅ Session 已存储到 Chrome Storage')
     sendResponse({ success: true })
   } catch (error) {
-    logger.error('BackgroundMessaging', '❌ 处理认证状态变化失败', error)
+    console.error('[BackgroundMessaging] ❌ 同步 session 失败:', error)
+    logger.error('BackgroundMessaging', '❌ 同步 session 失败', error)
     sendResponse({
       success: false,
       error: error instanceof Error ? error.message : String(error)
     })
   }
 }
+
+/**
+ * 处理清除认证 session 消息
+ * 
+ * 从 Chrome Storage 中删除 Supabase session
+ * 
+ * @param sendResponse - 响应回调函数
+ */
+async function handleClearAuthSession(
+  sendResponse: AsyncResponse
+): Promise<void> {
+  try {
+    logger.info('BackgroundMessaging', '🧹 清除 Chrome Storage 中的 session')
+
+    await chrome.storage.local.remove('supabase.auth.token')
+
+    logger.info('BackgroundMessaging', '✅ Session 已清除')
+    sendResponse({ success: true })
+  } catch (error) {
+    logger.error('BackgroundMessaging', '❌ 清除 session 失败', error)
+    sendResponse({
+      success: false,
+      error: error instanceof Error ? error.message : String(error)
+    })
+  }
+}
+
+
+

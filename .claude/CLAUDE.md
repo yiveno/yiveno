@@ -184,9 +184,33 @@ presentation/ → application/ → core/ → infrastructure/
 - **Validation**: Zod 3.22.4 (type-safe data validation)
 - **UUID**: uuid 11.1.0
 - **Database**: Supabase (PostgreSQL + real-time)
-- **AI**: Cloudflare AI with Vectorize embeddings
+- **AI**: User-provided API Keys (OpenAI / Claude / Gemini) or Chrome Built-in AI (future)
 
 ## Key Development Workflows
+
+### Embedding Service (Automatic Behavior)
+
+**Local ONNX Embeddings are fully automatic with smart defaults:**
+
+- ✅ **No user configuration needed** - All settings removed from UI
+- ✅ **Automatic quota management** - Adjusts based on bookmark count
+- ✅ **Background processing** - Runs during idle time without blocking UI
+- ✅ **Incremental sync** - Only processes new/changed bookmarks
+- ✅ **Fully local** - No network requests, complete privacy
+
+**Implementation:**
+
+- Service: `frontend/src/infrastructure/embedding/embedding-service.ts`
+- Provider: `frontend/src/infrastructure/embedding/onnx-embedding-provider.ts`
+- Storage: `frontend/src/infrastructure/embedding/local-vector-store.ts`
+
+**Smart Defaults (hardcoded):**
+
+```typescript
+const BATCH_SIZE = 32 // Process 32 bookmarks per batch
+const MAX_TEXT_LENGTH = 512 // Truncate text to 512 chars
+// Daily quota and other limits are automatically calculated based on bookmark count
+```
 
 ### Local Development
 
@@ -300,7 +324,7 @@ this.timer = setTimeout(() => {...}, 1000)
 
 - **Authentication**: Google, GitHub OAuth + Supabase
 - **Payment Processing**: Gumroad integration (Lemon Squeezy removed)
-- **AI Services**: Cloudflare AI with vector search
+- **AI Services**: User-provided API Keys (OpenAI / Claude / Gemini) + Local ONNX embeddings (fully automatic, no user configuration needed)
 - **Storage**: IndexedDB + Chrome Bookmarks API sync
 
 ## File Organization
@@ -337,5 +361,5 @@ this.timer = setTimeout(() => {...}, 1000)
 
 - **Runtime**: Edge network with global distribution
 - **Database**: Supabase (PostgreSQL) with vector search
-- **AI**: Cloudflare AI with Vectorize embeddings
+- **AI**: User-provided API Keys (OpenAI / Claude / Gemini) + Local ONNX embeddings (automatic)
 - **Custom Domain**: api.acuitybookmarks.com

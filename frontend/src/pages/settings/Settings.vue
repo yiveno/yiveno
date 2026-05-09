@@ -35,14 +35,6 @@
           <div v-else-if="tab === 'ai'" class="pane">
             <component :is="AISettings" />
           </div>
-          <div v-else-if="tab === 'embeddings'" class="pane">
-            <ProGate v-if="!isPro" tab="embeddings" />
-            <component :is="EmbeddingSettings" v-else />
-          </div>
-          <div v-else-if="tab === 'vectorize'" class="pane">
-            <ProGate v-if="!isPro" tab="vectorize" />
-            <component :is="VectorizeSettings" v-else />
-          </div>
           <div v-else-if="tab === 'notifications'" class="pane">
             <component :is="NotificationSettings" />
           </div>
@@ -86,18 +78,15 @@ import {
 import { App, AppHeader, Main, Tabs, Button, LucideIcon } from '@/components'
 import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'
 import GlobalQuickAddBookmark from '@/components/business/GlobalQuickAddBookmark/GlobalQuickAddBookmark.vue'
-import ProGate from './sections/ProGate.vue'
 import { t } from '@/infrastructure'
 import { onEvent } from '@/infrastructure/events/event-bus'
 import { useSupabaseAuth } from '@/composables'
-import { useSubscription } from '@/composables'
 import { logger } from '@/infrastructure/logging/logger'
 import { websiteUrls, openWebsiteUrl } from '@/config/website'
 
 // 使用 Supabase Auth 检查登录状态
 const { isAuthenticated, initialize } = useSupabaseAuth()
 const isLoggedIn = computed(() => isAuthenticated.value)
-const { isPro } = useSubscription()
 
 defineOptions({
   name: 'SettingsPage',
@@ -113,12 +102,6 @@ const GeneralSettings = defineAsyncComponent(
 )
 const AISettings = defineAsyncComponent(
   () => import('./sections/AISettings.vue')
-)
-const EmbeddingSettings = defineAsyncComponent(
-  () => import('./sections/EmbeddingSettings.vue')
-)
-const VectorizeSettings = defineAsyncComponent(
-  () => import('./sections/VectorizeSettings.vue')
 )
 const NotificationSettings = defineAsyncComponent(
   () => import('./sections/NotificationSettings.vue')
@@ -139,8 +122,6 @@ async function handleOpenSubscriptionPage() {
 type TabKey =
   | 'general'
   | 'ai'
-  | 'embeddings'
-  | 'vectorize'
   | 'notifications'
   | 'shortcuts'
   | 'subscription'
@@ -157,18 +138,6 @@ const tabs = [
     key: 'settings_tab_ai',
     fallback: 'AI 配置',
     icon: 'sparkles'
-  },
-  {
-    value: 'embeddings',
-    key: 'settings_tab_embeddings',
-    fallback: '嵌入',
-    icon: 'brain'
-  },
-  {
-    value: 'vectorize',
-    key: 'settings_tab_vectorize',
-    fallback: '向量检索',
-    icon: 'cloud'
   },
   {
     value: 'notifications',
@@ -213,8 +182,6 @@ async function checkLoginStatus() {
 const allowed = new Set<TabKey>([
   'general',
   'ai',
-  'embeddings',
-  'vectorize',
   'notifications',
   'shortcuts',
   'subscription'

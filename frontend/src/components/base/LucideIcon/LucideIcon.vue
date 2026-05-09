@@ -19,7 +19,7 @@
 <script setup lang="ts">
 import { computed, type Component } from 'vue'
 import type { LucideIconProps } from './LucideIcon.d'
-import { lucideIcons } from './icons'
+import { lucideIcons, materialToLucideMap } from './icons'
 
 defineOptions({
   name: 'LucideIcon'
@@ -78,11 +78,24 @@ const computedColor = computed(() => {
 
 /**
  * 获取图标组件
+ * 支持 Material Icons 到 Lucide Icons 的自动映射
  */
 const iconComponent = computed<Component | null>(() => {
-  const icon = lucideIcons[props.name]
+  let iconName = props.name
+  
+  // 如果是 icon- 前缀的 Material Icons，尝试映射到 Lucide Icons
+  if (iconName.startsWith('icon-')) {
+    const mappedName = materialToLucideMap[iconName]
+    if (mappedName) {
+      iconName = mappedName
+    } else if (import.meta.env.DEV) {
+      console.warn(`[LucideIcon] Material Icon 映射未找到: ${iconName}`)
+    }
+  }
+  
+  const icon = lucideIcons[iconName]
   if (!icon && import.meta.env.DEV) {
-    console.warn(`[LucideIcon] 图标未找到: ${props.name}`)
+    console.warn(`[LucideIcon] 图标未找到: ${iconName} (原始名称: ${props.name})`)
   }
   return icon || null
 })

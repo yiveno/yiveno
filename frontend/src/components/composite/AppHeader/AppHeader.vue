@@ -29,7 +29,7 @@
 
     <div class="app-header__col app-header__col--right">
       <ThemeToggle v-if="showTheme" />
-      <UserMenu v-if="showAccount" />
+      <UserMenu v-if="showAccount" :size="24" />
       <Button
         v-if="showSettings"
         class="app-header__action"

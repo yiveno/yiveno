@@ -5,6 +5,7 @@
  * - 创建和管理 Supabase 客户端实例
  * - 配置认证选项
  * - 处理 Chrome Extension 环境的特殊配置
+ * - 使用 Chrome Storage 存储 session（与官网同步）
  */
 
 import { createClient } from '@supabase/supabase-js'
@@ -20,6 +21,16 @@ import { logger } from '@/infrastructure/logging/logger'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
+// 开发模式下打印环境变量状态（帮助调试）
+if (import.meta.env.DEV) {
+  logger.debug('Supabase', 'Config', '环境变量状态', {
+    hasUrl: !!supabaseUrl,
+    hasKey: !!supabaseAnonKey,
+    url: supabaseUrl ? `${supabaseUrl.substring(0, 30)}...` : 'undefined',
+    keyPrefix: supabaseAnonKey ? `${supabaseAnonKey.substring(0, 20)}...` : 'undefined'
+  })
+}
+
 // 检查配置是否完整
 const isConfigured = !!(supabaseUrl && supabaseAnonKey)
 
@@ -28,72 +39,71 @@ const isConfigured = !!(supabaseUrl && supabaseAnonKey)
 // 如需检查配置，可运行: bun ./scripts/check-supabase-config.mjs
 
 /**
+ * Chrome Storage Adapter for Supabase Auth
+ * 
+ * 使用 Chrome Storage 存储 session，实现插件与官网的认证状态同步
+ */
+const chromeStorageAdapter = {
+  async getItem(key: string): Promise<string | null> {
+    try {
+      const result = await chrome.storage.local.get(key)
+      const value = result[key] as string | undefined
+      console.log('[ChromeStorageAdapter] getItem:', { 
+        key, 
+        hasValue: !!value,
+        valueType: typeof value,
+        valueLength: value ? value.length : 0
+      })
+      return value || null
+    } catch (error) {
+      console.error('[ChromeStorageAdapter] getItem 失败:', error)
+      return null
+    }
+  },
+  async setItem(key: string, value: string): Promise<void> {
+    try {
+      await chrome.storage.local.set({ [key]: value })
+      console.log('[ChromeStorageAdapter] setItem:', { 
+        key, 
+        valueLength: value.length,
+        valuePreview: value.substring(0, 100) + '...'
+      })
+    } catch (error) {
+      console.error('[ChromeStorageAdapter] setItem 失败:', error)
+    }
+  },
+  async removeItem(key: string): Promise<void> {
+    try {
+      await chrome.storage.local.remove(key)
+      console.log('[ChromeStorageAdapter] removeItem:', { key })
+    } catch (error) {
+      console.error('[ChromeStorageAdapter] removeItem 失败:', error)
+    }
+  }
+}
+
+/**
  * 创建 Supabase 客户端
  *
  * Chrome Extension 环境配置：
- * - storage: 使用 chrome.storage.local 持久化 session
+ * - storage: 使用 Chrome Storage（通过 Content Script 与官网同步）
  * - autoRefreshToken: 自动刷新 token
- * - persistSession: 持久化 session（Chrome Extension 需要）
+ * - persistSession: 持久化 session
  *
  * 注意：如果环境变量未配置，使用占位符 URL 避免崩溃
  * 实际使用时应该通过 isSupabaseConfigured() 检查配置状态
  */
-
-// 用于去重日志的缓存（避免重复打印相同的日志）
-const loggedKeys = new Set<string>()
 
 export const supabase = createClient(
   supabaseUrl || 'https://placeholder.supabase.co',
   supabaseAnonKey || 'placeholder-key',
   {
     auth: {
-      // Chrome Extension 需要使用自定义存储
-      storage:
-        typeof chrome !== 'undefined' && chrome.storage?.local
-          ? {
-              getItem: (key: string) => {
-                return new Promise<string | null>(resolve => {
-                  chrome.storage.local.get([key], result => {
-                    const value = result?.[key]
-                    // 只在开发模式、首次找到 token 时打印日志（避免重复噪音）
-                    if (
-                      import.meta.env.DEV &&
-                      typeof value === 'string' &&
-                      !loggedKeys.has(`found:${key}`)
-                    ) {
-                      logger.debug('Supabase', 'Storage', 'Token found', { key })
-                      loggedKeys.add(`found:${key}`)
-                    }
-                    resolve(typeof value === 'string' ? value : null)
-                  })
-                })
-              },
-              setItem: (key: string, value: string) => {
-                return new Promise<void>(resolve => {
-                  chrome.storage.local.set({ [key]: value }, () => {
-                    if (import.meta.env.DEV && !loggedKeys.has(`saved:${key}`)) {
-                      logger.debug('Supabase', 'Storage', 'Token saved', { key })
-                      loggedKeys.add(`saved:${key}`)
-                    }
-                    resolve()
-                  })
-                })
-              },
-              removeItem: (key: string) => {
-                return new Promise<void>(resolve => {
-                  chrome.storage.local.remove([key], () => {
-                    if (import.meta.env.DEV) {
-                      logger.debug('Supabase', 'Storage', 'Token removed', { key })
-                      // 清除缓存，以便下次保存时可以再次打印
-                      loggedKeys.delete(`found:${key}`)
-                      loggedKeys.delete(`saved:${key}`)
-                    }
-                    resolve()
-                  })
-                })
-              }
-            }
-          : undefined,
+      // 🔑 使用 Chrome Storage 存储 session
+      // Content Script 会监听官网的 localStorage 变化，并同步到 Chrome Storage
+      // 这样插件就能自动获取官网的登录状态
+      storage: chromeStorageAdapter,
+      storageKey: 'supabase.auth.token', // 自定义 storage key
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: false // Chrome Extension 不需要检测 URL 中的 session

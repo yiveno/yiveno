@@ -63,14 +63,16 @@ export default defineNuxtConfig({
         url: process.env.NUXT_PUBLIC_SUPABASE_URL || '',
         anonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY || ''
       },
-      googleClientId: process.env.NUXT_PUBLIC_GOOGLE_CLIENT_ID || ''
+      googleClientId: process.env.NUXT_PUBLIC_GOOGLE_CLIENT_ID || '',
+      // Chrome 扩展 ID（用于官网与扩展通信）
+      extensionId: process.env.VITE_EXTENSION_ID || process.env.NUXT_PUBLIC_EXTENSION_ID || 'gdjcmpenmogdikhnnaebmddhmdgbfcgl'
     }
   },
 
   // TypeScript 配置
   typescript: {
     strict: true,
-    typeCheck: true // ✅ 启用类型检查
+    typeCheck: false // ⚠️ 暂时禁用类型检查，避免开发时的性能问题
   },
 
   // 开发服务器配置

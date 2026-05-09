@@ -15,9 +15,8 @@ import { logger } from '@/infrastructure/logging/logger'
 
 /**
  * 支持的第三方 AI 服务商
- * builtin-cloudflare: 使用 AcuityBookmarks 内置的 Cloudflare Workers AI（免费，无需 Key）
  */
-export type UserLLMProvider = 'openai' | 'claude' | 'gemini' | 'builtin-cloudflare'
+export type UserLLMProvider = 'openai' | 'claude' | 'gemini'
 
 /**
  * 用户 API Key 配置
@@ -54,11 +53,6 @@ const PROVIDER_DEFAULTS: Record<
     baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
     completionModel: 'gemini-2.0-flash',
     embeddingModel: 'text-embedding-004'
-  },
-  'builtin-cloudflare': {
-    baseUrl: '',
-    completionModel: '',
-    embeddingModel: ''
   }
 }
 
@@ -69,8 +63,7 @@ function friendlyError(provider: UserLLMProvider, status: number, rawMessage: st
   const providerName: Record<UserLLMProvider, string> = {
     openai: 'OpenAI',
     claude: 'Anthropic Claude',
-    gemini: 'Google Gemini',
-    'builtin-cloudflare': 'Cloudflare Workers AI'
+    gemini: 'Google Gemini'
   }
   const name = providerName[provider]
 
@@ -137,19 +130,11 @@ export class UserLLMClient {
   }
 
   /**
-   * 检查用户是否已配置 AI 服务（包括选择内置 Cloudflare）
+   * 检查用户是否已配置 AI 服务
    */
   async isConfigured(): Promise<boolean> {
     const config = await this.getConfig()
     return config !== null
-  }
-
-  /**
-   * 检查用户是否选择了内置 Cloudflare AI
-   */
-  async isUsingBuiltinCloudflare(): Promise<boolean> {
-    const config = await this.getConfig()
-    return config?.provider === 'builtin-cloudflare'
   }
 
   /**
@@ -165,9 +150,6 @@ export class UserLLMClient {
     }
 
     switch (config.provider) {
-      case 'builtin-cloudflare':
-        // 内置 Cloudflare AI，由 llm-adapter 的降级逻辑处理，这里不应直接调用
-        throw new Error('请通过 llmAdapter 调用内置 Cloudflare AI')
       case 'openai':
         return this._completeOpenAI(prompt, config, options)
       case 'claude':

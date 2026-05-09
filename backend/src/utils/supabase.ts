@@ -79,7 +79,7 @@ export async function getUserSubscription(
       .select('*')
       .eq('user_id', userId)
       .eq('status', 'active')
-      .gt('current_period_end', new Date().toISOString().replace('Z', '+00'))
+      .gt('current_period_end', new Date().toISOString())
       .order('current_period_end', { ascending: false })
       .limit(1)
       .maybeSingle<Subscription>()

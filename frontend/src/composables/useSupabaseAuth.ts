@@ -7,9 +7,10 @@
  * - 提供登出功能
  * - 检测用户不活跃超时（30 天）
  * 
- * 注意：
- * - 登录功能已迁移到官网，插件只负责状态同步
- * - 用户在官网登录后，插件会自动同步 session
+ * 同步机制：
+ * - 插件和官网共享 localStorage 中的 Supabase session
+ * - 通过 storage 事件实现跨标签页/跨环境自动同步
+ * - 用户在官网登录后，插件会自动检测到 session 变化并同步状态
  * 
  * 安全策略：
  * - Access Token 过期时间：1 小时
@@ -112,12 +113,15 @@ export function useSupabaseAuth() {
     if (!isSupabaseConfigured()) {
       loading.value = false
       error.value = 'Supabase 未配置'
+      logger.warn('[useSupabaseAuth] ⚠️ Supabase 未配置，跳过认证初始化')
+      console.log('[useSupabaseAuth] ⚠️ Supabase 未配置')
       return
     }
 
     try {
       loading.value = true
       logger.debug('[useSupabaseAuth] 开始初始化，检查 session...')
+      console.log('[useSupabaseAuth] 🔍 开始获取 session...')
 
       const {
         data: { session: currentSession },
@@ -126,10 +130,16 @@ export function useSupabaseAuth() {
 
       if (sessionError) {
         logger.error('[useSupabaseAuth] 获取 session 失败:', sessionError)
+        console.error('[useSupabaseAuth] ❌ 获取 session 失败:', sessionError)
         throw sessionError
       }
 
       logger.debug('[useSupabaseAuth] Session 获取成功:', {
+        hasSession: !!currentSession,
+        userId: currentSession?.user?.id,
+        email: currentSession?.user?.email
+      })
+      console.log('[useSupabaseAuth] ✅ Session 获取成功:', {
         hasSession: !!currentSession,
         userId: currentSession?.user?.id,
         email: currentSession?.user?.email
@@ -144,10 +154,12 @@ export function useSupabaseAuth() {
       }
 
       logger.debug('[useSupabaseAuth] 初始化完成，登录状态:', !!user.value)
+      console.log('[useSupabaseAuth] ✅ 初始化完成，登录状态:', !!user.value)
     } catch (err) {
       const authError = err as AuthError
       error.value = authError.message || '获取 session 失败'
       logger.error('[useSupabaseAuth] 初始化失败:', authError)
+      console.error('[useSupabaseAuth] ❌ 初始化失败:', authError)
       session.value = null
       user.value = null
     } finally {
@@ -240,18 +252,49 @@ export function useSupabaseAuth() {
     }
   }
 
+  // 🔑 监听 Chrome Storage 的变化（Content Script 同步的 session）
+  // 注意：这个监听器必须在组件外部设置，否则会在 Popup 打开之前就被调用
+  if (typeof chrome !== 'undefined' && chrome.storage) {
+    console.log('[useSupabaseAuth] 👂 设置 Chrome Storage 监听器（全局）')
+    chrome.storage.onChanged.addListener((changes, areaName) => {
+      if (areaName === 'local' && changes['supabase.auth.token']) {
+        const change = changes['supabase.auth.token']
+        console.log('[useSupabaseAuth] 📨 检测到 Chrome Storage session 变化:', {
+          hasOldValue: !!change.oldValue,
+          hasNewValue: !!change.newValue,
+          isDeleted: change.newValue === undefined || change.newValue === null
+        })
+        
+        // ✅ 如果 session 被删除（登出），立即清除本地状态
+        if (change.newValue === undefined || change.newValue === null) {
+          console.log('[useSupabaseAuth] 🧹 Session 已删除，清除本地状态...')
+          logger.info('[useSupabaseAuth] 🧹 Session 已删除（用户登出），清除本地状态')
+          
+          // 立即清除状态
+          user.value = null
+          session.value = null
+          
+          // 清除本地存储
+          void chromeStorage.removeLocal('current_login_provider')
+          void chromeStorage.removeLocal(STORAGE_KEYS.LAST_ACTIVITY)
+        } else {
+          // Session 更新（登录或刷新），重新初始化
+          logger.info('[useSupabaseAuth] 🔔 检测到 Chrome Storage session 变化，刷新状态...')
+          void initialize()
+        }
+      }
+    })
+  }
+
   // 初始化
   onMounted(() => {
-    initialize().then(() => {
+    console.log('[useSupabaseAuth] 🚀 onMounted 开始')
+    
+    // 不要在 onMounted 中使用 await，使用 .then() 代替
+    void initialize().then(() => {
+      console.log('[useSupabaseAuth] ✅ initialize 完成，登录状态:', !!user.value)
+      console.log('[useSupabaseAuth] 👤 user:', user.value)
       setupAuthListener()
-    })
-
-    // 监听来自 background 的认证状态变化通知
-    chrome.storage.onChanged.addListener((changes, areaName) => {
-      if (areaName === 'session' && changes.__authStateChanged) {
-        logger.info('[useSupabaseAuth] 🔔 收到认证状态变化通知，刷新 session...')
-        initialize()
-      }
     })
   })
 

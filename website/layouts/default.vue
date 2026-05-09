@@ -7,21 +7,13 @@
         class="container mx-auto px-4 h-20 flex items-center justify-between"
       >
         <!-- Logo -->
-        <NuxtLink to="/" class="flex items-center gap-3 group">
-          <div
-            class="bg-gradient-to-br from-primary-500 to-accent-600 text-white text-xs font-bold px-2 py-1 rounded-lg shadow-lg shadow-primary-500/20 group-hover:scale-105 transition-transform"
-          >
-            Acuity
-          </div>
-          <div class="flex flex-col">
-            <span class="font-bold text-lg leading-none tracking-tight"
-              >Bookmarks</span
-            >
-            <span
-              class="text-[10px] text-content-muted uppercase tracking-widest"
-              >Intelligent OS</span
-            >
-          </div>
+        <NuxtLink to="/" class="flex items-center gap-2 group">
+          <img 
+            src="/logo.webp" 
+            alt="AcuityBookmarks Logo" 
+            class="w-8 h-8 object-contain group-hover:scale-105 transition-transform"
+          />
+
         </NuxtLink>
 
         <!-- Desktop Nav -->
@@ -39,38 +31,109 @@
 
         <!-- Actions -->
         <div class="flex items-center gap-3">
-          <!-- 未登录：显示登录按钮 -->
-          <Button
+          <!-- 未登录：点击直接跳转登录页 -->
+          <button
             v-if="!isAuthenticated"
-            variant="ghost"
-            size="sm"
-            to="/login"
-            class="hidden sm:inline-flex"
-            :as="NuxtLink"
+            @click="navigateToLogin"
+            class="hidden sm:flex items-center justify-center w-10 h-10 rounded-full hover:bg-white/5 transition-colors"
+            aria-label="登录"
+            title="登录"
           >
-            登录
-          </Button>
+            <Icon name="lucide:circle-user" class="w-7 h-7 text-content-muted" />
+          </button>
           
-          <!-- 已登录：显示用户菜单 -->
-          <NuxtLink
+          <!-- 已登录：hover 显示下拉菜单 -->
+          <div
             v-else
-            to="/account"
-            class="hidden sm:flex items-center px-2 py-2 rounded-lg hover:bg-white/5 transition-colors"
-            :title="displayName"
+            class="hidden sm:block relative"
+            @mouseenter="showUserMenu = true"
+            @mouseleave="showUserMenu = false"
           >
-            <div class="user-avatar-wrapper">
-              <img 
-                v-if="userAvatar && !navAvatarFailed" 
-                :src="userAvatar" 
-                :alt="displayName"
-                class="user-avatar-image"
-                @error="navAvatarFailed = true"
-              />
-              <div v-else class="user-avatar">
-                {{ userInitial }}
+            <button
+              :class="[
+                'flex items-center justify-center w-10 h-10 rounded-full transition-all',
+                isPro 
+                  ? 'ring-2 ring-yellow-400 hover:ring-yellow-300 hover:shadow-[0_0_16px_rgba(251,191,36,0.6)]' 
+                  : 'ring-2 ring-primary-400 hover:ring-primary-300 hover:bg-white/5'
+              ]"
+              :title="displayName"
+              aria-label="用户菜单"
+            >
+              <div class="user-avatar-wrapper">
+                <img 
+                  v-if="userAvatar && !navAvatarFailed" 
+                  :src="userAvatar" 
+                  :alt="displayName"
+                  class="user-avatar-image"
+                  @error="navAvatarFailed = true"
+                />
+                <div v-else class="user-avatar">
+                  {{ userInitial }}
+                </div>
               </div>
-            </div>
-          </NuxtLink>
+              
+              <!-- PRO 徽章 -->
+              <div v-if="isPro" class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center shadow-lg">
+                <Icon name="lucide:crown" class="w-3 h-3 text-white" />
+              </div>
+            </button>
+            
+            <!-- 下拉菜单 -->
+            <Transition
+              enter-active-class="transition ease-out duration-100"
+              enter-from-class="transform opacity-0 scale-95"
+              enter-to-class="transform opacity-100 scale-100"
+              leave-active-class="transition ease-in duration-75"
+              leave-from-class="transform opacity-100 scale-100"
+              leave-to-class="transform opacity-0 scale-95"
+            >
+              <div
+                v-show="showUserMenu"
+                class="absolute right-0 mt-2 w-56 rounded-lg bg-bg-depth border border-white/10 shadow-lg overflow-hidden"
+              >
+                <!-- 用户信息 -->
+                <div class="px-4 py-3 border-b border-white/5">
+                  <div class="text-sm font-medium text-content">{{ displayName }}</div>
+                  <div class="text-xs text-content-muted mt-1">{{ user?.email }}</div>
+                  <div class="flex items-center gap-2 mt-2">
+                    <Icon :name="isPro ? 'lucide:crown' : 'lucide:circle'" class="w-3 h-3" :class="isPro ? 'text-yellow-400' : 'text-primary-400'" />
+                    <span class="text-xs font-medium" :class="isPro ? 'text-yellow-400' : 'text-primary-400'">
+                      {{ isPro ? 'PRO 方案' : 'FREE 方案' }}
+                    </span>
+                  </div>
+                </div>
+                
+                <!-- 菜单项 -->
+                <div class="py-1">
+                  <NuxtLink
+                    to="/account"
+                    class="flex items-center gap-3 px-4 py-2 text-sm text-content-muted hover:bg-white/5 hover:text-content transition-colors"
+                  >
+                    <Icon name="lucide:user" class="w-4 h-4" />
+                    <span>账户设置</span>
+                  </NuxtLink>
+                  
+                  <NuxtLink
+                    to="/account/subscription"
+                    class="flex items-center gap-3 px-4 py-2 text-sm text-content-muted hover:bg-white/5 hover:text-content transition-colors"
+                  >
+                    <Icon name="lucide:credit-card" class="w-4 h-4" />
+                    <span>订阅管理</span>
+                  </NuxtLink>
+                  
+                  <div class="border-t border-white/5 my-1"></div>
+                  
+                  <button
+                    @click="handleLogout"
+                    class="w-full flex items-center gap-3 px-4 py-2 text-sm text-content-muted hover:bg-white/5 hover:text-red-400 transition-colors"
+                  >
+                    <Icon name="lucide:log-out" class="w-4 h-4" />
+                    <span>退出登录</span>
+                  </button>
+                </div>
+              </div>
+            </Transition>
+          </div>
           
           <Button size="sm" @click="openExtension"> 添加到 Chrome </Button>
         </div>
@@ -159,14 +222,35 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import Button from '@/components/ui/Button.vue'
 
 const NuxtLink = resolveComponent('NuxtLink')
+const router = useRouter()
 const { extensionLink } = useProductLinks()
-const { setupAuthListener, setupStorageListener, user, isAuthenticated, initialize } = useAuth()
+const { setupAuthListener, setupStorageListener, user, isAuthenticated, initialize, signOut } = useAuth()
+const { isPro, isInitialized: subscriptionInitialized, loadSubscription } = useSubscription()
 const copyrightYear = new Date().getFullYear()
 const navAvatarFailed = ref(false)
+const showUserMenu = ref(false)
+
+// 🐛 调试日志
+watch([isAuthenticated, isPro, subscriptionInitialized], ([auth, pro, init]) => {
+  console.log('[Layout] 状态变化:', {
+    isAuthenticated: auth,
+    isPro: pro,
+    subscriptionInitialized: init
+  })
+})
+
+// 🔥 监听登录状态变化，自动刷新订阅
+watch(isAuthenticated, async (newAuth, oldAuth) => {
+  if (newAuth && !oldAuth) {
+    // 用户刚登录，刷新订阅状态
+    console.log('[Layout] 用户登录，刷新订阅状态')
+    await loadSubscription(true)
+  }
+})
 
 // 用户显示名称
 const displayName = computed(() => {
@@ -194,6 +278,22 @@ const userAvatar = computed(() => {
   return metadata?.avatar_url || metadata?.picture || null
 })
 
+// 未登录点击跳转登录页
+const navigateToLogin = () => {
+  router.push('/login')
+}
+
+// 退出登录
+const handleLogout = async () => {
+  try {
+    await signOut()
+    showUserMenu.value = false
+    router.push('/')
+  } catch (error) {
+    console.error('[Layout] 退出登录失败:', error)
+  }
+}
+
 // 设置认证状态监听
 let cleanupStorageListener: (() => void) | undefined
 
@@ -208,6 +308,12 @@ onMounted(async () => {
   cleanupStorageListener = setupStorageListener()
   
   console.log('[Layout] 认证状态监听已启动')
+  
+  // 🔥 如果已登录，强制刷新订阅状态
+  if (isAuthenticated.value) {
+    console.log('[Layout] 已登录，强制刷新订阅状态')
+    await loadSubscription(true) // forceRefresh = true
+  }
 })
 
 onUnmounted(() => {
@@ -261,3 +367,33 @@ const footerGroups = [
   }
 ]
 </script>
+
+<style scoped>
+.user-avatar-wrapper {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.user-avatar {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--color-primary-400), var(--color-primary-600));
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+}
+</style>

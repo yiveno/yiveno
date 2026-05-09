@@ -8,20 +8,27 @@
       class="avatar__image"
       @error="handleImageError"
     />
-    <!-- 图片加载失败或无图片时显示文字 -->
+    <!-- 图片加载失败或无图片时显示文字或图标 -->
+    <LucideIcon
+      v-else-if="!text"
+      name="user"
+      :size="size * 0.5"
+      class="avatar__icon"
+    />
     <span v-else class="avatar__text">{{ displayText }}</span>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { LucideIcon } from '@/components'
 
 defineOptions({ name: 'AcuityAvatar' })
 
 interface AvatarProps {
   /** 头像图片 URL */
   src?: string
-  /** 头像文字（图片加载失败时显示） */
+  /** 头像文字（图片加载失败时显示，如果为 undefined 则显示图标） */
   text?: string
   /** 头像尺寸（像素） */
   size?: number
@@ -33,7 +40,7 @@ interface AvatarProps {
 
 const props = withDefaults(defineProps<AvatarProps>(), {
   src: undefined,
-  text: '?',
+  text: undefined,
   size: 40,
   variant: 'circle',
   alt: '用户头像'
@@ -62,7 +69,8 @@ const avatarClasses = computed(() => [
   `avatar--${props.variant}`,
   {
     'avatar--image': props.src && !imageError.value,
-    'avatar--text': !props.src || imageError.value
+    'avatar--text': (!props.src || imageError.value) && props.text,
+    'avatar--icon': (!props.src || imageError.value) && !props.text
   }
 ])
 
@@ -108,6 +116,10 @@ const avatarStyle = computed(() => ({
   color: var(--md-sys-color-on-surface-variant);
 }
 
+.avatar__icon {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
 /* 图片头像：无背景色 */
 .avatar--image {
   background: transparent;
@@ -120,5 +132,14 @@ const avatarStyle = computed(() => ({
 
 .avatar--text .avatar__text {
   color: var(--md-sys-color-on-primary-container);
+}
+
+/* 图标头像：使用灰色背景 */
+.avatar--icon {
+  background: var(--md-sys-color-surface-container-high);
+}
+
+.avatar--icon .avatar__icon {
+  color: var(--md-sys-color-on-surface-variant);
 }
 </style>

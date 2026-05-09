@@ -38,9 +38,6 @@
   "settings_tab_embeddings": {
     "message": "嵌入"
   },
-  "settings_tab_vectorize": {
-    "message": "向量檢索"
-  },
   "settings_tab_notifications": {
     "message": "通知"
   },
@@ -56,9 +53,6 @@
   "settings_title_embeddings": {
     "message": "嵌入設定"
   },
-  "settings_title_vectorize": {
-    "message": "向量檢索"
-  },
   "settings_title_notifications": {
     "message": "通知設定"
   },
@@ -73,9 +67,6 @@
   },
   "settings_desc_embeddings": {
     "message": "文字嵌入的模型與快取策略。"
-  },
-  "settings_desc_vectorize": {
-    "message": "向量索引與查詢相關設定。"
   },
   "settings_desc_notifications": {
     "message": "Toast 與系統通知規則。"
@@ -1601,7 +1592,6 @@
   "language_selector_select": {
     "message": "選擇語言"
   },
-
   "language_name_zh_CN": {
     "message": "简体中文"
   },
@@ -2064,33 +2054,6 @@
   "settings_general_save_failed": {
     "message": "設定失敗: $1"
   },
-  "settings_vectorize_title": {
-    "message": "Vectorize"
-  },
-  "settings_vectorize_auto_sync": {
-    "message": "自動同步"
-  },
-  "settings_vectorize_auto_sync_tooltip_title": {
-    "message": "自動同步的作用："
-  },
-  "settings_vectorize_auto_sync_tooltip_1": {
-    "message": "自動將書籤資料同步到 Cloudflare Vectorize"
-  },
-  "settings_vectorize_auto_sync_tooltip_2": {
-    "message": "支援雲端向量搜尋和多裝置資料共享"
-  },
-  "settings_vectorize_auto_sync_tooltip_3": {
-    "message": "確保向量索引即時更新"
-  },
-  "settings_vectorize_auto_sync_note": {
-    "message": "注意：需要配置 Cloudflare 帳戶資訊。"
-  },
-  "settings_vectorize_auto_sync_enabled": {
-    "message": "自動同步：開啟"
-  },
-  "settings_vectorize_auto_sync_disabled": {
-    "message": "自動同步：關閉"
-  },
   "onboarding_performance_title": {
     "message": "即使數千個也超快"
   },
@@ -2491,98 +2454,6 @@
   "settings_subscription_select_yearly": {
     "message": "選擇年度計劃",
     "description": "Settings: settings_subscription_select_yearly"
-  },
-  "settings_embedding_title": {
-    "message": "嵌入（Embeddings）",
-    "description": "EmbeddingSettings: settings_embedding_title"
-  },
-  "settings_embedding_auto_generate": {
-    "message": "自動生成",
-    "description": "EmbeddingSettings: settings_embedding_auto_generate"
-  },
-  "settings_embedding_auto_generate_tooltip_title": {
-    "message": "自動生成的作用：",
-    "description": "EmbeddingSettings: settings_embedding_auto_generate_tooltip_title"
-  },
-  "settings_embedding_auto_generate_tooltip_1": {
-    "message": "自動為新書籤生成語義向量（Embeddings）",
-    "description": "EmbeddingSettings: settings_embedding_auto_generate_tooltip_1"
-  },
-  "settings_embedding_auto_generate_tooltip_2": {
-    "message": "支持基於內容的智能搜索和推薦",
-    "description": "EmbeddingSettings: settings_embedding_auto_generate_tooltip_2"
-  },
-  "settings_embedding_auto_generate_tooltip_3": {
-    "message": "無需手動觸發，後台自動處理",
-    "description": "EmbeddingSettings: settings_embedding_auto_generate_tooltip_3"
-  },
-  "settings_embedding_daily_quota": {
-    "message": "每日配額",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota"
-  },
-  "settings_embedding_daily_quota_tooltip_title": {
-    "message": "每日配額的作用：",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota_tooltip_title"
-  },
-  "settings_embedding_daily_quota_tooltip_1": {
-    "message": "限制每天生成向量的書籤數量",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota_tooltip_1"
-  },
-  "settings_embedding_daily_quota_tooltip_2": {
-    "message": "避免過度消耗 API 配額",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota_tooltip_2"
-  },
-  "settings_embedding_daily_quota_tooltip_3": {
-    "message": "默認 300 條/天，可根據需求調整",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota_tooltip_3"
-  },
-  "settings_embedding_daily_quota_placeholder": {
-    "message": "默認300",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota_placeholder"
-  },
-  "settings_embedding_per_run_max": {
-    "message": "單次最大",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max"
-  },
-  "settings_embedding_per_run_max_tooltip_title": {
-    "message": "單次最大的作用：",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max_tooltip_title"
-  },
-  "settings_embedding_per_run_max_tooltip_1": {
-    "message": "每次運行最多處理的書籤數量",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max_tooltip_1"
-  },
-  "settings_embedding_per_run_max_tooltip_2": {
-    "message": "避免長時間佔用資源",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max_tooltip_2"
-  },
-  "settings_embedding_per_run_max_tooltip_3": {
-    "message": "默認 150 條，分批處理更穩定",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max_tooltip_3"
-  },
-  "settings_embedding_per_run_max_placeholder": {
-    "message": "默認150",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max_placeholder"
-  },
-  "settings_embedding_night_idle_only": {
-    "message": "僅夜間/空閒",
-    "description": "EmbeddingSettings: settings_embedding_night_idle_only"
-  },
-  "settings_embedding_night_idle_only_tooltip_title": {
-    "message": "僅夜間/空閒的作用：",
-    "description": "EmbeddingSettings: settings_embedding_night_idle_only_tooltip_title"
-  },
-  "settings_embedding_night_idle_only_tooltip_1": {
-    "message": "只在系統空閒或夜間時段生成向量",
-    "description": "EmbeddingSettings: settings_embedding_night_idle_only_tooltip_1"
-  },
-  "settings_embedding_night_idle_only_tooltip_2": {
-    "message": "避免影響日常使用體驗",
-    "description": "EmbeddingSettings: settings_embedding_night_idle_only_tooltip_2"
-  },
-  "settings_embedding_night_idle_only_tooltip_3": {
-    "message": "推薦開啟，讓生成過程更加智能",
-    "description": "EmbeddingSettings: settings_embedding_night_idle_only_tooltip_3"
   },
   "settings_shortcut_label_execute_action": {
     "message": "激活擴展/切換彈出頁",

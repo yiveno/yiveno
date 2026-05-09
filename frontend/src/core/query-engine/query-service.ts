@@ -120,9 +120,18 @@ export class QueryService {
     }
 
     // 确定实际执行策略
-    const resolvedStrategy = strategy === 'auto'
+    let resolvedStrategy = strategy === 'auto'
       ? detectIntent(normalizedQuery).intent
       : strategy
+
+    // 检查语义搜索设置（仅在策略为 semantic 或 hybrid 时检查）
+    if (resolvedStrategy === 'semantic' || resolvedStrategy === 'hybrid') {
+      const semanticEnabled = await this.isSemanticSearchEnabled()
+      if (!semanticEnabled) {
+        this.logger.info('QueryService', '语义搜索已禁用，降级到 fuse')
+        resolvedStrategy = 'fuse'
+      }
+    }
 
     this.logger.info('QueryService', `📌 执行策略: ${resolvedStrategy}`)
 
@@ -172,6 +181,19 @@ export class QueryService {
     } catch (error) {
       this.logger.error('QueryService', '❌ 查询失败:', error)
       throw error
+    }
+  }
+
+  /**
+   * 检查语义搜索是否启用
+   */
+  private async isSemanticSearchEnabled(): Promise<boolean> {
+    try {
+      const result = await chrome.storage.local.get('semanticSearchEnabled')
+      return result.semanticSearchEnabled === true
+    } catch (error) {
+      this.logger.warn('QueryService', '读取语义搜索设置失败，默认禁用', error)
+      return false
     }
   }
 

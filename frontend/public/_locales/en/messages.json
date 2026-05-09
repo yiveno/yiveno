@@ -38,9 +38,6 @@
   "settings_tab_embeddings": {
     "message": "Embeddings"
   },
-  "settings_tab_vectorize": {
-    "message": "Vector Search"
-  },
   "settings_tab_notifications": {
     "message": "Notifications"
   },
@@ -56,9 +53,6 @@
   "settings_title_embeddings": {
     "message": "Embeddings"
   },
-  "settings_title_vectorize": {
-    "message": "Vector search"
-  },
   "settings_title_notifications": {
     "message": "Notifications"
   },
@@ -73,9 +67,6 @@
   },
   "settings_desc_embeddings": {
     "message": "Models and caching for text embeddings."
-  },
-  "settings_desc_vectorize": {
-    "message": "Vector index and query behavior."
   },
   "settings_desc_notifications": {
     "message": "Toasts and system notification rules."
@@ -538,6 +529,18 @@
   },
   "settings_general_language": {
     "message": "Language"
+  },
+  "settings_general_semantic_search": {
+    "message": "Semantic Search"
+  },
+  "settings_general_semantic_search_description": {
+    "message": "Use AI to understand search intent and provide smarter results"
+  },
+  "settings_general_semantic_search_hint": {
+    "message": "When enabled, searches will use semantic understanding to find more relevant bookmarks"
+  },
+  "settings_general_semantic_search_pro_only": {
+    "message": "This feature is only available for PRO members"
   },
   "settings_general_theme": {
     "message": "Theme"
@@ -1601,7 +1604,6 @@
   "language_selector_select": {
     "message": "Select Language"
   },
-
   "language_name_zh_CN": {
     "message": "简体中文"
   },
@@ -2064,33 +2066,6 @@
   "settings_general_save_failed": {
     "message": "Save failed: $1"
   },
-  "settings_vectorize_title": {
-    "message": "Vectorize"
-  },
-  "settings_vectorize_auto_sync": {
-    "message": "Auto Sync"
-  },
-  "settings_vectorize_auto_sync_tooltip_title": {
-    "message": "Auto Sync:"
-  },
-  "settings_vectorize_auto_sync_tooltip_1": {
-    "message": "Automatically sync bookmark data to Cloudflare Vectorize"
-  },
-  "settings_vectorize_auto_sync_tooltip_2": {
-    "message": "Support cloud vector search and multi-device data sharing"
-  },
-  "settings_vectorize_auto_sync_tooltip_3": {
-    "message": "Ensure vector index is updated in real-time"
-  },
-  "settings_vectorize_auto_sync_note": {
-    "message": "Note: Cloudflare account configuration required."
-  },
-  "settings_vectorize_auto_sync_enabled": {
-    "message": "Auto sync: Enabled"
-  },
-  "settings_vectorize_auto_sync_disabled": {
-    "message": "Auto sync: Disabled"
-  },
   "onboarding_performance_title": {
     "message": "Lightning Fast, Even with Thousands"
   },
@@ -2495,98 +2470,6 @@
   "settings_subscription_select_yearly": {
     "message": "Select Annual Plan",
     "description": "Settings: settings_subscription_select_yearly"
-  },
-  "settings_embedding_title": {
-    "message": "Embeddings",
-    "description": "EmbeddingSettings: settings_embedding_title"
-  },
-  "settings_embedding_auto_generate": {
-    "message": "Auto Generate",
-    "description": "EmbeddingSettings: settings_embedding_auto_generate"
-  },
-  "settings_embedding_auto_generate_tooltip_title": {
-    "message": "Auto Generate Function:",
-    "description": "EmbeddingSettings: settings_embedding_auto_generate_tooltip_title"
-  },
-  "settings_embedding_auto_generate_tooltip_1": {
-    "message": "Automatically generate semantic vectors (Embeddings) for new bookmarks",
-    "description": "EmbeddingSettings: settings_embedding_auto_generate_tooltip_1"
-  },
-  "settings_embedding_auto_generate_tooltip_2": {
-    "message": "Support content-based intelligent search and recommendations",
-    "description": "EmbeddingSettings: settings_embedding_auto_generate_tooltip_2"
-  },
-  "settings_embedding_auto_generate_tooltip_3": {
-    "message": "No manual trigger required, processed automatically in background",
-    "description": "EmbeddingSettings: settings_embedding_auto_generate_tooltip_3"
-  },
-  "settings_embedding_daily_quota": {
-    "message": "Daily Quota",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota"
-  },
-  "settings_embedding_daily_quota_tooltip_title": {
-    "message": "Daily Quota Function:",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota_tooltip_title"
-  },
-  "settings_embedding_daily_quota_tooltip_1": {
-    "message": "Limit the number of bookmarks for vector generation per day",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota_tooltip_1"
-  },
-  "settings_embedding_daily_quota_tooltip_2": {
-    "message": "Avoid excessive API quota consumption",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota_tooltip_2"
-  },
-  "settings_embedding_daily_quota_tooltip_3": {
-    "message": "Default 300 per day, adjustable as needed",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota_tooltip_3"
-  },
-  "settings_embedding_daily_quota_placeholder": {
-    "message": "Default 300",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota_placeholder"
-  },
-  "settings_embedding_per_run_max": {
-    "message": "Max Per Run",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max"
-  },
-  "settings_embedding_per_run_max_tooltip_title": {
-    "message": "Max Per Run Function:",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max_tooltip_title"
-  },
-  "settings_embedding_per_run_max_tooltip_1": {
-    "message": "Maximum number of bookmarks processed per run",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max_tooltip_1"
-  },
-  "settings_embedding_per_run_max_tooltip_2": {
-    "message": "Avoid long-term resource occupation",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max_tooltip_2"
-  },
-  "settings_embedding_per_run_max_tooltip_3": {
-    "message": "Default 150, batch processing is more stable",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max_tooltip_3"
-  },
-  "settings_embedding_per_run_max_placeholder": {
-    "message": "Default 150",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max_placeholder"
-  },
-  "settings_embedding_night_idle_only": {
-    "message": "Night/Idle Only",
-    "description": "EmbeddingSettings: settings_embedding_night_idle_only"
-  },
-  "settings_embedding_night_idle_only_tooltip_title": {
-    "message": "Night/Idle Only Function:",
-    "description": "EmbeddingSettings: settings_embedding_night_idle_only_tooltip_title"
-  },
-  "settings_embedding_night_idle_only_tooltip_1": {
-    "message": "Generate vectors only during system idle or night time",
-    "description": "EmbeddingSettings: settings_embedding_night_idle_only_tooltip_1"
-  },
-  "settings_embedding_night_idle_only_tooltip_2": {
-    "message": "Avoid affecting daily usage experience",
-    "description": "EmbeddingSettings: settings_embedding_night_idle_only_tooltip_2"
-  },
-  "settings_embedding_night_idle_only_tooltip_3": {
-    "message": "Recommended to enable for smarter generation process",
-    "description": "EmbeddingSettings: settings_embedding_night_idle_only_tooltip_3"
   },
   "settings_shortcut_label_execute_action": {
     "message": "Activate Extension/Toggle Popup",

@@ -1,19 +1,7 @@
 <template>
   <div class="account-page">
-    <!-- 未登录状态 -->
-    <div v-if="!isAuthenticated" class="unauth-container">
-      <div class="unauth-card">
-        <div class="unauth-icon">🔒</div>
-        <h1 class="unauth-title">请先登录</h1>
-        <p class="unauth-message">您需要登录才能查看账户信息</p>
-        <NuxtLink to="/login" class="account-button account-button--primary">
-          前往登录
-        </NuxtLink>
-      </div>
-    </div>
-
     <!-- 已登录状态：双栏布局 -->
-    <div v-else class="account-layout">
+    <div v-if="isAuthenticated" class="account-layout">
       <!-- 左侧：用户信息面板 -->
       <aside class="profile-sidebar">
         <div class="profile-card">
@@ -37,7 +25,13 @@
           <!-- 标签 -->
           <div class="profile-tags">
             <span class="tag tag--provider">{{ loginProvider }}</span>
-            <span class="tag tag--plan">免费版</span>
+            <!-- 订阅状态加载中显示骨架屏 -->
+            <span v-if="!isInitialized" class="tag tag--loading">
+              <span class="loading-shimmer"></span>
+            </span>
+            <span v-else class="tag tag--plan" :class="{ 'tag--pro': isPro }">
+              {{ isPro ? 'PRO' : '免费版' }}
+            </span>
           </div>
 
           <!-- 分隔线 -->
@@ -45,10 +39,6 @@
 
           <!-- 元信息 -->
           <div class="profile-meta">
-            <div class="meta-row">
-              <span class="meta-key">用户 ID</span>
-              <span class="meta-val mono">{{ user?.id?.substring(0, 8) }}…</span>
-            </div>
             <div class="meta-row">
               <span class="meta-key">注册时间</span>
               <span class="meta-val">{{ createdAt }}</span>
@@ -76,9 +66,6 @@
               <span v-if="!isLoading">退出登录</span>
               <span v-else>退出中…</span>
             </button>
-            <NuxtLink to="/" class="account-button account-button--ghost">
-              返回首页
-            </NuxtLink>
           </div>
         </div>
       </aside>
@@ -90,17 +77,61 @@
           <div class="card-header">
             <h3 class="card-title">订阅状态</h3>
           </div>
-          <div class="subscription-body">
+          
+          <!-- 加载中状态（骨架屏） -->
+          <div v-if="!isInitialized" class="subscription-body">
             <div class="plan-info">
-              <div class="plan-icon">🆓</div>
+              <div class="plan-icon-skeleton"></div>
               <div class="plan-text">
-                <div class="plan-name">免费版</div>
-                <div class="plan-desc">升级到 Pro，解锁 AI 标签、无限书签同步等高级功能</div>
+                <div class="skeleton-line skeleton-line--title"></div>
+                <div class="skeleton-line skeleton-line--desc"></div>
               </div>
             </div>
-            <NuxtLink to="/pricing" class="account-button account-button--primary upgrade-btn">
-              升级到 Pro →
-            </NuxtLink>
+            <div class="subscription-actions">
+              <div class="skeleton-button"></div>
+            </div>
+          </div>
+          
+          <!-- 加载完成后显示内容 -->
+          <div v-else class="subscription-body">
+            <div class="plan-info">
+              <div class="plan-icon">{{ isPro ? '👑' : '🆓' }}</div>
+              <div class="plan-text">
+                <div class="plan-name">{{ isPro ? 'PRO 方案' : '免费版' }}</div>
+                <div class="plan-desc">
+                  <template v-if="isPro && expiryDate">
+                    到期时间：{{ formatDateTime(expiryDate) }}
+                  </template>
+                  <template v-else>
+                    升级到 Pro，解锁 AI 标签、无限书签同步等高级功能
+                  </template>
+                </div>
+              </div>
+            </div>
+            <div class="subscription-actions">
+              <NuxtLink v-if="!isPro" to="/pricing" class="account-button account-button--primary">
+                升级到 Pro →
+              </NuxtLink>
+              <template v-else>
+                <!-- 主按钮：查看方案对比 -->
+                <NuxtLink 
+                  to="/pricing" 
+                  class="account-button account-button--primary"
+                >
+                  查看方案对比
+                </NuxtLink>
+                <!-- 次要链接：续费/管理 -->
+                <a 
+                  :href="gumroadUrls.subscriptions" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  class="subscription-link"
+                  title="在 Gumroad 续费或管理订阅（取消订阅、更新支付方式等）"
+                >
+                  续费或管理订阅 →
+                </a>
+              </template>
+            </div>
           </div>
         </section>
 
@@ -111,8 +142,9 @@
           </div>
           <div class="quick-grid">
             <a
-              href="https://chrome.google.com/webstore"
+              :href="chromeStoreUrls.extension"
               target="_blank"
+              rel="noopener noreferrer"
               class="quick-item"
             >
               <span class="quick-icon">🔌</span>
@@ -140,15 +172,45 @@
             </NuxtLink>
           </div>
         </section>
+
+        <!-- 数据管理卡片 -->
+        <section class="content-card danger-zone">
+          <div class="card-header">
+            <h3 class="card-title">数据管理</h3>
+          </div>
+          <div class="danger-actions">
+            <button 
+              class="danger-action-item"
+              @click="handleDeleteAccount"
+            >
+              <div class="danger-action-content">
+                <div class="danger-action-title">🗑️ 删除账户</div>
+                <div class="danger-action-desc">永久删除您的账户和所有数据</div>
+              </div>
+              <span class="danger-action-arrow">→</span>
+            </button>
+          </div>
+        </section>
       </main>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { formatDateTime, formatDate } from '@/utils/date-formatter'
+import { gumroadUrls, chromeStoreUrls } from '@/config/external-links'
+
 const { user, isAuthenticated, signOut, initialize } = useAuth()
+const { isPro, tier, expiryDate, loadSubscription, isInitialized } = useSubscription()
 const isLoading = ref(false)
 const avatarLoadFailed = ref(false)
+
+// 🔒 未登录自动跳转到登录页
+watchEffect(() => {
+  if (!isAuthenticated.value && !user.value) {
+    navigateTo('/login')
+  }
+})
 
 onMounted(() => {
   initialize()
@@ -182,24 +244,12 @@ const loginProvider = computed(() => {
 
 const createdAt = computed(() => {
   if (!user.value?.created_at) return '未知'
-  const date = new Date(user.value.created_at)
-  return date.toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
+  return formatDate(user.value.created_at)
 })
 
 const lastSignIn = computed(() => {
   if (!user.value?.last_sign_in_at) return '未知'
-  const date = new Date(user.value.last_sign_in_at)
-  return date.toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
+  return formatDateTime(user.value.last_sign_in_at)
 })
 
 const handleSignOut = async () => {
@@ -214,6 +264,30 @@ const handleSignOut = async () => {
     isLoading.value = false
   }
 }
+
+// 删除账户
+const handleDeleteAccount = () => {
+  const confirmed = confirm(
+    '⚠️ 警告：删除账户是不可逆的操作！\n\n' +
+    '删除后将永久清除：\n' +
+    '• 您的所有书签数据\n' +
+    '• 订阅信息\n' +
+    '• 账户设置\n\n' +
+    '确定要继续吗？'
+  )
+  
+  if (confirmed) {
+    const doubleConfirm = confirm(
+      '最后确认：您真的要删除账户吗？\n\n' +
+      '此操作无法撤销！'
+    )
+    
+    if (doubleConfirm) {
+      // TODO: 调用删除账户 API
+      alert('账户删除功能开发中...\n\n请联系客服协助删除账户。')
+    }
+  }
+}
 </script>
 
 <style scoped>
@@ -222,44 +296,6 @@ const handleSignOut = async () => {
   min-height: 100vh;
   padding: var(--md-sys-spacing-lg) var(--md-sys-spacing-md);
   background-color: var(--md-sys-color-background);
-}
-
-/* ===== 未登录状态 ===== */
-.unauth-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 60vh;
-}
-
-.unauth-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: var(--md-sys-spacing-2xl);
-  background-color: var(--md-sys-color-surface-variant);
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--md-sys-shape-corner-extra-large);
-  max-width: 400px;
-  gap: var(--md-sys-spacing-md);
-}
-
-.unauth-icon {
-  font-size: 3rem;
-}
-
-.unauth-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--md-sys-color-on-surface);
-  margin: 0;
-}
-
-.unauth-message {
-  font-size: 0.875rem;
-  color: var(--md-sys-color-on-surface-variant);
-  margin: 0;
 }
 
 /* ===== 双栏布局 ===== */
@@ -372,6 +408,44 @@ const handleSignOut = async () => {
   background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 15%, transparent);
   color: var(--md-sys-color-on-surface-variant);
   border: 1px solid color-mix(in srgb, var(--md-sys-color-on-surface-variant) 30%, transparent);
+}
+
+.tag--pro {
+  background: linear-gradient(135deg, #ffd700, #ffed4e);
+  color: #000;
+  border: 1px solid #ffd700;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+}
+
+.tag--loading {
+  width: 60px;
+  height: 24px;
+  padding: 0;
+  overflow: hidden;
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 15%, transparent);
+}
+
+.loading-shimmer {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--md-sys-color-on-surface-variant) 30%, transparent) 50%,
+    transparent 100%
+  );
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 /* 分隔线 */
@@ -535,12 +609,131 @@ const handleSignOut = async () => {
   );
 }
 
+/* 骨架屏样式 */
+.plan-icon-skeleton {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--md-sys-shape-corner-medium);
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 10%, transparent);
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.plan-icon-skeleton::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--md-sys-color-on-surface-variant) 20%, transparent) 50%,
+    transparent 100%
+  );
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-line {
+  height: 16px;
+  border-radius: 4px;
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 10%, transparent);
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-line::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--md-sys-color-on-surface-variant) 20%, transparent) 50%,
+    transparent 100%
+  );
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-line--title {
+  width: 80px;
+  height: 20px;
+  margin-bottom: 6px;
+}
+
+.skeleton-line--desc {
+  width: 200px;
+  height: 16px;
+}
+
+.skeleton-button {
+  width: 120px;
+  height: 40px;
+  border-radius: var(--md-sys-shape-corner-medium);
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 10%, transparent);
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-button::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--md-sys-color-on-surface-variant) 20%, transparent) 50%,
+    transparent 100%
+  );
+  animation: shimmer 1.5s infinite;
+}
+
 .subscription-body {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--md-sys-spacing-md);
   flex-wrap: wrap;
+}
+
+.subscription-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-sys-spacing-xs);
+  flex-shrink: 0;
+  align-items: stretch;
+}
+
+.subscription-actions .account-button {
+  width: auto;
+  white-space: nowrap;
+}
+
+/* 订阅管理次要链接 */
+.subscription-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--md-sys-spacing-xs) 0;
+  font-size: 0.8125rem;
+  color: var(--md-sys-color-on-surface-variant);
+  text-decoration: none;
+  text-align: center;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.subscription-link:hover {
+  color: var(--md-sys-color-primary);
+  text-decoration: underline;
 }
 
 .plan-info {
@@ -572,12 +765,6 @@ const handleSignOut = async () => {
   font-size: 0.8125rem;
   color: var(--md-sys-color-on-surface-variant);
   max-width: 280px;
-}
-
-.upgrade-btn {
-  width: auto;
-  flex-shrink: 0;
-  white-space: nowrap;
 }
 
 /* 快捷操作 */
@@ -644,6 +831,71 @@ const handleSignOut = async () => {
   transform: translateX(3px);
 }
 
+/* 数据管理（危险区域） */
+.danger-zone {
+  border-color: color-mix(in srgb, var(--md-sys-color-error) 30%, transparent);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--md-sys-color-error) 5%, var(--md-sys-color-surface-variant)),
+    var(--md-sys-color-surface-variant)
+  );
+}
+
+.danger-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-sys-spacing-xs);
+}
+
+.danger-action-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--md-sys-spacing-md);
+  padding: var(--md-sys-spacing-md);
+  border-radius: var(--md-sys-shape-corner-large);
+  background-color: transparent;
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-error) 20%, transparent);
+  color: var(--md-sys-color-on-surface);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  text-align: left;
+  width: 100%;
+}
+
+.danger-action-item:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-error) 8%, transparent);
+  border-color: color-mix(in srgb, var(--md-sys-color-error) 40%, transparent);
+}
+
+.danger-action-content {
+  flex: 1;
+}
+
+.danger-action-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--md-sys-color-error);
+  margin-bottom: 2px;
+}
+
+.danger-action-desc {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.danger-action-arrow {
+  font-size: 0.875rem;
+  color: var(--md-sys-color-error);
+  opacity: 0;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.danger-action-item:hover .danger-action-arrow {
+  opacity: 1;
+  transform: translateX(3px);
+}
+
 /* ===== 响应式 ===== */
 @media (max-width: 768px) {
   .account-page {
@@ -663,7 +915,15 @@ const handleSignOut = async () => {
     align-items: flex-start;
   }
 
-  .upgrade-btn {
+  .subscription-actions {
+    width: 100%;
+  }
+
+  .subscription-actions .account-button {
+    width: 100%;
+  }
+
+  .subscription-link {
     width: 100%;
   }
 }

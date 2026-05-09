@@ -65,41 +65,10 @@ export interface BookmarkUpdateDetails {
 }
 
 /**
- * OAuth 启动响应。
- *
- * 前端拿到 `authUrl` 后跳转到第三方登录页面。
- */
-export interface AuthStartResponse {
-  /** 是否成功生成认证链接 */
-  success: boolean
-  /** 需要跳转的第三方认证地址 */
-  authUrl: string
-}
-
-/**
- * OAuth 回调阶段的响应。
- *
- * 存在历史接口返回 `token`，也可能返回新版 `accessToken` / `refreshToken` 字段。
- */
-export interface AuthCallbackResponse {
-  /** 回调是否成功 */
-  success: boolean
-  /** 旧版单体令牌值 */
-  token?: string
-  /** 新版访问令牌 */
-  accessToken?: string
-  /** 新版刷新令牌 */
-  refreshToken?: string
-  /** 令牌过期时间戳，单位毫秒 */
-  expiresAt?: number
-  /** 失败时的错误信息 */
-  error?: string
-}
-
-/**
- * 登录接口的响应结构。
- *
- * 兼容旧版字段命名（含下划线）和新版驼峰格式。
+ * 用户登录响应。
+ * 
+ * 注意：OAuth 登录流程在官网完成，插件通过 Supabase 自动同步 session。
+ * 此类型仅用于兼容旧版 API 或特殊场景。
  */
 export interface LoginResponse {
   /** 是否登录成功 */

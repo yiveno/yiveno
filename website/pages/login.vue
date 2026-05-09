@@ -2,15 +2,11 @@
   <div class="auth-page">
     <!-- Logo 和标题 -->
     <div class="auth-header">
-      <div class="auth-logo">
-        <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="100" cy="100" r="80" fill="currentColor" opacity="0.2" />
-          <path
-            d="M100 30 L120 70 L165 75 L130 108 L140 155 L100 132 L60 155 L70 108 L35 75 L80 70 Z"
-            fill="currentColor"
-          />
-        </svg>
-      </div>
+      <img 
+        src="/logo.webp" 
+        alt="AcuityBookmarks Logo" 
+        class="auth-logo"
+      />
       <h1 class="auth-title">AcuityBookmarks</h1>
       <p class="auth-subtitle">智能书签管理，一键登录</p>
     </div>
@@ -243,32 +239,48 @@ const handleMicrosoftLogin = async () => {
 </script>
 
 <style scoped>
+/* ===== 动画 ===== */
 @keyframes float {
-  0%,
-  100% {
-    transform: translate(0, 0) rotate(0deg);
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
   }
-
-  33% {
-    transform: translate(30px, -30px) rotate(120deg);
-  }
-
-  66% {
-    transform: translate(-20px, 20px) rotate(240deg);
+  50% {
+    transform: translateY(-20px) rotate(5deg);
   }
 }
 
 @keyframes pulse {
-  0%,
-  100% {
+  0%, 100% {
     transform: scale(1);
+    opacity: 1;
   }
-
   50% {
     transform: scale(1.05);
+    opacity: 0.9;
   }
 }
 
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== 页面容器 ===== */
 .auth-page {
   position: relative;
   display: flex;
@@ -277,128 +289,151 @@ const handleMicrosoftLogin = async () => {
   align-items: center;
   min-height: 100vh;
   padding: var(--spacing-6);
+  
+  /* 🎨 深色背景，提高对比度 */
   background: linear-gradient(
     135deg,
-    var(--md-sys-color-primary-container) 0%,
-    var(--md-sys-color-secondary-container) 100%
+    #0a1612 0%,
+    #0e1a17 50%,
+    #0a1410 100%
   );
   overflow: hidden;
 }
 
-.auth-page::before {
+/* 🎨 背景装饰元素 - 薄荷绿光晕 */
+.auth-page::before,
+.auth-page::after {
   position: absolute;
-  top: -50%;
-  right: -50%;
-  width: 100%;
-  height: 100%;
+  border-radius: 50%;
+  content: '';
+  pointer-events: none;
+  opacity: 0.15;
+}
+
+.auth-page::before {
+  top: -10%;
+  right: -5%;
+  width: 500px;
+  height: 500px;
   background: radial-gradient(
     circle,
-    rgb(255 255 255 / 10%) 0%,
+    var(--md-sys-color-primary) 0%,
     transparent 70%
   );
   animation: float 20s ease-in-out infinite;
-  content: '';
 }
 
 .auth-page::after {
-  position: absolute;
-  bottom: -50%;
-  left: -50%;
-  width: 100%;
-  height: 100%;
+  bottom: -10%;
+  left: -5%;
+  width: 400px;
+  height: 400px;
   background: radial-gradient(
     circle,
-    rgb(255 255 255 / 5%) 0%,
+    var(--md-sys-color-secondary) 0%,
     transparent 70%
   );
   animation: float 25s ease-in-out infinite reverse;
-  content: '';
 }
 
+/* ===== 头部区域 ===== */
 .auth-header {
   position: relative;
   z-index: 1;
-  margin-bottom: var(--spacing-8);
+  margin-bottom: var(--spacing-10);
   text-align: center;
+  animation: fadeInUp 0.6s ease-out;
 }
 
 .auth-logo {
-  width: 120px;
-  height: 120px;
-  margin: 0 auto var(--spacing-4);
-  color: var(--md-sys-color-on-primary-container);
-  filter: drop-shadow(0 4px 12px rgb(0 0 0 / 20%));
+  width: 96px;
+  height: 96px;
+  margin: 0 auto var(--spacing-5);
+  filter: drop-shadow(0 8px 24px color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent));
   animation: pulse 3s ease-in-out infinite;
+  object-fit: contain;
 }
 
 .auth-title {
-  margin-bottom: var(--spacing-2);
-  font-size: var(--text-2xl);
-  font-weight: var(--font-bold);
-  text-align: center;
-  color: var(--md-sys-color-on-primary-container);
-  text-shadow: 0 2px 8px rgb(0 0 0 / 20%);
+  margin: 0 0 var(--spacing-3) 0;
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 2px 12px rgb(0 0 0 / 30%);
+  letter-spacing: -0.02em;
 }
 
 .auth-subtitle {
-  font-size: var(--text-lg);
-  text-align: center;
-  color: rgb(255 255 255 / 90%);
-  text-shadow: 0 1px 4px rgb(0 0 0 / 10%);
+  margin: 0;
+  font-size: 1.0625rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 400;
 }
 
+/* ===== 登录表单卡片 ===== */
 .auth-form {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 420px;
-  padding: var(--spacing-8);
+  max-width: 440px;
+  padding: var(--spacing-10) var(--spacing-8);
+  
+  /* 🎨 现代化卡片样式 - 更高对比度 */
   border-radius: var(--radius-lg);
-  background: var(--color-surface);
-  box-shadow: 0 20px 60px rgb(0 0 0 / 30%);
-}
-
-@media (width <= 480px) {
-  .auth-form {
-    max-width: 100%;
-    padding: var(--spacing-6);
-  }
+  background: rgba(20, 30, 26, 0.85);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(131, 213, 197, 0.15);
+  box-shadow: 
+    0 24px 64px rgb(0 0 0 / 40%),
+    0 12px 32px rgb(0 0 0 / 30%),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  
+  animation: fadeInUp 0.6s ease-out 0.2s both;
 }
 
 .form-title {
-  margin-bottom: var(--spacing-2);
-  font-size: var(--text-xl);
-  font-weight: var(--font-semibold);
+  margin: 0 0 24px 0;
+  font-size: 1.5rem;
+  font-weight: 600;
   text-align: center;
-  color: var(--color-text-primary);
+  color: #ffffff;
 }
 
 .form-subtitle {
-  margin-bottom: var(--spacing-6);
-  font-size: var(--text-sm);
+  margin: 0 0 40px 0;
+  font-size: 0.9375rem;
   text-align: center;
-  color: var(--color-text-secondary);
+  color: rgba(255, 255, 255, 0.6);
 }
 
+/* ===== 错误提示 ===== */
 .auth-alert {
   margin-bottom: var(--spacing-4);
-  padding: var(--spacing-3);
+  padding: var(--spacing-3) var(--spacing-4);
   border-radius: var(--radius-md);
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.5);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--md-sys-color-error) 12%, transparent) 0%,
+    color-mix(in srgb, var(--md-sys-color-error) 8%, transparent) 100%
+  );
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-error) 30%, transparent);
+  animation: fadeInUp 0.3s ease-out;
 }
 
 .auth-alert-text {
-  font-size: var(--text-sm);
-  color: #ef4444;
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--md-sys-color-error);
   text-align: center;
+  font-weight: 500;
 }
 
+/* ===== OAuth 登录按钮 ===== */
 .oauth-buttons {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-3);
-  margin-bottom: var(--spacing-4);
+  gap: 20px;
+  margin-bottom: 40px;
 }
 
 .oauth-btn {
@@ -406,66 +441,187 @@ const handleMicrosoftLogin = async () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: var(--spacing-2);
+  gap: 12px;
   width: 100%;
-  padding: var(--spacing-3) var(--spacing-4);
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-  border: 2px solid;
+  padding: 18px 20px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  border: 1.5px solid rgba(131, 213, 197, 0.2);
   border-radius: var(--radius-md);
-  background: transparent;
+  background: rgba(30, 45, 40, 0.6);
+  color: #ffffff;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+/* 按钮悬停效果 */
+.oauth-btn::before {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(131, 213, 197, 0.15);
+  content: '';
+  transition: width 0.6s ease, height 0.6s ease, top 0.6s ease, left 0.6s ease;
+  transform: translate(-50%, -50%);
+}
+
+.oauth-btn:hover::before {
+  width: 300px;
+  height: 300px;
 }
 
 .oauth-btn:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
+.oauth-btn:disabled::before {
+  display: none;
+}
+
+/* Google 按钮 */
 .oauth-btn--google {
-  border-color: var(--md-sys-color-primary);
-  color: var(--md-sys-color-primary);
+  border-color: rgba(131, 213, 197, 0.3);
 }
 
 .oauth-btn--google:hover:not(:disabled) {
-  color: var(--md-sys-color-on-primary);
-  background-color: var(--md-sys-color-primary);
-  box-shadow: 0 4px 12px rgb(66 133 244 / 30%);
+  border-color: var(--md-sys-color-primary);
+  background: rgba(30, 45, 40, 0.8);
+  box-shadow: 
+    0 8px 24px rgba(131, 213, 197, 0.2),
+    0 4px 12px rgba(131, 213, 197, 0.1);
+  transform: translateY(-2px);
 }
 
+.oauth-btn--google:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Microsoft 按钮 */
 .oauth-btn--microsoft {
-  border-color: var(--md-sys-color-secondary);
-  color: var(--md-sys-color-secondary);
+  border-color: rgba(177, 204, 197, 0.3);
 }
 
 .oauth-btn--microsoft:hover:not(:disabled) {
-  color: var(--md-sys-color-on-secondary);
-  background-color: var(--md-sys-color-secondary);
-  box-shadow: 0 4px 12px rgb(0 164 239 / 30%);
+  border-color: var(--md-sys-color-secondary);
+  background: rgba(30, 45, 40, 0.8);
+  box-shadow: 
+    0 8px 24px rgba(177, 204, 197, 0.2),
+    0 4px 12px rgba(177, 204, 197, 0.1);
+  transform: translateY(-2px);
 }
 
+.oauth-btn--microsoft:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* 图标 */
 .oauth-icon {
+  position: relative;
+  z-index: 1;
   width: 20px;
   height: 20px;
+  flex-shrink: 0;
 }
 
+.oauth-btn span {
+  position: relative;
+  z-index: 1;
+}
+
+/* ===== 隐私提示 ===== */
 .auth-privacy-notice {
-  margin-top: var(--spacing-4);
-  font-size: var(--text-xs);
+  margin: 0;
+  padding-top: 28px;
+  border-top: 1px solid rgba(131, 213, 197, 0.15);
+  font-size: 0.8125rem;
   line-height: 1.6;
   text-align: center;
-  color: var(--color-text-secondary);
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .auth-privacy-notice a {
   text-decoration: none;
   color: var(--md-sys-color-primary);
-  transition: color 0.2s ease;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 
 .auth-privacy-notice a:hover {
   text-decoration: underline;
-  color: color-mix(in srgb, var(--md-sys-color-primary) 80%, var(--color-text-primary) 20%);
+  color: rgba(131, 213, 197, 1);
+}
+
+/* ===== 响应式 ===== */
+@media (max-width: 480px) {
+  .auth-page {
+    padding: var(--spacing-4);
+  }
+
+  .auth-header {
+    margin-bottom: var(--spacing-6);
+  }
+
+  .auth-logo {
+    width: 64px;
+    height: 64px;
+  }
+
+  .auth-title {
+    font-size: 1.5rem;
+  }
+
+  .auth-subtitle {
+    font-size: 0.875rem;
+  }
+
+  .auth-form {
+    max-width: 100%;
+    padding: var(--spacing-8) var(--spacing-6);
+  }
+
+  .form-title {
+    font-size: 1.25rem;
+  }
+
+  .form-subtitle {
+    font-size: 0.875rem;
+  }
+
+  .oauth-btn {
+    padding: var(--spacing-4);
+    font-size: 0.9375rem;
+  }
+
+  .oauth-icon {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* ===== 深色模式优化 ===== */
+@media (prefers-color-scheme: dark) {
+  .auth-page {
+    /* 深色模式下保持相同的深色背景 */
+    background: linear-gradient(
+      135deg,
+      #0a1612 0%,
+      #0e1a17 50%,
+      #0a1410 100%
+    );
+  }
+
+  .auth-form {
+    background: rgba(20, 30, 26, 0.9);
+    border-color: rgba(131, 213, 197, 0.2);
+    box-shadow: 
+      0 24px 64px rgb(0 0 0 / 50%),
+      0 12px 32px rgb(0 0 0 / 40%),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
 }
 </style>

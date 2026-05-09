@@ -42,6 +42,20 @@
     "service_worker": "background.js",
     "type": "module"
   },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://localhost:3000/*",
+        "https://localhost:3000/*",
+        "http://localhost:3001/*",
+        "https://localhost:3001/*",
+        "https://acuitybookmarks.com/*",
+        "https://*.acuitybookmarks.com/*"
+      ],
+      "js": ["auth-sync.js"],
+      "run_at": "document_start"
+    }
+  ],
   "omnibox": {
     "keyword": "ab"
   },

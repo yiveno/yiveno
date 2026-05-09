@@ -23,7 +23,8 @@ export function createBuildInput() {
     'content/inject-quick-add-dialog': resolve(
       SRC_DIR,
       'content/inject-quick-add-dialog.ts'
-    )
+    ),
+    'auth-sync': resolve(SRC_DIR, 'content/auth-sync.ts')
   }
 }
 
@@ -130,6 +131,9 @@ export function createOutputFileNames() {
       // Content script 也需要固定文件名（manifest 中引用）
       if (chunkInfo.name === 'content/inject-quick-add-dialog') {
         return 'content/inject-quick-add-dialog.js'
+      }
+      if (chunkInfo.name === 'auth-sync') {
+        return 'auth-sync.js'
       }
       return 'assets/[name].[hash:8].js'
     },

@@ -20,7 +20,6 @@
             v-model="selectedProvider"
             class="provider-select"
           >
-            <option value="builtin-cloudflare">AcuityBookmarks 内置（免费）</option>
             <option value="openai">OpenAI（推荐）</option>
             <option value="claude">Anthropic Claude</option>
             <option value="gemini">Google Gemini</option>
@@ -28,22 +27,7 @@
         </div>
       </div>
 
-      <!-- 内置 Cloudflare AI 限额说明 -->
-      <div v-if="selectedProvider === 'builtin-cloudflare'" class="builtin-info">
-        <div class="builtin-info__header">
-          <LucideIcon name="zap" :size="14" />
-          <span>Cloudflare Workers AI 免费额度说明</span>
-        </div>
-        <ul class="builtin-info__list">
-          <li>每天 <strong>10,000 次</strong> Neurons 免费额度（所有用户共享）</li>
-          <li>模型：Llama 3.1 8B，支持中文</li>
-          <li>超出额度后 AI 功能暂停，次日自动恢复</li>
-          <li>书签数据会经过 AcuityBookmarks 服务器中转</li>
-        </ul>
-      </div>
-
-      <!-- API Key 输入（内置模式隐藏） -->
-      <template v-if="selectedProvider !== 'builtin-cloudflare'">
+      <!-- API Key 输入 -->
       <div class="row">
         <div class="label">API Key</div>
         <div class="field field--grow">
@@ -108,7 +92,6 @@
           style="width: 240px"
         />
       </div>
-      </template>
     </div>
 
     <!-- 操作按钮 -->
@@ -117,7 +100,7 @@
         variant="primary"
         size="sm"
         :loading="saving"
-        :disabled="selectedProvider !== 'builtin-cloudflare' && !apiKey.trim()"
+        :disabled="!apiKey.trim()"
         @click="saveConfig"
       >
         <LucideIcon name="save" :size="14" />
@@ -148,12 +131,11 @@
     <!-- 隐私说明 -->
     <div class="privacy-note">
       <LucideIcon name="shield" :size="14" />
-      <span>您的书签数据只在您的设备和您选择的 AI 服务商之间流动，不经过 AcuityBookmarks 服务器。</span>
+      <span>您的 API Key 和书签数据只在您的设备和您选择的 AI 服务商之间流动，不经过 AcuityBookmarks 服务器。</span>
     </div>
 
     <!-- 获取 Key 的链接 -->
-    <!-- 获取 Key 的链接（内置模式隐藏） -->
-    <div v-if="selectedProvider !== 'builtin-cloudflare'" class="get-key-links">
+    <div class="get-key-links">
       <span class="get-key-label">没有 API Key？</span>
       <a :href="providerLinks[selectedProvider]" target="_blank" rel="noopener" class="get-key-link">
         前往 {{ providerNames[selectedProvider] }} 获取
@@ -190,22 +172,19 @@ const isSaved = ref(false)
 const providerNames: Record<UserLLMProvider, string> = {
   openai: 'OpenAI',
   claude: 'Anthropic',
-  gemini: 'Google',
-  'builtin-cloudflare': 'AcuityBookmarks 内置'
+  gemini: 'Google'
 }
 
 const providerLinks: Record<UserLLMProvider, string> = {
   openai: 'https://platform.openai.com/api-keys',
   claude: 'https://console.anthropic.com/settings/keys',
-  gemini: 'https://aistudio.google.com/app/apikey',
-  'builtin-cloudflare': ''
+  gemini: 'https://aistudio.google.com/app/apikey'
 }
 const keyPlaceholder = computed(() => {
   const map: Record<UserLLMProvider, string> = {
     openai: 'sk-...',
     claude: 'sk-ant-...',
-    gemini: 'AIza...',
-    'builtin-cloudflare': ''
+    gemini: 'AIza...'
   }
   return map[selectedProvider.value]
 })
@@ -225,12 +204,12 @@ const statusText = computed(() =>
 
 /** 保存配置 */
 async function saveConfig() {
-  if (selectedProvider.value !== 'builtin-cloudflare' && !apiKey.value.trim()) return
+  if (!apiKey.value.trim()) return
   saving.value = true
   try {
     await userLLMClient.saveConfig({
       provider: selectedProvider.value,
-      apiKey: selectedProvider.value === 'builtin-cloudflare' ? 'builtin' : apiKey.value.trim(),
+      apiKey: apiKey.value.trim(),
       model: customModel.value.trim() || undefined,
       baseUrl: customBaseUrl.value.trim() || undefined
     })
@@ -248,21 +227,14 @@ async function saveConfig() {
 const consoleLinks: Record<UserLLMProvider, { url: string; text: string }> = {
   openai: { url: 'https://platform.openai.com/account/billing', text: '前往 OpenAI 控制台充值' },
   claude: { url: 'https://console.anthropic.com/settings/billing', text: '前往 Anthropic 控制台充值' },
-  gemini: { url: 'https://aistudio.google.com/app/apikey', text: '前往 Google AI Studio 查看额度' },
-  'builtin-cloudflare': { url: '', text: '内置服务额度已用完，次日自动恢复' }
+  gemini: { url: 'https://aistudio.google.com/app/apikey', text: '前往 Google AI Studio 查看额度' }
 }
 
 /** 测试连接 */
 async function testConnection() {
   testing.value = true
   try {
-    if (selectedProvider.value === 'builtin-cloudflare') {
-      // 内置模式直接测试后端接口
-      const { backendLLMClient } = await import('@/infrastructure/llm/backend-llm-client')
-      await backendLLMClient.complete('请回复"ok"', { maxTokens: 5 })
-    } else {
-      await userLLMClient.complete('请回复"ok"', { maxTokens: 5 })
-    }
+    await userLLMClient.complete('请回复"ok"', { maxTokens: 5 })
     notifySuccess(`连接成功，${providerNames[selectedProvider.value]} 可正常使用`, 'AI 设置')
   } catch (e) {
     const msg = String(e).replace(/^Error:\s*/, '')
@@ -494,35 +466,5 @@ onMounted(async () => {
 
 .gemini-tip a:hover {
   text-decoration: underline;
-}
-
-.builtin-info {
-  padding: var(--spacing-3);
-  border: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
-  border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
-}
-
-.builtin-info__header {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  margin-bottom: var(--spacing-2);
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-  color: var(--md-sys-color-primary);
-}
-
-.builtin-info__list {
-  margin: 0;
-  padding-left: var(--spacing-4);
-  font-size: var(--text-xs);
-  line-height: var(--line-height-relaxed);
-  color: var(--color-text-secondary);
-  list-style: disc;
-}
-
-.builtin-info__list strong {
-  color: var(--color-text-primary);
 }
 </style>

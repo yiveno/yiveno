@@ -207,6 +207,7 @@ import {
   type FolderNode,
   type ImportResult
 } from '@/utils/import-service'
+import { formatRelativeTime } from '@/utils/date-formatter'
 
 // 状态
 const isLoading = ref(true)
@@ -414,36 +415,9 @@ const handleIconError = (event: Event) => {
   img.style.display = 'none'
 }
 
-// 格式化日期
+// 格式化日期（使用相对时间）
 const formatDate = (timestamp: number): string => {
-  const date = new Date(timestamp)
-  const now = new Date()
-  const diff = now.getTime() - date.getTime()
-
-  // 小于 1 小时
-  if (diff < 60 * 60 * 1000) {
-    const minutes = Math.floor(diff / (60 * 1000))
-    return `${minutes} 分钟前`
-  }
-
-  // 小于 24 小时
-  if (diff < 24 * 60 * 60 * 1000) {
-    const hours = Math.floor(diff / (60 * 60 * 1000))
-    return `${hours} 小时前`
-  }
-
-  // 小于 7 天
-  if (diff < 7 * 24 * 60 * 60 * 1000) {
-    const days = Math.floor(diff / (24 * 60 * 60 * 1000))
-    return `${days} 天前`
-  }
-
-  // 显示完整日期
-  return date.toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
+  return formatRelativeTime(new Date(timestamp))
 }
 
 // 复制分享链接（移动端）

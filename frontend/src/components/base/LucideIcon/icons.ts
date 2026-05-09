@@ -165,6 +165,7 @@ export const lucideIcons: Record<string, Component> = {
   'edit': Edit,
   'delete': Trash2,
   'trash': Trash2,
+  'trash-2': Trash2,
   'copy': Copy,
   'clipboard': Clipboard,
   'save': Save,
@@ -233,6 +234,7 @@ export const lucideIcons: Record<string, Component> = {
   'refresh': RefreshCw,
   'sync': RefreshCw,
   'loader': Loader2,
+  'loader-2': Loader2,
   'loading': Loader2,
   
   // 视图和布局
@@ -241,6 +243,7 @@ export const lucideIcons: Record<string, Component> = {
   'layout': Layout,
   'grid': Grid,
   'list': List,
+  'heart': Star,  // heart 映射到 star（收藏）
   
   // 导航
   'home': Home,
@@ -318,6 +321,7 @@ export const materialToLucideMap: Record<string, string> = {
   // 编辑操作
   'icon-edit-bookmark': 'edit',
   'icon-edit-folder': 'edit',
+  'icon-folder-edit': 'edit',
   'icon-delete': 'trash',
   'icon-delete-sweep': 'trash',
   'icon-copy': 'copy',
@@ -335,6 +339,7 @@ export const materialToLucideMap: Record<string, string> = {
   'icon-bookmark-delete': 'bookmark-minus',
   'icon-favorite': 'star',
   'icon-favorite-outline': 'star-off',
+  'icon-star': 'star',
   
   // 状态指示
   'icon-alert': 'alert-circle',
@@ -343,13 +348,18 @@ export const materialToLucideMap: Record<string, string> = {
   'icon-approval': 'check-circle',
   'icon-circle-outline': 'circle',
   'icon-circle-minus': 'minus-circle',
+  'icon-warning': 'alert-triangle',
   
   // 用户
   'icon-account': 'user',
   
+  // 时间
+  'icon-clock': 'clock',
+  
   // 网络和同步
   'icon-cloud-sync': 'refresh',
   'icon-swap': 'refresh',
+  'icon-sync-alert': 'alert-circle',
   
   // 视图
   'icon-expand-All': 'chevrons-up',
@@ -357,6 +367,9 @@ export const materialToLucideMap: Record<string, string> = {
   
   // 主题
   'icon-dark': 'moon',
+  
+  // 分享
+  'icon-share': 'external-link',
   
   // 其他
   'icon-flash': 'zap',

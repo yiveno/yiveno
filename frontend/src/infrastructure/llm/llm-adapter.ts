@@ -90,10 +90,6 @@ export class LLMAdapter {
    * 优先级：用户 Key > Cloudflare > Built-in
    */
   async selectProvider(_task: LLMTask): Promise<LLMProvider> {
-    // 用户选择了内置 Cloudflare AI
-    const usingBuiltin = await userLLMClient.isUsingBuiltinCloudflare()
-    if (usingBuiltin) return 'cloudflare'
-
     // 优先使用用户自带 Key
     const userConfigured = await userLLMClient.isConfigured()
     if (userConfigured) {
@@ -136,13 +132,7 @@ export class LLMAdapter {
       logger.info(this.loggerPrefix, '使用 LLM 提供者', { provider })
     }
 
-    // 1. 用户选择内置 Cloudflare AI
-    const usingBuiltin = await userLLMClient.isUsingBuiltinCloudflare()
-    if (usingBuiltin) {
-      return await backendLLMClient.complete(prompt, options)
-    }
-
-    // 2. 用户自带 Key
+    // 1. 用户自带 Key
     const userConfigured = await userLLMClient.isConfigured()
     if (userConfigured) {
       try {
@@ -155,7 +145,7 @@ export class LLMAdapter {
       }
     }
 
-    // 3. Cloudflare Workers AI
+    // 2. Cloudflare Workers AI
     try {
       const backendAvailable = await backendLLMClient.isAvailable()
       if (backendAvailable) {
@@ -165,7 +155,7 @@ export class LLMAdapter {
       logger.warn(this.loggerPrefix, 'Cloudflare LLM 失败，尝试 Built-in', error)
     }
 
-    // 4. Chrome Built-in LLM（极端 fallback）
+    // 3. Chrome Built-in LLM（极端 fallback）
     try {
       const builtinAvailable = await builtInLLMClient.isAvailable()
       if (builtinAvailable) {

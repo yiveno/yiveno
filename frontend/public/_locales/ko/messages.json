@@ -38,9 +38,6 @@
   "settings_tab_embeddings": {
     "message": "임베딩"
   },
-  "settings_tab_vectorize": {
-    "message": "벡터 검색"
-  },
   "settings_tab_notifications": {
     "message": "알림"
   },
@@ -56,9 +53,6 @@
   "settings_title_embeddings": {
     "message": "임베딩"
   },
-  "settings_title_vectorize": {
-    "message": "벡터 검색"
-  },
   "settings_title_notifications": {
     "message": "알림"
   },
@@ -73,9 +67,6 @@
   },
   "settings_desc_embeddings": {
     "message": "텍스트 임베딩의 모델과 캐시."
-  },
-  "settings_desc_vectorize": {
-    "message": "벡터 인덱스와 쿼리 설정."
   },
   "settings_desc_notifications": {
     "message": "토스트 및 시스템 알림 규칙."
@@ -1601,7 +1592,6 @@
   "language_selector_select": {
     "message": "언어 선택"
   },
-
   "language_name_zh_CN": {
     "message": "简体中文"
   },
@@ -2064,33 +2054,6 @@
   "settings_general_save_failed": {
     "message": "저장 실패: $1"
   },
-  "settings_vectorize_title": {
-    "message": "Vectorize"
-  },
-  "settings_vectorize_auto_sync": {
-    "message": "자동 동기화"
-  },
-  "settings_vectorize_auto_sync_tooltip_title": {
-    "message": "자동 동기화："
-  },
-  "settings_vectorize_auto_sync_tooltip_1": {
-    "message": "북마크 데이터를 Cloudflare Vectorize에 자동으로 동기화"
-  },
-  "settings_vectorize_auto_sync_tooltip_2": {
-    "message": "클라우드 벡터 검색 및 다중 기기 데이터 공유 지원"
-  },
-  "settings_vectorize_auto_sync_tooltip_3": {
-    "message": "벡터 인덱스가 실시간으로 업데이트되도록 보장"
-  },
-  "settings_vectorize_auto_sync_note": {
-    "message": "참고: Cloudflare 계정 구성이 필요합니다."
-  },
-  "settings_vectorize_auto_sync_enabled": {
-    "message": "자동 동기화: 활성화됨"
-  },
-  "settings_vectorize_auto_sync_disabled": {
-    "message": "자동 동기화: 비활성화됨"
-  },
   "onboarding_performance_title": {
     "message": "수천 개에도 초고속"
   },
@@ -2491,98 +2454,6 @@
   "settings_subscription_select_yearly": {
     "message": "연간 플랜 선택",
     "description": "Settings: settings_subscription_select_yearly"
-  },
-  "settings_embedding_title": {
-    "message": "임베딩",
-    "description": "EmbeddingSettings: settings_embedding_title"
-  },
-  "settings_embedding_auto_generate": {
-    "message": "자동 생성",
-    "description": "EmbeddingSettings: settings_embedding_auto_generate"
-  },
-  "settings_embedding_auto_generate_tooltip_title": {
-    "message": "자동 생성 기능:",
-    "description": "EmbeddingSettings: settings_embedding_auto_generate_tooltip_title"
-  },
-  "settings_embedding_auto_generate_tooltip_1": {
-    "message": "새 북마크에 대한 의미 벡터(임베딩) 자동 생성",
-    "description": "EmbeddingSettings: settings_embedding_auto_generate_tooltip_1"
-  },
-  "settings_embedding_auto_generate_tooltip_2": {
-    "message": "콘텐츠 기반 지능형 검색 및 추천 지원",
-    "description": "EmbeddingSettings: settings_embedding_auto_generate_tooltip_2"
-  },
-  "settings_embedding_auto_generate_tooltip_3": {
-    "message": "수동 트리거 불필요, 백그라운드에서 자동 처리",
-    "description": "EmbeddingSettings: settings_embedding_auto_generate_tooltip_3"
-  },
-  "settings_embedding_daily_quota": {
-    "message": "일일 할당량",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota"
-  },
-  "settings_embedding_daily_quota_tooltip_title": {
-    "message": "일일 할당량 기능:",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota_tooltip_title"
-  },
-  "settings_embedding_daily_quota_tooltip_1": {
-    "message": "하루에 벡터 생성을 위한 북마크 수 제한",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota_tooltip_1"
-  },
-  "settings_embedding_daily_quota_tooltip_2": {
-    "message": "API 할당량 과도한 소비 방지",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota_tooltip_2"
-  },
-  "settings_embedding_daily_quota_tooltip_3": {
-    "message": "기본 300개/일, 필요에 따라 조정 가능",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota_tooltip_3"
-  },
-  "settings_embedding_daily_quota_placeholder": {
-    "message": "기본 300",
-    "description": "EmbeddingSettings: settings_embedding_daily_quota_placeholder"
-  },
-  "settings_embedding_per_run_max": {
-    "message": "실행당 최대",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max"
-  },
-  "settings_embedding_per_run_max_tooltip_title": {
-    "message": "실행당 최대 기능:",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max_tooltip_title"
-  },
-  "settings_embedding_per_run_max_tooltip_1": {
-    "message": "실행당 처리되는 북마크의 최대 수",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max_tooltip_1"
-  },
-  "settings_embedding_per_run_max_tooltip_2": {
-    "message": "장기 리소스 점유 방지",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max_tooltip_2"
-  },
-  "settings_embedding_per_run_max_tooltip_3": {
-    "message": "기본 150, 배치 처리가 더 안정적",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max_tooltip_3"
-  },
-  "settings_embedding_per_run_max_placeholder": {
-    "message": "기본 150",
-    "description": "EmbeddingSettings: settings_embedding_per_run_max_placeholder"
-  },
-  "settings_embedding_night_idle_only": {
-    "message": "야간/유휴 시간만",
-    "description": "EmbeddingSettings: settings_embedding_night_idle_only"
-  },
-  "settings_embedding_night_idle_only_tooltip_title": {
-    "message": "야간/유휴 시간만 기능:",
-    "description": "EmbeddingSettings: settings_embedding_night_idle_only_tooltip_title"
-  },
-  "settings_embedding_night_idle_only_tooltip_1": {
-    "message": "시스템 유휴 시간 또는 야간에만 벡터 생성",
-    "description": "EmbeddingSettings: settings_embedding_night_idle_only_tooltip_1"
-  },
-  "settings_embedding_night_idle_only_tooltip_2": {
-    "message": "일상적인 사용 경험에 영향을 주지 않음",
-    "description": "EmbeddingSettings: settings_embedding_night_idle_only_tooltip_2"
-  },
-  "settings_embedding_night_idle_only_tooltip_3": {
-    "message": "더 스마트한 생성 프로세스를 위해 활성화 권장",
-    "description": "EmbeddingSettings: settings_embedding_night_idle_only_tooltip_3"
   },
   "settings_shortcut_label_execute_action": {
     "message": "확장 프로그램 활성화/팝업 전환",

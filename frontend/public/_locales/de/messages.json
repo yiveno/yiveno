@@ -38,9 +38,6 @@
   "settings_tab_embeddings": {
     "message": "Embeddings"
   },
-  "settings_tab_vectorize": {
-    "message": "Vektorsuche"
-  },
   "settings_tab_notifications": {
     "message": "Benachrichtigungen"
   },
@@ -56,9 +53,6 @@
   "settings_title_embeddings": {
     "message": "Embeddings"
   },
-  "settings_title_vectorize": {
-    "message": "Vektorsuche"
-  },
   "settings_title_notifications": {
     "message": "Benachrichtigungen"
   },
@@ -73,9 +67,6 @@
   },
   "settings_desc_embeddings": {
     "message": "Modelle und Caching für Text-Embeddings."
-  },
-  "settings_desc_vectorize": {
-    "message": "Vektorindex und Abfrageverhalten."
   },
   "settings_desc_notifications": {
     "message": "Toast- und Systembenachrichtigungsregeln."
@@ -1601,7 +1592,6 @@
   "language_selector_select": {
     "message": "Sprache auswählen"
   },
-
   "language_name_zh_CN": {
     "message": "简体中文"
   },

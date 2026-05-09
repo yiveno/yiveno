@@ -4,14 +4,21 @@
  * 职责：
  * - 管理用户订阅状态
  * - 处理订阅创建与状态同步
- * - 与 Supabase（通过 API）和 Gumroad 集成
+ * - 与 Supabase 和 Gumroad 集成
+ * 
+ * 数据获取策略：
+ * - 直接查询 Supabase subscriptions 表（与官网一致）
+ * - 不再通过后端 API 中转，减少网络请求
  */
 
 import {
   buildCheckoutUrl,
-  getSubscriptionStatus,
   getManageSubscriptionUrl
 } from '@/infrastructure/gumroad/client'
+import {
+  getSubscriptionFromSupabase,
+  isProUser as checkIsProUser
+} from '@/infrastructure/supabase/subscription-repository'
 import type {
   Subscription,
   UserSubscriptionStatus
@@ -23,6 +30,9 @@ import type {
 export class SubscriptionAppService {
   /**
    * 获取用户当前订阅状态
+   * 
+   * ✅ 直接查询 Supabase（与官网一致）
+   * ❌ 不再通过后端 API 中转
    *
    * @param userId - Supabase 用户 ID
    * @returns 订阅状态
@@ -31,7 +41,8 @@ export class SubscriptionAppService {
     userId: string
   ): Promise<UserSubscriptionStatus | null> {
     try {
-      const subscription = await getSubscriptionStatus(userId)
+      // ✅ 直接查询 Supabase subscriptions 表
+      const subscription = await getSubscriptionFromSupabase(userId)
 
       if (!subscription) {
         return {
@@ -44,12 +55,13 @@ export class SubscriptionAppService {
 
       return {
         tier: subscription.tier,
-        status: subscription.status as UserSubscriptionStatus['status'],
+        status: subscription.status,
         current_period_end: subscription.current_period_end,
         cancel_at_period_end: subscription.cancel_at_period_end
       }
     } catch (error) {
       console.error('[SubscriptionAppService] 获取订阅状态异常:', error)
+      // 降级：返回免费用户状态
       return {
         tier: 'free',
         status: 'expired',
@@ -61,34 +73,23 @@ export class SubscriptionAppService {
 
   /**
    * 获取用户订阅详情
+   * 
+   * ✅ 直接查询 Supabase（与官网一致）
    *
    * @param userId - Supabase 用户 ID
    * @returns 订阅详情
    */
   async getSubscriptionDetails(userId: string): Promise<Subscription | null> {
     try {
-      const subscription = await getSubscriptionStatus(userId)
+      // ✅ 直接查询 Supabase subscriptions 表
+      const subscription = await getSubscriptionFromSupabase(userId)
 
-      if (!subscription || !subscription.id) {
+      if (!subscription) {
         return null
       }
 
-      // 转换为 Subscription 类型（简化版，因为 API 只返回部分字段）
-      return {
-        id: subscription.id,
-        user_id: userId,
-        gumroad_subscription_id: subscription.id,
-        gumroad_order_id: null,
-        gumroad_variant_id: null,
-        status: subscription.status as Subscription['status'],
-        tier: subscription.tier,
-        current_period_start: new Date().toISOString(),
-        current_period_end: subscription.current_period_end,
-        cancel_at_period_end: subscription.cancel_at_period_end,
-        cancelled_at: null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
+      // Supabase 返回的数据已经是完整的 Subscription 类型
+      return subscription
     } catch (error) {
       console.error('[SubscriptionAppService] 获取订阅详情异常:', error)
       return null
@@ -128,13 +129,14 @@ export class SubscriptionAppService {
 
   /**
    * 检查用户是否为 Pro 用户
+   * 
+   * ✅ 直接查询 Supabase（与官网一致）
    *
    * @param userId - Supabase 用户 ID
    * @returns 是否为 Pro 用户
    */
   async isProUser(userId: string): Promise<boolean> {
-    const subscription = await this.getUserSubscription(userId)
-    return subscription?.tier === 'pro' && subscription?.status === 'active'
+    return checkIsProUser(userId)
   }
 }
 

@@ -5,6 +5,7 @@
  * - 封装 Supabase OAuth 认证（Google、Microsoft）
  * - 提供统一的认证接口
  * - 处理认证状态管理
+ * - 同步认证状态到 Chrome 扩展
  */
 
 import { ref, computed } from 'vue'
@@ -228,7 +229,7 @@ export const useAuth = () => {
    * 监听认证状态变化
    */
   const setupAuthListener = () => {
-    supabase.auth.onAuthStateChange((event: string, newSession: Session | null) => {
+    supabase.auth.onAuthStateChange(async (event: string, newSession: Session | null) => {
       console.log('[useAuth] 认证状态变化:', event, {
         hasSession: !!newSession,
         userId: newSession?.user?.id
@@ -237,13 +238,47 @@ export const useAuth = () => {
       session.value = newSession
       user.value = newSession?.user ?? null
       
-      // 触发存储事件，通知其他标签页/窗口
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new StorageEvent('storage', {
-          key: 'supabase.auth.token',
-          newValue: newSession ? JSON.stringify(newSession) : null,
-          url: window.location.href
-        }))
+      // 🔑 当用户登录成功时，通知 Chrome 扩展同步 session
+      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && newSession) {
+        console.log('[useAuth] 🔔 通知 Chrome 扩展同步 session...')
+        try {
+          // 检查是否安装了扩展
+          if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+            // 获取扩展 ID（需要在环境变量中配置）
+            const extensionId = 'YOUR_EXTENSION_ID' // TODO: 从环境变量读取
+            
+            await chrome.runtime.sendMessage(extensionId, {
+              type: 'SYNC_AUTH_SESSION',
+              payload: {
+                access_token: newSession.access_token,
+                refresh_token: newSession.refresh_token,
+                expires_at: newSession.expires_at,
+                user: newSession.user
+              }
+            })
+            console.log('[useAuth] ✅ Session 已同步到扩展')
+          }
+        } catch (error) {
+          // 扩展未安装或通信失败，不影响网站功能
+          console.warn('[useAuth] ⚠️ 无法同步到扩展（扩展可能未安装）:', error)
+        }
+      }
+      
+      // 🔑 当用户登出时，通知 Chrome 扩展清除 session
+      if (event === 'SIGNED_OUT') {
+        console.log('[useAuth] 🔔 通知 Chrome 扩展清除 session...')
+        try {
+          if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+            const extensionId = 'YOUR_EXTENSION_ID' // TODO: 从环境变量读取
+            
+            await chrome.runtime.sendMessage(extensionId, {
+              type: 'CLEAR_AUTH_SESSION'
+            })
+            console.log('[useAuth] ✅ 扩展 session 已清除')
+          }
+        } catch (error) {
+          console.warn('[useAuth] ⚠️ 无法清除扩展 session:', error)
+        }
       }
     })
   }
