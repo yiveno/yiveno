@@ -135,6 +135,7 @@ const commonMappings = [
 </script>
 
 <style scoped>
+/* stylelint-disable declaration-property-value-disallowed-list -- 示例文件，用于演示组件用法 */
 .migration-example {
   max-width: 1200px;
   margin: 0 auto;

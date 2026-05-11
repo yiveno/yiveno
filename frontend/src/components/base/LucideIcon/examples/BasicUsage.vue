@@ -129,6 +129,7 @@ defineOptions({
 </script>
 
 <style scoped>
+/* stylelint-disable declaration-property-value-disallowed-list -- 示例文件，用于演示组件用法 */
 .lucide-examples {
   max-width: 1200px;
   margin: 0 auto;

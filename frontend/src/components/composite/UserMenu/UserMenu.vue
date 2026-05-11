@@ -355,7 +355,7 @@ onUnmounted(() => {
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  padding: 2px;
+  padding: var(--spacing-0-5);
   border-radius: var(--radius-full);
   transition: all var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
 }
@@ -419,7 +419,7 @@ onUnmounted(() => {
   width: 20px;
   height: 20px;
   border-radius: var(--radius-full);
-  color: #fff;
+  color: var(--md-sys-color-on-primary);
 
   /* ✅ 使用 design-tokens 的 accent-gold 和 accent-amber 颜色 */
   background: linear-gradient(135deg, var(--acuity-accent-gold) 0%, var(--acuity-accent-amber) 100%);

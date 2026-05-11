@@ -397,7 +397,8 @@ watch(tab, v => {
 /* ✨ Material Web Components 按钮样式 */
 .subscription-button {
   --md-sys-color-primary: var(--color-primary);
-  --md-sys-color-on-primary: #fff;
+
+  /* 使用 Material Design 主题中已定义的 on-primary 颜色 */
 
   margin-top: var(--spacing-6);
 }
