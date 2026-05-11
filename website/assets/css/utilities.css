@@ -581,7 +581,11 @@
 }
 
 .bg-green-500\/20 {
-  background-color: color-mix(in srgb, var(--acuity-semantic-success) 20%, transparent);
+  background-color: color-mix(
+    in srgb,
+    var(--acuity-semantic-success) 20%,
+    transparent
+  );
 }
 
 .bg-accent-500\/20 {

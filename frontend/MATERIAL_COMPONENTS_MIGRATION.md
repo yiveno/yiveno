@@ -45,17 +45,18 @@ import '@material/web/button/outlined-button.js'
 
 **API 对比**:
 
-| 旧组件 | Material Web Components | 说明 |
-|--------|------------------------|------|
-| `<Button variant="primary">` | `<md-filled-button>` | Filled 按钮 |
-| `<Button variant="secondary">` | `<md-filled-button>` | Filled 按钮（可用 CSS 自定义颜色） |
-| `<Button variant="outline">` | `<md-outlined-button>` | Outlined 按钮 |
-| `<Button variant="text">` | `<md-text-button>` | Text 按钮 |
-| `<Button variant="ghost">` | `<md-text-button>` | Text 按钮 |
-| `<Button icon-left="save">` | `<md-icon slot="icon">save</md-icon>` | 图标 |
-| `<Button :loading="true">` | 需要自己实现 loading 状态 | 可用 `<md-circular-progress>` |
+| 旧组件                         | Material Web Components               | 说明                               |
+| ------------------------------ | ------------------------------------- | ---------------------------------- |
+| `<Button variant="primary">`   | `<md-filled-button>`                  | Filled 按钮                        |
+| `<Button variant="secondary">` | `<md-filled-button>`                  | Filled 按钮（可用 CSS 自定义颜色） |
+| `<Button variant="outline">`   | `<md-outlined-button>`                | Outlined 按钮                      |
+| `<Button variant="text">`      | `<md-text-button>`                    | Text 按钮                          |
+| `<Button variant="ghost">`     | `<md-text-button>`                    | Text 按钮                          |
+| `<Button icon-left="save">`    | `<md-icon slot="icon">save</md-icon>` | 图标                               |
+| `<Button :loading="true">`     | 需要自己实现 loading 状态             | 可用 `<md-circular-progress>`      |
 
 **优势**:
+
 - ✅ 自动包含 Ripple 效果
 - ✅ 自动包含 State Layer（hover、focus、pressed）
 - ✅ 自动应用 Material Design 3 规范
@@ -119,11 +120,11 @@ const props = withDefaults(defineProps<ButtonProps>(), {
   <md-filled-button v-if="variant === 'primary'" v-bind="$attrs">
     <slot />
   </md-filled-button>
-  
+
   <md-outlined-button v-else-if="variant === 'outline'" v-bind="$attrs">
     <slot />
   </md-outlined-button>
-  
+
   <md-text-button v-else v-bind="$attrs">
     <slot />
   </md-text-button>
@@ -143,9 +144,7 @@ import { ButtonMaterial } from '@/components/base/Button'
 <template>
   <div class="settings-page">
     <!-- 使用新组件 -->
-    <ButtonMaterial variant="primary" @click="save">
-      保存设置
-    </ButtonMaterial>
+    <ButtonMaterial variant="primary" @click="save"> 保存设置 </ButtonMaterial>
   </div>
 </template>
 ```
@@ -211,9 +210,7 @@ import '@material/web/button/filled-button.js'
 
 <template>
   <!-- ✅ 正确：直接使用官方组件 -->
-  <md-filled-button @click="handleClick">
-    提交
-  </md-filled-button>
+  <md-filled-button @click="handleClick"> 提交 </md-filled-button>
 </template>
 ```
 
@@ -255,9 +252,10 @@ import '@material/web/icon/icon.js'
   color: var(--md-sys-color-on-primary);
   padding: var(--md-sys-spacing-md);
   border-radius: var(--md-sys-shape-corner-medium);
-  
+
   /* ✅ 使用 Material Design 3 动画 */
-  transition: all var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+  transition: all var(--md-sys-motion-duration-short2)
+    var(--md-sys-motion-easing-standard);
 }
 
 /* ✅ 必须实现 State Layer */
@@ -267,7 +265,8 @@ import '@material/web/icon/icon.js'
   inset: 0;
   background-color: currentColor;
   opacity: 0;
-  transition: opacity var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+  transition: opacity var(--md-sys-motion-duration-short2)
+    var(--md-sys-motion-easing-standard);
 }
 
 .md-custom-component:hover::before {
@@ -289,4 +288,3 @@ import '@material/web/icon/icon.js'
 
 **最后更新**: 2025-05-11  
 **维护者**: AcuityBookmarks Team
-

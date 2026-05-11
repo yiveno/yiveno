@@ -38,10 +38,8 @@ import '@material/web/textfield/filled-text-field.js'
 
 ```vue
 <template>
-  <md-filled-button @click="handleClick">
-    点击我
-  </md-filled-button>
-  
+  <md-filled-button @click="handleClick"> 点击我 </md-filled-button>
+
   <md-filled-text-field
     label="输入框"
     :value="value"
@@ -63,9 +61,7 @@ import '@material/web/button/filled-button.js'
 
 <template>
   <!-- ✅ 正确：直接使用官方组件 -->
-  <md-filled-button @click="handleClick">
-    提交
-  </md-filled-button>
+  <md-filled-button @click="handleClick"> 提交 </md-filled-button>
 </template>
 ```
 
@@ -117,9 +113,10 @@ import '@material/web/icon/icon.js'
   color: var(--md-sys-color-on-primary);
   padding: var(--md-sys-spacing-md);
   border-radius: var(--md-sys-shape-corner-medium);
-  
+
   /* ✅ 使用 Material Design 3 动画 */
-  transition: all var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+  transition: all var(--md-sys-motion-duration-short2)
+    var(--md-sys-motion-easing-standard);
 }
 
 /* ✅ 必须实现 State Layer */
@@ -129,7 +126,8 @@ import '@material/web/icon/icon.js'
   inset: 0;
   background-color: currentColor;
   opacity: 0;
-  transition: opacity var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+  transition: opacity var(--md-sys-motion-duration-short2)
+    var(--md-sys-motion-easing-standard);
 }
 
 .md-custom-component:hover::before {
@@ -174,7 +172,7 @@ const value = ref('')
     :value="value"
     @input="value = $event.target.value"
   />
-  
+
   <md-outlined-text-field
     label="描述"
     :value="value"
@@ -195,15 +193,11 @@ const showDialog = ref(false)
 </script>
 
 <template>
-  <md-filled-button @click="showDialog = true">
-    打开 Dialog
-  </md-filled-button>
-  
+  <md-filled-button @click="showDialog = true"> 打开 Dialog </md-filled-button>
+
   <md-dialog :open="showDialog" @closed="showDialog = false">
     <div slot="headline">Dialog 标题</div>
-    <div slot="content">
-      这是 Dialog 内容
-    </div>
+    <div slot="content">这是 Dialog 内容</div>
     <div slot="actions">
       <md-text-button @click="showDialog = false">取消</md-text-button>
       <md-filled-button @click="handleConfirm">确认</md-filled-button>
@@ -228,14 +222,24 @@ const radioValue = ref('1')
     <md-checkbox :checked="checked" @change="checked = $event.target.checked" />
     Checkbox
   </label>
-  
+
   <label>
-    <md-radio name="group" value="1" :checked="radioValue === '1'" @change="radioValue = $event.target.value" />
+    <md-radio
+      name="group"
+      value="1"
+      :checked="radioValue === '1'"
+      @change="radioValue = $event.target.value"
+    />
     Radio 1
   </label>
-  
+
   <label>
-    <md-radio name="group" value="2" :checked="radioValue === '2'" @change="radioValue = $event.target.value" />
+    <md-radio
+      name="group"
+      value="2"
+      :checked="radioValue === '2'"
+      @change="radioValue = $event.target.value"
+    />
     Radio 2
   </label>
 </template>

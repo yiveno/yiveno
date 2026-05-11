@@ -218,6 +218,7 @@ md-switch {
 
   flex-shrink: 0;
 }
+
 /* Field Description */
 .field-description {
   display: flex;

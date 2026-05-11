@@ -17,11 +17,11 @@ fi
 
 # 2. 代码质量检查（严格模式）
 echo "🔍 代码质量检查（严格模式）..."
-if bun run lint > /dev/null 2>&1; then
+if bun run lint:check > /dev/null 2>&1; then
     echo "✅ ESLint 检查通过"
 else
     echo "❌ ESLint 检查失败"
-    LINT_ERROR=$(bun run lint 2>&1 || true)
+    LINT_ERROR=$(bun run lint:check 2>&1 || true)
     ERRORS="${ERRORS}\n❌ ESLint 检查失败:\n${LINT_ERROR}\n\n"
 fi
 
@@ -67,10 +67,10 @@ if [ -n "$ERRORS" ]; then
     echo "💡 请修复以上问题后再推送。"
     echo ""
     echo "🛠️  可用的修复命令："
-    echo "   bun run lint                 # 自动修复 ESLint 问题"
-    echo "   bun run stylelint:fix        # 自动修复样式问题"
-    echo "   bun run typecheck            # 运行类型检查"
-    echo "   bun run build                # 运行完整构建"
+    echo "   cd frontend && bun run lint   # 自动修复 ESLint 问题"
+    echo "   cd frontend && bun run stylelint  # 自动修复样式问题"
+    echo "   bun run typecheck             # 运行类型检查"
+    echo "   bun run build                 # 运行完整构建"
     echo ""
     exit 1
 fi
