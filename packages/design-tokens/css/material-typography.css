@@ -1,0 +1,284 @@
+/**
+ * Material Design 3 Typography System
+ * 完整的字体比例系统（Type Scale）
+ * 
+ * 参考：https://m3.material.io/styles/typography/overview
+ * 
+ * 使用方式：
+ * 1. 在入口文件中导入此文件
+ * 2. 使用 CSS 变量应用字体样式
+ * 3. 或使用预定义的工具类
+ */
+
+/* ========================================
+ * Material Design 3 Type Scale 变量定义
+ * ======================================== */
+
+:root {
+  /* === Display - 大标题（用于营销页面、首屏标题） === */
+  
+  /* Display Large - 最大的标题 */
+  --md-sys-typescale-display-large-size: 3.5625rem; /* 57px */
+  --md-sys-typescale-display-large-weight: 400;
+  --md-sys-typescale-display-large-line-height: 4rem; /* 64px */
+  --md-sys-typescale-display-large-tracking: -0.25px;
+  
+  /* Display Medium - 中等大标题 */
+  --md-sys-typescale-display-medium-size: 2.8125rem; /* 45px */
+  --md-sys-typescale-display-medium-weight: 400;
+  --md-sys-typescale-display-medium-line-height: 3.25rem; /* 52px */
+  --md-sys-typescale-display-medium-tracking: 0;
+  
+  /* Display Small - 小大标题 */
+  --md-sys-typescale-display-small-size: 2.25rem; /* 36px */
+  --md-sys-typescale-display-small-weight: 400;
+  --md-sys-typescale-display-small-line-height: 2.75rem; /* 44px */
+  --md-sys-typescale-display-small-tracking: 0;
+  
+  /* === Headline - 标题（用于页面标题、卡片标题） === */
+  
+  /* Headline Large */
+  --md-sys-typescale-headline-large-size: 2rem; /* 32px */
+  --md-sys-typescale-headline-large-weight: 400;
+  --md-sys-typescale-headline-large-line-height: 2.5rem; /* 40px */
+  --md-sys-typescale-headline-large-tracking: 0;
+  
+  /* Headline Medium */
+  --md-sys-typescale-headline-medium-size: 1.75rem; /* 28px */
+  --md-sys-typescale-headline-medium-weight: 400;
+  --md-sys-typescale-headline-medium-line-height: 2.25rem; /* 36px */
+  --md-sys-typescale-headline-medium-tracking: 0;
+  
+  /* Headline Small */
+  --md-sys-typescale-headline-small-size: 1.5rem; /* 24px */
+  --md-sys-typescale-headline-small-weight: 400;
+  --md-sys-typescale-headline-small-line-height: 2rem; /* 32px */
+  --md-sys-typescale-headline-small-tracking: 0;
+  
+  /* === Title - 小标题（用于列表项标题、对话框标题） === */
+  
+  /* Title Large */
+  --md-sys-typescale-title-large-size: 1.375rem; /* 22px */
+  --md-sys-typescale-title-large-weight: 400;
+  --md-sys-typescale-title-large-line-height: 1.75rem; /* 28px */
+  --md-sys-typescale-title-large-tracking: 0;
+  
+  /* Title Medium */
+  --md-sys-typescale-title-medium-size: 1rem; /* 16px */
+  --md-sys-typescale-title-medium-weight: 500;
+  --md-sys-typescale-title-medium-line-height: 1.5rem; /* 24px */
+  --md-sys-typescale-title-medium-tracking: 0.15px;
+  
+  /* Title Small */
+  --md-sys-typescale-title-small-size: 0.875rem; /* 14px */
+  --md-sys-typescale-title-small-weight: 500;
+  --md-sys-typescale-title-small-line-height: 1.25rem; /* 20px */
+  --md-sys-typescale-title-small-tracking: 0.1px;
+  
+  /* === Body - 正文（用于段落、描述文本） === */
+  
+  /* Body Large */
+  --md-sys-typescale-body-large-size: 1rem; /* 16px */
+  --md-sys-typescale-body-large-weight: 400;
+  --md-sys-typescale-body-large-line-height: 1.5rem; /* 24px */
+  --md-sys-typescale-body-large-tracking: 0.5px;
+  
+  /* Body Medium */
+  --md-sys-typescale-body-medium-size: 0.875rem; /* 14px */
+  --md-sys-typescale-body-medium-weight: 400;
+  --md-sys-typescale-body-medium-line-height: 1.25rem; /* 20px */
+  --md-sys-typescale-body-medium-tracking: 0.25px;
+  
+  /* Body Small */
+  --md-sys-typescale-body-small-size: 0.75rem; /* 12px */
+  --md-sys-typescale-body-small-weight: 400;
+  --md-sys-typescale-body-small-line-height: 1rem; /* 16px */
+  --md-sys-typescale-body-small-tracking: 0.4px;
+  
+  /* === Label - 标签（用于按钮、表单标签、标签页） === */
+  
+  /* Label Large */
+  --md-sys-typescale-label-large-size: 0.875rem; /* 14px */
+  --md-sys-typescale-label-large-weight: 500;
+  --md-sys-typescale-label-large-line-height: 1.25rem; /* 20px */
+  --md-sys-typescale-label-large-tracking: 0.1px;
+  
+  /* Label Medium */
+  --md-sys-typescale-label-medium-size: 0.75rem; /* 12px */
+  --md-sys-typescale-label-medium-weight: 500;
+  --md-sys-typescale-label-medium-line-height: 1rem; /* 16px */
+  --md-sys-typescale-label-medium-tracking: 0.5px;
+  
+  /* Label Small */
+  --md-sys-typescale-label-small-size: 0.6875rem; /* 11px */
+  --md-sys-typescale-label-small-weight: 500;
+  --md-sys-typescale-label-small-line-height: 1rem; /* 16px */
+  --md-sys-typescale-label-small-tracking: 0.5px;
+  
+  /* === 字体家族 === */
+  
+  /* Material Design 推荐使用 Roboto，但项目使用 Noto Sans 以支持更多语言 */
+  --md-sys-typescale-font-family-plain: 'Noto Sans', 'Roboto', system-ui, -apple-system, sans-serif;
+  --md-sys-typescale-font-family-brand: 'Noto Sans', 'Roboto', system-ui, -apple-system, sans-serif;
+}
+
+/* ========================================
+ * Material Design 3 Typography 工具类
+ * 可直接应用到 HTML 元素
+ * ======================================== */
+
+/* === Display === */
+
+.md-typescale-display-large {
+  font-family: var(--md-sys-typescale-font-family-brand);
+  font-size: var(--md-sys-typescale-display-large-size);
+  font-weight: var(--md-sys-typescale-display-large-weight);
+  line-height: var(--md-sys-typescale-display-large-line-height);
+  letter-spacing: var(--md-sys-typescale-display-large-tracking);
+}
+
+.md-typescale-display-medium {
+  font-family: var(--md-sys-typescale-font-family-brand);
+  font-size: var(--md-sys-typescale-display-medium-size);
+  font-weight: var(--md-sys-typescale-display-medium-weight);
+  line-height: var(--md-sys-typescale-display-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-display-medium-tracking);
+}
+
+.md-typescale-display-small {
+  font-family: var(--md-sys-typescale-font-family-brand);
+  font-size: var(--md-sys-typescale-display-small-size);
+  font-weight: var(--md-sys-typescale-display-small-weight);
+  line-height: var(--md-sys-typescale-display-small-line-height);
+  letter-spacing: var(--md-sys-typescale-display-small-tracking);
+}
+
+/* === Headline === */
+
+.md-typescale-headline-large {
+  font-family: var(--md-sys-typescale-font-family-brand);
+  font-size: var(--md-sys-typescale-headline-large-size);
+  font-weight: var(--md-sys-typescale-headline-large-weight);
+  line-height: var(--md-sys-typescale-headline-large-line-height);
+  letter-spacing: var(--md-sys-typescale-headline-large-tracking);
+}
+
+.md-typescale-headline-medium {
+  font-family: var(--md-sys-typescale-font-family-brand);
+  font-size: var(--md-sys-typescale-headline-medium-size);
+  font-weight: var(--md-sys-typescale-headline-medium-weight);
+  line-height: var(--md-sys-typescale-headline-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-headline-medium-tracking);
+}
+
+.md-typescale-headline-small {
+  font-family: var(--md-sys-typescale-font-family-brand);
+  font-size: var(--md-sys-typescale-headline-small-size);
+  font-weight: var(--md-sys-typescale-headline-small-weight);
+  line-height: var(--md-sys-typescale-headline-small-line-height);
+  letter-spacing: var(--md-sys-typescale-headline-small-tracking);
+}
+
+/* === Title === */
+
+.md-typescale-title-large {
+  font-family: var(--md-sys-typescale-font-family-plain);
+  font-size: var(--md-sys-typescale-title-large-size);
+  font-weight: var(--md-sys-typescale-title-large-weight);
+  line-height: var(--md-sys-typescale-title-large-line-height);
+  letter-spacing: var(--md-sys-typescale-title-large-tracking);
+}
+
+.md-typescale-title-medium {
+  font-family: var(--md-sys-typescale-font-family-plain);
+  font-size: var(--md-sys-typescale-title-medium-size);
+  font-weight: var(--md-sys-typescale-title-medium-weight);
+  line-height: var(--md-sys-typescale-title-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-title-medium-tracking);
+}
+
+.md-typescale-title-small {
+  font-family: var(--md-sys-typescale-font-family-plain);
+  font-size: var(--md-sys-typescale-title-small-size);
+  font-weight: var(--md-sys-typescale-title-small-weight);
+  line-height: var(--md-sys-typescale-title-small-line-height);
+  letter-spacing: var(--md-sys-typescale-title-small-tracking);
+}
+
+/* === Body === */
+
+.md-typescale-body-large {
+  font-family: var(--md-sys-typescale-font-family-plain);
+  font-size: var(--md-sys-typescale-body-large-size);
+  font-weight: var(--md-sys-typescale-body-large-weight);
+  line-height: var(--md-sys-typescale-body-large-line-height);
+  letter-spacing: var(--md-sys-typescale-body-large-tracking);
+}
+
+.md-typescale-body-medium {
+  font-family: var(--md-sys-typescale-font-family-plain);
+  font-size: var(--md-sys-typescale-body-medium-size);
+  font-weight: var(--md-sys-typescale-body-medium-weight);
+  line-height: var(--md-sys-typescale-body-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+}
+
+.md-typescale-body-small {
+  font-family: var(--md-sys-typescale-font-family-plain);
+  font-size: var(--md-sys-typescale-body-small-size);
+  font-weight: var(--md-sys-typescale-body-small-weight);
+  line-height: var(--md-sys-typescale-body-small-line-height);
+  letter-spacing: var(--md-sys-typescale-body-small-tracking);
+}
+
+/* === Label === */
+
+.md-typescale-label-large {
+  font-family: var(--md-sys-typescale-font-family-plain);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+  letter-spacing: var(--md-sys-typescale-label-large-tracking);
+}
+
+.md-typescale-label-medium {
+  font-family: var(--md-sys-typescale-font-family-plain);
+  font-size: var(--md-sys-typescale-label-medium-size);
+  font-weight: var(--md-sys-typescale-label-medium-weight);
+  line-height: var(--md-sys-typescale-label-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-label-medium-tracking);
+}
+
+.md-typescale-label-small {
+  font-family: var(--md-sys-typescale-font-family-plain);
+  font-size: var(--md-sys-typescale-label-small-size);
+  font-weight: var(--md-sys-typescale-label-small-weight);
+  line-height: var(--md-sys-typescale-label-small-line-height);
+  letter-spacing: var(--md-sys-typescale-label-small-tracking);
+}
+
+/* ========================================
+ * 使用示例
+ * ======================================== */
+
+/*
+<!-- Display - 用于营销页面、首屏大标题 -->
+<h1 class="md-typescale-display-large">Welcome to AcuityBookmarks</h1>
+<h2 class="md-typescale-display-medium">Organize Your Web</h2>
+
+<!-- Headline - 用于页面标题、卡片标题 -->
+<h2 class="md-typescale-headline-large">Settings</h2>
+<h3 class="md-typescale-headline-medium">Appearance</h3>
+
+<!-- Title - 用于列表项标题、对话框标题 -->
+<div class="md-typescale-title-medium">Bookmark Title</div>
+<div class="md-typescale-title-small">Folder Name</div>
+
+<!-- Body - 用于段落、描述文本 -->
+<p class="md-typescale-body-large">This is a paragraph of text.</p>
+<p class="md-typescale-body-medium">This is a smaller paragraph.</p>
+
+<!-- Label - 用于按钮、表单标签 -->
+<button class="md-typescale-label-large">Save</button>
+<label class="md-typescale-label-medium">Email</label>
+*/

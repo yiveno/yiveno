@@ -248,8 +248,8 @@ const cardClasses = computed(() => [
 .card__title {
   min-width: 0; /* Allow text truncation */
   margin: 0;
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
+  font-size: var(--md-sys-typescale-title-medium-size); /* 16px */
+  font-weight: var(--md-sys-typescale-title-medium-weight); /* 500 */
   color: var(--color-text-primary);
 }
 

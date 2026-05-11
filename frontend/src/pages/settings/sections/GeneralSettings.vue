@@ -12,15 +12,10 @@
           AI 自动归纳书签
         </div>
         <div class="field">
-          <label class="toggle-switch">
-            <input
-              v-model="aiAutoEnabled"
-              type="checkbox"
-              class="toggle-input"
-              @change="handleAIAutoToggle"
-            />
-            <span class="toggle-slider"></span>
-          </label>
+          <md-switch
+            :selected="aiAutoEnabled"
+            @change="handleAIAutoToggle"
+          ></md-switch>
           <div class="field-description">
             <p class="field-description__text">
               开启后,添加书签时自动推荐最佳文件夹并直接保存,无需手动选择。
@@ -39,16 +34,11 @@
           {{ t('settings_general_semantic_search') }}
         </div>
         <div class="field">
-          <label class="toggle-switch" :class="{ 'toggle-switch--disabled': !isPro }">
-            <input
-              v-model="semanticSearchEnabled"
-              type="checkbox"
-              class="toggle-input"
-              :disabled="!isPro"
-              @change="handleSemanticSearchToggle"
-            />
-            <span class="toggle-slider"></span>
-          </label>
+          <md-switch
+            :selected="semanticSearchEnabled"
+            :disabled="!isPro"
+            @change="handleSemanticSearchToggle"
+          ></md-switch>
           <div class="field-description">
             <p class="field-description__text">
               {{ t('settings_general_semantic_search_description') }}
@@ -121,7 +111,9 @@ onMounted(async () => {
 })
 
 // 处理 AI 自动归纳开关切换
-async function handleAIAutoToggle() {
+async function handleAIAutoToggle(event: Event) {
+  const target = event.target as unknown as { selected: boolean }
+  aiAutoEnabled.value = target.selected
   try {
     await chrome.storage.local.set({ aiAutoBookmark: aiAutoEnabled.value })
     logger.info('GeneralSettings', 'AI 自动归纳设置已更新', { enabled: aiAutoEnabled.value })
@@ -131,7 +123,9 @@ async function handleAIAutoToggle() {
 }
 
 // 处理语义搜索开关切换
-async function handleSemanticSearchToggle() {
+async function handleSemanticSearchToggle(event: Event) {
+  const target = event.target as unknown as { selected: boolean }
+  semanticSearchEnabled.value = target.selected
   try {
     await chrome.storage.local.set({ semanticSearchEnabled: semanticSearchEnabled.value })
     logger.info('GeneralSettings', '语义搜索设置已更新', {
@@ -215,71 +209,15 @@ const currentLanguageName = computed(() => {
   gap: var(--spacing-4);
 }
 
-/* Toggle Switch */
-.toggle-switch {
-  position: relative;
-  display: inline-block;
+/* Material Web Components Switch 样式覆盖 */
+md-switch {
+  --md-switch-selected-track-color: var(--color-primary);
+  --md-switch-selected-handle-color: var(--md-sys-color-on-primary);
+  --md-switch-selected-hover-track-color: var(--color-primary-hover);
+  --md-switch-selected-pressed-track-color: var(--color-primary-active);
+
   flex-shrink: 0;
-  width: 44px;
-  height: 24px;
 }
-
-.toggle-switch--disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.toggle-input {
-  width: 0;
-  height: 0;
-  opacity: 0;
-}
-
-.toggle-input:disabled {
-  cursor: not-allowed;
-}
-
-.toggle-slider {
-  position: absolute;
-  inset: 0;
-  border-radius: var(--radius-full);
-  background-color: var(--color-border);
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.toggle-input:disabled + .toggle-slider {
-  cursor: not-allowed;
-}
-
-.toggle-slider::before {
-  position: absolute;
-  bottom: 3px;
-  left: 3px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background-color: var(--md-sys-color-surface-container-highest);
-  transition: transform 0.3s ease;
-  content: '';
-}
-
-.toggle-input:checked + .toggle-slider {
-  background-color: var(--color-primary);
-}
-
-.toggle-input:focus + .toggle-slider {
-  box-shadow: 0 0 0 3px var(--color-primary-bg);
-}
-
-.toggle-input:disabled:checked + .toggle-slider {
-  background-color: var(--color-border);
-}
-
-.toggle-input:checked + .toggle-slider::before {
-  transform: translateX(20px);
-}
-
 /* Field Description */
 .field-description {
   display: flex;

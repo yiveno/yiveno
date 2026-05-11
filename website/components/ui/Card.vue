@@ -42,7 +42,7 @@ const computedClass = computed(() => {
 /* 卡片变体 */
 .card-default {
   background-color: var(--md-sys-color-surface);
-  border: 1px solid var(--color-border-default);
+  border: 1px solid color-mix(in srgb, white 10%, transparent);
 }
 
 .card-glass {
@@ -53,7 +53,7 @@ const computedClass = computed(() => {
 
 .card-outline {
   background-color: transparent;
-  border: 1px solid var(--color-border-default);
+  border: 1px solid color-mix(in srgb, white 10%, transparent);
 }
 
 /* Hover 效果 */

@@ -239,7 +239,7 @@ const handleClick = (event: Event) => {
   border: 1px solid transparent;
   border-radius: var(--radius-base);
   font-family: var(--font-family-base);
-  font-weight: var(--font-weight-medium);
+  font-weight: 500;
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;

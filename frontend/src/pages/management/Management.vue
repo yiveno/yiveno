@@ -842,6 +842,7 @@ import {
   AnimatedNumber
 } from '@/components'
 import { notificationService } from '@/application/notification/notification-service'
+import { NOTIFICATION_CONFIG } from '@/config/constants'
 import { ConfirmableDialog } from '@/components'
 import { onEvent } from '@/infrastructure/events/event-bus'
 import BookmarkTree from '@/components/business/BookmarkTree/BookmarkTree.vue'
@@ -1165,7 +1166,8 @@ watch(
   () => bookmarkManagementStore.hasUnsavedChanges,
   hasChanges => {
     if (hasChanges) {
-      notificationService.updateBadge('!', '#faad14')
+      // ✅ 使用常量中定义的徽章颜色
+      notificationService.updateBadge('!', NOTIFICATION_CONFIG.BADGE_COLORS.warning)
     } else {
       notificationService.clearBadge()
     }

@@ -61,25 +61,25 @@ const computedClass = computed(() => {
 
 .badge-outline {
   background-color: transparent;
-  border: 1px solid var(--color-border-default);
-  color: var(--color-text-secondary);
+  border: 1px solid color-mix(in srgb, white 10%, transparent);
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .badge-success {
-  background-color: rgba(34, 197, 94, 0.1);
-  color: #22c55e;
-  border: 1px solid rgba(34, 197, 94, 0.2);
+  background-color: color-mix(in srgb, var(--acuity-semantic-success) 10%, transparent);
+  color: var(--acuity-semantic-success);
+  border: 1px solid color-mix(in srgb, var(--acuity-semantic-success) 20%, transparent);
 }
 
 .badge-warning {
-  background-color: rgba(245, 158, 11, 0.1);
-  color: #f59e0b;
-  border: 1px solid rgba(245, 158, 11, 0.2);
+  background-color: color-mix(in srgb, var(--acuity-semantic-warning) 10%, transparent);
+  color: var(--acuity-semantic-warning);
+  border: 1px solid color-mix(in srgb, var(--acuity-semantic-warning) 20%, transparent);
 }
 
 .badge-danger {
-  background-color: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  background-color: color-mix(in srgb, var(--md-sys-color-error) 10%, transparent);
+  color: var(--md-sys-color-error);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-error) 20%, transparent);
 }
 </style>

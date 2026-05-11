@@ -106,8 +106,8 @@ async function handleUpgrade() {
 .pro-gate__desc {
   max-width: 360px;
   margin: 0;
-  font-size: var(--text-sm);
-  line-height: var(--line-height-relaxed);
+  font-size: var(--md-sys-typescale-body-medium-size); /* 14px */
+  line-height: 1.75;
   color: var(--color-text-secondary);
 }
 

@@ -11,10 +11,19 @@
 
 /* === 设计系统导入 === */
 
+/* ⚠️ 重要：design-tokens 包的 CSS 必须在入口文件中导入，不在这里导入
+ * 原因：确保 Material Design 3 主题在所有样式之前加载
+ * 
+ * 在入口文件中导入：
+ * import '@acuity-bookmarks/design-tokens/css/material-theme.css'
+ * import '@acuity-bookmarks/design-tokens/css/variables.css'
+ * import '@acuity-bookmarks/design-tokens/css/semantic-colors.css'
+ */
+
 /* 1. Layers 定义（必须最先导入） */
 @import url('../design-system/layers.css');
 
-/* 2. 设计令牌 */
+/* 2. 设计令牌映射（将 Material Design 变量映射到项目内部使用的简化变量） */
 @import url('../design-system/tokens.css');
 
 /* 2.5 业务主题映射（项目特定） */
@@ -78,8 +87,8 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-semibold);
+  font-size: var(--md-sys-typescale-title-large-size); /* 22px */
+  font-weight: var(--md-sys-typescale-title-large-weight); /* 400 */
   color: var(--color-text-primary);
 }
 
@@ -126,8 +135,8 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
+  font-size: var(--md-sys-typescale-title-medium-size); /* 16px */
+  font-weight: var(--md-sys-typescale-title-medium-weight); /* 500 */
   color: var(--color-text-primary);
 }
 
@@ -183,7 +192,7 @@
 }
 
 .control-panel__label {
-  font-size: var(--font-size-sm);
+  font-size: var(--md-sys-typescale-body-medium-size); /* 14px */
   text-align: center;
   color: var(--color-text-secondary);
 }
@@ -196,8 +205,8 @@
   gap: var(--space-1);
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-base);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
+  font-size: var(--md-sys-typescale-label-medium-size); /* 12px */
+  font-weight: var(--md-sys-typescale-label-medium-weight); /* 500 */
 }
 
 .status-indicator--success {

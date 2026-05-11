@@ -14,9 +14,91 @@
  * ======================================== */
 
 @layer reset {
-  *,
-  *::before,
-  *::after {
+  /* ⚠️ 通配符选择器会穿透 Shadow DOM，影响 Material Web Components */
+
+  /* 只重置常见的 HTML 元素，不使用通配符 */
+
+  html,
+  body,
+  div,
+  span,
+  applet,
+  object,
+  iframe,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  blockquote,
+  pre,
+  a,
+  abbr,
+  acronym,
+  address,
+  big,
+  cite,
+  code,
+  del,
+  dfn,
+  em,
+  img,
+  ins,
+  kbd,
+  q,
+  s,
+  samp,
+  small,
+  strike,
+  strong,
+  sub,
+  sup,
+  tt,
+  var,
+  b,
+  u,
+  i,
+  center,
+  dl,
+  dt,
+  dd,
+  ol,
+  ul,
+  li,
+  fieldset,
+  form,
+  label,
+  legend,
+  table,
+  caption,
+  tbody,
+  tfoot,
+  thead,
+  tr,
+  th,
+  td,
+  article,
+  aside,
+  canvas,
+  details,
+  embed,
+  figure,
+  figcaption,
+  footer,
+  header,
+  hgroup,
+  menu,
+  nav,
+  output,
+  ruby,
+  section,
+  summary,
+  time,
+  mark,
+  audio,
+  video {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
@@ -32,7 +114,7 @@
     font-family: var(--font-family-base);
     /* stylelint-disable-next-line declaration-property-value-disallowed-list -- 根字体大小必须硬编码 */
     font-size: 16px;
-    line-height: var(--line-height-base);
+    line-height: 1.5;
     color: var(--color-text-primary);
     background-color: var(--color-background);
     -webkit-font-smoothing: antialiased;
@@ -57,8 +139,8 @@
   h5,
   h6 {
     margin: 0;
-    font-weight: var(--font-weight-semibold);
-    line-height: var(--line-height-tight);
+    font-weight: 600;
+    line-height: 1.25;
     color: var(--color-text-primary);
   }
 
@@ -115,7 +197,7 @@
 
   strong,
   b {
-    font-weight: var(--font-weight-semibold);
+    font-weight: 600;
   }
 
   em,
@@ -136,7 +218,7 @@
     padding: var(--spacing-4);
     border-radius: var(--radius-lg);
     font-family: var(--font-family-monospace);
-    font-size: var(--font-size-sm);
+    font-size: var(--md-sys-typescale-body-medium-size); /* 14px */
     color: var(--color-text-primary);
     background-color: var(--color-surface-container);
     overflow-x: auto;
@@ -202,7 +284,7 @@
   }
 
   /* Form Elements */
-  button {
+  button:not([class*='md-']) {
     padding: 0;
     border: none;
     font-family: inherit;
@@ -210,6 +292,28 @@
     line-height: inherit;
     background: transparent;
     cursor: pointer;
+  }
+
+  /* ✨ Material Web Components 修复 */
+
+  /* Material Web Components 的 Shadow DOM 内部 button 需要 position: relative 才能让 ripple 正常工作 */
+
+  md-filled-button,
+  md-outlined-button,
+  md-text-button,
+  md-elevated-button,
+  md-tonal-button {
+    /* 确保 host 元素不被全局样式影响 */
+    position: relative;
+  }
+
+  /* 🔧 强制修复 Shadow DOM 内部的 button position */
+  md-filled-button::part(button),
+  md-outlined-button::part(button),
+  md-text-button::part(button),
+  md-elevated-button::part(button),
+  md-tonal-button::part(button) {
+    position: relative !important;
   }
 
   input,
@@ -241,12 +345,21 @@
 
   /* ========================================
    * UX 优化：防止意外文本选择和拖拽（客户端软件体验）
+   * ⚠️ 重要：不使用通配符选择器，避免影响 Material Web Components
    * ======================================== */
 
-  /* 🎯 全局禁用文本选择 */
+  /* 🎯 禁用文本选择（仅针对特定元素，不影响 Web Components） */
 
-  /* 所有元素都禁止文本选择 */
-  * {
+  /* 常见容器元素禁用文本选择 */
+  body,
+  div:not([class*='md-']),
+  section:not([class*='md-']),
+  article:not([class*='md-']),
+  aside:not([class*='md-']),
+  nav:not([class*='md-']),
+  header:not([class*='md-']),
+  footer:not([class*='md-']),
+  main:not([class*='md-']) {
     /* stylelint-disable property-no-vendor-prefix -- 需要浏览器兼容性 */
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -256,8 +369,8 @@
   }
 
   /* 输入框和可编辑内容也禁用选择（完全客户端体验） */
-  input,
-  textarea,
+  input:not([class*='md-']),
+  textarea:not([class*='md-']),
   [contenteditable='true'],
   [contenteditable='plaintext-only'] {
     /* stylelint-disable property-no-vendor-prefix -- 需要浏览器兼容性 */
@@ -268,10 +381,16 @@
     user-select: none;
   }
 
-  /* 图片和图标：禁止拖拽和选择 */
-  img,
-  svg,
-  [role='img'] {
+  /* 链接中的图片：允许点击事件（必须在 img 规则之前，避免优先级冲突） */
+  a img,
+  button:not([class*='md-']) img {
+    pointer-events: auto;
+  }
+
+  /* 图片和图标：禁止拖拽和选择（排除 Material Web Components） */
+  img:not([class*='md-']),
+  svg:not([class*='md-']),
+  [role='img']:not([class*='md-']) {
     -webkit-user-drag: none;
     -khtml-user-drag: none;
     -moz-user-drag: none;
@@ -279,12 +398,6 @@
     user-drag: none;
     user-select: none;
     pointer-events: none;
-  }
-
-  /* 链接中的图片：允许点击事件 */
-  a img,
-  button img {
-    pointer-events: auto;
   }
 
   /* Tables */
@@ -303,7 +416,7 @@
   }
 
   th {
-    font-weight: var(--font-weight-semibold);
+    font-weight: 600;
     color: var(--color-text-primary);
     background-color: var(--color-surface-container);
   }

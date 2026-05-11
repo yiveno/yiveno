@@ -367,11 +367,11 @@ onUnmounted(() => {
   }
 
   .step-title {
-    font-size: var(--font-size-3xl);
+    font-size: var(--md-sys-typescale-display-small-size); /* 36px */
   }
 
   .step-description {
-    font-size: var(--font-size-base);
+    font-size: var(--md-sys-typescale-body-large-size); /* 16px */
   }
 }
 
@@ -408,8 +408,8 @@ onUnmounted(() => {
 }
 
 .logo-text {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
+  font-size: var(--md-sys-typescale-title-medium-size); /* 16px */
+  font-weight: 700;
   letter-spacing: -0.02em;
 }
 
@@ -525,13 +525,13 @@ onUnmounted(() => {
 
 .progress-percentage {
   margin-bottom: var(--space-1);
-  font-size: var(--font-size-3xl);
-  font-weight: var(--font-weight-bold);
+  font-size: var(--md-sys-typescale-display-small-size); /* 36px */
+  font-weight: 700;
   line-height: 1;
 }
 
 .progress-label {
-  font-size: var(--font-size-xs);
+  font-size: var(--md-sys-typescale-label-medium-size); /* 12px */
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--color-text-secondary);
@@ -559,8 +559,8 @@ onUnmounted(() => {
 }
 
 .status-message {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
+  font-size: var(--md-sys-typescale-body-medium-size); /* 14px */
+  font-weight: 500;
   color: var(--color-text-secondary);
 }
 
@@ -586,7 +586,7 @@ onUnmounted(() => {
 }
 
 .search-placeholder {
-  font-size: var(--font-size-base);
+  font-size: var(--md-sys-typescale-body-large-size); /* 16px */
   color: var(--color-text-secondary);
 }
 
@@ -619,7 +619,7 @@ onUnmounted(() => {
   width: 40px;
   height: 40px;
   border-radius: var(--radius-base);
-  font-weight: var(--font-weight-bold);
+  font-weight: 700;
 }
 
 .result-content {
@@ -674,13 +674,13 @@ onUnmounted(() => {
   flex: 1;
   align-items: center;
   gap: var(--space-2);
-  font-size: var(--font-size-base);
+  font-size: var(--md-sys-typescale-body-large-size); /* 16px */
 }
 
 .omnibox-keyword {
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-sm);
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--font-semibold);
   color: var(--color-primary);
   background: var(--color-primary-container);
 }
@@ -723,8 +723,8 @@ onUnmounted(() => {
 }
 
 .omnibox-result-title {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
+  font-size: var(--md-sys-typescale-body-medium-size); /* 14px */
+  font-weight: 500;
   white-space: nowrap;
   color: var(--color-text-primary);
   overflow: hidden;
@@ -732,7 +732,7 @@ onUnmounted(() => {
 }
 
 .omnibox-result-url {
-  font-size: var(--font-size-xs);
+  font-size: var(--md-sys-typescale-body-small-size); /* 12px */
   white-space: nowrap;
   color: var(--color-text-secondary);
   overflow: hidden;
@@ -762,8 +762,8 @@ onUnmounted(() => {
 }
 
 .step-label {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
+  font-size: var(--md-sys-typescale-label-large-size); /* 14px */
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--color-primary);
@@ -772,8 +772,8 @@ onUnmounted(() => {
 .step-title {
   max-width: 600px;
   margin: 0;
-  font-size: var(--font-size-4xl);
-  font-weight: var(--font-weight-bold);
+  font-size: var(--md-sys-typescale-display-small-size); /* 36px */
+  font-weight: 700;
   line-height: 1.2;
   letter-spacing: -0.02em;
 }
@@ -781,7 +781,7 @@ onUnmounted(() => {
 .step-description {
   max-width: 500px;
   margin: 0;
-  font-size: var(--font-size-lg);
+  font-size: var(--md-sys-typescale-title-medium-size); /* 16px */
   line-height: 1.6;
   color: var(--color-text-secondary);
 }
@@ -797,8 +797,8 @@ onUnmounted(() => {
   padding: var(--space-4) var(--space-8);
   border: none;
   border-radius: var(--radius-full);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
+  font-size: var(--md-sys-typescale-label-large-size); /* 14px */
+  font-weight: 600;
   color: var(--color-primary-foreground);
   background: var(--color-primary);
   cursor: pointer;

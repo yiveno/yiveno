@@ -4,11 +4,15 @@
  * 
  * 使用顺序：
  * 1. material-theme.css - Material Design 3 主题（薄荷绿 #89EAD7）
- * 2. variables.css - 扩展变量定义（当前文件）
+ * 2. material-typography.css - Material Design 3 字体系统（Type Scale）
+ * 3. variables.css - 扩展变量定义（当前文件）
  * 
  * 不再使用：
  * - brand-override.css 已废弃，不覆盖 Material Design 颜色
  */
+
+/* ⚠️ 重要：Material Design 3 Typography 必须先导入 */
+@import url('./material-typography.css');
 
 :root {
   /* ========================================
@@ -82,11 +86,9 @@
  * 基础样式重置
  * ======================================== */
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/* ⚠️ 通配符选择器会穿透 Shadow DOM，影响 Material Web Components */
+/* 已移除通配符选择器，改用具体的元素选择器 */
+/* 如果需要全局重置，请在 base.css 的 @layer reset 中添加 */
 
 html {
   font-family:

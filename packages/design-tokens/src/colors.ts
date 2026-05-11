@@ -1,177 +1,291 @@
 /**
- * AcuityBookmarks 品牌色彩系统
+ * AcuityBookmarks 颜色系统
  * 
- * 核心设计理念：基于 Material Design 3 薄荷绿主题
- * - 薄荷绿 (#89EAD7): Material Design 种子色，代表"清新"、"智能"、"现代"
- * - 品牌色完全遵循 Material Design 3 规范
- * - 不覆盖 Material Design 自动生成的颜色系统
+ * 核心设计理念：基于 Material Design 3
+ * - 完全遵循 Material Design 3 规范
+ * - 提供多种格式的颜色值（CSS 变量、RGB、Hex）
+ * - 支持在无法使用 CSS 变量的场景（Canvas、Badge API、Console 等）
  */
 
-export const colors = {
-  /**
-   * Material Design 主题色
-   * 这些颜色直接来自 Material Design 3 的薄荷绿主题
-   * 不应该被覆盖或修改
-   */
-  brand: {
-    /** Material Design Primary - Logo 蓝色 (#3B82F6) */
-    primary: '#3B82F6',
-    /** Material Design Primary (dark) */
-    primaryDark: '#1E40AF',
-    /** Material Design Secondary - Logo 紫色 (#C026D3) */
-    secondary: '#C026D3',
-    /** Material Design Secondary (dark) */
-    secondaryDark: '#86198F',
-    
-    /** 品牌渐变 - 蓝紫渐变，呼应 Logo */
-    gradient: {
-      start: '#3B82F6',
-      middle: '#8B5CF6',
-      end: '#C026D3',
-      /** CSS 渐变字符串 */
-      css: 'linear-gradient(135deg, #3B82F6 0%, #8B5CF6 50%, #C026D3 100%)'
-    }
-  },
+/**
+ * 颜色值类型
+ * 提供多种格式以适应不同使用场景
+ */
+export interface ColorValue {
+  /** CSS 变量引用（推荐用于 Vue/React 组件） */
+  css: string
+  /** RGB 格式（用于 Canvas、Badge API 等） */
+  rgb: string
+  /** Hex 格式（用于某些第三方库） */
+  hex: string
+}
 
-  /**
-   * 完整的主色阶梯系统（基于 Logo 蓝色 #3B82F6）
-   * 用于创建丰富的视觉层次
-   */
+/**
+ * Material Design 3 主题色
+ * 
+ * 这些颜色来自 material-theme.css，基于种子色 #3B82F6 生成
+ */
+export const materialColors = {
+  /** 主色（亮色主题） */
   primary: {
-    50: '#eff6ff',
-    100: '#dbeafe',
-    200: '#bfdbfe',
-    300: '#93c5fd',
-    400: '#60a5fa',
-    500: '#3b82f6',  // 主色
-    600: '#2563eb',
-    700: '#1d4ed8',
-    800: '#1e40af',
-    900: '#1e3a8a',
-    950: '#172554'
-  },
+    css: 'var(--md-sys-color-primary)',
+    rgb: 'rgb(47, 98, 140)',
+    hex: '#2f628c'
+  } as ColorValue,
 
-  /**
-   * 次要色阶梯系统（基于 Logo 紫色 #C026D3）
-   */
+  /** 主色（暗色主题） */
+  primaryDark: {
+    css: 'var(--md-sys-color-primary)',
+    rgb: 'rgb(155, 203, 251)',
+    hex: '#9bcbfb'
+  } as ColorValue,
+
+  /** 主色容器（亮色主题） */
+  primaryContainer: {
+    css: 'var(--md-sys-color-primary-container)',
+    rgb: 'rgb(206, 229, 255)',
+    hex: '#cee5ff'
+  } as ColorValue,
+
+  /** 次要色（亮色主题） */
   secondary: {
-    50: '#fdf4ff',
-    100: '#fae8ff',
-    200: '#f5d0fe',
-    300: '#f0abfc',
-    400: '#e879f9',
-    500: '#d946ef',
-    600: '#c026d3',  // 次要色
-    700: '#a21caf',
-    800: '#86198f',
-    900: '#701a75',
-    950: '#4a044e'
-  },
+    css: 'var(--md-sys-color-secondary)',
+    rgb: 'rgb(81, 96, 111)',
+    hex: '#51606f'
+  } as ColorValue,
 
-  /**
-   * 语义化颜色
-   */
-  semantic: {
-    /** 成功状态 */
-    success: '#22c55e',
-    successLight: 'rgba(34, 197, 94, 0.1)',
-    successBorder: 'rgba(34, 197, 94, 0.5)',
-    
-    /** 错误状态 */
-    error: '#ef4444',
-    errorLight: 'rgba(239, 68, 68, 0.1)',
-    errorBorder: 'rgba(239, 68, 68, 0.5)',
-    
-    /** 警告状态 */
-    warning: '#f59e0b',
-    warningLight: 'rgba(245, 158, 11, 0.1)',
-    warningBorder: 'rgba(245, 158, 11, 0.5)',
-    
-    /** 信息状态 */
-    info: '#3b82f6',
-    infoLight: 'rgba(59, 130, 246, 0.1)',
-    infoBorder: 'rgba(59, 130, 246, 0.5)',
-    
-    /** AI 功能专用色 - 与 Logo 紫色标签一致 */
-    ai: '#C026D3',
-    aiLight: 'rgba(192, 38, 211, 0.1)',
-    aiBorder: 'rgba(192, 38, 211, 0.5)'
-  },
+  /** 次要色（暗色主题） */
+  secondaryDark: {
+    css: 'var(--md-sys-color-secondary)',
+    rgb: 'rgb(185, 200, 218)',
+    hex: '#b9c8da'
+  } as ColorValue,
 
-  /**
-   * 灰度色阶
-   */
-  neutral: {
-    white: '#ffffff',
-    black: '#000000',
-    gray50: '#f9fafb',
-    gray100: '#f3f4f6',
-    gray200: '#e5e7eb',
-    gray300: '#d1d5db',
-    gray400: '#9ca3af',
-    gray500: '#6b7280',
-    gray600: '#4b5563',
-    gray700: '#374151',
-    gray800: '#1f2937',
-    gray900: '#111827'
-  },
+  /** 错误色（亮色主题） */
+  error: {
+    css: 'var(--md-sys-color-error)',
+    rgb: 'rgb(186, 26, 26)',
+    hex: '#ba1a1a'
+  } as ColorValue,
 
-  /**
-   * 文本颜色
-   */
-  text: {
-    primary: '#1f2937',
-    secondary: '#6b7280',
-    tertiary: '#9ca3af',
-    disabled: '#d1d5db',
-    inverse: '#ffffff'
-  },
+  /** 错误色（暗色主题） */
+  errorDark: {
+    css: 'var(--md-sys-color-error)',
+    rgb: 'rgb(255, 180, 171)',
+    hex: '#ffb4ab'
+  } as ColorValue,
 
-  /**
-   * 边框颜色
-   */
-  border: {
-    default: '#e5e7eb',
-    light: '#f3f4f6',
-    strong: '#d1d5db',
-    focus: '#3b82f6'
-  },
+  /** 表面色（亮色主题） */
+  surface: {
+    css: 'var(--md-sys-color-surface)',
+    rgb: 'rgb(247, 249, 255)',
+    hex: '#f7f9ff'
+  } as ColorValue,
 
-  /**
-   * 背景颜色
-   */
-  background: {
-    primary: '#ffffff',
-    secondary: '#f9fafb',
-    tertiary: '#f3f4f6',
-    overlay: 'rgba(0, 0, 0, 0.5)'
-  }
+  /** 表面色（暗色主题） */
+  surfaceDark: {
+    css: 'var(--md-sys-color-surface)',
+    rgb: 'rgb(16, 20, 24)',
+    hex: '#101418'
+  } as ColorValue,
+
+  /** 表面上的文本色（亮色主题） */
+  onSurface: {
+    css: 'var(--md-sys-color-on-surface)',
+    rgb: 'rgb(24, 28, 32)',
+    hex: '#181c20'
+  } as ColorValue,
+
+  /** 表面上的文本色（暗色主题） */
+  onSurfaceDark: {
+    css: 'var(--md-sys-color-on-surface)',
+    rgb: 'rgb(224, 226, 232)',
+    hex: '#e0e2e8'
+  } as ColorValue
 } as const
 
 /**
- * Material Design 3 主题配置
+ * 语义化颜色
  * 
- * ⚠️ 重要：AcuityBookmarks 完全使用 Material Design 3 自动生成的颜色系统
- * 
- * Material Design 会根据种子色 (#89EAD7) 自动生成完整的颜色方案，包括：
- * - primary, secondary, tertiary 及其变体
- * - surface, background 及其层级
- * - error, warning 等语义色
- * - 亮色/暗色主题的所有变体
- * 
- * 我们不应该手动覆盖这些颜色，除非有特殊需求。
- * 如果需要自定义颜色，应该在 Material Design Theme Builder 中调整，
- * 然后重新生成 material-theme.css
- * 
- * @see https://m3.material.io/theme-builder
+ * 这些颜色来自 semantic-colors.css
  */
-export const materialTheme = {
-  // 保留语义化颜色的映射（这些不会被 Material Design 自动生成）
-  '--md-ref-palette-error': colors.semantic.error,
-  '--md-ref-palette-success': colors.semantic.success,
-  '--md-ref-palette-warning': colors.semantic.warning,
-  '--md-ref-palette-info': colors.semantic.info
+export const semanticColors = {
+  /** 警告色 */
+  warning: {
+    css: 'var(--acuity-semantic-warning)',
+    rgb: 'rgb(245, 124, 0)',
+    hex: '#f57c00'
+  } as ColorValue,
+
+  /** 警告容器色 */
+  warningContainer: {
+    css: 'var(--acuity-semantic-warning-container)',
+    rgb: 'rgb(255, 243, 224)',
+    hex: '#fff3e0'
+  } as ColorValue,
+
+  /** 成功色 */
+  success: {
+    css: 'var(--acuity-semantic-success)',
+    rgb: 'rgb(46, 125, 50)',
+    hex: '#2e7d32'
+  } as ColorValue,
+
+  /** 成功容器色 */
+  successContainer: {
+    css: 'var(--acuity-semantic-success-container)',
+    rgb: 'rgb(232, 245, 232)',
+    hex: '#e8f5e8'
+  } as ColorValue,
+
+  /** 信息色 */
+  info: {
+    css: 'var(--acuity-semantic-info)',
+    rgb: 'rgb(25, 118, 210)',
+    hex: '#1976d2'
+  } as ColorValue,
+
+  /** 信息容器色 */
+  infoContainer: {
+    css: 'var(--acuity-semantic-info-container)',
+    rgb: 'rgb(227, 242, 253)',
+    hex: '#e3f2fd'
+  } as ColorValue
 } as const
 
+/**
+ * 强调色/装饰色
+ * 
+ * 这些颜色来自 semantic-colors.css，用于特殊功能标识
+ */
+export const accentColors = {
+  /** 青色 */
+  teal: {
+    css: 'var(--acuity-accent-teal)',
+    rgb: 'rgb(22, 160, 133)',
+    hex: '#16a085'
+  } as ColorValue,
+
+  /** 金色 */
+  gold: {
+    css: 'var(--acuity-accent-gold)',
+    rgb: 'rgb(255, 215, 0)',
+    hex: '#ffd700'
+  } as ColorValue,
+
+  /** 琥珀色 */
+  amber: {
+    css: 'var(--acuity-accent-amber)',
+    rgb: 'rgb(245, 158, 11)',
+    hex: '#f59e0b'
+  } as ColorValue,
+
+  /** 紫色 */
+  purple: {
+    css: 'var(--acuity-accent-purple)',
+    rgb: 'rgb(192, 38, 211)',
+    hex: '#c026d3'
+  } as ColorValue,
+
+  /** AI 功能色（映射到紫色） */
+  ai: {
+    css: 'var(--acuity-accent-ai)',
+    rgb: 'rgb(192, 38, 211)',
+    hex: '#c026d3'
+  } as ColorValue
+} as const
+
+/**
+ * Primary 色彩系列
+ * 
+ * 用于渐变、图表、数据可视化等场景
+ */
+export const primaryScale = {
+  50: {
+    css: 'var(--acuity-primary-50)',
+    rgb: 'rgb(239, 246, 255)',
+    hex: '#eff6ff'
+  } as ColorValue,
+  100: {
+    css: 'var(--acuity-primary-100)',
+    rgb: 'rgb(219, 234, 254)',
+    hex: '#dbeafe'
+  } as ColorValue,
+  200: {
+    css: 'var(--acuity-primary-200)',
+    rgb: 'rgb(191, 219, 254)',
+    hex: '#bfdbfe'
+  } as ColorValue,
+  300: {
+    css: 'var(--acuity-primary-300)',
+    rgb: 'rgb(147, 197, 253)',
+    hex: '#93c5fd'
+  } as ColorValue,
+  400: {
+    css: 'var(--acuity-primary-400)',
+    rgb: 'rgb(96, 165, 250)',
+    hex: '#60a5fa'
+  } as ColorValue,
+  500: {
+    css: 'var(--acuity-primary-500)',
+    rgb: 'rgb(59, 130, 246)',
+    hex: '#3b82f6'
+  } as ColorValue,
+  600: {
+    css: 'var(--acuity-primary-600)',
+    rgb: 'rgb(37, 99, 235)',
+    hex: '#2563eb'
+  } as ColorValue,
+  700: {
+    css: 'var(--acuity-primary-700)',
+    rgb: 'rgb(29, 78, 216)',
+    hex: '#1d4ed8'
+  } as ColorValue,
+  800: {
+    css: 'var(--acuity-primary-800)',
+    rgb: 'rgb(30, 64, 175)',
+    hex: '#1e40af'
+  } as ColorValue,
+  900: {
+    css: 'var(--acuity-primary-900)',
+    rgb: 'rgb(30, 58, 138)',
+    hex: '#1e3a8a'
+  } as ColorValue
+} as const
+
+/**
+ * 统一导出所有颜色
+ */
+export const colors = {
+  material: materialColors,
+  semantic: semanticColors,
+  accent: accentColors,
+  primaryScale
+} as const
+
+/**
+ * 辅助函数：获取颜色的特定格式
+ */
+export function getColor(color: ColorValue, format: 'css' | 'rgb' | 'hex' = 'css'): string {
+  return color[format]
+}
+
+/**
+ * 辅助函数：根据主题获取颜色
+ */
+export function getThemeColor(
+  lightColor: ColorValue,
+  darkColor: ColorValue,
+  theme: 'light' | 'dark'
+): ColorValue {
+  return theme === 'dark' ? darkColor : lightColor
+}
+
+/**
+ * 类型导出
+ */
 export type Colors = typeof colors
-export type MaterialTheme = typeof materialTheme
+export type MaterialColors = typeof materialColors
+export type SemanticColors = typeof semanticColors
+export type AccentColors = typeof accentColors
+export type PrimaryScale = typeof primaryScale

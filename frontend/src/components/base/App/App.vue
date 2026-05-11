@@ -28,7 +28,7 @@ const appClasses = computed(() => [
   display: flex;
   flex-direction: column;
   font-family: var(--font-family-base);
-  line-height: var(--line-height-base);
+  line-height: var(--line-height-normal);
   color: var(--color-text-primary);
   background: var(--color-background);
 }

@@ -1,6 +1,10 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import Management from './Management.vue'
+// ✅ 导入设计标准（必须在所有样式之前）
+import '@acuity-bookmarks/design-tokens/css/material-theme.css'
+import '@acuity-bookmarks/design-tokens/css/variables.css'
+import '@acuity-bookmarks/design-tokens/css/semantic-colors.css'
 import '@/assets/main.css' // Import shared styles
 import '@/assets/fonts.css' // Import font system
 import '@/assets/smart-fonts.css' // Import smart font system

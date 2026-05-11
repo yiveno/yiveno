@@ -2,6 +2,10 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import { VueQueryPlugin } from '@tanstack/vue-query'
 import Popup from './Popup.vue'
+// ✅ 导入设计标准（必须在所有样式之前）
+import '@acuity-bookmarks/design-tokens/css/material-theme.css'
+import '@acuity-bookmarks/design-tokens/css/variables.css'
+import '@acuity-bookmarks/design-tokens/css/semantic-colors.css'
 // 样式导入（main.css 已包含完整设计系统：layers + tokens + typography + base + utilities）
 import '@/assets/main.css'
 import '@/assets/fonts.css'

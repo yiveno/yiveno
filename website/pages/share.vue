@@ -496,8 +496,8 @@ useSeoMeta({
 
 .share-landing-page {
   min-height: 100vh;
-  background: var(--color-bg-depth, #0a0a0a);
-  color: var(--color-content-primary, #ffffff);
+  background: var(--md-sys-color-background);
+  color: var(--md-sys-color-on-background);
 }
 
 /* 容器 */
@@ -523,8 +523,8 @@ useSeoMeta({
 .loading-spinner {
   width: 48px;
   height: 48px;
-  border: 4px solid rgba(255, 255, 255, 0.1);
-  border-top-color: var(--color-primary, #83d5c5);
+  border: 4px solid color-mix(in srgb, white 10%, transparent);
+  border-top-color: var(--md-sys-color-primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -538,7 +538,7 @@ useSeoMeta({
 .loading-text {
   margin-top: 1rem;
   font-size: 1.125rem;
-  color: var(--color-content-muted, #a0a0a0);
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 /* 错误状态 */
@@ -555,7 +555,7 @@ useSeoMeta({
 
 .error-message {
   font-size: 1rem;
-  color: var(--color-content-muted, #a0a0a0);
+  color: var(--md-sys-color-on-surface-variant);
   margin-bottom: 1.5rem;
 }
 
@@ -563,8 +563,8 @@ useSeoMeta({
   padding: 0.75rem 1.5rem;
   border: none;
   border-radius: 0.5rem;
-  background: var(--color-primary, #83d5c5);
-  color: var(--color-bg-depth, #0a0a0a);
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
@@ -589,13 +589,13 @@ useSeoMeta({
 
 .empty-message {
   font-size: 1rem;
-  color: var(--color-content-muted, #a0a0a0);
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 /* 头部 */
 .share-header {
   padding: 3rem 0 2rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid color-mix(in srgb, white 10%, transparent);
 }
 
 .share-title {
@@ -606,7 +606,7 @@ useSeoMeta({
 
 .share-meta {
   font-size: 1rem;
-  color: var(--color-content-muted, #a0a0a0);
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .share-time {
@@ -618,10 +618,10 @@ useSeoMeta({
   padding: 2rem 0;
   background: linear-gradient(
     135deg,
-    rgba(131, 213, 197, 0.1),
-    rgba(131, 213, 197, 0.05)
+    color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent),
+    color-mix(in srgb, var(--md-sys-color-primary) 5%, transparent)
   );
-  border-bottom: 1px solid rgba(131, 213, 197, 0.2);
+  border-bottom: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
 }
 
 /* 移动端提示 */
@@ -629,10 +629,10 @@ useSeoMeta({
   padding: 2rem 0;
   background: linear-gradient(
     135deg,
-    rgba(59, 130, 246, 0.1),
-    rgba(59, 130, 246, 0.05)
+    color-mix(in srgb, var(--acuity-semantic-info) 10%, transparent),
+    color-mix(in srgb, var(--acuity-semantic-info) 5%, transparent)
   );
-  border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+  border-bottom: 1px solid color-mix(in srgb, var(--acuity-semantic-info) 20%, transparent);
 }
 
 .mobile-actions {
@@ -652,7 +652,7 @@ useSeoMeta({
   gap: 1.5rem;
   padding: 1.5rem;
   border-radius: 0.75rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: color-mix(in srgb, white 5%, transparent);
 }
 
 .prompt-icon {
@@ -672,14 +672,14 @@ useSeoMeta({
 
 .prompt-text p {
   font-size: 0.875rem;
-  color: var(--color-content-muted, #a0a0a0);
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .install-button {
   padding: 0.75rem 1.5rem;
   border-radius: 0.5rem;
-  background: var(--color-primary, #83d5c5);
-  color: var(--color-bg-depth, #0a0a0a);
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
   font-size: 1rem;
   font-weight: 500;
   text-decoration: none;
@@ -716,10 +716,10 @@ useSeoMeta({
 
 .folder-select {
   padding: 0.625rem 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid color-mix(in srgb, white 20%, transparent);
   border-radius: 0.5rem;
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--color-content-primary, #ffffff);
+  background: color-mix(in srgb, white 5%, transparent);
+  color: var(--md-sys-color-on-background);
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
@@ -728,8 +728,8 @@ useSeoMeta({
 }
 
 .folder-select:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(131, 213, 197, 0.3);
+  background: color-mix(in srgb, white 8%, transparent);
+  border-color: color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent);
 }
 
 .folder-select:disabled {
@@ -738,8 +738,8 @@ useSeoMeta({
 }
 
 .folder-select option {
-  background: var(--color-bg-depth, #0a0a0a);
-  color: var(--color-content-primary, #ffffff);
+  background: var(--md-sys-color-background);
+  color: var(--md-sys-color-on-background);
 }
 
 .action-button {
@@ -758,13 +758,13 @@ useSeoMeta({
 }
 
 .action-button.primary {
-  background: var(--color-primary, #83d5c5);
-  color: var(--color-bg-depth, #0a0a0a);
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
 }
 
 .action-button.secondary {
   background: rgba(255, 255, 255, 0.1);
-  color: var(--color-content-primary, #ffffff);
+  color: var(--md-sys-color-on-background);
 }
 
 .action-button:not(:disabled):hover {
@@ -806,7 +806,7 @@ useSeoMeta({
 
 .bookmark-item.selected {
   background: rgba(131, 213, 197, 0.1);
-  border-color: var(--color-primary, #83d5c5);
+  border-color: var(--md-sys-color-primary);
 }
 
 .bookmark-checkbox {
@@ -858,7 +858,7 @@ useSeoMeta({
 .bookmark-url {
   display: block;
   font-size: 0.875rem;
-  color: var(--color-primary, #83d5c5);
+  color: var(--md-sys-color-primary);
   text-decoration: none;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -872,7 +872,7 @@ useSeoMeta({
 
 .bookmark-description {
   font-size: 0.875rem;
-  color: var(--color-content-muted, #a0a0a0);
+  color: var(--md-sys-color-on-surface-variant);
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;

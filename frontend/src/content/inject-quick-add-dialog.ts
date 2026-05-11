@@ -6,6 +6,13 @@
  * - 不能使用 @/ 别名导入，只能使用相对路径
  * - 通过 chrome.runtime.sendMessage 与 Background Script 通信
  * - 使用覆盖层方式，模拟 Chrome 原生对话框样式
+ * 
+ * ⚠️ 颜色说明：
+ * - Content Script 注入的 UI 运行在宿主页面的上下文中
+ * - 无法访问扩展的 CSS 变量和样式表
+ * - 必须使用内联样式和硬编码颜色值
+ * - 颜色值尽量与 Material Design 3 主题保持一致
+ * - 主要使用 Chrome 原生 UI 的颜色规范（Google Material Design）
  */
 
 const loggerPrefix = 'ContentScript:QuickAdd'

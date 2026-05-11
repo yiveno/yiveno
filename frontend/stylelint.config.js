@@ -6,8 +6,8 @@ export default {
   ignoreFiles: [
     '**/dist/**',
     '**/node_modules/**',
-    '**/.vite/**',
-    '**/design-system/tokens.css' // 设计令牌文件允许硬编码颜色
+    '**/.vite/**'
+    // tokens.css 现在只包含映射，不再包含硬编码颜色
   ],
 
   extends: ['stylelint-config-standard', 'stylelint-config-recommended-vue'],

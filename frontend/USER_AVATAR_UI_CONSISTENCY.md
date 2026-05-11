@@ -9,30 +9,36 @@
 ### 1. 头像尺寸统一
 
 **改进前**：
+
 - 官网：32px
 - 插件：36px ❌
 
 **改进后**：
+
 - 官网：32px ✅
 - 插件：32px ✅
 
 ### 2. 边框颜色统一
 
 **改进前**：
+
 - 官网：免费用户使用 `ring-primary-400`（蓝绿色）
 - 插件：免费用户使用 `--md-sys-color-secondary`（蓝色）❌
 
 **改进后**：
+
 - 官网：免费用户使用 `ring-primary-400`（蓝绿色）✅
 - 插件：免费用户使用 `--md-sys-color-primary`（蓝绿色）✅
 
 ### 3. PRO 徽章统一
 
 **改进前**：
+
 - 官网：20px × 20px，位置 `-bottom-1 -right-1`
 - 插件：18px × 18px，位置 `-bottom-2px -right-2px` ❌
 
 **改进后**：
+
 - 官网：20px × 20px，位置 `-bottom-1 -right-1` ✅
 - 插件：20px × 20px，位置 `-bottom-4px -right-4px` ✅
 
@@ -56,11 +62,11 @@ transition: all 0.2s ease;
 
 ### 边框颜色
 
-| 用户类型 | 边框颜色 | 悬停效果 |
-|---------|---------|---------|
-| **未登录** | `--color-text-secondary`（灰色） | 透明度 0.7 → 1.0 + 阴影 |
-| **免费用户** | `--md-sys-color-primary`（蓝绿色） | 光晕 + 缩放 1.05 |
-| **PRO 用户** | `#fbbf24`（金色） | 金色光晕 + 缩放 1.05 |
+| 用户类型     | 边框颜色                           | 悬停效果                |
+| ------------ | ---------------------------------- | ----------------------- |
+| **未登录**   | `--color-text-secondary`（灰色）   | 透明度 0.7 → 1.0 + 阴影 |
+| **免费用户** | `--md-sys-color-primary`（蓝绿色） | 光晕 + 缩放 1.05        |
+| **PRO 用户** | `#fbbf24`（金色）                  | 金色光晕 + 缩放 1.05    |
 
 ### PRO 徽章
 
@@ -84,18 +90,22 @@ box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 ### 悬停效果
 
 **未登录**：
+
 ```css
-opacity: 0.7 → 1.0;
+opacity: 0.7 → 1;
 box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 ```
 
 **免费用户**：
+
 ```css
-box-shadow: 0 2px 8px color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent);
+box-shadow: 0 2px 8px
+  color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent);
 transform: scale(1.05);
 ```
 
 **PRO 用户**：
+
 ```css
 box-shadow: 0 0 16px color-mix(in srgb, #fbbf24 60%, transparent);
 transform: scale(1.05);
@@ -131,8 +141,8 @@ transform: scale(1.05);
 <button
   :class="[
     'flex items-center justify-center w-10 h-10 rounded-full transition-all',
-    isPro 
-      ? 'ring-2 ring-yellow-400 hover:ring-yellow-300 hover:shadow-[0_0_16px_rgba(251,191,36,0.6)]' 
+    isPro
+      ? 'ring-2 ring-yellow-400 hover:ring-yellow-300 hover:shadow-[0_0_16px_rgba(251,191,36,0.6)]'
       : 'ring-2 ring-primary-400 hover:ring-primary-300 hover:bg-white/5'
   ]"
 >
@@ -158,7 +168,7 @@ transform: scale(1.05);
     :size="32"
     variant="circle"
   />
-  
+
   <!-- PRO 徽章 -->
   <div v-if="isPro" class="user-menu__badge">
     <LucideIcon name="crown" :size="12" />
@@ -202,11 +212,11 @@ transform: scale(1.05);
 
 ## 颜色变量映射
 
-| 官网（Tailwind） | 插件（CSS Variables） | 颜色值 |
-|-----------------|---------------------|--------|
-| `ring-primary-400` | `--md-sys-color-primary` | `#83d5c5`（蓝绿色） |
-| `ring-yellow-400` | `#fbbf24` | `#fbbf24`（金色） |
-| `from-yellow-400 to-yellow-600` | `linear-gradient(135deg, #fbbf24, #f59e0b)` | 金色渐变 |
+| 官网（Tailwind）                | 插件（CSS Variables）                       | 颜色值              |
+| ------------------------------- | ------------------------------------------- | ------------------- |
+| `ring-primary-400`              | `--md-sys-color-primary`                    | `#83d5c5`（蓝绿色） |
+| `ring-yellow-400`               | `#fbbf24`                                   | `#fbbf24`（金色）   |
+| `from-yellow-400 to-yellow-600` | `linear-gradient(135deg, #fbbf24, #f59e0b)` | 金色渐变            |
 
 ## 测试清单
 
@@ -235,10 +245,12 @@ transform: scale(1.05);
 ## 相关文件
 
 ### 官网
+
 - `website/layouts/default.vue` - 导航栏用户头像
 - `website/pages/account.vue` - 账户页面大头像
 
 ### 插件
+
 - `frontend/src/components/composite/UserMenu/UserMenu.vue` - 用户菜单组件
 - `frontend/src/components/base/Avatar/Avatar.vue` - 头像基础组件
 
@@ -289,6 +301,7 @@ export const avatar = {
 ### 3. 添加动画变体
 
 考虑添加更多动画效果：
+
 - 登录成功：头像从灰色渐变到彩色
 - 升级到 PRO：边框从蓝绿色渐变到金色 + 皇冠飞入动画
 - 悬停：更流畅的光晕扩散效果

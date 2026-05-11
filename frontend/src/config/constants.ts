@@ -77,18 +77,46 @@ export const NOTIFICATION_CONFIG = {
   /**
    * ✨ 徽章颜色配置（根据通知级别）
    *
+   * ✅ 使用 Material Design 3 和语义色（从 design-tokens 包导入）
+   * 注意：这些颜色用于 Chrome Extension Badge API，无法使用 CSS 变量
+   * 通过导入 TypeScript 常量，确保与 design-tokens 包自动同步
+   *
    * 提供语义化的徽章颜色，确保视觉一致性
    */
-  BADGE_COLORS: {
-    /** 信息徽章：蓝色 */
-    info: '#1677ff',
-    /** 成功徽章：绿色 */
-    success: '#52c41a',
-    /** 警告徽章：橙色 */
-    warning: '#faad14',
-    /** 错误徽章：红色 */
-    error: '#ff4d4f'
-  } as const,
+  BADGE_COLORS: (() => {
+    // 动态导入 design-tokens 包的颜色（避免循环依赖）
+    // 这里使用立即执行函数，在运行时获取颜色值
+    const getColors = () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { materialColors, semanticColors } = require('@acuity-bookmarks/design-tokens/colors')
+        return {
+          /** 信息徽章：使用 MD3 Primary 色 */
+          info: materialColors.primary.rgb,
+          /** 成功徽章：使用语义 Success 色 */
+          success: semanticColors.success.rgb,
+          /** 警告徽章：使用语义 Warning 色 */
+          warning: semanticColors.warning.rgb,
+          /** 错误徽章：使用 MD3 Error 色 */
+          error: materialColors.error.rgb
+        }
+      } catch {
+        // 降级方案：如果导入失败，使用硬编码值
+        return {
+          info: 'rgb(47, 98, 140)',
+          success: 'rgb(46, 125, 50)',
+          warning: 'rgb(245, 124, 0)',
+          error: 'rgb(186, 26, 26)'
+        }
+      }
+    }
+    return getColors()
+  })() as {
+    info: string
+    success: string
+    warning: string
+    error: string
+  },
 
   /**
    * ✨ 徽章自动清除延迟（毫秒）

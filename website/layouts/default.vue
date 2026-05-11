@@ -391,7 +391,7 @@ const footerGroups = [
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--color-primary-400), var(--color-primary-600));
+  background: linear-gradient(135deg, var(--acuity-primary-400), var(--acuity-primary-600));
   color: white;
   font-size: 14px;
   font-weight: 600;

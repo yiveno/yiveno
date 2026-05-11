@@ -377,45 +377,47 @@ useSeoMeta({
 
 /* 当前方案高亮样式 - Free（绿色） */
 .plan-card--current {
-  border: 2px solid rgb(34 197 94 / 0.5) !important;
+  border: 2px solid color-mix(in srgb, var(--acuity-semantic-success) 50%, transparent) !important;
   background: linear-gradient(
     135deg,
-    rgb(34 197 94 / 0.08) 0%,
+    color-mix(in srgb, var(--acuity-semantic-success) 8%, transparent) 0%,
     transparent 100%
   ) !important;
-  box-shadow: 0 8px 24px rgb(34 197 94 / 0.15) !important;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--acuity-semantic-success) 15%, transparent) !important;
   animation: cardPulseGreen 3s ease-in-out infinite, cardFadeIn 0.6s ease-out;
 }
 
 /* 当前方案高亮样式 - Pro（金色） */
 .plan-card--current-pro {
-  border: 2px solid rgb(251 191 36 / 0.6) !important;
+  border: 2px solid color-mix(in srgb, var(--acuity-accent-gold) 60%, transparent) !important;
   background: linear-gradient(
     135deg,
-    rgb(251 191 36 / 0.1) 0%,
+    color-mix(in srgb, var(--acuity-accent-gold) 10%, transparent) 0%,
     transparent 100%
   ) !important;
-  box-shadow: 0 8px 32px rgb(251 191 36 / 0.25) !important;
+  box-shadow: 0 8px 32px color-mix(in srgb, var(--acuity-accent-gold) 25%, transparent) !important;
   animation: cardPulseGold 3s ease-in-out infinite, cardFadeIn 0.6s ease-out;
 }
 
 /* 卡片脉冲动画 - 绿色 */
 @keyframes cardPulseGreen {
   0%, 100% {
-    box-shadow: 0 8px 24px rgb(34 197 94 / 0.15);
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--acuity-semantic-success) 15%, transparent);
   }
   50% {
-    box-shadow: 0 8px 32px rgb(34 197 94 / 0.3), 0 0 0 4px rgb(34 197 94 / 0.1);
+    box-shadow: 0 8px 32px color-mix(in srgb, var(--acuity-semantic-success) 30%, transparent), 
+                0 0 0 4px color-mix(in srgb, var(--acuity-semantic-success) 10%, transparent);
   }
 }
 
 /* 卡片脉冲动画 - 金色 */
 @keyframes cardPulseGold {
   0%, 100% {
-    box-shadow: 0 8px 32px rgb(251 191 36 / 0.25);
+    box-shadow: 0 8px 32px color-mix(in srgb, var(--acuity-accent-gold) 25%, transparent);
   }
   50% {
-    box-shadow: 0 8px 40px rgb(251 191 36 / 0.4), 0 0 0 4px rgb(251 191 36 / 0.15);
+    box-shadow: 0 8px 40px color-mix(in srgb, var(--acuity-accent-gold) 40%, transparent), 
+                0 0 0 4px color-mix(in srgb, var(--acuity-accent-gold) 15%, transparent);
   }
 }
 

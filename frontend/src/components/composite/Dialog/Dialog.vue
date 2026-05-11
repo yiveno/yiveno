@@ -424,8 +424,8 @@ onBeforeUnmount(() => {
 
 .acuity-dialog-body {
   flex: 1;
-  font-size: var(--text-base);
-  line-height: var(--line-height-relaxed);
+  font-size: var(--md-sys-typescale-body-large-size); /* 16px */
+  line-height: 1.75;
   overflow-y: auto;
 }
 

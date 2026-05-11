@@ -35,9 +35,9 @@
 /* 应用全局字体到整个应用 */
 html {
   font-family: var(--font-family-base);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-regular);
-  line-height: var(--line-height-normal);
+  font-size: var(--md-sys-typescale-body-large-size); /* 16px */
+  font-weight: 400;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -57,124 +57,30 @@ body {
  * ======================================== */
 
 /* ========================================
- * 注：语言特定字体由 fonts.css 和 font-switcher.ts 管理
+ * 注：语言特定字体由 fonts.css 和 font-service.ts 管理
  * ======================================== */
 
 /* ========================================
- * 语义化字体类
+ * ⚠️ 字体大小/权重/行高/字间距已迁移到 Material Design 3
+ * 
+ * 请使用 Material Design 3 Type Scale：
+ * - 工具类：class="md-typescale-body-large"
+ * - CSS 变量：var(--md-sys-typescale-body-large-size)
+ * 
+ * 详见：packages/design-tokens/css/material-typography.css
  * ======================================== */
 
-/* 标题字体 */
-.typography-display-large {
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-5xl);
-  font-weight: var(--font-weight-regular);
-  line-height: var(--line-height-tight);
-  letter-spacing: var(--letter-spacing-tight);
-}
-
-.typography-display-medium {
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-4xl);
-  font-weight: var(--font-weight-regular);
-  line-height: var(--line-height-tight);
-  letter-spacing: var(--letter-spacing-normal);
-}
-
-.typography-display-small {
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-3xl);
-  font-weight: var(--font-weight-regular);
-  line-height: var(--line-height-snug);
-  letter-spacing: var(--letter-spacing-normal);
-}
-
-/* 标题字体 */
-.typography-headline-large {
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-regular);
-  line-height: var(--line-height-snug);
-  letter-spacing: var(--letter-spacing-normal);
-}
-
-.typography-headline-medium {
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-regular);
-  line-height: var(--line-height-normal);
-  letter-spacing: var(--letter-spacing-normal);
-}
-
-.typography-headline-small {
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-regular);
-  line-height: var(--line-height-normal);
-  letter-spacing: var(--letter-spacing-normal);
-}
-
-/* 正文字体 */
-.typography-body-large {
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-regular);
-  line-height: var(--line-height-normal);
-  letter-spacing: var(--letter-spacing-normal);
-}
-
-.typography-body-medium {
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-regular);
-  line-height: var(--line-height-normal);
-  letter-spacing: var(--letter-spacing-normal);
-}
-
-.typography-body-small {
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-regular);
-  line-height: var(--line-height-relaxed);
-  letter-spacing: var(--letter-spacing-wide);
-}
-
-/* 标签字体 */
-.typography-label-large {
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  line-height: var(--line-height-snug);
-  letter-spacing: var(--letter-spacing-normal);
-}
-
-.typography-label-medium {
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
-  line-height: var(--line-height-normal);
-  letter-spacing: var(--letter-spacing-wide);
-}
-
-.typography-label-small {
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
-  line-height: var(--line-height-normal);
-  letter-spacing: var(--letter-spacing-wider);
-}
-
 /* ========================================
- * 特殊字体用途
+ * 特殊字体用途（保留）
  * ======================================== */
 
 /* 代码字体 */
 .typography-code {
   font-family: var(--font-family-mono);
   font-size: 0.9em;
-  font-weight: var(--font-weight-regular);
-  line-height: var(--line-height-relaxed);
-  letter-spacing: var(--letter-spacing-normal);
+  font-weight: 400;
+  line-height: 1.75;
+  letter-spacing: 0;
 }
 
 /* 数字字体（表格、统计） */
@@ -182,31 +88,6 @@ body {
   font-family: var(--font-family-mono);
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum' 1;
-}
-
-/* 强调字体 */
-.typography-emphasis {
-  font-weight: var(--font-weight-medium);
-  color: var(--color-primary);
-}
-
-/* ========================================
- * 响应式字体（针对不同屏幕尺寸）
- * ======================================== */
-
-/* 在小屏幕上适当缩小字体 */
-@media (width <= 768px) {
-  .typography-display-large {
-    font-size: var(--font-size-4xl);
-  }
-
-  .typography-display-medium {
-    font-size: var(--font-size-3xl);
-  }
-
-  .typography-headline-large {
-    font-size: var(--font-size-xl);
-  }
 }
 
 /* ========================================

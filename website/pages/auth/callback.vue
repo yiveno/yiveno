@@ -80,20 +80,20 @@ onMounted(async () => {
 
 .error-icon {
   font-size: 4rem;
-  color: #ef4444;
+  color: var(--md-sys-color-error);
 }
 
 .error-title {
   margin: 0;
   font-size: var(--text-2xl);
   font-weight: var(--font-bold);
-  color: var(--color-text-primary);
+  color: var(--md-sys-color-on-background);
 }
 
 .error-message {
   margin: 0;
   font-size: var(--text-base);
-  color: var(--color-text-secondary);
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .error-button {
@@ -111,7 +111,7 @@ onMounted(async () => {
 .error-button:hover {
   background-color: color-mix(in srgb, var(--md-sys-color-primary), black 10%);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px color-mix(in srgb, black 15%, transparent);
 }
 
 .callback-loading {
@@ -124,7 +124,7 @@ onMounted(async () => {
 .loading-spinner {
   width: 48px;
   height: 48px;
-  border: 4px solid rgba(255, 255, 255, 0.3);
+  border: 4px solid color-mix(in srgb, white 30%, transparent);
   border-top-color: var(--md-sys-color-primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -140,12 +140,12 @@ onMounted(async () => {
   margin: 0;
   font-size: var(--text-2xl);
   font-weight: var(--font-bold);
-  color: var(--color-text-primary);
+  color: var(--md-sys-color-on-background);
 }
 
 .loading-message {
   margin: 0;
   font-size: var(--text-base);
-  color: var(--color-text-secondary);
+  color: var(--md-sys-color-on-surface-variant);
 }
 </style>

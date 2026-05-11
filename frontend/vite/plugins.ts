@@ -38,8 +38,9 @@ export function createVuePlugin() {
   return vue({
     template: {
       compilerOptions: {
-        // 忽略自定义元素警告
-        isCustomElement: _tag => false
+        // ✨ 识别 Material Web Components 自定义元素
+        // 所有以 md- 开头的标签都被视为自定义元素，不会触发 Vue 组件解析警告
+        isCustomElement: (tag) => tag.startsWith('md-')
       }
     }
   })

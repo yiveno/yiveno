@@ -314,6 +314,19 @@ export function enableEmbeddingDebugBridge(): () => void {
 
   ;(window as Window & { __AB_EMBEDDING__?: EmbeddingDebugBridge }).__AB_EMBEDDING__ = bridge
   logger.info(LOG_TAG, '🔧 Embedding 调试桥已启用，在 Console 中使用 __AB_EMBEDDING__')
+  
+  // 获取控制台样式颜色
+  const getConsoleColor = (): string => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { materialColors } = require('@acuity-bookmarks/design-tokens/colors')
+      return materialColors.primaryDark.rgb
+    } catch {
+      // 降级方案
+      return 'rgb(155, 203, 251)'
+    }
+  }
+  
   console.info(
     '%c[EmbeddingDebug] 调试命令：\n' +
     '  await __AB_EMBEDDING__.checkProvider()         // 检查 Provider\n' +
@@ -324,7 +337,7 @@ export function enableEmbeddingDebugBridge(): () => void {
     '  await __AB_EMBEDDING__.search("音乐")          // 测试搜索\n' +
     '  await __AB_EMBEDDING__.embed("文本")           // 测试 embedding\n' +
     '  await __AB_EMBEDDING__.vectorStore.getAll()    // 获取所有向量',
-    'color: #83d5c5; font-weight: bold'
+    `color: ${getConsoleColor()}; font-weight: bold`
   )
 
   return () => {

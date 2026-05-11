@@ -66,8 +66,8 @@ withDefaults(defineProps<EmptyStateProps>(), {
 
 .empty-state__title {
   margin-bottom: var(--space-2);
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
+  font-size: var(--md-sys-typescale-title-medium-size); /* 16px */
+  font-weight: var(--md-sys-typescale-title-medium-weight); /* 500 */
   color: var(--color-text-primary);
   
   /* ✅ 优化：标题延迟淡入 */

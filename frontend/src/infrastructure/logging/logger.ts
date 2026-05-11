@@ -20,15 +20,38 @@ export type { LogLevel, LoggerConfig, LogEntry }
 
 /**
  * 日志样式配置
+ * 
+ * ✅ 使用 Material Design 3 颜色（从 design-tokens 包导入）
+ * 注意：这些颜色用于浏览器控制台，无法使用 CSS 变量
+ * 通过导入 TypeScript 常量，确保与 design-tokens 包自动同步
  */
-const levelToStyle: Record<LogLevel, string> = {
-  info: 'background: #e3f2fd; color: #0d47a1; padding: 2px 6px; border-radius: 3px;',
-  warn: 'background: #fff3e0; color: #e65100; padding: 2px 6px; border-radius: 3px;',
-  error:
-    'background: #ffebee; color: #b71c1c; padding: 2px 6px; border-radius: 3px;',
-  debug:
-    'background: #f3e5f5; color: #4a148c; padding: 2px 6px; border-radius: 3px;'
+const getLevelToStyle = (): Record<LogLevel, string> => {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { semanticColors } = require('@acuity-bookmarks/design-tokens/colors')
+    
+    return {
+      // Info: 使用语义 Info 容器色
+      info: `background: ${semanticColors.infoContainer.rgb}; color: ${semanticColors.info.rgb}; padding: 2px 6px; border-radius: 3px;`,
+      // Warn: 使用语义 Warning 容器色
+      warn: `background: ${semanticColors.warningContainer.rgb}; color: ${semanticColors.warning.rgb}; padding: 2px 6px; border-radius: 3px;`,
+      // Error: 使用 MD3 Error 容器色（需要从 material-theme.css 获取）
+      error: `background: rgb(255, 235, 238); color: rgb(183, 28, 28); padding: 2px 6px; border-radius: 3px;`,
+      // Debug: 使用 MD3 Tertiary 容器色（需要从 material-theme.css 获取）
+      debug: `background: rgb(243, 229, 245); color: rgb(74, 20, 140); padding: 2px 6px; border-radius: 3px;`
+    }
+  } catch {
+    // 降级方案：如果导入失败，使用硬编码值
+    return {
+      info: 'background: rgb(227, 242, 253); color: rgb(13, 71, 161); padding: 2px 6px; border-radius: 3px;',
+      warn: 'background: rgb(255, 243, 224); color: rgb(230, 81, 0); padding: 2px 6px; border-radius: 3px;',
+      error: 'background: rgb(255, 235, 238); color: rgb(183, 28, 28); padding: 2px 6px; border-radius: 3px;',
+      debug: 'background: rgb(243, 229, 245); color: rgb(74, 20, 140); padding: 2px 6px; border-radius: 3px;'
+    }
+  }
 }
+
+const levelToStyle = getLevelToStyle()
 
 /**
  * 日志级别权重

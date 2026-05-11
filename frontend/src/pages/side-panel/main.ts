@@ -1,9 +1,14 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import SidePanel from './SidePanel.vue'
-import '@/design-system/tokens.css'
-import '@/design-system/typography.css'
-import '@/design-system/base.css'
+// ✅ 导入设计标准（必须在所有样式之前）
+import '@acuity-bookmarks/design-tokens/css/material-theme.css'
+import '@acuity-bookmarks/design-tokens/css/variables.css'
+import '@acuity-bookmarks/design-tokens/css/semantic-colors.css'
+// ❌ 移除自定义 tokens（违反设计标准）
+// import '@/design-system/tokens.css'
+// import '@/design-system/typography.css'
+// import '@/design-system/base.css'
 import '@/assets/main.css'
 import '@/assets/fonts.css'
 import '@/assets/smart-fonts.css'

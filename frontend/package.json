@@ -43,6 +43,7 @@
     "@acuity-bookmarks/design-tokens": "workspace:*",
     "@atlaskit/pragmatic-drag-and-drop": "^1.7.7",
     "@huggingface/transformers": "^4.2.0",
+    "@material/web": "^2.4.1",
     "@supabase/supabase-js": "^2.79.0",
     "@tanstack/vue-query": "^5.90.5",
     "@tanstack/vue-virtual": "^3.13.12",

@@ -1344,14 +1344,16 @@ defineExpose({
 /* ✅ 暗色模式支持（使用 CSS 变量） */
 @media (prefers-color-scheme: dark) {
   .bookmark-drag-preview {
-    background: var(--color-surface, #2d2d2d);
+    /* ✅ 回退颜色：接近 MD3 暗色主题的 surface 色 */
+    background: var(--color-surface, rgb(16 20 24));
     box-shadow:
       0 4px 12px rgb(0 0 0 / 30%),
       0 0 0 1px rgb(255 255 255 / 10%);
   }
 
   .bookmark-drag-preview .preview-title {
-    color: var(--color-text-primary, #e8eaed);
+    /* ✅ 回退颜色：接近 MD3 暗色主题的 on-surface 色 */
+    color: var(--color-text-primary, rgb(224 226 232));
   }
 }
 
@@ -1400,7 +1402,9 @@ defineExpose({
   white-space: nowrap;
 
   /* ✅ 使用 CSS 变量，自动适配深色模式 */
-  color: var(--color-text-primary, #202124);
+
+  /* 回退颜色：接近 MD3 亮色主题的 on-surface 色 */
+  color: var(--color-text-primary, rgb(24 28 32));
   overflow: hidden;
   text-overflow: ellipsis;
 }

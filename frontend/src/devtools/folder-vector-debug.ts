@@ -119,6 +119,19 @@ export function enableFolderVectorDebugBridge(): () => void {
 
   ;(window as Window & { __AB_FOLDER_VECTOR__?: FolderVectorDebugBridge }).__AB_FOLDER_VECTOR__ = bridge
   logger.info(LOG_TAG, '🔧 文件夹向量调试桥已启用，在 Console 中使用 __AB_FOLDER_VECTOR__')
+  
+  // 获取控制台样式颜色
+  const getConsoleColor = (): string => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { materialColors } = require('@acuity-bookmarks/design-tokens/colors')
+      return materialColors.primaryDark.rgb
+    } catch {
+      // 降级方案
+      return 'rgb(155, 203, 251)'
+    }
+  }
+  
   console.info(
     '%c[FolderVectorDebug] 调试命令：\n' +
     '  await __AB_FOLDER_VECTOR__.stats()                              // 查看统计\n' +
@@ -126,7 +139,7 @@ export function enableFolderVectorDebugBridge(): () => void {
     '  await __AB_FOLDER_VECTOR__.recommend("React", "https://react.dev") // 测试推荐\n' +
     '  await __AB_FOLDER_VECTOR__.updateFolder("folder_id")            // 更新单个文件夹\n' +
     '  await __AB_FOLDER_VECTOR__.clear()                              // 清空向量',
-    'color: #83d5c5; font-weight: bold'
+    `color: ${getConsoleColor()}; font-weight: bold`
   )
 
   return () => {

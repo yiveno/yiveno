@@ -264,6 +264,7 @@ async function clearConfig() {
 }
 
 onMounted(async () => {
+  // 加载配置
   const config = await userLLMClient.getConfig()
   if (config) {
     selectedProvider.value = config.provider
@@ -299,7 +300,7 @@ onMounted(async () => {
   margin-bottom: var(--spacing-4);
   padding: var(--spacing-2) var(--spacing-3);
   border-radius: var(--radius-md);
-  font-size: var(--text-sm);
+  font-size: var(--md-sys-typescale-body-medium-size); /* 14px */
 }
 
 .status-bar--ok {
@@ -328,7 +329,7 @@ onMounted(async () => {
 .label {
   flex-shrink: 0;
   width: 120px;
-  font-size: var(--text-sm);
+  font-size: var(--md-sys-typescale-body-medium-size); /* 14px */
   color: var(--color-text-secondary);
 }
 
@@ -352,19 +353,27 @@ onMounted(async () => {
   flex: 1;
 }
 
+/* 原生 select 样式 */
 .provider-select {
-  padding: var(--spacing-1) var(--spacing-3);
+  min-width: 200px;
+  padding: var(--spacing-2) var(--spacing-3);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  outline: none;
-  font-size: var(--text-sm);
+  font-size: var(--md-sys-typescale-body-medium-size);
   color: var(--color-text-primary);
-  background: var(--color-surface);
+  background-color: var(--color-surface);
   cursor: pointer;
+  transition: border-color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+}
+
+.provider-select:hover {
+  border-color: var(--color-primary-hover);
 }
 
 .provider-select:focus {
   border-color: var(--md-sys-color-primary);
+  outline: none;
+  box-shadow: 0 0 0 1px var(--md-sys-color-primary);
 }
 
 .key-input-wrap {
@@ -418,8 +427,8 @@ onMounted(async () => {
   margin-bottom: var(--spacing-3);
   padding: var(--spacing-3);
   border-radius: var(--radius-md);
-  font-size: var(--text-xs);
-  line-height: var(--line-height-relaxed);
+  font-size: var(--md-sys-typescale-body-small-size); /* 12px */
+  line-height: 1.75;
   color: var(--color-text-secondary);
   background: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
 }
@@ -428,7 +437,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
-  font-size: var(--text-xs);
+  font-size: var(--md-sys-typescale-body-small-size); /* 12px */
   color: var(--color-text-secondary);
 }
 
@@ -445,8 +454,8 @@ onMounted(async () => {
 }
 
 .tooltip-content {
-  font-size: var(--text-xs);
-  line-height: var(--line-height-relaxed);
+  font-size: var(--md-sys-typescale-body-small-size); /* 12px */
+  line-height: 1.75;
 }
 
 .gemini-tip {
@@ -454,8 +463,8 @@ onMounted(async () => {
   align-items: flex-start;
   gap: var(--spacing-1);
   margin-top: var(--spacing-2);
-  font-size: var(--text-xs);
-  line-height: var(--line-height-relaxed);
+  font-size: var(--md-sys-typescale-body-small-size); /* 12px */
+  line-height: 1.75;
   color: var(--color-text-secondary);
 }
 

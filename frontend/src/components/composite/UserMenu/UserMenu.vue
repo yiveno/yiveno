@@ -394,12 +394,13 @@ onUnmounted(() => {
 
 /* PRO 用户：金色边框 + 光晕 */
 .user-menu__avatar-wrapper--pro {
-  border: 2px solid #fbbf24; /* 金色 */
-  box-shadow: 0 0 12px color-mix(in srgb, #fbbf24 40%, transparent);
+  /* ✅ 使用 design-tokens 的 accent-gold 颜色 */
+  border: 2px solid var(--acuity-accent-gold);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--acuity-accent-gold) 40%, transparent);
 }
 
 .user-menu__avatar-wrapper--pro:hover {
-  box-shadow: 0 0 16px color-mix(in srgb, #fbbf24 60%, transparent);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--acuity-accent-gold) 60%, transparent);
 }
 
 /* 头像 */
@@ -419,7 +420,9 @@ onUnmounted(() => {
   height: 20px;
   border-radius: var(--radius-full);
   color: #fff;
-  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+
+  /* ✅ 使用 design-tokens 的 accent-gold 和 accent-amber 颜色 */
+  background: linear-gradient(135deg, var(--acuity-accent-gold) 0%, var(--acuity-accent-amber) 100%);
   box-shadow: 0 2px 4px rgb(0 0 0 / 20%);
 }
 

@@ -1,7 +1,7 @@
 {
   "name": "@acuity-bookmarks/design-tokens",
-  "version": "1.0.0",
-  "description": "Shared design tokens for AcuityBookmarks (colors, spacing, typography, etc.)",
+  "version": "1.1.1",
+  "description": "Shared design tokens for AcuityBookmarks - Material Design 3 based design system with colors, spacing, typography, and more",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
@@ -48,19 +48,59 @@
       "require": "./src/css-vars.ts",
       "default": "./src/css-vars.ts"
     },
-    "./css/material-theme.css": "./css/material-theme.css",
-    "./css/variables.css": "./css/variables.css"
+    "./css/material-theme.css": {
+      "import": "./css/material-theme.css",
+      "require": "./css/material-theme.css",
+      "default": "./css/material-theme.css"
+    },
+    "./css/variables.css": {
+      "import": "./css/variables.css",
+      "require": "./css/variables.css",
+      "default": "./css/variables.css"
+    },
+    "./css/semantic-colors.css": {
+      "import": "./css/semantic-colors.css",
+      "require": "./css/semantic-colors.css",
+      "default": "./css/semantic-colors.css"
+    }
   },
   "files": [
     "src",
-    "css"
+    "css",
+    "docs",
+    "examples",
+    "README.md",
+    "USAGE.md"
   ],
   "keywords": [
     "design-tokens",
     "design-system",
     "theme",
-    "acuity-bookmarks"
+    "material-design",
+    "material-design-3",
+    "css-variables",
+    "typescript",
+    "acuity-bookmarks",
+    "ui",
+    "colors",
+    "spacing",
+    "typography"
   ],
   "author": "AcuityBookmarks Team",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/acuity-bookmarks/acuitybookmarks.git",
+    "directory": "packages/design-tokens"
+  },
+  "bugs": {
+    "url": "https://github.com/acuity-bookmarks/acuitybookmarks/issues"
+  },
+  "homepage": "https://github.com/acuity-bookmarks/acuitybookmarks/tree/main/packages/design-tokens#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
 }

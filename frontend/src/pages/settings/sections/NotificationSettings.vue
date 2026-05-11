@@ -23,7 +23,10 @@
           </Tooltip>
         </div>
         <div class="field">
-          <Switch v-model="mirror" size="md" @change="onToggleMirror" />
+          <md-switch
+            :selected="mirror"
+            @change="handleMirrorToggle"
+          ></md-switch>
         </div>
       </div>
     </div>
@@ -35,7 +38,7 @@ import { defineOptions, onMounted, ref } from 'vue'
 defineOptions({
   name: 'NotificationSettings'
 })
-import { LucideIcon, Switch, Tooltip } from '@/components'
+import { LucideIcon, Tooltip } from '@/components'
 import { settingsAppService } from '@/application/settings/settings-app-service'
 import { notifySuccess } from '@/application'
 import { t } from '@/utils/i18n-helpers'
@@ -51,15 +54,17 @@ onMounted(async () => {
 })
 
 // 即时保存：开关变化时立即落盘
-async function onToggleMirror(v: boolean) {
+async function handleMirrorToggle(event: Event) {
+  const target = event.target as HTMLElement & { selected: boolean }
+  mirror.value = target.selected
   try {
     await settingsAppService.saveSetting(
       'notifications.mirrorSystemWhenHidden',
-      Boolean(v),
+      Boolean(mirror.value),
       'boolean',
       '页面隐藏时镜像系统通知'
     )
-    notifySuccess(v ? '系统通知镜像：开启' : '系统通知镜像：关闭', '通知')
+    notifySuccess(mirror.value ? '系统通知镜像：开启' : '系统通知镜像：关闭', '通知')
   } catch {
     /* 保留手动保存按钮 */
   }
@@ -113,6 +118,16 @@ async function onToggleMirror(v: boolean) {
 
 .label-info-icon:hover {
   color: var(--color-primary);
+}
+
+/* Material Web Components Switch 样式覆盖 */
+md-switch {
+  --md-switch-selected-track-color: var(--color-primary);
+  --md-switch-selected-handle-color: var(--md-sys-color-on-primary);
+  --md-switch-selected-hover-track-color: var(--color-primary-hover);
+  --md-switch-selected-pressed-track-color: var(--color-primary-active);
+
+  flex-shrink: 0;
 }
 
 .tooltip-content {

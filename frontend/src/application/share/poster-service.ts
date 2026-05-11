@@ -171,32 +171,74 @@ class PosterServiceImpl implements PosterService {
    * 获取主题配置
    */
   private getConfig(theme: 'dark' | 'light'): PosterConfig {
-    if (theme === 'dark') {
-      return {
-        width: this.POSTER_WIDTH,
-        theme: 'dark',
-        padding: this.PADDING,
-        bookmarkHeight: this.BOOKMARK_HEIGHT,
-        qrSize: this.QR_SIZE,
-        colors: {
-          background: '#0e1513', // --md-sys-color-surface (dark)
-          text: '#dfe4e1', // --md-sys-color-on-surface (dark)
-          primary: '#83d5c5', // --md-sys-color-primary (dark)
-          secondary: '#b1ccc5' // --md-sys-color-secondary (dark)
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { materialColors } = require('@acuity-bookmarks/design-tokens/colors')
+      
+      if (theme === 'dark') {
+        return {
+          width: this.POSTER_WIDTH,
+          theme: 'dark',
+          padding: this.PADDING,
+          bookmarkHeight: this.BOOKMARK_HEIGHT,
+          qrSize: this.QR_SIZE,
+          colors: {
+            // ✅ 使用 Material Design 3 颜色（暗色主题）
+            // 注意：Canvas 中无法直接使用 CSS 变量，需要从 design-tokens 包导入
+            // 通过导入 TypeScript 常量，确保与 design-tokens 包自动同步
+            background: materialColors.surfaceDark.rgb,
+            text: materialColors.onSurfaceDark.rgb,
+            primary: materialColors.primaryDark.rgb,
+            secondary: materialColors.secondaryDark.rgb
+          }
+        }
+      } else {
+        return {
+          width: this.POSTER_WIDTH,
+          theme: 'light',
+          padding: this.PADDING,
+          bookmarkHeight: this.BOOKMARK_HEIGHT,
+          qrSize: this.QR_SIZE,
+          colors: {
+            // ✅ 使用 Material Design 3 颜色（亮色主题）
+            // 注意：Canvas 中无法直接使用 CSS 变量，需要从 design-tokens 包导入
+            // 通过导入 TypeScript 常量，确保与 design-tokens 包自动同步
+            background: materialColors.surface.rgb,
+            text: materialColors.onSurface.rgb,
+            primary: materialColors.primary.rgb,
+            secondary: materialColors.secondary.rgb
+          }
         }
       }
-    } else {
-      return {
-        width: this.POSTER_WIDTH,
-        theme: 'light',
-        padding: this.PADDING,
-        bookmarkHeight: this.BOOKMARK_HEIGHT,
-        qrSize: this.QR_SIZE,
-        colors: {
-          background: '#ffffff',
-          text: '#1a1a1a',
-          primary: '#004d44', // --md-sys-color-primary-container (light)
-          secondary: '#1c3531' // --md-sys-color-secondary (light)
+    } catch {
+      // 降级方案：如果导入失败，使用硬编码值
+      if (theme === 'dark') {
+        return {
+          width: this.POSTER_WIDTH,
+          theme: 'dark',
+          padding: this.PADDING,
+          bookmarkHeight: this.BOOKMARK_HEIGHT,
+          qrSize: this.QR_SIZE,
+          colors: {
+            background: 'rgb(16, 20, 24)',
+            text: 'rgb(224, 226, 232)',
+            primary: 'rgb(155, 203, 251)',
+            secondary: 'rgb(185, 200, 218)'
+          }
+        }
+      } else {
+        return {
+          width: this.POSTER_WIDTH,
+          theme: 'light',
+          padding: this.PADDING,
+          bookmarkHeight: this.BOOKMARK_HEIGHT,
+          qrSize: this.QR_SIZE,
+          colors: {
+            background: 'rgb(247, 249, 255)',
+            text: 'rgb(24, 28, 32)',
+            primary: 'rgb(47, 98, 140)',
+            secondary: 'rgb(81, 96, 111)'
+          }
         }
       }
     }
@@ -484,6 +526,7 @@ class PosterServiceImpl implements PosterService {
         width: this.QR_SIZE,
         margin: 1,
         color: {
+          // ✅ 二维码颜色：黑白是标准配色，保持不变
           dark: '#000000',
           light: '#ffffff'
         },

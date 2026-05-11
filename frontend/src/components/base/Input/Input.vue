@@ -469,7 +469,7 @@ const clearInput = () => {
 /* 错误状态 - 特异性高于 .has-content */
 .acuity-input-hint.error,
 .acuity-input-hint.error.has-content {
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-medium);
   color: var(--color-error);
   
   /* ✨ 错误提示淡入 */

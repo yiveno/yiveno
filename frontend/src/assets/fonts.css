@@ -61,9 +61,10 @@ html {
 }
 
 /* 强制字体优先级 */
-* {
-  font-family: inherit;
-}
+
+/* ⚠️ 通配符选择器会穿透 Shadow DOM，影响 Material Web Components */
+
+/* 已移除通配符选择器，字体继承由 html/body 元素处理 */
 
 /* 确保所有文本元素都使用指定字体 */
 div,

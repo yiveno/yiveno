@@ -3,7 +3,7 @@
  * 将设计令牌转换为 CSS 自定义属性
  */
 
-import { colors, materialTheme } from './colors'
+import { colors } from './colors'
 import { spacing, borderRadius, shadows, zIndex } from './spacing'
 import { fontFamily, fontSize, fontWeight } from './typography'
 
@@ -13,30 +13,24 @@ import { fontFamily, fontSize, fontWeight } from './typography'
 export function generateCSSVars() {
   return {
     // Material Design 主题色
-    '--color-brand-primary': colors.brand.primary,
-    '--color-brand-primary-dark': colors.brand.primaryDark,
-    '--color-brand-secondary': colors.brand.secondary,
-    '--color-brand-secondary-dark': colors.brand.secondaryDark,
-    '--color-gradient': colors.brand.gradient.css,
+    '--color-primary': colors.material.primary.css,
+    '--color-primary-dark': colors.material.primaryDark.css,
+    '--color-secondary': colors.material.secondary.css,
+    '--color-secondary-dark': colors.material.secondaryDark.css,
 
     // 语义化颜色
-    '--color-success': colors.semantic.success,
-    '--color-error': colors.semantic.error,
-    '--color-warning': colors.semantic.warning,
-    '--color-info': colors.semantic.info,
+    '--color-success': colors.semantic.success.css,
+    '--color-warning': colors.semantic.warning.css,
+    '--color-info': colors.semantic.info.css,
+    '--color-error': colors.material.error.css,
 
-    // 文本颜色
-    '--color-text-primary': colors.text.primary,
-    '--color-text-secondary': colors.text.secondary,
-    '--color-text-tertiary': colors.text.tertiary,
-
-    // 边框颜色
-    '--color-border': colors.border.default,
-    '--color-border-focus': colors.border.focus,
+    // 文本颜色（使用 Material Design 的 on-surface 颜色）
+    '--color-text-primary': colors.material.onSurface.css,
+    '--color-text-secondary': colors.material.onSurfaceDark.css,
 
     // 背景颜色
-    '--color-bg-primary': colors.background.primary,
-    '--color-bg-secondary': colors.background.secondary,
+    '--color-bg-primary': colors.material.surface.css,
+    '--color-bg-secondary': colors.material.surfaceDark.css,
 
     // 间距
     '--spacing-xs': spacing.xs,
@@ -108,11 +102,20 @@ export function generateCSSString(): string {
  */
 export function generateMaterialCSSVars() {
   return {
-    ...materialTheme,
-    // Material Design 主题色（可选，用于兼容旧代码）
-    '--acuity-brand-primary': colors.brand.primary,
-    '--acuity-brand-secondary': colors.brand.secondary,
-    '--acuity-gradient': colors.brand.gradient.css
+    // Material Design 主题色
+    '--acuity-brand-primary': colors.material.primary.css,
+    '--acuity-brand-secondary': colors.material.secondary.css,
+    
+    // 语义化颜色
+    '--acuity-semantic-success': colors.semantic.success.css,
+    '--acuity-semantic-warning': colors.semantic.warning.css,
+    '--acuity-semantic-info': colors.semantic.info.css,
+    
+    // 强调色
+    '--acuity-accent-gold': colors.accent.gold.css,
+    '--acuity-accent-teal': colors.accent.teal.css,
+    '--acuity-accent-amber': colors.accent.amber.css,
+    '--acuity-accent-purple': colors.accent.purple.css
   }
 }
 

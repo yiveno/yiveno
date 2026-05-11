@@ -61,7 +61,11 @@ export default defineConfig((_env: ConfigEnv) => {
         '@vueuse/core',
         'immer',
         'mitt',
-        'zod'
+        'zod',
+        // ✨ Material Web Components
+        // 注意：依赖组件（ripple, focus-ring, elevation）通过动态导入加载
+        // 不需要在这里显式包含，因为动态导入会绕过 tree-shaking
+        '@material/web'
       ],
       exclude: [
         // 排除大型库，按需加载

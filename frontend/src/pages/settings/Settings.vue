@@ -47,14 +47,13 @@
               <p class="subscription-redirect__description">
                 为了提供更好的订阅管理体验，我们已将订阅功能迁移到官网。
               </p>
-              <Button
-                variant="primary"
-                size="lg"
+              <md-filled-button
+                class="subscription-button"
                 @click="handleOpenSubscriptionPage"
               >
-                <LucideIcon name="external-link" :size="16" />
+                <md-icon>open_in_new</md-icon>
                 前往官网管理订阅
-              </Button>
+              </md-filled-button>
             </div>
           </div>
           <div v-else-if="tab === 'shortcuts'" class="pane">
@@ -75,7 +74,7 @@ import {
   ref,
   watch
 } from 'vue'
-import { App, AppHeader, Main, Tabs, Button, LucideIcon } from '@/components'
+import { App, AppHeader, Main, Tabs, LucideIcon } from '@/components'
 import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'
 import GlobalQuickAddBookmark from '@/components/business/GlobalQuickAddBookmark/GlobalQuickAddBookmark.vue'
 import { t } from '@/infrastructure'
@@ -393,5 +392,13 @@ watch(tab, v => {
   margin: 0;
   font-size: var(--text-base);
   color: var(--color-text-secondary);
+}
+
+/* ✨ Material Web Components 按钮样式 */
+.subscription-button {
+  --md-sys-color-primary: var(--color-primary);
+  --md-sys-color-on-primary: #fff;
+
+  margin-top: var(--spacing-6);
 }
 </style>

@@ -9,6 +9,7 @@ export default defineNuxtConfig({
   css: [
     '@acuity-bookmarks/design-tokens/css/material-theme.css',
     '@acuity-bookmarks/design-tokens/css/variables.css',
+    '@acuity-bookmarks/design-tokens/css/semantic-colors.css',
     // 移除 brand-override.css，严格使用 Material Design tokens 原始配置
     '~/assets/css/utilities.css',
     '~/assets/css/main.css'
@@ -65,7 +66,10 @@ export default defineNuxtConfig({
       },
       googleClientId: process.env.NUXT_PUBLIC_GOOGLE_CLIENT_ID || '',
       // Chrome 扩展 ID（用于官网与扩展通信）
-      extensionId: process.env.VITE_EXTENSION_ID || process.env.NUXT_PUBLIC_EXTENSION_ID || 'gdjcmpenmogdikhnnaebmddhmdgbfcgl'
+      extensionId:
+        process.env.VITE_EXTENSION_ID ||
+        process.env.NUXT_PUBLIC_EXTENSION_ID ||
+        'gdjcmpenmogdikhnnaebmddhmdgbfcgl'
     }
   },
 

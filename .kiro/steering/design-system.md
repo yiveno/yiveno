@@ -6,6 +6,75 @@ inclusion: always
 
 本文档定义了 AcuityBookmarks 项目的设计系统规范，用于指导 Figma 设计到代码的转换。
 
+## 🚨 强制规则（必须严格遵守）
+
+### 1. 唯一设计标准
+
+**该产品的任何终端项目必须引用 `@acuity-bookmarks/design-tokens` 作为唯一设计标准。**
+
+```typescript
+// ✅ 正确：在所有入口文件中导入
+import '@acuity-bookmarks/design-tokens/css/material-theme.css'
+import '@acuity-bookmarks/design-tokens/css/variables.css'
+import '@acuity-bookmarks/design-tokens/css/semantic-colors.css'
+
+// ❌ 错误：自定义颜色、间距、字体等设计 tokens
+// import '@/design-system/tokens.css'  // 禁止！
+```
+
+### 2. 禁止内部自定义
+
+**禁止在项目内部自定义颜色、间距、字体等设计 tokens。**
+
+```css
+/* ❌ 错误：硬编码颜色值 */
+.button {
+  background-color: #3B82F6;  /* 禁止！ */
+  padding: 16px;              /* 禁止！ */
+  font-size: 14px;            /* 禁止！ */
+}
+
+/* ✅ 正确：使用 design-tokens 的变量 */
+.button {
+  background-color: var(--md-sys-color-primary);
+  padding: var(--md-sys-spacing-md);
+  font-size: var(--md-sys-typescale-label-large-size);
+}
+```
+
+### 3. 导入顺序
+
+**所有入口文件必须按以下顺序导入样式：**
+
+```typescript
+// 1. design-tokens 包（必须最先导入）
+import '@acuity-bookmarks/design-tokens/css/material-theme.css'
+import '@acuity-bookmarks/design-tokens/css/variables.css'
+import '@acuity-bookmarks/design-tokens/css/semantic-colors.css'
+
+// 2. 项目样式
+import '@/assets/main.css'
+import '@/assets/fonts.css'
+```
+import '@acuity-bookmarks/design-tokens/css/variables.css'
+
+// 2. 项目样式
+import '@/assets/main.css'
+import '@/assets/fonts.css'
+```
+
+### 4. 检查清单
+
+在修改任何样式代码前，必须确认：
+
+- [ ] 是否导入了 `@acuity-bookmarks/design-tokens` 的 CSS？
+- [ ] 是否使用了硬编码的颜色值？（如 `#3B82F6`、`rgb(59, 130, 246)`）
+- [ ] 是否使用了硬编码的间距值？（如 `16px`、`1rem`）
+- [ ] 是否使用了硬编码的字号？（如 `14px`、`0.875rem`）
+- [ ] 是否创建了自定义的 design tokens 文件？
+
+---
+
 ## 🎨 设计系统概览
 
 AcuityBookmarks 采用 **Material Design 3** 设计系统，基于薄荷绿色系（种子色 #89EAD7）。

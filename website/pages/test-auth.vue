@@ -20,7 +20,7 @@
             <a 
               href="https://supabase.com/dashboard/project/cqw547847/auth/url-configuration" 
               target="_blank"
-              style="color: #ffc107; text-decoration: underline;"
+              class="warning-link"
             >
               打开 Supabase Dashboard 配置页面
             </a>
@@ -104,7 +104,7 @@ const simulateOAuthCallback = () => {
 .test-auth-page {
   min-height: 100vh;
   padding: var(--spacing-6);
-  background: var(--color-background);
+  background: var(--md-sys-color-background);
 }
 
 .test-container {
@@ -116,66 +116,71 @@ h1 {
   margin-bottom: var(--spacing-6);
   font-size: var(--text-2xl);
   font-weight: var(--font-bold);
-  color: var(--color-text-primary);
+  color: var(--md-sys-color-on-background);
 }
 
 .test-section {
   margin-bottom: var(--spacing-6);
   padding: var(--spacing-5);
-  border: 1px solid var(--color-border);
+  border: 1px solid color-mix(in srgb, white 10%, transparent);
   border-radius: var(--radius-lg);
-  background: var(--color-surface);
+  background: var(--md-sys-color-surface);
 }
 
 h2 {
   margin-bottom: var(--spacing-3);
   font-size: var(--text-lg);
   font-weight: var(--font-semibold);
-  color: var(--color-text-primary);
+  color: var(--md-sys-color-on-background);
 }
 
 .test-description {
   margin-bottom: var(--spacing-3);
   font-size: var(--text-sm);
-  color: var(--color-text-secondary);
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .test-result {
   padding: var(--spacing-3);
   border-radius: var(--radius-md);
-  background: var(--color-background);
+  background: var(--md-sys-color-surface-variant);
   font-family: monospace;
   font-size: var(--text-sm);
 }
 
 .test-result p {
   margin: var(--spacing-2) 0;
-  color: var(--color-text-secondary);
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .test-warning {
   margin-top: var(--spacing-3);
   padding: var(--spacing-3);
   border-radius: var(--radius-md);
-  background: rgba(255, 193, 7, 0.1);
-  border: 1px solid rgba(255, 193, 7, 0.3);
+  background: color-mix(in srgb, var(--acuity-semantic-warning) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--acuity-semantic-warning) 30%, transparent);
 }
 
 .test-warning p {
   margin: var(--spacing-1) 0;
   font-size: var(--text-sm);
-  color: var(--color-text-primary);
+  color: var(--md-sys-color-on-background);
 }
 
 .test-warning code {
   display: block;
   margin-top: var(--spacing-2);
   padding: var(--spacing-2);
-  background: rgba(0, 0, 0, 0.2);
+  background: color-mix(in srgb, black 20%, transparent);
   border-radius: var(--radius-sm);
   font-family: monospace;
   font-size: var(--text-xs);
-  color: #ffc107;
+  color: var(--acuity-semantic-warning);
+}
+
+.warning-link {
+  color: var(--acuity-semantic-warning);
+  text-decoration: underline;
 }
 
 .test-button {
@@ -192,7 +197,7 @@ h2 {
 .test-button:hover {
   background-color: color-mix(in srgb, var(--md-sys-color-primary), black 10%);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px color-mix(in srgb, black 15%, transparent);
 }
 
 .test-links {
@@ -203,7 +208,7 @@ h2 {
 
 .test-link {
   padding: var(--spacing-2) var(--spacing-3);
-  border: 1px solid var(--color-border);
+  border: 1px solid color-mix(in srgb, white 10%, transparent);
   border-radius: var(--radius-md);
   color: var(--md-sys-color-primary);
   text-decoration: none;
@@ -211,7 +216,7 @@ h2 {
 }
 
 .test-link:hover {
-  background: var(--color-background);
+  background: var(--md-sys-color-surface-variant);
   border-color: var(--md-sys-color-primary);
 }
 </style>
