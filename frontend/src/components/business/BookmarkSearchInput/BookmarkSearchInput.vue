@@ -886,13 +886,6 @@ const executeFilter = async () => {
     const hasTextQuery = query.value.trim().length > 0
     const hasActiveFilters = activeFilters.value.size > 0
 
-    console.log('[BookmarkSearchInput] executeFilter 开始:', {
-      hasTextQuery,
-      hasActiveFilters,
-      activeFilters: Array.from(activeFilters.value),
-      dataLength: props.data?.length
-    })
-
     // 重置选中索引
     selectedResultIndex.value = -1
 
@@ -964,12 +957,6 @@ watch(showPanel, visible => {
 watch(
   () => traitFilterStore.activeFilters,
   storeFilters => {
-    console.log('[BookmarkSearchInput] traitFilterStore.activeFilters 变化:', {
-      storeFilters,
-      enableTraitFilters: props.enableTraitFilters,
-      syncWithStore: props.syncWithStore
-    })
-
     // 只有启用特征筛选且开启 store 同步时才处理
     if (!props.enableTraitFilters || !props.syncWithStore) return
 

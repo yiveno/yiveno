@@ -93,13 +93,6 @@ const { size = 32 } = defineProps<UserMenuProps>()
 const { user, isAuthenticated, signOut } = useSupabaseAuth()
 const { isPro, subscriptionStatus } = useSubscription()
 
-// 🐛 调试日志
-console.log('[UserMenu] 组件初始化:', {
-  isAuthenticated: isAuthenticated.value,
-  user: user.value,
-  isPro: isPro.value
-})
-
 const isLoggedIn = computed(() => isAuthenticated.value)
 const isLoggingOut = ref(false)
 const showContextMenu = ref(false)

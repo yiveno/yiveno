@@ -48,12 +48,6 @@ const chromeStorageAdapter = {
     try {
       const result = await chrome.storage.local.get(key)
       const value = result[key] as string | undefined
-      console.log('[ChromeStorageAdapter] getItem:', { 
-        key, 
-        hasValue: !!value,
-        valueType: typeof value,
-        valueLength: value ? value.length : 0
-      })
       return value || null
     } catch (error) {
       console.error('[ChromeStorageAdapter] getItem 失败:', error)
@@ -63,11 +57,6 @@ const chromeStorageAdapter = {
   async setItem(key: string, value: string): Promise<void> {
     try {
       await chrome.storage.local.set({ [key]: value })
-      console.log('[ChromeStorageAdapter] setItem:', { 
-        key, 
-        valueLength: value.length,
-        valuePreview: value.substring(0, 100) + '...'
-      })
     } catch (error) {
       console.error('[ChromeStorageAdapter] setItem 失败:', error)
     }
@@ -75,7 +64,6 @@ const chromeStorageAdapter = {
   async removeItem(key: string): Promise<void> {
     try {
       await chrome.storage.local.remove(key)
-      console.log('[ChromeStorageAdapter] removeItem:', { key })
     } catch (error) {
       console.error('[ChromeStorageAdapter] removeItem 失败:', error)
     }

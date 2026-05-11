@@ -83,7 +83,7 @@ const serviceWorkerGlobals = {
  * 公共代码质量规则
  */
 const commonCodeQualityRules = {
-  'no-console': 'off', // 允许 console 输出
+  'no-console': ['error', { allow: ['warn', 'error'] }], // 只允许 console.warn 和 console.error
   'no-debugger': 'error',
   'no-alert': 'error',
   'no-eval': 'error',
@@ -355,7 +355,7 @@ export default [
       'no-new-object': 'error',
       'no-new-symbol': 'error',
       'no-new': 'error',
-      'no-console': 'off',
+      'no-console': ['error', { allow: ['warn', 'error'] }],
       'no-unused-vars': 'error'
     }
   },
@@ -374,7 +374,7 @@ export default [
     rules: {
       'no-process-exit': 'warn',
       'no-sync': 'warn',
-      'no-console': 'off',
+      'no-console': ['error', { allow: ['warn', 'error'] }],
       'prefer-template': 'error',
       'prefer-const': 'error',
       'no-var': 'error',
@@ -407,7 +407,7 @@ export default [
     },
     rules: {
       'no-undef': 'error',
-      'no-console': 'off',
+      'no-console': ['error', { allow: ['warn', 'error'] }],
       'no-empty': 'warn',
       'no-unused-vars': 'error',
       'no-case-declarations': 'error',
@@ -432,6 +432,21 @@ export default [
     rules: {
       'no-unused-vars': 'warn',
       '@typescript-eslint/no-unused-vars': 'warn'
+    }
+  },
+
+  // 测试文件配置 - 允许 console.log
+  {
+    files: [
+      '**/*.test.ts',
+      '**/*.test.js',
+      '**/__tests__/**/*.ts',
+      '**/__tests__/**/*.js',
+      '**/scripts/**/*.js',
+      '**/test-*.js'
+    ],
+    rules: {
+      'no-console': 'off'
     }
   },
 

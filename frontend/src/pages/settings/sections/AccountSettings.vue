@@ -133,7 +133,6 @@ const storedLoginProvider = ref<string | null>(null)
 // 登录方式（从 user_metadata 或本地存储获取）
 const loginProvider = computed(() => {
   if (!user.value) {
-    console.log('[AccountSettings] loginProvider computed: 用户未登录')
     return null
   }
 
@@ -143,23 +142,8 @@ const loginProvider = computed(() => {
     storedLoginProvider.value === 'github' ||
     storedLoginProvider.value === 'microsoft'
   ) {
-    console.log(
-      '[AccountSettings] ✅ loginProvider computed: 使用本地存储的 provider:',
-      storedLoginProvider.value
-    )
     return storedLoginProvider.value
   }
-
-  // 添加调试日志
-  console.log(
-    '[AccountSettings] ⚠️ loginProvider computed: 本地存储 provider 为空，回退到 Supabase metadata'
-  )
-  console.log('[AccountSettings] 用户信息:', {
-    app_metadata: user.value.app_metadata,
-    user_metadata: user.value.user_metadata,
-    email: user.value.email,
-    storedProvider: storedLoginProvider.value
-  })
 
   // 优先使用 app_metadata.provider（当前登录方式）
   const appProvider = user.value.app_metadata?.provider
@@ -168,13 +152,6 @@ const loginProvider = computed(() => {
   // 检查 providers 数组（可能包含多个登录方式）
   const providers = user.value.user_metadata?.providers || []
 
-  console.log('[AccountSettings] Provider 信息:', {
-    appProvider,
-    userMetadataProvider,
-    providers,
-    storedProvider: storedLoginProvider.value
-  })
-
   // 🔑 Supabase 内部使用 'azure' 作为 Microsoft 的 provider 名称
   // 我们统一映射为 'microsoft' 以保持一致性
   const normalizeProvider = (p: string | undefined) => p === 'azure' ? 'microsoft' : p
@@ -182,20 +159,12 @@ const loginProvider = computed(() => {
   // 优先使用 app_metadata.provider（当前登录方式）
   const normalizedAppProvider = normalizeProvider(appProvider)
   if (normalizedAppProvider === 'google' || normalizedAppProvider === 'github' || normalizedAppProvider === 'microsoft') {
-    console.log(
-      '[AccountSettings] ✅ loginProvider: 使用 app_metadata.provider:',
-      normalizedAppProvider
-    )
     return normalizedAppProvider
   }
 
   // 其次使用 user_metadata.provider
   const normalizedUserProvider = normalizeProvider(userMetadataProvider)
   if (normalizedUserProvider === 'google' || normalizedUserProvider === 'github' || normalizedUserProvider === 'microsoft') {
-    console.log(
-      '[AccountSettings] ✅ loginProvider: 使用 user_metadata.provider:',
-      normalizedUserProvider
-    )
     return normalizedUserProvider
   }
 
@@ -203,17 +172,10 @@ const loginProvider = computed(() => {
   if (providers.length > 0) {
     const lastProvider = normalizeProvider(providers[providers.length - 1])
     if (lastProvider === 'google' || lastProvider === 'github' || lastProvider === 'microsoft') {
-      console.log(
-        '[AccountSettings] ✅ loginProvider: 使用 providers 数组最后一个:',
-        lastProvider
-      )
       return lastProvider
     }
   }
 
-  console.log(
-    '[AccountSettings] ❌ loginProvider: 未找到有效的 provider'
-  )
   return null
 })
 
@@ -250,17 +212,12 @@ const loginProviderColor = computed(() => {
 // 订阅等级
 const subscriptionTier = computed(() => {
   const tier = subscriptionStatus.value?.tier || 'free'
-  console.log('[AccountSettings] subscriptionStatus:', subscriptionStatus.value)
-  console.log('[AccountSettings] subscriptionTier:', tier)
   return tier
 })
 
 // 头像 URL（从 user_metadata 获取）
 const avatarUrl = computed(() => {
   if (!user.value) return undefined
-  
-  // 打印用户元数据，帮助调试
-  console.log('[AccountSettings] user_metadata:', user.value.user_metadata)
   
   // 优先级：
   // 1. avatar_url（通用字段）
@@ -289,23 +246,16 @@ const avatarInitial = computed(() => {
 
 onMounted(async () => {
   // 读取本地存储的 provider
-  console.log('[AccountSettings] 🔍 开始读取本地存储的 provider...')
   try {
     const savedProvider = await chromeStorage.getLocal<string>(
       'current_login_provider'
     )
     storedLoginProvider.value = savedProvider || null
-    console.log('[AccountSettings] ✅ 从本地存储读取 provider:', {
-      saved: savedProvider,
-      stored: storedLoginProvider.value,
-      isNull: storedLoginProvider.value === null
-    })
   } catch (error) {
     console.error('[AccountSettings] ❌ 读取本地存储 provider 失败:', error)
   }
 
   if (!isAuthenticated.value) {
-    console.log('[AccountSettings] ⚠️ 用户未登录')
     return
   }
 
@@ -317,29 +267,17 @@ onMounted(async () => {
 
   // ✅ 监听登录事件，实时更新状态
   const unsubscribeLogin = onEvent('auth:logged-in', async () => {
-    console.log(
-      '[AccountSettings] 📢 收到 auth:logged-in 事件，重新读取 provider...'
-    )
     // 重新读取 provider（登录后可能更新）
     try {
       const savedProvider = await chromeStorage.getLocal<string>(
         'current_login_provider'
       )
-      console.log('[AccountSettings] 🔍 登录后读取 provider:', {
-        saved: savedProvider,
-        before: storedLoginProvider.value
-      })
       storedLoginProvider.value = savedProvider || null
-      console.log('[AccountSettings] ✅ 登录后更新 provider:', {
-        after: storedLoginProvider.value,
-        changed: storedLoginProvider.value !== savedProvider
-      })
     } catch (error) {
       console.error('[AccountSettings] ❌ 读取本地存储 provider 失败:', error)
     }
 
     // 🔑 OAuth 登录后，等待用户信息同步（Google 的 user_metadata 可能需要一点时间）
-    console.log('[AccountSettings] 🔄 等待用户信息同步...')
     await new Promise(resolve => setTimeout(resolve, 300))
 
     // 刷新用户信息（包括昵称和头像）
@@ -353,17 +291,14 @@ onMounted(async () => {
       !currentUser.user_metadata?.full_name &&
       !currentUser.user_metadata?.picture
     ) {
-      console.log('[AccountSettings] ⚠️ 用户信息可能未完全同步，等待后重试...')
       await new Promise(resolve => setTimeout(resolve, 500))
       await refreshUserInfo()
     }
   })
 
   const unsubscribeLogout = onEvent('auth:logged-out', () => {
-    console.log('[AccountSettings] 📢 收到 auth:logged-out 事件')
     nickname.value = ''
     storedLoginProvider.value = null // 清除 provider
-    console.log('[AccountSettings] ✅ 已清除 provider')
   })
 
   // 清理函数
@@ -389,7 +324,6 @@ function handleVisibilityChange() {
  */
 async function refreshUserInfo() {
   if (!isAuthenticated.value || !user.value || !session.value) {
-    console.log('[AccountSettings] ⚠️ 用户未登录，无法刷新信息')
     return
   }
 
@@ -405,11 +339,6 @@ async function refreshUserInfo() {
       if (!refreshError && refreshedUser) {
         // 使用刷新后的用户信息（包含最新的 user_metadata）
         currentUser = refreshedUser
-        console.log('[AccountSettings] ✅ 已刷新用户信息', {
-          hasFullName: !!refreshedUser.user_metadata?.full_name,
-          hasPicture: !!refreshedUser.user_metadata?.picture,
-          hasNickname: !!refreshedUser.user_metadata?.nickname
-        })
       } else if (refreshError) {
         console.warn(
           '[AccountSettings] ⚠️ 刷新用户信息失败，使用当前 user:',

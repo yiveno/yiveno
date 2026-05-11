@@ -151,7 +151,6 @@ function open(config: NotificationConfig & { type: NotificationType }) {
         }, existing.duration * 1000)
       }
       
-      console.log('[Notification] 更新通知', { key, id: existing.id })
       return
     }
   }
@@ -182,8 +181,6 @@ function open(config: NotificationConfig & { type: NotificationType }) {
       close(id)
     }, item.duration * 1000)
   }
-
-  console.log('[Notification] 创建通知', { key, id })
 }
 
 function close(id: string) {
@@ -199,8 +196,6 @@ function close(id: string) {
 
   // 移除通知
   state.notifications.splice(index, 1)
-  
-  console.log('[Notification] 关闭通知', { id })
 }
 
 function destroy(key?: string) {

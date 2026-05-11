@@ -287,12 +287,6 @@ class PerformanceMonitor {
     const score = this.getPerformanceScore()
     const suggestions = this.getOptimizationSuggestions()
 
-    console.group('📊 性能报告')
-    console.log('评分:', score)
-    console.log('指标:', metrics)
-    console.log('建议:', suggestions)
-    console.groupEnd()
-
     logger.info('PerformanceMonitor', '性能报告', {
       score,
       metrics,

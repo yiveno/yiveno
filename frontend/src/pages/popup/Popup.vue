@@ -197,21 +197,8 @@ function registerCleanup(callback: () => void): void {
 }
 
 onMounted(async () => {
-  // 🔍 调试：检查 localStorage 中的 session
-  console.log('[Popup] 🔍 检查 localStorage session keys:', 
-    Object.keys(localStorage).filter(key => key.startsWith('sb-'))
-  )
-  
-  // 🔍 调试：初始化认证状态
-  console.log('[Popup] 🔐 开始初始化认证状态...')
-  const { initialize: initAuth, user, isAuthenticated } = await import('@/composables/useSupabaseAuth').then(m => m.useSupabaseAuth())
+  const { initialize: initAuth } = await import('@/composables/useSupabaseAuth').then(m => m.useSupabaseAuth())
   await initAuth()
-  console.log('[Popup] 🔐 认证状态初始化完成:', {
-    isAuthenticated: isAuthenticated.value,
-    hasUser: !!user.value,
-    userId: user.value?.id,
-    email: user.value?.email
-  })
 
   // 检查 URL 参数，如果是添加书签操作，自动触发对话框
   try {
