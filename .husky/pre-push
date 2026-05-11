@@ -17,11 +17,11 @@ fi
 
 # 2. 代码质量检查（严格模式）
 echo "🔍 代码质量检查（严格模式）..."
-if bun run lint:check > /dev/null 2>&1; then
+if (cd frontend && bun run lint:check > /dev/null 2>&1); then
     echo "✅ ESLint 检查通过"
 else
     echo "❌ ESLint 检查失败"
-    LINT_ERROR=$(bun run lint:check 2>&1 || true)
+    LINT_ERROR=$((cd frontend && bun run lint:check) 2>&1 || true)
     ERRORS="${ERRORS}\n❌ ESLint 检查失败:\n${LINT_ERROR}\n\n"
 fi
 
