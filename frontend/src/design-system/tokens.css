@@ -93,24 +93,24 @@
   --color-on-ai-container: var(--acuity-accent-on-ai-container);
 
   /* === Hover 状态色彩 (使用 color-mix 算法自动计算) === */
-  --color-primary-hover: color-mix(in srgb, var(--color-primary), black 15%);
-  --color-primary-active: color-mix(in srgb, var(--color-primary), black 25%);
+  --color-primary-hover: color-mix(in srgb, var(--color-primary), #000 15%);
+  --color-primary-active: color-mix(in srgb, var(--color-primary), #000 25%);
   --color-secondary-hover: color-mix(
     in srgb,
     var(--color-secondary),
-    black 15%
+    #000 15%
   );
   --color-secondary-active: color-mix(
     in srgb,
     var(--color-secondary),
-    black 25%
+    #000 25%
   );
-  --color-error-hover: color-mix(in srgb, var(--color-error), black 15%);
-  --color-error-active: color-mix(in srgb, var(--color-error), black 25%);
-  --color-warning-hover: color-mix(in srgb, var(--color-warning), black 15%);
-  --color-warning-active: color-mix(in srgb, var(--color-warning), black 25%);
-  --color-success-hover: color-mix(in srgb, var(--color-success), black 15%);
-  --color-success-active: color-mix(in srgb, var(--color-success), black 25%);
+  --color-error-hover: color-mix(in srgb, var(--color-error), #000 15%);
+  --color-error-active: color-mix(in srgb, var(--color-error), #000 25%);
+  --color-warning-hover: color-mix(in srgb, var(--color-warning), #000 15%);
+  --color-warning-active: color-mix(in srgb, var(--color-warning), #000 25%);
+  --color-success-hover: color-mix(in srgb, var(--color-success), #000 15%);
+  --color-success-active: color-mix(in srgb, var(--color-success), #000 25%);
   --color-surface-hover: color-mix(
     in srgb,
     var(--color-surface),

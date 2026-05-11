@@ -382,6 +382,7 @@
   }
 
   /* 链接中的图片：允许点击事件（必须在 img 规则之前，避免优先级冲突） */
+  /* stylelint-disable no-descending-specificity */
   a img,
   button:not([class*='md-']) img {
     pointer-events: auto;
@@ -391,9 +392,12 @@
   img:not([class*='md-']),
   svg:not([class*='md-']),
   [role='img']:not([class*='md-']) {
+    /* stylelint-enable no-descending-specificity */
     -webkit-user-drag: none;
     -khtml-user-drag: none;
+    /* stylelint-disable-next-line property-no-vendor-prefix */
     -moz-user-drag: none;
+    /* stylelint-disable-next-line property-no-vendor-prefix */
     -o-user-drag: none;
     user-drag: none;
     user-select: none;
