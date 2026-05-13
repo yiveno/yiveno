@@ -58,7 +58,7 @@
         title="更多操作"
         @click.stop="openContextMenu"
       >
-        <md-icon>more_vert</md-icon>
+        <LucideIcon name="more-vertical" :size="16" />
       </md-icon-button>
     </div>
 
@@ -125,7 +125,7 @@
         title="更多操作"
         @click.stop="openContextMenu"
       >
-        <md-icon>more_vert</md-icon>
+        <LucideIcon name="more-vertical" :size="16" />
       </md-icon-button>
     </div>
 

@@ -10,7 +10,7 @@
         :aria-label="sidePanelTooltip"
         @click="handleOpenSidePanel"
       >
-        <md-icon>menu_open</md-icon>
+        <LucideIcon name="panel-left" :size="20" />
       </md-icon-button>
     </div>
 
@@ -34,7 +34,7 @@
         aria-label="打开设置"
         @click="handleOpenSettings"
       >
-        <md-icon>settings</md-icon>
+        <LucideIcon name="settings" :size="20" />
       </md-icon-button>
       <slot name="actions" />
     </div>

@@ -16,7 +16,7 @@
       :title="currentThemeLabel"
       :aria-label="currentThemeLabel"
     >
-      <md-icon>{{ currentThemeIcon }}</md-icon>
+      <LucideIcon :name="currentThemeIconLucide" :size="20" />
     </md-icon-button>
 
     <Transition name="dropdown">
@@ -70,14 +70,14 @@ const themeOptions = [
   { value: 'dark' as ThemeMode, label: '暗黑主题', icon: 'dark_mode' }
 ]
 
-// 计算当前主题的图标
-const currentThemeIcon = computed(() => {
+// 计算当前主题的图标（Lucide Icons）
+const currentThemeIconLucide = computed(() => {
   if (currentTheme.value === 'system') {
     // 跟随系统时，显示当前实际主题的图标
     const systemIsDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    return systemIsDark ? 'dark_mode' : 'light_mode'
+    return systemIsDark ? 'moon' : 'sun'
   }
-  return currentTheme.value === 'dark' ? 'dark_mode' : 'light_mode'
+  return currentTheme.value === 'dark' ? 'moon' : 'sun'
 })
 
 // 计算当前主题的标签

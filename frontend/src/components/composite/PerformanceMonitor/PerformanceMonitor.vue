@@ -3,7 +3,7 @@
     <div class="monitor-header">
       <h4>性能监控</h4>
       <md-icon-button @click="toggleMonitor">
-        <md-icon>{{ isExpanded ? 'expand_less' : 'expand_more' }}</md-icon>
+        <LucideIcon :name="isExpanded ? 'chevron-up' : 'chevron-down'" :size="20" />
       </md-icon-button>
     </div>
 

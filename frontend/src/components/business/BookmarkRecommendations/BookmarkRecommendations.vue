@@ -27,7 +27,7 @@ SmartRecommendationEngine → 推荐列表 → UI 展示 → 用户交互 → �
           title="刷新推荐"
           @click="refreshRecommendations"
         >
-          <md-icon :class="{ 'icon-spin': isRefreshing }">refresh</md-icon>
+          <LucideIcon name="refresh-cw" :size="20" :class="{ 'icon-spin': isRefreshing }" />
         </md-icon-button>
       </div>
     </div>

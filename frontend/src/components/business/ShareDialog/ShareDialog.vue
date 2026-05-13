@@ -117,7 +117,7 @@
         aria-label="关闭分享对话框"
         @click="$emit('update:show', false)"
       >
-        <md-icon>close</md-icon>
+        <LucideIcon name="x" :size="20" />
       </md-icon-button>
       <md-icon-button
         title="复制图片"
@@ -125,7 +125,7 @@
         aria-label="复制海报图片到剪贴板"
         @click="handleCopyImage"
       >
-        <md-icon>content_copy</md-icon>
+        <LucideIcon name="copy" :size="20" />
       </md-icon-button>
       <md-icon-button
         title="下载图片"
@@ -133,7 +133,7 @@
         aria-label="下载海报图片"
         @click="handleDownloadImage"
       >
-        <md-icon>download</md-icon>
+        <LucideIcon name="download" :size="20" />
       </md-icon-button>
       <md-filled-icon-button
         title="生成链接"
@@ -141,7 +141,7 @@
         aria-label="生成分享链接并复制到剪贴板"
         @click="handleGenerateLink"
       >
-        <md-icon>link</md-icon>
+        <LucideIcon name="link" :size="20" />
       </md-filled-icon-button>
     </template>
   </Dialog>

@@ -23,7 +23,7 @@
               v-for="tabItem in tabsI18n"
               :key="tabItem.value"
             >
-              <md-icon slot="icon">{{ getIconName(tabItem.icon) }}</md-icon>
+              <LucideIcon slot="icon" :name="tabItem.icon" :size="20" />
               {{ tabItem.text }}
             </md-primary-tab>
           </md-tabs>
@@ -60,7 +60,7 @@ import {
 import { App, AppHeader, Main } from '@/components'
 import '@material/web/tabs/tabs.js'
 import '@material/web/tabs/primary-tab.js'
-import '@material/web/icon/icon.js'
+import LucideIcon from '@/components/base/LucideIcon/LucideIcon.vue'
 import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'
 import GlobalQuickAddBookmark from '@/components/business/GlobalQuickAddBookmark/GlobalQuickAddBookmark.vue'
 import { t } from '@/infrastructure'
@@ -151,19 +151,6 @@ const handleTabChange = (event: Event) => {
   if (index >= 0 && index < tabs.length) {
     tab.value = tabs[index].value
   }
-}
-
-/**
- * 将 Lucide 图标名称映射到 Material Icons
- */
-const getIconName = (lucideIcon: string): string => {
-  const iconMap: Record<string, string> = {
-    'settings': 'settings',
-    'sparkles': 'auto_awesome',
-    'bell': 'notifications',
-    'keyboard': 'keyboard'
-  }
-  return iconMap[lucideIcon] || lucideIcon
 }
 
 // 检查登录状态
