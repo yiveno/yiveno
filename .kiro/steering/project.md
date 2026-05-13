@@ -62,8 +62,21 @@ bun run stylelint:force
 ✅ 允许：重命名/重构后删除旧文件（确认无引用后立即删除）
 ❌ 禁止：创建独立的文档文件来记录修改
 ❌ 禁止：创建 CHANGELOG.md、TODO.md 等文件（除非用户要求）
-❌ 禁止创建一个 spec
-❌ 禁止保留已被替代的旧文件（不留历史包袱）
+❌ 禁止：创建一个 spec
+❌ 禁止：创建测试文件（.test.ts / .spec.ts 等）
+❌ 禁止：保留已被替代的旧文件（不留历史包袱）
+```
+
+### 3.2 测试文件规则
+```
+❌ 绝对禁止：主动创建测试文件
+❌ 绝对禁止：创建任何形式的测试文件（.test.ts、.spec.ts、.test.vue 等）
+✅ 唯一例外：用户明确说"创建测试文件"、"写测试"时
+
+⚠️ 原因：
+  - 测试文件属于冗余垃圾，增加维护成本
+  - 项目已有完整的测试体系，不需要额外测试文件
+  - 用户会在需要时主动要求创建测试
 ```
 
 ### 3.1 旧文件清理原则
@@ -89,6 +102,54 @@ bun run stylelint:force
 ---
 
 ## 🏗️ 架构铁律（必须严格遵守）
+
+### 铁律 0：Background Script 环境隔离（最高优先级）
+
+**Background Script 运行在 Service Worker 环境，没有 DOM API！**
+
+**绝对禁止：**
+```typescript
+// ❌ 禁止：background/ 目录中的任何文件导入 Vue 相关的模块
+import { ref, computed } from 'vue'  // ❌ Service Worker 中不能用 Vue
+import { useStore } from '@/stores'   // ❌ Pinia Store 依赖 Vue
+import SomeComponent from '@/components/SomeComponent.vue'  // ❌ Vue 组件
+
+// ❌ 禁止：background/ 依赖的模块（application/、services/、infrastructure/）导入 Vue
+// 文件：frontend/src/application/some-service.ts
+import { createApp } from 'vue'  // ❌ 会导致 background.js 间接依赖 Vue
+
+// ❌ 禁止：从 @/application 或 @/components 导入，因为它们可能包含 Vue 代码
+import { someService } from '@/application'  // ❌ 可能包含 Vue 依赖
+```
+
+**正确做法：**
+```typescript
+// ✅ 正确：只导入纯 TypeScript 模块
+import { logger } from '@/infrastructure/logging/logger'
+import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
+import type { BookmarkRecord } from '@/core/types/bookmark'
+
+// ✅ 正确：直接导入具体的服务文件，而不是通过 index.ts
+import { bookmarkSearchService } from '@/application/query/bookmark-search-service'
+// 而不是：import { bookmarkSearchService } from '@/application'  // ❌
+```
+
+**检查清单（修改 background/ 相关代码前必须确认）：**
+- [ ] 我要导入的模块是否依赖 Vue？
+- [ ] 我要导入的模块是否依赖 Pinia Store？
+- [ ] 我要导入的模块是否依赖 Vue 组件？
+- [ ] 我是否从 `@/application` 或 `@/components` 导入？（如果是，改为直接导入具体文件）
+- [ ] 我导入的服务是否会在内部导入 Vue 相关的模块？
+
+**验证方法：**
+```bash
+# 构建后会自动验证 background.js 是否包含 DOM API
+bun run build
+
+# 如果验证失败，会看到类似错误：
+# ❌ ./assets/some-chunk.js 包含 HTMLElement 引用
+# 这说明 background.js 间接依赖了 Vue 或 Material Web Components
+```
 
 ### 铁律 1：单向数据流（禁止违反）
 
@@ -310,6 +371,24 @@ if (isSemanticEnabled) {
 - ❌ 永久禁止 `any`、`as any`
 - ✅ 必须使用 Zod 校验外部数据
 - ✅ 必须添加 JSDoc 注释（中文）
+
+### 注释规范
+```
+❌ 禁止的注释类型：
+  - "已删除"、"已移除"、"已弃用"等状态标记
+  - "注意：XXX 已在 YYY 中配置"等提示性注释
+  - "使用 XXX 替代"等迁移提示
+  - 重复代码逻辑的注释（代码已经很清楚了）
+  - 过时的 TODO、FIXME 标记
+
+✅ 允许的注释：
+  - 解释**为什么**这样做（业务逻辑、性能优化原因）
+  - 解释复杂算法的思路
+  - 标注外部依赖的限制或 bug workaround
+  - API 文档（JSDoc）
+
+原则：代码应该自解释，注释应该解释意图而不是重复代码
+```
 
 ### Vue 组件规范
 - ✅ 必须使用 `defineOptions({ name: 'ComponentName' })`

@@ -17,6 +17,8 @@
  */
 
 import { logger } from '@/infrastructure/logging/logger'
+// ⚠️ 不要从 @/application 导入，因为 application/index.ts 会导入所有服务
+// 其中 notification-service 依赖 Vue，会导致 Vue 被打包到 background.js
 import { bookmarkSearchService } from '@/application/query/bookmark-search-service'
 import { dispatchOffscreenRequest } from '@/infrastructure/offscreen/manager'
 import type { EnhancedSearchResult } from '@/core/query-engine'

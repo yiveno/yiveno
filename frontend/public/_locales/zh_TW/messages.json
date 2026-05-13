@@ -2323,6 +2323,26 @@
     "message": "支持在後台運行時接收通知",
     "description": "Settings: settings_notification_mirror_tooltip_3"
   },
+  "settings_notification_do_not_disturb": {
+    "message": "勿擾模式",
+    "description": "Settings: settings_notification_do_not_disturb"
+  },
+  "settings_notification_do_not_disturb_tooltip_title": {
+    "message": "開啟後的效果：",
+    "description": "Settings: settings_notification_do_not_disturb_tooltip_title"
+  },
+  "settings_notification_do_not_disturb_tooltip_1": {
+    "message": "所有通知都不會彈出，包括頁面提示和系統通知",
+    "description": "Settings: settings_notification_do_not_disturb_tooltip_1"
+  },
+  "settings_notification_do_not_disturb_tooltip_2": {
+    "message": "適合需要專注工作、不希望被打擾的場景",
+    "description": "Settings: settings_notification_do_not_disturb_tooltip_2"
+  },
+  "settings_notification_do_not_disturb_tooltip_3": {
+    "message": "關閉後，通知功能恢復正常",
+    "description": "Settings: settings_notification_do_not_disturb_tooltip_3"
+  },
   "settings_shortcut_title": {
     "message": "快捷鍵設置",
     "description": "Settings: settings_shortcut_title"

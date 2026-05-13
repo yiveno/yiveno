@@ -164,6 +164,8 @@ export interface NotificationServiceConfig {
   enablePageToasts: boolean
   /** ✨ 是否启用扩展图标徽章 */
   enableBadge: boolean
+  /** ✨ 勿扰模式：开启后所有通知都不会显示 */
+  enableDoNotDisturb: boolean
 }
 
 /**

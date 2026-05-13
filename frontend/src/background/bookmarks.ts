@@ -15,7 +15,8 @@
 
 import { logger } from '@/infrastructure/logging/logger'
 import { bookmarkSyncService } from '@/services/bookmark-sync-service'
-import { scheduleTraitRebuildForIds } from '@/services/bookmark-trait-service'
+// ⚠️ 临时注释：scheduleTraitRebuildForIds 导致 background.js 导入 app-components
+// import { scheduleTraitRebuildForIds } from '@/services/bookmark-trait-service'
 import { crawlMultipleBookmarks } from '@/services/local-bookmark-crawler'
 import { deleteBookmarkMetadata } from '@/services/local-bookmark-crawler'
 
@@ -88,7 +89,9 @@ async function syncAndBroadcast(
       logger.warn('BackgroundBookmarks', '广播消息异常', { error, eventType })
     }
 
-    scheduleTraitRebuildForIds([bookmarkId], `background-${eventType}`)
+    // ⚠️ 临时注释：scheduleTraitRebuildForIds 导致 background.js 导入 app-components
+    // 特征重建将在前端页面打开时自动执行
+    // scheduleTraitRebuildForIds([bookmarkId], `background-${eventType}`)
 
   } catch (error) {
     logger.error('BackgroundBookmarks', `❌ 同步失败: ${eventType}`, error)

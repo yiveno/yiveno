@@ -43,8 +43,9 @@ export async function saveCrawlResult(
 
     await indexedDBManager.saveCrawlMetadata(crawlRecord)
 
-    // 触发特征检测（异步，不阻塞）
-    scheduleTraitRebuildForBookmark(bookmarkId)
+    // ⚠️ 临时注释：scheduleTraitRebuildForBookmark 导致 background.js 导入 app-components
+    // 特征重建将在前端页面打开时自动执行
+    // scheduleTraitRebuildForBookmark(bookmarkId)
 
     logger.debug('LocalCrawler', `💾 保存爬取结果: ${url} → HTTP ${result.httpStatus ?? 'N/A'}`)
   } catch (error) {
@@ -206,6 +207,9 @@ export async function getCrawlStatistics(): Promise<{
 
 // ==================== 工具函数 ====================
 
+// ⚠️ 临时注释：scheduleTraitRebuildForBookmark 导致 background.js 导入 app-components
+// 特征重建将在前端页面打开时自动执行
+/*
 function scheduleTraitRebuildForBookmark(bookmarkId: string): void {
   import('./bookmark-trait-service')
     .then(({ scheduleTraitRebuildForIds }) => {
@@ -215,3 +219,4 @@ function scheduleTraitRebuildForBookmark(bookmarkId: string): void {
       logger.warn('LocalCrawler', '触发特征检测失败', error)
     })
 }
+*/

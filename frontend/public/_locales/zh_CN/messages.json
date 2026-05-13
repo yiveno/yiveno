@@ -2318,24 +2318,68 @@
     "description": "Settings: settings_notification_title"
   },
   "settings_notification_mirror": {
-    "message": "系统通知镜像",
+    "message": "后台通知提醒",
     "description": "Settings: settings_notification_mirror"
   },
   "settings_notification_mirror_tooltip_title": {
-    "message": "系统通知镜像的作用：",
+    "message": "开启后的效果：",
     "description": "Settings: settings_notification_mirror_tooltip_title"
   },
   "settings_notification_mirror_tooltip_1": {
-    "message": "当页面隐藏时，自动镜像通知到系统通知中心",
+    "message": "当你切换到其他标签页或最小化浏览器时，仍能收到通知",
     "description": "Settings: settings_notification_mirror_tooltip_1"
   },
   "settings_notification_mirror_tooltip_2": {
-    "message": "确保重要提醒不会被遗漏",
+    "message": "通知会显示在系统通知中心（右下角），不会错过重要提醒",
     "description": "Settings: settings_notification_mirror_tooltip_2"
   },
   "settings_notification_mirror_tooltip_3": {
-    "message": "支持在后台运行时接收通知",
+    "message": "关闭后，只有在打开扩展页面时才能看到通知",
     "description": "Settings: settings_notification_mirror_tooltip_3"
+  },
+  "settings_notification_do_not_disturb": {
+    "message": "勿扰模式",
+    "description": "Settings: settings_notification_do_not_disturb"
+  },
+  "settings_notification_do_not_disturb_tooltip_title": {
+    "message": "开启后的效果：",
+    "description": "Settings: settings_notification_do_not_disturb_tooltip_title"
+  },
+  "settings_notification_do_not_disturb_tooltip_1": {
+    "message": "所有通知都不会弹出，包括页面提示和系统通知",
+    "description": "Settings: settings_notification_do_not_disturb_tooltip_1"
+  },
+  "settings_notification_do_not_disturb_tooltip_2": {
+    "message": "适合需要专注工作、不希望被打扰的场景",
+    "description": "Settings: settings_notification_do_not_disturb_tooltip_2"
+  },
+  "settings_notification_do_not_disturb_tooltip_3": {
+    "message": "关闭后，通知功能恢复正常",
+    "description": "Settings: settings_notification_do_not_disturb_tooltip_3"
+  },
+  "settings_notification_duration": {
+    "message": "通知显示时长",
+    "description": "Settings: settings_notification_duration"
+  },
+  "settings_notification_duration_tooltip_title": {
+    "message": "控制通知自动消失的时间：",
+    "description": "Settings: settings_notification_duration_tooltip_title"
+  },
+  "settings_notification_duration_tooltip_1": {
+    "message": "拖动滑块调整通知显示时长（1-10秒）",
+    "description": "Settings: settings_notification_duration_tooltip_1"
+  },
+  "settings_notification_duration_tooltip_2": {
+    "message": "较短的时长适合快速浏览，较长的时长适合仔细阅读",
+    "description": "Settings: settings_notification_duration_tooltip_2"
+  },
+  "settings_notification_duration_tooltip_3": {
+    "message": "建议设置为 3-5 秒，既不会错过重要信息，也不会过度干扰",
+    "description": "Settings: settings_notification_duration_tooltip_3"
+  },
+  "settings_notification_duration_seconds": {
+    "message": "秒",
+    "description": "Settings: settings_notification_duration_seconds"
   },
   "settings_shortcut_title": {
     "message": "快捷键设置",

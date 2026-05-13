@@ -142,25 +142,22 @@ const cardClasses = computed(() => [
 .card--default {
   border: 1px solid var(--color-border);
   
-  /* ✨ 添加轻微阴影 */
-  box-shadow: 0 1px 2px rgb(0 0 0 / 3%);
+  /* ✅ Material Design 3 Elevation Level 1 */
+  box-shadow: var(--md-sys-elevation-1);
 }
 
 .card--outlined {
   border: 2px solid var(--color-border);
   
-  /* ✨ 添加轻微阴影 */
-  box-shadow: 0 1px 2px rgb(0 0 0 / 3%);
+  /* ✅ Material Design 3 Elevation Level 1 */
+  box-shadow: var(--md-sys-elevation-1);
 }
 
 .card--elevated {
   border: 1px solid var(--color-border);
   
-  /* ✨ 优化阴影：多层次阴影 */
-  box-shadow: 
-    0 2px 8px rgb(0 0 0 / 6%),
-    0 1px 4px rgb(0 0 0 / 4%),
-    0 0 0 1px rgb(255 255 255 / 3%);
+  /* ✅ Material Design 3 Elevation Level 2 */
+  box-shadow: var(--md-sys-elevation-2);
 }
 
 /* === Borderless - 高特异性覆盖 outlined/elevated === */
@@ -186,11 +183,8 @@ const cardClasses = computed(() => [
 
 /* === States === */
 .card--hover:hover {
-  /* ✨ 悬停效果：阴影加深 */
-  box-shadow: 
-    0 8px 24px rgb(0 0 0 / 10%),
-    0 4px 12px rgb(0 0 0 / 8%),
-    0 0 0 1px rgb(255 255 255 / 5%);
+  /* ✅ Material Design 3 Elevation Level 3 */
+  box-shadow: var(--md-sys-elevation-3);
 }
 
 .card--clickable {
@@ -199,19 +193,15 @@ const cardClasses = computed(() => [
   &:hover {
     border-color: var(--color-border-hover);
     
-    /* ✨ 悬停效果：阴影加深 */
-    box-shadow: 
-      0 4px 12px rgb(0 0 0 / 8%),
-      0 2px 6px rgb(0 0 0 / 6%);
+    /* ✅ Material Design 3 Elevation Level 2 */
+    box-shadow: var(--md-sys-elevation-2);
   }
 
   &:active {
     opacity: 0.95;
 
-    /* ✨ 点击效果：阴影减弱 */
-    box-shadow: 
-      0 1px 3px rgb(0 0 0 / 6%),
-      0 1px 2px rgb(0 0 0 / 4%);
+    /* ✅ Material Design 3 Elevation Level 1 */
+    box-shadow: var(--md-sys-elevation-1);
   }
 }
 

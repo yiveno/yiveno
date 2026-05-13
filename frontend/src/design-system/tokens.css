@@ -101,8 +101,16 @@
   --color-white: #fff;
 
   /* === Hover 状态色彩 (使用 color-mix 算法自动计算) === */
-  --color-primary-hover: color-mix(in srgb, var(--color-primary), var(--color-black) 15%);
-  --color-primary-active: color-mix(in srgb, var(--color-primary), var(--color-black) 25%);
+  --color-primary-hover: color-mix(
+    in srgb,
+    var(--color-primary),
+    var(--color-black) 15%
+  );
+  --color-primary-active: color-mix(
+    in srgb,
+    var(--color-primary),
+    var(--color-black) 25%
+  );
   --color-secondary-hover: color-mix(
     in srgb,
     var(--color-secondary),
@@ -113,12 +121,36 @@
     var(--color-secondary),
     var(--color-black) 25%
   );
-  --color-error-hover: color-mix(in srgb, var(--color-error), var(--color-black) 15%);
-  --color-error-active: color-mix(in srgb, var(--color-error), var(--color-black) 25%);
-  --color-warning-hover: color-mix(in srgb, var(--color-warning), var(--color-black) 15%);
-  --color-warning-active: color-mix(in srgb, var(--color-warning), var(--color-black) 25%);
-  --color-success-hover: color-mix(in srgb, var(--color-success), var(--color-black) 15%);
-  --color-success-active: color-mix(in srgb, var(--color-success), var(--color-black) 25%);
+  --color-error-hover: color-mix(
+    in srgb,
+    var(--color-error),
+    var(--color-black) 15%
+  );
+  --color-error-active: color-mix(
+    in srgb,
+    var(--color-error),
+    var(--color-black) 25%
+  );
+  --color-warning-hover: color-mix(
+    in srgb,
+    var(--color-warning),
+    var(--color-black) 15%
+  );
+  --color-warning-active: color-mix(
+    in srgb,
+    var(--color-warning),
+    var(--color-black) 25%
+  );
+  --color-success-hover: color-mix(
+    in srgb,
+    var(--color-success),
+    var(--color-black) 15%
+  );
+  --color-success-active: color-mix(
+    in srgb,
+    var(--color-success),
+    var(--color-black) 25%
+  );
   --color-surface-hover: color-mix(
     in srgb,
     var(--color-surface),
@@ -382,20 +414,56 @@
 
 :root.theme-dark {
   /* === Hover 状态色彩 (Dark Mode - 与白色混合变亮) === */
-  --color-primary-hover: color-mix(in srgb, var(--color-primary), var(--color-white) 15%);
-  --color-primary-active: color-mix(in srgb, var(--color-primary), var(--color-white) 25%);
-  --color-secondary-hover: color-mix(in srgb, var(--color-secondary), var(--color-white) 15%);
+  --color-primary-hover: color-mix(
+    in srgb,
+    var(--color-primary),
+    var(--color-white) 15%
+  );
+  --color-primary-active: color-mix(
+    in srgb,
+    var(--color-primary),
+    var(--color-white) 25%
+  );
+  --color-secondary-hover: color-mix(
+    in srgb,
+    var(--color-secondary),
+    var(--color-white) 15%
+  );
   --color-secondary-active: color-mix(
     in srgb,
     var(--color-secondary),
     var(--color-white) 25%
   );
-  --color-error-hover: color-mix(in srgb, var(--color-error), var(--color-white) 15%);
-  --color-error-active: color-mix(in srgb, var(--color-error), var(--color-white) 25%);
-  --color-warning-hover: color-mix(in srgb, var(--color-warning), var(--color-white) 15%);
-  --color-warning-active: color-mix(in srgb, var(--color-warning), var(--color-white) 25%);
-  --color-success-hover: color-mix(in srgb, var(--color-success), var(--color-white) 15%);
-  --color-success-active: color-mix(in srgb, var(--color-success), var(--color-white) 25%);
+  --color-error-hover: color-mix(
+    in srgb,
+    var(--color-error),
+    var(--color-white) 15%
+  );
+  --color-error-active: color-mix(
+    in srgb,
+    var(--color-error),
+    var(--color-white) 25%
+  );
+  --color-warning-hover: color-mix(
+    in srgb,
+    var(--color-warning),
+    var(--color-white) 15%
+  );
+  --color-warning-active: color-mix(
+    in srgb,
+    var(--color-warning),
+    var(--color-white) 25%
+  );
+  --color-success-hover: color-mix(
+    in srgb,
+    var(--color-success),
+    var(--color-white) 15%
+  );
+  --color-success-active: color-mix(
+    in srgb,
+    var(--color-success),
+    var(--color-white) 25%
+  );
   --color-surface-hover: color-mix(
     in srgb,
     var(--color-surface),

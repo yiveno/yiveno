@@ -1,207 +1,168 @@
-# Material Web Components 组件迁移进度
+# Material Web Components 迁移进度
 
-**最后更新**: 2025-05-11  
-**当前阶段**: Phase 2 - P0 组件迁移
+## 迁移策略
 
----
+直接使用 Material Web Components,不创建包装层。所有样式通过 `frontend/src/assets/material-web-theme.css` 统一配置。
 
-## 📊 总体进度
+## 组件映射表
 
-- **Phase 1**: ✅ 100% (7/7) - 准备和评估
-- **Phase 2**: 🚧 17% (1/6) - P0 组件迁移
-- **Phase 3**: ⏳ 0% (0/6) - P1 组件迁移
-- **Phase 4**: ⏳ 0% (0/5) - P2 组件迁移
+| 自定义组件 | Material Web Component | 状态 |
+|-----------|----------------------|------|
+| Button (variant="primary") | `<md-filled-button>` | 🔄 进行中 |
+| Button (variant="secondary") | `<md-filled-tonal-button>` | 🔄 进行中 |
+| Button (variant="outline") | `<md-outlined-button>` | 🔄 进行中 |
+| Button (variant="ghost") | `<md-text-button>` | 🔄 进行中 |
+| Button (variant="text") | `<md-text-button>` | 🔄 进行中 |
+| Button (iconOnly) | `<md-icon-button>` | 🔄 进行中 |
+| Input | `<md-outlined-text-field>` | ⏳ 待开始 |
+| Checkbox | `<md-checkbox>` | ⏳ 待开始 |
+| Dialog | `<md-dialog>` | ⏳ 待开始 |
+| List | `<md-list>` + `<md-list-item>` | ⏳ 待开始 |
 
----
+## Button 组件替换清单
 
-## ✅ Phase 1: 准备和评估（已完成）
+### 已完成 ✅
+- `frontend/src/components/base/KeyboardShortcutsHelp/KeyboardShortcutsHelp.vue` - 替换为 `<md-text-button>`
+- `frontend/src/components/composite/AppHeader/AppHeader.vue` - 替换为 `<md-icon-button>`
+- `frontend/src/components/business/ShareDialog/ShareDialog.vue` - 替换为 `<md-filled-button>`, `<md-outlined-button>`, `<md-icon-button>`
+- `frontend/src/components/composite/Chip/Chip.vue` - 替换为 `<md-icon-button>`
+- `frontend/src/components/composite/PerformanceMonitor/PerformanceMonitor.vue` - 替换为 `<md-icon-button>`, `<md-outlined-button>`
+- `frontend/src/components/composite/Dialog/Dialog.vue` - 替换为 `<md-text-button>`, `<md-filled-button>`
+- `frontend/src/components/composite/SyncProgressDialog/SyncProgressDialog.vue` - 替换为 `<md-filled-button>`, `<md-text-button>`
+- `frontend/src/components/composite/ThemeToggle/ThemeToggle.vue` - 替换为 `<md-icon-button>`
+- `frontend/src/components/business/BookmarkTree/TreeNode.vue` - 替换为 `<md-icon-button>`
+- `frontend/src/components/business/QuickAddBookmarkDialog/QuickAddBookmarkDialog.vue` - 替换为 `<md-text-button>`, `<md-filled-button>`
+- `frontend/src/components/business/BookmarkRecommendations/BookmarkRecommendations.vue` - 替换为 `<md-icon-button>`, `<md-outlined-button>`
 
-- [x] 更新 Material Design Roadmap
-- [x] 创建使用指南
-- [x] 添加 TypeScript 类型定义
-- [x] 创建统一导入文件
-- [x] 安装 Material Web Components (`@material/web@2.4.1`)
-- [x] 创建迁移指南
-- [x] 确定迁移策略（直接使用，不创建 wrapper）
+### 进行中 🔄
+- 无
 
----
+### 待处理 ⏳
+- 无（Button 组件替换已全部完成）
 
-## 🚧 Phase 2: P0 组件迁移（进行中）
+## 替换规则
 
-### Button → Material Web Components
+### 1. 导入方式
+```typescript
+// ❌ 旧方式
+import { Button } from '@/components'
 
-**状态**: 🚧 进行中
-
-**已迁移的页面**:
-- [x] `frontend/src/pages/settings/Settings.vue` - 订阅页面的按钮
-
-**待迁移的页面**:
-- [ ] `frontend/src/pages/management/Management.vue` - 大量 Button 使用
-- [ ] 其他使用 Button 的页面
-
-**Material Web Components 对应组件**:
-- `<md-filled-button>` - 替代 `<Button variant="primary">`
-- `<md-outlined-button>` - 替代 `<Button variant="outline">`
-- `<md-text-button>` - 替代 `<Button variant="text">` 或 `<Button variant="ghost">`
-- `<md-elevated-button>` - 可选，带阴影的按钮
-- `<md-tonal-button>` - 可选，柔和的按钮
-
-**使用示例**:
-```vue
-<script setup>
+// ✅ 新方式
 import '@material/web/button/filled-button.js'
-import '@material/web/button/outlined-button.js'
-import '@material/web/button/text-button.js'
 import '@material/web/icon/icon.js'
-</script>
-
-<template>
-  <!-- 主要按钮 -->
-  <md-filled-button @click="handleClick">
-    <md-icon slot="icon">save</md-icon>
-    保存
-  </md-filled-button>
-  
-  <!-- 次要按钮 -->
-  <md-outlined-button @click="handleCancel">
-    取消
-  </md-outlined-button>
-  
-  <!-- 文本按钮 -->
-  <md-text-button @click="handleReset">
-    重置
-  </md-text-button>
-</template>
-
-<style scoped>
-/* 自定义 Material Web Components 样式 */
-md-filled-button {
-  --md-filled-button-container-color: var(--md-sys-color-primary);
-  --md-filled-button-label-text-color: var(--md-sys-color-on-primary);
-  --md-filled-button-container-height: 40px;
-}
-</style>
 ```
 
-### Input → Material Web Components
+### 2. 组件使用
 
-**状态**: ⏳ 未开始
+#### Primary Button
+```vue
+<!-- ❌ 旧方式 -->
+<Button variant="primary">保存</Button>
 
-**Material Web Components 对应组件**:
-- `<md-filled-text-field>` - 填充样式输入框
-- `<md-outlined-text-field>` - 轮廓样式输入框
+<!-- ✅ 新方式 -->
+<md-filled-button>保存</md-filled-button>
+```
 
-### Dialog → Material Web Components
+#### Secondary Button
+```vue
+<!-- ❌ 旧方式 -->
+<Button variant="secondary">取消</Button>
 
-**状态**: ⏳ 未开始
+<!-- ✅ 新方式 -->
+<md-filled-tonal-button>取消</md-filled-tonal-button>
+```
 
-**Material Web Components 对应组件**:
-- `<md-dialog>` - 对话框
+#### Outline Button
+```vue
+<!-- ❌ 旧方式 -->
+<Button variant="outline">编辑</Button>
 
-**注意事项**:
-- 需要适配现有的 Dialog API
-- 可能需要创建 wrapper 来保持 API 兼容性
+<!-- ✅ 新方式 -->
+<md-outlined-button>编辑</md-outlined-button>
+```
 
-### Checkbox → Material Web Components
+#### Ghost/Text Button
+```vue
+<!-- ❌ 旧方式 -->
+<Button variant="ghost">关闭</Button>
+<Button variant="text">了解更多</Button>
 
-**状态**: ⏳ 未开始
+<!-- ✅ 新方式 -->
+<md-text-button>关闭</md-text-button>
+<md-text-button>了解更多</md-text-button>
+```
 
-**Material Web Components 对应组件**:
-- `<md-checkbox>` - 复选框
+#### Icon Button
+```vue
+<!-- ❌ 旧方式 -->
+<Button variant="ghost" icon-only>
+  <LucideIcon name="x" :size="20" />
+</Button>
 
-### Radio → Material Web Components
+<!-- ✅ 新方式 -->
+<md-icon-button>
+  <md-icon>close</md-icon>
+</md-icon-button>
+```
 
-**状态**: ⏳ 未开始
+#### Button with Icon
+```vue
+<!-- ❌ 旧方式 -->
+<Button variant="primary">
+  <LucideIcon name="download" :size="16" />
+  下载
+</Button>
 
-**Material Web Components 对应组件**:
-- `<md-radio>` - 单选按钮
+<!-- ✅ 新方式 -->
+<md-filled-button>
+  <md-icon slot="icon">download</md-icon>
+  下载
+</md-filled-button>
+```
 
-### Switch → Material Web Components
+### 3. 事件处理
 
-**状态**: ⏳ 未开始
+```vue
+<!-- Material Web Components 使用原生事件 -->
+<md-filled-button @click="handleClick">点击</md-filled-button>
+```
 
-**Material Web Components 对应组件**:
-- `<md-switch>` - 开关
+### 4. 禁用状态
 
----
+```vue
+<!-- ❌ 旧方式 -->
+<Button :disabled="isLoading">提交</Button>
 
-## ⏳ Phase 3: P1 组件迁移（未开始）
+<!-- ✅ 新方式 -->
+<md-filled-button :disabled="isLoading">提交</md-filled-button>
+```
 
-- [ ] Icon Button → `<md-icon-button>`
-- [ ] FAB → `<md-fab>`
-- [ ] Chip → `<md-chip-set>`, `<md-filter-chip>`, `<md-input-chip>`
-- [ ] Menu → `<md-menu>`, `<md-menu-item>`
-- [ ] List → `<md-list>`, `<md-list-item>`
-- [ ] Progress → `<md-linear-progress>`, `<md-circular-progress>`
+### 5. 危险操作按钮
 
----
+```vue
+<!-- ❌ 旧方式 -->
+<Button variant="primary" class="button--danger">删除</Button>
 
-## ⏳ Phase 4: P2 组件迁移（未开始）
+<!-- ✅ 新方式 -->
+<md-filled-button class="button--danger">删除</md-filled-button>
+```
 
-- [ ] Tabs → `<md-tabs>`, `<md-primary-tab>`
-- [ ] Slider → `<md-slider>`
-- [ ] Card → 组装开发（使用 `<md-elevation>` + 自定义布局）
-- [ ] Badge → 组装开发（使用 CSS + Material Design 3 规范）
-- [ ] Tooltip → 组装开发（使用 `<md-elevation>` + 定位逻辑）
+## 注意事项
 
----
+1. **图标系统**: Material Web Components 使用 Material Icons,需要将 Lucide Icons 映射到 Material Icons
+2. **尺寸**: Material Web Components 没有 size prop,通过 CSS 变量控制
+3. **Loading 状态**: Material Web Components 没有内置 loading 状态,需要手动实现
+4. **Ripple 效果**: Material Web Components 自带 ripple 效果,无需额外配置
 
-## 📝 迁移检查清单
+## 迁移进度
 
-每个组件迁移后必须确认：
+- [x] Phase 1: Button 组件替换 (11/11) ✅ **已完成**
+- [ ] Phase 2: Input 组件替换
+- [ ] Phase 3: Checkbox/Radio/Switch 组件替换
+- [ ] Phase 4: Dialog 组件替换
+- [ ] Phase 5: List 组件替换
+- [ ] Phase 6: 其他组件替换
 
-- [ ] ✅ 使用 Material Web Components 官方组件（优先）
-- [ ] ✅ 或使用官方组件组装（次选）
-- [ ] ✅ 或完全符合 Material Design 3 规范（最后手段）
-- [ ] ✅ 使用 Design Tokens（颜色、间距、字体、动画）
-- [ ] ✅ 支持亮色/暗色主题
-- [ ] ✅ 支持键盘导航
-- [ ] ✅ 支持屏幕阅读器
-- [ ] ✅ 有完整的 TypeScript 类型定义
-- [ ] ✅ 功能测试通过
-- [ ] ✅ 样式符合 Material Design 3 规范
+## 最后更新
 
----
-
-## 🎯 下一步行动
-
-### 立即执行
-
-1. **继续迁移 Button 组件**
-   - 迁移 Management 页面的所有 Button
-   - 测试所有功能
-   - 确认样式正确
-
-2. **开始迁移 Input 组件**
-   - 创建使用示例
-   - 在 Settings 页面中测试
-   - 逐步替换其他页面
-
-3. **制定详细迁移清单**
-   - 列出所有使用 Button 的页面
-   - 列出所有使用 Input 的页面
-   - 制定替换顺序
-
----
-
-## 📚 相关文档
-
-- [Material Design Roadmap](./MATERIAL_DESIGN_ROADMAP.md) - 完整的落地计划
-- [迁移指南](./MATERIAL_WEB_COMPONENTS_MIGRATION.md) - 详细的迁移步骤
-- [组件迁移指南](./frontend/MATERIAL_COMPONENTS_MIGRATION.md) - 组件级别的迁移说明
-- [使用指南](./frontend/MATERIAL_WEB_COMPONENTS_GUIDE.md) - Material Web Components 使用方法
-
----
-
-## 💡 关键要点
-
-1. **不要重复造轮子**: 优先使用 Material Web Components 官方组件
-2. **渐进式迁移**: 在实际页面中并行测试，确认无问题后再替换
-3. **保留兼容性**: 如果需要 wrapper，保留原有 API，确保平滑过渡
-4. **严格遵循规范**: 所有自定义组件必须 100% 符合 Material Design 3 规范
-5. **真实环境测试**: 直接在 Chrome Extension 环境中测试，避免环境差异
-
----
-
-**维护者**: AcuityBookmarks Team  
-**最后更新**: 2025-05-11
+2025-05-13 - Button 组件替换全部完成

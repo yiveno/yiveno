@@ -30,10 +30,10 @@
       </div>
     </div>
     <template #actions>
-      <Button variant="text" @click="postponeRefresh">{{ t('sidepanel_postpone') }}</Button>
-      <Button color="primary" :loading="isLoading" @click="confirmRefresh"
-        >{{ t('sidepanel_refresh_now') }}</Button
-      >
+      <md-text-button @click="postponeRefresh">{{ t('sidepanel_postpone') }}</md-text-button>
+      <md-filled-button :disabled="isLoading" @click="confirmRefresh">
+        {{ t('sidepanel_refresh_now') }}
+      </md-filled-button>
     </template>
   </Dialog>
   <div class="side-panel-container">
@@ -117,7 +117,7 @@
         class="loading-state"
         data-testid="search-loading"
       >
-        <Spinner size="sm" />
+        <md-circular-progress indeterminate></md-circular-progress>
         <span>{{ t('sidepanel_searching') }}</span>
       </div>
 
@@ -210,11 +210,9 @@ defineOptions({
 import {
   Accordion,
   AccordionItem,
-  Button,
   CountIndicator,
   Dialog,
   Input,
-  Spinner,
   LucideIcon
 } from '@/components'
 import BookmarkTree from '@/components/business/BookmarkTree/BookmarkTree.vue'
@@ -1062,6 +1060,16 @@ const postponeRefresh = () => {
 <style scoped>
 .ai-badge-inline {
   margin-right: var(--spacing-1-5);
+}
+
+md-circular-progress {
+  --md-circular-progress-size: 20px;
+  --md-circular-progress-active-indicator-width: 3px;
+}
+
+.loading-state md-circular-progress {
+  --md-circular-progress-size: 32px;
+  --md-circular-progress-active-indicator-width: 4px;
 }
 </style>
 

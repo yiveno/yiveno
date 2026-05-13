@@ -4,17 +4,14 @@
       v-if="showSidePanelToggle"
       class="app-header__col app-header__col--left"
     >
-      <Button
+      <md-icon-button
         class="app-header__action"
-        variant="ghost"
-        size="sm"
-        borderless
-        title="打开侧边栏"
+        :title="sidePanelTooltip"
         :aria-label="sidePanelTooltip"
         @click="handleOpenSidePanel"
       >
-        <LucideIcon name="panel-left" :size="24" />
-      </Button>
+        <md-icon>menu_open</md-icon>
+      </md-icon-button>
     </div>
 
     <div class="app-header__col app-header__col--center">
@@ -30,31 +27,29 @@
     <div class="app-header__col app-header__col--right">
       <ThemeToggle v-if="showTheme" />
       <UserMenu v-if="showAccount" :size="24" />
-      <Button
+      <md-icon-button
         v-if="showSettings"
         class="app-header__action"
-        variant="ghost"
-        size="sm"
-        borderless
         title="打开设置"
         aria-label="打开设置"
         @click="handleOpenSettings"
       >
-        <LucideIcon name="settings" :size="24" />
-      </Button>
+        <md-icon>settings</md-icon>
+      </md-icon-button>
       <slot name="actions" />
     </div>
   </header>
 </template>
 
 <script setup lang="ts">
-import { Button, LucideIcon } from '@/components'
 import ThemeToggle from '@/components/composite/ThemeToggle/ThemeToggle.vue'
 import UserMenu from '@/components/composite/UserMenu/UserMenu.vue'
 import { ref, computed, toRefs, onMounted, onUnmounted } from 'vue'
 import { logger } from '@/infrastructure/logging/logger'
 import { onEvent } from '@/infrastructure/events/event-bus'
 import { globalStateManager } from '@/infrastructure/global-state/global-state-manager'
+import '@material/web/iconbutton/icon-button.js'
+import '@material/web/icon/icon.js'
 
 const props = withDefaults(
   defineProps<{

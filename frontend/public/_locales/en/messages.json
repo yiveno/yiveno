@@ -2339,6 +2339,50 @@
     "message": "Support receiving notifications when running in background",
     "description": "Settings: settings_notification_mirror_tooltip_3"
   },
+  "settings_notification_do_not_disturb": {
+    "message": "Do Not Disturb Mode",
+    "description": "Settings: settings_notification_do_not_disturb"
+  },
+  "settings_notification_do_not_disturb_tooltip_title": {
+    "message": "When enabled:",
+    "description": "Settings: settings_notification_do_not_disturb_tooltip_title"
+  },
+  "settings_notification_do_not_disturb_tooltip_1": {
+    "message": "All notifications will be suppressed, including page toasts and system notifications",
+    "description": "Settings: settings_notification_do_not_disturb_tooltip_1"
+  },
+  "settings_notification_do_not_disturb_tooltip_2": {
+    "message": "Ideal for focused work sessions when you don't want to be interrupted",
+    "description": "Settings: settings_notification_do_not_disturb_tooltip_2"
+  },
+  "settings_notification_do_not_disturb_tooltip_3": {
+    "message": "When disabled, notifications will resume normal behavior",
+    "description": "Settings: settings_notification_do_not_disturb_tooltip_3"
+  },
+  "settings_notification_duration": {
+    "message": "Notification Duration",
+    "description": "Settings: settings_notification_duration"
+  },
+  "settings_notification_duration_tooltip_title": {
+    "message": "Control how long notifications stay visible:",
+    "description": "Settings: settings_notification_duration_tooltip_title"
+  },
+  "settings_notification_duration_tooltip_1": {
+    "message": "Drag the slider to adjust notification display duration (1-10 seconds)",
+    "description": "Settings: settings_notification_duration_tooltip_1"
+  },
+  "settings_notification_duration_tooltip_2": {
+    "message": "Shorter durations are better for quick glances, longer durations for careful reading",
+    "description": "Settings: settings_notification_duration_tooltip_2"
+  },
+  "settings_notification_duration_tooltip_3": {
+    "message": "Recommended: 3-5 seconds for a balance between visibility and minimal distraction",
+    "description": "Settings: settings_notification_duration_tooltip_3"
+  },
+  "settings_notification_duration_seconds": {
+    "message": "seconds",
+    "description": "Settings: settings_notification_duration_seconds"
+  },
   "settings_shortcut_title": {
     "message": "Shortcut Settings",
     "description": "Settings: settings_shortcut_title"

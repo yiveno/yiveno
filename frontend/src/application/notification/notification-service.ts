@@ -197,6 +197,7 @@ export class NotificationService {
       enableSystemNotifications: true,
       enablePageToasts: true,
       enableBadge: true, // ✨ 默认启用扩展图标徽章
+      enableDoNotDisturb: false, // ✨ 默认关闭勿扰模式
       ...config
     }
 
@@ -373,6 +374,20 @@ export class NotificationService {
     opts?: NotificationOptions
   ): Promise<Result<void, Error>> {
     try {
+      // ✨ 勿扰模式检查：如果开启勿扰模式，直接返回，不显示任何通知
+      if (this.config.enableDoNotDisturb) {
+        logger.debug('NotificationService', '🔕 勿扰模式已开启，跳过通知显示', {
+          message,
+          level: opts?.level || opts?.type || 'info'
+        })
+        return ok(undefined)
+      }
+
+      // ✨ 如果没有明确指定 timeoutMs，从设置中读取用户配置的时长
+      if (!opts?.timeoutMs) {
+        await this.updateDefaultDuration()
+      }
+
       const options = this.buildOptions(opts)
 
       // 抑制同内容在短时间内重复
@@ -535,6 +550,7 @@ export class NotificationService {
     opts?: NotificationOptions
   ): Required<NotificationOptions> {
     const level: NotificationLevel = opts?.level || opts?.type || 'info'
+    // ✨ 优先使用用户提供的 timeoutMs，否则使用配置的默认值
     const timeoutMs = opts?.timeoutMs ?? this.config.defaultTimeout
     return {
       title: opts?.title || this.config.defaultTitle,
@@ -562,6 +578,42 @@ export class NotificationService {
       badgeText: opts?.badgeText ?? undefined,
       badgeColor: opts?.badgeColor ?? undefined
     } as Required<NotificationOptions>
+  }
+
+  /**
+   * ✨ 从设置中获取通知显示时长
+   * 
+   * @returns 通知显示时长（毫秒）
+   * @private
+   */
+  private async getNotificationDuration(): Promise<number> {
+    try {
+      // 动态导入避免循环依赖
+      const { settingsAppService } = await import('@/application/settings/settings-app-service')
+      const duration = await settingsAppService.getSetting<number>('notifications.duration')
+      
+      if (duration !== null && typeof duration !== 'undefined') {
+        const value = Number((duration as unknown as { value?: number }).value ?? duration)
+        // 确保值在合理范围内（1-10秒）
+        return Math.max(1000, Math.min(10000, value))
+      }
+    } catch (error) {
+      logger.warn('NotificationService', '获取通知时长设置失败，使用默认值', error)
+    }
+    
+    // 返回默认值
+    return this.config.defaultTimeout
+  }
+
+  /**
+   * ✨ 更新默认通知时长
+   * 
+   * 从设置中读取并更新配置
+   */
+  async updateDefaultDuration(): Promise<void> {
+    const duration = await this.getNotificationDuration()
+    this.config.defaultTimeout = duration
+    logger.debug('NotificationService', '通知时长已更新', { duration })
   }
 
   /**
@@ -859,6 +911,13 @@ export class NotificationService {
    */
   setConfig(config: Partial<NotificationServiceConfig>): void {
     this.config = { ...this.config, ...config }
+    
+    // ✨ 如果勿扰模式状态改变，记录日志
+    if (config.enableDoNotDisturb !== undefined) {
+      logger.info('NotificationService', 
+        config.enableDoNotDisturb ? '🔕 勿扰模式已开启' : '🔔 勿扰模式已关闭'
+      )
+    }
   }
 
   /**
@@ -868,6 +927,24 @@ export class NotificationService {
    */
   getConfig(): NotificationServiceConfig {
     return { ...this.config }
+  }
+
+  /**
+   * ✨ 设置勿扰模式
+   *
+   * @param enabled - 是否启用勿扰模式
+   */
+  setDoNotDisturb(enabled: boolean): void {
+    this.setConfig({ enableDoNotDisturb: enabled })
+  }
+
+  /**
+   * ✨ 获取勿扰模式状态
+   *
+   * @returns 是否启用勿扰模式
+   */
+  getDoNotDisturb(): boolean {
+    return this.config.enableDoNotDisturb
   }
 
   /**

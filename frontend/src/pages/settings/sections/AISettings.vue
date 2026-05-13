@@ -16,14 +16,17 @@
       <div class="row">
         <div class="label">AI 服务商</div>
         <div class="field">
-          <select
+          <md-outlined-select
             v-model="selectedProvider"
             class="provider-select"
           >
-            <option value="openai">OpenAI（推荐）</option>
-            <option value="claude">Anthropic Claude</option>
-            <option value="gemini">Google Gemini</option>
-          </select>
+            <md-select-option value="openai" headline="OpenAI（推荐）">
+            </md-select-option>
+            <md-select-option value="claude" headline="Anthropic Claude">
+            </md-select-option>
+            <md-select-option value="gemini" headline="Google Gemini">
+            </md-select-option>
+          </md-outlined-select>
         </div>
       </div>
 
@@ -32,14 +35,14 @@
         <div class="label">API Key</div>
         <div class="field field--grow">
           <div class="key-input-wrap">
-            <Input
-              v-model="apiKey"
+            <md-outlined-text-field
+              :value="apiKey"
               :type="showKey ? 'text' : 'password'"
-              density="compact"
               :placeholder="keyPlaceholder"
               class="key-input"
+              @input="apiKey = ($event.target as HTMLInputElement).value"
               @keydown.enter.prevent="saveConfig"
-            />
+            ></md-outlined-text-field>
             <button class="toggle-btn" type="button" @click="showKey = !showKey">
               <LucideIcon :name="showKey ? 'eye-off' : 'eye'" :size="16" />
             </button>
@@ -63,12 +66,12 @@
             </template>
           </Tooltip>
         </div>
-        <Input
-          v-model="customModel"
-          density="compact"
+        <md-outlined-text-field
+          :value="customModel"
           placeholder="留空使用默认模型"
           style="width: 240px"
-        />
+          @input="customModel = ($event.target as HTMLInputElement).value"
+        ></md-outlined-text-field>
       </div>
 
       <!-- 自定义端点（可选，用于代理） -->
@@ -85,47 +88,38 @@
             </template>
           </Tooltip>
         </div>
-        <Input
-          v-model="customBaseUrl"
-          density="compact"
+        <md-outlined-text-field
+          :value="customBaseUrl"
           placeholder="https://your-proxy.com/v1"
           style="width: 240px"
-        />
+          @input="customBaseUrl = ($event.target as HTMLInputElement).value"
+        ></md-outlined-text-field>
       </div>
     </div>
 
     <!-- 操作按钮 -->
     <div class="actions">
-      <Button
-        variant="primary"
-        size="sm"
-        :loading="saving"
-        :disabled="!apiKey.trim()"
+      <md-filled-button
+        :disabled="!apiKey.trim() || saving"
         @click="saveConfig"
       >
-        <LucideIcon name="save" :size="14" />
         保存配置
-      </Button>
-      <Button
+      </md-filled-button>
+      <md-text-button
         v-if="isSaved"
-        variant="ghost"
-        size="sm"
-        :loading="testing"
+        :disabled="testing"
         @click="testConnection"
       >
-        <LucideIcon name="zap" :size="14" />
         测试连接
-      </Button>
-      <Button
+      </md-text-button>
+      <md-text-button
         v-if="isSaved"
-        variant="ghost"
-        size="sm"
         class="btn--danger"
         @click="clearConfig"
       >
-        <LucideIcon name="trash" :size="14" />
+        清除配置
         清除
-      </Button>
+      </md-text-button>
     </div>
 
     <!-- 隐私说明 -->
@@ -152,11 +146,20 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { Button, Input, LucideIcon, Tooltip } from '@/components'
+import { LucideIcon, Tooltip } from '@/components'
 import { userLLMClient } from '@/infrastructure/llm/user-llm-client'
 import type { UserLLMProvider } from '@/infrastructure/llm/user-llm-client'
 import { llmAdapter } from '@/infrastructure/llm/llm-adapter'
-import { notifyError, notifySuccess, notifyWarning } from '@/application'
+// ⚠️ 不要从 @/application 导入 notify 函数，因为它们在 notification-service 中，依赖 Vue
+import { notifyError, notifySuccess, notifyWarning } from '@/application/notification/notification-service'
+
+// 导入 Material Web Components
+import '@material/web/select/outlined-select.js'
+import '@material/web/select/select-option.js'
+import '@material/web/textfield/outlined-text-field.js'
+import '@material/web/button/filled-button.js'
+import '@material/web/button/text-button.js'
+import '@material/web/icon/icon.js'
 
 defineOptions({ name: 'AISettings' })
 
@@ -353,27 +356,9 @@ onMounted(async () => {
   flex: 1;
 }
 
-/* 原生 select 样式 */
-.provider-select {
+/* Material Web Components Select 样式 */
+md-outlined-select.provider-select {
   min-width: 200px;
-  padding: var(--spacing-2) var(--spacing-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  font-size: var(--md-sys-typescale-body-medium-size);
-  color: var(--color-text-primary);
-  background-color: var(--color-surface);
-  cursor: pointer;
-  transition: border-color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
-}
-
-.provider-select:hover {
-  border-color: var(--color-primary-hover);
-}
-
-.provider-select:focus {
-  border-color: var(--md-sys-color-primary);
-  outline: none;
-  box-shadow: 0 0 0 1px var(--md-sys-color-primary);
 }
 
 .key-input-wrap {
@@ -387,10 +372,14 @@ onMounted(async () => {
   overflow: hidden;
 }
 
-.key-input-wrap :deep(.acuity-input) {
+/* Material Web Components Text Field 样式 */
+md-outlined-text-field.key-input {
+  --md-outlined-text-field-container-shape: 0;
+  --md-outlined-text-field-outline-width: 0;
+  --md-outlined-text-field-focus-outline-width: 0;
+
   flex: 1;
   border: none;
-  border-radius: 0;
 }
 
 .toggle-btn {
@@ -416,8 +405,18 @@ onMounted(async () => {
   margin-bottom: var(--spacing-3);
 }
 
-.btn--danger {
-  color: var(--color-semantic-error);
+/* Material Web Components Button 样式 */
+md-text-button.btn--danger {
+  --md-text-button-label-text-color: var(--color-semantic-error);
+  --md-text-button-hover-label-text-color: var(--color-semantic-error);
+  --md-text-button-pressed-label-text-color: var(--color-semantic-error);
+}
+
+/* Material Icon 样式 */
+md-icon {
+  --md-icon-size: 18px;
+
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
 }
 
 .privacy-note {

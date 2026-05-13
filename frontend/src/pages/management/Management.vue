@@ -1,13 +1,13 @@
 <template>
   <App class="app-container">
-    <Overlay :show="isPageLoading" persistent :opacity="0.12" :blur="true">
+    <div v-if="isPageLoading" class="page-overlay">
       <div class="overlay-loading">
-        <Spinner color="primary" size="xl" class="loading-spinner" />
+        <md-circular-progress indeterminate></md-circular-progress>
         <div class="loading-text" data-testid="progress-text">
           {{ loadingMessage }}
         </div>
       </div>
-    </Overlay>
+    </div>
 
     <!-- 📊 全局书签同步进度对话框 -->
     <GlobalSyncProgress />
@@ -33,16 +33,13 @@
             {{ organizeProgress.current }} / {{ organizeProgress.total }}
           </div>
         </div>
-        <ProgressBar
+        <md-linear-progress
           :value="
             organizeProgress.total > 0
-              ? (organizeProgress.current / organizeProgress.total) * 100
+              ? (organizeProgress.current / organizeProgress.total)
               : 0
           "
-          :show-label="true"
-          color="primary"
-          :height="8"
-        />
+        ></md-linear-progress>
       </div>
     </Dialog>
 
@@ -252,12 +249,12 @@
       </div>
 
       <template #actions>
-        <Button variant="text" @click="showApplyConfirmDialog = false">
+        <md-text-button @click="showApplyConfirmDialog = false">
           {{ t('common_cancel') }}
-        </Button>
-        <Button color="primary" @click="confirmApplyChanges">
+        </md-text-button>
+        <md-filled-button @click="confirmApplyChanges">
           {{ t('common_apply') }}
-        </Button>
+        </md-filled-button>
       </template>
     </Dialog>
 
@@ -280,12 +277,9 @@
             {{ bookmarkManagementStore.applyProgress.totalOperations }}
           </div>
         </div>
-        <ProgressBar
-          :value="bookmarkManagementStore.applyProgress.percentage"
-          :show-label="true"
-          color="primary"
-          :height="8"
-        />
+        <md-linear-progress
+          :value="bookmarkManagementStore.applyProgress.percentage / 100"
+        ></md-linear-progress>
         <div class="progress-tip">
           {{ t('management_estimated_time', estimatedRemainingTime) }}
         </div>
@@ -295,10 +289,10 @@
     <AppHeader :show-side-panel-toggle="false" />
 
     <Main padding class="main-content">
-      <Grid is="container" fluid class="fill-height management-container">
-        <Grid is="row" class="fill-height" align="stretch">
+      <div class="management-container">
+        <div class="management-row">
           <!-- Left Panel -->
-          <Grid is="col" :cols="5" class="panel-col">
+          <div class="panel-col left-panel">
             <Card class="panel-card" elevation="medium">
               <template #header>
                 <div class="panel-header">
@@ -315,10 +309,7 @@
                       @search-clear="handleLeftSearchClear"
                     />
 
-                    <Button
-                      variant="text"
-                      size="sm"
-                      icon
+                    <md-icon-button
                       :title="
                         leftExpandAll ? t('management_collapse_all') : t('management_expand_all')
                       "
@@ -336,7 +327,7 @@
                           :name="leftExpandAll ? 'chevrons-up' : 'chevrons-down'"
                         />
                       </span>
-                    </Button>
+                    </md-icon-button>
 
                   </div>
                 </div>
@@ -368,17 +359,17 @@
                 />
               </div>
             </Card>
-          </Grid>
+          </div>
 
           <!-- Middle Divider -->
-          <Grid is="col" :cols="1" class="panel-col divider-col">
+          <div class="panel-col divider-col">
             <div class="panel-divider">
               <LucideIcon name="chevrons-right" :size="24" color="muted" />
             </div>
-          </Grid>
+          </div>
 
           <!-- Right Panel -->
-          <Grid is="col" :cols="6" class="panel-col">
+          <div class="panel-col right-panel">
             <Card
               class="panel-card right-panel-card"
               elevation="medium"
@@ -399,33 +390,31 @@
                     <div class="panel-actions">
                       <!-- ✅ 使用包装元素解决禁用状态下 tooltip 不显示的问题 -->
                       <span class="btn-wrapper" :title="applyButtonTooltip">
-                        <Button
-                          variant="primary"
-                          size="sm"
+                        <md-filled-button
                           :disabled="
                             isPageLoading ||
                             !bookmarkManagementStore.hasUnsavedChanges
                           "
                           @click="handleApply"
                         >
-                          <LucideIcon name="check-circle" />
-                          <span>{{ t('management_apply') }}</span>
-                        </Button>
+                          <template #icon>
+<LucideIcon  name="check-circle" />
+</template>
+                          {{ t('management_apply') }}
+                        </md-filled-button>
                       </span>
                       <div class="panel-actions-divider"></div>
-                      <Button
-                        variant="primary"
-                        size="sm"
+                      <md-filled-button
                         :disabled="
                           isPageLoading || isOrganizing
                         "
                         @click="handleAIOrganize"
                       >
-                        <LucideIcon name="sparkles" :spin="isOrganizing" />
-                        <span>{{
-                          isOrganizing ? t('management_organizing') : t('management_ai_organize')
-                        }}</span>
-                      </Button>
+                        <template #icon>
+<LucideIcon  name="sparkles" :spin="isOrganizing" />
+</template>
+                        {{ isOrganizing ? t('management_organizing') : t('management_ai_organize') }}
+                      </md-filled-button>
                       <div class="panel-actions-divider"></div>
                       <BookmarkSearchInput
                         mode="memory"
@@ -436,10 +425,7 @@
                         @search-complete="handleRightSearch"
                         @search-clear="handleRightSearchClear"
                       />
-                      <Button
-                        variant="text"
-                        size="sm"
-                        icon
+                      <md-icon-button
                         :title="
                           rightExpandAll ? t('management_collapse_all') : t('management_expand_all')
                         "
@@ -456,7 +442,7 @@
                             :name="rightExpandAll ? 'chevrons-up' : 'chevrons-down'"
                           />
                         </span>
-                      </Button>
+                      </md-icon-button>
                     </div>
                   </div>
                 </div>
@@ -500,13 +486,12 @@
                 <!-- 右侧面板内底部批量操作条（始终显示） -->
                 <div class="bulk-delete-in-panel">
                   <div class="selection-summary">
-                    <Checkbox
-                      :model-value="rightSelectAllState.checked"
+                    <md-checkbox
+                      :checked="rightSelectAllState.checked"
                       :indeterminate="rightSelectAllState.indeterminate"
-                      size="md"
                       class="select-all-checkbox"
-                      @update:model-value="toggleRightSelectAll"
-                    />
+                      @change="toggleRightSelectAll"
+                    ></md-checkbox>
                     <!-- ✅ 全选时文案变化 -->
                     <span class="text">{{
                       rightSelectAllState.checked &&
@@ -529,7 +514,6 @@
                     <span class="btn-wrapper" :title="clearSelectionTooltip">
                       <Button
                         variant="text"
-                        size="sm"
                         class="clear-selection"
                         :disabled="rightSelectedIds.length === 0"
                         @click="clearRightSelection"
@@ -539,30 +523,27 @@
                     </span>
                     <!-- ✅ 删除按钮包装器 -->
                     <span class="btn-wrapper" :title="deleteButtonTooltip">
-                      <Button
-                        color="error"
-                        variant="primary"
-                        size="lg"
-                        class="bulk-delete-btn"
+                      <md-filled-button
+                        class="bulk-delete-btn error-button"
                         :disabled="
                           selectedCounts.bookmarks === 0 &&
                           selectedCounts.folders === 0
                         "
                         @click="handleBulkDelete"
                       >
-                        <template #prepend>
-                          <LucideIcon name="trash" />
-                        </template>
+                        <template #icon>
+<LucideIcon  name="trash" />
+</template>
                         {{ t('common_delete') }}
-                      </Button>
+                      </md-filled-button>
                     </span>
                   </div>
                 </div>
               </template>
             </Card>
-          </Grid>
-        </Grid>
-      </Grid>
+          </div>
+        </div>
+      </div>
     </Main>
 
     <!-- Edit Bookmark Dialog -->
@@ -607,17 +588,16 @@
         />
       </div>
       <template #actions="{ requestClose }">
-        <Button variant="text" @click="requestClose(false)">
+        <md-text-button @click="requestClose(false)">
           {{ t('common_cancel') }}
-        </Button>
-        <Button
-          color="primary"
+        </md-text-button>
+        <md-filled-button
           :disabled="!isEditDirty"
           :loading="isEditingBookmark"
           @click="confirmEditBookmark"
         >
           {{ t('management_update') }}
-        </Button>
+        </md-filled-button>
       </template>
     </ConfirmableDialog>
 
@@ -655,17 +635,16 @@
         />
       </div>
       <template #actions="{ requestClose }">
-        <Button variant="text" @click="requestClose(false)">
+        <md-text-button @click="requestClose(false)">
           {{ t('common_cancel') }}
-        </Button>
-        <Button
-          color="primary"
+        </md-text-button>
+        <md-filled-button
           :disabled="!isEditFolderDirty"
           :loading="isEditingFolder"
           @click="confirmEditFolder"
         >
           {{ t('management_update') }}
-        </Button>
+        </md-filled-button>
       </template>
     </ConfirmableDialog>
 
@@ -687,16 +666,16 @@
         {{ t('management_delete_folder_confirm', String(deleteFolderBookmarkCount)) }}
       </div>
       <template #actions="{ requestClose }">
-        <Button variant="text" @click="requestClose(false)">
+        <md-text-button @click="requestClose(false)">
           {{ t('common_cancel') }}
-        </Button>
-        <Button
-          color="error"
+        </md-text-button>
+        <md-filled-tonal-button
+          class="error-button"
           :loading="isDeletingFolder"
           @click="confirmDeleteFolder"
         >
           {{ t('management_confirm_delete') }}
-        </Button>
+        </md-filled-tonal-button>
       </template>
     </ConfirmableDialog>
 
@@ -726,69 +705,65 @@
       @confirm="confirmAddNewItem"
     >
       <div ref="addDialogContentRef" class="add-item-form">
-        <Tabs
-          v-model="dialogStore.addItemDialog.type"
-          :tabs="[
-            { value: 'bookmark', text: t('management_bookmark') },
-            { value: 'folder', text: t('management_folder') }
-          ]"
-          grow
-          animated
+        <!-- ✅ Material Web Tabs -->
+        <md-tabs
+          :active-tab-index="dialogStore.addItemDialog.type === 'bookmark' ? 0 : 1"
+          @change="handleAddDialogTabChange"
         >
-          <template #default="{ activeTab }">
-            <!-- 书签表单 -->
-            <div
-              v-if="activeTab === 'bookmark'"
-              class="form-fields"
-            >
-              <Input
-                v-model="dialogStore.addItemDialog.title"
-                :label="t('management_title')"
-                variant="outlined"
-                class="form-field"
-                autofocus
-                :error="!!addFormErrors.title"
-                :error-message="addFormErrors.title"
-              />
-              <UrlInput
-                v-model="dialogStore.addItemDialog.url"
-                :label="t('management_url')"
-                variant="outlined"
-                density="compact"
-                class="form-field"
-                :error="!!addFormErrors.url"
-                :error-message="addFormErrors.url"
-              />
-            </div>
-            <!-- 文件夹表单 -->
-            <div
-              v-else
-              class="form-fields"
-            >
-              <Input
-                v-model="dialogStore.addItemDialog.title"
-                :label="t('management_folder_name')"
-                variant="outlined"
-                class="form-field"
-                autofocus
-                :error="!!addFormErrors.title"
-                :error-message="addFormErrors.title"
-              />
-            </div>
-          </template>
-        </Tabs>
+          <md-primary-tab>{{ t('management_bookmark') }}</md-primary-tab>
+          <md-primary-tab>{{ t('management_folder') }}</md-primary-tab>
+        </md-tabs>
+
+        <!-- 书签表单 -->
+        <div
+          v-if="dialogStore.addItemDialog.type === 'bookmark'"
+          class="form-fields"
+        >
+          <Input
+            v-model="dialogStore.addItemDialog.title"
+            :label="t('management_title')"
+            variant="outlined"
+            class="form-field"
+            autofocus
+            :error="!!addFormErrors.title"
+            :error-message="addFormErrors.title"
+          />
+          <UrlInput
+            v-model="dialogStore.addItemDialog.url"
+            :label="t('management_url')"
+            variant="outlined"
+            density="compact"
+            class="form-field"
+            :error="!!addFormErrors.url"
+            :error-message="addFormErrors.url"
+          />
+        </div>
+        <!-- 文件夹表单 -->
+        <div
+          v-else
+          class="form-fields"
+        >
+          <Input
+            v-model="dialogStore.addItemDialog.title"
+            :label="t('management_folder_name')"
+            variant="outlined"
+            class="form-field"
+            autofocus
+            :error="!!addFormErrors.title"
+            :error-message="addFormErrors.title"
+          />
+        </div>
       </div>
       <template #actions="{ requestClose }">
-        <Button variant="text" @click="requestClose(false)">
+        <md-text-button @click="requestClose(false)">
           {{ t('common_cancel') }}
-        </Button>
-        <Button
-          color="primary"
+        </md-text-button>
+        <md-filled-button
           :loading="isAddingItem"
           @click="confirmAddNewItem"
         >
           {{ addConfirmText }}
-        </Button>
+        </md-filled-button>
       </template>
     </ConfirmableDialog>
   </App>
@@ -826,21 +801,17 @@ import {
   App,
   AppHeader,
   BookmarkSearchInput,
-  Button,
   Card,
   Dialog,
-  Grid,
   LucideIcon,
   Input,
   Main,
-  Overlay,
-  ProgressBar,
-  Spinner,
-  Tabs,
   UrlInput,
-  Checkbox,
   AnimatedNumber
 } from '@/components'
+import '@material/web/tabs/tabs.js'
+import '@material/web/tabs/primary-tab.js'
+import '@material/web/checkbox/checkbox.js'
 import { notificationService } from '@/application/notification/notification-service'
 import { NOTIFICATION_CONFIG } from '@/config/constants'
 import { ConfirmableDialog } from '@/components'
@@ -1394,6 +1365,24 @@ const handleBookmarkOpenNewTab = (node: BookmarkNode) => {
     notificationService.notify(t('management_open_link_failed'), { level: 'error' })
     logger.error('Management', '打开链接失败:', error, node.url)
   }
+}
+
+/**
+ * 处理添加对话框的 Tab 切换
+ * Material Web Tabs 的 change 事件会传递 CustomEvent，包含 activeTabIndex
+ */
+const handleAddDialogTabChange = (event: Event) => {
+  const customEvent = event as CustomEvent<{ activeTabIndex: number }>
+  const activeTabIndex = customEvent.detail?.activeTabIndex ?? 0
+  
+  // 根据 tab index 更新对话框类型
+  dialogStore.addItemDialog.type = activeTabIndex === 0 ? 'bookmark' : 'folder'
+  
+  // 清空表单数据和错误
+  dialogStore.addItemDialog.title = ''
+  dialogStore.addItemDialog.url = ''
+  addFormErrors.value.title = ''
+  addFormErrors.value.url = ''
 }
 
 const confirmAddNewItem = async () => {
@@ -2222,6 +2211,14 @@ const handleApply = () => {
 </script>
 
 <style scoped>
+/* ========================================
+ * Material Web Tabs 样式配置
+ * ======================================== */
+md-tabs {
+  width: 100%;
+  margin-bottom: var(--spacing-4);
+}
+
 /* 特征扫描进度对话框样式 */
 .trait-scan-progress {
   padding: var(--spacing-4);
@@ -2858,3 +2855,70 @@ p.warning-text {
   margin: 0;
 }
 </style>
+
+md-linear-progress {
+  width: 100%;
+  --md-linear-progress-track-height: 8px;
+}
+
+md-text-button,
+md-filled-button,
+md-filled-tonal-button,
+md-icon-button {
+  --md-sys-color-primary: var(--md-sys-color-primary);
+  --md-sys-color-on-primary: var(--md-sys-color-on-primary);
+}
+
+.error-button {
+  --md-sys-color-primary: var(--md-sys-color-error);
+  --md-sys-color-on-primary: var(--md-sys-color-on-error);
+}
+
+/* CSS Grid 布局替代 Grid 组件 */
+.management-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+.management-row {
+  display: grid;
+  grid-template-columns: 5fr 1fr 6fr;
+  gap: 0;
+  height: 100%;
+  align-items: stretch;
+}
+
+.panel-col {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.left-panel {
+  grid-column: 1;
+}
+
+.divider-col {
+  grid-column: 2;
+}
+
+.right-panel {
+  grid-column: 3;
+}
+
+/* 页面 Overlay 样式 */
+.page-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}

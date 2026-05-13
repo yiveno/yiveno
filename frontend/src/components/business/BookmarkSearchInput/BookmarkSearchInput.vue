@@ -59,7 +59,7 @@ BookmarkSearchInput - 书签筛选输入组件
         :aria-expanded="isExpanded"
         @click="handleIconClick"
       >
-        <Spinner v-if="isLoadingState" size="sm" />
+        <md-circular-progress v-if="isLoadingState" indeterminate class="search-spinner" />
         <LucideIcon
           v-else-if="query.length > 0"
           name="x"
@@ -83,26 +83,34 @@ BookmarkSearchInput - 书签筛选输入组件
                 <span>清空</span>
               </button>
             </div>
-            <div class="history-list">
-              <div
+            <md-list class="history-list">
+              <md-list-item
                 v-for="item in getRecentHistory(5)"
                 :key="item.timestamp"
-                class="history-item"
+                type="button"
                 @click="handleHistoryClick(item.query)"
               >
-                <LucideIcon name="clock" :size="14" class="history-icon" />
-                <span class="history-query">{{ item.query }}</span>
-                <span v-if="item.resultCount !== undefined" class="history-count">
+                <template #start>
+<LucideIcon  name="clock" :size="14" />
+</template>
+                <template #headline>
+<div >{{ item.query }}</div>
+</template>
+                <template #supporting-text>
+<div v-if="item.resultCount !== undefined"  class="history-count">
                   {{ item.resultCount }} 个结果
-                </span>
-                <button
-                  class="history-remove-btn"
-                  @click="handleRemoveHistory(item.query, $event)"
+                </div>
+</template>
+                <template #end>
+<md-icon-button
+                  
+                  @click.stop="handleRemoveHistory(item.query, $event)"
                 >
                   <LucideIcon name="x" :size="14" />
-                </button>
-              </div>
-            </div>
+                </md-icon-button>
+</template>
+              </md-list-item>
+            </md-list>
           </div>
 
           <!-- 快捷筛选标签（可选显示） -->
@@ -133,7 +141,7 @@ BookmarkSearchInput - 书签筛选输入组件
               />
               <span class="filter-label">{{ quickFilter.label }}</span>
               <!-- ✅ 加载状态：显示动画 -->
-              <Spinner v-if="isLoadingTraitCounts" size="sm" />
+              <md-circular-progress v-if="isLoadingTraitCounts" indeterminate class="filter-spinner" />
               <!-- ✅ 加载完成：显示实际数量 -->
               <CountIndicator
                 v-else-if="quickFilter.count !== undefined"
@@ -201,8 +209,12 @@ BookmarkSearchInput - 书签筛选输入组件
 
 <script setup lang="ts">
 import { watch, computed, ref, nextTick, onMounted, onUnmounted } from 'vue'
-import { CountIndicator, LucideIcon, Input, Spinner } from '@/components'
+import { CountIndicator, LucideIcon, Input } from '@/components'
 import { useBookmarkSearch } from '@/composables/useBookmarkSearch'
+import '@material/web/progress/circular-progress.js'
+import '@material/web/list/list.js'
+import '@material/web/list/list-item.js'
+import '@material/web/iconbutton/icon-button.js'
 import { useSearchHistory } from '@/composables/useSearchHistory'
 import type { BookmarkNode } from '@/types'
 import { useDebounceFn } from '@vueuse/core'
@@ -1618,68 +1630,41 @@ defineExpose({
 }
 
 .history-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-1);
-}
-
-.history-item {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  padding: var(--spacing-2);
-  border-radius: var(--border-radius-sm);
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.history-item:hover {
-  background: var(--color-bg-hover);
-}
-
-.history-icon {
-  flex-shrink: 0;
-  color: var(--color-text-tertiary);
-}
-
-.history-query {
-  flex: 1;
-  font-size: var(--text-sm);
-  white-space: nowrap;
-  color: var(--color-text-primary);
+  border-radius: var(--radius-md);
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .history-count {
-  flex-shrink: 0;
   font-size: var(--text-xs);
   color: var(--color-text-tertiary);
 }
 
-.history-remove-btn {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  border: none;
-  border-radius: var(--border-radius-sm);
-  color: var(--color-text-tertiary);
-  background: transparent;
-  opacity: 0;
-  cursor: pointer;
-  transition: all 0.2s ease;
+/* Material Web List 样式 */
+.history-list md-list {
+  --md-list-container-color: transparent;
 }
 
-.history-remove-btn:hover {
-  color: var(--color-error);
-  background: var(--color-error-alpha-10);
+.history-list md-list-item {
+  --md-list-item-label-text-color: var(--md-sys-color-on-surface);
+  --md-list-item-supporting-text-color: var(--md-sys-color-on-surface-variant);
+  --md-list-item-container-shape: var(--radius-sm);
+  --md-list-item-label-text-font: var(--font-family-base);
+  --md-list-item-label-text-size: var(--md-sys-typescale-body-medium-size);
+  --md-list-item-supporting-text-font: var(--font-family-base);
+  --md-list-item-supporting-text-size: var(--md-sys-typescale-body-small-size);
+  --md-list-item-one-line-container-height: 40px;
+  --md-list-item-hover-state-layer-color: var(--md-sys-color-on-surface);
+  --md-list-item-hover-state-layer-opacity: 0.08;
 }
 
-.history-item:hover .history-remove-btn {
-  opacity: 1;
+.history-list md-icon-button {
+  --md-icon-button-icon-color: var(--color-text-tertiary);
+  --md-icon-button-state-layer-shape: var(--radius-sm);
+  --md-icon-button-icon-size: 14px;
+}
+
+.history-list md-icon-button:hover {
+  --md-icon-button-icon-color: var(--color-error);
 }
 
 /* 快捷筛选标签容器（在面板内） */
@@ -1785,3 +1770,9 @@ defineExpose({
   transform: translateY(-4px);
 }
 </style>
+
+.search-spinner,
+.filter-spinner {
+  --md-circular-progress-size: 18px;
+  --md-circular-progress-active-indicator-width: 3px;
+}

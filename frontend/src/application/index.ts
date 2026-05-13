@@ -6,7 +6,12 @@ export * from './bookmark/bookmark-app-service'
 export * from './bookmark/bookmark-index-app-service'
 export * from './bookmark/bookmark-trait-query-service'
 // cleanup-app-service 已移除：现在使用 trait-filter-store 进行筛选
-export * from './notification/notification-service'
+
+// ⚠️ notification-service 不在这里导出，因为它依赖 Vue
+// 如果需要使用，请直接导入：
+// import { notificationService } from '@/application/notification/notification-service'
+// export * from './notification/notification-service'  // ❌ 已禁用
+
 export * from './settings/settings-app-service'
 export * from './font/font-service'
 

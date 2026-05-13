@@ -4,26 +4,54 @@
       <LucideIcon name="clock" :size="20" />
       <span>{{ t('sidepanel_recent_empty') }}</span>
     </div>
-    <div v-else class="recent-list">
-      <RecentItem
+    <md-list v-else class="recent-list">
+      <md-list-item
         v-for="bookmark in recentVisits"
         :key="bookmark.id"
-        :bookmark="bookmark"
+        type="button"
         @click="handleClick(bookmark)"
-      />
-    </div>
+      >
+        <!-- Favicon -->
+        <template #start>
+<div  class="recent-favicon">
+          <img
+            v-if="getFaviconUrl(bookmark)"
+            :src="getFaviconUrl(bookmark)"
+            alt="favicon"
+            loading="lazy"
+            @error="() => handleFaviconError(bookmark.id)"
+          />
+          <LucideIcon v-else name="bookmark" :size="16" />
+        </div>
+</template>
+
+        <!-- 标题 -->
+        <template #headline>
+<div >{{ bookmark.title }}</div>
+</template>
+
+        <!-- 访问时间 -->
+        <template #supporting-text>
+<div >{{ formatRecentVisitTime(bookmark.lastVisited) }}</div>
+</template>
+      </md-list-item>
+    </md-list>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { LucideIcon } from '@/components'
-import RecentItem from './RecentItem.vue'
 import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
 import type { BookmarkRecord } from '@/infrastructure/indexeddb/types'
 import { logger } from '@/infrastructure/logging/logger'
 import { onEvent } from '@/infrastructure/events/event-bus'
 import { t } from '@/utils/i18n-helpers'
+import { formatRecentVisitTime } from '@/utils/time-formatter'
+
+// 导入 Material Web Components
+import '@material/web/list/list.js'
+import '@material/web/list/list-item.js'
 
 defineOptions({
   name: 'RecentVisits'
@@ -35,6 +63,7 @@ const emit = defineEmits<{
 }>()
 
 const recentVisits = ref<BookmarkRecord[]>([])
+const faviconErrors = ref<Set<string>>(new Set())
 
 const loadRecentVisits = async () => {
   try {
@@ -44,6 +73,28 @@ const loadRecentVisits = async () => {
   } catch (error) {
     logger.error('RecentVisits', '❌ 加载最近访问失败', error)
   }
+}
+
+/**
+ * 获取 favicon URL
+ */
+const getFaviconUrl = (bookmark: BookmarkRecord): string | undefined => {
+  if (faviconErrors.value.has(bookmark.id)) {
+    return undefined
+  }
+  try {
+    const domain = new URL(bookmark.url).hostname
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=16`
+  } catch {
+    return undefined
+  }
+}
+
+/**
+ * 处理 favicon 加载错误
+ */
+const handleFaviconError = (bookmarkId: string) => {
+  faviconErrors.value.add(bookmarkId)
 }
 
 onMounted(loadRecentVisits)
@@ -93,9 +144,24 @@ defineExpose({
   color: var(--color-text-secondary);
 }
 
+/* Material Web List 样式 */
 .recent-list {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.recent-favicon {
   display: flex;
-  flex-direction: column;
-  gap: var(--spacing-1);
+  flex-shrink: 0;
+  justify-content: center;
+  align-items: center;
+  width: 16px;
+  height: 16px;
+}
+
+.recent-favicon img {
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-xs);
 }
 </style>

@@ -19,14 +19,10 @@
     <div class="share-dialog-content">
       <!-- 标题输入 -->
       <div class="title-input-section">
-        <label for="share-title" class="title-label">分享标题：</label>
-        <Input
-          id="share-title"
-          v-model="state.customTitle"
-          placeholder="输入自定义标题"
-          variant="outlined"
-          density="compact"
-          @input="handleTitleChange"
+        <md-outlined-text-field
+          label="分享标题"
+          :value="state.customTitle"
+          @input="handleTitleInput"
         />
       </div>
 
@@ -34,24 +30,39 @@
       <div class="theme-selector" role="group" aria-labelledby="theme-label">
         <label id="theme-label" class="theme-label">主题：</label>
         <div class="theme-buttons">
-          <Button
-            :variant="state.selectedTheme === 'dark' ? 'primary' : 'outline'"
-            size="sm"
+          <md-filled-button
+            v-if="state.selectedTheme === 'dark'"
             aria-label="选择深色主题"
-            :aria-pressed="state.selectedTheme === 'dark'"
+            :aria-pressed="true"
             @click="handleThemeChange('dark')"
           >
             🌙 深色
-          </Button>
-          <Button
-            :variant="state.selectedTheme === 'light' ? 'primary' : 'outline'"
-            size="sm"
+          </md-filled-button>
+          <md-outlined-button
+            v-else
+            aria-label="选择深色主题"
+            :aria-pressed="false"
+            @click="handleThemeChange('dark')"
+          >
+            🌙 深色
+          </md-outlined-button>
+          
+          <md-filled-button
+            v-if="state.selectedTheme === 'light'"
             aria-label="选择浅色主题"
-            :aria-pressed="state.selectedTheme === 'light'"
+            :aria-pressed="true"
             @click="handleThemeChange('light')"
           >
             ☀️ 浅色
-          </Button>
+          </md-filled-button>
+          <md-outlined-button
+            v-else
+            aria-label="选择浅色主题"
+            :aria-pressed="false"
+            @click="handleThemeChange('light')"
+          >
+            ☀️ 浅色
+          </md-outlined-button>
         </div>
       </div>
 
@@ -75,7 +86,7 @@
           aria-live="polite"
           aria-busy="true"
         >
-          <Spinner size="lg" aria-hidden="true" />
+          <md-circular-progress indeterminate class="poster-spinner" />
           <span>正在生成海报...</span>
         </div>
         <div
@@ -86,9 +97,9 @@
         >
           <LucideIcon name="alert-circle" :size="48" aria-hidden="true" />
           <span>{{ state.error }}</span>
-          <Button variant="outline" size="sm" aria-label="重新生成海报" @click="handleRetry">
+          <md-outlined-button aria-label="重新生成海报" @click="handleRetry">
             重试
-          </Button>
+          </md-outlined-button>
         </div>
         <img
           v-else-if="state.posterPreview"
@@ -101,45 +112,37 @@
     </div>
 
     <template #actions>
-      <Button
-        variant="text"
-        icon-only
+      <md-icon-button
         title="取消"
         aria-label="关闭分享对话框"
         @click="$emit('update:show', false)"
       >
-        <LucideIcon name="x" :size="20" />
-      </Button>
-      <Button
-        variant="outline"
-        icon-only
+        <md-icon>close</md-icon>
+      </md-icon-button>
+      <md-icon-button
         title="复制图片"
         :disabled="!state.posterPreview || state.isGenerating"
         aria-label="复制海报图片到剪贴板"
         @click="handleCopyImage"
       >
-        <LucideIcon name="copy" :size="20" />
-      </Button>
-      <Button
-        variant="outline"
-        icon-only
+        <md-icon>content_copy</md-icon>
+      </md-icon-button>
+      <md-icon-button
         title="下载图片"
         :disabled="!state.posterPreview || state.isGenerating"
         aria-label="下载海报图片"
         @click="handleDownloadImage"
       >
-        <LucideIcon name="download" :size="20" />
-      </Button>
-      <Button
-        color="primary"
-        icon-only
+        <md-icon>download</md-icon>
+      </md-icon-button>
+      <md-filled-icon-button
         title="生成链接"
         :disabled="!state.posterPreview || state.isGenerating"
         aria-label="生成分享链接并复制到剪贴板"
         @click="handleGenerateLink"
       >
-        <LucideIcon name="link" :size="20" />
-      </Button>
+        <md-icon>link</md-icon>
+      </md-filled-icon-button>
     </template>
   </Dialog>
 </template>
@@ -148,12 +151,19 @@
 import { reactive, watch, onUnmounted, ref, nextTick, computed } from 'vue'
 import { useDebounceFn, useEventListener } from '@vueuse/core'
 import type { ShareDialogProps, ShareDialogEmits } from './ShareDialog.d'
-import { Button, Dialog, LucideIcon, Spinner, Input } from '@/components'
+import { Dialog, LucideIcon } from '@/components'
 import { shareService } from '@/application/share/share-service'
 import { posterService } from '@/application/share/poster-service'
 import { notifySuccess, notifyError } from '@/application/notification/notification-service'
 import { logger } from '@/infrastructure/logging/logger'
 import { useSupabaseAuth } from '@/composables/useSupabaseAuth'
+import '@material/web/button/filled-button.js'
+import '@material/web/button/outlined-button.js'
+import '@material/web/button/text-button.js'
+import '@material/web/iconbutton/icon-button.js'
+import '@material/web/icon/icon.js'
+import '@material/web/progress/circular-progress.js'
+import '@material/web/textfield/outlined-text-field.js'
 
 defineOptions({ name: 'ShareDialog' })
 
@@ -308,6 +318,12 @@ const handleThemeChange = useDebounceFn((theme: 'dark' | 'light') => {
 }, 150)
 
 // 标题变化（防抖）
+const handleTitleInput = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  state.customTitle = target.value
+  handleTitleChange()
+}
+
 const handleTitleChange = useDebounceFn(() => {
   generatePoster()
 }, 500)
@@ -487,13 +503,6 @@ onUnmounted(() => {
   gap: var(--spacing-3);
 }
 
-.title-label {
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-  white-space: nowrap;
-  color: var(--color-text-secondary);
-}
-
 /* 主题选择器 */
 .theme-selector {
   display: flex;
@@ -557,3 +566,7 @@ onUnmounted(() => {
   box-shadow: var(--shadow-md);
 }
 </style>
+
+.title-input-section md-outlined-text-field {
+  width: 100%;
+}

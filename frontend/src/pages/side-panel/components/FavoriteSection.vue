@@ -1,26 +1,59 @@
 <template>
   <!-- 收藏列表 -->
   <section v-if="favorites.length > 0" class="favorite-section">
-    <div class="favorite-section__list">
-      <FavoriteItem
-        v-for="(favorite, index) in favorites"
+    <md-list class="favorite-section__list">
+      <md-list-item
+        v-for="favorite in favorites"
         :key="favorite.id"
-        :bookmark="favorite"
-        :index="index"
+        type="button"
         @click="handleClick(favorite)"
-        @remove="handleRemove(favorite)"
-      />
-    </div>
+      >
+        <!-- Favicon -->
+        <template #start>
+<div  class="favorite-favicon">
+          <img
+            v-if="getFaviconUrl(favorite)"
+            :src="getFaviconUrl(favorite)"
+            alt="favicon"
+            loading="lazy"
+            @error="() => handleFaviconError(favorite.id)"
+          />
+          <LucideIcon v-else name="bookmark" :size="16" />
+        </div>
+</template>
+
+        <!-- 标题 -->
+        <template #headline>
+<div >{{ favorite.title }}</div>
+</template>
+
+        <!-- 取消收藏按钮 -->
+        <template #end>
+<md-icon-button
+          
+          title="取消收藏"
+          @click.stop="handleRemove(favorite)"
+        >
+          <LucideIcon name="star" :size="16" />
+        </md-icon-button>
+</template>
+      </md-list-item>
+    </md-list>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, watch, onMounted, onUnmounted } from 'vue'
+import { computed, watch, onMounted, onUnmounted, ref } from 'vue'
 import { useBookmarkStore } from '@/stores/bookmarkStore'
 import { favoriteAppService } from '@/application/bookmark/favorite-app-service'
 import { logger } from '@/infrastructure/logging/logger'
-import FavoriteItem from './FavoriteItem.vue'
+import { LucideIcon } from '@/components'
 import type { BookmarkNode } from '@/types'
+
+// 导入 Material Web Components
+import '@material/web/list/list.js'
+import '@material/web/list/list-item.js'
+import '@material/web/iconbutton/icon-button.js'
 
 defineOptions({
   name: 'FavoriteSection'
@@ -40,6 +73,7 @@ const emit = defineEmits<{
 // ✅ 从 Pinia Store 派生数据，响应式更新
 const bookmarkStore = useBookmarkStore()
 const favorites = computed(() => bookmarkStore.favoriteBookmarks)
+const faviconErrors = ref<Set<string>>(new Set())
 
 // 组件挂载时立即发送数量
 onMounted(() => {
@@ -57,6 +91,28 @@ onUnmounted(() => {
     stopWatch()
   }
 })
+
+/**
+ * 获取 favicon URL
+ */
+const getFaviconUrl = (bookmark: BookmarkNode): string | undefined => {
+  if (!bookmark.url || faviconErrors.value.has(bookmark.id)) {
+    return undefined
+  }
+  try {
+    const domain = new URL(bookmark.url).hostname
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=16`
+  } catch {
+    return undefined
+  }
+}
+
+/**
+ * 处理 favicon 加载错误
+ */
+const handleFaviconError = (bookmarkId: string) => {
+  faviconErrors.value.add(bookmarkId)
+}
 
 // === 事件处理 ===
 
@@ -84,10 +140,23 @@ async function handleRemove(bookmark: BookmarkNode) {
 }
 
 .favorite-section__list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-1);
   max-height: 300px;
+  border-radius: var(--radius-md);
   overflow: hidden auto;
+}
+
+.favorite-favicon {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: center;
+  align-items: center;
+  width: 16px;
+  height: 16px;
+}
+
+.favorite-favicon img {
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-xs);
 }
 </style>

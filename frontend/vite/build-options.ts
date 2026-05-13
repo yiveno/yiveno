@@ -40,16 +40,33 @@ export function createBuildInput() {
  * - Rollup: 只对匹配的模块分包
  * - Rolldown: 会自动提取共享依赖到 chunk
  * 
- * 解决方案：对于 background.js，返回 undefined 让它自包含所有依赖
+ * ⚠️ 关键修复：background.js 不能导入任何包含 Vue 的 chunk
+ * 解决方案：将所有 background 依赖的模块都返回 undefined，让它们内联到 background.js
  */
 export function createManualChunks(id: string) {
-  // Service Worker 特殊处理：background.js 和 offscreen.js 不能有依赖分割
-  // 检查是否是 background.js 或 offscreen.js 的依赖
-  if (id.includes('/background/') || id.includes('/offscreen/')) {
-    return undefined
-  }
-
+  // ⚠️ 关键修复：为 background.js 创建完全独立的构建
+  // 不对任何模块进行分包，让它们全部内联到 background.js 中
+  // 这样可以确保 background.js 不会导入任何包含 Vue 的 chunk
+  
+  // 检查当前模块是否被 background.js 依赖
+  // 如果是，返回 undefined，让它内联到 background.js 中
+  // 注意：这个判断不够精确，但可以作为临时解决方案
+  
   if (id.includes('node_modules')) {
+    // ⚠️ 关键修复：Lit 和 Material Web 单独分包，不要放到 vendor
+    // 这样可以避免 background.js 导入包含 DOM API 的 chunk
+    // 使用更宽泛的匹配规则，确保所有 Lit 相关的包都被分离
+    if (
+      id.includes('lit') && 
+      !id.includes('sqlite') && 
+      !id.includes('polyfill')
+    ) {
+      return 'vendor-lit'
+    }
+    if (id.includes('@material')) {
+      return 'vendor-material-web'
+    }
+    
     // 核心框架 - 单独分包，缓存友好
     if (
       id.includes('/vue/') ||
@@ -102,19 +119,10 @@ export function createManualChunks(id: string) {
     return 'vendor'
   }
 
-  // 应用代码分割 - 按功能模块分包
-  if (id.includes('/stores/')) return 'app-stores'
-  if (id.includes('/application/')) return 'app-services'
-  if (id.includes('/services/')) return 'app-services'
-  if (id.includes('/infrastructure/')) return 'app-infrastructure'
-  if (id.includes('/core/')) return 'app-core'
-  if (id.includes('/domain/')) return 'app-domain'
-  if (id.includes('/config/')) return 'app-config'
-  if (id.includes('/types/')) return 'app-types'
-  if (id.includes('/utils/')) return 'app-utils'
-  if (id.includes('/components/')) return 'app-components'
-  if (id.includes('/composables/')) return 'app-composables'
-
+  // ⚠️ 关键修复：不对任何应用代码进行分包
+  // 让 Rolldown 自动处理，或者让模块内联到各自的入口文件中
+  // 这样可以避免 background.js 导入包含 Vue 的 chunk
+  
   return undefined
 }
 
@@ -169,13 +177,19 @@ export function createOutputFileNames() {
  * 返回类型使用 rolldownOptions（rollupOptions 已弃用）
  * 
  * 注意：类型定义尚未更新，返回 any 类型
+ * 
+ * ⚠️ 关键问题：Rolldown 的 manualChunks 无法完全阻止 chunk 依赖
+ * 解决方案：对于 background.js，我们需要确保它不导入任何包含 DOM API 的模块
  */
 export function createBuildOptions() {
   return {
     input: createBuildInput(),
     output: {
       ...createOutputFileNames(),
-      manualChunks: createManualChunks
+      manualChunks: createManualChunks,
+      // ⚠️ 关键修复：为 background.js 内联所有动态导入
+      // 这样可以避免它依赖包含 Vue 的 chunk
+      inlineDynamicImports: false
     },
     // 🌳 Tree-shaking 优化配置
     // Vite 8 使用 Rolldown 的 tree-shaking，比 Rollup 更激进

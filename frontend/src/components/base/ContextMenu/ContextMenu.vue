@@ -13,39 +13,46 @@
 <template>
   <Teleport to="body">
     <Transition name="context-menu">
-      <div
+      <md-list
         v-if="show"
         ref="menuRef"
+        role="menu"
         class="context-menu"
         :style="menuStyle"
         tabindex="-1"
         @keydown="handleKeyDown"
       >
-        <div
+        <md-list-item
           v-for="(item, index) in visibleItems"
           :key="item.id"
           :ref="el => setItemRef(el as HTMLElement, index)"
-          class="context-menu-item"
+          type="button"
+          :disabled="item.disabled"
           :class="{
-            'context-menu-item--disabled': item.disabled,
             'context-menu-item--focused': focusedIndex === index,
             [`context-menu-item--${item.color}`]: item.color && item.color !== 'default'
           }"
           @click="handleItemClick(item)"
           @mouseenter="focusedIndex = index"
         >
-          <LucideIcon
+          <template #start>
+<LucideIcon
             v-if="item.icon"
+            
             :name="item.icon"
             :size="16"
-            class="item-icon"
           />
-          <span class="item-label">{{ item.label }}</span>
-          <span v-if="item.shortcut" class="item-shortcut">{{
-            item.shortcut
-          }}</span>
-        </div>
-      </div>
+</template>
+          <template #headline>
+<div >{{ item.label }}</div>
+</template>
+          <template #trailing-supporting-text>
+<div v-if="item.shortcut"  class="item-shortcut">
+            {{ item.shortcut }}
+          </div>
+</template>
+        </md-list-item>
+      </md-list>
     </Transition>
   </Teleport>
 </template>
@@ -54,6 +61,10 @@
 import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import { LucideIcon } from '@/components/base/LucideIcon'
 import type { MenuItemConfig } from '@/core/bookmark/context-menu-config'
+
+// 导入 Material Web Components
+import '@material/web/list/list.js'
+import '@material/web/list/list-item.js'
 
 defineOptions({ name: 'ContextMenu' })
 
@@ -268,92 +279,80 @@ onUnmounted(() => {
   box-shadow: var(--shadow-lg);
 }
 
-.context-menu-item {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  padding: var(--spacing-2) var(--spacing-3);
-  border-bottom: 1px solid var(--color-border);
-  font-size: var(--text-sm);
-  color: var(--color-text-primary);
-  cursor: pointer;
-  transition: background var(--transition-fast);
-}
-
-.context-menu-item:last-child {
-  border-bottom: none;
-}
-
-.context-menu-item:hover,
-.context-menu-item--focused {
-  background: var(--color-surface-variant);
-}
-
-.context-menu-item--disabled {
-  color: var(--color-text-disabled);
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.context-menu-item--disabled:hover,
-.context-menu-item--disabled.context-menu-item--focused {
-  background: transparent;
-}
-
-.item-icon {
-  flex-shrink: 0;
-}
-
-.item-label {
-  flex: 1;
-}
-
 .item-shortcut {
-  flex-shrink: 0;
   font-size: var(--text-xs);
   color: var(--color-text-secondary);
 }
 
+/* Material Web Components 样式 */
+md-list {
+  --md-list-container-color: transparent;
+}
+
+md-list-item {
+  --md-list-item-label-text-color: var(--md-sys-color-on-surface);
+  --md-list-item-trailing-supporting-text-color: var(--md-sys-color-on-surface-variant);
+  --md-list-item-container-shape: 0;
+  --md-list-item-label-text-font: var(--font-family-base);
+  --md-list-item-label-text-size: var(--md-sys-typescale-body-medium-size);
+  --md-list-item-one-line-container-height: 48px;
+  --md-list-item-hover-state-layer-color: var(--md-sys-color-on-surface);
+  --md-list-item-hover-state-layer-opacity: 0.08;
+  --md-list-item-disabled-label-text-color: var(--color-text-disabled);
+  --md-list-item-disabled-label-text-opacity: 0.5;
+
+  border-bottom: 1px solid var(--color-border);
+}
+
+md-list-item:last-child {
+  border-bottom: none;
+}
+
+/* 焦点状态 */
+.context-menu-item--focused {
+  background: var(--color-surface-variant);
+}
+
+/* 颜色主题 */
 .context-menu-item--error {
-  color: var(--color-error);
+  --md-list-item-label-text-color: var(--color-error);
 }
 
 .context-menu-item--error:hover,
 .context-menu-item--error.context-menu-item--focused {
-  color: var(--color-on-error, var(--color-surface));
-  background: var(--color-error);
-}
-
-.context-menu-item--error:hover .item-icon,
-.context-menu-item--error.context-menu-item--focused .item-icon {
-  color: var(--color-on-error, var(--color-surface));
+  --md-list-item-label-text-color: var(--color-on-error, var(--color-surface));
+  --md-list-item-hover-state-layer-color: var(--color-error);
+  --md-list-item-hover-state-layer-opacity: 1;
 }
 
 .context-menu-item--warning {
-  color: var(--color-warning);
+  --md-list-item-label-text-color: var(--color-warning);
 }
 
 .context-menu-item--warning:hover,
 .context-menu-item--warning.context-menu-item--focused {
-  background: var(--color-warning-subtle);
+  --md-list-item-hover-state-layer-color: var(--color-warning-subtle);
+  --md-list-item-hover-state-layer-opacity: 1;
 }
 
 .context-menu-item--success {
-  color: var(--color-success);
+  --md-list-item-label-text-color: var(--color-success);
 }
 
 .context-menu-item--success:hover,
 .context-menu-item--success.context-menu-item--focused {
-  background: var(--color-success-subtle);
+  --md-list-item-hover-state-layer-color: var(--color-success-subtle);
+  --md-list-item-hover-state-layer-opacity: 1;
 }
 
 .context-menu-item--primary {
-  color: var(--color-primary);
+  --md-list-item-label-text-color: var(--color-primary);
 }
 
 .context-menu-item--primary:hover,
 .context-menu-item--primary.context-menu-item--focused {
-  background: var(--color-primary-subtle);
+  --md-list-item-hover-state-layer-color: var(--color-primary-subtle);
+  --md-list-item-hover-state-layer-opacity: 1;
 }
 
 /* 动画 */

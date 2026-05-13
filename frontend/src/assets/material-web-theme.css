@@ -1,0 +1,307 @@
+/**
+ * Material Web Components 全局主题配置
+ * 
+ * 使用 @acuity-bookmarks/design-tokens 统一所有 Material Web Components 的样式
+ * 这个文件在 main.ts 中全局导入，所有 Material Web Components 都会应用这些样式
+ */
+
+/* ============================================
+   Buttons
+   ============================================ */
+
+md-filled-button {
+  --md-filled-button-container-color: var(--md-sys-color-primary);
+  --md-filled-button-label-text-color: var(--md-sys-color-on-primary);
+  --md-filled-button-container-shape: var(--radius-md);
+  --md-filled-button-label-text-font: var(--font-family-base);
+  --md-filled-button-label-text-size: var(--md-sys-typescale-label-large-size);
+  --md-filled-button-label-text-weight: var(--font-medium);
+}
+
+md-outlined-button {
+  --md-outlined-button-outline-color: var(--md-sys-color-outline);
+  --md-outlined-button-label-text-color: var(--md-sys-color-primary);
+  --md-outlined-button-container-shape: var(--radius-md);
+  --md-outlined-button-label-text-font: var(--font-family-base);
+  --md-outlined-button-label-text-size: var(--md-sys-typescale-label-large-size);
+  --md-outlined-button-label-text-weight: var(--font-medium);
+}
+
+md-text-button {
+  --md-text-button-label-text-color: var(--md-sys-color-primary);
+  --md-text-button-container-shape: var(--radius-md);
+  --md-text-button-label-text-font: var(--font-family-base);
+  --md-text-button-label-text-size: var(--md-sys-typescale-label-large-size);
+  --md-text-button-label-text-weight: var(--font-medium);
+}
+
+md-elevated-button {
+  --md-elevated-button-container-color: var(--md-sys-color-surface);
+  --md-elevated-button-label-text-color: var(--md-sys-color-primary);
+  --md-elevated-button-container-shape: var(--radius-md);
+  --md-elevated-button-label-text-font: var(--font-family-base);
+  --md-elevated-button-label-text-size: var(--md-sys-typescale-label-large-size);
+  --md-elevated-button-label-text-weight: var(--font-medium);
+}
+
+md-tonal-button {
+  --md-tonal-button-container-color: var(--md-sys-color-secondary-container);
+  --md-tonal-button-label-text-color: var(--md-sys-color-on-secondary-container);
+  --md-tonal-button-container-shape: var(--radius-md);
+  --md-tonal-button-label-text-font: var(--font-family-base);
+  --md-tonal-button-label-text-size: var(--md-sys-typescale-label-large-size);
+  --md-tonal-button-label-text-weight: var(--font-medium);
+}
+
+/* Icon Buttons */
+md-icon-button,
+md-filled-icon-button,
+md-filled-tonal-icon-button,
+md-outlined-icon-button {
+  --md-icon-button-icon-size: 24px;
+}
+
+/* ============================================
+   Text Fields
+   ============================================ */
+
+md-filled-text-field {
+  --md-filled-text-field-container-color: var(--md-sys-color-surface-variant);
+  --md-filled-text-field-label-text-color: var(--md-sys-color-on-surface-variant);
+  --md-filled-text-field-input-text-color: var(--md-sys-color-on-surface);
+  --md-filled-text-field-container-shape: var(--radius-sm);
+  --md-filled-text-field-input-text-font: var(--font-family-base);
+  --md-filled-text-field-input-text-size: var(--md-sys-typescale-body-large-size);
+  --md-filled-text-field-error-text-color: var(--color-semantic-error);
+}
+
+md-outlined-text-field {
+  --md-outlined-text-field-outline-color: var(--md-sys-color-outline);
+  --md-outlined-text-field-label-text-color: var(--md-sys-color-on-surface-variant);
+  --md-outlined-text-field-input-text-color: var(--md-sys-color-on-surface);
+  --md-outlined-text-field-container-shape: var(--radius-sm);
+  --md-outlined-text-field-input-text-font: var(--font-family-base);
+  --md-outlined-text-field-input-text-size: var(--md-sys-typescale-body-large-size);
+  --md-outlined-text-field-error-text-color: var(--color-semantic-error);
+}
+
+/* ============================================
+   Selection Controls
+   ============================================ */
+
+md-checkbox {
+  --md-checkbox-selected-container-color: var(--md-sys-color-primary);
+  --md-checkbox-selected-icon-color: var(--md-sys-color-on-primary);
+  --md-checkbox-outline-color: var(--md-sys-color-outline);
+  --md-checkbox-container-shape: var(--radius-xs);
+}
+
+md-radio {
+  --md-radio-selected-icon-color: var(--md-sys-color-primary);
+  --md-radio-icon-color: var(--md-sys-color-on-surface-variant);
+}
+
+md-switch {
+  --md-switch-selected-track-color: var(--md-sys-color-primary);
+  --md-switch-selected-handle-color: var(--md-sys-color-on-primary);
+  --md-switch-selected-hover-track-color: var(--color-primary-hover);
+  --md-switch-selected-pressed-track-color: var(--color-primary-active);
+  
+  /* 调整尺寸 */
+  --md-switch-track-width: 44px;
+  --md-switch-track-height: 24px;
+  --md-switch-handle-width: 20px;
+  --md-switch-handle-height: 20px;
+}
+
+md-slider {
+  --md-slider-active-track-color: var(--md-sys-color-primary);
+  --md-slider-handle-color: var(--md-sys-color-primary);
+  --md-slider-hover-handle-color: var(--color-primary-hover);
+  --md-slider-pressed-handle-color: var(--color-primary-active);
+  --md-slider-label-container-color: var(--md-sys-color-primary);
+}
+
+/* ============================================
+   Dialogs
+   ============================================ */
+
+md-dialog {
+  --md-dialog-container-color: var(--md-sys-color-surface);
+  --md-dialog-container-shape: var(--radius-lg);
+  --md-dialog-headline-color: var(--md-sys-color-on-surface);
+  --md-dialog-headline-font: var(--font-family-base);
+  --md-dialog-headline-size: var(--md-sys-typescale-headline-small-size);
+  --md-dialog-supporting-text-color: var(--md-sys-color-on-surface-variant);
+  --md-dialog-supporting-text-font: var(--font-family-base);
+  --md-dialog-supporting-text-size: var(--md-sys-typescale-body-medium-size);
+}
+
+/* ============================================
+   Lists
+   ============================================ */
+
+md-list {
+  --md-list-container-color: transparent;
+}
+
+md-list-item {
+  --md-list-item-label-text-color: var(--md-sys-color-on-surface);
+  --md-list-item-supporting-text-color: var(--md-sys-color-on-surface-variant);
+  --md-list-item-trailing-supporting-text-color: var(--md-sys-color-on-surface-variant);
+  --md-list-item-container-shape: var(--radius-sm);
+  --md-list-item-label-text-font: var(--font-family-base);
+  --md-list-item-label-text-size: var(--md-sys-typescale-body-large-size);
+  --md-list-item-supporting-text-font: var(--font-family-base);
+  --md-list-item-supporting-text-size: var(--md-sys-typescale-body-medium-size);
+}
+
+/* ============================================
+   Menus
+   ============================================ */
+
+md-menu {
+  --md-menu-container-color: var(--md-sys-color-surface);
+  --md-menu-container-shape: var(--radius-md);
+  --md-menu-container-elevation: var(--shadow-md);
+}
+
+md-menu-item {
+  --md-menu-item-label-text-color: var(--md-sys-color-on-surface);
+  --md-menu-item-label-text-font: var(--font-family-base);
+  --md-menu-item-label-text-size: var(--md-sys-typescale-body-large-size);
+  --md-menu-item-container-shape: var(--radius-sm);
+}
+
+md-sub-menu {
+  --md-sub-menu-container-color: var(--md-sys-color-surface);
+  --md-sub-menu-container-shape: var(--radius-md);
+}
+
+/* ============================================
+   Chips
+   ============================================ */
+
+md-assist-chip,
+md-filter-chip,
+md-input-chip,
+md-suggestion-chip {
+  --md-chip-container-shape: var(--radius-sm);
+  --md-chip-label-text-font: var(--font-family-base);
+  --md-chip-label-text-size: var(--md-sys-typescale-label-large-size);
+}
+
+md-filter-chip {
+  --md-filter-chip-selected-container-color: var(--md-sys-color-secondary-container);
+  --md-filter-chip-label-text-color: var(--md-sys-color-on-surface-variant);
+  --md-filter-chip-selected-label-text-color: var(--md-sys-color-on-secondary-container);
+}
+
+/* ============================================
+   Progress Indicators
+   ============================================ */
+
+md-linear-progress {
+  --md-linear-progress-active-indicator-color: var(--md-sys-color-primary);
+  --md-linear-progress-track-color: var(--md-sys-color-surface-variant);
+  --md-linear-progress-track-shape: var(--radius-full);
+}
+
+md-circular-progress {
+  --md-circular-progress-active-indicator-color: var(--md-sys-color-primary);
+  --md-circular-progress-size: 48px;
+}
+
+/* ============================================
+   Tabs
+   ============================================ */
+
+md-tabs {
+  --md-tabs-container-color: transparent;
+  --md-tabs-divider-color: var(--md-sys-color-outline-variant);
+}
+
+md-primary-tab,
+md-secondary-tab {
+  --md-primary-tab-label-text-font: var(--font-family-base);
+  --md-primary-tab-label-text-size: var(--md-sys-typescale-title-small-size);
+  --md-primary-tab-active-indicator-color: var(--md-sys-color-primary);
+  --md-primary-tab-label-text-color: var(--md-sys-color-on-surface-variant);
+  --md-primary-tab-active-label-text-color: var(--md-sys-color-primary);
+}
+
+/* ============================================
+   Select
+   ============================================ */
+
+md-filled-select,
+md-outlined-select {
+  --md-filled-select-text-field-container-shape: var(--radius-sm);
+  --md-filled-select-text-field-input-text-font: var(--font-family-base);
+  --md-filled-select-text-field-input-text-size: var(--md-sys-typescale-body-large-size);
+}
+
+/* ============================================
+   Dividers
+   ============================================ */
+
+md-divider {
+  --md-divider-color: var(--md-sys-color-outline-variant);
+  --md-divider-thickness: 1px;
+}
+
+/* ============================================
+   Icons
+   ============================================ */
+
+md-icon {
+  --md-icon-size: 24px;
+
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* ============================================
+   FAB (Floating Action Button)
+   ============================================ */
+
+md-fab,
+md-branded-fab {
+  --md-fab-container-color: var(--md-sys-color-primary-container);
+  --md-fab-icon-color: var(--md-sys-color-on-primary-container);
+  --md-fab-container-shape: var(--radius-lg);
+}
+
+/* ============================================
+   自定义工具类
+   ============================================ */
+
+/* 危险操作按钮（红色） */
+md-filled-button.button--danger {
+  --md-filled-button-container-color: var(--color-semantic-error);
+  --md-filled-button-label-text-color: var(--md-sys-color-on-error);
+}
+
+md-outlined-button.button--danger {
+  --md-outlined-button-outline-color: var(--color-semantic-error);
+  --md-outlined-button-label-text-color: var(--color-semantic-error);
+}
+
+md-text-button.button--danger {
+  --md-text-button-label-text-color: var(--color-semantic-error);
+  --md-text-button-hover-label-text-color: var(--color-semantic-error);
+  --md-text-button-pressed-label-text-color: var(--color-semantic-error);
+}
+
+/* 成功操作按钮（绿色） */
+md-filled-button.button--success {
+  --md-filled-button-container-color: var(--color-semantic-success);
+  --md-filled-button-label-text-color: var(--md-sys-color-on-primary);
+}
+
+/* 禁用状态 */
+md-switch:disabled,
+md-checkbox:disabled,
+md-radio:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

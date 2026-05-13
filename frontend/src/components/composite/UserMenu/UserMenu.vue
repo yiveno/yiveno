@@ -63,7 +63,7 @@
             <span>到期：{{ expiryDate }}</span>
           </div>
         </div>
-        <Divider />
+        <md-divider></md-divider>
         <button class="user-menu__dropdown-item user-menu__dropdown-item--danger" :disabled="isLoggingOut" @click="handleLogout">
           <LucideIcon name="log-out" :size="16" />
           <span>{{ isLoggingOut ? '退出中...' : '退出登录' }}</span>
@@ -75,11 +75,12 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue'
-import { Avatar, LucideIcon, Divider } from '@/components'
+import { Avatar, LucideIcon } from '@/components'
 import { useSupabaseAuth, useSubscription } from '@/composables'
 import { emitEvent } from '@/infrastructure/events/event-bus'
 import { logger } from '@/infrastructure/logging/logger'
 import { websiteUrls, openWebsiteUrl } from '@/config/website'
+import '@material/web/divider/divider.js'
 
 defineOptions({ name: 'UserMenu' })
 
@@ -500,6 +501,11 @@ onUnmounted(() => {
 
 .user-menu__dropdown-item--danger {
   color: var(--md-sys-color-error);
+}
+
+/* Material Web Divider 样式 */
+md-divider {
+  margin: var(--spacing-2) 0;
 }
 
 /* 头像容器 */

@@ -2,9 +2,9 @@
   <div v-if="showMonitor" class="performance-monitor">
     <div class="monitor-header">
       <h4>性能监控</h4>
-      <Button variant="ghost" size="sm" @click="toggleMonitor">
-        <LucideIcon :name="isExpanded ? 'chevron-up' : 'chevron-down'" :size="16" />
-      </Button>
+      <md-icon-button @click="toggleMonitor">
+        <md-icon>{{ isExpanded ? 'expand_less' : 'expand_more' }}</md-icon>
+      </md-icon-button>
     </div>
 
     <div v-if="isExpanded" class="monitor-content">
@@ -31,10 +31,10 @@
       </div>
 
       <div class="actions">
-        <Button variant="outline" size="sm" @click="cleanup">清理缓存</Button>
-        <Button variant="outline" size="sm" @click="toggleOptimizations">
+        <md-outlined-button @click="cleanup">清理缓存</md-outlined-button>
+        <md-outlined-button @click="toggleOptimizations">
           {{ optimizationsEnabled ? '禁用' : '启用' }}优化
-        </Button>
+        </md-outlined-button>
       </div>
     </div>
   </div>
@@ -42,11 +42,13 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Button, LucideIcon } from '@/components'
 import {
   usePerformanceMonitor,
   useMemoryManagement
 } from '@/composables/useSimplePerformance'
+import '@material/web/button/outlined-button.js'
+import '@material/web/iconbutton/icon-button.js'
+import '@material/web/icon/icon.js'
 
 const showMonitor = ref(true) // 简化：总是显示
 const isExpanded = ref(false)

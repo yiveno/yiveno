@@ -93,21 +93,22 @@
     <template v-if="showActions" #actions>
       <!-- ✅ 错误时的操作 -->
       <template v-if="isError">
-        <Button
+        <md-filled-button
           v-if="progress.error?.canRetry"
-          variant="primary"
           @click="emit('retry')"
         >
-          <LucideIcon name="refresh" :size="16" />
+          <template #icon>
+<md-icon >refresh</md-icon>
+</template>
           重试
-        </Button>
-        <Button variant="text" @click="emit('force-close')">
+        </md-filled-button>
+        <md-text-button @click="emit('force-close')">
           忽略并继续
-        </Button>
+        </md-text-button>
       </template>
 
       <!-- ✅ 完成时的操作 -->
-      <Button v-else @click="emit('close')"> 关闭 </Button>
+      <md-filled-button v-else @click="emit('close')"> 关闭 </md-filled-button>
     </template>
   </Dialog>
 </template>
@@ -116,10 +117,12 @@
 import { computed, defineOptions } from 'vue'
 import Dialog from '@/components/composite/Dialog/Dialog.vue'
 import LucideIcon from '@/components/base/LucideIcon/LucideIcon.vue'
-import Button from '@/components/base/Button/Button.vue'
 import type { SyncProgress, SyncPhase } from '@/types/sync-progress'
 import { SYNC_PHASES, PHASE_TITLES, formatTime } from '@/types/sync-progress'
 import { formatNumber } from '@/utils/i18n-helpers'
+import '@material/web/button/filled-button.js'
+import '@material/web/button/text-button.js'
+import '@material/web/icon/icon.js'
 
 defineOptions({
   name: 'SyncProgressDialog'

@@ -2323,6 +2323,26 @@
     "message": "バックグラウンドで実行中に通知を受信できます",
     "description": "Settings: settings_notification_mirror_tooltip_3"
   },
+  "settings_notification_do_not_disturb": {
+    "message": "おやすみモード",
+    "description": "Settings: settings_notification_do_not_disturb"
+  },
+  "settings_notification_do_not_disturb_tooltip_title": {
+    "message": "有効にすると：",
+    "description": "Settings: settings_notification_do_not_disturb_tooltip_title"
+  },
+  "settings_notification_do_not_disturb_tooltip_1": {
+    "message": "ページのトーストやシステム通知を含むすべての通知が抑制されます",
+    "description": "Settings: settings_notification_do_not_disturb_tooltip_1"
+  },
+  "settings_notification_do_not_disturb_tooltip_2": {
+    "message": "集中して作業したい時や、邪魔されたくない場合に最適です",
+    "description": "Settings: settings_notification_do_not_disturb_tooltip_2"
+  },
+  "settings_notification_do_not_disturb_tooltip_3": {
+    "message": "無効にすると、通知は通常の動作に戻ります",
+    "description": "Settings: settings_notification_do_not_disturb_tooltip_3"
+  },
   "settings_shortcut_title": {
     "message": "ショートカット設定",
     "description": "Settings: settings_shortcut_title"

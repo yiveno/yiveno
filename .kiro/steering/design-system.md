@@ -63,7 +63,53 @@ import '@/assets/main.css'
 import '@/assets/fonts.css'
 ```
 
-### 4. 检查清单
+### 4. Material Web 组件样式管理
+
+**所有 Material Web 组件的样式必须在入口处集中配置，禁止在各个组件文件中重复配置。**
+
+```
+✅ 正确做法：
+  - 全局样式：frontend/src/design-system/material-web-overrides.css
+  - 在入口文件（main.css）中导入
+  - 提供尺寸变体类（size-xs、size-sm、size-md）
+
+❌ 错误做法：
+  - 在每个 Vue 组件的 <style scoped> 中配置 Material Web 样式
+  - 重复配置相同的 CSS 变量（如 --md-primary-tab-container-color）
+  - 在多个文件中配置相同组件的样式
+
+例外情况：
+  - 只有在需要组件特定样式时，才在组件中覆盖
+  - 必须有明确的理由（如 Settings 页面需要更大的 Tabs）
+```
+
+**示例：**
+
+```css
+/* ✅ 正确：在 design-system/material-web-overrides.css 中统一配置 */
+md-tabs {
+  --md-primary-tab-container-color: transparent;
+  --md-primary-tab-label-text-color: var(--color-text-secondary);
+  /* ... 其他全局配置 */
+}
+
+/* ✅ 正确：组件中只覆盖特定样式 */
+/* Settings.vue */
+md-tabs {
+  --md-primary-tab-container-height: 56px; /* Settings 页面需要更大的高度 */
+}
+
+/* ❌ 错误：在组件中重复配置所有样式 */
+/* SomeComponent.vue */
+md-tabs {
+  --md-primary-tab-container-color: transparent;
+  --md-primary-tab-label-text-color: var(--color-text-secondary);
+  --md-primary-tab-active-label-text-color: var(--color-primary);
+  /* ... 重复的配置 */
+}
+```
+
+### 5. 检查清单
 
 在修改任何样式代码前，必须确认：
 
@@ -72,6 +118,7 @@ import '@/assets/fonts.css'
 - [ ] 是否使用了硬编码的间距值？（如 `16px`、`1rem`）
 - [ ] 是否使用了硬编码的字号？（如 `14px`、`0.875rem`）
 - [ ] 是否创建了自定义的 design tokens 文件？
+- [ ] 是否在组件中重复配置了 Material Web 组件的样式？
 
 ---
 
@@ -286,13 +333,73 @@ export const colors = {
 --radius-full: 9999px;
 ```
 
-### 5. 阴影 (Shadows)
+### 5. 阴影 (Shadows / Elevation)
+
+**Material Design 3 Elevation 系统**
+
+Material Design 3 使用 Elevation（高度）来表示元素在 Z 轴上的相对距离，通过阴影效果创造层次感。
 
 ```css
---shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
---shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
---shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+/* Material Design 3 Elevation 变量 */
+--md-sys-elevation-0: none;                    /* Level 0: 无阴影（平面） */
+--md-sys-elevation-1: ...;                     /* Level 1: 最轻微阴影（卡片） */
+--md-sys-elevation-2: ...;                     /* Level 2: 轻微阴影（按钮） */
+--md-sys-elevation-3: ...;                     /* Level 3: 中等阴影（菜单） */
+--md-sys-elevation-4: ...;                     /* Level 4: 较强阴影（导航） */
+--md-sys-elevation-5: ...;                     /* Level 5: 最强阴影（对话框） */
+
+/* 便捷别名（推荐使用） */
+--shadow-none: var(--md-sys-elevation-0);
+--shadow-sm: var(--md-sys-elevation-1);
+--shadow-md: var(--md-sys-elevation-2);
+--shadow-lg: var(--md-sys-elevation-3);
+--shadow-xl: var(--md-sys-elevation-4);
+--shadow-2xl: var(--md-sys-elevation-5);
 ```
+
+**使用场景**
+
+| Elevation Level | 别名 | 使用场景 | 示例 |
+|----------------|------|---------|------|
+| Level 0 | `--shadow-none` | 平面元素 | 背景、分隔线 |
+| Level 1 | `--shadow-sm` | 轻微悬浮 | 卡片、徽章 |
+| Level 2 | `--shadow-md` | 中等悬浮 | 按钮、芯片 |
+| Level 3 | `--shadow-lg` | 明显悬浮 | 菜单、工具提示 |
+| Level 4 | `--shadow-xl` | 强烈悬浮 | 导航抽屉 |
+| Level 5 | `--shadow-2xl` | 最高层级 | 模态对话框 |
+
+**使用规范**
+
+```css
+/* ✅ 推荐：使用便捷别名 */
+.card {
+  box-shadow: var(--shadow-sm);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.dialog {
+  box-shadow: var(--shadow-lg);
+}
+
+/* ✅ 也可以：直接使用 Material Elevation 变量 */
+.menu {
+  box-shadow: var(--md-sys-elevation-3);
+}
+
+/* ❌ 错误：硬编码阴影值 */
+.card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);  /* 禁止！ */
+}
+```
+
+**注意事项**
+
+- **不需要使用 `<md-elevation>` 组件**：直接使用 CSS 变量即可
+- **遵循 Material Design 规范**：不要创建自定义的阴影值
+- **保持一致性**：同类元素使用相同的 elevation level
 
 ### 6. 动画 (Motion)
 

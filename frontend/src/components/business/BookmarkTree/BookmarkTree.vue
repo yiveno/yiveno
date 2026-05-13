@@ -40,7 +40,7 @@
         :style="containerStyles"
       >
         <div v-if="isOverlayLoading" class="tree-loading-overlay">
-          <Spinner size="lg" />
+          <md-circular-progress indeterminate class="tree-spinner-lg" />
           <div class="tree-loading-text">正在加载书签…</div>
         </div>
 
@@ -180,7 +180,7 @@
 
         <!-- 加载状态 -->
         <div v-if="loading && !isOverlayLoading" class="loading-state">
-          <Spinner size="md" />
+          <md-circular-progress indeterminate class="tree-spinner-md" />
           <span>加载中...</span>
         </div>
       </div>
@@ -201,8 +201,9 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch, shallowRef } from 'vue'
 import { useVirtualizer } from '@tanstack/vue-virtual'
-import { ContextMenu, EmptyState, Input, Spinner } from '@/components'
+import { ContextMenu, EmptyState, Input } from '@/components'
 import { LucideIcon } from '@/components/base/LucideIcon'
+import '@material/web/progress/circular-progress.js'
 import type { BookmarkNode } from '@/types'
 import { logger } from '@/infrastructure/logging/logger'
 import TreeNode from './TreeNode.vue'
@@ -2286,3 +2287,8 @@ defineExpose({
   pointer-events: none;
 }
 </style>
+
+.tree-spinner-md {
+  --md-circular-progress-size: 32px;
+  --md-circular-progress-active-indicator-width: 3px;
+}

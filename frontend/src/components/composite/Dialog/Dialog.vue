@@ -55,12 +55,12 @@
               <div class="acuity-dialog-cancel-box">
                 <div class="cancel-text">{{ cancelConfirmText }}</div>
                 <div class="cancel-actions">
-                  <Button variant="text" @click="continueEditing">{{
+                  <md-text-button @click="continueEditing">{{
                     cancelConfirmContinueText
-                  }}</Button>
-                  <Button color="error" @click="confirmCancel">{{
+                  }}</md-text-button>
+                  <md-filled-button class="button--danger" @click="confirmCancel">{{
                     cancelConfirmOkText
-                  }}</Button>
+                  }}</md-filled-button>
                 </div>
               </div>
             </div>
@@ -80,8 +80,10 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import type { DialogProps } from './Dialog.d'
-import { Button, Card } from '@/components'
+import { Card } from '@/components'
 import { LucideIcon } from '@/components/base/LucideIcon'
+import '@material/web/button/filled-button.js'
+import '@material/web/button/text-button.js'
 
 const props = withDefaults(defineProps<DialogProps>(), {
   width: '480px',

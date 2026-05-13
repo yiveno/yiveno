@@ -2323,6 +2323,26 @@
     "message": "Admite la recepción de notificaciones cuando se ejecuta en segundo plano",
     "description": "Settings: settings_notification_mirror_tooltip_3"
   },
+  "settings_notification_do_not_disturb": {
+    "message": "Modo No Molestar",
+    "description": "Settings: settings_notification_do_not_disturb"
+  },
+  "settings_notification_do_not_disturb_tooltip_title": {
+    "message": "Cuando está activado:",
+    "description": "Settings: settings_notification_do_not_disturb_tooltip_title"
+  },
+  "settings_notification_do_not_disturb_tooltip_1": {
+    "message": "Todas las notificaciones se suprimirán, incluidos los mensajes de la página y las notificaciones del sistema",
+    "description": "Settings: settings_notification_do_not_disturb_tooltip_1"
+  },
+  "settings_notification_do_not_disturb_tooltip_2": {
+    "message": "Ideal para sesiones de trabajo concentrado cuando no quieres ser interrumpido",
+    "description": "Settings: settings_notification_do_not_disturb_tooltip_2"
+  },
+  "settings_notification_do_not_disturb_tooltip_3": {
+    "message": "Cuando está desactivado, las notificaciones reanudarán su comportamiento normal",
+    "description": "Settings: settings_notification_do_not_disturb_tooltip_3"
+  },
   "settings_shortcut_title": {
     "message": "Configuración de atajos",
     "description": "Settings: settings_shortcut_title"

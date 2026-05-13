@@ -20,7 +20,7 @@
     />
     <!-- 加载状态 -->
     <div v-if="!isStoresReady" class="loading-container">
-      <Spinner color="primary" size="lg" />
+      <md-circular-progress indeterminate></md-circular-progress>
       <p class="loading-text" data-testid="popup-loading-text">{{ t('popup_initializing') }}</p>
     </div>
     <!-- 主内容 - 只有当stores都存在时才显示 -->
@@ -86,7 +86,7 @@
               <span class="issue-label">{{ t('popup_issue_duplicate') }}</span>
             </div>
             <div class="issue-value">
-              <Spinner v-if="isLoadingTraitOverview" size="sm" />
+              <md-circular-progress v-if="isLoadingTraitOverview" indeterminate></md-circular-progress>
               <AnimatedNumber v-else :value="traitOverview.duplicate" />
             </div>
             <button
@@ -110,7 +110,7 @@
               <span class="issue-label">{{ t('popup_issue_invalid') }}</span>
             </div>
             <div class="issue-value">
-              <Spinner v-if="isLoadingTraitOverview" size="sm" />
+              <md-circular-progress v-if="isLoadingTraitOverview" indeterminate></md-circular-progress>
               <AnimatedNumber v-else :value="traitOverview.invalid" />
             </div>
             <button
@@ -128,10 +128,12 @@
       <section class="actions-section">
         <div class="actions-grid">
           <button class="action-button" @click="openManualOrganizePage">
+            <md-ripple></md-ripple>
             <LucideIcon name="folder" :size="20" />
             <span>{{ t('popup_action_organize') }}</span>
           </button>
           <button class="action-button" @click="openSettings">
+            <md-ripple></md-ripple>
             <LucideIcon name="settings" :size="20" />
             <span>{{ t('popup_action_settings') }}</span>
           </button>
@@ -143,6 +145,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
+import '@material/web/ripple/ripple.js'
 import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'
 import GlobalQuickAddBookmark from '@/components/business/GlobalQuickAddBookmark/GlobalQuickAddBookmark.vue'
 import BookmarkSearchInput from '@/components/business/BookmarkSearchInput/BookmarkSearchInput.vue'
@@ -155,7 +158,6 @@ import { useUIStore } from '@/stores/ui-store'
 import { usePopupStoreIndexedDB } from '@/stores/popup-store-indexeddb'
 import {
   Card,
-  Spinner,
   AppHeader,
   AnimatedNumber,
   LucideIcon
@@ -807,10 +809,9 @@ body {
   border-radius: var(--radius-lg);
   background: color-mix(in srgb, var(--md-sys-color-surface-container-highest) 70%, transparent);
   backdrop-filter: blur(10px);
-  box-shadow: 
-    0 2px 8px rgb(0 0 0 / 4%),
-    0 1px 2px rgb(0 0 0 / 6%),
-    inset 0 1px 0 color-mix(in srgb, var(--md-sys-color-surface-container-highest) 80%, transparent);
+  
+  /* ✅ Material Design 3 Elevation Level 1 */
+  box-shadow: var(--md-sys-elevation-1);
   user-select: none;
   transition: 
     box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
@@ -819,10 +820,9 @@ body {
 
 .stat-card:hover {
   opacity: 0.9;
-  box-shadow: 
-    0 4px 12px rgb(0 0 0 / 8%),
-    0 2px 4px rgb(0 0 0 / 6%),
-    inset 0 1px 0 color-mix(in srgb, var(--md-sys-color-surface-container-highest) 80%, transparent);
+  
+  /* ✅ Material Design 3 Elevation Level 2 */
+  box-shadow: var(--md-sys-elevation-2);
 }
 
 .stat-label {
@@ -890,10 +890,9 @@ body {
     rgb(251 191 36 / 10%) 0%,
     rgb(251 191 36 / 5%) 100%
   );
-  box-shadow: 
-    0 2px 8px rgb(251 191 36 / 10%),
-    0 1px 2px rgb(0 0 0 / 6%),
-    inset 0 1px 0 color-mix(in srgb, var(--md-sys-color-surface-container-highest) 50%, transparent);
+  
+  /* ✅ Material Design 3 Elevation Level 1 */
+  box-shadow: var(--md-sys-elevation-1);
 }
 
 .issue-card--warning:hover {
@@ -903,10 +902,9 @@ body {
     rgb(251 191 36 / 8%) 100%
   );
   opacity: 0.95;
-  box-shadow: 
-    0 4px 16px rgb(251 191 36 / 20%),
-    0 2px 4px rgb(0 0 0 / 6%),
-    inset 0 1px 0 color-mix(in srgb, var(--md-sys-color-surface-container-highest) 60%, transparent);
+  
+  /* ✅ Material Design 3 Elevation Level 2 */
+  box-shadow: var(--md-sys-elevation-2);
 }
 
 .issue-card--danger {
@@ -915,10 +913,9 @@ body {
     rgb(239 68 68 / 10%) 0%,
     rgb(239 68 68 / 5%) 100%
   );
-  box-shadow: 
-    0 2px 8px rgb(239 68 68 / 10%),
-    0 1px 2px rgb(0 0 0 / 6%),
-    inset 0 1px 0 color-mix(in srgb, var(--md-sys-color-surface-container-highest) 50%, transparent);
+  
+  /* ✅ Material Design 3 Elevation Level 1 */
+  box-shadow: var(--md-sys-elevation-1);
 }
 
 .issue-card--danger:hover {
@@ -928,10 +925,9 @@ body {
     rgb(239 68 68 / 8%) 100%
   );
   opacity: 0.95;
-  box-shadow: 
-    0 4px 16px rgb(239 68 68 / 20%),
-    0 2px 4px rgb(0 0 0 / 6%),
-    inset 0 1px 0 color-mix(in srgb, var(--md-sys-color-surface-container-highest) 60%, transparent);
+  
+  /* ✅ Material Design 3 Elevation Level 2 */
+  box-shadow: var(--md-sys-elevation-2);
 }
 
 .issue-card:active {
@@ -1027,6 +1023,7 @@ body {
 }
 
 .action-button {
+  position: relative; /* ✅ Ripple 需要相对定位 */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1039,10 +1036,9 @@ body {
   color: var(--color-text-primary);
   background: color-mix(in srgb, var(--md-sys-color-surface-container-highest) 70%, transparent);
   backdrop-filter: blur(10px);
-  box-shadow: 
-    0 2px 8px rgb(0 0 0 / 4%),
-    0 1px 2px rgb(0 0 0 / 6%),
-    inset 0 1px 0 color-mix(in srgb, var(--md-sys-color-surface-container-highest) 80%, transparent);
+  
+  /* ✅ Material Design 3 Elevation Level 1 */
+  box-shadow: var(--md-sys-elevation-1);
   cursor: pointer;
   user-select: none;
   transition: 
@@ -1060,10 +1056,9 @@ body {
     color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent) 100%
   );
   opacity: 0.95;
-  box-shadow: 
-    0 4px 12px color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent),
-    0 2px 4px rgb(0 0 0 / 6%),
-    inset 0 1px 0 color-mix(in srgb, var(--md-sys-color-surface-container-highest) 80%, transparent);
+  
+  /* ✅ Material Design 3 Elevation Level 2 */
+  box-shadow: var(--md-sys-elevation-2);
 }
 
 .action-button:active {
@@ -1075,3 +1070,8 @@ body {
   font-weight: var(--font-medium);
 }
 </style>
+
+.issue-value md-circular-progress {
+  --md-circular-progress-size: 20px;
+  --md-circular-progress-active-indicator-width: 3px;
+}

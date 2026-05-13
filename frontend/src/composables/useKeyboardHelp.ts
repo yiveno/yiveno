@@ -5,7 +5,18 @@
  */
 import { ref } from 'vue'
 import { useKeyboard } from './useKeyboard'
-import type { ShortcutInfo } from '@/components/base/KeyboardShortcutsHelp/KeyboardShortcutsHelp.vue'
+
+/**
+ * 快捷键信息
+ */
+export interface ShortcutInfo {
+  /** 快捷键组合 */
+  keys: string[]
+  /** 描述 */
+  description: string
+  /** 分类 */
+  category?: string
+}
 
 /**
  * 键盘帮助选项
@@ -97,8 +108,8 @@ export function convertToShortcutInfo(
 
   shortcutsMap.forEach((shortcut, key) => {
     shortcuts.push({
-      shortcut: key,
-      description: shortcut.description
+      keys: [key],
+      description: shortcut.description || ''
     })
   })
 

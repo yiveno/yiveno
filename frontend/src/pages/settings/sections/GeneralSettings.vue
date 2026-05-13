@@ -13,6 +13,7 @@
         </div>
         <div class="field">
           <md-switch
+            icons
             :selected="aiAutoEnabled"
             @change="handleAIAutoToggle"
           ></md-switch>
@@ -35,6 +36,7 @@
         </div>
         <div class="field">
           <md-switch
+            icons
             :selected="semanticSearchEnabled"
             :disabled="!isPro"
             @change="handleSemanticSearchToggle"
@@ -209,13 +211,7 @@ const currentLanguageName = computed(() => {
   gap: var(--spacing-4);
 }
 
-/* Material Web Components Switch 样式覆盖 */
 md-switch {
-  --md-switch-selected-track-color: var(--color-primary);
-  --md-switch-selected-handle-color: var(--md-sys-color-on-primary);
-  --md-switch-selected-hover-track-color: var(--color-primary-hover);
-  --md-switch-selected-pressed-track-color: var(--color-primary-active);
-
   flex-shrink: 0;
 }
 

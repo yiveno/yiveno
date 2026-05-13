@@ -6,22 +6,23 @@
     </h3>
 
     <div class="shortcuts-container">
-      <!-- 快捷键列表 -->
-      <div v-if="shortcutItems.length > 0" class="shortcuts-list">
-        <div class="shortcuts-grid">
-          <div
-            v-for="item in shortcutItems"
-            :key="item.command"
-            class="shortcut-item"
-          >
-            <div class="shortcut-label">{{ item.label }}</div>
-            <div class="shortcut-keys">
-              <kbd v-if="item.keys" class="shortcut-kbd">{{ item.keys }}</kbd>
-              <span v-else class="shortcut-empty">{{ t('settings_shortcut_not_set') }}</span>
-            </div>
+      <!-- 快捷键列表 - Material Web List -->
+      <md-list v-if="shortcutItems.length > 0" class="shortcuts-list">
+        <md-list-item
+          v-for="item in shortcutItems"
+          :key="item.command"
+        >
+          <template #headline>
+<div >{{ item.label }}</div>
+</template>
+          <template #trailing-supporting-text>
+<div  class="shortcut-keys">
+            <kbd v-if="item.keys" class="shortcut-kbd">{{ item.keys }}</kbd>
+            <span v-else class="shortcut-empty">{{ t('settings_shortcut_not_set') }}</span>
           </div>
-        </div>
-      </div>
+</template>
+        </md-list-item>
+      </md-list>
 
       <!-- 未配置提示 -->
       <div v-else class="shortcuts-empty">
@@ -31,17 +32,9 @@
 
       <!-- 操作按钮 -->
       <div class="shortcuts-actions">
-        <Button
-          color="primary"
-          variant="primary"
-          size="md"
-          @click="openChromeShortcutSettings"
-        >
-          <template #prepend>
-            <LucideIcon name="settings" />
-          </template>
+        <md-filled-button @click="openChromeShortcutSettings">
           {{ t('settings_shortcut_open_chrome') }}
-        </Button>
+        </md-filled-button>
       </div>
     </div>
   </div>
@@ -49,10 +42,15 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted } from 'vue'
-import { Button, LucideIcon } from '@/components'
+import { LucideIcon } from '@/components'
 import { useCommandsShortcuts } from '@/composables/useCommandsShortcuts'
 import { useUIStore } from '@/stores/ui-store'
 import { t } from '@/utils/i18n-helpers'
+
+// 导入 Material Web Components
+import '@material/web/button/filled-button.js'
+import '@material/web/list/list.js'
+import '@material/web/list/list-item.js'
 
 defineOptions({
   name: 'ShortcutSettings'
@@ -140,26 +138,12 @@ onUnmounted(() => {
   gap: var(--spacing-5);
 }
 
-.shortcuts-grid {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2);
-}
-
-.shortcut-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--spacing-3) var(--spacing-4);
+/* Material Web List 样式 */
+.shortcuts-list {
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-md);
   background: var(--color-surface);
-}
-
-.shortcut-label {
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-  color: var(--color-text-primary);
+  overflow: hidden;
 }
 
 .shortcut-keys {
@@ -208,5 +192,37 @@ onUnmounted(() => {
   display: flex;
   justify-content: flex-start;
   padding-top: var(--spacing-2);
+}
+
+/* Material Web Components 样式 */
+
+/* List 样式 */
+md-list {
+  --md-list-container-color: transparent;
+}
+
+md-list-item {
+  --md-list-item-label-text-color: var(--md-sys-color-on-surface);
+  --md-list-item-supporting-text-color: var(--md-sys-color-on-surface-variant);
+  --md-list-item-trailing-supporting-text-color: var(--md-sys-color-on-surface-variant);
+  --md-list-item-container-shape: 0;
+  --md-list-item-label-text-font: var(--font-family-base);
+  --md-list-item-label-text-size: var(--md-sys-typescale-body-large-size);
+  --md-list-item-supporting-text-font: var(--font-family-base);
+  --md-list-item-supporting-text-size: var(--md-sys-typescale-body-medium-size);
+  --md-list-item-one-line-container-height: 56px;
+  --md-list-item-hover-state-layer-color: var(--md-sys-color-on-surface);
+  --md-list-item-hover-state-layer-opacity: 0.08;
+}
+
+/* Button 样式 */
+md-filled-button {
+  --md-filled-button-container-color: var(--md-sys-color-primary);
+  --md-filled-button-label-text-color: var(--md-sys-color-on-primary);
+  --md-filled-button-container-shape: var(--radius-md);
+  --md-filled-button-label-text-font: var(--font-family-base);
+  --md-filled-button-label-text-size: var(--md-sys-typescale-label-large-size);
+  --md-filled-button-hover-state-layer-color: var(--md-sys-color-on-primary);
+  --md-filled-button-hover-state-layer-opacity: 0.08;
 }
 </style>

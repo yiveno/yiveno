@@ -24,20 +24,18 @@
       @click="handleFolderToggleClick"
       @contextmenu.prevent="openContextMenu"
     >
-      <!-- 选择复选框（图标变体） -->
-      <Checkbox
+      <!-- 选择复选框 -->
+      <md-checkbox
         v-if="
           config.showSelectionCheckbox &&
           config.selectable === 'multiple' &&
           !isRootFolder
         "
-        variant="icon"
-        :model-value="isSelected"
+        :checked="isSelected"
         :indeterminate="isIndeterminate"
-        size="md"
         class="select-checkbox"
-        @update:model-value="toggleSelection"
-      />
+        @change="toggleSelection"
+      ></md-checkbox>
 
       <!-- 文件夹图标 -->
       <div class="folder-icon">
@@ -54,18 +52,14 @@
       </div>
 
       <!-- "⋮" 更多操作按钮 -->
-      <Button
+      <md-icon-button
         v-if="props.config.showMoreButton !== false"
-        variant="ghost"
-        size="sm"
-        density="compact"
-        icon-only
         class="more-actions-button"
         title="更多操作"
         @click.stop="openContextMenu"
       >
-        <LucideIcon name="more-vertical" :size="16" />
-      </Button>
+        <md-icon>more_vert</md-icon>
+      </md-icon-button>
     </div>
 
     <!-- 书签节点 -->
@@ -77,16 +71,14 @@
       @click="handleBookmarkClick"
       @contextmenu.prevent="openContextMenu"
     >
-      <!-- 书签选择复选框（图标变体） -->
-      <Checkbox
+      <!-- 书签选择复选框 -->
+      <md-checkbox
         v-if="config.showSelectionCheckbox && config.selectable === 'multiple'"
-        variant="icon"
-        :model-value="isSelected"
+        :checked="isSelected"
         :indeterminate="false"
-        size="md"
         class="select-checkbox"
-        @update:model-value="toggleSelection"
-      />
+        @change="toggleSelection"
+      ></md-checkbox>
       <!-- 书签图标/Favicon（带懒加载） -->
       <div class="bookmark-icon">
         <!-- 加载成功时显示favicon图片 -->
@@ -110,14 +102,16 @@
       </div>
 
       <!-- AI标签 -->
-      <div
+      <md-chip-set
         v-if="Array.isArray(node.tags) && node.tags.length > 0"
         class="bookmark-tags"
       >
-        <Chip v-for="tag in node.tags" :key="tag" size="sm" variant="outlined">
-          {{ tag }}
-        </Chip>
-      </div>
+        <md-input-chip 
+          v-for="tag in node.tags" 
+          :key="tag" 
+          :label="tag"
+        ></md-input-chip>
+      </md-chip-set>
 
       <!-- 书签URL (hover时显示) -->
       <div v-if="config.showBookmarkUrl !== false && config.size === 'spacious' && node.url" class="bookmark-url">
@@ -125,18 +119,14 @@
       </div>
 
       <!-- "⋮" 更多操作按钮 -->
-      <Button
+      <md-icon-button
         v-if="props.config.showMoreButton !== false"
-        variant="ghost"
-        size="sm"
-        density="compact"
-        icon-only
         class="more-actions-button"
         title="更多操作"
         @click.stop="openContextMenu"
       >
-        <LucideIcon name="more-vertical" :size="16" />
-      </Button>
+        <md-icon>more_vert</md-icon>
+      </md-icon-button>
     </div>
 
     <!-- 子节点：仅文件夹节点在展开时显示子节点 -->
@@ -181,9 +171,11 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, toRef } from 'vue'
-import { Button, Checkbox, Chip } from '@/components'
 import { LucideIcon } from '@/components/base/LucideIcon'
 import type { BookmarkNode } from '@/types'
+import '@material/web/chips/chip-set.js'
+import '@material/web/chips/input-chip.js'
+import '@material/web/checkbox/checkbox.js'
 import { logger } from '@/infrastructure/logging/logger'
 import { useLazyFavicon } from '@/composables/useLazyFavicon'
 import {
@@ -193,6 +185,8 @@ import {
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine'
 import { setCustomNativeDragPreview } from '@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview'
 import { pointerOutsideOfPreview } from '@atlaskit/pragmatic-drag-and-drop/element/pointer-outside-of-preview'
+import '@material/web/iconbutton/icon-button.js'
+import '@material/web/icon/icon.js'
 
 // ✅ i18n 已移除（收藏功能已移至右键菜单，不再需要 tooltip 文本）
 // const { t } = useI18n()
@@ -953,13 +947,15 @@ defineExpose({
 }
 
 /* 文件夹行内的 Checkbox hover 使用黄色系 */
-.folder-content .select-checkbox:hover :deep(.checkbox-icon-variant) {
-  background: var(--color-folder-hover);
+.folder-content:hover .select-checkbox {
+  --md-checkbox-unselected-hover-state-layer-color: var(--color-folder-hover);
+  --md-checkbox-unselected-hover-state-layer-opacity: 0.08;
 }
 
 /* 书签行内的 Checkbox hover 使用蓝色系 */
-.bookmark-content .select-checkbox:hover :deep(.checkbox-icon-variant) {
-  background: color-mix(in srgb, var(--color-bookmark-hover), transparent 30%);
+.bookmark-content:hover .select-checkbox {
+  --md-checkbox-unselected-hover-state-layer-color: var(--color-bookmark-hover);
+  --md-checkbox-unselected-hover-state-layer-opacity: 0.08;
 }
 
 .bookmark-icon img {
@@ -1337,7 +1333,23 @@ defineExpose({
 .bookmark-content:hover .bookmark-url {
   opacity: 1;
   visibility: visible;
-}/* stylelint-disable declaration-property-value-disallowed-list, color-no-hex -- 树节点组件使用特定尺寸和颜色 */
+}
+
+/* Material Web Chip 样式配置 */
+md-chip-set.bookmark-tags {
+  display: inline-flex;
+  gap: var(--spacing-1);
+  margin-top: var(--spacing-1);
+}
+
+md-input-chip {
+  --md-input-chip-container-height: 20px;
+  --md-input-chip-label-text-size: var(--text-xs);
+  --md-input-chip-label-text-color: var(--md-sys-color-on-surface-variant);
+  --md-input-chip-outline-color: var(--md-sys-color-outline);
+}
+
+/* stylelint-disable declaration-property-value-disallowed-list, color-no-hex -- 树节点组件使用特定尺寸和颜色 */
 </style>
 
 <style>

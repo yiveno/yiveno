@@ -2323,6 +2323,26 @@
     "message": "백그라운드에서 실행 중일 때 알림 수신 지원",
     "description": "Settings: settings_notification_mirror_tooltip_3"
   },
+  "settings_notification_do_not_disturb": {
+    "message": "방해 금지 모드",
+    "description": "Settings: settings_notification_do_not_disturb"
+  },
+  "settings_notification_do_not_disturb_tooltip_title": {
+    "message": "활성화 시:",
+    "description": "Settings: settings_notification_do_not_disturb_tooltip_title"
+  },
+  "settings_notification_do_not_disturb_tooltip_1": {
+    "message": "페이지 토스트 및 시스템 알림을 포함한 모든 알림이 차단됩니다",
+    "description": "Settings: settings_notification_do_not_disturb_tooltip_1"
+  },
+  "settings_notification_do_not_disturb_tooltip_2": {
+    "message": "방해받고 싶지 않을 때 집중 작업 세션에 이상적입니다",
+    "description": "Settings: settings_notification_do_not_disturb_tooltip_2"
+  },
+  "settings_notification_do_not_disturb_tooltip_3": {
+    "message": "비활성화하면 알림이 정상 동작으로 돌아갑니다",
+    "description": "Settings: settings_notification_do_not_disturb_tooltip_3"
+  },
   "settings_shortcut_title": {
     "message": "단축키 설정",
     "description": "Settings: settings_shortcut_title"

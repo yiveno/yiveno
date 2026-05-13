@@ -41,6 +41,9 @@
 /* 6. 动画系统 */
 @import url('../design-system/animations.css');
 
+/* 7. Material Web 组件样式覆盖 */
+@import url('../design-system/material-web-overrides.css');
+
 /* === Material Design Icons === */
 
 /* MDI 字体CSS已移除，使用 SVG 渲染替代 */

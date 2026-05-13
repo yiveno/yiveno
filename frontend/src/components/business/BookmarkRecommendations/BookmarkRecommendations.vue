@@ -21,29 +21,30 @@ SmartRecommendationEngine → 推荐列表 → UI 展示 → 用户交互 → �
         </Badge>
       </div>
       <div class="header-actions">
-        <Button
-          variant="ghost"
-          size="sm"
-          :loading="isRefreshing"
+        <md-icon-button
+          :disabled="isRefreshing"
           class="refresh-button"
+          title="刷新推荐"
           @click="refreshRecommendations"
         >
-          <LucideIcon name="refresh" :class="{ 'icon-spin': isRefreshing }" />
-        </Button>
+          <md-icon :class="{ 'icon-spin': isRefreshing }">refresh</md-icon>
+        </md-icon-button>
       </div>
     </div>
 
     <!-- 推荐列表 -->
-    <div class="recommendations-list">
-      <div
+    <md-list class="recommendations-list">
+      <md-list-item
         v-for="bookmark in recommendations"
         :key="bookmark.id"
+        type="button"
         class="recommendation-item no-select"
         @click="openBookmark(bookmark, $event)"
         @contextmenu.prevent="showContextMenu(bookmark)"
       >
         <!-- 书签图标 -->
-        <div class="bookmark-favicon">
+        <template #start>
+<div  class="bookmark-favicon">
           <img
             :src="getFaviconUrl(bookmark.url!)"
             :alt="bookmark.title"
@@ -56,29 +57,37 @@ SmartRecommendationEngine → 推荐列表 → UI 展示 → 用户交互 → �
             <LucideIcon name="link" :size="12" />
           </div>
         </div>
+</template>
 
-        <!-- 书签信息 -->
-        <div class="bookmark-info">
-          <div class="bookmark-title" :title="bookmark.title">
-            {{ bookmark.title }}
-          </div>
-          <div class="bookmark-meta">
-            <span class="bookmark-domain">
-              {{ extractDomain(bookmark.url!) }}
-            </span>
-            <span v-if="showDebugInfo" class="recommendation-score">
-              评分: {{ bookmark.recommendationScore?.toFixed(1) }}
-            </span>
-          </div>
+        <!-- 书签标题 -->
+        <template #headline>
+<div  class="bookmark-title" :title="bookmark.title">
+          {{ bookmark.title }}
         </div>
+</template>
+
+        <!-- 书签域名和评分 -->
+        <template #supporting-text>
+<div  class="bookmark-meta">
+          <span class="bookmark-domain">
+            {{ extractDomain(bookmark.url!) }}
+          </span>
+          <span v-if="showDebugInfo" class="recommendation-score">
+            评分: {{ bookmark.recommendationScore?.toFixed(1) }}
+          </span>
+        </div>
+</template>
 
         <!-- 推荐原因 -->
-        <div class="recommendation-reason">
+        <template #end>
+<div  class="recommendation-reason">
           <Badge :variant="getReasonBadgeVariant(bookmark)" size="sm">
             {{ getRecommendationReason(bookmark) }}
           </Badge>
         </div>
+</template>
 
+        <!-- 使用指示器 -->
         <div
           v-if="bookmark.visitCount && bookmark.visitCount > 0"
           class="usage-indicator"
@@ -91,20 +100,18 @@ SmartRecommendationEngine → 推荐列表 → UI 展示 → 用户交互 → �
             :title="`访问${bookmark.visitCount}次，置信度${(bookmark.confidence * 100).toFixed(1)}%`"
           ></div>
         </div>
-      </div>
-    </div>
+      </md-list-item>
+    </md-list>
 
     <!-- 更多推荐按钮 -->
     <div v-if="hasMoreRecommendations" class="recommendations-footer">
-      <Button
-        variant="outline"
-        size="sm"
-        :loading="isLoadingMore"
+      <md-outlined-button
+        :disabled="isLoadingMore"
         class="load-more-button"
         @click="loadMoreRecommendations"
       >
         查看更多推荐
-      </Button>
+      </md-outlined-button>
     </div>
   </div>
 
@@ -117,14 +124,14 @@ SmartRecommendationEngine → 推荐列表 → UI 展示 → 用户交互 → �
 
   <!-- 加载状态 -->
   <div v-else class="recommendations-loading">
-    <ProgressBar :value="0" indeterminate :height="4" />
+    <md-circular-progress indeterminate></md-circular-progress>
     <p class="loading-text">正在分析您的书签使用模式...</p>
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { Badge, Button, LucideIcon, ProgressBar } from '@/components'
+import { Badge, LucideIcon } from '@/components'
 import {
   type RecommendationOptions,
   type SmartRecommendation,
@@ -132,6 +139,12 @@ import {
 } from '@/application/bookmark/recommendation-app-service'
 
 import { logger } from '@/infrastructure/logging/logger'
+import '@material/web/iconbutton/icon-button.js'
+import '@material/web/button/outlined-button.js'
+import '@material/web/icon/icon.js'
+import '@material/web/list/list.js'
+import '@material/web/list/list-item.js'
+import '@material/web/progress/circular-progress.js'
 
 // Props
 interface Props {
@@ -622,31 +635,14 @@ defineExpose({
 }
 
 .recommendations-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
 }
 
 .recommendation-item {
   position: relative;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-3);
-  padding: var(--spacing-sm) var(--spacing-3);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition:
-    background var(--transition-fast),
-    color var(--transition-fast),
-    box-shadow var(--transition-fast);
   overflow: hidden;
-}
-
-.recommendation-item:hover {
-  background: var(--color-background-hover);
-
-  /* 无几何位移，使用颜色/亮度反馈 */
-  opacity: 0.98;
 }
 
 .bookmark-favicon {
@@ -689,17 +685,8 @@ defineExpose({
   background: var(--color-background-soft);
 }
 
-.bookmark-info {
-  flex: 1;
-  min-width: 0;
-}
-
 .bookmark-title {
-  margin-bottom: var(--spacing-0-5);
-  font-size: var(--text-sm);
-  font-weight: 500;
   white-space: nowrap;
-  color: var(--color-text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -749,6 +736,31 @@ defineExpose({
     var(--md-sys-motion-easing-standard);
 }
 
+/* Material Web List 样式 */
+.recommendations-list md-list {
+  --md-list-container-color: transparent;
+}
+
+.recommendations-list md-list-item {
+  --md-list-item-label-text-color: var(--md-sys-color-on-surface);
+  --md-list-item-supporting-text-color: var(--md-sys-color-on-surface-variant);
+  --md-list-item-container-shape: 0;
+  --md-list-item-label-text-font: var(--font-family-base);
+  --md-list-item-label-text-size: var(--md-sys-typescale-body-medium-size);
+  --md-list-item-label-text-weight: 500;
+  --md-list-item-supporting-text-font: var(--font-family-base);
+  --md-list-item-supporting-text-size: var(--md-sys-typescale-body-small-size);
+  --md-list-item-two-line-container-height: 64px;
+  --md-list-item-hover-state-layer-color: var(--md-sys-color-on-surface);
+  --md-list-item-hover-state-layer-opacity: 0.08;
+
+  border-bottom: 1px solid var(--color-border);
+}
+
+.recommendations-list md-list-item:last-child {
+  border-bottom: none;
+}
+
 .recommendations-footer {
   margin-top: var(--spacing-3);
   text-align: center;
@@ -786,13 +798,22 @@ defineExpose({
 }
 
 .recommendations-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-3);
   padding: var(--spacing-6) var(--spacing-4);
   text-align: center;
 }
 
 .loading-text {
-  margin: var(--spacing-sm) 0 0 0;
+  margin: 0;
   font-size: var(--text-xs);
   color: var(--color-text-secondary);
-}/* stylelint-disable declaration-property-value-disallowed-list -- 推荐组件使用特定尺寸 */
+}
+
+md-circular-progress {
+  --md-circular-progress-size: 32px;
+  --md-circular-progress-active-indicator-color: var(--md-sys-color-primary);
+}
 </style>

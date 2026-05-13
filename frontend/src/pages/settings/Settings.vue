@@ -13,20 +13,23 @@
     />
     <Main class="main-content">
       <div class="settings-body">
-        <aside
-          class="settings-sidebar"
-          aria-label="Settings Sections"
-          data-testid="settings-sidebar"
-        >
-          <Tabs
-            v-model="tab"
-            :tabs="tabsI18n"
-            variant="pills"
-            orientation="vertical"
-            :aria-label="t('settings_sidebar')"
-            data-testid="tabs-vertical"
-          />
-        </aside>
+        <!-- ✅ Material Web Tabs - 横向布局 -->
+        <div class="settings-tabs-container">
+          <md-tabs
+            :active-tab-index="getActiveTabIndex()"
+            @change="handleTabChange"
+          >
+            <md-primary-tab
+              v-for="tabItem in tabsI18n"
+              :key="tabItem.value"
+            >
+              <template #icon>
+<md-icon >{{ getIconName(tabItem.icon) }}</md-icon>
+</template>
+              {{ tabItem.text }}
+            </md-primary-tab>
+          </md-tabs>
+        </div>
 
         <main class="settings-content" role="region">
           <div v-if="tab === 'general'" class="pane">
@@ -37,24 +40,6 @@
           </div>
           <div v-else-if="tab === 'notifications'" class="pane">
             <component :is="NotificationSettings" />
-          </div>
-          <div v-else-if="tab === 'subscription'" class="pane">
-            <div class="subscription-redirect">
-              <div class="subscription-redirect__icon">
-                <LucideIcon name="crown" :size="48" />
-              </div>
-              <h2 class="subscription-redirect__title">订阅管理已迁移到官网</h2>
-              <p class="subscription-redirect__description">
-                为了提供更好的订阅管理体验，我们已将订阅功能迁移到官网。
-              </p>
-              <md-filled-button
-                class="subscription-button"
-                @click="handleOpenSubscriptionPage"
-              >
-                <md-icon>open_in_new</md-icon>
-                前往官网管理订阅
-              </md-filled-button>
-            </div>
           </div>
           <div v-else-if="tab === 'shortcuts'" class="pane">
             <component :is="ShortcutSettings" />
@@ -74,14 +59,16 @@ import {
   ref,
   watch
 } from 'vue'
-import { App, AppHeader, Main, Tabs, LucideIcon } from '@/components'
+import { App, AppHeader, Main } from '@/components'
+import '@material/web/tabs/tabs.js'
+import '@material/web/tabs/primary-tab.js'
+import '@material/web/icon/icon.js'
 import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'
 import GlobalQuickAddBookmark from '@/components/business/GlobalQuickAddBookmark/GlobalQuickAddBookmark.vue'
 import { t } from '@/infrastructure'
 import { onEvent } from '@/infrastructure/events/event-bus'
 import { useSupabaseAuth } from '@/composables'
 import { logger } from '@/infrastructure/logging/logger'
-import { websiteUrls, openWebsiteUrl } from '@/config/website'
 
 // 使用 Supabase Auth 检查登录状态
 const { isAuthenticated, initialize } = useSupabaseAuth()
@@ -89,9 +76,6 @@ const isLoggedIn = computed(() => isAuthenticated.value)
 
 defineOptions({
   name: 'SettingsPage',
-  components: {
-    Tabs
-  },
   inheritAttrs: false
 })
 
@@ -109,21 +93,7 @@ const ShortcutSettings = defineAsyncComponent(
   () => import('./sections/ShortcutSettings.vue')
 )
 
-/** 打开官网订阅页面 */
-async function handleOpenSubscriptionPage() {
-  try {
-    await openWebsiteUrl(websiteUrls.pricing)
-  } catch (error) {
-    logger.error('Settings', '打开订阅页面失败', error)
-  }
-}
-
-type TabKey =
-  | 'general'
-  | 'ai'
-  | 'notifications'
-  | 'shortcuts'
-  | 'subscription'
+type TabKey = 'general' | 'ai' | 'notifications' | 'shortcuts'
 const tab = ref<TabKey>('general')
 const tabs = [
   {
@@ -149,12 +119,6 @@ const tabs = [
     key: 'settings_tab_shortcuts',
     fallback: '快捷键',
     icon: 'keyboard'
-  },
-  {
-    value: 'subscription',
-    key: 'settings_tab_subscription',
-    fallback: '计划',
-    icon: 'crown'
   }
 ] as const
 
@@ -173,18 +137,43 @@ const tabsI18n = computed(() =>
   }))
 )
 
+/**
+ * 获取当前激活的 tab 索引
+ */
+const getActiveTabIndex = (): number => {
+  return tabs.findIndex(t => t.value === tab.value)
+}
+
+/**
+ * 处理 tab 切换
+ */
+const handleTabChange = (event: Event) => {
+  const target = event.target as HTMLElement & { activeTabIndex: number }
+  const index = target.activeTabIndex
+  if (index >= 0 && index < tabs.length) {
+    tab.value = tabs[index].value
+  }
+}
+
+/**
+ * 将 Lucide 图标名称映射到 Material Icons
+ */
+const getIconName = (lucideIcon: string): string => {
+  const iconMap: Record<string, string> = {
+    'settings': 'settings',
+    'sparkles': 'auto_awesome',
+    'bell': 'notifications',
+    'keyboard': 'keyboard'
+  }
+  return iconMap[lucideIcon] || lucideIcon
+}
+
 // 检查登录状态
 async function checkLoginStatus() {
   // Supabase Auth 的 isAuthenticated 是响应式的，会自动更新
 }
 
-const allowed = new Set<TabKey>([
-  'general',
-  'ai',
-  'notifications',
-  'shortcuts',
-  'subscription'
-])
+const allowed = new Set<TabKey>(['general', 'ai', 'notifications', 'shortcuts'])
 
 function readTabFromURL(): TabKey | null {
   try {
@@ -317,39 +306,33 @@ watch(tab, v => {
 }
 
 .settings-body {
-  display: grid;
-  align-items: start;
-  gap: var(--spacing-5);
-  grid-template-columns: 260px minmax(0, 1fr);
-  max-width: 1400px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  max-width: 1200px;
   margin: 0 auto;
   padding: var(--spacing-lg);
 }
 
-.settings-sidebar {
+/* ========================================
+ * Material Web Tabs 样式配置
+ * ======================================== */
+.settings-tabs-container {
   position: sticky;
-  top: var(--spacing-4);
-  align-self: start;
-  padding: var(--spacing-4) var(--spacing-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-sm);
+  top: 0;
+  z-index: 10;
+  padding: var(--spacing-4) 0;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-background);
 }
 
-.settings-sidebar :deep(.acuity-tab) {
-  margin: var(--spacing-1) 0;
-  padding: var(--spacing-2) var(--spacing-3);
-  border-radius: var(--radius-md);
-}
+md-tabs {
+  --md-primary-tab-active-indicator-height: 3px;
+  --md-primary-tab-container-height: 56px;
+  --md-primary-tab-label-text-size: var(--text-base);
+  --md-icon-size: 20px;
 
-.settings-sidebar :deep(.acuity-tab:hover:not(.acuity-tab--disabled)) {
-  background: var(--color-surface-hover);
-}
-
-.settings-sidebar :deep(.acuity-tab--active) {
-  color: var(--color-text-primary);
-  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  width: 100%;
 }
 
 .settings-content {
@@ -358,48 +341,12 @@ watch(tab, v => {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   background: var(--color-surface);
-  box-shadow: var(--shadow-sm);
+  
+  /* ✅ Material Design 3 Elevation Level 1 */
+  box-shadow: var(--md-sys-elevation-1);
 }
 
 .pane {
   padding: var(--spacing-2) 0;
-}
-
-.subscription-redirect {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: var(--spacing-4);
-  min-height: 400px;
-  padding: var(--spacing-8);
-  text-align: center;
-}
-
-.subscription-redirect__icon {
-  color: var(--md-sys-color-primary);
-}
-
-.subscription-redirect__title {
-  margin: 0;
-  font-size: var(--text-2xl);
-  font-weight: var(--font-semibold);
-  color: var(--color-text-primary);
-}
-
-.subscription-redirect__description {
-  max-width: 500px;
-  margin: 0;
-  font-size: var(--text-base);
-  color: var(--color-text-secondary);
-}
-
-/* ✨ Material Web Components 按钮样式 */
-.subscription-button {
-  --md-sys-color-primary: var(--color-primary);
-
-  /* 使用 Material Design 主题中已定义的 on-primary 颜色 */
-
-  margin-top: var(--spacing-6);
 }
 </style>

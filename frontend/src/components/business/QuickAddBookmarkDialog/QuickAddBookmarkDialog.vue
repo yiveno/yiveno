@@ -18,13 +18,11 @@
           <LucideIcon v-else name="bookmark" :size="24" />
         </div>
         <div class="info">
-          <Input
-            v-model="bookmarkTitle"
+          <md-outlined-text-field
             label="名称"
-            placeholder="书签名称"
-            size="md"
-            :autofocus="true"
-            @keydown.enter="handleConfirm"
+            :value="bookmarkTitle"
+            @input="handleTitleInput"
+            @keydown="handleKeyDown"
           />
         </div>
       </div>
@@ -48,26 +46,33 @@
           <LucideIcon name="sparkles" :size="16" />
           推荐文件夹
         </label>
-        <div class="recommendations-list">
-          <button
+        <md-list class="recommendations-list">
+          <md-list-item
             v-for="(rec, index) in recommendations"
             :key="rec.folderId"
-            class="recommendation-item"
+            type="button"
             :class="{ selected: selectedFolderId === rec.folderId }"
             @click="selectRecommendation(rec)"
           >
-            <div class="recommendation-header">
-              <LucideIcon
-                :name="selectedFolderId === rec.folderId ? 'check-circle' : 'folder'"
-                :size="18"
-              />
-              <span class="folder-path">{{ rec.folderPath }}</span>
-              <span class="score">{{ Math.round(rec.score * 100) }}%</span>
-            </div>
-            <div class="recommendation-reason">{{ rec.reason }}</div>
+            <template #start>
+<LucideIcon
+              
+              :name="selectedFolderId === rec.folderId ? 'check-circle' : 'folder'"
+              :size="18"
+            />
+</template>
+            <template #headline>
+<div  class="folder-path">{{ rec.folderPath }}</div>
+</template>
+            <template #supporting-text>
+<div  class="recommendation-reason">{{ rec.reason }}</div>
+</template>
+            <template #end>
+<div  class="score">{{ Math.round(rec.score * 100) }}%</div>
+</template>
             <div v-if="index === 0" class="best-match-badge">最佳匹配</div>
-          </button>
-        </div>
+          </md-list-item>
+        </md-list>
       </div>
 
       <!-- 加载推荐中 -->
@@ -97,14 +102,13 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <Button variant="text" @click="handleClose"> 取消 </Button>
-        <Button
-          variant="primary"
+        <md-text-button @click="handleClose">取消</md-text-button>
+        <md-filled-button
           :disabled="!bookmarkTitle || !selectedFolderId"
           @click="handleConfirm"
         >
           完成
-        </Button>
+        </md-filled-button>
       </div>
     </template>
   </Dialog>
@@ -112,9 +116,14 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { Dialog, Input, Button, LucideIcon } from '@/components'
+import { Dialog, LucideIcon } from '@/components'
 import { logger } from '@/infrastructure/logging/logger'
 import { notificationService } from '@/application/notification/notification-service'
+import '@material/web/button/text-button.js'
+import '@material/web/button/filled-button.js'
+import '@material/web/textfield/outlined-text-field.js'
+import '@material/web/list/list.js'
+import '@material/web/list/list-item.js'
 
 defineOptions({
   name: 'QuickAddBookmarkDialog'
@@ -324,6 +333,23 @@ function selectRecommendation(rec: FolderRecommendation) {
 }
 
 /**
+ * 处理标题输入
+ */
+function handleTitleInput(event: Event) {
+  const target = event.target as HTMLInputElement
+  bookmarkTitle.value = target.value
+}
+
+/**
+ * 处理键盘事件
+ */
+function handleKeyDown(event: KeyboardEvent) {
+  if (event.key === 'Enter') {
+    handleConfirm()
+  }
+}
+
+/**
  * 处理图标加载失败
  */
 function handleFaviconError() {
@@ -452,50 +478,12 @@ function handleClose() {
 }
 
 .recommendations-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2);
-}
-
-.recommendation-item {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-1);
-  padding: var(--spacing-3);
-  border: 2px solid var(--color-border);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  text-align: left;
-  background: var(--color-bg-primary);
-  cursor: pointer;
-  transition:
-    border-color 0.2s ease,
-    background-color 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.recommendation-item:hover {
-  border-color: var(--color-primary);
-  background: var(--color-bg-secondary);
-}
-
-.recommendation-item.selected {
-  border-color: var(--color-primary);
-  background: var(--color-primary-bg);
-  box-shadow: 0 0 0 3px rgb(131 213 197 / 10%);
-}
-
-.recommendation-header {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-  color: var(--color-text-primary);
+  overflow: hidden;
 }
 
 .folder-path {
-  flex: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -512,15 +500,15 @@ function handleClose() {
 }
 
 .recommendation-reason {
-  padding-left: calc(18px + var(--spacing-2));
   font-size: var(--text-xs);
   color: var(--color-text-secondary);
 }
 
 .best-match-badge {
   position: absolute;
-  top: -8px;
+  top: 8px;
   right: var(--spacing-3);
+  z-index: 1;
   padding: var(--spacing-1) var(--spacing-2);
   border-radius: var(--radius-sm);
   font-size: var(--text-xs);
@@ -528,6 +516,39 @@ function handleClose() {
   color: var(--md-sys-color-on-primary);
   background: var(--color-primary);
   box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
+}
+
+/* Material Web List 样式 */
+.recommendations-list md-list {
+  --md-list-container-color: transparent;
+}
+
+.recommendations-list md-list-item {
+  --md-list-item-label-text-color: var(--md-sys-color-on-surface);
+  --md-list-item-supporting-text-color: var(--md-sys-color-on-surface-variant);
+  --md-list-item-container-shape: 0;
+  --md-list-item-label-text-font: var(--font-family-base);
+  --md-list-item-label-text-size: var(--md-sys-typescale-body-medium-size);
+  --md-list-item-label-text-weight: 500;
+  --md-list-item-supporting-text-font: var(--font-family-base);
+  --md-list-item-supporting-text-size: var(--md-sys-typescale-body-small-size);
+  --md-list-item-two-line-container-height: 72px;
+  --md-list-item-hover-state-layer-color: var(--md-sys-color-on-surface);
+  --md-list-item-hover-state-layer-opacity: 0.08;
+
+  position: relative;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.recommendations-list md-list-item:last-child {
+  border-bottom: none;
+}
+
+.recommendations-list md-list-item.selected {
+  --md-list-item-container-color: var(--color-primary-bg);
+
+  border-color: var(--color-primary);
+  box-shadow: inset 0 0 0 2px var(--color-primary);
 }
 
 /* 加载推荐中 */
@@ -594,3 +615,8 @@ function handleClose() {
   border-top: 1px solid var(--color-border);
 }
 </style>
+
+/* ✅ Material Web Text Field 样式 */
+.info md-outlined-text-field {
+  width: 100%;
+}

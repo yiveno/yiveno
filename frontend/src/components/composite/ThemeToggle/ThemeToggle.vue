@@ -10,16 +10,14 @@
     @mouseenter="showDropdown = true"
     @mouseleave="showDropdown = false"
   >
-    <Button
+    <md-icon-button
       ref="toggleBtnRef"
-      variant="ghost"
-      borderless
       class="theme-toggle__button"
       :title="currentThemeLabel"
       :aria-label="currentThemeLabel"
     >
-      <LucideIcon :name="currentThemeIcon" :size="24" />
-    </Button>
+      <md-icon>{{ currentThemeIcon }}</md-icon>
+    </md-icon-button>
 
     <Transition name="dropdown">
       <div v-if="showDropdown" class="theme-toggle__dropdown">
@@ -46,7 +44,9 @@ import {
   type ThemeMode
 } from '@/infrastructure/global-state/global-state-manager'
 import { emitEvent } from '@/infrastructure/events/event-bus'
-import { Button, LucideIcon } from '@/components'
+import { LucideIcon } from '@/components'
+import '@material/web/iconbutton/icon-button.js'
+import '@material/web/icon/icon.js'
 
 // 当前主题状态（从全局状态管理器获取）
 const currentTheme = ref<ThemeMode>('system')
@@ -55,7 +55,7 @@ const currentTheme = ref<ThemeMode>('system')
 const showDropdown = ref(false)
 
 // 按钮引用（用于获取点击位置）
-const toggleBtnRef = ref<InstanceType<typeof Button> | null>(null)
+const toggleBtnRef = ref<HTMLElement | null>(null)
 
 // 系统主题变化监听器（MediaQueryList）
 let systemThemeQuery: MediaQueryList | null = null
@@ -65,9 +65,9 @@ const isToggling = ref(false)
 
 // 主题选项配置
 const themeOptions = [
-  { value: 'system' as ThemeMode, label: '跟随系统', icon: 'refresh' },
-  { value: 'light' as ThemeMode, label: '浅色主题', icon: 'sun' },
-  { value: 'dark' as ThemeMode, label: '暗黑主题', icon: 'moon' }
+  { value: 'system' as ThemeMode, label: '跟随系统', icon: 'sync' },
+  { value: 'light' as ThemeMode, label: '浅色主题', icon: 'light_mode' },
+  { value: 'dark' as ThemeMode, label: '暗黑主题', icon: 'dark_mode' }
 ]
 
 // 计算当前主题的图标
@@ -75,9 +75,9 @@ const currentThemeIcon = computed(() => {
   if (currentTheme.value === 'system') {
     // 跟随系统时，显示当前实际主题的图标
     const systemIsDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    return systemIsDark ? 'moon' : 'sun'
+    return systemIsDark ? 'dark_mode' : 'light_mode'
   }
-  return currentTheme.value === 'dark' ? 'moon' : 'sun'
+  return currentTheme.value === 'dark' ? 'dark_mode' : 'light_mode'
 })
 
 // 计算当前主题的标签
@@ -147,8 +147,8 @@ const toggleTheme = async (newTheme: ThemeMode) => {
     // 获取按钮位置（用于圆形扩散动画）
     let x = window.innerWidth - 50 // 默认右上角
     let y = 50
-    if (toggleBtnRef.value?.$el) {
-      const rect = toggleBtnRef.value.$el.getBoundingClientRect()
+    if (toggleBtnRef.value) {
+      const rect = toggleBtnRef.value.getBoundingClientRect()
       x = rect.left + rect.width / 2
       y = rect.top + rect.height / 2
     }
