@@ -90,25 +90,17 @@ BookmarkSearchInput - 书签筛选输入组件
                 type="button"
                 @click="handleHistoryClick(item.query)"
               >
-                <template #start>
-<LucideIcon  name="clock" :size="14" />
-</template>
-                <template #headline>
-<div >{{ item.query }}</div>
-</template>
-                <template #supporting-text>
-<div v-if="item.resultCount !== undefined"  class="history-count">
+                <LucideIcon slot="start" name="clock" :size="14" />
+                <div slot="headline">{{ item.query }}</div>
+                <div v-if="item.resultCount !== undefined" slot="supporting-text" class="history-count">
                   {{ item.resultCount }} 个结果
                 </div>
-</template>
-                <template #end>
-<md-icon-button
-                  
+                <md-icon-button
+                  slot="end"
                   @click.stop="handleRemoveHistory(item.query, $event)"
                 >
                   <LucideIcon name="x" :size="14" />
                 </md-icon-button>
-</template>
               </md-list-item>
             </md-list>
           </div>

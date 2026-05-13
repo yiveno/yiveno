@@ -42,9 +42,7 @@ SmartRecommendationEngine → 推荐列表 → UI 展示 → 用户交互 → �
         @click="openBookmark(bookmark, $event)"
         @contextmenu.prevent="showContextMenu(bookmark)"
       >
-        <!-- 书签图标 -->
-        <template #start>
-<div  class="bookmark-favicon">
+        <div slot="start" class="bookmark-favicon">
           <img
             :src="getFaviconUrl(bookmark.url!)"
             :alt="bookmark.title"
@@ -57,18 +55,10 @@ SmartRecommendationEngine → 推荐列表 → UI 展示 → 用户交互 → �
             <LucideIcon name="link" :size="12" />
           </div>
         </div>
-</template>
-
-        <!-- 书签标题 -->
-        <template #headline>
-<div  class="bookmark-title" :title="bookmark.title">
+        <div slot="headline" class="bookmark-title" :title="bookmark.title">
           {{ bookmark.title }}
         </div>
-</template>
-
-        <!-- 书签域名和评分 -->
-        <template #supporting-text>
-<div  class="bookmark-meta">
+        <div slot="supporting-text" class="bookmark-meta">
           <span class="bookmark-domain">
             {{ extractDomain(bookmark.url!) }}
           </span>
@@ -76,16 +66,11 @@ SmartRecommendationEngine → 推荐列表 → UI 展示 → 用户交互 → �
             评分: {{ bookmark.recommendationScore?.toFixed(1) }}
           </span>
         </div>
-</template>
-
-        <!-- 推荐原因 -->
-        <template #end>
-<div  class="recommendation-reason">
+        <div slot="end" class="recommendation-reason">
           <Badge :variant="getReasonBadgeVariant(bookmark)" size="sm">
             {{ getRecommendationReason(bookmark) }}
           </Badge>
         </div>
-</template>
 
         <!-- 使用指示器 -->
         <div

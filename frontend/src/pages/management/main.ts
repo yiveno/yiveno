@@ -5,7 +5,6 @@ import Management from './Management.vue'
 import '@acuity-bookmarks/design-tokens/css/material-theme.css'
 import '@acuity-bookmarks/design-tokens/css/variables.css'
 import '@acuity-bookmarks/design-tokens/css/semantic-colors.css'
-import '@/assets/material-web-theme.css' // Material Web Components 全局主题
 import '@/assets/main.css' // Import shared styles
 import '@/assets/fonts.css' // Import font system
 import '@/assets/smart-fonts.css' // Import smart font system

@@ -97,9 +97,7 @@
           v-if="progress.error?.canRetry"
           @click="emit('retry')"
         >
-          <template #icon>
-<md-icon >refresh</md-icon>
-</template>
+          <LucideIcon slot="icon" name="refresh" />
           重试
         </md-filled-button>
         <md-text-button @click="emit('force-close')">

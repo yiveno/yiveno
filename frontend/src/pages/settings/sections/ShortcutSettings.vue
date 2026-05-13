@@ -12,15 +12,11 @@
           v-for="item in shortcutItems"
           :key="item.command"
         >
-          <template #headline>
-<div >{{ item.label }}</div>
-</template>
-          <template #trailing-supporting-text>
-<div  class="shortcut-keys">
+          <div slot="headline">{{ item.label }}</div>
+          <div slot="trailing-supporting-text" class="shortcut-keys">
             <kbd v-if="item.keys" class="shortcut-kbd">{{ item.keys }}</kbd>
             <span v-else class="shortcut-empty">{{ t('settings_shortcut_not_set') }}</span>
           </div>
-</template>
         </md-list-item>
       </md-list>
 

@@ -23,9 +23,7 @@
               v-for="tabItem in tabsI18n"
               :key="tabItem.value"
             >
-              <template #icon>
-<md-icon >{{ getIconName(tabItem.icon) }}</md-icon>
-</template>
+              <md-icon slot="icon">{{ getIconName(tabItem.icon) }}</md-icon>
               {{ tabItem.text }}
             </md-primary-tab>
           </md-tabs>

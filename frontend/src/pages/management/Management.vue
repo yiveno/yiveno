@@ -397,9 +397,7 @@
                           "
                           @click="handleApply"
                         >
-                          <template #icon>
-<LucideIcon  name="check-circle" />
-</template>
+                          <LucideIcon slot="icon" name="check-circle" />
                           {{ t('management_apply') }}
                         </md-filled-button>
                       </span>
@@ -410,9 +408,7 @@
                         "
                         @click="handleAIOrganize"
                       >
-                        <template #icon>
-<LucideIcon  name="sparkles" :spin="isOrganizing" />
-</template>
+                        <LucideIcon slot="icon" name="sparkles" :spin="isOrganizing" />
                         {{ isOrganizing ? t('management_organizing') : t('management_ai_organize') }}
                       </md-filled-button>
                       <div class="panel-actions-divider"></div>
@@ -531,9 +527,7 @@
                         "
                         @click="handleBulkDelete"
                       >
-                        <template #icon>
-<LucideIcon  name="trash" />
-</template>
+                        <LucideIcon slot="icon" name="trash" />
                         {{ t('common_delete') }}
                       </md-filled-button>
                     </span>

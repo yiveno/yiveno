@@ -54,22 +54,14 @@
             :class="{ selected: selectedFolderId === rec.folderId }"
             @click="selectRecommendation(rec)"
           >
-            <template #start>
-<LucideIcon
-              
+            <LucideIcon
+              slot="start"
               :name="selectedFolderId === rec.folderId ? 'check-circle' : 'folder'"
               :size="18"
             />
-</template>
-            <template #headline>
-<div  class="folder-path">{{ rec.folderPath }}</div>
-</template>
-            <template #supporting-text>
-<div  class="recommendation-reason">{{ rec.reason }}</div>
-</template>
-            <template #end>
-<div  class="score">{{ Math.round(rec.score * 100) }}%</div>
-</template>
+            <div slot="headline" class="folder-path">{{ rec.folderPath }}</div>
+            <div slot="supporting-text" class="recommendation-reason">{{ rec.reason }}</div>
+            <div slot="end" class="score">{{ Math.round(rec.score * 100) }}%</div>
             <div v-if="index === 0" class="best-match-badge">最佳匹配</div>
           </md-list-item>
         </md-list>

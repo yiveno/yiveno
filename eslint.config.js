@@ -270,7 +270,8 @@ export default [
       'vue/no-ref-as-operand': 'error',
       'vue/no-watch-after-await': 'error',
       'vue/require-explicit-emits': 'warn',
-      'vue/no-deprecated-slot-attribute': 'error',
+      // Material Web Components 使用原生 slot 属性，不是 Vue 的 v-slot
+      'vue/no-deprecated-slot-attribute': 'off',
       'vue/no-deprecated-slot-scope-attribute': 'error',
       
       // ⚡ 性能优化规则

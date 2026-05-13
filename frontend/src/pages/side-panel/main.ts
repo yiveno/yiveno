@@ -5,7 +5,6 @@ import SidePanel from './SidePanel.vue'
 import '@acuity-bookmarks/design-tokens/css/material-theme.css'
 import '@acuity-bookmarks/design-tokens/css/variables.css'
 import '@acuity-bookmarks/design-tokens/css/semantic-colors.css'
-import '@/assets/material-web-theme.css' // Material Web Components 全局主题
 import '@/assets/main.css'
 import '@/assets/fonts.css'
 import '@/assets/smart-fonts.css'

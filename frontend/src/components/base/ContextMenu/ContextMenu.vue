@@ -35,22 +35,16 @@
           @click="handleItemClick(item)"
           @mouseenter="focusedIndex = index"
         >
-          <template #start>
-<LucideIcon
+          <LucideIcon
             v-if="item.icon"
-            
+            slot="start"
             :name="item.icon"
             :size="16"
           />
-</template>
-          <template #headline>
-<div >{{ item.label }}</div>
-</template>
-          <template #trailing-supporting-text>
-<div v-if="item.shortcut"  class="item-shortcut">
+          <div slot="headline">{{ item.label }}</div>
+          <div v-if="item.shortcut" slot="trailing-supporting-text" class="item-shortcut">
             {{ item.shortcut }}
           </div>
-</template>
         </md-list-item>
       </md-list>
     </Transition>

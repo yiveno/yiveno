@@ -11,9 +11,7 @@
         type="button"
         @click="handleClick(bookmark)"
       >
-        <!-- Favicon -->
-        <template #start>
-<div  class="recent-favicon">
+        <div slot="start" class="recent-favicon">
           <img
             v-if="getFaviconUrl(bookmark)"
             :src="getFaviconUrl(bookmark)"
@@ -23,17 +21,8 @@
           />
           <LucideIcon v-else name="bookmark" :size="16" />
         </div>
-</template>
-
-        <!-- 标题 -->
-        <template #headline>
-<div >{{ bookmark.title }}</div>
-</template>
-
-        <!-- 访问时间 -->
-        <template #supporting-text>
-<div >{{ formatRecentVisitTime(bookmark.lastVisited) }}</div>
-</template>
+        <div slot="headline">{{ bookmark.title }}</div>
+        <div slot="supporting-text">{{ formatRecentVisitTime(bookmark.lastVisited) }}</div>
       </md-list-item>
     </md-list>
   </div>

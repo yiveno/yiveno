@@ -8,9 +8,7 @@
         type="button"
         @click="handleClick(favorite)"
       >
-        <!-- Favicon -->
-        <template #start>
-<div  class="favorite-favicon">
+        <div slot="start" class="favorite-favicon">
           <img
             v-if="getFaviconUrl(favorite)"
             :src="getFaviconUrl(favorite)"
@@ -20,23 +18,14 @@
           />
           <LucideIcon v-else name="bookmark" :size="16" />
         </div>
-</template>
-
-        <!-- 标题 -->
-        <template #headline>
-<div >{{ favorite.title }}</div>
-</template>
-
-        <!-- 取消收藏按钮 -->
-        <template #end>
-<md-icon-button
-          
+        <div slot="headline">{{ favorite.title }}</div>
+        <md-icon-button
+          slot="end"
           title="取消收藏"
           @click.stop="handleRemove(favorite)"
         >
           <LucideIcon name="star" :size="16" />
         </md-icon-button>
-</template>
       </md-list-item>
     </md-list>
   </section>
