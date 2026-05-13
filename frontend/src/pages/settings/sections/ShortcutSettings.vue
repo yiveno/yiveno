@@ -159,7 +159,7 @@ onUnmounted(() => {
   font-weight: var(--font-medium);
   color: var(--color-text-primary);
   background: var(--color-background);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
+  box-shadow: 0 1px 2px var(--color-shadow-005);
 }
 
 .shortcut-empty {

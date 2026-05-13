@@ -304,7 +304,7 @@ const cardClasses = computed(() => [
   background: linear-gradient(
     90deg,
     transparent,
-    rgb(255 255 255 / 40%),
+    var(--color-loading-shimmer-mid),
     transparent
   );
   animation: card-loading 1.5s infinite;

@@ -69,9 +69,9 @@ const tooltipClasses = computed(() => [
   background: var(--color-surface-inverse);
   overflow-wrap: break-word;
   box-shadow:
-    0 4px 12px rgb(0 0 0 / 15%),
-    0 2px 6px rgb(0 0 0 / 10%),
-    0 0 1px rgb(0 0 0 / 20%);
+    0 4px 12px var(--color-shadow-015),
+    0 2px 6px var(--color-shadow-010),
+    0 0 1px var(--color-shadow-020);
 }
 
 .acuity-tooltip-content h3 {

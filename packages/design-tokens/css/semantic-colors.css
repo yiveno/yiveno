@@ -1,122 +1,107 @@
 /**
  * AcuityBookmarks Design Tokens - Semantic Colors
- * 
- * 语义色和强调色定义
- * 这些颜色用于特定的业务场景，不是 Material Design 3 标准的一部分
- * 
- * 使用顺序：
- * 1. material-theme.css - Material Design 3 主题
- * 2. variables.css - 扩展变量定义
- * 3. semantic-colors.css - 语义色定义（当前文件）
+ *
+ * 语义色与强调色：全部派生自 material-theme.css 的 M3 角色（--md-sys-color-*），
+ * 换 Theme Builder 导出种子后自动联动，勿在此文件写死 Hex（P2）。
+ *
+ * 角色映射（业务语义 → M3）：
+ * - Info：primary / primary-container（说明、与品牌主色一致）
+ * - Success：secondary / secondary-container（正向、沉稳）
+ * - Warning：tertiary / tertiary-container（需关注；与种子 tertiary 协调）
+ *
+ * 加载顺序：material-theme.css → variables.css → semantic-colors.css（当前文件）
  */
 
 :root {
   /* ========================================
-   * 语义色定义 (Semantic Colors)
-   * 用于特定的状态和场景
+   * 语义色 (Semantic) — 映射到 M3 角色
    * ======================================== */
 
-  /* === Warning 警告色 === */
-  --acuity-semantic-warning: #f57c00;
-  --acuity-semantic-warning-container: #fff3e0;
-  --acuity-semantic-on-warning: #fff;
-  --acuity-semantic-on-warning-container: #e65100;
+  --acuity-semantic-info: var(--md-sys-color-primary);
+  --acuity-semantic-info-container: var(--md-sys-color-primary-container);
+  --acuity-semantic-on-info: var(--md-sys-color-on-primary);
+  --acuity-semantic-on-info-container: var(--md-sys-color-on-primary-container);
 
-  /* === Success 成功色 === */
-  --acuity-semantic-success: #2e7d32;
-  --acuity-semantic-success-container: #e8f5e8;
-  --acuity-semantic-on-success: #fff;
-  --acuity-semantic-on-success-container: #1b5e20;
+  --acuity-semantic-success: var(--md-sys-color-secondary);
+  --acuity-semantic-success-container: var(--md-sys-color-secondary-container);
+  --acuity-semantic-on-success: var(--md-sys-color-on-secondary);
+  --acuity-semantic-on-success-container: var(--md-sys-color-on-secondary-container);
 
-  /* === Info 信息色 === */
-  --acuity-semantic-info: #1976d2;
-  --acuity-semantic-info-container: #e3f2fd;
-  --acuity-semantic-on-info: #fff;
-  --acuity-semantic-on-info-container: #0d47a1;
+  --acuity-semantic-warning: var(--md-sys-color-tertiary);
+  --acuity-semantic-warning-container: var(--md-sys-color-tertiary-container);
+  --acuity-semantic-on-warning: var(--md-sys-color-on-tertiary);
+  --acuity-semantic-on-warning-container: var(--md-sys-color-on-tertiary-container);
 
   /* ========================================
-   * 强调色/装饰色 (Accent Colors)
-   * 用于特殊功能标识和视觉装饰
+   * 强调色 (Accent) — color-mix 自 M3，无独立 Hex
    * ======================================== */
 
-  /* === Teal 青色 === */
-  --acuity-accent-teal: #16a085;
-  --acuity-accent-teal-hover: #138d75;
+  --acuity-accent-teal: color-mix(
+    in srgb,
+    var(--md-sys-color-primary) 45%,
+    var(--md-sys-color-secondary) 55%
+  );
+  --acuity-accent-teal-hover: color-mix(
+    in srgb,
+    var(--acuity-accent-teal) 88%,
+    var(--md-sys-color-on-surface) 12%
+  );
 
-  /* === Gold 金色 === */
-  --acuity-accent-gold: #ffd700;
-  --acuity-accent-gold-hover: #ffed4e;
+  /* 暖色高光：在蓝种子下用 error 少量掺入 primary-fixed-dim，避免脱离色板 */
+  --acuity-accent-gold: color-mix(
+    in srgb,
+    var(--md-sys-color-error) 12%,
+    var(--md-sys-color-primary-fixed-dim) 88%
+  );
+  --acuity-accent-gold-hover: color-mix(
+    in srgb,
+    var(--acuity-accent-gold) 88%,
+    var(--md-sys-color-surface) 12%
+  );
 
-  /* === Amber 琥珀色 === */
-  --acuity-accent-amber: #f59e0b;
-  --acuity-accent-amber-container: rgb(254 243 199);
+  --acuity-accent-amber: color-mix(
+    in srgb,
+    var(--md-sys-color-error) 28%,
+    var(--md-sys-color-primary-fixed-dim) 72%
+  );
+  --acuity-accent-amber-container: color-mix(
+    in srgb,
+    var(--md-sys-color-primary-container) 55%,
+    var(--md-sys-color-tertiary-container) 45%
+  );
 
-  /* === Purple 紫色 === */
-  --acuity-accent-purple: #c026d3;
-  --acuity-accent-purple-container: #fce7f3;
-
-  /* === AI 功能色（映射到紫色） === */
+  --acuity-accent-purple: var(--md-sys-color-tertiary);
+  --acuity-accent-purple-container: var(--md-sys-color-tertiary-container);
   --acuity-accent-ai: var(--acuity-accent-purple);
   --acuity-accent-ai-container: var(--acuity-accent-purple-container);
-  --acuity-accent-on-ai: #fff;
-  --acuity-accent-on-ai-container: #a21caf;
+  --acuity-accent-on-ai: var(--md-sys-color-on-tertiary);
+  --acuity-accent-on-ai-container: var(--md-sys-color-on-tertiary-container);
 
   /* ========================================
-   * Primary 色彩系列 (Primary Color Scale)
-   * 基于 Material Design Primary 色生成的渐变色系列
-   * 用于渐变、图表、数据可视化等场景
+   * Primary 阶梯 — 由当前主题 primary 混色生成（非 Tailwind 固定板）
    * ======================================== */
 
-  /* 
-   * 注意：这些颜色是基于 Material Design 3 的 Primary 色（#3B82F6）生成的
-   * 如果 Material Design 主题的 Primary 色发生变化，这些颜色也应该相应调整
-   */
-  --acuity-primary-50: #eff6ff;
-  --acuity-primary-100: #dbeafe;
-  --acuity-primary-200: #bfdbfe;
-  --acuity-primary-300: #93c5fd;
-  --acuity-primary-400: #60a5fa;
-  --acuity-primary-500: #3b82f6; /* 基准色，应与 Material Design Primary 一致 */
-  --acuity-primary-600: #2563eb;
-  --acuity-primary-700: #1d4ed8;
-  --acuity-primary-800: #1e40af;
-  --acuity-primary-900: #1e3a8a;
+  --acuity-primary-50: color-mix(in srgb, var(--md-sys-color-primary) 14%, white);
+  --acuity-primary-100: color-mix(in srgb, var(--md-sys-color-primary) 28%, white);
+  --acuity-primary-200: color-mix(in srgb, var(--md-sys-color-primary) 42%, white);
+  --acuity-primary-300: color-mix(in srgb, var(--md-sys-color-primary) 58%, white);
+  --acuity-primary-400: color-mix(in srgb, var(--md-sys-color-primary) 75%, white);
+  --acuity-primary-500: var(--md-sys-color-primary);
+  --acuity-primary-600: color-mix(in srgb, var(--md-sys-color-primary) 90%, black);
+  --acuity-primary-700: color-mix(in srgb, var(--md-sys-color-primary) 78%, black);
+  --acuity-primary-800: color-mix(in srgb, var(--md-sys-color-primary) 65%, black);
+  --acuity-primary-900: color-mix(in srgb, var(--md-sys-color-primary) 52%, black);
 
   /* ========================================
-   * Alpha 透明度色彩 (Alpha Colors)
-   * 用于叠加效果、遮罩、半透明背景等
+   * Alpha — color-mix(in srgb, …, transparent)
    * ======================================== */
 
-  --acuity-primary-alpha-10: rgb(59 130 246 / 10%);
-  --acuity-primary-alpha-20: rgb(59 130 246 / 20%);
-  --acuity-secondary-alpha-10: rgb(75 85 99 / 10%);
-  --acuity-error-alpha-10: rgb(186 26 26 / 10%);
-  --acuity-warning-alpha-10: rgb(245 124 0 / 10%);
-  --acuity-warning-alpha-20: rgb(245 124 0 / 20%);
-  --acuity-success-alpha-10: rgb(46 125 50 / 10%);
-  --acuity-info-alpha-10: rgb(25 118 210 / 10%);
-}
-
-/* ========================================
- * 暗色主题调整 (Dark Theme Adjustments)
- * 在暗色模式下，某些语义色可能需要调整以保持可读性
- * ======================================== */
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* 暗色模式下的语义色调整（如果需要） */
-    /* 目前保持与亮色模式相同，未来可根据需要调整 */
-  }
-}
-
-/* ========================================
- * 手动主题切换支持
- * ======================================== */
-
-.theme-dark {
-  /* 暗色主题下的语义色调整（如果需要） */
-}
-
-.theme-light {
-  /* 亮色主题下的语义色调整（如果需要） */
+  --acuity-primary-alpha-10: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
+  --acuity-primary-alpha-20: color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
+  --acuity-secondary-alpha-10: color-mix(in srgb, var(--md-sys-color-secondary) 10%, transparent);
+  --acuity-error-alpha-10: color-mix(in srgb, var(--md-sys-color-error) 10%, transparent);
+  --acuity-warning-alpha-10: color-mix(in srgb, var(--md-sys-color-tertiary) 10%, transparent);
+  --acuity-warning-alpha-20: color-mix(in srgb, var(--md-sys-color-tertiary) 20%, transparent);
+  --acuity-success-alpha-10: color-mix(in srgb, var(--md-sys-color-secondary) 10%, transparent);
+  --acuity-info-alpha-10: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
 }

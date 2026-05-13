@@ -1145,9 +1145,9 @@ md-circular-progress {
   align-items: center;
   margin-left: var(--spacing-sm);
   padding: var(--spacing-0-5) var(--spacing-1-5);
-  border: 1px solid var(--color-success-border, rgb(16 185 129 / 20%));
+  border: 1px solid var(--color-success-border);
   border-radius: var(--radius-lg);
-  background: var(--color-success-background, rgb(16 185 129 / 10%));
+  background: var(--color-success-background);
 }
 
 .sync-icon {

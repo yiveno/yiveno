@@ -23,13 +23,6 @@ import type { ThemeMode } from '@/infrastructure/global-state/global-state-manag
 function applyTheme(theme: ThemeMode): void {
   const root = document.documentElement
 
-  // 移除所有主题类
-  root.classList.remove('theme-dark', 'theme-light')
-
-  // 添加当前主题类
-  root.classList.add(`theme-${theme}`)
-
-  // 设置主题属性
   if (theme === 'dark') {
     root.style.colorScheme = 'dark'
     root.setAttribute('data-theme', 'dark')

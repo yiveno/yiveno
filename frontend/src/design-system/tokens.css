@@ -209,6 +209,129 @@
   --color-success-alpha-10: var(--acuity-success-alpha-10);
   --color-info-alpha-10: var(--acuity-info-alpha-10);
 
+  /* === 阴影 / 遮罩 / 高光（P3：统一自 md-sys shadow、scrim，禁止组件内 rgb(0,0,0/…)）=== */
+  --color-error-alpha-30: color-mix(
+    in srgb,
+    var(--md-sys-color-error) 30%,
+    transparent
+  );
+  --color-on-primary-faint-020: color-mix(
+    in srgb,
+    var(--md-sys-color-on-primary) 20%,
+    transparent
+  );
+  --color-on-primary-faint-025: color-mix(
+    in srgb,
+    var(--md-sys-color-on-primary) 25%,
+    transparent
+  );
+  --color-on-primary-faint-030: color-mix(
+    in srgb,
+    var(--md-sys-color-on-primary) 30%,
+    transparent
+  );
+  --color-primary-alpha-30: color-mix(
+    in srgb,
+    var(--md-sys-color-primary) 30%,
+    transparent
+  );
+  --color-primary-surface: color-mix(
+    in srgb,
+    var(--color-surface),
+    var(--color-primary) 8%
+  );
+  --color-primary-surface-strong: color-mix(
+    in srgb,
+    var(--color-surface),
+    var(--color-primary) 12%
+  );
+  --color-scrim-012: color-mix(
+    in srgb,
+    var(--md-sys-color-scrim) 12%,
+    transparent
+  );
+  --color-scrim-35: color-mix(
+    in srgb,
+    var(--md-sys-color-scrim) 35%,
+    transparent
+  );
+  --color-shadow-003: color-mix(
+    in srgb,
+    var(--md-sys-color-shadow) 3%,
+    transparent
+  );
+  --color-shadow-005: color-mix(
+    in srgb,
+    var(--md-sys-color-shadow) 5%,
+    transparent
+  );
+  --color-shadow-006: color-mix(
+    in srgb,
+    var(--md-sys-color-shadow) 6%,
+    transparent
+  );
+  --color-shadow-008: color-mix(
+    in srgb,
+    var(--md-sys-color-shadow) 8%,
+    transparent
+  );
+  --color-shadow-010: color-mix(
+    in srgb,
+    var(--md-sys-color-shadow) 10%,
+    transparent
+  );
+  --color-shadow-015: color-mix(
+    in srgb,
+    var(--md-sys-color-shadow) 15%,
+    transparent
+  );
+  --color-shadow-020: color-mix(
+    in srgb,
+    var(--md-sys-color-shadow) 20%,
+    transparent
+  );
+  --color-shadow-025: color-mix(
+    in srgb,
+    var(--md-sys-color-shadow) 25%,
+    transparent
+  );
+  --color-shadow-030: color-mix(
+    in srgb,
+    var(--md-sys-color-shadow) 30%,
+    transparent
+  );
+  --color-shadow-035: color-mix(
+    in srgb,
+    var(--md-sys-color-shadow) 35%,
+    transparent
+  );
+  --color-success-background: var(--color-success-alpha-10);
+  --color-success-border: color-mix(
+    in srgb,
+    var(--md-sys-color-secondary) 20%,
+    transparent
+  );
+  --color-surface-edge-010: color-mix(
+    in srgb,
+    var(--md-sys-color-inverse-on-surface) 10%,
+    transparent
+  );
+  --color-surface-glass-040: color-mix(
+    in srgb,
+    var(--md-sys-color-surface) 40%,
+    transparent
+  );
+  --color-loading-shimmer-mid: color-mix(
+    in srgb,
+    var(--md-sys-color-inverse-on-surface) 42%,
+    transparent
+  );
+  --color-surface-outline-soft: color-mix(
+    in srgb,
+    var(--md-sys-color-outline) 18%,
+    transparent
+  );
+
   /* === Legacy Support === */
   --color-success-light: var(--color-success-container);
   --color-success-dark: var(--color-on-success-container);
@@ -412,7 +535,7 @@
  * 暗色主题派生变量 (Dark Theme Derived Variables)
  * ======================================== */
 
-:root.theme-dark {
+:root[data-theme='dark'] {
   /* === Hover 状态色彩 (Dark Mode - 与白色混合变亮) === */
   --color-primary-hover: color-mix(
     in srgb,

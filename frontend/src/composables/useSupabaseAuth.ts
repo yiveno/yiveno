@@ -18,7 +18,7 @@
  * - 不活跃超时：30 天（本地检测）
  */
 
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import {
   supabase,
   isSupabaseConfigured
@@ -286,17 +286,8 @@ export function useSupabaseAuth() {
     })
   }
 
-  // 初始化
-  onMounted(() => {
-    console.log('[useSupabaseAuth] 🚀 onMounted 开始')
-    
-    // 不要在 onMounted 中使用 await，使用 .then() 代替
-    void initialize().then(() => {
-      console.log('[useSupabaseAuth] ✅ initialize 完成，登录状态:', !!user.value)
-      console.log('[useSupabaseAuth] 👤 user:', user.value)
-      setupAuthListener()
-    })
-  })
+  // ✅ 移除自动初始化的 onMounted，让调用者自己决定何时初始化
+  // 调用者应该在自己的 onMounted 中调用 initialize() 和 setupAuthListener()
 
   return {
     // 状态
@@ -309,6 +300,7 @@ export function useSupabaseAuth() {
     // 方法
     signOut,
     initialize,
+    setupAuthListener, // ✅ 暴露给调用者，让调用者在 onMounted 中手动设置
     unsubscribe,
     updateActivity, // 暴露给外部调用，用于更新活跃时间
     checkInactivity // 暴露给外部调用，用于手动检查

@@ -1,89 +1,106 @@
+<!--
+  应用对话框（基于 Material Web md-dialog）
+  - 利：原生 modal + 焦点陷阱、与 M3 动效/无障碍一致、在 md-dialog 内 select 可用 menu-positioning 文档建议
+  - 弊：需用 cancel/closed 事件适配原 overlay 逻辑；重度自定义动画弱于自研 Transition
+  @see https://github.com/material-components/material-web/blob/main/docs/components/dialog.md
+-->
 <template>
-  <Teleport to="body">
-    <Transition name="dialog" appear>
+  <Teleport :to="teleportTarget">
+    <md-dialog
+      class="acuity-md-dialog"
+      :class="mdDialogClasses"
+      :style="dialogInlineStyle"
+      :open="show"
+      :quick="dense"
+      :aria-label="dialogAriaLabel"
+      @cancel="handleMdCancel"
+      @closed="handleMdClosed"
+      @opened="handleMdOpened"
+    >
+      <!-- headline：与 md-dialog 无障碍约定一致（无标题时用 aria-label） -->
+      <div v-if="showHeadline" slot="headline" class="acuity-dialog-header">
+        <div class="acuity-dialog-header-main">
+          <slot v-if="$slots.header" name="header" />
+          <template v-else>
+            <div class="acuity-dialog-title">
+              <LucideIcon
+                v-if="icon"
+                :name="icon"
+                :color="iconColor"
+                class="title-icon"
+              />
+              <span>{{ title }}</span>
+            </div>
+          </template>
+        </div>
+        <div
+          v-if="$slots['header-actions']"
+          class="acuity-dialog-header-actions"
+        >
+          <slot name="header-actions" />
+        </div>
+      </div>
+
       <div
-        v-if="show"
-        :class="dialogClasses"
-        tabindex="-1"
-        @click.self="handleBackdropClick"
+        slot="content"
+        class="acuity-dialog-content-slot"
         @keydown="handleKeydown"
       >
-        <Transition name="dialog-content" appear>
-          <Card
-            v-if="show"
-            :class="contentClasses"
-            elevation="high"
-            :footer-visible="!!$slots.actions"
-            @click.stop
-          >
-            <template
-              v-if="$slots.header || title || $slots['header-actions']"
-              #header
-            >
-              <div class="acuity-dialog-header">
-                <div class="acuity-dialog-header-main">
-                  <slot v-if="$slots.header" name="header" />
-                  <template v-else>
-                    <div class="acuity-dialog-title">
-                      <LucideIcon
-                        v-if="icon"
-                        :name="icon"
-                        :color="iconColor"
-                        class="title-icon"
-                      />
-                      <span>{{ title }}</span>
-                    </div>
-                  </template>
-                </div>
-                <div
-                  v-if="$slots['header-actions']"
-                  class="acuity-dialog-header-actions"
-                >
-                  <slot name="header-actions" />
-                </div>
-              </div>
-            </template>
-
-            <div
-              ref="bodyRef"
-              :class="['acuity-dialog-body', bodyMinHeightClass]"
-            >
-              <slot />
+        <div
+          ref="bodyRef"
+          :class="['acuity-dialog-body', bodyMinHeightClass]"
+        >
+          <slot />
+        </div>
+        <div v-if="showCancelConfirm" class="acuity-dialog-cancel-overlay">
+          <div class="acuity-dialog-cancel-box">
+            <div class="cancel-text">{{ cancelConfirmText }}</div>
+            <div class="cancel-actions">
+              <md-text-button @click="continueEditing">{{
+                cancelConfirmContinueText
+              }}</md-text-button>
+              <md-filled-button class="button--danger" @click="confirmCancel">{{
+                cancelConfirmOkText
+              }}</md-filled-button>
             </div>
-            <!-- 取消确认覆盖层 -->
-            <div v-if="showCancelConfirm" class="acuity-dialog-cancel-overlay">
-              <div class="acuity-dialog-cancel-box">
-                <div class="cancel-text">{{ cancelConfirmText }}</div>
-                <div class="cancel-actions">
-                  <md-text-button @click="continueEditing">{{
-                    cancelConfirmContinueText
-                  }}</md-text-button>
-                  <md-filled-button class="button--danger" @click="confirmCancel">{{
-                    cancelConfirmOkText
-                  }}</md-filled-button>
-                </div>
-              </div>
-            </div>
-
-            <template v-if="$slots.actions" #footer>
-              <div class="acuity-dialog-actions">
-                <slot name="actions" />
-              </div>
-            </template>
-          </Card>
-        </Transition>
+          </div>
+        </div>
       </div>
-    </Transition>
+
+      <div v-if="$slots.actions" slot="actions" class="acuity-dialog-actions">
+        <slot name="actions" />
+      </div>
+    </md-dialog>
   </Teleport>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  ref,
+  useSlots,
+  watch
+} from 'vue'
 import type { DialogProps } from './Dialog.d'
-import { Card } from '@/components'
 import { LucideIcon } from '@/components/base/LucideIcon'
-import '@material/web/button/filled-button.js'
-import '@material/web/button/text-button.js'
+import { MdDialog } from '@material/web/dialog/dialog.js'
+import { MdFilledButton } from '@material/web/button/filled-button.js'
+import { MdTextButton } from '@material/web/button/text-button.js'
+
+/**
+ * 具名引用：仅 `import '...'` 时，生产构建可能把整段入口当作无导出依赖而 tree-shake 掉，
+ * `@customElement` 从未执行，表现为无 Shadow DOM、`display: inline`、所有 slot 内容平铺在页面上。
+ * @see frontend/src/pages/popup/main.ts 中关于 MWC 动态导入的说明
+ */
+void MdDialog
+void MdFilledButton
+void MdTextButton
+
+defineOptions({
+  name: 'AcuityDialog'
+})
 
 const props = withDefaults(defineProps<DialogProps>(), {
   width: '480px',
@@ -104,6 +121,8 @@ const emit = defineEmits<{
   confirm: []
 }>()
 
+const slots = useSlots()
+
 const show = computed({
   get: () =>
     props.show !== undefined ? props.show : (props.modelValue ?? false),
@@ -113,30 +132,50 @@ const show = computed({
   }
 })
 
-const dialogClasses = computed(() => [
-  'acuity-dialog-overlay',
+const showHeadline = computed(
+  () => !!(slots.header || props.title || slots['header-actions'])
+)
+
+/** 无 headline 插槽时供屏幕阅读器使用 */
+const dialogAriaLabel = computed(() => {
+  if (props.title?.trim()) return props.title.trim()
+  return 'AcuityBookmarks'
+})
+
+const mdDialogClasses = computed(() => [
   {
-    'acuity-dialog-overlay--fullscreen': props.fullscreen
-  }
+    'acuity-md-dialog--fullscreen': props.fullscreen,
+    'acuity-md-dialog--scrollable': props.scrollable
+  },
+  ...mdDialogSizeClasses.value
 ])
 
-const contentClasses = computed(() => {
-  const classes = ['acuity-dialog-content']
-  if (props.fullscreen) classes.push('acuity-dialog-content--fullscreen')
-  if (props.scrollable) classes.push('acuity-dialog-content--scrollable')
-  // 映射固定尺寸（仅使用到的三种宽度）
-  // width 属性会映射到 maxWidth
-  if (!props.fullscreen) {
-    const mw = (props.maxWidth || props.width || '').trim()
-    if (mw === '480px') classes.push('acuity-dialog-content--size-480')
-    else if (mw === '500px') classes.push('acuity-dialog-content--size-500')
-    else if (mw === '520px') classes.push('acuity-dialog-content--size-520')
-    else if (mw === '440px') classes.push('acuity-dialog-content--size-440')
-  }
+const mdDialogSizeClasses = computed(() => {
+  const classes: string[] = []
+  if (props.fullscreen) return classes
+  const mw = (props.maxWidth || props.width || '').trim()
+  if (mw === '480px') classes.push('acuity-md-dialog--size-480')
+  else if (mw === '500px') classes.push('acuity-md-dialog--size-500')
+  else if (mw === '520px') classes.push('acuity-md-dialog--size-520')
+  else if (mw === '440px') classes.push('acuity-md-dialog--size-440')
   return classes
 })
 
-// 将 bodyMinHeight 从字符串(px)映射到就近的类，避免内联样式
+const dialogInlineStyle = computed(() => {
+  if (props.fullscreen) return undefined
+  const mw = (props.maxWidth || props.width || '').trim()
+  const known = ['440px', '480px', '500px', '520px']
+  const style: Record<string, string> = {}
+  if (props.minWidth?.trim()) {
+    style.minWidth = props.minWidth.trim()
+  }
+  if (mw && !known.includes(mw)) {
+    style.width = 'min(100vw - 32px, ' + mw + ')'
+    style.maxWidth = mw
+  }
+  return Object.keys(style).length ? style : undefined
+})
+
 const bodyMinHeightClass = computed(() => {
   const val = (props.bodyMinHeight || '').trim()
   if (!val.endsWith('px')) return undefined
@@ -155,8 +194,9 @@ const bodyMinHeightClass = computed(() => {
 
 const bodyRef = ref<HTMLElement | null>(null)
 const showCancelConfirm = ref(false)
-// ✅ 焦点管理：保存打开对话框前的焦点元素
-let previousActiveElement: Element | null = null
+
+/** 用户通过 scrim / Esc 触发的 cancel 且未被拦截时，在 closed 中发出 close */
+const userDismissedViaCancel = ref(false)
 
 const detectUnsaved = (): boolean => {
   if (!bodyRef.value) return false
@@ -168,19 +208,47 @@ const detectUnsaved = (): boolean => {
     const val = (el.value || '').trim()
     if (val.length > 0) return true
   }
-  // 允许使用 data-dirty 标记为脏
   const dirty = bodyRef.value.querySelector('[data-dirty="true"]')
   return !!dirty
 }
 
-const attemptCancel = () => {
-  if (!props.cancelable) return // 不可取消弹窗直接忽略
-  if (props.enableCancelGuard && detectUnsaved()) {
-    showCancelConfirm.value = true
-  } else {
-    show.value = false
-    emit('close')
+/**
+ * scrim / Esc 触发的 cancel：可 preventDefault 以阻止关闭（与 Material 文档一致）
+ */
+const handleMdCancel = (ev: Event) => {
+  if (!props.cancelable) {
+    ev.preventDefault()
+    return
   }
+  if (props.persistent) {
+    ev.preventDefault()
+    return
+  }
+  if (props.enableCancelGuard && !showCancelConfirm.value && detectUnsaved()) {
+    ev.preventDefault()
+    showCancelConfirm.value = true
+    return
+  }
+  userDismissedViaCancel.value = true
+}
+
+const handleMdClosed = () => {
+  emit('update:modelValue', false)
+  emit('update:show', false)
+  if (userDismissedViaCancel.value) {
+    emit('close')
+    userDismissedViaCancel.value = false
+  }
+}
+
+const handleMdOpened = () => {
+  emit('open')
+  nextTick(() => {
+    const firstFocusable = bodyRef.value?.querySelector<HTMLElement>(
+      'input, textarea, button, [tabindex]:not([tabindex="-1"])'
+    )
+    firstFocusable?.focus()
+  })
 }
 
 const confirmCancel = () => {
@@ -193,40 +261,12 @@ const continueEditing = () => {
   showCancelConfirm.value = false
 }
 
-// ✅ 焦点管理：对话框打开/关闭时自动保存和恢复焦点
-watch(show, (isShown, wasShown) => {
-  if (isShown && !wasShown) {
-    // 对话框打开：保存当前焦点
-    previousActiveElement = document.activeElement
-    // 等待 DOM 更新后，尝试聚焦到对话框内的第一个可聚焦元素
-    nextTick(() => {
-      const firstFocusable = bodyRef.value?.querySelector<HTMLElement>(
-        'input, textarea, button, [tabindex]:not([tabindex="-1"])'
-      )
-      firstFocusable?.focus()
-    })
-  } else if (!isShown && wasShown) {
-    // 对话框关闭：恢复之前的焦点
-    ;(previousActiveElement as HTMLElement)?.focus?.()
-    previousActiveElement = null
-  }
-})
-
-const handleBackdropClick = () => {
-  attemptCancel()
-}
-
 const handleKeydown = (event: KeyboardEvent) => {
-  // ESC 键由全局监听器处理（handleGlobalKeydown），这里不再处理
-
-  // Tab键 - 检查是否有Tabs组件进行特殊处理
   if (event.key === 'Tab') {
-    // 查找弹窗内当前激活的 Tab 按钮（handleKeydown 绑定在按钮上）
-    const activeTabButton = document.querySelector(
-      '.acuity-dialog-overlay .acuity-tabs-nav .acuity-tab--active'
+    const activeTabButton = bodyRef.value?.querySelector(
+      '.acuity-tabs-nav .acuity-tab--active'
     ) as HTMLButtonElement
     if (activeTabButton) {
-      // 先聚焦到按钮，然后触发键盘事件
       activeTabButton.focus()
       const tabsEvent = new KeyboardEvent('keydown', {
         key: 'Tab',
@@ -240,133 +280,108 @@ const handleKeydown = (event: KeyboardEvent) => {
     }
   }
 
-  // 回车键 - 确认（只有在启用时才生效）
   if (event.key === 'Enter' && props.enterToConfirm) {
-    // 统一由弹窗处理，无论焦点位于何处
     emit('confirm')
     event.preventDefault()
   }
 }
 
-// 全局 ESC 键处理（确保无论焦点在哪里都能关闭弹窗）
-const handleGlobalKeydown = (event: KeyboardEvent) => {
-  if (event.key === 'Escape' && props.escToClose) {
-    attemptCancel()
-    event.preventDefault()
+/** escToClose 为 false 时仅拦截 Esc，不拦截 scrim（与旧版 window 监听行为一致） */
+let escapeBlockHandler: ((e: KeyboardEvent) => void) | null = null
+
+const detachEscapeBlock = () => {
+  if (escapeBlockHandler) {
+    window.removeEventListener('keydown', escapeBlockHandler, true)
+    escapeBlockHandler = null
   }
 }
 
-// Focus trap and body scroll lock
 watch(
-  () => show.value,
-  newShow => {
-    if (newShow) {
-      nextTick(() => {
-        document.body.style.overflow = 'hidden'
-        // 添加全局 ESC 键监听
-        window.addEventListener('keydown', handleGlobalKeydown)
-        // 自动获得焦点以确保键盘事件能被捕获
-        const overlay = document.querySelector(
-          '.acuity-dialog-overlay'
-        ) as HTMLElement
-        if (overlay) {
-          overlay.focus()
-        }
-      })
-    } else {
-      document.body.style.overflow = ''
-      // 移除全局 ESC 键监听
-      window.removeEventListener('keydown', handleGlobalKeydown)
+  () => [show.value, props.escToClose, props.persistent] as const,
+  ([isOpen, escToClose, persistent]) => {
+    detachEscapeBlock()
+    if (!isOpen || persistent || escToClose) {
+      return
     }
-  }
+    escapeBlockHandler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        e.stopPropagation()
+      }
+    }
+    window.addEventListener('keydown', escapeBlockHandler, true)
+  },
+  { immediate: true }
 )
 
-// 组件卸载时清理
+watch(show, isShown => {
+  if (!isShown) {
+    showCancelConfirm.value = false
+    userDismissedViaCancel.value = false
+  }
+})
+
 onBeforeUnmount(() => {
-  window.removeEventListener('keydown', handleGlobalKeydown)
+  detachEscapeBlock()
 })
 </script>
 
 <style scoped>
 /**
- * ✨ 淡入动画 - 用于弹窗内容
- */
-@keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-/**
- * ♿ 可访问性：尊重用户的动画偏好
+ * ♿ 尊重用户的动画偏好（Material 内部动画另受组件 quick 控制）
  */
 @media (prefers-reduced-motion: reduce) {
-  .acuity-dialog-overlay,
-  .acuity-dialog-content {
-    transition: none !important;
-    animation: none !important;
-  }
-  
-  .dialog-enter-active,
-  .dialog-leave-active,
-  .dialog-content-enter-active,
-  .dialog-content-leave-active {
-    transition: none !important;
+  .acuity-md-dialog {
+    --md-dialog-container-motion-duration: 0ms;
   }
 }
 
-.acuity-dialog-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 10000;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: var(--spacing-lg);
-  outline: none; /* 移除焦点轮廓 */
-  
-  /* ✨ 优化背景遮罩：更深的颜色 + 更强的模糊 */
-  background: rgb(0 0 0 / 70%);
-  backdrop-filter: blur(8px);
-  
-  /* ✨ 性能优化 */
-  will-change: opacity, backdrop-filter;
+.acuity-md-dialog {
+  --md-dialog-container-shape: var(--radius-lg);
+
+  max-height: min(90vh, 900px);
 }
 
-.acuity-dialog-overlay--fullscreen {
-  padding: 0;
+.acuity-md-dialog--fullscreen {
+  width: 100vw;
+  max-width: 100vw;
+  height: 100vh;
+  max-height: 100vh;
 }
 
-.acuity-dialog-content {
+.acuity-md-dialog--scrollable :deep(.scroller) {
+  max-height: min(70vh, 640px);
+}
+
+.acuity-md-dialog--size-440 {
+  width: min(100vw - 32px, 440px);
+  min-width: min(100vw - 32px, 440px);
+  max-width: 440px;
+}
+
+.acuity-md-dialog--size-480 {
+  width: min(100vw - 32px, 480px);
+  min-width: min(100vw - 32px, 480px);
+  max-width: 480px;
+}
+
+.acuity-md-dialog--size-500 {
+  width: min(100vw - 32px, 500px);
+  min-width: min(100vw - 32px, 500px);
+  max-width: 500px;
+}
+
+.acuity-md-dialog--size-520 {
+  width: min(100vw - 32px, 520px);
+  min-width: min(100vw - 32px, 520px);
+  max-width: 520px;
+}
+
+.acuity-dialog-content-slot {
+  position: relative;
   display: flex;
   flex-direction: column;
-  max-height: 90vh;
-  
-  /* ✨ 改进弹窗阴影：多层次阴影 */
-  box-shadow: 
-    0 8px 32px rgb(0 0 0 / 20%),
-    0 4px 16px rgb(0 0 0 / 15%),
-    0 0 0 1px rgb(255 255 255 / 5%);
-  
-  /* ✨ 性能优化 */
-  will-change: transform, opacity;
-}
-
-.acuity-dialog-content--scrollable {
-  overflow: hidden;
-}
-
-.acuity-dialog-content--fullscreen {
-  width: 100%;
-  min-width: 100%;
-  max-width: 100%;
-  height: 100%;
-  max-height: 100vh;
-  border-radius: 0;
+  min-height: 0;
 }
 
 .acuity-dialog-header {
@@ -374,9 +389,7 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   align-items: center;
   gap: var(--spacing-md);
-  padding: var(--spacing-lg);
-  padding-right: 0;
-  padding-left: 0;
+  padding: var(--spacing-md) var(--spacing-lg) 0;
 }
 
 .acuity-dialog-header-main {
@@ -409,29 +422,18 @@ onBeforeUnmount(() => {
   text-overflow: ellipsis;
 }
 
-/* 为自定义header slot内容提供样式基类 */
-.acuity-dialog-header .custom-header {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  padding: 0 var(--spacing-lg);
-  font-size: var(--text-lg);
-  font-weight: var(--font-semibold);
-  color: var(--color-text-primary);
-}
-
 .title-icon {
   flex-shrink: 0;
 }
 
 .acuity-dialog-body {
   flex: 1;
-  font-size: var(--md-sys-typescale-body-large-size); /* 16px */
+  padding: var(--spacing-lg);
+  font-size: var(--md-sys-typescale-body-large-size);
   line-height: 1.75;
   overflow-y: auto;
 }
 
-/* 取消确认覆盖层 */
 .acuity-dialog-cancel-overlay {
   position: absolute;
   inset: 0;
@@ -439,7 +441,7 @@ onBeforeUnmount(() => {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: rgb(0 0 0 / 35%);
+  background: var(--color-scrim-35);
 }
 
 .acuity-dialog-cancel-box {
@@ -449,15 +451,10 @@ onBeforeUnmount(() => {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   background: var(--color-surface);
-  
-  /* ✨ 优化取消确认框阴影 */
-  box-shadow: 
-    0 12px 48px rgb(0 0 0 / 25%),
-    0 6px 24px rgb(0 0 0 / 20%),
-    0 0 0 1px rgb(255 255 255 / 8%);
-  
-  /* ✨ 淡入动画 */
-  animation: fade-in var(--anim-duration-fast) var(--anim-ease-standard);
+  box-shadow:
+    0 12px 48px var(--color-shadow-025),
+    0 6px 24px var(--color-shadow-020),
+    0 0 0 1px var(--color-surface-edge-010);
 }
 
 .cancel-text {
@@ -474,34 +471,13 @@ onBeforeUnmount(() => {
 
 .acuity-dialog-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   align-items: center;
   gap: var(--spacing-md);
-  padding: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-md);
 }
 
-/* 固定宽度尺寸（避免内联样式） */
-.acuity-dialog-content--size-440 {
-  min-width: 440px;
-  max-width: 440px;
-}
-
-.acuity-dialog-content--size-480 {
-  min-width: 480px;
-  max-width: 480px;
-}
-
-.acuity-dialog-content--size-500 {
-  min-width: 500px;
-  max-width: 500px;
-}
-
-.acuity-dialog-content--size-520 {
-  min-width: 520px;
-  max-width: 520px;
-}
-
-/* 主体最小高度类（就近映射） */
 .acuity-dialog-body.min-h-320 {
   min-height: 320px;
 }
@@ -538,62 +514,6 @@ onBeforeUnmount(() => {
   min-height: 600px;
 }
 
-/* ===============================================
-   ✨ 弹窗动画优化
-   =============================================== */
-
-/**
- * 背景遮罩动画
- * - 淡入淡出
- * - 模糊效果渐变
- */
-.dialog-enter-active,
-.dialog-leave-active {
-  transition: 
-    opacity var(--anim-duration-normal) var(--anim-ease-standard),
-    backdrop-filter var(--anim-duration-normal) var(--anim-ease-standard);
-}
-
-.dialog-enter-from {
-  opacity: 0;
-  backdrop-filter: blur(0);
-}
-
-.dialog-leave-to {
-  opacity: 0;
-  backdrop-filter: blur(0);
-}
-
-/**
- * 弹窗内容动画
- * - 缩放 + 淡入
- * - 使用 emphasized 缓动函数增强动感
- * - 从 0.92 缩放到 1.0 (更微妙的效果)
- * - 轻微上浮效果 (translateY)
- */
-.dialog-content-enter-active {
-  transition: 
-    opacity var(--anim-duration-normal) var(--anim-ease-emphasized),
-    transform var(--anim-duration-normal) var(--anim-ease-emphasized);
-}
-
-.dialog-content-leave-active {
-  transition: 
-    opacity var(--anim-duration-fast) var(--anim-ease-standard),
-    transform var(--anim-duration-fast) var(--anim-ease-standard);
-}
-
-.dialog-content-enter-from {
-  opacity: 0;
-  transform: scale(0.92) translateY(16px);
-}
-
-.dialog-content-leave-to {
-  opacity: 0;
-  transform: scale(0.96) translateY(8px);
-}
-
-/* ✅ 键盘快捷键提示样式 */
 .keyboard-hint {
   display: inline-block;
   margin-left: var(--spacing-1);
@@ -608,15 +528,14 @@ onBeforeUnmount(() => {
   letter-spacing: 0.5px;
   color: var(--color-text-tertiary);
   background: var(--color-surface-variant);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
+  box-shadow: 0 1px 2px var(--color-shadow-005);
   vertical-align: middle;
 }
 
-/* Button 组件内的键盘提示需要适配按钮颜色 */
 :deep(.btn--primary .keyboard-hint) {
-  border-color: rgb(255 255 255 / 30%);
+  border-color: var(--color-on-primary-faint-030);
   color: var(--color-text-on-primary);
-  background: rgb(255 255 255 / 20%);
+  background: var(--color-on-primary-faint-020);
 }
 
 :deep(.btn--text .keyboard-hint),

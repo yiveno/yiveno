@@ -69,7 +69,7 @@ import { useSupabaseAuth } from '@/composables'
 import { logger } from '@/infrastructure/logging/logger'
 
 // 使用 Supabase Auth 检查登录状态
-const { isAuthenticated, initialize } = useSupabaseAuth()
+const { isAuthenticated, initialize, setupAuthListener } = useSupabaseAuth()
 const isLoggedIn = computed(() => isAuthenticated.value)
 
 defineOptions({
@@ -223,6 +223,7 @@ onMounted(async () => {
 
   // 等待 Supabase Auth 初始化完成（首次加载需要时间）
   await initialize()
+  setupAuthListener() // ✅ 手动设置认证状态监听器
 
   // 检查登录状态
   await checkLoginStatus()

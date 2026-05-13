@@ -8,6 +8,9 @@
   4. 支持图标、快捷键提示、分隔线
   5. 支持禁用状态和颜色主题
   6. 键盘导航（上下箭头、Enter、ESC）
+  
+  说明：使用 MWC `md-list` / `md-list-item`。图标必须放在带 `slot="start"` 的
+  原生元素（如 span）内，便于浏览器将 light DOM 正确分配到 Shadow 的 start 槽。
 -->
 
 <template>
@@ -35,13 +38,10 @@
           @click="handleItemClick(item)"
           @mouseenter="focusedIndex = index"
         >
-          <LucideIcon
-            v-if="item.icon"
-            slot="start"
-            :name="item.icon"
-            :size="16"
-          />
-          <div slot="headline">{{ item.label }}</div>
+          <span v-if="item.icon" slot="start" class="context-menu-item__start" aria-hidden="true">
+            <LucideIcon :name="item.icon" :size="16" />
+          </span>
+          <div slot="headline" class="context-menu-item__headline">{{ item.label }}</div>
           <div v-if="item.shortcut" slot="trailing-supporting-text" class="item-shortcut">
             {{ item.shortcut }}
           </div>
@@ -56,7 +56,6 @@ import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import { LucideIcon } from '@/components/base/LucideIcon'
 import type { MenuItemConfig } from '@/core/bookmark/context-menu-config'
 
-// 导入 Material Web Components
 import '@material/web/list/list.js'
 import '@material/web/list/list-item.js'
 
@@ -234,7 +233,7 @@ watch(
 
       // 等待 DOM 更新后聚焦
       await nextTick()
-      
+
       // 聚焦到菜单容器，启用键盘导航
       if (menuRef.value) {
         menuRef.value.focus()
@@ -276,6 +275,18 @@ onUnmounted(() => {
 .item-shortcut {
   font-size: var(--text-xs);
   color: var(--color-text-secondary);
+}
+
+.context-menu-item__start {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.context-menu-item__headline {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Material Web Components 样式 */

@@ -166,7 +166,7 @@
   position: relative;
 }
 
-/* stylelint-disable declaration-property-value-disallowed-list, color-no-hex -- 调试样式 */
+/* stylelint-disable declaration-property-value-disallowed-list -- 调试浮层尺寸 */
 .font-debug::after {
   position: absolute;
   top: -20px;
@@ -174,9 +174,9 @@
   padding: 2px 4px;
   border-radius: 2px;
   font-size: 10px;
-  color: #666;
-  background: rgb(255 255 0 / 30%);
+  color: var(--md-sys-color-on-tertiary-container);
+  background: var(--md-sys-color-tertiary-container);
   pointer-events: none;
   content: attr(data-detected-lang);
 }
-/* stylelint-enable declaration-property-value-disallowed-list, color-no-hex */
+/* stylelint-enable declaration-property-value-disallowed-list */

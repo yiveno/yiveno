@@ -2,7 +2,7 @@
 
 > 📘 **文档目标**：为 AI 编程助手（Cursor/Copilot）提供完整的项目上下文，确保生成的代码符合项目架构和规范。
 >
-> 🎯 **最后更新**：2026-04-29  
+> 🎯 **最后更新**：2026-05-15  
 > 📦 **项目版本**：v1.0  
 > 🏗️ **架构版本**：v3.0（DDD + 单向数据流 + 现代技术栈）
 
@@ -12,6 +12,7 @@
 
 - [第一部分：产品概述](#第一部分产品概述)
 - [第二部分：技术架构](#第二部分技术架构)
+- [2.5 Theming runbook - 换肤与主题操作清单](#25-theming-runbook-换肤与主题操作清单)
 - [第三部分：核心功能](#第三部分核心功能)
 - [第四部分：开发规范](#第四部分开发规范)
 - [第五部分：数据流设计](#第五部分数据流设计)
@@ -43,6 +44,14 @@
 - **隐私优先**：书签数据存储在本地 IndexedDB，AI 能力支持用户自带 API Key，数据不经过产品服务器
 - **高性能本地**：支持 2 万+ 书签流畅操作，核心功能完全离线可用
 - **融入浏览器**：支持 Chrome Omnibox 直接调用，无需打开任何页面
+
+#### 界面与宿主原则（Chrome）
+
+产品能力与 Chrome 书签强绑定，界面策略应与之同向，而非对立。
+
+- **延伸而非另起炉灶**：扩展 UI 应呈现为 **Chrome 书签能力的自然延伸**，降低「又进了一个陌生 App」的认知成本与信任摩擦。
+- **气质对齐、像素不必对齐**：与 Chrome / Google 系工具审美谱系协调（如 Material Design 3、语义化设计 token），**不要求**与浏览器外壳或各平台 Chrome 像素级一致；随宿主视觉迭代，以「气质一致、可维护」为准则适度跟进。
+- **差异靠信息与品牌**：辨识度通过信息架构、核心能力（语义检索、整理、健康度等）与自有品牌元素建立，**不**以刻意「反 Chrome 味」作为设计目标。
 
 ### 1.2 目标用户
 
@@ -306,6 +315,70 @@ bun run stylelint:fix:enhanced
 # 格式化代码
 bun run format
 ```
+
+### 2.5 Theming runbook - 换肤与主题操作清单
+
+> **目的**：换种子色或整体换肤时，接手人不必猜「色从哪来、该改哪几处」；与 [§1.1 界面与宿主原则（Chrome）](#界面与宿主原则chrome) 一致，以 **Material Design 3 导出 + 项目 token 映射** 为唯一主线。
+
+#### 2.5.1 单一事实来源（读此节即可建立心智模型）
+
+| 层级 | 作用 |
+|------|------|
+| **`document.documentElement`** | 运行时由 `data-theme`（`light` / `dark`）与 `style.colorScheme` 表达当前亮暗；**禁止**再使用已废弃的 `theme-light` / `theme-dark` 类名手抄变量。 |
+| **`packages/design-tokens/css/material-theme.css`** | Material Theme Builder 导出的 **`--md-sys-color-*`** 全量色板（含 `:root` 亮色、`@media (prefers-color-scheme: dark)` 下系统暗色、`:root[data-theme='dark']` 用户强制暗色及对比度变体）。**换品牌种子色时，本文件是主替换面。** |
+| **`packages/design-tokens/css/semantic-colors.css`** | 业务语义色（success / warning / info、强调色、primary 阶梯、alpha）由 **`var(--md-sys-color-*)` 与 `color-mix`** 派生；换 M3 导出后一般**只需核对映射**，无需再堆 Hex。 |
+| **`frontend/src/design-system/tokens.css`** | 扩展将 `--md-sys-*` / `--acuity-*` 映射为项目对外的 **`--color-*`**（含阴影、遮罩、语义浅底等 P3 集中变量）。换肤后重点检查 **混色与阴影** 是否仍协调。 |
+| **`packages/design-tokens/src/colors.ts`** | 供 **无法使用 CSS 变量** 的场景（如控制台样式字符串、Badge API）：`.css` 仍指向变量名；`.rgb` / `.hex` 为与当前种子一致的**近似快照**，换 `material-theme.css` 后应**同步校对**以免与界面脱节。 |
+
+主题应用逻辑（不负责写死颜色，但换肤后需回归）：`frontend/src/composables/useThemeSync.ts`、`frontend/src/components/composite/ThemeToggle/ThemeToggle.vue`。View Transition 与主题相关选择器：`frontend/src/design-system/animations.css`。
+
+**官网（Nuxt）**：`website/nuxt.config.ts` 已引入 `@acuity-bookmarks/design-tokens/css/material-theme.css`；`website/app.vue` 使用 `data-theme`。若官网要与扩展同一套色盘，需与上述 CSS **同源提交**，避免两处分叉。
+
+#### 2.5.2 换肤时要改 / 核对的文件清单
+
+按常见「只换 Theme Builder 种子」工作流排序：
+
+1. **必改（色盘本体）**  
+   - `packages/design-tokens/css/material-theme.css` — 用 [Material Theme Builder](https://material-foundation.github.io/material-theme-builder/) 导出替换或按块合并（保留与 `data-theme` / `prefers-color-scheme` 配套的选择器结构，避免破坏单向主题切换）。
+
+2. **强烈建议核对（派生与映射）**  
+   - `packages/design-tokens/css/semantic-colors.css` — 确认 `--acuity-*` 仍指向有效的 `--md-sys-color-*`。  
+   - `packages/design-tokens/src/colors.ts` — 更新 `materialColors` 及依赖新映射的 `semanticColors` / `accentColors` / `primaryScale` 的 **rgb/hex 快照**（若仅改 CSS 而不改 TS，非 CSS 场景可能仍显示旧色）。
+
+3. **按需核对（项目层）**  
+   - `frontend/src/design-system/tokens.css` — 新增或调整的 `--color-*` 是否与新材料角色一致。  
+   - `frontend/src/assets/main.css` — 高对比度、调试、打印等分支是否仍使用 token（如 `var(--color-black)`），避免裸色回归。
+
+4. **一般无需为换色而改**  
+   - 各业务 `.vue` 内样式：应以 **`var(--color-*)` / `var(--md-sys-color-*)`** 为主；若发现裸 `#` / `rgb(...)`，应迁回 `tokens.css` 集中定义后再引用（见 P3 扫尾约定）。
+
+#### 2.5.3 换肤后必跑命令（CI 前自检）
+
+在仓库根目录安装依赖后，**至少**对扩展前端执行：
+
+```bash
+cd frontend
+bun run typecheck
+bun run lint:check
+bun run stylelint:check
+```
+
+若修改了 `packages/design-tokens` 下 TypeScript，请同时确认根工作区类型检查策略（如 `bun run typecheck` 是否覆盖该包）；**无单独「换肤编译」脚本**，以现有质量脚本为准。
+
+#### 2.5.4 验收清单（QA）：浅色 / 深色 / 对比度
+
+以下在 **Popup、Side Panel、Management、Settings、Onboarding** 各至少抽查一条主路径；含 **Material Web Components** 的列表、对话框、输入框须重点看边框与 hover。
+
+| 场景 | 操作要点 | 通过标准 |
+|------|-----------|----------|
+| **浅色** | 设置中选「浅色」或等效项 | `html` 为 `data-theme="light"`（或等价表现）；主表面、主 on-surface 文字与 Chrome 工具栏气质协调；无大块硬编码旧色。 |
+| **深色** | 设置中选「深色」 | `html` 为 `data-theme="dark"`；暗色 `--md-sys-color-surface` / `on-surface` 对比可读；弹层遮罩使用 `--color-scrim-*` 等 token，不偏灰死。 |
+| **跟随系统** | 选「跟随系统」后，用系统或 DevTools 切换 **prefers-color-scheme** | 明暗随系统切换且无中间态错色；与 `material-theme.css` 中 `:root:not([data-theme='light'])` 暗色块一致。 |
+| **浅色 OS + 强制深色** | 系统浅色下仅通过扩展选深色 | 必须走 **`data-theme="dark"`** 整块暗色板，不得仅靠媒体查询「半套」暗色。 |
+| **对比度** | 启用系统「提高对比度」或 Chrome 模拟 `prefers-contrast: more` | 主要文本与背景、焦点环、错误/成功状态仍可辨识；高对比分支（如 `main.css`）生效且无布局崩坏。 |
+| **回归** | 全局抽查 | 无新增裸 Hex / 游离 `rgb`；语义 success/warning/info 与产品语义一致（warning 已映射 tertiary 等约定见 `semantic-colors.css` 头注释）。 |
+
+**文档路径说明**：仓库内产品文档以 `docs/product/AcuityBookmarks-产品文档-v3.0.md` 为准；历史路径 `文档/产品文档/` 若存在别名，以本路径为单一来源。
 
 ---
 

@@ -131,7 +131,10 @@ import {
   Lightbulb,
   Keyboard,
   Radar,
-  Cpu
+  Cpu,
+  Glasses,
+  NotebookTabs,
+  AppWindow
 } from 'lucide-vue-next'
 
 /**
@@ -301,7 +304,12 @@ export const lucideIcons: Record<string, Component> = {
   'lightbulb': Lightbulb,
   'keyboard': Keyboard,
   'radar': Radar,
-  'cpu': Cpu
+  'cpu': Cpu,
+
+  /** 浏览器 / 窗口 / 标签组（右键菜单等） */
+  'glasses': Glasses,
+  'notebook-tabs': NotebookTabs,
+  'app-window': AppWindow
 }
 
 /**
@@ -370,6 +378,12 @@ export const materialToLucideMap: Record<string, string> = {
   
   // 分享
   'icon-share': 'external-link',
+
+  /** 文件夹「打开全部」等菜单（原 Material 名 → Lucide 键） */
+  'icon-incognito': 'glasses',
+  'icon-tab-group': 'notebook-tabs',
+  'icon-open-link': 'external-link',
+  'icon-window': 'app-window',
   
   // 其他
   'icon-flash': 'zap',

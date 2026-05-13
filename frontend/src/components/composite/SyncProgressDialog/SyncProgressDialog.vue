@@ -1,6 +1,6 @@
 <template>
   <Dialog :show="show" persistent :hide-close="!showActions">
-    <template #title>
+    <template #header>
       <div class="dialog-title" :class="{ 'is-error': isError }">
         <LucideIcon
           :name="titleIcon"
@@ -11,7 +11,7 @@
       </div>
     </template>
 
-    <template #content>
+    <!-- 正文：使用默认插槽（原误用 #content，Dialog 未定义该槽位） -->
       <!-- ✅ 错误状态 -->
       <div v-if="isError" class="error-content">
         <div class="error-icon">
@@ -88,7 +88,6 @@
           </div>
         </div>
       </div>
-    </template>
 
     <template v-if="showActions" #actions>
       <!-- ✅ 错误时的操作 -->

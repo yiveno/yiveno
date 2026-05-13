@@ -52,8 +52,9 @@ const appClasses = computed(() => [
   box-sizing: border-box;
 }
 
+/* 正文里的图片/插图自适应；排除 Lucide 图标（否则在 flex/菜单里易被压扁或触发异常换行） */
 .acuity-app img,
-.acuity-app svg {
+.acuity-app svg:not(.acuity-lucide-icon) {
   max-width: 100%;
   height: auto;
 }

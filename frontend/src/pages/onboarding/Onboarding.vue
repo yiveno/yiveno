@@ -582,7 +582,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   background: var(--color-surface);
-  box-shadow: 0 2px 8px rgb(0 0 0 / 5%);
+  box-shadow: 0 2px 8px var(--color-shadow-005);
 }
 
 .search-placeholder {

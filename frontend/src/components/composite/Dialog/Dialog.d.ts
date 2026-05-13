@@ -15,6 +15,8 @@ export interface DialogProps {
   minWidth?: string
   /** 是否阻止外部关闭 */
   persistent?: boolean
+  /** 是否启用 md-dialog 的 quick 模式（弱化动效等，见 Material Web 文档） */
+  dense?: boolean
   /** 是否全屏 */
   fullscreen?: boolean
   /** 是否允许正文滚动 */

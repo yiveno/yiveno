@@ -44,6 +44,7 @@
 <script setup lang="ts">
 import ThemeToggle from '@/components/composite/ThemeToggle/ThemeToggle.vue'
 import UserMenu from '@/components/composite/UserMenu/UserMenu.vue'
+import LucideIcon from '@/components/base/LucideIcon/LucideIcon.vue'
 import { ref, computed, toRefs, onMounted, onUnmounted } from 'vue'
 import { logger } from '@/infrastructure/logging/logger'
 import { onEvent } from '@/infrastructure/events/event-bus'

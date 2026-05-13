@@ -5,34 +5,50 @@
   - 可独立使用，不依赖特定页面结构
 -->
 <template>
-  <div
-    class="theme-toggle"
-    @mouseenter="showDropdown = true"
-    @mouseleave="showDropdown = false"
-  >
+  <div class="theme-toggle">
     <md-icon-button
+      id="theme-toggle-anchor"
       ref="toggleBtnRef"
       class="theme-toggle__button"
       :title="currentThemeLabel"
       :aria-label="currentThemeLabel"
+      @click="showMenu = !showMenu"
     >
       <LucideIcon :name="currentThemeIconLucide" :size="20" />
     </md-icon-button>
 
-    <Transition name="dropdown">
-      <div v-if="showDropdown" class="theme-toggle__dropdown">
-        <button
-          v-for="option in themeOptions"
-          :key="option.value"
-          class="theme-toggle__option"
-          :class="{ 'is-active': currentTheme === option.value }"
-          @click="selectTheme(option.value)"
-        >
-          <LucideIcon :name="option.icon" :size="20" />
-          <span>{{ option.label }}</span>
-        </button>
-      </div>
-    </Transition>
+    <!-- Material Design 3 Menu -->
+    <md-menu
+      id="theme-menu"
+      ref="menuRef"
+      anchor="theme-toggle-anchor"
+      :open="showMenu"
+      :quick="true"
+      @closed="showMenu = false"
+    >
+      <md-menu-item
+        v-for="option in themeOptions"
+        :key="option.value"
+        :selected="currentTheme === option.value"
+        @click="selectTheme(option.value)"
+      >
+        <!-- 必须用原生元素承载 slot="start"：Vue 子组件上的 slot 可能无法交给 md-menu-item，图标会掉进 default 槽，从而在 headline 上方单独一行 -->
+        <span slot="start" class="theme-menu-item__start">
+          <LucideIcon :name="option.icon" :size="15" />
+        </span>
+        <!-- headline：避免使用 slot="end"（Material 会先渲染 end，对勾会夹在图标与文字之间） -->
+        <span slot="headline" class="theme-menu-item__headline">
+          <span class="theme-menu-item__label">{{ option.label }}</span>
+          <LucideIcon
+            v-if="currentTheme === option.value"
+            name="check-circle"
+            :size="16"
+            class="theme-menu-item__selected-icon"
+            aria-hidden="true"
+          />
+        </span>
+      </md-menu-item>
+    </md-menu>
   </div>
 </template>
 
@@ -45,17 +61,18 @@ import {
 } from '@/infrastructure/global-state/global-state-manager'
 import { emitEvent } from '@/infrastructure/events/event-bus'
 import { LucideIcon } from '@/components'
-import '@material/web/iconbutton/icon-button.js'
-import '@material/web/icon/icon.js'
 
 // 当前主题状态（从全局状态管理器获取）
 const currentTheme = ref<ThemeMode>('system')
 
-// 下拉菜单显示状态
-const showDropdown = ref(false)
+// 菜单显示状态
+const showMenu = ref(false)
 
 // 按钮引用（用于获取点击位置）
 const toggleBtnRef = ref<HTMLElement | null>(null)
+
+// 菜单引用
+const menuRef = ref<HTMLElement | null>(null)
 
 // 系统主题变化监听器（MediaQueryList）
 let systemThemeQuery: MediaQueryList | null = null
@@ -66,8 +83,8 @@ const isToggling = ref(false)
 // 主题选项配置
 const themeOptions = [
   { value: 'system' as ThemeMode, label: '跟随系统', icon: 'sync' },
-  { value: 'light' as ThemeMode, label: '浅色主题', icon: 'light_mode' },
-  { value: 'dark' as ThemeMode, label: '暗黑主题', icon: 'dark_mode' }
+  { value: 'light' as ThemeMode, label: '浅色主题', icon: 'sun' },
+  { value: 'dark' as ThemeMode, label: '暗黑主题', icon: 'moon' }
 ]
 
 // 计算当前主题的图标（Lucide Icons）
@@ -94,8 +111,8 @@ const selectTheme = async (theme: ThemeMode) => {
     return
   }
 
-  // 关闭下拉菜单
-  showDropdown.value = false
+  // 关闭菜单
+  showMenu.value = false
 
   // 如果选择的是当前主题，不执行切换
   if (theme === currentTheme.value) {
@@ -230,19 +247,10 @@ const toggleTheme = async (newTheme: ThemeMode) => {
 const applyTheme = (theme: 'light' | 'dark') => {
   const root = document.documentElement
 
-  // 移除所有主题类
-  root.classList.remove('theme-dark', 'theme-light')
-
-  // 添加当前主题类
-  root.classList.add(`theme-${theme}`)
-
-  // 设置主题属性
   if (theme === 'dark') {
-    // 暗黑模式
     root.style.colorScheme = 'dark'
     root.setAttribute('data-theme', 'dark')
   } else if (theme === 'light') {
-    // 明亮模式
     root.style.colorScheme = 'light'
     root.setAttribute('data-theme', 'light')
   }
@@ -388,63 +396,71 @@ onUnmounted(() => {
   color: var(--color-text-primary);
 }
 
-.theme-toggle__dropdown {
-  position: absolute;
-  top: calc(100% + var(--spacing-2));
-  right: 0;
-  z-index: 1000;
-  min-width: 160px;
-  padding: var(--spacing-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background-color: var(--md-sys-color-surface-container);
-  box-shadow: var(--shadow-lg);
+/* Material Design 3 Menu：紧凑尺寸（popup 等小视口） */
+md-menu {
+  --md-menu-container-color: var(--md-sys-color-surface-container);
+  --md-menu-container-shape: var(--radius-md);
+  --md-menu-container-elevation: 2;
+
+  /* 菜单列表上下内边距（默认各 8px） */
+  --md-menu-top-space: 4px;
+  --md-menu-bottom-space: 4px;
+
+  min-width: 148px;
+  max-width: min(100vw - 16px, 220px);
 }
 
-.theme-toggle__option {
+md-menu-item {
+  --md-menu-item-label-text-color: var(--md-sys-color-on-surface);
+  --md-menu-item-label-text-font: var(--font-family-base);
+  --md-menu-item-label-text-size: var(--text-sm);
+  --md-menu-item-label-text-line-height: 1.125rem;
+
+  /* 选中行背景（仅内部 .selected 行消费，未选中项不受影响） */
+  --md-menu-item-selected-container-color: var(--md-sys-color-primary-container);
+
+  /* 默认 min-height 56px + 上下各 12px padding，整体偏大 */
+  --md-menu-item-one-line-container-height: 34px;
+  --md-menu-item-top-space: 4px;
+  --md-menu-item-bottom-space: 4px;
+  --md-menu-item-leading-space: 10px;
+  --md-menu-item-trailing-space: 10px;
+
+  margin: 0;
+  border-radius: var(--radius-sm);
+}
+
+/* hover 状态 */
+md-menu-item:hover {
+  --md-menu-item-container-color: var(--md-sys-color-surface-variant);
+}
+
+.theme-menu-item__start {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
-  gap: var(--spacing-3);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.theme-menu-item__headline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-2);
   width: 100%;
-  padding: var(--spacing-3);
-  border: none;
-  border-radius: var(--radius-md);
-  font-size: var(--text-sm);
-  text-align: left;
-  color: var(--color-text-primary);
-  background: transparent;
-  cursor: pointer;
-  transition: background-color var(--md-sys-motion-duration-short2);
+  min-width: 0;
 }
 
-.theme-toggle__option:hover {
-  background-color: var(--md-sys-color-surface-variant);
-}
-
-.theme-toggle__option.is-active {
-  color: var(--md-sys-color-on-primary-container);
-  background-color: var(--md-sys-color-primary-container);
-}
-
-.theme-toggle__option span {
+.theme-menu-item__label {
   flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.check-icon {
-  margin-left: auto;
+.theme-menu-item__selected-icon {
+  flex-shrink: 0;
   color: var(--md-sys-color-primary);
-}
-
-/* 下拉动画 */
-.dropdown-enter-active,
-.dropdown-leave-active {
-  transition: opacity var(--md-sys-motion-duration-short2),
-              transform var(--md-sys-motion-duration-short2);
-}
-
-.dropdown-enter-from,
-.dropdown-leave-to {
-  opacity: 0;
-  transform: translateY(-8px);
 }
 </style>

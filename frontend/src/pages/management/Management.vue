@@ -564,21 +564,22 @@
       @confirm="confirmEditBookmark"
     >
       <div class="edit-form">
-        <Input
-          v-model="dialogStore.editBookmarkDialog.title"
-          :label="t('management_bookmark_title')"
-          variant="outlined"
+        <md-outlined-text-field
           class="form-field"
+          :label="t('management_bookmark_title')"
+          :value="dialogStore.editBookmarkDialog.title"
           :error="!!editFormErrors.title"
-          :error-message="editFormErrors.title"
+          :error-text="editFormErrors.title"
+          @input="onEditBookmarkTitleInput"
         />
-        <UrlInput
-          v-model="dialogStore.editBookmarkDialog.url"
+        <md-outlined-text-field
+          class="form-field"
           :label="t('management_bookmark_url')"
-          variant="outlined"
-          density="compact"
+          type="url"
+          :value="dialogStore.editBookmarkDialog.url"
           :error="!!editFormErrors.url"
-          :error-message="editFormErrors.url"
+          :error-text="editFormErrors.url"
+          @input="onEditBookmarkUrlInput"
         />
       </div>
       <template #actions="{ requestClose }">
@@ -619,13 +620,13 @@
       @confirm="confirmEditFolder"
     >
       <div class="edit-form">
-        <Input
-          v-model="dialogStore.editFolderDialog.title"
-          :label="t('management_folder_title')"
-          variant="outlined"
+        <md-outlined-text-field
           class="form-field"
+          :label="t('management_folder_title')"
+          :value="dialogStore.editFolderDialog.title"
           :error="!!folderEditFormErrors.title"
-          :error-message="folderEditFormErrors.title"
+          :error-text="folderEditFormErrors.title"
+          @input="onEditFolderTitleInput"
         />
       </div>
       <template #actions="{ requestClose }">
@@ -699,6 +700,12 @@
       @confirm="confirmAddNewItem"
     >
       <div ref="addDialogContentRef" class="add-item-form">
+        <md-outlined-text-field
+          class="form-field"
+          :label="t('form_parent_folder')"
+          :value="addItemParentFolderLabel"
+          readonly
+        />
         <!-- ✅ Material Web Tabs -->
         <md-tabs
           :active-tab-index="dialogStore.addItemDialog.type === 'bookmark' ? 0 : 1"
@@ -713,23 +720,22 @@
           v-if="dialogStore.addItemDialog.type === 'bookmark'"
           class="form-fields"
         >
-          <Input
-            v-model="dialogStore.addItemDialog.title"
+          <md-outlined-text-field
+            class="form-field"
             :label="t('management_title')"
-            variant="outlined"
-            class="form-field"
-            autofocus
+            :value="dialogStore.addItemDialog.title"
             :error="!!addFormErrors.title"
-            :error-message="addFormErrors.title"
+            :error-text="addFormErrors.title"
+            @input="onAddItemTitleInput"
           />
-          <UrlInput
-            v-model="dialogStore.addItemDialog.url"
-            :label="t('management_url')"
-            variant="outlined"
-            density="compact"
+          <md-outlined-text-field
             class="form-field"
+            :label="t('management_url')"
+            type="url"
+            :value="dialogStore.addItemDialog.url"
             :error="!!addFormErrors.url"
-            :error-message="addFormErrors.url"
+            :error-text="addFormErrors.url"
+            @input="onAddItemUrlInput"
           />
         </div>
         <!-- 文件夹表单 -->
@@ -737,14 +743,13 @@
           v-else
           class="form-fields"
         >
-          <Input
-            v-model="dialogStore.addItemDialog.title"
-            :label="t('management_folder_name')"
-            variant="outlined"
+          <md-outlined-text-field
             class="form-field"
-            autofocus
+            :label="t('management_folder_name')"
+            :value="dialogStore.addItemDialog.title"
             :error="!!addFormErrors.title"
-            :error-message="addFormErrors.title"
+            :error-text="addFormErrors.title"
+            @input="onAddItemTitleInput"
           />
         </div>
       </div>
@@ -798,14 +803,16 @@ import {
   Card,
   Dialog,
   LucideIcon,
-  Input,
   Main,
-  UrlInput,
   AnimatedNumber
 } from '@/components'
+import { MdOutlinedTextField } from '@material/web/textfield/outlined-text-field.js'
 import '@material/web/tabs/tabs.js'
 import '@material/web/tabs/primary-tab.js'
 import '@material/web/checkbox/checkbox.js'
+
+/** 防止生产构建 tree-shake 掉 @customElement 注册 */
+void MdOutlinedTextField
 import { notificationService } from '@/application/notification/notification-service'
 import { NOTIFICATION_CONFIG } from '@/config/constants'
 import { ConfirmableDialog } from '@/components'
@@ -1033,6 +1040,39 @@ const addDialogIcon = computed(() =>
     : 'icon-folder'
 )
 const addConfirmText = computed(() => t('management_add'))
+
+/** 添加对话框：当前父文件夹展示（无选中时视为「我的书签」根区） */
+const addItemParentFolderLabel = computed(() => {
+  const folder = dialogStore.addItemDialog.parentFolder
+  const title = folder?.title?.trim()
+  if (title) return title
+  return t('management_my_bookmarks')
+})
+
+function readMwcTextFieldValue(ev: Event): string {
+  const el = ev.target as unknown as { value?: string }
+  return typeof el.value === 'string' ? el.value : ''
+}
+
+function onEditBookmarkTitleInput(ev: Event) {
+  dialogStore.editBookmarkDialog.title = readMwcTextFieldValue(ev)
+}
+
+function onEditBookmarkUrlInput(ev: Event) {
+  dialogStore.editBookmarkDialog.url = readMwcTextFieldValue(ev)
+}
+
+function onEditFolderTitleInput(ev: Event) {
+  dialogStore.editFolderDialog.title = readMwcTextFieldValue(ev)
+}
+
+function onAddItemTitleInput(ev: Event) {
+  dialogStore.addItemDialog.title = readMwcTextFieldValue(ev)
+}
+
+function onAddItemUrlInput(ev: Event) {
+  dialogStore.addItemDialog.url = readMwcTextFieldValue(ev)
+}
 
 const addDialogContentRef = ref<HTMLElement | null>(null)
 const addDialogMinHeight = ref<string | undefined>(undefined)
@@ -2254,7 +2294,7 @@ md-tabs {
   font-size: var(--font-size-body-medium);
   font-weight: 500;
   color: var(--color-primary);
-  background: var(--color-primary-surface, rgb(25 118 210 / 8%));
+  background: var(--color-primary-surface);
 }
 
 .statistics-section {
@@ -2284,7 +2324,7 @@ md-tabs {
 }
 
 .stat-item.total {
-  background: var(--color-primary-surface, rgb(25 118 210 / 12%));
+  background: var(--color-primary-surface-strong);
 }
 
 .stat-label {
@@ -2730,6 +2770,11 @@ p.warning-text {
   color: var(--color-text-secondary);
 }
 
+.edit-form md-outlined-text-field,
+.add-item-form md-outlined-text-field {
+  width: 100%;
+}
+
 .edit-form,
 .add-item-form {
   display: flex;
@@ -2909,7 +2954,7 @@ md-icon-button {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.12);
+  background: var(--color-scrim-012);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;

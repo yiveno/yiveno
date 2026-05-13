@@ -244,14 +244,14 @@ const clearInput = () => {
   border: 1px solid var(--color-border);
   
   /* ✨ 初始阴影 */
-  box-shadow: 0 1px 2px rgb(0 0 0 / 3%);
+  box-shadow: 0 1px 2px var(--color-shadow-003);
 }
 
 .acuity-input-container--outlined:hover {
   border-color: var(--color-border-hover);
   
   /* ✨ 悬停时阴影加深 */
-  box-shadow: 0 2px 4px rgb(0 0 0 / 6%);
+  box-shadow: 0 2px 4px var(--color-shadow-006);
 }
 
 .acuity-input-container--outlined.acuity-input-container--focused {
@@ -260,7 +260,7 @@ const clearInput = () => {
   /* ✨ 聚焦时的发光效果：多层阴影 + 彩色光晕 */
   box-shadow: 
     0 0 0 3px color-mix(in srgb, var(--color-primary) 15%, transparent),
-    0 2px 8px rgb(0 0 0 / 8%),
+    0 2px 8px var(--color-shadow-008),
     0 0 20px color-mix(in srgb, var(--color-primary) 20%, transparent);
   
   /* ✨ 聚焦时背景更亮 */
@@ -277,7 +277,7 @@ const clearInput = () => {
   background: var(--color-surface-variant);
   
   /* ✨ 轻微阴影 */
-  box-shadow: 0 1px 2px rgb(0 0 0 / 3%);
+  box-shadow: 0 1px 2px var(--color-shadow-003);
 }
 
 .acuity-input-container--filled.acuity-input-container--focused {
@@ -286,7 +286,7 @@ const clearInput = () => {
   /* ✨ 聚焦时底部发光 */
   box-shadow: 
     0 2px 0 0 color-mix(in srgb, var(--color-primary) 30%, transparent),
-    0 2px 8px rgb(0 0 0 / 8%);
+    0 2px 8px var(--color-shadow-008);
 }
 
 /* Size styles */
@@ -322,7 +322,7 @@ const clearInput = () => {
   /* ✨ 错误状态的红色光晕 */
   box-shadow: 
     0 0 0 3px color-mix(in srgb, var(--color-error) 15%, transparent),
-    0 2px 8px rgb(0 0 0 / 8%),
+    0 2px 8px var(--color-shadow-008),
     0 0 20px color-mix(in srgb, var(--color-error) 20%, transparent);
 }
 

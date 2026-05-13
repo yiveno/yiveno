@@ -967,8 +967,8 @@ defineExpose({
   
   /* ✅ 优化：添加微妙阴影，增强 favicon 层次感 */
   box-shadow: 
-    0 1px 2px rgb(0 0 0 / 8%),
-    0 0 0 0.5px rgb(0 0 0 / 5%);
+    0 1px 2px var(--color-shadow-008),
+    0 0 0 0.5px var(--color-shadow-005);
   
   /* ✅ 优化：hover 时轻微放大 */
   transition: transform var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
@@ -1356,16 +1356,14 @@ md-input-chip {
 /* ✅ 暗色模式支持（使用 CSS 变量） */
 @media (prefers-color-scheme: dark) {
   .bookmark-drag-preview {
-    /* ✅ 回退颜色：接近 MD3 暗色主题的 surface 色 */
-    background: var(--color-surface, rgb(16 20 24));
+    background: var(--color-surface);
     box-shadow:
-      0 4px 12px rgb(0 0 0 / 30%),
-      0 0 0 1px rgb(255 255 255 / 10%);
+      0 4px 12px var(--color-shadow-030),
+      0 0 0 1px var(--color-surface-edge-010);
   }
 
   .bookmark-drag-preview .preview-title {
-    /* ✅ 回退颜色：接近 MD3 暗色主题的 on-surface 色 */
-    color: var(--color-text-primary, rgb(224 226 232));
+    color: var(--color-text-primary);
   }
 }
 
@@ -1384,8 +1382,8 @@ md-input-chip {
   /* ✅ 仅用于hover时的subtle scale效果，不包含rotate */
   transition: transform 0.2s ease;
   box-shadow:
-    0 4px 12px rgb(0 0 0 / 15%),
-    0 0 0 1px rgb(0 0 0 / 10%);
+    0 4px 12px var(--color-shadow-015),
+    0 0 0 1px var(--color-shadow-010);
   backdrop-filter: blur(10px);
 }
 
@@ -1413,10 +1411,8 @@ md-input-chip {
   letter-spacing: 0.01em;
   white-space: nowrap;
 
-  /* ✅ 使用 CSS 变量，自动适配深色模式 */
-
-  /* 回退颜色：接近 MD3 亮色主题的 on-surface 色 */
-  color: var(--color-text-primary, rgb(24 28 32));
+  /* 使用设计 token，随亮/暗主题切换 */
+  color: var(--color-text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
 }

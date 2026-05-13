@@ -104,8 +104,8 @@ export const NOTIFICATION_CONFIG = {
         // 降级方案：如果导入失败，使用硬编码值
         return {
           info: 'rgb(47, 98, 140)',
-          success: 'rgb(46, 125, 50)',
-          warning: 'rgb(245, 124, 0)',
+          success: 'rgb(81, 96, 111)',
+          warning: 'rgb(104, 88, 122)',
           error: 'rgb(186, 26, 26)'
         }
       }

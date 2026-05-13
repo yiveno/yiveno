@@ -6,9 +6,20 @@
     <label v-if="label" class="url-input__label">{{ label }}</label>
     <div class="url-input__controls" :class="[`density-${density}`]">
       <div class="url-input__protocol">
-        <select v-model="protocol" class="protocol-select" :disabled="disabled">
-          <option v-for="p in protocols" :key="p" :value="p">{{ p }}</option>
-        </select>
+        <md-outlined-select
+          v-model="protocol"
+          class="protocol-select"
+          aria-label="链接协议"
+          :disabled="disabled"
+          menu-positioning="fixed"
+        >
+          <md-select-option
+            v-for="p in protocols"
+            :key="p"
+            :value="p"
+            :headline="p"
+          ></md-select-option>
+        </md-outlined-select>
         <div class="protocol-divider" />
       </div>
       <div class="url-input__rest">
@@ -40,6 +51,12 @@
 import { computed, ref, watch } from 'vue'
 import { Input } from '@/components'
 import type { UrlInputProps } from './UrlInput.d'
+import '@material/web/select/outlined-select.js'
+import '@material/web/select/select-option.js'
+
+defineOptions({
+  name: 'UrlInput'
+})
 
 const props = withDefaults(defineProps<UrlInputProps>(), {
   modelValue: '',
@@ -176,13 +193,14 @@ const handlePaste = (e: ClipboardEvent) => {
 }
 
 .protocol-select {
-  padding: 0 var(--spacing-md);
-  border: none;
-  font-size: var(--text-base);
-  color: var(--color-text-primary);
-  background: transparent;
-  cursor: pointer;
-  appearance: none;
+  /* 嵌入药丸控件：去掉描边，由外层 .url-input__controls 提供轮廓 */
+  --md-outlined-select-text-field-outline-color: transparent;
+  --md-outlined-select-text-field-focus-outline-color: transparent;
+  --md-outlined-select-text-field-hover-outline-color: transparent;
+  --md-outlined-select-text-field-container-shape: 0;
+
+  width: 100%;
+  min-width: 5rem;
 }
 
 .protocol-divider {

@@ -47,96 +47,122 @@
         />
       </section>
 
-      <!-- 📊 书签概览 -->
+      <!-- 📊 书签概览（MWC md-list，三列统计） -->
       <section class="overview-section">
-        <div class="overview-grid">
-          <div class="stat-card">
-            <div class="stat-label">{{ t('popup_stat_total') }}</div>
-            <div class="stat-value stat-value--primary">
-              <AnimatedNumber :value="stats.bookmarks" />
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">{{ t('popup_stat_today_added') }}</div>
-            <div class="stat-value stat-value--secondary">
-              <AnimatedNumber :value="stats.todayAdded" />
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">{{ t('popup_stat_recently_opened') }}</div>
-            <div class="stat-value stat-value--secondary">
-              <AnimatedNumber :value="stats.recentlyOpened" />
-            </div>
-          </div>
+        <div class="popup-list-panel">
+          <md-list class="popup-mwc-list popup-stat-list">
+            <md-list-item type="text" class="popup-stat-item">
+              <div slot="headline" class="popup-stat-stack">
+                <span class="popup-stat-label">{{ t('popup_stat_total') }}</span>
+                <span class="popup-stat-value popup-stat-value--primary">
+                  <AnimatedNumber :value="stats.bookmarks" />
+                </span>
+              </div>
+            </md-list-item>
+            <md-list-item type="text" class="popup-stat-item">
+              <div slot="headline" class="popup-stat-stack">
+                <span class="popup-stat-label">{{ t('popup_stat_today_added') }}</span>
+                <span class="popup-stat-value popup-stat-value--secondary">
+                  <AnimatedNumber :value="stats.todayAdded" />
+                </span>
+              </div>
+            </md-list-item>
+            <md-list-item type="text" class="popup-stat-item">
+              <div slot="headline" class="popup-stat-stack">
+                <span class="popup-stat-label">{{ t('popup_stat_recently_opened') }}</span>
+                <span class="popup-stat-value popup-stat-value--secondary">
+                  <AnimatedNumber :value="stats.recentlyOpened" />
+                </span>
+              </div>
+            </md-list-item>
+          </md-list>
         </div>
       </section>
 
-      <!-- ⚠️ 需要关注 -->
+      <md-divider class="popup-section-divider"></md-divider>
+
+      <!-- ⚠️ 需要关注（可点击行 + 末尾删除；整行非 button，避免嵌套 button） -->
       <section class="issues-section">
-        <div class="issues-grid">
-          <Card
-            class="issue-card issue-card--warning"
-            elevation="none"
-            rounded
-            clickable
-            @click="openManagementWithFilter('duplicate')"
-          >
-            <div class="issue-header">
-              <LucideIcon name="copy" :size="20" />
-              <span class="issue-label">{{ t('popup_issue_duplicate') }}</span>
-            </div>
-            <div class="issue-value">
-              <md-circular-progress v-if="isLoadingTraitOverview" indeterminate></md-circular-progress>
-              <AnimatedNumber v-else :value="traitOverview.duplicate" />
-            </div>
-            <button
-              class="issue-action"
-              :title="t('popup_issue_delete_tooltip_duplicate')"
-              @click.stop="handleBatchDelete('duplicate')"
+        <div class="popup-list-panel">
+          <md-list class="popup-mwc-list popup-issues-list">
+            <md-list-item
+              type="text"
+              class="popup-issue-item popup-issue-item--warning"
+              tabindex="0"
+              @click="handleIssueRowClick('duplicate', $event)"
+              @keydown.enter.prevent="openManagementWithFilter('duplicate')"
+              @keydown.space.prevent="openManagementWithFilter('duplicate')"
             >
-              <LucideIcon name="trash" :size="16" />
-            </button>
-          </Card>
+              <span slot="start" class="popup-issue-start" aria-hidden="true">
+                <LucideIcon name="copy" :size="20" />
+              </span>
+              <div slot="headline">{{ t('popup_issue_duplicate') }}</div>
+              <span slot="end" class="popup-issue-end">
+                <span class="popup-issue-count popup-issue-count--warning">
+                  <md-circular-progress v-if="isLoadingTraitOverview" indeterminate></md-circular-progress>
+                  <AnimatedNumber v-else :value="traitOverview.duplicate" />
+                </span>
+                <button
+                  type="button"
+                  class="issue-action"
+                  :title="t('popup_issue_delete_tooltip_duplicate')"
+                  @click.stop="handleBatchDelete('duplicate')"
+                >
+                  <LucideIcon name="trash" :size="16" />
+                </button>
+              </span>
+            </md-list-item>
 
-          <Card
-            class="issue-card issue-card--danger"
-            elevation="none"
-            rounded
-            clickable
-            @click="openManagementWithFilter('dead')"
-          >
-            <div class="issue-header">
-              <LucideIcon name="unlink" :size="20" />
-              <span class="issue-label">{{ t('popup_issue_invalid') }}</span>
-            </div>
-            <div class="issue-value">
-              <md-circular-progress v-if="isLoadingTraitOverview" indeterminate></md-circular-progress>
-              <AnimatedNumber v-else :value="traitOverview.invalid" />
-            </div>
-            <button
-              class="issue-action"
-              :title="t('popup_issue_delete_tooltip_invalid')"
-              @click.stop="handleBatchDelete('invalid')"
+            <md-list-item
+              type="text"
+              class="popup-issue-item popup-issue-item--danger"
+              tabindex="0"
+              @click="handleIssueRowClick('invalid', $event)"
+              @keydown.enter.prevent="openManagementWithFilter('dead')"
+              @keydown.space.prevent="openManagementWithFilter('dead')"
             >
-              <LucideIcon name="trash" :size="16" />
-            </button>
-          </Card>
+              <span slot="start" class="popup-issue-start" aria-hidden="true">
+                <LucideIcon name="unlink" :size="20" />
+              </span>
+              <div slot="headline">{{ t('popup_issue_invalid') }}</div>
+              <span slot="end" class="popup-issue-end">
+                <span class="popup-issue-count popup-issue-count--danger">
+                  <md-circular-progress v-if="isLoadingTraitOverview" indeterminate></md-circular-progress>
+                  <AnimatedNumber v-else :value="traitOverview.invalid" />
+                </span>
+                <button
+                  type="button"
+                  class="issue-action"
+                  :title="t('popup_issue_delete_tooltip_invalid')"
+                  @click.stop="handleBatchDelete('invalid')"
+                >
+                  <LucideIcon name="trash" :size="16" />
+                </button>
+              </span>
+            </md-list-item>
+          </md-list>
         </div>
       </section>
 
-      <!-- ⚡ 快速操作 -->
+      <md-divider class="popup-section-divider"></md-divider>
+
+      <!-- ⚡ 快速操作（MWC 列表按钮行） -->
       <section class="actions-section">
-        <div class="actions-grid">
-          <button class="action-button" @click="openManualOrganizePage">
-            <md-ripple></md-ripple>
-            <LucideIcon name="folder" :size="20" />
-            <span>{{ t('popup_action_organize') }}</span>
-          </button>
-          <button class="action-button" @click="openSettings">
-            <md-ripple></md-ripple>
-            <LucideIcon name="settings" :size="20" />
-            <span>{{ t('popup_action_settings') }}</span>
-          </button>
+        <div class="popup-list-panel">
+          <md-list class="popup-mwc-list popup-actions-list">
+            <md-list-item type="button" @click="openManualOrganizePage">
+              <span slot="start" class="popup-action-start" aria-hidden="true">
+                <LucideIcon name="folder" :size="20" />
+              </span>
+              <div slot="headline">{{ t('popup_action_organize') }}</div>
+            </md-list-item>
+            <md-list-item type="button" @click="openSettings">
+              <span slot="start" class="popup-action-start" aria-hidden="true">
+                <LucideIcon name="settings" :size="20" />
+              </span>
+              <div slot="headline">{{ t('popup_action_settings') }}</div>
+            </md-list-item>
+          </md-list>
         </div>
       </section>
     </div>
@@ -145,7 +171,9 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import '@material/web/ripple/ripple.js'
+import '@material/web/list/list.js'
+import '@material/web/list/list-item.js'
+import '@material/web/divider/divider.js'
 import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'
 import GlobalQuickAddBookmark from '@/components/business/GlobalQuickAddBookmark/GlobalQuickAddBookmark.vue'
 import BookmarkSearchInput from '@/components/business/BookmarkSearchInput/BookmarkSearchInput.vue'
@@ -156,12 +184,7 @@ import { logger } from '@/infrastructure/logging/logger'
 import { useUIStore } from '@/stores/ui-store'
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports
 import { usePopupStoreIndexedDB } from '@/stores/popup-store-indexeddb'
-import {
-  Card,
-  AppHeader,
-  AnimatedNumber,
-  LucideIcon
-} from '@/components'
+import { AppHeader, AnimatedNumber, LucideIcon } from '@/components'
 import { t } from '@/utils/i18n-helpers'
 import type { BookmarkNode } from '@/types'
 
@@ -198,53 +221,7 @@ function registerCleanup(callback: () => void): void {
   cleanupCallbacks.push(callback)
 }
 
-onMounted(async () => {
-  const { initialize: initAuth } = await import('@/composables/useSupabaseAuth').then(m => m.useSupabaseAuth())
-  await initAuth()
-
-  // 检查 URL 参数，如果是添加书签操作，自动触发对话框
-  try {
-    // 🔒 环境检查：确保在浏览器环境中运行
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search)
-      const action = urlParams.get('action')
-
-      if (action === 'add-bookmark') {
-        const title = urlParams.get('title') || ''
-        const url = urlParams.get('url') || ''
-        const favIconUrl = urlParams.get('favIconUrl') || ''
-
-        logger.info('Popup', '通过 URL 参数触发添加书签', { title, url })
-
-        // 延迟确保组件已挂载
-        setTimeout(() => {
-          chrome.runtime.sendMessage({
-            type: 'SHOW_ADD_BOOKMARK_DIALOG',
-            data: { title, url, favIconUrl }
-          })
-        }, 100)
-      }
-    }
-  } catch (error) {
-    logger.warn('Popup', '处理 URL 参数失败', error)
-  }
-
-  // 监听同一快捷键以实现"再次按下收起"效果
-  try {
-    if (chrome?.commands?.onCommand) {
-      chrome.commands.onCommand.addListener(handleTogglePopupCommand)
-      registerCleanup(() => {
-        try {
-          chrome.commands.onCommand.removeListener(handleTogglePopupCommand)
-        } catch (error) {
-          logger.warn('Popup', '移除命令快捷键监听失败', error)
-        }
-      })
-    }
-  } catch (error) {
-    logger.warn('Popup', '注册命令快捷键监听失败', error)
-  }
-})
+// ✅ 第一个 onMounted 已移除，合并到下面的主 onMounted 中
 
 /** Store 实例 - 使用响应式引用以确保模板能正确更新。 */
 type UIStore = ReturnType<typeof useUIStore>
@@ -521,6 +498,23 @@ async function openManagementWithFilter(key: string): Promise<void> {
   }
 }
 
+/**
+ * 「需要关注」行点击：点击删除按钮时不跳转管理页
+ *
+ * @param kind - duplicate | invalid
+ * @param event - 鼠标事件
+ */
+function handleIssueRowClick(
+  kind: 'duplicate' | 'invalid',
+  event: MouseEvent
+): void {
+  const el = event.target
+  if (el instanceof Element && el.closest('.issue-action')) {
+    return
+  }
+  void openManagementWithFilter(kind === 'duplicate' ? 'duplicate' : 'dead')
+}
+
 // --- 监听器 ---
 
 // 加载书签统计数据
@@ -536,6 +530,54 @@ const loadBookmarkStats = async () => {
 
 // --- 生命周期钩子 ---
 onMounted(async () => {
+  // ✅ 初始化 Supabase 认证（从第一个 onMounted 合并）
+  const { initialize: initAuth, setupAuthListener } = await import('@/composables/useSupabaseAuth').then(m => m.useSupabaseAuth())
+  await initAuth()
+  setupAuthListener() // ✅ 手动设置认证状态监听器
+
+  // ✅ 检查 URL 参数，如果是添加书签操作，自动触发对话框（从第一个 onMounted 合并）
+  try {
+    // 🔒 环境检查：确保在浏览器环境中运行
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search)
+      const action = urlParams.get('action')
+
+      if (action === 'add-bookmark') {
+        const title = urlParams.get('title') || ''
+        const url = urlParams.get('url') || ''
+        const favIconUrl = urlParams.get('favIconUrl') || ''
+
+        logger.info('Popup', '通过 URL 参数触发添加书签', { title, url })
+
+        // 延迟确保组件已挂载
+        setTimeout(() => {
+          chrome.runtime.sendMessage({
+            type: 'SHOW_ADD_BOOKMARK_DIALOG',
+            data: { title, url, favIconUrl }
+          })
+        }, 100)
+      }
+    }
+  } catch (error) {
+    logger.warn('Popup', '处理 URL 参数失败', error)
+  }
+
+  // ✅ 监听同一快捷键以实现"再次按下收起"效果（从第一个 onMounted 合并）
+  try {
+    if (chrome?.commands?.onCommand) {
+      chrome.commands.onCommand.addListener(handleTogglePopupCommand)
+      registerCleanup(() => {
+        try {
+          chrome.commands.onCommand.removeListener(handleTogglePopupCommand)
+        } catch (error) {
+          logger.warn('Popup', '移除命令快捷键监听失败', error)
+        }
+      })
+    }
+  } catch (error) {
+    logger.warn('Popup', '注册命令快捷键监听失败', error)
+  }
+
   // 延迟动态导入stores避免初始化顺序问题
   try {
     logger.info('Popup', '开始动态导入stores...')
@@ -608,15 +650,7 @@ html,
 body {
   margin: 0;
   padding: 0;
-
-  /* 🎨 确保整个页面都有薄荷绿背景 */
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--md-sys-color-primary) 20%, var(--md-sys-color-surface-container-lowest)) 0%,
-    color-mix(in srgb, var(--md-sys-color-primary) 15%, var(--md-sys-color-surface-container-lowest)) 30%,
-    color-mix(in srgb, var(--md-sys-color-primary) 10%, var(--md-sys-color-surface-container-lowest)) 60%,
-    color-mix(in srgb, var(--md-sys-color-primary) 5%, var(--md-sys-color-surface-container-lowest)) 100%
-  );
+  background: var(--md-sys-color-surface);
   overflow: hidden;
 }
 
@@ -647,14 +681,8 @@ body {
   min-height: 550px; /* 增加最小高度，确保覆盖整个窗口 */
   max-height: 600px; /* 增加最大高度 */
 
-  /* 🎨 明显的薄荷绿渐变背景 */
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--md-sys-color-primary) 20%, var(--md-sys-color-surface-container-lowest)) 0%,
-    color-mix(in srgb, var(--md-sys-color-primary) 15%, var(--md-sys-color-surface-container-lowest)) 30%,
-    color-mix(in srgb, var(--md-sys-color-primary) 10%, var(--md-sys-color-surface-container-lowest)) 60%,
-    color-mix(in srgb, var(--md-sys-color-primary) 5%, var(--md-sys-color-surface-container-lowest)) 100%
-  );
+  /* 与 Chrome 扩展面板一致：平面表面，无强渐变 */
+  background: var(--md-sys-color-surface);
   overflow: hidden auto;
   scrollbar-width: none;
 }
@@ -760,17 +788,15 @@ body {
 .main-container {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-4); /* 增加间距，让呼吸感更好 */
-  padding: var(--spacing-4);
+  gap: var(--spacing-3);
+  padding: var(--spacing-3);
 }
 
 /* 🔍 搜索区块 */
 .search-section {
   display: flex;
   flex-direction: column;
-  padding-bottom: var(--spacing-3);
-
-  /* 移除边框，使用阴影分隔 */
+  padding-bottom: var(--spacing-2);
 }
 
 /* 区块标题 */
@@ -784,162 +810,153 @@ body {
   color: var(--color-text-secondary);
 }
 
-/* 📊 书签概览 */
-.overview-section {
-  padding-bottom: var(--spacing-3);
-
-  /* 移除边框 */
+/* 📊 书签概览 + ⚠️ 需要关注 + ⚡ 快速操作（MWC md-list） */
+.popup-section-divider {
+  margin: 0 var(--spacing-3);
+  border-color: var(--color-border-subtle);
 }
 
-.overview-grid {
+.popup-list-panel {
+  padding: var(--spacing-2);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.popup-mwc-list {
+  --md-list-container-color: transparent;
+
+  padding: 0;
+}
+
+.popup-stat-list {
   display: grid;
-  gap: var(--spacing-3);
+  gap: var(--spacing-2);
   grid-template-columns: repeat(3, 1fr);
 }
 
-.stat-card {
+.popup-stat-item {
+  --md-list-item-one-line-container-height: auto;
+
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+}
+
+.popup-stat-stack {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--spacing-2);
-  padding: var(--spacing-4);
-
-  /* 🎨 现代化卡片样式 */
-  border: none;
-  border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--md-sys-color-surface-container-highest) 70%, transparent);
-  backdrop-filter: blur(10px);
-  
-  /* ✅ Material Design 3 Elevation Level 1 */
-  box-shadow: var(--md-sys-elevation-1);
-  user-select: none;
-  transition: 
-    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  gap: var(--spacing-1);
+  width: 100%;
+  padding: var(--spacing-2) 0;
+  text-align: center;
 }
 
-.stat-card:hover {
-  opacity: 0.9;
-  
-  /* ✅ Material Design 3 Elevation Level 2 */
-  box-shadow: var(--md-sys-elevation-2);
-}
-
-.stat-label {
+.popup-stat-label {
   font-size: var(--text-xs);
   color: var(--color-text-secondary);
 }
 
-.stat-value {
-  font-size: var(--text-3xl);
+.popup-stat-value {
+  font-size: var(--text-2xl);
   font-weight: var(--font-bold);
   line-height: 1;
-
-  /* 🎨 添加文字阴影，增强立体感 */
-  text-shadow: 0 2px 4px rgb(0 0 0 / 10%);
 }
 
-.stat-value--primary {
+.popup-stat-value--primary {
   color: var(--color-primary);
-
-  /* 🎨 品牌色发光效果 */
-  text-shadow: 
-    0 2px 4px rgb(131 213 197 / 30%),
-    0 0 20px rgb(131 213 197 / 10%);
 }
 
-.stat-value--secondary {
+.popup-stat-value--secondary {
   color: var(--color-text-secondary);
 }
 
-/* ⚠️ 需要关注 */
-.issues-section {
-  padding-bottom: var(--spacing-3);
-
-  /* 移除边框 */
+.overview-section {
+  padding-bottom: 0;
 }
 
-.issues-grid {
+.issues-section {
+  padding-bottom: 0;
+}
+
+.popup-issues-list {
   display: grid;
-  gap: var(--spacing-3);
+  gap: var(--spacing-2);
   grid-template-columns: repeat(2, 1fr);
 }
 
-.issue-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-3);
-  padding: var(--spacing-4);
+.popup-issue-item {
+  --md-list-item-one-line-container-height: auto;
 
-  /* 🎨 现代化卡片样式 */
-  border: none;
-  border-radius: var(--radius-lg);
-  backdrop-filter: blur(10px);
+  height: auto;
+  min-height: 56px;
+  padding: 0;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  border-left-width: 3px;
   cursor: pointer;
   user-select: none;
-  transition: 
-    background 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background var(--transition-fast);
 }
 
-.issue-card--warning {
-  background: linear-gradient(
-    135deg,
-    rgb(251 191 36 / 10%) 0%,
-    rgb(251 191 36 / 5%) 100%
-  );
-  
-  /* ✅ Material Design 3 Elevation Level 1 */
-  box-shadow: var(--md-sys-elevation-1);
+.popup-issue-item--warning {
+  border-left-color: var(--color-warning);
+  background: color-mix(in srgb, var(--color-warning) 8%, var(--md-sys-color-surface));
 }
 
-.issue-card--warning:hover {
-  background: linear-gradient(
-    135deg,
-    rgb(251 191 36 / 15%) 0%,
-    rgb(251 191 36 / 8%) 100%
-  );
-  opacity: 0.95;
-  
-  /* ✅ Material Design 3 Elevation Level 2 */
-  box-shadow: var(--md-sys-elevation-2);
+.popup-issue-item--warning:hover {
+  background: color-mix(in srgb, var(--color-warning) 12%, var(--md-sys-color-surface));
 }
 
-.issue-card--danger {
-  background: linear-gradient(
-    135deg,
-    rgb(239 68 68 / 10%) 0%,
-    rgb(239 68 68 / 5%) 100%
-  );
-  
-  /* ✅ Material Design 3 Elevation Level 1 */
-  box-shadow: var(--md-sys-elevation-1);
+.popup-issue-item--danger {
+  border-left-color: var(--color-error);
+  background: color-mix(in srgb, var(--color-error) 6%, var(--md-sys-color-surface));
 }
 
-.issue-card--danger:hover {
-  background: linear-gradient(
-    135deg,
-    rgb(239 68 68 / 15%) 0%,
-    rgb(239 68 68 / 8%) 100%
-  );
-  opacity: 0.95;
-  
-  /* ✅ Material Design 3 Elevation Level 2 */
-  box-shadow: var(--md-sys-elevation-2);
+.popup-issue-item--danger:hover {
+  background: color-mix(in srgb, var(--color-error) 10%, var(--md-sys-color-surface));
 }
 
-.issue-card:active {
-  opacity: 0.9;
+.popup-issue-item:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
-/* 删除按钮 */
+.popup-issue-start {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  color: var(--color-text-secondary);
+}
+
+.popup-issue-end {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.popup-issue-count {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.popup-issue-count--warning {
+  color: var(--color-warning);
+}
+
+.popup-issue-count--danger {
+  color: var(--color-error);
+}
+
 .issue-action {
-  position: absolute;
-  top: var(--spacing-2);
-  right: var(--spacing-2);
-  display: flex;
+  display: inline-flex;
   justify-content: center;
   align-items: center;
   width: 28px;
@@ -951,7 +968,10 @@ body {
   background: transparent;
   opacity: 0;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition:
+    color var(--transition-fast),
+    background var(--transition-fast),
+    opacity var(--transition-fast);
 }
 
 .issue-action:hover {
@@ -959,119 +979,44 @@ body {
   background: var(--color-error-alpha-10);
 }
 
-.issue-action:active {
-  opacity: 0.8;
-}
-
-.issue-card:hover .issue-action {
+.popup-issue-item:hover .issue-action,
+.popup-issue-item:focus-within .issue-action {
   opacity: 1;
 }
 
-.issue-header {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-}
-
-.issue-label {
-  flex: 1;
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-  color: var(--color-text-primary);
-}
-
-
-
-.issue-value {
-  font-size: var(--text-3xl);
-  font-weight: var(--font-bold);
-  line-height: 1;
-  text-align: center;
-  overflow: hidden;
-
-  /* 🎨 添加文字阴影 */
-  text-shadow: 0 2px 4px rgb(0 0 0 / 10%);
-}
-
-.issue-card--warning .issue-value {
-  color: var(--color-warning);
-
-  /* 🎨 警告色发光效果 */
-  text-shadow: 
-    0 2px 4px rgb(251 191 36 / 30%),
-    0 0 20px rgb(251 191 36 / 15%);
-}
-
-.issue-card--danger .issue-value {
-  color: var(--color-error);
-
-  /* 🎨 错误色发光效果 */
-  text-shadow: 
-    0 2px 4px rgb(239 68 68 / 30%),
-    0 0 20px rgb(239 68 68 / 15%);
-}
-
-/* ⚡ 快速操作 */
-.actions-section {
-  /* 移除 padding-bottom 和 border-bottom，因为这是最后一个区块 */
-}
-
-.actions-grid {
-  display: grid;
-  gap: var(--spacing-3);
-  grid-template-columns: repeat(2, 1fr);
-}
-
-.action-button {
-  position: relative; /* ✅ Ripple 需要相对定位 */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-2);
-  padding: var(--spacing-4);
-
-  /* 🎨 现代化按钮样式 */
-  border: none;
-  border-radius: var(--radius-lg);
-  color: var(--color-text-primary);
-  background: color-mix(in srgb, var(--md-sys-color-surface-container-highest) 70%, transparent);
-  backdrop-filter: blur(10px);
-  
-  /* ✅ Material Design 3 Elevation Level 1 */
-  box-shadow: var(--md-sys-elevation-1);
-  cursor: pointer;
-  user-select: none;
-  transition: 
-    color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    background 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.action-button:hover {
-  color: var(--color-primary);
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--md-sys-color-primary) 15%, transparent) 0%,
-    color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent) 100%
-  );
-  opacity: 0.95;
-  
-  /* ✅ Material Design 3 Elevation Level 2 */
-  box-shadow: var(--md-sys-elevation-2);
-}
-
-.action-button:active {
-  opacity: 0.9;
-}
-
-.action-button span {
-  font-size: var(--text-xs);
-  font-weight: var(--font-medium);
-}
-</style>
-
-.issue-value md-circular-progress {
+:deep(.popup-issue-count md-circular-progress) {
   --md-circular-progress-size: 20px;
   --md-circular-progress-active-indicator-width: 3px;
 }
+
+.actions-section {
+  padding-bottom: 0;
+}
+
+.popup-actions-list md-list-item {
+  --md-list-item-one-line-container-height: 44px;
+}
+
+.popup-action-start {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  color: var(--color-text-secondary);
+}
+
+.popup-actions-list md-list-item:hover .popup-action-start {
+  color: var(--color-primary);
+}
+
+/* 压平 MWC 列表项在 Popup 内的 elevation，贴近 Chrome 工具面板 */
+.popup-mwc-list md-list-item {
+  --md-list-item-container-shape: var(--radius-sm);
+
+  box-shadow: none;
+}
+
+.popup-mwc-list md-list-item:hover,
+.popup-mwc-list md-list-item:active {
+  box-shadow: none;
+}
+</style>

@@ -353,9 +353,9 @@ defineExpose({
   pointer-events: auto;
   overflow: hidden;
   box-shadow:
-    0 10px 15px -3px rgb(0 0 0 / 10%),
-    0 4px 6px -2px rgb(0 0 0 / 5%),
-    0 0 1px rgb(0 0 0 / 10%);
+    0 10px 15px -3px var(--color-shadow-010),
+    0 4px 6px -2px var(--color-shadow-005),
+    0 0 1px var(--color-shadow-010);
 }
 
 /* 进度条容器 */
@@ -365,7 +365,7 @@ defineExpose({
   left: 0;
   width: 100%;
   height: 3px;
-  background: rgb(0 0 0 / 5%);
+  background: var(--color-shadow-005);
   overflow: hidden;
 }
 
@@ -456,13 +456,13 @@ defineExpose({
   font-size: var(--text-base);
   font-weight: 600;
   line-height: 24px;
-  color: rgb(0 0 0 / 88%);
+  color: var(--color-text-primary);
 }
 
 .ab-notification-description {
   font-size: var(--text-sm);
   line-height: 22px;
-  color: rgb(0 0 0 / 65%);
+  color: var(--color-text-secondary);
 }
 
 .ab-notification-close {
@@ -471,7 +471,7 @@ defineExpose({
   border: none;
   outline: none;
   line-height: 1;
-  color: rgb(0 0 0 / 45%);
+  color: var(--color-text-tertiary);
   background: none;
   cursor: pointer;
   transition: color var(--md-sys-motion-duration-short2)
@@ -479,7 +479,7 @@ defineExpose({
 }
 
 .ab-notification-close:hover {
-  color: rgb(0 0 0 / 88%);
+  color: var(--color-text-primary);
 }
 
 /* 动画 */

@@ -1,12 +1,12 @@
 <template>
   <!-- 头像始终显示 -->
-  <div
-    class="user-menu"
-    @click="handleClick"
-    @mouseenter="handleMouseEnter"
-    @mouseleave="handleMouseLeave"
-  >
-    <div :class="avatarWrapperClasses" :title="avatarTitle">
+  <div class="user-menu">
+    <md-icon-button
+      id="user-menu-anchor"
+      :class="avatarWrapperClasses"
+      :title="avatarTitle"
+      @click="handleClick"
+    >
       <!-- 未登录：显示图标 -->
       <div v-if="!isLoggedIn" class="user-menu__guest-icon" :style="{ width: `${size}px`, height: `${size}px` }">
         <LucideIcon name="user" :size="size * 0.8" />
@@ -26,61 +26,69 @@
       <div v-if="isPro" class="user-menu__badge">
         <LucideIcon name="crown" :size="12" />
       </div>
-    </div>
+    </md-icon-button>
   </div>
 
-  <!-- 下拉菜单 -->
-  <Teleport to="body">
-    <div
-      v-if="showContextMenu"
-      ref="contextMenuRef"
-      class="user-menu__dropdown"
-      :style="contextMenuStyle"
-      @mouseenter="handleMenuMouseEnter"
-      @mouseleave="handleMenuMouseLeave"
-    >
-      <!-- 未登录菜单 -->
-      <template v-if="!isLoggedIn">
-        <button class="user-menu__dropdown-item" @click="handleLogin">
-          <LucideIcon name="log-in" :size="16" />
-          <span>立即登录</span>
-        </button>
-      </template>
+  <!-- Material Design 3 Menu -->
+  <md-menu
+    id="user-menu"
+    ref="menuRef"
+    anchor="user-menu-anchor"
+    :open="showMenu"
+    :quick="true"
+    @opened="handleMenuOpened"
+    @closed="handleMenuClosed"
+  >
+    <!-- 未登录菜单 -->
+    <template v-if="!isLoggedIn">
+      <md-menu-item @click="handleLogin">
+        <LucideIcon slot="start" name="log-in" :size="16" />
+        立即登录
+      </md-menu-item>
+    </template>
 
-      <!-- 已登录菜单 -->
-      <template v-else>
-        <div class="user-menu__dropdown-header">
-          <LucideIcon name="user" :size="16" class="user-menu__dropdown-icon" />
-          <span class="user-menu__dropdown-title">{{ displayName }}</span>
+    <!-- 已登录菜单 -->
+    <template v-else>
+      <!-- 用户信息头部 -->
+      <div class="user-menu__header">
+        <LucideIcon name="user" :size="16" class="user-menu__header-icon" />
+        <span class="user-menu__header-title">{{ displayName }}</span>
+      </div>
+      
+      <!-- 订阅信息 -->
+      <div class="user-menu__info">
+        <div class="user-menu__info-row">
+          <LucideIcon :name="isPro ? 'crown' : 'circle'" :size="14" />
+          <span>{{ isPro ? 'PRO 方案' : 'FREE 方案' }}</span>
         </div>
-        <div class="user-menu__dropdown-info">
-          <div class="user-menu__dropdown-row">
-            <LucideIcon :name="isPro ? 'crown' : 'circle'" :size="14" />
-            <span>{{ isPro ? 'PRO 方案' : 'FREE 方案' }}</span>
-          </div>
-          <div v-if="isPro && expiryDate" class="user-menu__dropdown-row">
-            <LucideIcon name="calendar" :size="14" />
-            <span>到期：{{ expiryDate }}</span>
-          </div>
+        <div v-if="isPro && expiryDate" class="user-menu__info-row">
+          <LucideIcon name="calendar" :size="14" />
+          <span>到期：{{ expiryDate }}</span>
         </div>
-        <md-divider></md-divider>
-        <button class="user-menu__dropdown-item user-menu__dropdown-item--danger" :disabled="isLoggingOut" @click="handleLogout">
-          <LucideIcon name="log-out" :size="16" />
-          <span>{{ isLoggingOut ? '退出中...' : '退出登录' }}</span>
-        </button>
-      </template>
-    </div>
-  </Teleport>
+      </div>
+      
+      <md-divider></md-divider>
+      
+      <!-- 退出登录 -->
+      <md-menu-item
+        class="user-menu__logout-item"
+        :disabled="isLoggingOut"
+        @click="handleLogout"
+      >
+        <LucideIcon slot="start" name="log-out" :size="16" />
+        {{ isLoggingOut ? '退出中...' : '退出登录' }}
+      </md-menu-item>
+    </template>
+  </md-menu>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { computed, ref } from 'vue'
 import { Avatar, LucideIcon } from '@/components'
 import { useSupabaseAuth, useSubscription } from '@/composables'
 import { emitEvent } from '@/infrastructure/events/event-bus'
 import { logger } from '@/infrastructure/logging/logger'
 import { websiteUrls, openWebsiteUrl } from '@/config/website'
-import '@material/web/divider/divider.js'
 
 defineOptions({ name: 'UserMenu' })
 
@@ -96,10 +104,8 @@ const { isPro, subscriptionStatus } = useSubscription()
 
 const isLoggedIn = computed(() => isAuthenticated.value)
 const isLoggingOut = ref(false)
-const showContextMenu = ref(false)
-const contextMenuRef = ref<HTMLElement | null>(null)
-const contextMenuPosition = ref({ x: 0, y: 0 })
-const hoverTimeout = ref<ReturnType<typeof setTimeout> | null>(null)
+const showMenu = ref(false)
+const menuRef = ref<HTMLElement | null>(null)
 
 /** 用户邮箱 */
 const userEmail = computed(() => user.value?.email ?? '')
@@ -163,13 +169,7 @@ const expiryDate = computed(() => {
   })
 })
 
-/** 右键菜单样式 */
-const contextMenuStyle = computed(() => ({
-  left: `${contextMenuPosition.value.x}px`,
-  top: `${contextMenuPosition.value.y}px`
-}))
-
-/** 左键点击：切换菜单显示/隐藏 */
+/** 点击按钮：切换菜单显示/隐藏 */
 function handleClick(event: MouseEvent) {
   event.stopPropagation()
   
@@ -179,105 +179,25 @@ function handleClick(event: MouseEvent) {
     return
   }
   
-  const target = event.currentTarget as HTMLElement | null
-  if (!target) {
-    console.warn('[UserMenu] event.currentTarget is null')
-    return
-  }
-  
-  // 如果菜单已显示，关闭它
-  if (showContextMenu.value) {
-    closeContextMenu()
-  } else {
-    // 否则显示菜单
-    const rect = target.getBoundingClientRect()
-    showMenuAtPosition(rect.left, rect.bottom + 8)
-  }
+  // 切换菜单显示状态
+  showMenu.value = !showMenu.value
 }
 
-/** 鼠标悬停：延迟显示菜单 */
-function handleMouseEnter(event: MouseEvent) {
-  // 🔥 未登录：不显示下拉菜单
-  if (!isLoggedIn.value) {
-    return
-  }
-  
-  // 清除之前的定时器
-  if (hoverTimeout.value) {
-    clearTimeout(hoverTimeout.value)
-  }
-  
-  // 立即获取目标元素的位置（在事件处理时获取，避免 setTimeout 后 currentTarget 变为 null）
-  const target = event.currentTarget as HTMLElement | null
-  if (!target) {
-    console.warn('[UserMenu] event.currentTarget is null')
-    return
-  }
-  
-  const rect = target.getBoundingClientRect()
-  
-  // 延迟 200ms 显示菜单（缩短延迟，更快响应）
-  hoverTimeout.value = setTimeout(() => {
-    // 菜单显示在头像下方
-    showMenuAtPosition(rect.left, rect.bottom + 8)
-  }, 200)
+/** 菜单打开事件 */
+function handleMenuOpened() {
+  logger.debug('UserMenu', '菜单已打开')
 }
 
-/** 鼠标离开头像：延迟关闭菜单 */
-function handleMouseLeave() {
-  if (hoverTimeout.value) {
-    clearTimeout(hoverTimeout.value)
-    hoverTimeout.value = null
-  }
-  
-  // 延迟 300ms 关闭菜单，给用户时间移动到菜单上
-  hoverTimeout.value = setTimeout(() => {
-    closeContextMenu()
-  }, 300)
-}
-
-/** 鼠标进入菜单：取消关闭 */
-function handleMenuMouseEnter() {
-  if (hoverTimeout.value) {
-    clearTimeout(hoverTimeout.value)
-    hoverTimeout.value = null
-  }
-}
-
-/** 鼠标离开菜单：关闭菜单 */
-function handleMenuMouseLeave() {
-  closeContextMenu()
-}
-
-/** 在指定位置显示菜单 */
-function showMenuAtPosition(x: number, y: number) {
-  // 计算菜单位置（避免超出屏幕）
-  const menuWidth = 240
-  const menuHeight = isLoggedIn.value ? 180 : 140
-  
-  // 防止菜单超出右边界
-  if (x + menuWidth > window.innerWidth) {
-    x = window.innerWidth - menuWidth - 10
-  }
-  
-  // 防止菜单超出下边界
-  if (y + menuHeight > window.innerHeight) {
-    y = window.innerHeight - menuHeight - 10
-  }
-  
-  contextMenuPosition.value = { x, y }
-  showContextMenu.value = true
-}
-
-/** 关闭右键菜单 */
-function closeContextMenu() {
-  showContextMenu.value = false
+/** 菜单关闭事件 */
+function handleMenuClosed() {
+  showMenu.value = false
+  logger.debug('UserMenu', '菜单已关闭')
 }
 
 /** 登录 */
 async function handleLogin() {
   try {
-    closeContextMenu()
+    showMenu.value = false
     await openWebsiteUrl(websiteUrls.login)
   } catch (error) {
     logger.error('UserMenu', '打开登录页失败', error)
@@ -291,64 +211,29 @@ async function handleLogout() {
     isLoggingOut.value = true
     await signOut()
     emitEvent('auth:logged-out', {})
-    closeContextMenu()
+    showMenu.value = false
   } catch (error) {
     logger.error('UserMenu', '退出登录失败', error)
   } finally {
     isLoggingOut.value = false
   }
 }
-
-/** 点击外部关闭菜单 */
-function handleClickOutside(event: MouseEvent) {
-  if (
-    showContextMenu.value &&
-    contextMenuRef.value &&
-    !contextMenuRef.value.contains(event.target as Node)
-  ) {
-    closeContextMenu()
-  }
-}
-
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-  // 清理定时器
-  if (hoverTimeout.value) {
-    clearTimeout(hoverTimeout.value)
-  }
-})
 </script>
 
 <style scoped>
-/* 动画定义 */
-@keyframes dropdown-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 /* 组件样式 */
 .user-menu {
   position: relative;
   display: inline-flex;
-  cursor: pointer;
+}
+
+/* Icon Button 样式 */
+md-icon-button {
+  --md-icon-button-icon-size: 32px;
 }
 
 .user-menu__avatar-wrapper {
   position: relative;
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
   padding: var(--spacing-0-5);
   border-radius: var(--radius-full);
   transition: all var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
@@ -363,18 +248,11 @@ onUnmounted(() => {
   height: 100%;
   border-radius: var(--radius-full);
   color: var(--color-text-secondary);
-  background: var(--md-sys-color-surface-container);
 }
 
-/* 未登录：灰色边框 */
-.user-menu__avatar-wrapper--guest {
-  border: 2px solid var(--color-text-secondary);
-  opacity: 0.7;
-}
-
+/* 未登录：纯图标风格（与 AppHeader 其他图标保持一致） */
 .user-menu__avatar-wrapper--guest:hover {
-  opacity: 1;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 15%);
+  background: var(--color-surface-hover);
 }
 
 /* 免费用户：蓝绿色边框（与官网一致） */
@@ -388,7 +266,6 @@ onUnmounted(() => {
 
 /* PRO 用户：金色边框 + 光晕 */
 .user-menu__avatar-wrapper--pro {
-  /* ✅ 使用 design-tokens 的 accent-gold 颜色 */
   border: 2px solid var(--acuity-accent-gold);
   box-shadow: 0 0 12px color-mix(in srgb, var(--acuity-accent-gold) 40%, transparent);
 }
@@ -414,59 +291,47 @@ onUnmounted(() => {
   height: 20px;
   border-radius: var(--radius-full);
   color: var(--md-sys-color-on-primary);
-
-  /* ✅ 使用 design-tokens 的 accent-gold 和 accent-amber 颜色 */
   background: linear-gradient(135deg, var(--acuity-accent-gold) 0%, var(--acuity-accent-amber) 100%);
-  box-shadow: 0 2px 4px rgb(0 0 0 / 20%);
+  box-shadow: 0 2px 4px var(--color-shadow-020);
 }
 
-/* 下拉菜单 */
-.user-menu__dropdown {
-  position: fixed;
-  z-index: 9999;
+/* Material Design 3 Menu 样式 */
+md-menu {
+  --md-menu-container-color: var(--md-sys-color-surface-container);
+  --md-menu-container-shape: var(--radius-lg);
+  --md-menu-container-elevation: 2;
+
   min-width: 220px;
-  padding: var(--spacing-2) 0;
-  border-radius: var(--radius-lg);
-  background: var(--md-sys-color-surface-container);
-  box-shadow: 0 8px 24px rgb(0 0 0 / 20%), 0 2px 8px rgb(0 0 0 / 10%);
-  backdrop-filter: blur(10px);
-  animation: dropdown-fade-in var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
 }
 
-/* 菜单头部 */
-.user-menu__dropdown-header {
+/* 用户信息头部 */
+.user-menu__header {
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
   padding: var(--spacing-3) var(--spacing-4);
+  border-bottom: 1px solid var(--color-border);
 }
 
-.user-menu__dropdown-icon {
+.user-menu__header-icon {
   color: var(--color-text-secondary);
 }
 
-.user-menu__dropdown-title {
+.user-menu__header-title {
   font-size: var(--text-sm);
   font-weight: var(--font-semibold);
   color: var(--color-text-primary);
 }
 
-/* 提示文字 */
-.user-menu__dropdown-hint {
-  padding: var(--spacing-3) var(--spacing-4);
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
-}
-
-/* 信息区域 */
-.user-menu__dropdown-info {
+/* 订阅信息 */
+.user-menu__info {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-2);
-  padding: var(--spacing-2) var(--spacing-4);
+  padding: var(--spacing-3) var(--spacing-4);
 }
 
-.user-menu__dropdown-row {
+.user-menu__info-row {
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
@@ -474,32 +339,19 @@ onUnmounted(() => {
   color: var(--color-text-secondary);
 }
 
-/* 菜单项 */
-.user-menu__dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  width: 100%;
-  padding: var(--spacing-2) var(--spacing-4);
-  border: none;
-  font-size: var(--text-sm);
-  text-align: left;
-  color: var(--color-text-primary);
-  background: transparent;
-  cursor: pointer;
-  transition: background var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+md-menu-item {
+  --md-menu-item-label-text-color: var(--md-sys-color-on-surface);
+  --md-menu-item-label-text-font: var(--font-family-base);
+  --md-menu-item-label-text-size: var(--text-sm);
+  --md-menu-item-one-line-container-height: 48px;
 }
 
-.user-menu__dropdown-item:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+/* 退出登录按钮（危险操作） */
+.user-menu__logout-item {
+  --md-menu-item-label-text-color: var(--md-sys-color-error);
 }
 
-.user-menu__dropdown-item:hover:not(:disabled) {
-  background: var(--color-surface-hover);
-}
-
-.user-menu__dropdown-item--danger {
+.user-menu__logout-item :deep(svg) {
   color: var(--md-sys-color-error);
 }
 
@@ -507,6 +359,4 @@ onUnmounted(() => {
 md-divider {
   margin: var(--spacing-2) 0;
 }
-
-/* 头像容器 */
 </style>

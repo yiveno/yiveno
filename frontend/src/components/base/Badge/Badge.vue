@@ -62,7 +62,7 @@ const badgeClasses = computed(() => [
   color: var(--color-primary-foreground);
   background: var(--color-primary);
   box-shadow:
-    0 1px 2px rgb(0 0 0 / 10%),
+    0 1px 2px var(--color-shadow-010),
     0 0 8px color-mix(in srgb, var(--color-primary) 20%, transparent);
 }
 
@@ -70,7 +70,7 @@ const badgeClasses = computed(() => [
   color: var(--color-secondary-foreground);
   background: var(--color-secondary);
   box-shadow:
-    0 1px 2px rgb(0 0 0 / 10%),
+    0 1px 2px var(--color-shadow-010),
     0 0 8px color-mix(in srgb, var(--color-secondary) 20%, transparent);
 }
 
@@ -78,7 +78,7 @@ const badgeClasses = computed(() => [
   color: var(--color-success-foreground);
   background: var(--color-success);
   box-shadow:
-    0 1px 2px rgb(0 0 0 / 10%),
+    0 1px 2px var(--color-shadow-010),
     0 0 8px color-mix(in srgb, var(--color-success) 20%, transparent);
 }
 
@@ -86,7 +86,7 @@ const badgeClasses = computed(() => [
   color: var(--color-warning-foreground);
   background: var(--color-warning);
   box-shadow:
-    0 1px 2px rgb(0 0 0 / 10%),
+    0 1px 2px var(--color-shadow-010),
     0 0 8px color-mix(in srgb, var(--color-warning) 20%, transparent);
 }
 
@@ -94,7 +94,7 @@ const badgeClasses = computed(() => [
   color: var(--color-error-foreground);
   background: var(--color-error);
   box-shadow:
-    0 1px 2px rgb(0 0 0 / 10%),
+    0 1px 2px var(--color-shadow-010),
     0 0 8px color-mix(in srgb, var(--color-error) 20%, transparent);
 }
 
@@ -102,7 +102,7 @@ const badgeClasses = computed(() => [
   color: var(--color-info-foreground);
   background: var(--color-info);
   box-shadow:
-    0 1px 2px rgb(0 0 0 / 10%),
+    0 1px 2px var(--color-shadow-010),
     0 0 8px color-mix(in srgb, var(--color-info) 20%, transparent);
 }
 

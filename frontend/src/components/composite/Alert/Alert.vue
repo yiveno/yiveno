@@ -73,25 +73,25 @@ const icon = computed(() => {
 .acuity-alert--filled.acuity-alert--info {
   color: var(--color-on-info-container);
   background: var(--color-info-container);
-  box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
+  box-shadow: 0 1px 3px var(--color-shadow-008);
 }
 
 .acuity-alert--filled.acuity-alert--success {
   color: var(--color-on-success-container);
   background: var(--color-success-container);
-  box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
+  box-shadow: 0 1px 3px var(--color-shadow-008);
 }
 
 .acuity-alert--filled.acuity-alert--warning {
   color: var(--color-on-warning-container);
   background: var(--color-warning-container);
-  box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
+  box-shadow: 0 1px 3px var(--color-shadow-008);
 }
 
 .acuity-alert--filled.acuity-alert--error {
   color: var(--color-on-error-container);
   background: var(--color-error-container);
-  box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
+  box-shadow: 0 1px 3px var(--color-shadow-008);
 }
 
 /* Colors - Outlined */

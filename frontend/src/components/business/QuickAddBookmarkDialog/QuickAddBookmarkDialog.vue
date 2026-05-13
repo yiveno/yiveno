@@ -75,20 +75,25 @@
 
       <!-- 手动选择文件夹 -->
       <div v-if="!enableAIAuto" class="folder-selection">
-        <label class="label">
+        <div class="label">
           <LucideIcon name="folder" :size="16" />
           选择文件夹
-        </label>
-        <select v-model="selectedFolderId" class="folder-select">
-          <option value="">选择文件夹</option>
-          <option
+        </div>
+        <!-- Material Select：在自定义 Dialog（overflow/层叠上下文）内使用 fixed 定位菜单 -->
+        <md-outlined-select
+          v-model="selectedFolderId"
+          class="folder-select"
+          aria-label="选择文件夹"
+          menu-positioning="fixed"
+        >
+          <md-select-option value="" headline="选择文件夹"></md-select-option>
+          <md-select-option
             v-for="folder in folderOptions"
             :key="folder.value"
             :value="folder.value"
-          >
-            {{ folder.label }}
-          </option>
-        </select>
+            :headline="folder.label"
+          ></md-select-option>
+        </md-outlined-select>
       </div>
     </div>
 
@@ -116,6 +121,8 @@ import '@material/web/button/filled-button.js'
 import '@material/web/textfield/outlined-text-field.js'
 import '@material/web/list/list.js'
 import '@material/web/list/list-item.js'
+import '@material/web/select/outlined-select.js'
+import '@material/web/select/select-option.js'
 
 defineOptions({
   name: 'QuickAddBookmarkDialog'
@@ -507,7 +514,7 @@ function handleClose() {
   font-weight: var(--font-semibold);
   color: var(--md-sys-color-on-primary);
   background: var(--color-primary);
-  box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
+  box-shadow: 0 2px 4px var(--color-shadow-010);
 }
 
 /* Material Web List 样式 */
@@ -577,26 +584,6 @@ function handleClose() {
 
 .folder-select {
   width: 100%;
-  padding: var(--spacing-2) var(--spacing-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  outline: none;
-  font-size: var(--text-sm);
-  color: var(--color-text-primary);
-  background: var(--color-bg-primary);
-  cursor: pointer;
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.folder-select:hover {
-  border-color: var(--color-border-hover);
-}
-
-.folder-select:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-bg);
 }
 
 .dialog-footer {

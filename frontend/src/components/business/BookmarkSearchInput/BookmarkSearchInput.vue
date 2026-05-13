@@ -146,22 +146,38 @@ BookmarkSearchInput - 书签筛选输入组件
 
           <!-- 搜索结果下拉列表 -->
           <div v-if="shouldShowResultsDropdown" class="search-results-dropdown">
-            <div class="result-list">
-              <div
+            <md-list class="result-list">
+              <md-list-item
                 v-for="(bookmark, index) in dropdownResults"
                 :key="bookmark.id"
-                class="result-item"
-                :class="{ selected: selectedResultIndex === index }"
+                type="button"
+                :class="{ 'result-item--selected': selectedResultIndex === index }"
                 @click="handleResultClick(bookmark)"
                 @mouseenter="selectedResultIndex = index"
               >
-                <LucideIcon name="bookmark" :size="16" class="result-icon" />
-                <div class="result-content">
-                  <div class="result-title">{{ bookmark.title || '无标题' }}</div>
-                  <div v-if="bookmark.url" class="result-url">{{ bookmark.url }}</div>
+                <!-- 左侧图标 -->
+                <LucideIcon slot="start" name="bookmark" :size="16" />
+                
+                <!-- 主标题 -->
+                <div slot="headline" class="result-headline">
+                  {{ bookmark.title || '无标题' }}
                 </div>
-              </div>
-            </div>
+                
+                <!-- 副标题（URL） -->
+                <div v-if="bookmark.url" slot="supporting-text" class="result-url">
+                  {{ bookmark.url }}
+                </div>
+                
+                <!-- 右侧操作按钮：在新标签页打开 -->
+                <md-icon-button
+                  slot="end"
+                  class="result-action-btn"
+                  @click.stop="handleOpenInNewTab(bookmark)"
+                >
+                  <LucideIcon name="external-link" :size="14" />
+                </md-icon-button>
+              </md-list-item>
+            </md-list>
 
             <!-- 底部提示：当结果超过 50 条时显示 -->
             <div v-if="hasMoreResults" class="more-results-hint">
@@ -1160,16 +1176,34 @@ const handleResultClick = (bookmark: BookmarkNode) => {
   
   // 根据 resultDisplay 模式决定默认行为
   if (props.resultDisplay === 'dropdown') {
-    // dropdown 模式：打开书签（如果父组件没有阻止默认行为）
+    // dropdown 模式：在当前标签页打开书签
     if (bookmark.url) {
       // 安全检查：确保 chrome.tabs API 可用
-      if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
-        chrome.tabs.create({ url: bookmark.url }).catch(err => {
+      if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.update) {
+        chrome.tabs.update({ url: bookmark.url }).catch(err => {
           logger.error('BookmarkSearchInput', '打开书签失败', err)
         })
       } else {
         logger.warn('BookmarkSearchInput', 'chrome.tabs API 不可用，无法打开书签')
       }
+    }
+  }
+}
+
+/**
+ * 处理在新标签页打开书签
+ */
+const handleOpenInNewTab = (bookmark: BookmarkNode) => {
+  logger.info('BookmarkSearchInput', '在新标签页打开书签', { bookmark })
+  
+  if (bookmark.url) {
+    // 安全检查：确保 chrome.tabs API 可用
+    if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
+      chrome.tabs.create({ url: bookmark.url, active: false }).catch(err => {
+        logger.error('BookmarkSearchInput', '在新标签页打开书签失败', err)
+      })
+    } else {
+      logger.warn('BookmarkSearchInput', 'chrome.tabs API 不可用，无法打开书签')
     }
   }
 }
@@ -1426,13 +1460,13 @@ defineExpose({
 
 .search-icon-button:hover {
   background: var(--color-bg-hover);
-  box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
+  box-shadow: 0 2px 4px var(--color-shadow-010);
 }
 
 .search-icon-button:active {
   background: var(--color-bg-active);
   opacity: 0.8;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 10%);
+  box-shadow: 0 1px 2px var(--color-shadow-010);
 }
 
 /* 当有查询内容时，按钮更明显 */
@@ -1442,7 +1476,7 @@ defineExpose({
 
 .search-icon-button.has-query:hover {
   background: var(--color-error);
-  box-shadow: 0 2px 6px rgb(239 68 68 / 30%);
+  box-shadow: 0 2px 6px var(--color-error-alpha-30);
 }
 
 .search-icon-button.has-query:hover :deep(.acuity-icon) {
@@ -1464,7 +1498,7 @@ defineExpose({
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-md);
   background: var(--color-surface);
-  box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+  box-shadow: 0 2px 8px var(--color-shadow-008);
   overflow-y: auto;
 }
 
@@ -1476,58 +1510,72 @@ defineExpose({
 }
 
 .result-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-1);
   max-height: 400px; /* 最大高度 400px */
+  border-radius: var(--radius-md);
   overflow-y: auto; /* 自适应滚动 */
 }
 
-.result-item {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--spacing-2);
-  padding: var(--spacing-2);
-  border-radius: var(--border-radius-sm);
-  cursor: pointer;
-  transition: background-color 0.2s ease;
+/* Material Web List 样式覆盖 - 搜索结果 */
+.result-list md-list {
+  --md-list-container-color: transparent;
 }
 
-.result-item:hover,
-.result-item.selected {
-  background: var(--color-bg-hover);
+.result-list md-list-item {
+  --md-list-item-label-text-color: var(--md-sys-color-on-surface);
+  --md-list-item-supporting-text-color: var(--md-sys-color-on-surface-variant);
+  --md-list-item-container-shape: var(--radius-sm);
+  --md-list-item-label-text-font: var(--font-family-base);
+  --md-list-item-label-text-size: var(--md-sys-typescale-body-medium-size);
+  --md-list-item-label-text-weight: 500;
+  --md-list-item-supporting-text-font: var(--font-family-base);
+  --md-list-item-supporting-text-size: var(--md-sys-typescale-body-small-size);
+  --md-list-item-two-line-container-height: 56px;
+  --md-list-item-hover-state-layer-color: var(--md-sys-color-on-surface);
+  --md-list-item-hover-state-layer-opacity: 0.08;
+  --md-list-item-focus-state-layer-color: var(--md-sys-color-on-surface);
+  --md-list-item-focus-state-layer-opacity: 0.12;
 }
 
-.result-icon {
-  flex-shrink: 0;
-  margin-top: 2px;
-  color: var(--color-text-secondary);
+/* 选中状态的结果项 */
+.result-list md-list-item.result-item--selected {
+  --md-list-item-container-color: var(--md-sys-color-surface-variant);
 }
 
-.result-content {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.result-title {
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
+/* 结果项标题样式 */
+.result-headline {
+  font-weight: 500;
   line-height: 1.4;
   white-space: nowrap;
-  color: var(--color-text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+/* 结果项 URL 样式 */
 .result-url {
-  margin-top: 2px;
-  font-size: var(--text-xs);
   line-height: 1.3;
   white-space: nowrap;
-  color: var(--color-text-tertiary);
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* 结果项右侧操作按钮 */
+.result-action-btn {
+  --md-icon-button-icon-color: var(--color-text-tertiary);
+  --md-icon-button-state-layer-shape: var(--radius-sm);
+  --md-icon-button-icon-size: 14px;
+  
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.result-action-btn:hover {
+  --md-icon-button-icon-color: var(--color-primary);
+}
+
+/* hover 时显示操作按钮 */
+.result-list md-list-item:hover .result-action-btn,
+.result-list md-list-item.result-item--selected .result-action-btn {
+  opacity: 1;
 }
 
 /* 底部提示（当结果 > 50 时显示） */
@@ -1574,7 +1622,7 @@ defineExpose({
   border-radius: var(--border-radius-md);
   font-size: var(--text-xs);
   background: var(--color-error-subtle);
-  box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
+  box-shadow: 0 2px 4px var(--color-shadow-010);
 }
 
 .error-text {
@@ -1696,7 +1744,7 @@ defineExpose({
   border-color: var(--color-primary);
   color: var(--color-text);
   background: var(--color-bg-hover);
-  box-shadow: 0 1px 3px rgb(0 0 0 / 10%);
+  box-shadow: 0 1px 3px var(--color-shadow-010);
 }
 
 .filter-tag.active {
@@ -1704,7 +1752,7 @@ defineExpose({
   font-weight: 500;
   color: var(--color-text-on-primary);
   background: var(--color-primary);
-  box-shadow: 0 2px 4px rgb(59 130 246 / 30%);
+  box-shadow: 0 2px 4px var(--color-primary-alpha-30);
 }
 
 .filter-tag.active:hover {
@@ -1725,7 +1773,7 @@ defineExpose({
 /* 激活状态下覆盖 CountIndicator 样式 */
 .filter-tag.active .filter-count {
   color: var(--color-text-on-primary);
-  background: rgb(255 255 255 / 25%);
+  background: var(--color-on-primary-faint-025);
 }
 
 /* 过渡动画 */

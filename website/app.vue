@@ -10,7 +10,6 @@ useHead({
     return titleChunk ? `${titleChunk} - AcuityBookmarks` : 'AcuityBookmarks'
   },
   htmlAttrs: {
-    class: 'theme-dark',
     'data-theme': 'dark'
   },
   bodyAttrs: {
