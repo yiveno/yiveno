@@ -222,7 +222,7 @@ function closeWindow() {
                   <!-- Mockup: Search -->
                   <div v-if="currentStep.visualType === 'search'" class="p-8 flex flex-col h-full">
                      <!-- 模拟搜索框 -->
-                     <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-600 p-4 flex items-center gap-3 mb-6 transform transition-transform group-hover:scale-105">
+                     <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-600 p-4 flex items-center gap-3 mb-6 transition-shadow duration-200 group-hover:shadow-md dark:group-hover:border-slate-500">
                         <LucideIcon name="search" class="text-slate-400" />
                         <span class="text-slate-500 dark:text-slate-400 text-lg">"design resources"</span>
                      </div>
@@ -328,7 +328,7 @@ function closeWindow() {
              <button 
                v-if="!isLast"
                :disabled="currentStep.id === 'sync' && !isCompleted"
-               class="w-12 h-12 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center shadow-lg hover:scale-105 hover:shadow-xl transition-all disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed"
+               class="w-12 h-12 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center shadow-lg transition-shadow duration-200 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50"
                @click="nextStep"
              >
                 <LucideIcon name="arrow-right" />

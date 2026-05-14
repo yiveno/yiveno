@@ -18,6 +18,12 @@
       "require": "./src/colors.ts",
       "default": "./src/colors.ts"
     },
+    "./color-presets": {
+      "types": "./src/color-presets.ts",
+      "import": "./src/color-presets.ts",
+      "require": "./src/color-presets.ts",
+      "default": "./src/color-presets.ts"
+    },
     "./spacing": {
       "types": "./src/spacing.ts",
       "import": "./src/spacing.ts",

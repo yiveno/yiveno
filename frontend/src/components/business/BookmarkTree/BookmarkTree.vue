@@ -203,7 +203,6 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch, shallowRef } fr
 import { useVirtualizer } from '@tanstack/vue-virtual'
 import { ContextMenu, EmptyState, Input } from '@/components'
 import { LucideIcon } from '@/components/base/LucideIcon'
-import '@material/web/progress/circular-progress.js'
 import type { BookmarkNode } from '@/types'
 import { logger } from '@/infrastructure/logging/logger'
 import TreeNode from './TreeNode.vue'
@@ -1009,9 +1008,17 @@ const getVisibleNodeIds = (): string[] => {
  * 处理键盘导航
  */
 const handleKeyboardNavigation = (event: KeyboardEvent) => {
-  // 如果焦点在输入框中，不处理导航键
-  const target = event.target as HTMLElement
-  if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+  const target = event.target as HTMLElement | null
+  if (!target) {
+    return
+  }
+
+  // 真实焦点可能在 Material Web 的 Shadow 内；仅判断 event.target 会漏掉宿主上的事件重定向
+  const deep = event.composedPath()[0]
+  if (deep instanceof HTMLInputElement || deep instanceof HTMLTextAreaElement) {
+    return
+  }
+  if (typeof target.closest === 'function' && target.closest('md-checkbox')) {
     return
   }
 

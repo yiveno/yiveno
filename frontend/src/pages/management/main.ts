@@ -13,6 +13,7 @@ import { installQueryClient } from '@/infrastructure/query/plugin'
 import { initializeChromeMessageBridge } from '@/infrastructure/events/chrome-message-bridge'
 import { logger } from '@/infrastructure/logging/logger'
 import { performanceMonitor } from '@/utils/performance-monitor'
+import { preloadMaterialWebComponents } from '@/infrastructure/material/preload-material-web'
 
 // 懒加载字体服务、跨页面同步和收藏服务
 const loadFontService = () => import('@/application/font/font-service')
@@ -46,6 +47,8 @@ async function initializeApp() {
     initializeSmartFonts()
 
     // 字体加载已由 Service Worker 统一预取和缓存，无需页面单独请求
+
+    await preloadMaterialWebComponents('Management')
 
     // 挂载应用（优先显示 UI）
     app.mount('#app')

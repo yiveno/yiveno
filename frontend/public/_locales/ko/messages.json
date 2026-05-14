@@ -2027,6 +2027,15 @@
   "settings_tab_shortcuts": {
     "message": "단축키"
   },
+  "settings_tab_color_preset": {
+    "message": "색상"
+  },
+  "settings_color_presets_title": {
+    "message": "색상 프리셋"
+  },
+  "settings_color_presets_intro": {
+    "message": "기본색과 표면색 세트를 고릅니다. 상단의 밝기/다크모드「외관」과 별개로 조정할 수 있습니다."
+  },
   "settings_general_title": {
     "message": "일반 설정"
   },

@@ -70,12 +70,22 @@ md-list-item {
  * Checkbox 组件
  * ============================================ */
 md-checkbox {
-  --md-checkbox-container-size: 20px;
-  --md-checkbox-icon-size: 16px;
+  /*
+   * 须与内部 viewBox「0 0 18 18」及内置对勾/半选 transform 一致。
+   * 若 container（如 20px）大于 icon（18px），.icon 在 inset:0 下常贴左上，
+   * 背景仍铺满整格，对勾与横线会相对紫块「不居中」。
+   */
+  --md-checkbox-container-size: 18px;
+  --md-checkbox-icon-size: 18px;
   --md-checkbox-selected-container-color: var(--md-sys-color-primary);
   --md-checkbox-selected-icon-color: var(--md-sys-color-on-primary);
   --md-checkbox-unselected-outline-color: var(--md-sys-color-outline);
   --md-checkbox-unselected-hover-outline-color: var(--md-sys-color-on-surface);
+}
+
+/* Shadow 内 `md-focus-ring part="focus-ring"`：关闭外圈焦点动画，避免挡图标、与树行高亮重复 */
+md-checkbox::part(focus-ring) {
+  display: none;
 }
 
 /* ============================================

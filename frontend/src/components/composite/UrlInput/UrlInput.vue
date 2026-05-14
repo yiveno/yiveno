@@ -51,8 +51,6 @@
 import { computed, ref, watch } from 'vue'
 import { Input } from '@/components'
 import type { UrlInputProps } from './UrlInput.d'
-import '@material/web/select/outlined-select.js'
-import '@material/web/select/select-option.js'
 
 defineOptions({
   name: 'UrlInput'

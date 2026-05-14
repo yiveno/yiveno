@@ -13,6 +13,7 @@
  */
 
 import mitt from 'mitt'
+import type { ColorPresetId } from '@acuity-bookmarks/design-tokens/color-presets'
 import type { BookmarkNode } from '@/types/domain/bookmark'
 
 /**
@@ -60,6 +61,11 @@ export interface AppEvents extends Record<string | symbol, unknown> {
    * 用户退出登录事件
    */
   'auth:logged-out': Record<string, never>
+
+  /**
+   * 配色预设变更（与亮/暗 `data-theme` 正交）
+   */
+  'colorPreset:changed': { preset: ColorPresetId }
 }
 
 /**

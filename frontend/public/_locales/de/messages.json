@@ -77,6 +77,18 @@
   "settings_desc_subscription": {
     "message": "Plan und Berechtigungen."
   },
+  "settings_tab_shortcuts": {
+    "message": "Tastenkürzel"
+  },
+  "settings_tab_color_preset": {
+    "message": "Farben"
+  },
+  "settings_color_presets_title": {
+    "message": "Farbvorlagen"
+  },
+  "settings_color_presets_intro": {
+    "message": "Wählen Sie eine vollständige Palette aus Primär- und Oberflächenfarben. Unabhängig vom hell/dunkel-Erscheinungsbild in der Kopfzeile."
+  },
   "time_less_than_second": {
     "message": "weniger als 1 Sekunde",
     "description": "Zeit weniger als 1 Sekunde"

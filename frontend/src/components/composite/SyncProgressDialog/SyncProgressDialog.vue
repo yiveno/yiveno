@@ -117,9 +117,6 @@ import LucideIcon from '@/components/base/LucideIcon/LucideIcon.vue'
 import type { SyncProgress, SyncPhase } from '@/types/sync-progress'
 import { SYNC_PHASES, PHASE_TITLES, formatTime } from '@/types/sync-progress'
 import { formatNumber } from '@/utils/i18n-helpers'
-import '@material/web/button/filled-button.js'
-import '@material/web/button/text-button.js'
-import '@material/web/icon/icon.js'
 
 defineOptions({
   name: 'SyncProgressDialog'

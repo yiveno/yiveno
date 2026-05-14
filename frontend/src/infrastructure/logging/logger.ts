@@ -43,8 +43,8 @@ const getLevelToStyle = (): Record<LogLevel, string> => {
   } catch {
     // 降级方案：如果导入失败，使用硬编码值
     return {
-      info: 'background: rgb(206, 229, 255); color: rgb(47, 98, 140); padding: 2px 6px; border-radius: 3px;',
-      warn: 'background: rgb(239, 219, 255); color: rgb(104, 88, 122); padding: 2px 6px; border-radius: 3px;',
+      info: 'background: rgb(216, 226, 255); color: rgb(68, 94, 145); padding: 2px 6px; border-radius: 3px;',
+      warn: 'background: rgb(252, 215, 251); color: rgb(113, 85, 115); padding: 2px 6px; border-radius: 3px;',
       error: 'background: rgb(255, 235, 238); color: rgb(183, 28, 28); padding: 2px 6px; border-radius: 3px;',
       debug: 'background: rgb(243, 229, 245); color: rgb(74, 20, 140); padding: 2px 6px; border-radius: 3px;'
     }

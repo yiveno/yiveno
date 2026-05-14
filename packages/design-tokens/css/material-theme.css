@@ -1,200 +1,28 @@
 /**
- * Material Theme Builder 导出产物集成
- * 种子颜色: #3B82F6 (Logo 蓝色)
- * 导出时间: 2025-12-01
+ * Material Theme：M3 色板 + 外观（data-theme）+ 配色预设（data-color-preset）
  *
- * 主题切换（P1 单源）：
- * - 亮色默认值：见下方 :root
- * - 系统暗色：prefers-color-scheme: dark 且未设置 data-theme='light'
- * - 用户强制暗色：:root[data-theme='dark']（含浅色 OS）
- * - color-scheme：见文件末尾 :root[data-theme='…']
- * - 勿再使用 .theme-light / .theme-dark 手抄变量（已移除）
+ * 标准亮/暗由 `css/presets/*.css` 提供（Material Theme Builder 导出，经
+ * `scripts/build-material-color-presets.mjs` 从仓库根目录 Skyline、Ocean 等文件夹生成）。
  *
- * 包含6个主题变体：
- * - Light (标准亮色)
- * - Dark (标准暗色)  
- * - Light Medium Contrast (亮色中等对比度)
- * - Dark Medium Contrast (暗色中等对比度)
- * - Light High Contrast (亮色高对比度)
- * - Dark High Contrast (暗色高对比度)
+ * - **data-theme**：`light` | `dark`（`system` 由运行时解析为亮/暗后写入）
+ * - **data-color-preset**：`default` | `ocean` | `forest` | `ember` | `violet` | `slate`
+ * - 未设置 `data-color-preset` 时与 `default`（晴空）等价
+ *
+ * 中等/高对比度 class 仅叠加在 **默认配色预设**（无 preset 或 `default`），避免旧 mc/hc 盖错 ocean 等预设。
  */
 
-/* ========================================
- * 标准亮色主题 (Light Theme)
- * ======================================== */
-:root {
-  --md-sys-color-primary: rgb(47 98 140);
-  --md-sys-color-surface-tint: rgb(47 98 140);
-  --md-sys-color-on-primary: rgb(255 255 255);
-  --md-sys-color-primary-container: rgb(206 229 255);
-  --md-sys-color-on-primary-container: rgb(14 74 115);
-  --md-sys-color-secondary: rgb(81 96 111);
-  --md-sys-color-on-secondary: rgb(255 255 255);
-  --md-sys-color-secondary-container: rgb(213 228 247);
-  --md-sys-color-on-secondary-container: rgb(58 72 87);
-  --md-sys-color-tertiary: rgb(104 88 122);
-  --md-sys-color-on-tertiary: rgb(255 255 255);
-  --md-sys-color-tertiary-container: rgb(239 219 255);
-  --md-sys-color-on-tertiary-container: rgb(80 64 97);
-  --md-sys-color-error: rgb(186 26 26);
-  --md-sys-color-on-error: rgb(255 255 255);
-  --md-sys-color-error-container: rgb(255 218 214);
-  --md-sys-color-on-error-container: rgb(147 0 10);
-  --md-sys-color-background: rgb(247 249 255);
-  --md-sys-color-on-background: rgb(24 28 32);
-  --md-sys-color-surface: rgb(247 249 255);
-  --md-sys-color-on-surface: rgb(24 28 32);
-  --md-sys-color-surface-variant: rgb(222 227 235);
-  --md-sys-color-on-surface-variant: rgb(66 71 78);
-  --md-sys-color-outline: rgb(114 119 127);
-  --md-sys-color-outline-variant: rgb(194 199 207);
-  --md-sys-color-shadow: rgb(0 0 0);
-  --md-sys-color-scrim: rgb(0 0 0);
-  --md-sys-color-inverse-surface: rgb(45 49 53);
-  --md-sys-color-inverse-on-surface: rgb(239 241 246);
-  --md-sys-color-inverse-primary: rgb(155 203 251);
-  --md-sys-color-primary-fixed: rgb(206 229 255);
-  --md-sys-color-on-primary-fixed: rgb(0 29 51);
-  --md-sys-color-primary-fixed-dim: rgb(155 203 251);
-  --md-sys-color-on-primary-fixed-variant: rgb(14 74 115);
-  --md-sys-color-secondary-fixed: rgb(213 228 247);
-  --md-sys-color-on-secondary-fixed: rgb(14 29 42);
-  --md-sys-color-secondary-fixed-dim: rgb(185 200 218);
-  --md-sys-color-on-secondary-fixed-variant: rgb(58 72 87);
-  --md-sys-color-tertiary-fixed: rgb(239 219 255);
-  --md-sys-color-on-tertiary-fixed: rgb(35 21 51);
-  --md-sys-color-tertiary-fixed-dim: rgb(211 191 230);
-  --md-sys-color-on-tertiary-fixed-variant: rgb(80 64 97);
-  --md-sys-color-surface-dim: rgb(216 218 224);
-  --md-sys-color-surface-bright: rgb(247 249 255);
-  --md-sys-color-surface-container-lowest: rgb(255 255 255);
-  --md-sys-color-surface-container-low: rgb(241 243 249);
-  --md-sys-color-surface-container: rgb(236 238 243);
-  --md-sys-color-surface-container-high: rgb(230 232 238);
-  --md-sys-color-surface-container-highest: rgb(224 226 232);
-}
-
-/* ========================================
- * 标准暗色主题 (Dark Theme)
- * ======================================== */
-/**
- * 系统偏好暗色：仅在未强制「浅色」时生效（避免与 :root 亮色默认值同优先级抢错）
- * 显式暗色见下方 :root[data-theme='dark']（含浅色 OS + 用户选暗色）
- */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --md-sys-color-primary: rgb(155 203 251);
-    --md-sys-color-surface-tint: rgb(155 203 251);
-    --md-sys-color-on-primary: rgb(0 51 83);
-    --md-sys-color-primary-container: rgb(14 74 115);
-    --md-sys-color-on-primary-container: rgb(206 229 255);
-    --md-sys-color-secondary: rgb(185 200 218);
-    --md-sys-color-on-secondary: rgb(35 50 64);
-    --md-sys-color-secondary-container: rgb(58 72 87);
-    --md-sys-color-on-secondary-container: rgb(213 228 247);
-    --md-sys-color-tertiary: rgb(211 191 230);
-    --md-sys-color-on-tertiary: rgb(56 42 73);
-    --md-sys-color-tertiary-container: rgb(80 64 97);
-    --md-sys-color-on-tertiary-container: rgb(239 219 255);
-    --md-sys-color-error: rgb(255 180 171);
-    --md-sys-color-on-error: rgb(105 0 5);
-    --md-sys-color-error-container: rgb(147 0 10);
-    --md-sys-color-on-error-container: rgb(255 218 214);
-    --md-sys-color-background: rgb(16 20 24);
-    --md-sys-color-on-background: rgb(224 226 232);
-    --md-sys-color-surface: rgb(16 20 24);
-    --md-sys-color-on-surface: rgb(224 226 232);
-    --md-sys-color-surface-variant: rgb(66 71 78);
-    --md-sys-color-on-surface-variant: rgb(194 199 207);
-    --md-sys-color-outline: rgb(140 145 152);
-    --md-sys-color-outline-variant: rgb(66 71 78);
-    --md-sys-color-shadow: rgb(0 0 0);
-    --md-sys-color-scrim: rgb(0 0 0);
-    --md-sys-color-inverse-surface: rgb(224 226 232);
-    --md-sys-color-inverse-on-surface: rgb(45 49 53);
-    --md-sys-color-inverse-primary: rgb(47 98 140);
-    --md-sys-color-primary-fixed: rgb(206 229 255);
-    --md-sys-color-on-primary-fixed: rgb(0 29 51);
-    --md-sys-color-primary-fixed-dim: rgb(155 203 251);
-    --md-sys-color-on-primary-fixed-variant: rgb(14 74 115);
-    --md-sys-color-secondary-fixed: rgb(213 228 247);
-    --md-sys-color-on-secondary-fixed: rgb(14 29 42);
-    --md-sys-color-secondary-fixed-dim: rgb(185 200 218);
-    --md-sys-color-on-secondary-fixed-variant: rgb(58 72 87);
-    --md-sys-color-tertiary-fixed: rgb(239 219 255);
-    --md-sys-color-on-tertiary-fixed: rgb(35 21 51);
-    --md-sys-color-tertiary-fixed-dim: rgb(211 191 230);
-    --md-sys-color-on-tertiary-fixed-variant: rgb(80 64 97);
-    --md-sys-color-surface-dim: rgb(16 20 24);
-    --md-sys-color-surface-bright: rgb(54 57 62);
-    --md-sys-color-surface-container-lowest: rgb(11 15 18);
-    --md-sys-color-surface-container-low: rgb(24 28 32);
-    --md-sys-color-surface-container: rgb(28 32 36);
-    --md-sys-color-surface-container-high: rgb(39 42 47);
-    --md-sys-color-surface-container-highest: rgb(50 53 57);
-  }
-}
-
-/**
- * 用户强制暗色（含浅色 OS 下选暗色）：须独立于 prefers-color-scheme
- */
-:root[data-theme='dark'] {
-  color-scheme: dark;
-  --md-sys-color-primary: rgb(155 203 251);
-  --md-sys-color-surface-tint: rgb(155 203 251);
-  --md-sys-color-on-primary: rgb(0 51 83);
-  --md-sys-color-primary-container: rgb(14 74 115);
-  --md-sys-color-on-primary-container: rgb(206 229 255);
-  --md-sys-color-secondary: rgb(185 200 218);
-  --md-sys-color-on-secondary: rgb(35 50 64);
-  --md-sys-color-secondary-container: rgb(58 72 87);
-  --md-sys-color-on-secondary-container: rgb(213 228 247);
-  --md-sys-color-tertiary: rgb(211 191 230);
-  --md-sys-color-on-tertiary: rgb(56 42 73);
-  --md-sys-color-tertiary-container: rgb(80 64 97);
-  --md-sys-color-on-tertiary-container: rgb(239 219 255);
-  --md-sys-color-error: rgb(255 180 171);
-  --md-sys-color-on-error: rgb(105 0 5);
-  --md-sys-color-error-container: rgb(147 0 10);
-  --md-sys-color-on-error-container: rgb(255 218 214);
-  --md-sys-color-background: rgb(16 20 24);
-  --md-sys-color-on-background: rgb(224 226 232);
-  --md-sys-color-surface: rgb(16 20 24);
-  --md-sys-color-on-surface: rgb(224 226 232);
-  --md-sys-color-surface-variant: rgb(66 71 78);
-  --md-sys-color-on-surface-variant: rgb(194 199 207);
-  --md-sys-color-outline: rgb(140 145 152);
-  --md-sys-color-outline-variant: rgb(66 71 78);
-  --md-sys-color-shadow: rgb(0 0 0);
-  --md-sys-color-scrim: rgb(0 0 0);
-  --md-sys-color-inverse-surface: rgb(224 226 232);
-  --md-sys-color-inverse-on-surface: rgb(45 49 53);
-  --md-sys-color-inverse-primary: rgb(47 98 140);
-  --md-sys-color-primary-fixed: rgb(206 229 255);
-  --md-sys-color-on-primary-fixed: rgb(0 29 51);
-  --md-sys-color-primary-fixed-dim: rgb(155 203 251);
-  --md-sys-color-on-primary-fixed-variant: rgb(14 74 115);
-  --md-sys-color-secondary-fixed: rgb(213 228 247);
-  --md-sys-color-on-secondary-fixed: rgb(14 29 42);
-  --md-sys-color-secondary-fixed-dim: rgb(185 200 218);
-  --md-sys-color-on-secondary-fixed-variant: rgb(58 72 87);
-  --md-sys-color-tertiary-fixed: rgb(239 219 255);
-  --md-sys-color-on-tertiary-fixed: rgb(35 21 51);
-  --md-sys-color-tertiary-fixed-dim: rgb(211 191 230);
-  --md-sys-color-on-tertiary-fixed-variant: rgb(80 64 97);
-  --md-sys-color-surface-dim: rgb(16 20 24);
-  --md-sys-color-surface-bright: rgb(54 57 62);
-  --md-sys-color-surface-container-lowest: rgb(11 15 18);
-  --md-sys-color-surface-container-low: rgb(24 28 32);
-  --md-sys-color-surface-container: rgb(28 32 36);
-  --md-sys-color-surface-container-high: rgb(39 42 47);
-  --md-sys-color-surface-container-highest: rgb(50 53 57);
-}
+@import url('./presets/default.css');
+@import url('./presets/ocean.css');
+@import url('./presets/forest.css');
+@import url('./presets/ember.css');
+@import url('./presets/violet.css');
+@import url('./presets/slate.css');
 
 /* ========================================
  * 亮色中等对比度主题 (Light Medium Contrast)
  * ======================================== */
-.light-medium-contrast {
+:root.light-medium-contrast:not([data-color-preset]),
+:root.light-medium-contrast[data-color-preset='default'] {
   --md-sys-color-primary: rgb(0 57 92);
   --md-sys-color-surface-tint: rgb(47 98 140);
   --md-sys-color-on-primary: rgb(255 255 255);
@@ -250,7 +78,8 @@
  * 暗色中等对比度主题 (Dark Medium Contrast)
  * ======================================== */
 @media (prefers-color-scheme: dark) {
-  .dark-medium-contrast {
+  :root.dark-medium-contrast:not([data-color-preset]),
+  :root.dark-medium-contrast[data-color-preset='default'] {
     --md-sys-color-primary: rgb(194 223 255);
     --md-sys-color-surface-tint: rgb(155 203 251);
     --md-sys-color-on-primary: rgb(0 40 66);
@@ -306,7 +135,8 @@
 /* ========================================
  * 亮色高对比度主题 (Light High Contrast)
  * ======================================== */
-.light-high-contrast {
+:root.light-high-contrast:not([data-color-preset]),
+:root.light-high-contrast[data-color-preset='default'] {
   --md-sys-color-primary: rgb(0 46 77);
   --md-sys-color-surface-tint: rgb(47 98 140);
   --md-sys-color-on-primary: rgb(255 255 255);
@@ -362,7 +192,8 @@
  * 暗色高对比度主题 (Dark High Contrast)
  * ======================================== */
 @media (prefers-color-scheme: dark) {
-  .dark-high-contrast {
+  :root.dark-high-contrast:not([data-color-preset]),
+  :root.dark-high-contrast[data-color-preset='default'] {
     --md-sys-color-primary: rgb(231 241 255);
     --md-sys-color-surface-tint: rgb(155 203 251);
     --md-sys-color-on-primary: rgb(0 0 0);
@@ -416,7 +247,7 @@
 }
 
 /* ========================================
- * 主题切换：仅 color-scheme（调色板由 :root / 媒体查询 / :root[data-theme='dark'] 提供）
+ * color-scheme（调色板由 `presets/*.css` 与 data-theme / data-color-preset 提供）
  * data-theme 设置在 document.documentElement（即 :root）
  * ======================================== */
 

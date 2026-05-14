@@ -134,7 +134,8 @@ import {
   Cpu,
   Glasses,
   NotebookTabs,
-  AppWindow
+  AppWindow,
+  Palette
 } from 'lucide-vue-next'
 
 /**
@@ -271,6 +272,9 @@ export const lucideIcons: Record<string, Component> = {
   'sparkles': Sparkles,
   'ai': Sparkles,
   'auto': Sparkles,
+  /** 配色 / 主题色 */
+  'palette': Palette,
+  'color-palette': Palette,
   'lock': Lock,
   'unlock': Unlock,
   'shield': Shield,

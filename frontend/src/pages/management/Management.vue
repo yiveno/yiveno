@@ -806,13 +806,6 @@ import {
   Main,
   AnimatedNumber
 } from '@/components'
-import { MdOutlinedTextField } from '@material/web/textfield/outlined-text-field.js'
-import '@material/web/tabs/tabs.js'
-import '@material/web/tabs/primary-tab.js'
-import '@material/web/checkbox/checkbox.js'
-
-/** 防止生产构建 tree-shake 掉 @customElement 注册 */
-void MdOutlinedTextField
 import { notificationService } from '@/application/notification/notification-service'
 import { NOTIFICATION_CONFIG } from '@/config/constants'
 import { ConfirmableDialog } from '@/components'
@@ -2629,9 +2622,9 @@ p.warning-text {
   overflow: hidden;
 }
 
-/* 左侧面板：增加视觉权重，使用更深的背景 */
+/* 左右面板等宽（列宽由 .management-row 的 grid 控制） */
 .panel-col:first-child .panel-card {
-  flex: 1.2;
+  flex: 1;
   background: var(--color-bg-primary);
 }
 
@@ -2895,9 +2888,12 @@ p.warning-text {
 }
 </style>
 
+<!-- 无 scoped：Material 根节点 token + 管理页主栅格（此前误写在 style 外导致未生效） -->
+<style>
 md-linear-progress {
-  width: 100%;
   --md-linear-progress-track-height: 8px;
+
+  width: 100%;
 }
 
 md-text-button,
@@ -2913,51 +2909,40 @@ md-icon-button {
   --md-sys-color-on-primary: var(--md-sys-color-on-error);
 }
 
-/* CSS Grid 布局替代 Grid 组件 */
+/* 左右面板等宽，中间为弹性间距（随视口缩放） */
 .management-container {
   display: flex;
   flex-direction: column;
-  height: 100%;
   width: 100%;
+  height: 100%;
+  min-height: 0;
 }
 
 .management-row {
   display: grid;
-  grid-template-columns: 5fr 1fr 6fr;
-  gap: 0;
-  height: 100%;
+  flex: 1;
   align-items: stretch;
-}
-
-.panel-col {
-  display: flex;
-  flex-direction: column;
+  gap: clamp(var(--spacing-3), 3vw, var(--spacing-10));
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  box-sizing: border-box;
+  width: 100%;
   height: 100%;
+  min-height: 0;
 }
 
-.left-panel {
-  grid-column: 1;
-}
-
-.divider-col {
-  grid-column: 2;
-}
-
-.right-panel {
-  grid-column: 3;
+.management-row > .panel-col {
+  min-width: 0;
 }
 
 /* 页面 Overlay 样式 */
 .page-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   background: var(--color-scrim-012);
   backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
 }
+</style>

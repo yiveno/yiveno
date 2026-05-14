@@ -43,11 +43,6 @@ import { useCommandsShortcuts } from '@/composables/useCommandsShortcuts'
 import { useUIStore } from '@/stores/ui-store'
 import { t } from '@/utils/i18n-helpers'
 
-// 导入 Material Web Components
-import '@material/web/button/filled-button.js'
-import '@material/web/list/list.js'
-import '@material/web/list/list-item.js'
-
 defineOptions({
   name: 'ShortcutSettings'
 })

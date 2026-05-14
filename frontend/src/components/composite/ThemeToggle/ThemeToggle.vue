@@ -60,6 +60,7 @@ import {
   type ThemeMode
 } from '@/infrastructure/global-state/global-state-manager'
 import { emitEvent } from '@/infrastructure/events/event-bus'
+import { applyColorPresetToDocument } from '@/composables/useThemeSync'
 import { LucideIcon } from '@/components'
 
 // 当前主题状态（从全局状态管理器获取）
@@ -340,6 +341,8 @@ const initializeTheme = async () => {
       } else {
         applyTheme(savedTheme)
       }
+
+      applyColorPresetToDocument(globalStateManager.getColorPreset())
 
       logger.info('ThemeToggle', '使用保存的主题', { theme: savedTheme })
     } catch (globalStateError) {

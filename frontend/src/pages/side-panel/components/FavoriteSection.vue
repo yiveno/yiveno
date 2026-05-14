@@ -39,11 +39,6 @@ import { logger } from '@/infrastructure/logging/logger'
 import { LucideIcon } from '@/components'
 import type { BookmarkNode } from '@/types'
 
-// 导入 Material Web Components
-import '@material/web/list/list.js'
-import '@material/web/list/list-item.js'
-import '@material/web/iconbutton/icon-button.js'
-
 defineOptions({
   name: 'FavoriteSection'
 })

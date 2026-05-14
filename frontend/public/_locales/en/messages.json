@@ -2039,6 +2039,15 @@
   "settings_tab_shortcuts": {
     "message": "Shortcuts"
   },
+  "settings_tab_color_preset": {
+    "message": "Color"
+  },
+  "settings_color_presets_title": {
+    "message": "Color presets"
+  },
+  "settings_color_presets_intro": {
+    "message": "Pick a full set of primary and surface colors. This is separate from light/dark appearance in the header; you can adjust both independently."
+  },
   "settings_general_title": {
     "message": "General Settings"
   },

@@ -116,13 +116,6 @@ import { ref, watch } from 'vue'
 import { Dialog, LucideIcon } from '@/components'
 import { logger } from '@/infrastructure/logging/logger'
 import { notificationService } from '@/application/notification/notification-service'
-import '@material/web/button/text-button.js'
-import '@material/web/button/filled-button.js'
-import '@material/web/textfield/outlined-text-field.js'
-import '@material/web/list/list.js'
-import '@material/web/list/list-item.js'
-import '@material/web/select/outlined-select.js'
-import '@material/web/select/select-option.js'
 
 defineOptions({
   name: 'QuickAddBookmarkDialog'

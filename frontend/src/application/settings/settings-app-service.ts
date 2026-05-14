@@ -21,6 +21,7 @@ import {
 } from '@/infrastructure/global-state/global-state-manager'
 import { chromeStorage } from '@/infrastructure/storage/chrome-storage'
 import { logger } from '@/infrastructure/logging/logger'
+import { normalizeColorPresetId } from '@acuity-bookmarks/design-tokens/color-presets'
 
 /**
  * 全局设置键名枚举
@@ -30,6 +31,8 @@ import { logger } from '@/infrastructure/logging/logger'
 export const GLOBAL_SETTING_KEYS = {
   /** 主题设置 */
   THEME: 'theme',
+  /** Material 3 配色预设 */
+  COLOR_PRESET: 'colorPreset',
   /** 自动同步开关 */
   AUTO_SYNC: 'autoSync',
   /** 显示图标开关 */
@@ -104,6 +107,8 @@ export class SettingsAppService {
         switch (key) {
           case GLOBAL_SETTING_KEYS.THEME:
             return (state.theme ?? null) as T
+          case GLOBAL_SETTING_KEYS.COLOR_PRESET:
+            return (state.colorPreset ?? null) as T
           case GLOBAL_SETTING_KEYS.AUTO_SYNC:
             return (state.autoSync ?? null) as T
           case GLOBAL_SETTING_KEYS.SHOW_FAVICONS:
@@ -263,6 +268,9 @@ export class SettingsAppService {
         case GLOBAL_SETTING_KEYS.THEME:
           await globalStateManager.setTheme(value as 'light' | 'dark')
           break
+        case GLOBAL_SETTING_KEYS.COLOR_PRESET:
+          await globalStateManager.setColorPreset(normalizeColorPresetId(value))
+          break
         case GLOBAL_SETTING_KEYS.AUTO_SYNC:
           await globalStateManager.setAutoSync(value as boolean)
           break
@@ -291,6 +299,9 @@ export class SettingsAppService {
       switch (key) {
         case GLOBAL_SETTING_KEYS.THEME:
           await globalStateManager.setTheme('light') // 删除主题时重置为明亮主题
+          break
+        case GLOBAL_SETTING_KEYS.COLOR_PRESET:
+          await globalStateManager.setColorPreset('default')
           break
         case GLOBAL_SETTING_KEYS.AUTO_SYNC:
           await globalStateManager.setAutoSync(true)
@@ -328,6 +339,11 @@ export class SettingsAppService {
     try {
       if (settings.theme !== undefined) {
         await globalStateManager.setTheme(settings.theme)
+      }
+      if (settings.colorPreset !== undefined) {
+        await globalStateManager.setColorPreset(
+          normalizeColorPresetId(settings.colorPreset)
+        )
       }
       if (settings.autoSync !== undefined) {
         await globalStateManager.setAutoSync(settings.autoSync)

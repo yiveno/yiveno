@@ -55,7 +55,7 @@ bun run stylelint:force
 ```
 
 ## 📚 必读文档
-- **产品文档（最重要）**：`文档/产品文档/AcuityBookmarks-产品文档-v3.0.md`
+- **产品文档（最重要）**：`docs/product/AcuityBookmarks-产品文档-v3.0.md`（含 **§零 文档治理与 AI 协作**；列表与指针交互见 **§1.1.1**；实现约束见 **§4.1.2.1**）
 - 架构变更必须同步更新产品文档
 
 ---
@@ -386,6 +386,30 @@ async function loadBookmarks() {
 - 从已有集合中过滤 = 筛选（Filter）
 - 对外统一使用"筛选"概念
 
+### 错误 6：列表 hover 用位移 / 整行缩放
+
+**错误代码：**
+```css
+/* ❌ 书签树、搜索建议行等高密度列表 */
+.row:hover {
+  transform: translateY(-2px);
+}
+.row:hover {
+  transform: scale(1.02);
+}
+```
+
+**正确代码：**
+```css
+/* ✅ 仅用表面反馈（与 MD3 state layer 一致，见产品文档 §1.1.1） */
+.row:hover {
+  background: var(--color-surface-hover);
+  /* 或 box-shadow / outline / Material token */
+}
+```
+
+**原因：** 见 `docs/product/AcuityBookmarks-产品文档-v3.0.md` §1.1.1、§4.1.2.1。
+
 ## ⚡ 性能要求
 
 **目标：支持 2 万书签流畅操作**
@@ -426,7 +450,7 @@ bun run build:hot                # 热构建
 
 ## � 核心要点总结（必读）
 
-**牢记这 5 条铁律，避免 95% 的错误：**
+**牢记这 6 条铁律，避免 95% 的错误：**
 
 | # | 铁律 | 检查方法 | 违反后果 |
 |---|------|---------|---------|
@@ -435,6 +459,7 @@ bun run build:hot                # 热构建
 | 3 | **禁止前端直接访问 Chrome API** | 前端只能用 `chrome.runtime.sendMessage` | 破坏架构、难以维护 |
 | 4 | **Service Worker 兼容** | Background 中禁用 `window.*` / `localStorage` | 运行时报错 |
 | 5 | **UI 术语统一** | UI 文案中用"筛选"而非"搜索" | 产品定位混乱 |
+| 6 | **列表 hover 不动位** | 列表行 `:hover` 不出现 `translateY` / 行级 `scale` | 扫读节奏乱、与 MD3 约定不一致 |
 
 ---
 
@@ -454,6 +479,9 @@ bun run build:hot                # 热构建
   - 否 → 继续
 - [ ] 我的 UI 文案是否使用了"搜索"？
   - 是 → 改为"筛选"
+  - 否 → 继续
+- [ ] 我是否在改**列表行 / 搜索建议 / 筛选标签**的 `:hover`？
+  - 是 → 仅用背景/边框/shadow/MD state layer，**禁止** `translateY`、行级 `scale`（见产品文档 §1.1.1）
   - 否 → 继续
 
 ---

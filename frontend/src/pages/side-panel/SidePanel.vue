@@ -1082,7 +1082,6 @@ md-circular-progress {
 
   50% {
     opacity: 1;
-    transform: scale(1.1);
   }
 }
 
@@ -1154,7 +1153,7 @@ md-circular-progress {
   color: var(--color-success);
 
   /* ✅ 性能优化：提示浏览器优化动画性能 */
-  will-change: transform, opacity;
+  will-change: opacity;
   animation: sync-pulse 2s infinite;
 }
 

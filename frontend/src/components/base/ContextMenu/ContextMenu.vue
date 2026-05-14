@@ -56,9 +56,6 @@ import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import { LucideIcon } from '@/components/base/LucideIcon'
 import type { MenuItemConfig } from '@/core/bookmark/context-menu-config'
 
-import '@material/web/list/list.js'
-import '@material/web/list/list-item.js'
-
 defineOptions({ name: 'ContextMenu' })
 
 interface Props {

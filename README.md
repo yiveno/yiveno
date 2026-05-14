@@ -102,10 +102,11 @@ acuityBookmarks/                    # Monorepo根目录
 │   ├── dev-setup.sh               # 开发环境设置
 │   └── ...
 │
-├── 文档/                           # 📚 项目文档 (中文)
-│   ├── 开发指南/                  # 开发相关文档
-│   ├── 项目管理/                  # 架构和管理文档
-│   └── 产品文档/                  # 产品说明
+├── docs/                           # 📚 项目文档
+│   ├── product/                    # 产品文档（唯一正文见该目录下 v3.0）
+│   ├── development/                # 开发 / 性能 / 阶段记录
+│   ├── website/                    # 官网相关
+│   └── archive/                    # 历史归档
 │
 ├── .husky/                         # 🐕 Git Hooks
 ├── .vscode/                        # VS Code 配置
@@ -238,30 +239,19 @@ bun run lint:fix              # ESLint 自动修复
 
 ## 📚 文档导航
 
-### 🚀 快速上手
+### 📦 产品文档（唯一正文）
 
-- [前端开发指南](文档/开发指南/前端开发指南.md)
-- [后端开发指南](文档/开发指南/后端开发指南.md)
-- [E2E测试使用说明](文档/开发指南/E2E-使用说明.md)
+- [AcuityBookmarks 完整产品文档 v3.0](docs/product/AcuityBookmarks-产品文档-v3.0.md)
+- [`docs/` 目录说明](docs/README.md)（`development/` 保留清单、`archive/`、官网等）
 
-### 🏗️ 架构文档
+### 其他文档
 
-- [TypeScript配置架构](TSCONFIG_ARCHITECTURE.md)
-- [Frontend架构说明](frontend/ARCHITECTURE.md)
-- [Monorepo最佳实践审核](MONOREPO_BEST_PRACTICES_AUDIT.md)
-- [架构优化实施指南](文档/项目管理/架构优化实施指南.md)
+- 环境变量与依赖移除等事实清单见 [`docs/development/`](docs/development/)。
+- 架构与分层约定以 **产品文档** 为准；代码入口见 `frontend/src/` 各层目录。
 
-### 🛠️ 开发工具
+### 🏗️ 架构与工程
 
-- [Git提交代码质量自动化](文档/开发指南/Git提交代码质量自动化.md)
-- [Prettier-ESLint协调配置](文档/开发指南/Prettier-ESLint协调配置.md)
-- [UI组件库说明](文档/开发指南/UI组件库说明.md)
-- [设计系统说明](文档/开发指南/设计系统说明.md)
-
-### 📦 产品文档
-
-- [产品介绍](文档/产品文档/产品介绍.md)
-- [产品说明文档](文档/产品文档/产品说明文档.md)
+- 以 [产品文档 v3.0 — 第二部分](docs/product/AcuityBookmarks-产品文档-v3.0.md#第二部分技术架构) 为准；仓库内若仍有独立架构 `.md` 与正文冲突，以正文为准。
 
 ---
 
@@ -318,7 +308,7 @@ bun run e2e:management:perf --ext $EXT_ID
 bun run e2e:management:all --ext $EXT_ID
 ```
 
-详见: [E2E使用说明](文档/开发指南/E2E-使用说明.md)
+详见根目录 `package.json` 中的 `e2e` / `e2e:perf` 脚本及 `scripts/e2e-management.mjs`。
 
 ### Lighthouse CI
 

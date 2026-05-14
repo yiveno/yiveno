@@ -6,6 +6,8 @@ inclusion: always
 
 用中文回复
 
+> **与 Cursor 同步（2026-05）**：架构、质量门禁与「禁止事项」以仓库 **`.cursor/rules/project.mdc`** 为执行口径。本文若与 `.cursor` 冲突，**以 `.cursor` 为准**，并应回写修正本文件。
+
 ---
 # AcuityBookmarks 项目规范
 **本文档为 AI IDE 行为准则，必须严格遵守**
@@ -55,18 +57,23 @@ inclusion: always
   - 如果用户没有明确说"生成"或"创建"文档 → 不要创建
 ```
 
-### 2. 代码修改检查流程
-**❌ 禁止：每次改动后自动运行检查命令（typecheck / lint / stylelint）**
-**✅ 只有在用户明确说"跑一下检查"、"typecheck"、"lint" 等时，才执行检查**
+### 2. 代码修改检查流程（与 Cursor 一致）
+
+**每次修改 `frontend/` 等代码后，须在对话收尾前按顺序执行：**
 
 ```bash
-# 仅在用户明确要求时执行：
-bun run typecheck:force
-bun run lint:check:force
-bun run stylelint:force
+cd frontend
+bun run typecheck
+bun run lint:check
+bun run stylelint:check
 ```
 
-**原因：自动检查大幅降低效率，用户会在需要时主动要求。**
+（根目录脚本名以 `package.json` / `.cursor/rules` 为准；若用户在 Cursor 中配置了 `typecheck:force` 等别名，从其约定。）
+
+- ✅ 无错误后再向用户报告「修改完成」
+- ❌ 有错误须修复至通过
+
+**原因**：与 `.cursor/rules/project.mdc` 对齐，保证 CI 与本地一致。
 
 ### 3. 输出规范
 ```
@@ -109,7 +116,7 @@ bun run stylelint:force
 ```
 
 ## 📚 必读文档
-- **产品文档（最重要）**：`文档/产品文档/AcuityBookmarks-产品文档-v3.0.md`
+- **产品文档（最重要）**：`docs/product/AcuityBookmarks-产品文档-v3.0.md`（含 **§零 文档治理与 AI 协作**；列表 hover 见 §1.1.1；实现约束见 §4.1.2.1）
 - 架构变更必须同步更新产品文档
 
 ---

@@ -103,9 +103,9 @@ export const NOTIFICATION_CONFIG = {
       } catch {
         // 降级方案：如果导入失败，使用硬编码值
         return {
-          info: 'rgb(47, 98, 140)',
-          success: 'rgb(81, 96, 111)',
-          warning: 'rgb(104, 88, 122)',
+          info: 'rgb(68, 94, 145)',
+          success: 'rgb(87, 94, 113)',
+          warning: 'rgb(113, 85, 115)',
           error: 'rgb(186, 26, 26)'
         }
       }

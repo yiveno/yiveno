@@ -23,42 +23,42 @@ export interface ColorValue {
 /**
  * Material Design 3 主题色
  * 
- * 这些颜色来自 material-theme.css，基于种子色 #3B82F6 生成
+ * 这些颜色来自默认配色预设（晴空 / Skyline，`material-theme.css` → `presets/default.css`）
  */
 export const materialColors = {
   /** 主色（亮色主题） */
   primary: {
     css: 'var(--md-sys-color-primary)',
-    rgb: 'rgb(47, 98, 140)',
-    hex: '#2f628c'
+    rgb: 'rgb(68, 94, 145)',
+    hex: '#445e91'
   } as ColorValue,
 
   /** 主色（暗色主题） */
   primaryDark: {
     css: 'var(--md-sys-color-primary)',
-    rgb: 'rgb(155, 203, 251)',
-    hex: '#9bcbfb'
+    rgb: 'rgb(173, 198, 255)',
+    hex: '#adc6ff'
   } as ColorValue,
 
   /** 主色容器（亮色主题） */
   primaryContainer: {
     css: 'var(--md-sys-color-primary-container)',
-    rgb: 'rgb(206, 229, 255)',
-    hex: '#cee5ff'
+    rgb: 'rgb(216, 226, 255)',
+    hex: '#d8e2ff'
   } as ColorValue,
 
   /** 次要色（亮色主题） */
   secondary: {
     css: 'var(--md-sys-color-secondary)',
-    rgb: 'rgb(81, 96, 111)',
-    hex: '#51606f'
+    rgb: 'rgb(87, 94, 113)',
+    hex: '#575e71'
   } as ColorValue,
 
   /** 次要色（暗色主题） */
   secondaryDark: {
     css: 'var(--md-sys-color-secondary)',
-    rgb: 'rgb(185, 200, 218)',
-    hex: '#b9c8da'
+    rgb: 'rgb(191, 198, 220)',
+    hex: '#bfc6dc'
   } as ColorValue,
 
   /** 错误色（亮色主题） */
@@ -78,79 +78,79 @@ export const materialColors = {
   /** 表面色（亮色主题） */
   surface: {
     css: 'var(--md-sys-color-surface)',
-    rgb: 'rgb(247, 249, 255)',
-    hex: '#f7f9ff'
+    rgb: 'rgb(249, 249, 255)',
+    hex: '#f9f9ff'
   } as ColorValue,
 
   /** 表面色（暗色主题） */
   surfaceDark: {
     css: 'var(--md-sys-color-surface)',
-    rgb: 'rgb(16, 20, 24)',
-    hex: '#101418'
+    rgb: 'rgb(17, 19, 24)',
+    hex: '#111318'
   } as ColorValue,
 
   /** 表面上的文本色（亮色主题） */
   onSurface: {
     css: 'var(--md-sys-color-on-surface)',
-    rgb: 'rgb(24, 28, 32)',
-    hex: '#181c20'
+    rgb: 'rgb(26, 27, 32)',
+    hex: '#1a1b20'
   } as ColorValue,
 
   /** 表面上的文本色（暗色主题） */
   onSurfaceDark: {
     css: 'var(--md-sys-color-on-surface)',
-    rgb: 'rgb(224, 226, 232)',
-    hex: '#e0e2e8'
+    rgb: 'rgb(226, 226, 233)',
+    hex: '#e2e2e9'
   } as ColorValue
 } as const
 
 /**
  * 语义化颜色（定义见 semantic-colors.css，由 M3 角色映射）
  *
- * rgb / hex：亮色主题下与当前种子（#3B82F6 导出）一致的近似快照，供控制台、
+ * rgb / hex：亮色主题下与默认预设「晴空」M3 导出一致的近似快照，供控制台、
  * Badge API 等无法使用 CSS 变量的场景；界面与主题切换以 `.css` 变量为准。
  */
 export const semanticColors = {
   /** 警告色（映射 tertiary） */
   warning: {
     css: 'var(--acuity-semantic-warning)',
-    rgb: 'rgb(104, 88, 122)',
-    hex: '#68587a'
+    rgb: 'rgb(113, 85, 115)',
+    hex: '#715573'
   } as ColorValue,
 
   /** 警告容器色 */
   warningContainer: {
     css: 'var(--acuity-semantic-warning-container)',
-    rgb: 'rgb(239, 219, 255)',
-    hex: '#efdbff'
+    rgb: 'rgb(252, 215, 251)',
+    hex: '#fcd7fb'
   } as ColorValue,
 
   /** 成功色（映射 secondary） */
   success: {
     css: 'var(--acuity-semantic-success)',
-    rgb: 'rgb(81, 96, 111)',
-    hex: '#51606f'
+    rgb: 'rgb(87, 94, 113)',
+    hex: '#575e71'
   } as ColorValue,
 
   /** 成功容器色 */
   successContainer: {
     css: 'var(--acuity-semantic-success-container)',
-    rgb: 'rgb(213, 228, 247)',
-    hex: '#d5e4f7'
+    rgb: 'rgb(219, 226, 249)',
+    hex: '#dbe2f9'
   } as ColorValue,
 
   /** 信息色（映射 primary） */
   info: {
     css: 'var(--acuity-semantic-info)',
-    rgb: 'rgb(47, 98, 140)',
-    hex: '#2f628c'
+    rgb: 'rgb(68, 94, 145)',
+    hex: '#445e91'
   } as ColorValue,
 
   /** 信息容器色 */
   infoContainer: {
     css: 'var(--acuity-semantic-info-container)',
-    rgb: 'rgb(206, 229, 255)',
-    hex: '#cee5ff'
+    rgb: 'rgb(216, 226, 255)',
+    hex: '#d8e2ff'
   } as ColorValue
 } as const
 
@@ -161,94 +161,94 @@ export const accentColors = {
   /** 青色（primary + secondary 混色，亮色近似） */
   teal: {
     css: 'var(--acuity-accent-teal)',
-    rgb: 'rgb(66, 97, 124)',
-    hex: '#42617c'
+    rgb: 'rgb(78, 94, 127)',
+    hex: '#4e5e7f'
   } as ColorValue,
 
   /** 金色（error 少量 + primary-fixed-dim，亮色近似） */
   gold: {
     css: 'var(--acuity-accent-gold)',
-    rgb: 'rgb(159, 182, 224)',
-    hex: '#9fb6e0'
+    rgb: 'rgb(175, 177, 228)',
+    hex: '#afb1e4'
   } as ColorValue,
 
   /** 琥珀色（亮色近似） */
   amber: {
     css: 'var(--acuity-accent-amber)',
-    rgb: 'rgb(164, 153, 188)',
-    hex: '#a499bc'
+    rgb: 'rgb(177, 150, 191)',
+    hex: '#b196bf'
   } as ColorValue,
 
   /** 紫色（同 tertiary） */
   purple: {
     css: 'var(--acuity-accent-purple)',
-    rgb: 'rgb(104, 88, 122)',
-    hex: '#68587a'
+    rgb: 'rgb(113, 85, 115)',
+    hex: '#715573'
   } as ColorValue,
 
   /** AI 功能色（映射到紫色） */
   ai: {
     css: 'var(--acuity-accent-ai)',
-    rgb: 'rgb(104, 88, 122)',
-    hex: '#68587a'
+    rgb: 'rgb(113, 85, 115)',
+    hex: '#715573'
   } as ColorValue
 } as const
 
 /**
  * Primary 色彩阶梯（CSS 侧由当前主题 primary 与 white/black 混色生成）
  *
- * rgb / hex：与当前 M3 导出主色 rgb(47, 98, 140) 一致的亮色近似。
+ * rgb / hex：与默认预设主色 rgb(68, 94, 145) 混白/黑一致的亮色近似。
  */
 export const primaryScale = {
   50: {
     css: 'var(--acuity-primary-50)',
-    rgb: 'rgb(226, 233, 239)',
-    hex: '#e2e9ef'
+    rgb: 'rgb(229, 232, 240)',
+    hex: '#e5e8f0'
   } as ColorValue,
   100: {
     css: 'var(--acuity-primary-100)',
-    rgb: 'rgb(197, 211, 223)',
-    hex: '#c5d3df'
+    rgb: 'rgb(203, 210, 224)',
+    hex: '#cbd2e0'
   } as ColorValue,
   200: {
     css: 'var(--acuity-primary-200)',
-    rgb: 'rgb(168, 189, 207)',
-    hex: '#a8bdcf'
+    rgb: 'rgb(176, 187, 209)',
+    hex: '#b0bbd1'
   } as ColorValue,
   300: {
     css: 'var(--acuity-primary-300)',
-    rgb: 'rgb(134, 164, 188)',
-    hex: '#86a4bc'
+    rgb: 'rgb(147, 162, 191)',
+    hex: '#93a2bf'
   } as ColorValue,
   400: {
     css: 'var(--acuity-primary-400)',
-    rgb: 'rgb(99, 137, 169)',
-    hex: '#6389a9'
+    rgb: 'rgb(115, 134, 173)',
+    hex: '#7386ad'
   } as ColorValue,
   500: {
     css: 'var(--acuity-primary-500)',
-    rgb: 'rgb(47, 98, 140)',
-    hex: '#2f628c'
+    rgb: 'rgb(68, 94, 145)',
+    hex: '#445e91'
   } as ColorValue,
   600: {
     css: 'var(--acuity-primary-600)',
-    rgb: 'rgb(42, 88, 126)',
-    hex: '#2a587e'
+    rgb: 'rgb(61, 85, 131)',
+    hex: '#3d5583'
   } as ColorValue,
   700: {
     css: 'var(--acuity-primary-700)',
-    rgb: 'rgb(37, 76, 109)',
-    hex: '#254c6d'
+    rgb: 'rgb(53, 73, 113)',
+    hex: '#354971'
   } as ColorValue,
   800: {
     css: 'var(--acuity-primary-800)',
-    rgb: 'rgb(31, 64, 91)',
-    hex: '#1f405b'
+    rgb: 'rgb(44, 61, 94)',
+    hex: '#2c3d5e'
   } as ColorValue,
   900: {
     css: 'var(--acuity-primary-900)',
-    rgb: 'rgb(24, 51, 73)',
-    hex: '#183349'
+    rgb: 'rgb(35, 49, 75)',
+    hex: '#23314b'
   } as ColorValue
 } as const
 

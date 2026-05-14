@@ -85,19 +85,11 @@ import {
 } from 'vue'
 import type { DialogProps } from './Dialog.d'
 import { LucideIcon } from '@/components/base/LucideIcon'
-import { MdDialog } from '@material/web/dialog/dialog.js'
-import { MdFilledButton } from '@material/web/button/filled-button.js'
-import { MdTextButton } from '@material/web/button/text-button.js'
 
 /**
- * 具名引用：仅 `import '...'` 时，生产构建可能把整段入口当作无导出依赖而 tree-shake 掉，
- * `@customElement` 从未执行，表现为无 Shadow DOM、`display: inline`、所有 slot 内容平铺在页面上。
- * @see frontend/src/pages/popup/main.ts 中关于 MWC 动态导入的说明
+ * `md-dialog` / 按钮由各 HTML 入口 `preloadMaterialWebComponents` 在 `mount` 前注册；
+ * 勿在此再写仅副作用的 `import '@material/web/...'`，避免与入口策略分叉。
  */
-void MdDialog
-void MdFilledButton
-void MdTextButton
-
 defineOptions({
   name: 'AcuityDialog'
 })

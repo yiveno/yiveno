@@ -13,44 +13,11 @@ import '@/assets/smart-fonts.css'
 import { logger } from '@/infrastructure/logging/logger'
 import { notifyInfo } from '@/application/notification/notification-service'
 import { performanceMonitor } from '@/utils/performance-monitor'
+import { preloadMaterialWebComponents } from '@/infrastructure/material/preload-material-web'
 
 // 懒加载字体服务和跨页面同步
 const loadFontService = () => import('@/application/font/font-service')
 const loadCrossPageSync = () => import('@/composables/useCrossPageSync')
-
-/**
- * ✅ 动态加载 Material Web 组件（避免 Vite tree-shaking 移除副作用代码）
- * 必须使用动态导入，否则 customElements.define 会被移除
- */
-async function loadMaterialComponents() {
-  logger.info('Popup', 'Init', '开始加载 Material Web Components...')
-  
-  // 先加载依赖组件（ripple, focus-ring, elevation）
-  await Promise.all([
-    import('@material/web/ripple/ripple.js'),
-    import('@material/web/focus/md-focus-ring.js'),
-    import('@material/web/elevation/elevation.js')
-  ])
-  
-  // 再加载所有需要的组件
-  await Promise.all([
-    import('@material/web/menu/menu.js'),
-    import('@material/web/menu/menu-item.js'),
-    import('@material/web/iconbutton/icon-button.js'),
-    import('@material/web/divider/divider.js'),
-    import('@material/web/list/list.js'),
-    import('@material/web/list/list-item.js')
-  ])
-  
-  logger.info('Popup', 'Material Web', 'Components loaded', {
-    'md-menu': !!customElements.get('md-menu'),
-    'md-menu-item': !!customElements.get('md-menu-item'),
-    'md-icon-button': !!customElements.get('md-icon-button'),
-    'md-divider': !!customElements.get('md-divider'),
-    'md-list': !!customElements.get('md-list'),
-    'md-list-item': !!customElements.get('md-list-item')
-  })
-}
 
 /**
  * Popup 页面根应用实例。
@@ -75,7 +42,7 @@ async function initializePopup(): Promise<void> {
   
   try {
     // ✅ 1. 先加载 Material Web 组件（确保在 Vue 组件渲染前注册）
-    await loadMaterialComponents()
+    await preloadMaterialWebComponents('Popup')
     
     // 2. 懒加载字体服务
     const { fontService, initializeSmartFonts } = await loadFontService()

@@ -16,15 +16,21 @@
         <!-- ✅ Material Web Tabs - 横向布局 -->
         <div class="settings-tabs-container">
           <md-tabs
-            :active-tab-index="getActiveTabIndex()"
+            ref="mdTabsRef"
+            class="settings-md-tabs"
+            :active-tab-index="tabsActiveIndex"
             @change="handleTabChange"
           >
             <md-primary-tab
               v-for="tabItem in tabsI18n"
               :key="tabItem.value"
+              class="settings-md-primary-tab"
             >
-              <LucideIcon slot="icon" :name="tabItem.icon" :size="20" />
-              {{ tabItem.text }}
+              <!-- 原生元素承载 slot，保证投射进 md-primary-tab 的 icon 槽，避免 Vue 组件根节点无法插槽导致重叠与 ? 占位 -->
+              <span slot="icon" class="settings-tab__icon-slot">
+                <LucideIcon :name="tabItem.icon" :size="20" />
+              </span>
+              <span class="settings-tab__label">{{ tabItem.text }}</span>
             </md-primary-tab>
           </md-tabs>
         </div>
@@ -32,6 +38,9 @@
         <main class="settings-content" role="region">
           <div v-if="tab === 'general'" class="pane">
             <component :is="GeneralSettings" />
+          </div>
+          <div v-else-if="tab === 'colorPreset'" class="pane">
+            <component :is="ColorPresetSettings" />
           </div>
           <div v-else-if="tab === 'ai'" class="pane">
             <component :is="AISettings" />
@@ -52,20 +61,19 @@
 import {
   computed,
   defineAsyncComponent,
+  nextTick,
   onMounted,
   onUnmounted,
   ref,
   watch
 } from 'vue'
 import { App, AppHeader, Main } from '@/components'
-import '@material/web/tabs/tabs.js'
-import '@material/web/tabs/primary-tab.js'
 import LucideIcon from '@/components/base/LucideIcon/LucideIcon.vue'
 import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'
 import GlobalQuickAddBookmark from '@/components/business/GlobalQuickAddBookmark/GlobalQuickAddBookmark.vue'
 import { t } from '@/infrastructure'
 import { onEvent } from '@/infrastructure/events/event-bus'
-import { useSupabaseAuth } from '@/composables'
+import { useSupabaseAuth, useThemeSync } from '@/composables'
 import { logger } from '@/infrastructure/logging/logger'
 
 // 使用 Supabase Auth 检查登录状态
@@ -81,6 +89,9 @@ defineOptions({
 const GeneralSettings = defineAsyncComponent(
   () => import('./sections/GeneralSettings.vue')
 )
+const ColorPresetSettings = defineAsyncComponent(
+  () => import('./sections/ColorPresetSettings.vue')
+)
 const AISettings = defineAsyncComponent(
   () => import('./sections/AISettings.vue')
 )
@@ -91,7 +102,7 @@ const ShortcutSettings = defineAsyncComponent(
   () => import('./sections/ShortcutSettings.vue')
 )
 
-type TabKey = 'general' | 'ai' | 'notifications' | 'shortcuts'
+type TabKey = 'general' | 'colorPreset' | 'ai' | 'notifications' | 'shortcuts'
 const tab = ref<TabKey>('general')
 const tabs = [
   {
@@ -99,6 +110,12 @@ const tabs = [
     key: 'settings_tab_general',
     fallback: '通用',
     icon: 'settings'
+  },
+  {
+    value: 'colorPreset',
+    key: 'settings_tab_color_preset',
+    fallback: '配色',
+    icon: 'palette'
   },
   {
     value: 'ai',
@@ -135,19 +152,32 @@ const tabsI18n = computed(() =>
   }))
 )
 
+/** 与 `md-tabs.activeTabIndex` 对齐的当前索引（Material Web 使用 0-based） */
+const tabsActiveIndex = computed(() => {
+  const i = tabs.findIndex(t => t.value === tab.value)
+  return i >= 0 ? i : 0
+})
+
+const mdTabsRef = ref<HTMLElement | null>(null)
+
 /**
- * 获取当前激活的 tab 索引
+ * 将 Vue 状态同步到 Lit `md-tabs`（仅靠模板绑定时，部分情况下指示器与选中态不会更新）。
  */
-const getActiveTabIndex = (): number => {
-  return tabs.findIndex(t => t.value === tab.value)
+function syncMdTabsActiveIndex(): void {
+  const el = mdTabsRef.value as { activeTabIndex?: number } | null
+  if (!el || typeof el.activeTabIndex !== 'number') return
+  const next = tabsActiveIndex.value
+  if (el.activeTabIndex !== next) {
+    el.activeTabIndex = next
+  }
 }
 
 /**
- * 处理 tab 切换
+ * 处理 tab 切换：`change` 可能从子节点冒泡，必须用 `currentTarget` 取 `md-tabs`。
  */
-const handleTabChange = (event: Event) => {
-  const target = event.target as HTMLElement & { activeTabIndex: number }
-  const index = target.activeTabIndex
+function handleTabChange(event: Event): void {
+  const host = event.currentTarget as HTMLElement & { activeTabIndex: number }
+  const index = host.activeTabIndex
   if (index >= 0 && index < tabs.length) {
     tab.value = tabs[index].value
   }
@@ -158,7 +188,15 @@ async function checkLoginStatus() {
   // Supabase Auth 的 isAuthenticated 是响应式的，会自动更新
 }
 
-const allowed = new Set<TabKey>(['general', 'ai', 'notifications', 'shortcuts'])
+const allowed = new Set<TabKey>([
+  'general',
+  'colorPreset',
+  'ai',
+  'notifications',
+  'shortcuts'
+])
+
+useThemeSync('Settings')
 
 function readTabFromURL(): TabKey | null {
   try {
@@ -239,6 +277,9 @@ onMounted(async () => {
     tab.value = initial
   }
 
+  await nextTick()
+  syncMdTabsActiveIndex()
+
   // 监听浏览器前进/后退
   // 🔒 环境检查：确保在浏览器环境中运行
   if (typeof window !== 'undefined') {
@@ -274,6 +315,7 @@ onUnmounted(() => {
 
 watch(tab, v => {
   writeTabToURL(v)
+  void nextTick(() => syncMdTabsActiveIndex())
 })
 </script>
 
@@ -308,17 +350,39 @@ watch(tab, v => {
   top: 0;
   z-index: 10;
   padding: var(--spacing-4) 0;
-  border-bottom: 1px solid var(--color-border);
+
+  /* 不与下方内容区 `border-top` 叠成双横线：分隔由 `.settings-content` 外框承担 */
   background: var(--color-background);
 }
 
-md-tabs {
+.settings-md-tabs {
   --md-primary-tab-active-indicator-height: 3px;
   --md-primary-tab-container-height: 56px;
   --md-primary-tab-label-text-size: var(--text-base);
   --md-icon-size: 20px;
 
+  display: block;
   width: 100%;
+  min-height: 56px;
+}
+
+/* 子节点在 Shadow 外：用 :deep 拉平各 Tab 的最小宽度与图标对齐，避免标签挤成一团 */
+.settings-tabs-container :deep(md-primary-tab.settings-md-primary-tab) {
+  flex: 1 1 0;
+  min-width: 4.5rem;
+  max-width: none;
+}
+
+.settings-tab__icon-slot {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.settings-tab__label {
+  white-space: nowrap;
 }
 
 .settings-content {

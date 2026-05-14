@@ -4,7 +4,8 @@ AcuityBookmarks 设计令牌包 - 基于 Material Design 3 的统一设计系统
 
 ## 📦 包含内容
 
-- **Material Design 3 主题** - 薄荷绿色系（种子色 #89EAD7）
+- **Material Design 3 主题** - 见 `css/material-theme.css`（默认种子与产品文档 §2.5.5「晴空」一致）
+- **官方配色预设** - `src/color-presets.ts`：六套色相 `id` / 中文名 / Builder 种子 Hex（与产品文档 §2.5.5 同步）
 - **颜色系统** - 完整的 MD3 颜色方案 + 语义色
 - **间距系统** - Material Design spacing tokens
 - **形状系统** - Material Design shape tokens

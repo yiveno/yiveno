@@ -2027,6 +2027,15 @@
   "settings_tab_shortcuts": {
     "message": "快捷鍵"
   },
+  "settings_tab_color_preset": {
+    "message": "配色"
+  },
+  "settings_color_presets_title": {
+    "message": "配色預設"
+  },
+  "settings_color_presets_intro": {
+    "message": "選擇一整套主色與介面色變數。此設定與頂欄中的亮/暗「外觀」無關，可分別調整。"
+  },
   "settings_general_title": {
     "message": "通用設定"
   },

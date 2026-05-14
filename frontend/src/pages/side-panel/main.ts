@@ -13,6 +13,7 @@ import { logger } from '@/infrastructure/logging/logger'
 import { notifyInfo } from '@/application/notification/notification-service'
 import { initializeChromeMessageBridge } from '@/infrastructure/events/chrome-message-bridge'
 import { initCrossPageSync } from '@/composables/useCrossPageSync'
+import { preloadMaterialWebComponents } from '@/infrastructure/material/preload-material-web'
 
 logger.debug('SidePanel', 'Init', '恢复完整的初始化逻辑')
 
@@ -30,6 +31,8 @@ async function initializeSidePanel() {
     await initializeSmartFonts()
 
     // 字体加载已由 Service Worker 统一预取和缓存，无需页面单独请求
+
+    await preloadMaterialWebComponents('SidePanel')
 
     // 挂载应用
     app.mount('#app')

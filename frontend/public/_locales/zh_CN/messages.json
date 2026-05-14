@@ -2036,6 +2036,15 @@
   "settings_tab_shortcuts": {
     "message": "快捷键"
   },
+  "settings_tab_color_preset": {
+    "message": "配色"
+  },
+  "settings_color_presets_title": {
+    "message": "配色预设"
+  },
+  "settings_color_presets_intro": {
+    "message": "选择一整套主色与界面色变量。此设置与顶栏中的亮/暗「外观」无关，可分别调整。"
+  },
   "settings_general_title": {
     "message": "通用设置"
   },

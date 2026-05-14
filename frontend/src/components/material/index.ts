@@ -1,14 +1,12 @@
 /**
- * Material Web Components 统一导入
- * 
- * 这个文件提供了所有 Material Web Components 的统一导入入口
- * 
- * 使用方式：
- * 1. 按需导入（推荐）：
- *    import '@material/web/button/filled-button.js'
- * 
- * 2. 统一导入（如果需要多个组件）：
- *    import '@/components/material'
+ * Material Web Components 统一 re-export（供类型或按需拉取符号等场景）
+ *
+ * **运行时注册**：各 HTML 入口须在 `app.mount` 前 `await preloadMaterialWebComponents(...)`，
+ * 见 `frontend/src/infrastructure/material/preload-material-web.ts`。Vue SFC 内请勿再写纯副作用
+ * `import '@material/web/...'`，避免与入口策略分叉。
+ *
+ * 使用方式（非典型）：
+ * - 需要具名类型/类时：`import { MdFilledButton } from '@/components/material'` 等
  */
 
 // ============================================

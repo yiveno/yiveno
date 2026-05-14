@@ -2,6 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Single source of truth (read first)
+
+- **Authoritative product + architecture spec (Chinese):** `docs/product/AcuityBookmarks-产品文档-v3.0.md` — **only** product document; update it when behavior or architecture changes.
+- **Cursor / IDE enforcement:** `.cursor/rules/project.mdc` (and `.kiro/steering/*.md` must not contradict it).
+
 ## Project Overview
 
 **AcuityBookmarks** is an intelligent Chrome extension built with Vue 3, TypeScript, and Cloudflare Workers that provides AI-powered bookmark organization, content-aware search, and smart recommendations. The project follows a sophisticated Domain-Driven Design (DDD) architecture and is optimized for high performance with features like virtual scrolling, IndexedDB caching, and background crawling.

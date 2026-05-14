@@ -66,4 +66,4 @@ export {
 } from './useSimplePerformance'
 export { useCrossPageSync } from './useCrossPageSync'
 export { useGlobalSyncProgress } from './useGlobalSyncProgress'
-export { useThemeSync } from './useThemeSync'
+export { useThemeSync, applyColorPresetToDocument } from './useThemeSync'

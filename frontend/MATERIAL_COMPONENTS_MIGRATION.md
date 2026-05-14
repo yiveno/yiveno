@@ -282,7 +282,7 @@ import '@material/web/icon/icon.js'
 - [Material Web Components 官方文档](https://github.com/material-components/material-web)
 - [Material Design 3 规范](https://m3.material.io/)
 - [Material Web Components 使用指南](./MATERIAL_WEB_COMPONENTS_GUIDE.md)
-- [Material Design Roadmap](../MATERIAL_DESIGN_ROADMAP.md)
+- [完整产品文档 v3.0](../../docs/product/AcuityBookmarks-产品文档-v3.0.md)（仓库唯一规格正文）
 
 ---
 

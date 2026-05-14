@@ -802,7 +802,9 @@ onUnmounted(() => {
   color: var(--color-primary-foreground);
   background: var(--color-primary);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition:
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast);
   box-shadow: 0 4px 12px var(--color-primary-alpha-20);
 }
 
@@ -814,13 +816,10 @@ onUnmounted(() => {
 .action-button:hover:not(:disabled) {
   background: var(--color-primary-hover);
   box-shadow: 0 6px 20px var(--color-primary-alpha-20);
-  /* stylelint-disable-next-line acuity/no-motion-on-interaction */
-  transform: translateY(-2px);
 }
 
 .action-button:active:not(:disabled) {
-  /* stylelint-disable-next-line acuity/no-motion-on-interaction */
-  transform: translateY(0);
+  box-shadow: 0 2px 8px var(--color-primary-alpha-20);
 }
 
 /* Footer */

@@ -124,12 +124,6 @@ import {
 } from '@/application/bookmark/recommendation-app-service'
 
 import { logger } from '@/infrastructure/logging/logger'
-import '@material/web/iconbutton/icon-button.js'
-import '@material/web/button/outlined-button.js'
-import '@material/web/icon/icon.js'
-import '@material/web/list/list.js'
-import '@material/web/list/list-item.js'
-import '@material/web/progress/circular-progress.js'
 
 // Props
 interface Props {

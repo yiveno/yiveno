@@ -153,14 +153,6 @@ import { llmAdapter } from '@/infrastructure/llm/llm-adapter'
 // ⚠️ 不要从 @/application 导入 notify 函数，因为它们在 notification-service 中，依赖 Vue
 import { notifyError, notifySuccess, notifyWarning } from '@/application/notification/notification-service'
 
-// 导入 Material Web Components
-import '@material/web/select/outlined-select.js'
-import '@material/web/select/select-option.js'
-import '@material/web/textfield/outlined-text-field.js'
-import '@material/web/button/filled-button.js'
-import '@material/web/button/text-button.js'
-import '@material/web/icon/icon.js'
-
 defineOptions({ name: 'AISettings' })
 
 const selectedProvider = ref<UserLLMProvider>('openai')

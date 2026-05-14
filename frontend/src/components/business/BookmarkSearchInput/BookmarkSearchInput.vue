@@ -219,10 +219,6 @@ BookmarkSearchInput - 书签筛选输入组件
 import { watch, computed, ref, nextTick, onMounted, onUnmounted } from 'vue'
 import { CountIndicator, LucideIcon, Input } from '@/components'
 import { useBookmarkSearch } from '@/composables/useBookmarkSearch'
-import '@material/web/progress/circular-progress.js'
-import '@material/web/list/list.js'
-import '@material/web/list/list-item.js'
-import '@material/web/iconbutton/icon-button.js'
 import { useSearchHistory } from '@/composables/useSearchHistory'
 import type { BookmarkNode } from '@/types'
 import { useDebounceFn } from '@vueuse/core'
@@ -1730,14 +1726,11 @@ defineExpose({
   color: var(--color-text-secondary);
   background: var(--color-bg);
   cursor: pointer;
-
-  /* ✅ 增强过渡效果，添加 transform 和 font-weight */
   transition:
     background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
     border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
     color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .filter-tag:hover {

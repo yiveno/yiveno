@@ -46,9 +46,6 @@ import {
   usePerformanceMonitor,
   useMemoryManagement
 } from '@/composables/useSimplePerformance'
-import '@material/web/button/outlined-button.js'
-import '@material/web/iconbutton/icon-button.js'
-import '@material/web/icon/icon.js'
 
 const showMonitor = ref(true) // 简化：总是显示
 const isExpanded = ref(false)

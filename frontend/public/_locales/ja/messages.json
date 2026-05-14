@@ -2027,6 +2027,15 @@
   "settings_tab_shortcuts": {
     "message": "ショートカット"
   },
+  "settings_tab_color_preset": {
+    "message": "配色"
+  },
+  "settings_color_presets_title": {
+    "message": "配色プリセット"
+  },
+  "settings_color_presets_intro": {
+    "message": "プライマリ色とサーフェス色の一式を選びます。ヘッダーのライト/ダーク「外観」とは独立して調整できます。"
+  },
   "settings_general_title": {
     "message": "一般設定"
   },

@@ -202,7 +202,7 @@ chrome.storage.local.get(null, items => {
 
 - [Supabase Auth 文档](https://supabase.com/docs/guides/auth)
 - [Chrome Extension OAuth](https://developer.chrome.com/docs/extensions/reference/identity/)
-- [项目架构文档](../文档/产品文档/AcuityBookmarks-产品文档-v3.0.md)
+- [AcuityBookmarks 产品文档 v3.0（唯一正文）](../product/AcuityBookmarks-产品文档-v3.0.md)
 
 ## ❓ 常见问题
 

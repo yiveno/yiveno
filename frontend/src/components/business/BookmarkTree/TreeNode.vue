@@ -173,9 +173,6 @@
 import { computed, onMounted, onUnmounted, ref, toRef } from 'vue'
 import { LucideIcon } from '@/components/base/LucideIcon'
 import type { BookmarkNode } from '@/types'
-import '@material/web/chips/chip-set.js'
-import '@material/web/chips/input-chip.js'
-import '@material/web/checkbox/checkbox.js'
 import { logger } from '@/infrastructure/logging/logger'
 import { useLazyFavicon } from '@/composables/useLazyFavicon'
 import {
@@ -185,8 +182,6 @@ import {
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine'
 import { setCustomNativeDragPreview } from '@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview'
 import { pointerOutsideOfPreview } from '@atlaskit/pragmatic-drag-and-drop/element/pointer-outside-of-preview'
-import '@material/web/iconbutton/icon-button.js'
-import '@material/web/icon/icon.js'
 
 // ✅ i18n 已移除（收藏功能已移至右键菜单，不再需要 tooltip 文本）
 // const { t } = useI18n()
@@ -668,7 +663,13 @@ const itemStyle = computed(() => {
 // === 事件处理 ===
 
 const handleFolderToggleClick = (event: MouseEvent) => {
-  if ((event.target as HTMLElement).closest('.node-actions')) {
+  const t = event.target as HTMLElement
+  if (t.closest('.node-actions')) {
+    return
+  }
+
+  // 点击选择框时只走 md-checkbox 的 change（全选/取消），勿冒泡触发展开收起
+  if (t.closest('md-checkbox')) {
     return
   }
 
@@ -684,7 +685,12 @@ const handleFolderToggleClick = (event: MouseEvent) => {
 }
 
 const handleBookmarkClick = (event: MouseEvent) => {
-  if ((event.target as HTMLElement).closest('.node-actions')) {
+  const t = event.target as HTMLElement
+  if (t.closest('.node-actions')) {
+    return
+  }
+
+  if (t.closest('md-checkbox')) {
     return
   }
 
@@ -846,8 +852,7 @@ defineExpose({
   transition:
     background var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard),
     border-left-color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard),
-    box-shadow var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard),
-    transform var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+    box-shadow var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
 }
 
 /* 书签行高紧凑 */
@@ -860,25 +865,16 @@ defineExpose({
   border-radius: 15px; /* 30px / 2 = 胶囊形状 */
   transition:
     background var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard),
-    box-shadow var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard),
-    transform var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+    box-shadow var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
 }
 
 .folder-content:hover {
   background: linear-gradient(90deg, var(--color-folder-hover) 0%, transparent 100%);
-  
-  /* ✅ 优化：hover 时轻微上浮 */
-  /* stylelint-disable-next-line acuity/no-motion-on-interaction -- 微交互设计：1px 位移不会引起布局抖动 */
-  transform: translateY(-1px);
 }
 
 /* 书签悬停效果 - 蓝色系 */
 .bookmark-content:hover {
   background: var(--color-bookmark-hover);
-  
-  /* ✅ 优化：hover 时轻微上浮 */
-  /* stylelint-disable-next-line acuity/no-motion-on-interaction -- 微交互设计：1px 位移不会引起布局抖动 */
-  transform: translateY(-1px);
 }
 
 /* 选中状态高亮（持久显示）- 通过增加特异性而非 !important */
@@ -969,15 +965,6 @@ defineExpose({
   box-shadow: 
     0 1px 2px var(--color-shadow-008),
     0 0 0 0.5px var(--color-shadow-005);
-  
-  /* ✅ 优化：hover 时轻微放大 */
-  transition: transform var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
-}
-
-/* ✅ 优化：hover 时 favicon 轻微放大 */
-.bookmark-content:hover .bookmark-icon img {
-  /* stylelint-disable-next-line acuity/no-motion-on-interaction -- 微交互设计：5% 缩放不会引起布局抖动 */
-  transform: scale(1.05);
 }
 
 /* 标题 - 基础样式 */

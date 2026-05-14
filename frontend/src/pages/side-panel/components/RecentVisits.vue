@@ -38,10 +38,6 @@ import { onEvent } from '@/infrastructure/events/event-bus'
 import { t } from '@/utils/i18n-helpers'
 import { formatRecentVisitTime } from '@/utils/time-formatter'
 
-// 导入 Material Web Components
-import '@material/web/list/list.js'
-import '@material/web/list/list-item.js'
-
 defineOptions({
   name: 'RecentVisits'
 })

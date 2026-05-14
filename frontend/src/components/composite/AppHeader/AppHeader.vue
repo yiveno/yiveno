@@ -49,8 +49,6 @@ import { ref, computed, toRefs, onMounted, onUnmounted } from 'vue'
 import { logger } from '@/infrastructure/logging/logger'
 import { onEvent } from '@/infrastructure/events/event-bus'
 import { globalStateManager } from '@/infrastructure/global-state/global-state-manager'
-import '@material/web/iconbutton/icon-button.js'
-import '@material/web/icon/icon.js'
 
 const props = withDefaults(
   defineProps<{

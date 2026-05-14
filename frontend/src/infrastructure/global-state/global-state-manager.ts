@@ -9,6 +9,12 @@
  * - 支持实时状态监听和更新
  */
 
+import {
+  normalizeColorPresetId,
+  type ColorPresetId
+} from '@acuity-bookmarks/design-tokens/color-presets'
+
+import { emitEvent } from '../events/event-bus'
 import { logger } from '../logging/logger'
 
 /**
@@ -30,6 +36,9 @@ export interface GlobalState {
   /** 主题设置 */
   theme: ThemeMode
 
+  /** Material 3 配色预设（与亮/暗主题正交） */
+  colorPreset: ColorPresetId
+
   /** 是否自动同步 */
   autoSync: boolean
   /** 是否显示网站图标 */
@@ -47,6 +56,7 @@ export interface GlobalState {
  */
 const DEFAULT_STATE: GlobalState = {
   theme: 'system', // 默认跟随系统主题
+  colorPreset: 'default',
   autoSync: true,
   showFavicons: true,
   compactMode: false,
@@ -62,6 +72,7 @@ const STORAGE_KEYS = {
   /** 本地存储键名（快速访问，不跨设备同步） */
   LOCAL: {
     THEME: 'theme',
+    COLOR_PRESET: 'colorPreset',
     AUTO_SYNC: 'autoSync',
     SHOW_FAVICONS: 'showFavicons',
     COMPACT_MODE: 'compactMode',
@@ -69,7 +80,8 @@ const STORAGE_KEYS = {
   },
   /** 同步存储键名（跨设备同步） */
   SYNC: {
-    THEME: 'theme'
+    THEME: 'theme',
+    COLOR_PRESET: 'colorPreset'
   }
 } as const
 
@@ -114,10 +126,18 @@ export class GlobalStateManager {
     return typeof value === 'boolean' ? value : fallback
   }
 
+  private ensureColorPreset(
+    value: unknown,
+    fallback: ColorPresetId = DEFAULT_STATE.colorPreset
+  ): ColorPresetId {
+    return normalizeColorPresetId(value ?? fallback)
+  }
+
   private normalizeState(rawState: Partial<GlobalState>): GlobalState {
     const fallback = this.state ?? DEFAULT_STATE
     return {
       theme: this.ensureTheme(rawState.theme, fallback.theme),
+      colorPreset: this.ensureColorPreset(rawState.colorPreset, fallback.colorPreset),
       autoSync: this.ensureBoolean(rawState.autoSync, fallback.autoSync),
       showFavicons: this.ensureBoolean(
         rawState.showFavicons,
@@ -242,6 +262,18 @@ export class GlobalStateManager {
               break
             }
 
+            case STORAGE_KEYS.LOCAL.COLOR_PRESET: {
+              const nextPreset = this.ensureColorPreset(
+                changes[key].newValue,
+                newState.colorPreset
+              )
+              if (nextPreset !== newState.colorPreset) {
+                newState.colorPreset = nextPreset
+                stateChanged = true
+              }
+              break
+            }
+
             case STORAGE_KEYS.LOCAL.AUTO_SYNC: {
               const nextAutoSync = this.ensureBoolean(
                 changes[key].newValue,
@@ -296,6 +328,18 @@ export class GlobalStateManager {
               )
               if (nextTheme !== newState.theme) {
                 newState.theme = nextTheme
+                stateChanged = true
+              }
+              break
+            }
+
+            case STORAGE_KEYS.SYNC.COLOR_PRESET: {
+              const nextPreset = this.ensureColorPreset(
+                changes[key].newValue,
+                newState.colorPreset
+              )
+              if (nextPreset !== newState.colorPreset) {
+                newState.colorPreset = nextPreset
                 stateChanged = true
               }
               break
@@ -400,6 +444,46 @@ export class GlobalStateManager {
    */
   getTheme(): ThemeMode {
     return this.state?.theme ?? DEFAULT_STATE.theme
+  }
+
+  /**
+   * 获取配色预设
+   */
+  getColorPreset(): ColorPresetId {
+    return this.state?.colorPreset ?? DEFAULT_STATE.colorPreset
+  }
+
+  /**
+   * 设置配色预设（写入 local + sync，并广播 `colorPreset:changed`）
+   */
+  async setColorPreset(preset: ColorPresetId): Promise<void> {
+    await this.ensureInitialized()
+
+    const normalized = normalizeColorPresetId(preset)
+    const oldValue = this.state.colorPreset
+    this.state.colorPreset = normalized
+
+    try {
+      await Promise.all([
+        this.setStorageData(
+          STORAGE_KEYS.LOCAL.COLOR_PRESET,
+          normalized,
+          'local'
+        ),
+        this.setStorageData(
+          STORAGE_KEYS.SYNC.COLOR_PRESET,
+          normalized,
+          'sync'
+        )
+      ])
+
+      logger.info('GlobalStateManager', `配色预设已更新: ${oldValue} -> ${normalized}`)
+      emitEvent('colorPreset:changed', { preset: normalized })
+    } catch (error) {
+      this.state.colorPreset = oldValue
+      logger.error('GlobalStateManager', '设置配色预设失败', error)
+      throw error
+    }
   }
 
   /**
@@ -604,6 +688,22 @@ export async function getTheme(): Promise<ThemeMode> {
 export async function setTheme(theme: ThemeMode): Promise<void> {
   await globalStateManager.initialize()
   return globalStateManager.setTheme(theme)
+}
+
+/**
+ * 便捷函数 - 获取配色预设
+ */
+export async function getColorPreset(): Promise<ColorPresetId> {
+  await globalStateManager.initialize()
+  return globalStateManager.getColorPreset()
+}
+
+/**
+ * 便捷函数 - 设置配色预设
+ */
+export async function setColorPreset(preset: ColorPresetId): Promise<void> {
+  await globalStateManager.initialize()
+  return globalStateManager.setColorPreset(preset)
 }
 
 /**

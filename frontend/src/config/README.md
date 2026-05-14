@@ -382,9 +382,8 @@ const imported = JSON.parse(await file.text())
 
 ## 📚 相关文档
 
-- [产品文档](../../../文档/产品文档/AcuityBookmarks-产品文档-v3.0.md)
-- [开发规范](../../../文档/开发规范/)
-- [架构设计](../../../文档/架构设计/)
+- [产品文档](../../../docs/product/AcuityBookmarks-产品文档-v3.0.md)（仓库内唯一产品正文）
+- [项目文档目录](../../../docs/)
 
 ---
 

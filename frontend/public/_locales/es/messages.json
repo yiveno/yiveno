@@ -2027,6 +2027,15 @@
   "settings_tab_shortcuts": {
     "message": "Atajos"
   },
+  "settings_tab_color_preset": {
+    "message": "Color"
+  },
+  "settings_color_presets_title": {
+    "message": "Presets de color"
+  },
+  "settings_color_presets_intro": {
+    "message": "Elige un conjunto completo de colores primarios y de superficie. Es independiente del aspecto claro/oscuro del encabezado."
+  },
   "settings_general_title": {
     "message": "Configuración General"
   },

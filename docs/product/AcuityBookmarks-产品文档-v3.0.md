@@ -1,8 +1,8 @@
 # AcuityBookmarks - 完整产品文档 v3.0
 
-> 📘 **文档目标**：为 AI 编程助手（Cursor/Copilot）提供完整的项目上下文，确保生成的代码符合项目架构和规范。
+> 📘 **文档目标**：为 AI 编程助手（Cursor / Kiro / Claude 等）提供完整项目上下文，确保生成代码符合本仓库架构与规范。
 >
-> 🎯 **最后更新**：2026-05-15  
+> 🎯 **最后更新**：2026-05-14  
 > 📦 **项目版本**：v1.0  
 > 🏗️ **架构版本**：v3.0（DDD + 单向数据流 + 现代技术栈）
 
@@ -10,15 +10,73 @@
 
 ## 📋 目录
 
+- [零、文档治理与 AI 协作](#零文档治理与-ai-协作)
 - [第一部分：产品概述](#第一部分产品概述)
+  - [1.1.1 Hover 与指针交互（Material Design 3）](#interaction-hover)
 - [第二部分：技术架构](#第二部分技术架构)
+  - [2.1.4 插件与官网（认证与会话）](#extension-website-auth)
 - [2.5 Theming runbook - 换肤与主题操作清单](#25-theming-runbook-换肤与主题操作清单)
+- [2.5.5 官方配色预设（与代码同步）](#255-官方配色预设与代码同步)
 - [第三部分：核心功能](#第三部分核心功能)
 - [第四部分：开发规范](#第四部分开发规范)
+  - [4.1.2.1 Hover 与指针交互（实现约束）](#4121-hover-与指针交互实现约束)
 - [第五部分：数据流设计](#第五部分数据流设计)
 - [第六部分：存储方案](#第六部分存储方案)
 - [第七部分：关键实现细节](#第七部分关键实现细节)
 - [第八部分：测试与质量保障](#第八部分测试与质量保障)
+
+---
+
+## 零、文档治理与 AI 协作 {#doc-governance}
+
+本仓库**长期由 AI IDE（Cursor / Kiro / 其他）辅助开发**，易产生多套 **rules** 与大量过程性 Markdown。**本节为「写什么、信什么、删什么」的硬约定**，与代码具有同等效力。
+
+> **说明（2026-05）**：原 `docs/PHASE*.md` 及 `docs/development/` 下多数阶段性「完成报告」已从仓库删除，避免与正文双源；细节以 **Git 提交历史** 为准。
+
+### 0.1 单一产品正文（规格唯一出口）
+
+| 类型 | 路径 | 说明 |
+|------|------|------|
+| **产品 + 架构 + 交互 + 开发规范（正文）** | `docs/product/AcuityBookmarks-产品文档-v3.0.md` | **唯一**需要与「当前真实实现」持续对齐的规格文档；架构/数据流/UI 约定/质量门禁等**以本文件为准**。 |
+| IDE 规则 | `.cursor/rules/project.mdc`、`.kiro/steering/*.md` | **执行层**：行为约束、速查表；**不得**与产品正文冲突；若冲突**以本文件为准**并应立刻改 IDE 规则。 |
+| 运维/接入说明（非产品规格） | 如 `docs/AUTH_GUIDE.md` | 操作步骤类可暂存；**与正文冲突时以正文为准**；结论性内容应迁回正文后删或缩为链接。 |
+| 阶段复盘 / 历史 | ~~`docs/PHASE*.md`~~（**已移除**，考古用 Git）、`docs/archive/*` | **不作为规格引用**；新结论必须写回正文。 |
+| 开发事实清单 | `docs/development/`（现仅保留环境变量、依赖移除等**可查表**） | 非产品规格；与正文冲突以正文为准。 |
+| 组件 / 模块 README | `frontend/src/**/README.md` 等 | **局部说明**（用法、边界），不替代正文。 |
+| Material 清单与迁移备忘 | `frontend/MATERIAL_WEB_COMPONENTS_GUIDE.md` 等 | **实现备忘**；与正文重复时以**代码与本文件**为准。 |
+
+**禁止**：在仓库根目录或 `frontend/` 根目录再新增 `*_PROGRESS.md`、`*_MIGRATION_COMPLETE.md`、`*_SUMMARY.md` 等平行「产品规格」类文档；阶段性结论应**写回本文件**或仅存于 **Git 提交说明**，不再在 `docs/` 根目录堆积「PHASE 完成报告」类 Markdown。
+
+### 0.2 与 AI IDE 的协作原则
+
+- **需求与迭代**：新能力、改架构、改数据流 → **先改本文件相关章节，再改代码**（或同一 PR 内同时完成）。
+- **Rules 同步**：修改正文中的「铁律 / 门禁 / 目录结构」时，**必须**同步检查 `.cursor/rules/project.mdc` 与 `.kiro/steering/project.md`（及与本仓库相关的其他 steering），避免双口径。
+- **国际化（i18n）**：开发与校验流程见 `frontend/docs/i18n-implementation-guide.md`、`frontend/docs/i18n-workflow.md`；日期/时间类展示须走统一工具与语言环境，校验清单见 `frontend/docs/time-i18n-checklist.md`；脚本见 `frontend/package.json` 中 `i18n:*`；**不再**维护 `i18n-batch-*.md` 类批次记录。
+- **前端 `frontend/docs/`**：除上述 **3 份 i18n 相关**长期文档外，**不**再堆积过程性说明；阶段性结论写入本文件对应章节后应删除源 Markdown。
+- **瘦身**：历史过程文档**不主动扩张**；已吸收进正文且无引用价值的文件应删除；`frontend/docs/` 下**批次进度类**（如 `i18n-batch-*.md`）不得复活。
+
+### 0.3 前端 `src` 真实顶层结构（与代码一致）
+
+以下为 **2026-05** 仓库实际目录（用于对齐正文中的「分层」描述；**不以**旧文档中的理想树为唯一依据）：
+
+```
+frontend/src/
+├── pages/              # 各入口页面（popup / side-panel / management / settings …）
+├── components/         # Vue 组件（base / business / composite 等）
+├── application/        # 应用服务与用例编排
+├── core/               # 领域模型与纯逻辑
+├── infrastructure/     # IndexedDB、Chrome API、HTTP、日志等
+├── background/         # MV3 Service Worker（禁止依赖 Vue/DOM）
+├── stores/             # Pinia
+├── composables/
+├── services/           # 部分跨切能力（与 application 并存时注意依赖方向）
+├── presentation/       # 少量遗留/辅助表现层文件（新代码优先走 pages + components）
+├── design-system/      # 全局样式与 Material 覆盖
+├── config/、constants/、types/、utils/、workers/、offscreen/、content/ …
+└── tests/              # Vitest 等
+```
+
+**依赖方向**仍遵守正文 **§2.2**（DDD）：表现层 → application → core → infrastructure；`background/` 仅允许引用**无 Vue、无 DOM** 的模块路径（详见 `.cursor/rules` 中的 Service Worker 约束）。
 
 ---
 
@@ -52,6 +110,29 @@
 - **延伸而非另起炉灶**：扩展 UI 应呈现为 **Chrome 书签能力的自然延伸**，降低「又进了一个陌生 App」的认知成本与信任摩擦。
 - **气质对齐、像素不必对齐**：与 Chrome / Google 系工具审美谱系协调（如 Material Design 3、语义化设计 token），**不要求**与浏览器外壳或各平台 Chrome 像素级一致；随宿主视觉迭代，以「气质一致、可维护」为准则适度跟进。
 - **差异靠信息与品牌**：辨识度通过信息架构、核心能力（语义检索、整理、健康度等）与自有品牌元素建立，**不**以刻意「反 Chrome 味」作为设计目标。
+
+#### 1.1.1 Hover 与指针交互（Material Design 3）{#interaction-hover}
+
+**目标**：指针悬停时，用**可预期的表面反馈**表达「可交互 / 当前指针下是哪一行」，**不**破坏列表扫读节奏与版心稳定。
+
+**与 Material Design 3 的关系**：MD3 将 hover 列为标准 [Interaction states](https://m3.material.io/foundations/interaction/states) 之一，推荐通过 **state layer**（叠在组件表面上的半透明 on-container / on-surface 色层）与**容器属性**（底色、描边、阴影层级）区分状态；**不推荐**在**高密度列表行**上用位移、整行缩放充当 hover 主效果。
+
+**AcuityBookmarks 约定（扩展 / 管理页 / 侧栏等书签列表与类列表 UI）**
+
+| 场景 | 推荐 | 避免 |
+|------|------|------|
+| 书签树行、搜索结果行、上下文菜单项、筛选标签等**可重复列表行** | 背景色 / 渐变、`outline` / `box-shadow`（含 inset 边框）、Material 组件自带的 **hover state layer** token | `transform: translateY(...)`、`scale(...)` 作用在**整行**或行内大块；`transition: all` 无必要地带动 `transform` |
+| 独立 **CTA 按钮**、**图标按钮** | 底色变化、阴影略加重、`opacity`；必要时仅 **水平** 微动（如箭头 `translateX`）表达方向 | 整块卡片 `scale` 随 hover（易与「列表行 hover」混淆） |
+| **入场 / 离场**（对话框、下拉、Tooltip） | 短时长 `opacity` + 轻微 `translateY` / `scale` 仅用于**挂载卸载**，与列表 hover 分离 | 将「列表 hover」与「浮层入场」混用同一套位移习惯 |
+| **无障碍** | 尊重系统「减少动效」；非必要不动效 | 持续、大幅度的位移动效（易引发前庭不适） |
+
+**实现自检（前端）**
+
+- 在 `BookmarkTree` / `TreeNode`、搜索下拉、设置列表等路径上，**禁止**为 `:hover` 增加**垂直位移**或**整行缩放**。
+- `transition` 应枚举具体属性，**避免** `transition: all` 与列表项 hover 绑定导致误过渡 `transform`。
+- 工具类动画（`design-system/animations.css` 中的 `pop`、`shake` 等）用于**明确反馈**（成功 / 错误），**不**替代列表 hover 规范。
+
+**文档与代码同步**：新增或改版列表类组件时，须符合本节；审查 PR 时可将上表作为 UI 检查项。
 
 ### 1.2 目标用户
 
@@ -88,7 +169,7 @@
 
 #### P3 - 支撑功能（必要但非重点）
 
-- **设置页面**：AI API Key 配置、功能开关等用户配置项
+- **设置页面**：AI API Key 配置、功能开关等用户配置项；向量嵌入（Embedding）的生成节奏与配额由产品侧默认策略管理，**不再**提供独立「Embedding 设置」页，相关说明集中在「语义搜索」等开关附近文案。
 - **数据统计**：Popup 页面展示书签总数、健康状态等基础指标
 
 ### 1.4 AI 能力架构策略
@@ -96,9 +177,8 @@
 作为个人开发者产品，AI 能力采用**隐私优先 + 成本可控**的分层策略：
 
 #### 第一层：本地检索（免费，始终可用）
-- 基于 Fuse.js 的模糊匹配
-- IndexedDB 全文索引检索
-- 无需网络，无成本
+- 基于 **FlexSearch** 的高性能模糊筛选（工程内部分 API 仍沿用历史命名 `fuse` / `Fuse`）
+- IndexedDB 持久化与索引；无需网络，无成本
 
 #### 第二层：用户自带 API Key（推荐，隐私最优）
 - 用户在设置页填入自己的 OpenAI / Claude / Gemini API Key
@@ -113,7 +193,7 @@
 #### 降级策略
 ```
 用户有 API Key → 使用用户 Key（语义搜索）
-用户无 API Key → 使用本地 Fuse.js（模糊搜索）
+用户无 API Key → 使用本地 FlexSearch 模糊筛选
 网络不可用    → 使用本地 IndexedDB 索引（关键词搜索）
 ```
 
@@ -127,27 +207,30 @@
 
 ```typescript
 {
-  // 🔷 核心框架
-  vue: "3.5.18",                    // 响应式框架
-  pinia: "3.0.3",                   // 状态管理
-  typescript: "5.8.3",              // 类型安全
-  vite: "7.1.2",                    // 构建工具
+  // 🔷 核心框架（见 frontend/package.json）
+  vue: "^3.5.18",
+  pinia: "^3.0.3",
+  typescript: "~5.8.3",
+  vite: "^8.0.10",
 
-  // 🔷 现代库（v3.0 新增）
-  "@tanstack/vue-query": "5.90.5",  // 异步状态管理
-  "@tanstack/vue-virtual": "3.13.12", // 虚拟滚动
-  "@vueuse/core": "14.0.0",         // Vue Composables 工具集
-  "immer": "10.2.0",                // 不可变状态更新
-  "mitt": "3.0.1",                  // 事件总线
-  "zod": "3.25.8",                  // 运行时数据校验
+  // 🔷 现代库
+  "@tanstack/vue-query": "^5.90.5",
+  "@tanstack/vue-virtual": "^3.13.12",
+  "@vueuse/core": "^14.0.0",
+  "immer": "^10.2.0",
+  "mitt": "^3.0.1",
+  "zod": "^3.25.8",
 
-  // 🔷 搜索与工具
-  "fuse.js": "6.6.2",               // 模糊搜索引擎
-  "p-queue": "8.0.1",               // 并发控制
+  // 🔷 搜索与索引
+  "fuse.js": "^6.6.2",
+  "flexsearch": "^0.8.212",
 
-  // 🔷 测试框架
-  "vitest": "2.1.1",                // 单元测试
-  "@testing-library/vue": "8.1.0"   // 组件测试
+  // 🔷 UI 与扩展
+  "@material/web": "^2.4.1",
+
+  // 🔷 测试
+  "vitest": "^4.0.17",
+  "@vue/test-utils": "^2.4.6"
 }
 ```
 
@@ -173,61 +256,40 @@
 }
 ```
 
+#### 2.1.4 插件与官网（认证入口与会话同步）{#extension-website-auth}
+
+> 对应已移除的过程说明 `docs/plugin-website-integration.md` 等；**以本节 + 代码为准**，操作步骤类仍见 `docs/AUTH_GUIDE.md`（若与实现不一致以代码为准）。
+
+| 维度 | 约定 |
+|------|------|
+| **用户登录 / 账户 / 定价等外链** | 统一使用 `frontend/src/config/website.ts` 中的 `websiteUrls` 与 `openWebsiteUrl()`（如 `UserMenu` 跳转登录页）；基地址由 `VITE_WEBSITE_URL` 覆盖，默认生产域为 `https://acuitybookmarks.com`。 |
+| **官网与扩展的会话** | 在官网匹配域上注入内容脚本 `auth-sync.js`（源码 `frontend/src/content/auth-sync.ts`）：监听官网 `localStorage` 中 Supabase session（`sb-*-auth-token`），通过 `chrome.runtime.sendMessage` 向 Background 发送 `SYNC_AUTH_SESSION` / `CLEAR_AUTH_SESSION`，由扩展侧持久化并驱动 UI。 |
+| **职责边界** | 登录与账户主流程在 **官网（Nuxt `website/`）**；扩展负责书签核心能力、展示登录态与跳转；避免在扩展内再维护一套完整账户注册页（与已删文档中的目标一致，实现路径已演进为 content script 同步而非独立 `auth.html` 页）。 |
+
 ### 2.2 DDD 分层架构
 
 AcuityBookmarks 严格遵循 **领域驱动设计（DDD）** 的分层架构：
 
 ```
 frontend/src/
-├── presentation/         # 表现层（UI 组件）
-│   ├── pages/           # 页面级组件
-│   └── components/      # 可复用组件
-│
-├── application/         # 应用层（业务流程协调）
-│   ├── bookmark/        # 书签相关应用服务
-│   ├── search/          # 搜索应用服务
-│   ├── cleanup/         # 清理应用服务
-│   └── settings/        # 设置应用服务
-│
-├── core/                # 核心层（领域逻辑）
-│   ├── bookmark/        # 书签领域模型
-│   │   ├── domain/      # 领域实体和值对象
-│   │   ├── repositories/ # 仓储接口
-│   │   └── services/    # 领域服务
-│   └── search/          # 搜索领域逻辑
-│
-├── infrastructure/      # 基础设施层（技术实现）
-│   ├── indexeddb/       # IndexedDB 管理
-│   ├── storage/         # Chrome Storage API
-│   ├── events/          # 事件总线（mitt）
-│   ├── query/           # TanStack Query 配置
-│   ├── state/           # Immer 状态更新工具
-│   └── logging/         # 日志系统
-│
-├── background/          # 后台脚本（Chrome Extension）
-│   ├── bookmarks.ts     # 书签变化监听
-│   ├── messaging.ts     # 消息通信
-│   ├── crawler-manager.ts # 爬虫管理器
-│   └── state.ts         # 全局状态管理
-│
-├── stores/              # Pinia 状态管理
-│   ├── bookmarkStore.ts      # 书签状态
-│   ├── ui-store.ts           # UI 状态
-│   ├── search/               # 搜索状态
-│   └── cleanup/              # 清理状态
-│
-└── services/            # 服务层（跨层协调）
-    ├── bookmark-sync-service.ts  # 书签同步服务
-    ├── modern-bookmark-service.ts # 现代书签服务
-    ├── bookmark-trait-service.ts # 书签特征计算服务
-    └── trait-detection-service.ts # 特征检测 Worker 服务
+├── pages/                 # 入口页面（popup / management / side-panel / settings …）
+├── components/            # Vue 组件（base / business / composite）
+├── presentation/          # 少量遗留表现层文件；**新功能优先**使用 pages + components
+├── application/           # 应用服务（bookmark、search、cleanup、settings…）
+├── core/                  # 领域与纯逻辑
+├── infrastructure/        # IndexedDB、Chrome API、HTTP、日志等
+├── background/            # MV3 Service Worker（无 Vue / 无 DOM）
+├── stores/                # Pinia
+├── composables/、services/、design-system/、config/、types/、utils/、tests/ …
 ```
+
+> **说明**：与 **§零.0.3** 一致；子包（`packages/design-tokens`、`packages/auth-core`）及 `website/`、`backend/` 见各目录 README；**具体文件名以仓库为准**，上表为架构导航而非穷举。
 
 #### 分层职责与规则
 
 | 层级               | 职责                        | 禁止                                    |
 | ------------------ | --------------------------- | --------------------------------------- |
-| **Presentation**   | UI 渲染、用户交互、事件绑定 | 直接访问 Chrome API、直接访问 IndexedDB |
+| **Pages / Components** | UI 渲染、用户交互、事件绑定 | 直接访问 Chrome API、直接访问 IndexedDB |
 | **Application**    | 业务流程协调、跨领域编排    | 包含 UI 逻辑、直接操作 DOM              |
 | **Core**           | 领域模型、业务规则、纯函数  | 依赖外部 API、依赖框架                  |
 | **Infrastructure** | 技术实现、外部 API 封装     | 包含业务逻辑                            |
@@ -325,12 +387,14 @@ bun run format
 | 层级 | 作用 |
 |------|------|
 | **`document.documentElement`** | 运行时由 `data-theme`（`light` / `dark`）与 `style.colorScheme` 表达当前亮暗；**禁止**再使用已废弃的 `theme-light` / `theme-dark` 类名手抄变量。 |
-| **`packages/design-tokens/css/material-theme.css`** | Material Theme Builder 导出的 **`--md-sys-color-*`** 全量色板（含 `:root` 亮色、`@media (prefers-color-scheme: dark)` 下系统暗色、`:root[data-theme='dark']` 用户强制暗色及对比度变体）。**换品牌种子色时，本文件是主替换面。** |
+| **`packages/design-tokens/src/color-presets.ts`** | **官方配色预设清单**（`ColorPresetId`、种子 Hex、中文名）；与 §2.5.5 表格 **同源**，接入 `data-color-preset` 与设置 UI 时从此导入。 |
+| **`packages/design-tokens/css/presets/*.css`** | **六套配色**的亮/暗 `--md-sys-color-*`（由根目录 Builder 导出 + `build-material-color-presets.mjs` 生成）；运行时由 `data-color-preset` 选择。 |
+| **`packages/design-tokens/css/material-theme.css`** | 总入口：`@import` 各 `presets/*.css`，并含中等/高对比度与 `color-scheme` 段；**不**再内联整套标准亮/暗色（已拆至 presets）。 |
 | **`packages/design-tokens/css/semantic-colors.css`** | 业务语义色（success / warning / info、强调色、primary 阶梯、alpha）由 **`var(--md-sys-color-*)` 与 `color-mix`** 派生；换 M3 导出后一般**只需核对映射**，无需再堆 Hex。 |
 | **`frontend/src/design-system/tokens.css`** | 扩展将 `--md-sys-*` / `--acuity-*` 映射为项目对外的 **`--color-*`**（含阴影、遮罩、语义浅底等 P3 集中变量）。换肤后重点检查 **混色与阴影** 是否仍协调。 |
-| **`packages/design-tokens/src/colors.ts`** | 供 **无法使用 CSS 变量** 的场景（如控制台样式字符串、Badge API）：`.css` 仍指向变量名；`.rgb` / `.hex` 为与当前种子一致的**近似快照**，换 `material-theme.css` 后应**同步校对**以免与界面脱节。 |
+| **`packages/design-tokens/src/colors.ts`** | 供 **无法使用 CSS 变量** 的场景（如控制台样式字符串、Badge API）：`.css` 仍指向变量名；`.rgb` / `.hex` 为与 **默认 preset 亮侧** 一致的近似快照，换 `presets/default.css` 后应**同步校对** `colors.ts`。 |
 
-主题应用逻辑（不负责写死颜色，但换肤后需回归）：`frontend/src/composables/useThemeSync.ts`、`frontend/src/components/composite/ThemeToggle/ThemeToggle.vue`。View Transition 与主题相关选择器：`frontend/src/design-system/animations.css`。
+主题应用逻辑（不负责写死颜色，但换肤后需回归）：`frontend/src/composables/useThemeSync.ts`（同步 `data-theme` 与 `data-color-preset`）、`frontend/src/components/composite/ThemeToggle/ThemeToggle.vue`；**配色预设**在设置页「配色」标签 `frontend/src/pages/settings/sections/ColorPresetSettings.vue` 中选择，经 `frontend/src/infrastructure/global-state/global-state-manager.ts` 写入 `chrome.storage.local` / `sync` 的 `colorPreset` 键。View Transition 与主题相关选择器：`frontend/src/design-system/animations.css`。
 
 **官网（Nuxt）**：`website/nuxt.config.ts` 已引入 `@acuity-bookmarks/design-tokens/css/material-theme.css`；`website/app.vue` 使用 `data-theme`。若官网要与扩展同一套色盘，需与上述 CSS **同源提交**，避免两处分叉。
 
@@ -339,7 +403,8 @@ bun run format
 按常见「只换 Theme Builder 种子」工作流排序：
 
 1. **必改（色盘本体）**  
-   - `packages/design-tokens/css/material-theme.css` — 用 [Material Theme Builder](https://material-foundation.github.io/material-theme-builder/) 导出替换或按块合并（保留与 `data-theme` / `prefers-color-scheme` 配套的选择器结构，避免破坏单向主题切换）。
+   - **多预设**：`packages/design-tokens/css/presets/*.css` — 由根目录 `Skyline`、`Ocean`、`Forest`、`Ember`、`Twilight`（→ preset `violet`）、`Slate` 中 `light.css` / `dark.css` 经 `bun run build:color-presets`（`scripts/build-material-color-presets.mjs`）生成；**勿手改生成体**，改源 CSS 后重新运行脚本。  
+   - **总入口**：`packages/design-tokens/css/material-theme.css` — `@import` 上述 preset，并保留中等/高对比度与 `color-scheme` 段。若仅替换「晴空」单套，可只更新 `Skyline` 源文件后重跑脚本。
 
 2. **强烈建议核对（派生与映射）**  
    - `packages/design-tokens/css/semantic-colors.css` — 确认 `--acuity-*` 仍指向有效的 `--md-sys-color-*`。  
@@ -378,7 +443,25 @@ bun run stylelint:check
 | **对比度** | 启用系统「提高对比度」或 Chrome 模拟 `prefers-contrast: more` | 主要文本与背景、焦点环、错误/成功状态仍可辨识；高对比分支（如 `main.css`）生效且无布局崩坏。 |
 | **回归** | 全局抽查 | 无新增裸 Hex / 游离 `rgb`；语义 success/warning/info 与产品语义一致（warning 已映射 tertiary 等约定见 `semantic-colors.css` 头注释）。 |
 
-**文档路径说明**：仓库内产品文档以 `docs/product/AcuityBookmarks-产品文档-v3.0.md` 为准；历史路径 `文档/产品文档/` 若存在别名，以本路径为单一来源。
+#### 2.5.5 官方配色预设（与代码同步）
+
+> **单一事实来源**：`packages/design-tokens/src/color-presets.ts`（导出 `COLOR_PRESET_DEFINITIONS`、`ColorPresetId`、`normalizeColorPresetId` 等）。  
+> 下文表格与源码 **必须同步维护**；在 Material Theme Builder 中换种子或增减预设时，**先改 TS 再改本节（及后续接入的 UI 文案）**。
+
+| 代码 `id`（`data-color-preset` / 存储） | 中文名 | 英文名（内部） | 种子 Hex（Builder 主色种子） | 气质 |
+|----------------------------------------|--------|----------------|-------------------------------|------|
+| `default` | 晴空 | Skyline | `#3B82F6` | 与现有 Logo 蓝一致，默认品牌色 |
+| `ocean` | 碧海 | Ocean | `#0E7490` | 偏青绿，冷静、工具感 |
+| `forest` | 森雾 | Forest | `#047857` | 偏祖母绿，自然、长时间阅读 |
+| `ember` | 琥珀 | Ember | `#C2410C` | 偏暖橙琥珀，偏活力不是错误红 |
+| `violet` | 暮紫 | Twilight | `#6D28D9` | 紫，偏「智能/创意」但不荧光 |
+| `slate` | 岩灰 | Slate | `#475569` | 冷灰蓝，克制、贴近系统工具栏 |
+
+**文件夹命名**：Material 导出目录为 `Skyline`、`Ocean`、`Forest`、`Ember`、`Twilight`、`Slate`；其中 **`Twilight` 对应代码与 CSS 中的 preset id `violet`**（与 `color-presets.ts` 一致）。
+
+**接入说明（后续开发）**：每套预设对应 Builder 导出的 **light + dark** 两套 `--md-sys-color-*` 赋值，经 `data-color-preset="<id>"` 与现有 `data-theme` 组合选择器挂到 `html`；默认套对应 `presets/default.css`（源目录 `Skyline`），更新流程见 §2.5.2。
+
+**文档路径（单一来源）**：`docs/product/AcuityBookmarks-产品文档-v3.0.md` — 仓库内产品说明、架构与规范均以本文件为准，不另设平行「产品说明」文档。
 
 ---
 
@@ -648,6 +731,14 @@ defineOptions({
 // 组件逻辑
 </script>
 ```
+
+#### 4.1.2.1 Hover 与指针交互（实现约束）{#4121-hover-与指针交互实现约束}
+
+产品层完整约定见 [§1.1.1 Hover 与指针交互](#interaction-hover)。开发时须遵守：
+
+- 列表行（书签树、搜索建议、筛选标签、上下文菜单项等）的 `:hover`：**仅**表面属性（背景、边框、`box-shadow`、`outline`、Material **state layer** token），**禁止** `translateY` / 行级 `scale`。
+- `transition` 枚举具体属性；避免在列表行上使用 `transition: all` 顺带动画 `transform`。
+- 浮层入场/离场、成功/错误反馈动画与「列表 hover」分离，不得复用列表行的位移缩放习惯。
 
 #### 4.1.3 Pinia Store 规范
 
@@ -1509,6 +1600,22 @@ Worker 异步带来的"UI 流畅度"毫无价值
    - 当前：静态 Loading 文本
    - 期望：通用的 `SyncProgressDialog` 组件，复用于所有长耗时任务
 
+### 7.7 书签筛选与混合检索（实现口径）
+
+> 对外 UI 与交互文案统一称 **「筛选」**；本节描述技术实现。
+
+- **意图路由**：`frontend/src/core/query-engine/intent-detector.ts` 根据查询长度、技术词 / 语义关键词集合等选择 `fuse` / `semantic` / `hybrid` / `auto`；短查询阈值 **`MIN_SEMANTIC_LENGTH = 2`**（支持「代码」等双字词走语义倾向）。
+- **本地模糊层**：`FlexSearchStrategy`（`query-service.ts` 中仍以 `searchWithFuse` 等历史命名调用）负责标题 / URL / 域名 / 关键词的快速命中。
+- **语义层**：在已开通 PRO 或已配置用户 Key 等前提下，由语义检索补充概念相近结果。
+- **Hybrid 超时**：`QueryService.searchWithHybrid` 中语义分支与 **600ms** 超时竞速，超时则降级为**仅本地模糊**结果，避免 UI 长时间等待。
+
+### 7.8 跨页面同步与扩展内通信
+
+- **推荐机制**：Popup、Side Panel、Management、Background 等多进程场景，以 **`chrome.storage.*` + `chrome.storage.onChanged`** 做状态广播；**不要**将 `BroadcastChannel` 作为主同步路径（扩展内上下文隔离，可靠性差、难测）。
+- **收藏夹 UI 同步**：`frontend/src/composables/useCrossPageSync.ts` 的 `initCrossPageSync()` 已在 **Popup、Side Panel、Management** 各入口 `main.ts` 调用；会话域约定键 **`__favoriteEvent`**（`chrome.storage.session`）用于收藏相关增量信号。
+- **主题与配色等偏好**：经 `chrome.storage.local` / `sync`（如 `theme`、`colorPreset`）写入并由 `onChanged` 驱动各 UI 刷新（与 `useThemeSync`、设置页配色节一致）；**Popup / Side Panel / Management / Settings** 已挂载 `useThemeSync`；**Onboarding** 等入口是否接入以各页 `main.ts` 为准（当前可与上述四页表现不一致，属产品可选范围）。
+- **手工回归建议**：并行打开 Popup、Side Panel、Management，在任一页切换浅色/深色或配色预设，其余页应通过 `onChanged` 立即一致。
+
 ---
 
 ## 第八部分：测试与质量保障
@@ -1566,6 +1673,20 @@ describe('Button', () => {
 # 运行 E2E 测试
 bun run e2e:management --ext $EXT_ID
 ```
+
+#### 8.1.4 Service Worker 与消息边界测试
+
+| 类型 | 命令 | 说明 |
+|------|------|------|
+| **单元** | `bun run test:service-worker` | `frontend/src/tests/service-worker/lifecycle.test.ts`，覆盖 MV3 生命周期与 `onMessage` 异步边界（异步处理须 **`return true`** 以保持消息通道；**单次** `sendResponse` 等）。 |
+| **E2E** | `bun run test:service-worker:e2e` | 独立 Vitest 配置（`vitest.e2e.config.ts`），依赖已安装的 Puppeteer；偏慢，CI 可择机启用。 |
+| **实现约束** | MV3 | Service Worker 可能随时休眠；**持久状态**须落在 `chrome.storage.*` / `chrome.alarms` 等，禁止依赖进程内全局变量充当跨唤醒「单例」。 |
+
+#### 8.1.5 测试分层原则
+
+- **默认**：以 Vitest 单元 / 组件测试为主，保证快速反馈。
+- **补充**：管理页 E2E（`bun run e2e:management`）、上文 Service Worker 脚本覆盖关键链路与休眠边界。
+- **参考**：Chrome 官方扩展测试指引：<https://developer.chrome.com/docs/extensions/how-to/test/>
 
 ### 8.2 代码质量工具
 

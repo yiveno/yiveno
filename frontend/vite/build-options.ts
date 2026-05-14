@@ -194,8 +194,17 @@ export function createBuildOptions() {
     // 🌳 Tree-shaking 优化配置
     // Vite 8 使用 Rolldown 的 tree-shaking，比 Rollup 更激进
     treeshake: {
-      // 对 node_modules 启用副作用检测（移除未使用的代码）
-      moduleSideEffects: (id: string) => !id.includes('node_modules'),
+      /**
+       * Lit / Material Web 通过模块顶层 `customElements.define` 注册组件，
+       * 若对 `node_modules` 一律 `moduleSideEffects: false`，仅副作用的
+       * `import '@material/web/...'` 会被摇掉，页面将出现未升级的裸标签（无 Shadow DOM）。
+       */
+      moduleSideEffects: (id: string) => {
+        if (id.includes('node_modules/@material/web')) {
+          return true
+        }
+        return !id.includes('node_modules')
+      },
       // 禁用属性读取副作用检测（更激进的 tree-shaking）
       propertyReadSideEffects: false
     },

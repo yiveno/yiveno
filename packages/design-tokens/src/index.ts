@@ -7,6 +7,7 @@
 
 // 导出所有设计令牌
 export * from './colors'
+export * from './color-presets'
 export * from './spacing'
 export * from './typography'
 export * from './animations'

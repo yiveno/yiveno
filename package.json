@@ -50,6 +50,7 @@
     "test:be": "bunx turbo run test --filter=backend",
     
     "typecheck": "bunx turbo run typecheck",
+    "build:color-presets": "bun scripts/build-material-color-presets.mjs",
     "lint": "bun ./scripts/smart-lint.mjs",
     "format": "bunx prettier --write \"**/*.{js,ts,json,md,vue}\"",
     "stylelint": "bunx turbo run stylelint --filter=frontend",
