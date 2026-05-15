@@ -90,8 +90,8 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: var(--md-sys-typescale-title-large-size); /* 22px */
-  font-weight: var(--md-sys-typescale-title-large-weight); /* 400 */
+  font-size: var(--text-lg);
+  font-weight: var(--font-normal);
   color: var(--color-text-primary);
 }
 
@@ -138,8 +138,8 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: var(--md-sys-typescale-title-medium-size); /* 16px */
-  font-weight: var(--md-sys-typescale-title-medium-weight); /* 500 */
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
   color: var(--color-text-primary);
 }
 
@@ -208,28 +208,28 @@
   gap: var(--space-1);
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-base);
-  font-size: var(--md-sys-typescale-label-medium-size); /* 12px */
-  font-weight: var(--md-sys-typescale-label-medium-weight); /* 500 */
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
 }
 
 .status-indicator--success {
-  color: var(--color-success-dark);
-  background-color: var(--color-success-light);
+  color: var(--color-on-success-container);
+  background-color: var(--color-success-container);
 }
 
 .status-indicator--warning {
-  color: var(--color-warning-dark);
-  background-color: var(--color-warning-light);
+  color: var(--color-on-warning-container);
+  background-color: var(--color-warning-container);
 }
 
 .status-indicator--error {
-  color: var(--color-error-dark);
-  background-color: var(--color-error-light);
+  color: var(--color-on-error-container);
+  background-color: var(--color-error-container);
 }
 
 .status-indicator--info {
-  color: var(--color-info-dark);
-  background-color: var(--color-info-light);
+  color: var(--color-on-info-container);
+  background-color: var(--color-info-container);
 }
 
 /* === 加载状态（由全局 Overlay 统一实现；移除旧样式占位） === */

@@ -647,7 +647,7 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background: var(--md-sys-color-surface);
+  background: var(--color-surface);
   overflow: hidden;
 }
 
@@ -817,7 +817,7 @@ body {
   padding: var(--spacing-2);
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-md);
-  background: var(--md-sys-color-surface-container-low);
+  background: var(--color-surface-container-low);
 }
 
 .popup-mwc-list {
@@ -901,20 +901,20 @@ body {
 
 .popup-issue-item--warning {
   border-left-color: var(--color-warning);
-  background: color-mix(in srgb, var(--color-warning) 8%, var(--md-sys-color-surface));
+  background: color-mix(in srgb, var(--color-warning) 8%, var(--color-surface));
 }
 
 .popup-issue-item--warning:hover {
-  background: color-mix(in srgb, var(--color-warning) 12%, var(--md-sys-color-surface));
+  background: color-mix(in srgb, var(--color-warning) 12%, var(--color-surface));
 }
 
 .popup-issue-item--danger {
   border-left-color: var(--color-error);
-  background: color-mix(in srgb, var(--color-error) 6%, var(--md-sys-color-surface));
+  background: color-mix(in srgb, var(--color-error) 6%, var(--color-surface));
 }
 
 .popup-issue-item--danger:hover {
-  background: color-mix(in srgb, var(--color-error) 10%, var(--md-sys-color-surface));
+  background: color-mix(in srgb, var(--color-error) 10%, var(--color-surface));
 }
 
 .popup-issue-item:focus-visible {

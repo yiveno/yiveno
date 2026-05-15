@@ -32,6 +32,8 @@
   /* === 表面色系 (Surface Colors) === */
   --color-surface: var(--md-sys-color-surface);
   --color-surface-variant: var(--md-sys-color-surface-variant);
+  --color-surface-container-lowest: var(--md-sys-color-surface-container-lowest);
+  --color-surface-container-low: var(--md-sys-color-surface-container-low);
   --color-surface-container: var(--md-sys-color-surface-container);
   --color-surface-container-high: var(--md-sys-color-surface-container-high);
   --color-surface-container-highest: var(
@@ -60,21 +62,28 @@
   --color-on-error: var(--md-sys-color-on-error);
   --color-on-error-container: var(--md-sys-color-on-error-container);
 
+  /* 兼容别名：统一使用 foreground 命名，便于组件读取 */
+  --color-error-foreground: var(--color-on-error);
+
   /* ✅ Warning、Success、Info 颜色映射自 design-tokens 包 */
   --color-warning: var(--acuity-semantic-warning);
   --color-warning-container: var(--acuity-semantic-warning-container);
   --color-on-warning: var(--acuity-semantic-on-warning);
   --color-on-warning-container: var(--acuity-semantic-on-warning-container);
+  --color-warning-foreground: var(--color-on-warning);
+  --color-warning-container-foreground: var(--color-on-warning-container);
   --color-success: var(--acuity-semantic-success);
   --color-success-container: var(--acuity-semantic-success-container);
   --color-on-success: var(--acuity-semantic-on-success);
   --color-on-success-container: var(--acuity-semantic-on-success-container);
+  --color-success-foreground: var(--color-on-success);
+  --color-success-container-foreground: var(--color-on-success-container);
   --color-info: var(--acuity-semantic-info);
   --color-info-container: var(--acuity-semantic-info-container);
   --color-on-info: var(--acuity-semantic-on-info);
   --color-on-info-container: var(--acuity-semantic-on-info-container);
-
-  /* === 强调色/装饰色 (Accent Colors) === */
+  --color-info-foreground: var(--color-on-info);
+  --color-info-container-foreground: var(--color-on-info-container);
 
   /* ✅ 这些颜色映射自 design-tokens 包 */
   --color-accent-teal: var(--acuity-accent-teal);
@@ -342,6 +351,16 @@
   --color-info-light: var(--color-info-container);
   --color-info-dark: var(--color-on-info-container);
 
+  /* === Recommended semantic aliases (new code should prefer these) === */
+  --color-success-surface: var(--color-success-container);
+  --color-success-on-surface: var(--color-on-success-container);
+  --color-warning-surface: var(--color-warning-container);
+  --color-warning-on-surface: var(--color-on-warning-container);
+  --color-error-surface: var(--color-error-container);
+  --color-error-on-surface: var(--color-on-error-container);
+  --color-info-surface: var(--color-info-container);
+  --color-info-on-surface: var(--color-on-info-container);
+
   /* ========================================
    * 字体系统 (Typography System)
    * 
@@ -373,6 +392,68 @@
     'SF Mono', 'Monaco', 'Consolas', 'Roboto Mono', 'Liberation Mono',
     'Courier New', monospace;
   --font-family-monospace: var(--font-family-mono);
+
+  /* === Material Type Scale 语义别名 === */
+  --typescale-display-lg-size: var(--md-sys-typescale-display-large-size);
+  --typescale-display-md-size: var(--md-sys-typescale-display-medium-size);
+  --typescale-display-sm-size: var(--md-sys-typescale-display-small-size);
+  --typescale-headline-lg-size: var(--md-sys-typescale-headline-large-size);
+  --typescale-headline-md-size: var(--md-sys-typescale-headline-medium-size);
+  --typescale-headline-sm-size: var(--md-sys-typescale-headline-small-size);
+  --typescale-title-lg-size: var(--md-sys-typescale-title-large-size);
+  --typescale-title-md-size: var(--md-sys-typescale-title-medium-size);
+  --typescale-title-sm-size: var(--md-sys-typescale-title-small-size);
+  --typescale-body-lg-size: var(--md-sys-typescale-body-large-size);
+  --typescale-body-md-size: var(--md-sys-typescale-body-medium-size);
+  --typescale-body-sm-size: var(--md-sys-typescale-body-small-size);
+  --typescale-label-lg-size: var(--md-sys-typescale-label-large-size);
+  --typescale-label-md-size: var(--md-sys-typescale-label-medium-size);
+  --typescale-label-sm-size: var(--md-sys-typescale-label-small-size);
+  --typescale-display-lg-line: var(--md-sys-typescale-display-large-line-height);
+  --typescale-display-md-line: var(--md-sys-typescale-display-medium-line-height);
+  --typescale-display-sm-line: var(--md-sys-typescale-display-small-line-height);
+  --typescale-headline-lg-line: var(--md-sys-typescale-headline-large-line-height);
+  --typescale-headline-md-line: var(--md-sys-typescale-headline-medium-line-height);
+  --typescale-headline-sm-line: var(--md-sys-typescale-headline-small-line-height);
+  --typescale-title-lg-line: var(--md-sys-typescale-title-large-line-height);
+  --typescale-title-md-line: var(--md-sys-typescale-title-medium-line-height);
+  --typescale-title-sm-line: var(--md-sys-typescale-title-small-line-height);
+  --typescale-body-lg-line: var(--md-sys-typescale-body-large-line-height);
+  --typescale-body-md-line: var(--md-sys-typescale-body-medium-line-height);
+  --typescale-body-sm-line: var(--md-sys-typescale-body-small-line-height);
+  --typescale-label-lg-line: var(--md-sys-typescale-label-large-line-height);
+  --typescale-label-md-line: var(--md-sys-typescale-label-medium-line-height);
+  --typescale-label-sm-line: var(--md-sys-typescale-label-small-line-height);
+  --typescale-display-lg-tracking: var(--md-sys-typescale-display-large-tracking);
+  --typescale-display-md-tracking: var(--md-sys-typescale-display-medium-tracking);
+  --typescale-display-sm-tracking: var(--md-sys-typescale-display-small-tracking);
+  --typescale-headline-lg-tracking: var(--md-sys-typescale-headline-large-tracking);
+  --typescale-headline-md-tracking: var(--md-sys-typescale-headline-medium-tracking);
+  --typescale-headline-sm-tracking: var(--md-sys-typescale-headline-small-tracking);
+  --typescale-title-lg-tracking: var(--md-sys-typescale-title-large-tracking);
+  --typescale-title-md-tracking: var(--md-sys-typescale-title-medium-tracking);
+  --typescale-title-sm-tracking: var(--md-sys-typescale-title-small-tracking);
+  --typescale-body-lg-tracking: var(--md-sys-typescale-body-large-tracking);
+  --typescale-body-md-tracking: var(--md-sys-typescale-body-medium-tracking);
+  --typescale-body-sm-tracking: var(--md-sys-typescale-body-small-tracking);
+  --typescale-label-lg-tracking: var(--md-sys-typescale-label-large-tracking);
+  --typescale-label-md-tracking: var(--md-sys-typescale-label-medium-tracking);
+  --typescale-label-sm-tracking: var(--md-sys-typescale-label-small-tracking);
+  --font-weight-regular: var(--md-sys-typescale-body-large-weight);
+  --font-weight-medium: var(--md-sys-typescale-title-medium-weight);
+  --font-weight-bold: 700;
+
+  /* Legacy aliases: new code should prefer Material role names above. */
+  --text-xs: var(--typescale-body-sm-size);
+  --text-sm: var(--typescale-body-md-size);
+  --text-base: var(--typescale-body-lg-size);
+  --text-lg: var(--typescale-title-lg-size);
+  --text-xl: var(--typescale-headline-sm-size);
+  --text-2xl: var(--typescale-headline-md-size);
+  --font-normal: var(--font-weight-regular);
+  --font-medium: var(--font-weight-medium);
+  --font-semibold: 600;
+  --font-bold: var(--font-weight-bold);
 
   /* ========================================
    * 间距系统映射 (Spacing System Mapping)

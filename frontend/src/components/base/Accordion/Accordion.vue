@@ -1,7 +1,7 @@
 <template>
-  <div class="accordion">
+  <md-list class="accordion" role="presentation">
     <slot />
-  </div>
+  </md-list>
 </template>
 
 <script setup lang="ts">
@@ -66,7 +66,11 @@ provide('accordion', {
 
 <style scoped>
 .accordion {
-  display: flex;
-  flex-direction: column;
+  display: block;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-low);
+  overflow: hidden;
 }
 </style>

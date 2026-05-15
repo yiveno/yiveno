@@ -145,16 +145,16 @@ async function selectPreset(id: ColorPresetId) {
   border-radius: var(--radius-md);
   text-align: left;
   color: var(--color-text-primary);
-  background: var(--md-sys-color-surface-container-low);
+  background: var(--color-surface-container-low);
   cursor: pointer;
   transition:
-    border-color var(--md-sys-motion-duration-short2),
-    box-shadow var(--md-sys-motion-duration-short2),
-    background-color var(--md-sys-motion-duration-short2);
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    background-color var(--transition-fast);
 }
 
 .preset-card:focus-visible {
-  outline: 2px solid var(--md-sys-color-primary);
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
@@ -164,14 +164,14 @@ async function selectPreset(id: ColorPresetId) {
 }
 
 .preset-card:hover:not(:disabled) {
-  border-color: var(--md-sys-color-outline-variant);
-  box-shadow: var(--md-sys-elevation-level1);
+  border-color: var(--color-outline);
+  box-shadow: var(--shadow-sm);
 }
 
 .preset-card--selected {
-  border-color: var(--md-sys-color-primary);
-  box-shadow: 0 0 0 1px var(--md-sys-color-primary);
-  background: var(--md-sys-color-surface-container);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px var(--color-primary);
+  background: var(--color-surface-container);
 }
 
 .preset-card__swatch {
@@ -179,7 +179,7 @@ async function selectPreset(id: ColorPresetId) {
   width: 2rem;
   height: 2rem;
   border-radius: var(--radius-full);
-  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 12%);
+  box-shadow: inset 0 0 0 1px var(--color-surface-edge-010);
 }
 
 .preset-card__name {

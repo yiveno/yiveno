@@ -16,9 +16,9 @@ SmartRecommendationEngine → 推荐列表 → UI 展示 → 用户交互 → �
       <div class="header-content">
         <LucideIcon name="sparkles" class="recommendation-icon" />
         <h3 class="recommendations-title">为您推荐</h3>
-        <Badge variant="soft" size="sm">
+        <Chip variant="soft" size="sm">
           {{ recommendations.length }}
-        </Badge>
+        </Chip>
       </div>
       <div class="header-actions">
         <md-icon-button
@@ -67,9 +67,9 @@ SmartRecommendationEngine → 推荐列表 → UI 展示 → 用户交互 → �
           </span>
         </div>
         <div slot="end" class="recommendation-reason">
-          <Badge :variant="getReasonBadgeVariant(bookmark)" size="sm">
+          <Chip :variant="getReasonBadgeVariant(bookmark)" size="sm">
             {{ getRecommendationReason(bookmark) }}
-          </Badge>
+          </Chip>
         </div>
 
         <!-- 使用指示器 -->
@@ -116,7 +116,7 @@ SmartRecommendationEngine → 推荐列表 → UI 展示 → 用户交互 → �
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { Badge, LucideIcon } from '@/components'
+import { Chip, LucideIcon } from '@/components'
 import {
   type RecommendationOptions,
   type SmartRecommendation,

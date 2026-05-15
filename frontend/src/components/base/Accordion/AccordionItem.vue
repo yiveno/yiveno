@@ -1,20 +1,30 @@
 <template>
-  <div class="accordion-item no-select">
-    <div class="accordion-header" @click="handleToggle">
-      <div class="accordion-title">
-        <LucideIcon v-if="icon" :name="icon" :size="iconSize" />
-        <span>{{ title }}</span>
-        <slot name="badge" />
-      </div>
+  <md-list-item
+    class="accordion-item no-select"
+    :class="{ 'accordion-item--expanded': isExpanded }"
+    type="button"
+    @click="handleToggle"
+  >
+    <span slot="start" class="accordion-header__start" aria-hidden="true">
+      <LucideIcon v-if="icon" :name="icon" :size="iconSize" />
+    </span>
+
+    <div slot="headline" class="accordion-title">
+      <span>{{ title }}</span>
+      <slot name="badge" />
+    </div>
+
+    <span slot="end" class="accordion-header__end" aria-hidden="true">
       <LucideIcon
         :name="isExpanded ? 'chevron-down' : 'chevron-right'"
         :size="16"
         class="accordion-icon"
       />
-    </div>
-    <div v-if="isExpanded" class="accordion-content">
-      <slot />
-    </div>
+    </span>
+  </md-list-item>
+
+  <div v-if="isExpanded" class="accordion-content">
+    <slot />
   </div>
 </template>
 
@@ -52,58 +62,49 @@ const handleToggle = () => {
 
 <style scoped>
 .accordion-item {
-  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  --md-list-item-container-color: transparent;
+  --md-list-item-label-text-font: var(--font-family-base);
+  --md-list-item-label-text-size: var(--typescale-body-md-size);
+  --md-list-item-label-text-weight: var(--font-weight-medium);
+  --md-list-item-label-text-line-height: var(--typescale-body-md-line);
+  --md-list-item-label-text-tracking: var(--typescale-body-md-tracking);
+  --md-list-item-leading-space: var(--spacing-4);
+  --md-list-item-trailing-space: var(--spacing-4);
+  border-bottom: 1px solid var(--color-border);
 }
 
-.accordion-header {
-  display: flex;
-  justify-content: space-between;
+.accordion-item:last-of-type {
+  border-bottom: none;
+}
+
+.accordion-item--expanded {
+  background: var(--color-surface-container);
+}
+
+.accordion-header__start,
+.accordion-header__end {
+  display: inline-flex;
   align-items: center;
-  padding: var(--spacing-3) var(--spacing-4);
-  border-bottom: 1px solid transparent;
-  background-color: var(--md-sys-color-surface-container-low);
-  cursor: pointer;
-  transition:
-    background-color var(--md-sys-motion-duration-short2)
-      var(--md-sys-motion-easing-standard),
-    border-color var(--md-sys-motion-duration-short2)
-      var(--md-sys-motion-easing-standard);
-}
-
-.accordion-header:hover {
-  background-color: var(--md-sys-color-surface-container);
 }
 
 .accordion-title {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: var(--spacing-2);
-  font-size: var(--text-sm);
-  font-weight: var(--font-semibold);
   color: var(--color-text-primary);
 }
 
 .accordion-icon {
   color: var(--color-text-secondary);
-  transition: transform var(--md-sys-motion-duration-short2)
-    var(--md-sys-motion-easing-standard);
+  transition: transform var(--transition-fast);
+}
+
+.accordion-item--expanded .accordion-icon {
+  transform: rotate(0deg);
 }
 
 .accordion-content {
-  background-color: var(--md-sys-color-surface);
-  animation: accordion-expand var(--md-sys-motion-duration-medium1)
-    var(--md-sys-motion-easing-emphasized);
-}
-
-@keyframes accordion-expand {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  padding: var(--spacing-3) var(--spacing-4) var(--spacing-4);
+  background: var(--color-surface);
 }
 </style>

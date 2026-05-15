@@ -220,17 +220,14 @@ onMounted(() => {
   grid-template-columns: repeat(3, 1fr);
   height: 56px;
   padding: 0 var(--spacing-lg);
-  border-bottom: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-primary) 20%, transparent);
 
-  /* 🎨 薄荷绿渐变背景（与 popup-container 一致） */
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--md-sys-color-primary) 20%, var(--md-sys-color-surface-container-lowest)) 0%,
-    color-mix(in srgb, var(--md-sys-color-primary) 15%, var(--md-sys-color-surface-container-lowest)) 50%,
-    color-mix(in srgb, var(--md-sys-color-primary) 10%, var(--md-sys-color-surface-container-lowest)) 100%
+  /* 顶部背景：基于项目语义 surface 与 primary 的轻量叠加 */
+  background: color-mix(
+    in srgb,
+    var(--color-surface-container-lowest) 88%,
+    var(--color-primary) 12%
   );
-
-  /* 🎨 添加毛玻璃效果 */
   backdrop-filter: blur(10px);
 }
 

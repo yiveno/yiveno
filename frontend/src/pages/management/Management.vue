@@ -1,5 +1,5 @@
 <template>
-  <App class="app-container">
+  <div class="management-page app-container">
     <div v-if="isPageLoading" class="page-overlay">
       <div class="overlay-loading">
         <md-circular-progress indeterminate></md-circular-progress>
@@ -765,7 +765,7 @@
         </md-filled-button>
       </template>
     </ConfirmableDialog>
-  </App>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -797,7 +797,6 @@ import {
 } from '@/stores'
 import type { TraitTag } from '@/types/domain/trait'
 import {
-  App,
   AppHeader,
   BookmarkSearchInput,
   Card,

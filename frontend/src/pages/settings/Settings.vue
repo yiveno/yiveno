@@ -1,11 +1,11 @@
 <template>
-  <!-- 📊 全局书签同步进度对话框 -->
-  <GlobalSyncProgress />
+  <div class="settings-page app-container">
+    <!-- 📊 全局书签同步进度对话框 -->
+    <GlobalSyncProgress />
 
-  <!-- ⚡ 全局快速添加书签对话框 -->
-  <GlobalQuickAddBookmark />
+    <!-- ⚡ 全局快速添加书签对话框 -->
+    <GlobalQuickAddBookmark />
 
-  <App app class="app-container">
     <AppHeader
       :show-side-panel-toggle="false"
       :show-settings="false"
@@ -53,21 +53,13 @@
           </div>
         </main>
       </div>
-    </Main>
-  </App>
+</Main>
+  </div>
 </template>
 
 <script setup lang="ts">
-import {
-  computed,
-  defineAsyncComponent,
-  nextTick,
-  onMounted,
-  onUnmounted,
-  ref,
-  watch
-} from 'vue'
-import { App, AppHeader, Main } from '@/components'
+import { computed, defineAsyncComponent, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { AppHeader, Main } from '@/components'
 import LucideIcon from '@/components/base/LucideIcon/LucideIcon.vue'
 import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'
 import GlobalQuickAddBookmark from '@/components/business/GlobalQuickAddBookmark/GlobalQuickAddBookmark.vue'

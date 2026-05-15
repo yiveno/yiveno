@@ -35,9 +35,10 @@
 /* 应用全局字体到整个应用 */
 html {
   font-family: var(--font-family-base);
-  font-size: var(--md-sys-typescale-body-large-size); /* 16px */
-  font-weight: 400;
-  line-height: 1.5;
+  font-size: var(--typescale-body-lg-size);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--typescale-body-lg-line);
+  letter-spacing: var(--typescale-body-lg-tracking);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -78,8 +79,8 @@ body {
 .typography-code {
   font-family: var(--font-family-mono);
   font-size: 0.9em;
-  font-weight: 400;
-  line-height: 1.75;
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-body-lg);
   letter-spacing: 0;
 }
 

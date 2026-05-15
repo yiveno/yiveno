@@ -207,8 +207,10 @@ const clearInput = () => {
 
 .acuity-input-label {
   margin-bottom: var(--spacing-xs);
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
+  font-size: var(--typescale-body-md-size);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--typescale-body-md-line);
+  letter-spacing: var(--typescale-body-md-tracking);
   color: var(--color-text-primary);
   
   /* ✨ 平滑过渡 */
@@ -357,7 +359,9 @@ const clearInput = () => {
   padding: 0;
   border: none;
   outline: none;
-  font-size: var(--text-base);
+  font-size: var(--typescale-body-lg-size);
+  line-height: var(--typescale-body-lg-line);
+  letter-spacing: var(--typescale-body-lg-tracking);
   color: var(--color-text-primary);
   background: transparent;
   
@@ -451,8 +455,9 @@ const clearInput = () => {
 /* ✅ 始终预留提示区域空间，避免布局跳动 */
 .acuity-input-hint {
   min-height: 1.5em; /* 预留一行文本的高度 */
-  font-size: var(--text-sm);
-  line-height: 1.5;
+  font-size: var(--typescale-body-md-size);
+  line-height: var(--typescale-body-md-line);
+  letter-spacing: var(--typescale-body-md-tracking);
   color: transparent; /* 默认透明，无内容时不可见 */
   
   /* ✨ 平滑过渡 */
@@ -469,7 +474,7 @@ const clearInput = () => {
 /* 错误状态 - 特异性高于 .has-content */
 .acuity-input-hint.error,
 .acuity-input-hint.error.has-content {
-  font-weight: var(--font-medium);
+  font-weight: var(--font-weight-medium);
   color: var(--color-error);
   
   /* ✨ 错误提示淡入 */
