@@ -15,7 +15,6 @@ export { default as ContextMenu } from './base/ContextMenu/ContextMenu.vue'
 export { default as CountIndicator } from './base/CountIndicator/CountIndicator.vue'
 export { default as Input } from './base/Input/Input.vue'
 export { default as LucideIcon } from './base/LucideIcon/LucideIcon.vue'
-export { default as Main } from './base/Main/Main.vue'
 export { default as Tooltip } from './base/Tooltip/Tooltip.vue'
 
 // ===== 复合组件 (从 composite/ 目录导出) =====
@@ -67,7 +66,6 @@ export type * from './base/Chip/Chip.d'
 export type * from './base/ContextMenu/ContextMenu.d'
 export type * from './base/CountIndicator/CountIndicator.d'
 export type * from './base/Input/Input.d'
-export type * from './base/Main/Main.d'
 export type * from './base/Tooltip/Tooltip.d'
 
 // 复合组件类型

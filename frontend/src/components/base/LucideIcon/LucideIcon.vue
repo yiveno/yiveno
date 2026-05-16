@@ -114,7 +114,9 @@ const transformStyle = computed(() => {
 
 <style scoped>
 .acuity-lucide-icon {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   vertical-align: middle;
   flex-shrink: 0;
 

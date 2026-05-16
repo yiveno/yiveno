@@ -70,6 +70,7 @@ const handleToggle = () => {
   --md-list-item-label-text-tracking: var(--typescale-body-md-tracking);
   --md-list-item-leading-space: var(--spacing-4);
   --md-list-item-trailing-space: var(--spacing-4);
+
   border-bottom: 1px solid var(--color-border);
 }
 

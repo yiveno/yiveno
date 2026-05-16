@@ -8,24 +8,16 @@
         </div>
       </div>
     </div>
-
     <!-- 📊 全局书签同步进度对话框 -->
     <GlobalSyncProgress />
-
     <!-- ⚡ 全局快速添加书签对话框 -->
     <GlobalQuickAddBookmark />
-
-
-
-    <!-- 🔍 特征检测进度对话框 - 已移除，改为后台静默运行 -->
-
     <!-- 🤖 AI 整理进度对话框 -->
     <Dialog
       :show="showOrganizeProgress"
       :title="t('management_ai_organize_bookmarks')"
       persistent
-      max-width="500px"
-    >
+      max-width="500px">
       <div class="trait-scan-progress">
         <div class="progress-info">
           <div class="progress-message">{{ organizeProgress.message }}</div>
@@ -42,7 +34,6 @@
         ></md-linear-progress>
       </div>
     </Dialog>
-
     <!-- 📝 应用更改确认对话框 -->
     <Dialog
       :show="showApplyConfirmDialog"
@@ -52,8 +43,7 @@
       :enter-to-confirm="true"
       max-width="600px"
       @update:show="showApplyConfirmDialog = $event"
-      @confirm="confirmApplyChanges"
-    >
+      @confirm="confirmApplyChanges">
       <div class="apply-confirm-dialog">
         <!-- AI 生成标记 -->
         <div v-if="bookmarkManagementStore.isAIGenerated" class="ai-badge">
@@ -257,7 +247,6 @@
         </md-filled-button>
       </template>
     </Dialog>
-
     <!-- 📈 应用更改进度对话框 -->
     <Dialog
       :show="bookmarkManagementStore.applyProgress.isApplying"
@@ -265,8 +254,7 @@
       persistent
       :close-on-overlay="false"
       :esc-to-close="false"
-      max-width="500px"
-    >
+      max-width="500px">
       <div class="apply-progress">
         <div class="progress-info">
           <div class="progress-message">
@@ -285,10 +273,8 @@
         </div>
       </div>
     </Dialog>
-
     <AppHeader :show-side-panel-toggle="false" />
-
-    <Main padding class="main-content">
+    <main class="main-content">
       <div class="management-container">
         <div class="management-row">
           <!-- Left Panel -->
@@ -538,8 +524,7 @@
           </div>
         </div>
       </div>
-    </Main>
-
+    </main>
     <!-- Edit Bookmark Dialog -->
     <ConfirmableDialog
       :show="dialogStore.editBookmarkDialog.isOpen"
@@ -561,8 +546,7 @@
               )
             : dialogStore.closeEditBookmarkDialog()
       "
-      @confirm="confirmEditBookmark"
-    >
+      @confirm="confirmEditBookmark">
       <div class="edit-form">
         <md-outlined-text-field
           class="form-field"
@@ -802,7 +786,6 @@ import {
   Card,
   Dialog,
   LucideIcon,
-  Main,
   AnimatedNumber
 } from '@/components'
 import { notificationService } from '@/application/notification/notification-service'
@@ -841,14 +824,6 @@ const { originalExpandedFolders, proposalExpandedFolders } = storeToRefs(
   bookmarkManagementStore
 )
 
-// 特征检测进度状态（已废弃，改为后台静默运行）
-// const traitDetectionProgress = ref({
-//   current: 0,
-//   total: 0,
-//   percentage: 0,
-//   message: t('management_preparing_scan')
-// })
-// const showTraitDetectionProgress = ref(false)
 
 // 应用更改相关状态
 const showApplyConfirmDialog = ref(false)
@@ -2593,6 +2568,7 @@ p.warning-text {
 .main-content {
   flex: none;
   height: calc(100vh - var(--spacing-16));
+  padding: var(--spacing-lg);
   overflow: hidden;
 }
 

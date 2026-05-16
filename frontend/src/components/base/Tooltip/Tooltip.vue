@@ -1,19 +1,25 @@
 <template>
   <div
-    class="acuity-tooltip-wrapper"
-    @mouseenter="show = true"
-    @mouseleave="show = false"
-    @focus="show = true"
-    @blur="show = false"
+    class="md-tooltip-wrapper"
+    @mouseenter="handleMouseEnter"
+    @mouseleave="handleMouseLeave"
+    @focus="handleFocus"
+    @blur="handleBlur"
   >
     <slot :show="show" />
 
-    <Transition name="tooltip">
-      <div v-if="show" ref="tooltipRef" :class="tooltipClasses">
-        <div class="acuity-tooltip-content">
+    <Transition name="md-tooltip">
+      <div
+        v-if="show"
+        ref="tooltipRef"
+        :class="tooltipClasses"
+        role="tooltip"
+        :aria-hidden="!show"
+      >
+        <div class="md-tooltip__surface">
+          <!-- 支持富文本内容 (Rich Tooltip) -->
           <slot name="content">{{ text }}</slot>
         </div>
-        <div class="acuity-tooltip-arrow"></div>
       </div>
     </Transition>
   </div>
@@ -21,212 +27,333 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useTimeoutFn } from '@vueuse/core'
 import type { TooltipProps } from './Tooltip.d'
+
+defineOptions({ name: 'Tooltip' })
 
 const props = withDefaults(defineProps<TooltipProps>(), {
   placement: 'top',
-  delay: 300,
+  delay: 500, // MD3 推荐 500ms 延迟
   disabled: false,
-  offset: 'xs'
+  offset: 'sm' // MD3 推荐较小的偏移
 })
 
 const show = ref(false)
 const tooltipRef = ref<HTMLElement>()
 
+// 延迟显示
+const { start: startShowTimer, stop: stopShowTimer } = useTimeoutFn(
+  () => {
+    if (!props.disabled) {
+      show.value = true
+    }
+  },
+  props.delay,
+  { immediate: false }
+)
+
+// 延迟隐藏（更短的延迟）
+const { start: startHideTimer, stop: stopHideTimer } = useTimeoutFn(
+  () => {
+    show.value = false
+  },
+  150, // MD3 推荐快速隐藏
+  { immediate: false }
+)
+
 const tooltipClasses = computed(() => [
-  'acuity-tooltip',
-  `acuity-tooltip--${props.placement}`,
-  `offset-${props.offset}`,
+  'md-tooltip',
+  `md-tooltip--${props.placement}`,
+  `md-tooltip--offset-${props.offset}`,
   {
-    'acuity-tooltip--disabled': props.disabled
+    'md-tooltip--disabled': props.disabled
   }
 ])
 
-// 使用相对定位与类控制偏移，无需内联样式
+function handleMouseEnter() {
+  stopHideTimer()
+  startShowTimer()
+}
+
+function handleMouseLeave() {
+  stopShowTimer()
+  startHideTimer()
+}
+
+function handleFocus() {
+  stopHideTimer()
+  startShowTimer()
+}
+
+function handleBlur() {
+  stopShowTimer()
+  startHideTimer()
+}
 </script>
 
 <style scoped>
-.acuity-tooltip-wrapper {
+/* ===== Material Design 3 Tooltip ===== */
+
+.md-tooltip-wrapper {
   position: relative;
   display: inline-block;
 }
 
-.acuity-tooltip {
+.md-tooltip {
   position: absolute;
-  z-index: var(--z-tooltip);
-  min-width: 500px;
-  max-width: 1000px;
+  z-index: var(--z-tooltip, 1000);
+  width:max-content;
+  
+  /* 
+   * 宽度设置：
+   * - Plain Tooltip (纯文本): 自动宽度，最大 200px
+   * - Rich Tooltip (富文本): 自动宽度，最大 800px
+   * 实际项目中需要更宽的宽度以容纳多行文本和列表
+   */
+  max-width: 500px;
   pointer-events: none;
 }
 
-.acuity-tooltip-content {
-  padding: var(--spacing-3);
+/* ===== Tooltip Surface (MD3 标准) ===== */
+.md-tooltip__surface {
+  /* MD3 Spacing: 4dp padding for plain, 8-16dp for rich */
+  padding: var(--spacing-2) var(--spacing-3);
+  
+  /* MD3 Shape: Small (4dp) */
   border-radius: var(--radius-sm);
-  font-size: var(--text-sm);
-  line-height: 1.6;
+  
+  /* MD3 Typography: Body Small (12sp) */
+  font-size: var(--md-sys-typescale-body-small-size);
+  font-weight: var(--md-sys-typescale-body-small-weight);
+  line-height: var(--md-sys-typescale-body-small-line-height);
+  letter-spacing: var(--md-sys-typescale-body-small-tracking);
   white-space: normal;
-  color: var(--color-on-surface-inverse);
-  background: var(--color-surface-inverse);
+  
+  /* MD3 Color: Inverse Surface */
+  color: var(--md-sys-color-inverse-on-surface);
+  background-color: var(--md-sys-color-inverse-surface);
   overflow-wrap: break-word;
-  box-shadow:
-    0 4px 12px var(--color-shadow-015),
-    0 2px 6px var(--color-shadow-010),
-    0 0 1px var(--color-shadow-020);
+  
+  /* MD3 Elevation: Level 2 */
+  box-shadow: var(--md-sys-elevation-2);
 }
 
-.acuity-tooltip-content h3 {
-  margin: 0 0 var(--spacing-2) 0;
-  font-size: var(--text-base);
-  font-weight: var(--font-semibold);
+/* ===== Rich Tooltip 样式 (支持标题、列表等) ===== */
+.md-tooltip__surface :deep(h3),
+.md-tooltip__surface :deep(strong) {
+  margin: 0 0 var(--spacing-1) 0;
+  font-size: var(--md-sys-typescale-body-medium-size);
+  font-weight: var(--md-sys-typescale-body-medium-weight);
+  color: var(--md-sys-color-inverse-on-surface);
 }
 
-.acuity-tooltip-content p {
-  margin: var(--spacing-2) 0;
-}
-
-.acuity-tooltip-content p:last-child {
-  margin-bottom: 0;
-}
-
-.acuity-tooltip-content ul {
-  margin: var(--spacing-2) 0;
-  padding-left: var(--spacing-4);
-}
-
-.acuity-tooltip-content li {
+.md-tooltip__surface :deep(p) {
   margin: var(--spacing-1) 0;
 }
 
-.acuity-tooltip-arrow {
-  position: absolute;
-  width: 0;
-  height: 0;
-  border: var(--spacing-1-5) solid transparent;
+.md-tooltip__surface :deep(p:first-child) {
+  margin-top: 0;
 }
 
-.acuity-tooltip--top .acuity-tooltip-arrow {
-  top: 100%;
+.md-tooltip__surface :deep(p:last-child) {
+  margin-bottom: 0;
+}
+
+.md-tooltip__surface :deep(ul) {
+  margin: var(--spacing-1) 0;
+  padding-left: var(--spacing-4);
+}
+
+.md-tooltip__surface :deep(li) {
+  margin: var(--spacing-1) 0;
+}
+
+.md-tooltip__surface :deep(br) {
+  display: block;
+  margin-top: var(--spacing-1);
+  content: '';
+}
+
+/* ===== Positioning (基于 placement) ===== */
+
+/* Top */
+.md-tooltip--top {
   left: 50%;
+  
+  /* 防止超出视口 */
+  max-width: min(800px, calc(100vw - 32px));
   transform: translateX(-50%);
-  border-top-color: var(--color-surface-inverse);
 }
 
-.acuity-tooltip--bottom .acuity-tooltip-arrow {
-  bottom: 100%;
+.md-tooltip--top.md-tooltip--offset-xs {
+  bottom: calc(100% + var(--spacing-1));
+}
+
+.md-tooltip--top.md-tooltip--offset-sm {
+  bottom: calc(100% + var(--spacing-2));
+}
+
+.md-tooltip--top.md-tooltip--offset-md {
+  bottom: calc(100% + var(--spacing-3));
+}
+
+.md-tooltip--top.md-tooltip--offset-lg {
+  bottom: calc(100% + var(--spacing-4));
+}
+
+.md-tooltip--top.md-tooltip--offset-xl {
+  bottom: calc(100% + var(--spacing-6));
+}
+
+/* Bottom */
+.md-tooltip--bottom {
   left: 50%;
+  
+  /* 防止超出视口 */
+  max-width: min(800px, calc(100vw - 32px));
   transform: translateX(-50%);
-  border-bottom-color: var(--color-surface-inverse);
 }
 
-.acuity-tooltip--left .acuity-tooltip-arrow {
+.md-tooltip--bottom.md-tooltip--offset-xs {
+  top: calc(100% + var(--spacing-1));
+}
+
+.md-tooltip--bottom.md-tooltip--offset-sm {
+  top: calc(100% + var(--spacing-2));
+}
+
+.md-tooltip--bottom.md-tooltip--offset-md {
+  top: calc(100% + var(--spacing-3));
+}
+
+.md-tooltip--bottom.md-tooltip--offset-lg {
+  top: calc(100% + var(--spacing-4));
+}
+
+.md-tooltip--bottom.md-tooltip--offset-xl {
+  top: calc(100% + var(--spacing-6));
+}
+
+/* Left */
+.md-tooltip--left {
   top: 50%;
-  left: 100%;
+  
+  /* 防止超出视口 */
+  max-width: min(800px, calc(100vw - 32px));
   transform: translateY(-50%);
-  border-left-color: var(--color-surface-inverse);
 }
 
-.acuity-tooltip--right .acuity-tooltip-arrow {
+.md-tooltip--left.md-tooltip--offset-xs {
+  right: calc(100% + var(--spacing-1));
+}
+
+.md-tooltip--left.md-tooltip--offset-sm {
+  right: calc(100% + var(--spacing-2));
+}
+
+.md-tooltip--left.md-tooltip--offset-md {
+  right: calc(100% + var(--spacing-3));
+}
+
+.md-tooltip--left.md-tooltip--offset-lg {
+  right: calc(100% + var(--spacing-4));
+}
+
+.md-tooltip--left.md-tooltip--offset-xl {
+  right: calc(100% + var(--spacing-6));
+}
+
+/* Right */
+.md-tooltip--right {
   top: 50%;
-  right: 100%;
+  
+  /* 防止超出视口 */
+  max-width: min(800px, calc(100vw - 32px));
   transform: translateY(-50%);
-  border-right-color: var(--color-surface-inverse);
 }
 
-/* 触发器与内容的偏移（基于设计系统 spacing token） */
-.acuity-tooltip.offset-xs.acuity-tooltip--top {
-  bottom: calc(100% + var(--spacing-xs));
+.md-tooltip--right.md-tooltip--offset-xs {
+  left: calc(100% + var(--spacing-1));
 }
 
-.acuity-tooltip.offset-sm.acuity-tooltip--top {
-  bottom: calc(100% + var(--spacing-sm));
+.md-tooltip--right.md-tooltip--offset-sm {
+  left: calc(100% + var(--spacing-2));
 }
 
-.acuity-tooltip.offset-md.acuity-tooltip--top {
-  bottom: calc(100% + var(--spacing-md));
+.md-tooltip--right.md-tooltip--offset-md {
+  left: calc(100% + var(--spacing-3));
 }
 
-.acuity-tooltip.offset-lg.acuity-tooltip--top {
-  bottom: calc(100% + var(--spacing-lg));
+.md-tooltip--right.md-tooltip--offset-lg {
+  left: calc(100% + var(--spacing-4));
 }
 
-.acuity-tooltip.offset-xl.acuity-tooltip--top {
-  bottom: calc(100% + var(--spacing-xl));
+.md-tooltip--right.md-tooltip--offset-xl {
+  left: calc(100% + var(--spacing-6));
 }
 
-.acuity-tooltip.offset-xs.acuity-tooltip--bottom {
-  top: calc(100% + var(--spacing-xs));
+/* ===== MD3 Transitions (Emphasized Easing) ===== */
+.md-tooltip-enter-active {
+  transition:
+    opacity var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-emphasized),
+    transform var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-emphasized);
 }
 
-.acuity-tooltip.offset-sm.acuity-tooltip--bottom {
-  top: calc(100% + var(--spacing-sm));
+.md-tooltip-leave-active {
+  transition:
+    opacity var(--md-sys-motion-duration-short1) var(--md-sys-motion-easing-emphasized),
+    transform var(--md-sys-motion-duration-short1) var(--md-sys-motion-easing-emphasized);
 }
 
-.acuity-tooltip.offset-md.acuity-tooltip--bottom {
-  top: calc(100% + var(--spacing-md));
-}
-
-.acuity-tooltip.offset-lg.acuity-tooltip--bottom {
-  top: calc(100% + var(--spacing-lg));
-}
-
-.acuity-tooltip.offset-xl.acuity-tooltip--bottom {
-  top: calc(100% + var(--spacing-xl));
-}
-
-.acuity-tooltip.offset-xs.acuity-tooltip--left {
-  right: calc(100% + var(--spacing-xs));
-}
-
-.acuity-tooltip.offset-sm.acuity-tooltip--left {
-  right: calc(100% + var(--spacing-sm));
-}
-
-.acuity-tooltip.offset-md.acuity-tooltip--left {
-  right: calc(100% + var(--spacing-md));
-}
-
-.acuity-tooltip.offset-lg.acuity-tooltip--left {
-  right: calc(100% + var(--spacing-lg));
-}
-
-.acuity-tooltip.offset-xl.acuity-tooltip--left {
-  right: calc(100% + var(--spacing-xl));
-}
-
-.acuity-tooltip.offset-xs.acuity-tooltip--right {
-  left: calc(100% + var(--spacing-xs));
-}
-
-.acuity-tooltip.offset-sm.acuity-tooltip--right {
-  left: calc(100% + var(--spacing-sm));
-}
-
-.acuity-tooltip.offset-md.acuity-tooltip--right {
-  left: calc(100% + var(--spacing-md));
-}
-
-.acuity-tooltip.offset-lg.acuity-tooltip--right {
-  left: calc(100% + var(--spacing-lg));
-}
-
-.acuity-tooltip.offset-xl.acuity-tooltip--right {
-  left: calc(100% + var(--spacing-xl));
-}
-
-/* Transitions */
-.tooltip-enter-active,
-.tooltip-leave-active {
-  transition: all var(--md-sys-motion-duration-short4)
-    var(--md-sys-motion-easing-emphasized);
-}
-
-.tooltip-enter-from {
+.md-tooltip-enter-from {
   opacity: 0;
-  transform: scale(0.92) translateY(-4px);
+  transform: scale(0.8);
 }
 
-.tooltip-leave-to {
+.md-tooltip-leave-to {
   opacity: 0;
-  transform: scale(0.92) translateY(-4px);
+  transform: scale(0.8);
+}
+
+/* Top placement 特殊动画 */
+.md-tooltip--top.md-tooltip-enter-from {
+  transform: translateX(-50%) scale(0.8) translateY(4px);
+}
+
+.md-tooltip--top.md-tooltip-leave-to {
+  transform: translateX(-50%) scale(0.8) translateY(4px);
+}
+
+/* Bottom placement 特殊动画 */
+.md-tooltip--bottom.md-tooltip-enter-from {
+  transform: translateX(-50%) scale(0.8) translateY(-4px);
+}
+
+.md-tooltip--bottom.md-tooltip-leave-to {
+  transform: translateX(-50%) scale(0.8) translateY(-4px);
+}
+
+/* Left placement 特殊动画 */
+.md-tooltip--left.md-tooltip-enter-from {
+  transform: translateY(-50%) scale(0.8) translateX(4px);
+}
+
+.md-tooltip--left.md-tooltip-leave-to {
+  transform: translateY(-50%) scale(0.8) translateX(4px);
+}
+
+/* Right placement 特殊动画 */
+.md-tooltip--right.md-tooltip-enter-from {
+  transform: translateY(-50%) scale(0.8) translateX(-4px);
+}
+
+.md-tooltip--right.md-tooltip-leave-to {
+  transform: translateY(-50%) scale(0.8) translateX(-4px);
+}
+
+/* ===== Disabled State ===== */
+.md-tooltip--disabled {
+  display: none;
 }
 </style>

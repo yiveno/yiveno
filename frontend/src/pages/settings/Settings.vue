@@ -11,7 +11,7 @@
       :show-settings="false"
       :show-account="false"
     />
-    <Main class="main-content">
+    <main class="main-content">
       <div class="settings-body">
         <!-- ✅ Material Web Tabs - 横向布局 -->
         <div class="settings-tabs-container">
@@ -53,13 +53,13 @@
           </div>
         </main>
       </div>
-</Main>
+    </main>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, defineAsyncComponent, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
-import { AppHeader, Main } from '@/components'
+import { AppHeader } from '@/components'
 import LucideIcon from '@/components/base/LucideIcon/LucideIcon.vue'
 import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'
 import GlobalQuickAddBookmark from '@/components/business/GlobalQuickAddBookmark/GlobalQuickAddBookmark.vue'

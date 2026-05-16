@@ -1,52 +1,88 @@
 <template>
-  <div class="acuity-input-wrapper">
-    <label v-if="label" :for="inputId" class="acuity-input-label">
-      {{ label }}
-    </label>
-    <div class="acuity-input-container" :class="inputContainerClasses">
-      <div v-if="$slots.prepend" class="acuity-input-prepend">
+  <div class="md-input-wrapper" :class="wrapperClasses">
+    <div class="md-input-container" :class="containerClasses">
+      <!-- Prepend slot -->
+      <div v-if="$slots.prepend" class="md-input-prepend">
         <slot name="prepend"></slot>
       </div>
-      <input
-        :id="inputId"
+      
+      <!-- Material Web Text Field -->
+      <md-outlined-text-field
+        v-if="variant === 'outlined'"
+        ref="textFieldRef"
         :value="modelValue"
         :type="type"
         :name="name"
+        :label="label"
         :placeholder="placeholder"
         :disabled="disabled"
         :readonly="readonly"
         :autocomplete="autocomplete"
-        :class="inputClasses"
-        class="acuity-input"
+        :supporting-text="errorMessage || hint"
+        :error="!!errorMessage"
+        :error-text="errorMessage"
+        class="md-text-field"
         v-bind="$attrs"
         @input="handleInput"
         @focus="handleFocus"
         @blur="handleBlur"
         @keydown="handleKeydown"
-      />
-      <div v-if="loading" class="acuity-input-loading">
-        <div class="acuity-spinner-small"></div>
-      </div>
-      <div
-        v-if="clearable && modelValue"
-        class="acuity-input-clear"
-        @click="clearInput"
       >
-        <LucideIcon name="x" :size="16" />
-      </div>
-      <div v-if="$slots.append" class="acuity-input-append">
+        <!-- Trailing icon: Loading or Clear button -->
+        <div v-if="loading || (clearable && modelValue)" slot="trailing-icon" class="md-input-actions">
+          <md-circular-progress v-if="loading" indeterminate class="md-input-spinner" />
+          <md-icon-button
+            v-else-if="clearable && modelValue"
+            type="button"
+            class="md-input-clear-btn"
+            :aria-label="'清除'"
+            @click="clearInput"
+          >
+            <LucideIcon name="x" :size="16" />
+          </md-icon-button>
+        </div>
+      </md-outlined-text-field>
+
+      <md-filled-text-field
+        v-else
+        ref="textFieldRef"
+        :value="modelValue"
+        :type="type"
+        :name="name"
+        :label="label"
+        :placeholder="placeholder"
+        :disabled="disabled"
+        :readonly="readonly"
+        :autocomplete="autocomplete"
+        :supporting-text="errorMessage || hint"
+        :error="!!errorMessage"
+        :error-text="errorMessage"
+        class="md-text-field"
+        v-bind="$attrs"
+        @input="handleInput"
+        @focus="handleFocus"
+        @blur="handleBlur"
+        @keydown="handleKeydown"
+      >
+        <!-- Trailing icon: Loading or Clear button -->
+        <div v-if="loading || (clearable && modelValue)" slot="trailing-icon" class="md-input-actions">
+          <md-circular-progress v-if="loading" indeterminate class="md-input-spinner" />
+          <md-icon-button
+            v-else-if="clearable && modelValue"
+            type="button"
+            class="md-input-clear-btn"
+            :aria-label="'清除'"
+            @click="clearInput"
+          >
+            <LucideIcon name="x" :size="16" />
+          </md-icon-button>
+        </div>
+      </md-filled-text-field>
+
+      <!-- Append slot -->
+      <div v-if="$slots.append" class="md-input-append">
         <slot name="append"></slot>
       </div>
-    </div>
-    <!-- ✅ 始终渲染提示区域，预留空间避免布局跳动 -->
-    <div
-      class="acuity-input-hint"
-      :class="{
-        error: !!errorMessage,
-        'has-content': !!(errorMessage || hint)
-      }"
-    >
-      {{ errorMessage || hint || '\u00A0' }}
     </div>
   </div>
 </template>
@@ -55,12 +91,13 @@
 import { computed, ref } from 'vue'
 import { LucideIcon } from '@/components/base/LucideIcon'
 import type { InputProps, InputEmits } from './Input.d'
+import '@material/web/textfield/outlined-text-field.js'
+import '@material/web/textfield/filled-text-field.js'
+import '@material/web/iconbutton/icon-button.js'
+import '@material/web/progress/circular-progress.js'
 
 defineOptions({ 
-  name: 'AcuityInput',
-  components: {
-    LucideIcon
-  }
+  name: 'MdInput'
 })
 
 const props = withDefaults(defineProps<InputProps>(), {
@@ -78,37 +115,44 @@ const props = withDefaults(defineProps<InputProps>(), {
   hint: '',
   error: false,
   errorMessage: '',
-  borderless: false
+  size: 'md',
+  type: 'text'
 })
-
-declare const __ACUITY_INPUT_INTERNAL__: unique symbol
 
 const emit = defineEmits<InputEmits>()
 
+const textFieldRef = ref<HTMLElement>()
 const isFocused = ref(false)
-const inputId = `acuity-input-${Math.random().toString(36).substr(2, 9)}`
 
-const inputContainerClasses = computed(() => [
-  `acuity-input-container--${props.variant}`,
-  `acuity-input-container--${props.size}`,
-  `acuity-input-container--${props.density}`,
+/**
+ * Wrapper 类名
+ */
+const wrapperClasses = computed(() => [
+  `md-input-wrapper--${props.size}`,
+  `md-input-wrapper--${props.density}`,
   {
-    'acuity-input-container--focused': isFocused.value,
-    'acuity-input-container--disabled': props.disabled,
-    'acuity-input-container--error': props.error || props.errorMessage,
-    'acuity-input-container--loading': props.loading,
-    'acuity-input-container--borderless': props.borderless
+    'md-input-wrapper--disabled': props.disabled,
+    'md-input-wrapper--error': props.error || props.errorMessage
   }
 ])
 
-const inputClasses = computed(() => [
-  `acuity-input--${props.size}`,
+/**
+ * Container 类名
+ */
+const containerClasses = computed(() => [
+  `md-input-container--${props.size}`,
+  `md-input-container--${props.density}`,
   {
-    'acuity-input--disabled': props.disabled,
-    'acuity-input--readonly': props.readonly
+    'md-input-container--focused': isFocused.value,
+    'md-input-container--disabled': props.disabled,
+    'md-input-container--error': props.error || props.errorMessage,
+    'md-input-container--loading': props.loading
   }
 ])
 
+/**
+ * 处理输入事件
+ */
 const handleInput = (event: Event) => {
   const target = event.target as HTMLInputElement
   const raw = target.value
@@ -117,20 +161,32 @@ const handleInput = (event: Event) => {
   emit('input', value)
 }
 
+/**
+ * 处理聚焦事件
+ */
 const handleFocus = (event: FocusEvent) => {
   isFocused.value = true
   emit('focus', event)
 }
 
+/**
+ * 处理失焦事件
+ */
 const handleBlur = (event: FocusEvent) => {
   isFocused.value = false
   emit('blur', event)
 }
 
+/**
+ * 处理键盘事件
+ */
 const handleKeydown = (event: KeyboardEvent) => {
   emit('keydown', event)
 }
 
+/**
+ * 清空输入
+ */
 const clearInput = () => {
   let clearedValue: string | number | undefined = props.clearValue
 
@@ -144,355 +200,112 @@ const clearInput = () => {
 </script>
 
 <style scoped>
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
+/**
+ * Material Design 3 Input Component
+ * 基于 Material Web Text Field 的封装组件
+ * 
+ * 特性：
+ * - 完全使用 Material Web Text Field
+ * - 支持 outlined/filled 变体
+ * - 支持 clearable 按钮
+ * - 支持 loading 状态
+ * - 支持 prepend/append slots
+ * - 完全符合 Material Design 3 规范
+ */
 
-  100% {
-    transform: rotate(360deg);
-  }
+/* ========== Wrapper 样式 ========== */
+
+.md-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 }
 
-/**
- * ✨ 淡入动画 - 用于 loading spinner 和 clear 按钮
- */
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+/* 尺寸变体 */
+.md-input-wrapper--sm {
+  --md-outlined-text-field-container-shape: var(--radius-sm);
+  --md-filled-text-field-container-shape: var(--radius-sm);
 }
 
-/**
- * ✨ 缩放弹跳动画 - 用于 clear 按钮点击
- */
-@keyframes scale-bounce {
-  0% {
-    transform: scale(1);
-  }
-
-  50% {
-    transform: scale(0.9);
-  }
-
-  100% {
-    transform: scale(1);
-  }
+.md-input-wrapper--md {
+  --md-outlined-text-field-container-shape: var(--radius-md);
+  --md-filled-text-field-container-shape: var(--radius-md);
 }
 
-/**
- * ♿ 可访问性：尊重用户的动画偏好
- */
+.md-input-wrapper--lg {
+  --md-outlined-text-field-container-shape: var(--radius-lg);
+  --md-filled-text-field-container-shape: var(--radius-lg);
+}
+
+/* 密度变体 */
+.md-input-wrapper--compact {
+  --md-outlined-text-field-top-space: var(--spacing-xs);
+  --md-outlined-text-field-bottom-space: var(--spacing-xs);
+  --md-filled-text-field-top-space: var(--spacing-xs);
+  --md-filled-text-field-bottom-space: var(--spacing-xs);
+}
+
+.md-input-wrapper--comfortable {
+  --md-outlined-text-field-top-space: var(--spacing-sm);
+  --md-outlined-text-field-bottom-space: var(--spacing-sm);
+  --md-filled-text-field-top-space: var(--spacing-sm);
+  --md-filled-text-field-bottom-space: var(--spacing-sm);
+}
+
+/* ========== Container 样式 ========== */
+
+.md-input-container {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  width: 100%;
+}
+
+.md-text-field {
+  flex: 1;
+  width: 100%;
+}
+
+/* Prepend/Append slots */
+.md-input-prepend,
+.md-input-append {
+  display: flex;
+  align-items: center;
+  color: var(--md-sys-color-on-surface-variant);
+  transition: color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+}
+
+.md-input-container--focused .md-input-prepend,
+.md-input-container--focused .md-input-append {
+  color: var(--md-sys-color-primary);
+}
+
+/* Loading & Clear 按钮容器 */
+.md-input-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.md-input-spinner {
+  --md-circular-progress-size: 18px;
+  --md-circular-progress-active-indicator-color: var(--md-sys-color-primary);
+}
+
+.md-input-clear-btn {
+  --md-icon-button-icon-size: 16px;
+  --md-icon-button-state-layer-shape: var(--radius-full);
+}
+
+/* ========== 可访问性：尊重用户的动画偏好 ========== */
+
 @media (prefers-reduced-motion: reduce) {
-  .acuity-input-container,
-  .acuity-input-clear,
-  .acuity-input-loading {
+  .md-input-container,
+  .md-input-prepend,
+  .md-input-append,
+  .md-input-spinner {
     transition: none !important;
     animation: none !important;
   }
-}
-
-.acuity-input-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-  width: 100%; /* 确保 wrapper 占据全部宽度 */
-}
-
-.acuity-input-label {
-  margin-bottom: var(--spacing-xs);
-  font-size: var(--typescale-body-md-size);
-  font-weight: var(--font-weight-medium);
-  line-height: var(--typescale-body-md-line);
-  letter-spacing: var(--typescale-body-md-tracking);
-  color: var(--color-text-primary);
-  
-  /* ✨ 平滑过渡 */
-  transition: color var(--anim-duration-fast) var(--anim-ease-standard);
-}
-
-.acuity-input-container {
-  position: relative;
-  display: flex;
-  align-items: center;
-  padding: 0 var(--spacing-md);
-  border-radius: var(--radius-md);
-  
-  /* ✨ 优化背景：微妙的渐变 */
-  background: linear-gradient(
-    135deg,
-    var(--color-surface) 0%,
-    color-mix(in srgb, var(--color-surface) 98%, var(--color-primary) 2%) 100%
-  );
-  
-  /* ✨ 性能优化：提示浏览器优化变换和阴影 */
-  will-change: border-color, box-shadow;
-  
-  /* ✨ 平滑过渡：边框 + 阴影 + 背景 */
-  transition:
-    border-color var(--anim-duration-fast) var(--anim-ease-standard),
-    box-shadow var(--anim-duration-normal) var(--anim-ease-emphasized),
-    background var(--anim-duration-fast) var(--anim-ease-standard);
-}
-
-/* Variant styles */
-.acuity-input-container--outlined {
-  border: 1px solid var(--color-border);
-  
-  /* ✨ 初始阴影 */
-  box-shadow: 0 1px 2px var(--color-shadow-003);
-}
-
-.acuity-input-container--outlined:hover {
-  border-color: var(--color-border-hover);
-  
-  /* ✨ 悬停时阴影加深 */
-  box-shadow: 0 2px 4px var(--color-shadow-006);
-}
-
-.acuity-input-container--outlined.acuity-input-container--focused {
-  border-color: var(--color-primary);
-  
-  /* ✨ 聚焦时的发光效果：多层阴影 + 彩色光晕 */
-  box-shadow: 
-    0 0 0 3px color-mix(in srgb, var(--color-primary) 15%, transparent),
-    0 2px 8px var(--color-shadow-008),
-    0 0 20px color-mix(in srgb, var(--color-primary) 20%, transparent);
-  
-  /* ✨ 聚焦时背景更亮 */
-  background: linear-gradient(
-    135deg,
-    var(--color-surface) 0%,
-    color-mix(in srgb, var(--color-surface) 95%, var(--color-primary) 5%) 100%
-  );
-}
-
-.acuity-input-container--filled {
-  border: 1px solid transparent;
-  border-bottom: 2px solid var(--color-border);
-  background: var(--color-surface-variant);
-  
-  /* ✨ 轻微阴影 */
-  box-shadow: 0 1px 2px var(--color-shadow-003);
-}
-
-.acuity-input-container--filled.acuity-input-container--focused {
-  border-bottom-color: var(--color-primary);
-  
-  /* ✨ 聚焦时底部发光 */
-  box-shadow: 
-    0 2px 0 0 color-mix(in srgb, var(--color-primary) 30%, transparent),
-    0 2px 8px var(--color-shadow-008);
-}
-
-/* Size styles */
-.acuity-input-container--sm {
-  min-height: 32px;
-}
-
-.acuity-input-container--md {
-  min-height: 40px;
-}
-
-.acuity-input-container--lg {
-  min-height: 48px;
-}
-
-/* Density styles */
-.acuity-input-container--comfortable {
-  padding-top: var(--spacing-sm);
-  padding-bottom: var(--spacing-sm);
-}
-
-.acuity-input-container--compact {
-  padding-top: var(--spacing-xs);
-  padding-bottom: var(--spacing-xs);
-}
-
-/* State styles - 错误状态优先级高于 hover */
-.acuity-input-container--error,
-.acuity-input-container--error:hover,
-.acuity-input-container--error.acuity-input-container--focused {
-  border-color: var(--color-error);
-  
-  /* ✨ 错误状态的红色光晕 */
-  box-shadow: 
-    0 0 0 3px color-mix(in srgb, var(--color-error) 15%, transparent),
-    0 2px 8px var(--color-shadow-008),
-    0 0 20px color-mix(in srgb, var(--color-error) 20%, transparent);
-}
-
-.acuity-input-container--disabled {
-  border-color: var(--color-border-disabled);
-  background: var(--color-surface-disabled);
-  opacity: 0.6;
-  cursor: not-allowed;
-  
-  /* ✨ 禁用状态无阴影 */
-  box-shadow: none;
-}
-
-/* Borderless style - 使用高特异性选择器覆盖所有变体 */
-.acuity-input-container.acuity-input-container--borderless {
-  padding: 0;
-  border: none;
-  background: transparent;
-  box-shadow: none;
-  opacity: 1;
-}
-
-.acuity-input-container.acuity-input-container--borderless:hover,
-.acuity-input-container.acuity-input-container--borderless.acuity-input-container--focused {
-  background: transparent;
-  box-shadow: none;
-  opacity: 1;
-}
-
-.acuity-input {
-  flex: 1;
-  padding: 0;
-  border: none;
-  outline: none;
-  font-size: var(--typescale-body-lg-size);
-  line-height: var(--typescale-body-lg-line);
-  letter-spacing: var(--typescale-body-lg-tracking);
-  color: var(--color-text-primary);
-  background: transparent;
-  
-  /* ✨ 平滑过渡 */
-  transition: color var(--anim-duration-fast) var(--anim-ease-standard);
-}
-
-.acuity-input::placeholder {
-  color: var(--color-text-tertiary);
-  
-  /* ✨ placeholder 淡入淡出 */
-  transition: 
-    color var(--anim-duration-fast) var(--anim-ease-standard),
-    opacity var(--anim-duration-fast) var(--anim-ease-standard);
-}
-
-/* ✨ 聚焦时 placeholder 更淡 */
-.acuity-input-container--focused .acuity-input::placeholder {
-  opacity: 0.5;
-}
-
-.acuity-input--disabled {
-  color: var(--color-text-disabled);
-  cursor: not-allowed;
-}
-
-.acuity-input--readonly {
-  cursor: default;
-  user-select: none;
-}
-
-.acuity-input-prepend,
-.acuity-input-append {
-  display: flex;
-  align-items: center;
-  color: var(--color-text-secondary);
-  
-  /* ✨ 平滑过渡 */
-  transition: color var(--anim-duration-fast) var(--anim-ease-standard);
-}
-
-.acuity-input-prepend {
-  margin-right: var(--spacing-1-5);
-}
-
-.acuity-input-append {
-  margin-left: var(--spacing-sm);
-}
-
-.acuity-input-loading {
-  margin-left: var(--spacing-sm);
-  
-  /* ✨ 淡入动画 */
-  animation: fade-in var(--anim-duration-fast) var(--anim-ease-standard);
-}
-
-.acuity-input-clear {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-left: var(--spacing-sm);
-  padding: var(--spacing-xs);
-  border-radius: var(--radius-sm);
-  color: var(--color-text-tertiary);
-  cursor: pointer;
-  
-  /* ✨ 平滑过渡 */
-  transition:
-    color var(--anim-duration-fast) var(--anim-ease-standard),
-    background-color var(--anim-duration-fast) var(--anim-ease-standard),
-    transform var(--anim-duration-fast) var(--anim-ease-spring);
-  
-  /* ✨ 淡入动画 */
-  animation: fade-in var(--anim-duration-fast) var(--anim-ease-standard);
-  
-  /* ✨ 性能优化 */
-  will-change: transform, background-color;
-}
-
-.acuity-input-clear:hover {
-  color: var(--color-text-secondary);
-  background-color: var(--color-surface-hover);
-  opacity: 0.8;
-}
-
-.acuity-input-clear:active {
-  opacity: 0.6;
-  animation: scale-bounce var(--anim-duration-fast) var(--anim-ease-bounce);
-}
-
-/* ✅ 始终预留提示区域空间，避免布局跳动 */
-.acuity-input-hint {
-  min-height: 1.5em; /* 预留一行文本的高度 */
-  font-size: var(--typescale-body-md-size);
-  line-height: var(--typescale-body-md-line);
-  letter-spacing: var(--typescale-body-md-tracking);
-  color: transparent; /* 默认透明，无内容时不可见 */
-  
-  /* ✨ 平滑过渡 */
-  transition: 
-    color var(--anim-duration-fast) var(--anim-ease-standard),
-    opacity var(--anim-duration-fast) var(--anim-ease-standard);
-}
-
-/* 有内容时显示颜色 */
-.acuity-input-hint.has-content {
-  color: var(--color-text-tertiary);
-}
-
-/* 错误状态 - 特异性高于 .has-content */
-.acuity-input-hint.error,
-.acuity-input-hint.error.has-content {
-  font-weight: var(--font-weight-medium);
-  color: var(--color-error);
-  
-  /* ✨ 错误提示淡入 */
-  animation: fade-in var(--anim-duration-fast) var(--anim-ease-standard);
-}
-
-.acuity-spinner-small {
-  width: 18px;
-  height: 18px;
-  border: 2.5px solid transparent;
-  border-top: 2.5px solid var(--color-primary);
-  border-right: 2.5px solid var(--color-primary);
-  border-radius: 50%;
-
-  /* ✅ 性能优化：提示浏览器优化动画性能 */
-  will-change: transform;
-  
-  /* ✨ 更流畅的旋转动画 - 使用弹性缓动 */
-  animation: spin 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
 }
 </style>

@@ -1,58 +1,76 @@
 <!--
-  📋 上下文菜单组件
+  📋 上下文菜单组件 (Material Design 3)
   
   功能：
   1. 显示右键菜单
   2. 自动计算位置（防止超出视口）
   3. 点击外部自动关闭
-  4. 支持图标、快捷键提示、分隔线
+  4. 支持图标、快捷键提示
   5. 支持禁用状态和颜色主题
-  6. 键盘导航（上下箭头、Enter、ESC）
+  6. 键盘导航
   
-  说明：使用 MWC `md-list` / `md-list-item`。图标必须放在带 `slot="start"` 的
-  原生元素（如 span）内，便于浏览器将 light DOM 正确分配到 Shadow 的 start 槽。
+  实现说明：
+  - 使用自定义容器 + Material Web 的 md-list + md-list-item
+  - 手动实现定位逻辑（md-menu 不支持右键菜单场景）
+  - 使用 Teleport 渲染到 body
+  - 保持 Material Design 3 视觉风格
 -->
 
 <template>
   <Teleport to="body">
-    <Transition name="context-menu">
-      <md-list
-        v-if="show"
-        ref="menuRef"
-        role="menu"
-        class="context-menu"
-        :style="menuStyle"
-        tabindex="-1"
-        @keydown="handleKeyDown"
-      >
-        <md-list-item
-          v-for="(item, index) in visibleItems"
+    <!-- 自定义菜单容器 -->
+    <div
+      v-if="show"
+      ref="menuRef"
+      class="context-menu"
+      :style="menuStyle"
+      @click.stop
+    >
+      <!-- 菜单列表 -->
+      <div class="context-menu__list">
+        <button
+          v-for="item in visibleItems"
           :key="item.id"
-          :ref="el => setItemRef(el as HTMLElement, index)"
           type="button"
           :disabled="item.disabled"
+          class="context-menu-item"
           :class="{
-            'context-menu-item--focused': focusedIndex === index,
             [`context-menu-item--${item.color}`]: item.color && item.color !== 'default'
           }"
           @click="handleItemClick(item)"
-          @mouseenter="focusedIndex = index"
         >
-          <span v-if="item.icon" slot="start" class="context-menu-item__start" aria-hidden="true">
-            <LucideIcon :name="item.icon" :size="16" />
+          <!-- 图标 -->
+          <span v-if="item.icon" class="context-menu-item__icon-wrapper">
+            <LucideIcon
+              :name="item.icon"
+              :size="16"
+              class="context-menu-item__icon"
+            />
           </span>
-          <div slot="headline" class="context-menu-item__headline">{{ item.label }}</div>
-          <div v-if="item.shortcut" slot="trailing-supporting-text" class="item-shortcut">
+          
+          <!-- 标签文本 -->
+          <span class="context-menu-item__label">{{ item.label }}</span>
+          
+          <!-- 快捷键提示 -->
+          <span v-if="item.shortcut" class="context-menu-item__shortcut">
             {{ item.shortcut }}
-          </div>
-        </md-list-item>
-      </md-list>
-    </Transition>
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 点击外部关闭的遮罩 -->
+    <div
+      v-if="show"
+      class="context-menu-backdrop"
+      @click="emit('close')"
+      @contextmenu.prevent="emit('close')"
+    ></div>
   </Teleport>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { LucideIcon } from '@/components/base/LucideIcon'
 import type { MenuItemConfig } from '@/core/bookmark/context-menu-config'
 
@@ -79,15 +97,6 @@ const emit = defineEmits<{
 }>()
 
 const menuRef = ref<HTMLElement | null>(null)
-const focusedIndex = ref(0)
-const itemRefs = ref<Array<HTMLElement | null>>([])
-
-// 设置菜单项引用
-const setItemRef = (el: HTMLElement | null, index: number) => {
-  if (el) {
-    itemRefs.value[index] = el
-  }
-}
 
 // 过滤出可见的菜单项
 const visibleItems = computed(() => {
@@ -96,7 +105,10 @@ const visibleItems = computed(() => {
 
 // 计算菜单位置（防止超出视口）
 const menuStyle = computed(() => {
-  const style: Record<string, string> = {}
+  const style: Record<string, string> = {
+    position: 'fixed',
+    zIndex: '9999'
+  }
 
   // 初始位置
   if (!menuRef.value) {
@@ -127,78 +139,6 @@ const menuStyle = computed(() => {
 })
 
 /**
- * 处理键盘导航
- */
-const handleKeyDown = (event: KeyboardEvent) => {
-  const items = visibleItems.value
-
-  switch (event.key) {
-    case 'ArrowDown': {
-      event.preventDefault()
-      // 向下移动，跳过禁用项
-      let nextIndex = focusedIndex.value + 1
-      while (nextIndex < items.length && items[nextIndex].disabled) {
-        nextIndex++
-      }
-      // 循环到第一项
-      if (nextIndex >= items.length) {
-        nextIndex = 0
-        while (nextIndex < items.length && items[nextIndex].disabled) {
-          nextIndex++
-        }
-      }
-      if (nextIndex < items.length) {
-        focusedIndex.value = nextIndex
-      }
-      break
-    }
-
-    case 'ArrowUp': {
-      event.preventDefault()
-      // 向上移动，跳过禁用项
-      let prevIndex = focusedIndex.value - 1
-      while (prevIndex >= 0 && items[prevIndex].disabled) {
-        prevIndex--
-      }
-      // 循环到最后一项
-      if (prevIndex < 0) {
-        prevIndex = items.length - 1
-        while (prevIndex >= 0 && items[prevIndex].disabled) {
-          prevIndex--
-        }
-      }
-      if (prevIndex >= 0) {
-        focusedIndex.value = prevIndex
-      }
-      break
-    }
-
-    case 'ArrowLeft': {
-      // 左箭头键：关闭菜单
-      event.preventDefault()
-      emit('close')
-      break
-    }
-
-    case 'Enter':
-    case ' ': {
-      event.preventDefault()
-      const item = items[focusedIndex.value]
-      if (item && !item.disabled) {
-        handleItemClick(item)
-      }
-      break
-    }
-
-    case 'Escape': {
-      event.preventDefault()
-      emit('close')
-      break
-    }
-  }
-}
-
-/**
  * 处理菜单项点击
  */
 const handleItemClick = (item: MenuItemConfig) => {
@@ -208,172 +148,194 @@ const handleItemClick = (item: MenuItemConfig) => {
 }
 
 /**
- * 处理点击外部关闭
+ * 处理键盘导航
  */
-const handleClickOutside = (event: MouseEvent) => {
-  if (menuRef.value && !menuRef.value.contains(event.target as Node)) {
-    emit('close')
+const handleKeyDown = (event: KeyboardEvent) => {
+  if (!props.show) return
+
+  switch (event.key) {
+    case 'Escape':
+      event.preventDefault()
+      emit('close')
+      break
+    case 'ArrowDown':
+    case 'ArrowUp':
+      // 键盘导航：可以在这里实现上下箭头切换焦点
+      break
   }
 }
 
-// 监听显示状态，添加/移除事件监听器
+// 监听显示状态变化
 watch(
   () => props.show,
   async (newShow) => {
     if (newShow) {
-      // 重置焦点到第一个可用项
-      focusedIndex.value = 0
-      const items = visibleItems.value
-      while (focusedIndex.value < items.length && items[focusedIndex.value].disabled) {
-        focusedIndex.value++
-      }
-
-      // 等待 DOM 更新后聚焦
       await nextTick()
-
-      // 聚焦到菜单容器，启用键盘导航
-      if (menuRef.value) {
-        menuRef.value.focus()
+      // 聚焦第一个可用的菜单项以支持键盘导航
+      const firstItem = menuRef.value?.querySelector('.context-menu-item:not([disabled])')
+      if (firstItem instanceof HTMLElement) {
+        firstItem.focus()
       }
-
-      // 添加点击外部关闭的监听器
-      setTimeout(() => {
-        document.addEventListener('click', handleClickOutside)
-      }, 0)
-    } else {
-      document.removeEventListener('click', handleClickOutside)
-      itemRefs.value = []
     }
   }
 )
 
-// 组件卸载时清理事件监听器
+onMounted(() => {
+  document.addEventListener('keydown', handleKeyDown)
+})
+
 onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
+  document.removeEventListener('keydown', handleKeyDown)
 })
 </script>
 
 <style scoped>
+/* 点击外部关闭的遮罩 */
+.context-menu-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9998;
+  width: 100vw;
+  height: 100vh;
+  background: transparent;
+}
+
+/* 菜单容器 */
 .context-menu {
   position: fixed;
   z-index: 9999;
   min-width: 180px;
   max-width: 280px;
-  padding: 0;
-  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  outline: none;
-  background: var(--color-surface);
-  user-select: none;
+  background: var(--md-sys-color-surface-container);
   overflow: hidden;
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--md-sys-elevation-3);
 }
 
-.item-shortcut {
-  font-size: var(--text-xs);
+/* 菜单列表容器 */
+.context-menu__list {
+  margin: 0;
+  padding: var(--spacing-1) 0;
+}
+
+/* 菜单项按钮 */
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  width: 100%;
+  min-height: 40px;
+  padding: var(--spacing-2) var(--spacing-3);
+  border: none;
+  font-family: var(--font-family-base);
+  font-size: var(--text-sm);
+  line-height: 1.25rem;
+  text-align: left;
+  color: var(--md-sys-color-on-surface);
+  background: transparent;
+  cursor: pointer;
+  transition: background-color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+}
+
+.context-menu-item:focus-visible {
+  outline: none;
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
+}
+
+.context-menu-item:disabled {
+  color: var(--color-text-disabled);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.context-menu-item:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
+}
+
+/* 图标容器 */
+.context-menu-item__icon-wrapper {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: center;
+  align-items: center;
+  width: 20px;
+  height: 20px;
+}
+
+/* 图标 */
+.context-menu-item__icon {
   color: var(--color-text-secondary);
 }
 
-.context-menu-item__start {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-}
-
-.context-menu-item__headline {
+/* 标签文本 */
+.context-menu-item__label {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-sm);
   white-space: nowrap;
+  color: var(--md-sys-color-on-surface);
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Material Web Components 样式 */
-md-list {
-  --md-list-container-color: transparent;
+/* 快捷键提示 */
+.context-menu-item__shortcut {
+  flex-shrink: 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  opacity: 0.7;
 }
 
-md-list-item {
-  --md-list-item-label-text-color: var(--md-sys-color-on-surface);
-  --md-list-item-trailing-supporting-text-color: var(--md-sys-color-on-surface-variant);
-  --md-list-item-container-shape: 0;
-  --md-list-item-label-text-font: var(--font-family-base);
-  --md-list-item-label-text-size: var(--md-sys-typescale-body-medium-size);
-  --md-list-item-one-line-container-height: 48px;
-  --md-list-item-hover-state-layer-color: var(--md-sys-color-on-surface);
-  --md-list-item-hover-state-layer-opacity: 0.08;
-  --md-list-item-disabled-label-text-color: var(--color-text-disabled);
-  --md-list-item-disabled-label-text-opacity: 0.5;
-
-  border-bottom: 1px solid var(--color-border);
-}
-
-md-list-item:last-child {
-  border-bottom: none;
-}
-
-/* 焦点状态 */
-.context-menu-item--focused {
-  background: var(--color-surface-variant);
-}
-
-/* 颜色主题 */
+/* 颜色主题 - Error（危险操作） */
 .context-menu-item--error {
-  --md-list-item-label-text-color: var(--color-error);
+  color: var(--md-sys-color-error);
 }
 
-.context-menu-item--error:hover,
-.context-menu-item--error.context-menu-item--focused {
-  --md-list-item-label-text-color: var(--color-on-error, var(--color-surface));
-  --md-list-item-hover-state-layer-color: var(--color-error);
-  --md-list-item-hover-state-layer-opacity: 1;
+.context-menu-item--error .context-menu-item__icon {
+  color: var(--md-sys-color-error);
 }
 
+.context-menu-item--error:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--md-sys-color-error) 12%, transparent);
+}
+
+/* 颜色主题 - Warning */
 .context-menu-item--warning {
-  --md-list-item-label-text-color: var(--color-warning);
+  color: var(--color-warning);
 }
 
-.context-menu-item--warning:hover,
-.context-menu-item--warning.context-menu-item--focused {
-  --md-list-item-hover-state-layer-color: var(--color-warning-subtle);
-  --md-list-item-hover-state-layer-opacity: 1;
+.context-menu-item--warning .context-menu-item__icon {
+  color: var(--color-warning);
 }
 
+.context-menu-item--warning:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--color-warning) 12%, transparent);
+}
+
+/* 颜色主题 - Success */
 .context-menu-item--success {
-  --md-list-item-label-text-color: var(--color-success);
+  color: var(--color-success);
 }
 
-.context-menu-item--success:hover,
-.context-menu-item--success.context-menu-item--focused {
-  --md-list-item-hover-state-layer-color: var(--color-success-subtle);
-  --md-list-item-hover-state-layer-opacity: 1;
+.context-menu-item--success .context-menu-item__icon {
+  color: var(--color-success);
 }
 
+.context-menu-item--success:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--color-success) 12%, transparent);
+}
+
+/* 颜色主题 - Primary */
 .context-menu-item--primary {
-  --md-list-item-label-text-color: var(--color-primary);
+  color: var(--md-sys-color-primary);
 }
 
-.context-menu-item--primary:hover,
-.context-menu-item--primary.context-menu-item--focused {
-  --md-list-item-hover-state-layer-color: var(--color-primary-subtle);
-  --md-list-item-hover-state-layer-opacity: 1;
+.context-menu-item--primary .context-menu-item__icon {
+  color: var(--md-sys-color-primary);
 }
 
-/* 动画 */
-.context-menu-enter-active,
-.context-menu-leave-active {
-  transition:
-    opacity var(--md-sys-motion-duration-short2)
-      var(--md-sys-motion-easing-standard),
-    transform var(--md-sys-motion-duration-short2)
-      var(--md-sys-motion-easing-standard);
-}
-
-.context-menu-enter-from {
-  opacity: 0;
-  transform: scale(0.95) translateY(-4px);
-}
-
-.context-menu-leave-to {
-  opacity: 0;
-  transform: scale(0.95) translateY(-4px);
+.context-menu-item--primary:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
 }
 </style>
