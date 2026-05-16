@@ -18,11 +18,12 @@
           <LucideIcon v-else name="bookmark" :size="24" />
         </div>
         <div class="info">
-          <md-outlined-text-field
+          <MdInput
+            v-model="bookmarkTitle"
             label="名称"
-            :value="bookmarkTitle"
-            @input="handleTitleInput"
-            @keydown="handleKeyDown"
+            variant="outlined"
+            size="md"
+            @keydown.enter="handleConfirm"
           />
         </div>
       </div>
@@ -114,6 +115,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { Dialog, LucideIcon } from '@/components'
+import { MdInput } from '@/components/base/Input'
 import { logger } from '@/infrastructure/logging/logger'
 import { notificationService } from '@/application/notification/notification-service'
 
@@ -322,23 +324,6 @@ function selectRecommendation(rec: FolderRecommendation) {
     folderPath: rec.folderPath,
     score: rec.score
   })
-}
-
-/**
- * 处理标题输入
- */
-function handleTitleInput(event: Event) {
-  const target = event.target as HTMLInputElement
-  bookmarkTitle.value = target.value
-}
-
-/**
- * 处理键盘事件
- */
-function handleKeyDown(event: KeyboardEvent) {
-  if (event.key === 'Enter') {
-    handleConfirm()
-  }
 }
 
 /**
@@ -588,7 +573,3 @@ function handleClose() {
 }
 </style>
 
-/* ✅ Material Web Text Field 样式 */
-.info md-outlined-text-field {
-  width: 100%;
-}

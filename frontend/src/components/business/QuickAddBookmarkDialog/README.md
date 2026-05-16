@@ -151,7 +151,7 @@ await chrome.runtime.sendMessage({
 ## 注意事项
 
 1. **需要权限**：`bookmarks` 权限（已在 manifest.json 中配置）
-2. **AI 依赖**：需要后端 Cloudflare Workers AI 服务可用
+2. **AI 依赖**：需要用户配置 API Key 或启用 Chrome 内置 LLM
 3. **异步操作**：AI 分类需要 1-3 秒，会显示加载状态
 
 ## 后续改进

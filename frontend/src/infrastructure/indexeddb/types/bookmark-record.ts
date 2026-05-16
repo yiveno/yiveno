@@ -82,6 +82,7 @@ export interface BookmarkRecord {
   // 用户数据
   category?: string
   notes?: string
+  description?: string // AI 生成的文件夹描述
   lastVisited?: number
   visitCount?: number
 

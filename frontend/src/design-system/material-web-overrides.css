@@ -178,6 +178,23 @@ md-filled-select {
   --md-filled-select-text-field-input-text-size: var(--md-sys-typescale-body-medium-size);
 }
 
+/* Select Option 组件（下拉选项） */
+md-select-option {
+  /* 选项文字颜色 */
+  --md-list-item-label-text-color: var(--color-text-primary);
+  --md-list-item-label-text-font: var(--font-family-base);
+  --md-list-item-label-text-size: var(--md-sys-typescale-body-medium-size);
+  --md-list-item-label-text-weight: 400;
+  
+  /* 选中状态 */
+  --md-list-item-selected-label-text-color: var(--md-sys-color-primary);
+  
+  /* 悬停状态 */
+  --md-list-item-hover-label-text-color: var(--color-text-primary);
+  --md-list-item-hover-state-layer-color: var(--md-sys-color-on-surface);
+  --md-list-item-hover-state-layer-opacity: 0.08;
+}
+
 /* ============================================
  * Button 组件
  * ============================================ */

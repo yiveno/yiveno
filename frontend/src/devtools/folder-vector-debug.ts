@@ -68,6 +68,7 @@ async function recommend(title: string, url: string, topK = 3) {
   const recommendations = await folderVectorService.recommendFolders(
     title,
     url,
+    undefined, // bookmarkContent
     topK
   )
 

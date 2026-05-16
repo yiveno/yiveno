@@ -200,18 +200,19 @@ const clearInput = () => {
 </script>
 
 <style scoped>
-/**
- * Material Design 3 Input Component
- * 基于 Material Web Text Field 的封装组件
- * 
- * 特性：
- * - 完全使用 Material Web Text Field
- * - 支持 outlined/filled 变体
- * - 支持 clearable 按钮
- * - 支持 loading 状态
- * - 支持 prepend/append slots
- * - 完全符合 Material Design 3 规范
- */
+
+
+/* ========== 可访问性：尊重用户的动画偏好 ========== */
+
+@media (prefers-reduced-motion: reduce) {
+  .md-input-container,
+  .md-input-prepend,
+  .md-input-append,
+  .md-input-spinner {
+    transition: none !important;
+    animation: none !important;
+  }
+}
 
 /* ========== Wrapper 样式 ========== */
 
@@ -264,6 +265,7 @@ const clearInput = () => {
 .md-text-field {
   flex: 1;
   width: 100%;
+  min-height: 56px; /* Material Design 3 标准高度 */
 }
 
 /* Prepend/Append slots */
@@ -297,15 +299,16 @@ const clearInput = () => {
   --md-icon-button-state-layer-shape: var(--radius-full);
 }
 
-/* ========== 可访问性：尊重用户的动画偏好 ========== */
-
-@media (prefers-reduced-motion: reduce) {
-  .md-input-container,
-  .md-input-prepend,
-  .md-input-append,
-  .md-input-spinner {
-    transition: none !important;
-    animation: none !important;
-  }
-}
+/**
+ * Material Design 3 Input Component
+ * 基于 Material Web Text Field 的封装组件
+ * 
+ * 特性：
+ * - 完全使用 Material Web Text Field
+ * - 支持 outlined/filled 变体
+ * - 支持 clearable 按钮
+ * - 支持 loading 状态
+ * - 支持 prepend/append slots
+ * - 完全符合 Material Design 3 规范
+ */
 </style>

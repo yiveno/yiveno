@@ -1,82 +1,171 @@
 <template>
   <div class="settings-section">
-    <h3 class="section-subtitle">
-      <LucideIcon name="sparkles" />
-      <span>AI 服务配置</span>
-    </h3>
-
-    <!-- 当前状态 -->
-    <div class="status-bar" :class="statusClass">
-      <LucideIcon :name="statusIcon" :size="16" />
-      <span>{{ statusText }}</span>
+    <!-- 启用 AI 开关 -->
+    <div class="ai-toggle-section">
+      <div class="toggle-row">
+        <div class="toggle-label-group">
+          <label class="toggle-label">启用 AI 功能</label>
+          <span class="pro-badge">PRO</span>
+          <Tooltip offset="md">
+            <LucideIcon name="info" class="label-info-icon" />
+            <template #content>
+              <div class="tooltip-content">
+                AI 功能仅限 Pro 用户使用。<br />
+                <a href="#" class="tooltip-link">升级到 Pro</a>
+              </div>
+            </template>
+          </Tooltip>
+        </div>
+        <Tooltip offset="md">
+          <md-switch
+            :selected="aiEnabled"
+            :disabled="aiToggleDisabled"
+            @change="handleAIToggle"
+          ></md-switch>
+          <template #content>
+            <div class="tooltip-content">
+              {{ aiToggleTooltip }}
+            </div>
+          </template>
+        </Tooltip>
+      </div>
     </div>
 
-    <!-- Provider 选择 -->
-    <div class="grid">
-      <div class="row">
-        <div class="label">AI 服务商</div>
-        <div class="field">
+    <!-- Tab 切换: API Key vs Chrome AI -->
+    <div class="provider-tabs">
+      <md-tabs @change="handleTabChange">
+        <md-primary-tab
+          :active="activeTab === 'apikey'"
+          @click="activeTab = 'apikey'"
+        >
+          API Key
+          <LucideIcon
+            v-if="hasApiKeyConfigured"
+            name="check-circle"
+            :size="16"
+            class="tab-status-icon tab-status-icon--success"
+          />
+        </md-primary-tab>
+        <md-primary-tab
+          :active="activeTab === 'chrome'"
+          @click="activeTab = 'chrome'"
+        >
+          Chrome AI
+          <LucideIcon
+            v-if="chromeAIAvailable"
+            name="check-circle"
+            :size="16"
+            class="tab-status-icon tab-status-icon--success"
+          />
+          <LucideIcon
+            v-else
+            name="alert-circle"
+            :size="16"
+            class="tab-status-icon tab-status-icon--warning"
+          />
+        </md-primary-tab>
+      </md-tabs>
+    </div>
+
+    <!-- Tab 内容区域 -->
+    <div class="tab-content">
+      <!-- API Key Tab -->
+      <div v-if="activeTab === 'apikey'" class="tab-panel">
+        <!-- Provider 选择 -->
+        <div class="form-grid">
+      <div class="form-row">
+        <label class="form-label">AI 服务商</label>
+        <div class="form-field">
           <md-outlined-select
             v-model="selectedProvider"
-            class="provider-select"
+            class="select-field"
           >
-            <md-select-option value="openai" headline="OpenAI（推荐）">
+            <md-select-option value="openai">
+              <div slot="headline">OpenAI（推荐）</div>
             </md-select-option>
-            <md-select-option value="claude" headline="Anthropic Claude">
+            <md-select-option value="claude">
+              <div slot="headline">Anthropic Claude</div>
             </md-select-option>
-            <md-select-option value="gemini" headline="Google Gemini">
+            <md-select-option value="gemini">
+              <div slot="headline">Google Gemini</div>
             </md-select-option>
           </md-outlined-select>
         </div>
       </div>
 
       <!-- API Key 输入 -->
-      <div class="row">
-        <div class="label">API Key</div>
-        <div class="field field--grow">
-          <div class="key-input-wrap">
-            <md-outlined-text-field
-              :value="apiKey"
-              :type="showKey ? 'text' : 'password'"
-              :placeholder="keyPlaceholder"
-              class="key-input"
-              @input="apiKey = ($event.target as HTMLInputElement).value"
-              @keydown.enter.prevent="saveConfig"
-            ></md-outlined-text-field>
-            <button class="toggle-btn" type="button" @click="showKey = !showKey">
-              <LucideIcon :name="showKey ? 'eye-off' : 'eye'" :size="16" />
+      <div class="form-row">
+        <label class="form-label">API Key</label>
+        <div class="form-field">
+          <md-outlined-text-field
+            :value="apiKey"
+            :type="showKey ? 'text' : 'password'"
+            :placeholder="keyPlaceholder"
+            class="text-field"
+            @input="apiKey = ($event.target as HTMLInputElement).value"
+            @keydown.enter.prevent="saveConfig"
+          >
+            <button
+              slot="trailing-icon"
+              type="button"
+              class="icon-toggle-btn"
+              @click="showKey = !showKey"
+            >
+              <LucideIcon :name="showKey ? 'eye-off' : 'eye'" :size="18" />
             </button>
-          </div>
+          </md-outlined-text-field>
         </div>
       </div>
 
-      <!-- 自定义模型（可选） -->
-      <div class="row">
-        <div class="label label--with-tooltip">
-          自定义模型
+      <!-- 模型选择 -->
+      <div class="form-row">
+        <label class="form-label">模型选择</label>
+        <div class="form-field">
+          <md-outlined-select
+            :value="selectedModel"
+            class="select-field"
+            @change="selectedModel = ($event.target as HTMLSelectElement).value"
+          >
+            <md-select-option
+              v-for="model in availableModels"
+              :key="model.value"
+              :value="model.value"
+            >
+              <div slot="headline">{{ model.label }}</div>
+            </md-select-option>
+          </md-outlined-select>
+        </div>
+      </div>
+
+      <!-- 自定义模型名称(仅在选择"其他模型"时显示) -->
+      <div v-if="showCustomModelInput" class="form-row">
+        <label class="form-label form-label--with-tooltip">
+          模型名称
           <Tooltip offset="md">
             <LucideIcon name="info" class="label-info-icon" />
             <template #content>
               <div class="tooltip-content">
-                留空使用默认模型：<br />
-                OpenAI: gpt-4o-mini<br />
-                Claude: claude-3-haiku-20240307<br />
-                Gemini: gemini-2.0-flash
+                输入完整的模型 ID,例如:<br />
+                OpenAI: gpt-4o-2024-05-13<br />
+                Claude: claude-3-5-sonnet-20241022<br />
+                Gemini: gemini-1.5-pro-002
               </div>
             </template>
           </Tooltip>
+        </label>
+        <div class="form-field">
+          <md-outlined-text-field
+            :value="customModelName"
+            placeholder="输入完整的模型 ID"
+            class="text-field"
+            @input="customModelName = ($event.target as HTMLInputElement).value"
+          />
         </div>
-        <md-outlined-text-field
-          :value="customModel"
-          placeholder="留空使用默认模型"
-          style="width: 240px"
-          @input="customModel = ($event.target as HTMLInputElement).value"
-        ></md-outlined-text-field>
       </div>
 
       <!-- 自定义端点（可选，用于代理） -->
-      <div class="row">
-        <div class="label label--with-tooltip">
+      <div class="form-row">
+        <label class="form-label form-label--with-tooltip">
           自定义端点
           <Tooltip offset="md">
             <LucideIcon name="info" class="label-info-icon" />
@@ -87,82 +176,270 @@
               </div>
             </template>
           </Tooltip>
+        </label>
+        <div class="form-field">
+          <md-outlined-text-field
+            :value="customBaseUrl"
+            placeholder="https://your-proxy.com/v1"
+            class="text-field"
+            @input="customBaseUrl = ($event.target as HTMLInputElement).value"
+          />
         </div>
-        <md-outlined-text-field
-          :value="customBaseUrl"
-          placeholder="https://your-proxy.com/v1"
-          style="width: 240px"
-          @input="customBaseUrl = ($event.target as HTMLInputElement).value"
-        ></md-outlined-text-field>
       </div>
     </div>
 
-    <!-- 操作按钮 -->
-    <div class="actions">
-      <md-filled-button
-        :disabled="!apiKey.trim() || saving"
-        @click="saveConfig"
-      >
-        保存配置
-      </md-filled-button>
-      <md-text-button
-        v-if="isSaved"
-        :disabled="testing"
-        @click="testConnection"
-      >
-        测试连接
-      </md-text-button>
-      <md-text-button
-        v-if="isSaved"
-        class="btn--danger"
-        @click="clearConfig"
-      >
-        清除配置
-        清除
-      </md-text-button>
+        <!-- 操作按钮 -->
+        <div class="actions">
+          <md-filled-button
+            :disabled="!apiKey.trim() || saving"
+            @click="saveConfig"
+          >
+            保存配置
+          </md-filled-button>
+          <md-text-button
+            v-if="isSaved"
+            :disabled="testing"
+            @click="testConnection"
+          >
+            测试连接
+          </md-text-button>
+          <md-text-button
+            v-if="isSaved"
+            class="btn--danger"
+            @click="clearConfig"
+          >
+            清除
+          </md-text-button>
+        </div>
+
+        <!-- 隐私说明 -->
+        <div class="privacy-note">
+          <LucideIcon name="shield" :size="14" />
+          <span>您的 API Key 和书签数据只在您的设备和您选择的 AI 服务商之间流动，不经过 AcuityBookmarks 服务器。</span>
+        </div>
+
+        <!-- 获取 Key 的链接 -->
+        <div class="get-key-links">
+          <span class="get-key-label">没有 API Key？</span>
+          <a :href="providerLinks[selectedProvider]" target="_blank" rel="noopener" class="get-key-link">
+            前往 {{ providerNames[selectedProvider] }} 获取
+            <LucideIcon name="external-link" :size="12" />
+          </a>
+        </div>
+        
+        <!-- Gemini 特别提示 -->
+        <div v-if="selectedProvider === 'gemini'" class="gemini-tip">
+          <LucideIcon name="info" :size="13" />
+          <span>请使用 <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Google AI Studio</a> 申请的 Key（AIza 开头），不要使用 Google Cloud Console 的 Key</span>
+        </div>
+      </div>
+
+      <!-- Chrome AI Tab -->
+      <div v-else-if="activeTab === 'chrome'" class="tab-panel">
+        <div v-if="chromeAIAvailable" class="chrome-ai-available">
+          <div class="status-card status-card--success">
+            <LucideIcon name="check-circle" :size="20" />
+            <div class="status-content">
+              <h4>Chrome AI 已启用</h4>
+              <p>您的浏览器已启用 Gemini Nano 模型，可以免费使用本地 AI 功能。</p>
+            </div>
+            <md-text-button :disabled="recheckingChromeAI" @click="recheckChromeAI">
+              <LucideIcon name="refresh-cw" :size="16" />
+              重新检测
+            </md-text-button>
+          </div>
+          
+          <div class="chrome-ai-features">
+            <h4>特性</h4>
+            <ul>
+              <li><LucideIcon name="check" :size="16" /> 完全免费，无需 API Key</li>
+              <li><LucideIcon name="check" :size="16" /> 本地处理，隐私最优</li>
+              <li><LucideIcon name="check" :size="16" /> 无网络延迟，离线可用</li>
+            </ul>
+          </div>
+          
+          <div class="chrome-ai-limitations">
+            <h4>限制</h4>
+            <ul>
+              <li><LucideIcon name="alert-circle" :size="16" /> Token 限制较低 (2048)</li>
+              <li><LucideIcon name="alert-circle" :size="16" /> 准确率略低于第三方 API</li>
+              <li><LucideIcon name="alert-circle" :size="16" /> 功能相对基础</li>
+            </ul>
+          </div>
+        </div>
+        
+        <div v-else class="chrome-ai-unavailable">
+          <div class="status-card status-card--warning">
+            <LucideIcon name="alert-circle" :size="20" />
+            <div class="status-content">
+              <h4>Chrome AI 未启用</h4>
+              <p>您的浏览器尚未启用 Gemini Nano 模型。</p>
+            </div>
+            <md-text-button :disabled="recheckingChromeAI" @click="recheckChromeAI">
+              <LucideIcon name="refresh-cw" :size="16" />
+              重新检测
+            </md-text-button>
+          </div>
+          
+          <div class="enable-guide">
+            <h4>启用步骤</h4>
+            <ol>
+              <li>确保 Chrome 版本 >= 127</li>
+              <li>访问 <a href="chrome://flags" target="_blank" class="chrome-link">chrome://flags</a></li>
+              <li>搜索并启用以下功能:
+                <ul>
+                  <li><code>Prompt API for Gemini Nano</code></li>
+                  <li><code>Enables optimization guide on device</code></li>
+                </ul>
+              </li>
+              <li>重启浏览器</li>
+              <li>等待模型下载 (约 22GB)</li>
+            </ol>
+          </div>
+          
+          <div class="alternative-tip">
+            <LucideIcon name="info" :size="16" />
+            <span>推荐使用 <strong>API Key</strong> 方式，更简单且功能更强大。</span>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- 隐私说明 -->
-    <div class="privacy-note">
-      <LucideIcon name="shield" :size="14" />
-      <span>您的 API Key 和书签数据只在您的设备和您选择的 AI 服务商之间流动，不经过 AcuityBookmarks 服务器。</span>
-    </div>
+    <!-- AI 功能开关（始终显示，但需要 AI 启用后才能操作） -->
+    <div class="ai-features-section">
+      <!-- AI 自动归纳书签 -->
+      <div class="feature-row">
+        <label class="feature-label">
+          <span>AI 自动归纳书签</span>
+          <Tooltip offset="md">
+            <LucideIcon name="info" class="label-info-icon" />
+            <template #content>
+              <div class="tooltip-content">
+                开启后,添加书签时自动推荐最佳文件夹并直接保存,无需手动选择。<br />
+                关闭后,每次添加书签都会弹出对话框让你手动选择文件夹。
+              </div>
+            </template>
+          </Tooltip>
+        </label>
+        <md-switch
+          icons
+          :selected="aiAutoEnabled"
+          :disabled="!aiEnabled"
+          @change="handleAIAutoToggle"
+        ></md-switch>
+      </div>
 
-    <!-- 获取 Key 的链接 -->
-    <div class="get-key-links">
-      <span class="get-key-label">没有 API Key？</span>
-      <a :href="providerLinks[selectedProvider]" target="_blank" rel="noopener" class="get-key-link">
-        前往 {{ providerNames[selectedProvider] }} 获取
-        <LucideIcon name="external-link" :size="12" />
-      </a>
-    </div>
-    <!-- Gemini 特别提示 -->
-    <div v-if="selectedProvider === 'gemini'" class="gemini-tip">
-      <LucideIcon name="info" :size="13" />
-      <span>请使用 <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Google AI Studio</a> 申请的 Key（AIza 开头），不要使用 Google Cloud Console 的 Key</span>
+      <!-- 语义搜索 -->
+      <div class="feature-row">
+        <label class="feature-label">
+          <span>语义搜索</span>
+          <Tooltip offset="md">
+            <LucideIcon name="info" class="label-info-icon" />
+            <template #content>
+              <div class="tooltip-content">
+                使用 AI 理解搜索意图，提供更智能的搜索结果。<br />
+                后台自动生成语义向量，完全本地化，无需联网。
+              </div>
+            </template>
+          </Tooltip>
+        </label>
+        <md-switch
+          icons
+          :selected="semanticSearchEnabled"
+          :disabled="!aiEnabled"
+          @change="handleSemanticSearchToggle"
+        ></md-switch>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { LucideIcon, Tooltip } from '@/components'
 import { userLLMClient } from '@/infrastructure/llm/user-llm-client'
 import type { UserLLMProvider } from '@/infrastructure/llm/user-llm-client'
 import { llmAdapter } from '@/infrastructure/llm/llm-adapter'
-// ⚠️ 不要从 @/application 导入 notify 函数，因为它们在 notification-service 中，依赖 Vue
+import { builtInLLMClient } from '@/infrastructure/llm/builtin-llm-client'
 import { notifyError, notifySuccess, notifyWarning } from '@/application/notification/notification-service'
+import { useSubscription } from '@/composables/useSubscription'
+import { logger } from '@/infrastructure/logging/logger'
+
+// 导入 Material Web Components
+import '@material/web/select/outlined-select.js'
+import '@material/web/select/select-option.js'
+import '@material/web/button/filled-button.js'
+import '@material/web/tabs/tabs.js'
+import '@material/web/tabs/primary-tab.js'
+import '@material/web/button/text-button.js'
+import '@material/web/textfield/outlined-text-field.js'
+import '@material/web/switch/switch.js'
 
 defineOptions({ name: 'AISettings' })
 
+const { isPro } = useSubscription()
+
+// Tab 状态
+const activeTab = ref<'apikey' | 'chrome'>('apikey')
+
+// Chrome AI 可用性
+const chromeAIAvailable = ref(false)
+const recheckingChromeAI = ref(false)
+
+const aiEnabled = ref(false)
+const aiAutoEnabled = ref(true)
+const semanticSearchEnabled = ref(false)
+
 const selectedProvider = ref<UserLLMProvider>('openai')
 const apiKey = ref('')
-const customModel = ref('')
+const selectedModel = ref('')
 const customBaseUrl = ref('')
 const showKey = ref(false)
 const saving = ref(false)
 const testing = ref(false)
 const isSaved = ref(false)
+
+// 各服务商的模型列表
+const modelsByProvider: Record<UserLLMProvider, Array<{ value: string; label: string }>> = {
+  openai: [
+    { value: 'gpt-4o-mini', label: 'GPT-4o Mini (推荐) - 快速且经济' },
+    { value: 'gpt-4o', label: 'GPT-4o - 最强性能' },
+    { value: 'gpt-4-turbo', label: 'GPT-4 Turbo - 平衡性能' },
+    { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo - 最经济' },
+    { value: 'custom', label: '其他模型...' }
+  ],
+  claude: [
+    { value: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet (推荐) - 最强性能' },
+    { value: 'claude-3-5-haiku-20241022', label: 'Claude 3.5 Haiku - 快速响应' },
+    { value: 'claude-3-opus-20240229', label: 'Claude 3 Opus - 复杂任务' },
+    { value: 'claude-3-haiku-20240307', label: 'Claude 3 Haiku - 最经济' },
+    { value: 'custom', label: '其他模型...' }
+  ],
+  gemini: [
+    { value: 'gemini-2.0-flash-exp', label: 'Gemini 2.0 Flash (推荐) - 最新实验版' },
+    { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro - 强大性能' },
+    { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash - 快速响应' },
+    { value: 'custom', label: '其他模型...' }
+  ]
+}
+
+// 自定义模型名称
+const customModelName = ref('')
+
+// 当前服务商的可用模型
+const availableModels = computed(() => modelsByProvider[selectedProvider.value])
+
+// 是否显示自定义模型输入框
+const showCustomModelInput = computed(() => selectedModel.value === 'custom')
+
+// 监听服务商切换,自动选择推荐模型
+watch(selectedProvider, (newProvider) => {
+  const models = modelsByProvider[newProvider]
+  if (models.length > 0) {
+    selectedModel.value = models[0].value // 默认选择第一个(推荐)
+    customModelName.value = '' // 清空自定义模型名称
+  }
+})
 
 const providerNames: Record<UserLLMProvider, string> = {
   openai: 'OpenAI',
@@ -184,28 +461,104 @@ const keyPlaceholder = computed(() => {
   return map[selectedProvider.value]
 })
 
-const statusClass = computed(() => ({
-  'status-bar--ok': isSaved.value,
-  'status-bar--empty': !isSaved.value
-}))
+// 是否已配置 API Key
+const hasApiKeyConfigured = computed(() => !!apiKey.value.trim())
 
-const statusIcon = computed(() => (isSaved.value ? 'check-circle' : 'alert-circle'))
+// 是否可以启用 AI (需要 Pro 且至少有一种 LLM 方案可用)
+const canEnableAI = computed(() => {
+  return isPro.value && (hasApiKeyConfigured.value || chromeAIAvailable.value)
+})
 
-const statusText = computed(() =>
-  isSaved.value
-    ? `已配置 ${providerNames[selectedProvider.value]} API Key`
-    : '未配置 AI 服务，AI 功能不可用'
-)
+// AI Toggle 的禁用状态
+const aiToggleDisabled = computed(() => !canEnableAI.value)
+
+// AI Toggle 的 Tooltip 提示
+const aiToggleTooltip = computed(() => {
+  if (!isPro.value) {
+    return 'AI 功能仅限 Pro 用户使用。升级到 Pro'
+  }
+  if (!hasApiKeyConfigured.value && !chromeAIAvailable.value) {
+    return '请先配置 API Key 或启用 Chrome AI'
+  }
+  return 'AI 功能已就绪，可以开启'
+})
+
+/** 处理 Tab 切换 */
+function handleTabChange() {
+  // Tab 切换逻辑
+}
+
+/** 处理 AI 开关切换 */
+async function handleAIToggle(event: Event) {
+  const target = event.target as HTMLInputElement
+  aiEnabled.value = target.checked
+  
+  if (!aiEnabled.value) {
+    // 关闭 AI 时，联动关闭所有 AI 功能开关
+    aiAutoEnabled.value = false
+    semanticSearchEnabled.value = false
+    
+    // 保存到 storage
+    try {
+      await chrome.storage.local.set({
+        aiAutoBookmark: false,
+        semanticSearchEnabled: false
+      })
+      logger.info('AISettings', 'AI 功能已全部关闭')
+    } catch (error) {
+      logger.error('AISettings', '保存 AI 功能状态失败', error)
+    }
+    
+    // 清除 AI 配置
+    clearConfig()
+  }
+}
+
+/** 处理 AI 自动归纳开关切换 */
+async function handleAIAutoToggle(event: Event) {
+  const target = event.target as unknown as { selected: boolean }
+  aiAutoEnabled.value = target.selected
+  try {
+    await chrome.storage.local.set({ aiAutoBookmark: aiAutoEnabled.value })
+    logger.info('AISettings', 'AI 自动归纳设置已更新', { enabled: aiAutoEnabled.value })
+  } catch (error) {
+    logger.error('AISettings', '保存 AI 自动归纳设置失败', error)
+  }
+}
+
+/** 处理语义搜索开关切换 */
+async function handleSemanticSearchToggle(event: Event) {
+  const target = event.target as unknown as { selected: boolean }
+  semanticSearchEnabled.value = target.selected
+  try {
+    await chrome.storage.local.set({ semanticSearchEnabled: semanticSearchEnabled.value })
+    logger.info('AISettings', '语义搜索设置已更新', { enabled: semanticSearchEnabled.value })
+  } catch (error) {
+    logger.error('AISettings', '保存语义搜索设置失败', error)
+  }
+}
 
 /** 保存配置 */
 async function saveConfig() {
   if (!apiKey.value.trim()) return
+  
+  // 如果选择了"其他模型",但没有输入自定义模型名称
+  if (selectedModel.value === 'custom' && !customModelName.value.trim()) {
+    notifyError('请输入自定义模型名称', 'AI 设置')
+    return
+  }
+  
   saving.value = true
   try {
+    // 确定最终使用的模型名称
+    const finalModel = selectedModel.value === 'custom' 
+      ? customModelName.value.trim() 
+      : selectedModel.value
+    
     await userLLMClient.saveConfig({
       provider: selectedProvider.value,
       apiKey: apiKey.value.trim(),
-      model: customModel.value.trim() || undefined,
+      model: finalModel || undefined,
       baseUrl: customBaseUrl.value.trim() || undefined
     })
     llmAdapter.clearCapabilitiesCache()
@@ -252,142 +605,242 @@ async function clearConfig() {
   await userLLMClient.clearConfig()
   llmAdapter.clearCapabilitiesCache()
   apiKey.value = ''
-  customModel.value = ''
+  selectedModel.value = modelsByProvider[selectedProvider.value][0].value
+  customModelName.value = ''
   customBaseUrl.value = ''
   isSaved.value = false
   notifySuccess('AI 配置已清除', 'AI 设置')
 }
 
+/** 重新检测 Chrome AI 可用性 */
+async function recheckChromeAI() {
+  recheckingChromeAI.value = true
+  try {
+    const previousStatus = chromeAIAvailable.value
+    chromeAIAvailable.value = await builtInLLMClient.isAvailable()
+    
+    logger.info('AISettings', 'Chrome AI 重新检测完成', { 
+      available: chromeAIAvailable.value,
+      changed: previousStatus !== chromeAIAvailable.value
+    })
+    
+    // 状态变化时给用户反馈
+    if (previousStatus !== chromeAIAvailable.value) {
+      if (chromeAIAvailable.value) {
+        notifySuccess('Chrome AI 已成功启用！', 'AI 设置')
+      } else {
+        notifyWarning('Chrome AI 仍未启用，请检查配置步骤', 'AI 设置')
+      }
+    } else {
+      if (chromeAIAvailable.value) {
+        notifySuccess('Chrome AI 状态正常', 'AI 设置')
+      } else {
+        notifyWarning('Chrome AI 仍未启用', 'AI 设置')
+      }
+    }
+  } catch (error) {
+    logger.error('AISettings', 'Chrome AI 重新检测失败', error)
+    notifyError('检测失败，请重试', 'AI 设置')
+  } finally {
+    recheckingChromeAI.value = false
+  }
+}
+
 onMounted(async () => {
-  // 加载配置
+  // 加载 AI 配置
   const config = await userLLMClient.getConfig()
   if (config) {
+    aiEnabled.value = true
     selectedProvider.value = config.provider
     apiKey.value = config.apiKey
-    customModel.value = config.model || ''
     customBaseUrl.value = config.baseUrl || ''
     isSaved.value = true
+    
+    if (config.model) {
+      const models = modelsByProvider[config.provider]
+      const presetModel = models.find(m => m.value === config.model)
+      
+      if (presetModel) {
+        selectedModel.value = config.model
+      } else {
+        selectedModel.value = 'custom'
+        customModelName.value = config.model
+      }
+    } else {
+      selectedModel.value = modelsByProvider[config.provider][0].value
+    }
+  } else {
+    selectedModel.value = modelsByProvider[selectedProvider.value][0].value
+  }
+  
+  // 加载 AI 功能开关状态
+  try {
+    const result = await chrome.storage.local.get(['aiAutoBookmark', 'semanticSearchEnabled'])
+    aiAutoEnabled.value = result.aiAutoBookmark !== false
+    semanticSearchEnabled.value = result.semanticSearchEnabled === true
+    logger.info('AISettings', '设置已加载', {
+      aiAuto: aiAutoEnabled.value,
+      semanticSearch: semanticSearchEnabled.value
+    })
+  } catch (error) {
+    logger.error('AISettings', '加载设置失败', error)
+  }
+  
+  // 检测 Chrome AI 是否可用
+  try {
+    chromeAIAvailable.value = await builtInLLMClient.isAvailable()
+    logger.info('AISettings', 'Chrome AI 可用性检测', { available: chromeAIAvailable.value })
+  } catch (error) {
+    logger.error('AISettings', 'Chrome AI 检测失败', error)
+    chromeAIAvailable.value = false
   }
 })
 </script>
 
 <style scoped>
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .settings-section {
-  margin-bottom: var(--spacing-6);
-}
-
-.section-subtitle {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  margin: 0 0 var(--spacing-4) 0;
-  padding-bottom: var(--spacing-2);
-  border-bottom: 1px solid var(--color-border-subtle);
-  font-size: var(--text-base);
-  font-weight: var(--font-semibold);
-  color: var(--color-text-secondary);
-}
-
-.status-bar {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  margin-bottom: var(--spacing-4);
-  padding: var(--spacing-2) var(--spacing-3);
-  border-radius: var(--radius-md);
-  font-size: var(--md-sys-typescale-body-medium-size); /* 14px */
-}
-
-.status-bar--ok {
-  color: var(--color-semantic-success);
-  background: color-mix(in srgb, var(--color-semantic-success) 12%, transparent);
-}
-
-.status-bar--empty {
-  color: var(--color-semantic-warning);
-  background: color-mix(in srgb, var(--color-semantic-warning) 12%, transparent);
-}
-
-.grid {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-3);
-  margin-bottom: var(--spacing-4);
+  user-select: text;
 }
 
-.row {
+/* AI 开关区域 */
+.ai-toggle-section {
+  margin-bottom: var(--spacing-3);
+  padding: var(--spacing-4);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.toggle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.toggle-label-group {
   display: flex;
   align-items: center;
-  gap: var(--spacing-3);
+  gap: var(--spacing-2);
 }
 
-.label {
-  flex-shrink: 0;
-  width: 120px;
-  font-size: var(--md-sys-typescale-body-medium-size); /* 14px */
+.toggle-label {
+  font-size: var(--md-sys-typescale-body-large-size);
+  font-weight: var(--font-medium);
+  color: var(--color-text-primary);
+}
+
+.pro-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: var(--md-sys-typescale-label-small-size);
+  font-weight: var(--font-semibold);
+  color: var(--md-sys-color-on-primary);
+  background: linear-gradient(135deg, var(--md-sys-color-primary), var(--md-sys-color-tertiary));
+}
+
+.tooltip-link {
+  font-weight: var(--font-medium);
+  text-decoration: none;
+  color: var(--md-sys-color-primary);
+}
+
+.tooltip-link:hover {
+  text-decoration: underline;
+}
+
+/* Material Web Switch 样式 */
+md-switch {
+  --md-switch-selected-track-color: var(--md-sys-color-primary);
+  --md-switch-selected-handle-color: var(--md-sys-color-on-primary);
+}
+
+/* 表单布局 */
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  margin-bottom: var(--spacing-3);
+}
+
+.form-row {
+  display: grid;
+  align-items: start;
+  gap: var(--spacing-3);
+  grid-template-columns: 120px 1fr;
+}
+
+.form-label {
+  padding-top: 12px; /* 与输入框内文字对齐 */
+  font-size: var(--md-sys-typescale-body-medium-size);
+  line-height: 1.5;
   color: var(--color-text-secondary);
 }
 
-.label--with-tooltip {
+.form-label--with-tooltip {
   display: inline-flex;
   align-items: center;
   gap: var(--spacing-1);
-  cursor: default;
 }
 
 .label-info-icon {
   color: var(--color-text-secondary);
 }
 
-.field {
+.form-field {
   display: flex;
   align-items: center;
+  width: 400px;
 }
 
-.field--grow {
-  flex: 1;
-}
+/* Material Web Components 样式优化 */
+md-outlined-select.select-field,
+md-outlined-text-field.text-field {
+  /* 减小输入框高度 */
+  --md-outlined-field-container-shape: var(--radius-md);
+  --md-outlined-field-top-space: 12px;
+  --md-outlined-field-bottom-space: 12px;
 
-/* Material Web Components Select 样式 */
-md-outlined-select.provider-select {
-  min-width: 200px;
-}
-
-.key-input-wrap {
-  display: flex;
-  align-items: center;
   width: 100%;
-  max-width: 360px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  overflow: hidden;
 }
 
-/* Material Web Components Text Field 样式 */
-md-outlined-text-field.key-input {
-  --md-outlined-text-field-container-shape: 0;
-  --md-outlined-text-field-outline-width: 0;
-  --md-outlined-text-field-focus-outline-width: 0;
-
-  flex: 1;
-  border: none;
-}
-
-.toggle-btn {
+/* 输入框内的图标按钮 */
+.icon-toggle-btn {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100%;
-  padding: 0 var(--spacing-2);
+  padding: 8px;
   border: none;
+  border-radius: var(--radius-sm);
   color: var(--color-text-secondary);
   background: transparent;
   cursor: pointer;
+  transition: all var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
 }
 
-.toggle-btn:hover {
+.icon-toggle-btn:hover {
   color: var(--color-text-primary);
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
+}
+
+.icon-toggle-btn:active {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
 }
 
 .actions {
@@ -402,13 +855,6 @@ md-text-button.btn--danger {
   --md-text-button-label-text-color: var(--color-semantic-error);
   --md-text-button-hover-label-text-color: var(--color-semantic-error);
   --md-text-button-pressed-label-text-color: var(--color-semantic-error);
-}
-
-/* Material Icon 样式 */
-md-icon {
-  --md-icon-size: 18px;
-
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
 }
 
 .privacy-note {
@@ -447,6 +893,9 @@ md-icon {
 .tooltip-content {
   font-size: var(--md-sys-typescale-body-small-size); /* 12px */
   line-height: 1.75;
+
+  /* ✅ 允许复制 Tooltip 中的示例文本 */
+  user-select: text;
 }
 
 .gemini-tip {
@@ -467,4 +916,222 @@ md-icon {
 .gemini-tip a:hover {
   text-decoration: underline;
 }
+
+/* AI 功能开关区域 */
+.ai-features-section {
+  margin-top: 0;
+  margin-bottom: var(--spacing-3);
+  padding: var(--spacing-4);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.feature-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-3) 0;
+}
+
+.feature-row:not(:last-child) {
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.feature-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: var(--md-sys-typescale-body-large-size);
+  font-weight: var(--font-medium);
+  color: var(--color-text-primary);
+}
+
+/* Tab 切换区域 */
+.provider-tabs {
+  margin-bottom: var(--spacing-4);
+}
+
+md-tabs {
+  --md-primary-tab-container-color: transparent;
+  --md-primary-tab-label-text-color: var(--color-text-secondary);
+  --md-primary-tab-active-label-text-color: var(--md-sys-color-primary);
+  --md-primary-tab-active-indicator-color: var(--md-sys-color-primary);
+}
+
+.tab-status-icon {
+  margin-left: var(--spacing-1);
+  vertical-align: middle;
+}
+
+.tab-status-icon--success {
+  color: var(--color-semantic-success);
+}
+
+.tab-status-icon--warning {
+  color: var(--color-semantic-warning);
+}
+
+/* Tab 内容区域 */
+.tab-content {
+  margin-bottom: var(--spacing-4);
+}
+
+.tab-panel {
+  animation: fade-in var(--md-sys-motion-duration-medium1) var(--md-sys-motion-easing-standard);
+}
+
+/* Chrome AI Tab 样式 */
+.status-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-3);
+  margin-bottom: var(--spacing-4);
+  padding: var(--spacing-4);
+  border-radius: var(--radius-md);
+}
+
+.status-card md-text-button {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.status-card md-text-button lucide-icon {
+  margin-right: var(--spacing-1);
+}
+
+.status-card--success {
+  border: 1px solid color-mix(in srgb, var(--color-semantic-success) 30%, transparent);
+  background: color-mix(in srgb, var(--color-semantic-success) 10%, transparent);
+}
+
+.status-card--warning {
+  border: 1px solid color-mix(in srgb, var(--color-semantic-warning) 30%, transparent);
+  background: color-mix(in srgb, var(--color-semantic-warning) 10%, transparent);
+}
+
+.status-card h4 {
+  margin: 0 0 var(--spacing-1) 0;
+  font-size: var(--md-sys-typescale-title-medium-size);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+}
+
+.status-card p {
+  margin: 0;
+  font-size: var(--md-sys-typescale-body-medium-size);
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.chrome-ai-features,
+.chrome-ai-limitations {
+  margin-bottom: var(--spacing-4);
+}
+
+.chrome-ai-features h4,
+.chrome-ai-limitations h4,
+.enable-guide h4 {
+  margin: 0 0 var(--spacing-2) 0;
+  font-size: var(--md-sys-typescale-title-small-size);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+}
+
+.chrome-ai-features ul,
+.chrome-ai-limitations ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chrome-ai-features li,
+.chrome-ai-limitations li {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) 0;
+  font-size: var(--md-sys-typescale-body-medium-size);
+  color: var(--color-text-secondary);
+}
+
+.chrome-ai-features li {
+  color: var(--color-semantic-success);
+}
+
+.chrome-ai-limitations li {
+  color: var(--color-semantic-warning);
+}
+
+.enable-guide {
+  margin-bottom: var(--spacing-4);
+}
+
+.enable-guide ol {
+  margin: 0;
+  padding-left: var(--spacing-5);
+}
+
+.enable-guide li {
+  padding: var(--spacing-1) 0;
+  font-size: var(--md-sys-typescale-body-medium-size);
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+}
+
+.enable-guide ul {
+  margin-top: var(--spacing-1);
+  padding-left: var(--spacing-4);
+}
+
+.enable-guide code {
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-family: Consolas, Monaco, 'Courier New', monospace;
+  font-size: 0.9em;
+  color: var(--md-sys-color-primary);
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
+  cursor: text;
+
+  /* ✅ 确保 code 标签内的文本可以被复制 */
+  user-select: text;
+}
+
+.enable-guide .chrome-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-family: Consolas, Monaco, 'Courier New', monospace;
+  font-size: 0.9em;
+  text-decoration: none;
+  color: var(--md-sys-color-primary);
+  background: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
+  user-select: text;
+  transition: all var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+}
+
+.enable-guide .chrome-link:hover {
+  text-decoration: underline;
+  background: color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
+}
+
+.alternative-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3);
+  border-radius: var(--radius-md);
+  font-size: var(--md-sys-typescale-body-small-size);
+  line-height: 1.75;
+  color: var(--color-text-secondary);
+  background: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
+}
+
+.alternative-tip strong {
+  font-weight: var(--font-semibold);
+  color: var(--md-sys-color-primary);
+}
+
+/* ✅ 允许用户复制文本（覆盖全局 user-select: none） */
 </style>

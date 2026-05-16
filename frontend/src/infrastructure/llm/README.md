@@ -4,8 +4,8 @@
 
 LLM 模块提供了统一的 AI 功能接口，支持：
 
-- Chrome 内置 LLM（免费、本地处理）
-- Cloudflare Workers AI（后端降级方案）
+- 用户自带 API Key（OpenAI / Claude / Gemini）- 最高优先级
+- Chrome 内置 LLM（Gemini Nano）- 免费、本地处理
 
 ## 架构
 
@@ -15,9 +15,29 @@ AIAppService (应用层)
 LLMAdapter (适配器层)
     ↓
 ┌─────────────────┬─────────────────┐
-│ BuiltInLLMClient│ BackendLLMClient│
-│ (Chrome 内置)    │ (Cloudflare)    │
+│ UserLLMClient   │ BuiltInLLMClient│
+│ (用户 API Key)   │ (Chrome 内置)    │
 └─────────────────┴─────────────────┘
+```
+
+## Provider 优先级
+
+1. **用户自带 API Key**（OpenAI / Claude / Gemini）
+   - 隐私最优，数据不经过产品服务器
+   - 直接调用第三方 API
+   - 需要用户在设置页面配置
+
+2. **Chrome Built-in LLM**（Gemini Nano）
+   - 极端 fallback（覆盖率低，功能受限）
+   - 完全免费，本地处理
+   - 需要 Chrome 127+ 并手动启用
+
+## 降级策略
+
+```
+用户有 Key → 直接调第三方 API
+用户无 Key → Chrome Built-in（如果可用）
+两者都不可用 → 抛出错误，上层降级到本地 Fuse.js 搜索
 ```
 
 ## 快速开始
@@ -35,7 +55,7 @@ const result = await aiAppService.categorizeBookmark({
 })
 
 console.log(result.category) // '技术'
-console.log(result.provider) // 'builtin' 或 'cloudflare'
+console.log(result.provider) // 'builtin' 或 'openai' 或 'claude' 或 'gemini'
 ```
 
 ### 2. 生成书签摘要
@@ -107,16 +127,12 @@ capabilities.forEach(cap => {
 
 ### 手动选择 LLM 提供者
 
-```typescript
-// 强制使用内置 LLM
-llmAdapter.setStrategy('builtin')
+LLM 适配器会自动根据优先级选择可用的提供者：
 
-// 强制使用后端
-llmAdapter.setStrategy('backend')
+1. 用户自带 API Key（如果已配置）
+2. Chrome Built-in LLM（如果可用）
 
-// 自动选择（默认）
-llmAdapter.setStrategy('auto')
-```
+无需手动选择，系统会自动降级。
 
 ### 获取 Chrome 内置 LLM 启用指南
 
@@ -184,22 +200,28 @@ async function enhancedSearch(query: string) {
 
 ## 注意事项
 
-1. **Chrome 内置 LLM 需要手动启用**
+1. **用户 API Key 配置**
+   - 支持 OpenAI、Anthropic Claude、Google Gemini
+   - 需要用户在设置页面填写 API Key
+   - 数据直接发送到第三方 API，不经过产品服务器
+
+2. **Chrome 内置 LLM 需要手动启用**
    - 需要 Chrome 127+ 版本
    - 需要在 `chrome://flags` 中启用相关功能
    - 需要下载约 22GB 的模型文件
 
-2. **自动降级**
-   - 如果内置 LLM 不可用，会自动降级到后端
-   - 如果后端也失败，会抛出错误
+3. **自动降级**
+   - 优先使用用户自带 API Key
+   - 如果未配置，降级到 Chrome 内置 LLM
+   - 如果都不可用，抛出错误
 
-3. **性能考虑**
+4. **性能考虑**
+   - 用户 API Key：需要网络请求，可能有延迟
    - 内置 LLM：本地处理，无网络延迟
-   - 后端 LLM：需要网络请求，可能有延迟
 
-4. **成本考虑**
+5. **成本考虑**
+   - 用户 API Key：用户自行承担 API 费用
    - 内置 LLM：完全免费
-   - 后端 LLM：需要消耗 Cloudflare Workers AI 配额
 
 ## 错误处理
 
@@ -207,9 +229,12 @@ async function enhancedSearch(query: string) {
 try {
   const result = await aiAppService.categorizeBookmark(bookmark)
 } catch (error) {
-  if (error.message.includes('内置 LLM')) {
-    // 内置 LLM 不可用，提示用户启用
-    showEnableGuide()
+  if (error.message.includes('没有可用的 AI 服务')) {
+    // 提示用户配置 API Key 或启用 Chrome 内置 LLM
+    showConfigGuide()
+  } else if (error.message.includes('API Key')) {
+    // API Key 配置错误
+    showApiKeyError()
   } else {
     // 其他错误
     console.error('分类失败:', error)

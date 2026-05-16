@@ -6,15 +6,21 @@
  * 2. 根据新书签的向量推荐合适的文件夹
  * 3. 增量同步文件夹向量
  * 4. 支持用户习惯学习（强化学习）
+ * 
+ * 优化：使用 Summarizer API 预处理长文本，避免 token 限制
  */
 
 import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
 import { embeddingService } from '@/infrastructure/embedding/embedding-service'
 import { localVectorStore } from '@/infrastructure/embedding/local-vector-store'
 import { folderVectorStore } from '@/infrastructure/folder-vector/folder-vector-store'
+import { builtInSummarizerClient } from '@/infrastructure/llm/builtin-summarizer-client'
 import { logger } from '@/infrastructure/logging/logger'
 
 const LOG_TAG = 'FolderVectorService'
+
+/** Token 限制阈值（字符数估算：1 token ≈ 4 字符） */
+const TOKEN_LIMIT_CHARS = 2000 // 约 500 tokens
 
 /** 推荐结果 */
 export interface FolderRecommendation {
@@ -40,6 +46,56 @@ export interface FolderVectorSyncProgress {
 }
 
 export class FolderVectorService {
+  /**
+   * 预处理文本（长文本压缩）
+   * 
+   * 使用 Summarizer API 压缩长文本，避免 Embedding 时超过 token 限制
+   * 
+   * @param text 原始文本
+   * @returns 压缩后的文本
+   */
+  private async preprocessText(text: string): Promise<string> {
+    // 短文本直接返回
+    if (text.length <= TOKEN_LIMIT_CHARS) {
+      return text
+    }
+
+    // 尝试使用 Summarizer API 压缩
+    try {
+      const summarizerAvailable = await builtInSummarizerClient.isAvailable()
+
+      if (summarizerAvailable) {
+        logger.info(LOG_TAG, '使用 Summarizer API 压缩长文本', {
+          originalLength: text.length
+        })
+
+        const result = await builtInSummarizerClient.summarize(text, {
+          type: 'key-points',
+          format: 'plain-text',
+          length: 'short'
+        })
+
+        logger.info(LOG_TAG, '长文本压缩完成', {
+          originalLength: text.length,
+          compressedLength: result.summary.length,
+          compressionRatio: (result.summary.length / text.length * 100).toFixed(1) + '%'
+        })
+
+        return result.summary
+      }
+    } catch (error) {
+      logger.warn(LOG_TAG, 'Summarizer API 压缩失败，降级到截断', error)
+    }
+
+    // 降级：简单截断
+    logger.info(LOG_TAG, '降级到简单截断', {
+      originalLength: text.length,
+      truncatedLength: TOKEN_LIMIT_CHARS
+    })
+
+    return text.slice(0, TOKEN_LIMIT_CHARS)
+  }
+
   /**
    * 增量同步文件夹向量
    *
@@ -173,15 +229,19 @@ export class FolderVectorService {
    * 推荐文件夹
    *
    * 根据书签的标题和 URL 推荐最合适的文件夹
+   * 
+   * 优化：使用 Summarizer API 预处理长文本，提升向量质量
    *
    * @param bookmarkTitle 书签标题
    * @param bookmarkUrl 书签 URL
+   * @param bookmarkContent 书签内容（可选）
    * @param topK 返回数量
    * @param minScore 最低相似度阈值，默认 0.3
    */
   async recommendFolders(
     bookmarkTitle: string,
     bookmarkUrl: string,
+    bookmarkContent?: string,
     topK = 3,
     minScore = 0.3
   ): Promise<FolderRecommendation[]> {
@@ -191,11 +251,19 @@ export class FolderVectorService {
       return []
     }
 
-    // 1. 生成书签的向量
-    const bookmarkText = `${bookmarkTitle} | ${bookmarkUrl}`
+    // 1. 构造书签文本
+    let bookmarkText = `${bookmarkTitle} | ${bookmarkUrl}`
+
+    // 如果有内容，添加内容（预处理长文本）
+    if (bookmarkContent) {
+      const processedContent = await this.preprocessText(bookmarkContent)
+      bookmarkText += ` | ${processedContent}`
+    }
+
+    // 2. 生成书签的向量
     const bookmarkVector = await provider.embed(bookmarkText)
 
-    // 2. 获取所有文件夹向量
+    // 3. 获取所有文件夹向量
     const allFolderVectors = await folderVectorStore.getAll()
 
     if (allFolderVectors.length === 0) {
@@ -203,7 +271,7 @@ export class FolderVectorService {
       return []
     }
 
-    // 3. 计算相似度
+    // 4. 计算相似度
     const scored = allFolderVectors
       .map(folder => ({
         folderId: folder.folderId,
@@ -216,7 +284,7 @@ export class FolderVectorService {
       .sort((a, b) => b.score - a.score)
       .slice(0, topK)
 
-    // 4. 生成推荐原因
+    // 5. 生成推荐原因
     const recommendations: FolderRecommendation[] = scored.map(item => ({
       ...item,
       reason: generateReason(item.bookmarkCount, item.score)

@@ -5,57 +5,6 @@
       <span>{{ t('settings_title_general') }}</span>
     </h3>
     <div class="grid">
-      <!-- AI 自动归纳书签 -->
-      <div class="row">
-        <div class="label">
-          <LucideIcon name="sparkles" :size="16" />
-          AI 自动归纳书签
-        </div>
-        <div class="field">
-          <md-switch
-            icons
-            :selected="aiAutoEnabled"
-            @change="handleAIAutoToggle"
-          ></md-switch>
-          <div class="field-description">
-            <p class="field-description__text">
-              开启后,添加书签时自动推荐最佳文件夹并直接保存,无需手动选择。
-            </p>
-            <p class="field-description__hint">
-              关闭后,每次添加书签都会弹出对话框让你手动选择文件夹。
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <!-- 语义搜索 -->
-      <div class="row">
-        <div class="label">
-          <LucideIcon name="brain" :size="16" />
-          {{ t('settings_general_semantic_search') }}
-        </div>
-        <div class="field">
-          <md-switch
-            icons
-            :selected="semanticSearchEnabled"
-            :disabled="!isPro"
-            @change="handleSemanticSearchToggle"
-          ></md-switch>
-          <div class="field-description">
-            <p class="field-description__text">
-              {{ t('settings_general_semantic_search_description') }}
-            </p>
-            <p class="field-description__hint">
-              后台自动生成语义向量，完全本地化，无需联网。
-            </p>
-            <p v-if="!isPro" class="field-description__hint field-description__hint--warning">
-              <LucideIcon name="crown" :size="12" />
-              {{ t('settings_general_semantic_search_pro_only') }}
-            </p>
-          </div>
-        </div>
-      </div>
-
       <!-- 语言说明 -->
       <div class="row">
         <div class="label">
@@ -79,65 +28,11 @@
 <script setup lang="ts">
 import { LucideIcon } from '@/components'
 import { t } from '@/utils/i18n-helpers'
-import { computed, onMounted, ref } from 'vue'
-import { logger } from '@/infrastructure/logging/logger'
-import { useSubscription } from '@/composables'
+import { computed } from 'vue'
 
 defineOptions({
   name: 'GeneralSettings'
 })
-
-// 会员状态
-const { isPro } = useSubscription()
-
-// AI 自动归纳开关状态
-const aiAutoEnabled = ref(true) // 默认开启
-
-// 语义搜索开关状态
-const semanticSearchEnabled = ref(false) // 默认关闭
-
-// 加载设置
-onMounted(async () => {
-  try {
-    const result = await chrome.storage.local.get(['aiAutoBookmark', 'semanticSearchEnabled'])
-    aiAutoEnabled.value = result.aiAutoBookmark !== false // 默认 true
-    semanticSearchEnabled.value = result.semanticSearchEnabled === true // 默认 false
-    logger.info('GeneralSettings', '设置已加载', {
-      aiAuto: aiAutoEnabled.value,
-      semanticSearch: semanticSearchEnabled.value,
-      isPro: isPro.value
-    })
-  } catch (error) {
-    logger.error('GeneralSettings', '加载设置失败', error)
-  }
-})
-
-// 处理 AI 自动归纳开关切换
-async function handleAIAutoToggle(event: Event) {
-  const target = event.target as unknown as { selected: boolean }
-  aiAutoEnabled.value = target.selected
-  try {
-    await chrome.storage.local.set({ aiAutoBookmark: aiAutoEnabled.value })
-    logger.info('GeneralSettings', 'AI 自动归纳设置已更新', { enabled: aiAutoEnabled.value })
-  } catch (error) {
-    logger.error('GeneralSettings', '保存 AI 自动归纳设置失败', error)
-  }
-}
-
-// 处理语义搜索开关切换
-async function handleSemanticSearchToggle(event: Event) {
-  const target = event.target as unknown as { selected: boolean }
-  semanticSearchEnabled.value = target.selected
-  try {
-    await chrome.storage.local.set({ semanticSearchEnabled: semanticSearchEnabled.value })
-    logger.info('GeneralSettings', '语义搜索设置已更新', {
-      enabled: semanticSearchEnabled.value,
-      isPro: isPro.value
-    })
-  } catch (error) {
-    logger.error('GeneralSettings', '保存语义搜索设置失败', error)
-  }
-}
 
 // 语言显示名称映射
 // 支持多种语言代码格式（连字符和下划线）

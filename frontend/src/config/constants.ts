@@ -318,15 +318,10 @@ export const CRAWLER_CONFIG = {
 
 // === AI配置（新增：支持提供者选择与自动检测） ===
 export const AI_CONFIG = {
-  // 简化：移除 PROVIDER 选项，永远使用 Cloudflare
   // 默认温度与最大tokens
   DEFAULT_TEMPERATURE: 0.6,
   DEFAULT_MAX_TOKENS: 256,
   DEFAULT_TOP_K: 40,
-  // Cloudflare 默认模型
-  CLOUDFLARE_DEFAULT_MODEL:
-    (import.meta.env.VITE_CLOUDFLARE_DEFAULT_MODEL as string) ||
-    '@cf/meta/llama-3.1-8b-instruct',
   // 初始提示（系统指令等），用于会话初始化
   INITIAL_PROMPTS: (() => {
     const raw = import.meta.env.VITE_AI_INITIAL_PROMPTS as string | undefined

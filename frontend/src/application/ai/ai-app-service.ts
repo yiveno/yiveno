@@ -2,13 +2,14 @@
  * AI 应用服务
  *
  * 提供高级 AI 功能：
- * - 书签摘要
+ * - 书签摘要（优先使用 Summarizer API，降级到 Prompt API）
  * - 语义搜索增强
  * - 标签生成
  * 
  * 注意：书签分类功能已迁移到基于向量的本地推荐（folderVectorService）
  */
 import { llmAdapter } from '@/infrastructure/llm/llm-adapter'
+import { builtInSummarizerClient } from '@/infrastructure/llm/builtin-summarizer-client'
 import {
   createSummarizePrompt,
   createSemanticSearchPrompt,
@@ -23,7 +24,7 @@ export interface BookmarkSummaryResult {
   /** 摘要文本 */
   summary: string
   /** 使用的 LLM 提供者 */
-  provider: 'builtin' | 'cloudflare' | 'openai' | 'claude' | 'gemini'
+  provider: 'builtin' | 'openai' | 'claude' | 'gemini'
 }
 
 /**
@@ -34,12 +35,52 @@ export class AIAppService {
 
   /**
    * 生成书签摘要
+   * 
+   * 优先级：
+   * 1. Chrome Summarizer API（Chrome 138+，专用摘要模型，质量更高、速度更快）
+   * 2. Prompt API（通用 LLM，fallback）
    */
   async summarizeBookmark(bookmark: {
     title: string
     url: string
     content?: string
   }): Promise<BookmarkSummaryResult> {
+    // 1. 优先尝试 Summarizer API
+    try {
+      const summarizerAvailable = await builtInSummarizerClient.isAvailable()
+
+      if (summarizerAvailable) {
+        logger.info(this.loggerPrefix, '使用 Summarizer API 生成摘要')
+
+        // 构造输入文本
+        const text = [
+          `标题：${bookmark.title}`,
+          `URL：${bookmark.url}`,
+          bookmark.content ? `内容：${bookmark.content.slice(0, 1000)}` : ''
+        ]
+          .filter(Boolean)
+          .join('\n')
+
+        // 使用 Summarizer API
+        const result = await builtInSummarizerClient.summarize(text, {
+          type: 'tl;dr',
+          format: 'plain-text',
+          length: 'short'
+        })
+
+        return {
+          summary: result.summary,
+          provider: 'builtin'
+        }
+      }
+    } catch (error) {
+      logger.warn(this.loggerPrefix, 'Summarizer API 失败，降级到 Prompt API', error)
+      // 继续执行，降级到 Prompt API
+    }
+
+    // 2. 降级到 Prompt API
+    logger.info(this.loggerPrefix, '使用 Prompt API 生成摘要')
+
     const prompt = createSummarizePrompt(bookmark)
 
     try {
@@ -50,12 +91,7 @@ export class AIAppService {
 
       return {
         summary: result.text.trim(),
-        provider:
-          result.provider === 'builtin' || result.provider === 'cloudflare'
-            ? result.provider
-            : result.provider === 'openai' || result.provider === 'claude' || result.provider === 'gemini'
-              ? result.provider
-              : 'cloudflare'
+        provider: result.provider
       }
     } catch (error) {
       logger.error(this.loggerPrefix, '书签摘要生成失败', { error, bookmark })
@@ -154,9 +190,24 @@ export class AIAppService {
 
   /**
    * 检测可用 LLM 提供者
+   * 
+   * 包含 Summarizer API 的能力检测
    */
   async detectCapabilities() {
-    return await llmAdapter.detectCapabilities()
+    const capabilities = await llmAdapter.detectCapabilities()
+
+    // 额外检测 Summarizer API
+    const summarizerAvailable = await builtInSummarizerClient.isAvailable()
+
+    return {
+      ...capabilities,
+      summarizer: {
+        available: summarizerAvailable,
+        capabilities: summarizerAvailable
+          ? await builtInSummarizerClient.getCapabilities()
+          : null
+      }
+    }
   }
 
   /**
@@ -164,6 +215,13 @@ export class AIAppService {
    */
   getBuiltInLLMGuide() {
     return llmAdapter.getBuiltInLLMGuide()
+  }
+
+  /**
+   * 获取 Summarizer API 启用指南
+   */
+  getSummarizerGuide() {
+    return builtInSummarizerClient.getEnableGuide()
   }
 }
 

@@ -15,6 +15,8 @@
         :class="tooltipClasses"
         role="tooltip"
         :aria-hidden="!show"
+        @mouseenter="handleTooltipMouseEnter"
+        @mouseleave="handleTooltipMouseLeave"
       >
         <div class="md-tooltip__surface">
           <!-- 支持富文本内容 (Rich Tooltip) -->
@@ -81,6 +83,15 @@ function handleMouseLeave() {
   startHideTimer()
 }
 
+function handleTooltipMouseEnter() {
+  stopHideTimer()
+  stopShowTimer()
+}
+
+function handleTooltipMouseLeave() {
+  startHideTimer()
+}
+
 function handleFocus() {
   stopHideTimer()
   startShowTimer()
@@ -112,7 +123,9 @@ function handleBlur() {
    * 实际项目中需要更宽的宽度以容纳多行文本和列表
    */
   max-width: 500px;
-  pointer-events: none;
+  
+  /* 允许鼠标交互，以便点击 Tooltip 内的链接 */
+  pointer-events: auto;
 }
 
 /* ===== Tooltip Surface (MD3 标准) ===== */

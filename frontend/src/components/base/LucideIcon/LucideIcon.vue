@@ -115,17 +115,17 @@ const transformStyle = computed(() => {
 <style scoped>
 .acuity-lucide-icon {
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  vertical-align: middle;
   flex-shrink: 0;
+  justify-content: center;
+  align-items: center;
+
+  /* GPU 加速 */
+  transform: translateZ(0);
+  vertical-align: middle;
 
   /* 优化图标渲染 */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  /* GPU 加速 */
-  transform: translateZ(0);
   will-change: transform;
 }
 

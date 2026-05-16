@@ -317,6 +317,7 @@ const handlers: Record<string, OffscreenHandler> = {
     return folderVectorService.recommendFolders(
       data.title,
       data.url,
+      undefined, // bookmarkContent
       data.topK ?? 3,
       data.minScore ?? 0.3
     )

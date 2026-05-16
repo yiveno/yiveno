@@ -19,10 +19,12 @@
     <div class="share-dialog-content">
       <!-- 标题输入 -->
       <div class="title-input-section">
-        <md-outlined-text-field
+        <MdInput
+          v-model="state.customTitle"
           label="分享标题"
-          :value="state.customTitle"
-          @input="handleTitleInput"
+          variant="outlined"
+          size="md"
+          @input="handleTitleChange"
         />
       </div>
 
@@ -152,6 +154,7 @@ import { reactive, watch, onUnmounted, ref, nextTick, computed } from 'vue'
 import { useDebounceFn, useEventListener } from '@vueuse/core'
 import type { ShareDialogProps, ShareDialogEmits } from './ShareDialog.d'
 import { Dialog, LucideIcon } from '@/components'
+import { MdInput } from '@/components/base/Input'
 import { shareService } from '@/application/share/share-service'
 import { posterService } from '@/application/share/poster-service'
 import { notifySuccess, notifyError } from '@/application/notification/notification-service'
@@ -311,12 +314,6 @@ const handleThemeChange = useDebounceFn((theme: 'dark' | 'light') => {
 }, 150)
 
 // 标题变化（防抖）
-const handleTitleInput = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  state.customTitle = target.value
-  handleTitleChange()
-}
-
 const handleTitleChange = useDebounceFn(() => {
   generatePoster()
 }, 500)
@@ -559,7 +556,3 @@ onUnmounted(() => {
   box-shadow: var(--shadow-md);
 }
 </style>
-
-.title-input-section md-outlined-text-field {
-  width: 100%;
-}

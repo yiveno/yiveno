@@ -109,6 +109,7 @@ export const BookmarkRecordSchema = z.object({
   duplicateOf: z.string().optional(),
   category: z.string().optional(),
   notes: z.string().optional(),
+  description: z.string().optional(),
   lastVisited: z.number().optional(),
   visitCount: z.number().optional(),
   isFavorite: z.boolean().optional(),
