@@ -1,88 +1,142 @@
 <template>
   <div class="md-input-wrapper" :class="wrapperClasses">
-    <div class="md-input-container" :class="containerClasses">
-      <!-- Prepend slot -->
-      <div v-if="$slots.prepend" class="md-input-prepend">
-        <slot name="prepend"></slot>
-      </div>
+    <!-- Prepend slot (外部) -->
+    <div v-if="$slots.prepend" class="md-input-prepend">
+      <slot name="prepend"></slot>
+    </div>
+    
+    <!-- Material Web Text Field -->
+    <md-outlined-text-field
+      v-if="variant === 'outlined'"
+      ref="textFieldRef"
+      :value="modelValue"
+      :type="type"
+      :name="name"
+      :label="label"
+      :placeholder="placeholder"
+      :disabled="disabled"
+      :readonly="readonly"
+      :autocomplete="autocomplete"
+      :supporting-text="errorMessage || hint"
+      :error="!!errorMessage"
+      :error-text="errorMessage"
+      class="md-text-field"
+      v-bind="$attrs"
+      @input="handleInput"
+      @focus="handleFocus"
+      @blur="handleBlur"
+      @keydown="handleKeydown"
+    >
+      <!-- Leading icon -->
+      <LucideIcon
+        v-if="leadingIcon"
+        slot="leading-icon"
+        :name="leadingIcon"
+        :size="leadingIconSize"
+      />
       
-      <!-- Material Web Text Field -->
-      <md-outlined-text-field
-        v-if="variant === 'outlined'"
-        ref="textFieldRef"
-        :value="modelValue"
-        :type="type"
-        :name="name"
-        :label="label"
-        :placeholder="placeholder"
-        :disabled="disabled"
-        :readonly="readonly"
-        :autocomplete="autocomplete"
-        :supporting-text="errorMessage || hint"
-        :error="!!errorMessage"
-        :error-text="errorMessage"
-        class="md-text-field"
-        v-bind="$attrs"
-        @input="handleInput"
-        @focus="handleFocus"
-        @blur="handleBlur"
-        @keydown="handleKeydown"
+      <!-- Trailing icon: 直接渲染，不使用 v-if -->
+      <md-icon-button
+        v-if="trailingIcon"
+        slot="trailing-icon"
+        type="button"
+        class="md-input-trailing-icon-btn"
+        @click.stop="handleTrailingIconClick"
       >
-        <!-- Trailing icon: Loading or Clear button -->
-        <div v-if="loading || (clearable && modelValue)" slot="trailing-icon" class="md-input-actions">
-          <md-circular-progress v-if="loading" indeterminate class="md-input-spinner" />
-          <md-icon-button
-            v-else-if="clearable && modelValue"
-            type="button"
-            class="md-input-clear-btn"
-            :aria-label="'清除'"
-            @click="clearInput"
-          >
-            <LucideIcon name="x" :size="16" />
-          </md-icon-button>
-        </div>
-      </md-outlined-text-field>
-
-      <md-filled-text-field
-        v-else
-        ref="textFieldRef"
-        :value="modelValue"
-        :type="type"
-        :name="name"
-        :label="label"
-        :placeholder="placeholder"
-        :disabled="disabled"
-        :readonly="readonly"
-        :autocomplete="autocomplete"
-        :supporting-text="errorMessage || hint"
-        :error="!!errorMessage"
-        :error-text="errorMessage"
-        class="md-text-field"
-        v-bind="$attrs"
-        @input="handleInput"
-        @focus="handleFocus"
-        @blur="handleBlur"
-        @keydown="handleKeydown"
+        <LucideIcon :name="trailingIcon" :size="trailingIconSize" />
+      </md-icon-button>
+      
+      <!-- 自定义 slot -->
+      <slot name="trailing-icon"></slot>
+      
+      <!-- Loading spinner -->
+      <md-circular-progress 
+        v-if="loading && !trailingIcon && !$slots['trailing-icon']" 
+        slot="trailing-icon" 
+        indeterminate 
+        class="md-input-spinner" 
+      />
+      
+      <!-- Clear button -->
+      <md-icon-button
+        v-if="clearable && modelValue && !trailingIcon && !$slots['trailing-icon'] && !loading"
+        slot="trailing-icon"
+        type="button"
+        class="md-input-clear-btn"
+        :aria-label="'清除'"
+        @click.stop="clearInput"
       >
-        <!-- Trailing icon: Loading or Clear button -->
-        <div v-if="loading || (clearable && modelValue)" slot="trailing-icon" class="md-input-actions">
-          <md-circular-progress v-if="loading" indeterminate class="md-input-spinner" />
-          <md-icon-button
-            v-else-if="clearable && modelValue"
-            type="button"
-            class="md-input-clear-btn"
-            :aria-label="'清除'"
-            @click="clearInput"
-          >
-            <LucideIcon name="x" :size="16" />
-          </md-icon-button>
-        </div>
-      </md-filled-text-field>
+        <LucideIcon name="x" :size="16" />
+      </md-icon-button>
+    </md-outlined-text-field>
 
-      <!-- Append slot -->
-      <div v-if="$slots.append" class="md-input-append">
-        <slot name="append"></slot>
-      </div>
+    <md-filled-text-field
+      v-else
+      ref="textFieldRef"
+      :value="modelValue"
+      :type="type"
+      :name="name"
+      :label="label"
+      :placeholder="placeholder"
+      :disabled="disabled"
+      :readonly="readonly"
+      :autocomplete="autocomplete"
+      :supporting-text="errorMessage || hint"
+      :error="!!errorMessage"
+      :error-text="errorMessage"
+      class="md-text-field"
+      v-bind="$attrs"
+      @input="handleInput"
+      @focus="handleFocus"
+      @blur="handleBlur"
+      @keydown="handleKeydown"
+    >
+      <!-- Leading icon -->
+      <LucideIcon
+        v-if="leadingIcon"
+        slot="leading-icon"
+        :name="leadingIcon"
+        :size="leadingIconSize"
+      />
+      
+      <!-- Trailing icon: 直接渲染，不使用 v-if -->
+      <md-icon-button
+        v-if="trailingIcon"
+        slot="trailing-icon"
+        type="button"
+        class="md-input-trailing-icon-btn"
+        @click.stop="handleTrailingIconClick"
+      >
+        <LucideIcon :name="trailingIcon" :size="trailingIconSize" />
+      </md-icon-button>
+      
+      <!-- 自定义 slot -->
+      <slot name="trailing-icon"></slot>
+      
+      <!-- Loading spinner -->
+      <md-circular-progress 
+        v-if="loading && !trailingIcon && !$slots['trailing-icon']" 
+        slot="trailing-icon" 
+        indeterminate 
+        class="md-input-spinner" 
+      />
+      
+      <!-- Clear button -->
+      <md-icon-button
+        v-if="clearable && modelValue && !trailingIcon && !$slots['trailing-icon'] && !loading"
+        slot="trailing-icon"
+        type="button"
+        class="md-input-clear-btn"
+        :aria-label="'清除'"
+        @click.stop="clearInput"
+      >
+        <LucideIcon name="x" :size="16" />
+      </md-icon-button>
+    </md-filled-text-field>
+
+    <!-- Append slot (外部) -->
+    <div v-if="$slots.append" class="md-input-append">
+      <slot name="append"></slot>
     </div>
   </div>
 </template>
@@ -116,12 +170,20 @@ const props = withDefaults(defineProps<InputProps>(), {
   error: false,
   errorMessage: '',
   size: 'md',
-  type: 'text'
+  type: 'text',
+  leadingIcon: undefined,
+  leadingIconSize: 20,
+  trailingIcon: undefined,
+  trailingIconSize: 20
 })
 
 const emit = defineEmits<InputEmits>()
 
 const textFieldRef = ref<HTMLElement>()
+
+// 调试：打印 props
+console.log('[Input] trailingIcon prop:', props.trailingIcon)
+console.log('[Input] trailingIconSize prop:', props.trailingIconSize)
 const isFocused = ref(false)
 
 /**
@@ -133,20 +195,6 @@ const wrapperClasses = computed(() => [
   {
     'md-input-wrapper--disabled': props.disabled,
     'md-input-wrapper--error': props.error || props.errorMessage
-  }
-])
-
-/**
- * Container 类名
- */
-const containerClasses = computed(() => [
-  `md-input-container--${props.size}`,
-  `md-input-container--${props.density}`,
-  {
-    'md-input-container--focused': isFocused.value,
-    'md-input-container--disabled': props.disabled,
-    'md-input-container--error': props.error || props.errorMessage,
-    'md-input-container--loading': props.loading
   }
 ])
 
@@ -197,6 +245,13 @@ const clearInput = () => {
   emit('update:modelValue', clearedValue as string | number)
   emit('clear')
 }
+
+/**
+ * 处理后置图标点击事件
+ */
+const handleTrailingIconClick = (event: MouseEvent) => {
+  emit('trailing-icon-click', event)
+}
 </script>
 
 <style scoped>
@@ -205,7 +260,7 @@ const clearInput = () => {
 /* ========== 可访问性：尊重用户的动画偏好 ========== */
 
 @media (prefers-reduced-motion: reduce) {
-  .md-input-container,
+  .md-input-wrapper,
   .md-input-prepend,
   .md-input-append,
   .md-input-spinner {
@@ -218,7 +273,8 @@ const clearInput = () => {
 
 .md-input-wrapper {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
   width: 100%;
 }
 
@@ -253,14 +309,7 @@ const clearInput = () => {
   --md-filled-text-field-bottom-space: var(--spacing-sm);
 }
 
-/* ========== Container 样式 ========== */
-
-.md-input-container {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  width: 100%;
-}
+/* ========== Text Field 样式 ========== */
 
 .md-text-field {
   flex: 1;
@@ -277,26 +326,25 @@ const clearInput = () => {
   transition: color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
 }
 
-.md-input-container--focused .md-input-prepend,
-.md-input-container--focused .md-input-append {
+.md-input-wrapper:has(.md-text-field:focus-within) .md-input-prepend,
+.md-input-wrapper:has(.md-text-field:focus-within) .md-input-append {
   color: var(--md-sys-color-primary);
 }
 
-/* Loading & Clear 按钮容器 */
-.md-input-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-}
-
+/* Loading & Clear 按钮 */
 .md-input-spinner {
   --md-circular-progress-size: 18px;
   --md-circular-progress-active-indicator-color: var(--md-sys-color-primary);
 }
 
-.md-input-clear-btn {
+.md-input-clear-btn,
+.md-input-trailing-icon-btn {
   --md-icon-button-icon-size: 16px;
   --md-icon-button-state-layer-shape: var(--radius-full);
+}
+
+.md-input-trailing-icon-btn {
+  --md-icon-button-icon-size: 18px;
 }
 
 /**
@@ -308,7 +356,9 @@ const clearInput = () => {
  * - 支持 outlined/filled 变体
  * - 支持 clearable 按钮
  * - 支持 loading 状态
- * - 支持 prepend/append slots
+ * - 支持 prepend/append slots（外部）
+ * - 支持 leading-icon prop（内部左侧图标）
+ * - 支持 trailing-icon slot（内部右侧自定义内容）
  * - 完全符合 Material Design 3 规范
  */
 </style>

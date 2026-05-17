@@ -6,11 +6,12 @@
     >
       <md-icon-button
         class="app-header__action"
+        :style="{ '--md-icon-button-icon-size': '30px' }"
         :title="sidePanelTooltip"
         :aria-label="sidePanelTooltip"
         @click="handleOpenSidePanel"
       >
-        <LucideIcon name="panel-left" :size="20" />
+        <LucideIcon name="panel-left" :size="30" />
       </md-icon-button>
     </div>
 
@@ -26,15 +27,16 @@
 
     <div class="app-header__col app-header__col--right">
       <ThemeToggle v-if="showTheme" />
-      <UserMenu v-if="showAccount" :size="24" />
+      <UserMenu v-if="showAccount" :size="30" />
       <md-icon-button
         v-if="showSettings"
         class="app-header__action"
+        :style="{ '--md-icon-button-icon-size': '30px' }"
         title="打开设置"
         aria-label="打开设置"
         @click="handleOpenSettings"
       >
-        <LucideIcon name="settings" :size="20" />
+        <LucideIcon name="settings" :size="30" />
       </md-icon-button>
       <slot name="actions" />
     </div>

@@ -40,6 +40,14 @@ export interface InputProps {
   size?: 'sm' | 'md' | 'lg'
   /** 输入框是否加载中 */
   loading?: boolean
+  /** 前置图标名称（Lucide 图标） */
+  leadingIcon?: string
+  /** 前置图标尺寸 */
+  leadingIconSize?: number
+  /** 后置图标名称（Lucide 图标） */
+  trailingIcon?: string
+  /** 后置图标尺寸 */
+  trailingIconSize?: number
 }
 
 export interface InputEmits {
@@ -51,4 +59,5 @@ export interface InputEmits {
   (event: 'suffix-click', e: MouseEvent): void
   (event: 'input', value: string | number): void
   (event: 'keydown', e: KeyboardEvent): void
+  (event: 'trailing-icon-click', e: MouseEvent): void
 } // 输入框组件事件

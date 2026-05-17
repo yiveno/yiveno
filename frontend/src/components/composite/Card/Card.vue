@@ -1,12 +1,16 @@
 <!--
   AcuityCard - 卡片组件
   通用卡片布局组件，支持标题、内容、操作区域
+  集成 Material Design 3 md-elevation 组件
 -->
 <template>
   <div
     :class="cardClasses"
     @click="props.clickable ? $emit('click', $event) : undefined"
   >
+    <!-- Material Design 3 Elevation -->
+    <md-elevation :class="elevationClass"></md-elevation>
+
     <!-- Header -->
     <header v-if="$slots.header || title" class="card__header">
       <slot name="header">
@@ -46,6 +50,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import '@material/web/elevation/elevation.js'
 import { LucideIcon } from '@/components/base/LucideIcon'
 import type { CardProps, CardEmits } from './Card.d'
 
@@ -77,6 +82,11 @@ const cardClasses = computed(() => [
     'card--borderless': props.borderless
   }
 ])
+
+/**
+ * Elevation 类名（用于控制 hover 状态）
+ */
+const elevationClass = computed(() => 'card__elevation')
 
 // 类型已从 Card.types.ts 导入
 </script>
@@ -126,38 +136,77 @@ const cardClasses = computed(() => [
   border-radius: var(--radius-lg);
   background-color: var(--color-surface);
 
-  /* ✨ 性能优化 */
-  will-change: box-shadow, border-color;
-
-  /* ✨ 优化过渡动画：阴影 + 边框 + 变换 */
+  /* ✨ 优化过渡动画：边框 + 变换 */
   transition:
-    box-shadow var(--anim-duration-normal) var(--anim-ease-emphasized),
     border-color var(--anim-duration-fast) var(--anim-ease-standard),
     transform var(--anim-duration-fast) var(--anim-ease-spring),
     opacity var(--anim-duration-instant) var(--anim-ease-standard);
   overflow: hidden;
 }
 
+/* === Material Design 3 Elevation === */
+.card__elevation {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
 /* === Variants === */
 .card--default {
   border: 1px solid var(--color-border);
-  
-  /* ✅ Material Design 3 Elevation Level 1 */
-  box-shadow: var(--md-sys-elevation-1);
+}
+
+.card--default .card__elevation {
+  --md-elevation-level: 1;
 }
 
 .card--outlined {
   border: 2px solid var(--color-border);
-  
-  /* ✅ Material Design 3 Elevation Level 1 */
-  box-shadow: var(--md-sys-elevation-1);
+}
+
+.card--outlined .card__elevation {
+  --md-elevation-level: 1;
 }
 
 .card--elevated {
   border: 1px solid var(--color-border);
-  
-  /* ✅ Material Design 3 Elevation Level 2 */
-  box-shadow: var(--md-sys-elevation-2);
+}
+
+.card--elevated .card__elevation {
+  --md-elevation-level: 2;
+}
+
+.card--warning {
+  border: 1px solid var(--color-border-subtle);
+  border-left-width: 3px;
+  border-left-color: var(--color-warning);
+  background: color-mix(in srgb, var(--color-warning) 8%, var(--color-surface));
+}
+
+.card--warning .card__elevation {
+  --md-elevation-level: 0;
+}
+
+.card--danger {
+  border: 1px solid var(--color-border-subtle);
+  border-left-width: 3px;
+  border-left-color: var(--color-error);
+  background: color-mix(in srgb, var(--color-error) 6%, var(--color-surface));
+}
+
+.card--danger .card__elevation {
+  --md-elevation-level: 0;
+}
+
+.card--success {
+  border: 1px solid var(--color-border-subtle);
+  border-left-width: 3px;
+  border-left-color: var(--color-success);
+  background: color-mix(in srgb, var(--color-success) 8%, var(--color-surface));
+}
+
+.card--success .card__elevation {
+  --md-elevation-level: 0;
 }
 
 /* === Borderless - 高特异性覆盖 outlined/elevated === */
@@ -182,9 +231,8 @@ const cardClasses = computed(() => [
 }
 
 /* === States === */
-.card--hover:hover {
-  /* ✅ Material Design 3 Elevation Level 3 */
-  box-shadow: var(--md-sys-elevation-3);
+.card--hover:hover .card__elevation {
+  --md-elevation-level: 3;
 }
 
 .card--clickable {
@@ -192,17 +240,46 @@ const cardClasses = computed(() => [
 
   &:hover {
     border-color: var(--color-border-hover);
-    
-    /* ✅ Material Design 3 Elevation Level 2 */
-    box-shadow: var(--md-sys-elevation-2);
+  }
+
+  &:hover .card__elevation {
+    --md-elevation-level: 2;
   }
 
   &:active {
     opacity: 0.95;
-
-    /* ✅ Material Design 3 Elevation Level 1 */
-    box-shadow: var(--md-sys-elevation-1);
   }
+
+  &:active .card__elevation {
+    --md-elevation-level: 1;
+  }
+}
+
+/* Warning variant hover */
+.card--warning.card--clickable:hover {
+  background: color-mix(in srgb, var(--color-warning) 12%, var(--color-surface));
+}
+
+.card--warning.card--clickable:hover .card__elevation {
+  --md-elevation-level: 1;
+}
+
+/* Danger variant hover */
+.card--danger.card--clickable:hover {
+  background: color-mix(in srgb, var(--color-error) 10%, var(--color-surface));
+}
+
+.card--danger.card--clickable:hover .card__elevation {
+  --md-elevation-level: 1;
+}
+
+/* Success variant hover */
+.card--success.card--clickable:hover {
+  background: color-mix(in srgb, var(--color-success) 12%, var(--color-surface));
+}
+
+.card--success.card--clickable:hover .card__elevation {
+  --md-elevation-level: 1;
 }
 
 .card--no-padding {
@@ -211,6 +288,8 @@ const cardClasses = computed(() => [
 
 /* === Header === */
 .card__header {
+  position: relative;
+  z-index: 1;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -259,6 +338,8 @@ const cardClasses = computed(() => [
 
 /* === Body === */
 .card__body {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -273,6 +354,9 @@ const cardClasses = computed(() => [
 
 /* === Footer === */
 .card__footer {
+  position: relative;
+  z-index: 1;
+
   /* padding: var(--card-padding); */
   border-top: 1px solid var(--color-border);
 
@@ -301,6 +385,7 @@ const cardClasses = computed(() => [
 .card--loading::after {
   position: absolute;
   inset: 0;
+  z-index: 2;
   background: linear-gradient(
     90deg,
     transparent,

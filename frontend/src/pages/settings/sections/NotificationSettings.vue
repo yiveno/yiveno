@@ -1,10 +1,5 @@
 <template>
-  <div class="settings-section">
-    <h3 class="section-subtitle">
-      <LucideIcon name="bell" />
-      <span>{{ t('settings_notification_title') }}</span>
-    </h3>
-    <div class="grid">
+  <div class="grid">
       <!-- 勿扰模式 -->
       <div class="row">
         <div class="label label--with-tooltip">
@@ -91,7 +86,6 @@
           ></md-slider>
           <span class="duration-value">{{ notificationDuration }} {{ t('settings_notification_duration_seconds') }}</span>
         </div>
-      </div>
     </div>
   </div>
 </template>
@@ -235,22 +229,6 @@ async function handleDurationChange(event: Event) {
 }
 </script>
 <style scoped>
-.settings-section {
-  margin-bottom: var(--spacing-6);
-}
-
-.section-subtitle {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  margin: 0 0 var(--spacing-4) 0;
-  padding-bottom: var(--spacing-2);
-  border-bottom: 1px solid var(--color-border-subtle);
-  font-size: var(--text-base);
-  font-weight: var(--font-semibold);
-  color: var(--color-text-secondary);
-}
-
 .grid {
   display: flex;
   flex-direction: column;

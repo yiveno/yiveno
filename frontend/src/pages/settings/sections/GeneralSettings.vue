@@ -1,24 +1,18 @@
 <template>
-  <div class="settings-section">
-    <h3 class="section-subtitle">
-      <LucideIcon name="settings" :size="20" />
-      <span>{{ t('settings_title_general') }}</span>
-    </h3>
-    <div class="grid">
-      <!-- 语言说明 -->
-      <div class="row">
-        <div class="label">
-          {{ t('settings_general_language') }}
-        </div>
-        <div class="field">
-          <div class="language-info">
-            <p class="language-info__text">
-              扩展语言由浏览器语言设置决定。当前语言：<strong>{{ currentLanguageName }}</strong>
-            </p>
-            <p class="language-info__hint">
-              如需更改，请在 Chrome 设置 > 语言 中修改浏览器语言。
-            </p>
-          </div>
+  <div class="grid">
+    <!-- 语言说明 -->
+    <div class="row">
+      <div class="label">
+        {{ t('settings_general_language') }}
+      </div>
+      <div class="field">
+        <div class="language-info">
+          <p class="language-info__text">
+            扩展语言由浏览器语言设置决定。当前语言：<strong>{{ currentLanguageName }}</strong>
+          </p>
+          <p class="language-info__hint">
+            如需更改，请在 Chrome 设置 > 语言 中修改浏览器语言。
+          </p>
         </div>
       </div>
     </div>
@@ -26,7 +20,6 @@
 </template>
 
 <script setup lang="ts">
-import { LucideIcon } from '@/components'
 import { t } from '@/utils/i18n-helpers'
 import { computed } from 'vue'
 
@@ -61,22 +54,6 @@ const currentLanguageName = computed(() => {
 </script>
 
 <style scoped>
-.settings-section {
-  margin-bottom: var(--spacing-6);
-}
-
-.section-subtitle {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  margin: 0 0 var(--spacing-4) 0;
-  padding-bottom: var(--spacing-2);
-  border-bottom: 1px solid var(--color-border-subtle);
-  font-size: var(--text-base);
-  font-weight: var(--font-semibold);
-  color: var(--color-text-secondary);
-}
-
 .grid {
   display: flex;
   flex-direction: column;

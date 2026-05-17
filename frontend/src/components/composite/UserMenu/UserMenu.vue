@@ -1,10 +1,11 @@
 <template>
   <!-- 头像始终显示 -->
   <div class="user-menu">
-    <md-icon-button
+    <button
       id="user-menu-anchor"
       :class="avatarWrapperClasses"
       :title="avatarTitle"
+      type="button"
       @click="handleClick"
     >
       <!-- 未登录：显示图标 -->
@@ -24,9 +25,9 @@
       
       <!-- PRO 徽章（右下角小皇冠） -->
       <div v-if="isPro" class="user-menu__badge">
-        <LucideIcon name="crown" :size="12" />
+        <LucideIcon name="crown" :size="10" />
       </div>
-    </md-icon-button>
+    </button>
   </div>
 
   <!-- Material Design 3 Menu -->
@@ -97,7 +98,7 @@ interface UserMenuProps {
   size?: number
 }
 
-const { size = 32 } = defineProps<UserMenuProps>()
+const { size = 30 } = defineProps<UserMenuProps>()
 
 const { user, isAuthenticated, signOut } = useSupabaseAuth()
 const { isPro, subscriptionStatus } = useSubscription()
@@ -227,16 +228,21 @@ async function handleLogout() {
   display: inline-flex;
 }
 
-/* Icon Button 样式 */
-md-icon-button {
-  --md-icon-button-icon-size: 32px;
-}
-
 .user-menu__avatar-wrapper {
   position: relative;
-  padding: var(--spacing-0-5);
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  border: none;
   border-radius: var(--radius-full);
+  
+  /* 移除 button 默认样式 */
+  outline: none;
+  background: transparent;
+  cursor: pointer;
   transition: all var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+  appearance: none;
 }
 
 /* 未登录图标容器 */
@@ -282,17 +288,17 @@ md-icon-button {
 /* PRO 徽章（右下角小皇冠，与官网一致） */
 .user-menu__badge {
   position: absolute;
-  right: -4px;
-  bottom: -4px;
+  right: -2px;
+  bottom: -2px;
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   border-radius: var(--radius-full);
   color: var(--md-sys-color-on-primary);
-  background: linear-gradient(135deg, var(--acuity-accent-gold) 0%, var(--acuity-accent-amber) 100%);
-  box-shadow: 0 2px 4px var(--color-shadow-020);
+  background: linear-gradient(135deg, var(--color-warning) 0%, var(--color-warning-dark) 100%);
+  box-shadow: var(--shadow-sm);
 }
 
 /* Material Design 3 Menu 样式 */

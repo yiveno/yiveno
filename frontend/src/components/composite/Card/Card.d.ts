@@ -8,7 +8,7 @@ export interface CardProps {
   /** 卡片图标颜色 (可选) */
   iconColor?: string
   /** 卡片样式 */
-  variant?: 'default' | 'outlined' | 'elevated'
+  variant?: 'default' | 'outlined' | 'elevated' | 'warning' | 'danger' | 'success'
   /** 卡片大小 */
   size?: 'sm' | 'md' | 'lg'
   /** 卡片是否无边框 */

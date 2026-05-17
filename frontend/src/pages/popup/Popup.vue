@@ -27,24 +27,26 @@
     <div v-else class="main-container">
       <!-- 🔍 书签搜索 -->
       <section class="search-section">
-        <BookmarkSearchInput
-          display-mode="full"
-          mode="indexeddb"
-          strategy="auto"
-          result-display="dropdown"
-          :show-stats="true"
-          :show-result-count="true"
-          :max-dropdown-results="50"
-          :quick-filters="{
-            enabled: false,
-            position: 'none',
-            filters: []
-          }"
-          :limit="50"
-          @result-click="handleBookmarkClick"
-          @search-complete="handleSearchComplete"
-          @search-clear="handleSearchClear"
-        />
+        <div class="search-wrapper">
+          <BookmarkSearchInput
+            display-mode="full"
+            mode="indexeddb"
+            strategy="auto"
+            result-display="dropdown"
+            :show-stats="true"
+            :show-result-count="true"
+            :max-dropdown-results="50"
+            :quick-filters="{
+              enabled: false,
+              position: 'none',
+              filters: []
+            }"
+            :limit="50"
+            @result-click="handleBookmarkClick"
+            @search-complete="handleSearchComplete"
+            @search-clear="handleSearchClear"
+          />
+        </div>
       </section>
 
       <!-- 📊 书签概览（MWC md-list，三列统计） -->
@@ -81,26 +83,24 @@
 
       <md-divider class="popup-section-divider"></md-divider>
 
-      <!-- ⚠️ 需要关注（可点击行 + 末尾删除；整行非 button，避免嵌套 button） -->
+      <!-- ⚠️ 需要关注 -->
       <section class="issues-section">
-        <div class="popup-list-panel">
-          <md-list class="popup-mwc-list popup-issues-list">
-            <md-list-item
-              type="text"
-              class="popup-issue-item popup-issue-item--warning"
-              tabindex="0"
-              @click="handleIssueRowClick('duplicate', $event)"
-              @keydown.enter.prevent="openManagementWithFilter('duplicate')"
-              @keydown.space.prevent="openManagementWithFilter('duplicate')"
-            >
-              <span slot="start" class="popup-issue-start" aria-hidden="true">
-                <LucideIcon name="copy" :size="20" />
-              </span>
-              <div slot="headline">{{ t('popup_issue_duplicate') }}</div>
-              <span slot="end" class="popup-issue-end">
-                <span class="popup-issue-count popup-issue-count--warning">
-                  <md-circular-progress v-if="isLoadingTraitOverview" indeterminate></md-circular-progress>
-                  <AnimatedNumber v-else :value="traitOverview.duplicate" />
+        <div class="issues-grid">
+          <Card
+            variant="warning"
+            :padding="false"
+            :borderless="false"
+            clickable
+            class="issue-card"
+            @click="handleIssueRowClick('duplicate', $event)"
+            @keydown.enter.prevent="openManagementWithFilter('duplicate')"
+            @keydown.space.prevent="openManagementWithFilter('duplicate')"
+          >
+            <div class="issue-card-content">
+              <div class="issue-card-header">
+                <span class="issue-card-title">
+                  <LucideIcon name="copy" :size="18" />
+                  <span>{{ t('popup_issue_duplicate') }}</span>
                 </span>
                 <button
                   type="button"
@@ -110,25 +110,29 @@
                 >
                   <LucideIcon name="trash" :size="16" />
                 </button>
-              </span>
-            </md-list-item>
+              </div>
+              <div class="issue-card-count issue-card-count--warning">
+                <md-circular-progress v-if="isLoadingTraitOverview" indeterminate></md-circular-progress>
+                <AnimatedNumber v-else :value="traitOverview.duplicate" />
+              </div>
+            </div>
+          </Card>
 
-            <md-list-item
-              type="text"
-              class="popup-issue-item popup-issue-item--danger"
-              tabindex="0"
-              @click="handleIssueRowClick('invalid', $event)"
-              @keydown.enter.prevent="openManagementWithFilter('dead')"
-              @keydown.space.prevent="openManagementWithFilter('dead')"
-            >
-              <span slot="start" class="popup-issue-start" aria-hidden="true">
-                <LucideIcon name="unlink" :size="20" />
-              </span>
-              <div slot="headline">{{ t('popup_issue_invalid') }}</div>
-              <span slot="end" class="popup-issue-end">
-                <span class="popup-issue-count popup-issue-count--danger">
-                  <md-circular-progress v-if="isLoadingTraitOverview" indeterminate></md-circular-progress>
-                  <AnimatedNumber v-else :value="traitOverview.invalid" />
+          <Card
+            variant="danger"
+            :padding="false"
+            :borderless="false"
+            clickable
+            class="issue-card"
+            @click="handleIssueRowClick('invalid', $event)"
+            @keydown.enter.prevent="openManagementWithFilter('dead')"
+            @keydown.space.prevent="openManagementWithFilter('dead')"
+          >
+            <div class="issue-card-content">
+              <div class="issue-card-header">
+                <span class="issue-card-title">
+                  <LucideIcon name="unlink" :size="18" />
+                  <span>{{ t('popup_issue_invalid') }}</span>
                 </span>
                 <button
                   type="button"
@@ -138,9 +142,13 @@
                 >
                   <LucideIcon name="trash" :size="16" />
                 </button>
-              </span>
-            </md-list-item>
-          </md-list>
+              </div>
+              <div class="issue-card-count issue-card-count--danger">
+                <md-circular-progress v-if="isLoadingTraitOverview" indeterminate></md-circular-progress>
+                <AnimatedNumber v-else :value="traitOverview.invalid" />
+              </div>
+            </div>
+          </Card>
         </div>
       </section>
 
@@ -148,21 +156,37 @@
 
       <!-- ⚡ 快速操作（MWC 列表按钮行） -->
       <section class="actions-section">
-        <div class="popup-list-panel">
-          <md-list class="popup-mwc-list popup-actions-list">
-            <md-list-item type="button" @click="openManualOrganizePage">
-              <span slot="start" class="popup-action-start" aria-hidden="true">
-                <LucideIcon name="folder" :size="20" />
-              </span>
-              <div slot="headline">{{ t('popup_action_organize') }}</div>
-            </md-list-item>
-            <md-list-item type="button" @click="openSettings">
-              <span slot="start" class="popup-action-start" aria-hidden="true">
-                <LucideIcon name="settings" :size="20" />
-              </span>
-              <div slot="headline">{{ t('popup_action_settings') }}</div>
-            </md-list-item>
-          </md-list>
+        <div class="actions-grid">
+          <Card
+            variant="default"
+            :padding="false"
+            :borderless="false"
+            clickable
+            class="action-card"
+            @click="openManualOrganizePage"
+          >
+            <div class="action-card-content">
+              <div class="action-card-icon">
+                <LucideIcon name="folder" :size="24" />
+              </div>
+              <div class="action-card-label">{{ t('popup_action_organize') }}</div>
+            </div>
+          </Card>
+          <Card
+            variant="default"
+            :padding="false"
+            :borderless="false"
+            clickable
+            class="action-card"
+            @click="openSettings"
+          >
+            <div class="action-card-content">
+              <div class="action-card-icon">
+                <LucideIcon name="settings" :size="24" />
+              </div>
+              <div class="action-card-label">{{ t('popup_action_settings') }}</div>
+            </div>
+          </Card>
         </div>
       </section>
     </div>
@@ -181,7 +205,7 @@ import { logger } from '@/infrastructure/logging/logger'
 import { useUIStore } from '@/stores/ui-store'
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports
 import { usePopupStoreIndexedDB } from '@/stores/popup-store-indexeddb'
-import { AppHeader, AnimatedNumber, LucideIcon } from '@/components'
+import { AppHeader, AnimatedNumber, LucideIcon, Card } from '@/components'
 import { t } from '@/utils/i18n-helpers'
 import type { BookmarkNode } from '@/types'
 
@@ -503,7 +527,7 @@ async function openManagementWithFilter(key: string): Promise<void> {
  */
 function handleIssueRowClick(
   kind: 'duplicate' | 'invalid',
-  event: MouseEvent
+  event: Event
 ): void {
   const el = event.target
   if (el instanceof Element && el.closest('.issue-action')) {
@@ -796,6 +820,22 @@ body {
   padding-bottom: var(--spacing-2);
 }
 
+.search-wrapper {
+  width: 100%;
+}
+
+.search-wrapper :deep(.bookmark-search-input) {
+  width: 100%;
+}
+
+.search-wrapper :deep(.search-input-wrapper) {
+  width: 100%;
+}
+
+.search-wrapper :deep(md-outlined-text-field) {
+  width: 100%;
+}
+
 /* 区块标题 */
 .section-title {
   display: flex;
@@ -807,9 +847,9 @@ body {
   color: var(--color-text-secondary);
 }
 
-/* 📊 书签概览 + ⚠️ 需要关注 + ⚡ 快速操作（MWC md-list） */
+/* 区块分隔线 - 左右间距一致 */
 .popup-section-divider {
-  margin: 0 var(--spacing-3);
+  margin: 0;
   border-color: var(--color-border-subtle);
 }
 
@@ -879,6 +919,91 @@ body {
   padding-bottom: 0;
 }
 
+.issues-grid {
+  display: grid;
+  gap: var(--spacing-3);
+  grid-template-columns: repeat(2, 1fr);
+}
+
+/* Issue Card 内容布局 */
+.issue-card {
+  min-height: 100px;
+}
+
+.issue-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3);
+}
+
+.issue-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.issue-card-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
+  color: var(--color-text-primary);
+}
+
+.issue-card-count {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.issue-card-count--warning {
+  color: var(--color-warning);
+}
+
+.issue-card-count--danger {
+  color: var(--color-error);
+}
+
+.issue-action {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-full);
+  color: var(--color-text-secondary);
+  background: transparent;
+  opacity: 0;
+  cursor: pointer;
+  transition:
+    color var(--transition-fast),
+    background var(--transition-fast),
+    opacity var(--transition-fast);
+}
+
+.issue-action:hover {
+  color: var(--color-error);
+  background: var(--color-error-alpha-10);
+}
+
+.issue-card:hover .issue-action,
+.issue-card:focus-within .issue-action {
+  opacity: 1;
+}
+
+:deep(.issue-card-count md-circular-progress) {
+  --md-circular-progress-size: 48px;
+  --md-circular-progress-active-indicator-width: 5px;
+}
+
 .popup-issues-list {
   display: grid;
   gap: var(--spacing-2);
@@ -922,6 +1047,19 @@ body {
   outline-offset: 2px;
 }
 
+.popup-issue-headline {
+  width: 100%;
+}
+
+.popup-issue-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--color-text-primary);
+}
+
 .popup-issue-start {
   display: inline-flex;
   flex-shrink: 0;
@@ -952,35 +1090,6 @@ body {
   color: var(--color-error);
 }
 
-.issue-action {
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: none;
-  border-radius: var(--radius-full);
-  color: var(--color-text-secondary);
-  background: transparent;
-  opacity: 0;
-  cursor: pointer;
-  transition:
-    color var(--transition-fast),
-    background var(--transition-fast),
-    opacity var(--transition-fast);
-}
-
-.issue-action:hover {
-  color: var(--color-error);
-  background: var(--color-error-alpha-10);
-}
-
-.popup-issue-item:hover .issue-action,
-.popup-issue-item:focus-within .issue-action {
-  opacity: 1;
-}
-
 :deep(.popup-issue-count md-circular-progress) {
   --md-circular-progress-size: 20px;
   --md-circular-progress-active-indicator-width: 3px;
@@ -988,6 +1097,49 @@ body {
 
 .actions-section {
   padding-bottom: 0;
+}
+
+.actions-grid {
+  display: grid;
+  gap: var(--spacing-3);
+  grid-template-columns: repeat(2, 1fr);
+}
+
+/* Action Card 内容布局 */
+.action-card {
+  min-height: 80px;
+}
+
+.action-card-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3);
+}
+
+.action-card-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  transition: all var(--transition-fast);
+}
+
+.action-card:hover .action-card-icon {
+  background: color-mix(in srgb, var(--color-primary) 20%, transparent);
+}
+
+.action-card-label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  text-align: center;
+  color: var(--color-text-primary);
 }
 
 .popup-actions-list md-list-item {

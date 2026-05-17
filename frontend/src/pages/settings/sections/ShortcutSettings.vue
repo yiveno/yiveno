@@ -1,11 +1,5 @@
 <template>
-  <div class="settings-section">
-    <h3 class="section-subtitle">
-      <LucideIcon name="settings" />
-      <span>{{ t('settings_shortcut_title') }}</span>
-    </h3>
-
-    <div class="shortcuts-container">
+  <div class="shortcuts-container">
       <!-- 快捷键列表 - Material Web List -->
       <md-list v-if="shortcutItems.length > 0" class="shortcuts-list">
         <md-list-item
@@ -31,7 +25,6 @@
         <md-filled-button @click="openChromeShortcutSettings">
           {{ t('settings_shortcut_open_chrome') }}
         </md-filled-button>
-      </div>
     </div>
   </div>
 </template>
@@ -107,22 +100,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.settings-section {
-  margin-bottom: var(--spacing-6);
-}
-
-.section-subtitle {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  margin: 0 0 var(--spacing-4) 0;
-  padding-bottom: var(--spacing-2);
-  border-bottom: 1px solid var(--color-border-subtle);
-  font-size: var(--text-base);
-  font-weight: var(--font-semibold);
-  color: var(--color-text-secondary);
-}
-
 .shortcuts-container {
   display: flex;
   flex-direction: column;

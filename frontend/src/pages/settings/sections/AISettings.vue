@@ -97,23 +97,17 @@
       <div class="form-row">
         <label class="form-label">API Key</label>
         <div class="form-field">
-          <md-outlined-text-field
-            :value="apiKey"
+          <Input
+            v-model="apiKey"
             :type="showKey ? 'text' : 'password'"
             :placeholder="keyPlaceholder"
+            :trailing-icon="showKey ? 'eye-off' : 'eye'"
+            :trailing-icon-size="18"
             class="text-field"
-            @input="apiKey = ($event.target as HTMLInputElement).value"
+            variant="outlined"
             @keydown.enter.prevent="saveConfig"
-          >
-            <button
-              slot="trailing-icon"
-              type="button"
-              class="icon-toggle-btn"
-              @click="showKey = !showKey"
-            >
-              <LucideIcon :name="showKey ? 'eye-off' : 'eye'" :size="18" />
-            </button>
-          </md-outlined-text-field>
+            @trailing-icon-click="showKey = !showKey"
+          />
         </div>
       </div>
 
@@ -154,11 +148,11 @@
           </Tooltip>
         </label>
         <div class="form-field">
-          <md-outlined-text-field
-            :value="customModelName"
+          <Input
+            v-model="customModelName"
             placeholder="输入完整的模型 ID"
             class="text-field"
-            @input="customModelName = ($event.target as HTMLInputElement).value"
+            variant="outlined"
           />
         </div>
       </div>
@@ -178,11 +172,11 @@
           </Tooltip>
         </label>
         <div class="form-field">
-          <md-outlined-text-field
-            :value="customBaseUrl"
+          <Input
+            v-model="customBaseUrl"
             placeholder="https://your-proxy.com/v1"
             class="text-field"
-            @input="customBaseUrl = ($event.target as HTMLInputElement).value"
+            variant="outlined"
           />
         </div>
       </div>
@@ -237,17 +231,19 @@
       <!-- Chrome AI Tab -->
       <div v-else-if="activeTab === 'chrome'" class="tab-panel">
         <div v-if="chromeAIAvailable" class="chrome-ai-available">
-          <div class="status-card status-card--success">
-            <LucideIcon name="check-circle" :size="20" />
-            <div class="status-content">
-              <h4>Chrome AI 已启用</h4>
-              <p>您的浏览器已启用 Gemini Nano 模型，可以免费使用本地 AI 功能。</p>
+          <Card variant="success" :padding="false" class="status-card">
+            <div class="status-card-content">
+              <LucideIcon name="check-circle" :size="20" />
+              <div class="status-content">
+                <h4>Chrome AI 已启用</h4>
+                <p>您的浏览器已启用 Gemini Nano 模型，可以免费使用本地 AI 功能。</p>
+              </div>
+              <md-text-button :disabled="recheckingChromeAI" @click="recheckChromeAI">
+                <LucideIcon name="refresh-cw" :size="16" />
+                重新检测
+              </md-text-button>
             </div>
-            <md-text-button :disabled="recheckingChromeAI" @click="recheckChromeAI">
-              <LucideIcon name="refresh-cw" :size="16" />
-              重新检测
-            </md-text-button>
-          </div>
+          </Card>
           
           <div class="chrome-ai-features">
             <h4>特性</h4>
@@ -269,17 +265,19 @@
         </div>
         
         <div v-else class="chrome-ai-unavailable">
-          <div class="status-card status-card--warning">
-            <LucideIcon name="alert-circle" :size="20" />
-            <div class="status-content">
-              <h4>Chrome AI 未启用</h4>
-              <p>您的浏览器尚未启用 Gemini Nano 模型。</p>
+          <Card variant="warning" :padding="false" class="status-card">
+            <div class="status-card-content">
+              <LucideIcon name="alert-circle" :size="20" />
+              <div class="status-content">
+                <h4>Chrome AI 未启用</h4>
+                <p>您的浏览器尚未启用 Gemini Nano 模型。</p>
+              </div>
+              <md-text-button :disabled="recheckingChromeAI" @click="recheckChromeAI">
+                <LucideIcon name="refresh-cw" :size="16" />
+                重新检测
+              </md-text-button>
             </div>
-            <md-text-button :disabled="recheckingChromeAI" @click="recheckChromeAI">
-              <LucideIcon name="refresh-cw" :size="16" />
-              重新检测
-            </md-text-button>
-          </div>
+          </Card>
           
           <div class="enable-guide">
             <h4>启用步骤</h4>
@@ -356,7 +354,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import { LucideIcon, Tooltip } from '@/components'
+import { LucideIcon, Tooltip, Card, Input } from '@/components'
 import { userLLMClient } from '@/infrastructure/llm/user-llm-client'
 import type { UserLLMProvider } from '@/infrastructure/llm/user-llm-client'
 import { llmAdapter } from '@/infrastructure/llm/llm-adapter'
@@ -787,7 +785,7 @@ md-switch {
 }
 
 .form-label {
-  padding-top: 12px; /* 与输入框内文字对齐 */
+  padding-top: var(--spacing-3); /* 与输入框内文字对齐 */
   font-size: var(--md-sys-typescale-body-medium-size);
   line-height: 1.5;
   color: var(--color-text-secondary);
@@ -814,8 +812,8 @@ md-outlined-select.select-field,
 md-outlined-text-field.text-field {
   /* 减小输入框高度 */
   --md-outlined-field-container-shape: var(--radius-md);
-  --md-outlined-field-top-space: 12px;
-  --md-outlined-field-bottom-space: 12px;
+  --md-outlined-field-top-space: var(--spacing-3);
+  --md-outlined-field-bottom-space: var(--spacing-3);
 
   width: 100%;
 }
@@ -825,7 +823,7 @@ md-outlined-text-field.text-field {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 8px;
+  padding: var(--spacing-2);
   border: none;
   border-radius: var(--radius-sm);
   color: var(--color-text-secondary);
@@ -983,41 +981,33 @@ md-tabs {
 
 /* Chrome AI Tab 样式 */
 .status-card {
+  margin-bottom: var(--spacing-4);
+}
+
+.status-card-content {
   display: flex;
   align-items: flex-start;
   gap: var(--spacing-3);
-  margin-bottom: var(--spacing-4);
   padding: var(--spacing-4);
-  border-radius: var(--radius-md);
 }
 
-.status-card md-text-button {
+.status-card-content md-text-button {
   flex-shrink: 0;
   margin-left: auto;
 }
 
-.status-card md-text-button lucide-icon {
+.status-card-content md-text-button lucide-icon {
   margin-right: var(--spacing-1);
 }
 
-.status-card--success {
-  border: 1px solid color-mix(in srgb, var(--color-semantic-success) 30%, transparent);
-  background: color-mix(in srgb, var(--color-semantic-success) 10%, transparent);
-}
-
-.status-card--warning {
-  border: 1px solid color-mix(in srgb, var(--color-semantic-warning) 30%, transparent);
-  background: color-mix(in srgb, var(--color-semantic-warning) 10%, transparent);
-}
-
-.status-card h4 {
+.status-content h4 {
   margin: 0 0 var(--spacing-1) 0;
   font-size: var(--md-sys-typescale-title-medium-size);
   font-weight: var(--font-semibold);
   color: var(--color-text-primary);
 }
 
-.status-card p {
+.status-content p {
   margin: 0;
   font-size: var(--md-sys-typescale-body-medium-size);
   line-height: 1.5;

@@ -1,9 +1,5 @@
 <template>
-  <div class="settings-section">
-    <h3 class="section-subtitle">
-      <LucideIcon name="palette" :size="20" />
-      <span>{{ t('settings_color_presets_title') }}</span>
-    </h3>
+  <div>
     <p class="intro">{{ t('settings_color_presets_intro') }}</p>
 
     <div
@@ -35,7 +31,6 @@
 </template>
 
 <script setup lang="ts">
-import { LucideIcon } from '@/components'
 import { t } from '@/infrastructure'
 import {
   COLOR_PRESET_DEFINITIONS,
@@ -105,22 +100,6 @@ async function selectPreset(id: ColorPresetId) {
 </script>
 
 <style scoped>
-.settings-section {
-  margin-bottom: var(--spacing-6);
-}
-
-.section-subtitle {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  margin: 0 0 var(--spacing-3) 0;
-  padding-bottom: var(--spacing-2);
-  border-bottom: 1px solid var(--color-border-subtle);
-  font-size: var(--text-base);
-  font-weight: var(--font-semibold);
-  color: var(--color-text-secondary);
-}
-
 .intro {
   max-width: 42rem;
   margin: 0 0 var(--spacing-5) 0;

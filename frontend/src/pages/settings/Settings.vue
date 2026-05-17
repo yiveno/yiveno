@@ -35,23 +35,23 @@
           </md-tabs>
         </div>
 
-        <main class="settings-content" role="region">
-          <div v-if="tab === 'general'" class="pane">
-            <component :is="GeneralSettings" />
-          </div>
-          <div v-else-if="tab === 'colorPreset'" class="pane">
-            <component :is="ColorPresetSettings" />
-          </div>
-          <div v-else-if="tab === 'ai'" class="pane">
-            <component :is="AISettings" />
-          </div>
-          <div v-else-if="tab === 'notifications'" class="pane">
-            <component :is="NotificationSettings" />
-          </div>
-          <div v-else-if="tab === 'shortcuts'" class="pane">
-            <component :is="ShortcutSettings" />
-          </div>
-        </main>
+        <Card variant="default" class="settings-content" role="region">
+          <template #header>
+            <div class="settings-card-header">
+              <LucideIcon :name="currentTabIcon" :size="20" />
+              <span>{{ currentTabTitle }}</span>
+            </div>
+          </template>
+
+          <component
+            :is="tab === 'general' ? GeneralSettings : 
+                 tab === 'colorPreset' ? ColorPresetSettings : 
+                 tab === 'ai' ? AISettings : 
+                 tab === 'notifications' ? NotificationSettings : 
+                 ShortcutSettings"
+            class="pane"
+          />
+        </Card>
       </div>
     </main>
   </div>
@@ -59,7 +59,7 @@
 
 <script setup lang="ts">
 import { computed, defineAsyncComponent, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
-import { AppHeader } from '@/components'
+import { AppHeader, Card } from '@/components'
 import LucideIcon from '@/components/base/LucideIcon/LucideIcon.vue'
 import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'
 import GlobalQuickAddBookmark from '@/components/business/GlobalQuickAddBookmark/GlobalQuickAddBookmark.vue'
@@ -148,6 +148,18 @@ const tabsI18n = computed(() =>
 const tabsActiveIndex = computed(() => {
   const i = tabs.findIndex(t => t.value === tab.value)
   return i >= 0 ? i : 0
+})
+
+/** 当前 tab 的标题 */
+const currentTabTitle = computed(() => {
+  const currentTab = tabs.find(t => t.value === tab.value)
+  return currentTab ? tf(currentTab.key, currentTab.fallback) : ''
+})
+
+/** 当前 tab 的图标 */
+const currentTabIcon = computed(() => {
+  const currentTab = tabs.find(t => t.value === tab.value)
+  return currentTab?.icon || 'settings'
 })
 
 const mdTabsRef = ref<HTMLElement | null>(null)
@@ -320,16 +332,24 @@ watch(tab, v => {
 }
 
 .main-content {
+  display: flex;
+  flex-direction: column;
   flex: 1;
+  box-sizing: border-box; /* padding 不会导致溢出 */
+  min-height: 0; /* 允许 flex 子元素收缩 */
   background: var(--color-background);
-  overflow: auto;
+  overflow: hidden; /* 页面层级不出现滚动条 */
 }
 
 .settings-body {
   display: flex;
   flex-direction: column;
+  flex: 1; /* 填满父容器 */
   gap: var(--spacing-4);
+  box-sizing: border-box; /* padding 不会导致溢出 */
+  width: 100%; /* 确保宽度正确 */
   max-width: 1200px;
+  min-height: 0; /* 允许 flex 子元素收缩 */
   margin: 0 auto;
   padding: var(--spacing-lg);
 }
@@ -378,17 +398,25 @@ watch(tab, v => {
 }
 
 .settings-content {
-  min-height: 70vh;
-  padding: var(--spacing-5);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
-  
-  /* ✅ Material Design 3 Elevation Level 1 */
-  box-shadow: var(--md-sys-elevation-1);
+  display: flex;
+  flex-direction: column;
+  flex: 1; /* 填满剩余空间 */
+  min-height: 0; /* 允许 flex 子元素收缩 */
 }
 
+.settings-card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+}
+
+/* Card body 已经有 overflow-y: auto，这里不需要额外设置 */
+
+/* section 组件的内容会在 Card body 中滚动 */
+
 .pane {
-  padding: var(--spacing-2) 0;
 }
 </style>
