@@ -217,7 +217,6 @@ describe('Service Worker 生命周期（单元测试）', () => {
       })
     })
     
-    // ⭐ 新增：错误使用场景测试
     describe('错误使用场景（边界测试）', () => {
       it('❌ 应该检测到忘记返回 true 的错误', async () => {
         // 这是最常见的错误：异步消息处理器忘记返回 true
@@ -428,7 +427,7 @@ describe('Service Worker 生命周期（单元测试）', () => {
   })
   
   describe('最佳实践验证', () => {
-    it('✅ 应该使用 chrome.storage 而不是全局变量', () => {
+    it('应该使用 chrome.storage 而不是全局变量', () => {
       // 这是一个代码审查测试，验证最佳实践
       
       // ❌ 反模式：全局变量
@@ -448,7 +447,7 @@ describe('Service Worker 生命周期（单元测试）', () => {
       expect(typeof _badExample).toBe('function')
     })
     
-    it('✅ 应该在消息处理器中返回 true 以保持通道开放', () => {
+    it('应该在消息处理器中返回 true 以保持通道开放', () => {
       const correctHandler = (_message: chrome.runtime.MessageSender, _sender: chrome.runtime.MessageSender, sendResponse: (response?: unknown) => void) => {
         setTimeout(() => {
           sendResponse({ result: 'done' })
@@ -460,7 +459,7 @@ describe('Service Worker 生命周期（单元测试）', () => {
       expect(result).toBe(true)
     })
     
-    it('✅ 应该使用 chrome.alarms 而不是 setTimeout', () => {
+    it('应该使用 chrome.alarms 而不是 setTimeout', () => {
       // ❌ 反模式：setTimeout（Service Worker 终止后失效）
       const _badExample = () => {
         setTimeout(() => {
@@ -482,14 +481,14 @@ describe('Service Worker 生命周期（单元测试）', () => {
 /**
  * Service Worker 最佳实践总结：
  * 
- * 1. ✅ 使用 chrome.storage 存储状态（不要用全局变量）
- * 2. ✅ 使用 chrome.alarms 调度任务（不要用 setTimeout）
- * 3. ✅ 在异步消息处理器中返回 true
- * 4. ✅ 在启动时重新注册所有监听器
- * 5. ✅ 处理所有可能的错误场景
- * 6. ✅ 假设 Service Worker 随时可能终止
- * 7. ✅ 使用 IndexedDB 存储大量数据
- * 8. ✅ 避免长时间运行的同步操作
+ * 1. 使用 chrome.storage 存储状态（不要用全局变量）
+ * 2. 使用 chrome.alarms 调度任务（不要用 setTimeout）
+ * 3. 在异步消息处理器中返回 true
+ * 4. 在启动时重新注册所有监听器
+ * 5. 处理所有可能的错误场景
+ * 6. 假设 Service Worker 随时可能终止
+ * 7. 使用 IndexedDB 存储大量数据
+ * 8. 避免长时间运行的同步操作
  * 
  * 参考文档：
  * https://developer.chrome.com/docs/extensions/mv3/service_workers/

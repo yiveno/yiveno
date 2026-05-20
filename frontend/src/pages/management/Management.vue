@@ -5,11 +5,10 @@
         <Loading size="xl" :text="loadingMessage" />
       </div>
     </div>
-    <!-- 📊 全局书签同步进度对话框 -->
     <GlobalSyncProgress />
-    <!-- ⚡ 全局快速添加书签对话框 -->
+
     <GlobalQuickAddBookmark />
-    <!-- 🤖 AI 整理进度对话框 -->
+
     <Dialog
       :show="showOrganizeProgress"
       :title="t('management_ai_organize_bookmarks')"
@@ -1332,7 +1331,6 @@ const handleBookmarkOpenNewTab = (node: BookmarkNode) => {
   }
 
   try {
-    // 🔒 环境检查：确保在浏览器环境中运行
     if (typeof window === 'undefined') {
       logger.error('Management', '非浏览器环境，无法打开链接')
       notificationService.notify(t('management_open_link_failed'), { level: 'error' })
@@ -1581,7 +1579,6 @@ const handleBeforeUnload = (e: BeforeUnloadEvent) => {
 
 onUnmounted(() => {
   unsubscribeExternalChange()
-  // 🔒 环境检查：确保在浏览器环境中运行
   if (typeof window !== 'undefined') {
     window.removeEventListener('beforeunload', handleBeforeUnload)
   }
@@ -1615,7 +1612,6 @@ onMounted(async () => {
   // 2. 兜底：从 URL 参数读取（向后兼容）
   if (pendingTags.length === 0) {
     try {
-      // 🔒 环境检查：确保在浏览器环境中运行
       if (typeof window !== 'undefined') {
         const params = new URLSearchParams(window.location.search)
         const tagsParam = params.get('tags')
@@ -1655,7 +1651,6 @@ onMounted(async () => {
     logger.info('Management', '✅ 筛选应该已经生效，当前 activeFilters:', traitFilterStore.activeFilters)
   }
 
-  // 🔒 环境检查：确保在浏览器环境中运行
   if (typeof window !== 'undefined') {
     window.addEventListener('beforeunload', handleBeforeUnload)
 
@@ -2087,7 +2082,6 @@ const handleApplyClick = () => {
       `1. 如果这些是误添加的节点，请刷新页面丢弃它们\n` +
       `2. 如果需要保留这些节点，暂时不支持保存（功能开发中）`
 
-    // 🔒 环境检查：确保在浏览器环境中运行
     const shouldContinue = typeof window !== 'undefined' ? window.confirm(message) : false
 
     if (shouldContinue) {

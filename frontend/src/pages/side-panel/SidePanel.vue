@@ -1,11 +1,8 @@
 <template>
-  <!-- 📊 全局书签同步进度对话框 -->
   <GlobalSyncProgress />
 
-  <!-- ⚡ 全局快速添加书签对话框 -->
   <GlobalQuickAddBookmark />
 
-  <!-- 📤 分享弹窗 -->
   <ShareDialog
     v-model:show="showShareDialog"
     :bookmarks="shareBookmarks"
@@ -760,7 +757,6 @@ const handleBookmarkOpenNewTab = async (node: BookmarkNode) => {
   }
 
   try {
-    // 🔒 环境检查：确保在浏览器环境中运行
     if (typeof window === 'undefined') {
       logger.error('SidePanel', '非浏览器环境，无法打开链接')
       notificationService.notify('当前环境不支持打开链接', { level: 'error' })
@@ -875,7 +871,7 @@ const pendingUpdateDetail = ref<BookmarkUpdateDetail | null>(null)
 
 /**
  * 设置实时同步监听器
- * 🆕 使用 mitt 事件总线替代 window.addEventListener
+ *
  * @description 设置实时同步监听器
  * @returns {void} 设置实时同步监听器
  * @throws {Error} 设置实时同步监听器失败

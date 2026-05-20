@@ -587,7 +587,6 @@ export function initializeSmartFonts(): void {
     return
   }
 
-  // ✅ 使用 DOM 事件机制替代固定延迟，确保 DOM 真正准备好
   const processFonts = () => {
     const result = fontService.processPageElements()
     if (result.ok) {

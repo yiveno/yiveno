@@ -20,7 +20,6 @@ const app = createApp(App)
 const pinia = createPinia()
 
 app.use(pinia)
-// 旧 Icon 组件已移除，使用 LucideIcon 替代
 
 async function initializeOnboarding() {
   fontService.injectDynamicFontLink()

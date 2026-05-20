@@ -70,8 +70,6 @@ function handleChromeMessage(message: ChromeMessage) {
     case 'acuity-bookmarks-db-synced': {
       const { eventType, bookmarkId, timestamp } = message
 
-      // 🆕 只有真正的 Chrome bookmark 事件才转发给前端触发弹窗
-      // full-sync/incremental 是后台同步任务，不是外部变更
       const isExternalChange = ['created', 'changed', 'moved', 'removed'].includes(String(eventType))
       
       if (isExternalChange) {
@@ -82,7 +80,6 @@ function handleChromeMessage(message: ChromeMessage) {
         })
         logger.info('ChromeMessageBridge', `✅ 外部变更事件已转发: ${eventType}`)
       } else {
-        // full-sync/incremental 等内部同步事件，只记录日志，不转发
         logger.debug('ChromeMessageBridge', `忽略内部同步事件: ${eventType}`)
       }
       break

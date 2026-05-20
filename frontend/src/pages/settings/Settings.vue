@@ -1,9 +1,7 @@
 <template>
   <div class="settings-page app-container">
-    <!-- 📊 全局书签同步进度对话框 -->
     <GlobalSyncProgress />
 
-    <!-- ⚡ 全局快速添加书签对话框 -->
     <GlobalQuickAddBookmark />
 
     <AppHeader
@@ -204,7 +202,6 @@ useThemeSync('Settings')
 
 function readTabFromURL(): TabKey | null {
   try {
-    // 🔒 环境检查：确保在浏览器环境中运行
     if (typeof window === 'undefined') {
       return null
     }
@@ -227,7 +224,6 @@ function readTabFromURL(): TabKey | null {
 
 function writeTabToURL(v: TabKey) {
   try {
-    // 🔒 环境检查：确保在浏览器环境中运行
     if (typeof window === 'undefined') {
       return
     }
@@ -285,7 +281,6 @@ onMounted(async () => {
   syncMdTabsActiveIndex()
 
   // 监听浏览器前进/后退
-  // 🔒 环境检查：确保在浏览器环境中运行
   if (typeof window !== 'undefined') {
     window.addEventListener('popstate', syncFromURL)
     window.addEventListener('hashchange', syncFromURL)
@@ -307,7 +302,6 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  // 🔒 环境检查：确保在浏览器环境中运行
   if (typeof window !== 'undefined') {
     window.removeEventListener('popstate', syncFromURL)
     window.removeEventListener('hashchange', syncFromURL)

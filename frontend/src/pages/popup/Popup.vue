@@ -5,10 +5,8 @@
   - 遵循扩展 CSP：所有脚本为模块化引入，无内联脚本。
 -->
 <template>
-  <!-- 📊 全局书签同步进度对话框 -->
   <GlobalSyncProgress />
 
-  <!-- ⚡ 全局快速添加书签对话框 -->
   <GlobalQuickAddBookmark ref="quickAddRef" />
 
   <div class="popup-container">
@@ -339,7 +337,6 @@ function handleSearchClear(): void {
 function handleTogglePopupCommand(command: string) {
   if (command === 'open-popup' || command === '_execute_action') {
     try {
-      // 🔒 环境检查：确保在浏览器环境中运行
       if (typeof window !== 'undefined') {
         window.close()
       }
@@ -401,7 +398,6 @@ function openManualOrganizePage(): void {
  */
 function openSettings(): void {
   try {
-    // 🔒 环境检查：确保在浏览器环境中运行
     if (typeof window === 'undefined') {
       logger.error('Popup', '非浏览器环境，无法打开设置页面')
       return
@@ -507,7 +503,6 @@ async function openManagementWithFilter(key: string): Promise<void> {
 
     chrome.tabs.create({ url }).catch(err => {
       logger.warn('Popup', 'chrome.tabs.create 失败，使用 window.open:', err)
-      // 🔒 环境检查：确保在浏览器环境中运行
       if (typeof window !== 'undefined') {
         window.open(url, '_blank')
       }
@@ -556,9 +551,8 @@ onMounted(async () => {
   await initAuth()
   setupAuthListener() // ✅ 手动设置认证状态监听器
 
-  // ✅ 检查 URL 参数，如果是添加书签操作，自动触发对话框（从第一个 onMounted 合并）
+  // 检查 URL 参数，如果是添加书签操作，自动触发对话框
   try {
-    // 🔒 环境检查：确保在浏览器环境中运行
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search)
       const action = urlParams.get('action')

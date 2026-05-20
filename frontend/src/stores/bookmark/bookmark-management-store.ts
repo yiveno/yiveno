@@ -439,7 +439,6 @@ export const useBookmarkManagementStore = defineStore(
           throw new Error(response?.error || '删除失败')
         }
 
-        // ✅ 使用事件机制等待同步完成，替代固定延迟
         await waitForSyncComplete()
         await loadBookmarks()
 
@@ -682,7 +681,6 @@ export const useBookmarkManagementStore = defineStore(
           throw new Error(response.error || '删除文件夹失败')
         }
 
-        // ✅ 使用事件机制等待同步完成，替代固定延迟
         await waitForSyncComplete()
         await loadBookmarks()
 
@@ -1028,7 +1026,6 @@ export const useBookmarkManagementStore = defineStore(
           )
         }
 
-        // ✅ 使用事件机制等待 Chrome API 事件传播完成，替代固定延迟
         await waitForSyncComplete(5000) // 批量操作可能需要更长时间
 
         // 应用完成后重新加载数据
@@ -1047,7 +1044,6 @@ export const useBookmarkManagementStore = defineStore(
           errors: errors.length
         })
 
-        // ✅ 使用事件机制等待所有同步事件处理完成，替代固定延迟
         // 等待最后一次同步事件完成后再重置标志位
         await waitForSyncComplete(1000) // 短暂等待，确保最后的同步事件已处理
         isApplyingOwnChanges.value = false

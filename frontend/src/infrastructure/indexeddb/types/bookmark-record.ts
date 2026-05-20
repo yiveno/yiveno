@@ -51,7 +51,6 @@ export interface BookmarkRecord {
   keywords: string[]
   isFolder: boolean
   childrenCount: number
-  // ✅ 已移除 bookmarksCount 和 folderCount：递归计算成本高，对用户价值低
   tags: string[]
   traitTags: string[]
   createdYear: number

@@ -1318,7 +1318,7 @@ async function handleBatchDeleteByTrait(
         successCount++
         logger.debug(
           'BackgroundMessaging',
-          `✅ 已删除书签: ${bookmark.title} (${bookmark.id})`
+          `已删除书签: ${bookmark.title} (${bookmark.id})`
         )
       } catch (error) {
         failCount++

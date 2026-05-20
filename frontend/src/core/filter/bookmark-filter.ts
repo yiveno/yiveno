@@ -354,7 +354,6 @@ export function recalculateChildrenCount(
       ...node,
       children: updatedChildren,
       childrenCount: updatedChildren.length
-      // ✅ 已移除 bookmarksCount 和 folderCount 字段
     }
   }
 

@@ -75,8 +75,6 @@ export class BackgroundCrawlerManager {
    * 注册消息监听器（响应前端页面请求）
    */
   private registerMessageListener() {
-    // ❌ 已移除：safeHandler（不再需要手动触发处理）
-
     chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       logger.debug('BackgroundCrawler', '收到消息', { type: message.type })
 
@@ -91,10 +89,6 @@ export class BackgroundCrawlerManager {
         }
         return false
       }
-
-      // ❌ 已移除所有手动控制功能（START_CRAWL, PAUSE_CRAWL, RESUME_CRAWL, CANCEL_CRAWL）
-      // 爬取逻辑完全由系统内部自动触发，用户不可手动控制
-
       // 未知消息类型
       logger.debug('BackgroundCrawler', '未知消息类型（已忽略）', {
         type: message.type
@@ -105,43 +99,6 @@ export class BackgroundCrawlerManager {
 
     logger.info('BackgroundCrawler', '✅ 消息监听器已注册')
   }
-
-  // ==================== 爬取逻辑 ====================
-
-  /**
-   * ❌ 已移除：handleStartCrawl
-   *
-   * 爬取逻辑现在完全由系统内部自动触发：
-   * - 新书签创建时自动爬取（bookmarks.ts 中的 onCreated 监听器）
-   * - 用户不可手动触发
-   */
-
-  /**
-   * ❌ 已移除：startCrawl
-   *
-   * 爬取逻辑现在完全由系统内部自动触发（bookmarks.ts 中的 onCreated 监听器）。
-   * 不再需要手动触发爬取。
-   */
-
-  // ==================== 工具方法 ====================
-
-  /**
-   * ❌ 已移除：filterUnprocessedBookmarks
-   *
-   * 不再需要手动筛选书签，系统会自动处理。
-   */
-
-  /**
-   * ❌ 已移除：getBookmarksByIds
-   *
-   * 不再需要手动获取书签，系统会自动处理。
-   */
-
-  /**
-   * ❌ 已移除：convertToChromeBookmarks
-   *
-   * 不再需要手动转换，系统会自动处理。
-   */
 }
 
 /**

@@ -78,7 +78,6 @@ function nextStep() {
   if (currentStepIndex.value < steps.length - 1) {
     currentStepIndex.value++
   } else {
-    // 🔒 环境检查：确保在浏览器环境中运行
     if (typeof window !== 'undefined') {
       window.close()
     }

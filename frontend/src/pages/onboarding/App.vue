@@ -65,7 +65,6 @@ function nextStep() {
     direction.value = 1
     currentStepIndex.value++
   } else {
-    // 🔒 环境检查：确保在浏览器环境中运行
     if (typeof window !== 'undefined') {
       window.close()
     }
@@ -124,7 +123,6 @@ onUnmounted(() => {
   chrome.runtime.onMessage.removeListener(messageListener)
 })
 function closeWindow() {
-  // 🔒 环境检查：确保在浏览器环境中运行
   if (typeof window !== 'undefined') {
     window.close()
   }
