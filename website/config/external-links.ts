@@ -19,8 +19,14 @@ export const gumroadUrls = {
  * Chrome Web Store 链接
  */
 export const chromeStoreUrls = {
-  /** 扩展详情页 */
-  extension: 'https://chrome.google.com/webstore',
+  /** 扩展详情页（完整链接） */
+  extension: 'https://chrome.google.com/webstore/detail/acuitybookmarks/gdjcmpenmogdikhnnaebmddhmdgbfcgl',
+  
+  /** Chrome Web Store 首页 */
+  home: 'https://chrome.google.com/webstore',
+  
+  /** 扩展 ID */
+  extensionId: 'gdjcmpenmogdikhnnaebmddhmdgbfcgl',
 } as const
 
 /**

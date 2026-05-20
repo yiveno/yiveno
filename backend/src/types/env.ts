@@ -11,7 +11,9 @@ export interface Env {
   // Secrets & Vars from wrangler.toml
   JWT_SECRET: string
   SUPABASE_URL: string
+  SUPABASE_ANON_KEY: string
   SUPABASE_SERVICE_ROLE_KEY: string
+  WEBSITE_URL: string
 
   AUTH_GOOGLE_CLIENT_ID?: string
   AUTH_GOOGLE_CLIENT_SECRET?: string

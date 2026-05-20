@@ -815,6 +815,357 @@ class LocalBookmarkCrawler {
 }
 ```
 
+### 3.5 书签分享
+
+#### 3.5.1 功能定位与设计决策
+
+**核心理念**：分享功能分为三种独立的使用场景，各有不同的目标和价值。
+
+| 分享方式 | 目标 | 入库时机 | 核心价值 | 优先级 |
+|---------|------|---------|---------|--------|
+| **生成链接** | 实用分享 | 点击"生成链接"时 | 方便快捷，可追踪统计 | P1 |
+| **发送给用户** | 私密分享 | 点击"发送"时 | 通知机制，社交属性 | P1 |
+| **生成海报** | 炫耀展示 | **不入库** | 品牌曝光，用户炫耀 | P2 |
+
+**关键设计决策（2026-05-19）**：
+
+1. **海报不包含二维码**
+   - **原因**：产品当前只有 PC 端插件，没有移动端落地页
+   - **用户场景分析**：
+     - PC 用户之间分享 → 直接复制链接更方便，不会扫码
+     - 移动端用户扫码 → 无法使用 PC 插件，价值链断裂
+   - **海报定位**：纯展示功能，用于社交媒体炫耀，带品牌 Logo 吸引新用户
+   - **未来扩展**：当有移动端 App/网页时，可考虑在海报上添加二维码
+
+2. **只在用户真正完成分享时入库**
+   - **不入库**：生成海报预览、搜索用户、切换主题
+   - **入库**：点击"生成链接"或"发送分享"按钮
+   - **原因**：避免产生无用的数据库记录，用户可能只是预览
+
+3. **记录有价值的数据**
+   - **分享者关心**：分享标题、时间、方式、书签数量、访问次数、导入次数
+   - **接收者关心**：分享标题、发送者、书签列表、留言、接收时间、导入状态
+   - **不记录**：海报图片（临时生成，用户下载后即结束）
+
+4. **导入入口：只保留官网落地页**（2026-05-19）
+   - **设计决策**：不在扩展 Popup 中提供导入功能，只保留官网落地页作为唯一导入入口
+   - **理由**：
+     - **降低维护成本**：只维护一套导入逻辑，避免代码重复
+     - **统一用户体验**：所有用户都走相同的流程，降低学习成本
+     - **增加产品曝光**：每次分享都是一次品牌曝光机会，未安装用户可以被引导安装
+     - **数据可追踪**：完整的用户行为数据（访问量、安装转化率、导入成功率）
+     - **功能扩展性**：官网落地页可以添加更多功能（评论、统计、推荐等），扩展内难以实现
+   - **用户场景**：
+     - PC 用户收到分享链接 → 打开官网落地页 → 预览书签 → 一键导入
+     - 未安装用户 → 看到安装引导 → 安装扩展 → 刷新页面 → 导入书签
+   - **技术实现**：通过 Chrome Extension 的 Externally Connectable 机制，官网可以直接与扩展通信，无需打开扩展界面
+
+#### 3.5.2 技术架构
+
+**核心文件**：
+- `frontend/src/components/business/ShareDialog/ShareDialog.vue` - 分享对话框组件
+- `frontend/src/application/share/share-service.ts` - 分享业务逻辑
+- `frontend/src/application/share/poster-service.ts` - 海报生成服务
+- `frontend/src/application/share/types.ts` - 分享类型定义
+- `backend/src/routers/share.ts` - 分享 API 路由
+
+**数据流**：
+```
+用户操作 → ShareDialog 组件 → tRPC 客户端 → Cloudflare Workers → Supabase
+                                                                    ↓
+                                                            shares 表
+                                                            shared_bookmarks 表
+                                                            direct_shares 表
+                                                            notifications 表
+```
+
+**数据库表设计（简化版，2026-05-18）**：
+
+```sql
+-- 分享记录表（已简化，移除冗余字段）
+CREATE TABLE public.shares (
+  id UUID PRIMARY KEY,
+  user_id UUID NOT NULL,
+  short_code VARCHAR(10) UNIQUE,  -- 短链接代码（如 abc123），直接分享为 NULL
+  title TEXT NOT NULL,
+  bookmark_count INTEGER NOT NULL,
+  share_type VARCHAR(20) NOT NULL,  -- 'link' 或 'direct'
+  view_count INTEGER DEFAULT 0,     -- 访问次数（仅链接分享）
+  import_count INTEGER DEFAULT 0,   -- 导入次数（新增）
+  created_at TIMESTAMP DEFAULT NOW()
+  -- 已移除：is_public（可通过 share_type 判断）
+  -- 已移除：expires_at（暂不需要过期功能）
+  -- 已移除：updated_at（分享创建后不会修改）
+);
+
+-- 分享的书签数据表
+CREATE TABLE public.shared_bookmarks (
+  id UUID PRIMARY KEY,
+  share_id UUID NOT NULL,
+  title TEXT NOT NULL,
+  url TEXT NOT NULL,
+  description TEXT,
+  position INTEGER NOT NULL,  -- 书签顺序
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 直接分享记录表
+CREATE TABLE public.direct_shares (
+  id UUID PRIMARY KEY,
+  share_id UUID NOT NULL,
+  sender_id UUID NOT NULL,
+  recipient_id UUID NOT NULL,
+  status VARCHAR(20) DEFAULT 'pending',  -- pending/accepted/rejected
+  message TEXT,  -- 发送者留言
+  sent_at TIMESTAMP DEFAULT NOW(),
+  read_at TIMESTAMP,
+  imported_at TIMESTAMP
+);
+
+-- 通知表
+CREATE TABLE public.notifications (
+  id UUID PRIMARY KEY,
+  user_id UUID NOT NULL,
+  type VARCHAR(50) NOT NULL,  -- share_received, share_imported, etc.
+  title TEXT NOT NULL,
+  message TEXT NOT NULL,
+  data JSONB,  -- 额外数据
+  is_read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW(),
+  read_at TIMESTAMP
+);
+```
+
+**数据库简化说明（2026-05-18）**：
+
+1. **移除 `is_public` 字段**：
+   - 链接分享（`share_type='link'`）默认公开
+   - 直接分享（`share_type='direct'`）默认私密
+   - 可以通过 `share_type` 判断，无需额外字段
+
+2. **移除 `expires_at` 字段**：
+   - 暂时不需要过期功能
+   - 未来如需添加，可通过迁移重新引入
+
+3. **移除 `updated_at` 字段**：
+   - 分享创建后不会修改
+   - 只需要 `created_at` 记录创建时间
+
+4. **新增 `import_count` 字段**：
+   - 记录分享被导入的次数
+   - 提供 `increment_share_import_count()` 函数增加计数
+
+5. **更新 RLS 策略**：
+   - 旧策略：`is_public = true` 可访问
+   - 新策略：`share_type = 'link'` 可访问
+   - 更符合业务语义
+
+#### 3.5.3 链接分享流程
+
+**用户操作流程**：
+```
+1. 用户打开 ShareDialog
+2. 输入分享标题（可选，默认为"我的书签收藏"）
+3. 点击"生成链接"按钮
+4. 系统入库 → 生成短链接 → 复制到剪贴板
+5. 用户将链接发送给朋友
+6. 朋友点击链接 → 官网显示书签列表 → 一键导入
+```
+
+**技术实现**：
+
+```typescript
+// ShareDialog.vue
+const handleCreateLinkShare = async () => {
+  // 1. 调用 API 入库
+  const result = await trpc.share.createLinkShare.mutate({
+    title: currentTitle.value,
+    bookmarks: props.bookmarks.map(b => ({
+      title: b.title,
+      url: b.url || '',
+      description: b.description
+    })),
+    accessToken: session.value.access_token
+  })
+  
+  // 2. 复制短链接到剪贴板
+  await navigator.clipboard.writeText(result.data.shareUrl)
+  
+  // 3. 提示用户
+  notifySuccess('分享链接已复制到剪贴板')
+}
+```
+
+**短链接格式**：`https://acuitybookmarks.com/s/{shortCode}`
+- `shortCode`：8 位随机字符串（a-zA-Z0-9）
+- 示例：`https://acuitybookmarks.com/s/abc12345`
+
+**统计数据**：
+- `view_count`：访问次数（每次访问短链接时 +1）
+- `import_count`：导入次数（用户点击"一键导入"时 +1）
+
+#### 3.5.4 直接分享流程
+
+**用户操作流程**：
+```
+1. 用户打开 ShareDialog
+2. 选择"发送给用户"方式
+3. 搜索接收者（输入用户名或邮箱）
+4. 选择一个或多个接收者
+5. 添加留言（可选）
+6. 点击"发送分享"按钮
+7. 系统入库 → 发送通知给接收者
+8. 接收者收到通知 → 查看分享 → 一键导入
+```
+
+**技术实现**：
+
+```typescript
+// ShareDialog.vue
+const handleCreateDirectShare = async () => {
+  // 1. 调用 API 入库
+  const result = await trpc.share.createDirectShare.mutate({
+    title: currentTitle.value,
+    bookmarks: props.bookmarks.map(b => ({
+      title: b.title,
+      url: b.url || '',
+      description: b.description
+    })),
+    recipientIds: state.selectedUserIds,
+    message: state.message.trim() || undefined,
+    accessToken: session.value.access_token
+  })
+  
+  // 2. 提示用户
+  notifySuccess(`已成功发送给 ${result.data.recipientCount} 个用户`)
+}
+```
+
+**通知机制**：
+- 接收者会收到一条通知：`{发送者} 分享了 {书签数量} 个书签给你`
+- 通知包含：分享标题、发送者信息、书签数量、留言
+- 接收者可以在通知中心查看和导入
+
+#### 3.5.5 海报生成流程
+
+**用户操作流程**：
+```
+1. 用户打开 ShareDialog
+2. 选择"生成海报"方式
+3. 选择主题（深色/浅色）
+4. 预览海报
+5. 下载图片或复制图片
+6. 发到社交媒体炫耀
+```
+
+**海报设计**：
+
+```
+┌─────────────────────────────────────┐
+│                                     │
+│  🔖 我的 2024 年度书签收藏           │
+│                                     │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
+│                                     │
+│  📌 GitHub - 代码托管平台            │
+│  📌 Stack Overflow - 技术问答        │
+│  📌 MDN Web Docs - 前端文档          │
+│  📌 Vue.js - 渐进式框架              │
+│  📌 TypeScript - 类型安全            │
+│  ... 共 25 个书签                   │
+│                                     │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
+│                                     │
+│  由 AcuityBookmarks 生成             │
+│  acuitybookmarks.com                │
+│                                     │
+└─────────────────────────────────────┘
+```
+
+**设计要点**：
+- ✅ 简洁美观，适合社交媒体分享
+- ✅ 突出书签列表（用户的核心内容）
+- ✅ 品牌标识（Logo + 网址）
+- ❌ **不包含二维码**（因为没有移动端落地页，二维码无实际价值）
+- ✅ 可选：添加用户头像和昵称
+
+**技术实现**：
+
+```typescript
+// poster-service.ts
+async function generatePoster(options: PosterOptions): Promise<string> {
+  const canvas = document.createElement('canvas')
+  const ctx = canvas.getContext('2d')
+  
+  // 1. 绘制背景
+  ctx.fillStyle = options.theme === 'dark' ? '#0e1513' : '#ffffff'
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+  
+  // 2. 绘制标题
+  ctx.font = 'bold 24px sans-serif'
+  ctx.fillStyle = options.theme === 'dark' ? '#dfe4e1' : '#1a1a1a'
+  ctx.fillText(options.title, 40, 60)
+  
+  // 3. 绘制书签列表
+  options.bookmarks.forEach((bookmark, index) => {
+    const y = 120 + index * 40
+    ctx.font = '16px sans-serif'
+    ctx.fillText(`📌 ${bookmark.title}`, 40, y)
+  })
+  
+  // 4. 绘制品牌标识
+  ctx.font = '14px sans-serif'
+  ctx.fillStyle = '#83d5c5'
+  ctx.fillText('由 AcuityBookmarks 生成', 40, canvas.height - 60)
+  ctx.fillText('acuitybookmarks.com', 40, canvas.height - 30)
+  
+  // 5. 返回 Data URL
+  return canvas.toDataURL('image/png')
+}
+```
+
+**不入库原因**：
+- 海报只是临时生成的图片，用户下载后即结束
+- 不需要追踪海报的访问次数或导入次数
+- 海报的价值在于品牌曝光和用户炫耀，不在于数据统计
+
+#### 3.5.6 分享管理（设置页）
+
+**功能**：在设置页显示用户的分享历史和统计信息
+
+**我的分享列表**：
+- 显示所有链接分享和直接分享
+- 每条记录显示：标题、分享方式、书签数量、创建时间、访问次数、导入次数
+- 支持删除分享
+
+**收到的分享列表**：
+- 显示其他用户发送给我的分享
+- 每条记录显示：标题、发送者、书签数量、接收时间、状态（待处理/已接受/已拒绝）
+- 支持一键导入
+
+**统计信息**：
+- 总分享次数
+- 总访问次数
+- 总导入次数
+- 最受欢迎的分享（按访问次数排序）
+
+#### 3.5.7 未来扩展
+
+**移动端支持**：
+- 当有移动端 App/网页时，可以在海报上添加二维码
+- 用户扫码 → 跳转到移动端 → 显示书签列表 → 一键导入
+- 二维码指向短链接：`https://acuitybookmarks.com/s/{shortCode}`
+
+**分享统计增强**：
+- 分享的地理位置分布
+- 分享的时间趋势
+- 最受欢迎的书签（被分享次数最多）
+
+**社交功能**：
+- 关注其他用户
+- 查看其他用户的公开分享
+- 点赞和评论分享
+
 ---
 
 ## 第四部分：开发规范

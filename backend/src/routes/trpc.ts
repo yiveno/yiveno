@@ -17,15 +17,16 @@ export const trpcRouter = new Hono<{ Bindings: Env }>()
  */
 trpcRouter.all('/*', async (c) => {
   const request = c.req.raw
+  const env = c.env
   
   return fetchRequestHandler({
     endpoint: '/trpc',
     req: request,
     router: appRouter,
     createContext: () =>
-      createContext({ req: request, resHeaders: new Headers() }),
+      createContext({ req: request, resHeaders: new Headers() }, env),
     onError:
-      process.env.NODE_ENV === 'development'
+      env.NODE_ENV === 'development'
         ? ({ path, error }) => {
             console.error(
               `❌ tRPC failed on ${path ?? '<no-path>'}: ${error.message}`

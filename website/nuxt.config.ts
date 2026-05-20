@@ -60,6 +60,8 @@ export default defineNuxtConfig({
     public: {
       siteUrl:
         process.env.NUXT_PUBLIC_SITE_URL || 'https://acuitybookmarks.com',
+      apiBaseUrl:
+        process.env.NUXT_PUBLIC_API_BASE_URL || 'https://api.acuitybookmarks.com',
       supabase: {
         url: process.env.NUXT_PUBLIC_SUPABASE_URL || '',
         anonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY || ''

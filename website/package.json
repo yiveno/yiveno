@@ -3,7 +3,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "nuxt dev",
+    "dev": "NUXT_PUBLIC_API_BASE_URL=https://localhost:8787 nuxt dev",
     "build": "nuxt build",
     "generate": "nuxt generate",
     "preview": "nuxt preview",

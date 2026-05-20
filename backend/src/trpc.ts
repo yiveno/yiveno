@@ -1,20 +1,21 @@
 import { initTRPC } from '@trpc/server'
 import type { FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch'
+import type { Env } from './types/env'
 
 /**
  * Creates the context for each request.
  * @param {FetchCreateContextFnOptions} opts - The options for creating the context.
+ * @param {Env} env - Cloudflare Workers environment bindings.
  * @returns {object} The context object.
  */
-export function createContext({
-  req,
-  resHeaders
-}: FetchCreateContextFnOptions) {
-  // For now, we're not using any context, but this is where you would
-  // add things like database connections or user authentication.
+export function createContext(
+  { req, resHeaders }: FetchCreateContextFnOptions,
+  env: Env
+) {
   return {
     req,
-    resHeaders
+    resHeaders,
+    env
   }
 }
 

@@ -35,6 +35,10 @@ GUMROAD_PLAN_ID_YEARLY = ""
 
 # Supabase 配置（这些是公开配置，敏感信息使用 Secrets）
 SUPABASE_URL = "https://ugxgxytykxblctsyulsg.supabase.co"
+SUPABASE_ANON_KEY = "sb_publishable_2FY9uDfqNbLwUYXxgcu8lw_qQ8SEbXo"
+
+# 官网 URL（用于生成分享链接）
+WEBSITE_URL = "http://localhost:3001"
 
 [ai]
 binding = "AI"
@@ -66,6 +70,8 @@ head_sampling_rate = 0
 GUMROAD_PLAN_ID_MONTHLY = "o7qLAIuwtSQWZjaFr2EabQ%3D%3D&_gl=1*8l61ck*_ga*MTM3NDU3NDY4OS4xNzYyNzg1NzA3*_ga_6LJN6D94N6*czE3NjI4NDQ4MTYkbzMkZzEkdDE3NjI4NDQ5NDMkajYwJGwwJGgw"
 GUMROAD_PLAN_ID_YEARLY = ""
 SUPABASE_URL = "https://ugxgxytykxblctsyulsg.supabase.co"
+SUPABASE_ANON_KEY = "sb_publishable_2FY9uDfqNbLwUYXxgcu8lw_qQ8SEbXo"
+WEBSITE_URL = "https://acuitybookmarks.com"
 
 [env.production.ai]
 binding = "AI"
