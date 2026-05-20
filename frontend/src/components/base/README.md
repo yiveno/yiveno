@@ -35,7 +35,6 @@
 | **Icon** | 图标组件 | [查看文档](./Icon/README.md) |
 | **SvgIcon** | SVG 图标 | [查看文档](./SvgIcon/README.md) |
 | **EmojiIcon** | Emoji 图标 | [查看文档](./EmojiIcon/README.md) |
-| **CountIndicator** | 计数指示器 | [查看文档](./CountIndicator/README.md) |
 | **AnimatedNumber** | 数字动画 | [查看文档](./AnimatedNumber/README.md) |
 
 ### 反馈类（3 个）

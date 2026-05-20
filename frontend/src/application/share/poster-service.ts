@@ -82,8 +82,9 @@ class PosterServiceImpl implements PosterService {
       const canvas = this.getOrCreateOffscreenCanvas()
       const ctx = canvas.getContext('2d')!
 
-      // 3. 计算画布尺寸
-      const height = this.calculateHeight(options.bookmarks.length)
+      // 3. 计算画布尺寸（根据是否包含二维码调整）
+      const includeQRCode = !!options.shareUrl
+      const height = this.calculateHeight(options.bookmarks.length, includeQRCode)
       canvas.width = this.POSTER_WIDTH
       canvas.height = height
 
@@ -96,18 +97,20 @@ class PosterServiceImpl implements PosterService {
           // 6. 绘制背景
           this.drawBackground(ctx, config)
 
-          // 7. 绘制标题
-          this.drawTitle(ctx, options.title || '书签分享', config)
+          // 7. 绘制标题（根据 showUsername 决定是否显示用户名）
+          this.drawTitle(ctx, options.title || '书签分享', config, options.showUsername, options.username)
 
           // 8. 绘制书签列表
           await this.drawBookmarks(ctx, options.bookmarks, config)
 
-          // 9. 绘制二维码
-          const qrDataUrl = await this.generateQRCode(options.shareUrl)
-          await this.drawQRCode(ctx, qrDataUrl)
+          // 9. 绘制二维码（如果提供了 shareUrl）
+          if (includeQRCode) {
+            const qrDataUrl = await this.generateQRCode(options.shareUrl)
+            await this.drawQRCode(ctx, qrDataUrl)
+          }
 
           // 10. 绘制品牌标识
-          this.drawBranding(ctx, config)
+          this.drawBranding(ctx, config, includeQRCode)
 
           resolve()
         })
@@ -120,7 +123,8 @@ class PosterServiceImpl implements PosterService {
         width: canvas.width,
         height: canvas.height,
         bookmarkCount: options.bookmarks.length,
-        theme: options.theme
+        theme: options.theme,
+        includeQRCode
       })
 
       return dataUrl
@@ -158,12 +162,13 @@ class PosterServiceImpl implements PosterService {
   /**
    * 计算画布高度
    */
-  private calculateHeight(bookmarkCount: number): number {
+  private calculateHeight(bookmarkCount: number, includeQRCode: boolean = true): number {
+    const footerHeight = includeQRCode ? this.FOOTER_HEIGHT : 80 // 不包含二维码时，底部区域更小
     return (
       this.PADDING * 2 +
       this.HEADER_HEIGHT +
       bookmarkCount * this.BOOKMARK_HEIGHT +
-      this.FOOTER_HEIGHT
+      footerHeight
     )
   }
 
@@ -258,7 +263,9 @@ class PosterServiceImpl implements PosterService {
   private drawTitle(
     ctx: CanvasRenderingContext2D,
     title: string,
-    config: PosterConfig
+    config: PosterConfig,
+    showUsername: boolean = true,
+    username?: string
   ): void {
     ctx.save()
 
@@ -269,6 +276,14 @@ class PosterServiceImpl implements PosterService {
 
     const titleY = this.PADDING + 20
     ctx.fillText(title, this.PADDING, titleY)
+
+    // 如果显示用户名，在标题下方绘制
+    if (showUsername && username) {
+      ctx.fillStyle = config.colors.secondary
+      ctx.font = '16px Inter, -apple-system, BlinkMacSystemFont, sans-serif'
+      const usernameY = titleY + 40
+      ctx.fillText(`分享者：${username}`, this.PADDING, usernameY)
+    }
 
     ctx.restore()
   }
@@ -477,22 +492,24 @@ class PosterServiceImpl implements PosterService {
   /**
    * 绘制品牌标识
    */
-  private drawBranding(ctx: CanvasRenderingContext2D, config: PosterConfig): void {
+  private drawBranding(ctx: CanvasRenderingContext2D, config: PosterConfig, includeQRCode: boolean = true): void {
     ctx.save()
 
-    const y = ctx.canvas.height - this.PADDING - this.QR_SIZE / 2
+    const y = includeQRCode 
+      ? ctx.canvas.height - this.PADDING - this.QR_SIZE / 2
+      : ctx.canvas.height - this.PADDING - 30
 
     // 品牌文字
     ctx.fillStyle = config.colors.secondary
     ctx.font = '14px Inter, -apple-system, BlinkMacSystemFont, sans-serif'
     ctx.textBaseline = 'middle'
 
-    ctx.fillText('AcuityBookmarks', this.PADDING, y)
+    ctx.fillText('由 AcuityBookmarks 生成', this.PADDING, y)
 
     // 副标题
     ctx.fillStyle = config.colors.secondary
     ctx.font = '12px Inter, -apple-system, BlinkMacSystemFont, sans-serif'
-    ctx.fillText('智能书签管理工具', this.PADDING, y + 20)
+    ctx.fillText('acuitybookmarks.com', this.PADDING, y + 20)
 
     ctx.restore()
   }

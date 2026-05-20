@@ -97,17 +97,23 @@
       <div class="form-row">
         <label class="form-label">API Key</label>
         <div class="form-field">
-          <Input
-            v-model="apiKey"
+          <md-outlined-text-field
+            :value="apiKey"
             :type="showKey ? 'text' : 'password'"
             :placeholder="keyPlaceholder"
-            :trailing-icon="showKey ? 'eye-off' : 'eye'"
-            :trailing-icon-size="18"
             class="text-field"
-            variant="outlined"
+            @input="apiKey = ($event.target as HTMLInputElement).value"
             @keydown.enter.prevent="saveConfig"
-            @trailing-icon-click="showKey = !showKey"
-          />
+          >
+            <button
+              slot="trailing-icon"
+              type="button"
+              class="icon-toggle-btn"
+              @click="showKey = !showKey"
+            >
+              <LucideIcon :name="showKey ? 'eye-off' : 'eye'" :size="18" />
+            </button>
+          </md-outlined-text-field>
         </div>
       </div>
 
@@ -148,11 +154,11 @@
           </Tooltip>
         </label>
         <div class="form-field">
-          <Input
-            v-model="customModelName"
+          <md-outlined-text-field
+            :value="customModelName"
             placeholder="输入完整的模型 ID"
             class="text-field"
-            variant="outlined"
+            @input="customModelName = ($event.target as HTMLInputElement).value"
           />
         </div>
       </div>
@@ -172,11 +178,11 @@
           </Tooltip>
         </label>
         <div class="form-field">
-          <Input
-            v-model="customBaseUrl"
+          <md-outlined-text-field
+            :value="customBaseUrl"
             placeholder="https://your-proxy.com/v1"
             class="text-field"
-            variant="outlined"
+            @input="customBaseUrl = ($event.target as HTMLInputElement).value"
           />
         </div>
       </div>
@@ -354,7 +360,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import { LucideIcon, Tooltip, Card, Input } from '@/components'
+import { LucideIcon, Tooltip, Card } from '@/components'
 import { userLLMClient } from '@/infrastructure/llm/user-llm-client'
 import type { UserLLMProvider } from '@/infrastructure/llm/user-llm-client'
 import { llmAdapter } from '@/infrastructure/llm/llm-adapter'
@@ -362,16 +368,6 @@ import { builtInLLMClient } from '@/infrastructure/llm/builtin-llm-client'
 import { notifyError, notifySuccess, notifyWarning } from '@/application/notification/notification-service'
 import { useSubscription } from '@/composables/useSubscription'
 import { logger } from '@/infrastructure/logging/logger'
-
-// 导入 Material Web Components
-import '@material/web/select/outlined-select.js'
-import '@material/web/select/select-option.js'
-import '@material/web/button/filled-button.js'
-import '@material/web/tabs/tabs.js'
-import '@material/web/tabs/primary-tab.js'
-import '@material/web/button/text-button.js'
-import '@material/web/textfield/outlined-text-field.js'
-import '@material/web/switch/switch.js'
 
 defineOptions({ name: 'AISettings' })
 

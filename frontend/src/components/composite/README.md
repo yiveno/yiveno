@@ -28,7 +28,6 @@
 | 组件 | 说明 | 依赖组件 | 文档 |
 |------|------|----------|------|
 | **Checkbox** | 复选框 | Icon | [查看文档](./Checkbox/README.md) |
-| **UrlInput** | URL 输入框 | Input | [查看文档](./UrlInput/README.md) |
 
 ### 展示类（6 个）
 
@@ -38,7 +37,7 @@
 | **Card** | 卡片容器 | Icon | [查看文档](./Card/README.md) |
 | **EmptyState** | 空状态 | Icon | [查看文档](./EmptyState/README.md) |
 | **Avatar** | 头像 | Icon | [查看文档](./Avatar/README.md) |
-| **Chip** | 标签 | Button, Icon | [查看文档](./Chip/README.md) |
+| **Chip** | 标签/徽章 | Material Web Components | [查看文档](./Chip/README.md) |
 | **Notification** | 通知提示 | Icon | [查看文档](./Notification/README.md) |
 
 ### 导航类（2 个）
@@ -55,7 +54,7 @@
 | **ThemeToggle** | 主题切换 | Icon, Button | [查看文档](./ThemeToggle/README.md) |
 | **PerformanceMonitor** | 性能监控 | Button, Icon | [查看文档](./PerformanceMonitor/README.md) |
 
-**总计**: 15 个复合组件
+**总计**: 13 个复合组件
 
 ## 🎯 使用示例
 
@@ -321,5 +320,30 @@ export interface ComponentNameEmits {
 
 ---
 
-**最后更新**: 2025-01-05  
+## 🔄 更新日志
+
+### 2025-05-20：组件清理
+
+**删除的组件**：
+- ❌ `UrlInput` - 已被 `Input` 组件的 `type="url"` 替代
+- ❌ `CountIndicator` - 已被 `Chip` 组件完全替代
+
+**Chip 组件增强**：
+- ✅ 现在用于显示数量徽章（替代 CountIndicator）
+- ✅ 支持多种样式变体：`filled`、`outlined`、`soft`
+- ✅ 支持多种颜色：`primary`、`secondary`、`success`、`warning`、`error`、`info`
+- ✅ 支持多种尺寸：`sm`、`md`、`lg`
+
+**使用示例**：
+```vue
+<!-- 显示数量（替代 CountIndicator） -->
+<Chip size="sm" variant="filled" color="primary">{{ count }}</Chip>
+
+<!-- 显示标签 -->
+<Chip size="md" variant="soft" color="success">新功能</Chip>
+```
+
+---
+
+**最后更新**: 2025-05-20  
 **维护者**: Kiro AI

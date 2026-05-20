@@ -4,7 +4,8 @@
  */
 
 /**
- * 分享数据结构（用于编码到 URL）
+ * 分享数据结构（用于编码到 URL，已废弃，改用云端存储）
+ * @deprecated 使用 ShareRecord 替代
  */
 export interface ShareData {
   /** 版本号，当前为 1 */
@@ -18,7 +19,8 @@ export interface ShareData {
 }
 
 /**
- * 分享书签数据
+ * 分享书签数据（用于 URL 编码，已废弃）
+ * @deprecated 使用 SharedBookmark 替代
  */
 export interface ShareBookmark {
   /** 书签标题 */
@@ -27,6 +29,86 @@ export interface ShareBookmark {
   u: string
   /** 描述（可选） */
   d?: string
+}
+
+/**
+ * 分享记录（数据库表）
+ */
+export interface ShareRecord {
+  id: string
+  user_id: string
+  short_code: string | null
+  title: string
+  description: string | null
+  bookmark_count: number
+  share_type: 'link' | 'direct'
+  view_count: number
+  import_count: number
+  created_at: string
+}
+
+/**
+ * 分享的书签（数据库表）
+ */
+export interface SharedBookmark {
+  id: string
+  share_id: string
+  title: string
+  url: string
+  description: string | null
+  position: number
+  created_at: string
+}
+
+/**
+ * 直接分享记录（数据库表）
+ */
+export interface DirectShareRecord {
+  id: string
+  share_id: string
+  sender_id: string
+  recipient_id: string
+  status: 'pending' | 'accepted' | 'rejected'
+  message: string | null
+  sent_at: string
+  read_at: string | null
+  imported_at: string | null
+}
+
+/**
+ * 通知记录（数据库表）
+ */
+export interface NotificationRecord {
+  id: string
+  user_id: string
+  type: string
+  title: string
+  message: string
+  data: Record<string, unknown> | null
+  is_read: boolean
+  created_at: string
+  read_at: string | null
+}
+
+/**
+ * 导入历史记录（数据库表）
+ */
+export interface ImportHistoryRecord {
+  id: string
+  user_id: string
+  share_id: string
+  bookmark_count: number
+  imported_at: string
+}
+
+/**
+ * 用户信息（用于搜索）
+ */
+export interface UserProfile {
+  id: string
+  name: string
+  email: string
+  avatar_url: string | null
 }
 
 /**
@@ -64,6 +146,10 @@ export interface PosterOptions {
   title?: string
   /** 分享 URL（用于生成二维码） */
   shareUrl: string
+  /** 是否显示用户名 */
+  showUsername?: boolean
+  /** 用户名 */
+  username?: string
 }
 
 /**

@@ -20,8 +20,7 @@
     />
     <!-- 加载状态 -->
     <div v-if="!isStoresReady" class="loading-container">
-      <md-circular-progress indeterminate></md-circular-progress>
-      <p class="loading-text" data-testid="popup-loading-text">{{ t('popup_initializing') }}</p>
+      <Loading size="lg" text="初始化中..." />
     </div>
     <!-- 主内容 - 只有当stores都存在时才显示 -->
     <div v-else class="main-container">
@@ -112,7 +111,7 @@
                 </button>
               </div>
               <div class="issue-card-count issue-card-count--warning">
-                <md-circular-progress v-if="isLoadingTraitOverview" indeterminate></md-circular-progress>
+                <Loading v-if="isLoadingTraitOverview" size="lg" />
                 <AnimatedNumber v-else :value="traitOverview.duplicate" />
               </div>
             </div>
@@ -144,7 +143,7 @@
                 </button>
               </div>
               <div class="issue-card-count issue-card-count--danger">
-                <md-circular-progress v-if="isLoadingTraitOverview" indeterminate></md-circular-progress>
+                <Loading v-if="isLoadingTraitOverview" size="lg" />
                 <AnimatedNumber v-else :value="traitOverview.invalid" />
               </div>
             </div>
@@ -206,6 +205,7 @@ import { useUIStore } from '@/stores/ui-store'
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports
 import { usePopupStoreIndexedDB } from '@/stores/popup-store-indexeddb'
 import { AppHeader, AnimatedNumber, LucideIcon, Card } from '@/components'
+import { Loading } from '@/components/base/Loading'
 import { t } from '@/utils/i18n-helpers'
 import type { BookmarkNode } from '@/types'
 
@@ -799,12 +799,6 @@ body {
   text-align: center;
 }
 
-.loading-text {
-  margin: 0;
-  font-size: var(--text-sm);
-  color: var(--color-text-secondary);
-}
-
 /* 主容器 */
 .main-container {
   display: flex;
@@ -999,11 +993,6 @@ body {
   opacity: 1;
 }
 
-:deep(.issue-card-count md-circular-progress) {
-  --md-circular-progress-size: 48px;
-  --md-circular-progress-active-indicator-width: 5px;
-}
-
 .popup-issues-list {
   display: grid;
   gap: var(--spacing-2);
@@ -1088,11 +1077,6 @@ body {
 
 .popup-issue-count--danger {
   color: var(--color-error);
-}
-
-:deep(.popup-issue-count md-circular-progress) {
-  --md-circular-progress-size: 20px;
-  --md-circular-progress-active-indicator-width: 3px;
 }
 
 .actions-section {

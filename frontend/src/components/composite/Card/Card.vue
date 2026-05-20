@@ -50,7 +50,6 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import '@material/web/elevation/elevation.js'
 import { LucideIcon } from '@/components/base/LucideIcon'
 import type { CardProps, CardEmits } from './Card.d'
 

@@ -59,12 +59,11 @@ frontend/src/components/
 - `ConfirmableDialog` - Dialog + 确认逻辑
 - `EmptyState` - Icon + 标题 + 描述
 - `Checkbox` - Input + Icon 组合
-- `Chip` - Button + Icon 组合
+- `Chip` - Button + Icon 组合（用于显示标签、数量等）
 - `Tabs` - 多个 Tab 组合
 - `Avatar` - 头像（可能包含 Icon）
 - `Notification` - 通知提示
 - `ThemeToggle` - 主题切换
-- `UrlInput` - URL 输入框
 - `AppHeader` - 应用头部
 - `SyncProgressDialog` - 同步进度对话框
 - `PerformanceMonitor` - 性能监控
@@ -292,6 +291,28 @@ import BookmarkTree from '@/components/business/BookmarkTree/BookmarkTree.vue'
 
 ## 🔄 迁移记录
 
+### 2025-05-20：组件清理 - 删除冗余组件
+
+**变更**：
+- ✅ 删除 `UrlInput` 组件（已被 `Input` 组件的 `type="url"` 替代）
+- ✅ 删除 `CountIndicator` 组件（已被 `Chip` 组件完全替代）
+- ✅ 更新所有使用 `CountIndicator` 的地方改用 `Chip`：
+  - `SidePanel.vue` - 最近访问和收藏夹数量显示
+  - `BookmarkSearchInput.vue` - 快捷筛选标签数量显示
+- ✅ 更新 `ShareDialog.vue` 使用 `Input` 组件替代 `MdInput`
+
+**影响的文件**：
+- `components/index.ts` - 移除 CountIndicator 导出
+- `pages/side-panel/SidePanel.vue` - 使用 Chip 替代 CountIndicator
+- `components/business/BookmarkSearchInput/BookmarkSearchInput.vue` - 使用 Chip 替代 CountIndicator
+- `components/business/ShareDialog/ShareDialog.vue` - 使用 Input 替代 MdInput
+
+**验证**：
+- ✅ 构建成功
+- ✅ background.js 验证通过：无 DOM API
+
+---
+
 ### 2025-01-05：严格分类 - 创建 composite 目录
 
 **变更**：
@@ -311,7 +332,6 @@ import BookmarkTree from '@/components/business/BookmarkTree/BookmarkTree.vue'
   - `base/SyncProgressDialog/` → `composite/SyncProgressDialog/`
   - `base/Tabs/` → `composite/Tabs/`
   - `base/ThemeToggle/` → `composite/ThemeToggle/`
-  - `base/UrlInput/` → `composite/UrlInput/`
 - ✅ 更新 `components/index.ts` 导出路径
 - ✅ 更新所有引用这些组件的文件
 
@@ -354,5 +374,5 @@ import BookmarkTree from '@/components/business/BookmarkTree/BookmarkTree.vue'
 
 ---
 
-**最后更新**: 2025-01-04  
+**最后更新**: 2025-05-20  
 **维护者**: Kiro AI

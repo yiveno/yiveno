@@ -13,7 +13,7 @@ export interface ShareDialogProps {
   /** 书签列表 */
   bookmarks: BookmarkNode[]
   /** 分享类型 */
-  shareType: 'favorites' | 'folder'
+  shareType: 'favorites' | 'folder' | 'bookmark'
   /** 文件夹名称（分享文件夹时） */
   folderName?: string
 }

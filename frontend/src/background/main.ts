@@ -17,6 +17,8 @@ import { registerMenusAndShortcuts } from './menus'
 import { registerOmniboxHandlers } from './omnibox'
 import { registerBookmarkChangeListeners } from './bookmarks'
 import { initializeBookmarkTraitAutoSync } from '@/services/bookmark-trait-auto-sync'
+import { initializeDataIntegrityChecker } from './data-integrity-checker'
+import { initShareNotificationListener } from './share-notification-listener'
 
 /**
  * 初始化 Service Worker
@@ -76,7 +78,23 @@ async function initializeServiceWorker() {
       logger.warn('Background', '⚠️ 书签特征自动同步初始化失败（非致命）', error)
     }
 
-    // 3.2 后台爬取管理器（延迟导入，避免阻塞启动）
+    // 3.2 数据完整性检查器（定时兜底任务）
+    try {
+      initializeDataIntegrityChecker()
+      logger.debug('Background', '✅ 数据完整性检查器已初始化')
+    } catch (error) {
+      logger.warn('Background', '⚠️ 数据完整性检查器初始化失败（非致命）', error)
+    }
+
+    // 3.3 分享通知监听器（定时检查新通知）
+    try {
+      initShareNotificationListener()
+      logger.debug('Background', '✅ 分享通知监听器已初始化')
+    } catch (error) {
+      logger.warn('Background', '⚠️ 分享通知监听器初始化失败（非致命）', error)
+    }
+
+    // 3.4 后台爬取管理器（延迟导入，避免阻塞启动）
     // ⚠️ 使用 setTimeout 延迟加载，避免阻塞核心功能
     setTimeout(async () => {
       try {

@@ -105,7 +105,6 @@ const handleToggle = () => {
 }
 
 .accordion-content {
-  padding: var(--spacing-3) var(--spacing-4) var(--spacing-4);
   background: var(--color-surface);
 }
 </style>

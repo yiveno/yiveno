@@ -35,36 +35,16 @@
         :size="leadingIconSize"
       />
       
-      <!-- Trailing icon: 直接渲染，不使用 v-if -->
+      <!-- Trailing icon: 优先使用自定义 slot，否则使用默认的 loading/clear -->
+      <slot v-if="$slots['trailing-icon']" slot="trailing-icon" name="trailing-icon"></slot>
+      <Loading v-else-if="loading" slot="trailing-icon" size="xs" />
       <md-icon-button
-        v-if="trailingIcon"
-        slot="trailing-icon"
-        type="button"
-        class="md-input-trailing-icon-btn"
-        @click.stop="handleTrailingIconClick"
-      >
-        <LucideIcon :name="trailingIcon" :size="trailingIconSize" />
-      </md-icon-button>
-      
-      <!-- 自定义 slot -->
-      <slot name="trailing-icon"></slot>
-      
-      <!-- Loading spinner -->
-      <md-circular-progress 
-        v-if="loading && !trailingIcon && !$slots['trailing-icon']" 
-        slot="trailing-icon" 
-        indeterminate 
-        class="md-input-spinner" 
-      />
-      
-      <!-- Clear button -->
-      <md-icon-button
-        v-if="clearable && modelValue && !trailingIcon && !$slots['trailing-icon'] && !loading"
+        v-else-if="clearable && modelValue"
         slot="trailing-icon"
         type="button"
         class="md-input-clear-btn"
         :aria-label="'清除'"
-        @click.stop="clearInput"
+        @click="clearInput"
       >
         <LucideIcon name="x" :size="16" />
       </md-icon-button>
@@ -99,36 +79,16 @@
         :size="leadingIconSize"
       />
       
-      <!-- Trailing icon: 直接渲染，不使用 v-if -->
+      <!-- Trailing icon: 优先使用自定义 slot，否则使用默认的 loading/clear -->
+      <slot v-if="$slots['trailing-icon']" name="trailing-icon" slot="trailing-icon"></slot>
+      <Loading v-else-if="loading" slot="trailing-icon" size="xs" />
       <md-icon-button
-        v-if="trailingIcon"
-        slot="trailing-icon"
-        type="button"
-        class="md-input-trailing-icon-btn"
-        @click.stop="handleTrailingIconClick"
-      >
-        <LucideIcon :name="trailingIcon" :size="trailingIconSize" />
-      </md-icon-button>
-      
-      <!-- 自定义 slot -->
-      <slot name="trailing-icon"></slot>
-      
-      <!-- Loading spinner -->
-      <md-circular-progress 
-        v-if="loading && !trailingIcon && !$slots['trailing-icon']" 
-        slot="trailing-icon" 
-        indeterminate 
-        class="md-input-spinner" 
-      />
-      
-      <!-- Clear button -->
-      <md-icon-button
-        v-if="clearable && modelValue && !trailingIcon && !$slots['trailing-icon'] && !loading"
+        v-else-if="clearable && modelValue"
         slot="trailing-icon"
         type="button"
         class="md-input-clear-btn"
         :aria-label="'清除'"
-        @click.stop="clearInput"
+        @click="clearInput"
       >
         <LucideIcon name="x" :size="16" />
       </md-icon-button>
@@ -144,11 +104,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { LucideIcon } from '@/components/base/LucideIcon'
+import { Loading } from '@/components/base/Loading'
 import type { InputProps, InputEmits } from './Input.d'
-import '@material/web/textfield/outlined-text-field.js'
-import '@material/web/textfield/filled-text-field.js'
-import '@material/web/iconbutton/icon-button.js'
-import '@material/web/progress/circular-progress.js'
 
 defineOptions({ 
   name: 'MdInput'
@@ -172,18 +129,12 @@ const props = withDefaults(defineProps<InputProps>(), {
   size: 'md',
   type: 'text',
   leadingIcon: undefined,
-  leadingIconSize: 20,
-  trailingIcon: undefined,
-  trailingIconSize: 20
+  leadingIconSize: 20
 })
 
 const emit = defineEmits<InputEmits>()
 
 const textFieldRef = ref<HTMLElement>()
-
-// 调试：打印 props
-console.log('[Input] trailingIcon prop:', props.trailingIcon)
-console.log('[Input] trailingIconSize prop:', props.trailingIconSize)
 const isFocused = ref(false)
 
 /**
@@ -244,13 +195,6 @@ const clearInput = () => {
 
   emit('update:modelValue', clearedValue as string | number)
   emit('clear')
-}
-
-/**
- * 处理后置图标点击事件
- */
-const handleTrailingIconClick = (event: MouseEvent) => {
-  emit('trailing-icon-click', event)
 }
 </script>
 
@@ -314,7 +258,16 @@ const handleTrailingIconClick = (event: MouseEvent) => {
 .md-text-field {
   flex: 1;
   width: 100%;
+  min-width: 0; /* 防止 flex 子元素溢出 */
   min-height: 56px; /* Material Design 3 标准高度 */
+}
+
+/* 修复 Material Web 动画计算 NaN 问题 */
+md-outlined-text-field,
+md-filled-text-field {
+  display: block;
+  width: 100%;
+  min-width: 200px; /* 确保有足够的宽度用于动画计算 */
 }
 
 /* Prepend/Append slots */
@@ -332,19 +285,9 @@ const handleTrailingIconClick = (event: MouseEvent) => {
 }
 
 /* Loading & Clear 按钮 */
-.md-input-spinner {
-  --md-circular-progress-size: 18px;
-  --md-circular-progress-active-indicator-color: var(--md-sys-color-primary);
-}
-
-.md-input-clear-btn,
-.md-input-trailing-icon-btn {
+.md-input-clear-btn {
   --md-icon-button-icon-size: 16px;
   --md-icon-button-state-layer-shape: var(--radius-full);
-}
-
-.md-input-trailing-icon-btn {
-  --md-icon-button-icon-size: 18px;
 }
 
 /**

@@ -59,7 +59,7 @@
       <!-- 最近访问 -->
       <AccordionItem id="recent" :title="t('sidepanel_recent_visits')" icon="icon-clock">
         <template #badge>
-          <CountIndicator :count="recentCount" size="sm" variant="primary" />
+          <Chip size="sm" variant="filled" color="primary">{{ recentCount }}</Chip>
         </template>
         <RecentVisits
           @bookmark-click="handleRecentClick"
@@ -70,7 +70,7 @@
       <!-- 收藏书签 -->
       <AccordionItem id="favorites" :title="t('sidepanel_favorites')" icon="icon-star">
         <template #badge>
-          <CountIndicator :count="favoriteCount" size="sm" variant="primary" />
+          <Chip size="sm" variant="filled" color="primary">{{ favoriteCount }}</Chip>
         </template>
         <FavoriteSection
           @bookmark-click="handleFavoriteClick"
@@ -210,10 +210,10 @@ defineOptions({
 import {
   Accordion,
   AccordionItem,
-  CountIndicator,
   Dialog,
   Input,
-  LucideIcon
+  LucideIcon,
+  Chip
 } from '@/components'
 import BookmarkTree from '@/components/business/BookmarkTree/BookmarkTree.vue'
 import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'

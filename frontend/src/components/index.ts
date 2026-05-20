@@ -10,20 +10,20 @@
 export { default as Accordion } from './base/Accordion/Accordion.vue'
 export { default as AccordionItem } from './base/Accordion/AccordionItem.vue'
 export { default as AnimatedNumber } from './base/AnimatedNumber/AnimatedNumber.vue'
+export { default as AsyncSearchSelect } from './base/AsyncSearchSelect/AsyncSearchSelect.vue'
 export { default as Chip } from './base/Chip/Chip.vue'
 export { default as ContextMenu } from './base/ContextMenu/ContextMenu.vue'
-export { default as CountIndicator } from './base/CountIndicator/CountIndicator.vue'
 export { default as Input } from './base/Input/Input.vue'
+// ⚠️ Loading 组件不导出到全局，避免 Material Web Components 被打包到 background.js
+// 使用时请直接导入：import { Loading } from '@/components/base/Loading'
 export { default as LucideIcon } from './base/LucideIcon/LucideIcon.vue'
 export { default as Tooltip } from './base/Tooltip/Tooltip.vue'
 
 // ===== 复合组件 (从 composite/ 目录导出) =====
 // 通用复合组件：多个基础组件组合，但无业务逻辑
-export { default as Alert } from './composite/Alert/Alert.vue'
 export { default as AppHeader } from './composite/AppHeader/AppHeader.vue'
 export { default as Avatar } from './composite/Avatar/Avatar.vue'
 export { default as Card } from './composite/Card/Card.vue'
-export { default as ConfirmableDialog } from './composite/ConfirmableDialog/ConfirmableDialog.vue'
 export { default as Dialog } from './composite/Dialog/Dialog.vue'
 export { default as EmptyState } from './composite/EmptyState/EmptyState.vue'
 
@@ -44,10 +44,7 @@ export { default as EmptyState } from './composite/EmptyState/EmptyState.vue'
  */
 export { default as Notification } from './composite/Notification/Notification.vue'
 
-export { default as PerformanceMonitor } from './composite/PerformanceMonitor/PerformanceMonitor.vue'
-export { default as SyncProgressDialog } from './composite/SyncProgressDialog/SyncProgressDialog.vue'
 export { default as ThemeToggle } from './composite/ThemeToggle/ThemeToggle.vue'
-export { default as UrlInput } from './composite/UrlInput/UrlInput.vue'
 
 // ===== 业务组件 (从 business/ 目录导出) =====
 // 包含业务逻辑的项目专属组件
@@ -62,22 +59,20 @@ export { default as ShareDialog } from './business/ShareDialog/ShareDialog.vue'
 // 基础组件类型
 export type * from './base/Accordion/Accordion.d'
 export type * from './base/AnimatedNumber/AnimatedNumber.d'
+export type * from './base/AsyncSearchSelect/AsyncSearchSelect.d'
 export type * from './base/Chip/Chip.d'
 export type * from './base/ContextMenu/ContextMenu.d'
-export type * from './base/CountIndicator/CountIndicator.d'
 export type * from './base/Input/Input.d'
+// ⚠️ Loading 类型不导出到全局
 export type * from './base/Tooltip/Tooltip.d'
 
 // 复合组件类型
-export type * from './composite/Alert/Alert.d'
 export type * from './composite/AppHeader/AppHeader.d'
 export type * from './composite/Avatar/Avatar.d'
 export type * from './composite/Card/Card.d'
-export type * from './composite/ConfirmableDialog/ConfirmableDialog.d'
 export type * from './composite/Dialog/Dialog.d'
 export type * from './composite/EmptyState/EmptyState.d'
 export type * from './composite/ThemeToggle/ThemeToggle.d'
-export type * from './composite/UrlInput/UrlInput.d'
 
 // 业务组件类型
 export type * from './business/BookmarkTree/BookmarkTree.d'

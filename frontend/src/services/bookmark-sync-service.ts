@@ -885,11 +885,55 @@ export class BookmarkSyncService {
           toDelete.push(evt.id)
           continue
         }
-        // 查询该节点（以及必要时其子树）
-        const nodes = await chrome.bookmarks.get(evt.id)
-        if (nodes && nodes.length > 0) {
-          const recs = flattenBookmarkTree(nodes)
-          toUpsert.push(...recs)
+        
+        // ✅ 优化：对于 moved 事件，需要获取完整的父级路径信息
+        // 使用 getSubTree 而不是 get，以便正确计算 pathIds
+        try {
+          if (evt.type === 'moved') {
+            // 1. 获取节点的完整子树（包含层级信息）
+            const subTree = await chrome.bookmarks.getSubTree(evt.id)
+            if (subTree && subTree.length > 0) {
+              const node = subTree[0]
+              
+              // 2. 获取父节点路径信息
+              let pathIds: string[] = []
+              let pathNames: string[] = []
+              
+              if (node?.parentId && node.parentId !== '0') {
+                // 递归获取父级路径
+                let currentId = node.parentId
+                const parentPath: Array<{ id: string; title: string }> = []
+                
+                while (currentId && currentId !== '0') {
+                  const parents = await chrome.bookmarks.get(currentId)
+                  if (parents && parents.length > 0) {
+                    const parent = parents[0]!
+                    parentPath.unshift({ id: parent.id, title: parent.title || '' })
+                    currentId = parent.parentId || '0'
+                  } else {
+                    break
+                  }
+                }
+                
+                pathIds = parentPath.map(p => p.id)
+                pathNames = parentPath.map(p => p.title)
+              }
+              
+              // 3. 转换节点（带正确的路径信息）
+              const recs = flattenBookmarkTree([node], pathIds, pathNames)
+              toUpsert.push(...recs)
+            }
+          } else {
+            // 其他事件（created, changed）：使用简单的 get
+            const nodes = await chrome.bookmarks.get(evt.id)
+            if (nodes && nodes.length > 0) {
+              const recs = flattenBookmarkTree(nodes)
+              toUpsert.push(...recs)
+            }
+          }
+        } catch (error) {
+          logger.warn('BookmarkSync', `⚠️ 增量同步处理节点 ${evt.id} 失败`, error)
+          // 继续处理其他节点
         }
       }
 

@@ -2,10 +2,7 @@
   <div class="management-page app-container">
     <div v-if="isPageLoading" class="page-overlay">
       <div class="overlay-loading">
-        <md-circular-progress indeterminate></md-circular-progress>
-        <div class="loading-text" data-testid="progress-text">
-          {{ loadingMessage }}
-        </div>
+        <Loading size="xl" :text="loadingMessage" />
       </div>
     </div>
     <!-- 📊 全局书签同步进度对话框 -->
@@ -526,16 +523,15 @@
       </div>
     </main>
     <!-- Edit Bookmark Dialog -->
-    <ConfirmableDialog
+    <Dialog
       :show="dialogStore.editBookmarkDialog.isOpen"
       :title="t('management_edit_bookmark')"
       icon="icon-edit-bookmark"
       :persistent="true"
       :esc-to-close="true"
       :enter-to-confirm="true"
-      :enable-cancel-guard="false"
-      :confirm-message="MSG_CANCEL_EDIT"
-      :is-dirty="isEditDirty"
+      :enable-cancel-guard="true"
+      :cancel-confirm-text="MSG_CANCEL_EDIT"
       max-width="500px"
       min-width="500px"
       @update:show="
@@ -566,8 +562,8 @@
           @input="onEditBookmarkUrlInput"
         />
       </div>
-      <template #actions="{ requestClose }">
-        <md-text-button @click="requestClose(false)">
+      <template #actions>
+        <md-text-button @click="dialogStore.closeEditBookmarkDialog()">
           {{ t('common_cancel') }}
         </md-text-button>
         <md-filled-button
@@ -578,19 +574,18 @@
           {{ t('management_update') }}
         </md-filled-button>
       </template>
-    </ConfirmableDialog>
+    </Dialog>
 
     <!-- Edit Folder Dialog -->
-    <ConfirmableDialog
+    <Dialog
       :show="dialogStore.editFolderDialog.isOpen"
       :title="t('management_edit_folder')"
       icon="icon-folder-edit"
       :persistent="true"
       :esc-to-close="true"
       :enter-to-confirm="true"
-      :enable-cancel-guard="false"
-      :confirm-message="MSG_CANCEL_EDIT"
-      :is-dirty="isEditFolderDirty"
+      :enable-cancel-guard="true"
+      :cancel-confirm-text="MSG_CANCEL_EDIT"
       max-width="500px"
       min-width="500px"
       @update:show="
@@ -613,8 +608,8 @@
           @input="onEditFolderTitleInput"
         />
       </div>
-      <template #actions="{ requestClose }">
-        <md-text-button @click="requestClose(false)">
+      <template #actions>
+        <md-text-button @click="dialogStore.closeEditFolderDialog()">
           {{ t('common_cancel') }}
         </md-text-button>
         <md-filled-button
@@ -625,17 +620,16 @@
           {{ t('management_update') }}
         </md-filled-button>
       </template>
-    </ConfirmableDialog>
+    </Dialog>
 
-    <!-- Delete Folder Confirm Dialog (统一为 ConfirmableDialog) -->
-    <ConfirmableDialog
+    <!-- Delete Folder Confirm Dialog -->
+    <Dialog
       :show="isConfirmDeleteDialogOpen"
       :esc-to-close="true"
       :enter-to-confirm="true"
       :title="t('management_confirm_delete')"
       icon="icon-delete"
       :persistent="true"
-      :enable-cancel-guard="false"
       max-width="480px"
       min-width="480px"
       @update:show="(v: boolean) => (isConfirmDeleteDialogOpen = v)"
@@ -644,8 +638,8 @@
       <div class="confirm-content">
         {{ t('management_delete_folder_confirm', String(deleteFolderBookmarkCount)) }}
       </div>
-      <template #actions="{ requestClose }">
-        <md-text-button @click="requestClose(false)">
+      <template #actions>
+        <md-text-button @click="isConfirmDeleteDialogOpen = false">
           {{ t('common_cancel') }}
         </md-text-button>
         <md-filled-tonal-button
@@ -656,19 +650,18 @@
           {{ t('management_confirm_delete') }}
         </md-filled-tonal-button>
       </template>
-    </ConfirmableDialog>
+    </Dialog>
 
     <!-- Add New Item Dialog -->
-    <ConfirmableDialog
+    <Dialog
       :show="dialogStore.addItemDialog.isOpen"
       :title="addDialogTitle"
       :icon="addDialogIcon"
       :persistent="true"
       :esc-to-close="true"
       :enter-to-confirm="true"
-      :enable-cancel-guard="false"
-      :confirm-message="MSG_CANCEL_ADD"
-      :is-dirty="isAddDirty"
+      :enable-cancel-guard="true"
+      :cancel-confirm-text="MSG_CANCEL_ADD"
       :body-min-height="addDialogMinHeight"
       max-width="500px"
       min-width="500px"
@@ -737,8 +730,8 @@
           />
         </div>
       </div>
-      <template #actions="{ requestClose }">
-        <md-text-button @click="requestClose(false)">
+      <template #actions>
+        <md-text-button @click="dialogStore.closeAddItemDialog()">
           {{ t('common_cancel') }}
         </md-text-button>
         <md-filled-button
@@ -748,7 +741,7 @@
           {{ addConfirmText }}
         </md-filled-button>
       </template>
-    </ConfirmableDialog>
+    </Dialog>
   </div>
 </template>
 
@@ -788,9 +781,9 @@ import {
   LucideIcon,
   AnimatedNumber
 } from '@/components'
+import { Loading } from '@/components/base/Loading'
 import { notificationService } from '@/application/notification/notification-service'
 import { NOTIFICATION_CONFIG } from '@/config/constants'
-import { ConfirmableDialog } from '@/components'
 import { onEvent } from '@/infrastructure/events/event-bus'
 import BookmarkTree from '@/components/business/BookmarkTree/BookmarkTree.vue'
 // 导入书签 API 网关：以 side-effect 方式初始化并设置事件监听与消息桥接
@@ -1245,14 +1238,6 @@ const handleLeftTreeReady = () => {
     logger.error('Management', '❌ handleLeftTreeReady 失败', error)
   }
 }
-const isAddDirty = computed(() => {
-  const t = (dialogStore.addItemDialog.title || '').trim()
-  const u = (dialogStore.addItemDialog.url || '').trim()
-  if (dialogStore.addItemDialog.type === 'bookmark') {
-    return !!t || !!u
-  }
-  return !!t
-})
 const isEditDirty = computed(() => {
   const originalTitle = (
     dialogStore.editBookmarkDialog.bookmark?.title || ''

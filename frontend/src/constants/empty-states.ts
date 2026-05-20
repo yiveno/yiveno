@@ -88,8 +88,8 @@ export const EMPTY_STATES = {
   syncError: {
     icon: 'icon-sync-off',
     title: '同步失败',
-    description: '请检查账号状态或稍后重试',
-    actionText: '重新同步',
+    description: '数据同步遇到问题，请重试',
+    actionText: '重试',
     iconSize: 56
   },
 

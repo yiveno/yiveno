@@ -19,7 +19,7 @@
     <div class="share-dialog-content">
       <!-- 标题输入 -->
       <div class="title-input-section">
-        <MdInput
+        <Input
           v-model="state.customTitle"
           label="分享标题"
           variant="outlined"
@@ -153,8 +153,7 @@
 import { reactive, watch, onUnmounted, ref, nextTick, computed } from 'vue'
 import { useDebounceFn, useEventListener } from '@vueuse/core'
 import type { ShareDialogProps, ShareDialogEmits } from './ShareDialog.d'
-import { Dialog, LucideIcon } from '@/components'
-import { MdInput } from '@/components/base/Input'
+import { Dialog, LucideIcon, Input } from '@/components'
 import { shareService } from '@/application/share/share-service'
 import { posterService } from '@/application/share/poster-service'
 import { notifySuccess, notifyError } from '@/application/notification/notification-service'

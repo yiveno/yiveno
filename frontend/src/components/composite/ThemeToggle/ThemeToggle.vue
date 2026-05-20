@@ -10,12 +10,11 @@
       id="theme-toggle-anchor"
       ref="toggleBtnRef"
       class="theme-toggle__button"
-      :style="{ '--md-icon-button-icon-size': '30px' }"
       :title="currentThemeLabel"
       :aria-label="currentThemeLabel"
       @click="showMenu = !showMenu"
     >
-      <LucideIcon :name="currentThemeIconLucide" :size="30" />
+      <LucideIcon :name="currentThemeIconLucide" :size="20" />
     </md-icon-button>
 
     <!-- Material Design 3 Menu -->
