@@ -1,3 +1,97 @@
+<script setup lang="ts">
+import { computed, defineOptions } from 'vue'
+import Dialog from '@/components/composite/Dialog/Dialog.vue'
+import LucideIcon from '@/components/base/LucideIcon/LucideIcon.vue'
+import type { SyncProgress, SyncPhase } from '@/types/sync-progress'
+import { SYNC_PHASES, PHASE_TITLES, formatTime } from '@/types/sync-progress'
+import { formatNumber } from '@/utils/i18n-helpers'
+
+defineOptions({
+  name: 'SyncProgressDialog'
+})
+
+const props = defineProps<Props>()
+
+const emit = defineEmits<Emits>()
+
+interface Props {
+  /** 是否显示对话框 */
+  show: boolean
+  /** 进度数据 */
+  progress: SyncProgress
+}
+
+interface Emits {
+  (e: 'close'): void
+  (e: 'retry'): void
+  (e: 'forceClose'): void
+}
+
+/**
+ * 所有阶段
+ */
+const phases = computed(() => {
+  // 只显示前4个阶段（不包括 'completed'）
+  return SYNC_PHASES.slice(0, 4)
+})
+
+/**
+ * 是否已完成
+ */
+const isCompleted = computed(() => {
+  return props.progress.phase === 'completed'
+})
+
+/**
+ * 是否处于错误状态
+ */
+const isError = computed(() => {
+  return props.progress.phase === 'failed' || props.progress.phase === 'timeout'
+})
+
+/**
+ * 对话框标题
+ */
+const dialogTitle = computed(() => {
+  if (isCompleted.value) return '同步完成'
+  if (isError.value) return PHASE_TITLES[props.progress.phase]
+  return PHASE_TITLES[props.progress.phase] || '正在同步'
+})
+
+/**
+ * 标题图标
+ */
+const titleIcon = computed(() => {
+  if (isCompleted.value) return 'check-circle'
+  if (isError.value) return 'alert-triangle'
+  return 'refresh'
+})
+
+/**
+ * 是否显示操作按钮
+ */
+const showActions = computed(() => {
+  return isCompleted.value || isError.value
+})
+
+/**
+ * 判断阶段是否已完成
+ */
+function isPhaseCompleted(phase: SyncPhase): boolean {
+  const phaseOrder: SyncPhase[] = [
+    'fetching',
+    'converting',
+    'writing',
+    'indexing',
+    'completed'
+  ]
+  const currentIndex = phaseOrder.indexOf(props.progress.phase)
+  const checkIndex = phaseOrder.indexOf(phase)
+
+  return checkIndex < currentIndex || props.progress.phase === 'completed'
+}
+</script>
+
 <template>
   <Dialog :show="show" persistent :hide-close="!showActions">
     <template #header>
@@ -99,7 +193,7 @@
           <LucideIcon slot="icon" name="refresh" />
           重试
         </md-filled-button>
-        <md-text-button @click="emit('force-close')">
+        <md-text-button @click="emit('forceClose')">
           忽略并继续
         </md-text-button>
       </template>
@@ -109,99 +203,6 @@
     </template>
   </Dialog>
 </template>
-
-<script setup lang="ts">
-import { computed, defineOptions } from 'vue'
-import Dialog from '@/components/composite/Dialog/Dialog.vue'
-import LucideIcon from '@/components/base/LucideIcon/LucideIcon.vue'
-import type { SyncProgress, SyncPhase } from '@/types/sync-progress'
-import { SYNC_PHASES, PHASE_TITLES, formatTime } from '@/types/sync-progress'
-import { formatNumber } from '@/utils/i18n-helpers'
-
-defineOptions({
-  name: 'SyncProgressDialog'
-})
-
-interface Props {
-  /** 是否显示对话框 */
-  show: boolean
-  /** 进度数据 */
-  progress: SyncProgress
-}
-
-interface Emits {
-  (e: 'close'): void
-  (e: 'retry'): void
-  (e: 'force-close'): void
-}
-
-const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
-
-/**
- * 所有阶段
- */
-const phases = computed(() => {
-  // 只显示前4个阶段（不包括 'completed'）
-  return SYNC_PHASES.slice(0, 4)
-})
-
-/**
- * 是否已完成
- */
-const isCompleted = computed(() => {
-  return props.progress.phase === 'completed'
-})
-
-/**
- * 是否处于错误状态
- */
-const isError = computed(() => {
-  return props.progress.phase === 'failed' || props.progress.phase === 'timeout'
-})
-
-/**
- * 对话框标题
- */
-const dialogTitle = computed(() => {
-  if (isCompleted.value) return '同步完成'
-  if (isError.value) return PHASE_TITLES[props.progress.phase]
-  return PHASE_TITLES[props.progress.phase] || '正在同步'
-})
-
-/**
- * 标题图标
- */
-const titleIcon = computed(() => {
-  if (isCompleted.value) return 'check-circle'
-  if (isError.value) return 'alert-triangle'
-  return 'refresh'
-})
-
-/**
- * 是否显示操作按钮
- */
-const showActions = computed(() => {
-  return isCompleted.value || isError.value
-})
-
-/**
- * 判断阶段是否已完成
- */
-function isPhaseCompleted(phase: SyncPhase): boolean {
-  const phaseOrder: SyncPhase[] = [
-    'fetching',
-    'converting',
-    'writing',
-    'indexing',
-    'completed'
-  ]
-  const currentIndex = phaseOrder.indexOf(props.progress.phase)
-  const checkIndex = phaseOrder.indexOf(phase)
-
-  return checkIndex < currentIndex || props.progress.phase === 'completed'
-}
-</script>
 
 <style scoped>
 @keyframes spin {

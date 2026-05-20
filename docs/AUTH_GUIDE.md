@@ -102,9 +102,7 @@ try {
 
 ```vue
 <template>
-  <Button :loading="loading" :disabled="loading" @click="handleLogin">
-    登录
-  </Button>
+  <Button :loading="loading" :disabled="loading" @click="handleLogin"> 登录 </Button>
 </template>
 
 <script setup>

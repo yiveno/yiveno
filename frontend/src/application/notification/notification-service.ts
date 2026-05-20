@@ -71,8 +71,10 @@ class PageNotificationManager {
     try {
       // 动态导入 Vue 和 Notification 组件
       // ⚠️ 只导入 Notification 组件，避免导入整个 @/components（包含 Material Web Components）
+      // eslint-disable-next-line require-atomic-updates -- 模块加载是原子操作，不会有竞态条件
       vueModule = await import('vue')
       const notificationModule = await import('@/components/composite/Notification/Notification.vue')
+      // eslint-disable-next-line require-atomic-updates -- 模块加载是原子操作，不会有竞态条件
       NotificationComponent = notificationModule.default
       return true
     } catch (error) {
@@ -157,12 +159,25 @@ class PageNotificationManager {
     const method = methodMap[level] || 'info'
     
     if (typeof this.exposed[method] === 'function') {
-      this.exposed[method]({
+      const notificationConfig: {
+        message: string
+        description?: string
+        duration: number
+        key?: string
+      } = {
         message: opts?.title || message,
-        description: opts?.title ? message : undefined,
-        duration,
-        key: opts?.key
-      })
+        duration
+      }
+      
+      if (opts?.title) {
+        notificationConfig.description = message
+      }
+      
+      if (opts?.key) {
+        notificationConfig.key = opts.key
+      }
+      
+      this.exposed[method](notificationConfig)
     }
 
     return '' // Notification 内部管理 ID

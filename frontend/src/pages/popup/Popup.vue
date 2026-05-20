@@ -4,192 +4,6 @@
   - 通过组合式 API 管理状态，避免在模板内写复杂逻辑；
   - 遵循扩展 CSP：所有脚本为模块化引入，无内联脚本。
 -->
-<template>
-  <GlobalSyncProgress />
-
-  <GlobalQuickAddBookmark ref="quickAddRef" />
-
-  <div class="popup-container">
-    <AppHeader
-      :show-name="false"
-      :back-tooltip="t('popup_open_sidepanel')"
-      :show-settings="false"
-      @back="openSidePanel"
-    />
-    <!-- 加载状态 -->
-    <div v-if="!isStoresReady" class="loading-container">
-      <Loading size="lg" text="初始化中..." />
-    </div>
-    <!-- 主内容 - 只有当stores都存在时才显示 -->
-    <div v-else class="main-container">
-      <!-- 🔍 书签搜索 -->
-      <section class="search-section">
-        <div class="search-wrapper">
-          <BookmarkSearchInput
-            display-mode="full"
-            mode="indexeddb"
-            strategy="auto"
-            result-display="dropdown"
-            :show-stats="true"
-            :show-result-count="true"
-            :max-dropdown-results="50"
-            :quick-filters="{
-              enabled: false,
-              position: 'none',
-              filters: []
-            }"
-            :limit="50"
-            @result-click="handleBookmarkClick"
-            @search-complete="handleSearchComplete"
-            @search-clear="handleSearchClear"
-          />
-        </div>
-      </section>
-
-      <!-- 📊 书签概览（MWC md-list，三列统计） -->
-      <section class="overview-section">
-        <div class="popup-list-panel">
-          <md-list class="popup-mwc-list popup-stat-list">
-            <md-list-item type="text" class="popup-stat-item">
-              <div slot="headline" class="popup-stat-stack">
-                <span class="popup-stat-label">{{ t('popup_stat_total') }}</span>
-                <span class="popup-stat-value popup-stat-value--primary">
-                  <AnimatedNumber :value="stats.bookmarks" />
-                </span>
-              </div>
-            </md-list-item>
-            <md-list-item type="text" class="popup-stat-item">
-              <div slot="headline" class="popup-stat-stack">
-                <span class="popup-stat-label">{{ t('popup_stat_today_added') }}</span>
-                <span class="popup-stat-value popup-stat-value--secondary">
-                  <AnimatedNumber :value="stats.todayAdded" />
-                </span>
-              </div>
-            </md-list-item>
-            <md-list-item type="text" class="popup-stat-item">
-              <div slot="headline" class="popup-stat-stack">
-                <span class="popup-stat-label">{{ t('popup_stat_recently_opened') }}</span>
-                <span class="popup-stat-value popup-stat-value--secondary">
-                  <AnimatedNumber :value="stats.recentlyOpened" />
-                </span>
-              </div>
-            </md-list-item>
-          </md-list>
-        </div>
-      </section>
-
-      <md-divider class="popup-section-divider"></md-divider>
-
-      <!-- ⚠️ 需要关注 -->
-      <section class="issues-section">
-        <div class="issues-grid">
-          <Card
-            variant="warning"
-            :padding="false"
-            :borderless="false"
-            clickable
-            class="issue-card"
-            @click="handleIssueRowClick('duplicate', $event)"
-            @keydown.enter.prevent="openManagementWithFilter('duplicate')"
-            @keydown.space.prevent="openManagementWithFilter('duplicate')"
-          >
-            <div class="issue-card-content">
-              <div class="issue-card-header">
-                <span class="issue-card-title">
-                  <LucideIcon name="copy" :size="18" />
-                  <span>{{ t('popup_issue_duplicate') }}</span>
-                </span>
-                <button
-                  type="button"
-                  class="issue-action"
-                  :title="t('popup_issue_delete_tooltip_duplicate')"
-                  @click.stop="handleBatchDelete('duplicate')"
-                >
-                  <LucideIcon name="trash" :size="16" />
-                </button>
-              </div>
-              <div class="issue-card-count issue-card-count--warning">
-                <Loading v-if="isLoadingTraitOverview" size="lg" />
-                <AnimatedNumber v-else :value="traitOverview.duplicate" />
-              </div>
-            </div>
-          </Card>
-
-          <Card
-            variant="danger"
-            :padding="false"
-            :borderless="false"
-            clickable
-            class="issue-card"
-            @click="handleIssueRowClick('invalid', $event)"
-            @keydown.enter.prevent="openManagementWithFilter('dead')"
-            @keydown.space.prevent="openManagementWithFilter('dead')"
-          >
-            <div class="issue-card-content">
-              <div class="issue-card-header">
-                <span class="issue-card-title">
-                  <LucideIcon name="unlink" :size="18" />
-                  <span>{{ t('popup_issue_invalid') }}</span>
-                </span>
-                <button
-                  type="button"
-                  class="issue-action"
-                  :title="t('popup_issue_delete_tooltip_invalid')"
-                  @click.stop="handleBatchDelete('invalid')"
-                >
-                  <LucideIcon name="trash" :size="16" />
-                </button>
-              </div>
-              <div class="issue-card-count issue-card-count--danger">
-                <Loading v-if="isLoadingTraitOverview" size="lg" />
-                <AnimatedNumber v-else :value="traitOverview.invalid" />
-              </div>
-            </div>
-          </Card>
-        </div>
-      </section>
-
-      <md-divider class="popup-section-divider"></md-divider>
-
-      <!-- ⚡ 快速操作（MWC 列表按钮行） -->
-      <section class="actions-section">
-        <div class="actions-grid">
-          <Card
-            variant="default"
-            :padding="false"
-            :borderless="false"
-            clickable
-            class="action-card"
-            @click="openManualOrganizePage"
-          >
-            <div class="action-card-content">
-              <div class="action-card-icon">
-                <LucideIcon name="folder" :size="24" />
-              </div>
-              <div class="action-card-label">{{ t('popup_action_organize') }}</div>
-            </div>
-          </Card>
-          <Card
-            variant="default"
-            :padding="false"
-            :borderless="false"
-            clickable
-            class="action-card"
-            @click="openSettings"
-          >
-            <div class="action-card-content">
-              <div class="action-card-icon">
-                <LucideIcon name="settings" :size="24" />
-              </div>
-              <div class="action-card-label">{{ t('popup_action_settings') }}</div>
-            </div>
-          </Card>
-        </div>
-      </section>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'
@@ -601,13 +415,13 @@ onMounted(async () => {
     logger.info('Popup', 'Popup 启动，点击图标永远显示 popup 页面')
 
     // 动态导入stores - 使用IndexedDB版本
-    const { useUIStore } = await import('@/stores/ui-store')
-    const { usePopupStoreIndexedDB } = await import(
+    const { useUIStore: useUIStoreImport } = await import('@/stores/ui-store')
+    const { usePopupStoreIndexedDB: usePopupStoreIndexedDBImport } = await import(
       '@/stores/popup-store-indexeddb'
     )
 
-    uiStore.value = useUIStore()
-    popupStore.value = usePopupStoreIndexedDB()
+    uiStore.value = useUIStoreImport()
+    popupStore.value = usePopupStoreIndexedDBImport()
 
     logger.info('Popup', 'Stores初始化完成')
 
@@ -659,6 +473,192 @@ onUnmounted(() => {
   }
 })
 </script>
+
+<template>
+  <GlobalSyncProgress />
+
+  <GlobalQuickAddBookmark ref="quickAddRef" />
+
+  <div class="popup-container">
+    <AppHeader
+      :show-name="false"
+      :back-tooltip="t('popup_open_sidepanel')"
+      :show-settings="false"
+      @back="openSidePanel"
+    />
+    <!-- 加载状态 -->
+    <div v-if="!isStoresReady" class="loading-container">
+      <Loading size="lg" text="初始化中..." />
+    </div>
+    <!-- 主内容 - 只有当stores都存在时才显示 -->
+    <div v-else class="main-container">
+      <!-- 🔍 书签搜索 -->
+      <section class="search-section">
+        <div class="search-wrapper">
+          <BookmarkSearchInput
+            display-mode="full"
+            mode="indexeddb"
+            strategy="auto"
+            result-display="dropdown"
+            :show-stats="true"
+            :show-result-count="true"
+            :max-dropdown-results="50"
+            :quick-filters="{
+              enabled: false,
+              position: 'none',
+              filters: []
+            }"
+            :limit="50"
+            @result-click="handleBookmarkClick"
+            @search-complete="handleSearchComplete"
+            @search-clear="handleSearchClear"
+          />
+        </div>
+      </section>
+
+      <!-- 📊 书签概览（MWC md-list，三列统计） -->
+      <section class="overview-section">
+        <div class="popup-list-panel">
+          <md-list class="popup-mwc-list popup-stat-list">
+            <md-list-item type="text" class="popup-stat-item">
+              <div slot="headline" class="popup-stat-stack">
+                <span class="popup-stat-label">{{ t('popup_stat_total') }}</span>
+                <span class="popup-stat-value popup-stat-value--primary">
+                  <AnimatedNumber :value="stats.bookmarks" />
+                </span>
+              </div>
+            </md-list-item>
+            <md-list-item type="text" class="popup-stat-item">
+              <div slot="headline" class="popup-stat-stack">
+                <span class="popup-stat-label">{{ t('popup_stat_today_added') }}</span>
+                <span class="popup-stat-value popup-stat-value--secondary">
+                  <AnimatedNumber :value="stats.todayAdded" />
+                </span>
+              </div>
+            </md-list-item>
+            <md-list-item type="text" class="popup-stat-item">
+              <div slot="headline" class="popup-stat-stack">
+                <span class="popup-stat-label">{{ t('popup_stat_recently_opened') }}</span>
+                <span class="popup-stat-value popup-stat-value--secondary">
+                  <AnimatedNumber :value="stats.recentlyOpened" />
+                </span>
+              </div>
+            </md-list-item>
+          </md-list>
+        </div>
+      </section>
+
+      <md-divider class="popup-section-divider"></md-divider>
+
+      <!-- ⚠️ 需要关注 -->
+      <section class="issues-section">
+        <div class="issues-grid">
+          <Card
+            variant="warning"
+            :padding="false"
+            :borderless="false"
+            clickable
+            class="issue-card"
+            @click="handleIssueRowClick('duplicate', $event)"
+            @keydown.enter.prevent="openManagementWithFilter('duplicate')"
+            @keydown.space.prevent="openManagementWithFilter('duplicate')"
+          >
+            <div class="issue-card-content">
+              <div class="issue-card-header">
+                <span class="issue-card-title">
+                  <LucideIcon name="copy" :size="18" />
+                  <span>{{ t('popup_issue_duplicate') }}</span>
+                </span>
+                <button
+                  type="button"
+                  class="issue-action"
+                  :title="t('popup_issue_delete_tooltip_duplicate')"
+                  @click.stop="handleBatchDelete('duplicate')"
+                >
+                  <LucideIcon name="trash" :size="16" />
+                </button>
+              </div>
+              <div class="issue-card-count issue-card-count--warning">
+                <Loading v-if="isLoadingTraitOverview" size="lg" />
+                <AnimatedNumber v-else :value="traitOverview.duplicate" />
+              </div>
+            </div>
+          </Card>
+
+          <Card
+            variant="danger"
+            :padding="false"
+            :borderless="false"
+            clickable
+            class="issue-card"
+            @click="handleIssueRowClick('invalid', $event)"
+            @keydown.enter.prevent="openManagementWithFilter('dead')"
+            @keydown.space.prevent="openManagementWithFilter('dead')"
+          >
+            <div class="issue-card-content">
+              <div class="issue-card-header">
+                <span class="issue-card-title">
+                  <LucideIcon name="unlink" :size="18" />
+                  <span>{{ t('popup_issue_invalid') }}</span>
+                </span>
+                <button
+                  type="button"
+                  class="issue-action"
+                  :title="t('popup_issue_delete_tooltip_invalid')"
+                  @click.stop="handleBatchDelete('invalid')"
+                >
+                  <LucideIcon name="trash" :size="16" />
+                </button>
+              </div>
+              <div class="issue-card-count issue-card-count--danger">
+                <Loading v-if="isLoadingTraitOverview" size="lg" />
+                <AnimatedNumber v-else :value="traitOverview.invalid" />
+              </div>
+            </div>
+          </Card>
+        </div>
+      </section>
+
+      <md-divider class="popup-section-divider"></md-divider>
+
+      <!-- ⚡ 快速操作（MWC 列表按钮行） -->
+      <section class="actions-section">
+        <div class="actions-grid">
+          <Card
+            variant="default"
+            :padding="false"
+            :borderless="false"
+            clickable
+            class="action-card"
+            @click="openManualOrganizePage"
+          >
+            <div class="action-card-content">
+              <div class="action-card-icon">
+                <LucideIcon name="folder" :size="24" />
+              </div>
+              <div class="action-card-label">{{ t('popup_action_organize') }}</div>
+            </div>
+          </Card>
+          <Card
+            variant="default"
+            :padding="false"
+            :borderless="false"
+            clickable
+            class="action-card"
+            @click="openSettings"
+          >
+            <div class="action-card-content">
+              <div class="action-card-icon">
+                <LucideIcon name="settings" :size="24" />
+              </div>
+              <div class="action-card-label">{{ t('popup_action_settings') }}</div>
+            </div>
+          </Card>
+        </div>
+      </section>
+    </div>
+  </div>
+</template>
 
 <style>
 html,

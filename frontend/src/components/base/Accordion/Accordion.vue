@@ -1,9 +1,3 @@
-<template>
-  <md-list class="accordion" role="presentation">
-    <slot />
-  </md-list>
-</template>
-
 <script setup lang="ts">
 import { provide, ref } from 'vue'
 import type { AccordionProps } from './Accordion.d'
@@ -22,9 +16,9 @@ const expandedItems = ref<Set<string>>(new Set())
 // 初始化默认展开项
 if (props.defaultExpanded) {
   if (Array.isArray(props.defaultExpanded)) {
-    props.defaultExpanded.forEach(id => expandedItems.value.add(id))
+    expandedItems.value = new Set(props.defaultExpanded)
   } else {
-    expandedItems.value.add(props.defaultExpanded)
+    expandedItems.value = new Set([props.defaultExpanded])
   }
 }
 
@@ -63,6 +57,12 @@ provide('accordion', {
   isItemExpanded
 })
 </script>
+
+<template>
+  <md-list class="accordion" role="presentation">
+    <slot />
+  </md-list>
+</template>
 
 <style scoped>
 .accordion {

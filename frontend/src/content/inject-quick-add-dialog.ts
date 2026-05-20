@@ -810,7 +810,7 @@ function createNativeStyleDialog(data: {
     }
 
     try {
-      const response = await new Promise<{
+      const duplicateCheckResponse = await new Promise<{
         success?: boolean
         exists?: boolean
         existingBookmarks?: Array<{
@@ -838,10 +838,10 @@ function createNativeStyleDialog(data: {
       })
 
       if (
-        response.success &&
-        response.exists &&
-        response.existingBookmarks &&
-        response.existingBookmarks.length > 0
+        duplicateCheckResponse.success &&
+        duplicateCheckResponse.exists &&
+        duplicateCheckResponse.existingBookmarks &&
+        duplicateCheckResponse.existingBookmarks.length > 0
       ) {
         // 显示重复警告
         if (duplicateWarningDiv) {
@@ -878,7 +878,7 @@ function createNativeStyleDialog(data: {
         warningIcon.textContent = '⚠️'
         warningIcon.style.cssText = 'flex-shrink: 0; font-size: 14px;'
         const warningTitle = document.createElement('span')
-        warningTitle.textContent = `当前书签已存在（共 ${response.existingBookmarks.length} 个）`
+        warningTitle.textContent = `当前书签已存在（共 ${duplicateCheckResponse.existingBookmarks.length} 个）`
         warningHeader.appendChild(warningIcon)
         warningHeader.appendChild(warningTitle)
 
@@ -892,7 +892,7 @@ function createNativeStyleDialog(data: {
           line-height: 1.5;
         `
 
-        response.existingBookmarks.forEach((bookmark, index) => {
+        duplicateCheckResponse.existingBookmarks.forEach((bookmark, index) => {
           const item = document.createElement('div')
           item.style.cssText = `
             display: flex;
@@ -1471,7 +1471,7 @@ async function loadFolderTree(
     console.log('[ContentScript:QuickAdd] 开始加载文件夹树')
 
     // 使用 Promise 包装 sendMessage，确保能正确处理异步响应
-    const response = await new Promise<{
+    const treeResponse = await new Promise<{
       success?: boolean
       tree?: chrome.bookmarks.BookmarkTreeNode[]
       error?: string
@@ -1513,12 +1513,12 @@ async function loadFolderTree(
       )
     })
 
-    if (!response.success) {
-      log('error', '获取书签树失败', response.error)
+    if (!treeResponse.success) {
+      log('error', '获取书签树失败', treeResponse.error)
       return
     }
 
-    const tree = response.tree
+    const tree = treeResponse.tree
     if (!tree || !Array.isArray(tree) || tree.length === 0) {
       log('error', '书签树数据无效', { tree })
       return
@@ -1606,7 +1606,7 @@ async function getVectorRecommendations(
   try {
     log('info', '📤 请求向量推荐', { title, url })
 
-    const response = await new Promise<{
+    const recommendationResponse = await new Promise<{
       success?: boolean
       recommendations?: Array<{
         folderId: string
@@ -1638,14 +1638,14 @@ async function getVectorRecommendations(
       )
     })
 
-    if (response.success && response.recommendations) {
+    if (recommendationResponse.success && recommendationResponse.recommendations) {
       log('info', '✅ 收到向量推荐', {
-        count: response.recommendations.length,
-        topRecommendation: response.recommendations[0]?.folderPath
+        count: recommendationResponse.recommendations.length,
+        topRecommendation: recommendationResponse.recommendations[0]?.folderPath
       })
-      return response.recommendations
+      return recommendationResponse.recommendations
     } else {
-      log('warn', '向量推荐失败', response.error)
+      log('warn', '向量推荐失败', recommendationResponse.error)
       return []
     }
   } catch (error) {

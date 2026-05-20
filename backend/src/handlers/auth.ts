@@ -42,15 +42,19 @@ export function getProviderConfig(provider: string, env: Env): ProviderConfig | 
       env.AUTH_GOOGLE_USERINFO_URL ||
       'https://openidconnect.googleapis.com/v1/userinfo'
     if (!clientId) return null
-    return {
+    
+    const config: ProviderConfig = {
       provider,
       clientId,
-      clientSecret,
       authUrl,
       tokenUrl,
       userInfoUrl,
       scope: 'openid email profile'
     }
+    if (clientSecret) {
+      config.clientSecret = clientSecret
+    }
+    return config
   }
   if (provider === 'microsoft') {
     const clientId = env.AUTH_MICROSOFT_CLIENT_ID
@@ -64,15 +68,19 @@ export function getProviderConfig(provider: string, env: Env): ProviderConfig | 
     const userInfoUrl =
       env.AUTH_MICROSOFT_USERINFO_URL || 'https://graph.microsoft.com/v1.0/me'
     if (!clientId) return null
-    return {
+    
+    const config: ProviderConfig = {
       provider,
       clientId,
-      clientSecret,
       authUrl,
       tokenUrl,
       userInfoUrl,
       scope: 'openid email profile'
     }
+    if (clientSecret) {
+      config.clientSecret = clientSecret
+    }
+    return config
   }
   return null
 }
@@ -337,7 +345,8 @@ async function fetchUserInfoWithAccessToken(
     const uResp = await fetch(cfg.userInfoUrl, {
       headers: { Authorization: `Bearer ${accessToken}` }
     })
-    const u: Partial<OAuthUserInfo> = await uResp.json().catch(() => ({}))
+    const rawData = await uResp.json().catch(() => ({}))
+    const u = rawData as Partial<OAuthUserInfo>
     return { email: String(u.email || ''), sub: String(u.sub || '') }
   }
   if (provider === 'github') {
@@ -377,7 +386,8 @@ async function fetchUserInfoWithAccessToken(
     const uResp = await fetch(cfg.userInfoUrl, {
       headers: { Authorization: `Bearer ${accessToken}` }
     })
-    const u: Partial<OAuthUserInfo> = await uResp.json().catch(() => ({}))
+    const rawData = await uResp.json().catch(() => ({}))
+    const u = rawData as Partial<OAuthUserInfo>
     return { email: String(u.email || ''), sub: String(u.sub || '') }
   }
   return { email: '', sub: '' }

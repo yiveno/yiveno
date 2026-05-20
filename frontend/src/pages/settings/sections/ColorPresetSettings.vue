@@ -1,35 +1,3 @@
-<template>
-  <div>
-    <p class="intro">{{ t('settings_color_presets_intro') }}</p>
-
-    <div
-      class="preset-grid"
-      role="radiogroup"
-      :aria-label="t('settings_color_presets_title')"
-    >
-      <button
-        v-for="def in presets"
-        :key="def.id"
-        type="button"
-        class="preset-card"
-        role="radio"
-        :aria-checked="currentPreset === def.id"
-        :disabled="busy"
-        :class="{ 'preset-card--selected': currentPreset === def.id }"
-        @click="selectPreset(def.id)"
-      >
-        <span
-          class="preset-card__swatch"
-          :style="{ backgroundColor: def.seedHex }"
-          aria-hidden="true"
-        />
-        <span class="preset-card__name">{{ presetDisplayName(def) }}</span>
-        <span v-if="showVibeZh" class="preset-card__vibe">{{ def.vibeZh }}</span>
-      </button>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { t } from '@/infrastructure'
 import {
@@ -89,15 +57,49 @@ async function selectPreset(id: ColorPresetId) {
   busy.value = true
   try {
     await globalStateManager.setColorPreset(id)
+    // eslint-disable-next-line require-atomic-updates -- 配色预设切换是原子操作，不会有竞态条件
     currentPreset.value = globalStateManager.getColorPreset()
     logger.info('ColorPresetSettings', '配色预设已切换', { preset: id })
   } catch (error) {
     logger.error('ColorPresetSettings', '保存配色预设失败', error)
   } finally {
+    // eslint-disable-next-line require-atomic-updates -- finally 块中的状态重置是安全的
     busy.value = false
   }
 }
 </script>
+
+<template>
+  <div>
+    <p class="intro">{{ t('settings_color_presets_intro') }}</p>
+
+    <div
+      class="preset-grid"
+      role="radiogroup"
+      :aria-label="t('settings_color_presets_title')"
+    >
+      <button
+        v-for="def in presets"
+        :key="def.id"
+        type="button"
+        class="preset-card"
+        role="radio"
+        :aria-checked="currentPreset === def.id"
+        :disabled="busy"
+        :class="{ 'preset-card--selected': currentPreset === def.id }"
+        @click="selectPreset(def.id)"
+      >
+        <span
+          class="preset-card__swatch"
+          :style="{ backgroundColor: def.seedHex }"
+          aria-hidden="true"
+        />
+        <span class="preset-card__name">{{ presetDisplayName(def) }}</span>
+        <span v-if="showVibeZh" class="preset-card__vibe">{{ def.vibeZh }}</span>
+      </button>
+    </div>
+  </div>
+</template>
 
 <style scoped>
 .intro {

@@ -254,8 +254,7 @@ import '@material/web/icon/icon.js'
   border-radius: var(--md-sys-shape-corner-medium);
 
   /* ✅ 使用 Material Design 3 动画 */
-  transition: all var(--md-sys-motion-duration-short2)
-    var(--md-sys-motion-easing-standard);
+  transition: all var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
 }
 
 /* ✅ 必须实现 State Layer */
@@ -265,8 +264,7 @@ import '@material/web/icon/icon.js'
   inset: 0;
   background-color: currentColor;
   opacity: 0;
-  transition: opacity var(--md-sys-motion-duration-short2)
-    var(--md-sys-motion-easing-standard);
+  transition: opacity var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
 }
 
 .md-custom-component:hover::before {

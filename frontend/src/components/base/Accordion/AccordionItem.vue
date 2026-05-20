@@ -1,33 +1,3 @@
-<template>
-  <md-list-item
-    class="accordion-item no-select"
-    :class="{ 'accordion-item--expanded': isExpanded }"
-    type="button"
-    @click="handleToggle"
-  >
-    <span slot="start" class="accordion-header__start" aria-hidden="true">
-      <LucideIcon v-if="icon" :name="icon" :size="iconSize" />
-    </span>
-
-    <div slot="headline" class="accordion-title">
-      <span>{{ title }}</span>
-      <slot name="badge" />
-    </div>
-
-    <span slot="end" class="accordion-header__end" aria-hidden="true">
-      <LucideIcon
-        :name="isExpanded ? 'chevron-down' : 'chevron-right'"
-        :size="16"
-        class="accordion-icon"
-      />
-    </span>
-  </md-list-item>
-
-  <div v-if="isExpanded" class="accordion-content">
-    <slot />
-  </div>
-</template>
-
 <script setup lang="ts">
 import { inject, computed } from 'vue'
 import { LucideIcon } from '@/components'
@@ -59,6 +29,36 @@ const handleToggle = () => {
   accordion.toggleItem(props.id)
 }
 </script>
+
+<template>
+  <md-list-item
+    class="accordion-item no-select"
+    :class="{ 'accordion-item--expanded': isExpanded }"
+    type="button"
+    @click="handleToggle"
+  >
+    <span slot="start" class="accordion-header__start" aria-hidden="true">
+      <LucideIcon v-if="icon" :name="icon" :size="iconSize" />
+    </span>
+
+    <div slot="headline" class="accordion-title">
+      <span>{{ title }}</span>
+      <slot name="badge" />
+    </div>
+
+    <span slot="end" class="accordion-header__end" aria-hidden="true">
+      <LucideIcon
+        :name="isExpanded ? 'chevron-down' : 'chevron-right'"
+        :size="16"
+        class="accordion-icon"
+      />
+    </span>
+  </md-list-item>
+
+  <div v-if="isExpanded" class="accordion-content">
+    <slot />
+  </div>
+</template>
 
 <style scoped>
 .accordion-item {

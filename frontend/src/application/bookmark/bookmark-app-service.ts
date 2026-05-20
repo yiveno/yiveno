@@ -68,17 +68,24 @@ export class BookmarkAppService {
       if (result.ok && result.value) {
         // 转换 BookmarkRecord 为 BookmarkNode
         const nodes: BookmarkNode[] = result.value.map(
-          (record: BookmarkRecord) => ({
-            id: String(record.id),
-            title: record.title,
-            url: record.url,
-            parentId: record.parentId ? String(record.parentId) : undefined,
-            index: record.index,
-            dateAdded: record.dateAdded,
-            children: [],
-            childrenCount: record.childrenCount,
-            _childrenLoaded: false
-          })
+          (record: BookmarkRecord) => {
+            const node: BookmarkNode = {
+              id: String(record.id),
+              title: record.title,
+              url: record.url,
+              index: record.index,
+              dateAdded: record.dateAdded,
+              children: [],
+              childrenCount: record.childrenCount,
+              _childrenLoaded: false
+            }
+            
+            if (record.parentId) {
+              node.parentId = String(record.parentId)
+            }
+            
+            return node
+          }
         )
         return ok(nodes)
       }
@@ -105,17 +112,24 @@ export class BookmarkAppService {
       if (result.ok && result.value) {
         // 转换 BookmarkRecord 为 BookmarkNode
         const nodes: BookmarkNode[] = result.value.map(
-          (record: BookmarkRecord) => ({
-            id: String(record.id),
-            title: record.title,
-            url: record.url,
-            parentId: record.parentId ? String(record.parentId) : undefined,
-            index: record.index,
-            dateAdded: record.dateAdded,
-            children: [],
-            childrenCount: record.childrenCount,
-            _childrenLoaded: false
-          })
+          (record: BookmarkRecord) => {
+            const node: BookmarkNode = {
+              id: String(record.id),
+              title: record.title,
+              url: record.url,
+              index: record.index,
+              dateAdded: record.dateAdded,
+              children: [],
+              childrenCount: record.childrenCount,
+              _childrenLoaded: false
+            }
+            
+            if (record.parentId) {
+              node.parentId = String(record.parentId)
+            }
+            
+            return node
+          }
         )
         return ok(nodes)
       }

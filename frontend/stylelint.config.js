@@ -195,8 +195,7 @@ export default {
       },
       {
         severity: 'warning',
-        message:
-          '建议使用 CSS 变量，如 var(--spacing-4)、var(--text-base)、var(--radius-md)'
+        message: '建议使用 CSS 变量，如 var(--spacing-4)、var(--text-base)、var(--radius-md)'
       }
     ],
 

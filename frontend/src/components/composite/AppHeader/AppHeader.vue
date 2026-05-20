@@ -1,48 +1,3 @@
-<template>
-  <header :class="headerClasses" aria-label="AcuityBookmarks">
-    <div
-      v-if="showSidePanelToggle"
-      class="app-header__col app-header__col--left"
-    >
-      <md-icon-button
-        class="app-header__action"
-        :style="{ '--md-icon-button-icon-size': '30px' }"
-        :title="sidePanelTooltip"
-        :aria-label="sidePanelTooltip"
-        @click="handleOpenSidePanel"
-      >
-        <LucideIcon name="panel-left" :size="30" />
-      </md-icon-button>
-    </div>
-
-    <div class="app-header__col app-header__col--center">
-      <img
-        v-if="showLogo"
-        :src="logoSrc"
-        alt="AcuityBookmarks Logo"
-        class="app-header__logo"
-      />
-      <span v-if="showName" class="app-header__name">AcuityBookmarks</span>
-    </div>
-
-    <div class="app-header__col app-header__col--right">
-      <ThemeToggle v-if="showTheme" />
-      <UserMenu v-if="showAccount" :size="30" />
-      <md-icon-button
-        v-if="showSettings"
-        class="app-header__action"
-        :style="{ '--md-icon-button-icon-size': '30px' }"
-        title="打开设置"
-        aria-label="打开设置"
-        @click="handleOpenSettings"
-      >
-        <LucideIcon name="settings" :size="30" />
-      </md-icon-button>
-      <slot name="actions" />
-    </div>
-  </header>
-</template>
-
 <script setup lang="ts">
 import ThemeToggle from '@/components/composite/ThemeToggle/ThemeToggle.vue'
 import UserMenu from '@/components/composite/UserMenu/UserMenu.vue'
@@ -211,6 +166,51 @@ onMounted(() => {
   })
 })
 </script>
+
+<template>
+  <header :class="headerClasses" aria-label="AcuityBookmarks">
+    <div
+      v-if="showSidePanelToggle"
+      class="app-header__col app-header__col--left"
+    >
+      <md-icon-button
+        class="app-header__action"
+        :style="{ '--md-icon-button-icon-size': '30px' }"
+        :title="sidePanelTooltip"
+        :aria-label="sidePanelTooltip"
+        @click="handleOpenSidePanel"
+      >
+        <LucideIcon name="panel-left" :size="30" />
+      </md-icon-button>
+    </div>
+
+    <div class="app-header__col app-header__col--center">
+      <img
+        v-if="showLogo"
+        :src="logoSrc"
+        alt="AcuityBookmarks Logo"
+        class="app-header__logo"
+      />
+      <span v-if="showName" class="app-header__name">AcuityBookmarks</span>
+    </div>
+
+    <div class="app-header__col app-header__col--right">
+      <ThemeToggle v-if="showTheme" />
+      <UserMenu v-if="showAccount" :size="30" />
+      <md-icon-button
+        v-if="showSettings"
+        class="app-header__action"
+        :style="{ '--md-icon-button-icon-size': '30px' }"
+        title="打开设置"
+        aria-label="打开设置"
+        @click="handleOpenSettings"
+      >
+        <LucideIcon name="settings" :size="30" />
+      </md-icon-button>
+      <slot name="actions" />
+    </div>
+  </header>
+</template>
 
 <style scoped>
 .app-header {

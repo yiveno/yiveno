@@ -1,3 +1,352 @@
+<script setup lang="ts">
+import { computed, onMounted, ref, watch } from 'vue'
+import { LucideIcon, Tooltip, Card } from '@/components'
+import { userLLMClient } from '@/infrastructure/llm/user-llm-client'
+import type { UserLLMProvider } from '@/infrastructure/llm/user-llm-client'
+import { llmAdapter } from '@/infrastructure/llm/llm-adapter'
+import { builtInLLMClient } from '@/infrastructure/llm/builtin-llm-client'
+import { notifyError, notifySuccess, notifyWarning } from '@/application/notification/notification-service'
+import { useSubscription } from '@/composables/useSubscription'
+import { logger } from '@/infrastructure/logging/logger'
+
+defineOptions({ name: 'AISettings' })
+
+const { isPro } = useSubscription()
+
+// Tab 状态
+const activeTab = ref<'apikey' | 'chrome'>('apikey')
+
+// Chrome AI 可用性
+const chromeAIAvailable = ref(false)
+const recheckingChromeAI = ref(false)
+
+const aiEnabled = ref(false)
+const aiAutoEnabled = ref(true)
+const semanticSearchEnabled = ref(false)
+
+const selectedProvider = ref<UserLLMProvider>('openai')
+const apiKey = ref('')
+const selectedModel = ref('')
+const customBaseUrl = ref('')
+const showKey = ref(false)
+const saving = ref(false)
+const testing = ref(false)
+const isSaved = ref(false)
+
+// 各服务商的模型列表
+const modelsByProvider: Record<UserLLMProvider, Array<{ value: string; label: string }>> = {
+  openai: [
+    { value: 'gpt-4o-mini', label: 'GPT-4o Mini (推荐) - 快速且经济' },
+    { value: 'gpt-4o', label: 'GPT-4o - 最强性能' },
+    { value: 'gpt-4-turbo', label: 'GPT-4 Turbo - 平衡性能' },
+    { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo - 最经济' },
+    { value: 'custom', label: '其他模型...' }
+  ],
+  claude: [
+    { value: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet (推荐) - 最强性能' },
+    { value: 'claude-3-5-haiku-20241022', label: 'Claude 3.5 Haiku - 快速响应' },
+    { value: 'claude-3-opus-20240229', label: 'Claude 3 Opus - 复杂任务' },
+    { value: 'claude-3-haiku-20240307', label: 'Claude 3 Haiku - 最经济' },
+    { value: 'custom', label: '其他模型...' }
+  ],
+  gemini: [
+    { value: 'gemini-2.0-flash-exp', label: 'Gemini 2.0 Flash (推荐) - 最新实验版' },
+    { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro - 强大性能' },
+    { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash - 快速响应' },
+    { value: 'custom', label: '其他模型...' }
+  ]
+}
+
+// 自定义模型名称
+const customModelName = ref('')
+
+// 当前服务商的可用模型
+const availableModels = computed(() => modelsByProvider[selectedProvider.value])
+
+// 是否显示自定义模型输入框
+const showCustomModelInput = computed(() => selectedModel.value === 'custom')
+
+// 监听服务商切换,自动选择推荐模型
+watch(selectedProvider, (newProvider) => {
+  const models = modelsByProvider[newProvider]
+  if (models.length > 0) {
+    selectedModel.value = models[0].value // 默认选择第一个(推荐)
+    customModelName.value = '' // 清空自定义模型名称
+  }
+})
+
+const providerNames: Record<UserLLMProvider, string> = {
+  openai: 'OpenAI',
+  claude: 'Anthropic',
+  gemini: 'Google'
+}
+
+const providerLinks: Record<UserLLMProvider, string> = {
+  openai: 'https://platform.openai.com/api-keys',
+  claude: 'https://console.anthropic.com/settings/keys',
+  gemini: 'https://aistudio.google.com/app/apikey'
+}
+const keyPlaceholder = computed(() => {
+  const map: Record<UserLLMProvider, string> = {
+    openai: 'sk-...',
+    claude: 'sk-ant-...',
+    gemini: 'AIza...'
+  }
+  return map[selectedProvider.value]
+})
+
+// 是否已配置 API Key
+const hasApiKeyConfigured = computed(() => !!apiKey.value.trim())
+
+// 是否可以启用 AI (需要 Pro 且至少有一种 LLM 方案可用)
+const canEnableAI = computed(() => {
+  return isPro.value && (hasApiKeyConfigured.value || chromeAIAvailable.value)
+})
+
+// AI Toggle 的禁用状态
+const aiToggleDisabled = computed(() => !canEnableAI.value)
+
+// AI Toggle 的 Tooltip 提示
+const aiToggleTooltip = computed(() => {
+  if (!isPro.value) {
+    return 'AI 功能仅限 Pro 用户使用。升级到 Pro'
+  }
+  if (!hasApiKeyConfigured.value && !chromeAIAvailable.value) {
+    return '请先配置 API Key 或启用 Chrome AI'
+  }
+  return 'AI 功能已就绪，可以开启'
+})
+
+/** 处理 Tab 切换 */
+function handleTabChange() {
+  // Tab 切换逻辑
+}
+
+/** 处理 AI 开关切换 */
+async function handleAIToggle(event: Event) {
+  const target = event.target as HTMLInputElement
+  aiEnabled.value = target.checked
+  
+  if (!aiEnabled.value) {
+    // 关闭 AI 时，联动关闭所有 AI 功能开关
+    aiAutoEnabled.value = false
+    semanticSearchEnabled.value = false
+    
+    // 保存到 storage
+    try {
+      await chrome.storage.local.set({
+        aiAutoBookmark: false,
+        semanticSearchEnabled: false
+      })
+      logger.info('AISettings', 'AI 功能已全部关闭')
+    } catch (error) {
+      logger.error('AISettings', '保存 AI 功能状态失败', error)
+    }
+    
+    // 清除 AI 配置
+    clearConfig()
+  }
+}
+
+/** 处理 AI 自动归纳开关切换 */
+async function handleAIAutoToggle(event: Event) {
+  const target = event.target as unknown as { selected: boolean }
+  aiAutoEnabled.value = target.selected
+  try {
+    await chrome.storage.local.set({ aiAutoBookmark: aiAutoEnabled.value })
+    logger.info('AISettings', 'AI 自动归纳设置已更新', { enabled: aiAutoEnabled.value })
+  } catch (error) {
+    logger.error('AISettings', '保存 AI 自动归纳设置失败', error)
+  }
+}
+
+/** 处理语义搜索开关切换 */
+async function handleSemanticSearchToggle(event: Event) {
+  const target = event.target as unknown as { selected: boolean }
+  semanticSearchEnabled.value = target.selected
+  try {
+    await chrome.storage.local.set({ semanticSearchEnabled: semanticSearchEnabled.value })
+    logger.info('AISettings', '语义搜索设置已更新', { enabled: semanticSearchEnabled.value })
+  } catch (error) {
+    logger.error('AISettings', '保存语义搜索设置失败', error)
+  }
+}
+
+/** 保存配置 */
+async function saveConfig() {
+  if (!apiKey.value.trim()) return
+  
+  // 如果选择了"其他模型",但没有输入自定义模型名称
+  if (selectedModel.value === 'custom' && !customModelName.value.trim()) {
+    notifyError('请输入自定义模型名称', 'AI 设置')
+    return
+  }
+  
+  saving.value = true
+  try {
+    // 确定最终使用的模型名称
+    const finalModel = selectedModel.value === 'custom' 
+      ? customModelName.value.trim() 
+      : selectedModel.value
+    
+    const config: {
+      provider: UserLLMProvider
+      apiKey: string
+      model?: string
+      baseUrl?: string
+    } = {
+      provider: selectedProvider.value,
+      apiKey: apiKey.value.trim()
+    }
+    
+    if (finalModel) {
+      config.model = finalModel
+    }
+    
+    const trimmedBaseUrl = customBaseUrl.value.trim()
+    if (trimmedBaseUrl) {
+      config.baseUrl = trimmedBaseUrl
+    }
+    
+    await userLLMClient.saveConfig(config)
+    llmAdapter.clearCapabilitiesCache()
+    isSaved.value = true
+    notifySuccess('AI 配置已保存', 'AI 设置')
+  } catch (_e) {
+    notifyError('保存失败，请重试', 'AI 设置')
+  } finally {
+    saving.value = false
+  }
+}
+
+/** 各服务商控制台链接 */
+const consoleLinks: Record<UserLLMProvider, { url: string; text: string }> = {
+  openai: { url: 'https://platform.openai.com/account/billing', text: '前往 OpenAI 控制台充值' },
+  claude: { url: 'https://console.anthropic.com/settings/billing', text: '前往 Anthropic 控制台充值' },
+  gemini: { url: 'https://aistudio.google.com/app/apikey', text: '前往 Google AI Studio 查看额度' }
+}
+
+/** 测试连接 */
+async function testConnection() {
+  testing.value = true
+  try {
+    await userLLMClient.complete('请回复"ok"', { maxTokens: 5 })
+    notifySuccess(`连接成功，${providerNames[selectedProvider.value]} 可正常使用`, 'AI 设置')
+  } catch (e) {
+    const msg = String(e).replace(/^Error:\s*/, '')
+    const isQuotaError = msg.includes('额度') || msg.includes('充值') || msg.includes('频率')
+    const isKeyError = msg.includes('无效') || msg.includes('过期') || msg.includes('权限')
+    const link = consoleLinks[selectedProvider.value]
+
+    if ((isQuotaError || isKeyError) && link.url) {
+      notifyWarning(`${msg}（${link.text}：${link.url}）`, 'AI 设置')
+    } else {
+      notifyError(link.url ? msg : link.text, 'AI 设置')
+    }
+  } finally {
+    testing.value = false
+  }
+}
+
+/** 清除配置 */
+async function clearConfig() {
+  await userLLMClient.clearConfig()
+  llmAdapter.clearCapabilitiesCache()
+  apiKey.value = ''
+  selectedModel.value = modelsByProvider[selectedProvider.value][0].value
+  customModelName.value = ''
+  customBaseUrl.value = ''
+  isSaved.value = false
+  notifySuccess('AI 配置已清除', 'AI 设置')
+}
+
+/** 重新检测 Chrome AI 可用性 */
+async function recheckChromeAI() {
+  recheckingChromeAI.value = true
+  try {
+    const previousStatus = chromeAIAvailable.value
+    // eslint-disable-next-line require-atomic-updates -- Chrome AI 可用性检测是原子操作，不会有竞态条件
+    chromeAIAvailable.value = await builtInLLMClient.isAvailable()
+    
+    logger.info('AISettings', 'Chrome AI 重新检测完成', { 
+      available: chromeAIAvailable.value,
+      changed: previousStatus !== chromeAIAvailable.value
+    })
+    
+    // 状态变化时给用户反馈
+    if (previousStatus !== chromeAIAvailable.value) {
+      if (chromeAIAvailable.value) {
+        notifySuccess('Chrome AI 已成功启用！', 'AI 设置')
+      } else {
+        notifyWarning('Chrome AI 仍未启用，请检查配置步骤', 'AI 设置')
+      }
+    } else {
+      if (chromeAIAvailable.value) {
+        notifySuccess('Chrome AI 状态正常', 'AI 设置')
+      } else {
+        notifyWarning('Chrome AI 仍未启用', 'AI 设置')
+      }
+    }
+  } catch (error) {
+    logger.error('AISettings', 'Chrome AI 重新检测失败', error)
+    notifyError('检测失败，请重试', 'AI 设置')
+  } finally {
+    recheckingChromeAI.value = false
+  }
+}
+
+onMounted(async () => {
+  // 加载 AI 配置
+  const config = await userLLMClient.getConfig()
+  if (config) {
+    aiEnabled.value = true
+    selectedProvider.value = config.provider
+    apiKey.value = config.apiKey
+    customBaseUrl.value = config.baseUrl || ''
+    isSaved.value = true
+    
+    if (config.model) {
+      const models = modelsByProvider[config.provider]
+      const presetModel = models.find(m => m.value === config.model)
+      
+      if (presetModel) {
+        selectedModel.value = config.model
+      } else {
+        selectedModel.value = 'custom'
+        customModelName.value = config.model
+      }
+    } else {
+      selectedModel.value = modelsByProvider[config.provider][0].value
+    }
+  } else {
+    selectedModel.value = modelsByProvider[selectedProvider.value][0].value
+  }
+  
+  // 加载 AI 功能开关状态
+  try {
+    const result = await chrome.storage.local.get(['aiAutoBookmark', 'semanticSearchEnabled'])
+    aiAutoEnabled.value = result.aiAutoBookmark !== false
+    semanticSearchEnabled.value = result.semanticSearchEnabled === true
+    logger.info('AISettings', '设置已加载', {
+      aiAuto: aiAutoEnabled.value,
+      semanticSearch: semanticSearchEnabled.value
+    })
+  } catch (error) {
+    logger.error('AISettings', '加载设置失败', error)
+  }
+  
+  // 检测 Chrome AI 是否可用
+  try {
+    // eslint-disable-next-line require-atomic-updates -- Chrome AI 可用性检测是原子操作，不会有竞态条件
+    chromeAIAvailable.value = await builtInLLMClient.isAvailable()
+    logger.info('AISettings', 'Chrome AI 可用性检测', { available: chromeAIAvailable.value })
+  } catch (error) {
+    logger.error('AISettings', 'Chrome AI 检测失败', error)
+    chromeAIAvailable.value = false
+  }
+})
+</script>
+
 <template>
   <div class="settings-section">
     <!-- 启用 AI 开关 -->
@@ -357,339 +706,6 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
-import { LucideIcon, Tooltip, Card } from '@/components'
-import { userLLMClient } from '@/infrastructure/llm/user-llm-client'
-import type { UserLLMProvider } from '@/infrastructure/llm/user-llm-client'
-import { llmAdapter } from '@/infrastructure/llm/llm-adapter'
-import { builtInLLMClient } from '@/infrastructure/llm/builtin-llm-client'
-import { notifyError, notifySuccess, notifyWarning } from '@/application/notification/notification-service'
-import { useSubscription } from '@/composables/useSubscription'
-import { logger } from '@/infrastructure/logging/logger'
-
-defineOptions({ name: 'AISettings' })
-
-const { isPro } = useSubscription()
-
-// Tab 状态
-const activeTab = ref<'apikey' | 'chrome'>('apikey')
-
-// Chrome AI 可用性
-const chromeAIAvailable = ref(false)
-const recheckingChromeAI = ref(false)
-
-const aiEnabled = ref(false)
-const aiAutoEnabled = ref(true)
-const semanticSearchEnabled = ref(false)
-
-const selectedProvider = ref<UserLLMProvider>('openai')
-const apiKey = ref('')
-const selectedModel = ref('')
-const customBaseUrl = ref('')
-const showKey = ref(false)
-const saving = ref(false)
-const testing = ref(false)
-const isSaved = ref(false)
-
-// 各服务商的模型列表
-const modelsByProvider: Record<UserLLMProvider, Array<{ value: string; label: string }>> = {
-  openai: [
-    { value: 'gpt-4o-mini', label: 'GPT-4o Mini (推荐) - 快速且经济' },
-    { value: 'gpt-4o', label: 'GPT-4o - 最强性能' },
-    { value: 'gpt-4-turbo', label: 'GPT-4 Turbo - 平衡性能' },
-    { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo - 最经济' },
-    { value: 'custom', label: '其他模型...' }
-  ],
-  claude: [
-    { value: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet (推荐) - 最强性能' },
-    { value: 'claude-3-5-haiku-20241022', label: 'Claude 3.5 Haiku - 快速响应' },
-    { value: 'claude-3-opus-20240229', label: 'Claude 3 Opus - 复杂任务' },
-    { value: 'claude-3-haiku-20240307', label: 'Claude 3 Haiku - 最经济' },
-    { value: 'custom', label: '其他模型...' }
-  ],
-  gemini: [
-    { value: 'gemini-2.0-flash-exp', label: 'Gemini 2.0 Flash (推荐) - 最新实验版' },
-    { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro - 强大性能' },
-    { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash - 快速响应' },
-    { value: 'custom', label: '其他模型...' }
-  ]
-}
-
-// 自定义模型名称
-const customModelName = ref('')
-
-// 当前服务商的可用模型
-const availableModels = computed(() => modelsByProvider[selectedProvider.value])
-
-// 是否显示自定义模型输入框
-const showCustomModelInput = computed(() => selectedModel.value === 'custom')
-
-// 监听服务商切换,自动选择推荐模型
-watch(selectedProvider, (newProvider) => {
-  const models = modelsByProvider[newProvider]
-  if (models.length > 0) {
-    selectedModel.value = models[0].value // 默认选择第一个(推荐)
-    customModelName.value = '' // 清空自定义模型名称
-  }
-})
-
-const providerNames: Record<UserLLMProvider, string> = {
-  openai: 'OpenAI',
-  claude: 'Anthropic',
-  gemini: 'Google'
-}
-
-const providerLinks: Record<UserLLMProvider, string> = {
-  openai: 'https://platform.openai.com/api-keys',
-  claude: 'https://console.anthropic.com/settings/keys',
-  gemini: 'https://aistudio.google.com/app/apikey'
-}
-const keyPlaceholder = computed(() => {
-  const map: Record<UserLLMProvider, string> = {
-    openai: 'sk-...',
-    claude: 'sk-ant-...',
-    gemini: 'AIza...'
-  }
-  return map[selectedProvider.value]
-})
-
-// 是否已配置 API Key
-const hasApiKeyConfigured = computed(() => !!apiKey.value.trim())
-
-// 是否可以启用 AI (需要 Pro 且至少有一种 LLM 方案可用)
-const canEnableAI = computed(() => {
-  return isPro.value && (hasApiKeyConfigured.value || chromeAIAvailable.value)
-})
-
-// AI Toggle 的禁用状态
-const aiToggleDisabled = computed(() => !canEnableAI.value)
-
-// AI Toggle 的 Tooltip 提示
-const aiToggleTooltip = computed(() => {
-  if (!isPro.value) {
-    return 'AI 功能仅限 Pro 用户使用。升级到 Pro'
-  }
-  if (!hasApiKeyConfigured.value && !chromeAIAvailable.value) {
-    return '请先配置 API Key 或启用 Chrome AI'
-  }
-  return 'AI 功能已就绪，可以开启'
-})
-
-/** 处理 Tab 切换 */
-function handleTabChange() {
-  // Tab 切换逻辑
-}
-
-/** 处理 AI 开关切换 */
-async function handleAIToggle(event: Event) {
-  const target = event.target as HTMLInputElement
-  aiEnabled.value = target.checked
-  
-  if (!aiEnabled.value) {
-    // 关闭 AI 时，联动关闭所有 AI 功能开关
-    aiAutoEnabled.value = false
-    semanticSearchEnabled.value = false
-    
-    // 保存到 storage
-    try {
-      await chrome.storage.local.set({
-        aiAutoBookmark: false,
-        semanticSearchEnabled: false
-      })
-      logger.info('AISettings', 'AI 功能已全部关闭')
-    } catch (error) {
-      logger.error('AISettings', '保存 AI 功能状态失败', error)
-    }
-    
-    // 清除 AI 配置
-    clearConfig()
-  }
-}
-
-/** 处理 AI 自动归纳开关切换 */
-async function handleAIAutoToggle(event: Event) {
-  const target = event.target as unknown as { selected: boolean }
-  aiAutoEnabled.value = target.selected
-  try {
-    await chrome.storage.local.set({ aiAutoBookmark: aiAutoEnabled.value })
-    logger.info('AISettings', 'AI 自动归纳设置已更新', { enabled: aiAutoEnabled.value })
-  } catch (error) {
-    logger.error('AISettings', '保存 AI 自动归纳设置失败', error)
-  }
-}
-
-/** 处理语义搜索开关切换 */
-async function handleSemanticSearchToggle(event: Event) {
-  const target = event.target as unknown as { selected: boolean }
-  semanticSearchEnabled.value = target.selected
-  try {
-    await chrome.storage.local.set({ semanticSearchEnabled: semanticSearchEnabled.value })
-    logger.info('AISettings', '语义搜索设置已更新', { enabled: semanticSearchEnabled.value })
-  } catch (error) {
-    logger.error('AISettings', '保存语义搜索设置失败', error)
-  }
-}
-
-/** 保存配置 */
-async function saveConfig() {
-  if (!apiKey.value.trim()) return
-  
-  // 如果选择了"其他模型",但没有输入自定义模型名称
-  if (selectedModel.value === 'custom' && !customModelName.value.trim()) {
-    notifyError('请输入自定义模型名称', 'AI 设置')
-    return
-  }
-  
-  saving.value = true
-  try {
-    // 确定最终使用的模型名称
-    const finalModel = selectedModel.value === 'custom' 
-      ? customModelName.value.trim() 
-      : selectedModel.value
-    
-    await userLLMClient.saveConfig({
-      provider: selectedProvider.value,
-      apiKey: apiKey.value.trim(),
-      model: finalModel || undefined,
-      baseUrl: customBaseUrl.value.trim() || undefined
-    })
-    llmAdapter.clearCapabilitiesCache()
-    isSaved.value = true
-    notifySuccess('AI 配置已保存', 'AI 设置')
-  } catch (_e) {
-    notifyError('保存失败，请重试', 'AI 设置')
-  } finally {
-    saving.value = false
-  }
-}
-
-/** 各服务商控制台链接 */
-const consoleLinks: Record<UserLLMProvider, { url: string; text: string }> = {
-  openai: { url: 'https://platform.openai.com/account/billing', text: '前往 OpenAI 控制台充值' },
-  claude: { url: 'https://console.anthropic.com/settings/billing', text: '前往 Anthropic 控制台充值' },
-  gemini: { url: 'https://aistudio.google.com/app/apikey', text: '前往 Google AI Studio 查看额度' }
-}
-
-/** 测试连接 */
-async function testConnection() {
-  testing.value = true
-  try {
-    await userLLMClient.complete('请回复"ok"', { maxTokens: 5 })
-    notifySuccess(`连接成功，${providerNames[selectedProvider.value]} 可正常使用`, 'AI 设置')
-  } catch (e) {
-    const msg = String(e).replace(/^Error:\s*/, '')
-    const isQuotaError = msg.includes('额度') || msg.includes('充值') || msg.includes('频率')
-    const isKeyError = msg.includes('无效') || msg.includes('过期') || msg.includes('权限')
-    const link = consoleLinks[selectedProvider.value]
-
-    if ((isQuotaError || isKeyError) && link.url) {
-      notifyWarning(`${msg}（${link.text}：${link.url}）`, 'AI 设置')
-    } else {
-      notifyError(link.url ? msg : link.text, 'AI 设置')
-    }
-  } finally {
-    testing.value = false
-  }
-}
-
-/** 清除配置 */
-async function clearConfig() {
-  await userLLMClient.clearConfig()
-  llmAdapter.clearCapabilitiesCache()
-  apiKey.value = ''
-  selectedModel.value = modelsByProvider[selectedProvider.value][0].value
-  customModelName.value = ''
-  customBaseUrl.value = ''
-  isSaved.value = false
-  notifySuccess('AI 配置已清除', 'AI 设置')
-}
-
-/** 重新检测 Chrome AI 可用性 */
-async function recheckChromeAI() {
-  recheckingChromeAI.value = true
-  try {
-    const previousStatus = chromeAIAvailable.value
-    chromeAIAvailable.value = await builtInLLMClient.isAvailable()
-    
-    logger.info('AISettings', 'Chrome AI 重新检测完成', { 
-      available: chromeAIAvailable.value,
-      changed: previousStatus !== chromeAIAvailable.value
-    })
-    
-    // 状态变化时给用户反馈
-    if (previousStatus !== chromeAIAvailable.value) {
-      if (chromeAIAvailable.value) {
-        notifySuccess('Chrome AI 已成功启用！', 'AI 设置')
-      } else {
-        notifyWarning('Chrome AI 仍未启用，请检查配置步骤', 'AI 设置')
-      }
-    } else {
-      if (chromeAIAvailable.value) {
-        notifySuccess('Chrome AI 状态正常', 'AI 设置')
-      } else {
-        notifyWarning('Chrome AI 仍未启用', 'AI 设置')
-      }
-    }
-  } catch (error) {
-    logger.error('AISettings', 'Chrome AI 重新检测失败', error)
-    notifyError('检测失败，请重试', 'AI 设置')
-  } finally {
-    recheckingChromeAI.value = false
-  }
-}
-
-onMounted(async () => {
-  // 加载 AI 配置
-  const config = await userLLMClient.getConfig()
-  if (config) {
-    aiEnabled.value = true
-    selectedProvider.value = config.provider
-    apiKey.value = config.apiKey
-    customBaseUrl.value = config.baseUrl || ''
-    isSaved.value = true
-    
-    if (config.model) {
-      const models = modelsByProvider[config.provider]
-      const presetModel = models.find(m => m.value === config.model)
-      
-      if (presetModel) {
-        selectedModel.value = config.model
-      } else {
-        selectedModel.value = 'custom'
-        customModelName.value = config.model
-      }
-    } else {
-      selectedModel.value = modelsByProvider[config.provider][0].value
-    }
-  } else {
-    selectedModel.value = modelsByProvider[selectedProvider.value][0].value
-  }
-  
-  // 加载 AI 功能开关状态
-  try {
-    const result = await chrome.storage.local.get(['aiAutoBookmark', 'semanticSearchEnabled'])
-    aiAutoEnabled.value = result.aiAutoBookmark !== false
-    semanticSearchEnabled.value = result.semanticSearchEnabled === true
-    logger.info('AISettings', '设置已加载', {
-      aiAuto: aiAutoEnabled.value,
-      semanticSearch: semanticSearchEnabled.value
-    })
-  } catch (error) {
-    logger.error('AISettings', '加载设置失败', error)
-  }
-  
-  // 检测 Chrome AI 是否可用
-  try {
-    chromeAIAvailable.value = await builtInLLMClient.isAvailable()
-    logger.info('AISettings', 'Chrome AI 可用性检测', { available: chromeAIAvailable.value })
-  } catch (error) {
-    logger.error('AISettings', 'Chrome AI 检测失败', error)
-    chromeAIAvailable.value = false
-  }
-})
-</script>
 
 <style scoped>
 @keyframes fade-in {

@@ -1,7 +1,3 @@
-<template>
-  <span>{{ display }}</span>
-</template>
-
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
 import type { AnimatedNumberProps } from './AnimatedNumber.d'
@@ -49,3 +45,7 @@ watch(
   }
 )
 </script>
+
+<template>
+  <span>{{ display }}</span>
+</template>

@@ -105,12 +105,12 @@ export async function ensureOffscreenDocument(
               
               chrome.runtime.sendMessage(
                 { __offscreenRequest__: true, type: 'PING' },
-                (response) => {
+                (pingResponse) => {
                   clearTimeout(timer)
                   if (chrome.runtime.lastError) {
                     reject(new Error(chrome.runtime.lastError.message))
                   } else {
-                    resolve(response || { ok: false })
+                    resolve(pingResponse || { ok: false })
                   }
                 }
               )
@@ -134,14 +134,23 @@ export async function ensureOffscreenDocument(
       })
       .then(() => true)
       .catch(error => {
+        const errorInfo: {
+          error: string
+          stack?: string
+          errorType: string
+        } = {
+          error: error instanceof Error ? error.message : String(error),
+          errorType: error instanceof Error ? error.constructor.name : typeof error
+        }
+        
+        if (error instanceof Error && error.stack) {
+          errorInfo.stack = error.stack
+        }
+        
         logger.error(
           'OffscreenManager',
           '❌ 无法创建 Offscreen Document',
-          {
-            error: error instanceof Error ? error.message : String(error),
-            stack: error instanceof Error ? error.stack : undefined,
-            errorType: error instanceof Error ? error.constructor.name : typeof error
-          }
+          errorInfo
         )
         return false
       })

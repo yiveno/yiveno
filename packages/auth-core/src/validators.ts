@@ -11,9 +11,13 @@ export function validateEmail(email: string): ValidationResult {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   const valid = emailRegex.test(email)
 
+  if (valid) {
+    return { valid: true }
+  }
+
   return {
-    valid,
-    message: valid ? undefined : '邮箱格式不正确'
+    valid: false,
+    message: '邮箱格式不正确'
   }
 }
 

@@ -1,3 +1,1458 @@
+<script setup lang="ts">
+import { schedulerService } from '@/application/scheduler/scheduler-service'
+import { useNotification } from '@/composables/useNotification'
+import { useThemeSync } from '@/composables/useThemeSync'
+import {
+  computed,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  ref,
+  watch
+} from 'vue'
+import { t } from '@/utils/i18n-helpers'
+
+defineOptions({
+  name: 'ManagementPage'
+})
+
+// 启用主题同步
+useThemeSync('Management')
+import { storeToRefs } from 'pinia'
+// useManagementStore 已迁移到新的专业化 Store
+import {
+  useDialogStore,
+  useBookmarkManagementStore,
+  useTraitFilterStore
+} from '@/stores'
+import type { TraitTag } from '@/types/domain/trait'
+import {
+  AppHeader,
+  BookmarkSearchInput,
+  Card,
+  Dialog,
+  LucideIcon,
+  AnimatedNumber
+} from '@/components'
+import { Loading } from '@/components/base/Loading'
+import { notificationService } from '@/application/notification/notification-service'
+import { NOTIFICATION_CONFIG } from '@/config/constants'
+import { onEvent } from '@/infrastructure/events/event-bus'
+import BookmarkTree from '@/components/business/BookmarkTree/BookmarkTree.vue'
+// 导入书签 API 网关：以 side-effect 方式初始化并设置事件监听与消息桥接
+import '@/infrastructure/chrome-api/bookmark-gateway'
+import { DataValidator } from '@/core/common/store-error'
+import { logger } from '@/infrastructure/logging/logger'
+import type { BookmarkNode } from '@/types'
+// 数据健康检查已移除，使用特征检测代替
+import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'
+import GlobalQuickAddBookmark from '@/components/business/GlobalQuickAddBookmark/GlobalQuickAddBookmark.vue'
+import type {
+  DiffResult,
+  BookmarkOperation,
+  BookmarkOperationType
+} from '@/application/bookmark/bookmark-diff-service'
+// AI 整理功能临时禁用，等待重构
+// import { aiAppService } from '@/application/ai/ai-app-service'
+// import { bookmarkAppService } from '@/application/bookmark/bookmark-app-service'
+// import { treeAppService } from '@/application/bookmark/tree-app-service'
+// import type { BookmarkRecord } from '@/infrastructure/indexeddb/schema'
+import { enableEnvSnapshotBridge } from '@/devtools/env-snapshot'
+import { enableEmbeddingDebugBridge } from '@/devtools/embedding-debug'
+import { enableFolderVectorDebugBridge } from '@/devtools/folder-vector-debug'
+import { createBookmarkIndex } from '@/application/bookmark/bookmark-index-app-service'
+
+const dialogStore = useDialogStore()
+const bookmarkManagementStore = useBookmarkManagementStore()
+const traitFilterStore = useTraitFilterStore()
+
+const { originalExpandedFolders, proposalExpandedFolders } = storeToRefs(
+  bookmarkManagementStore
+)
+
+
+// 应用更改相关状态
+const showApplyConfirmDialog = ref(false)
+const diffResult = ref<DiffResult | null>(null)
+const applyStartTime = ref(0)
+
+// AI 整理相关状态
+const isOrganizing = ref(false)
+const organizeProgress = ref({
+  current: 0,
+  total: 0,
+  message: t('management_preparing_organize')
+})
+const showOrganizeProgress = ref(false)
+
+let envSnapshotCleanup: (() => void) | null = null
+let embeddingDebugCleanup: (() => void) | null = null
+let folderVectorDebugCleanup: (() => void) | null = null
+const shouldExposeEnvSnapshot =
+  typeof window !== 'undefined' &&
+  (import.meta.env.DEV ||
+    new URLSearchParams(window.location.search).get('abDevtools') === '1')
+
+if (shouldExposeEnvSnapshot) {
+  onMounted(() => {
+    envSnapshotCleanup = enableEnvSnapshotBridge()
+    embeddingDebugCleanup = enableEmbeddingDebugBridge()
+    folderVectorDebugCleanup = enableFolderVectorDebugBridge()
+  })
+  onUnmounted(() => {
+    envSnapshotCleanup?.()
+    envSnapshotCleanup = null
+    embeddingDebugCleanup?.()
+    embeddingDebugCleanup = null
+    folderVectorDebugCleanup?.()
+    folderVectorDebugCleanup = null
+  })
+}
+
+/**
+ * 动态生成"应用"按钮的 tooltip 提示文字
+ * 让用户明确了解按钮为何被禁用
+ */
+const applyButtonTooltip = computed(() => {
+  // 1. 页面加载中
+  if (isPageLoading.value) {
+    return t('management_tooltip_page_loading')
+  }
+
+  // 2. 没有未保存的更改
+  if (!bookmarkManagementStore.hasUnsavedChanges) {
+    return t('management_tooltip_no_changes')
+  }
+
+  // 3. 正常可用状态
+  return t('management_tooltip_apply_ready')
+})
+
+/**
+ * 动态生成"清除选择"按钮的 tooltip
+ */
+const clearSelectionTooltip = computed(() => {
+  if (rightSelectedIds.value.length === 0) {
+    return t('management_tooltip_no_selection')
+  }
+  return t('management_tooltip_clear_selection')
+})
+
+/**
+ * 动态生成"删除"按钮的 tooltip
+ */
+const deleteButtonTooltip = computed(() => {
+  if (
+    selectedCounts.value.bookmarks === 0 &&
+    selectedCounts.value.folders === 0
+  ) {
+    return t('management_tooltip_no_selection')
+  }
+  const parts = []
+  if (selectedCounts.value.bookmarks > 0) {
+    parts.push(`${selectedCounts.value.bookmarks} ${t('management_bookmarks_count')}`)
+  }
+  if (selectedCounts.value.folders > 0) {
+    parts.push(`${selectedCounts.value.folders} ${t('management_folders_count')}`)
+  }
+  return t('management_tooltip_delete_selected', parts.join('和'))
+})
+
+/**
+ * ✅ 特征检测由 Background Script 自动维护，无需 loading 状态
+ * @deprecated isCleanupLoading 已移除，特征检测在后台异步执行
+ */
+
+const isAddingItem = ref(false)
+const isEditingBookmark = ref(false)
+const isEditingFolder = ref(false)
+const isDeletingFolder = ref(false)
+const isBulkDeleting = ref(false)
+
+const { originalTree, newProposalTree, isPageLoading, loadingMessage } =
+  storeToRefs(bookmarkManagementStore)
+
+const rightTreeSelectedDescCounts = ref(new Map<string, number>())
+
+const rightTreeIndex = createBookmarkIndex()
+
+const {
+  getProposalPanelTitle,
+  getProposalPanelIcon,
+  initialize: initializeStore,
+  deleteFolder,
+  bulkDeleteByIds
+  // setProposalTree - AI 整理功能临时禁用
+} = bookmarkManagementStore
+
+const leftSearchResults = ref<BookmarkNode[]>([])
+const isLeftSearchActive = ref(false)
+
+const rightSearchResults = ref<BookmarkNode[]>([])
+const isRightSearchActive = ref(false)
+const handleLeftSearch = async (results: BookmarkNode[]) => {
+  leftSearchResults.value = results
+  isLeftSearchActive.value = true
+
+  if (results.length > 0) {
+    await nextTick()
+    leftTreeRef.value?.expandAll?.()
+    leftExpandAll.value = true
+  } else {
+    leftTreeRef.value?.collapseAll?.()
+    leftExpandAll.value = false
+  }
+}
+
+const handleLeftSearchClear = () => {
+  isLeftSearchActive.value = false
+  leftSearchResults.value = []
+  leftTreeRef.value?.collapseAll?.()
+  leftExpandAll.value = false
+}
+
+const handleRightSearch = async (results: BookmarkNode[]) => {
+  rightSearchResults.value = results
+  isRightSearchActive.value = true
+
+  if (results.length > 0) {
+    await nextTick()
+    rightTreeRef.value?.expandAll?.()
+    rightExpandAll.value = true
+  } else {
+    rightTreeRef.value?.collapseAll?.()
+    rightExpandAll.value = false
+  }
+}
+
+const handleRightSearchClear = () => {
+  isRightSearchActive.value = false
+  rightSearchResults.value = []
+  rightTreeRef.value?.collapseAll?.()
+  rightExpandAll.value = false
+}
+
+const leftTreeData = computed(() =>
+  isLeftSearchActive.value ? leftSearchResults.value : originalTree.value
+)
+
+const rightTreeData = computed(() =>
+  isRightSearchActive.value
+    ? rightSearchResults.value
+    : newProposalTree.value.children || []
+)
+
+const MSG_CANCEL_EDIT = t('management_cancel_edit_message')
+const MSG_CANCEL_ADD = t('management_cancel_add_message')
+const addDialogTitle = computed(() =>
+  dialogStore.addItemDialog.type === 'bookmark' ? t('management_add_new_bookmark') : t('management_add_new_folder')
+)
+const addDialogIcon = computed(() =>
+  dialogStore.addItemDialog.type === 'bookmark'
+    ? 'icon-bookmark'
+    : 'icon-folder'
+)
+const addConfirmText = computed(() => t('management_add'))
+
+/** 添加对话框：当前父文件夹展示（无选中时视为「我的书签」根区） */
+const addItemParentFolderLabel = computed(() => {
+  const folder = dialogStore.addItemDialog.parentFolder
+  const title = folder?.title?.trim()
+  if (title) return title
+  return t('management_my_bookmarks')
+})
+
+function readMwcTextFieldValue(ev: Event): string {
+  const el = ev.target as unknown as { value?: string }
+  return typeof el.value === 'string' ? el.value : ''
+}
+
+function onEditBookmarkTitleInput(ev: Event) {
+  dialogStore.editBookmarkDialog.title = readMwcTextFieldValue(ev)
+}
+
+function onEditBookmarkUrlInput(ev: Event) {
+  dialogStore.editBookmarkDialog.url = readMwcTextFieldValue(ev)
+}
+
+function onEditFolderTitleInput(ev: Event) {
+  dialogStore.editFolderDialog.title = readMwcTextFieldValue(ev)
+}
+
+function onAddItemTitleInput(ev: Event) {
+  dialogStore.addItemDialog.title = readMwcTextFieldValue(ev)
+}
+
+function onAddItemUrlInput(ev: Event) {
+  dialogStore.addItemDialog.url = readMwcTextFieldValue(ev)
+}
+
+const addDialogContentRef = ref<HTMLElement | null>(null)
+const addDialogMinHeight = ref<string | undefined>(undefined)
+
+watch(
+  () => dialogStore.addItemDialog.isOpen,
+  async open => {
+    if (open) {
+      await nextTick()
+      requestAnimationFrame(() => {
+        const el = addDialogContentRef.value
+        if (el) {
+          const h = el.offsetHeight
+          if (h && h > 0) {
+            addDialogMinHeight.value = `${h}px`
+          }
+        }
+      })
+    } else {
+      addDialogMinHeight.value = undefined
+    }
+  }
+)
+
+const pendingTagSelection = ref<TraitTag[] | null>(null)
+
+const leftTreeRef = ref<InstanceType<typeof BookmarkTree> | null>(null)
+const rightTreeRef = ref<InstanceType<typeof BookmarkTree> | null>(null)
+const rightSelectedIds = ref<string[]>([])
+
+watch(
+  () => rightTreeData.value,
+  (newData) => {
+    if (Array.isArray(newData) && newData.length > 0) {
+      rightTreeIndex.buildFromTree(newData)
+      logger.info('Management', `右侧树索引已更新: ${rightTreeIndex.getSize()} 个节点`)
+    }
+  },
+  { immediate: true, deep: false }
+)
+
+const selectedCounts = computed(() => {
+  const bookmarkIds = new Set<string>()
+  const selectedFolderIds = new Set<string>()
+
+  for (const rawId of rightSelectedIds.value) {
+    const id = String(rawId)
+    const node = rightTreeIndex.getNode(id)
+    if (!node) continue
+
+    if (node.url) {
+      // 这是一个书签
+      bookmarkIds.add(id)
+    } else {
+      // 这是一个文件夹
+      // ✅ 修复：排除顶层根节点（书签栏、其他书签等）
+      // Chrome 书签结构：'0' 是根容器，'1' 是书签栏，'2' 是其他书签
+      // 只统计用户可见的子文件夹，不包括这些顶层容器
+      const isTopLevelRoot = !node.parentId || node.parentId === '0' || node.id === '1' || node.id === '2'
+      
+      if (!isTopLevelRoot) {
+        selectedFolderIds.add(id)
+      }
+      
+      // 遍历该文件夹的所有子节点
+      const stack: string[] = [id]
+      while (stack.length > 0) {
+        const currentId = stack.pop()!
+        const current = rightTreeIndex.getNode(currentId)
+        
+        if (!current) continue
+        
+        if (current.url) {
+          // 子节点是书签
+          bookmarkIds.add(currentId)
+        } else {
+          // 子节点是文件夹
+          // ✅ 所有子文件夹都应该被计入 selectedFolderIds（除了顶层根节点）
+          if (currentId !== id) {
+            const isChildTopLevelRoot = !current.parentId || current.parentId === '0' || current.id === '1' || current.id === '2'
+            if (!isChildTopLevelRoot) {
+              selectedFolderIds.add(currentId)
+            }
+          }
+          const childrenIds = rightTreeIndex.getChildrenIds(currentId)
+          stack.push(...Array.from(childrenIds))
+        }
+      }
+    }
+  }
+
+  return { bookmarks: bookmarkIds.size, folders: selectedFolderIds.size }
+})
+
+watch(
+  () => bookmarkManagementStore.hasUnsavedChanges,
+  hasChanges => {
+    if (hasChanges) {
+      // ✅ 使用常量中定义的徽章颜色
+      notificationService.updateBadge('!', NOTIFICATION_CONFIG.BADGE_COLORS.warning)
+    } else {
+      notificationService.clearBadge()
+    }
+  },
+  { immediate: true }
+)
+
+watch(
+  () => bookmarkManagementStore.newProposalTree,
+  async newTree => {
+    if (!newTree || !pendingTagSelection.value?.length) return
+    await nextTick()
+    // 清除待选中标签（已经应用筛选）
+    // eslint-disable-next-line require-atomic-updates -- 清除待选中标签是原子操作，不会有竞态条件
+    pendingTagSelection.value = null
+    
+    // 使用 traitFilterStore 的 filterResultIds 获取筛选结果
+    const ids = traitFilterStore.filterResultIds
+    if (!ids.length || !rightTreeRef.value) return
+    
+    try {
+      const instance = rightTreeRef.value
+      if (!instance) return
+      if (typeof instance.selectNodesByIds === 'function') {
+        instance.selectNodesByIds(ids, { append: false })
+      }
+      const firstId = ids[0]
+      if (firstId && typeof instance.focusNodeById === 'function') {
+        await instance.focusNodeById(firstId, {
+          scrollIntoViewCenter: true
+        })
+      }
+    } catch (error) {
+      logger.warn('Management', 'Focus', '自动选中健康问题节点失败', error)
+    }
+  },
+  { deep: false }
+)
+const leftExpandAll = ref(false)
+const rightExpandAll = ref(false)
+
+watch(
+  () => rightTreeData.value,
+  () => {
+    clearRightSelection()
+  },
+  { deep: true }
+)
+
+const isExpanding = ref(false)
+const editFormErrors = ref<{ title: string; url: string }>({
+  title: '',
+  url: ''
+})
+const addFormErrors = ref<{ title: string; url: string }>({
+  title: '',
+  url: ''
+})
+
+// ✅ 性能优化：合并多个表单字段的 watch 为单个 watch
+watch(
+  () => [
+    dialogStore.editBookmarkDialog.url,
+    dialogStore.editBookmarkDialog.title,
+    dialogStore.addItemDialog.url,
+    dialogStore.addItemDialog.title
+  ],
+  ([editUrl, editTitle, addUrl, addTitle]) => {
+    // 清除编辑对话框错误
+    if (editFormErrors.value.url && (editUrl || '').trim()) {
+      editFormErrors.value.url = ''
+    }
+    if (editFormErrors.value.title && (editTitle || '').trim()) {
+      editFormErrors.value.title = ''
+    }
+    // 清除添加对话框错误
+    if (addFormErrors.value.url && (addUrl || '').trim()) {
+      addFormErrors.value.url = ''
+    }
+    if (addFormErrors.value.title && (addTitle || '').trim()) {
+      addFormErrors.value.title = ''
+    }
+  }
+)
+watch(
+  () => dialogStore.addItemDialog.type,
+  () => {
+    if (!dialogStore.addItemDialog.isOpen) return
+    dialogStore.addItemDialog.title = ''
+    dialogStore.addItemDialog.url = ''
+    addFormErrors.value.title = ''
+    addFormErrors.value.url = ''
+  }
+)
+
+const handleLeftTreeReady = () => {
+  try {
+    const hasData =
+      Array.isArray(originalTree.value) && originalTree.value.length > 0
+    if (isPageLoading.value && hasData) {
+      isPageLoading.value = false
+    }
+  } catch (error) {
+    logger.error('Management', '❌ handleLeftTreeReady 失败', error)
+  }
+}
+const isEditDirty = computed(() => {
+  const originalTitle = (
+    dialogStore.editBookmarkDialog.bookmark?.title || ''
+  ).trim()
+  const originalUrl = (
+    dialogStore.editBookmarkDialog.bookmark?.url || ''
+  ).trim()
+  const curTitle = (dialogStore.editBookmarkDialog.title || '').trim()
+  const curUrl = (dialogStore.editBookmarkDialog.url || '').trim()
+  return originalTitle !== curTitle || originalUrl !== curUrl
+})
+const isEditFolderDirty = computed(() => {
+  const originalTitle = (
+    dialogStore.editFolderDialog.folder?.title || ''
+  ).trim()
+  const curTitle = (dialogStore.editFolderDialog.title || '').trim()
+  return originalTitle !== curTitle
+})
+const folderEditFormErrors = ref<{ title: string }>({ title: '' })
+watch(
+  () => dialogStore.editFolderDialog.title,
+  val => {
+    if (folderEditFormErrors.value.title && (val || '').trim()) {
+      folderEditFormErrors.value.title = ''
+    }
+  }
+)
+
+const isConfirmDeleteDialogOpen = ref(false)
+const deleteTargetFolder = ref<BookmarkNode | null>(null)
+const deleteFolderBookmarkCount = ref(0)
+
+/**
+ * 右侧面板：编辑节点（仅内存操作）
+ */
+const handleRightNodeEdit = (node: BookmarkNode) => {
+  if (node.url) {
+    dialogStore.openEditBookmarkDialog(node)
+  } else {
+    dialogStore.openEditFolderDialog(node)
+  }
+}
+
+/**
+ * 右侧面板：删除节点（仅内存操作）
+ */
+const handleRightNodeDelete = (node: BookmarkNode) => {
+  const success = bookmarkManagementStore.deleteNodeFromProposal(node.id)
+
+  if (!success) {
+    logger.error('Management', 'Delete', '删除提案树节点失败', { nodeId: node.id })
+  }
+}
+
+/**
+ * 右侧面板：添加书签/文件夹（仅内存操作）
+ */
+const handleRightFolderAdd = (node: BookmarkNode) => {
+  dialogStore.openAddItemDialog('bookmark', node)
+}
+
+/**
+ * 检查 URL 是否为浏览器内部协议
+ */
+const isInternalProtocolUrl = (url: string): boolean => {
+  if (!url) return false
+  const lowerUrl = url.toLowerCase()
+  return (
+    lowerUrl.startsWith('chrome://') ||
+    lowerUrl.startsWith('chrome-extension://') ||
+    lowerUrl.startsWith('about:') ||
+    lowerUrl.startsWith('file://') ||
+    lowerUrl.startsWith('edge://') ||
+    lowerUrl.startsWith('brave://')
+  )
+}
+
+const handleBookmarkOpenNewTab = (node: BookmarkNode) => {
+  if (!node.url) {
+    notificationService.notify(t('management_no_valid_url'), { level: 'warning' })
+    return
+  }
+
+  // 检查是否为内部协议书签（优先检查标签，兜底检查 URL）
+  const hasInternalTag = node.traitTags?.includes('internal')
+  const isInternalUrl = isInternalProtocolUrl(node.url)
+  
+  if (hasInternalTag || isInternalUrl) {
+    notificationService.notify(t('management_cannot_open_internal'), { level: 'warning' })
+    logger.warn('Management', '尝试打开内部协议书签:', node.url)
+    return
+  }
+
+  try {
+    if (typeof window === 'undefined') {
+      logger.error('Management', '非浏览器环境，无法打开链接')
+      notificationService.notify(t('management_open_link_failed'), { level: 'error' })
+      return
+    }
+
+    // 打开书签（不记录访问，因为这是管理操作，不是真实使用）
+    const newWindow = window.open(node.url, '_blank')
+    
+    // 检查是否被浏览器阻止
+    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+      notificationService.notify(t('management_link_blocked'), { level: 'warning' })
+      logger.warn('Management', '链接被浏览器阻止:', node.url)
+    }
+  } catch (error) {
+    notificationService.notify(t('management_open_link_failed'), { level: 'error' })
+    logger.error('Management', '打开链接失败:', error, node.url)
+  }
+}
+
+/**
+ * 处理添加对话框的 Tab 切换
+ * Material Web Tabs 的 change 事件会传递 CustomEvent，包含 activeTabIndex
+ */
+const handleAddDialogTabChange = (event: Event) => {
+  const customEvent = event as CustomEvent<{ activeTabIndex: number }>
+  const activeTabIndex = customEvent.detail?.activeTabIndex ?? 0
+  
+  // 根据 tab index 更新对话框类型
+  dialogStore.addItemDialog.type = activeTabIndex === 0 ? 'bookmark' : 'folder'
+  
+  // 清空表单数据和错误
+  dialogStore.addItemDialog.title = ''
+  dialogStore.addItemDialog.url = ''
+  addFormErrors.value.title = ''
+  addFormErrors.value.url = ''
+}
+
+const confirmAddNewItem = async () => {
+  const title = (dialogStore.addItemDialog.title || '').trim()
+  if (!title) {
+    addFormErrors.value.title = t('management_title_required')
+    return
+  }
+  if (dialogStore.addItemDialog.type === 'bookmark') {
+    const url = (dialogStore.addItemDialog.url || '').trim()
+    if (!DataValidator.validateUrl(url)) {
+      addFormErrors.value.url = t('management_url_invalid')
+      return
+    }
+  }
+
+  if (isAddingItem.value) return
+
+  try {
+    isAddingItem.value = true
+
+    const itemType =
+      dialogStore.addItemDialog.type === 'bookmark' ? '书签' : '文件夹'
+
+    const res = await bookmarkManagementStore.addBookmark({
+      type: dialogStore.addItemDialog.type,
+      title: dialogStore.addItemDialog.title,
+      url: dialogStore.addItemDialog.url,
+      parentId: dialogStore.addItemDialog.parentFolder?.id
+    })
+
+    dialogStore.closeAddItemDialog()
+
+    if (
+      res &&
+      rightTreeRef.value &&
+      typeof rightTreeRef.value.focusNodeById === 'function'
+    ) {
+      await nextTick()
+      try {
+        await rightTreeRef.value.focusNodeById(res.id, {
+          collapseOthers: true,
+          scrollIntoViewCenter: true
+        })
+      } catch (e) {
+        logger.error('Management', 'Focus', '新增后定位失败', e)
+      }
+    }
+
+    await nextTick()
+    notificationService.notify(t('management_bookmark_added', itemType), { level: 'success' })
+  } catch (error) {
+    logger.error('Management', 'Add', '添加失败', error)
+    notificationService.notify(t('management_add_failed'), { level: 'error' })
+  } finally {
+    // eslint-disable-next-line require-atomic-updates -- finally 块中的状态重置是安全的
+    isAddingItem.value = false
+  }
+}
+
+const confirmEditBookmark = async () => {
+  if (!isEditDirty.value) {
+    dialogStore.closeEditBookmarkDialog()
+    return
+  }
+  const title = (dialogStore.editBookmarkDialog.title || '').trim()
+  if (!title) {
+    editFormErrors.value.title = t('management_title_required')
+    return
+  }
+  const url = (dialogStore.editBookmarkDialog.url || '').trim()
+  if (!DataValidator.validateUrl(url)) {
+    editFormErrors.value.url = t('management_url_invalid')
+    return
+  }
+
+  if (isEditingBookmark.value) return
+
+  try {
+    isEditingBookmark.value = true
+
+    await bookmarkManagementStore.editBookmark({
+      id: dialogStore.editBookmarkDialog.bookmark!.id,
+      title: dialogStore.editBookmarkDialog.title,
+      url: dialogStore.editBookmarkDialog.url,
+      parentId: dialogStore.editBookmarkDialog.parentId
+    })
+
+    dialogStore.closeEditBookmarkDialog()
+
+    await nextTick()
+    notificationService.notify(t('management_bookmark_updated'), { level: 'success' })
+  } catch (error) {
+    logger.error('Management', 'Edit', '编辑书签失败', error)
+    notificationService.notify(t('management_edit_failed'), { level: 'error' })
+  } finally {
+    // eslint-disable-next-line require-atomic-updates -- finally 块中的状态重置是安全的
+    isEditingBookmark.value = false
+  }
+}
+
+const confirmEditFolder = async () => {
+  if (!isEditFolderDirty.value) {
+    dialogStore.closeEditFolderDialog()
+    return
+  }
+  const title = (dialogStore.editFolderDialog.title || '').trim()
+  if (!title) {
+    folderEditFormErrors.value.title = t('management_title_required')
+    return
+  }
+
+  if (isEditingFolder.value) return
+
+  try {
+    isEditingFolder.value = true
+
+    await bookmarkManagementStore.editBookmark({
+      id: dialogStore.editFolderDialog.folder!.id,
+      title: dialogStore.editFolderDialog.title,
+      url: '',
+      parentId: undefined
+    })
+
+    dialogStore.closeEditFolderDialog()
+
+    await nextTick()
+    notificationService.notify(t('management_folder_updated'), { level: 'success' })
+  } catch (error) {
+    logger.error('Management', 'Edit', '编辑文件夹失败', error)
+    notificationService.notify(t('management_edit_failed'), { level: 'error' })
+  } finally {
+    // eslint-disable-next-line require-atomic-updates -- finally 块中的状态重置是安全的
+    isEditingFolder.value = false
+  }
+}
+const confirmDeleteFolder = async () => {
+  if (deleteTargetFolder.value) {
+    const folder = deleteTargetFolder.value
+
+    if (isDeletingFolder.value) return
+
+    try {
+      // eslint-disable-next-line require-atomic-updates -- 删除操作开始时设置状态是安全的
+      isDeletingFolder.value = true
+
+      try {
+        await deleteFolder(folder.id)
+      } catch (error) {
+        logger.error('Management', '删除文件夹失败', error)
+        notificationService.notify(t('management_delete_failed'), { level: 'error' })
+      } finally {
+        // eslint-disable-next-line require-atomic-updates -- finally 块中的状态重置是安全的
+        isDeletingFolder.value = false
+      }
+    } catch (error) {
+      logger.error('Management', '删除文件夹失败', error)
+      notificationService.notify(t('management_delete_failed'), { level: 'error' })
+      // eslint-disable-next-line require-atomic-updates -- 错误处理中的状态重置是安全的
+      isDeletingFolder.value = false
+    }
+  }
+
+  isConfirmDeleteDialogOpen.value = false
+  // eslint-disable-next-line require-atomic-updates -- 清理状态是原子操作，不会有竞态条件
+  deleteTargetFolder.value = null
+  deleteFolderBookmarkCount.value = 0
+}
+
+const handleBookmarkCopyUrl = (node: BookmarkNode) => {
+  if (node.url) {
+    navigator.clipboard.writeText(node.url)
+    notificationService.notify('URL copied!', { level: 'success' })
+  }
+}
+/**
+ * 处理外部书签变更事件
+ * 当检测到外部书签变更时（如 Chrome Sync、其他设备、书签管理器），
+ * 如果用户没有未保存的修改，则静默刷新数据
+ */
+const handleExternalChange = async (data: {
+  eventType: 'created' | 'changed' | 'moved' | 'removed'
+  bookmarkId?: string
+  timestamp: number
+}) => {
+  if (bookmarkManagementStore.isApplyingOwnChanges) {
+    logger.debug('Management', '检测到自己触发的变更，忽略', data)
+    return
+  }
+
+  logger.info('Management', '🔄 检测到外部书签变更', data)
+
+  if (bookmarkManagementStore.hasUnsavedChanges) {
+    logger.warn('Management', '用户有未保存的修改，暂不自动刷新')
+    return
+  }
+
+  try {
+    await initializeStore()
+    logger.info('Management', '✅ 已静默刷新书签数据')
+    notificationService.notify(t('management_external_change_detected'), {
+      level: 'info'
+    })
+  } catch (error) {
+    logger.error('Management', '静默刷新失败', error)
+    notificationService.notify(t('management_refresh_failed'), { level: 'error' })
+  }
+}
+
+const unsubscribeExternalChange = onEvent('data:synced', handleExternalChange)
+const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+  if (bookmarkManagementStore.hasUnsavedChanges) {
+    e.preventDefault()
+    e.returnValue = ''
+  }
+}
+
+onUnmounted(() => {
+  unsubscribeExternalChange()
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('beforeunload', handleBeforeUnload)
+  }
+})
+
+onMounted(async () => {
+  // ✅ 先初始化 store，等待数据加载完成
+  await initializeStore()
+
+  // 1. 从 session storage 读取初始筛选参数（优先级最高）
+  let pendingTags: TraitTag[] = []
+  try {
+    const result = await chrome.storage.session.get('managementInitialFilter')
+    if (result.managementInitialFilter) {
+      const filter = result.managementInitialFilter as { tags?: string[]; timestamp?: number }
+      const { tags, timestamp } = filter
+      // 检查时间戳，避免使用过期的筛选状态（5秒内有效）
+      if (tags && timestamp && Date.now() - timestamp < 5000) {
+        pendingTags = tags.filter((tag: string): tag is TraitTag =>
+          ['duplicate', 'invalid', 'internal'].includes(tag)
+        )
+        logger.info('Management', '从 session storage 读取筛选参数:', pendingTags)
+        // 使用后立即清除，避免影响下次打开
+        await chrome.storage.session.remove('managementInitialFilter')
+      }
+    }
+  } catch (error) {
+    logger.warn('Management', '读取 session storage 失败:', error)
+  }
+
+  // 2. 兜底：从 URL 参数读取（向后兼容）
+  if (pendingTags.length === 0) {
+    try {
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search)
+        const tagsParam = params.get('tags')
+        if (tagsParam) {
+          pendingTags = tagsParam
+            .split(',')
+            .map(tag => tag.trim())
+            .filter((tag): tag is TraitTag =>
+              ['duplicate', 'invalid', 'internal'].includes(tag)
+            )
+          logger.info('Management', '从 URL 参数读取筛选:', pendingTags)
+        }
+      }
+    } catch (error) {
+      logger.warn('Management', '解析 URL 参数失败:', error)
+    }
+  }
+
+  // 3. 应用筛选（如果有待处理的筛选条件）
+  // ✅ 特征数据由 Background Script 自动维护，无需手动触发检测
+  if (pendingTags.length > 0) {
+    logger.info('Management', '准备激活筛选:', pendingTags)
+    
+    // 等待下一帧，确保 UI 已更新
+    await nextTick()
+    
+    // 设置筛选状态（会触发 BookmarkSearchInput 的 watch）
+    traitFilterStore.setActiveFilters(pendingTags)
+    logger.info('Management', '✅ traitFilterStore.setActiveFilters 已调用')
+    
+    // 设置待选中的节点（用于自动选中问题节点）
+    pendingTagSelection.value = pendingTags
+    logger.info('Management', '✅ pendingTagSelection 已设置')
+    
+    // 再等待一帧，确保筛选已应用
+    await nextTick()
+    logger.info('Management', '✅ 筛选应该已经生效，当前 activeFilters:', traitFilterStore.activeFilters)
+  }
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('beforeunload', handleBeforeUnload)
+
+    const g = window as unknown as Record<string, unknown>
+    g.AB_setFolderExpanded = (id: string, expanded?: boolean) => {
+      const comp = leftTreeRef.value
+      if (!comp) return
+      const sid = String(id)
+      if (expanded === undefined) {
+        if (typeof comp.toggleFolderById === 'function')
+          comp.toggleFolderById(sid)
+        return
+      }
+      if (expanded) {
+        if (typeof comp.expandFolderById === 'function')
+          comp.expandFolderById(sid)
+      } else {
+        if (typeof comp.collapseFolderById === 'function')
+          comp.collapseFolderById(sid)
+      }
+    }
+    g.AB_toggleFolder = (id: string) => {
+      const comp = leftTreeRef.value
+      if (!comp) return
+      const sid = String(id)
+      if (typeof comp.toggleFolderById === 'function') comp.toggleFolderById(sid)
+    }
+    g.AB_focusBookmark = (
+      id: string,
+      opts?: {
+        collapseOthers?: boolean
+        scrollIntoViewCenter?: boolean
+        pathIds?: string[]
+      }
+    ) => {
+      const comp = leftTreeRef.value
+      if (!comp || !comp.focusNodeById) return
+      comp.focusNodeById(
+        String(id),
+        opts || { collapseOthers: true, scrollIntoViewCenter: true }
+      )
+    }
+  }
+})
+
+const toggleLeftExpandAll = async () => {
+  if (!leftTreeRef.value) return
+  if (isExpanding.value) return
+  isExpanding.value = true
+  schedulerService.scheduleUIUpdate(() => {
+    isPageLoading.value = true
+    loadingMessage.value = leftExpandAll.value ? '正在收起...' : '正在展开...'
+  })
+  await nextTick()
+  await new Promise(r => requestAnimationFrame(r))
+  await new Promise(r => requestAnimationFrame(r))
+  await new Promise(r => setTimeout(r, 0))
+  if (leftExpandAll.value) {
+    leftTreeRef.value.collapseAll()
+    leftExpandAll.value = false
+  } else {
+    leftTreeRef.value.expandAll()
+    leftExpandAll.value = true
+  }
+  schedulerService.scheduleUIUpdate(() => {
+    isPageLoading.value = false
+    isExpanding.value = false
+  })
+}
+
+const toggleRightExpandAll = async () => {
+  if (!rightTreeRef.value) return
+  if (isExpanding.value) return
+  isExpanding.value = true
+  isPageLoading.value = true
+  loadingMessage.value = rightExpandAll.value ? '正在收起...' : '正在展开...'
+  // 让出两帧以确保蒙层先绘制（处理主线程阻塞导致的晚出现）
+  await nextTick()
+  await new Promise(r => requestAnimationFrame(r))
+  await new Promise(r => requestAnimationFrame(r))
+  await new Promise(r => setTimeout(r, 0))
+  if (rightExpandAll.value) {
+    rightTreeRef.value.collapseAll()
+    rightExpandAll.value = false
+  } else {
+    rightTreeRef.value.expandAll()
+    rightExpandAll.value = true
+  }
+  requestAnimationFrame(() => {
+    isPageLoading.value = false
+    isExpanding.value = false
+  })
+}
+
+// 右侧选择变化：用于批量删除
+const onRightSelectionChange = (ids: string[]) => {
+  rightSelectedIds.value = Array.isArray(ids) ? ids.map(String) : []
+}
+
+// 清空选择：调用树组件 API，状态通过 selection-change 事件自动同步
+const clearRightSelection = () => {
+  try {
+    rightTreeRef.value?.clearSelection?.()
+  } catch {}
+}
+
+// 计算右侧树的全选状态
+const rightSelectAllState = computed(() => {
+  const totalNodes = getAllRightTreeNodeIds()
+  const selectedCount = rightSelectedIds.value.length
+
+  if (selectedCount === 0) {
+    return { checked: false, indeterminate: false }
+  }
+
+  if (selectedCount === totalNodes.length) {
+    return { checked: true, indeterminate: false }
+  }
+
+  return { checked: false, indeterminate: true }
+})
+
+// 统计右侧树数据中的实际书签和文件夹数量（用于调试和验证）
+const rightTreeDataStats = computed(() => {
+  let bookmarkCount = 0
+  let folderCount = 0
+
+  const countNodes = (nodes: BookmarkNode[]) => {
+    for (const node of nodes) {
+      if (!node || !node.id) continue
+      if (node.url) {
+        bookmarkCount++
+      } else {
+        folderCount++
+      }
+      if (node.children && node.children.length) {
+        countNodes(node.children)
+      }
+    }
+  }
+
+  countNodes(rightTreeData.value)
+  return { bookmarkCount, folderCount, total: bookmarkCount + folderCount }
+})
+
+// 监控右侧树数据统计（用于调试数量不一致问题）
+watch(
+  () => rightTreeDataStats.value,
+  stats => {
+    logger.debug('Management', '右侧树数据统计', {
+      bookmarks: stats.bookmarkCount,
+      folders: stats.folderCount,
+      total: stats.total
+    })
+  },
+  { immediate: true }
+)
+
+/**
+ * 获取右侧树所有节点 ID
+ * 直接从索引获取，O(1) 操作
+ * 
+ * @returns 所有节点 ID 数组
+ */
+const getAllRightTreeNodeIds = (): string[] => {
+  return rightTreeIndex.getAllNodeIds()
+}
+
+// 全选/取消全选切换
+const toggleRightSelectAll = (checked: boolean) => {
+  if (checked) {
+    // 全选
+    const allIds = getAllRightTreeNodeIds()
+    rightTreeRef.value?.selectNodesByIds?.(allIds, { append: false })
+    // 全选后自动展开所有文件夹，方便用户确认选中内容
+    nextTick(() => {
+      rightTreeRef.value?.expandAll?.()
+      rightExpandAll.value = true
+    })
+  } else {
+    // 取消全选：显式传递空数组，确保所有节点（包括文件夹）都被取消选中
+    rightTreeRef.value?.selectNodesByIds?.([], { append: false })
+  }
+}
+
+// 使用 Notification 组件
+const notification = useNotification()
+
+const handleBookmarkMove = async (data: {
+  sourceId: string
+  targetId: string
+  position: 'before' | 'inside' | 'after'
+}) => {
+  const callTime = Date.now()
+  logger.info('Management', '🔵 拖拽移动书签开始', { ...data, callTime })
+
+  try {
+    const result = await bookmarkManagementStore.moveBookmark(data)
+
+    if (result) {
+      logger.info('Management', '📦 移动结果（可用于 Chrome API）', {
+        nodeId: result.nodeId,
+        newParentId: result.newParentId,
+        newIndex: result.newIndex,
+        chromeApiCall: `chrome.bookmarks.move('${result.nodeId}', { parentId: '${result.newParentId}', index: ${result.newIndex} })`
+      })
+    }
+
+    notification.success({
+      message: t('management_bookmark_moved'),
+      key: 'bookmark-moved',
+      duration: 2 // duration 单位为秒
+    })
+  } catch (error) {
+    logger.error('Management', '移动书签失败', error)
+    notification.error({
+      message: t('management_move_failed'),
+      description: t('management_move_failed_retry'),
+      duration: 3 // duration 单位为秒
+    })
+  }
+}
+
+/**
+ * 批量删除选中的书签和文件夹
+ * 
+ * ✅ 直接执行删除，不需要确认对话框
+ * 因为右侧面板的所有操作都需要点击"应用"才会真实生效
+ * 应用时会有全面的确认提示
+ */
+const handleBulkDelete = async () => {
+  const ids = rightSelectedIds.value.filter(Boolean)
+  if (!ids.length) return
+
+  if (isBulkDeleting.value) return // 防止重复点击
+
+  try {
+    isBulkDeleting.value = true
+
+    bulkDeleteByIds(ids)
+    
+    // 清空选择，避免再次误删
+    try {
+      rightTreeRef.value?.clearSelection?.()
+    } catch {}
+  } catch (error) {
+    logger.error('Management', '批量删除失败', error)
+    notificationService.notify(t('management_bulk_delete_failed'), { level: 'error' })
+  } finally {
+    isBulkDeleting.value = false
+  }
+}
+
+// ==================== 应用更改相关方法 ====================
+
+/**
+ * 确认对话框标题
+ */
+const applyConfirmTitle = computed(() => {
+  if (!diffResult.value) return t('management_apply')
+
+  const total = diffResult.value.statistics.total
+  if (total < 100) {
+    return t('management_confirm_apply_changes')
+  } else if (total < 500) {
+    return '⚠️ ' + t('management_confirm_apply_changes')
+  } else {
+    return '⚠️ ' + t('management_large_operation_warning')
+  }
+})
+
+/**
+ * 确认对话框图标
+ */
+const applyConfirmIcon = computed(() => {
+  if (!diffResult.value) return 'icon-check'
+
+  const total = diffResult.value.statistics.total
+  if (total < 100) {
+    return 'icon-check'
+  } else {
+    return 'icon-warning'
+  }
+})
+
+/**
+ * 预计剩余时间
+ */
+const estimatedRemainingTime = computed(() => {
+  const progress = bookmarkManagementStore.applyProgress
+  if (!progress.isApplying || progress.currentIndex === 0) {
+    return t('management_calculating')
+  }
+
+  const elapsed = Date.now() - applyStartTime.value
+  const avgTimePerOp = elapsed / progress.currentIndex
+  const remaining = Math.ceil(
+    ((progress.totalOperations - progress.currentIndex) * avgTimePerOp) / 1000
+  )
+
+  if (remaining < 60) {
+    return t('management_about_seconds', String(remaining))
+  } else {
+    const minutes = Math.ceil(remaining / 60)
+    return t('management_about_minutes', String(minutes))
+  }
+})
+
+/**
+ * 获取操作图标
+ */
+const getOperationIcon = (type: BookmarkOperationType): string => {
+  const icons: Record<BookmarkOperationType, string> = {
+    create: 'plus',
+    move: 'refresh',
+    edit: 'edit',
+    delete: 'trash'
+  }
+  return icons[type] || 'bookmark'
+}
+
+/**
+ * 获取操作类型文本
+ */
+const getOperationTypeText = (type: BookmarkOperationType): string => {
+  const texts: Record<BookmarkOperationType, string> = {
+    create: '新增',
+    move: '移动',
+    edit: '编辑',
+    delete: '删除'
+  }
+  return texts[type] || type
+}
+
+/**
+ * 按类型获取操作列表
+ */
+const getOperationsByType = (
+  type: BookmarkOperationType
+): BookmarkOperation[] => {
+  if (!diffResult.value) return []
+  return diffResult.value.operations.filter(op => op.type === type)
+}
+
+/**
+ * 一键整理书签栏（AI 自动分类）
+ * 
+ * ⚠️ 临时禁用：organizeBookmarks 方法已从 aiAppService 中移除
+ * TODO: 使用 folderVectorService 实现基于向量的本地推荐
+ */
+async function handleAIOrganize() {
+  if (isOrganizing.value || isPageLoading.value) {
+    return
+  }
+
+  try {
+    isOrganizing.value = true
+    
+    // 临时提示：功能正在重构中
+    notificationService.notify(
+      'AI 整理功能正在重构中，即将推出基于向量的本地推荐功能',
+      { level: 'info' }
+    )
+    
+    /* 原实现已注释，等待使用 folderVectorService 重新实现
+    showOrganizeProgress.value = true
+    organizeProgress.value = {
+      current: 0,
+      total: 0,
+      message: '正在加载书签...'
+    }
+
+    // 获取所有书签（只获取书签，不包括文件夹）
+    const allBookmarksResult = await bookmarkAppService.getAllBookmarks()
+    if (!allBookmarksResult.ok) {
+      notificationService.notifyError('获取书签失败', 'AI 整理')
+      return
+    }
+
+    const allBookmarks = allBookmarksResult.value
+    // 过滤出书签（有 URL 的），排除文件夹和 Chrome 内部链接
+    const bookmarkRecords = allBookmarks.filter(
+      record => record.url && !record.url.startsWith('chrome://')
+    )
+
+    if (bookmarkRecords.length === 0) {
+      notificationService.notify(t('management_no_bookmarks_to_organize'), { level: 'info' })
+      return
+    }
+
+    organizeProgress.value = {
+      current: 0,
+      total: bookmarkRecords.length,
+      message: t('management_organizing_bookmarks', String(bookmarkRecords.length))
+    }
+
+    // TODO: 使用 folderVectorService 实现分类推荐
+    // const results = await folderVectorService.recommendFolders(bookmarkRecords)
+
+    notificationService.notifySuccess(
+      t('management_organize_success', [String(bookmarkRecords.length), String(0)]),
+      'AI 整理'
+    )
+    */
+  } catch (error) {
+    logger.error('AI 整理失败', error)
+    notificationService.notifyError(t('management_organize_failed'), 'AI 整理')
+  } finally {
+    isOrganizing.value = false
+    showOrganizeProgress.value = false
+  }
+}
+
+/**
+ * 点击应用更改按钮
+ */
+const handleApplyClick = () => {
+  // 检查是否有临时节点
+  const tempNodeInfo = getTempNodesInfo(
+    bookmarkManagementStore.newProposalTree.children
+  )
+
+  if (tempNodeInfo.count > 0) {
+    const message =
+      `⚠️ 检测到 ${tempNodeInfo.count} 个未保存的新增节点。\n\n` +
+      `说明：新添加的节点（ID 以 temp_ 开头）尚未保存到浏览器书签。\n` +
+      `这些节点的顺序调整无法应用，因为它们还不存在于浏览器中。\n\n` +
+      `建议操作流程：\n` +
+      `1. 如果这些是误添加的节点，请刷新页面丢弃它们\n` +
+      `2. 如果需要保留这些节点，暂时不支持保存（功能开发中）`
+
+    const shouldContinue = typeof window !== 'undefined' ? window.confirm(message) : false
+
+    if (shouldContinue) {
+      // 用户选择了解，继续显示差异（已过滤临时节点）
+      const diff = bookmarkManagementStore.calculateDiff()
+
+      if (!diff || diff.statistics.total === 0) {
+        // 如果实际没有差异，重置标志位，禁用按钮
+        bookmarkManagementStore.hasUnsavedChanges = false
+        notificationService.notify(t('management_no_changes_detected'), {
+          level: 'info'
+        })
+        return
+      }
+
+      diffResult.value = diff
+      showApplyConfirmDialog.value = true
+    }
+    return
+  }
+
+  // 计算差异
+  const diff = bookmarkManagementStore.calculateDiff()
+
+  if (!diff || diff.statistics.total === 0) {
+    // 如果实际没有差异，重置标志位，禁用按钮
+    bookmarkManagementStore.hasUnsavedChanges = false
+    notificationService.notify(t('management_no_changes_detected'), { level: 'info' })
+    return
+  }
+
+  diffResult.value = diff
+  showApplyConfirmDialog.value = true
+}
+
+/**
+ * 获取临时节点信息
+ * 直接从索引获取所有 ID 并过滤，避免递归遍历
+ * 
+ * @param _nodes 节点数组（未使用，保留兼容性）
+ * @returns 临时节点信息
+ */
+const getTempNodesInfo = (
+  _nodes: BookmarkNode[]
+): { count: number; ids: string[] } => {
+  const allIds = rightTreeIndex.getAllNodeIds()
+  const tempIds = allIds.filter(id => id.startsWith('temp_'))
+  
+  return {
+    count: tempIds.length,
+    ids: tempIds
+  }
+}
+
+/**
+ * 确认应用更改
+ */
+const confirmApplyChanges = async () => {
+  if (!diffResult.value) return
+
+  try {
+    // 关闭确认对话框
+    showApplyConfirmDialog.value = false
+
+    // 记录开始时间
+    applyStartTime.value = Date.now()
+
+    // 应用更改
+    const result = await bookmarkManagementStore.applyChanges(
+      diffResult.value.operations,
+      (current, total, operation) => {
+        // 进度回调（已在 store 中更新状态）
+        logger.debug('Management', `应用进度: ${current}/${total}`, {
+          operation
+        })
+      }
+    )
+
+    // 显示结果
+    if (result.success) {
+      notificationService.notify(t('management_all_changes_applied'), { level: 'success' })
+    } else {
+      notificationService.notify(
+        t('management_some_changes_failed', String(result.errors.length)),
+        { level: 'warning' }
+      )
+      logger.error('Management', '应用更改部分失败', result.errors)
+    }
+
+    // 清空差异结果
+    // eslint-disable-next-line require-atomic-updates -- 清空差异结果是原子操作，不会有竞态条件
+    diffResult.value = null
+  } catch (error) {
+    logger.error('Management', '应用更改失败', error)
+    notificationService.notify(t('management_apply_changes_failed'), { level: 'error' })
+  }
+}
+
+/**
+ * 顶部"应用"按钮点击事件
+ */
+const handleApply = () => {
+  // 复用 handleApplyClick 的逻辑
+  handleApplyClick()
+}
+
+// =============================
+</script>
+
 <template>
   <div class="management-page app-container">
     <div v-if="isPageLoading" class="page-overlay">
@@ -665,13 +2120,17 @@
       max-width="500px"
       min-width="500px"
       @update:show="
-        (v: boolean) =>
-          v
-            ? dialogStore.openAddItemDialog(
-                dialogStore.addItemDialog.type,
-                dialogStore.addItemDialog.parentFolder || undefined
-              )
-            : dialogStore.closeAddItemDialog()
+        (v: boolean) => {
+          if (v) {
+            const parentFolder = dialogStore.addItemDialog.parentFolder
+            dialogStore.openAddItemDialog(
+              dialogStore.addItemDialog.type,
+              parentFolder ? parentFolder : null
+            )
+          } else {
+            dialogStore.closeAddItemDialog()
+          }
+        }
       "
       @confirm="confirmAddNewItem"
     >
@@ -743,1452 +2202,6 @@
     </Dialog>
   </div>
 </template>
-
-<script setup lang="ts">
-import { schedulerService } from '@/application/scheduler/scheduler-service'
-import { useNotification } from '@/composables/useNotification'
-import { useThemeSync } from '@/composables/useThemeSync'
-import {
-  computed,
-  nextTick,
-  onMounted,
-  onUnmounted,
-  ref,
-  watch
-} from 'vue'
-import { t } from '@/utils/i18n-helpers'
-
-defineOptions({
-  name: 'ManagementPage'
-})
-
-// 启用主题同步
-useThemeSync('Management')
-import { storeToRefs } from 'pinia'
-// useManagementStore 已迁移到新的专业化 Store
-import {
-  useDialogStore,
-  useBookmarkManagementStore,
-  useTraitFilterStore
-} from '@/stores'
-import type { TraitTag } from '@/types/domain/trait'
-import {
-  AppHeader,
-  BookmarkSearchInput,
-  Card,
-  Dialog,
-  LucideIcon,
-  AnimatedNumber
-} from '@/components'
-import { Loading } from '@/components/base/Loading'
-import { notificationService } from '@/application/notification/notification-service'
-import { NOTIFICATION_CONFIG } from '@/config/constants'
-import { onEvent } from '@/infrastructure/events/event-bus'
-import BookmarkTree from '@/components/business/BookmarkTree/BookmarkTree.vue'
-// 导入书签 API 网关：以 side-effect 方式初始化并设置事件监听与消息桥接
-import '@/infrastructure/chrome-api/bookmark-gateway'
-import { DataValidator } from '@/core/common/store-error'
-import { logger } from '@/infrastructure/logging/logger'
-import type { BookmarkNode } from '@/types'
-// 数据健康检查已移除，使用特征检测代替
-import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'
-import GlobalQuickAddBookmark from '@/components/business/GlobalQuickAddBookmark/GlobalQuickAddBookmark.vue'
-import type {
-  DiffResult,
-  BookmarkOperation,
-  BookmarkOperationType
-} from '@/application/bookmark/bookmark-diff-service'
-// AI 整理功能临时禁用，等待重构
-// import { aiAppService } from '@/application/ai/ai-app-service'
-// import { bookmarkAppService } from '@/application/bookmark/bookmark-app-service'
-// import { treeAppService } from '@/application/bookmark/tree-app-service'
-// import type { BookmarkRecord } from '@/infrastructure/indexeddb/schema'
-import { enableEnvSnapshotBridge } from '@/devtools/env-snapshot'
-import { enableEmbeddingDebugBridge } from '@/devtools/embedding-debug'
-import { enableFolderVectorDebugBridge } from '@/devtools/folder-vector-debug'
-import { createBookmarkIndex } from '@/application/bookmark/bookmark-index-app-service'
-
-const dialogStore = useDialogStore()
-const bookmarkManagementStore = useBookmarkManagementStore()
-const traitFilterStore = useTraitFilterStore()
-
-const { originalExpandedFolders, proposalExpandedFolders } = storeToRefs(
-  bookmarkManagementStore
-)
-
-
-// 应用更改相关状态
-const showApplyConfirmDialog = ref(false)
-const diffResult = ref<DiffResult | null>(null)
-const applyStartTime = ref(0)
-
-// AI 整理相关状态
-const isOrganizing = ref(false)
-const organizeProgress = ref({
-  current: 0,
-  total: 0,
-  message: t('management_preparing_organize')
-})
-const showOrganizeProgress = ref(false)
-
-let envSnapshotCleanup: (() => void) | null = null
-let embeddingDebugCleanup: (() => void) | null = null
-let folderVectorDebugCleanup: (() => void) | null = null
-const shouldExposeEnvSnapshot =
-  typeof window !== 'undefined' &&
-  (import.meta.env.DEV ||
-    new URLSearchParams(window.location.search).get('abDevtools') === '1')
-
-if (shouldExposeEnvSnapshot) {
-  onMounted(() => {
-    envSnapshotCleanup = enableEnvSnapshotBridge()
-    embeddingDebugCleanup = enableEmbeddingDebugBridge()
-    folderVectorDebugCleanup = enableFolderVectorDebugBridge()
-  })
-  onUnmounted(() => {
-    envSnapshotCleanup?.()
-    envSnapshotCleanup = null
-    embeddingDebugCleanup?.()
-    embeddingDebugCleanup = null
-    folderVectorDebugCleanup?.()
-    folderVectorDebugCleanup = null
-  })
-}
-
-/**
- * 动态生成"应用"按钮的 tooltip 提示文字
- * 让用户明确了解按钮为何被禁用
- */
-const applyButtonTooltip = computed(() => {
-  // 1. 页面加载中
-  if (isPageLoading.value) {
-    return t('management_tooltip_page_loading')
-  }
-
-  // 2. 没有未保存的更改
-  if (!bookmarkManagementStore.hasUnsavedChanges) {
-    return t('management_tooltip_no_changes')
-  }
-
-  // 3. 正常可用状态
-  return t('management_tooltip_apply_ready')
-})
-
-/**
- * 动态生成"清除选择"按钮的 tooltip
- */
-const clearSelectionTooltip = computed(() => {
-  if (rightSelectedIds.value.length === 0) {
-    return t('management_tooltip_no_selection')
-  }
-  return t('management_tooltip_clear_selection')
-})
-
-/**
- * 动态生成"删除"按钮的 tooltip
- */
-const deleteButtonTooltip = computed(() => {
-  if (
-    selectedCounts.value.bookmarks === 0 &&
-    selectedCounts.value.folders === 0
-  ) {
-    return t('management_tooltip_no_selection')
-  }
-  const parts = []
-  if (selectedCounts.value.bookmarks > 0) {
-    parts.push(`${selectedCounts.value.bookmarks} ${t('management_bookmarks_count')}`)
-  }
-  if (selectedCounts.value.folders > 0) {
-    parts.push(`${selectedCounts.value.folders} ${t('management_folders_count')}`)
-  }
-  return t('management_tooltip_delete_selected', parts.join('和'))
-})
-
-/**
- * ✅ 特征检测由 Background Script 自动维护，无需 loading 状态
- * @deprecated isCleanupLoading 已移除，特征检测在后台异步执行
- */
-
-const isAddingItem = ref(false)
-const isEditingBookmark = ref(false)
-const isEditingFolder = ref(false)
-const isDeletingFolder = ref(false)
-const isBulkDeleting = ref(false)
-
-const { originalTree, newProposalTree, isPageLoading, loadingMessage } =
-  storeToRefs(bookmarkManagementStore)
-
-const rightTreeSelectedDescCounts = ref(new Map<string, number>())
-
-const rightTreeIndex = createBookmarkIndex()
-
-const {
-  getProposalPanelTitle,
-  getProposalPanelIcon,
-  initialize: initializeStore,
-  deleteFolder,
-  bulkDeleteByIds
-  // setProposalTree - AI 整理功能临时禁用
-} = bookmarkManagementStore
-
-const leftSearchResults = ref<BookmarkNode[]>([])
-const isLeftSearchActive = ref(false)
-
-const rightSearchResults = ref<BookmarkNode[]>([])
-const isRightSearchActive = ref(false)
-const handleLeftSearch = async (results: BookmarkNode[]) => {
-  leftSearchResults.value = results
-  isLeftSearchActive.value = true
-
-  if (results.length > 0) {
-    await nextTick()
-    leftTreeRef.value?.expandAll?.()
-    leftExpandAll.value = true
-  } else {
-    leftTreeRef.value?.collapseAll?.()
-    leftExpandAll.value = false
-  }
-}
-
-const handleLeftSearchClear = () => {
-  isLeftSearchActive.value = false
-  leftSearchResults.value = []
-  leftTreeRef.value?.collapseAll?.()
-  leftExpandAll.value = false
-}
-
-const handleRightSearch = async (results: BookmarkNode[]) => {
-  rightSearchResults.value = results
-  isRightSearchActive.value = true
-
-  if (results.length > 0) {
-    await nextTick()
-    rightTreeRef.value?.expandAll?.()
-    rightExpandAll.value = true
-  } else {
-    rightTreeRef.value?.collapseAll?.()
-    rightExpandAll.value = false
-  }
-}
-
-const handleRightSearchClear = () => {
-  isRightSearchActive.value = false
-  rightSearchResults.value = []
-  rightTreeRef.value?.collapseAll?.()
-  rightExpandAll.value = false
-}
-
-const leftTreeData = computed(() =>
-  isLeftSearchActive.value ? leftSearchResults.value : originalTree.value
-)
-
-const rightTreeData = computed(() =>
-  isRightSearchActive.value
-    ? rightSearchResults.value
-    : newProposalTree.value.children || []
-)
-
-const MSG_CANCEL_EDIT = t('management_cancel_edit_message')
-const MSG_CANCEL_ADD = t('management_cancel_add_message')
-const addDialogTitle = computed(() =>
-  dialogStore.addItemDialog.type === 'bookmark' ? t('management_add_new_bookmark') : t('management_add_new_folder')
-)
-const addDialogIcon = computed(() =>
-  dialogStore.addItemDialog.type === 'bookmark'
-    ? 'icon-bookmark'
-    : 'icon-folder'
-)
-const addConfirmText = computed(() => t('management_add'))
-
-/** 添加对话框：当前父文件夹展示（无选中时视为「我的书签」根区） */
-const addItemParentFolderLabel = computed(() => {
-  const folder = dialogStore.addItemDialog.parentFolder
-  const title = folder?.title?.trim()
-  if (title) return title
-  return t('management_my_bookmarks')
-})
-
-function readMwcTextFieldValue(ev: Event): string {
-  const el = ev.target as unknown as { value?: string }
-  return typeof el.value === 'string' ? el.value : ''
-}
-
-function onEditBookmarkTitleInput(ev: Event) {
-  dialogStore.editBookmarkDialog.title = readMwcTextFieldValue(ev)
-}
-
-function onEditBookmarkUrlInput(ev: Event) {
-  dialogStore.editBookmarkDialog.url = readMwcTextFieldValue(ev)
-}
-
-function onEditFolderTitleInput(ev: Event) {
-  dialogStore.editFolderDialog.title = readMwcTextFieldValue(ev)
-}
-
-function onAddItemTitleInput(ev: Event) {
-  dialogStore.addItemDialog.title = readMwcTextFieldValue(ev)
-}
-
-function onAddItemUrlInput(ev: Event) {
-  dialogStore.addItemDialog.url = readMwcTextFieldValue(ev)
-}
-
-const addDialogContentRef = ref<HTMLElement | null>(null)
-const addDialogMinHeight = ref<string | undefined>(undefined)
-
-watch(
-  () => dialogStore.addItemDialog.isOpen,
-  async open => {
-    if (open) {
-      await nextTick()
-      requestAnimationFrame(() => {
-        const el = addDialogContentRef.value
-        if (el) {
-          const h = el.offsetHeight
-          if (h && h > 0) {
-            addDialogMinHeight.value = `${h}px`
-          }
-        }
-      })
-    } else {
-      addDialogMinHeight.value = undefined
-    }
-  }
-)
-
-const pendingTagSelection = ref<TraitTag[] | null>(null)
-
-const leftTreeRef = ref<InstanceType<typeof BookmarkTree> | null>(null)
-const rightTreeRef = ref<InstanceType<typeof BookmarkTree> | null>(null)
-const rightSelectedIds = ref<string[]>([])
-
-watch(
-  () => rightTreeData.value,
-  (newData) => {
-    if (Array.isArray(newData) && newData.length > 0) {
-      rightTreeIndex.buildFromTree(newData)
-      logger.info('Management', `右侧树索引已更新: ${rightTreeIndex.getSize()} 个节点`)
-    }
-  },
-  { immediate: true, deep: false }
-)
-
-const selectedCounts = computed(() => {
-  const bookmarkIds = new Set<string>()
-  const selectedFolderIds = new Set<string>()
-
-  for (const rawId of rightSelectedIds.value) {
-    const id = String(rawId)
-    const node = rightTreeIndex.getNode(id)
-    if (!node) continue
-
-    if (node.url) {
-      // 这是一个书签
-      bookmarkIds.add(id)
-    } else {
-      // 这是一个文件夹
-      // ✅ 修复：排除顶层根节点（书签栏、其他书签等）
-      // Chrome 书签结构：'0' 是根容器，'1' 是书签栏，'2' 是其他书签
-      // 只统计用户可见的子文件夹，不包括这些顶层容器
-      const isTopLevelRoot = !node.parentId || node.parentId === '0' || node.id === '1' || node.id === '2'
-      
-      if (!isTopLevelRoot) {
-        selectedFolderIds.add(id)
-      }
-      
-      // 遍历该文件夹的所有子节点
-      const stack: string[] = [id]
-      while (stack.length > 0) {
-        const currentId = stack.pop()!
-        const current = rightTreeIndex.getNode(currentId)
-        
-        if (!current) continue
-        
-        if (current.url) {
-          // 子节点是书签
-          bookmarkIds.add(currentId)
-        } else {
-          // 子节点是文件夹
-          // ✅ 所有子文件夹都应该被计入 selectedFolderIds（除了顶层根节点）
-          if (currentId !== id) {
-            const isChildTopLevelRoot = !current.parentId || current.parentId === '0' || current.id === '1' || current.id === '2'
-            if (!isChildTopLevelRoot) {
-              selectedFolderIds.add(currentId)
-            }
-          }
-          const childrenIds = rightTreeIndex.getChildrenIds(currentId)
-          stack.push(...Array.from(childrenIds))
-        }
-      }
-    }
-  }
-
-  return { bookmarks: bookmarkIds.size, folders: selectedFolderIds.size }
-})
-
-watch(
-  () => bookmarkManagementStore.hasUnsavedChanges,
-  hasChanges => {
-    if (hasChanges) {
-      // ✅ 使用常量中定义的徽章颜色
-      notificationService.updateBadge('!', NOTIFICATION_CONFIG.BADGE_COLORS.warning)
-    } else {
-      notificationService.clearBadge()
-    }
-  },
-  { immediate: true }
-)
-
-watch(
-  () => bookmarkManagementStore.newProposalTree,
-  async newTree => {
-    if (!newTree || !pendingTagSelection.value?.length) return
-    await nextTick()
-    // 清除待选中标签（已经应用筛选）
-    pendingTagSelection.value = null
-    
-    // 使用 traitFilterStore 的 filterResultIds 获取筛选结果
-    const ids = traitFilterStore.filterResultIds
-    if (!ids.length || !rightTreeRef.value) return
-    
-    try {
-      const instance = rightTreeRef.value
-      if (!instance) return
-      if (typeof instance.selectNodesByIds === 'function') {
-        instance.selectNodesByIds(ids, { append: false })
-      }
-      const firstId = ids[0]
-      if (firstId && typeof instance.focusNodeById === 'function') {
-        await instance.focusNodeById(firstId, {
-          scrollIntoViewCenter: true
-        })
-      }
-    } catch (error) {
-      logger.warn('Management', 'Focus', '自动选中健康问题节点失败', error)
-    }
-  },
-  { deep: false }
-)
-const leftExpandAll = ref(false)
-const rightExpandAll = ref(false)
-
-watch(
-  () => rightTreeData.value,
-  () => {
-    clearRightSelection()
-  },
-  { deep: true }
-)
-
-const isExpanding = ref(false)
-const editFormErrors = ref<{ title: string; url: string }>({
-  title: '',
-  url: ''
-})
-const addFormErrors = ref<{ title: string; url: string }>({
-  title: '',
-  url: ''
-})
-
-// ✅ 性能优化：合并多个表单字段的 watch 为单个 watch
-watch(
-  () => [
-    dialogStore.editBookmarkDialog.url,
-    dialogStore.editBookmarkDialog.title,
-    dialogStore.addItemDialog.url,
-    dialogStore.addItemDialog.title
-  ],
-  ([editUrl, editTitle, addUrl, addTitle]) => {
-    // 清除编辑对话框错误
-    if (editFormErrors.value.url && (editUrl || '').trim()) {
-      editFormErrors.value.url = ''
-    }
-    if (editFormErrors.value.title && (editTitle || '').trim()) {
-      editFormErrors.value.title = ''
-    }
-    // 清除添加对话框错误
-    if (addFormErrors.value.url && (addUrl || '').trim()) {
-      addFormErrors.value.url = ''
-    }
-    if (addFormErrors.value.title && (addTitle || '').trim()) {
-      addFormErrors.value.title = ''
-    }
-  }
-)
-watch(
-  () => dialogStore.addItemDialog.type,
-  () => {
-    if (!dialogStore.addItemDialog.isOpen) return
-    dialogStore.addItemDialog.title = ''
-    dialogStore.addItemDialog.url = ''
-    addFormErrors.value.title = ''
-    addFormErrors.value.url = ''
-  }
-)
-
-const handleLeftTreeReady = () => {
-  try {
-    const hasData =
-      Array.isArray(originalTree.value) && originalTree.value.length > 0
-    if (isPageLoading.value && hasData) {
-      isPageLoading.value = false
-    }
-  } catch (error) {
-    logger.error('Management', '❌ handleLeftTreeReady 失败', error)
-  }
-}
-const isEditDirty = computed(() => {
-  const originalTitle = (
-    dialogStore.editBookmarkDialog.bookmark?.title || ''
-  ).trim()
-  const originalUrl = (
-    dialogStore.editBookmarkDialog.bookmark?.url || ''
-  ).trim()
-  const curTitle = (dialogStore.editBookmarkDialog.title || '').trim()
-  const curUrl = (dialogStore.editBookmarkDialog.url || '').trim()
-  return originalTitle !== curTitle || originalUrl !== curUrl
-})
-const isEditFolderDirty = computed(() => {
-  const originalTitle = (
-    dialogStore.editFolderDialog.folder?.title || ''
-  ).trim()
-  const curTitle = (dialogStore.editFolderDialog.title || '').trim()
-  return originalTitle !== curTitle
-})
-const folderEditFormErrors = ref<{ title: string }>({ title: '' })
-watch(
-  () => dialogStore.editFolderDialog.title,
-  val => {
-    if (folderEditFormErrors.value.title && (val || '').trim()) {
-      folderEditFormErrors.value.title = ''
-    }
-  }
-)
-
-const isConfirmDeleteDialogOpen = ref(false)
-const deleteTargetFolder = ref<BookmarkNode | null>(null)
-const deleteFolderBookmarkCount = ref(0)
-
-/**
- * 右侧面板：编辑节点（仅内存操作）
- */
-const handleRightNodeEdit = (node: BookmarkNode) => {
-  if (node.url) {
-    dialogStore.openEditBookmarkDialog(node)
-  } else {
-    dialogStore.openEditFolderDialog(node)
-  }
-}
-
-/**
- * 右侧面板：删除节点（仅内存操作）
- */
-const handleRightNodeDelete = (node: BookmarkNode) => {
-  const success = bookmarkManagementStore.deleteNodeFromProposal(node.id)
-
-  if (!success) {
-    logger.error('Management', 'Delete', '删除提案树节点失败', { nodeId: node.id })
-  }
-}
-
-/**
- * 右侧面板：添加书签/文件夹（仅内存操作）
- */
-const handleRightFolderAdd = (node: BookmarkNode) => {
-  dialogStore.openAddItemDialog('bookmark', node)
-}
-
-/**
- * 检查 URL 是否为浏览器内部协议
- */
-const isInternalProtocolUrl = (url: string): boolean => {
-  if (!url) return false
-  const lowerUrl = url.toLowerCase()
-  return (
-    lowerUrl.startsWith('chrome://') ||
-    lowerUrl.startsWith('chrome-extension://') ||
-    lowerUrl.startsWith('about:') ||
-    lowerUrl.startsWith('file://') ||
-    lowerUrl.startsWith('edge://') ||
-    lowerUrl.startsWith('brave://')
-  )
-}
-
-const handleBookmarkOpenNewTab = (node: BookmarkNode) => {
-  if (!node.url) {
-    notificationService.notify(t('management_no_valid_url'), { level: 'warning' })
-    return
-  }
-
-  // 检查是否为内部协议书签（优先检查标签，兜底检查 URL）
-  const hasInternalTag = node.traitTags?.includes('internal')
-  const isInternalUrl = isInternalProtocolUrl(node.url)
-  
-  if (hasInternalTag || isInternalUrl) {
-    notificationService.notify(t('management_cannot_open_internal'), { level: 'warning' })
-    logger.warn('Management', '尝试打开内部协议书签:', node.url)
-    return
-  }
-
-  try {
-    if (typeof window === 'undefined') {
-      logger.error('Management', '非浏览器环境，无法打开链接')
-      notificationService.notify(t('management_open_link_failed'), { level: 'error' })
-      return
-    }
-
-    // 打开书签（不记录访问，因为这是管理操作，不是真实使用）
-    const newWindow = window.open(node.url, '_blank')
-    
-    // 检查是否被浏览器阻止
-    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-      notificationService.notify(t('management_link_blocked'), { level: 'warning' })
-      logger.warn('Management', '链接被浏览器阻止:', node.url)
-    }
-  } catch (error) {
-    notificationService.notify(t('management_open_link_failed'), { level: 'error' })
-    logger.error('Management', '打开链接失败:', error, node.url)
-  }
-}
-
-/**
- * 处理添加对话框的 Tab 切换
- * Material Web Tabs 的 change 事件会传递 CustomEvent，包含 activeTabIndex
- */
-const handleAddDialogTabChange = (event: Event) => {
-  const customEvent = event as CustomEvent<{ activeTabIndex: number }>
-  const activeTabIndex = customEvent.detail?.activeTabIndex ?? 0
-  
-  // 根据 tab index 更新对话框类型
-  dialogStore.addItemDialog.type = activeTabIndex === 0 ? 'bookmark' : 'folder'
-  
-  // 清空表单数据和错误
-  dialogStore.addItemDialog.title = ''
-  dialogStore.addItemDialog.url = ''
-  addFormErrors.value.title = ''
-  addFormErrors.value.url = ''
-}
-
-const confirmAddNewItem = async () => {
-  const title = (dialogStore.addItemDialog.title || '').trim()
-  if (!title) {
-    addFormErrors.value.title = t('management_title_required')
-    return
-  }
-  if (dialogStore.addItemDialog.type === 'bookmark') {
-    const url = (dialogStore.addItemDialog.url || '').trim()
-    if (!DataValidator.validateUrl(url)) {
-      addFormErrors.value.url = t('management_url_invalid')
-      return
-    }
-  }
-
-  if (isAddingItem.value) return
-
-  try {
-    isAddingItem.value = true
-
-    const itemType =
-      dialogStore.addItemDialog.type === 'bookmark' ? '书签' : '文件夹'
-
-    const res = await bookmarkManagementStore.addBookmark({
-      type: dialogStore.addItemDialog.type,
-      title: dialogStore.addItemDialog.title,
-      url: dialogStore.addItemDialog.url,
-      parentId: dialogStore.addItemDialog.parentFolder?.id
-    })
-
-    dialogStore.closeAddItemDialog()
-
-    if (
-      res &&
-      rightTreeRef.value &&
-      typeof rightTreeRef.value.focusNodeById === 'function'
-    ) {
-      await nextTick()
-      try {
-        await rightTreeRef.value.focusNodeById(res.id, {
-          collapseOthers: true,
-          scrollIntoViewCenter: true
-        })
-      } catch (e) {
-        logger.error('Management', 'Focus', '新增后定位失败', e)
-      }
-    }
-
-    await nextTick()
-    notificationService.notify(t('management_bookmark_added', itemType), { level: 'success' })
-  } catch (error) {
-    logger.error('Management', 'Add', '添加失败', error)
-    notificationService.notify(t('management_add_failed'), { level: 'error' })
-  } finally {
-    isAddingItem.value = false
-  }
-}
-
-const confirmEditBookmark = async () => {
-  if (!isEditDirty.value) {
-    dialogStore.closeEditBookmarkDialog()
-    return
-  }
-  const title = (dialogStore.editBookmarkDialog.title || '').trim()
-  if (!title) {
-    editFormErrors.value.title = t('management_title_required')
-    return
-  }
-  const url = (dialogStore.editBookmarkDialog.url || '').trim()
-  if (!DataValidator.validateUrl(url)) {
-    editFormErrors.value.url = t('management_url_invalid')
-    return
-  }
-
-  if (isEditingBookmark.value) return
-
-  try {
-    isEditingBookmark.value = true
-
-    await bookmarkManagementStore.editBookmark({
-      id: dialogStore.editBookmarkDialog.bookmark!.id,
-      title: dialogStore.editBookmarkDialog.title,
-      url: dialogStore.editBookmarkDialog.url,
-      parentId: dialogStore.editBookmarkDialog.parentId
-    })
-
-    dialogStore.closeEditBookmarkDialog()
-
-    await nextTick()
-    notificationService.notify(t('management_bookmark_updated'), { level: 'success' })
-  } catch (error) {
-    logger.error('Management', 'Edit', '编辑书签失败', error)
-    notificationService.notify(t('management_edit_failed'), { level: 'error' })
-  } finally {
-    isEditingBookmark.value = false
-  }
-}
-
-const confirmEditFolder = async () => {
-  if (!isEditFolderDirty.value) {
-    dialogStore.closeEditFolderDialog()
-    return
-  }
-  const title = (dialogStore.editFolderDialog.title || '').trim()
-  if (!title) {
-    folderEditFormErrors.value.title = t('management_title_required')
-    return
-  }
-
-  if (isEditingFolder.value) return
-
-  try {
-    isEditingFolder.value = true
-
-    await bookmarkManagementStore.editBookmark({
-      id: dialogStore.editFolderDialog.folder!.id,
-      title: dialogStore.editFolderDialog.title,
-      url: '',
-      parentId: undefined
-    })
-
-    dialogStore.closeEditFolderDialog()
-
-    await nextTick()
-    notificationService.notify(t('management_folder_updated'), { level: 'success' })
-  } catch (error) {
-    logger.error('Management', 'Edit', '编辑文件夹失败', error)
-    notificationService.notify(t('management_edit_failed'), { level: 'error' })
-  } finally {
-    isEditingFolder.value = false
-  }
-}
-const confirmDeleteFolder = async () => {
-  if (deleteTargetFolder.value) {
-    const folder = deleteTargetFolder.value
-
-    if (isDeletingFolder.value) return
-
-    try {
-      isDeletingFolder.value = true
-
-      try {
-        await deleteFolder(folder.id)
-      } catch (error) {
-        logger.error('Management', '删除文件夹失败', error)
-        notificationService.notify(t('management_delete_failed'), { level: 'error' })
-      } finally {
-        isDeletingFolder.value = false
-      }
-    } catch (error) {
-      logger.error('Management', '删除文件夹失败', error)
-      notificationService.notify(t('management_delete_failed'), { level: 'error' })
-      isDeletingFolder.value = false
-    }
-  }
-
-  isConfirmDeleteDialogOpen.value = false
-  deleteTargetFolder.value = null
-  deleteFolderBookmarkCount.value = 0
-}
-
-const handleBookmarkCopyUrl = (node: BookmarkNode) => {
-  if (node.url) {
-    navigator.clipboard.writeText(node.url)
-    notificationService.notify('URL copied!', { level: 'success' })
-  }
-}
-/**
- * 处理外部书签变更事件
- * 当检测到外部书签变更时（如 Chrome Sync、其他设备、书签管理器），
- * 如果用户没有未保存的修改，则静默刷新数据
- */
-const handleExternalChange = async (data: {
-  eventType: 'created' | 'changed' | 'moved' | 'removed'
-  bookmarkId?: string
-  timestamp: number
-}) => {
-  if (bookmarkManagementStore.isApplyingOwnChanges) {
-    logger.debug('Management', '检测到自己触发的变更，忽略', data)
-    return
-  }
-
-  logger.info('Management', '🔄 检测到外部书签变更', data)
-
-  if (bookmarkManagementStore.hasUnsavedChanges) {
-    logger.warn('Management', '用户有未保存的修改，暂不自动刷新')
-    return
-  }
-
-  try {
-    await initializeStore()
-    logger.info('Management', '✅ 已静默刷新书签数据')
-    notificationService.notify(t('management_external_change_detected'), {
-      level: 'info'
-    })
-  } catch (error) {
-    logger.error('Management', '静默刷新失败', error)
-    notificationService.notify(t('management_refresh_failed'), { level: 'error' })
-  }
-}
-
-const unsubscribeExternalChange = onEvent('data:synced', handleExternalChange)
-const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-  if (bookmarkManagementStore.hasUnsavedChanges) {
-    e.preventDefault()
-    e.returnValue = ''
-  }
-}
-
-onUnmounted(() => {
-  unsubscribeExternalChange()
-  if (typeof window !== 'undefined') {
-    window.removeEventListener('beforeunload', handleBeforeUnload)
-  }
-})
-
-onMounted(async () => {
-  // ✅ 先初始化 store，等待数据加载完成
-  await initializeStore()
-
-  // 1. 从 session storage 读取初始筛选参数（优先级最高）
-  let pendingTags: TraitTag[] = []
-  try {
-    const result = await chrome.storage.session.get('managementInitialFilter')
-    if (result.managementInitialFilter) {
-      const filter = result.managementInitialFilter as { tags?: string[]; timestamp?: number }
-      const { tags, timestamp } = filter
-      // 检查时间戳，避免使用过期的筛选状态（5秒内有效）
-      if (tags && timestamp && Date.now() - timestamp < 5000) {
-        pendingTags = tags.filter((tag: string): tag is TraitTag =>
-          ['duplicate', 'invalid', 'internal'].includes(tag)
-        )
-        logger.info('Management', '从 session storage 读取筛选参数:', pendingTags)
-        // 使用后立即清除，避免影响下次打开
-        await chrome.storage.session.remove('managementInitialFilter')
-      }
-    }
-  } catch (error) {
-    logger.warn('Management', '读取 session storage 失败:', error)
-  }
-
-  // 2. 兜底：从 URL 参数读取（向后兼容）
-  if (pendingTags.length === 0) {
-    try {
-      if (typeof window !== 'undefined') {
-        const params = new URLSearchParams(window.location.search)
-        const tagsParam = params.get('tags')
-        if (tagsParam) {
-          pendingTags = tagsParam
-            .split(',')
-            .map(tag => tag.trim())
-            .filter((tag): tag is TraitTag =>
-              ['duplicate', 'invalid', 'internal'].includes(tag)
-            )
-          logger.info('Management', '从 URL 参数读取筛选:', pendingTags)
-        }
-      }
-    } catch (error) {
-      logger.warn('Management', '解析 URL 参数失败:', error)
-    }
-  }
-
-  // 3. 应用筛选（如果有待处理的筛选条件）
-  // ✅ 特征数据由 Background Script 自动维护，无需手动触发检测
-  if (pendingTags.length > 0) {
-    logger.info('Management', '准备激活筛选:', pendingTags)
-    
-    // 等待下一帧，确保 UI 已更新
-    await nextTick()
-    
-    // 设置筛选状态（会触发 BookmarkSearchInput 的 watch）
-    traitFilterStore.setActiveFilters(pendingTags)
-    logger.info('Management', '✅ traitFilterStore.setActiveFilters 已调用')
-    
-    // 设置待选中的节点（用于自动选中问题节点）
-    pendingTagSelection.value = pendingTags
-    logger.info('Management', '✅ pendingTagSelection 已设置')
-    
-    // 再等待一帧，确保筛选已应用
-    await nextTick()
-    logger.info('Management', '✅ 筛选应该已经生效，当前 activeFilters:', traitFilterStore.activeFilters)
-  }
-
-  if (typeof window !== 'undefined') {
-    window.addEventListener('beforeunload', handleBeforeUnload)
-
-    const g = window as unknown as Record<string, unknown>
-    g.AB_setFolderExpanded = (id: string, expanded?: boolean) => {
-      const comp = leftTreeRef.value
-      if (!comp) return
-      const sid = String(id)
-      if (expanded === undefined) {
-        if (typeof comp.toggleFolderById === 'function')
-          comp.toggleFolderById(sid)
-        return
-      }
-      if (expanded) {
-        if (typeof comp.expandFolderById === 'function')
-          comp.expandFolderById(sid)
-      } else {
-        if (typeof comp.collapseFolderById === 'function')
-          comp.collapseFolderById(sid)
-      }
-    }
-    g.AB_toggleFolder = (id: string) => {
-      const comp = leftTreeRef.value
-      if (!comp) return
-      const sid = String(id)
-      if (typeof comp.toggleFolderById === 'function') comp.toggleFolderById(sid)
-    }
-    g.AB_focusBookmark = (
-      id: string,
-      opts?: {
-        collapseOthers?: boolean
-        scrollIntoViewCenter?: boolean
-        pathIds?: string[]
-      }
-    ) => {
-      const comp = leftTreeRef.value
-      if (!comp || !comp.focusNodeById) return
-      comp.focusNodeById(
-        String(id),
-        opts || { collapseOthers: true, scrollIntoViewCenter: true }
-      )
-    }
-  }
-})
-
-const toggleLeftExpandAll = async () => {
-  if (!leftTreeRef.value) return
-  if (isExpanding.value) return
-  isExpanding.value = true
-  schedulerService.scheduleUIUpdate(() => {
-    isPageLoading.value = true
-    loadingMessage.value = leftExpandAll.value ? '正在收起...' : '正在展开...'
-  })
-  await nextTick()
-  await new Promise(r => requestAnimationFrame(r))
-  await new Promise(r => requestAnimationFrame(r))
-  await new Promise(r => setTimeout(r, 0))
-  if (leftExpandAll.value) {
-    leftTreeRef.value.collapseAll()
-    leftExpandAll.value = false
-  } else {
-    leftTreeRef.value.expandAll()
-    leftExpandAll.value = true
-  }
-  schedulerService.scheduleUIUpdate(() => {
-    isPageLoading.value = false
-    isExpanding.value = false
-  })
-}
-
-const toggleRightExpandAll = async () => {
-  if (!rightTreeRef.value) return
-  if (isExpanding.value) return
-  isExpanding.value = true
-  isPageLoading.value = true
-  loadingMessage.value = rightExpandAll.value ? '正在收起...' : '正在展开...'
-  // 让出两帧以确保蒙层先绘制（处理主线程阻塞导致的晚出现）
-  await nextTick()
-  await new Promise(r => requestAnimationFrame(r))
-  await new Promise(r => requestAnimationFrame(r))
-  await new Promise(r => setTimeout(r, 0))
-  if (rightExpandAll.value) {
-    rightTreeRef.value.collapseAll()
-    rightExpandAll.value = false
-  } else {
-    rightTreeRef.value.expandAll()
-    rightExpandAll.value = true
-  }
-  requestAnimationFrame(() => {
-    isPageLoading.value = false
-    isExpanding.value = false
-  })
-}
-
-// 右侧选择变化：用于批量删除
-const onRightSelectionChange = (ids: string[]) => {
-  rightSelectedIds.value = Array.isArray(ids) ? ids.map(String) : []
-}
-
-// 清空选择：调用树组件 API，状态通过 selection-change 事件自动同步
-const clearRightSelection = () => {
-  try {
-    rightTreeRef.value?.clearSelection?.()
-  } catch {}
-}
-
-// 计算右侧树的全选状态
-const rightSelectAllState = computed(() => {
-  const totalNodes = getAllRightTreeNodeIds()
-  const selectedCount = rightSelectedIds.value.length
-
-  if (selectedCount === 0) {
-    return { checked: false, indeterminate: false }
-  }
-
-  if (selectedCount === totalNodes.length) {
-    return { checked: true, indeterminate: false }
-  }
-
-  return { checked: false, indeterminate: true }
-})
-
-// 统计右侧树数据中的实际书签和文件夹数量（用于调试和验证）
-const rightTreeDataStats = computed(() => {
-  let bookmarkCount = 0
-  let folderCount = 0
-
-  const countNodes = (nodes: BookmarkNode[]) => {
-    for (const node of nodes) {
-      if (!node || !node.id) continue
-      if (node.url) {
-        bookmarkCount++
-      } else {
-        folderCount++
-      }
-      if (node.children && node.children.length) {
-        countNodes(node.children)
-      }
-    }
-  }
-
-  countNodes(rightTreeData.value)
-  return { bookmarkCount, folderCount, total: bookmarkCount + folderCount }
-})
-
-// 监控右侧树数据统计（用于调试数量不一致问题）
-watch(
-  () => rightTreeDataStats.value,
-  stats => {
-    logger.debug('Management', '右侧树数据统计', {
-      bookmarks: stats.bookmarkCount,
-      folders: stats.folderCount,
-      total: stats.total
-    })
-  },
-  { immediate: true }
-)
-
-/**
- * 获取右侧树所有节点 ID
- * 直接从索引获取，O(1) 操作
- * 
- * @returns 所有节点 ID 数组
- */
-const getAllRightTreeNodeIds = (): string[] => {
-  return rightTreeIndex.getAllNodeIds()
-}
-
-// 全选/取消全选切换
-const toggleRightSelectAll = (checked: boolean) => {
-  if (checked) {
-    // 全选
-    const allIds = getAllRightTreeNodeIds()
-    rightTreeRef.value?.selectNodesByIds?.(allIds, { append: false })
-    // 全选后自动展开所有文件夹，方便用户确认选中内容
-    nextTick(() => {
-      rightTreeRef.value?.expandAll?.()
-      rightExpandAll.value = true
-    })
-  } else {
-    // 取消全选：显式传递空数组，确保所有节点（包括文件夹）都被取消选中
-    rightTreeRef.value?.selectNodesByIds?.([], { append: false })
-  }
-}
-
-// 使用 Notification 组件
-const notification = useNotification()
-
-const handleBookmarkMove = async (data: {
-  sourceId: string
-  targetId: string
-  position: 'before' | 'inside' | 'after'
-}) => {
-  const callTime = Date.now()
-  logger.info('Management', '🔵 拖拽移动书签开始', { ...data, callTime })
-
-  try {
-    const result = await bookmarkManagementStore.moveBookmark(data)
-
-    if (result) {
-      logger.info('Management', '📦 移动结果（可用于 Chrome API）', {
-        nodeId: result.nodeId,
-        newParentId: result.newParentId,
-        newIndex: result.newIndex,
-        chromeApiCall: `chrome.bookmarks.move('${result.nodeId}', { parentId: '${result.newParentId}', index: ${result.newIndex} })`
-      })
-    }
-
-    notification.success({
-      message: t('management_bookmark_moved'),
-      key: 'bookmark-moved',
-      duration: 2 // duration 单位为秒
-    })
-  } catch (error) {
-    logger.error('Management', '移动书签失败', error)
-    notification.error({
-      message: t('management_move_failed'),
-      description: t('management_move_failed_retry'),
-      duration: 3 // duration 单位为秒
-    })
-  }
-}
-
-/**
- * 批量删除选中的书签和文件夹
- * 
- * ✅ 直接执行删除，不需要确认对话框
- * 因为右侧面板的所有操作都需要点击"应用"才会真实生效
- * 应用时会有全面的确认提示
- */
-const handleBulkDelete = async () => {
-  const ids = rightSelectedIds.value.filter(Boolean)
-  if (!ids.length) return
-
-  if (isBulkDeleting.value) return // 防止重复点击
-
-  try {
-    isBulkDeleting.value = true
-
-    bulkDeleteByIds(ids)
-    
-    // 清空选择，避免再次误删
-    try {
-      rightTreeRef.value?.clearSelection?.()
-    } catch {}
-  } catch (error) {
-    logger.error('Management', '批量删除失败', error)
-    notificationService.notify(t('management_bulk_delete_failed'), { level: 'error' })
-  } finally {
-    isBulkDeleting.value = false
-  }
-}
-
-// ==================== 应用更改相关方法 ====================
-
-/**
- * 确认对话框标题
- */
-const applyConfirmTitle = computed(() => {
-  if (!diffResult.value) return t('management_apply')
-
-  const total = diffResult.value.statistics.total
-  if (total < 100) {
-    return t('management_confirm_apply_changes')
-  } else if (total < 500) {
-    return '⚠️ ' + t('management_confirm_apply_changes')
-  } else {
-    return '⚠️ ' + t('management_large_operation_warning')
-  }
-})
-
-/**
- * 确认对话框图标
- */
-const applyConfirmIcon = computed(() => {
-  if (!diffResult.value) return 'icon-check'
-
-  const total = diffResult.value.statistics.total
-  if (total < 100) {
-    return 'icon-check'
-  } else {
-    return 'icon-warning'
-  }
-})
-
-/**
- * 预计剩余时间
- */
-const estimatedRemainingTime = computed(() => {
-  const progress = bookmarkManagementStore.applyProgress
-  if (!progress.isApplying || progress.currentIndex === 0) {
-    return t('management_calculating')
-  }
-
-  const elapsed = Date.now() - applyStartTime.value
-  const avgTimePerOp = elapsed / progress.currentIndex
-  const remaining = Math.ceil(
-    ((progress.totalOperations - progress.currentIndex) * avgTimePerOp) / 1000
-  )
-
-  if (remaining < 60) {
-    return t('management_about_seconds', String(remaining))
-  } else {
-    const minutes = Math.ceil(remaining / 60)
-    return t('management_about_minutes', String(minutes))
-  }
-})
-
-/**
- * 获取操作图标
- */
-const getOperationIcon = (type: BookmarkOperationType): string => {
-  const icons: Record<BookmarkOperationType, string> = {
-    create: 'plus',
-    move: 'refresh',
-    edit: 'edit',
-    delete: 'trash'
-  }
-  return icons[type] || 'bookmark'
-}
-
-/**
- * 获取操作类型文本
- */
-const getOperationTypeText = (type: BookmarkOperationType): string => {
-  const texts: Record<BookmarkOperationType, string> = {
-    create: '新增',
-    move: '移动',
-    edit: '编辑',
-    delete: '删除'
-  }
-  return texts[type] || type
-}
-
-/**
- * 按类型获取操作列表
- */
-const getOperationsByType = (
-  type: BookmarkOperationType
-): BookmarkOperation[] => {
-  if (!diffResult.value) return []
-  return diffResult.value.operations.filter(op => op.type === type)
-}
-
-/**
- * 一键整理书签栏（AI 自动分类）
- * 
- * ⚠️ 临时禁用：organizeBookmarks 方法已从 aiAppService 中移除
- * TODO: 使用 folderVectorService 实现基于向量的本地推荐
- */
-async function handleAIOrganize() {
-  if (isOrganizing.value || isPageLoading.value) {
-    return
-  }
-
-  try {
-    isOrganizing.value = true
-    
-    // 临时提示：功能正在重构中
-    notificationService.notify(
-      'AI 整理功能正在重构中，即将推出基于向量的本地推荐功能',
-      { level: 'info' }
-    )
-    
-    /* 原实现已注释，等待使用 folderVectorService 重新实现
-    showOrganizeProgress.value = true
-    organizeProgress.value = {
-      current: 0,
-      total: 0,
-      message: '正在加载书签...'
-    }
-
-    // 获取所有书签（只获取书签，不包括文件夹）
-    const allBookmarksResult = await bookmarkAppService.getAllBookmarks()
-    if (!allBookmarksResult.ok) {
-      notificationService.notifyError('获取书签失败', 'AI 整理')
-      return
-    }
-
-    const allBookmarks = allBookmarksResult.value
-    // 过滤出书签（有 URL 的），排除文件夹和 Chrome 内部链接
-    const bookmarkRecords = allBookmarks.filter(
-      record => record.url && !record.url.startsWith('chrome://')
-    )
-
-    if (bookmarkRecords.length === 0) {
-      notificationService.notify(t('management_no_bookmarks_to_organize'), { level: 'info' })
-      return
-    }
-
-    organizeProgress.value = {
-      current: 0,
-      total: bookmarkRecords.length,
-      message: t('management_organizing_bookmarks', String(bookmarkRecords.length))
-    }
-
-    // TODO: 使用 folderVectorService 实现分类推荐
-    // const results = await folderVectorService.recommendFolders(bookmarkRecords)
-
-    notificationService.notifySuccess(
-      t('management_organize_success', [String(bookmarkRecords.length), String(0)]),
-      'AI 整理'
-    )
-    */
-  } catch (error) {
-    logger.error('AI 整理失败', error)
-    notificationService.notifyError(t('management_organize_failed'), 'AI 整理')
-  } finally {
-    isOrganizing.value = false
-    showOrganizeProgress.value = false
-  }
-}
-
-/**
- * 点击应用更改按钮
- */
-const handleApplyClick = () => {
-  // 检查是否有临时节点
-  const tempNodeInfo = getTempNodesInfo(
-    bookmarkManagementStore.newProposalTree.children
-  )
-
-  if (tempNodeInfo.count > 0) {
-    const message =
-      `⚠️ 检测到 ${tempNodeInfo.count} 个未保存的新增节点。\n\n` +
-      `说明：新添加的节点（ID 以 temp_ 开头）尚未保存到浏览器书签。\n` +
-      `这些节点的顺序调整无法应用，因为它们还不存在于浏览器中。\n\n` +
-      `建议操作流程：\n` +
-      `1. 如果这些是误添加的节点，请刷新页面丢弃它们\n` +
-      `2. 如果需要保留这些节点，暂时不支持保存（功能开发中）`
-
-    const shouldContinue = typeof window !== 'undefined' ? window.confirm(message) : false
-
-    if (shouldContinue) {
-      // 用户选择了解，继续显示差异（已过滤临时节点）
-      const diff = bookmarkManagementStore.calculateDiff()
-
-      if (!diff || diff.statistics.total === 0) {
-        // 如果实际没有差异，重置标志位，禁用按钮
-        bookmarkManagementStore.hasUnsavedChanges = false
-        notificationService.notify(t('management_no_changes_detected'), {
-          level: 'info'
-        })
-        return
-      }
-
-      diffResult.value = diff
-      showApplyConfirmDialog.value = true
-    }
-    return
-  }
-
-  // 计算差异
-  const diff = bookmarkManagementStore.calculateDiff()
-
-  if (!diff || diff.statistics.total === 0) {
-    // 如果实际没有差异，重置标志位，禁用按钮
-    bookmarkManagementStore.hasUnsavedChanges = false
-    notificationService.notify(t('management_no_changes_detected'), { level: 'info' })
-    return
-  }
-
-  diffResult.value = diff
-  showApplyConfirmDialog.value = true
-}
-
-/**
- * 获取临时节点信息
- * 直接从索引获取所有 ID 并过滤，避免递归遍历
- * 
- * @param _nodes 节点数组（未使用，保留兼容性）
- * @returns 临时节点信息
- */
-const getTempNodesInfo = (
-  _nodes: BookmarkNode[]
-): { count: number; ids: string[] } => {
-  const allIds = rightTreeIndex.getAllNodeIds()
-  const tempIds = allIds.filter(id => id.startsWith('temp_'))
-  
-  return {
-    count: tempIds.length,
-    ids: tempIds
-  }
-}
-
-/**
- * 确认应用更改
- */
-const confirmApplyChanges = async () => {
-  if (!diffResult.value) return
-
-  try {
-    // 关闭确认对话框
-    showApplyConfirmDialog.value = false
-
-    // 记录开始时间
-    applyStartTime.value = Date.now()
-
-    // 应用更改
-    const result = await bookmarkManagementStore.applyChanges(
-      diffResult.value.operations,
-      (current, total, operation) => {
-        // 进度回调（已在 store 中更新状态）
-        logger.debug('Management', `应用进度: ${current}/${total}`, {
-          operation
-        })
-      }
-    )
-
-    // 显示结果
-    if (result.success) {
-      notificationService.notify(t('management_all_changes_applied'), { level: 'success' })
-    } else {
-      notificationService.notify(
-        t('management_some_changes_failed', String(result.errors.length)),
-        { level: 'warning' }
-      )
-      logger.error('Management', '应用更改部分失败', result.errors)
-    }
-
-    // 清空差异结果
-    diffResult.value = null
-  } catch (error) {
-    logger.error('Management', '应用更改失败', error)
-    notificationService.notify(t('management_apply_changes_failed'), { level: 'error' })
-  }
-}
-
-/**
- * 顶部"应用"按钮点击事件
- */
-const handleApply = () => {
-  // 复用 handleApplyClick 的逻辑
-  handleApplyClick()
-}
-
-// =============================
-</script>
 
 <style scoped>
 /* ========================================

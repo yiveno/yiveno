@@ -667,11 +667,11 @@ export const useBookmarkManagementStore = defineStore(
               type: 'REMOVE_TREE_BOOKMARK',
               data: { id: folderId }
             },
-            response => {
+            messageResponse => {
               if (chrome.runtime.lastError) {
                 reject(new Error(chrome.runtime.lastError.message))
               } else {
-                resolve(response || { success: false })
+                resolve(messageResponse || { success: false })
               }
             }
           )
@@ -1105,11 +1105,11 @@ export const useBookmarkManagementStore = defineStore(
               : 'DELETE_BOOKMARK',
             data: { id: operation.nodeId }
           },
-          response => {
+          deleteResponse => {
             if (chrome.runtime.lastError) {
               reject(new Error(chrome.runtime.lastError.message))
             } else {
-              resolve(response || { success: false })
+              resolve(deleteResponse || { success: false })
             }
           }
         )
@@ -1145,11 +1145,11 @@ export const useBookmarkManagementStore = defineStore(
               index: operation.toIndex
             }
           },
-          response => {
+          moveResponse => {
             if (chrome.runtime.lastError) {
               reject(new Error(chrome.runtime.lastError.message))
             } else {
-              resolve(response || { success: false })
+              resolve(moveResponse || { success: false })
             }
           }
         )
@@ -1180,11 +1180,11 @@ export const useBookmarkManagementStore = defineStore(
               url: operation.newUrl
             }
           },
-          response => {
+          updateResponse => {
             if (chrome.runtime.lastError) {
               reject(new Error(chrome.runtime.lastError.message))
             } else {
-              resolve(response || { success: false })
+              resolve(updateResponse || { success: false })
             }
           }
         )
@@ -1219,11 +1219,11 @@ export const useBookmarkManagementStore = defineStore(
               index: operation.index
             }
           },
-          response => {
+          createResponse => {
             if (chrome.runtime.lastError) {
               reject(new Error(chrome.runtime.lastError.message))
             } else {
-              resolve(response || { success: false })
+              resolve(createResponse || { success: false })
             }
           }
         )

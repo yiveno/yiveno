@@ -28,7 +28,7 @@ export async function proxyApiRequest<T = unknown>(
       }
     }
 
-    const response = await new Promise<{
+    const apiResponse = await new Promise<{
       success: boolean
       status: number
       statusText: string
@@ -64,24 +64,24 @@ export async function proxyApiRequest<T = unknown>(
     })
 
     // 处理 HTTP 错误响应（4xx, 5xx）
-    if (response.status >= 400) {
+    if (apiResponse.status >= 400) {
       // 从响应数据中提取错误码
-      const errorCode = extractErrorCode(response.data)
+      const errorCode = extractErrorCode(apiResponse.data)
 
       // 根据错误码获取对应的错误文案
       const errorMessage = getErrorMessage(
         errorCode,
-        `HTTP ${response.status}: ${response.statusText}`
+        `HTTP ${apiResponse.status}: ${apiResponse.statusText}`
       )
 
       throw new Error(errorMessage)
     }
 
-    if (!response.success) {
-      throw new Error(response.error || '请求失败')
+    if (!apiResponse.success) {
+      throw new Error(apiResponse.error || '请求失败')
     }
 
-    return response.data
+    return apiResponse.data
   } catch (error) {
     logger.error('ProxyAPI', 'Request', '代理 API 请求失败', error)
     // 如果是已经包含错误信息的 Error，直接抛出

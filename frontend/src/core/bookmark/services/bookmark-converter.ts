@@ -61,19 +61,28 @@ export class BookmarkConverter {
   static listToBookmarkNodes<T extends MinimalTreeNode>(
     nodes: T[]
   ): BookmarkNode[] {
-    const mapNode = (n: MinimalTreeNode): BookmarkNode => ({
-      id: String(n.id),
-      title: n.title,
-      url: n.url,
-      parentId: n.parentId,
-      index: typeof n.index === 'number' ? n.index : undefined,
-      dateAdded: n.dateAdded,
-      children: n.children?.length
-        ? n.children.map(mapNode)
-        : n.url
-          ? undefined
-          : []
-    })
+    const mapNode = (n: MinimalTreeNode): BookmarkNode => {
+      const node: BookmarkNode = {
+        id: String(n.id),
+        title: n.title,
+        url: n.url,
+        parentId: n.parentId,
+        dateAdded: n.dateAdded
+      }
+      
+      if (typeof n.index === 'number') {
+        node.index = n.index
+      }
+      
+      if (n.children?.length) {
+        node.children = n.children.map(mapNode)
+      } else if (!n.url) {
+        node.children = []
+      }
+      
+      return node
+    }
+    
     return Array.isArray(nodes) ? nodes.map(mapNode) : []
   }
 
@@ -264,12 +273,18 @@ export class BookmarkConverter {
    * @returns 清理后的书签节点
    */
   static sanitizeBookmarkNode(node: BookmarkNode): BookmarkNode {
-    return {
+    const trimmedUrl = node.url?.trim()
+    const result: BookmarkNode = {
       ...node,
       id: String(node.id).trim(),
       title: node.title?.trim() || '',
-      url: node.url?.trim() || undefined,
       children: node.children?.map(child => this.sanitizeBookmarkNode(child))
     }
+    
+    if (trimmedUrl) {
+      result.url = trimmedUrl
+    }
+    
+    return result
   }
 }

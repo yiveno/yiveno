@@ -8,196 +8,6 @@
   4. 优化事件处理函数
 -->
 
-<template>
-  <div 
-    class="simple-bookmark-tree" 
-    :class="treeClasses"
-    tabindex="0"
-    @keydown="handleTreeKeyDown"
-  >
-    <!-- 搜索框 (可选) -->
-    <div v-if="searchable" class="tree-search">
-      <Input
-        v-model="searchQuery"
-        :placeholder="t('search_placeholder')"
-        type="text"
-        variant="outlined"
-        density="compact"
-        clearable
-      >
-        <template #prepend>
-          <LucideIcon name="search" :size="16" />
-        </template>
-      </Input>
-    </div>
-
-    <!-- 树容器 -->
-    <div class="tree-container-wrapper">
-      <div
-        ref="containerRef"
-        class="tree-container"
-        :class="{ 'is-loading': isOverlayLoading }"
-        :style="containerStyles"
-      >
-        <div v-if="isOverlayLoading" class="tree-loading-overlay">
-          <md-circular-progress indeterminate class="tree-spinner-lg" />
-          <div class="tree-loading-text">正在加载书签…</div>
-        </div>
-
-        <!-- 空状态 -->
-        <EmptyState
-          v-if="shouldShowEmptyState"
-          :icon="emptyStateConfig.icon"
-          :title="emptyStateConfig.title"
-          :description="emptyStateConfig.description"
-          :icon-size="56"
-        />
-
-        <!-- 标准渲染模式 -->
-        <div
-          v-if="!virtualEnabled && !shouldShowEmptyState"
-          class="standard-content"
-        >
-          <TreeNode
-            v-for="node in filteredNodes"
-            :key="node.id"
-            :node="node"
-            :level="0"
-            :expanded-folders="expandedFolders"
-            :selected-nodes="selectedNodes"
-            :selected-desc-counts="selectedDescCountsState"
-            :search-query="searchQuery"
-            :highlight-matches="highlightMatches"
-            :config="treeConfig"
-            :drag-state="dragState"
-            :strict-order="props.strictChromeOrder"
-            :active-id="activeNodeId"
-            :focused-id="focusedNodeId"
-            @node-mounted="registerNodeEl"
-            @node-unmounted="unregisterNodeEl"
-            @node-click="handleNodeClick"
-            @folder-toggle="handleFolderToggle"
-            @node-select="handleNodeSelect"
-            @node-edit="handleNodeEdit"
-            @node-delete="handleNodeDelete"
-            @folder-add="handleFolderAdd"
-            @bookmark-open-new-tab="handleBookmarkOpenNewTab"
-            @bookmark-copy-url="handleBookmarkCopyUrl"
-            @bookmark-toggle-favorite="handleBookmarkToggleFavorite"
-            @folder-share="handleFolderShare"
-            @drag-start="handleDragStart"
-            @drag-over="handleDragOver"
-            @drag-leave="handleDragLeave"
-            @drop="handleDrop"
-            @drag-end="handleDragEnd"
-            @open-context-menu="handleOpenContextMenu"
-          />
-        </div>
-
-        <!-- 虚拟滚动模式 (TanStack Virtual) -->
-        <div
-          v-else-if="virtualEnabled && !shouldShowEmptyState"
-          class="virtual-content"
-        >
-          <div class="virtual-spacer" :style="{ height: `${totalHeight}px` }">
-            <div
-              v-for="row in virtualRows"
-              :key="row.record.id"
-              class="virtual-item"
-              :style="{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: `${row.size}px`,
-                transform: `translateY(${row.start}px)`
-              }"
-            >
-              <TreeNode
-                v-if="row.record.kind === 'node' && row.record.node"
-                :node="row.record.node"
-                :level="row.record.level"
-                :expanded-folders="expandedFolders"
-                :selected-nodes="selectedNodes"
-                :selected-desc-counts="selectedDescCountsState"
-                :search-query="searchQuery"
-                :highlight-matches="highlightMatches"
-                :config="treeConfig"
-                :is-virtual-mode="true"
-                :drag-state="dragState"
-                :strict-order="props.strictChromeOrder"
-                :active-id="activeNodeId"
-                :focused-id="focusedNodeId"
-                :loading-more-folders="loadingMoreFolders"
-                @node-mounted="registerNodeEl"
-                @node-unmounted="unregisterNodeEl"
-                @node-click="handleNodeClick"
-                @folder-toggle="handleFolderToggle"
-                @node-select="handleNodeSelect"
-                @node-edit="handleNodeEdit"
-                @node-delete="handleNodeDelete"
-                @folder-add="handleFolderAdd"
-                @bookmark-open-new-tab="handleBookmarkOpenNewTab"
-                @bookmark-copy-url="handleBookmarkCopyUrl"
-                @bookmark-toggle-favorite="handleBookmarkToggleFavorite"
-                @folder-share="handleFolderShare"
-                @drag-start="handleDragStart"
-                @drag-over="handleDragOver"
-                @drag-leave="handleDragLeave"
-                @drop="handleDrop"
-                @drag-end="handleDragEnd"
-                @open-context-menu="handleOpenContextMenu"
-              />
-              <VirtualFolderList
-                v-else-if="row.record.kind === 'chunk' && row.record.chunk"
-                :chunk="row.record.chunk"
-                :level="row.record.level"
-                :expanded-folders="expandedFolders"
-                :selected-nodes="selectedNodes"
-                :selected-desc-counts="selectedDescCountsState"
-                :search-query="searchQuery"
-                :highlight-matches="highlightMatches"
-                :config="treeConfig"
-                :strict-order="props.strictChromeOrder"
-                :active-id="activeNodeId"
-                :focused-id="focusedNodeId"
-                :loading-more-folders="loadingMoreFolders"
-                :size="props.size"
-                @node-click="handleNodeClick"
-                @folder-toggle="handleFolderToggle"
-                @node-select="handleNodeSelect"
-                @node-edit="handleNodeEdit"
-                @node-delete="handleNodeDelete"
-                @folder-add="handleFolderAdd"
-                @bookmark-open-new-tab="handleBookmarkOpenNewTab"
-                @bookmark-copy-url="handleBookmarkCopyUrl"
-                @bookmark-toggle-favorite="handleBookmarkToggleFavorite"
-                @folder-share="handleFolderShare"
-              />
-            </div>
-          </div>
-        </div>
-
-        <!-- 加载状态 -->
-        <div v-if="loading && !isOverlayLoading" class="loading-state">
-          <md-circular-progress indeterminate class="tree-spinner-md" />
-          <span>加载中...</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- 全局右键菜单 -->
-    <ContextMenu
-      :show="showContextMenu"
-      :items="contextMenuItems"
-      :x="contextMenuX"
-      :y="contextMenuY"
-      @item-click="handleContextMenuItemClick"
-      @close="closeContextMenu"
-    />
-  </div>
-</template>
-
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch, shallowRef } from 'vue'
 import { useVirtualizer } from '@tanstack/vue-virtual'
@@ -215,6 +25,85 @@ import { useUIStore } from '@/stores/ui-store'
 
 // ✅ 明确组件名称，便于 Vue DevTools 与日志追踪
 defineOptions({ name: 'BookmarkTree' })
+
+// ✅ 组件默认值集中在此，便于统一维护
+const props = withDefaults(defineProps<Props>(), {
+  height: '400px',
+  searchable: false,
+  selectable: false,
+  editable: false,
+  strictChromeOrder: false,
+  virtual: false,
+  size: 'comfortable',
+  showToolbar: true,
+  toolbarExpandCollapse: true,
+  source: 'sidePanel',
+  highlightMatches: true,
+  showSelectionCheckbox: false,
+  accordionMode: false,
+  showFavoriteButton: false,
+  showEditButton: false,
+  showDeleteButton: false,
+  showAddButton: false,
+  showOpenNewTabButton: false,
+  showCopyUrlButton: false,
+  showShareButton: false,
+  showMoreButton: true,
+  draggable: false,
+  defaultOpenMode: 'new-tab-background',
+  clickBehavior: 'both',
+  showBookmarkUrl: true
+})
+
+// === Emits 定义 ===
+// ✅ 组件对外事件统一声明，用中文说明触发时机
+const emit = defineEmits<{
+  nodeClick: [BookmarkNode, MouseEvent]
+  folderToggle: [string, BookmarkNode, boolean]
+  nodeSelect: [string, BookmarkNode, boolean]
+  selectionChange: [string[], BookmarkNode[]]
+  search: [string]
+  ready: []
+  nodeEdit: [BookmarkNode]
+  nodeDelete: [BookmarkNode]
+  folderAdd: [BookmarkNode]
+  bookmarkOpenNewTab: [BookmarkNode]
+  bookmarkCopyUrl: [BookmarkNode]
+  bookmarkToggleFavorite: [BookmarkNode, boolean]
+  /** 分享文件夹 */
+  folderShare: [BookmarkNode]
+  nodeHover: [BookmarkNode]
+  nodeHoverLeave: [BookmarkNode]
+  /** 展开状态变化事件：true=全部展开，false=全部收起 */
+  expandStateChange: [boolean]
+  requestChildren: [
+    {
+      folderId: string
+      node: BookmarkNode
+      limit: number
+      offset: number
+    }
+  ]
+  requestMoreChildren: [
+    {
+      folderId: string
+      node: BookmarkNode
+      limit: number
+      loaded: number
+    }
+  ]
+  requestClearFilters: []
+  // ✅ 拖拽相关事件
+  bookmarkMove: [
+    {
+      sourceId: string
+      targetId: string
+      position: 'before' | 'inside' | 'after'
+    }
+  ]
+  // 后代计数更新事件
+  descCountsUpdated: [Map<string, number>]
+}>()
 
 // 使用 UI Store 管理高亮状态
 const uiStore = useUIStore()
@@ -317,88 +206,6 @@ interface Props {
    */
   showBookmarkUrl?: boolean
 }
-
-// ✅ 组件默认值集中在此，便于统一维护
-const props = withDefaults(defineProps<Props>(), {
-  loading: undefined,
-  height: '400px',
-  searchable: false,
-  selectable: false,
-  editable: false,
-  strictChromeOrder: false,
-  virtual: false,
-  size: 'comfortable',
-  showToolbar: true,
-  toolbarExpandCollapse: true,
-  source: 'sidePanel',
-  highlightMatches: true,
-  showSelectionCheckbox: false,
-  accordionMode: false,
-  showFavoriteButton: false,
-  showEditButton: false,
-  showDeleteButton: false,
-  showAddButton: false,
-  showOpenNewTabButton: false,
-  showCopyUrlButton: false,
-  showShareButton: false,
-  showMoreButton: true,
-  loadingChildren: undefined,
-  draggable: false,
-  selectedDescCounts: undefined,
-  defaultOpenMode: 'new-tab-background',
-  clickBehavior: 'both',
-  showBookmarkUrl: true
-})
-
-// === Emits 定义 ===
-// ✅ 组件对外事件统一声明，用中文说明触发时机
-const emit = defineEmits<{
-  'node-click': [BookmarkNode, MouseEvent]
-  'folder-toggle': [string, BookmarkNode, boolean]
-  'node-select': [string, BookmarkNode, boolean]
-  'selection-change': [string[], BookmarkNode[]]
-  search: [string]
-  ready: []
-  'node-edit': [BookmarkNode]
-  'node-delete': [BookmarkNode]
-  'folder-add': [BookmarkNode]
-  'bookmark-open-new-tab': [BookmarkNode]
-  'bookmark-copy-url': [BookmarkNode]
-  'bookmark-toggle-favorite': [BookmarkNode, boolean]
-  /** 分享文件夹 */
-  'folder-share': [BookmarkNode]
-  'node-hover': [BookmarkNode]
-  'node-hover-leave': [BookmarkNode]
-  /** 展开状态变化事件：true=全部展开，false=全部收起 */
-  'expand-state-change': [boolean]
-  'request-children': [
-    {
-      folderId: string
-      node: BookmarkNode
-      limit: number
-      offset: number
-    }
-  ]
-  'request-more-children': [
-    {
-      folderId: string
-      node: BookmarkNode
-      limit: number
-      loaded: number
-    }
-  ]
-  'request-clear-filters': []
-  // ✅ 拖拽相关事件
-  'bookmark-move': [
-    {
-      sourceId: string
-      targetId: string
-      position: 'before' | 'inside' | 'after'
-    }
-  ]
-  // 后代计数更新事件
-  'desc-counts-updated': [Map<string, number>]
-}>()
 
 // === 响应式状态 ===
 // 🚀 性能优化：使用 shallowRef 减少深度响应式开销
@@ -835,7 +642,7 @@ const handleNodeClick = async (node: BookmarkNode, event: MouseEvent) => {
   }
   
   // 触发事件通知父组件（用于额外处理，如更新访问记录）
-  emit('node-click', node, event)
+  emit('nodeClick', node, event)
 }
 
 /**
@@ -958,7 +765,7 @@ const handleFolderToggle = (folderId: string, node: BookmarkNode) => {
   // 强制触发响应式更新
   expandedFolders.value = new Set(expandedFolders.value)
 
-  emit('folder-toggle', folderId, node, !isExpanded)
+  emit('folderToggle', folderId, node, !isExpanded)
 }
 
 // === 自动加载功能 ===
@@ -1302,33 +1109,33 @@ const handleContextMenuItemClick = (item: MenuItemConfig) => {
       openAllBookmarksInFolder(node, 'new-window')
       break
     case 'folder:add':
-      emit('folder-add', node)
+      emit('folderAdd', node)
       break
     case 'folder:edit':
-      emit('node-edit', node)
+      emit('nodeEdit', node)
       break
     case 'folder:delete':
-      emit('node-delete', node)
+      emit('nodeDelete', node)
       break
     case 'folder:share':
-      emit('folder-share', node)
+      emit('folderShare', node)
       break
     case 'bookmark:open-new-tab':
-      emit('bookmark-open-new-tab', node)
+      emit('bookmarkOpenNewTab', node)
       break
     case 'bookmark:copy-url':
-      emit('bookmark-copy-url', node)
+      emit('bookmarkCopyUrl', node)
       break
     case 'bookmark:toggle-favorite':
       // 获取当前收藏状态（这里需要从 node 的 tags 中判断）
       const isFavorite = node.tags?.includes('favorite') ?? false
-      emit('bookmark-toggle-favorite', node, !isFavorite)
+      emit('bookmarkToggleFavorite', node, !isFavorite)
       break
     case 'bookmark:edit':
-      emit('node-edit', node)
+      emit('nodeEdit', node)
       break
     case 'bookmark:delete':
-      emit('node-delete', node)
+      emit('nodeDelete', node)
       break
     default:
       logger.warn('BookmarkTree', '未知的菜单操作', item.action)
@@ -1404,7 +1211,7 @@ const openAllBookmarksInFolder = async (
         }
         
         // 创建标签页分组
-        const tabIds = tabs.map(t => t.id).filter((id): id is number => id !== undefined)
+        const tabIds = tabs.map(tabItem => tabItem.id).filter((id): id is number => id !== undefined)
         if (tabIds.length > 0) {
           // @ts-expect-error - Chrome API 类型定义问题
           const groupId = await chrome.tabs.group({ tabIds })
@@ -1569,36 +1376,36 @@ const findNodeById = (id: string): BookmarkNode | undefined => {
 }
 
 const handleNodeEdit = (node: BookmarkNode) => {
-  emit('node-edit', node)
+  emit('nodeEdit', node)
 }
 
 const handleNodeDelete = (node: BookmarkNode) => {
-  emit('node-delete', node)
+  emit('nodeDelete', node)
 }
 
 const handleFolderAdd = (parentNode: BookmarkNode) => {
-  emit('folder-add', parentNode)
+  emit('folderAdd', parentNode)
 }
 
 const handleFolderShare = (node: BookmarkNode) => {
-  emit('folder-share', node)
+  emit('folderShare', node)
 }
 
 const handleBookmarkOpenNewTab = (node: BookmarkNode) => {
   if (node.url) {
-    emit('bookmark-open-new-tab', node)
+    emit('bookmarkOpenNewTab', node)
   }
 }
 
 const handleBookmarkCopyUrl = (node: BookmarkNode) => {
-  emit('bookmark-copy-url', node)
+  emit('bookmarkCopyUrl', node)
 }
 
 const handleBookmarkToggleFavorite = (
   node: BookmarkNode,
   isFavorite: boolean
 ) => {
-  emit('bookmark-toggle-favorite', node, isFavorite)
+  emit('bookmarkToggleFavorite', node, isFavorite)
 }
 
 // 拖拽事件处理
@@ -1627,7 +1434,7 @@ const handleDrop = (data: {
   position: 'before' | 'inside' | 'after'
 }) => {
   logger.info('BookmarkTree', '拖拽放置', data)
-  emit('bookmark-move', data)
+  emit('bookmarkMove', data)
 
   // 重置拖拽状态
   dragState.value.isDragging = false
@@ -1752,8 +1559,8 @@ const handleNodeSelect = (nodeId: string, node: BookmarkNode) => {
   selectedNodes.value = new Set(selectedNodes.value)
 
   const selected = selectedNodes.value.has(id)
-  emit('node-select', id, node, selected)
-  emit('selection-change', Array.from(selectedNodes.value), getSelectedNodes())
+  emit('nodeSelect', id, node, selected)
+  emit('selectionChange', Array.from(selectedNodes.value), getSelectedNodes())
 
   // 基于当前选中集合重算已选后代计数（O(#selected书签 * 平均祖先深度））
   // ✅ 直接修改 props.selectedDescCounts (Map 是引用类型，父组件会自动更新)
@@ -1799,7 +1606,7 @@ const handleNodeSelect = (nodeId: string, node: BookmarkNode) => {
     }
     
     // 🔄 通过 emit 通知父组件 Map 已更新（触发响应式）
-    emit('desc-counts-updated', new Map(props.selectedDescCounts))
+    emit('descCountsUpdated', new Map(props.selectedDescCounts))
   }
 }
 
@@ -1833,8 +1640,8 @@ function filterNodes(nodes: BookmarkNode[], query: string): BookmarkNode[] {
     const urlLower = (n.urlLower || n.url || '').toString().toLowerCase()
     const domainLower = (n.domain || '').toLowerCase()
     const tags = n.tags || []
-    const hasTagHit = tags.some((t: string) =>
-      t.toLowerCase().includes(isTagOnly ? tagTerm : lowerQuery)
+    const hasTagHit = tags.some((tag: string) =>
+      tag.toLowerCase().includes(isTagOnly ? tagTerm : lowerQuery)
     )
 
     if (isTagOnly) return hasTagHit
@@ -1882,8 +1689,8 @@ watch(searchQuery, (newQuery: string) => {
         const urlLower = (n.urlLower || n.url || '').toString().toLowerCase()
         const domainLower = (n.domain || '').toLowerCase()
         const tags = n.tags || []
-        const hasTagHit = tags.some((t: string) =>
-          t.toLowerCase().includes(lowerQuery)
+        const hasTagHit = tags.some((tag: string) =>
+          tag.toLowerCase().includes(lowerQuery)
         )
         return (
           titleLower.includes(lowerQuery) ||
@@ -1942,14 +1749,14 @@ const expandAll = () => {
   expandedFolders.value = new Set(allFolderIds)
   // 强制触发响应式更新
   expandedFolders.value = new Set(expandedFolders.value)
-  emit('expand-state-change', true)
+  emit('expandStateChange', true)
 }
 
 const collapseAll = () => {
   expandedFolders.value = new Set()
   // 强制触发响应式更新
   expandedFolders.value = new Set(expandedFolders.value)
-  emit('expand-state-change', false)
+  emit('expandStateChange', false)
 }
 
 const clearSelection = () => {
@@ -1962,7 +1769,7 @@ const clearSelection = () => {
       error
     })
   }
-  emit('selection-change', [], [])
+  emit('selectionChange', [], [])
 }
 
 const clearHoverAndActive = () => {
@@ -2104,7 +1911,7 @@ const selectNodeById = (id: string, opts?: { append?: boolean }) => {
   selectedNodes.value.add(sid)
   // ✅ 强制触发响应式更新
   selectedNodes.value = new Set(selectedNodes.value)
-  emit('selection-change', Array.from(selectedNodes.value), getSelectedNodes())
+  emit('selectionChange', Array.from(selectedNodes.value), getSelectedNodes())
 }
 
 const selectNodesByIds = (ids: string[], opts?: { append?: boolean }) => {
@@ -2121,7 +1928,7 @@ const selectNodesByIds = (ids: string[], opts?: { append?: boolean }) => {
     if (!allowMultiple) break
   }
   selectedNodes.value = current
-  emit('selection-change', Array.from(current), getSelectedNodes())
+  emit('selectionChange', Array.from(current), getSelectedNodes())
 
   // ✅ 重新计算选中后代计数
   // ✅ 使用完整的 props.nodes 而不是 filteredNodes，确保搜索状态下也能正确计算父节点的 indeterminate 状态
@@ -2198,6 +2005,196 @@ defineExpose({
   isScrolling
 })
 </script>
+
+<template>
+  <div 
+    class="simple-bookmark-tree" 
+    :class="treeClasses"
+    tabindex="0"
+    @keydown="handleTreeKeyDown"
+  >
+    <!-- 搜索框 (可选) -->
+    <div v-if="searchable" class="tree-search">
+      <Input
+        v-model="searchQuery"
+        :placeholder="t('search_placeholder')"
+        type="text"
+        variant="outlined"
+        density="compact"
+        clearable
+      >
+        <template #prepend>
+          <LucideIcon name="search" :size="16" />
+        </template>
+      </Input>
+    </div>
+
+    <!-- 树容器 -->
+    <div class="tree-container-wrapper">
+      <div
+        ref="containerRef"
+        class="tree-container"
+        :class="{ 'is-loading': isOverlayLoading }"
+        :style="containerStyles"
+      >
+        <div v-if="isOverlayLoading" class="tree-loading-overlay">
+          <md-circular-progress indeterminate class="tree-spinner-lg" />
+          <div class="tree-loading-text">正在加载书签…</div>
+        </div>
+
+        <!-- 空状态 -->
+        <EmptyState
+          v-if="shouldShowEmptyState"
+          :icon="emptyStateConfig.icon"
+          :title="emptyStateConfig.title"
+          :description="emptyStateConfig.description"
+          :icon-size="56"
+        />
+
+        <!-- 标准渲染模式 -->
+        <div
+          v-if="!virtualEnabled && !shouldShowEmptyState"
+          class="standard-content"
+        >
+          <TreeNode
+            v-for="node in filteredNodes"
+            :key="node.id"
+            :node="node"
+            :level="0"
+            :expanded-folders="expandedFolders"
+            :selected-nodes="selectedNodes"
+            :selected-desc-counts="selectedDescCountsState"
+            :search-query="searchQuery"
+            :highlight-matches="highlightMatches"
+            :config="treeConfig"
+            :drag-state="dragState"
+            :strict-order="props.strictChromeOrder"
+            :active-id="activeNodeId"
+            :focused-id="focusedNodeId"
+            @node-mounted="registerNodeEl"
+            @node-unmounted="unregisterNodeEl"
+            @node-click="handleNodeClick"
+            @folder-toggle="handleFolderToggle"
+            @node-select="handleNodeSelect"
+            @node-edit="handleNodeEdit"
+            @node-delete="handleNodeDelete"
+            @folder-add="handleFolderAdd"
+            @bookmark-open-new-tab="handleBookmarkOpenNewTab"
+            @bookmark-copy-url="handleBookmarkCopyUrl"
+            @bookmark-toggle-favorite="handleBookmarkToggleFavorite"
+            @folder-share="handleFolderShare"
+            @drag-start="handleDragStart"
+            @drag-over="handleDragOver"
+            @drag-leave="handleDragLeave"
+            @drop="handleDrop"
+            @drag-end="handleDragEnd"
+            @open-context-menu="handleOpenContextMenu"
+          />
+        </div>
+
+        <!-- 虚拟滚动模式 (TanStack Virtual) -->
+        <div
+          v-else-if="virtualEnabled && !shouldShowEmptyState"
+          class="virtual-content"
+        >
+          <div class="virtual-spacer" :style="{ height: `${totalHeight}px` }">
+            <div
+              v-for="row in virtualRows"
+              :key="row.record.id"
+              class="virtual-item"
+              :style="{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: `${row.size}px`,
+                transform: `translateY(${row.start}px)`
+              }"
+            >
+              <TreeNode
+                v-if="row.record.kind === 'node' && row.record.node"
+                :node="row.record.node"
+                :level="row.record.level"
+                :expanded-folders="expandedFolders"
+                :selected-nodes="selectedNodes"
+                :selected-desc-counts="selectedDescCountsState"
+                :search-query="searchQuery"
+                :highlight-matches="highlightMatches"
+                :config="treeConfig"
+                :is-virtual-mode="true"
+                :drag-state="dragState"
+                :strict-order="props.strictChromeOrder"
+                :active-id="activeNodeId"
+                :focused-id="focusedNodeId"
+                :loading-more-folders="loadingMoreFolders"
+                @node-mounted="registerNodeEl"
+                @node-unmounted="unregisterNodeEl"
+                @node-click="handleNodeClick"
+                @folder-toggle="handleFolderToggle"
+                @node-select="handleNodeSelect"
+                @node-edit="handleNodeEdit"
+                @node-delete="handleNodeDelete"
+                @folder-add="handleFolderAdd"
+                @bookmark-open-new-tab="handleBookmarkOpenNewTab"
+                @bookmark-copy-url="handleBookmarkCopyUrl"
+                @bookmark-toggle-favorite="handleBookmarkToggleFavorite"
+                @folder-share="handleFolderShare"
+                @drag-start="handleDragStart"
+                @drag-over="handleDragOver"
+                @drag-leave="handleDragLeave"
+                @drop="handleDrop"
+                @drag-end="handleDragEnd"
+                @open-context-menu="handleOpenContextMenu"
+              />
+              <VirtualFolderList
+                v-else-if="row.record.kind === 'chunk' && row.record.chunk"
+                :chunk="row.record.chunk"
+                :level="row.record.level"
+                :expanded-folders="expandedFolders"
+                :selected-nodes="selectedNodes"
+                :selected-desc-counts="selectedDescCountsState"
+                :search-query="searchQuery"
+                :highlight-matches="highlightMatches"
+                :config="treeConfig"
+                :strict-order="props.strictChromeOrder"
+                :active-id="activeNodeId"
+                :focused-id="focusedNodeId"
+                :loading-more-folders="loadingMoreFolders"
+                :size="props.size"
+                @node-click="handleNodeClick"
+                @folder-toggle="handleFolderToggle"
+                @node-select="handleNodeSelect"
+                @node-edit="handleNodeEdit"
+                @node-delete="handleNodeDelete"
+                @folder-add="handleFolderAdd"
+                @bookmark-open-new-tab="handleBookmarkOpenNewTab"
+                @bookmark-copy-url="handleBookmarkCopyUrl"
+                @bookmark-toggle-favorite="handleBookmarkToggleFavorite"
+                @folder-share="handleFolderShare"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- 加载状态 -->
+        <div v-if="loading && !isOverlayLoading" class="loading-state">
+          <md-circular-progress indeterminate class="tree-spinner-md" />
+          <span>加载中...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 全局右键菜单 -->
+    <ContextMenu
+      :show="showContextMenu"
+      :items="contextMenuItems"
+      :x="contextMenuX"
+      :y="contextMenuY"
+      @item-click="handleContextMenuItemClick"
+      @close="closeContextMenu"
+    />
+  </div>
+</template>
 
 <style scoped>
 .simple-bookmark-tree {

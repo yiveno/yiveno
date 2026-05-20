@@ -35,9 +35,7 @@
  * 从 Supabase 查询用户的有效订阅信息
  * 查询逻辑与官网完全一致
  */
-export async function getSubscriptionFromSupabase(
-  userId: string
-): Promise<Subscription | null>
+export async function getSubscriptionFromSupabase(userId: string): Promise<Subscription | null>
 
 /**
  * 检查用户是否为 Pro 用户

@@ -118,10 +118,8 @@
   /* === 字体家族 === */
 
   /* Material Design 推荐使用 Roboto，但项目使用 Noto Sans 以支持更多语言 */
-  --md-sys-typescale-font-family-plain:
-    'Noto Sans', 'Roboto', system-ui, -apple-system, sans-serif;
-  --md-sys-typescale-font-family-brand:
-    'Noto Sans', 'Roboto', system-ui, -apple-system, sans-serif;
+  --md-sys-typescale-font-family-plain: 'Noto Sans', 'Roboto', system-ui, -apple-system, sans-serif;
+  --md-sys-typescale-font-family-brand: 'Noto Sans', 'Roboto', system-ui, -apple-system, sans-serif;
 }
 
 /* ========================================

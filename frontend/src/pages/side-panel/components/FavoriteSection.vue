@@ -1,36 +1,3 @@
-<template>
-  <!-- 收藏列表 -->
-  <section v-if="favorites.length > 0" class="favorite-section">
-    <md-list class="favorite-section__list">
-      <md-list-item
-        v-for="favorite in favorites"
-        :key="favorite.id"
-        type="button"
-        @click="handleClick(favorite)"
-      >
-        <div slot="start" class="favorite-favicon">
-          <img
-            v-if="getFaviconUrl(favorite)"
-            :src="getFaviconUrl(favorite)"
-            alt="favicon"
-            loading="lazy"
-            @error="() => handleFaviconError(favorite.id)"
-          />
-          <LucideIcon v-else name="bookmark" :size="16" />
-        </div>
-        <div slot="headline">{{ favorite.title }}</div>
-        <md-icon-button
-          slot="end"
-          title="取消收藏"
-          @click.stop="handleRemove(favorite)"
-        >
-          <LucideIcon name="star" :size="16" />
-        </md-icon-button>
-      </md-list-item>
-    </md-list>
-  </section>
-</template>
-
 <script setup lang="ts">
 import { computed, watch, onMounted, onUnmounted, ref } from 'vue'
 import { useBookmarkStore } from '@/stores/bookmarkStore'
@@ -45,13 +12,13 @@ defineOptions({
 
 const emit = defineEmits<{
   /** 点击书签 */
-  'bookmark-click': [bookmark: BookmarkNode]
+  bookmarkClick: [bookmark: BookmarkNode]
   /** 移除收藏 */
-  'bookmark-remove': [bookmark: BookmarkNode]
+  bookmarkRemove: [bookmark: BookmarkNode]
   /** 分享收藏书签 */
-  'share': [bookmarks: BookmarkNode[]]
+  share: [bookmarks: BookmarkNode[]]
   /** 数量更新 */
-  'count-update': [count: number]
+  countUpdate: [count: number]
 }>()
 
 // ✅ 从 Pinia Store 派生数据，响应式更新
@@ -61,12 +28,12 @@ const faviconErrors = ref<Set<string>>(new Set())
 
 // 组件挂载时立即发送数量
 onMounted(() => {
-  emit('count-update', favorites.value.length)
+  emit('countUpdate', favorites.value.length)
 })
 
 // 监听数量变化，自动更新
 const stopWatch = watch(() => favorites.value.length, (newCount) => {
-  emit('count-update', newCount)
+  emit('countUpdate', newCount)
 })
 
 // 组件卸载时清理 watch
@@ -102,7 +69,7 @@ const handleFaviconError = (bookmarkId: string) => {
 
 function handleClick(bookmark: BookmarkNode) {
   logger.info('FavoriteSection', '🔗 点击收藏书签:', bookmark.title)
-  emit('bookmark-click', bookmark)
+  emit('bookmarkClick', bookmark)
 }
 
 async function handleRemove(bookmark: BookmarkNode) {
@@ -112,10 +79,43 @@ async function handleRemove(bookmark: BookmarkNode) {
   if (success) {
     // ✅ 直接更新 store，UI 自动响应式更新
     bookmarkStore.updateNode(bookmark.id, { isFavorite: false })
-    emit('bookmark-remove', bookmark)
+    emit('bookmarkRemove', bookmark)
   }
 }
 </script>
+
+<template>
+  <!-- 收藏列表 -->
+  <section v-if="favorites.length > 0" class="favorite-section">
+    <md-list class="favorite-section__list">
+      <md-list-item
+        v-for="favorite in favorites"
+        :key="favorite.id"
+        type="button"
+        @click="handleClick(favorite)"
+      >
+        <div slot="start" class="favorite-favicon">
+          <img
+            v-if="getFaviconUrl(favorite)"
+            :src="getFaviconUrl(favorite)"
+            alt="favicon"
+            loading="lazy"
+            @error="() => handleFaviconError(favorite.id)"
+          />
+          <LucideIcon v-else name="bookmark" :size="16" />
+        </div>
+        <div slot="headline">{{ favorite.title }}</div>
+        <md-icon-button
+          slot="end"
+          title="取消收藏"
+          @click.stop="handleRemove(favorite)"
+        >
+          <LucideIcon name="star" :size="16" />
+        </md-icon-button>
+      </md-list-item>
+    </md-list>
+  </section>
+</template>
 
 <style scoped lang="scss">
 .favorite-section {

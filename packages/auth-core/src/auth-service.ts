@@ -26,15 +26,20 @@ export class AuthService {
    */
   async signUp(info: SignUpInfo): Promise<AuthResponse> {
     try {
-      const { data, error } = await this.supabase.auth.signUp({
-        email: info.email,
-        password: info.password,
-        options: info.redirectUrl
-          ? {
+      const signUpOptions = info.redirectUrl
+        ? {
+            email: info.email,
+            password: info.password,
+            options: {
               emailRedirectTo: info.redirectUrl
             }
-          : undefined
-      })
+          }
+        : {
+            email: info.email,
+            password: info.password
+          }
+
+      const { data, error } = await this.supabase.auth.signUp(signUpOptions)
 
       if (error) {
         // 检测邮箱已注册错误
@@ -194,13 +199,15 @@ export class AuthService {
    * 发送密码重置邮件
    */
   async resetPassword(info: PasswordResetInfo): Promise<void> {
+    const resetOptions = info.redirectUrl
+      ? {
+          redirectTo: info.redirectUrl
+        }
+      : undefined
+
     const { error } = await this.supabase.auth.resetPasswordForEmail(
       info.email,
-      info.redirectUrl
-        ? {
-            redirectTo: info.redirectUrl
-          }
-        : undefined
+      resetOptions
     )
 
     if (error) {

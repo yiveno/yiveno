@@ -1,32 +1,3 @@
-<template>
-  <div
-    class="md-tooltip-wrapper"
-    @mouseenter="handleMouseEnter"
-    @mouseleave="handleMouseLeave"
-    @focus="handleFocus"
-    @blur="handleBlur"
-  >
-    <slot :show="show" />
-
-    <Transition name="md-tooltip">
-      <div
-        v-if="show"
-        ref="tooltipRef"
-        :class="tooltipClasses"
-        role="tooltip"
-        :aria-hidden="!show"
-        @mouseenter="handleTooltipMouseEnter"
-        @mouseleave="handleTooltipMouseLeave"
-      >
-        <div class="md-tooltip__surface">
-          <!-- 支持富文本内容 (Rich Tooltip) -->
-          <slot name="content">{{ text }}</slot>
-        </div>
-      </div>
-    </Transition>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useTimeoutFn } from '@vueuse/core'
@@ -51,7 +22,7 @@ const { start: startShowTimer, stop: stopShowTimer } = useTimeoutFn(
       show.value = true
     }
   },
-  props.delay,
+  () => props.delay ?? 200,
   { immediate: false }
 )
 
@@ -102,6 +73,35 @@ function handleBlur() {
   startHideTimer()
 }
 </script>
+
+<template>
+  <div
+    class="md-tooltip-wrapper"
+    @mouseenter="handleMouseEnter"
+    @mouseleave="handleMouseLeave"
+    @focus="handleFocus"
+    @blur="handleBlur"
+  >
+    <slot :show="show" />
+
+    <Transition name="md-tooltip">
+      <div
+        v-if="show"
+        ref="tooltipRef"
+        :class="tooltipClasses"
+        role="tooltip"
+        :aria-hidden="!show"
+        @mouseenter="handleTooltipMouseEnter"
+        @mouseleave="handleTooltipMouseLeave"
+      >
+        <div class="md-tooltip__surface">
+          <!-- 支持富文本内容 (Rich Tooltip) -->
+          <slot name="content">{{ text }}</slot>
+        </div>
+      </div>
+    </Transition>
+  </div>
+</template>
 
 <style scoped>
 /* ===== Material Design 3 Tooltip ===== */

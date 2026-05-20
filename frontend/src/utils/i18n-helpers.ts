@@ -33,12 +33,12 @@ export function useI18n() {
     return rtlLanguages.some(lang => locale.value.startsWith(lang))
   })
 
-  const t = (key: string, substitutions?: string | string[]) => {
+  const translate = (key: string, substitutions?: string | string[]) => {
     return i18nService.t(key, substitutions)
   }
 
   return {
-    t,
+    t: translate,
     locale,
     isRTL
   }

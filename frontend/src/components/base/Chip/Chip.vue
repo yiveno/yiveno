@@ -1,9 +1,3 @@
-<template>
-  <component :is="chipTag" v-bind="chipAttrs" :class="chipClasses">
-    <slot />
-  </component>
-</template>
-
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { ChipProps } from './Chip.d'
@@ -17,13 +11,9 @@ const props = withDefaults(defineProps<ChipProps>(), {
   variant: 'filled',
   color: 'primary',
   size: 'md',
-  count: undefined,
   selected: false,
   removable: false,
   elevated: false,
-  href: undefined,
-  target: undefined,
-  download: undefined,
   removeOnly: false,
   avatar: false
 })
@@ -71,6 +61,12 @@ const chipClasses = computed(() => [
   `acuity-chip--${props.size}`
 ])
 </script>
+
+<template>
+  <component :is="chipTag" v-bind="chipAttrs" :class="chipClasses">
+    <slot />
+  </component>
+</template>
 
 <style scoped>
 .acuity-chip {

@@ -332,7 +332,7 @@ export const shareRouter = router({
       }
       
       // 如果需要显示用户名，再查询 profiles
-      let profiles = null
+      let profiles: { name: any; email: any; avatar_url: any } | null = null
       if (share.show_username) {
         const { data: profileData } = await supabase
           .from('profiles')
@@ -344,7 +344,7 @@ export const shareRouter = router({
       }
       
       // 如果是直接分享，查询发送者信息（无论 show_username 设置如何）
-      let senderInfo = null
+      let senderInfo: { name: any; email: any; avatar_url: any } | null = null
       if (share.share_type === 'direct') {
         const { data: senderData } = await supabase
           .from('profiles')

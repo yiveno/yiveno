@@ -1,83 +1,23 @@
-<template>
-  <div v-click-outside="closeDropdown" class="async-search-select">
-    <!-- 输入框 -->
-    <MdInput
-      v-model="searchQuery"
-      :label="label"
-      :placeholder="placeholder"
-      :disabled="loading"
-      :loading="loading"
-      variant="outlined"
-      size="md"
-      @focus="handleFocus"
-      @input="handleInput"
-    >
-      <LucideIcon slot="leading-icon" name="search" :size="18" />
-    </MdInput>
-
-    <!-- 下拉菜单 -->
-    <div
-      v-if="showDropdown"
-      class="dropdown-menu"
-      role="listbox"
-      :aria-label="label"
-    >
-      <!-- 搜索结果 -->
-      <div
-        v-if="options.length > 0"
-        class="dropdown-options"
-      >
-        <div
-          v-for="option in options"
-          :key="option.value"
-          class="dropdown-option"
-          :class="{ 'dropdown-option--selected': isSelected(option.value) }"
-          role="option"
-          :aria-selected="isSelected(option.value)"
-          @click="toggleOption(option)"
-        >
-          <md-checkbox
-            v-if="multiple"
-            :checked="isSelected(option.value)"
-            @change="toggleOption(option)"
-          />
-          <div class="option-content">
-            <span class="option-label">{{ option.label }}</span>
-            <span v-if="option.description" class="option-description">
-              {{ option.description }}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 无结果 -->
-      <div v-else class="dropdown-empty">
-        <LucideIcon name="x-circle" :size="24" />
-        <span>{{ emptyText }}</span>
-      </div>
-    </div>
-
-    <!-- 已选择的项（多选模式） -->
-    <div v-if="multiple && selectedOptions.length > 0" class="selected-chips">
-      <md-assist-chip
-        v-for="option in selectedOptions"
-        :key="option.value"
-        :label="option.label"
-        @click="removeOption(option.value)"
-      >
-        <LucideIcon slot="icon" name="x" :size="14" />
-      </md-assist-chip>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, toRef } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 import { MdInput } from '@/components/base/Input'
 import { LucideIcon } from '@/components'
 
 defineOptions({ name: 'AsyncSearchSelect' })
+
+const props = withDefaults(defineProps<AsyncSearchSelectProps>(), {
+  label: '搜索',
+  placeholder: '输入关键词搜索...',
+  multiple: false,
+  emptyText: '未找到匹配结果',
+  debounce: 300
+})
+
+const emit = defineEmits<AsyncSearchSelectEmits>()
+
+// 将 debounce 转换为 ref 以保持响应式
+const debounceDelay = toRef(props, 'debounce')
 
 /**
  * 选项接口
@@ -109,14 +49,6 @@ interface AsyncSearchSelectProps {
   debounce?: number
 }
 
-const props = withDefaults(defineProps<AsyncSearchSelectProps>(), {
-  label: '搜索',
-  placeholder: '输入关键词搜索...',
-  multiple: false,
-  emptyText: '未找到匹配结果',
-  debounce: 300
-})
-
 /**
  * 组件 Emits
  */
@@ -128,8 +60,6 @@ interface AsyncSearchSelectEmits {
   /** 选择变化事件（返回选中的选项对象数组） */
   (e: 'update:selected', options: SelectOption[]): void
 }
-
-const emit = defineEmits<AsyncSearchSelectEmits>()
 
 // 状态
 const searchQuery = ref('')
@@ -212,7 +142,7 @@ const handleInput = useDebounceFn(() => {
     options.value = []
     loading.value = false
   }
-}, props.debounce)
+}, debounceDelay)
 
 /**
  * 关闭下拉框
@@ -286,6 +216,79 @@ defineExpose({
   getSelectedOptions
 })
 </script>
+
+<template>
+  <div v-click-outside="closeDropdown" class="async-search-select">
+    <!-- 输入框 -->
+    <MdInput
+      v-model="searchQuery"
+      :label="label"
+      :placeholder="placeholder"
+      :disabled="loading"
+      :loading="loading"
+      variant="outlined"
+      size="md"
+      @focus="handleFocus"
+      @input="handleInput"
+    >
+      <LucideIcon slot="leading-icon" name="search" :size="18" />
+    </MdInput>
+
+    <!-- 下拉菜单 -->
+    <div
+      v-if="showDropdown"
+      class="dropdown-menu"
+      role="listbox"
+      :aria-label="label"
+    >
+      <!-- 搜索结果 -->
+      <div
+        v-if="options.length > 0"
+        class="dropdown-options"
+      >
+        <div
+          v-for="option in options"
+          :key="option.value"
+          class="dropdown-option"
+          :class="{ 'dropdown-option--selected': isSelected(option.value) }"
+          role="option"
+          :aria-selected="isSelected(option.value)"
+          @click="toggleOption(option)"
+        >
+          <md-checkbox
+            v-if="multiple"
+            :checked="isSelected(option.value)"
+            @change="toggleOption(option)"
+          />
+          <div class="option-content">
+            <span class="option-label">{{ option.label }}</span>
+            <span v-if="option.description" class="option-description">
+              {{ option.description }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 无结果 -->
+      <div v-else class="dropdown-empty">
+        <LucideIcon name="x-circle" :size="24" />
+        <span>{{ emptyText }}</span>
+      </div>
+    </div>
+
+    <!-- 已选择的项（多选模式） -->
+    <div v-if="multiple && selectedOptions.length > 0" class="selected-chips">
+      <md-assist-chip
+        v-for="option in selectedOptions"
+        :key="option.value"
+        :label="option.label"
+        @click="removeOption(option.value)"
+      >
+        <LucideIcon slot="icon" name="x" :size="14" />
+      </md-assist-chip>
+    </div>
+  </div>
+</template>
 
 <style scoped>
 

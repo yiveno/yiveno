@@ -1,24 +1,3 @@
-<template>
-  <div class="grid">
-    <!-- 语言说明 -->
-    <div class="row">
-      <div class="label">
-        {{ t('settings_general_language') }}
-      </div>
-      <div class="field">
-        <div class="language-info">
-          <p class="language-info__text">
-            扩展语言由浏览器语言设置决定。当前语言：<strong>{{ currentLanguageName }}</strong>
-          </p>
-          <p class="language-info__hint">
-            如需更改，请在 Chrome 设置 > 语言 中修改浏览器语言。
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { t } from '@/utils/i18n-helpers'
 import { computed } from 'vue'
@@ -52,6 +31,27 @@ const currentLanguageName = computed(() => {
   return 'English'
 })
 </script>
+
+<template>
+  <div class="grid">
+    <!-- 语言说明 -->
+    <div class="row">
+      <div class="label">
+        {{ t('settings_general_language') }}
+      </div>
+      <div class="field">
+        <div class="language-info">
+          <p class="language-info__text">
+            扩展语言由浏览器语言设置决定。当前语言：<strong>{{ currentLanguageName }}</strong>
+          </p>
+          <p class="language-info__hint">
+            如需更改，请在 Chrome 设置 > 语言 中修改浏览器语言。
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
 
 <style scoped>
 .grid {

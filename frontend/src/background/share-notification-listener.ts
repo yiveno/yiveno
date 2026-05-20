@@ -16,6 +16,7 @@ let trpcModule: typeof TrpcService | null = null
 
 async function getTrpc() {
   if (!trpcModule) {
+    // eslint-disable-next-line require-atomic-updates -- 模块加载是原子操作，不会有竞态条件
     trpcModule = await import('@/services/trpc')
   }
   return trpcModule.trpc

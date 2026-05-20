@@ -3,6 +3,48 @@
   通用卡片布局组件，支持标题、内容、操作区域
   集成 Material Design 3 md-elevation 组件
 -->
+<script setup lang="ts">
+import { computed } from 'vue'
+import { LucideIcon } from '@/components/base/LucideIcon'
+import type { CardProps, CardEmits } from './Card.d'
+
+/**
+ * 卡片默认属性设置，保障视觉与交互一致性。
+ */
+const props = withDefaults(defineProps<CardProps>(), {
+  variant: 'default',
+  size: 'md',
+  padding: true,
+  borderless: false,
+  footerTransition: ''
+})
+
+defineEmits<CardEmits>()
+
+// Card classes
+/**
+ * 根据属性生成卡片的样式类集合。
+ */
+const cardClasses = computed(() => [
+  'card',
+  `card--${props.variant}`,
+  `card--${props.size}`,
+  {
+    'card--no-padding': !props.padding,
+    'card--hover': props.hover,
+    'card--clickable': props.clickable,
+    'card--borderless': props.borderless
+  }
+])
+
+/**
+ * Elevation 类名（用于控制 hover 状态）
+ */
+const elevationClass = computed(() => 'card__elevation')
+
+// 类型已从 Card.types.ts 导入
+</script>
+
 <template>
   <div
     :class="cardClasses"
@@ -47,48 +89,6 @@
     </Transition>
   </div>
 </template>
-
-<script setup lang="ts">
-import { computed } from 'vue'
-import { LucideIcon } from '@/components/base/LucideIcon'
-import type { CardProps, CardEmits } from './Card.d'
-
-/**
- * 卡片默认属性设置，保障视觉与交互一致性。
- */
-const props = withDefaults(defineProps<CardProps>(), {
-  variant: 'default',
-  size: 'md',
-  padding: true,
-  borderless: false,
-  footerTransition: ''
-})
-
-defineEmits<CardEmits>()
-
-// Card classes
-/**
- * 根据属性生成卡片的样式类集合。
- */
-const cardClasses = computed(() => [
-  'card',
-  `card--${props.variant}`,
-  `card--${props.size}`,
-  {
-    'card--no-padding': !props.padding,
-    'card--hover': props.hover,
-    'card--clickable': props.clickable,
-    'card--borderless': props.borderless
-  }
-])
-
-/**
- * Elevation 类名（用于控制 hover 状态）
- */
-const elevationClass = computed(() => 'card__elevation')
-
-// 类型已从 Card.types.ts 导入
-</script>
 
 <style scoped>
 /**

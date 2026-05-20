@@ -8,215 +8,13 @@ BookmarkSearchInput - 书签筛选输入组件
 - 不负责展示结果（由父组件决定）
 
 数据流：
-用户输入 → 筛选服务 → emit('search-complete', results)
+用户输入 → 筛选服务 → emit('searchComplete', results)
 
 注意：
 - 数据源默认 IndexedDB，可外部传入
 - 只负责筛选逻辑，不负责结果展示
 - 保持单一职责原则
 -->
-
-<template>
-  <div class="bookmark-search-input" :class="`display-mode--${props.displayMode}`">
-    <!-- 可展开搜索框 -->
-    <div
-      ref="searchWrapperRef"
-      class="search-wrapper"
-      :class="{ 
-        expanded: isExpanded || isAlwaysExpanded, 
-        searching: isLoadingState,
-        'always-expanded': isAlwaysExpanded
-      }"
-      @transitionend="handleSearchBoxTransitionEnd"
-    >
-      <!-- 输入框容器 -->
-      <div class="input-container">
-        <Input
-          ref="inputRef"
-          v-model="query"
-          class="search-input"
-          :placeholder="actualPlaceholder"
-          :disabled="disabled"
-          borderless
-          @focus="handleFocus"
-          @blur="handleBlur"
-          @keydown.esc="handleEscape"
-          @keydown.down.prevent="handleArrowDown"
-          @keydown.up.prevent="handleArrowUp"
-          @keydown.enter="handleEnter"
-        />
-      </div>
-
-      <!-- 搜索图标按钮（仅 icon 模式显示） -->
-      <button
-        v-if="props.displayMode === 'icon'"
-        class="search-icon-button"
-        :class="{ 'has-query': query.length > 0 }"
-        :title="isLoadingState ? '搜索中...' : query.length > 0 ? '清空' : '搜索'"
-        :aria-label="
-          isLoadingState ? '搜索中' : query.length > 0 ? '清空搜索' : '展开搜索'
-        "
-        :aria-expanded="isExpanded"
-        @click="handleIconClick"
-      >
-        <md-circular-progress v-if="isLoadingState" indeterminate class="search-spinner" />
-        <LucideIcon
-          v-else-if="query.length > 0"
-          name="x"
-          :size="20"
-        />
-        <LucideIcon v-else name="search" :size="20" />
-      </button>
-
-      <!-- 搜索结果面板（包含筛选标签 + 搜索结果） -->
-      <Transition name="panel-fade" @after-leave="handlePanelTransitionEnd">
-        <div v-if="showPanel && shouldShowPanel" class="search-result-panel">
-          <!-- 搜索历史（输入框为空时显示） -->
-          <div v-if="shouldShowSearchHistory" class="search-history-panel">
-            <div class="history-header">
-              <span class="history-title">最近搜索</span>
-              <button 
-                class="history-clear-btn" 
-                @click="handleClearAllHistory"
-              >
-                <LucideIcon name="trash-2" :size="14" />
-                <span>清空</span>
-              </button>
-            </div>
-            <md-list class="history-list">
-              <md-list-item
-                v-for="item in getRecentHistory(5)"
-                :key="item.timestamp"
-                type="button"
-                @click="handleHistoryClick(item.query)"
-              >
-                <LucideIcon slot="start" name="clock" :size="14" />
-                <div slot="headline">{{ item.query }}</div>
-                <div v-if="item.resultCount !== undefined" slot="supporting-text" class="history-count">
-                  {{ item.resultCount }} 个结果
-                </div>
-                <md-icon-button
-                  slot="end"
-                  @click.stop="handleRemoveHistory(item.query, $event)"
-                >
-                  <LucideIcon name="x" :size="14" />
-                </md-icon-button>
-              </md-list-item>
-            </md-list>
-          </div>
-
-          <!-- 快捷筛选标签（可选显示） -->
-          <div
-            v-if="showQuickTags && showFiltersInDropdown"
-            class="filter-quick-tags"
-          >
-            <button
-              v-for="quickFilter in allQuickFilters"
-              :key="quickFilter.id"
-              class="filter-tag"
-              :class="{
-                active: activeFilters.has(quickFilter.id),
-                loading: isLoadingTraitCounts
-              }"
-              :title="quickFilter.label"
-              :aria-label="`${quickFilter.label}${activeFilters.has(quickFilter.id) ? '（已选中）' : ''}`"
-              :aria-pressed="activeFilters.has(quickFilter.id)"
-              tabindex="0"
-              @click="toggleFilter(quickFilter.id)"
-              @keydown.enter.prevent="toggleFilter(quickFilter.id)"
-              @keydown.space.prevent="toggleFilter(quickFilter.id)"
-            >
-              <LucideIcon
-                v-if="quickFilter.icon"
-                :name="quickFilter.icon"
-                :size="14"
-              />
-              <span class="filter-label">{{ quickFilter.label }}</span>
-              <!-- ✅ 加载状态：显示动画 -->
-              <md-circular-progress v-if="isLoadingTraitCounts" indeterminate class="filter-spinner" />
-              <!-- ✅ 加载完成：显示实际数量 -->
-              <Chip
-                v-else-if="quickFilter.count !== undefined"
-                size="sm"
-                variant="soft"
-                color="primary"
-                class="filter-count"
-              >
-                {{ quickFilter.count }}
-              </Chip>
-            </button>
-          </div>
-
-          <!-- 搜索结果下拉列表 -->
-          <div v-if="shouldShowResultsDropdown" class="search-results-dropdown">
-            <md-list class="result-list">
-              <md-list-item
-                v-for="(bookmark, index) in dropdownResults"
-                :key="bookmark.id"
-                type="button"
-                :class="{ 'result-item--selected': selectedResultIndex === index }"
-                @click="handleResultClick(bookmark)"
-                @mouseenter="selectedResultIndex = index"
-              >
-                <!-- 左侧图标 -->
-                <LucideIcon slot="start" name="bookmark" :size="16" />
-                
-                <!-- 主标题 -->
-                <div slot="headline" class="result-headline">
-                  {{ bookmark.title || '无标题' }}
-                </div>
-                
-                <!-- 副标题（URL） -->
-                <div v-if="bookmark.url" slot="supporting-text" class="result-url">
-                  {{ bookmark.url }}
-                </div>
-                
-                <!-- 右侧操作按钮：在新标签页打开 -->
-                <md-icon-button
-                  slot="end"
-                  class="result-action-btn"
-                  @click.stop="handleOpenInNewTab(bookmark)"
-                >
-                  <LucideIcon name="external-link" :size="14" />
-                </md-icon-button>
-              </md-list-item>
-            </md-list>
-
-            <!-- 底部提示：当结果超过 50 条时显示 -->
-            <div v-if="hasMoreResults" class="more-results-hint">
-              <LucideIcon name="info" :size="14" />
-              <span>在 Management 页面可以查看全部 {{ totalResults }} 个结果</span>
-            </div>
-          </div>
-
-          <!-- 搜索结果统计（只在有搜索内容时显示，0 个结果也显示） -->
-          <div
-            v-if="
-              showStats &&
-              showResultCount &&
-              displayResultCount >= 0 &&
-              (query.trim() || activeFilters.size > 0)
-            "
-            class="search-stats"
-          >
-            <span class="stats-text">找到 {{ displayResultCount }} 个结果</span>
-            <span v-if="executionTime" class="stats-time">
-              ({{ executionTime }}ms)
-            </span>
-          </div>
-        </div>
-      </Transition>
-
-      <!-- 错误提示（绝对定位在搜索框下方） -->
-      <Transition name="error-fade">
-        <div v-if="error && isExpanded" class="search-error">
-          <LucideIcon name="alert-circle" :size="16" />
-          <span class="error-text">{{ error.message }}</span>
-        </div>
-      </Transition>
-    </div>
-  </div>
-</template>
 
 <script setup lang="ts">
 import { watch, computed, ref, nextTick, onMounted, onUnmounted } from 'vue'
@@ -235,6 +33,28 @@ defineOptions({
   name: 'BookmarkSearchInput'
 })
 
+const props = withDefaults(defineProps<Props>(), {
+  displayMode: 'icon',
+  mode: 'indexeddb',
+  strategy: 'auto',
+  limit: 100,
+  debounce: 300,
+  disabled: false,
+  placeholder: '',
+  initialQuery: '',
+  resultDisplay: 'dropdown',
+  showResultCount: true,
+  maxDropdownResults: 50,
+  enableTraitFilters: true,
+  syncWithStore: false,
+  showQuickFilters: true,
+  customQuickFilters: () => [],
+  showStats: true,
+  autoFocus: false,
+  size: 'md',
+  rounded: true
+})
+const emit = defineEmits<Emits>()
 // 展开状态
 const isExpanded = ref(false)
 const inputRef = ref<InstanceType<typeof Input>>()
@@ -557,66 +377,42 @@ interface Props {
   rounded?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  displayMode: 'icon',
-  mode: 'indexeddb',
-  strategy: 'auto',
-  limit: 100,
-  debounce: 300,
-  disabled: false,
-  placeholder: '',
-  initialQuery: '',
-  resultDisplay: 'dropdown',
-  showResultCount: true,
-  maxDropdownResults: 50,
-  enableTraitFilters: true,
-  syncWithStore: false,
-  showQuickFilters: true,
-  customQuickFilters: () => [],
-  showStats: true,
-  autoFocus: false,
-  size: 'md',
-  rounded: true
-})
-
 interface Emits {
   /**
    * 搜索完成事件
    * @param results - 搜索结果（标准书签树结构）
    */
-  'search-complete': [results: BookmarkNode[]]
+  searchComplete: [results: BookmarkNode[]]
 
   /**
    * 搜索开始事件
    * @param query - 搜索关键词
    */
-  'search-start': [query: string]
+  searchStart: [query: string]
 
   /**
    * 搜索错误事件
    * @param error - 错误对象
    */
-  'search-error': [error: Error]
+  searchError: [error: Error]
 
   /**
    * 搜索清空事件
    */
-  'search-clear': []
+  searchClear: []
 
   /**
    * 结果项点击事件（dropdown 模式）
    * @param bookmark - 被点击的书签
    */
-  'result-click': [bookmark: BookmarkNode]
+  resultClick: [bookmark: BookmarkNode]
 
   /**
    * 查看全部结果事件（dropdown 模式）
    * @param results - 所有搜索结果
    */
-  'view-all': [results: BookmarkNode[]]
+  viewAll: [results: BookmarkNode[]]
 }
-
-const emit = defineEmits<Emits>()
 
 // ========== 快捷筛选器状态管理 ==========
 
@@ -776,7 +572,9 @@ const {
   executionTime,
   filter,
   clear
+  // eslint-disable-next-line vue/no-setup-props-reactivity-loss -- props 用于 composable 初始配置，不需要响应式
 } = useBookmarkSearch({
+  // eslint-disable-next-line vue/no-setup-props-reactivity-loss -- props 用于 composable 初始配置，不需要响应式
   mode: props.mode,
   strategy: props.strategy,
   data: computed(() => props.data ?? []),
@@ -912,15 +710,15 @@ const executeFilter = async () => {
     if (!hasTextQuery && !hasActiveFilters) {
       clear()
       localFilteredCount.value = 0 // ✅ 清空本地计数
-      emit('search-complete', [])
-      emit('search-clear')
+      emit('searchComplete', [])
+      emit('searchClear')
       return
     }
 
     // 步骤 1: 如果有文本搜索，先执行文本筛选
     let results: BookmarkNode[] = []
     if (hasTextQuery) {
-      emit('search-start', query.value)
+      emit('searchStart', query.value)
       await filter(query.value)
       results = bookmarkNodes.value
       
@@ -940,17 +738,17 @@ const executeFilter = async () => {
     localFilteredCount.value = countFilteredItems(results)
 
     // 发送最终结果
-    emit('search-complete', results)
+    emit('searchComplete', results)
   } catch (err) {
-    const error = err instanceof Error ? err : new Error(String(err))
+    const filterError = err instanceof Error ? err : new Error(String(err))
     localFilteredCount.value = 0 // ✅ 出错时清空计数
     selectedResultIndex.value = -1 // ✅ 重置选中索引
-    emit('search-error', error)
+    emit('searchError', filterError)
   }
 }
 
 // 防抖搜索
-const debouncedSearch = useDebounceFn(executeFilter, props.debounce)
+const debouncedSearch = useDebounceFn(executeFilter, () => props.debounce ?? 300)
 
 // 本地 loading 状态（用于显示防抖期间的加载动画）
 const isDebouncing = ref(false)
@@ -1171,7 +969,7 @@ const handleResultClick = (bookmark: BookmarkNode) => {
   logger.info('BookmarkSearchInput', '结果项被点击', { bookmark })
   
   // 先触发事件（让父组件有机会处理）
-  emit('result-click', bookmark)
+  emit('resultClick', bookmark)
   
   // 根据 resultDisplay 模式决定默认行为
   if (props.resultDisplay === 'dropdown') {
@@ -1218,9 +1016,9 @@ const handleClear = () => {
   localFilteredCount.value = 0 // ✅ 重置本地计数
   selectedResultIndex.value = -1 // ✅ 重置选中索引
   // ✅ 统一通过 search-complete 事件通知父组件（传递空数组）
-  emit('search-complete', [])
+  emit('searchComplete', [])
   // 🔔 同时保留 search-clear 事件，用于特殊场景（如关闭搜索框）
-  emit('search-clear')
+  emit('searchClear')
 }
 
 /**
@@ -1230,7 +1028,7 @@ const handleClear = () => {
 const search = async (searchQuery: string) => {
   query.value = searchQuery
   await filter(searchQuery)
-  emit('search-complete', bookmarkNodes.value)
+  emit('searchComplete', bookmarkNodes.value)
 }
 
 /**
@@ -1245,9 +1043,9 @@ const clearSearch = () => {
   clear()
   activeFilters.value.clear() // ✅ 清空激活的筛选器
   // ✅ 统一通过 search-complete 事件通知父组件（传递空数组）
-  emit('search-complete', [])
+  emit('searchComplete', [])
   // 🔔 同时保留 search-clear 事件，用于特殊场景（如关闭搜索框）
-  emit('search-clear')
+  emit('searchClear')
 }
 
 // ========== 生命周期 ==========
@@ -1308,6 +1106,208 @@ defineExpose({
   totalResults
 })
 </script>
+
+<template>
+  <div class="bookmark-search-input" :class="`display-mode--${props.displayMode}`">
+    <!-- 可展开搜索框 -->
+    <div
+      ref="searchWrapperRef"
+      class="search-wrapper"
+      :class="{ 
+        expanded: isExpanded || isAlwaysExpanded, 
+        searching: isLoadingState,
+        'always-expanded': isAlwaysExpanded
+      }"
+      @transitionend="handleSearchBoxTransitionEnd"
+    >
+      <!-- 输入框容器 -->
+      <div class="input-container">
+        <Input
+          ref="inputRef"
+          v-model="query"
+          class="search-input"
+          :placeholder="actualPlaceholder"
+          :disabled="disabled"
+          borderless
+          @focus="handleFocus"
+          @blur="handleBlur"
+          @keydown.esc="handleEscape"
+          @keydown.down.prevent="handleArrowDown"
+          @keydown.up.prevent="handleArrowUp"
+          @keydown.enter="handleEnter"
+        />
+      </div>
+
+      <!-- 搜索图标按钮（仅 icon 模式显示） -->
+      <button
+        v-if="props.displayMode === 'icon'"
+        class="search-icon-button"
+        :class="{ 'has-query': query.length > 0 }"
+        :title="isLoadingState ? '搜索中...' : query.length > 0 ? '清空' : '搜索'"
+        :aria-label="
+          isLoadingState ? '搜索中' : query.length > 0 ? '清空搜索' : '展开搜索'
+        "
+        :aria-expanded="isExpanded"
+        @click="handleIconClick"
+      >
+        <md-circular-progress v-if="isLoadingState" indeterminate class="search-spinner" />
+        <LucideIcon
+          v-else-if="query.length > 0"
+          name="x"
+          :size="20"
+        />
+        <LucideIcon v-else name="search" :size="20" />
+      </button>
+
+      <!-- 搜索结果面板（包含筛选标签 + 搜索结果） -->
+      <Transition name="panel-fade" @after-leave="handlePanelTransitionEnd">
+        <div v-if="showPanel && shouldShowPanel" class="search-result-panel">
+          <!-- 搜索历史（输入框为空时显示） -->
+          <div v-if="shouldShowSearchHistory" class="search-history-panel">
+            <div class="history-header">
+              <span class="history-title">最近搜索</span>
+              <button 
+                class="history-clear-btn" 
+                @click="handleClearAllHistory"
+              >
+                <LucideIcon name="trash-2" :size="14" />
+                <span>清空</span>
+              </button>
+            </div>
+            <md-list class="history-list">
+              <md-list-item
+                v-for="item in getRecentHistory(5)"
+                :key="item.timestamp"
+                type="button"
+                @click="handleHistoryClick(item.query)"
+              >
+                <LucideIcon slot="start" name="clock" :size="14" />
+                <div slot="headline">{{ item.query }}</div>
+                <div v-if="item.resultCount !== undefined" slot="supporting-text" class="history-count">
+                  {{ item.resultCount }} 个结果
+                </div>
+                <md-icon-button
+                  slot="end"
+                  @click.stop="handleRemoveHistory(item.query, $event)"
+                >
+                  <LucideIcon name="x" :size="14" />
+                </md-icon-button>
+              </md-list-item>
+            </md-list>
+          </div>
+
+          <!-- 快捷筛选标签（可选显示） -->
+          <div
+            v-if="showQuickTags && showFiltersInDropdown"
+            class="filter-quick-tags"
+          >
+            <button
+              v-for="quickFilter in allQuickFilters"
+              :key="quickFilter.id"
+              class="filter-tag"
+              :class="{
+                active: activeFilters.has(quickFilter.id),
+                loading: isLoadingTraitCounts
+              }"
+              :title="quickFilter.label"
+              :aria-label="`${quickFilter.label}${activeFilters.has(quickFilter.id) ? '（已选中）' : ''}`"
+              :aria-pressed="activeFilters.has(quickFilter.id)"
+              tabindex="0"
+              @click="toggleFilter(quickFilter.id)"
+              @keydown.enter.prevent="toggleFilter(quickFilter.id)"
+              @keydown.space.prevent="toggleFilter(quickFilter.id)"
+            >
+              <LucideIcon
+                v-if="quickFilter.icon"
+                :name="quickFilter.icon"
+                :size="14"
+              />
+              <span class="filter-label">{{ quickFilter.label }}</span>
+              <!-- ✅ 加载状态：显示动画 -->
+              <md-circular-progress v-if="isLoadingTraitCounts" indeterminate class="filter-spinner" />
+              <!-- ✅ 加载完成：显示实际数量 -->
+              <Chip
+                v-else-if="quickFilter.count !== undefined"
+                size="sm"
+                variant="soft"
+                color="primary"
+                class="filter-count"
+              >
+                {{ quickFilter.count }}
+              </Chip>
+            </button>
+          </div>
+
+          <!-- 搜索结果下拉列表 -->
+          <div v-if="shouldShowResultsDropdown" class="search-results-dropdown">
+            <md-list class="result-list">
+              <md-list-item
+                v-for="(bookmark, index) in dropdownResults"
+                :key="bookmark.id"
+                type="button"
+                :class="{ 'result-item--selected': selectedResultIndex === index }"
+                @click="handleResultClick(bookmark)"
+                @mouseenter="selectedResultIndex = index"
+              >
+                <!-- 左侧图标 -->
+                <LucideIcon slot="start" name="bookmark" :size="16" />
+                
+                <!-- 主标题 -->
+                <div slot="headline" class="result-headline">
+                  {{ bookmark.title || '无标题' }}
+                </div>
+                
+                <!-- 副标题（URL） -->
+                <div v-if="bookmark.url" slot="supporting-text" class="result-url">
+                  {{ bookmark.url }}
+                </div>
+                
+                <!-- 右侧操作按钮：在新标签页打开 -->
+                <md-icon-button
+                  slot="end"
+                  class="result-action-btn"
+                  @click.stop="handleOpenInNewTab(bookmark)"
+                >
+                  <LucideIcon name="external-link" :size="14" />
+                </md-icon-button>
+              </md-list-item>
+            </md-list>
+
+            <!-- 底部提示：当结果超过 50 条时显示 -->
+            <div v-if="hasMoreResults" class="more-results-hint">
+              <LucideIcon name="info" :size="14" />
+              <span>在 Management 页面可以查看全部 {{ totalResults }} 个结果</span>
+            </div>
+          </div>
+
+          <!-- 搜索结果统计（只在有搜索内容时显示，0 个结果也显示） -->
+          <div
+            v-if="
+              showStats &&
+              showResultCount &&
+              displayResultCount >= 0 &&
+              (query.trim() || activeFilters.size > 0)
+            "
+            class="search-stats"
+          >
+            <span class="stats-text">找到 {{ displayResultCount }} 个结果</span>
+            <span v-if="executionTime" class="stats-time">
+              ({{ executionTime }}ms)
+            </span>
+          </div>
+        </div>
+      </Transition>
+
+      <!-- 错误提示（绝对定位在搜索框下方） -->
+      <Transition name="error-fade">
+        <div v-if="error && isExpanded" class="search-error">
+          <LucideIcon name="alert-circle" :size="16" />
+          <span class="error-text">{{ error.message }}</span>
+        </div>
+      </Transition>
+    </div>
+  </div>
+</template>
 
 <style scoped>
 /* stylelint-disable declaration-property-value-disallowed-list -- 搜索输入组件使用特定尺寸 */

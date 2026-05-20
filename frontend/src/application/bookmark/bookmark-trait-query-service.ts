@@ -108,11 +108,20 @@ class BookmarkTraitQueryService {
       const traitName = TRAIT_RULES[trait]?.name || trait
       logger.debug('TraitQueryService', `查询特征 "${traitName}": ${records.length} 条`)
       
-      return {
+      const result: {
+        ids: string[]
+        records?: BookmarkRecord[]
+        count: number
+      } = {
         ids,
-        records: options.includeFullRecord ? records : undefined,
         count: records.length
       }
+      
+      if (options.includeFullRecord) {
+        result.records = records
+      }
+      
+      return result
     } catch (error) {
       logger.error('TraitQueryService', '查询特征异常', error)
       throw error

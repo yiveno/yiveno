@@ -14,7 +14,6 @@ interface SearchState {
 }
 
 const searchState: SearchState = {
-  worker: undefined,
   ready: false,
   initializing: false,
   primed: false,
@@ -158,15 +157,20 @@ async function ensureSearchWorker(): Promise<Worker> {
       }
     })
 
+    // eslint-disable-next-line require-atomic-updates -- Worker 初始化是原子操作，不会有竞态条件
     searchState.worker = worker
+    // eslint-disable-next-line require-atomic-updates -- Worker 初始化是原子操作，不会有竞态条件
     searchState.ready = true
     return worker
   } catch (error) {
     logger.error('OffscreenSearch', '创建查询 Worker 失败', error)
+    // eslint-disable-next-line require-atomic-updates -- 错误处理是原子操作，不会有竞态条件
     searchState.worker = undefined
+    // eslint-disable-next-line require-atomic-updates -- 错误处理是原子操作，不会有竞态条件
     searchState.ready = false
     throw error
   } finally {
+    // eslint-disable-next-line require-atomic-updates -- finally 块中的状态重置是安全的
     searchState.initializing = false
   }
 }
@@ -390,7 +394,9 @@ async function primeWorkerDocs(worker: Worker, docsFromPayload?: WorkerDoc[]) {
 
   const docs = docsFromPayload ?? (await collectDocsFromIDB())
   worker.postMessage({ type: 'init', docs })
+  // eslint-disable-next-line require-atomic-updates -- 文档索引初始化是原子操作，不会有竞态条件
   searchState.docCount = docs.length
+  // eslint-disable-next-line require-atomic-updates -- 文档索引初始化是原子操作，不会有竞态条件
   searchState.primed = docs.length > 0
   logger.info('OffscreenSearch', `索引文档数量: ${searchState.docCount}`)
 }

@@ -58,10 +58,8 @@ export default defineNuxtConfig({
 
     // 公共配置（客户端和服务端都可用）
     public: {
-      siteUrl:
-        process.env.NUXT_PUBLIC_SITE_URL || 'https://acuitybookmarks.com',
-      apiBaseUrl:
-        process.env.NUXT_PUBLIC_API_BASE_URL || 'https://api.acuitybookmarks.com',
+      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://acuitybookmarks.com',
+      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || 'https://api.acuitybookmarks.com',
       supabase: {
         url: process.env.NUXT_PUBLIC_SUPABASE_URL || '',
         anonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY || ''
@@ -101,13 +99,7 @@ export default defineNuxtConfig({
   nitro: {
     prerender: {
       // 跳过需要客户端运行时的认证页面
-      ignore: [
-        '/login',
-        '/register',
-        '/reset-password',
-        '/auth/callback',
-        '/update-password'
-      ],
+      ignore: ['/login', '/register', '/reset-password', '/auth/callback', '/update-password'],
       // 失败时继续
       failOnError: false
     }

@@ -87,21 +87,20 @@ inclusion: always
   - 如果理由是"方便团队"或"帮助其他人" → 绝对不要创建
 ```
 
-### 2. 代码修改检查流程（与 Cursor 一致）
+### 2. 代码修改检查流程（已自动化）
 
-**每次修改 `frontend/` 等代码后，须在对话收尾前按顺序执行：**
+**✅ 已通过 Agent Hook 自动化，无需手动执行。**
 
+Hook `post-task-quality-check` 会在 AI 完成任务时自动运行：
 ```bash
 cd frontend
-bun run typecheck
-bun run lint:check
-bun run stylelint:check
+bun run typecheck      # 类型检查
+bun run lint:check     # 代码规范
+bun run stylelint:check # 样式规范
 ```
 
-（根目录脚本名以 `package.json` / `.cursor/rules` 为准；若用户在 Cursor 中配置了 `typecheck:force` 等别名，从其约定。）
-
-- ✅ 无错误后再向用户报告「修改完成」
-- ❌ 有错误须修复至通过
+- ✅ 无错误：任务完成
+- ❌ 有错误：AI 会在下次对话中自动修复
 
 **原因**：与 `.cursor/rules/project.mdc` 对齐，保证 CI 与本地一致。
 

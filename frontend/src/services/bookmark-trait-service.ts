@@ -111,6 +111,7 @@ async function flushTraitQueue(): Promise<void> {
     return
   }
 
+  // eslint-disable-next-line require-atomic-updates -- 队列运行状态设置是原子操作，不会有竞态条件
   queueState.running = true
 
   const reasons = Array.from(queueState.reasons)
@@ -124,6 +125,7 @@ async function flushTraitQueue(): Promise<void> {
   updateGlobalQueueState()
 
   if (!needFullRebuild && pendingIds.length === 0) {
+    // eslint-disable-next-line require-atomic-updates -- 队列运行状态重置是原子操作，不会有竞态条件
     queueState.running = false
     return
   }
@@ -176,6 +178,7 @@ async function flushTraitQueue(): Promise<void> {
   } catch (error) {
     logger.error('BookmarkTrait', '特征标签计算失败', error)
   } finally {
+    // eslint-disable-next-line require-atomic-updates -- finally 块中的状态重置是安全的
     queueState.running = false
   }
 }

@@ -1,0 +1,15 @@
+{
+  "enabled": true,
+  "name": "Frontend Quality Check",
+  "description": "修改 frontend 文件后自动运行 typecheck、lint 和 stylelint 检查",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": ["frontend/**/*.ts", "frontend/**/*.vue", "frontend/**/*.js", "frontend/**/*.css"]
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "cd frontend && bun run lint && bun run stylelint && bun run typecheck",
+    "timeout": 120
+  }
+}

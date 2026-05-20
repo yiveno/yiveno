@@ -1,3 +1,38 @@
+<script setup lang="ts">
+import { ref } from 'vue'
+import {
+  usePerformanceMonitor,
+  useMemoryManagement
+} from '@/composables/useSimplePerformance'
+
+const showMonitor = ref(true) // 简化：总是显示
+const isExpanded = ref(false)
+
+const { metrics } = usePerformanceMonitor('PerformanceMonitor')
+const { memoryUsage, cleanup: cleanupMemory } = useMemoryManagement()
+
+const optimizationsEnabled = ref(true)
+const cacheSize = ref(0)
+
+const toggleMonitor = () => {
+  isExpanded.value = !isExpanded.value
+}
+
+const getMemoryClass = () => {
+  if (memoryUsage.value.percentage > 80) return 'error'
+  if (memoryUsage.value.percentage > 60) return 'warning'
+  return 'success'
+}
+
+const cleanup = () => {
+  cleanupMemory()
+}
+
+const toggleOptimizations = () => {
+  optimizationsEnabled.value = !optimizationsEnabled.value
+}
+</script>
+
 <template>
   <div v-if="showMonitor" class="performance-monitor">
     <div class="monitor-header">
@@ -39,41 +74,6 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { ref } from 'vue'
-import {
-  usePerformanceMonitor,
-  useMemoryManagement
-} from '@/composables/useSimplePerformance'
-
-const showMonitor = ref(true) // 简化：总是显示
-const isExpanded = ref(false)
-
-const { metrics } = usePerformanceMonitor('PerformanceMonitor')
-const { memoryUsage, cleanup: cleanupMemory } = useMemoryManagement()
-
-const optimizationsEnabled = ref(true)
-const cacheSize = ref(0)
-
-const toggleMonitor = () => {
-  isExpanded.value = !isExpanded.value
-}
-
-const getMemoryClass = () => {
-  if (memoryUsage.value.percentage > 80) return 'error'
-  if (memoryUsage.value.percentage > 60) return 'warning'
-  return 'success'
-}
-
-const cleanup = () => {
-  cleanupMemory()
-}
-
-const toggleOptimizations = () => {
-  optimizationsEnabled.value = !optimizationsEnabled.value
-}
-</script>
 
 <style scoped>
 .performance-monitor {

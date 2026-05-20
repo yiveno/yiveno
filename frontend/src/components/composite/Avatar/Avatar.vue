@@ -1,17 +1,3 @@
-<template>
-  <div :class="avatarClasses">
-    <img
-      v-if="src"
-      :src="src"
-      :alt="alt"
-      class="acuity-avatar-img"
-      @error="handleImageError"
-    />
-    <LucideIcon v-else-if="icon" :name="icon" :size="iconSize" />
-    <span v-else class="acuity-avatar-text">{{ initials }}</span>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { LucideIcon } from '@/components'
@@ -56,6 +42,20 @@ const handleImageError = () => {
   imageError.value = true
 }
 </script>
+
+<template>
+  <div :class="avatarClasses">
+    <img
+      v-if="src"
+      :src="src"
+      :alt="alt"
+      class="acuity-avatar-img"
+      @error="handleImageError"
+    />
+    <LucideIcon v-else-if="icon" :name="icon" :size="iconSize" />
+    <span v-else class="acuity-avatar-text">{{ initials }}</span>
+  </div>
+</template>
 
 <style scoped>
 .acuity-avatar {

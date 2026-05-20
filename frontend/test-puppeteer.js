@@ -19,9 +19,7 @@ import puppeteer from 'puppeteer'
     })
 
     const launchTime = Date.now() - startTime
-    console.log(
-      `✅ 浏览器启动成功！耗时: ${launchTime}ms (${(launchTime / 1000).toFixed(1)}秒)\n`
-    )
+    console.log(`✅ 浏览器启动成功！耗时: ${launchTime}ms (${(launchTime / 1000).toFixed(1)}秒)\n`)
 
     console.log('⏳ 创建测试页面...')
     const page = await browser.newPage()

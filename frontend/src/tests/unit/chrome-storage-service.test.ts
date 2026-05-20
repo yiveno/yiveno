@@ -117,13 +117,13 @@ global.chrome = {
 
 describe('ChromeStorageService', () => {
   let storageService: ChromeStorageService
-  let mockStorage: ReturnType<typeof createMockStorage>
+  let testMockStorage: ReturnType<typeof createMockStorage>
 
   beforeEach(() => {
     // 每次测试前重新创建 Mock Storage
-    mockStorage = createMockStorage()
+    testMockStorage = createMockStorage()
     global.chrome = {
-      storage: mockStorage
+      storage: testMockStorage
     } as unknown as typeof chrome
     
     storageService = new ChromeStorageService()

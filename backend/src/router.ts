@@ -8,8 +8,8 @@ import { shareRouter } from './routers/share'
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = router({
-  example: exampleRouter as any, // eslint-disable-line @typescript-eslint/no-explicit-any
-  share: shareRouter as any // eslint-disable-line @typescript-eslint/no-explicit-any
+  example: exampleRouter as any,  
+  share: shareRouter as any  
 })
 
 // export type definition of API

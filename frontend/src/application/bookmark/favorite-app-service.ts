@@ -301,10 +301,12 @@ class FavoriteAppService {
       // 更新书签数据到 IndexedDB
       const updatedBookmark: BookmarkRecord = {
         ...bookmark,
-        isFavorite: false,
-        favoriteOrder: undefined,
-        favoritedAt: undefined
+        isFavorite: false
       }
+      
+      // 删除可选属性
+      delete updatedBookmark.favoriteOrder
+      delete updatedBookmark.favoritedAt
 
       await indexedDBManager.updateBookmark(updatedBookmark)
 
@@ -322,11 +324,10 @@ class FavoriteAppService {
         try {
           const { useBookmarkStore } = await import('@/stores/bookmarkStore')
           const bookmarkStore = useBookmarkStore()
-          bookmarkStore.updateNode(bookmarkId, {
-            isFavorite: false,
-            favoriteOrder: undefined,
-            favoritedAt: undefined
-          })
+          const updates: Partial<BookmarkNode> = {
+            isFavorite: false
+          }
+          bookmarkStore.updateNode(bookmarkId, updates)
         } catch (error) {
           logger.warn('FavoriteAppService', '更新 bookmarkStore 失败（非致命错误）', error)
         }

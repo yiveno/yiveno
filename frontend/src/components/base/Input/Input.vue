@@ -1,3 +1,96 @@
+<script setup lang="ts">
+import { computed, ref } from 'vue'
+import { LucideIcon } from '@/components/base/LucideIcon'
+import { Loading } from '@/components/base/Loading'
+import type { InputProps, InputEmits } from './Input.d'
+
+defineOptions({ 
+  name: 'MdInput'
+})
+
+const props = withDefaults(defineProps<InputProps>(), {
+  label: '',
+  variant: 'outlined',
+  density: 'default',
+  autocomplete: 'off',
+  placeholder: '',
+  disabled: false,
+  readonly: false,
+  clearable: false,
+  hint: '',
+  error: false,
+  errorMessage: '',
+  size: 'md',
+  type: 'text',
+  leadingIconSize: 20
+})
+
+const emit = defineEmits<InputEmits>()
+
+const textFieldRef = ref<HTMLElement>()
+const isFocused = ref(false)
+
+/**
+ * Wrapper 类名
+ */
+const wrapperClasses = computed(() => [
+  `md-input-wrapper--${props.size}`,
+  `md-input-wrapper--${props.density}`,
+  {
+    'md-input-wrapper--disabled': props.disabled,
+    'md-input-wrapper--error': props.error || props.errorMessage
+  }
+])
+
+/**
+ * 处理输入事件
+ */
+const handleInput = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const raw = target.value
+  const value = props.modelModifiers?.number ? Number(raw) : raw
+  emit('update:modelValue', value)
+  emit('input', value)
+}
+
+/**
+ * 处理聚焦事件
+ */
+const handleFocus = (event: FocusEvent) => {
+  isFocused.value = true
+  emit('focus', event)
+}
+
+/**
+ * 处理失焦事件
+ */
+const handleBlur = (event: FocusEvent) => {
+  isFocused.value = false
+  emit('blur', event)
+}
+
+/**
+ * 处理键盘事件
+ */
+const handleKeydown = (event: KeyboardEvent) => {
+  emit('keydown', event)
+}
+
+/**
+ * 清空输入
+ */
+const clearInput = () => {
+  let clearedValue: string | number | undefined = props.clearValue
+
+  if (clearedValue === undefined) {
+    clearedValue = props.modelModifiers?.number ? undefined : ''
+  }
+
+  emit('update:modelValue', clearedValue as string | number)
+  emit('clear')
+}
+</script>
+
 <template>
   <div class="md-input-wrapper" :class="wrapperClasses">
     <!-- Prepend slot (外部) -->
@@ -100,103 +193,6 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { computed, ref } from 'vue'
-import { LucideIcon } from '@/components/base/LucideIcon'
-import { Loading } from '@/components/base/Loading'
-import type { InputProps, InputEmits } from './Input.d'
-
-defineOptions({ 
-  name: 'MdInput'
-})
-
-const props = withDefaults(defineProps<InputProps>(), {
-  label: '',
-  variant: 'outlined',
-  density: 'default',
-  autocomplete: 'off',
-  name: undefined,
-  placeholder: '',
-  disabled: false,
-  readonly: false,
-  clearable: false,
-  clearValue: undefined,
-  maxlength: undefined,
-  hint: '',
-  error: false,
-  errorMessage: '',
-  size: 'md',
-  type: 'text',
-  leadingIcon: undefined,
-  leadingIconSize: 20
-})
-
-const emit = defineEmits<InputEmits>()
-
-const textFieldRef = ref<HTMLElement>()
-const isFocused = ref(false)
-
-/**
- * Wrapper 类名
- */
-const wrapperClasses = computed(() => [
-  `md-input-wrapper--${props.size}`,
-  `md-input-wrapper--${props.density}`,
-  {
-    'md-input-wrapper--disabled': props.disabled,
-    'md-input-wrapper--error': props.error || props.errorMessage
-  }
-])
-
-/**
- * 处理输入事件
- */
-const handleInput = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  const raw = target.value
-  const value = props.modelModifiers?.number ? Number(raw) : raw
-  emit('update:modelValue', value)
-  emit('input', value)
-}
-
-/**
- * 处理聚焦事件
- */
-const handleFocus = (event: FocusEvent) => {
-  isFocused.value = true
-  emit('focus', event)
-}
-
-/**
- * 处理失焦事件
- */
-const handleBlur = (event: FocusEvent) => {
-  isFocused.value = false
-  emit('blur', event)
-}
-
-/**
- * 处理键盘事件
- */
-const handleKeydown = (event: KeyboardEvent) => {
-  emit('keydown', event)
-}
-
-/**
- * 清空输入
- */
-const clearInput = () => {
-  let clearedValue: string | number | undefined = props.clearValue
-
-  if (clearedValue === undefined) {
-    clearedValue = props.modelModifiers?.number ? undefined : ''
-  }
-
-  emit('update:modelValue', clearedValue as string | number)
-  emit('clear')
-}
-</script>
 
 <style scoped>
 

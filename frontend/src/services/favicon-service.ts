@@ -147,25 +147,32 @@ class FaviconService {
       await indexedDBManager.initialize()
 
       const now = Date.now()
+      const getFormat = (): 'svg' | 'ico' | 'png' => {
+        if (faviconUrl.includes('.svg')) return 'svg'
+        if (faviconUrl.includes('.ico')) return 'ico'
+        return 'png'
+      }
+
+      const getQuality = (): 'high' | 'medium' | 'low' => {
+        if (attempt === 0) return 'high'
+        if (attempt === 1) return 'medium'
+        return 'low'
+      }
+
       const record: FaviconCacheRecord = {
         domain,
         faviconUrl,
         size: 16,
-        format: faviconUrl.includes('.svg')
-          ? 'svg'
-          : faviconUrl.includes('.ico')
-            ? 'ico'
-            : 'png',
+        format: getFormat(),
         timestamp: now,
         lastAccessed: now,
         accessCount: 1,
         expiresAt: now + FAVICON_CACHE_DURATION,
-        quality: attempt === 0 ? 'high' : attempt === 1 ? 'medium' : 'low',
+        quality: getQuality(),
         isDefault: false,
         bookmarkCount: 0,
         isPopular: false,
         retryCount: attempt,
-        lastError: undefined,
         isBlocked: false,
         updatedAt: now
       }

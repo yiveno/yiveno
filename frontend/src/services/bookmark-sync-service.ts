@@ -1010,11 +1010,11 @@ export class BookmarkSyncService {
       }
 
       // 小概率失败时触发一次全量兜底（异步，不阻塞调用方）
-      const isSyncing =
+      const currentSyncState =
         (await chromeStorage.getSession<boolean>(this.SYNC_STATE_KEY, false)) ??
         false
 
-      if (isSyncing) {
+      if (currentSyncState) {
         this.pendingFullSync = true
       } else if (this.fullSyncRetryCount < MAX_FULL_SYNC_RETRY) {
         queueMicrotask(() => {

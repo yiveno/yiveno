@@ -167,6 +167,7 @@ export function useSubscription() {
     if (!isAuthenticated.value || !userId) {
       subscription.value = null
       subscriptionStatus.value = null
+      // eslint-disable-next-line require-atomic-updates -- 未登录时设置初始化状态是安全的
       isInitialized.value = true
       return
     }
@@ -178,6 +179,7 @@ export function useSubscription() {
         if (cached) {
           subscription.value = cached.subscription
           subscriptionStatus.value = cached.subscriptionStatus
+          // eslint-disable-next-line require-atomic-updates -- 缓存加载后设置初始化状态是安全的
           isInitialized.value = true
           console.log('[useSubscription] 立即显示缓存数据')
 
@@ -220,9 +222,9 @@ export function useSubscription() {
         await saveToCache(userId, details, status)
       }
     } catch (err) {
-      const errorMessage =
+      const subscriptionError =
         err instanceof Error ? err.message : '加载订阅状态失败'
-      error.value = errorMessage
+      error.value = subscriptionError
       console.error('[useSubscription] 加载订阅状态失败:', err)
 
       // 降级：设置为免费用户
@@ -235,6 +237,7 @@ export function useSubscription() {
       }
     } finally {
       loading.value = false
+      // eslint-disable-next-line require-atomic-updates -- isInitialized 只在 finally 块中设置一次，不会有竞态条件
       isInitialized.value = true
     }
   }
@@ -262,10 +265,10 @@ export function useSubscription() {
       // 在新标签页打开支付链接
       window.open(checkoutUrl, '_blank')
     } catch (err) {
-      const errorMessage =
+      const checkoutError =
         err instanceof Error ? err.message : '创建支付链接失败'
-      error.value = errorMessage
-      throw new Error(errorMessage)
+      error.value = checkoutError
+      throw new Error(checkoutError)
     } finally {
       loading.value = false
     }

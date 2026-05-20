@@ -141,11 +141,11 @@ if (!isWebsiteDomain) {
    * 定期检查 session（检测当前标签页的变化）
    */
   setInterval(() => {
-    const keys = Object.keys(localStorage).filter(key => 
+    const sessionKeys = Object.keys(localStorage).filter(key => 
       key.startsWith('sb-') && key.endsWith('-auth-token')
     )
     
-    const currentSessionData = keys.length > 0 ? localStorage.getItem(keys[0]) : null
+    const currentSessionData = sessionKeys.length > 0 ? localStorage.getItem(sessionKeys[0]) : null
     
     // 检查 session 是否发生变化
     if (currentSessionData !== lastSessionData) {

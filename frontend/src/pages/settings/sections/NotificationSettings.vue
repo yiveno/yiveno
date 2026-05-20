@@ -1,94 +1,3 @@
-<template>
-  <div class="grid">
-      <!-- 勿扰模式 -->
-      <div class="row">
-        <div class="label label--with-tooltip">
-          {{ t('settings_notification_do_not_disturb') }}
-          <Tooltip offset="md">
-            <LucideIcon name="info" class="label-info-icon" />
-            <template #content>
-              <div class="tooltip-content">
-                <strong>{{ t('settings_notification_do_not_disturb_tooltip_title') }}</strong>
-                <ul>
-                  <li>{{ t('settings_notification_do_not_disturb_tooltip_1') }}</li>
-                  <li>{{ t('settings_notification_do_not_disturb_tooltip_2') }}</li>
-                  <li>{{ t('settings_notification_do_not_disturb_tooltip_3') }}</li>
-                </ul>
-              </div>
-            </template>
-          </Tooltip>
-        </div>
-        <div class="field">
-          <md-switch
-            icons
-            :selected="doNotDisturb"
-            @change="handleDoNotDisturbToggle"
-          ></md-switch>
-        </div>
-      </div>
-
-      <!-- 后台通知提醒 -->
-      <div class="row">
-        <div class="label label--with-tooltip">
-          {{ t('settings_notification_mirror') }}
-          <Tooltip offset="md">
-            <LucideIcon name="info" class="label-info-icon" />
-            <template #content>
-              <div class="tooltip-content">
-                <strong>{{ t('settings_notification_mirror_tooltip_title') }}</strong>
-                <ul>
-                  <li>{{ t('settings_notification_mirror_tooltip_1') }}</li>
-                  <li>{{ t('settings_notification_mirror_tooltip_2') }}</li>
-                  <li>{{ t('settings_notification_mirror_tooltip_3') }}</li>
-                </ul>
-              </div>
-            </template>
-          </Tooltip>
-        </div>
-        <div class="field">
-          <md-switch
-            icons
-            :selected="mirror"
-            :disabled="doNotDisturb"
-            @change="handleMirrorToggle"
-          ></md-switch>
-        </div>
-      </div>
-
-      <!-- 通知显示时长 -->
-      <div class="row row--slider">
-        <div class="label label--with-tooltip">
-          {{ t('settings_notification_duration') }}
-          <Tooltip offset="md">
-            <LucideIcon name="info" class="label-info-icon" />
-            <template #content>
-              <div class="tooltip-content">
-                <strong>{{ t('settings_notification_duration_tooltip_title') }}</strong>
-                <ul>
-                  <li>{{ t('settings_notification_duration_tooltip_1') }}</li>
-                  <li>{{ t('settings_notification_duration_tooltip_2') }}</li>
-                  <li>{{ t('settings_notification_duration_tooltip_3') }}</li>
-                </ul>
-              </div>
-            </template>
-          </Tooltip>
-        </div>
-        <div class="field field--slider">
-          <md-slider
-            ref="sliderRef"
-            :min="1"
-            :max="10"
-            :step="1"
-            :value="notificationDuration"
-            labeled
-            @input="handleDurationInput"
-            @change="handleDurationChange"
-          ></md-slider>
-          <span class="duration-value">{{ notificationDuration }} {{ t('settings_notification_duration_seconds') }}</span>
-        </div>
-    </div>
-  </div>
-</template>
 <script setup lang="ts">
 import { defineOptions, onMounted, ref, watch, nextTick } from 'vue'
 
@@ -228,6 +137,97 @@ async function handleDurationChange(event: Event) {
   }
 }
 </script>
+<template>
+  <div class="grid">
+      <!-- 勿扰模式 -->
+      <div class="row">
+        <div class="label label--with-tooltip">
+          {{ t('settings_notification_do_not_disturb') }}
+          <Tooltip offset="md">
+            <LucideIcon name="info" class="label-info-icon" />
+            <template #content>
+              <div class="tooltip-content">
+                <strong>{{ t('settings_notification_do_not_disturb_tooltip_title') }}</strong>
+                <ul>
+                  <li>{{ t('settings_notification_do_not_disturb_tooltip_1') }}</li>
+                  <li>{{ t('settings_notification_do_not_disturb_tooltip_2') }}</li>
+                  <li>{{ t('settings_notification_do_not_disturb_tooltip_3') }}</li>
+                </ul>
+              </div>
+            </template>
+          </Tooltip>
+        </div>
+        <div class="field">
+          <md-switch
+            icons
+            :selected="doNotDisturb"
+            @change="handleDoNotDisturbToggle"
+          ></md-switch>
+        </div>
+      </div>
+
+      <!-- 后台通知提醒 -->
+      <div class="row">
+        <div class="label label--with-tooltip">
+          {{ t('settings_notification_mirror') }}
+          <Tooltip offset="md">
+            <LucideIcon name="info" class="label-info-icon" />
+            <template #content>
+              <div class="tooltip-content">
+                <strong>{{ t('settings_notification_mirror_tooltip_title') }}</strong>
+                <ul>
+                  <li>{{ t('settings_notification_mirror_tooltip_1') }}</li>
+                  <li>{{ t('settings_notification_mirror_tooltip_2') }}</li>
+                  <li>{{ t('settings_notification_mirror_tooltip_3') }}</li>
+                </ul>
+              </div>
+            </template>
+          </Tooltip>
+        </div>
+        <div class="field">
+          <md-switch
+            icons
+            :selected="mirror"
+            :disabled="doNotDisturb"
+            @change="handleMirrorToggle"
+          ></md-switch>
+        </div>
+      </div>
+
+      <!-- 通知显示时长 -->
+      <div class="row row--slider">
+        <div class="label label--with-tooltip">
+          {{ t('settings_notification_duration') }}
+          <Tooltip offset="md">
+            <LucideIcon name="info" class="label-info-icon" />
+            <template #content>
+              <div class="tooltip-content">
+                <strong>{{ t('settings_notification_duration_tooltip_title') }}</strong>
+                <ul>
+                  <li>{{ t('settings_notification_duration_tooltip_1') }}</li>
+                  <li>{{ t('settings_notification_duration_tooltip_2') }}</li>
+                  <li>{{ t('settings_notification_duration_tooltip_3') }}</li>
+                </ul>
+              </div>
+            </template>
+          </Tooltip>
+        </div>
+        <div class="field field--slider">
+          <md-slider
+            ref="sliderRef"
+            :min="1"
+            :max="10"
+            :step="1"
+            :value="notificationDuration"
+            labeled
+            @input="handleDurationInput"
+            @change="handleDurationChange"
+          ></md-slider>
+          <span class="duration-value">{{ notificationDuration }} {{ t('settings_notification_duration_seconds') }}</span>
+        </div>
+    </div>
+  </div>
+</template>
 <style scoped>
 .grid {
   display: flex;

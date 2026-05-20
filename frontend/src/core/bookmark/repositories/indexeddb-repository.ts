@@ -477,7 +477,7 @@ export class IndexedDBBookmarkRepository implements BookmarkRepository {
    * 将 BookmarkNode 转换为 BookmarkRecord
    */
   private nodeToRecord(node: BookmarkNode): BookmarkRecord {
-    return {
+    const record: BookmarkRecord = {
       id: node.id,
       parentId: node.parentId,
       title: node.title,
@@ -496,8 +496,6 @@ export class IndexedDBBookmarkRepository implements BookmarkRepository {
 
       // 筛选优化字段
       titleLower: node.title.toLowerCase(),
-      urlLower: node.url?.toLowerCase(),
-      domain: node.url ? new URL(node.url).hostname : undefined,
       keywords: [],
 
       // 类型和统计字段
@@ -521,20 +519,37 @@ export class IndexedDBBookmarkRepository implements BookmarkRepository {
       dataVersion: 1,
       lastCalculated: Date.now()
     }
+    
+    // 条件添加 urlLower 和 domain
+    if (node.url) {
+      record.urlLower = node.url.toLowerCase()
+      try {
+        record.domain = new URL(node.url).hostname
+      } catch {
+        // URL 解析失败，不添加 domain
+      }
+    }
+    
+    return record
   }
 
   /**
    * 将 BookmarkRecord 转换为 BookmarkNode
    */
   private recordToNode(record: BookmarkRecord): BookmarkNode {
-    return {
+    const node: BookmarkNode = {
       id: record.id,
       parentId: record.parentId,
       title: record.title,
       url: record.url,
       dateAdded: record.dateAdded,
-      index: record.index,
-      children: record.isFolder ? [] : undefined
+      index: record.index
     }
+    
+    if (record.isFolder) {
+      node.children = []
+    }
+    
+    return node
   }
 }

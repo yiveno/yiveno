@@ -4,76 +4,6 @@
   - 弊：需用 cancel/closed 事件适配原 overlay 逻辑；重度自定义动画弱于自研 Transition
   @see https://github.com/material-components/material-web/blob/main/docs/components/dialog.md
 -->
-<template>
-  <Teleport :to="teleportTarget">
-    <md-dialog
-      class="acuity-md-dialog"
-      :class="mdDialogClasses"
-      :style="dialogInlineStyle"
-      :open="show"
-      :quick="dense"
-      :aria-label="dialogAriaLabel"
-      @cancel="handleMdCancel"
-      @closed="handleMdClosed"
-      @opened="handleMdOpened"
-    >
-      <!-- headline：与 md-dialog 无障碍约定一致（无标题时用 aria-label） -->
-      <div v-if="showHeadline" slot="headline" class="acuity-dialog-header">
-        <div class="acuity-dialog-header-main">
-          <slot v-if="$slots.header" name="header" />
-          <template v-else>
-            <div class="acuity-dialog-title">
-              <LucideIcon
-                v-if="icon"
-                :name="icon"
-                :color="iconColor"
-                class="title-icon"
-              />
-              <span>{{ title }}</span>
-            </div>
-          </template>
-        </div>
-        <div
-          v-if="$slots['header-actions']"
-          class="acuity-dialog-header-actions"
-        >
-          <slot name="header-actions" />
-        </div>
-      </div>
-
-      <div
-        slot="content"
-        class="acuity-dialog-content-slot"
-        @keydown="handleKeydown"
-      >
-        <div
-          ref="bodyRef"
-          :class="['acuity-dialog-body', bodyMinHeightClass]"
-        >
-          <slot />
-        </div>
-        <div v-if="showCancelConfirm" class="acuity-dialog-cancel-overlay">
-          <div class="acuity-dialog-cancel-box">
-            <div class="cancel-text">{{ cancelConfirmText }}</div>
-            <div class="cancel-actions">
-              <md-text-button @click="continueEditing">{{
-                cancelConfirmContinueText
-              }}</md-text-button>
-              <md-filled-button class="button--danger" @click="confirmCancel">{{
-                cancelConfirmOkText
-              }}</md-filled-button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div v-if="$slots.actions" slot="actions" class="acuity-dialog-actions">
-        <slot name="actions" />
-      </div>
-    </md-dialog>
-  </Teleport>
-</template>
-
 <script setup lang="ts">
 import {
   computed,
@@ -317,6 +247,76 @@ onBeforeUnmount(() => {
   detachEscapeBlock()
 })
 </script>
+
+<template>
+  <Teleport :to="teleportTarget">
+    <md-dialog
+      class="acuity-md-dialog"
+      :class="mdDialogClasses"
+      :style="dialogInlineStyle"
+      :open="show"
+      :quick="dense"
+      :aria-label="dialogAriaLabel"
+      @cancel="handleMdCancel"
+      @closed="handleMdClosed"
+      @opened="handleMdOpened"
+    >
+      <!-- headline：与 md-dialog 无障碍约定一致（无标题时用 aria-label） -->
+      <div v-if="showHeadline" slot="headline" class="acuity-dialog-header">
+        <div class="acuity-dialog-header-main">
+          <slot v-if="$slots.header" name="header" />
+          <template v-else>
+            <div class="acuity-dialog-title">
+              <LucideIcon
+                v-if="icon"
+                :name="icon"
+                :color="iconColor"
+                class="title-icon"
+              />
+              <span>{{ title }}</span>
+            </div>
+          </template>
+        </div>
+        <div
+          v-if="$slots['header-actions']"
+          class="acuity-dialog-header-actions"
+        >
+          <slot name="header-actions" />
+        </div>
+      </div>
+
+      <div
+        slot="content"
+        class="acuity-dialog-content-slot"
+        @keydown="handleKeydown"
+      >
+        <div
+          ref="bodyRef"
+          :class="['acuity-dialog-body', bodyMinHeightClass]"
+        >
+          <slot />
+        </div>
+        <div v-if="showCancelConfirm" class="acuity-dialog-cancel-overlay">
+          <div class="acuity-dialog-cancel-box">
+            <div class="cancel-text">{{ cancelConfirmText }}</div>
+            <div class="cancel-actions">
+              <md-text-button @click="continueEditing">{{
+                cancelConfirmContinueText
+              }}</md-text-button>
+              <md-filled-button class="button--danger" @click="confirmCancel">{{
+                cancelConfirmOkText
+              }}</md-filled-button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="$slots.actions" slot="actions" class="acuity-dialog-actions">
+        <slot name="actions" />
+      </div>
+    </md-dialog>
+  </Teleport>
+</template>
 
 <style scoped>
 /**

@@ -161,10 +161,10 @@ export class FlexSearchStrategy implements SearchStrategy {
       const weight = fieldWeights[field] || 0.1
 
       // 为每个匹配的 ID 累加得分
-      ids.forEach((id, index) => {
+      ids.forEach((id, position) => {
         const existing = scoreMap.get(id)
         // 位置越靠前，得分越高
-        const positionScore = 1 - (index / ids.length) * 0.5
+        const positionScore = 1 - (position / ids.length) * 0.5
         const fieldScore = weight * positionScore
 
         if (existing) {

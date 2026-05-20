@@ -4,54 +4,6 @@
   - Hover 显示下拉菜单
   - 可独立使用，不依赖特定页面结构
 -->
-<template>
-  <div class="theme-toggle">
-    <md-icon-button
-      id="theme-toggle-anchor"
-      ref="toggleBtnRef"
-      class="theme-toggle__button"
-      :title="currentThemeLabel"
-      :aria-label="currentThemeLabel"
-      @click="showMenu = !showMenu"
-    >
-      <LucideIcon :name="currentThemeIconLucide" :size="20" />
-    </md-icon-button>
-
-    <!-- Material Design 3 Menu -->
-    <md-menu
-      id="theme-menu"
-      ref="menuRef"
-      anchor="theme-toggle-anchor"
-      :open="showMenu"
-      :quick="true"
-      @closed="showMenu = false"
-    >
-      <md-menu-item
-        v-for="option in themeOptions"
-        :key="option.value"
-        :selected="currentTheme === option.value"
-        @click="selectTheme(option.value)"
-      >
-        <!-- 必须用原生元素承载 slot="start"：Vue 子组件上的 slot 可能无法交给 md-menu-item，图标会掉进 default 槽，从而在 headline 上方单独一行 -->
-        <span slot="start" class="theme-menu-item__start">
-          <LucideIcon :name="option.icon" :size="15" />
-        </span>
-        <!-- headline：避免使用 slot="end"（Material 会先渲染 end，对勾会夹在图标与文字之间） -->
-        <span slot="headline" class="theme-menu-item__headline">
-          <span class="theme-menu-item__label">{{ option.label }}</span>
-          <LucideIcon
-            v-if="currentTheme === option.value"
-            name="check-circle"
-            :size="16"
-            class="theme-menu-item__selected-icon"
-            aria-hidden="true"
-          />
-        </span>
-      </md-menu-item>
-    </md-menu>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { logger } from '@/infrastructure/logging/logger'
@@ -336,8 +288,8 @@ const initializeTheme = async () => {
 
       // 应用主题
       if (savedTheme === 'system') {
-        const systemIsDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-        applyTheme(systemIsDark ? 'dark' : 'light')
+        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+        applyTheme(systemPrefersDark ? 'dark' : 'light')
       } else {
         applyTheme(savedTheme)
       }
@@ -383,6 +335,54 @@ onUnmounted(() => {
   stopSystemThemeMonitoring()
 })
 </script>
+
+<template>
+  <div class="theme-toggle">
+    <md-icon-button
+      id="theme-toggle-anchor"
+      ref="toggleBtnRef"
+      class="theme-toggle__button"
+      :title="currentThemeLabel"
+      :aria-label="currentThemeLabel"
+      @click="showMenu = !showMenu"
+    >
+      <LucideIcon :name="currentThemeIconLucide" :size="20" />
+    </md-icon-button>
+
+    <!-- Material Design 3 Menu -->
+    <md-menu
+      id="theme-menu"
+      ref="menuRef"
+      anchor="theme-toggle-anchor"
+      :open="showMenu"
+      :quick="true"
+      @closed="showMenu = false"
+    >
+      <md-menu-item
+        v-for="option in themeOptions"
+        :key="option.value"
+        :selected="currentTheme === option.value"
+        @click="selectTheme(option.value)"
+      >
+        <!-- 必须用原生元素承载 slot="start"：Vue 子组件上的 slot 可能无法交给 md-menu-item，图标会掉进 default 槽，从而在 headline 上方单独一行 -->
+        <span slot="start" class="theme-menu-item__start">
+          <LucideIcon :name="option.icon" :size="15" />
+        </span>
+        <!-- headline：避免使用 slot="end"（Material 会先渲染 end，对勾会夹在图标与文字之间） -->
+        <span slot="headline" class="theme-menu-item__headline">
+          <span class="theme-menu-item__label">{{ option.label }}</span>
+          <LucideIcon
+            v-if="currentTheme === option.value"
+            name="check-circle"
+            :size="16"
+            class="theme-menu-item__selected-icon"
+            aria-hidden="true"
+          />
+        </span>
+      </md-menu-item>
+    </md-menu>
+  </div>
+</template>
 
 <style scoped>
 .theme-toggle {

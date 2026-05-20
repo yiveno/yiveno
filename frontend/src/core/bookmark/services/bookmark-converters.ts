@@ -48,19 +48,27 @@ export interface MinimalTreeNode {
 export function listToBookmarkNodes<T extends MinimalTreeNode>(
   nodes: T[]
 ): BookmarkNode[] {
-  const mapNode = (n: MinimalTreeNode): BookmarkNode => ({
-    id: String(n.id),
-    title: n.title,
-    url: n.url,
-    parentId: n.parentId,
-    index: typeof n.index === 'number' ? n.index : undefined,
-    dateAdded: n.dateAdded,
-    children: n.children?.length
-      ? n.children.map(mapNode)
-      : n.url
-        ? undefined
-        : []
-  })
+  const mapNode = (n: MinimalTreeNode): BookmarkNode => {
+    const node: BookmarkNode = {
+      id: String(n.id),
+      title: n.title,
+      url: n.url,
+      parentId: n.parentId,
+      dateAdded: n.dateAdded
+    }
+    
+    if (typeof n.index === 'number') {
+      node.index = n.index
+    }
+    
+    if (n.children?.length) {
+      node.children = n.children.map(mapNode)
+    } else if (!n.url) {
+      node.children = []
+    }
+    
+    return node
+  }
   return Array.isArray(nodes) ? nodes.map(mapNode) : []
 }
 

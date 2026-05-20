@@ -1,3 +1,267 @@
+<script setup lang="ts">
+import { ref, watch } from 'vue'
+import { Dialog, LucideIcon } from '@/components'
+import { MdInput } from '@/components/base/Input'
+import { logger } from '@/infrastructure/logging/logger'
+import { notificationService } from '@/application/notification/notification-service'
+
+defineOptions({
+  name: 'QuickAddBookmarkDialog'
+})
+
+const props = withDefaults(defineProps<Props>(), {
+  show: false,
+  title: '',
+  url: '',
+  favIconUrl: '',
+  enableAI: true
+})
+
+const emit = defineEmits<{
+  'update:show': [value: boolean]
+  confirm: [data: { title: string; url: string; folderId: string }]
+}>()
+
+interface Props {
+  show: boolean
+  title?: string
+  url?: string
+  favIconUrl?: string
+  enableAI?: boolean
+}
+
+interface FolderRecommendation {
+  folderId: string
+  folderName: string
+  folderPath: string
+  score: number
+  bookmarkCount: number
+  reason: string
+}
+
+// 书签信息
+const bookmarkTitle = ref('')
+const selectedFolderId = ref('')
+const showFaviconError = ref(false)
+
+// 文件夹列表
+const folderOptions = ref<Array<{ label: string; value: string }>>([])
+
+// 推荐相关
+const recommendations = ref<FolderRecommendation[]>([])
+const isLoadingRecommendations = ref(false)
+const enableAIAuto = ref(true) // 默认开启 AI 自动归纳
+
+// 监听 props 变化
+watch(
+  () => props.show,
+  async newShow => {
+    if (newShow) {
+      // 重置状态
+      const initialTitle = props.title || props.url || '未命名书签'
+      bookmarkTitle.value = initialTitle
+      recommendations.value = []
+      selectedFolderId.value = ''
+
+      logger.info('QuickAddBookmark', '对话框打开', {
+        propsTitle: props.title,
+        propsUrl: props.url,
+        initialTitle,
+        favIconUrl: props.favIconUrl
+      })
+
+      // 加载文件夹列表
+      await loadFolders()
+
+      // 获取向量推荐（仅在 AI 模式下）
+      if (props.enableAI && props.title && props.url && enableAIAuto.value) {
+        await getVectorRecommendations()
+      }
+    }
+  }
+)
+
+/**
+ * 加载所有文件夹
+ */
+async function loadFolders() {
+  try {
+    const treeResponse = await new Promise<{
+      success: boolean
+      tree?: chrome.bookmarks.BookmarkTreeNode[]
+      error?: string
+    }>((resolve, reject) => {
+      chrome.runtime.sendMessage(
+        {
+          type: 'GET_BOOKMARK_TREE'
+        },
+        response => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message))
+          } else {
+            resolve(response || { success: false })
+          }
+        }
+      )
+    })
+
+    if (!treeResponse.success || !treeResponse.tree) {
+      throw new Error(treeResponse.error || '获取书签树失败')
+    }
+
+    const folders: Array<{ label: string; value: string }> = []
+
+    // 递归遍历书签树，收集所有文件夹
+    function traverse(nodes: chrome.bookmarks.BookmarkTreeNode[], prefix = '') {
+      for (const node of nodes) {
+        if (!node.url) {
+          // 是文件夹
+          const label = prefix ? `${prefix} > ${node.title}` : node.title
+          folders.push({ label, value: node.id })
+
+          if (node.children) {
+            traverse(node.children, label)
+          }
+        }
+      }
+    }
+
+    traverse(treeResponse.tree)
+
+    folderOptions.value = folders
+
+    // 默认选择书签栏（如果没有推荐）
+    if (!selectedFolderId.value) {
+      const bookmarksBar = folders.find(
+        f => f.label === '书签栏' || f.label === 'Bookmarks Bar'
+      )
+      if (bookmarksBar) {
+        selectedFolderId.value = bookmarksBar.value
+      } else if (folders.length > 0) {
+        selectedFolderId.value = folders[0].value
+      }
+    }
+  } catch (error) {
+    logger.error('QuickAddBookmark', '加载文件夹列表失败', error)
+  }
+}
+
+/**
+ * 获取向量相似度推荐
+ */
+async function getVectorRecommendations() {
+  try {
+    isLoadingRecommendations.value = true
+
+    const recommendationResponse = await new Promise<{
+      success: boolean
+      recommendations?: FolderRecommendation[]
+      error?: string
+    }>((resolve, reject) => {
+      chrome.runtime.sendMessage(
+        {
+          type: 'GET_FOLDER_RECOMMENDATIONS',
+          data: {
+            title: props.title,
+            url: props.url,
+            topK: 3,
+            minScore: 0.3
+          }
+        },
+        response => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message))
+          } else {
+            resolve(response || { success: false })
+          }
+        }
+      )
+    })
+
+    if (recommendationResponse.success && recommendationResponse.recommendations) {
+      recommendations.value = recommendationResponse.recommendations
+
+      logger.info('QuickAddBookmark', '获取到向量推荐', {
+        count: recommendationResponse.recommendations.length,
+        topRecommendation: recommendationResponse.recommendations[0]?.folderPath
+      })
+
+      // 自动选中最佳推荐
+      if (recommendationResponse.recommendations.length > 0) {
+        selectedFolderId.value = recommendationResponse.recommendations[0].folderId
+      }
+    } else {
+      logger.warn('QuickAddBookmark', '向量推荐失败', recommendationResponse.error)
+    }
+  } catch (error) {
+    logger.error('QuickAddBookmark', '向量推荐失败', error)
+  } finally {
+    isLoadingRecommendations.value = false
+  }
+}
+
+/**
+ * 选择推荐的文件夹
+ */
+function selectRecommendation(rec: FolderRecommendation) {
+  selectedFolderId.value = rec.folderId
+  logger.info('QuickAddBookmark', '用户选择推荐文件夹', {
+    folderId: rec.folderId,
+    folderPath: rec.folderPath,
+    score: rec.score
+  })
+}
+
+/**
+ * 处理图标加载失败
+ */
+function handleFaviconError() {
+  showFaviconError.value = true
+}
+
+/**
+ * 确认添加
+ */
+function handleConfirm() {
+  // ✅ 验证数据
+  if (!bookmarkTitle.value || bookmarkTitle.value.trim() === '') {
+    notificationService.notify('请填写书签名称', { level: 'warning' })
+    return
+  }
+
+  if (!selectedFolderId.value) {
+    notificationService.notify('请选择文件夹', { level: 'warning' })
+    return
+  }
+
+  if (!props.url || props.url.trim() === '') {
+    notificationService.notify('书签 URL 不能为空', { level: 'error' })
+    return
+  }
+
+  logger.info('QuickAddBookmark', '用户确认添加书签', {
+    title: bookmarkTitle.value,
+    url: props.url,
+    folderId: selectedFolderId.value
+  })
+
+  emit('confirm', {
+    title: bookmarkTitle.value.trim(),
+    url: props.url.trim(),
+    folderId: selectedFolderId.value
+  })
+
+  handleClose()
+}
+
+/**
+ * 关闭对话框
+ */
+function handleClose() {
+  emit('update:show', false)
+}
+</script>
+
 <template>
   <Dialog
     :show="show"
@@ -111,270 +375,6 @@
     </template>
   </Dialog>
 </template>
-
-<script setup lang="ts">
-import { ref, watch } from 'vue'
-import { Dialog, LucideIcon } from '@/components'
-import { MdInput } from '@/components/base/Input'
-import { logger } from '@/infrastructure/logging/logger'
-import { notificationService } from '@/application/notification/notification-service'
-
-defineOptions({
-  name: 'QuickAddBookmarkDialog'
-})
-
-interface Props {
-  show: boolean
-  title?: string
-  url?: string
-  favIconUrl?: string
-  enableAI?: boolean
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  show: false,
-  title: '',
-  url: '',
-  favIconUrl: '',
-  enableAI: true
-})
-
-const emit = defineEmits<{
-  'update:show': [value: boolean]
-  confirm: [data: { title: string; url: string; folderId: string }]
-}>()
-
-interface FolderRecommendation {
-  folderId: string
-  folderName: string
-  folderPath: string
-  score: number
-  bookmarkCount: number
-  reason: string
-}
-
-// 书签信息
-const bookmarkTitle = ref('')
-const selectedFolderId = ref('')
-const showFaviconError = ref(false)
-
-// 文件夹列表
-const folderOptions = ref<Array<{ label: string; value: string }>>([])
-
-// 推荐相关
-const recommendations = ref<FolderRecommendation[]>([])
-const isLoadingRecommendations = ref(false)
-const enableAIAuto = ref(true) // 默认开启 AI 自动归纳
-
-// 监听 props 变化
-watch(
-  () => props.show,
-  async newShow => {
-    if (newShow) {
-      // 重置状态
-      const initialTitle = props.title || props.url || '未命名书签'
-      bookmarkTitle.value = initialTitle
-      recommendations.value = []
-      selectedFolderId.value = ''
-
-      logger.info('QuickAddBookmark', '对话框打开', {
-        propsTitle: props.title,
-        propsUrl: props.url,
-        initialTitle,
-        favIconUrl: props.favIconUrl
-      })
-
-      // 加载文件夹列表
-      await loadFolders()
-
-      // 获取向量推荐（仅在 AI 模式下）
-      if (props.enableAI && props.title && props.url && enableAIAuto.value) {
-        await getVectorRecommendations()
-      }
-    }
-  }
-)
-
-/**
- * 加载所有文件夹
- */
-async function loadFolders() {
-  try {
-    const response = await new Promise<{
-      success: boolean
-      tree?: chrome.bookmarks.BookmarkTreeNode[]
-      error?: string
-    }>((resolve, reject) => {
-      chrome.runtime.sendMessage(
-        {
-          type: 'GET_BOOKMARK_TREE'
-        },
-        response => {
-          if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message))
-          } else {
-            resolve(response || { success: false })
-          }
-        }
-      )
-    })
-
-    if (!response.success || !response.tree) {
-      throw new Error(response.error || '获取书签树失败')
-    }
-
-    const folders: Array<{ label: string; value: string }> = []
-
-    // 递归遍历书签树，收集所有文件夹
-    function traverse(nodes: chrome.bookmarks.BookmarkTreeNode[], prefix = '') {
-      for (const node of nodes) {
-        if (!node.url) {
-          // 是文件夹
-          const label = prefix ? `${prefix} > ${node.title}` : node.title
-          folders.push({ label, value: node.id })
-
-          if (node.children) {
-            traverse(node.children, label)
-          }
-        }
-      }
-    }
-
-    traverse(response.tree)
-
-    folderOptions.value = folders
-
-    // 默认选择书签栏（如果没有推荐）
-    if (!selectedFolderId.value) {
-      const bookmarksBar = folders.find(
-        f => f.label === '书签栏' || f.label === 'Bookmarks Bar'
-      )
-      if (bookmarksBar) {
-        selectedFolderId.value = bookmarksBar.value
-      } else if (folders.length > 0) {
-        selectedFolderId.value = folders[0].value
-      }
-    }
-  } catch (error) {
-    logger.error('QuickAddBookmark', '加载文件夹列表失败', error)
-  }
-}
-
-/**
- * 获取向量相似度推荐
- */
-async function getVectorRecommendations() {
-  try {
-    isLoadingRecommendations.value = true
-
-    const response = await new Promise<{
-      success: boolean
-      recommendations?: FolderRecommendation[]
-      error?: string
-    }>((resolve, reject) => {
-      chrome.runtime.sendMessage(
-        {
-          type: 'GET_FOLDER_RECOMMENDATIONS',
-          data: {
-            title: props.title,
-            url: props.url,
-            topK: 3,
-            minScore: 0.3
-          }
-        },
-        response => {
-          if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message))
-          } else {
-            resolve(response || { success: false })
-          }
-        }
-      )
-    })
-
-    if (response.success && response.recommendations) {
-      recommendations.value = response.recommendations
-
-      logger.info('QuickAddBookmark', '获取到向量推荐', {
-        count: response.recommendations.length,
-        topRecommendation: response.recommendations[0]?.folderPath
-      })
-
-      // 自动选中最佳推荐
-      if (response.recommendations.length > 0) {
-        selectedFolderId.value = response.recommendations[0].folderId
-      }
-    } else {
-      logger.warn('QuickAddBookmark', '向量推荐失败', response.error)
-    }
-  } catch (error) {
-    logger.error('QuickAddBookmark', '向量推荐失败', error)
-  } finally {
-    isLoadingRecommendations.value = false
-  }
-}
-
-/**
- * 选择推荐的文件夹
- */
-function selectRecommendation(rec: FolderRecommendation) {
-  selectedFolderId.value = rec.folderId
-  logger.info('QuickAddBookmark', '用户选择推荐文件夹', {
-    folderId: rec.folderId,
-    folderPath: rec.folderPath,
-    score: rec.score
-  })
-}
-
-/**
- * 处理图标加载失败
- */
-function handleFaviconError() {
-  showFaviconError.value = true
-}
-
-/**
- * 确认添加
- */
-function handleConfirm() {
-  // ✅ 验证数据
-  if (!bookmarkTitle.value || bookmarkTitle.value.trim() === '') {
-    notificationService.notify('请填写书签名称', { level: 'warning' })
-    return
-  }
-
-  if (!selectedFolderId.value) {
-    notificationService.notify('请选择文件夹', { level: 'warning' })
-    return
-  }
-
-  if (!props.url || props.url.trim() === '') {
-    notificationService.notify('书签 URL 不能为空', { level: 'error' })
-    return
-  }
-
-  logger.info('QuickAddBookmark', '用户确认添加书签', {
-    title: bookmarkTitle.value,
-    url: props.url,
-    folderId: selectedFolderId.value
-  })
-
-  emit('confirm', {
-    title: bookmarkTitle.value.trim(),
-    url: props.url.trim(),
-    folderId: selectedFolderId.value
-  })
-
-  handleClose()
-}
-
-/**
- * 关闭对话框
- */
-function handleClose() {
-  emit('update:show', false)
-}
-</script>
 
 <style scoped>
 

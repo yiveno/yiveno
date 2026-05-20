@@ -2,6 +2,19 @@
   空状态组件
   用于展示无数据、筛选无结果等空状态
 -->
+<script setup lang="ts">
+import { LucideIcon } from '@/components/base/LucideIcon'
+import type { EmptyStateProps } from './EmptyState.d'
+
+defineOptions({ name: 'EmptyState' })
+
+withDefaults(defineProps<EmptyStateProps>(), {
+  icon: 'folder',
+  iconSize: 48,
+  iconColor: 'muted'
+})
+</script>
+
 <template>
   <div class="empty-state">
     <div class="empty-state__icon">
@@ -16,19 +29,6 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { LucideIcon } from '@/components/base/LucideIcon'
-import type { EmptyStateProps } from './EmptyState.d'
-
-defineOptions({ name: 'EmptyState' })
-
-withDefaults(defineProps<EmptyStateProps>(), {
-  icon: 'folder',
-  iconSize: 48,
-  iconColor: 'muted'
-})
-</script>
 
 <style scoped>
 /**

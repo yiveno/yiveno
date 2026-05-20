@@ -1,154 +1,3 @@
-<template>
-  <Dialog
-    :show="show"
-    title="分享书签"
-    icon="icon-share"
-    max-width="720px"
-    @update:show="$emit('update:show', $event)"
-  >
-    <!-- 屏幕阅读器消息区域（视觉上隐藏） -->
-    <div
-      class="sr-only"
-      role="status"
-      aria-live="polite"
-      aria-atomic="true"
-    >
-      {{ state.srMessage }}
-    </div>
-
-    <div class="share-dialog-content">
-      <!-- 标题输入 -->
-      <div class="title-input-section">
-        <Input
-          v-model="state.customTitle"
-          label="分享标题"
-          variant="outlined"
-          size="md"
-          @input="handleTitleChange"
-        />
-      </div>
-
-      <!-- 主题选择 -->
-      <div class="theme-selector" role="group" aria-labelledby="theme-label">
-        <label id="theme-label" class="theme-label">主题：</label>
-        <div class="theme-buttons">
-          <md-filled-button
-            v-if="state.selectedTheme === 'dark'"
-            aria-label="选择深色主题"
-            :aria-pressed="true"
-            @click="handleThemeChange('dark')"
-          >
-            🌙 深色
-          </md-filled-button>
-          <md-outlined-button
-            v-else
-            aria-label="选择深色主题"
-            :aria-pressed="false"
-            @click="handleThemeChange('dark')"
-          >
-            🌙 深色
-          </md-outlined-button>
-          
-          <md-filled-button
-            v-if="state.selectedTheme === 'light'"
-            aria-label="选择浅色主题"
-            :aria-pressed="true"
-            @click="handleThemeChange('light')"
-          >
-            ☀️ 浅色
-          </md-filled-button>
-          <md-outlined-button
-            v-else
-            aria-label="选择浅色主题"
-            :aria-pressed="false"
-            @click="handleThemeChange('light')"
-          >
-            ☀️ 浅色
-          </md-outlined-button>
-        </div>
-      </div>
-
-      <!-- 书签数量提示 -->
-      <div
-        v-if="bookmarks.length > 0"
-        class="bookmarks-info"
-        role="status"
-        aria-live="polite"
-      >
-        <LucideIcon name="bookmark" :size="16" aria-hidden="true" />
-        <span class="info-text">将分享 {{ bookmarks.length }} 个书签</span>
-      </div>
-
-      <!-- 海报预览 -->
-      <div class="poster-preview" role="region" aria-label="海报预览区域">
-        <div
-          v-if="state.isGenerating"
-          class="preview-loading"
-          role="status"
-          aria-live="polite"
-          aria-busy="true"
-        >
-          <md-circular-progress indeterminate class="poster-spinner" />
-          <span>正在生成海报...</span>
-        </div>
-        <div
-          v-else-if="state.error"
-          class="preview-error"
-          role="alert"
-          aria-live="assertive"
-        >
-          <LucideIcon name="alert-circle" :size="48" aria-hidden="true" />
-          <span>{{ state.error }}</span>
-          <md-outlined-button aria-label="重新生成海报" @click="handleRetry">
-            重试
-          </md-outlined-button>
-        </div>
-        <img
-          v-else-if="state.posterPreview"
-          :src="state.posterPreview"
-          alt="分享海报预览，包含书签列表和二维码"
-          class="preview-image"
-          role="img"
-        />
-      </div>
-    </div>
-
-    <template #actions>
-      <md-icon-button
-        title="取消"
-        aria-label="关闭分享对话框"
-        @click="$emit('update:show', false)"
-      >
-        <LucideIcon name="x" :size="20" />
-      </md-icon-button>
-      <md-icon-button
-        title="复制图片"
-        :disabled="!state.posterPreview || state.isGenerating"
-        aria-label="复制海报图片到剪贴板"
-        @click="handleCopyImage"
-      >
-        <LucideIcon name="copy" :size="20" />
-      </md-icon-button>
-      <md-icon-button
-        title="下载图片"
-        :disabled="!state.posterPreview || state.isGenerating"
-        aria-label="下载海报图片"
-        @click="handleDownloadImage"
-      >
-        <LucideIcon name="download" :size="20" />
-      </md-icon-button>
-      <md-filled-icon-button
-        title="生成链接"
-        :disabled="!state.posterPreview || state.isGenerating"
-        aria-label="生成分享链接并复制到剪贴板"
-        @click="handleGenerateLink"
-      >
-        <LucideIcon name="link" :size="20" />
-      </md-filled-icon-button>
-    </template>
-  </Dialog>
-</template>
-
 <script setup lang="ts">
 import { reactive, watch, onUnmounted, ref, nextTick, computed } from 'vue'
 import { useDebounceFn, useEventListener } from '@vueuse/core'
@@ -340,12 +189,14 @@ const handleCopyImage = async () => {
 
     const message = '图片已复制到剪贴板'
     notifySuccess(message)
+    // eslint-disable-next-line require-atomic-updates -- 屏幕阅读器消息更新是原子操作，不会有竞态条件
     state.srMessage = message // 屏幕阅读器播报
     logger.info('ShareDialog', '图片复制成功')
   } catch (error) {
     const message = '图片复制失败，请尝试下载'
     logger.error('ShareDialog', '图片复制失败', error)
     notifyError(message)
+    // eslint-disable-next-line require-atomic-updates -- 屏幕阅读器消息更新是原子操作，不会有竞态条件
     state.srMessage = message // 屏幕阅读器播报
   }
 }
@@ -365,12 +216,14 @@ const handleDownloadImage = () => {
     shareService.downloadImage(state.posterPreview, filename)
     const message = '图片下载已开始'
     notifySuccess(message)
+    // eslint-disable-next-line require-atomic-updates -- 屏幕阅读器消息更新是原子操作，不会有竞态条件
     state.srMessage = message // 屏幕阅读器播报
     logger.info('ShareDialog', '图片下载成功', { filename })
   } catch (error) {
     const message = '图片下载失败，请重试'
     logger.error('ShareDialog', '图片下载失败', error)
     notifyError(message)
+    // eslint-disable-next-line require-atomic-updates -- 屏幕阅读器消息更新是原子操作，不会有竞态条件
     state.srMessage = message // 屏幕阅读器播报
   }
 }
@@ -392,15 +245,17 @@ const handleGenerateLink = async () => {
 
     const message = '分享链接已复制到剪贴板'
     notifySuccess(message)
+    // eslint-disable-next-line require-atomic-updates -- 屏幕阅读器消息更新是原子操作，不会有竞态条件
     state.srMessage = message // 屏幕阅读器播报
     logger.info('ShareDialog', '分享链接生成成功', { url: shareUrl })
 
     // 触发分享完成事件
-    emit('share-complete')
+    emit('shareComplete')
   } catch (error) {
     const message = error instanceof Error ? error.message : '生成链接失败，请重试'
     logger.error('ShareDialog', '生成链接失败', error)
     notifyError(message)
+    // eslint-disable-next-line require-atomic-updates -- 屏幕阅读器消息更新是原子操作，不会有竞态条件
     state.srMessage = message // 屏幕阅读器播报
   }
 }
@@ -463,6 +318,157 @@ onUnmounted(() => {
   state.currentGenerationId++
 })
 </script>
+
+<template>
+  <Dialog
+    :show="show"
+    title="分享书签"
+    icon="icon-share"
+    max-width="720px"
+    @update:show="$emit('update:show', $event)"
+  >
+    <!-- 屏幕阅读器消息区域（视觉上隐藏） -->
+    <div
+      class="sr-only"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    >
+      {{ state.srMessage }}
+    </div>
+
+    <div class="share-dialog-content">
+      <!-- 标题输入 -->
+      <div class="title-input-section">
+        <Input
+          v-model="state.customTitle"
+          label="分享标题"
+          variant="outlined"
+          size="md"
+          @input="handleTitleChange"
+        />
+      </div>
+
+      <!-- 主题选择 -->
+      <div class="theme-selector" role="group" aria-labelledby="theme-label">
+        <label id="theme-label" class="theme-label">主题：</label>
+        <div class="theme-buttons">
+          <md-filled-button
+            v-if="state.selectedTheme === 'dark'"
+            aria-label="选择深色主题"
+            :aria-pressed="true"
+            @click="handleThemeChange('dark')"
+          >
+            🌙 深色
+          </md-filled-button>
+          <md-outlined-button
+            v-else
+            aria-label="选择深色主题"
+            :aria-pressed="false"
+            @click="handleThemeChange('dark')"
+          >
+            🌙 深色
+          </md-outlined-button>
+          
+          <md-filled-button
+            v-if="state.selectedTheme === 'light'"
+            aria-label="选择浅色主题"
+            :aria-pressed="true"
+            @click="handleThemeChange('light')"
+          >
+            ☀️ 浅色
+          </md-filled-button>
+          <md-outlined-button
+            v-else
+            aria-label="选择浅色主题"
+            :aria-pressed="false"
+            @click="handleThemeChange('light')"
+          >
+            ☀️ 浅色
+          </md-outlined-button>
+        </div>
+      </div>
+
+      <!-- 书签数量提示 -->
+      <div
+        v-if="bookmarks.length > 0"
+        class="bookmarks-info"
+        role="status"
+        aria-live="polite"
+      >
+        <LucideIcon name="bookmark" :size="16" aria-hidden="true" />
+        <span class="info-text">将分享 {{ bookmarks.length }} 个书签</span>
+      </div>
+
+      <!-- 海报预览 -->
+      <div class="poster-preview" role="region" aria-label="海报预览区域">
+        <div
+          v-if="state.isGenerating"
+          class="preview-loading"
+          role="status"
+          aria-live="polite"
+          aria-busy="true"
+        >
+          <md-circular-progress indeterminate class="poster-spinner" />
+          <span>正在生成海报...</span>
+        </div>
+        <div
+          v-else-if="state.error"
+          class="preview-error"
+          role="alert"
+          aria-live="assertive"
+        >
+          <LucideIcon name="alert-circle" :size="48" aria-hidden="true" />
+          <span>{{ state.error }}</span>
+          <md-outlined-button aria-label="重新生成海报" @click="handleRetry">
+            重试
+          </md-outlined-button>
+        </div>
+        <img
+          v-else-if="state.posterPreview"
+          :src="state.posterPreview"
+          alt="分享海报预览，包含书签列表和二维码"
+          class="preview-image"
+          role="img"
+        />
+      </div>
+    </div>
+
+    <template #actions>
+      <md-icon-button
+        title="取消"
+        aria-label="关闭分享对话框"
+        @click="$emit('update:show', false)"
+      >
+        <LucideIcon name="x" :size="20" />
+      </md-icon-button>
+      <md-icon-button
+        title="复制图片"
+        :disabled="!state.posterPreview || state.isGenerating"
+        aria-label="复制海报图片到剪贴板"
+        @click="handleCopyImage"
+      >
+        <LucideIcon name="copy" :size="20" />
+      </md-icon-button>
+      <md-icon-button
+        title="下载图片"
+        :disabled="!state.posterPreview || state.isGenerating"
+        aria-label="下载海报图片"
+        @click="handleDownloadImage"
+      >
+        <LucideIcon name="download" :size="20" />
+      </md-icon-button>
+      <md-filled-icon-button
+        title="生成链接"
+        :disabled="!state.posterPreview || state.isGenerating"
+        aria-label="生成分享链接并复制到剪贴板"
+        @click="handleGenerateLink"
+      >
+        <LucideIcon name="link" :size="20" />
+      </md-filled-icon-button>
+    </template>
+  </Dialog>
+</template>
 
 <style scoped>
 /* 屏幕阅读器专用（视觉上隐藏） */

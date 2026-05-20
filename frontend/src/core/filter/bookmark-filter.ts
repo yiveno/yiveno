@@ -184,13 +184,22 @@ export function filterBookmarkNodes(
 
       // 如果节点匹配或有子节点匹配，则包含此节点
       if (matched || childMatches.length > 0) {
-        results.push({
-          ...node,
-          matchedFields: matched ? matchedFields : undefined,
-          filterScore: matched ? score : undefined,
-          children:
-            childMatches.length > 0 ? childMatches : node.url ? undefined : []
-        })
+        const resultNode: FilteredBookmarkNode = {
+          ...node
+        }
+        
+        if (matched) {
+          resultNode.matchedFields = matchedFields
+          resultNode.filterScore = score
+        }
+        
+        if (childMatches.length > 0) {
+          resultNode.children = childMatches
+        } else if (!node.url) {
+          resultNode.children = []
+        }
+        
+        results.push(resultNode)
       }
     }
 

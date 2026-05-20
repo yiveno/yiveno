@@ -319,8 +319,7 @@
   }
 
   .anim-highlight {
-    animation: highlight-flash var(--anim-duration-slow)
-      var(--anim-ease-standard);
+    animation: highlight-flash var(--anim-duration-slow) var(--anim-ease-standard);
   }
 
   /* === 过渡预设类 === */

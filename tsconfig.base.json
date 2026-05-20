@@ -11,12 +11,10 @@
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
 
-    /* 严格性 - 暂时放宽以支持渐进式迁移 */
-    "strict": false,
-    "noUncheckedIndexedAccess": false,
+    /* 严格性 - Phase 2 完成：全面启用严格模式 ✅ */
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
-    "strictNullChecks": false,
-    "noImplicitAny": false,
 
     /* 模块设置 */
     "module": "ESNext",
@@ -24,7 +22,9 @@
 
     /* 代码质量 */
     "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "exactOptionalPropertyTypes": true
   },
   "exclude": ["node_modules", "dist", "build", ".cache"]
 }

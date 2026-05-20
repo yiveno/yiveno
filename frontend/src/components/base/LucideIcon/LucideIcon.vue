@@ -2,20 +2,6 @@
   LucideIcon - Lucide 图标组件
   基于 lucide-vue-next 的现代图标组件
 -->
-<template>
-  <component
-    :is="iconComponent"
-    v-if="iconComponent"
-    :size="computedSize"
-    :color="computedColor"
-    :stroke-width="strokeWidth"
-    :class="['acuity-lucide-icon', { spin }]"
-    :style="transformStyle"
-    v-bind="$attrs"
-  />
-  <span v-else class="acuity-lucide-icon acuity-lucide-icon--missing">?</span>
-</template>
-
 <script setup lang="ts">
 import { computed, type Component } from 'vue'
 import type { LucideIconProps } from './LucideIcon.d'
@@ -111,6 +97,20 @@ const transformStyle = computed(() => {
   return transforms.length ? { transform: transforms.join(' ') } : undefined
 })
 </script>
+
+<template>
+  <component
+    :is="iconComponent"
+    v-if="iconComponent"
+    :size="computedSize"
+    :color="computedColor"
+    :stroke-width="strokeWidth"
+    :class="['acuity-lucide-icon', { spin }]"
+    :style="transformStyle"
+    v-bind="$attrs"
+  />
+  <span v-else class="acuity-lucide-icon acuity-lucide-icon--missing">?</span>
+</template>
 
 <style scoped>
 .acuity-lucide-icon {

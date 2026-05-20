@@ -19,19 +19,22 @@ trpcRouter.all('/*', async (c) => {
   const request = c.req.raw
   const env = c.env
   
-  return fetchRequestHandler({
+  const handlerOptions: Parameters<typeof fetchRequestHandler>[0] = {
     endpoint: '/trpc',
     req: request,
     router: appRouter,
     createContext: () =>
-      createContext({ req: request, resHeaders: new Headers() }, env),
-    onError:
-      env.NODE_ENV === 'development'
-        ? ({ path, error }) => {
-            console.error(
-              `❌ tRPC failed on ${path ?? '<no-path>'}: ${error.message}`
-            )
-          }
-        : undefined
-  })
+      createContext({ req: request, resHeaders: new Headers() }, env)
+  }
+
+  // 只在开发环境添加 onError
+  if (env.NODE_ENV === 'development') {
+    handlerOptions.onError = ({ path, error }) => {
+      console.error(
+        `❌ tRPC failed on ${path ?? '<no-path>'}: ${error.message}`
+      )
+    }
+  }
+
+  return fetchRequestHandler(handlerOptions)
 })

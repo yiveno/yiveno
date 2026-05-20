@@ -9,166 +9,6 @@
   5. 减少不必要的响应式数据
 -->
 
-<template>
-  <div
-    ref="rootRef"
-    class="simple-tree-node"
-    :class="nodeClasses"
-    :data-node-id="String(node.id)"
-  >
-    <!-- 文件夹节点 -->
-    <div
-      v-if="isFolder"
-      class="node-content folder-content no-select"
-      :style="itemStyle"
-      @click="handleFolderToggleClick"
-      @contextmenu.prevent="openContextMenu"
-    >
-      <!-- 选择复选框 -->
-      <md-checkbox
-        v-if="
-          config.showSelectionCheckbox &&
-          config.selectable === 'multiple' &&
-          !isRootFolder
-        "
-        :checked="isSelected"
-        :indeterminate="isIndeterminate"
-        class="select-checkbox"
-        @change="toggleSelection"
-      ></md-checkbox>
-
-      <!-- 文件夹图标 -->
-      <div class="folder-icon">
-        <LucideIcon
-          :name="isExpanded ? 'folder-open' : 'folder'"
-          :size="18"
-          class="folder-icon-svg"
-        />
-      </div>
-
-      <!-- 文件夹标题 -->
-      <div class="node-title" :title="node.title">
-        <span v-html="highlightedTitle"></span>
-      </div>
-
-      <!-- "⋮" 更多操作按钮 -->
-      <md-icon-button
-        v-if="props.config.showMoreButton !== false"
-        class="more-actions-button"
-        title="更多操作"
-        @click.stop="openContextMenu"
-      >
-        <LucideIcon name="more-vertical" :size="16" />
-      </md-icon-button>
-    </div>
-
-    <!-- 书签节点 -->
-    <div
-      v-else
-      class="node-content bookmark-content no-select"
-      :class="{ 'node-content--selected': isSelected }"
-      :style="itemStyle"
-      @click="handleBookmarkClick"
-      @contextmenu.prevent="openContextMenu"
-    >
-      <!-- 书签选择复选框 -->
-      <md-checkbox
-        v-if="config.showSelectionCheckbox && config.selectable === 'multiple'"
-        :checked="isSelected"
-        :indeterminate="false"
-        class="select-checkbox"
-        @change="toggleSelection"
-      ></md-checkbox>
-      <!-- 书签图标/Favicon（带懒加载） -->
-      <div class="bookmark-icon">
-        <!-- 加载成功时显示favicon图片 -->
-        <img
-          v-if="safeFaviconUrl"
-          :src="safeFaviconUrl"
-          :alt="node.title"
-          :style="{ width: '16px', height: '16px' }"
-          loading="lazy"
-          decoding="async"
-          @load="handleFaviconLoad"
-          @error="handleFaviconError"
-        />
-        <!-- 加载失败或无URL时显示备用图标 -->
-        <LucideIcon v-else name="link" :size="16" color="secondary" />
-      </div>
-
-      <!-- 书签标题 -->
-      <div class="node-title">
-        <span v-html="highlightedTitle"></span>
-      </div>
-
-      <!-- AI标签 -->
-      <md-chip-set
-        v-if="Array.isArray(node.tags) && node.tags.length > 0"
-        class="bookmark-tags"
-      >
-        <md-input-chip 
-          v-for="tag in node.tags" 
-          :key="tag" 
-          :label="tag"
-        ></md-input-chip>
-      </md-chip-set>
-
-      <!-- 书签URL (hover时显示) -->
-      <div v-if="config.showBookmarkUrl !== false && config.size === 'spacious' && node.url" class="bookmark-url">
-        {{ truncatedUrl }}
-      </div>
-
-      <!-- "⋮" 更多操作按钮 -->
-      <md-icon-button
-        v-if="props.config.showMoreButton !== false"
-        class="more-actions-button"
-        title="更多操作"
-        @click.stop="openContextMenu"
-      >
-        <LucideIcon name="more-vertical" :size="16" />
-      </md-icon-button>
-    </div>
-
-    <!-- 子节点：仅文件夹节点在展开时显示子节点 -->
-    <div
-      v-if="isFolder && isExpanded && node.children && !isVirtualMode"
-      class="children"
-    >
-      <TreeNode
-        v-for="child in renderChildren"
-        :key="child.id"
-        :node="child"
-        :level="level + 1"
-        :expanded-folders="expandedFolders"
-        :selected-nodes="selectedNodes"
-        :search-query="searchQuery"
-        :config="config"
-        :active-id="activeId"
-        :focused-id="focusedId"
-        :loading-more-folders="loadingMoreFolders"
-        :drag-state="dragState"
-        @node-click="handleChildNodeClick"
-        @folder-toggle="handleChildFolderToggle"
-        @node-select="handleChildNodeSelect"
-        @node-edit="handleChildNodeEdit"
-        @node-delete="handleChildNodeDelete"
-        @folder-add="handleChildFolderAdd"
-        @bookmark-open-new-tab="handleChildBookmarkOpenNewTab"
-        @bookmark-copy-url="handleChildBookmarkCopyUrl"
-        @bookmark-toggle-favorite="handleChildBookmarkToggleFavorite"
-        @node-mounted="(id, el) => $emit('node-mounted', id, el)"
-        @node-unmounted="(id) => $emit('node-unmounted', id)"
-        @open-context-menu="(id, x, y) => $emit('open-context-menu', id, x, y)"
-        @drag-start="$emit('drag-start', $event)"
-        @drag-over="$emit('drag-over', $event)"
-        @drag-leave="$emit('drag-leave', $event)"
-        @drop="$emit('drop', $event)"
-        @drag-end="$emit('drag-end')"
-      />
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, toRef } from 'vue'
 import { LucideIcon } from '@/components/base/LucideIcon'
@@ -182,6 +22,60 @@ import {
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine'
 import { setCustomNativeDragPreview } from '@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview'
 import { pointerOutsideOfPreview } from '@atlaskit/pragmatic-drag-and-drop/element/pointer-outside-of-preview'
+
+// ✅ 设置组件名称，方便调试与日志定位
+/**
+ * TreeNode - 树节点渲染单元
+ * - 负责单个节点的交互与展示
+ */
+defineOptions({ name: 'TreeNode' })
+
+const props = withDefaults(defineProps<Props>(), {
+  level: 0,
+  searchQuery: '',
+  highlightMatches: true,
+  isVirtualMode: false,
+  strictOrder: false,
+  loadingMoreFolders: () => new Set()
+})
+
+// === Emits 定义 ===
+/**
+ * 组件对外抛出的事件列表
+ * - 与父组件联动，完成节点操作
+ */
+const emit = defineEmits<{
+  nodeClick: [node: BookmarkNode, event: MouseEvent]
+  folderToggle: [folderId: string, node: BookmarkNode]
+  nodeSelect: [nodeId: string, node: BookmarkNode]
+  nodeEdit: [node: BookmarkNode]
+  nodeDelete: [node: BookmarkNode]
+  folderAdd: [parentNode: BookmarkNode]
+  bookmarkOpenNewTab: [node: BookmarkNode]
+  bookmarkCopyUrl: [node: BookmarkNode]
+  bookmarkToggleFavorite: [node: BookmarkNode, isFavorite: boolean]
+  // 🆕 节点挂载/卸载事件，用于构建元素注册表以提升滚动性能
+  nodeMounted: [id: string, el: HTMLElement]
+  nodeUnmounted: [id: string]
+  // ✅ 拖拽相关事件
+  dragStart: [node: BookmarkNode]
+  dragOver: [
+    data: { node: BookmarkNode; position: 'before' | 'inside' | 'after' }
+  ]
+  dragLeave: [node: BookmarkNode]
+  drop: [
+    data: {
+      sourceId: string
+      targetId: string
+      position: 'before' | 'inside' | 'after'
+    }
+  ]
+  dragEnd: []
+  /** 分享文件夹 */
+  'folder-share': [node: BookmarkNode]
+  /** 打开右键菜单 */
+  openContextMenu: [nodeId: string, x: number, y: number]
+}>()
 
 // ✅ i18n 已移除（收藏功能已移至右键菜单，不再需要 tooltip 文本）
 // const { t } = useI18n()
@@ -200,13 +94,6 @@ function sanitizeFaviconUrl(rawUrl: string | undefined): string | undefined {
     return undefined
   }
 }
-
-// ✅ 设置组件名称，方便调试与日志定位
-/**
- * TreeNode - 树节点渲染单元
- * - 负责单个节点的交互与展示
- */
-defineOptions({ name: 'TreeNode' })
 
 // === Props 定义 ===
 /**
@@ -259,54 +146,6 @@ interface Props {
     dropPosition: 'before' | 'inside' | 'after' | null
   }
 }
-const props = withDefaults(defineProps<Props>(), {
-  level: 0,
-  searchQuery: '',
-  highlightMatches: true,
-  isVirtualMode: false,
-  strictOrder: false,
-  loadingMoreFolders: () => new Set()
-})
-
-
-// === Emits 定义 ===
-/**
- * 组件对外抛出的事件列表
- * - 与父组件联动，完成节点操作
- */
-const emit = defineEmits<{
-  'node-click': [node: BookmarkNode, event: MouseEvent]
-  'folder-toggle': [folderId: string, node: BookmarkNode]
-  'node-select': [nodeId: string, node: BookmarkNode]
-  'node-edit': [node: BookmarkNode]
-  'node-delete': [node: BookmarkNode]
-  'folder-add': [parentNode: BookmarkNode]
-  'bookmark-open-new-tab': [node: BookmarkNode]
-  'bookmark-copy-url': [node: BookmarkNode]
-  'bookmark-toggle-favorite': [node: BookmarkNode, isFavorite: boolean]
-  // 🆕 节点挂载/卸载事件，用于构建元素注册表以提升滚动性能
-  'node-mounted': [id: string, el: HTMLElement]
-  'node-unmounted': [id: string]
-  // ✅ 拖拽相关事件
-  'drag-start': [node: BookmarkNode]
-  'drag-over': [
-    data: { node: BookmarkNode; position: 'before' | 'inside' | 'after' }
-  ]
-  'drag-leave': [node: BookmarkNode]
-  drop: [
-    data: {
-      sourceId: string
-      targetId: string
-      position: 'before' | 'inside' | 'after'
-    }
-  ]
-  'drag-end': []
-  /** 分享文件夹 */
-  'folder-share': [node: BookmarkNode]
-  /** 打开右键菜单 */
-  'open-context-menu': [nodeId: string, x: number, y: number]
-}>()
-
 // 根元素引用与生命周期上报，用于构建元素注册表以优化滚动定位
 const rootRef = ref<HTMLElement | null>(null)
 // ✅ 拖拽清理函数引用
@@ -314,7 +153,7 @@ let cleanupDrag: (() => void) | null = null
 
 onMounted(() => {
   if (rootRef.value) {
-    emit('node-mounted', String(props.node.id), rootRef.value)
+    emit('nodeMounted', String(props.node.id), rootRef.value)
   }
 
   // ✅ 启用拖拽功能
@@ -376,11 +215,11 @@ onMounted(() => {
         },
         onDragStart: () => {
           logger.debug('TreeNode', '开始拖拽', { nodeId: props.node.id })
-          emit('drag-start', props.node)
+          emit('dragStart', props.node)
         },
         onDrop: () => {
           logger.debug('TreeNode', '拖拽结束', { nodeId: props.node.id })
-          emit('drag-end')
+          emit('dragEnd')
         }
       }),
 
@@ -459,15 +298,15 @@ onMounted(() => {
             nodeId: props.node.id,
             position
           })
-          emit('drag-over', { node: props.node, position })
+          emit('dragOver', { node: props.node, position })
         },
         onDrag: ({ self }) => {
           const position = self.data.position as 'before' | 'inside' | 'after'
-          emit('drag-over', { node: props.node, position })
+          emit('dragOver', { node: props.node, position })
         },
         onDragLeave: () => {
           logger.debug('TreeNode', '拖拽离开', { nodeId: props.node.id })
-          emit('drag-leave', props.node)
+          emit('dragLeave', props.node)
         },
         onDrop: ({ source, self }) => {
           const sourceId = String(source.data.nodeId)
@@ -488,7 +327,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  emit('node-unmounted', String(props.node.id))
+  emit('nodeUnmounted', String(props.node.id))
   // ✅ 清理拖拽事件监听
   if (cleanupDrag) {
     cleanupDrag()
@@ -675,13 +514,13 @@ const handleFolderToggleClick = (event: MouseEvent) => {
 
   // 如果是文件夹，总是处理展开/收起逻辑
   if (isFolder.value) {
-    emit('node-click', props.node, event)
-    emit('folder-toggle', props.node.id, props.node)
+    emit('nodeClick', props.node, event)
+    emit('folderToggle', props.node.id, props.node)
     return
   }
 
   // 对于非文件夹节点（书签），触发点击事件
-  emit('node-click', props.node, event)
+  emit('nodeClick', props.node, event)
 }
 
 const handleBookmarkClick = (event: MouseEvent) => {
@@ -695,11 +534,11 @@ const handleBookmarkClick = (event: MouseEvent) => {
   }
 
   // ✅ 普通点击：触发 node-click 事件（由父组件决定行为）
-  emit('node-click', props.node, event)
+  emit('nodeClick', props.node, event)
 }
 
 const toggleSelection = () => {
-  emit('node-select', String(props.node.id), props.node)
+  emit('nodeSelect', String(props.node.id), props.node)
 }
 
 // ✅ 收藏功能已移至右键菜单
@@ -710,7 +549,7 @@ const toggleSelection = () => {
 //     `${newFavoriteState ? '⭐ 收藏' : '🗑️ 取消收藏'}书签:`,
 //     props.node.title
 //   )
-//   emit('bookmark-toggle-favorite', props.node, newFavoriteState)
+//   emit('bookmarkToggleFavorite', props.node, newFavoriteState)
 // }
 
 const handleFaviconError = () => {
@@ -719,42 +558,42 @@ const handleFaviconError = () => {
 
 // === 工具函数 ===
 const handleChildNodeClick = (node: BookmarkNode, event: MouseEvent) => {
-  emit('node-click', node, event)
+  emit('nodeClick', node, event)
 }
 
 const handleChildFolderToggle = (folderId: string, node: BookmarkNode) => {
-  emit('folder-toggle', folderId, node)
+  emit('folderToggle', folderId, node)
 }
 
 const handleChildNodeSelect = (nodeId: string, node: BookmarkNode) => {
-  emit('node-select', nodeId, node)
+  emit('nodeSelect', nodeId, node)
 }
 
 const handleChildNodeEdit = (node: BookmarkNode) => {
-  emit('node-edit', node)
+  emit('nodeEdit', node)
 }
 
 const handleChildNodeDelete = (node: BookmarkNode) => {
-  emit('node-delete', node)
+  emit('nodeDelete', node)
 }
 
 const handleChildFolderAdd = (parentNode: BookmarkNode) => {
-  emit('folder-add', parentNode)
+  emit('folderAdd', parentNode)
 }
 
 const handleChildBookmarkOpenNewTab = (node: BookmarkNode) => {
-  emit('bookmark-open-new-tab', node)
+  emit('bookmarkOpenNewTab', node)
 }
 
 const handleChildBookmarkCopyUrl = (node: BookmarkNode) => {
-  emit('bookmark-copy-url', node)
+  emit('bookmarkCopyUrl', node)
 }
 
 const handleChildBookmarkToggleFavorite = (
   node: BookmarkNode,
   isFavorite: boolean
 ) => {
-  emit('bookmark-toggle-favorite', node, isFavorite)
+  emit('bookmarkToggleFavorite', node, isFavorite)
 }
 
 function escapeRegExp(string: string): string {
@@ -792,7 +631,7 @@ const openContextMenu = (event?: Event) => {
   const y = mouseEvent ? mouseEvent.clientY : rect.top + rect.height / 2
 
   // 通知父组件打开菜单
-  emit('open-context-menu', String(props.node.id), x, y)
+  emit('openContextMenu', String(props.node.id), x, y)
   
   logger.debug('TreeNode', '请求打开右键菜单', {
     nodeId: props.node.id,
@@ -807,6 +646,166 @@ defineExpose({
   openContextMenu
 })
 </script>
+
+<template>
+  <div
+    ref="rootRef"
+    class="simple-tree-node"
+    :class="nodeClasses"
+    :data-node-id="String(node.id)"
+  >
+    <!-- 文件夹节点 -->
+    <div
+      v-if="isFolder"
+      class="node-content folder-content no-select"
+      :style="itemStyle"
+      @click="handleFolderToggleClick"
+      @contextmenu.prevent="openContextMenu"
+    >
+      <!-- 选择复选框 -->
+      <md-checkbox
+        v-if="
+          config.showSelectionCheckbox &&
+          config.selectable === 'multiple' &&
+          !isRootFolder
+        "
+        :checked="isSelected"
+        :indeterminate="isIndeterminate"
+        class="select-checkbox"
+        @change="toggleSelection"
+      ></md-checkbox>
+
+      <!-- 文件夹图标 -->
+      <div class="folder-icon">
+        <LucideIcon
+          :name="isExpanded ? 'folder-open' : 'folder'"
+          :size="18"
+          class="folder-icon-svg"
+        />
+      </div>
+
+      <!-- 文件夹标题 -->
+      <div class="node-title" :title="node.title">
+        <span v-html="highlightedTitle"></span>
+      </div>
+
+      <!-- "⋮" 更多操作按钮 -->
+      <md-icon-button
+        v-if="props.config.showMoreButton !== false"
+        class="more-actions-button"
+        title="更多操作"
+        @click.stop="openContextMenu"
+      >
+        <LucideIcon name="more-vertical" :size="16" />
+      </md-icon-button>
+    </div>
+
+    <!-- 书签节点 -->
+    <div
+      v-else
+      class="node-content bookmark-content no-select"
+      :class="{ 'node-content--selected': isSelected }"
+      :style="itemStyle"
+      @click="handleBookmarkClick"
+      @contextmenu.prevent="openContextMenu"
+    >
+      <!-- 书签选择复选框 -->
+      <md-checkbox
+        v-if="config.showSelectionCheckbox && config.selectable === 'multiple'"
+        :checked="isSelected"
+        :indeterminate="false"
+        class="select-checkbox"
+        @change="toggleSelection"
+      ></md-checkbox>
+      <!-- 书签图标/Favicon（带懒加载） -->
+      <div class="bookmark-icon">
+        <!-- 加载成功时显示favicon图片 -->
+        <img
+          v-if="safeFaviconUrl"
+          :src="safeFaviconUrl"
+          :alt="node.title"
+          :style="{ width: '16px', height: '16px' }"
+          loading="lazy"
+          decoding="async"
+          @load="handleFaviconLoad"
+          @error="handleFaviconError"
+        />
+        <!-- 加载失败或无URL时显示备用图标 -->
+        <LucideIcon v-else name="link" :size="16" color="secondary" />
+      </div>
+
+      <!-- 书签标题 -->
+      <div class="node-title">
+        <span v-html="highlightedTitle"></span>
+      </div>
+
+      <!-- AI标签 -->
+      <md-chip-set
+        v-if="Array.isArray(node.tags) && node.tags.length > 0"
+        class="bookmark-tags"
+      >
+        <md-input-chip 
+          v-for="tag in node.tags" 
+          :key="tag" 
+          :label="tag"
+        ></md-input-chip>
+      </md-chip-set>
+
+      <!-- 书签URL (hover时显示) -->
+      <div v-if="config.showBookmarkUrl !== false && config.size === 'spacious' && node.url" class="bookmark-url">
+        {{ truncatedUrl }}
+      </div>
+
+      <!-- "⋮" 更多操作按钮 -->
+      <md-icon-button
+        v-if="props.config.showMoreButton !== false"
+        class="more-actions-button"
+        title="更多操作"
+        @click.stop="openContextMenu"
+      >
+        <LucideIcon name="more-vertical" :size="16" />
+      </md-icon-button>
+    </div>
+
+    <!-- 子节点：仅文件夹节点在展开时显示子节点 -->
+    <div
+      v-if="isFolder && isExpanded && node.children && !isVirtualMode"
+      class="children"
+    >
+      <TreeNode
+        v-for="child in renderChildren"
+        :key="child.id"
+        :node="child"
+        :level="level + 1"
+        :expanded-folders="expandedFolders"
+        :selected-nodes="selectedNodes"
+        :search-query="searchQuery"
+        :config="config"
+        :active-id="activeId"
+        :focused-id="focusedId"
+        :loading-more-folders="loadingMoreFolders"
+        :drag-state="dragState"
+        @node-click="handleChildNodeClick"
+        @folder-toggle="handleChildFolderToggle"
+        @node-select="handleChildNodeSelect"
+        @node-edit="handleChildNodeEdit"
+        @node-delete="handleChildNodeDelete"
+        @folder-add="handleChildFolderAdd"
+        @bookmark-open-new-tab="handleChildBookmarkOpenNewTab"
+        @bookmark-copy-url="handleChildBookmarkCopyUrl"
+        @bookmark-toggle-favorite="handleChildBookmarkToggleFavorite"
+        @node-mounted="(id, el) => $emit('nodeMounted', id, el)"
+        @node-unmounted="(id) => $emit('nodeUnmounted', id)"
+        @open-context-menu="(id, x, y) => $emit('openContextMenu', id, x, y)"
+        @drag-start="$emit('dragStart', $event)"
+        @drag-over="$emit('dragOver', $event)"
+        @drag-leave="$emit('dragLeave', $event)"
+        @drop="$emit('drop', $event)"
+        @drag-end="$emit('dragEnd')"
+      />
+    </div>
+  </div>
+</template>
 
 <style scoped>
 

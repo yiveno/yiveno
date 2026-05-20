@@ -1,15 +1,3 @@
-<template>
-  <QuickAddBookmarkDialog
-    :show="showDialog"
-    :title="bookmarkData.title"
-    :url="bookmarkData.url"
-    :fav-icon-url="bookmarkData.favIconUrl"
-    :enable-a-i="true"
-    @update:show="handleClose"
-    @confirm="handleConfirm"
-  />
-</template>
-
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { QuickAddBookmarkDialog } from '@/components'
@@ -118,6 +106,18 @@ function handleClose() {
   showDialog.value = false
 }
 </script>
+
+<template>
+  <QuickAddBookmarkDialog
+    :show="showDialog"
+    :title="bookmarkData.title"
+    :url="bookmarkData.url"
+    :fav-icon-url="bookmarkData.favIconUrl"
+    :enable-a-i="true"
+    @update:show="handleClose"
+    @confirm="handleConfirm"
+  />
+</template>
 
 <style scoped>
 /* 无需额外样式，所有样式在 QuickAddBookmarkDialog 组件中 */

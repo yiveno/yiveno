@@ -1,40 +1,3 @@
-<template>
-  <div ref="containerRef" class="virtual-folder-list">
-    <div class="virtual-spacer" :style="{ height: `${totalHeight}px` }">
-      <div
-        v-for="row in virtualRows"
-        :key="row.id"
-        class="virtual-item"
-        :style="{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: `${row.size}px`,
-          transform: `translateY(${row.start}px)`
-        }"
-      >
-        <TreeNode
-          v-if="row.node"
-          :node="row.node"
-          :level="level + 1"
-          :expanded-folders="expandedFolders"
-          :selected-nodes="selectedNodes"
-          :selected-desc-counts="selectedDescCounts"
-          :search-query="searchQuery"
-          :highlight-matches="highlightMatches"
-          :config="config"
-          :is-virtual-mode="true"
-          :strict-order="strictOrder"
-          :active-id="activeId"
-          :focused-id="focusedId"
-          :loading-more-folders="loadingMoreFolders"
-        />
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useVirtualizer } from '@tanstack/vue-virtual'
@@ -104,6 +67,43 @@ const virtualRows = computed(() => {
   return rows
 })
 </script>
+
+<template>
+  <div ref="containerRef" class="virtual-folder-list">
+    <div class="virtual-spacer" :style="{ height: `${totalHeight}px` }">
+      <div
+        v-for="row in virtualRows"
+        :key="row.id"
+        class="virtual-item"
+        :style="{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: `${row.size}px`,
+          transform: `translateY(${row.start}px)`
+        }"
+      >
+        <TreeNode
+          v-if="row.node"
+          :node="row.node"
+          :level="level + 1"
+          :expanded-folders="expandedFolders"
+          :selected-nodes="selectedNodes"
+          :selected-desc-counts="selectedDescCounts"
+          :search-query="searchQuery"
+          :highlight-matches="highlightMatches"
+          :config="config"
+          :is-virtual-mode="true"
+          :strict-order="strictOrder"
+          :active-id="activeId"
+          :focused-id="focusedId"
+          :loading-more-folders="loadingMoreFolders"
+        />
+      </div>
+    </div>
+  </div>
+</template>
 
 <style scoped>
 .virtual-folder-list {

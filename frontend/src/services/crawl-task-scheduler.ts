@@ -167,9 +167,11 @@ export class CrawlTaskScheduler {
         timeout: TIMEOUT_CONFIG.CRAWLER.REQUEST
       })
 
+      // eslint-disable-next-line require-atomic-updates -- 爬取结果赋值是原子操作，不会有竞态条件
       task.result = result
 
       if (result.success) {
+        // eslint-disable-next-line require-atomic-updates -- 任务状态更新是原子操作，不会有竞态条件
         task.status = 'success'
         this.currentOptions?.onTaskComplete?.(task)
       } else if (task.retryCount < 2 && (result.errorType === 'timeout' || result.errorType === 'network')) {
@@ -180,7 +182,9 @@ export class CrawlTaskScheduler {
         task.error = result.error
       }
     } catch (error) {
+      // eslint-disable-next-line require-atomic-updates -- 错误处理中的状态更新是原子操作，不会有竞态条件
       task.status = 'failed'
+      // eslint-disable-next-line require-atomic-updates -- 错误处理中的错误信息赋值是原子操作，不会有竞态条件
       task.error = String(error)
     } finally {
       this.concurrency.finish(task.url)

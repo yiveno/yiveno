@@ -166,6 +166,26 @@ const typescriptCommonRules = {
   '@typescript-eslint/no-import-type-side-effects': 'warn',
   '@typescript-eslint/prefer-literal-enum-member': 'warn',
   '@typescript-eslint/prefer-enum-initializers': 'warn',
+  
+  // Phase 1 优化：异步代码规则（防止 Promise 相关 Bug）
+  // 注意：这些规则需要类型信息，在 monorepo 中配置复杂，暂时禁用
+  // '@typescript-eslint/no-floating-promises': 'error',
+  // '@typescript-eslint/no-misused-promises': 'error',
+  // '@typescript-eslint/await-thenable': 'error',
+  // '@typescript-eslint/promise-function-async': 'warn',
+  'no-async-promise-executor': 'error',
+  'require-atomic-updates': 'error',
+  
+  // Phase 1 优化：代码质量规则
+  'no-shadow': 'off',
+  '@typescript-eslint/no-shadow': 'error',
+  // '@typescript-eslint/prefer-nullish-coalescing': 'warn',  // 需要类型信息
+  // '@typescript-eslint/prefer-optional-chain': 'warn',  // 需要类型信息
+  'prefer-object-spread': 'error',
+  'no-nested-ternary': 'warn',
+  'max-depth': ['warn', 4],
+  'complexity': ['warn', 15],
+  
   ...unusedImportsConfig
 }
 
@@ -270,6 +290,21 @@ export default [
       'vue/no-ref-as-operand': 'error',
       'vue/no-watch-after-await': 'error',
       'vue/require-explicit-emits': 'warn',
+      
+      // Phase 1 优化：Vue 3 响应式规则（防止响应式丢失）
+      'vue/no-ref-object-reactivity-loss': 'error',
+      'vue/no-setup-props-reactivity-loss': 'error',
+      
+      // Phase 1 优化：组件规范
+      'vue/component-name-in-template-casing': ['error', 'PascalCase'],
+      'vue/custom-event-name-casing': ['error', 'camelCase'],
+      'vue/define-macros-order': ['warn', {
+        order: ['defineOptions', 'defineProps', 'defineEmits', 'defineSlots']
+      }],
+      'vue/block-order': ['error', {
+        order: ['script', 'template', 'style']
+      }],
+      
       // Material Web Components 使用原生 slot 属性，不是 Vue 的 v-slot
       'vue/no-deprecated-slot-attribute': 'off',
       'vue/no-deprecated-slot-scope-attribute': 'error',
@@ -285,9 +320,28 @@ export default [
     }
   },
 
-  // TypeScript 文件配置
+  // Frontend TypeScript 文件配置
   {
-    files: ['frontend/**/*.ts', 'frontend/**/*.tsx', 'backend/**/*.ts'],
+    files: ['frontend/**/*.ts', 'frontend/**/*.tsx'],
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        tsconfigRootDir: process.cwd()
+      }
+    },
+    plugins: {
+      'unused-imports': unusedImports
+    },
+    rules: {
+      ...typescriptCommonRules
+    }
+  },
+
+  // Backend TypeScript 文件配置
+  {
+    files: ['backend/**/*.ts'],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {

@@ -1,201 +1,3 @@
-<template>
-  <GlobalSyncProgress />
-
-  <GlobalQuickAddBookmark />
-
-  <ShareDialog
-    v-model:show="showShareDialog"
-    :bookmarks="shareBookmarks"
-    :share-type="shareType"
-    :folder-name="shareFolderName"
-    @share-complete="handleShareComplete"
-  />
-
-  <!-- 外部变更更新提示 -->
-  <Dialog
-    :show="showUpdatePrompt"
-    :title="t('sidepanel_external_change_title')"
-    icon="icon-sync-alert"
-    @update:show="showUpdatePrompt = $event"
-  >
-    <div class="update-prompt-content">
-      <p>{{ t('sidepanel_external_change_message') }}</p>
-      <div v-if="pendingUpdateDetail" class="update-detail">
-        <small
-          >{{ t('sidepanel_external_change_detail', [pendingUpdateDetail.eventType, pendingUpdateDetail.id]) }}</small
-        >
-      </div>
-    </div>
-    <template #actions>
-      <md-text-button @click="postponeRefresh">{{ t('sidepanel_postpone') }}</md-text-button>
-      <md-filled-button :disabled="isLoading" @click="confirmRefresh">
-        {{ t('sidepanel_refresh_now') }}
-      </md-filled-button>
-    </template>
-  </Dialog>
-  <div class="side-panel-container">
-    <!-- 搜索栏 -->
-    <div class="search-section">
-      <Input
-        v-model="searchQuery"
-        :placeholder="t('sidepanel_search_placeholder')"
-        type="text"
-        variant="outlined"
-        density="compact"
-        clearable
-        data-testid="input-search"
-      >
-        <template #prepend>
-          <LucideIcon name="search" :size="16" />
-        </template>
-      </Input>
-    </div>
-
-    <!-- 百叶窗式折叠面板 -->
-    <Accordion v-if="!searchQuery" :exclusive="true" default-expanded="tree">
-      <!-- 最近访问 -->
-      <AccordionItem id="recent" :title="t('sidepanel_recent_visits')" icon="icon-clock">
-        <template #badge>
-          <Chip size="sm" variant="filled" color="primary">{{ recentCount }}</Chip>
-        </template>
-        <RecentVisits
-          @bookmark-click="handleRecentClick"
-          @count-update="recentCount = $event"
-        />
-      </AccordionItem>
-
-      <!-- 收藏书签 -->
-      <AccordionItem id="favorites" :title="t('sidepanel_favorites')" icon="icon-star">
-        <template #badge>
-          <Chip size="sm" variant="filled" color="primary">{{ favoriteCount }}</Chip>
-        </template>
-        <FavoriteSection
-          @bookmark-click="handleFavoriteClick"
-          @bookmark-remove="handleFavoriteRemove"
-          @share="handleShareFavorites"
-        />
-      </AccordionItem>
-
-      <!-- 书签树 - 默认展开，可折叠 -->
-      <AccordionItem id="tree" :title="t('sidepanel_bookmark_tree')" icon="icon-folder">
-        <BookmarkTree
-          :key="treeRefreshKey"
-          :nodes="bookmarkTree"
-          :selected-desc-counts="treeSelectedDescCounts"
-          source="sidePanel"
-          :loading="isLoading"
-          height="calc(100vh - 350px)"
-          size="spacious"
-          :searchable="false"
-          :selectable="false"
-          :editable="false"
-          :show-toolbar="false"
-          :accordion-mode="true"
-          :show-favorite-button="true"
-          :show-share-button="true"
-          :show-bookmark-url="false"
-          default-open-mode="current-tab"
-          click-behavior="open"
-          @ready="handleTreeReady"
-          @node-click="handleBookmarkClick"
-          @folder-toggle="handleFolderToggle"
-          @bookmark-open-new-tab="handleBookmarkOpenNewTab"
-          @bookmark-copy-url="handleBookmarkCopyUrl"
-          @bookmark-toggle-favorite="handleBookmarkToggleFavorite"
-          @folder-share="handleFolderShare"
-        />
-      </AccordionItem>
-    </Accordion>
-
-    <!-- 搜索结果 -->
-    <div v-else class="search-results">
-      <div
-        v-if="isSearching"
-        class="loading-state"
-        data-testid="search-loading"
-      >
-        <md-circular-progress indeterminate></md-circular-progress>
-        <span>{{ t('sidepanel_searching') }}</span>
-      </div>
-
-      <div
-        v-else-if="searchResults.length === 0"
-        class="empty-state"
-        data-testid="search-empty"
-      >
-        <LucideIcon name="search" :size="32" />
-        <p>{{ t('sidepanel_no_results') }}</p>
-      </div>
-
-      <div v-else ref="searchResultsContainerRef" class="search-items" data-testid="search-items">
-        <div
-          :style="{
-            height: `${searchVirtualizer.getTotalSize()}px`,
-            width: '100%',
-            position: 'relative'
-          }"
-        >
-          <div
-            v-for="virtualRow in searchVirtualizer.getVirtualItems()"
-            :key="searchResults[virtualRow.index].bookmark.id"
-            :data-index="virtualRow.index"
-            :style="{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: `${virtualRow.size}px`,
-              transform: `translateY(${virtualRow.start}px)`
-            }"
-          >
-            <div
-              class="search-item no-select"
-              :data-id="searchResults[virtualRow.index].bookmark.id"
-              @click="openBookmark(searchResults[virtualRow.index].bookmark)"
-            >
-              <div class="search-item-icon">
-                <img
-                  v-if="
-                    searchResults[virtualRow.index].bookmark.url &&
-                    getFaviconForUrl(searchResults[virtualRow.index].bookmark.url)
-                  "
-                  :src="getFaviconForUrl(searchResults[virtualRow.index].bookmark.url)"
-                  alt=""
-                  @error="handleIconError"
-                />
-                <LucideIcon v-else name="link" :size="20" />
-              </div>
-
-              <div class="search-item-content">
-                <div
-                  class="search-item-title"
-                  :title="searchResults[virtualRow.index].bookmark.title"
-                  v-html="highlightSearchText(searchResults[virtualRow.index].bookmark.title)"
-                ></div>
-                <a
-                  class="search-item-url"
-                  :href="searchResults[virtualRow.index].bookmark.url"
-                  :title="searchResults[virtualRow.index].bookmark.url + ' (点击在新标签页打开)'"
-                  @click.stop="openInNewTab(searchResults[virtualRow.index].bookmark.url)"
-                >
-                  {{ formatUrl(searchResults[virtualRow.index].bookmark.url || '') }}
-                </a>
-                <div
-                  v-if="searchResults[virtualRow.index].bookmark.path?.length"
-                  class="search-item-path"
-                  :title="searchResults[virtualRow.index].bookmark.path.join(' / ')"
-                >
-                  {{ searchResults[virtualRow.index].bookmark.path.join(' / ') }}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch, shallowRef } from 'vue'
 import { storeToRefs } from 'pinia'
@@ -1052,6 +854,204 @@ const postponeRefresh = () => {
   logger.info('SidePanel', '⏸️ 已暂缓刷新侧边栏数据')
 }
 </script>
+
+<template>
+  <GlobalSyncProgress />
+
+  <GlobalQuickAddBookmark />
+
+  <ShareDialog
+    v-model:show="showShareDialog"
+    :bookmarks="shareBookmarks"
+    :share-type="shareType"
+    :folder-name="shareFolderName"
+    @share-complete="handleShareComplete"
+  />
+
+  <!-- 外部变更更新提示 -->
+  <Dialog
+    :show="showUpdatePrompt"
+    :title="t('sidepanel_external_change_title')"
+    icon="icon-sync-alert"
+    @update:show="showUpdatePrompt = $event"
+  >
+    <div class="update-prompt-content">
+      <p>{{ t('sidepanel_external_change_message') }}</p>
+      <div v-if="pendingUpdateDetail" class="update-detail">
+        <small
+          >{{ t('sidepanel_external_change_detail', [pendingUpdateDetail.eventType, pendingUpdateDetail.id]) }}</small
+        >
+      </div>
+    </div>
+    <template #actions>
+      <md-text-button @click="postponeRefresh">{{ t('sidepanel_postpone') }}</md-text-button>
+      <md-filled-button :disabled="isLoading" @click="confirmRefresh">
+        {{ t('sidepanel_refresh_now') }}
+      </md-filled-button>
+    </template>
+  </Dialog>
+  <div class="side-panel-container">
+    <!-- 搜索栏 -->
+    <div class="search-section">
+      <Input
+        v-model="searchQuery"
+        :placeholder="t('sidepanel_search_placeholder')"
+        type="text"
+        variant="outlined"
+        density="compact"
+        clearable
+        data-testid="input-search"
+      >
+        <template #prepend>
+          <LucideIcon name="search" :size="16" />
+        </template>
+      </Input>
+    </div>
+
+    <!-- 百叶窗式折叠面板 -->
+    <Accordion v-if="!searchQuery" :exclusive="true" default-expanded="tree">
+      <!-- 最近访问 -->
+      <AccordionItem id="recent" :title="t('sidepanel_recent_visits')" icon="icon-clock">
+        <template #badge>
+          <Chip size="sm" variant="filled" color="primary">{{ recentCount }}</Chip>
+        </template>
+        <RecentVisits
+          @bookmark-click="handleRecentClick"
+          @count-update="recentCount = $event"
+        />
+      </AccordionItem>
+
+      <!-- 收藏书签 -->
+      <AccordionItem id="favorites" :title="t('sidepanel_favorites')" icon="icon-star">
+        <template #badge>
+          <Chip size="sm" variant="filled" color="primary">{{ favoriteCount }}</Chip>
+        </template>
+        <FavoriteSection
+          @bookmark-click="handleFavoriteClick"
+          @bookmark-remove="handleFavoriteRemove"
+          @share="handleShareFavorites"
+        />
+      </AccordionItem>
+
+      <!-- 书签树 - 默认展开，可折叠 -->
+      <AccordionItem id="tree" :title="t('sidepanel_bookmark_tree')" icon="icon-folder">
+        <BookmarkTree
+          :key="treeRefreshKey"
+          :nodes="bookmarkTree"
+          :selected-desc-counts="treeSelectedDescCounts"
+          source="sidePanel"
+          :loading="isLoading"
+          height="calc(100vh - 350px)"
+          size="spacious"
+          :searchable="false"
+          :selectable="false"
+          :editable="false"
+          :show-toolbar="false"
+          :accordion-mode="true"
+          :show-favorite-button="true"
+          :show-share-button="true"
+          :show-bookmark-url="false"
+          default-open-mode="current-tab"
+          click-behavior="open"
+          @ready="handleTreeReady"
+          @node-click="handleBookmarkClick"
+          @folder-toggle="handleFolderToggle"
+          @bookmark-open-new-tab="handleBookmarkOpenNewTab"
+          @bookmark-copy-url="handleBookmarkCopyUrl"
+          @bookmark-toggle-favorite="handleBookmarkToggleFavorite"
+          @folder-share="handleFolderShare"
+        />
+      </AccordionItem>
+    </Accordion>
+
+    <!-- 搜索结果 -->
+    <div v-else class="search-results">
+      <div
+        v-if="isSearching"
+        class="loading-state"
+        data-testid="search-loading"
+      >
+        <md-circular-progress indeterminate></md-circular-progress>
+        <span>{{ t('sidepanel_searching') }}</span>
+      </div>
+
+      <div
+        v-else-if="searchResults.length === 0"
+        class="empty-state"
+        data-testid="search-empty"
+      >
+        <LucideIcon name="search" :size="32" />
+        <p>{{ t('sidepanel_no_results') }}</p>
+      </div>
+
+      <div v-else ref="searchResultsContainerRef" class="search-items" data-testid="search-items">
+        <div
+          :style="{
+            height: `${searchVirtualizer.getTotalSize()}px`,
+            width: '100%',
+            position: 'relative'
+          }"
+        >
+          <div
+            v-for="virtualRow in searchVirtualizer.getVirtualItems()"
+            :key="searchResults[virtualRow.index].bookmark.id"
+            :data-index="virtualRow.index"
+            :style="{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: `${virtualRow.size}px`,
+              transform: `translateY(${virtualRow.start}px)`
+            }"
+          >
+            <div
+              class="search-item no-select"
+              :data-id="searchResults[virtualRow.index].bookmark.id"
+              @click="openBookmark(searchResults[virtualRow.index].bookmark)"
+            >
+              <div class="search-item-icon">
+                <img
+                  v-if="
+                    searchResults[virtualRow.index].bookmark.url &&
+                    getFaviconForUrl(searchResults[virtualRow.index].bookmark.url)
+                  "
+                  :src="getFaviconForUrl(searchResults[virtualRow.index].bookmark.url)"
+                  alt=""
+                  @error="handleIconError"
+                />
+                <LucideIcon v-else name="link" :size="20" />
+              </div>
+
+              <div class="search-item-content">
+                <div
+                  class="search-item-title"
+                  :title="searchResults[virtualRow.index].bookmark.title"
+                  v-html="highlightSearchText(searchResults[virtualRow.index].bookmark.title)"
+                ></div>
+                <a
+                  class="search-item-url"
+                  :href="searchResults[virtualRow.index].bookmark.url"
+                  :title="searchResults[virtualRow.index].bookmark.url + ' (点击在新标签页打开)'"
+                  @click.stop="openInNewTab(searchResults[virtualRow.index].bookmark.url)"
+                >
+                  {{ formatUrl(searchResults[virtualRow.index].bookmark.url || '') }}
+                </a>
+                <div
+                  v-if="searchResults[virtualRow.index].bookmark.path?.length"
+                  class="search-item-path"
+                  :title="searchResults[virtualRow.index].bookmark.path.join(' / ')"
+                >
+                  {{ searchResults[virtualRow.index].bookmark.path.join(' / ') }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
 
 <style scoped>
 .ai-badge-inline {

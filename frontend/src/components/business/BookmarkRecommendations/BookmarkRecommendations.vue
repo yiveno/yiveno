@@ -9,111 +9,6 @@
 数据流：
 SmartRecommendationEngine → 推荐列表 → UI 展示 → 用户交互 → 反馈记录
 -->
-<template>
-  <div v-if="recommendations.length > 0" class="smart-recommendations">
-    <!-- 标题栏 -->
-    <div class="recommendations-header">
-      <div class="header-content">
-        <LucideIcon name="sparkles" class="recommendation-icon" />
-        <h3 class="recommendations-title">为您推荐</h3>
-        <Chip variant="soft" size="sm">
-          {{ recommendations.length }}
-        </Chip>
-      </div>
-      <div class="header-actions">
-        <md-icon-button
-          :disabled="isRefreshing"
-          class="refresh-button"
-          title="刷新推荐"
-          @click="refreshRecommendations"
-        >
-          <LucideIcon name="refresh-cw" :size="20" :class="{ 'icon-spin': isRefreshing }" />
-        </md-icon-button>
-      </div>
-    </div>
-
-    <!-- 推荐列表 -->
-    <md-list class="recommendations-list">
-      <md-list-item
-        v-for="bookmark in recommendations"
-        :key="bookmark.id"
-        type="button"
-        class="recommendation-item no-select"
-        @click="openBookmark(bookmark, $event)"
-        @contextmenu.prevent="showContextMenu(bookmark)"
-      >
-        <div slot="start" class="bookmark-favicon">
-          <img
-            :src="getFaviconUrl(bookmark.url!)"
-            :alt="bookmark.title"
-            class="favicon-image"
-            :class="{ 'favicon-loading': !faviconLoaded[bookmark.id] }"
-            @error="handleFaviconError($event, bookmark.url!)"
-            @load="handleFaviconLoad"
-          />
-          <div v-if="faviconError[bookmark.id]" class="favicon-fallback">
-            <LucideIcon name="link" :size="12" />
-          </div>
-        </div>
-        <div slot="headline" class="bookmark-title" :title="bookmark.title">
-          {{ bookmark.title }}
-        </div>
-        <div slot="supporting-text" class="bookmark-meta">
-          <span class="bookmark-domain">
-            {{ extractDomain(bookmark.url!) }}
-          </span>
-          <span v-if="showDebugInfo" class="recommendation-score">
-            评分: {{ bookmark.recommendationScore?.toFixed(1) }}
-          </span>
-        </div>
-        <div slot="end" class="recommendation-reason">
-          <Chip :variant="getReasonBadgeVariant(bookmark)" size="sm">
-            {{ getRecommendationReason(bookmark) }}
-          </Chip>
-        </div>
-
-        <!-- 使用指示器 -->
-        <div
-          v-if="bookmark.visitCount && bookmark.visitCount > 0"
-          class="usage-indicator"
-        >
-          <div
-            class="usage-bar"
-            :style="{
-              width: `${Math.min((bookmark.visitCount || 0) * 5, 100)}%`
-            }"
-            :title="`访问${bookmark.visitCount}次，置信度${(bookmark.confidence * 100).toFixed(1)}%`"
-          ></div>
-        </div>
-      </md-list-item>
-    </md-list>
-
-    <!-- 更多推荐按钮 -->
-    <div v-if="hasMoreRecommendations" class="recommendations-footer">
-      <md-outlined-button
-        :disabled="isLoadingMore"
-        class="load-more-button"
-        @click="loadMoreRecommendations"
-      >
-        查看更多推荐
-      </md-outlined-button>
-    </div>
-  </div>
-
-  <!-- 空状态 -->
-  <div v-else-if="!isLoading" class="recommendations-empty">
-    <LucideIcon name="sparkles" class="empty-icon" />
-    <p class="empty-text">暂无推荐书签</p>
-    <p class="empty-hint">多使用书签，我们将为您提供个性化推荐</p>
-  </div>
-
-  <!-- 加载状态 -->
-  <div v-else class="recommendations-loading">
-    <md-circular-progress indeterminate></md-circular-progress>
-    <p class="loading-text">正在分析您的书签使用模式...</p>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { Chip, LucideIcon } from '@/components'
@@ -215,9 +110,11 @@ async function refreshRecommendations() {
   if (isRefreshing.value) return
 
   try {
+    // eslint-disable-next-line require-atomic-updates -- 刷新状态设置是原子操作，不会有竞态条件
     isRefreshing.value = true
     await loadRecommendations()
   } finally {
+    // eslint-disable-next-line require-atomic-updates -- finally 块中的状态重置是安全的
     isRefreshing.value = false
   }
 }
@@ -226,6 +123,7 @@ async function loadMoreRecommendations() {
   if (isLoadingMore.value) return
 
   try {
+    // eslint-disable-next-line require-atomic-updates -- 加载更多状态设置是原子操作，不会有竞态条件
     isLoadingMore.value = true
     logger.info('Component', '🔄 [SmartRecommendation] 加载更多推荐...')
 
@@ -263,6 +161,7 @@ async function loadMoreRecommendations() {
       error
     )
   } finally {
+    // eslint-disable-next-line require-atomic-updates -- finally 块中的状态重置是安全的
     isLoadingMore.value = false
   }
 }
@@ -541,6 +440,111 @@ defineExpose({
   loadMoreRecommendations
 })
 </script>
+
+<template>
+  <div v-if="recommendations.length > 0" class="smart-recommendations">
+    <!-- 标题栏 -->
+    <div class="recommendations-header">
+      <div class="header-content">
+        <LucideIcon name="sparkles" class="recommendation-icon" />
+        <h3 class="recommendations-title">为您推荐</h3>
+        <Chip variant="soft" size="sm">
+          {{ recommendations.length }}
+        </Chip>
+      </div>
+      <div class="header-actions">
+        <md-icon-button
+          :disabled="isRefreshing"
+          class="refresh-button"
+          title="刷新推荐"
+          @click="refreshRecommendations"
+        >
+          <LucideIcon name="refresh-cw" :size="20" :class="{ 'icon-spin': isRefreshing }" />
+        </md-icon-button>
+      </div>
+    </div>
+
+    <!-- 推荐列表 -->
+    <md-list class="recommendations-list">
+      <md-list-item
+        v-for="bookmark in recommendations"
+        :key="bookmark.id"
+        type="button"
+        class="recommendation-item no-select"
+        @click="openBookmark(bookmark, $event)"
+        @contextmenu.prevent="showContextMenu(bookmark)"
+      >
+        <div slot="start" class="bookmark-favicon">
+          <img
+            :src="getFaviconUrl(bookmark.url!)"
+            :alt="bookmark.title"
+            class="favicon-image"
+            :class="{ 'favicon-loading': !faviconLoaded[bookmark.id] }"
+            @error="handleFaviconError($event, bookmark.url!)"
+            @load="handleFaviconLoad"
+          />
+          <div v-if="faviconError[bookmark.id]" class="favicon-fallback">
+            <LucideIcon name="link" :size="12" />
+          </div>
+        </div>
+        <div slot="headline" class="bookmark-title" :title="bookmark.title">
+          {{ bookmark.title }}
+        </div>
+        <div slot="supporting-text" class="bookmark-meta">
+          <span class="bookmark-domain">
+            {{ extractDomain(bookmark.url!) }}
+          </span>
+          <span v-if="showDebugInfo" class="recommendation-score">
+            评分: {{ bookmark.recommendationScore?.toFixed(1) }}
+          </span>
+        </div>
+        <div slot="end" class="recommendation-reason">
+          <Chip :variant="getReasonBadgeVariant(bookmark)" size="sm">
+            {{ getRecommendationReason(bookmark) }}
+          </Chip>
+        </div>
+
+        <!-- 使用指示器 -->
+        <div
+          v-if="bookmark.visitCount && bookmark.visitCount > 0"
+          class="usage-indicator"
+        >
+          <div
+            class="usage-bar"
+            :style="{
+              width: `${Math.min((bookmark.visitCount || 0) * 5, 100)}%`
+            }"
+            :title="`访问${bookmark.visitCount}次，置信度${(bookmark.confidence * 100).toFixed(1)}%`"
+          ></div>
+        </div>
+      </md-list-item>
+    </md-list>
+
+    <!-- 更多推荐按钮 -->
+    <div v-if="hasMoreRecommendations" class="recommendations-footer">
+      <md-outlined-button
+        :disabled="isLoadingMore"
+        class="load-more-button"
+        @click="loadMoreRecommendations"
+      >
+        查看更多推荐
+      </md-outlined-button>
+    </div>
+  </div>
+
+  <!-- 空状态 -->
+  <div v-else-if="!isLoading" class="recommendations-empty">
+    <LucideIcon name="sparkles" class="empty-icon" />
+    <p class="empty-text">暂无推荐书签</p>
+    <p class="empty-hint">多使用书签，我们将为您提供个性化推荐</p>
+  </div>
+
+  <!-- 加载状态 -->
+  <div v-else class="recommendations-loading">
+    <md-circular-progress indeterminate></md-circular-progress>
+    <p class="loading-text">正在分析您的书签使用模式...</p>
+  </div>
+</template>
 
 <style scoped>
 

@@ -198,43 +198,86 @@ export const treeAppService = {
 
     // 2) 构建节点映射（统一成 BookmarkNode）
     const nodeMap = new Map<string, BookmarkNode>()
-    const toNode = (item: BookmarkRecord): BookmarkNode => ({
-      id: String(item.id),
-      title: item.title,
-      url: item.url,
-      children: item.url ? undefined : [],
-      // ✅ 保留 parentId 和 index，用于后续重建树结构
-      parentId: item.parentId ? String(item.parentId) : undefined,
-      index: typeof item.index === 'number' ? item.index : undefined,
-      // 透传 IndexedDB 预处理字段，便于后续定位/筛选/统计
-      pathIds: Array.isArray(item.pathIds)
-        ? item.pathIds.map((x: string | number) => String(x))
-        : undefined,
-      ancestorIds: Array.isArray(item.ancestorIds)
-        ? item.ancestorIds.map((x: string | number) => String(x))
-        : undefined,
-      depth: typeof item.depth === 'number' ? item.depth : undefined,
-      domain: typeof item.domain === 'string' ? item.domain : undefined,
-      titleLower:
-        typeof item.titleLower === 'string' ? item.titleLower : undefined,
-      urlLower: typeof item.urlLower === 'string' ? item.urlLower : undefined,
-      childrenCount:
-        typeof item.childrenCount === 'number' ? item.childrenCount : undefined,
-      // ✅ 透传特征相关字段（用于特征筛选）
-      traitTags: Array.isArray(item.traitTags) ? item.traitTags : undefined,
-      traitMetadata: Array.isArray(item.traitMetadata)
-        ? (item.traitMetadata as Array<{
-            tag: 'duplicate' | 'invalid' | 'internal'
-            detectedAt: number
-            source: 'worker' | 'user' | 'imported'
-            notes?: string
-          }>)
-        : undefined,
-      // ✅ 透传收藏相关字段
-      isFavorite: item.isFavorite === true,
-      favoriteOrder:
-        typeof item.favoriteOrder === 'number' ? item.favoriteOrder : undefined
-    })
+    const toNode = (item: BookmarkRecord): BookmarkNode => {
+      const node: BookmarkNode = {
+        id: String(item.id),
+        title: item.title,
+        url: item.url,
+        isFavorite: item.isFavorite === true
+      }
+      
+      // 条件添加 children
+      if (!item.url) {
+        node.children = []
+      }
+      
+      // 条件添加 parentId
+      if (item.parentId) {
+        node.parentId = String(item.parentId)
+      }
+      
+      // 条件添加 index
+      if (typeof item.index === 'number') {
+        node.index = item.index
+      }
+      
+      // 条件添加 pathIds
+      if (Array.isArray(item.pathIds)) {
+        node.pathIds = item.pathIds.map((x: string | number) => String(x))
+      }
+      
+      // 条件添加 ancestorIds
+      if (Array.isArray(item.ancestorIds)) {
+        node.ancestorIds = item.ancestorIds.map((x: string | number) => String(x))
+      }
+      
+      // 条件添加 depth
+      if (typeof item.depth === 'number') {
+        node.depth = item.depth
+      }
+      
+      // 条件添加 domain
+      if (typeof item.domain === 'string') {
+        node.domain = item.domain
+      }
+      
+      // 条件添加 titleLower
+      if (typeof item.titleLower === 'string') {
+        node.titleLower = item.titleLower
+      }
+      
+      // 条件添加 urlLower
+      if (typeof item.urlLower === 'string') {
+        node.urlLower = item.urlLower
+      }
+      
+      // 条件添加 childrenCount
+      if (typeof item.childrenCount === 'number') {
+        node.childrenCount = item.childrenCount
+      }
+      
+      // 条件添加 traitTags
+      if (Array.isArray(item.traitTags)) {
+        node.traitTags = item.traitTags
+      }
+      
+      // 条件添加 traitMetadata
+      if (Array.isArray(item.traitMetadata)) {
+        node.traitMetadata = item.traitMetadata as Array<{
+          tag: 'duplicate' | 'invalid' | 'internal'
+          detectedAt: number
+          source: 'worker' | 'user' | 'imported'
+          notes?: string
+        }>
+      }
+      
+      // 条件添加 favoriteOrder
+      if (typeof item.favoriteOrder === 'number') {
+        node.favoriteOrder = item.favoriteOrder
+      }
+      
+      return node
+    }
 
     for (const it of items) nodeMap.set(String(it.id), toNode(it))
     const t2 = performance.now()

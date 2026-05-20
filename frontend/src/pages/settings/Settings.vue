@@ -1,60 +1,3 @@
-<template>
-  <div class="settings-page app-container">
-    <GlobalSyncProgress />
-
-    <GlobalQuickAddBookmark />
-
-    <AppHeader
-      :show-side-panel-toggle="false"
-      :show-settings="false"
-      :show-account="false"
-    />
-    <main class="main-content">
-      <div class="settings-body">
-        <!-- ✅ Material Web Tabs - 横向布局 -->
-        <div class="settings-tabs-container">
-          <md-tabs
-            ref="mdTabsRef"
-            class="settings-md-tabs"
-            :active-tab-index="tabsActiveIndex"
-            @change="handleTabChange"
-          >
-            <md-primary-tab
-              v-for="tabItem in tabsI18n"
-              :key="tabItem.value"
-              class="settings-md-primary-tab"
-            >
-              <!-- 原生元素承载 slot，保证投射进 md-primary-tab 的 icon 槽，避免 Vue 组件根节点无法插槽导致重叠与 ? 占位 -->
-              <span slot="icon" class="settings-tab__icon-slot">
-                <LucideIcon :name="tabItem.icon" :size="20" />
-              </span>
-              <span class="settings-tab__label">{{ tabItem.text }}</span>
-            </md-primary-tab>
-          </md-tabs>
-        </div>
-
-        <Card variant="default" class="settings-content" role="region">
-          <template #header>
-            <div class="settings-card-header">
-              <LucideIcon :name="currentTabIcon" :size="20" />
-              <span>{{ currentTabTitle }}</span>
-            </div>
-          </template>
-
-          <component
-            :is="tab === 'general' ? GeneralSettings : 
-                 tab === 'colorPreset' ? ColorPresetSettings : 
-                 tab === 'ai' ? AISettings : 
-                 tab === 'notifications' ? NotificationSettings : 
-                 ShortcutSettings"
-            class="pane"
-          />
-        </Card>
-      </div>
-    </main>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { computed, defineAsyncComponent, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { AppHeader, Card } from '@/components'
@@ -66,14 +9,13 @@ import { onEvent } from '@/infrastructure/events/event-bus'
 import { useSupabaseAuth, useThemeSync } from '@/composables'
 import { logger } from '@/infrastructure/logging/logger'
 
-// 使用 Supabase Auth 检查登录状态
-const { isAuthenticated, initialize, setupAuthListener } = useSupabaseAuth()
-const isLoggedIn = computed(() => isAuthenticated.value)
-
 defineOptions({
   name: 'SettingsPage',
   inheritAttrs: false
 })
+// 使用 Supabase Auth 检查登录状态
+const { isAuthenticated, initialize, setupAuthListener } = useSupabaseAuth()
+const isLoggedIn = computed(() => isAuthenticated.value)
 
 // 懒加载分区组件（首屏更快）
 const GeneralSettings = defineAsyncComponent(
@@ -144,19 +86,19 @@ const tabsI18n = computed(() =>
 
 /** 与 `md-tabs.activeTabIndex` 对齐的当前索引（Material Web 使用 0-based） */
 const tabsActiveIndex = computed(() => {
-  const i = tabs.findIndex(t => t.value === tab.value)
+  const i = tabs.findIndex(tabItem => tabItem.value === tab.value)
   return i >= 0 ? i : 0
 })
 
 /** 当前 tab 的标题 */
 const currentTabTitle = computed(() => {
-  const currentTab = tabs.find(t => t.value === tab.value)
+  const currentTab = tabs.find(tabItem => tabItem.value === tab.value)
   return currentTab ? tf(currentTab.key, currentTab.fallback) : ''
 })
 
 /** 当前 tab 的图标 */
 const currentTabIcon = computed(() => {
-  const currentTab = tabs.find(t => t.value === tab.value)
+  const currentTab = tabs.find(tabItem => tabItem.value === tab.value)
   return currentTab?.icon || 'settings'
 })
 
@@ -241,8 +183,8 @@ function writeTabToURL(v: TabKey) {
 }
 
 function syncFromURL() {
-  const t = readTabFromURL()
-  if (t && t !== tab.value) tab.value = t
+  const tabFromURL = readTabFromURL()
+  if (tabFromURL && tabFromURL !== tab.value) tab.value = tabFromURL
 }
 
 let unsubscribeLogin: (() => void) | null = null
@@ -316,6 +258,63 @@ watch(tab, v => {
   void nextTick(() => syncMdTabsActiveIndex())
 })
 </script>
+
+<template>
+  <div class="settings-page app-container">
+    <GlobalSyncProgress />
+
+    <GlobalQuickAddBookmark />
+
+    <AppHeader
+      :show-side-panel-toggle="false"
+      :show-settings="false"
+      :show-account="false"
+    />
+    <main class="main-content">
+      <div class="settings-body">
+        <!-- ✅ Material Web Tabs - 横向布局 -->
+        <div class="settings-tabs-container">
+          <md-tabs
+            ref="mdTabsRef"
+            class="settings-md-tabs"
+            :active-tab-index="tabsActiveIndex"
+            @change="handleTabChange"
+          >
+            <md-primary-tab
+              v-for="tabItem in tabsI18n"
+              :key="tabItem.value"
+              class="settings-md-primary-tab"
+            >
+              <!-- 原生元素承载 slot，保证投射进 md-primary-tab 的 icon 槽，避免 Vue 组件根节点无法插槽导致重叠与 ? 占位 -->
+              <span slot="icon" class="settings-tab__icon-slot">
+                <LucideIcon :name="tabItem.icon" :size="20" />
+              </span>
+              <span class="settings-tab__label">{{ tabItem.text }}</span>
+            </md-primary-tab>
+          </md-tabs>
+        </div>
+
+        <Card variant="default" class="settings-content" role="region">
+          <template #header>
+            <div class="settings-card-header">
+              <LucideIcon :name="currentTabIcon" :size="20" />
+              <span>{{ currentTabTitle }}</span>
+            </div>
+          </template>
+
+          <component
+            :is="tab === 'general' ? GeneralSettings : 
+                 tab === 'colorPreset' ? ColorPresetSettings : 
+                 tab === 'ai' ? AISettings : 
+                 tab === 'notifications' ? NotificationSettings : 
+                 ShortcutSettings"
+            class="pane"
+          />
+        </Card>
+      </div>
+    </main>
+  </div>
+</template>
 
 <style scoped>
 .app-container {

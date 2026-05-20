@@ -331,8 +331,7 @@
 }
 
 .shadow-primary-500\/20 {
-  box-shadow: 0 4px 12px
-    color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
 }
 
 /* ========================================
@@ -356,11 +355,7 @@
 }
 
 .bg-hero-glow {
-  background: radial-gradient(
-    circle,
-    var(--md-sys-color-primary) 0%,
-    transparent 70%
-  );
+  background: radial-gradient(circle, var(--md-sys-color-primary) 0%, transparent 70%);
 }
 
 .bg-white\/5 {
@@ -402,11 +397,7 @@
 }
 
 .bg-gradient-to-br {
-  background-image: linear-gradient(
-    to bottom right,
-    var(--gradient-start),
-    var(--gradient-end)
-  );
+  background-image: linear-gradient(to bottom right, var(--gradient-start), var(--gradient-end));
 }
 
 .from-white\/5 {
@@ -418,11 +409,7 @@
 }
 
 .bg-gradient-to-br {
-  background-image: linear-gradient(
-    to bottom right,
-    var(--gradient-start),
-    var(--gradient-end)
-  );
+  background-image: linear-gradient(to bottom right, var(--gradient-start), var(--gradient-end));
 }
 
 .from-primary-500 {
@@ -434,11 +421,7 @@
 }
 
 .bg-gradient-to-r {
-  background-image: linear-gradient(
-    to right,
-    var(--gradient-start),
-    var(--gradient-end)
-  );
+  background-image: linear-gradient(to right, var(--gradient-start), var(--gradient-end));
 }
 
 .from-primary-600 {
@@ -581,19 +564,11 @@
 }
 
 .bg-green-500\/20 {
-  background-color: color-mix(
-    in srgb,
-    var(--acuity-semantic-success) 20%,
-    transparent
-  );
+  background-color: color-mix(in srgb, var(--acuity-semantic-success) 20%, transparent);
 }
 
 .bg-accent-500\/20 {
-  background-color: color-mix(
-    in srgb,
-    var(--md-sys-color-secondary) 20%,
-    transparent
-  );
+  background-color: color-mix(in srgb, var(--md-sys-color-secondary) 20%, transparent);
 }
 
 .rounded-md {
@@ -799,13 +774,11 @@
 }
 
 .focus\:ring-2:focus {
-  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0
-    var(--tw-ring-offset-width) var(--tw-ring-offset-color);
-  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0
-    calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
-  box-shadow:
-    var(--tw-ring-offset-shadow), var(--tw-ring-shadow),
-    var(--tw-shadow, 0 0 #0000);
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width)
+    var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width))
+    var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
 }
 
 .focus\:ring-offset-2:focus {

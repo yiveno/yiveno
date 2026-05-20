@@ -588,20 +588,17 @@
 
 .animate-fade-in {
   will-change: opacity;
-  animation: fade-in var(--md-sys-motion-duration-medium2)
-    var(--md-sys-motion-easing-standard);
+  animation: fade-in var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-standard);
 }
 
 .animate-fade-out {
   will-change: opacity;
-  animation: fade-out var(--md-sys-motion-duration-medium2)
-    var(--md-sys-motion-easing-standard);
+  animation: fade-out var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-standard);
 }
 
 .animate-slide-in-up {
   will-change: transform, opacity;
-  animation: slide-in-up var(--md-sys-motion-duration-medium2)
-    var(--md-sys-motion-easing-standard);
+  animation: slide-in-up var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-standard);
 }
 
 .animate-slide-in-down {
@@ -624,14 +621,12 @@
 
 .animate-scale-in {
   will-change: transform, opacity;
-  animation: scale-in var(--md-sys-motion-duration-medium2)
-    var(--md-sys-motion-easing-standard);
+  animation: scale-in var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-standard);
 }
 
 .animate-scale-out {
   will-change: transform, opacity;
-  animation: scale-out var(--md-sys-motion-duration-medium2)
-    var(--md-sys-motion-easing-standard);
+  animation: scale-out var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-standard);
 }
 
 /* ========================================

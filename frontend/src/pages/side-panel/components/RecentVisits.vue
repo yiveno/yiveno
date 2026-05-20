@@ -1,33 +1,3 @@
-<template>
-  <div class="recent-visits">
-    <div v-if="recentVisits.length === 0" class="empty-state">
-      <LucideIcon name="clock" :size="20" />
-      <span>{{ t('sidepanel_recent_empty') }}</span>
-    </div>
-    <md-list v-else class="recent-list">
-      <md-list-item
-        v-for="bookmark in recentVisits"
-        :key="bookmark.id"
-        type="button"
-        @click="handleClick(bookmark)"
-      >
-        <div slot="start" class="recent-favicon">
-          <img
-            v-if="getFaviconUrl(bookmark)"
-            :src="getFaviconUrl(bookmark)"
-            alt="favicon"
-            loading="lazy"
-            @error="() => handleFaviconError(bookmark.id)"
-          />
-          <LucideIcon v-else name="bookmark" :size="16" />
-        </div>
-        <div slot="headline">{{ bookmark.title }}</div>
-        <div slot="supporting-text">{{ formatRecentVisitTime(bookmark.lastVisited) }}</div>
-      </md-list-item>
-    </md-list>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { LucideIcon } from '@/components'
@@ -43,8 +13,8 @@ defineOptions({
 })
 
 const emit = defineEmits<{
-  'bookmark-click': [bookmark: BookmarkRecord]
-  'count-update': [count: number]
+  bookmarkClick: [bookmark: BookmarkRecord]
+  countUpdate: [count: number]
 }>()
 
 const recentVisits = ref<BookmarkRecord[]>([])
@@ -53,7 +23,7 @@ const faviconErrors = ref<Set<string>>(new Set())
 const loadRecentVisits = async () => {
   try {
     recentVisits.value = await indexedDBManager.getRecentVisits(5)
-    emit('count-update', recentVisits.value.length)
+    emit('countUpdate', recentVisits.value.length)
     logger.info('RecentVisits', '📊 加载最近访问', recentVisits.value.length)
   } catch (error) {
     logger.error('RecentVisits', '❌ 加载最近访问失败', error)
@@ -99,12 +69,12 @@ onUnmounted(() => {
 
 // 监听数据变化，自动更新数量
 const stopWatch = watch(() => recentVisits.value.length, (newCount) => {
-  emit('count-update', newCount)
+  emit('countUpdate', newCount)
 })
 
 const handleClick = (bookmark: BookmarkRecord) => {
   logger.info('RecentVisits', '🔗 点击最近访问', bookmark.title)
-  emit('bookmark-click', bookmark)
+  emit('bookmarkClick', bookmark)
 }
 
 // 暴露方法供父组件调用
@@ -112,6 +82,36 @@ defineExpose({
   loadRecentVisits
 })
 </script>
+
+<template>
+  <div class="recent-visits">
+    <div v-if="recentVisits.length === 0" class="empty-state">
+      <LucideIcon name="clock" :size="20" />
+      <span>{{ t('sidepanel_recent_empty') }}</span>
+    </div>
+    <md-list v-else class="recent-list">
+      <md-list-item
+        v-for="bookmark in recentVisits"
+        :key="bookmark.id"
+        type="button"
+        @click="handleClick(bookmark)"
+      >
+        <div slot="start" class="recent-favicon">
+          <img
+            v-if="getFaviconUrl(bookmark)"
+            :src="getFaviconUrl(bookmark)"
+            alt="favicon"
+            loading="lazy"
+            @error="() => handleFaviconError(bookmark.id)"
+          />
+          <LucideIcon v-else name="bookmark" :size="16" />
+        </div>
+        <div slot="headline">{{ bookmark.title }}</div>
+        <div slot="supporting-text">{{ formatRecentVisitTime(bookmark.lastVisited) }}</div>
+      </md-list-item>
+    </md-list>
+  </div>
+</template>
 
 <style scoped>
 .recent-visits {

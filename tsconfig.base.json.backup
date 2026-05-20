@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    /* 基础选项 */
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "target": "ES2022",
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "moduleDetection": "force",
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+
+    /* 严格性 - 暂时放宽以支持渐进式迁移 */
+    "strict": false,
+    "noUncheckedIndexedAccess": false,
+    "noImplicitOverride": true,
+    "strictNullChecks": false,
+    "noImplicitAny": false,
+
+    /* 模块设置 */
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+
+    /* 代码质量 - Phase 1 优化：立即启用（无破坏性） */
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "exactOptionalPropertyTypes": true
+  },
+  "exclude": ["node_modules", "dist", "build", ".cache"]
+}

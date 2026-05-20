@@ -24,20 +24,14 @@
 
   /* 语言字体变量（kebab-case，以满足 stylelint 对 custom-property-pattern 的要求） */
   --font-family-en:
-    system-ui, -apple-system, segoe ui, roboto, ubuntu, cantarell, noto sans,
-    helvetica neue, arial, sans-serif;
-  --font-family-zh-cn:
-    'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'WenQuanYi Micro Hei',
-    'Heiti SC', sans-serif;
-  --font-family-zh-tw:
-    'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'Heiti TC', sans-serif;
-  --font-family-ja:
-    'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Meiryo', 'Yu Gothic',
+    system-ui, -apple-system, segoe ui, roboto, ubuntu, cantarell, noto sans, helvetica neue, arial,
     sans-serif;
-  --font-family-ko:
-    'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
-  --font-family-ar:
-    'Noto Sans Arabic', 'Geeza Pro', 'GeezaPro', arial, sans-serif;
+  --font-family-zh-cn:
+    'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'WenQuanYi Micro Hei', 'Heiti SC', sans-serif;
+  --font-family-zh-tw: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'Heiti TC', sans-serif;
+  --font-family-ja: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Meiryo', 'Yu Gothic', sans-serif;
+  --font-family-ko: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --font-family-ar: 'Noto Sans Arabic', 'Geeza Pro', 'GeezaPro', arial, sans-serif;
 
   /* 西语、法语、德语、俄语等使用英文字体 */
   --font-family-es: var(--font-family-en);
@@ -190,8 +184,8 @@ small {
 
   /* Add generic fallback to satisfy linters */
   font-family:
-    'Noto Sans', 'Noto Sans SC', 'Noto Sans TC', 'Noto Sans JP', 'Noto Sans KR',
-    'Noto Sans Arabic', sans-serif;
+    'Noto Sans', 'Noto Sans SC', 'Noto Sans TC', 'Noto Sans JP', 'Noto Sans KR', 'Noto Sans Arabic',
+    sans-serif;
   opacity: 0;
   pointer-events: none;
   content: '';

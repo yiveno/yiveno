@@ -1,0 +1,15 @@
+{
+  "enabled": true,
+  "name": "Backend Quality Check",
+  "description": "修改 backend 文件后自动运行 typecheck 和 lint 检查",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": ["backend/**/*.ts", "backend/**/*.js"]
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "cd backend && bun run lint && bun run typecheck",
+    "timeout": 60
+  }
+}

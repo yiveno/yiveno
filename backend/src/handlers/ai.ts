@@ -26,8 +26,8 @@ export async function handleAIComplete(request: Request, env: Env): Promise<Resp
   
   try {
     const url = new URL(request.url)
-    const body: AICompleteRequest =
-      request.method === 'POST' ? await request.json().catch(() => ({})) : {}
+    const rawBody = request.method === 'POST' ? await request.json().catch(() => ({})) : {}
+    const body = rawBody as AICompleteRequest
     const prompt = url.searchParams.get('prompt') || body.prompt || ''
     const messages = body.messages || undefined
     const stream =

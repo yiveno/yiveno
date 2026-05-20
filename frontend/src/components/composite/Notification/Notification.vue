@@ -1,62 +1,3 @@
-<template>
-  <teleport to="body">
-    <div 
-      v-for="placement in placements" 
-      :key="placement"
-      :class="['ab-notification-container', `ab-notification-${placement}`]"
-    >
-      <transition-group name="ab-notification" tag="div">
-        <div
-          v-for="item in getNotificationsByPlacement(placement)"
-          :key="item.key || item.id"
-          class="ab-notification"
-          :class="[`ab-notification-${item.type}`]"
-          @mouseenter="handleMouseEnter(item.id)"
-          @mouseleave="handleMouseLeave(item.id)"
-        >
-          <!-- 进度条：使用纯 CSS 动画，零 JS 开销 -->
-          <div
-            v-if="item.duration && item.duration > 0"
-            class="ab-notification-progress-wrapper"
-          >
-            <div
-              :key="item.progressKey"
-              class="ab-notification-progress-bar"
-              :class="[
-                `ab-notification-progress-bar--${item.type}`,
-                { 'ab-notification-progress-bar--paused': item.paused }
-              ]"
-              :style="getProgressStyle(item)"
-            ></div>
-          </div>
-          <div class="ab-notification-content">
-            <div v-if="item.icon !== false" class="ab-notification-icon">
-              <LucideIcon :name="getIconName(item.type)" :size="24" />
-            </div>
-            <div class="ab-notification-message">
-              <div v-if="item.message" class="ab-notification-title">
-                {{ item.message }}
-              </div>
-              <div v-if="item.description" class="ab-notification-description">
-                {{ item.description }}
-              </div>
-            </div>
-            <button
-              v-if="item.closable !== false"
-              class="ab-notification-close"
-              type="button"
-              :aria-label="`关闭${item.message}通知`"
-              @click="close(item.id)"
-            >
-              <LucideIcon name="x" :size="14" />
-            </button>
-          </div>
-        </div>
-      </transition-group>
-    </div>
-  </teleport>
-</template>
-
 <script setup lang="ts">
 import { reactive } from 'vue'
 import LucideIcon from '@/components/base/LucideIcon/LucideIcon.vue'
@@ -284,6 +225,65 @@ defineExpose({
   }
 })
 </script>
+
+<template>
+  <teleport to="body">
+    <div 
+      v-for="placement in placements" 
+      :key="placement"
+      :class="['ab-notification-container', `ab-notification-${placement}`]"
+    >
+      <transition-group name="ab-notification" tag="div">
+        <div
+          v-for="item in getNotificationsByPlacement(placement)"
+          :key="item.key || item.id"
+          class="ab-notification"
+          :class="[`ab-notification-${item.type}`]"
+          @mouseenter="handleMouseEnter(item.id)"
+          @mouseleave="handleMouseLeave(item.id)"
+        >
+          <!-- 进度条：使用纯 CSS 动画，零 JS 开销 -->
+          <div
+            v-if="item.duration && item.duration > 0"
+            class="ab-notification-progress-wrapper"
+          >
+            <div
+              :key="item.progressKey"
+              class="ab-notification-progress-bar"
+              :class="[
+                `ab-notification-progress-bar--${item.type}`,
+                { 'ab-notification-progress-bar--paused': item.paused }
+              ]"
+              :style="getProgressStyle(item)"
+            ></div>
+          </div>
+          <div class="ab-notification-content">
+            <div v-if="item.icon !== false" class="ab-notification-icon">
+              <LucideIcon :name="getIconName(item.type)" :size="24" />
+            </div>
+            <div class="ab-notification-message">
+              <div v-if="item.message" class="ab-notification-title">
+                {{ item.message }}
+              </div>
+              <div v-if="item.description" class="ab-notification-description">
+                {{ item.description }}
+              </div>
+            </div>
+            <button
+              v-if="item.closable !== false"
+              class="ab-notification-close"
+              type="button"
+              :aria-label="`关闭${item.message}通知`"
+              @click="close(item.id)"
+            >
+              <LucideIcon name="x" :size="14" />
+            </button>
+          </div>
+        </div>
+      </transition-group>
+    </div>
+  </teleport>
+</template>
 
 <style scoped>
 
