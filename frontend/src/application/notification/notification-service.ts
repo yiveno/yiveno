@@ -13,10 +13,11 @@ import { ok, err } from '../../core/common/result'
 import { logger } from '../../infrastructure/logging/logger'
 import { navigationService } from '@/services/navigation-service'
 import { NOTIFICATION_CONFIG, ANIMATION_CONFIG } from '@/config/constants'
+import type * as Vue from 'vue'
 
 // ⚠️ 延迟导入 Vue 和组件，避免在 Service Worker 环境中加载
 // Vue 组件依赖 HTMLElement，在 Service Worker 中不可用
-let vueModule: typeof import('vue') | null = null
+let vueModule: typeof Vue | null = null
 let NotificationComponent: unknown | null = null
 
 // 从统一类型定义导入
@@ -47,9 +48,9 @@ interface NotificationComponentExposed {
  */
 class PageNotificationManager {
   /** Vue 应用实例 */
-  private app: any | null = null
+  private app: ReturnType<typeof Vue.createApp> | null = null
   /** Notification 容器 DOM 元素 */
-  private container: any | null = null
+  private container: HTMLDivElement | null = null
   /** Notification 组件暴露的方法 */
   private exposed: NotificationComponentExposed | null = null
 
@@ -110,7 +111,7 @@ class PageNotificationManager {
     }
 
     this.app = vueModule.createApp({
-      render: () => vueModule!.h(NotificationComponent as any, { ref: 'notification' })
+      render: () => vueModule!.h(NotificationComponent as ReturnType<typeof vueModule.defineComponent>, { ref: 'notification' })
     })
 
     const vm = this.app.mount(this.container)

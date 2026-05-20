@@ -80,7 +80,7 @@
       />
       
       <!-- Trailing icon: 优先使用自定义 slot，否则使用默认的 loading/clear -->
-      <slot v-if="$slots['trailing-icon']" name="trailing-icon" slot="trailing-icon"></slot>
+      <slot v-if="$slots['trailing-icon']" slot="trailing-icon" name="trailing-icon"></slot>
       <Loading v-else-if="loading" slot="trailing-icon" size="xs" />
       <md-icon-button
         v-else-if="clearable && modelValue"

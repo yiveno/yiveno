@@ -288,39 +288,42 @@ defineExpose({
 </script>
 
 <style scoped>
-.async-search-select {
-  position: relative;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-3);
-}
 
-/* 下拉菜单 */
-.dropdown-menu {
-  position: absolute;
-  top: calc(100% + var(--spacing-1));
-  left: 0;
-  right: 0;
-  max-height: 320px;
-  overflow-y: auto;
-  background: var(--md-sys-color-surface-container);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
-  z-index: 1000;
-  animation: dropdown-fade-in 0.15s ease-out;
-}
 
 @keyframes dropdown-fade-in {
   from {
     opacity: 0;
     transform: translateY(-8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.async-search-select {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  width: 100%;
+}
+
+/* 下拉菜单 */
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + var(--spacing-1));
+  right: 0;
+  left: 0;
+  z-index: 1000;
+  max-height: 320px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--md-sys-color-surface-container);
+  animation: dropdown-fade-in 0.15s ease-out;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
 }
 
 /* 下拉选项 */
@@ -334,9 +337,9 @@ defineExpose({
   align-items: center;
   gap: var(--spacing-3);
   padding: var(--spacing-3) var(--spacing-4);
+  border-bottom: 1px solid var(--color-border);
   cursor: pointer;
   transition: background-color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
-  border-bottom: 1px solid var(--color-border);
 }
 
 .dropdown-option:last-child {
@@ -359,38 +362,38 @@ defineExpose({
 .option-content {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-1);
   flex: 1;
+  gap: var(--spacing-1);
   min-width: 0;
 }
 
 .option-label {
   font-size: var(--text-sm);
   font-weight: var(--font-medium);
+  white-space: nowrap;
   color: var(--color-text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .option-description {
   font-size: var(--text-xs);
+  white-space: nowrap;
   color: var(--color-text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /* 无结果 */
 .dropdown-empty {
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   gap: var(--spacing-2);
   padding: var(--spacing-6);
-  color: var(--color-text-secondary);
   font-size: var(--text-sm);
+  color: var(--color-text-secondary);
 }
 
 .dropdown-empty svg {
@@ -403,9 +406,9 @@ defineExpose({
   flex-wrap: wrap;
   gap: var(--spacing-2);
   padding: var(--spacing-2);
-  background: var(--md-sys-color-surface-container-low);
-  border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--md-sys-color-surface-container-low);
 }
 
 .selected-chips md-assist-chip {

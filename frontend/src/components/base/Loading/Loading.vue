@@ -25,14 +25,19 @@ withDefaults(defineProps<LoadingProps>(), {
 <style scoped>
 .loading-container {
   display: inline-flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
 }
 
 /* 带文案时使用列布局 */
 .loading-container--with-text {
   flex-direction: column;
   gap: var(--spacing-2);
+}
+
+/* 基础样式 */
+.loading-spinner {
+  --md-circular-progress-active-indicator-color: var(--md-sys-color-primary);
 }
 
 /* 尺寸变体 */
@@ -61,14 +66,10 @@ withDefaults(defineProps<LoadingProps>(), {
   --md-circular-progress-active-indicator-width: 5px;
 }
 
-.loading-spinner {
-  --md-circular-progress-active-indicator-color: var(--md-sys-color-primary);
-}
-
 /* 加载文案 */
 .loading-text {
   font-size: var(--text-sm);
-  color: var(--color-text-secondary);
   text-align: center;
+  color: var(--color-text-secondary);
 }
 </style>

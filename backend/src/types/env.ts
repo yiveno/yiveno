@@ -29,6 +29,7 @@ export interface Env {
 
   // For local dev
   SECRET?: string
+  NODE_ENV?: string
 
   // Auth URLs (optional overrides)
   AUTH_GOOGLE_AUTH_URL?: string

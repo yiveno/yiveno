@@ -9,9 +9,10 @@
  */
 
 import { logger } from '@/infrastructure/logging/logger'
+import type * as TrpcService from '@/services/trpc'
 
 // ⚠️ 延迟导入 trpc，避免在模块加载时就引入依赖
-let trpcModule: typeof import('@/services/trpc') | null = null
+let trpcModule: typeof TrpcService | null = null
 
 async function getTrpc() {
   if (!trpcModule) {
@@ -139,7 +140,11 @@ async function updateBadge(count: number): Promise<void> {
 /**
  * 显示 Chrome 系统通知
  */
-async function showChromeNotification(notification: any): Promise<void> {
+async function showChromeNotification(notification: { 
+  title: string
+  message: string
+  data?: { share_url?: string; [key: string]: unknown }
+}): Promise<void> {
   try {
     // 创建 Chrome 通知
     const chromeNotification = await chrome.notifications.create({
@@ -161,7 +166,7 @@ async function showChromeNotification(notification: any): Promise<void> {
     // 监听通知按钮点击
     chrome.notifications.onButtonClicked.addListener((notifId, buttonIndex) => {
       if (notifId === chromeNotification) {
-        if (buttonIndex === 0) {
+        if (buttonIndex === 0 && notification.data?.share_url) {
           // 点击"查看"按钮，打开分享链接
           chrome.tabs.create({ url: notification.data.share_url })
         }
@@ -172,7 +177,7 @@ async function showChromeNotification(notification: any): Promise<void> {
 
     // 监听通知点击
     chrome.notifications.onClicked.addListener((notifId) => {
-      if (notifId === chromeNotification) {
+      if (notifId === chromeNotification && notification.data?.share_url) {
         // 点击通知本身，打开分享链接
         chrome.tabs.create({ url: notification.data.share_url })
         chrome.notifications.clear(notifId)
