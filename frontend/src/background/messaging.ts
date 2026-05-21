@@ -59,9 +59,7 @@ export function registerMessageHandlers(): void {
       const allowedOrigins = [
         'https://acuitybookmarks.com',
         'http://localhost:3000',
-        'https://localhost:3000',
-        'http://localhost:3001',
-        'https://localhost:3001'
+        'https://localhost:3000'
       ]
 
       if (sender.origin && allowedOrigins.includes(sender.origin)) {
@@ -200,27 +198,12 @@ async function handleMessage(
         sendResponse({ installed: true, version: chrome.runtime.getManifest().version })
         return
       }
-      case 'GET_CURRENT_USER': {
-        // 获取当前登录用户信息（从 Chrome Storage）
-        await handleGetCurrentUser(sendResponse)
-        return
-      }
-      case 'IMPORT_SHARED_BOOKMARKS': {
-        // 从官网导入分享的书签
-        await handleImportSharedBookmarks(message, sendResponse)
-        return
-      }
       case 'SYNC_AUTH_SESSION': {
         await handleSyncAuthSession(message, sendResponse)
         return
       }
       case 'CLEAR_AUTH_SESSION': {
         await handleClearAuthSession(sendResponse)
-        return
-      }
-      case 'TRIGGER_DATA_INTEGRITY_CHECK': {
-        // 手动触发数据完整性检查（用于测试和调试）
-        await handleTriggerDataIntegrityCheck(sendResponse)
         return
       }
       default: {
@@ -1318,7 +1301,7 @@ async function handleBatchDeleteByTrait(
         successCount++
         logger.debug(
           'BackgroundMessaging',
-          `已删除书签: ${bookmark.title} (${bookmark.id})`
+          `✅ 已删除书签: ${bookmark.title} (${bookmark.id})`
         )
       } catch (error) {
         failCount++
@@ -1449,272 +1432,3 @@ async function handleClearAuthSession(
 
 
 
-
-
-/**
- * 处理获取当前登录用户信息
- *
- * 从 Chrome Storage 读取 Supabase session，返回用户信息
- *
- * @param sendResponse - 响应回调函数
- */
-async function handleGetCurrentUser(
-  sendResponse: AsyncResponse
-): Promise<void> {
-  try {
-    // 从 Chrome Storage 读取 session
-    const result = await chrome.storage.local.get('supabase.auth.token')
-    const sessionJson = result['supabase.auth.token'] as string | undefined
-
-    if (!sessionJson) {
-      logger.info('BackgroundMessaging', '📭 未找到登录 session')
-      sendResponse({ success: true, user: null })
-      return
-    }
-
-    const session = JSON.parse(sessionJson) as { 
-      user?: { 
-        id: string
-        email: string
-        user_metadata?: { name?: string }
-      } 
-    }
-    
-    if (!session.user) {
-      logger.warn('BackgroundMessaging', '⚠️ Session 中没有用户信息')
-      sendResponse({ success: true, user: null })
-      return
-    }
-
-    logger.info('BackgroundMessaging', '✅ 获取到当前用户', {
-      userId: session.user.id,
-      email: session.user.email
-    })
-
-    sendResponse({
-      success: true,
-      user: {
-        id: session.user.id,
-        email: session.user.email,
-        name: session.user.user_metadata?.name || session.user.email
-      }
-    })
-  } catch (error) {
-    logger.error('BackgroundMessaging', '❌ 获取当前用户失败', error)
-    sendResponse({
-      success: false,
-      error: error instanceof Error ? error.message : String(error)
-    })
-  }
-}
-
-/**
- * 处理从官网导入分享的书签
- *
- * 架构：通过 Background Script 统一处理，确保数据一致性
- * 1. 接收官网传来的书签数据
- * 2. 逐个调用 Chrome API 创建书签
- * 3. Chrome API 会自动触发 onCreated 事件，同步到 IndexedDB
- *
- * @param message - 消息对象（包含 bookmarks 数组和可选的 targetFolderId）
- * @param sendResponse - 响应回调函数
- */
-async function handleImportSharedBookmarks(
-  message: RuntimeMessage,
-  sendResponse: AsyncResponse
-): Promise<void> {
-  try {
-    const data = message.data || {}
-    const bookmarks = data.bookmarks as Array<{
-      title: string
-      url: string
-      description?: string
-    }>
-    const shareTitle = (data.shareTitle as string) || '分享的书签'
-
-    if (!bookmarks || !Array.isArray(bookmarks) || bookmarks.length === 0) {
-      logger.error('BackgroundMessaging', '❌ 书签数据为空或格式不正确', data)
-      sendResponse({
-        success: false,
-        error: '书签数据为空或格式不正确'
-      })
-      return
-    }
-
-    logger.info('BackgroundMessaging', '📥 开始导入分享的书签', {
-      count: bookmarks.length,
-      shareTitle
-    })
-
-    // 1. 获取书签栏 ID
-    const tree = await new Promise<chrome.bookmarks.BookmarkTreeNode[]>(
-      (resolve, reject) => {
-        chrome.bookmarks.getTree(result => {
-          if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message))
-          } else {
-            resolve(result)
-          }
-        })
-      }
-    )
-
-    // 查找书签栏（Bookmarks Bar / 书签栏）
-    const bookmarksBar = tree[0]?.children?.find(
-      node => node.title === '书签栏' || node.title === 'Bookmarks Bar'
-    )
-
-    if (!bookmarksBar) {
-      throw new Error('未找到书签栏')
-    }
-
-    logger.info('BackgroundMessaging', '📁 找到书签栏', {
-      id: bookmarksBar.id,
-      title: bookmarksBar.title
-    })
-
-    // 2. 在书签栏中创建一个文件夹（使用分享标题 + 时间戳）
-    const now = new Date()
-    const year = now.getFullYear()
-    const month = String(now.getMonth() + 1).padStart(2, '0')
-    const day = String(now.getDate()).padStart(2, '0')
-    const hours = String(now.getHours()).padStart(2, '0')
-    const minutes = String(now.getMinutes()).padStart(2, '0')
-    
-    const timestamp = `${year}-${month}-${day} ${hours}:${minutes}`
-    const folderName = `${shareTitle} (${timestamp})`
-
-    const folder = await new Promise<chrome.bookmarks.BookmarkTreeNode>(
-      (resolve, reject) => {
-        chrome.bookmarks.create(
-          {
-            parentId: bookmarksBar.id,
-            title: folderName,
-            index: 0 // 放在书签栏的最前面
-          },
-          result => {
-            if (chrome.runtime.lastError) {
-              reject(new Error(chrome.runtime.lastError.message))
-            } else {
-              resolve(result)
-            }
-          }
-        )
-      }
-    )
-
-    logger.info('BackgroundMessaging', '📁 创建文件夹成功', {
-      folderId: folder.id,
-      folderName: folder.title
-    })
-
-    // 3. 批量创建书签到新文件夹中
-    let successCount = 0
-    let failCount = 0
-    const errors: string[] = []
-
-    for (const bookmark of bookmarks) {
-      try {
-        // 验证书签数据
-        if (!bookmark.url || !bookmark.url.trim()) {
-          failCount++
-          errors.push(`${bookmark.title || '未命名'}: URL 为空`)
-          continue
-        }
-
-        // 调用 Chrome API 创建书签
-        await new Promise<chrome.bookmarks.BookmarkTreeNode>(
-          (resolve, reject) => {
-            chrome.bookmarks.create(
-              {
-                title: bookmark.title || bookmark.url,
-                url: bookmark.url,
-                parentId: folder.id // ✅ 放到新创建的文件夹中
-              },
-              result => {
-                if (chrome.runtime.lastError) {
-                  reject(new Error(chrome.runtime.lastError.message))
-                } else {
-                  resolve(result)
-                }
-              }
-            )
-          }
-        )
-
-        successCount++
-        logger.debug(
-          'BackgroundMessaging',
-          `✅ 已导入书签: ${bookmark.title || bookmark.url}`
-        )
-      } catch (error) {
-        failCount++
-        const errorMsg = error instanceof Error ? error.message : String(error)
-        errors.push(`${bookmark.title || bookmark.url}: ${errorMsg}`)
-        logger.error(
-          'BackgroundMessaging',
-          `❌ 导入书签失败: ${bookmark.title || bookmark.url}`,
-          error
-        )
-      }
-    }
-
-    // 返回结果
-    logger.info('BackgroundMessaging', '✅ 书签导入完成', {
-      total: bookmarks.length,
-      success: successCount,
-      failed: failCount,
-      folderName: folder.title
-    })
-
-    sendResponse({
-      success: true,
-      imported: successCount,
-      failed: failCount,
-      total: bookmarks.length,
-      folderName: folder.title,
-      folderId: folder.id,
-      errors: errors.length > 0 ? errors : undefined
-    })
-  } catch (error) {
-    logger.error('BackgroundMessaging', '❌ 导入分享的书签失败', error)
-    sendResponse({
-      success: false,
-      error: error instanceof Error ? error.message : String(error)
-    })
-  }
-}
-
-/**
- * 处理手动触发数据完整性检查请求
- *
- * 用于测试和调试，允许前端手动触发检查
- *
- * @param sendResponse - 响应回调函数
- */
-async function handleTriggerDataIntegrityCheck(
-  sendResponse: AsyncResponse
-): Promise<void> {
-  try {
-    logger.info('BackgroundMessaging', '🔧 手动触发数据完整性检查')
-
-    // 动态导入检查器（避免循环依赖）
-    const { triggerManualCheck } = await import('./data-integrity-checker')
-
-    // 异步执行检查（不阻塞响应）
-    triggerManualCheck().catch(error => {
-      logger.error('BackgroundMessaging', '❌ 手动检查执行失败', error)
-    })
-
-    sendResponse({
-      success: true,
-      message: '数据完整性检查已触发'
-    })
-  } catch (error) {
-    logger.error('BackgroundMessaging', '❌ 触发数据完整性检查失败', error)
-    sendResponse({
-      success: false,
-      error: error instanceof Error ? error.message : String(error)
-    })
-  }
-}

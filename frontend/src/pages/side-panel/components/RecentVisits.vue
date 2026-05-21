@@ -13,8 +13,8 @@ defineOptions({
 })
 
 const emit = defineEmits<{
-  bookmarkClick: [bookmark: BookmarkRecord]
-  countUpdate: [count: number]
+  'bookmark-click': [bookmark: BookmarkRecord]
+  'count-update': [count: number]
 }>()
 
 const recentVisits = ref<BookmarkRecord[]>([])
@@ -23,7 +23,7 @@ const faviconErrors = ref<Set<string>>(new Set())
 const loadRecentVisits = async () => {
   try {
     recentVisits.value = await indexedDBManager.getRecentVisits(5)
-    emit('countUpdate', recentVisits.value.length)
+    emit('count-update', recentVisits.value.length)
     logger.info('RecentVisits', '📊 加载最近访问', recentVisits.value.length)
   } catch (error) {
     logger.error('RecentVisits', '❌ 加载最近访问失败', error)
@@ -69,12 +69,12 @@ onUnmounted(() => {
 
 // 监听数据变化，自动更新数量
 const stopWatch = watch(() => recentVisits.value.length, (newCount) => {
-  emit('countUpdate', newCount)
+  emit('count-update', newCount)
 })
 
 const handleClick = (bookmark: BookmarkRecord) => {
   logger.info('RecentVisits', '🔗 点击最近访问', bookmark.title)
-  emit('bookmarkClick', bookmark)
+  emit('bookmark-click', bookmark)
 }
 
 // 暴露方法供父组件调用

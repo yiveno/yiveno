@@ -35,8 +35,18 @@ async function setDatabaseReady(ready: boolean): Promise<void> {
   await chromeStorage.setSession(DB_READY_SESSION_KEY, ready)
 }
 
+// ✅ 已移除 calculateBookmarksCount 和 calculateFoldersCount 函数
+// 原因：递归计算成本高（O(n) 遍历整个子树），对用户价值低
+// 保留 childrenCount 用于判断空文件夹即可
+
+// ✅ 移除 isValidBookmarkUrl() 函数
+// URL 格式检测应该由特征检测服务统一处理，不应该在同步服务中实现
+
 /**
  * 从 Chrome 书签树节点转换为 BookmarkRecord
+ * 
+ * ✅ 只负责数据转换，不做业务判断
+ * ✅ 特征检测由 bookmark-trait-service 统一处理
  */
 function convertChromeNodeToRecord(
   node: chrome.bookmarks.BookmarkTreeNode,
@@ -76,6 +86,7 @@ function convertChromeNodeToRecord(
     // 类型和统计字段
     isFolder,
     childrenCount: node.children?.length ?? 0,
+    // ✅ 已移除 bookmarksCount 和 folderCount 字段
 
     // 扩展属性（初始为空，由特征检测服务填充）
     tags: [],
@@ -302,17 +313,19 @@ function markDuplicateBookmarks(records: BookmarkRecord[]): BookmarkRecord[] {
 }
 
 const MAX_FULL_SYNC_RETRY = 3
+// ✅ 使用统一配置：同步操作超时时间
 const SYNC_TIMEOUT_MS = TIMEOUT_CONFIG.API.SYNC
 
 /**
  * 书签同步服务类
  *
- * Session Storage Keys:
+ * 🔴 Session Storage Keys:
  * - `bookmark_sync_is_syncing`: 当前是否正在同步（防止并发，跨 Service Worker 挂起/唤醒）
  */
 export class BookmarkSyncService {
   private static instance: BookmarkSyncService
 
+  // 🔴 迁移到 session storage：临时运行状态，Service Worker 挂起时不应保留
   private readonly SYNC_STATE_KEY = 'bookmark_sync_is_syncing' as const
 
   private lastSyncTime = 0
@@ -328,9 +341,11 @@ export class BookmarkSyncService {
   private pendingFullSync = false
   private fullSyncRetryCount = 0
 
+  // 📊 进度回调管理
   private progressCallbacks: Set<ProgressCallback> = new Set()
   private currentProgress: SyncProgress | null = null
 
+  // ⏱️ 超时保护（兼容 Service Worker 和浏览器环境）
   private syncTimeoutTimer: ReturnType<typeof setTimeout> | null = null
 
   static getInstance(): BookmarkSyncService {
@@ -870,55 +885,11 @@ export class BookmarkSyncService {
           toDelete.push(evt.id)
           continue
         }
-        
-        // ✅ 优化：对于 moved 事件，需要获取完整的父级路径信息
-        // 使用 getSubTree 而不是 get，以便正确计算 pathIds
-        try {
-          if (evt.type === 'moved') {
-            // 1. 获取节点的完整子树（包含层级信息）
-            const subTree = await chrome.bookmarks.getSubTree(evt.id)
-            if (subTree && subTree.length > 0) {
-              const node = subTree[0]
-              
-              // 2. 获取父节点路径信息
-              let pathIds: string[] = []
-              let pathNames: string[] = []
-              
-              if (node?.parentId && node.parentId !== '0') {
-                // 递归获取父级路径
-                let currentId = node.parentId
-                const parentPath: Array<{ id: string; title: string }> = []
-                
-                while (currentId && currentId !== '0') {
-                  const parents = await chrome.bookmarks.get(currentId)
-                  if (parents && parents.length > 0) {
-                    const parent = parents[0]!
-                    parentPath.unshift({ id: parent.id, title: parent.title || '' })
-                    currentId = parent.parentId || '0'
-                  } else {
-                    break
-                  }
-                }
-                
-                pathIds = parentPath.map(p => p.id)
-                pathNames = parentPath.map(p => p.title)
-              }
-              
-              // 3. 转换节点（带正确的路径信息）
-              const recs = flattenBookmarkTree([node], pathIds, pathNames)
-              toUpsert.push(...recs)
-            }
-          } else {
-            // 其他事件（created, changed）：使用简单的 get
-            const nodes = await chrome.bookmarks.get(evt.id)
-            if (nodes && nodes.length > 0) {
-              const recs = flattenBookmarkTree(nodes)
-              toUpsert.push(...recs)
-            }
-          }
-        } catch (error) {
-          logger.warn('BookmarkSync', `⚠️ 增量同步处理节点 ${evt.id} 失败`, error)
-          // 继续处理其他节点
+        // 查询该节点（以及必要时其子树）
+        const nodes = await chrome.bookmarks.get(evt.id)
+        if (nodes && nodes.length > 0) {
+          const recs = flattenBookmarkTree(nodes)
+          toUpsert.push(...recs)
         }
       }
 
@@ -1010,11 +981,11 @@ export class BookmarkSyncService {
       }
 
       // 小概率失败时触发一次全量兜底（异步，不阻塞调用方）
-      const currentSyncState =
+      const isSyncing =
         (await chromeStorage.getSession<boolean>(this.SYNC_STATE_KEY, false)) ??
         false
 
-      if (currentSyncState) {
+      if (isSyncing) {
         this.pendingFullSync = true
       } else if (this.fullSyncRetryCount < MAX_FULL_SYNC_RETRY) {
         queueMicrotask(() => {

@@ -57,13 +57,11 @@ async function selectPreset(id: ColorPresetId) {
   busy.value = true
   try {
     await globalStateManager.setColorPreset(id)
-    // eslint-disable-next-line require-atomic-updates -- 配色预设切换是原子操作，不会有竞态条件
     currentPreset.value = globalStateManager.getColorPreset()
     logger.info('ColorPresetSettings', '配色预设已切换', { preset: id })
   } catch (error) {
     logger.error('ColorPresetSettings', '保存配色预设失败', error)
   } finally {
-    // eslint-disable-next-line require-atomic-updates -- finally 块中的状态重置是安全的
     busy.value = false
   }
 }

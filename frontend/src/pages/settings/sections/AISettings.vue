@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import { LucideIcon, Tooltip, Card } from '@/components'
+import { LucideIcon, Tooltip, Card, Input } from '@/components'
 import { userLLMClient } from '@/infrastructure/llm/user-llm-client'
 import type { UserLLMProvider } from '@/infrastructure/llm/user-llm-client'
 import { llmAdapter } from '@/infrastructure/llm/llm-adapter'
@@ -8,6 +8,16 @@ import { builtInLLMClient } from '@/infrastructure/llm/builtin-llm-client'
 import { notifyError, notifySuccess, notifyWarning } from '@/application/notification/notification-service'
 import { useSubscription } from '@/composables/useSubscription'
 import { logger } from '@/infrastructure/logging/logger'
+
+// 导入 Material Web Components
+import '@material/web/select/outlined-select.js'
+import '@material/web/select/select-option.js'
+import '@material/web/button/filled-button.js'
+import '@material/web/tabs/tabs.js'
+import '@material/web/tabs/primary-tab.js'
+import '@material/web/button/text-button.js'
+import '@material/web/textfield/outlined-text-field.js'
+import '@material/web/switch/switch.js'
 
 defineOptions({ name: 'AISettings' })
 
@@ -189,26 +199,12 @@ async function saveConfig() {
       ? customModelName.value.trim() 
       : selectedModel.value
     
-    const config: {
-      provider: UserLLMProvider
-      apiKey: string
-      model?: string
-      baseUrl?: string
-    } = {
+    await userLLMClient.saveConfig({
       provider: selectedProvider.value,
-      apiKey: apiKey.value.trim()
-    }
-    
-    if (finalModel) {
-      config.model = finalModel
-    }
-    
-    const trimmedBaseUrl = customBaseUrl.value.trim()
-    if (trimmedBaseUrl) {
-      config.baseUrl = trimmedBaseUrl
-    }
-    
-    await userLLMClient.saveConfig(config)
+      apiKey: apiKey.value.trim(),
+      model: finalModel || undefined,
+      baseUrl: customBaseUrl.value.trim() || undefined
+    })
     llmAdapter.clearCapabilitiesCache()
     isSaved.value = true
     notifySuccess('AI 配置已保存', 'AI 设置')
@@ -265,7 +261,6 @@ async function recheckChromeAI() {
   recheckingChromeAI.value = true
   try {
     const previousStatus = chromeAIAvailable.value
-    // eslint-disable-next-line require-atomic-updates -- Chrome AI 可用性检测是原子操作，不会有竞态条件
     chromeAIAvailable.value = await builtInLLMClient.isAvailable()
     
     logger.info('AISettings', 'Chrome AI 重新检测完成', { 
@@ -337,7 +332,6 @@ onMounted(async () => {
   
   // 检测 Chrome AI 是否可用
   try {
-    // eslint-disable-next-line require-atomic-updates -- Chrome AI 可用性检测是原子操作，不会有竞态条件
     chromeAIAvailable.value = await builtInLLMClient.isAvailable()
     logger.info('AISettings', 'Chrome AI 可用性检测', { available: chromeAIAvailable.value })
   } catch (error) {
@@ -446,23 +440,17 @@ onMounted(async () => {
       <div class="form-row">
         <label class="form-label">API Key</label>
         <div class="form-field">
-          <md-outlined-text-field
-            :value="apiKey"
+          <Input
+            v-model="apiKey"
             :type="showKey ? 'text' : 'password'"
             :placeholder="keyPlaceholder"
+            :trailing-icon="showKey ? 'eye-off' : 'eye'"
+            :trailing-icon-size="18"
             class="text-field"
-            @input="apiKey = ($event.target as HTMLInputElement).value"
+            variant="outlined"
             @keydown.enter.prevent="saveConfig"
-          >
-            <button
-              slot="trailing-icon"
-              type="button"
-              class="icon-toggle-btn"
-              @click="showKey = !showKey"
-            >
-              <LucideIcon :name="showKey ? 'eye-off' : 'eye'" :size="18" />
-            </button>
-          </md-outlined-text-field>
+            @trailing-icon-click="showKey = !showKey"
+          />
         </div>
       </div>
 
@@ -503,11 +491,11 @@ onMounted(async () => {
           </Tooltip>
         </label>
         <div class="form-field">
-          <md-outlined-text-field
-            :value="customModelName"
+          <Input
+            v-model="customModelName"
             placeholder="输入完整的模型 ID"
             class="text-field"
-            @input="customModelName = ($event.target as HTMLInputElement).value"
+            variant="outlined"
           />
         </div>
       </div>
@@ -527,11 +515,11 @@ onMounted(async () => {
           </Tooltip>
         </label>
         <div class="form-field">
-          <md-outlined-text-field
-            :value="customBaseUrl"
+          <Input
+            v-model="customBaseUrl"
             placeholder="https://your-proxy.com/v1"
             class="text-field"
-            @input="customBaseUrl = ($event.target as HTMLInputElement).value"
+            variant="outlined"
           />
         </div>
       </div>

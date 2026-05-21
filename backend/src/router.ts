@@ -8,8 +8,8 @@ import { shareRouter } from './routers/share'
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = router({
-  example: exampleRouter as any,  
-  share: shareRouter as any  
+  example: exampleRouter,
+  share: shareRouter
 })
 
 // export type definition of API

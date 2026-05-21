@@ -12,13 +12,13 @@ defineOptions({
 
 const emit = defineEmits<{
   /** 点击书签 */
-  bookmarkClick: [bookmark: BookmarkNode]
+  'bookmark-click': [bookmark: BookmarkNode]
   /** 移除收藏 */
-  bookmarkRemove: [bookmark: BookmarkNode]
+  'bookmark-remove': [bookmark: BookmarkNode]
   /** 分享收藏书签 */
-  share: [bookmarks: BookmarkNode[]]
+  'share': [bookmarks: BookmarkNode[]]
   /** 数量更新 */
-  countUpdate: [count: number]
+  'count-update': [count: number]
 }>()
 
 // ✅ 从 Pinia Store 派生数据，响应式更新
@@ -28,12 +28,12 @@ const faviconErrors = ref<Set<string>>(new Set())
 
 // 组件挂载时立即发送数量
 onMounted(() => {
-  emit('countUpdate', favorites.value.length)
+  emit('count-update', favorites.value.length)
 })
 
 // 监听数量变化，自动更新
 const stopWatch = watch(() => favorites.value.length, (newCount) => {
-  emit('countUpdate', newCount)
+  emit('count-update', newCount)
 })
 
 // 组件卸载时清理 watch
@@ -69,7 +69,7 @@ const handleFaviconError = (bookmarkId: string) => {
 
 function handleClick(bookmark: BookmarkNode) {
   logger.info('FavoriteSection', '🔗 点击收藏书签:', bookmark.title)
-  emit('bookmarkClick', bookmark)
+  emit('bookmark-click', bookmark)
 }
 
 async function handleRemove(bookmark: BookmarkNode) {
@@ -79,7 +79,7 @@ async function handleRemove(bookmark: BookmarkNode) {
   if (success) {
     // ✅ 直接更新 store，UI 自动响应式更新
     bookmarkStore.updateNode(bookmark.id, { isFavorite: false })
-    emit('bookmarkRemove', bookmark)
+    emit('bookmark-remove', bookmark)
   }
 }
 </script>

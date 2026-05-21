@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import '@material/web/progress/circular-progress.js'
 import type { LoadingProps } from './Loading.d'
 
 defineOptions({ name: 'Loading' })
@@ -35,11 +36,6 @@ withDefaults(defineProps<LoadingProps>(), {
   gap: var(--spacing-2);
 }
 
-/* 基础样式 */
-.loading-spinner {
-  --md-circular-progress-active-indicator-color: var(--md-sys-color-primary);
-}
-
 /* 尺寸变体 */
 .loading-container--xs .loading-spinner {
   --md-circular-progress-size: 16px;
@@ -64,6 +60,10 @@ withDefaults(defineProps<LoadingProps>(), {
 .loading-container--xl .loading-spinner {
   --md-circular-progress-size: 64px;
   --md-circular-progress-active-indicator-width: 5px;
+}
+
+.loading-spinner {
+  --md-circular-progress-active-indicator-color: var(--md-sys-color-primary);
 }
 
 /* 加载文案 */

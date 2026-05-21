@@ -8,7 +8,7 @@ BookmarkSearchInput - 书签筛选输入组件
 - 不负责展示结果（由父组件决定）
 
 数据流：
-用户输入 → 筛选服务 → emit('searchComplete', results)
+用户输入 → 筛选服务 → emit('search-complete', results)
 
 注意：
 - 数据源默认 IndexedDB，可外部传入
@@ -18,7 +18,7 @@ BookmarkSearchInput - 书签筛选输入组件
 
 <script setup lang="ts">
 import { watch, computed, ref, nextTick, onMounted, onUnmounted } from 'vue'
-import { LucideIcon, Input, Chip } from '@/components'
+import { Chip, AnimatedNumber, LucideIcon, Input, Loading } from '@/components'
 import { useBookmarkSearch } from '@/composables/useBookmarkSearch'
 import { useSearchHistory } from '@/composables/useSearchHistory'
 import type { BookmarkNode } from '@/types'
@@ -382,36 +382,36 @@ interface Emits {
    * 搜索完成事件
    * @param results - 搜索结果（标准书签树结构）
    */
-  searchComplete: [results: BookmarkNode[]]
+  'search-complete': [results: BookmarkNode[]]
 
   /**
    * 搜索开始事件
    * @param query - 搜索关键词
    */
-  searchStart: [query: string]
+  'search-start': [query: string]
 
   /**
    * 搜索错误事件
    * @param error - 错误对象
    */
-  searchError: [error: Error]
+  'search-error': [error: Error]
 
   /**
    * 搜索清空事件
    */
-  searchClear: []
+  'search-clear': []
 
   /**
    * 结果项点击事件（dropdown 模式）
    * @param bookmark - 被点击的书签
    */
-  resultClick: [bookmark: BookmarkNode]
+  'result-click': [bookmark: BookmarkNode]
 
   /**
    * 查看全部结果事件（dropdown 模式）
    * @param results - 所有搜索结果
    */
-  viewAll: [results: BookmarkNode[]]
+  'view-all': [results: BookmarkNode[]]
 }
 
 // ========== 快捷筛选器状态管理 ==========
@@ -572,9 +572,7 @@ const {
   executionTime,
   filter,
   clear
-  // eslint-disable-next-line vue/no-setup-props-reactivity-loss -- props 用于 composable 初始配置，不需要响应式
 } = useBookmarkSearch({
-  // eslint-disable-next-line vue/no-setup-props-reactivity-loss -- props 用于 composable 初始配置，不需要响应式
   mode: props.mode,
   strategy: props.strategy,
   data: computed(() => props.data ?? []),
@@ -710,15 +708,15 @@ const executeFilter = async () => {
     if (!hasTextQuery && !hasActiveFilters) {
       clear()
       localFilteredCount.value = 0 // ✅ 清空本地计数
-      emit('searchComplete', [])
-      emit('searchClear')
+      emit('search-complete', [])
+      emit('search-clear')
       return
     }
 
     // 步骤 1: 如果有文本搜索，先执行文本筛选
     let results: BookmarkNode[] = []
     if (hasTextQuery) {
-      emit('searchStart', query.value)
+      emit('search-start', query.value)
       await filter(query.value)
       results = bookmarkNodes.value
       
@@ -738,17 +736,17 @@ const executeFilter = async () => {
     localFilteredCount.value = countFilteredItems(results)
 
     // 发送最终结果
-    emit('searchComplete', results)
+    emit('search-complete', results)
   } catch (err) {
-    const filterError = err instanceof Error ? err : new Error(String(err))
+    const error = err instanceof Error ? err : new Error(String(err))
     localFilteredCount.value = 0 // ✅ 出错时清空计数
     selectedResultIndex.value = -1 // ✅ 重置选中索引
-    emit('searchError', filterError)
+    emit('search-error', error)
   }
 }
 
 // 防抖搜索
-const debouncedSearch = useDebounceFn(executeFilter, () => props.debounce ?? 300)
+const debouncedSearch = useDebounceFn(executeFilter, props.debounce)
 
 // 本地 loading 状态（用于显示防抖期间的加载动画）
 const isDebouncing = ref(false)
@@ -969,7 +967,7 @@ const handleResultClick = (bookmark: BookmarkNode) => {
   logger.info('BookmarkSearchInput', '结果项被点击', { bookmark })
   
   // 先触发事件（让父组件有机会处理）
-  emit('resultClick', bookmark)
+  emit('result-click', bookmark)
   
   // 根据 resultDisplay 模式决定默认行为
   if (props.resultDisplay === 'dropdown') {
@@ -1016,9 +1014,9 @@ const handleClear = () => {
   localFilteredCount.value = 0 // ✅ 重置本地计数
   selectedResultIndex.value = -1 // ✅ 重置选中索引
   // ✅ 统一通过 search-complete 事件通知父组件（传递空数组）
-  emit('searchComplete', [])
+  emit('search-complete', [])
   // 🔔 同时保留 search-clear 事件，用于特殊场景（如关闭搜索框）
-  emit('searchClear')
+  emit('search-clear')
 }
 
 /**
@@ -1028,7 +1026,7 @@ const handleClear = () => {
 const search = async (searchQuery: string) => {
   query.value = searchQuery
   await filter(searchQuery)
-  emit('searchComplete', bookmarkNodes.value)
+  emit('search-complete', bookmarkNodes.value)
 }
 
 /**
@@ -1043,9 +1041,9 @@ const clearSearch = () => {
   clear()
   activeFilters.value.clear() // ✅ 清空激活的筛选器
   // ✅ 统一通过 search-complete 事件通知父组件（传递空数组）
-  emit('searchComplete', [])
+  emit('search-complete', [])
   // 🔔 同时保留 search-clear 事件，用于特殊场景（如关闭搜索框）
-  emit('searchClear')
+  emit('search-clear')
 }
 
 // ========== 生命周期 ==========
@@ -1128,13 +1126,17 @@ defineExpose({
           class="search-input"
           :placeholder="actualPlaceholder"
           :disabled="disabled"
-          borderless
+          variant="outlined"
+          clearable
+          leading-icon="search"
+          :leading-icon-size="20"
           @focus="handleFocus"
           @blur="handleBlur"
           @keydown.esc="handleEscape"
           @keydown.down.prevent="handleArrowDown"
           @keydown.up.prevent="handleArrowUp"
           @keydown.enter="handleEnter"
+          @clear="handleClear"
         />
       </div>
 
@@ -1150,7 +1152,7 @@ defineExpose({
         :aria-expanded="isExpanded"
         @click="handleIconClick"
       >
-        <md-circular-progress v-if="isLoadingState" indeterminate class="search-spinner" />
+        <Loading v-if="isLoadingState" size="xs" />
         <LucideIcon
           v-else-if="query.length > 0"
           name="x"
@@ -1224,16 +1226,17 @@ defineExpose({
               />
               <span class="filter-label">{{ quickFilter.label }}</span>
               <!-- ✅ 加载状态：显示动画 -->
-              <md-circular-progress v-if="isLoadingTraitCounts" indeterminate class="filter-spinner" />
+              <Loading v-if="isLoadingTraitCounts" size="xs" />
               <!-- ✅ 加载完成：显示实际数量 -->
               <Chip
                 v-else-if="quickFilter.count !== undefined"
+                type="assist"
                 size="sm"
                 variant="soft"
                 color="primary"
                 class="filter-count"
               >
-                {{ quickFilter.count }}
+                <AnimatedNumber :value="quickFilter.count" />
               </Chip>
             </button>
           </div>
@@ -1325,26 +1328,8 @@ defineExpose({
   position: relative;
   display: flex;
   align-items: center;
-  height: 32px;
-  border: 1px solid var(--color-border);
-  outline: 3px solid transparent; /* 使用 outline 代替 box-shadow，避免位移 */
-  outline-offset: 0;
-  background: var(--color-surface);
-  transition:
-    width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    border-color 0.2s ease,
-    outline-color 0.2s ease;
-  overflow: visible; /* 改为 visible，让绝对定位的子元素可见 */
-}
-
-/* 搜索中状态 */
-.search-wrapper.searching {
-  border-color: var(--color-primary);
-}
-
-/* 悬停效果 */
-.search-wrapper:hover {
-  border-color: var(--color-primary-hover);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: visible; /* 让绝对定位的子元素（下拉面板）可见 */
 }
 
 /* icon 模式：默认圆形，点击展开 */
@@ -1374,15 +1359,6 @@ defineExpose({
 /* inline 模式：内联模式，无边框 */
 .display-mode--inline .search-wrapper {
   width: 100%;
-  border: none;
-  border-radius: 0;
-  background: transparent;
-}
-
-/* 聚焦状态 - 必须在 display-mode 选择器之后 */
-.search-wrapper:has(.search-input:focus) {
-  border-color: var(--color-primary);
-  outline-color: var(--color-primary-soft);
 }
 
 /* 输入框容器 - 基础样式 */
@@ -1422,19 +1398,6 @@ defineExpose({
 .search-input {
   width: 100%;
   height: 100%;
-}
-
-.search-input :deep(.acuity-input-container.acuity-input-container--borderless) {
-  display: flex;
-  align-items: center;
-  min-height: 30px;
-  padding: 0 var(--spacing-3); /* 覆盖 borderless 的 padding: 0 */
-}
-
-.search-input :deep(.acuity-input) {
-  height: 30px; /* 明确设置高度 */
-  font-size: var(--text-sm);
-  line-height: 30px; /* 与容器高度一致，确保文本垂直居中 */
 }
 
 /* 搜索图标按钮 - 使用绝对定位固定在右侧 */
@@ -1768,8 +1731,8 @@ defineExpose({
 
 /* 激活状态下覆盖 Chip 样式 */
 .filter-tag.active .filter-count {
-  color: var(--color-text-on-primary);
-  background: var(--color-on-primary-faint-025);
+  --md-assist-chip-label-text-color: var(--color-text-on-primary);
+  --md-assist-chip-container-color: var(--color-on-primary-faint-025);
 }
 
 /* 过渡动画 */
@@ -1806,9 +1769,3 @@ defineExpose({
   transform: translateY(-4px);
 }
 </style>
-
-.search-spinner,
-.filter-spinner {
-  --md-circular-progress-size: 18px;
-  --md-circular-progress-active-indicator-width: 3px;
-}

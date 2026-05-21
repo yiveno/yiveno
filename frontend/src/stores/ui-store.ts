@@ -80,7 +80,9 @@ export const useUIStore = defineStore('ui', () => {
     title: '',
     content: '',
     confirmText: '确认',
-    cancelText: '取消'
+    cancelText: '取消',
+    onConfirm: undefined,
+    onCancel: undefined
   })
 
   /** 全局加载状态 */

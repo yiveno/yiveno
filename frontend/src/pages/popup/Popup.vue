@@ -17,7 +17,6 @@ import { useUIStore } from '@/stores/ui-store'
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports
 import { usePopupStoreIndexedDB } from '@/stores/popup-store-indexeddb'
 import { AppHeader, AnimatedNumber, LucideIcon, Card } from '@/components'
-import { Loading } from '@/components/base/Loading'
 import { t } from '@/utils/i18n-helpers'
 import type { BookmarkNode } from '@/types'
 
@@ -151,6 +150,7 @@ function handleSearchClear(): void {
 function handleTogglePopupCommand(command: string) {
   if (command === 'open-popup' || command === '_execute_action') {
     try {
+      // 🔒 环境检查：确保在浏览器环境中运行
       if (typeof window !== 'undefined') {
         window.close()
       }
@@ -212,6 +212,7 @@ function openManualOrganizePage(): void {
  */
 function openSettings(): void {
   try {
+    // 🔒 环境检查：确保在浏览器环境中运行
     if (typeof window === 'undefined') {
       logger.error('Popup', '非浏览器环境，无法打开设置页面')
       return
@@ -317,6 +318,7 @@ async function openManagementWithFilter(key: string): Promise<void> {
 
     chrome.tabs.create({ url }).catch(err => {
       logger.warn('Popup', 'chrome.tabs.create 失败，使用 window.open:', err)
+      // 🔒 环境检查：确保在浏览器环境中运行
       if (typeof window !== 'undefined') {
         window.open(url, '_blank')
       }
@@ -365,8 +367,9 @@ onMounted(async () => {
   await initAuth()
   setupAuthListener() // ✅ 手动设置认证状态监听器
 
-  // 检查 URL 参数，如果是添加书签操作，自动触发对话框
+  // ✅ 检查 URL 参数，如果是添加书签操作，自动触发对话框（从第一个 onMounted 合并）
   try {
+    // 🔒 环境检查：确保在浏览器环境中运行
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search)
       const action = urlParams.get('action')
@@ -415,13 +418,13 @@ onMounted(async () => {
     logger.info('Popup', 'Popup 启动，点击图标永远显示 popup 页面')
 
     // 动态导入stores - 使用IndexedDB版本
-    const { useUIStore: useUIStoreImport } = await import('@/stores/ui-store')
-    const { usePopupStoreIndexedDB: usePopupStoreIndexedDBImport } = await import(
+    const { useUIStore } = await import('@/stores/ui-store')
+    const { usePopupStoreIndexedDB } = await import(
       '@/stores/popup-store-indexeddb'
     )
 
-    uiStore.value = useUIStoreImport()
-    popupStore.value = usePopupStoreIndexedDBImport()
+    uiStore.value = useUIStore()
+    popupStore.value = usePopupStoreIndexedDB()
 
     logger.info('Popup', 'Stores初始化完成')
 
@@ -475,8 +478,10 @@ onUnmounted(() => {
 </script>
 
 <template>
+  <!-- 📊 全局书签同步进度对话框 -->
   <GlobalSyncProgress />
 
+  <!-- ⚡ 全局快速添加书签对话框 -->
   <GlobalQuickAddBookmark ref="quickAddRef" />
 
   <div class="popup-container">
@@ -488,7 +493,8 @@ onUnmounted(() => {
     />
     <!-- 加载状态 -->
     <div v-if="!isStoresReady" class="loading-container">
-      <Loading size="lg" text="初始化中..." />
+      <md-circular-progress indeterminate></md-circular-progress>
+      <p class="loading-text" data-testid="popup-loading-text">{{ t('popup_initializing') }}</p>
     </div>
     <!-- 主内容 - 只有当stores都存在时才显示 -->
     <div v-else class="main-container">
@@ -579,7 +585,7 @@ onUnmounted(() => {
                 </button>
               </div>
               <div class="issue-card-count issue-card-count--warning">
-                <Loading v-if="isLoadingTraitOverview" size="lg" />
+                <md-circular-progress v-if="isLoadingTraitOverview" indeterminate></md-circular-progress>
                 <AnimatedNumber v-else :value="traitOverview.duplicate" />
               </div>
             </div>
@@ -611,7 +617,7 @@ onUnmounted(() => {
                 </button>
               </div>
               <div class="issue-card-count issue-card-count--danger">
-                <Loading v-if="isLoadingTraitOverview" size="lg" />
+                <md-circular-progress v-if="isLoadingTraitOverview" indeterminate></md-circular-progress>
                 <AnimatedNumber v-else :value="traitOverview.invalid" />
               </div>
             </div>
@@ -791,6 +797,12 @@ body {
   gap: var(--spacing-md);
   height: 200px;
   text-align: center;
+}
+
+.loading-text {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
 }
 
 /* 主容器 */
@@ -987,6 +999,11 @@ body {
   opacity: 1;
 }
 
+:deep(.issue-card-count md-circular-progress) {
+  --md-circular-progress-size: 48px;
+  --md-circular-progress-active-indicator-width: 5px;
+}
+
 .popup-issues-list {
   display: grid;
   gap: var(--spacing-2);
@@ -1071,6 +1088,11 @@ body {
 
 .popup-issue-count--danger {
   color: var(--color-error);
+}
+
+:deep(.popup-issue-count md-circular-progress) {
+  --md-circular-progress-size: 20px;
+  --md-circular-progress-active-indicator-width: 3px;
 }
 
 .actions-section {

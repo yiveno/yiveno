@@ -11,14 +11,10 @@
 import type { Result } from '../../core/common/result'
 import { ok, err } from '../../core/common/result'
 import { logger } from '../../infrastructure/logging/logger'
+import { createApp, h, type App } from 'vue'
+import { Notification } from '@/components'
 import { navigationService } from '@/services/navigation-service'
 import { NOTIFICATION_CONFIG, ANIMATION_CONFIG } from '@/config/constants'
-import type * as Vue from 'vue'
-
-// ⚠️ 延迟导入 Vue 和组件，避免在 Service Worker 环境中加载
-// Vue 组件依赖 HTMLElement，在 Service Worker 中不可用
-let vueModule: typeof Vue | null = null
-let NotificationComponent: unknown | null = null
 
 // 从统一类型定义导入
 import type {
@@ -48,53 +44,19 @@ interface NotificationComponentExposed {
  */
 class PageNotificationManager {
   /** Vue 应用实例 */
-  private app: ReturnType<typeof Vue.createApp> | null = null
+  private app: App | null = null
   /** Notification 容器 DOM 元素 */
-  private container: HTMLDivElement | null = null
+  private container: HTMLElement | null = null
   /** Notification 组件暴露的方法 */
   private exposed: NotificationComponentExposed | null = null
-
-  /**
-   * 确保 Vue 和 Notification 组件已加载
-   */
-  private async ensureVueLoaded(): Promise<boolean> {
-    if (vueModule && NotificationComponent) {
-      return true
-    }
-
-    // Service Worker 环境检查：没有 document
-    if (typeof document === 'undefined' || !isRunningInExtension()) {
-      logger.warn('PageNotificationManager', 'document 不可用（Service Worker 环境）')
-      return false
-    }
-
-    try {
-      // 动态导入 Vue 和 Notification 组件
-      // ⚠️ 只导入 Notification 组件，避免导入整个 @/components（包含 Material Web Components）
-      // eslint-disable-next-line require-atomic-updates -- 模块加载是原子操作，不会有竞态条件
-      vueModule = await import('vue')
-      const notificationModule = await import('@/components/composite/Notification/Notification.vue')
-      // eslint-disable-next-line require-atomic-updates -- 模块加载是原子操作，不会有竞态条件
-      NotificationComponent = notificationModule.default
-      return true
-    } catch (error) {
-      logger.error('PageNotificationManager', 'Vue 或 Notification 组件加载失败', error)
-      return false
-    }
-  }
 
   /**
    * 确保 Notification 组件已挂载到页面
    *
    * 首次调用时创建容器并挂载 Vue 组件
    */
-  private async ensureMounted(): Promise<void> {
+  private ensureMounted(): void {
     if (this.exposed) return
-
-    // 确保 Vue 已加载
-    if (!(await this.ensureVueLoaded())) {
-      return
-    }
 
     // Service Worker 环境检查：没有 document
     if (typeof document === 'undefined' || !isRunningInExtension()) {
@@ -107,13 +69,8 @@ class PageNotificationManager {
       document.body.appendChild(this.container)
     }
 
-    if (!vueModule || !NotificationComponent) {
-      logger.error('PageNotificationManager', 'Vue 或 Notification 组件未加载')
-      return
-    }
-
-    this.app = vueModule.createApp({
-      render: () => vueModule!.h(NotificationComponent as ReturnType<typeof vueModule.defineComponent>, { ref: 'notification' })
+    this.app = createApp({
+      render: () => h(Notification, { ref: 'notification' })
     })
 
     const vm = this.app.mount(this.container)
@@ -130,14 +87,14 @@ class PageNotificationManager {
    * @param opts - 通知显示选项
    * @returns 通知 ID
    */
-  async show(message: string, opts?: ToastShowOptions): Promise<string> {
+  show(message: string, opts?: ToastShowOptions): string {
     // Service Worker 环境检查
     if (typeof document === 'undefined' || !isRunningInExtension()) {
       logger.debug('PageNotificationManager', 'Service Worker 环境，跳过通知显示')
       return ''
     }
 
-    await this.ensureMounted()
+    this.ensureMounted()
 
     if (!this.exposed) {
       logger.warn('PageNotificationManager', 'Notification 未正确初始化')
@@ -159,25 +116,12 @@ class PageNotificationManager {
     const method = methodMap[level] || 'info'
     
     if (typeof this.exposed[method] === 'function') {
-      const notificationConfig: {
-        message: string
-        description?: string
-        duration: number
-        key?: string
-      } = {
+      this.exposed[method]({
         message: opts?.title || message,
-        duration
-      }
-      
-      if (opts?.title) {
-        notificationConfig.description = message
-      }
-      
-      if (opts?.key) {
-        notificationConfig.key = opts.key
-      }
-      
-      this.exposed[method](notificationConfig)
+        description: opts?.title ? message : undefined,
+        duration,
+        key: opts?.key
+      })
     }
 
     return '' // Notification 内部管理 ID
@@ -752,7 +696,7 @@ export class NotificationService {
       }
 
       const level = notification.options.level as ToastLevel
-      await this.pageNotificationManager.show(notification.message, {
+      this.pageNotificationManager.show(notification.message, {
         title: notification.options.title,
         level,
         timeoutMs: notification.options.timeoutMs,

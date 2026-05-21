@@ -14,8 +14,7 @@ export { default as AsyncSearchSelect } from './base/AsyncSearchSelect/AsyncSear
 export { default as Chip } from './base/Chip/Chip.vue'
 export { default as ContextMenu } from './base/ContextMenu/ContextMenu.vue'
 export { default as Input } from './base/Input/Input.vue'
-// ⚠️ Loading 组件不导出到全局，避免 Material Web Components 被打包到 background.js
-// 使用时请直接导入：import { Loading } from '@/components/base/Loading'
+export { default as Loading } from './base/Loading/Loading.vue'
 export { default as LucideIcon } from './base/LucideIcon/LucideIcon.vue'
 export { default as Tooltip } from './base/Tooltip/Tooltip.vue'
 
@@ -63,7 +62,7 @@ export type * from './base/AsyncSearchSelect/AsyncSearchSelect.d'
 export type * from './base/Chip/Chip.d'
 export type * from './base/ContextMenu/ContextMenu.d'
 export type * from './base/Input/Input.d'
-// ⚠️ Loading 类型不导出到全局
+export type * from './base/Loading/Loading.d'
 export type * from './base/Tooltip/Tooltip.d'
 
 // 复合组件类型

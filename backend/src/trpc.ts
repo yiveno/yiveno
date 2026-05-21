@@ -5,7 +5,7 @@ import type { Env } from './types/env'
 /**
  * Creates the context for each request.
  * @param {FetchCreateContextFnOptions} opts - The options for creating the context.
- * @param {Env} env - Cloudflare Workers environment bindings.
+ * @param {Env} env - The environment variables.
  * @returns {object} The context object.
  */
 export function createContext(

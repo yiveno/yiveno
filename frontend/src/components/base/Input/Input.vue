@@ -3,6 +3,9 @@ import { computed, ref } from 'vue'
 import { LucideIcon } from '@/components/base/LucideIcon'
 import { Loading } from '@/components/base/Loading'
 import type { InputProps, InputEmits } from './Input.d'
+import '@material/web/textfield/outlined-text-field.js'
+import '@material/web/textfield/filled-text-field.js'
+import '@material/web/iconbutton/icon-button.js'
 
 defineOptions({ 
   name: 'MdInput'
@@ -13,15 +16,19 @@ const props = withDefaults(defineProps<InputProps>(), {
   variant: 'outlined',
   density: 'default',
   autocomplete: 'off',
+  name: undefined,
   placeholder: '',
   disabled: false,
   readonly: false,
   clearable: false,
+  clearValue: undefined,
+  maxlength: undefined,
   hint: '',
   error: false,
   errorMessage: '',
   size: 'md',
   type: 'text',
+  leadingIcon: undefined,
   leadingIconSize: 20
 })
 

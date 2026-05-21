@@ -179,29 +179,22 @@ export class ContextMenuBuilder {
         icon: 'icon-open-link',
         // shortcut: 'Ctrl+Click',
         action: 'bookmark:open-new-tab',
-        visible: true // ✅ 始终显示
+        visible: config.showOpenNewTabButton || config.editable
       },
       {
         id: 'copy-url',
         label: '复制链接',
         icon: 'icon-link',
         action: 'bookmark:copy-url',
-        visible: true // ✅ 始终显示
+        visible: config.showCopyUrlButton || config.editable
       },
       {
         id: 'favorite',
         label: isFavorited ? '取消收藏' : '收藏',
-        icon: 'star', // ✅ 统一使用 star 图标，通过 color 区分状态
-        color: isFavorited ? 'primary' : 'default', // ✅ 已收藏时使用主题色（薄荷绿），配合 CSS 填充为实心
+        icon: isFavorited ? 'icon-favorite-outline' : 'icon-favorite',
+        color: isFavorited ? 'warning' : 'default',
         action: 'bookmark:toggle-favorite',
         visible: true // ✅ 始终显示收藏选项
-      },
-      {
-        id: 'share',
-        label: '分享书签',
-        icon: 'icon-share',
-        action: 'bookmark:share',
-        visible: config.showShareButton !== false // ✅ 默认显示，除非明确禁用
       },
       {
         id: 'edit',

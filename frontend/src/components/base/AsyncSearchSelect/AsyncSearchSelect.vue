@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, toRef } from 'vue'
+import { ref, computed } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 import { MdInput } from '@/components/base/Input'
 import { LucideIcon } from '@/components'
@@ -15,9 +15,6 @@ const props = withDefaults(defineProps<AsyncSearchSelectProps>(), {
 })
 
 const emit = defineEmits<AsyncSearchSelectEmits>()
-
-// 将 debounce 转换为 ref 以保持响应式
-const debounceDelay = toRef(props, 'debounce')
 
 /**
  * 选项接口
@@ -142,7 +139,7 @@ const handleInput = useDebounceFn(() => {
     options.value = []
     loading.value = false
   }
-}, debounceDelay)
+}, props.debounce)
 
 /**
  * 关闭下拉框

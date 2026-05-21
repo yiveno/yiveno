@@ -142,37 +142,8 @@ export function registerBookmarkChangeListeners(): void {
   // 监听书签移动
   chrome.bookmarks.onMoved.addListener(async (id, _moveInfo) => {
     logger.info('BackgroundBookmarks', '📁 书签已移动:', id)
-    
-    // ✅ 性能优化：区分书签和文件夹移动
-    // - 单个书签移动：只影响自己的 pathIds，使用增量同步（快速）
-    // - 文件夹移动：影响所有子节点的 pathIds，需要全量同步（保证正确性）
-    try {
-      const nodes = await chrome.bookmarks.get(id)
-      const node = nodes[0]
-      
-      if (!node) {
-        logger.warn('BackgroundBookmarks', '⚠️ 无法获取移动的节点信息:', id)
-        // 兜底：使用全量同步保证数据一致性
-        await syncAndBroadcast('moved', id, true)
-        return
-      }
-      
-      const isFolder = !node.url
-      
-      if (isFolder) {
-        // 文件夹移动：影响所有子节点的 pathIds，需要全量同步
-        logger.info('BackgroundBookmarks', '📁 文件夹移动，执行全量同步')
-        await syncAndBroadcast('moved', id, true)
-      } else {
-        // 单个书签移动：只影响自己，使用增量同步（性能提升 40 倍）
-        logger.info('BackgroundBookmarks', '📄 书签移动，执行增量同步')
-        await syncAndBroadcast('moved', id, false)
-      }
-    } catch (error) {
-      logger.error('BackgroundBookmarks', '❌ 判断移动类型失败，回退到全量同步', error)
-      // 异常情况：使用全量同步保证数据一致性
-      await syncAndBroadcast('moved', id, true)
-    }
+    // ⚠️ 移动操作需要全量同步，因为会影响 pathIds、ancestorIds 等层级字段
+    await syncAndBroadcast('moved', id, true)
   })
 
   // 监听书签删除

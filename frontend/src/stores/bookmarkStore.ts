@@ -219,6 +219,7 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
    * @param nodeArray - 要添加的书签节点数组（根节点）
    */
   function addNodes(nodeArray: BookmarkNode[]) {
+    // ✅ 添加数组检查，防止传入非数组数据
     if (!Array.isArray(nodeArray)) {
       logger.error('BookmarkStore', '❌ addNodes收到非数组数据:', nodeArray)
       return
@@ -235,6 +236,7 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
       }))
     })
 
+    // 🆕 如果传入的是根节点数组（树形结构），直接缓存
     if (
       nodeArray.length > 0 &&
       nodeArray.every(n => !n.parentId || n.parentId === '0')
@@ -245,6 +247,7 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
       })
     }
 
+    // 🆕 使用 Immer 不可变更新 nodes 和 childrenIndex
     updateMap(nodes, draftNodes => {
       updateMap(childrenIndex, draftChildrenIndex => {
         nodeArray.forEach(rawNode => {
@@ -279,6 +282,7 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
           }
         })
 
+        // 🆕 递归扁平化所有子节点到 Map
         if (cachedTree.value.length > 0) {
           flattenTreeToMap(cachedTree.value, draftNodes)
         }
@@ -294,11 +298,13 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
    * 重置存储中的所有节点和索引
    */
   function reset() {
+    // ✅ 使用 updateMap 安全地清空 Map（避免 Immer 冻结错误）
     updateMap(nodes, draft => draft.clear())
     updateMap(childrenIndex, draft => draft.clear())
     updateMap(selectedDescCounts, draft => draft.clear())
+    // ✅ Set 类型直接赋值新实例（Vue 会自动检测到变化）
     loadingChildren.value = new Set()
-    cachedTree.value = []
+    cachedTree.value = [] // 🆕 清空缓存的树
     lastUpdated.value = null
   }
 
@@ -347,6 +353,10 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
     }
     return chain
   }
+
+  // ✅ 已移除 getDescendantBookmarksCount 函数
+  // 原因：依赖已废弃的 bookmarksCount 字段，且递归计算成本高
+
   /**
    * 重新计算选中节点的后代书签计数
    *

@@ -11,7 +11,7 @@ SmartRecommendationEngine → 推荐列表 → UI 展示 → 用户交互 → �
 -->
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { Chip, LucideIcon } from '@/components'
+import { Chip, LucideIcon, Loading } from '@/components'
 import {
   type RecommendationOptions,
   type SmartRecommendation,
@@ -110,11 +110,9 @@ async function refreshRecommendations() {
   if (isRefreshing.value) return
 
   try {
-    // eslint-disable-next-line require-atomic-updates -- 刷新状态设置是原子操作，不会有竞态条件
     isRefreshing.value = true
     await loadRecommendations()
   } finally {
-    // eslint-disable-next-line require-atomic-updates -- finally 块中的状态重置是安全的
     isRefreshing.value = false
   }
 }
@@ -123,7 +121,6 @@ async function loadMoreRecommendations() {
   if (isLoadingMore.value) return
 
   try {
-    // eslint-disable-next-line require-atomic-updates -- 加载更多状态设置是原子操作，不会有竞态条件
     isLoadingMore.value = true
     logger.info('Component', '🔄 [SmartRecommendation] 加载更多推荐...')
 
@@ -161,7 +158,6 @@ async function loadMoreRecommendations() {
       error
     )
   } finally {
-    // eslint-disable-next-line require-atomic-updates -- finally 块中的状态重置是安全的
     isLoadingMore.value = false
   }
 }
@@ -541,8 +537,7 @@ defineExpose({
 
   <!-- 加载状态 -->
   <div v-else class="recommendations-loading">
-    <md-circular-progress indeterminate></md-circular-progress>
-    <p class="loading-text">正在分析您的书签使用模式...</p>
+    <Loading size="lg" text="正在分析您的书签使用模式..." />
   </div>
 </template>
 
@@ -787,16 +782,5 @@ defineExpose({
   gap: var(--spacing-3);
   padding: var(--spacing-6) var(--spacing-4);
   text-align: center;
-}
-
-.loading-text {
-  margin: 0;
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
-}
-
-md-circular-progress {
-  --md-circular-progress-size: 32px;
-  --md-circular-progress-active-indicator-color: var(--md-sys-color-primary);
 }
 </style>

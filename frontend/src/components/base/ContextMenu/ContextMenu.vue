@@ -27,7 +27,7 @@ const props = defineProps<Props>()
 
 const emit = defineEmits<{
   /** 菜单项被点击 */
-  itemClick: [item: MenuItemConfig]
+  'item-click': [item: MenuItemConfig]
   /** 关闭菜单 */
   close: []
 }>()
@@ -90,7 +90,7 @@ const menuStyle = computed(() => {
  */
 const handleItemClick = (item: MenuItemConfig) => {
   if (item.disabled) return
-  emit('itemClick', item)
+  emit('item-click', item)
   emit('close')
 }
 
@@ -165,6 +165,9 @@ onUnmounted(() => {
               :name="item.icon"
               :size="16"
               class="context-menu-item__icon"
+              :class="{
+                'context-menu-item__icon--filled': item.icon === 'star' && item.color === 'primary'
+              }"
             />
           </span>
           
@@ -266,6 +269,11 @@ onUnmounted(() => {
 /* 图标 */
 .context-menu-item__icon {
   color: var(--color-text-secondary);
+}
+
+/* ⭐ 实心星标样式（已收藏状态） */
+.context-menu-item__icon--filled {
+  fill: currentColor;
 }
 
 /* 标签文本 */

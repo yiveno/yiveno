@@ -180,10 +180,7 @@ export const useTraitFilterStore = defineStore('traitFilter', () => {
    * 应用筛选（不删除，只筛选）
    */
   async function applyFilters(): Promise<void> {
-    // 保存当前筛选条件的快照，避免 await 期间状态变化
-    const activeFiltersSnapshot = state.value.activeFilters
-    
-    if (activeFiltersSnapshot.length === 0) {
+    if (state.value.activeFilters.length === 0) {
       state.value.filterResults.clear()
       return
     }
@@ -191,7 +188,7 @@ export const useTraitFilterStore = defineStore('traitFilter', () => {
     try {
       // 使用 bookmarkTraitQueryService 查询
       const result = await bookmarkTraitQueryService.queryByTraits(
-        activeFiltersSnapshot,
+        state.value.activeFilters,
         { includeFullRecord: true }
       )
 
@@ -200,11 +197,10 @@ export const useTraitFilterStore = defineStore('traitFilter', () => {
       result.records?.forEach(record => {
         newResults.set(record.id, (record.traitTags || []) as TraitTag[])
       })
-      // eslint-disable-next-line require-atomic-updates
       state.value.filterResults = newResults
 
       logger.debug('TraitFilterStore', '筛选完成', {
-        filters: activeFiltersSnapshot,
+        filters: state.value.activeFilters,
         results: newResults.size
       })
     } catch (error) {

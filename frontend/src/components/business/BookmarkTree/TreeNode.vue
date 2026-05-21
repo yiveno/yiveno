@@ -45,24 +45,24 @@ const props = withDefaults(defineProps<Props>(), {
  * - 与父组件联动，完成节点操作
  */
 const emit = defineEmits<{
-  nodeClick: [node: BookmarkNode, event: MouseEvent]
-  folderToggle: [folderId: string, node: BookmarkNode]
-  nodeSelect: [nodeId: string, node: BookmarkNode]
-  nodeEdit: [node: BookmarkNode]
-  nodeDelete: [node: BookmarkNode]
-  folderAdd: [parentNode: BookmarkNode]
-  bookmarkOpenNewTab: [node: BookmarkNode]
-  bookmarkCopyUrl: [node: BookmarkNode]
-  bookmarkToggleFavorite: [node: BookmarkNode, isFavorite: boolean]
+  'node-click': [node: BookmarkNode, event: MouseEvent]
+  'folder-toggle': [folderId: string, node: BookmarkNode]
+  'node-select': [nodeId: string, node: BookmarkNode]
+  'node-edit': [node: BookmarkNode]
+  'node-delete': [node: BookmarkNode]
+  'folder-add': [parentNode: BookmarkNode]
+  'bookmark-open-new-tab': [node: BookmarkNode]
+  'bookmark-copy-url': [node: BookmarkNode]
+  'bookmark-toggle-favorite': [node: BookmarkNode, isFavorite: boolean]
   // 🆕 节点挂载/卸载事件，用于构建元素注册表以提升滚动性能
-  nodeMounted: [id: string, el: HTMLElement]
-  nodeUnmounted: [id: string]
+  'node-mounted': [id: string, el: HTMLElement]
+  'node-unmounted': [id: string]
   // ✅ 拖拽相关事件
-  dragStart: [node: BookmarkNode]
-  dragOver: [
+  'drag-start': [node: BookmarkNode]
+  'drag-over': [
     data: { node: BookmarkNode; position: 'before' | 'inside' | 'after' }
   ]
-  dragLeave: [node: BookmarkNode]
+  'drag-leave': [node: BookmarkNode]
   drop: [
     data: {
       sourceId: string
@@ -70,11 +70,11 @@ const emit = defineEmits<{
       position: 'before' | 'inside' | 'after'
     }
   ]
-  dragEnd: []
+  'drag-end': []
   /** 分享文件夹 */
   'folder-share': [node: BookmarkNode]
   /** 打开右键菜单 */
-  openContextMenu: [nodeId: string, x: number, y: number]
+  'open-context-menu': [nodeId: string, x: number, y: number]
 }>()
 
 // ✅ i18n 已移除（收藏功能已移至右键菜单，不再需要 tooltip 文本）
@@ -153,7 +153,7 @@ let cleanupDrag: (() => void) | null = null
 
 onMounted(() => {
   if (rootRef.value) {
-    emit('nodeMounted', String(props.node.id), rootRef.value)
+    emit('node-mounted', String(props.node.id), rootRef.value)
   }
 
   // ✅ 启用拖拽功能
@@ -215,11 +215,11 @@ onMounted(() => {
         },
         onDragStart: () => {
           logger.debug('TreeNode', '开始拖拽', { nodeId: props.node.id })
-          emit('dragStart', props.node)
+          emit('drag-start', props.node)
         },
         onDrop: () => {
           logger.debug('TreeNode', '拖拽结束', { nodeId: props.node.id })
-          emit('dragEnd')
+          emit('drag-end')
         }
       }),
 
@@ -298,15 +298,15 @@ onMounted(() => {
             nodeId: props.node.id,
             position
           })
-          emit('dragOver', { node: props.node, position })
+          emit('drag-over', { node: props.node, position })
         },
         onDrag: ({ self }) => {
           const position = self.data.position as 'before' | 'inside' | 'after'
-          emit('dragOver', { node: props.node, position })
+          emit('drag-over', { node: props.node, position })
         },
         onDragLeave: () => {
           logger.debug('TreeNode', '拖拽离开', { nodeId: props.node.id })
-          emit('dragLeave', props.node)
+          emit('drag-leave', props.node)
         },
         onDrop: ({ source, self }) => {
           const sourceId = String(source.data.nodeId)
@@ -327,7 +327,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  emit('nodeUnmounted', String(props.node.id))
+  emit('node-unmounted', String(props.node.id))
   // ✅ 清理拖拽事件监听
   if (cleanupDrag) {
     cleanupDrag()
@@ -514,13 +514,13 @@ const handleFolderToggleClick = (event: MouseEvent) => {
 
   // 如果是文件夹，总是处理展开/收起逻辑
   if (isFolder.value) {
-    emit('nodeClick', props.node, event)
-    emit('folderToggle', props.node.id, props.node)
+    emit('node-click', props.node, event)
+    emit('folder-toggle', props.node.id, props.node)
     return
   }
 
   // 对于非文件夹节点（书签），触发点击事件
-  emit('nodeClick', props.node, event)
+  emit('node-click', props.node, event)
 }
 
 const handleBookmarkClick = (event: MouseEvent) => {
@@ -534,11 +534,11 @@ const handleBookmarkClick = (event: MouseEvent) => {
   }
 
   // ✅ 普通点击：触发 node-click 事件（由父组件决定行为）
-  emit('nodeClick', props.node, event)
+  emit('node-click', props.node, event)
 }
 
 const toggleSelection = () => {
-  emit('nodeSelect', String(props.node.id), props.node)
+  emit('node-select', String(props.node.id), props.node)
 }
 
 // ✅ 收藏功能已移至右键菜单
@@ -549,7 +549,7 @@ const toggleSelection = () => {
 //     `${newFavoriteState ? '⭐ 收藏' : '🗑️ 取消收藏'}书签:`,
 //     props.node.title
 //   )
-//   emit('bookmarkToggleFavorite', props.node, newFavoriteState)
+//   emit('bookmark-toggle-favorite', props.node, newFavoriteState)
 // }
 
 const handleFaviconError = () => {
@@ -558,42 +558,42 @@ const handleFaviconError = () => {
 
 // === 工具函数 ===
 const handleChildNodeClick = (node: BookmarkNode, event: MouseEvent) => {
-  emit('nodeClick', node, event)
+  emit('node-click', node, event)
 }
 
 const handleChildFolderToggle = (folderId: string, node: BookmarkNode) => {
-  emit('folderToggle', folderId, node)
+  emit('folder-toggle', folderId, node)
 }
 
 const handleChildNodeSelect = (nodeId: string, node: BookmarkNode) => {
-  emit('nodeSelect', nodeId, node)
+  emit('node-select', nodeId, node)
 }
 
 const handleChildNodeEdit = (node: BookmarkNode) => {
-  emit('nodeEdit', node)
+  emit('node-edit', node)
 }
 
 const handleChildNodeDelete = (node: BookmarkNode) => {
-  emit('nodeDelete', node)
+  emit('node-delete', node)
 }
 
 const handleChildFolderAdd = (parentNode: BookmarkNode) => {
-  emit('folderAdd', parentNode)
+  emit('folder-add', parentNode)
 }
 
 const handleChildBookmarkOpenNewTab = (node: BookmarkNode) => {
-  emit('bookmarkOpenNewTab', node)
+  emit('bookmark-open-new-tab', node)
 }
 
 const handleChildBookmarkCopyUrl = (node: BookmarkNode) => {
-  emit('bookmarkCopyUrl', node)
+  emit('bookmark-copy-url', node)
 }
 
 const handleChildBookmarkToggleFavorite = (
   node: BookmarkNode,
   isFavorite: boolean
 ) => {
-  emit('bookmarkToggleFavorite', node, isFavorite)
+  emit('bookmark-toggle-favorite', node, isFavorite)
 }
 
 function escapeRegExp(string: string): string {
@@ -631,7 +631,7 @@ const openContextMenu = (event?: Event) => {
   const y = mouseEvent ? mouseEvent.clientY : rect.top + rect.height / 2
 
   // 通知父组件打开菜单
-  emit('openContextMenu', String(props.node.id), x, y)
+  emit('open-context-menu', String(props.node.id), x, y)
   
   logger.debug('TreeNode', '请求打开右键菜单', {
     nodeId: props.node.id,
@@ -794,14 +794,14 @@ defineExpose({
         @bookmark-open-new-tab="handleChildBookmarkOpenNewTab"
         @bookmark-copy-url="handleChildBookmarkCopyUrl"
         @bookmark-toggle-favorite="handleChildBookmarkToggleFavorite"
-        @node-mounted="(id, el) => $emit('nodeMounted', id, el)"
-        @node-unmounted="(id) => $emit('nodeUnmounted', id)"
-        @open-context-menu="(id, x, y) => $emit('openContextMenu', id, x, y)"
-        @drag-start="$emit('dragStart', $event)"
-        @drag-over="$emit('dragOver', $event)"
-        @drag-leave="$emit('dragLeave', $event)"
+        @node-mounted="(id, el) => $emit('node-mounted', id, el)"
+        @node-unmounted="(id) => $emit('node-unmounted', id)"
+        @open-context-menu="(id, x, y) => $emit('open-context-menu', id, x, y)"
+        @drag-start="$emit('drag-start', $event)"
+        @drag-over="$emit('drag-over', $event)"
+        @drag-leave="$emit('drag-leave', $event)"
         @drop="$emit('drop', $event)"
-        @drag-end="$emit('dragEnd')"
+        @drag-end="$emit('drag-end')"
       />
     </div>
   </div>

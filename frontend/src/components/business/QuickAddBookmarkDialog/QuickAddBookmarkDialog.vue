@@ -86,7 +86,7 @@ watch(
  */
 async function loadFolders() {
   try {
-    const treeResponse = await new Promise<{
+    const response = await new Promise<{
       success: boolean
       tree?: chrome.bookmarks.BookmarkTreeNode[]
       error?: string
@@ -105,8 +105,8 @@ async function loadFolders() {
       )
     })
 
-    if (!treeResponse.success || !treeResponse.tree) {
-      throw new Error(treeResponse.error || '获取书签树失败')
+    if (!response.success || !response.tree) {
+      throw new Error(response.error || '获取书签树失败')
     }
 
     const folders: Array<{ label: string; value: string }> = []
@@ -126,7 +126,7 @@ async function loadFolders() {
       }
     }
 
-    traverse(treeResponse.tree)
+    traverse(response.tree)
 
     folderOptions.value = folders
 
@@ -153,7 +153,7 @@ async function getVectorRecommendations() {
   try {
     isLoadingRecommendations.value = true
 
-    const recommendationResponse = await new Promise<{
+    const response = await new Promise<{
       success: boolean
       recommendations?: FolderRecommendation[]
       error?: string
@@ -178,20 +178,20 @@ async function getVectorRecommendations() {
       )
     })
 
-    if (recommendationResponse.success && recommendationResponse.recommendations) {
-      recommendations.value = recommendationResponse.recommendations
+    if (response.success && response.recommendations) {
+      recommendations.value = response.recommendations
 
       logger.info('QuickAddBookmark', '获取到向量推荐', {
-        count: recommendationResponse.recommendations.length,
-        topRecommendation: recommendationResponse.recommendations[0]?.folderPath
+        count: response.recommendations.length,
+        topRecommendation: response.recommendations[0]?.folderPath
       })
 
       // 自动选中最佳推荐
-      if (recommendationResponse.recommendations.length > 0) {
-        selectedFolderId.value = recommendationResponse.recommendations[0].folderId
+      if (response.recommendations.length > 0) {
+        selectedFolderId.value = response.recommendations[0].folderId
       }
     } else {
-      logger.warn('QuickAddBookmark', '向量推荐失败', recommendationResponse.error)
+      logger.warn('QuickAddBookmark', '向量推荐失败', response.error)
     }
   } catch (error) {
     logger.error('QuickAddBookmark', '向量推荐失败', error)

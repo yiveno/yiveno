@@ -16,9 +16,9 @@ const expandedItems = ref<Set<string>>(new Set())
 // 初始化默认展开项
 if (props.defaultExpanded) {
   if (Array.isArray(props.defaultExpanded)) {
-    expandedItems.value = new Set(props.defaultExpanded)
+    props.defaultExpanded.forEach(id => expandedItems.value.add(id))
   } else {
-    expandedItems.value = new Set([props.defaultExpanded])
+    expandedItems.value.add(props.defaultExpanded)
   }
 }
 

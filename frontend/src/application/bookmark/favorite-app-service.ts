@@ -12,6 +12,8 @@ import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
 import type { BookmarkRecord } from '@/infrastructure/indexeddb/schema'
 import { logger } from '@/infrastructure/logging/logger'
 import { chromeStorage } from '@/infrastructure/storage/chrome-storage'
+// ✅ 已移除 Event Bus 依赖，统一使用 Pinia 响应式 + 跨页面 storage 广播
+// ⚠️ useBookmarkStore 不能静态导入，因为此文件会在 Service Worker 中运行
 
 /**
  * 收藏书签项
@@ -61,6 +63,8 @@ class FavoriteAppService {
   /**
    * 同步 IndexedDB 和 chrome.storage.local 的收藏数据
    * 启动时调用，确保数据一致性
+   * 
+   * ⚠️ 性能优化：不加载所有书签，只查询收藏状态，避免内存溢出
    */
   async syncFavoriteData(): Promise<void> {
     try {
@@ -79,6 +83,7 @@ class FavoriteAppService {
       })
 
       // 2. 逐个检查 storage 中的书签是否在 DB 中标记为收藏
+      // ✅ 优化：只查询需要的书签，不加载所有书签
       const toMarkAsFavorite: string[] = []
       
       for (const bookmarkId of idsInStorage) {
@@ -129,6 +134,9 @@ class FavoriteAppService {
 
       logger.info('FavoriteAppService', '✅ 收藏数据恢复完成')
 
+      // 5. ✅ 优化：批量更新后，只重新加载一次数据，避免多次触发 updateNode
+      // ⚠️ 只在浏览器环境中更新 bookmarkStore，Service Worker 中跳过
+      // ⚠️ 使用 self 检查是否在 Service Worker 环境中
       const isServiceWorker = typeof self !== 'undefined' && 'ServiceWorkerGlobalScope' in self
       
       if (!isServiceWorker && typeof window !== 'undefined' && typeof document !== 'undefined') {
@@ -136,9 +144,12 @@ class FavoriteAppService {
           const { useBookmarkStore } = await import('@/stores/bookmarkStore')
           const bookmarkStore = useBookmarkStore()
           
+          // ✅ 重新加载整个数据集，而不是逐个更新节点
+          // 这样可以避免多次递归遍历树结构，提升性能
           logger.info('FavoriteAppService', '🔄 重新加载书签数据以应用收藏状态')
           await bookmarkStore.loadFromIndexedDB()
         } catch (error) {
+          // 在 background script 中，store 可能未初始化，这是正常的
           logger.debug('FavoriteAppService', 'bookmarkStore 未初始化（background 环境）', error)
         }
       } else {
@@ -301,12 +312,10 @@ class FavoriteAppService {
       // 更新书签数据到 IndexedDB
       const updatedBookmark: BookmarkRecord = {
         ...bookmark,
-        isFavorite: false
+        isFavorite: false,
+        favoriteOrder: undefined,
+        favoritedAt: undefined
       }
-      
-      // 删除可选属性
-      delete updatedBookmark.favoriteOrder
-      delete updatedBookmark.favoritedAt
 
       await indexedDBManager.updateBookmark(updatedBookmark)
 
@@ -324,10 +333,11 @@ class FavoriteAppService {
         try {
           const { useBookmarkStore } = await import('@/stores/bookmarkStore')
           const bookmarkStore = useBookmarkStore()
-          const updates: Partial<BookmarkNode> = {
-            isFavorite: false
-          }
-          bookmarkStore.updateNode(bookmarkId, updates)
+          bookmarkStore.updateNode(bookmarkId, {
+            isFavorite: false,
+            favoriteOrder: undefined,
+            favoritedAt: undefined
+          })
         } catch (error) {
           logger.warn('FavoriteAppService', '更新 bookmarkStore 失败（非致命错误）', error)
         }

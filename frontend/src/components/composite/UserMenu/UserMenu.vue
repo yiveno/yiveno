@@ -42,7 +42,7 @@ const displayName = computed(() => {
 const avatarUrl = computed(() => {
   if (!user.value) return undefined
   const meta = user.value.user_metadata
-  return meta?.avatar_url || meta?.picture || meta?.avatar || meta?.photo
+  return meta?.avatar_url || meta?.picture || meta?.avatar || meta?.photo || undefined
 })
 
 /** 头像首字母（仅登录时使用） */
@@ -124,7 +124,6 @@ async function handleLogin() {
 async function handleLogout() {
   if (isLoggingOut.value) return
   try {
-    // eslint-disable-next-line require-atomic-updates -- 退出登录状态设置是原子操作，不会有竞态条件
     isLoggingOut.value = true
     await signOut()
     emitEvent('auth:logged-out', {})
@@ -132,7 +131,6 @@ async function handleLogout() {
   } catch (error) {
     logger.error('UserMenu', '退出登录失败', error)
   } finally {
-    // eslint-disable-next-line require-atomic-updates -- finally 块中的状态重置是安全的
     isLoggingOut.value = false
   }
 }

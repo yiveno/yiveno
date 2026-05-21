@@ -135,7 +135,10 @@ import {
   Glasses,
   NotebookTabs,
   AppWindow,
-  Palette
+  Palette,
+  // 分享相关
+  Send,
+  Image
 } from 'lucide-vue-next'
 
 /**
@@ -313,7 +316,11 @@ export const lucideIcons: Record<string, Component> = {
   /** 浏览器 / 窗口 / 标签组（右键菜单等） */
   'glasses': Glasses,
   'notebook-tabs': NotebookTabs,
-  'app-window': AppWindow
+  'app-window': AppWindow,
+  
+  // 分享相关
+  'send': Send,
+  'image': Image
 }
 
 /**
@@ -382,6 +389,7 @@ export const materialToLucideMap: Record<string, string> = {
   
   // 分享
   'icon-share': 'external-link',
+  'icon-link': 'link',
 
   /** 文件夹「打开全部」等菜单（原 Material 名 → Lucide 键） */
   'icon-incognito': 'glasses',

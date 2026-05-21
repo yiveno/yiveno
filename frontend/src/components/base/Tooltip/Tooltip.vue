@@ -22,7 +22,7 @@ const { start: startShowTimer, stop: stopShowTimer } = useTimeoutFn(
       show.value = true
     }
   },
-  () => props.delay ?? 200,
+  props.delay,
   { immediate: false }
 )
 

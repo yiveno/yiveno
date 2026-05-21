@@ -288,8 +288,8 @@ const initializeTheme = async () => {
 
       // 应用主题
       if (savedTheme === 'system') {
-        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-        applyTheme(systemPrefersDark ? 'dark' : 'light')
+        const systemIsDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+        applyTheme(systemIsDark ? 'dark' : 'light')
       } else {
         applyTheme(savedTheme)
       }
@@ -342,11 +342,12 @@ onUnmounted(() => {
       id="theme-toggle-anchor"
       ref="toggleBtnRef"
       class="theme-toggle__button"
+      :style="{ '--md-icon-button-icon-size': '30px' }"
       :title="currentThemeLabel"
       :aria-label="currentThemeLabel"
       @click="showMenu = !showMenu"
     >
-      <LucideIcon :name="currentThemeIconLucide" :size="20" />
+      <LucideIcon :name="currentThemeIconLucide" :size="30" />
     </md-icon-button>
 
     <!-- Material Design 3 Menu -->

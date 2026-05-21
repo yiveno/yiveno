@@ -86,19 +86,19 @@ const tabsI18n = computed(() =>
 
 /** 与 `md-tabs.activeTabIndex` 对齐的当前索引（Material Web 使用 0-based） */
 const tabsActiveIndex = computed(() => {
-  const i = tabs.findIndex(tabItem => tabItem.value === tab.value)
+  const i = tabs.findIndex(t => t.value === tab.value)
   return i >= 0 ? i : 0
 })
 
 /** 当前 tab 的标题 */
 const currentTabTitle = computed(() => {
-  const currentTab = tabs.find(tabItem => tabItem.value === tab.value)
+  const currentTab = tabs.find(t => t.value === tab.value)
   return currentTab ? tf(currentTab.key, currentTab.fallback) : ''
 })
 
 /** 当前 tab 的图标 */
 const currentTabIcon = computed(() => {
-  const currentTab = tabs.find(tabItem => tabItem.value === tab.value)
+  const currentTab = tabs.find(t => t.value === tab.value)
   return currentTab?.icon || 'settings'
 })
 
@@ -144,6 +144,7 @@ useThemeSync('Settings')
 
 function readTabFromURL(): TabKey | null {
   try {
+    // 🔒 环境检查：确保在浏览器环境中运行
     if (typeof window === 'undefined') {
       return null
     }
@@ -166,6 +167,7 @@ function readTabFromURL(): TabKey | null {
 
 function writeTabToURL(v: TabKey) {
   try {
+    // 🔒 环境检查：确保在浏览器环境中运行
     if (typeof window === 'undefined') {
       return
     }
@@ -183,8 +185,8 @@ function writeTabToURL(v: TabKey) {
 }
 
 function syncFromURL() {
-  const tabFromURL = readTabFromURL()
-  if (tabFromURL && tabFromURL !== tab.value) tab.value = tabFromURL
+  const t = readTabFromURL()
+  if (t && t !== tab.value) tab.value = t
 }
 
 let unsubscribeLogin: (() => void) | null = null
@@ -223,6 +225,7 @@ onMounted(async () => {
   syncMdTabsActiveIndex()
 
   // 监听浏览器前进/后退
+  // 🔒 环境检查：确保在浏览器环境中运行
   if (typeof window !== 'undefined') {
     window.addEventListener('popstate', syncFromURL)
     window.addEventListener('hashchange', syncFromURL)
@@ -244,6 +247,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  // 🔒 环境检查：确保在浏览器环境中运行
   if (typeof window !== 'undefined') {
     window.removeEventListener('popstate', syncFromURL)
     window.removeEventListener('hashchange', syncFromURL)
@@ -261,8 +265,10 @@ watch(tab, v => {
 
 <template>
   <div class="settings-page app-container">
+    <!-- 📊 全局书签同步进度对话框 -->
     <GlobalSyncProgress />
 
+    <!-- ⚡ 全局快速添加书签对话框 -->
     <GlobalQuickAddBookmark />
 
     <AppHeader
