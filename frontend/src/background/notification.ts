@@ -14,13 +14,13 @@ import { logger } from '@/infrastructure/logging/logger'
  */
 export interface SystemNotificationOptions {
   /** 通知标题（默认：AcuityBookmarks） */
-  title?: string
+  title?: string | undefined
   /** 通知图标 URL */
-  iconUrl?: string
+  iconUrl?: string | undefined
   /** 是否需要用户交互才关闭 */
-  requireInteraction?: boolean
+  requireInteraction?: boolean | undefined
   /** 自动关闭时间（毫秒），0 表示不自动关闭 */
-  autoCloseMs?: number
+  autoCloseMs?: number | undefined
 }
 
 /**

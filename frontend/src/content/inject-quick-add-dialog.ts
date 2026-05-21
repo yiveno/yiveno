@@ -645,6 +645,8 @@ function createNativeStyleDialog(data: {
         const recItems = recommendationsList.querySelectorAll('button')
         recItems.forEach((item, idx) => {
           const rec = recommendations[idx]
+          if (!rec) return
+
           const icon = item.querySelector('[data-icon="folder"]')
           if (rec.folderId === selectedFolderId) {
             item.style.borderColor = '#137333'
@@ -662,8 +664,11 @@ function createNativeStyleDialog(data: {
 
       // 自动选中最佳推荐
       if (!selectedFolderId) {
-        setSelectedFolderId(recommendations[0].folderId)
-        selectedFolderId = recommendations[0].folderId
+        const firstRecommendation = recommendations[0]
+        if (firstRecommendation) {
+          setSelectedFolderId(firstRecommendation.folderId)
+          selectedFolderId = firstRecommendation.folderId
+        }
       }
       updateRecommendationStyles()
     } else {
@@ -959,8 +964,8 @@ function createNativeStyleDialog(data: {
         // 插入到名称输入框下方
         nameGroup.appendChild(duplicateWarningDiv)
         log('warn', '检测到重复书签', {
-          count: response.existingBookmarks.length,
-          bookmarks: response.existingBookmarks
+          count: duplicateCheckResponse.existingBookmarks.length,
+          bookmarks: duplicateCheckResponse.existingBookmarks
         })
       } else if (duplicateWarningDiv) {
         duplicateWarningDiv.remove()

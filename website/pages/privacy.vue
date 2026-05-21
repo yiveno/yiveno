@@ -1,3 +1,14 @@
+<script setup lang="ts">
+const lastUpdated = '2025年1月21日'
+
+useSeoMeta({
+  title: '隐私政策 - AcuityBookmarks',
+  description: 'AcuityBookmarks 隐私政策，了解我们如何收集、使用和保护您的个人信息。',
+  ogTitle: '隐私政策 - AcuityBookmarks',
+  ogDescription: 'AcuityBookmarks 隐私政策，了解我们如何收集、使用和保护您的个人信息。'
+})
+</script>
+
 <template>
   <div class="min-h-screen bg-gray-50 py-12">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -169,14 +180,3 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-const lastUpdated = '2025年1月21日'
-
-useSeoMeta({
-  title: '隐私政策 - AcuityBookmarks',
-  description: 'AcuityBookmarks 隐私政策，了解我们如何收集、使用和保护您的个人信息。',
-  ogTitle: '隐私政策 - AcuityBookmarks',
-  ogDescription: 'AcuityBookmarks 隐私政策，了解我们如何收集、使用和保护您的个人信息。'
-})
-</script>

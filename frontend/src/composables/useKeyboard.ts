@@ -8,23 +8,23 @@ export interface KeyboardShortcut {
   /** 按键（小写），如 'a', 'enter', 'escape' */
   key: string
   /** 是否需要 Ctrl/Cmd 键 */
-  ctrl?: boolean
+  ctrl?: boolean | undefined
   /** 是否需要 Alt 键 */
-  alt?: boolean
+  alt?: boolean | undefined
   /** 是否需要 Shift 键 */
-  shift?: boolean
+  shift?: boolean | undefined
   /** 是否需要 Meta 键（Mac Command / Windows 键） */
-  meta?: boolean
+  meta?: boolean | undefined
   /** 回调函数 */
   handler: (event: KeyboardEvent) => void
   /** 是否阻止默认行为（默认 true） */
-  preventDefault?: boolean
+  preventDefault?: boolean | undefined
   /** 是否阻止事件冒泡（默认 false） */
-  stopPropagation?: boolean
+  stopPropagation?: boolean | undefined
   /** 描述（用于调试和文档） */
-  description?: string
+  description?: string | undefined
   /** 是否在输入元素中也触发（默认 false） */
-  allowInInput?: boolean
+  allowInInput?: boolean | undefined
 }
 
 /**
@@ -32,13 +32,13 @@ export interface KeyboardShortcut {
  */
 export interface UseKeyboardOptions {
   /** 是否全局监听（默认 true） */
-  global?: boolean
+  global?: boolean | undefined
   /** 目标元素（如果不是全局监听） */
-  target?: Ref<HTMLElement | null> | HTMLElement | null
+  target?: Ref<HTMLElement | null> | HTMLElement | null | undefined
   /** 是否启用（默认 true） */
-  enabled?: Ref<boolean> | boolean
+  enabled?: Ref<boolean> | boolean | undefined
   /** 是否在输入元素中禁用快捷键（默认 true） */
-  disableInInput?: boolean
+  disableInInput?: boolean | undefined
 }
 
 /**

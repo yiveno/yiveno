@@ -1,3 +1,38 @@
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+
+const { user, isAuthenticated, initialize } = useAuth()
+const config = useRuntimeConfig()
+
+const supabaseUrl = computed(() => config.public.supabaseUrl)
+const isConfigured = computed(() => isSupabaseConfigured())
+const currentOrigin = computed(() => typeof window !== 'undefined' ? window.location.origin : '')
+const callbackUrl = computed(() => `${currentOrigin.value}/auth/callback`)
+const testResult = ref('')
+
+onMounted(() => {
+  initialize()
+})
+
+const simulateOAuthCallback = () => {
+  testResult.value = '模拟回调功能开发中...'
+  
+  // 模拟跳转到回调页面
+  const mockTokens = {
+    access_token: 'mock_access_token_' + Date.now(),
+    refresh_token: 'mock_refresh_token_' + Date.now()
+  }
+  
+  const simulatedCallbackUrl = `/auth/callback#access_token=${mockTokens.access_token}&refresh_token=${mockTokens.refresh_token}`
+  
+  testResult.value = `✅ 模拟回调 URL 生成成功！\n即将跳转到: ${simulatedCallbackUrl}`
+  
+  setTimeout(() => {
+    navigateTo(simulatedCallbackUrl)
+  }, 2000)
+}
+</script>
+
 <template>
   <div class="test-auth-page">
     <div class="test-container">
@@ -64,41 +99,6 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-
-const { user, isAuthenticated, initialize } = useAuth()
-const config = useRuntimeConfig()
-
-const supabaseUrl = computed(() => config.public.supabaseUrl)
-const isConfigured = computed(() => isSupabaseConfigured())
-const currentOrigin = computed(() => typeof window !== 'undefined' ? window.location.origin : '')
-const callbackUrl = computed(() => `${currentOrigin.value}/auth/callback`)
-const testResult = ref('')
-
-onMounted(() => {
-  initialize()
-})
-
-const simulateOAuthCallback = () => {
-  testResult.value = '模拟回调功能开发中...'
-  
-  // 模拟跳转到回调页面
-  const mockTokens = {
-    access_token: 'mock_access_token_' + Date.now(),
-    refresh_token: 'mock_refresh_token_' + Date.now()
-  }
-  
-  const callbackUrl = `/auth/callback#access_token=${mockTokens.access_token}&refresh_token=${mockTokens.refresh_token}`
-  
-  testResult.value = `✅ 模拟回调 URL 生成成功！\n即将跳转到: ${callbackUrl}`
-  
-  setTimeout(() => {
-    navigateTo(callbackUrl)
-  }, 2000)
-}
-</script>
 
 <style scoped>
 .test-auth-page {

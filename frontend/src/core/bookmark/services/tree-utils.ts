@@ -69,6 +69,8 @@ export function removeNodeById<T extends GenericTreeNode>(
 ): boolean {
   for (let i = 0; i < nodes.length; i++) {
     const n = nodes[i]
+    if (!n) continue
+
     if (n.id === id) {
       nodes.splice(i, 1)
       return true

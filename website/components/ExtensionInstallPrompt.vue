@@ -1,3 +1,38 @@
+<script setup lang="ts">
+import { chromeStoreUrls } from '~/config/external-links'
+
+interface Props {
+  /** 标题 */
+  title?: string
+  /** 描述文字 */
+  description?: string
+  /** 按钮文字 */
+  buttonText?: string
+  /** 图标 emoji */
+  icon?: string
+  /** 是否显示安装步骤 */
+  showSteps?: boolean
+  /** 安装后的提示文字 */
+  afterInstallText?: string
+  /** 样式变体 */
+  variant?: 'default' | 'compact'
+}
+
+withDefaults(defineProps<Props>(), {
+  title: '安装 AcuityBookmarks 扩展',
+  description: '安装扩展后，您可以一键导入书签到您的 Chrome 浏览器',
+  buttonText: '前往 Chrome 商店安装',
+  icon: '🚀',
+  showSteps: true,
+  afterInstallText: '刷新本页面即可使用',
+  variant: 'default'
+})
+
+const extensionLink = chromeStoreUrls.extension
+
+const buttonAriaLabel = `在新标签页中打开 Chrome 网上应用店安装 AcuityBookmarks 扩展`
+</script>
+
 <template>
   <div class="extension-install-prompt" :class="variant">
     <div class="prompt-content">
@@ -35,41 +70,6 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { chromeStoreUrls } from '~/config/external-links'
-
-interface Props {
-  /** 标题 */
-  title?: string
-  /** 描述文字 */
-  description?: string
-  /** 按钮文字 */
-  buttonText?: string
-  /** 图标 emoji */
-  icon?: string
-  /** 是否显示安装步骤 */
-  showSteps?: boolean
-  /** 安装后的提示文字 */
-  afterInstallText?: string
-  /** 样式变体 */
-  variant?: 'default' | 'compact'
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  title: '安装 AcuityBookmarks 扩展',
-  description: '安装扩展后，您可以一键导入书签到您的 Chrome 浏览器',
-  buttonText: '前往 Chrome 商店安装',
-  icon: '🚀',
-  showSteps: true,
-  afterInstallText: '刷新本页面即可使用',
-  variant: 'default'
-})
-
-const extensionLink = chromeStoreUrls.extension
-
-const buttonAriaLabel = `在新标签页中打开 Chrome 网上应用店安装 AcuityBookmarks 扩展`
-</script>
 
 <style scoped>
 .extension-install-prompt {

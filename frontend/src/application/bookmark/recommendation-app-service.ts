@@ -56,9 +56,9 @@ export interface SmartRecommendation {
   id: string
   title: string
   url: string
-  dateAdded?: number
-  dateLastUsed?: number
-  parentId?: string
+  dateAdded?: number | undefined
+  dateLastUsed?: number | undefined
+  parentId?: string | undefined
 
   // 推荐相关信息
   recommendationScore: number // 推荐分数 (0-100)
@@ -69,8 +69,8 @@ export interface SmartRecommendation {
   // 使用统计
   visitCount: number
   recentVisitCount: number // 最近访问次数
-  lastVisitTime?: number
-  averageVisitInterval?: number // 平均访问间隔(天)
+  lastVisitTime?: number | undefined
+  averageVisitInterval?: number | undefined // 平均访问间隔(天)
 
   // 上下文信息
   contextScore: number // 上下文相关性分数
@@ -79,10 +79,10 @@ export interface SmartRecommendation {
   similarityScore: number // 相似度分数
 
   // 元数据
-  domain?: string
-  category?: string
-  tags?: string[]
-  path?: string[]
+  domain?: string | undefined
+  category?: string | undefined
+  tags?: string[] | undefined
+  path?: string[] | undefined
 }
 
 export type RecommendationType =
@@ -105,9 +105,9 @@ export interface RecommendationContext {
   currentTime: number
   currentHour: number
   currentDayOfWeek: number
-  currentUrl?: string
-  currentDomain?: string
-  currentPageTitle?: string
+  currentUrl?: string | undefined
+  currentDomain?: string | undefined
+  currentPageTitle?: string | undefined
   recentSearches: string[]
   recentBookmarks: string[]
   userBehaviorPattern: UserBehaviorPattern
@@ -158,13 +158,13 @@ export interface RecommendationStats {
 }
 
 export interface RecommendationOptions {
-  maxResults?: number // 最大推荐数量，默认10
-  minConfidence?: number // 最低置信度，默认0.3
-  includeRecentOnly?: boolean // 是否只包含最近访问，默认false
-  contextWeight?: number // 上下文权重，默认0.3
-  diversityFactor?: number // 多样性因子，默认0.2
-  excludeTypes?: RecommendationType[] // 排除的推荐类型
-  userContext?: Partial<RecommendationContext> // 用户上下文
+  maxResults?: number | undefined // 最大推荐数量，默认10
+  minConfidence?: number | undefined // 最低置信度，默认0.3
+  includeRecentOnly?: boolean | undefined // 是否只包含最近访问，默认false
+  contextWeight?: number | undefined // 上下文权重，默认0.3
+  diversityFactor?: number | undefined // 多样性因子，默认0.2
+  excludeTypes?: RecommendationType[] | undefined // 排除的推荐类型
+  userContext?: Partial<RecommendationContext> | undefined // 用户上下文
 }
 
 // ==================== 智能推荐引擎主类 ====================
@@ -1290,7 +1290,7 @@ export class SmartRecommendationEngine {
       .slice(0, Math.ceil(days.size * 0.6))
       .map(([day]) => day)
 
-    const peakHour = sortedHours.length > 0 ? sortedHours[0] : 14 // 默认下午2点
+    const peakHour = sortedHours[0] ?? 14 // 默认下午2点
 
     return {
       activeHours: sortedHours,
@@ -1769,9 +1769,13 @@ export class SmartRecommendationEngine {
                       )
 
                       // 🔄 记录相同URL的书签复用情况
+                      const sameUrlBookmarks = urlGrouping[bookmark.url!]
+                      if (!sameUrlBookmarks) {
+                        return
+                      }
                       await this.propagateEnhancementToSameUrl(
                         null,
-                        urlGrouping[bookmark.url!]
+                        sameUrlBookmarks
                       )
                     } catch (error) {
                       logger.warn(
@@ -1821,10 +1825,12 @@ export class SmartRecommendationEngine {
 
     for (const bookmark of bookmarks) {
       if (bookmark.url) {
-        if (!urlGroups[bookmark.url]) {
-          urlGroups[bookmark.url] = []
+        const existingGroup = urlGroups[bookmark.url]
+        if (existingGroup) {
+          existingGroup.push(bookmark)
+        } else {
+          urlGroups[bookmark.url] = [bookmark]
         }
-        urlGroups[bookmark.url].push(bookmark)
       }
     }
 
@@ -1842,7 +1848,10 @@ export class SmartRecommendationEngine {
     for (const [url, bookmarksGroup] of Object.entries(urlGroups)) {
       if (bookmarksGroup.length === 1) {
         // 只有一个书签，直接选择
-        representatives.push(bookmarksGroup[0])
+        const firstBookmark = bookmarksGroup[0]
+        if (firstBookmark) {
+          representatives.push(firstBookmark)
+        }
       } else {
         // 有多个书签，选择最优质的一个
         const bestBookmark = bookmarksGroup.slice().sort((a, b) => {
@@ -1863,6 +1872,9 @@ export class SmartRecommendationEngine {
           return dateAddedB - dateAddedA
         })[0]
 
+        if (!bestBookmark) {
+          continue
+        }
         representatives.push(bestBookmark)
         logger.info(
           'SmartEnhancer',

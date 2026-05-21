@@ -8,8 +8,8 @@ export type SimpleBookmarkTreeSelectable = boolean | 'single' | 'multiple'
 
 export interface SimpleBookmarkTreeVirtualOptions {
   enabled: boolean
-  itemHeight?: number
-  threshold?: number
+  itemHeight?: number | undefined
+  threshold?: number | undefined
 }
 
 // ✅ defineExpose 暴露给父组件的能力集合
@@ -23,9 +23,9 @@ export interface SimpleBookmarkTreeExpose {
     id: string,
     options?: {
       scrollIntoView?: boolean
-      collapseOthers?: boolean
-      scrollIntoViewCenter?: boolean
-      pathIds?: string[]
+      collapseOthers?: boolean | undefined
+      scrollIntoViewCenter?: boolean | undefined
+      pathIds?: string[] | undefined
     }
   ): Promise<void>
   activeNodeId: string | undefined
@@ -42,22 +42,22 @@ export interface SimpleBookmarkTreeExpose {
 
 // ✅ 组件 Props：中文注释解释业务语义
 export interface SimpleBookmarkTreeProps {
-  nodes?: BookmarkNode[]
-  loading?: boolean
-  height?: string | number
-  searchable?: boolean
-  selectable?: SimpleBookmarkTreeSelectable
-  editable?: boolean
-  strictChromeOrder?: boolean
-  virtual?: boolean | SimpleBookmarkTreeVirtualOptions
-  size?: 'compact' | 'comfortable' | 'spacious'
-  showToolbar?: boolean
-  toolbarExpandCollapse?: boolean
-  source?: SimpleBookmarkTreeSource
-  highlightMatches?: boolean
-  showSelectionCheckbox?: boolean
-  loadingChildren?: Set<string>
-  selectedDescCounts?: Map<string, number>
+  nodes?: BookmarkNode[] | undefined
+  loading?: boolean | undefined
+  height?: string | number | undefined
+  searchable?: boolean | undefined
+  selectable?: SimpleBookmarkTreeSelectable | undefined
+  editable?: boolean | undefined
+  strictChromeOrder?: boolean | undefined
+  virtual?: boolean | SimpleBookmarkTreeVirtualOptions | undefined
+  size?: 'compact' | 'comfortable' | 'spacious' | undefined
+  showToolbar?: boolean | undefined
+  toolbarExpandCollapse?: boolean | undefined
+  source?: SimpleBookmarkTreeSource | undefined
+  highlightMatches?: boolean | undefined
+  showSelectionCheckbox?: boolean | undefined
+  loadingChildren?: Set<string> | undefined
+  selectedDescCounts?: Map<string, number> | undefined
 }
 
 // ✅ 组件 Emits：列出所有事件供 TS 推断

@@ -1,3 +1,76 @@
+<script setup lang="ts">
+import { TrendingUp, CheckCircle, AlertCircle, Users } from 'lucide-vue-next'
+import Button from '@/components/ui/Button.vue'
+import Card from '@/components/ui/Card.vue'
+import Badge from '@/components/ui/Badge.vue'
+
+const { loading, error, success, submitFeatureRequest } = useFeatureRequest()
+
+const form = reactive({
+  email: '',
+  feature: '',
+  description: '',
+  url: ''
+})
+
+const handleSubmit = async () => {
+  try {
+    await submitFeatureRequest(form)
+    // 重置 reactive 表单字段是顺序执行的，ESLint 在这里会误报 require-atomic-updates
+    // eslint-disable-next-line require-atomic-updates
+    form.email = ''
+    // eslint-disable-next-line require-atomic-updates
+    form.feature = ''
+    // eslint-disable-next-line require-atomic-updates
+    form.description = ''
+  } catch (_err) {
+    // handled already
+  }
+}
+
+const statusList = [
+  { label: '本周票数最高', value: 'AI 自动标签' },
+  { label: '下一版本', value: '团队权限 / SSO' },
+  { label: '正在研发', value: '侧边栏上下文推荐' }
+]
+
+const popularRequests = [
+  {
+    title: 'AI 自动标签',
+    description: '根据书签内容自动生成和推荐标签，减少手动分类工作。',
+    votes: 156,
+    status: 'In Progress',
+    quarter: '2025 Q1'
+  },
+  {
+    title: '团队协作空间',
+    description: '支持创建团队工作区，共享书签集合和标签体系。',
+    votes: 98,
+    status: 'Planned',
+    quarter: '2025 Q2'
+  },
+  {
+    title: '浏览器历史集成',
+    description: '将浏览历史与书签结合，提供更智能的推荐。',
+    votes: 87,
+    status: 'Planned',
+    quarter: '2025 Q2'
+  },
+  {
+    title: 'Markdown 笔记',
+    description: '为每个书签添加 Markdown 格式的笔记和注释。',
+    votes: 72,
+    status: 'Under Review',
+    quarter: 'TBD'
+  }
+]
+
+useSeoMeta({
+  title: '新功能预约 - AcuityBookmarks',
+  description: '提交或投票你想要的功能，我们会同步在路线图中显示进度。'
+})
+</script>
+
 <template>
   <div class="min-h-screen pb-20">
     <!-- Hero Section -->
@@ -66,7 +139,7 @@
             </p>
           </div>
 
-          <form @submit.prevent="handleSubmit" class="space-y-6">
+          <form class="space-y-6" @submit.prevent="handleSubmit">
             <div>
               <label for="email" class="block text-sm font-bold mb-2"
                 >邮箱 *</label
@@ -183,75 +256,6 @@
     </section>
   </div>
 </template>
-
-<script setup lang="ts">
-import { TrendingUp, CheckCircle, AlertCircle, Users } from 'lucide-vue-next'
-import Button from '@/components/ui/Button.vue'
-import Card from '@/components/ui/Card.vue'
-import Badge from '@/components/ui/Badge.vue'
-
-const { loading, error, success, submitFeatureRequest } = useFeatureRequest()
-
-const form = reactive({
-  email: '',
-  feature: '',
-  description: '',
-  url: ''
-})
-
-const handleSubmit = async () => {
-  try {
-    await submitFeatureRequest(form)
-    form.email = ''
-    form.feature = ''
-    form.description = ''
-  } catch (err) {
-    // handled already
-  }
-}
-
-const statusList = [
-  { label: '本周票数最高', value: 'AI 自动标签' },
-  { label: '下一版本', value: '团队权限 / SSO' },
-  { label: '正在研发', value: '侧边栏上下文推荐' }
-]
-
-const popularRequests = [
-  {
-    title: 'AI 自动标签',
-    description: '根据书签内容自动生成和推荐标签，减少手动分类工作。',
-    votes: 156,
-    status: 'In Progress',
-    quarter: '2025 Q1'
-  },
-  {
-    title: '团队协作空间',
-    description: '支持创建团队工作区，共享书签集合和标签体系。',
-    votes: 98,
-    status: 'Planned',
-    quarter: '2025 Q2'
-  },
-  {
-    title: '浏览器历史集成',
-    description: '将浏览历史与书签结合，提供更智能的推荐。',
-    votes: 87,
-    status: 'Planned',
-    quarter: '2025 Q2'
-  },
-  {
-    title: 'Markdown 笔记',
-    description: '为每个书签添加 Markdown 格式的笔记和注释。',
-    votes: 72,
-    status: 'Under Review',
-    quarter: 'TBD'
-  }
-]
-
-useSeoMeta({
-  title: '新功能预约 - AcuityBookmarks',
-  description: '提交或投票你想要的功能，我们会同步在路线图中显示进度。'
-})
-</script>
 
 <style scoped>
 .fade-enter-active,

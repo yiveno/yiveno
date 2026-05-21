@@ -50,11 +50,18 @@
     "test:be": "bunx turbo run test --filter=backend",
     
     "typecheck": "bunx turbo run typecheck",
+    "typecheck:fe": "bunx turbo run typecheck --filter=frontend",
+    "typecheck:be": "bunx turbo run typecheck --filter=backend",
+    "typecheck:web": "bunx turbo run typecheck --filter=acuitybookmarks-website",
+    "typecheck:strict": "bunx turbo run typecheck:force --filter=frontend --filter=backend --filter=acuitybookmarks-website",
     "build:color-presets": "bun scripts/build-material-color-presets.mjs",
-    "lint": "bun ./scripts/smart-lint.mjs",
-    "format": "bunx prettier --write \"**/*.{js,ts,json,md,vue}\"",
-    "stylelint": "bunx turbo run stylelint --filter=frontend",
-    "stylelint:fix": "bunx turbo run stylelint:fix --filter=frontend",
+    "lint": "bun run format && bun run lint:fix && bun run stylelint:fix",
+    "lint:check": "bunx turbo run lint:check --filter=frontend --filter=backend --filter=acuitybookmarks-website",
+    "lint:fix": "bunx turbo run lint --filter=frontend --filter=backend --filter=acuitybookmarks-website",
+    "format": "bunx prettier --write \"**/*.{js,ts,json,md,vue,css}\"",
+    "stylelint": "bun run stylelint:check",
+    "stylelint:check": "bunx turbo run stylelint:check --filter=frontend --filter=acuitybookmarks-website",
+    "stylelint:fix": "bunx turbo run stylelint --filter=frontend --filter=acuitybookmarks-website",
     
     "deploy:be": "bunx turbo run deploy --filter=backend",
     "deploy:web": "bunx turbo run build --filter=acuitybookmarks-website && echo 'Website build complete. Deploy dist/ directory to your hosting service.'",
@@ -93,9 +100,8 @@
     "supabase": "^2.66.0",
     "turbo": "^2.9.6",
     "typescript": "~5.8.3",
-    "typescript-eslint": "^8.43.0"
-  },
-  "dependencies": {
+    "typescript-eslint": "^8.43.0",
+    "wrangler": "^4.81.1",
     "eslint-config-prettier": "^10.1.8"
   }
 }

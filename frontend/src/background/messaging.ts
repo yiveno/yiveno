@@ -397,8 +397,8 @@ async function handleCreateBookmark(
           {
             title: title || url, // ✅ 如果标题为空，使用 URL
             url, // ✅ 必须提供 URL（否则会创建文件夹）
-            parentId,
-            index: data.index as number | undefined
+            ...(parentId !== undefined ? { parentId } : {}),
+            ...(typeof data.index === 'number' ? { index: data.index } : {})
           },
           result => {
             if (chrome.runtime.lastError) {
@@ -455,8 +455,8 @@ async function handleUpdateBookmark(
         chrome.bookmarks.update(
           id,
           {
-            title: data.title as string | undefined,
-            url: data.url as string | undefined
+            ...(typeof data.title === 'string' ? { title: data.title } : {}),
+            ...(typeof data.url === 'string' ? { url: data.url } : {})
           },
           result => {
             if (chrome.runtime.lastError) {
@@ -567,8 +567,8 @@ async function handleMoveBookmark(
         chrome.bookmarks.move(
           id,
           {
-            parentId: targetParentId,
-            index
+            ...(targetParentId !== undefined ? { parentId: targetParentId } : {}),
+            ...(typeof index === 'number' ? { index } : {})
           },
           result => {
             if (chrome.runtime.lastError) {
@@ -1099,7 +1099,7 @@ async function handleProxyApiRequest(
       const response = await fetch(url, {
         method,
         headers,
-        body
+        ...(body !== undefined ? { body } : {})
       })
 
       const contentType = response.headers.get('content-type')

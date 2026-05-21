@@ -1,3 +1,31 @@
+<script setup lang="ts">
+const features = [
+  {
+    icon: '⚡',
+    tag: 'Search',
+    title: '多索引极速检索',
+    description: 'Fuse.js、标签、备注、语义向量并行搜索，毫秒级返回。',
+    preview: 'list'
+  },
+  {
+    icon: '🤖',
+    tag: 'AI',
+    title: '可解释的智能推荐',
+    description: 'AI 卡片展示推荐原因和引用来源，可一键采纳。',
+    preview: 'grid'
+  },
+  {
+    icon: '📊',
+    tag: 'Analytics',
+    title: '使用统计与健康监控',
+    description: '实时了解失效检测状态、同步进度与收藏趋势。',
+    preview: 'chart'
+  }
+]
+
+const chartValues = [30, 70, 45, 90, 55]
+</script>
+
 <template>
   <div class="feature-gallery">
     <article v-for="feature in features" :key="feature.title">
@@ -34,34 +62,6 @@
     </article>
   </div>
 </template>
-
-<script setup lang="ts">
-const features = [
-  {
-    icon: '⚡',
-    tag: 'Search',
-    title: '多索引极速检索',
-    description: 'Fuse.js、标签、备注、语义向量并行搜索，毫秒级返回。',
-    preview: 'list'
-  },
-  {
-    icon: '🤖',
-    tag: 'AI',
-    title: '可解释的智能推荐',
-    description: 'AI 卡片展示推荐原因和引用来源，可一键采纳。',
-    preview: 'grid'
-  },
-  {
-    icon: '📊',
-    tag: 'Analytics',
-    title: '使用统计与健康监控',
-    description: '实时了解失效检测状态、同步进度与收藏趋势。',
-    preview: 'chart'
-  }
-]
-
-const chartValues = [30, 70, 45, 90, 55]
-</script>
 
 <style scoped>
 .feature-gallery {

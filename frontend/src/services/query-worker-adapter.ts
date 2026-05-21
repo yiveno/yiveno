@@ -99,12 +99,16 @@ export class QueryWorkerAdapter {
         // 仅处理最新的一次查询结果，其它丢弃
         if (this.currentReqId !== null && evt.reqId !== this.currentReqId) {
           // 丢弃过期请求
-          this.pending.delete(evt.reqId)
+          if (evt.reqId !== undefined) {
+            this.pending.delete(evt.reqId)
+          }
           break
         }
         const cb = evt.reqId ? this.pending.get(evt.reqId) : undefined
         if (cb) {
-          this.pending.delete(evt.reqId)
+          if (evt.reqId !== undefined) {
+            this.pending.delete(evt.reqId)
+          }
           cb(evt.hits)
         }
         break

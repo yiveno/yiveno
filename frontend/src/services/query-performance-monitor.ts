@@ -130,7 +130,9 @@ export class QueryPerformanceMonitor {
       sessionId: this.sessionId,
       sources: [...searchData.sources],
       success: searchData.success,
-      errorMessage: searchData.errorMessage
+      ...(searchData.errorMessage !== undefined
+        ? { errorMessage: searchData.errorMessage }
+        : {})
     }
 
     this.metrics.push(metric)
@@ -365,9 +367,11 @@ export class QueryPerformanceMonitor {
 
     const mid = Math.floor(sortedValues.length / 2)
     if (sortedValues.length % 2 === 0) {
-      return (sortedValues[mid - 1] + sortedValues[mid]) / 2
+      const left = sortedValues[mid - 1] ?? 0
+      const right = sortedValues[mid] ?? 0
+      return (left + right) / 2
     }
-    return sortedValues[mid]
+    return sortedValues[mid] ?? 0
   }
 
   private calculatePercentile(
@@ -377,7 +381,7 @@ export class QueryPerformanceMonitor {
     if (sortedValues.length === 0) return 0
 
     const index = Math.ceil(sortedValues.length * percentile) - 1
-    return sortedValues[Math.max(0, Math.min(index, sortedValues.length - 1))]
+    return sortedValues[Math.max(0, Math.min(index, sortedValues.length - 1))] ?? 0
   }
 
   private calculateSearchModeDistribution(metrics: PerformanceMetric[]): {

@@ -153,8 +153,9 @@ class BookmarkTraitQueryService {
       return { ids: [], count: 0 }
     }
     
-    if (traits.length === 1) {
-      return this.queryByTrait(traits[0], options)
+    const firstTrait = traits[0]
+    if (traits.length === 1 && firstTrait) {
+      return this.queryByTrait(firstTrait, options)
     }
     
     // 查询每个特征的结果
@@ -171,18 +172,22 @@ class BookmarkTraitQueryService {
     const ids = Array.from(intersection)
     
     // 如果需要完整记录，从第一个结果中筛选
-    let records: BookmarkRecord[] | undefined
-    if (options.includeFullRecord && results[0].records) {
-      records = results[0].records.filter(r => intersection.has(r.id))
+    if (options.includeFullRecord && results[0]?.records) {
+      let records = results[0].records.filter(r => intersection.has(r.id))
       
       if (options.sortBy) {
         records = this.sortRecords(records, options.sortBy, options.sortOrder)
+      }
+      
+      return {
+        ids,
+        records,
+        count: ids.length
       }
     }
     
     return {
       ids,
-      records,
       count: ids.length
     }
   }
@@ -231,12 +236,12 @@ class BookmarkTraitQueryService {
     )
     
     return {
-      duplicate: counts[0],
-      invalid: counts[1],
-      internal: counts[2],
-      outdated: counts[3],
-      untagged: counts[4],
-      untitled: counts[5]
+      duplicate: counts[0] ?? 0,
+      invalid: counts[1] ?? 0,
+      internal: counts[2] ?? 0,
+      outdated: counts[3] ?? 0,
+      untagged: counts[4] ?? 0,
+      untitled: counts[5] ?? 0
     }
   }
   
@@ -451,12 +456,12 @@ class BookmarkTraitQueryService {
     )
     
     return {
-      duplicate: results[0],
-      invalid: results[1],
-      internal: results[2],
-      outdated: results[3],
-      untagged: results[4],
-      untitled: results[5]
+      duplicate: results[0] ?? { count: 0, bookmarks: [] },
+      invalid: results[1] ?? { count: 0, bookmarks: [] },
+      internal: results[2] ?? { count: 0, bookmarks: [] },
+      outdated: results[3] ?? { count: 0, bookmarks: [] },
+      untagged: results[4] ?? { count: 0, bookmarks: [] },
+      untitled: results[5] ?? { count: 0, bookmarks: [] }
     }
   }
 }

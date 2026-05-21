@@ -15,8 +15,8 @@ export interface DialogState {
   content: string
   confirmText: string
   cancelText: string
-  onConfirm?: () => void
-  onCancel?: () => void
+  onConfirm?: (() => void) | undefined
+  onCancel?: (() => void) | undefined
 }
 
 export interface EditBookmarkDialogState {
@@ -24,7 +24,7 @@ export interface EditBookmarkDialogState {
   bookmark: BookmarkNode | null
   title: string
   url: string
-  parentId?: string
+  parentId?: string | undefined
 }
 
 export interface EditFolderDialogState {

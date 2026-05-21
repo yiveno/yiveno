@@ -1,11 +1,3 @@
-<template>
-  <div class="feature-card">
-    <div class="feature-icon">{{ icon }}</div>
-    <h3>{{ title }}</h3>
-    <p>{{ description }}</p>
-  </div>
-</template>
-
 <script setup lang="ts">
 defineProps<{
   icon: string
@@ -13,6 +5,14 @@ defineProps<{
   description: string
 }>()
 </script>
+
+<template>
+  <div class="feature-card">
+    <div class="feature-icon">{{ icon }}</div>
+    <h3>{{ title }}</h3>
+    <p>{{ description }}</p>
+  </div>
+</template>
 
 <style scoped>
 .feature-card {

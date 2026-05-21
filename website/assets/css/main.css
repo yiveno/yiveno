@@ -14,16 +14,16 @@
 .container {
   width: 100%;
   max-width: 1280px;
-  margin-left: auto;
   margin-right: auto;
-  padding-left: var(--md-sys-spacing-md);
+  margin-left: auto;
   padding-right: var(--md-sys-spacing-md);
+  padding-left: var(--md-sys-spacing-md);
 }
 
-@media (min-width: 768px) {
+@media (width >= 768px) {
   .container {
-    padding-left: var(--md-sys-spacing-lg);
     padding-right: var(--md-sys-spacing-lg);
+    padding-left: var(--md-sys-spacing-lg);
   }
 }
 
@@ -34,42 +34,42 @@
 
 /* 玻璃态效果 */
 .glass {
-  background-color: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(12px);
   border: 1px solid color-mix(in srgb, white 10%, transparent);
+  background-color: rgb(15 23 42 / 60%);
+  backdrop-filter: blur(12px);
 }
 
 .glass:hover {
-  background-color: rgba(15, 23, 42, 0.8);
   border-color: color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent);
+  background-color: rgb(15 23 42 / 80%);
   transition: all 300ms ease;
 }
 
 /* 卡片 */
 .card {
-  background-color: var(--md-sys-color-surface);
-  border-radius: var(--md-sys-shape-corner-large);
   padding: var(--md-sys-spacing-lg);
+  border-radius: var(--md-sys-shape-corner-large);
+  background-color: var(--md-sys-color-surface);
   box-shadow: var(--md-sys-elevation-2);
 }
 
 /* 按钮 */
 .btn {
   display: inline-flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   padding: 12px 24px;
+  border: none;
   border-radius: var(--md-sys-shape-corner-medium);
   font-weight: 600;
-  cursor: pointer;
-  border: none;
-  transition: all 200ms ease;
   text-decoration: none;
+  cursor: pointer;
+  transition: all 200ms ease;
 }
 
 .btn-primary {
-  background-color: var(--md-sys-color-primary);
   color: var(--md-sys-color-on-primary);
+  background-color: var(--md-sys-color-primary);
 }
 
 .btn-primary:hover {
@@ -79,20 +79,20 @@
 }
 
 .btn-secondary {
-  background-color: var(--md-sys-color-secondary);
   color: var(--md-sys-color-on-secondary);
+  background-color: var(--md-sys-color-secondary);
 }
 
 .btn-secondary:hover {
   background-color: var(--md-sys-color-secondary-container);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(22, 160, 133, 0.3);
+  box-shadow: 0 4px 12px rgb(22 160 133 / 30%);
 }
 
 .btn-outline {
-  background-color: transparent;
   border: 2px solid var(--md-sys-color-primary);
   color: var(--md-sys-color-primary);
+  background-color: transparent;
 }
 
 .btn-outline:hover {
@@ -104,6 +104,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -111,12 +112,13 @@
 
 @keyframes slideUp {
   from {
-    transform: translateY(20px);
     opacity: 0;
+    transform: translateY(20px);
   }
+
   to {
-    transform: translateY(0);
     opacity: 1;
+    transform: translateY(0);
   }
 }
 

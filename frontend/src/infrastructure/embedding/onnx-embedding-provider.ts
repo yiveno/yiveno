@@ -40,10 +40,13 @@ class OnnxEmbeddingProviderDirect implements EmbeddingProvider {
       env.allowLocalModels = false
       // 强制单线程，禁止从外部 CDN 加载 WASM 运行时文件
       // Chrome 扩展 MV3 的 script-src 不允许外部域名
-      env.backends.onnx.wasm.numThreads = 1
+      const wasmBackend = env.backends.onnx.wasm
+      if (wasmBackend) {
+        wasmBackend.numThreads = 1
+      }
       // 设置 WASM 文件路径为扩展本地 assets，避免从 cdn.jsdelivr.net 加载
-      if (typeof chrome !== 'undefined' && chrome.runtime?.getURL) {
-        env.backends.onnx.wasm.wasmPaths = chrome.runtime.getURL('assets/')
+      if (wasmBackend && typeof chrome !== 'undefined' && chrome.runtime?.getURL) {
+        wasmBackend.wasmPaths = chrome.runtime.getURL('assets/')
       }
 
       this.pipeline = await pipeline(
@@ -97,6 +100,9 @@ function extractBatchVectors(output: unknown, count: number): number[][] {
     const dim = tensor.dims.length >= 2
       ? tensor.dims[tensor.dims.length - 1]
       : tensor.data.length / count
+    if (dim === undefined) {
+      return []
+    }
     const data = Array.from(tensor.data)
     const result: number[][] = []
     for (let i = 0; i < count; i++) {

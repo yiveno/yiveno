@@ -307,7 +307,7 @@ export function monitorPerformance(type: OperationType, storeName: string) {
           storeName,
           duration,
           success,
-          error,
+          ...(error !== undefined ? { error } : {}),
           timestamp: Date.now()
         })
       }
@@ -358,9 +358,9 @@ export async function monitorOperation<T>(
       type,
       storeName,
       duration,
-      recordCount,
+      ...(recordCount !== undefined ? { recordCount } : {}),
       success,
-      error,
+      ...(error !== undefined ? { error } : {}),
       timestamp: Date.now()
     })
   }

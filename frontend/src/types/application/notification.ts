@@ -24,9 +24,9 @@ export interface NotificationPayload {
   /** 创建时间戳（毫秒） */
   createdAt: number
   /** 是否自动关闭 */
-  autoClose?: boolean
+  autoClose?: boolean | undefined
   /** 自定义停留时间 */
-  duration?: number
+  duration?: number | undefined
 }
 
 /**
@@ -36,13 +36,13 @@ export interface BadgeOptions {
   /** 徽章文本内容 */
   text: string
   /** 徽章背景颜色（默认根据级别自动选择） */
-  color?: BadgeColor
+  color?: BadgeColor | undefined
   /** 徽章级别（影响默认颜色） */
-  level?: BadgeLevel
+  level?: BadgeLevel | undefined
   /** 是否在通知结束后自动清除徽章 */
-  autoClear?: boolean
+  autoClear?: boolean | undefined
   /** 自动清除延迟（毫秒，默认立即清除） */
-  clearDelay?: number
+  clearDelay?: number | undefined
 }
 
 /**
@@ -52,49 +52,49 @@ export interface BadgeOptions {
  */
 export interface NotificationOptions {
   /** 标题 */
-  title?: string
+  title?: string | undefined
   /** 主体内容 */
-  message?: string
+  message?: string | undefined
   /** 新版级别字段 */
-  level?: NotificationLevel
+  level?: NotificationLevel | undefined
   /** 旧版级别字段 */
-  type?: NotificationLevel
+  type?: NotificationLevel | undefined
   /** 显示时长（毫秒） */
-  timeoutMs?: number
+  timeoutMs?: number | undefined
   /** 通知优先级，用于系统通知 */
-  priority?: 'low' | 'normal' | 'high'
+  priority?: 'low' | 'normal' | 'high' | undefined
   /** 是否保持常驻 */
-  persistent?: boolean
+  persistent?: boolean | undefined
   /** 自动关闭（布尔或毫秒） */
-  autoClose?: boolean | number
+  autoClose?: boolean | number | undefined
   /** 图标地址 */
-  iconUrl?: string
+  iconUrl?: string | undefined
   /** 图标字体类名等 */
-  icon?: string
+  icon?: string | undefined
   /** 图片地址 */
-  imageUrl?: string
+  imageUrl?: string | undefined
   /** 自定义操作按钮 */
-  actions?: Array<{ label: string; action: string }>
+  actions?: Array<{ label: string; action: string }> | undefined
   /** 附加数据 */
-  data?: Record<string, unknown>
+  data?: Record<string, unknown> | undefined
   /** 来源标识 */
-  source?: string
+  source?: string | undefined
   /** 分组 ID（防止重复） */
-  groupId?: string
+  groupId?: string | undefined
   /** 是否播放提示音 */
-  playSound?: boolean
+  playSound?: boolean | undefined
   /** 是否弹出系统通知 */
-  showDesktopNotification?: boolean
+  showDesktopNotification?: boolean | undefined
   /** 去重 key */
-  key?: string
+  key?: string | undefined
   /** ✨ 是否更新扩展图标徽章 */
-  updateBadge?: boolean
+  updateBadge?: boolean | undefined
   /** ✨ 徽章配置（如果 updateBadge 为 true） */
-  badge?: BadgeOptions
+  badge?: BadgeOptions | undefined
   /** ✨ 简化配置：直接指定徽章文本 */
-  badgeText?: string
+  badgeText?: string | undefined
   /** ✨ 简化配置：直接指定徽章颜色 */
-  badgeColor?: BadgeColor
+  badgeColor?: BadgeColor | undefined
 }
 
 /** Toast 级别与通知级别保持一致。 */
@@ -103,15 +103,15 @@ export type ToastLevel = NotificationLevel
 /** Toast 展示时的附加选项。 */
 export interface ToastShowOptions {
   /** Toast 级别 */
-  level?: ToastLevel
+  level?: ToastLevel | undefined
   /** 标题 */
-  title?: string
+  title?: string | undefined
   /** 旧版停留时间（毫秒） */
-  timeout?: number
+  timeout?: number | undefined
   /** 新版停留时间（毫秒） */
-  timeoutMs?: number
+  timeoutMs?: number | undefined
   /** 🎯 Ant Design 风格：相同 key 的通知会更新而不是创建新的 */
-  key?: string
+  key?: string | undefined
 }
 
 /**
@@ -127,7 +127,7 @@ export interface ToastInstance {
   /** 创建时间戳 */
   createdAt: number
   /** 定时器句柄 */
-  timeoutHandle?: number
+  timeoutHandle?: number | undefined
   /** 对外暴露的显示方法 */
   showToast(message: string, opts?: ToastShowOptions): string
 }

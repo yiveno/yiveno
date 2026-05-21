@@ -1,3 +1,14 @@
+<script setup lang="ts">
+const lastUpdated = '2025年1月21日'
+
+useSeoMeta({
+  title: '服务条款 - AcuityBookmarks',
+  description: 'AcuityBookmarks 服务条款，了解使用我们书签管理服务的规则和条件。',
+  ogTitle: '服务条款 - AcuityBookmarks',
+  ogDescription: 'AcuityBookmarks 服务条款，了解使用我们书签管理服务的规则和条件。'
+})
+</script>
+
 <template>
   <div class="min-h-screen bg-gray-50 py-12">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -118,14 +129,3 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-const lastUpdated = '2025年1月21日'
-
-useSeoMeta({
-  title: '服务条款 - AcuityBookmarks',
-  description: 'AcuityBookmarks 服务条款，了解使用我们书签管理服务的规则和条件。',
-  ogTitle: '服务条款 - AcuityBookmarks',
-  ogDescription: 'AcuityBookmarks 服务条款，了解使用我们书签管理服务的规则和条件。'
-})
-</script>

@@ -260,9 +260,9 @@ export const useAuth = () => {
             })
             console.log('[useAuth] ✅ Session 已同步到扩展')
           }
-        } catch (error) {
+        } catch (extensionError) {
           // 扩展未安装或通信失败，不影响网站功能
-          console.warn('[useAuth] ⚠️ 无法同步到扩展（扩展可能未安装）:', error)
+          console.warn('[useAuth] ⚠️ 无法同步到扩展（扩展可能未安装）:', extensionError)
         }
       }
       
@@ -280,8 +280,8 @@ export const useAuth = () => {
             })
             console.log('[useAuth] ✅ 扩展 session 已清除')
           }
-        } catch (error) {
-          console.warn('[useAuth] ⚠️ 无法清除扩展 session:', error)
+        } catch (extensionError) {
+          console.warn('[useAuth] ⚠️ 无法清除扩展 session:', extensionError)
         }
       }
     })

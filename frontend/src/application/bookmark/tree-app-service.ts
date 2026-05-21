@@ -38,7 +38,11 @@ function cloneToProposal(fullTree: ChromeBookmarkTreeNode[]): ProposalNodeLike {
 
 type BookmarkMapping = Map<
   string,
-  { proposedId?: string; title?: string; parentId?: string }
+  {
+    proposedId?: string | undefined
+    title?: string | undefined
+    parentId?: string | undefined
+  }
 >
 
 /**
@@ -117,6 +121,7 @@ export async function buildBookmarkMappingChunked(
       const end = Math.min(total, start + chunkSize)
       for (let i = start; i < end; i++) {
         const n = originalList[i]
+        if (!n) continue
         const pid = String(n.id)
         const p = proposedIndex.get(pid)
         if (p)

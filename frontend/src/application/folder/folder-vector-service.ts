@@ -395,12 +395,12 @@ function computeAverageVector(vectors: number[][]): number[] {
     throw new Error('向量数组为空')
   }
 
-  const dimension = vectors[0].length
+  const dimension = vectors[0]?.length ?? 0
   const avgVector = new Array(dimension).fill(0)
 
   for (const vector of vectors) {
     for (let i = 0; i < dimension; i++) {
-      avgVector[i] += vector[i]
+      avgVector[i] += vector[i] ?? 0
     }
   }
 
@@ -426,7 +426,7 @@ function dotProduct(a: number[], b: number[]): number {
   if (a.length !== b.length) return 0
   let sum = 0
   for (let i = 0; i < a.length; i++) {
-    sum += a[i] * b[i]
+    sum += (a[i] ?? 0) * (b[i] ?? 0)
   }
   return sum
 }

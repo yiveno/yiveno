@@ -62,13 +62,13 @@ export function createLazyComponent(options: LazyComponentOptions) {
 
   return defineAsyncComponent({
     loader,
-    loadingComponent,
-    errorComponent,
+    ...(loadingComponent && { loadingComponent }),
+    ...(errorComponent && { errorComponent }),
     delay,
     timeout,
     onError(error, retry, fail, attempts) {
       logger.error('LazyLoad', `组件加载失败 (尝试 ${attempts} 次)`, error)
-      
+
       // 最多重试 3 次
       if (attempts < 3) {
         retry()

@@ -19,15 +19,15 @@ export interface MenuItemConfig {
   /** 显示文本 */
   label: string
   /** 图标名称 */
-  icon?: string
+  icon?: string | undefined
   /** 快捷键提示 */
-  shortcut?: string
+  shortcut?: string | undefined
   /** 颜色主题 */
-  color?: 'default' | 'error' | 'warning' | 'success' | 'primary'
+  color?: 'default' | 'error' | 'warning' | 'success' | 'primary' | undefined
   /** 是否禁用 */
-  disabled?: boolean
+  disabled?: boolean | undefined
   /** 是否显示（默认 true） */
-  visible?: boolean
+  visible?: boolean | undefined
   /** 触发的事件名称 */
   action: string
 }
@@ -36,14 +36,14 @@ export interface MenuItemConfig {
  * 树配置接口（从 TreeNode props 中提取）
  */
 export interface TreeConfig {
-  editable?: boolean
-  showAddButton?: boolean
-  showEditButton?: boolean
-  showDeleteButton?: boolean
-  showOpenNewTabButton?: boolean
-  showCopyUrlButton?: boolean
-  showShareButton?: boolean
-  showFavoriteButton?: boolean
+  editable?: boolean | undefined
+  showAddButton?: boolean | undefined
+  showEditButton?: boolean | undefined
+  showDeleteButton?: boolean | undefined
+  showOpenNewTabButton?: boolean | undefined
+  showCopyUrlButton?: boolean | undefined
+  showShareButton?: boolean | undefined
+  showFavoriteButton?: boolean | undefined
 }
 
 /**

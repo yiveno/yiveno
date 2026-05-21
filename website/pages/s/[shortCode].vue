@@ -1,3 +1,435 @@
+<script setup lang="ts">
+import { ref, onMounted, computed } from 'vue'
+
+interface SharedBookmark {
+  title: string
+  url: string
+  description?: string
+}
+
+interface SharedPageData {
+  title: string
+  user_id: string
+  bookmark_count: number
+}
+
+interface ExtensionUserResponse {
+  user?: {
+    id: string
+  }
+}
+
+interface ExtensionInstallResponse {
+  installed?: boolean
+}
+
+interface ImportSharedBookmarksResponse {
+  success?: boolean
+  imported?: number
+  failed?: number
+  folderName?: string
+  error?: string
+}
+
+type ExtensionMessageResponse =
+  | ExtensionUserResponse
+  | ExtensionInstallResponse
+  | ImportSharedBookmarksResponse
+
+// 获取路由参数
+const route = useRoute()
+const shortCode = computed(() => route.params.shortCode as string)
+
+// 状态
+const isLoading = ref(true)
+const error = ref<string | null>(null)
+const shareData = ref<SharedPageData | null>(null)
+const bookmarks = ref<SharedBookmark[]>([])
+const selectedBookmarks = ref<Set<number>>(new Set())
+const isExtensionInstalled = ref(false)
+const isOwnShare = ref(false) // 是否是自己的分享
+const currentUserId = ref<string | null>(null) // 当前登录用户 ID
+
+// 导入相关状态
+const isImporting = ref(false)
+const importProgress = ref({ current: 0, total: 0 })
+
+// 移动端检测
+const isMobile = ref(false)
+
+// 扩展链接
+const extensionLink = 'https://chrome.google.com/webstore/detail/acuitybookmarks/gdjcmpenmogdikhnnaebmddhmdgbfcgl'
+
+// ✅ 扩展 ID：从环境变量读取（本地开发时为空，生产环境使用固定 ID）
+const config = useRuntimeConfig()
+const EXTENSION_ID = config.public.extensionId || '' // 本地开发时为空字符串
+
+// 检测是否为移动设备
+const checkMobile = () => {
+  if (typeof window === 'undefined') return false
+
+  const userAgent = navigator.userAgent.toLowerCase()
+  const mobileKeywords = ['android', 'iphone', 'ipad', 'ipod', 'mobile', 'webos']
+  const isMobileUA = mobileKeywords.some((keyword) => userAgent.includes(keyword))
+
+  const isMobileWidth = window.innerWidth < 768
+  const hasTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+
+  return isMobileUA || (isMobileWidth && hasTouchScreen)
+}
+
+// 加载分享数据
+const loadShareData = async () => {
+  isLoading.value = true
+  error.value = null
+
+  try {
+    // 从环境变量获取 API URL
+    const apiBaseUrl = config.public.apiBaseUrl || 'https://api.acuitybookmarks.com'
+    
+    console.log('🔧 API Base URL:', apiBaseUrl)
+    
+    // 调用后端 API 获取分享数据
+    const response = await fetch(
+      `${apiBaseUrl}/trpc/share.getShareByCode?batch=1&input=${encodeURIComponent(
+        JSON.stringify({ 0: { shortCode: shortCode.value } })
+      )}`
+    )
+
+    if (!response.ok) {
+      throw new Error('获取分享数据失败')
+    }
+
+    const data = await response.json()
+
+    if (!data[0]?.result?.data) {
+      throw new Error('分享不存在或已过期')
+    }
+
+    // ✅ 修复：后端返回的数据结构是 data[0].result.data.data（多了一层 data）
+    const result = data[0].result.data.data
+    shareData.value = result.share
+    bookmarks.value = result.bookmarks
+
+    console.log('✅ 分享数据加载成功', {
+      title: shareData.value.title,
+      bookmarkCount: bookmarks.value.length,
+      userId: shareData.value.user_id
+    })
+
+    // 检查是否是自己的分享
+    await checkIfOwnShare()
+
+    // 默认全选所有书签（仅当扩展已安装）
+    // ⚠️ 临时移除 !isOwnShare 限制，用于测试分享流程
+    if (isExtensionInstalled.value) {
+      bookmarks.value.forEach((_, index) => {
+        selectedBookmarks.value.add(index)
+      })
+    }
+  } catch (err) {
+    console.error('加载分享数据失败:', err)
+    error.value = err instanceof Error ? err.message : '加载失败，请重试'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// 检查是否是自己的分享
+const checkIfOwnShare = async () => {
+  try {
+    // 从扩展获取当前登录用户信息
+    // @ts-ignore
+    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+      // ✅ 修复：使用统一的消息发送方式
+      const sendMessageToExtension = (
+        message: Record<string, unknown>,
+        callback: (response: ExtensionMessageResponse) => void
+      ) => {
+        if (EXTENSION_ID) {
+          // @ts-ignore
+          chrome.runtime.sendMessage(EXTENSION_ID, message, callback)
+        } else {
+          // @ts-ignore
+          chrome.runtime.sendMessage(message, callback)
+        }
+      }
+
+      sendMessageToExtension(
+        { type: 'GET_CURRENT_USER' },
+        (response: ExtensionMessageResponse) => {
+          // @ts-ignore
+          if (!chrome.runtime.lastError && response && response.user) {
+            currentUserId.value = response.user.id
+            console.log('📍 当前用户 ID:', currentUserId.value)
+
+            // 比对用户 ID
+            if (shareData.value && shareData.value.user_id === currentUserId.value) {
+              isOwnShare.value = true
+              console.log('⚠️ 这是您自己的分享，不能导入')
+            }
+          }
+        }
+      )
+    }
+  } catch (ownerCheckError) {
+    console.error('检查分享所有者失败:', ownerCheckError)
+  }
+}
+
+// 检测扩展是否安装
+const checkExtension = async () => {
+  try {
+    console.log('🔍 开始检测扩展是否安装...')
+
+    // 使用 chrome.runtime.sendMessage 检测扩展
+    // @ts-ignore - chrome API 在网页环境中可用（通过 externally_connectable）
+    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+      console.log('✅ chrome.runtime.sendMessage 可用')
+
+      // ✅ 修复：本地开发时不指定 extensionId，让扩展通过 externally_connectable 自动接收
+      const sendMessageToExtension = (
+        message: Record<string, unknown>,
+        callback: (response: ExtensionMessageResponse) => void
+      ) => {
+        if (EXTENSION_ID) {
+          // 生产环境：指定扩展 ID
+          console.log('📍 使用固定扩展 ID:', EXTENSION_ID)
+          // @ts-ignore
+          chrome.runtime.sendMessage(EXTENSION_ID, message, callback)
+        } else {
+          // 本地开发：不指定 ID，让扩展自动接收（通过 externally_connectable）
+          console.log('📍 本地开发模式：不指定扩展 ID')
+          // @ts-ignore
+          chrome.runtime.sendMessage(message, callback)
+        }
+      }
+
+      // 发送 ping 消息到扩展
+      sendMessageToExtension(
+        { type: 'CHECK_EXTENSION_INSTALLED' },
+        (response: ExtensionMessageResponse) => {
+          // @ts-ignore
+          if (chrome.runtime.lastError) {
+            // @ts-ignore
+            console.log('❌ 扩展未安装或未响应:', chrome.runtime.lastError.message)
+            isExtensionInstalled.value = false
+          } else if (response && response.installed) {
+            console.log('✅ 检测到 AcuityBookmarks 扩展', response)
+            isExtensionInstalled.value = true
+
+            // 默认全选所有书签
+            bookmarks.value.forEach((_, index) => {
+              selectedBookmarks.value.add(index)
+            })
+          } else {
+            console.log('❌ 扩展响应异常:', response)
+            isExtensionInstalled.value = false
+          }
+        }
+      )
+    } else {
+      console.log('❌ chrome.runtime.sendMessage 不可用')
+      isExtensionInstalled.value = false
+    }
+  } catch (extensionError) {
+    console.error('检测扩展失败:', extensionError)
+    isExtensionInstalled.value = false
+  }
+}
+
+// 切换书签选择
+const toggleBookmark = (index: number) => {
+  // ⚠️ 临时移除 isOwnShare 限制，用于测试分享流程
+  if (!isExtensionInstalled.value) return
+
+  if (selectedBookmarks.value.has(index)) {
+    selectedBookmarks.value.delete(index)
+  } else {
+    selectedBookmarks.value.add(index)
+  }
+}
+
+// 全选/取消全选
+const toggleSelectAll = () => {
+  if (selectedBookmarks.value.size === bookmarks.value.length) {
+    selectedBookmarks.value.clear()
+  } else {
+    bookmarks.value.forEach((_, index) => {
+      selectedBookmarks.value.add(index)
+    })
+  }
+}
+
+// 导入选中的书签
+const importSelected = async () => {
+  if (selectedBookmarks.value.size === 0) return
+
+  const bookmarksToImport = Array.from(selectedBookmarks.value).map(
+    (index) => bookmarks.value[index]
+  )
+
+  isImporting.value = true
+  importProgress.value = { current: 0, total: bookmarksToImport.length }
+
+  try {
+    console.log('📤 开始导入书签到扩展...', {
+      count: bookmarksToImport.length
+    })
+
+    // 使用 chrome.runtime.sendMessage 发送导入请求
+    // @ts-ignore
+    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+      // ✅ 修复：使用统一的消息发送方式
+      const sendMessageToExtension = (
+        message: Record<string, unknown>,
+        callback: (response: ExtensionMessageResponse) => void
+      ) => {
+        if (EXTENSION_ID) {
+          // @ts-ignore
+          chrome.runtime.sendMessage(EXTENSION_ID, message, callback)
+        } else {
+          // @ts-ignore
+          chrome.runtime.sendMessage(message, callback)
+        }
+      }
+
+      sendMessageToExtension(
+        {
+          type: 'IMPORT_SHARED_BOOKMARKS',
+          data: {
+            bookmarks: bookmarksToImport.map((b) => ({
+              title: b.title,
+              url: b.url,
+              description: b.description
+            })),
+            shareTitle: shareData.value?.title || '分享的书签' // ✅ 传递分享标题
+          }
+        },
+        (response: ExtensionMessageResponse) => {
+          // @ts-ignore
+          if (chrome.runtime.lastError) {
+            // @ts-ignore
+            console.error('❌ 导入失败:', chrome.runtime.lastError.message)
+            // @ts-ignore
+            alert(`❌ 导入失败：${chrome.runtime.lastError.message}`)
+            isImporting.value = false
+            return
+          }
+
+          if (response && response.success) {
+            console.log('✅ 导入成功', response)
+            alert(
+              `✅ 成功导入 ${response.imported} 个书签到文件夹「${response.folderName}」！${
+                response.failed > 0 ? `\n失败 ${response.failed} 个` : ''
+              }`
+            )
+            selectedBookmarks.value.clear()
+          } else {
+            console.error('❌ 导入失败:', response)
+            alert(`❌ 导入失败：${response.error || '未知错误'}`)
+          }
+
+          isImporting.value = false
+        }
+      )
+    } else {
+      throw new Error('chrome.runtime.sendMessage 不可用')
+    }
+  } catch (importError) {
+    console.error('导入失败:', importError)
+    alert(`❌ 导入失败：${importError instanceof Error ? importError.message : String(importError)}`)
+    isImporting.value = false
+  }
+}
+
+// 获取 favicon URL
+const getFaviconUrl = (url: string): string => {
+  try {
+    const domain = new URL(url).hostname
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`
+  } catch {
+    return ''
+  }
+}
+
+// 处理图标加载错误
+const handleIconError = (event: Event) => {
+  const img = event.target as HTMLImageElement
+  img.style.display = 'none'
+}
+
+// 格式化日期 - 显示精确时间（年月日时分秒）
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString)
+  
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  const seconds = String(date.getSeconds()).padStart(2, '0')
+  
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+}
+
+// 复制分享链接（移动端）
+const copyShareLink = async () => {
+  try {
+    const currentUrl = window.location.href
+    await navigator.clipboard.writeText(currentUrl)
+    alert('✅ 链接已复制到剪贴板')
+  } catch (copyError) {
+    console.error('复制链接失败:', copyError)
+    alert('❌ 复制失败，请手动复制链接')
+  }
+}
+
+// 使用系统分享 API（移动端）
+const shareToFriends = async () => {
+  if (!shareData.value) return
+
+  try {
+    if (navigator.share) {
+      await navigator.share({
+        title: shareData.value.title,
+        text: `${shareData.value.title} - 分享了 ${shareData.value.bookmark_count} 个书签`,
+        url: window.location.href
+      })
+      console.log('✅ 分享成功')
+    } else {
+      await copyShareLink()
+    }
+  } catch (shareError) {
+    if ((shareError as Error).name !== 'AbortError') {
+      console.error('分享失败:', shareError)
+      alert('❌ 分享失败，请重试')
+    }
+  }
+}
+
+// 页面加载时执行
+onMounted(async () => {
+  isMobile.value = checkMobile()
+  console.log('📱 移动端检测结果:', isMobile.value)
+
+  if (!isMobile.value) {
+    await checkExtension()
+  }
+
+  await loadShareData()
+})
+
+// SEO
+useSeoMeta({
+  title: computed(() => shareData.value?.title || '分享的书签') + ' - AcuityBookmarks',
+  description: computed(
+    () => `查看分享的 ${shareData.value?.bookmark_count || 0} 个书签`
+  ),
+  robots: 'noindex, nofollow'
+})
+</script>
+
 <template>
   <div class="share-landing-page">
     <!-- 加载状态 -->
@@ -263,395 +695,6 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-
-// 获取路由参数
-const route = useRoute()
-const shortCode = computed(() => route.params.shortCode as string)
-
-// 状态
-const isLoading = ref(true)
-const error = ref<string | null>(null)
-const shareData = ref<any>(null)
-const bookmarks = ref<any[]>([])
-const selectedBookmarks = ref<Set<number>>(new Set())
-const isExtensionInstalled = ref(false)
-const isOwnShare = ref(false) // 是否是自己的分享
-const currentUserId = ref<string | null>(null) // 当前登录用户 ID
-
-// 导入相关状态
-const isImporting = ref(false)
-const importProgress = ref({ current: 0, total: 0 })
-
-// 移动端检测
-const isMobile = ref(false)
-
-// 扩展链接
-const extensionLink = 'https://chrome.google.com/webstore/detail/acuitybookmarks/gdjcmpenmogdikhnnaebmddhmdgbfcgl'
-
-// ✅ 扩展 ID：从环境变量读取（本地开发时为空，生产环境使用固定 ID）
-const config = useRuntimeConfig()
-const EXTENSION_ID = config.public.extensionId || '' // 本地开发时为空字符串
-
-// 检测是否为移动设备
-const checkMobile = () => {
-  if (typeof window === 'undefined') return false
-
-  const userAgent = navigator.userAgent.toLowerCase()
-  const mobileKeywords = ['android', 'iphone', 'ipad', 'ipod', 'mobile', 'webos']
-  const isMobileUA = mobileKeywords.some((keyword) => userAgent.includes(keyword))
-
-  const isMobileWidth = window.innerWidth < 768
-  const hasTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0
-
-  return isMobileUA || (isMobileWidth && hasTouchScreen)
-}
-
-// 加载分享数据
-const loadShareData = async () => {
-  isLoading.value = true
-  error.value = null
-
-  try {
-    // 从环境变量获取 API URL
-    const config = useRuntimeConfig()
-    const apiBaseUrl = config.public.apiBaseUrl || 'https://api.acuitybookmarks.com'
-    
-    console.log('🔧 API Base URL:', apiBaseUrl)
-    
-    // 调用后端 API 获取分享数据
-    const response = await fetch(
-      `${apiBaseUrl}/trpc/share.getShareByCode?batch=1&input=${encodeURIComponent(
-        JSON.stringify({ 0: { shortCode: shortCode.value } })
-      )}`
-    )
-
-    if (!response.ok) {
-      throw new Error('获取分享数据失败')
-    }
-
-    const data = await response.json()
-
-    if (!data[0]?.result?.data) {
-      throw new Error('分享不存在或已过期')
-    }
-
-    // ✅ 修复：后端返回的数据结构是 data[0].result.data.data（多了一层 data）
-    const result = data[0].result.data.data
-    shareData.value = result.share
-    bookmarks.value = result.bookmarks
-
-    console.log('✅ 分享数据加载成功', {
-      title: shareData.value.title,
-      bookmarkCount: bookmarks.value.length,
-      userId: shareData.value.user_id
-    })
-
-    // 检查是否是自己的分享
-    await checkIfOwnShare()
-
-    // 默认全选所有书签（仅当扩展已安装）
-    // ⚠️ 临时移除 !isOwnShare 限制，用于测试分享流程
-    if (isExtensionInstalled.value) {
-      bookmarks.value.forEach((_, index) => {
-        selectedBookmarks.value.add(index)
-      })
-    }
-  } catch (err) {
-    console.error('加载分享数据失败:', err)
-    error.value = err instanceof Error ? err.message : '加载失败，请重试'
-  } finally {
-    isLoading.value = false
-  }
-}
-
-// 检查是否是自己的分享
-const checkIfOwnShare = async () => {
-  try {
-    // 从扩展获取当前登录用户信息
-    // @ts-ignore
-    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
-      // ✅ 修复：使用统一的消息发送方式
-      const sendMessageToExtension = (message: any, callback: (response: any) => void) => {
-        if (EXTENSION_ID) {
-          // @ts-ignore
-          chrome.runtime.sendMessage(EXTENSION_ID, message, callback)
-        } else {
-          // @ts-ignore
-          chrome.runtime.sendMessage(message, callback)
-        }
-      }
-
-      sendMessageToExtension(
-        { type: 'GET_CURRENT_USER' },
-        (response: any) => {
-          // @ts-ignore
-          if (!chrome.runtime.lastError && response && response.user) {
-            currentUserId.value = response.user.id
-            console.log('📍 当前用户 ID:', currentUserId.value)
-
-            // 比对用户 ID
-            if (shareData.value && shareData.value.user_id === currentUserId.value) {
-              isOwnShare.value = true
-              console.log('⚠️ 这是您自己的分享，不能导入')
-            }
-          }
-        }
-      )
-    }
-  } catch (error) {
-    console.error('检查分享所有者失败:', error)
-  }
-}
-
-// 检测扩展是否安装
-const checkExtension = async () => {
-  try {
-    console.log('🔍 开始检测扩展是否安装...')
-
-    // 使用 chrome.runtime.sendMessage 检测扩展
-    // @ts-ignore - chrome API 在网页环境中可用（通过 externally_connectable）
-    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
-      console.log('✅ chrome.runtime.sendMessage 可用')
-
-      // ✅ 修复：本地开发时不指定 extensionId，让扩展通过 externally_connectable 自动接收
-      const sendMessageToExtension = (message: any, callback: (response: any) => void) => {
-        if (EXTENSION_ID) {
-          // 生产环境：指定扩展 ID
-          console.log('📍 使用固定扩展 ID:', EXTENSION_ID)
-          // @ts-ignore
-          chrome.runtime.sendMessage(EXTENSION_ID, message, callback)
-        } else {
-          // 本地开发：不指定 ID，让扩展自动接收（通过 externally_connectable）
-          console.log('📍 本地开发模式：不指定扩展 ID')
-          // @ts-ignore
-          chrome.runtime.sendMessage(message, callback)
-        }
-      }
-
-      // 发送 ping 消息到扩展
-      sendMessageToExtension(
-        { type: 'CHECK_EXTENSION_INSTALLED' },
-        (response: any) => {
-          // @ts-ignore
-          if (chrome.runtime.lastError) {
-            // @ts-ignore
-            console.log('❌ 扩展未安装或未响应:', chrome.runtime.lastError.message)
-            isExtensionInstalled.value = false
-          } else if (response && response.installed) {
-            console.log('✅ 检测到 AcuityBookmarks 扩展', response)
-            isExtensionInstalled.value = true
-
-            // 默认全选所有书签
-            bookmarks.value.forEach((_, index) => {
-              selectedBookmarks.value.add(index)
-            })
-          } else {
-            console.log('❌ 扩展响应异常:', response)
-            isExtensionInstalled.value = false
-          }
-        }
-      )
-    } else {
-      console.log('❌ chrome.runtime.sendMessage 不可用')
-      isExtensionInstalled.value = false
-    }
-  } catch (error) {
-    console.error('检测扩展失败:', error)
-    isExtensionInstalled.value = false
-  }
-}
-
-// 切换书签选择
-const toggleBookmark = (index: number) => {
-  // ⚠️ 临时移除 isOwnShare 限制，用于测试分享流程
-  if (!isExtensionInstalled.value) return
-
-  if (selectedBookmarks.value.has(index)) {
-    selectedBookmarks.value.delete(index)
-  } else {
-    selectedBookmarks.value.add(index)
-  }
-}
-
-// 全选/取消全选
-const toggleSelectAll = () => {
-  if (selectedBookmarks.value.size === bookmarks.value.length) {
-    selectedBookmarks.value.clear()
-  } else {
-    bookmarks.value.forEach((_, index) => {
-      selectedBookmarks.value.add(index)
-    })
-  }
-}
-
-// 导入选中的书签
-const importSelected = async () => {
-  if (selectedBookmarks.value.size === 0) return
-
-  const bookmarksToImport = Array.from(selectedBookmarks.value).map(
-    (index) => bookmarks.value[index]
-  )
-
-  isImporting.value = true
-  importProgress.value = { current: 0, total: bookmarksToImport.length }
-
-  try {
-    console.log('📤 开始导入书签到扩展...', {
-      count: bookmarksToImport.length
-    })
-
-    // 使用 chrome.runtime.sendMessage 发送导入请求
-    // @ts-ignore
-    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
-      // ✅ 修复：使用统一的消息发送方式
-      const sendMessageToExtension = (message: any, callback: (response: any) => void) => {
-        if (EXTENSION_ID) {
-          // @ts-ignore
-          chrome.runtime.sendMessage(EXTENSION_ID, message, callback)
-        } else {
-          // @ts-ignore
-          chrome.runtime.sendMessage(message, callback)
-        }
-      }
-
-      sendMessageToExtension(
-        {
-          type: 'IMPORT_SHARED_BOOKMARKS',
-          data: {
-            bookmarks: bookmarksToImport.map((b) => ({
-              title: b.title,
-              url: b.url,
-              description: b.description
-            })),
-            shareTitle: shareData.value?.title || '分享的书签' // ✅ 传递分享标题
-          }
-        },
-        (response: any) => {
-          // @ts-ignore
-          if (chrome.runtime.lastError) {
-            // @ts-ignore
-            console.error('❌ 导入失败:', chrome.runtime.lastError.message)
-            // @ts-ignore
-            alert(`❌ 导入失败：${chrome.runtime.lastError.message}`)
-            isImporting.value = false
-            return
-          }
-
-          if (response && response.success) {
-            console.log('✅ 导入成功', response)
-            alert(
-              `✅ 成功导入 ${response.imported} 个书签到文件夹「${response.folderName}」！${
-                response.failed > 0 ? `\n失败 ${response.failed} 个` : ''
-              }`
-            )
-            selectedBookmarks.value.clear()
-          } else {
-            console.error('❌ 导入失败:', response)
-            alert(`❌ 导入失败：${response.error || '未知错误'}`)
-          }
-
-          isImporting.value = false
-        }
-      )
-    } else {
-      throw new Error('chrome.runtime.sendMessage 不可用')
-    }
-  } catch (error) {
-    console.error('导入失败:', error)
-    alert(`❌ 导入失败：${error instanceof Error ? error.message : String(error)}`)
-    isImporting.value = false
-  }
-}
-
-// 获取 favicon URL
-const getFaviconUrl = (url: string): string => {
-  try {
-    const domain = new URL(url).hostname
-    return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`
-  } catch {
-    return ''
-  }
-}
-
-// 处理图标加载错误
-const handleIconError = (event: Event) => {
-  const img = event.target as HTMLImageElement
-  img.style.display = 'none'
-}
-
-// 格式化日期 - 显示精确时间（年月日时分秒）
-const formatDate = (dateString: string): string => {
-  const date = new Date(dateString)
-  
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  const seconds = String(date.getSeconds()).padStart(2, '0')
-  
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
-}
-
-// 复制分享链接（移动端）
-const copyShareLink = async () => {
-  try {
-    const currentUrl = window.location.href
-    await navigator.clipboard.writeText(currentUrl)
-    alert('✅ 链接已复制到剪贴板')
-  } catch (error) {
-    console.error('复制链接失败:', error)
-    alert('❌ 复制失败，请手动复制链接')
-  }
-}
-
-// 使用系统分享 API（移动端）
-const shareToFriends = async () => {
-  if (!shareData.value) return
-
-  try {
-    if (navigator.share) {
-      await navigator.share({
-        title: shareData.value.title,
-        text: `${shareData.value.title} - 分享了 ${shareData.value.bookmark_count} 个书签`,
-        url: window.location.href
-      })
-      console.log('✅ 分享成功')
-    } else {
-      await copyShareLink()
-    }
-  } catch (error) {
-    if ((error as Error).name !== 'AbortError') {
-      console.error('分享失败:', error)
-      alert('❌ 分享失败，请重试')
-    }
-  }
-}
-
-// 页面加载时执行
-onMounted(async () => {
-  isMobile.value = checkMobile()
-  console.log('📱 移动端检测结果:', isMobile.value)
-
-  if (!isMobile.value) {
-    await checkExtension()
-  }
-
-  await loadShareData()
-})
-
-// SEO
-useSeoMeta({
-  title: computed(() => shareData.value?.title || '分享的书签') + ' - AcuityBookmarks',
-  description: computed(
-    () => `查看分享的 ${shareData.value?.bookmark_count || 0} 个书签`
-  ),
-  robots: 'noindex, nofollow'
-})
-</script>
 
 <style scoped>
 /* 复用 share.vue 的样式 */

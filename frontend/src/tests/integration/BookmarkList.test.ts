@@ -96,8 +96,10 @@ describe('BookmarkList 组件', () => {
     await wrapper.find('[data-testid="bookmark-item"]').trigger('click')
     
     // 检查是否触发了 select 事件
-    expect(wrapper.emitted('select')).toBeTruthy()
-    expect(wrapper.emitted('select')?.[0]).toEqual(['1'])
+    const selectEmits = wrapper.emitted('select')
+    expect(selectEmits).toBeTruthy()
+    expect(selectEmits?.[0]).toBeDefined()
+    expect(selectEmits?.[0]).toEqual(['1'])
   })
   
   it('应该支持多选', async () => {
@@ -122,7 +124,9 @@ describe('BookmarkList 组件', () => {
     await items[1].trigger('click', { ctrlKey: true })
     
     // 检查是否触发了 2 次 select 事件
-    expect(wrapper.emitted('select')).toHaveLength(2)
+    const selectEmits = wrapper.emitted('select')
+    expect(selectEmits).toBeTruthy()
+    expect(selectEmits).toHaveLength(2)
   })
   
   it('应该显示空状态', () => {

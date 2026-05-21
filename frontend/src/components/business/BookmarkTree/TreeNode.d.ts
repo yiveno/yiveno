@@ -3,11 +3,11 @@ import type { BookmarkNode } from '@/types'
 
 // ✅ 树节点渲染配置项
 export interface SimpleTreeNodeConfig {
-  size?: 'compact' | 'comfortable' | 'spacious'
-  searchable?: boolean
-  selectable?: boolean | 'single' | 'multiple'
-  editable?: boolean
-  showSelectionCheckbox?: boolean
+  size?: 'compact' | 'comfortable' | 'spacious' | undefined
+  searchable?: boolean | undefined
+  selectable?: boolean | 'single' | 'multiple' | undefined
+  editable?: boolean | undefined
+  showSelectionCheckbox?: boolean | undefined
 }
 
 // ✅ Props：描述节点展示所需的输入
@@ -17,14 +17,14 @@ export interface SimpleTreeNodeProps {
   expandedFolders: Set<string>
   selectedNodes: Set<string>
   loadingChildren: Set<string>
-  searchQuery?: string
-  highlightMatches?: boolean
+  searchQuery?: string | undefined
+  highlightMatches?: boolean | undefined
   config: SimpleTreeNodeConfig
-  isVirtualMode?: boolean
-  strictOrder?: boolean
-  activeId?: string
-  loadingMoreFolders?: Set<string>
-  selectedDescCounts?: Map<string, number>
+  isVirtualMode?: boolean | undefined
+  strictOrder?: boolean | undefined
+  activeId?: string | null | undefined
+  loadingMoreFolders?: Set<string> | undefined
+  selectedDescCounts?: Map<string, number> | undefined
 }
 
 // ✅ Emits：列出节点交互向外发送的事件

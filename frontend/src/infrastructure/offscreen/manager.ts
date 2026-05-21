@@ -49,7 +49,9 @@ let requestCounter = 1
 function createError(message: string, cause?: unknown): Error {
   if (cause instanceof Error) {
     const err = new Error(message)
-    err.stack = cause.stack
+    if (cause.stack !== undefined) {
+      err.stack = cause.stack
+    }
     return err
   }
   return new Error(message)

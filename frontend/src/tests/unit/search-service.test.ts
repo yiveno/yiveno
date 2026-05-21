@@ -53,7 +53,8 @@ describe('搜索服务', () => {
     const results = searchAppService.search('Vue')
     
     expect(results).toHaveLength(1)
-    expect(results[0].id).toBe('1')
+    expect(results[0]).toBeDefined()
+    expect(results[0]!.id).toBe('1')
   })
   
   it('应该支持模糊搜索', () => {
@@ -80,7 +81,8 @@ describe('搜索服务', () => {
     const results = searchAppService.search('前端')
     
     expect(results).toHaveLength(1)
-    expect(results[0].id).toBe('1')
+    expect(results[0]).toBeDefined()
+    expect(results[0]!.id).toBe('1')
   })
   
   it('应该按相关度排序', () => {
@@ -95,7 +97,8 @@ describe('搜索服务', () => {
     const results = searchAppService.search('Vue')
     
     // 完全匹配应该排在前面
-    expect(results[0].id).toBe('1')
+    expect(results[0]).toBeDefined()
+    expect(results[0]!.id).toBe('1')
   })
   
   it('性能测试：搜索 2 万书签应该在 100ms 内', () => {

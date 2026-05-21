@@ -192,24 +192,42 @@ export class HighlightEngine {
     }
 
     for (let j = 0; j <= a.length; j++) {
+      if (!matrix[0]) {
+        matrix[0] = []
+      }
       matrix[0][j] = j
     }
 
     for (let i = 1; i <= b.length; i++) {
       for (let j = 1; j <= a.length; j++) {
+        const currentRow = matrix[i]
+        const previousRow = matrix[i - 1]
+        if (!currentRow || !previousRow) {
+          continue
+        }
         if (b.charAt(i - 1) === a.charAt(j - 1)) {
-          matrix[i][j] = matrix[i - 1][j - 1]
+          const diagonal = previousRow[j - 1]
+          if (diagonal === undefined) {
+            continue
+          }
+          currentRow[j] = diagonal
         } else {
-          matrix[i][j] = Math.min(
-            matrix[i - 1][j - 1] + 1,
-            matrix[i][j - 1] + 1,
-            matrix[i - 1][j] + 1
-          )
+          const diagonal = previousRow[j - 1]
+          const left = currentRow[j - 1]
+          const up = previousRow[j]
+          if (
+            diagonal === undefined ||
+            left === undefined ||
+            up === undefined
+          ) {
+            continue
+          }
+          currentRow[j] = Math.min(diagonal + 1, left + 1, up + 1)
         }
       }
     }
 
-    return matrix[b.length][a.length]
+    return matrix[b.length]?.[a.length] ?? 0
   }
 
   /**
@@ -227,9 +245,13 @@ export class HighlightEngine {
 
     const merged: Array<{ start: number; end: number }> = []
     let current = matches[0]
+    if (!current) {
+      return merged
+    }
 
     for (let i = 1; i < matches.length; i++) {
       const next = matches[i]
+      if (!next) continue
 
       if (next.start <= current.end) {
         // 合并重叠或相邻的匹配
@@ -319,7 +341,15 @@ export class HighlightEngine {
     }
 
     // 计算上下文范围
-    const matchStart = segments[firstMatchIndex].start
+    const firstMatch = segments[firstMatchIndex]
+    if (!firstMatch) {
+      return {
+        snippet: text.substring(0, maxLength),
+        highlights: []
+      }
+    }
+
+    const matchStart = firstMatch.start
     const contextStart = Math.max(0, matchStart - Math.floor(maxLength / 2))
     const contextEnd = Math.min(text.length, contextStart + maxLength)
 

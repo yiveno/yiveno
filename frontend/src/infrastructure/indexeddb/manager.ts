@@ -1381,7 +1381,7 @@ export class IndexedDBManager {
           key,
           value,
           type: (type || typeof value) as AppSettings['type'],
-          description,
+          ...(description !== undefined ? { description } : {}),
           updatedAt: Date.now()
         }
 

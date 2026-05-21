@@ -75,7 +75,7 @@ export async function crawlSingleBookmark(
 
   try {
     const result = await crawlBookmarkLocally(bookmark.url, {
-      timeout: options?.timeout
+      ...(options?.timeout !== undefined ? { timeout: options.timeout } : {})
     })
     await saveCrawlResult(bookmark.id, bookmark.url, result)
   } catch (error) {

@@ -10,11 +10,11 @@ export interface ShareData {
   /** 版本号，当前为 1 */
   v: number
   /** 分享标题（可选） */
-  t?: string
+  t?: string | undefined
   /** 书签列表 */
   b: ShareBookmark[]
   /** 分享者信息（可选，仅显示昵称） */
-  s?: string
+  s?: string | undefined
 }
 
 /**
@@ -26,7 +26,7 @@ export interface ShareBookmark {
   /** URL */
   u: string
   /** 描述（可选） */
-  d?: string
+  d?: string | undefined
 }
 
 /**

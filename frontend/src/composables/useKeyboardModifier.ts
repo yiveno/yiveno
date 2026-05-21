@@ -19,8 +19,9 @@ export function parseModifierString(
   const parts = modifierString.toLowerCase().split('.')
   const key = parts[parts.length - 1] // 最后一个是按键
 
-  const modifiers: Partial<KeyboardShortcut> = {
-    key
+  const modifiers: Partial<KeyboardShortcut> = {}
+  if (key) {
+    modifiers.key = key
   }
 
   // 解析修饰键

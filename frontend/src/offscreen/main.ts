@@ -6,7 +6,7 @@ import type { SearchResult } from '@/infrastructure/indexeddb/manager'
 import type { WorkerDoc } from '@/types/domain/query'
 
 interface SearchState {
-  worker?: Worker
+  worker: Worker | undefined
   ready: boolean
   initializing: boolean
   primed: boolean
@@ -14,6 +14,7 @@ interface SearchState {
 }
 
 const searchState: SearchState = {
+  worker: undefined,
   ready: false,
   initializing: false,
   primed: false,

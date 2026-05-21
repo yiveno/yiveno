@@ -246,13 +246,14 @@ export class GlobalStateManager {
     const newState = { ...this.state }
 
     Object.keys(changes).forEach(key => {
-      if (changes[key].newValue !== undefined) {
+      const change = changes[key]
+      if (change?.newValue !== undefined) {
         // 根据命名空间和键名更新对应状态
         if (namespace === 'local') {
           switch (key) {
             case STORAGE_KEYS.LOCAL.THEME: {
               const nextTheme = this.ensureTheme(
-                changes[key].newValue,
+                change.newValue,
                 newState.theme
               )
               if (nextTheme !== newState.theme) {
@@ -264,7 +265,7 @@ export class GlobalStateManager {
 
             case STORAGE_KEYS.LOCAL.COLOR_PRESET: {
               const nextPreset = this.ensureColorPreset(
-                changes[key].newValue,
+                change.newValue,
                 newState.colorPreset
               )
               if (nextPreset !== newState.colorPreset) {
@@ -276,7 +277,7 @@ export class GlobalStateManager {
 
             case STORAGE_KEYS.LOCAL.AUTO_SYNC: {
               const nextAutoSync = this.ensureBoolean(
-                changes[key].newValue,
+                change.newValue,
                 newState.autoSync
               )
               if (nextAutoSync !== newState.autoSync) {
@@ -287,7 +288,7 @@ export class GlobalStateManager {
             }
             case STORAGE_KEYS.LOCAL.SHOW_FAVICONS: {
               const nextShowFavicons = this.ensureBoolean(
-                changes[key].newValue,
+                change.newValue,
                 newState.showFavicons
               )
               if (nextShowFavicons !== newState.showFavicons) {
@@ -298,7 +299,7 @@ export class GlobalStateManager {
             }
             case STORAGE_KEYS.LOCAL.COMPACT_MODE: {
               const nextCompactMode = this.ensureBoolean(
-                changes[key].newValue,
+                change.newValue,
                 newState.compactMode
               )
               if (nextCompactMode !== newState.compactMode) {
@@ -309,7 +310,7 @@ export class GlobalStateManager {
             }
             case STORAGE_KEYS.LOCAL.AUTO_FOLLOW_SYSTEM_THEME: {
               const nextAutoFollow = this.ensureBoolean(
-                changes[key].newValue,
+                change.newValue,
                 newState.autoFollowSystemTheme
               )
               if (nextAutoFollow !== newState.autoFollowSystemTheme) {
@@ -323,7 +324,7 @@ export class GlobalStateManager {
           switch (key) {
             case STORAGE_KEYS.SYNC.THEME: {
               const nextTheme = this.ensureTheme(
-                changes[key].newValue,
+                change.newValue,
                 newState.theme
               )
               if (nextTheme !== newState.theme) {
@@ -335,7 +336,7 @@ export class GlobalStateManager {
 
             case STORAGE_KEYS.SYNC.COLOR_PRESET: {
               const nextPreset = this.ensureColorPreset(
-                changes[key].newValue,
+                change.newValue,
                 newState.colorPreset
               )
               if (nextPreset !== newState.colorPreset) {

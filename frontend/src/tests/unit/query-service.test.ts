@@ -206,7 +206,11 @@ describe('QueryService', () => {
       const response = await queryService.search('vue', { sortBy: 'title', sortOrder: 'asc' })
       
       if (response.results.length >= 2) {
-        expect(response.results[0].bookmark.title.localeCompare(response.results[1].bookmark.title)).toBeLessThan(0)
+        expect(response.results[0]).toBeDefined()
+        expect(response.results[1]).toBeDefined()
+        const first = response.results[0]!
+        const second = response.results[1]!
+        expect(first.bookmark.title.localeCompare(second.bookmark.title)).toBeLessThan(0)
       }
     })
   })

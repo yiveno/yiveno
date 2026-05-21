@@ -1,3 +1,63 @@
+<script setup lang="ts">
+import { Users, Shield, Zap, GitBranch, Github } from 'lucide-vue-next'
+import Button from '@/components/ui/Button.vue'
+import Card from '@/components/ui/Card.vue'
+
+const NuxtLink = resolveComponent('NuxtLink')
+
+const stats = [
+  { value: '12+', label: '核心贡献者' },
+  { value: '40+', label: '社区 Pull Requests' },
+  { value: '2019', label: '最早原型年份' }
+]
+
+const values = [
+  {
+    icon: Users,
+    title: '用户至上',
+    description: '定期与核心用户共创，路线图公开透明，投票即可影响排期。'
+  },
+  {
+    icon: Shield,
+    title: '隐私优先',
+    description: '所有设计都以本地掌控为前提，云端只是可选协作能力。'
+  },
+  {
+    icon: Zap,
+    title: '持续打磨',
+    description: '每周小版本，保持稳定迭代和性能改善。'
+  },
+  {
+    icon: GitBranch,
+    title: '开放共建',
+    description: '欢迎 fork、提 issue、写文档，我们乐于帮助你贡献第一行代码。'
+  }
+]
+
+const roadmap = [
+  {
+    quarter: '2025 Q1',
+    title: 'AI 多模态推荐',
+    description: '引入图像/音频上下文理解，提升侧边栏推荐准确度。'
+  },
+  {
+    quarter: '2025 Q2',
+    title: '团队权限 & 审计',
+    description: '支持 SSO、空间权限、操作日志，方便企业部署。'
+  },
+  {
+    quarter: '2025 Q3',
+    title: '生态开放',
+    description: '开放命令面板与事件 API，允许第三方扩展任务流。'
+  }
+]
+
+useSeoMeta({
+  title: '关于我们 - AcuityBookmarks',
+  description: '认识 AcuityBookmarks 团队：使命、价值观、路线图与加入方式。'
+})
+</script>
+
 <template>
   <div class="min-h-screen pb-20">
     <!-- Hero Section -->
@@ -110,7 +170,7 @@
           ></div>
 
           <Card
-            v-for="(item, index) in roadmap"
+            v-for="item in roadmap"
             :key="item.title"
             class="p-8 border-white/10 hover:border-primary-500/30 transition-all relative"
           >
@@ -184,63 +244,3 @@
     </section>
   </div>
 </template>
-
-<script setup lang="ts">
-import { Users, Shield, Zap, GitBranch, Github } from 'lucide-vue-next'
-import Button from '@/components/ui/Button.vue'
-import Card from '@/components/ui/Card.vue'
-
-const NuxtLink = resolveComponent('NuxtLink')
-
-const stats = [
-  { value: '12+', label: '核心贡献者' },
-  { value: '40+', label: '社区 Pull Requests' },
-  { value: '2019', label: '最早原型年份' }
-]
-
-const values = [
-  {
-    icon: Users,
-    title: '用户至上',
-    description: '定期与核心用户共创，路线图公开透明，投票即可影响排期。'
-  },
-  {
-    icon: Shield,
-    title: '隐私优先',
-    description: '所有设计都以本地掌控为前提，云端只是可选协作能力。'
-  },
-  {
-    icon: Zap,
-    title: '持续打磨',
-    description: '每周小版本，保持稳定迭代和性能改善。'
-  },
-  {
-    icon: GitBranch,
-    title: '开放共建',
-    description: '欢迎 fork、提 issue、写文档，我们乐于帮助你贡献第一行代码。'
-  }
-]
-
-const roadmap = [
-  {
-    quarter: '2025 Q1',
-    title: 'AI 多模态推荐',
-    description: '引入图像/音频上下文理解，提升侧边栏推荐准确度。'
-  },
-  {
-    quarter: '2025 Q2',
-    title: '团队权限 & 审计',
-    description: '支持 SSO、空间权限、操作日志，方便企业部署。'
-  },
-  {
-    quarter: '2025 Q3',
-    title: '生态开放',
-    description: '开放命令面板与事件 API，允许第三方扩展任务流。'
-  }
-]
-
-useSeoMeta({
-  title: '关于我们 - AcuityBookmarks',
-  description: '认识 AcuityBookmarks 团队：使命、价值观、路线图与加入方式。'
-})
-</script>

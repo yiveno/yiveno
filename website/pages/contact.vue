@@ -1,3 +1,47 @@
+<script setup lang="ts">
+import { Mail, MessageSquare, TrendingUp, ChevronDown } from 'lucide-vue-next'
+import Card from '@/components/ui/Card.vue'
+import ContactForm from '@/components/ContactForm.vue'
+
+const contacts = [
+  {
+    icon: Mail,
+    label: '邮箱',
+    value: 'hi@acuitybookmarks.com',
+    description: '适用于合作、媒体采访、企业采购相关事宜'
+  },
+  {
+    icon: MessageSquare,
+    label: '社区',
+    value: 'Discord / GitHub',
+    description: '在 issue 或讨论区提需求、提交 PR'
+  },
+  {
+    icon: TrendingUp,
+    label: '反馈通道',
+    value: 'feature-request',
+    description: '直接在路线图页面投票或添加需求'
+  }
+]
+
+const faqs = [
+  {
+    q: '多久能得到回复？',
+    a: '工作日 24h 内、周末 48h 内回复。Pro/Team 用户会优先处理。'
+  },
+  {
+    q: '是否提供在线演示？',
+    a: '可以，Team/Enterprise 用户可预约线上 Demo，我们会展示完整部署流程。'
+  }
+]
+
+useSeoMeta({
+  title: '联系我们 - AcuityBookmarks',
+  description:
+    '通过邮件、社区或表单联系 AcuityBookmarks 团队，反馈问题或探讨合作。'
+})
+</script>
+
 <template>
   <div class="min-h-screen pb-20">
     <!-- Hero Section -->
@@ -110,47 +154,3 @@
     </section>
   </div>
 </template>
-
-<script setup lang="ts">
-import { Mail, MessageSquare, TrendingUp, ChevronDown } from 'lucide-vue-next'
-import Card from '@/components/ui/Card.vue'
-import ContactForm from '@/components/ContactForm.vue'
-
-const contacts = [
-  {
-    icon: Mail,
-    label: '邮箱',
-    value: 'hi@acuitybookmarks.com',
-    description: '适用于合作、媒体采访、企业采购相关事宜'
-  },
-  {
-    icon: MessageSquare,
-    label: '社区',
-    value: 'Discord / GitHub',
-    description: '在 issue 或讨论区提需求、提交 PR'
-  },
-  {
-    icon: TrendingUp,
-    label: '反馈通道',
-    value: 'feature-request',
-    description: '直接在路线图页面投票或添加需求'
-  }
-]
-
-const faqs = [
-  {
-    q: '多久能得到回复？',
-    a: '工作日 24h 内、周末 48h 内回复。Pro/Team 用户会优先处理。'
-  },
-  {
-    q: '是否提供在线演示？',
-    a: '可以，Team/Enterprise 用户可预约线上 Demo，我们会展示完整部署流程。'
-  }
-]
-
-useSeoMeta({
-  title: '联系我们 - AcuityBookmarks',
-  description:
-    '通过邮件、社区或表单联系 AcuityBookmarks 团队，反馈问题或探讨合作。'
-})
-</script>

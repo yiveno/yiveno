@@ -27,6 +27,9 @@ export interface TraitStatistics {
   duplicate: number
   invalid: number
   internal: number
+  outdated?: number
+  untagged?: number
+  untitled?: number
 }
 
 /**
@@ -166,7 +169,7 @@ export const useTraitDataStore = defineStore('traitData', () => {
    * @returns 数量
    */
   function getCount(trait: TraitTag): number {
-    return statistics.value[trait]
+    return statistics.value[trait] ?? 0
   }
   
   /**

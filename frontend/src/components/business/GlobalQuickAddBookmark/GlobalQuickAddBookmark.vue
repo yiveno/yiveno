@@ -42,6 +42,8 @@ onMounted(() => {
       sendResponse({ success: true })
       return true
     }
+
+    return false
   })
 })
 

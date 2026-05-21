@@ -56,7 +56,11 @@ const progressMessage = ref('Initializing...')
 const isSyncing = ref(true)
 const isCompleted = ref(false)
 
-const currentStep = computed(() => steps[currentStepIndex.value])
+const fallbackStep: Step = steps[0]!
+
+const currentStep = computed<Step>(
+  () => steps[currentStepIndex.value] ?? fallbackStep
+)
 const isLast = computed(() => currentStepIndex.value === steps.length - 1)
 
 // --- 导航逻辑 ---
@@ -100,7 +104,8 @@ function completeSync() {
     progressMessage.value = 'Ready'
     
     // 如果用户还停留在同步页，自动跳转（体验优化）
-    if (steps[currentStepIndex.value].id === 'sync') {
+    const activeStep = steps[currentStepIndex.value] ?? fallbackStep
+    if (activeStep.id === 'sync') {
       setTimeout(() => {
         nextStep()
       }, 1200)

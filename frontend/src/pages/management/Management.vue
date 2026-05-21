@@ -34,9 +34,9 @@ import {
   LucideIcon,
   AnimatedNumber
 } from '@/components'
+import { Loading } from '@/components/base/Loading'
 import { notificationService } from '@/application/notification/notification-service'
 import { NOTIFICATION_CONFIG } from '@/config/constants'
-import { ConfirmableDialog } from '@/components'
 import { onEvent } from '@/infrastructure/events/event-bus'
 import BookmarkTree from '@/components/business/BookmarkTree/BookmarkTree.vue'
 // 导入书签 API 网关：以 side-effect 方式初始化并设置事件监听与消息桥接
@@ -52,6 +52,7 @@ import type {
   BookmarkOperation,
   BookmarkOperationType
 } from '@/application/bookmark/bookmark-diff-service'
+import type { AddItemData, EditBookmarkData } from '@/stores/bookmark/bookmark-management-store'
 // AI 整理功能临时禁用，等待重构
 // import { aiAppService } from '@/application/ai/ai-app-service'
 // import { bookmarkAppService } from '@/application/bookmark/bookmark-app-service'
@@ -288,7 +289,7 @@ function onAddItemUrlInput(ev: Event) {
 }
 
 const addDialogContentRef = ref<HTMLElement | null>(null)
-const addDialogMinHeight = ref<string | undefined>(undefined)
+const addDialogMinHeight = ref<string>('')
 
 watch(
   () => dialogStore.addItemDialog.isOpen,
@@ -305,7 +306,7 @@ watch(
         }
       })
     } else {
-      addDialogMinHeight.value = undefined
+      addDialogMinHeight.value = ''
     }
   }
 )
@@ -399,6 +400,7 @@ watch(
     if (!newTree || !pendingTagSelection.value?.length) return
     await nextTick()
     // 清除待选中标签（已经应用筛选）
+    // eslint-disable-next-line require-atomic-updates -- 清除待选中标签是原子操作，不会有竞态条件
     pendingTagSelection.value = null
     
     // 使用 traitFilterStore 的 filterResultIds 获取筛选结果
@@ -491,14 +493,6 @@ const handleLeftTreeReady = () => {
     logger.error('Management', '❌ handleLeftTreeReady 失败', error)
   }
 }
-const isAddDirty = computed(() => {
-  const t = (dialogStore.addItemDialog.title || '').trim()
-  const u = (dialogStore.addItemDialog.url || '').trim()
-  if (dialogStore.addItemDialog.type === 'bookmark') {
-    return !!t || !!u
-  }
-  return !!t
-})
 const isEditDirty = computed(() => {
   const originalTitle = (
     dialogStore.editBookmarkDialog.bookmark?.title || ''
@@ -593,7 +587,6 @@ const handleBookmarkOpenNewTab = (node: BookmarkNode) => {
   }
 
   try {
-    // 🔒 环境检查：确保在浏览器环境中运行
     if (typeof window === 'undefined') {
       logger.error('Management', '非浏览器环境，无法打开链接')
       notificationService.notify(t('management_open_link_failed'), { level: 'error' })
@@ -654,12 +647,16 @@ const confirmAddNewItem = async () => {
     const itemType =
       dialogStore.addItemDialog.type === 'bookmark' ? '书签' : '文件夹'
 
-    const res = await bookmarkManagementStore.addBookmark({
+    const addData: AddItemData = {
       type: dialogStore.addItemDialog.type,
       title: dialogStore.addItemDialog.title,
-      url: dialogStore.addItemDialog.url,
-      parentId: dialogStore.addItemDialog.parentFolder?.id
-    })
+      url: dialogStore.addItemDialog.url
+    }
+    if (dialogStore.addItemDialog.parentFolder?.id) {
+      addData.parentId = dialogStore.addItemDialog.parentFolder.id
+    }
+
+    const res = await bookmarkManagementStore.addBookmark(addData)
 
     dialogStore.closeAddItemDialog()
 
@@ -685,6 +682,7 @@ const confirmAddNewItem = async () => {
     logger.error('Management', 'Add', '添加失败', error)
     notificationService.notify(t('management_add_failed'), { level: 'error' })
   } finally {
+    // eslint-disable-next-line require-atomic-updates -- finally 块中的状态重置是安全的
     isAddingItem.value = false
   }
 }
@@ -710,12 +708,16 @@ const confirmEditBookmark = async () => {
   try {
     isEditingBookmark.value = true
 
-    await bookmarkManagementStore.editBookmark({
+    const editData: EditBookmarkData = {
       id: dialogStore.editBookmarkDialog.bookmark!.id,
       title: dialogStore.editBookmarkDialog.title,
-      url: dialogStore.editBookmarkDialog.url,
-      parentId: dialogStore.editBookmarkDialog.parentId
-    })
+      url: dialogStore.editBookmarkDialog.url
+    }
+    if (dialogStore.editBookmarkDialog.parentId) {
+      editData.parentId = dialogStore.editBookmarkDialog.parentId
+    }
+
+    await bookmarkManagementStore.editBookmark(editData)
 
     dialogStore.closeEditBookmarkDialog()
 
@@ -725,6 +727,7 @@ const confirmEditBookmark = async () => {
     logger.error('Management', 'Edit', '编辑书签失败', error)
     notificationService.notify(t('management_edit_failed'), { level: 'error' })
   } finally {
+    // eslint-disable-next-line require-atomic-updates -- finally 块中的状态重置是安全的
     isEditingBookmark.value = false
   }
 }
@@ -748,8 +751,7 @@ const confirmEditFolder = async () => {
     await bookmarkManagementStore.editBookmark({
       id: dialogStore.editFolderDialog.folder!.id,
       title: dialogStore.editFolderDialog.title,
-      url: '',
-      parentId: undefined
+      url: ''
     })
 
     dialogStore.closeEditFolderDialog()
@@ -760,6 +762,7 @@ const confirmEditFolder = async () => {
     logger.error('Management', 'Edit', '编辑文件夹失败', error)
     notificationService.notify(t('management_edit_failed'), { level: 'error' })
   } finally {
+    // eslint-disable-next-line require-atomic-updates -- finally 块中的状态重置是安全的
     isEditingFolder.value = false
   }
 }
@@ -770,6 +773,7 @@ const confirmDeleteFolder = async () => {
     if (isDeletingFolder.value) return
 
     try {
+      // eslint-disable-next-line require-atomic-updates -- 删除操作开始时设置状态是安全的
       isDeletingFolder.value = true
 
       try {
@@ -778,16 +782,19 @@ const confirmDeleteFolder = async () => {
         logger.error('Management', '删除文件夹失败', error)
         notificationService.notify(t('management_delete_failed'), { level: 'error' })
       } finally {
+        // eslint-disable-next-line require-atomic-updates -- finally 块中的状态重置是安全的
         isDeletingFolder.value = false
       }
     } catch (error) {
       logger.error('Management', '删除文件夹失败', error)
       notificationService.notify(t('management_delete_failed'), { level: 'error' })
+      // eslint-disable-next-line require-atomic-updates -- 错误处理中的状态重置是安全的
       isDeletingFolder.value = false
     }
   }
 
   isConfirmDeleteDialogOpen.value = false
+  // eslint-disable-next-line require-atomic-updates -- 清理状态是原子操作，不会有竞态条件
   deleteTargetFolder.value = null
   deleteFolderBookmarkCount.value = 0
 }
@@ -842,7 +849,6 @@ const handleBeforeUnload = (e: BeforeUnloadEvent) => {
 
 onUnmounted(() => {
   unsubscribeExternalChange()
-  // 🔒 环境检查：确保在浏览器环境中运行
   if (typeof window !== 'undefined') {
     window.removeEventListener('beforeunload', handleBeforeUnload)
   }
@@ -876,7 +882,6 @@ onMounted(async () => {
   // 2. 兜底：从 URL 参数读取（向后兼容）
   if (pendingTags.length === 0) {
     try {
-      // 🔒 环境检查：确保在浏览器环境中运行
       if (typeof window !== 'undefined') {
         const params = new URLSearchParams(window.location.search)
         const tagsParam = params.get('tags')
@@ -916,7 +921,6 @@ onMounted(async () => {
     logger.info('Management', '✅ 筛选应该已经生效，当前 activeFilters:', traitFilterStore.activeFilters)
   }
 
-  // 🔒 环境检查：确保在浏览器环境中运行
   if (typeof window !== 'undefined') {
     window.addEventListener('beforeunload', handleBeforeUnload)
 
@@ -1348,7 +1352,6 @@ const handleApplyClick = () => {
       `1. 如果这些是误添加的节点，请刷新页面丢弃它们\n` +
       `2. 如果需要保留这些节点，暂时不支持保存（功能开发中）`
 
-    // 🔒 环境检查：确保在浏览器环境中运行
     const shouldContinue = typeof window !== 'undefined' ? window.confirm(message) : false
 
     if (shouldContinue) {
@@ -1439,6 +1442,7 @@ const confirmApplyChanges = async () => {
     }
 
     // 清空差异结果
+    // eslint-disable-next-line require-atomic-updates -- 清空差异结果是原子操作，不会有竞态条件
     diffResult.value = null
   } catch (error) {
     logger.error('Management', '应用更改失败', error)
@@ -1461,17 +1465,13 @@ const handleApply = () => {
   <div class="management-page app-container">
     <div v-if="isPageLoading" class="page-overlay">
       <div class="overlay-loading">
-        <md-circular-progress indeterminate></md-circular-progress>
-        <div class="loading-text" data-testid="progress-text">
-          {{ loadingMessage }}
-        </div>
+        <Loading size="xl" :text="loadingMessage" />
       </div>
     </div>
-    <!-- 📊 全局书签同步进度对话框 -->
     <GlobalSyncProgress />
-    <!-- ⚡ 全局快速添加书签对话框 -->
+
     <GlobalQuickAddBookmark />
-    <!-- 🤖 AI 整理进度对话框 -->
+
     <Dialog
       :show="showOrganizeProgress"
       :title="t('management_ai_organize_bookmarks')"
@@ -1985,16 +1985,15 @@ const handleApply = () => {
       </div>
     </main>
     <!-- Edit Bookmark Dialog -->
-    <ConfirmableDialog
+    <Dialog
       :show="dialogStore.editBookmarkDialog.isOpen"
       :title="t('management_edit_bookmark')"
       icon="icon-edit-bookmark"
       :persistent="true"
       :esc-to-close="true"
       :enter-to-confirm="true"
-      :enable-cancel-guard="false"
-      :confirm-message="MSG_CANCEL_EDIT"
-      :is-dirty="isEditDirty"
+      :enable-cancel-guard="true"
+      :cancel-confirm-text="MSG_CANCEL_EDIT"
       max-width="500px"
       min-width="500px"
       @update:show="
@@ -2025,8 +2024,8 @@ const handleApply = () => {
           @input="onEditBookmarkUrlInput"
         />
       </div>
-      <template #actions="{ requestClose }">
-        <md-text-button @click="requestClose(false)">
+      <template #actions>
+        <md-text-button @click="dialogStore.closeEditBookmarkDialog()">
           {{ t('common_cancel') }}
         </md-text-button>
         <md-filled-button
@@ -2037,19 +2036,18 @@ const handleApply = () => {
           {{ t('management_update') }}
         </md-filled-button>
       </template>
-    </ConfirmableDialog>
+    </Dialog>
 
     <!-- Edit Folder Dialog -->
-    <ConfirmableDialog
+    <Dialog
       :show="dialogStore.editFolderDialog.isOpen"
       :title="t('management_edit_folder')"
       icon="icon-folder-edit"
       :persistent="true"
       :esc-to-close="true"
       :enter-to-confirm="true"
-      :enable-cancel-guard="false"
-      :confirm-message="MSG_CANCEL_EDIT"
-      :is-dirty="isEditFolderDirty"
+      :enable-cancel-guard="true"
+      :cancel-confirm-text="MSG_CANCEL_EDIT"
       max-width="500px"
       min-width="500px"
       @update:show="
@@ -2072,8 +2070,8 @@ const handleApply = () => {
           @input="onEditFolderTitleInput"
         />
       </div>
-      <template #actions="{ requestClose }">
-        <md-text-button @click="requestClose(false)">
+      <template #actions>
+        <md-text-button @click="dialogStore.closeEditFolderDialog()">
           {{ t('common_cancel') }}
         </md-text-button>
         <md-filled-button
@@ -2084,17 +2082,16 @@ const handleApply = () => {
           {{ t('management_update') }}
         </md-filled-button>
       </template>
-    </ConfirmableDialog>
+    </Dialog>
 
-    <!-- Delete Folder Confirm Dialog (统一为 ConfirmableDialog) -->
-    <ConfirmableDialog
+    <!-- Delete Folder Confirm Dialog -->
+    <Dialog
       :show="isConfirmDeleteDialogOpen"
       :esc-to-close="true"
       :enter-to-confirm="true"
       :title="t('management_confirm_delete')"
       icon="icon-delete"
       :persistent="true"
-      :enable-cancel-guard="false"
       max-width="480px"
       min-width="480px"
       @update:show="(v: boolean) => (isConfirmDeleteDialogOpen = v)"
@@ -2103,8 +2100,8 @@ const handleApply = () => {
       <div class="confirm-content">
         {{ t('management_delete_folder_confirm', String(deleteFolderBookmarkCount)) }}
       </div>
-      <template #actions="{ requestClose }">
-        <md-text-button @click="requestClose(false)">
+      <template #actions>
+        <md-text-button @click="isConfirmDeleteDialogOpen = false">
           {{ t('common_cancel') }}
         </md-text-button>
         <md-filled-tonal-button
@@ -2115,30 +2112,33 @@ const handleApply = () => {
           {{ t('management_confirm_delete') }}
         </md-filled-tonal-button>
       </template>
-    </ConfirmableDialog>
+    </Dialog>
 
     <!-- Add New Item Dialog -->
-    <ConfirmableDialog
+    <Dialog
       :show="dialogStore.addItemDialog.isOpen"
       :title="addDialogTitle"
       :icon="addDialogIcon"
       :persistent="true"
       :esc-to-close="true"
       :enter-to-confirm="true"
-      :enable-cancel-guard="false"
-      :confirm-message="MSG_CANCEL_ADD"
-      :is-dirty="isAddDirty"
+      :enable-cancel-guard="true"
+      :cancel-confirm-text="MSG_CANCEL_ADD"
       :body-min-height="addDialogMinHeight"
       max-width="500px"
       min-width="500px"
       @update:show="
-        (v: boolean) =>
-          v
-            ? dialogStore.openAddItemDialog(
-                dialogStore.addItemDialog.type,
-                dialogStore.addItemDialog.parentFolder || undefined
-              )
-            : dialogStore.closeAddItemDialog()
+        (v: boolean) => {
+          if (v) {
+            const parentFolder = dialogStore.addItemDialog.parentFolder
+            dialogStore.openAddItemDialog(
+              dialogStore.addItemDialog.type,
+              parentFolder || undefined
+            )
+          } else {
+            dialogStore.closeAddItemDialog()
+          }
+        }
       "
       @confirm="confirmAddNewItem"
     >
@@ -2196,8 +2196,8 @@ const handleApply = () => {
           />
         </div>
       </div>
-      <template #actions="{ requestClose }">
-        <md-text-button @click="requestClose(false)">
+      <template #actions>
+        <md-text-button @click="dialogStore.closeAddItemDialog()">
           {{ t('common_cancel') }}
         </md-text-button>
         <md-filled-button
@@ -2207,7 +2207,7 @@ const handleApply = () => {
           {{ addConfirmText }}
         </md-filled-button>
       </template>
-    </ConfirmableDialog>
+    </Dialog>
   </div>
 </template>
 

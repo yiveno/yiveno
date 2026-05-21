@@ -14,6 +14,24 @@ import type { BookmarkNode } from '@/types'
 import { logger } from '@/infrastructure/logging/logger'
 import { emitEvent } from '@/infrastructure/events/event-bus'
 
+function toBookmarkNode(record: BookmarkRecord): BookmarkNode {
+  return {
+    id: String(record.id),
+    title: record.title,
+    ...(record.url !== undefined ? { url: record.url } : {}),
+    ...(typeof record.index === 'number' ? { index: record.index } : {}),
+    ...(typeof record.dateAdded === 'number'
+      ? { dateAdded: record.dateAdded }
+      : {}),
+    children: [],
+    ...(typeof record.childrenCount === 'number'
+      ? { childrenCount: record.childrenCount }
+      : {}),
+    _childrenLoaded: false,
+    ...(record.parentId ? { parentId: String(record.parentId) } : {})
+  }
+}
+
 /**
  * 书签应用服务，负责协调仓储层与上层调用的交互。
  */
@@ -67,18 +85,8 @@ export class BookmarkAppService {
       const result = await bookmarkRepository.getChildrenByParentId('0', 0, 100)
       if (result.ok && result.value) {
         // 转换 BookmarkRecord 为 BookmarkNode
-        const nodes: BookmarkNode[] = result.value.map(
-          (record: BookmarkRecord) => ({
-            id: String(record.id),
-            title: record.title,
-            url: record.url,
-            parentId: record.parentId ? String(record.parentId) : undefined,
-            index: record.index,
-            dateAdded: record.dateAdded,
-            children: [],
-            childrenCount: record.childrenCount,
-            _childrenLoaded: false
-          })
+        const nodes: BookmarkNode[] = result.value.map(record =>
+          toBookmarkNode(record)
         )
         return ok(nodes)
       }
@@ -104,18 +112,8 @@ export class BookmarkAppService {
       )
       if (result.ok && result.value) {
         // 转换 BookmarkRecord 为 BookmarkNode
-        const nodes: BookmarkNode[] = result.value.map(
-          (record: BookmarkRecord) => ({
-            id: String(record.id),
-            title: record.title,
-            url: record.url,
-            parentId: record.parentId ? String(record.parentId) : undefined,
-            index: record.index,
-            dateAdded: record.dateAdded,
-            children: [],
-            childrenCount: record.childrenCount,
-            _childrenLoaded: false
-          })
+        const nodes: BookmarkNode[] = result.value.map(record =>
+          toBookmarkNode(record)
         )
         return ok(nodes)
       }

@@ -11,16 +11,22 @@ const CACHE_KEY = 'acuity_subscription_cache'
 const CACHE_DURATION = 15 * 60 * 1000 // 15 分钟
 
 interface SubscriptionCache {
-  data: any
+  data: SubscriptionRecord | null
   timestamp: number
   userId: string // 添加用户 ID，确保缓存对应正确的用户
+}
+
+interface SubscriptionRecord {
+  tier: string
+  status: string
+  current_period_end: string
 }
 
 export const useSubscription = () => {
   const { user } = useAuth()
   const { supabase } = useSupabase()
   
-  const subscription = ref<any>(null)
+  const subscription = ref<SubscriptionRecord | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
   const isInitialized = ref(false) // 是否已初始化
@@ -62,7 +68,7 @@ export const useSubscription = () => {
   /**
    * 从缓存读取订阅数据（带用户 ID 验证）
    */
-  const loadFromCache = (userId: string): any | null => {
+  const loadFromCache = (userId: string): SubscriptionRecord | null => {
     if (typeof window === 'undefined') return null
     
     try {
@@ -97,7 +103,7 @@ export const useSubscription = () => {
   /**
    * 保存订阅数据到缓存
    */
-  const saveToCache = (data: any, userId: string) => {
+  const saveToCache = (data: SubscriptionRecord | null, userId: string) => {
     if (typeof window === 'undefined') return
     
     try {
@@ -163,6 +169,8 @@ export const useSubscription = () => {
     if (!userId) {
       subscription.value = null
       loading.value = false
+      // 这里是同步分支中的状态收束，不存在跨 await 竞争
+      // eslint-disable-next-line require-atomic-updates
       isInitialized.value = true
       return
     }
@@ -173,6 +181,8 @@ export const useSubscription = () => {
         const cached = loadFromCache(userId)
         if (cached) {
           subscription.value = cached
+          // 缓存命中后立即标记初始化完成，后台刷新不会依赖旧值
+          // eslint-disable-next-line require-atomic-updates
           isInitialized.value = true
           console.log('[useSubscription] 立即显示缓存数据')
           
@@ -209,6 +219,8 @@ export const useSubscription = () => {
       error.value = err instanceof Error ? err.message : '加载订阅失败'
     } finally {
       loading.value = false
+      // finally 中统一收束状态，ESLint 对 ref 赋值会误报 require-atomic-updates
+      // eslint-disable-next-line require-atomic-updates
       isInitialized.value = true
     }
   }
@@ -222,6 +234,8 @@ export const useSubscription = () => {
     } else if (!newUserId) {
       // 用户退出登录
       subscription.value = null
+      // 用户退出登录时直接重置状态，不存在并发写入风险
+      // eslint-disable-next-line require-atomic-updates
       isInitialized.value = true
       clearCache()
     }

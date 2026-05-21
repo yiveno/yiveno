@@ -24,7 +24,7 @@ export interface TraitMetadata {
   tag: string // 使用 string 而不是 TraitTag，避免循环依赖
   detectedAt: number
   source: TraitMetadataSource
-  notes?: string
+  notes?: string | undefined
 }
 
 // ==================== 核心类型 ====================
@@ -60,47 +60,47 @@ export interface BookmarkRecord {
 
   // ===== 可选字段 (Optional Fields) =====
   // Chrome 原生字段
-  parentId?: string
-  url?: string
-  dateAdded?: number
-  dateGroupModified?: number
+  parentId?: string | undefined
+  url?: string | undefined
+  dateAdded?: number | undefined
+  dateGroupModified?: number | undefined
 
   // 派生字段
-  urlLower?: string
-  domain?: string
-  domainCategory?: string
+  urlLower?: string | undefined
+  domain?: string | undefined
+  domainCategory?: string | undefined
 
   // 特征字段
-  traitMetadata?: TraitMetadata[]
-  isInvalid?: boolean
-  invalidReason?: InvalidReason
-  httpStatus?: number
-  isDuplicate?: boolean
-  duplicateOf?: string
+  traitMetadata?: TraitMetadata[] | undefined
+  isInvalid?: boolean | undefined
+  invalidReason?: InvalidReason | undefined
+  httpStatus?: number | undefined
+  isDuplicate?: boolean | undefined
+  duplicateOf?: string | undefined
 
   // 用户数据
-  category?: string
-  notes?: string
-  description?: string // AI 生成的文件夹描述
-  lastVisited?: number
-  visitCount?: number
+  category?: string | undefined
+  notes?: string | undefined
+  description?: string | undefined // AI 生成的文件夹描述
+  lastVisited?: number | undefined
+  visitCount?: number | undefined
 
   // 收藏功能
-  isFavorite?: boolean
-  favoriteOrder?: number
-  favoritedAt?: number
+  isFavorite?: boolean | undefined
+  favoriteOrder?: number | undefined
+  favoritedAt?: number | undefined
 
   // 元数据增强
-  hasMetadata?: boolean
-  metadataUpdatedAt?: number
-  metadataSource?: MetadataSource
-  metaTitleLower?: string
-  metaDescriptionLower?: string
-  metaKeywordsTokens?: string[]
-  metaBoost?: number
+  hasMetadata?: boolean | undefined
+  metadataUpdatedAt?: number | undefined
+  metadataSource?: MetadataSource | undefined
+  metaTitleLower?: string | undefined
+  metaDescriptionLower?: string | undefined
+  metaKeywordsTokens?: string[] | undefined
+  metaBoost?: number | undefined
 
   // 虚拟化支持
-  flatIndex?: number
-  isVisible?: boolean
-  sortKey?: string
+  flatIndex?: number | undefined
+  isVisible?: boolean | undefined
+  sortKey?: string | undefined
 }

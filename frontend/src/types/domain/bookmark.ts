@@ -10,23 +10,23 @@ export interface ChromeBookmarkTreeNode {
   /** 节点 ID（Chrome 分配） */
   id: string
   /** 父节点 ID */
-  parentId?: string
+  parentId?: string | undefined
   /** 同父节点下的顺序索引 */
-  index?: number
+  index?: number | undefined
   /** 节点标题 */
   title: string
   /** 书签 URL，文件夹为空 */
-  url?: string
+  url?: string | undefined
   /** 创建时间 */
-  dateAdded?: number
+  dateAdded?: number | undefined
   /** 文件夹内容变更时间 */
-  dateGroupModified?: number
+  dateGroupModified?: number | undefined
   /** 最后修改时间 */
-  dateModified?: number
+  dateModified?: number | undefined
   /** 子节点（仅文件夹存在） */
-  children?: ChromeBookmarkTreeNode[]
+  children?: ChromeBookmarkTreeNode[] | undefined
   /** 受保护标记，如书签栏、其他书签等 */
-  unmodifiable?: string
+  unmodifiable?: string | undefined
 }
 
 /**
@@ -37,54 +37,54 @@ export interface ChromeBookmarkTreeNode {
 export interface BookmarkNode
   extends Omit<ChromeBookmarkTreeNode, 'children' | 'unmodifiable'> {
   /** 子节点列表 */
-  children?: BookmarkNode[]
+  children?: BookmarkNode[] | undefined
   /** 子节点数量（已加载） */
-  childrenCount?: number
+  childrenCount?: number | undefined
   /** 逐层路径（节点名数组） */
-  path?: string[]
+  path?: string[] | undefined
   /** 路径字符串形式（`/` 分隔） */
-  pathString?: string
+  pathString?: string | undefined
   /** 路径 ID 列表 */
-  pathIds?: Array<string | number>
+  pathIds?: Array<string | number> | undefined
   /** 自定义标签 */
-  tags?: string[]
+  tags?: string[] | undefined
   /** 节点层级，从 0 开始 */
-  level?: number
+  level?: number | undefined
   /** 提取的域名信息 */
-  domain?: string
+  domain?: string | undefined
   /** Favicon 地址 */
-  favicon?: string
+  favicon?: string | undefined
   /** 访问次数 */
-  visits?: number
+  visits?: number | undefined
   /** 最后访问时间戳 */
-  lastVisit?: number
+  lastVisit?: number | undefined
   /** 评分或检索相关度 */
-  score?: number
+  score?: number | undefined
   /** 是否是文件夹（兼容旧逻辑） */
-  isFolder?: boolean
+  isFolder?: boolean | undefined
   /** UI 展开状态 */
-  expanded?: boolean
+  expanded?: boolean | undefined
   /** UI 选中状态 */
-  selected?: boolean
+  selected?: boolean | undefined
   /** 是否被修改过 */
-  modified?: boolean
+  modified?: boolean | undefined
   /** 子节点是否已加载完成 */
-  _childrenLoaded?: boolean
+  _childrenLoaded?: boolean | undefined
   /** 特征标签，例如 invalid（失效书签）/ duplicate（重复书签）/ internal（内部书签）等 */
-  traitTags?: string[]
+  traitTags?: string[] | undefined
   /** 特征标签元数据（检测时间、来源等） */
   traitMetadata?: Array<{
     tag: 'duplicate' | 'invalid' | 'internal'
     detectedAt: number
     source: 'worker' | 'user' | 'imported'
-    notes?: string
-  }>
+    notes?: string | undefined
+  }> | undefined
   /** 是否收藏 */
-  isFavorite?: boolean
+  isFavorite?: boolean | undefined
   /** 收藏排序 */
-  favoriteOrder?: number
+  favoriteOrder?: number | undefined
   /** 收藏时间戳 */
-  favoritedAt?: number
+  favoritedAt?: number | undefined
   [key: string]: unknown
 }
 
@@ -103,15 +103,15 @@ export interface ProposalNode {
   /** 节点标题 */
   title: string
   /** 书签 URL */
-  url?: string
+  url?: string | undefined
   /** 子节点列表 */
-  children?: ProposalNode[]
+  children?: ProposalNode[] | undefined
   /** 父节点 ID */
-  parentId?: string
+  parentId?: string | undefined
   /** 排序索引 */
-  index?: number
+  index?: number | undefined
   /** 创建时间 */
-  dateAdded?: number
+  dateAdded?: number | undefined
 }
 
 /** 书签编辑弹窗所需的数据。 */
@@ -123,7 +123,7 @@ export interface BookmarkEditData {
   /** URL */
   url: string
   /** 父节点 ID */
-  parentId?: string
+  parentId?: string | undefined
 }
 
 /** 新增书签/文件夹时的表单数据。 */

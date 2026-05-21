@@ -1,3 +1,129 @@
+<script setup lang="ts">
+import {
+  Brain,
+  Zap,
+  Layout,
+  Bot,
+  Lock,
+  Share2,
+  Check,
+  Github
+} from 'lucide-vue-next'
+import Button from '@/components/ui/Button.vue'
+import Card from '@/components/ui/Card.vue'
+import Badge from '@/components/ui/Badge.vue'
+
+const NuxtLink = resolveComponent('NuxtLink')
+
+const highlights = [
+  {
+    tag: 'AI 语义',
+    title: '向量推荐可解释',
+    description: '所有推荐来源可追溯，可一键查看 Summary 与 Embedding。'
+  },
+  {
+    tag: '离线优先',
+    title: '无网也能管理',
+    description: '索引、摘要、操作全部在本地执行，恢复网络后再统一同步。'
+  },
+  {
+    tag: '自动化',
+    title: '失效检测',
+    description: '自动检测书签链接是否失效，及时发现无法访问的网页。'
+  }
+]
+
+const modules = [
+  {
+    lucideIcon: Brain,
+    title: 'AI 语义引擎',
+    description: '本地生成摘要与 embedding，结合 Worker 推理返回推荐。',
+    points: ['支持自定义 Prompt', '可选自托管模型', '推荐记录可回放']
+  },
+  {
+    lucideIcon: Zap,
+    title: '多索引检索',
+    description: 'Fuse.js + 标签过滤 + 备注全文检索，匹配权重可调。',
+    points: ['拼写容错 / 多语言', '按权重分段显示', '快捷键一键过滤']
+  },
+  {
+    lucideIcon: Layout,
+    title: '分层工作台',
+    description: 'Popup、管理台、侧边栏共享状态，响应式布局无缝切换。',
+    points: ['虚拟滚动 20K+ 列表', '批量拖拽 + 多选', 'Pinia Store 持久化']
+  },
+  {
+    lucideIcon: Bot,
+    title: '失效检测',
+    description: '自动检测书签链接的 HTTP 状态，及时发现失效链接。',
+    points: ['批量检测', '状态码识别', '失败自动重试']
+  },
+  {
+    lucideIcon: Lock,
+    title: '隐私与同步',
+    description: 'Chrome storage + Supabase 双写，配合 RLS 控制访问。',
+    points: ['数据加密传输', '可选自托管 Worker', '变更日志可审计']
+  },
+  {
+    lucideIcon: Share2,
+    title: '开放接口',
+    description: 'tRPC API + Router，可接入自定义工作流或知识库。',
+    points: ['Webhook/事件总线', '命令面板扩展', 'Chrome Message Bridge']
+  }
+]
+
+const flows = [
+  {
+    step: '01',
+    title: '采集与理解',
+    description: '书签保存 -> 本地生成摘要/embedding -> 入库 IndexedDB。',
+    detail: '可配置语言、摘要长度、忽略域名等参数。'
+  },
+  {
+    step: '02',
+    title: 'Worker 推理',
+    description: '向 Cloudflare Worker 请求推荐，并在 Supabase 记录审计。',
+    detail: '全程加密，支持切换到私有接口。'
+  },
+  {
+    step: '03',
+    title: '失效检测',
+    description: '自动检测书签链接的 HTTP 状态，及时发现失效链接。',
+    detail: '批量检测，失败任务自动重试，避免误报。'
+  }
+]
+
+const views = [
+  {
+    tag: 'Popup',
+    title: '即时搜索器',
+    mode: '快速入口',
+    description: '⌘B/Alt+B 唤起，输入即得推荐，适合写作/研究即时引用。',
+    points: ['键盘优先交互', 'AI 推荐卡片', '快捷操作书签']
+  },
+  {
+    tag: 'Management',
+    title: '分层工作区',
+    mode: '批量整理',
+    description: '支持看板/表格/列表多视图，自定义分组策略满足团队协作。',
+    points: ['虚拟滚动', '批量拖拽', '自定义字段']
+  },
+  {
+    tag: 'Side Panel',
+    title: '上下文助手',
+    mode: '辅助研究',
+    description: '在阅读页面时，侧边栏自动推荐关联书签，提供智能摘要。',
+    points: ['与页面内容联动', '快速收藏/标注', '支持插件生态']
+  }
+]
+
+useSeoMeta({
+  title: '功能特性 - AcuityBookmarks',
+  description:
+    '了解 AcuityBookmarks 六大模块：AI 语义引擎、多索引检索、分层工作台、失效检测、同步安全与开放接口。'
+})
+</script>
+
 <template>
   <div class="min-h-screen pb-20">
     <!-- Hero Section -->
@@ -254,132 +380,6 @@
     </section>
   </div>
 </template>
-
-<script setup lang="ts">
-import {
-  Brain,
-  Zap,
-  Layout,
-  Bot,
-  Lock,
-  Share2,
-  Check,
-  Github
-} from 'lucide-vue-next'
-import Button from '@/components/ui/Button.vue'
-import Card from '@/components/ui/Card.vue'
-import Badge from '@/components/ui/Badge.vue'
-
-const NuxtLink = resolveComponent('NuxtLink')
-
-const highlights = [
-  {
-    tag: 'AI 语义',
-    title: '向量推荐可解释',
-    description: '所有推荐来源可追溯，可一键查看 Summary 与 Embedding。'
-  },
-  {
-    tag: '离线优先',
-    title: '无网也能管理',
-    description: '索引、摘要、操作全部在本地执行，恢复网络后再统一同步。'
-  },
-  {
-    tag: '自动化',
-    title: '失效检测',
-    description: '自动检测书签链接是否失效，及时发现无法访问的网页。'
-  }
-]
-
-const modules = [
-  {
-    lucideIcon: Brain,
-    title: 'AI 语义引擎',
-    description: '本地生成摘要与 embedding，结合 Worker 推理返回推荐。',
-    points: ['支持自定义 Prompt', '可选自托管模型', '推荐记录可回放']
-  },
-  {
-    lucideIcon: Zap,
-    title: '多索引检索',
-    description: 'Fuse.js + 标签过滤 + 备注全文检索，匹配权重可调。',
-    points: ['拼写容错 / 多语言', '按权重分段显示', '快捷键一键过滤']
-  },
-  {
-    lucideIcon: Layout,
-    title: '分层工作台',
-    description: 'Popup、管理台、侧边栏共享状态，响应式布局无缝切换。',
-    points: ['虚拟滚动 20K+ 列表', '批量拖拽 + 多选', 'Pinia Store 持久化']
-  },
-  {
-    lucideIcon: Bot,
-    title: '失效检测',
-    description: '自动检测书签链接的 HTTP 状态，及时发现失效链接。',
-    points: ['批量检测', '状态码识别', '失败自动重试']
-  },
-  {
-    lucideIcon: Lock,
-    title: '隐私与同步',
-    description: 'Chrome storage + Supabase 双写，配合 RLS 控制访问。',
-    points: ['数据加密传输', '可选自托管 Worker', '变更日志可审计']
-  },
-  {
-    lucideIcon: Share2,
-    title: '开放接口',
-    description: 'tRPC API + Router，可接入自定义工作流或知识库。',
-    points: ['Webhook/事件总线', '命令面板扩展', 'Chrome Message Bridge']
-  }
-]
-
-const flows = [
-  {
-    step: '01',
-    title: '采集与理解',
-    description: '书签保存 -> 本地生成摘要/embedding -> 入库 IndexedDB。',
-    detail: '可配置语言、摘要长度、忽略域名等参数。'
-  },
-  {
-    step: '02',
-    title: 'Worker 推理',
-    description: '向 Cloudflare Worker 请求推荐，并在 Supabase 记录审计。',
-    detail: '全程加密，支持切换到私有接口。'
-  },
-  {
-    step: '03',
-    title: '失效检测',
-    description: '自动检测书签链接的 HTTP 状态，及时发现失效链接。',
-    detail: '批量检测，失败任务自动重试，避免误报。'
-  }
-]
-
-const views = [
-  {
-    tag: 'Popup',
-    title: '即时搜索器',
-    mode: '快速入口',
-    description: '⌘B/Alt+B 唤起，输入即得推荐，适合写作/研究即时引用。',
-    points: ['键盘优先交互', 'AI 推荐卡片', '快捷操作书签']
-  },
-  {
-    tag: 'Management',
-    title: '分层工作区',
-    mode: '批量整理',
-    description: '支持看板/表格/列表多视图，自定义分组策略满足团队协作。',
-    points: ['虚拟滚动', '批量拖拽', '自定义字段']
-  },
-  {
-    tag: 'Side Panel',
-    title: '上下文助手',
-    mode: '辅助研究',
-    description: '在阅读页面时，侧边栏自动推荐关联书签，提供智能摘要。',
-    points: ['与页面内容联动', '快速收藏/标注', '支持插件生态']
-  }
-]
-
-useSeoMeta({
-  title: '功能特性 - AcuityBookmarks',
-  description:
-    '了解 AcuityBookmarks 六大模块：AI 语义引擎、多索引检索、分层工作台、失效检测、同步安全与开放接口。'
-})
-</script>
 
 <style scoped>
 .highlights-grid,

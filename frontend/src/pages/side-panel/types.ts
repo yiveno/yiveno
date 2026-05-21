@@ -9,8 +9,8 @@ export interface SidePanelSearchItem {
   bookmark: {
     id: string
     title: string
-    url?: string
-    path?: string[]
+    url?: string | undefined
+    path?: string[] | undefined
   }
   score: number
   matchedFields: string[]

@@ -2,17 +2,17 @@ export interface LucideIconProps {
   /** 图标名称 */
   name: string
   /** 图标大小 */
-  size?: number | 'xs' | 'sm' | 'md' | 'lg' | 'xl'
+  size?: number | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | undefined
   /** 图标颜色 */
-  color?: string
+  color?: string | undefined
   /** 线条宽度 */
-  strokeWidth?: number
+  strokeWidth?: number | undefined
   /** 是否旋转动画 */
-  spin?: boolean
+  spin?: boolean | undefined
   /** 水平翻转 */
-  flipH?: boolean
+  flipH?: boolean | undefined
   /** 垂直翻转 */
-  flipV?: boolean
+  flipV?: boolean | undefined
   /** 旋转角度 */
-  rotate?: number
+  rotate?: number | undefined
 }

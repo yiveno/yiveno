@@ -79,8 +79,9 @@ const showCustomModelInput = computed(() => selectedModel.value === 'custom')
 // 监听服务商切换,自动选择推荐模型
 watch(selectedProvider, (newProvider) => {
   const models = modelsByProvider[newProvider]
-  if (models.length > 0) {
-    selectedModel.value = models[0].value // 默认选择第一个(推荐)
+  const firstModel = models?.[0]
+  if (firstModel) {
+    selectedModel.value = firstModel.value // 默认选择第一个(推荐)
     customModelName.value = '' // 清空自定义模型名称
   }
 })
@@ -249,7 +250,11 @@ async function clearConfig() {
   await userLLMClient.clearConfig()
   llmAdapter.clearCapabilitiesCache()
   apiKey.value = ''
-  selectedModel.value = modelsByProvider[selectedProvider.value][0].value
+  const defaultModels = modelsByProvider[selectedProvider.value]
+  const firstDefaultModel = defaultModels?.[0]
+  if (firstDefaultModel) {
+    selectedModel.value = firstDefaultModel.value
+  }
   customModelName.value = ''
   customBaseUrl.value = ''
   isSaved.value = false
@@ -302,8 +307,8 @@ onMounted(async () => {
     
     if (config.model) {
       const models = modelsByProvider[config.provider]
-      const presetModel = models.find(m => m.value === config.model)
-      
+      const presetModel = models?.find(m => m.value === config.model)
+
       if (presetModel) {
         selectedModel.value = config.model
       } else {
@@ -311,10 +316,12 @@ onMounted(async () => {
         customModelName.value = config.model
       }
     } else {
-      selectedModel.value = modelsByProvider[config.provider][0].value
+      const defaultModels = modelsByProvider[config.provider]
+      selectedModel.value = defaultModels?.[0]?.value ?? 'custom'
     }
   } else {
-    selectedModel.value = modelsByProvider[selectedProvider.value][0].value
+    const defaultModels = modelsByProvider[selectedProvider.value]
+    selectedModel.value = defaultModels?.[0]?.value || 'custom'
   }
   
   // 加载 AI 功能开关状态

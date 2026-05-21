@@ -337,6 +337,7 @@ export class SchedulerService {
           if (result instanceof Promise) {
             return result
           }
+          return undefined
         })
         .then(resolve)
         .catch(error => {

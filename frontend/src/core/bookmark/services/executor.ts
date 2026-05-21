@@ -148,15 +148,18 @@ export class SmartBookmarkExecutor {
     const sortedOps = this.resolveDependencies(operations)
     for (let i = 0; i < sortedOps.length; i++) {
       const operation = sortedOps[i]
+      if (!operation || !result) {
+        continue
+      }
       try {
         await this.executeOperation(operation)
-        result!.executedOperations++
-        result!.performance.apiCallsActual++
+        result.executedOperations++
+        result.performance.apiCallsActual++
         if (progressCallback) {
           progressCallback({
             completed: i + 1,
             total: sortedOps.length,
-            failed: result!.failedOperations,
+            failed: result.failedOperations,
             currentOperation: this.getOperationDescription(operation),
             estimatedTimeRemaining: this.estimateRemainingTime(
               i,
@@ -166,8 +169,8 @@ export class SmartBookmarkExecutor {
           })
         }
       } catch (error) {
-        result!.failedOperations++
-        result!.errors.push({
+        result.failedOperations++
+        result.errors.push({
           operation,
           error: error instanceof Error ? error.message : String(error)
         })
@@ -179,7 +182,7 @@ export class SmartBookmarkExecutor {
           progressCallback({
             completed: i + 1,
             total: sortedOps.length,
-            failed: result!.failedOperations,
+            failed: result.failedOperations,
             currentOperation: this.getOperationDescription(operation),
             estimatedTimeRemaining: this.estimateRemainingTime(
               i,
@@ -201,6 +204,9 @@ export class SmartBookmarkExecutor {
     const batches = this.groupOperationsIntoBatches(operations)
     for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
       const batch = batches[batchIndex]
+      if (!batch || !result) {
+        continue
+      }
       const batchPromises = batch.map(async operation => {
         try {
           await this.executeOperation(operation)
@@ -218,16 +224,16 @@ export class SmartBookmarkExecutor {
         if (promiseResult.status === 'fulfilled') {
           const operationResult = promiseResult.value
           if (operationResult.success) {
-            result!.executedOperations++
+            result.executedOperations++
           } else {
-            result!.failedOperations++
-            result!.errors.push({
+            result.failedOperations++
+            result.errors.push({
               operation: operationResult.operation,
               error: operationResult.error!
             })
           }
         }
-        result!.performance.apiCallsActual++
+        result.performance.apiCallsActual++
       })
       if (progressCallback) {
         const processed = Math.min(
@@ -237,7 +243,7 @@ export class SmartBookmarkExecutor {
         progressCallback({
           completed: processed,
           total: operations.length,
-          failed: result!.failedOperations,
+          failed: result.failedOperations,
           currentOperation: `批量处理第 ${batchIndex + 1} 批`,
           estimatedTimeRemaining: this.estimateRemainingTime(
             batchIndex,
@@ -281,13 +287,15 @@ export class SmartBookmarkExecutor {
   private async executeCreateOperation(
     operation: BookmarkOperation
   ): Promise<void> {
-    const target = operation.target!
+    const target = operation.target
+    if (!target) {
+      throw new Error('CREATE 操作缺少 target')
+    }
     return new Promise((resolve, reject) => {
-      const createParams: BookmarkCreateDetails = {
-        parentId: target.parentId,
-        title: target.title,
-        index: target.index
-      }
+      const createParams: BookmarkCreateDetails = {}
+      if (target.parentId !== undefined) createParams.parentId = target.parentId
+      if (target.title !== undefined) createParams.title = target.title
+      if (target.index !== undefined) createParams.index = target.index
       if (target.url) createParams.url = target.url
       chrome.bookmarks.create(createParams, _result => {
         if (chrome.runtime.lastError)
@@ -306,7 +314,10 @@ export class SmartBookmarkExecutor {
   private async executeDeleteOperation(
     operation: BookmarkOperation
   ): Promise<void> {
-    const nodeId = operation.target!.id!
+    const nodeId = operation.target?.id
+    if (!nodeId) {
+      throw new Error('DELETE 操作缺少目标节点 ID')
+    }
     return new Promise((resolve, reject) => {
       chrome.bookmarks.get([nodeId], results => {
         if (chrome.runtime.lastError) {
@@ -314,6 +325,10 @@ export class SmartBookmarkExecutor {
           return
         }
         const node = results[0]
+        if (!node) {
+          reject(new Error('未找到要删除的书签节点'))
+          return
+        }
         if (!node.url) {
           chrome.bookmarks.removeTree(nodeId, () => {
             if (chrome.runtime.lastError)
@@ -346,12 +361,16 @@ export class SmartBookmarkExecutor {
   private async executeUpdateOperation(
     operation: BookmarkOperation
   ): Promise<void> {
-    const target = operation.target!
+    const target = operation.target
+    if (!target?.id) {
+      throw new Error('UPDATE 操作缺少目标节点')
+    }
+    const targetId = target.id
     return new Promise((resolve, reject) => {
       const updateParams: BookmarkUpdateDetails = {}
       if (target.title) updateParams.title = target.title
       if (target.url) updateParams.url = target.url
-      chrome.bookmarks.update(target.id!, updateParams, () => {
+      chrome.bookmarks.update(targetId, updateParams, () => {
         if (chrome.runtime.lastError)
           reject(new Error(chrome.runtime.lastError.message))
         else {
@@ -368,12 +387,16 @@ export class SmartBookmarkExecutor {
   private async executeMoveOperation(
     operation: BookmarkOperation
   ): Promise<void> {
-    const target = operation.target!
+    const target = operation.target
+    if (!target?.id) {
+      throw new Error('MOVE 操作缺少目标节点')
+    }
+    const targetId = target.id
     return new Promise((resolve, reject) => {
       const moveParams: BookmarkDestination = {}
       if (target.parentId) moveParams.parentId = target.parentId
       if (target.index !== undefined) moveParams.index = target.index
-      chrome.bookmarks.move(target.id!, moveParams, () => {
+      chrome.bookmarks.move(targetId, moveParams, () => {
         if (chrome.runtime.lastError)
           reject(new Error(chrome.runtime.lastError.message))
         else {
@@ -390,15 +413,23 @@ export class SmartBookmarkExecutor {
   private async executeReorderOperation(
     operation: BookmarkOperation
   ): Promise<void> {
-    const target = operation.target!
-    const children = target.children!
+    const target = operation.target
+    const children = target?.children
+    if (!target || !children) {
+      throw new Error('REORDER 操作缺少 children')
+    }
     for (let i = 0; i < children.length; i++) {
       const child = children[i]
-      if (child.id) {
+      if (child?.id) {
         await new Promise<void>((resolve, reject) => {
           chrome.bookmarks.move(
-            child.id!,
-            { parentId: target.parentId, index: i },
+            child.id,
+            {
+              ...(target.parentId !== undefined
+                ? { parentId: target.parentId }
+                : {}),
+              index: i
+            },
             () => {
               if (chrome.runtime.lastError)
                 reject(new Error(chrome.runtime.lastError.message))
@@ -438,11 +469,14 @@ export class SmartBookmarkExecutor {
     operations: BookmarkOperation[]
   ): BookmarkOperation[][] {
     const batches: BookmarkOperation[][] = []
-    const groups = new Map<string, BookmarkOperation[]>()
+      const groups = new Map<string, BookmarkOperation[]>()
     operations.forEach(op => {
       const key = `${op.type}_${op.priority}`
       if (!groups.has(key)) groups.set(key, [])
-      groups.get(key)!.push(op)
+      const group = groups.get(key)
+      if (group) {
+        group.push(op)
+      }
     })
     groups.forEach(group => {
       for (let i = 0; i < group.length; i += this.config.batchSize) {

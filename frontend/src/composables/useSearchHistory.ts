@@ -20,7 +20,7 @@ export interface SearchHistoryItem {
   /** 搜索时间戳 */
   timestamp: number
   /** 结果数量 */
-  resultCount?: number
+  resultCount?: number | undefined
 }
 
 /**

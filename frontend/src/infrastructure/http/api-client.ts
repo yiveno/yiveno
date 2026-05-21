@@ -126,7 +126,7 @@ export class ApiClient {
     return this.request<T>(url, {
       ...options,
       method: 'POST',
-      body: data ? JSON.stringify(data) : undefined
+      ...(data !== undefined ? { body: JSON.stringify(data) } : {})
     })
   }
 
@@ -141,7 +141,7 @@ export class ApiClient {
     return this.request<T>(url, {
       ...options,
       method: 'PUT',
-      body: data ? JSON.stringify(data) : undefined
+      ...(data !== undefined ? { body: JSON.stringify(data) } : {})
     })
   }
 

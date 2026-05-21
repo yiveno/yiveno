@@ -53,7 +53,7 @@ function extractJSON(text: string): string | null {
   // 策略 1: 提取 markdown 代码块中的 JSON
   const markdownMatch = text.match(/```(?:json)?\s*(\[[\s\S]*?\])\s*```/)
   if (markdownMatch) {
-    return markdownMatch[1]
+    return markdownMatch[1] ?? null
   }
 
   // 策略 2: 提取第一个完整的 JSON 数组
@@ -115,11 +115,15 @@ export function normalizeCategory(category: string): BookmarkCategory {
   )
 
   if (variant) {
+    const mappedCategory = variants[variant]
+    if (!mappedCategory) {
+      return '其他'
+    }
     logger.debug(
       loggerPrefix,
-      `标准化分类: ${category} -> ${variants[variant]}`
+      `标准化分类: ${category} -> ${mappedCategory}`
     )
-    return variants[variant]
+    return mappedCategory
   }
 
   // 默认分类
@@ -237,7 +241,7 @@ export function parseSimpleFormat(
     const line = lines[i]
     const bookmark = bookmarks[i]
 
-    if (!line) continue
+    if (!line || !bookmark) continue
 
     const parts = line.split('|')
     const categoryText = parts[parts.length - 1]?.trim()

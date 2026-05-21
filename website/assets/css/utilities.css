@@ -289,11 +289,11 @@
 }
 
 .border-white\/5 {
-  border-color: rgba(255, 255, 255, 0.05);
+  border-color: rgb(255 255 255 / 5%);
 }
 
 .border-white\/10 {
-  border-color: rgba(255, 255, 255, 0.1);
+  border-color: rgb(255 255 255 / 10%);
 }
 
 /* ========================================
@@ -322,12 +322,12 @@
 
 .shadow-xl {
   box-shadow:
-    0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    0 20px 25px -5px rgb(0 0 0 / 10%),
+    0 10px 10px -5px rgb(0 0 0 / 4%);
 }
 
 .shadow-2xl {
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 25%);
 }
 
 .shadow-primary-500\/20 {
@@ -343,7 +343,7 @@
 }
 
 .bg-bg-default\/80 {
-  background-color: rgba(3, 6, 23, 0.8);
+  background-color: rgb(3 6 23 / 80%);
 }
 
 .bg-bg-depth {
@@ -359,15 +359,15 @@
 }
 
 .bg-white\/5 {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: rgb(255 255 255 / 5%);
 }
 
 .bg-white\/10 {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgb(255 255 255 / 10%);
 }
 
 .bg-clip-text {
-  -webkit-background-clip: text;
+  background-clip: text;
   background-clip: text;
 }
 
@@ -401,7 +401,7 @@
 }
 
 .from-white\/5 {
-  --gradient-start: rgba(255, 255, 255, 0.05);
+  --gradient-start: rgb(255 255 255 / 5%);
 }
 
 .to-transparent {
@@ -461,7 +461,7 @@
 }
 
 .text-white {
-  color: rgb(255, 255, 255);
+  color: rgb(255 255 255);
 }
 
 .text-xs {
@@ -499,7 +499,7 @@
     Inter,
     MiSans,
     -apple-system,
-    'system-ui',
+    system-ui,
     'Segoe UI',
     Roboto,
     'Helvetica Neue',
@@ -580,12 +580,12 @@
  * ======================================== */
 
 .backdrop-blur-xl {
-  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
   backdrop-filter: blur(24px);
 }
 
 .backdrop-blur-md {
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
 }
 
@@ -599,20 +599,20 @@
 
 .transition-colors {
   transition-property: color, background-color, border-color;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .transition-transform {
   transition-property: transform;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .transition-all {
   transition-property: all;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ========================================
@@ -628,7 +628,7 @@
 }
 
 .hover\:bg-white\/5:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: rgb(255 255 255 / 5%);
 }
 
 .hover\:scale-105:hover {
@@ -659,7 +659,7 @@
   display: none;
 }
 
-@media (min-width: 640px) {
+@media (width >= 640px) {
   .sm\:flex {
     display: flex;
   }
@@ -673,7 +673,7 @@
   }
 }
 
-@media (min-width: 768px) {
+@media (width >= 768px) {
   .md\:flex {
     display: flex;
   }
@@ -718,6 +718,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -729,6 +730,7 @@
   100% {
     background-position: 0% 50%;
   }
+
   50% {
     background-position: 100% 50%;
   }
@@ -751,6 +753,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -778,6 +781,7 @@
     var(--tw-ring-offset-color);
   --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width))
     var(--tw-ring-color);
+
   box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
 }
 
@@ -816,33 +820,33 @@
  * ======================================== */
 
 .user-avatar-wrapper {
+  flex-shrink: 0;
   width: 2rem;
   height: 2rem;
-  flex-shrink: 0;
 }
 
 .user-avatar-image {
   width: 2rem;
   height: 2rem;
+  border: 2px solid var(--md-sys-color-primary);
   border-radius: 9999px;
   object-fit: cover;
-  border: 2px solid var(--md-sys-color-primary);
 }
 
 .user-avatar {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: center;
+  align-items: center;
   width: 2rem;
   height: 2rem;
   border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: white;
   background-image: linear-gradient(
     to bottom right,
     var(--md-sys-color-primary),
     var(--md-sys-color-secondary)
   );
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 0.875rem;
-  font-weight: 600;
-  flex-shrink: 0;
 }

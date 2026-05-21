@@ -425,7 +425,7 @@ function parseSuggestionContent(text: string): ParsedSuggestion {
     }
     const hashParams = new URLSearchParams(url.hash.replace(/^#/, ''))
     return {
-      url: url.href.split('#')[0],
+      url: url.href.split('#')[0] ?? null,
       id: hashParams.get('id'),
       view: (hashParams.get('view') as ParsedSuggestion['view']) || 'open'
     }

@@ -1,5 +1,35 @@
+<script setup lang="ts">
+import { Check } from 'lucide-vue-next'
+import Card from '@/components/ui/Card.vue'
+import Badge from '@/components/ui/Badge.vue'
+import Button from '@/components/ui/Button.vue'
+
+const NuxtLink = resolveComponent('NuxtLink')
+
+const freeFeatures = [
+  '无限书签与标签',
+  '失效书签检测',
+  'Popup / Side Panel 全量能力'
+]
+
+const proFeatures = [
+  '包含所有免费功能',
+  'AI 向量推荐 + 摘要',
+  '多设备 Supabase 同步',
+  '自定义自动化与监控',
+  '优先支持渠道'
+]
+
+const teamFeatures = [
+  '单点登录 & 权限控制',
+  '私有 Worker / VPC 部署',
+  '专属成功经理',
+  '安全审计与培训'
+]
+</script>
+
 <template>
-  <section class="py-16 relative" id="pricing">
+  <section id="pricing" class="py-16 relative">
     <div class="container mx-auto px-4">
       <div class="text-center max-w-2xl mx-auto mb-10">
         <h2 class="text-2xl md:text-3xl font-bold mb-3">
@@ -101,36 +131,6 @@
     </div>
   </section>
 </template>
-
-<script setup lang="ts">
-import { Check } from 'lucide-vue-next'
-import Card from '@/components/ui/Card.vue'
-import Badge from '@/components/ui/Badge.vue'
-import Button from '@/components/ui/Button.vue'
-
-const NuxtLink = resolveComponent('NuxtLink')
-
-const freeFeatures = [
-  '无限书签与标签',
-  '失效书签检测',
-  'Popup / Side Panel 全量能力'
-]
-
-const proFeatures = [
-  '包含所有免费功能',
-  'AI 向量推荐 + 摘要',
-  '多设备 Supabase 同步',
-  '自定义自动化与监控',
-  '优先支持渠道'
-]
-
-const teamFeatures = [
-  '单点登录 & 权限控制',
-  '私有 Worker / VPC 部署',
-  '专属成功经理',
-  '安全审计与培训'
-]
-</script>
 
 <style scoped>
 .pricing-grid {

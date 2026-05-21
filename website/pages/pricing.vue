@@ -1,3 +1,102 @@
+<script setup lang="ts">
+import { Check, ChevronDown, CheckCircle } from 'lucide-vue-next'
+import Button from '@/components/ui/Button.vue'
+import Card from '@/components/ui/Card.vue'
+import Badge from '@/components/ui/Badge.vue'
+
+const NuxtLink = resolveComponent('NuxtLink')
+
+// 获取用户订阅状态
+const { isPro, isInitialized } = useSubscription()
+
+const metas = [
+  { value: '免费', label: '个人核心功能' },
+  { value: '<48h', label: 'Pro 响应时间' },
+  { value: 'SLA 99.9%', label: '企业稳定性' }
+]
+
+const plans = [
+  {
+    features: [
+      '多索引检索、标签、备注',
+      '失效书签检测',
+      'Popup / Side Panel 全功能'
+    ]
+  },
+  {
+    features: [
+      '包含 Free 所有功能',
+      'AI 向量推荐 / 摘要',
+      'Supabase 云同步',
+      '批量自动化与监控',
+      '优先支持渠道'
+    ]
+  },
+  {
+    features: [
+      '私有 Cloudflare Worker',
+      'Supabase RLS / SSO',
+      '安全审计与培训',
+      '专属成功经理'
+    ]
+  }
+]
+
+const matrix = [
+  {
+    cap: '离线本地功能',
+    free: '✓',
+    pro: '✓',
+    team: '✓'
+  },
+  {
+    cap: 'AI 推荐 / 摘要',
+    free: '—',
+    pro: '✓',
+    team: '✓（可自托管）'
+  },
+  {
+    cap: 'Supabase 同步',
+    free: '—',
+    pro: '✓',
+    team: '✓ + RLS + SSO'
+  },
+  {
+    cap: '自动化监控',
+    free: '基础',
+    pro: '高级调度',
+    team: '自定义 Pipeline'
+  },
+  {
+    cap: '支持与 SLA',
+    free: '社区支持',
+    pro: '<48h 邮件',
+    team: 'SLA + 成功经理'
+  }
+]
+
+const faqs = [
+  {
+    q: '购买 Pro 后可以取消吗？',
+    a: '可以随时取消，周期结束前仍可使用。年度订阅支持按比例退款。您可以在账户设置中一键管理您的订阅状态。'
+  },
+  {
+    q: '团队版如何部署？',
+    a: '我们提供详细的部署脚本来检测环境，并协助将 Cloudflare Worker / Supabase 配置到您的账户。我们的技术团队会提供全程指导。'
+  },
+  {
+    q: '是否支持企业采购流程？',
+    a: '支持。我们可开具正规发票并签署数据处理协议（DPA）。请通过联系销售页面与我们取得联系，会有专人负责对接。'
+  }
+]
+
+useSeoMeta({
+  title: '定价 - AcuityBookmarks',
+  description:
+    '了解 Free、Pro、Team/Enterprise 三种方案，覆盖个人到团队的智能书签需求。'
+})
+</script>
+
 <template>
   <div class="min-h-screen pb-20">
     <!-- Hero Section -->
@@ -266,105 +365,6 @@
     </section>
   </div>
 </template>
-
-<script setup lang="ts">
-import { Check, ChevronDown, CheckCircle } from 'lucide-vue-next'
-import Button from '@/components/ui/Button.vue'
-import Card from '@/components/ui/Card.vue'
-import Badge from '@/components/ui/Badge.vue'
-
-const NuxtLink = resolveComponent('NuxtLink')
-
-// 获取用户订阅状态
-const { isPro, isInitialized } = useSubscription()
-
-const metas = [
-  { value: '免费', label: '个人核心功能' },
-  { value: '<48h', label: 'Pro 响应时间' },
-  { value: 'SLA 99.9%', label: '企业稳定性' }
-]
-
-const plans = [
-  {
-    features: [
-      '多索引检索、标签、备注',
-      '失效书签检测',
-      'Popup / Side Panel 全功能'
-    ]
-  },
-  {
-    features: [
-      '包含 Free 所有功能',
-      'AI 向量推荐 / 摘要',
-      'Supabase 云同步',
-      '批量自动化与监控',
-      '优先支持渠道'
-    ]
-  },
-  {
-    features: [
-      '私有 Cloudflare Worker',
-      'Supabase RLS / SSO',
-      '安全审计与培训',
-      '专属成功经理'
-    ]
-  }
-]
-
-const matrix = [
-  {
-    cap: '离线本地功能',
-    free: '✓',
-    pro: '✓',
-    team: '✓'
-  },
-  {
-    cap: 'AI 推荐 / 摘要',
-    free: '—',
-    pro: '✓',
-    team: '✓（可自托管）'
-  },
-  {
-    cap: 'Supabase 同步',
-    free: '—',
-    pro: '✓',
-    team: '✓ + RLS + SSO'
-  },
-  {
-    cap: '自动化监控',
-    free: '基础',
-    pro: '高级调度',
-    team: '自定义 Pipeline'
-  },
-  {
-    cap: '支持与 SLA',
-    free: '社区支持',
-    pro: '<48h 邮件',
-    team: 'SLA + 成功经理'
-  }
-]
-
-const faqs = [
-  {
-    q: '购买 Pro 后可以取消吗？',
-    a: '可以随时取消，周期结束前仍可使用。年度订阅支持按比例退款。您可以在账户设置中一键管理您的订阅状态。'
-  },
-  {
-    q: '团队版如何部署？',
-    a: '我们提供详细的部署脚本来检测环境，并协助将 Cloudflare Worker / Supabase 配置到您的账户。我们的技术团队会提供全程指导。'
-  },
-  {
-    q: '是否支持企业采购流程？',
-    a: '支持。我们可开具正规发票并签署数据处理协议（DPA）。请通过联系销售页面与我们取得联系，会有专人负责对接。'
-  }
-]
-
-useSeoMeta({
-  title: '定价 - AcuityBookmarks',
-  description:
-    '了解 Free、Pro、Team/Enterprise 三种方案，覆盖个人到团队的智能书签需求。'
-})
-</script>
 
 <style scoped>
 .plans-grid {

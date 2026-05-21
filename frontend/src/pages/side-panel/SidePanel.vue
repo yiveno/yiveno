@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, watch, shallowRef } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useVirtualizer } from '@tanstack/vue-virtual'
+import type { VirtualItem } from '@tanstack/vue-virtual'
 
 defineOptions({
   name: 'SidePanelPage'
@@ -129,8 +130,10 @@ const toSidePanelResult = (
   bookmark: {
     id: String(result.bookmark.id),
     title: result.bookmark.title,
-    url: result.bookmark.url,
-    path: result.bookmark.path
+    ...(result.bookmark.url !== undefined ? { url: result.bookmark.url } : {}),
+    ...(result.bookmark.path !== undefined
+      ? { path: result.bookmark.path }
+      : {})
   },
   score: result.score,
   matchedFields: result.matchedFields,
@@ -145,7 +148,7 @@ const toSidePanelResult = (
 const isSearching = ref(false)
 
 // ==================== 虚拟滚动 ====================
-const searchResultsContainerRef = ref<HTMLElement>()
+const searchResultsContainerRef = ref<HTMLElement | null>(null)
 
 const searchVirtualizer = useVirtualizer(
   computed(() => ({
@@ -155,6 +158,22 @@ const searchVirtualizer = useVirtualizer(
     overscan: 5 // 预渲染额外的项数
   }))
 )
+
+const virtualSearchRows = computed<
+  Array<{
+    virtualRow: VirtualItem
+    item: SidePanelSearchItem
+  }>
+>(() => {
+  const rows: Array<{ virtualRow: VirtualItem; item: SidePanelSearchItem }> = []
+  for (const virtualRow of searchVirtualizer.value.getVirtualItems()) {
+    const item = searchResults.value[virtualRow.index]
+    if (item) {
+      rows.push({ virtualRow, item })
+    }
+  }
+  return rows
+})
 
 // ✅ 使用Google favicon服务（CSP允许，更可靠）
 /**
@@ -868,7 +887,7 @@ const postponeRefresh = () => {
     v-model:show="showShareDialog"
     :bookmarks="shareBookmarks"
     :share-type="shareType"
-    :folder-name="shareFolderName"
+    v-bind="shareFolderName ? { folderName: shareFolderName } : {}"
     @share-complete="handleShareComplete"
   />
 
@@ -997,8 +1016,8 @@ const postponeRefresh = () => {
           }"
         >
           <div
-            v-for="virtualRow in searchVirtualizer.getVirtualItems()"
-            :key="searchResults[virtualRow.index].bookmark.id"
+            v-for="{ virtualRow, item } in virtualSearchRows"
+            :key="item.bookmark.id"
             :data-index="virtualRow.index"
             :style="{
               position: 'absolute',
@@ -1011,16 +1030,16 @@ const postponeRefresh = () => {
           >
             <div
               class="search-item no-select"
-              :data-id="searchResults[virtualRow.index].bookmark.id"
-              @click="openBookmark(searchResults[virtualRow.index].bookmark)"
+              :data-id="item.bookmark.id"
+              @click="openBookmark(item.bookmark)"
             >
               <div class="search-item-icon">
                 <img
                   v-if="
-                    searchResults[virtualRow.index].bookmark.url &&
-                    getFaviconForUrl(searchResults[virtualRow.index].bookmark.url)
+                    item.bookmark.url &&
+                    getFaviconForUrl(item.bookmark.url)
                   "
-                  :src="getFaviconForUrl(searchResults[virtualRow.index].bookmark.url)"
+                  :src="getFaviconForUrl(item.bookmark.url)"
                   alt=""
                   @error="handleIconError"
                 />
@@ -1030,23 +1049,23 @@ const postponeRefresh = () => {
               <div class="search-item-content">
                 <div
                   class="search-item-title"
-                  :title="searchResults[virtualRow.index].bookmark.title"
-                  v-html="highlightSearchText(searchResults[virtualRow.index].bookmark.title)"
+                  :title="item.bookmark.title"
+                  v-html="highlightSearchText(item.bookmark.title)"
                 ></div>
                 <a
                   class="search-item-url"
-                  :href="searchResults[virtualRow.index].bookmark.url"
-                  :title="searchResults[virtualRow.index].bookmark.url + ' (点击在新标签页打开)'"
-                  @click.stop="openInNewTab(searchResults[virtualRow.index].bookmark.url)"
+                  :href="item.bookmark.url"
+                  :title="item.bookmark.url + ' (点击在新标签页打开)'"
+                  @click.stop="openInNewTab(item.bookmark.url)"
                 >
-                  {{ formatUrl(searchResults[virtualRow.index].bookmark.url || '') }}
+                  {{ formatUrl(item.bookmark.url || '') }}
                 </a>
                 <div
-                  v-if="searchResults[virtualRow.index].bookmark.path?.length"
+                  v-if="item.bookmark.path?.length"
                   class="search-item-path"
-                  :title="searchResults[virtualRow.index].bookmark.path.join(' / ')"
+                  :title="item.bookmark.path.join(' / ')"
                 >
-                  {{ searchResults[virtualRow.index].bookmark.path.join(' / ') }}
+                  {{ item.bookmark.path.join(' / ') }}
                 </div>
               </div>
             </div>

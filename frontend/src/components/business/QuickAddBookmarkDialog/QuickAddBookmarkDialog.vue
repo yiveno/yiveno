@@ -86,7 +86,7 @@ watch(
  */
 async function loadFolders() {
   try {
-    const response = await new Promise<{
+    const treeResponse = await new Promise<{
       success: boolean
       tree?: chrome.bookmarks.BookmarkTreeNode[]
       error?: string
@@ -105,8 +105,8 @@ async function loadFolders() {
       )
     })
 
-    if (!response.success || !response.tree) {
-      throw new Error(response.error || '获取书签树失败')
+    if (!treeResponse.success || !treeResponse.tree) {
+      throw new Error(treeResponse.error || '获取书签树失败')
     }
 
     const folders: Array<{ label: string; value: string }> = []
@@ -126,7 +126,7 @@ async function loadFolders() {
       }
     }
 
-    traverse(response.tree)
+    traverse(treeResponse.tree)
 
     folderOptions.value = folders
 
@@ -137,8 +137,11 @@ async function loadFolders() {
       )
       if (bookmarksBar) {
         selectedFolderId.value = bookmarksBar.value
-      } else if (folders.length > 0) {
-        selectedFolderId.value = folders[0].value
+      } else {
+        const firstFolder = folders[0]
+        if (firstFolder) {
+          selectedFolderId.value = firstFolder.value
+        }
       }
     }
   } catch (error) {
@@ -153,7 +156,7 @@ async function getVectorRecommendations() {
   try {
     isLoadingRecommendations.value = true
 
-    const response = await new Promise<{
+    const recommendationResponse = await new Promise<{
       success: boolean
       recommendations?: FolderRecommendation[]
       error?: string
@@ -178,20 +181,21 @@ async function getVectorRecommendations() {
       )
     })
 
-    if (response.success && response.recommendations) {
-      recommendations.value = response.recommendations
+    if (recommendationResponse.success && recommendationResponse.recommendations) {
+      recommendations.value = recommendationResponse.recommendations
 
       logger.info('QuickAddBookmark', '获取到向量推荐', {
-        count: response.recommendations.length,
-        topRecommendation: response.recommendations[0]?.folderPath
+        count: recommendationResponse.recommendations.length,
+        topRecommendation: recommendationResponse.recommendations[0]?.folderPath
       })
 
       // 自动选中最佳推荐
-      if (response.recommendations.length > 0) {
-        selectedFolderId.value = response.recommendations[0].folderId
+      const firstRecommendation = recommendationResponse.recommendations[0]
+      if (firstRecommendation) {
+        selectedFolderId.value = firstRecommendation.folderId
       }
     } else {
-      logger.warn('QuickAddBookmark', '向量推荐失败', response.error)
+      logger.warn('QuickAddBookmark', '向量推荐失败', recommendationResponse.error)
     }
   } catch (error) {
     logger.error('QuickAddBookmark', '向量推荐失败', error)
@@ -572,4 +576,3 @@ function handleClose() {
   border-top: 1px solid var(--color-border);
 }
 </style>
-

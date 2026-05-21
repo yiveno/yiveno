@@ -20,13 +20,20 @@ const isWebsiteDomain = WEBSITE_DOMAINS.some(domain =>
   currentHost.includes(domain)
 )
 
+interface SupabaseSession {
+  access_token?: string
+  refresh_token?: string
+  expires_at?: number
+  user?: unknown
+}
+
 if (!isWebsiteDomain) {
   // 非官网域名，跳过同步
 } else {
   /**
    * 从 localStorage 读取 Supabase session
    */
-  function getSupabaseSession() {
+  function getSupabaseSession(): SupabaseSession | null {
     try {
       // Supabase 的 session key 格式：sb-<project-ref>-auth-token
       const keys = Object.keys(localStorage).filter(key => 
@@ -38,13 +45,17 @@ if (!isWebsiteDomain) {
       }
       
       const sessionKey = keys[0]
+      if (!sessionKey) {
+        return null
+      }
+
       const sessionData = localStorage.getItem(sessionKey)
       
       if (!sessionData) {
         return null
       }
       
-      const session = JSON.parse(sessionData)
+      const session = JSON.parse(sessionData) as SupabaseSession
       return session
     } catch (error) {
       console.error('[AuthSync] 读取 session 失败:', error)
@@ -55,7 +66,7 @@ if (!isWebsiteDomain) {
   /**
    * 将 session 同步到 Chrome Storage
    */
-  async function syncSessionToExtension(session) {
+  async function syncSessionToExtension(session: SupabaseSession | null) {
     try {
       if (!session) {
         await chrome.runtime.sendMessage({
@@ -134,7 +145,10 @@ if (!isWebsiteDomain) {
     key.startsWith('sb-') && key.endsWith('-auth-token')
   )
   if (keys.length > 0) {
-    lastSessionData = localStorage.getItem(keys[0])
+    const firstKey = keys[0]
+    if (firstKey) {
+      lastSessionData = localStorage.getItem(firstKey)
+    }
   }
 
   /**
@@ -145,7 +159,10 @@ if (!isWebsiteDomain) {
       key.startsWith('sb-') && key.endsWith('-auth-token')
     )
     
-    const currentSessionData = sessionKeys.length > 0 ? localStorage.getItem(sessionKeys[0]) : null
+    const firstSessionKey = sessionKeys[0]
+    const currentSessionData = firstSessionKey
+      ? localStorage.getItem(firstSessionKey)
+      : null
     
     // 检查 session 是否发生变化
     if (currentSessionData !== lastSessionData) {

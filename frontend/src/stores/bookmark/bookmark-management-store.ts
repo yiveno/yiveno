@@ -25,14 +25,14 @@ export interface EditBookmarkData {
   id: string
   title: string
   url: string
-  parentId?: string
+  parentId?: string | undefined
 }
 
 export interface AddItemData {
   type: 'folder' | 'bookmark'
   title: string
-  url?: string
-  parentId?: string
+  url?: string | undefined
+  parentId?: string | undefined
 }
 
 /**

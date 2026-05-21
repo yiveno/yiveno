@@ -37,6 +37,9 @@ const getFaviconUrl = (bookmark: BookmarkRecord): string | undefined => {
   if (faviconErrors.value.has(bookmark.id)) {
     return undefined
   }
+  if (!bookmark.url) {
+    return undefined
+  }
   try {
     const domain = new URL(bookmark.url).hostname
     return `https://www.google.com/s2/favicons?domain=${domain}&sz=16`

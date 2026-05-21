@@ -142,9 +142,9 @@ class BookmarkDiffService {
           nodeId: id,
           title: proposalNode.title,
           isFolder: !proposalNode.url,
-          url: proposalNode.url,
           parentId: proposalNode.parentId || 'root',
-          index: proposalNode.index ?? 0
+          index: proposalNode.index ?? 0,
+          ...(proposalNode.url !== undefined ? { url: proposalNode.url } : {})
         })
       } else {
         // 检测编辑（标题或URL变化）
@@ -159,8 +159,12 @@ class BookmarkDiffService {
             isFolder: !proposalNode.url,
             oldTitle: originalNode.title,
             newTitle: proposalNode.title,
-            oldUrl: originalNode.url,
-            newUrl: proposalNode.url
+            ...(originalNode.url !== undefined
+              ? { oldUrl: originalNode.url }
+              : {}),
+            ...(proposalNode.url !== undefined
+              ? { newUrl: proposalNode.url }
+              : {})
           })
         }
 

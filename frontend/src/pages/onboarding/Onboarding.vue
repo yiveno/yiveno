@@ -71,7 +71,11 @@ const progressMessage = ref(t('onboarding_initializing'))
 const isSyncing = ref(true)
 const isCompleted = ref(false)
 
-const currentStep = computed(() => steps[currentStepIndex.value])
+const fallbackStep: Step = steps[0]!
+
+const currentStep = computed<Step>(
+  () => steps[currentStepIndex.value] ?? fallbackStep
+)
 const isLast = computed(() => currentStepIndex.value === steps.length - 1)
 
 function nextStep() {

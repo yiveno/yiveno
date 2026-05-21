@@ -1,3 +1,97 @@
+<script setup lang="ts">
+import { formatDateTime, formatDate } from '@/utils/date-formatter'
+import { gumroadUrls, chromeStoreUrls } from '@/config/external-links'
+
+const { user, isAuthenticated, signOut, initialize } = useAuth()
+const { isPro, expiryDate, isInitialized } = useSubscription()
+const isLoading = ref(false)
+const avatarLoadFailed = ref(false)
+
+// 🔒 未登录自动跳转到登录页
+watchEffect(() => {
+  if (!isAuthenticated.value && !user.value) {
+    navigateTo('/login')
+  }
+})
+
+onMounted(() => {
+  initialize()
+})
+
+const userName = computed(() => {
+  if (!user.value) return '未知用户'
+  const metadata = user.value.user_metadata
+  if (metadata?.full_name) return metadata.full_name
+  if (metadata?.name) return metadata.name
+  if (user.value.email) return user.value.email.split('@')[0]
+  return '未知用户'
+})
+
+const userAvatar = computed(() => {
+  if (!user.value) return null
+  const metadata = user.value.user_metadata
+  return metadata?.avatar_url || metadata?.picture || null
+})
+
+const userInitial = computed(() => userName.value.charAt(0).toUpperCase())
+
+const loginProvider = computed(() => {
+  if (!user.value) return '未知'
+  const appMetadata = user.value.app_metadata
+  const provider = appMetadata?.provider
+  if (provider === 'google') return 'Google'
+  if (provider === 'azure') return 'Microsoft'
+  return provider || '未知'
+})
+
+const createdAt = computed(() => {
+  if (!user.value?.created_at) return '未知'
+  return formatDate(user.value.created_at)
+})
+
+const lastSignIn = computed(() => {
+  if (!user.value?.last_sign_in_at) return '未知'
+  return formatDateTime(user.value.last_sign_in_at)
+})
+
+const handleSignOut = async () => {
+  try {
+    isLoading.value = true
+    await signOut()
+    await navigateTo('/')
+  } catch (error) {
+    console.error('[Account] 退出登录失败:', error)
+    alert('退出登录失败，请重试')
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// 删除账户
+const handleDeleteAccount = () => {
+  const confirmed = confirm(
+    '⚠️ 警告：删除账户是不可逆的操作！\n\n' +
+    '删除后将永久清除：\n' +
+    '• 您的所有书签数据\n' +
+    '• 订阅信息\n' +
+    '• 账户设置\n\n' +
+    '确定要继续吗？'
+  )
+  
+  if (confirmed) {
+    const doubleConfirm = confirm(
+      '最后确认：您真的要删除账户吗？\n\n' +
+      '此操作无法撤销！'
+    )
+    
+    if (doubleConfirm) {
+      // TODO: 调用删除账户 API
+      alert('账户删除功能开发中...\n\n请联系客服协助删除账户。')
+    }
+  }
+}
+</script>
+
 <template>
   <div class="account-page">
     <!-- 已登录状态：双栏布局 -->
@@ -195,100 +289,6 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { formatDateTime, formatDate } from '@/utils/date-formatter'
-import { gumroadUrls, chromeStoreUrls } from '@/config/external-links'
-
-const { user, isAuthenticated, signOut, initialize } = useAuth()
-const { isPro, tier, expiryDate, loadSubscription, isInitialized } = useSubscription()
-const isLoading = ref(false)
-const avatarLoadFailed = ref(false)
-
-// 🔒 未登录自动跳转到登录页
-watchEffect(() => {
-  if (!isAuthenticated.value && !user.value) {
-    navigateTo('/login')
-  }
-})
-
-onMounted(() => {
-  initialize()
-})
-
-const userName = computed(() => {
-  if (!user.value) return '未知用户'
-  const metadata = user.value.user_metadata
-  if (metadata?.full_name) return metadata.full_name
-  if (metadata?.name) return metadata.name
-  if (user.value.email) return user.value.email.split('@')[0]
-  return '未知用户'
-})
-
-const userAvatar = computed(() => {
-  if (!user.value) return null
-  const metadata = user.value.user_metadata
-  return metadata?.avatar_url || metadata?.picture || null
-})
-
-const userInitial = computed(() => userName.value.charAt(0).toUpperCase())
-
-const loginProvider = computed(() => {
-  if (!user.value) return '未知'
-  const appMetadata = user.value.app_metadata
-  const provider = appMetadata?.provider
-  if (provider === 'google') return 'Google'
-  if (provider === 'azure') return 'Microsoft'
-  return provider || '未知'
-})
-
-const createdAt = computed(() => {
-  if (!user.value?.created_at) return '未知'
-  return formatDate(user.value.created_at)
-})
-
-const lastSignIn = computed(() => {
-  if (!user.value?.last_sign_in_at) return '未知'
-  return formatDateTime(user.value.last_sign_in_at)
-})
-
-const handleSignOut = async () => {
-  try {
-    isLoading.value = true
-    await signOut()
-    await navigateTo('/')
-  } catch (error) {
-    console.error('[Account] 退出登录失败:', error)
-    alert('退出登录失败，请重试')
-  } finally {
-    isLoading.value = false
-  }
-}
-
-// 删除账户
-const handleDeleteAccount = () => {
-  const confirmed = confirm(
-    '⚠️ 警告：删除账户是不可逆的操作！\n\n' +
-    '删除后将永久清除：\n' +
-    '• 您的所有书签数据\n' +
-    '• 订阅信息\n' +
-    '• 账户设置\n\n' +
-    '确定要继续吗？'
-  )
-  
-  if (confirmed) {
-    const doubleConfirm = confirm(
-      '最后确认：您真的要删除账户吗？\n\n' +
-      '此操作无法撤销！'
-    )
-    
-    if (doubleConfirm) {
-      // TODO: 调用删除账户 API
-      alert('账户删除功能开发中...\n\n请联系客服协助删除账户。')
-    }
-  }
-}
-</script>
 
 <style scoped>
 /* ===== 页面容器 ===== */

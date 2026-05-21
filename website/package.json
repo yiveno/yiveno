@@ -10,11 +10,12 @@
     "test": "echo 'Website: 暂无测试'",
     "typecheck": "nuxt typecheck",
     "typecheck:force": "nuxt typecheck --force",
-    "lint": "echo 'Website: 使用 Nuxt 内置 ESLint'",
-    "lint:check": "echo 'Website: 使用 Nuxt 内置 ESLint'",
-    "lint:check:force": "echo 'Website: 使用 Nuxt 内置 ESLint'",
-    "lint:fix": "echo 'Website: 使用 Nuxt 内置 ESLint'",
-    "format": "echo 'Website: 使用 Nuxt 内置格式化'",
+    "lint": "eslint . --no-cache --fix --max-warnings 0 --fix-type problem,suggestion,layout && echo '✅ ESLint: 所有问题已修复'",
+    "lint:check": "eslint . --no-cache --max-warnings 0",
+    "lint:fix": "eslint . --no-cache --fix && echo '✅ ESLint: 所有问题已修复'",
+    "stylelint": "stylelint \"app.vue\" \"assets/**/*.css\" \"components/**/*.vue\" \"layouts/**/*.vue\" \"pages/**/*.vue\" --config ../frontend/stylelint.config.js --no-cache --fix && echo '✅ Stylelint: 所有问题已修复'",
+    "stylelint:check": "stylelint \"app.vue\" \"assets/**/*.css\" \"components/**/*.vue\" \"layouts/**/*.vue\" \"pages/**/*.vue\" --config ../frontend/stylelint.config.js --no-cache",
+    "stylelint:fix": "stylelint \"app.vue\" \"assets/**/*.css\" \"components/**/*.vue\" \"layouts/**/*.vue\" \"pages/**/*.vue\" --config ../frontend/stylelint.config.js --no-cache --fix && echo '✅ Stylelint: 所有问题已修复'",
     "clean": "rm -rf .nuxt .output dist node_modules/.cache",
     "clean:lighthouse": "rm -rf .lighthouseci/*.json .lighthouseci/*.html && echo '✅ Lighthouse 报告已清理'",
     "postinstall": "nuxt prepare"
@@ -31,8 +32,6 @@
   },
   "devDependencies": {
     "lucide-vue-next": "^0.554.0",
-    "postcss": "^8.4.41",
-    "typescript": "~5.8.3",
     "vue-tsc": "^2.1.10"
   }
 }

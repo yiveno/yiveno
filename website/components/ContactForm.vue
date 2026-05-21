@@ -1,5 +1,32 @@
+<script setup lang="ts">
+const { loading, error, successMessage, submitContact } = useContactForm()
+
+const form = reactive({
+  name: '',
+  email: '',
+  message: '',
+  website: ''
+})
+
+const reset = () => {
+  form.name = ''
+  form.email = ''
+  form.message = ''
+  form.website = ''
+}
+
+const handleSubmit = async () => {
+  try {
+    await submitContact(form)
+    reset()
+  } catch (_err) {
+    // 错误在 composable 中已处理
+  }
+}
+</script>
+
 <template>
-  <form @submit.prevent="handleSubmit" class="contact-form">
+  <form class="contact-form" @submit.prevent="handleSubmit">
     <div class="field">
       <label for="name">姓名 *</label>
       <input
@@ -57,33 +84,6 @@
     </transition>
   </form>
 </template>
-
-<script setup lang="ts">
-const { loading, error, successMessage, submitContact } = useContactForm()
-
-const form = reactive({
-  name: '',
-  email: '',
-  message: '',
-  website: ''
-})
-
-const reset = () => {
-  form.name = ''
-  form.email = ''
-  form.message = ''
-  form.website = ''
-}
-
-const handleSubmit = async () => {
-  try {
-    await submitContact(form)
-    reset()
-  } catch (err) {
-    // 错误在 composable 中已处理
-  }
-}
-</script>
 
 <style scoped>
 .contact-form {

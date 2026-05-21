@@ -11,6 +11,7 @@ import type { EmbeddingProvider } from './embedding-provider'
 import { onnxEmbeddingProvider } from './onnx-embedding-provider'
 import { chromeBuiltinEmbeddingProvider } from './chrome-builtin-embedding-provider'
 import { localVectorStore } from './local-vector-store'
+import type { VectorRecord } from './local-vector-store'
 import type { BookmarkRecord } from '@/infrastructure/indexeddb/manager'
 import { logger } from '@/infrastructure/logging/logger'
 
@@ -149,14 +150,21 @@ export class EmbeddingService {
           vectors = await Promise.all(texts.map(t => provider.embed(t)))
         }
 
-        const records = batch.map((b, idx) => ({
-          bookmarkId: b.id,
-          vector: vectors[idx],
-          model: provider.name,
-          title: b.title,
-          url: b.url!,
-          updatedAt: Date.now()
-        }))
+        const updatedAt = Date.now()
+        const records: VectorRecord[] = []
+        batch.forEach((b, idx) => {
+          const vector = vectors[idx]
+          if (!vector || !b.url) return
+
+          records.push({
+            bookmarkId: b.id,
+            vector,
+            model: provider.name,
+            title: b.title,
+            url: b.url,
+            updatedAt
+          })
+        })
 
         await localVectorStore.upsertBatch(records)
         progress.processed += batch.length

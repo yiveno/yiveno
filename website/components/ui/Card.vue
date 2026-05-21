@@ -1,9 +1,3 @@
-<template>
-  <div :class="computedClass">
-    <slot />
-  </div>
-</template>
-
 <script setup lang="ts">
 import { computed } from 'vue'
 
@@ -30,6 +24,12 @@ const computedClass = computed(() => {
   return classes.filter(Boolean).join(' ')
 })
 </script>
+
+<template>
+  <div :class="computedClass">
+    <slot />
+  </div>
+</template>
 
 <style scoped>
 /* 基础卡片样式 */

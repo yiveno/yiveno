@@ -1,3 +1,48 @@
+<script setup lang="ts">
+import { Download, Code, Check, Chrome, HardDrive } from 'lucide-vue-next'
+import Button from '@/components/ui/Button.vue'
+import Card from '@/components/ui/Card.vue'
+import Badge from '@/components/ui/Badge.vue'
+
+const NuxtLink = resolveComponent('NuxtLink')
+const { extensionLink } = useProductLinks()
+
+const builds = [
+  {
+    tag: 'Stable',
+    title: '正式版',
+    description: '经过完整 QA 与 Store 审核，适合生产环境。',
+    notes: ['自动更新', '包含最新 AI 功能', '支持 Chrome / Edge'],
+    linkLabel: '前往商店',
+    link: extensionLink,
+    external: true
+  },
+  {
+    tag: 'Beta',
+    title: '内测版',
+    description: '提前体验即将发布的能力，适合愿意反馈问题的用户。',
+    notes: ['每周一次', '内置调试日志', '可能含实验特性'],
+    linkLabel: '查看路线图',
+    link: '/feature-request',
+    external: false
+  },
+  {
+    tag: 'Source',
+    title: '自行构建',
+    description: 'Fork 项目或从 Release 下载 zip，完全掌控环境。',
+    notes: ['遵循 MIT 许可', '支持 Cloudflare Worker 自托管', '欢迎提交 PR'],
+    linkLabel: 'GitHub Releases',
+    link: 'https://github.com/ChenQiWen/acuityBookmarks',
+    external: true
+  }
+]
+
+useSeoMeta({
+  title: '下载 - AcuityBookmarks',
+  description: '通过 Chrome Web Store 或本地构建方式安装 AcuityBookmarks。'
+})
+</script>
+
 <template>
   <div class="min-h-screen pb-20">
     <!-- Hero Section -->
@@ -197,48 +242,3 @@
     </section>
   </div>
 </template>
-
-<script setup lang="ts">
-import { Download, Code, Check, Chrome, HardDrive } from 'lucide-vue-next'
-import Button from '@/components/ui/Button.vue'
-import Card from '@/components/ui/Card.vue'
-import Badge from '@/components/ui/Badge.vue'
-
-const NuxtLink = resolveComponent('NuxtLink')
-const { extensionLink } = useProductLinks()
-
-const builds = [
-  {
-    tag: 'Stable',
-    title: '正式版',
-    description: '经过完整 QA 与 Store 审核，适合生产环境。',
-    notes: ['自动更新', '包含最新 AI 功能', '支持 Chrome / Edge'],
-    linkLabel: '前往商店',
-    link: extensionLink,
-    external: true
-  },
-  {
-    tag: 'Beta',
-    title: '内测版',
-    description: '提前体验即将发布的能力，适合愿意反馈问题的用户。',
-    notes: ['每周一次', '内置调试日志', '可能含实验特性'],
-    linkLabel: '查看路线图',
-    link: '/feature-request',
-    external: false
-  },
-  {
-    tag: 'Source',
-    title: '自行构建',
-    description: 'Fork 项目或从 Release 下载 zip，完全掌控环境。',
-    notes: ['遵循 MIT 许可', '支持 Cloudflare Worker 自托管', '欢迎提交 PR'],
-    linkLabel: 'GitHub Releases',
-    link: 'https://github.com/ChenQiWen/acuityBookmarks',
-    external: true
-  }
-]
-
-useSeoMeta({
-  title: '下载 - AcuityBookmarks',
-  description: '通过 Chrome Web Store 或本地构建方式安装 AcuityBookmarks。'
-})
-</script>

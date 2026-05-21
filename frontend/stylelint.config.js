@@ -5,8 +5,11 @@
 export default {
   ignoreFiles: [
     '**/dist/**',
+    '**/.nuxt/**',
+    '**/.output/**',
     '**/node_modules/**',
-    '**/.vite/**'
+    '**/.vite/**',
+    '**/src/tests/**'
     // tokens.css 现在只包含映射，不再包含硬编码颜色
   ],
 

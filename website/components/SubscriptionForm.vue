@@ -1,3 +1,24 @@
+<script setup lang="ts">
+const { loading, error, success, submitSubscription } = useSubscriptionForm()
+
+const form = reactive({
+  email: '',
+  source: 'landing-page',
+  channel: 'newsletter'
+})
+
+const handleSubmit = async () => {
+  try {
+    await submitSubscription(form)
+    // 表单重置是串行执行的，ESLint 在 reactive 对象上会误报 require-atomic-updates
+    // eslint-disable-next-line require-atomic-updates
+    form.email = ''
+  } catch (_err) {
+    // handled already
+  }
+}
+</script>
+
 <template>
   <form class="subscription" @submit.prevent="handleSubmit">
     <div class="inputs">
@@ -21,25 +42,6 @@
     </transition>
   </form>
 </template>
-
-<script setup lang="ts">
-const { loading, error, success, submitSubscription } = useSubscriptionForm()
-
-const form = reactive({
-  email: '',
-  source: 'landing-page',
-  channel: 'newsletter'
-})
-
-const handleSubmit = async () => {
-  try {
-    await submitSubscription(form)
-    form.email = ''
-  } catch (err) {
-    // handled already
-  }
-}
-</script>
 
 <style scoped>
 .subscription {

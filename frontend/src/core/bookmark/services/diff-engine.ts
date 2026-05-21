@@ -27,14 +27,14 @@ export interface BookmarkOperation {
   priority: number
   nodeId?: string
   target?: {
-    id?: string
-    title?: string
-    url?: string
-    parentId?: string
-    index?: number
-    children?: BookmarkNode[]
+    id?: string | undefined
+    title?: string | undefined
+    url?: string | undefined
+    parentId?: string | undefined
+    index?: number | undefined
+    children?: BookmarkNode[] | undefined
   }
-  dependencies?: string[]
+  dependencies?: string[] | undefined
   estimatedCost: number
 }
 
@@ -144,16 +144,17 @@ export class SmartBookmarkDiffEngine {
     const operations: BookmarkOperation[] = []
     targetMap.forEach((node, id) => {
       if (!originalMap.has(id)) {
+        const target: BookmarkOperation['target'] = {
+          ...(node.title !== undefined ? { title: node.title } : {}),
+          ...(node.url !== undefined ? { url: node.url } : {}),
+          ...(node.parentId !== undefined ? { parentId: node.parentId } : {}),
+          ...(node.index !== undefined ? { index: node.index } : {})
+        }
         operations.push({
           id: `create_${this.operationCounter++}`,
           type: OperationType.CREATE,
           priority: 10,
-          target: {
-            title: node.title,
-            url: node.url,
-            parentId: node.parentId,
-            index: node.index
-          },
+          target,
           estimatedCost: 15
         })
       }
@@ -270,6 +271,7 @@ export class SmartBookmarkDiffEngine {
       []
     for (let targetIndex = 0; targetIndex < target.length; targetIndex++) {
       const targetNode = target[targetIndex]
+      if (!targetNode) continue
       const originalIndex = original.findIndex(n => n.id === targetNode.id)
       if (originalIndex !== -1 && originalIndex !== targetIndex) {
         moves.push({

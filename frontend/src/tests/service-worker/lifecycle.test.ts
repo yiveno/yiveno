@@ -167,13 +167,15 @@ describe('Service Worker 生命周期（单元测试）', () => {
           }, 100)
           return true // 保持消息通道开放
         }
+        return false
       })
       
       chrome.runtime.onMessage.addListener(messageHandler)
       
       // 模拟消息发送
       const listeners = vi.mocked(chrome.runtime.onMessage.addListener).mock.calls
-      const registeredHandler = listeners[0][0]
+      expect(listeners[0]).toBeDefined()
+      const registeredHandler = listeners[0]![0]
       
       const sendResponse = vi.fn()
       const returnValue = registeredHandler(
@@ -206,7 +208,8 @@ describe('Service Worker 生命周期（单元测试）', () => {
       chrome.runtime.onMessage.addListener(messageHandler)
       
       const listeners = vi.mocked(chrome.runtime.onMessage.addListener).mock.calls
-      const registeredHandler = listeners[0][0]
+      expect(listeners[0]).toBeDefined()
+      const registeredHandler = listeners[0]![0]
       
       const sendResponse = vi.fn()
       registeredHandler({ type: 'ERROR_TASK' }, {}, sendResponse)
@@ -232,7 +235,8 @@ describe('Service Worker 生命周期（单元测试）', () => {
         chrome.runtime.onMessage.addListener(incorrectHandler)
         
         const listeners = vi.mocked(chrome.runtime.onMessage.addListener).mock.calls
-        const registeredHandler = listeners[0][0]
+        expect(listeners[0]).toBeDefined()
+        const registeredHandler = listeners[0]![0]
         
         const sendResponse = vi.fn()
         const returnValue = registeredHandler(
@@ -265,7 +269,8 @@ describe('Service Worker 生命周期（单元测试）', () => {
         chrome.runtime.onMessage.addListener(incorrectHandler)
         
         const listeners = vi.mocked(chrome.runtime.onMessage.addListener).mock.calls
-        const registeredHandler = listeners[0][0]
+        expect(listeners[0]).toBeDefined()
+        const registeredHandler = listeners[0]![0]
         
         const sendResponse = vi.fn()
         registeredHandler({ type: 'MULTI_RESPONSE' }, {}, sendResponse)
@@ -318,10 +323,11 @@ describe('Service Worker 生命周期（单元测试）', () => {
           return false // ✅ 正确：同步消息返回 false
         })
         
-        chrome.runtime.onMessage.addListener(correctHandler)
-        
-        const listeners = vi.mocked(chrome.runtime.onMessage.addListener).mock.calls
-        const registeredHandler = listeners[0][0]
+      chrome.runtime.onMessage.addListener(correctHandler)
+      
+      const listeners = vi.mocked(chrome.runtime.onMessage.addListener).mock.calls
+      expect(listeners[0]).toBeDefined()
+      const registeredHandler = listeners[0]![0]
         
         const sendResponse = vi.fn()
         const returnValue = registeredHandler(
@@ -349,10 +355,11 @@ describe('Service Worker 生命周期（单元测试）', () => {
           return undefined
         })
         
-        chrome.runtime.onMessage.addListener(incorrectHandler)
-        
-        const listeners = vi.mocked(chrome.runtime.onMessage.addListener).mock.calls
-        const registeredHandler = listeners[0][0]
+      chrome.runtime.onMessage.addListener(incorrectHandler)
+      
+      const listeners = vi.mocked(chrome.runtime.onMessage.addListener).mock.calls
+      expect(listeners[0]).toBeDefined()
+      const registeredHandler = listeners[0]![0]
         
         const sendResponse = vi.fn()
         const returnValue = registeredHandler(

@@ -1,3 +1,20 @@
+<script setup lang="ts">
+import { Sparkles, Chrome, PlayCircle, Zap, Brain } from 'lucide-vue-next'
+import Button from '@/components/ui/Button.vue'
+
+const props = defineProps<{
+  extensionLink?: string
+}>()
+
+const NuxtLink = resolveComponent('NuxtLink')
+
+const openExtension = () => {
+  if (props.extensionLink) {
+    window.open(props.extensionLink, '_blank')
+  }
+}
+</script>
+
 <template>
   <section class="relative pt-20 pb-16 overflow-hidden">
     <!-- Background decoration -->
@@ -90,7 +107,7 @@
             </div>
             <div>
               <div class="text-[10px] text-content-muted">平均检索</div>
-              <div class="text-sm font-bold text-content">< 50ms</div>
+              <div class="text-sm font-bold text-content">&lt; 50ms</div>
             </div>
           </div>
         </div>
@@ -113,23 +130,6 @@
     </div>
   </section>
 </template>
-
-<script setup lang="ts">
-import { Sparkles, Chrome, PlayCircle, Zap, Brain } from 'lucide-vue-next'
-import Button from '@/components/ui/Button.vue'
-
-const NuxtLink = resolveComponent('NuxtLink')
-
-const props = defineProps<{
-  extensionLink?: string
-}>()
-
-const openExtension = () => {
-  if (props.extensionLink) {
-    window.open(props.extensionLink, '_blank')
-  }
-}
-</script>
 
 <style scoped>
 .animate-gradient-x {

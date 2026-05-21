@@ -1,3 +1,285 @@
+<script setup lang="ts">
+import { ref, onMounted, computed } from 'vue'
+import { getShareDataFromUrl, type ShareData } from '@/utils/share-service'
+import { detectExtension } from '@/utils/extension-detector'
+import {
+  importService,
+  type FolderNode,
+  type ImportResult
+} from '@/utils/import-service'
+import { formatRelativeTime } from '@/utils/date-formatter'
+
+// 状态
+const isLoading = ref(true)
+const error = ref<string | null>(null)
+const shareData = ref<ShareData | null>(null)
+const selectedBookmarks = ref<Set<number>>(new Set())
+const isExtensionInstalled = ref(false)
+
+// 导入相关状态
+const folderTree = ref<FolderNode[]>([])
+const selectedFolderId = ref<string>('')
+const isImporting = ref(false)
+const importProgress = ref({ current: 0, total: 0 })
+const importResult = ref<ImportResult | null>(null)
+
+// 移动端检测
+const isMobile = ref(false)
+
+// 扩展链接
+const { extensionLink } = useProductLinks()
+
+// 检测是否为移动设备
+const checkMobile = () => {
+  if (typeof window === 'undefined') return false
+  
+  // 检查 User Agent
+  const userAgent = navigator.userAgent.toLowerCase()
+  const mobileKeywords = ['android', 'iphone', 'ipad', 'ipod', 'mobile', 'webos']
+  const isMobileUA = mobileKeywords.some(keyword => userAgent.includes(keyword))
+  
+  // 检查屏幕宽度
+  const isMobileWidth = window.innerWidth < 768
+  
+  // 检查触摸支持
+  const hasTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+  
+  return isMobileUA || (isMobileWidth && hasTouchScreen)
+}
+
+// 计算属性：扁平化的文件夹列表（用于下拉框）
+const flatFolders = computed(() => {
+  const flatten = (
+    nodes: FolderNode[],
+    level = 0
+  ): Array<{ id: string; title: string; level: number }> => {
+    const result: Array<{ id: string; title: string; level: number }> = []
+    for (const node of nodes) {
+      result.push({
+        id: node.id,
+        title: node.title,
+        level
+      })
+      if (node.children) {
+        result.push(...flatten(node.children, level + 1))
+      }
+    }
+    return result
+  }
+  return flatten(folderTree.value)
+})
+
+// 加载分享数据
+const loadShareData = () => {
+  isLoading.value = true
+  error.value = null
+
+  try {
+    const data = getShareDataFromUrl()
+
+    if (!data) {
+      error.value = '分享链接中没有数据，请检查链接是否完整'
+      return
+    }
+
+    shareData.value = data
+
+    // 默认全选所有书签
+    if (isExtensionInstalled.value) {
+      data.bookmarks.forEach((_, index) => {
+        selectedBookmarks.value.add(index)
+      })
+    }
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : '加载失败，请重试'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// 检测扩展是否安装
+const checkExtension = async () => {
+  try {
+    const installed = await detectExtension()
+    isExtensionInstalled.value = installed
+
+    if (installed) {
+      console.log('✅ 检测到 AcuityBookmarks 扩展已安装')
+
+      // 加载文件夹树
+      await loadFolderTree()
+    } else {
+      console.log('❌ 未检测到 AcuityBookmarks 扩展')
+    }
+  } catch (extensionError) {
+    console.error('检测扩展失败:', extensionError)
+    isExtensionInstalled.value = false
+  }
+}
+
+// 加载文件夹树
+const loadFolderTree = async () => {
+  try {
+    const tree = await importService.getFolderTree()
+    folderTree.value = tree
+
+    // 设置默认文件夹
+    const defaultFolderId = await importService.getDefaultFolderId()
+    selectedFolderId.value = defaultFolderId
+
+    console.log('✅ 文件夹树加载成功', {
+      folderCount: flatFolders.value.length,
+      defaultFolderId
+    })
+  } catch (loadError) {
+    console.error('加载文件夹树失败:', loadError)
+  }
+}
+
+// 切换书签选择
+const toggleBookmark = (index: number) => {
+  if (!isExtensionInstalled.value) return
+
+  if (selectedBookmarks.value.has(index)) {
+    selectedBookmarks.value.delete(index)
+  } else {
+    selectedBookmarks.value.add(index)
+  }
+}
+
+// 清除选择
+const clearSelection = () => {
+  selectedBookmarks.value.clear()
+}
+
+// 导入选中的书签
+const importSelected = async () => {
+  if (!shareData.value || selectedBookmarks.value.size === 0) return
+  if (!selectedFolderId.value) {
+    alert('请选择目标文件夹')
+    return
+  }
+
+  const bookmarksToImport = Array.from(selectedBookmarks.value)
+    .map((index) => shareData.value!.bookmarks[index])
+    .filter((bookmark): bookmark is { title: string; url: string; description?: string } => 
+      bookmark !== undefined
+    )
+
+  isImporting.value = true
+  importProgress.value = { current: 0, total: bookmarksToImport.length }
+  importResult.value = null
+
+  try {
+    const result = await importService.importBookmarks({
+      bookmarks: bookmarksToImport,
+      targetFolderId: selectedFolderId.value,
+      onProgress: (current, total) => {
+        importProgress.value = { current, total }
+      }
+    })
+
+    importResult.value = result
+
+    if (result.failed === 0) {
+      alert(`✅ 成功导入 ${result.success} 个书签！`)
+    } else {
+      alert(
+        `⚠️ 导入完成：成功 ${result.success} 个，失败 ${result.failed} 个\n\n失败原因：\n${result.errors.map((e) => `- ${e.bookmark}: ${e.error}`).join('\n')}`
+      )
+    }
+
+    // 清除选择
+    selectedBookmarks.value.clear()
+  } catch (importError) {
+    console.error('导入失败:', importError)
+    alert(`❌ 导入失败：${importError instanceof Error ? importError.message : String(importError)}`)
+  } finally {
+    isImporting.value = false
+  }
+}
+
+// 获取 favicon URL
+const getFaviconUrl = (url: string): string => {
+  try {
+    const domain = new URL(url).hostname
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`
+  } catch {
+    return ''
+  }
+}
+
+// 处理图标加载错误
+const handleIconError = (event: Event) => {
+  const img = event.target as HTMLImageElement
+  img.style.display = 'none'
+}
+
+// 格式化日期（使用相对时间）
+const formatDate = (timestamp: number): string => {
+  return formatRelativeTime(new Date(timestamp))
+}
+
+// 复制分享链接（移动端）
+const copyShareLink = async () => {
+  try {
+    const currentUrl = window.location.href
+    await navigator.clipboard.writeText(currentUrl)
+    alert('✅ 链接已复制到剪贴板')
+  } catch (copyError) {
+    console.error('复制链接失败:', copyError)
+    alert('❌ 复制失败，请手动复制链接')
+  }
+}
+
+// 使用系统分享 API（移动端）
+const shareToFriends = async () => {
+  if (!shareData.value) return
+  
+  try {
+    // 检查是否支持 Web Share API
+    if (navigator.share) {
+      await navigator.share({
+        title: shareData.value.title,
+        text: `${shareData.value.title} - 分享了 ${shareData.value.bookmarks.length} 个书签`,
+        url: window.location.href
+      })
+      console.log('✅ 分享成功')
+    } else {
+      // 降级到复制链接
+      await copyShareLink()
+    }
+  } catch (shareError) {
+    // 用户取消分享不算错误
+    if ((shareError as Error).name !== 'AbortError') {
+      console.error('分享失败:', shareError)
+      alert('❌ 分享失败，请重试')
+    }
+  }
+}
+
+// 页面加载时执行
+onMounted(async () => {
+  // 检测移动设备
+  isMobile.value = checkMobile()
+  console.log('📱 移动端检测结果:', isMobile.value)
+  
+  // 只在桌面端检测扩展
+  if (!isMobile.value) {
+    await checkExtension()
+  }
+  
+  loadShareData()
+})
+
+// SEO
+useSeoMeta({
+  title: '分享的书签 - AcuityBookmarks',
+  description: '查看朋友分享的书签收藏',
+  robots: 'noindex, nofollow' // 分享页面不需要被搜索引擎索引
+})
+</script>
+
 <template>
   <div class="share-landing-page">
     <!-- 加载状态 -->
@@ -197,288 +479,6 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import { getShareDataFromUrl, type ShareData } from '@/utils/share-service'
-import { detectExtension } from '@/utils/extension-detector'
-import {
-  importService,
-  type FolderNode,
-  type ImportResult
-} from '@/utils/import-service'
-import { formatRelativeTime } from '@/utils/date-formatter'
-
-// 状态
-const isLoading = ref(true)
-const error = ref<string | null>(null)
-const shareData = ref<ShareData | null>(null)
-const selectedBookmarks = ref<Set<number>>(new Set())
-const isExtensionInstalled = ref(false)
-
-// 导入相关状态
-const folderTree = ref<FolderNode[]>([])
-const selectedFolderId = ref<string>('')
-const isImporting = ref(false)
-const importProgress = ref({ current: 0, total: 0 })
-const importResult = ref<ImportResult | null>(null)
-
-// 移动端检测
-const isMobile = ref(false)
-
-// 扩展链接
-const { extensionLink } = useProductLinks()
-
-// 检测是否为移动设备
-const checkMobile = () => {
-  if (typeof window === 'undefined') return false
-  
-  // 检查 User Agent
-  const userAgent = navigator.userAgent.toLowerCase()
-  const mobileKeywords = ['android', 'iphone', 'ipad', 'ipod', 'mobile', 'webos']
-  const isMobileUA = mobileKeywords.some(keyword => userAgent.includes(keyword))
-  
-  // 检查屏幕宽度
-  const isMobileWidth = window.innerWidth < 768
-  
-  // 检查触摸支持
-  const hasTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0
-  
-  return isMobileUA || (isMobileWidth && hasTouchScreen)
-}
-
-// 计算属性：扁平化的文件夹列表（用于下拉框）
-const flatFolders = computed(() => {
-  const flatten = (
-    nodes: FolderNode[],
-    level = 0
-  ): Array<{ id: string; title: string; level: number }> => {
-    const result: Array<{ id: string; title: string; level: number }> = []
-    for (const node of nodes) {
-      result.push({
-        id: node.id,
-        title: node.title,
-        level
-      })
-      if (node.children) {
-        result.push(...flatten(node.children, level + 1))
-      }
-    }
-    return result
-  }
-  return flatten(folderTree.value)
-})
-
-// 加载分享数据
-const loadShareData = () => {
-  isLoading.value = true
-  error.value = null
-
-  try {
-    const data = getShareDataFromUrl()
-
-    if (!data) {
-      error.value = '分享链接中没有数据，请检查链接是否完整'
-      return
-    }
-
-    shareData.value = data
-
-    // 默认全选所有书签
-    if (isExtensionInstalled.value) {
-      data.bookmarks.forEach((_, index) => {
-        selectedBookmarks.value.add(index)
-      })
-    }
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : '加载失败，请重试'
-  } finally {
-    isLoading.value = false
-  }
-}
-
-// 检测扩展是否安装
-const checkExtension = async () => {
-  try {
-    const installed = await detectExtension()
-    isExtensionInstalled.value = installed
-
-    if (installed) {
-      console.log('✅ 检测到 AcuityBookmarks 扩展已安装')
-
-      // 加载文件夹树
-      await loadFolderTree()
-    } else {
-      console.log('❌ 未检测到 AcuityBookmarks 扩展')
-    }
-  } catch (error) {
-    console.error('检测扩展失败:', error)
-    isExtensionInstalled.value = false
-  }
-}
-
-// 加载文件夹树
-const loadFolderTree = async () => {
-  try {
-    const tree = await importService.getFolderTree()
-    folderTree.value = tree
-
-    // 设置默认文件夹
-    const defaultFolderId = await importService.getDefaultFolderId()
-    selectedFolderId.value = defaultFolderId
-
-    console.log('✅ 文件夹树加载成功', {
-      folderCount: flatFolders.value.length,
-      defaultFolderId
-    })
-  } catch (error) {
-    console.error('加载文件夹树失败:', error)
-  }
-}
-
-// 切换书签选择
-const toggleBookmark = (index: number) => {
-  if (!isExtensionInstalled.value) return
-
-  if (selectedBookmarks.value.has(index)) {
-    selectedBookmarks.value.delete(index)
-  } else {
-    selectedBookmarks.value.add(index)
-  }
-}
-
-// 清除选择
-const clearSelection = () => {
-  selectedBookmarks.value.clear()
-}
-
-// 导入选中的书签
-const importSelected = async () => {
-  if (!shareData.value || selectedBookmarks.value.size === 0) return
-  if (!selectedFolderId.value) {
-    alert('请选择目标文件夹')
-    return
-  }
-
-  const bookmarksToImport = Array.from(selectedBookmarks.value)
-    .map((index) => shareData.value!.bookmarks[index])
-    .filter((bookmark): bookmark is { title: string; url: string; description?: string } => 
-      bookmark !== undefined
-    )
-
-  isImporting.value = true
-  importProgress.value = { current: 0, total: bookmarksToImport.length }
-  importResult.value = null
-
-  try {
-    const result = await importService.importBookmarks({
-      bookmarks: bookmarksToImport,
-      targetFolderId: selectedFolderId.value,
-      onProgress: (current, total) => {
-        importProgress.value = { current, total }
-      }
-    })
-
-    importResult.value = result
-
-    if (result.failed === 0) {
-      alert(`✅ 成功导入 ${result.success} 个书签！`)
-    } else {
-      alert(
-        `⚠️ 导入完成：成功 ${result.success} 个，失败 ${result.failed} 个\n\n失败原因：\n${result.errors.map((e) => `- ${e.bookmark}: ${e.error}`).join('\n')}`
-      )
-    }
-
-    // 清除选择
-    selectedBookmarks.value.clear()
-  } catch (error) {
-    console.error('导入失败:', error)
-    alert(`❌ 导入失败：${error instanceof Error ? error.message : String(error)}`)
-  } finally {
-    isImporting.value = false
-  }
-}
-
-// 获取 favicon URL
-const getFaviconUrl = (url: string): string => {
-  try {
-    const domain = new URL(url).hostname
-    return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`
-  } catch {
-    return ''
-  }
-}
-
-// 处理图标加载错误
-const handleIconError = (event: Event) => {
-  const img = event.target as HTMLImageElement
-  img.style.display = 'none'
-}
-
-// 格式化日期（使用相对时间）
-const formatDate = (timestamp: number): string => {
-  return formatRelativeTime(new Date(timestamp))
-}
-
-// 复制分享链接（移动端）
-const copyShareLink = async () => {
-  try {
-    const currentUrl = window.location.href
-    await navigator.clipboard.writeText(currentUrl)
-    alert('✅ 链接已复制到剪贴板')
-  } catch (error) {
-    console.error('复制链接失败:', error)
-    alert('❌ 复制失败，请手动复制链接')
-  }
-}
-
-// 使用系统分享 API（移动端）
-const shareToFriends = async () => {
-  if (!shareData.value) return
-  
-  try {
-    // 检查是否支持 Web Share API
-    if (navigator.share) {
-      await navigator.share({
-        title: shareData.value.title,
-        text: `${shareData.value.title} - 分享了 ${shareData.value.bookmarks.length} 个书签`,
-        url: window.location.href
-      })
-      console.log('✅ 分享成功')
-    } else {
-      // 降级到复制链接
-      await copyShareLink()
-    }
-  } catch (error) {
-    // 用户取消分享不算错误
-    if ((error as Error).name !== 'AbortError') {
-      console.error('分享失败:', error)
-      alert('❌ 分享失败，请重试')
-    }
-  }
-}
-
-// 页面加载时执行
-onMounted(async () => {
-  // 检测移动设备
-  isMobile.value = checkMobile()
-  console.log('📱 移动端检测结果:', isMobile.value)
-  
-  // 只在桌面端检测扩展
-  if (!isMobile.value) {
-    await checkExtension()
-  }
-  
-  loadShareData()
-})
-
-// SEO
-useSeoMeta({
-  title: '分享的书签 - AcuityBookmarks',
-  description: '查看朋友分享的书签收藏',
-  robots: 'noindex, nofollow' // 分享页面不需要被搜索引擎索引
-})
-</script>
 
 <style scoped>
 /* 屏幕阅读器专用（视觉上隐藏） */

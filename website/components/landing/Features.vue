@@ -1,3 +1,9 @@
+<script setup lang="ts">
+import { Zap, Brain, ShieldCheck, RefreshCw, Lock } from 'lucide-vue-next'
+import Card from '@/components/ui/Card.vue'
+import Badge from '@/components/ui/Badge.vue'
+</script>
+
 <template>
   <section id="features" class="py-16 relative">
     <div class="container mx-auto px-4">
@@ -104,12 +110,6 @@
     </div>
   </section>
 </template>
-
-<script setup lang="ts">
-import { Zap, Brain, ShieldCheck, RefreshCw, Lock } from 'lucide-vue-next'
-import Card from '@/components/ui/Card.vue'
-import Badge from '@/components/ui/Badge.vue'
-</script>
 
 <style scoped>
 /* Bento grid: 3 columns, wide cards span 2 */

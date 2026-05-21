@@ -1,52 +1,3 @@
-<template>
-  <div class="hero-showcase">
-    <div class="window popup">
-      <header>
-        <span class="dot" v-for="n in 3" :key="n" />
-        <p>Popup · 即时搜索</p>
-      </header>
-      <ul>
-        <li v-for="entry in popupEntries" :key="entry.title">
-          <div>
-            <p class="title">{{ entry.title }}</p>
-            <small>{{ entry.meta }}</small>
-          </div>
-          <span class="badge" :class="entry.type">{{ entry.tag }}</span>
-        </li>
-      </ul>
-    </div>
-
-    <div class="window board">
-      <header>
-        <p>Management · Kanban</p>
-        <span>20,184 bookmarks</span>
-      </header>
-      <div class="columns">
-        <div v-for="column in boardColumns" :key="column.name" class="column">
-          <p class="column-name">{{ column.name }}</p>
-          <article v-for="card in column.cards" :key="card" class="card" />
-        </div>
-      </div>
-    </div>
-
-    <div class="window panel">
-      <header>
-        <p>Side Panel · 推荐</p>
-        <span>AI Suggestions</span>
-      </header>
-      <div class="panel-body">
-        <article v-for="item in aiSuggestions" :key="item.title">
-          <div>
-            <p class="title">{{ item.title }}</p>
-            <small>{{ item.context }}</small>
-          </div>
-          <span class="chip">{{ item.action }}</span>
-        </article>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 const popupEntries = [
   {
@@ -93,6 +44,55 @@ const aiSuggestions = [
   }
 ]
 </script>
+
+<template>
+  <div class="hero-showcase">
+    <div class="window popup">
+      <header>
+        <span v-for="n in 3" :key="n" class="dot" />
+        <p>Popup · 即时搜索</p>
+      </header>
+      <ul>
+        <li v-for="entry in popupEntries" :key="entry.title">
+          <div>
+            <p class="title">{{ entry.title }}</p>
+            <small>{{ entry.meta }}</small>
+          </div>
+          <span class="badge" :class="entry.type">{{ entry.tag }}</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="window board">
+      <header>
+        <p>Management · Kanban</p>
+        <span>20,184 bookmarks</span>
+      </header>
+      <div class="columns">
+        <div v-for="column in boardColumns" :key="column.name" class="column">
+          <p class="column-name">{{ column.name }}</p>
+          <article v-for="card in column.cards" :key="card" class="card" />
+        </div>
+      </div>
+    </div>
+
+    <div class="window panel">
+      <header>
+        <p>Side Panel · 推荐</p>
+        <span>AI Suggestions</span>
+      </header>
+      <div class="panel-body">
+        <article v-for="item in aiSuggestions" :key="item.title">
+          <div>
+            <p class="title">{{ item.title }}</p>
+            <small>{{ item.context }}</small>
+          </div>
+          <span class="chip">{{ item.action }}</span>
+        </article>
+      </div>
+    </div>
+  </div>
+</template>
 
 <style scoped>
 .hero-showcase {

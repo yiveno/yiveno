@@ -103,48 +103,48 @@ function sanitizeFaviconUrl(rawUrl: string | undefined): string | undefined {
  */
 interface Props {
   node: BookmarkNode
-  level?: number
+  level: number
   expandedFolders: Set<string>
   selectedNodes: Set<string>
-  searchQuery?: string
+  searchQuery?: string | undefined
   /** 是否对标题进行关键字高亮 */
-  highlightMatches?: boolean
+  highlightMatches?: boolean | undefined
   config: {
-    size?: 'compact' | 'comfortable' | 'spacious'
-    searchable?: boolean
-    selectable?: boolean | 'single' | 'multiple'
-    editable?: boolean
-    showSelectionCheckbox?: boolean
-    draggable?: boolean // ✅ 是否启用拖拽
-    showBookmarkUrl?: boolean // ✅ 是否显示书签 URL
+    size?: 'compact' | 'comfortable' | 'spacious' | undefined
+    searchable?: boolean | undefined
+    selectable?: boolean | 'single' | 'multiple' | undefined
+    editable?: boolean | undefined
+    showSelectionCheckbox?: boolean | undefined
+    draggable?: boolean | undefined // ✅ 是否启用拖拽
+    showBookmarkUrl?: boolean | undefined // ✅ 是否显示书签 URL
     // 细粒度按钮控制
-    showFavoriteButton?: boolean
-    showEditButton?: boolean
-    showDeleteButton?: boolean
-    showAddButton?: boolean
-    showOpenNewTabButton?: boolean
-    showCopyUrlButton?: boolean
-    showShareButton?: boolean
-    showMoreButton?: boolean // ✅ 是否显示"更多操作"按钮
+    showFavoriteButton?: boolean | undefined
+    showEditButton?: boolean | undefined
+    showDeleteButton?: boolean | undefined
+    showAddButton?: boolean | undefined
+    showOpenNewTabButton?: boolean | undefined
+    showCopyUrlButton?: boolean | undefined
+    showShareButton?: boolean | undefined
+    showMoreButton?: boolean | undefined // ✅ 是否显示"更多操作"按钮
   }
-  isVirtualMode?: boolean
+  isVirtualMode?: boolean | undefined
   /** 严格顺序渲染：不对 children 去重/重排 */
-  strictOrder?: boolean
+  strictOrder?: boolean | undefined
   /** 当前激活高亮的节点ID（用于 SidePanel 当前页面高亮） */
-  activeId?: string
+  activeId?: string | null | undefined
   /** 键盘导航焦点的节点ID */
-  focusedId?: string
+  focusedId?: string | null | undefined
   /** 正在自动加载更多子节点的文件夹ID集合 */
-  loadingMoreFolders?: Set<string>
+  loadingMoreFolders?: Set<string> | undefined
   /** 已选后代计数 Map（folderId -> 已选书签数）*/
-  selectedDescCounts?: Map<string, number>
+  selectedDescCounts?: Map<string, number> | undefined
   /** 拖拽状态（由 BookmarkTree 传入） */
   dragState?: {
     isDragging: boolean
     dragSourceId: string | null
     dropTargetId: string | null
     dropPosition: 'before' | 'inside' | 'after' | null
-  }
+  } | undefined
 }
 // 根元素引用与生命周期上报，用于构建元素注册表以优化滚动定位
 const rootRef = ref<HTMLElement | null>(null)

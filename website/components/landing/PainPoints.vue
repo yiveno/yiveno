@@ -1,3 +1,26 @@
+<script setup lang="ts">
+import { X, ArrowRight } from 'lucide-vue-next'
+
+const painPoints = [
+  {
+    title: '搜索慢且无序',
+    description: '默认书签管理缺乏模糊匹配与分层视图，大量收藏后几乎无法回忆。',
+    solution:
+      '多索引引擎：Fuse.js + 语义向量 + 标签过滤，一次输入获取上下文结果。'
+  },
+  {
+    title: '同步易丢失',
+    description: '浏览器同步经常冲突，团队无法共享最新的工作台与知识结构。',
+    solution: 'Chrome storage + Supabase 双写，变更日志可回放，跨设备实时一致。'
+  },
+  {
+    title: '没有推荐与提醒',
+    description: '收藏只是起点，真正的难题在于何时、在何种场景提醒你使用。',
+    solution: '本地 AI Agent 理解书签语义，结合上下文推荐最合适的链接。'
+  }
+]
+</script>
+
 <template>
   <section class="py-16 bg-bg-surface/30 border-y border-white/5">
     <div class="container mx-auto px-4">
@@ -37,29 +60,6 @@
     </div>
   </section>
 </template>
-
-<script setup lang="ts">
-import { X, ArrowRight } from 'lucide-vue-next'
-
-const painPoints = [
-  {
-    title: '搜索慢且无序',
-    description: '默认书签管理缺乏模糊匹配与分层视图，大量收藏后几乎无法回忆。',
-    solution:
-      '多索引引擎：Fuse.js + 语义向量 + 标签过滤，一次输入获取上下文结果。'
-  },
-  {
-    title: '同步易丢失',
-    description: '浏览器同步经常冲突，团队无法共享最新的工作台与知识结构。',
-    solution: 'Chrome storage + Supabase 双写，变更日志可回放，跨设备实时一致。'
-  },
-  {
-    title: '没有推荐与提醒',
-    description: '收藏只是起点，真正的难题在于何时、在何种场景提醒你使用。',
-    solution: '本地 AI Agent 理解书签语义，结合上下文推荐最合适的链接。'
-  }
-]
-</script>
 
 <style scoped>
 .painpoints-grid {

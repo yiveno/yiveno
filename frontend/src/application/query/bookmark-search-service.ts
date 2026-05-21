@@ -135,7 +135,7 @@ export class BookmarkSearchService {
         searchMode: response?.metadata.strategy || 'unknown',
         sources: response?.metadata.strategy ? [response.metadata.strategy] : [],
         success,
-        errorMessage: error?.message
+        ...(error?.message ? { errorMessage: error.message } : {})
       })
     }
   }

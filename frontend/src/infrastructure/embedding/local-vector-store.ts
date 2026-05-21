@@ -220,7 +220,10 @@ function dotProduct(a: number[], b: number[]): number {
   if (a.length !== b.length) return 0
   let sum = 0
   for (let i = 0; i < a.length; i++) {
-    sum += a[i] * b[i]
+    const left = a[i]
+    const right = b[i]
+    if (left === undefined || right === undefined) return 0
+    sum += left * right
   }
   return sum
 }

@@ -19,7 +19,29 @@
       "cache": false,
       "outputs": []
     },
+    "lint:check": {
+      "dependsOn": ["^lint:check"],
+      "cache": false,
+      "outputs": []
+    },
+    "stylelint": {
+      "cache": false,
+      "outputs": []
+    },
+    "stylelint:fix": {
+      "cache": false,
+      "outputs": []
+    },
+    "stylelint:check": {
+      "cache": false,
+      "outputs": []
+    },
     "typecheck": {
+      "dependsOn": ["^typecheck"],
+      "cache": false,
+      "outputs": []
+    },
+    "typecheck:force": {
       "dependsOn": ["^typecheck"],
       "cache": false,
       "outputs": []

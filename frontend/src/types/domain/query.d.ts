@@ -48,52 +48,52 @@ export type SortOrder = 'asc' | 'desc'
  */
 export interface SearchOptions extends Record<string, unknown> {
   /** 查询策略（可选，默认为 'fuse'） */
-  strategy?: SearchStrategy
+  strategy?: SearchStrategy | undefined
 
   /** 结果限制数量 */
-  limit?: number
+  limit?: number | undefined
 
   /** 偏移量（分页） */
-  offset?: number
+  offset?: number | undefined
 
   /** 排序字段 */
-  sortBy?: SearchSortBy
+  sortBy?: SearchSortBy | undefined
 
   /** 排序顺序 */
-  sortOrder?: SortOrder
+  sortOrder?: SortOrder | undefined
 
   /** 是否过滤文件夹 */
-  filterFolders?: boolean
+  filterFolders?: boolean | undefined
 
   /** 是否过滤书签 */
-  filterBookmarks?: boolean
+  filterBookmarks?: boolean | undefined
 
   /** 域名过滤列表 */
-  domainFilter?: string[]
+  domainFilter?: string[] | undefined
 
   /** 是否启用高亮 */
-  highlight?: boolean
+  highlight?: boolean | undefined
 
   /** 高亮标签名 */
-  highlightTag?: string
+  highlightTag?: string | undefined
 
   /** 是否使用缓存 */
-  useCache?: boolean
+  useCache?: boolean | undefined
 
   /** 仅使用缓存（不执行新查询） */
-  cacheOnly?: boolean
+  cacheOnly?: boolean | undefined
 
   /** 超时时间（毫秒） */
-  timeout?: number
+  timeout?: number | undefined
 
   /** 最低分数阈值 */
-  minScore?: number
+  minScore?: number | undefined
 
   /** 模糊匹配阈值 (0-1) */
-  fuzzyThreshold?: number
+  fuzzyThreshold?: number | undefined
 
   /** 是否包含元数据 */
-  includeMetadata?: boolean
+  includeMetadata?: boolean | undefined
 }
 
 /**
@@ -517,22 +517,22 @@ export interface WorkerDoc {
   titleLower: string
 
   /** 原始标题（用于展示） */
-  title?: string
+  title?: string | undefined
 
   /** URL（小写） */
-  urlLower?: string
+  urlLower?: string | undefined
 
   /** 原始 URL（用于展示） */
-  url?: string
+  url?: string | undefined
 
   /** 域名 */
-  domain?: string
+  domain?: string | undefined
 
   /** 关键词 */
-  keywords?: string[]
+  keywords?: string[] | undefined
 
   /** 是否为文件夹 */
-  isFolder?: boolean
+  isFolder?: boolean | undefined
 }
 
 /**
@@ -571,7 +571,7 @@ export type SearchWorkerCommand =
       /** 初始文档列表 */
       docs: WorkerDoc[]
       /** 初始化选项 */
-      options?: WorkerInitOptions
+      options?: WorkerInitOptions | undefined
     }
   | {
       /** 查询命令 */
@@ -579,19 +579,19 @@ export type SearchWorkerCommand =
       /** 查询文本 */
       q: string
       /** 结果数量限制 */
-      limit?: number
+      limit?: number | undefined
       /** 请求ID */
-      reqId?: number
+      reqId?: number | undefined
     }
   | {
       /** 增量更新命令 */
       type: 'applyPatch'
       /** 新增文档 */
-      adds?: WorkerDoc[]
+      adds?: WorkerDoc[] | undefined
       /** 更新文档 */
-      updates?: WorkerDoc[]
+      updates?: WorkerDoc[] | undefined
       /** 删除文档ID */
-      removes?: string[]
+      removes?: string[] | undefined
     }
   | {
       /** 销毁命令 */
@@ -618,7 +618,7 @@ export type SearchWorkerEvent =
       /** 查询结果事件 */
       type: 'result'
       /** 请求ID */
-      reqId?: number
+      reqId?: number | undefined
       /** 命中结果 */
       hits: WorkerHit[]
     }
@@ -628,7 +628,7 @@ export type SearchWorkerEvent =
       /** 错误消息 */
       message: string
       /** 请求ID */
-      reqId?: number
+      reqId?: number | undefined
     }
 
 /**
@@ -656,7 +656,7 @@ export interface SearchPerformanceMetrics {
   timestamp: Timestamp
 
   /** 会话ID */
-  sessionId?: string
+  sessionId?: string | undefined
 
   /** 数据源 */
   sources: string[]
@@ -665,5 +665,5 @@ export interface SearchPerformanceMetrics {
   success: boolean
 
   /** 错误信息 */
-  errorMessage?: string
+  errorMessage?: string | undefined
 }

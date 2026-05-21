@@ -49,7 +49,8 @@ export function convertCachedToTreeNodes(
   cached: CachedBookmarkItem[],
   logger: ILogger = noopLogger
 ): ChromeBookmarkTreeNode[] {
-  if (cached.length > 0 && cached[0].children !== undefined) {
+  const firstCached = cached[0]
+  if (firstCached && firstCached.children !== undefined) {
     const convert = (item: CachedBookmarkItem): ChromeBookmarkTreeNode => {
       const node: ChromeBookmarkTreeNode = {
         id: item.id,

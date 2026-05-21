@@ -10,10 +10,9 @@
     "test": "bun test",
     "typecheck": "tsc --noEmit --skipLibCheck",
     "typecheck:force": "tsc --noEmit --skipLibCheck",
-    "lint": "eslint . --no-cache --fix && echo '✅ ESLint: 所有问题已修复'",
-    "lint:check": "eslint . --no-cache && echo '✅ ESLint: 检查通过'",
-    "lint:check:force": "eslint . --no-cache --max-warnings 0 && echo '✅ ESLint: 检查通过（强制模式）'",
-    "lint:fix": "eslint . --no-cache --fix && echo '✅ ESLint: 所有问题已修复'",
+    "lint": "eslint . --no-cache --fix --max-warnings 0 --fix-type problem,suggestion,layout && echo '✅ ESLint: 所有问题已修复'",
+    "lint:check": "eslint . --no-cache --max-warnings 0 && echo '✅ ESLint: 检查通过'",
+    "lint:fix": "eslint . --no-cache --fix --max-warnings 0 --fix-type problem,suggestion,layout && echo '✅ ESLint: 所有问题已修复'",
     "clean": "rm -rf .wrangler node_modules/.cache",
     "deploy": "wrangler deploy --env production",
     "deploy:dev": "wrangler deploy",
@@ -38,8 +37,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240403.0",
     "@types/node": "^24.3.0",
-    "supabase": "^1.187.3",
-    "wrangler": "^4.81.1"
+    "supabase": "^1.187.3"
   },
   "runtime": "bun",
   "keywords": [

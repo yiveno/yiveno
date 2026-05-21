@@ -12,13 +12,13 @@ interface Props {
   level: number
   expandedFolders: Set<string>
   selectedNodes: Set<string>
-  selectedDescCounts: Map<string, number>
+  selectedDescCounts?: Map<string, number> | undefined
   searchQuery: string
   highlightMatches: boolean
   config: Record<string, unknown>
   strictOrder: boolean
-  activeId?: string
-  focusedId?: string
+  activeId?: string | null | undefined
+  focusedId?: string | null | undefined
   loadingMoreFolders: Set<string>
   size: 'compact' | 'comfortable' | 'spacious'
 }

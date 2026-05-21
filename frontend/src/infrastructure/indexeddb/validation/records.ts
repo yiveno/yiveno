@@ -42,17 +42,21 @@ export function migrateTraitTags(tags: string[] | undefined): string[] | undefin
  * 'untagged' → 删除（不是有效的特征标签）
  */
 export function migrateTraitMetadata(
-  metadata: Array<{ tag: string; detectedAt: number; source: string; notes?: string }> | undefined
+  metadata: Array<{ tag: string; detectedAt: number; source: string; notes?: string | undefined }> | undefined
 ): Array<{ tag: 'duplicate' | 'invalid' | 'internal'; detectedAt: number; source: 'worker' | 'user' | 'imported'; notes?: string }> | undefined {
   if (!metadata || metadata.length === 0) return undefined
   
   const migrated = metadata
     .filter(m => m.tag !== 'empty' && m.tag !== 'untagged')
-    .map(m => ({
-      ...m,
-      tag: m.tag === '404' ? ('invalid' as const) : (m.tag as 'duplicate' | 'invalid' | 'internal'),
-      source: m.source as 'worker' | 'user' | 'imported'
-    }))
+    .map(m => {
+      const normalized = {
+        tag: m.tag === '404' ? ('invalid' as const) : (m.tag as 'duplicate' | 'invalid' | 'internal'),
+        detectedAt: m.detectedAt,
+        source: m.source as 'worker' | 'user' | 'imported'
+      }
+
+      return m.notes !== undefined ? { ...normalized, notes: m.notes } : normalized
+    })
   
   // 如果过滤后为空，返回 undefined
   return migrated.length > 0 ? migrated : undefined

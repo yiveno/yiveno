@@ -1,9 +1,3 @@
-<template>
-  <span :class="computedClass">
-    <slot />
-  </span>
-</template>
-
 <script setup lang="ts">
 import { computed } from 'vue'
 
@@ -30,6 +24,12 @@ const computedClass = computed(() => {
   return classes.filter(Boolean).join(' ')
 })
 </script>
+
+<template>
+  <span :class="computedClass">
+    <slot />
+  </span>
+</template>
 
 <style scoped>
 /* 基础徽章样式 */

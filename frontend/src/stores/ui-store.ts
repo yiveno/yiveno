@@ -36,9 +36,9 @@ export interface DialogState {
   /** 取消按钮文本 */
   cancelText: string
   /** 确认回调函数 */
-  onConfirm?: () => void
+  onConfirm?: (() => void) | undefined
   /** 取消回调函数 */
-  onCancel?: () => void
+  onCancel?: (() => void) | undefined
 }
 
 /**

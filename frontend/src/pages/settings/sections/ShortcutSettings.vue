@@ -37,7 +37,7 @@ const shortcutItems = computed(() => {
     const keys = shortcuts.value[cmd]
     items.push({
       command: cmd,
-      label: labelMap[cmd],
+      label: labelMap[cmd] ?? cmd,
       keys: keys && keys.trim() ? keys : ''
     })
   })

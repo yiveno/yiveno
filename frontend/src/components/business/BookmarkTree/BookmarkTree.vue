@@ -183,12 +183,12 @@ interface Props {
    * - 用于显示文件夹包含多少已选中的子节点
    * - 如不需要此功能，可不传或传入空 Map
    */
-  selectedDescCounts?: Map<string, number>
+  selectedDescCounts?: Map<string, number> | undefined
   /**
    * 是否启用拖拽功能
    * @default false
    */
-  draggable?: boolean
+  draggable?: boolean | undefined
   /**
    * 点击书签的默认打开方式
    * - 'new-tab-background': 新标签页打开（后台）- 默认
@@ -196,7 +196,11 @@ interface Props {
    * - 'current-tab': 当前标签页打开
    * @default 'new-tab-background'
    */
-  defaultOpenMode?: 'new-tab-background' | 'new-tab-foreground' | 'current-tab'
+  defaultOpenMode?:
+    | 'new-tab-background'
+    | 'new-tab-foreground'
+    | 'current-tab'
+    | undefined
   /**
    * 点击书签的行为模式
    * - 'select': 只选中，不打开（用于批量操作场景，如 Popup）
@@ -204,12 +208,12 @@ interface Props {
    * - 'both': 单击选中，双击打开（默认）
    * @default 'both'
    */
-  clickBehavior?: 'select' | 'open' | 'both'
+  clickBehavior?: 'select' | 'open' | 'both' | undefined
   /**
    * 是否显示书签 URL（hover 时显示）
    * @default true
    */
-  showBookmarkUrl?: boolean
+  showBookmarkUrl?: boolean | undefined
 }
 
 // === 响应式状态 ===
@@ -313,8 +317,8 @@ const treeConfig = computed(() => ({
 // 🚀 性能优化：缓存虚拟滚动配置
 interface VirtualConfig {
   enabled: boolean
-  itemHeight?: number
-  threshold?: number
+  itemHeight?: number | undefined
+  threshold?: number | undefined
 }
 const normalizedVirtual = computed<VirtualConfig>(() => {
   if (typeof props.virtual === 'object' && props.virtual) {
@@ -850,10 +854,12 @@ const handleKeyboardNavigation = (event: KeyboardEvent) => {
       
       const nextIndex = currentIndex < visibleIds.length - 1 ? currentIndex + 1 : 0
       const nextId = visibleIds[nextIndex]
-      focusedNodeId.value = nextId
+      focusedNodeId.value = nextId ?? null
       
       // 滚动到可见区域
-      scrollToNode(nextId)
+      if (nextId) {
+        scrollToNode(nextId)
+      }
       break
     }
 
@@ -864,10 +870,12 @@ const handleKeyboardNavigation = (event: KeyboardEvent) => {
       
       const prevIndex = currentIndex > 0 ? currentIndex - 1 : visibleIds.length - 1
       const prevId = visibleIds[prevIndex]
-      focusedNodeId.value = prevId
+      focusedNodeId.value = prevId ?? null
       
       // 滚动到可见区域
-      scrollToNode(prevId)
+      if (prevId) {
+        scrollToNode(prevId)
+      }
       break
     }
 
@@ -1072,7 +1080,9 @@ const handleTreeKeyDown = (event: KeyboardEvent) => {
     const selectedNodeIds = Array.from(selectedNodes.value.keys())
     if (selectedNodeIds.length === 1) {
       const nodeId = selectedNodeIds[0]
-      handleOpenContextMenu(nodeId)
+      if (nodeId) {
+        handleOpenContextMenu(nodeId)
+      }
       event.preventDefault()
     }
   }
@@ -1327,7 +1337,7 @@ const handleContainerClick = (event: MouseEvent) => {
   if (!focusedNodeId.value) {
     const visibleIds = getVisibleNodeIds()
     if (visibleIds.length > 0) {
-      focusedNodeId.value = visibleIds[0]
+      focusedNodeId.value = visibleIds[0] ?? null
     }
   }
 }
@@ -1601,8 +1611,8 @@ const handleNodeSelect = (nodeId: string, node: BookmarkNode) => {
 
   // ✅ 更新 Map 并触发响应式（通过 emit 让父组件重新赋值）
   if (props.selectedDescCounts) {
-    try {
-      props.selectedDescCounts.clear()
+      try {
+        props.selectedDescCounts?.clear()
       newCounts.forEach((value, key) => {
         props.selectedDescCounts!.set(key, value)
       })
@@ -1771,7 +1781,7 @@ const clearSelection = () => {
   selectedNodes.value = new Set()
   // ✅ 安全地清空 Map（处理可能的 Immer 冻结对象）
   try {
-    props.selectedDescCounts.clear()
+    props.selectedDescCounts?.clear()
   } catch (error) {
     logger.warn('BookmarkTree', 'selectedDescCounts 被冻结，无法清空', {
       error
@@ -1966,10 +1976,10 @@ const selectNodesByIds = (ids: string[], opts?: { append?: boolean }) => {
 
   // ✅ 安全地更新 Map（处理可能的 Immer 冻结对象）
   try {
-    props.selectedDescCounts.clear()
-    newCounts.forEach((value, key) => {
-      props.selectedDescCounts.set(key, value)
-    })
+      props.selectedDescCounts?.clear()
+      newCounts.forEach((value, key) => {
+        props.selectedDescCounts?.set(key, value)
+      })
   } catch (error) {
     logger.warn('BookmarkTree', 'selectedDescCounts 被冻结，无法直接修改', {
       error
@@ -2054,7 +2064,11 @@ defineExpose({
           v-if="shouldShowEmptyState"
           :icon="emptyStateConfig.icon"
           :title="emptyStateConfig.title"
-          :description="emptyStateConfig.description"
+          v-bind="
+            emptyStateConfig.description
+              ? { description: emptyStateConfig.description }
+              : {}
+          "
           :icon-size="56"
         />
 

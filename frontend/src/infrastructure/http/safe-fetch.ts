@@ -86,7 +86,9 @@ export async function safeJsonFetchWithResult<T = unknown>(
         data: null,
         success: false,
         error: result.error.message,
-        status: result.error.status
+        ...(result.error.status !== undefined
+          ? { status: result.error.status }
+          : {})
       }
     }
   } catch (error) {

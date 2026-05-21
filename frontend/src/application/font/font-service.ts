@@ -521,7 +521,10 @@ export class FontService {
         else if (lang.startsWith('ko')) langKey = 'ko'
         else if (lang.startsWith('ar')) langKey = 'ar'
 
-        const font = GOOGLE_FONTS_MAP[langKey] || GOOGLE_FONTS_MAP['default']
+        const font = GOOGLE_FONTS_MAP[langKey] ?? GOOGLE_FONTS_MAP.default
+        if (!font) {
+          return
+        }
         const href = `https://fonts.googleapis.com/css2?family=${font.google}:wght@100..900&display=swap`
 
         // 移除已存在的动态字体 link

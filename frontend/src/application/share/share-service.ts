@@ -99,13 +99,15 @@ class ShareServiceImpl implements ShareService {
       // 1. 构建分享数据结构
       const data: ShareData = {
         v: this.VERSION,
-        t: title,
-        s: sharedBy,
         b: bookmarks.map(bookmark => ({
           t: bookmark.title,
           u: bookmark.url || '',
-          d: typeof bookmark.description === 'string' ? bookmark.description : undefined
-        }))
+          ...(typeof bookmark.description === 'string'
+            ? { d: bookmark.description }
+            : {})
+        })),
+        ...(title ? { t: title } : {}),
+        ...(sharedBy ? { s: sharedBy } : {})
       }
 
       // 2. 序列化为 JSON

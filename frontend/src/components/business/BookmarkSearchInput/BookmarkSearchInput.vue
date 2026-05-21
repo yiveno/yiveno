@@ -893,7 +893,9 @@ const handleEnter = () => {
   // 如果有选中的结果，打开它
   if (selectedResultIndex.value >= 0 && selectedResultIndex.value < dropdownResults.value.length) {
     const selectedBookmark = dropdownResults.value[selectedResultIndex.value]
-    handleResultClick(selectedBookmark)
+    if (selectedBookmark) {
+      handleResultClick(selectedBookmark)
+    }
   }
 }
 

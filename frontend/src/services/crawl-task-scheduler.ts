@@ -18,7 +18,7 @@ export interface CrawlTask {
   status: 'pending' | 'running' | 'success' | 'failed'
   retryCount: number
   result?: CrawlResult
-  error?: string
+  error?: string | undefined
 }
 
 export interface QueueStatistics {
@@ -179,7 +179,7 @@ export class CrawlTaskScheduler {
         task.status = 'pending'
       } else {
         task.status = 'failed'
-        task.error = result.error
+        task.error = result.error ?? '未知爬取错误'
       }
     } catch (error) {
       // eslint-disable-next-line require-atomic-updates -- 错误处理中的状态更新是原子操作，不会有竞态条件

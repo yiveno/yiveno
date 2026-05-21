@@ -120,11 +120,12 @@ export async function crawlBookmarkLocally(
       duration: Date.now() - startTime
     }
   } catch (error) {
+    const errorType = classifyError(error)
     return {
       success: false,
       url,
       error: error instanceof Error ? error.message : String(error),
-      errorType: classifyError(error),
+      ...(errorType !== undefined ? { errorType } : {}),
       duration: Date.now() - startTime
     }
   }

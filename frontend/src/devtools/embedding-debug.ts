@@ -113,8 +113,8 @@ async function search(query: string, topK = 10) {
   const matchingRecords = allRecords.filter(r => r.title.includes(query))
   console.info(`[EmbeddingDebug] 标题包含"${query}"的记录数: ${matchingRecords.length}`)
   
-  if (matchingRecords.length > 0) {
-    const firstMatch = matchingRecords[0]
+  const firstMatch = matchingRecords[0]
+  if (firstMatch) {
     console.info(`[EmbeddingDebug] 第一条匹配记录:`, {
       title: firstMatch.title,
       vectorDim: firstMatch.vector.length,
@@ -149,7 +149,10 @@ function dotProduct(a: number[], b: number[]): number {
   if (a.length !== b.length) return 0
   let sum = 0
   for (let i = 0; i < a.length; i++) {
-    sum += a[i] * b[i]
+    const left = a[i]
+    const right = b[i]
+    if (left === undefined || right === undefined) return 0
+    sum += left * right
   }
   return sum
 }

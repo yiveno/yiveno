@@ -24,15 +24,15 @@ export interface MinimalTreeNode {
   /** 节点标题 */
   title: string
   /** 书签URL（文件夹为空） */
-  url?: string
+  url?: string | undefined
   /** 子节点（文件夹使用） */
-  children?: MinimalTreeNode[]
+  children?: MinimalTreeNode[] | undefined
   /** 父节点ID */
-  parentId?: string
+  parentId?: string | undefined
   /** 位置索引 */
-  index?: number
+  index?: number | undefined
   /** 创建时间 */
-  dateAdded?: number
+  dateAdded?: number | undefined
 }
 
 /**
@@ -51,10 +51,19 @@ export function listToBookmarkNodes<T extends MinimalTreeNode>(
   const mapNode = (n: MinimalTreeNode): BookmarkNode => {
     const node: BookmarkNode = {
       id: String(n.id),
-      title: n.title,
-      url: n.url,
-      parentId: n.parentId,
-      dateAdded: n.dateAdded
+      title: n.title
+    }
+
+    if (n.url !== undefined) {
+      node.url = n.url
+    }
+
+    if (n.parentId !== undefined) {
+      node.parentId = n.parentId
+    }
+
+    if (n.dateAdded !== undefined) {
+      node.dateAdded = n.dateAdded
     }
     
     if (typeof n.index === 'number') {

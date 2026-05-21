@@ -15,10 +15,11 @@ import { getProviderConfig } from './auth'
  */
 function pickExisting(env: Env, keys: string[]): Record<string, string> {
   const out: Record<string, string> = {}
+  const envRecord = env as unknown as Record<string, unknown>
   for (const k of keys) {
-    if (env && env[k] !== undefined)
+    if (env && envRecord[k] !== undefined)
       out[k] =
-        typeof env[k] === 'string' && env[k].length > 0 ? '(set)' : '(empty)'
+        typeof envRecord[k] === 'string' && (envRecord[k] as string).length > 0 ? '(set)' : '(empty)'
   }
   return out
 }
@@ -31,7 +32,8 @@ function pickExisting(env: Env, keys: string[]): Record<string, string> {
  * @returns 缺失的键列表
  */
 function listMissing(env: Env, keys: string[]): string[] {
-  return keys.filter(k => !env || !env[k])
+  const envRecord = env as unknown as Record<string, unknown>
+  return keys.filter(k => !env || !envRecord[k])
 }
 
 /**

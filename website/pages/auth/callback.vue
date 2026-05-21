@@ -1,23 +1,3 @@
-<template>
-  <div class="callback-page">
-    <div class="callback-content">
-      <div v-if="error" class="callback-error">
-        <div class="error-icon">✖</div>
-        <h1 class="error-title">登录失败</h1>
-        <p class="error-message">{{ error }}</p>
-        <NuxtLink to="/login" class="error-button">
-          返回登录
-        </NuxtLink>
-      </div>
-      <div v-else class="callback-loading">
-        <div class="loading-spinner"></div>
-        <h1 class="loading-title">登录中...</h1>
-        <p class="loading-message">正在处理您的登录请求</p>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 
@@ -52,6 +32,26 @@ onMounted(async () => {
   }
 })
 </script>
+
+<template>
+  <div class="callback-page">
+    <div class="callback-content">
+      <div v-if="error" class="callback-error">
+        <div class="error-icon">✖</div>
+        <h1 class="error-title">登录失败</h1>
+        <p class="error-message">{{ error }}</p>
+        <NuxtLink to="/login" class="error-button">
+          返回登录
+        </NuxtLink>
+      </div>
+      <div v-else class="callback-loading">
+        <div class="loading-spinner"></div>
+        <h1 class="loading-title">登录中...</h1>
+        <p class="loading-message">正在处理您的登录请求</p>
+      </div>
+    </div>
+  </div>
+</template>
 
 <style scoped>
 .callback-page {

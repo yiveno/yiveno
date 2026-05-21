@@ -338,6 +338,8 @@ function buildDuplicateInfo(bookmarks: BookmarkRecord[]): {
     )
 
     const canonical = group[0]
+    if (!canonical) continue
+
     for (let i = 1; i < group.length; i += 1) {
       duplicateIds.add(group[i]!.id)
       canonicalMap.set(group[i]!.id, canonical.id)

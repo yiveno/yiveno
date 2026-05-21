@@ -66,13 +66,13 @@ export async function detectExtension(): Promise<boolean> {
         // 不指定 extensionId，让扩展通过 externally_connectable 接收
         { type: 'CHECK_EXTENSION_INSTALLED' } as unknown as string,
         {} as Record<string, unknown>,
-        (response: unknown) => {
+        (extensionResponse: unknown) => {
           clearTimeout(timeout)
 
           if (runtime.lastError) {
             reject(runtime.lastError)
           } else {
-            resolve(response as ExtensionResponse)
+            resolve(extensionResponse as ExtensionResponse)
           }
         }
       )
@@ -126,13 +126,13 @@ export async function getExtensionInfo(): Promise<ExtensionInfo> {
       runtime.sendMessage(
         { type: 'CHECK_EXTENSION_INSTALLED' } as unknown as string,
         {} as Record<string, unknown>,
-        (response: unknown) => {
+        (extensionResponse: unknown) => {
           clearTimeout(timeout)
 
           if (runtime.lastError) {
             reject(runtime.lastError)
           } else {
-            resolve(response as ExtensionResponse)
+            resolve(extensionResponse as ExtensionResponse)
           }
         }
       )

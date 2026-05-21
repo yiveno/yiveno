@@ -277,7 +277,9 @@ function getRecommendationReason(bookmark: SmartRecommendation): string {
   // 备用逻辑：基于具体推荐原因
   if (bookmark.recommendationReason.length > 0) {
     const topReason = bookmark.recommendationReason[0]
-    return topReason.description
+    if (topReason) {
+      return topReason.description
+    }
   }
 
   // 最后的备用逻辑

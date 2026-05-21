@@ -152,11 +152,12 @@ export function handleAuthStart(
     }
     const cfg = getProviderConfig(provider, env)
     if (!cfg) {
+      const envRecord = env as unknown as Record<string, unknown>
       const missing =
         provider === 'google'
-          ? ['AUTH_GOOGLE_CLIENT_ID'].filter(k => !env?.[k])
+          ? ['AUTH_GOOGLE_CLIENT_ID'].filter(k => !envRecord[k])
           : provider === 'microsoft'
-            ? ['AUTH_MICROSOFT_CLIENT_ID'].filter(k => !env?.[k])
+            ? ['AUTH_MICROSOFT_CLIENT_ID'].filter(k => !envRecord[k])
             : []
       return errorJson(
         { error: `provider not configured: ${provider}`, missing },
@@ -219,16 +220,17 @@ export async function handleAuthCallback(
     }
     const cfg = getProviderConfig(provider, env)
     if (!cfg) {
+      const envRecord = env as unknown as Record<string, unknown>
       const missing =
         provider === 'google'
           ? ['AUTH_GOOGLE_CLIENT_ID', 'AUTH_GOOGLE_CLIENT_SECRET'].filter(
-              k => !env?.[k]
+              k => !envRecord[k]
             )
           : provider === 'microsoft'
             ? [
                 'AUTH_MICROSOFT_CLIENT_ID',
                 'AUTH_MICROSOFT_CLIENT_SECRET'
-              ].filter(k => !env?.[k])
+              ].filter(k => !envRecord[k])
             : []
       return errorJson(
         { error: `provider not configured: ${provider}`, missing },

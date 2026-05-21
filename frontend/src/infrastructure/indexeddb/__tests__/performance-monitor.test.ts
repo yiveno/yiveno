@@ -152,10 +152,16 @@ describe('PerformanceMonitor', () => {
       })
 
       const stats = monitor.getStats()
-      expect(stats.byStore.bookmarks.count).toBe(1)
-      expect(stats.byStore.bookmarks.averageDuration).toBe(50)
-      expect(stats.byStore.settings.count).toBe(1)
-      expect(stats.byStore.settings.averageDuration).toBe(30)
+      expect(stats.byStore.bookmarks).toBeDefined()
+      expect(stats.byStore.settings).toBeDefined()
+
+      const bookmarksStats = stats.byStore.bookmarks!
+      const settingsStats = stats.byStore.settings!
+
+      expect(bookmarksStats.count).toBe(1)
+      expect(bookmarksStats.averageDuration).toBe(50)
+      expect(settingsStats.count).toBe(1)
+      expect(settingsStats.averageDuration).toBe(30)
     })
   })
 

@@ -199,6 +199,8 @@ export default [
     ignores: [
       '**/node_modules/**',
       '**/dist/**',
+      '**/.nuxt/**',
+      '**/.output/**',
       '**/build/**',
       '**/.cache/**',
       '**/.venv/**',
@@ -210,6 +212,7 @@ export default [
       '**/*.log',
       '**/*.sh',
       '**/*.bash',
+      'frontend/src/tests/**',
       'vite.config.ts',
       '**/.wrangler/**', // wrangler 自动生成的临时文件
       '**/scripts/*.cjs' // 构建脚本使用 CommonJS，允许 require()
@@ -358,6 +361,25 @@ export default [
     }
   },
 
+  // Website TypeScript 文件配置
+  {
+    files: ['website/**/*.ts', 'website/**/*.tsx'],
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        tsconfigRootDir: process.cwd()
+      }
+    },
+    plugins: {
+      'unused-imports': unusedImports
+    },
+    rules: {
+      ...typescriptCommonRules
+    }
+  },
+
   // 🚨 架构铁律：禁止非 background 层导入 background 层
   // 违反此规则会导致构建分包污染，background.js 循环依赖，Service Worker 崩溃
   {
@@ -382,6 +404,41 @@ export default [
               group: ['**/background/**', '@/background/**'],
               message:
                 '禁止从 services/infrastructure/core 层导入 background 层。请将共享逻辑移到 infrastructure/ 层，或使用动态 import。'
+            }
+          ]
+        }
+      ]
+    }
+  },
+
+  // Chrome Extension 前端约束
+  {
+    files: ['frontend/src/**/*.{ts,tsx,vue,js}'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            "CallExpression[callee.object.name='chrome'][callee.property.name='bookmarks'] > :not(MemberExpression[object.name='chrome'][property.name='runtime'])",
+          message:
+            '禁止在前端组件中直接调用 chrome.bookmarks.*，请使用 chrome.runtime.sendMessage 通知 Background Script'
+        },
+        {
+          selector: "CallExpression[callee.object.name='localStorage']",
+          message: 'Chrome Extension 中禁止使用 localStorage，请使用 chrome.storage.local'
+        },
+        {
+          selector: "CallExpression[callee.object.name='sessionStorage']",
+          message: 'Chrome Extension 中禁止使用 sessionStorage，请使用 chrome.storage.session'
+        }
+      ],
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@supabase/supabase-js',
+              message: '请使用 @/infrastructure/supabase/client 而不是直接导入'
             }
           ]
         }

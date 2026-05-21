@@ -122,8 +122,9 @@ function syncMdTabsActiveIndex(): void {
 function handleTabChange(event: Event): void {
   const host = event.currentTarget as HTMLElement & { activeTabIndex: number }
   const index = host.activeTabIndex
-  if (index >= 0 && index < tabs.length) {
-    tab.value = tabs[index].value
+  const nextTab = tabs[index]
+  if (nextTab) {
+    tab.value = nextTab.value
   }
 }
 

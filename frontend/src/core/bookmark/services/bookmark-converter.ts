@@ -16,11 +16,11 @@ import type { BookmarkNode } from '../domain/bookmark'
 export interface MinimalTreeNode {
   id: string
   title: string
-  url?: string
-  children?: MinimalTreeNode[]
-  parentId?: string
-  index?: number
-  dateAdded?: number
+  url?: string | undefined
+  children?: MinimalTreeNode[] | undefined
+  parentId?: string | undefined
+  index?: number | undefined
+  dateAdded?: number | undefined
 }
 
 /**
@@ -29,17 +29,17 @@ export interface MinimalTreeNode {
 interface BookmarkRecord {
   id: string | number
   title: string
-  url?: string
-  parentId?: string | number
-  index?: number
-  dateAdded?: number
-  pathIds?: Array<string | number>
-  ancestorIds?: Array<string | number>
-  depth?: number
-  domain?: string
-  titleLower?: string
-  urlLower?: string
-  childrenCount?: number
+  url?: string | undefined
+  parentId?: string | number | undefined
+  index?: number | undefined
+  dateAdded?: number | undefined
+  pathIds?: Array<string | number> | undefined
+  ancestorIds?: Array<string | number> | undefined
+  depth?: number | undefined
+  domain?: string | undefined
+  titleLower?: string | undefined
+  urlLower?: string | undefined
+  childrenCount?: number | undefined
 }
 
 /**
@@ -64,10 +64,19 @@ export class BookmarkConverter {
     const mapNode = (n: MinimalTreeNode): BookmarkNode => {
       const node: BookmarkNode = {
         id: String(n.id),
-        title: n.title,
-        url: n.url,
-        parentId: n.parentId,
-        dateAdded: n.dateAdded
+        title: n.title
+      }
+
+      if (n.url !== undefined) {
+        node.url = n.url
+      }
+
+      if (n.parentId !== undefined) {
+        node.parentId = n.parentId
+      }
+
+      if (n.dateAdded !== undefined) {
+        node.dateAdded = n.dateAdded
       }
       
       if (typeof n.index === 'number') {

@@ -706,7 +706,10 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
       for (const [_parentId, children] of draft.entries()) {
         const index = children.findIndex(child => child.id === id)
         if (index !== -1) {
-          const updatedNode = { ...children[index], ...changes }
+          const currentNode = children[index]
+          if (!currentNode) continue
+
+          const updatedNode = { ...currentNode, ...changes }
           children[index] = updatedNode
         }
       }

@@ -177,7 +177,7 @@ async function handleQuickAddBookmark(
     const bookmarkData = {
       title: tab.title || '未命名书签',
       url: linkUrl || tab.url || '',
-      favIconUrl: tab.favIconUrl
+      ...(tab.favIconUrl ? { favIconUrl: tab.favIconUrl } : {})
     }
 
     console.log('📋 [DEBUG] 书签数据', bookmarkData)
@@ -221,7 +221,7 @@ async function handleQuickAddBookmark(
 async function handleAIAutoAddBookmark(bookmarkData: {
   title: string
   url: string
-  favIconUrl?: string
+  favIconUrl?: string | undefined
 }): Promise<void> {
   console.log('🤖 [DEBUG] handleAIAutoAddBookmark 开始', bookmarkData)
   
@@ -259,6 +259,9 @@ async function handleAIAutoAddBookmark(bookmarkData: {
       if (recommendations && recommendations.length > 0) {
         // 使用 AI 推荐的文件夹
         const topRecommendation = recommendations[0]
+        if (!topRecommendation) {
+          throw new Error('推荐结果为空')
+        }
         folderId = topRecommendation.folderId
         console.log('✅ [DEBUG] 使用 AI 推荐', { folderId, folderPath: topRecommendation.folderPath })
         logger.info('Menus', '✅ AI 推荐文件夹', {
@@ -344,7 +347,7 @@ async function handleManualAddBookmark(
   bookmarkData: {
     title: string
     url: string
-    favIconUrl?: string
+    favIconUrl?: string | undefined
   }
 ): Promise<void> {
   try {
@@ -530,6 +533,7 @@ async function getFolderPath(folderId: string): Promise<string> {
       if (nodes.length === 0) break
 
       const node = nodes[0]
+      if (!node) break
       if (node.title) {
         pathParts.unshift(node.title)
       }

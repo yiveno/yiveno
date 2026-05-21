@@ -97,6 +97,9 @@ function extractBatchVectors(output: unknown, count: number): number[][] {
     const dim = tensor.dims.length >= 2
       ? tensor.dims[tensor.dims.length - 1]
       : tensor.data.length / count
+    if (dim === undefined) {
+      return []
+    }
     const data = Array.from(tensor.data)
     const result: number[][] = []
     for (let i = 0; i < count; i++) {

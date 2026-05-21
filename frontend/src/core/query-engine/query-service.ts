@@ -444,7 +444,7 @@ export class QueryService {
         title: this.highlightEngine.highlight(result.bookmark.title, query),
         url: result.bookmark.url
           ? this.highlightEngine.highlight(result.bookmark.url, query)
-          : undefined
+          : []
       }
     }))
   }

@@ -73,9 +73,12 @@ describe('BookmarkAPIGateway', () => {
       const tree = await gateway.getEnhancedBookmarkTree()
 
       expect(tree).toHaveLength(1)
-      expect(tree[0].id).toBe('1')
-      expect(tree[0].children).toHaveLength(1)
-      expect(tree[0].children?.[0].id).toBe('2')
+      expect(tree[0]).toBeDefined()
+      const root = tree[0]!
+      expect(root.id).toBe('1')
+      expect(root.children).toHaveLength(1)
+      expect(root.children?.[0]).toBeDefined()
+      expect(root.children?.[0]!.id).toBe('2')
     })
 
     it('应该处理孤立节点（父节点不存在）', async () => {
@@ -96,7 +99,8 @@ describe('BookmarkAPIGateway', () => {
 
       // 孤立节点应该被作为根节点
       expect(tree).toHaveLength(1)
-      expect(tree[0].id).toBe('1')
+      expect(tree[0]).toBeDefined()
+      expect(tree[0]!.id).toBe('1')
     })
 
     it('应该正确处理多层嵌套', async () => {
@@ -113,18 +117,24 @@ describe('BookmarkAPIGateway', () => {
 
       // 验证嵌套结构存在
       expect(tree).toHaveLength(1)
-      expect(tree[0].id).toBe('1')
-      expect(tree[0].children).toBeDefined()
+      expect(tree[0]).toBeDefined()
+      expect(tree[0]!.id).toBe('1')
+      expect(tree[0]!.children).toBeDefined()
       
       // 验证深层嵌套
-      const level1 = tree[0]
-      expect(level1.children?.[0].id).toBe('2')
+      const level1 = tree[0]!
+      expect(level1.children?.[0]).toBeDefined()
+      expect(level1.children?.[0]!.id).toBe('2')
       
       const level2 = level1.children?.[0]
-      expect(level2?.children?.[0].id).toBe('3')
+      expect(level2).toBeDefined()
+      expect(level2?.children?.[0]).toBeDefined()
+      expect(level2?.children?.[0]!.id).toBe('3')
       
       const level3 = level2?.children?.[0]
-      expect(level3?.children?.[0].id).toBe('4')
+      expect(level3).toBeDefined()
+      expect(level3?.children?.[0]).toBeDefined()
+      expect(level3?.children?.[0]!.id).toBe('4')
     })
   })
 
@@ -291,8 +301,10 @@ describe('BookmarkAPIGateway', () => {
       const recent = await gateway.getRecentBookmarks(2)
 
       expect(recent).toHaveLength(2)
-      expect(recent[0].id).toBe('1')
-      expect(recent[1].id).toBe('2')
+      expect(recent[0]).toBeDefined()
+      expect(recent[1]).toBeDefined()
+      expect(recent[0]!.id).toBe('1')
+      expect(recent[1]!.id).toBe('2')
     })
 
     it('应该过滤掉文件夹', async () => {
@@ -319,7 +331,8 @@ describe('BookmarkAPIGateway', () => {
       const recent = await gateway.getRecentBookmarks(10)
 
       expect(recent).toHaveLength(1)
-      expect(recent[0].id).toBe('2')
+      expect(recent[0]).toBeDefined()
+      expect(recent[0]!.id).toBe('2')
     })
 
     it('应该支持自定义数量限制', async () => {
@@ -371,7 +384,8 @@ describe('BookmarkAPIGateway', () => {
 
       expect(recommendations).toHaveLength(2)
       // Vue.js 应该排在前面（域名完全匹配）
-      expect(recommendations[0].id).toBe('1')
+      expect(recommendations[0]).toBeDefined()
+      expect(recommendations[0]!.id).toBe('1')
     })
 
     it('应该返回指定数量的推荐', async () => {
@@ -415,7 +429,8 @@ describe('BookmarkAPIGateway', () => {
       const recommendations = await gateway.getSmartRecommendations({}, 10)
 
       expect(recommendations).toHaveLength(1)
-      expect(recommendations[0].id).toBe('2')
+      expect(recommendations[0]).toBeDefined()
+      expect(recommendations[0]!.id).toBe('2')
     })
 
     it('空书签列表应该返回空推荐', async () => {
@@ -479,7 +494,8 @@ describe('BookmarkAPIGateway', () => {
       const tree = await gateway.getEnhancedBookmarkTree()
 
       // 应该不会崩溃，domain 应该是 undefined
-      expect(tree[0].domain).toBeUndefined()
+      expect(tree[0]).toBeDefined()
+      expect(tree[0]!.domain).toBeUndefined()
     })
 
     it('应该处理缺失的字段', async () => {

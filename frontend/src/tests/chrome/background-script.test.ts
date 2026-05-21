@@ -112,8 +112,10 @@ describe('Background Script - 书签同步', () => {
     
     // 应该返回扁平化的书签列表（不包含文件夹）
     expect(bookmarks).toHaveLength(2)
-    expect(bookmarks[0].id).toBe('1')
-    expect(bookmarks[1].id).toBe('3')
+    expect(bookmarks[0]).toBeDefined()
+    expect(bookmarks[1]).toBeDefined()
+    expect(bookmarks[0]!.id).toBe('1')
+    expect(bookmarks[1]!.id).toBe('3')
   })
   
   it('应该能够处理来自前端的消息', async () => {
@@ -139,7 +141,8 @@ describe('Background Script - 书签同步', () => {
     
     // 触发 onCreated 事件
     const listeners = vi.mocked(chrome.bookmarks.onCreated.addListener).mock.calls
-    const registeredHandler = listeners[0][0]
+    expect(listeners[0]).toBeDefined()
+    const registeredHandler = listeners[0]![0]
     registeredHandler('999', newBookmark)
     
     expect(onCreatedHandler).toHaveBeenCalledWith('999', newBookmark)

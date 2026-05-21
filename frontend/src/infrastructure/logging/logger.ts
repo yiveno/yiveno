@@ -373,6 +373,6 @@ export function setConsoleLogging(enabled: boolean): void {
 export function setRemoteLogging(enabled: boolean, endpoint?: string): void {
   logger.setConfig({
     enableRemote: enabled,
-    remoteEndpoint: endpoint
+    ...(endpoint !== undefined ? { remoteEndpoint: endpoint } : {})
   })
 }

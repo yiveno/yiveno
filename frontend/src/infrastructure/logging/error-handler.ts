@@ -52,8 +52,8 @@ export type ErrorType = (typeof ErrorType)[keyof typeof ErrorType]
  */
 export class AppError extends Error {
   type: ErrorType
-  context?: ErrorContext
-  originalError?: Error
+  context: ErrorContext | undefined
+  originalError: Error | undefined
 
   constructor(
     message: string,
@@ -438,6 +438,7 @@ export class DataValidator {
 
       const tld = parts[parts.length - 1]
       const sld = parts[parts.length - 2]
+      if (!tld || !sld) return false
 
       // 顶级域名需为字母，长度>=2（如 com, cn 等）
       if (!/^[a-z]{2,}$/i.test(tld)) return false

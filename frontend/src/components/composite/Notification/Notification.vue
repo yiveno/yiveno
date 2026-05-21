@@ -7,31 +7,31 @@ type NotificationPlacement = 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRigh
 
 interface NotificationItem {
   id: string
-  key?: string
+  key?: string | undefined
   type: NotificationType
-  message?: string
-  description?: string
-  duration?: number
-  closable?: boolean
-  icon?: boolean
+  message?: string | undefined
+  description?: string | undefined
+  duration?: number | undefined
+  closable?: boolean | undefined
+  icon?: boolean | undefined
   placement: NotificationPlacement
   createdAt: number
   paused: boolean
-  pausedAt?: number          // 暂停时的时间戳
-  remainingTime?: number     // 暂停时的剩余时间（秒）
-  timer?: ReturnType<typeof setTimeout>
-  progressStartTime?: number // 进度条开始时间
-  progressKey?: number       // 进度条 key，用于强制重新渲染
+  pausedAt?: number | undefined          // 暂停时的时间戳
+  remainingTime?: number | undefined     // 暂停时的剩余时间（秒）
+  timer?: ReturnType<typeof setTimeout> | undefined
+  progressStartTime?: number | undefined // 进度条开始时间
+  progressKey?: number | undefined       // 进度条 key，用于强制重新渲染
 }
 
 interface NotificationConfig {
-  key?: string
-  message?: string
-  description?: string
-  duration?: number
-  closable?: boolean
-  icon?: boolean
-  placement?: NotificationPlacement
+  key?: string | undefined
+  message?: string | undefined
+  description?: string | undefined
+  duration?: number | undefined
+  closable?: boolean | undefined
+  icon?: boolean | undefined
+  placement?: NotificationPlacement | undefined
 }
 
 const state = reactive<{
@@ -129,6 +129,7 @@ function close(id: string) {
   if (index === -1) return
 
   const item = state.notifications[index]
+  if (!item) return
   
   // 清除定时器
   if (item.timer) {

@@ -118,5 +118,5 @@ export function getColorPresetDefinition(
 ): ColorPresetDefinition {
   const normalized = normalizeColorPresetId(id)
   const found = COLOR_PRESET_DEFINITIONS.find(p => p.id === normalized)
-  return found ?? COLOR_PRESET_DEFINITIONS[0]
+  return found ?? COLOR_PRESET_DEFINITIONS[0]!
 }

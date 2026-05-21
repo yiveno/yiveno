@@ -44,7 +44,7 @@ export class LLMAdapter {
     capabilities.push({
       available: userConfigured,
       provider: (userConfig?.provider as LLMProvider) || 'openai',
-      reason: userConfigured ? undefined : '未配置 API Key，请在设置页面填写',
+      ...(!userConfigured ? { reason: '未配置 API Key，请在设置页面填写' } : {}),
       features: {
         textCompletion: true,
         embedding: userConfig?.provider !== 'claude',
