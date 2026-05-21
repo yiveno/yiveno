@@ -23,7 +23,7 @@ if [ -n "$TS_FILES" ]; then
     
     # ✅ 使用构建模式进行类型检查（更严格，但不生成文件）
     echo "   运行严格类型检查..."
-    if (cd frontend && bun run typecheck:strict 2>&1); then
+    if bun run typecheck:strict 2>&1; then
         echo "✅ 类型检查通过"
     else
         echo ""
@@ -32,7 +32,7 @@ if [ -n "$TS_FILES" ]; then
         echo "🚨 ==================================================="
         echo ""
         echo "💡 提示："
-        echo "   • 运行 cd frontend && bun run typecheck:strict 查看详细错误"
+        echo "   • 运行 bun run typecheck:strict 查看详细错误"
         echo "   • 这是增强模式，会发现更多潜在问题"
         echo "   • 修复后重新提交"
         echo ""

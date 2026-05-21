@@ -28,7 +28,6 @@ defineOptions({ name: 'BookmarkTree' })
 
 // ✅ 组件默认值集中在此，便于统一维护
 const props = withDefaults(defineProps<Props>(), {
-  loading: undefined,
   height: '400px',
   searchable: false,
   selectable: false,
@@ -50,9 +49,7 @@ const props = withDefaults(defineProps<Props>(), {
   showCopyUrlButton: false,
   showShareButton: false,
   showMoreButton: true,
-  loadingChildren: undefined,
   draggable: false,
-  selectedDescCounts: undefined,
   defaultOpenMode: 'new-tab-background',
   clickBehavior: 'both',
   showBookmarkUrl: true

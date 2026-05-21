@@ -11,6 +11,19 @@ interface SharedPageData {
   title: string
   user_id: string
   bookmark_count: number
+  share_type?: 'link' | 'direct'
+  sender?: {
+    name?: string
+    email?: string
+    avatar_url?: string
+  }
+  description?: string
+  show_username?: boolean
+  profiles?: {
+    name?: string
+    email?: string
+  }
+  created_at?: string
 }
 
 interface ExtensionUserResponse {
@@ -31,10 +44,18 @@ interface ImportSharedBookmarksResponse {
   error?: string
 }
 
-type ExtensionMessageResponse =
-  | ExtensionUserResponse
-  | ExtensionInstallResponse
-  | ImportSharedBookmarksResponse
+// 联合类型，包含所有可能的响应属性
+type ExtensionMessageResponse = {
+  user?: {
+    id: string
+  }
+  installed?: boolean
+  success?: boolean
+  imported?: number
+  failed?: number
+  folderName?: string
+  error?: string
+}
 
 // 获取路由参数
 const route = useRoute()
@@ -112,9 +133,9 @@ const loadShareData = async () => {
     bookmarks.value = result.bookmarks
 
     console.log('✅ 分享数据加载成功', {
-      title: shareData.value.title,
+      title: shareData.value?.title,
       bookmarkCount: bookmarks.value.length,
-      userId: shareData.value.user_id
+      userId: shareData.value?.user_id
     })
 
     // 检查是否是自己的分享
@@ -265,9 +286,9 @@ const toggleSelectAll = () => {
 const importSelected = async () => {
   if (selectedBookmarks.value.size === 0) return
 
-  const bookmarksToImport = Array.from(selectedBookmarks.value).map(
-    (index) => bookmarks.value[index]
-  )
+  const bookmarksToImport = Array.from(selectedBookmarks.value)
+    .map((index) => bookmarks.value[index])
+    .filter((b): b is SharedBookmark => b !== undefined)
 
   isImporting.value = true
   importProgress.value = { current: 0, total: bookmarksToImport.length }
@@ -321,7 +342,7 @@ const importSelected = async () => {
             console.log('✅ 导入成功', response)
             alert(
               `✅ 成功导入 ${response.imported} 个书签到文件夹「${response.folderName}」！${
-                response.failed > 0 ? `\n失败 ${response.failed} 个` : ''
+                (response.failed ?? 0) > 0 ? `\n失败 ${response.failed} 个` : ''
               }`
             )
             selectedBookmarks.value.clear()
@@ -462,7 +483,7 @@ useSeoMeta({
                 :alt="shareData.sender.name || shareData.sender.email"
               />
               <div v-else class="sender-avatar-placeholder">
-                {{ (shareData.sender.name || shareData.sender.email || '?')[0].toUpperCase() }}
+                {{ ((shareData.sender.name || shareData.sender.email || '?')[0] ?? '?').toUpperCase() }}
               </div>
             </div>
             <div class="sender-text">

@@ -73,7 +73,6 @@ async function checkNewNotifications() {
     const trpc = await getTrpc()
 
     // 获取未读通知数量
-    // @ts-expect-error - tRPC 类型推断问题
     const unreadCountResult = await trpc.share.getUnreadCount.query({ accessToken })
     
     if (!unreadCountResult.success) {
@@ -90,7 +89,6 @@ async function checkNewNotifications() {
 
     // 如果有未读通知，获取最新的通知
     if (unreadCount > 0) {
-      // @ts-expect-error - tRPC 类型推断问题
       const notificationsResult = await trpc.share.getNotifications.query({
         accessToken,
         unreadOnly: true,

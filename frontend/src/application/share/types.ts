@@ -64,6 +64,10 @@ export interface PosterOptions {
   title?: string
   /** 分享 URL（用于生成二维码） */
   shareUrl: string
+  /** 是否显示用户名（可选） */
+  showUsername?: boolean
+  /** 用户名（可选） */
+  username?: string
 }
 
 /**

@@ -200,11 +200,14 @@ async function saveConfig() {
       ? customModelName.value.trim() 
       : selectedModel.value
     
+    // 确保 model 不为空字符串
+    const modelValue = finalModel || undefined
+    
     await userLLMClient.saveConfig({
       provider: selectedProvider.value,
       apiKey: apiKey.value.trim(),
-      model: finalModel || undefined,
-      baseUrl: customBaseUrl.value.trim() || undefined
+      ...(modelValue && { model: modelValue }),
+      ...(customBaseUrl.value.trim() && { baseUrl: customBaseUrl.value.trim() })
     })
     llmAdapter.clearCapabilitiesCache()
     isSaved.value = true

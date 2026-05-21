@@ -114,13 +114,14 @@ export function createPlugins() {
   // 📊 打包体积分析（ANALYZE=true 时启用）
   if (process.env.ANALYZE === 'true') {
     plugins.push(
+      // @ts-expect-error - Rollup 插件类型与 Vite 插件类型不完全兼容
       visualizer({
         filename: 'dist/stats.html',
         open: false,
         gzipSize: true,
         brotliSize: true,
         template: 'treemap' // 可选: 'sunburst', 'treemap', 'network'
-      }) as Plugin
+      })
     )
   }
 

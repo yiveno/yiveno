@@ -16,19 +16,15 @@ const props = withDefaults(defineProps<InputProps>(), {
   variant: 'outlined',
   density: 'default',
   autocomplete: 'off',
-  name: undefined,
   placeholder: '',
   disabled: false,
   readonly: false,
   clearable: false,
-  clearValue: undefined,
-  maxlength: undefined,
   hint: '',
   error: false,
   errorMessage: '',
   size: 'md',
   type: 'text',
-  leadingIcon: undefined,
   leadingIconSize: 20
 })
 

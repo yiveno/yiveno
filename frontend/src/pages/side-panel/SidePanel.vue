@@ -10,7 +10,6 @@ defineOptions({
 import {
   Accordion,
   AccordionItem,
-  CountIndicator,
   Dialog,
   Input,
   LucideIcon
@@ -102,7 +101,7 @@ const shareBookmarks = ref<BookmarkNode[]>([])
 /**
  * 分享类型
  */
-const shareType = ref<'favorites' | 'folder'>('favorites')
+const shareType = ref<'favorites' | 'folder' | 'bookmark'>('favorites')
 
 /**
  * 分享的文件夹名称（分享文件夹时使用）
@@ -427,6 +426,24 @@ const handleFolderShare = (folder: BookmarkNode) => {
   shareBookmarks.value = bookmarks
   shareType.value = 'folder'
   shareFolderName.value = folder.title
+  
+  // 打开分享弹窗
+  showShareDialog.value = true
+}
+
+/**
+ * 处理分享书签
+ * @description 打开分享弹窗，分享单个书签
+ * @param {BookmarkNode} bookmark 书签节点
+ * @returns {void} 无返回值
+ */
+const handleBookmarkShare = (bookmark: BookmarkNode) => {
+  logger.info('SidePanel', `📤 分享书签: ${bookmark.title}`)
+  
+  // 设置分享数据
+  shareBookmarks.value = [bookmark]
+  shareType.value = 'bookmark'
+  shareFolderName.value = bookmark.title
   
   // 打开分享弹窗
   showShareDialog.value = true
@@ -983,6 +1000,7 @@ const postponeRefresh = () => {
           @bookmark-copy-url="handleBookmarkCopyUrl"
           @bookmark-toggle-favorite="handleBookmarkToggleFavorite"
           @folder-share="handleFolderShare"
+          @bookmark-share="handleBookmarkShare"
         />
       </AccordionItem>
     </Accordion>

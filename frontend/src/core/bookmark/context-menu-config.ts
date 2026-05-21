@@ -197,6 +197,13 @@ export class ContextMenuBuilder {
         visible: true // ✅ 始终显示收藏选项
       },
       {
+        id: 'share',
+        label: '分享书签',
+        icon: 'icon-share',
+        action: 'bookmark:share',
+        visible: config.showShareButton
+      },
+      {
         id: 'edit',
         label: '编辑书签',
         icon: 'icon-edit-bookmark',
