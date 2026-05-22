@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue'
-import { LucideIcon } from '@/components'
-import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
+import { LucideIcon, EmptyState } from '@/components'
 import type { BookmarkRecord } from '@/infrastructure/indexeddb/types'
 import { logger } from '@/infrastructure/logging/logger'
 import { onEvent } from '@/infrastructure/events/event-bus'
-import { t } from '@/utils/i18n-helpers'
-import { formatRecentVisitTime } from '@/utils/time-formatter'
+import { formatRecentVisitTime, formatFullDateTime } from '@/utils/time-formatter'
+import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
 
 defineOptions({
   name: 'RecentVisits'
@@ -15,6 +14,7 @@ defineOptions({
 const emit = defineEmits<{
   'bookmark-click': [bookmark: BookmarkRecord]
   'count-update': [count: number]
+  'bookmark-remove': [bookmark: BookmarkRecord]
 }>()
 
 const recentVisits = ref<BookmarkRecord[]>([])
@@ -42,7 +42,7 @@ const getFaviconUrl = (bookmark: BookmarkRecord): string | undefined => {
   }
   try {
     const domain = new URL(bookmark.url).hostname
-    return `https://www.google.com/s2/favicons?domain=${domain}&sz=16`
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`
   } catch {
     return undefined
   }
@@ -80,6 +80,48 @@ const handleClick = (bookmark: BookmarkRecord) => {
   emit('bookmark-click', bookmark)
 }
 
+/**
+ * 处理清除访问记录
+ * @description 清除单条书签的访问记录（删除 lastVisited 和 visitCount 字段）
+ */
+const handleRemove = async (bookmark: BookmarkRecord) => {
+  logger.info('RecentVisits', '🗑️ 清除访问记录', bookmark.title)
+  
+  try {
+    // 获取完整的书签记录
+    const existingBookmark = await indexedDBManager.getBookmarkById(bookmark.id)
+    if (!existingBookmark) {
+      logger.error('RecentVisits', '❌ 书签不存在', bookmark.id)
+      return
+    }
+    
+    // 创建新的书签对象，删除访问记录字段
+    const updatedBookmark: BookmarkRecord = {
+      ...existingBookmark
+    }
+    
+    // 删除访问记录字段
+    delete updatedBookmark.lastVisited
+    delete updatedBookmark.visitCount
+    
+    // 直接调用 IndexedDBManager 更新
+    await indexedDBManager.updateBookmark(updatedBookmark)
+    
+    // 从列表中移除
+    recentVisits.value = recentVisits.value.filter(b => b.id !== bookmark.id)
+    
+    // 更新数量
+    emit('count-update', recentVisits.value.length)
+    
+    // 通知父组件
+    emit('bookmark-remove', bookmark)
+    
+    logger.debug('RecentVisits', '✅ 访问记录已清除')
+  } catch (error) {
+    logger.error('RecentVisits', '❌ 清除访问记录失败', error)
+  }
+}
+
 // 暴露方法供父组件调用
 defineExpose({
   loadRecentVisits
@@ -88,15 +130,22 @@ defineExpose({
 
 <template>
   <div class="recent-visits">
-    <div v-if="recentVisits.length === 0" class="empty-state">
-      <LucideIcon name="clock" :size="20" />
-      <span>{{ t('sidepanel_recent_empty') }}</span>
-    </div>
+    <!-- 空状态 -->
+    <EmptyState
+      v-if="recentVisits.length === 0"
+      icon="clock"
+      title="暂无最近访问"
+      :icon-size="32"
+    />
+    
+    <!-- 最近访问列表 -->
     <md-list v-else class="recent-list">
       <md-list-item
         v-for="bookmark in recentVisits"
         :key="bookmark.id"
         type="button"
+        class="recent-list-item"
+        :title="`${bookmark.title}\n${formatFullDateTime(bookmark.lastVisited)}`"
         @click="handleClick(bookmark)"
       >
         <div slot="start" class="recent-favicon">
@@ -107,10 +156,20 @@ defineExpose({
             loading="lazy"
             @error="() => handleFaviconError(bookmark.id)"
           />
-          <LucideIcon v-else name="bookmark" :size="16" />
+          <LucideIcon v-else name="bookmark" :size="32" />
         </div>
-        <div slot="headline">{{ bookmark.title }}</div>
-        <div slot="supporting-text">{{ formatRecentVisitTime(bookmark.lastVisited) }}</div>
+        
+        <div slot="headline" class="headline-text">{{ bookmark.title }}</div>
+        <div slot="supporting-text" class="supporting-text">{{ formatRecentVisitTime(bookmark.lastVisited) }}</div>
+        
+        <md-icon-button
+          slot="end"
+          class="remove-button"
+          title="清除访问记录"
+          @click.stop="handleRemove(bookmark)"
+        >
+          <LucideIcon name="x" :size="16" />
+        </md-icon-button>
       </md-list-item>
     </md-list>
   </div>
@@ -121,21 +180,47 @@ defineExpose({
   width: 100%;
 }
 
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: var(--spacing-2);
-  padding: var(--spacing-6) var(--spacing-4);
-  font-size: var(--text-sm);
-  color: var(--color-text-secondary);
-}
-
 /* Material Web List 样式 */
 .recent-list {
   border-radius: var(--radius-md);
   overflow: hidden;
+}
+
+/* 列表项样式 */
+.recent-list-item {
+  position: relative;
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* 最后一项不显示分隔线 */
+.recent-list-item:last-child {
+  border-bottom: none;
+}
+
+/* 清除按钮：默认隐藏 */
+.recent-list-item .remove-button {
+  opacity: 0;
+  transition: opacity var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+}
+
+/* hover 时显示清除按钮 */
+.recent-list-item:hover .remove-button {
+  opacity: 1;
+}
+
+/* 标题样式：单行显示，超出省略 */
+.headline-text {
+  display: block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 时间样式：单行显示 */
+.supporting-text {
+  display: block;
+  white-space: nowrap;
 }
 
 .recent-favicon {
@@ -143,13 +228,13 @@ defineExpose({
   flex-shrink: 0;
   justify-content: center;
   align-items: center;
-  width: 16px;
-  height: 16px;
+  width: 32px;
+  height: 32px;
 }
 
 .recent-favicon img {
-  width: 16px;
-  height: 16px;
-  border-radius: var(--radius-xs);
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
 }
 </style>

@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch, shallowRef } from 'vue'
+import { computed, onMounted, onUnmounted, ref, shallowRef } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useVirtualizer } from '@tanstack/vue-virtual'
-import type { VirtualItem } from '@tanstack/vue-virtual'
 
 defineOptions({
   name: 'SidePanelPage'
@@ -10,22 +8,18 @@ defineOptions({
 import {
   Accordion,
   AccordionItem,
-  Dialog,
-  Input,
-  LucideIcon
+  Dialog
 } from '@/components'
 import BookmarkTree from '@/components/business/BookmarkTree/BookmarkTree.vue'
 import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'
 import { FavoriteSection, RecentVisits } from './components'
 import GlobalQuickAddBookmark from '@/components/business/GlobalQuickAddBookmark/GlobalQuickAddBookmark.vue'
 import ShareDialog from '@/components/business/ShareDialog/ShareDialog.vue'
+import BookmarkSearchInput from '@/components/business/BookmarkSearchInput/BookmarkSearchInput.vue'
 
 import { useBookmarkStore } from '@/stores/bookmarkStore'
-import { bookmarkSearchService } from '@/application/query/bookmark-search-service'
 import type {
   BookmarkNode,
-  EnhancedSearchResult,
-  SidePanelSearchItem,
   BookmarkUpdateDetail
 } from './types'
 import type { BookmarkRecord } from '@/infrastructure/indexeddb/types'
@@ -70,12 +64,17 @@ const treeRefreshKey = ref(0)
 
 // ✅ 展开状态由 BookmarkTree 组件内部管理，SidePanel 不需要维护
 /**
- * 搜索查询
+ * 搜索查询（用于控制 Accordion 显示/隐藏）
  * @description 搜索查询
  * @returns {string} 搜索查询
  * @throws {Error} 搜索查询失败
  */
 const searchQuery = ref('')
+
+/**
+ * 搜索结果（由 BookmarkSearchInput 组件管理）
+ */
+const searchResults = ref<BookmarkNode[]>([])
 
 /**
  * 最近访问数量
@@ -109,120 +108,22 @@ const shareType = ref<'favorites' | 'folder' | 'bookmark'>('favorites')
 const shareFolderName = ref<string | undefined>(undefined)
 
 /**
- * 搜索结果
- * @description 搜索结果
- * @returns {SidePanelSearchItem[]} 搜索结果
- * @throws {Error} 搜索结果失败
+ * 处理搜索完成事件
+ * @param {BookmarkNode[]} results 搜索结果
  */
-const searchResults = ref<SidePanelSearchItem[]>([])
-
-/**
- * 转换为侧边栏结果
- * @description 转换为侧边栏结果
- * @param {EnhancedSearchResult} result 搜索结果
- * @returns {SidePanelSearchItem} 侧边栏结果
- * @throws {Error} 转换为侧边栏结果失败
- */
-const toSidePanelResult = (
-  result: EnhancedSearchResult
-): SidePanelSearchItem => ({
-  bookmark: {
-    id: String(result.bookmark.id),
-    title: result.bookmark.title,
-    ...(result.bookmark.url !== undefined ? { url: result.bookmark.url } : {}),
-    ...(result.bookmark.path !== undefined
-      ? { path: result.bookmark.path }
-      : {})
-  },
-  score: result.score,
-  matchedFields: result.matchedFields,
-  highlights: result.highlights
-})
-/**
- * 是否正在搜索
- * @description 是否正在搜索
- * @returns {boolean} 是否正在搜索
- * @throws {Error} 是否正在搜索失败
- */
-const isSearching = ref(false)
-
-// ==================== 虚拟滚动 ====================
-const searchResultsContainerRef = ref<HTMLElement | null>(null)
-
-const searchVirtualizer = useVirtualizer(
-  computed(() => ({
-    count: searchResults.value.length,
-    getScrollElement: () => searchResultsContainerRef.value,
-    estimateSize: () => 72, // 每个搜索结果项的估计高度（px）
-    overscan: 5 // 预渲染额外的项数
-  }))
-)
-
-const virtualSearchRows = computed<
-  Array<{
-    virtualRow: VirtualItem
-    item: SidePanelSearchItem
-  }>
->(() => {
-  const rows: Array<{ virtualRow: VirtualItem; item: SidePanelSearchItem }> = []
-  for (const virtualRow of searchVirtualizer.value.getVirtualItems()) {
-    const item = searchResults.value[virtualRow.index]
-    if (item) {
-      rows.push({ virtualRow, item })
-    }
-  }
-  return rows
-})
-
-// ✅ 使用Google favicon服务（CSP允许，更可靠）
-/**
- * 获取favicon
- * @description 获取favicon
- * @param {string} url 书签URL
- * @returns {string} favicon
- * @throws {Error} 获取favicon失败
- */
-const getFaviconForUrl = (url: string | undefined): string => {
-  if (!url) return ''
-  try {
-    // 使用 Google favicon 服务（CSP已允许）
-    const domain = new URL(url).hostname
-    return `https://www.google.com/s2/favicons?domain=${domain}&sz=20`
-  } catch {
-    return ''
-  }
+const handleSearchComplete = (results: BookmarkNode[]) => {
+  searchResults.value = results
+  logger.info('SidePanel', '搜索完成', { resultCount: results.length })
 }
 
-// ✅ 性能优化：使用 VueUse 的 useDebounceFn 替代手动 setTimeout
-import { useDebounceFn } from '@vueuse/core'
-
-// 搜索防抖函数
-const debouncedSearch = useDebounceFn(async (query: string) => {
-  const q = query.trim()
-  if (!q) {
-    searchResults.value = []
-    isSearching.value = false
-    return
-  }
-  
-  isSearching.value = true
-  
-  const result = await bookmarkSearchService.search(q, { limit: 100 })
-  
-  if (!result.ok) {
-    logger.error('Component', 'SidePanel', '❌ 搜索失败', result.error)
-    searchResults.value = []
-  } else {
-    searchResults.value = result.value.map(toSidePanelResult)
-  }
-  
-  isSearching.value = false
-}, 200)
-
-// 监听搜索查询变化
-const stopSearchWatch = watch(searchQuery, (newQuery) => {
-  debouncedSearch(newQuery || '')
-})
+/**
+ * 处理搜索清空事件
+ */
+const handleSearchClear = () => {
+  searchResults.value = []
+  searchQuery.value = ''
+  logger.info('SidePanel', '搜索已清空')
+}
 
 /**
  * 更新书签访问记录
@@ -300,35 +201,6 @@ const openBookmark = async (
   }
 }
 
-
-
-/**
- * 在新标签页打开书签
- * @description 在新标签页打开书签
- * @param {string} url 书签URL
- * @returns {void} 在新标签页打开书签
- * @throws {Error} 在新标签页打开书签失败
- */
-const openInNewTab = async (url?: string) => {
-  if (!url) return
-
-  try {
-    await chrome.tabs.create({
-      url: url,
-      active: false // 在后台打开新标签页，不切换到新标签页
-    })
-    logger.info('SidePanel', '✅ 已在新标签页打开', url)
-  } catch (error) {
-    logger.error('Component', 'SidePanel', '❌ 新标签页打开失败', error)
-    // 降级处理：使用 window.open
-    if (typeof window !== 'undefined') {
-      window.open(url, '_blank')
-    } else {
-      logger.error('Component', 'SidePanel', '非浏览器环境，无法打开链接')
-    }
-  }
-}
-
 /**
  * 处理文件夹展开/收起
  * @description 接收 BookmarkTree 的展开状态变化通知（仅用于日志记录）
@@ -365,6 +237,17 @@ const handleRecentClick = async (bookmark: BookmarkRecord) => {
     url: bookmark.url,
     title: bookmark.title || ''
   })
+}
+
+/**
+ * 处理最近访问记录清除
+ * @description 最近访问记录被清除时的回调
+ * @param {BookmarkRecord} bookmark 被清除的书签
+ * @returns {void} 无返回值
+ */
+const handleRecentRemove = (bookmark: BookmarkRecord) => {
+  logger.info('SidePanel', '🗑️ 清除最近访问记录:', bookmark.title)
+  notifyInfo(`已清除访问记录: ${bookmark.title}`)
 }
 
 /**
@@ -636,55 +519,6 @@ const handleBookmarkCopyUrl = (node: BookmarkNode) => {
   }
 }
 
-/**
- * 格式化URL显示
- * @description 格式化URL显示
- * @param {string} url 书签URL
- * @returns {string} 格式化后的URL
- * @throws {Error} 格式化URL显示失败
- */
-const formatUrl = (url: string) => {
-  // 返回完整的URL
-  return url
-}
-
-/**
- * 图标错误处理
- * @description 图标错误处理
- * @param {Event} event 事件
- * @returns {void} 图标错误处理
- * @throws {Error} 图标错误处理失败
- */
-const handleIconError = (event: Event) => {
-  const img = event.target as HTMLImageElement
-  img.style.display = 'none'
-}
-
-/**
- * 高亮搜索文本
- * @description 高亮搜索文本
- * @param {string} text 文本
- * @returns {string} 高亮搜索文本
- * @throws {Error} 高亮搜索文本失败
- */
-const highlightSearchText = (text: string) => {
-  if (!searchQuery.value.trim()) return text
-
-  const query = searchQuery.value.toLowerCase()
-  const index = text.toLowerCase().indexOf(query)
-
-  if (index === -1) return text
-
-  // 返回HTML格式的高亮文本
-  return `${text.substring(
-    0,
-    index
-  )}<span class="search-highlight">${text.substring(
-    index,
-    index + query.length
-  )}</span>${text.substring(index + query.length)}`
-}
-
 // 组件就绪回调：仅解除页面加载状态
 const handleTreeReady = () => {
   isLoading.value = false
@@ -827,16 +661,6 @@ onMounted(async () => {
 onUnmounted(() => {
   logger.info('SidePanel', '🧹 开始清理组件...')
   
-  // 清理 watch 监听器
-  if (stopSearchWatch) {
-    try {
-      stopSearchWatch()
-      logger.info('SidePanel', '✅ 搜索监听器已清理')
-    } catch (error) {
-      logger.error('SidePanel', '❌ 清理搜索监听器失败', error)
-    }
-  }
-  
   // 清理实时同步监听器
   if (cleanupSyncRef) {
     try {
@@ -933,19 +757,16 @@ const postponeRefresh = () => {
   <div class="side-panel-container">
     <!-- 搜索栏 -->
     <div class="search-section">
-      <Input
-        v-model="searchQuery"
-        :placeholder="t('sidepanel_search_placeholder')"
-        type="text"
-        variant="outlined"
-        density="compact"
-        clearable
-        data-testid="input-search"
-      >
-        <template #prepend>
-          <LucideIcon name="search" :size="16" />
-        </template>
-      </Input>
+      <BookmarkSearchInput
+        v-model:query="searchQuery"
+        display-mode="full"
+        mode="indexeddb"
+        :limit="50"
+        :enable-trait-filters="false"
+        @result-click="openBookmark"
+        @search-complete="handleSearchComplete"
+        @search-clear="handleSearchClear"
+      />
     </div>
 
     <!-- 百叶窗式折叠面板 -->
@@ -957,6 +778,7 @@ const postponeRefresh = () => {
         </template>
         <RecentVisits
           @bookmark-click="handleRecentClick"
+          @bookmark-remove="handleRecentRemove"
           @count-update="recentCount = $event"
         />
       </AccordionItem>
@@ -981,7 +803,7 @@ const postponeRefresh = () => {
           :selected-desc-counts="treeSelectedDescCounts"
           source="sidePanel"
           :loading="isLoading"
-          height="calc(100vh - 350px)"
+          height="auto"
           size="spacious"
           :searchable="false"
           :selectable="false"
@@ -990,6 +812,8 @@ const postponeRefresh = () => {
           :accordion-mode="true"
           :show-favorite-button="true"
           :show-share-button="true"
+          :show-open-new-tab-button="true"
+          :show-copy-url-button="true"
           :show-bookmark-url="false"
           default-open-mode="current-tab"
           click-behavior="open"
@@ -1004,93 +828,6 @@ const postponeRefresh = () => {
         />
       </AccordionItem>
     </Accordion>
-
-    <!-- 搜索结果 -->
-    <div v-else class="search-results">
-      <div
-        v-if="isSearching"
-        class="loading-state"
-        data-testid="search-loading"
-      >
-        <md-circular-progress indeterminate></md-circular-progress>
-        <span>{{ t('sidepanel_searching') }}</span>
-      </div>
-
-      <div
-        v-else-if="searchResults.length === 0"
-        class="empty-state"
-        data-testid="search-empty"
-      >
-        <LucideIcon name="search" :size="32" />
-        <p>{{ t('sidepanel_no_results') }}</p>
-      </div>
-
-      <div v-else ref="searchResultsContainerRef" class="search-items" data-testid="search-items">
-        <div
-          :style="{
-            height: `${searchVirtualizer.getTotalSize()}px`,
-            width: '100%',
-            position: 'relative'
-          }"
-        >
-          <div
-            v-for="{ virtualRow, item } in virtualSearchRows"
-            :key="item.bookmark.id"
-            :data-index="virtualRow.index"
-            :style="{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: `${virtualRow.size}px`,
-              transform: `translateY(${virtualRow.start}px)`
-            }"
-          >
-            <div
-              class="search-item no-select"
-              :data-id="item.bookmark.id"
-              @click="openBookmark(item.bookmark)"
-            >
-              <div class="search-item-icon">
-                <img
-                  v-if="
-                    item.bookmark.url &&
-                    getFaviconForUrl(item.bookmark.url)
-                  "
-                  :src="getFaviconForUrl(item.bookmark.url)"
-                  alt=""
-                  @error="handleIconError"
-                />
-                <LucideIcon v-else name="link" :size="20" />
-              </div>
-
-              <div class="search-item-content">
-                <div
-                  class="search-item-title"
-                  :title="item.bookmark.title"
-                  v-html="highlightSearchText(item.bookmark.title)"
-                ></div>
-                <a
-                  class="search-item-url"
-                  :href="item.bookmark.url"
-                  :title="item.bookmark.url + ' (点击在新标签页打开)'"
-                  @click.stop="openInNewTab(item.bookmark.url)"
-                >
-                  {{ formatUrl(item.bookmark.url || '') }}
-                </a>
-                <div
-                  v-if="item.bookmark.path?.length"
-                  class="search-item-path"
-                  :title="item.bookmark.path.join(' / ')"
-                >
-                  {{ item.bookmark.path.join(' / ') }}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -1128,9 +865,49 @@ md-circular-progress {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  padding-left:var(--spacing-4);
+  padding-right:var(--spacing-4);
+  padding-bottom:var(--spacing-3);
   color: var(--color-text-primary);
   background: var(--color-background);
   overflow: hidden;
+}
+
+/* 搜索区域固定高度 */
+.search-section {
+  flex-shrink: 0;
+}
+
+/* Accordion 容器占据剩余空间 */
+.side-panel-container :deep(.accordion) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* AccordionItem 标题：固定高度 */
+.side-panel-container :deep(.accordion-item) {
+  flex-shrink: 0;
+}
+
+/* AccordionItem 内容区域：展开时占据所有剩余空间 */
+.side-panel-container :deep(.accordion-content) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* BookmarkTree 容器：填充父容器，不设置滚动 */
+.side-panel-container :deep(.bookmark-tree-wrapper) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
 }
 
 /* 头部样式 */
@@ -1196,8 +973,7 @@ md-circular-progress {
 
 /* 搜索区域 */
 .search-section {
-  padding: var(--spacing-4) var(--spacing-4) var(--spacing-3);
-  border-bottom: 1px solid var(--color-border);
+  padding: var(--spacing-3) 0;
 }
 
 
@@ -1239,18 +1015,16 @@ md-circular-progress {
   font-size: var(--text-xs);
 }
 
-/* 书签树容器 */
+/* 书签树容器：不设置滚动，由 accordion-content 控制 */
 .bookmark-tree {
   flex: 1;
   padding: var(--spacing-sm);
-  overflow-y: auto;
 }
 
-/* 搜索结果容器 */
+/* 搜索结果容器：不设置滚动，由 accordion-content 控制 */
 .search-results {
   flex: 1;
   padding: var(--spacing-sm);
-  overflow-y: auto;
 }
 
 .search-items {

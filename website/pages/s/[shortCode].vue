@@ -443,7 +443,7 @@ onMounted(async () => {
 
 // SEO
 useSeoMeta({
-  title: computed(() => shareData.value?.title || '分享的书签') + ' - AcuityBookmarks',
+  title: computed(() => `${shareData.value?.title || '分享的书签'} - AcuityBookmarks`),
   description: computed(
     () => `查看分享的 ${shareData.value?.bookmark_count || 0} 个书签`
   ),

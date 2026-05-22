@@ -137,19 +137,16 @@ async function handleLogout() {
 </script>
 
 <template>
-  <!-- 头像始终显示 -->
   <div class="user-menu">
-    <button
+    <md-icon-button
       id="user-menu-anchor"
       :class="avatarWrapperClasses"
       :title="avatarTitle"
-      type="button"
+      :style="{ '--md-icon-button-icon-size': `${size}px` }"
       @click="handleClick"
     >
       <!-- 未登录：显示图标 -->
-      <div v-if="!isLoggedIn" class="user-menu__guest-icon" :style="{ width: `${size}px`, height: `${size}px` }">
-        <LucideIcon name="user" :size="size * 0.8" />
-      </div>
+      <LucideIcon v-if="!isLoggedIn" name="user" :size="size * 0.8" />
       
       <!-- 已登录：显示头像 -->
       <Avatar
@@ -165,7 +162,7 @@ async function handleLogout() {
       <div v-if="isPro" class="user-menu__badge">
         <LucideIcon name="crown" :size="10" />
       </div>
-    </button>
+    </md-icon-button>
   </div>
 
   <!-- Material Design 3 Menu -->
@@ -230,53 +227,36 @@ async function handleLogout() {
 
 .user-menu__avatar-wrapper {
   position: relative;
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
   padding: 0;
-  border: none;
-  border-radius: var(--radius-full);
-  
-  /* 移除 button 默认样式 */
-  outline: none;
-  background: transparent;
-  cursor: pointer;
-  transition: all var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
-  appearance: none;
+  color: var(--color-text-secondary);
+  transition: color var(--md-sys-motion-duration-short2);
 }
 
-/* 未登录图标容器 */
-.user-menu__guest-icon {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  height: 100%;
-  border-radius: var(--radius-full);
+/* 未登录：与 ThemeToggle 保持一致的样式 */
+.user-menu__avatar-wrapper--guest {
   color: var(--color-text-secondary);
 }
 
-/* 未登录：纯图标风格（与 AppHeader 其他图标保持一致） */
 .user-menu__avatar-wrapper--guest:hover {
-  background: var(--color-surface-hover);
+  color: var(--color-primary);
 }
 
-/* 免费用户：蓝绿色边框（与官网一致） */
-.user-menu__avatar-wrapper--free {
+/* 免费用户：头像外层容器添加边框 */
+.user-menu__avatar-wrapper--free .user-menu__avatar {
   border: 2px solid var(--md-sys-color-primary);
 }
 
-.user-menu__avatar-wrapper--free:hover {
+.user-menu__avatar-wrapper--free:hover .user-menu__avatar {
   box-shadow: 0 2px 8px color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent);
 }
 
-/* PRO 用户：金色边框 + 光晕 */
-.user-menu__avatar-wrapper--pro {
+/* PRO 用户：头像外层容器添加金色边框 + 光晕 */
+.user-menu__avatar-wrapper--pro .user-menu__avatar {
   border: 2px solid var(--acuity-accent-gold);
   box-shadow: 0 0 12px color-mix(in srgb, var(--acuity-accent-gold) 40%, transparent);
 }
 
-.user-menu__avatar-wrapper--pro:hover {
+.user-menu__avatar-wrapper--pro:hover .user-menu__avatar {
   box-shadow: 0 0 16px color-mix(in srgb, var(--acuity-accent-gold) 60%, transparent);
 }
 

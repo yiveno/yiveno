@@ -270,15 +270,15 @@ defineExpose({
                 {{ item.description }}
               </div>
             </div>
-            <button
+            <md-icon-button
               v-if="item.closable !== false"
               class="ab-notification-close"
-              type="button"
+              :style="{ '--md-icon-button-icon-size': '14px' }"
               :aria-label="`关闭${item.message}通知`"
               @click="close(item.id)"
             >
               <LucideIcon name="x" :size="14" />
-            </button>
+            </md-icon-button>
           </div>
         </div>
       </transition-group>

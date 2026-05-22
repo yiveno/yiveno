@@ -2149,7 +2149,7 @@
     "description": "Side-panel: sidepanel_favorites"
   },
   "sidepanel_bookmark_tree": {
-    "message": "Bookmark Tree",
+    "message": "My Bookmarks",
     "description": "Side-panel: sidepanel_bookmark_tree"
   },
   "sidepanel_searching": {

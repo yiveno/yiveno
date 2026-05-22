@@ -97,19 +97,39 @@ export function formatDateTime(
 }
 
 /**
- * 组合格式：相对时间 + 具体时间
+ * 格式化最近访问时间（只显示相对时间）
  * @param timestamp 时间戳（毫秒）
- * @returns 本地化的组合时间字符串
+ * @returns 本地化的相对时间字符串
  * @example
- * // 中文: "2小时前 14:30:25"
- * // 英文: "2 hours ago 2:30:25 PM"
- * // 日文: "2時間前 14:30:25"
+ * // 中文: "2小时前"、"昨天"、"前天"
+ * // 英文: "2 hours ago"、"yesterday"、"2 days ago"
  */
 export function formatRecentVisitTime(timestamp?: number): string {
   if (!timestamp) return ''
 
-  const relativeTime = formatRelativeTime(timestamp)
-  const exactTime = formatTime(timestamp)
+  return formatRelativeTime(timestamp)
+}
 
-  return `${relativeTime} ${exactTime}`
+/**
+ * 格式化完整时间（用于 tooltip）
+ * @param timestamp 时间戳（毫秒）
+ * @returns 本地化的完整时间字符串
+ * @example
+ * // 中文: "2025年1月16日 14:30:23"
+ * // 英文: "Jan 16, 2025, 2:30:23 PM"
+ */
+export function formatFullDateTime(timestamp?: number): string {
+  if (!timestamp) return ''
+
+  const locale = getUserLocale()
+
+  return new Intl.DateTimeFormat(locale, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: locale.startsWith('en-US')
+  }).format(timestamp)
 }

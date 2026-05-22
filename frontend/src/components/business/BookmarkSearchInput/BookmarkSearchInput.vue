@@ -1143,10 +1143,11 @@ defineExpose({
       </div>
 
       <!-- 搜索图标按钮（仅 icon 模式显示） -->
-      <button
+      <md-icon-button
         v-if="props.displayMode === 'icon'"
         class="search-icon-button"
         :class="{ 'has-query': query.length > 0 }"
+        :style="{ '--md-icon-button-icon-size': '20px' }"
         :title="isLoadingState ? '搜索中...' : query.length > 0 ? '清空' : '搜索'"
         :aria-label="
           isLoadingState ? '搜索中' : query.length > 0 ? '清空搜索' : '展开搜索'
@@ -1161,7 +1162,7 @@ defineExpose({
           :size="20"
         />
         <LucideIcon v-else name="search" :size="20" />
-      </button>
+      </md-icon-button>
 
       <!-- 搜索结果面板（包含筛选标签 + 搜索结果） -->
       <Transition name="panel-fade" @after-leave="handlePanelTransitionEnd">
@@ -1474,9 +1475,8 @@ defineExpose({
 }
 
 .result-list {
-  max-height: 400px; /* 最大高度 400px */
+  /* 移除 max-height 和 overflow-y，让外层容器控制滚动 */
   border-radius: var(--radius-md);
-  overflow-y: auto; /* 自适应滚动 */
 }
 
 /* Material Web List 样式覆盖 - 搜索结果 */

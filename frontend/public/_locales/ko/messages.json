@@ -2137,7 +2137,7 @@
     "description": "Side-panel: sidepanel_favorites"
   },
   "sidepanel_bookmark_tree": {
-    "message": "북마크 트리",
+    "message": "내 북마크",
     "description": "Side-panel: sidepanel_bookmark_tree"
   },
   "sidepanel_searching": {

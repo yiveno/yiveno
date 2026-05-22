@@ -21,6 +21,7 @@ const error = ref<string | null>(null)
 
 export const useAuth = () => {
   const { supabase } = useSupabase()
+  const config = useRuntimeConfig()
   
   /**
    * 初始化：检查当前 session
@@ -245,13 +246,13 @@ export const useAuth = () => {
           // 检查是否安装了扩展
           // @ts-expect-error - chrome API 仅在浏览器环境中可用
           if (typeof chrome !== 'undefined' && chrome?.runtime?.sendMessage) {
-            // 获取扩展 ID（需要在环境变量中配置）
-            const extensionId = 'YOUR_EXTENSION_ID' // TODO: 从环境变量读取
+            // 从 runtimeConfig 获取扩展 ID
+            const extensionId = config.public.extensionId
             
             // @ts-expect-error - chrome API 仅在浏览器环境中可用
             await chrome.runtime.sendMessage(extensionId, {
               type: 'SYNC_AUTH_SESSION',
-              payload: {
+              data: {
                 access_token: newSession.access_token,
                 refresh_token: newSession.refresh_token,
                 expires_at: newSession.expires_at,
@@ -272,7 +273,8 @@ export const useAuth = () => {
         try {
           // @ts-expect-error - chrome API 仅在浏览器环境中可用
           if (typeof chrome !== 'undefined' && chrome?.runtime?.sendMessage) {
-            const extensionId = 'YOUR_EXTENSION_ID' // TODO: 从环境变量读取
+            // 从 runtimeConfig 获取扩展 ID
+            const extensionId = config.public.extensionId
             
             // @ts-expect-error - chrome API 仅在浏览器环境中可用
             await chrome.runtime.sendMessage(extensionId, {

@@ -59,7 +59,9 @@ export function registerMessageHandlers(): void {
       const allowedOrigins = [
         'https://acuitybookmarks.com',
         'http://localhost:3000',
-        'https://localhost:3000'
+        'https://localhost:3000',
+        'http://localhost:3001',
+        'https://localhost:3001'
       ]
 
       if (sender.origin && allowedOrigins.includes(sender.origin)) {

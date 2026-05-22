@@ -145,6 +145,8 @@ interface Props {
     dropTargetId: string | null
     dropPosition: 'before' | 'inside' | 'after' | null
   } | undefined
+  /** 当前打开右键菜单的节点 ID */
+  contextMenuNodeId?: string | null | undefined
 }
 // 根元素引用与生命周期上报，用于构建元素注册表以优化滚动定位
 const rootRef = ref<HTMLElement | null>(null)
@@ -446,6 +448,11 @@ const nodeClasses = computed(() => {
                     props.node.id != null && 
                     String(props.focusedId) === String(props.node.id)
   
+  // ✅ 右键菜单打开状态：当前节点打开了右键菜单
+  const hasContextMenuOpen = props.contextMenuNodeId != null && 
+                              props.node.id != null && 
+                              String(props.contextMenuNodeId) === String(props.node.id)
+  
   // 🐛 调试日志
   if (isFocused) {
     logger.debug('TreeNode', '节点获得焦点', {
@@ -463,6 +470,7 @@ const nodeClasses = computed(() => {
     'node--expanded': isExpanded.value,
     'node--active': isActive,
     'node--focused': isFocused,
+    'node--context-menu-open': hasContextMenuOpen,
     // ✅ 拖拽功能启用标识
     'node--draggable': props.config.draggable === true,
     // ✅ 拖拽状态类
@@ -785,6 +793,7 @@ defineExpose({
         :focused-id="focusedId"
         :loading-more-folders="loadingMoreFolders"
         :drag-state="dragState"
+        :context-menu-node-id="contextMenuNodeId"
         @node-click="handleChildNodeClick"
         @folder-toggle="handleChildFolderToggle"
         @node-select="handleChildNodeSelect"
@@ -873,6 +882,15 @@ defineExpose({
 
 /* 书签悬停效果 - 蓝色系 */
 .bookmark-content:hover {
+  background: var(--color-bookmark-hover);
+}
+
+/* ✅ 右键菜单打开时保持 hover 状态 */
+.node--context-menu-open .folder-content {
+  background: linear-gradient(90deg, var(--color-folder-hover) 0%, transparent 100%);
+}
+
+.node--context-menu-open .bookmark-content {
   background: var(--color-bookmark-hover);
 }
 

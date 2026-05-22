@@ -575,14 +575,14 @@ onUnmounted(() => {
                   <LucideIcon name="copy" :size="18" />
                   <span>{{ t('popup_issue_duplicate') }}</span>
                 </span>
-                <button
-                  type="button"
+                <md-icon-button
                   class="issue-action"
+                  :style="{ '--md-icon-button-icon-size': '16px' }"
                   :title="t('popup_issue_delete_tooltip_duplicate')"
                   @click.stop="handleBatchDelete('duplicate')"
                 >
                   <LucideIcon name="trash" :size="16" />
-                </button>
+                </md-icon-button>
               </div>
               <div class="issue-card-count issue-card-count--warning">
                 <md-circular-progress v-if="isLoadingTraitOverview" indeterminate></md-circular-progress>
@@ -607,14 +607,14 @@ onUnmounted(() => {
                   <LucideIcon name="unlink" :size="18" />
                   <span>{{ t('popup_issue_invalid') }}</span>
                 </span>
-                <button
-                  type="button"
+                <md-icon-button
                   class="issue-action"
+                  :style="{ '--md-icon-button-icon-size': '16px' }"
                   :title="t('popup_issue_delete_tooltip_invalid')"
                   @click.stop="handleBatchDelete('invalid')"
                 >
                   <LucideIcon name="trash" :size="16" />
-                </button>
+                </md-icon-button>
               </div>
               <div class="issue-card-count issue-card-count--danger">
                 <md-circular-progress v-if="isLoadingTraitOverview" indeterminate></md-circular-progress>
@@ -956,7 +956,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: var(--text-3xl);
+  font-size: var(--text-2xl);
   font-weight: var(--font-bold);
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -971,27 +971,15 @@ body {
 }
 
 .issue-action {
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: none;
-  border-radius: var(--radius-full);
   color: var(--color-text-secondary);
-  background: transparent;
   opacity: 0;
-  cursor: pointer;
   transition:
     color var(--transition-fast),
-    background var(--transition-fast),
     opacity var(--transition-fast);
 }
 
 .issue-action:hover {
   color: var(--color-error);
-  background: var(--color-error-alpha-10);
 }
 
 .issue-card:hover .issue-action,

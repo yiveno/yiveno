@@ -272,5 +272,10 @@ onMounted(() => {
 
 .app-header__action {
   color: var(--color-text-secondary);
+  transition: color var(--md-sys-motion-duration-short2);
+}
+
+.app-header__action:hover {
+  color: var(--color-primary);
 }
 </style>

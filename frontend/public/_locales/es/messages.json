@@ -2137,7 +2137,7 @@
     "description": "Side-panel: sidepanel_favorites"
   },
   "sidepanel_bookmark_tree": {
-    "message": "Árbol de marcadores",
+    "message": "Mis marcadores",
     "description": "Side-panel: sidepanel_bookmark_tree"
   },
   "sidepanel_searching": {

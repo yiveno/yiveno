@@ -1,338 +1,3 @@
-<template>
-  <Dialog
-    :show="show"
-    title="分享书签"
-    icon="icon-share"
-    max-width="720px"
-    @update:show="$emit('update:show', $event)"
-  >
-    <template #header-actions>
-      <md-icon-button
-        title="关闭"
-        aria-label="关闭分享对话框"
-        @click="$emit('update:show', false)"
-      >
-        <LucideIcon name="x" :size="20" />
-      </md-icon-button>
-    </template>
-    <!-- 屏幕阅读器消息区域（视觉上隐藏） -->
-    <div
-      class="sr-only"
-      role="status"
-      aria-live="polite"
-      aria-atomic="true"
-    >
-      {{ state.srMessage }}
-    </div>
-
-    <div class="share-dialog-content">
-      <!-- 未登录提示 -->
-      <div v-if="!isAuthenticated" class="login-prompt">
-        <LucideIcon name="lock" :size="48" class="login-prompt__icon" />
-        <h3 class="login-prompt__title">需要登录才能分享</h3>
-        <p class="login-prompt__description">
-          登录后可以生成分享链接或直接发送给其他用户
-        </p>
-        <md-filled-button @click="handleGoToLogin">
-          <LucideIcon slot="icon" name="log-in" :size="18" />
-          前往登录
-        </md-filled-button>
-      </div>
-
-      <!-- 已登录：分享功能 -->
-      <template v-else>
-        <!-- 标题输入 -->
-        <div class="title-input-section">
-          <MdInput
-            v-model="state.customTitle"
-            label="分享标题"
-            variant="outlined"
-            size="md"
-            @input="handleTitleChange"
-          />
-        </div>
-
-        <!-- 书签数量提示 -->
-        <div class="share-info-section" :class="{ 'share-info-section--warning': bookmarks.length > 500 }">
-          <div class="bookmark-count-info">
-            <LucideIcon 
-              :name="bookmarks.length > 500 ? 'alert-triangle' : 'bookmark'" 
-              :size="18" 
-              class="bookmark-icon" 
-            />
-            <span class="bookmark-count-text">
-              将分享 {{ bookmarks.length }} 个书签
-              <span v-if="bookmarks.length > 500" class="bookmark-count-warning-text">
-                （超出限制，最多 500 个）
-              </span>
-            </span>
-          </div>
-        </div>
-
-        <!-- 分享选项（两个开关） -->
-        <div class="share-options">
-          <!-- 显示用户名开关 -->
-          <div class="option-item">
-            <md-switch
-              class="option-switch"
-              :selected="state.showUsername"
-              @change="handleShowUsernameChange"
-            />
-            <label class="option-label" @click="state.showUsername = !state.showUsername">
-              显示用户名
-            </label>
-            <Tooltip placement="top" :delay="300" offset="sm">
-              <md-icon-button
-                class="option-tip"
-                aria-label="显示用户名说明"
-              >
-                <LucideIcon name="info" :size="16" />
-              </md-icon-button>
-              <template #content>
-                <div class="tip-content">
-                  <div class="tip-title">显示用户名</div>
-                  <div class="tip-text">
-                    开启后，分享页面将显示你的用户名（{{ userName }}）。<br />
-                    关闭后，分享页面将不显示任何用户信息，保持匿名。
-                  </div>
-                </div>
-              </template>
-            </Tooltip>
-          </div>
-          
-          <!-- 添加描述开关 -->
-          <div class="option-item">
-            <md-switch
-              class="option-switch"
-              :selected="state.showDescription"
-              @change="handleShowDescriptionChange"
-            />
-            <label class="option-label" @click="state.showDescription = !state.showDescription">
-              添加描述
-            </label>
-            <Tooltip placement="top" :delay="300" offset="sm">
-              <md-icon-button
-                class="option-tip"
-                aria-label="添加描述说明"
-              >
-                <LucideIcon name="info" :size="16" />
-              </md-icon-button>
-              <template #content>
-                <div class="tip-content">
-                  <div class="tip-title">添加分享描述</div>
-                  <div class="tip-text">
-                    为这次分享添加详细说明，帮助接收者更好地了解这些书签的用途和价值。<br />
-                    <br />
-                    • 最多 1000 字符<br />
-                    • 支持换行<br />
-                    • 可选填写，不填写则不显示
-                  </div>
-                </div>
-              </template>
-            </Tooltip>
-          </div>
-        </div>
-
-        <!-- 描述输入框（仅在开关开启时显示） -->
-        <div v-if="state.showDescription" class="description-input-section">
-          <MdInput
-            v-model="state.description"
-            label="分享描述"
-            variant="outlined"
-            size="md"
-            type="textarea"
-            :rows="3"
-            placeholder="介绍一下这些书签的用途、特点等..."
-            @input="handleDescriptionInput"
-          />
-          <div class="char-count" :class="{ 'char-count-warning': state.description.length > 1000 }">
-            {{ state.description.length }}/1000
-          </div>
-        </div>
-
-        <!-- 分享方式选择 -->
-        <md-tabs
-          :active-tab-index="activeTabIndex"
-          @change="handleTabChange"
-        >
-          <md-primary-tab aria-label="分享链接">
-            <LucideIcon slot="icon" name="link" :size="18" />
-            分享链接
-          </md-primary-tab>
-          <md-primary-tab aria-label="直接发送给用户">
-            <LucideIcon slot="icon" name="send" :size="18" />
-            发送给用户
-          </md-primary-tab>
-          <md-primary-tab aria-label="生成海报">
-            <LucideIcon slot="icon" name="image" :size="18" />
-            生成海报
-          </md-primary-tab>
-        </md-tabs>
-
-        <!-- 直接分享：用户搜索 -->
-        <div v-if="state.shareType === 'direct'" class="user-search-section">
-          <!-- 书签数量超限提示 -->
-          <div v-if="bookmarks.length > 500" class="error-hint">
-            <LucideIcon name="alert-circle" :size="16" />
-            <span>书签数量超出限制（{{ bookmarks.length }}/500），请减少选择的书签数量</span>
-          </div>
-          
-          <!-- 用户搜索选择器 -->
-          <AsyncSearchSelect
-            ref="userSearchSelectRef"
-            label="搜索用户"
-            placeholder="输入用户名或邮箱"
-            :multiple="true"
-            empty-text="未找到匹配的用户"
-            @search="handleUserSearch"
-            @change="handleUserSelectionChange"
-          />
-
-          <!-- 留言输入 -->
-          <MdInput
-            v-model="state.message"
-            label="留言（可选）"
-            variant="outlined"
-            size="md"
-            type="textarea"
-            :rows="2"
-            placeholder="给接收者留言..."
-            :maxlength="500"
-          />
-        </div>
-
-        <!-- 链接分享：生成按钮和使用说明 -->
-        <template v-if="state.shareType === 'link'">
-          <div class="link-share-section">
-            <!-- 生成链接按钮 -->
-            <div class="generate-link-container">
-              <md-filled-button
-                :disabled="state.isSharing || bookmarks.length === 0 || bookmarks.length > 500"
-                class="generate-link-button"
-                @click="handleCreateLinkShare"
-              >
-                <Loading
-                  v-if="state.isSharing"
-                  slot="icon"
-                  size="xs"
-                />
-                <LucideIcon
-                  v-else
-                  slot="icon"
-                  name="link"
-                  :size="18"
-                />
-                {{ state.isSharing ? '生成中...' : '生成分享链接' }}
-              </md-filled-button>
-              <div v-if="bookmarks.length > 500" class="error-hint">
-                <LucideIcon name="alert-circle" :size="16" />
-                <span>书签数量超出限制，请选择不超过 500 个书签</span>
-              </div>
-            </div>
-
-            <!-- 使用说明 -->
-            <div class="usage-hint">
-              <div class="usage-hint-header">
-                <LucideIcon name="info" :size="20" class="usage-hint-icon" />
-                <span class="usage-hint-title">如何使用分享链接</span>
-              </div>
-              <ol class="usage-hint-steps">
-                <li>点击上方按钮生成分享链接</li>
-                <li>链接会自动复制到剪贴板</li>
-                <li>将链接发送给朋友</li>
-                <li>朋友打开链接即可查看并导入书签</li>
-              </ol>
-            </div>
-          </div>
-        </template>
-
-        <!-- 海报分享：海报预览 -->
-        <template v-if="state.shareType === 'poster'">
-          <!-- 海报预览 -->
-          <div class="poster-preview" role="region" aria-label="海报预览区域">
-            <div
-              v-if="state.isGenerating"
-              class="preview-loading"
-              role="status"
-              aria-live="polite"
-              aria-busy="true"
-            >
-              <Loading size="lg" text="正在生成海报..." />
-              <md-linear-progress indeterminate class="poster-progress" />
-            </div>
-            <div
-              v-else-if="state.error"
-              class="preview-error"
-              role="alert"
-              aria-live="assertive"
-            >
-              <LucideIcon name="alert-circle" :size="48" aria-hidden="true" />
-              <span>{{ state.error }}</span>
-              <md-outlined-button aria-label="重新生成海报" @click="handleRetry">
-                重试
-              </md-outlined-button>
-            </div>
-            <img
-              v-else-if="state.posterPreview"
-              :src="state.posterPreview"
-              alt="分享海报预览，包含书签列表"
-              class="preview-image"
-              role="img"
-            />
-          </div>
-        </template>
-      </template>
-    </div>
-
-    <template #actions>
-      <!-- 未登录时不显示操作按钮 -->
-      <template v-if="isAuthenticated">
-        <!-- 海报分享的操作按钮 -->
-        <template v-if="state.shareType === 'poster'">
-          <md-text-button
-            :disabled="!state.posterPreview || state.isGenerating"
-            aria-label="复制海报图片到剪贴板"
-            @click="handleCopyImage"
-          >
-            <LucideIcon slot="icon" name="copy" :size="18" />
-            复制图片
-          </md-text-button>
-          <md-filled-button
-            :disabled="!state.posterPreview || state.isGenerating"
-            aria-label="下载海报图片"
-            @click="handleDownloadImage"
-          >
-            <LucideIcon slot="icon" name="download" :size="18" />
-            下载图片
-          </md-filled-button>
-        </template>
-
-        <!-- 直接分享的操作按钮 -->
-        <template v-else-if="state.shareType === 'direct'">
-          <md-filled-button
-            :disabled="state.selectedUserIds.length === 0 || state.isSharing || bookmarks.length > 500"
-            aria-label="发送分享给选中的用户"
-            @click="handleCreateDirectShare"
-          >
-            <Loading
-              v-if="state.isSharing"
-              slot="icon"
-              size="xs"
-            />
-            <LucideIcon
-              v-else
-              slot="icon"
-              name="send"
-              :size="18"
-            />
-            {{ state.isSharing ? '发送中...' : '发送分享' }}
-          </md-filled-button>
-        </template>
-      </template>
-    </template>
-  </Dialog>
-</template>
-
 <script setup lang="ts">
 import { reactive, watch, onUnmounted, ref, nextTick, computed, onMounted } from 'vue'
 import { useDebounceFn, useEventListener } from '@vueuse/core'
@@ -873,6 +538,341 @@ onUnmounted(() => {
   state.currentGenerationId++
 })
 </script>
+
+<template>
+  <Dialog
+    :show="show"
+    title="分享书签"
+    icon="icon-share"
+    max-width="720px"
+    @update:show="$emit('update:show', $event)"
+  >
+    <template #header-actions>
+      <md-icon-button
+        title="关闭"
+        aria-label="关闭分享对话框"
+        @click="$emit('update:show', false)"
+      >
+        <LucideIcon name="x" :size="20" />
+      </md-icon-button>
+    </template>
+    <!-- 屏幕阅读器消息区域（视觉上隐藏） -->
+    <div
+      class="sr-only"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    >
+      {{ state.srMessage }}
+    </div>
+
+    <div class="share-dialog-content">
+      <!-- 未登录提示 -->
+      <div v-if="!isAuthenticated" class="login-prompt">
+        <LucideIcon name="lock" :size="48" class="login-prompt__icon" />
+        <h3 class="login-prompt__title">需要登录才能分享</h3>
+        <p class="login-prompt__description">
+          登录后可以生成分享链接或直接发送给其他用户
+        </p>
+        <md-filled-button @click="handleGoToLogin">
+          <LucideIcon slot="icon" name="log-in" :size="18" />
+          前往登录
+        </md-filled-button>
+      </div>
+
+      <!-- 已登录：分享功能 -->
+      <template v-else>
+        <!-- 标题输入 -->
+        <div class="title-input-section">
+          <MdInput
+            v-model="state.customTitle"
+            label="分享标题"
+            variant="outlined"
+            size="md"
+            @input="handleTitleChange"
+          />
+        </div>
+
+        <!-- 书签数量提示 -->
+        <div class="share-info-section" :class="{ 'share-info-section--warning': bookmarks.length > 500 }">
+          <div class="bookmark-count-info">
+            <LucideIcon 
+              :name="bookmarks.length > 500 ? 'alert-triangle' : 'bookmark'" 
+              :size="18" 
+              class="bookmark-icon" 
+            />
+            <span class="bookmark-count-text">
+              将分享 {{ bookmarks.length }} 个书签
+              <span v-if="bookmarks.length > 500" class="bookmark-count-warning-text">
+                （超出限制，最多 500 个）
+              </span>
+            </span>
+          </div>
+        </div>
+
+        <!-- 分享选项（两个开关） -->
+        <div class="share-options">
+          <!-- 显示用户名开关 -->
+          <div class="option-item">
+            <md-switch
+              class="option-switch"
+              :selected="state.showUsername"
+              @change="handleShowUsernameChange"
+            />
+            <label class="option-label" @click="state.showUsername = !state.showUsername">
+              显示用户名
+            </label>
+            <Tooltip placement="top" :delay="300" offset="sm">
+              <md-icon-button
+                class="option-tip"
+                aria-label="显示用户名说明"
+              >
+                <LucideIcon name="info" :size="16" />
+              </md-icon-button>
+              <template #content>
+                <div class="tip-content">
+                  <div class="tip-title">显示用户名</div>
+                  <div class="tip-text">
+                    开启后，分享页面将显示你的用户名（{{ userName }}）。<br />
+                    关闭后，分享页面将不显示任何用户信息，保持匿名。
+                  </div>
+                </div>
+              </template>
+            </Tooltip>
+          </div>
+          
+          <!-- 添加描述开关 -->
+          <div class="option-item">
+            <md-switch
+              class="option-switch"
+              :selected="state.showDescription"
+              @change="handleShowDescriptionChange"
+            />
+            <label class="option-label" @click="state.showDescription = !state.showDescription">
+              添加描述
+            </label>
+            <Tooltip placement="top" :delay="300" offset="sm">
+              <md-icon-button
+                class="option-tip"
+                aria-label="添加描述说明"
+              >
+                <LucideIcon name="info" :size="16" />
+              </md-icon-button>
+              <template #content>
+                <div class="tip-content">
+                  <div class="tip-title">添加分享描述</div>
+                  <div class="tip-text">
+                    为这次分享添加详细说明，帮助接收者更好地了解这些书签的用途和价值。<br />
+                    <br />
+                    • 最多 1000 字符<br />
+                    • 支持换行<br />
+                    • 可选填写，不填写则不显示
+                  </div>
+                </div>
+              </template>
+            </Tooltip>
+          </div>
+        </div>
+
+        <!-- 描述输入框（仅在开关开启时显示） -->
+        <div v-if="state.showDescription" class="description-input-section">
+          <MdInput
+            v-model="state.description"
+            label="分享描述"
+            variant="outlined"
+            size="md"
+            type="textarea"
+            :rows="3"
+            placeholder="介绍一下这些书签的用途、特点等..."
+            @input="handleDescriptionInput"
+          />
+          <div class="char-count" :class="{ 'char-count-warning': state.description.length > 1000 }">
+            {{ state.description.length }}/1000
+          </div>
+        </div>
+
+        <!-- 分享方式选择 -->
+        <md-tabs
+          :active-tab-index="activeTabIndex"
+          @change="handleTabChange"
+        >
+          <md-primary-tab aria-label="分享链接">
+            <LucideIcon slot="icon" name="link" :size="18" />
+            分享链接
+          </md-primary-tab>
+          <md-primary-tab aria-label="直接发送给用户">
+            <LucideIcon slot="icon" name="send" :size="18" />
+            发送给用户
+          </md-primary-tab>
+          <md-primary-tab aria-label="生成海报">
+            <LucideIcon slot="icon" name="image" :size="18" />
+            生成海报
+          </md-primary-tab>
+        </md-tabs>
+
+        <!-- 直接分享：用户搜索 -->
+        <div v-if="state.shareType === 'direct'" class="user-search-section">
+          <!-- 书签数量超限提示 -->
+          <div v-if="bookmarks.length > 500" class="error-hint">
+            <LucideIcon name="alert-circle" :size="16" />
+            <span>书签数量超出限制（{{ bookmarks.length }}/500），请减少选择的书签数量</span>
+          </div>
+          
+          <!-- 用户搜索选择器 -->
+          <AsyncSearchSelect
+            ref="userSearchSelectRef"
+            label="搜索用户"
+            placeholder="输入用户名或邮箱"
+            :multiple="true"
+            empty-text="未找到匹配的用户"
+            @search="handleUserSearch"
+            @change="handleUserSelectionChange"
+          />
+
+          <!-- 留言输入 -->
+          <MdInput
+            v-model="state.message"
+            label="留言（可选）"
+            variant="outlined"
+            size="md"
+            type="textarea"
+            :rows="2"
+            placeholder="给接收者留言..."
+            :maxlength="500"
+          />
+        </div>
+
+        <!-- 链接分享：生成按钮和使用说明 -->
+        <template v-if="state.shareType === 'link'">
+          <div class="link-share-section">
+            <!-- 生成链接按钮 -->
+            <div class="generate-link-container">
+              <md-filled-button
+                :disabled="state.isSharing || bookmarks.length === 0 || bookmarks.length > 500"
+                class="generate-link-button"
+                @click="handleCreateLinkShare"
+              >
+                <Loading
+                  v-if="state.isSharing"
+                  slot="icon"
+                  size="xs"
+                />
+                <LucideIcon
+                  v-else
+                  slot="icon"
+                  name="link"
+                  :size="18"
+                />
+                {{ state.isSharing ? '生成中...' : '生成分享链接' }}
+              </md-filled-button>
+              <div v-if="bookmarks.length > 500" class="error-hint">
+                <LucideIcon name="alert-circle" :size="16" />
+                <span>书签数量超出限制，请选择不超过 500 个书签</span>
+              </div>
+            </div>
+
+            <!-- 使用说明 -->
+            <div class="usage-hint">
+              <div class="usage-hint-header">
+                <LucideIcon name="info" :size="20" class="usage-hint-icon" />
+                <span class="usage-hint-title">如何使用分享链接</span>
+              </div>
+              <ol class="usage-hint-steps">
+                <li>点击上方按钮生成分享链接</li>
+                <li>链接会自动复制到剪贴板</li>
+                <li>将链接发送给朋友</li>
+                <li>朋友打开链接即可查看并导入书签</li>
+              </ol>
+            </div>
+          </div>
+        </template>
+
+        <!-- 海报分享：海报预览 -->
+        <template v-if="state.shareType === 'poster'">
+          <!-- 海报预览 -->
+          <div class="poster-preview" role="region" aria-label="海报预览区域">
+            <div
+              v-if="state.isGenerating"
+              class="preview-loading"
+              role="status"
+              aria-live="polite"
+              aria-busy="true"
+            >
+              <Loading size="lg" text="正在生成海报..." />
+              <md-linear-progress indeterminate class="poster-progress" />
+            </div>
+            <div
+              v-else-if="state.error"
+              class="preview-error"
+              role="alert"
+              aria-live="assertive"
+            >
+              <LucideIcon name="alert-circle" :size="48" aria-hidden="true" />
+              <span>{{ state.error }}</span>
+              <md-outlined-button aria-label="重新生成海报" @click="handleRetry">
+                重试
+              </md-outlined-button>
+            </div>
+            <img
+              v-else-if="state.posterPreview"
+              :src="state.posterPreview"
+              alt="分享海报预览，包含书签列表"
+              class="preview-image"
+              role="img"
+            />
+          </div>
+        </template>
+      </template>
+    </div>
+
+    <template #actions>
+      <!-- 未登录时不显示操作按钮 -->
+      <template v-if="isAuthenticated">
+        <!-- 海报分享的操作按钮 -->
+        <template v-if="state.shareType === 'poster'">
+          <md-text-button
+            :disabled="!state.posterPreview || state.isGenerating"
+            aria-label="复制海报图片到剪贴板"
+            @click="handleCopyImage"
+          >
+            <LucideIcon slot="icon" name="copy" :size="18" />
+            复制图片
+          </md-text-button>
+          <md-filled-button
+            :disabled="!state.posterPreview || state.isGenerating"
+            aria-label="下载海报图片"
+            @click="handleDownloadImage"
+          >
+            <LucideIcon slot="icon" name="download" :size="18" />
+            下载图片
+          </md-filled-button>
+        </template>
+
+        <!-- 直接分享的操作按钮 -->
+        <template v-else-if="state.shareType === 'direct'">
+          <md-filled-button
+            :disabled="state.selectedUserIds.length === 0 || state.isSharing || bookmarks.length > 500"
+            aria-label="发送分享给选中的用户"
+            @click="handleCreateDirectShare"
+          >
+            <Loading
+              v-if="state.isSharing"
+              slot="icon"
+              size="xs"
+            />
+            <LucideIcon
+              v-else
+              slot="icon"
+              name="send"
+              :size="18"
+            />
+            {{ state.isSharing ? '发送中...' : '发送分享' }}
+          </md-filled-button>
+        </template>
+      </template>
+    </template>
+  </Dialog>
+</template>
 
 <style scoped>
 /* 屏幕阅读器专用（视觉上隐藏） */

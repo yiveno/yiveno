@@ -275,6 +275,8 @@ const contextMenuX = ref(0)
 const contextMenuY = ref(0)
 const contextMenuItems = ref<MenuItemConfig[]>([])
 const contextMenuNode = ref<BookmarkNode | null>(null)
+// ✅ 当前打开菜单的节点 ID（用于保持 hover 状态）
+const contextMenuNodeId = ref<string | null>(null)
 
 // 📊 选中后代计数：直接使用 props
 const selectedDescCountsState = computed(() => props.selectedDescCounts)
@@ -1010,6 +1012,8 @@ const handleOpenContextMenu = (nodeId: string, x?: number, y?: number) => {
   
   // 保存当前节点引用
   contextMenuNode.value = node
+  // ✅ 保存当前节点 ID（用于保持 hover 状态）
+  contextMenuNodeId.value = node.id
   
   // 显示菜单
   showContextMenu.value = true
@@ -1056,6 +1060,8 @@ const openNodeContextMenu = (nodeId: string) => {
 const closeContextMenu = () => {
   showContextMenu.value = false
   contextMenuNode.value = null
+  // ✅ 清除菜单节点 ID
+  contextMenuNodeId.value = null
   
   // ✅ 关闭菜单后，将焦点返回到树容器，确保键盘导航继续工作
   nextTick(() => {
@@ -2089,6 +2095,7 @@ defineExpose({
             :strict-order="props.strictChromeOrder"
             :active-id="activeNodeId"
             :focused-id="focusedNodeId"
+            :context-menu-node-id="contextMenuNodeId"
             @node-mounted="registerNodeEl"
             @node-unmounted="unregisterNodeEl"
             @node-click="handleNodeClick"
@@ -2145,6 +2152,7 @@ defineExpose({
                 :active-id="activeNodeId"
                 :focused-id="focusedNodeId"
                 :loading-more-folders="loadingMoreFolders"
+                :context-menu-node-id="contextMenuNodeId"
                 @node-mounted="registerNodeEl"
                 @node-unmounted="unregisterNodeEl"
                 @node-click="handleNodeClick"
