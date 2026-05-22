@@ -27,60 +27,49 @@
   "scripts": {
     "prepare": "husky",
     "lint-staged": "lint-staged",
-    
     "clean:deps": "rm -rf node_modules frontend/node_modules backend/node_modules website/node_modules packages/*/node_modules bun.lockb frontend/bun.lock backend/bun.lock 2>/dev/null || true && echo '🧹 清理完成'",
     "reinstall": "bun run clean:deps && bun install && echo '✅ 依赖已清理并重新安装'",
-    
     "dev": "bunx turbo run dev",
     "dev:fe": "bunx turbo run dev --filter=frontend",
     "dev:be": "bunx turbo run dev --filter=backend",
     "dev:web": "bunx turbo run dev --filter=acuitybookmarks-website",
-    
     "build": "bunx turbo run build",
     "build:fe": "bunx turbo run build --filter=frontend",
     "build:be": "bunx turbo run build --filter=backend",
     "build:web": "bunx turbo run build --filter=acuitybookmarks-website",
     "build:prod": "NODE_ENV=production bunx turbo run build",
-    
+    "build:color-presets": "bun scripts/build-material-color-presets.mjs",
     "watch": "bunx turbo run build:watch --filter=frontend dev --filter=backend dev --filter=acuitybookmarks-website --parallel --ui=tui",
     "watch:fe": "bunx turbo run build:watch --filter=frontend",
-    
-    "test": "bunx turbo run test --filter=frontend",
-    "test:fe": "bunx turbo run test --filter=frontend",
-    "test:be": "bunx turbo run test --filter=backend",
-    
     "typecheck": "bunx turbo run typecheck",
     "typecheck:fe": "bunx turbo run typecheck --filter=frontend",
     "typecheck:be": "bunx turbo run typecheck --filter=backend",
     "typecheck:web": "bunx turbo run typecheck --filter=acuitybookmarks-website",
-    "typecheck:strict": "bunx turbo run typecheck:force --filter=frontend --filter=backend --filter=acuitybookmarks-website",
-    "build:color-presets": "bun scripts/build-material-color-presets.mjs",
-    "lint": "bun run format && bun run lint:fix && bun run stylelint:fix",
-    "lint:check": "bunx turbo run lint:check --filter=frontend --filter=backend --filter=acuitybookmarks-website",
-    "lint:fix": "bunx turbo run lint --filter=frontend --filter=backend --filter=acuitybookmarks-website",
+    "typecheck:force": "bunx turbo run typecheck:force",
+    "typecheck:all": "bunx turbo run typecheck:force --filter=frontend --filter=backend --filter=acuitybookmarks-website",
+    "lint": "bun run format && bunx turbo run eslint --filter=frontend --filter=backend --filter=acuitybookmarks-website && bunx turbo run stylelint --filter=frontend --filter=acuitybookmarks-website",
+    "lint:check": "bunx turbo run eslint:check --filter=frontend --filter=backend --filter=acuitybookmarks-website && bunx turbo run stylelint:check --filter=frontend --filter=acuitybookmarks-website",
     "format": "bunx prettier --write \"**/*.{js,ts,json,md,vue,css}\"",
-    "stylelint": "bun run stylelint:check",
+    "eslint": "bunx turbo run eslint --filter=frontend --filter=backend --filter=acuitybookmarks-website",
+    "eslint:check": "bunx turbo run eslint:check --filter=frontend --filter=backend --filter=acuitybookmarks-website",
+    "stylelint": "bunx turbo run stylelint --filter=frontend --filter=acuitybookmarks-website",
     "stylelint:check": "bunx turbo run stylelint:check --filter=frontend --filter=acuitybookmarks-website",
-    "stylelint:fix": "bunx turbo run stylelint --filter=frontend --filter=acuitybookmarks-website",
-    
-    "deploy:be": "bunx turbo run deploy --filter=backend",
-    "deploy:web": "bunx turbo run build --filter=acuitybookmarks-website && echo 'Website build complete. Deploy dist/ directory to your hosting service.'",
-    
-    "audit:fe": "bun run build:fe && bunx -y @lhci/cli autorun --config ./frontend/lighthouserc.json && bun ./scripts/lhci-summary.mjs && bun ./scripts/open-median-reports.mjs frontend",
-    "audit:web": "cd website && bun run generate && bunx -y @lhci/cli autorun --config ./lighthouserc.json && bun ../scripts/lhci-summary-website.mjs && bun ../scripts/open-median-reports.mjs website",
-    
-    "clean": "bunx turbo run clean",
-    
+    "test": "bunx turbo run test --filter=frontend",
+    "test:fe": "bunx turbo run test --filter=frontend",
+    "test:be": "bunx turbo run test --filter=backend",
     "e2e": "bun ./scripts/e2e-management.mjs --ext ${EXT_ID:-gdjcmpenmogdikhnnaebmddhmdgbfcgl}",
     "e2e:perf": "bun ./scripts/e2e-management.mjs --ext ${EXT_ID:-gdjcmpenmogdikhnnaebmddhmdgbfcgl} --perf --cpu ${CPU_RATE:-4} --net ${NET_PRESET:-slow4g}",
     "e2e:all": "bun run e2e && bun run e2e:perf",
-    
+    "audit:fe": "bun run build:fe && bunx -y @lhci/cli autorun --config ./frontend/lighthouserc.json && bun ./scripts/lhci-summary.mjs && bun ./scripts/open-median-reports.mjs frontend",
+    "audit:web": "cd website && bun run generate && bunx -y @lhci/cli autorun --config ./lighthouserc.json && bun ../scripts/lhci-summary-website.mjs && bun ../scripts/open-median-reports.mjs website",
+    "deploy:be": "bunx turbo run deploy --filter=backend",
+    "deploy:web": "bunx turbo run build --filter=acuitybookmarks-website && echo 'Website build complete. Deploy dist/ directory to your hosting service.'",
     "db:start": "bunx turbo run db:start --filter=backend",
     "db:stop": "bunx turbo run db:stop --filter=backend",
     "db:reset": "bunx turbo run db:reset --filter=backend",
     "db:new": "bunx turbo run db:new --filter=backend",
     "db:logs": "bunx turbo run logs --filter=backend",
-    
+    "clean": "bunx turbo run clean",
     "export:env": "bun ./scripts/export-env.mjs --ext ${EXT_ID:-gdjcmpenmogdikhnnaebmddhmdgbfcgl}",
     "import:env": "bun ./scripts/import-env.mjs --ext ${EXT_ID:-gdjcmpenmogdikhnnaebmddhmdgbfcgl}"
   },

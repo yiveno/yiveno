@@ -24,6 +24,14 @@
       "cache": false,
       "outputs": []
     },
+    "eslint": {
+      "cache": false,
+      "outputs": []
+    },
+    "eslint:check": {
+      "cache": false,
+      "outputs": []
+    },
     "stylelint": {
       "cache": false,
       "outputs": []
@@ -55,9 +63,5 @@
       "cache": false
     }
   },
-  "globalDependencies": [
-    "tsconfig.base.json",
-    "eslint.config.js",
-    ".prettierrc.json"
-  ]
+  "globalDependencies": ["tsconfig.base.json", "eslint.config.js", ".prettierrc.json"]
 }

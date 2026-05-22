@@ -7,13 +7,14 @@
   "scripts": {
     "dev": "wrangler dev --local --port 8787 --local-protocol https --https-cert-path ./localhost+2.pem --https-key-path ./localhost+2-key.pem",
     "build": "echo 'Backend: Cloudflare Worker 无需构建'",
-    "test": "bun test",
     "typecheck": "tsc --noEmit --skipLibCheck",
     "typecheck:force": "tsc --noEmit --skipLibCheck",
-    "lint": "eslint . --no-cache --fix --max-warnings 0 --fix-type problem,suggestion,layout && echo '✅ ESLint: 所有问题已修复'",
-    "lint:check": "eslint . --no-cache --max-warnings 0 && echo '✅ ESLint: 检查通过'",
-    "lint:fix": "eslint . --no-cache --fix --max-warnings 0 --fix-type problem,suggestion,layout && echo '✅ ESLint: 所有问题已修复'",
-    "clean": "rm -rf .wrangler node_modules/.cache",
+    "lint": "bun run format && bun run eslint",
+    "lint:check": "bun run eslint:check",
+    "format": "bunx prettier --write \"**/*.{js,ts,json}\"",
+    "eslint": "eslint . --no-cache --fix --max-warnings 0 --fix-type problem,suggestion,layout && echo '✅ ESLint: 所有问题已修复'",
+    "eslint:check": "eslint . --no-cache --max-warnings 0 && echo '✅ ESLint: 检查通过'",
+    "test": "bun test",
     "deploy": "wrangler deploy --env production",
     "deploy:dev": "wrangler deploy",
     "deploy:preview": "wrangler deploy --env preview",
@@ -21,7 +22,8 @@
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset",
     "db:new": "supabase migration new",
-    "logs": "wrangler tail"
+    "logs": "wrangler tail",
+    "clean": "rm -rf .wrangler node_modules/.cache"
   },
   "dependencies": {
     "@acuity-bookmarks/types": "workspace:*",

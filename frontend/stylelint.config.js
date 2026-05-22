@@ -4,13 +4,32 @@
 
 export default {
   ignoreFiles: [
+    // 构建产物
     '**/dist/**',
     '**/.nuxt/**',
     '**/.output/**',
+    
+    // 依赖和缓存
     '**/node_modules/**',
     '**/.vite/**',
-    '**/src/tests/**'
-    // tokens.css 现在只包含映射，不再包含硬编码颜色
+    '**/.vite-temp/**',
+    '**/.cache/**',
+    '**/.turbo/**',
+    
+    // 测试相关
+    '**/src/tests/**',
+    '**/__tests__/**',
+    '**/*.test.vue',
+    '**/*.spec.vue',
+    '**/coverage/**',
+    '**/.lighthouseci/**',
+    
+    // 文档和脚本
+    '**/docs/**',
+    '**/scripts/**',
+    
+    // 生成的类型文件
+    '**/.vue-global-types/**'
   ],
 
   extends: ['stylelint-config-standard', 'stylelint-config-recommended-vue'],

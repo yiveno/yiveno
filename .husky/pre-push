@@ -5,13 +5,13 @@ echo "🚀 pre-push: 运行推送前检查..."
 # 错误收集
 ERRORS=""
 
-# 1. TypeScript 类型检查
+# 1. TypeScript 类型检查（强制重新检查所有项目）
 echo "🧪 TypeScript 类型检查..."
-if bun run typecheck > /dev/null 2>&1; then
+if bun run typecheck:all > /dev/null 2>&1; then
     echo "✅ 类型检查通过"
 else
     echo "❌ 类型检查失败"
-    TYPECHECK_ERROR=$(bun run typecheck 2>&1 || true)
+    TYPECHECK_ERROR=$(bun run typecheck:all 2>&1 || true)
     ERRORS="${ERRORS}\n❌ TypeScript 类型检查失败:\n${TYPECHECK_ERROR}\n\n"
 fi
 

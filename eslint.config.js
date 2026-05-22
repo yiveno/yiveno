@@ -166,7 +166,7 @@ const typescriptCommonRules = {
   '@typescript-eslint/no-import-type-side-effects': 'warn',
   '@typescript-eslint/prefer-literal-enum-member': 'warn',
   '@typescript-eslint/prefer-enum-initializers': 'warn',
-  
+
   // Phase 1 优化：异步代码规则（防止 Promise 相关 Bug）
   // 注意：这些规则需要类型信息，在 monorepo 中配置复杂，暂时禁用
   // '@typescript-eslint/no-floating-promises': 'error',
@@ -175,7 +175,7 @@ const typescriptCommonRules = {
   // '@typescript-eslint/promise-function-async': 'warn',
   'no-async-promise-executor': 'error',
   'require-atomic-updates': 'error',
-  
+
   // Phase 1 优化：代码质量规则
   'no-shadow': 'off',
   '@typescript-eslint/no-shadow': 'error',
@@ -184,8 +184,8 @@ const typescriptCommonRules = {
   'prefer-object-spread': 'error',
   'no-nested-ternary': 'warn',
   'max-depth': ['warn', 4],
-  'complexity': ['warn', 15],
-  
+  complexity: ['warn', 15],
+
   ...unusedImportsConfig
 }
 
@@ -197,25 +197,57 @@ export default [
   // 基础忽略配置
   {
     ignores: [
+      // 依赖和构建产物
       '**/node_modules/**',
       '**/dist/**',
       '**/.nuxt/**',
       '**/.output/**',
       '**/build/**',
+      '**/.wrangler/**',
+
+      // 缓存和临时文件
       '**/.cache/**',
+      '**/.vite/**',
+      '**/.vite-temp/**',
+      '**/.tmp/**',
+      '**/.turbo/**',
+      '**/*.tsbuildinfo',
+      '**/*.log',
+
+      // 测试相关
+      'frontend/src/tests/**',
+      '**/__tests__/**',
+      '**/*.test.ts',
+      '**/*.test.js',
+      '**/*.spec.ts',
+      '**/*.spec.js',
+      '**/coverage/**',
+      '**/.lighthouseci/**',
+
+      // 文档和脚本（不需要严格检查）
+      '**/docs/**',
+      '**/scripts/**/*.cjs',
+      '**/*.md',
+
+      // 配置文件（已有专门配置）
+      'vite.config.ts',
+      'vitest.config.ts',
+      'vitest.e2e.config.ts',
+      'playwright.config.ts',
+
+      // 生成的类型文件
+      '**/.vue-global-types/**',
+      '**/vite-env.d.ts',
+
+      // 其他
       '**/.venv/**',
       '**/*.min.js',
-      '**/coverage/**',
       '**/.git/**',
       '**/bun.lockb',
       '**/*.lock',
-      '**/*.log',
       '**/*.sh',
       '**/*.bash',
-      'frontend/src/tests/**',
-      'vite.config.ts',
-      '**/.wrangler/**', // wrangler 自动生成的临时文件
-      '**/scripts/*.cjs' // 构建脚本使用 CommonJS，允许 require()
+      '**/*.py'
     ]
   },
 
@@ -285,7 +317,7 @@ export default [
       'vue/no-use-v-if-with-v-for': 'off',
       'vue/require-default-prop': 'off',
       'vue/no-required-prop-with-default': 'off',
-      
+
       // 🔒 安全规则：防止在 computed 中修改响应式状态
       'vue/no-side-effects-in-computed-properties': 'error',
       'vue/no-mutating-props': 'error',
@@ -293,31 +325,37 @@ export default [
       'vue/no-ref-as-operand': 'error',
       'vue/no-watch-after-await': 'error',
       'vue/require-explicit-emits': 'warn',
-      
+
       // Phase 1 优化：Vue 3 响应式规则（防止响应式丢失）
       'vue/no-ref-object-reactivity-loss': 'error',
       'vue/no-setup-props-reactivity-loss': 'error',
-      
+
       // Phase 1 优化：组件规范
       'vue/component-name-in-template-casing': ['error', 'PascalCase'],
       'vue/custom-event-name-casing': ['error', 'camelCase'],
-      'vue/define-macros-order': ['warn', {
-        order: ['defineOptions', 'defineProps', 'defineEmits', 'defineSlots']
-      }],
-      'vue/block-order': ['error', {
-        order: ['script', 'template', 'style']
-      }],
-      
+      'vue/define-macros-order': [
+        'warn',
+        {
+          order: ['defineOptions', 'defineProps', 'defineEmits', 'defineSlots']
+        }
+      ],
+      'vue/block-order': [
+        'error',
+        {
+          order: ['script', 'template', 'style']
+        }
+      ],
+
       // Material Web Components 使用原生 slot 属性，不是 Vue 的 v-slot
       'vue/no-deprecated-slot-attribute': 'off',
       'vue/no-deprecated-slot-scope-attribute': 'error',
-      
+
       // ⚡ 性能优化规则
       'vue/no-v-for-template-key': 'error',
-      'vue/no-useless-v-bind': 'off',  // 关闭：太严格，影响代码可读性
-      'vue/no-useless-mustaches': 'off',  // 关闭：太严格，影响代码可读性
-      'vue/prefer-true-attribute-shorthand': 'off',  // 关闭：太严格，影响代码可读性
-      
+      'vue/no-useless-v-bind': 'off', // 关闭：太严格，影响代码可读性
+      'vue/no-useless-mustaches': 'off', // 关闭：太严格，影响代码可读性
+      'vue/prefer-true-attribute-shorthand': 'off', // 关闭：太严格，影响代码可读性
+
       // TypeScript 规则
       ...typescriptCommonRules
     }

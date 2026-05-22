@@ -29,5 +29,39 @@
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"],
-  "exclude": ["node_modules", "dist", "src/tests/**/*"]
+  "exclude": [
+    // 依赖和构建产物
+    "node_modules",
+    "dist",
+    
+    // 缓存和临时文件
+    ".vite",
+    ".vite-temp",
+    ".cache",
+    ".turbo",
+    "*.tsbuildinfo",
+    
+    // 测试相关
+    "src/tests/**/*",
+    "**/__tests__/**/*",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx",
+    "coverage",
+    ".lighthouseci",
+    
+    // 文档和脚本
+    "docs",
+    "scripts",
+    
+    // 配置文件（由 tsconfig.node.json 处理）
+    "vite.config.ts",
+    "vitest.config.ts",
+    "vitest.e2e.config.ts",
+    "playwright.config.ts",
+    
+    // 生成的类型文件
+    ".vue-global-types"
+  ]
 }
