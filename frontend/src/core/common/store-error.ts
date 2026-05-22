@@ -183,9 +183,7 @@ export class DataValidator {
   /**
    * 检查是否为书签树节点
    */
-  static isBookmarkTreeNode(
-    obj: unknown
-  ): obj is chrome.bookmarks.BookmarkTreeNode {
+  static isBookmarkTreeNode(obj: unknown): obj is chrome.bookmarks.BookmarkTreeNode {
     if (!obj || typeof obj !== 'object') return false
     const node = obj as Record<string, unknown>
     return typeof node.id === 'string' && typeof node.title === 'string'
@@ -194,12 +192,8 @@ export class DataValidator {
   /**
    * 检查是否为书签数组
    */
-  static isBookmarkArray(
-    arr: unknown
-  ): arr is chrome.bookmarks.BookmarkTreeNode[] {
-    return (
-      Array.isArray(arr) && arr.every(item => this.isBookmarkTreeNode(item))
-    )
+  static isBookmarkArray(arr: unknown): arr is chrome.bookmarks.BookmarkTreeNode[] {
+    return Array.isArray(arr) && arr.every(item => this.isBookmarkTreeNode(item))
   }
 
   /**

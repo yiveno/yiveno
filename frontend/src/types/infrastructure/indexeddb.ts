@@ -72,15 +72,9 @@ export interface DatabaseMigration {
   /** 目标版本号 */
   version: number
   /** 升级逻辑 */
-  upgrade: (
-    db: IDBDatabase,
-    transaction: IDBTransaction
-  ) => void | Promise<void>
+  upgrade: (db: IDBDatabase, transaction: IDBTransaction) => void | Promise<void>
   /** 降级逻辑，可选 */
-  downgrade?: (
-    db: IDBDatabase,
-    transaction: IDBTransaction
-  ) => void | Promise<void>
+  downgrade?: (db: IDBDatabase, transaction: IDBTransaction) => void | Promise<void>
 }
 
 /** 数据库连接状态信息。 */

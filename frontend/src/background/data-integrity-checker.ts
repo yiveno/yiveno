@@ -38,10 +38,7 @@ async function performDailySync(): Promise<void> {
     await bookmarkSyncService.syncAllBookmarks()
 
     const totalElapsed = performance.now() - syncStart
-    logger.info(
-      'DailySync',
-      `✅ 定期全量同步完成，总耗时: ${totalElapsed.toFixed(0)}ms`
-    )
+    logger.info('DailySync', `✅ 定期全量同步完成，总耗时: ${totalElapsed.toFixed(0)}ms`)
   } catch (error) {
     logger.error('DailySync', '❌ 定期全量同步失败', error)
     // 同步失败不影响正常使用，只记录日志
@@ -71,10 +68,7 @@ export function initializeDataIntegrityChecker(): void {
     periodInMinutes: SYNC_INTERVAL_MINUTES
   })
 
-  logger.info(
-    'DailySync',
-    `✅ 定期同步器已启动，同步间隔: ${SYNC_INTERVAL_MINUTES / 60} 小时`
-  )
+  logger.info('DailySync', `✅ 定期同步器已启动，同步间隔: ${SYNC_INTERVAL_MINUTES / 60} 小时`)
 
   // 3. 注册 Alarm 监听器
   chrome.alarms.onAlarm.addListener(alarm => {

@@ -35,9 +35,7 @@ export type KeyPath<T> = T extends object
   : never
 
 /** 一般函数类型定义。 */
-export type Callback<Args extends unknown[] = [], Return = void> = (
-  ...args: Args
-) => Return
+export type Callback<Args extends unknown[] = [], Return = void> = (...args: Args) => Return
 
 /** 异步函数类型定义。 */
 export type AsyncCallback<Args extends unknown[] = [], Return = void> = (
@@ -68,9 +66,7 @@ export interface JSONObject {
 }
 
 export type Constructor<T = unknown> = new (...args: unknown[]) => T
-export type AbstractConstructor<T = unknown> = abstract new (
-  ...args: unknown[]
-) => T
+export type AbstractConstructor<T = unknown> = abstract new (...args: unknown[]) => T
 
 export type AnyFunction = (...args: unknown[]) => unknown
 export type AnyObject = Record<string, unknown>

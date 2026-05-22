@@ -96,7 +96,7 @@ export function generateCSSString(): string {
 
 /**
  * 为插件前端生成 Chrome Material Design CSS 变量
- * 
+ *
  * ⚠️ 注意：Material Design 颜色已经在 material-theme.css 中定义
  * 这里只保留语义化颜色的映射
  */
@@ -105,12 +105,12 @@ export function generateMaterialCSSVars() {
     // Material Design 主题色
     '--acuity-brand-primary': colors.material.primary.css,
     '--acuity-brand-secondary': colors.material.secondary.css,
-    
+
     // 语义化颜色
     '--acuity-semantic-success': colors.semantic.success.css,
     '--acuity-semantic-warning': colors.semantic.warning.css,
     '--acuity-semantic-info': colors.semantic.info.css,
-    
+
     // 强调色
     '--acuity-accent-gold': colors.accent.gold.css,
     '--acuity-accent-teal': colors.accent.teal.css,

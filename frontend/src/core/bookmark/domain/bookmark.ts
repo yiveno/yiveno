@@ -31,12 +31,7 @@ export function getBookmarkType(node: BookmarkNode): BookmarkType {
 /**
  * 书签操作类型
  */
-export type BookmarkOperation =
-  | 'create'
-  | 'update'
-  | 'delete'
-  | 'move'
-  | 'reorder'
+export type BookmarkOperation = 'create' | 'update' | 'delete' | 'move' | 'reorder'
 
 /**
  * 书签变更事件

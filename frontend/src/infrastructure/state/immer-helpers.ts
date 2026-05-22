@@ -54,10 +54,7 @@ enableMapSet()
  * })
  * ```
  */
-export function updateRef<T>(
-  ref: Ref<T>,
-  updater: (draft: Draft<T>) => void
-): void {
+export function updateRef<T>(ref: Ref<T>, updater: (draft: Draft<T>) => void): void {
   ref.value = produce(ref.value, updater) as T
 }
 
@@ -76,10 +73,7 @@ export function updateRef<T>(
  * })
  * ```
  */
-export function updateState<T>(
-  state: T,
-  updater: (draft: Draft<T>) => void
-): T {
+export function updateState<T>(state: T, updater: (draft: Draft<T>) => void): T {
   return produce(state, updater) as T
 }
 
@@ -125,10 +119,7 @@ export function updateMap<K, V>(
  * })
  * ```
  */
-export function updateArray<T>(
-  arrayRef: Ref<T[]>,
-  updater: (draft: Draft<T[]>) => void
-): void {
+export function updateArray<T>(arrayRef: Ref<T[]>, updater: (draft: Draft<T[]>) => void): void {
   arrayRef.value = produce(arrayRef.value, updater)
 }
 
@@ -178,10 +169,7 @@ export function conditionalUpdate<T>(
  * ])
  * ```
  */
-export function batchUpdate<T>(
-  ref: Ref<T>,
-  updaters: Array<(draft: Draft<T>) => void>
-): void {
+export function batchUpdate<T>(ref: Ref<T>, updaters: Array<(draft: Draft<T>) => void>): void {
   ref.value = produce(ref.value, draft => {
     for (const updater of updaters) {
       updater(draft)

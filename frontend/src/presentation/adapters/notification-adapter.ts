@@ -57,11 +57,7 @@ export class NotificationPresentationAdapter {
    * @param message - 通知内容
    * @param level - 通知级别
    */
-  showSystemNotification(
-    title: string,
-    message: string,
-    level: NotificationLevel = 'info'
-  ): void {
+  showSystemNotification(title: string, message: string, level: NotificationLevel = 'info'): void {
     try {
       notificationService.notify(message, {
         title,
@@ -102,5 +98,4 @@ export class NotificationPresentationAdapter {
 /**
  * 默认通知适配器实例
  */
-export const notificationPresentationAdapter =
-  new NotificationPresentationAdapter()
+export const notificationPresentationAdapter = new NotificationPresentationAdapter()

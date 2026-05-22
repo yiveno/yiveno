@@ -78,13 +78,7 @@ const showActions = computed(() => {
  * 判断阶段是否已完成
  */
 function isPhaseCompleted(phase: SyncPhase): boolean {
-  const phaseOrder: SyncPhase[] = [
-    'fetching',
-    'converting',
-    'writing',
-    'indexing',
-    'completed'
-  ]
+  const phaseOrder: SyncPhase[] = ['fetching', 'converting', 'writing', 'indexing', 'completed']
   const currentIndex = phaseOrder.indexOf(props.progress.phase)
   const checkIndex = phaseOrder.indexOf(phase)
 
@@ -106,96 +100,84 @@ function isPhaseCompleted(phase: SyncPhase): boolean {
     </template>
 
     <!-- 正文：使用默认插槽（原误用 #content，Dialog 未定义该槽位） -->
-      <!-- ✅ 错误状态 -->
-      <div v-if="isError" class="error-content">
-        <div class="error-icon">
-          <LucideIcon name="alert-circle" :size="64" />
-        </div>
-        <div class="error-message">
-          {{ progress.error?.message || '同步过程中发生错误' }}
-        </div>
-        <div v-if="progress.error?.type === 'timeout'" class="error-hint">
-          <LucideIcon name="info" :size="20" />
-          <span>可能原因：网络缓慢、书签数量过多、或浏览器资源不足</span>
-        </div>
-        <div v-if="progress.error?.retryCount" class="retry-count">
-          已重试 {{ progress.error.retryCount }} 次
-        </div>
+    <!-- ✅ 错误状态 -->
+    <div v-if="isError" class="error-content">
+      <div class="error-icon">
+        <LucideIcon name="alert-circle" :size="64" />
       </div>
+      <div class="error-message">
+        {{ progress.error?.message || '同步过程中发生错误' }}
+      </div>
+      <div v-if="progress.error?.type === 'timeout'" class="error-hint">
+        <LucideIcon name="info" :size="20" />
+        <span>可能原因：网络缓慢、书签数量过多、或浏览器资源不足</span>
+      </div>
+      <div v-if="progress.error?.retryCount" class="retry-count">
+        已重试 {{ progress.error.retryCount }} 次
+      </div>
+    </div>
 
-      <!-- ✅ 正常进度 -->
-      <div v-else class="sync-progress-content">
-        <!-- 阶段指示器 -->
-        <div class="phase-indicators">
-          <div
-            v-for="phase in phases"
-            :key="phase.key"
-            class="phase-item"
-            :class="{
-              active: progress.phase === phase.key,
-              completed: isPhaseCompleted(phase.key)
-            }"
-          >
-            <div class="phase-icon">
-              <LucideIcon
-                :name="phase.icon"
-                :class="{ spin: progress.phase === phase.key && !isCompleted }"
-              />
-            </div>
-            <span class="phase-label">{{ phase.label }}</span>
-          </div>
-        </div>
-
-        <!-- 进度条 -->
-        <div class="progress-bar-container">
-          <div class="progress-bar">
-            <div
-              class="progress-fill"
-              :style="{ width: `${progress.percentage}%` }"
+    <!-- ✅ 正常进度 -->
+    <div v-else class="sync-progress-content">
+      <!-- 阶段指示器 -->
+      <div class="phase-indicators">
+        <div
+          v-for="phase in phases"
+          :key="phase.key"
+          class="phase-item"
+          :class="{
+            active: progress.phase === phase.key,
+            completed: isPhaseCompleted(phase.key)
+          }"
+        >
+          <div class="phase-icon">
+            <LucideIcon
+              :name="phase.icon"
+              :class="{ spin: progress.phase === phase.key && !isCompleted }"
             />
           </div>
-          <div class="progress-percentage">
-            {{ Math.round(progress.percentage) }}%
-          </div>
-        </div>
-
-        <!-- 详细信息 -->
-        <div class="progress-details">
-          <div class="progress-message">
-            {{ progress.message }}
-          </div>
-          <div class="progress-stats">
-            <span v-if="progress.total > 0" class="stat-item">
-              <LucideIcon name="file" :size="14" class="stat-icon" />
-              {{ formatNumber(progress.current) }} /
-              {{ formatNumber(progress.total) }}
-            </span>
-            <span
-              v-if="
-                progress.estimatedRemaining && progress.estimatedRemaining > 0
-              "
-              class="stat-item"
-            >
-              <LucideIcon name="clock" :size="14" class="stat-icon" />
-              剩余约 {{ formatTime(progress.estimatedRemaining) }}
-            </span>
-          </div>
+          <span class="phase-label">{{ phase.label }}</span>
         </div>
       </div>
+
+      <!-- 进度条 -->
+      <div class="progress-bar-container">
+        <div class="progress-bar">
+          <div class="progress-fill" :style="{ width: `${progress.percentage}%` }" />
+        </div>
+        <div class="progress-percentage">{{ Math.round(progress.percentage) }}%</div>
+      </div>
+
+      <!-- 详细信息 -->
+      <div class="progress-details">
+        <div class="progress-message">
+          {{ progress.message }}
+        </div>
+        <div class="progress-stats">
+          <span v-if="progress.total > 0" class="stat-item">
+            <LucideIcon name="file" :size="14" class="stat-icon" />
+            {{ formatNumber(progress.current) }} /
+            {{ formatNumber(progress.total) }}
+          </span>
+          <span
+            v-if="progress.estimatedRemaining && progress.estimatedRemaining > 0"
+            class="stat-item"
+          >
+            <LucideIcon name="clock" :size="14" class="stat-icon" />
+            剩余约 {{ formatTime(progress.estimatedRemaining) }}
+          </span>
+        </div>
+      </div>
+    </div>
 
     <template v-if="showActions" #actions>
       <!-- ✅ 错误时的操作 -->
       <template v-if="isError">
-        <md-filled-button
-          v-if="progress.error?.canRetry"
-          @click="emit('retry')"
-        >
+        <md-filled-button v-if="progress.error?.canRetry" @click="emit('retry')">
           <LucideIcon slot="icon" name="refresh" />
           重试
         </md-filled-button>
-        <md-text-button @click="emit('forceClose')">
-          忽略并继续
-        </md-text-button>
+        <md-text-button @click="emit('forceClose')"> 忽略并继续 </md-text-button>
       </template>
 
       <!-- ✅ 完成时的操作 -->
@@ -394,11 +376,7 @@ function isPhaseCompleted(phase: SyncPhase): boolean {
 .progress-fill {
   height: 100%;
   border-radius: var(--radius-md);
-  background: linear-gradient(
-    90deg,
-    var(--primary-color),
-    var(--primary-color-dark)
-  );
+  background: linear-gradient(90deg, var(--primary-color), var(--primary-color-dark));
   transition: width 0.3s ease;
 }
 

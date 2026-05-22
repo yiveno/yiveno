@@ -1,12 +1,12 @@
 /**
  * Ant Design 风格的 Notification 组合式函数
- * 
+ *
  * 用法：
  * ```ts
  * import { useNotification } from '@/composables/useNotification'
- * 
+ *
  * const notification = useNotification()
- * 
+ *
  * notification.success({
  *   message: '成功',
  *   description: '操作成功！',
@@ -72,7 +72,7 @@ class NotificationManager implements NotificationInterface {
 
     // 挂载到容器
     const vm = this.app.mount(this.container)
-    
+
     // 获取组件实例
     const refs = (vm as { $refs: Record<string, unknown> }).$refs
     this.instance = refs.notification as NotificationComponentInstance

@@ -86,10 +86,7 @@ export class BookmarkAPIGateway {
           { timestamp: message.timestamp || Date.now() },
           150
         )
-        logger.info(
-          'Component',
-          '📡 [前端] 已合并派发 acuity-bookmarks-db-synced 事件'
-        )
+        logger.info('Component', '📡 [前端] 已合并派发 acuity-bookmarks-db-synced 事件')
       }
       // 不需要响应，所以不调用sendResponse
     })
@@ -157,18 +154,14 @@ export class BookmarkAPIGateway {
       return this.enhanceBookmarkNodes(tree)
     } catch (error) {
       logger.error('Component', '❌ 获取书签树失败:', error)
-      throw new Error(
-        `获取书签树失败: ${error instanceof Error ? error.message : String(error)}`
-      )
+      throw new Error(`获取书签树失败: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 
   /**
    * 从扁平的 BookmarkRecord[] 构建树形结构
    */
-  private buildTreeFromFlat(
-    bookmarks: BookmarkRecord[]
-  ): chrome.bookmarks.BookmarkTreeNode[] {
+  private buildTreeFromFlat(bookmarks: BookmarkRecord[]): chrome.bookmarks.BookmarkTreeNode[] {
     const nodeMap = new Map<string, chrome.bookmarks.BookmarkTreeNode>()
     const rootNodes: chrome.bookmarks.BookmarkTreeNode[] = []
 
@@ -209,9 +202,7 @@ export class BookmarkAPIGateway {
   /**
    * 增强书签节点 - 添加现代特性
    */
-  private enhanceBookmarkNodes(
-    nodes: chrome.bookmarks.BookmarkTreeNode[]
-  ): EnhancedBookmarkNode[] {
+  private enhanceBookmarkNodes(nodes: chrome.bookmarks.BookmarkTreeNode[]): EnhancedBookmarkNode[] {
     return nodes.map(node => {
       const enhanced: EnhancedBookmarkNode = {
         ...node,
@@ -278,15 +269,13 @@ export class BookmarkAPIGateway {
     // 基于最后使用时间（Chrome 114+）
     const dateLastUsed = (node as EnhancedBookmarkNode).dateLastUsed
     if (dateLastUsed) {
-      const daysSinceLastUsed =
-        (Date.now() - dateLastUsed) / (1000 * 60 * 60 * 24)
+      const daysSinceLastUsed = (Date.now() - dateLastUsed) / (1000 * 60 * 60 * 24)
       score += Math.max(0, 100 - daysSinceLastUsed * 2)
     }
 
     // 基于创建时间
     if (node.dateAdded) {
-      const daysSinceCreated =
-        (Date.now() - node.dateAdded) / (1000 * 60 * 60 * 24)
+      const daysSinceCreated = (Date.now() - node.dateAdded) / (1000 * 60 * 60 * 24)
       if (daysSinceCreated < 7) score += 30 // 最近创建的书签
     }
 
@@ -325,9 +314,7 @@ export class BookmarkAPIGateway {
       return this.enhanceBookmarkNodes(nodes)
     } catch (error) {
       logger.error('Component', '❌ 获取最近书签失败:', error)
-      throw new Error(
-        `获取最近书签失败: ${error instanceof Error ? error.message : String(error)}`
-      )
+      throw new Error(`获取最近书签失败: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 
@@ -343,24 +330,17 @@ export class BookmarkAPIGateway {
   ): Promise<EnhancedBookmarkNode[]> {
     try {
       const tree = await this.getEnhancedBookmarkTree()
-      const flatBookmarks = this.flattenBookmarkTree(tree).filter(
-        node => node.url
-      )
+      const flatBookmarks = this.flattenBookmarkTree(tree).filter(node => node.url)
 
       // 计算推荐评分
       const recommendations = flatBookmarks.map(bookmark => ({
         ...bookmark,
-        recommendationScore: this.calculateRecommendationScore(
-          bookmark,
-          context
-        )
+        recommendationScore: this.calculateRecommendationScore(bookmark, context)
       }))
 
       // 按评分排序并返回top结果
       return recommendations
-        .sort(
-          (a, b) => (b.recommendationScore || 0) - (a.recommendationScore || 0)
-        )
+        .sort((a, b) => (b.recommendationScore || 0) - (a.recommendationScore || 0))
         .slice(0, maxResults)
     } catch (error) {
       logger.error('Component', '❌ 获取智能推荐失败:', error)
@@ -413,9 +393,7 @@ export class BookmarkAPIGateway {
   /**
    * 扁平化书签树
    */
-  private flattenBookmarkTree(
-    nodes: EnhancedBookmarkNode[]
-  ): EnhancedBookmarkNode[] {
+  private flattenBookmarkTree(nodes: EnhancedBookmarkNode[]): EnhancedBookmarkNode[] {
     const flattened: EnhancedBookmarkNode[] = []
 
     function traverse(nodeArray: EnhancedBookmarkNode[]) {
@@ -469,16 +447,13 @@ export async function searchBookmarks(options: BookmarkSearchOptions) {
         parentId: r.bookmark.parentId,
         dateAdded: r.bookmark.dateAdded,
         // 兼容字段
-        dateLastUsed: (r.bookmark as unknown as EnhancedBookmarkNode)
-          .dateLastUsed,
+        dateLastUsed: (r.bookmark as unknown as EnhancedBookmarkNode).dateLastUsed,
         // 预计算域名（若存在）
         domain: r.bookmark.domain
       }) as EnhancedBookmarkNode
   )
 }
 
-export async function getBookmarkRecommendations(
-  context?: BookmarkRecommendationContext
-) {
+export async function getBookmarkRecommendations(context?: BookmarkRecommendationContext) {
   return bookmarkAPIGateway.getSmartRecommendations(context)
 }

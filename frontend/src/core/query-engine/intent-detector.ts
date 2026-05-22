@@ -9,15 +9,55 @@
 
 /** 技术关键词集合（命中则倾向 Fuse） */
 const TECH_KEYWORDS = new Set([
-  'css', 'js', 'ts', 'vue', 'react', 'api', 'sql', 'git', 'npm', 'cdn',
-  'html', 'php', 'ios', 'ui', 'ux', 'ai', 'ml', 'db', 'http', 'url',
-  'svg', 'png', 'pdf', 'json', 'xml', 'rss', 'ssh', 'ftp', 'dns', 'ip'
+  'css',
+  'js',
+  'ts',
+  'vue',
+  'react',
+  'api',
+  'sql',
+  'git',
+  'npm',
+  'cdn',
+  'html',
+  'php',
+  'ios',
+  'ui',
+  'ux',
+  'ai',
+  'ml',
+  'db',
+  'http',
+  'url',
+  'svg',
+  'png',
+  'pdf',
+  'json',
+  'xml',
+  'rss',
+  'ssh',
+  'ftp',
+  'dns',
+  'ip'
 ])
 
 /** 语义关键词集合（命中则倾向 Semantic/Hybrid） */
 const SEMANTIC_KEYWORDS = new Set([
-  '代码', '编程', '开发', '技术', '教程', '文档', '博客', '学习',
-  'code', 'programming', 'development', 'tutorial', 'documentation', 'blog', 'learning'
+  '代码',
+  '编程',
+  '开发',
+  '技术',
+  '教程',
+  '文档',
+  '博客',
+  '学习',
+  'code',
+  'programming',
+  'development',
+  'tutorial',
+  'documentation',
+  'blog',
+  'learning'
 ])
 
 /** 自然语言触发词（命中则倾向 Semantic） */
@@ -27,7 +67,7 @@ const NATURAL_TRIGGERS = [
 ]
 
 /** 最小触发语义搜索的字符数 */
-const MIN_SEMANTIC_LENGTH = 2  // 降低到 2，支持"代码"这样的短词
+const MIN_SEMANTIC_LENGTH = 2 // 降低到 2，支持"代码"这样的短词
 
 export type QueryIntent = 'fuse' | 'semantic' | 'hybrid'
 

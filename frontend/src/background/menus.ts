@@ -28,7 +28,7 @@ let menusRegistered = false
 export function registerMenusAndShortcuts(): void {
   /**
    * 注册菜单（幂等操作）
-   * 
+   *
    * 使用状态标记确保菜单只注册一次，避免重复注册
    */
   function registerMenus(): void {
@@ -165,7 +165,7 @@ async function handleQuickAddBookmark(
   linkUrl?: string
 ): Promise<void> {
   console.log('🚀 [DEBUG] handleQuickAddBookmark 被调用', { tab, linkUrl })
-  
+
   if (!tab) {
     logger.warn('Menus', '无法获取当前标签页')
     console.warn('⚠️ [DEBUG] 无法获取当前标签页')
@@ -224,7 +224,7 @@ async function handleAIAutoAddBookmark(bookmarkData: {
   favIconUrl?: string | undefined
 }): Promise<void> {
   console.log('🤖 [DEBUG] handleAIAutoAddBookmark 开始', bookmarkData)
-  
+
   try {
     logger.info('Menus', '🤖 AI 自动添加书签 - 开始', bookmarkData)
 
@@ -232,16 +232,16 @@ async function handleAIAutoAddBookmark(bookmarkData: {
     // ✅ 避免使用 chrome.runtime.sendMessage（在 Service Worker 中可能不可靠）
     logger.info('Menus', '📤 准备获取文件夹推荐...')
     console.log('📤 [DEBUG] 准备获取文件夹推荐...')
-    
+
     let folderId: string
-    
+
     try {
       // 动态导入 messaging.ts 的导出函数
       const { getFolderRecommendations } = await import('./messaging')
-      
+
       console.log('✅ [DEBUG] messaging 模块已导入')
       logger.info('Menus', '✅ messaging 模块已导入')
-      
+
       // 调用推荐函数
       const recommendations = await getFolderRecommendations(
         bookmarkData.title,
@@ -263,7 +263,10 @@ async function handleAIAutoAddBookmark(bookmarkData: {
           throw new Error('推荐结果为空')
         }
         folderId = topRecommendation.folderId
-        console.log('✅ [DEBUG] 使用 AI 推荐', { folderId, folderPath: topRecommendation.folderPath })
+        console.log('✅ [DEBUG] 使用 AI 推荐', {
+          folderId,
+          folderPath: topRecommendation.folderPath
+        })
         logger.info('Menus', '✅ AI 推荐文件夹', {
           folderId,
           folderPath: topRecommendation.folderPath,
@@ -301,7 +304,7 @@ async function handleAIAutoAddBookmark(bookmarkData: {
       title: bookmarkData.title,
       url: bookmarkData.url
     })
-    
+
     const newBookmark = await chrome.bookmarks.create({
       parentId: folderId,
       title: bookmarkData.title,
@@ -362,10 +365,9 @@ async function handleManualAddBookmark(
 
     if (isSpecialPage) {
       // 特殊页面无法注入 content script，直接提示不支持
-      void showSystemNotification(
-        '此页面类型不支持快速添加书签功能。请在普通网页上使用此功能。',
-        { title: '无法添加书签' }
-      )
+      void showSystemNotification('此页面类型不支持快速添加书签功能。请在普通网页上使用此功能。', {
+        title: '无法添加书签'
+      })
       return
     }
 
@@ -373,27 +375,23 @@ async function handleManualAddBookmark(
     // 前置检查：确保tab状态正常
     if (!tab.id || tab.id < 0) {
       logger.error('Menus', '❌ Tab ID 无效', { tabId: tab.id })
-      void showSystemNotification(
-        '无法获取当前标签页信息，请刷新页面后重试。',
-        { title: '无法添加书签' }
-      )
+      void showSystemNotification('无法获取当前标签页信息，请刷新页面后重试。', {
+        title: '无法添加书签'
+      })
       return
     }
 
     // 检查URL是否有效（避免about:blank等无效状态）
     if (!url || url === 'about:blank' || url === 'about:srcdoc') {
       logger.error('Menus', '❌ URL 无效或页面未加载完成', { url })
-      void showSystemNotification(
-        '当前页面还未加载完成，请等待页面加载后再试。',
-        { title: '无法添加书签' }
-      )
+      void showSystemNotification('当前页面还未加载完成，请等待页面加载后再试。', {
+        title: '无法添加书签'
+      })
       return
     }
 
     // 验证content script文件是否存在（通过runtime.getURL检查）
-    const scriptUrl = chrome.runtime.getURL(
-      'content/inject-quick-add-dialog.js'
-    )
+    const scriptUrl = chrome.runtime.getURL('content/inject-quick-add-dialog.js')
     logger.info('Menus', '准备注入 content script', {
       tabId: tab.id,
       url,
@@ -438,10 +436,7 @@ async function handleManualAddBookmark(
 
             if (pingResponse?.ready) {
               scriptReady = true
-              logger.info(
-                'Menus',
-                `✅ Content script 已就绪 (等待了 ${i * 50}ms)`
-              )
+              logger.info('Menus', `✅ Content script 已就绪 (等待了 ${i * 50}ms)`)
               break
             }
           } catch {
@@ -451,9 +446,7 @@ async function handleManualAddBookmark(
         }
 
         if (!scriptReady) {
-          throw new Error(
-            `Content script未响应心跳检测（等待了${maxPingAttempts * 50}ms）`
-          )
+          throw new Error(`Content script未响应心跳检测（等待了${maxPingAttempts * 50}ms）`)
         }
 
         // 步骤4: 发送显示对话框消息
@@ -477,11 +470,7 @@ async function handleManualAddBookmark(
           tabId: tab.id
         }
 
-        logger.warn(
-          'Menus',
-          `❌ 注入失败 (尝试 ${attempt}/${maxRetries})`,
-          errorDetails
-        )
+        logger.warn('Menus', `❌ 注入失败 (尝试 ${attempt}/${maxRetries})`, errorDetails)
 
         // 如果是最后一次尝试，记录完整错误
         if (attempt === maxRetries) {
@@ -518,7 +507,6 @@ async function handleManualAddBookmark(
     logger.error('Menus', '手动添加书签失败', error)
   }
 }
-
 
 /**
  * 获取文件夹路径
@@ -568,10 +556,7 @@ async function showBookmarkAddedNotification(
     })
 
     // 监听通知按钮点击
-    const handleNotificationClick = async (
-      clickedNotificationId: string,
-      buttonIndex?: number
-    ) => {
+    const handleNotificationClick = async (clickedNotificationId: string, buttonIndex?: number) => {
       // 只处理当前通知的点击事件
       if (clickedNotificationId !== notificationId) {
         return
@@ -597,9 +582,7 @@ async function showBookmarkAddedNotification(
 
       // 清除通知
       await chrome.notifications.clear(notificationId)
-      chrome.notifications.onButtonClicked.removeListener(
-        handleNotificationClick
-      )
+      chrome.notifications.onButtonClicked.removeListener(handleNotificationClick)
     }
 
     chrome.notifications.onButtonClicked.addListener(handleNotificationClick)

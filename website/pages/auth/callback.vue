@@ -40,9 +40,7 @@ onMounted(async () => {
         <div class="error-icon">✖</div>
         <h1 class="error-title">登录失败</h1>
         <p class="error-message">{{ error }}</p>
-        <NuxtLink to="/login" class="error-button">
-          返回登录
-        </NuxtLink>
+        <NuxtLink to="/login" class="error-button"> 返回登录 </NuxtLink>
       </div>
       <div v-else class="callback-loading">
         <div class="loading-spinner"></div>

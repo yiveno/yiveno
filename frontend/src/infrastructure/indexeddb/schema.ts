@@ -170,7 +170,7 @@ export interface FaviconCacheRecord {
 
 /**
  * 爬虫元数据记录
- * 
+ *
  * 精简版：只保留失效书签检测所需的核心字段
  */
 export interface CrawlMetadataRecord {
@@ -216,7 +216,7 @@ export interface EmbeddingRecord {
 
 /**
  * 文件夹向量记录
- * 
+ *
  * 用于智能书签分类推荐
  * 每个文件夹的向量是该文件夹下所有书签向量的平均值
  */

@@ -46,11 +46,7 @@ const chartValues = [30, 70, 45, 90, 55]
         </template>
         <template v-else-if="feature.preview === 'chart'">
           <div class="bars">
-            <span
-              v-for="(val, idx) in chartValues"
-              :key="idx"
-              :style="{ height: val + '%' }"
-            />
+            <span v-for="(val, idx) in chartValues" :key="idx" :style="{ height: val + '%' }" />
           </div>
         </template>
         <template v-else>
@@ -73,8 +69,8 @@ const chartValues = [30, 70, 45, 90, 55]
 article {
   padding: 1.75rem;
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(148, 163, 184, 0.15);
-  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgb(148 163 184 / 15%);
+  background: rgb(15 23 42 / 65%);
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -93,14 +89,14 @@ article {
 .tag {
   font-size: 0.75rem;
   letter-spacing: 0.1em;
-  color: rgba(56, 189, 248, 0.7);
+  color: rgb(56 189 248 / 70%);
 }
 
 .preview {
   border-radius: 18px;
-  border: 1px solid rgba(148, 163, 184, 0.12);
+  border: 1px solid rgb(148 163 184 / 12%);
   padding: 1rem;
-  background: rgba(2, 8, 23, 0.7);
+  background: rgb(2 8 23 / 70%);
   min-height: 150px;
 }
 
@@ -114,11 +110,7 @@ article {
 .bar {
   height: 12px;
   border-radius: 999px;
-  background: linear-gradient(
-    120deg,
-    rgba(56, 189, 248, 0.2),
-    rgba(124, 58, 237, 0.2)
-  );
+  background: linear-gradient(120deg, rgb(56 189 248 / 20%), rgb(124 58 237 / 20%));
 }
 
 .bar.long {
@@ -138,11 +130,7 @@ article {
 
 .preview.chart span {
   flex: 1;
-  background: linear-gradient(
-    180deg,
-    rgba(56, 189, 248, 0.9),
-    rgba(56, 189, 248, 0.1)
-  );
+  background: linear-gradient(180deg, rgb(56 189 248 / 90%), rgb(56 189 248 / 10%));
   border-radius: 8px 8px 4px 4px;
   animation: pulse 4s ease-in-out infinite;
 }
@@ -156,16 +144,18 @@ article {
 .preview.grid span {
   height: 36px;
   border-radius: 8px;
-  background: rgba(124, 58, 237, 0.3);
+  background: rgb(124 58 237 / 30%);
 }
 
 @keyframes pulse {
   0% {
     opacity: 0.6;
   }
+
   50% {
     opacity: 1;
   }
+
   100% {
     opacity: 0.6;
   }

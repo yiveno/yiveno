@@ -1,6 +1,6 @@
 /**
  * Hono 应用主入口
- * 
+ *
  * 使用 Hono 框架构建的 Cloudflare Worker 应用
  */
 
@@ -31,47 +31,53 @@ export function createApp() {
 
   /**
    * 安全响应头中间件
-   * 
+   *
    * 添加安全响应头（X-Content-Type-Options, X-Frame-Options 等）
    */
   app.use('*', secureHeadersMiddleware())
 
   /**
    * CORS 中间件
-   * 
+   *
    * 安全策略：只允许特定域名访问 API
    */
-  app.use('*', cors({
-    origin: (origin) => {
-      // Chrome Extension 的 origin 格式：chrome-extension://extension-id
-      const isChromeExtension = origin.startsWith('chrome-extension://')
-      
-      // 检查是否为允许的来源
-      if (ALLOWED_ORIGINS.includes(origin) || isChromeExtension) {
-        return origin
-      }
-      
-      // 不允许的来源：返回 null（浏览器会阻止请求）
-      return null
-    },
-    allowMethods: ['GET', 'POST', 'OPTIONS'],
-    allowHeaders: ['content-type', 'authorization'],
-    credentials: true,
-    maxAge: 86400 // 24 小时
-  }))
+  app.use(
+    '*',
+    cors({
+      origin: origin => {
+        // Chrome Extension 的 origin 格式：chrome-extension://extension-id
+        const isChromeExtension = origin.startsWith('chrome-extension://')
+
+        // 检查是否为允许的来源
+        if (ALLOWED_ORIGINS.includes(origin) || isChromeExtension) {
+          return origin
+        }
+
+        // 不允许的来源：返回 null（浏览器会阻止请求）
+        return null
+      },
+      allowMethods: ['GET', 'POST', 'OPTIONS'],
+      allowHeaders: ['content-type', 'authorization'],
+      credentials: true,
+      maxAge: 86400 // 24 小时
+    })
+  )
 
   /**
    * 日志中间件
-   * 
+   *
    * 记录所有请求和响应
    */
-  app.use('*', honoLogger((message) => {
-    console.log(message)
-  }))
+  app.use(
+    '*',
+    honoLogger(message => {
+      console.log(message)
+    })
+  )
 
   /**
    * 自定义日志中间件
-   * 
+   *
    * 使用项目的日志工具记录详细信息
    */
   app.use('*', async (c, next) => {
@@ -82,7 +88,7 @@ export function createApp() {
 
     try {
       await next()
-      
+
       const response = c.res
       logResponse(request, response, Date.now() - startTime)
     } catch (err) {
@@ -99,7 +105,7 @@ export function createApp() {
 
   /**
    * 健康检查路由
-   * 
+   *
    * GET /health
    * GET /api/health
    */
@@ -107,7 +113,7 @@ export function createApp() {
 
   /**
    * 管理员路由（需要 JWT 认证）
-   * 
+   *
    * GET /api/admin/env/check
    */
   app.use('/api/admin/*', jwtAuth())
@@ -115,7 +121,7 @@ export function createApp() {
 
   /**
    * 认证路由
-   * 
+   *
    * GET /api/auth/providers
    * GET /api/auth/start
    * GET /api/auth/callback
@@ -124,14 +130,14 @@ export function createApp() {
 
   /**
    * AI 路由
-   * 
+   *
    * GET/POST /api/ai/complete
    */
   app.route('/api/ai', aiRouter)
 
   /**
    * Gumroad 支付路由（需要 JWT 认证）
-   * 
+   *
    * GET /api/gumroad/subscription
    * POST /api/gumroad/webhook
    */
@@ -140,7 +146,7 @@ export function createApp() {
 
   /**
    * tRPC 路由
-   * 
+   *
    * ALL /trpc/*
    */
   app.route('/trpc', trpcRouter)
@@ -150,7 +156,7 @@ export function createApp() {
   /**
    * 404 Not Found
    */
-  app.notFound((c) => {
+  app.notFound(c => {
     return c.json({ error: 'Not Found' }, 404)
   })
 

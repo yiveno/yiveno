@@ -125,16 +125,11 @@ export class BuiltInLLMClient {
   /**
    * 文本补全
    */
-  async complete(
-    prompt: string,
-    options?: LLMCompleteOptions
-  ): Promise<LLMCompleteResult> {
+  async complete(prompt: string, options?: LLMCompleteOptions): Promise<LLMCompleteResult> {
     const capability = await this.detectCapability()
 
     if (!capability.available) {
-      throw new Error(
-        `Chrome 内置 LLM 不可用: ${capability.reason || '未知原因'}`
-      )
+      throw new Error(`Chrome 内置 LLM 不可用: ${capability.reason || '未知原因'}`)
     }
 
     const ai = window.ai as BuiltInLLMAPI

@@ -56,17 +56,23 @@ interface PerformanceStats {
   /** 总耗时（毫秒） */
   totalDuration: number
   /** 按操作类型分组的统计 */
-  byType: Record<OperationType, {
-    count: number
-    averageDuration: number
-    successRate: number
-  }>
+  byType: Record<
+    OperationType,
+    {
+      count: number
+      averageDuration: number
+      successRate: number
+    }
+  >
   /** 按对象存储分组的统计 */
-  byStore: Record<string, {
-    count: number
-    averageDuration: number
-    successRate: number
-  }>
+  byStore: Record<
+    string,
+    {
+      count: number
+      averageDuration: number
+      successRate: number
+    }
+  >
 }
 
 /**
@@ -120,9 +126,7 @@ export class PerformanceMonitor {
    */
   getStats(timeRange: number = 5 * 60 * 1000): PerformanceStats {
     const now = Date.now()
-    const recentMetrics = this.metrics.filter(
-      m => now - m.timestamp <= timeRange
-    )
+    const recentMetrics = this.metrics.filter(m => now - m.timestamp <= timeRange)
 
     if (recentMetrics.length === 0) {
       return this.getEmptyStats()
@@ -142,7 +146,7 @@ export class PerformanceMonitor {
     // 按操作类型分组
     const byType: PerformanceStats['byType'] = {} as PerformanceStats['byType']
     const types: OperationType[] = ['read', 'write', 'delete', 'clear', 'count']
-    
+
     for (const type of types) {
       const typeMetrics = recentMetrics.filter(m => m.type === type)
       if (typeMetrics.length > 0) {
@@ -158,7 +162,7 @@ export class PerformanceMonitor {
     // 按对象存储分组
     const byStore: PerformanceStats['byStore'] = {}
     const storeNames = [...new Set(recentMetrics.map(m => m.storeName))]
-    
+
     for (const storeName of storeNames) {
       const storeMetrics = recentMetrics.filter(m => m.storeName === storeName)
       const storeSuccessful = storeMetrics.filter(m => m.success).length
@@ -281,11 +285,7 @@ export const performanceMonitor = new PerformanceMonitor()
  * ```
  */
 export function monitorPerformance(type: OperationType, storeName: string) {
-  return function (
-    _target: unknown,
-    _propertyKey: string,
-    descriptor: PropertyDescriptor
-  ) {
+  return function (_target: unknown, _propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value
 
     descriptor.value = async function (...args: unknown[]) {

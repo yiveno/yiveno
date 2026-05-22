@@ -39,7 +39,7 @@ const selectRef = ref<AsyncSearchSelectInstance | null>(null)
 const handleSearch = async (query: string) => {
   // 调用 API 搜索
   const results = await searchAPI(query)
-  
+
   // 转换为 SelectOption 格式
   const options: SelectOption[] = results.map(item => ({
     value: item.id,
@@ -47,7 +47,7 @@ const handleSearch = async (query: string) => {
     description: item.email,
     raw: item
   }))
-  
+
   // 设置搜索结果
   selectRef.value?.setOptions(options)
 }
@@ -115,34 +115,34 @@ const handleSelectedChange = (options: SelectOption[]) => {
 
 ## Props
 
-| 属性 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `label` | `string` | `'搜索'` | 输入框标签 |
-| `placeholder` | `string` | `'输入关键词搜索...'` | 输入框占位符 |
-| `multiple` | `boolean` | `false` | 是否多选 |
-| `minSearchLength` | `number` | `2` | 最小搜索长度 |
-| `emptyText` | `string` | `'未找到匹配结果'` | 无结果提示文本 |
-| `debounce` | `number` | `300` | 防抖延迟（毫秒） |
+| 属性              | 类型      | 默认值                | 说明             |
+| ----------------- | --------- | --------------------- | ---------------- |
+| `label`           | `string`  | `'搜索'`              | 输入框标签       |
+| `placeholder`     | `string`  | `'输入关键词搜索...'` | 输入框占位符     |
+| `multiple`        | `boolean` | `false`               | 是否多选         |
+| `minSearchLength` | `number`  | `2`                   | 最小搜索长度     |
+| `emptyText`       | `string`  | `'未找到匹配结果'`    | 无结果提示文本   |
+| `debounce`        | `number`  | `300`                 | 防抖延迟（毫秒） |
 
 ## Events
 
-| 事件 | 参数 | 说明 |
-|------|------|------|
-| `search` | `(query: string)` | 搜索事件，返回搜索关键词 |
-| `change` | `(values: string[])` | 选择变化，返回选中的值数组 |
+| 事件              | 参数                        | 说明                             |
+| ----------------- | --------------------------- | -------------------------------- |
+| `search`          | `(query: string)`           | 搜索事件，返回搜索关键词         |
+| `change`          | `(values: string[])`        | 选择变化，返回选中的值数组       |
 | `update:selected` | `(options: SelectOption[])` | 选择变化，返回选中的选项对象数组 |
 
 ## 实例方法
 
 通过 `ref` 可以调用以下方法：
 
-| 方法 | 参数 | 返回值 | 说明 |
-|------|------|--------|------|
-| `setOptions` | `(options: SelectOption[])` | `void` | 设置搜索结果 |
-| `setLoading` | `(loading: boolean)` | `void` | 设置 loading 状态 |
-| `clearSelection` | `()` | `void` | 清空选择 |
-| `getSelectedValues` | `()` | `string[]` | 获取选中的值 |
-| `getSelectedOptions` | `()` | `SelectOption[]` | 获取选中的选项 |
+| 方法                 | 参数                        | 返回值           | 说明              |
+| -------------------- | --------------------------- | ---------------- | ----------------- |
+| `setOptions`         | `(options: SelectOption[])` | `void`           | 设置搜索结果      |
+| `setLoading`         | `(loading: boolean)`        | `void`           | 设置 loading 状态 |
+| `clearSelection`     | `()`                        | `void`           | 清空选择          |
+| `getSelectedValues`  | `()`                        | `string[]`       | 获取选中的值      |
+| `getSelectedOptions` | `()`                        | `SelectOption[]` | 获取选中的选项    |
 
 ## SelectOption 接口
 
@@ -174,7 +174,7 @@ interface SelectOption {
       @search="handleUserSearch"
       @change="handleUserChange"
     />
-    
+
     <div v-if="selectedUserIds.length > 0" class="selected-info">
       已选择 {{ selectedUserIds.length }} 个用户
     </div>
@@ -194,10 +194,10 @@ const handleUserSearch = async (query: string) => {
   try {
     // 设置 loading
     userSelectRef.value?.setLoading(true)
-    
+
     // 调用 API
     const result = await trpc.user.search.query({ query })
-    
+
     // 转换为 SelectOption
     const options: SelectOption[] = result.data.map(user => ({
       value: user.id,
@@ -205,7 +205,7 @@ const handleUserSearch = async (query: string) => {
       description: user.email,
       raw: user
     }))
-    
+
     // 设置结果
     userSelectRef.value?.setOptions(options)
   } catch (error) {
@@ -228,7 +228,7 @@ const handleUserChange = (userIds: string[]) => {
 .async-search-select {
   /* 下拉菜单最大高度 */
   --dropdown-max-height: 320px;
-  
+
   /* 下拉菜单 z-index */
   --dropdown-z-index: 1000;
 }
@@ -244,13 +244,13 @@ const handleUserChange = (userIds: string[]) => {
 
 ## 与 Ant Design Select 的对比
 
-| 特性 | AsyncSearchSelect | Ant Design Select |
-|------|-------------------|-------------------|
-| 异步搜索 | ✅ | ✅ |
-| 多选 | ✅ | ✅ |
-| Loading 状态 | ✅ | ✅ |
-| 防抖 | ✅ 内置 | ❌ 需手动实现 |
-| 无结果提示 | ✅ | ✅ |
-| Chips 展示 | ✅ | ✅ |
-| 依赖 | 无外部依赖 | 需要 Ant Design |
-| 样式 | Material Design 3 | Ant Design |
+| 特性         | AsyncSearchSelect | Ant Design Select |
+| ------------ | ----------------- | ----------------- |
+| 异步搜索     | ✅                | ✅                |
+| 多选         | ✅                | ✅                |
+| Loading 状态 | ✅                | ✅                |
+| 防抖         | ✅ 内置           | ❌ 需手动实现     |
+| 无结果提示   | ✅                | ✅                |
+| Chips 展示   | ✅                | ✅                |
+| 依赖         | 无外部依赖        | 需要 Ant Design   |
+| 样式         | Material Design 3 | Ant Design        |

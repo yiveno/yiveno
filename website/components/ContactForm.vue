@@ -29,23 +29,11 @@ const handleSubmit = async () => {
   <form class="contact-form" @submit.prevent="handleSubmit">
     <div class="field">
       <label for="name">姓名 *</label>
-      <input
-        id="name"
-        v-model="form.name"
-        required
-        type="text"
-        placeholder="请输入您的姓名"
-      />
+      <input id="name" v-model="form.name" required type="text" placeholder="请输入您的姓名" />
     </div>
     <div class="field">
       <label for="email">邮箱 *</label>
-      <input
-        id="email"
-        v-model="form.email"
-        required
-        type="email"
-        placeholder="your@email.com"
-      />
+      <input id="email" v-model="form.email" required type="email" placeholder="your@email.com" />
     </div>
     <div class="field">
       <label for="message">消息 *</label>
@@ -107,8 +95,8 @@ label {
 input,
 textarea {
   border-radius: 14px;
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgb(148 163 184 / 30%);
+  background: rgb(15 23 42 / 60%);
   padding: 0.85rem 1rem;
   color: var(--text-primary);
   font-size: 0.95rem;
@@ -120,8 +108,8 @@ textarea {
 
 input:focus,
 textarea:focus {
-  border-color: rgba(56, 189, 248, 0.6);
-  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+  border-color: rgb(56 189 248 / 60%);
+  box-shadow: 0 0 0 3px rgb(56 189 248 / 15%);
   outline: none;
 }
 

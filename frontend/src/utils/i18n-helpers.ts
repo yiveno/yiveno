@@ -1,6 +1,6 @@
 /**
  * 国际化辅助工具
- * 
+ *
  * 提供便捷的国际化函数和 Vue Composable
  */
 
@@ -10,13 +10,13 @@ import { i18nService } from '@/infrastructure/i18n/i18n-service'
 /**
  * Vue Composable - 国际化
  * @returns 国际化相关的响应式函数和状态
- * 
+ *
  * @example
  * ```vue
  * <script setup>
  * const { t, locale, isRTL } = useI18n()
  * </script>
- * 
+ *
  * <template>
  *   <div :dir="isRTL ? 'rtl' : 'ltr'">
  *     {{ t('welcome') }}
@@ -26,7 +26,7 @@ import { i18nService } from '@/infrastructure/i18n/i18n-service'
  */
 export function useI18n() {
   const locale = computed(() => i18nService.getCurrentLanguage())
-  
+
   const isRTL = computed(() => {
     // 当前不支持 RTL 语言
     const rtlLanguages: string[] = []
@@ -82,13 +82,13 @@ export function getLanguageDisplayName(locale: string): string {
   const displayNames: Record<string, string> = {
     'zh-CN': '简体中文',
     'zh-TW': '繁體中文',
-    'en': 'English',
-    'ja': '日本語',
-    'ko': '한국어',
-    'de': 'Deutsch',
-    'es': 'Español'
+    en: 'English',
+    ja: '日本語',
+    ko: '한국어',
+    de: 'Deutsch',
+    es: 'Español'
   }
-  
+
   return displayNames[locale] || locale
 }
 
@@ -105,15 +105,12 @@ export function getSupportedLocales(): readonly string[] {
  * @param value 数字
  * @param options 格式化选项
  * @returns 本地化的数字字符串
- * 
+ *
  * @example
  * formatNumber(1234.56) // "1,234.56" (en) 或 "1,234.56" (zh-CN)
  * formatNumber(0.85, { style: 'percent' }) // "85%" (en) 或 "85%" (zh-CN)
  */
-export function formatNumber(
-  value: number,
-  options?: Intl.NumberFormatOptions
-): string {
+export function formatNumber(value: number, options?: Intl.NumberFormatOptions): string {
   const locale = getCurrentLocale()
   return new Intl.NumberFormat(locale, options).format(value)
 }
@@ -123,7 +120,7 @@ export function formatNumber(
  * @param value 金额
  * @param currency 货币代码
  * @returns 本地化的货币字符串
- * 
+ *
  * @example
  * formatCurrency(99.99, 'USD') // "$99.99" (en) 或 "US$99.99" (zh-CN)
  * formatCurrency(99.99, 'CNY') // "¥99.99" (zh-CN)
@@ -141,11 +138,11 @@ export function formatCurrency(value: number, currency: string): string {
  * @param count 数量
  * @param key 翻译键
  * @returns 根据数量选择正确的复数形式
- * 
+ *
  * @example
  * // en/messages.json:
  * // "bookmark_count": { "message": "$1 bookmark(s)" }
- * 
+ *
  * pluralize(1, 'bookmark_count') // "1 bookmark"
  * pluralize(5, 'bookmark_count') // "5 bookmarks"
  */

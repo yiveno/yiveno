@@ -50,11 +50,7 @@ onMounted(() => {
 /**
  * 确认添加书签
  */
-async function handleConfirm(data: {
-  title: string
-  url: string
-  folderId: string
-}) {
+async function handleConfirm(data: { title: string; url: string; folderId: string }) {
   try {
     // ✅ 验证数据（重要：防止创建文件夹而不是书签）
     if (!data.url || data.url.trim() === '') {
@@ -85,11 +81,7 @@ async function handleConfirm(data: {
     })
 
     if (response?.success) {
-      logger.info(
-        'GlobalQuickAddBookmark',
-        '✅ 书签添加成功',
-        response.bookmark
-      )
+      logger.info('GlobalQuickAddBookmark', '✅ 书签添加成功', response.bookmark)
       notificationService.notifySuccess(`已添加到书签`, '快速添加')
       showDialog.value = false
     } else {

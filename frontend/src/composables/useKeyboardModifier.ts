@@ -13,9 +13,7 @@ import { useKeyboard, type KeyboardShortcut } from './useKeyboard'
  * parseModifierString('alt.shift.s') // { key: 's', alt: true, shift: true }
  * parseModifierString('meta.k') // { key: 'k', meta: true }
  */
-export function parseModifierString(
-  modifierString: string
-): Partial<KeyboardShortcut> {
+export function parseModifierString(modifierString: string): Partial<KeyboardShortcut> {
   const parts = modifierString.toLowerCase().split('.')
   const key = parts[parts.length - 1] // 最后一个是按键
 
@@ -62,12 +60,7 @@ export function useKeyboardModifier() {
     modifierString: string,
     handler: (event: KeyboardEvent) => void,
     description?: string,
-    options?: Partial<
-      Pick<
-        KeyboardShortcut,
-        'preventDefault' | 'stopPropagation' | 'allowInInput'
-      >
-    >
+    options?: Partial<Pick<KeyboardShortcut, 'preventDefault' | 'stopPropagation' | 'allowInInput'>>
   ): () => void {
     const modifiers = parseModifierString(modifierString)
 

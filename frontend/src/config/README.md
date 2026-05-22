@@ -235,11 +235,7 @@ icon.size = 20
 toast.timeout = 3000
 
 // ✅ 好的做法：使用配置
-import {
-  TIMEOUT_CONFIG,
-  SIZE_CONFIG,
-  NOTIFICATION_CONFIG
-} from '@/config/constants'
+import { TIMEOUT_CONFIG, SIZE_CONFIG, NOTIFICATION_CONFIG } from '@/config/constants'
 
 setTimeout(callback, TIMEOUT_CONFIG.DELAY.STANDARD)
 icon.size = SIZE_CONFIG.ICON.MD

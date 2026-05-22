@@ -21,7 +21,6 @@ import { EmptyState } from '@/components'
 
 - [Icon](../../base/Icon/README.md)
 
-
 ## 🎯 基础用法
 
 ### 默认用法
@@ -42,36 +41,30 @@ import { EmptyState } from '@/components'
 
 ```vue
 <template>
-  <EmptyState
-  icon="icon-folder"
-  title="暂无数据"
-  description="还没有添加任何内容"
->
-  <Button @click="handleAdd">添加内容</Button>
-</EmptyState>
+  <EmptyState icon="icon-folder" title="暂无数据" description="还没有添加任何内容">
+    <Button @click="handleAdd">添加内容</Button>
+  </EmptyState>
 </template>
 ```
-
-
 
 ## 📋 API
 
 ### Props
 
-| 属性 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| - | - | - | 待补充 |
+| 属性 | 类型 | 默认值 | 说明   |
+| ---- | ---- | ------ | ------ |
+| -    | -    | -      | 待补充 |
 
 ### Emits
 
-| 事件名 | 参数 | 说明 |
-|--------|------|------|
-| - | - | 待补充 |
+| 事件名 | 参数 | 说明   |
+| ------ | ---- | ------ |
+| -      | -    | 待补充 |
 
 ### Slots
 
-| 插槽名 | 说明 |
-|--------|------|
+| 插槽名    | 说明     |
+| --------- | -------- |
 | `default` | 默认内容 |
 
 ## 🎨 样式变量

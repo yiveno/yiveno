@@ -75,10 +75,7 @@ export interface TreeKeyboardCallbacks {
  * </script>
  * ```
  */
-export function useTreeKeyboard(
-  options: TreeKeyboardOptions,
-  callbacks: TreeKeyboardCallbacks
-) {
+export function useTreeKeyboard(options: TreeKeyboardOptions, callbacks: TreeKeyboardCallbacks) {
   const { selectedId, visibleNodes, expandedFolders, enabled } = options
 
   const { register } = useKeyboard({

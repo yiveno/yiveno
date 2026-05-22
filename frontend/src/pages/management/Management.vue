@@ -2,14 +2,7 @@
 import { schedulerService } from '@/application/scheduler/scheduler-service'
 import { useNotification } from '@/composables/useNotification'
 import { useThemeSync } from '@/composables/useThemeSync'
-import {
-  computed,
-  nextTick,
-  onMounted,
-  onUnmounted,
-  ref,
-  watch
-} from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { t } from '@/utils/i18n-helpers'
 
 defineOptions({
@@ -20,11 +13,7 @@ defineOptions({
 useThemeSync('Management')
 import { storeToRefs } from 'pinia'
 // useManagementStore 已迁移到新的专业化 Store
-import {
-  useDialogStore,
-  useBookmarkManagementStore,
-  useTraitFilterStore
-} from '@/stores'
+import { useDialogStore, useBookmarkManagementStore, useTraitFilterStore } from '@/stores'
 import type { TraitTag } from '@/types/domain/trait'
 import {
   AppHeader,
@@ -67,10 +56,7 @@ const dialogStore = useDialogStore()
 const bookmarkManagementStore = useBookmarkManagementStore()
 const traitFilterStore = useTraitFilterStore()
 
-const { originalExpandedFolders, proposalExpandedFolders } = storeToRefs(
-  bookmarkManagementStore
-)
-
+const { originalExpandedFolders, proposalExpandedFolders } = storeToRefs(bookmarkManagementStore)
 
 // 应用更改相关状态
 const showApplyConfirmDialog = ref(false)
@@ -91,8 +77,7 @@ let embeddingDebugCleanup: (() => void) | null = null
 let folderVectorDebugCleanup: (() => void) | null = null
 const shouldExposeEnvSnapshot =
   typeof window !== 'undefined' &&
-  (import.meta.env.DEV ||
-    new URLSearchParams(window.location.search).get('abDevtools') === '1')
+  (import.meta.env.DEV || new URLSearchParams(window.location.search).get('abDevtools') === '1')
 
 if (shouldExposeEnvSnapshot) {
   onMounted(() => {
@@ -143,10 +128,7 @@ const clearSelectionTooltip = computed(() => {
  * 动态生成"删除"按钮的 tooltip
  */
 const deleteButtonTooltip = computed(() => {
-  if (
-    selectedCounts.value.bookmarks === 0 &&
-    selectedCounts.value.folders === 0
-  ) {
+  if (selectedCounts.value.bookmarks === 0 && selectedCounts.value.folders === 0) {
     return t('management_tooltip_no_selection')
   }
   const parts = []
@@ -238,20 +220,18 @@ const leftTreeData = computed(() =>
 )
 
 const rightTreeData = computed(() =>
-  isRightSearchActive.value
-    ? rightSearchResults.value
-    : newProposalTree.value.children || []
+  isRightSearchActive.value ? rightSearchResults.value : newProposalTree.value.children || []
 )
 
 const MSG_CANCEL_EDIT = t('management_cancel_edit_message')
 const MSG_CANCEL_ADD = t('management_cancel_add_message')
 const addDialogTitle = computed(() =>
-  dialogStore.addItemDialog.type === 'bookmark' ? t('management_add_new_bookmark') : t('management_add_new_folder')
+  dialogStore.addItemDialog.type === 'bookmark'
+    ? t('management_add_new_bookmark')
+    : t('management_add_new_folder')
 )
 const addDialogIcon = computed(() =>
-  dialogStore.addItemDialog.type === 'bookmark'
-    ? 'icon-bookmark'
-    : 'icon-folder'
+  dialogStore.addItemDialog.type === 'bookmark' ? 'icon-bookmark' : 'icon-folder'
 )
 const addConfirmText = computed(() => t('management_add'))
 
@@ -319,7 +299,7 @@ const rightSelectedIds = ref<string[]>([])
 
 watch(
   () => rightTreeData.value,
-  (newData) => {
+  newData => {
     if (Array.isArray(newData) && newData.length > 0) {
       rightTreeIndex.buildFromTree(newData)
       logger.info('Management', `右侧树索引已更新: ${rightTreeIndex.getSize()} 个节点`)
@@ -328,6 +308,7 @@ watch(
   { immediate: true, deep: false }
 )
 
+// eslint-disable-next-line complexity -- 此函数需要处理多种书签节点类型和层级关系，复杂度较高但逻辑清晰
 const selectedCounts = computed(() => {
   const bookmarkIds = new Set<string>()
   const selectedFolderIds = new Set<string>()
@@ -345,20 +326,21 @@ const selectedCounts = computed(() => {
       // ✅ 修复：排除顶层根节点（书签栏、其他书签等）
       // Chrome 书签结构：'0' 是根容器，'1' 是书签栏，'2' 是其他书签
       // 只统计用户可见的子文件夹，不包括这些顶层容器
-      const isTopLevelRoot = !node.parentId || node.parentId === '0' || node.id === '1' || node.id === '2'
-      
+      const isTopLevelRoot =
+        !node.parentId || node.parentId === '0' || node.id === '1' || node.id === '2'
+
       if (!isTopLevelRoot) {
         selectedFolderIds.add(id)
       }
-      
+
       // 遍历该文件夹的所有子节点
       const stack: string[] = [id]
       while (stack.length > 0) {
         const currentId = stack.pop()!
         const current = rightTreeIndex.getNode(currentId)
-        
+
         if (!current) continue
-        
+
         if (current.url) {
           // 子节点是书签
           bookmarkIds.add(currentId)
@@ -366,7 +348,12 @@ const selectedCounts = computed(() => {
           // 子节点是文件夹
           // ✅ 所有子文件夹都应该被计入 selectedFolderIds（除了顶层根节点）
           if (currentId !== id) {
-            const isChildTopLevelRoot = !current.parentId || current.parentId === '0' || current.id === '1' || current.id === '2'
+            const isChildTopLevelRoot =
+              !current.parentId ||
+              current.parentId === '0' ||
+              current.id === '1' ||
+              current.id === '2'
+            // eslint-disable-next-line max-depth -- 嵌套深度由书签树结构决定，无法简化
             if (!isChildTopLevelRoot) {
               selectedFolderIds.add(currentId)
             }
@@ -402,11 +389,11 @@ watch(
     // 清除待选中标签（已经应用筛选）
     // eslint-disable-next-line require-atomic-updates -- 清除待选中标签是原子操作，不会有竞态条件
     pendingTagSelection.value = null
-    
+
     // 使用 traitFilterStore 的 filterResultIds 获取筛选结果
     const ids = traitFilterStore.filterResultIds
     if (!ids.length || !rightTreeRef.value) return
-    
+
     try {
       const instance = rightTreeRef.value
       if (!instance) return
@@ -484,8 +471,7 @@ watch(
 
 const handleLeftTreeReady = () => {
   try {
-    const hasData =
-      Array.isArray(originalTree.value) && originalTree.value.length > 0
+    const hasData = Array.isArray(originalTree.value) && originalTree.value.length > 0
     if (isPageLoading.value && hasData) {
       isPageLoading.value = false
     }
@@ -494,20 +480,14 @@ const handleLeftTreeReady = () => {
   }
 }
 const isEditDirty = computed(() => {
-  const originalTitle = (
-    dialogStore.editBookmarkDialog.bookmark?.title || ''
-  ).trim()
-  const originalUrl = (
-    dialogStore.editBookmarkDialog.bookmark?.url || ''
-  ).trim()
+  const originalTitle = (dialogStore.editBookmarkDialog.bookmark?.title || '').trim()
+  const originalUrl = (dialogStore.editBookmarkDialog.bookmark?.url || '').trim()
   const curTitle = (dialogStore.editBookmarkDialog.title || '').trim()
   const curUrl = (dialogStore.editBookmarkDialog.url || '').trim()
   return originalTitle !== curTitle || originalUrl !== curUrl
 })
 const isEditFolderDirty = computed(() => {
-  const originalTitle = (
-    dialogStore.editFolderDialog.folder?.title || ''
-  ).trim()
+  const originalTitle = (dialogStore.editFolderDialog.folder?.title || '').trim()
   const curTitle = (dialogStore.editFolderDialog.title || '').trim()
   return originalTitle !== curTitle
 })
@@ -579,7 +559,7 @@ const handleBookmarkOpenNewTab = (node: BookmarkNode) => {
   // 检查是否为内部协议书签（优先检查标签，兜底检查 URL）
   const hasInternalTag = node.traitTags?.includes('internal')
   const isInternalUrl = isInternalProtocolUrl(node.url)
-  
+
   if (hasInternalTag || isInternalUrl) {
     notificationService.notify(t('management_cannot_open_internal'), { level: 'warning' })
     logger.warn('Management', '尝试打开内部协议书签:', node.url)
@@ -595,7 +575,7 @@ const handleBookmarkOpenNewTab = (node: BookmarkNode) => {
 
     // 打开书签（不记录访问，因为这是管理操作，不是真实使用）
     const newWindow = window.open(node.url, '_blank')
-    
+
     // 检查是否被浏览器阻止
     if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
       notificationService.notify(t('management_link_blocked'), { level: 'warning' })
@@ -614,10 +594,10 @@ const handleBookmarkOpenNewTab = (node: BookmarkNode) => {
 const handleAddDialogTabChange = (event: Event) => {
   const customEvent = event as CustomEvent<{ activeTabIndex: number }>
   const activeTabIndex = customEvent.detail?.activeTabIndex ?? 0
-  
+
   // 根据 tab index 更新对话框类型
   dialogStore.addItemDialog.type = activeTabIndex === 0 ? 'bookmark' : 'folder'
-  
+
   // 清空表单数据和错误
   dialogStore.addItemDialog.title = ''
   dialogStore.addItemDialog.url = ''
@@ -644,8 +624,7 @@ const confirmAddNewItem = async () => {
   try {
     isAddingItem.value = true
 
-    const itemType =
-      dialogStore.addItemDialog.type === 'bookmark' ? '书签' : '文件夹'
+    const itemType = dialogStore.addItemDialog.type === 'bookmark' ? '书签' : '文件夹'
 
     const addData: AddItemData = {
       type: dialogStore.addItemDialog.type,
@@ -660,11 +639,7 @@ const confirmAddNewItem = async () => {
 
     dialogStore.closeAddItemDialog()
 
-    if (
-      res &&
-      rightTreeRef.value &&
-      typeof rightTreeRef.value.focusNodeById === 'function'
-    ) {
+    if (res && rightTreeRef.value && typeof rightTreeRef.value.focusNodeById === 'function') {
       await nextTick()
       try {
         await rightTreeRef.value.focusNodeById(res.id, {
@@ -773,7 +748,6 @@ const confirmDeleteFolder = async () => {
     if (isDeletingFolder.value) return
 
     try {
-      // eslint-disable-next-line require-atomic-updates -- 删除操作开始时设置状态是安全的
       isDeletingFolder.value = true
 
       try {
@@ -889,9 +863,7 @@ onMounted(async () => {
           pendingTags = tagsParam
             .split(',')
             .map(tag => tag.trim())
-            .filter((tag): tag is TraitTag =>
-              ['duplicate', 'invalid', 'internal'].includes(tag)
-            )
+            .filter((tag): tag is TraitTag => ['duplicate', 'invalid', 'internal'].includes(tag))
           logger.info('Management', '从 URL 参数读取筛选:', pendingTags)
         }
       }
@@ -904,21 +876,25 @@ onMounted(async () => {
   // ✅ 特征数据由 Background Script 自动维护，无需手动触发检测
   if (pendingTags.length > 0) {
     logger.info('Management', '准备激活筛选:', pendingTags)
-    
+
     // 等待下一帧，确保 UI 已更新
     await nextTick()
-    
+
     // 设置筛选状态（会触发 BookmarkSearchInput 的 watch）
     traitFilterStore.setActiveFilters(pendingTags)
     logger.info('Management', '✅ traitFilterStore.setActiveFilters 已调用')
-    
+
     // 设置待选中的节点（用于自动选中问题节点）
     pendingTagSelection.value = pendingTags
     logger.info('Management', '✅ pendingTagSelection 已设置')
-    
+
     // 再等待一帧，确保筛选已应用
     await nextTick()
-    logger.info('Management', '✅ 筛选应该已经生效，当前 activeFilters:', traitFilterStore.activeFilters)
+    logger.info(
+      'Management',
+      '✅ 筛选应该已经生效，当前 activeFilters:',
+      traitFilterStore.activeFilters
+    )
   }
 
   if (typeof window !== 'undefined') {
@@ -930,16 +906,13 @@ onMounted(async () => {
       if (!comp) return
       const sid = String(id)
       if (expanded === undefined) {
-        if (typeof comp.toggleFolderById === 'function')
-          comp.toggleFolderById(sid)
+        if (typeof comp.toggleFolderById === 'function') comp.toggleFolderById(sid)
         return
       }
       if (expanded) {
-        if (typeof comp.expandFolderById === 'function')
-          comp.expandFolderById(sid)
+        if (typeof comp.expandFolderById === 'function') comp.expandFolderById(sid)
       } else {
-        if (typeof comp.collapseFolderById === 'function')
-          comp.collapseFolderById(sid)
+        if (typeof comp.collapseFolderById === 'function') comp.collapseFolderById(sid)
       }
     }
     g.AB_toggleFolder = (id: string) => {
@@ -958,10 +931,7 @@ onMounted(async () => {
     ) => {
       const comp = leftTreeRef.value
       if (!comp || !comp.focusNodeById) return
-      comp.focusNodeById(
-        String(id),
-        opts || { collapseOthers: true, scrollIntoViewCenter: true }
-      )
+      comp.focusNodeById(String(id), opts || { collapseOthers: true, scrollIntoViewCenter: true })
     }
   }
 })
@@ -1082,7 +1052,7 @@ watch(
 /**
  * 获取右侧树所有节点 ID
  * 直接从索引获取，O(1) 操作
- * 
+ *
  * @returns 所有节点 ID 数组
  */
 const getAllRightTreeNodeIds = (): string[] => {
@@ -1146,7 +1116,7 @@ const handleBookmarkMove = async (data: {
 
 /**
  * 批量删除选中的书签和文件夹
- * 
+ *
  * ✅ 直接执行删除，不需要确认对话框
  * 因为右侧面板的所有操作都需要点击"应用"才会真实生效
  * 应用时会有全面的确认提示
@@ -1161,7 +1131,7 @@ const handleBulkDelete = async () => {
     isBulkDeleting.value = true
 
     bulkDeleteByIds(ids)
-    
+
     // 清空选择，避免再次误删
     try {
       rightTreeRef.value?.clearSelection?.()
@@ -1258,16 +1228,14 @@ const getOperationTypeText = (type: BookmarkOperationType): string => {
 /**
  * 按类型获取操作列表
  */
-const getOperationsByType = (
-  type: BookmarkOperationType
-): BookmarkOperation[] => {
+const getOperationsByType = (type: BookmarkOperationType): BookmarkOperation[] => {
   if (!diffResult.value) return []
   return diffResult.value.operations.filter(op => op.type === type)
 }
 
 /**
  * 一键整理书签栏（AI 自动分类）
- * 
+ *
  * ⚠️ 临时禁用：organizeBookmarks 方法已从 aiAppService 中移除
  * TODO: 使用 folderVectorService 实现基于向量的本地推荐
  */
@@ -1278,13 +1246,12 @@ async function handleAIOrganize() {
 
   try {
     isOrganizing.value = true
-    
+
     // 临时提示：功能正在重构中
-    notificationService.notify(
-      'AI 整理功能正在重构中，即将推出基于向量的本地推荐功能',
-      { level: 'info' }
-    )
-    
+    notificationService.notify('AI 整理功能正在重构中，即将推出基于向量的本地推荐功能', {
+      level: 'info'
+    })
+
     /* 原实现已注释，等待使用 folderVectorService 重新实现
     showOrganizeProgress.value = true
     organizeProgress.value = {
@@ -1339,9 +1306,7 @@ async function handleAIOrganize() {
  */
 const handleApplyClick = () => {
   // 检查是否有临时节点
-  const tempNodeInfo = getTempNodesInfo(
-    bookmarkManagementStore.newProposalTree.children
-  )
+  const tempNodeInfo = getTempNodesInfo(bookmarkManagementStore.newProposalTree.children)
 
   if (tempNodeInfo.count > 0) {
     const message =
@@ -1390,16 +1355,14 @@ const handleApplyClick = () => {
 /**
  * 获取临时节点信息
  * 直接从索引获取所有 ID 并过滤，避免递归遍历
- * 
+ *
  * @param _nodes 节点数组（未使用，保留兼容性）
  * @returns 临时节点信息
  */
-const getTempNodesInfo = (
-  _nodes: BookmarkNode[]
-): { count: number; ids: string[] } => {
+const getTempNodesInfo = (_nodes: BookmarkNode[]): { count: number; ids: string[] } => {
   const allIds = rightTreeIndex.getAllNodeIds()
   const tempIds = allIds.filter(id => id.startsWith('temp_'))
-  
+
   return {
     count: tempIds.length,
     ids: tempIds
@@ -1476,7 +1439,8 @@ const handleApply = () => {
       :show="showOrganizeProgress"
       :title="t('management_ai_organize_bookmarks')"
       persistent
-      max-width="500px">
+      max-width="500px"
+    >
       <div class="trait-scan-progress">
         <div class="progress-info">
           <div class="progress-message">{{ organizeProgress.message }}</div>
@@ -1486,9 +1450,7 @@ const handleApply = () => {
         </div>
         <md-linear-progress
           :value="
-            organizeProgress.total > 0
-              ? (organizeProgress.current / organizeProgress.total)
-              : 0
+            organizeProgress.total > 0 ? organizeProgress.current / organizeProgress.total : 0
           "
         ></md-linear-progress>
       </div>
@@ -1502,7 +1464,8 @@ const handleApply = () => {
       :enter-to-confirm="true"
       max-width="600px"
       @update:show="showApplyConfirmDialog = $event"
-      @confirm="confirmApplyChanges">
+      @confirm="confirmApplyChanges"
+    >
       <div class="apply-confirm-dialog">
         <!-- AI 生成标记 -->
         <div v-if="bookmarkManagementStore.isAIGenerated" class="ai-badge">
@@ -1516,39 +1479,27 @@ const handleApply = () => {
           <div class="statistics-grid">
             <div class="stat-item">
               <span class="stat-label">{{ t('management_new_folders') }}</span>
-              <span class="stat-value">{{
-                diffResult?.statistics.newFolders || 0
-              }}</span>
+              <span class="stat-value">{{ diffResult?.statistics.newFolders || 0 }}</span>
             </div>
             <div class="stat-item">
               <span class="stat-label">{{ t('management_new_bookmarks') }}</span>
-              <span class="stat-value">{{
-                diffResult?.statistics.newBookmarks || 0
-              }}</span>
+              <span class="stat-value">{{ diffResult?.statistics.newBookmarks || 0 }}</span>
             </div>
             <div class="stat-item">
               <span class="stat-label">{{ t('management_moved') }}</span>
-              <span class="stat-value">{{
-                diffResult?.statistics.move || 0
-              }}</span>
+              <span class="stat-value">{{ diffResult?.statistics.move || 0 }}</span>
             </div>
             <div class="stat-item">
               <span class="stat-label">{{ t('management_edited') }}</span>
-              <span class="stat-value">{{
-                diffResult?.statistics.edit || 0
-              }}</span>
+              <span class="stat-value">{{ diffResult?.statistics.edit || 0 }}</span>
             </div>
             <div class="stat-item">
               <span class="stat-label">{{ t('management_deleted') }}</span>
-              <span class="stat-value error">{{
-                diffResult?.statistics.delete || 0
-              }}</span>
+              <span class="stat-value error">{{ diffResult?.statistics.delete || 0 }}</span>
             </div>
             <div class="stat-item total">
               <span class="stat-label">{{ t('management_total') }}</span>
-              <span class="stat-value">{{
-                diffResult?.statistics.total || 0
-              }}</span>
+              <span class="stat-value">{{ diffResult?.statistics.total || 0 }}</span>
             </div>
           </div>
         </div>
@@ -1563,127 +1514,91 @@ const handleApply = () => {
                 :key="index"
                 class="operation-item"
               >
-                <LucideIcon
-                  :name="getOperationIcon(op.type)"
-                />
-                <span class="operation-type">{{
-                  getOperationTypeText(op.type)
-                }}</span>
+                <LucideIcon :name="getOperationIcon(op.type)" />
+                <span class="operation-type">{{ getOperationTypeText(op.type) }}</span>
                 <span class="operation-title">{{ op.title }}</span>
               </div>
             </div>
           </div>
-          <div
-            v-else-if="diffResult.statistics.total < 500"
-            class="grouped-summary"
-          >
+          <div v-else-if="diffResult.statistics.total < 500" class="grouped-summary">
             <h3 class="section-title">{{ t('management_grouped_summary') }}</h3>
-            <details
-              v-if="diffResult.statistics.create > 0"
-              class="summary-group"
-              open
-            >
+            <details v-if="diffResult.statistics.create > 0" class="summary-group" open>
               <summary>
                 <LucideIcon name="plus" color="success" />
-                <span>{{ t('management_create_nodes', String(diffResult.statistics.create)) }}</span>
+                <span>{{
+                  t('management_create_nodes', String(diffResult.statistics.create))
+                }}</span>
               </summary>
               <div class="group-items">
                 <div
-                  v-for="(op, index) in getOperationsByType('create').slice(
-                    0,
-                    50
-                  )"
+                  v-for="(op, index) in getOperationsByType('create').slice(0, 50)"
                   :key="index"
                   class="group-item"
                 >
                   {{ op.isFolder ? '📁' : '📄' }} {{ op.title }}
                 </div>
-                <div
-                  v-if="getOperationsByType('create').length > 50"
-                  class="more-items"
-                >
-                  {{ t('management_more_items', String(getOperationsByType('create').length - 50)) }}
+                <div v-if="getOperationsByType('create').length > 50" class="more-items">
+                  {{
+                    t('management_more_items', String(getOperationsByType('create').length - 50))
+                  }}
                 </div>
               </div>
             </details>
-            <details
-              v-if="diffResult.statistics.move > 0"
-              class="summary-group"
-            >
+            <details v-if="diffResult.statistics.move > 0" class="summary-group">
               <summary>
                 <LucideIcon name="refresh" color="primary" />
                 <span>{{ t('management_move_nodes', String(diffResult.statistics.move)) }}</span>
               </summary>
               <div class="group-items">
                 <div
-                  v-for="(op, index) in getOperationsByType('move').slice(
-                    0,
-                    50
-                  )"
+                  v-for="(op, index) in getOperationsByType('move').slice(0, 50)"
                   :key="index"
                   class="group-item"
                 >
                   {{ op.title }}
                 </div>
-                <div
-                  v-if="getOperationsByType('move').length > 50"
-                  class="more-items"
-                >
+                <div v-if="getOperationsByType('move').length > 50" class="more-items">
                   {{ t('management_more_items', String(getOperationsByType('move').length - 50)) }}
                 </div>
               </div>
             </details>
-            <details
-              v-if="diffResult.statistics.edit > 0"
-              class="summary-group"
-            >
+            <details v-if="diffResult.statistics.edit > 0" class="summary-group">
               <summary>
                 <LucideIcon name="edit" color="warning" />
                 <span>{{ t('management_edit_nodes', String(diffResult.statistics.edit)) }}</span>
               </summary>
               <div class="group-items">
                 <div
-                  v-for="(op, index) in getOperationsByType('edit').slice(
-                    0,
-                    50
-                  )"
+                  v-for="(op, index) in getOperationsByType('edit').slice(0, 50)"
                   :key="index"
                   class="group-item"
                 >
                   {{ op.title }}
                 </div>
-                <div
-                  v-if="getOperationsByType('edit').length > 50"
-                  class="more-items"
-                >
+                <div v-if="getOperationsByType('edit').length > 50" class="more-items">
                   {{ t('management_more_items', String(getOperationsByType('edit').length - 50)) }}
                 </div>
               </div>
             </details>
-            <details
-              v-if="diffResult.statistics.delete > 0"
-              class="summary-group"
-            >
+            <details v-if="diffResult.statistics.delete > 0" class="summary-group">
               <summary>
                 <LucideIcon name="trash" color="error" />
-                <span>{{ t('management_delete_nodes', String(diffResult.statistics.delete)) }}</span>
+                <span>{{
+                  t('management_delete_nodes', String(diffResult.statistics.delete))
+                }}</span>
               </summary>
               <div class="group-items">
                 <div
-                  v-for="(op, index) in getOperationsByType('delete').slice(
-                    0,
-                    50
-                  )"
+                  v-for="(op, index) in getOperationsByType('delete').slice(0, 50)"
                   :key="index"
                   class="group-item"
                 >
                   {{ op.title }}
                 </div>
-                <div
-                  v-if="getOperationsByType('delete').length > 50"
-                  class="more-items"
-                >
-                  {{ t('management_more_items', String(getOperationsByType('delete').length - 50)) }}
+                <div v-if="getOperationsByType('delete').length > 50" class="more-items">
+                  {{
+                    t('management_more_items', String(getOperationsByType('delete').length - 50))
+                  }}
                 </div>
               </div>
             </details>
@@ -1691,7 +1606,9 @@ const handleApply = () => {
           <div v-else class="large-operation-warning">
             <LucideIcon name="alert-triangle" color="warning" :size="48" />
             <h3>{{ t('management_large_operation_warning') }}</h3>
-            <p v-html="t('management_large_operation_desc', String(diffResult.statistics.total))"></p>
+            <p
+              v-html="t('management_large_operation_desc', String(diffResult.statistics.total))"
+            ></p>
             <p class="warning-text">{{ t('management_large_operation_warning_text') }}</p>
           </div>
         </div>
@@ -1713,7 +1630,8 @@ const handleApply = () => {
       persistent
       :close-on-overlay="false"
       :esc-to-close="false"
-      max-width="500px">
+      max-width="500px"
+    >
       <div class="apply-progress">
         <div class="progress-info">
           <div class="progress-message">
@@ -1768,12 +1686,9 @@ const handleApply = () => {
                           expanding: isPageLoading
                         }"
                       >
-                        <LucideIcon
-                          :name="leftExpandAll ? 'chevrons-up' : 'chevrons-down'"
-                        />
+                        <LucideIcon :name="leftExpandAll ? 'chevrons-up' : 'chevrons-down'" />
                       </span>
                     </md-icon-button>
-
                   </div>
                 </div>
               </template>
@@ -1824,22 +1739,15 @@ const handleApply = () => {
               <template #header>
                 <div class="panel-header">
                   <div class="panel-title-section">
-                    <LucideIcon
-                      :name="getProposalPanelIcon()"
-                    />
-                    <span class="panel-title">{{
-                      getProposalPanelTitle()
-                    }}</span>
+                    <LucideIcon :name="getProposalPanelIcon()" />
+                    <span class="panel-title">{{ getProposalPanelTitle() }}</span>
                   </div>
                   <div class="panel-title-section">
                     <div class="panel-actions">
                       <!-- ✅ 使用包装元素解决禁用状态下 tooltip 不显示的问题 -->
                       <span class="btn-wrapper" :title="applyButtonTooltip">
                         <md-filled-button
-                          :disabled="
-                            isPageLoading ||
-                            !bookmarkManagementStore.hasUnsavedChanges
-                          "
+                          :disabled="isPageLoading || !bookmarkManagementStore.hasUnsavedChanges"
                           @click="handleApply"
                         >
                           <LucideIcon slot="icon" name="check-circle" />
@@ -1848,13 +1756,13 @@ const handleApply = () => {
                       </span>
                       <div class="panel-actions-divider"></div>
                       <md-filled-button
-                        :disabled="
-                          isPageLoading || isOrganizing
-                        "
+                        :disabled="isPageLoading || isOrganizing"
                         @click="handleAIOrganize"
                       >
                         <LucideIcon slot="icon" name="sparkles" :spin="isOrganizing" />
-                        {{ isOrganizing ? t('management_organizing') : t('management_ai_organize') }}
+                        {{
+                          isOrganizing ? t('management_organizing') : t('management_ai_organize')
+                        }}
                       </md-filled-button>
                       <div class="panel-actions-divider"></div>
                       <BookmarkSearchInput
@@ -1879,9 +1787,7 @@ const handleApply = () => {
                             expanded: rightExpandAll
                           }"
                         >
-                          <LucideIcon
-                            :name="rightExpandAll ? 'chevrons-up' : 'chevrons-down'"
-                          />
+                          <LucideIcon :name="rightExpandAll ? 'chevrons-up' : 'chevrons-down'" />
                         </span>
                       </md-icon-button>
                     </div>
@@ -1935,19 +1841,14 @@ const handleApply = () => {
                     ></md-checkbox>
                     <!-- ✅ 全选时文案变化 -->
                     <span class="text">{{
-                      rightSelectAllState.checked &&
-                      !rightSelectAllState.indeterminate
+                      rightSelectAllState.checked && !rightSelectAllState.indeterminate
                         ? t('management_all_selected')
                         : t('management_selected')
                     }}</span>
-                    <span class="count"
-                      ><AnimatedNumber :value="selectedCounts.bookmarks"
-                    /></span>
+                    <span class="count"><AnimatedNumber :value="selectedCounts.bookmarks" /></span>
                     <span class="text">{{ t('management_bookmarks_count') }}</span>
                     <span class="gap"></span>
-                    <span class="count"
-                      ><AnimatedNumber :value="selectedCounts.folders"
-                    /></span>
+                    <span class="count"><AnimatedNumber :value="selectedCounts.folders" /></span>
                     <span class="text">{{ t('management_folders_count') }}</span>
                   </div>
                   <div class="bulk-actions">
@@ -1966,10 +1867,7 @@ const handleApply = () => {
                     <span class="btn-wrapper" :title="deleteButtonTooltip">
                       <md-filled-button
                         class="bulk-delete-btn error-button"
-                        :disabled="
-                          selectedCounts.bookmarks === 0 &&
-                          selectedCounts.folders === 0
-                        "
+                        :disabled="selectedCounts.bookmarks === 0 && selectedCounts.folders === 0"
                         @click="handleBulkDelete"
                       >
                         <LucideIcon slot="icon" name="trash" />
@@ -1999,12 +1897,11 @@ const handleApply = () => {
       @update:show="
         (v: boolean) =>
           v
-            ? dialogStore.openEditBookmarkDialog(
-                dialogStore.editBookmarkDialog.bookmark!
-              )
+            ? dialogStore.openEditBookmarkDialog(dialogStore.editBookmarkDialog.bookmark!)
             : dialogStore.closeEditBookmarkDialog()
       "
-      @confirm="confirmEditBookmark">
+      @confirm="confirmEditBookmark"
+    >
       <div class="edit-form">
         <md-outlined-text-field
           class="form-field"
@@ -2053,9 +1950,7 @@ const handleApply = () => {
       @update:show="
         (v: boolean) =>
           v
-            ? dialogStore.openEditFolderDialog(
-                dialogStore.editFolderDialog.folder!
-              )
+            ? dialogStore.openEditFolderDialog(dialogStore.editFolderDialog.folder!)
             : dialogStore.closeEditFolderDialog()
       "
       @confirm="confirmEditFolder"
@@ -2131,10 +2026,7 @@ const handleApply = () => {
         (v: boolean) => {
           if (v) {
             const parentFolder = dialogStore.addItemDialog.parentFolder
-            dialogStore.openAddItemDialog(
-              dialogStore.addItemDialog.type,
-              parentFolder || undefined
-            )
+            dialogStore.openAddItemDialog(dialogStore.addItemDialog.type, parentFolder || undefined)
           } else {
             dialogStore.closeAddItemDialog()
           }
@@ -2159,10 +2051,7 @@ const handleApply = () => {
         </md-tabs>
 
         <!-- 书签表单 -->
-        <div
-          v-if="dialogStore.addItemDialog.type === 'bookmark'"
-          class="form-fields"
-        >
+        <div v-if="dialogStore.addItemDialog.type === 'bookmark'" class="form-fields">
           <md-outlined-text-field
             class="form-field"
             :label="t('management_title')"
@@ -2182,10 +2071,7 @@ const handleApply = () => {
           />
         </div>
         <!-- 文件夹表单 -->
-        <div
-          v-else
-          class="form-fields"
-        >
+        <div v-else class="form-fields">
           <md-outlined-text-field
             class="form-field"
             :label="t('management_folder_name')"
@@ -2200,10 +2086,7 @@ const handleApply = () => {
         <md-text-button @click="dialogStore.closeAddItemDialog()">
           {{ t('common_cancel') }}
         </md-text-button>
-        <md-filled-button
-          :loading="isAddingItem"
-          @click="confirmAddNewItem"
-        >
+        <md-filled-button :loading="isAddingItem" @click="confirmAddNewItem">
           {{ addConfirmText }}
         </md-filled-button>
       </template>
@@ -2446,10 +2329,8 @@ p.warning-text {
 .expand-toggle-icon {
   display: inline-flex;
   transition:
-    transform var(--md-sys-motion-duration-short4)
-      var(--md-sys-motion-easing-standard),
-    opacity var(--md-sys-motion-duration-short4)
-      var(--md-sys-motion-easing-standard);
+    transform var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
 .expand-toggle-icon.expanded {
@@ -2698,8 +2579,7 @@ p.warning-text {
   align-items: center;
   height: 100%;
   opacity: 0.3;
-  transition: opacity var(--md-sys-motion-duration-short2)
-    var(--md-sys-motion-easing-standard);
+  transition: opacity var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
 }
 
 .panel-divider:hover {
@@ -2758,7 +2638,6 @@ p.warning-text {
   gap: var(--spacing-4);
   overflow: hidden;
 }
-
 
 /* 语义搜索样式 */
 .semantic-search-panel {
@@ -2834,10 +2713,8 @@ p.warning-text {
 .card-footer-slide-enter-active,
 .card-footer-slide-leave-active {
   transition:
-    transform var(--md-sys-motion-duration-short4)
-      var(--md-sys-motion-easing-standard),
-    opacity var(--md-sys-motion-duration-short4)
-      var(--md-sys-motion-easing-standard);
+    transform var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
   will-change: transform, opacity;
 }
 

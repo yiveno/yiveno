@@ -22,7 +22,7 @@ const { start: startShowTimer, stop: stopShowTimer } = useTimeoutFn(
       show.value = true
     }
   },
-  props.delay,
+  () => props.delay,
   { immediate: false }
 )
 
@@ -114,8 +114,8 @@ function handleBlur() {
 .md-tooltip {
   position: absolute;
   z-index: var(--z-tooltip, 1000);
-  width:max-content;
-  
+  width: max-content;
+
   /* 
    * 宽度设置：
    * - Plain Tooltip (纯文本): 自动宽度，最大 200px
@@ -123,7 +123,7 @@ function handleBlur() {
    * 实际项目中需要更宽的宽度以容纳多行文本和列表
    */
   max-width: 500px;
-  
+
   /* 允许鼠标交互，以便点击 Tooltip 内的链接 */
   pointer-events: auto;
 }
@@ -132,22 +132,22 @@ function handleBlur() {
 .md-tooltip__surface {
   /* MD3 Spacing: 4dp padding for plain, 8-16dp for rich */
   padding: var(--spacing-2) var(--spacing-3);
-  
+
   /* MD3 Shape: Small (4dp) */
   border-radius: var(--radius-sm);
-  
+
   /* MD3 Typography: Body Small (12sp) */
   font-size: var(--md-sys-typescale-body-small-size);
   font-weight: var(--md-sys-typescale-body-small-weight);
   line-height: var(--md-sys-typescale-body-small-line-height);
   letter-spacing: var(--md-sys-typescale-body-small-tracking);
   white-space: normal;
-  
+
   /* MD3 Color: Inverse Surface */
   color: var(--md-sys-color-inverse-on-surface);
   background-color: var(--md-sys-color-inverse-surface);
   overflow-wrap: break-word;
-  
+
   /* MD3 Elevation: Level 2 */
   box-shadow: var(--md-sys-elevation-2);
 }
@@ -193,7 +193,7 @@ function handleBlur() {
 /* Top */
 .md-tooltip--top {
   left: 50%;
-  
+
   /* 防止超出视口 */
   max-width: min(800px, calc(100vw - 32px));
   transform: translateX(-50%);
@@ -222,7 +222,7 @@ function handleBlur() {
 /* Bottom */
 .md-tooltip--bottom {
   left: 50%;
-  
+
   /* 防止超出视口 */
   max-width: min(800px, calc(100vw - 32px));
   transform: translateX(-50%);
@@ -251,7 +251,7 @@ function handleBlur() {
 /* Left */
 .md-tooltip--left {
   top: 50%;
-  
+
   /* 防止超出视口 */
   max-width: min(800px, calc(100vw - 32px));
   transform: translateY(-50%);
@@ -280,7 +280,7 @@ function handleBlur() {
 /* Right */
 .md-tooltip--right {
   top: 50%;
-  
+
   /* 防止超出视口 */
   max-width: min(800px, calc(100vw - 32px));
   transform: translateY(-50%);

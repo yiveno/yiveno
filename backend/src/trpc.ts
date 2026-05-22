@@ -8,10 +8,7 @@ import type { Env } from './types/env'
  * @param {Env} env - The environment variables.
  * @returns {object} The context object.
  */
-export function createContext(
-  { req, resHeaders }: FetchCreateContextFnOptions,
-  env: Env
-) {
+export function createContext({ req, resHeaders }: FetchCreateContextFnOptions, env: Env) {
   return {
     req,
     resHeaders,

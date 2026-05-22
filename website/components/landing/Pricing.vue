@@ -6,11 +6,7 @@ import Button from '@/components/ui/Button.vue'
 
 const NuxtLink = resolveComponent('NuxtLink')
 
-const freeFeatures = [
-  '无限书签与标签',
-  '失效书签检测',
-  'Popup / Side Panel 全量能力'
-]
+const freeFeatures = ['无限书签与标签', '失效书签检测', 'Popup / Side Panel 全量能力']
 
 const proFeatures = [
   '包含所有免费功能',
@@ -35,9 +31,7 @@ const teamFeatures = [
         <h2 class="text-2xl md:text-3xl font-bold mb-3">
           简单透明的<span class="text-primary-400">定价方案</span>
         </h2>
-        <p class="text-content-muted text-sm">
-          免费即可使用核心功能，按需升级高级能力。
-        </p>
+        <p class="text-content-muted text-sm">免费即可使用核心功能，按需升级高级能力。</p>
       </div>
 
       <div class="pricing-grid">
@@ -51,11 +45,7 @@ const teamFeatures = [
             </p>
           </div>
           <ul class="space-y-2.5 mb-6 flex-1">
-            <li
-              v-for="feature in freeFeatures"
-              :key="feature"
-              class="flex items-start"
-            >
+            <li v-for="feature in freeFeatures" :key="feature" class="flex items-start">
               <Check class="w-4 h-4 text-primary-400 mr-2 shrink-0 mt-0.5" />
               <span class="text-xs text-content-muted">{{ feature }}</span>
             </li>
@@ -66,14 +56,9 @@ const teamFeatures = [
         </Card>
 
         <!-- Pro Plan -->
-        <Card
-          class="p-6 flex flex-col relative border-primary-500/50 bg-bg-surface/80"
-          hover
-        >
+        <Card class="p-6 flex flex-col relative border-primary-500/50 bg-bg-surface/80" hover>
           <div class="absolute -top-3 left-1/2 -translate-x-1/2">
-            <Badge
-              variant="default"
-              class="bg-primary-500 text-white border-none text-xs px-3"
+            <Badge variant="default" class="bg-primary-500 text-white border-none text-xs px-3"
               >最受欢迎</Badge
             >
           </div>
@@ -81,20 +66,14 @@ const teamFeatures = [
             <h3 class="text-sm font-medium text-primary-400 mb-1">Pro</h3>
             <div class="mt-1 flex items-baseline text-2xl font-bold">
               ¥49
-              <span class="text-xs font-normal text-content-muted ml-1"
-                >/ 月</span
-              >
+              <span class="text-xs font-normal text-content-muted ml-1">/ 月</span>
             </div>
             <p class="mt-1.5 text-xs text-content-subtle leading-relaxed">
               解锁 AI 推荐、批量同步与优先支持。
             </p>
           </div>
           <ul class="space-y-2.5 mb-6 flex-1">
-            <li
-              v-for="feature in proFeatures"
-              :key="feature"
-              class="flex items-start"
-            >
+            <li v-for="feature in proFeatures" :key="feature" class="flex items-start">
               <Check class="w-4 h-4 text-primary-400 mr-2 shrink-0 mt-0.5" />
               <span class="text-xs text-content">{{ feature }}</span>
             </li>
@@ -114,11 +93,7 @@ const teamFeatures = [
             </p>
           </div>
           <ul class="space-y-2.5 mb-6 flex-1">
-            <li
-              v-for="feature in teamFeatures"
-              :key="feature"
-              class="flex items-start"
-            >
+            <li v-for="feature in teamFeatures" :key="feature" class="flex items-start">
               <Check class="w-4 h-4 text-content-subtle mr-2 shrink-0 mt-0.5" />
               <span class="text-xs text-content-muted">{{ feature }}</span>
             </li>
@@ -141,7 +116,7 @@ const teamFeatures = [
   margin: 0 auto;
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .pricing-grid {
     grid-template-columns: 1fr;
   }

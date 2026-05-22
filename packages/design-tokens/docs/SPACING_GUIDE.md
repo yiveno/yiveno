@@ -13,13 +13,13 @@ AcuityBookmarks 采用 **8px 网格系统**，确保设计的一致性和可预�
 ```typescript
 import { spacing } from '@acuity-bookmarks/design-tokens'
 
-spacing.none   // 0px
-spacing.xs     // 4px  - 极小间距
-spacing.sm     // 8px  - 小间距
-spacing.md     // 12px - 中小间距
-spacing.base   // 16px - 中等间距（标准）
-spacing.lg     // 24px - 大间距
-spacing.xl     // 32px - 超大间距
+spacing.none // 0px
+spacing.xs // 4px  - 极小间距
+spacing.sm // 8px  - 小间距
+spacing.md // 12px - 中小间距
+spacing.base // 16px - 中等间距（标准）
+spacing.lg // 24px - 大间距
+spacing.xl // 32px - 超大间距
 spacing['2xl'] // 48px - 超超大间距
 spacing['3xl'] // 64px - 巨大间距
 ```
@@ -44,17 +44,17 @@ var(--spacing-3xl)   /* 64px */
 ```css
 /* 按钮内边距 */
 .button {
-  padding: var(--spacing-md) var(--spacing-base);  /* 12px 16px */
+  padding: var(--spacing-md) var(--spacing-base); /* 12px 16px */
 }
 
 /* 卡片内边距 */
 .card {
-  padding: var(--spacing-base);  /* 16px */
+  padding: var(--spacing-base); /* 16px */
 }
 
 /* 输入框内边距 */
 .input {
-  padding: var(--spacing-sm) var(--spacing-md);  /* 8px 12px */
+  padding: var(--spacing-sm) var(--spacing-md); /* 8px 12px */
 }
 ```
 
@@ -63,18 +63,18 @@ var(--spacing-3xl)   /* 64px */
 ```css
 /* 列表项间距 */
 .list-item {
-  margin-bottom: var(--spacing-sm);  /* 8px */
+  margin-bottom: var(--spacing-sm); /* 8px */
 }
 
 /* 区块间距 */
 .section {
-  margin-bottom: var(--spacing-lg);  /* 24px */
+  margin-bottom: var(--spacing-lg); /* 24px */
 }
 
 /* Flexbox 间距 */
 .container {
   display: flex;
-  gap: var(--spacing-base);  /* 16px */
+  gap: var(--spacing-base); /* 16px */
 }
 ```
 
@@ -85,7 +85,7 @@ var(--spacing-3xl)   /* 64px */
 .icon-text {
   display: flex;
   align-items: center;
-  gap: var(--spacing-xs);  /* 4px */
+  gap: var(--spacing-xs); /* 4px */
 }
 ```
 
@@ -126,12 +126,12 @@ import { spacing } from '@acuity-bookmarks/design-tokens'
 
 const styles = StyleSheet.create({
   card: {
-    padding: parseInt(spacing.base),      // 16
-    marginBottom: parseInt(spacing.lg)    // 24
+    padding: parseInt(spacing.base), // 16
+    marginBottom: parseInt(spacing.lg) // 24
   },
   buttonGroup: {
     flexDirection: 'row',
-    gap: parseInt(spacing.sm)             // 8
+    gap: parseInt(spacing.sm) // 8
   }
 })
 ```
@@ -171,7 +171,7 @@ Container(
 ```css
 /* 禁止魔法数字 */
 .card {
-  padding: 16px;      /* ❌ 禁止！ */
+  padding: 16px; /* ❌ 禁止！ */
   margin-bottom: 25px; /* ❌ 禁止！ */
 }
 ```
@@ -188,7 +188,7 @@ Container(
 /* ✅ 可接受的特殊情况 */
 .special-component {
   /* 设计稿要求 20px，使用最接近的 24px */
-  padding: var(--spacing-lg);  /* 24px - 设计稿 20px，向上取整 */
+  padding: var(--spacing-lg); /* 24px - 设计稿 20px，向上取整 */
 }
 ```
 

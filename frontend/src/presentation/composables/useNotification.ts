@@ -70,11 +70,7 @@ export function useNotification() {
       message: string,
       level: 'info' | 'success' | 'warning' | 'error' = 'info'
     ) => {
-      notificationPresentationAdapter.showSystemNotification(
-        title,
-        message,
-        level
-      )
+      notificationPresentationAdapter.showSystemNotification(title, message, level)
     }
   }
 }

@@ -69,11 +69,7 @@ export function convertCachedToTreeNodes(
     return cached.map(convert)
   }
 
-  logger.info(
-    'TreeConverter',
-    '🔄 重建书签树形结构，扁平数据长度:',
-    cached.length
-  )
+  logger.info('TreeConverter', '🔄 重建书签树形结构，扁平数据长度:', cached.length)
   const nodeMap = new Map<string, ChromeBookmarkTreeNode>()
   const convert = (item: CachedBookmarkItem): ChromeBookmarkTreeNode => ({
     id: item.id,
@@ -117,18 +113,12 @@ export function convertCachedToTreeNodes(
   // 按 index 排序根节点
   roots.sort((a, b) => (a.index ?? 0) - (b.index ?? 0))
 
-  logger.info(
-    'TreeConverter',
-    `✅ 树构建完成: ${roots.length} 个根节点, 总节点数: ${nodeMap.size}`
-  )
+  logger.info('TreeConverter', `✅ 树构建完成: ${roots.length} 个根节点, 总节点数: ${nodeMap.size}`)
 
   // 检查每个根节点的 children 数量
   roots.forEach(root => {
     const childCount = root.children?.length || 0
-    logger.info(
-      'TreeConverter',
-      `  - ${root.title} (id=${root.id}): ${childCount} 个直接子节点`
-    )
+    logger.info('TreeConverter', `  - ${root.title} (id=${root.id}): ${childCount} 个直接子节点`)
   })
 
   return roots

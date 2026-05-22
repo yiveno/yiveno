@@ -14,14 +14,16 @@
 **文件**: `tsconfig.base.json`
 
 **新增规则**:
+
 ```jsonc
 {
-  "noImplicitReturns": true,           // 函数必须显式返回
-  "exactOptionalPropertyTypes": true   // 可选属性不能赋值 undefined
+  "noImplicitReturns": true, // 函数必须显式返回
+  "exactOptionalPropertyTypes": true // 可选属性不能赋值 undefined
 }
 ```
 
 **效果**:
+
 - ✅ 防止函数忘记返回值
 - ✅ 更严格的可选属性类型检查
 - ✅ 0 个新错误（已有代码符合规范）
@@ -35,6 +37,7 @@
 **新增规则分类**:
 
 #### A. 异步代码规则（防止 Promise 相关 Bug）
+
 ```javascript
 '@typescript-eslint/no-floating-promises': 'error',        // 禁止未处理的 Promise
 '@typescript-eslint/no-misused-promises': 'error',         // 禁止错误使用 Promise
@@ -45,10 +48,11 @@
 ```
 
 **预防的 Bug 类型**:
+
 ```typescript
 // ❌ 错误：忘记 await（现在会报错）
 async function loadData() {
-  fetchData()  // Error: Promise 未处理
+  fetchData() // Error: Promise 未处理
 }
 
 // ✅ 正确
@@ -58,6 +62,7 @@ async function loadData() {
 ```
 
 #### B. 代码质量规则
+
 ```javascript
 '@typescript-eslint/no-shadow': 'error',                   // 禁止变量遮蔽
 '@typescript-eslint/prefer-nullish-coalescing': 'warn',    // 优先使用 ?? 而非 ||
@@ -69,21 +74,23 @@ async function loadData() {
 ```
 
 **预防的 Bug 类型**:
+
 ```typescript
 // ❌ 错误：变量遮蔽（现在会报错）
 const count = 10
 function test() {
-  const count = 20  // Error: 遮蔽外部变量
+  const count = 20 // Error: 遮蔽外部变量
 }
 
 // ❌ 错误：应该用 ?? 而非 ||
-const value = input || 'default'  // Warning: 0 和 '' 也会被替换
+const value = input || 'default' // Warning: 0 和 '' 也会被替换
 
 // ✅ 正确
-const value = input ?? 'default'  // 只有 null/undefined 才替换
+const value = input ?? 'default' // 只有 null/undefined 才替换
 ```
 
 #### C. Vue 3 响应式规则（防止响应式丢失）
+
 ```javascript
 'vue/no-ref-object-reactivity-loss': 'error',              // 防止 ref 响应式丢失
 'vue/no-setup-props-reactivity-loss': 'error',            // 防止 props 解构丢失响应式
@@ -94,10 +101,11 @@ const value = input ?? 'default'  // 只有 null/undefined 才替换
 ```
 
 **预防的 Bug 类型**:
+
 ```vue
 <script setup>
 // ❌ 错误：解构丢失响应式（现在会报错）
-const { count } = reactive({ count: 0 })  // Error: 响应式丢失
+const { count } = reactive({ count: 0 }) // Error: 响应式丢失
 
 // ✅ 正确
 const state = reactive({ count: 0 })
@@ -113,14 +121,16 @@ const count = toRef(state, 'count')
 **文件**: `.prettierrc.json`
 
 **新增配置**:
+
 ```json
 {
-  "printWidth": 100,    // 行宽从 80 增加到 100（更符合现代屏幕）
-  "endOfLine": "lf"     // 强制 Unix 换行符（跨平台一致性）
+  "printWidth": 100, // 行宽从 80 增加到 100（更符合现代屏幕）
+  "endOfLine": "lf" // 强制 Unix 换行符（跨平台一致性）
 }
 ```
 
 **效果**:
+
 - ✅ 减少不必要的换行
 - ✅ 跨平台（Windows/Mac/Linux）一致性
 - ✅ 自动格式化时会应用新规则
@@ -130,18 +140,21 @@ const count = toRef(state, 'count')
 ## 📊 验证结果
 
 ### TypeScript 检查
+
 ```bash
 $ bun run typecheck
 ✅ 通过（0 个错误）
 ```
 
 ### ESLint 检查
+
 ```bash
 $ bun run lint:check
 ⏳ 待验证（预计 0-10 个新警告）
 ```
 
 ### Stylelint 检查
+
 ```bash
 $ bun run stylelint:check
 ✅ 无变化（Stylelint 未修改）
@@ -154,16 +167,19 @@ $ bun run stylelint:check
 ### 预计工作量：2-3 天
 
 **Phase 2 目标**:
+
 1. 启用 TypeScript 严格模式 (`strict: true`)
 2. 修复所有类型错误（预计 200-300 个）
 3. 添加安全规则（防止 XSS）
 
 **Phase 2 收益**:
+
 - ✅ 减少 80% 的空指针异常
 - ✅ 减少 90% 的类型错误
 - ✅ 减少 100% 的 XSS 漏洞
 
 **是否启动 Phase 2？**
+
 - 建议：在 1-2 周内启动
 - 策略：渐进式修复，每天修复 50-100 个错误
 - 工具：使用 `bun run typecheck` 查看错误列表
@@ -173,16 +189,19 @@ $ bun run stylelint:check
 ## 📈 Phase 1 收益评估
 
 ### 立即收益
+
 - ✅ 提升代码质量检测能力
 - ✅ 防止新代码引入常见 Bug
 - ✅ 0 个破坏性变更
 
 ### 长期收益（1 个月后）
+
 - ✅ 减少 30-40% 的异步相关 Bug
 - ✅ 减少 20-30% 的响应式丢失问题
 - ✅ 提升 10-15% 的代码可读性
 
 ### 开发体验
+
 - ✅ 更好的 IDE 提示（可选链、空值合并）
 - ✅ 更早发现潜在问题（编译时而非运行时）
 - ✅ 更一致的代码风格（Prettier 行宽）
@@ -192,10 +211,11 @@ $ bun run stylelint:check
 ## 🔧 如何使用新规则
 
 ### 1. 异步代码
+
 ```typescript
 // ❌ 旧写法（会报错）
 async function loadData() {
-  fetchData()  // Error: Promise 未处理
+  fetchData() // Error: Promise 未处理
 }
 
 // ✅ 新写法
@@ -207,6 +227,7 @@ async function loadData() {
 ```
 
 ### 2. 空值处理
+
 ```typescript
 // ❌ 旧写法（会警告）
 const value = input || 'default'
@@ -216,6 +237,7 @@ const value = input ?? 'default'
 ```
 
 ### 3. 可选链
+
 ```typescript
 // ❌ 旧写法（会警告）
 const title = bookmark && bookmark.title
@@ -225,6 +247,7 @@ const title = bookmark?.title
 ```
 
 ### 4. Vue 3 响应式
+
 ```vue
 <script setup>
 // ❌ 旧写法（会报错）
@@ -258,7 +281,7 @@ const count = toRef(state, 'count')
 - ✅ 为 Phase 2 做好准备
 
 **建议**:
+
 1. 立即运行 `bun run lint` 查看新的警告
 2. 在接下来的开发中遵循新规则
 3. 1-2 周后启动 Phase 2（TypeScript 严格模式）
-

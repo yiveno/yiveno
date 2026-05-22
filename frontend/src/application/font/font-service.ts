@@ -11,11 +11,7 @@
 import type { Result } from '../../core/common/result'
 import { ok, err } from '../../core/common/result'
 import { logger } from '../../infrastructure/logging/logger'
-import type {
-  DetectedLanguage,
-  FontStrategy,
-  FontServiceConfig
-} from '@/types/application/font'
+import type { DetectedLanguage, FontStrategy, FontServiceConfig } from '@/types/application/font'
 
 /**
  * Google Fonts 字体映射配置
@@ -111,8 +107,7 @@ export class FontService {
 
     // 日文内容优先策略
     this.strategies.set('ja', {
-      systemUI:
-        '"NotoSansJP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif',
+      systemUI: '"NotoSansJP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif',
       userContent:
         '"NotoSansJP", "NotoSansSC", "NotoSansTC", "NotoSansKR", "NotoSans", system-ui, sans-serif',
       detected: 'ja'
@@ -120,8 +115,7 @@ export class FontService {
 
     // 韩文内容优先策略
     this.strategies.set('ko', {
-      systemUI:
-        '"NotoSansKR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif',
+      systemUI: '"NotoSansKR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif',
       userContent:
         '"NotoSansKR", "NotoSansJP", "NotoSansSC", "NotoSansTC", "NotoSans", system-ui, sans-serif',
       detected: 'ko'
@@ -137,8 +131,7 @@ export class FontService {
 
     // 英文内容优先策略
     this.strategies.set('en', {
-      systemUI:
-        '"NotoSans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      systemUI: '"NotoSans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
       userContent:
         '"NotoSans", "NotoSansSC", "NotoSansTC", "NotoSansJP", "NotoSansKR", system-ui, sans-serif',
       detected: 'en'
@@ -146,8 +139,7 @@ export class FontService {
 
     // 混合语言内容策略
     this.strategies.set('mixed', {
-      systemUI:
-        '"NotoSans", "NotoSansSC", "NotoSansJP", "NotoSansKR", system-ui, sans-serif',
+      systemUI: '"NotoSans", "NotoSansSC", "NotoSansJP", "NotoSansKR", system-ui, sans-serif',
       userContent:
         '"NotoSansSC", "NotoSansTC", "NotoSansJP", "NotoSansKR", "NotoSansArabic", "NotoSans", system-ui, sans-serif',
       detected: 'mixed'
@@ -190,17 +182,11 @@ export class FontService {
       const code = char.charCodeAt(0)
 
       // 中文字符 (包括简繁体)
-      if (
-        (code >= 0x4e00 && code <= 0x9fff) ||
-        (code >= 0x3400 && code <= 0x4dbf)
-      ) {
+      if ((code >= 0x4e00 && code <= 0x9fff) || (code >= 0x3400 && code <= 0x4dbf)) {
         stats.chinese++
       }
       // 日文假名
-      else if (
-        (code >= 0x3040 && code <= 0x309f) ||
-        (code >= 0x30a0 && code <= 0x30ff)
-      ) {
+      else if ((code >= 0x3040 && code <= 0x309f) || (code >= 0x30a0 && code <= 0x30ff)) {
         stats.japanese++
       }
       // 韩文
@@ -208,17 +194,11 @@ export class FontService {
         stats.korean++
       }
       // 阿拉伯文
-      else if (
-        (code >= 0x0600 && code <= 0x06ff) ||
-        (code >= 0x0750 && code <= 0x077f)
-      ) {
+      else if ((code >= 0x0600 && code <= 0x06ff) || (code >= 0x0750 && code <= 0x077f)) {
         stats.arabic++
       }
       // 拉丁字符
-      else if (
-        (code >= 0x0041 && code <= 0x005a) ||
-        (code >= 0x0061 && code <= 0x007a)
-      ) {
+      else if ((code >= 0x0041 && code <= 0x005a) || (code >= 0x0061 && code <= 0x007a)) {
         stats.latin++
       }
     }
@@ -252,8 +232,7 @@ export class FontService {
     }
 
     // 检测是否为混合语言
-    const nonLatinTotal =
-      chineseRatio + japaneseRatio + koreanRatio + arabicRatio
+    const nonLatinTotal = chineseRatio + japaneseRatio + koreanRatio + arabicRatio
     if (nonLatinTotal > 0.2 && latinRatio > 0.2) {
       return 'mixed'
     }
@@ -270,30 +249,8 @@ export class FontService {
    */
   private detectChineseVariant(text: string): 'zh-CN' | 'zh-TW' {
     // 简化的简繁体检测 - 基于常见字符
-    const simplifiedIndicators = [
-      '的',
-      '了',
-      '在',
-      '是',
-      '我',
-      '有',
-      '他',
-      '这',
-      '中',
-      '来'
-    ]
-    const traditionalIndicators = [
-      '的',
-      '了',
-      '在',
-      '是',
-      '我',
-      '有',
-      '他',
-      '這',
-      '中',
-      '來'
-    ]
+    const simplifiedIndicators = ['的', '了', '在', '是', '我', '有', '他', '这', '中', '来']
+    const traditionalIndicators = ['的', '了', '在', '是', '我', '有', '他', '這', '中', '來']
 
     let _simplifiedScore = 0
     let _traditionalScore = 0
@@ -326,8 +283,7 @@ export class FontService {
     try {
       const text = element.textContent || ''
       const detectedLang = this.detectLanguage(text)
-      const strategy =
-        this.strategies.get(detectedLang) || this.strategies.get('unknown')!
+      const strategy = this.strategies.get(detectedLang) || this.strategies.get('unknown')!
 
       const fontFamily = isSystemUI ? strategy.systemUI : strategy.userContent
       element.style.fontFamily = fontFamily
@@ -335,10 +291,7 @@ export class FontService {
       // 添加调试信息
       if (this.config.debugMode) {
         element.setAttribute('data-detected-lang', detectedLang)
-        element.setAttribute(
-          'data-font-strategy',
-          isSystemUI ? 'system' : 'content'
-        )
+        element.setAttribute('data-font-strategy', isSystemUI ? 'system' : 'content')
       }
 
       return ok({ detectedLang, fontFamily, strategy })
@@ -394,8 +347,7 @@ export class FontService {
 
               // 检查是否为系统UI或用户内容
               const systemSelector = this.config.systemUISelectors.join(', ')
-              const contentSelector =
-                this.config.userContentSelectors.join(', ')
+              const contentSelector = this.config.userContentSelectors.join(', ')
 
               const isSystemUI = element.closest(systemSelector) !== null
               const isUserContent = element.closest(contentSelector) !== null
@@ -509,13 +461,8 @@ export class FontService {
 
         // 映射语言代码到字体配置
         let langKey = 'default'
-        if (lang.startsWith('zh-CN') || lang.startsWith('zh-Hans'))
-          langKey = 'zh-CN'
-        else if (
-          lang.startsWith('zh-TW') ||
-          lang.startsWith('zh-Hant') ||
-          lang.startsWith('zh-HK')
-        )
+        if (lang.startsWith('zh-CN') || lang.startsWith('zh-Hans')) langKey = 'zh-CN'
+        else if (lang.startsWith('zh-TW') || lang.startsWith('zh-Hant') || lang.startsWith('zh-HK'))
           langKey = 'zh-TW'
         else if (lang.startsWith('ja')) langKey = 'ja'
         else if (lang.startsWith('ko')) langKey = 'ko'
@@ -595,12 +542,7 @@ export function initializeSmartFonts(): void {
     if (result.ok) {
       logger.info('FontService', '智能字体管理器已初始化')
     } else {
-      logger.error(
-        'Component',
-        'FontService',
-        '智能字体管理器初始化失败',
-        result.error
-      )
+      logger.error('Component', 'FontService', '智能字体管理器初始化失败', result.error)
     }
   }
 

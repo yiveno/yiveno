@@ -5,8 +5,7 @@ const painPoints = [
   {
     title: '搜索慢且无序',
     description: '默认书签管理缺乏模糊匹配与分层视图，大量收藏后几乎无法回忆。',
-    solution:
-      '多索引引擎：Fuse.js + 语义向量 + 标签过滤，一次输入获取上下文结果。'
+    solution: '多索引引擎：Fuse.js + 语义向量 + 标签过滤，一次输入获取上下文结果。'
   },
   {
     title: '同步易丢失',
@@ -26,16 +25,11 @@ const painPoints = [
     <div class="container mx-auto px-4">
       <div class="painpoints-grid">
         <div class="md:col-span-1 painpoints-left">
-          <p
-            class="text-accent-400 text-xs tracking-widest uppercase mb-3 font-bold"
-          >
-            真实痛点
-          </p>
-          <h2 class="text-2xl font-bold mb-4 leading-tight">
-            我们解决最难啃的问题
-          </h2>
+          <p class="text-accent-400 text-xs tracking-widest uppercase mb-3 font-bold">真实痛点</p>
+          <h2 class="text-2xl font-bold mb-4 leading-tight">我们解决最难啃的问题</h2>
           <p class="text-content-muted text-sm leading-relaxed">
-            设计 AcuityBookmarks 的初衷，就是解决「书签堆成山却找不到」、「跨设备无法同步」等长期痛点。
+            设计 AcuityBookmarks
+            的初衷，就是解决「书签堆成山却找不到」、「跨设备无法同步」等长期痛点。
           </p>
         </div>
 
@@ -69,7 +63,7 @@ const painPoints = [
   align-items: start;
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .painpoints-grid {
     grid-template-columns: 1fr;
     gap: 24px;

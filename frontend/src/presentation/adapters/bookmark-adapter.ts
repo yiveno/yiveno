@@ -137,7 +137,7 @@ export class BookmarkPresentationAdapter {
     const result = await bookmarkSearchService.search(query, {
       limit: options?.limit || 50
     })
-    
+
     if (!result.ok) {
       logger.error('BookmarkAdapter', '筛选书签失败', { query, error: result.error })
       notificationService.notify('筛选失败，请稍后重试', {
@@ -145,7 +145,7 @@ export class BookmarkPresentationAdapter {
       })
       return []
     }
-    
+
     return result.value
   }
 
@@ -155,9 +155,7 @@ export class BookmarkPresentationAdapter {
    * @param parentId - 父节点 ID
    * @returns 包含数据、错误和加载状态的结果
    */
-  async getChildrenByParentId(
-    parentId: string
-  ): Promise<LoadResult<BookmarkRecord[]>> {
+  async getChildrenByParentId(parentId: string): Promise<LoadResult<BookmarkRecord[]>> {
     try {
       const result = await bookmarkAppService.getChildrenByParentId(parentId)
       if (result.ok) {

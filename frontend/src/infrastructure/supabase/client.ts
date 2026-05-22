@@ -8,6 +8,7 @@
  * - 使用 Chrome Storage 存储 session（与官网同步）
  */
 
+/* eslint-disable no-restricted-imports -- 这是 Supabase 客户端的封装层，必须直接导入 @supabase/supabase-js */
 import { createClient } from '@supabase/supabase-js'
 import { logger } from '@/infrastructure/logging/logger'
 
@@ -40,7 +41,7 @@ const isConfigured = !!(supabaseUrl && supabaseAnonKey)
 
 /**
  * Chrome Storage Adapter for Supabase Auth
- * 
+ *
  * 使用 Chrome Storage 存储 session，实现插件与官网的认证状态同步
  */
 const chromeStorageAdapter = {

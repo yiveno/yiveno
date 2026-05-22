@@ -15,14 +15,10 @@ export const SUPABASE_ERROR_CODES: ErrorCodeMap = {
   email_address_not_authorized: '该邮箱未授权，请联系管理员',
   email_already_registered: '该邮箱已被注册，请直接登录或使用其他邮箱',
   email_exists: '该邮箱已被注册，请直接登录或使用其他邮箱',
-  email_not_confirmed:
-    '请先验证邮箱。请检查您的邮箱并点击验证链接完成注册后才能登录',
-  email_not_verified:
-    '请先验证邮箱。请检查您的邮箱并点击验证链接完成注册后才能登录',
-  email_rate_limit_exceeded:
-    '发送邮件过于频繁，请稍后再试（建议等待 15-60 分钟后重试）',
-  over_email_send_rate_limit:
-    '发送邮件过于频繁，请稍后再试（建议等待 15-60 分钟后重试）',
+  email_not_confirmed: '请先验证邮箱。请检查您的邮箱并点击验证链接完成注册后才能登录',
+  email_not_verified: '请先验证邮箱。请检查您的邮箱并点击验证链接完成注册后才能登录',
+  email_rate_limit_exceeded: '发送邮件过于频繁，请稍后再试（建议等待 15-60 分钟后重试）',
+  over_email_send_rate_limit: '发送邮件过于频繁，请稍后再试（建议等待 15-60 分钟后重试）',
 
   // 密码相关
   weak_password: '密码不符合安全要求，必须至少8位，包含字母和数字',
@@ -68,17 +64,24 @@ export const SUPABASE_ERROR_CODES: ErrorCodeMap = {
 /**
  * 从错误对象中提取错误码
  */
-export function extractErrorCode(error: any): string | undefined {
+export function extractErrorCode(error: unknown): string | undefined {
   if (!error) return undefined
+
+  // 类型守卫：确保 error 是对象
+  if (typeof error !== 'object') return undefined
+
+  const errorObj = error as Record<string, unknown>
 
   // 尝试多种方式提取错误码
   return (
-    error.error_code ||
-    error.errorCode ||
-    error.code ||
-    error.error?.code ||
-    error.error_description ||
-    error.message?.match(/error_code:\s*(\w+)/)?.[1]
+    (errorObj.error_code as string | undefined) ||
+    (errorObj.errorCode as string | undefined) ||
+    (errorObj.code as string | undefined) ||
+    ((errorObj.error as Record<string, unknown> | undefined)?.code as string | undefined) ||
+    (errorObj.error_description as string | undefined) ||
+    (typeof errorObj.message === 'string'
+      ? errorObj.message.match(/error_code:\s*(\w+)/)?.[1]
+      : undefined)
   )
 }
 
@@ -86,7 +89,7 @@ export function extractErrorCode(error: any): string | undefined {
  * 获取用户友好的错误消息
  */
 export function getErrorMessage(
-  errorCodeOrError: string | any | undefined,
+  errorCodeOrError: string | unknown | undefined,
   defaultMessage: string = '操作失败，请稍后重试'
 ): string {
   if (!errorCodeOrError) {
@@ -95,9 +98,7 @@ export function getErrorMessage(
 
   // 如果传入的是错误对象，先提取错误码
   const errorCode =
-    typeof errorCodeOrError === 'string'
-      ? errorCodeOrError
-      : extractErrorCode(errorCodeOrError)
+    typeof errorCodeOrError === 'string' ? errorCodeOrError : extractErrorCode(errorCodeOrError)
 
   if (!errorCode) {
     return defaultMessage

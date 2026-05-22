@@ -12,9 +12,9 @@ defineOptions({
 })
 
 const emit = defineEmits<{
-  'bookmark-click': [bookmark: BookmarkRecord]
-  'count-update': [count: number]
-  'bookmark-remove': [bookmark: BookmarkRecord]
+  (e: 'bookmarkClick', bookmark: BookmarkRecord): void
+  (e: 'countUpdate', count: number): void
+  (e: 'bookmarkRemove', bookmark: BookmarkRecord): void
 }>()
 
 const recentVisits = ref<BookmarkRecord[]>([])
@@ -23,7 +23,7 @@ const faviconErrors = ref<Set<string>>(new Set())
 const loadRecentVisits = async () => {
   try {
     recentVisits.value = await indexedDBManager.getRecentVisits(5)
-    emit('count-update', recentVisits.value.length)
+    emit('countUpdate', recentVisits.value.length)
     logger.info('RecentVisits', '📊 加载最近访问', recentVisits.value.length)
   } catch (error) {
     logger.error('RecentVisits', '❌ 加载最近访问失败', error)
@@ -71,13 +71,16 @@ onUnmounted(() => {
 })
 
 // 监听数据变化，自动更新数量
-const stopWatch = watch(() => recentVisits.value.length, (newCount) => {
-  emit('count-update', newCount)
-})
+const stopWatch = watch(
+  () => recentVisits.value.length,
+  newCount => {
+    emit('countUpdate', newCount)
+  }
+)
 
 const handleClick = (bookmark: BookmarkRecord) => {
   logger.info('RecentVisits', '🔗 点击最近访问', bookmark.title)
-  emit('bookmark-click', bookmark)
+  emit('bookmarkClick', bookmark)
 }
 
 /**
@@ -86,7 +89,7 @@ const handleClick = (bookmark: BookmarkRecord) => {
  */
 const handleRemove = async (bookmark: BookmarkRecord) => {
   logger.info('RecentVisits', '🗑️ 清除访问记录', bookmark.title)
-  
+
   try {
     // 获取完整的书签记录
     const existingBookmark = await indexedDBManager.getBookmarkById(bookmark.id)
@@ -94,28 +97,28 @@ const handleRemove = async (bookmark: BookmarkRecord) => {
       logger.error('RecentVisits', '❌ 书签不存在', bookmark.id)
       return
     }
-    
+
     // 创建新的书签对象，删除访问记录字段
     const updatedBookmark: BookmarkRecord = {
       ...existingBookmark
     }
-    
+
     // 删除访问记录字段
     delete updatedBookmark.lastVisited
     delete updatedBookmark.visitCount
-    
+
     // 直接调用 IndexedDBManager 更新
     await indexedDBManager.updateBookmark(updatedBookmark)
-    
+
     // 从列表中移除
     recentVisits.value = recentVisits.value.filter(b => b.id !== bookmark.id)
-    
+
     // 更新数量
-    emit('count-update', recentVisits.value.length)
-    
+    emit('countUpdate', recentVisits.value.length)
+
     // 通知父组件
-    emit('bookmark-remove', bookmark)
-    
+    emit('bookmarkRemove', bookmark)
+
     logger.debug('RecentVisits', '✅ 访问记录已清除')
   } catch (error) {
     logger.error('RecentVisits', '❌ 清除访问记录失败', error)
@@ -137,7 +140,7 @@ defineExpose({
       title="暂无最近访问"
       :icon-size="32"
     />
-    
+
     <!-- 最近访问列表 -->
     <md-list v-else class="recent-list">
       <md-list-item
@@ -158,10 +161,12 @@ defineExpose({
           />
           <LucideIcon v-else name="bookmark" :size="32" />
         </div>
-        
+
         <div slot="headline" class="headline-text">{{ bookmark.title }}</div>
-        <div slot="supporting-text" class="supporting-text">{{ formatRecentVisitTime(bookmark.lastVisited) }}</div>
-        
+        <div slot="supporting-text" class="supporting-text">
+          {{ formatRecentVisitTime(bookmark.lastVisited) }}
+        </div>
+
         <md-icon-button
           slot="end"
           class="remove-button"

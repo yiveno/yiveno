@@ -80,10 +80,7 @@ export function scheduleFullTraitRebuild(reason = 'unknown'): void {
 /**
  * 请求对指定书签重新评估特征
  */
-export function scheduleTraitRebuildForIds(
-  ids: string[],
-  reason = 'unknown'
-): void {
+export function scheduleTraitRebuildForIds(ids: string[], reason = 'unknown'): void {
   ids.forEach(id => queueState.pendingIds.add(id))
   queueState.reasons.add(reason)
   scheduleFlush()
@@ -111,7 +108,6 @@ async function flushTraitQueue(): Promise<void> {
     return
   }
 
-  // eslint-disable-next-line require-atomic-updates -- 队列运行状态设置是原子操作，不会有竞态条件
   queueState.running = true
 
   const reasons = Array.from(queueState.reasons)
@@ -125,7 +121,6 @@ async function flushTraitQueue(): Promise<void> {
   updateGlobalQueueState()
 
   if (!needFullRebuild && pendingIds.length === 0) {
-    // eslint-disable-next-line require-atomic-updates -- 队列运行状态重置是原子操作，不会有竞态条件
     queueState.running = false
     return
   }
@@ -148,7 +143,7 @@ async function flushTraitQueue(): Promise<void> {
         count: pendingIds.length
       })
     }
-    
+
     // ✅ 特征检测完成后，广播消息通知 UI 刷新
     // 注意：在 Service Worker 环境中，如果没有接收端，sendMessage 会失败
     // 我们需要检查是否有可用的 runtime 环境
@@ -164,7 +159,11 @@ async function flushTraitQueue(): Promise<void> {
           () => {
             // 使用回调函数来捕获错误，避免 Promise rejection
             if (chrome.runtime.lastError) {
-              logger.debug('BookmarkTrait', '广播特征更新消息失败', chrome.runtime.lastError.message)
+              logger.debug(
+                'BookmarkTrait',
+                '广播特征更新消息失败',
+                chrome.runtime.lastError.message
+              )
             } else {
               logger.debug('BookmarkTrait', '✅ 已广播特征更新消息')
             }
@@ -208,8 +207,7 @@ export async function evaluateAllBookmarkTraits(): Promise<void> {
 
   await persistTraitEvaluations(evaluations)
 
-  const duration =
-    (performance.now ? performance.now() : Date.now()) - startTime
+  const duration = (performance.now ? performance.now() : Date.now()) - startTime
   logger.debug('BookmarkTrait', '特征标签写入完成', {
     total: evaluations.length,
     duration: Math.round(duration)
@@ -219,9 +217,7 @@ export async function evaluateAllBookmarkTraits(): Promise<void> {
 /**
  * 增量评估指定书签的特征
  */
-async function evaluateBookmarksTraitsIncremental(
-  bookmarkIds: string[]
-): Promise<void> {
+async function evaluateBookmarksTraitsIncremental(bookmarkIds: string[]): Promise<void> {
   if (bookmarkIds.length === 0) return
 
   await indexedDBManager.initialize()
@@ -241,9 +237,7 @@ async function evaluateBookmarksTraitsIncremental(
     return
   }
 
-  const urls = new Set(
-    targetBookmarks.filter(b => b.url).map(b => b.url!.toLowerCase().trim())
-  )
+  const urls = new Set(targetBookmarks.filter(b => b.url).map(b => b.url!.toLowerCase().trim()))
 
   const relatedBookmarks: BookmarkRecord[] = [...targetBookmarks]
   const urlSet = new Set<string>()
@@ -277,8 +271,7 @@ async function evaluateBookmarksTraitsIncremental(
 
   await persistTraitEvaluations(evaluations)
 
-  const duration =
-    (performance.now ? performance.now() : Date.now()) - startTime
+  const duration = (performance.now ? performance.now() : Date.now()) - startTime
   logger.debug('BookmarkTrait', '增量特征标签写入完成', {
     requested: bookmarkIds.length,
     evaluated: evaluations.length,
@@ -289,9 +282,7 @@ async function evaluateBookmarksTraitsIncremental(
 /**
  * 将评估结果批量写入 IndexedDB
  */
-async function persistTraitEvaluations(
-  evaluations: BookmarkTraitEvaluation[]
-): Promise<void> {
+async function persistTraitEvaluations(evaluations: BookmarkTraitEvaluation[]): Promise<void> {
   const batches: BookmarkTraitEvaluation[][] = []
   for (let i = 0; i < evaluations.length; i += TRAIT_WRITE_BATCH) {
     batches.push(evaluations.slice(i, i + TRAIT_WRITE_BATCH))
@@ -333,9 +324,7 @@ function buildDuplicateInfo(bookmarks: BookmarkRecord[]): {
   for (const [, group] of urlGroups) {
     if (group.length <= 1) continue
 
-    group.sort((a, b) =>
-      getBookmarkOrderKey(a).localeCompare(getBookmarkOrderKey(b))
-    )
+    group.sort((a, b) => getBookmarkOrderKey(a).localeCompare(getBookmarkOrderKey(b)))
 
     const canonical = group[0]
     if (!canonical) continue
@@ -351,7 +340,7 @@ function buildDuplicateInfo(bookmarks: BookmarkRecord[]): {
 
 /**
  * 生成书签的排序键
- * 
+ *
  * ✅ 修复：统一使用 dateAdded + index 排序，与 markDuplicateBookmarks() 保持一致
  * 确保全量同步和特征检测选择相同的"原始书签"
  */
@@ -378,13 +367,11 @@ function evaluateBookmarkTraits(
     ? record.traitMetadata.filter(entry => entry && entry.source !== 'worker')
     : []
 
-  const metadataEntries: BookmarkRecord['traitMetadata'] = [
-    ...existingMetadata
-  ]
-  
+  const metadataEntries: BookmarkRecord['traitMetadata'] = [...existingMetadata]
+
   // ✅ 只有这三个特征标签需要存储 metadata（需要记录详细信息）
   const METADATA_TAGS: TraitTag[] = ['duplicate', 'invalid', 'internal']
-  
+
   const addTag = (tag: TraitTag, notes?: string) => {
     tagSet.add(tag)
     // ✅ 只为需要 metadata 的标签创建条目
@@ -415,10 +402,7 @@ function evaluateBookmarkTraits(
     // 3. 重复书签检测
     if (duplicateInfo.duplicateIds.has(record.id)) {
       const canonicalId = duplicateInfo.canonicalMap.get(record.id)
-      addTag(
-        'duplicate',
-        canonicalId ? `参考原始书签 ${canonicalId}` : undefined
-      )
+      addTag('duplicate', canonicalId ? `参考原始书签 ${canonicalId}` : undefined)
     }
 
     // 4. 过时书签检测（超过 1 年未访问）
@@ -454,7 +438,7 @@ function evaluateBookmarkTraits(
  */
 function isInternalProtocol(url: string): boolean {
   if (!url || typeof url !== 'string') return false
-  
+
   const lowerUrl = url.toLowerCase()
   return (
     lowerUrl.startsWith('chrome://') ||
@@ -473,29 +457,29 @@ function isValidBookmarkUrl(url: string): boolean {
   if (!url) return false
   try {
     const urlObj = new URL(url)
-    
+
     // 检查协议
     if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') {
       return false
     }
-    
+
     // 检查域名格式
     const hostname = urlObj.hostname
-    
+
     // 域名不能为空
     if (!hostname) return false
-    
+
     // 检查顶级域名（TLD）是否完整
     // 有效的 TLD 至少 2 个字符（如 .io, .cn）
     const parts = hostname.split('.')
     if (parts.length < 2) return false // 必须有至少一个点
-    
+
     const tld = parts[parts.length - 1]
     if (!tld || tld.length < 2) return false // TLD 至少 2 个字符
-    
+
     // 检查 TLD 是否只包含字母（排除 .o 这种不完整的）
     if (!/^[a-z]{2,}$/i.test(tld)) return false
-    
+
     return true
   } catch {
     return false
@@ -526,7 +510,7 @@ function createTraitMetadataEntry(tag: TraitTag, notes?: string) {
 
 /**
  * 判断书签是否过时（超过 1 年未访问）
- * 
+ *
  * 检测规则：
  * 1. 优先使用 lastVisited（最后访问时间）
  * 2. 如果没有 lastVisited，使用 dateAdded（创建时间）
@@ -535,17 +519,17 @@ function createTraitMetadataEntry(tag: TraitTag, notes?: string) {
 function isOutdatedBookmark(record: BookmarkRecord): boolean {
   const now = Date.now()
   const oneYearMs = 365 * 24 * 60 * 60 * 1000 // 365 天
-  
+
   // 优先使用 lastVisited
   if (record.lastVisited && record.lastVisited > 0) {
     return now - record.lastVisited > oneYearMs
   }
-  
+
   // 如果没有 lastVisited，使用 dateAdded
   if (record.dateAdded && record.dateAdded > 0) {
     return now - record.dateAdded > oneYearMs
   }
-  
+
   return false
 }
 
@@ -561,7 +545,7 @@ function getDaysSinceLastVisit(record: BookmarkRecord): number {
 
 /**
  * 判断书签是否未分类（直接在根目录或书签栏）
- * 
+ *
  * 检测规则：
  * 1. parentId 为 '0'（根目录）
  * 2. parentId 为 '1'（书签栏）
@@ -572,18 +556,18 @@ function isUntaggedBookmark(record: BookmarkRecord): boolean {
   if (record.parentId === '0' || record.parentId === '1') {
     return true
   }
-  
+
   // 检查路径深度
   if (record.pathIds && record.pathIds.length <= 1) {
     return true
   }
-  
+
   return false
 }
 
 /**
  * 判断书签是否无标题
- * 
+ *
  * 检测规则：
  * 1. 标题为空字符串或只包含空格
  * 2. 标题等于 URL（未自定义标题）
@@ -592,31 +576,24 @@ function isUntaggedBookmark(record: BookmarkRecord): boolean {
 function isUntitledBookmark(record: BookmarkRecord): boolean {
   const title = record.title?.trim() || ''
   const url = record.url || ''
-  
+
   // 1. 标题为空
   if (!title) {
     return true
   }
-  
+
   // 2. 标题等于 URL
   if (title === url) {
     return true
   }
-  
+
   // 3. 标题为常见的默认值
-  const defaultTitles = [
-    'untitled',
-    'no title',
-    'new bookmark',
-    '无标题',
-    '新建书签',
-    '未命名'
-  ]
-  
+  const defaultTitles = ['untitled', 'no title', 'new bookmark', '无标题', '新建书签', '未命名']
+
   const lowerTitle = title.toLowerCase()
   if (defaultTitles.includes(lowerTitle)) {
     return true
   }
-  
+
   return false
 }

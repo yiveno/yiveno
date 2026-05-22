@@ -11,12 +11,9 @@ withDefaults(defineProps<LoadingProps>(), {
 </script>
 
 <template>
-  <div 
-    class="loading-container" 
-    :class="[
-      `loading-container--${size}`,
-      { 'loading-container--with-text': text }
-    ]"
+  <div
+    class="loading-container"
+    :class="[`loading-container--${size}`, { 'loading-container--with-text': text }]"
   >
     <md-circular-progress :indeterminate="indeterminate" class="loading-spinner" />
     <span v-if="text" class="loading-text">{{ text }}</span>
@@ -34,6 +31,11 @@ withDefaults(defineProps<LoadingProps>(), {
 .loading-container--with-text {
   flex-direction: column;
   gap: var(--spacing-2);
+}
+
+/* 基础样式 */
+.loading-spinner {
+  --md-circular-progress-active-indicator-color: var(--md-sys-color-primary);
 }
 
 /* 尺寸变体 */
@@ -60,10 +62,6 @@ withDefaults(defineProps<LoadingProps>(), {
 .loading-container--xl .loading-spinner {
   --md-circular-progress-size: 64px;
   --md-circular-progress-active-indicator-width: 5px;
-}
-
-.loading-spinner {
-  --md-circular-progress-active-indicator-color: var(--md-sys-color-primary);
 }
 
 /* 加载文案 */

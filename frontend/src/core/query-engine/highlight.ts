@@ -80,9 +80,7 @@ export class HighlightEngine {
       })
     }
 
-    return segments.length > 0
-      ? segments
-      : [{ text, isMatch: false, start: 0, end: text.length }]
+    return segments.length > 0 ? segments : [{ text, isMatch: false, start: 0, end: text.length }]
   }
 
   /**
@@ -110,10 +108,7 @@ export class HighlightEngine {
    * @param queryTerms - 查询词数组
    * @returns 匹配位置数组（按起始位置排序）
    */
-  private findMatches(
-    text: string,
-    queryTerms: string[]
-  ): Array<{ start: number; end: number }> {
+  private findMatches(text: string, queryTerms: string[]): Array<{ start: number; end: number }> {
     const matches: Array<{ start: number; end: number }> = []
 
     for (const term of queryTerms) {
@@ -159,10 +154,7 @@ export class HighlightEngine {
 
     for (let i = 0; i <= text.length - pattern.length; i++) {
       const window = text.substring(i, Math.min(i + windowSize, text.length))
-      const distance = this.levenshteinDistance(
-        pattern,
-        window.substring(0, pattern.length)
-      )
+      const distance = this.levenshteinDistance(pattern, window.substring(0, pattern.length))
 
       if (distance <= maxDistance) {
         matches.push({
@@ -215,11 +207,7 @@ export class HighlightEngine {
           const diagonal = previousRow[j - 1]
           const left = currentRow[j - 1]
           const up = previousRow[j]
-          if (
-            diagonal === undefined ||
-            left === undefined ||
-            up === undefined
-          ) {
+          if (diagonal === undefined || left === undefined || up === undefined) {
             continue
           }
           currentRow[j] = Math.min(diagonal + 1, left + 1, up + 1)
@@ -334,9 +322,7 @@ export class HighlightEngine {
       const snippet = text.substring(0, maxLength)
       return {
         snippet,
-        highlights: [
-          { text: snippet, isMatch: false, start: 0, end: snippet.length }
-        ]
+        highlights: [{ text: snippet, isMatch: false, start: 0, end: snippet.length }]
       }
     }
 
@@ -360,20 +346,14 @@ export class HighlightEngine {
     const adjustedHighlights = segments
       .filter(s => s.end > contextStart && s.start < contextEnd)
       .map(s => ({
-        text: text.substring(
-          Math.max(s.start, contextStart),
-          Math.min(s.end, contextEnd)
-        ),
+        text: text.substring(Math.max(s.start, contextStart), Math.min(s.end, contextEnd)),
         isMatch: s.isMatch,
         start: Math.max(0, s.start - contextStart),
         end: Math.min(maxLength, s.end - contextStart)
       }))
 
     return {
-      snippet:
-        (contextStart > 0 ? '...' : '') +
-        snippet +
-        (contextEnd < text.length ? '...' : ''),
+      snippet: (contextStart > 0 ? '...' : '') + snippet + (contextEnd < text.length ? '...' : ''),
       highlights: adjustedHighlights
     }
   }

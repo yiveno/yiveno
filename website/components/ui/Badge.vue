@@ -15,12 +15,7 @@ const props = withDefaults(
 )
 
 const computedClass = computed(() => {
-  const classes = [
-    'badge',
-    `badge-${props.variant}`,
-    `badge-${props.size}`,
-    props.className
-  ]
+  const classes = ['badge', `badge-${props.variant}`, `badge-${props.size}`, props.className]
   return classes.filter(Boolean).join(' ')
 })
 </script>

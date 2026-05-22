@@ -17,13 +17,13 @@ interface Props {
    * @default true
    */
   autoPrompt?: boolean
-  
+
   /**
    * 是否在用户关闭后记住选择
    * @default true
    */
   rememberDismissal?: boolean
-  
+
   /**
    * One Tap 冷却期（秒）
    * 用户关闭后多久再显示
@@ -88,7 +88,7 @@ const handleCredentialResponse = async (response: { credential: string }) => {
     const result = await signInWithGoogleOneTap(response.credential)
 
     console.log('[GoogleOneTap] 登录成功:', result.user?.email)
-    
+
     // 清除关闭记录
     if (props.rememberDismissal) {
       localStorage.removeItem('google_onetap_dismissed_at')
@@ -162,35 +162,43 @@ const promptOneTap = () => {
 
   console.log('[GoogleOneTap] 显示 One Tap 提示...')
 
-  window.google.accounts.id.prompt((notification: { getMomentType: () => string; isNotDisplayed: () => boolean; getNotDisplayedReason: () => string; isSkippedMoment: () => boolean; isDismissedMoment: () => boolean }) => {
-    console.log('[GoogleOneTap] 提示状态:', notification.getMomentType())
+  window.google.accounts.id.prompt(
+    (notification: {
+      getMomentType: () => string
+      isNotDisplayed: () => boolean
+      getNotDisplayedReason: () => string
+      isSkippedMoment: () => boolean
+      isDismissedMoment: () => boolean
+    }) => {
+      console.log('[GoogleOneTap] 提示状态:', notification.getMomentType())
 
-    if (notification.isNotDisplayed()) {
-      console.log('[GoogleOneTap] 未显示原因:', notification.getNotDisplayedReason())
-    }
-
-    if (notification.isSkippedMoment()) {
-      console.log('[GoogleOneTap] 用户跳过了 One Tap')
-      
-      // 记录用户关闭时间
-      if (props.rememberDismissal) {
-        localStorage.setItem('google_onetap_dismissed_at', Date.now().toString())
+      if (notification.isNotDisplayed()) {
+        console.log('[GoogleOneTap] 未显示原因:', notification.getNotDisplayedReason())
       }
-      
-      emit('dismissed')
-    }
 
-    if (notification.isDismissedMoment()) {
-      console.log('[GoogleOneTap] 用户关闭了 One Tap')
-      
-      // 记录用户关闭时间
-      if (props.rememberDismissal) {
-        localStorage.setItem('google_onetap_dismissed_at', Date.now().toString())
+      if (notification.isSkippedMoment()) {
+        console.log('[GoogleOneTap] 用户跳过了 One Tap')
+
+        // 记录用户关闭时间
+        if (props.rememberDismissal) {
+          localStorage.setItem('google_onetap_dismissed_at', Date.now().toString())
+        }
+
+        emit('dismissed')
       }
-      
-      emit('dismissed')
+
+      if (notification.isDismissedMoment()) {
+        console.log('[GoogleOneTap] 用户关闭了 One Tap')
+
+        // 记录用户关闭时间
+        if (props.rememberDismissal) {
+          localStorage.setItem('google_onetap_dismissed_at', Date.now().toString())
+        }
+
+        emit('dismissed')
+      }
     }
-  })
+  )
 }
 
 /**

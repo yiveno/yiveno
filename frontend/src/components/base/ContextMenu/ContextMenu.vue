@@ -27,7 +27,7 @@ const props = defineProps<Props>()
 
 const emit = defineEmits<{
   /** 菜单项被点击 */
-  'item-click': [item: MenuItemConfig]
+  itemClick: [item: MenuItemConfig]
   /** 关闭菜单 */
   close: []
 }>()
@@ -90,7 +90,7 @@ const menuStyle = computed(() => {
  */
 const handleItemClick = (item: MenuItemConfig) => {
   if (item.disabled) return
-  emit('item-click', item)
+  emit('itemClick', item)
   emit('close')
 }
 
@@ -115,7 +115,7 @@ const handleKeyDown = (event: KeyboardEvent) => {
 // 监听显示状态变化
 watch(
   () => props.show,
-  async (newShow) => {
+  async newShow => {
     if (newShow) {
       await nextTick()
       // 聚焦第一个可用的菜单项以支持键盘导航
@@ -139,13 +139,7 @@ onUnmounted(() => {
 <template>
   <Teleport to="body">
     <!-- 自定义菜单容器 -->
-    <div
-      v-if="show"
-      ref="menuRef"
-      class="context-menu"
-      :style="menuStyle"
-      @click.stop
-    >
+    <div v-if="show" ref="menuRef" class="context-menu" :style="menuStyle" @click.stop>
       <!-- 菜单列表 -->
       <div class="context-menu__list">
         <button
@@ -170,10 +164,10 @@ onUnmounted(() => {
               }"
             />
           </span>
-          
+
           <!-- 标签文本 -->
           <span class="context-menu-item__label">{{ item.label }}</span>
-          
+
           <!-- 快捷键提示 -->
           <span v-if="item.shortcut" class="context-menu-item__shortcut">
             {{ item.shortcut }}
@@ -238,7 +232,8 @@ onUnmounted(() => {
   color: var(--md-sys-color-on-surface);
   background: transparent;
   cursor: pointer;
-  transition: background-color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+  transition: background-color var(--md-sys-motion-duration-short2)
+    var(--md-sys-motion-easing-standard);
 }
 
 .context-menu-item:focus-visible {

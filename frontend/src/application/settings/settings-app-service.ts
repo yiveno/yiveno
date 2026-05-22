@@ -69,10 +69,7 @@ export class SettingsAppService {
    * @private
    */
   private async ensureInit() {
-    await Promise.all([
-      indexedDBManager.initialize(),
-      globalStateManager.initialize()
-    ])
+    await Promise.all([indexedDBManager.initialize(), globalStateManager.initialize()])
   }
 
   /**
@@ -94,11 +91,9 @@ export class SettingsAppService {
       try {
         const state = globalStateManager.getState()
         if (!state) {
-          logger.warn(
-            'SettingsAppService',
-            '全局状态为空，尝试从 chrome.storage.local 获取',
-            { key }
-          )
+          logger.warn('SettingsAppService', '全局状态为空，尝试从 chrome.storage.local 获取', {
+            key
+          })
           // 降级到 chrome.storage.local
           const value = await chromeStorage.getLocal<T>(key)
           return value ?? null
@@ -177,19 +172,12 @@ export class SettingsAppService {
 
       // 小数据配置保存到 chrome.storage.local
       if (this.isSmallDataKey(key)) {
-        logger.info(
-          'SettingsAppService',
-          `🔐 保存小数据配置到 chrome.storage.local: ${key}`,
-          {
-            valueType: typeof value,
-            valueLength: typeof value === 'string' ? value.length : 'N/A'
-          }
-        )
+        logger.info('SettingsAppService', `🔐 保存小数据配置到 chrome.storage.local: ${key}`, {
+          valueType: typeof value,
+          valueLength: typeof value === 'string' ? value.length : 'N/A'
+        })
         await chromeStorage.setLocal(key, value)
-        logger.info(
-          'SettingsAppService',
-          `✅ 小数据配置已保存到 chrome.storage.local: ${key}`
-        )
+        logger.info('SettingsAppService', `✅ 小数据配置已保存到 chrome.storage.local: ${key}`)
 
         // 验证保存是否成功
         const verify = await chromeStorage.getLocal(key)
@@ -205,10 +193,7 @@ export class SettingsAppService {
       }
 
       // 大量数据保存到 IndexedDB
-      logger.debug(
-        'SettingsAppService',
-        `✅ 大量数据已保存到 IndexedDB: ${key}`
-      )
+      logger.debug('SettingsAppService', `✅ 大量数据已保存到 IndexedDB: ${key}`)
       return indexedDBManager.saveSetting(key, value, type, description)
     } catch (error) {
       logger.error('SettingsAppService', `❌ 保存设置失败: ${key}`, error)
@@ -341,9 +326,7 @@ export class SettingsAppService {
         await globalStateManager.setTheme(settings.theme)
       }
       if (settings.colorPreset !== undefined) {
-        await globalStateManager.setColorPreset(
-          normalizeColorPresetId(settings.colorPreset)
-        )
+        await globalStateManager.setColorPreset(normalizeColorPresetId(settings.colorPreset))
       }
       if (settings.autoSync !== undefined) {
         await globalStateManager.setAutoSync(settings.autoSync)

@@ -30,7 +30,7 @@ export function useSyncProgress() {
   const messageListener = (message: ChromeExtensionMessage) => {
     if (message.type === 'acuity-bookmarks-sync-progress') {
       updateProgress(message.data.percentage, message.data.message)
-      
+
       if (message.data.phase === 'completed') {
         completeSync()
       }
@@ -45,13 +45,13 @@ export function useSyncProgress() {
     const interval = setInterval(() => {
       currentProgress += 10
       updateProgress(currentProgress, `Processing... ${currentProgress}%`)
-      
+
       if (currentProgress >= 100) {
         clearInterval(interval)
         completeSync()
       }
     }, 300)
-    
+
     return interval
   }
 
@@ -59,10 +59,10 @@ export function useSyncProgress() {
     // 检查 Chrome Extension API 是否可用
     if (typeof chrome !== 'undefined' && chrome.runtime) {
       chrome.runtime.onMessage.addListener(messageListener)
-      
+
       // 检查初始化状态
       if (chrome.storage?.local) {
-        chrome.storage.local.get(['AB_INITIALIZED'], (result) => {
+        chrome.storage.local.get(['AB_INITIALIZED'], result => {
           if (result.AB_INITIALIZED) {
             completeSync()
           }
@@ -70,7 +70,11 @@ export function useSyncProgress() {
       }
     } else {
       // 非扩展环境：演示模式
-      logger.warn('SyncProgress', 'Env', 'Chrome Extension APIs not available. Running in demo mode.')
+      logger.warn(
+        'SyncProgress',
+        'Env',
+        'Chrome Extension APIs not available. Running in demo mode.'
+      )
       simulateProgress()
     }
   })

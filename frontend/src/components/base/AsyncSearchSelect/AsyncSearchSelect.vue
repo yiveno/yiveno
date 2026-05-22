@@ -125,21 +125,24 @@ const handleFocus = () => {
 /**
  * 处理输入变化（防抖）
  */
-const handleInput = useDebounceFn(() => {
-  const query = searchQuery.value.trim()
-  
-  if (query.length > 0) {
-    // 有输入值：显示下拉框并触发搜索
-    showDropdown.value = true
-    loading.value = true
-    emit('search', query)
-  } else {
-    // 无输入值：隐藏下拉框并清空选项
-    showDropdown.value = false
-    options.value = []
-    loading.value = false
-  }
-}, props.debounce)
+const handleInput = useDebounceFn(
+  () => {
+    const query = searchQuery.value.trim()
+
+    if (query.length > 0) {
+      // 有输入值：显示下拉框并触发搜索
+      showDropdown.value = true
+      loading.value = true
+      emit('search', query)
+    } else {
+      // 无输入值：隐藏下拉框并清空选项
+      showDropdown.value = false
+      options.value = []
+      loading.value = false
+    }
+  },
+  () => props.debounce
+)
 
 /**
  * 关闭下拉框
@@ -194,7 +197,8 @@ const vClickOutside = {
         binding.value()
       }
     }
-    ;(el as HTMLElement & { clickOutsideEvent?: (event: Event) => void }).clickOutsideEvent = clickOutsideEvent
+    ;(el as HTMLElement & { clickOutsideEvent?: (event: Event) => void }).clickOutsideEvent =
+      clickOutsideEvent
     document.addEventListener('click', clickOutsideEvent)
   },
   unmounted(el: HTMLElement & { clickOutsideEvent?: (event: Event) => void }) {
@@ -232,17 +236,9 @@ defineExpose({
     </MdInput>
 
     <!-- 下拉菜单 -->
-    <div
-      v-if="showDropdown"
-      class="dropdown-menu"
-      role="listbox"
-      :aria-label="label"
-    >
+    <div v-if="showDropdown" class="dropdown-menu" role="listbox" :aria-label="label">
       <!-- 搜索结果 -->
-      <div
-        v-if="options.length > 0"
-        class="dropdown-options"
-      >
+      <div v-if="options.length > 0" class="dropdown-options">
         <div
           v-for="option in options"
           :key="option.value"
@@ -288,8 +284,6 @@ defineExpose({
 </template>
 
 <style scoped>
-
-
 @keyframes dropdown-fade-in {
   from {
     opacity: 0;
@@ -339,7 +333,8 @@ defineExpose({
   padding: var(--spacing-3) var(--spacing-4);
   border-bottom: 1px solid var(--color-border);
   cursor: pointer;
-  transition: background-color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+  transition: background-color var(--md-sys-motion-duration-short2)
+    var(--md-sys-motion-easing-standard);
 }
 
 .dropdown-option:last-child {
@@ -355,7 +350,11 @@ defineExpose({
 }
 
 .dropdown-option--selected:hover {
-  background-color: color-mix(in srgb, var(--md-sys-color-primary-container), var(--md-sys-color-primary) 10%);
+  background-color: color-mix(
+    in srgb,
+    var(--md-sys-color-primary-container),
+    var(--md-sys-color-primary) 10%
+  );
 }
 
 /* 选项内容 */

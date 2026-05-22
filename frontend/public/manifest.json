@@ -5,7 +5,7 @@
   "description": "__MSG_app_description__",
   "default_locale": "en",
   "minimum_chrome_version": "116",
-  "trial_tokens":[
+  "trial_tokens": [
     "A0qQi+oW1ysJtWL7x6hzgFoucn+xD7Wtj8N8DnCR5P+ZVfSjGjzCqk97jvGeibouvByTv2YV34vI5wSbTI8TlgwAAACPeyJvcmlnaW4iOiJjaHJvbWUtZXh0ZW5zaW9uOi8vZ2RqY21wZW5tb2dkaWtobm5hZWJtZGRobWRnYmZjZ2wiLCJmZWF0dXJlIjoiQUlQcm9tcHRBUElNdWx0aW1vZGFsSW5wdXQiLCJleHBpcnkiOjE3ODE1NjgwMDAsImlzVGhpcmRQYXJ0eSI6dHJ1ZX0="
   ],
   "permissions": [

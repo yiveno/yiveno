@@ -15,32 +15,34 @@ const expandedItems = ref<Set<string>>(new Set())
 
 // 初始化默认展开项
 if (props.defaultExpanded) {
+  const initialExpanded = new Set<string>()
   if (Array.isArray(props.defaultExpanded)) {
-    props.defaultExpanded.forEach(id => expandedItems.value.add(id))
+    props.defaultExpanded.forEach(id => initialExpanded.add(id))
   } else {
-    expandedItems.value.add(props.defaultExpanded)
+    initialExpanded.add(props.defaultExpanded)
   }
+  expandedItems.value = initialExpanded
 }
 
 /**
  * 切换项目展开状态
  */
 const toggleItem = (itemId: string) => {
-  const isExpanded = expandedItems.value.has(itemId)
+  const currentExpanded = expandedItems.value
+  const isExpanded = currentExpanded.has(itemId)
 
   if (props.exclusive) {
     // 独占模式：展开一个会关闭其他
-    expandedItems.value.clear()
-    if (!isExpanded) {
-      expandedItems.value.add(itemId)
-    }
+    expandedItems.value = new Set(isExpanded ? [] : [itemId])
   } else {
     // 多选模式：可以同时展开多个
+    const newExpanded = new Set(currentExpanded)
     if (isExpanded) {
-      expandedItems.value.delete(itemId)
+      newExpanded.delete(itemId)
     } else {
-      expandedItems.value.add(itemId)
+      newExpanded.add(itemId)
     }
+    expandedItems.value = newExpanded
   }
 }
 

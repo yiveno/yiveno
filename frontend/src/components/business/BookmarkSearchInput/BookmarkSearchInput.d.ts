@@ -4,19 +4,19 @@ import type { Ref } from 'vue'
 /**
  * 交互展示模式
  */
-export type DisplayMode = 
-  | 'icon'        // 圆形图标，点击展开（适合 popup 等空间受限场景）
-  | 'compact'     // 紧凑搜索框，始终显示（适合 side-panel）
-  | 'full'        // 完整搜索框 + 所有功能（适合 management 页面）
-  | 'inline'      // 内联模式，无边框（适合嵌入其他组件）
+export type DisplayMode =
+  | 'icon' // 圆形图标，点击展开（适合 popup 等空间受限场景）
+  | 'compact' // 紧凑搜索框，始终显示（适合 side-panel）
+  | 'full' // 完整搜索框 + 所有功能（适合 management 页面）
+  | 'inline' // 内联模式，无边框（适合嵌入其他组件）
 
 /**
  * 搜索结果展示方式
  */
-export type ResultDisplay = 
-  | 'dropdown'    // 下拉列表（默认）- 显示前 N 条结果
-  | 'navigate'    // 导航模式 - 搜索后跳转到其他页面
-  | 'emit'        // 仅触发事件 - 由父组件处理结果
+export type ResultDisplay =
+  | 'dropdown' // 下拉列表（默认）- 显示前 N 条结果
+  | 'navigate' // 导航模式 - 搜索后跳转到其他页面
+  | 'emit' // 仅触发事件 - 由父组件处理结果
 
 /**
  * 快捷筛选器配置
@@ -192,30 +192,30 @@ export interface BookmarkSearchInputEmits {
    * 搜索完成事件
    * @param results - 搜索结果（标准书签树结构）
    */
-  'search-complete': [results: BookmarkNode[]]
+  (e: 'searchComplete', results: BookmarkNode[]): void
 
   /**
    * 搜索开始事件
    * @param query - 搜索关键词
    */
-  'search-start': [query: string]
+  (e: 'searchStart', query: string): void
 
   /**
    * 搜索错误事件
    * @param error - 错误对象
    */
-  'search-error': [error: Error]
+  (e: 'searchError', error: Error): void
 
   /**
    * 搜索清空事件
    */
-  'search-clear': []
+  (e: 'searchClear'): void
 
   /**
    * 结果项点击事件（dropdown 模式）
    * @param bookmark - 被点击的书签
    */
-  'result-click': [bookmark: BookmarkNode]
+  (e: 'resultClick', bookmark: BookmarkNode): void
 }
 
 /**

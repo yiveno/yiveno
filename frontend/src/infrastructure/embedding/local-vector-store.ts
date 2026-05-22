@@ -38,18 +38,14 @@ export class LocalVectorStore {
    * 写入或更新单条向量记录
    */
   async upsert(record: VectorRecord): Promise<void> {
-    await indexedDBManager.withTransaction(
-      [DB_CONFIG.STORES.EMBEDDINGS],
-      'readwrite',
-      async tx => {
-        const store = tx.objectStore(DB_CONFIG.STORES.EMBEDDINGS)
-        await new Promise<void>((resolve, reject) => {
-          const req = store.put(record)
-          req.onsuccess = () => resolve()
-          req.onerror = () => reject(req.error)
-        })
-      }
-    )
+    await indexedDBManager.withTransaction([DB_CONFIG.STORES.EMBEDDINGS], 'readwrite', async tx => {
+      const store = tx.objectStore(DB_CONFIG.STORES.EMBEDDINGS)
+      await new Promise<void>((resolve, reject) => {
+        const req = store.put(record)
+        req.onsuccess = () => resolve()
+        req.onerror = () => reject(req.error)
+      })
+    })
   }
 
   /**
@@ -58,41 +54,33 @@ export class LocalVectorStore {
   async upsertBatch(records: VectorRecord[]): Promise<void> {
     if (records.length === 0) return
 
-    await indexedDBManager.withTransaction(
-      [DB_CONFIG.STORES.EMBEDDINGS],
-      'readwrite',
-      async tx => {
-        const store = tx.objectStore(DB_CONFIG.STORES.EMBEDDINGS)
-        await Promise.all(
-          records.map(
-            record =>
-              new Promise<void>((resolve, reject) => {
-                const req = store.put(record)
-                req.onsuccess = () => resolve()
-                req.onerror = () => reject(req.error)
-              })
-          )
+    await indexedDBManager.withTransaction([DB_CONFIG.STORES.EMBEDDINGS], 'readwrite', async tx => {
+      const store = tx.objectStore(DB_CONFIG.STORES.EMBEDDINGS)
+      await Promise.all(
+        records.map(
+          record =>
+            new Promise<void>((resolve, reject) => {
+              const req = store.put(record)
+              req.onsuccess = () => resolve()
+              req.onerror = () => reject(req.error)
+            })
         )
-      }
-    )
+      )
+    })
   }
 
   /**
    * 删除指定书签的向量记录
    */
   async delete(bookmarkId: string): Promise<void> {
-    await indexedDBManager.withTransaction(
-      [DB_CONFIG.STORES.EMBEDDINGS],
-      'readwrite',
-      async tx => {
-        const store = tx.objectStore(DB_CONFIG.STORES.EMBEDDINGS)
-        await new Promise<void>((resolve, reject) => {
-          const req = store.delete(bookmarkId)
-          req.onsuccess = () => resolve()
-          req.onerror = () => reject(req.error)
-        })
-      }
-    )
+    await indexedDBManager.withTransaction([DB_CONFIG.STORES.EMBEDDINGS], 'readwrite', async tx => {
+      const store = tx.objectStore(DB_CONFIG.STORES.EMBEDDINGS)
+      await new Promise<void>((resolve, reject) => {
+        const req = store.delete(bookmarkId)
+        req.onsuccess = () => resolve()
+        req.onerror = () => reject(req.error)
+      })
+    })
   }
 
   /**
@@ -101,23 +89,19 @@ export class LocalVectorStore {
   async deleteBatch(bookmarkIds: string[]): Promise<void> {
     if (bookmarkIds.length === 0) return
 
-    await indexedDBManager.withTransaction(
-      [DB_CONFIG.STORES.EMBEDDINGS],
-      'readwrite',
-      async tx => {
-        const store = tx.objectStore(DB_CONFIG.STORES.EMBEDDINGS)
-        await Promise.all(
-          bookmarkIds.map(
-            id =>
-              new Promise<void>((resolve, reject) => {
-                const req = store.delete(id)
-                req.onsuccess = () => resolve()
-                req.onerror = () => reject(req.error)
-              })
-          )
+    await indexedDBManager.withTransaction([DB_CONFIG.STORES.EMBEDDINGS], 'readwrite', async tx => {
+      const store = tx.objectStore(DB_CONFIG.STORES.EMBEDDINGS)
+      await Promise.all(
+        bookmarkIds.map(
+          id =>
+            new Promise<void>((resolve, reject) => {
+              const req = store.delete(id)
+              req.onsuccess = () => resolve()
+              req.onerror = () => reject(req.error)
+            })
         )
-      }
-    )
+      )
+    })
   }
 
   /**
@@ -184,11 +168,7 @@ export class LocalVectorStore {
    * @param topK 返回数量
    * @param minScore 最低相似度阈值（0-1），过滤不相关结果，默认 0.2
    */
-  async search(
-    queryVector: number[],
-    topK = 10,
-    minScore = 0.2
-  ): Promise<VectorSearchResult[]> {
+  async search(queryVector: number[], topK = 10, minScore = 0.2): Promise<VectorSearchResult[]> {
     const allRecords = await this.getAll()
 
     if (allRecords.length === 0) {

@@ -10,10 +10,10 @@ export const healthRouter = new Hono<{ Bindings: Env }>()
 /**
  * GET /health
  * GET /api/health
- * 
+ *
  * 返回服务健康状态
  */
-healthRouter.get('/health', (c) => {
+healthRouter.get('/health', c => {
   return c.json({
     status: 'ok',
     runtime: 'cloudflare-worker',
@@ -21,7 +21,7 @@ healthRouter.get('/health', (c) => {
   })
 })
 
-healthRouter.get('/api/health', (c) => {
+healthRouter.get('/api/health', c => {
   return c.json({
     status: 'ok',
     runtime: 'cloudflare-worker',

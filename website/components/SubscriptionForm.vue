@@ -22,20 +22,13 @@ const handleSubmit = async () => {
 <template>
   <form class="subscription" @submit.prevent="handleSubmit">
     <div class="inputs">
-      <input
-        v-model="form.email"
-        type="email"
-        required
-        placeholder="输入邮箱，获取产品更新"
-      />
+      <input v-model="form.email" type="email" required placeholder="输入邮箱，获取产品更新" />
       <button type="submit" :disabled="loading">
         {{ loading ? '发送中…' : '订阅' }}
       </button>
     </div>
     <transition name="fade">
-      <p v-if="success" class="toast success">
-        订阅成功，我们会在每次更新时通知你。
-      </p>
+      <p v-if="success" class="toast success">订阅成功，我们会在每次更新时通知你。</p>
     </transition>
     <transition name="fade">
       <p v-if="error" class="toast error">{{ error }}</p>
@@ -60,8 +53,8 @@ const handleSubmit = async () => {
 input {
   flex: 1;
   border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  background: rgba(3, 6, 17, 0.75);
+  border: 1px solid rgb(148 163 184 / 35%);
+  background: rgb(3 6 17 / 75%);
   padding: 0.85rem 1.2rem;
   color: var(--text-primary);
   min-width: 220px;
@@ -69,8 +62,8 @@ input {
 
 input:focus {
   outline: none;
-  border-color: rgba(56, 189, 248, 0.6);
-  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+  border-color: rgb(56 189 248 / 60%);
+  box-shadow: 0 0 0 3px rgb(56 189 248 / 15%);
 }
 
 button {

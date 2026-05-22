@@ -12,13 +12,13 @@ defineOptions({
 
 const emit = defineEmits<{
   /** 点击书签 */
-  'bookmark-click': [bookmark: BookmarkNode]
+  (e: 'bookmarkClick', bookmark: BookmarkNode): void
   /** 移除收藏 */
-  'bookmark-remove': [bookmark: BookmarkNode]
+  (e: 'bookmarkRemove', bookmark: BookmarkNode): void
   /** 分享收藏书签 */
-  'share': [bookmarks: BookmarkNode[]]
+  (e: 'share', bookmarks: BookmarkNode[]): void
   /** 数量更新 */
-  'count-update': [count: number]
+  (e: 'countUpdate', count: number): void
 }>()
 
 // ✅ 从 Pinia Store 派生数据，响应式更新
@@ -28,13 +28,16 @@ const faviconErrors = ref<Set<string>>(new Set())
 
 // 组件挂载时立即发送数量
 onMounted(() => {
-  emit('count-update', favorites.value.length)
+  emit('countUpdate', favorites.value.length)
 })
 
 // 监听数量变化，自动更新
-const stopWatch = watch(() => favorites.value.length, (newCount) => {
-  emit('count-update', newCount)
-})
+const stopWatch = watch(
+  () => favorites.value.length,
+  newCount => {
+    emit('countUpdate', newCount)
+  }
+)
 
 // 组件卸载时清理 watch
 onUnmounted(() => {
@@ -63,12 +66,12 @@ const getFaviconUrl = (bookmark: BookmarkNode): string | undefined => {
  */
 const formatFavoriteTime = (timestamp: number | undefined): string => {
   if (!timestamp) return '未知时间'
-  
+
   const date = new Date(timestamp)
   const now = new Date()
   const diffMs = now.getTime() - date.getTime()
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-  
+
   if (diffDays === 0) {
     return '今天收藏'
   } else if (diffDays === 1) {
@@ -92,7 +95,7 @@ const formatFavoriteTime = (timestamp: number | undefined): string => {
  */
 const formatFullFavoriteTime = (timestamp: number | undefined): string => {
   if (!timestamp) return '未知时间'
-  
+
   const date = new Date(timestamp)
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -100,7 +103,7 @@ const formatFullFavoriteTime = (timestamp: number | undefined): string => {
   const hours = String(date.getHours()).padStart(2, '0')
   const minutes = String(date.getMinutes()).padStart(2, '0')
   const seconds = String(date.getSeconds()).padStart(2, '0')
-  
+
   return `${year}年${month}月${day}日 ${hours}:${minutes}:${seconds}`
 }
 
@@ -115,7 +118,7 @@ const handleFaviconError = (bookmarkId: string) => {
 
 function handleClick(bookmark: BookmarkNode) {
   logger.info('FavoriteSection', '🔗 点击收藏书签:', bookmark.title)
-  emit('bookmark-click', bookmark)
+  emit('bookmarkClick', bookmark)
 }
 
 async function handleRemove(bookmark: BookmarkNode) {
@@ -125,7 +128,7 @@ async function handleRemove(bookmark: BookmarkNode) {
   if (success) {
     // ✅ 直接更新 store，UI 自动响应式更新
     bookmarkStore.updateNode(bookmark.id, { isFavorite: false })
-    emit('bookmark-remove', bookmark)
+    emit('bookmarkRemove', bookmark)
   }
 }
 </script>
@@ -134,13 +137,8 @@ async function handleRemove(bookmark: BookmarkNode) {
   <!-- 收藏列表 -->
   <section class="favorite-section">
     <!-- 空状态 -->
-    <EmptyState
-      v-if="favorites.length === 0"
-      icon="star"
-      title="暂无收藏书签"
-      :icon-size="32"
-    />
-    
+    <EmptyState v-if="favorites.length === 0" icon="star" title="暂无收藏书签" :icon-size="32" />
+
     <!-- 收藏列表 -->
     <md-list v-else class="favorite-section__list">
       <md-list-item
@@ -161,12 +159,10 @@ async function handleRemove(bookmark: BookmarkNode) {
           <LucideIcon v-else name="bookmark" :size="32" />
         </div>
         <div slot="headline" class="headline-text">{{ favorite.title }}</div>
-        <div slot="supporting-text" class="supporting-text">{{ formatFavoriteTime(favorite.favoritedAt) }}</div>
-        <md-icon-button
-          slot="end"
-          title="取消收藏"
-          @click.stop="handleRemove(favorite)"
-        >
+        <div slot="supporting-text" class="supporting-text">
+          {{ formatFavoriteTime(favorite.favoritedAt) }}
+        </div>
+        <md-icon-button slot="end" title="取消收藏" @click.stop="handleRemove(favorite)">
           <LucideIcon name="star" :size="16" fill="currentColor" />
         </md-icon-button>
       </md-list-item>

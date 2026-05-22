@@ -7,16 +7,9 @@
  * - 以“最新请求优先”的策略丢弃过期结果，提升交互响应；
  * - 同步内存缓存 byId，减少重复读取。
  */
-import type {
-  BookmarkRecord,
-  SearchResult
-} from '@/infrastructure/indexeddb/manager'
+import type { BookmarkRecord, SearchResult } from '@/infrastructure/indexeddb/manager'
 import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
-import type {
-  WorkerDoc,
-  SearchWorkerCommand,
-  SearchWorkerEvent
-} from '@/types/domain/query'
+import type { WorkerDoc, SearchWorkerCommand, SearchWorkerEvent } from '@/types/domain/query'
 
 import type { SearchWorkerAdapterOptions } from '@/types/application/service'
 import { logger } from '@/infrastructure/logging/logger'
@@ -31,25 +24,20 @@ export class QueryWorkerAdapter {
   private worker: WorkerHandle = null
   private reqCounter = 1
   /** 当前待完成请求的回调映射表 */
-  private pending = new Map<
-    number,
-    (hits: Array<{ id: string; score: number }>) => void
-  >()
+  private pending = new Map<number, (hits: Array<{ id: string; score: number }>) => void>()
   /** Worker 是否已完成初始化 */
   private inited = false
   private options: SearchWorkerAdapterOptions
   private byId: Map<string, BookmarkRecord> | null = null
   private currentReqId: number | null = null
   private workerSupported: boolean
-  private offscreenSupported =
-    typeof chrome !== 'undefined' && !!chrome.offscreen
+  private offscreenSupported = typeof chrome !== 'undefined' && !!chrome.offscreen
   private offscreenInitialized = false
   private offscreenInitPromise: Promise<void> | null = null
 
   private isServiceWorkerContext =
     typeof globalThis !== 'undefined' &&
-    typeof (globalThis as unknown as ServiceWorkerGlobalScope).clients ===
-      'object'
+    typeof (globalThis as unknown as ServiceWorkerGlobalScope).clients === 'object'
 
   constructor(options: SearchWorkerAdapterOptions = {}) {
     this.options = { workerUrl: '', cacheSize: 500, ...options }
@@ -58,10 +46,7 @@ export class QueryWorkerAdapter {
     if (this.isServiceWorkerContext && this.offscreenSupported) {
       logger.info('QueryWorkerAdapter', '🔀 将通过 Offscreen Document 代理查询')
     } else if (!this.workerSupported) {
-      logger.warn(
-        'QueryWorkerAdapter',
-        '当前运行环境不支持 Worker，将退化为主线程查询'
-      )
+      logger.warn('QueryWorkerAdapter', '当前运行环境不支持 Worker，将退化为主线程查询')
     }
   }
 
@@ -70,21 +55,14 @@ export class QueryWorkerAdapter {
     if (this.worker) return
     try {
       // Vite module worker
-      this.worker = new Worker(
-        new URL('@/workers/query-worker.ts', import.meta.url),
-        {
-          type: 'module'
-        }
-      )
+      this.worker = new Worker(new URL('@/workers/query-worker.ts', import.meta.url), {
+        type: 'module'
+      })
       this.worker.onmessage = e => this.onMessage(e.data as SearchWorkerEvent)
     } catch (error) {
       this.workerSupported = false
       this.worker = null
-      logger.warn(
-        'QueryWorkerAdapter',
-        '创建 Worker 失败，退化为主线程查询',
-        error
-      )
+      logger.warn('QueryWorkerAdapter', '创建 Worker 失败，退化为主线程查询', error)
     }
   }
 
@@ -184,24 +162,16 @@ export class QueryWorkerAdapter {
     this.inited = true
   }
 
-  async search(
-    query: string,
-    limit = this.options.limit ?? 100
-  ): Promise<SearchResult[]> {
+  async search(query: string, limit = this.options.limit ?? 100): Promise<SearchResult[]> {
     if (!query.trim()) return []
 
-    const canUseOffscreen =
-      this.isServiceWorkerContext && this.offscreenSupported
+    const canUseOffscreen = this.isServiceWorkerContext && this.offscreenSupported
 
     if (canUseOffscreen) {
       try {
         await this.ensureOffscreenInitialized()
-        const { dispatchOffscreenRequest } = await import(
-          '@/background/offscreen-manager'
-        )
-        const offscreenHits = await dispatchOffscreenRequest<
-          Array<{ id: string; score: number }>
-        >(
+        const { dispatchOffscreenRequest } = await import('@/background/offscreen-manager')
+        const offscreenHits = await dispatchOffscreenRequest<Array<{ id: string; score: number }>>(
           {
             type: 'SEARCH_QUERY',
             payload: { query, limit }
@@ -229,11 +199,7 @@ export class QueryWorkerAdapter {
         }
         return mappedResults
       } catch (error) {
-        logger.warn(
-          'QueryWorkerAdapter',
-          'Offscreen 查询失败，退回本地 fallback',
-          error
-        )
+        logger.warn('QueryWorkerAdapter', 'Offscreen 查询失败，退回本地 fallback', error)
       }
     }
 
@@ -257,20 +223,15 @@ export class QueryWorkerAdapter {
     this.currentReqId = reqId
     const cmd: SearchWorkerCommand = { type: 'query', q: query, limit, reqId }
 
-    const hits = await new Promise<Array<{ id: string; score: number }>>(
-      resolve => {
-        this.pending.set(reqId, resolve)
-        this.worker!.postMessage(cmd)
-      }
-    )
+    const hits = await new Promise<Array<{ id: string; score: number }>>(resolve => {
+      this.pending.set(reqId, resolve)
+      this.worker!.postMessage(cmd)
+    })
 
     return this.mapHitsToResults(hits, query)
   }
 
-  private async fallbackSearch(
-    query: string,
-    limit: number
-  ): Promise<SearchResult[]> {
+  private async fallbackSearch(query: string, limit: number): Promise<SearchResult[]> {
     logger.info('QueryWorkerAdapter', `⚠️ 使用主线程 fallback 查询: "${query}"`)
     await indexedDBManager.initialize()
     const results = await indexedDBManager.searchBookmarks(query, {
@@ -294,9 +255,7 @@ export class QueryWorkerAdapter {
     if (!byId) {
       await indexedDBManager.initialize()
       const data = await indexedDBManager.getAllBookmarks()
-      byId = new Map<string, BookmarkRecord>(
-        data.map((b: BookmarkRecord) => [String(b.id), b])
-      )
+      byId = new Map<string, BookmarkRecord>(data.map((b: BookmarkRecord) => [String(b.id), b]))
       this.byId = byId
     }
 
@@ -317,9 +276,7 @@ export class QueryWorkerAdapter {
     if (normalizedQuery.length < 4) {
       return results
     }
-    return results.filter(result =>
-      this.includesQuery(result.bookmark, normalizedQuery)
-    )
+    return results.filter(result => this.includesQuery(result.bookmark, normalizedQuery))
   }
 
   private includesQuery(bookmark: BookmarkRecord, query: string): boolean {
@@ -379,9 +336,7 @@ export class QueryWorkerAdapter {
     if (!this.offscreenInitPromise) {
       this.offscreenInitPromise = (async () => {
         try {
-          const { dispatchOffscreenRequest } = await import(
-            '@/background/offscreen-manager'
-          )
+          const { dispatchOffscreenRequest } = await import('@/background/offscreen-manager')
           await dispatchOffscreenRequest(
             { type: 'SEARCH_INIT' },
             { timeout: TIMEOUT_CONFIG.API.STANDARD } // 标准API初始化超时

@@ -1,11 +1,11 @@
 /**
  * 书签特征规则字典
- * 
+ *
  * 职责：
  * - 定义所有特征类型
  * - 提供特征的元数据（名称、描述、优先级）
  * - 统一管理特征规则
- * 
+ *
  * 设计原则：
  * - 单一数据源：所有特征定义都在这里
  * - 易于扩展：新增特征只需在这里添加
@@ -14,7 +14,7 @@
 
 /**
  * 特征标签类型
- * 
+ *
  * 所有可能的书签特征：
  * - duplicate: 重复书签（URL 完全相同的书签，从第二个开始）
  * - invalid: 失效书签（无法正常访问的书签）
@@ -47,13 +47,13 @@ export interface TraitMetadata {
 
 /**
  * 特征规则字典
- * 
+ *
  * 包含所有特征的完整定义
  */
 export const TRAIT_RULES: Record<TraitTag, TraitMetadata> = {
   /**
    * 重复书签
-   * 
+   *
    * 检测规则：
    * 1. URL 完全相同（忽略大小写）
    * 2. 按 dateAdded + index 排序
@@ -75,7 +75,7 @@ export const TRAIT_RULES: Record<TraitTag, TraitMetadata> = {
 
   /**
    * 失效书签
-   * 
+   *
    * 检测规则：
    * 1. URL 格式错误（协议不是 http/https、域名格式错误、TLD 不完整）
    * 2. HTTP 4xx 错误（404、403 等）
@@ -101,7 +101,7 @@ export const TRAIT_RULES: Record<TraitTag, TraitMetadata> = {
 
   /**
    * 内部书签
-   * 
+   *
    * 检测规则：
    * 1. chrome:// 协议（Chrome 内部页面）
    * 2. chrome-extension:// 协议（扩展程序页面）
@@ -129,7 +129,7 @@ export const TRAIT_RULES: Record<TraitTag, TraitMetadata> = {
 
   /**
    * 过时书签
-   * 
+   *
    * 检测规则：
    * 1. 超过 1 年（365 天）未访问
    * 2. 如果没有 lastVisited，使用 dateAdded 判断
@@ -151,7 +151,7 @@ export const TRAIT_RULES: Record<TraitTag, TraitMetadata> = {
 
   /**
    * 未分类书签
-   * 
+   *
    * 检测规则：
    * 1. 直接在根目录（parentId 为 '0'）
    * 2. 直接在书签栏（parentId 为 '1'）
@@ -175,7 +175,7 @@ export const TRAIT_RULES: Record<TraitTag, TraitMetadata> = {
 
   /**
    * 无标题书签
-   * 
+   *
    * 检测规则：
    * 1. 标题为空字符串
    * 2. 标题只包含空格
@@ -201,7 +201,7 @@ export const TRAIT_RULES: Record<TraitTag, TraitMetadata> = {
 
 /**
  * 特征标签优先级顺序
- * 
+ *
  * 用于排序显示，优先级高的排在前面
  */
 export const TRAIT_TAG_ORDER: TraitTag[] = [
@@ -215,7 +215,7 @@ export const TRAIT_TAG_ORDER: TraitTag[] = [
 
 /**
  * 获取特征元数据
- * 
+ *
  * @param tag - 特征标签
  * @returns 特征元数据
  */
@@ -225,7 +225,7 @@ export function getTraitMetadata(tag: TraitTag): TraitMetadata {
 
 /**
  * 获取所有特征标签
- * 
+ *
  * @returns 所有特征标签数组
  */
 export function getAllTraitTags(): TraitTag[] {
@@ -234,7 +234,7 @@ export function getAllTraitTags(): TraitTag[] {
 
 /**
  * 获取所有负面特征标签
- * 
+ *
  * @returns 负面特征标签数组
  */
 export function getNegativeTraitTags(): TraitTag[] {
@@ -243,7 +243,7 @@ export function getNegativeTraitTags(): TraitTag[] {
 
 /**
  * 按优先级排序特征标签
- * 
+ *
  * @param tags - 特征标签数组
  * @returns 排序后的特征标签数组
  */
@@ -257,11 +257,11 @@ export function sortTraitTags(tags: TraitTag[]): TraitTag[] {
 
 /**
  * 格式化特征标签为显示文本
- * 
+ *
  * @param tag - 特征标签
  * @param includeIcon - 是否包含图标
  * @returns 格式化后的文本
- * 
+ *
  * @example
  * ```typescript
  * formatTraitTag('duplicate', true)  // "🔄 重复书签"
@@ -275,7 +275,7 @@ export function formatTraitTag(tag: TraitTag, includeIcon = true): string {
 
 /**
  * 获取特征的详细描述（包含检测规则）
- * 
+ *
  * @param tag - 特征标签
  * @returns 详细描述
  */

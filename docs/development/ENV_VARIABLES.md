@@ -15,15 +15,18 @@ acuityBookmarks/
 ## 🎯 配置原则
 
 ### 1. 统一管理
+
 - **所有环境变量集中在根目录**
 - 避免在子项目中重复定义
 - 便于维护和查找
 
 ### 2. 分层配置
+
 - **`.env`**：公共配置，提交到 Git
 - **`.env.local`**：本地覆盖，不提交到 Git
 
 ### 3. 优先级
+
 ```
 .env.local（最高优先级）
     ↓
@@ -45,6 +48,7 @@ VITE_SUPABASE_ANON_KEY=sb_publishable_2FY9uDfqNbLwUYXxgcu8lw_qQ8SEbXo
 ```
 
 **说明**：
+
 - `SUPABASE_*`：后端使用
 - `VITE_SUPABASE_*`：前端使用（Vite 只注入 `VITE_` 前缀的变量）
 
@@ -66,6 +70,7 @@ VITE_CLOUDFLARE_WORKER_URL=https://localhost:8787
 ```
 
 **说明**：
+
 - 如果不设置 `.env.local`，开发环境会自动使用 `https://localhost:8787`
 - 生产构建会使用 `.env` 中的配置
 
@@ -158,10 +163,10 @@ grep -r "api.acuitybookmarks.com" frontend/dist/
 
 ```typescript
 // src/config/constants.ts
-const apiBase = 
-  import.meta.env.VITE_API_BASE_URL ||  // 优先使用环境变量
-  (import.meta.env.DEV 
-    ? 'https://localhost:8787'           // 开发环境默认
+const apiBase =
+  import.meta.env.VITE_API_BASE_URL || // 优先使用环境变量
+  (import.meta.env.DEV
+    ? 'https://localhost:8787' // 开发环境默认
     : 'https://api.acuitybookmarks.com') // 生产环境默认
 ```
 

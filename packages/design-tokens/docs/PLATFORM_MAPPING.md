@@ -68,8 +68,8 @@ import '@acuity-bookmarks/design-tokens/css/variables.css'
 import { colors } from '@acuity-bookmarks/design-tokens'
 
 const buttonStyle = {
-  backgroundColor: colors.brand.primary,  // #3B82F6
-  color: colors.neutral.white             // #ffffff
+  backgroundColor: colors.brand.primary, // #3B82F6
+  color: colors.neutral.white // #ffffff
 }
 ```
 
@@ -80,8 +80,8 @@ import { colors } from '@acuity-bookmarks/design-tokens'
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: colors.brand.primary,  // #3B82F6
-    color: colors.neutral.white             // #ffffff
+    backgroundColor: colors.brand.primary, // #3B82F6
+    color: colors.neutral.white // #ffffff
   }
 })
 ```
@@ -109,8 +109,8 @@ Container(
 ```css
 /* CSS 变量 */
 .card {
-  padding: var(--spacing-base);      /* 16px */
-  margin-bottom: var(--spacing-lg);  /* 24px */
+  padding: var(--spacing-base); /* 16px */
+  margin-bottom: var(--spacing-lg); /* 24px */
 }
 ```
 
@@ -119,8 +119,8 @@ Container(
 import { spacing } from '@acuity-bookmarks/design-tokens'
 
 const cardStyle = {
-  padding: spacing.base,      // '1rem' (16px)
-  marginBottom: spacing.lg    // '1.5rem' (24px)
+  padding: spacing.base, // '1rem' (16px)
+  marginBottom: spacing.lg // '1.5rem' (24px)
 }
 ```
 
@@ -131,8 +131,8 @@ import { spacing } from '@acuity-bookmarks/design-tokens'
 
 const styles = StyleSheet.create({
   card: {
-    padding: parseInt(spacing.base),      // 16
-    marginBottom: parseInt(spacing.lg)    // 24
+    padding: parseInt(spacing.base), // 16
+    marginBottom: parseInt(spacing.lg) // 24
   }
 })
 ```
@@ -157,9 +157,9 @@ Container(
 ```css
 /* CSS 变量 */
 .title {
-  font-size: var(--text-xl);           /* 20px */
-  font-weight: var(--font-semibold);   /* 600 */
-  line-height: var(--line-height-tight);  /* 1.25 */
+  font-size: var(--text-xl); /* 20px */
+  font-weight: var(--font-semibold); /* 600 */
+  line-height: var(--line-height-tight); /* 1.25 */
 }
 ```
 
@@ -168,9 +168,9 @@ Container(
 import { fontSize, fontWeight, lineHeight } from '@acuity-bookmarks/design-tokens'
 
 const titleStyle = {
-  fontSize: fontSize.xl,           // '1.25rem' (20px)
+  fontSize: fontSize.xl, // '1.25rem' (20px)
   fontWeight: fontWeight.semibold, // '600'
-  lineHeight: lineHeight.tight     // '1.25'
+  lineHeight: lineHeight.tight // '1.25'
 }
 ```
 
@@ -181,9 +181,9 @@ import { fontSize, fontWeight, lineHeight } from '@acuity-bookmarks/design-token
 
 const styles = StyleSheet.create({
   title: {
-    fontSize: parseInt(fontSize.xl),           // 20
-    fontWeight: fontWeight.semibold,           // '600'
-    lineHeight: parseFloat(lineHeight.tight) * parseInt(fontSize.xl)  // 25
+    fontSize: parseInt(fontSize.xl), // 20
+    fontWeight: fontWeight.semibold, // '600'
+    lineHeight: parseFloat(lineHeight.tight) * parseInt(fontSize.xl) // 25
   }
 })
 ```
@@ -211,7 +211,7 @@ Text(
 
 ```css
 .card {
-  border-radius: var(--radius-md);  /* 8px */
+  border-radius: var(--radius-md); /* 8px */
 }
 ```
 
@@ -222,7 +222,7 @@ import { borderRadius } from '@acuity-bookmarks/design-tokens'
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: parseInt(borderRadius.md)  // 8
+    borderRadius: parseInt(borderRadius.md) // 8
   }
 })
 ```
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
-    elevation: 4  // Android
+    elevation: 4 // Android
   }
 })
 ```
@@ -374,13 +374,13 @@ ElevatedButton(
 
 ## 📊 Token 映射对照表
 
-| Design Token | Web/CSS | React Native | Flutter |
-|-------------|---------|--------------|---------|
-| `colors.brand.primary` | `var(--md-sys-color-primary)` | `colors.brand.primary` | `AcuityColors.brandPrimary` |
-| `spacing.base` | `var(--spacing-base)` | `parseInt(spacing.base)` | `AcuitySpacing.base` |
-| `fontSize.base` | `var(--text-base)` | `parseInt(fontSize.base)` | `AcuityFontSize.base` |
-| `fontWeight.medium` | `var(--font-medium)` | `fontWeight.medium` | `AcuityFontWeight.medium` |
-| `borderRadius.md` | `var(--radius-md)` | `parseInt(borderRadius.md)` | `AcuityBorderRadius.md` |
+| Design Token           | Web/CSS                       | React Native                | Flutter                     |
+| ---------------------- | ----------------------------- | --------------------------- | --------------------------- |
+| `colors.brand.primary` | `var(--md-sys-color-primary)` | `colors.brand.primary`      | `AcuityColors.brandPrimary` |
+| `spacing.base`         | `var(--spacing-base)`         | `parseInt(spacing.base)`    | `AcuitySpacing.base`        |
+| `fontSize.base`        | `var(--text-base)`            | `parseInt(fontSize.base)`   | `AcuityFontSize.base`       |
+| `fontWeight.medium`    | `var(--font-medium)`          | `fontWeight.medium`         | `AcuityFontWeight.medium`   |
+| `borderRadius.md`      | `var(--radius-md)`            | `parseInt(borderRadius.md)` | `AcuityBorderRadius.md`     |
 
 ---
 
@@ -401,7 +401,7 @@ const myColor: Colors['brand']['primary'] = colors.brand.primary
 
 ```css
 .button {
-  background-color: var(--md-sys-color-primary);  /* 自动提示 */
+  background-color: var(--md-sys-color-primary); /* 自动提示 */
 }
 ```
 

@@ -33,23 +33,18 @@ interface ChromeMessage {
  */
 export function initializeChromeMessageBridge() {
   if (typeof chrome === 'undefined' || !chrome.runtime) {
-    logger.warn(
-      'ChromeMessageBridge',
-      'Chrome runtime 不可用，跳过消息桥接初始化'
-    )
+    logger.warn('ChromeMessageBridge', 'Chrome runtime 不可用，跳过消息桥接初始化')
     return
   }
 
   logger.info('ChromeMessageBridge', '🔗 初始化 Chrome 消息桥接')
 
-  chrome.runtime.onMessage.addListener(
-    (message: ChromeMessage, _sender, _sendResponse) => {
-      handleChromeMessage(message)
+  chrome.runtime.onMessage.addListener((message: ChromeMessage, _sender, _sendResponse) => {
+    handleChromeMessage(message)
 
-      // Chrome 消息处理器要求返回 false（不需要异步响应）
-      return false
-    }
-  )
+    // Chrome 消息处理器要求返回 false（不需要异步响应）
+    return false
+  })
 
   logger.info('ChromeMessageBridge', '✅ Chrome 消息桥接已启动')
 }
@@ -70,8 +65,10 @@ function handleChromeMessage(message: ChromeMessage) {
     case 'acuity-bookmarks-db-synced': {
       const { eventType, bookmarkId, timestamp } = message
 
-      const isExternalChange = ['created', 'changed', 'moved', 'removed'].includes(String(eventType))
-      
+      const isExternalChange = ['created', 'changed', 'moved', 'removed'].includes(
+        String(eventType)
+      )
+
       if (isExternalChange) {
         emitEvent('data:synced', {
           eventType: eventType as 'created' | 'changed' | 'moved' | 'removed',
@@ -130,9 +127,7 @@ function handleChromeMessage(message: ChromeMessage) {
  * })
  * ```
  */
-export async function sendToBackground<T = unknown>(
-  message: ChromeMessage
-): Promise<T> {
+export async function sendToBackground<T = unknown>(message: ChromeMessage): Promise<T> {
   if (typeof chrome === 'undefined' || !chrome.runtime) {
     throw new Error('Chrome runtime 不可用')
   }

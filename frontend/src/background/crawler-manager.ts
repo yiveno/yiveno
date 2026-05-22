@@ -36,10 +36,7 @@ export class BackgroundCrawlerManager {
    * 初始化管理器
    */
   private async initialize() {
-    logger.info(
-      'BackgroundCrawler',
-      '🚀 初始化后台爬取管理器（事件驱动模式）...'
-    )
+    logger.info('BackgroundCrawler', '🚀 初始化后台爬取管理器（事件驱动模式）...')
 
     // 1. 清除旧的周期性 alarm（向后兼容）
     this.clearLegacyPeriodicCrawl()
@@ -47,10 +44,7 @@ export class BackgroundCrawlerManager {
     // 2. 注册消息监听器（响应前端请求）
     this.registerMessageListener()
 
-    logger.info(
-      'BackgroundCrawler',
-      '✅ 后台爬取管理器初始化完成（事件驱动模式）'
-    )
+    logger.info('BackgroundCrawler', '✅ 后台爬取管理器初始化完成（事件驱动模式）')
   }
 
   // ==================== 清理旧配置 ====================
@@ -61,10 +55,7 @@ export class BackgroundCrawlerManager {
   private clearLegacyPeriodicCrawl() {
     chrome.alarms.clear(this.ALARM_NAME, wasCleared => {
       if (wasCleared) {
-        logger.info(
-          'BackgroundCrawler',
-          '✅ 已清除旧的周期性爬取定时器（优化：改为事件驱动）'
-        )
+        logger.info('BackgroundCrawler', '✅ 已清除旧的周期性爬取定时器（优化：改为事件驱动）')
       }
     })
   }

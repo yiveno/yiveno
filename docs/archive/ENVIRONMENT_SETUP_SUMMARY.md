@@ -5,11 +5,13 @@
 ### 1. 统一环境变量管理
 
 **之前的问题**：
+
 - ❌ 根目录 `.env` 和 `frontend/.env` 重复定义
 - ❌ Supabase 配置重复（`SUPABASE_*` 和 `VITE_SUPABASE_*`）
 - ❌ 配置分散，难以维护
 
 **优化后**：
+
 - ✅ 所有配置统一在根目录 `.env`
 - ✅ 删除 `frontend/.env`，避免重复
 - ✅ 创建 `frontend/.env.README.md` 说明文档
@@ -70,6 +72,7 @@ VITE_WEBSITE_URL=http://localhost:3001
 ### 1. 避免重复定义
 
 **之前**：
+
 ```
 根目录 .env:
   SUPABASE_URL=...
@@ -82,6 +85,7 @@ frontend/.env:
 ```
 
 **现在**：
+
 ```
 根目录 .env:
   SUPABASE_URL=...             # 后端使用
@@ -118,6 +122,7 @@ bun run dev
 ```
 
 代码会自动使用默认值：
+
 - API: `https://localhost:8787`
 - Supabase: 使用 `.env` 中的配置
 
@@ -171,10 +176,10 @@ grep -r "api.acuitybookmarks.com" frontend/dist/
 
 ```typescript
 // frontend/src/config/constants.ts
-const apiBase = 
-  import.meta.env.VITE_API_BASE_URL ||  // 优先使用环境变量
-  (import.meta.env.DEV 
-    ? 'https://localhost:8787'           // 开发环境默认
+const apiBase =
+  import.meta.env.VITE_API_BASE_URL || // 优先使用环境变量
+  (import.meta.env.DEV
+    ? 'https://localhost:8787' // 开发环境默认
     : 'https://api.acuitybookmarks.com') // 生产环境默认
 ```
 
@@ -188,7 +193,8 @@ console.log('🔧 API_CONFIG.API_BASE:', API_CONFIG.API_BASE)
 
 ### Q: 需要重新构建吗？
 
-**A**: 
+**A**:
+
 - ✅ 修改 `.env` 后需要重新构建
 - ✅ 修改 `.env.local` 后需要重启开发服务器
 - ❌ 不需要清除缓存
@@ -211,6 +217,7 @@ console.log('🔧 API_CONFIG.API_BASE:', API_CONFIG.API_BASE)
 ## 🚀 下一步
 
 1. **重新构建扩展**：
+
    ```bash
    CRAWLER_DEBUG=true bunx vite build
    ```

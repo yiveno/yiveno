@@ -137,11 +137,7 @@ class FaviconService {
   /**
    * 保存到IndexedDB
    */
-  private async saveToDB(
-    domain: string,
-    faviconUrl: string,
-    attempt: number
-  ): Promise<void> {
+  private async saveToDB(domain: string, faviconUrl: string, attempt: number): Promise<void> {
     try {
       // ✅ 确保 IndexedDB 已初始化
       await indexedDBManager.initialize()
@@ -179,16 +175,9 @@ class FaviconService {
 
       logger.debug('FaviconService', `💾 正在保存favicon到IndexedDB: ${domain}`)
       await indexedDBManager.saveFaviconCache(record)
-      logger.info(
-        'FaviconService',
-        `✅ 已成功保存favicon到IndexedDB: ${domain}`
-      )
+      logger.info('FaviconService', `✅ 已成功保存favicon到IndexedDB: ${domain}`)
     } catch (error) {
-      logger.error(
-        'FaviconService',
-        `❌ 保存IndexedDB缓存失败: ${domain}`,
-        error
-      )
+      logger.error('FaviconService', `❌ 保存IndexedDB缓存失败: ${domain}`, error)
       throw error
     }
   }
@@ -351,10 +340,7 @@ class FaviconService {
         record.url = nextUrl
         record.status = 'loading'
         this.cache.set(domain, record)
-        logger.debug(
-          'FaviconService',
-          `尝试回退方案 ${record.attempts}: ${domain}`
-        )
+        logger.debug('FaviconService', `尝试回退方案 ${record.attempts}: ${domain}`)
         return nextUrl
       }
     }
@@ -375,10 +361,7 @@ class FaviconService {
   /**
    * 订阅域名的favicon更新
    */
-  subscribe(
-    domain: string,
-    callback: (record: FaviconRecord) => void
-  ): () => void {
+  subscribe(domain: string, callback: (record: FaviconRecord) => void): () => void {
     if (!this.subscribers.has(domain)) {
       this.subscribers.set(domain, new Set())
     }

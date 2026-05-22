@@ -141,19 +141,14 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
       // ✅ 不需要排序：数据已按 Chrome 原始顺序返回
     }
 
-    const buildNode = (
-      node: BookmarkNode,
-      pathGuard: Set<string>
-    ): BookmarkNode => {
+    const buildNode = (node: BookmarkNode, pathGuard: Set<string>): BookmarkNode => {
       const nodeId = String(node.id)
       if (pathGuard.has(nodeId)) {
         return { ...node, children: [] }
       }
       pathGuard.add(nodeId)
       const rawChildren = parentChildrenMap.get(nodeId) ?? []
-      const builtChildren = rawChildren.map(child =>
-        buildNode(child, pathGuard)
-      )
+      const builtChildren = rawChildren.map(child => buildNode(child, pathGuard))
       pathGuard.delete(nodeId)
       return {
         ...node,
@@ -198,10 +193,7 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
    * @param treeNodes - 树形结构的节点数组
    * @param targetMap - 目标 Map 存储
    */
-  function flattenTreeToMap(
-    treeNodes: BookmarkNode[],
-    targetMap: Map<string, BookmarkNode>
-  ): void {
+  function flattenTreeToMap(treeNodes: BookmarkNode[], targetMap: Map<string, BookmarkNode>): void {
     for (const node of treeNodes) {
       const nodeId = String(node.id)
       targetMap.set(nodeId, node)
@@ -237,10 +229,7 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
     })
 
     // 🆕 如果传入的是根节点数组（树形结构），直接缓存
-    if (
-      nodeArray.length > 0 &&
-      nodeArray.every(n => !n.parentId || n.parentId === '0')
-    ) {
+    if (nodeArray.length > 0 && nodeArray.every(n => !n.parentId || n.parentId === '0')) {
       cachedTree.value = nodeArray
       logger.debug('BookmarkStore', 'addNodes - 缓存树结构', {
         rootCount: nodeArray.length
@@ -448,9 +437,7 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
       const t4 = performance.now()
 
       // 🔍 验证树结构：检查是否有嵌套的 children
-      const hasNestedChildren = viewTree.some(
-        root => root.children && root.children.length > 0
-      )
+      const hasNestedChildren = viewTree.some(root => root.children && root.children.length > 0)
       logger.info('BookmarkStore', '🔍 树结构验证', {
         hasNestedChildren,
         rootCount: viewTree.length,
@@ -551,10 +538,7 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
         )?.runtime?.onMessage?.addListener
 
       if (!hasRuntimeListener) {
-        logger.warn(
-          'BookmarkStore',
-          '⚠️ 扩展运行时不可用，跳过消息监听（开发环境或非扩展页面）。'
-        )
+        logger.warn('BookmarkStore', '⚠️ 扩展运行时不可用，跳过消息监听（开发环境或非扩展页面）。')
         return
       }
 
@@ -568,7 +552,7 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
             } catch {}
             return
           }
-          
+
           // ✅ 新增：监听数据同步完成消息（用于批量删除等操作）
           // 使用类型断言处理不同的消息格式
           const anyMessage = message as unknown as { type?: string; eventType?: string }
@@ -577,19 +561,12 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
 
             // 批量删除或其他重大变更时，重新加载所有数据
             if (eventType === 'removed' || eventType === 'full-sync') {
-              logger.info(
-                'BookmarkStore',
-                `📡 收到数据同步消息 (${eventType})，重新加载书签数据`
-              )
+              logger.info('BookmarkStore', `📡 收到数据同步消息 (${eventType})，重新加载书签数据`)
 
               // 使用 queueMicrotask 避免阻塞消息处理
               queueMicrotask(() => {
                 loadFromIndexedDB().catch(error => {
-                  logger.error(
-                    'BookmarkStore',
-                    '重新加载书签数据失败',
-                    error
-                  )
+                  logger.error('BookmarkStore', '重新加载书签数据失败', error)
                 })
               })
             }
@@ -599,14 +576,11 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
             } catch {}
             return
           }
-          
+
           // 未处理的消息不响应
         }
       )
-      logger.info(
-        'BookmarkStore',
-        '🎧 Listening for bookmark changes from background script.'
-      )
+      logger.info('BookmarkStore', '🎧 Listening for bookmark changes from background script.')
     } catch (e) {
       logger.warn('BookmarkStore', '⚠️ 设置消息监听失败', e)
     }

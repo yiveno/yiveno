@@ -94,10 +94,7 @@ export class LLMAdapter {
   /**
    * 统一的文本补全接口
    */
-  async complete(
-    prompt: string,
-    options?: LLMCompleteOptions
-  ): Promise<LLMCompleteResult> {
+  async complete(prompt: string, options?: LLMCompleteOptions): Promise<LLMCompleteResult> {
     const task: LLMTask = {
       type: 'categorize',
       complexity: prompt.length < 500 ? 'simple' : 'complex',

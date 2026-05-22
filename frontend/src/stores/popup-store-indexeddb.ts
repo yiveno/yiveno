@@ -25,7 +25,7 @@ export interface BookmarkStats {
 
 /**
  * 书签特征概览数据结构
- * 
+ *
  * @deprecated 使用 useTraitDataStore 替代
  * 保留此接口仅为向后兼容
  */
@@ -75,14 +75,17 @@ export const usePopupStoreIndexedDB = defineStore('popup-indexeddb', () => {
   })
 
   // 书签特征概览
-  /** 
+  /**
    * @deprecated 使用 useTraitDataStore 替代
    * 保留此 ref 仅为向后兼容，实际数据从 TraitDataStore 获取
    */
   const traitOverview = computed(() => {
     const traitStore = useTraitDataStore()
     return {
-      totalScanned: traitStore.statistics.duplicate + traitStore.statistics.invalid + traitStore.statistics.internal,
+      totalScanned:
+        traitStore.statistics.duplicate +
+        traitStore.statistics.invalid +
+        traitStore.statistics.internal,
       invalid: traitStore.statistics.invalid,
       duplicate: traitStore.statistics.duplicate,
       internal: traitStore.statistics.internal
@@ -134,10 +137,7 @@ export const usePopupStoreIndexedDB = defineStore('popup-indexeddb', () => {
     } finally {
       isLoading.value = false
       const endTime = performance.now()
-      logger.info(
-        'PopupStore',
-        `初始化耗时: ${(endTime - startTime).toFixed(2)}ms`
-      )
+      logger.info('PopupStore', `初始化耗时: ${(endTime - startTime).toFixed(2)}ms`)
     }
   }
 
@@ -211,7 +211,7 @@ export const usePopupStoreIndexedDB = defineStore('popup-indexeddb', () => {
     }
   }
 
-  /** 
+  /**
    * 特征概览是否正在加载
    * @deprecated 使用 useTraitDataStore().isLoading 替代
    */
@@ -236,7 +236,7 @@ export const usePopupStoreIndexedDB = defineStore('popup-indexeddb', () => {
    *
    * @description
    * 当书签数据更新时自动触发，确保 UI 显示最新数据
-   * 
+   *
    * 注意：特征数据由 TraitDataStore 自动刷新，无需在此处理
    */
   async function autoRefreshData(): Promise<void> {
@@ -258,17 +258,14 @@ export const usePopupStoreIndexedDB = defineStore('popup-indexeddb', () => {
    * @description
    * 监听 background service worker 广播的书签同步完成消息，
    * 自动刷新 UI 数据，无需用户手动操作
-   * 
+   *
    * 注意：特征更新消息由 TraitDataStore 自动监听，无需在此处理
    */
   function setupAutoRefreshListener(): void {
     chrome.runtime.onMessage.addListener(message => {
       // 监听书签同步完成消息
       if (message.type === 'acuity-bookmarks-db-synced') {
-        logger.info(
-          'PopupStore',
-          `📡 收到书签同步消息 (${message.eventType})，自动刷新数据`
-        )
+        logger.info('PopupStore', `📡 收到书签同步消息 (${message.eventType})，自动刷新数据`)
 
         // 使用 queueMicrotask 避免阻塞消息处理
         queueMicrotask(() => {

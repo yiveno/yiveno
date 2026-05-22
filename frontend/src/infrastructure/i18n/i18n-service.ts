@@ -101,12 +101,7 @@ export class I18nService {
         try {
           el.textContent = this.t(binding.value)
         } catch (error) {
-          logger.error(
-            'Component',
-            'I18nService',
-            'Vue 指令 mounted 失败',
-            error
-          )
+          logger.error('Component', 'I18nService', 'Vue 指令 mounted 失败', error)
           el.textContent = binding.value // 出错时显示原始键值
         }
       },
@@ -114,12 +109,7 @@ export class I18nService {
         try {
           el.textContent = this.t(binding.value)
         } catch (error) {
-          logger.error(
-            'Component',
-            'I18nService',
-            'Vue 指令 updated 失败',
-            error
-          )
+          logger.error('Component', 'I18nService', 'Vue 指令 updated 失败', error)
           el.textContent = binding.value // 出错时显示原始键值
         }
       }
@@ -148,11 +138,7 @@ export class I18nService {
       }
 
       // 浏览器原生语言检测
-      return (
-        navigator.language ||
-        navigator.languages?.[0] ||
-        this.config.fallbackLanguage
-      )
+      return navigator.language || navigator.languages?.[0] || this.config.fallbackLanguage
     } catch (error) {
       logger.error('Component', 'I18nService', '获取当前语言失败', error)
       return this.config.fallbackLanguage
@@ -175,11 +161,7 @@ export class I18nService {
       }
 
       // 浏览器原生支持语言
-      return (
-        navigator.languages || [
-          navigator.language || this.config.fallbackLanguage
-        ]
-      )
+      return navigator.languages || [navigator.language || this.config.fallbackLanguage]
     } catch (error) {
       logger.error('Component', 'I18nService', '获取支持语言失败', error)
       return [this.config.fallbackLanguage]

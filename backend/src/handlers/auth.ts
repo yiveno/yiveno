@@ -1,6 +1,6 @@
 /**
  * 认证处理器
- * 
+ *
  * 负责 OAuth 认证流程（Google、Microsoft）
  */
 
@@ -25,7 +25,7 @@ interface ProviderConfig {
 
 /**
  * 获取 OAuth 提供商配置
- * 
+ *
  * @param provider - 提供商名称（google/microsoft）
  * @param env - 环境变量
  * @returns 提供商配置或 null
@@ -34,15 +34,12 @@ export function getProviderConfig(provider: string, env: Env): ProviderConfig | 
   if (provider === 'google') {
     const clientId = env.AUTH_GOOGLE_CLIENT_ID
     const clientSecret = env.AUTH_GOOGLE_CLIENT_SECRET
-    const authUrl =
-      env.AUTH_GOOGLE_AUTH_URL || 'https://accounts.google.com/o/oauth2/v2/auth'
-    const tokenUrl =
-      env.AUTH_GOOGLE_TOKEN_URL || 'https://oauth2.googleapis.com/token'
+    const authUrl = env.AUTH_GOOGLE_AUTH_URL || 'https://accounts.google.com/o/oauth2/v2/auth'
+    const tokenUrl = env.AUTH_GOOGLE_TOKEN_URL || 'https://oauth2.googleapis.com/token'
     const userInfoUrl =
-      env.AUTH_GOOGLE_USERINFO_URL ||
-      'https://openidconnect.googleapis.com/v1/userinfo'
+      env.AUTH_GOOGLE_USERINFO_URL || 'https://openidconnect.googleapis.com/v1/userinfo'
     if (!clientId) return null
-    
+
     const config: ProviderConfig = {
       provider,
       clientId,
@@ -63,12 +60,10 @@ export function getProviderConfig(provider: string, env: Env): ProviderConfig | 
       env.AUTH_MICROSOFT_AUTH_URL ||
       'https://login.microsoftonline.com/common/oauth2/v2.0/authorize'
     const tokenUrl =
-      env.AUTH_MICROSOFT_TOKEN_URL ||
-      'https://login.microsoftonline.com/common/oauth2/v2.0/token'
-    const userInfoUrl =
-      env.AUTH_MICROSOFT_USERINFO_URL || 'https://graph.microsoft.com/v1.0/me'
+      env.AUTH_MICROSOFT_TOKEN_URL || 'https://login.microsoftonline.com/common/oauth2/v2.0/token'
+    const userInfoUrl = env.AUTH_MICROSOFT_USERINFO_URL || 'https://graph.microsoft.com/v1.0/me'
     if (!clientId) return null
-    
+
     const config: ProviderConfig = {
       provider,
       clientId,
@@ -87,17 +82,13 @@ export function getProviderConfig(provider: string, env: Env): ProviderConfig | 
 
 /**
  * 处理认证提供商列表请求
- * 
+ *
  * @param _request - 请求对象
  * @param env - 环境变量
  * @param origin - 请求来源
  * @returns 提供商列表响应
  */
-export function handleAuthProviders(
-  _request: Request,
-  env: Env,
-  origin: string | null
-): Response {
+export function handleAuthProviders(_request: Request, env: Env, origin: string | null): Response {
   try {
     const gCfg = getProviderConfig('google', env)
     const google = Boolean(gCfg)
@@ -106,12 +97,15 @@ export function handleAuthProviders(
     const microsoft = Boolean(msCfg)
     const microsoftHasSecret = Boolean(msCfg && msCfg.clientSecret)
     const allow = parseAllowlist(env)
-    return okJson({
-      success: true,
-      providers: { google, googleHasSecret, microsoft, microsoftHasSecret },
-      redirectAllowlist: allow.length ? allow : undefined,
-      note: '默认放行 https://*.chromiumapp.org 作为 Chrome 扩展回调域'
-    }, origin)
+    return okJson(
+      {
+        success: true,
+        providers: { google, googleHasSecret, microsoft, microsoftHasSecret },
+        redirectAllowlist: allow.length ? allow : undefined,
+        note: '默认放行 https://*.chromiumapp.org 作为 Chrome 扩展回调域'
+      },
+      origin
+    )
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     return errorJson({ error: msg }, 500, origin)
@@ -120,33 +114,23 @@ export function handleAuthProviders(
 
 /**
  * 处理认证开始请求
- * 
+ *
  * @param request - 请求对象
  * @param env - 环境变量
  * @param origin - 请求来源
  * @returns 认证 URL 响应
  */
-export function handleAuthStart(
-  request: Request,
-  env: Env,
-  origin: string | null
-): Response {
+export function handleAuthStart(request: Request, env: Env, origin: string | null): Response {
   try {
     const url = new URL(request.url)
-    const provider = (
-      url.searchParams.get('provider') || 'google'
-    ).toLowerCase()
+    const provider = (url.searchParams.get('provider') || 'google').toLowerCase()
     const redirectUri = url.searchParams.get('redirect_uri') || ''
     const codeChallenge = url.searchParams.get('code_challenge') || ''
     const scope = url.searchParams.get('scope') || ''
     if (!redirectUri) return errorJson({ error: 'missing redirect_uri' }, 400, origin)
     const redirCheck = isAllowedRedirectUri(redirectUri, env)
     if (!redirCheck.ok)
-      return errorJson(
-        { error: `invalid redirect_uri: ${redirCheck.error}` },
-        400,
-        origin
-      )
+      return errorJson({ error: `invalid redirect_uri: ${redirCheck.error}` }, 400, origin)
     if (!['google', 'microsoft'].includes(provider)) {
       return errorJson({ error: `unsupported provider: ${provider}` }, 400, origin)
     }
@@ -159,14 +143,9 @@ export function handleAuthStart(
           : provider === 'microsoft'
             ? ['AUTH_MICROSOFT_CLIENT_ID'].filter(k => !envRecord[k])
             : []
-      return errorJson(
-        { error: `provider not configured: ${provider}`, missing },
-        400,
-        origin
-      )
+      return errorJson({ error: `provider not configured: ${provider}`, missing }, 400, origin)
     }
-    const state =
-      url.searchParams.get('state') || Math.random().toString(36).slice(2)
+    const state = url.searchParams.get('state') || Math.random().toString(36).slice(2)
     const authUrl = new URL(cfg.authUrl)
     authUrl.searchParams.set('response_type', 'code')
     authUrl.searchParams.set('client_id', cfg.clientId)
@@ -181,12 +160,15 @@ export function handleAuthStart(
       authUrl.searchParams.set('prompt', 'consent')
       authUrl.searchParams.set('access_type', 'offline')
     }
-    return okJson({
-      success: true,
-      provider,
-      authUrl: authUrl.toString(),
-      state
-    }, origin)
+    return okJson(
+      {
+        success: true,
+        provider,
+        authUrl: authUrl.toString(),
+        state
+      },
+      origin
+    )
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     return errorJson({ error: msg }, 500, origin)
@@ -195,7 +177,7 @@ export function handleAuthStart(
 
 /**
  * 处理认证回调请求
- * 
+ *
  * @param request - 请求对象
  * @param env - 环境变量
  * @param origin - 请求来源
@@ -208,9 +190,7 @@ export async function handleAuthCallback(
 ): Promise<Response> {
   try {
     const url = new URL(request.url)
-    const provider = (
-      url.searchParams.get('provider') || 'google'
-    ).toLowerCase()
+    const provider = (url.searchParams.get('provider') || 'google').toLowerCase()
     const code = url.searchParams.get('code') || ''
     const redirectUri = url.searchParams.get('redirect_uri') || ''
     const codeVerifier = url.searchParams.get('code_verifier') || ''
@@ -223,41 +203,21 @@ export async function handleAuthCallback(
       const envRecord = env as unknown as Record<string, unknown>
       const missing =
         provider === 'google'
-          ? ['AUTH_GOOGLE_CLIENT_ID', 'AUTH_GOOGLE_CLIENT_SECRET'].filter(
-              k => !envRecord[k]
-            )
+          ? ['AUTH_GOOGLE_CLIENT_ID', 'AUTH_GOOGLE_CLIENT_SECRET'].filter(k => !envRecord[k])
           : provider === 'microsoft'
-            ? [
-                'AUTH_MICROSOFT_CLIENT_ID',
-                'AUTH_MICROSOFT_CLIENT_SECRET'
-              ].filter(k => !envRecord[k])
+            ? ['AUTH_MICROSOFT_CLIENT_ID', 'AUTH_MICROSOFT_CLIENT_SECRET'].filter(
+                k => !envRecord[k]
+              )
             : []
-      return errorJson(
-        { error: `provider not configured: ${provider}`, missing },
-        400,
-        origin
-      )
+      return errorJson({ error: `provider not configured: ${provider}`, missing }, 400, origin)
     }
     if (!redirectUri) return errorJson({ error: 'missing redirect_uri' }, 400, origin)
     const redirCheck = isAllowedRedirectUri(redirectUri, env)
     if (!redirCheck.ok)
-      return errorJson(
-        { error: `invalid redirect_uri: ${redirCheck.error}` },
-        400,
-        origin
-      )
+      return errorJson({ error: `invalid redirect_uri: ${redirCheck.error}` }, 400, origin)
     if (!codeVerifier) return errorJson({ error: 'missing code_verifier' }, 400, origin)
-    const accessToken = await exchangeCodeForToken(
-      cfg,
-      code,
-      redirectUri,
-      codeVerifier
-    )
-    const { email, sub } = await fetchUserInfoWithAccessToken(
-      provider,
-      cfg,
-      accessToken
-    )
+    const accessToken = await exchangeCodeForToken(cfg, code, redirectUri, codeVerifier)
+    const { email, sub } = await fetchUserInfoWithAccessToken(provider, cfg, accessToken)
     const userId = `${provider}:${sub || email || Math.random().toString(36).slice(2)}`
     const tier = 'free'
     const secret = env.JWT_SECRET || env.SECRET || 'dev-secret'
@@ -267,13 +227,16 @@ export async function handleAuthCallback(
       7 * 24 * 60 * 60
     )
     const now = Math.floor(Date.now() / 1000)
-    return okJson({
-      success: true,
-      token,
-      tier,
-      user: { id: userId, email },
-      expiresAt: now + 7 * 24 * 60 * 60
-    }, origin)
+    return okJson(
+      {
+        success: true,
+        token,
+        tier,
+        user: { id: userId, email },
+        expiresAt: now + 7 * 24 * 60 * 60
+      },
+      origin
+    )
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     return errorJson({ error: msg }, 500, origin)
@@ -282,7 +245,7 @@ export async function handleAuthCallback(
 
 /**
  * 使用授权码交换访问令牌
- * 
+ *
  * @param cfg - 提供商配置
  * @param code - 授权码
  * @param redirectUri - 重定向 URI
@@ -321,10 +284,12 @@ async function exchangeCodeForToken(
       `token exchange failed ${tokenResp.status}${detail ? `: ${detail.slice(0, 200)}` : ''}`
     )
   }
-  const tokenJson = await tokenResp.json().catch((): OAuthTokenResponse => ({
-    access_token: '',
-    token_type: 'Bearer'
-  })) as OAuthTokenResponse
+  const tokenJson = (await tokenResp.json().catch(
+    (): OAuthTokenResponse => ({
+      access_token: '',
+      token_type: 'Bearer'
+    })
+  )) as OAuthTokenResponse
   const accessToken = tokenJson.access_token
   if (!accessToken) throw new Error('missing access_token')
   return accessToken
@@ -332,7 +297,7 @@ async function exchangeCodeForToken(
 
 /**
  * 使用访问令牌获取用户信息
- * 
+ *
  * @param provider - 提供商名称
  * @param cfg - 提供商配置
  * @param accessToken - 访问令牌
@@ -359,7 +324,10 @@ async function fetchUserInfoWithAccessToken(
         'user-agent': 'AcuityBookmarks'
       }
     })
-    const u: Record<string, unknown> = (await uResp.json().catch(() => ({}))) as Record<string, unknown>
+    const u: Record<string, unknown> = (await uResp.json().catch(() => ({}))) as Record<
+      string,
+      unknown
+    >
     let email = String(u.email || '')
     const sub = String(u.id || '')
     if (!email) {

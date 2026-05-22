@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /**
  * 国际化文案自动替换工具
- * 
+ *
  * 功能：
  * 1. 读取 i18n-report.json
  * 2. 交互式选择要替换的文案
@@ -57,8 +57,8 @@ async function selectTexts(texts: ExtractedText[]): Promise<ExtractedText[]> {
     output: process.stdout
   })
 
-  return new Promise((resolve) => {
-    rl.question('请选择 (0-4): ', (answer) => {
+  return new Promise(resolve => {
+    rl.question('请选择 (0-4): ', answer => {
       rl.close()
 
       switch (answer.trim()) {
@@ -140,11 +140,7 @@ async function updateLocaleFiles(plans: ReplacementPlan[]): Promise<void> {
       })
 
       // 写回文件
-      await writeFile(
-        messagesPath,
-        JSON.stringify(messages, null, 2) + '\n',
-        'utf-8'
-      )
+      await writeFile(messagesPath, JSON.stringify(messages, null, 2) + '\n', 'utf-8')
 
       console.log(`✅ 已更新 ${locale}/messages.json`)
     } catch {
@@ -188,7 +184,7 @@ async function replaceInCode(plans: ReplacementPlan[]): Promise<void> {
         // 在 <script setup> 中添加 import
         newContent = newContent.replace(
           /<script setup.*?>/,
-          (match) => `${match}\nimport { t } from '@/utils/i18n-helpers'`
+          match => `${match}\nimport { t } from '@/utils/i18n-helpers'`
         )
       }
 
@@ -243,8 +239,8 @@ async function confirm(message: string): Promise<boolean> {
     output: process.stdout
   })
 
-  return new Promise((resolve) => {
-    rl.question(`${message} (y/N): `, (answer) => {
+  return new Promise(resolve => {
+    rl.question(`${message} (y/N): `, answer => {
       rl.close()
       resolve(answer.toLowerCase() === 'y')
     })

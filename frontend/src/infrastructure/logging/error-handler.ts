@@ -83,10 +83,7 @@ export function classifyError(error: Error | string): ErrorType {
     return ErrorType.CHROME_API
   }
 
-  if (
-    errorMessage.includes('timeout') ||
-    errorMessage.includes('TimeoutError')
-  ) {
+  if (errorMessage.includes('timeout') || errorMessage.includes('TimeoutError')) {
     return ErrorType.TIMEOUT
   }
 
@@ -113,8 +110,7 @@ export function classifyError(error: Error | string): ErrorType {
  * 获取用户友好的错误消息
  */
 export function getUserFriendlyMessage(error: Error | AppError): string {
-  const errorType =
-    error instanceof AppError ? error.type : classifyError(error)
+  const errorType = error instanceof AppError ? error.type : classifyError(error)
   // const originalMessage = error.message
 
   switch (errorType) {
@@ -146,12 +142,7 @@ export async function withRetry<T>(
   options: Partial<RetryOptions> = {},
   context?: ErrorContext
 ): Promise<Result<T, AppError>> {
-  const {
-    maxAttempts = 3,
-    delay = 1000,
-    backoff = true,
-    shouldRetry = () => true
-  } = options
+  const { maxAttempts = 3, delay = 1000, backoff = true, shouldRetry = () => true } = options
 
   let lastError: Error | undefined
 
@@ -305,12 +296,7 @@ export class ErrorBoundary {
     const appError =
       error instanceof AppError
         ? error
-        : new AppError(
-            getUserFriendlyMessage(error),
-            classifyError(error),
-            context,
-            error
-          )
+        : new AppError(getUserFriendlyMessage(error), classifyError(error), context, error)
 
     // 记录错误
     logger.error('Component', 'ErrorBoundary', '捕获错误', {
@@ -401,20 +387,14 @@ export function safeExecuteSync<T>(
  * 数据验证器
  */
 export class DataValidator {
-  static isBookmarkTreeNode(
-    obj: unknown
-  ): obj is chrome.bookmarks.BookmarkTreeNode {
+  static isBookmarkTreeNode(obj: unknown): obj is chrome.bookmarks.BookmarkTreeNode {
     if (!obj || typeof obj !== 'object') return false
     const node = obj as Record<string, unknown>
     return typeof node.id === 'string' && typeof node.title === 'string'
   }
 
-  static isBookmarkArray(
-    arr: unknown
-  ): arr is chrome.bookmarks.BookmarkTreeNode[] {
-    return (
-      Array.isArray(arr) && arr.every(item => this.isBookmarkTreeNode(item))
-    )
+  static isBookmarkArray(arr: unknown): arr is chrome.bookmarks.BookmarkTreeNode[] {
+    return Array.isArray(arr) && arr.every(item => this.isBookmarkTreeNode(item))
   }
 
   static validateUrl(url: string): boolean {

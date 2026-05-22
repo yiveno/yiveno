@@ -119,10 +119,7 @@ export function normalizeCategory(category: string): BookmarkCategory {
     if (!mappedCategory) {
       return '其他'
     }
-    logger.debug(
-      loggerPrefix,
-      `标准化分类: ${category} -> ${mappedCategory}`
-    )
+    logger.debug(loggerPrefix, `标准化分类: ${category} -> ${mappedCategory}`)
     return mappedCategory
   }
 

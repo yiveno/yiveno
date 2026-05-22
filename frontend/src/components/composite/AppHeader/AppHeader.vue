@@ -143,7 +143,7 @@ onMounted(() => {
   initTheme()
 
   // 监听主题切换事件
-  const unsubscribeTheme = onEvent('theme:changed', (data) => {
+  const unsubscribeTheme = onEvent('theme:changed', data => {
     const payload = data as { theme: 'light' | 'dark' }
     if (currentTheme.value !== 'system') {
       currentTheme.value = payload.theme
@@ -169,10 +169,7 @@ onMounted(() => {
 
 <template>
   <header :class="headerClasses" aria-label="AcuityBookmarks">
-    <div
-      v-if="showSidePanelToggle"
-      class="app-header__col app-header__col--left"
-    >
+    <div v-if="showSidePanelToggle" class="app-header__col app-header__col--left">
       <md-icon-button
         class="app-header__action"
         :style="{ '--md-icon-button-icon-size': '30px' }"
@@ -185,12 +182,7 @@ onMounted(() => {
     </div>
 
     <div class="app-header__col app-header__col--center">
-      <img
-        v-if="showLogo"
-        :src="logoSrc"
-        alt="AcuityBookmarks Logo"
-        class="app-header__logo"
-      />
+      <img v-if="showLogo" :src="logoSrc" alt="AcuityBookmarks Logo" class="app-header__logo" />
       <span v-if="showName" class="app-header__name">AcuityBookmarks</span>
     </div>
 

@@ -33,12 +33,12 @@ const handleToggle = () => {
 }
 
 // ✅ 监听展开状态变化，确保 DOM 更新完成后滚动容器才能正常工作
-watch(isExpanded, async (newValue) => {
+watch(isExpanded, async newValue => {
   if (newValue && contentRef.value) {
     // 展开时：等待 DOM 完全渲染
     await nextTick()
     await nextTick() // 双重 nextTick 确保所有子组件也渲染完成
-    
+
     // 强制触发滚动容器的重新计算
     const scrollContainer = contentRef.value.querySelector('.accordion-content') as HTMLElement
     if (scrollContainer) {
@@ -75,12 +75,7 @@ watch(isExpanded, async (newValue) => {
   </md-list-item>
 
   <!-- ✅ 使用 v-show 替代 v-if，避免 DOM 重新创建导致的滚动延迟 -->
-  <div 
-    v-show="isExpanded"
-    ref="contentRef" 
-    class="accordion-content" 
-    :data-accordion-id="id"
-  >
+  <div v-show="isExpanded" ref="contentRef" class="accordion-content" :data-accordion-id="id">
     <slot />
   </div>
 </template>

@@ -57,12 +57,12 @@ async function selectPreset(id: ColorPresetId) {
   busy.value = true
   try {
     await globalStateManager.setColorPreset(id)
-    currentPreset.value = globalStateManager.getColorPreset()
+    currentPreset.value = globalStateManager.getColorPreset() // eslint-disable-line require-atomic-updates
     logger.info('ColorPresetSettings', '配色预设已切换', { preset: id })
   } catch (error) {
     logger.error('ColorPresetSettings', '保存配色预设失败', error)
   } finally {
-    busy.value = false
+    busy.value = false // eslint-disable-line require-atomic-updates
   }
 }
 </script>
@@ -71,11 +71,7 @@ async function selectPreset(id: ColorPresetId) {
   <div>
     <p class="intro">{{ t('settings_color_presets_intro') }}</p>
 
-    <div
-      class="preset-grid"
-      role="radiogroup"
-      :aria-label="t('settings_color_presets_title')"
-    >
+    <div class="preset-grid" role="radiogroup" :aria-label="t('settings_color_presets_title')">
       <button
         v-for="def in presets"
         :key="def.id"

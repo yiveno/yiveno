@@ -100,7 +100,10 @@ const isLoadingTraitOverview = useTraitLoading()
 
 // 兼容旧的 traitOverview 接口
 const traitOverview = computed(() => ({
-  totalScanned: traitStatistics.value.duplicate + traitStatistics.value.invalid + traitStatistics.value.internal,
+  totalScanned:
+    traitStatistics.value.duplicate +
+    traitStatistics.value.invalid +
+    traitStatistics.value.internal,
   invalid: traitStatistics.value.invalid,
   duplicate: traitStatistics.value.duplicate,
   internal: traitStatistics.value.internal
@@ -132,7 +135,7 @@ function handleBookmarkClick(bookmark: BookmarkNode): void {
 function handleSearchComplete(results: BookmarkNode[]): void {
   searchResults.value = results
   logger.info('Popup', '搜索完成', { resultCount: results.length })
-  
+
   // dropdown 模式下不自动跳转，由用户点击单个结果
 }
 
@@ -143,7 +146,6 @@ function handleSearchClear(): void {
   searchResults.value = []
   logger.info('Popup', '搜索已清空')
 }
-
 
 // --- 操作函数 ---
 // 在弹出页中监听同一命令，收到时关闭自身，实现“切换展开收起”
@@ -218,9 +220,7 @@ function openSettings(): void {
       return
     }
 
-    const url = chrome?.runtime?.getURL
-      ? chrome.runtime.getURL('settings.html')
-      : '/settings.html'
+    const url = chrome?.runtime?.getURL ? chrome.runtime.getURL('settings.html') : '/settings.html'
     window.open(url, '_blank')
   } catch {
     if (typeof window !== 'undefined') {
@@ -234,14 +234,14 @@ function openSettings(): void {
  */
 async function handleBatchDelete(type: 'duplicate' | 'invalid'): Promise<void> {
   const typeLabel = type === 'duplicate' ? t('popup_issue_duplicate') : t('popup_issue_invalid')
-  
+
   if (!confirm(t('popup_batch_delete_confirm', typeLabel))) {
     return
   }
 
   try {
     logger.info('Popup', `开始批量删除${typeLabel}`)
-    
+
     // 发送消息到 background script 执行批量删除
     const response = await chrome.runtime.sendMessage({
       type: 'BATCH_DELETE_BY_TRAIT',
@@ -251,9 +251,14 @@ async function handleBatchDelete(type: 'duplicate' | 'invalid'): Promise<void> {
     if (response?.success) {
       if (uiStore.value) {
         // ✅ 显示详细结果（包含失败数）
-        const message = response.failed > 0
-          ? t('popup_batch_delete_partial', [String(response.count), typeLabel, String(response.failed)])
-          : t('popup_batch_delete_success', [String(response.count), typeLabel])
+        const message =
+          response.failed > 0
+            ? t('popup_batch_delete_partial', [
+                String(response.count),
+                typeLabel,
+                String(response.failed)
+              ])
+            : t('popup_batch_delete_success', [String(response.count), typeLabel])
         uiStore.value.showSuccess(message)
       }
       // ✅ 移除手动刷新，完全依赖自动刷新机制
@@ -270,9 +275,6 @@ async function handleBatchDelete(type: 'duplicate' | 'invalid'): Promise<void> {
     }
   }
 }
-
-
-
 
 // 从统计卡片跳转到整理页并带上搜索参数
 async function openManagementWithFilter(key: string): Promise<void> {
@@ -336,10 +338,7 @@ async function openManagementWithFilter(key: string): Promise<void> {
  * @param kind - duplicate | invalid
  * @param event - 鼠标事件
  */
-function handleIssueRowClick(
-  kind: 'duplicate' | 'invalid',
-  event: Event
-): void {
+function handleIssueRowClick(kind: 'duplicate' | 'invalid', event: Event): void {
   const el = event.target
   if (el instanceof Element && el.closest('.issue-action')) {
     return
@@ -363,7 +362,8 @@ const loadBookmarkStats = async () => {
 // --- 生命周期钩子 ---
 onMounted(async () => {
   // ✅ 初始化 Supabase 认证（从第一个 onMounted 合并）
-  const { initialize: initAuth, setupAuthListener } = await import('@/composables/useSupabaseAuth').then(m => m.useSupabaseAuth())
+  const { initialize: initAuth, setupAuthListener } =
+    await import('@/composables/useSupabaseAuth').then(m => m.useSupabaseAuth())
   await initAuth()
   setupAuthListener() // ✅ 手动设置认证状态监听器
 
@@ -418,13 +418,12 @@ onMounted(async () => {
     logger.info('Popup', 'Popup 启动，点击图标永远显示 popup 页面')
 
     // 动态导入stores - 使用IndexedDB版本
-    const { useUIStore } = await import('@/stores/ui-store')
-    const { usePopupStoreIndexedDB } = await import(
-      '@/stores/popup-store-indexeddb'
-    )
+    const { useUIStore: importedUseUIStore } = await import('@/stores/ui-store')
+    const { usePopupStoreIndexedDB: importedUsePopupStoreIndexedDB } =
+      await import('@/stores/popup-store-indexeddb')
 
-    uiStore.value = useUIStore()
-    popupStore.value = usePopupStoreIndexedDB()
+    uiStore.value = importedUseUIStore()
+    popupStore.value = importedUsePopupStoreIndexedDB()
 
     logger.info('Popup', 'Stores初始化完成')
 
@@ -585,7 +584,10 @@ onUnmounted(() => {
                 </md-icon-button>
               </div>
               <div class="issue-card-count issue-card-count--warning">
-                <md-circular-progress v-if="isLoadingTraitOverview" indeterminate></md-circular-progress>
+                <md-circular-progress
+                  v-if="isLoadingTraitOverview"
+                  indeterminate
+                ></md-circular-progress>
                 <AnimatedNumber v-else :value="traitOverview.duplicate" />
               </div>
             </div>
@@ -617,7 +619,10 @@ onUnmounted(() => {
                 </md-icon-button>
               </div>
               <div class="issue-card-count issue-card-count--danger">
-                <md-circular-progress v-if="isLoadingTraitOverview" indeterminate></md-circular-progress>
+                <md-circular-progress
+                  v-if="isLoadingTraitOverview"
+                  indeterminate
+                ></md-circular-progress>
                 <AnimatedNumber v-else :value="traitOverview.invalid" />
               </div>
             </div>

@@ -87,11 +87,7 @@ async function verifySignature(
     false,
     ['sign']
   )
-  const signatureBuffer = await crypto.subtle.sign(
-    'HMAC',
-    key,
-    encoder.encode(rawBody)
-  )
+  const signatureBuffer = await crypto.subtle.sign('HMAC', key, encoder.encode(rawBody))
   const expectedHex = bufferToHex(signatureBuffer)
   // Gumroad 文档未说明是否区分大小写，这里统一转小写比较
   return timingSafeEqual(expectedHex.toLowerCase(), signature.toLowerCase())
@@ -116,10 +112,7 @@ function toBoolean(flag: unknown): boolean {
   return flag === true || flag === 'true' || flag === '1'
 }
 
-function toIsoDate(
-  value: unknown,
-  fallback: string | null = null
-): string | null {
+function toIsoDate(value: unknown, fallback: string | null = null): string | null {
   if (!value) return fallback
   const date = new Date(value as string | number | Date)
   if (Number.isNaN(date.getTime())) return fallback
@@ -129,10 +122,7 @@ function toIsoDate(
 /**
  * GET /api/gumroad/subscription?user_id=xxx
  */
-export async function handleGetSubscription(
-  request: Request,
-  env: Env
-): Promise<Response> {
+export async function handleGetSubscription(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'GET') {
     return json({ success: false, error: 'Method not allowed' }, 405)
   }
@@ -155,8 +145,7 @@ export async function handleGetSubscription(
     return json({
       success: true,
       subscription: {
-        id:
-          subscription.gumroad_subscription_id || subscription.id || null,
+        id: subscription.gumroad_subscription_id || subscription.id || null,
         status: subscription.status,
         tier: subscription.tier || 'free',
         current_period_end: subscription.current_period_end,
@@ -175,10 +164,7 @@ export async function handleGetSubscription(
  * Gumroad 使用 Ping 功能发送通知，可能不使用签名验证
  * 可以通过 seller_id 或 IP 白名单进行验证（可选）
  */
-export async function handleWebhook(
-  request: Request,
-  env: Env
-): Promise<Response> {
+export async function handleWebhook(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') {
     return json({ success: false, error: 'Method not allowed' }, 405)
   }
@@ -199,27 +185,18 @@ export async function handleWebhook(
     }
   } else {
     // 如果没有配置 Secret，记录警告但继续处理（开发环境）
-    console.warn(
-      '[Gumroad] 未配置 Webhook Secret，跳过签名验证（仅用于开发测试）'
-    )
+    console.warn('[Gumroad] 未配置 Webhook Secret，跳过签名验证（仅用于开发测试）')
   }
 
   const payload = parseWebhookPayload(rawBody)
-  const notificationType =
-    payload.notification_type || payload.kind || 'unknown'
+  const notificationType = payload.notification_type || payload.kind || 'unknown'
   const subscriptionId = payload.subscription_id || payload.sale_id || null
-  const userId =
-    payload['custom_fields[user_id]'] ||
-    payload['custom_fields[userId]'] ||
-    null
+  const userId = payload['custom_fields[user_id]'] || payload['custom_fields[userId]'] || null
   const tier = (payload['custom_fields[tier]'] || 'pro') as SubscriptionTier
 
   if (!subscriptionId || !userId) {
     console.error('[Gumroad] Webhook 缺少 subscription_id 或 user_id', payload)
-    return json(
-      { success: false, error: 'Missing subscription_id or user_id' },
-      400
-    )
+    return json({ success: false, error: 'Missing subscription_id or user_id' }, 400)
   }
 
   try {
@@ -240,16 +217,14 @@ export async function handleWebhook(
     const cancelAtPeriodEnd = cancelled && !endedAt
     const status: Subscription['status'] = endedAt
       ? 'expired'
-      : toBoolean(payload.is_failed || payload.failed) ||
-          toBoolean(payload.charge_failed)
+      : toBoolean(payload.is_failed || payload.failed) || toBoolean(payload.charge_failed)
         ? 'past_due'
         : 'active'
 
     const subscriptionRecord: Partial<Subscription> = {
       user_id: userId,
       gumroad_subscription_id: subscriptionId,
-      gumroad_order_id:
-        payload.order_id || payload.sale_id || payload.purchase_id || null,
+      gumroad_order_id: payload.order_id || payload.sale_id || payload.purchase_id || null,
       gumroad_variant_id: payload.plan_id || payload.price_id || null,
       status,
       tier,
@@ -266,8 +241,7 @@ export async function handleWebhook(
       const paymentRecord: PaymentRecord = {
         user_id: userId,
         subscription_id: subscriptionId,
-        gumroad_order_id:
-          payload.sale_id || payload.order_id || payload.purchase_id || null,
+        gumroad_order_id: payload.sale_id || payload.order_id || payload.purchase_id || null,
         gumroad_payment_id: payload.charge_id || null,
         amount: Number(payload.price || payload.charge_amount || 0),
         currency: payload.currency || 'USD',

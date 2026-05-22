@@ -37,7 +37,7 @@ const computedSize = computed(() => {
  */
 const computedColor = computed(() => {
   if (!props.color) return 'currentColor'
-  
+
   // 语义化颜色映射到 CSS 变量
   const semanticColors: Record<string, string> = {
     primary: 'var(--md-sys-color-primary)',
@@ -48,16 +48,16 @@ const computedColor = computed(() => {
     info: 'var(--color-semantic-info)',
     muted: 'var(--md-sys-color-outline)'
   }
-  
+
   if (semanticColors[props.color]) {
     return semanticColors[props.color]
   }
-  
+
   // CSS 变量
   if (props.color.startsWith('--')) {
     return `var(${props.color})`
   }
-  
+
   // 直接颜色值
   return props.color
 })
@@ -68,7 +68,7 @@ const computedColor = computed(() => {
  */
 const iconComponent = computed<Component | null>(() => {
   let iconName = props.name
-  
+
   // 如果是 icon- 前缀的 Material Icons，尝试映射到 Lucide Icons
   if (iconName.startsWith('icon-')) {
     const mappedName = materialToLucideMap[iconName]
@@ -78,7 +78,7 @@ const iconComponent = computed<Component | null>(() => {
       console.warn(`[LucideIcon] Material Icon 映射未找到: ${iconName}`)
     }
   }
-  
+
   const icon = lucideIcons[iconName]
   if (!icon && import.meta.env.DEV) {
     console.warn(`[LucideIcon] 图标未找到: ${iconName} (原始名称: ${props.name})`)

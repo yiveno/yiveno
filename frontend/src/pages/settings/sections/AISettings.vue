@@ -5,7 +5,11 @@ import { userLLMClient } from '@/infrastructure/llm/user-llm-client'
 import type { UserLLMProvider } from '@/infrastructure/llm/user-llm-client'
 import { llmAdapter } from '@/infrastructure/llm/llm-adapter'
 import { builtInLLMClient } from '@/infrastructure/llm/builtin-llm-client'
-import { notifyError, notifySuccess, notifyWarning } from '@/application/notification/notification-service'
+import {
+  notifyError,
+  notifySuccess,
+  notifyWarning
+} from '@/application/notification/notification-service'
 import { useSubscription } from '@/composables/useSubscription'
 import { logger } from '@/infrastructure/logging/logger'
 
@@ -77,7 +81,7 @@ const availableModels = computed(() => modelsByProvider[selectedProvider.value])
 const showCustomModelInput = computed(() => selectedModel.value === 'custom')
 
 // 监听服务商切换,自动选择推荐模型
-watch(selectedProvider, (newProvider) => {
+watch(selectedProvider, newProvider => {
   const models = modelsByProvider[newProvider]
   const firstModel = models?.[0]
   if (firstModel) {
@@ -137,12 +141,12 @@ function handleTabChange() {
 async function handleAIToggle(event: Event) {
   const target = event.target as HTMLInputElement
   aiEnabled.value = target.checked
-  
+
   if (!aiEnabled.value) {
     // 关闭 AI 时，联动关闭所有 AI 功能开关
     aiAutoEnabled.value = false
     semanticSearchEnabled.value = false
-    
+
     // 保存到 storage
     try {
       await chrome.storage.local.set({
@@ -153,7 +157,7 @@ async function handleAIToggle(event: Event) {
     } catch (error) {
       logger.error('AISettings', '保存 AI 功能状态失败', error)
     }
-    
+
     // 清除 AI 配置
     clearConfig()
   }
@@ -186,23 +190,22 @@ async function handleSemanticSearchToggle(event: Event) {
 /** 保存配置 */
 async function saveConfig() {
   if (!apiKey.value.trim()) return
-  
+
   // 如果选择了"其他模型",但没有输入自定义模型名称
   if (selectedModel.value === 'custom' && !customModelName.value.trim()) {
     notifyError('请输入自定义模型名称', 'AI 设置')
     return
   }
-  
+
   saving.value = true
   try {
     // 确定最终使用的模型名称
-    const finalModel = selectedModel.value === 'custom' 
-      ? customModelName.value.trim() 
-      : selectedModel.value
-    
+    const finalModel =
+      selectedModel.value === 'custom' ? customModelName.value.trim() : selectedModel.value
+
     // 确保 model 不为空字符串
     const modelValue = finalModel || undefined
-    
+
     await userLLMClient.saveConfig({
       provider: selectedProvider.value,
       apiKey: apiKey.value.trim(),
@@ -222,7 +225,10 @@ async function saveConfig() {
 /** 各服务商控制台链接 */
 const consoleLinks: Record<UserLLMProvider, { url: string; text: string }> = {
   openai: { url: 'https://platform.openai.com/account/billing', text: '前往 OpenAI 控制台充值' },
-  claude: { url: 'https://console.anthropic.com/settings/billing', text: '前往 Anthropic 控制台充值' },
+  claude: {
+    url: 'https://console.anthropic.com/settings/billing',
+    text: '前往 Anthropic 控制台充值'
+  },
   gemini: { url: 'https://aistudio.google.com/app/apikey', text: '前往 Google AI Studio 查看额度' }
 }
 
@@ -269,13 +275,13 @@ async function recheckChromeAI() {
   recheckingChromeAI.value = true
   try {
     const previousStatus = chromeAIAvailable.value
-    chromeAIAvailable.value = await builtInLLMClient.isAvailable()
-    
-    logger.info('AISettings', 'Chrome AI 重新检测完成', { 
+    chromeAIAvailable.value = await builtInLLMClient.isAvailable() // eslint-disable-line require-atomic-updates
+
+    logger.info('AISettings', 'Chrome AI 重新检测完成', {
       available: chromeAIAvailable.value,
       changed: previousStatus !== chromeAIAvailable.value
     })
-    
+
     // 状态变化时给用户反馈
     if (previousStatus !== chromeAIAvailable.value) {
       if (chromeAIAvailable.value) {
@@ -307,7 +313,7 @@ onMounted(async () => {
     apiKey.value = config.apiKey
     customBaseUrl.value = config.baseUrl || ''
     isSaved.value = true
-    
+
     if (config.model) {
       const models = modelsByProvider[config.provider]
       const presetModel = models?.find(m => m.value === config.model)
@@ -326,7 +332,7 @@ onMounted(async () => {
     const defaultModels = modelsByProvider[selectedProvider.value]
     selectedModel.value = defaultModels?.[0]?.value || 'custom'
   }
-  
+
   // 加载 AI 功能开关状态
   try {
     const result = await chrome.storage.local.get(['aiAutoBookmark', 'semanticSearchEnabled'])
@@ -339,7 +345,7 @@ onMounted(async () => {
   } catch (error) {
     logger.error('AISettings', '加载设置失败', error)
   }
-  
+
   // 检测 Chrome AI 是否可用
   try {
     chromeAIAvailable.value = await builtInLLMClient.isAvailable()
@@ -387,10 +393,7 @@ onMounted(async () => {
     <!-- Tab 切换: API Key vs Chrome AI -->
     <div class="provider-tabs">
       <md-tabs @change="handleTabChange">
-        <md-primary-tab
-          :active="activeTab === 'apikey'"
-          @click="activeTab = 'apikey'"
-        >
+        <md-primary-tab :active="activeTab === 'apikey'" @click="activeTab = 'apikey'">
           API Key
           <LucideIcon
             v-if="hasApiKeyConfigured"
@@ -399,10 +402,7 @@ onMounted(async () => {
             class="tab-status-icon tab-status-icon--success"
           />
         </md-primary-tab>
-        <md-primary-tab
-          :active="activeTab === 'chrome'"
-          @click="activeTab = 'chrome'"
-        >
+        <md-primary-tab :active="activeTab === 'chrome'" @click="activeTab = 'chrome'">
           Chrome AI
           <LucideIcon
             v-if="chromeAIAvailable"
@@ -426,135 +426,121 @@ onMounted(async () => {
       <div v-if="activeTab === 'apikey'" class="tab-panel">
         <!-- Provider 选择 -->
         <div class="form-grid">
-      <div class="form-row">
-        <label class="form-label">AI 服务商</label>
-        <div class="form-field">
-          <md-outlined-select
-            v-model="selectedProvider"
-            class="select-field"
-          >
-            <md-select-option value="openai">
-              <div slot="headline">OpenAI（推荐）</div>
-            </md-select-option>
-            <md-select-option value="claude">
-              <div slot="headline">Anthropic Claude</div>
-            </md-select-option>
-            <md-select-option value="gemini">
-              <div slot="headline">Google Gemini</div>
-            </md-select-option>
-          </md-outlined-select>
-        </div>
-      </div>
+          <div class="form-row">
+            <label class="form-label">AI 服务商</label>
+            <div class="form-field">
+              <md-outlined-select v-model="selectedProvider" class="select-field">
+                <md-select-option value="openai">
+                  <div slot="headline">OpenAI（推荐）</div>
+                </md-select-option>
+                <md-select-option value="claude">
+                  <div slot="headline">Anthropic Claude</div>
+                </md-select-option>
+                <md-select-option value="gemini">
+                  <div slot="headline">Google Gemini</div>
+                </md-select-option>
+              </md-outlined-select>
+            </div>
+          </div>
 
-      <!-- API Key 输入 -->
-      <div class="form-row">
-        <label class="form-label">API Key</label>
-        <div class="form-field">
-          <Input
-            v-model="apiKey"
-            :type="showKey ? 'text' : 'password'"
-            :placeholder="keyPlaceholder"
-            :trailing-icon="showKey ? 'eye-off' : 'eye'"
-            :trailing-icon-size="18"
-            class="text-field"
-            variant="outlined"
-            @keydown.enter.prevent="saveConfig"
-            @trailing-icon-click="showKey = !showKey"
-          />
-        </div>
-      </div>
+          <!-- API Key 输入 -->
+          <div class="form-row">
+            <label class="form-label">API Key</label>
+            <div class="form-field">
+              <Input
+                v-model="apiKey"
+                :type="showKey ? 'text' : 'password'"
+                :placeholder="keyPlaceholder"
+                :trailing-icon="showKey ? 'eye-off' : 'eye'"
+                :trailing-icon-size="18"
+                class="text-field"
+                variant="outlined"
+                @keydown.enter.prevent="saveConfig"
+                @trailing-icon-click="showKey = !showKey"
+              />
+            </div>
+          </div>
 
-      <!-- 模型选择 -->
-      <div class="form-row">
-        <label class="form-label">模型选择</label>
-        <div class="form-field">
-          <md-outlined-select
-            :value="selectedModel"
-            class="select-field"
-            @change="selectedModel = ($event.target as HTMLSelectElement).value"
-          >
-            <md-select-option
-              v-for="model in availableModels"
-              :key="model.value"
-              :value="model.value"
-            >
-              <div slot="headline">{{ model.label }}</div>
-            </md-select-option>
-          </md-outlined-select>
-        </div>
-      </div>
+          <!-- 模型选择 -->
+          <div class="form-row">
+            <label class="form-label">模型选择</label>
+            <div class="form-field">
+              <md-outlined-select
+                :value="selectedModel"
+                class="select-field"
+                @change="selectedModel = ($event.target as HTMLSelectElement).value"
+              >
+                <md-select-option
+                  v-for="model in availableModels"
+                  :key="model.value"
+                  :value="model.value"
+                >
+                  <div slot="headline">{{ model.label }}</div>
+                </md-select-option>
+              </md-outlined-select>
+            </div>
+          </div>
 
-      <!-- 自定义模型名称(仅在选择"其他模型"时显示) -->
-      <div v-if="showCustomModelInput" class="form-row">
-        <label class="form-label form-label--with-tooltip">
-          模型名称
-          <Tooltip offset="md">
-            <LucideIcon name="info" class="label-info-icon" />
-            <template #content>
-              <div class="tooltip-content">
-                输入完整的模型 ID,例如:<br />
-                OpenAI: gpt-4o-2024-05-13<br />
-                Claude: claude-3-5-sonnet-20241022<br />
-                Gemini: gemini-1.5-pro-002
-              </div>
-            </template>
-          </Tooltip>
-        </label>
-        <div class="form-field">
-          <Input
-            v-model="customModelName"
-            placeholder="输入完整的模型 ID"
-            class="text-field"
-            variant="outlined"
-          />
-        </div>
-      </div>
+          <!-- 自定义模型名称(仅在选择"其他模型"时显示) -->
+          <div v-if="showCustomModelInput" class="form-row">
+            <label class="form-label form-label--with-tooltip">
+              模型名称
+              <Tooltip offset="md">
+                <LucideIcon name="info" class="label-info-icon" />
+                <template #content>
+                  <div class="tooltip-content">
+                    输入完整的模型 ID,例如:<br />
+                    OpenAI: gpt-4o-2024-05-13<br />
+                    Claude: claude-3-5-sonnet-20241022<br />
+                    Gemini: gemini-1.5-pro-002
+                  </div>
+                </template>
+              </Tooltip>
+            </label>
+            <div class="form-field">
+              <Input
+                v-model="customModelName"
+                placeholder="输入完整的模型 ID"
+                class="text-field"
+                variant="outlined"
+              />
+            </div>
+          </div>
 
-      <!-- 自定义端点（可选，用于代理） -->
-      <div class="form-row">
-        <label class="form-label form-label--with-tooltip">
-          自定义端点
-          <Tooltip offset="md">
-            <LucideIcon name="info" class="label-info-icon" />
-            <template #content>
-              <div class="tooltip-content">
-                可选。用于 API 代理或私有部署。<br />
-                留空使用官方端点。
-              </div>
-            </template>
-          </Tooltip>
-        </label>
-        <div class="form-field">
-          <Input
-            v-model="customBaseUrl"
-            placeholder="https://your-proxy.com/v1"
-            class="text-field"
-            variant="outlined"
-          />
+          <!-- 自定义端点（可选，用于代理） -->
+          <div class="form-row">
+            <label class="form-label form-label--with-tooltip">
+              自定义端点
+              <Tooltip offset="md">
+                <LucideIcon name="info" class="label-info-icon" />
+                <template #content>
+                  <div class="tooltip-content">
+                    可选。用于 API 代理或私有部署。<br />
+                    留空使用官方端点。
+                  </div>
+                </template>
+              </Tooltip>
+            </label>
+            <div class="form-field">
+              <Input
+                v-model="customBaseUrl"
+                placeholder="https://your-proxy.com/v1"
+                class="text-field"
+                variant="outlined"
+              />
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
 
         <!-- 操作按钮 -->
         <div class="actions">
-          <md-filled-button
-            :disabled="!apiKey.trim() || saving"
-            @click="saveConfig"
-          >
+          <md-filled-button :disabled="!apiKey.trim() || saving" @click="saveConfig">
             保存配置
           </md-filled-button>
-          <md-text-button
-            v-if="isSaved"
-            :disabled="testing"
-            @click="testConnection"
-          >
+          <md-text-button v-if="isSaved" :disabled="testing" @click="testConnection">
             测试连接
           </md-text-button>
-          <md-text-button
-            v-if="isSaved"
-            class="btn--danger"
-            @click="clearConfig"
-          >
+          <md-text-button v-if="isSaved" class="btn--danger" @click="clearConfig">
             清除
           </md-text-button>
         </div>
@@ -562,22 +548,36 @@ onMounted(async () => {
         <!-- 隐私说明 -->
         <div class="privacy-note">
           <LucideIcon name="shield" :size="14" />
-          <span>您的 API Key 和书签数据只在您的设备和您选择的 AI 服务商之间流动，不经过 AcuityBookmarks 服务器。</span>
+          <span
+            >您的 API Key 和书签数据只在您的设备和您选择的 AI 服务商之间流动，不经过 AcuityBookmarks
+            服务器。</span
+          >
         </div>
 
         <!-- 获取 Key 的链接 -->
         <div class="get-key-links">
           <span class="get-key-label">没有 API Key？</span>
-          <a :href="providerLinks[selectedProvider]" target="_blank" rel="noopener" class="get-key-link">
+          <a
+            :href="providerLinks[selectedProvider]"
+            target="_blank"
+            rel="noopener"
+            class="get-key-link"
+          >
             前往 {{ providerNames[selectedProvider] }} 获取
             <LucideIcon name="external-link" :size="12" />
           </a>
         </div>
-        
+
         <!-- Gemini 特别提示 -->
         <div v-if="selectedProvider === 'gemini'" class="gemini-tip">
           <LucideIcon name="info" :size="13" />
-          <span>请使用 <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Google AI Studio</a> 申请的 Key（AIza 开头），不要使用 Google Cloud Console 的 Key</span>
+          <span
+            >请使用
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener"
+              >Google AI Studio</a
+            >
+            申请的 Key（AIza 开头），不要使用 Google Cloud Console 的 Key</span
+          >
         </div>
       </div>
 
@@ -597,7 +597,7 @@ onMounted(async () => {
               </md-text-button>
             </div>
           </Card>
-          
+
           <div class="chrome-ai-features">
             <h4>特性</h4>
             <ul>
@@ -606,7 +606,7 @@ onMounted(async () => {
               <li><LucideIcon name="check" :size="16" /> 无网络延迟，离线可用</li>
             </ul>
           </div>
-          
+
           <div class="chrome-ai-limitations">
             <h4>限制</h4>
             <ul>
@@ -616,7 +616,7 @@ onMounted(async () => {
             </ul>
           </div>
         </div>
-        
+
         <div v-else class="chrome-ai-unavailable">
           <Card variant="warning" :padding="false" class="status-card">
             <div class="status-card-content">
@@ -631,13 +631,16 @@ onMounted(async () => {
               </md-text-button>
             </div>
           </Card>
-          
+
           <div class="enable-guide">
             <h4>启用步骤</h4>
             <ol>
               <li>确保 Chrome 版本 >= 127</li>
-              <li>访问 <a href="chrome://flags" target="_blank" class="chrome-link">chrome://flags</a></li>
-              <li>搜索并启用以下功能:
+              <li>
+                访问 <a href="chrome://flags" target="_blank" class="chrome-link">chrome://flags</a>
+              </li>
+              <li>
+                搜索并启用以下功能:
                 <ul>
                   <li><code>Prompt API for Gemini Nano</code></li>
                   <li><code>Enables optimization guide on device</code></li>
@@ -647,7 +650,7 @@ onMounted(async () => {
               <li>等待模型下载 (约 22GB)</li>
             </ol>
           </div>
-          
+
           <div class="alternative-tip">
             <LucideIcon name="info" :size="16" />
             <span>推荐使用 <strong>API Key</strong> 方式，更简单且功能更强大。</span>

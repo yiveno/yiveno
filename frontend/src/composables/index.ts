@@ -29,10 +29,7 @@ export { useKeyboardHelp } from './useKeyboardHelp'
 // 书签相关
 // ============================================
 export { useLazyFavicon } from './useLazyFavicon'
-export type {
-  UseLazyFaviconOptions,
-  UseLazyFaviconReturn
-} from './useLazyFavicon'
+export type { UseLazyFaviconOptions, UseLazyFaviconReturn } from './useLazyFavicon'
 
 // ============================================
 // 特征数据

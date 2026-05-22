@@ -14,11 +14,7 @@
  * @returns 用户的语言代码，如 'zh-CN', 'en-US', 'ja-JP'
  */
 function getUserLocale(): string {
-  return (
-    navigator.language ||
-    (navigator.languages && navigator.languages[0]) ||
-    'en-US'
-  )
+  return navigator.language || (navigator.languages && navigator.languages[0]) || 'en-US'
 }
 
 /**
@@ -76,10 +72,7 @@ export function formatTime(timestamp: number): string {
  * @param options 格式化选项
  * @returns 本地化的日期时间字符串
  */
-export function formatDateTime(
-  timestamp: number,
-  options?: Intl.DateTimeFormatOptions
-): string {
+export function formatDateTime(timestamp: number, options?: Intl.DateTimeFormatOptions): string {
   const locale = getUserLocale()
 
   const defaultOptions: Intl.DateTimeFormatOptions = {
@@ -91,9 +84,7 @@ export function formatDateTime(
     second: '2-digit'
   }
 
-  return new Intl.DateTimeFormat(locale, options || defaultOptions).format(
-    timestamp
-  )
+  return new Intl.DateTimeFormat(locale, options || defaultOptions).format(timestamp)
 }
 
 /**

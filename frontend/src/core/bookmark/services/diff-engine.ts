@@ -66,31 +66,20 @@ export class SmartBookmarkDiffEngine {
     this.logger = logger || noopLogger
   }
 
-  async computeDiff(
-    originalTree: BookmarkNode[],
-    targetTree: BookmarkNode[]
-  ): Promise<DiffResult> {
+  async computeDiff(originalTree: BookmarkNode[], targetTree: BookmarkNode[]): Promise<DiffResult> {
     const startTime = performance.now()
     this.logger.info('SmartDiff', '🧠 开始智能差异分析...')
 
     const originalMap = this.buildNodeMap(originalTree)
     const targetMap = this.buildNodeMap(targetTree)
 
-    const operations = await this.performTreeDiff(
-      originalMap,
-      targetMap,
-      originalTree,
-      targetTree
-    )
+    const operations = await this.performTreeDiff(originalMap, targetMap, originalTree, targetTree)
     const optimizedOperations = this.optimizeOperations(operations)
     const strategy = this.determineStrategy(optimizedOperations)
     const stats = this.calculateStats(optimizedOperations)
 
     const duration = performance.now() - startTime
-    this.logger.info(
-      'SmartDiff',
-      `🧠 差异分析完成，耗时: ${duration.toFixed(2)}ms`
-    )
+    this.logger.info('SmartDiff', `🧠 差异分析完成，耗时: ${duration.toFixed(2)}ms`)
     this.logger.info(
       'SmartDiff',
       `📊 发现 ${operations.length} 个操作，优化后 ${optimizedOperations.length} 个`
@@ -110,9 +99,7 @@ export class SmartBookmarkDiffEngine {
     operations.push(...this.findDeleteOperations(originalMap, targetMap))
     operations.push(...this.findCreateOperations(originalMap, targetMap))
     operations.push(...this.findUpdateOperations(originalMap, targetMap))
-    operations.push(
-      ...(await this.findMoveOperations(originalTree, targetTree))
-    )
+    operations.push(...(await this.findMoveOperations(originalTree, targetTree)))
 
     return operations
   }
@@ -202,12 +189,7 @@ export class SmartBookmarkDiffEngine {
     const operations: BookmarkOperation[] = []
     const originalParentMap = this.buildParentChildMap(originalTree)
     const targetParentMap = this.buildParentChildMap(targetTree)
-    await this.analyzeFolderReordering(
-      'root',
-      originalParentMap,
-      targetParentMap,
-      operations
-    )
+    await this.analyzeFolderReordering('root', originalParentMap, targetParentMap, operations)
     return operations
   }
 
@@ -221,10 +203,7 @@ export class SmartBookmarkDiffEngine {
     const targetChildren = targetParentMap.get(parentId) || []
     if (originalChildren.length === 0 && targetChildren.length === 0) return
 
-    const moveSequence = this.calculateOptimalMoveSequence(
-      originalChildren,
-      targetChildren
-    )
+    const moveSequence = this.calculateOptimalMoveSequence(originalChildren, targetChildren)
     if (moveSequence.length > 0) {
       if (moveSequence.length > 3) {
         operations.push({
@@ -249,17 +228,10 @@ export class SmartBookmarkDiffEngine {
     }
 
     const allFolders = new Set(
-      [...originalChildren, ...targetChildren]
-        .filter(n => n.children)
-        .map(n => n.id!)
+      [...originalChildren, ...targetChildren].filter(n => n.children).map(n => n.id!)
     )
     for (const folderId of allFolders) {
-      await this.analyzeFolderReordering(
-        folderId,
-        originalParentMap,
-        targetParentMap,
-        operations
-      )
+      await this.analyzeFolderReordering(folderId, originalParentMap, targetParentMap, operations)
     }
   }
 
@@ -267,8 +239,7 @@ export class SmartBookmarkDiffEngine {
     original: BookmarkNode[],
     target: BookmarkNode[]
   ): Array<{ nodeId: string; fromIndex: number; toIndex: number }> {
-    const moves: Array<{ nodeId: string; fromIndex: number; toIndex: number }> =
-      []
+    const moves: Array<{ nodeId: string; fromIndex: number; toIndex: number }> = []
     for (let targetIndex = 0; targetIndex < target.length; targetIndex++) {
       const targetNode = target[targetIndex]
       if (!targetNode) continue
@@ -284,18 +255,14 @@ export class SmartBookmarkDiffEngine {
     return moves
   }
 
-  private optimizeOperations(
-    operations: BookmarkOperation[]
-  ): BookmarkOperation[] {
+  private optimizeOperations(operations: BookmarkOperation[]): BookmarkOperation[] {
     const sortedOps = operations.sort((a, b) => a.priority - b.priority)
     const optimized = this.mergeOperations(sortedOps)
     this.analyzeDependencies(optimized)
     return optimized
   }
 
-  private mergeOperations(
-    operations: BookmarkOperation[]
-  ): BookmarkOperation[] {
+  private mergeOperations(operations: BookmarkOperation[]): BookmarkOperation[] {
     return operations
   }
 
@@ -303,9 +270,7 @@ export class SmartBookmarkDiffEngine {
     operations.forEach(op => {
       if (op.type === OperationType.MOVE && op.target?.parentId) {
         const parentCreateOp = operations.find(
-          other =>
-            other.type === OperationType.CREATE &&
-            other.target?.id === op.target?.parentId
+          other => other.type === OperationType.CREATE && other.target?.id === op.target?.parentId
         )
         if (parentCreateOp) {
           op.dependencies = op.dependencies || []
@@ -315,9 +280,7 @@ export class SmartBookmarkDiffEngine {
     })
   }
 
-  private determineStrategy(
-    operations: BookmarkOperation[]
-  ): DiffResult['strategy'] {
+  private determineStrategy(operations: BookmarkOperation[]): DiffResult['strategy'] {
     const totalOps = operations.length
     const complexity = this.calculateComplexity(operations)
     if (totalOps < 10 && complexity !== 'extreme') {
@@ -330,11 +293,7 @@ export class SmartBookmarkDiffEngine {
       return {
         type: 'batch',
         reason: '中等规模变更，适合批量处理',
-        recommendations: [
-          '使用批量API调用',
-          '分批执行避免阻塞',
-          '显示详细进度条'
-        ]
+        recommendations: ['使用批量API调用', '分批执行避免阻塞', '显示详细进度条']
       }
     } else {
       return {
@@ -380,9 +339,7 @@ export class SmartBookmarkDiffEngine {
     return map
   }
 
-  private buildParentChildMap(
-    tree: BookmarkNode[]
-  ): Map<string, BookmarkNode[]> {
+  private buildParentChildMap(tree: BookmarkNode[]): Map<string, BookmarkNode[]> {
     const map = new Map<string, BookmarkNode[]>()
     const traverse = (nodes: BookmarkNode[], parentId = 'root') => {
       map.set(parentId, nodes)

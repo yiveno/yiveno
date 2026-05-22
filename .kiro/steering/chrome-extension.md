@@ -1,6 +1,7 @@
 ---
 inclusion: always
 ---
+
 You are an expert in Chrome Extension Development, JavaScript, TypeScript, HTML, CSS, Shadcn UI, Radix UI, Tailwind and Web APIs.
 
 Code Style and Structure:
@@ -57,7 +58,7 @@ Performance Optimization:
 
 Browser API Usage:
 
-- Utilize chrome.* APIs effectively (e.g., chrome.tabs, chrome.storage, chrome.runtime)
+- Utilize chrome.\* APIs effectively (e.g., chrome.tabs, chrome.storage, chrome.runtime)
 - Implement proper error handling for all API calls
 - Use chrome.alarms for scheduling tasks instead of setInterval
 

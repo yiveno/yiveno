@@ -64,11 +64,7 @@ export class EventStream {
    * stream.dispatchCoalescedEvent<{ ids: string[] }>('bulk-update', { ids: [...] })
    * ```
    */
-  dispatchCoalescedEvent<T = AnyDetail>(
-    name: string,
-    detail?: T,
-    waitMs?: number
-  ): void {
+  dispatchCoalescedEvent<T = AnyDetail>(name: string, detail?: T, waitMs?: number): void {
     const delay = waitMs ?? this.config.defaultWaitMs
 
     this.lastDetails.set(name, detail as AnyDetail)
@@ -144,9 +140,7 @@ export class EventStream {
       return () => {
         // 无需执行任何操作，因为监听器从未被添加
         if (this.config.enableLogging) {
-          console.log(
-            `EventStream: No-op unsubscribe for "${name}" (max listeners reached)`
-          )
+          console.log(`EventStream: No-op unsubscribe for "${name}" (max listeners reached)`)
         }
       }
     }
@@ -297,9 +291,7 @@ export class EventStream {
    */
   getEventHistory<T = AnyDetail>(name?: string): Array<EventHistoryItem<T>> {
     if (name) {
-      return this.eventHistory.filter(event => event.name === name) as Array<
-        EventHistoryItem<T>
-      >
+      return this.eventHistory.filter(event => event.name === name) as Array<EventHistoryItem<T>>
     }
     return [...this.eventHistory] as Array<EventHistoryItem<T>>
   }
@@ -382,10 +374,7 @@ export function dispatchCoalescedEvent<T = AnyDetail>(
  * dispatchEventSafe<{ bookmarkId: string }>('bookmark:created', { bookmarkId: '123' })
  * ```
  */
-export function dispatchEventSafe<T = AnyDetail>(
-  name: string,
-  detail?: T
-): void {
+export function dispatchEventSafe<T = AnyDetail>(name: string, detail?: T): void {
   eventStream.dispatchEventSafe(name, detail)
 }
 
@@ -404,10 +393,7 @@ export function dispatchEventSafe<T = AnyDetail>(
  * })
  * ```
  */
-export function onEvent<T = AnyDetail>(
-  name: string,
-  listener: EventListener<T>
-): () => void {
+export function onEvent<T = AnyDetail>(name: string, listener: EventListener<T>): () => void {
   return eventStream.on(name, listener)
 }
 
@@ -426,10 +412,7 @@ export function onEvent<T = AnyDetail>(
  * })
  * ```
  */
-export function onceEvent<T = AnyDetail>(
-  name: string,
-  listener: EventListener<T>
-): () => void {
+export function onceEvent<T = AnyDetail>(name: string, listener: EventListener<T>): () => void {
   return eventStream.once(name, listener)
 }
 

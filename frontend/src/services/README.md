@@ -32,35 +32,35 @@
 
 ### 书签相关
 
-| 文件 | 职责 | 类型 |
-|------|------|------|
-| `bookmark-sync-service.ts` | Chrome API → IndexedDB 同步 | Infrastructure |
-| `bookmark-trait-service.ts` | 特征检测和标记 | Infrastructure |
-| `bookmark-trait-auto-sync.ts` | 特征自动同步 | Infrastructure |
+| 文件                          | 职责                        | 类型           |
+| ----------------------------- | --------------------------- | -------------- |
+| `bookmark-sync-service.ts`    | Chrome API → IndexedDB 同步 | Infrastructure |
+| `bookmark-trait-service.ts`   | 特征检测和标记              | Infrastructure |
+| `bookmark-trait-auto-sync.ts` | 特征自动同步                | Infrastructure |
 
 ### 爬虫相关
 
-| 文件 | 职责 | 类型 |
-|------|------|------|
-| `local-bookmark-crawler.ts` | 本地书签爬虫 | Infrastructure |
-| `local-crawler-worker.ts` | 爬虫 Worker | Infrastructure |
-| `crawl-task-scheduler.ts` | 爬虫任务调度 | Infrastructure |
+| 文件                           | 职责           | 类型           |
+| ------------------------------ | -------------- | -------------- |
+| `local-bookmark-crawler.ts`    | 本地书签爬虫   | Infrastructure |
+| `local-crawler-worker.ts`      | 爬虫 Worker    | Infrastructure |
+| `crawl-task-scheduler.ts`      | 爬虫任务调度   | Infrastructure |
 | `background-crawler-client.ts` | 后台爬虫客户端 | Infrastructure |
 
 ### 查询和性能
 
-| 文件 | 职责 | 类型 |
-|------|------|------|
-| `query-worker-adapter.ts` | 查询 Worker 适配器 | Infrastructure |
-| `query-performance-monitor.ts` | 查询性能监控 | Infrastructure |
+| 文件                           | 职责               | 类型           |
+| ------------------------------ | ------------------ | -------------- |
+| `query-worker-adapter.ts`      | 查询 Worker 适配器 | Infrastructure |
+| `query-performance-monitor.ts` | 查询性能监控       | Infrastructure |
 
 ### 其他基础设施
 
-| 文件 | 职责 | 类型 |
-|------|------|------|
-| `favicon-service.ts` | Favicon 管理 | Infrastructure |
-| `navigation-service.ts` | 页面导航 | Infrastructure |
-| `trpc.ts` | tRPC 客户端 | Infrastructure |
+| 文件                    | 职责         | 类型           |
+| ----------------------- | ------------ | -------------- |
+| `favicon-service.ts`    | Favicon 管理 | Infrastructure |
+| `navigation-service.ts` | 页面导航     | Infrastructure |
+| `trpc.ts`               | tRPC 客户端  | Infrastructure |
 
 ---
 
@@ -68,9 +68,9 @@
 
 以下服务已迁移到 `application/` 层：
 
-| 旧位置 | 新位置 | 原因 |
-|--------|--------|------|
-| `services/bookmark-index-service.ts` | `application/bookmark/bookmark-index-app-service.ts` | 业务逻辑 |
+| 旧位置                                    | 新位置                                               | 原因     |
+| ----------------------------------------- | ---------------------------------------------------- | -------- |
+| `services/bookmark-index-service.ts`      | `application/bookmark/bookmark-index-app-service.ts` | 业务逻辑 |
 | `services/smart-recommendation-engine.ts` | `application/bookmark/recommendation-app-service.ts` | 业务逻辑 |
 
 ---
@@ -89,15 +89,15 @@
 
 ```typescript
 // ✅ 好的命名
-bookmark-sync-service.ts      // 书签同步服务
-favicon-gateway.ts             // Favicon 网关
-query-worker-adapter.ts        // 查询 Worker 适配器
-background-crawler-client.ts   // 后台爬虫客户端
+bookmark - sync - service.ts // 书签同步服务
+favicon - gateway.ts // Favicon 网关
+query - worker - adapter.ts // 查询 Worker 适配器
+background - crawler - client.ts // 后台爬虫客户端
 
 // ❌ 不好的命名
-smart-recommendation.ts        // 太模糊，应该在 application 层
-bookmark-manager.ts            // 太宽泛，职责不清
-utils.ts                       // 太通用
+smart - recommendation.ts // 太模糊，应该在 application 层
+bookmark - manager.ts // 太宽泛，职责不清
+utils.ts // 太通用
 ```
 
 ---
@@ -195,8 +195,6 @@ import { faviconService } from '@/services/favicon-service'
 
 **最后更新**: 2025-01-10  
 **维护者**: System
-
-
 
 ## 书签筛选服务（统一入口）
 
@@ -349,10 +347,7 @@ interface SearchStats {
 
 // 获取缓存统计
 const cacheStats = bookmarkSearchService.getCacheStats()
-logger.info(
-  'SearchService',
-  `缓存大小: ${cacheStats.size}/${cacheStats.maxSize}`
-)
+logger.info('SearchService', `缓存大小: ${cacheStats.size}/${cacheStats.maxSize}`)
 ```
 
 ## 书签变更：计划与执行（Plan & Execute）
@@ -363,16 +358,12 @@ logger.info(
 import { bookmarkChangeAppService } from '@/application/bookmark/bookmark-change-app-service'
 
 // original 与 target 为 Chrome 的书签树结构（或经过转换的等价结构）
-const { ok, value, error } = await bookmarkChangeAppService.planAndExecute(
-  original,
-  target,
-  {
-    onProgress: p => {
-      // 进度指标：总任务、已完成、失败
-      // p.total, p.completed, p.failed, p.currentOperation, p.estimatedTimeRemaining
-    }
+const { ok, value, error } = await bookmarkChangeAppService.planAndExecute(original, target, {
+  onProgress: p => {
+    // 进度指标：总任务、已完成、失败
+    // p.total, p.completed, p.failed, p.currentOperation, p.estimatedTimeRemaining
   }
-)
+})
 
 if (ok) {
   // value.diff: DiffResult（来自 core/bookmark/services/diff-engine）
@@ -444,8 +435,8 @@ const execResult = await executor.executeDiff(diffResult, p => {
 
 | 旧文件/概念                           | 现行/规范位置                                                                                             |
 | ------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `services/hybrid-search-engine.ts`    | `application/query/bookmark-search-service.ts`（策略统一）                                                    |
-| `services/fuse-search.ts`             | `core/query-engine/strategies/fuse-strategy.ts`（由应用层封装调度）                                             |
+| `services/hybrid-search-engine.ts`    | `application/query/bookmark-search-service.ts`（策略统一）                                                |
+| `services/fuse-search.ts`             | `core/query-engine/strategies/fuse-strategy.ts`（由应用层封装调度）                                       |
 | `utils/smart-bookmark-diff-engine.ts` | `core/bookmark/services/diff-engine.ts`                                                                   |
 | `utils/smart-bookmark-executor.ts`    | `core/bookmark/services/executor.ts`                                                                      |
 | `utils/smart-bookmark-manager.ts`     | `application/bookmark/bookmark-change-app-service.ts` 或 `application/bookmark/smart-bookmark-manager.ts` |

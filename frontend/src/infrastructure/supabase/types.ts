@@ -19,12 +19,7 @@ export interface UserProfile {
 /**
  * 订阅状态
  */
-export type SubscriptionStatus =
-  | 'active'
-  | 'cancelled'
-  | 'expired'
-  | 'past_due'
-  | 'paused'
+export type SubscriptionStatus = 'active' | 'cancelled' | 'expired' | 'past_due' | 'paused'
 
 /**
  * 订阅信息

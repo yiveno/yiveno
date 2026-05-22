@@ -22,8 +22,7 @@ defineOptions({
   name: 'GlobalSyncProgress'
 })
 
-const { progress, isVisible, initialize, dismiss, retry, forceClose } =
-  useGlobalSyncProgress()
+const { progress, isVisible, initialize, dismiss, retry, forceClose } = useGlobalSyncProgress()
 
 const showForceCloseConfirm = ref(false)
 
@@ -83,13 +82,7 @@ const showActions = computed(() => {
  * 判断阶段是否已完成
  */
 function isPhaseCompleted(phase: SyncPhase): boolean {
-  const phaseOrder: SyncPhase[] = [
-    'fetching',
-    'converting',
-    'writing',
-    'indexing',
-    'completed'
-  ]
+  const phaseOrder: SyncPhase[] = ['fetching', 'converting', 'writing', 'indexing', 'completed']
   const currentIndex = phaseOrder.indexOf(progress.value.phase)
   const checkIndex = phaseOrder.indexOf(phase)
 
@@ -182,13 +175,8 @@ function handleClose() {
 
       <!-- 进度条 -->
       <div class="progress-bar-container">
-        <md-linear-progress
-          :value="progress.percentage / 100"
-          class="progress-bar"
-        />
-        <div class="progress-percentage">
-          {{ Math.round(progress.percentage) }}%
-        </div>
+        <md-linear-progress :value="progress.percentage / 100" class="progress-bar" />
+        <div class="progress-percentage">{{ Math.round(progress.percentage) }}%</div>
       </div>
 
       <!-- 详细信息 -->
@@ -203,9 +191,7 @@ function handleClose() {
             {{ formatNumber(progress.total) }}
           </span>
           <span
-            v-if="
-              progress.estimatedRemaining && progress.estimatedRemaining > 0
-            "
+            v-if="progress.estimatedRemaining && progress.estimatedRemaining > 0"
             class="stat-item"
           >
             <LucideIcon name="clock" :size="14" class="stat-icon" />
@@ -218,16 +204,11 @@ function handleClose() {
     <template v-if="showActions" #actions>
       <!-- 错误时的操作 -->
       <template v-if="isError">
-        <md-filled-button
-          v-if="progress.error?.canRetry"
-          @click="handleRetry"
-        >
+        <md-filled-button v-if="progress.error?.canRetry" @click="handleRetry">
           <LucideIcon slot="icon" name="refresh" />
           重试
         </md-filled-button>
-        <md-text-button @click="handleForceClose">
-          忽略并继续
-        </md-text-button>
+        <md-text-button @click="handleForceClose"> 忽略并继续 </md-text-button>
       </template>
 
       <!-- 完成时的操作 -->
@@ -243,12 +224,8 @@ function handleClose() {
       <p>建议点击"重试"按钮或等待同步自动重试。</p>
     </div>
     <template #actions>
-      <md-text-button @click="showForceCloseConfirm = false">
-        取消
-      </md-text-button>
-      <md-filled-button @click="confirmForceClose">
-        确认关闭
-      </md-filled-button>
+      <md-text-button @click="showForceCloseConfirm = false"> 取消 </md-text-button>
+      <md-filled-button @click="confirmForceClose"> 确认关闭 </md-filled-button>
     </template>
   </Dialog>
 </template>

@@ -16,22 +16,21 @@ const DEFAULT_MAX_TOKENS = 256
 
 /**
  * 处理 AI 文本补全请求
- * 
+ *
  * @param request - 请求对象
  * @param env - 环境变量
  * @returns AI 补全响应
  */
 export async function handleAIComplete(request: Request, env: Env): Promise<Response> {
   const origin = request.headers.get('origin')
-  
+
   try {
     const url = new URL(request.url)
     const rawBody = request.method === 'POST' ? await request.json().catch(() => ({})) : {}
     const body = rawBody as AICompleteRequest
     const prompt = url.searchParams.get('prompt') || body.prompt || ''
     const messages = body.messages || undefined
-    const stream =
-      body.stream === true || url.searchParams.get('stream') === 'true'
+    const stream = body.stream === true || url.searchParams.get('stream') === 'true'
     const model = body.model || url.searchParams.get('model') || DEFAULT_MODEL
     const temperature = body.temperature ?? DEFAULT_TEMPERATURE
     const max_tokens = body.max_tokens ?? DEFAULT_MAX_TOKENS

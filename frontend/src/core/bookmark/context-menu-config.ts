@@ -1,6 +1,6 @@
 /**
  * 📋 书签树右键菜单配置管理器
- * 
+ *
  * 设计原则：
  * 1. 数据驱动：菜单配置集中管理，易于维护
  * 2. 高复用：统一的菜单项配置接口
@@ -48,24 +48,21 @@ export interface TreeConfig {
 
 /**
  * 菜单配置构建器
- * 
+ *
  * 负责根据节点类型、状态、权限生成对应的菜单配置
  */
 export class ContextMenuBuilder {
   /**
    * 为文件夹节点生成菜单
-   * 
+   *
    * @param node - 文件夹节点
    * @param config - 树配置
    * @returns 菜单项配置数组
    */
-  static buildFolderMenu(
-    node: BookmarkNode,
-    config: TreeConfig
-  ): MenuItemConfig[] {
+  static buildFolderMenu(node: BookmarkNode, config: TreeConfig): MenuItemConfig[] {
     // 判断是否为根文件夹（书签栏、其他书签等）
     const isRootFolder = !node.parentId || node.parentId === '0'
-    
+
     // 计算文件夹内的书签数量（递归统计）
     const bookmarkCount = this.countBookmarksInFolder(node)
 
@@ -136,7 +133,7 @@ export class ContextMenuBuilder {
 
   /**
    * 递归统计文件夹内的书签数量
-   * 
+   *
    * @param node - 文件夹节点
    * @returns 书签数量
    */
@@ -161,15 +158,12 @@ export class ContextMenuBuilder {
 
   /**
    * 为书签节点生成菜单
-   * 
+   *
    * @param node - 书签节点
    * @param config - 树配置
    * @returns 菜单项配置数组
    */
-  static buildBookmarkMenu(
-    node: BookmarkNode,
-    config: TreeConfig
-  ): MenuItemConfig[] {
+  static buildBookmarkMenu(node: BookmarkNode, config: TreeConfig): MenuItemConfig[] {
     const isFavorited = Boolean(node.isFavorite)
 
     const items: MenuItemConfig[] = [
@@ -226,15 +220,12 @@ export class ContextMenuBuilder {
 
   /**
    * 为多选状态生成菜单
-   * 
+   *
    * @param selectedNodes - 选中的节点数组
    * @param config - 树配置
    * @returns 菜单项配置数组
    */
-  static buildMultiSelectMenu(
-    selectedNodes: BookmarkNode[],
-    config: TreeConfig
-  ): MenuItemConfig[] {
+  static buildMultiSelectMenu(selectedNodes: BookmarkNode[], config: TreeConfig): MenuItemConfig[] {
     const hasBookmarks = selectedNodes.some(n => n.url)
     const count = selectedNodes.length
 
@@ -269,7 +260,7 @@ export class ContextMenuBuilder {
 
   /**
    * 根据节点和配置自动选择合适的菜单
-   * 
+   *
    * @param node - 节点
    * @param config - 树配置
    * @param isMultiSelect - 是否为多选状态

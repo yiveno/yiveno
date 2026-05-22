@@ -240,10 +240,7 @@ export class SchedulerService {
       })
 
       // 重试逻辑
-      if (
-        this.config.enableRetry &&
-        (task.retryCount || 0) < (task.options?.retries || 0)
-      ) {
+      if (this.config.enableRetry && (task.retryCount || 0) < (task.options?.retries || 0)) {
         task.retryCount = (task.retryCount || 0) + 1
         setTimeout(
           () => {
@@ -265,8 +262,7 @@ export class SchedulerService {
     return new Promise((resolve, reject) => {
       try {
         // 优先使用 requestIdleCallback
-        const ric = (globalThis as Window & typeof globalThis)
-          .requestIdleCallback
+        const ric = (globalThis as Window & typeof globalThis).requestIdleCallback
         if (typeof ric === 'function') {
           ric(
             () => {
@@ -286,8 +282,7 @@ export class SchedulerService {
               }
             },
             {
-              timeout:
-                task.options?.timeoutMs || this.config.defaultTimeout || 100
+              timeout: task.options?.timeoutMs || this.config.defaultTimeout || 100
             }
           )
           return
@@ -314,10 +309,7 @@ export class SchedulerService {
             reject(error)
           }
         },
-        Math.min(
-          task.options?.timeoutMs || this.config.defaultTimeout || 100,
-          50
-        )
+        Math.min(task.options?.timeoutMs || this.config.defaultTimeout || 100, 50)
       )
     })
   }
@@ -341,12 +333,7 @@ export class SchedulerService {
         })
         .then(resolve)
         .catch(error => {
-          logger.error(
-            'Component',
-            'SchedulerService',
-            'Microtask error',
-            error
-          )
+          logger.error('Component', 'SchedulerService', 'Microtask error', error)
           reject(error)
         })
     })
@@ -372,8 +359,7 @@ export class SchedulerService {
     return new Promise((resolve, reject) => {
       try {
         // 使用 requestAnimationFrame 确保与浏览器刷新率同步
-        const raf = (globalThis as Window & typeof globalThis)
-          .requestAnimationFrame
+        const raf = (globalThis as Window & typeof globalThis).requestAnimationFrame
         if (typeof raf === 'function') {
           raf(() => {
             try {
@@ -499,10 +485,7 @@ export const schedulerService = new SchedulerService()
 /**
  * 便捷函数（保持向后兼容）
  */
-export function scheduleUIUpdate(
-  fn: () => void,
-  options: ScheduleOptions = {}
-): string | null {
+export function scheduleUIUpdate(fn: () => void, options: ScheduleOptions = {}): string | null {
   const result = schedulerService.scheduleUIUpdate(fn, options)
   return result.ok ? result.value : null
 }

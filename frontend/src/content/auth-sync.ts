@@ -1,11 +1,16 @@
 /**
  * 认证状态同步 Content Script
- * 
+ *
  * 职责：
  * - 监听官网 localStorage 中的 Supabase session 变化
  * - 将 session 同步到 Chrome Extension Storage
  * - 实现官网和插件的认证状态自动同步
+ *
+ * ⚠️ 注意：此文件是 Content Script，运行在网页环境中
+ * 必须使用 localStorage 来读取官网的 Supabase session
  */
+
+/* eslint-disable no-restricted-syntax -- Content Script 必须使用 localStorage 读取官网的 Supabase session */
 
 // 只在官网域名下运行
 const WEBSITE_DOMAINS = [
@@ -16,9 +21,7 @@ const WEBSITE_DOMAINS = [
 ]
 
 const currentHost = window.location.host
-const isWebsiteDomain = WEBSITE_DOMAINS.some(domain => 
-  currentHost.includes(domain)
-)
+const isWebsiteDomain = WEBSITE_DOMAINS.some(domain => currentHost.includes(domain))
 
 interface SupabaseSession {
   access_token?: string
@@ -36,25 +39,25 @@ if (!isWebsiteDomain) {
   function getSupabaseSession(): SupabaseSession | null {
     try {
       // Supabase 的 session key 格式：sb-<project-ref>-auth-token
-      const keys = Object.keys(localStorage).filter(key => 
-        key.startsWith('sb-') && key.endsWith('-auth-token')
+      const keys = Object.keys(localStorage).filter(
+        key => key.startsWith('sb-') && key.endsWith('-auth-token')
       )
-      
+
       if (keys.length === 0) {
         return null
       }
-      
+
       const sessionKey = keys[0]
       if (!sessionKey) {
         return null
       }
 
       const sessionData = localStorage.getItem(sessionKey)
-      
+
       if (!sessionData) {
         return null
       }
-      
+
       const session = JSON.parse(sessionData) as SupabaseSession
       return session
     } catch (error) {
@@ -74,7 +77,7 @@ if (!isWebsiteDomain) {
         })
         return
       }
-      
+
       await chrome.runtime.sendMessage({
         type: 'SYNC_AUTH_SESSION',
         data: {
@@ -94,11 +97,11 @@ if (!isWebsiteDomain) {
    */
   async function initializeSync() {
     const localSession = getSupabaseSession()
-    
+
     // 从 Chrome Storage 读取当前存储的 session
     const chromeSession = await chrome.storage.local.get('supabase.auth.token')
     const hasChromeSession = !!chromeSession['supabase.auth.token']
-    
+
     // 情况 1：localStorage 有 session，同步到 Chrome Storage
     if (localSession) {
       await syncSessionToExtension(localSession)
@@ -108,14 +111,14 @@ if (!isWebsiteDomain) {
       await syncSessionToExtension(null)
     }
   }
-  
+
   // 执行初始化同步
   initializeSync()
 
   /**
    * 监听 localStorage 变化（只能监听其他标签页的变化）
    */
-  window.addEventListener('storage', (event) => {
+  window.addEventListener('storage', event => {
     // 只关心 Supabase session 的变化
     if (event.key?.startsWith('sb-') && event.key?.endsWith('-auth-token')) {
       if (event.newValue) {
@@ -134,15 +137,15 @@ if (!isWebsiteDomain) {
 
   /**
    * 使用 MutationObserver 监听 localStorage 的变化（当前标签页）
-   * 
+   *
    * 注意：storage 事件只能监听其他标签页的变化，无法监听当前标签页
    * 因此我们需要定期轮询来检测当前标签页的 localStorage 变化
    */
   let lastSessionData: string | null = null
-  
+
   // 获取初始 session 数据
-  const keys = Object.keys(localStorage).filter(key => 
-    key.startsWith('sb-') && key.endsWith('-auth-token')
+  const keys = Object.keys(localStorage).filter(
+    key => key.startsWith('sb-') && key.endsWith('-auth-token')
   )
   if (keys.length > 0) {
     const firstKey = keys[0]
@@ -155,19 +158,17 @@ if (!isWebsiteDomain) {
    * 定期检查 session（检测当前标签页的变化）
    */
   setInterval(() => {
-    const sessionKeys = Object.keys(localStorage).filter(key => 
-      key.startsWith('sb-') && key.endsWith('-auth-token')
+    const sessionKeys = Object.keys(localStorage).filter(
+      key => key.startsWith('sb-') && key.endsWith('-auth-token')
     )
-    
+
     const firstSessionKey = sessionKeys[0]
-    const currentSessionData = firstSessionKey
-      ? localStorage.getItem(firstSessionKey)
-      : null
-    
+    const currentSessionData = firstSessionKey ? localStorage.getItem(firstSessionKey) : null
+
     // 检查 session 是否发生变化
     if (currentSessionData !== lastSessionData) {
       lastSessionData = currentSessionData
-      
+
       if (currentSessionData) {
         try {
           const session = JSON.parse(currentSessionData)

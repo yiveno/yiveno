@@ -99,9 +99,7 @@ export class ApiClient {
       if (error instanceof ApiError) {
         return err(error)
       }
-      return err(
-        new ApiError(error instanceof Error ? error.message : 'Unknown error')
-      )
+      return err(new ApiError(error instanceof Error ? error.message : 'Unknown error'))
     }
   }
 
@@ -188,14 +186,8 @@ export class ApiClient {
   /**
    * 执行请求（带重试机制）
    */
-  private async executeRequest(
-    url: string,
-    options: RequestOptions
-  ): Promise<Response> {
-    const {
-      retries = this.config.retries,
-      retryDelay = this.config.retryDelay
-    } = options
+  private async executeRequest(url: string, options: RequestOptions): Promise<Response> {
+    const { retries = this.config.retries, retryDelay = this.config.retryDelay } = options
     let lastError: Error | null = null
 
     for (let attempt = 0; attempt <= retries; attempt++) {

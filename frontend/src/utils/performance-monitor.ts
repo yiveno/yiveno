@@ -1,6 +1,6 @@
 /**
  * 性能监控工具
- * 
+ *
  * 监控应用性能指标，提供性能优化建议
  */
 
@@ -84,7 +84,7 @@ class PerformanceMonitor {
    */
   private observePaint(): void {
     try {
-      const observer = new PerformanceObserver((list) => {
+      const observer = new PerformanceObserver(list => {
         for (const entry of list.getEntries()) {
           if (entry.name === 'first-contentful-paint') {
             this.metrics.fcp = entry.startTime
@@ -104,7 +104,7 @@ class PerformanceMonitor {
    */
   private observeLCP(): void {
     try {
-      const observer = new PerformanceObserver((list) => {
+      const observer = new PerformanceObserver(list => {
         const entries = list.getEntries()
         const lastEntry = entries[entries.length - 1]
         if (lastEntry) {
@@ -124,7 +124,7 @@ class PerformanceMonitor {
    */
   private observeFID(): void {
     try {
-      const observer = new PerformanceObserver((list) => {
+      const observer = new PerformanceObserver(list => {
         for (const entry of list.getEntries()) {
           const perfEntry = entry as PerformanceEventTiming
           const fid = perfEntry.processingStart - entry.startTime
@@ -145,7 +145,7 @@ class PerformanceMonitor {
   private observeCLS(): void {
     try {
       let clsValue = 0
-      const observer = new PerformanceObserver((list) => {
+      const observer = new PerformanceObserver(list => {
         for (const entry of list.getEntries()) {
           const layoutShift = entry as LayoutShift
           if (!layoutShift.hadRecentInput) {
@@ -207,7 +207,7 @@ class PerformanceMonitor {
 
   /**
    * 获取性能评分
-   * 
+   *
    * @returns 性能评分（0-100）
    */
   getPerformanceScore(): number {

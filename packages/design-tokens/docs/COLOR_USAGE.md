@@ -11,32 +11,35 @@ AcuityBookmarks 采用 **Material Design 3** 颜色系统，基于品牌色（�
 ### 1. 品牌色（Brand Colors）
 
 **主色（Primary）- Logo 蓝色**
+
 ```typescript
 import { colors } from '@acuity-bookmarks/design-tokens'
 
-colors.brand.primary      // #3B82F6
-colors.brand.primaryDark  // #1E40AF
+colors.brand.primary // #3B82F6
+colors.brand.primaryDark // #1E40AF
 ```
 
 **次要色（Secondary）- Logo 紫色**
+
 ```typescript
-colors.brand.secondary      // #C026D3
-colors.brand.secondaryDark  // #86198F
+colors.brand.secondary // #C026D3
+colors.brand.secondaryDark // #86198F
 ```
 
 **品牌渐变**
+
 ```typescript
-colors.brand.gradient.css  // 'linear-gradient(135deg, #3B82F6 0%, #8B5CF6 50%, #C026D3 100%)'
+colors.brand.gradient.css // 'linear-gradient(135deg, #3B82F6 0%, #8B5CF6 50%, #C026D3 100%)'
 ```
 
 ### 2. 语义化颜色（Semantic Colors）
 
 ```typescript
-colors.semantic.success  // #22c55e - 成功状态
-colors.semantic.error    // #ef4444 - 错误状态
-colors.semantic.warning  // #f59e0b - 警告状态
-colors.semantic.info     // #3b82f6 - 信息状态
-colors.semantic.ai       // #C026D3 - AI 功能专用色
+colors.semantic.success // #22c55e - 成功状态
+colors.semantic.error // #ef4444 - 错误状态
+colors.semantic.warning // #f59e0b - 警告状态
+colors.semantic.info // #3b82f6 - 信息状态
+colors.semantic.ai // #C026D3 - AI 功能专用色
 ```
 
 ### 3. Material Design 颜色（CSS 变量）
@@ -116,7 +119,7 @@ const color = colors.brand.primary
 ```css
 /* 禁止硬编码颜色值 */
 .button {
-  background-color: #3B82F6;  /* ❌ 禁止！ */
+  background-color: #3b82f6; /* ❌ 禁止！ */
 }
 ```
 

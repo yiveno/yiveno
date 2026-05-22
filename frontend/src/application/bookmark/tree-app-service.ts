@@ -7,12 +7,7 @@
  * - 通过 `requestIdleCallback`/`setTimeout` 进行分块调度，降低主线程阻塞；
  * - 保持纯函数与可预测性，便于测试与复用。
  */
-import type {
-  ChromeBookmarkTreeNode,
-  BookmarkNode,
-  ProposalNode,
-  BookmarkRecord
-} from '@/types'
+import type { ChromeBookmarkTreeNode, BookmarkNode, ProposalNode, BookmarkRecord } from '@/types'
 import { smartBookmarkDiffEngine } from '@/core/bookmark/services/diff-engine'
 import {
   chromeToBookmarkNodes,
@@ -69,8 +64,7 @@ function buildBookmarkMapping(
     for (const n of nodes) {
       const pid = String(n.id)
       const p = proposedIndex.get(pid)
-      if (p)
-        map.set(pid, { proposedId: pid, title: p.title, parentId: p.parentId })
+      if (p) map.set(pid, { proposedId: pid, title: p.title, parentId: p.parentId })
       if (n.children?.length) collectOriginal(n.children)
     }
   }
@@ -184,10 +178,7 @@ export const treeAppService = {
     // 在边界进行统一转换，确保 diff 引擎拿到 BookmarkNode 形状
     const originalNodes: BookmarkNode[] = chromeToBookmarkNodes(original)
     const proposedNodes: BookmarkNode[] = proposalsToBookmarkNodes(proposed)
-    const diff = await smartBookmarkDiffEngine.computeDiff(
-      originalNodes,
-      proposedNodes
-    )
+    const diff = await smartBookmarkDiffEngine.computeDiff(originalNodes, proposedNodes)
     return (diff.operations?.length ?? 0) > 0
   },
   // 将扁平记录构建为通用 UI 书签树（提供给组件层使用）
@@ -220,11 +211,9 @@ export const treeAppService = {
         : undefined,
       depth: typeof item.depth === 'number' ? item.depth : undefined,
       domain: typeof item.domain === 'string' ? item.domain : undefined,
-      titleLower:
-        typeof item.titleLower === 'string' ? item.titleLower : undefined,
+      titleLower: typeof item.titleLower === 'string' ? item.titleLower : undefined,
       urlLower: typeof item.urlLower === 'string' ? item.urlLower : undefined,
-      childrenCount:
-        typeof item.childrenCount === 'number' ? item.childrenCount : undefined,
+      childrenCount: typeof item.childrenCount === 'number' ? item.childrenCount : undefined,
       // ✅ 透传特征相关字段（用于特征筛选）
       traitTags: Array.isArray(item.traitTags) ? item.traitTags : undefined,
       traitMetadata: Array.isArray(item.traitMetadata)
@@ -237,8 +226,7 @@ export const treeAppService = {
         : undefined,
       // ✅ 透传收藏相关字段
       isFavorite: item.isFavorite === true,
-      favoriteOrder:
-        typeof item.favoriteOrder === 'number' ? item.favoriteOrder : undefined
+      favoriteOrder: typeof item.favoriteOrder === 'number' ? item.favoriteOrder : undefined
     })
 
     for (const it of items) nodeMap.set(String(it.id), toNode(it))
@@ -292,11 +280,7 @@ export const treeAppService = {
 
     // ✅ 不需要排序：IndexedDB 已经按 Chrome 原始顺序返回数据
     // 构建树时保持读取顺序，确保与 Chrome 书签管理器完全一致
-    logger.debug(
-      'TreeAppService',
-      'buildViewTreeFromFlat',
-      `总耗时 ${(t4 - t0).toFixed(0)}ms`
-    )
+    logger.debug('TreeAppService', 'buildViewTreeFromFlat', `总耗时 ${(t4 - t0).toFixed(0)}ms`)
 
     return roots
   }

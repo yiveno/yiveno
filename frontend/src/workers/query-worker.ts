@@ -67,7 +67,7 @@ function buildIndex(input: WorkerDoc[], _options?: WorkerInitOptions) {
   docMap.clear()
   for (const doc of input) {
     docMap.set(doc.id, doc)
-    
+
     // 添加到索引
     flexIndex.add({
       id: doc.id,
@@ -174,12 +174,10 @@ function handleQuery(cmd: Extract<SearchWorkerCommand, { type: 'query' }>) {
 
 /**
  * 处理增量更新命令
- * 
+ *
  * 支持添加、更新、删除文档
  */
-function handlePatch(
-  cmd: Extract<SearchWorkerCommand, { type: 'applyPatch' }>
-) {
+function handlePatch(cmd: Extract<SearchWorkerCommand, { type: 'applyPatch' }>) {
   let changed = false
   if (cmd.removes && cmd.removes.length) {
     const set = new Set(cmd.removes)
@@ -207,7 +205,7 @@ function handlePatch(
 
 /**
  * 处理销毁命令
- * 
+ *
  * 清理索引和文档数据
  */
 function handleDispose() {

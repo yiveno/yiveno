@@ -86,9 +86,7 @@ export async function safeJsonFetchWithResult<T = unknown>(
         data: null,
         success: false,
         error: result.error.message,
-        ...(result.error.status !== undefined
-          ? { status: result.error.status }
-          : {})
+        ...(result.error.status !== undefined ? { status: result.error.status } : {})
       }
     }
   } catch (error) {
@@ -223,9 +221,7 @@ export async function safeBatchFetch<T = unknown>(
     options?: SafeFetchOptions
   }>
 ): Promise<Array<T | null>> {
-  const promises = requests.map(({ url, options }) =>
-    safeJsonFetch<T>(url, options)
-  )
+  const promises = requests.map(({ url, options }) => safeJsonFetch<T>(url, options))
 
   return Promise.all(promises)
 }

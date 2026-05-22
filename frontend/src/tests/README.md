@@ -66,16 +66,16 @@ bun run test:service-worker:e2e  # 运行 E2E 测试
 
 ## 📊 测试统计
 
-| 类型 | 数量 | 速度 | 工具 |
-|------|------|------|------|
-| 单元测试 | 9 | ⚡ ~100ms | Vitest |
-| 集成测试 | 5 | ⚡ ~200ms | Vue Test Utils |
-| Chrome API 测试 | 16 | ⚡ ~300ms | Vitest + Mock |
-| Service Worker 单元测试 | 17 | ⚡ ~700ms | Vitest + Mock |
-| Service Worker E2E 测试 | 11 | 🐢 ~30-60s | Puppeteer |
-| 性能测试 | 4 | ⚡ ~50ms | Vitest |
-| 契约测试 | 4 | ⚡ ~50ms | Vitest + Zod |
-| **总计** | **66** | **~1-2 分钟** | - |
+| 类型                    | 数量   | 速度          | 工具           |
+| ----------------------- | ------ | ------------- | -------------- |
+| 单元测试                | 9      | ⚡ ~100ms     | Vitest         |
+| 集成测试                | 5      | ⚡ ~200ms     | Vue Test Utils |
+| Chrome API 测试         | 16     | ⚡ ~300ms     | Vitest + Mock  |
+| Service Worker 单元测试 | 17     | ⚡ ~700ms     | Vitest + Mock  |
+| Service Worker E2E 测试 | 11     | 🐢 ~30-60s    | Puppeteer      |
+| 性能测试                | 4      | ⚡ ~50ms      | Vitest         |
+| 契约测试                | 4      | ⚡ ~50ms      | Vitest + Zod   |
+| **总计**                | **66** | **~1-2 分钟** | -              |
 
 ---
 
@@ -84,11 +84,13 @@ bun run test:service-worker:e2e  # 运行 E2E 测试
 ### Service Worker 测试 ⭐
 
 **为什么重要？**
+
 - Chrome Extension Manifest V3 的核心
 - Service Worker 会自动终止和重启
 - 需要测试状态持久化和消息传递
 
 **测试内容：**
+
 - ✅ 状态持久化（chrome.storage）
 - ✅ 定时任务（chrome.alarms）
 - ✅ 消息传递（chrome.runtime.onMessage）
@@ -120,6 +122,7 @@ bun run test:service-worker:e2e  # 运行 E2E 测试
 ### Chrome API Mock
 
 所有 Chrome API 都在 `setup.ts` 中 Mock：
+
 - ✅ `chrome.runtime.*` - 消息传递
 - ✅ `chrome.storage.*` - 存储
 - ✅ `chrome.bookmarks.*` - 书签

@@ -47,7 +47,9 @@ export interface FolderVectorDebugBridge {
 
 async function stats() {
   const result = await folderVectorService.getStats()
-  console.info(`[FolderVectorDebug] 文件夹向量: ${result.folderCount} 个, Provider: ${result.providerName ?? '未初始化'}`)
+  console.info(
+    `[FolderVectorDebug] 文件夹向量: ${result.folderCount} 个, Provider: ${result.providerName ?? '未初始化'}`
+  )
   return result
 }
 
@@ -56,7 +58,9 @@ async function sync() {
 
   await folderVectorService.syncFolderVectors(progress => {
     const pct = Math.round((progress.processed / progress.total) * 100)
-    console.info(`[FolderVectorDebug] 进度: ${progress.processed}/${progress.total} (${pct}%) 失败: ${progress.failed}`)
+    console.info(
+      `[FolderVectorDebug] 进度: ${progress.processed}/${progress.total} (${pct}%) 失败: ${progress.failed}`
+    )
   })
 
   console.info('[FolderVectorDebug] ✅ 同步完成')
@@ -118,9 +122,10 @@ export function enableFolderVectorDebugBridge(): () => void {
     service: folderVectorService
   }
 
-  ;(window as Window & { __AB_FOLDER_VECTOR__?: FolderVectorDebugBridge }).__AB_FOLDER_VECTOR__ = bridge
+  ;(window as Window & { __AB_FOLDER_VECTOR__?: FolderVectorDebugBridge }).__AB_FOLDER_VECTOR__ =
+    bridge
   logger.info(LOG_TAG, '🔧 文件夹向量调试桥已启用，在 Console 中使用 __AB_FOLDER_VECTOR__')
-  
+
   // 获取控制台样式颜色
   const getConsoleColor = (): string => {
     try {
@@ -132,18 +137,19 @@ export function enableFolderVectorDebugBridge(): () => void {
       return 'rgb(155, 203, 251)'
     }
   }
-  
+
   console.info(
     '%c[FolderVectorDebug] 调试命令：\n' +
-    '  await __AB_FOLDER_VECTOR__.stats()                              // 查看统计\n' +
-    '  await __AB_FOLDER_VECTOR__.sync()                               // 同步向量 ⭐\n' +
-    '  await __AB_FOLDER_VECTOR__.recommend("React", "https://react.dev") // 测试推荐\n' +
-    '  await __AB_FOLDER_VECTOR__.updateFolder("folder_id")            // 更新单个文件夹\n' +
-    '  await __AB_FOLDER_VECTOR__.clear()                              // 清空向量',
+      '  await __AB_FOLDER_VECTOR__.stats()                              // 查看统计\n' +
+      '  await __AB_FOLDER_VECTOR__.sync()                               // 同步向量 ⭐\n' +
+      '  await __AB_FOLDER_VECTOR__.recommend("React", "https://react.dev") // 测试推荐\n' +
+      '  await __AB_FOLDER_VECTOR__.updateFolder("folder_id")            // 更新单个文件夹\n' +
+      '  await __AB_FOLDER_VECTOR__.clear()                              // 清空向量',
     `color: ${getConsoleColor()}; font-weight: bold`
   )
 
   return () => {
-    delete (window as Window & { __AB_FOLDER_VECTOR__?: FolderVectorDebugBridge }).__AB_FOLDER_VECTOR__
+    delete (window as Window & { __AB_FOLDER_VECTOR__?: FolderVectorDebugBridge })
+      .__AB_FOLDER_VECTOR__
   }
 }

@@ -5,7 +5,7 @@
  * - 管理订阅状态
  * - 提供订阅操作接口
  * - 与 UI 组件集成
- * 
+ *
  * 缓存策略（与官网一致）：
  * - 首次加载：立即从缓存读取（避免闪烁），然后从 Supabase 刷新
  * - 后续加载：先显示缓存，后台刷新
@@ -16,10 +16,7 @@ import { ref, computed, watchEffect } from 'vue'
 import { subscriptionAppService } from '@/application/subscription/subscription-app-service'
 import { useSupabaseAuth } from './useSupabaseAuth'
 import { chromeStorage } from '@/infrastructure/storage/chrome-storage'
-import type {
-  Subscription,
-  UserSubscriptionStatus
-} from '@/infrastructure/supabase/types'
+import type { Subscription, UserSubscriptionStatus } from '@/infrastructure/supabase/types'
 import { GUMROAD_CONFIG } from '@/infrastructure/gumroad/client'
 
 /**
@@ -51,9 +48,7 @@ export function useSubscription() {
   /**
    * 从缓存读取订阅数据（带用户 ID 验证）
    */
-  const loadFromCache = async (
-    userId: string
-  ): Promise<SubscriptionCache | null> => {
+  const loadFromCache = async (userId: string): Promise<SubscriptionCache | null> => {
     try {
       const cached = await chromeStorage.getLocal<SubscriptionCache>(CACHE_KEY)
       if (!cached) return null
@@ -125,10 +120,7 @@ export function useSubscription() {
    * 是否为 Pro 用户
    */
   const isPro = computed(() => {
-    return (
-      subscriptionStatus.value?.tier === 'pro' &&
-      subscriptionStatus.value?.status === 'active'
-    )
+    return subscriptionStatus.value?.tier === 'pro' && subscriptionStatus.value?.status === 'active'
   })
 
   /**
@@ -139,8 +131,7 @@ export function useSubscription() {
       return false
     }
     const endDate = new Date(subscriptionStatus.value.current_period_end)
-    const daysUntilExpiry =
-      (endDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+    const daysUntilExpiry = (endDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
     return daysUntilExpiry <= 7 && daysUntilExpiry > 0
   })
 
@@ -156,7 +147,7 @@ export function useSubscription() {
 
   /**
    * 加载订阅状态（带缓存）
-   * 
+   *
    * 策略：
    * 1. 首次加载：先从缓存读取（立即显示），然后后台刷新
    * 2. 强制刷新：跳过缓存，直接查询 Supabase
@@ -167,7 +158,6 @@ export function useSubscription() {
     if (!isAuthenticated.value || !userId) {
       subscription.value = null
       subscriptionStatus.value = null
-      // eslint-disable-next-line require-atomic-updates -- 未登录时设置初始化状态是安全的
       isInitialized.value = true
       return
     }
@@ -198,7 +188,7 @@ export function useSubscription() {
                 void clearCache()
               }
             })
-            .catch((err) => {
+            .catch(err => {
               console.error('[useSubscription] 后台刷新失败:', err)
             })
 
@@ -222,8 +212,7 @@ export function useSubscription() {
         await saveToCache(userId, details, status)
       }
     } catch (err) {
-      const subscriptionError =
-        err instanceof Error ? err.message : '加载订阅状态失败'
+      const subscriptionError = err instanceof Error ? err.message : '加载订阅状态失败'
       error.value = subscriptionError
       console.error('[useSubscription] 加载订阅状态失败:', err)
 
@@ -265,8 +254,7 @@ export function useSubscription() {
       // 在新标签页打开支付链接
       window.open(checkoutUrl, '_blank')
     } catch (err) {
-      const checkoutError =
-        err instanceof Error ? err.message : '创建支付链接失败'
+      const checkoutError = err instanceof Error ? err.message : '创建支付链接失败'
       error.value = checkoutError
       throw new Error(checkoutError)
     } finally {

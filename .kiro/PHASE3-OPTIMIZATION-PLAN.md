@@ -15,17 +15,20 @@
 #### 1. TypeScript 配置修复
 
 **Backend tsconfig.json**:
+
 - ✅ 移除了与 base 配置冲突的选项（`noImplicitAny: false`, `strictPropertyInitialization: false`）
 - ✅ Backend 现在继承完整的严格模式配置
 
 #### 2. ESLint 配置优化
 
 **需要类型信息的规则处理**:
+
 - ⚠️ 在 monorepo 中配置 `parserOptions.project` 非常复杂
 - ✅ 决策：暂时禁用需要类型信息的规则，保留其他所有规则
 - ✅ 这样可以获得 80% 的收益，同时避免配置复杂性
 
 **禁用的规则**（需要类型信息）:
+
 ```javascript
 // '@typescript-eslint/no-floating-promises': 'error',
 // '@typescript-eslint/no-misused-promises': 'error',
@@ -36,6 +39,7 @@
 ```
 
 **保留的规则**（不需要类型信息）:
+
 - ✅ `@typescript-eslint/no-shadow` - 防止变量遮蔽
 - ✅ `no-async-promise-executor` - 防止异步 Promise executor
 - ✅ `require-atomic-updates` - 防止 race condition
@@ -69,11 +73,12 @@
 **严重性**: 🔴 高（可能导致 Bug）
 
 **示例**:
+
 ```typescript
 // ❌ 错误：内层 response 遮蔽外层 response
 const response = await fetch(url1)
 if (condition) {
-  const response = await fetch(url2)  // 遮蔽了外层的 response
+  const response = await fetch(url2) // 遮蔽了外层的 response
 }
 
 // ✅ 正确：使用不同的变量名
@@ -84,6 +89,7 @@ if (condition) {
 ```
 
 **影响文件**:
+
 - `frontend/src/infrastructure/http/http-client.ts` - 大量 response 变量遮蔽
 - `frontend/src/tests/unit/chrome-storage-service.test.ts` - mockStorage 遮蔽
 - `frontend/src/utils/i18n-helpers.ts` - t 函数遮蔽
@@ -95,6 +101,7 @@ if (condition) {
 **严重性**: 🔴 高（可能导致数据不一致）
 
 **示例**:
+
 ```typescript
 // ❌ 错误：可能的 race condition
 state.value.filterResults = await computeResults(state.value.filters)
@@ -107,6 +114,7 @@ state.value.filterResults = results
 ```
 
 **影响文件**:
+
 - `frontend/src/stores/trait-filter/trait-filter-store.ts` - 1 处
 
 ---
@@ -116,6 +124,7 @@ state.value.filterResults = results
 **严重性**: 🟡 中（影响可维护性）
 
 **示例**:
+
 ```typescript
 // ❌ 错误：复杂度 23（超过限制 15）
 function createManualChunks(id: string) {
@@ -136,12 +145,19 @@ function createManualChunks(id: string) {
   if (isUtilChunk(id)) return 'utils'
 }
 
-function isVendorChunk(id: string) { /* ... */ }
-function isComponentChunk(id: string) { /* ... */ }
-function isUtilChunk(id: string) { /* ... */ }
+function isVendorChunk(id: string) {
+  /* ... */
+}
+function isComponentChunk(id: string) {
+  /* ... */
+}
+function isUtilChunk(id: string) {
+  /* ... */
+}
 ```
 
 **影响文件**:
+
 - `frontend/vite/build-options.ts` - `createManualChunks` (复杂度 23)
 - `frontend/src/utils/performance-monitor.ts` - `getPerformanceScore` (复杂度 16)
 - `backend/src/gumroad-handler.ts` - `handleWebhook` (复杂度 43)
@@ -155,13 +171,15 @@ function isUtilChunk(id: string) { /* ... */ }
 **严重性**: 🟡 中（影响可读性）
 
 **示例**:
+
 ```typescript
 // ❌ 错误：嵌套 5 层
 if (a) {
   if (b) {
     if (c) {
       if (d) {
-        if (e) {  // 第 5 层，超过限制
+        if (e) {
+          // 第 5 层，超过限制
           // ...
         }
       }
@@ -179,6 +197,7 @@ if (!e) return
 ```
 
 **影响文件**:
+
 - `backend/src/handlers/auth.ts` - `fetchUserInfoWithAccessToken` (嵌套 5 层)
 - `backend/src/utils/validation.ts` - 1 处（嵌套 5 层）
 
@@ -188,12 +207,12 @@ if (!e) return
 
 ### 优先级排序
 
-| 优先级 | 问题类型 | 数量 | 风险等级 | 修复难度 |
-|--------|---------|------|---------|---------|
-| **P0** | Race Condition | 1 | 🔴 高 | 低 |
-| **P1** | 变量遮蔽 | ~140 | 🔴 高 | 低 |
-| **P2** | 嵌套过深 | ~10 | 🟡 中 | 中 |
-| **P3** | 函数复杂度 | ~50 | 🟡 中 | 高 |
+| 优先级 | 问题类型       | 数量 | 风险等级 | 修复难度 |
+| ------ | -------------- | ---- | -------- | -------- |
+| **P0** | Race Condition | 1    | 🔴 高    | 低       |
+| **P1** | 变量遮蔽       | ~140 | 🔴 高    | 低       |
+| **P2** | 嵌套过深       | ~10  | 🟡 中    | 中       |
+| **P3** | 函数复杂度     | ~50  | 🟡 中    | 高       |
 
 ### 修复计划
 
@@ -233,16 +252,17 @@ if (!e) return
 
 ### 代码质量提升
 
-| 指标 | Phase 2 | Phase 3 目标 | 提升 |
-|------|---------|-------------|------|
-| **类型安全** | 95% | 95% | - |
-| **Bug 检测率** | 95% | 98% | +3% |
-| **代码一致性** | 95% | 98% | +3% |
-| **可维护性** | 95% | 98% | +3% |
+| 指标           | Phase 2 | Phase 3 目标 | 提升 |
+| -------------- | ------- | ------------ | ---- |
+| **类型安全**   | 95%     | 95%          | -    |
+| **Bug 检测率** | 95%     | 98%          | +3%  |
+| **代码一致性** | 95%     | 98%          | +3%  |
+| **可维护性**   | 95%     | 98%          | +3%  |
 
 ### Bug 预防
 
 **修复后可预防的 Bug 类型**:
+
 1. ✅ 变量遮蔽导致的逻辑错误 - 减少 90%
 2. ✅ Race condition 导致的数据不一致 - 减少 100%
 3. ✅ 复杂函数导致的维护困难 - 减少 60%
@@ -279,6 +299,7 @@ if (!e) return
 ### P1: 变量遮蔽（~140 处）
 
 **frontend/src/infrastructure/http/http-client.ts**:
+
 - [ ] Line 1108: response 遮蔽
 - [ ] Line 1148: response 遮蔽
 - [ ] Line 1183: response 遮蔽
@@ -286,6 +307,7 @@ if (!e) return
 - [ ] ... 更多（约 136 处）
 
 **其他文件**:
+
 - [ ] `frontend/src/tests/unit/chrome-storage-service.test.ts:120` - mockStorage 遮蔽
 - [ ] `frontend/src/utils/i18n-helpers.ts:36` - t 函数遮蔽
 
@@ -298,6 +320,7 @@ if (!e) return
 ### P3: 函数复杂度（~50 处）
 
 **Backend**:
+
 - [ ] `backend/src/gumroad-handler.ts:178` - handleWebhook (复杂度 43)
 - [ ] `backend/src/handlers/auth.ts:129` - handleAuthStart (复杂度 18)
 - [ ] `backend/src/handlers/auth.ts:203` - handleAuthCallback (复杂度 19)
@@ -305,6 +328,7 @@ if (!e) return
 - [ ] `backend/src/handlers/ai.ts:24` - handleAIComplete (复杂度 17)
 
 **Frontend**:
+
 - [ ] `frontend/vite/build-options.ts:46` - createManualChunks (复杂度 23)
 - [ ] `frontend/src/utils/performance-monitor.ts:213` - getPerformanceScore (复杂度 16)
 - [ ] ... 更多（约 43 处）
@@ -320,7 +344,7 @@ if (!e) return
 function processData() {
   const data = fetchData()
   if (condition) {
-    const data = transformData()  // 遮蔽外层 data
+    const data = transformData() // 遮蔽外层 data
   }
 }
 

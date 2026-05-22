@@ -1,6 +1,6 @@
 /**
  * 搜索历史记录 Composable
- * 
+ *
  * 功能：
  * - 保存搜索历史到 chrome.storage.local
  * - 获取最近的搜索历史
@@ -36,22 +36,11 @@ export function useSearchHistory() {
   const loadHistory = async (): Promise<void> => {
     try {
       isLoading.value = true
-      
-      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-        const result = await chrome.storage.local.get(STORAGE_KEY)
-        const data = result[STORAGE_KEY]
-        history.value = Array.isArray(data) ? data : []
-      } else {
-        // 兜底：使用 localStorage
-        const stored = localStorage.getItem(STORAGE_KEY)
-        if (stored) {
-          const parsed = JSON.parse(stored)
-          history.value = Array.isArray(parsed) ? parsed : []
-        } else {
-          history.value = []
-        }
-      }
-      
+
+      const result = await chrome.storage.local.get(STORAGE_KEY)
+      const data = result[STORAGE_KEY]
+      history.value = Array.isArray(data) ? data : []
+
       logger.info('useSearchHistory', '搜索历史已加载', { count: history.value.length })
     } catch (error) {
       logger.error('useSearchHistory', '加载搜索历史失败', error)
@@ -81,19 +70,17 @@ export function useSearchHistory() {
         timestamp: Date.now(),
         resultCount
       }
-      
+
       const updated = [newItem, ...filtered].slice(0, MAX_HISTORY_SIZE)
       history.value = updated
 
       // 保存到存储
-      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-        await chrome.storage.local.set({ [STORAGE_KEY]: updated })
-      } else {
-        // 兜底：使用 localStorage
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
-      }
+      await chrome.storage.local.set({ [STORAGE_KEY]: updated })
 
-      logger.info('useSearchHistory', '搜索历史已保存', { query: trimmedQuery, count: updated.length })
+      logger.info('useSearchHistory', '搜索历史已保存', {
+        query: trimmedQuery,
+        count: updated.length
+      })
     } catch (error) {
       logger.error('useSearchHistory', '保存搜索历史失败', error)
     }
@@ -109,12 +96,7 @@ export function useSearchHistory() {
       history.value = updated
 
       // 保存到存储
-      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-        await chrome.storage.local.set({ [STORAGE_KEY]: updated })
-      } else {
-        // 兜底：使用 localStorage
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
-      }
+      await chrome.storage.local.set({ [STORAGE_KEY]: updated })
 
       logger.info('useSearchHistory', '历史记录已删除', { query })
     } catch (error) {
@@ -130,12 +112,7 @@ export function useSearchHistory() {
       history.value = []
 
       // 清空存储
-      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-        await chrome.storage.local.remove(STORAGE_KEY)
-      } else {
-        // 兜底：使用 localStorage
-        localStorage.removeItem(STORAGE_KEY)
-      }
+      await chrome.storage.local.remove(STORAGE_KEY)
 
       logger.info('useSearchHistory', '搜索历史已清空')
     } catch (error) {
@@ -159,9 +136,7 @@ export function useSearchHistory() {
     if (!keyword.trim()) return history.value
 
     const lowerKeyword = keyword.toLowerCase()
-    return history.value.filter(item => 
-      item.query.toLowerCase().includes(lowerKeyword)
-    )
+    return history.value.filter(item => item.query.toLowerCase().includes(lowerKeyword))
   }
 
   // 组件挂载时自动加载历史

@@ -17,49 +17,49 @@
 
 ### 表单类（7 个）
 
-| 组件 | 说明 | 文档 |
-|------|------|------|
-| **Button** | 按钮组件 | [查看文档](./Button/README.md) |
-| **Input** | 输入框组件 | [查看文档](./Input/README.md) |
-| **Switch** | 开关组件 | [查看文档](./Switch/README.md) |
-| **Dropdown** | 下拉菜单 | [查看文档](./Dropdown/README.md) |
+| 组件          | 说明           | 文档                              |
+| ------------- | -------------- | --------------------------------- |
+| **Button**    | 按钮组件       | [查看文档](./Button/README.md)    |
+| **Input**     | 输入框组件     | [查看文档](./Input/README.md)     |
+| **Switch**    | 开关组件       | [查看文档](./Switch/README.md)    |
+| **Dropdown**  | 下拉菜单       | [查看文档](./Dropdown/README.md)  |
 | **Accordion** | 手风琴折叠面板 | [查看文档](./Accordion/README.md) |
-| **List** | 列表容器 | [查看文档](./List/README.md) |
-| **ListItem** | 列表项 | [查看文档](./ListItem/README.md) |
+| **List**      | 列表容器       | [查看文档](./List/README.md)      |
+| **ListItem**  | 列表项         | [查看文档](./ListItem/README.md)  |
 
 ### 展示类（6 个）
 
-| 组件 | 说明 | 文档 |
-|------|------|------|
-| **Badge** | 徽章组件 | [查看文档](./Badge/README.md) |
-| **Icon** | 图标组件 | [查看文档](./Icon/README.md) |
-| **SvgIcon** | SVG 图标 | [查看文档](./SvgIcon/README.md) |
-| **EmojiIcon** | Emoji 图标 | [查看文档](./EmojiIcon/README.md) |
-| **AnimatedNumber** | 数字动画 | [查看文档](./AnimatedNumber/README.md) |
+| 组件               | 说明       | 文档                                   |
+| ------------------ | ---------- | -------------------------------------- |
+| **Badge**          | 徽章组件   | [查看文档](./Badge/README.md)          |
+| **Icon**           | 图标组件   | [查看文档](./Icon/README.md)           |
+| **SvgIcon**        | SVG 图标   | [查看文档](./SvgIcon/README.md)        |
+| **EmojiIcon**      | Emoji 图标 | [查看文档](./EmojiIcon/README.md)      |
+| **AnimatedNumber** | 数字动画   | [查看文档](./AnimatedNumber/README.md) |
 
 ### 反馈类（3 个）
 
-| 组件 | 说明 | 文档 |
-|------|------|------|
-| **Spinner** | 加载动画 | [查看文档](./Spinner/README.md) |
-| **ProgressBar** | 进度条 | [查看文档](./ProgressBar/README.md) |
-| **Tooltip** | 提示框 | [查看文档](./Tooltip/README.md) |
+| 组件            | 说明     | 文档                                |
+| --------------- | -------- | ----------------------------------- |
+| **Spinner**     | 加载动画 | [查看文档](./Spinner/README.md)     |
+| **ProgressBar** | 进度条   | [查看文档](./ProgressBar/README.md) |
+| **Tooltip**     | 提示框   | [查看文档](./Tooltip/README.md)     |
 
 ### 布局类（5 个）
 
-| 组件 | 说明 | 文档 |
-|------|------|------|
-| **App** | 应用容器 | [查看文档](./App/README.md) |
-| **Main** | 主内容区 | [查看文档](./Main/README.md) |
-| **Grid** | 网格布局 | [查看文档](./Grid/README.md) |
-| **Divider** | 分割线 | [查看文档](./Divider/README.md) |
-| **Spacer** | 间距组件 | [查看文档](./Spacer/README.md) |
+| 组件        | 说明     | 文档                            |
+| ----------- | -------- | ------------------------------- |
+| **App**     | 应用容器 | [查看文档](./App/README.md)     |
+| **Main**    | 主内容区 | [查看文档](./Main/README.md)    |
+| **Grid**    | 网格布局 | [查看文档](./Grid/README.md)    |
+| **Divider** | 分割线   | [查看文档](./Divider/README.md) |
+| **Spacer**  | 间距组件 | [查看文档](./Spacer/README.md)  |
 
 ### 其他（2 个）
 
-| 组件 | 说明 | 文档 |
-|------|------|------|
-| **Overlay** | 遮罩层 | [查看文档](./Overlay/README.md) |
+| 组件                      | 说明       | 文档                                          |
+| ------------------------- | ---------- | --------------------------------------------- |
+| **Overlay**               | 遮罩层     | [查看文档](./Overlay/README.md)               |
 | **KeyboardShortcutsHelp** | 快捷键帮助 | [查看文档](./KeyboardShortcutsHelp/README.md) |
 
 **总计**: 23 个基础组件
@@ -79,11 +79,11 @@ import { Button, Input, Badge, Icon, Spinner } from '@/components'
       <Icon name="icon-check" />
       确认
     </Button>
-    
+
     <Input v-model="value" placeholder="请输入" />
-    
+
     <Badge color="success">5</Badge>
-    
+
     <Spinner v-if="loading" />
   </div>
 </template>
@@ -188,11 +188,7 @@ emit('valueChanged', value)
 
 ```vue
 <template>
-  <button
-    :aria-label="ariaLabel"
-    :aria-disabled="disabled"
-    role="button"
-  >
+  <button :aria-label="ariaLabel" :aria-disabled="disabled" role="button">
     <slot />
   </button>
 </template>

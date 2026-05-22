@@ -97,18 +97,13 @@ export const useDialogStore = defineStore('dialog', () => {
    */
   const loadDialogDrafts = async () => {
     try {
-      const [editBookmarkDraft, editFolderDraft, addItemDraft] =
-        await Promise.all([
-          chromeStorage.getSession<Partial<EditBookmarkDialogState>>(
-            SESSION_KEYS.EDIT_BOOKMARK_DRAFT
-          ),
-          chromeStorage.getSession<Partial<EditFolderDialogState>>(
-            SESSION_KEYS.EDIT_FOLDER_DRAFT
-          ),
-          chromeStorage.getSession<Partial<AddItemDialogState>>(
-            SESSION_KEYS.ADD_ITEM_DRAFT
-          )
-        ])
+      const [editBookmarkDraft, editFolderDraft, addItemDraft] = await Promise.all([
+        chromeStorage.getSession<Partial<EditBookmarkDialogState>>(
+          SESSION_KEYS.EDIT_BOOKMARK_DRAFT
+        ),
+        chromeStorage.getSession<Partial<EditFolderDialogState>>(SESSION_KEYS.EDIT_FOLDER_DRAFT),
+        chromeStorage.getSession<Partial<AddItemDialogState>>(SESSION_KEYS.ADD_ITEM_DRAFT)
+      ])
 
       // ✅ 只恢复表单数据，不恢复打开状态（避免刷新后弹窗自动打开）
       if (editBookmarkDraft) {
@@ -175,10 +170,7 @@ export const useDialogStore = defineStore('dialog', () => {
 
       // ✅ 只保存表单数据，不包含 isOpen
       const { isOpen, ...draftData } = editBookmarkDialog.value
-      await chromeStorage.setSession(
-        SESSION_KEYS.EDIT_BOOKMARK_DRAFT,
-        draftData
-      )
+      await chromeStorage.setSession(SESSION_KEYS.EDIT_BOOKMARK_DRAFT, draftData)
     } catch (error) {
       logger.warn('DialogStore', '保存编辑书签草稿失败', error)
     }
@@ -338,8 +330,7 @@ export const useDialogStore = defineStore('dialog', () => {
   ) => {
     if (data.title !== undefined) editBookmarkDialog.value.title = data.title
     if (data.url !== undefined) editBookmarkDialog.value.url = data.url
-    if (data.parentId !== undefined)
-      editBookmarkDialog.value.parentId = data.parentId
+    if (data.parentId !== undefined) editBookmarkDialog.value.parentId = data.parentId
 
     // 🔴 同步草稿到 session storage
     saveEditBookmarkDraft().catch(err => {
@@ -391,9 +382,7 @@ export const useDialogStore = defineStore('dialog', () => {
   /**
    * 更新编辑文件夹数据
    */
-  const updateEditFolderData = (
-    data: Partial<Pick<EditFolderDialogState, 'title'>>
-  ) => {
+  const updateEditFolderData = (data: Partial<Pick<EditFolderDialogState, 'title'>>) => {
     if (data.title !== undefined) editFolderDialog.value.title = data.title
 
     // 🔴 同步草稿到 session storage
@@ -407,10 +396,7 @@ export const useDialogStore = defineStore('dialog', () => {
   /**
    * 打开添加新项目对话框
    */
-  const openAddItemDialog = (
-    type: 'folder' | 'bookmark',
-    parentFolder?: BookmarkNode
-  ) => {
+  const openAddItemDialog = (type: 'folder' | 'bookmark', parentFolder?: BookmarkNode) => {
     addItemDialog.value = {
       isOpen: true,
       type,
@@ -454,15 +440,12 @@ export const useDialogStore = defineStore('dialog', () => {
    * 更新添加新项目数据
    */
   const updateAddItemData = (
-    data: Partial<
-      Pick<AddItemDialogState, 'type' | 'title' | 'url' | 'parentFolder'>
-    >
+    data: Partial<Pick<AddItemDialogState, 'type' | 'title' | 'url' | 'parentFolder'>>
   ) => {
     if (data.type !== undefined) addItemDialog.value.type = data.type
     if (data.title !== undefined) addItemDialog.value.title = data.title
     if (data.url !== undefined) addItemDialog.value.url = data.url
-    if (data.parentFolder !== undefined)
-      addItemDialog.value.parentFolder = data.parentFolder
+    if (data.parentFolder !== undefined) addItemDialog.value.parentFolder = data.parentFolder
 
     // 🔴 同步草稿到 session storage
     saveAddItemDraft().catch(err => {
@@ -521,11 +504,7 @@ export const useDialogStore = defineStore('dialog', () => {
     logger.info('Dialog', '重置所有对话框状态')
 
     // 🔴 清除所有草稿
-    Promise.all([
-      saveEditBookmarkDraft(),
-      saveEditFolderDraft(),
-      saveAddItemDraft()
-    ]).catch(err => {
+    Promise.all([saveEditBookmarkDraft(), saveEditFolderDraft(), saveAddItemDraft()]).catch(err => {
       logger.warn('Dialog', '清除所有草稿失败', err)
     })
   }

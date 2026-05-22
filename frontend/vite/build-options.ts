@@ -1,6 +1,6 @@
 /**
  * Vite 构建选项配置
- * 
+ *
  * 注意：Vite 8 使用 Rolldown 替换了 Rollup
  * 配置接口从 rollupOptions 迁移到 rolldownOptions
  */
@@ -20,26 +20,23 @@ export function createBuildInput() {
     background: resolve(SRC_DIR, 'background/main.ts'),
     offscreen: resolve(SRC_DIR, 'offscreen/main.ts'),
     onboarding: resolve(SRC_DIR, 'pages/onboarding/index.html'),
-    'content/inject-quick-add-dialog': resolve(
-      SRC_DIR,
-      'content/inject-quick-add-dialog.ts'
-    ),
+    'content/inject-quick-add-dialog': resolve(SRC_DIR, 'content/inject-quick-add-dialog.ts'),
     'auth-sync': resolve(SRC_DIR, 'content/auth-sync.ts')
   }
 }
 
 /**
  * 智能分包策略
- * 
+ *
  * 优化目标：
  * 1. 减少重复代码
  * 2. 提高缓存命中率
  * 3. 优化首屏加载速度
- * 
+ *
  * 注意：Rolldown 的 manualChunks 行为与 Rollup 略有不同
  * - Rollup: 只对匹配的模块分包
  * - Rolldown: 会自动提取共享依赖到 chunk
- * 
+ *
  * ⚠️ 关键修复：background.js 不能导入任何包含 Vue 的 chunk
  * 解决方案：将所有 background 依赖的模块都返回 undefined，让它们内联到 background.js
  */
@@ -47,32 +44,24 @@ export function createManualChunks(id: string) {
   // ⚠️ 关键修复：为 background.js 创建完全独立的构建
   // 不对任何模块进行分包，让它们全部内联到 background.js 中
   // 这样可以确保 background.js 不会导入任何包含 Vue 的 chunk
-  
+
   // 检查当前模块是否被 background.js 依赖
   // 如果是，返回 undefined，让它内联到 background.js 中
   // 注意：这个判断不够精确，但可以作为临时解决方案
-  
+
   if (id.includes('node_modules')) {
     // ⚠️ 关键修复：Lit 和 Material Web 单独分包，不要放到 vendor
     // 这样可以避免 background.js 导入包含 DOM API 的 chunk
     // 使用更宽泛的匹配规则，确保所有 Lit 相关的包都被分离
-    if (
-      id.includes('lit') && 
-      !id.includes('sqlite') && 
-      !id.includes('polyfill')
-    ) {
+    if (id.includes('lit') && !id.includes('sqlite') && !id.includes('polyfill')) {
       return 'vendor-lit'
     }
     if (id.includes('@material')) {
       return 'vendor-material-web'
     }
-    
+
     // 核心框架 - 单独分包，缓存友好
-    if (
-      id.includes('/vue/') ||
-      id.includes('/vue-demi/') ||
-      id.includes('@vue/')
-    )
+    if (id.includes('/vue/') || id.includes('/vue-demi/') || id.includes('@vue/'))
       return 'vendor-vue'
     if (id.includes('/pinia/')) return 'vendor-pinia'
 
@@ -89,18 +78,11 @@ export function createManualChunks(id: string) {
     if (id.includes('@tanstack/vue-virtual')) return 'vendor-virtual'
 
     // 查询库 - 合并 query 相关
-    if (
-      id.includes('@tanstack/vue-query') ||
-      id.includes('@tanstack/query-core')
-    )
+    if (id.includes('@tanstack/vue-query') || id.includes('@tanstack/query-core'))
       return 'vendor-query'
 
     // 工具库：vueuse + immer + mitt（体积小，合并）
-    if (
-      id.includes('@vueuse/') ||
-      id.includes('immer') ||
-      id.includes('mitt')
-    )
+    if (id.includes('@vueuse/') || id.includes('immer') || id.includes('mitt'))
       return 'vendor-utils'
 
     // 数据校验 - 单独分包
@@ -122,7 +104,7 @@ export function createManualChunks(id: string) {
   // ⚠️ 关键修复：不对任何应用代码进行分包
   // 让 Rolldown 自动处理，或者让模块内联到各自的入口文件中
   // 这样可以避免 background.js 导入包含 Vue 的 chunk
-  
+
   return undefined
 }
 
@@ -172,12 +154,12 @@ export function createOutputFileNames() {
 
 /**
  * 创建构建配置
- * 
+ *
  * Vite 8 使用 Rolldown 替换了 Rollup
  * 返回类型使用 rolldownOptions（rollupOptions 已弃用）
- * 
+ *
  * 注意：类型定义尚未更新，返回 any 类型
- * 
+ *
  * ⚠️ 关键问题：Rolldown 的 manualChunks 无法完全阻止 chunk 依赖
  * 解决方案：对于 background.js，我们需要确保它不导入任何包含 DOM API 的模块
  */

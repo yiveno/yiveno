@@ -15,10 +15,7 @@ import { LucideIcon } from '@/components/base/LucideIcon'
 import type { BookmarkNode } from '@/types'
 import { logger } from '@/infrastructure/logging/logger'
 import { useLazyFavicon } from '@/composables/useLazyFavicon'
-import {
-  draggable,
-  dropTargetForElements
-} from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
+import { draggable, dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine'
 import { setCustomNativeDragPreview } from '@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview'
 import { pointerOutsideOfPreview } from '@atlaskit/pragmatic-drag-and-drop/element/pointer-outside-of-preview'
@@ -45,36 +42,31 @@ const props = withDefaults(defineProps<Props>(), {
  * - 与父组件联动，完成节点操作
  */
 const emit = defineEmits<{
-  'node-click': [node: BookmarkNode, event: MouseEvent]
-  'folder-toggle': [folderId: string, node: BookmarkNode]
-  'node-select': [nodeId: string, node: BookmarkNode]
-  'node-edit': [node: BookmarkNode]
-  'node-delete': [node: BookmarkNode]
-  'folder-add': [parentNode: BookmarkNode]
-  'bookmark-open-new-tab': [node: BookmarkNode]
-  'bookmark-copy-url': [node: BookmarkNode]
-  'bookmark-toggle-favorite': [node: BookmarkNode, isFavorite: boolean]
-  // 🆕 节点挂载/卸载事件，用于构建元素注册表以提升滚动性能
-  'node-mounted': [id: string, el: HTMLElement]
-  'node-unmounted': [id: string]
-  // ✅ 拖拽相关事件
-  'drag-start': [node: BookmarkNode]
-  'drag-over': [
-    data: { node: BookmarkNode; position: 'before' | 'inside' | 'after' }
-  ]
-  'drag-leave': [node: BookmarkNode]
-  drop: [
+  (e: 'nodeClick', node: BookmarkNode, event: MouseEvent): void
+  (e: 'folderToggle', folderId: string, node: BookmarkNode): void
+  (e: 'nodeSelect', nodeId: string, node: BookmarkNode): void
+  (e: 'nodeEdit', node: BookmarkNode): void
+  (e: 'nodeDelete', node: BookmarkNode): void
+  (e: 'folderAdd', parentNode: BookmarkNode): void
+  (e: 'bookmarkOpenNewTab', node: BookmarkNode): void
+  (e: 'bookmarkCopyUrl', node: BookmarkNode): void
+  (e: 'bookmarkToggleFavorite', node: BookmarkNode, isFavorite: boolean): void
+  (e: 'nodeMounted', id: string, el: HTMLElement): void
+  (e: 'nodeUnmounted', id: string): void
+  (e: 'dragStart', node: BookmarkNode): void
+  (e: 'dragOver', data: { node: BookmarkNode; position: 'before' | 'inside' | 'after' }): void
+  (e: 'dragLeave', node: BookmarkNode): void
+  (
+    e: 'drop',
     data: {
       sourceId: string
       targetId: string
       position: 'before' | 'inside' | 'after'
     }
-  ]
-  'drag-end': []
-  /** 分享文件夹 */
-  'folder-share': [node: BookmarkNode]
-  /** 打开右键菜单 */
-  'open-context-menu': [nodeId: string, x: number, y: number]
+  ): void
+  (e: 'dragEnd'): void
+  (e: 'folderShare', node: BookmarkNode): void
+  (e: 'openContextMenu', nodeId: string, x: number, y: number): void
 }>()
 
 // ✅ i18n 已移除（收藏功能已移至右键菜单，不再需要 tooltip 文本）
@@ -139,12 +131,14 @@ interface Props {
   /** 已选后代计数 Map（folderId -> 已选书签数）*/
   selectedDescCounts?: Map<string, number> | undefined
   /** 拖拽状态（由 BookmarkTree 传入） */
-  dragState?: {
-    isDragging: boolean
-    dragSourceId: string | null
-    dropTargetId: string | null
-    dropPosition: 'before' | 'inside' | 'after' | null
-  } | undefined
+  dragState?:
+    | {
+        isDragging: boolean
+        dragSourceId: string | null
+        dropTargetId: string | null
+        dropPosition: 'before' | 'inside' | 'after' | null
+      }
+    | undefined
   /** 当前打开右键菜单的节点 ID */
   contextMenuNodeId?: string | null | undefined
 }
@@ -155,7 +149,7 @@ let cleanupDrag: (() => void) | null = null
 
 onMounted(() => {
   if (rootRef.value) {
-    emit('node-mounted', String(props.node.id), rootRef.value)
+    emit('nodeMounted', String(props.node.id), rootRef.value)
   }
 
   // ✅ 启用拖拽功能
@@ -217,11 +211,11 @@ onMounted(() => {
         },
         onDragStart: () => {
           logger.debug('TreeNode', '开始拖拽', { nodeId: props.node.id })
-          emit('drag-start', props.node)
+          emit('dragStart', props.node)
         },
         onDrop: () => {
           logger.debug('TreeNode', '拖拽结束', { nodeId: props.node.id })
-          emit('drag-end')
+          emit('dragEnd')
         }
       }),
 
@@ -242,17 +236,11 @@ onMounted(() => {
           const sourceNode = source.data.node as BookmarkNode | undefined
           if (sourceNode && !props.node.url) {
             // 如果目标节点的祖先链中包含源节点ID，则禁止
-            const checkIsDescendant = (
-              node: BookmarkNode,
-              ancestorId: string
-            ): boolean => {
+            const checkIsDescendant = (node: BookmarkNode, ancestorId: string): boolean => {
               if (node.id === ancestorId) return true
               if (node.parentId === ancestorId) return true
               // 通过 ancestorIds 检查（如果有的话）
-              if (
-                Array.isArray(node.ancestorIds) &&
-                node.ancestorIds.includes(ancestorId)
-              ) {
+              if (Array.isArray(node.ancestorIds) && node.ancestorIds.includes(ancestorId)) {
                 return true
               }
               return false
@@ -300,15 +288,15 @@ onMounted(() => {
             nodeId: props.node.id,
             position
           })
-          emit('drag-over', { node: props.node, position })
+          emit('dragOver', { node: props.node, position })
         },
         onDrag: ({ self }) => {
           const position = self.data.position as 'before' | 'inside' | 'after'
-          emit('drag-over', { node: props.node, position })
+          emit('dragOver', { node: props.node, position })
         },
         onDragLeave: () => {
           logger.debug('TreeNode', '拖拽离开', { nodeId: props.node.id })
-          emit('drag-leave', props.node)
+          emit('dragLeave', props.node)
         },
         onDrop: ({ source, self }) => {
           const sourceId = String(source.data.nodeId)
@@ -329,7 +317,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  emit('node-unmounted', String(props.node.id))
+  emit('nodeUnmounted', String(props.node.id))
   // ✅ 清理拖拽事件监听
   if (cleanupDrag) {
     cleanupDrag()
@@ -343,9 +331,7 @@ const isFolder = computed(() => !props.node.url)
 
 // 🚀 性能优化：缓存展开状态检查
 const isExpanded = computed(() => props.expandedFolders.has(props.node.id))
-const isSelected = computed(() =>
-  props.selectedNodes.has(String(props.node.id))
-)
+const isSelected = computed(() => props.selectedNodes.has(String(props.node.id)))
 
 // 🆕 收藏状态（已移除，收藏功能已移至右键菜单）
 // const isFavorited = computed(() => {
@@ -424,10 +410,7 @@ const renderChildren = computed(() => {
 
 // ✅ 拖拽状态计算属性
 const isDraggingSource = computed(() => {
-  return (
-    props.dragState?.isDragging &&
-    props.dragState.dragSourceId === String(props.node.id)
-  )
+  return props.dragState?.isDragging && props.dragState.dragSourceId === String(props.node.id)
 })
 
 const dropPosition = computed(() => {
@@ -439,20 +422,23 @@ const dropPosition = computed(() => {
 // === 性能优化：缓存节点样式类
 const nodeClasses = computed(() => {
   // ✅ 激活状态：只有当 activeId 不为空时才进行比较
-  const isActive = props.activeId != null && 
-                   props.node.id != null && 
-                   String(props.activeId) === String(props.node.id)
-  
+  const isActive =
+    props.activeId != null &&
+    props.node.id != null &&
+    String(props.activeId) === String(props.node.id)
+
   // ✅ 焦点状态：键盘导航焦点
-  const isFocused = props.focusedId != null && 
-                    props.node.id != null && 
-                    String(props.focusedId) === String(props.node.id)
-  
+  const isFocused =
+    props.focusedId != null &&
+    props.node.id != null &&
+    String(props.focusedId) === String(props.node.id)
+
   // ✅ 右键菜单打开状态：当前节点打开了右键菜单
-  const hasContextMenuOpen = props.contextMenuNodeId != null && 
-                              props.node.id != null && 
-                              String(props.contextMenuNodeId) === String(props.node.id)
-  
+  const hasContextMenuOpen =
+    props.contextMenuNodeId != null &&
+    props.node.id != null &&
+    String(props.contextMenuNodeId) === String(props.node.id)
+
   // 🐛 调试日志
   if (isFocused) {
     logger.debug('TreeNode', '节点获得焦点', {
@@ -463,7 +449,7 @@ const nodeClasses = computed(() => {
       isFocused
     })
   }
-  
+
   return {
     'node--folder': isFolder.value,
     'node--bookmark': !isFolder.value,
@@ -522,13 +508,13 @@ const handleFolderToggleClick = (event: MouseEvent) => {
 
   // 如果是文件夹，总是处理展开/收起逻辑
   if (isFolder.value) {
-    emit('node-click', props.node, event)
-    emit('folder-toggle', props.node.id, props.node)
+    emit('nodeClick', props.node, event)
+    emit('folderToggle', props.node.id, props.node)
     return
   }
 
   // 对于非文件夹节点（书签），触发点击事件
-  emit('node-click', props.node, event)
+  emit('nodeClick', props.node, event)
 }
 
 const handleBookmarkClick = (event: MouseEvent) => {
@@ -542,11 +528,11 @@ const handleBookmarkClick = (event: MouseEvent) => {
   }
 
   // ✅ 普通点击：触发 node-click 事件（由父组件决定行为）
-  emit('node-click', props.node, event)
+  emit('nodeClick', props.node, event)
 }
 
 const toggleSelection = () => {
-  emit('node-select', String(props.node.id), props.node)
+  emit('nodeSelect', String(props.node.id), props.node)
 }
 
 // ✅ 收藏功能已移至右键菜单
@@ -557,7 +543,7 @@ const toggleSelection = () => {
 //     `${newFavoriteState ? '⭐ 收藏' : '🗑️ 取消收藏'}书签:`,
 //     props.node.title
 //   )
-//   emit('bookmark-toggle-favorite', props.node, newFavoriteState)
+//   emit('bookmarkToggleFavorite', props.node, newFavoriteState)
 // }
 
 const handleFaviconError = () => {
@@ -566,42 +552,39 @@ const handleFaviconError = () => {
 
 // === 工具函数 ===
 const handleChildNodeClick = (node: BookmarkNode, event: MouseEvent) => {
-  emit('node-click', node, event)
+  emit('nodeClick', node, event)
 }
 
 const handleChildFolderToggle = (folderId: string, node: BookmarkNode) => {
-  emit('folder-toggle', folderId, node)
+  emit('folderToggle', folderId, node)
 }
 
 const handleChildNodeSelect = (nodeId: string, node: BookmarkNode) => {
-  emit('node-select', nodeId, node)
+  emit('nodeSelect', nodeId, node)
 }
 
 const handleChildNodeEdit = (node: BookmarkNode) => {
-  emit('node-edit', node)
+  emit('nodeEdit', node)
 }
 
 const handleChildNodeDelete = (node: BookmarkNode) => {
-  emit('node-delete', node)
+  emit('nodeDelete', node)
 }
 
 const handleChildFolderAdd = (parentNode: BookmarkNode) => {
-  emit('folder-add', parentNode)
+  emit('folderAdd', parentNode)
 }
 
 const handleChildBookmarkOpenNewTab = (node: BookmarkNode) => {
-  emit('bookmark-open-new-tab', node)
+  emit('bookmarkOpenNewTab', node)
 }
 
 const handleChildBookmarkCopyUrl = (node: BookmarkNode) => {
-  emit('bookmark-copy-url', node)
+  emit('bookmarkCopyUrl', node)
 }
 
-const handleChildBookmarkToggleFavorite = (
-  node: BookmarkNode,
-  isFavorite: boolean
-) => {
-  emit('bookmark-toggle-favorite', node, isFavorite)
+const handleChildBookmarkToggleFavorite = (node: BookmarkNode, isFavorite: boolean) => {
+  emit('bookmarkToggleFavorite', node, isFavorite)
 }
 
 function escapeRegExp(string: string): string {
@@ -632,15 +615,15 @@ const openContextMenu = (event?: Event) => {
   }
 
   const rect = nodeEl.getBoundingClientRect()
-  
+
   // 如果是鼠标事件，使用鼠标位置；否则使用节点位置
   const mouseEvent = event as MouseEvent | undefined
   const x = mouseEvent ? mouseEvent.clientX : rect.right - 30
   const y = mouseEvent ? mouseEvent.clientY : rect.top + rect.height / 2
 
   // 通知父组件打开菜单
-  emit('open-context-menu', String(props.node.id), x, y)
-  
+  emit('openContextMenu', String(props.node.id), x, y)
+
   logger.debug('TreeNode', '请求打开右键菜单', {
     nodeId: props.node.id,
     title: props.node.title,
@@ -656,12 +639,7 @@ defineExpose({
 </script>
 
 <template>
-  <div
-    ref="rootRef"
-    class="simple-tree-node"
-    :class="nodeClasses"
-    :data-node-id="String(node.id)"
-  >
+  <div ref="rootRef" class="simple-tree-node" :class="nodeClasses" :data-node-id="String(node.id)">
     <!-- 文件夹节点 -->
     <div
       v-if="isFolder"
@@ -672,11 +650,7 @@ defineExpose({
     >
       <!-- 选择复选框 -->
       <md-checkbox
-        v-if="
-          config.showSelectionCheckbox &&
-          config.selectable === 'multiple' &&
-          !isRootFolder
-        "
+        v-if="config.showSelectionCheckbox && config.selectable === 'multiple' && !isRootFolder"
         :checked="isSelected"
         :indeterminate="isIndeterminate"
         class="select-checkbox"
@@ -748,19 +722,15 @@ defineExpose({
       </div>
 
       <!-- AI标签 -->
-      <md-chip-set
-        v-if="Array.isArray(node.tags) && node.tags.length > 0"
-        class="bookmark-tags"
-      >
-        <md-input-chip 
-          v-for="tag in node.tags" 
-          :key="tag" 
-          :label="tag"
-        ></md-input-chip>
+      <md-chip-set v-if="Array.isArray(node.tags) && node.tags.length > 0" class="bookmark-tags">
+        <md-input-chip v-for="tag in node.tags" :key="tag" :label="tag"></md-input-chip>
       </md-chip-set>
 
       <!-- 书签URL (hover时显示) -->
-      <div v-if="config.showBookmarkUrl !== false && config.size === 'spacious' && node.url" class="bookmark-url">
+      <div
+        v-if="config.showBookmarkUrl !== false && config.size === 'spacious' && node.url"
+        class="bookmark-url"
+      >
         {{ truncatedUrl }}
       </div>
 
@@ -776,10 +746,7 @@ defineExpose({
     </div>
 
     <!-- 子节点：仅文件夹节点在展开时显示子节点 -->
-    <div
-      v-if="isFolder && isExpanded && node.children && !isVirtualMode"
-      class="children"
-    >
+    <div v-if="isFolder && isExpanded && node.children && !isVirtualMode" class="children">
       <TreeNode
         v-for="child in renderChildren"
         :key="child.id"
@@ -803,22 +770,20 @@ defineExpose({
         @bookmark-open-new-tab="handleChildBookmarkOpenNewTab"
         @bookmark-copy-url="handleChildBookmarkCopyUrl"
         @bookmark-toggle-favorite="handleChildBookmarkToggleFavorite"
-        @node-mounted="(id, el) => $emit('node-mounted', id, el)"
-        @node-unmounted="(id) => $emit('node-unmounted', id)"
-        @open-context-menu="(id, x, y) => $emit('open-context-menu', id, x, y)"
-        @drag-start="$emit('drag-start', $event)"
-        @drag-over="$emit('drag-over', $event)"
-        @drag-leave="$emit('drag-leave', $event)"
+        @node-mounted="(id, el) => $emit('nodeMounted', id, el)"
+        @node-unmounted="id => $emit('nodeUnmounted', id)"
+        @open-context-menu="(id, x, y) => $emit('openContextMenu', id, x, y)"
+        @drag-start="$emit('dragStart', $event)"
+        @drag-over="$emit('dragOver', $event)"
+        @drag-leave="$emit('dragLeave', $event)"
         @drop="$emit('drop', $event)"
-        @drag-end="$emit('drag-end')"
+        @drag-end="$emit('dragEnd')"
       />
     </div>
   </div>
 </template>
 
 <style scoped>
-
-
 @keyframes slide-down {
   from {
     opacity: 0;
@@ -916,7 +881,6 @@ defineExpose({
   background: color-mix(in srgb, var(--color-folder-selected), var(--color-surface) 5%);
 }
 
-
 /* 点击反馈（未选中时）- 区分文件夹和书签 */
 
 /* 书签点击 - 蓝色系 */
@@ -977,9 +941,9 @@ defineExpose({
   /* stylelint-disable-next-line declaration-property-value-disallowed-list */
   border-radius: 2px;
   object-fit: cover;
-  
+
   /* ✅ 优化：添加微妙阴影，增强 favicon 层次感 */
-  box-shadow: 
+  box-shadow:
     0 1px 2px var(--color-shadow-008),
     0 0 0 0.5px var(--color-shadow-005);
 }
@@ -1032,10 +996,8 @@ defineExpose({
   opacity: 0;
   visibility: hidden;
   transition:
-    opacity var(--md-sys-motion-duration-short4)
-      var(--md-sys-motion-easing-standard),
-    visibility var(--md-sys-motion-duration-short4)
-      var(--md-sys-motion-easing-standard);
+    opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    visibility var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
 /* hover 时显示"⋮"按钮 */
@@ -1050,10 +1012,9 @@ defineExpose({
 
   /* ✅ 性能优化：提示浏览器优化动画性能 */
   will-change: transform, opacity;
-  
+
   /* ✅ 优化：使用 emphasized 缓动函数，更流畅的展开动画 */
-  animation: slide-down var(--md-sys-motion-duration-medium2)
-    var(--md-sys-motion-easing-emphasized);
+  animation: slide-down var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized);
 }
 
 .children::before {
@@ -1281,10 +1242,8 @@ defineExpose({
   opacity: 0;
   visibility: hidden;
   transition:
-    opacity var(--md-sys-motion-duration-short4)
-      var(--md-sys-motion-easing-standard),
-    visibility var(--md-sys-motion-duration-short4)
-      var(--md-sys-motion-easing-standard);
+    opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    visibility var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
 /* hover 效果（按特异性从低到高排序） */
@@ -1325,10 +1284,8 @@ defineExpose({
   opacity: 0;
   visibility: hidden;
   transition:
-    opacity var(--md-sys-motion-duration-short2)
-      var(--md-sys-motion-easing-standard),
-    visibility var(--md-sys-motion-duration-short2)
-      var(--md-sys-motion-easing-standard);
+    opacity var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard),
+    visibility var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -1379,8 +1336,7 @@ md-input-chip {
   max-width: 280px;
   padding: var(--spacing-2) var(--spacing-3);
   border-radius: var(--radius-sm);
-  font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background: var(--color-surface);
 
   /* ✅ 仅用于hover时的subtle scale效果，不包含rotate */

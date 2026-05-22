@@ -6,10 +6,7 @@
  * - 统一处理输入规范（trim/空串），保持上层调用简洁；
  * - 与数据来源无关，仅接收 BookmarkRecord 列表进行检索。
  */
-import type {
-  BookmarkRecord,
-  SearchResult
-} from '@/infrastructure/indexeddb/manager'
+import type { BookmarkRecord, SearchResult } from '@/infrastructure/indexeddb/manager'
 
 /**
  * 查询策略接口

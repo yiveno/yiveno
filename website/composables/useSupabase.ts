@@ -1,6 +1,6 @@
 /**
  * Supabase 客户端 Composable
- * 
+ *
  * 用于官网的 Supabase 集成
  */
 
@@ -10,16 +10,16 @@ let supabaseClient: SupabaseClient | null = null
 
 export const useSupabase = () => {
   const config = useRuntimeConfig()
-  
+
   if (!supabaseClient) {
     const supabaseUrl = config.public.supabase.url
     const supabaseAnonKey = config.public.supabase.anonKey
-    
+
     if (!supabaseUrl || !supabaseAnonKey) {
       console.error('[Supabase] 配置缺失')
       throw new Error('Supabase 配置缺失')
     }
-    
+
     supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         // Web 环境使用默认的 localStorage
@@ -29,7 +29,7 @@ export const useSupabase = () => {
       }
     })
   }
-  
+
   return {
     supabase: supabaseClient
   }

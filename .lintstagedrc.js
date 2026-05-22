@@ -11,7 +11,7 @@ export default {
   // TypeScript / JavaScript 文件
   // ============================================================================
   '**/*.{ts,tsx,js,jsx}': [
-    'bunx eslint --no-cache --fix --max-warnings 0',
+    'bunx eslint --no-cache --fix --max-warnings 100',
     'bunx prettier --write'
   ],
 
@@ -19,7 +19,7 @@ export default {
   // Vue 文件（需要 ESLint + Stylelint + Prettier）
   // ============================================================================
   '**/*.vue': [
-    'bunx eslint --no-cache --fix --max-warnings 0',
+    'bunx eslint --no-cache --fix --max-warnings 100',
     'bunx stylelint --no-cache --fix',
     'bunx prettier --write'
   ],

@@ -1,12 +1,12 @@
 /**
  * CORS 中间件
- * 
+ *
  * 负责处理跨域请求的安全策略
  */
 
 /**
  * 允许的 CORS 来源列表
- * 
+ *
  * 安全策略：只允许特定域名访问 API
  */
 export const ALLOWED_ORIGINS = [
@@ -24,19 +24,16 @@ export const ALLOWED_ORIGINS = [
 
 /**
  * 获取 CORS 响应头
- * 
+ *
  * @param origin - 请求来源
  * @returns CORS 响应头对象
  */
 export function getCorsHeaders(origin: string | null): Record<string, string> {
   // Chrome Extension 的 origin 格式：chrome-extension://extension-id
   const isChromeExtension = origin?.startsWith('chrome-extension://')
-  
+
   // 检查是否为允许的来源
-  const isAllowed = origin && (
-    ALLOWED_ORIGINS.includes(origin) || 
-    isChromeExtension
-  )
+  const isAllowed = origin && (ALLOWED_ORIGINS.includes(origin) || isChromeExtension)
 
   if (isAllowed) {
     return {
@@ -57,7 +54,7 @@ export function getCorsHeaders(origin: string | null): Record<string, string> {
 
 /**
  * 处理 OPTIONS 预检请求
- * 
+ *
  * @param origin - 请求来源
  * @returns OPTIONS 响应
  */

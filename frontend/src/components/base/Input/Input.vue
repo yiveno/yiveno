@@ -7,7 +7,7 @@ import '@material/web/textfield/outlined-text-field.js'
 import '@material/web/textfield/filled-text-field.js'
 import '@material/web/iconbutton/icon-button.js'
 
-defineOptions({ 
+defineOptions({
   name: 'MdInput'
 })
 
@@ -100,7 +100,7 @@ const clearInput = () => {
     <div v-if="$slots.prepend" class="md-input-prepend">
       <slot name="prepend"></slot>
     </div>
-    
+
     <!-- Material Web Text Field -->
     <md-outlined-text-field
       v-if="variant === 'outlined'"
@@ -130,7 +130,7 @@ const clearInput = () => {
         :name="leadingIcon"
         :size="leadingIconSize"
       />
-      
+
       <!-- Trailing icon: 优先使用自定义 slot，否则使用默认的 loading/clear -->
       <slot v-if="$slots['trailing-icon']" slot="trailing-icon" name="trailing-icon"></slot>
       <Loading v-else-if="loading" slot="trailing-icon" size="xs" />
@@ -174,7 +174,7 @@ const clearInput = () => {
         :name="leadingIcon"
         :size="leadingIconSize"
       />
-      
+
       <!-- Trailing icon: 优先使用自定义 slot，否则使用默认的 loading/clear -->
       <slot v-if="$slots['trailing-icon']" slot="trailing-icon" name="trailing-icon"></slot>
       <Loading v-else-if="loading" slot="trailing-icon" size="xs" />
@@ -198,8 +198,6 @@ const clearInput = () => {
 </template>
 
 <style scoped>
-
-
 /* ========== 可访问性：尊重用户的动画偏好 ========== */
 
 @media (prefers-reduced-motion: reduce) {

@@ -35,10 +35,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   bookmarkClick: [bookmark: SmartRecommendation, event: MouseEvent]
   recommendationUpdate: [recommendations: SmartRecommendation[]]
-  recommendationFeedback: [
-    recommendationId: string,
-    feedback: 'accepted' | 'rejected' | 'clicked'
-  ]
+  recommendationFeedback: [recommendationId: string, feedback: 'accepted' | 'rejected' | 'clicked']
 }>()
 
 // 响应式状态
@@ -76,12 +73,10 @@ async function loadRecommendations() {
     }
 
     // 使用智能推荐引擎获取推荐
-    const newRecommendations =
-      await recommendationEngine.generateRecommendations(options)
+    const newRecommendations = await recommendationEngine.generateRecommendations(options)
 
     recommendations.value = newRecommendations
-    hasMoreRecommendations.value =
-      newRecommendations.length >= props.maxRecommendations
+    hasMoreRecommendations.value = newRecommendations.length >= props.maxRecommendations
 
     // ✅ 初始化favicon状态
     initializeFaviconState(newRecommendations)
@@ -109,19 +104,19 @@ async function loadRecommendations() {
 async function refreshRecommendations() {
   if (isRefreshing.value) return
 
+  isRefreshing.value = true
   try {
-    isRefreshing.value = true
     await loadRecommendations()
   } finally {
-    isRefreshing.value = false
+    isRefreshing.value = false // eslint-disable-line require-atomic-updates
   }
 }
 
 async function loadMoreRecommendations() {
   if (isLoadingMore.value) return
 
+  isLoadingMore.value = true
   try {
-    isLoadingMore.value = true
     logger.info('Component', '🔄 [SmartRecommendation] 加载更多推荐...')
 
     // 构建选项（更大的范围）
@@ -134,8 +129,7 @@ async function loadMoreRecommendations() {
       userContext: await getCurrentUserContext()
     }
 
-    const moreRecommendations =
-      await recommendationEngine.generateRecommendations(options)
+    const moreRecommendations = await recommendationEngine.generateRecommendations(options)
 
     // 添加新的推荐（去重）
     const existingIds = new Set(recommendations.value.map(r => r.id))
@@ -147,18 +141,11 @@ async function loadMoreRecommendations() {
     )
     hasMoreRecommendations.value = newOnes.length > 0
 
-    logger.info(
-      'Component',
-      '✅ [SmartRecommendation] 新增${newOnes.length}个推荐'
-    )
+    logger.info('Component', '✅ [SmartRecommendation] 新增${newOnes.length}个推荐')
   } catch (error) {
-    logger.error(
-      'Component',
-      '❌ [SmartRecommendation] 加载更多推荐失败:',
-      error
-    )
+    logger.error('Component', '❌ [SmartRecommendation] 加载更多推荐失败:', error)
   } finally {
-    isLoadingMore.value = false
+    isLoadingMore.value = false // eslint-disable-line require-atomic-updates
   }
 }
 /**
@@ -247,12 +234,10 @@ function recordRecommendationFeedback(
   // 发出事件供父组件监听
   emit('recommendationFeedback', recommendationId, feedback)
 
-  logger.info(
-    'SmartRecommendation',
-    `📝 记录反馈: ${recommendationId} -> ${feedback}`
-  )
+  logger.info('SmartRecommendation', `📝 记录反馈: ${recommendationId} -> ${feedback}`)
 }
 
+// eslint-disable-next-line complexity -- 推荐原因判断逻辑需要多个条件分支，拆分会降低可读性
 function getRecommendationReason(bookmark: SmartRecommendation): string {
   // 优先使用智能推荐引擎提供的推荐类型
   switch (bookmark.recommendationType) {
@@ -287,17 +272,14 @@ function getRecommendationReason(bookmark: SmartRecommendation): string {
   const visitCount = bookmark.visitCount || 0
 
   if (visitCount > 10) return '常用书签'
-  if (bookmark.recentVisitCount && bookmark.recentVisitCount > 0)
-    return '最近使用'
+  if (bookmark.recentVisitCount && bookmark.recentVisitCount > 0) return '最近使用'
   if (score > 50) return '高分推荐'
   if (bookmark.contextScore > 40) return '上下文相关'
 
   return '智能推荐'
 }
 
-function getReasonBadgeVariant(
-  bookmark: SmartRecommendation
-): 'outlined' | 'soft' {
+function getReasonBadgeVariant(bookmark: SmartRecommendation): 'outlined' | 'soft' {
   const type = bookmark.recommendationType
 
   switch (type) {
@@ -370,8 +352,7 @@ function handleFaviconLoad(event: Event) {
   // 从data属性或通过parent找到对应的书签
   const bookmarkElement = img.closest('.recommendation-item')
   if (bookmarkElement) {
-    const bookmarkTitle =
-      bookmarkElement.querySelector('.bookmark-title')?.textContent
+    const bookmarkTitle = bookmarkElement.querySelector('.bookmark-title')?.textContent
     const bookmark = recommendations.value.find(b => b.title === bookmarkTitle)
     if (bookmark) {
       faviconLoaded.value[bookmark.id] = true
@@ -503,10 +484,7 @@ defineExpose({
         </div>
 
         <!-- 使用指示器 -->
-        <div
-          v-if="bookmark.visitCount && bookmark.visitCount > 0"
-          class="usage-indicator"
-        >
+        <div v-if="bookmark.visitCount && bookmark.visitCount > 0" class="usage-indicator">
           <div
             class="usage-bar"
             :style="{
@@ -544,8 +522,6 @@ defineExpose({
 </template>
 
 <style scoped>
-
-
 @keyframes favicon-pulse {
   0%,
   100% {
@@ -640,8 +616,7 @@ defineExpose({
   height: 100%;
   object-fit: cover;
   border-radius: var(--radius-xs);
-  transition: opacity var(--md-sys-motion-duration-short4)
-    var(--md-sys-motion-easing-standard);
+  transition: opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
 .favicon-image.favicon-loading {
@@ -707,13 +682,8 @@ defineExpose({
 
 .usage-bar {
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    var(--color-success),
-    var(--color-warning)
-  );
-  transition: width var(--md-sys-motion-duration-medium2)
-    var(--md-sys-motion-easing-standard);
+  background: linear-gradient(90deg, var(--color-success), var(--color-warning));
+  transition: width var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-standard);
 }
 
 /* Material Web List 样式 */

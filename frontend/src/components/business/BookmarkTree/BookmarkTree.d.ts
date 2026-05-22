@@ -62,30 +62,20 @@ export interface SimpleBookmarkTreeProps {
 
 // ✅ 组件 Emits：列出所有事件供 TS 推断
 export interface SimpleBookmarkTreeEmits {
-  (event: 'node-click', node: BookmarkNode, e: MouseEvent): void
-  (
-    event: 'folder-toggle',
-    folderId: string,
-    node: BookmarkNode,
-    expanded: boolean
-  ): void
-  (
-    event: 'node-select',
-    nodeId: string,
-    node: BookmarkNode,
-    selected: boolean
-  ): void
-  (event: 'selection-change', ids: string[], nodes: BookmarkNode[]): void
+  (event: 'nodeClick', node: BookmarkNode, e: MouseEvent): void
+  (event: 'folderToggle', folderId: string, node: BookmarkNode, expanded: boolean): void
+  (event: 'nodeSelect', nodeId: string, node: BookmarkNode, selected: boolean): void
+  (event: 'selectionChange', ids: string[], nodes: BookmarkNode[]): void
   (event: 'search', query: string): void
   (event: 'ready'): void
-  (event: 'node-edit', node: BookmarkNode): void
-  (event: 'node-delete', node: BookmarkNode): void
-  (event: 'folder-add', parent: BookmarkNode): void
-  (event: 'bookmark-open-new-tab', node: BookmarkNode): void
-  (event: 'bookmark-copy-url', node: BookmarkNode): void
-  (event: 'expand-state-change', expanded: boolean): void
+  (event: 'nodeEdit', node: BookmarkNode): void
+  (event: 'nodeDelete', node: BookmarkNode): void
+  (event: 'folderAdd', parent: BookmarkNode): void
+  (event: 'bookmarkOpenNewTab', node: BookmarkNode): void
+  (event: 'bookmarkCopyUrl', node: BookmarkNode): void
+  (event: 'expandStateChange', expanded: boolean): void
   (
-    event: 'request-children',
+    event: 'requestChildren',
     payload: {
       folderId: string
       node: BookmarkNode
@@ -94,7 +84,7 @@ export interface SimpleBookmarkTreeEmits {
     }
   ): void
   (
-    event: 'request-more-children',
+    event: 'requestMoreChildren',
     payload: {
       folderId: string
       node: BookmarkNode
@@ -102,4 +92,9 @@ export interface SimpleBookmarkTreeEmits {
       loaded: number
     }
   ): void
+  (event: 'bookmarkToggleFavorite', node: BookmarkNode): void
+  (event: 'folderShare', node: BookmarkNode): void
+  (event: 'bookmarkShare', node: BookmarkNode): void
+  (event: 'bookmarkMove', node: BookmarkNode): void
+  (event: 'descCountsUpdated', counts: Map<string, number>): void
 }

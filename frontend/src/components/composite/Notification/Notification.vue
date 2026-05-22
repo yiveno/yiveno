@@ -17,11 +17,11 @@ interface NotificationItem {
   placement: NotificationPlacement
   createdAt: number
   paused: boolean
-  pausedAt?: number | undefined          // 暂停时的时间戳
-  remainingTime?: number | undefined     // 暂停时的剩余时间（秒）
+  pausedAt?: number | undefined // 暂停时的时间戳
+  remainingTime?: number | undefined // 暂停时的剩余时间（秒）
   timer?: ReturnType<typeof setTimeout> | undefined
   progressStartTime?: number | undefined // 进度条开始时间
-  progressKey?: number | undefined       // 进度条 key，用于强制重新渲染
+  progressKey?: number | undefined // 进度条 key，用于强制重新渲染
 }
 
 interface NotificationConfig {
@@ -79,19 +79,19 @@ function open(config: NotificationConfig & { type: NotificationType }) {
       existing.closable = closable ?? true
       existing.icon = icon ?? true
       existing.paused = false
-      
+
       // 清除旧定时器
       if (existing.timer) {
         clearTimeout(existing.timer)
       }
-      
+
       // 重新设置定时器
       if (existing.duration > 0) {
         existing.timer = setTimeout(() => {
           close(existing.id)
         }, existing.duration * 1000)
       }
-      
+
       return
     }
   }
@@ -130,7 +130,7 @@ function close(id: string) {
 
   const item = state.notifications[index]
   if (!item) return
-  
+
   // 清除定时器
   if (item.timer) {
     clearTimeout(item.timer)
@@ -163,11 +163,11 @@ function handleMouseEnter(id: string) {
 
   item.paused = true
   item.pausedAt = Date.now()
-  
+
   // 计算并保存剩余时间
   const elapsed = (Date.now() - item.createdAt) / 1000
   item.remainingTime = Math.max(0, item.duration - elapsed)
-  
+
   if (item.timer) {
     clearTimeout(item.timer)
     item.timer = undefined
@@ -179,15 +179,15 @@ function handleMouseLeave(id: string) {
   if (!item || !item.duration) return
 
   item.paused = false
-  
+
   // 使用暂停时记录的剩余时间
   const remaining = item.remainingTime ?? item.duration
-  
+
   if (remaining > 0) {
     // ✅ 更新 progressKey 强制重新渲染进度条，使用剩余时间重新开始动画
     // 这样动画时长和定时器时长保持一致
     item.progressKey = Date.now()
-    
+
     // 重启定时器（使用相同的剩余时间）
     item.timer = setTimeout(() => {
       close(item.id)
@@ -202,11 +202,11 @@ function handleMouseLeave(id: string) {
 // 获取进度条样式（纯 CSS 动画驱动）
 function getProgressStyle(item: NotificationItem) {
   if (!item.duration || item.duration <= 0) return {}
-  
+
   // ✅ 如果有剩余时间（恢复后），使用剩余时间作为动画时长
   // 这样动画时长和定时器时长保持一致
   const duration = item.remainingTime ?? item.duration
-  
+
   return {
     animationDuration: `${duration}s`
   }
@@ -229,8 +229,8 @@ defineExpose({
 
 <template>
   <teleport to="body">
-    <div 
-      v-for="placement in placements" 
+    <div
+      v-for="placement in placements"
       :key="placement"
       :class="['ab-notification-container', `ab-notification-${placement}`]"
     >
@@ -244,10 +244,7 @@ defineExpose({
           @mouseleave="handleMouseLeave(item.id)"
         >
           <!-- 进度条：使用纯 CSS 动画，零 JS 开销 -->
-          <div
-            v-if="item.duration && item.duration > 0"
-            class="ab-notification-progress-wrapper"
-          >
+          <div v-if="item.duration && item.duration > 0" class="ab-notification-progress-wrapper">
             <div
               :key="item.progressKey"
               class="ab-notification-progress-bar"
@@ -287,8 +284,6 @@ defineExpose({
 </template>
 
 <style scoped>
-
-
 @keyframes notification-slide-in {
   from {
     opacity: 0;
@@ -306,12 +301,12 @@ defineExpose({
     opacity: 1;
     transform: translateX(0);
   }
-  
+
   50% {
     opacity: 0;
     transform: translateX(100%);
   }
-  
+
   100% {
     max-height: 0;
     margin-bottom: 0;
@@ -475,8 +470,7 @@ defineExpose({
   color: var(--color-text-tertiary);
   background: none;
   cursor: pointer;
-  transition: color var(--md-sys-motion-duration-short2)
-    var(--md-sys-motion-easing-standard);
+  transition: color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
 }
 
 .ab-notification-close:hover {

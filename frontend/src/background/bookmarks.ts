@@ -37,10 +37,7 @@ async function syncAndBroadcast(
 
     // 1. 根据情况选择全量或增量同步（无论内部/外部都需要同步数据）
     if (forceFullSync) {
-      logger.info(
-        'BackgroundBookmarks',
-        '🔄 执行全量同步（移动操作需重建 pathIds）'
-      )
+      logger.info('BackgroundBookmarks', '🔄 执行全量同步（移动操作需重建 pathIds）')
       await bookmarkSyncService.syncAllBookmarks()
     } else {
       // ✅ 优先使用增量同步，性能更好
@@ -92,7 +89,6 @@ async function syncAndBroadcast(
     // ⚠️ 临时注释：scheduleTraitRebuildForIds 导致 background.js 导入 app-components
     // 特征重建将在前端页面打开时自动执行
     // scheduleTraitRebuildForIds([bookmarkId], `background-${eventType}`)
-
   } catch (error) {
     logger.error('BackgroundBookmarks', `❌ 同步失败: ${eventType}`, error)
   }
@@ -120,11 +116,7 @@ export function registerBookmarkChangeListeners(): void {
 
     // ✅ 优化：新书签创建时立即爬取（事件驱动）
     if (bookmark.url && !bookmark.url.startsWith('chrome://')) {
-      logger.info(
-        'BackgroundBookmarks',
-        '🕷️ 新书签立即爬取:',
-        bookmark.title || bookmark.url
-      )
+      logger.info('BackgroundBookmarks', '🕷️ 新书签立即爬取:', bookmark.title || bookmark.url)
       // 异步爬取，不阻塞主流程
       crawlMultipleBookmarks([bookmark], { skipExisting: false }).catch(err => {
         logger.warn('BackgroundBookmarks', '新书签爬取失败（非致命）:', err)
@@ -159,11 +151,7 @@ export function registerBookmarkChangeListeners(): void {
       logger.info('BackgroundBookmarks', `✅ 已清理书签 ${id} 的爬取元数据`)
     } catch (error) {
       // 非致命错误，只记录日志
-      logger.warn(
-        'BackgroundBookmarks',
-        `⚠️ 清理书签 ${id} 的爬取元数据失败（非致命）`,
-        error
-      )
+      logger.warn('BackgroundBookmarks', `⚠️ 清理书签 ${id} 的爬取元数据失败（非致命）`, error)
     }
   })
 

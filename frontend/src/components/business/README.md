@@ -15,11 +15,13 @@
 ## 组件列表
 
 ### BookmarkTree
+
 书签树组件，包含书签展示、拖拽、编辑等业务逻辑。
 
 **路径**：`business/BookmarkTree/`
 
 **使用**：
+
 ```vue
 <script setup>
 import BookmarkTree from '@/components/business/BookmarkTree/BookmarkTree.vue'
@@ -33,6 +35,7 @@ import BookmarkTree from '@/components/business/BookmarkTree/BookmarkTree.vue'
 ---
 
 ### BookmarkSearchInput
+
 书签搜索输入框，包含搜索算法和筛选逻辑。
 
 **路径**：`business/BookmarkSearchInput/`
@@ -40,6 +43,7 @@ import BookmarkTree from '@/components/business/BookmarkTree/BookmarkTree.vue'
 ---
 
 ### BookmarkRecommendations
+
 书签推荐组件，包含推荐算法。
 
 **路径**：`business/BookmarkRecommendations/`
@@ -47,6 +51,7 @@ import BookmarkTree from '@/components/business/BookmarkTree/BookmarkTree.vue'
 ---
 
 ### QuickAddBookmarkDialog
+
 快速添加书签对话框，包含书签创建逻辑。
 
 **路径**：`business/QuickAddBookmarkDialog/`
@@ -54,11 +59,13 @@ import BookmarkTree from '@/components/business/BookmarkTree/BookmarkTree.vue'
 ---
 
 ### GlobalQuickAddBookmark
+
 全局快速添加书签组件。
 
 **路径**：`business/GlobalQuickAddBookmark/`
 
 **使用**：
+
 ```vue
 <script setup>
 import GlobalQuickAddBookmark from '@/components/business/GlobalQuickAddBookmark/GlobalQuickAddBookmark.vue'
@@ -72,11 +79,13 @@ import GlobalQuickAddBookmark from '@/components/business/GlobalQuickAddBookmark
 ---
 
 ### GlobalSyncProgress
+
 全局同步进度组件。
 
 **路径**：`business/GlobalSyncProgress/`
 
 **使用**：
+
 ```vue
 <script setup>
 import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'
@@ -115,12 +124,14 @@ const tooltips = computed(() => ({
 ### ✅ 推荐
 
 1. **直接使用项目 i18n**
+
    ```typescript
    import { useI18n } from '@/utils/i18n-helpers'
    const { t } = useI18n()
    ```
 
 2. **使用项目的服务层**
+
    ```typescript
    import { bookmarkAppService } from '@/application/bookmark/bookmark-app-service'
    ```
@@ -133,16 +144,18 @@ const tooltips = computed(() => ({
 ### ❌ 禁止
 
 1. **创建独立的 i18n 系统**
+
    ```typescript
    // ❌ 错误
    import { useTreeNodeI18n } from './useTreeNodeI18n'
    ```
 
 2. **硬编码文案**
+
    ```vue
    <!-- ❌ 错误 -->
    <Button>删除</Button>
-   
+
    <!-- ✅ 正确 -->
    <Button>{{ t('delete') }}</Button>
    ```

@@ -94,10 +94,7 @@ export class BuiltInSummarizerClient {
    * @param text 原始文本
    * @param options 配置选项
    */
-  async summarize(
-    text: string,
-    options?: SummarizerOptions
-  ): Promise<SummarizerResult> {
+  async summarize(text: string, options?: SummarizerOptions): Promise<SummarizerResult> {
     const available = await this.isAvailable()
 
     if (!available) {
@@ -133,10 +130,7 @@ export class BuiltInSummarizerClient {
    * @param text 原始文本
    * @param options 配置选项
    */
-  async *summarizeStreaming(
-    text: string,
-    options?: SummarizerOptions
-  ): AsyncIterable<string> {
+  async *summarizeStreaming(text: string, options?: SummarizerOptions): AsyncIterable<string> {
     const available = await this.isAvailable()
 
     if (!available) {
@@ -175,10 +169,7 @@ export class BuiltInSummarizerClient {
    * @param texts 文本数组
    * @param options 配置选项
    */
-  async summarizeBatch(
-    texts: string[],
-    options?: SummarizerOptions
-  ): Promise<SummarizerResult[]> {
+  async summarizeBatch(texts: string[], options?: SummarizerOptions): Promise<SummarizerResult[]> {
     const available = await this.isAvailable()
 
     if (!available) {

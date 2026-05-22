@@ -6,7 +6,7 @@ const config = useRuntimeConfig()
 
 const supabaseUrl = computed(() => config.public.supabaseUrl)
 const isConfigured = computed(() => isSupabaseConfigured())
-const currentOrigin = computed(() => typeof window !== 'undefined' ? window.location.origin : '')
+const currentOrigin = computed(() => (typeof window !== 'undefined' ? window.location.origin : ''))
 const callbackUrl = computed(() => `${currentOrigin.value}/auth/callback`)
 const testResult = ref('')
 
@@ -16,17 +16,17 @@ onMounted(() => {
 
 const simulateOAuthCallback = () => {
   testResult.value = '模拟回调功能开发中...'
-  
+
   // 模拟跳转到回调页面
   const mockTokens = {
     access_token: 'mock_access_token_' + Date.now(),
     refresh_token: 'mock_refresh_token_' + Date.now()
   }
-  
+
   const simulatedCallbackUrl = `/auth/callback#access_token=${mockTokens.access_token}&refresh_token=${mockTokens.refresh_token}`
-  
+
   testResult.value = `✅ 模拟回调 URL 生成成功！\n即将跳转到: ${simulatedCallbackUrl}`
-  
+
   setTimeout(() => {
     navigateTo(simulatedCallbackUrl)
   }, 2000)
@@ -37,7 +37,7 @@ const simulateOAuthCallback = () => {
   <div class="test-auth-page">
     <div class="test-container">
       <h1>认证流程测试</h1>
-      
+
       <div class="test-section">
         <h2>1. Supabase 配置检查</h2>
         <div class="test-result">
@@ -48,19 +48,21 @@ const simulateOAuthCallback = () => {
         </div>
         <div class="test-warning">
           <p><strong>⚠️ 重要提示：</strong></p>
-          <p>请确保在 Supabase Dashboard 的 Authentication > URL Configuration 中添加了以下回调 URL：</p>
+          <p>
+            请确保在 Supabase Dashboard 的 Authentication > URL Configuration 中添加了以下回调 URL：
+          </p>
           <code>{{ callbackUrl }}</code>
-          <p style="margin-top: 12px;">
+          <p style="margin-top: 12px">
             <strong>配置链接：</strong>
-            <a 
-              href="https://supabase.com/dashboard/project/cqw547847/auth/url-configuration" 
+            <a
+              href="https://supabase.com/dashboard/project/cqw547847/auth/url-configuration"
               target="_blank"
               class="warning-link"
             >
               打开 Supabase Dashboard 配置页面
             </a>
           </p>
-          <p style="margin-top: 8px; font-size: 12px; opacity: 0.8;">
+          <p style="margin-top: 8px; font-size: 12px; opacity: 0.8">
             注意：添加官网回调 URL 时，请保留现有的 Chrome Extension 回调 URL，不要删除！
           </p>
         </div>
@@ -77,12 +79,8 @@ const simulateOAuthCallback = () => {
 
       <div class="test-section">
         <h2>3. 模拟 OAuth 回调</h2>
-        <p class="test-description">
-          点击下面的按钮模拟 OAuth 登录成功后的回调流程
-        </p>
-        <button class="test-button" @click="simulateOAuthCallback">
-          模拟 OAuth 回调
-        </button>
+        <p class="test-description">点击下面的按钮模拟 OAuth 登录成功后的回调流程</p>
+        <button class="test-button" @click="simulateOAuthCallback">模拟 OAuth 回调</button>
         <div v-if="testResult" class="test-result">
           <p>{{ testResult }}</p>
         </div>

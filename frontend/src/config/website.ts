@@ -1,6 +1,6 @@
 /**
  * 官网 URL 配置
- * 
+ *
  * 插件中所有需要跳转到官网的地方都应该使用这个配置
  */
 
@@ -13,26 +13,26 @@ const WEBSITE_BASE_URL = import.meta.env.VITE_WEBSITE_URL || 'https://acuitybook
 export const websiteUrls = {
   /** 官网首页 */
   home: WEBSITE_BASE_URL,
-  
+
   /** 登录页面 */
   login: `${WEBSITE_BASE_URL}/login`,
-  
+
   /** 账户中心 */
   account: `${WEBSITE_BASE_URL}/account`,
-  
+
   /** 订阅/定价页面 */
   pricing: `${WEBSITE_BASE_URL}/pricing`,
-  
+
   /** 服务条款 */
   terms: `${WEBSITE_BASE_URL}/terms`,
-  
+
   /** 隐私政策 */
-  privacy: `${WEBSITE_BASE_URL}/privacy`,
+  privacy: `${WEBSITE_BASE_URL}/privacy`
 } as const
 
 /**
  * 在新标签页中打开官网 URL
- * 
+ *
  * @param url - 要打开的 URL
  */
 export async function openWebsiteUrl(url: string): Promise<void> {

@@ -160,7 +160,8 @@ bun run i18n:replace
 请选择 (0-4): 1
 ```
 
-**建议**: 
+**建议**:
+
 - 第一次选择 "1" (50条)
 - 测试通过后，逐步增加到 100、200 条
 - **不要一次性处理全部！**
@@ -355,15 +356,15 @@ jobs:
   "common.save": { "message": "保存" },
   "common.cancel": { "message": "取消" },
   "common.confirm": { "message": "确认" },
-  
+
   // 侧边栏
   "sidebar.bookmarks.title": { "message": "书签管理" },
   "sidebar.recent.title": { "message": "最近访问" },
-  
+
   // 错误消息
   "error.network.timeout": { "message": "网络超时" },
   "error.save.failed": { "message": "保存失败" },
-  
+
   // 成功消息
   "success.bookmark.created": { "message": "书签创建成功" },
   "success.bookmark.deleted": { "message": "书签删除成功" }

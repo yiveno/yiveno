@@ -1,7 +1,7 @@
 /**
  * 分享通知监听器
  * 在 Background Script 中运行，监听新的分享通知
- * 
+ *
  * ⚠️ Service Worker 环境限制：
  * - 不能导入任何包含 Vue 的模块
  * - 不能导入任何包含 Material Web Components 的模块
@@ -58,10 +58,10 @@ export function initShareNotificationListener() {
 async function checkNewNotifications() {
   try {
     // 从 chrome.storage 获取 access token
-    const result = await chrome.storage.local.get(['supabase_session']) as {
+    const result = (await chrome.storage.local.get(['supabase_session'])) as {
       supabase_session?: { access_token: string }
     }
-    
+
     if (!result.supabase_session?.access_token) {
       logger.debug('ShareNotificationListener', '用户未登录，跳过通知检查')
       return
@@ -74,14 +74,14 @@ async function checkNewNotifications() {
 
     // 获取未读通知数量
     const unreadCountResult = await trpc.share.getUnreadCount.query({ accessToken })
-    
+
     if (!unreadCountResult.success) {
       logger.error('ShareNotificationListener', '获取未读数量失败')
       return
     }
 
     const unreadCount = unreadCountResult.data.count
-    
+
     logger.info('ShareNotificationListener', '未读通知数量', { unreadCount })
 
     // 更新 Badge
@@ -139,7 +139,7 @@ async function updateBadge(count: number): Promise<void> {
 /**
  * 显示 Chrome 系统通知
  */
-async function showChromeNotification(notification: { 
+async function showChromeNotification(notification: {
   title: string
   message: string
   data?: { share_url?: string; [key: string]: unknown }
@@ -151,10 +151,7 @@ async function showChromeNotification(notification: {
       iconUrl: chrome.runtime.getURL('icons/icon-128.png'),
       title: notification.title,
       message: notification.message,
-      buttons: [
-        { title: '查看' },
-        { title: '稍后' }
-      ],
+      buttons: [{ title: '查看' }, { title: '稍后' }],
       requireInteraction: true
     })
 
@@ -175,7 +172,7 @@ async function showChromeNotification(notification: {
     })
 
     // 监听通知点击
-    chrome.notifications.onClicked.addListener((notifId) => {
+    chrome.notifications.onClicked.addListener(notifId => {
       if (notifId === chromeNotification && notification.data?.share_url) {
         // 点击通知本身，打开分享链接
         chrome.tabs.create({ url: notification.data.share_url })

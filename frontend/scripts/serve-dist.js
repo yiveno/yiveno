@@ -55,7 +55,5 @@ createServer((req, res) => {
 }).listen(PORT, () => {
   console.log(`➡️  Serving dist from ${DIST_DIR}`)
   console.log(`🌐 Open http://localhost:${PORT}/popup.html`)
-  console.log(
-    '   Other pages: /management.html /settings.html /side-panel.html /onboarding.html'
-  )
+  console.log('   Other pages: /management.html /settings.html /side-panel.html /onboarding.html')
 })

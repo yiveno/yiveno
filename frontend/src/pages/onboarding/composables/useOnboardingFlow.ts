@@ -19,20 +19,23 @@ export function useOnboardingFlow() {
       id: 'welcome',
       title: 'Welcome to AcuityBookmarks',
       subtitle: 'AI-Powered Bookmark Management',
-      description: 'Unlock the knowledge in your bookmarks with intelligent organization and semantic search.',
+      description:
+        'Unlock the knowledge in your bookmarks with intelligent organization and semantic search.',
       visual: 'hero',
       showAction: true
     },
     {
       id: 'sync',
       title: 'Building Your Local Index',
-      description: 'We\'re analyzing your bookmarks to create a fast, searchable index. Your data never leaves your device.',
+      description:
+        "We're analyzing your bookmarks to create a fast, searchable index. Your data never leaves your device.",
       visual: 'sync'
     },
     {
       id: 'search',
       title: 'AI Semantic Search',
-      description: 'Find bookmarks by meaning, not just keywords. Ask in natural language and get instant, relevant results.',
+      description:
+        'Find bookmarks by meaning, not just keywords. Ask in natural language and get instant, relevant results.',
       visual: 'search',
       showAction: true
     },
@@ -46,7 +49,7 @@ export function useOnboardingFlow() {
   ]
 
   const currentStepIndex = ref(0)
-  
+
   const currentStep = computed(() => steps[currentStepIndex.value])
   const isFirst = computed(() => currentStepIndex.value === 0)
   const isLast = computed(() => currentStepIndex.value === steps.length - 1)

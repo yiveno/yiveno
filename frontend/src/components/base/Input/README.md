@@ -42,10 +42,10 @@ const value = ref('')
 <template>
   <!-- Outlined 样式（默认） -->
   <Input v-model="value" variant="outlined" placeholder="Outlined" />
-  
+
   <!-- Filled 样式 -->
   <Input v-model="value" variant="filled" placeholder="Filled" />
-  
+
   <!-- Underlined 样式 -->
   <Input v-model="value" variant="underlined" placeholder="Underlined" />
 </template>
@@ -74,26 +74,13 @@ const value = ref('')
 ```vue
 <template>
   <!-- 前缀图标 -->
-  <Input
-    v-model="value"
-    prefix-icon="icon-search"
-    placeholder="搜索..."
-  />
-  
+  <Input v-model="value" prefix-icon="icon-search" placeholder="搜索..." />
+
   <!-- 后缀图标 -->
-  <Input
-    v-model="value"
-    suffix-icon="icon-eye"
-    placeholder="密码"
-    type="password"
-  />
-  
+  <Input v-model="value" suffix-icon="icon-eye" placeholder="密码" type="password" />
+
   <!-- 图标点击事件 -->
-  <Input
-    v-model="value"
-    suffix-icon="icon-send"
-    @suffix-click="handleSend"
-  />
+  <Input v-model="value" suffix-icon="icon-send" @suffix-click="handleSend" />
 </template>
 ```
 
@@ -101,12 +88,7 @@ const value = ref('')
 
 ```vue
 <template>
-  <Input
-    v-model="value"
-    clearable
-    placeholder="可清除的输入框"
-    @clear="handleClear"
-  />
+  <Input v-model="value" clearable placeholder="可清除的输入框" @clear="handleClear" />
 </template>
 ```
 
@@ -144,10 +126,10 @@ const errorMessage = computed(() => {
 <template>
   <!-- 禁用 -->
   <Input v-model="value" disabled placeholder="禁用状态" />
-  
+
   <!-- 只读 -->
   <Input v-model="value" readonly placeholder="只读状态" />
-  
+
   <!-- 加载中 -->
   <Input v-model="value" loading placeholder="加载中..." />
 </template>
@@ -159,16 +141,16 @@ const errorMessage = computed(() => {
 <template>
   <!-- 文本 -->
   <Input v-model="text" type="text" placeholder="文本" />
-  
+
   <!-- 密码 -->
   <Input v-model="password" type="password" placeholder="密码" />
-  
+
   <!-- 数字 -->
   <Input v-model.number="number" type="number" placeholder="数字" />
-  
+
   <!-- 邮箱 -->
   <Input v-model="email" type="email" placeholder="邮箱" />
-  
+
   <!-- URL -->
   <Input v-model="url" type="url" placeholder="网址" />
 </template>
@@ -178,11 +160,7 @@ const errorMessage = computed(() => {
 
 ```vue
 <template>
-  <Input
-    v-model="value"
-    borderless
-    placeholder="无边框输入框"
-  />
+  <Input v-model="value" borderless placeholder="无边框输入框" />
 </template>
 ```
 
@@ -190,45 +168,45 @@ const errorMessage = computed(() => {
 
 ### Props
 
-| 属性 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `modelValue` | `string \| number` | `''` | 输入框的值（v-model） |
-| `label` | `string` | - | 输入框标签 |
-| `variant` | `'outlined' \| 'filled' \| 'underlined'` | `'outlined'` | 输入框样式 |
-| `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | 输入框大小 |
-| `type` | `string` | `'text'` | 输入框类型 |
-| `placeholder` | `string` | - | 占位符文本 |
-| `disabled` | `boolean` | `false` | 是否禁用 |
-| `readonly` | `boolean` | `false` | 是否只读 |
-| `clearable` | `boolean` | `false` | 是否可清除 |
-| `error` | `boolean` | `false` | 是否显示错误状态 |
-| `errorMessage` | `string` | - | 错误提示信息 |
-| `hint` | `string` | - | 提示信息 |
-| `prefixIcon` | `string` | - | 前缀图标 |
-| `suffixIcon` | `string` | - | 后缀图标 |
-| `loading` | `boolean` | `false` | 是否加载中 |
-| `borderless` | `boolean` | `false` | 是否无边框 |
-| `maxlength` | `number` | - | 最大长度 |
-| `autocomplete` | `string` | - | 自动完成 |
-| `name` | `string` | - | 表单字段名 |
+| 属性           | 类型                                     | 默认值       | 说明                  |
+| -------------- | ---------------------------------------- | ------------ | --------------------- |
+| `modelValue`   | `string \| number`                       | `''`         | 输入框的值（v-model） |
+| `label`        | `string`                                 | -            | 输入框标签            |
+| `variant`      | `'outlined' \| 'filled' \| 'underlined'` | `'outlined'` | 输入框样式            |
+| `size`         | `'sm' \| 'md' \| 'lg'`                   | `'md'`       | 输入框大小            |
+| `type`         | `string`                                 | `'text'`     | 输入框类型            |
+| `placeholder`  | `string`                                 | -            | 占位符文本            |
+| `disabled`     | `boolean`                                | `false`      | 是否禁用              |
+| `readonly`     | `boolean`                                | `false`      | 是否只读              |
+| `clearable`    | `boolean`                                | `false`      | 是否可清除            |
+| `error`        | `boolean`                                | `false`      | 是否显示错误状态      |
+| `errorMessage` | `string`                                 | -            | 错误提示信息          |
+| `hint`         | `string`                                 | -            | 提示信息              |
+| `prefixIcon`   | `string`                                 | -            | 前缀图标              |
+| `suffixIcon`   | `string`                                 | -            | 后缀图标              |
+| `loading`      | `boolean`                                | `false`      | 是否加载中            |
+| `borderless`   | `boolean`                                | `false`      | 是否无边框            |
+| `maxlength`    | `number`                                 | -            | 最大长度              |
+| `autocomplete` | `string`                                 | -            | 自动完成              |
+| `name`         | `string`                                 | -            | 表单字段名            |
 
 ### Emits
 
-| 事件名 | 参数 | 说明 |
-|--------|------|------|
-| `update:modelValue` | `(value: string \| number)` | 值变化时触发 |
-| `input` | `(value: string \| number)` | 输入时触发 |
-| `focus` | `(e: FocusEvent)` | 获得焦点时触发 |
-| `blur` | `(e: FocusEvent)` | 失去焦点时触发 |
-| `clear` | `()` | 清除内容时触发 |
-| `prefix-click` | `(e: MouseEvent)` | 前缀图标点击时触发 |
-| `suffix-click` | `(e: MouseEvent)` | 后缀图标点击时触发 |
-| `keydown` | `(e: KeyboardEvent)` | 键盘按下时触发 |
+| 事件名              | 参数                        | 说明               |
+| ------------------- | --------------------------- | ------------------ |
+| `update:modelValue` | `(value: string \| number)` | 值变化时触发       |
+| `input`             | `(value: string \| number)` | 输入时触发         |
+| `focus`             | `(e: FocusEvent)`           | 获得焦点时触发     |
+| `blur`              | `(e: FocusEvent)`           | 失去焦点时触发     |
+| `clear`             | `()`                        | 清除内容时触发     |
+| `prefix-click`      | `(e: MouseEvent)`           | 前缀图标点击时触发 |
+| `suffix-click`      | `(e: MouseEvent)`           | 后缀图标点击时触发 |
+| `keydown`           | `(e: KeyboardEvent)`        | 键盘按下时触发     |
 
 ### Slots
 
-| 插槽名 | 说明 |
-|--------|------|
+| 插槽名   | 说明     |
+| -------- | -------- |
 | `prefix` | 前缀内容 |
 | `suffix` | 后缀内容 |
 
@@ -240,13 +218,13 @@ const errorMessage = computed(() => {
   --input-sm-height: 32px;
   --input-md-height: 40px;
   --input-lg-height: 48px;
-  
+
   /* 圆角 */
   border-radius: var(--radius-md);
-  
+
   /* 边框 */
   border: 1px solid var(--color-border);
-  
+
   /* 颜色 */
   color: var(--color-text-primary);
   background: var(--color-surface);
@@ -308,7 +286,7 @@ const togglePassword = () => {
       :error-message="errors.usernameMessage"
       required
     />
-    
+
     <Input
       v-model="form.email"
       label="邮箱"
@@ -319,7 +297,7 @@ const togglePassword = () => {
       :error-message="errors.emailMessage"
       required
     />
-    
+
     <Button type="submit">提交</Button>
   </form>
 </template>

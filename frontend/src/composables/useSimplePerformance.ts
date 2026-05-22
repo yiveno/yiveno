@@ -97,10 +97,7 @@ export function useVirtualScroll<T>(
 
   const visibleRange = computed(() => {
     const start = Math.floor(scrollTop.value / itemHeight)
-    const end = Math.min(
-      start + Math.ceil(containerHeight / itemHeight) + overscan,
-      items.length
-    )
+    const end = Math.min(start + Math.ceil(containerHeight / itemHeight) + overscan, items.length)
     return {
       start: Math.max(0, start - overscan),
       end
@@ -218,10 +215,7 @@ export function usePerformanceMonitor(componentName: string) {
   }
 
   const endRender = () => {
-    const duration = performance.measure(
-      `${componentName}-render`,
-      `${componentName}-render`
-    )
+    const duration = performance.measure(`${componentName}-render`, `${componentName}-render`)
     metrics.value.renderTime = duration.duration
   }
 
@@ -230,10 +224,7 @@ export function usePerformanceMonitor(componentName: string) {
   }
 
   const endUpdate = () => {
-    const duration = performance.measure(
-      `${componentName}-update`,
-      `${componentName}-update`
-    )
+    const duration = performance.measure(`${componentName}-update`, `${componentName}-update`)
     metrics.value.updateTime = duration.duration
   }
 
@@ -244,8 +235,7 @@ export function usePerformanceMonitor(componentName: string) {
           memory: { usedJSHeapSize: number; totalJSHeapSize: number }
         }
       ).memory
-      metrics.value.memoryUsage =
-        (memory.usedJSHeapSize / memory.totalJSHeapSize) * 100
+      metrics.value.memoryUsage = (memory.usedJSHeapSize / memory.totalJSHeapSize) * 100
     }
   }
 
@@ -301,10 +291,7 @@ export function useMemoryManagement() {
 
   const cleanup = () => {
     // 强制垃圾回收（如果可用）
-    if (
-      'gc' in window &&
-      typeof (window as unknown as { gc?: () => void }).gc === 'function'
-    ) {
+    if ('gc' in window && typeof (window as unknown as { gc?: () => void }).gc === 'function') {
       ;(window as unknown as { gc: () => void }).gc()
     }
   }

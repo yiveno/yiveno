@@ -54,7 +54,7 @@ export async function detectExtension(): Promise<boolean> {
   try {
     // 保存 runtime 引用以避免 TypeScript 类型检查问题
     const runtime = chrome.runtime
-    
+
     // 尝试与扩展通信
     // 注意：不需要指定 extensionId，扩展会通过 externally_connectable 配置接收消息
     const response = await new Promise<ExtensionResponse>((resolve, reject) => {

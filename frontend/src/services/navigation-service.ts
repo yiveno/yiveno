@@ -51,9 +51,7 @@ async function openExtensionUrl(path: string): Promise<void> {
  */
 async function openSidePanel(): Promise<void> {
   if (!chrome.sidePanel?.open || !chrome.sidePanel?.setOptions) {
-    const error = new Error(
-      '当前浏览器不支持侧边栏功能，请升级到 Chrome 116 或更高版本'
-    )
+    const error = new Error('当前浏览器不支持侧边栏功能，请升级到 Chrome 116 或更高版本')
     logger.error('NavigationService', error.message)
     throw error
   }
@@ -65,9 +63,7 @@ async function openSidePanel(): Promise<void> {
   })
 
   if (!currentTab?.windowId) {
-    const error = new Error(
-      '无法获取当前窗口信息，请确保至少有一个浏览器窗口处于打开状态'
-    )
+    const error = new Error('无法获取当前窗口信息，请确保至少有一个浏览器窗口处于打开状态')
     logger.error('NavigationService', error.message)
     throw error
   }

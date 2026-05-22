@@ -65,11 +65,7 @@ export interface DeleteOperation extends BaseOperation {
 /**
  * 联合类型
  */
-export type BookmarkOperation =
-  | CreateOperation
-  | MoveOperation
-  | EditOperation
-  | DeleteOperation
+export type BookmarkOperation = CreateOperation | MoveOperation | EditOperation | DeleteOperation
 
 /**
  * Diff 结果统计
@@ -159,12 +155,8 @@ class BookmarkDiffService {
             isFolder: !proposalNode.url,
             oldTitle: originalNode.title,
             newTitle: proposalNode.title,
-            ...(originalNode.url !== undefined
-              ? { oldUrl: originalNode.url }
-              : {}),
-            ...(proposalNode.url !== undefined
-              ? { newUrl: proposalNode.url }
-              : {})
+            ...(originalNode.url !== undefined ? { oldUrl: originalNode.url } : {}),
+            ...(proposalNode.url !== undefined ? { newUrl: proposalNode.url } : {})
           })
         }
 
@@ -241,9 +233,7 @@ class BookmarkDiffService {
    * 场景：当一个节点插入到列表中间时，后面的节点 index 都会 +1
    * 但这些节点实际上没有"移动"，不需要调用 Chrome API
    */
-  private filterFalsePositiveMoves(
-    operations: BookmarkOperation[]
-  ): BookmarkOperation[] {
+  private filterFalsePositiveMoves(operations: BookmarkOperation[]): BookmarkOperation[] {
     logger.info('BookmarkDiffService', '🧹 开始过滤整体偏移')
 
     // 按 parentId 分组同级移动操作
@@ -284,33 +274,25 @@ class BookmarkDiffService {
       if (allSame && indexDeltas.length > 1) {
         // 整体偏移：所有节点的 index 都增加/减少相同的值
         // 这是因为其他节点插入/删除造成的连锁反应，不算真正的移动
-        logger.info(
-          'BookmarkDiffService',
-          `🚫 过滤整体偏移（parentId=${parentId}）`,
-          {
-            filteredCount: moves.length,
-            delta: indexDeltas[0],
-            affectedNodes: moves.map(m => m.title).slice(0, 5), // 只显示前5个
-            more: moves.length > 5 ? `... 还有 ${moves.length - 5} 个` : ''
-          }
-        )
+        logger.info('BookmarkDiffService', `🚫 过滤整体偏移（parentId=${parentId}）`, {
+          filteredCount: moves.length,
+          delta: indexDeltas[0],
+          affectedNodes: moves.map(m => m.title).slice(0, 5), // 只显示前5个
+          more: moves.length > 5 ? `... 还有 ${moves.length - 5} 个` : ''
+        })
         filteredCount += moves.length
         // 不添加到 genuineMoves
       } else {
         // 非整体偏移：真正的位置调换
-        logger.debug(
-          'BookmarkDiffService',
-          `✅ 保留真实移动（parentId=${parentId}）`,
-          {
-            count: moves.length,
-            nodes: moves.map(m => ({
-              title: m.title,
-              from: m.fromIndex,
-              to: m.toIndex,
-              delta: m.toIndex - m.fromIndex
-            }))
-          }
-        )
+        logger.debug('BookmarkDiffService', `✅ 保留真实移动（parentId=${parentId}）`, {
+          count: moves.length,
+          nodes: moves.map(m => ({
+            title: m.title,
+            from: m.fromIndex,
+            to: m.toIndex,
+            delta: m.toIndex - m.fromIndex
+          }))
+        })
         genuineMoves.push(...moves)
       }
     }
@@ -331,10 +313,7 @@ class BookmarkDiffService {
   /**
    * 递归构建节点映射表
    */
-  private buildNodeMap(
-    node: BookmarkNode,
-    map: Map<string, BookmarkNode>
-  ): void {
+  private buildNodeMap(node: BookmarkNode, map: Map<string, BookmarkNode>): void {
     map.set(node.id, node)
 
     if (node.children && node.children.length > 0) {

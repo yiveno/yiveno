@@ -25,7 +25,14 @@
 
 ```typescript
 // 导入所有 tokens
-import { colors, spacing, shadows, duration, easing, glassmorphism } from '@acuity-bookmarks/design-tokens'
+import {
+  colors,
+  spacing,
+  shadows,
+  duration,
+  easing,
+  glassmorphism
+} from '@acuity-bookmarks/design-tokens'
 
 // 或者按需导入
 import { colors } from '@acuity-bookmarks/design-tokens/colors'
@@ -72,7 +79,7 @@ const cardStyle = {
   /* 使用 Material Design 颜色 */
   background-color: var(--md-sys-color-primary);
   color: var(--md-sys-color-on-primary);
-  
+
   /* 使用自定义 tokens（需要先定义 CSS 变量） */
   padding: var(--spacing-md);
   box-shadow: var(--shadow-md);
@@ -93,47 +100,50 @@ const cardStyle = {
 ### 1. 颜色系统 (colors)
 
 #### 主色阶梯
+
 ```typescript
-colors.primary[50]   // #eff6ff - 最浅
-colors.primary[100]  // #dbeafe
-colors.primary[200]  // #bfdbfe
-colors.primary[300]  // #93c5fd
-colors.primary[400]  // #60a5fa
-colors.primary[500]  // #3b82f6 - 主色
-colors.primary[600]  // #2563eb
-colors.primary[700]  // #1d4ed8
-colors.primary[800]  // #1e40af
-colors.primary[900]  // #1e3a8a
-colors.primary[950]  // #172554 - 最深
+colors.primary[50] // #eff6ff - 最浅
+colors.primary[100] // #dbeafe
+colors.primary[200] // #bfdbfe
+colors.primary[300] // #93c5fd
+colors.primary[400] // #60a5fa
+colors.primary[500] // #3b82f6 - 主色
+colors.primary[600] // #2563eb
+colors.primary[700] // #1d4ed8
+colors.primary[800] // #1e40af
+colors.primary[900] // #1e3a8a
+colors.primary[950] // #172554 - 最深
 ```
 
 #### 次要色阶梯
+
 ```typescript
-colors.secondary[50]   // #fdf4ff - 最浅
-colors.secondary[500]  // #d946ef
-colors.secondary[600]  // #c026d3 - 次要色
-colors.secondary[900]  // #701a75 - 最深
+colors.secondary[50] // #fdf4ff - 最浅
+colors.secondary[500] // #d946ef
+colors.secondary[600] // #c026d3 - 次要色
+colors.secondary[900] // #701a75 - 最深
 ```
 
 #### 语义化颜色
+
 ```typescript
-colors.semantic.success  // #22c55e
-colors.semantic.error    // #ef4444
-colors.semantic.warning  // #f59e0b
-colors.semantic.info     // #3b82f6
-colors.semantic.ai       // #c026d3
+colors.semantic.success // #22c55e
+colors.semantic.error // #ef4444
+colors.semantic.warning // #f59e0b
+colors.semantic.info // #3b82f6
+colors.semantic.ai // #c026d3
 ```
 
 ### 2. 间距系统 (spacing)
 
 ```typescript
-spacing.none   // 0
-spacing.xs     // 4px
-spacing.sm     // 8px
-spacing.md     // 12px
-spacing.base   // 16px
-spacing.lg     // 24px
-spacing.xl     // 32px
+spacing.none // 0
+spacing.xs // 4px
+spacing.sm // 8px
+spacing.md // 12px
+spacing.base // 16px
+spacing.lg // 24px
+spacing.xl // 32px
 spacing['2xl'] // 48px
 spacing['3xl'] // 64px
 ```
@@ -141,68 +151,73 @@ spacing['3xl'] // 64px
 ### 3. 阴影系统 (shadows)
 
 ```typescript
-shadows.none   // 无阴影
-shadows.xs     // 微小阴影
-shadows.sm     // 小阴影
-shadows.md     // 中等阴影
-shadows.lg     // 大阴影
-shadows.xl     // 超大阴影
+shadows.none // 无阴影
+shadows.xs // 微小阴影
+shadows.sm // 小阴影
+shadows.md // 中等阴影
+shadows.lg // 大阴影
+shadows.xl // 超大阴影
 shadows['2xl'] // 超超大阴影
 
 // 特殊阴影
-shadows.inner              // 内阴影
-shadows.focus              // 焦点阴影（蓝色）
-shadows.focusSecondary     // 焦点阴影（紫色）
-shadows.coloredPrimary     // 彩色阴影（主色）
-shadows.coloredSecondary   // 彩色阴影（次要色）
+shadows.inner // 内阴影
+shadows.focus // 焦点阴影（蓝色）
+shadows.focusSecondary // 焦点阴影（紫色）
+shadows.coloredPrimary // 彩色阴影（主色）
+shadows.coloredSecondary // 彩色阴影（次要色）
 ```
 
 ### 4. 动画系统 (animations)
 
 #### 时长
+
 ```typescript
-duration.instant  // 50ms
-duration.fastest  // 100ms
-duration.fast     // 200ms
-duration.normal   // 300ms
-duration.slow     // 400ms
-duration.slowest  // 700ms
+duration.instant // 50ms
+duration.fastest // 100ms
+duration.fast // 200ms
+duration.normal // 300ms
+duration.slow // 400ms
+duration.slowest // 700ms
 ```
 
 #### 缓动函数
+
 ```typescript
-easing.standard              // 标准
-easing.emphasized            // 强调
-easing.emphasizedDecelerate  // 强调减速
-easing.emphasizedAccelerate  // 强调加速
-easing.spring                // 弹性
-easing.bounce                // 回弹
+easing.standard // 标准
+easing.emphasized // 强调
+easing.emphasizedDecelerate // 强调减速
+easing.emphasizedAccelerate // 强调加速
+easing.spring // 弹性
+easing.bounce // 回弹
 ```
 
 ### 5. 视觉效果 (effects)
 
 #### 玻璃态效果
+
 ```typescript
-glassmorphism.light   // 轻度玻璃态
-glassmorphism.medium  // 中度玻璃态
-glassmorphism.heavy   // 重度玻璃态
-glassmorphism.dark    // 深色玻璃态
+glassmorphism.light // 轻度玻璃态
+glassmorphism.medium // 中度玻璃态
+glassmorphism.heavy // 重度玻璃态
+glassmorphism.dark // 深色玻璃态
 ```
 
 #### 渐变
+
 ```typescript
-gradients.brand           // 品牌渐变
-gradients.brandVertical   // 品牌渐变（垂直）
-gradients.subtle          // 微妙渐变
-gradients.shine           // 光泽效果
+gradients.brand // 品牌渐变
+gradients.brandVertical // 品牌渐变（垂直）
+gradients.subtle // 微妙渐变
+gradients.shine // 光泽效果
 ```
 
 #### 模糊
+
 ```typescript
-blur.none   // 无模糊
-blur.sm     // 小模糊
-blur.md     // 中等模糊
-blur.lg     // 大模糊
+blur.none // 无模糊
+blur.sm // 小模糊
+blur.md // 中等模糊
+blur.lg // 大模糊
 ```
 
 ---
@@ -230,7 +245,7 @@ import { glassmorphism, shadows, spacing } from '@acuity-bookmarks/design-tokens
   backdrop-filter: v-bind('glassmorphism.light.backdropFilter');
   border: v-bind('glassmorphism.light.border');
   box-shadow: v-bind('glassmorphism.light.boxShadow');
-  
+
   /* 间距和圆角 */
   padding: v-bind('spacing.lg');
   border-radius: 16px;
@@ -246,9 +261,7 @@ import { colors, shadows, duration, easing } from '@acuity-bookmarks/design-toke
 </script>
 
 <template>
-  <button class="animated-button">
-    点击我
-  </button>
+  <button class="animated-button">点击我</button>
 </template>
 
 <style scoped>
@@ -256,10 +269,10 @@ import { colors, shadows, duration, easing } from '@acuity-bookmarks/design-toke
   /* 颜色 */
   background: v-bind('colors.primary[500]');
   color: white;
-  
+
   /* 阴影 */
   box-shadow: v-bind('shadows.md');
-  
+
   /* 动画 */
   transition: all v-bind('duration.fast') v-bind('easing.standard');
 }
@@ -294,10 +307,10 @@ import { gradients, spacing } from '@acuity-bookmarks/design-tokens'
 .gradient-hero {
   /* 品牌渐变背景 */
   background: v-bind('gradients.brand');
-  
+
   /* 间距 */
   padding: v-bind('spacing["2xl"]');
-  
+
   /* 文字颜色 */
   color: white;
   text-align: center;
@@ -335,7 +348,7 @@ const successStyle = {
 
 // ❌ 避免：直接使用色阶
 const successStyle = {
-  color: colors.primary[500]  // 不清楚这是什么用途
+  color: colors.primary[500] // 不清楚这是什么用途
 }
 ```
 

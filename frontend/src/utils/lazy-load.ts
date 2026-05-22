@@ -1,6 +1,6 @@
 /**
  * 懒加载工具函数
- * 
+ *
  * 提供组件和模块的懒加载功能，优化首屏加载速度
  */
 
@@ -27,10 +27,10 @@ interface LazyComponentOptions {
 
 /**
  * 创建懒加载组件
- * 
+ *
  * @param options - 懒加载配置
  * @returns Vue 异步组件
- * 
+ *
  * @example
  * ```typescript
  * const BookmarkList = createLazyComponent({
@@ -81,17 +81,17 @@ export function createLazyComponent(options: LazyComponentOptions) {
 
 /**
  * 懒加载模块（带缓存）
- * 
+ *
  * @param loader - 加载模块的函数
  * @returns 缓存的模块加载函数
- * 
+ *
  * @example
  * ```typescript
  * const loadHeavyModule = createLazyModule(() => import('./heavy-module'))
- * 
+ *
  * // 第一次调用会加载模块
  * const module1 = await loadHeavyModule()
- * 
+ *
  * // 第二次调用直接返回缓存
  * const module2 = await loadHeavyModule()
  * ```
@@ -113,17 +113,17 @@ export function createLazyModule<T>(loader: () => Promise<T>): () => Promise<T> 
 
 /**
  * 预加载组件
- * 
+ *
  * 在空闲时预加载组件，提高后续加载速度
- * 
+ *
  * @param loader - 加载组件的函数
  * @param priority - 优先级（high/low），默认 low
- * 
+ *
  * @example
  * ```typescript
  * // 低优先级预加载（空闲时）
  * preloadComponent(() => import('./BookmarkList.vue'))
- * 
+ *
  * // 高优先级预加载（立即）
  * preloadComponent(() => import('./BookmarkList.vue'), 'high')
  * ```
@@ -158,10 +158,10 @@ export function preloadComponent(
 
 /**
  * 批量预加载组件
- * 
+ *
  * @param loaders - 加载组件的函数数组
  * @param priority - 优先级（high/low），默认 low
- * 
+ *
  * @example
  * ```typescript
  * preloadComponents([
@@ -180,12 +180,12 @@ export function preloadComponents(
 
 /**
  * 懒加载图片
- * 
+ *
  * 使用 Intersection Observer 实现图片懒加载
- * 
+ *
  * @param selector - 图片选择器
  * @param options - Intersection Observer 配置
- * 
+ *
  * @example
  * ```typescript
  * // 在组件挂载后调用
@@ -194,10 +194,7 @@ export function preloadComponents(
  * })
  * ```
  */
-export function lazyLoadImages(
-  selector: string,
-  options?: IntersectionObserverInit
-): void {
+export function lazyLoadImages(selector: string, options?: IntersectionObserverInit): void {
   if (typeof IntersectionObserver === 'undefined') {
     // 降级：立即加载所有图片
     document.querySelectorAll<HTMLImageElement>(selector).forEach(img => {
@@ -210,7 +207,7 @@ export function lazyLoadImages(
     return
   }
 
-  const observer = new IntersectionObserver((entries) => {
+  const observer = new IntersectionObserver(entries => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         const img = entry.target as HTMLImageElement

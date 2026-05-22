@@ -57,15 +57,12 @@ useSeoMeta({
             <div
               class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-6"
             >
-              <span
-                class="text-sm font-medium text-primary-400 tracking-wider uppercase"
+              <span class="text-sm font-medium text-primary-400 tracking-wider uppercase"
                 >Download</span
               >
             </div>
 
-            <h1
-              class="text-4xl md:text-5xl font-bold tracking-tight mb-6 leading-tight"
-            >
+            <h1 class="text-4xl md:text-5xl font-bold tracking-tight mb-6 leading-tight">
               立即安装<br />
               <span
                 class="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-accent-400"
@@ -75,8 +72,7 @@ useSeoMeta({
             </h1>
 
             <p class="text-lg text-content-muted leading-relaxed mb-8">
-              Chrome、Edge 直接安装。开发者也可本地加载 dist/
-              目录，或自定义打包。
+              Chrome、Edge 直接安装。开发者也可本地加载 dist/ 目录，或自定义打包。
             </p>
 
             <div class="flex flex-col sm:flex-row gap-4">
@@ -84,13 +80,7 @@ useSeoMeta({
                 <Download class="w-5 h-5 mr-2" />
                 Chrome Web Store
               </Button>
-              <Button
-                variant="secondary"
-                size="lg"
-                to="/features"
-                :as="NuxtLink"
-                >查看功能</Button
-              >
+              <Button variant="secondary" size="lg" to="/features" :as="NuxtLink">查看功能</Button>
             </div>
           </div>
 
@@ -107,8 +97,7 @@ useSeoMeta({
                 >
                 <span
                   >在仓库根目录运行
-                  <code
-                    class="px-2 py-1 bg-bg-depth rounded text-sm text-accent-400"
+                  <code class="px-2 py-1 bg-bg-depth rounded text-sm text-accent-400"
                     >bun run build:frontend</code
                   ></span
                 >
@@ -120,8 +109,7 @@ useSeoMeta({
                 >
                 <span
                   >打开
-                  <code
-                    class="px-2 py-1 bg-bg-depth rounded text-sm text-accent-400"
+                  <code class="px-2 py-1 bg-bg-depth rounded text-sm text-accent-400"
                     >chrome://extensions</code
                   >，开启开发者模式</span
                 >
@@ -133,8 +121,7 @@ useSeoMeta({
                 >
                 <span
                   >点击"加载已解压的扩展程序"，选择
-                  <code
-                    class="px-2 py-1 bg-bg-depth rounded text-sm text-accent-400"
+                  <code class="px-2 py-1 bg-bg-depth rounded text-sm text-accent-400"
                     >dist/</code
                   ></span
                 >
@@ -149,14 +136,10 @@ useSeoMeta({
     <section class="py-24 bg-white/[0.02] border-y border-white/5">
       <div class="container mx-auto px-4">
         <div class="text-center mb-16 max-w-3xl mx-auto">
-          <div
-            class="text-accent-400 text-sm font-bold uppercase tracking-widest mb-2"
-          >
+          <div class="text-accent-400 text-sm font-bold uppercase tracking-widest mb-2">
             Release channels
           </div>
-          <h2 class="text-3xl md:text-4xl font-bold mb-4">
-            多通道让你按需选择稳定或前沿版本
-          </h2>
+          <h2 class="text-3xl md:text-4xl font-bold mb-4">多通道让你按需选择稳定或前沿版本</h2>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
@@ -217,9 +200,7 @@ useSeoMeta({
               </div>
               <div>
                 <h3 class="font-bold mb-2">Chrome / Edge</h3>
-                <p class="text-sm text-content-muted">
-                  版本 100+ (推荐最新版本)
-                </p>
+                <p class="text-sm text-content-muted">版本 100+ (推荐最新版本)</p>
               </div>
             </div>
           </Card>

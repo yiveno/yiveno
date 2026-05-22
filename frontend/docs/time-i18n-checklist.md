@@ -3,6 +3,7 @@
 ## 📊 当前状态
 
 ### ✅ 已完成
+
 - [x] 时间格式化工具 (`time-formatter.ts`)
 - [x] `RecentItem.vue` - 最近访问时间
 - [x] `SubscriptionSettings.vue` - 订阅到期日期格式化
@@ -20,7 +21,8 @@
 // ❌ 当前代码 (第 218 行)
 function formatDate(dateString: string): string {
   const date = new Date(dateString)
-  return date.toLocaleDateString('zh-CN', {  // 硬编码中文
+  return date.toLocaleDateString('zh-CN', {
+    // 硬编码中文
     year: 'numeric',
     month: 'long',
     day: 'numeric'
@@ -54,16 +56,16 @@ function formatDate(dateString: string): string {
 // ❌ 当前代码 (第 165 行)
 export function formatTime(ms: number): string {
   if (ms < 1000) {
-    return '不到 1 秒'  // 硬编码中文
+    return '不到 1 秒' // 硬编码中文
   }
 
   if (ms < 60000) {
     const seconds = Math.ceil(ms / 1000)
-    return `${seconds} 秒`  // 硬编码中文
+    return `${seconds} 秒` // 硬编码中文
   }
 
   const minutes = Math.ceil(ms / 60000)
-  return `${minutes} 分钟`  // 硬编码中文
+  return `${minutes} 分钟` // 硬编码中文
 }
 ```
 
@@ -115,8 +117,7 @@ export function formatTime(ms: number): string {
 
 ```vue
 <!-- ❌ 当前代码 (第 76-77 行) -->
-{{ progress.current.toLocaleString() }} /
-{{ progress.total.toLocaleString() }}
+{{ progress.current.toLocaleString() }} / {{ progress.total.toLocaleString() }}
 ```
 
 **修复方案**:
@@ -141,13 +142,14 @@ import { formatNumber } from '@/utils/i18n-helpers'
 
 ```typescript
 // ✅ 这些不需要修改（用于计算，不显示给用户）
-new Date().getFullYear()  // 获取年份（用于分类）
-new Date().getMonth()     // 获取月份（用于分类）
-new Date().getHours()     // 获取小时（用于推荐算法）
-new Date().getDay()       // 获取星期（用于推荐算法）
+new Date().getFullYear() // 获取年份（用于分类）
+new Date().getMonth() // 获取月份（用于分类）
+new Date().getHours() // 获取小时（用于推荐算法）
+new Date().getDay() // 获取星期（用于推荐算法）
 ```
 
 **位置**:
+
 - `smart-recommendation-engine.ts` - 推荐算法
 - `bookmark-sync-service.ts` - 书签分类
 - `indexeddb-repository.ts` - 数据存储

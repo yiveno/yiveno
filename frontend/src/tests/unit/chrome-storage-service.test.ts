@@ -1,8 +1,8 @@
 /**
  * ChromeStorageService 单元测试
- * 
+ *
  * 测试目标：infrastructure/storage/chrome-storage.ts
- * 
+ *
  * 测试范围：
  * - 基础存储操作（get/set/remove/clear）
  * - Session Storage
@@ -20,7 +20,7 @@ const createMockStorage = () => {
   const localData: Record<string, unknown> = {}
   const sessionData: Record<string, unknown> = {}
   const syncData: Record<string, unknown> = {}
-  
+
   return {
     local: {
       get: vi.fn((keys: string | string[] | null) => {
@@ -125,7 +125,7 @@ describe('ChromeStorageService', () => {
     global.chrome = {
       storage: testMockStorage
     } as unknown as typeof chrome
-    
+
     storageService = new ChromeStorageService()
   })
 

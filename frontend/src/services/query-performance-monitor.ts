@@ -25,9 +25,7 @@ const getNotify = async () => {
   if (typeof document === 'undefined') {
     return null
   }
-  const { notify } = await import(
-    '@/application/notification/notification-service'
-  )
+  const { notify } = await import('@/application/notification/notification-service')
   return notify
 }
 
@@ -130,9 +128,7 @@ export class QueryPerformanceMonitor {
       sessionId: this.sessionId,
       sources: [...searchData.sources],
       success: searchData.success,
-      ...(searchData.errorMessage !== undefined
-        ? { errorMessage: searchData.errorMessage }
-        : {})
+      ...(searchData.errorMessage !== undefined ? { errorMessage: searchData.errorMessage } : {})
     }
 
     this.metrics.push(metric)
@@ -181,12 +177,10 @@ export class QueryPerformanceMonitor {
 
       // 成功率统计
       successRate: successfulSearches / recentMetrics.length,
-      errorRate:
-        (recentMetrics.length - successfulSearches) / recentMetrics.length,
+      errorRate: (recentMetrics.length - successfulSearches) / recentMetrics.length,
 
       // 查询模式统计
-      searchModeDistribution:
-        this.calculateSearchModeDistribution(recentMetrics),
+      searchModeDistribution: this.calculateSearchModeDistribution(recentMetrics),
 
       // 时间趋势
       performanceTrend: this.calculatePerformanceTrend(),
@@ -231,10 +225,7 @@ export class QueryPerformanceMonitor {
         action: '优化缓存策略，增加缓存时间或改进缓存键生成',
         impact: 'high',
         effort: 'low',
-        priority: this.calculatePriority(
-          'caching',
-          (1 - stats.cacheHitRate) * 5
-        )
+        priority: this.calculatePriority('caching', (1 - stats.cacheHitRate) * 5)
       })
     }
 
@@ -260,20 +251,13 @@ export class QueryPerformanceMonitor {
         action: '分析慢查询模式，考虑预建索引或查询优化',
         impact: 'medium',
         effort: 'medium',
-        priority: this.calculatePriority(
-          'indexing',
-          stats.slowQueries.length / 5
-        )
+        priority: this.calculatePriority('indexing', stats.slowQueries.length / 5)
       })
     }
 
     // 查询模式分布建议
-    const totalSearches = Object.values(stats.searchModeDistribution).reduce(
-      (a, b) => a + b,
-      0
-    )
-    const smartSearchRatio =
-      (stats.searchModeDistribution.smart || 0) / totalSearches
+    const totalSearches = Object.values(stats.searchModeDistribution).reduce((a, b) => a + b, 0)
+    const smartSearchRatio = (stats.searchModeDistribution.smart || 0) / totalSearches
 
     if (smartSearchRatio < 0.5 && totalSearches > 50) {
       suggestions.push({
@@ -297,10 +281,7 @@ export class QueryPerformanceMonitor {
   private analyzeMetricRealtime(metric: PerformanceMetric): void {
     // 检查慢查询
     if (metric.duration > this.analysisConfig.slowQueryThreshold) {
-      logger.warn(
-        'PerformanceMonitor',
-        `🐌 慢查询检测: "${metric.query}" - ${metric.duration}ms`
-      )
+      logger.warn('PerformanceMonitor', `🐌 慢查询检测: "${metric.query}" - ${metric.duration}ms`)
 
       // 可以触发实时告警
       this.triggerSlowQueryAlert(metric)
@@ -374,10 +355,7 @@ export class QueryPerformanceMonitor {
     return sortedValues[mid] ?? 0
   }
 
-  private calculatePercentile(
-    sortedValues: number[],
-    percentile: number
-  ): number {
+  private calculatePercentile(sortedValues: number[], percentile: number): number {
     if (sortedValues.length === 0) return 0
 
     const index = Math.ceil(sortedValues.length * percentile) - 1
@@ -390,8 +368,7 @@ export class QueryPerformanceMonitor {
     const distribution: { [mode: string]: number } = {}
 
     metrics.forEach(metric => {
-      distribution[metric.searchMode] =
-        (distribution[metric.searchMode] || 0) + 1
+      distribution[metric.searchMode] = (distribution[metric.searchMode] || 0) + 1
     })
 
     return distribution

@@ -83,17 +83,17 @@ small → Body Small
 ### Display
 
 ```css
---md-sys-typescale-display-large-size: 3.5625rem;    /* 57px */
+--md-sys-typescale-display-large-size: 3.5625rem; /* 57px */
 --md-sys-typescale-display-large-weight: 400;
---md-sys-typescale-display-large-line-height: 4rem;  /* 64px */
+--md-sys-typescale-display-large-line-height: 4rem; /* 64px */
 --md-sys-typescale-display-large-tracking: -0.25px;
 
---md-sys-typescale-display-medium-size: 2.8125rem;   /* 45px */
+--md-sys-typescale-display-medium-size: 2.8125rem; /* 45px */
 --md-sys-typescale-display-medium-weight: 400;
 --md-sys-typescale-display-medium-line-height: 3.25rem; /* 52px */
 --md-sys-typescale-display-medium-tracking: 0;
 
---md-sys-typescale-display-small-size: 2.25rem;      /* 36px */
+--md-sys-typescale-display-small-size: 2.25rem; /* 36px */
 --md-sys-typescale-display-small-weight: 400;
 --md-sys-typescale-display-small-line-height: 2.75rem; /* 44px */
 --md-sys-typescale-display-small-tracking: 0;
@@ -102,17 +102,17 @@ small → Body Small
 ### Headline
 
 ```css
---md-sys-typescale-headline-large-size: 2rem;        /* 32px */
+--md-sys-typescale-headline-large-size: 2rem; /* 32px */
 --md-sys-typescale-headline-large-weight: 400;
 --md-sys-typescale-headline-large-line-height: 2.5rem; /* 40px */
 --md-sys-typescale-headline-large-tracking: 0;
 
---md-sys-typescale-headline-medium-size: 1.75rem;    /* 28px */
+--md-sys-typescale-headline-medium-size: 1.75rem; /* 28px */
 --md-sys-typescale-headline-medium-weight: 400;
 --md-sys-typescale-headline-medium-line-height: 2.25rem; /* 36px */
 --md-sys-typescale-headline-medium-tracking: 0;
 
---md-sys-typescale-headline-small-size: 1.5rem;      /* 24px */
+--md-sys-typescale-headline-small-size: 1.5rem; /* 24px */
 --md-sys-typescale-headline-small-weight: 400;
 --md-sys-typescale-headline-small-line-height: 2rem; /* 32px */
 --md-sys-typescale-headline-small-tracking: 0;
@@ -121,17 +121,17 @@ small → Body Small
 ### Title
 
 ```css
---md-sys-typescale-title-large-size: 1.375rem;       /* 22px */
+--md-sys-typescale-title-large-size: 1.375rem; /* 22px */
 --md-sys-typescale-title-large-weight: 400;
 --md-sys-typescale-title-large-line-height: 1.75rem; /* 28px */
 --md-sys-typescale-title-large-tracking: 0;
 
---md-sys-typescale-title-medium-size: 1rem;          /* 16px */
+--md-sys-typescale-title-medium-size: 1rem; /* 16px */
 --md-sys-typescale-title-medium-weight: 500;
 --md-sys-typescale-title-medium-line-height: 1.5rem; /* 24px */
 --md-sys-typescale-title-medium-tracking: 0.15px;
 
---md-sys-typescale-title-small-size: 0.875rem;       /* 14px */
+--md-sys-typescale-title-small-size: 0.875rem; /* 14px */
 --md-sys-typescale-title-small-weight: 500;
 --md-sys-typescale-title-small-line-height: 1.25rem; /* 20px */
 --md-sys-typescale-title-small-tracking: 0.1px;
@@ -140,38 +140,38 @@ small → Body Small
 ### Body
 
 ```css
---md-sys-typescale-body-large-size: 1rem;            /* 16px */
+--md-sys-typescale-body-large-size: 1rem; /* 16px */
 --md-sys-typescale-body-large-weight: 400;
---md-sys-typescale-body-large-line-height: 1.5rem;   /* 24px */
+--md-sys-typescale-body-large-line-height: 1.5rem; /* 24px */
 --md-sys-typescale-body-large-tracking: 0.5px;
 
---md-sys-typescale-body-medium-size: 0.875rem;       /* 14px */
+--md-sys-typescale-body-medium-size: 0.875rem; /* 14px */
 --md-sys-typescale-body-medium-weight: 400;
 --md-sys-typescale-body-medium-line-height: 1.25rem; /* 20px */
 --md-sys-typescale-body-medium-tracking: 0.25px;
 
---md-sys-typescale-body-small-size: 0.75rem;         /* 12px */
+--md-sys-typescale-body-small-size: 0.75rem; /* 12px */
 --md-sys-typescale-body-small-weight: 400;
---md-sys-typescale-body-small-line-height: 1rem;     /* 16px */
+--md-sys-typescale-body-small-line-height: 1rem; /* 16px */
 --md-sys-typescale-body-small-tracking: 0.4px;
 ```
 
 ### Label
 
 ```css
---md-sys-typescale-label-large-size: 0.875rem;       /* 14px */
+--md-sys-typescale-label-large-size: 0.875rem; /* 14px */
 --md-sys-typescale-label-large-weight: 500;
 --md-sys-typescale-label-large-line-height: 1.25rem; /* 20px */
 --md-sys-typescale-label-large-tracking: 0.1px;
 
---md-sys-typescale-label-medium-size: 0.75rem;       /* 12px */
+--md-sys-typescale-label-medium-size: 0.75rem; /* 12px */
 --md-sys-typescale-label-medium-weight: 500;
---md-sys-typescale-label-medium-line-height: 1rem;   /* 16px */
+--md-sys-typescale-label-medium-line-height: 1rem; /* 16px */
 --md-sys-typescale-label-medium-tracking: 0.5px;
 
---md-sys-typescale-label-small-size: 0.6875rem;      /* 11px */
+--md-sys-typescale-label-small-size: 0.6875rem; /* 11px */
 --md-sys-typescale-label-small-weight: 500;
---md-sys-typescale-label-small-line-height: 1rem;    /* 16px */
+--md-sys-typescale-label-small-line-height: 1rem; /* 16px */
 --md-sys-typescale-label-small-tracking: 0.5px;
 ```
 
@@ -198,25 +198,19 @@ small → Body Small
 ### 场景 2：书签标题
 
 ```html
-<div class="bookmark-title md-typescale-title-medium">
-  My Bookmark
-</div>
+<div class="bookmark-title md-typescale-title-medium">My Bookmark</div>
 ```
 
 ### 场景 3：按钮文字
 
 ```html
-<button class="md-typescale-label-large">
-  Save Changes
-</button>
+<button class="md-typescale-label-large">Save Changes</button>
 ```
 
 ### 场景 4：描述文本
 
 ```html
-<p class="md-typescale-body-medium">
-  This is a description of the bookmark.
-</p>
+<p class="md-typescale-body-medium">This is a description of the bookmark.</p>
 ```
 
 ---
@@ -256,23 +250,23 @@ Material Design 3 推荐使用 **Roboto**，但本项目使用 **Noto Sans** 以
 
 ## 📐 字体大小对照表
 
-| Type Scale | 字号 (px) | 字号 (rem) | 用途 |
-|-----------|----------|-----------|------|
-| Display Large | 57px | 3.5625rem | 营销页面首屏 |
-| Display Medium | 45px | 2.8125rem | 次级大标题 |
-| Display Small | 36px | 2.25rem | 小大标题 |
-| Headline Large | 32px | 2rem | 页面主标题 |
-| Headline Medium | 28px | 1.75rem | 区块标题 |
-| Headline Small | 24px | 1.5rem | 卡片标题 |
-| Title Large | 22px | 1.375rem | 列表项标题 |
-| Title Medium | 16px | 1rem | 对话框标题 |
-| Title Small | 14px | 0.875rem | 小标题 |
-| Body Large | 16px | 1rem | 主要段落 |
-| Body Medium | 14px | 0.875rem | 次要段落 |
-| Body Small | 12px | 0.75rem | 辅助文本 |
-| Label Large | 14px | 0.875rem | 按钮文字 |
-| Label Medium | 12px | 0.75rem | 表单标签 |
-| Label Small | 11px | 0.6875rem | 小标签 |
+| Type Scale      | 字号 (px) | 字号 (rem) | 用途         |
+| --------------- | --------- | ---------- | ------------ |
+| Display Large   | 57px      | 3.5625rem  | 营销页面首屏 |
+| Display Medium  | 45px      | 2.8125rem  | 次级大标题   |
+| Display Small   | 36px      | 2.25rem    | 小大标题     |
+| Headline Large  | 32px      | 2rem       | 页面主标题   |
+| Headline Medium | 28px      | 1.75rem    | 区块标题     |
+| Headline Small  | 24px      | 1.5rem     | 卡片标题     |
+| Title Large     | 22px      | 1.375rem   | 列表项标题   |
+| Title Medium    | 16px      | 1rem       | 对话框标题   |
+| Title Small     | 14px      | 0.875rem   | 小标题       |
+| Body Large      | 16px      | 1rem       | 主要段落     |
+| Body Medium     | 14px      | 0.875rem   | 次要段落     |
+| Body Small      | 12px      | 0.75rem    | 辅助文本     |
+| Label Large     | 14px      | 0.875rem   | 按钮文字     |
+| Label Medium    | 12px      | 0.75rem    | 表单标签     |
+| Label Small     | 11px      | 0.6875rem  | 小标签       |
 
 ---
 

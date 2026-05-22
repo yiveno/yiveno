@@ -95,9 +95,7 @@ function stripTrailingPathSegment(rawPath: string, title: string): string {
  * 构造无查询结果时的提示描述，显式告知用户书签索引中没有匹配项。
  */
 function buildNoResultDescription(query: string): string {
-  const safeQuery = escapeOmniboxText(
-    truncateWithEllipsis(query, 80) || '（空）'
-  )
+  const safeQuery = escapeOmniboxText(truncateWithEllipsis(query, 80) || '（空）')
   return `<dim>未找到匹配书签：</dim> <match>${safeQuery}</match>`
 }
 
@@ -105,9 +103,7 @@ function buildNoResultDescription(query: string): string {
  * 构造查询失败后的提示描述，提示用户稍后重试或检查离线状态。
  */
 function buildErrorDescription(query: string): string {
-  const safeQuery = escapeOmniboxText(
-    truncateWithEllipsis(query, 80) || '（空）'
-  )
+  const safeQuery = escapeOmniboxText(truncateWithEllipsis(query, 80) || '（空）')
   return `<dim>查询暂时不可用，请稍后重试：</dim> <match>${safeQuery}</match>`
 }
 
@@ -115,9 +111,7 @@ function buildErrorDescription(query: string): string {
  * 构造"正在查询"提示描述，用于在异步请求过程中反馈状态。
  */
 function buildSearchingDescription(query: string): string {
-  const safeQuery = escapeOmniboxText(
-    truncateWithEllipsis(query, 80) || '（空）'
-  )
+  const safeQuery = escapeOmniboxText(truncateWithEllipsis(query, 80) || '（空）')
   return `<dim>正在检索书签：</dim> <match>${safeQuery}</match>`
 }
 
@@ -125,9 +119,7 @@ function buildSearchingDescription(query: string): string {
  * 构造"找到匹配数量"提示描述，提示当前命中情况。
  */
 function buildResultSummaryDescription(query: string, count: number): string {
-  const safeQuery = escapeOmniboxText(
-    truncateWithEllipsis(query, 80) || '（空）'
-  )
+  const safeQuery = escapeOmniboxText(truncateWithEllipsis(query, 80) || '（空）')
   const safeCount = Number.isFinite(count) && count >= 0 ? count : 0
   return `<dim>已找到匹配书签：</dim> <match>${safeQuery}</match> <dim>（${safeCount} 条建议）</dim>`
 }
@@ -157,9 +149,7 @@ const DEBOUNCE_MS = 50
 /**
  * 默认提示文案：仅在输入框为空时展示，提醒用户可以使用 Omnibox 查询书签。
  */
-const DEFAULT_IDLE_DESCRIPTION = buildDescription(
-  'AcuityBookmarks：输入关键字快速查找书签'
-)
+const DEFAULT_IDLE_DESCRIPTION = buildDescription('AcuityBookmarks：输入关键字快速查找书签')
 
 /**
  * 当存在查询时使用的“空白”占位文案，避免重复显示默认提示。
@@ -214,10 +204,13 @@ export function registerOmniboxHandlers(): void {
             highlight: false,
             useCache: false
           }),
-          dispatchOffscreenRequest<VectorSearchResult[]>({
-            type: 'SEMANTIC_SEARCH',
-            payload: { query, topK: SUGGESTION_LIMIT, minScore: 0.2 }
-          }, { timeout: 3000 }).catch(() => [] as VectorSearchResult[])
+          dispatchOffscreenRequest<VectorSearchResult[]>(
+            {
+              type: 'SEMANTIC_SEARCH',
+              payload: { query, topK: SUGGESTION_LIMIT, minScore: 0.2 }
+            },
+            { timeout: 3000 }
+          ).catch(() => [] as VectorSearchResult[])
         ])
 
         if (currentSeq !== sequence) return
@@ -232,7 +225,10 @@ export function registerOmniboxHandlers(): void {
         const fuseResults = fuseResult.value
         const mergedResults = mergeOmniboxResults(fuseResults, semanticResults, SUGGESTION_LIMIT)
         const suggestions = buildSuggestions(mergedResults, query)
-        logger.info('Omnibox', `📊 Fuse: ${fuseResults.length}, 语义: ${semanticResults.length}, 合并: ${mergedResults.length}`)
+        logger.info(
+          'Omnibox',
+          `📊 Fuse: ${fuseResults.length}, 语义: ${semanticResults.length}, 合并: ${mergedResults.length}`
+        )
         safeSuggest(suggest, suggestions, 'query-results')
 
         if (mergedResults.length > 0) {
@@ -243,11 +239,7 @@ export function registerOmniboxHandlers(): void {
       } catch (error) {
         logger.warn('Omnibox', '查询失败，回退占位', error)
         if (currentSeq !== sequence) return
-        safeSuggest(
-          suggest,
-          [createErrorSuggestion(query)],
-          'search-error-fallback'
-        )
+        safeSuggest(suggest, [createErrorSuggestion(query)], 'search-error-fallback')
         setDefaultDescription(buildErrorDescription(query))
       }
     }, DEBOUNCE_MS)
@@ -443,12 +435,9 @@ function parseSuggestionContent(text: string): ParsedSuggestion {
  * @param disposition - 打开方式
  */
 function openUrl(url: string, disposition: string): void {
-  const isForeground =
-    disposition === 'currentTab' || disposition === 'newForegroundTab'
+  const isForeground = disposition === 'currentTab' || disposition === 'newForegroundTab'
   if (disposition === 'currentTab') {
-    chrome.tabs
-      .update({ url })
-      .catch(() => chrome.tabs.create({ url, active: true }))
+    chrome.tabs.update({ url }).catch(() => chrome.tabs.create({ url, active: true }))
     return
   }
 
@@ -463,10 +452,7 @@ function openUrl(url: string, disposition: string): void {
  * @param id - 书签ID
  * @param disposition - 打开方式
  */
-async function openBookmarkById(
-  id: string,
-  disposition: string
-): Promise<void> {
+async function openBookmarkById(id: string, disposition: string): Promise<void> {
   try {
     const nodes = await chrome.bookmarks.get(id)
     const target = Array.isArray(nodes) ? nodes[0] : null

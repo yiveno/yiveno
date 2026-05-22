@@ -34,10 +34,25 @@ import type {
  * Notification 组件暴露的方法接口
  */
 interface NotificationComponentExposed {
-  success: (config: { message: string; description?: string; duration?: number; key?: string }) => void
-  error: (config: { message: string; description?: string; duration?: number; key?: string }) => void
+  success: (config: {
+    message: string
+    description?: string
+    duration?: number
+    key?: string
+  }) => void
+  error: (config: {
+    message: string
+    description?: string
+    duration?: number
+    key?: string
+  }) => void
   info: (config: { message: string; description?: string; duration?: number; key?: string }) => void
-  warning: (config: { message: string; description?: string; duration?: number; key?: string }) => void
+  warning: (config: {
+    message: string
+    description?: string
+    duration?: number
+    key?: string
+  }) => void
   destroy: (key?: string) => void
 }
 
@@ -73,7 +88,8 @@ class PageNotificationManager {
       // ⚠️ 只导入 Notification 组件，避免导入整个 @/components（包含 Material Web Components）
       // eslint-disable-next-line require-atomic-updates -- 模块加载是原子操作，不会有竞态条件
       vueModule = await import('vue')
-      const notificationModule = await import('@/components/composite/Notification/Notification.vue')
+      const notificationModule =
+        await import('@/components/composite/Notification/Notification.vue')
       // eslint-disable-next-line require-atomic-updates -- 模块加载是原子操作，不会有竞态条件
       NotificationComponent = notificationModule.default
       return true
@@ -119,10 +135,9 @@ class PageNotificationManager {
 
     this.app = vue.createApp({
       render: () =>
-        vue.h(
-          NotificationComponent as ReturnType<typeof vue.defineComponent>,
-          { ref: 'notification' }
-        )
+        vue.h(NotificationComponent as ReturnType<typeof vue.defineComponent>, {
+          ref: 'notification'
+        })
     })
 
     const vm = this.app.mount(this.container)
@@ -156,7 +171,7 @@ class PageNotificationManager {
     // 转换为 Notification API 格式
     const level = opts?.level || 'info'
     const duration = opts?.timeoutMs ? opts.timeoutMs / 1000 : 3 // 转换为秒
-    
+
     // 🎯 Ant Design 风格：使用对应的方法
     const methodMap: Record<
       NonNullable<ToastShowOptions['level']> | 'info',
@@ -167,7 +182,7 @@ class PageNotificationManager {
       info: 'info',
       warning: 'warning'
     }
-    
+
     const method = methodMap[level] || 'info'
     const notifyMethod = this.exposed[method]
 
@@ -181,21 +196,23 @@ class PageNotificationManager {
         message: opts?.title || message,
         duration
       }
-      
+
       if (opts?.title) {
         notificationConfig.description = message
       }
-      
+
       if (opts?.key) {
         notificationConfig.key = opts.key
       }
-      
-      ;(notifyMethod as (config: {
-        message: string
-        description?: string | undefined
-        duration?: number | undefined
-        key?: string | undefined
-      }) => void)(notificationConfig)
+
+      ;(
+        notifyMethod as (config: {
+          message: string
+          description?: string | undefined
+          duration?: number | undefined
+          key?: string | undefined
+        }) => void
+      )(notificationConfig)
     }
 
     return '' // Notification 内部管理 ID
@@ -292,7 +309,7 @@ export class NotificationService {
   private cleanupRecentMap(): void {
     const now = Date.now()
     const maxAge = Math.max(this.config.suppressWindowMs, 10000) // 至少保留 10 秒
-    
+
     for (const [key, timestamp] of this.recentMap.entries()) {
       if (now - timestamp > maxAge) {
         this.recentMap.delete(key)
@@ -320,10 +337,7 @@ export class NotificationService {
    * await notificationService.updateBadge('!', '#faad14')
    * ```
    */
-  async updateBadge(
-    text: string,
-    color?: string
-  ): Promise<Result<void, Error>> {
+  async updateBadge(text: string, color?: string): Promise<Result<void, Error>> {
     if (!this.config.enableBadge) {
       logger.debug('NotificationService', 'Badge 功能已禁用')
       return ok(undefined)
@@ -403,10 +417,7 @@ export class NotificationService {
    * @private
    */
   private getBadgeColor(level: NotificationLevel): string {
-    return (
-      NOTIFICATION_CONFIG.BADGE_COLORS[level] ||
-      NOTIFICATION_CONFIG.BADGE_COLORS.info
-    )
+    return NOTIFICATION_CONFIG.BADGE_COLORS[level] || NOTIFICATION_CONFIG.BADGE_COLORS.info
   }
 
   /**
@@ -443,10 +454,7 @@ export class NotificationService {
    * })
    * ```
    */
-  async notify(
-    message: string,
-    opts?: NotificationOptions
-  ): Promise<Result<void, Error>> {
+  async notify(message: string, opts?: NotificationOptions): Promise<Result<void, Error>> {
     try {
       // ✨ 勿扰模式检查：如果开启勿扰模式，直接返回，不显示任何通知
       if (this.config.enableDoNotDisturb) {
@@ -514,9 +522,7 @@ export class NotificationService {
       if (opts?.updateBadge && this.config.enableBadge) {
         const badgeText = opts.badgeText || opts.badge?.text || '!'
         const badgeColor =
-          opts.badgeColor ||
-          opts.badge?.color ||
-          this.getBadgeColor(options.level || 'info')
+          opts.badgeColor || opts.badge?.color || this.getBadgeColor(options.level || 'info')
 
         await this.updateBadge(badgeText, badgeColor)
 
@@ -527,8 +533,7 @@ export class NotificationService {
 
         // ✅ 如果配置了自动清除，设置定时器
         if (opts.badge?.autoClear) {
-          const clearDelay =
-            opts.badge.clearDelay || NOTIFICATION_CONFIG.BADGE_AUTO_CLEAR_DELAY
+          const clearDelay = opts.badge.clearDelay || NOTIFICATION_CONFIG.BADGE_AUTO_CLEAR_DELAY
           if (clearDelay > 0) {
             setTimeout(() => {
               this.clearBadge()
@@ -543,8 +548,7 @@ export class NotificationService {
       }
 
       // ✨ Level 3: 自动镜像系统通知（副通道）：仅当页面不可见时
-      const shouldMirror =
-        typeof document !== 'undefined' ? document.hidden : true
+      const shouldMirror = typeof document !== 'undefined' ? document.hidden : true
 
       if (shouldMirror && this.config.enableSystemNotifications) {
         this.queue.push(item)
@@ -564,10 +568,7 @@ export class NotificationService {
    * @param title - 可选的标题
    * @returns 操作结果
    */
-  async notifySuccess(
-    message: string,
-    title?: string
-  ): Promise<Result<void, Error>> {
+  async notifySuccess(message: string, title?: string): Promise<Result<void, Error>> {
     return this.notify(message, { level: 'success', title, type: 'success' })
   }
 
@@ -578,10 +579,7 @@ export class NotificationService {
    * @param title - 可选的标题
    * @returns 操作结果
    */
-  async notifyInfo(
-    message: string,
-    title?: string
-  ): Promise<Result<void, Error>> {
+  async notifyInfo(message: string, title?: string): Promise<Result<void, Error>> {
     return this.notify(message, { level: 'info', title, type: 'info' })
   }
 
@@ -592,10 +590,7 @@ export class NotificationService {
    * @param title - 可选的标题
    * @returns 操作结果
    */
-  async notifyWarning(
-    message: string,
-    title?: string
-  ): Promise<Result<void, Error>> {
+  async notifyWarning(message: string, title?: string): Promise<Result<void, Error>> {
     return this.notify(message, { level: 'warning', title, type: 'warning' })
   }
 
@@ -606,10 +601,7 @@ export class NotificationService {
    * @param title - 可选的标题
    * @returns 操作结果
    */
-  async notifyError(
-    message: string,
-    title?: string
-  ): Promise<Result<void, Error>> {
+  async notifyError(message: string, title?: string): Promise<Result<void, Error>> {
     return this.notify(message, { level: 'error', title, type: 'error' })
   }
 
@@ -621,9 +613,7 @@ export class NotificationService {
    * @param opts - 用户提供的选项
    * @returns 完整的通知选项
    */
-  private buildOptions(
-    opts?: NotificationOptions
-  ): Required<NotificationOptions> {
+  private buildOptions(opts?: NotificationOptions): Required<NotificationOptions> {
     const level: NotificationLevel = opts?.level || opts?.type || 'info'
     // ✨ 优先使用用户提供的 timeoutMs，否则使用配置的默认值
     const timeoutMs = opts?.timeoutMs ?? this.config.defaultTimeout
@@ -635,8 +625,7 @@ export class NotificationService {
       timeoutMs,
       priority: opts?.priority || 'normal',
       persistent: opts?.persistent || false,
-      autoClose:
-        typeof opts?.autoClose === 'number' ? opts.autoClose : timeoutMs,
+      autoClose: typeof opts?.autoClose === 'number' ? opts.autoClose : timeoutMs,
       iconUrl: this.resolveIconUrl(opts?.iconUrl, level),
       icon: opts?.icon || '',
       imageUrl: opts?.imageUrl || '',
@@ -657,7 +646,7 @@ export class NotificationService {
 
   /**
    * ✨ 从设置中获取通知显示时长
-   * 
+   *
    * @returns 通知显示时长（毫秒）
    * @private
    */
@@ -666,7 +655,7 @@ export class NotificationService {
       // 动态导入避免循环依赖
       const { settingsAppService } = await import('@/application/settings/settings-app-service')
       const duration = await settingsAppService.getSetting<number>('notifications.duration')
-      
+
       if (duration !== null && typeof duration !== 'undefined') {
         const value = Number((duration as unknown as { value?: number }).value ?? duration)
         // 确保值在合理范围内（1-10秒）
@@ -675,14 +664,14 @@ export class NotificationService {
     } catch (error) {
       logger.warn('NotificationService', '获取通知时长设置失败，使用默认值', error)
     }
-    
+
     // 返回默认值
     return this.config.defaultTimeout
   }
 
   /**
    * ✨ 更新默认通知时长
-   * 
+   *
    * 从设置中读取并更新配置
    */
   async updateDefaultDuration(): Promise<void> {
@@ -700,19 +689,12 @@ export class NotificationService {
    * @param level - 通知级别
    * @returns 完整的图标URL
    */
-  private resolveIconUrl(
-    iconUrl?: string,
-    level: NotificationLevel = 'info'
-  ): string {
+  private resolveIconUrl(iconUrl?: string, level: NotificationLevel = 'info'): string {
     const defaultIcon = this.getDefaultIcon(level)
     const raw = iconUrl || defaultIcon
 
     try {
-      if (
-        _isExtensionRuntime &&
-        typeof chrome !== 'undefined' &&
-        chrome?.runtime?.getURL
-      ) {
+      if (_isExtensionRuntime && typeof chrome !== 'undefined' && chrome?.runtime?.getURL) {
         if (/^https?:\/\//.test(raw) || raw.startsWith('chrome-extension://')) {
           return raw
         }
@@ -734,11 +716,7 @@ export class NotificationService {
    */
   private getDefaultIcon(_level: NotificationLevel): string {
     try {
-      if (
-        _isExtensionRuntime &&
-        typeof chrome !== 'undefined' &&
-        chrome?.runtime?.getURL
-      ) {
+      if (_isExtensionRuntime && typeof chrome !== 'undefined' && chrome?.runtime?.getURL) {
         return chrome.runtime.getURL('images/icon128.png')
       }
     } catch {
@@ -784,12 +762,7 @@ export class NotificationService {
         key: notification.options.key
       })
     } catch (error) {
-      logger.error(
-        'Component',
-        'NotificationService',
-        '页面通知显示失败',
-        error
-      )
+      logger.error('Component', 'NotificationService', '页面通知显示失败', error)
     }
   }
 
@@ -799,9 +772,7 @@ export class NotificationService {
    * @param notification - 队列中的通知对象
    * @returns 通知ID，用于后续清除
    */
-  private async createChromeNotification(
-    notification: QueuedNotification
-  ): Promise<string> {
+  private async createChromeNotification(notification: QueuedNotification): Promise<string> {
     try {
       if (!_isExtensionRuntime) {
         logger.warn('NotificationService', 'Not running in extension context')
@@ -821,11 +792,7 @@ export class NotificationService {
 
       return response?.notificationId || ''
     } catch (error) {
-      logger.warn(
-        'NotificationService',
-        '调用 Chrome 系统通知失败',
-        error
-      )
+      logger.warn('NotificationService', '调用 Chrome 系统通知失败', error)
       return ''
     }
   }
@@ -837,14 +804,12 @@ export class NotificationService {
    */
   private clearChromeNotification(notificationId: string): void {
     if (!notificationId) return
-    void navigationService
-      .clearChromeNotification(notificationId)
-      .catch(error => {
-        logger.warn('NotificationService', '清除通知失败', {
-          id: notificationId,
-          error
-        })
+    void navigationService.clearChromeNotification(notificationId).catch(error => {
+      logger.warn('NotificationService', '清除通知失败', {
+        id: notificationId,
+        error
       })
+    })
   }
 
   /**
@@ -902,14 +867,9 @@ export class NotificationService {
         }
       )?.notifications
 
-      if (
-        chromeNotifications &&
-        typeof chromeNotifications.getPermissionLevel === 'function'
-      ) {
+      if (chromeNotifications && typeof chromeNotifications.getPermissionLevel === 'function') {
         this.permissionCache = await new Promise<string>(resolve => {
-          chromeNotifications.getPermissionLevel!((level: string) =>
-            resolve(level || 'unknown')
-          )
+          chromeNotifications.getPermissionLevel!((level: string) => resolve(level || 'unknown'))
         })
         return this.permissionCache
       }
@@ -932,9 +892,8 @@ export class NotificationService {
 
     try {
       diagnostics.hasChrome = typeof chrome !== 'undefined'
-      diagnostics.hasNotifications = !!(
-        chrome as unknown as { notifications?: unknown }
-      )?.notifications
+      diagnostics.hasNotifications = !!(chrome as unknown as { notifications?: unknown })
+        ?.notifications
       diagnostics.manifestHasPermission = false
 
       try {
@@ -942,8 +901,7 @@ export class NotificationService {
           ? (chrome.runtime.getManifest() as { permissions?: string[] })
           : null
         if (manifest && Array.isArray(manifest.permissions)) {
-          diagnostics.manifestHasPermission =
-            manifest.permissions.includes('notifications')
+          diagnostics.manifestHasPermission = manifest.permissions.includes('notifications')
         }
       } catch {
         // 忽略错误
@@ -986,10 +944,11 @@ export class NotificationService {
    */
   setConfig(config: Partial<NotificationServiceConfig>): void {
     this.config = { ...this.config, ...config }
-    
+
     // ✨ 如果勿扰模式状态改变，记录日志
     if (config.enableDoNotDisturb !== undefined) {
-      logger.info('NotificationService', 
+      logger.info(
+        'NotificationService',
         config.enableDoNotDisturb ? '🔕 勿扰模式已开启' : '🔔 勿扰模式已关闭'
       )
     }
@@ -1068,10 +1027,7 @@ export const notificationService = new NotificationService()
 /**
  * 便捷函数（保持向后兼容）
  */
-export async function notify(
-  message: string,
-  opts?: NotificationOptions
-): Promise<void> {
+export async function notify(message: string, opts?: NotificationOptions): Promise<void> {
   const result = await notificationService.notify(message, opts)
   if (!result.ok) {
     throw result.error

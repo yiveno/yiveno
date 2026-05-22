@@ -76,14 +76,14 @@ application/
 
 ```typescript
 // ✅ 好的命名
-bookmark-app-service.ts           // 书签应用服务
-bookmark-change-app-service.ts    // 书签变更应用服务
-recommendation-app-service.ts     // 推荐应用服务
+bookmark - app - service.ts // 书签应用服务
+bookmark - change - app - service.ts // 书签变更应用服务
+recommendation - app - service.ts // 推荐应用服务
 
 // ❌ 不好的命名
-bookmark-manager.ts               // 太宽泛
-smart-recommendation.ts           // 缺少 -app-service 后缀
-utils.ts                          // 太通用
+bookmark - manager.ts // 太宽泛
+smart - recommendation.ts // 缺少 -app-service 后缀
+utils.ts // 太通用
 ```
 
 ---
@@ -95,7 +95,7 @@ utils.ts                          // 太通用
 ```typescript
 /**
  * 书签应用服务
- * 
+ *
  * 职责：
  * - 协调书签相关的业务用例
  * - 管理事务边界
@@ -115,10 +115,7 @@ export class BookmarkAppService {
   /**
    * 业务用例：获取所有书签
    */
-  async getAllBookmarks(
-    limit?: number,
-    offset?: number
-  ): Promise<Result<BookmarkRecord[]>> {
+  async getAllBookmarks(limit?: number, offset?: number): Promise<Result<BookmarkRecord[]>> {
     // 1. 参数验证
     // 2. 调用领域服务或仓储
     // 3. 数据转换
@@ -222,7 +219,7 @@ export function useBookmarkSearch() {
     }
     // 处理错误
   }
-  
+
   return { search }
 }
 ```
@@ -278,10 +275,10 @@ export class BookmarkChangeAppService {
   ): Promise<Result<ExecutionResult>> {
     // 1. 调用 Diff 服务
     const diffResult = await diffService.compare(original, target)
-    
+
     // 2. 调用执行器
     const execResult = await executor.execute(diffResult)
-    
+
     // 3. 返回结果
     return ok({ diff: diffResult, execution: execResult })
   }
@@ -294,23 +291,20 @@ export class BookmarkChangeAppService {
 
 ```typescript
 export class BookmarkAppService {
-  async moveBookmark(
-    bookmarkId: string,
-    targetFolderId: string
-  ): Promise<Result<void>> {
+  async moveBookmark(bookmarkId: string, targetFolderId: string): Promise<Result<void>> {
     // 开始事务
     const transaction = await this.beginTransaction()
-    
+
     try {
       // 1. 更新书签
       await this.updateBookmark(bookmarkId, { parentId: targetFolderId })
-      
+
       // 2. 更新索引
       await this.updateIndex(bookmarkId)
-      
+
       // 3. 提交事务
       await transaction.commit()
-      
+
       return ok(undefined)
     } catch (error) {
       // 回滚事务
@@ -335,10 +329,10 @@ describe('BookmarkAppService', () => {
   it('should get all bookmarks', async () => {
     // Arrange
     const service = new BookmarkAppService()
-    
+
     // Act
     const result = await service.getAllBookmarks()
-    
+
     // Assert
     expect(result.ok).toBe(true)
     expect(result.value).toBeInstanceOf(Array)
@@ -357,20 +351,18 @@ describe('BookmarkAppService Integration', () => {
   it('should create and retrieve bookmark', async () => {
     // 初始化 IndexedDB
     await indexedDBManager.initialize()
-    
+
     // 创建书签
     const createResult = await bookmarkAppService.createBookmark({
       title: 'Test',
       url: 'https://test.com'
     })
-    
+
     expect(createResult.ok).toBe(true)
-    
+
     // 获取书签
-    const getResult = await bookmarkAppService.getBookmarkById(
-      createResult.value.id
-    )
-    
+    const getResult = await bookmarkAppService.getBookmarkById(createResult.value.id)
+
     expect(getResult.ok).toBe(true)
     expect(getResult.value?.title).toBe('Test')
   })

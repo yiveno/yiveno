@@ -1,6 +1,6 @@
 /**
  * 校验工具函数
- * 
+ *
  * 负责 redirect_uri 等安全相关的校验
  */
 
@@ -11,13 +11,12 @@ const DEFAULT_ALLOWED_REDIRECT_HOST_SUFFIXES = ['.chromiumapp.org']
 
 /**
  * 解析环境变量中的 allowlist
- * 
+ *
  * @param env - 环境变量
  * @returns allowlist 数组
  */
 export function parseAllowlist(env: Env): string[] {
-  const raw =
-    env && (env.REDIRECT_URI_ALLOWLIST || env.REDIRECT_ALLOWLIST || '')
+  const raw = env && (env.REDIRECT_URI_ALLOWLIST || env.REDIRECT_ALLOWLIST || '')
   if (!raw) return []
   try {
     if (raw.trim().startsWith('[')) {
@@ -35,20 +34,17 @@ export function parseAllowlist(env: Env): string[] {
 
 /**
  * 检查是否为 HTTPS 的本地地址
- * 
+ *
  * @param u - URL 对象
  * @returns 是否为 HTTPS 本地地址
  */
 function isHttpsLikeLocal(u: URL): boolean {
-  return (
-    u.protocol === 'https:' &&
-    (u.hostname === 'localhost' || u.hostname === '127.0.0.1')
-  )
+  return u.protocol === 'https:' && (u.hostname === 'localhost' || u.hostname === '127.0.0.1')
 }
 
 /**
  * 校验 redirect_uri 是否合法
- * 
+ *
  * @param redirectUri - 重定向 URI
  * @param env - 环境变量
  * @returns 校验结果
@@ -60,25 +56,17 @@ export function isAllowedRedirectUri(
   try {
     const u = new URL(redirectUri)
     const scheme = u.protocol
-    if (
-      scheme !== 'https:' &&
-      scheme !== 'chrome-extension:' &&
-      !isHttpsLikeLocal(u)
-    ) {
+    if (scheme !== 'https:' && scheme !== 'chrome-extension:' && !isHttpsLikeLocal(u)) {
       return { ok: false, error: 'unsupported scheme' }
     }
     if (scheme === 'https:') {
       const host = u.hostname.toLowerCase()
-      if (
-        !DEFAULT_ALLOWED_REDIRECT_HOST_SUFFIXES.some(suf => host.endsWith(suf))
-      ) {
+      if (!DEFAULT_ALLOWED_REDIRECT_HOST_SUFFIXES.some(suf => host.endsWith(suf))) {
         const allow = parseAllowlist(env)
         if (allow.length) {
           const href = u.toString()
           const origin = `${u.protocol}//${u.host}`
-          const ok = allow.some(
-            item => href.startsWith(item) || origin === item || host === item
-          )
+          const ok = allow.some(item => href.startsWith(item) || origin === item || host === item)
           if (!ok) return { ok: false, error: 'redirect not in allowlist' }
         }
       }

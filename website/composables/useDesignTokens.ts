@@ -11,7 +11,7 @@ export function useDesignTokens() {
   if (process.client) {
     const vars = generateCSSVars()
     const root = document.documentElement
-    
+
     Object.entries(vars).forEach(([key, value]) => {
       root.style.setProperty(key, value)
     })

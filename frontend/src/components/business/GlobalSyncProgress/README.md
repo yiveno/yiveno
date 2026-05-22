@@ -38,7 +38,7 @@ import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalS
   <div class="app">
     <!-- 页面内容 -->
     <router-view />
-    
+
     <!-- 全局同步进度 -->
     <GlobalSyncProgress />
   </div>
@@ -108,7 +108,7 @@ async function handleSync() {
 import { bookmarkSyncService } from '@/application/bookmark/bookmark-sync-service'
 
 // 订阅同步进度
-bookmarkSyncService.subscribe((progress) => {
+bookmarkSyncService.subscribe(progress => {
   console.log('同步进度:', progress)
   // GlobalSyncProgress 会自动更新 UI
 })
@@ -139,12 +139,12 @@ bookmarkSyncService.subscribe((progress) => {
 ```typescript
 interface SyncProgress {
   stage: 'idle' | 'syncing' | 'completed' | 'failed'
-  phase: string           // 当前阶段描述
-  percentage: number      // 百分比 (0-100)
-  current: number         // 当前处理数量
-  total: number           // 总数量
-  estimatedTime: number   // 预计剩余时间（秒）
-  error?: string          // 错误信息
+  phase: string // 当前阶段描述
+  percentage: number // 百分比 (0-100)
+  current: number // 当前处理数量
+  total: number // 总数量
+  estimatedTime: number // 预计剩余时间（秒）
+  error?: string // 错误信息
 }
 ```
 
@@ -190,9 +190,7 @@ await bookmarkSyncService.startSync()
 ```typescript
 // ✅ 正确：强制关闭前警告用户
 function handleForceClose() {
-  const confirmed = window.confirm(
-    '⚠️ 警告：同步尚未完成，强制关闭可能导致数据不完整。'
-  )
+  const confirmed = window.confirm('⚠️ 警告：同步尚未完成，强制关闭可能导致数据不完整。')
   if (confirmed) {
     forceClose()
   }
@@ -200,7 +198,7 @@ function handleForceClose() {
 
 // ❌ 错误：直接关闭，不警告
 function handleForceClose() {
-  forceClose()  // 可能导致数据不完整
+  forceClose() // 可能导致数据不完整
 }
 ```
 
@@ -214,7 +212,7 @@ onUnmounted(() => {
 
 // ❌ 错误：清理订阅（会影响其他页面）
 onUnmounted(() => {
-  cleanup()  // 其他页面将无法看到进度
+  cleanup() // 其他页面将无法看到进度
 })
 ```
 
@@ -222,12 +220,12 @@ onUnmounted(() => {
 
 ### 同步阶段
 
-| 阶段 | 描述 | 百分比 |
-|------|------|--------|
-| **idle** | 空闲状态 | 0% |
-| **syncing** | 同步中 | 1-99% |
-| **completed** | 同步完成 | 100% |
-| **failed** | 同步失败 | - |
+| 阶段          | 描述     | 百分比 |
+| ------------- | -------- | ------ |
+| **idle**      | 空闲状态 | 0%     |
+| **syncing**   | 同步中   | 1-99%  |
+| **completed** | 同步完成 | 100%   |
+| **failed**    | 同步失败 | -      |
 
 ### 进度信息
 

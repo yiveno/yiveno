@@ -88,9 +88,7 @@ import Badge from '@/components/ui/Badge.vue'
               </p>
               <Badge variant="default" class="text-xs">Cloudflare Worker</Badge>
             </div>
-            <div
-              class="bg-bg-depth/50 rounded-lg p-4 border border-white/5 min-h-[120px]"
-            >
+            <div class="bg-bg-depth/50 rounded-lg p-4 border border-white/5 min-h-[120px]">
               <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center gap-2">
                   <div class="w-1.5 h-1.5 rounded-full bg-green-400"></div>
@@ -131,7 +129,7 @@ import Badge from '@/components/ui/Badge.vue'
   height: 100%;
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .features-bento {
     grid-template-columns: 1fr;
   }

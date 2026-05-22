@@ -193,11 +193,7 @@ export class EmbeddingService {
    * @param topK 返回数量
    * @param minScore 最低相似度阈值，默认 0.2
    */
-  async search(
-    query: string,
-    topK = 10,
-    minScore = 0.2
-  ): Promise<LocalSemanticResult[]> {
+  async search(query: string, topK = 10, minScore = 0.2): Promise<LocalSemanticResult[]> {
     const provider = await this.getProvider()
     if (!provider) return []
 
@@ -215,17 +211,14 @@ export class EmbeddingService {
    * 获取向量库统计信息
    */
   async getStats(): Promise<{ count: number; providerName: string | null }> {
-    const [count, provider] = await Promise.all([
-      localVectorStore.count(),
-      this.getProvider()
-    ])
+    const [count, provider] = await Promise.all([localVectorStore.count(), this.getProvider()])
     return { count, providerName: provider?.name ?? null }
   }
 }
 
 /**
  * 将书签转换为用于 embedding 的文本
- * 
+ *
  * 优先级策略：
  * 1. 标题：优先使用爬取的 meta title，回退到书签标题
  * 2. 文件夹路径：用户组织书签的方式，包含重要的分类信息
@@ -233,7 +226,7 @@ export class EmbeddingService {
  * 4. 关键词：使用爬取的 meta keywords（如果有）
  * 5. 域名：用于语义上下文
  * 6. URL 路径：提取有意义的路径词
- * 
+ *
  * 组合这些字段可以提升语义搜索质量，让搜索结果更准确。
  */
 function buildBookmarkText(bookmark: BookmarkRecord): string {
@@ -245,7 +238,7 @@ function buildBookmarkText(bookmark: BookmarkRecord): string {
   } else if (bookmark.title) {
     parts.push(bookmark.title)
   }
-  
+
   // 2. 文件夹路径（新增：用户的分类信息，非常重要）
   if (bookmark.path && bookmark.path.length > 1) {
     // path 数组包含从根到当前节点的所有文件夹名称
@@ -256,21 +249,21 @@ function buildBookmarkText(bookmark: BookmarkRecord): string {
       parts.push(folderPath)
     }
   }
-  
+
   // 3. 描述（来自网页 meta description）
   if (bookmark.metaDescriptionLower) {
     // 描述通常较长，截取前 200 字符避免稀释其他信息
     const description = bookmark.metaDescriptionLower.slice(0, 200)
     parts.push(description)
   }
-  
+
   // 4. 关键词（来自网页 meta keywords）
   if (bookmark.metaKeywordsTokens && bookmark.metaKeywordsTokens.length > 0) {
     // 最多使用前 10 个关键词
     const keywords = bookmark.metaKeywordsTokens.slice(0, 10).join(' ')
     parts.push(keywords)
   }
-  
+
   // 5. 域名（用于语义上下文）
   if (bookmark.domain) {
     parts.push(bookmark.domain)

@@ -92,11 +92,7 @@ export function useCreateBookmark() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (data: {
-      title: string
-      url?: string
-      parentId?: string
-    }) => {
+    mutationFn: async (data: { title: string; url?: string; parentId?: string }) => {
       logger.info('useBookmarkQueries', '创建书签', data)
       const result = await bookmarkAppService.createBookmark(data)
 
@@ -172,13 +168,10 @@ export function useUpdateBookmark() {
       )
 
       // 乐观更新：立即更新缓存
-      queryClient.setQueryData<BookmarkRecord>(
-        queryKeys.bookmarks.detail(id),
-        old => {
-          if (!old) return old
-          return { ...old, ...variables }
-        }
-      )
+      queryClient.setQueryData<BookmarkRecord>(queryKeys.bookmarks.detail(id), old => {
+        if (!old) return old
+        return { ...old, ...variables }
+      })
 
       return { previousBookmark }
     },
@@ -197,10 +190,7 @@ export function useUpdateBookmark() {
 
       // 回滚：恢复之前的数据
       if (context?.previousBookmark) {
-        queryClient.setQueryData(
-          queryKeys.bookmarks.detail(variables.id),
-          context.previousBookmark
-        )
+        queryClient.setQueryData(queryKeys.bookmarks.detail(variables.id), context.previousBookmark)
       }
     }
   })

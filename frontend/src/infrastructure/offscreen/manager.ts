@@ -18,13 +18,13 @@
 import { logger } from '@/infrastructure/logging/logger'
 
 export type OffscreenReason = 'DOM_SCRAPING' | 'WEB_WORKER' | 'TESTING'
-export type OffscreenTaskType = 
-  | 'PARSE_HTML' 
-  | 'SEARCH_QUERY' 
-  | 'SEARCH_INIT' 
-  | 'EMBEDDING_EMBED' 
-  | 'EMBEDDING_EMBED_BATCH' 
-  | 'EMBEDDING_IS_AVAILABLE' 
+export type OffscreenTaskType =
+  | 'PARSE_HTML'
+  | 'SEARCH_QUERY'
+  | 'SEARCH_INIT'
+  | 'EMBEDDING_EMBED'
+  | 'EMBEDDING_EMBED_BATCH'
+  | 'EMBEDDING_IS_AVAILABLE'
   | 'SEMANTIC_SEARCH'
   | 'GET_FOLDER_RECOMMENDATIONS'
 
@@ -89,14 +89,11 @@ export async function ensureOffscreenDocument(
         justification: `AcuityBookmarks needs to perform ${reason} tasks in the background.`
       })
       .then(async () => {
-        logger.info(
-          'OffscreenManager',
-          `✅ Offscreen Document 已创建，原因: ${reason}`
-        )
-        
+        logger.info('OffscreenManager', `✅ Offscreen Document 已创建，原因: ${reason}`)
+
         // 等待 Offscreen Document 加载并验证其可用性
         logger.info('OffscreenManager', '⏱️ 等待 Offscreen Document 加载...')
-        
+
         // 尝试 ping Offscreen Document，最多等待 3 秒
         const maxAttempts = 30 // 30 次 × 100ms = 3 秒
         for (let i = 0; i < maxAttempts; i++) {
@@ -104,10 +101,10 @@ export async function ensureOffscreenDocument(
             // 发送 ping 消息
             const response = await new Promise<{ ok: boolean }>((resolve, reject) => {
               const timer = setTimeout(() => reject(new Error('Ping timeout')), 200)
-              
+
               chrome.runtime.sendMessage(
                 { __offscreenRequest__: true, type: 'PING' },
-                (pingResponse) => {
+                pingResponse => {
                   clearTimeout(timer)
                   if (chrome.runtime.lastError) {
                     reject(new Error(chrome.runtime.lastError.message))
@@ -117,20 +114,23 @@ export async function ensureOffscreenDocument(
                 }
               )
             })
-            
+
             if (response.ok) {
-              logger.info('OffscreenManager', `✅ Offscreen Document 已就绪 (尝试 ${i + 1}/${maxAttempts})`)
+              logger.info(
+                'OffscreenManager',
+                `✅ Offscreen Document 已就绪 (尝试 ${i + 1}/${maxAttempts})`
+              )
               return
             }
           } catch (_error) {
             // 继续等待
             logger.debug('OffscreenManager', `⏳ Ping 失败，继续等待... (${i + 1}/${maxAttempts})`)
           }
-          
+
           // 等待 100ms 后重试
           await new Promise(resolve => setTimeout(resolve, 100))
         }
-        
+
         // 超时，但不抛出错误，让后续请求自己处理
         logger.warn('OffscreenManager', '⚠️ Offscreen Document 可能未完全加载，但继续尝试')
       })
@@ -144,16 +144,12 @@ export async function ensureOffscreenDocument(
           error: error instanceof Error ? error.message : String(error),
           errorType: error instanceof Error ? error.constructor.name : typeof error
         }
-        
+
         if (error instanceof Error && error.stack) {
           errorInfo.stack = error.stack
         }
-        
-        logger.error(
-          'OffscreenManager',
-          '❌ 无法创建 Offscreen Document',
-          errorInfo
-        )
+
+        logger.error('OffscreenManager', '❌ 无法创建 Offscreen Document', errorInfo)
         return false
       })
       .finally(() => {
@@ -164,18 +160,14 @@ export async function ensureOffscreenDocument(
   return ensuringDocument
 }
 
-export async function dispatchOffscreenRequest<
-  TResult = unknown,
-  TPayload = unknown
->(
+export async function dispatchOffscreenRequest<TResult = unknown, TPayload = unknown>(
   request: OffscreenRequest<TPayload>,
   options: { timeout?: number } = {}
 ): Promise<TResult> {
-  const reason: OffscreenReason =
-    request.type === 'PARSE_HTML' ? 'DOM_SCRAPING' : 'WEB_WORKER'
-  
+  const reason: OffscreenReason = request.type === 'PARSE_HTML' ? 'DOM_SCRAPING' : 'WEB_WORKER'
+
   logger.info('OffscreenManager', `📤 准备发送 Offscreen 请求: ${request.type}`)
-  
+
   const ready = await ensureOffscreenDocument(reason)
   if (!ready) {
     const error = 'Offscreen Document 不可用'
@@ -213,54 +205,48 @@ export async function dispatchOffscreenRequest<
     let retryCount = 0
 
     const send = () => {
-      chrome.runtime.sendMessage(
-        payload,
-        (response?: OffscreenResponse<TResult>) => {
-          const lastError = chrome.runtime.lastError
-          if (lastError) {
-            const message = lastError.message ?? ''
-            logger.warn('OffscreenManager', `⚠️ chrome.runtime.lastError: ${message}`, {
-              retryCount,
-              maxRetry: MAX_RETRY
-            })
-            
-            if (
-              message.includes('Receiving end does not exist') &&
-              retryCount < MAX_RETRY
-            ) {
-              retryCount += 1
-              const baseDelay = 50
-              const retryDelay = Math.min(
-                baseDelay * Math.pow(2, retryCount - 1),
-                1000
-              )
-              logger.info('OffscreenManager', `🔄 重试 Offscreen 请求 (${retryCount}/${MAX_RETRY})，延迟 ${retryDelay}ms`)
-              setTimeout(send, retryDelay)
-              return
-            }
-            clearTimeout(timer)
-            logger.error('OffscreenManager', `❌ Offscreen 请求失败: ${message}`)
-            reject(createError(message || 'Offscreen 返回失败'))
+      chrome.runtime.sendMessage(payload, (response?: OffscreenResponse<TResult>) => {
+        const lastError = chrome.runtime.lastError
+        if (lastError) {
+          const message = lastError.message ?? ''
+          logger.warn('OffscreenManager', `⚠️ chrome.runtime.lastError: ${message}`, {
+            retryCount,
+            maxRetry: MAX_RETRY
+          })
+
+          if (message.includes('Receiving end does not exist') && retryCount < MAX_RETRY) {
+            retryCount += 1
+            const baseDelay = 50
+            const retryDelay = Math.min(baseDelay * Math.pow(2, retryCount - 1), 1000)
+            logger.info(
+              'OffscreenManager',
+              `🔄 重试 Offscreen 请求 (${retryCount}/${MAX_RETRY})，延迟 ${retryDelay}ms`
+            )
+            setTimeout(send, retryDelay)
             return
           }
-
-          if (!response) {
-            clearTimeout(timer)
-            logger.error('OffscreenManager', '❌ Offscreen 响应为空')
-            reject(createError('Offscreen 响应为空'))
-            return
-          }
-
           clearTimeout(timer)
-          if (response.ok) {
-            logger.info('OffscreenManager', `✅ Offscreen 请求成功: ${requestType}`)
-            resolve(response.result as TResult)
-          } else {
-            logger.error('OffscreenManager', `❌ Offscreen 返回错误: ${response.error}`)
-            reject(createError(response.error || 'Offscreen 返回失败'))
-          }
+          logger.error('OffscreenManager', `❌ Offscreen 请求失败: ${message}`)
+          reject(createError(message || 'Offscreen 返回失败'))
+          return
         }
-      )
+
+        if (!response) {
+          clearTimeout(timer)
+          logger.error('OffscreenManager', '❌ Offscreen 响应为空')
+          reject(createError('Offscreen 响应为空'))
+          return
+        }
+
+        clearTimeout(timer)
+        if (response.ok) {
+          logger.info('OffscreenManager', `✅ Offscreen 请求成功: ${requestType}`)
+          resolve(response.result as TResult)
+        } else {
+          logger.error('OffscreenManager', `❌ Offscreen 返回错误: ${response.error}`)
+          reject(createError(response.error || 'Offscreen 返回失败'))
+        }
+      })
     }
 
     send()

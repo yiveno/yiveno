@@ -79,22 +79,22 @@ notification.success({
 interface NotificationConfig {
   // 唯一标识，相同 key 会更新而不是新建
   key?: string
-  
+
   // 标题
   message?: string
-  
+
   // 描述内容
   description?: string
-  
+
   // 停留时长（秒），0 表示不自动关闭
   duration?: number
-  
+
   // 是否显示关闭按钮
   closable?: boolean
-  
+
   // 是否显示图标
   icon?: boolean
-  
+
   // 弹出位置
   placement?: 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight'
 }
@@ -133,10 +133,10 @@ notification.config({
 ### 案例 1：书签拖拽移动
 
 ```typescript
-const handleBookmarkMove = async (data) => {
+const handleBookmarkMove = async data => {
   try {
     await moveBookmark(data)
-    
+
     // ✅ 使用 key 确保快速连续拖拽时不会闪烁
     notification.success({
       message: '书签已移动',
@@ -202,17 +202,17 @@ notification.warning({
 
 ## 🎨 对比 Ant Design
 
-| 特性 | Ant Design | 本实现 | 说明 |
-|------|-----------|--------|------|
-| 通过 key 更新 | ✅ | ✅ | **核心特性** |
-| 多通知堆叠 | ✅ | ✅ | |
-| 四个方向位置 | ✅ | ✅ | |
-| 自动关闭 | ✅ | ✅ | |
-| 手动关闭 | ✅ | ✅ | |
-| 悬停暂停 | ✅ | ✅ | |
-| 自定义图标 | ✅ | ⚠️ | 待实现 |
-| 操作按钮 | ✅ | ⚠️ | 待实现 |
-| RTL 支持 | ✅ | ❌ | |
+| 特性          | Ant Design | 本实现 | 说明         |
+| ------------- | ---------- | ------ | ------------ |
+| 通过 key 更新 | ✅         | ✅     | **核心特性** |
+| 多通知堆叠    | ✅         | ✅     |              |
+| 四个方向位置  | ✅         | ✅     |              |
+| 自动关闭      | ✅         | ✅     |              |
+| 手动关闭      | ✅         | ✅     |              |
+| 悬停暂停      | ✅         | ✅     |              |
+| 自定义图标    | ✅         | ⚠️     | 待实现       |
+| 操作按钮      | ✅         | ⚠️     | 待实现       |
+| RTL 支持      | ✅         | ❌     |              |
 
 ## 🔧 全局配置
 
@@ -227,13 +227,17 @@ notification.config({
 ## 🐛 故障排除
 
 ### Q: 通知还是会闪烁？
+
 A: 检查是否使用了 **key** 参数，相同 key 才会更新而不是新建。
 
 ### Q: 通知位置不对？
+
 A: 使用 `placement` 参数或全局配置。
 
 ### Q: 如何永久显示通知？
+
 A: 设置 `duration: 0`。
 
 ### Q: 如何手动关闭通知？
+
 A: 使用 `notification.destroy(key)` 或点击关闭按钮。

@@ -45,8 +45,7 @@ useSeoMeta({
   description:
     'Fuse.js 模糊检索 × AI 语义推荐 × Cloudflare Worker API。AcuityBookmarks 为高密度知识工作者打造极速、离线、安全的书签体验。',
   ogTitle: 'AcuityBookmarks · AI 驱动的智能书签工作台',
-  ogDescription:
-    '结合离线索引、AI 推荐、失效检测和 Cloudflare Worker，重新定义书签管理。',
+  ogDescription: '结合离线索引、AI 推荐、失效检测和 Cloudflare Worker，重新定义书签管理。',
   twitterCard: 'summary_large_image'
 })
 </script>
@@ -93,9 +92,7 @@ useSeoMeta({
     <Pricing />
 
     <section class="py-16 relative overflow-hidden">
-      <div
-        class="absolute inset-0 bg-gradient-to-b from-bg-depth to-primary-900/20 z-0"
-      ></div>
+      <div class="absolute inset-0 bg-gradient-to-b from-bg-depth to-primary-900/20 z-0"></div>
       <div class="container mx-auto px-4 relative z-10 text-center">
         <h3 class="text-2xl md:text-4xl font-bold mb-4 max-w-2xl mx-auto">
           准备好重塑您的<span class="text-accent-400">知识工作流</span>了吗？

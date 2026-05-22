@@ -37,8 +37,7 @@ const faqs = [
 
 useSeoMeta({
   title: '联系我们 - AcuityBookmarks',
-  description:
-    '通过邮件、社区或表单联系 AcuityBookmarks 团队，反馈问题或探讨合作。'
+  description: '通过邮件、社区或表单联系 AcuityBookmarks 团队，反馈问题或探讨合作。'
 })
 </script>
 
@@ -54,8 +53,7 @@ useSeoMeta({
         <div
           class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-6"
         >
-          <span
-            class="text-sm font-medium text-primary-400 tracking-wider uppercase"
+          <span class="text-sm font-medium text-primary-400 tracking-wider uppercase"
             >Contact us</span
           >
         </div>
@@ -68,11 +66,9 @@ useSeoMeta({
           >
         </h1>
 
-        <p
-          class="text-lg md:text-xl text-content-muted max-w-3xl mx-auto leading-relaxed"
-        >
-          无论是合作、企业部署、Bug
-          反馈还是功能建议，都可以通过下方渠道联系。我们会在 24-48h 内回复。
+        <p class="text-lg md:text-xl text-content-muted max-w-3xl mx-auto leading-relaxed">
+          无论是合作、企业部署、Bug 反馈还是功能建议，都可以通过下方渠道联系。我们会在 24-48h
+          内回复。
         </p>
       </div>
     </section>
@@ -92,9 +88,7 @@ useSeoMeta({
             >
               <component :is="item.icon" class="w-8 h-8 text-primary-400" />
             </div>
-            <div
-              class="text-xs font-bold text-primary-400 uppercase tracking-wider mb-2"
-            >
+            <div class="text-xs font-bold text-primary-400 uppercase tracking-wider mb-2">
               {{ item.label }}
             </div>
             <h3 class="text-xl font-bold mb-3">{{ item.value }}</h3>
@@ -134,9 +128,7 @@ useSeoMeta({
             class="border border-white/10 rounded-xl bg-bg-surface overflow-hidden"
           >
             <details class="group">
-              <summary
-                class="flex justify-between items-center p-6 cursor-pointer list-none"
-              >
+              <summary class="flex justify-between items-center p-6 cursor-pointer list-none">
                 <span class="font-bold text-lg">{{ item.q }}</span>
                 <ChevronDown
                   class="w-5 h-5 text-content-muted transition-transform group-open:rotate-180"

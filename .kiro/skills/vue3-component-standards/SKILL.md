@@ -22,6 +22,7 @@ defineOptions({ name: 'AcuityButton' })
 ```
 
 **命名规范：**
+
 - ✅ 使用 PascalCase（如 `AcuityButton`、`BookmarkTree`）
 - ✅ 基础组件加 `Acuity` 前缀（如 `AcuityButton`、`AcuityInput`）
 - ✅ 业务组件使用描述性名称（如 `BookmarkSearchInput`）
@@ -50,24 +51,26 @@ const props = defineProps({
 ```
 
 **Props 规范：**
+
 - ✅ 必须创建独立的 `.d.ts` 类型文件
 - ✅ 使用 `withDefaults` 设置默认值
 - ✅ Props 名称使用 camelCase
 - ✅ 添加 JSDoc 注释（中文）
 
 **示例类型文件：**
+
 ```typescript
 // Button.d.ts
 export interface ButtonProps {
   /** 按钮变体 */
   variant?: 'primary' | 'secondary' | 'text'
-  
+
   /** 按钮尺寸 */
   size?: 'small' | 'medium' | 'large'
-  
+
   /** 是否禁用 */
   disabled?: boolean
-  
+
   /** 是否加载中 */
   loading?: boolean
 }
@@ -100,6 +103,7 @@ const emit = defineEmits(['click'])
 ```
 
 **Emits 规范：**
+
 - ✅ 使用标准 DOM 事件名称（如 `click`、`change`、`input`）
 - ✅ 或使用动词形式（如 `update:modelValue`、`search-complete`）
 - ✅ 添加 JSDoc 注释说明事件用途
@@ -123,20 +127,22 @@ const emit = defineEmits(['click'])
 
 /* ❌ 错误：硬编码数值 */
 .button {
-  padding: 12px 16px;      /* 禁止！ */
-  font-size: 14px;         /* 禁止！ */
-  background-color: #3B82F6; /* 禁止！ */
+  padding: 12px 16px; /* 禁止！ */
+  font-size: 14px; /* 禁止！ */
+  background-color: #3b82f6; /* 禁止！ */
 }
 </style>
 ```
 
 **样式规范：**
+
 - ✅ 必须使用 `scoped` 避免样式泄漏
 - ✅ 必须使用 CSS 变量（来自 `@acuity-bookmarks/design-tokens`）
 - ✅ 类名使用 kebab-case（如 `button-primary`）
 - ❌ 禁止硬编码颜色、间距、字号
 
 **可用的 CSS 变量：**
+
 ```css
 /* 颜色 */
 var(--md-sys-color-primary)
@@ -177,7 +183,7 @@ var(--md-sys-motion-easing-standard)  /* cubic-bezier */
 <script setup lang="ts">
 /**
  * 更新书签访问记录
- * 
+ *
  * @description 通过 application 层服务更新书签的 lastVisited 和 visitCount 字段
  * @param bookmarkId - 书签ID
  * @returns Promise<void>
@@ -185,12 +191,10 @@ var(--md-sys-motion-easing-standard)  /* cubic-bezier */
  */
 const updateBookmarkVisitRecord = async (bookmarkId: string): Promise<void> => {
   try {
-    const { bookmarkAppService } = await import(
-      '@/application/bookmark/bookmark-app-service'
-    )
-    
+    const { bookmarkAppService } = await import('@/application/bookmark/bookmark-app-service')
+
     const result = await bookmarkAppService.updateVisitRecord(bookmarkId)
-    
+
     if (!result.ok) {
       logger.warn('SidePanel', '⚠️ 更新访问记录失败', result.error)
     }
@@ -202,6 +206,7 @@ const updateBookmarkVisitRecord = async (bookmarkId: string): Promise<void> => {
 ```
 
 **注释规范：**
+
 - ✅ 所有函数必须添加 JSDoc 注释（中文）
 - ✅ 包含：描述、参数、返回值、异常
 - ✅ 复杂逻辑添加行内注释说明意图
@@ -212,6 +217,7 @@ const updateBookmarkVisitRecord = async (bookmarkId: string): Promise<void> => {
 ### 6. 组件分类（必须遵守）
 
 **基础组件（`components/base/`）：**
+
 - ✅ 单一功能，不依赖其他组件
 - ✅ 纯 UI 展示，无业务逻辑
 - ✅ 文案由外部传入（props 或 slots）
@@ -219,6 +225,7 @@ const updateBookmarkVisitRecord = async (bookmarkId: string): Promise<void> => {
 - ❌ 不调用业务服务
 
 **复合组件（`components/composite/`）：**
+
 - ✅ 由多个基础组件组合
 - ✅ 纯 UI 展示，无业务逻辑
 - ✅ 可能有少量固定的 UI 提示文案
@@ -226,12 +233,14 @@ const updateBookmarkVisitRecord = async (bookmarkId: string): Promise<void> => {
 - ❌ 不调用业务服务
 
 **业务组件（`components/business/`）：**
+
 - ✅ 包含业务逻辑
 - ✅ 调用业务服务
 - ✅ 处理业务数据
 - ✅ 直接使用项目 i18n
 
 **判断标准：**
+
 ```
 开始
  ↓
@@ -252,7 +261,7 @@ const updateBookmarkVisitRecord = async (bookmarkId: string): Promise<void> => {
 <script setup lang="ts">
 // ❌ 错误：组件直接调用 Chrome API
 async function deleteBookmark(id: string) {
-  await chrome.bookmarks.remove(id)  // ❌ 违反架构
+  await chrome.bookmarks.remove(id) // ❌ 违反架构
 }
 
 // ✅ 正确：通过消息通知 Background Script
@@ -264,14 +273,15 @@ async function deleteBookmark(id: string) {
 }
 
 // ❌ 错误：组件直接访问 IndexedDB
-import { indexedDBManager } from '@/infrastructure/indexeddb/manager'  // ❌
+import { indexedDBManager } from '@/infrastructure/indexeddb/manager' // ❌
 
 // ✅ 正确：通过 application 层服务
-import { bookmarkService } from '@/application/bookmark/bookmark-service'  // ✅
+import { bookmarkService } from '@/application/bookmark/bookmark-service' // ✅
 </script>
 ```
 
 **架构规则：**
+
 - ❌ 组件不能直接调用 `chrome.bookmarks.*`
 - ❌ 组件不能直接调用 `indexedDB.open()`
 - ❌ 组件不能直接访问 `infrastructure/` 层
@@ -353,13 +363,13 @@ const handleClick = (event: MouseEvent) => {
 export interface ButtonProps {
   /** 按钮变体 */
   variant?: 'primary' | 'secondary' | 'text'
-  
+
   /** 按钮尺寸 */
   size?: 'small' | 'medium' | 'large'
-  
+
   /** 是否禁用 */
   disabled?: boolean
-  
+
   /** 是否加载中 */
   loading?: boolean
 }

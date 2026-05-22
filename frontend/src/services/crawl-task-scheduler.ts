@@ -53,7 +53,8 @@ class ConcurrencyController {
       const domain = new URL(url).hostname
       if (this.runningCount >= this.MAX_GLOBAL) return false
       if ((this.domainRunning.get(domain) || 0) >= this.MAX_PER_DOMAIN) return false
-      if (Date.now() - (this.domainLastAccess.get(domain) || 0) < this.MIN_DOMAIN_INTERVAL) return false
+      if (Date.now() - (this.domainLastAccess.get(domain) || 0) < this.MIN_DOMAIN_INTERVAL)
+        return false
       return true
     } catch {
       return false
@@ -66,7 +67,9 @@ class ConcurrencyController {
       this.runningCount++
       this.domainRunning.set(domain, (this.domainRunning.get(domain) || 0) + 1)
       this.domainLastAccess.set(domain, Date.now())
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   finish(url: string): void {
@@ -74,7 +77,9 @@ class ConcurrencyController {
       const domain = new URL(url).hostname
       this.runningCount = Math.max(0, this.runningCount - 1)
       this.domainRunning.set(domain, Math.max(0, (this.domainRunning.get(domain) || 1) - 1))
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 }
 
@@ -84,7 +89,12 @@ export class CrawlTaskScheduler {
   private tasks: CrawlTask[] = []
   private concurrency = new ConcurrencyController()
   private statistics: QueueStatistics = {
-    total: 0, completed: 0, failed: 0, pending: 0, running: 0, progress: 0
+    total: 0,
+    completed: 0,
+    failed: 0,
+    pending: 0,
+    running: 0,
+    progress: 0
   }
   private isRunning = false
   private currentOptions: CrawlOptions | null = null
@@ -174,7 +184,10 @@ export class CrawlTaskScheduler {
         // eslint-disable-next-line require-atomic-updates -- 任务状态更新是原子操作，不会有竞态条件
         task.status = 'success'
         this.currentOptions?.onTaskComplete?.(task)
-      } else if (task.retryCount < 2 && (result.errorType === 'timeout' || result.errorType === 'network')) {
+      } else if (
+        task.retryCount < 2 &&
+        (result.errorType === 'timeout' || result.errorType === 'network')
+      ) {
         task.retryCount++
         task.status = 'pending'
       } else {
@@ -200,9 +213,8 @@ export class CrawlTaskScheduler {
     this.statistics.pending = this.tasks.filter(t => t.status === 'pending').length
     this.statistics.running = this.tasks.filter(t => t.status === 'running').length
     const done = this.statistics.completed + this.statistics.failed
-    this.statistics.progress = this.statistics.total > 0
-      ? Math.round((done / this.statistics.total) * 100)
-      : 0
+    this.statistics.progress =
+      this.statistics.total > 0 ? Math.round((done / this.statistics.total) * 100) : 0
   }
 
   private hashURL(url: string): string {

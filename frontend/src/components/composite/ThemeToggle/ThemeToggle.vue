@@ -132,16 +132,17 @@ const toggleTheme = async (newTheme: ThemeMode) => {
     if (isViewTransitionSupported) {
       // 使用 View Transitions API 实现圆形扩散动画
       const radius = getCircleRadius(x, y)
-      const clipPath = [
-        `circle(0px at ${x}px ${y}px)`,
-        `circle(${radius}px at ${x}px ${y}px)`
-      ]
+      const clipPath = [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`]
 
       // 设置 CSS 变量供动画使用
       document.documentElement.style.setProperty('--theme-transition-x', `${x}px`)
       document.documentElement.style.setProperty('--theme-transition-y', `${y}px`)
 
-      const transition = (document as unknown as { startViewTransition: (cb: () => void) => { ready: Promise<void>; finished: Promise<void> } }).startViewTransition(() => {
+      const transition = (
+        document as unknown as {
+          startViewTransition: (cb: () => void) => { ready: Promise<void>; finished: Promise<void> }
+        }
+      ).startViewTransition(() => {
         currentTheme.value = newTheme
         applyTheme(actualTheme)
       })
@@ -160,9 +161,7 @@ const toggleTheme = async (newTheme: ThemeMode) => {
           easing: 'ease-out',
           // 保持动画结束状态，避免闪烁
           fill: 'forwards',
-          pseudoElement: isDark
-            ? '::view-transition-new(root)'
-            : '::view-transition-old(root)'
+          pseudoElement: isDark ? '::view-transition-new(root)' : '::view-transition-old(root)'
         }
       )
 
@@ -288,8 +287,8 @@ const initializeTheme = async () => {
 
       // 应用主题
       if (savedTheme === 'system') {
-        const systemIsDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-        applyTheme(systemIsDark ? 'dark' : 'light')
+        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+        applyTheme(systemPrefersDark ? 'dark' : 'light')
       } else {
         applyTheme(savedTheme)
       }
@@ -298,11 +297,7 @@ const initializeTheme = async () => {
 
       logger.info('ThemeToggle', '使用保存的主题', { theme: savedTheme })
     } catch (globalStateError) {
-      logger.warn(
-        'ThemeToggle',
-        '全局状态管理器初始化失败，使用默认跟随系统',
-        globalStateError
-      )
+      logger.warn('ThemeToggle', '全局状态管理器初始化失败，使用默认跟随系统', globalStateError)
       // 全局状态管理器失败不影响组件正常工作，已经设置了默认主题
     }
 

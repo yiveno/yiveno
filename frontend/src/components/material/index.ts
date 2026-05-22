@@ -127,8 +127,8 @@ export * from '@material/web/focus/focus-ring.js'
 // ⚠️ 注意：不要在这里导出 Vue 组件！
 // Vue 组件会导致 Rolldown 将 Vue 代码打包到 app-components chunk
 // 如果 background.js 间接依赖了这个文件，会导致 Service Worker 环境中出现 HTMLElement 错误
-// 
+//
 // 如果需要使用 MaterialButton，请直接导入：
 // import MaterialButton from '@/components/material/MaterialButton.vue'
-// 
+//
 // export { default as MaterialButton } from './MaterialButton.vue'  // ❌ 已禁用

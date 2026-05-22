@@ -70,10 +70,7 @@ const DEFAULT_STATE: ExtensionState = {
  */
 export async function getDatabaseReady(): Promise<boolean> {
   try {
-    const ready = await chromeStorage.getSession<boolean>(
-      SESSION_KEYS.DB_READY,
-      false
-    )
+    const ready = await chromeStorage.getSession<boolean>(SESSION_KEYS.DB_READY, false)
     return ready ?? false
   } catch (error) {
     logger.error('BackgroundState', '读取 DB_READY 失败', error)
@@ -129,9 +126,7 @@ export async function getExtensionState(): Promise<ExtensionState> {
  *
  * ⚠️ dbReady 已迁移到 session storage，使用 setDatabaseReady()
  */
-export async function updateExtensionState(
-  updates: Partial<ExtensionState>
-): Promise<void> {
+export async function updateExtensionState(updates: Partial<ExtensionState>): Promise<void> {
   const payload: Partial<Record<StateKey, unknown>> = {}
 
   if (updates.initialized !== undefined) {

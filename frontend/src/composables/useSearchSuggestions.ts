@@ -1,6 +1,6 @@
 /**
  * 搜索建议 Composable
- * 
+ *
  * 功能：
  * - 基于书签标题和 URL 生成搜索建议
  * - 支持模糊匹配
@@ -35,10 +35,7 @@ export function useSearchSuggestions() {
    * @param query - 搜索关键词
    * @param limit - 建议数量限制
    */
-  const generateSuggestions = async (
-    query: string,
-    limit = 10
-  ): Promise<SearchSuggestion[]> => {
+  const generateSuggestions = async (query: string, limit = 10): Promise<SearchSuggestion[]> => {
     try {
       isLoading.value = true
 

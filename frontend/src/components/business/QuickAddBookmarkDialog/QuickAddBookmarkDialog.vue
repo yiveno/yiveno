@@ -132,9 +132,7 @@ async function loadFolders() {
 
     // 默认选择书签栏（如果没有推荐）
     if (!selectedFolderId.value) {
-      const bookmarksBar = folders.find(
-        f => f.label === '书签栏' || f.label === 'Bookmarks Bar'
-      )
+      const bookmarksBar = folders.find(f => f.label === '书签栏' || f.label === 'Bookmarks Bar')
       if (bookmarksBar) {
         selectedFolderId.value = bookmarksBar.value
       } else {
@@ -267,22 +265,12 @@ function handleClose() {
 </script>
 
 <template>
-  <Dialog
-    :show="show"
-    title="添加书签"
-    width="480px"
-    @update:show="handleClose"
-  >
+  <Dialog :show="show" title="添加书签" width="480px" @update:show="handleClose">
     <div class="quick-add-content">
       <!-- 网站图标和信息预览 -->
       <div class="bookmark-preview">
         <div class="favicon">
-          <img
-            v-if="favIconUrl"
-            :src="favIconUrl"
-            alt="网站图标"
-            @error="handleFaviconError"
-          />
+          <img v-if="favIconUrl" :src="favIconUrl" alt="网站图标" @error="handleFaviconError" />
           <LucideIcon v-else name="bookmark" :size="24" />
         </div>
         <div class="info">
@@ -299,11 +287,7 @@ function handleClose() {
       <!-- AI 自动归纳开关 -->
       <div class="ai-auto-toggle">
         <label class="toggle-label">
-          <input
-            v-model="enableAIAuto"
-            type="checkbox"
-            class="toggle-checkbox"
-          />
+          <input v-model="enableAIAuto" type="checkbox" class="toggle-checkbox" />
           <LucideIcon name="sparkles" :size="16" />
           <span>AI 自动归纳</span>
         </label>
@@ -369,10 +353,7 @@ function handleClose() {
     <template #footer>
       <div class="dialog-footer">
         <md-text-button @click="handleClose">取消</md-text-button>
-        <md-filled-button
-          :disabled="!bookmarkTitle || !selectedFolderId"
-          @click="handleConfirm"
-        >
+        <md-filled-button :disabled="!bookmarkTitle || !selectedFolderId" @click="handleConfirm">
           完成
         </md-filled-button>
       </div>
@@ -381,8 +362,6 @@ function handleClose() {
 </template>
 
 <style scoped>
-
-
 @keyframes spin {
   from {
     transform: rotate(0deg);

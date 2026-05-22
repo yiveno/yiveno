@@ -34,8 +34,7 @@ export interface ChromeBookmarkTreeNode {
  *
  * 提供 UI 层常用的附加字段，并保持与 Chrome 数据兼容。
  */
-export interface BookmarkNode
-  extends Omit<ChromeBookmarkTreeNode, 'children' | 'unmodifiable'> {
+export interface BookmarkNode extends Omit<ChromeBookmarkTreeNode, 'children' | 'unmodifiable'> {
   /** 子节点列表 */
   children?: BookmarkNode[] | undefined
   /** 子节点数量（已加载） */
@@ -73,12 +72,14 @@ export interface BookmarkNode
   /** 特征标签，例如 invalid（失效书签）/ duplicate（重复书签）/ internal（内部书签）等 */
   traitTags?: string[] | undefined
   /** 特征标签元数据（检测时间、来源等） */
-  traitMetadata?: Array<{
-    tag: 'duplicate' | 'invalid' | 'internal'
-    detectedAt: number
-    source: 'worker' | 'user' | 'imported'
-    notes?: string | undefined
-  }> | undefined
+  traitMetadata?:
+    | Array<{
+        tag: 'duplicate' | 'invalid' | 'internal'
+        detectedAt: number
+        source: 'worker' | 'user' | 'imported'
+        notes?: string | undefined
+      }>
+    | undefined
   /** 是否收藏 */
   isFavorite?: boolean | undefined
   /** 收藏排序 */
@@ -151,9 +152,7 @@ export function isBookmarkArray(arr: unknown): arr is BookmarkNode[] {
 }
 
 /** 类型守卫：检查对象是否为 ChromeBookmarkTreeNode。 */
-export function isChromeBookmarkTreeNode(
-  obj: unknown
-): obj is ChromeBookmarkTreeNode {
+export function isChromeBookmarkTreeNode(obj: unknown): obj is ChromeBookmarkTreeNode {
   if (!obj || typeof obj !== 'object') return false
   const candidate = obj as ChromeBookmarkTreeNode
   return typeof candidate.id === 'string' && typeof candidate.title === 'string'

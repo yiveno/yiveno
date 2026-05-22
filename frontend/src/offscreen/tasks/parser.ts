@@ -16,7 +16,7 @@ export interface PageMetadata {
 
 /**
  * 将 HTML 文本解析为结构化页面元数据
- * 
+ *
  * 使用 DOMParser 提取页面基础元数据，仅返回爬虫需要的关键字段
  *
  * @param html 原始 HTML 字符串
@@ -35,15 +35,12 @@ export function parseHtml(html: string): Partial<PageMetadata> {
     const getMeta = (name: string) =>
       (
         doc.querySelector(`meta[name="${name}"]`)?.getAttribute('content') ??
-        doc
-          .querySelector(`meta[property="${name}"]`)
-          ?.getAttribute('content') ??
+        doc.querySelector(`meta[property="${name}"]`)?.getAttribute('content') ??
         ''
       ).trim()
 
     const title = (doc.querySelector('title')?.textContent ?? '').trim()
-    const description =
-      getMeta('description') || getMeta('og:description') || ''
+    const description = getMeta('description') || getMeta('og:description') || ''
     const keywords = getMeta('keywords')
     const ogTitle = getMeta('og:title')
     const ogDescription = getMeta('og:description')
@@ -51,13 +48,9 @@ export function parseHtml(html: string): Partial<PageMetadata> {
     const ogType = getMeta('og:type')
     const iconHref =
       doc
-        .querySelector(
-          'link[rel~="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]'
-        )
+        .querySelector('link[rel~="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]')
         ?.getAttribute('href') ?? ''
-    const language =
-      doc.querySelector('html')?.getAttribute('lang')?.trim().toLowerCase() ??
-      ''
+    const language = doc.querySelector('html')?.getAttribute('lang')?.trim().toLowerCase() ?? ''
     const author = getMeta('author')
 
     return {

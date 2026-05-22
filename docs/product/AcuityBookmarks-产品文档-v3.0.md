@@ -35,15 +35,15 @@
 
 ### 0.1 单一产品正文（规格唯一出口）
 
-| 类型 | 路径 | 说明 |
-|------|------|------|
-| **产品 + 架构 + 交互 + 开发规范（正文）** | `docs/product/AcuityBookmarks-产品文档-v3.0.md` | **唯一**需要与「当前真实实现」持续对齐的规格文档；架构/数据流/UI 约定/质量门禁等**以本文件为准**。 |
-| IDE 规则 | `.cursor/rules/project.mdc`、`.kiro/steering/*.md` | **执行层**：行为约束、速查表；**不得**与产品正文冲突；若冲突**以本文件为准**并应立刻改 IDE 规则。 |
-| 运维/接入说明（非产品规格） | 如 `docs/AUTH_GUIDE.md` | 操作步骤类可暂存；**与正文冲突时以正文为准**；结论性内容应迁回正文后删或缩为链接。 |
-| 阶段复盘 / 历史 | ~~`docs/PHASE*.md`~~（**已移除**，考古用 Git）、`docs/archive/*` | **不作为规格引用**；新结论必须写回正文。 |
-| 开发事实清单 | `docs/development/`（现仅保留环境变量、依赖移除等**可查表**） | 非产品规格；与正文冲突以正文为准。 |
-| 组件 / 模块 README | `frontend/src/**/README.md` 等 | **局部说明**（用法、边界），不替代正文。 |
-| Material 清单与迁移备忘 | `frontend/MATERIAL_WEB_COMPONENTS_GUIDE.md` 等 | **实现备忘**；与正文重复时以**代码与本文件**为准。 |
+| 类型                                      | 路径                                                             | 说明                                                                                               |
+| ----------------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| **产品 + 架构 + 交互 + 开发规范（正文）** | `docs/product/AcuityBookmarks-产品文档-v3.0.md`                  | **唯一**需要与「当前真实实现」持续对齐的规格文档；架构/数据流/UI 约定/质量门禁等**以本文件为准**。 |
+| IDE 规则                                  | `.cursor/rules/project.mdc`、`.kiro/steering/*.md`               | **执行层**：行为约束、速查表；**不得**与产品正文冲突；若冲突**以本文件为准**并应立刻改 IDE 规则。  |
+| 运维/接入说明（非产品规格）               | 如 `docs/AUTH_GUIDE.md`                                          | 操作步骤类可暂存；**与正文冲突时以正文为准**；结论性内容应迁回正文后删或缩为链接。                 |
+| 阶段复盘 / 历史                           | ~~`docs/PHASE*.md`~~（**已移除**，考古用 Git）、`docs/archive/*` | **不作为规格引用**；新结论必须写回正文。                                                           |
+| 开发事实清单                              | `docs/development/`（现仅保留环境变量、依赖移除等**可查表**）    | 非产品规格；与正文冲突以正文为准。                                                                 |
+| 组件 / 模块 README                        | `frontend/src/**/README.md` 等                                   | **局部说明**（用法、边界），不替代正文。                                                           |
+| Material 清单与迁移备忘                   | `frontend/MATERIAL_WEB_COMPONENTS_GUIDE.md` 等                   | **实现备忘**；与正文重复时以**代码与本文件**为准。                                                 |
 
 **禁止**：在仓库根目录或 `frontend/` 根目录再新增 `*_PROGRESS.md`、`*_MIGRATION_COMPLETE.md`、`*_SUMMARY.md` 等平行「产品规格」类文档；阶段性结论应**写回本文件**或仅存于 **Git 提交说明**，不再在 `docs/` 根目录堆积「PHASE 完成报告」类 Markdown。
 
@@ -120,12 +120,12 @@ frontend/src/
 
 **AcuityBookmarks 约定（扩展 / 管理页 / 侧栏等书签列表与类列表 UI）**
 
-| 场景 | 推荐 | 避免 |
-|------|------|------|
+| 场景                                                           | 推荐                                                                                                      | 避免                                                                                                            |
+| -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | 书签树行、搜索结果行、上下文菜单项、筛选标签等**可重复列表行** | 背景色 / 渐变、`outline` / `box-shadow`（含 inset 边框）、Material 组件自带的 **hover state layer** token | `transform: translateY(...)`、`scale(...)` 作用在**整行**或行内大块；`transition: all` 无必要地带动 `transform` |
-| 独立 **CTA 按钮**、**图标按钮** | 底色变化、阴影略加重、`opacity`；必要时仅 **水平** 微动（如箭头 `translateX`）表达方向 | 整块卡片 `scale` 随 hover（易与「列表行 hover」混淆） |
-| **入场 / 离场**（对话框、下拉、Tooltip） | 短时长 `opacity` + 轻微 `translateY` / `scale` 仅用于**挂载卸载**，与列表 hover 分离 | 将「列表 hover」与「浮层入场」混用同一套位移习惯 |
-| **无障碍** | 尊重系统「减少动效」；非必要不动效 | 持续、大幅度的位移动效（易引发前庭不适） |
+| 独立 **CTA 按钮**、**图标按钮**                                | 底色变化、阴影略加重、`opacity`；必要时仅 **水平** 微动（如箭头 `translateX`）表达方向                    | 整块卡片 `scale` 随 hover（易与「列表行 hover」混淆）                                                           |
+| **入场 / 离场**（对话框、下拉、Tooltip）                       | 短时长 `opacity` + 轻微 `translateY` / `scale` 仅用于**挂载卸载**，与列表 hover 分离                      | 将「列表 hover」与「浮层入场」混用同一套位移习惯                                                                |
+| **无障碍**                                                     | 尊重系统「减少动效」；非必要不动效                                                                        | 持续、大幅度的位移动效（易引发前庭不适）                                                                        |
 
 **实现自检（前端）**
 
@@ -140,6 +140,7 @@ frontend/src/
 **核心用户**：书签积累超过 500 条、懒得手动分类、但需要快速找到的重度网络用户。
 
 具体包括：
+
 - **知识工作者**：研究员、咨询师、产品经理，需要快速找到之前收藏的参考资料
 - **内容创作者**：博主、设计师，收藏大量灵感素材但难以检索
 - **IT 从业者**：开发者、技术人员，收藏大量技术文档和工具链接
@@ -178,20 +179,24 @@ frontend/src/
 作为个人开发者产品，AI 能力采用**隐私优先 + 成本可控**的分层策略：
 
 #### 第一层：本地检索（免费，始终可用）
+
 - 基于 **FlexSearch** 的高性能模糊筛选（工程内部分 API 仍沿用历史命名 `fuse` / `Fuse`）
 - IndexedDB 持久化与索引；无需网络，无成本
 
 #### 第二层：用户自带 API Key（推荐，隐私最优）
+
 - 用户在设置页填入自己的 OpenAI / Claude / Gemini API Key
 - 请求从用户浏览器直接发往 AI 服务商，产品服务器不经手任何书签数据
 - 隐私宣传点完整保留："你的书签数据只在你的设备和你选择的 AI 服务商之间流动"
 
 #### 第三层：产品托管 AI（付费订阅，便捷优先）
+
 - 用户不想配置 API Key 时，使用产品提供的 AI 服务
 - 基于 Cloudflare Workers AI，成本极低
 - 付费订阅用户专属
 
 #### 降级策略
+
 ```
 用户有 API Key → 使用用户 Key（语义搜索）
 用户无 API Key → 使用本地 FlexSearch 模糊筛选
@@ -308,11 +313,11 @@ Chrome Built-in AI（免费，本地，质量高）
 
 > 对应已移除的过程说明 `docs/plugin-website-integration.md` 等；**以本节 + 代码为准**，操作步骤类仍见 `docs/AUTH_GUIDE.md`（若与实现不一致以代码为准）。
 
-| 维度 | 约定 |
-|------|------|
-| **用户登录 / 账户 / 定价等外链** | 统一使用 `frontend/src/config/website.ts` 中的 `websiteUrls` 与 `openWebsiteUrl()`（如 `UserMenu` 跳转登录页）；基地址由 `VITE_WEBSITE_URL` 覆盖，默认生产域为 `https://acuitybookmarks.com`。 |
-| **官网与扩展的会话** | 在官网匹配域上注入内容脚本 `auth-sync.js`（源码 `frontend/src/content/auth-sync.ts`）：监听官网 `localStorage` 中 Supabase session（`sb-*-auth-token`），通过 `chrome.runtime.sendMessage` 向 Background 发送 `SYNC_AUTH_SESSION` / `CLEAR_AUTH_SESSION`，由扩展侧持久化并驱动 UI。 |
-| **职责边界** | 登录与账户主流程在 **官网（Nuxt `website/`）**；扩展负责书签核心能力、展示登录态与跳转；避免在扩展内再维护一套完整账户注册页（与已删文档中的目标一致，实现路径已演进为 content script 同步而非独立 `auth.html` 页）。 |
+| 维度                             | 约定                                                                                                                                                                                                                                                                                |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **用户登录 / 账户 / 定价等外链** | 统一使用 `frontend/src/config/website.ts` 中的 `websiteUrls` 与 `openWebsiteUrl()`（如 `UserMenu` 跳转登录页）；基地址由 `VITE_WEBSITE_URL` 覆盖，默认生产域为 `https://acuitybookmarks.com`。                                                                                      |
+| **官网与扩展的会话**             | 在官网匹配域上注入内容脚本 `auth-sync.js`（源码 `frontend/src/content/auth-sync.ts`）：监听官网 `localStorage` 中 Supabase session（`sb-*-auth-token`），通过 `chrome.runtime.sendMessage` 向 Background 发送 `SYNC_AUTH_SESSION` / `CLEAR_AUTH_SESSION`，由扩展侧持久化并驱动 UI。 |
+| **职责边界**                     | 登录与账户主流程在 **官网（Nuxt `website/`）**；扩展负责书签核心能力、展示登录态与跳转；避免在扩展内再维护一套完整账户注册页（与已删文档中的目标一致，实现路径已演进为 content script 同步而非独立 `auth.html` 页）。                                                               |
 
 ### 2.2 DDD 分层架构
 
@@ -335,12 +340,12 @@ frontend/src/
 
 #### 分层职责与规则
 
-| 层级               | 职责                        | 禁止                                    |
-| ------------------ | --------------------------- | --------------------------------------- |
+| 层级                   | 职责                        | 禁止                                    |
+| ---------------------- | --------------------------- | --------------------------------------- |
 | **Pages / Components** | UI 渲染、用户交互、事件绑定 | 直接访问 Chrome API、直接访问 IndexedDB |
-| **Application**    | 业务流程协调、跨领域编排    | 包含 UI 逻辑、直接操作 DOM              |
-| **Core**           | 领域模型、业务规则、纯函数  | 依赖外部 API、依赖框架                  |
-| **Infrastructure** | 技术实现、外部 API 封装     | 包含业务逻辑                            |
+| **Application**        | 业务流程协调、跨领域编排    | 包含 UI 逻辑、直接操作 DOM              |
+| **Core**               | 领域模型、业务规则、纯函数  | 依赖外部 API、依赖框架                  |
+| **Infrastructure**     | 技术实现、外部 API 封装     | 包含业务逻辑                            |
 
 #### AI 能力模块架构（内部实现）
 
@@ -369,13 +374,13 @@ frontend/src/
 
 **职责说明**：
 
-| 模块 | 职责 | 关键方法 |
-|------|------|---------|
-| **ai-app-service.ts** | 统一 AI 服务入口，协调各 LLM 提供者 | `summarizeBookmark()` - 书签摘要生成<br>`generateTags()` - 标签生成<br>`enhanceSemanticSearch()` - 语义搜索增强 |
-| **builtin-summarizer-client.ts** | Chrome Summarizer API 封装 | `summarize()` - 生成摘要<br>`summarizeStreaming()` - 流式生成<br>`summarizeBatch()` - 批量生成 |
-| **folder-vector-service.ts** | 文件夹向量管理与推荐 | `recommendFolders()` - 推荐文件夹（含长文本预处理）<br>`syncFolderVectors()` - 同步文件夹向量 |
-| **folder-description-service.ts** | 文件夹描述自动生成 | `generateDescription()` - 生成单个描述<br>`generateBatch()` - 批量生成 |
-| **llm-adapter.ts** | LLM 提供者选择与降级策略 | `selectProvider()` - 选择最优提供者<br>`complete()` - 统一文本补全接口 |
+| 模块                              | 职责                                | 关键方法                                                                                                        |
+| --------------------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| **ai-app-service.ts**             | 统一 AI 服务入口，协调各 LLM 提供者 | `summarizeBookmark()` - 书签摘要生成<br>`generateTags()` - 标签生成<br>`enhanceSemanticSearch()` - 语义搜索增强 |
+| **builtin-summarizer-client.ts**  | Chrome Summarizer API 封装          | `summarize()` - 生成摘要<br>`summarizeStreaming()` - 流式生成<br>`summarizeBatch()` - 批量生成                  |
+| **folder-vector-service.ts**      | 文件夹向量管理与推荐                | `recommendFolders()` - 推荐文件夹（含长文本预处理）<br>`syncFolderVectors()` - 同步文件夹向量                   |
+| **folder-description-service.ts** | 文件夹描述自动生成                  | `generateDescription()` - 生成单个描述<br>`generateBatch()` - 批量生成                                          |
+| **llm-adapter.ts**                | LLM 提供者选择与降级策略            | `selectProvider()` - 选择最优提供者<br>`complete()` - 统一文本补全接口                                          |
 
 **降级链路**（自动，用户无感知）：
 
@@ -510,15 +515,15 @@ bun run format
 
 #### 2.5.1 单一事实来源（读此节即可建立心智模型）
 
-| 层级 | 作用 |
-|------|------|
-| **`document.documentElement`** | 运行时由 `data-theme`（`light` / `dark`）与 `style.colorScheme` 表达当前亮暗；**禁止**再使用已废弃的 `theme-light` / `theme-dark` 类名手抄变量。 |
-| **`packages/design-tokens/src/color-presets.ts`** | **官方配色预设清单**（`ColorPresetId`、种子 Hex、中文名）；与 §2.5.5 表格 **同源**，接入 `data-color-preset` 与设置 UI 时从此导入。 |
-| **`packages/design-tokens/css/presets/*.css`** | **六套配色**的亮/暗 `--md-sys-color-*`（由根目录 Builder 导出 + `build-material-color-presets.mjs` 生成）；运行时由 `data-color-preset` 选择。 |
-| **`packages/design-tokens/css/material-theme.css`** | 总入口：`@import` 各 `presets/*.css`，并含中等/高对比度与 `color-scheme` 段；**不**再内联整套标准亮/暗色（已拆至 presets）。 |
-| **`packages/design-tokens/css/semantic-colors.css`** | 业务语义色（success / warning / info、强调色、primary 阶梯、alpha）由 **`var(--md-sys-color-*)` 与 `color-mix`** 派生；换 M3 导出后一般**只需核对映射**，无需再堆 Hex。 |
-| **`frontend/src/design-system/tokens.css`** | 扩展将 `--md-sys-*` / `--acuity-*` 映射为项目对外的 **`--color-*`**（含阴影、遮罩、语义浅底等 P3 集中变量）。换肤后重点检查 **混色与阴影** 是否仍协调。 |
-| **`packages/design-tokens/src/colors.ts`** | 供 **无法使用 CSS 变量** 的场景（如控制台样式字符串、Badge API）：`.css` 仍指向变量名；`.rgb` / `.hex` 为与 **默认 preset 亮侧** 一致的近似快照，换 `presets/default.css` 后应**同步校对** `colors.ts`。 |
+| 层级                                                 | 作用                                                                                                                                                                                                     |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`document.documentElement`**                       | 运行时由 `data-theme`（`light` / `dark`）与 `style.colorScheme` 表达当前亮暗；**禁止**再使用已废弃的 `theme-light` / `theme-dark` 类名手抄变量。                                                         |
+| **`packages/design-tokens/src/color-presets.ts`**    | **官方配色预设清单**（`ColorPresetId`、种子 Hex、中文名）；与 §2.5.5 表格 **同源**，接入 `data-color-preset` 与设置 UI 时从此导入。                                                                      |
+| **`packages/design-tokens/css/presets/*.css`**       | **六套配色**的亮/暗 `--md-sys-color-*`（由根目录 Builder 导出 + `build-material-color-presets.mjs` 生成）；运行时由 `data-color-preset` 选择。                                                           |
+| **`packages/design-tokens/css/material-theme.css`**  | 总入口：`@import` 各 `presets/*.css`，并含中等/高对比度与 `color-scheme` 段；**不**再内联整套标准亮/暗色（已拆至 presets）。                                                                             |
+| **`packages/design-tokens/css/semantic-colors.css`** | 业务语义色（success / warning / info、强调色、primary 阶梯、alpha）由 **`var(--md-sys-color-*)` 与 `color-mix`** 派生；换 M3 导出后一般**只需核对映射**，无需再堆 Hex。                                  |
+| **`frontend/src/design-system/tokens.css`**          | 扩展将 `--md-sys-*` / `--acuity-*` 映射为项目对外的 **`--color-*`**（含阴影、遮罩、语义浅底等 P3 集中变量）。换肤后重点检查 **混色与阴影** 是否仍协调。                                                  |
+| **`packages/design-tokens/src/colors.ts`**           | 供 **无法使用 CSS 变量** 的场景（如控制台样式字符串、Badge API）：`.css` 仍指向变量名；`.rgb` / `.hex` 为与 **默认 preset 亮侧** 一致的近似快照，换 `presets/default.css` 后应**同步校对** `colors.ts`。 |
 
 主题应用逻辑（不负责写死颜色，但换肤后需回归）：`frontend/src/composables/useThemeSync.ts`（同步 `data-theme` 与 `data-color-preset`）、`frontend/src/components/composite/ThemeToggle/ThemeToggle.vue`；**配色预设**在设置页「配色」标签 `frontend/src/pages/settings/sections/ColorPresetSettings.vue` 中选择，经 `frontend/src/infrastructure/global-state/global-state-manager.ts` 写入 `chrome.storage.local` / `sync` 的 `colorPreset` 键。View Transition 与主题相关选择器：`frontend/src/design-system/animations.css`。
 
@@ -528,19 +533,19 @@ bun run format
 
 按常见「只换 Theme Builder 种子」工作流排序：
 
-1. **必改（色盘本体）**  
-   - **多预设**：`packages/design-tokens/css/presets/*.css` — 由根目录 `Skyline`、`Ocean`、`Forest`、`Ember`、`Twilight`（→ preset `violet`）、`Slate` 中 `light.css` / `dark.css` 经 `bun run build:color-presets`（`scripts/build-material-color-presets.mjs`）生成；**勿手改生成体**，改源 CSS 后重新运行脚本。  
+1. **必改（色盘本体）**
+   - **多预设**：`packages/design-tokens/css/presets/*.css` — 由根目录 `Skyline`、`Ocean`、`Forest`、`Ember`、`Twilight`（→ preset `violet`）、`Slate` 中 `light.css` / `dark.css` 经 `bun run build:color-presets`（`scripts/build-material-color-presets.mjs`）生成；**勿手改生成体**，改源 CSS 后重新运行脚本。
    - **总入口**：`packages/design-tokens/css/material-theme.css` — `@import` 上述 preset，并保留中等/高对比度与 `color-scheme` 段。若仅替换「晴空」单套，可只更新 `Skyline` 源文件后重跑脚本。
 
-2. **强烈建议核对（派生与映射）**  
-   - `packages/design-tokens/css/semantic-colors.css` — 确认 `--acuity-*` 仍指向有效的 `--md-sys-color-*`。  
+2. **强烈建议核对（派生与映射）**
+   - `packages/design-tokens/css/semantic-colors.css` — 确认 `--acuity-*` 仍指向有效的 `--md-sys-color-*`。
    - `packages/design-tokens/src/colors.ts` — 更新 `materialColors` 及依赖新映射的 `semanticColors` / `accentColors` / `primaryScale` 的 **rgb/hex 快照**（若仅改 CSS 而不改 TS，非 CSS 场景可能仍显示旧色）。
 
-3. **按需核对（项目层）**  
-   - `frontend/src/design-system/tokens.css` — 新增或调整的 `--color-*` 是否与新材料角色一致。  
+3. **按需核对（项目层）**
+   - `frontend/src/design-system/tokens.css` — 新增或调整的 `--color-*` 是否与新材料角色一致。
    - `frontend/src/assets/main.css` — 高对比度、调试、打印等分支是否仍使用 token（如 `var(--color-black)`），避免裸色回归。
 
-4. **一般无需为换色而改**  
+4. **一般无需为换色而改**
    - 各业务 `.vue` 内样式：应以 **`var(--color-*)` / `var(--md-sys-color-*)`** 为主；若发现裸 `#` / `rgb(...)`，应迁回 `tokens.css` 集中定义后再引用（见 P3 扫尾约定）。
 
 #### 2.5.3 换肤后必跑命令（CI 前自检）
@@ -560,28 +565,28 @@ bun run stylelint:check
 
 以下在 **Popup、Side Panel、Management、Settings、Onboarding** 各至少抽查一条主路径；含 **Material Web Components** 的列表、对话框、输入框须重点看边框与 hover。
 
-| 场景 | 操作要点 | 通过标准 |
-|------|-----------|----------|
-| **浅色** | 设置中选「浅色」或等效项 | `html` 为 `data-theme="light"`（或等价表现）；主表面、主 on-surface 文字与 Chrome 工具栏气质协调；无大块硬编码旧色。 |
-| **深色** | 设置中选「深色」 | `html` 为 `data-theme="dark"`；暗色 `--md-sys-color-surface` / `on-surface` 对比可读；弹层遮罩使用 `--color-scrim-*` 等 token，不偏灰死。 |
-| **跟随系统** | 选「跟随系统」后，用系统或 DevTools 切换 **prefers-color-scheme** | 明暗随系统切换且无中间态错色；与 `material-theme.css` 中 `:root:not([data-theme='light'])` 暗色块一致。 |
-| **浅色 OS + 强制深色** | 系统浅色下仅通过扩展选深色 | 必须走 **`data-theme="dark"`** 整块暗色板，不得仅靠媒体查询「半套」暗色。 |
-| **对比度** | 启用系统「提高对比度」或 Chrome 模拟 `prefers-contrast: more` | 主要文本与背景、焦点环、错误/成功状态仍可辨识；高对比分支（如 `main.css`）生效且无布局崩坏。 |
-| **回归** | 全局抽查 | 无新增裸 Hex / 游离 `rgb`；语义 success/warning/info 与产品语义一致（warning 已映射 tertiary 等约定见 `semantic-colors.css` 头注释）。 |
+| 场景                   | 操作要点                                                          | 通过标准                                                                                                                                  |
+| ---------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **浅色**               | 设置中选「浅色」或等效项                                          | `html` 为 `data-theme="light"`（或等价表现）；主表面、主 on-surface 文字与 Chrome 工具栏气质协调；无大块硬编码旧色。                      |
+| **深色**               | 设置中选「深色」                                                  | `html` 为 `data-theme="dark"`；暗色 `--md-sys-color-surface` / `on-surface` 对比可读；弹层遮罩使用 `--color-scrim-*` 等 token，不偏灰死。 |
+| **跟随系统**           | 选「跟随系统」后，用系统或 DevTools 切换 **prefers-color-scheme** | 明暗随系统切换且无中间态错色；与 `material-theme.css` 中 `:root:not([data-theme='light'])` 暗色块一致。                                   |
+| **浅色 OS + 强制深色** | 系统浅色下仅通过扩展选深色                                        | 必须走 **`data-theme="dark"`** 整块暗色板，不得仅靠媒体查询「半套」暗色。                                                                 |
+| **对比度**             | 启用系统「提高对比度」或 Chrome 模拟 `prefers-contrast: more`     | 主要文本与背景、焦点环、错误/成功状态仍可辨识；高对比分支（如 `main.css`）生效且无布局崩坏。                                              |
+| **回归**               | 全局抽查                                                          | 无新增裸 Hex / 游离 `rgb`；语义 success/warning/info 与产品语义一致（warning 已映射 tertiary 等约定见 `semantic-colors.css` 头注释）。    |
 
 #### 2.5.5 官方配色预设（与代码同步）
 
 > **单一事实来源**：`packages/design-tokens/src/color-presets.ts`（导出 `COLOR_PRESET_DEFINITIONS`、`ColorPresetId`、`normalizeColorPresetId` 等）。  
 > 下文表格与源码 **必须同步维护**；在 Material Theme Builder 中换种子或增减预设时，**先改 TS 再改本节（及后续接入的 UI 文案）**。
 
-| 代码 `id`（`data-color-preset` / 存储） | 中文名 | 英文名（内部） | 种子 Hex（Builder 主色种子） | 气质 |
-|----------------------------------------|--------|----------------|-------------------------------|------|
-| `default` | 晴空 | Skyline | `#3B82F6` | 与现有 Logo 蓝一致，默认品牌色 |
-| `ocean` | 碧海 | Ocean | `#0E7490` | 偏青绿，冷静、工具感 |
-| `forest` | 森雾 | Forest | `#047857` | 偏祖母绿，自然、长时间阅读 |
-| `ember` | 琥珀 | Ember | `#C2410C` | 偏暖橙琥珀，偏活力不是错误红 |
-| `violet` | 暮紫 | Twilight | `#6D28D9` | 紫，偏「智能/创意」但不荧光 |
-| `slate` | 岩灰 | Slate | `#475569` | 冷灰蓝，克制、贴近系统工具栏 |
+| 代码 `id`（`data-color-preset` / 存储） | 中文名 | 英文名（内部） | 种子 Hex（Builder 主色种子） | 气质                           |
+| --------------------------------------- | ------ | -------------- | ---------------------------- | ------------------------------ |
+| `default`                               | 晴空   | Skyline        | `#3B82F6`                    | 与现有 Logo 蓝一致，默认品牌色 |
+| `ocean`                                 | 碧海   | Ocean          | `#0E7490`                    | 偏青绿，冷静、工具感           |
+| `forest`                                | 森雾   | Forest         | `#047857`                    | 偏祖母绿，自然、长时间阅读     |
+| `ember`                                 | 琥珀   | Ember          | `#C2410C`                    | 偏暖橙琥珀，偏活力不是错误红   |
+| `violet`                                | 暮紫   | Twilight       | `#6D28D9`                    | 紫，偏「智能/创意」但不荧光    |
+| `slate`                                 | 岩灰   | Slate          | `#475569`                    | 冷灰蓝，克制、贴近系统工具栏   |
 
 **文件夹命名**：Material 导出目录为 `Skyline`、`Ocean`、`Forest`、`Ember`、`Twilight`、`Slate`；其中 **`Twilight` 对应代码与 CSS 中的 preset id `violet`**（与 `color-presets.ts` 一致）。
 
@@ -758,6 +763,7 @@ async function evaluateBookmarkTraits(bookmarkId: string) {
 **Composable API**: `frontend/src/composables/useTraitData.ts`
 
 提供 7 个响应式 API:
+
 - `useTraitStatistics()` - 获取所有统计
 - `useTraitCount(trait)` - 获取单个特征数量
 - `useTotalNegativeTraits()` - 获取负面特征总数
@@ -767,6 +773,7 @@ async function evaluateBookmarkTraits(bookmarkId: string) {
 - `useRefreshTraits()` - 手动刷新
 
 **使用示例**:
+
 ```typescript
 // 在组件中使用
 import { useTraitCount } from '@/composables/useTraitData'
@@ -776,6 +783,7 @@ const invalidCount = useTraitCount('invalid')
 ```
 
 **架构优势**:
+
 - ✅ 单一数据源,避免数据不一致
 - ✅ 自动更新,无需手动刷新
 - ✅ 智能缓存,减少查询次数
@@ -821,11 +829,11 @@ class LocalBookmarkCrawler {
 
 **核心理念**：分享功能分为三种独立的使用场景，各有不同的目标和价值。
 
-| 分享方式 | 目标 | 入库时机 | 核心价值 | 优先级 |
-|---------|------|---------|---------|--------|
-| **生成链接** | 实用分享 | 点击"生成链接"时 | 方便快捷，可追踪统计 | P1 |
-| **发送给用户** | 私密分享 | 点击"发送"时 | 通知机制，社交属性 | P1 |
-| **生成海报** | 炫耀展示 | **不入库** | 品牌曝光，用户炫耀 | P2 |
+| 分享方式       | 目标     | 入库时机         | 核心价值             | 优先级 |
+| -------------- | -------- | ---------------- | -------------------- | ------ |
+| **生成链接**   | 实用分享 | 点击"生成链接"时 | 方便快捷，可追踪统计 | P1     |
+| **发送给用户** | 私密分享 | 点击"发送"时     | 通知机制，社交属性   | P1     |
+| **生成海报**   | 炫耀展示 | **不入库**       | 品牌曝光，用户炫耀   | P2     |
 
 **关键设计决策（2026-05-19）**：
 
@@ -863,6 +871,7 @@ class LocalBookmarkCrawler {
 #### 3.5.2 技术架构
 
 **核心文件**：
+
 - `frontend/src/components/business/ShareDialog/ShareDialog.vue` - 分享对话框组件
 - `frontend/src/application/share/share-service.ts` - 分享业务逻辑
 - `frontend/src/application/share/poster-service.ts` - 海报生成服务
@@ -870,6 +879,7 @@ class LocalBookmarkCrawler {
 - `backend/src/routers/share.ts` - 分享 API 路由
 
 **数据流**：
+
 ```
 用户操作 → ShareDialog 组件 → tRPC 客户端 → Cloudflare Workers → Supabase
                                                                     ↓
@@ -963,6 +973,7 @@ CREATE TABLE public.notifications (
 #### 3.5.3 链接分享流程
 
 **用户操作流程**：
+
 ```
 1. 用户打开 ShareDialog
 2. 输入分享标题（可选，默认为"我的书签收藏"）
@@ -987,26 +998,29 @@ const handleCreateLinkShare = async () => {
     })),
     accessToken: session.value.access_token
   })
-  
+
   // 2. 复制短链接到剪贴板
   await navigator.clipboard.writeText(result.data.shareUrl)
-  
+
   // 3. 提示用户
   notifySuccess('分享链接已复制到剪贴板')
 }
 ```
 
 **短链接格式**：`https://acuitybookmarks.com/s/{shortCode}`
+
 - `shortCode`：8 位随机字符串（a-zA-Z0-9）
 - 示例：`https://acuitybookmarks.com/s/abc12345`
 
 **统计数据**：
+
 - `view_count`：访问次数（每次访问短链接时 +1）
 - `import_count`：导入次数（用户点击"一键导入"时 +1）
 
 #### 3.5.4 直接分享流程
 
 **用户操作流程**：
+
 ```
 1. 用户打开 ShareDialog
 2. 选择"发送给用户"方式
@@ -1035,13 +1049,14 @@ const handleCreateDirectShare = async () => {
     message: state.message.trim() || undefined,
     accessToken: session.value.access_token
   })
-  
+
   // 2. 提示用户
   notifySuccess(`已成功发送给 ${result.data.recipientCount} 个用户`)
 }
 ```
 
 **通知机制**：
+
 - 接收者会收到一条通知：`{发送者} 分享了 {书签数量} 个书签给你`
 - 通知包含：分享标题、发送者信息、书签数量、留言
 - 接收者可以在通知中心查看和导入
@@ -1049,6 +1064,7 @@ const handleCreateDirectShare = async () => {
 #### 3.5.5 海报生成流程
 
 **用户操作流程**：
+
 ```
 1. 用户打开 ShareDialog
 2. 选择"生成海报"方式
@@ -1083,6 +1099,7 @@ const handleCreateDirectShare = async () => {
 ```
 
 **设计要点**：
+
 - ✅ 简洁美观，适合社交媒体分享
 - ✅ 突出书签列表（用户的核心内容）
 - ✅ 品牌标识（Logo + 网址）
@@ -1096,35 +1113,36 @@ const handleCreateDirectShare = async () => {
 async function generatePoster(options: PosterOptions): Promise<string> {
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d')
-  
+
   // 1. 绘制背景
   ctx.fillStyle = options.theme === 'dark' ? '#0e1513' : '#ffffff'
   ctx.fillRect(0, 0, canvas.width, canvas.height)
-  
+
   // 2. 绘制标题
   ctx.font = 'bold 24px sans-serif'
   ctx.fillStyle = options.theme === 'dark' ? '#dfe4e1' : '#1a1a1a'
   ctx.fillText(options.title, 40, 60)
-  
+
   // 3. 绘制书签列表
   options.bookmarks.forEach((bookmark, index) => {
     const y = 120 + index * 40
     ctx.font = '16px sans-serif'
     ctx.fillText(`📌 ${bookmark.title}`, 40, y)
   })
-  
+
   // 4. 绘制品牌标识
   ctx.font = '14px sans-serif'
   ctx.fillStyle = '#83d5c5'
   ctx.fillText('由 AcuityBookmarks 生成', 40, canvas.height - 60)
   ctx.fillText('acuitybookmarks.com', 40, canvas.height - 30)
-  
+
   // 5. 返回 Data URL
   return canvas.toDataURL('image/png')
 }
 ```
 
 **不入库原因**：
+
 - 海报只是临时生成的图片，用户下载后即结束
 - 不需要追踪海报的访问次数或导入次数
 - 海报的价值在于品牌曝光和用户炫耀，不在于数据统计
@@ -1134,16 +1152,19 @@ async function generatePoster(options: PosterOptions): Promise<string> {
 **功能**：在设置页显示用户的分享历史和统计信息
 
 **我的分享列表**：
+
 - 显示所有链接分享和直接分享
 - 每条记录显示：标题、分享方式、书签数量、创建时间、访问次数、导入次数
 - 支持删除分享
 
 **收到的分享列表**：
+
 - 显示其他用户发送给我的分享
 - 每条记录显示：标题、发送者、书签数量、接收时间、状态（待处理/已接受/已拒绝）
 - 支持一键导入
 
 **统计信息**：
+
 - 总分享次数
 - 总访问次数
 - 总导入次数
@@ -1152,16 +1173,19 @@ async function generatePoster(options: PosterOptions): Promise<string> {
 #### 3.5.7 未来扩展
 
 **移动端支持**：
+
 - 当有移动端 App/网页时，可以在海报上添加二维码
 - 用户扫码 → 跳转到移动端 → 显示书签列表 → 一键导入
 - 二维码指向短链接：`https://acuitybookmarks.com/s/{shortCode}`
 
 **分享统计增强**：
+
 - 分享的地理位置分布
 - 分享的时间趋势
 - 最受欢迎的书签（被分享次数最多）
 
 **社交功能**：
+
 - 关注其他用户
 - 查看其他用户的公开分享
 - 点赞和评论分享
@@ -1693,20 +1717,14 @@ import { produce } from 'immer'
 /**
  * 更新 Vue Ref 包装的 Map
  */
-export function updateMap<K, V>(
-  mapRef: Ref<Map<K, V>>,
-  updater: (draft: Map<K, V>) => void
-): void {
+export function updateMap<K, V>(mapRef: Ref<Map<K, V>>, updater: (draft: Map<K, V>) => void): void {
   mapRef.value = produce(mapRef.value, updater)
 }
 
 /**
  * 更新 Vue Ref 包装的数组
  */
-export function updateArray<T>(
-  arrayRef: Ref<T[]>,
-  updater: (draft: T[]) => void
-): void {
+export function updateArray<T>(arrayRef: Ref<T[]>, updater: (draft: T[]) => void): void {
   arrayRef.value = produce(arrayRef.value, updater)
 }
 
@@ -2308,11 +2326,11 @@ bun run e2e:management --ext $EXT_ID
 
 #### 8.1.4 Service Worker 与消息边界测试
 
-| 类型 | 命令 | 说明 |
-|------|------|------|
-| **单元** | `bun run test:service-worker` | `frontend/src/tests/service-worker/lifecycle.test.ts`，覆盖 MV3 生命周期与 `onMessage` 异步边界（异步处理须 **`return true`** 以保持消息通道；**单次** `sendResponse` 等）。 |
-| **E2E** | `bun run test:service-worker:e2e` | 独立 Vitest 配置（`vitest.e2e.config.ts`），依赖已安装的 Puppeteer；偏慢，CI 可择机启用。 |
-| **实现约束** | MV3 | Service Worker 可能随时休眠；**持久状态**须落在 `chrome.storage.*` / `chrome.alarms` 等，禁止依赖进程内全局变量充当跨唤醒「单例」。 |
+| 类型         | 命令                              | 说明                                                                                                                                                                         |
+| ------------ | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **单元**     | `bun run test:service-worker`     | `frontend/src/tests/service-worker/lifecycle.test.ts`，覆盖 MV3 生命周期与 `onMessage` 异步边界（异步处理须 **`return true`** 以保持消息通道；**单次** `sendResponse` 等）。 |
+| **E2E**      | `bun run test:service-worker:e2e` | 独立 Vitest 配置（`vitest.e2e.config.ts`），依赖已安装的 Puppeteer；偏慢，CI 可择机启用。                                                                                    |
+| **实现约束** | MV3                               | Service Worker 可能随时休眠；**持久状态**须落在 `chrome.storage.*` / `chrome.alarms` 等，禁止依赖进程内全局变量充当跨唤醒「单例」。                                          |
 
 #### 8.1.5 测试分层原则
 
@@ -2414,66 +2432,66 @@ bun run audit:lhci:summary      # 审计报告摘要
 
 ## 附录 B：关键文件路径速查表
 
-| 功能             | 文件路径                                                |
-| ---------------- | ------------------------------------------------------- |
-| **架构文档**     |                                                         |
-| 单向数据流说明   | `/单向数据流架构说明.md`                                |
-| **前端核心**     |                                                         |
-| 书签 Store       | `frontend/src/stores/bookmarkStore.ts`                  |
-| 管理页面         | `frontend/src/pages/management/Management.vue`          |
-| 书签树组件       | `frontend/src/components/composite/SimpleBookmarkTree/` |
-| **基础设施**     |                                                         |
-| IndexedDB 管理器 | `frontend/src/infrastructure/indexeddb/manager.ts`      |
-| 存储抽象层       | `frontend/src/infrastructure/storage/modern-storage.ts` |
-| 事件总线         | `frontend/src/infrastructure/events/event-bus.ts`       |
-| Immer 工具       | `frontend/src/infrastructure/state/immer-helpers.ts`    |
-| **后台脚本**     |                                                         |
-| 书签监听         | `frontend/src/background/bookmarks.ts`                  |
-| 消息处理         | `frontend/src/background/messaging.ts`                  |
-| 爬虫管理器       | `frontend/src/background/crawler-manager.ts`            |
-| **服务层**       |                                                         |
-| 书签同步服务     | `frontend/src/services/bookmark-sync-service.ts`        |
-| 书签特征服务     | `frontend/src/services/bookmark-trait-service.ts`       |
-| 特征检测服务     | `frontend/src/services/trait-detection-service.ts`      |
-| 本地爬取服务     | `frontend/src/services/local-bookmark-crawler.ts`       |
-| **AI 能力**      |                                                         |
-| AI 应用服务      | `frontend/src/application/ai/ai-app-service.ts`         |
-| Summarizer 客户端 | `frontend/src/infrastructure/llm/builtin-summarizer-client.ts` |
-| Prompt API 客户端 | `frontend/src/infrastructure/llm/builtin-llm-client.ts` |
-| LLM 适配器       | `frontend/src/infrastructure/llm/llm-adapter.ts`        |
-| 文件夹向量服务   | `frontend/src/application/folder/folder-vector-service.ts` |
-| 文件夹描述服务   | `frontend/src/application/folder/folder-description-service.ts` |
-| **配置文件**     |                                                         |
-| Manifest         | `frontend/public/manifest.json`                         |
-| Vite 配置        | `frontend/vite.config.ts`                               |
-| TypeScript 配置  | `frontend/tsconfig.json`                                |
-| ESLint 配置      | `eslint.config.js`                                      |
-| Stylelint 配置   | `frontend/stylelint.config.js`                          |
+| 功能              | 文件路径                                                        |
+| ----------------- | --------------------------------------------------------------- |
+| **架构文档**      |                                                                 |
+| 单向数据流说明    | `/单向数据流架构说明.md`                                        |
+| **前端核心**      |                                                                 |
+| 书签 Store        | `frontend/src/stores/bookmarkStore.ts`                          |
+| 管理页面          | `frontend/src/pages/management/Management.vue`                  |
+| 书签树组件        | `frontend/src/components/composite/SimpleBookmarkTree/`         |
+| **基础设施**      |                                                                 |
+| IndexedDB 管理器  | `frontend/src/infrastructure/indexeddb/manager.ts`              |
+| 存储抽象层        | `frontend/src/infrastructure/storage/modern-storage.ts`         |
+| 事件总线          | `frontend/src/infrastructure/events/event-bus.ts`               |
+| Immer 工具        | `frontend/src/infrastructure/state/immer-helpers.ts`            |
+| **后台脚本**      |                                                                 |
+| 书签监听          | `frontend/src/background/bookmarks.ts`                          |
+| 消息处理          | `frontend/src/background/messaging.ts`                          |
+| 爬虫管理器        | `frontend/src/background/crawler-manager.ts`                    |
+| **服务层**        |                                                                 |
+| 书签同步服务      | `frontend/src/services/bookmark-sync-service.ts`                |
+| 书签特征服务      | `frontend/src/services/bookmark-trait-service.ts`               |
+| 特征检测服务      | `frontend/src/services/trait-detection-service.ts`              |
+| 本地爬取服务      | `frontend/src/services/local-bookmark-crawler.ts`               |
+| **AI 能力**       |                                                                 |
+| AI 应用服务       | `frontend/src/application/ai/ai-app-service.ts`                 |
+| Summarizer 客户端 | `frontend/src/infrastructure/llm/builtin-summarizer-client.ts`  |
+| Prompt API 客户端 | `frontend/src/infrastructure/llm/builtin-llm-client.ts`         |
+| LLM 适配器        | `frontend/src/infrastructure/llm/llm-adapter.ts`                |
+| 文件夹向量服务    | `frontend/src/application/folder/folder-vector-service.ts`      |
+| 文件夹描述服务    | `frontend/src/application/folder/folder-description-service.ts` |
+| **配置文件**      |                                                                 |
+| Manifest          | `frontend/public/manifest.json`                                 |
+| Vite 配置         | `frontend/vite.config.ts`                                       |
+| TypeScript 配置   | `frontend/tsconfig.json`                                        |
+| ESLint 配置       | `eslint.config.js`                                              |
+| Stylelint 配置    | `frontend/stylelint.config.js`                                  |
 
 ---
 
 ## 附录 C：术语表
 
-| 术语               | 解释                                                    |
-| ------------------ | ------------------------------------------------------- |
-| **DDD**            | Domain-Driven Design（领域驱动设计）                    |
-| **单向数据流**     | Chrome API → Background → IndexedDB → UI 的单向数据流动 |
-| **IndexedDB**      | 浏览器端的 NoSQL 数据库，本项目的唯一数据源             |
-| **BookmarkRecord** | IndexedDB 中存储的书签数据结构                          |
-| **BookmarkNode**   | 前端 Vue 组件使用的书签节点数据结构                     |
-| **Pinia Store**    | Vue 的状态管理库                                        |
-| **mitt**           | 轻量级事件总线库                                        |
-| **Immer**          | 不可变状态更新库                                        |
-| **TanStack Query** | 异步状态管理和缓存库                                    |
-| **VueUse**         | Vue Composition API 实用工具集                          |
-| **Zod**            | TypeScript 运行时数据校验库                             |
-| **虚拟滚动**       | 只渲染可见区域的节点，提升大列表性能                    |
-| **pathIds**        | 从根节点到当前节点的所有父节点 ID 数组                  |
-| **traitTags**      | 书签特征标签（duplicate, invalid, internal）            |
+| 术语               | 解释                                                       |
+| ------------------ | ---------------------------------------------------------- |
+| **DDD**            | Domain-Driven Design（领域驱动设计）                       |
+| **单向数据流**     | Chrome API → Background → IndexedDB → UI 的单向数据流动    |
+| **IndexedDB**      | 浏览器端的 NoSQL 数据库，本项目的唯一数据源                |
+| **BookmarkRecord** | IndexedDB 中存储的书签数据结构                             |
+| **BookmarkNode**   | 前端 Vue 组件使用的书签节点数据结构                        |
+| **Pinia Store**    | Vue 的状态管理库                                           |
+| **mitt**           | 轻量级事件总线库                                           |
+| **Immer**          | 不可变状态更新库                                           |
+| **TanStack Query** | 异步状态管理和缓存库                                       |
+| **VueUse**         | Vue Composition API 实用工具集                             |
+| **Zod**            | TypeScript 运行时数据校验库                                |
+| **虚拟滚动**       | 只渲染可见区域的节点，提升大列表性能                       |
+| **pathIds**        | 从根节点到当前节点的所有父节点 ID 数组                     |
+| **traitTags**      | 书签特征标签（duplicate, invalid, internal）               |
 | **Summarizer API** | Chrome 138+ 内置的摘要生成 API，用于书签摘要和长文本预处理 |
-| **Prompt API**     | Chrome 127+ 内置的通用文本生成 API                      |
-| **Embedding**      | 文本向量化，用于语义搜索和书签分类                      |
-| **降级策略**       | AI 能力不可用时自动切换到备选方案的机制                 |
+| **Prompt API**     | Chrome 127+ 内置的通用文本生成 API                         |
+| **Embedding**      | 文本向量化，用于语义搜索和书签分类                         |
+| **降级策略**       | AI 能力不可用时自动切换到备选方案的机制                    |
 
 ---
 
@@ -2545,16 +2563,19 @@ bun run stylelint:fix      # 样式检查
 **A**: Summarizer API 是 Chrome 138+ 内置的摘要生成能力，作为内部技术优化使用：
 
 **工作原理**：
+
 - ✅ 完全在本地运行，数据不上传
 - ✅ 专用摘要模型，质量比通用 Prompt API 高 30-50%
 - ✅ 速度快 2-3x，无需网络请求
 
 **使用场景**：
+
 1. **书签摘要生成**（P0-1）：使用 `tl;dr` 类型生成书签内容摘要
 2. **长文本预处理**（P0-2）：使用 `key-points` 类型压缩长文本后再生成 Embedding
 3. **文件夹描述生成**（P1）：使用 `headline` 类型生成文件夹标题
 
 **降级策略**：
+
 ```
 Summarizer API (Chrome 138+, 本地, 免费)
     ↓ 不可用
@@ -2566,11 +2587,13 @@ Prompt API (Chrome 127+)
 ```
 
 **用户覆盖率**：
+
 - 桌面端：85-90%（Chrome 138+ 用户）
 - 移动端：0%（不支持）
 - 整体：约 60-70%
 
 **隐私保护**：
+
 - ✅ 完全本地运行，符合"隐私优先"产品定位
 - ✅ 不经过产品服务器
 - ✅ 用户无感知，自动降级
@@ -2580,15 +2603,18 @@ Prompt API (Chrome 127+)
 **A**: Summarizer API 是**内部技术优化**，不是用户功能：
 
 **设计理念**：
+
 - ✅ 用户只需要知道"书签摘要质量更好了"
 - ✅ 不需要知道"是用 Summarizer API 还是 Prompt API"
 - ✅ 降级策略自动执行，用户无感知
 
 **类比**：
+
 - 就像浏览器使用 GPU 加速渲染，用户不需要在设置中看到"启用 GPU 加速"开关
 - 技术细节对用户来说是黑盒，只要结果好就行
 
 **实现约束**：
+
 - ❌ 禁止在 UI 中显示"Summarizer API 状态"
 - ❌ 禁止在设置中添加"启用 Summarizer API"开关
 - ✅ 只在开发者工具的日志中记录使用情况

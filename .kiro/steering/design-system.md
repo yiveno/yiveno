@@ -29,9 +29,9 @@ import '@acuity-bookmarks/design-tokens/css/semantic-colors.css'
 ```css
 /* ❌ 错误：硬编码颜色值 */
 .button {
-  background-color: #3B82F6;  /* 禁止！ */
-  padding: 16px;              /* 禁止！ */
-  font-size: 14px;            /* 禁止！ */
+  background-color: #3b82f6; /* 禁止！ */
+  padding: 16px; /* 禁止！ */
+  font-size: 14px; /* 禁止！ */
 }
 
 /* ✅ 正确：使用 design-tokens 的变量 */
@@ -56,11 +56,13 @@ import '@acuity-bookmarks/design-tokens/css/semantic-colors.css'
 import '@/assets/main.css'
 import '@/assets/fonts.css'
 ```
+
 import '@acuity-bookmarks/design-tokens/css/variables.css'
 
 // 2. 项目样式
 import '@/assets/main.css'
 import '@/assets/fonts.css'
+
 ```
 
 ### 4. Material Web 组件样式管理
@@ -68,20 +70,25 @@ import '@/assets/fonts.css'
 **所有 Material Web 组件的样式必须在入口处集中配置，禁止在各个组件文件中重复配置。**
 
 ```
+
 ✅ 正确做法：
-  - 全局样式：frontend/src/design-system/material-web-overrides.css
-  - 在入口文件（main.css）中导入
-  - 提供尺寸变体类（size-xs、size-sm、size-md）
+
+- 全局样式：frontend/src/design-system/material-web-overrides.css
+- 在入口文件（main.css）中导入
+- 提供尺寸变体类（size-xs、size-sm、size-md）
 
 ❌ 错误做法：
-  - 在每个 Vue 组件的 <style scoped> 中配置 Material Web 样式
-  - 重复配置相同的 CSS 变量（如 --md-primary-tab-container-color）
-  - 在多个文件中配置相同组件的样式
+
+- 在每个 Vue 组件的 <style scoped> 中配置 Material Web 样式
+- 重复配置相同的 CSS 变量（如 --md-primary-tab-container-color）
+- 在多个文件中配置相同组件的样式
 
 例外情况：
-  - 只有在需要组件特定样式时，才在组件中覆盖
-  - 必须有明确的理由（如 Settings 页面需要更大的 Tabs）
-```
+
+- 只有在需要组件特定样式时，才在组件中覆盖
+- 必须有明确的理由（如 Settings 页面需要更大的 Tabs）
+
+````
 
 **示例：**
 
@@ -107,7 +114,7 @@ md-tabs {
   --md-primary-tab-active-label-text-color: var(--color-primary);
   /* ... 重复的配置 */
 }
-```
+````
 
 ### 5. 检查清单
 
@@ -187,8 +194,8 @@ packages/design-tokens/
 
 ```css
 /* 主色调 - 薄荷绿 */
---md-sys-color-primary: #83d5c5;           /* 亮色模式 */
---md-sys-color-on-primary: #003731;        /* 主色上的文本 */
+--md-sys-color-primary: #83d5c5; /* 亮色模式 */
+--md-sys-color-on-primary: #003731; /* 主色上的文本 */
 --md-sys-color-primary-container: #004d44; /* 主色容器 */
 
 /* 次要色 - 蓝绿色 */
@@ -196,10 +203,10 @@ packages/design-tokens/
 --md-sys-color-on-secondary: #1c3531;
 
 /* 表面色 */
---md-sys-color-surface: #0e1513;           /* 深色模式表面 */
---md-sys-color-on-surface: #dfe4e1;        /* 表面上的文本 */
---md-sys-color-background: #0e1513;        /* 页面背景 */
---md-sys-color-on-background: #dfe4e1;     /* 背景上的文本 */
+--md-sys-color-surface: #0e1513; /* 深色模式表面 */
+--md-sys-color-on-surface: #dfe4e1; /* 表面上的文本 */
+--md-sys-color-background: #0e1513; /* 页面背景 */
+--md-sys-color-on-background: #dfe4e1; /* 背景上的文本 */
 
 /* 错误色 */
 --md-sys-color-error: #ffb4ab;
@@ -212,13 +219,13 @@ packages/design-tokens/
 // packages/design-tokens/src/colors.ts
 export const colors = {
   semantic: {
-    success: '#22c55e',  // 成功
-    error: '#ef4444',    // 错误
-    warning: '#f59e0b',  // 警告
-    info: '#3b82f6'      // 信息
+    success: '#22c55e', // 成功
+    error: '#ef4444', // 错误
+    warning: '#f59e0b', // 警告
+    info: '#3b82f6' // 信息
   },
   brand: {
-    primary: '#83d5c5',  // 品牌主色
+    primary: '#83d5c5', // 品牌主色
     secondary: '#b1ccc5' // 品牌次色
   }
 }
@@ -240,8 +247,8 @@ export const colors = {
 
 /* ❌ 错误：硬编码颜色 */
 .button {
-  background-color: #83d5c5;  /* 禁止！ */
-  color: #333;                /* 禁止！ */
+  background-color: #83d5c5; /* 禁止！ */
+  color: #333; /* 禁止！ */
 }
 </style>
 ```
@@ -250,17 +257,17 @@ export const colors = {
 
 ```css
 /* 间距 tokens */
---spacing-1: 4px;    /* 紧凑间距、图标与文字 */
---spacing-2: 8px;    /* 小间距、列表项内 */
---spacing-3: 12px;   /* 中等间距、卡片内 */
---spacing-4: 16px;   /* 标准间距、区块内 */
---spacing-5: 20px;   /* 较大间距 */
---spacing-6: 24px;   /* 大间距、区块间 */
---spacing-8: 32px;   /* 特大间距 */
---spacing-lg: 24px;  /* 别名：大间距 */
---spacing-md: 12px;  /* 别名：中等间距 */
---spacing-sm: 8px;   /* 别名：小间距 */
---spacing-xs: 4px;   /* 别名：超小间距 */
+--spacing-1: 4px; /* 紧凑间距、图标与文字 */
+--spacing-2: 8px; /* 小间距、列表项内 */
+--spacing-3: 12px; /* 中等间距、卡片内 */
+--spacing-4: 16px; /* 标准间距、区块内 */
+--spacing-5: 20px; /* 较大间距 */
+--spacing-6: 24px; /* 大间距、区块间 */
+--spacing-8: 32px; /* 特大间距 */
+--spacing-lg: 24px; /* 别名：大间距 */
+--spacing-md: 12px; /* 别名：中等间距 */
+--spacing-sm: 8px; /* 别名：小间距 */
+--spacing-xs: 4px; /* 别名：超小间距 */
 ```
 
 #### 使用规范
@@ -276,7 +283,7 @@ export const colors = {
 
 /* ❌ 错误：魔法数字 */
 .card {
-  padding: 16px;      /* 禁止！ */
+  padding: 16px; /* 禁止！ */
   margin-bottom: 25px; /* 禁止！ */
 }
 </style>
@@ -286,12 +293,12 @@ export const colors = {
 
 ```css
 /* 字号 */
---text-xs: 12px;     /* 辅助文字、标签 */
---text-sm: 14px;     /* 次要文字、按钮 */
---text-base: 16px;   /* 正文 */
---text-lg: 18px;     /* 小标题 */
---text-xl: 20px;     /* 标题 */
---text-2xl: 24px;    /* 大标题 */
+--text-xs: 12px; /* 辅助文字、标签 */
+--text-sm: 14px; /* 次要文字、按钮 */
+--text-base: 16px; /* 正文 */
+--text-lg: 18px; /* 小标题 */
+--text-xl: 20px; /* 标题 */
+--text-2xl: 24px; /* 大标题 */
 
 /* 字重 */
 --font-normal: 400;
@@ -318,8 +325,8 @@ export const colors = {
 
 /* ❌ 错误：硬编码字号 */
 .title {
-  font-size: 18px;    /* 禁止！ */
-  font-weight: 600;   /* 禁止！ */
+  font-size: 18px; /* 禁止！ */
+  font-weight: 600; /* 禁止！ */
 }
 </style>
 ```
@@ -341,12 +348,12 @@ Material Design 3 使用 Elevation（高度）来表示元素在 Z 轴上的相�
 
 ```css
 /* Material Design 3 Elevation 变量 */
---md-sys-elevation-0: none;                    /* Level 0: 无阴影（平面） */
---md-sys-elevation-1: ...;                     /* Level 1: 最轻微阴影（卡片） */
---md-sys-elevation-2: ...;                     /* Level 2: 轻微阴影（按钮） */
---md-sys-elevation-3: ...;                     /* Level 3: 中等阴影（菜单） */
---md-sys-elevation-4: ...;                     /* Level 4: 较强阴影（导航） */
---md-sys-elevation-5: ...;                     /* Level 5: 最强阴影（对话框） */
+--md-sys-elevation-0: none; /* Level 0: 无阴影（平面） */
+--md-sys-elevation-1: ...; /* Level 1: 最轻微阴影（卡片） */
+--md-sys-elevation-2: ...; /* Level 2: 轻微阴影（按钮） */
+--md-sys-elevation-3: ...; /* Level 3: 中等阴影（菜单） */
+--md-sys-elevation-4: ...; /* Level 4: 较强阴影（导航） */
+--md-sys-elevation-5: ...; /* Level 5: 最强阴影（对话框） */
 
 /* 便捷别名（推荐使用） */
 --shadow-none: var(--md-sys-elevation-0);
@@ -359,14 +366,14 @@ Material Design 3 使用 Elevation（高度）来表示元素在 Z 轴上的相�
 
 **使用场景**
 
-| Elevation Level | 别名 | 使用场景 | 示例 |
-|----------------|------|---------|------|
-| Level 0 | `--shadow-none` | 平面元素 | 背景、分隔线 |
-| Level 1 | `--shadow-sm` | 轻微悬浮 | 卡片、徽章 |
-| Level 2 | `--shadow-md` | 中等悬浮 | 按钮、芯片 |
-| Level 3 | `--shadow-lg` | 明显悬浮 | 菜单、工具提示 |
-| Level 4 | `--shadow-xl` | 强烈悬浮 | 导航抽屉 |
-| Level 5 | `--shadow-2xl` | 最高层级 | 模态对话框 |
+| Elevation Level | 别名            | 使用场景 | 示例           |
+| --------------- | --------------- | -------- | -------------- |
+| Level 0         | `--shadow-none` | 平面元素 | 背景、分隔线   |
+| Level 1         | `--shadow-sm`   | 轻微悬浮 | 卡片、徽章     |
+| Level 2         | `--shadow-md`   | 中等悬浮 | 按钮、芯片     |
+| Level 3         | `--shadow-lg`   | 明显悬浮 | 菜单、工具提示 |
+| Level 4         | `--shadow-xl`   | 强烈悬浮 | 导航抽屉       |
+| Level 5         | `--shadow-2xl`  | 最高层级 | 模态对话框     |
 
 **使用规范**
 
@@ -391,7 +398,7 @@ Material Design 3 使用 Elevation（高度）来表示元素在 Z 轴上的相�
 
 /* ❌ 错误：硬编码阴影值 */
 .card {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);  /* 禁止！ */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* 禁止！ */
 }
 ```
 
@@ -498,46 +505,46 @@ const buttonClasses = computed(() => [
 
 ### 1. 颜色转换
 
-| Figma 设计 | 代码实现 |
-|-----------|---------|
-| Primary Color | `var(--md-sys-color-primary)` |
-| Text/Primary | `var(--color-text-primary)` |
-| Text/Secondary | `var(--color-text-secondary)` |
-| Background | `var(--color-background)` |
-| Surface | `var(--color-surface)` |
-| Error | `var(--color-semantic-error)` |
-| Success | `var(--color-semantic-success)` |
+| Figma 设计     | 代码实现                        |
+| -------------- | ------------------------------- |
+| Primary Color  | `var(--md-sys-color-primary)`   |
+| Text/Primary   | `var(--color-text-primary)`     |
+| Text/Secondary | `var(--color-text-secondary)`   |
+| Background     | `var(--color-background)`       |
+| Surface        | `var(--color-surface)`          |
+| Error          | `var(--color-semantic-error)`   |
+| Success        | `var(--color-semantic-success)` |
 
 ### 2. 间距转换
 
-| Figma 值 | 代码实现 |
-|---------|---------|
-| 4px | `var(--spacing-1)` |
-| 8px | `var(--spacing-2)` |
-| 12px | `var(--spacing-3)` |
-| 16px | `var(--spacing-4)` |
-| 24px | `var(--spacing-6)` |
-| 其他值 | 使用最接近的 token + 注释说明 |
+| Figma 值 | 代码实现                      |
+| -------- | ----------------------------- |
+| 4px      | `var(--spacing-1)`            |
+| 8px      | `var(--spacing-2)`            |
+| 12px     | `var(--spacing-3)`            |
+| 16px     | `var(--spacing-4)`            |
+| 24px     | `var(--spacing-6)`            |
+| 其他值   | 使用最接近的 token + 注释说明 |
 
 ### 3. 字号转换
 
-| Figma 值 | 代码实现 |
-|---------|---------|
-| 12px | `var(--text-xs)` |
-| 14px | `var(--text-sm)` |
-| 16px | `var(--text-base)` |
-| 18px | `var(--text-lg)` |
-| 20px | `var(--text-xl)` |
-| 24px | `var(--text-2xl)` |
+| Figma 值 | 代码实现           |
+| -------- | ------------------ |
+| 12px     | `var(--text-xs)`   |
+| 14px     | `var(--text-sm)`   |
+| 16px     | `var(--text-base)` |
+| 18px     | `var(--text-lg)`   |
+| 20px     | `var(--text-xl)`   |
+| 24px     | `var(--text-2xl)`  |
 
 ### 4. 圆角转换
 
-| Figma 值 | 代码实现 |
-|---------|---------|
-| 4px | `var(--radius-sm)` |
-| 8px | `var(--radius-md)` |
-| 12px | `var(--radius-lg)` |
-| 全圆角 | `var(--radius-full)` |
+| Figma 值 | 代码实现             |
+| -------- | -------------------- |
+| 4px      | `var(--radius-sm)`   |
+| 8px      | `var(--radius-md)`   |
+| 12px     | `var(--radius-lg)`   |
+| 全圆角   | `var(--radius-full)` |
 
 ---
 

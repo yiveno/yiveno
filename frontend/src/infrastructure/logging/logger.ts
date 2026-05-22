@@ -9,18 +9,14 @@
  */
 
 // 从统一类型定义导入
-import type {
-  LogLevel,
-  LoggerConfig,
-  LogEntry
-} from '@/types/infrastructure/logging'
+import type { LogLevel, LoggerConfig, LogEntry } from '@/types/infrastructure/logging'
 
 // 导出类型供外部使用
 export type { LogLevel, LoggerConfig, LogEntry }
 
 /**
  * 日志样式配置
- * 
+ *
  * ✅ 使用 Material Design 3 颜色（从 design-tokens 包导入）
  * 注意：这些颜色用于浏览器控制台，无法使用 CSS 变量
  * 通过导入 TypeScript 常量，确保与 design-tokens 包自动同步
@@ -29,7 +25,7 @@ const getLevelToStyle = (): Record<LogLevel, string> => {
   try {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { semanticColors } = require('@acuity-bookmarks/design-tokens/colors')
-    
+
     return {
       // Info: 使用语义 Info 容器色
       info: `background: ${semanticColors.infoContainer.rgb}; color: ${semanticColors.info.rgb}; padding: 2px 6px; border-radius: 3px;`,
@@ -45,8 +41,10 @@ const getLevelToStyle = (): Record<LogLevel, string> => {
     return {
       info: 'background: rgb(216, 226, 255); color: rgb(68, 94, 145); padding: 2px 6px; border-radius: 3px;',
       warn: 'background: rgb(252, 215, 251); color: rgb(113, 85, 115); padding: 2px 6px; border-radius: 3px;',
-      error: 'background: rgb(255, 235, 238); color: rgb(183, 28, 28); padding: 2px 6px; border-radius: 3px;',
-      debug: 'background: rgb(243, 229, 245); color: rgb(74, 20, 140); padding: 2px 6px; border-radius: 3px;'
+      error:
+        'background: rgb(255, 235, 238); color: rgb(183, 28, 28); padding: 2px 6px; border-radius: 3px;',
+      debug:
+        'background: rgb(243, 229, 245); color: rgb(74, 20, 140); padding: 2px 6px; border-radius: 3px;'
     }
   }
 }
@@ -326,8 +324,7 @@ export class Logger {
  * 默认日志器实例
  */
 const rawLevel = import.meta.env?.VITE_LOG_LEVEL as string | undefined
-const desiredLevel =
-  rawLevel && rawLevel in levelWeights ? (rawLevel as LogLevel) : 'info'
+const desiredLevel = rawLevel && rawLevel in levelWeights ? (rawLevel as LogLevel) : 'info'
 
 const rawConsole = import.meta.env?.VITE_LOG_CONSOLE as string | undefined
 const runtimeEnv = import.meta.env?.VITE_RUNTIME_ENV || 'dev'

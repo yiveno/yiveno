@@ -14,6 +14,7 @@ Service Worker 测试分为两类：
 **文件**: `lifecycle.test.ts`
 
 **测试内容**:
+
 - Service Worker 初始化逻辑
 - 状态持久化策略
 - 消息处理器注册
@@ -21,6 +22,7 @@ Service Worker 测试分为两类：
 - 最佳实践验证
 
 **运行方式**:
+
 ```bash
 bun run test:service-worker:unit
 ```
@@ -34,12 +36,14 @@ bun run test:service-worker:unit
 **文件**: `termination.test.ts`
 
 **测试内容**:
+
 - Service Worker 终止后的状态恢复
 - Alarm 触发后的 Service Worker 重启
 - 消息传递的可靠性
 - 性能和资源管理
 
 **运行方式**:
+
 ```bash
 # 1. 安装 Puppeteer
 bun add -d puppeteer
@@ -54,6 +58,7 @@ bun run test:service-worker:e2e
 **状态**: ⏳ 需要安装 Puppeteer 才能运行
 
 **注意事项**:
+
 - ⚠️ 这些测试会启动真实的 Chrome 浏览器（headless: false）
 - ⚠️ 测试时间较长（包含等待 Service Worker 终止的时间）
 - ⚠️ 需要先构建扩展到 `dist/` 目录
@@ -79,18 +84,21 @@ bun run test:service-worker:e2e
 ### ✅ DO（推荐）
 
 1. **使用 `chrome.storage` 存储状态**
+
    ```typescript
    // ✅ 正确：持久化存储
    await chrome.storage.local.set({ count: 1 })
    ```
 
 2. **使用 `chrome.alarms` 调度任务**
+
    ```typescript
    // ✅ 正确：持久化定时任务
    await chrome.alarms.create('task', { delayInMinutes: 1 })
    ```
 
 3. **在异步消息处理器中返回 `true`**
+
    ```typescript
    // ✅ 正确：保持消息通道开放
    chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -109,12 +117,14 @@ bun run test:service-worker:e2e
 ### ❌ DON'T（避免）
 
 1. **不要使用全局变量存储状态**
+
    ```typescript
    // ❌ 错误：Service Worker 终止后丢失
    let globalState = { count: 0 }
    ```
 
 2. **不要使用 `setTimeout` 调度长期任务**
+
    ```typescript
    // ❌ 错误：Service Worker 终止后失效
    setTimeout(() => doTask(), 60000)
@@ -144,9 +154,9 @@ bun run test:service-worker:e2e
 
 ## 📝 总结
 
-| 测试类型 | 文件 | 状态 | 运行命令 |
-|---------|------|------|---------|
-| 单元测试 | `lifecycle.test.ts` | ✅ 完成 | `bun run test:service-worker:unit` |
-| E2E 测试 | `termination.test.ts` | ⏳ 需要 Puppeteer | `bun run test:service-worker:e2e` |
+| 测试类型 | 文件                  | 状态              | 运行命令                           |
+| -------- | --------------------- | ----------------- | ---------------------------------- |
+| 单元测试 | `lifecycle.test.ts`   | ✅ 完成           | `bun run test:service-worker:unit` |
+| E2E 测试 | `termination.test.ts` | ⏳ 需要 Puppeteer | `bun run test:service-worker:e2e`  |
 
 **Service Worker 测试已经完整实现，但 E2E 测试需要额外的 Puppeteer 依赖才能运行。**

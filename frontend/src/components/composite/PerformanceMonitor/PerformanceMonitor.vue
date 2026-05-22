@@ -1,9 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import {
-  usePerformanceMonitor,
-  useMemoryManagement
-} from '@/composables/useSimplePerformance'
+import { usePerformanceMonitor, useMemoryManagement } from '@/composables/useSimplePerformance'
 
 const showMonitor = ref(true) // 简化：总是显示
 const isExpanded = ref(false)

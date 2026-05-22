@@ -30,12 +30,7 @@ const userEmail = computed(() => user.value?.email ?? '')
 const displayName = computed(() => {
   if (!user.value) return '未登录'
   const meta = user.value.user_metadata
-  return (
-    meta?.full_name ||
-    meta?.name ||
-    user.value.email?.split('@')[0] ||
-    '用户'
-  )
+  return meta?.full_name || meta?.name || user.value.email?.split('@')[0] || '用户'
 })
 
 /** 头像 URL */
@@ -88,13 +83,13 @@ const expiryDate = computed(() => {
 /** 点击按钮：切换菜单显示/隐藏 */
 function handleClick(event: MouseEvent) {
   event.stopPropagation()
-  
+
   // 🔥 未登录：直接跳转登录页，不显示下拉菜单
   if (!isLoggedIn.value) {
     handleLogin()
     return
   }
-  
+
   // 切换菜单显示状态
   showMenu.value = !showMenu.value
 }
@@ -131,6 +126,7 @@ async function handleLogout() {
   } catch (error) {
     logger.error('UserMenu', '退出登录失败', error)
   } finally {
+    // eslint-disable-next-line require-atomic-updates -- isLoggingOut.value 在 await 期间不会被其他代码修改
     isLoggingOut.value = false
   }
 }
@@ -147,7 +143,7 @@ async function handleLogout() {
     >
       <!-- 未登录：显示图标 -->
       <LucideIcon v-if="!isLoggedIn" name="user" :size="size * 0.8" />
-      
+
       <!-- 已登录：显示头像 -->
       <Avatar
         v-else
@@ -157,7 +153,7 @@ async function handleLogout() {
         variant="circle"
         class="user-menu__avatar"
       />
-      
+
       <!-- PRO 徽章（右下角小皇冠） -->
       <div v-if="isPro" class="user-menu__badge">
         <LucideIcon name="crown" :size="10" />
@@ -190,7 +186,7 @@ async function handleLogout() {
         <LucideIcon name="user" :size="16" class="user-menu__header-icon" />
         <span class="user-menu__header-title">{{ displayName }}</span>
       </div>
-      
+
       <!-- 订阅信息 -->
       <div class="user-menu__info">
         <div class="user-menu__info-row">
@@ -202,15 +198,11 @@ async function handleLogout() {
           <span>到期：{{ expiryDate }}</span>
         </div>
       </div>
-      
+
       <md-divider></md-divider>
-      
+
       <!-- 退出登录 -->
-      <md-menu-item
-        class="user-menu__logout-item"
-        :disabled="isLoggingOut"
-        @click="handleLogout"
-      >
+      <md-menu-item class="user-menu__logout-item" :disabled="isLoggingOut" @click="handleLogout">
         <LucideIcon slot="start" name="log-out" :size="16" />
         {{ isLoggingOut ? '退出中...' : '退出登录' }}
       </md-menu-item>
@@ -241,13 +233,14 @@ async function handleLogout() {
   color: var(--color-primary);
 }
 
+/* 头像 */
+.user-menu__avatar {
+  border-radius: var(--radius-full);
+}
+
 /* 免费用户：头像外层容器添加边框 */
 .user-menu__avatar-wrapper--free .user-menu__avatar {
   border: 2px solid var(--md-sys-color-primary);
-}
-
-.user-menu__avatar-wrapper--free:hover .user-menu__avatar {
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent);
 }
 
 /* PRO 用户：头像外层容器添加金色边框 + 光晕 */
@@ -256,13 +249,12 @@ async function handleLogout() {
   box-shadow: 0 0 12px color-mix(in srgb, var(--acuity-accent-gold) 40%, transparent);
 }
 
-.user-menu__avatar-wrapper--pro:hover .user-menu__avatar {
-  box-shadow: 0 0 16px color-mix(in srgb, var(--acuity-accent-gold) 60%, transparent);
+.user-menu__avatar-wrapper--free:hover .user-menu__avatar {
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent);
 }
 
-/* 头像 */
-.user-menu__avatar {
-  border-radius: var(--radius-full);
+.user-menu__avatar-wrapper--pro:hover .user-menu__avatar {
+  box-shadow: 0 0 16px color-mix(in srgb, var(--acuity-accent-gold) 60%, transparent);
 }
 
 /* PRO 徽章（右下角小皇冠，与官网一致） */

@@ -59,10 +59,7 @@ function isInputElement(target: EventTarget | null): boolean {
 /**
  * 判断快捷键是否匹配
  */
-function matchesShortcut(
-  event: KeyboardEvent,
-  shortcut: KeyboardShortcut
-): boolean {
+function matchesShortcut(event: KeyboardEvent, shortcut: KeyboardShortcut): boolean {
   const key = event.key.toLowerCase()
 
   // 基本按键匹配
@@ -71,23 +68,23 @@ function matchesShortcut(
   // 修饰键匹配
   // 注意：只检查快捷键配置中明确要求的修饰键
   // 如果快捷键没有要求某个修饰键，则不检查该修饰键的状态
-  
+
   // Ctrl/Cmd 键匹配
   if (shortcut.ctrl !== undefined) {
     const hasCtrl = event.ctrlKey || event.metaKey
     if (shortcut.ctrl !== hasCtrl) return false
   }
-  
+
   // Alt 键匹配
   if (shortcut.alt !== undefined) {
     if (shortcut.alt !== event.altKey) return false
   }
-  
+
   // Shift 键匹配
   if (shortcut.shift !== undefined) {
     if (shortcut.shift !== event.shiftKey) return false
   }
-  
+
   // Meta 键匹配（Mac Command / Windows 键）
   if (shortcut.meta !== undefined) {
     if (shortcut.meta !== event.metaKey) return false
@@ -155,8 +152,7 @@ export function useKeyboard(options: UseKeyboardOptions = {}) {
   // 快捷键处理器
   const handleKeydown = (event: KeyboardEvent) => {
     // 检查是否启用
-    const isEnabled =
-      typeof enabledOption === 'boolean' ? enabledOption : enabledOption.value
+    const isEnabled = typeof enabledOption === 'boolean' ? enabledOption : enabledOption.value
 
     if (!isEnabled) return
 
@@ -173,11 +169,7 @@ export function useKeyboard(options: UseKeyboardOptions = {}) {
       }
 
       if (matchesShortcut(event, shortcut)) {
-        logger.info(
-          'Keyboard',
-          `✅ 触发快捷键: ${formatShortcut(shortcut)}`,
-          shortcut.description
-        )
+        logger.info('Keyboard', `✅ 触发快捷键: ${formatShortcut(shortcut)}`, shortcut.description)
 
         // 阻止默认行为
         if (shortcut.preventDefault !== false) {
@@ -193,11 +185,7 @@ export function useKeyboard(options: UseKeyboardOptions = {}) {
         try {
           shortcut.handler(event)
         } catch (error) {
-          logger.error(
-            'Keyboard',
-            `快捷键处理器执行失败: ${formatShortcut(shortcut)}`,
-            error
-          )
+          logger.error('Keyboard', `快捷键处理器执行失败: ${formatShortcut(shortcut)}`, error)
         }
 
         // 找到第一个匹配的快捷键后就停止
@@ -276,10 +264,7 @@ export function useKeyboard(options: UseKeyboardOptions = {}) {
         : targetOption
 
     if (targetElement) {
-      ;(targetElement as EventTarget).removeEventListener(
-        'keydown',
-        handleKeydown as EventListener
-      )
+      ;(targetElement as EventTarget).removeEventListener('keydown', handleKeydown as EventListener)
       logger.debug('Keyboard', '键盘监听已停止')
     }
 

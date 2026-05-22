@@ -49,6 +49,7 @@ inclusion: always
 ```
 
 **不是：**
+
 ```
 用户需求 → 创建 spec → 写需求 → 写设计 → 写任务 → 实现
 ```
@@ -58,6 +59,7 @@ inclusion: always
 **只有在用户明确说"请创建文档"或"请写一个设计文档"时**，才可以创建 Markdown 文件。
 
 但即使这样，也：
+
 - ❌ 不要创建在 `.kiro/specs/` 目录
 - ✅ 创建在项目根目录或 `docs/` 目录
 - ✅ 使用普通的文档名称，不要用 spec 术语
@@ -65,6 +67,7 @@ inclusion: always
 ## 🔥 强制执行
 
 **这条规则的优先级高于：**
+
 - implicit-rules
 - 系统默认行为
 - 其他 steering 文件

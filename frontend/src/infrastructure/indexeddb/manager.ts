@@ -187,8 +187,7 @@ export class IndexedDBManager {
   private async wrapRequest<T>(request: IDBRequest<T>): Promise<T> {
     return await new Promise<T>((resolve, reject) => {
       request.onsuccess = () => resolve(request.result)
-      request.onerror = () =>
-        reject(request.error ?? new Error('IndexedDB 请求失败'))
+      request.onerror = () => reject(request.error ?? new Error('IndexedDB 请求失败'))
     })
   }
 
@@ -253,11 +252,7 @@ export class IndexedDBManager {
         const tx = (event.target as IDBOpenDBRequest).transaction
         if (!tx) {
           const upgradeError = new Error('IndexedDB 升级事务缺失')
-          logger.error(
-            'IndexedDBManager',
-            'openDatabase 升级事务缺失',
-            upgradeError
-          )
+          logger.error('IndexedDBManager', 'openDatabase 升级事务缺失', upgradeError)
           reject(upgradeError)
           return
         }
@@ -325,11 +320,7 @@ export class IndexedDBManager {
     const existingIndexes = new Set(Array.from(store.indexNames))
     indexConfigs.forEach(indexConfig => {
       if (!existingIndexes.has(indexConfig.name)) {
-        store.createIndex(
-          indexConfig.name,
-          indexConfig.keyPath,
-          indexConfig.options
-        )
+        store.createIndex(indexConfig.name, indexConfig.keyPath, indexConfig.options)
       }
     })
 
@@ -440,9 +431,7 @@ export class IndexedDBManager {
                 await executor(store, item)
               } catch (error) {
                 const normalizedError =
-                  error instanceof Error
-                    ? error
-                    : new Error(String(error ?? '未知错误'))
+                  error instanceof Error ? error : new Error(String(error ?? '未知错误'))
                 options.errorCallback?.(normalizedError, item)
                 throw normalizedError
               }
@@ -457,9 +446,7 @@ export class IndexedDBManager {
       }
 
       if (options.delayBetweenBatches) {
-        await new Promise(resolve =>
-          setTimeout(resolve, options.delayBetweenBatches)
-        )
+        await new Promise(resolve => setTimeout(resolve, options.delayBetweenBatches))
       }
     }
   }
@@ -472,8 +459,7 @@ export class IndexedDBManager {
   }
 
   private calculateOptimalBatchSize(totalRecords: number): number {
-    const memoryGB = (navigator as Navigator & { deviceMemory?: number })
-      .deviceMemory
+    const memoryGB = (navigator as Navigator & { deviceMemory?: number }).deviceMemory
     const baseBatchSize = (memoryGB || 4) >= 8 ? 5000 : 2000
 
     if (totalRecords < 1000) return totalRecords
@@ -548,11 +534,7 @@ export class IndexedDBManager {
 
     const parsed = BookmarkRecordArraySchema.safeParse(bookmarks)
     if (!parsed.success) {
-      logger.error(
-        'IndexedDBManager',
-        'insertBookmarks 数据校验失败',
-        parsed.error
-      )
+      logger.error('IndexedDBManager', 'insertBookmarks 数据校验失败', parsed.error)
       throw parsed.error
     }
 
@@ -590,25 +572,18 @@ export class IndexedDBManager {
   async updateBookmark(bookmark: BookmarkRecord): Promise<void> {
     const parsed = BookmarkRecordSchema.safeParse(bookmark)
     if (!parsed.success) {
-      logger.error(
-        'IndexedDBManager',
-        'updateBookmark 数据校验失败',
-        parsed.error
-      )
+      logger.error('IndexedDBManager', 'updateBookmark 数据校验失败', parsed.error)
       throw parsed.error
     }
 
-    await this.runWriteTransaction(
-      DB_CONFIG.STORES.BOOKMARKS,
-      async (_tx, store) => {
-        const record = {
-          ...parsed.data,
-          traitTags: parsed.data.traitTags ?? [],
-          traitMetadata: (parsed.data.traitMetadata ?? []) as TraitMetadata[]
-        } as BookmarkRecord
-        await this.wrapRequest(store.put(record))
-      }
-    )
+    await this.runWriteTransaction(DB_CONFIG.STORES.BOOKMARKS, async (_tx, store) => {
+      const record = {
+        ...parsed.data,
+        traitTags: parsed.data.traitTags ?? [],
+        traitMetadata: (parsed.data.traitMetadata ?? []) as TraitMetadata[]
+      } as BookmarkRecord
+      await this.wrapRequest(store.put(record))
+    })
   }
 
   async updateBookmarksTraits(
@@ -620,54 +595,47 @@ export class IndexedDBManager {
   ): Promise<void> {
     if (updates.length === 0) return
 
-    await this.runWriteTransaction(
-      DB_CONFIG.STORES.BOOKMARKS,
-      async (_tx, store) => {
-        for (const update of updates) {
-          try {
-            const existing = (await this.wrapRequest(store.get(update.id))) as
-              | BookmarkRecord
-              | undefined
-            if (!existing) continue
+    await this.runWriteTransaction(DB_CONFIG.STORES.BOOKMARKS, async (_tx, store) => {
+      for (const update of updates) {
+        try {
+          const existing = (await this.wrapRequest(store.get(update.id))) as
+            | BookmarkRecord
+            | undefined
+          if (!existing) continue
 
-            // ✅ 数据迁移：清理旧的特征标签和元数据
-            const migratedTags = migrateTraitTags(update.traitTags) ?? []
-            const migratedMetadata = migrateTraitMetadata(update.traitMetadata)
+          // ✅ 数据迁移：清理旧的特征标签和元数据
+          const migratedTags = migrateTraitTags(update.traitTags) ?? []
+          const migratedMetadata = migrateTraitMetadata(update.traitMetadata)
 
-            const nextRecord: BookmarkRecord = {
-              ...existing,
-              traitTags: migratedTags,
-              traitMetadata: migratedMetadata ?? []
-            }
-
-            const parsed = BookmarkRecordSchema.safeParse(nextRecord)
-            if (!parsed.success) {
-              logger.error(
-                'IndexedDBManager',
-                'updateBookmarksTraits 数据校验失败',
-                {
-                  bookmarkId: update.id,
-                  error: parsed.error,
-                  // 添加更多调试信息
-                  originalTraitTags: update.traitTags,
-                  migratedTraitTags: migratedTags,
-                  originalMetadata: update.traitMetadata,
-                  migratedMetadata: migratedMetadata
-                }
-              )
-              continue
-            }
-
-            await this.wrapRequest(store.put(parsed.data))
-          } catch (error) {
-            logger.error('IndexedDBManager', '更新特征标签失败', {
-              bookmarkId: update.id,
-              error
-            })
+          const nextRecord: BookmarkRecord = {
+            ...existing,
+            traitTags: migratedTags,
+            traitMetadata: migratedMetadata ?? []
           }
+
+          const parsed = BookmarkRecordSchema.safeParse(nextRecord)
+          if (!parsed.success) {
+            logger.error('IndexedDBManager', 'updateBookmarksTraits 数据校验失败', {
+              bookmarkId: update.id,
+              error: parsed.error,
+              // 添加更多调试信息
+              originalTraitTags: update.traitTags,
+              migratedTraitTags: migratedTags,
+              originalMetadata: update.traitMetadata,
+              migratedMetadata: migratedMetadata
+            })
+            continue
+          }
+
+          await this.wrapRequest(store.put(parsed.data))
+        } catch (error) {
+          logger.error('IndexedDBManager', '更新特征标签失败', {
+            bookmarkId: update.id,
+            error
+          })
         }
       }
-    )
+    })
   }
 
   /**
@@ -682,97 +650,87 @@ export class IndexedDBManager {
     reason: 'http_error' | 'network_error' | 'timeout' | 'unknown',
     httpStatus?: number
   ): Promise<void> {
-    await this.runWriteTransaction(
-      DB_CONFIG.STORES.BOOKMARKS,
-      async (_tx, store) => {
-        try {
-          const existing = (await this.wrapRequest(store.get(bookmarkId))) as
-            | BookmarkRecord
-            | undefined
-          if (!existing) {
-            logger.warn('IndexedDBManager', '书签不存在，无法标记为失效', {
-              bookmarkId
-            })
-            return
-          }
-
-          // 如果已经标记为失效，跳过
-          if (existing.isInvalid) {
-            logger.debug('IndexedDBManager', '书签已标记为失效，跳过', {
-              bookmarkId
-            })
-            return
-          }
-
-          // 添加 invalid 标签（如果还没有）
-          const traitTags = existing.traitTags ?? []
-          if (!traitTags.includes('invalid')) {
-            traitTags.push('invalid')
-          }
-
-          // 添加元数据
-          const traitMetadata = existing.traitMetadata ?? []
-          const statusText = httpStatus
-            ? `HTTP ${httpStatus}`
-            : reason === 'http_error'
-              ? 'HTTP错误'
-              : '未知错误'
-
-          traitMetadata.push({
-            tag: 'invalid',
-            detectedAt: Date.now(),
-            source: 'worker',
-            notes: statusText
+    await this.runWriteTransaction(DB_CONFIG.STORES.BOOKMARKS, async (_tx, store) => {
+      try {
+        const existing = (await this.wrapRequest(store.get(bookmarkId))) as
+          | BookmarkRecord
+          | undefined
+        if (!existing) {
+          logger.warn('IndexedDBManager', '书签不存在，无法标记为失效', {
+            bookmarkId
           })
-
-          const nextRecord: BookmarkRecord = {
-            ...existing,
-            isInvalid: true,
-            invalidReason: reason,
-            httpStatus,
-            traitTags,
-            traitMetadata
-          }
-
-          const parsed = BookmarkRecordSchema.safeParse(nextRecord)
-          if (!parsed.success) {
-            logger.error(
-              'IndexedDBManager',
-              'markBookmarkAsInvalid 数据校验失败',
-              {
-                bookmarkId,
-                error: parsed.error
-              }
-            )
-            return
-          }
-
-          await this.wrapRequest(store.put(parsed.data))
-          logger.info('IndexedDBManager', '已标记书签为失效', {
-            bookmarkId,
-            reason,
-            httpStatus
-          })
-        } catch (error) {
-          logger.error('IndexedDBManager', '标记书签失效时出错', {
-            bookmarkId,
-            error
-          })
+          return
         }
+
+        // 如果已经标记为失效，跳过
+        if (existing.isInvalid) {
+          logger.debug('IndexedDBManager', '书签已标记为失效，跳过', {
+            bookmarkId
+          })
+          return
+        }
+
+        // 添加 invalid 标签（如果还没有）
+        const traitTags = existing.traitTags ?? []
+        if (!traitTags.includes('invalid')) {
+          traitTags.push('invalid')
+        }
+
+        // 添加元数据
+        const traitMetadata = existing.traitMetadata ?? []
+        const statusText = httpStatus
+          ? `HTTP ${httpStatus}`
+          : reason === 'http_error'
+            ? 'HTTP错误'
+            : '未知错误'
+
+        traitMetadata.push({
+          tag: 'invalid',
+          detectedAt: Date.now(),
+          source: 'worker',
+          notes: statusText
+        })
+
+        const nextRecord: BookmarkRecord = {
+          ...existing,
+          isInvalid: true,
+          invalidReason: reason,
+          httpStatus,
+          traitTags,
+          traitMetadata
+        }
+
+        const parsed = BookmarkRecordSchema.safeParse(nextRecord)
+        if (!parsed.success) {
+          logger.error('IndexedDBManager', 'markBookmarkAsInvalid 数据校验失败', {
+            bookmarkId,
+            error: parsed.error
+          })
+          return
+        }
+
+        await this.wrapRequest(store.put(parsed.data))
+        logger.info('IndexedDBManager', '已标记书签为失效', {
+          bookmarkId,
+          reason,
+          httpStatus
+        })
+      } catch (error) {
+        logger.error('IndexedDBManager', '标记书签失效时出错', {
+          bookmarkId,
+          error
+        })
       }
-    )
+    })
   }
 
   /**
    * 删除指定书签。
    */
   async deleteBookmark(id: string): Promise<void> {
-    await this.runWriteTransaction(
-      DB_CONFIG.STORES.BOOKMARKS,
-      async (_tx, store) => {
-        await this.wrapRequest(store.delete(id))
-      }
-    )
+    await this.runWriteTransaction(DB_CONFIG.STORES.BOOKMARKS, async (_tx, store) => {
+      await this.wrapRequest(store.delete(id))
+    })
   }
 
   /**
@@ -781,14 +739,9 @@ export class IndexedDBManager {
   async deleteBookmarksBatch(ids: string[]): Promise<void> {
     if (ids.length === 0) return
 
-    await this.runWriteTransaction(
-      DB_CONFIG.STORES.BOOKMARKS,
-      async (_tx, store) => {
-        await Promise.all(
-          ids.map(async id => await this.wrapRequest(store.delete(id)))
-        )
-      }
-    )
+    await this.runWriteTransaction(DB_CONFIG.STORES.BOOKMARKS, async (_tx, store) => {
+      await Promise.all(ids.map(async id => await this.wrapRequest(store.delete(id))))
+    })
   }
 
   /**
@@ -895,54 +848,59 @@ export class IndexedDBManager {
       .slice(0, limit) // 取前 N 条
   }
 
-  async getAllBookmarks(
-    limit?: number,
-    offset?: number
-  ): Promise<BookmarkRecord[]> {
-    return await monitorOperation('read', DB_CONFIG.STORES.BOOKMARKS, async () => {
-      const result = await this.runReadTransaction(
-        DB_CONFIG.STORES.BOOKMARKS,
-        async (_tx, store) => await this.wrapRequest(store.getAll())
-      )
+  async getAllBookmarks(limit?: number, offset?: number): Promise<BookmarkRecord[]> {
+    return await monitorOperation(
+      'read',
+      DB_CONFIG.STORES.BOOKMARKS,
+      async () => {
+        const result = await this.runReadTransaction(
+          DB_CONFIG.STORES.BOOKMARKS,
+          async (_tx, store) => await this.wrapRequest(store.getAll())
+        )
 
-      const parsed = BookmarkRecordArraySchema.safeParse(result)
-      if (!parsed.success) {
-        logger.error('IndexedDBManager', 'getAllBookmarks 校验失败', parsed.error)
-        throw parsed.error
-      }
-
-      // ✅ 严格按照 Chrome 原始顺序：先按 parentId 分组，再按 index 排序
-      // 这样保证树的构建顺序与 Chrome 完全一致
-      let data = parsed.data.map(record => ({
-        ...record,
-        traitTags: record.traitTags ?? [],
-        traitMetadata: (record.traitMetadata ?? []) as TraitMetadata[]
-      } as BookmarkRecord))
-
-      // ✅ 按 parentId（字符串）+ index（数字）排序，严格复制 Chrome 的书签树顺序
-      data.sort((a, b) => {
-        const parentA = a.parentId ?? '0'
-        const parentB = b.parentId ?? '0'
-        // 先按 parentId 排序（同一父节点的子节点会聚集在一起）
-        if (parentA !== parentB) {
-          return parentA.localeCompare(parentB)
+        const parsed = BookmarkRecordArraySchema.safeParse(result)
+        if (!parsed.success) {
+          logger.error('IndexedDBManager', 'getAllBookmarks 校验失败', parsed.error)
+          throw parsed.error
         }
-        // 同一父节点下，按 index 排序（保持 Chrome 的顺序）
-        const indexA = typeof a.index === 'number' ? a.index : 0
-        const indexB = typeof b.index === 'number' ? b.index : 0
-        return indexA - indexB
-      })
 
-      // 应用分页
-      if (offset !== undefined && offset > 0) {
-        data = data.slice(offset)
-      }
-      if (limit !== undefined && limit > 0) {
-        data = data.slice(0, limit)
-      }
+        // ✅ 严格按照 Chrome 原始顺序：先按 parentId 分组，再按 index 排序
+        // 这样保证树的构建顺序与 Chrome 完全一致
+        let data = parsed.data.map(
+          record =>
+            ({
+              ...record,
+              traitTags: record.traitTags ?? [],
+              traitMetadata: (record.traitMetadata ?? []) as TraitMetadata[]
+            }) as BookmarkRecord
+        )
 
-      return data
-    }, limit)
+        // ✅ 按 parentId（字符串）+ index（数字）排序，严格复制 Chrome 的书签树顺序
+        data.sort((a, b) => {
+          const parentA = a.parentId ?? '0'
+          const parentB = b.parentId ?? '0'
+          // 先按 parentId 排序（同一父节点的子节点会聚集在一起）
+          if (parentA !== parentB) {
+            return parentA.localeCompare(parentB)
+          }
+          // 同一父节点下，按 index 排序（保持 Chrome 的顺序）
+          const indexA = typeof a.index === 'number' ? a.index : 0
+          const indexB = typeof b.index === 'number' ? b.index : 0
+          return indexA - indexB
+        })
+
+        // 应用分页
+        if (offset !== undefined && offset > 0) {
+          data = data.slice(offset)
+        }
+        if (limit !== undefined && limit > 0) {
+          data = data.slice(0, limit)
+        }
+
+        return data
+      },
+      limit
+    )
   }
 
   /**
@@ -1039,11 +997,7 @@ export class IndexedDBManager {
     })
 
     if (!parsedOptions.success) {
-      logger.error(
-        'IndexedDBManager',
-        'searchBookmarks 参数校验失败',
-        parsedOptions.error
-      )
+      logger.error('IndexedDBManager', 'searchBookmarks 参数校验失败', parsedOptions.error)
       throw parsedOptions.error
     }
 
@@ -1052,10 +1006,7 @@ export class IndexedDBManager {
       DB_CONFIG.STORES.BOOKMARKS,
       async (_tx, store) => {
         const candidateMap = new Map<string, BookmarkRecord>()
-        const terms = normalized.query
-          .toLowerCase()
-          .split(/\s+/)
-          .filter(Boolean)
+        const terms = normalized.query.toLowerCase().split(/\s+/).filter(Boolean)
 
         if (terms.length === 0) return []
 
@@ -1066,10 +1017,7 @@ export class IndexedDBManager {
         if (normalized.includeUrl && store.indexNames.contains('urlLower')) {
           indexes.push('urlLower')
         }
-        if (
-          normalized.includeKeywords &&
-          store.indexNames.contains('keywords')
-        ) {
+        if (normalized.includeKeywords && store.indexNames.contains('keywords')) {
           indexes.push('keywords')
         }
         if (normalized.includeTags && store.indexNames.contains('tags')) {
@@ -1144,33 +1092,22 @@ export class IndexedDBManager {
             (a.bookmark.title as string).localeCompare(b.bookmark.title as string)
           )
         } else if (normalized.sortBy === 'dateAdded') {
-          scored.sort(
-            (a, b) => (b.bookmark.dateAdded ?? 0) - (a.bookmark.dateAdded ?? 0)
-          )
+          scored.sort((a, b) => (b.bookmark.dateAdded ?? 0) - (a.bookmark.dateAdded ?? 0))
         } else if (normalized.sortBy === 'visitCount') {
-          scored.sort(
-            (a, b) =>
-              (b.bookmark.visitCount ?? 0) - (a.bookmark.visitCount ?? 0)
-          )
+          scored.sort((a, b) => (b.bookmark.visitCount ?? 0) - (a.bookmark.visitCount ?? 0))
         } else {
           scored.sort((a, b) => b.score - a.score)
         }
 
         const limited =
-          normalized.limit && normalized.limit > 0
-            ? scored.slice(0, normalized.limit)
-            : scored
+          normalized.limit && normalized.limit > 0 ? scored.slice(0, normalized.limit) : scored
         return limited
       }
     )
 
     const validated = BookmarkSearchResultArraySchema.safeParse(matches)
     if (!validated.success) {
-      logger.error(
-        'IndexedDBManager',
-        'searchBookmarks 结果校验失败',
-        validated.error
-      )
+      logger.error('IndexedDBManager', 'searchBookmarks 结果校验失败', validated.error)
       throw validated.error
     }
 
@@ -1221,22 +1158,19 @@ export class IndexedDBManager {
   }
 
   async updateGlobalStats(stats: GlobalStats): Promise<void> {
-    await this.runWriteTransaction(
-      DB_CONFIG.STORES.GLOBAL_STATS,
-      async (_tx, store) => {
-        const normalized: GlobalStats = {
-          key: stats.key ?? 'basic',
-          id: stats.id ?? stats.key ?? 'basic',
-          totalBookmarks: stats.totalBookmarks ?? 0,
-          totalFolders: stats.totalFolders ?? 0,
-          totalDomains: stats.totalDomains ?? 0,
-          lastUpdated: Date.now(),
-          dataVersion: stats.dataVersion ?? DB_CONFIG.VERSION
-        }
-
-        await this.wrapRequest(store.put(normalized))
+    await this.runWriteTransaction(DB_CONFIG.STORES.GLOBAL_STATS, async (_tx, store) => {
+      const normalized: GlobalStats = {
+        key: stats.key ?? 'basic',
+        id: stats.id ?? stats.key ?? 'basic',
+        totalBookmarks: stats.totalBookmarks ?? 0,
+        totalFolders: stats.totalFolders ?? 0,
+        totalDomains: stats.totalDomains ?? 0,
+        lastUpdated: Date.now(),
+        dataVersion: stats.dataVersion ?? DB_CONFIG.VERSION
       }
-    )
+
+      await this.wrapRequest(store.put(normalized))
+    })
   }
 
   async getGlobalStats(): Promise<GlobalStats> {
@@ -1269,46 +1203,36 @@ export class IndexedDBManager {
   }
 
   private async autoEnsureGlobalStats(): Promise<void> {
-    await this.runWriteTransaction(
-      DB_CONFIG.STORES.GLOBAL_STATS,
-      async (_tx, store) => {
-        const existing = (await this.wrapRequest(store.get('basic'))) as
-          | GlobalStats
-          | undefined
+    await this.runWriteTransaction(DB_CONFIG.STORES.GLOBAL_STATS, async (_tx, store) => {
+      const existing = (await this.wrapRequest(store.get('basic'))) as GlobalStats | undefined
 
-        if (existing && typeof existing.totalBookmarks === 'number') {
-          return
-        }
-
-        await this.wrapRequest(
-          store.put({
-            key: 'basic',
-            id: 'basic',
-            totalBookmarks: 0,
-            totalFolders: 0,
-            totalDomains: 0,
-            lastUpdated: Date.now(),
-            dataVersion: DB_CONFIG.VERSION
-          })
-        )
+      if (existing && typeof existing.totalBookmarks === 'number') {
+        return
       }
-    )
+
+      await this.wrapRequest(
+        store.put({
+          key: 'basic',
+          id: 'basic',
+          totalBookmarks: 0,
+          totalFolders: 0,
+          totalDomains: 0,
+          lastUpdated: Date.now(),
+          dataVersion: DB_CONFIG.VERSION
+        })
+      )
+    })
   }
 
   async getDatabaseStats(): Promise<DatabaseStats> {
-    const [
-      bookmarkCount,
-      faviconCount,
-      searchHistoryCount,
-      settingsCount,
-      crawlMetadataCount
-    ] = await Promise.all([
-      this.getStoreCount(DB_CONFIG.STORES.BOOKMARKS),
-      this.getStoreCount(DB_CONFIG.STORES.FAVICON_CACHE),
-      this.getStoreCount(DB_CONFIG.STORES.SEARCH_HISTORY),
-      this.getStoreCount(DB_CONFIG.STORES.SETTINGS),
-      this.getStoreCount(DB_CONFIG.STORES.CRAWL_METADATA)
-    ])
+    const [bookmarkCount, faviconCount, searchHistoryCount, settingsCount, crawlMetadataCount] =
+      await Promise.all([
+        this.getStoreCount(DB_CONFIG.STORES.BOOKMARKS),
+        this.getStoreCount(DB_CONFIG.STORES.FAVICON_CACHE),
+        this.getStoreCount(DB_CONFIG.STORES.SEARCH_HISTORY),
+        this.getStoreCount(DB_CONFIG.STORES.SETTINGS),
+        this.getStoreCount(DB_CONFIG.STORES.CRAWL_METADATA)
+      ])
 
     const totalSize =
       bookmarkCount * 1000 +
@@ -1336,9 +1260,7 @@ export class IndexedDBManager {
       const expectedStores = this.storeNames
       const existingStores = Array.from(db.objectStoreNames)
 
-      const missingStores = expectedStores.filter(
-        store => !existingStores.includes(store)
-      )
+      const missingStores = expectedStores.filter(store => !existingStores.includes(store))
       const extraStores = existingStores.filter(
         store =>
           !expectedStores.includes(
@@ -1374,20 +1296,17 @@ export class IndexedDBManager {
     type?: string,
     description?: string
   ): Promise<void> {
-    await this.runWriteTransaction(
-      DB_CONFIG.STORES.SETTINGS,
-      async (_tx, store) => {
-        const record: AppSettings = {
-          key,
-          value,
-          type: (type || typeof value) as AppSettings['type'],
-          ...(description !== undefined ? { description } : {}),
-          updatedAt: Date.now()
-        }
-
-        await this.wrapRequest(store.put(record))
+    await this.runWriteTransaction(DB_CONFIG.STORES.SETTINGS, async (_tx, store) => {
+      const record: AppSettings = {
+        key,
+        value,
+        type: (type || typeof value) as AppSettings['type'],
+        ...(description !== undefined ? { description } : {}),
+        updatedAt: Date.now()
       }
-    )
+
+      await this.wrapRequest(store.put(record))
+    })
   }
 
   async getSetting<T>(key: string): Promise<T | null> {
@@ -1400,12 +1319,9 @@ export class IndexedDBManager {
   }
 
   async deleteSetting(key: string): Promise<void> {
-    await this.runWriteTransaction(
-      DB_CONFIG.STORES.SETTINGS,
-      async (_tx, store) => {
-        await this.wrapRequest(store.delete(key))
-      }
-    )
+    await this.runWriteTransaction(DB_CONFIG.STORES.SETTINGS, async (_tx, store) => {
+      await this.wrapRequest(store.delete(key))
+    })
   }
 
   async addSearchHistory(
@@ -1414,20 +1330,17 @@ export class IndexedDBManager {
     executionTime?: number,
     source?: SearchHistoryRecord['source']
   ): Promise<void> {
-    await this.runWriteTransaction(
-      DB_CONFIG.STORES.SEARCH_HISTORY,
-      async (_tx, store) => {
-        const record: Omit<SearchHistoryRecord, 'id'> = {
-          query,
-          results,
-          executionTime: executionTime ?? 0,
-          source: source ?? 'management',
-          timestamp: Date.now()
-        }
-
-        await this.wrapRequest(store.add(record))
+    await this.runWriteTransaction(DB_CONFIG.STORES.SEARCH_HISTORY, async (_tx, store) => {
+      const record: Omit<SearchHistoryRecord, 'id'> = {
+        query,
+        results,
+        executionTime: executionTime ?? 0,
+        source: source ?? 'management',
+        timestamp: Date.now()
       }
-    )
+
+      await this.wrapRequest(store.add(record))
+    })
   }
 
   async getSearchHistory(limit?: number): Promise<SearchHistoryRecord[]> {
@@ -1460,29 +1373,23 @@ export class IndexedDBManager {
   }
 
   async clearSearchHistory(): Promise<void> {
-    await this.runWriteTransaction(
-      DB_CONFIG.STORES.SEARCH_HISTORY,
-      async (_tx, store) => {
-        await this.wrapRequest(store.clear())
-      }
-    )
+    await this.runWriteTransaction(DB_CONFIG.STORES.SEARCH_HISTORY, async (_tx, store) => {
+      await this.wrapRequest(store.clear())
+    })
   }
 
   async saveFaviconCache(record: FaviconCacheRecord): Promise<void> {
-    await this.runWriteTransaction(
-      DB_CONFIG.STORES.FAVICON_CACHE,
-      async (_tx, store) => {
-        const now = Date.now()
-        await this.wrapRequest(
-          store.put({
-            ...record,
-            timestamp: record.timestamp ?? now,
-            lastAccessed: record.lastAccessed ?? now,
-            updatedAt: record.updatedAt ?? now
-          })
-        )
-      }
-    )
+    await this.runWriteTransaction(DB_CONFIG.STORES.FAVICON_CACHE, async (_tx, store) => {
+      const now = Date.now()
+      await this.wrapRequest(
+        store.put({
+          ...record,
+          timestamp: record.timestamp ?? now,
+          lastAccessed: record.lastAccessed ?? now,
+          updatedAt: record.updatedAt ?? now
+        })
+      )
+    })
   }
 
   async getFaviconCache(domain: string): Promise<FaviconCacheRecord | null> {
@@ -1495,22 +1402,17 @@ export class IndexedDBManager {
   }
 
   async saveCrawlMetadata(metadata: CrawlMetadataRecord): Promise<void> {
-    await this.runWriteTransaction(
-      DB_CONFIG.STORES.CRAWL_METADATA,
-      async (_tx, store) => {
-        await this.wrapRequest(
-          store.put({
-            ...metadata,
-            updatedAt: Date.now()
-          })
-        )
-      }
-    )
+    await this.runWriteTransaction(DB_CONFIG.STORES.CRAWL_METADATA, async (_tx, store) => {
+      await this.wrapRequest(
+        store.put({
+          ...metadata,
+          updatedAt: Date.now()
+        })
+      )
+    })
   }
 
-  async getCrawlMetadata(
-    bookmarkId: string
-  ): Promise<CrawlMetadataRecord | null> {
+  async getCrawlMetadata(bookmarkId: string): Promise<CrawlMetadataRecord | null> {
     const result = await this.runReadTransaction(
       DB_CONFIG.STORES.CRAWL_METADATA,
       async (_tx, store) => await this.wrapRequest(store.get(bookmarkId))
@@ -1522,14 +1424,11 @@ export class IndexedDBManager {
   async getAllCrawlMetadata(): Promise<CrawlMetadataRecord[]> {
     return await this.runReadTransaction(
       DB_CONFIG.STORES.CRAWL_METADATA,
-      async (_tx, store) =>
-        (await this.wrapRequest(store.getAll())) as CrawlMetadataRecord[]
+      async (_tx, store) => (await this.wrapRequest(store.getAll())) as CrawlMetadataRecord[]
     )
   }
 
-  async getBatchCrawlMetadata(
-    bookmarkIds: string[]
-  ): Promise<Map<string, CrawlMetadataRecord>> {
+  async getBatchCrawlMetadata(bookmarkIds: string[]): Promise<Map<string, CrawlMetadataRecord>> {
     const result = new Map<string, CrawlMetadataRecord>()
 
     for (const id of bookmarkIds) {
@@ -1550,12 +1449,9 @@ export class IndexedDBManager {
   }
 
   async deleteCrawlMetadata(bookmarkId: string): Promise<void> {
-    await this.runWriteTransaction(
-      DB_CONFIG.STORES.CRAWL_METADATA,
-      async (_tx, store) => {
-        await this.wrapRequest(store.delete(bookmarkId))
-      }
-    )
+    await this.runWriteTransaction(DB_CONFIG.STORES.CRAWL_METADATA, async (_tx, store) => {
+      await this.wrapRequest(store.delete(bookmarkId))
+    })
   }
 
   private async getStoreCount(
@@ -1587,37 +1483,28 @@ export class IndexedDBManager {
    * const count = await indexedDBManager.countByBooleanIndex('isInvalid', true)
    * ```
    */
-  async countByBooleanIndex(
-    indexName: string,
-    value: boolean
-  ): Promise<number> {
-    return await this.runReadTransaction(
-      DB_CONFIG.STORES.BOOKMARKS,
-      async (_tx, store) => {
-        try {
-          // ✅ 先检查索引是否存在
-          if (!store.indexNames.contains(indexName)) {
-            // 索引还未创建（数据库正在初始化中），这是正常情况，返回 0
-            logger.debug(
-              'IndexedDBManager',
-              `索引 ${indexName} 暂不可用（数据库初始化中），返回 0`
-            )
-            return 0
-          }
-
-          const index = store.index(indexName)
-          const request = index.count(IDBKeyRange.only(value))
-          return await this.wrapRequest(request)
-        } catch (error) {
-          logger.debug(
-            'IndexedDBManager',
-            `通过索引 ${indexName} 统计失败，返回 0`,
-            { error, indexName, value }
-          )
+  async countByBooleanIndex(indexName: string, value: boolean): Promise<number> {
+    return await this.runReadTransaction(DB_CONFIG.STORES.BOOKMARKS, async (_tx, store) => {
+      try {
+        // ✅ 先检查索引是否存在
+        if (!store.indexNames.contains(indexName)) {
+          // 索引还未创建（数据库正在初始化中），这是正常情况，返回 0
+          logger.debug('IndexedDBManager', `索引 ${indexName} 暂不可用（数据库初始化中），返回 0`)
           return 0
         }
+
+        const index = store.index(indexName)
+        const request = index.count(IDBKeyRange.only(value))
+        return await this.wrapRequest(request)
+      } catch (error) {
+        logger.debug('IndexedDBManager', `通过索引 ${indexName} 统计失败，返回 0`, {
+          error,
+          indexName,
+          value
+        })
+        return 0
       }
-    )
+    })
   }
 
   /**
@@ -1626,15 +1513,10 @@ export class IndexedDBManager {
   async exportAllStores(): Promise<StoreDump> {
     const snapshot = {} as StoreDump
     for (const storeName of this.storeNames) {
-      snapshot[storeName] = await this.runReadTransaction(
-        storeName,
-        async (_tx, store) => {
-          const records = await this.wrapRequest(store.getAll())
-          return Array.isArray(records)
-            ? records.map(record => cloneValue(record))
-            : []
-        }
-      )
+      snapshot[storeName] = await this.runReadTransaction(storeName, async (_tx, store) => {
+        const records = await this.wrapRequest(store.getAll())
+        return Array.isArray(records) ? records.map(record => cloneValue(record)) : []
+      })
     }
     return snapshot
   }

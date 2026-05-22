@@ -13,15 +13,19 @@ inclusion: always
 以下配置文件会自动加载到上下文中，AI 必须严格遵守其中的所有规则：
 
 ### TypeScript 配置
+
 #[[file:../../tsconfig.base.json]]
 
 ### ESLint 配置
+
 #[[file:../../eslint.config.js]]
 
 ### Prettier 配置
+
 #[[file:../../.prettierrc.json]]
 
 ### Stylelint 配置
+
 #[[file:../../frontend/stylelint.config.js]]
 
 > **⚠️ 重要**：以上配置文件包含所有详细规则，AI 必须完全遵守。特别注意 Stylelint 的 `order/properties-order` 规则（250 行完整的 CSS 属性排序列表）。
@@ -33,18 +37,21 @@ inclusion: always
 **⚠️ 在编写任何代码前，必须先过一遍这个清单！**
 
 ### TypeScript 检查（5 秒）
+
 - [ ] 没有使用 `any` 类型
 - [ ] 数组/对象访问使用 `??` 或 `?.`（因为 `noUncheckedIndexedAccess: true`）
 - [ ] 函数所有分支都有显式返回值
 - [ ] 可选属性不使用 `undefined`，而是条件构造对象
 
 ### Vue 3 检查（5 秒）
+
 - [ ] `defineOptions` 在 `defineProps` 之前
 - [ ] Props 没有在 root scope 解构（❌ `...props.xxx` → ✅ `toRefs(props)` 或 `props.xxx`）
 - [ ] 事件命名使用 camelCase（❌ `'update-value'` → ✅ `updateValue`）
 - [ ] 没有在 computed 中修改响应式状态
 
 ### CSS 检查（10 秒）
+
 - [ ] 所有颜色使用 CSS 变量（❌ `#333` / `red` → ✅ `var(--color-text-primary)`）
 - [ ] 所有间距使用 CSS 变量（❌ `16px` → ✅ `var(--spacing-4)`）
 - [ ] 所有字号使用 CSS 变量（❌ `14px` → ✅ `var(--text-sm)`）
@@ -118,7 +125,7 @@ function processData(data: unknown) {
 const options = {
   email,
   password,
-  redirectTo: redirectUrl || undefined  // ❌
+  redirectTo: redirectUrl || undefined // ❌
 }
 
 // ✅ 正确：条件构造对象
@@ -139,8 +146,8 @@ const options = {
 ```typescript
 // ❌ 错误：直接访问可能不存在的元素
 const items = ['a', 'b', 'c']
-const item = items[10]  // 类型: string | undefined
-item.toUpperCase()      // ❌ 编译错误
+const item = items[10] // 类型: string | undefined
+item.toUpperCase() // ❌ 编译错误
 
 // ✅ 正确：使用可选链
 const item = items[10]
@@ -192,7 +199,7 @@ function getValue(condition: boolean): string {
 // ❌ 错误：内层变量遮蔽外层变量
 const response = await fetch(url1)
 if (condition) {
-  const response = await fetch(url2)  // ❌ 遮蔽外层 response
+  const response = await fetch(url2) // ❌ 遮蔽外层 response
 }
 
 // ✅ 正确：使用不同的变量名
@@ -228,11 +235,7 @@ state.value = await compute(state.value)
 
 ```typescript
 // ❌ 错误：嵌套三元运算符
-const value = condition1
-  ? value1
-  : condition2
-    ? value2
-    : value3
+const value = condition1 ? value1 : condition2 ? value2 : value3
 
 // ✅ 正确：提取为函数
 function getValue() {
@@ -287,11 +290,16 @@ function processFolder(folder: Folder) {
 ```typescript
 // ❌ 错误：嵌套过深（> 4 层）
 function processData(data: Data[]) {
-  for (const item of data) {           // 第 1 层
-    if (item.valid) {                  // 第 2 层
-      for (const child of item.children) {  // 第 3 层
-        if (child.active) {            // 第 4 层
-          for (const tag of child.tags) {   // 第 5 层 ❌
+  for (const item of data) {
+    // 第 1 层
+    if (item.valid) {
+      // 第 2 层
+      for (const child of item.children) {
+        // 第 3 层
+        if (child.active) {
+          // 第 4 层
+          for (const tag of child.tags) {
+            // 第 5 层 ❌
             // ...
           }
         }
@@ -322,16 +330,16 @@ function processChildren(children: Child[]) {
 <!-- ❌ 错误：使用 kebab-case -->
 <script setup lang="ts">
 const emit = defineEmits<{
-  'update-value': [value: string]  // ❌
-  'item-selected': [id: string]    // ❌
+  'update-value': [value: string] // ❌
+  'item-selected': [id: string] // ❌
 }>()
 </script>
 
 <!-- ✅ 正确：使用 camelCase -->
 <script setup lang="ts">
 const emit = defineEmits<{
-  updateValue: [value: string]  // ✅
-  itemSelected: [id: string]    // ✅
+  updateValue: [value: string] // ✅
+  itemSelected: [id: string] // ✅
 }>()
 </script>
 ```
@@ -340,7 +348,7 @@ const emit = defineEmits<{
 
 ```typescript
 // ❌ 错误：解构 props 会丢失响应式
-const { title, url } = props  // ❌
+const { title, url } = props // ❌
 
 // ✅ 正确：使用 toRefs
 const { title, url } = toRefs(props)
@@ -350,7 +358,7 @@ console.log(props.title)
 
 // ❌ 错误：在 root scope 展开 props
 const filterOptions = ref({
-  ...props.initialFilter  // ❌ 会丢失响应式
+  ...props.initialFilter // ❌ 会丢失响应式
 })
 
 // ✅ 正确：使用 toRefs 或条件赋值
@@ -360,7 +368,7 @@ const filterOptions = ref({
 
 // ❌ 错误：ref 对象响应式丢失
 const bookmark = ref({ title: 'test' })
-const title = bookmark.value.title  // ❌ 丢失响应式
+const title = bookmark.value.title // ❌ 丢失响应式
 
 // ✅ 正确：使用 computed
 const title = computed(() => bookmark.value.title)
@@ -377,7 +385,7 @@ const emit = defineEmits<Emits>()
 
 // ❌ 错误：defineOptions 在 defineProps 之后
 const props = defineProps<Props>()
-defineOptions({ name: 'ComponentName' })  // ❌ 顺序错误
+defineOptions({ name: 'ComponentName' }) // ❌ 顺序错误
 ```
 
 ---
@@ -399,38 +407,38 @@ defineOptions({ name: 'ComponentName' })  // ❌ 顺序错误
   position: relative;
   top: 0;
   z-index: 1;
-  
+
   /* 2. 显示（⚠️ 关键：flex 在 gap 之前，justify-content 在 align-items 之前） */
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  flex: 1;                    /* ⚠️ flex 必须在 gap 之前 */
-  justify-content: center;    /* ⚠️ 必须在 align-items 之前 */
-  align-items: center;        /* ⚠️ 必须在 justify-content 之后 */
+  flex: 1; /* ⚠️ flex 必须在 gap 之前 */
+  justify-content: center; /* ⚠️ 必须在 align-items 之前 */
+  align-items: center; /* ⚠️ 必须在 justify-content 之后 */
   gap: var(--spacing-4);
-  
+
   /* 3. 盒模型（⚠️ 关键：border-width 在 border-color 之前） */
   width: 100%;
   padding: var(--spacing-4);
   border: 1px solid var(--color-border);
-  border-width: 2px;          /* ⚠️ 必须在 border-color 之前 */
+  border-width: 2px; /* ⚠️ 必须在 border-color 之前 */
   border-color: var(--color-primary);
   border-radius: var(--radius-md);
-  outline: none;              /* ⚠️ outline 必须在 background 之前 */
-  
+  outline: none; /* ⚠️ outline 必须在 background 之前 */
+
   /* 4. 字体（⚠️ 关键：white-space 在 text-overflow 之前） */
   font-size: var(--text-base);
   color: var(--color-text-primary);
-  white-space: nowrap;        /* ⚠️ 必须在 text-overflow 之前 */
+  white-space: nowrap; /* ⚠️ 必须在 text-overflow 之前 */
   text-overflow: ellipsis;
-  
+
   /* 5. 背景 */
   background-color: var(--color-surface);
-  
+
   /* 6. 视觉效果 */
   opacity: 1;
   cursor: pointer;
-  
+
   /* 7. 变换和动画 */
   transition: all 0.2s;
 }
@@ -514,18 +522,18 @@ defineOptions({ name: 'ComponentName' })  // ❌ 顺序错误
 .element {
   /* 定位 */
   position: relative;
-  
+
   /* 显示（注意：justify-content 在 align-items 之前） */
   display: flex;
   justify-content: center;
   align-items: center;
-  
+
   /* 盒模型 */
   padding: var(--spacing-4);
-  
+
   /* 字体 */
   color: var(--color-text-primary);
-  
+
   /* 背景 */
   background: var(--color-surface);
 }
@@ -586,11 +594,9 @@ bun run format
 
 1. **过一遍检查清单**（20 秒）
    - 确认要遵守的关键规则
-   
 2. **编写代码**
    - 遵循所有规则
    - 特别注意高频错误清单
-   
 3. **自我检查**
    - 确认没有违反任何规则
    - 特别检查 CSS 属性顺序

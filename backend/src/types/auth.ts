@@ -48,19 +48,19 @@ export interface OAuthUserInfo {
 export interface JWTPayload {
   /** Subject (用户 ID) */
   sub: string
-  
+
   /** 用户邮箱 */
   email: string
-  
+
   /** 订阅层级 */
   tier: string
-  
+
   /** 功能权限 */
   features: Record<string, boolean>
-  
+
   /** 签发时间 (Unix timestamp) */
   iat: number
-  
+
   /** 过期时间 (Unix timestamp) */
   exp: number
 }

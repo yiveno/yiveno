@@ -21,13 +21,13 @@ import { LucideIcon } from '@/components/base/LucideIcon'
 <template>
   <!-- 基础图标 -->
   <LucideIcon name="bookmark" />
-  
+
   <!-- 指定尺寸 -->
   <LucideIcon name="star" size="lg" />
-  
+
   <!-- 指定颜色 -->
   <LucideIcon name="heart" color="error" />
-  
+
   <!-- 自定义尺寸和颜色 -->
   <LucideIcon name="settings" :size="32" color="#3b82f6" />
 </template>
@@ -36,6 +36,7 @@ import { LucideIcon } from '@/components/base/LucideIcon'
 ## Props
 
 ### name
+
 - 类型: `string`
 - 必填: 是
 - 说明: 图标名称,使用 kebab-case 格式
@@ -47,11 +48,13 @@ import { LucideIcon } from '@/components/base/LucideIcon'
 ```
 
 ### size
+
 - 类型: `number | 'xs' | 'sm' | 'md' | 'lg' | 'xl'`
 - 默认值: `'md'`
 - 说明: 图标尺寸
 
 尺寸映射:
+
 - `xs`: 12px
 - `sm`: 16px
 - `md`: 20px (默认)
@@ -68,11 +71,13 @@ import { LucideIcon } from '@/components/base/LucideIcon'
 ```
 
 ### color
+
 - 类型: `string`
 - 默认值: `'currentColor'`
 - 说明: 图标颜色
 
 支持的颜色类型:
+
 1. 语义化颜色: `primary`, `secondary`, `error`, `warning`, `success`, `info`, `muted`
 2. CSS 变量: `--md-sys-color-primary`
 3. 直接颜色值: `#3b82f6`, `rgb(59, 130, 246)`
@@ -91,6 +96,7 @@ import { LucideIcon } from '@/components/base/LucideIcon'
 ```
 
 ### strokeWidth
+
 - 类型: `number`
 - 默认值: `2`
 - 说明: 线条宽度
@@ -102,6 +108,7 @@ import { LucideIcon } from '@/components/base/LucideIcon'
 ```
 
 ### spin
+
 - 类型: `boolean`
 - 默认值: `false`
 - 说明: 是否旋转动画
@@ -112,6 +119,7 @@ import { LucideIcon } from '@/components/base/LucideIcon'
 ```
 
 ### flipH
+
 - 类型: `boolean`
 - 默认值: `false`
 - 说明: 水平翻转
@@ -121,6 +129,7 @@ import { LucideIcon } from '@/components/base/LucideIcon'
 ```
 
 ### flipV
+
 - 类型: `boolean`
 - 默认值: `false`
 - 说明: 垂直翻转
@@ -130,6 +139,7 @@ import { LucideIcon } from '@/components/base/LucideIcon'
 ```
 
 ### rotate
+
 - 类型: `number`
 - 说明: 旋转角度(度)
 
@@ -142,55 +152,69 @@ import { LucideIcon } from '@/components/base/LucideIcon'
 ## 可用图标
 
 ### 基础操作
+
 - `plus`, `minus`, `x`, `close`, `check`
 - `chevron-down`, `chevron-right`, `chevron-left`, `chevron-up`
 - `chevrons-right`, `chevrons-left`
 - `arrow-right`, `arrow-left`, `arrow-up`, `arrow-down`
 
 ### 编辑操作
+
 - `edit`, `delete`, `trash`, `copy`, `clipboard`
 - `save`, `download`, `upload`
 
 ### 文件和文件夹
+
 - `file`, `folder`, `folder-open`
 - `folder-plus`, `folder-add`, `folder-minus`, `folder-delete`
 
 ### 书签相关
+
 - `bookmark`, `bookmark-plus`, `bookmark-add`
 - `bookmark-minus`, `bookmark-delete`, `bookmark-check`
 - `star`, `favorite`, `star-off`, `favorite-outline`
 
 ### 搜索和筛选
+
 - `search`, `filter`, `sliders`
 
 ### 设置和配置
+
 - `settings`, `more-vertical`, `more-horizontal`, `menu`
 
 ### 状态指示
+
 - `alert`, `alert-circle`, `alert-triangle`, `warning`
 - `info`, `success`, `check-circle`
 - `error`, `x-circle`, `help`, `help-circle`
 
 ### 用户和账户
+
 - `user`, `account`, `users`, `user-plus`
 
 ### 时间和日期
+
 - `clock`, `calendar`
 
 ### 网络和同步
+
 - `cloud`, `cloud-off`, `cloud-sync`
 - `refresh`, `sync`, `loader`, `loading`
 
 ### 视图和布局
+
 - `eye`, `eye-off`, `layout`, `grid`, `list`
 
 ### 导航
+
 - `home`, `external-link`, `link`, `unlink`
 
 ### 主题
+
 - `sun`, `light`, `moon`, `dark`
 
 ### 其他
+
 - `tag`, `tags`, `hash`
 - `flash`, `zap`, `crown`, `brain`
 - `sparkles`, `ai`, `auto`
@@ -212,6 +236,7 @@ const newName = materialToLucideMap[oldName] // 'bookmark-plus'
 ```
 
 常见映射:
+
 - `icon-add` → `plus`
 - `icon-delete` → `trash`
 - `icon-bookmark` → `bookmark`
@@ -306,12 +331,12 @@ export const lucideIcons: Record<string, Component> = {
     <LucideIcon name="check-circle" color="success" />
     <span>同步成功</span>
   </div>
-  
+
   <div class="status">
     <LucideIcon name="alert-triangle" color="warning" />
     <span>需要注意</span>
   </div>
-  
+
   <div class="status">
     <LucideIcon name="x-circle" color="error" />
     <span>同步失败</span>

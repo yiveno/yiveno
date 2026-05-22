@@ -18,21 +18,13 @@ const { isAuthenticated, initialize, setupAuthListener } = useSupabaseAuth()
 const isLoggedIn = computed(() => isAuthenticated.value)
 
 // 懒加载分区组件（首屏更快）
-const GeneralSettings = defineAsyncComponent(
-  () => import('./sections/GeneralSettings.vue')
-)
-const ColorPresetSettings = defineAsyncComponent(
-  () => import('./sections/ColorPresetSettings.vue')
-)
-const AISettings = defineAsyncComponent(
-  () => import('./sections/AISettings.vue')
-)
+const GeneralSettings = defineAsyncComponent(() => import('./sections/GeneralSettings.vue'))
+const ColorPresetSettings = defineAsyncComponent(() => import('./sections/ColorPresetSettings.vue'))
+const AISettings = defineAsyncComponent(() => import('./sections/AISettings.vue'))
 const NotificationSettings = defineAsyncComponent(
   () => import('./sections/NotificationSettings.vue')
 )
-const ShortcutSettings = defineAsyncComponent(
-  () => import('./sections/ShortcutSettings.vue')
-)
+const ShortcutSettings = defineAsyncComponent(() => import('./sections/ShortcutSettings.vue'))
 
 type TabKey = 'general' | 'colorPreset' | 'ai' | 'notifications' | 'shortcuts'
 const tab = ref<TabKey>('general')
@@ -77,28 +69,28 @@ function tf(key: string, fallback: string) {
 }
 
 const tabsI18n = computed(() =>
-  tabs.map(tb => ({
-    value: tb.value,
-    text: tf(tb.key, tb.fallback),
-    icon: tb.icon
+  tabs.map(tabItem => ({
+    value: tabItem.value,
+    text: tf(tabItem.key, tabItem.fallback),
+    icon: tabItem.icon
   }))
 )
 
 /** 与 `md-tabs.activeTabIndex` 对齐的当前索引（Material Web 使用 0-based） */
 const tabsActiveIndex = computed(() => {
-  const i = tabs.findIndex(t => t.value === tab.value)
+  const i = tabs.findIndex(tabItem => tabItem.value === tab.value)
   return i >= 0 ? i : 0
 })
 
 /** 当前 tab 的标题 */
 const currentTabTitle = computed(() => {
-  const currentTab = tabs.find(t => t.value === tab.value)
+  const currentTab = tabs.find(tabItem => tabItem.value === tab.value)
   return currentTab ? tf(currentTab.key, currentTab.fallback) : ''
 })
 
 /** 当前 tab 的图标 */
 const currentTabIcon = computed(() => {
-  const currentTab = tabs.find(t => t.value === tab.value)
+  const currentTab = tabs.find(tabItem => tabItem.value === tab.value)
   return currentTab?.icon || 'settings'
 })
 
@@ -133,13 +125,7 @@ async function checkLoginStatus() {
   // Supabase Auth 的 isAuthenticated 是响应式的，会自动更新
 }
 
-const allowed = new Set<TabKey>([
-  'general',
-  'colorPreset',
-  'ai',
-  'notifications',
-  'shortcuts'
-])
+const allowed = new Set<TabKey>(['general', 'colorPreset', 'ai', 'notifications', 'shortcuts'])
 
 useThemeSync('Settings')
 
@@ -175,10 +161,7 @@ function writeTabToURL(v: TabKey) {
     const url = new URL(window.location.href)
     url.searchParams.set('tab', v)
     // 清理旧的 #tab 片段，统一用查询参数
-    if (
-      url.hash &&
-      (url.hash.startsWith('#tab=') || url.hash.startsWith('#/tab/'))
-    ) {
+    if (url.hash && (url.hash.startsWith('#tab=') || url.hash.startsWith('#/tab/'))) {
       url.hash = ''
     }
     window.history.replaceState({}, '', url.toString())
@@ -186,8 +169,8 @@ function writeTabToURL(v: TabKey) {
 }
 
 function syncFromURL() {
-  const t = readTabFromURL()
-  if (t && t !== tab.value) tab.value = t
+  const urlTab = readTabFromURL()
+  if (urlTab && urlTab !== tab.value) tab.value = urlTab
 }
 
 let unsubscribeLogin: (() => void) | null = null
@@ -272,11 +255,7 @@ watch(tab, v => {
     <!-- ⚡ 全局快速添加书签对话框 -->
     <GlobalQuickAddBookmark />
 
-    <AppHeader
-      :show-side-panel-toggle="false"
-      :show-settings="false"
-      :show-account="false"
-    />
+    <AppHeader :show-side-panel-toggle="false" :show-settings="false" :show-account="false" />
     <main class="main-content">
       <div class="settings-body">
         <!-- ✅ Material Web Tabs - 横向布局 -->
@@ -310,11 +289,17 @@ watch(tab, v => {
           </template>
 
           <component
-            :is="tab === 'general' ? GeneralSettings : 
-                 tab === 'colorPreset' ? ColorPresetSettings : 
-                 tab === 'ai' ? AISettings : 
-                 tab === 'notifications' ? NotificationSettings : 
-                 ShortcutSettings"
+            :is="
+              tab === 'general'
+                ? GeneralSettings
+                : tab === 'colorPreset'
+                  ? ColorPresetSettings
+                  : tab === 'ai'
+                    ? AISettings
+                    : tab === 'notifications'
+                      ? NotificationSettings
+                      : ShortcutSettings
+            "
             class="pane"
           />
         </Card>

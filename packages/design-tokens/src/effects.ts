@@ -1,6 +1,6 @@
 /**
  * AcuityBookmarks 视觉效果系统
- * 
+ *
  * 包含玻璃态、模糊、渐变等现代视觉效果
  */
 
@@ -71,24 +71,27 @@ export const gradients = {
   brandVertical: 'linear-gradient(180deg, #3B82F6 0%, #8B5CF6 50%, #C026D3 100%)',
   /** 品牌渐变（径向） */
   brandRadial: 'radial-gradient(circle, #3B82F6 0%, #8B5CF6 50%, #C026D3 100%)',
-  
+
   /** 微妙渐变 - 用于背景 */
   subtle: 'linear-gradient(180deg, rgba(59, 130, 246, 0.05) 0%, rgba(192, 38, 211, 0.05) 100%)',
   /** 微妙渐变（反向） */
-  subtleReverse: 'linear-gradient(180deg, rgba(192, 38, 211, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%)',
-  
+  subtleReverse:
+    'linear-gradient(180deg, rgba(192, 38, 211, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%)',
+
   /** 光泽效果 - 用于按钮 */
   shine: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%)',
   /** 光泽效果（垂直） */
-  shineVertical: 'linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%)',
-  
+  shineVertical:
+    'linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%)',
+
   /** 深色渐变 - 用于遮罩 */
   dark: 'linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.8) 100%)',
   /** 深色渐变（反向） */
   darkReverse: 'linear-gradient(180deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0) 100%)',
-  
+
   /** 彩虹渐变 - 用于装饰 */
-  rainbow: 'linear-gradient(90deg, #ff0000 0%, #ff7f00 16.67%, #ffff00 33.33%, #00ff00 50%, #0000ff 66.67%, #4b0082 83.33%, #9400d3 100%)'
+  rainbow:
+    'linear-gradient(90deg, #ff0000 0%, #ff7f00 16.67%, #ffff00 33.33%, #00ff00 50%, #0000ff 66.67%, #4b0082 83.33%, #9400d3 100%)'
 } as const
 
 /**
@@ -130,9 +133,11 @@ export const patterns = {
   /** 网格图案 */
   grid: 'linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px)',
   /** 对角线图案 */
-  diagonal: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0, 0, 0, 0.05) 10px, rgba(0, 0, 0, 0.05) 20px)',
+  diagonal:
+    'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0, 0, 0, 0.05) 10px, rgba(0, 0, 0, 0.05) 20px)',
   /** 波浪图案 */
-  waves: 'repeating-radial-gradient(circle at 0 0, transparent 0, rgba(0, 0, 0, 0.05) 10px, transparent 20px)'
+  waves:
+    'repeating-radial-gradient(circle at 0 0, transparent 0, rgba(0, 0, 0, 0.05) 10px, transparent 20px)'
 } as const
 
 /**

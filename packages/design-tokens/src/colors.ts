@@ -1,6 +1,6 @@
 /**
  * AcuityBookmarks 颜色系统
- * 
+ *
  * 核心设计理念：基于 Material Design 3
  * - 完全遵循 Material Design 3 规范
  * - 提供多种格式的颜色值（CSS 变量、RGB、Hex）
@@ -22,7 +22,7 @@ export interface ColorValue {
 
 /**
  * Material Design 3 主题色
- * 
+ *
  * 这些颜色来自默认配色预设（晴空 / Skyline，`material-theme.css` → `presets/default.css`）
  */
 export const materialColors = {

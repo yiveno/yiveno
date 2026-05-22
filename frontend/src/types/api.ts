@@ -66,7 +66,7 @@ export interface BookmarkUpdateDetails {
 
 /**
  * 用户登录响应。
- * 
+ *
  * 注意：OAuth 登录流程在官网完成，插件通过 Supabase 自动同步 session。
  * 此类型仅用于兼容旧版 API 或特殊场景。
  */

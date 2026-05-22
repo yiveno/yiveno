@@ -6,7 +6,7 @@
  * - 不能使用 @/ 别名导入，只能使用相对路径
  * - 通过 chrome.runtime.sendMessage 与 Background Script 通信
  * - 使用覆盖层方式，模拟 Chrome 原生对话框样式
- * 
+ *
  * ⚠️ 颜色说明：
  * - Content Script 注入的 UI 运行在宿主页面的上下文中
  * - 无法访问扩展的 CSS 变量和样式表
@@ -19,14 +19,10 @@ const loggerPrefix = 'ContentScript:QuickAdd'
 
 /**
  * 简化的日志函数
- * 
+ *
  * Content Script 环境中的日志工具，输出到浏览器控制台
  */
-function log(
-  level: 'info' | 'warn' | 'error',
-  message: string,
-  ...args: unknown[]
-): void {
+function log(level: 'info' | 'warn' | 'error', message: string, ...args: unknown[]): void {
   if (typeof console !== 'undefined' && console[level]) {
     console[level](`[${loggerPrefix}]`, message, ...args)
   }
@@ -35,11 +31,7 @@ function log(
 /**
  * 创建 Chrome 原生样式的对话框
  */
-function createNativeStyleDialog(data: {
-  title: string
-  url: string
-  favIconUrl?: string
-}): void {
+function createNativeStyleDialog(data: { title: string; url: string; favIconUrl?: string }): void {
   // 检查是否已经存在对话框，避免重复创建
   if (document.getElementById('acuity-quick-add-dialog')) {
     log('warn', '对话框已存在，跳过创建')
@@ -344,11 +336,13 @@ function createNativeStyleDialog(data: {
 
   // 创建树形选择器
   log('info', '🎯 创建树形选择器...')
-  const { updateTree, getSelectedFolderId, setSelectedFolderId } =
-    createFolderTreeSelector(folderTreeContainer, (folderId: string) => {
+  const { updateTree, getSelectedFolderId, setSelectedFolderId } = createFolderTreeSelector(
+    folderTreeContainer,
+    (folderId: string) => {
       selectedFolderId = folderId
       log('info', '文件夹已选中', folderId)
-    })
+    }
+  )
   log('info', '✅ 树形选择器创建完成')
 
   // 加载文件夹树（立即调用，不等待）
@@ -366,8 +360,7 @@ function createNativeStyleDialog(data: {
         } else {
           log('warn', '未找到书签栏，使用第一个可用文件夹')
           // 如果找不到书签栏，选择第一个文件夹
-          const firstFolder =
-            folderTreeContainer.querySelector('[data-folder-id]')
+          const firstFolder = folderTreeContainer.querySelector('[data-folder-id]')
           if (firstFolder) {
             const firstFolderId = firstFolder.getAttribute('data-folder-id')
             if (firstFolderId) {
@@ -507,21 +500,22 @@ function createNativeStyleDialog(data: {
   })
 
   // 获取向量推荐（异步）
-  getVectorRecommendations(data.title, data.url).then(recommendations => {
-    // 移除加载提示
-    loadingRecommendations.remove()
+  getVectorRecommendations(data.title, data.url)
+    .then(recommendations => {
+      // 移除加载提示
+      loadingRecommendations.remove()
 
-    if (recommendations.length > 0) {
-      // 显示推荐区域（仅在 AI 模式下）
-      if (aiAutoCheckbox.checked) {
-        recommendationsContainer.style.display = 'flex'
-      }
+      if (recommendations.length > 0) {
+        // 显示推荐区域（仅在 AI 模式下）
+        if (aiAutoCheckbox.checked) {
+          recommendationsContainer.style.display = 'flex'
+        }
 
-      // 渲染推荐项
-      recommendations.forEach((rec, index) => {
-        const recItem = document.createElement('button')
-        recItem.type = 'button'
-        recItem.style.cssText = `
+        // 渲染推荐项
+        recommendations.forEach((rec, index) => {
+          const recItem = document.createElement('button')
+          recItem.type = 'button'
+          recItem.style.cssText = `
           position: relative;
           display: flex;
           flex-direction: column;
@@ -536,9 +530,9 @@ function createNativeStyleDialog(data: {
           outline: none;
         `
 
-        // 推荐项头部
-        const recHeader = document.createElement('div')
-        recHeader.style.cssText = `
+          // 推荐项头部
+          const recHeader = document.createElement('div')
+          recHeader.style.cssText = `
           display: flex;
           align-items: center;
           gap: 8px;
@@ -547,23 +541,23 @@ function createNativeStyleDialog(data: {
           color: #202124;
         `
 
-        const recIcon = document.createElement('span')
-        recIcon.textContent = '📁'
-        recIcon.style.cssText = 'font-size: 16px; flex-shrink: 0;'
-        recIcon.setAttribute('data-icon', 'folder')
+          const recIcon = document.createElement('span')
+          recIcon.textContent = '📁'
+          recIcon.style.cssText = 'font-size: 16px; flex-shrink: 0;'
+          recIcon.setAttribute('data-icon', 'folder')
 
-        const recPath = document.createElement('span')
-        recPath.textContent = rec.folderPath
-        recPath.style.cssText = `
+          const recPath = document.createElement('span')
+          recPath.textContent = rec.folderPath
+          recPath.style.cssText = `
           flex: 1;
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
         `
 
-        const recScore = document.createElement('span')
-        recScore.textContent = `${Math.round(rec.score * 100)}%`
-        recScore.style.cssText = `
+          const recScore = document.createElement('span')
+          recScore.textContent = `${Math.round(rec.score * 100)}%`
+          recScore.style.cssText = `
           flex-shrink: 0;
           padding: 2px 8px;
           border-radius: 2px;
@@ -573,27 +567,27 @@ function createNativeStyleDialog(data: {
           background: #e6f4ea;
         `
 
-        recHeader.appendChild(recIcon)
-        recHeader.appendChild(recPath)
-        recHeader.appendChild(recScore)
+          recHeader.appendChild(recIcon)
+          recHeader.appendChild(recPath)
+          recHeader.appendChild(recScore)
 
-        // 推荐原因
-        const recReason = document.createElement('div')
-        recReason.textContent = rec.reason
-        recReason.style.cssText = `
+          // 推荐原因
+          const recReason = document.createElement('div')
+          recReason.textContent = rec.reason
+          recReason.style.cssText = `
           font-size: 12px;
           color: #5f6368;
           padding-left: 24px;
         `
 
-        recItem.appendChild(recHeader)
-        recItem.appendChild(recReason)
+          recItem.appendChild(recHeader)
+          recItem.appendChild(recReason)
 
-        // 最佳匹配标记
-        if (index === 0) {
-          const bestBadge = document.createElement('div')
-          bestBadge.textContent = '最佳匹配'
-          bestBadge.style.cssText = `
+          // 最佳匹配标记
+          if (index === 0) {
+            const bestBadge = document.createElement('div')
+            bestBadge.textContent = '最佳匹配'
+            bestBadge.style.cssText = `
             position: absolute;
             top: -8px;
             right: 12px;
@@ -605,85 +599,86 @@ function createNativeStyleDialog(data: {
             background: #137333;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
           `
-          recItem.appendChild(bestBadge)
+            recItem.appendChild(bestBadge)
+          }
+
+          // 点击选择
+          recItem.addEventListener('click', () => {
+            setSelectedFolderId(rec.folderId)
+            selectedFolderId = rec.folderId
+            // 更新所有推荐项的选中状态
+            updateRecommendationStyles()
+            // 滚动到选中项
+            const selectedItem = folderTreeContainer.querySelector(
+              `[data-folder-id="${rec.folderId}"]`
+            ) as HTMLElement
+            if (selectedItem) {
+              selectedItem.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            }
+          })
+
+          // 悬停效果
+          recItem.addEventListener('mouseenter', () => {
+            if (selectedFolderId !== rec.folderId) {
+              recItem.style.borderColor = '#137333'
+              recItem.style.backgroundColor = '#f8f9fa'
+            }
+          })
+          recItem.addEventListener('mouseleave', () => {
+            if (selectedFolderId !== rec.folderId) {
+              recItem.style.borderColor = '#dadce0'
+              recItem.style.backgroundColor = '#ffffff'
+            }
+          })
+
+          recommendationsList.appendChild(recItem)
+        })
+
+        // 更新推荐项选中状态的函数
+        function updateRecommendationStyles() {
+          const recItems = recommendationsList.querySelectorAll('button')
+          recItems.forEach((item, idx) => {
+            const rec = recommendations[idx]
+            if (!rec) return
+
+            const icon = item.querySelector('[data-icon="folder"]')
+            if (rec.folderId === selectedFolderId) {
+              item.style.borderColor = '#137333'
+              item.style.backgroundColor = '#e6f4ea'
+              item.style.boxShadow = '0 0 0 3px rgba(19, 115, 51, 0.1)'
+              if (icon) icon.textContent = '✓'
+            } else {
+              item.style.borderColor = '#dadce0'
+              item.style.backgroundColor = '#ffffff'
+              item.style.boxShadow = 'none'
+              if (icon) icon.textContent = '📁'
+            }
+          })
         }
 
-        // 点击选择
-        recItem.addEventListener('click', () => {
-          setSelectedFolderId(rec.folderId)
-          selectedFolderId = rec.folderId
-          // 更新所有推荐项的选中状态
-          updateRecommendationStyles()
-          // 滚动到选中项
-          const selectedItem = folderTreeContainer.querySelector(
-            `[data-folder-id="${rec.folderId}"]`
-          ) as HTMLElement
-          if (selectedItem) {
-            selectedItem.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        // 自动选中最佳推荐
+        if (!selectedFolderId) {
+          const firstRecommendation = recommendations[0]
+          if (firstRecommendation) {
+            setSelectedFolderId(firstRecommendation.folderId)
+            selectedFolderId = firstRecommendation.folderId
           }
-        })
-
-        // 悬停效果
-        recItem.addEventListener('mouseenter', () => {
-          if (selectedFolderId !== rec.folderId) {
-            recItem.style.borderColor = '#137333'
-            recItem.style.backgroundColor = '#f8f9fa'
-          }
-        })
-        recItem.addEventListener('mouseleave', () => {
-          if (selectedFolderId !== rec.folderId) {
-            recItem.style.borderColor = '#dadce0'
-            recItem.style.backgroundColor = '#ffffff'
-          }
-        })
-
-        recommendationsList.appendChild(recItem)
-      })
-
-      // 更新推荐项选中状态的函数
-      function updateRecommendationStyles() {
-        const recItems = recommendationsList.querySelectorAll('button')
-        recItems.forEach((item, idx) => {
-          const rec = recommendations[idx]
-          if (!rec) return
-
-          const icon = item.querySelector('[data-icon="folder"]')
-          if (rec.folderId === selectedFolderId) {
-            item.style.borderColor = '#137333'
-            item.style.backgroundColor = '#e6f4ea'
-            item.style.boxShadow = '0 0 0 3px rgba(19, 115, 51, 0.1)'
-            if (icon) icon.textContent = '✓'
-          } else {
-            item.style.borderColor = '#dadce0'
-            item.style.backgroundColor = '#ffffff'
-            item.style.boxShadow = 'none'
-            if (icon) icon.textContent = '📁'
-          }
-        })
-      }
-
-      // 自动选中最佳推荐
-      if (!selectedFolderId) {
-        const firstRecommendation = recommendations[0]
-        if (firstRecommendation) {
-          setSelectedFolderId(firstRecommendation.folderId)
-          selectedFolderId = firstRecommendation.folderId
         }
+        updateRecommendationStyles()
+      } else {
+        // 没有推荐结果，自动切换到手动模式
+        log('warn', '没有推荐结果，自动切换到手动选择模式')
+        aiAutoCheckbox.checked = false
+        aiAutoCheckbox.dispatchEvent(new Event('change'))
       }
-      updateRecommendationStyles()
-    } else {
-      // 没有推荐结果，自动切换到手动模式
-      log('warn', '没有推荐结果，自动切换到手动选择模式')
+    })
+    .catch(error => {
+      log('error', '获取向量推荐失败', error)
+      loadingRecommendations.remove()
+      // 推荐失败，自动切换到手动模式
       aiAutoCheckbox.checked = false
       aiAutoCheckbox.dispatchEvent(new Event('change'))
-    }
-  }).catch(error => {
-    log('error', '获取向量推荐失败', error)
-    loadingRecommendations.remove()
-    // 推荐失败，自动切换到手动模式
-    aiAutoCheckbox.checked = false
-    aiAutoCheckbox.dispatchEvent(new Event('change'))
-  })
+    })
 
   // 组装名称输入区域
   const nameGroup = document.createElement('div')
@@ -806,7 +801,7 @@ function createNativeStyleDialog(data: {
 
   /**
    * 检查 URL 是否重复
-   * 
+   *
    * 通过 Background Script 查询 IndexedDB，检测当前 URL 是否已存在
    */
   async function checkDuplicate(url: string): Promise<void> {
@@ -1067,9 +1062,7 @@ function createNativeStyleDialog(data: {
           }
 
           log('info', '✅ 书签添加成功', { title, url, isFavorite })
-          const successMsg = isFavorite
-            ? '✅ 书签已添加并收藏'
-            : '✅ 书签已添加'
+          const successMsg = isFavorite ? '✅ 书签已添加并收藏' : '✅ 书签已添加'
           showNotification(successMsg, 'success')
           // 延迟关闭，让用户看到成功消息
           setTimeout(() => {
@@ -1330,12 +1323,7 @@ function createFolderTreeSelector(
       ) as HTMLElement
       if (childrenContainer) {
         for (const child of node.children) {
-          renderFolderRecursive(
-            child,
-            level + 1,
-            childrenContainer,
-            renderedNodeIds
-          )
+          renderFolderRecursive(child, level + 1, childrenContainer, renderedNodeIds)
         }
       }
     }
@@ -1355,10 +1343,7 @@ function createFolderTreeSelector(
     for (const rootNode of tree) {
       if (rootNode.children) {
         for (const child of rootNode.children) {
-          if (
-            !child.url &&
-            (child.title === '书签栏' || child.title === 'Bookmarks Bar')
-          ) {
+          if (!child.url && (child.title === '书签栏' || child.title === 'Bookmarks Bar')) {
             expandedFolders.add(child.id)
             break
           }
@@ -1434,14 +1419,8 @@ function createFolderTreeSelector(
   /**
    * 展开到目标节点的路径
    */
-  function expandPathToNode(
-    targetId: string,
-    tree: chrome.bookmarks.BookmarkTreeNode[]
-  ): void {
-    let current: chrome.bookmarks.BookmarkTreeNode | null = findNodeById(
-      targetId,
-      tree
-    )
+  function expandPathToNode(targetId: string, tree: chrome.bookmarks.BookmarkTreeNode[]): void {
+    let current: chrome.bookmarks.BookmarkTreeNode | null = findNodeById(targetId, tree)
     while (current) {
       const parent = findParentNode(current.id, tree)
       if (parent) {
@@ -1492,10 +1471,7 @@ async function loadFolderTree(
           if (chrome.runtime.lastError) {
             const error = chrome.runtime.lastError.message
             log('error', '❌ [loadFolderTree] chrome.runtime.lastError', error)
-            console.error(
-              '[ContentScript:QuickAdd] chrome.runtime.lastError:',
-              error
-            )
+            console.error('[ContentScript:QuickAdd] chrome.runtime.lastError:', error)
             reject(new Error(error))
             return
           }
@@ -1532,9 +1508,7 @@ async function loadFolderTree(
     log('info', '✅ 收到书签树数据', {
       rootNodes: tree.length,
       hasBookmarksBar: tree.some(node =>
-        node.children?.some(
-          child => child.title === '书签栏' || child.title === 'Bookmarks Bar'
-        )
+        node.children?.some(child => child.title === '书签栏' || child.title === 'Bookmarks Bar')
       )
     })
 
@@ -1594,20 +1568,22 @@ function findBookmarksBarId(container: HTMLElement): string | null {
 
 /**
  * 获取向量相似度推荐的文件夹
- * 
+ *
  * 通过 Background Script 调用向量服务，根据书签内容推荐合适的文件夹
  */
 async function getVectorRecommendations(
   title: string,
   url: string
-): Promise<Array<{ 
-  folderId: string
-  folderName: string
-  folderPath: string
-  score: number
-  bookmarkCount: number
-  reason: string
-}>> {
+): Promise<
+  Array<{
+    folderId: string
+    folderName: string
+    folderPath: string
+    score: number
+    bookmarkCount: number
+    reason: string
+  }>
+> {
   try {
     log('info', '📤 请求向量推荐', { title, url })
 
@@ -1658,7 +1634,6 @@ async function getVectorRecommendations(
     return []
   }
 }
-
 
 /**
  * 显示通知

@@ -21,9 +21,7 @@ export const GUMROAD_CONFIG = {
     PRO_MONTHLY: import.meta.env.VITE_GUMROAD_PLAN_ID_MONTHLY || '',
     PRO_YEARLY: import.meta.env.VITE_GUMROAD_PLAN_ID_YEARLY || ''
   },
-  manageUrl:
-    import.meta.env.VITE_GUMROAD_MANAGE_URL ||
-    'https://app.gumroad.com/subscriptions'
+  manageUrl: import.meta.env.VITE_GUMROAD_MANAGE_URL || 'https://app.gumroad.com/subscriptions'
 } as const
 
 /**

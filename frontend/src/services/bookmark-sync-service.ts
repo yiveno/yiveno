@@ -10,21 +10,11 @@
 
 import { logger } from '@/infrastructure/logging/logger'
 import { indexedDBManager, DB_CONFIG } from '@/infrastructure/indexeddb/manager'
-import {
-  scheduleFullTraitRebuild,
-  scheduleTraitRebuildForIds
-} from './bookmark-trait-service'
+import { scheduleFullTraitRebuild, scheduleTraitRebuildForIds } from './bookmark-trait-service'
 import type { BookmarkRecord } from '@/infrastructure/indexeddb/types'
 import { chromeStorage } from '@/infrastructure/storage/chrome-storage'
-import type {
-  ProgressCallback,
-  SyncProgress,
-  SyncErrorType
-} from '@/types/sync-progress'
-import {
-  calculateEstimatedRemaining,
-  ERROR_MESSAGES
-} from '@/types/sync-progress'
+import type { ProgressCallback, SyncProgress, SyncErrorType } from '@/types/sync-progress'
+import { calculateEstimatedRemaining, ERROR_MESSAGES } from '@/types/sync-progress'
 import { TIMEOUT_CONFIG } from '@/config/constants'
 
 /** 数据库就绪状态的 session storage key（与 background/state.ts 保持一致） */
@@ -81,9 +71,8 @@ function convertChromeNodeToRecord(
     tags: [],
     traitTags: [],
     traitMetadata: [],
-    lastVisited: (
-      node as chrome.bookmarks.BookmarkTreeNode & { dateLastUsed?: number }
-    ).dateLastUsed,
+    lastVisited: (node as chrome.bookmarks.BookmarkTreeNode & { dateLastUsed?: number })
+      .dateLastUsed,
     visitCount: 0,
 
     // 时间分类
@@ -187,21 +176,12 @@ function flattenBookmarkTree(
 
   while (stack.length > 0) {
     const { node, path } = stack.pop()!
-    const record = convertChromeNodeToRecord(
-      node,
-      path.ids,
-      path.names,
-      flatIndex.current++
-    )
+    const record = convertChromeNodeToRecord(node, path.ids, path.names, flatIndex.current++)
     records.push(record)
 
     // 报告进度
     processedCount++
-    if (
-      onProgress &&
-      totalNodes > 0 &&
-      processedCount % PROGRESS_INTERVAL === 0
-    ) {
+    if (onProgress && totalNodes > 0 && processedCount % PROGRESS_INTERVAL === 0) {
       onProgress(processedCount, totalNodes)
     }
 
@@ -398,10 +378,7 @@ export class BookmarkSyncService {
     ) {
       return 'indexeddb'
     }
-    if (
-      message.includes('chrome.bookmarks') ||
-      message.includes('Extension context invalidated')
-    ) {
+    if (message.includes('chrome.bookmarks') || message.includes('Extension context invalidated')) {
       return 'chrome_api'
     }
     return 'unknown'
@@ -436,9 +413,7 @@ export class BookmarkSyncService {
     logger.info('BookmarkSync', '🚀 开始全量同步...')
 
     // 🔴 检查 session storage 中的同步状态
-    const isSyncing =
-      (await chromeStorage.getSession<boolean>(this.SYNC_STATE_KEY, false)) ??
-      false
+    const isSyncing = (await chromeStorage.getSession<boolean>(this.SYNC_STATE_KEY, false)) ?? false
 
     if (isSyncing) {
       logger.warn('BookmarkSync', '⚠️ 同步正在进行中，记录挂起请求')
@@ -534,32 +509,26 @@ export class BookmarkSyncService {
       // 3. 扁平化书签树（带进度回调）
       logger.debug('BookmarkSync', '🔄 扁平化书签树...')
       const flattenStart = performance.now()
-      const allRecords = flattenBookmarkTree(
-        tree,
-        [],
-        [],
-        { current: 0 },
-        (current, total) => {
-          // 转换阶段占 20%-40%
-          const percentage = 20 + (current / total) * 20
-          this.notifyProgress({
+      const allRecords = flattenBookmarkTree(tree, [], [], { current: 0 }, (current, total) => {
+        // 转换阶段占 20%-40%
+        const percentage = 20 + (current / total) * 20
+        this.notifyProgress({
+          phase: 'converting',
+          current,
+          total,
+          percentage,
+          message: `正在转换书签数据... ${current}/${total}`,
+          startTime: syncStart,
+          estimatedRemaining: calculateEstimatedRemaining({
             phase: 'converting',
             current,
             total,
             percentage,
-            message: `正在转换书签数据... ${current}/${total}`,
-            startTime: syncStart,
-            estimatedRemaining: calculateEstimatedRemaining({
-              phase: 'converting',
-              current,
-              total,
-              percentage,
-              message: '',
-              startTime: syncStart
-            })
+            message: '',
+            startTime: syncStart
           })
-        }
-      )
+        })
+      })
       logger.debug(
         'BookmarkSync',
         `✅ 扁平化完成，耗时 ${(performance.now() - flattenStart).toFixed(0)}ms，记录数: ${allRecords.length}`
@@ -615,13 +584,8 @@ export class BookmarkSyncService {
 
           if (processed % 1000 === 0 || processed === total) {
             const elapsed = performance.now() - writeStart
-            const rate = (processed / Math.max(elapsed / 1000, 0.001)).toFixed(
-              0
-            )
-            logger.debug(
-              'BookmarkSync',
-              `📝 进度: ${processed}/${total} (${rate} 条/秒)`
-            )
+            const rate = (processed / Math.max(elapsed / 1000, 0.001)).toFixed(0)
+            logger.debug('BookmarkSync', `📝 进度: ${processed}/${total} (${rate} 条/秒)`)
           }
 
           // 让出主线程，避免阻塞 UI
@@ -642,9 +606,7 @@ export class BookmarkSyncService {
       try {
         const totalFolders = allRecords.filter(record => record.isFolder).length
         // ✅ 只统计有 URL 且不是文件夹的书签（与 handleGlobalStats 逻辑一致）
-        const totalBookmarks = allRecords.filter(
-          record => record.url && !record.isFolder
-        ).length
+        const totalBookmarks = allRecords.filter(record => record.url && !record.isFolder).length
         await indexedDBManager.updateGlobalStats({
           key: 'basic',
           totalBookmarks,
@@ -731,10 +693,7 @@ export class BookmarkSyncService {
             timestamp: Date.now()
           })
           .catch(() => {
-            logger.warn(
-              'BookmarkSync',
-              '❌ 广播 acuity-bookmarks-db-ready 消息失败'
-            )
+            logger.warn('BookmarkSync', '❌ 广播 acuity-bookmarks-db-ready 消息失败')
           })
         chrome.runtime
           .sendMessage({
@@ -743,10 +702,7 @@ export class BookmarkSyncService {
             timestamp: Date.now()
           })
           .catch(() => {
-            logger.warn(
-              'BookmarkSync',
-              '❌ 广播 acuity-bookmarks-db-synced 消息失败'
-            )
+            logger.warn('BookmarkSync', '❌ 广播 acuity-bookmarks-db-synced 消息失败')
           })
       } catch {}
     } catch (error) {
@@ -782,22 +738,12 @@ export class BookmarkSyncService {
         try {
           // 🔴 使用 session storage
           await setDatabaseReady(false)
-          logger.debug(
-            'BookmarkSync',
-            '📊 状态已更新: dbReady=false (初次同步失败)'
-          )
+          logger.debug('BookmarkSync', '📊 状态已更新: dbReady=false (初次同步失败)')
         } catch (e) {
-          logger.warn(
-            'BookmarkSync',
-            'syncAllBookmarks] ⚠️ 更新失败状态失败:',
-            e
-          )
+          logger.warn('BookmarkSync', 'syncAllBookmarks] ⚠️ 更新失败状态失败:', e)
         }
       } else {
-        logger.info(
-          'BookmarkSync',
-          '同步失败但已有数据，保持数据库就绪状态不变'
-        )
+        logger.info('BookmarkSync', '同步失败但已有数据，保持数据库就绪状态不变')
       }
 
       // ✅ 自动重试逻辑
@@ -828,10 +774,7 @@ export class BookmarkSyncService {
       await chromeStorage.setSession(this.SYNC_STATE_KEY, false)
       logger.debug('BookmarkSync', ' 🔓 释放同步锁')
 
-      if (
-        this.pendingFullSync &&
-        this.fullSyncRetryCount < MAX_FULL_SYNC_RETRY
-      ) {
+      if (this.pendingFullSync && this.fullSyncRetryCount < MAX_FULL_SYNC_RETRY) {
         logger.info('BookmarkSync', '🔁 检测到挂起的全量同步请求，立即重新执行')
         this.pendingFullSync = false
         queueMicrotask(() => {
@@ -847,9 +790,7 @@ export class BookmarkSyncService {
    */
   async syncIncremental(): Promise<void> {
     // 🔴 检查 session storage 中的同步状态
-    const isSyncing =
-      (await chromeStorage.getSession<boolean>(this.SYNC_STATE_KEY, false)) ??
-      false
+    const isSyncing = (await chromeStorage.getSession<boolean>(this.SYNC_STATE_KEY, false)) ?? false
 
     if (isSyncing) return
     if (this.incrementalQueue.length === 0) return
@@ -859,10 +800,7 @@ export class BookmarkSyncService {
       await chromeStorage.setSession(this.SYNC_STATE_KEY, true)
       await indexedDBManager.initialize()
 
-      const queue = this.incrementalQueue.splice(
-        0,
-        this.incrementalQueue.length
-      )
+      const queue = this.incrementalQueue.splice(0, this.incrementalQueue.length)
       const toUpsert: BookmarkRecord[] = []
       const toDelete: string[] = []
 
@@ -871,7 +809,7 @@ export class BookmarkSyncService {
           toDelete.push(evt.id)
           continue
         }
-        
+
         // ✅ 优化：对于 moved 事件，需要获取完整的父级路径信息
         // 使用 getSubTree 而不是 get，以便正确计算 pathIds
         try {
@@ -880,16 +818,16 @@ export class BookmarkSyncService {
             const subTree = await chrome.bookmarks.getSubTree(evt.id)
             if (subTree && subTree.length > 0) {
               const node = subTree[0]
-              
+
               // 2. 获取父节点路径信息
               let pathIds: string[] = []
               let pathNames: string[] = []
-              
+
               if (node?.parentId && node.parentId !== '0') {
                 // 递归获取父级路径
                 let currentId = node.parentId
                 const parentPath: Array<{ id: string; title: string }> = []
-                
+
                 while (currentId && currentId !== '0') {
                   const parents = await chrome.bookmarks.get(currentId)
                   if (parents && parents.length > 0) {
@@ -900,15 +838,13 @@ export class BookmarkSyncService {
                     break
                   }
                 }
-                
+
                 pathIds = parentPath.map(p => p.id)
                 pathNames = parentPath.map(p => p.title)
               }
-              
+
               // 3. 转换节点（带正确的路径信息）
-              const recs = node
-                ? flattenBookmarkTree([node], pathIds, pathNames)
-                : []
+              const recs = node ? flattenBookmarkTree([node], pathIds, pathNames) : []
               toUpsert.push(...recs)
             }
           } else {
@@ -953,10 +889,7 @@ export class BookmarkSyncService {
               const toUpdate = markedAll.filter(r => affectedUrls.has(r.url))
               if (toUpdate.length > 0) {
                 await indexedDBManager.insertBookmarks(toUpdate)
-                logger.debug(
-                  'BookmarkSync',
-                  ` ✅ 已更新 ${toUpdate.length} 个书签的重复状态`
-                )
+                logger.debug('BookmarkSync', ` ✅ 已更新 ${toUpdate.length} 个书签的重复状态`)
               }
             } catch (error) {
               logger.error('BookmarkSync', ' 重新检测重复书签失败:', error)
@@ -990,10 +923,7 @@ export class BookmarkSyncService {
             timestamp: Date.now()
           })
           .catch(() => {
-            logger.warn(
-              'BookmarkSync',
-              '❌ 广播 acuity-bookmarks-db-synced 消息失败'
-            )
+            logger.warn('BookmarkSync', '❌ 广播 acuity-bookmarks-db-synced 消息失败')
           })
       } catch {}
 
@@ -1014,8 +944,7 @@ export class BookmarkSyncService {
 
       // 小概率失败时触发一次全量兜底（异步，不阻塞调用方）
       const currentSyncState =
-        (await chromeStorage.getSession<boolean>(this.SYNC_STATE_KEY, false)) ??
-        false
+        (await chromeStorage.getSession<boolean>(this.SYNC_STATE_KEY, false)) ?? false
 
       if (currentSyncState) {
         this.pendingFullSync = true
@@ -1032,10 +961,7 @@ export class BookmarkSyncService {
       // 注意：正常情况下 Promise 已经在 try/catch 中处理了
       if (this.pendingIncrementalPromise) {
         // 这种情况不应该发生，但作为兜底处理
-        logger.warn(
-          'BookmarkSync',
-          '⚠️ 增量同步完成但 Promise 未被处理，强制 resolve'
-        )
+        logger.warn('BookmarkSync', '⚠️ 增量同步完成但 Promise 未被处理，强制 resolve')
         this.pendingIncrementalPromise.resolve()
         this.pendingIncrementalPromise = null
       }
@@ -1052,10 +978,7 @@ export class BookmarkSyncService {
    * @param id - 书签ID
    * @returns Promise，在同步完成时 resolve
    */
-  enqueueIncremental(
-    type: 'created' | 'removed' | 'changed' | 'moved',
-    id: string
-  ): Promise<void> {
+  enqueueIncremental(type: 'created' | 'removed' | 'changed' | 'moved', id: string): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       this.incrementalQueue.push({ type, id })
 
@@ -1102,11 +1025,7 @@ export class BookmarkSyncService {
   ): Promise<BookmarkRecord[]> {
     try {
       await indexedDBManager.initialize()
-      return await indexedDBManager.getChildrenByParentId(
-        parentId,
-        offset,
-        limit
-      )
+      return await indexedDBManager.getChildrenByParentId(parentId, offset, limit)
     } catch (error) {
       logger.error('BookmarkSync', `❌ 获取子书签失败: ${parentId}`, error)
       return []
@@ -1116,10 +1035,7 @@ export class BookmarkSyncService {
   /**
    * 获取所有书签（分页）
    */
-  async getAllBookmarks(
-    limit?: number,
-    offset?: number
-  ): Promise<BookmarkRecord[]> {
+  async getAllBookmarks(limit?: number, offset?: number): Promise<BookmarkRecord[]> {
     try {
       await indexedDBManager.initialize()
       return await indexedDBManager.getAllBookmarks(limit, offset)
@@ -1155,15 +1071,11 @@ export class BookmarkSyncService {
 
       // ✅ 过滤掉移动书签（id='3'）和没有标题的节点
       // Chrome 原生书签管理器在桌面版不显示移动书签，且所有显示的文件夹都应有标题
-      logger.debug(
-        'BookmarkSync',
-        `🔍 开始过滤，原始节点数量: ${rootBookmarks.length}`
-      )
+      logger.debug('BookmarkSync', `🔍 开始过滤，原始节点数量: ${rootBookmarks.length}`)
 
       const beforeFilter = rootBookmarks.length
       rootBookmarks = rootBookmarks.filter(
-        bookmark =>
-          bookmark.id !== '3' && bookmark.title && bookmark.title.trim() !== ''
+        bookmark => bookmark.id !== '3' && bookmark.title && bookmark.title.trim() !== ''
       )
       const filteredOut = beforeFilter - rootBookmarks.length
 

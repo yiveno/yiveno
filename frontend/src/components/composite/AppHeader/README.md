@@ -23,7 +23,6 @@ import { AppHeader } from '@/components'
 - [Button](../../base/Button/README.md)
 - [ThemeToggle](../../base/ThemeToggle/README.md)
 
-
 ## 🎯 基础用法
 
 ### 默认用法
@@ -44,34 +43,28 @@ import { AppHeader } from '@/components'
 
 ```vue
 <template>
-  <AppHeader
-  title="应用名称"
-  :user="currentUser"
-  @menu-click="handleMenu"
-/>
+  <AppHeader title="应用名称" :user="currentUser" @menu-click="handleMenu" />
 </template>
 ```
-
-
 
 ## 📋 API
 
 ### Props
 
-| 属性 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| - | - | - | 待补充 |
+| 属性 | 类型 | 默认值 | 说明   |
+| ---- | ---- | ------ | ------ |
+| -    | -    | -      | 待补充 |
 
 ### Emits
 
-| 事件名 | 参数 | 说明 |
-|--------|------|------|
-| - | - | 待补充 |
+| 事件名 | 参数 | 说明   |
+| ------ | ---- | ------ |
+| -      | -    | 待补充 |
 
 ### Slots
 
-| 插槽名 | 说明 |
-|--------|------|
+| 插槽名    | 说明     |
+| --------- | -------- |
 | `default` | 默认内容 |
 
 ## 🎨 样式变量

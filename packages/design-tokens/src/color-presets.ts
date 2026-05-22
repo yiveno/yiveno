@@ -12,14 +12,7 @@
  */
 
 /** Builder / `data-color-preset` / 存储用的预设 id */
-export const COLOR_PRESET_IDS = [
-  'default',
-  'ocean',
-  'forest',
-  'ember',
-  'violet',
-  'slate'
-] as const
+export const COLOR_PRESET_IDS = ['default', 'ocean', 'forest', 'ember', 'violet', 'slate'] as const
 
 export type ColorPresetId = (typeof COLOR_PRESET_IDS)[number]
 
@@ -97,10 +90,7 @@ export const COLOR_PRESET_DEFINITIONS: readonly ColorPresetDefinition[] = [
  * 校验字符串是否为已注册的配色预设 id（如来自 chrome.storage）
  */
 export function isColorPresetId(value: unknown): value is ColorPresetId {
-  return (
-    typeof value === 'string' &&
-    (COLOR_PRESET_IDS as readonly string[]).includes(value)
-  )
+  return typeof value === 'string' && (COLOR_PRESET_IDS as readonly string[]).includes(value)
 }
 
 /**
@@ -113,9 +103,7 @@ export function normalizeColorPresetId(value: unknown): ColorPresetId {
 /**
  * 按 id 取定义；未知 id 时回退 `default`
  */
-export function getColorPresetDefinition(
-  id: unknown
-): ColorPresetDefinition {
+export function getColorPresetDefinition(id: unknown): ColorPresetDefinition {
   const normalized = normalizeColorPresetId(id)
   const found = COLOR_PRESET_DEFINITIONS.find(p => p.id === normalized)
   return found ?? COLOR_PRESET_DEFINITIONS[0]!

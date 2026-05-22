@@ -19,6 +19,7 @@ src/components/business/ShareDialog/
 ## 功能模块
 
 ### 1. ShareService（分享服务）
+
 - 编码书签数据为压缩字符串
 - 解码分享链接数据
 - 生成分享 URL
@@ -26,18 +27,21 @@ src/components/business/ShareDialog/
 - 下载图片
 
 ### 2. PosterService（海报生成服务）
+
 - 使用 Canvas API 绘制海报
 - 生成二维码
 - 加载和缓存 favicon
 - 导出为 PNG 图片
 
 ### 3. ImportService（导入服务）
+
 - 调用 Chrome Bookmarks API
 - 批量导入书签
 - 进度回调
 - 错误处理
 
 ### 4. ShareDialog（分享弹窗组件）
+
 - 显示分享选项
 - 海报预览
 - 主题切换
@@ -59,9 +63,7 @@ import { shareService } from '@/application/share/share-service'
 import { posterService } from '@/application/share/poster-service'
 
 // 1. 编码书签数据
-const bookmarks = [
-  { title: 'Example', url: 'https://example.com' }
-]
+const bookmarks = [{ title: 'Example', url: 'https://example.com' }]
 const encoded = shareService.encodeShareData(bookmarks)
 
 // 2. 生成分享 URL

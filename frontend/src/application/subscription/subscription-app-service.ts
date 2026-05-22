@@ -5,24 +5,18 @@
  * - 管理用户订阅状态
  * - 处理订阅创建与状态同步
  * - 与 Supabase 和 Gumroad 集成
- * 
+ *
  * 数据获取策略：
  * - 直接查询 Supabase subscriptions 表（与官网一致）
  * - 不再通过后端 API 中转，减少网络请求
  */
 
-import {
-  buildCheckoutUrl,
-  getManageSubscriptionUrl
-} from '@/infrastructure/gumroad/client'
+import { buildCheckoutUrl, getManageSubscriptionUrl } from '@/infrastructure/gumroad/client'
 import {
   getSubscriptionFromSupabase,
   isProUser as checkIsProUser
 } from '@/infrastructure/supabase/subscription-repository'
-import type {
-  Subscription,
-  UserSubscriptionStatus
-} from '@/infrastructure/supabase/types'
+import type { Subscription, UserSubscriptionStatus } from '@/infrastructure/supabase/types'
 
 /**
  * 订阅应用服务类
@@ -30,16 +24,14 @@ import type {
 export class SubscriptionAppService {
   /**
    * 获取用户当前订阅状态
-   * 
+   *
    * ✅ 直接查询 Supabase（与官网一致）
    * ❌ 不再通过后端 API 中转
    *
    * @param userId - Supabase 用户 ID
    * @returns 订阅状态
    */
-  async getUserSubscription(
-    userId: string
-  ): Promise<UserSubscriptionStatus | null> {
+  async getUserSubscription(userId: string): Promise<UserSubscriptionStatus | null> {
     try {
       // ✅ 直接查询 Supabase subscriptions 表
       const subscription = await getSubscriptionFromSupabase(userId)
@@ -73,7 +65,7 @@ export class SubscriptionAppService {
 
   /**
    * 获取用户订阅详情
-   * 
+   *
    * ✅ 直接查询 Supabase（与官网一致）
    *
    * @param userId - Supabase 用户 ID
@@ -104,17 +96,12 @@ export class SubscriptionAppService {
    * @param email - 用户邮箱
    * @returns 支付链接
    */
-  async createCheckoutLink(
-    planId: string,
-    userId: string,
-    email: string
-  ): Promise<string> {
+  async createCheckoutLink(planId: string, userId: string, email: string): Promise<string> {
     try {
       const checkoutUrl = buildCheckoutUrl(planId, userId, email)
       return checkoutUrl
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : '创建支付链接失败'
+      const errorMessage = error instanceof Error ? error.message : '创建支付链接失败'
       console.error('[SubscriptionAppService] 创建支付链接失败:', error)
       throw new Error(errorMessage)
     }
@@ -129,7 +116,7 @@ export class SubscriptionAppService {
 
   /**
    * 检查用户是否为 Pro 用户
-   * 
+   *
    * ✅ 直接查询 Supabase（与官网一致）
    *
    * @param userId - Supabase 用户 ID

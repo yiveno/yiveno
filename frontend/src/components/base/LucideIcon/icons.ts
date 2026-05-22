@@ -1,6 +1,6 @@
 /**
  * Lucide Icons 导入和映射
- * 
+ *
  * 这个文件集中管理所有使用的 Lucide 图标
  * 按需导入,减少打包体积
  */
@@ -26,7 +26,7 @@ import {
   ArrowDown,
   Circle,
   MinusCircle,
-  
+
   // 编辑操作
   Edit,
   Trash2,
@@ -35,14 +35,14 @@ import {
   Save,
   Download,
   Upload,
-  
+
   // 文件和文件夹
   File,
   Folder,
   FolderOpen,
   FolderPlus,
   FolderMinus,
-  
+
   // 书签相关
   Bookmark,
   BookmarkPlus,
@@ -50,18 +50,18 @@ import {
   BookmarkCheck,
   Star,
   StarOff,
-  
+
   // 搜索和筛选
   Search,
   Filter,
   SlidersHorizontal,
-  
+
   // 设置和配置
   Settings,
   MoreVertical,
   MoreHorizontal,
   Menu,
-  
+
   // 状态指示
   AlertCircle,
   AlertTriangle,
@@ -69,39 +69,39 @@ import {
   CheckCircle,
   XCircle,
   HelpCircle,
-  
+
   // 用户和账户
   User,
   Users,
   UserPlus,
-  
+
   // 时间和日期
   Clock,
   Calendar,
-  
+
   // 网络和同步
   Cloud,
   CloudOff,
   RefreshCw,
   Loader2,
-  
+
   // 视图和布局
   Eye,
   EyeOff,
   Layout,
   Grid,
   List,
-  
+
   // 导航
   Home,
   ExternalLink,
   Link,
   Unlink,
-  
+
   // 主题
   Sun,
   Moon,
-  
+
   // 其他
   Tag,
   Tags,
@@ -148,11 +148,11 @@ import {
  */
 export const lucideIcons: Record<string, Component> = {
   // 基础操作
-  'plus': Plus,
-  'minus': Minus,
-  'x': X,
-  'close': X,
-  'check': Check,
+  plus: Plus,
+  minus: Minus,
+  x: X,
+  close: X,
+  check: Check,
   'chevron-down': ChevronDown,
   'chevron-right': ChevronRight,
   'chevron-left': ChevronLeft,
@@ -163,136 +163,136 @@ export const lucideIcons: Record<string, Component> = {
   'arrow-left': ArrowLeft,
   'arrow-up': ArrowUp,
   'arrow-down': ArrowDown,
-  'circle': Circle,
+  circle: Circle,
   'circle-outline': Circle,
   'minus-circle': MinusCircle,
   'circle-minus': MinusCircle,
-  
+
   // 编辑操作
-  'edit': Edit,
-  'delete': Trash2,
-  'trash': Trash2,
+  edit: Edit,
+  delete: Trash2,
+  trash: Trash2,
   'trash-2': Trash2,
-  'copy': Copy,
-  'clipboard': Clipboard,
-  'save': Save,
-  'download': Download,
-  'upload': Upload,
-  
+  copy: Copy,
+  clipboard: Clipboard,
+  save: Save,
+  download: Download,
+  upload: Upload,
+
   // 文件和文件夹
-  'file': File,
-  'folder': Folder,
+  file: File,
+  folder: Folder,
   'folder-open': FolderOpen,
   'folder-plus': FolderPlus,
   'folder-add': FolderPlus,
   'folder-minus': FolderMinus,
   'folder-delete': FolderMinus,
-  
+
   // 书签相关
-  'bookmark': Bookmark,
+  bookmark: Bookmark,
   'bookmark-plus': BookmarkPlus,
   'bookmark-add': BookmarkPlus,
   'bookmark-minus': BookmarkMinus,
   'bookmark-delete': BookmarkMinus,
   'bookmark-check': BookmarkCheck,
-  'star': Star,
-  'favorite': Star,
+  star: Star,
+  favorite: Star,
   'star-off': StarOff,
   'favorite-outline': StarOff,
-  
+
   // 搜索和筛选
-  'search': Search,
-  'filter': Filter,
-  'sliders': SlidersHorizontal,
-  
+  search: Search,
+  filter: Filter,
+  sliders: SlidersHorizontal,
+
   // 设置和配置
-  'settings': Settings,
+  settings: Settings,
   'more-vertical': MoreVertical,
   'more-horizontal': MoreHorizontal,
-  'menu': Menu,
-  
+  menu: Menu,
+
   // 状态指示
-  'alert': AlertCircle,
+  alert: AlertCircle,
   'alert-circle': AlertCircle,
   'alert-triangle': AlertTriangle,
-  'warning': AlertTriangle,
-  'info': Info,
-  'success': CheckCircle,
+  warning: AlertTriangle,
+  info: Info,
+  success: CheckCircle,
   'check-circle': CheckCircle,
-  'error': XCircle,
+  error: XCircle,
   'x-circle': XCircle,
-  'help': HelpCircle,
+  help: HelpCircle,
   'help-circle': HelpCircle,
-  
+
   // 用户和账户
-  'user': User,
-  'account': User,
-  'users': Users,
+  user: User,
+  account: User,
+  users: Users,
   'user-plus': UserPlus,
-  
+
   // 时间和日期
-  'clock': Clock,
-  'calendar': Calendar,
-  
+  clock: Clock,
+  calendar: Calendar,
+
   // 网络和同步
-  'cloud': Cloud,
+  cloud: Cloud,
   'cloud-off': CloudOff,
   'cloud-sync': RefreshCw,
-  'refresh': RefreshCw,
-  'sync': RefreshCw,
-  'loader': Loader2,
+  refresh: RefreshCw,
+  sync: RefreshCw,
+  loader: Loader2,
   'loader-2': Loader2,
-  'loading': Loader2,
-  
+  loading: Loader2,
+
   // 视图和布局
-  'eye': Eye,
+  eye: Eye,
   'eye-off': EyeOff,
-  'layout': Layout,
-  'grid': Grid,
-  'list': List,
-  'heart': Star,  // heart 映射到 star（收藏）
-  
+  layout: Layout,
+  grid: Grid,
+  list: List,
+  heart: Star, // heart 映射到 star（收藏）
+
   // 导航
-  'home': Home,
+  home: Home,
   'external-link': ExternalLink,
-  'link': Link,
-  'unlink': Unlink,
-  
+  link: Link,
+  unlink: Unlink,
+
   // 主题
-  'sun': Sun,
-  'light': Sun,
-  'moon': Moon,
-  'dark': Moon,
-  
+  sun: Sun,
+  light: Sun,
+  moon: Moon,
+  dark: Moon,
+
   // 其他
-  'tag': Tag,
-  'tags': Tags,
-  'hash': Hash,
-  'flash': Zap,
-  'zap': Zap,
-  'crown': Crown,
-  'brain': Brain,
-  'sparkles': Sparkles,
-  'ai': Sparkles,
-  'auto': Sparkles,
+  tag: Tag,
+  tags: Tags,
+  hash: Hash,
+  flash: Zap,
+  zap: Zap,
+  crown: Crown,
+  brain: Brain,
+  sparkles: Sparkles,
+  ai: Sparkles,
+  auto: Sparkles,
   /** 配色 / 主题色 */
-  'palette': Palette,
+  palette: Palette,
   'color-palette': Palette,
-  'lock': Lock,
-  'unlock': Unlock,
-  'shield': Shield,
-  'ban': Ban,
-  'block': Ban,
+  lock: Lock,
+  unlock: Unlock,
+  shield: Shield,
+  ban: Ban,
+  block: Ban,
 
   // 通知
-  'bell': Bell,
-  'notification': Bell,
+  bell: Bell,
+  notification: Bell,
 
   // 用户操作
   'log-out': LogOut,
-  'logout': LogOut,
+  logout: LogOut,
   'log-in': LogIn,
-  'login': LogIn,
+  login: LogIn,
 
   // 展开收起
   'chevrons-up': ChevronsUp,
@@ -300,27 +300,27 @@ export const lucideIcons: Record<string, Component> = {
 
   // 布局
   'panel-left': PanelLeft,
-  'sidebar': PanelLeft,
+  sidebar: PanelLeft,
 
   // 数据库
-  'database': Database,
+  database: Database,
 
   // 其他补充
-  'globe': Globe,
-  'web': Globe,
-  'lightbulb': Lightbulb,
-  'keyboard': Keyboard,
-  'radar': Radar,
-  'cpu': Cpu,
+  globe: Globe,
+  web: Globe,
+  lightbulb: Lightbulb,
+  keyboard: Keyboard,
+  radar: Radar,
+  cpu: Cpu,
 
   /** 浏览器 / 窗口 / 标签组（右键菜单等） */
-  'glasses': Glasses,
+  glasses: Glasses,
   'notebook-tabs': NotebookTabs,
   'app-window': AppWindow,
-  
+
   // 分享相关
-  'send': Send,
-  'image': Image
+  send: Send,
+  image: Image
 }
 
 /**
@@ -336,7 +336,7 @@ export const materialToLucideMap: Record<string, string> = {
   'icon-chevron-down': 'chevron-down',
   'icon-chevron-right': 'chevron-right',
   'icon-arrow-right-double': 'chevrons-right',
-  
+
   // 编辑操作
   'icon-edit-bookmark': 'edit',
   'icon-edit-folder': 'edit',
@@ -345,13 +345,13 @@ export const materialToLucideMap: Record<string, string> = {
   'icon-delete-sweep': 'trash',
   'icon-copy': 'copy',
   'icon-duplicate': 'copy',
-  
+
   // 文件和文件夹
   'icon-file': 'file',
   'icon-folder': 'folder',
   'icon-folder-add': 'folder-plus',
   'icon-folder-delete': 'folder-minus',
-  
+
   // 书签相关
   'icon-bookmark': 'bookmark',
   'icon-bookmark-Add': 'bookmark-plus',
@@ -359,7 +359,7 @@ export const materialToLucideMap: Record<string, string> = {
   'icon-favorite': 'star',
   'icon-favorite-outline': 'star-off',
   'icon-star': 'star',
-  
+
   // 状态指示
   'icon-alert': 'alert-circle',
   'icon-error': 'x-circle',
@@ -368,25 +368,25 @@ export const materialToLucideMap: Record<string, string> = {
   'icon-circle-outline': 'circle',
   'icon-circle-minus': 'minus-circle',
   'icon-warning': 'alert-triangle',
-  
+
   // 用户
   'icon-account': 'user',
-  
+
   // 时间
   'icon-clock': 'clock',
-  
+
   // 网络和同步
   'icon-cloud-sync': 'refresh',
   'icon-swap': 'refresh',
   'icon-sync-alert': 'alert-circle',
-  
+
   // 视图
   'icon-expand-All': 'chevrons-up',
   'icon-collapse-All': 'chevrons-down',
-  
+
   // 主题
   'icon-dark': 'moon',
-  
+
   // 分享
   'icon-share': 'external-link',
   'icon-link': 'link',
@@ -396,7 +396,7 @@ export const materialToLucideMap: Record<string, string> = {
   'icon-tab-group': 'notebook-tabs',
   'icon-open-link': 'external-link',
   'icon-window': 'app-window',
-  
+
   // 其他
   'icon-flash': 'zap',
   'icon-crown': 'crown',

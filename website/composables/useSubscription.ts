@@ -1,6 +1,6 @@
 /**
  * 订阅状态管理 Composable（官网专用）
- * 
+ *
  * 使用缓存策略优化性能：
  * - 首次加载：立即从缓存读取（避免闪烁），然后从 Supabase 刷新
  * - 后续加载：先显示缓存，后台刷新
@@ -25,7 +25,7 @@ interface SubscriptionRecord {
 export const useSubscription = () => {
   const { user } = useAuth()
   const { supabase } = useSupabase()
-  
+
   const subscription = ref<SubscriptionRecord | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
@@ -70,7 +70,7 @@ export const useSubscription = () => {
    */
   const loadFromCache = (userId: string): SubscriptionRecord | null => {
     if (typeof window === 'undefined') return null
-    
+
     try {
       const cached = localStorage.getItem(CACHE_KEY)
       if (!cached) return null
@@ -105,7 +105,7 @@ export const useSubscription = () => {
    */
   const saveToCache = (data: SubscriptionRecord | null, userId: string) => {
     if (typeof window === 'undefined') return
-    
+
     try {
       const cache: SubscriptionCache = {
         data,
@@ -165,12 +165,12 @@ export const useSubscription = () => {
    */
   const loadSubscription = async (forceRefresh = false) => {
     const userId = user.value?.id
-    
+
     if (!userId) {
       subscription.value = null
       loading.value = false
       // 这里是同步分支中的状态收束，不存在跨 await 竞争
-      // eslint-disable-next-line require-atomic-updates
+
       isInitialized.value = true
       return
     }
@@ -182,10 +182,10 @@ export const useSubscription = () => {
         if (cached) {
           subscription.value = cached
           // 缓存命中后立即标记初始化完成，后台刷新不会依赖旧值
-          // eslint-disable-next-line require-atomic-updates
+
           isInitialized.value = true
           console.log('[useSubscription] 立即显示缓存数据')
-          
+
           // 后台刷新（不阻塞 UI，不改变 loading 状态）
           fetchFromSupabase()
             .then(data => {
@@ -200,7 +200,7 @@ export const useSubscription = () => {
             .catch(err => {
               console.error('[useSubscription] 后台刷新失败:', err)
             })
-          
+
           return
         }
       }
@@ -211,7 +211,7 @@ export const useSubscription = () => {
 
       const data = await fetchFromSupabase()
       subscription.value = data
-      
+
       if (data) {
         saveToCache(data, userId)
       }
@@ -226,20 +226,24 @@ export const useSubscription = () => {
   }
 
   // 监听用户登录状态变化
-  watch(() => user.value?.id, (newUserId, oldUserId) => {
-    if (newUserId && newUserId !== oldUserId) {
-      // 用户登录或切换，重新加载订阅
-      isInitialized.value = false
-      loadSubscription()
-    } else if (!newUserId) {
-      // 用户退出登录
-      subscription.value = null
-      // 用户退出登录时直接重置状态，不存在并发写入风险
-      // eslint-disable-next-line require-atomic-updates
-      isInitialized.value = true
-      clearCache()
-    }
-  }, { immediate: true })
+  watch(
+    () => user.value?.id,
+    (newUserId, oldUserId) => {
+      if (newUserId && newUserId !== oldUserId) {
+        // 用户登录或切换，重新加载订阅
+        isInitialized.value = false
+        loadSubscription()
+      } else if (!newUserId) {
+        // 用户退出登录
+        subscription.value = null
+        // 用户退出登录时直接重置状态，不存在并发写入风险
+
+        isInitialized.value = true
+        clearCache()
+      }
+    },
+    { immediate: true }
+  )
 
   return {
     subscription: computed(() => subscription.value),

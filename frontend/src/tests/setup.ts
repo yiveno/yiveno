@@ -1,11 +1,11 @@
 /**
  * Vitest 全局设置
- * 
+ *
  * 用途：
  * 1. Mock Chrome API
  * 2. Mock IndexedDB
  * 3. 全局测试工具
- * 
+ *
  * 基于 Chrome Extensions 官方测试最佳实践:
  * https://developer.chrome.com/docs/extensions/how-to/test/unit-testing
  */
@@ -37,7 +37,7 @@ const createChromeMock = () => ({
     },
     getURL: vi.fn((path: string) => `chrome-extension://test-id/${path}`)
   },
-  
+
   storage: {
     local: {
       // 模拟真实的异步存储
@@ -99,7 +99,7 @@ const createChromeMock = () => ({
       removeListener: vi.fn()
     }
   },
-  
+
   bookmarks: {
     getTree: vi.fn((callback?) => {
       const result: chrome.bookmarks.BookmarkTreeNode[] = []
@@ -159,7 +159,7 @@ const createChromeMock = () => ({
       removeListener: vi.fn()
     }
   },
-  
+
   tabs: {
     query: vi.fn((_queryInfo, callback?) => {
       const result: chrome.tabs.Tab[] = []
@@ -189,7 +189,7 @@ const createChromeMock = () => ({
       return Promise.resolve()
     })
   },
-  
+
   // ✅ 新增：Alarms API Mock
   alarms: {
     create: vi.fn((_name?, _alarmInfo?) => {
@@ -254,7 +254,7 @@ import 'fake-indexeddb/auto'
 // 重置所有 Mock
 export function resetAllMocks() {
   vi.clearAllMocks()
-  
+
   // 重新创建 Chrome Mock
   global.chrome = createChromeMock() as unknown as typeof chrome
 }
@@ -268,7 +268,9 @@ afterEach(() => {
 // 4. 测试数据工厂
 // ============================================
 
-export const createMockBookmark = (overrides: Partial<chrome.bookmarks.BookmarkTreeNode> = {}): chrome.bookmarks.BookmarkTreeNode => ({
+export const createMockBookmark = (
+  overrides: Partial<chrome.bookmarks.BookmarkTreeNode> = {}
+): chrome.bookmarks.BookmarkTreeNode => ({
   id: 'test-id-' + Math.random(),
   title: 'Test Bookmark',
   url: 'https://example.com',
@@ -279,7 +281,9 @@ export const createMockBookmark = (overrides: Partial<chrome.bookmarks.BookmarkT
   ...overrides
 })
 
-export const createMockFolder = (overrides: Partial<chrome.bookmarks.BookmarkTreeNode> = {}): chrome.bookmarks.BookmarkTreeNode => ({
+export const createMockFolder = (
+  overrides: Partial<chrome.bookmarks.BookmarkTreeNode> = {}
+): chrome.bookmarks.BookmarkTreeNode => ({
   id: 'folder-id-' + Math.random(),
   title: 'Test Folder',
   dateAdded: Date.now(),

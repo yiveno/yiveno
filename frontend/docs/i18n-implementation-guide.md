@@ -16,12 +16,14 @@
 ### 已有基础
 
 ✅ **基础设施**
+
 - Chrome i18n API 封装 (`i18n-service.ts`)
 - 7种语言目录结构 (zh_CN, zh_TW, en, ja, ko, de, es)
 - Vue 指令支持
 - 时间格式化已国际化
 
 ✅ **支持语言**
+
 - 🇨🇳 简体中文 (zh_CN)
 - 🇹🇼 繁体中文 (zh_TW)
 - 🇺🇸 英文 (en)
@@ -33,16 +35,19 @@
 ### 存在问题
 
 ❌ **覆盖率低**
+
 - 现有翻译键: ~30条
 - 估计需要: ~500-800条
 - 覆盖率: <5%
 
 ❌ **代码质量**
+
 - 大量硬编码中文文案
 - 缺少统一的文案管理
 - 没有翻译验证机制
 
 ❌ **开发体验**
+
 - 缺少自动化工具
 - 没有翻译提取流程
 - 缺少开发者文档
@@ -68,10 +73,12 @@
 **步骤**:
 
 1. **自动提取** (1天)
+
    ```bash
    cd frontend
    bun run i18n:extract
    ```
+
    - 扫描所有 `.vue` 和 `.ts` 文件
    - 提取硬编码中文文案
    - 生成翻译键建议
@@ -178,14 +185,14 @@ bun run i18n:coverage
 
 ```typescript
 // ✅ 好的命名
-'sidebar.bookmarks.title'          // 侧边栏 - 书签 - 标题
-'settings.general.save_button'     // 设置 - 通用 - 保存按钮
-'error.network.timeout'            // 错误 - 网络 - 超时
+'sidebar.bookmarks.title' // 侧边栏 - 书签 - 标题
+'settings.general.save_button' // 设置 - 通用 - 保存按钮
+'error.network.timeout' // 错误 - 网络 - 超时
 
 // ❌ 不好的命名
-'text1'                            // 太模糊
-'sidebar_bookmarks_title_text'     // 太冗长
-'保存'                             // 使用中文
+'text1' // 太模糊
+'sidebar_bookmarks_title_text' // 太冗长
+'保存' // 使用中文
 ```
 
 **分类前缀**:
@@ -215,10 +222,10 @@ const { t } = useI18n()
     <!-- ✅ 推荐：使用 t() 函数 -->
     <h1>{{ t('sidebar.bookmarks.title') }}</h1>
     <button>{{ t('common.save') }}</button>
-    
+
     <!-- ✅ 带占位符 -->
     <p>{{ t('bookmark.count', String(count)) }}</p>
-    
+
     <!-- ❌ 禁止：硬编码 -->
     <h1>书签管理</h1>
   </div>
@@ -271,12 +278,12 @@ const statusMap = {
     "message": "翻译文本",
     "description": "上下文说明（可选）"
   },
-  
+
   "bookmark_count": {
     "message": "$1 个书签",
     "description": "显示书签数量，$1 是数字占位符"
   },
-  
+
   "welcome_user": {
     "message": "欢迎，$1！",
     "description": "欢迎消息，$1 是用户名"
@@ -291,7 +298,7 @@ const statusMap = {
   "single_placeholder": {
     "message": "你有 $1 条消息"
   },
-  
+
   "multiple_placeholders": {
     "message": "$1 在 $2 创建了 $3"
   }
@@ -431,6 +438,7 @@ bun run i18n:coverage
 **步骤**:
 
 1. **准备中文文案**
+
    ```json
    {
      "sidebar.bookmarks.title": { "message": "书签管理" },
@@ -440,8 +448,9 @@ bun run i18n:coverage
    ```
 
 2. **使用 AI 批量翻译**
-   
+
    **Prompt 模板**:
+
    ```
    请将以下 Chrome Extension 的中文翻译为 [目标语言]。
    保持 JSON 格式，只翻译 "message" 字段的值。
@@ -449,7 +458,7 @@ bun run i18n:coverage
    - 保持占位符 $1, $2 等不变
    - 使用自然、地道的表达
    - 保持专业术语一致性
-   
+
    [粘贴 JSON 内容]
    ```
 
@@ -513,6 +522,7 @@ jobs:
 ### 测试方法
 
 1. **切换语言测试**
+
    ```typescript
    // 在浏览器控制台
    chrome.i18n.getUILanguage() // 查看当前语言
@@ -553,16 +563,19 @@ jobs:
 ## 🎯 里程碑
 
 ### Sprint 1 (Week 1-2)
+
 - [x] 完善基础设施
 - [ ] 提取所有文案
 - [ ] 完成中英文翻译
 
 ### Sprint 2 (Week 3-4)
+
 - [ ] 完成其他语言翻译
 - [ ] 质量保证
 - [ ] 文档完善
 
 ### Sprint 3 (Week 5+)
+
 - [ ] 用户测试
 - [ ] 反馈收集
 - [ ] 持续优化

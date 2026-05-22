@@ -1,6 +1,6 @@
 /**
  * Material Web Components 类型定义
- * 
+ *
  * 这些类型定义允许 TypeScript 识别 Material Web Components 的导入
  */
 

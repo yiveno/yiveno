@@ -86,15 +86,15 @@ export const useTraitFilterStore = defineStore('traitFilter', () => {
     filterResults: new Map(),
     isDetecting: initialIsDetecting.value
   })
-  
+
   // ✅ 使用 TraitDataStore 获取统计数据（单一数据源）
   const traitDataStore = useTraitDataStore()
-  
+
   // 确保 TraitDataStore 已初始化
   if (!traitDataStore.isInitialized) {
     traitDataStore.initialize()
   }
-  
+
   // 统计数据从 TraitDataStore 获取
   const statistics = computed(() => traitDataStore.statistics)
 
@@ -102,7 +102,7 @@ export const useTraitFilterStore = defineStore('traitFilter', () => {
   const activeFilters = computed(() => state.value.activeFilters)
   const hasActiveFilter = computed(() => state.value.activeFilters.length > 0)
   const filterResultIds = computed(() => Array.from(state.value.filterResults.keys()))
-  
+
   // ✅ 导出统计数据（从 TraitDataStore 获取）
   const statisticsExport = computed(() => statistics.value)
 
@@ -111,10 +111,7 @@ export const useTraitFilterStore = defineStore('traitFilter', () => {
    */
   async function saveActiveFilters(): Promise<void> {
     try {
-      await chromeStorage.setLocal(
-        LOCAL_KEYS.ACTIVE_FILTERS,
-        state.value.activeFilters
-      )
+      await chromeStorage.setLocal(LOCAL_KEYS.ACTIVE_FILTERS, state.value.activeFilters)
       logger.debug(
         'TraitFilterStore',
         `activeFilters 已保存: ${state.value.activeFilters.join(', ')}`
@@ -187,16 +184,16 @@ export const useTraitFilterStore = defineStore('traitFilter', () => {
 
     try {
       // 使用 bookmarkTraitQueryService 查询
-      const result = await bookmarkTraitQueryService.queryByTraits(
-        state.value.activeFilters,
-        { includeFullRecord: true }
-      )
+      const result = await bookmarkTraitQueryService.queryByTraits(state.value.activeFilters, {
+        includeFullRecord: true
+      })
 
       // 更新筛选结果
       const newResults = new Map<string, TraitTag[]>()
       result.records?.forEach(record => {
         newResults.set(record.id, (record.traitTags || []) as TraitTag[])
       })
+      // eslint-disable-next-line require-atomic-updates -- state.value.filterResults 在 await 期间不会被其他代码修改
       state.value.filterResults = newResults
 
       logger.debug('TraitFilterStore', '筛选完成', {
@@ -210,7 +207,7 @@ export const useTraitFilterStore = defineStore('traitFilter', () => {
 
   /**
    * 启动特征检测
-   * 
+   *
    * ✅ 使用新的特征检测服务（bookmark-trait-service）
    * ✅ 特征检测在后台异步执行，不阻塞 UI
    * ✅ 统计数据由 TraitDataStore 自动刷新
@@ -236,7 +233,7 @@ export const useTraitFilterStore = defineStore('traitFilter', () => {
 
   /**
    * 取消正在进行的特征检测
-   * 
+   *
    * ✅ 新的特征检测服务使用调度队列，无需手动取消
    */
   function cancelTraitDetection(): void {
@@ -251,23 +248,23 @@ export const useTraitFilterStore = defineStore('traitFilter', () => {
     if (state.value.activeFilters.length > 0) {
       await applyFilters()
     }
-    
+
     // ✅ 设置自动刷新监听器
     setupAutoRefreshListener()
   }
-  
+
   /**
    * 设置自动刷新监听器
-   * 
+   *
    * 监听特征更新消息，自动刷新筛选结果
-   * 
+   *
    * 注意：统计数据由 TraitDataStore 自动刷新，无需在此处理
    */
   function setupAutoRefreshListener(): void {
-    chrome.runtime.onMessage.addListener((message) => {
+    chrome.runtime.onMessage.addListener(message => {
       if (message.type === 'acuity-bookmarks-trait-updated') {
         logger.info('TraitFilterStore', '🏷️ 收到特征更新消息，重新应用筛选')
-        
+
         // 如果有激活的筛选器，重新应用
         if (state.value.activeFilters.length > 0) {
           applyFilters().catch(err => {
@@ -276,7 +273,7 @@ export const useTraitFilterStore = defineStore('traitFilter', () => {
         }
       }
     })
-    
+
     logger.info('TraitFilterStore', '✅ 自动刷新监听器已设置')
   }
 

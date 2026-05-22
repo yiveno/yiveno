@@ -91,7 +91,7 @@ class PosterServiceImpl implements PosterService {
       const config = this.getConfig(options.theme)
 
       // 5. 使用 requestAnimationFrame 优化渲染
-      await new Promise<void>((resolve) => {
+      await new Promise<void>(resolve => {
         requestAnimationFrame(async () => {
           // 6. 绘制背景
           this.drawBackground(ctx, config)
@@ -174,7 +174,7 @@ class PosterServiceImpl implements PosterService {
     try {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { materialColors } = require('@acuity-bookmarks/design-tokens/colors')
-      
+
       if (theme === 'dark') {
         return {
           width: this.POSTER_WIDTH,
@@ -255,11 +255,7 @@ class PosterServiceImpl implements PosterService {
   /**
    * 绘制标题
    */
-  private drawTitle(
-    ctx: CanvasRenderingContext2D,
-    title: string,
-    config: PosterConfig
-  ): void {
+  private drawTitle(ctx: CanvasRenderingContext2D, title: string, config: PosterConfig): void {
     ctx.save()
 
     // 标题文字
@@ -376,11 +372,7 @@ class PosterServiceImpl implements PosterService {
   /**
    * 截断文本
    */
-  private truncateText(
-    ctx: CanvasRenderingContext2D,
-    text: string,
-    maxWidth: number
-  ): string {
+  private truncateText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string {
     const metrics = ctx.measureText(text)
     if (metrics.width <= maxWidth) {
       return text
@@ -455,10 +447,7 @@ class PosterServiceImpl implements PosterService {
   /**
    * 绘制二维码
    */
-  private async drawQRCode(
-    ctx: CanvasRenderingContext2D,
-    qrDataUrl: string
-  ): Promise<void> {
+  private async drawQRCode(ctx: CanvasRenderingContext2D, qrDataUrl: string): Promise<void> {
     const img = new Image()
     img.src = qrDataUrl
 

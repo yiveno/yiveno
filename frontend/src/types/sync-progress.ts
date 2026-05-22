@@ -185,10 +185,7 @@ export function formatTime(ms: number): string {
  * @param checkPhase - 要检查的阶段
  * @returns 是否已完成
  */
-export function isPhaseCompleted(
-  currentPhase: SyncPhase,
-  checkPhase: SyncPhase
-): boolean {
+export function isPhaseCompleted(currentPhase: SyncPhase, checkPhase: SyncPhase): boolean {
   const currentIndex = SYNC_PHASES.findIndex(p => p.key === currentPhase)
   const checkIndex = SYNC_PHASES.findIndex(p => p.key === checkPhase)
 

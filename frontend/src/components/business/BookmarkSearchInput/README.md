@@ -35,6 +35,7 @@
 ```
 
 **特点：**
+
 - 初始显示为圆形搜索图标
 - 点击展开为搜索框
 - 搜索结果显示在下拉列表中（最多 5 条）
@@ -60,6 +61,7 @@
 ```
 
 **特点：**
+
 - 完整搜索框，始终展开
 - 快捷筛选标签显示在搜索框旁边
 - 搜索结果通过事件传递给父组件
@@ -80,6 +82,7 @@
 ```
 
 **特点：**
+
 - 紧凑搜索框，始终显示
 - 不显示快捷筛选标签
 - 搜索结果显示在下拉列表中
@@ -90,47 +93,47 @@
 
 ### 交互模式
 
-| Prop | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `displayMode` | `'icon' \| 'compact' \| 'full' \| 'inline'` | `'icon'` | 交互展示模式 |
-| `resultDisplay` | `'dropdown' \| 'navigate' \| 'emit'` | `'dropdown'` | 搜索结果展示方式 |
+| Prop            | 类型                                        | 默认值       | 说明             |
+| --------------- | ------------------------------------------- | ------------ | ---------------- |
+| `displayMode`   | `'icon' \| 'compact' \| 'full' \| 'inline'` | `'icon'`     | 交互展示模式     |
+| `resultDisplay` | `'dropdown' \| 'navigate' \| 'emit'`        | `'dropdown'` | 搜索结果展示方式 |
 
 ### 搜索配置
 
-| Prop | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `mode` | `'indexeddb' \| 'memory'` | `'indexeddb'` | 搜索模式 |
-| `strategy` | `'auto' \| 'fuse' \| 'semantic' \| 'hybrid'` | `'auto'` | 搜索策略 |
-| `limit` | `number` | `100` | 搜索结果数量限制 |
-| `debounce` | `number` | `300` | 防抖延迟（毫秒） |
+| Prop       | 类型                                         | 默认值        | 说明             |
+| ---------- | -------------------------------------------- | ------------- | ---------------- |
+| `mode`     | `'indexeddb' \| 'memory'`                    | `'indexeddb'` | 搜索模式         |
+| `strategy` | `'auto' \| 'fuse' \| 'semantic' \| 'hybrid'` | `'auto'`      | 搜索策略         |
+| `limit`    | `number`                                     | `100`         | 搜索结果数量限制 |
+| `debounce` | `number`                                     | `300`         | 防抖延迟（毫秒） |
 
 ### 结果展示
 
-| Prop | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `showResultCount` | `boolean` | `true` | 是否显示结果数量 |
-| `maxDropdownResults` | `number` | `5` | 下拉列表最多显示几条 |
-| `showStats` | `boolean` | `true` | 是否显示统计信息 |
+| Prop                 | 类型      | 默认值 | 说明                 |
+| -------------------- | --------- | ------ | -------------------- |
+| `showResultCount`    | `boolean` | `true` | 是否显示结果数量     |
+| `maxDropdownResults` | `number`  | `5`    | 下拉列表最多显示几条 |
+| `showStats`          | `boolean` | `true` | 是否显示统计信息     |
 
 ### 快捷筛选
 
-| Prop | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `quickFilters` | `QuickFilterConfig` | - | 快捷筛选配置 |
+| Prop           | 类型                | 默认值 | 说明         |
+| -------------- | ------------------- | ------ | ------------ |
+| `quickFilters` | `QuickFilterConfig` | -      | 快捷筛选配置 |
 
 ```typescript
 interface QuickFilterConfig {
-  enabled: boolean                    // 是否启用
-  position: 'inline' | 'dropdown'     // 显示位置
-  filters: QuickFilter[]              // 筛选器列表
+  enabled: boolean // 是否启用
+  position: 'inline' | 'dropdown' // 显示位置
+  filters: QuickFilter[] // 筛选器列表
 }
 
 interface QuickFilter {
-  id: string                          // 唯一标识
-  label: string                       // 显示标签
-  icon?: string                       // 图标名称
-  count?: number                      // 结果数量
-  filter: (node: BookmarkNode) => boolean  // 筛选逻辑
+  id: string // 唯一标识
+  label: string // 显示标签
+  icon?: string // 图标名称
+  count?: number // 结果数量
+  filter: (node: BookmarkNode) => boolean // 筛选逻辑
 }
 ```
 
@@ -138,25 +141,25 @@ interface QuickFilter {
 
 ## Events
 
-| 事件名 | 参数 | 说明 |
-|--------|------|------|
-| `search-complete` | `results: BookmarkNode[]` | 搜索完成 |
-| `search-start` | `query: string` | 搜索开始 |
-| `search-clear` | - | 搜索清空 |
-| `search-error` | `error: Error` | 搜索错误 |
-| `result-click` | `bookmark: BookmarkNode` | 结果项点击（dropdown 模式） |
-| `view-all` | `results: BookmarkNode[]` | 查看全部结果（dropdown 模式） |
+| 事件名            | 参数                      | 说明                          |
+| ----------------- | ------------------------- | ----------------------------- |
+| `search-complete` | `results: BookmarkNode[]` | 搜索完成                      |
+| `search-start`    | `query: string`           | 搜索开始                      |
+| `search-clear`    | -                         | 搜索清空                      |
+| `search-error`    | `error: Error`            | 搜索错误                      |
+| `result-click`    | `bookmark: BookmarkNode`  | 结果项点击（dropdown 模式）   |
+| `view-all`        | `results: BookmarkNode[]` | 查看全部结果（dropdown 模式） |
 
 ---
 
 ## 键盘快捷键
 
-| 快捷键 | 功能 |
-|--------|------|
-| `↓` | 向下导航（下拉列表） |
-| `↑` | 向上导航（下拉列表） |
-| `Enter` | 打开选中的书签 |
-| `Esc` | 清空输入 / 关闭下拉列表 / 收起搜索框 |
+| 快捷键  | 功能                                 |
+| ------- | ------------------------------------ |
+| `↓`     | 向下导航（下拉列表）                 |
+| `↑`     | 向上导航（下拉列表）                 |
+| `Enter` | 打开选中的书签                       |
+| `Esc`   | 清空输入 / 关闭下拉列表 / 收起搜索框 |
 
 ---
 
@@ -187,6 +190,7 @@ interface QuickFilter {
 ### 从旧版本迁移
 
 **旧版本：**
+
 ```vue
 <BookmarkSearchInput
   :enable-trait-filters="true"
@@ -197,6 +201,7 @@ interface QuickFilter {
 ```
 
 **新版本：**
+
 ```vue
 <BookmarkSearchInput
   display-mode="icon"
@@ -219,35 +224,25 @@ interface QuickFilter {
 ### Q: 如何隐藏快捷筛选标签？
 
 ```vue
-<BookmarkSearchInput
-  :quick-filters="{ enabled: false }"
-/>
+<BookmarkSearchInput :quick-filters="{ enabled: false }" />
 ```
 
 ### Q: 如何自定义下拉列表显示数量？
 
 ```vue
-<BookmarkSearchInput
-  :max-dropdown-results="10"
-/>
+<BookmarkSearchInput :max-dropdown-results="10" />
 ```
 
 ### Q: 如何在搜索后跳转到其他页面？
 
 ```vue
-<BookmarkSearchInput
-  result-display="navigate"
-  @search-complete="openManagementPage"
-/>
+<BookmarkSearchInput result-display="navigate" @search-complete="openManagementPage" />
 ```
 
 或者使用 `view-all` 事件：
 
 ```vue
-<BookmarkSearchInput
-  result-display="dropdown"
-  @view-all="openManagementPage"
-/>
+<BookmarkSearchInput result-display="dropdown" @view-all="openManagementPage" />
 ```
 
 ---

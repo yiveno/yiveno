@@ -15,9 +15,7 @@ import type { BookmarkRecord } from '@/infrastructure/indexeddb/types'
 
 // 动态导入性能监控
 async function getPerformanceMonitor() {
-  const { getPerformanceMonitor: monitor } = await import(
-    '@/services/query-performance-monitor'
-  )
+  const { getPerformanceMonitor: monitor } = await import('@/services/query-performance-monitor')
   return monitor()
 }
 
@@ -247,10 +245,7 @@ export class SmartRecommendationEngine {
 
       // 获取候选书签
       const candidates = await this.getCandidateBookmarks(includeRecentOnly)
-      logger.info(
-        'SmartRecommendation',
-        `📚 获取到${candidates.length}个候选书签`
-      )
+      logger.info('SmartRecommendation', `📚 获取到${candidates.length}个候选书签`)
 
       // 🚀 轻量级爬虫增强书签数据 (智能全量爬取策略)
       // ⚠️ 已禁用自动爬取，避免内存泄漏和浏览器卡死
@@ -271,10 +266,7 @@ export class SmartRecommendationEngine {
         .filter(bookmark => {
           // URL去重：如果URL已存在，跳过
           if (uniqueUrls.has(bookmark.url)) {
-            logger.debug(
-              'SmartRecommendation',
-              `🔄 跳过重复URL: ${bookmark.url}`
-            )
+            logger.debug('SmartRecommendation', `🔄 跳过重复URL: ${bookmark.url}`)
             return false
           }
           uniqueUrls.add(bookmark.url)
@@ -283,10 +275,7 @@ export class SmartRecommendationEngine {
         .sort((a, b) => b.recommendationScore - a.recommendationScore)
 
       // 应用多样性过滤
-      const diverseRecommendations = this.applyDiversityFilter(
-        filteredBookmarks,
-        diversityFactor
-      )
+      const diverseRecommendations = this.applyDiversityFilter(filteredBookmarks, diversityFactor)
 
       // 限制结果数量
       const finalRecommendations = diverseRecommendations.slice(0, maxResults)
@@ -307,10 +296,7 @@ export class SmartRecommendationEngine {
           'SmartRecommendation',
           `评分: ${rec.recommendationScore.toFixed(1)} | 置信度: ${(rec.confidence * 100).toFixed(1)}%`
         )
-        logger.info(
-          'SmartRecommendation',
-          `类型: ${rec.recommendationType} | 域名: ${rec.domain}`
-        )
+        logger.info('SmartRecommendation', `类型: ${rec.recommendationType} | 域名: ${rec.domain}`)
         logger.info(
           'SmartRecommendation',
           `分维度分数: 频率${rec.frequencyScore.toFixed(1)} 最近${rec.timePatternScore.toFixed(1)} 上下文${rec.contextScore.toFixed(1)}`
@@ -344,8 +330,7 @@ export class SmartRecommendationEngine {
       currentDayOfWeek: now.getDay(),
       recentSearches: [],
       recentBookmarks: [],
-      userBehaviorPattern:
-        this.userBehaviorPattern || (await this.analyzeUserBehaviorPattern())
+      userBehaviorPattern: this.userBehaviorPattern || (await this.analyzeUserBehaviorPattern())
     }
 
     // ✅ 获取当前活动标签页信息
@@ -394,9 +379,7 @@ export class SmartRecommendationEngine {
    * 获取候选书签
    * ✅ 符合单向数据流：从 IndexedDB 读取
    */
-  private async getCandidateBookmarks(
-    recentOnly: boolean = false
-  ): Promise<BookmarkRecord[]> {
+  private async getCandidateBookmarks(recentOnly: boolean = false): Promise<BookmarkRecord[]> {
     try {
       // ✅ 确保 IndexedDB 已初始化
       await indexedDBManager.initialize()
@@ -413,20 +396,14 @@ export class SmartRecommendationEngine {
         candidates = candidates.filter(
           bookmark =>
             ((bookmark as BookmarkWithUsage).dateLastUsed &&
-              (bookmark as BookmarkWithUsage).dateLastUsed! >
-                recentThreshold) ||
+              (bookmark as BookmarkWithUsage).dateLastUsed! > recentThreshold) ||
             (bookmark.dateAdded && bookmark.dateAdded > recentThreshold)
         )
       }
 
       return candidates
     } catch (error) {
-      logger.error(
-        'Component',
-        'SmartRecommendation',
-        '❌ 获取候选书签失败',
-        error
-      )
+      logger.error('Component', 'SmartRecommendation', '❌ 获取候选书签失败', error)
       return []
     }
   }
@@ -538,8 +515,7 @@ export class SmartRecommendationEngine {
 
     // ✅ 改进2：基于书签添加时间的新鲜度
     if (bookmark.dateAdded) {
-      const daysSinceAdded =
-        (Date.now() - bookmark.dateAdded) / (1000 * 60 * 60 * 24)
+      const daysSinceAdded = (Date.now() - bookmark.dateAdded) / (1000 * 60 * 60 * 24)
       if (daysSinceAdded <= 7)
         score += 30 // 一周内添加
       else if (daysSinceAdded <= 30)
@@ -575,8 +551,7 @@ export class SmartRecommendationEngine {
     // ✅ 传统方式：基于Chrome API时间戳（如果可用）
     const bookmarkWithUsage = bookmark as BookmarkWithUsage
     if (bookmarkWithUsage.dateLastUsed && bookmark.dateAdded) {
-      const daysSinceUsed =
-        (Date.now() - bookmarkWithUsage.dateLastUsed) / (1000 * 60 * 60 * 24)
+      const daysSinceUsed = (Date.now() - bookmarkWithUsage.dateLastUsed) / (1000 * 60 * 60 * 24)
       if (daysSinceUsed <= 7) score += 20
       else if (daysSinceUsed <= 30) score += 10
     }
@@ -587,10 +562,7 @@ export class SmartRecommendationEngine {
   /**
    * 计算最近性分数
    */
-  private calculateRecencyScore(
-    bookmark: BookmarkRecord,
-    _context: RecommendationContext
-  ): number {
+  private calculateRecencyScore(bookmark: BookmarkRecord, _context: RecommendationContext): number {
     const bookmarkWithUsage = bookmark as BookmarkWithUsage
     const lastUsed = bookmarkWithUsage.dateLastUsed || bookmark.dateAdded
     if (!lastUsed) return 0
@@ -627,11 +599,7 @@ export class SmartRecommendationEngine {
       currentUrl,
       currentPageTitle
     )
-    const bookmarkPageType = this.detectPageType(
-      bookmarkDomain || '',
-      bookmarkUrl,
-      bookmarkTitle
-    )
+    const bookmarkPageType = this.detectPageType(bookmarkDomain || '', bookmarkUrl, bookmarkTitle)
 
     if (currentPageType && bookmarkPageType === currentPageType) {
       score += 50 // 同类型页面获得高分
@@ -646,10 +614,7 @@ export class SmartRecommendationEngine {
     }
 
     // 🎯 核心优化4：标题关键词匹配（当前页面标题 vs 书签标题）
-    const titleMatchScore = this.calculateTitleContentMatch(
-      currentPageTitle,
-      bookmarkTitle
-    )
+    const titleMatchScore = this.calculateTitleContentMatch(currentPageTitle, bookmarkTitle)
     if (titleMatchScore > 0) {
       score += titleMatchScore
       logger.debug('ContextScore', `🎯 标题内容匹配: ${titleMatchScore}`)
@@ -657,10 +622,7 @@ export class SmartRecommendationEngine {
 
     // 🎯 核心优化5：URL路径相似性（特别适用于同一网站的不同页面）
     if (_context.currentDomain && bookmarkDomain === _context.currentDomain) {
-      const pathSimilarity = this.calculatePathSimilarity(
-        currentUrl,
-        bookmarkUrl
-      )
+      const pathSimilarity = this.calculatePathSimilarity(currentUrl, bookmarkUrl)
       score += pathSimilarity
       if (pathSimilarity > 0) {
         logger.debug('ContextScore', `🎯 路径相似性: ${pathSimilarity}`)
@@ -698,20 +660,14 @@ export class SmartRecommendationEngine {
   /**
    * 检测页面类型 - ✅ 新增智能页面类型识别
    */
-  private detectPageType(
-    domain: string,
-    url: string,
-    title: string
-  ): string | null {
+  private detectPageType(domain: string, url: string, title: string): string | null {
     if (!domain) return null
 
     const content = `${domain} ${url} ${title}`.toLowerCase()
 
     // 视频娱乐类
     if (
-      ['youtube.com', 'bilibili.com', 'vimeo.com', 'twitch.tv'].includes(
-        domain
-      ) ||
+      ['youtube.com', 'bilibili.com', 'vimeo.com', 'twitch.tv'].includes(domain) ||
       content.includes('video') ||
       content.includes('watch') ||
       content.includes('播放') ||
@@ -723,12 +679,7 @@ export class SmartRecommendationEngine {
 
     // 音乐类
     if (
-      [
-        'spotify.com',
-        'music.apple.com',
-        'soundcloud.com',
-        'netease.com'
-      ].includes(domain) ||
+      ['spotify.com', 'music.apple.com', 'soundcloud.com', 'netease.com'].includes(domain) ||
       content.includes('music') ||
       content.includes('song') ||
       content.includes('音乐') ||
@@ -740,13 +691,9 @@ export class SmartRecommendationEngine {
 
     // 社交媒体类
     if (
-      [
-        'twitter.com',
-        'facebook.com',
-        'instagram.com',
-        'linkedin.com',
-        'weibo.com'
-      ].includes(domain) ||
+      ['twitter.com', 'facebook.com', 'instagram.com', 'linkedin.com', 'weibo.com'].includes(
+        domain
+      ) ||
       content.includes('social') ||
       content.includes('profile') ||
       content.includes('follow')
@@ -756,13 +703,9 @@ export class SmartRecommendationEngine {
 
     // 学习教育类
     if (
-      [
-        'coursera.org',
-        'udemy.com',
-        'edx.org',
-        'khan.academy.org',
-        'duolingo.com'
-      ].includes(domain) ||
+      ['coursera.org', 'udemy.com', 'edx.org', 'khan.academy.org', 'duolingo.com'].includes(
+        domain
+      ) ||
       content.includes('course') ||
       content.includes('learn') ||
       content.includes('education') ||
@@ -775,13 +718,9 @@ export class SmartRecommendationEngine {
 
     // 技术开发类
     if (
-      [
-        'github.com',
-        'stackoverflow.com',
-        'developer.mozilla.org',
-        'docs.',
-        'api.'
-      ].some(d => domain.includes(d)) ||
+      ['github.com', 'stackoverflow.com', 'developer.mozilla.org', 'docs.', 'api.'].some(d =>
+        domain.includes(d)
+      ) ||
       content.includes('docs') ||
       content.includes('api') ||
       content.includes('developer') ||
@@ -793,9 +732,7 @@ export class SmartRecommendationEngine {
 
     // 新闻资讯类
     if (
-      ['news.', 'bbc.com', 'cnn.com', 'reuters.com', 'xinhua.net'].some(d =>
-        domain.includes(d)
-      ) ||
+      ['news.', 'bbc.com', 'cnn.com', 'reuters.com', 'xinhua.net'].some(d => domain.includes(d)) ||
       content.includes('news') ||
       content.includes('article') ||
       content.includes('新闻') ||
@@ -806,9 +743,7 @@ export class SmartRecommendationEngine {
 
     // 购物类
     if (
-      ['amazon.com', 'taobao.com', 'jd.com', 'ebay.com', 'shop'].some(d =>
-        domain.includes(d)
-      ) ||
+      ['amazon.com', 'taobao.com', 'jd.com', 'ebay.com', 'shop'].some(d => domain.includes(d)) ||
       content.includes('shop') ||
       content.includes('buy') ||
       content.includes('product') ||
@@ -913,10 +848,7 @@ export class SmartRecommendationEngine {
   /**
    * 计算标题内容匹配度 - ✅ 新增基于内容的智能匹配
    */
-  private calculateTitleContentMatch(
-    currentTitle: string,
-    bookmarkTitle: string
-  ): number {
+  private calculateTitleContentMatch(currentTitle: string, bookmarkTitle: string): number {
     if (!currentTitle || !bookmarkTitle) return 0
 
     const currentWords = currentTitle
@@ -937,10 +869,7 @@ export class SmartRecommendationEngine {
           matchScore += 20
         }
         // 包含匹配
-        else if (
-          currentWord.includes(bookmarkWord) ||
-          bookmarkWord.includes(currentWord)
-        ) {
+        else if (currentWord.includes(bookmarkWord) || bookmarkWord.includes(currentWord)) {
           matchScore += 10
         }
       }
@@ -952,10 +881,7 @@ export class SmartRecommendationEngine {
   /**
    * 计算URL路径相似性 - ✅ 新增同域名下的路径相似度
    */
-  private calculatePathSimilarity(
-    currentUrl: string,
-    bookmarkUrl: string
-  ): number {
+  private calculatePathSimilarity(currentUrl: string, bookmarkUrl: string): number {
     try {
       const currentPath = new URL(currentUrl).pathname
       const bookmarkPath = new URL(bookmarkUrl).pathname
@@ -966,24 +892,15 @@ export class SmartRecommendationEngine {
       const bookmarkSegments = bookmarkPath.split('/').filter(s => s)
 
       let matchingSegments = 0
-      const maxSegments = Math.max(
-        currentSegments.length,
-        bookmarkSegments.length
-      )
+      const maxSegments = Math.max(currentSegments.length, bookmarkSegments.length)
 
-      for (
-        let i = 0;
-        i < Math.min(currentSegments.length, bookmarkSegments.length);
-        i++
-      ) {
+      for (let i = 0; i < Math.min(currentSegments.length, bookmarkSegments.length); i++) {
         if (currentSegments[i] === bookmarkSegments[i]) {
           matchingSegments++
         }
       }
 
-      return matchingSegments > 0
-        ? Math.floor((matchingSegments / maxSegments) * 20)
-        : 0
+      return matchingSegments > 0 ? Math.floor((matchingSegments / maxSegments) * 20) : 0
     } catch {
       return 0
     }
@@ -1032,17 +949,13 @@ export class SmartRecommendationEngine {
     }
 
     // 基于活跃日期的分数
-    if (
-      context.userBehaviorPattern.activeDays.includes(context.currentDayOfWeek)
-    ) {
+    if (context.userBehaviorPattern.activeDays.includes(context.currentDayOfWeek)) {
       score += 30
     }
 
     // 季节性模式（简化版）
     const month = new Date().getMonth()
-    const bookmarkMonth = bookmark.dateAdded
-      ? new Date(bookmark.dateAdded).getMonth()
-      : month
+    const bookmarkMonth = bookmark.dateAdded ? new Date(bookmark.dateAdded).getMonth() : month
     if (Math.abs(month - bookmarkMonth) <= 1) {
       score += 30 // 相近月份
     }
@@ -1131,10 +1044,7 @@ export class SmartRecommendationEngine {
   /**
    * 计算置信度
    */
-  private calculateConfidence(
-    score: number,
-    reasons: RecommendationReason[]
-  ): number {
+  private calculateConfidence(score: number, reasons: RecommendationReason[]): number {
     // 基础置信度基于分数
     let confidence = Math.min(1, score / 100)
 
@@ -1173,9 +1083,7 @@ export class SmartRecommendationEngine {
 
       // 域名多样性检查
       if (recommendation.domain && usedDomains.has(recommendation.domain)) {
-        const domainCount = Array.from(usedDomains).filter(
-          d => d === recommendation.domain
-        ).length
+        const domainCount = Array.from(usedDomains).filter(d => d === recommendation.domain).length
         if (domainCount >= Math.ceil(recommendations.length * 0.3)) {
           shouldInclude = false
         }
@@ -1196,10 +1104,7 @@ export class SmartRecommendationEngine {
       }
 
       // 限制结果数量
-      if (
-        diverseResults.length >=
-        recommendations.length * (1 - diversityFactor)
-      ) {
+      if (diverseResults.length >= recommendations.length * (1 - diversityFactor)) {
         break
       }
     }
@@ -1229,8 +1134,7 @@ export class SmartRecommendationEngine {
       const domainPreferences = this.analyzeDomainPreferences(bookmarksWithUrls)
 
       // 分析内容偏好
-      const contentPreferences =
-        this.analyzeContentPreferences(bookmarksWithUrls)
+      const contentPreferences = this.analyzeContentPreferences(bookmarksWithUrls)
 
       const pattern: UserBehaviorPattern = {
         ...timePattern,
@@ -1250,12 +1154,7 @@ export class SmartRecommendationEngine {
 
       return pattern
     } catch (error) {
-      logger.error(
-        'Component',
-        'SmartRecommendation',
-        '❌ 行为模式分析失败',
-        error
-      )
+      logger.error('Component', 'SmartRecommendation', '❌ 行为模式分析失败', error)
       return this.getDefaultBehaviorPattern()
     }
   }
@@ -1302,9 +1201,7 @@ export class SmartRecommendationEngine {
   /**
    * 分析域名偏好
    */
-  private analyzeDomainPreferences(
-    bookmarks: BookmarkRecord[]
-  ): DomainPreference[] {
+  private analyzeDomainPreferences(bookmarks: BookmarkRecord[]): DomainPreference[] {
     const domainStats = new Map<
       string,
       {
@@ -1329,10 +1226,7 @@ export class SmartRecommendationEngine {
         const bookmarkWithUsage = bookmark as BookmarkWithUsage
         if (bookmarkWithUsage.dateLastUsed) {
           existing.count += 1
-          existing.lastVisit = Math.max(
-            existing.lastVisit,
-            bookmarkWithUsage.dateLastUsed
-          )
+          existing.lastVisit = Math.max(existing.lastVisit, bookmarkWithUsage.dateLastUsed)
         }
 
         domainStats.set(domain, existing)
@@ -1428,10 +1322,8 @@ export class SmartRecommendationEngine {
     const bookmarkWithUsage = bookmark as BookmarkWithUsage
     if (!bookmarkWithUsage.dateLastUsed || !bookmark.dateAdded) return 1
 
-    const daysSinceAdded =
-      (Date.now() - bookmark.dateAdded) / (1000 * 60 * 60 * 24)
-    const daysSinceUsed =
-      (Date.now() - bookmarkWithUsage.dateLastUsed) / (1000 * 60 * 60 * 24)
+    const daysSinceAdded = (Date.now() - bookmark.dateAdded) / (1000 * 60 * 60 * 24)
+    const daysSinceUsed = (Date.now() - bookmarkWithUsage.dateLastUsed) / (1000 * 60 * 60 * 24)
 
     if (daysSinceUsed > 30) return 1 // 长时间未使用
     if (daysSinceUsed < 1) return Math.ceil(daysSinceAdded / 7) // 最近使用，估算每周使用
@@ -1443,8 +1335,7 @@ export class SmartRecommendationEngine {
     const bookmarkWithUsage = bookmark as BookmarkWithUsage
     if (!bookmarkWithUsage.dateLastUsed) return 0
 
-    const daysSinceUsed =
-      (Date.now() - bookmarkWithUsage.dateLastUsed) / (1000 * 60 * 60 * 24)
+    const daysSinceUsed = (Date.now() - bookmarkWithUsage.dateLastUsed) / (1000 * 60 * 60 * 24)
 
     if (daysSinceUsed > 7) return 0
     if (daysSinceUsed < 1) return 3 // 今天使用，假设多次
@@ -1457,9 +1348,7 @@ export class SmartRecommendationEngine {
     const bookmarkWithUsage = bookmark as BookmarkWithUsage
     if (!bookmark.dateAdded || !bookmarkWithUsage.dateLastUsed) return 0
 
-    const totalDays =
-      (bookmarkWithUsage.dateLastUsed - bookmark.dateAdded) /
-      (1000 * 60 * 60 * 24)
+    const totalDays = (bookmarkWithUsage.dateLastUsed - bookmark.dateAdded) / (1000 * 60 * 60 * 24)
     const estimatedVisits = this.estimateVisitCount(bookmark)
 
     return totalDays / Math.max(estimatedVisits, 1)
@@ -1469,9 +1358,7 @@ export class SmartRecommendationEngine {
    * 获取最近书签
    * ✅ 符合单向数据流：从 IndexedDB 读取
    */
-  private async getRecentBookmarks(
-    days: number = 7
-  ): Promise<BookmarkRecord[]> {
+  private async getRecentBookmarks(days: number = 7): Promise<BookmarkRecord[]> {
     const threshold = Date.now() - days * 24 * 60 * 60 * 1000
 
     // ✅ 确保 IndexedDB 已初始化
@@ -1545,12 +1432,7 @@ export class SmartRecommendationEngine {
       'jsp'
     ])
 
-    return (
-      word.length >= 3 &&
-      word.length <= 20 &&
-      !stopWords.has(word) &&
-      !/^\d+$/.test(word)
-    )
+    return word.length >= 3 && word.length <= 20 && !stopWords.has(word) && !/^\d+$/.test(word)
   }
 
   /**
@@ -1614,17 +1496,13 @@ export class SmartRecommendationEngine {
    * @param {number} duration 持续时间
    * @returns {void} 更新性能统计
    */
-  private updatePerformanceStats(
-    recommendations: SmartRecommendation[],
-    duration: number
-  ): void {
+  private updatePerformanceStats(recommendations: SmartRecommendation[], duration: number): void {
     this.performanceStats.totalRecommendations += recommendations.length
     this.performanceStats.performanceMetrics.generationTime = duration
 
     if (recommendations.length > 0) {
       this.performanceStats.averageConfidence =
-        recommendations.reduce((sum, r) => sum + r.confidence, 0) /
-        recommendations.length
+        recommendations.reduce((sum, r) => sum + r.confidence, 0) / recommendations.length
     }
 
     // 更新推荐类型统计
@@ -1700,14 +1578,8 @@ export class SmartRecommendationEngine {
             !bookmark.url.startsWith('chrome-extension://')
         )
 
-        logger.info(
-          'SmartEnhancer',
-          `🌟 启动智能全量爬取: ${validBookmarks.length}个书签`
-        )
-        logger.info(
-          'SmartEnhancer',
-          '🧠 策略: URL去重 → 优先级排序 → 分批处理 → 智能间隔'
-        )
+        logger.info('SmartEnhancer', `🌟 启动智能全量爬取: ${validBookmarks.length}个书签`)
+        logger.info('SmartEnhancer', '🧠 策略: URL去重 → 优先级排序 → 分批处理 → 智能间隔')
 
         // 🎯 Step 1: URL去重和分组 - 核心优化！
         const urlGrouping = this.groupBookmarksByUrl(validBookmarks)
@@ -1720,32 +1592,22 @@ export class SmartRecommendationEngine {
         // 📊 显示去重统计
         const duplicateCount = validBookmarks.length - uniqueUrls.length
         if (duplicateCount > 0) {
-          logger.info(
-            'SmartEnhancer',
-            `♻️ 发现${duplicateCount}个重复URL，将复用爬取结果`
-          )
+          logger.info('SmartEnhancer', `♻️ 发现${duplicateCount}个重复URL，将复用爬取结果`)
         }
 
         // 🎯 Step 2: 选择代表书签并按优先级排序
-        const representativeBookmarks =
-          this.selectRepresentativeBookmarks(urlGrouping)
-        const prioritizedBookmarks = this.prioritizeBookmarks(
-          representativeBookmarks
-        )
+        const representativeBookmarks = this.selectRepresentativeBookmarks(urlGrouping)
+        const prioritizedBookmarks = this.prioritizeBookmarks(representativeBookmarks)
 
         // 🔄 Step 3: 分批并发处理，使用全局爬虫限速配置
         const BATCH_SIZE = CRAWLER_CONFIG.BATCH_SIZE
         const BATCH_INTERVAL = CRAWLER_CONFIG.BATCH_INTERVAL_MS
-        const IDLE_DELAY = CRAWLER_CONFIG.USE_IDLE_SCHEDULING
-          ? CRAWLER_CONFIG.IDLE_DELAY_MS
-          : 0
+        const IDLE_DELAY = CRAWLER_CONFIG.USE_IDLE_SCHEDULING ? CRAWLER_CONFIG.IDLE_DELAY_MS : 0
 
         for (let i = 0; i < prioritizedBookmarks.length; i += BATCH_SIZE) {
           const batch = prioritizedBookmarks.slice(i, i + BATCH_SIZE)
           const batchNumber = Math.floor(i / BATCH_SIZE) + 1
-          const totalBatches = Math.ceil(
-            prioritizedBookmarks.length / BATCH_SIZE
-          )
+          const totalBatches = Math.ceil(prioritizedBookmarks.length / BATCH_SIZE)
 
           // 延迟执行每个批次
           setTimeout(
@@ -1773,10 +1635,7 @@ export class SmartRecommendationEngine {
                       if (!sameUrlBookmarks) {
                         return
                       }
-                      await this.propagateEnhancementToSameUrl(
-                        null,
-                        sameUrlBookmarks
-                      )
+                      await this.propagateEnhancementToSameUrl(null, sameUrlBookmarks)
                     } catch (error) {
                       logger.warn(
                         'SmartEnhancer',
@@ -1800,10 +1659,7 @@ export class SmartRecommendationEngine {
               // 如果是最后一批，显示完成统计
               if (batchNumber === totalBatches) {
                 logger.info('SmartEnhancer', '🏆 全量增强任务完成!')
-                logger.info(
-                  'SmartEnhancer',
-                  `♻️ URL复用节省了${duplicateCount}次网络请求`
-                )
+                logger.info('SmartEnhancer', `♻️ URL复用节省了${duplicateCount}次网络请求`)
               }
             },
             IDLE_DELAY + batchNumber * BATCH_INTERVAL
@@ -1818,9 +1674,7 @@ export class SmartRecommendationEngine {
   /**
    * 🔗 按URL分组书签 - 实现URL去重
    */
-  private groupBookmarksByUrl(
-    bookmarks: BookmarkRecord[]
-  ): Record<string, BookmarkRecord[]> {
+  private groupBookmarksByUrl(bookmarks: BookmarkRecord[]): Record<string, BookmarkRecord[]> {
     const urlGroups: Record<string, BookmarkRecord[]> = {}
 
     for (const bookmark of bookmarks) {
@@ -1897,10 +1751,7 @@ export class SmartRecommendationEngine {
   ): Promise<void> {
     try {
       if (bookmarksWithSameUrl.length > 1) {
-        logger.info(
-          'SmartEnhancer',
-          `♻️ 复用爬取结果到${bookmarksWithSameUrl.length}个重复书签`
-        )
+        logger.info('SmartEnhancer', `♻️ 复用爬取结果到${bookmarksWithSameUrl.length}个重复书签`)
       }
     } catch (error) {
       logger.error('Component', 'SmartEnhancer', '❌ 结果传播失败', error)

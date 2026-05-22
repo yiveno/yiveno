@@ -10,14 +10,7 @@
  */
 export function isBotSubmission(body: Record<string, unknown>): boolean {
   // 检查常见的蜜罐字段名
-  const honeypotFields = [
-    'website',
-    'url',
-    'homepage',
-    'phone',
-    'company',
-    'subject'
-  ]
+  const honeypotFields = ['website', 'url', 'homepage', 'phone', 'company', 'subject']
 
   for (const field of honeypotFields) {
     const value = body[field]

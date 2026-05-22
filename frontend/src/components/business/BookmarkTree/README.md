@@ -3,6 +3,7 @@
 ## 组件分类
 
 BookmarkTree 是**业务组件**（Business Component），包含：
+
 - 书签相关的业务逻辑
 - 数据处理算法
 - 项目专属功能
@@ -19,7 +20,7 @@ const { t } = useI18n()
 
 const tooltips = computed(() => ({
   addToFolder: t('tree_node_add_to_folder', node.title),
-  editFolder: t('tree_node_edit_folder'),
+  editFolder: t('tree_node_edit_folder')
   // ...
 }))
 </script>
@@ -63,10 +64,7 @@ const treeConfig = {
 </script>
 
 <template>
-  <BookmarkTree
-    :nodes="bookmarkNodes"
-    :config="treeConfig"
-  />
+  <BookmarkTree :nodes="bookmarkNodes" :config="treeConfig" />
 </template>
 ```
 

@@ -1,7 +1,7 @@
 /**
  * 分享服务 - 官网版本
  * 用于解码分享链接中的书签数据
- * 
+ *
  * 注意：必须与 frontend/src/application/share/share-service.ts 的编码方式保持一致
  */
 
@@ -51,19 +51,19 @@ export function decodeShareData(encoded: string): ShareData {
   try {
     // 1. LZ-String 解压缩（使用 decompressFromEncodedURIComponent，与 frontend 编码方式对应）
     const decompressed = LZString.decompressFromEncodedURIComponent(encoded)
-    
+
     if (!decompressed) {
       throw new Error('解压缩失败')
     }
-    
+
     // 2. JSON 解析
     const data = JSON.parse(decompressed) as ShareDataInternal
-    
+
     // 3. 数据验证
     if (!data.v || !Array.isArray(data.b)) {
       throw new Error('无效的分享数据格式')
     }
-    
+
     // 4. 转换为对外格式
     return {
       version: data.v,
@@ -91,13 +91,13 @@ export function getShareDataFromUrl(url?: string): ShareData | null {
     const searchParams = new URLSearchParams(
       url || (typeof window !== 'undefined' ? window.location.search : '')
     )
-    
+
     const encoded = searchParams.get('data')
-    
+
     if (!encoded) {
       return null
     }
-    
+
     return decodeShareData(encoded)
   } catch (error) {
     console.error('从 URL 获取分享数据失败:', error)

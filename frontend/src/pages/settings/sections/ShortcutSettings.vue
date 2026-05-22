@@ -14,8 +14,7 @@ const uiStore = useUIStore()
 /**
  * 全局命令快捷键工具集
  */
-const { shortcuts, loadShortcuts, startAutoRefresh, stopAutoRefresh } =
-  useCommandsShortcuts()
+const { shortcuts, loadShortcuts, startAutoRefresh, stopAutoRefresh } = useCommandsShortcuts()
 
 /**
  * 快捷键标签映射
@@ -52,9 +51,7 @@ function openChromeShortcutSettings(): void {
   try {
     chrome.tabs.create({ url: 'chrome://extensions/shortcuts' })
   } catch {
-    uiStore.showInfo(
-      t('settings_shortcut_chrome_url_hint')
-    )
+    uiStore.showInfo(t('settings_shortcut_chrome_url_hint'))
   }
 }
 
@@ -70,31 +67,28 @@ onUnmounted(() => {
 
 <template>
   <div class="shortcuts-container">
-      <!-- 快捷键列表 - Material Web List -->
-      <md-list v-if="shortcutItems.length > 0" class="shortcuts-list">
-        <md-list-item
-          v-for="item in shortcutItems"
-          :key="item.command"
-        >
-          <div slot="headline">{{ item.label }}</div>
-          <div slot="trailing-supporting-text" class="shortcut-keys">
-            <kbd v-if="item.keys" class="shortcut-kbd">{{ item.keys }}</kbd>
-            <span v-else class="shortcut-empty">{{ t('settings_shortcut_not_set') }}</span>
-          </div>
-        </md-list-item>
-      </md-list>
+    <!-- 快捷键列表 - Material Web List -->
+    <md-list v-if="shortcutItems.length > 0" class="shortcuts-list">
+      <md-list-item v-for="item in shortcutItems" :key="item.command">
+        <div slot="headline">{{ item.label }}</div>
+        <div slot="trailing-supporting-text" class="shortcut-keys">
+          <kbd v-if="item.keys" class="shortcut-kbd">{{ item.keys }}</kbd>
+          <span v-else class="shortcut-empty">{{ t('settings_shortcut_not_set') }}</span>
+        </div>
+      </md-list-item>
+    </md-list>
 
-      <!-- 未配置提示 -->
-      <div v-else class="shortcuts-empty">
-        <LucideIcon name="info" :size="24" />
-        <p>{{ t('settings_shortcut_empty') }}</p>
-      </div>
+    <!-- 未配置提示 -->
+    <div v-else class="shortcuts-empty">
+      <LucideIcon name="info" :size="24" />
+      <p>{{ t('settings_shortcut_empty') }}</p>
+    </div>
 
-      <!-- 操作按钮 -->
-      <div class="shortcuts-actions">
-        <md-filled-button @click="openChromeShortcutSettings">
-          {{ t('settings_shortcut_open_chrome') }}
-        </md-filled-button>
+    <!-- 操作按钮 -->
+    <div class="shortcuts-actions">
+      <md-filled-button @click="openChromeShortcutSettings">
+        {{ t('settings_shortcut_open_chrome') }}
+      </md-filled-button>
     </div>
   </div>
 </template>

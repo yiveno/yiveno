@@ -45,9 +45,7 @@ export interface MinimalTreeNode {
  * @param nodes - 最小树节点数组
  * @returns 标准化的 BookmarkNode 数组
  */
-export function listToBookmarkNodes<T extends MinimalTreeNode>(
-  nodes: T[]
-): BookmarkNode[] {
+export function listToBookmarkNodes<T extends MinimalTreeNode>(nodes: T[]): BookmarkNode[] {
   const mapNode = (n: MinimalTreeNode): BookmarkNode => {
     const node: BookmarkNode = {
       id: String(n.id),
@@ -65,17 +63,17 @@ export function listToBookmarkNodes<T extends MinimalTreeNode>(
     if (n.dateAdded !== undefined) {
       node.dateAdded = n.dateAdded
     }
-    
+
     if (typeof n.index === 'number') {
       node.index = n.index
     }
-    
+
     if (n.children?.length) {
       node.children = n.children.map(mapNode)
     } else if (!n.url) {
       node.children = []
     }
-    
+
     return node
   }
   return Array.isArray(nodes) ? nodes.map(mapNode) : []
@@ -89,9 +87,7 @@ export function listToBookmarkNodes<T extends MinimalTreeNode>(
  * @param nodes - Chrome 书签树节点数组
  * @returns 标准化的 BookmarkNode 数组
  */
-export function chromeToBookmarkNodes(
-  nodes: MinimalTreeNode[]
-): BookmarkNode[] {
+export function chromeToBookmarkNodes(nodes: MinimalTreeNode[]): BookmarkNode[] {
   return listToBookmarkNodes(nodes)
 }
 
@@ -103,9 +99,7 @@ export function chromeToBookmarkNodes(
  * @param nodes - 提案草稿节点数组
  * @returns 标准化的 BookmarkNode 数组
  */
-export function proposalsToBookmarkNodes(
-  nodes: MinimalTreeNode[]
-): BookmarkNode[] {
+export function proposalsToBookmarkNodes(nodes: MinimalTreeNode[]): BookmarkNode[] {
   return listToBookmarkNodes(nodes)
 }
 
@@ -117,9 +111,7 @@ export function proposalsToBookmarkNodes(
  * @param records - IndexedDB 书签记录数组
  * @returns 重建后的 BookmarkNode 树
  */
-export function recordsToBookmarkNodes(
-  records: BookmarkRecord[]
-): BookmarkNode[] {
+export function recordsToBookmarkNodes(records: BookmarkRecord[]): BookmarkNode[] {
   if (!Array.isArray(records) || records.length === 0) return []
 
   // 去重后构建节点映射
@@ -152,8 +144,7 @@ export function recordsToBookmarkNodes(
     if (parentId && nodeMap.has(parentId) && parentId !== '0') {
       const parent = nodeMap.get(parentId)!
       if (parent.children) {
-        if (!parent.children.some(c => String(c.id) === id))
-          parent.children.push(node)
+        if (!parent.children.some(c => String(c.id) === id)) parent.children.push(node)
       }
     } else {
       if (id !== '0' && !roots.some(r => r.id === id)) roots.push(node)

@@ -6,12 +6,12 @@
  * - 监听认证状态变化
  * - 提供登出功能
  * - 检测用户不活跃超时（30 天）
- * 
+ *
  * 同步机制：
  * - 插件和官网共享 localStorage 中的 Supabase session
  * - 通过 storage 事件实现跨标签页/跨环境自动同步
  * - 用户在官网登录后，插件会自动检测到 session 变化并同步状态
- * 
+ *
  * 安全策略：
  * - Access Token 过期时间：1 小时
  * - Refresh Token 过期时间：60 天（需在 Supabase Dashboard 配置）
@@ -19,11 +19,8 @@
  */
 
 import { ref, computed } from 'vue'
-import {
-  supabase,
-  isSupabaseConfigured
-} from '@/infrastructure/supabase/client'
-import type { User, Session, AuthError } from '@supabase/supabase-js'
+import { supabase, isSupabaseConfigured } from '@/infrastructure/supabase/client'
+import type { User, Session, AuthError } from '@/infrastructure/supabase/client'
 import { logger } from '@/infrastructure/logging/logger'
 import { chromeStorage } from '@/infrastructure/storage/chrome-storage'
 
@@ -63,21 +60,14 @@ export function useSupabaseAuth() {
     }
 
     try {
-      const lastActivity = await chromeStorage.getLocal<number>(
-        STORAGE_KEYS.LAST_ACTIVITY
-      )
+      const lastActivity = await chromeStorage.getLocal<number>(STORAGE_KEYS.LAST_ACTIVITY)
       const now = Date.now()
 
       if (lastActivity && now - lastActivity > INACTIVITY_TIMEOUT) {
-        logger.warn(
-          '[useSupabaseAuth] 🔒 用户超过 30 天未活跃，自动登出',
-          {
-            lastActivity: new Date(lastActivity).toISOString(),
-            daysSinceLastActivity: Math.floor(
-              (now - lastActivity) / (24 * 60 * 60 * 1000)
-            )
-          }
-        )
+        logger.warn('[useSupabaseAuth] 🔒 用户超过 30 天未活跃，自动登出', {
+          lastActivity: new Date(lastActivity).toISOString(),
+          daysSinceLastActivity: Math.floor((now - lastActivity) / (24 * 60 * 60 * 1000))
+        })
 
         await signOut()
         error.value = '您已超过 30 天未使用，为了安全已自动登出，请重新登录'
@@ -203,43 +193,39 @@ export function useSupabaseAuth() {
   /**
    * 监听认证状态变化
    */
-  let authStateSubscription: ReturnType<
-    typeof supabase.auth.onAuthStateChange
-  > | null = null
+  let authStateSubscription: ReturnType<typeof supabase.auth.onAuthStateChange> | null = null
 
   const setupAuthListener = () => {
     if (authStateSubscription) {
       return // 已设置，避免重复订阅
     }
 
-    authStateSubscription = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
-        logger.debug('[useSupabaseAuth] 认证状态变化:', event, {
-          hasSession: !!newSession,
-          userId: newSession?.user?.id
-        })
+    authStateSubscription = supabase.auth.onAuthStateChange(async (event, newSession) => {
+      logger.debug('[useSupabaseAuth] 认证状态变化:', event, {
+        hasSession: !!newSession,
+        userId: newSession?.user?.id
+      })
 
-        session.value = newSession
-        user.value = newSession?.user ?? null
+      session.value = newSession
+      user.value = newSession?.user ?? null
 
-        // 🔑 当用户登出或 session 失效时，清除本地存储
-        if (event === 'SIGNED_OUT' || !newSession) {
-          logger.debug('[useSupabaseAuth] 🧹 清除本地用户数据...')
-          try {
-            await chromeStorage.removeLocal('current_login_provider')
-            await chromeStorage.removeLocal(STORAGE_KEYS.LAST_ACTIVITY)
-            logger.debug('[useSupabaseAuth] ✅ 已清除本地用户数据')
-          } catch (err) {
-            logger.error('[useSupabaseAuth] ❌ 清除本地数据失败:', err)
-          }
-        }
-
-        // 🔒 当用户登录或 session 刷新时，更新活跃时间
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          await updateActivity()
+      // 🔑 当用户登出或 session 失效时，清除本地存储
+      if (event === 'SIGNED_OUT' || !newSession) {
+        logger.debug('[useSupabaseAuth] 🧹 清除本地用户数据...')
+        try {
+          await chromeStorage.removeLocal('current_login_provider')
+          await chromeStorage.removeLocal(STORAGE_KEYS.LAST_ACTIVITY)
+          logger.debug('[useSupabaseAuth] ✅ 已清除本地用户数据')
+        } catch (err) {
+          logger.error('[useSupabaseAuth] ❌ 清除本地数据失败:', err)
         }
       }
-    )
+
+      // 🔒 当用户登录或 session 刷新时，更新活跃时间
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        await updateActivity()
+      }
+    })
   }
 
   /**
@@ -264,16 +250,16 @@ export function useSupabaseAuth() {
           hasNewValue: !!change.newValue,
           isDeleted: change.newValue === undefined || change.newValue === null
         })
-        
+
         // ✅ 如果 session 被删除（登出），立即清除本地状态
         if (change.newValue === undefined || change.newValue === null) {
           console.log('[useSupabaseAuth] 🧹 Session 已删除，清除本地状态...')
           logger.info('[useSupabaseAuth] 🧹 Session 已删除（用户登出），清除本地状态')
-          
+
           // 立即清除状态
           user.value = null
           session.value = null
-          
+
           // 清除本地存储
           void chromeStorage.removeLocal('current_login_provider')
           void chromeStorage.removeLocal(STORAGE_KEYS.LAST_ACTIVITY)

@@ -59,10 +59,7 @@ export function useGlobalSyncProgress() {
    * 是否处于错误状态
    */
   const isError = computed(() => {
-    return (
-      globalProgress.value.phase === 'failed' ||
-      globalProgress.value.phase === 'timeout'
-    )
+    return globalProgress.value.phase === 'failed' || globalProgress.value.phase === 'timeout'
   })
 
   /**
@@ -118,10 +115,7 @@ export function useGlobalSyncProgress() {
    * 用户确认后才会关闭，因为这可能导致数据不完整
    */
   function forceClose() {
-    logger.warn(
-      'GlobalSyncProgress',
-      '用户强制关闭了同步进度条，数据可能不完整'
-    )
+    logger.warn('GlobalSyncProgress', '用户强制关闭了同步进度条，数据可能不完整')
     isVisible.value = false
   }
 

@@ -72,15 +72,12 @@ useSeoMeta({
             <div
               class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-6"
             >
-              <span
-                class="text-sm font-medium text-accent-400 tracking-wider uppercase"
+              <span class="text-sm font-medium text-accent-400 tracking-wider uppercase"
                 >AcuityBookmarks Team</span
               >
             </div>
 
-            <h1
-              class="text-4xl md:text-5xl font-bold tracking-tight mb-6 leading-tight"
-            >
+            <h1 class="text-4xl md:text-5xl font-bold tracking-tight mb-6 leading-tight">
               我们是一支相信<br />
               <span
                 class="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-accent-400"
@@ -96,11 +93,7 @@ useSeoMeta({
           </div>
 
           <div class="grid grid-cols-3 gap-4">
-            <Card
-              v-for="stat in stats"
-              :key="stat.label"
-              class="p-6 text-center border-white/10"
-            >
+            <Card v-for="stat in stats" :key="stat.label" class="p-6 text-center border-white/10">
               <div class="text-3xl font-bold text-primary-400 mb-2">
                 {{ stat.value }}
               </div>
@@ -117,19 +110,13 @@ useSeoMeta({
     <section class="py-24 bg-white/[0.02] border-y border-white/5">
       <div class="container mx-auto px-4">
         <div class="text-center mb-16 max-w-3xl mx-auto">
-          <div
-            class="text-primary-400 text-sm font-bold uppercase tracking-widest mb-2"
-          >
+          <div class="text-primary-400 text-sm font-bold uppercase tracking-widest mb-2">
             使命 & 价值观
           </div>
-          <h2 class="text-3xl md:text-4xl font-bold mb-4">
-            让书签成为知识网络的入口
-          </h2>
+          <h2 class="text-3xl md:text-4xl font-bold mb-4">让书签成为知识网络的入口</h2>
         </div>
 
-        <div
-          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto"
-        >
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
           <Card
             v-for="value in values"
             :key="value.title"
@@ -153,14 +140,10 @@ useSeoMeta({
     <section class="py-24">
       <div class="container mx-auto px-4 max-w-4xl">
         <div class="text-center mb-16">
-          <div
-            class="text-accent-400 text-sm font-bold uppercase tracking-widest mb-2"
-          >
+          <div class="text-accent-400 text-sm font-bold uppercase tracking-widest mb-2">
             路线图速览
           </div>
-          <h2 class="text-3xl md:text-4xl font-bold mb-4">
-            公开透明的版本计划
-          </h2>
+          <h2 class="text-3xl md:text-4xl font-bold mb-4">公开透明的版本计划</h2>
         </div>
 
         <div class="space-y-6 relative">
@@ -179,9 +162,7 @@ useSeoMeta({
                 <div
                   class="w-16 h-16 rounded-full bg-bg-surface border-2 border-primary-500/30 flex items-center justify-center relative z-10"
                 >
-                  <span class="text-sm font-bold text-primary-400">{{
-                    item.quarter
-                  }}</span>
+                  <span class="text-sm font-bold text-primary-400">{{ item.quarter }}</span>
                 </div>
               </div>
               <div class="flex-1">
@@ -206,37 +187,26 @@ useSeoMeta({
         <div
           class="relative rounded-3xl bg-gradient-to-br from-primary-900/20 to-accent-900/20 border border-white/10 p-12 md:p-16 overflow-hidden"
         >
-          <div
-            class="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-10"
-          ></div>
+          <div class="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-10"></div>
           <div class="relative z-10 max-w-3xl mx-auto text-center">
             <div
               class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-6"
             >
-              <span
-                class="text-sm font-medium text-accent-400 tracking-wider uppercase"
+              <span class="text-sm font-medium text-accent-400 tracking-wider uppercase"
                 >Join us</span
               >
             </div>
-            <h2 class="text-3xl md:text-4xl font-bold mb-6">
-              与我们一起定义下一代知识工具
-            </h2>
+            <h2 class="text-3xl md:text-4xl font-bold mb-6">与我们一起定义下一代知识工具</h2>
             <p class="text-content-muted mb-10 text-lg leading-relaxed">
-              正在寻找对浏览器扩展、AI、云边计算充满热情的合作者。欢迎在 GitHub
-              发起 Issue 或发送邮件介绍你的想法。
+              正在寻找对浏览器扩展、AI、云边计算充满热情的合作者。欢迎在 GitHub 发起 Issue
+              或发送邮件介绍你的想法。
             </p>
             <div class="flex flex-col sm:flex-row justify-center gap-4">
-              <Button
-                href="https://github.com/ChenQiWen/acuityBookmarks"
-                target="_blank"
-                :as="'a'"
-              >
+              <Button href="https://github.com/ChenQiWen/acuityBookmarks" target="_blank" :as="'a'">
                 <Github class="w-4 h-4 mr-2" />
                 访问 GitHub
               </Button>
-              <Button variant="secondary" to="/contact" :as="NuxtLink"
-                >联系团队</Button
-              >
+              <Button variant="secondary" to="/contact" :as="NuxtLink">联系团队</Button>
             </div>
           </div>
         </div>

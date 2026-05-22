@@ -53,7 +53,7 @@ const buttonAriaLabel = `在新标签页中打开 Chrome 网上应用店安装 A
         {{ buttonText }}
       </a>
     </div>
-    
+
     <div v-if="showSteps" class="install-steps">
       <div class="step">
         <span class="step-number">1</span>
@@ -167,7 +167,7 @@ const buttonAriaLabel = `在新标签页中打开 Chrome 网上应用店安装 A
   line-height: 1.5;
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .prompt-content {
     flex-direction: column;
     text-align: center;

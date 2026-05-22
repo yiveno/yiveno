@@ -4,7 +4,11 @@
  * 特征是对书签的客观描述，不带价值判断
  */
 
-export type { TraitTag, TraitMetadata, TraitMetadataSource } from '@/infrastructure/indexeddb/types/bookmark-record'
+export type {
+  TraitTag,
+  TraitMetadata,
+  TraitMetadataSource
+} from '@/infrastructure/indexeddb/types/bookmark-record'
 
 /**
  * 特征筛选选项

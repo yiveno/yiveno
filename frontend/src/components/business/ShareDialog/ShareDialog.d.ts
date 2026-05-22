@@ -23,7 +23,7 @@ export interface ShareDialogProps {
  */
 export interface ShareDialogEmits {
   /** 更新显示状态 */
-  'update:show': [value: boolean]
+  (e: 'update:show', value: boolean): void
   /** 分享完成 */
-  'share-complete': []
+  (e: 'shareComplete'): void
 }

@@ -37,9 +37,7 @@ export interface BookmarkRepository {
    * @param bookmarks - 书签节点数组
    * @returns 批量操作结果
    */
-  saveBatch(
-    bookmarks: BookmarkNode[]
-  ): Promise<Result<BatchResult<void>, Error>>
+  saveBatch(bookmarks: BookmarkNode[]): Promise<Result<BatchResult<void>, Error>>
 
   /**
    * 根据ID查找书签
@@ -158,9 +156,7 @@ export class IndexedDBBookmarkRepository implements BookmarkRepository {
         }
 
         request.onerror = () => {
-          resolve(
-            err(new Error(`Failed to save bookmark: ${request.error?.message}`))
-          )
+          resolve(err(new Error(`Failed to save bookmark: ${request.error?.message}`)))
         }
       })
     } catch (error) {
@@ -171,9 +167,7 @@ export class IndexedDBBookmarkRepository implements BookmarkRepository {
   /**
    * 批量保存书签
    */
-  async saveBatch(
-    bookmarks: BookmarkNode[]
-  ): Promise<Result<BatchResult<void>, Error>> {
+  async saveBatch(bookmarks: BookmarkNode[]): Promise<Result<BatchResult<void>, Error>> {
     const initResult = this.ensureInitialized()
     if (!initResult.ok) return initResult as Result<BatchResult<void>, Error>
 
@@ -254,9 +248,7 @@ export class IndexedDBBookmarkRepository implements BookmarkRepository {
         }
 
         request.onerror = () => {
-          resolve(
-            err(new Error(`Failed to find bookmark: ${request.error?.message}`))
-          )
+          resolve(err(new Error(`Failed to find bookmark: ${request.error?.message}`)))
         }
       })
     } catch (error) {
@@ -267,9 +259,7 @@ export class IndexedDBBookmarkRepository implements BookmarkRepository {
   /**
    * 根据父ID获取子书签
    */
-  async findByParentId(
-    parentId: string
-  ): Promise<Result<BookmarkNode[], Error>> {
+  async findByParentId(parentId: string): Promise<Result<BookmarkNode[], Error>> {
     const initResult = this.ensureInitialized()
     if (!initResult.ok) return initResult as Result<BookmarkNode[], Error>
 
@@ -287,13 +277,7 @@ export class IndexedDBBookmarkRepository implements BookmarkRepository {
         }
 
         request.onerror = () => {
-          resolve(
-            err(
-              new Error(
-                `Failed to find bookmarks by parent: ${request.error?.message}`
-              )
-            )
-          )
+          resolve(err(new Error(`Failed to find bookmarks by parent: ${request.error?.message}`)))
         }
       })
     } catch (error) {
@@ -304,9 +288,7 @@ export class IndexedDBBookmarkRepository implements BookmarkRepository {
   /**
    * 筛选书签
    */
-  async search(
-    _options: SearchOptions
-  ): Promise<Result<SearchResult[], Error>> {
+  async search(_options: SearchOptions): Promise<Result<SearchResult[], Error>> {
     const initResult = this.ensureInitialized()
     if (!initResult.ok) return initResult as Result<SearchResult[], Error>
 
@@ -338,11 +320,7 @@ export class IndexedDBBookmarkRepository implements BookmarkRepository {
         }
 
         request.onerror = () => {
-          resolve(
-            err(
-              new Error(`Failed to delete bookmark: ${request.error?.message}`)
-            )
-          )
+          resolve(err(new Error(`Failed to delete bookmark: ${request.error?.message}`)))
         }
       })
     } catch (error) {
@@ -389,9 +367,7 @@ export class IndexedDBBookmarkRepository implements BookmarkRepository {
           }
 
           request.onerror = () => {
-            const error = new Error(
-              `Failed to delete bookmark ${id}: ${request.error?.message}`
-            )
+            const error = new Error(`Failed to delete bookmark ${id}: ${request.error?.message}`)
             result.errors.push(error)
             result.failed++
             completed++
@@ -429,13 +405,7 @@ export class IndexedDBBookmarkRepository implements BookmarkRepository {
         }
 
         request.onerror = () => {
-          resolve(
-            err(
-              new Error(
-                `Failed to find all bookmarks: ${request.error?.message}`
-              )
-            )
-          )
+          resolve(err(new Error(`Failed to find all bookmarks: ${request.error?.message}`)))
         }
       })
     } catch (error) {
@@ -461,11 +431,7 @@ export class IndexedDBBookmarkRepository implements BookmarkRepository {
         }
 
         request.onerror = () => {
-          resolve(
-            err(
-              new Error(`Failed to clear bookmarks: ${request.error?.message}`)
-            )
-          )
+          resolve(err(new Error(`Failed to clear bookmarks: ${request.error?.message}`)))
         }
       })
     } catch (error) {
@@ -511,15 +477,13 @@ export class IndexedDBBookmarkRepository implements BookmarkRepository {
       createdYear: node.dateAdded
         ? new Date(node.dateAdded).getFullYear()
         : new Date().getFullYear(),
-      createdMonth: node.dateAdded
-        ? new Date(node.dateAdded).getMonth()
-        : new Date().getMonth(),
+      createdMonth: node.dateAdded ? new Date(node.dateAdded).getMonth() : new Date().getMonth(),
 
       // 版本控制
       dataVersion: 1,
       lastCalculated: Date.now()
     }
-    
+
     // 条件添加 urlLower 和 domain
     if (node.url) {
       record.urlLower = node.url.toLowerCase()
@@ -529,7 +493,7 @@ export class IndexedDBBookmarkRepository implements BookmarkRepository {
         // URL 解析失败，不添加 domain
       }
     }
-    
+
     return record
   }
 
@@ -545,11 +509,11 @@ export class IndexedDBBookmarkRepository implements BookmarkRepository {
       dateAdded: record.dateAdded,
       index: record.index
     }
-    
+
     if (record.isFolder) {
       node.children = []
     }
-    
+
     return node
   }
 }

@@ -1,6 +1,6 @@
 /**
  * Google Identity Services (GIS) 类型定义
- * 
+ *
  * 参考：https://developers.google.com/identity/gsi/web/reference/js-reference
  */
 
@@ -22,10 +22,7 @@ declare global {
           /**
            * 渲染登录按钮
            */
-          renderButton(
-            parent: HTMLElement,
-            options: GoogleButtonConfig
-          ): void
+          renderButton(parent: HTMLElement, options: GoogleButtonConfig): void
 
           /**
            * 取消 One Tap 提示
@@ -207,12 +204,7 @@ interface GooglePromptNotification {
    * - tap_outside: 点击外部
    * - issuing_failed: 发行失败
    */
-  getSkippedReason():
-    | 'auto_cancel'
-    | 'user_cancel'
-    | 'tap_outside'
-    | 'issuing_failed'
-    | ''
+  getSkippedReason(): 'auto_cancel' | 'user_cancel' | 'tap_outside' | 'issuing_failed' | ''
 
   /**
    * 是否关闭时刻
@@ -225,11 +217,7 @@ interface GooglePromptNotification {
    * - cancel_called: 调用了取消
    * - flow_restarted: 流程重启
    */
-  getDismissedReason():
-    | 'credential_returned'
-    | 'cancel_called'
-    | 'flow_restarted'
-    | ''
+  getDismissedReason(): 'credential_returned' | 'cancel_called' | 'flow_restarted' | ''
 
   /**
    * 获取时刻类型

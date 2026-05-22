@@ -71,10 +71,7 @@ export const useQueryStore = defineStore('query', () => {
         []
       )
       searchHistory.value = history ?? []
-      logger.debug(
-        'QueryStore',
-        `搜索历史已加载: ${searchHistory.value.length} 条`
-      )
+      logger.debug('QueryStore', `搜索历史已加载: ${searchHistory.value.length} 条`)
     } catch (error) {
       logger.error('QueryStore', '加载搜索历史失败', error)
       searchHistory.value = []
@@ -113,9 +110,10 @@ export const useQueryStore = defineStore('query', () => {
   // 🟢 初始化时从 local storage 读取
   const loadSearchSettings = async () => {
     try {
-      const settings = await chromeStorage.getLocal<
-        typeof defaultSearchSettings
-      >(LOCAL_KEYS.SEARCH_SETTINGS, defaultSearchSettings)
+      const settings = await chromeStorage.getLocal<typeof defaultSearchSettings>(
+        LOCAL_KEYS.SEARCH_SETTINGS,
+        defaultSearchSettings
+      )
       searchSettings.value = { ...defaultSearchSettings, ...(settings ?? {}) }
       logger.debug('QueryStore', '✅ 搜索设置已从 local storage 恢复', settings)
     } catch (error) {
@@ -134,10 +132,7 @@ export const useQueryStore = defineStore('query', () => {
    */
   const saveSearchSettings = async () => {
     try {
-      await chromeStorage.setLocal(
-        LOCAL_KEYS.SEARCH_SETTINGS,
-        searchSettings.value
-      )
+      await chromeStorage.setLocal(LOCAL_KEYS.SEARCH_SETTINGS, searchSettings.value)
       logger.debug('QueryStore', '搜索设置已保存', searchSettings.value)
     } catch (error) {
       logger.warn('QueryStore', '保存搜索设置失败', error)
@@ -146,9 +141,7 @@ export const useQueryStore = defineStore('query', () => {
 
   // === 计算属性 ===
   const recentSearches = computed(() => {
-    return searchHistory.value
-      .sort((a, b) => b.timestamp - a.timestamp)
-      .slice(0, 10)
+    return searchHistory.value.sort((a, b) => b.timestamp - a.timestamp).slice(0, 10)
   })
 
   const searchPerformance = computed(() => {
@@ -312,10 +305,7 @@ export const useQueryStore = defineStore('query', () => {
 
     // 🔴 同步到 session storage
     try {
-      await chromeStorage.setSession(
-        SESSION_KEYS.SEARCH_HISTORY,
-        searchHistory.value
-      )
+      await chromeStorage.setSession(SESSION_KEYS.SEARCH_HISTORY, searchHistory.value)
       logger.debug('Search', '搜索历史已更新并同步', { query, resultCount })
     } catch (error) {
       logger.error('Search', '同步搜索历史失败', error)
@@ -329,11 +319,9 @@ export const useQueryStore = defineStore('query', () => {
     const stats = searchStatistics.value
     stats.totalSearches++
     stats.searchPerformance.totalTime += searchTime
-    stats.searchPerformance.averageTime =
-      stats.searchPerformance.totalTime / stats.totalSearches
+    stats.searchPerformance.averageTime = stats.searchPerformance.totalTime / stats.totalSearches
     stats.averageResultCount =
-      (stats.averageResultCount * (stats.totalSearches - 1) + resultCount) /
-      stats.totalSearches
+      (stats.averageResultCount * (stats.totalSearches - 1) + resultCount) / stats.totalSearches
 
     // 更新最常搜索的术语
     const termCounts = new Map<string, number>()
@@ -353,9 +341,7 @@ export const useQueryStore = defineStore('query', () => {
   /**
    * 更新搜索设置
    */
-  const updateSearchSettings = (
-    settings: Partial<typeof searchSettings.value>
-  ) => {
+  const updateSearchSettings = (settings: Partial<typeof searchSettings.value>) => {
     searchSettings.value = { ...searchSettings.value, ...settings }
     logger.info('Search', '搜索设置已更新', settings)
     // 🟢 保存到 local storage

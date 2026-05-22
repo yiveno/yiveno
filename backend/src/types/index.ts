@@ -3,10 +3,7 @@
  */
 
 export type { Env } from './env'
-export type {
-  AICompleteRequest,
-  AICompleteResponse
-} from './ai'
+export type { AICompleteRequest, AICompleteResponse } from './ai'
 export type {
   OAuthProvider,
   OAuthProviderConfig,

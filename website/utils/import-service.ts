@@ -113,7 +113,7 @@ class ImportService {
     }
 
     return new Promise((resolve, reject) => {
-      chrome.bookmarks!.getTree((results) => {
+      chrome.bookmarks!.getTree(results => {
         if (chrome.runtime?.lastError) {
           reject(new Error(chrome.runtime.lastError.message))
           return
@@ -255,7 +255,7 @@ class ImportService {
 
       // 让出主线程（避免阻塞 UI）
       if (i + BATCH_SIZE < bookmarks.length) {
-        await new Promise((resolve) => setTimeout(resolve, 0))
+        await new Promise(resolve => setTimeout(resolve, 0))
       }
     }
 
@@ -284,7 +284,7 @@ class ImportService {
           title: bookmark.title,
           url: bookmark.url
         },
-        (result) => {
+        result => {
           if (chrome.runtime?.lastError) {
             reject(new Error(chrome.runtime.lastError.message))
           } else {

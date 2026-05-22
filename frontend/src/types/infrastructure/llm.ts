@@ -33,12 +33,7 @@ export interface LLMCapability {
 /**
  * LLM 任务类型
  */
-export type LLMTaskType =
-  | 'categorize'
-  | 'summarize'
-  | 'embedding'
-  | 'deep-analysis'
-  | 'organize'
+export type LLMTaskType = 'categorize' | 'summarize' | 'embedding' | 'deep-analysis' | 'organize'
 
 /**
  * LLM 任务复杂度
@@ -172,25 +167,25 @@ export interface SummarizerOptions {
  * Summarizer 类型
  */
 export type SummarizerType =
-  | 'tl;dr'        // 简短摘要（默认）
-  | 'key-points'   // 关键点提取
-  | 'teaser'       // 预览式摘要
-  | 'headline'     // 标题式摘要
+  | 'tl;dr' // 简短摘要（默认）
+  | 'key-points' // 关键点提取
+  | 'teaser' // 预览式摘要
+  | 'headline' // 标题式摘要
 
 /**
  * Summarizer 输出格式
  */
 export type SummarizerFormat =
-  | 'plain-text'   // 纯文本（默认）
-  | 'markdown'     // Markdown 格式
+  | 'plain-text' // 纯文本（默认）
+  | 'markdown' // Markdown 格式
 
 /**
  * Summarizer 长度
  */
 export type SummarizerLength =
-  | 'short'        // 短（默认）
-  | 'medium'       // 中
-  | 'long'         // 长
+  | 'short' // 短（默认）
+  | 'medium' // 中
+  | 'long' // 长
 
 /**
  * Chrome 内置 Summarizer 实例

@@ -1,6 +1,6 @@
 /**
  * Vite 构建配置
- * 
+ *
  * Vite 8 默认使用：
  * - Rolldown（替代 Rollup）
  * - Oxc Minifier（替代 esbuild/terser）
@@ -8,10 +8,7 @@
  */
 
 import type { BuildOptions } from 'vite'
-import {
-  OUT_DIR,
-  ENABLE_SOURCEMAP
-} from './constants'
+import { OUT_DIR, ENABLE_SOURCEMAP } from './constants'
 import { createBuildOptions } from './build-options'
 
 /**
@@ -27,10 +24,10 @@ export function createBuildConfig(): BuildOptions {
 
     /**
      * 🚀 Vite 8 压缩器：terser（JavaScript 实现，压缩率最高）
-     * 
+     *
      * 注意：Vite 8 虽然支持 Oxc Minifier，但类型定义尚未更新
      * 等待 @vitejs/plugin-vue 更新类型定义后可切换到 'oxc'
-     * 
+     *
      * 可选值：
      * - 'terser'：JavaScript 实现，压缩率最高，类型安全
      * - 'esbuild'：Go 实现，速度快
@@ -53,7 +50,7 @@ export function createBuildConfig(): BuildOptions {
 
     /**
      * 🎨 CSS 压缩器：Lightning CSS（Rust 实现，比 esbuild 快 100 倍）
-     * 
+     *
      * Vite 8 默认使用 Lightning CSS，支持：
      * - 更好的语法降级
      * - 自动添加浏览器前缀

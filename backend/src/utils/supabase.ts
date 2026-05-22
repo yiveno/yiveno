@@ -47,9 +47,7 @@ export function createSupabaseClient(env: Env): SupabaseClient | null {
 export function hasSupabase(env: Env): boolean {
   console.log('[Supabase] 环境变量检查:', {
     SUPABASE_URL: env.SUPABASE_URL ? '✅ 已配置' : '❌ 缺失',
-    SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_ROLE_KEY
-      ? '✅ 已配置'
-      : '❌ 缺失'
+    SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_ROLE_KEY ? '✅ 已配置' : '❌ 缺失'
   })
   return Boolean(env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY)
 }
@@ -61,10 +59,7 @@ export function hasSupabase(env: Env): boolean {
  * @param {string} userId - 用户 ID (Supabase UUID)
  * @returns {Promise<Subscription | null>} 订阅记录或 null
  */
-export async function getUserSubscription(
-  env: Env,
-  userId: string
-): Promise<Subscription | null> {
+export async function getUserSubscription(env: Env, userId: string): Promise<Subscription | null> {
   if (!hasSupabase(env)) {
     console.warn('[Supabase] 未配置，跳过查询')
     return null
@@ -299,8 +294,7 @@ export async function insertPaymentRecord(
       metadata: payment.metadata || null
     }
 
-    const uuidRegex =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
     if (payment.id && uuidRegex.test(payment.id)) {
       paymentData.id = payment.id
     }

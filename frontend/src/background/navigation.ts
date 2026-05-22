@@ -73,10 +73,7 @@ async function smartOpenSettings(): Promise<void> {
 
     if (existingTab?.id) {
       // 如果已存在，激活该标签页
-      logger.info(
-        'Navigation',
-        `切换到已存在的settings标签页 (ID: ${existingTab.id})`
-      )
+      logger.info('Navigation', `切换到已存在的settings标签页 (ID: ${existingTab.id})`)
       await chrome.tabs.update(existingTab.id, { active: true })
 
       // 将焦点切换到该标签页所在的窗口

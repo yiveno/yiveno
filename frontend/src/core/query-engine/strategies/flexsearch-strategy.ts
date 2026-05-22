@@ -26,10 +26,7 @@
  * - 中文分词优化（tokenize: 'forward'）
  */
 import { Document } from 'flexsearch'
-import type {
-  BookmarkRecord,
-  SearchResult
-} from '@/infrastructure/indexeddb/manager'
+import type { BookmarkRecord, SearchResult } from '@/infrastructure/indexeddb/manager'
 import type { SearchStrategy } from '../engine'
 
 /**
@@ -104,7 +101,7 @@ export class FlexSearchStrategy implements SearchStrategy {
       this.bookmarkMap.clear()
       for (const bookmark of data) {
         this.bookmarkMap.set(bookmark.id, bookmark)
-        
+
         // 添加到索引
         this.index.add({
           id: bookmark.id,

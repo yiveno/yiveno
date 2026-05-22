@@ -91,9 +91,7 @@ export async function crawlMultipleBookmarks(
   bookmarks: chrome.bookmarks.BookmarkTreeNode[],
   options?: CrawlOptions & { skipExisting?: boolean }
 ): Promise<void> {
-  let targets = bookmarks.filter(
-    b => b.url && !b.url.startsWith('chrome://')
-  )
+  let targets = bookmarks.filter(b => b.url && !b.url.startsWith('chrome://'))
 
   if (options?.skipExisting) {
     const filtered: chrome.bookmarks.BookmarkTreeNode[] = []
@@ -129,9 +127,7 @@ export async function crawlMultipleBookmarks(
 /**
  * 获取书签的爬取元数据
  */
-export async function getBookmarkMetadata(
-  bookmarkId: string
-): Promise<CrawlMetadataRecord | null> {
+export async function getBookmarkMetadata(bookmarkId: string): Promise<CrawlMetadataRecord | null> {
   await indexedDBManager.initialize()
   return indexedDBManager.getCrawlMetadata(bookmarkId)
 }

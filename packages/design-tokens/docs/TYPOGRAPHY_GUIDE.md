@@ -13,12 +13,13 @@ AcuityBookmarks 采用系统字体栈，确保在所有平台上都有良好的�
 ```typescript
 import { fontFamily } from '@acuity-bookmarks/design-tokens'
 
-fontFamily.sans   // 无衬线字体（默认）
-fontFamily.mono   // 等宽字体（代码）
-fontFamily.serif  // 衬线字体（标题）
+fontFamily.sans // 无衬线字体（默认）
+fontFamily.mono // 等宽字体（代码）
+fontFamily.serif // 衬线字体（标题）
 ```
 
 **CSS 变量：**
+
 ```css
 var(--font-family-sans)   /* -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, ... */
 var(--font-family-mono)   /* ui-monospace, SFMono-Regular, "SF Mono", Menlo, ... */
@@ -30,12 +31,12 @@ var(--font-family-serif)  /* Georgia, Cambria, "Times New Roman", Times, serif *
 ```typescript
 import { fontSize } from '@acuity-bookmarks/design-tokens'
 
-fontSize.xs     // 10px - 极小文字
-fontSize.sm     // 12px - 辅助文字、标签
-fontSize.base   // 14px - 正文（默认）
-fontSize.md     // 16px - 次要标题
-fontSize.lg     // 18px - 小标题
-fontSize.xl     // 20px - 标题
+fontSize.xs // 10px - 极小文字
+fontSize.sm // 12px - 辅助文字、标签
+fontSize.base // 14px - 正文（默认）
+fontSize.md // 16px - 次要标题
+fontSize.lg // 18px - 小标题
+fontSize.xl // 20px - 标题
 fontSize['2xl'] // 24px - 大标题
 fontSize['3xl'] // 30px - 超大标题
 fontSize['4xl'] // 36px - 巨大标题
@@ -43,6 +44,7 @@ fontSize['5xl'] // 48px - 特大标题
 ```
 
 **CSS 变量：**
+
 ```css
 var(--text-xs)    /* 10px */
 var(--text-sm)    /* 12px */
@@ -61,15 +63,16 @@ var(--text-5xl)   /* 48px */
 ```typescript
 import { fontWeight } from '@acuity-bookmarks/design-tokens'
 
-fontWeight.light      // 300
-fontWeight.normal     // 400 - 正文
-fontWeight.medium     // 500 - 强调
-fontWeight.semibold   // 600 - 小标题
-fontWeight.bold       // 700 - 标题
-fontWeight.extrabold  // 800 - 特殊强调
+fontWeight.light // 300
+fontWeight.normal // 400 - 正文
+fontWeight.medium // 500 - 强调
+fontWeight.semibold // 600 - 小标题
+fontWeight.bold // 700 - 标题
+fontWeight.extrabold // 800 - 特殊强调
 ```
 
 **CSS 变量：**
+
 ```css
 var(--font-light)      /* 300 */
 var(--font-normal)     /* 400 */
@@ -84,14 +87,15 @@ var(--font-extrabold)  /* 800 */
 ```typescript
 import { lineHeight } from '@acuity-bookmarks/design-tokens'
 
-lineHeight.tight    // 1.25 - 标题
-lineHeight.snug     // 1.375 - 紧密
-lineHeight.normal   // 1.5 - 正文（默认）
-lineHeight.relaxed  // 1.625 - 宽松
-lineHeight.loose    // 2 - 超宽松
+lineHeight.tight // 1.25 - 标题
+lineHeight.snug // 1.375 - 紧密
+lineHeight.normal // 1.5 - 正文（默认）
+lineHeight.relaxed // 1.625 - 宽松
+lineHeight.loose // 2 - 超宽松
 ```
 
 **CSS 变量：**
+
 ```css
 var(--line-height-tight)    /* 1.25 */
 var(--line-height-snug)     /* 1.375 */
@@ -105,12 +109,12 @@ var(--line-height-loose)    /* 2 */
 ```typescript
 import { letterSpacing } from '@acuity-bookmarks/design-tokens'
 
-letterSpacing.tighter  // -0.05em
-letterSpacing.tight    // -0.025em
-letterSpacing.normal   // 0
-letterSpacing.wide     // 0.025em
-letterSpacing.wider    // 0.05em
-letterSpacing.widest   // 0.1em
+letterSpacing.tighter // -0.05em
+letterSpacing.tight // -0.025em
+letterSpacing.normal // 0
+letterSpacing.wide // 0.025em
+letterSpacing.wider // 0.05em
+letterSpacing.widest // 0.1em
 ```
 
 ## 🎯 使用场景
@@ -120,23 +124,23 @@ letterSpacing.widest   // 0.1em
 ```css
 /* H1 - 页面主标题 */
 .h1 {
-  font-size: var(--text-2xl);      /* 24px */
-  font-weight: var(--font-bold);   /* 700 */
-  line-height: var(--line-height-tight);  /* 1.25 */
+  font-size: var(--text-2xl); /* 24px */
+  font-weight: var(--font-bold); /* 700 */
+  line-height: var(--line-height-tight); /* 1.25 */
 }
 
 /* H2 - 区块标题 */
 .h2 {
-  font-size: var(--text-xl);       /* 20px */
+  font-size: var(--text-xl); /* 20px */
   font-weight: var(--font-semibold); /* 600 */
-  line-height: var(--line-height-tight);  /* 1.25 */
+  line-height: var(--line-height-tight); /* 1.25 */
 }
 
 /* H3 - 小标题 */
 .h3 {
-  font-size: var(--text-lg);       /* 18px */
+  font-size: var(--text-lg); /* 18px */
   font-weight: var(--font-semibold); /* 600 */
-  line-height: var(--line-height-snug);  /* 1.375 */
+  line-height: var(--line-height-snug); /* 1.375 */
 }
 ```
 
@@ -145,16 +149,16 @@ letterSpacing.widest   // 0.1em
 ```css
 /* 正文 */
 .body {
-  font-size: var(--text-base);     /* 14px */
+  font-size: var(--text-base); /* 14px */
   font-weight: var(--font-normal); /* 400 */
-  line-height: var(--line-height-normal);  /* 1.5 */
+  line-height: var(--line-height-normal); /* 1.5 */
 }
 
 /* 次要文字 */
 .body-secondary {
-  font-size: var(--text-sm);       /* 12px */
+  font-size: var(--text-sm); /* 12px */
   font-weight: var(--font-normal); /* 400 */
-  line-height: var(--line-height-normal);  /* 1.5 */
+  line-height: var(--line-height-normal); /* 1.5 */
   color: var(--color-text-secondary);
 }
 ```
@@ -164,17 +168,17 @@ letterSpacing.widest   // 0.1em
 ```css
 /* 按钮文字 */
 .button {
-  font-size: var(--text-sm);       /* 12px */
+  font-size: var(--text-sm); /* 12px */
   font-weight: var(--font-medium); /* 500 */
-  line-height: var(--line-height-normal);  /* 1.5 */
+  line-height: var(--line-height-normal); /* 1.5 */
 }
 
 /* 标签 */
 .label {
-  font-size: var(--text-xs);       /* 10px */
+  font-size: var(--text-xs); /* 10px */
   font-weight: var(--font-medium); /* 500 */
-  line-height: var(--line-height-normal);  /* 1.5 */
-  letter-spacing: var(--letter-spacing-wide);  /* 0.025em */
+  line-height: var(--line-height-normal); /* 1.5 */
+  letter-spacing: var(--letter-spacing-wide); /* 0.025em */
   text-transform: uppercase;
 }
 ```
@@ -206,14 +210,14 @@ import { fontSize, fontWeight, lineHeight } from '@acuity-bookmarks/design-token
 
 const styles = StyleSheet.create({
   title: {
-    fontSize: parseInt(fontSize.xl),           // 20
-    fontWeight: fontWeight.semibold,           // '600'
-    lineHeight: parseFloat(lineHeight.tight) * parseInt(fontSize.xl)  // 1.25 * 20 = 25
+    fontSize: parseInt(fontSize.xl), // 20
+    fontWeight: fontWeight.semibold, // '600'
+    lineHeight: parseFloat(lineHeight.tight) * parseInt(fontSize.xl) // 1.25 * 20 = 25
   },
   bodyText: {
-    fontSize: parseInt(fontSize.base),         // 14
-    fontWeight: fontWeight.normal,             // '400'
-    lineHeight: parseFloat(lineHeight.normal) * parseInt(fontSize.base)  // 1.5 * 14 = 21
+    fontSize: parseInt(fontSize.base), // 14
+    fontWeight: fontWeight.normal, // '400'
+    lineHeight: parseFloat(lineHeight.normal) * parseInt(fontSize.base) // 1.5 * 14 = 21
   }
 })
 ```
@@ -260,8 +264,8 @@ Text(
 ```css
 /* 禁止硬编码字号 */
 .title {
-  font-size: 18px;    /* ❌ 禁止！ */
-  font-weight: 600;   /* ❌ 禁止！ */
+  font-size: 18px; /* ❌ 禁止！ */
+  font-weight: 600; /* ❌ 禁止！ */
 }
 ```
 

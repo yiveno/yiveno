@@ -5,7 +5,7 @@
  * - 书签摘要（优先使用 Summarizer API，降级到 Prompt API）
  * - 语义搜索增强
  * - 标签生成
- * 
+ *
  * 注意：书签分类功能已迁移到基于向量的本地推荐（folderVectorService）
  */
 import { llmAdapter } from '@/infrastructure/llm/llm-adapter'
@@ -35,7 +35,7 @@ export class AIAppService {
 
   /**
    * 生成书签摘要
-   * 
+   *
    * 优先级：
    * 1. Chrome Summarizer API（Chrome 138+，专用摘要模型，质量更高、速度更快）
    * 2. Prompt API（通用 LLM，fallback）
@@ -165,8 +165,7 @@ export class AIAppService {
         const parsed = JSON.parse(result.text)
         if (Array.isArray(parsed)) {
           return parsed.filter(
-            (tag): tag is string =>
-              typeof tag === 'string' && tag.trim().length > 0
+            (tag): tag is string => typeof tag === 'string' && tag.trim().length > 0
           )
         }
       } catch {
@@ -190,7 +189,7 @@ export class AIAppService {
 
   /**
    * 检测可用 LLM 提供者
-   * 
+   *
    * 包含 Summarizer API 的能力检测
    */
   async detectCapabilities() {
@@ -203,9 +202,7 @@ export class AIAppService {
       ...capabilities,
       summarizer: {
         available: summarizerAvailable,
-        capabilities: summarizerAvailable
-          ? await builtInSummarizerClient.getCapabilities()
-          : null
+        capabilities: summarizerAvailable ? await builtInSummarizerClient.getCapabilities() : null
       }
     }
   }

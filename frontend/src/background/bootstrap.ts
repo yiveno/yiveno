@@ -7,11 +7,7 @@
 
 import { logger } from '@/infrastructure/logging/logger'
 import type { ExtensionState } from './state'
-import {
-  CURRENT_SCHEMA_VERSION,
-  getExtensionState,
-  updateExtensionState
-} from './state'
+import { CURRENT_SCHEMA_VERSION, getExtensionState, updateExtensionState } from './state'
 import { bookmarkSyncService } from '@/services/bookmark-sync-service'
 import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
 
@@ -77,10 +73,7 @@ async function handleFirstInstall(reason: string): Promise<void> {
  * @param state - 当前扩展状态
  */
 async function handleSchemaUpgrade(state: ExtensionState): Promise<void> {
-  logger.info(
-    'Bootstrap',
-    `架构升级：v${state.schemaVersion} → v${CURRENT_SCHEMA_VERSION}`
-  )
+  logger.info('Bootstrap', `架构升级：v${state.schemaVersion} → v${CURRENT_SCHEMA_VERSION}`)
 
   // ✅ 直接执行升级操作，移除无意义的固定延迟
   await indexedDBManager.initialize()
@@ -108,27 +101,27 @@ async function handleSchemaUpgrade(state: ExtensionState): Promise<void> {
 
 /**
  * 检查 IndexedDB 健康状态
- * 
+ *
  * 检查逻辑：
  * 1. 尝试初始化 IndexedDB
  * 2. 读取少量数据验证数据库可访问
  * 3. 对比 storage 中的记录数和实际数据
- * 
+ *
  * @returns true 如果数据库健康，false 如果需要重新同步
  */
 async function checkDatabaseHealth(): Promise<boolean> {
   try {
     logger.debug('Bootstrap', '🔍 开始数据库健康检查...')
-    
+
     // 1. 尝试初始化 IndexedDB
     await indexedDBManager.initialize()
-    
+
     // 2. 尝试读取少量数据（只读 10 条，快速检查）
     const sampleBookmarks = await indexedDBManager.getAllBookmarks(10)
-    
+
     // 3. 获取 storage 中记录的书签数量
     const state = await getExtensionState()
-    
+
     // 4. 数据一致性检查
     if (state.bookmarkCount > 0 && sampleBookmarks.length === 0) {
       logger.warn('Bootstrap', '⚠️ 数据不一致：storage 显示有书签但 IndexedDB 为空', {
@@ -137,7 +130,7 @@ async function checkDatabaseHealth(): Promise<boolean> {
       })
       return false
     }
-    
+
     // 5. 如果 storage 说有很多书签，但实际只读到很少，可能数据损坏
     if (state.bookmarkCount > 100 && sampleBookmarks.length < 5) {
       logger.warn('Bootstrap', '⚠️ 数据可能损坏：预期书签数量与实际不符', {
@@ -146,12 +139,12 @@ async function checkDatabaseHealth(): Promise<boolean> {
       })
       return false
     }
-    
+
     logger.debug('Bootstrap', '✅ 数据库健康检查通过', {
       storageCount: state.bookmarkCount,
       sampleCount: sampleBookmarks.length
     })
-    
+
     return true
   } catch (error) {
     logger.error('Bootstrap', '❌ 数据库健康检查失败', error)
@@ -169,7 +162,11 @@ async function handleDataRecovery(): Promise<void> {
   await bookmarkSyncService.syncAllBookmarks()
   const allBookmarks = await indexedDBManager.getAllBookmarks()
   const totalBookmarks = allBookmarks.filter(node => node.url && !node.isFolder).length
-  await updateExtensionState({ dbReady: true, bookmarkCount: totalBookmarks, lastSyncedAt: Date.now() })
+  await updateExtensionState({
+    dbReady: true,
+    bookmarkCount: totalBookmarks,
+    lastSyncedAt: Date.now()
+  })
   logger.info('Bootstrap', '数据恢复完成', { totalBookmarks })
 }
 
@@ -233,14 +230,14 @@ export function registerLifecycleHandlers(): void {
   chrome.runtime.onStartup?.addListener(async () => {
     try {
       logger.info('Bootstrap', '浏览器启动：进行幂等同步')
-      
+
       // ✅ 启动时也进行健康检查
       // 如果数据不健康，syncAllBookmarks 会自动恢复
       const isHealthy = await checkDatabaseHealth()
       if (!isHealthy) {
         logger.warn('Bootstrap', '🔧 启动时检测到数据丢失，将触发全量同步恢复')
       }
-      
+
       await bookmarkSyncService.syncAllBookmarks()
 
       // ⚠️ 收藏数据同步已移到页面打开时执行

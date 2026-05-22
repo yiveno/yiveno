@@ -104,16 +104,16 @@ export const useUIStore = defineStore('ui', () => {
   const errorCount = ref<number>(0)
 
   // === 书签状态管理 ===
-  
+
   /** 选中的书签ID集合（用于批量操作） */
   const selectedBookmarkIds = ref<Set<string>>(new Set())
-  
+
   /** 当前激活的书签ID（表示当前打开页面对应的书签，用于 SidePanel） */
   const activeBookmarkId = ref<string | null>(null)
-  
+
   /** 键盘导航焦点的书签ID - Popup 面板（用于方向键导航） */
   const focusedBookmarkIdPopup = ref<string | null>(null)
-  
+
   /** 键盘导航焦点的书签ID - SidePanel 面板（用于方向键导航） */
   const focusedBookmarkIdSidePanel = ref<string | null>(null)
 
@@ -322,7 +322,7 @@ export const useUIStore = defineStore('ui', () => {
   }
 
   // === 书签状态管理动作 ===
-  
+
   /**
    * 设置激活的书签ID（用于 SidePanel 当前页面高亮）
    * @param id - 书签ID，null 表示清除激活状态
@@ -330,14 +330,14 @@ export const useUIStore = defineStore('ui', () => {
   function setActiveBookmark(id: string | null) {
     activeBookmarkId.value = id
   }
-  
+
   /**
    * 清除激活状态
    */
   function clearActiveBookmark() {
     activeBookmarkId.value = null
   }
-  
+
   /**
    * 设置键盘导航焦点的书签ID（Popup 面板）
    * @param id - 书签ID，null 表示清除焦点
@@ -349,14 +349,14 @@ export const useUIStore = defineStore('ui', () => {
       focusedBookmarkIdSidePanel.value = null
     }
   }
-  
+
   /**
    * 清除键盘导航焦点（Popup 面板）
    */
   function clearFocusedBookmarkPopup() {
     focusedBookmarkIdPopup.value = null
   }
-  
+
   /**
    * 设置键盘导航焦点的书签ID（SidePanel 面板）
    * @param id - 书签ID，null 表示清除焦点
@@ -368,14 +368,14 @@ export const useUIStore = defineStore('ui', () => {
       focusedBookmarkIdPopup.value = null
     }
   }
-  
+
   /**
    * 清除键盘导航焦点（SidePanel 面板）
    */
   function clearFocusedBookmarkSidePanel() {
     focusedBookmarkIdSidePanel.value = null
   }
-  
+
   /**
    * 切换书签选中状态
    * @param id - 书签ID
@@ -389,7 +389,7 @@ export const useUIStore = defineStore('ui', () => {
     // 强制触发响应式更新
     selectedBookmarkIds.value = new Set(selectedBookmarkIds.value)
   }
-  
+
   /**
    * 清除所有选中状态
    */
@@ -397,7 +397,7 @@ export const useUIStore = defineStore('ui', () => {
     selectedBookmarkIds.value.clear()
     selectedBookmarkIds.value = new Set()
   }
-  
+
   /**
    * 批量选中书签
    * @param ids - 书签ID数组

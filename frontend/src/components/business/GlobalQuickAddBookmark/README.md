@@ -37,7 +37,7 @@ import GlobalQuickAddBookmark from '@/components/business/GlobalQuickAddBookmark
   <div class="app">
     <!-- 页面内容 -->
     <router-view />
-    
+
     <!-- 全局快速添加书签 -->
     <GlobalQuickAddBookmark />
   </div>
@@ -190,7 +190,7 @@ if (!data.url || data.url.trim() === '') {
 chrome.runtime.sendMessage({
   type: 'CREATE_BOOKMARK',
   data: {
-    url: ''  // 可能创建文件夹而不是书签
+    url: '' // 可能创建文件夹而不是书签
   }
 })
 ```
@@ -203,12 +203,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'SHOW_ADD_BOOKMARK_DIALOG') {
     // 处理消息
     sendResponse({ success: true })
-    return true  // 保持消息通道打开
+    return true // 保持消息通道打开
   }
 })
 
 // ❌ 错误：不返回响应
-chrome.runtime.onMessage.addListener((message) => {
+chrome.runtime.onMessage.addListener(message => {
   // 处理消息
   // 没有 sendResponse
 })

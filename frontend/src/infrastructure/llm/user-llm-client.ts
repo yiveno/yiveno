@@ -140,10 +140,7 @@ export class UserLLMClient {
   /**
    * 文本补全
    */
-  async complete(
-    prompt: string,
-    options?: LLMCompleteOptions
-  ): Promise<LLMCompleteResult> {
+  async complete(prompt: string, options?: LLMCompleteOptions): Promise<LLMCompleteResult> {
     const config = await this.getConfig()
     if (!config) {
       throw new Error('未配置 API Key，请在设置页面填写您的 AI 服务商 Key')
@@ -210,7 +207,9 @@ export class UserLLMClient {
 
     if (!response.ok) {
       const err = await response.json().catch(() => ({}))
-      throw new Error(friendlyError('openai', response.status, err?.error?.message || response.statusText))
+      throw new Error(
+        friendlyError('openai', response.status, err?.error?.message || response.statusText)
+      )
     }
 
     const data = await response.json()
@@ -240,7 +239,9 @@ export class UserLLMClient {
 
     if (!response.ok) {
       const err = await response.json().catch(() => ({}))
-      throw new Error(friendlyError('openai', response.status, err?.error?.message || response.statusText))
+      throw new Error(
+        friendlyError('openai', response.status, err?.error?.message || response.statusText)
+      )
     }
 
     const data = await response.json()
@@ -280,7 +281,9 @@ export class UserLLMClient {
 
     if (!response.ok) {
       const err = await response.json().catch(() => ({}))
-      throw new Error(friendlyError('claude', response.status, err?.error?.message || response.statusText))
+      throw new Error(
+        friendlyError('claude', response.status, err?.error?.message || response.statusText)
+      )
     }
 
     const data = await response.json()
@@ -319,7 +322,9 @@ export class UserLLMClient {
 
     if (!response.ok) {
       const err = await response.json().catch(() => ({}))
-      throw new Error(friendlyError('gemini', response.status, err?.error?.message || response.statusText))
+      throw new Error(
+        friendlyError('gemini', response.status, err?.error?.message || response.statusText)
+      )
     }
 
     const data = await response.json()
@@ -338,21 +343,20 @@ export class UserLLMClient {
     const baseUrl = config.baseUrl || defaults.baseUrl
     const model = defaults.embeddingModel
 
-    const response = await fetch(
-      `${baseUrl}/models/${model}:embedContent?key=${config.apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: `models/${model}`,
-          content: { parts: [{ text: text.trim() }] }
-        })
-      }
-    )
+    const response = await fetch(`${baseUrl}/models/${model}:embedContent?key=${config.apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: `models/${model}`,
+        content: { parts: [{ text: text.trim() }] }
+      })
+    })
 
     if (!response.ok) {
       const err = await response.json().catch(() => ({}))
-      throw new Error(friendlyError('gemini', response.status, err?.error?.message || response.statusText))
+      throw new Error(
+        friendlyError('gemini', response.status, err?.error?.message || response.statusText)
+      )
     }
 
     const data = await response.json()

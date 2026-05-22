@@ -23,7 +23,7 @@ const searchState: SearchState = {
 
 /**
  * 等待 Worker 就绪
- * 
+ *
  * 使用事件机制监听 Worker 状态，避免固定轮询间隔
  *
  * @param timeout 超时时间（毫秒）
@@ -112,7 +112,7 @@ async function waitForWorkerReady(timeout = 3000): Promise<void> {
 
 /**
  * 确保查询 Worker 已就绪
- * 
+ *
  * 若未创建则启动并等待 ready 事件
  */
 async function ensureSearchWorker(): Promise<Worker> {
@@ -131,10 +131,9 @@ async function ensureSearchWorker(): Promise<Worker> {
 
   searchState.initializing = true
   try {
-    const worker = new Worker(
-      new URL('@/workers/query-worker.ts', import.meta.url),
-      { type: 'module' }
-    )
+    const worker = new Worker(new URL('@/workers/query-worker.ts', import.meta.url), {
+      type: 'module'
+    })
 
     await new Promise<void>((resolve, reject) => {
       const timer = setTimeout(() => {
@@ -165,9 +164,7 @@ async function ensureSearchWorker(): Promise<Worker> {
     return worker
   } catch (error) {
     logger.error('OffscreenSearch', '创建查询 Worker 失败', error)
-    // eslint-disable-next-line require-atomic-updates -- 错误处理是原子操作，不会有竞态条件
     searchState.worker = undefined
-    // eslint-disable-next-line require-atomic-updates -- 错误处理是原子操作，不会有竞态条件
     searchState.ready = false
     throw error
   } finally {
@@ -187,7 +184,7 @@ async function handleSearchInit(payload: { docs?: WorkerDoc[] } | undefined) {
 
 /**
  * 处理搜索查询请求
- * 
+ *
  * 优先使用 Worker 查询，失败时降级到 IndexedDB 直接查询
  */
 async function handleSearchQuery(payload: { query: string; limit?: number }) {
@@ -213,10 +210,7 @@ async function handleSearchQuery(payload: { query: string; limit?: number }) {
         const message = event.data
         if (message?.type === 'result' && message.reqId === reqId) {
           cleanup()
-          logger.info(
-            'OffscreenSearch',
-            `🔍 命中 ${message.hits?.length ?? 0} 条`
-          )
+          logger.info('OffscreenSearch', `🔍 命中 ${message.hits?.length ?? 0} 条`)
           resolve(message.hits ?? [])
         } else if (message?.type === 'error' && message.reqId === reqId) {
           cleanup()
@@ -234,11 +228,7 @@ async function handleSearchQuery(payload: { query: string; limit?: number }) {
       })
     })
   } catch (error) {
-    logger.warn(
-      'OffscreenSearch',
-      'Worker 不可用，回退到 IndexedDB 查询',
-      error
-    )
+    logger.warn('OffscreenSearch', 'Worker 不可用，回退到 IndexedDB 查询', error)
     return indexedDBManager.searchBookmarks(query, {
       query,
       limit: payload?.limit ?? 50,
@@ -268,41 +258,33 @@ const handlers: Record<string, OffscreenHandler> = {
     const data = payload as { html?: string }
     return parseHtml(data?.html ?? '')
   },
-  SEARCH_INIT: payload =>
-    handleSearchInit(payload as { docs?: WorkerDoc[] } | undefined),
-  SEARCH_QUERY: async payload =>
-    handleSearchQuery(payload as { query: string; limit?: number }),
+  SEARCH_INIT: payload => handleSearchInit(payload as { docs?: WorkerDoc[] } | undefined),
+  SEARCH_QUERY: async payload => handleSearchQuery(payload as { query: string; limit?: number }),
 
   // Embedding 任务：在 Offscreen Document 里运行 ONNX，绕过扩展页面的 CSP 限制
   EMBEDDING_EMBED: async payload => {
-    const { onnxEmbeddingProviderDirect } = await import(
-      '@/infrastructure/embedding/onnx-embedding-provider-direct'
-    )
+    const { onnxEmbeddingProviderDirect } =
+      await import('@/infrastructure/embedding/onnx-embedding-provider-direct')
     const data = payload as { text: string }
     return onnxEmbeddingProviderDirect.embed(data.text)
   },
   EMBEDDING_EMBED_BATCH: async payload => {
-    const { onnxEmbeddingProviderDirect } = await import(
-      '@/infrastructure/embedding/onnx-embedding-provider-direct'
-    )
+    const { onnxEmbeddingProviderDirect } =
+      await import('@/infrastructure/embedding/onnx-embedding-provider-direct')
     const data = payload as { texts: string[] }
     return onnxEmbeddingProviderDirect.embedBatch!(data.texts)
   },
   EMBEDDING_IS_AVAILABLE: async () => {
-    const { onnxEmbeddingProviderDirect } = await import(
-      '@/infrastructure/embedding/onnx-embedding-provider-direct'
-    )
+    const { onnxEmbeddingProviderDirect } =
+      await import('@/infrastructure/embedding/onnx-embedding-provider-direct')
     return onnxEmbeddingProviderDirect.isAvailable()
   },
 
   // 语义搜索：在 Offscreen 里完成 embed + 向量相似度计算，供 background/omnibox 调用
   SEMANTIC_SEARCH: async payload => {
-    const { onnxEmbeddingProviderDirect } = await import(
-      '@/infrastructure/embedding/onnx-embedding-provider-direct'
-    )
-    const { localVectorStore } = await import(
-      '@/infrastructure/embedding/local-vector-store'
-    )
+    const { onnxEmbeddingProviderDirect } =
+      await import('@/infrastructure/embedding/onnx-embedding-provider-direct')
+    const { localVectorStore } = await import('@/infrastructure/embedding/local-vector-store')
     const data = payload as { query: string; topK?: number; minScore?: number }
     const queryVector = await onnxEmbeddingProviderDirect.embed(data.query.trim())
     return localVectorStore.search(queryVector, data.topK ?? 10, data.minScore ?? 0.2)
@@ -310,9 +292,7 @@ const handlers: Record<string, OffscreenHandler> = {
 
   // 文件夹推荐：在 Offscreen 里完成向量计算和推荐
   GET_FOLDER_RECOMMENDATIONS: async payload => {
-    const { folderVectorService } = await import(
-      '@/application/folder/folder-vector-service'
-    )
+    const { folderVectorService } = await import('@/application/folder/folder-vector-service')
     const data = payload as {
       title: string
       url: string
@@ -331,7 +311,7 @@ const handlers: Record<string, OffscreenHandler> = {
 
 /**
  * 监听来自 Background Script 的消息
- * 
+ *
  * Offscreen Document 通过消息机制接收任务请求
  */
 
@@ -352,12 +332,11 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
 
   const handler = handlers[message.type]
-  
+
   logger.info('OffscreenDocument', `🔄 处理 Offscreen 任务: ${message.type}`, {
     hasHandler: !!handler,
     availableHandlers: Object.keys(handlers)
   })
-
   ;(async () => {
     try {
       if (!handler) {
@@ -385,7 +364,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
 /**
  * 初始化 Worker 文档索引
- * 
+ *
  * 从 IndexedDB 加载书签数据并发送给 Worker 建立索引
  */
 async function primeWorkerDocs(worker: Worker, docsFromPayload?: WorkerDoc[]) {
@@ -404,7 +383,7 @@ async function primeWorkerDocs(worker: Worker, docsFromPayload?: WorkerDoc[]) {
 
 /**
  * 从 IndexedDB 收集文档数据
- * 
+ *
  * 将书签数据转换为 Worker 所需的文档格式
  */
 async function collectDocsFromIDB(): Promise<WorkerDoc[]> {

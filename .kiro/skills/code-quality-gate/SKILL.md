@@ -19,12 +19,14 @@ bun run format
 ```
 
 **检查清单：**
+
 - [ ] TypeScript 类型检查通过？（无错误）
 - [ ] ESLint 检查通过？（无错误）
 - [ ] Stylelint 检查通过？（无错误）
 - [ ] Prettier 格式化完成？（代码格式统一）
 
 **如果有错误：**
+
 - ✅ 必须立即修复
 - ✅ 只有在所有检查通过后才能完成任务
 - ❌ 不允许带着错误提交代码
@@ -37,16 +39,17 @@ bun run format
 
 ```typescript
 // ❌ 永久禁止：any 类型
-const data: any = await fetchData()  // 禁止！
+const data: any = await fetchData() // 禁止！
 
 // ✅ 正确：使用具体类型或 unknown
 const data: BookmarkRecord = await fetchData()
 // 或
 const data: unknown = await fetchData()
-const validated = BookmarkRecordSchema.parse(data)  // 使用 Zod 校验
+const validated = BookmarkRecordSchema.parse(data) // 使用 Zod 校验
 ```
 
 **检查方法：**
+
 ```bash
 # 搜索 any 类型
 grep -r ": any" frontend/src/
@@ -60,8 +63,8 @@ grep -r "as any" frontend/src/
 ```css
 /* ❌ 禁止：硬编码颜色 */
 .button {
-  background-color: #3B82F6;  /* 禁止！ */
-  color: #333;                /* 禁止！ */
+  background-color: #3b82f6; /* 禁止！ */
+  color: #333; /* 禁止！ */
 }
 
 /* ✅ 正确：使用 CSS 变量 */
@@ -74,7 +77,7 @@ grep -r "as any" frontend/src/
 ```css
 /* ❌ 禁止：硬编码间距 */
 .card {
-  padding: 16px;      /* 禁止！ */
+  padding: 16px; /* 禁止！ */
   margin-bottom: 25px; /* 禁止！ */
 }
 
@@ -88,8 +91,8 @@ grep -r "as any" frontend/src/
 ```css
 /* ❌ 禁止：硬编码字号 */
 .title {
-  font-size: 18px;    /* 禁止！ */
-  font-weight: 600;   /* 禁止！ */
+  font-size: 18px; /* 禁止！ */
+  font-weight: 600; /* 禁止！ */
 }
 
 /* ✅ 正确：使用字体 tokens */
@@ -100,6 +103,7 @@ grep -r "as any" frontend/src/
 ```
 
 **检查方法：**
+
 ```bash
 # Stylelint 会自动检查硬编码数值
 bun run stylelint:force
@@ -110,12 +114,14 @@ bun run stylelint:force
 ### 3. 文件创建禁止项
 
 **❌ 禁止自动创建测试文件：**
+
 ```
 ❌ 禁止：主动创建 .test.ts、.spec.ts、.test.vue 等测试文件
 ✅ 例外：用户明确说"创建测试文件"、"写测试"时
 ```
 
 **❌ 禁止自动生成文档：**
+
 ```
 ❌ 禁止：主动生成 .md、.txt、.doc、.pdf 等文档
 ❌ 禁止：创建 migration-report.md、summary.md、changelog.md
@@ -123,6 +129,7 @@ bun run stylelint:force
 ```
 
 **原因：**
+
 - 测试文件属于冗余垃圾，增加维护成本
 - 文档应该由用户主动要求创建
 - 避免项目中堆积无用文件
@@ -132,6 +139,7 @@ bun run stylelint:force
 ### 4. 注释禁止项
 
 **❌ 禁止的注释类型：**
+
 ```typescript
 // ❌ 禁止："已删除"、"已移除"、"已弃用"等状态标记
 // 已删除：旧的实现方式
@@ -144,13 +152,14 @@ bun run stylelint:force
 
 // ❌ 禁止：重复代码逻辑的注释
 // 设置 loading 为 true
-loading.value = true  // 代码已经很清楚了
+loading.value = true // 代码已经很清楚了
 
 // ❌ 禁止：过时的 TODO、FIXME 标记
 // TODO: 以后优化这里
 ```
 
 **✅ 允许的注释：**
+
 ```typescript
 // ✅ 允许：解释为什么这样做（业务逻辑、性能优化原因）
 // 使用 Immer 更新 Map，确保 Vue 可以检测到变化
@@ -190,6 +199,7 @@ bun run typecheck:force
 ```
 
 **检查内容：**
+
 - ✅ 类型错误
 - ✅ 类型推断
 - ✅ 类型兼容性
@@ -204,12 +214,14 @@ bun run lint:fix:enhanced
 ```
 
 **检查内容：**
+
 - ✅ 代码风格
 - ✅ 潜在错误
 - ✅ 最佳实践
 - ✅ Vue 3 规范
 
 **自动修复：**
+
 - ✅ 自动格式化
 - ✅ 自动添加分号
 - ✅ 自动排序 import
@@ -223,12 +235,14 @@ bun run stylelint:force
 ```
 
 **检查内容：**
+
 - ✅ CSS 语法错误
 - ✅ 硬编码数值（颜色、间距、字号）
 - ✅ 样式规范
 - ✅ 属性顺序
 
 **自动修复：**
+
 - ✅ 自动格式化 CSS
 - ✅ 自动排序属性
 
@@ -241,6 +255,7 @@ bun run format
 ```
 
 **格式化内容：**
+
 - ✅ JavaScript/TypeScript
 - ✅ Vue 单文件组件
 - ✅ CSS/SCSS
@@ -253,13 +268,13 @@ bun run format
 
 ### 目标指标
 
-| 指标 | 目标值 | 当前值 |
-|------|--------|--------|
-| TypeScript 覆盖率 | 100% | - |
-| ESLint 错误数 | 0 | - |
-| Stylelint 错误数 | 0 | - |
-| 硬编码数值 | 0 | - |
-| any 类型使用 | 0 | - |
+| 指标              | 目标值 | 当前值 |
+| ----------------- | ------ | ------ |
+| TypeScript 覆盖率 | 100%   | -      |
+| ESLint 错误数     | 0      | -      |
+| Stylelint 错误数  | 0      | -      |
+| 硬编码数值        | 0      | -      |
+| any 类型使用      | 0      | -      |
 
 ---
 
@@ -270,6 +285,7 @@ bun run format
 **症状：** `bun run typecheck:force` 报错
 
 **修复步骤：**
+
 1. 查看错误信息，定位文件和行号
 2. 添加正确的类型注解
 3. 如果是外部数据，使用 Zod 校验
@@ -282,6 +298,7 @@ bun run format
 **症状：** `bun run lint:fix:enhanced` 报错
 
 **修复步骤：**
+
 1. 大部分错误会自动修复
 2. 手动修复无法自动修复的错误
 3. 重新运行 `bun run lint:fix:enhanced` 确认修复
@@ -293,6 +310,7 @@ bun run format
 **症状：** `bun run stylelint:force` 报错
 
 **修复步骤：**
+
 1. 查看错误信息，定位硬编码数值
 2. 替换为 CSS 变量（参考 design-tokens）
 3. 重新运行 `bun run stylelint:force` 确认修复

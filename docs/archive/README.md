@@ -7,14 +7,17 @@
 ## 文档列表
 
 ### 清理与优化记录
+
 - `CLEANUP_SUMMARY.md` - 项目清理总结
 - `ENVIRONMENT_SETUP_SUMMARY.md` - 环境设置总结
 
 ### 功能实现进度
+
 - `FOLDER_VECTOR_IMPLEMENTATION_PROGRESS.md` - 文件夹向量实现进度
 - `SEARCH_ENHANCEMENT_PROGRESS.md` - 搜索增强进度
 
 ### 修复记录
+
 - `SERVICE_WORKER_FIX_SUMMARY.md` - Service Worker 修复总结
 
 ---

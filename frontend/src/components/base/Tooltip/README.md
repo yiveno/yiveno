@@ -109,19 +109,19 @@ import { Tooltip, LucideIcon } from '@/components'
 
 ### Props
 
-| 属性 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `text` | `string` | - | 简单文本内容（Plain Tooltip） |
-| `placement` | `'top' \| 'bottom' \| 'left' \| 'right'` | `'top'` | Tooltip 位置 |
-| `delay` | `number` | `500` | 显示延迟（毫秒），MD3 推荐 500ms |
-| `disabled` | `boolean` | `false` | 是否禁用 |
-| `offset` | `'xs' \| 'sm' \| 'md' \| 'lg' \| 'xl'` | `'sm'` | 与触发元素的偏移量 |
+| 属性        | 类型                                     | 默认值  | 说明                             |
+| ----------- | ---------------------------------------- | ------- | -------------------------------- |
+| `text`      | `string`                                 | -       | 简单文本内容（Plain Tooltip）    |
+| `placement` | `'top' \| 'bottom' \| 'left' \| 'right'` | `'top'` | Tooltip 位置                     |
+| `delay`     | `number`                                 | `500`   | 显示延迟（毫秒），MD3 推荐 500ms |
+| `disabled`  | `boolean`                                | `false` | 是否禁用                         |
+| `offset`    | `'xs' \| 'sm' \| 'md' \| 'lg' \| 'xl'`   | `'sm'`  | 与触发元素的偏移量               |
 
 ### Slots
 
-| 插槽名 | 说明 |
-|--------|------|
-| `default` | 触发 Tooltip 的元素（必需） |
+| 插槽名    | 说明                              |
+| --------- | --------------------------------- |
+| `default` | 触发 Tooltip 的元素（必需）       |
 | `content` | Tooltip 内容（Rich Tooltip 使用） |
 
 ### Emits
@@ -152,7 +152,7 @@ import { Tooltip, LucideIcon } from '@/components'
 
 - **最大宽度**: 320dp（Rich Tooltip）
 - **最小宽度**: 40dp
-- **内边距**: 
+- **内边距**:
   - Plain: 4dp × 8dp
   - Rich: 8dp × 12dp
 

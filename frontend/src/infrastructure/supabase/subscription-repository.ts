@@ -13,7 +13,7 @@ import type { Subscription } from './types'
 
 /**
  * 从 Supabase 查询用户的有效订阅信息
- * 
+ *
  * 查询逻辑与官网完全一致：
  * - 只查询 status = 'active' 的订阅
  * - 只查询未过期的订阅（current_period_end > now）
@@ -22,9 +22,7 @@ import type { Subscription } from './types'
  * @param userId - Supabase 用户 ID
  * @returns 订阅信息，如果没有有效订阅则返回 null
  */
-export async function getSubscriptionFromSupabase(
-  userId: string
-): Promise<Subscription | null> {
+export async function getSubscriptionFromSupabase(userId: string): Promise<Subscription | null> {
   if (!isSupabaseConfigured()) {
     logger.warn('[SubscriptionRepository] Supabase 未配置，跳过查询')
     return null

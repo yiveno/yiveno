@@ -81,10 +81,7 @@ export class QueryCache {
    * @param options - 查询选项
    * @returns 缓存键
    */
-  private generateKey(
-    query: string,
-    options?: Record<string, unknown>
-  ): string {
+  private generateKey(query: string, options?: Record<string, unknown>): string {
     const normalized = query.toLowerCase().trim()
     const optionsStr = options ? JSON.stringify(options) : ''
     return `${normalized}:${optionsStr}`
@@ -100,10 +97,7 @@ export class QueryCache {
    * @param options - 查询选项
    * @returns 缓存的查询结果，未命中或已过期时返回 null
    */
-  get(
-    query: string,
-    options?: Record<string, unknown>
-  ): EnhancedSearchResult[] | null {
+  get(query: string, options?: Record<string, unknown>): EnhancedSearchResult[] | null {
     const key = this.generateKey(query, options)
     const entry = this.cache.get(key)
 
@@ -127,7 +121,7 @@ export class QueryCache {
     entry.hits++
     entry.lastAccess = now
     this.cache.set(key, entry)
-    
+
     this.hits++
 
     this.logger.info('QueryCache', `缓存命中: ${query}`)
@@ -144,11 +138,7 @@ export class QueryCache {
    * @param results - 查询结果数组
    * @param options - 查询选项
    */
-  set(
-    query: string,
-    results: EnhancedSearchResult[],
-    options?: Record<string, unknown>
-  ): void {
+  set(query: string, results: EnhancedSearchResult[], options?: Record<string, unknown>): void {
     const key = this.generateKey(query, options)
     const now = Date.now()
 
@@ -171,10 +161,7 @@ export class QueryCache {
     }
 
     this.cache.set(key, entry)
-    this.logger.info(
-      'QueryCache',
-      `缓存写入: ${query} (${results.length} 条结果)`
-    )
+    this.logger.info('QueryCache', `缓存写入: ${query} (${results.length} 条结果)`)
   }
 
   /**
@@ -186,7 +173,7 @@ export class QueryCache {
   private evictLRU(): void {
     // Map 保证插入顺序，第一个元素是最久未使用的
     const firstKey = this.cache.keys().next().value
-    
+
     if (firstKey) {
       const evictedEntry = this.cache.get(firstKey)
       this.cache.delete(firstKey)
@@ -276,29 +263,27 @@ export class QueryCache {
    *
    * @param queries - 查询和结果数组
    */
-  async warmup(
-    queries: Array<{ query: string; results: EnhancedSearchResult[] }>
-  ): Promise<void> {
+  async warmup(queries: Array<{ query: string; results: EnhancedSearchResult[] }>): Promise<void> {
     this.logger.info('QueryCache', `预热缓存: ${queries.length} 条查询`)
 
     for (const { query, results } of queries) {
       this.set(query, results)
-      
+
       // ✅ 每 10 条查询让出主线程，避免阻塞
       if (queries.indexOf({ query, results }) % 10 === 0) {
         await new Promise(resolve => setTimeout(resolve, 0))
       }
     }
-    
+
     this.logger.info('QueryCache', `缓存预热完成，当前缓存大小: ${this.cache.size}`)
   }
 
   /**
    * 智能失效策略
-   * 
+   *
    * 根据书签变更类型，选择性失效相关缓存
    * ✅ 优化：避免全量清空，只失效受影响的查询
-   * 
+   *
    * @param changeType - 变更类型
    * @param affectedIds - 受影响的书签ID（可选）
    */
@@ -312,31 +297,34 @@ export class QueryCache {
         this.clear()
         this.logger.info('QueryCache', '全量同步，清空所有缓存')
         break
-        
+
       case 'bookmark_created':
       case 'bookmark_updated':
         // 新增/更新：只失效可能受影响的缓存
         // 策略：保留缓存，让 TTL 自然过期（避免过度失效）
-        this.logger.info('QueryCache', `书签${changeType === 'bookmark_created' ? '新增' : '更新'}，保留缓存（TTL 自然过期）`)
+        this.logger.info(
+          'QueryCache',
+          `书签${changeType === 'bookmark_created' ? '新增' : '更新'}，保留缓存（TTL 自然过期）`
+        )
         break
-        
+
       case 'bookmark_deleted':
         // 删除：失效包含已删除书签的缓存
         if (affectedIds && affectedIds.length > 0) {
           let invalidatedCount = 0
-          
+
           for (const [key, entry] of this.cache.entries()) {
             // 检查缓存结果中是否包含已删除的书签
-            const hasDeletedBookmark = entry.value.some(result => 
+            const hasDeletedBookmark = entry.value.some(result =>
               affectedIds.includes(result.bookmark.id)
             )
-            
+
             if (hasDeletedBookmark) {
               this.cache.delete(key)
               invalidatedCount++
             }
           }
-          
+
           this.logger.info('QueryCache', `书签删除，失效 ${invalidatedCount} 条缓存`)
         }
         break

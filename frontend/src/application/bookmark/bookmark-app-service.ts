@@ -20,13 +20,9 @@ function toBookmarkNode(record: BookmarkRecord): BookmarkNode {
     title: record.title,
     ...(record.url !== undefined ? { url: record.url } : {}),
     ...(typeof record.index === 'number' ? { index: record.index } : {}),
-    ...(typeof record.dateAdded === 'number'
-      ? { dateAdded: record.dateAdded }
-      : {}),
+    ...(typeof record.dateAdded === 'number' ? { dateAdded: record.dateAdded } : {}),
     children: [],
-    ...(typeof record.childrenCount === 'number'
-      ? { childrenCount: record.childrenCount }
-      : {}),
+    ...(typeof record.childrenCount === 'number' ? { childrenCount: record.childrenCount } : {}),
     _childrenLoaded: false,
     ...(record.parentId ? { parentId: String(record.parentId) } : {})
   }
@@ -60,10 +56,7 @@ export class BookmarkAppService {
   /**
    * 读取全部书签记录（含文件夹与书签），从 IndexedDB 仓储获取。
    */
-  async getAllBookmarks(
-    limit?: number,
-    offset?: number
-  ): Promise<Result<BookmarkRecord[]>> {
+  async getAllBookmarks(limit?: number, offset?: number): Promise<Result<BookmarkRecord[]>> {
     return bookmarkRepository.getAllBookmarks(limit, offset)
   }
 
@@ -85,9 +78,7 @@ export class BookmarkAppService {
       const result = await bookmarkRepository.getChildrenByParentId('0', 0, 100)
       if (result.ok && result.value) {
         // 转换 BookmarkRecord 为 BookmarkNode
-        const nodes: BookmarkNode[] = result.value.map(record =>
-          toBookmarkNode(record)
-        )
+        const nodes: BookmarkNode[] = result.value.map(record => toBookmarkNode(record))
         return ok(nodes)
       }
       return err(new Error('获取根节点失败'))
@@ -112,9 +103,7 @@ export class BookmarkAppService {
       )
       if (result.ok && result.value) {
         // 转换 BookmarkRecord 为 BookmarkNode
-        const nodes: BookmarkNode[] = result.value.map(record =>
-          toBookmarkNode(record)
-        )
+        const nodes: BookmarkNode[] = result.value.map(record => toBookmarkNode(record))
         return ok(nodes)
       }
       return err(new Error('获取子节点失败'))
@@ -250,43 +239,43 @@ export class BookmarkAppService {
 
   /**
    * 更新书签访问记录
-   * 
+   *
    * @param bookmarkId - 书签ID
    * @returns Result<void>
    */
   async updateVisitRecord(bookmarkId: string): Promise<Result<void>> {
     try {
       logger.info('BookmarkAppService', '📊 更新访问记录', { id: bookmarkId })
-      
+
       // 获取当前书签数据
       const bookmarkResult = await bookmarkRepository.getBookmarkById(bookmarkId)
       if (!bookmarkResult.ok || !bookmarkResult.value) {
         logger.warn('BookmarkAppService', '书签不存在', bookmarkId)
         return err(new Error('书签不存在'))
       }
-      
+
       const bookmark = bookmarkResult.value
-      
+
       // 更新访问记录
       const now = Date.now()
       const updateResult = await bookmarkRepository.updateBookmark(bookmarkId, {
         lastVisited: now,
         visitCount: (bookmark.visitCount || 0) + 1
       })
-      
+
       if (!updateResult.ok) {
         return err(new Error('更新访问记录失败'))
       }
-      
+
       logger.debug('BookmarkAppService', '✅ 访问记录已更新', {
         id: bookmarkId,
         lastVisited: now,
         visitCount: (bookmark.visitCount || 0) + 1
       })
-      
+
       // 触发事件，通知 RecentVisits 组件刷新
       emitEvent('bookmark:visited', { id: bookmarkId, timestamp: now })
-      
+
       return ok(undefined)
     } catch (error) {
       logger.error('BookmarkAppService', '更新访问记录失败', error)

@@ -17,41 +17,41 @@
 
 ### 对话框类（3 个）
 
-| 组件 | 说明 | 依赖组件 | 文档 |
-|------|------|----------|------|
-| **Dialog** | 对话框 | Button, Card, Icon | [查看文档](./Dialog/README.md) |
-| **ConfirmableDialog** | 可确认对话框 | Dialog | [查看文档](./ConfirmableDialog/README.md) |
+| 组件                   | 说明           | 依赖组件             | 文档                                       |
+| ---------------------- | -------------- | -------------------- | ------------------------------------------ |
+| **Dialog**             | 对话框         | Button, Card, Icon   | [查看文档](./Dialog/README.md)             |
+| **ConfirmableDialog**  | 可确认对话框   | Dialog               | [查看文档](./ConfirmableDialog/README.md)  |
 | **SyncProgressDialog** | 同步进度对话框 | Dialog, Icon, Button | [查看文档](./SyncProgressDialog/README.md) |
 
 ### 表单类（2 个）
 
-| 组件 | 说明 | 依赖组件 | 文档 |
-|------|------|----------|------|
-| **Checkbox** | 复选框 | Icon | [查看文档](./Checkbox/README.md) |
+| 组件         | 说明   | 依赖组件 | 文档                             |
+| ------------ | ------ | -------- | -------------------------------- |
+| **Checkbox** | 复选框 | Icon     | [查看文档](./Checkbox/README.md) |
 
 ### 展示类（6 个）
 
-| 组件 | 说明 | 依赖组件 | 文档 |
-|------|------|----------|------|
-| **Alert** | 警告提示 | Icon | [查看文档](./Alert/README.md) |
-| **Card** | 卡片容器 | Icon | [查看文档](./Card/README.md) |
-| **EmptyState** | 空状态 | Icon | [查看文档](./EmptyState/README.md) |
-| **Avatar** | 头像 | Icon | [查看文档](./Avatar/README.md) |
-| **Chip** | 标签/徽章 | Material Web Components | [查看文档](./Chip/README.md) |
-| **Notification** | 通知提示 | Icon | [查看文档](./Notification/README.md) |
+| 组件             | 说明      | 依赖组件                | 文档                                 |
+| ---------------- | --------- | ----------------------- | ------------------------------------ |
+| **Alert**        | 警告提示  | Icon                    | [查看文档](./Alert/README.md)        |
+| **Card**         | 卡片容器  | Icon                    | [查看文档](./Card/README.md)         |
+| **EmptyState**   | 空状态    | Icon                    | [查看文档](./EmptyState/README.md)   |
+| **Avatar**       | 头像      | Icon                    | [查看文档](./Avatar/README.md)       |
+| **Chip**         | 标签/徽章 | Material Web Components | [查看文档](./Chip/README.md)         |
+| **Notification** | 通知提示  | Icon                    | [查看文档](./Notification/README.md) |
 
 ### 导航类（2 个）
 
-| 组件 | 说明 | 依赖组件 | 文档 |
-|------|------|----------|------|
-| **Tabs** | 标签页 | Icon | [查看文档](./Tabs/README.md) |
+| 组件          | 说明     | 依赖组件                  | 文档                              |
+| ------------- | -------- | ------------------------- | --------------------------------- |
+| **Tabs**      | 标签页   | Icon                      | [查看文档](./Tabs/README.md)      |
 | **AppHeader** | 应用头部 | Icon, Button, ThemeToggle | [查看文档](./AppHeader/README.md) |
 
 ### 功能类（2 个）
 
-| 组件 | 说明 | 依赖组件 | 文档 |
-|------|------|----------|------|
-| **ThemeToggle** | 主题切换 | Icon, Button | [查看文档](./ThemeToggle/README.md) |
+| 组件                   | 说明     | 依赖组件     | 文档                                       |
+| ---------------------- | -------- | ------------ | ------------------------------------------ |
+| **ThemeToggle**        | 主题切换 | Icon, Button | [查看文档](./ThemeToggle/README.md)        |
 | **PerformanceMonitor** | 性能监控 | Button, Icon | [查看文档](./PerformanceMonitor/README.md) |
 
 **总计**: 13 个复合组件
@@ -68,19 +68,13 @@ import { Alert, Card, Dialog, EmptyState, Checkbox } from '@/components'
 <template>
   <Card>
     <Alert color="success">操作成功！</Alert>
-    
-    <EmptyState
-      v-if="!items.length"
-      icon="icon-folder"
-      title="暂无数据"
-    />
-    
+
+    <EmptyState v-if="!items.length" icon="icon-folder" title="暂无数据" />
+
     <Checkbox v-model="agreed" label="同意条款" />
   </Card>
-  
-  <Dialog :show="showDialog" title="确认">
-    确定要删除吗？
-  </Dialog>
+
+  <Dialog :show="showDialog" title="确认"> 确定要删除吗？ </Dialog>
 </template>
 ```
 
@@ -96,7 +90,7 @@ import { Card, Alert, Button, EmptyState } from '@/components'
     <Alert v-if="error" color="error">
       {{ error }}
     </Alert>
-    
+
     <EmptyState
       v-else-if="!users.length"
       icon="icon-users"
@@ -105,7 +99,7 @@ import { Card, Alert, Button, EmptyState } from '@/components'
     >
       <Button @click="addUser">添加用户</Button>
     </EmptyState>
-    
+
     <div v-else>
       <!-- 用户列表 -->
     </div>
@@ -127,12 +121,12 @@ import { Icon, Button } from '@/components'
 
 <!-- ❌ 错误：不要导入其他复合组件 -->
 <script setup lang="ts">
-import { Alert } from '@/components'  // 复合组件
+import { Alert } from '@/components' // 复合组件
 </script>
 
 <!-- ✅ 例外：有明确层级关系的可以依赖 -->
 <script setup lang="ts">
-import Dialog from '../Dialog/Dialog.vue'  // ConfirmableDialog 可以依赖 Dialog
+import Dialog from '../Dialog/Dialog.vue' // ConfirmableDialog 可以依赖 Dialog
 </script>
 ```
 
@@ -157,7 +151,7 @@ const emit = defineEmits<{
 }>()
 
 function handleClick() {
-  emit('click')  // 只负责 UI 交互
+  emit('click') // 只负责 UI 交互
 }
 </script>
 ```
@@ -170,17 +164,21 @@ function handleClick() {
 <!-- ✅ 方案 1：完全由外部传入 -->
 <template>
   <Alert>
-    <slot />  <!-- 文案由父组件传入 -->
+    <slot />
+    <!-- 文案由父组件传入 -->
   </Alert>
 </template>
 
 <!-- ✅ 方案 2：内置默认文案 + 支持覆盖 -->
 <script setup lang="ts">
-const props = withDefaults(defineProps<{
-  message?: string
-}>(), {
-  message: '默认提示文案'  // 通用的默认文案
-})
+const props = withDefaults(
+  defineProps<{
+    message?: string
+  }>(),
+  {
+    message: '默认提示文案' // 通用的默认文案
+  }
+)
 </script>
 
 <template>
@@ -189,7 +187,8 @@ const props = withDefaults(defineProps<{
 
 <!-- ❌ 错误：写死项目特定文案 -->
 <template>
-  <Alert>书签创建成功</Alert>  <!-- 项目特定文案 -->
+  <Alert>书签创建成功</Alert>
+  <!-- 项目特定文案 -->
 </template>
 ```
 
@@ -325,16 +324,19 @@ export interface ComponentNameEmits {
 ### 2025-05-20：组件清理
 
 **删除的组件**：
+
 - ❌ `UrlInput` - 已被 `Input` 组件的 `type="url"` 替代
 - ❌ `CountIndicator` - 已被 `Chip` 组件完全替代
 
 **Chip 组件增强**：
+
 - ✅ 现在用于显示数量徽章（替代 CountIndicator）
 - ✅ 支持多种样式变体：`filled`、`outlined`、`soft`
 - ✅ 支持多种颜色：`primary`、`secondary`、`success`、`warning`、`error`、`info`
 - ✅ 支持多种尺寸：`sm`、`md`、`lg`
 
 **使用示例**：
+
 ```vue
 <!-- 显示数量（替代 CountIndicator） -->
 <Chip size="sm" variant="filled" color="primary">{{ count }}</Chip>

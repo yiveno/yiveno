@@ -1,6 +1,6 @@
 /**
  * Vite 插件配置
- * 
+ *
  * 注意：虽然 Vite 8 使用 Rolldown 替代了 Rollup，
  * 但 rollup-plugin-visualizer 仍然兼容（Rolldown 保持了 Rollup 插件 API 兼容性）
  */
@@ -24,9 +24,7 @@ export function forceHttpsEnvVars(env: Record<string, string>) {
       process.env[key] = httpsValue
       // 更新 env 对象
       env[key] = httpsValue
-      console.warn(
-        `⚠️  构建时转换: ${key} 从 HTTP 转换为 HTTPS: ${value} → ${httpsValue}`
-      )
+      console.warn(`⚠️  构建时转换: ${key} 从 HTTP 转换为 HTTPS: ${value} → ${httpsValue}`)
     }
   })
 }
@@ -40,7 +38,7 @@ export function createVuePlugin() {
       compilerOptions: {
         // ✨ 识别 Material Web Components 自定义元素
         // 所有以 md- 开头的标签都被视为自定义元素，不会触发 Vue 组件解析警告
-        isCustomElement: (tag) => tag.startsWith('md-')
+        isCustomElement: tag => tag.startsWith('md-')
       }
     }
   })
@@ -88,9 +86,7 @@ export function createForceHttpsPlugin(): Plugin {
           if (config.env[key]) {
             config.env[key] = httpsValue
           }
-          console.warn(
-            `⚠️  插件转换: ${key} 从 HTTP 转换为 HTTPS: ${value} → ${httpsValue}`
-          )
+          console.warn(`⚠️  插件转换: ${key} 从 HTTP 转换为 HTTPS: ${value} → ${httpsValue}`)
         }
       })
     }

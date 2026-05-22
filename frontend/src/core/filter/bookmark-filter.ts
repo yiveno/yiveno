@@ -109,16 +109,10 @@ export function filterBookmarkNodes(
     }
 
     // 获取要匹配的字段值
-    const title = caseSensitive
-      ? node.title || ''
-      : (node.title || '').toLowerCase()
+    const title = caseSensitive ? node.title || '' : (node.title || '').toLowerCase()
     const url = caseSensitive ? node.url || '' : (node.url || '').toLowerCase()
-    const domain = caseSensitive
-      ? node.domain || ''
-      : (node.domain || '').toLowerCase()
-    const tags = (node.tags || []).map(t =>
-      caseSensitive ? t : t.toLowerCase()
-    )
+    const domain = caseSensitive ? node.domain || '' : (node.domain || '').toLowerCase()
+    const tags = (node.tags || []).map(t => (caseSensitive ? t : t.toLowerCase()))
 
     // 标签查询
     if (isTagQuery) {
@@ -187,18 +181,18 @@ export function filterBookmarkNodes(
         const resultNode: FilteredBookmarkNode = {
           ...node
         }
-        
+
         if (matched) {
           resultNode.matchedFields = matchedFields
           resultNode.filterScore = score
         }
-        
+
         if (childMatches.length > 0) {
           resultNode.children = childMatches
         } else if (!node.url) {
           resultNode.children = []
         }
-        
+
         results.push(resultNode)
       }
     }
@@ -259,9 +253,7 @@ function calculateFuzzyScore(text: string, query: string): number {
  * @param nodes - 筛选后的树形节点
  * @returns 扁平化的节点数组
  */
-export function flattenFilterResults(
-  nodes: FilteredBookmarkNode[]
-): FilteredBookmarkNode[] {
+export function flattenFilterResults(nodes: FilteredBookmarkNode[]): FilteredBookmarkNode[] {
   const results: FilteredBookmarkNode[] = []
 
   function traverse(nodeList: FilteredBookmarkNode[]) {
@@ -344,9 +336,7 @@ export function highlightMatches(
  * @param nodes - 筛选后的树形节点
  * @returns 更新了 childrenCount 的节点
  */
-export function recalculateChildrenCount(
-  nodes: FilteredBookmarkNode[]
-): FilteredBookmarkNode[] {
+export function recalculateChildrenCount(nodes: FilteredBookmarkNode[]): FilteredBookmarkNode[] {
   function updateNode(node: FilteredBookmarkNode): FilteredBookmarkNode {
     // 如果是书签（有 url），直接返回
     if (node.url) {

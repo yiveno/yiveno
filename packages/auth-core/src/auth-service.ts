@@ -56,14 +56,8 @@ export class AuthService {
         }
 
         // 检测频率限制错误
-        if (
-          errorCode === 'over_email_send_rate_limit' ||
-          errorCode.includes('rate_limit')
-        ) {
-          const friendlyMessage = getErrorMessage(
-            errorCode,
-            '发送邮件过于频繁，请稍后再试'
-          )
+        if (errorCode === 'over_email_send_rate_limit' || errorCode.includes('rate_limit')) {
+          const friendlyMessage = getErrorMessage(errorCode, '发送邮件过于频繁，请稍后再试')
           throw new Error(friendlyMessage)
         }
 
@@ -129,10 +123,7 @@ export class AuthService {
    * OAuth 登录（获取授权 URL）
    * 注意：实际的 OAuth 流程需要在各平台中实现（因为涉及平台特定的 API）
    */
-  async getOAuthUrl(
-    provider: OAuthProvider,
-    config: OAuthConfig
-  ): Promise<{ url: string }> {
+  async getOAuthUrl(provider: OAuthProvider, config: OAuthConfig): Promise<{ url: string }> {
     try {
       const { data, error } = await this.supabase.auth.signInWithOAuth({
         provider: provider as 'google', // 目前仅支持 Google OAuth
@@ -158,10 +149,7 @@ export class AuthService {
   /**
    * 使用 OAuth tokens 设置会话
    */
-  async setOAuthSession(
-    accessToken: string,
-    refreshToken: string
-  ): Promise<AuthResponse> {
+  async setOAuthSession(accessToken: string, refreshToken: string): Promise<AuthResponse> {
     try {
       const { data, error } = await this.supabase.auth.setSession({
         access_token: accessToken,
@@ -205,10 +193,7 @@ export class AuthService {
         }
       : undefined
 
-    const { error } = await this.supabase.auth.resetPasswordForEmail(
-      info.email,
-      resetOptions
-    )
+    const { error } = await this.supabase.auth.resetPasswordForEmail(info.email, resetOptions)
 
     if (error) {
       const errorCode = extractErrorCode(error)

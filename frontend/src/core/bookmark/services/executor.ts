@@ -10,16 +10,8 @@
  */
 import type { ILogger } from '@/core/common/logger'
 import { noopLogger } from '@/core/common/logger'
-import {
-  OperationType,
-  type BookmarkOperation,
-  type DiffResult
-} from './diff-engine'
-import type {
-  BookmarkCreateDetails,
-  BookmarkUpdateDetails,
-  BookmarkDestination
-} from '@/types'
+import { OperationType, type BookmarkOperation, type DiffResult } from './diff-engine'
+import type { BookmarkCreateDetails, BookmarkUpdateDetails, BookmarkDestination } from '@/types'
 
 export interface ExecutorConfig {
   maxConcurrency: number
@@ -92,38 +84,21 @@ export class SmartBookmarkExecutor {
     try {
       switch (diffResult.strategy.type) {
         case 'incremental':
-          await this.executeIncremental(
-            diffResult.operations,
-            progressCallback,
-            result
-          )
+          await this.executeIncremental(diffResult.operations, progressCallback, result)
           break
         case 'batch':
-          await this.executeBatch(
-            diffResult.operations,
-            progressCallback,
-            result
-          )
+          await this.executeBatch(diffResult.operations, progressCallback, result)
           break
         case 'rebuild':
-          await this.executeRebuild(
-            diffResult.operations,
-            progressCallback,
-            result
-          )
+          await this.executeRebuild(diffResult.operations, progressCallback, result)
           break
       }
       result.success = result.failedOperations === 0
       result.totalTime = performance.now() - startTime
       result.performance.timePerOperation =
-        result.executedOperations > 0
-          ? result.totalTime / result.executedOperations
-          : 0
-      const originalEstimatedTime = this.calculateOriginalTime(
-        diffResult.operations
-      )
-      result.performance.effectiveSpeedup =
-        originalEstimatedTime / Math.max(1, result.totalTime)
+        result.executedOperations > 0 ? result.totalTime / result.executedOperations : 0
+      const originalEstimatedTime = this.calculateOriginalTime(diffResult.operations)
+      result.performance.effectiveSpeedup = originalEstimatedTime / Math.max(1, result.totalTime)
       this.logger.info('SmartBookmarkExecutor', '✅ 执行完成', {
         success: result.success,
         executedOperations: result.executedOperations,
@@ -236,10 +211,7 @@ export class SmartBookmarkExecutor {
         result.performance.apiCallsActual++
       })
       if (progressCallback) {
-        const processed = Math.min(
-          (batchIndex + 1) * this.config.batchSize,
-          operations.length
-        )
+        const processed = Math.min((batchIndex + 1) * this.config.batchSize, operations.length)
         progressCallback({
           completed: processed,
           total: operations.length,
@@ -284,9 +256,7 @@ export class SmartBookmarkExecutor {
     }
   }
 
-  private async executeCreateOperation(
-    operation: BookmarkOperation
-  ): Promise<void> {
+  private async executeCreateOperation(operation: BookmarkOperation): Promise<void> {
     const target = operation.target
     if (!target) {
       throw new Error('CREATE 操作缺少 target')
@@ -298,22 +268,16 @@ export class SmartBookmarkExecutor {
       if (target.index !== undefined) createParams.index = target.index
       if (target.url) createParams.url = target.url
       chrome.bookmarks.create(createParams, _result => {
-        if (chrome.runtime.lastError)
-          reject(new Error(chrome.runtime.lastError.message))
+        if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message))
         else {
-          this.logger.debug(
-            'SmartBookmarkExecutor',
-            `✅ 创建成功: ${target.title}`
-          )
+          this.logger.debug('SmartBookmarkExecutor', `✅ 创建成功: ${target.title}`)
           resolve()
         }
       })
     })
   }
 
-  private async executeDeleteOperation(
-    operation: BookmarkOperation
-  ): Promise<void> {
+  private async executeDeleteOperation(operation: BookmarkOperation): Promise<void> {
     const nodeId = operation.target?.id
     if (!nodeId) {
       throw new Error('DELETE 操作缺少目标节点 ID')
@@ -331,25 +295,17 @@ export class SmartBookmarkExecutor {
         }
         if (!node.url) {
           chrome.bookmarks.removeTree(nodeId, () => {
-            if (chrome.runtime.lastError)
-              reject(new Error(chrome.runtime.lastError.message))
+            if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message))
             else {
-              this.logger.debug(
-                'SmartBookmarkExecutor',
-                `🗑️  删除文件夹: ${node.title}`
-              )
+              this.logger.debug('SmartBookmarkExecutor', `🗑️  删除文件夹: ${node.title}`)
               resolve()
             }
           })
         } else {
           chrome.bookmarks.remove(nodeId, () => {
-            if (chrome.runtime.lastError)
-              reject(new Error(chrome.runtime.lastError.message))
+            if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message))
             else {
-              this.logger.debug(
-                'SmartBookmarkExecutor',
-                `🗑️  删除书签: ${node.title}`
-              )
+              this.logger.debug('SmartBookmarkExecutor', `🗑️  删除书签: ${node.title}`)
               resolve()
             }
           })
@@ -358,9 +314,7 @@ export class SmartBookmarkExecutor {
     })
   }
 
-  private async executeUpdateOperation(
-    operation: BookmarkOperation
-  ): Promise<void> {
+  private async executeUpdateOperation(operation: BookmarkOperation): Promise<void> {
     const target = operation.target
     if (!target?.id) {
       throw new Error('UPDATE 操作缺少目标节点')
@@ -371,22 +325,16 @@ export class SmartBookmarkExecutor {
       if (target.title) updateParams.title = target.title
       if (target.url) updateParams.url = target.url
       chrome.bookmarks.update(targetId, updateParams, () => {
-        if (chrome.runtime.lastError)
-          reject(new Error(chrome.runtime.lastError.message))
+        if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message))
         else {
-          this.logger.debug(
-            'SmartBookmarkExecutor',
-            `📝 更新成功: ${target.title}`
-          )
+          this.logger.debug('SmartBookmarkExecutor', `📝 更新成功: ${target.title}`)
           resolve()
         }
       })
     })
   }
 
-  private async executeMoveOperation(
-    operation: BookmarkOperation
-  ): Promise<void> {
+  private async executeMoveOperation(operation: BookmarkOperation): Promise<void> {
     const target = operation.target
     if (!target?.id) {
       throw new Error('MOVE 操作缺少目标节点')
@@ -397,22 +345,16 @@ export class SmartBookmarkExecutor {
       if (target.parentId) moveParams.parentId = target.parentId
       if (target.index !== undefined) moveParams.index = target.index
       chrome.bookmarks.move(targetId, moveParams, () => {
-        if (chrome.runtime.lastError)
-          reject(new Error(chrome.runtime.lastError.message))
+        if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message))
         else {
-          this.logger.debug(
-            'SmartBookmarkExecutor',
-            `📦 移动成功: ${target.id}`
-          )
+          this.logger.debug('SmartBookmarkExecutor', `📦 移动成功: ${target.id}`)
           resolve()
         }
       })
     })
   }
 
-  private async executeReorderOperation(
-    operation: BookmarkOperation
-  ): Promise<void> {
+  private async executeReorderOperation(operation: BookmarkOperation): Promise<void> {
     const target = operation.target
     const children = target?.children
     if (!target || !children) {
@@ -425,29 +367,21 @@ export class SmartBookmarkExecutor {
           chrome.bookmarks.move(
             child.id,
             {
-              ...(target.parentId !== undefined
-                ? { parentId: target.parentId }
-                : {}),
+              ...(target.parentId !== undefined ? { parentId: target.parentId } : {}),
               index: i
             },
             () => {
-              if (chrome.runtime.lastError)
-                reject(new Error(chrome.runtime.lastError.message))
+              if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message))
               else resolve()
             }
           )
         })
       }
     }
-    this.logger.debug(
-      'SmartBookmarkExecutor',
-      `🔄 重排序完成: ${target.parentId}`
-    )
+    this.logger.debug('SmartBookmarkExecutor', `🔄 重排序完成: ${target.parentId}`)
   }
 
-  private resolveDependencies(
-    operations: BookmarkOperation[]
-  ): BookmarkOperation[] {
+  private resolveDependencies(operations: BookmarkOperation[]): BookmarkOperation[] {
     const result: BookmarkOperation[] = []
     const visited = new Set<string>()
     const visit = (operation: BookmarkOperation) => {
@@ -465,11 +399,9 @@ export class SmartBookmarkExecutor {
     return result
   }
 
-  private groupOperationsIntoBatches(
-    operations: BookmarkOperation[]
-  ): BookmarkOperation[][] {
+  private groupOperationsIntoBatches(operations: BookmarkOperation[]): BookmarkOperation[][] {
     const batches: BookmarkOperation[][] = []
-      const groups = new Map<string, BookmarkOperation[]>()
+    const groups = new Map<string, BookmarkOperation[]>()
     operations.forEach(op => {
       const key = `${op.type}_${op.priority}`
       if (!groups.has(key)) groups.set(key, [])
@@ -507,11 +439,7 @@ export class SmartBookmarkExecutor {
     }
   }
 
-  private estimateRemainingTime(
-    currentIndex: number,
-    total: number,
-    startTime: number
-  ): number {
+  private estimateRemainingTime(currentIndex: number, total: number, startTime: number): number {
     if (currentIndex === 0) return 0
     const elapsed = performance.now() - startTime
     const avgTimePerItem = elapsed / currentIndex

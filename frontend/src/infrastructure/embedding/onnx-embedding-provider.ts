@@ -15,7 +15,9 @@ class OnnxEmbeddingProviderDirect implements EmbeddingProvider {
   readonly name = 'onnx-local'
   readonly dimensions = DEFAULT_DIMENSIONS
 
-  private pipeline: ((text: string | string[], options?: Record<string, unknown>) => Promise<unknown>) | null = null
+  private pipeline:
+    | ((text: string | string[], options?: Record<string, unknown>) => Promise<unknown>)
+    | null = null
   private loadPromise: Promise<void> | null = null
   private loadFailed = false
 
@@ -49,11 +51,11 @@ class OnnxEmbeddingProviderDirect implements EmbeddingProvider {
         wasmBackend.wasmPaths = chrome.runtime.getURL('assets/')
       }
 
-      this.pipeline = await pipeline(
+      this.pipeline = (await pipeline(
         'feature-extraction',
         'Xenova/paraphrase-multilingual-MiniLM-L12-v2',
         { dtype: 'q8', device: 'wasm' }
-      ) as (text: string | string[], options?: Record<string, unknown>) => Promise<unknown>
+      )) as (text: string | string[], options?: Record<string, unknown>) => Promise<unknown>
 
       logger.info(LOG_TAG, `模型加载完成，耗时 ${Date.now() - startTime}ms`)
     })()
@@ -97,9 +99,8 @@ function extractVector(output: unknown): number[] {
 function extractBatchVectors(output: unknown, count: number): number[][] {
   const tensor = output as { data: Float32Array | number[]; dims: number[] }
   if (tensor?.data && tensor?.dims) {
-    const dim = tensor.dims.length >= 2
-      ? tensor.dims[tensor.dims.length - 1]
-      : tensor.data.length / count
+    const dim =
+      tensor.dims.length >= 2 ? tensor.dims[tensor.dims.length - 1] : tensor.data.length / count
     if (dim === undefined) {
       return []
     }
@@ -112,7 +113,7 @@ function extractBatchVectors(output: unknown, count: number): number[][] {
   }
   if (Array.isArray(output)) {
     return output.map(item =>
-      Array.isArray(item) ? item as number[] : Array.from(item as Float32Array)
+      Array.isArray(item) ? (item as number[]) : Array.from(item as Float32Array)
     )
   }
   throw new Error('无法解析批量 embedding 输出格式')

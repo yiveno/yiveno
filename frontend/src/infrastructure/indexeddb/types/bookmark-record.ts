@@ -1,6 +1,6 @@
 /**
  * BookmarkRecord 类型定义
- * 
+ *
  * Type-First 方法：优先定义 TypeScript 类型，然后创建对应的 Zod schema
  * 优势：
  * 1. 类型推断更准确，避免 z.infer 的复杂性
@@ -31,7 +31,7 @@ export interface TraitMetadata {
 
 /**
  * 书签记录 - 明确的类型定义
- * 
+ *
  * 必需字段：数据完整性的核心字段
  * 可选字段：扩展功能字段，向后兼容
  */

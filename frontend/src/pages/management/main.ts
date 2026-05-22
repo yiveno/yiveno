@@ -30,16 +30,16 @@ initializeChromeMessageBridge() // 🆕 初始化事件桥接
 // 初始化应用
 async function initializeApp() {
   const startTime = performance.now()
-  
+
   // 启动性能监控
   performanceMonitor.initialize()
-  
+
   try {
     // 懒加载字体服务
     const { fontService, initializeSmartFonts } = await loadFontService()
-    
+
     fontService.injectDynamicFontLink()
-    
+
     // 启动基础字体系统（用户界面语言）
     await initializeSmartFonts()
 
@@ -74,7 +74,7 @@ async function initializeApp() {
     const loadTime = performance.now() - startTime
     logger.info('Management', 'Init', `AcuityBookmarks 管理页面启动完成 (${loadTime.toFixed(2)}ms)`)
     logger.info('Management', 'Font', '智能多语言字体系统已激活')
-    
+
     // 打印性能报告（延迟执行，避免阻塞）
     setTimeout(() => {
       performanceMonitor.printReport()

@@ -61,10 +61,9 @@ export function applyColorPresetToDocument(preset: ColorPresetId): void {
  * @param pageName 页面名称（用于日志）
  */
 export function useThemeSync(pageName: string): void {
-  let storageListener: ((
-    changes: { [key: string]: chrome.storage.StorageChange },
-    areaName: string
-  ) => void) | null = null
+  let storageListener:
+    | ((changes: { [key: string]: chrome.storage.StorageChange }, areaName: string) => void)
+    | null = null
 
   onMounted(() => {
     logger.info('useThemeSync', `${pageName} 页面开始监听主题与配色变化`)
@@ -74,11 +73,7 @@ export function useThemeSync(pageName: string): void {
         await globalStateManager.initialize()
         applyColorPresetToDocument(globalStateManager.getColorPreset())
       } catch (error) {
-        logger.warn(
-          'useThemeSync',
-          `${pageName} 初始化配色预设到 DOM 失败`,
-          error
-        )
+        logger.warn('useThemeSync', `${pageName} 初始化配色预设到 DOM 失败`, error)
       }
     })()
 
@@ -90,13 +85,10 @@ export function useThemeSync(pageName: string): void {
       }
     })
 
-    const unsubscribeColorPresetChanged = onEvent(
-      'colorPreset:changed',
-      data => {
-        logger.info('useThemeSync', `${pageName} 收到配色预设变化事件`, data)
-        applyColorPresetToDocument(data.preset)
-      }
-    )
+    const unsubscribeColorPresetChanged = onEvent('colorPreset:changed', data => {
+      logger.info('useThemeSync', `${pageName} 收到配色预设变化事件`, data)
+      applyColorPresetToDocument(data.preset)
+    })
 
     storageListener = (
       changes: { [key: string]: chrome.storage.StorageChange },
@@ -104,33 +96,23 @@ export function useThemeSync(pageName: string): void {
     ) => {
       if (areaName === 'local' && changes.theme) {
         const newTheme = changes.theme.newValue as ThemeMode
-        logger.info(
-          'useThemeSync',
-          `${pageName} 检测到 chrome.storage 主题变化`,
-          {
-            oldValue: changes.theme.oldValue,
-            newValue: newTheme
-          }
-        )
+        logger.info('useThemeSync', `${pageName} 检测到 chrome.storage 主题变化`, {
+          oldValue: changes.theme.oldValue,
+          newValue: newTheme
+        })
 
         if (newTheme === 'dark' || newTheme === 'light') {
           applyTheme(newTheme)
         }
       }
 
-      if (
-        (areaName === 'local' || areaName === 'sync') &&
-        changes.colorPreset
-      ) {
+      if ((areaName === 'local' || areaName === 'sync') && changes.colorPreset) {
         const raw = changes.colorPreset.newValue
-        const preset = normalizeColorPresetId(
-          raw !== undefined ? raw : 'default'
-        )
-        logger.info(
-          'useThemeSync',
-          `${pageName} 检测到 chrome.storage 配色预设变化`,
-          { areaName, preset }
-        )
+        const preset = normalizeColorPresetId(raw !== undefined ? raw : 'default')
+        logger.info('useThemeSync', `${pageName} 检测到 chrome.storage 配色预设变化`, {
+          areaName,
+          preset
+        })
         applyColorPresetToDocument(preset)
       }
     }
@@ -141,11 +123,7 @@ export function useThemeSync(pageName: string): void {
         logger.debug('useThemeSync', `${pageName} chrome.storage 监听器已注册`)
       }
     } catch (error) {
-      logger.warn(
-        'useThemeSync',
-        `${pageName} 注册 chrome.storage 监听器失败`,
-        error
-      )
+      logger.warn('useThemeSync', `${pageName} 注册 chrome.storage 监听器失败`, error)
     }
 
     onUnmounted(() => {
@@ -159,11 +137,7 @@ export function useThemeSync(pageName: string): void {
           chrome.storage.onChanged.removeListener(storageListener)
           logger.debug('useThemeSync', `${pageName} chrome.storage 监听器已移除`)
         } catch (error) {
-          logger.warn(
-            'useThemeSync',
-            `${pageName} 移除 chrome.storage 监听器失败`,
-            error
-          )
+          logger.warn('useThemeSync', `${pageName} 移除 chrome.storage 监听器失败`, error)
         }
       }
     })

@@ -26,26 +26,8 @@ interface SharedPageData {
   created_at?: string
 }
 
-interface ExtensionUserResponse {
-  user?: {
-    id: string
-  }
-}
-
-interface ExtensionInstallResponse {
-  installed?: boolean
-}
-
-interface ImportSharedBookmarksResponse {
-  success?: boolean
-  imported?: number
-  failed?: number
-  folderName?: string
-  error?: string
-}
-
 // 联合类型，包含所有可能的响应属性
-type ExtensionMessageResponse = {
+interface ExtensionMessageResponse {
   user?: {
     id: string
   }
@@ -79,7 +61,8 @@ const importProgress = ref({ current: 0, total: 0 })
 const isMobile = ref(false)
 
 // 扩展链接
-const extensionLink = 'https://chrome.google.com/webstore/detail/acuitybookmarks/gdjcmpenmogdikhnnaebmddhmdgbfcgl'
+const extensionLink =
+  'https://chrome.google.com/webstore/detail/acuitybookmarks/gdjcmpenmogdikhnnaebmddhmdgbfcgl'
 
 // ✅ 扩展 ID：从环境变量读取（本地开发时为空，生产环境使用固定 ID）
 const config = useRuntimeConfig()
@@ -91,7 +74,7 @@ const checkMobile = () => {
 
   const userAgent = navigator.userAgent.toLowerCase()
   const mobileKeywords = ['android', 'iphone', 'ipad', 'ipod', 'mobile', 'webos']
-  const isMobileUA = mobileKeywords.some((keyword) => userAgent.includes(keyword))
+  const isMobileUA = mobileKeywords.some(keyword => userAgent.includes(keyword))
 
   const isMobileWidth = window.innerWidth < 768
   const hasTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0
@@ -107,9 +90,9 @@ const loadShareData = async () => {
   try {
     // 从环境变量获取 API URL
     const apiBaseUrl = config.public.apiBaseUrl || 'https://api.acuitybookmarks.com'
-    
+
     console.log('🔧 API Base URL:', apiBaseUrl)
-    
+
     // 调用后端 API 获取分享数据
     const response = await fetch(
       `${apiBaseUrl}/trpc/share.getShareByCode?batch=1&input=${encodeURIComponent(
@@ -160,7 +143,7 @@ const loadShareData = async () => {
 const checkIfOwnShare = async () => {
   try {
     // 从扩展获取当前登录用户信息
-    // @ts-ignore
+    // @ts-expect-error
     if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
       // ✅ 修复：使用统一的消息发送方式
       const sendMessageToExtension = (
@@ -168,30 +151,27 @@ const checkIfOwnShare = async () => {
         callback: (response: ExtensionMessageResponse) => void
       ) => {
         if (EXTENSION_ID) {
-          // @ts-ignore
+          // @ts-expect-error
           chrome.runtime.sendMessage(EXTENSION_ID, message, callback)
         } else {
-          // @ts-ignore
+          // @ts-expect-error
           chrome.runtime.sendMessage(message, callback)
         }
       }
 
-      sendMessageToExtension(
-        { type: 'GET_CURRENT_USER' },
-        (response: ExtensionMessageResponse) => {
-          // @ts-ignore
-          if (!chrome.runtime.lastError && response && response.user) {
-            currentUserId.value = response.user.id
-            console.log('📍 当前用户 ID:', currentUserId.value)
+      sendMessageToExtension({ type: 'GET_CURRENT_USER' }, (response: ExtensionMessageResponse) => {
+        // @ts-expect-error
+        if (!chrome.runtime.lastError && response && response.user) {
+          currentUserId.value = response.user.id
+          console.log('📍 当前用户 ID:', currentUserId.value)
 
-            // 比对用户 ID
-            if (shareData.value && shareData.value.user_id === currentUserId.value) {
-              isOwnShare.value = true
-              console.log('⚠️ 这是您自己的分享，不能导入')
-            }
+          // 比对用户 ID
+          if (shareData.value && shareData.value.user_id === currentUserId.value) {
+            isOwnShare.value = true
+            console.log('⚠️ 这是您自己的分享，不能导入')
           }
         }
-      )
+      })
     }
   } catch (ownerCheckError) {
     console.error('检查分享所有者失败:', ownerCheckError)
@@ -204,7 +184,7 @@ const checkExtension = async () => {
     console.log('🔍 开始检测扩展是否安装...')
 
     // 使用 chrome.runtime.sendMessage 检测扩展
-    // @ts-ignore - chrome API 在网页环境中可用（通过 externally_connectable）
+    // @ts-expect-error - chrome API 在网页环境中可用（通过 externally_connectable）
     if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
       console.log('✅ chrome.runtime.sendMessage 可用')
 
@@ -216,12 +196,12 @@ const checkExtension = async () => {
         if (EXTENSION_ID) {
           // 生产环境：指定扩展 ID
           console.log('📍 使用固定扩展 ID:', EXTENSION_ID)
-          // @ts-ignore
+          // @ts-expect-error
           chrome.runtime.sendMessage(EXTENSION_ID, message, callback)
         } else {
           // 本地开发：不指定 ID，让扩展自动接收（通过 externally_connectable）
           console.log('📍 本地开发模式：不指定扩展 ID')
-          // @ts-ignore
+          // @ts-expect-error
           chrome.runtime.sendMessage(message, callback)
         }
       }
@@ -230,9 +210,9 @@ const checkExtension = async () => {
       sendMessageToExtension(
         { type: 'CHECK_EXTENSION_INSTALLED' },
         (response: ExtensionMessageResponse) => {
-          // @ts-ignore
+          // @ts-expect-error
           if (chrome.runtime.lastError) {
-            // @ts-ignore
+            // @ts-expect-error
             console.log('❌ 扩展未安装或未响应:', chrome.runtime.lastError.message)
             isExtensionInstalled.value = false
           } else if (response && response.installed) {
@@ -287,7 +267,7 @@ const importSelected = async () => {
   if (selectedBookmarks.value.size === 0) return
 
   const bookmarksToImport = Array.from(selectedBookmarks.value)
-    .map((index) => bookmarks.value[index])
+    .map(index => bookmarks.value[index])
     .filter((b): b is SharedBookmark => b !== undefined)
 
   isImporting.value = true
@@ -299,7 +279,7 @@ const importSelected = async () => {
     })
 
     // 使用 chrome.runtime.sendMessage 发送导入请求
-    // @ts-ignore
+    // @ts-expect-error
     if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
       // ✅ 修复：使用统一的消息发送方式
       const sendMessageToExtension = (
@@ -307,10 +287,10 @@ const importSelected = async () => {
         callback: (response: ExtensionMessageResponse) => void
       ) => {
         if (EXTENSION_ID) {
-          // @ts-ignore
+          // @ts-expect-error
           chrome.runtime.sendMessage(EXTENSION_ID, message, callback)
         } else {
-          // @ts-ignore
+          // @ts-expect-error
           chrome.runtime.sendMessage(message, callback)
         }
       }
@@ -319,7 +299,7 @@ const importSelected = async () => {
         {
           type: 'IMPORT_SHARED_BOOKMARKS',
           data: {
-            bookmarks: bookmarksToImport.map((b) => ({
+            bookmarks: bookmarksToImport.map(b => ({
               title: b.title,
               url: b.url,
               description: b.description
@@ -328,11 +308,11 @@ const importSelected = async () => {
           }
         },
         (response: ExtensionMessageResponse) => {
-          // @ts-ignore
+          // @ts-expect-error
           if (chrome.runtime.lastError) {
-            // @ts-ignore
+            // @ts-expect-error
             console.error('❌ 导入失败:', chrome.runtime.lastError.message)
-            // @ts-ignore
+            // @ts-expect-error
             alert(`❌ 导入失败：${chrome.runtime.lastError.message}`)
             isImporting.value = false
             return
@@ -359,7 +339,9 @@ const importSelected = async () => {
     }
   } catch (importError) {
     console.error('导入失败:', importError)
-    alert(`❌ 导入失败：${importError instanceof Error ? importError.message : String(importError)}`)
+    alert(
+      `❌ 导入失败：${importError instanceof Error ? importError.message : String(importError)}`
+    )
     isImporting.value = false
   }
 }
@@ -383,14 +365,14 @@ const handleIconError = (event: Event) => {
 // 格式化日期 - 显示精确时间（年月日时分秒）
 const formatDate = (dateString: string): string => {
   const date = new Date(dateString)
-  
+
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
   const hours = String(date.getHours()).padStart(2, '0')
   const minutes = String(date.getMinutes()).padStart(2, '0')
   const seconds = String(date.getSeconds()).padStart(2, '0')
-  
+
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
 }
 
@@ -444,9 +426,7 @@ onMounted(async () => {
 // SEO
 useSeoMeta({
   title: computed(() => `${shareData.value?.title || '分享的书签'} - AcuityBookmarks`),
-  description: computed(
-    () => `查看分享的 ${shareData.value?.bookmark_count || 0} 个书签`
-  ),
+  description: computed(() => `查看分享的 ${shareData.value?.bookmark_count || 0} 个书签`),
   robots: 'noindex, nofollow'
 })
 </script>
@@ -483,7 +463,9 @@ useSeoMeta({
                 :alt="shareData.sender.name || shareData.sender.email"
               />
               <div v-else class="sender-avatar-placeholder">
-                {{ ((shareData.sender.name || shareData.sender.email || '?')[0] ?? '?').toUpperCase() }}
+                {{
+                  ((shareData.sender.name || shareData.sender.email || '?')[0] ?? '?').toUpperCase()
+                }}
               </div>
             </div>
             <div class="sender-text">
@@ -491,23 +473,42 @@ useSeoMeta({
               <span class="sender-action">分享给你</span>
             </div>
           </div>
-          
+
           <h1 class="share-title">{{ shareData.title }}</h1>
-          
+
           <!-- 分享描述 -->
           <p v-if="shareData.description" class="share-description">
             {{ shareData.description }}
           </p>
-          
+
           <!-- 分享元信息 -->
           <p class="share-meta">
             <!-- ✅ 根据 show_username 字段决定是否显示分享者名称（仅链接分享） -->
-            <span v-if="shareData.share_type === 'link' && shareData.show_username && (shareData.profiles?.name || shareData.profiles?.email)" class="share-author">
+            <span
+              v-if="
+                shareData.share_type === 'link' &&
+                shareData.show_username &&
+                (shareData.profiles?.name || shareData.profiles?.email)
+              "
+              class="share-author"
+            >
               {{ shareData.profiles?.name || shareData.profiles?.email }}
             </span>
-            <span v-if="shareData.share_type === 'link' && shareData.show_username && (shareData.profiles?.name || shareData.profiles?.email)"> · </span>
-            <span v-if="shareData.bookmark_count">分享了 {{ shareData.bookmark_count }} 个书签</span>
-            <span v-if="shareData.created_at" class="share-time"> · {{ formatDate(shareData.created_at) }} </span>
+            <span
+              v-if="
+                shareData.share_type === 'link' &&
+                shareData.show_username &&
+                (shareData.profiles?.name || shareData.profiles?.email)
+              "
+            >
+              ·
+            </span>
+            <span v-if="shareData.bookmark_count"
+              >分享了 {{ shareData.bookmark_count }} 个书签</span
+            >
+            <span v-if="shareData.created_at" class="share-time">
+              · {{ formatDate(shareData.created_at) }}
+            </span>
           </p>
         </div>
       </header>
@@ -650,11 +651,7 @@ useSeoMeta({
             正在导入书签，进度 {{ importProgress.current }} / {{ importProgress.total }}
           </div>
 
-          <div
-            class="bookmarks-list"
-            role="list"
-            :aria-label="`共 ${bookmarks.length} 个书签`"
-          >
+          <div class="bookmarks-list" role="list" :aria-label="`共 ${bookmarks.length} 个书签`">
             <div
               v-for="(bookmark, index) in bookmarks"
               :key="index"
@@ -895,7 +892,7 @@ useSeoMeta({
   color: var(--md-sys-color-on-surface-variant);
   margin-bottom: 0.75rem;
   white-space: pre-wrap;
-  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .share-meta {
@@ -946,6 +943,21 @@ useSeoMeta({
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
+}
+
+.action-button {
+  padding: 0.625rem 1.25rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.action-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .mobile-actions .action-button {
@@ -1056,28 +1068,13 @@ useSeoMeta({
   align-items: center;
 }
 
-.action-button {
-  padding: 0.625rem 1.25rem;
-  border: none;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.action-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 .action-button.primary {
   background: var(--md-sys-color-primary);
   color: var(--md-sys-color-on-primary);
 }
 
 .action-button.secondary {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgb(255 255 255 / 10%);
   color: var(--md-sys-color-on-background);
 }
 
@@ -1097,7 +1094,7 @@ useSeoMeta({
   gap: 1rem;
   padding: 1rem;
   border-radius: 0.5rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgb(255 255 255 / 5%);
   border: 1px solid transparent;
   transition: all 0.2s;
   cursor: pointer;
@@ -1108,12 +1105,12 @@ useSeoMeta({
 }
 
 .bookmark-item:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(131, 213, 197, 0.3);
+  background: rgb(255 255 255 / 8%);
+  border-color: rgb(131 213 197 / 30%);
 }
 
 .bookmark-item.mobile-item:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgb(255 255 255 / 5%);
   border-color: transparent;
 }
 
@@ -1123,12 +1120,12 @@ useSeoMeta({
 }
 
 .bookmark-item.own-share-item:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgb(255 255 255 / 5%);
   border-color: transparent;
 }
 
 .bookmark-item.selected {
-  background: rgba(131, 213, 197, 0.1);
+  background: rgb(131 213 197 / 10%);
   border-color: var(--md-sys-color-primary);
 }
 
@@ -1151,7 +1148,7 @@ useSeoMeta({
   align-items: center;
   justify-content: center;
   border-radius: 0.375rem;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgb(255 255 255 / 10%);
 }
 
 .bookmark-icon img {
@@ -1204,7 +1201,7 @@ useSeoMeta({
   overflow: hidden;
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .share-title {
     font-size: 1.5rem;
   }

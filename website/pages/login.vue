@@ -39,7 +39,7 @@ const navigateToHome = () => {
 const handleOAuthCallback = async () => {
   try {
     const hash = window.location.hash
-    
+
     if (!hash || !hash.includes('access_token')) {
       console.log('[Auth] 没有 OAuth 回调参数')
       return
@@ -75,7 +75,6 @@ const handleOAuthCallback = async () => {
       console.log('[Auth] 跳转到主页...')
       navigateToHome()
     }, 1000)
-
   } catch (error) {
     console.error('[Auth] OAuth 回调处理失败', error)
     authError.value = error instanceof Error ? error.message : 'OAuth 登录失败'
@@ -89,7 +88,7 @@ const handleOAuthCallback = async () => {
 onMounted(async () => {
   // 1. 先初始化认证状态
   await initialize()
-  
+
   // 2. 检查用户是否已登录
   if (user.value) {
     console.log('[Auth] 用户已登录，跳转到账户页面')
@@ -110,14 +109,14 @@ const handleGoogleLogin = async () => {
     authError.value = ''
 
     console.log('[Auth] 开始 Google OAuth 登录...')
-    
+
     const { url } = await signInWithOAuth('google')
-    
+
     // 跳转到 OAuth 授权页面
     window.location.href = url
   } catch (error) {
     console.error('[Auth] Google 登录失败', error)
-    
+
     if (error instanceof Error && error.message.includes('取消')) {
       authError.value = ''
     } else {
@@ -137,14 +136,14 @@ const handleMicrosoftLogin = async () => {
     authError.value = ''
 
     console.log('[Auth] 开始 Microsoft OAuth 登录...')
-    
+
     const { url } = await signInWithOAuth('microsoft')
-    
+
     // 跳转到 OAuth 授权页面
     window.location.href = url
   } catch (error) {
     console.error('[Auth] Microsoft 登录失败', error)
-    
+
     if (error instanceof Error && error.message.includes('取消')) {
       authError.value = ''
     } else {
@@ -160,11 +159,7 @@ const handleMicrosoftLogin = async () => {
   <div class="auth-page">
     <!-- Logo 和标题 -->
     <div class="auth-header">
-      <img 
-        src="/logo.webp" 
-        alt="AcuityBookmarks Logo" 
-        class="auth-logo"
-      />
+      <img src="/logo.webp" alt="AcuityBookmarks Logo" class="auth-logo" />
       <h1 class="auth-title">AcuityBookmarks</h1>
       <p class="auth-subtitle">智能书签管理，一键登录</p>
     </div>
@@ -175,10 +170,7 @@ const handleMicrosoftLogin = async () => {
       <p class="form-subtitle">使用以下方式快速登录</p>
 
       <!-- 错误提示 -->
-      <div
-        v-if="authError"
-        class="auth-alert"
-      >
+      <div v-if="authError" class="auth-alert">
         <p class="auth-alert-text">{{ authError }}</p>
       </div>
 
@@ -241,19 +233,23 @@ const handleMicrosoftLogin = async () => {
 <style scoped>
 /* ===== 动画 ===== */
 @keyframes float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0) rotate(0deg);
   }
+
   50% {
     transform: translateY(-20px) rotate(5deg);
   }
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
     opacity: 1;
   }
+
   50% {
     transform: scale(1.05);
     opacity: 0.9;
@@ -264,16 +260,18 @@ const handleMicrosoftLogin = async () => {
   0% {
     background-position: -1000px 0;
   }
+
   100% {
     background-position: 1000px 0;
   }
 }
 
-@keyframes fadeInUp {
+@keyframes fade-in-up {
   from {
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -289,14 +287,9 @@ const handleMicrosoftLogin = async () => {
   align-items: center;
   min-height: 100vh;
   padding: var(--spacing-6);
-  
+
   /* 🎨 深色背景，提高对比度 */
-  background: linear-gradient(
-    135deg,
-    #0a1612 0%,
-    #0e1a17 50%,
-    #0a1410 100%
-  );
+  background: linear-gradient(135deg, #0a1612 0%, #0e1a17 50%, #0a1410 100%);
   overflow: hidden;
 }
 
@@ -315,11 +308,7 @@ const handleMicrosoftLogin = async () => {
   right: -5%;
   width: 500px;
   height: 500px;
-  background: radial-gradient(
-    circle,
-    var(--md-sys-color-primary) 0%,
-    transparent 70%
-  );
+  background: radial-gradient(circle, var(--md-sys-color-primary) 0%, transparent 70%);
   animation: float 20s ease-in-out infinite;
 }
 
@@ -328,11 +317,7 @@ const handleMicrosoftLogin = async () => {
   left: -5%;
   width: 400px;
   height: 400px;
-  background: radial-gradient(
-    circle,
-    var(--md-sys-color-secondary) 0%,
-    transparent 70%
-  );
+  background: radial-gradient(circle, var(--md-sys-color-secondary) 0%, transparent 70%);
   animation: float 25s ease-in-out infinite reverse;
 }
 
@@ -342,7 +327,7 @@ const handleMicrosoftLogin = async () => {
   z-index: 1;
   margin-bottom: var(--spacing-10);
   text-align: center;
-  animation: fadeInUp 0.6s ease-out;
+  animation: fade-in-up 0.6s ease-out;
 }
 
 .auth-logo {
@@ -358,7 +343,7 @@ const handleMicrosoftLogin = async () => {
   margin: 0 0 var(--spacing-3) 0;
   font-size: 2.25rem;
   font-weight: 700;
-  color: #ffffff;
+  color: #fff;
   text-shadow: 0 2px 12px rgb(0 0 0 / 30%);
   letter-spacing: -0.02em;
 }
@@ -366,7 +351,7 @@ const handleMicrosoftLogin = async () => {
 .auth-subtitle {
   margin: 0;
   font-size: 1.0625rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgb(255 255 255 / 70%);
   font-weight: 400;
 }
 
@@ -377,33 +362,32 @@ const handleMicrosoftLogin = async () => {
   width: 100%;
   max-width: 440px;
   padding: var(--spacing-10) var(--spacing-8);
-  
+
   /* 🎨 现代化卡片样式 - 更高对比度 */
   border-radius: var(--radius-lg);
-  background: rgba(20, 30, 26, 0.85);
+  background: rgb(20 30 26 / 85%);
   backdrop-filter: blur(24px);
-  border: 1px solid rgba(131, 213, 197, 0.15);
-  box-shadow: 
+  border: 1px solid rgb(131 213 197 / 15%);
+  box-shadow:
     0 24px 64px rgb(0 0 0 / 40%),
     0 12px 32px rgb(0 0 0 / 30%),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  
-  animation: fadeInUp 0.6s ease-out 0.2s both;
+    inset 0 1px 0 rgb(255 255 255 / 5%);
+  animation: fade-in-up 0.6s ease-out 0.2s both;
 }
 
 .form-title {
-  margin: 0 0 24px 0;
+  margin: 0 0 24px;
   font-size: 1.5rem;
   font-weight: 600;
   text-align: center;
-  color: #ffffff;
+  color: #fff;
 }
 
 .form-subtitle {
-  margin: 0 0 40px 0;
+  margin: 0 0 40px;
   font-size: 0.9375rem;
   text-align: center;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgb(255 255 255 / 60%);
 }
 
 /* ===== 错误提示 ===== */
@@ -417,7 +401,7 @@ const handleMicrosoftLogin = async () => {
     color-mix(in srgb, var(--md-sys-color-error) 8%, transparent) 100%
   );
   border: 1px solid color-mix(in srgb, var(--md-sys-color-error) 30%, transparent);
-  animation: fadeInUp 0.3s ease-out;
+  animation: fade-in-up 0.3s ease-out;
 }
 
 .auth-alert-text {
@@ -446,10 +430,10 @@ const handleMicrosoftLogin = async () => {
   padding: 18px 20px;
   font-size: 0.9375rem;
   font-weight: 500;
-  border: 1.5px solid rgba(131, 213, 197, 0.2);
+  border: 1.5px solid rgb(131 213 197 / 20%);
   border-radius: var(--radius-md);
-  background: rgba(30, 45, 40, 0.6);
-  color: #ffffff;
+  background: rgb(30 45 40 / 60%);
+  color: #fff;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
@@ -463,9 +447,13 @@ const handleMicrosoftLogin = async () => {
   width: 0;
   height: 0;
   border-radius: 50%;
-  background: rgba(131, 213, 197, 0.15);
+  background: rgb(131 213 197 / 15%);
   content: '';
-  transition: width 0.6s ease, height 0.6s ease, top 0.6s ease, left 0.6s ease;
+  transition:
+    width 0.6s ease,
+    height 0.6s ease,
+    top 0.6s ease,
+    left 0.6s ease;
   transform: translate(-50%, -50%);
 }
 
@@ -485,15 +473,15 @@ const handleMicrosoftLogin = async () => {
 
 /* Google 按钮 */
 .oauth-btn--google {
-  border-color: rgba(131, 213, 197, 0.3);
+  border-color: rgb(131 213 197 / 30%);
 }
 
 .oauth-btn--google:hover:not(:disabled) {
   border-color: var(--md-sys-color-primary);
-  background: rgba(30, 45, 40, 0.8);
-  box-shadow: 
-    0 8px 24px rgba(131, 213, 197, 0.2),
-    0 4px 12px rgba(131, 213, 197, 0.1);
+  background: rgb(30 45 40 / 80%);
+  box-shadow:
+    0 8px 24px rgb(131 213 197 / 20%),
+    0 4px 12px rgb(131 213 197 / 10%);
   transform: translateY(-2px);
 }
 
@@ -503,15 +491,15 @@ const handleMicrosoftLogin = async () => {
 
 /* Microsoft 按钮 */
 .oauth-btn--microsoft {
-  border-color: rgba(177, 204, 197, 0.3);
+  border-color: rgb(177 204 197 / 30%);
 }
 
 .oauth-btn--microsoft:hover:not(:disabled) {
   border-color: var(--md-sys-color-secondary);
-  background: rgba(30, 45, 40, 0.8);
-  box-shadow: 
-    0 8px 24px rgba(177, 204, 197, 0.2),
-    0 4px 12px rgba(177, 204, 197, 0.1);
+  background: rgb(30 45 40 / 80%);
+  box-shadow:
+    0 8px 24px rgb(177 204 197 / 20%),
+    0 4px 12px rgb(177 204 197 / 10%);
   transform: translateY(-2px);
 }
 
@@ -537,11 +525,11 @@ const handleMicrosoftLogin = async () => {
 .auth-privacy-notice {
   margin: 0;
   padding-top: 28px;
-  border-top: 1px solid rgba(131, 213, 197, 0.15);
+  border-top: 1px solid rgb(131 213 197 / 15%);
   font-size: 0.8125rem;
   line-height: 1.6;
   text-align: center;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgb(255 255 255 / 50%);
 }
 
 .auth-privacy-notice a {
@@ -553,11 +541,11 @@ const handleMicrosoftLogin = async () => {
 
 .auth-privacy-notice a:hover {
   text-decoration: underline;
-  color: rgba(131, 213, 197, 1);
+  color: rgb(131 213 197 / 100%);
 }
 
 /* ===== 响应式 ===== */
-@media (max-width: 480px) {
+@media (width <= 480px) {
   .auth-page {
     padding: var(--spacing-4);
   }
@@ -607,21 +595,16 @@ const handleMicrosoftLogin = async () => {
 @media (prefers-color-scheme: dark) {
   .auth-page {
     /* 深色模式下保持相同的深色背景 */
-    background: linear-gradient(
-      135deg,
-      #0a1612 0%,
-      #0e1a17 50%,
-      #0a1410 100%
-    );
+    background: linear-gradient(135deg, #0a1612 0%, #0e1a17 50%, #0a1410 100%);
   }
 
   .auth-form {
-    background: rgba(20, 30, 26, 0.9);
-    border-color: rgba(131, 213, 197, 0.2);
-    box-shadow: 
+    background: rgb(20 30 26 / 90%);
+    border-color: rgb(131 213 197 / 20%);
+    box-shadow:
       0 24px 64px rgb(0 0 0 / 50%),
       0 12px 32px rgb(0 0 0 / 40%),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      inset 0 1px 0 rgb(255 255 255 / 8%);
   }
 }
 </style>

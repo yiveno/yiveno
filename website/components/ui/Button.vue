@@ -35,12 +35,7 @@ const computedClass = computed(() => {
 </script>
 
 <template>
-  <component
-    :is="as"
-    :class="computedClass"
-    v-bind="$attrs"
-    :disabled="disabled || loading"
-  >
+  <component :is="as" :class="computedClass" v-bind="$attrs" :disabled="disabled || loading">
     <svg
       v-if="loading"
       class="animate-spin -ml-1 mr-2 h-4 w-4"
@@ -98,8 +93,9 @@ const computedClass = computed(() => {
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: linear-gradient(to right, 
-    color-mix(in srgb, var(--md-sys-color-primary) 90%, white), 
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--md-sys-color-primary) 90%, white),
     color-mix(in srgb, var(--md-sys-color-secondary) 90%, white)
   );
   transform: translateY(-1px);
@@ -107,14 +103,14 @@ const computedClass = computed(() => {
 }
 
 .btn-secondary {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgb(255 255 255 / 10%);
   color: white;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgb(255 255 255 / 10%);
   backdrop-filter: blur(8px);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background-color: rgba(255, 255, 255, 0.15);
+  background-color: rgb(255 255 255 / 15%);
 }
 
 .btn-outline {
@@ -134,7 +130,7 @@ const computedClass = computed(() => {
 
 .btn-ghost:hover:not(:disabled) {
   color: white;
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: rgb(255 255 255 / 5%);
 }
 
 .btn-link {
@@ -177,6 +173,7 @@ const computedClass = computed(() => {
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }

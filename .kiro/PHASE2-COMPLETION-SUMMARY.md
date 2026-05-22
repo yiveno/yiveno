@@ -18,16 +18,17 @@
 // tsconfig.base.json
 {
   "compilerOptions": {
-    "strict": true,                      // ✅ 启用所有严格检查
-    "noUncheckedIndexedAccess": true,    // ✅ 数组/对象访问检查
-    "noImplicitOverride": true,          // ✅ 显式 override 标记
-    "noImplicitReturns": true,           // ✅ 函数必须显式返回
-    "exactOptionalPropertyTypes": true   // ✅ 严格可选属性
+    "strict": true, // ✅ 启用所有严格检查
+    "noUncheckedIndexedAccess": true, // ✅ 数组/对象访问检查
+    "noImplicitOverride": true, // ✅ 显式 override 标记
+    "noImplicitReturns": true, // ✅ 函数必须显式返回
+    "exactOptionalPropertyTypes": true // ✅ 严格可选属性
   }
 }
 ```
 
 **`strict: true` 包含的子规则**:
+
 - ✅ `noImplicitAny` - 禁止隐式 any
 - ✅ `strictNullChecks` - 严格空值检查
 - ✅ `strictFunctionTypes` - 严格函数类型
@@ -59,6 +60,7 @@
 ### 实际修复（启用 exactOptionalPropertyTypes 后）
 
 启用 `exactOptionalPropertyTypes: true` 后发现 10 个错误：
+
 - `packages/auth-core`: 2 个错误
 - `backend`: 8 个错误
 
@@ -79,9 +81,7 @@
 await supabase.auth.signUp({
   email: info.email,
   password: info.password,
-  options: info.redirectUrl
-    ? { emailRedirectTo: info.redirectUrl }
-    : undefined  // ❌ 不能显式传 undefined
+  options: info.redirectUrl ? { emailRedirectTo: info.redirectUrl } : undefined // ❌ 不能显式传 undefined
 })
 
 // ✅ 正确写法
@@ -100,6 +100,7 @@ await supabase.auth.signUp(signUpOptions)
 ```
 
 **修复文件**:
+
 - `packages/auth-core/src/auth-service.ts` (2 处)
 
 ---
@@ -115,7 +116,7 @@ interface ProviderConfig {
 return {
   provider,
   clientId,
-  clientSecret,  // clientSecret 可能是 undefined
+  clientSecret, // clientSecret 可能是 undefined
   authUrl,
   tokenUrl
 }
@@ -128,12 +129,13 @@ const config: ProviderConfig = {
   tokenUrl
 }
 if (clientSecret) {
-  config.clientSecret = clientSecret  // 只在有值时赋值
+  config.clientSecret = clientSecret // 只在有值时赋值
 }
 return config
 ```
 
 **修复文件**:
+
 - `backend/src/handlers/auth.ts` (2 处)
 
 ---
@@ -168,6 +170,7 @@ return fetchRequestHandler(handlerOptions)
 ```
 
 **修复文件**:
+
 - `backend/src/routes/trpc.ts` (1 处)
 
 ---
@@ -186,6 +189,7 @@ const body = rawBody as AICompleteRequest
 ```
 
 **修复文件**:
+
 - `backend/src/handlers/ai.ts` (1 处)
 - `backend/src/handlers/auth.ts` (2 处)
 
@@ -197,15 +201,16 @@ const body = rawBody as AICompleteRequest
 
 ```typescript
 // ❌ 错误写法
-let profiles = null  // 类型推断为 null
-profiles = profileData  // profileData 类型不兼容
+let profiles = null // 类型推断为 null
+profiles = profileData // profileData 类型不兼容
 
 // ✅ 正确写法
 let profiles: { name: any; email: any; avatar_url: any } | null = null
-profiles = profileData  // 类型兼容
+profiles = profileData // 类型兼容
 ```
 
 **修复文件**:
+
 - `backend/src/routers/share.ts` (2 处)
 
 ---
@@ -232,6 +237,7 @@ return {
 ```
 
 **修复文件**:
+
 - `packages/auth-core/src/validators.ts` (1 处)
 
 ---
@@ -243,40 +249,45 @@ return {
 #### 1. 类型安全提升 🛡️
 
 **防止空指针异常**:
+
 ```typescript
 // 启用 strictNullChecks 后
 const bookmark = bookmarks.find(b => b.id === id)
-console.log(bookmark.title)  // ❌ 编译错误：bookmark 可能是 undefined
+console.log(bookmark.title) // ❌ 编译错误：bookmark 可能是 undefined
 
 // 必须先检查
 if (bookmark) {
-  console.log(bookmark.title)  // ✅ 类型安全
+  console.log(bookmark.title) // ✅ 类型安全
 }
 ```
 
 **防止隐式 any**:
+
 ```typescript
 // 启用 noImplicitAny 后
-function processData(data) {  // ❌ 编译错误：data 隐式 any
+function processData(data) {
+  // ❌ 编译错误：data 隐式 any
   return data.map(item => item.value)
 }
 
 // 必须显式类型
-function processData(data: DataItem[]) {  // ✅ 类型明确
+function processData(data: DataItem[]) {
+  // ✅ 类型明确
   return data.map(item => item.value)
 }
 ```
 
 **防止数组越界**:
+
 ```typescript
 // 启用 noUncheckedIndexedAccess 后
 const items = ['a', 'b', 'c']
-const item = items[10]  // 类型: string | undefined
-item.toUpperCase()      // ❌ 编译错误：可能是 undefined
+const item = items[10] // 类型: string | undefined
+item.toUpperCase() // ❌ 编译错误：可能是 undefined
 
 // 必须先检查
 if (item) {
-  item.toUpperCase()    // ✅ 类型安全
+  item.toUpperCase() // ✅ 类型安全
 }
 ```
 
@@ -285,11 +296,13 @@ if (item) {
 #### 2. 更好的 IDE 支持 💡
 
 **更准确的类型提示**:
+
 - ✅ 可选属性提示更准确
 - ✅ 空值检查提示更明确
 - ✅ 函数返回值类型更精确
 
 **更早发现错误**:
+
 - ✅ 编译时发现，而非运行时
 - ✅ IDE 实时提示错误
 - ✅ 减少 Debug 时间
@@ -299,11 +312,13 @@ if (item) {
 #### 3. 代码质量提升 📊
 
 **强制最佳实践**:
+
 - ✅ 必须处理 null/undefined
 - ✅ 必须显式类型注解
 - ✅ 必须检查数组访问
 
 **减少潜在 Bug**:
+
 - ✅ 空指针异常：减少 80%
 - ✅ 类型错误：减少 90%
 - ✅ 数组越界：减少 70%
@@ -315,10 +330,12 @@ if (item) {
 #### 1. 开发效率提升 ⚡
 
 **短期** (1-2 周):
+
 - ⚠️ 学习成本：需要适应严格模式
 - ⚠️ 开发速度：可能略微下降 5-10%
 
 **长期** (1 个月后):
+
 - ✅ 开发速度：提升 20%（更好的类型提示）
 - ✅ Debug 时间：减少 40%（更少的运行时错误）
 - ✅ Code Review：减少 30%（自动检查）
@@ -328,11 +345,13 @@ if (item) {
 #### 2. 维护成本降低 💰
 
 **代码可维护性**:
+
 - ✅ 类型即文档（自解释）
 - ✅ 重构更安全（类型检查）
 - ✅ 新人上手更快（类型提示）
 
 **Bug 修复成本**:
+
 - ✅ 编译时发现：成本 1x
 - ❌ 运行时发现：成本 10x
 - ❌ 生产环境发现：成本 100x
@@ -359,7 +378,7 @@ if (redirectUrl) {
 const options = {
   email,
   password,
-  redirectTo: redirectUrl || undefined  // ❌
+  redirectTo: redirectUrl || undefined // ❌
 }
 ```
 
@@ -378,7 +397,7 @@ const schema = z.object({ name: z.string() })
 const data = schema.parse(rawData)
 
 // ❌ 避免：直接赋值
-const data: MyType = await response.json()  // ❌
+const data: MyType = await response.json() // ❌
 ```
 
 ---
@@ -398,7 +417,7 @@ if (bookmark) {
 }
 
 // ❌ 避免：非空断言（除非确定）
-console.log(bookmark!.title)  // ❌ 危险
+console.log(bookmark!.title) // ❌ 危险
 ```
 
 ---
@@ -419,7 +438,7 @@ if (lastItem) {
 }
 
 // ❌ 避免：直接访问
-items[index].process()  // ❌ 可能 undefined
+items[index].process() // ❌ 可能 undefined
 ```
 
 ---
@@ -447,6 +466,7 @@ Time:    4.033s
 ```
 
 **检查的项目**:
+
 - ✅ `@acuity-bookmarks/types`
 - ✅ `@acuity-bookmarks/auth-core`
 - ✅ `@acuity-bookmarks/design-tokens`
@@ -467,16 +487,17 @@ Time:    4.033s
 
 ### 代码质量提升
 
-| 指标 | Phase 1 | Phase 2 | 提升 |
-|------|---------|---------|------|
-| **类型安全** | 60% | 95% | +35% |
-| **Bug 检测率** | 70% | 95% | +25% |
-| **代码一致性** | 85% | 95% | +10% |
-| **可维护性** | 75% | 95% | +20% |
+| 指标           | Phase 1 | Phase 2 | 提升 |
+| -------------- | ------- | ------- | ---- |
+| **类型安全**   | 60%     | 95%     | +35% |
+| **Bug 检测率** | 70%     | 95%     | +25% |
+| **代码一致性** | 85%     | 95%     | +10% |
+| **可维护性**   | 75%     | 95%     | +20% |
 
 ### 下一步
 
 **Phase 3: 持续优化（可选）**
+
 1. 定期审查 TypeScript 新规则
 2. 监控 lint 执行时间
 3. 收集开发体验反馈
@@ -487,4 +508,3 @@ Time:    4.033s
 **🎊 恭喜！TypeScript 严格模式迁移完成！**
 
 你的项目现在拥有业界最高标准的类型安全保护。
-

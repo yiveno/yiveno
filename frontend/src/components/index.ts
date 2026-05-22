@@ -28,14 +28,14 @@ export { default as EmptyState } from './composite/EmptyState/EmptyState.vue'
 
 /**
  * ✨ Ant Design 风格的 Notification 组件（推荐使用）
- * 
+ *
  * 使用方式：
  * ```typescript
  * import { useNotification } from '@/composables/useNotification'
  * const notification = useNotification()
  * notification.success({ message: '成功', key: 'my-key' })
  * ```
- * 
+ *
  * 或使用全局服务（兼容旧代码）：
  * ```typescript
  * notificationService.notify('成功', { level: 'success', key: 'my-key' })

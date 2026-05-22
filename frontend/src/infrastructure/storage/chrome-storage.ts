@@ -72,10 +72,7 @@ export class ChromeStorageService {
    * await storage.setSession('currentTab', { id: '123', title: 'Example' })
    * ```
    */
-  async setSession<T extends SerializableValue>(
-    key: string,
-    value: T
-  ): Promise<void> {
+  async setSession<T extends SerializableValue>(key: string, value: T): Promise<void> {
     try {
       if (this.isSessionStorageAvailable) {
         // 🆕 使用 storage.session（自动清理）
@@ -161,10 +158,7 @@ export class ChromeStorageService {
    * await storage.setLocal('theme', 'dark')
    * ```
    */
-  async setLocal<T extends SerializableValue>(
-    key: string,
-    value: T
-  ): Promise<void> {
+  async setLocal<T extends SerializableValue>(key: string, value: T): Promise<void> {
     try {
       await chrome.storage.local.set({ [key]: value })
       logger.debug('ChromeStorage', `✅ Local 存储成功: ${key}`)
@@ -234,10 +228,7 @@ export class ChromeStorageService {
    * await storage.setSync('userPrefs', { language: 'zh-CN' })
    * ```
    */
-  async setSync<T extends SerializableValue>(
-    key: string,
-    value: T
-  ): Promise<void> {
+  async setSync<T extends SerializableValue>(key: string, value: T): Promise<void> {
     try {
       await chrome.storage.sync.set({ [key]: value })
       logger.debug('ChromeStorage', `✅ Sync 存储成功: ${key}`)
@@ -296,10 +287,7 @@ export class ChromeStorageService {
         )
         await chrome.storage.local.set(prefixedItems)
       }
-      logger.debug(
-        'ChromeStorage',
-        `✅ 批量 Session 存储成功，数量: ${Object.keys(items).length}`
-      )
+      logger.debug('ChromeStorage', `✅ 批量 Session 存储成功，数量: ${Object.keys(items).length}`)
     } catch (error) {
       logger.error('ChromeStorage', '❌ 批量 Session 存储失败', error)
       throw error
@@ -316,9 +304,7 @@ export class ChromeStorageService {
       } else {
         // 降级：清空所有 _session_ 前缀的键
         const allItems = await chrome.storage.local.get(null)
-        const sessionKeys = Object.keys(allItems).filter(k =>
-          k.startsWith('_session_')
-        )
+        const sessionKeys = Object.keys(allItems).filter(k => k.startsWith('_session_'))
         if (sessionKeys.length > 0) {
           await chrome.storage.local.remove(sessionKeys)
         }
@@ -336,16 +322,10 @@ export class ChromeStorageService {
    * @param area - 监听的存储区域（可选）
    */
   onChanged(
-    callback: (
-      changes: Record<string, chrome.storage.StorageChange>,
-      area: StorageArea
-    ) => void,
+    callback: (changes: Record<string, chrome.storage.StorageChange>, area: StorageArea) => void,
     area?: StorageArea
   ): () => void {
-    const listener = (
-      changes: Record<string, chrome.storage.StorageChange>,
-      areaName: string
-    ) => {
+    const listener = (changes: Record<string, chrome.storage.StorageChange>, areaName: string) => {
       if (!area || areaName === area) {
         callback(changes, areaName as StorageArea)
       }

@@ -47,10 +47,7 @@ const elevationClass = computed(() => 'card__elevation')
 </script>
 
 <template>
-  <div
-    :class="cardClasses"
-    @click="props.clickable ? $emit('click', $event) : undefined"
-  >
+  <div :class="cardClasses" @click="props.clickable ? $emit('click', $event) : undefined">
     <!-- Material Design 3 Elevation -->
     <md-elevation :class="elevationClass"></md-elevation>
 
@@ -58,12 +55,7 @@ const elevationClass = computed(() => 'card__elevation')
     <header v-if="$slots.header || title" class="card__header">
       <slot name="header">
         <div class="card__title-section">
-          <LucideIcon
-            v-if="icon"
-            :name="icon"
-            :color="iconColor"
-            class="card__icon"
-          />
+          <LucideIcon v-if="icon" :name="icon" :color="iconColor" class="card__icon" />
           <h3 v-if="title" class="card__title">{{ title }}</h3>
           <p v-if="subtitle" class="card__subtitle">{{ subtitle }}</p>
         </div>
@@ -81,10 +73,7 @@ const elevationClass = computed(() => 'card__elevation')
 
     <!-- Footer -->
     <Transition :name="props.footerTransition">
-      <footer
-        v-if="(props.footerVisible ?? !!$slots.footer) && $slots.footer"
-        class="card__footer"
-      >
+      <footer v-if="(props.footerVisible ?? !!$slots.footer) && $slots.footer" class="card__footer">
         <slot name="footer" />
       </footer>
     </Transition>
@@ -386,12 +375,7 @@ const elevationClass = computed(() => 'card__elevation')
   position: absolute;
   inset: 0;
   z-index: 2;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--color-loading-shimmer-mid),
-    transparent
-  );
+  background: linear-gradient(90deg, transparent, var(--color-loading-shimmer-mid), transparent);
   animation: card-loading 1.5s infinite;
   content: '';
 

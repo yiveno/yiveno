@@ -73,9 +73,7 @@ const isCompleted = ref(false)
 
 const fallbackStep: Step = steps[0]!
 
-const currentStep = computed<Step>(
-  () => steps[currentStepIndex.value] ?? fallbackStep
-)
+const currentStep = computed<Step>(() => steps[currentStepIndex.value] ?? fallbackStep)
 const isLast = computed(() => currentStepIndex.value === steps.length - 1)
 
 function nextStep() {
@@ -88,12 +86,11 @@ function nextStep() {
   }
 }
 
-
 const messageListener = (message: ChromeExtensionMessage) => {
   if (message.type === 'acuity-bookmarks-sync-progress') {
     progress.value = message.data.percentage
     progressMessage.value = message.data.message
-    
+
     if (message.data.phase === 'completed') {
       completeSync()
     }
@@ -115,9 +112,9 @@ onMounted(() => {
   // 检查 Chrome API 是否可用
   if (typeof chrome !== 'undefined' && chrome.runtime) {
     chrome.runtime.onMessage.addListener(messageListener)
-    
+
     if (chrome.storage?.local) {
-      chrome.storage.local.get(['AB_INITIALIZED'], (result) => {
+      chrome.storage.local.get(['AB_INITIALIZED'], result => {
         if (result.AB_INITIALIZED) {
           completeSync()
         }
@@ -132,7 +129,7 @@ onMounted(() => {
       currentProgress += 10
       progress.value = currentProgress
       progressMessage.value = t('onboarding_processing', String(currentProgress))
-      
+
       if (currentProgress >= 100) {
         clearInterval(interval)
         completeSync()
@@ -153,21 +150,15 @@ onUnmounted(() => {
     <!-- Header -->
     <header class="onboarding-header">
       <div class="logo-container">
-        <img
-          src="/logo.webp"
-          alt="AcuityBookmarks Logo"
-          class="logo-icon"
-        />
+        <img src="/logo.webp" alt="AcuityBookmarks Logo" class="logo-icon" />
         <span class="logo-text">AcuityBookmarks</span>
       </div>
-      
     </header>
 
     <!-- Main Content -->
     <main class="onboarding-main">
       <Transition name="fade" mode="out-in">
         <div :key="currentStep.id" class="step-content">
-          
           <!-- Visual Area -->
           <div class="visual-area">
             <!-- Hero Visual -->
@@ -183,10 +174,10 @@ onUnmounted(() => {
               <div class="progress-circle">
                 <svg class="progress-ring" viewBox="0 0 120 120">
                   <circle class="progress-ring__background" cx="60" cy="60" r="54" />
-                  <circle 
-                    class="progress-ring__progress" 
-                    cx="60" 
-                    cy="60" 
+                  <circle
+                    class="progress-ring__progress"
+                    cx="60"
+                    cy="60"
                     r="54"
                     :style="{ strokeDashoffset: 339.29 * (1 - progress / 100) }"
                   />
@@ -276,16 +267,12 @@ onUnmounted(() => {
             <p class="step-description">{{ t(currentStep.descriptionKey) }}</p>
 
             <div v-if="currentStep.showAction" class="action-area">
-              <button 
-                class="action-button"
-                @click="nextStep"
-              >
+              <button class="action-button" @click="nextStep">
                 {{ isLast ? t('onboarding_get_started') : t('onboarding_next') }}
                 <LucideIcon name="arrow-right" size="sm" />
               </button>
             </div>
           </div>
-
         </div>
       </Transition>
     </main>
@@ -305,8 +292,6 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-
-
 @keyframes pulse {
   0%,
   100% {
@@ -415,7 +400,6 @@ onUnmounted(() => {
   font-weight: 700;
   letter-spacing: -0.02em;
 }
-
 
 /* Main Content */
 .onboarding-main {
@@ -860,7 +844,9 @@ onUnmounted(() => {
 /* Transitions */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
 }
 
 .fade-enter-from {

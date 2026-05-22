@@ -46,8 +46,8 @@ const computedClass = computed(() => {
 }
 
 .card-glass {
-  background-color: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background-color: rgb(255 255 255 / 2%);
+  border: 1px solid rgb(255 255 255 / 5%);
   backdrop-filter: blur(12px);
 }
 
@@ -59,9 +59,9 @@ const computedClass = computed(() => {
 /* Hover 效果 */
 .card-hover:hover {
   border-color: color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent);
-  background-color: rgba(255, 255, 255, 0.04);
-  box-shadow: 
-    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+  background-color: rgb(255 255 255 / 4%);
+  box-shadow:
+    0 20px 25px -5px rgb(0 0 0 / 10%),
     0 10px 10px -5px color-mix(in srgb, var(--md-sys-color-primary) 5%, transparent);
 }
 </style>

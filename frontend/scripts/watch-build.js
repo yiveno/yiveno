@@ -107,17 +107,12 @@ function getBuildEnv() {
         // 🔒 如果值是 HTTP，转换为 HTTPS（不允许 HTTP）
         if (value.startsWith('http://')) {
           value = value.replace('http://', 'https://')
-          __scriptLogger__.warn(
-            `⚠️  .env 中的 HTTP 已转换为 HTTPS: ${key}=${value}`
-          )
+          __scriptLogger__.warn(`⚠️  .env 中的 HTTP 已转换为 HTTPS: ${key}=${value}`)
         }
         // ✅ 优先使用文件中的值（覆盖进程环境变量）
         // 特别是对于 VITE_API_BASE_URL 和 VITE_CLOUDFLARE_WORKER_URL
         // 注意：开发环境的 API URL 不应该从 .env 读取，由下面逻辑自动设置
-        if (
-          key === 'VITE_API_BASE_URL' ||
-          key === 'VITE_CLOUDFLARE_WORKER_URL'
-        ) {
+        if (key === 'VITE_API_BASE_URL' || key === 'VITE_CLOUDFLARE_WORKER_URL') {
           // 开发环境时，这些值由脚本自动管理，不覆盖
           // 生产环境时，使用 .env 中的值
           if (process.env.NODE_ENV === 'production') {
@@ -160,24 +155,19 @@ function getBuildEnv() {
   if (!cfUrl) {
     try {
       // 检查是否有 wrangler 进程在运行
-      const processes = execSync(
-        'ps aux | grep wrangler | grep -v grep || true',
-        { encoding: 'utf8' }
-      )
+      const processes = execSync('ps aux | grep wrangler | grep -v grep || true', {
+        encoding: 'utf8'
+      })
 
       if (processes.includes('--remote')) {
         // ⚠️ 重要：--remote 模式的本地代理是 HTTP，Chrome Extension 需要 HTTPS
         // 因此直接使用远程 Worker URL，不通过本地代理
         cfUrl = cfRemote
         __scriptLogger__.info('🔍 自动检测：后端运行在远程模式（--remote）')
-        __scriptLogger__.info(
-          '   → 使用远程 Worker URL（避免本地 HTTP 代理的 HTTPS 问题）'
-        )
+        __scriptLogger__.info('   → 使用远程 Worker URL（避免本地 HTTP 代理的 HTTPS 问题）')
       } else if (processes.includes('--local')) {
         cfUrl = cfLocal
-        __scriptLogger__.info(
-          '🔍 自动检测：后端运行在本地模式（--local），使用本地 HTTPS 服务'
-        )
+        __scriptLogger__.info('🔍 自动检测：后端运行在本地模式（--local），使用本地 HTTPS 服务')
       } else {
         // 默认使用本地（开发环境最常见）
         cfUrl = cfLocal
@@ -214,14 +204,9 @@ function getBuildEnv() {
   env.NODE_ENV = env.NODE_ENV || 'production'
 
   // 显示检测结果
-  const mode =
-    cfUrl.includes('localhost') || cfUrl.includes('127.0.0.1') ? '本地' : '远程'
-  __scriptLogger__.info(
-    `🌐 构建目标服务: Cloudflare ${mode} (${env.VITE_API_BASE_URL})`
-  )
-  __scriptLogger__.info(
-    `   ✅ 已强制覆盖环境变量为 HTTPS（优先级高于 .env.development）`
-  )
+  const mode = cfUrl.includes('localhost') || cfUrl.includes('127.0.0.1') ? '本地' : '远程'
+  __scriptLogger__.info(`🌐 构建目标服务: Cloudflare ${mode} (${env.VITE_API_BASE_URL})`)
+  __scriptLogger__.info(`   ✅ 已强制覆盖环境变量为 HTTPS（优先级高于 .env.development）`)
   // 🔍 调试：显示最终注入的环境变量值
   __scriptLogger__.info(
     `   🔍 最终注入的环境变量: VITE_API_BASE_URL=${env.VITE_API_BASE_URL}, VITE_CLOUDFLARE_WORKER_URL=${env.VITE_CLOUDFLARE_WORKER_URL}`
@@ -274,9 +259,7 @@ async function runESLintFix() {
           __scriptLogger__.info(`✅ ESLint 修复完成! 耗时: ${eslintDuration}ms`)
           resolve()
         } else {
-          __scriptLogger__.warn(
-            `⚠️ ESLint 修复阶段检测到问题: ${eslintDuration}ms`
-          )
+          __scriptLogger__.warn(`⚠️ ESLint 修复阶段检测到问题: ${eslintDuration}ms`)
           if (eslintOutput.trim()) {
             __scriptLogger__.info('📋 ESLint 输出:')
             __scriptLogger__.info(eslintOutput.trim())
@@ -378,12 +361,8 @@ async function build() {
       await runESLintFix()
       const ok = await runESLintCheck()
       if (!ok) {
-        __scriptLogger__.error(
-          '🛑 阻止后续构建：请先修复以上 ESLint 问题后重试。'
-        )
-        __scriptLogger__.info(
-          '💡 若需暂时跳过，可使用脚本: `bun run build:hot:no-lint`'
-        )
+        __scriptLogger__.error('🛑 阻止后续构建：请先修复以上 ESLint 问题后重试。')
+        __scriptLogger__.info('💡 若需暂时跳过，可使用脚本: `bun run build:hot:no-lint`')
         throw new Error('ESLint 检查未通过')
       }
     } else {
@@ -426,12 +405,8 @@ async function build() {
           // 根据变更的文件类型给出明确的提示
           if (lastChangedFiles.needsReload) {
             __scriptLogger__.warn('⚠️  需要重新加载扩展')
-            __scriptLogger__.warn(
-              `   📋 变更的文件: ${lastChangedFiles.files.join(', ')}`
-            )
-            __scriptLogger__.warn(
-              '   📋 步骤：chrome://extensions/ → 找到扩展 → 点击刷新按钮'
-            )
+            __scriptLogger__.warn(`   📋 变更的文件: ${lastChangedFiles.files.join(', ')}`)
+            __scriptLogger__.warn('   📋 步骤：chrome://extensions/ → 找到扩展 → 点击刷新按钮')
           } else {
             __scriptLogger__.info('✅ 刷新页面即可看到更新')
             if (lastChangedFiles.files.length > 0) {
@@ -580,9 +555,7 @@ try {
 }
 
 // 初始构建
-__scriptLogger__.info(
-  `🔨 执行初始构建流程 ${SKIP_ESLINT ? '(仅 Vite)' : '(ESLint + Vite)'}...`
-)
+__scriptLogger__.info(`🔨 执行初始构建流程 ${SKIP_ESLINT ? '(仅 Vite)' : '(ESLint + Vite)'}...`)
 build()
 
 // 处理进程退出

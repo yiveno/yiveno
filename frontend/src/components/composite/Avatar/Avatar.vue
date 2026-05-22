@@ -10,10 +10,7 @@ const props = withDefaults(defineProps<AvatarProps>(), {
 
 const imageError = ref(false)
 
-const avatarClasses = computed(() => [
-  'acuity-avatar',
-  `acuity-avatar--${props.variant}`
-])
+const avatarClasses = computed(() => ['acuity-avatar', `acuity-avatar--${props.variant}`])
 
 const avatarStyle = computed(() => ({
   width: typeof props.size === 'number' ? `${props.size}px` : props.size,
@@ -45,13 +42,7 @@ const handleImageError = () => {
 
 <template>
   <div :class="avatarClasses">
-    <img
-      v-if="src"
-      :src="src"
-      :alt="alt"
-      class="acuity-avatar-img"
-      @error="handleImageError"
-    />
+    <img v-if="src" :src="src" :alt="alt" class="acuity-avatar-img" @error="handleImageError" />
     <LucideIcon v-else-if="icon" :name="icon" :size="iconSize" />
     <span v-else class="acuity-avatar-text">{{ initials }}</span>
   </div>

@@ -61,12 +61,12 @@ import { materialColors, semanticColors } from '@acuity-bookmarks/design-tokens/
 
 // Canvas 绘图示例
 const ctx = canvas.getContext('2d')
-ctx.fillStyle = materialColors.primary.rgb  // 'rgb(47, 98, 140)'
+ctx.fillStyle = materialColors.primary.rgb // 'rgb(47, 98, 140)'
 ctx.fillRect(0, 0, 100, 100)
 
 // Chrome Badge API 示例
 chrome.action.setBadgeBackgroundColor({
-  color: semanticColors.success.rgb  // 'rgb(46, 125, 50)'
+  color: semanticColors.success.rgb // 'rgb(46, 125, 50)'
 })
 
 // 浏览器控制台样式示例
@@ -76,45 +76,45 @@ console.log(
 )
 
 // 获取不同格式的颜色值
-materialColors.primary.css  // 'var(--md-sys-color-primary)'
-materialColors.primary.rgb  // 'rgb(47, 98, 140)'
-materialColors.primary.hex  // '#2f628c'
+materialColors.primary.css // 'var(--md-sys-color-primary)'
+materialColors.primary.rgb // 'rgb(47, 98, 140)'
+materialColors.primary.hex // '#2f628c'
 ```
 
 **可用的颜色导出**：
 
 ```typescript
 // Material Design 3 主题色
-materialColors.primary          // 主色（亮色主题）
-materialColors.primaryDark      // 主色（暗色主题）
-materialColors.secondary        // 次要色（亮色主题）
-materialColors.secondaryDark    // 次要色（暗色主题）
-materialColors.error            // 错误色（亮色主题）
-materialColors.errorDark        // 错误色（暗色主题）
-materialColors.surface          // 表面色（亮色主题）
-materialColors.surfaceDark      // 表面色（暗色主题）
-materialColors.onSurface        // 表面上的文本（亮色主题）
-materialColors.onSurfaceDark    // 表面上的文本（暗色主题）
+materialColors.primary // 主色（亮色主题）
+materialColors.primaryDark // 主色（暗色主题）
+materialColors.secondary // 次要色（亮色主题）
+materialColors.secondaryDark // 次要色（暗色主题）
+materialColors.error // 错误色（亮色主题）
+materialColors.errorDark // 错误色（暗色主题）
+materialColors.surface // 表面色（亮色主题）
+materialColors.surfaceDark // 表面色（暗色主题）
+materialColors.onSurface // 表面上的文本（亮色主题）
+materialColors.onSurfaceDark // 表面上的文本（暗色主题）
 
 // 语义化颜色
-semanticColors.warning          // 警告色
+semanticColors.warning // 警告色
 semanticColors.warningContainer // 警告容器色
-semanticColors.success          // 成功色
+semanticColors.success // 成功色
 semanticColors.successContainer // 成功容器色
-semanticColors.info             // 信息色
-semanticColors.infoContainer    // 信息容器色
+semanticColors.info // 信息色
+semanticColors.infoContainer // 信息容器色
 
 // 强调色/装饰色
-accentColors.teal               // 青色
-accentColors.gold               // 金色
-accentColors.amber              // 琥珀色
-accentColors.purple             // 紫色
-accentColors.ai                 // AI 功能色
+accentColors.teal // 青色
+accentColors.gold // 金色
+accentColors.amber // 琥珀色
+accentColors.purple // 紫色
+accentColors.ai // AI 功能色
 
 // Primary 色彩系列（50-900）
-primaryScale[50]                // 最浅
-primaryScale[500]               // 中等
-primaryScale[900]               // 最深
+primaryScale[50] // 最浅
+primaryScale[500] // 中等
+primaryScale[900] // 最深
 ```
 
 **辅助函数**：
@@ -128,9 +128,9 @@ const hexColor = getColor(materialColors.primary, 'hex')
 
 // 根据主题获取颜色
 const themeColor = getThemeColor(
-  materialColors.primary,      // 亮色
-  materialColors.primaryDark,  // 暗色
-  'dark'                       // 当前主题
+  materialColors.primary, // 亮色
+  materialColors.primaryDark, // 暗色
+  'dark' // 当前主题
 )
 ```
 
@@ -142,9 +142,7 @@ const themeColor = getThemeColor(
 </script>
 
 <template>
-  <button class="btn-primary">
-    登录
-  </button>
+  <button class="btn-primary">登录</button>
 </template>
 
 <style scoped>
@@ -199,16 +197,16 @@ ctx.fillStyle = materialColors.primary.rgb
 import { materialColors } from '@acuity-bookmarks/design-tokens/colors'
 
 const BADGE_COLORS = {
-  info: materialColors.primary.rgb,      // 自动同步
-  success: semanticColors.success.rgb,   // 自动同步
-  warning: semanticColors.warning.rgb,   // 自动同步
-  error: materialColors.error.rgb        // 自动同步
+  info: materialColors.primary.rgb, // 自动同步
+  success: semanticColors.success.rgb, // 自动同步
+  warning: semanticColors.warning.rgb, // 自动同步
+  error: materialColors.error.rgb // 自动同步
 }
 
 // ❌ 不会自动同步：硬编码的颜色值
 const BADGE_COLORS = {
-  info: 'rgb(47, 98, 140)',    // 需要手动更新
-  success: 'rgb(46, 125, 50)', // 需要手动更新
+  info: 'rgb(47, 98, 140)', // 需要手动更新
+  success: 'rgb(46, 125, 50)' // 需要手动更新
 }
 ```
 
@@ -249,30 +247,30 @@ var(--acuity-accent-ai)                  /* AI 功能色 */
 ### 语义化颜色（TypeScript）
 
 ```typescript
-colors.semantic.success     // #22c55e - 成功
-colors.semantic.error       // #ef4444 - 错误
-colors.semantic.warning     // #f59e0b - 警告
-colors.semantic.info        // #3b82f6 - 信息
+colors.semantic.success // #22c55e - 成功
+colors.semantic.error // #ef4444 - 错误
+colors.semantic.warning // #f59e0b - 警告
+colors.semantic.info // #3b82f6 - 信息
 ```
 
 ### 间距
 
 ```typescript
-spacing.xs      // 4px
-spacing.sm      // 8px
-spacing.md      // 12px
-spacing.base    // 16px
-spacing.lg      // 24px
-spacing.xl      // 32px
+spacing.xs // 4px
+spacing.sm // 8px
+spacing.md // 12px
+spacing.base // 16px
+spacing.lg // 24px
+spacing.xl // 32px
 ```
 
 ### 字体
 
 ```typescript
-fontSize.sm     // 12px
-fontSize.base   // 14px
-fontSize.md     // 16px
-fontSize.lg     // 18px
+fontSize.sm // 12px
+fontSize.base // 14px
+fontSize.md // 16px
+fontSize.lg // 18px
 ```
 
 ## 🔄 跨平台使用
@@ -324,6 +322,7 @@ import { colors, spacing } from '@acuity-bookmarks/design-tokens'
 ## 📚 完整文档
 
 ### 设计规范
+
 - [设计原则](./docs/DESIGN_PRINCIPLES.md) - 核心设计理念
 - [颜色使用指南](./docs/COLOR_USAGE.md) - 如何使用颜色系统
 - [间距使用指南](./docs/SPACING_GUIDE.md) - 如何使用间距系统
@@ -332,6 +331,7 @@ import { colors, spacing } from '@acuity-bookmarks/design-tokens'
 - [核心 UI 规范](./docs/CORE_UI_SPECS.md) - 核心 UI 元素规范
 
 ### 实现示例
+
 - [Web CSS 变量示例](./examples/web-css-variables.html) - HTML/CSS 完整示例
 - [React Native 示例](./examples/react-native.tsx) - React Native 完整示例
 - [Flutter 示例](./examples/flutter.dart) - Flutter 完整示例

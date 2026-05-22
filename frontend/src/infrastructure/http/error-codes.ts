@@ -37,10 +37,8 @@ const SUPABASE_ERROR_CODES: ErrorCodeMap = {
   email_address_not_authorized: '该邮箱未授权，请联系管理员',
   email_already_registered: '该邮箱已被注册，请直接登录或使用其他邮箱',
   email_exists: '该邮箱已被注册，请直接登录或使用其他邮箱',
-  email_not_confirmed:
-    '请先验证邮箱。请检查您的邮箱并点击验证链接完成注册后才能登录',
-  email_not_verified:
-    '请先验证邮箱。请检查您的邮箱并点击验证链接完成注册后才能登录',
+  email_not_confirmed: '请先验证邮箱。请检查您的邮箱并点击验证链接完成注册后才能登录',
+  email_not_verified: '请先验证邮箱。请检查您的邮箱并点击验证链接完成注册后才能登录',
   email_rate_limit_exceeded:
     '发送邮件过于频繁，请稍后再试（建议等待 15-60 分钟后重试，或使用其他邮箱地址）',
   over_email_send_rate_limit:
@@ -192,16 +190,10 @@ export function getErrorMessage(
   if (normalizedCode.includes('not found')) {
     return '未找到相关资源'
   }
-  if (
-    normalizedCode.includes('unauthorized') ||
-    normalizedCode.includes('forbidden')
-  ) {
+  if (normalizedCode.includes('unauthorized') || normalizedCode.includes('forbidden')) {
     return '未授权，请先登录'
   }
-  if (
-    normalizedCode.includes('network') ||
-    normalizedCode.includes('timeout')
-  ) {
+  if (normalizedCode.includes('network') || normalizedCode.includes('timeout')) {
     return '网络连接失败，请检查网络后重试'
   }
 

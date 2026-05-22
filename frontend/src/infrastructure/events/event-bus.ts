@@ -84,10 +84,7 @@ export const eventBus = mitt<AppEvents>()
  * })
  * ```
  */
-export function emitEvent<K extends keyof AppEvents>(
-  type: K,
-  payload: AppEvents[K]
-) {
+export function emitEvent<K extends keyof AppEvents>(type: K, payload: AppEvents[K]) {
   eventBus.emit(type, payload)
 }
 

@@ -29,7 +29,9 @@ const openExtension = () => {
           class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-md animate-fade-in"
         >
           <Sparkles class="w-3.5 h-3.5 text-accent-400" />
-          <span class="text-xs font-medium text-primary-100 tracking-wide">AI 驱动的智能书签工作台</span>
+          <span class="text-xs font-medium text-primary-100 tracking-wide"
+            >AI 驱动的智能书签工作台</span
+          >
         </div>
       </div>
 
@@ -60,28 +62,17 @@ const openExtension = () => {
         style="animation-delay: 300ms"
       >
         <Button size="lg" class="min-w-[160px] group" @click="openExtension">
-          <Chrome
-            class="w-4 h-4 mr-2 group-hover:scale-110 transition-transform"
-          />
+          <Chrome class="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
           添加到 Chrome
         </Button>
-        <Button
-          variant="secondary"
-          size="lg"
-          class="min-w-[160px]"
-          to="/features"
-          :as="NuxtLink"
-        >
+        <Button variant="secondary" size="lg" class="min-w-[160px]" to="/features" :as="NuxtLink">
           <PlayCircle class="w-4 h-4 mr-2" />
           了解功能
         </Button>
       </div>
 
       <!-- Visual Placeholder/Showcase -->
-      <div
-        class="relative max-w-4xl mx-auto animate-slide-up"
-        style="animation-delay: 400ms"
-      >
+      <div class="relative max-w-4xl mx-auto animate-slide-up" style="animation-delay: 400ms">
         <div
           class="relative rounded-xl bg-bg-surface border border-white/10 shadow-2xl shadow-primary-500/20 overflow-hidden aspect-[16/9] group"
         >
@@ -141,9 +132,11 @@ const openExtension = () => {
   0% {
     background-position: 0% 50%;
   }
+
   50% {
     background-position: 100% 50%;
   }
+
   100% {
     background-position: 0% 50%;
   }
@@ -155,13 +148,15 @@ const openExtension = () => {
 
 @keyframes float {
   0% {
-    transform: translateY(0px);
+    transform: translateY(0);
   }
+
   50% {
     transform: translateY(-20px);
   }
+
   100% {
-    transform: translateY(0px);
+    transform: translateY(0);
   }
 }
 </style>

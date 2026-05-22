@@ -76,9 +76,7 @@ export interface UseLazyFaviconReturn {
  * })
  * ```
  */
-export function useLazyFavicon(
-  options: UseLazyFaviconOptions
-): UseLazyFaviconReturn {
+export function useLazyFavicon(options: UseLazyFaviconOptions): UseLazyFaviconReturn {
   const { url, rootEl, rootMargin = '200px', enabled = true } = options
 
   // 响应式状态
@@ -158,16 +156,13 @@ export function useLazyFavicon(
 
     try {
       // 使用FaviconService获取favicon
-      const initialUrl = await faviconService.getFavicon(
-        bookmarkUrl,
-        (newStatus, newUrl) => {
-          status.value = newStatus
-          if (newUrl) {
-            faviconUrl.value = newUrl
-          }
-          updateComputedState()
+      const initialUrl = await faviconService.getFavicon(bookmarkUrl, (newStatus, newUrl) => {
+        status.value = newStatus
+        if (newUrl) {
+          faviconUrl.value = newUrl
         }
-      )
+        updateComputedState()
+      })
 
       if (!initialUrl) {
         // 服务返回空（可能是特殊协议），标记为error
@@ -195,10 +190,7 @@ export function useLazyFavicon(
     const bookmarkUrl = url.value
     if (!bookmarkUrl) return
 
-    logger.debug(
-      'useLazyFavicon',
-      `✅ Favicon加载成功: ${bookmarkUrl} -> ${faviconUrl.value}`
-    )
+    logger.debug('useLazyFavicon', `✅ Favicon加载成功: ${bookmarkUrl} -> ${faviconUrl.value}`)
     faviconService.markLoaded(bookmarkUrl, faviconUrl.value)
     status.value = 'loaded'
     updateComputedState()

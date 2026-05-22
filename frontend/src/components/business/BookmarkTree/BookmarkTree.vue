@@ -58,53 +58,51 @@ const props = withDefaults(defineProps<Props>(), {
 // === Emits 定义 ===
 // ✅ 组件对外事件统一声明，用中文说明触发时机
 const emit = defineEmits<{
-  'node-click': [BookmarkNode, MouseEvent]
-  'folder-toggle': [string, BookmarkNode, boolean]
-  'node-select': [string, BookmarkNode, boolean]
-  'selection-change': [string[], BookmarkNode[]]
-  search: [string]
-  ready: []
-  'node-edit': [BookmarkNode]
-  'node-delete': [BookmarkNode]
-  'folder-add': [BookmarkNode]
-  'bookmark-open-new-tab': [BookmarkNode]
-  'bookmark-copy-url': [BookmarkNode]
-  'bookmark-toggle-favorite': [BookmarkNode, boolean]
-  /** 分享书签 */
-  'bookmark-share': [BookmarkNode]
-  /** 分享文件夹 */
-  'folder-share': [BookmarkNode]
-  'node-hover': [BookmarkNode]
-  'node-hover-leave': [BookmarkNode]
-  /** 展开状态变化事件：true=全部展开，false=全部收起 */
-  'expand-state-change': [boolean]
-  'request-children': [
-    {
+  (e: 'nodeClick', node: BookmarkNode, event: MouseEvent): void
+  (e: 'folderToggle', folderId: string, node: BookmarkNode, expanded: boolean): void
+  (e: 'nodeSelect', nodeId: string, node: BookmarkNode, selected: boolean): void
+  (e: 'selectionChange', ids: string[], nodes: BookmarkNode[]): void
+  (e: 'search', query: string): void
+  (e: 'ready'): void
+  (e: 'nodeEdit', node: BookmarkNode): void
+  (e: 'nodeDelete', node: BookmarkNode): void
+  (e: 'folderAdd', node: BookmarkNode): void
+  (e: 'bookmarkOpenNewTab', node: BookmarkNode): void
+  (e: 'bookmarkCopyUrl', node: BookmarkNode): void
+  (e: 'bookmarkToggleFavorite', node: BookmarkNode, isFavorite: boolean): void
+  (e: 'bookmarkShare', node: BookmarkNode): void
+  (e: 'folderShare', node: BookmarkNode): void
+  (e: 'nodeHover', node: BookmarkNode): void
+  (e: 'nodeHoverLeave', node: BookmarkNode): void
+  (e: 'expandStateChange', expanded: boolean): void
+  (
+    e: 'requestChildren',
+    payload: {
       folderId: string
       node: BookmarkNode
       limit: number
       offset: number
     }
-  ]
-  'request-more-children': [
-    {
+  ): void
+  (
+    e: 'requestMoreChildren',
+    payload: {
       folderId: string
       node: BookmarkNode
       limit: number
       loaded: number
     }
-  ]
-  'request-clear-filters': []
-  // ✅ 拖拽相关事件
-  'bookmark-move': [
-    {
+  ): void
+  (e: 'requestClearFilters'): void
+  (
+    e: 'bookmarkMove',
+    payload: {
       sourceId: string
       targetId: string
       position: 'before' | 'inside' | 'after'
     }
-  ]
-  // 后代计数更新事件
-  'desc-counts-updated': [Map<string, number>]
+  ): void
+  (e: 'descCountsUpdated', counts: Map<string, number>): void
 }>()
 
 // 使用 UI Store 管理高亮状态
@@ -134,9 +132,7 @@ interface Props {
   /** 严格按 Chrome API 原始树的结构与顺序渲染（不做去重/重排） */
   strictChromeOrder?: boolean
   /** 是否启用虚拟滚动 */
-  virtual?:
-    | boolean
-    | { enabled: boolean; itemHeight?: number; threshold?: number }
+  virtual?: boolean | { enabled: boolean; itemHeight?: number; threshold?: number }
   /** 树的尺寸 */
   size?: 'compact' | 'comfortable' | 'spacious'
   /** 是否显示工具栏 */
@@ -193,11 +189,7 @@ interface Props {
    * - 'current-tab': 当前标签页打开
    * @default 'new-tab-background'
    */
-  defaultOpenMode?:
-    | 'new-tab-background'
-    | 'new-tab-foreground'
-    | 'current-tab'
-    | undefined
+  defaultOpenMode?: 'new-tab-background' | 'new-tab-foreground' | 'current-tab' | undefined
   /**
    * 点击书签的行为模式
    * - 'select': 只选中，不打开（用于批量操作场景，如 Popup）
@@ -246,8 +238,8 @@ const activeNodeId = computed({
 const focusedNodeId = computed({
   get: () => {
     // 根据 source 返回对应面板的焦点状态
-    return props.source === 'sidePanel' 
-      ? uiStore.focusedBookmarkIdSidePanel 
+    return props.source === 'sidePanel'
+      ? uiStore.focusedBookmarkIdSidePanel
       : uiStore.focusedBookmarkIdPopup
   },
   set: (value: string | null) => {
@@ -333,10 +325,7 @@ const normalizedVirtual = computed<VirtualConfig>(() => {
 /**
  * 固定节点高度映射：通过约束节点布局，确保虚拟滚动定位稳定。
  */
-const TREE_ITEM_HEIGHT_MAP: Record<
-  'compact' | 'comfortable' | 'spacious',
-  number
-> = {
+const TREE_ITEM_HEIGHT_MAP: Record<'compact' | 'comfortable' | 'spacious', number> = {
   compact: 30,
   comfortable: 36,
   spacious: 44
@@ -362,8 +351,7 @@ const itemHeight = computed(() => {
  * 动态计算 overscan，缓解滚动空白与额外渲染开销之间的冲突。
  */
 const virtualOverscan = computed(() => {
-  const containerHeight =
-    containerRef.value?.clientHeight ?? TREE_ITEM_HEIGHT_MAP.comfortable * 12
+  const containerHeight = containerRef.value?.clientHeight ?? TREE_ITEM_HEIGHT_MAP.comfortable * 12
   const rowsInView = Math.max(Math.ceil(containerHeight / itemHeight.value), 1)
   return Math.max(Math.min(rowsInView * 3, 120), 24)
 })
@@ -377,8 +365,7 @@ const treeClasses = computed(() => ({
 
 // 🚀 性能优化：缓存容器样式
 const containerStyles = computed(() => {
-  const height =
-    typeof props.height === 'number' ? `${props.height}px` : props.height
+  const height = typeof props.height === 'number' ? `${props.height}px` : props.height
   return {
     height,
     overflowY: virtualEnabled.value ? ('auto' as const) : ('scroll' as const)
@@ -622,10 +609,10 @@ function scheduleVirtualizerUpdate() {
 // 🚀 性能优化：使用箭头函数避免重复创建
 const handleNodeClick = async (node: BookmarkNode, event: MouseEvent) => {
   const nodeId = String(node.id)
-  
+
   // ✅ 点击节点时设置键盘导航焦点（而不是选中）
   focusedNodeId.value = nodeId
-  
+
   logger.debug('BookmarkTree', '点击节点，设置焦点', {
     nodeId,
     title: node.title,
@@ -637,7 +624,7 @@ const handleNodeClick = async (node: BookmarkNode, event: MouseEvent) => {
     if (node.url) {
       // 设置激活状态（通过 UI Store）
       uiStore.setActiveBookmark(nodeId)
-      
+
       // 打开书签
       await openBookmark(node, event)
     }
@@ -648,9 +635,9 @@ const handleNodeClick = async (node: BookmarkNode, event: MouseEvent) => {
     // 默认 'both' 模式：设置焦点，不自动选中
     // 选中操作由复选框或 Shift+点击触发
   }
-  
+
   // 触发事件通知父组件（用于额外处理，如更新访问记录）
-  emit('node-click', node, event)
+  emit('nodeClick', node, event)
 }
 
 /**
@@ -726,7 +713,7 @@ const handleFolderToggle = (folderId: string, node: BookmarkNode) => {
     if (props.accordionMode) {
       // ✅ 优化：只查找直接兄弟节点，避免遍历整个树
       const parentId = node.parentId || '0'
-      
+
       // 查找父节点
       const findParentNode = (nodes: BookmarkNode[]): BookmarkNode | null => {
         for (const n of nodes) {
@@ -738,7 +725,7 @@ const handleFolderToggle = (folderId: string, node: BookmarkNode) => {
         }
         return null
       }
-      
+
       // 获取父节点的所有子节点（即当前节点的兄弟节点）
       let siblings: BookmarkNode[] = []
       if (parentId === '0') {
@@ -751,16 +738,12 @@ const handleFolderToggle = (folderId: string, node: BookmarkNode) => {
           siblings = parentNode.children
         }
       }
-      
+
       // 收起所有同级的已展开文件夹（排除当前节点）
       for (const sibling of siblings) {
         if (sibling.id !== folderId && !sibling.url && expandedFolders.value.has(sibling.id)) {
           expandedFolders.value.delete(sibling.id)
-          logger.debug(
-            'SimpleBookmarkTree',
-            '📁 手风琴模式：收起同级文件夹',
-            sibling.id
-          )
+          logger.debug('SimpleBookmarkTree', '📁 手风琴模式：收起同级文件夹', sibling.id)
         }
       }
     }
@@ -773,7 +756,7 @@ const handleFolderToggle = (folderId: string, node: BookmarkNode) => {
   // 强制触发响应式更新
   expandedFolders.value = new Set(expandedFolders.value)
 
-  emit('folder-toggle', folderId, node, !isExpanded)
+  emit('folderToggle', folderId, node, !isExpanded)
 }
 
 // === 自动加载功能 ===
@@ -799,29 +782,30 @@ const setupScrollAutoLoad = () => {
  */
 const getVisibleNodeIds = (): string[] => {
   const ids: string[] = []
-  
+
   const traverse = (nodes: BookmarkNode[]) => {
     for (const node of nodes) {
       ids.push(String(node.id))
-      
+
       // 如果是展开的文件夹，递归添加子节点
       if (!node.url && expandedFolders.value.has(String(node.id)) && node.children) {
         traverse(node.children)
       }
     }
   }
-  
+
   const source = filteredNodes.value
   if (Array.isArray(source)) {
     traverse(source as BookmarkNode[])
   }
-  
+
   return ids
 }
 
 /**
  * 处理键盘导航
  */
+// eslint-disable-next-line complexity -- 键盘导航需要处理多个按键，复杂度较高但逻辑清晰
 const handleKeyboardNavigation = (event: KeyboardEvent) => {
   const target = event.target as HTMLElement | null
   if (!target) {
@@ -841,20 +825,18 @@ const handleKeyboardNavigation = (event: KeyboardEvent) => {
   if (visibleIds.length === 0) return
 
   // ✅ 使用 focusedNodeId 而不是 activeNodeId
-  const currentIndex = focusedNodeId.value 
-    ? visibleIds.indexOf(String(focusedNodeId.value))
-    : -1
+  const currentIndex = focusedNodeId.value ? visibleIds.indexOf(String(focusedNodeId.value)) : -1
 
   switch (event.key) {
     case 'ArrowDown': {
       // 下移焦点
       event.preventDefault()
       event.stopPropagation()
-      
+
       const nextIndex = currentIndex < visibleIds.length - 1 ? currentIndex + 1 : 0
       const nextId = visibleIds[nextIndex]
       focusedNodeId.value = nextId ?? null
-      
+
       // 滚动到可见区域
       if (nextId) {
         scrollToNode(nextId)
@@ -866,11 +848,11 @@ const handleKeyboardNavigation = (event: KeyboardEvent) => {
       // 上移焦点
       event.preventDefault()
       event.stopPropagation()
-      
+
       const prevIndex = currentIndex > 0 ? currentIndex - 1 : visibleIds.length - 1
       const prevId = visibleIds[prevIndex]
       focusedNodeId.value = prevId ?? null
-      
+
       // 滚动到可见区域
       if (prevId) {
         scrollToNode(prevId)
@@ -883,7 +865,7 @@ const handleKeyboardNavigation = (event: KeyboardEvent) => {
       if (focusedNodeId.value) {
         event.preventDefault()
         event.stopPropagation()
-        
+
         const node = findNodeById(focusedNodeId.value)
         if (node) {
           if (!node.url) {
@@ -906,13 +888,14 @@ const handleKeyboardNavigation = (event: KeyboardEvent) => {
         closeContextMenu()
         break
       }
-      
+
       // 文件夹：收起；书签：移动到父节点
       if (focusedNodeId.value) {
         const node = findNodeById(focusedNodeId.value)
         if (node) {
           if (!node.url) {
             // 是文件夹
+            // eslint-disable-next-line max-depth -- 键盘导航的嵌套逻辑由按键处理决定，无法简化
             if (expandedFolders.value.has(String(node.id))) {
               // 已展开，收起它
               event.preventDefault()
@@ -944,7 +927,7 @@ const handleKeyboardNavigation = (event: KeyboardEvent) => {
       if (focusedNodeId.value) {
         event.preventDefault()
         event.stopPropagation()
-        
+
         const node = findNodeById(focusedNodeId.value)
         if (node) {
           if (node.url) {
@@ -964,7 +947,7 @@ const handleKeyboardNavigation = (event: KeyboardEvent) => {
       if (props.selectable && focusedNodeId.value) {
         event.preventDefault()
         event.stopPropagation()
-        
+
         const node = findNodeById(focusedNodeId.value)
         if (node) {
           handleNodeSelect(String(node.id), node)
@@ -1001,23 +984,18 @@ const handleOpenContextMenu = (nodeId: string, x?: number, y?: number) => {
   // 设置菜单位置
   contextMenuX.value = x
   contextMenuY.value = y
-  
+
   // 生成菜单项
-  contextMenuItems.value = ContextMenuBuilder.buildMenu(
-    node,
-    treeConfig.value,
-    false,
-    []
-  )
-  
+  contextMenuItems.value = ContextMenuBuilder.buildMenu(node, treeConfig.value, false, [])
+
   // 保存当前节点引用
   contextMenuNode.value = node
   // ✅ 保存当前节点 ID（用于保持 hover 状态）
   contextMenuNodeId.value = node.id
-  
+
   // 显示菜单
   showContextMenu.value = true
-  
+
   logger.debug('BookmarkTree', '打开右键菜单', {
     nodeId: node.id,
     title: node.title,
@@ -1045,7 +1023,7 @@ const openNodeContextMenu = (nodeId: string) => {
 
   // 获取节点的位置信息
   const rect = nodeEl.getBoundingClientRect()
-  
+
   // 调用统一的打开菜单函数
   handleOpenContextMenu(
     nodeId,
@@ -1062,7 +1040,7 @@ const closeContextMenu = () => {
   contextMenuNode.value = null
   // ✅ 清除菜单节点 ID
   contextMenuNodeId.value = null
-  
+
   // ✅ 关闭菜单后，将焦点返回到树容器，确保键盘导航继续工作
   nextTick(() => {
     if (containerRef.value) {
@@ -1089,7 +1067,7 @@ const handleTreeKeyDown = (event: KeyboardEvent) => {
       event.preventDefault()
     }
   }
-  
+
   // 左箭头键：关闭右键菜单
   if (event.key === 'ArrowLeft' && showContextMenu.value) {
     closeContextMenu()
@@ -1100,6 +1078,7 @@ const handleTreeKeyDown = (event: KeyboardEvent) => {
 /**
  * 处理菜单项点击
  */
+// eslint-disable-next-line complexity -- switch 语句处理多种菜单操作，逻辑清晰
 const handleContextMenuItemClick = (item: MenuItemConfig) => {
   const node = contextMenuNode.value
   if (!node) {
@@ -1127,36 +1106,36 @@ const handleContextMenuItemClick = (item: MenuItemConfig) => {
       openAllBookmarksInFolder(node, 'new-window')
       break
     case 'folder:add':
-      emit('folder-add', node)
+      emit('folderAdd', node)
       break
     case 'folder:edit':
-      emit('node-edit', node)
+      emit('nodeEdit', node)
       break
     case 'folder:delete':
-      emit('node-delete', node)
+      emit('nodeDelete', node)
       break
     case 'folder:share':
-      emit('folder-share', node)
+      emit('folderShare', node)
       break
     case 'bookmark:open-new-tab':
-      emit('bookmark-open-new-tab', node)
+      emit('bookmarkOpenNewTab', node)
       break
     case 'bookmark:copy-url':
-      emit('bookmark-copy-url', node)
+      emit('bookmarkCopyUrl', node)
       break
     case 'bookmark:toggle-favorite':
       // 获取当前收藏状态（这里需要从 node 的 tags 中判断）
       const isFavorite = node.tags?.includes('favorite') ?? false
-      emit('bookmark-toggle-favorite', node, !isFavorite)
+      emit('bookmarkToggleFavorite', node, !isFavorite)
       break
     case 'bookmark:share':
-      emit('bookmark-share', node)
+      emit('bookmarkShare', node)
       break
     case 'bookmark:edit':
-      emit('node-edit', node)
+      emit('nodeEdit', node)
       break
     case 'bookmark:delete':
-      emit('node-delete', node)
+      emit('nodeDelete', node)
       break
     default:
       logger.warn('BookmarkTree', '未知的菜单操作', item.action)
@@ -1167,7 +1146,7 @@ const handleContextMenuItemClick = (item: MenuItemConfig) => {
 
 /**
  * 打开文件夹内的所有书签
- * 
+ *
  * @param node - 文件夹节点
  * @param mode - 打开模式
  */
@@ -1208,11 +1187,8 @@ const openAllBookmarksInFolder = async (
           incognito: true,
           url: urls // 直接传入所有 URL 数组
         })
-        
-        notificationService.notify(
-          `已在无痕窗口中打开 ${urls.length} 个书签`,
-          { level: 'success' }
-        )
+
+        notificationService.notify(`已在无痕窗口中打开 ${urls.length} 个书签`, { level: 'success' })
         break
       }
 
@@ -1220,7 +1196,7 @@ const openAllBookmarksInFolder = async (
         // 在新标签页分组中打开
         const currentWindow = await chrome.windows.getCurrent()
         const tabs: chrome.tabs.Tab[] = []
-        
+
         // 创建所有标签页
         for (const url of urls) {
           const tab = await chrome.tabs.create({
@@ -1230,9 +1206,9 @@ const openAllBookmarksInFolder = async (
           })
           tabs.push(tab)
         }
-        
+
         // 创建标签页分组
-        const tabIds = tabs.map(t => t.id).filter((id): id is number => id !== undefined)
+        const tabIds = tabs.map(tab => tab.id).filter((id): id is number => id !== undefined)
         if (tabIds.length > 0) {
           // @ts-expect-error - Chrome API 类型定义问题
           const groupId = await chrome.tabs.group({ tabIds })
@@ -1242,18 +1218,17 @@ const openAllBookmarksInFolder = async (
             collapsed: false
           })
         }
-        
-        notificationService.notify(
-          `已在标签页分组中打开 ${urls.length} 个书签`,
-          { level: 'success' }
-        )
+
+        notificationService.notify(`已在标签页分组中打开 ${urls.length} 个书签`, {
+          level: 'success'
+        })
         break
       }
 
       case 'current-window': {
         // 在当前窗口中打开
         const currentWindow = await chrome.windows.getCurrent()
-        
+
         for (const url of urls) {
           await chrome.tabs.create({
             windowId: currentWindow.id,
@@ -1261,11 +1236,8 @@ const openAllBookmarksInFolder = async (
             active: false
           })
         }
-        
-        notificationService.notify(
-          `已打开 ${urls.length} 个书签`,
-          { level: 'success' }
-        )
+
+        notificationService.notify(`已打开 ${urls.length} 个书签`, { level: 'success' })
         break
       }
 
@@ -1275,11 +1247,8 @@ const openAllBookmarksInFolder = async (
         await chrome.windows.create({
           url: urls // 直接传入所有 URL 数组
         })
-        
-        notificationService.notify(
-          `已在新窗口中打开 ${urls.length} 个书签`,
-          { level: 'success' }
-        )
+
+        notificationService.notify(`已在新窗口中打开 ${urls.length} 个书签`, { level: 'success' })
         break
       }
     }
@@ -1289,7 +1258,6 @@ const openAllBookmarksInFolder = async (
   }
 }
 
-
 /**
  * 滚动到指定节点
  */
@@ -1298,17 +1266,15 @@ const scrollToNode = (nodeId: string) => {
   if (el && containerRef.value) {
     const containerRect = containerRef.value.getBoundingClientRect()
     const nodeRect = el.getBoundingClientRect()
-    
+
     // 检查节点是否在可见区域内
-    const isVisible = 
-      nodeRect.top >= containerRect.top &&
-      nodeRect.bottom <= containerRect.bottom
-    
+    const isVisible = nodeRect.top >= containerRect.top && nodeRect.bottom <= containerRect.bottom
+
     if (!isVisible) {
       // 滚动到节点位置（居中）
-      el.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'center' 
+      el.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
       })
     }
   }
@@ -1329,13 +1295,13 @@ const handleClickOutsideTree = (event: MouseEvent) => {
 const handleContainerClick = (event: MouseEvent) => {
   // ✅ 不要阻止事件冒泡，让 ContextMenu 的外部点击监听器可以工作
   // event.stopPropagation() // ❌ 移除这行
-  
+
   // 如果点击的是右键菜单，不处理
   const target = event.target as HTMLElement
   if (target.closest('.context-menu')) {
     return
   }
-  
+
   // 如果没有焦点节点，设置第一个节点为焦点
   if (!focusedNodeId.value) {
     const visibleIds = getVisibleNodeIds()
@@ -1350,16 +1316,16 @@ const handleContainerClick = (event: MouseEvent) => {
  */
 const setupKeyboardNavigation = () => {
   if (!containerRef.value) return
-  
+
   // 使树容器可聚焦
   containerRef.value.setAttribute('tabindex', '0')
-  
+
   // 添加键盘事件监听
   containerRef.value.addEventListener('keydown', handleKeyboardNavigation)
-  
+
   // 点击树容器时，如果没有焦点节点，设置第一个节点为焦点
   containerRef.value.addEventListener('click', handleContainerClick)
-  
+
   // 点击树容器外部时，清除焦点状态
   document.addEventListener('click', handleClickOutsideTree)
 }
@@ -1397,36 +1363,33 @@ const findNodeById = (id: string): BookmarkNode | undefined => {
 }
 
 const handleNodeEdit = (node: BookmarkNode) => {
-  emit('node-edit', node)
+  emit('nodeEdit', node)
 }
 
 const handleNodeDelete = (node: BookmarkNode) => {
-  emit('node-delete', node)
+  emit('nodeDelete', node)
 }
 
 const handleFolderAdd = (parentNode: BookmarkNode) => {
-  emit('folder-add', parentNode)
+  emit('folderAdd', parentNode)
 }
 
 const handleFolderShare = (node: BookmarkNode) => {
-  emit('folder-share', node)
+  emit('folderShare', node)
 }
 
 const handleBookmarkOpenNewTab = (node: BookmarkNode) => {
   if (node.url) {
-    emit('bookmark-open-new-tab', node)
+    emit('bookmarkOpenNewTab', node)
   }
 }
 
 const handleBookmarkCopyUrl = (node: BookmarkNode) => {
-  emit('bookmark-copy-url', node)
+  emit('bookmarkCopyUrl', node)
 }
 
-const handleBookmarkToggleFavorite = (
-  node: BookmarkNode,
-  isFavorite: boolean
-) => {
-  emit('bookmark-toggle-favorite', node, isFavorite)
+const handleBookmarkToggleFavorite = (node: BookmarkNode, isFavorite: boolean) => {
+  emit('bookmarkToggleFavorite', node, isFavorite)
 }
 
 // 拖拽事件处理
@@ -1436,10 +1399,7 @@ const handleDragStart = (node: BookmarkNode) => {
   logger.debug('BookmarkTree', '开始拖拽', { nodeId: node.id })
 }
 
-const handleDragOver = (data: {
-  node: BookmarkNode
-  position: 'before' | 'inside' | 'after'
-}) => {
+const handleDragOver = (data: { node: BookmarkNode; position: 'before' | 'inside' | 'after' }) => {
   dragState.value.dropTargetId = String(data.node.id)
   dragState.value.dropPosition = data.position
 }
@@ -1455,7 +1415,7 @@ const handleDrop = (data: {
   position: 'before' | 'inside' | 'after'
 }) => {
   logger.info('BookmarkTree', '拖拽放置', data)
-  emit('bookmark-move', data)
+  emit('bookmarkMove', data)
 
   // 重置拖拽状态
   dragState.value.isDragging = false
@@ -1508,7 +1468,7 @@ const handleNodeSelect = (nodeId: string, node: BookmarkNode) => {
   // 🆕 向上级联更新父节点选中状态
   const updateAncestors = (currentNode: BookmarkNode, visited: Set<string> = new Set()) => {
     if (!currentNode.parentId) return
-    
+
     // ⚠️ 防止无限递归：检查是否已访问过此节点
     const currentId = String(currentNode.id)
     if (visited.has(currentId)) {
@@ -1516,7 +1476,7 @@ const handleNodeSelect = (nodeId: string, node: BookmarkNode) => {
       return
     }
     visited.add(currentId)
-    
+
     // ⚠️ 防止无限递归：限制递归深度
     if (visited.size > 50) {
       logger.warn('BookmarkTree', '递归深度超过限制，停止向上更新', { depth: visited.size })
@@ -1524,8 +1484,7 @@ const handleNodeSelect = (nodeId: string, node: BookmarkNode) => {
     }
 
     const parentNode = findNodeById(currentNode.parentId)
-    if (!parentNode || !parentNode.children || parentNode.children.length === 0)
-      return
+    if (!parentNode || !parentNode.children || parentNode.children.length === 0) return
 
     // 检查父节点的所有直接子节点是否都被选中
     const allChildrenSelected = parentNode.children.every(child =>
@@ -1580,8 +1539,8 @@ const handleNodeSelect = (nodeId: string, node: BookmarkNode) => {
   selectedNodes.value = new Set(selectedNodes.value)
 
   const selected = selectedNodes.value.has(id)
-  emit('node-select', id, node, selected)
-  emit('selection-change', Array.from(selectedNodes.value), getSelectedNodes())
+  emit('nodeSelect', id, node, selected)
+  emit('selectionChange', Array.from(selectedNodes.value), getSelectedNodes())
 
   // 基于当前选中集合重算已选后代计数（O(#selected书签 * 平均祖先深度））
   // ✅ 直接修改 props.selectedDescCounts (Map 是引用类型，父组件会自动更新)
@@ -1593,9 +1552,7 @@ const handleNodeSelect = (nodeId: string, node: BookmarkNode) => {
     const traverse = (nodes: BookmarkNode[], ancestors: string[] = []) => {
       for (const current of nodes) {
         const currentId = String(current.id)
-        const nextAncestors = current.url
-          ? ancestors
-          : [...ancestors, currentId]
+        const nextAncestors = current.url ? ancestors : [...ancestors, currentId]
 
         if (current.url && selectedNodes.value.has(currentId)) {
           for (const ancestorId of ancestors) {
@@ -1614,8 +1571,8 @@ const handleNodeSelect = (nodeId: string, node: BookmarkNode) => {
 
   // ✅ 更新 Map 并触发响应式（通过 emit 让父组件重新赋值）
   if (props.selectedDescCounts) {
-      try {
-        props.selectedDescCounts?.clear()
+    try {
+      props.selectedDescCounts?.clear()
       newCounts.forEach((value, key) => {
         props.selectedDescCounts!.set(key, value)
       })
@@ -1625,9 +1582,9 @@ const handleNodeSelect = (nodeId: string, node: BookmarkNode) => {
         error
       })
     }
-    
+
     // 🔄 通过 emit 通知父组件 Map 已更新（触发响应式）
-    emit('desc-counts-updated', new Map(props.selectedDescCounts))
+    emit('descCountsUpdated', new Map(props.selectedDescCounts))
   }
 }
 
@@ -1661,8 +1618,8 @@ function filterNodes(nodes: BookmarkNode[], query: string): BookmarkNode[] {
     const urlLower = (n.urlLower || n.url || '').toString().toLowerCase()
     const domainLower = (n.domain || '').toLowerCase()
     const tags = n.tags || []
-    const hasTagHit = tags.some((t: string) =>
-      t.toLowerCase().includes(isTagOnly ? tagTerm : lowerQuery)
+    const hasTagHit = tags.some((tag: string) =>
+      tag.toLowerCase().includes(isTagOnly ? tagTerm : lowerQuery)
     )
 
     if (isTagOnly) return hasTagHit
@@ -1681,9 +1638,15 @@ function filterNodes(nodes: BookmarkNode[], query: string): BookmarkNode[] {
       const matched = matchNode(n)
       const childMatches = n.children ? recurse(n.children) : []
       if (matched || childMatches.length > 0) {
+        // 提取嵌套三元运算符为函数
+        const getChildren = () => {
+          if (childMatches.length) return childMatches
+          if (n.url) return undefined
+          return []
+        }
         out.push({
           ...n,
-          children: childMatches.length ? childMatches : n.url ? undefined : []
+          children: getChildren()
         })
       }
     }
@@ -1704,15 +1667,11 @@ watch(searchQuery, (newQuery: string) => {
 
       const lowerQuery = trimmed.toLowerCase()
       const matchNode = (n: BookmarkNode): boolean => {
-        const titleLower = (n.titleLower || n.title || '')
-          .toString()
-          .toLowerCase()
+        const titleLower = (n.titleLower || n.title || '').toString().toLowerCase()
         const urlLower = (n.urlLower || n.url || '').toString().toLowerCase()
         const domainLower = (n.domain || '').toLowerCase()
         const tags = n.tags || []
-        const hasTagHit = tags.some((t: string) =>
-          t.toLowerCase().includes(lowerQuery)
-        )
+        const hasTagHit = tags.some((tag: string) => tag.toLowerCase().includes(lowerQuery))
         return (
           titleLower.includes(lowerQuery) ||
           urlLower.includes(lowerQuery) ||
@@ -1770,14 +1729,14 @@ const expandAll = () => {
   expandedFolders.value = new Set(allFolderIds)
   // 强制触发响应式更新
   expandedFolders.value = new Set(expandedFolders.value)
-  emit('expand-state-change', true)
+  emit('expandStateChange', true)
 }
 
 const collapseAll = () => {
   expandedFolders.value = new Set()
   // 强制触发响应式更新
   expandedFolders.value = new Set(expandedFolders.value)
-  emit('expand-state-change', false)
+  emit('expandStateChange', false)
 }
 
 const clearSelection = () => {
@@ -1790,7 +1749,7 @@ const clearSelection = () => {
       error
     })
   }
-  emit('selection-change', [], [])
+  emit('selectionChange', [], [])
 }
 
 const clearHoverAndActive = () => {
@@ -1932,15 +1891,13 @@ const selectNodeById = (id: string, opts?: { append?: boolean }) => {
   selectedNodes.value.add(sid)
   // ✅ 强制触发响应式更新
   selectedNodes.value = new Set(selectedNodes.value)
-  emit('selection-change', Array.from(selectedNodes.value), getSelectedNodes())
+  emit('selectionChange', Array.from(selectedNodes.value), getSelectedNodes())
 }
 
 const selectNodesByIds = (ids: string[], opts?: { append?: boolean }) => {
   const allowMultiple = props.selectable === 'multiple'
   const normalized = ids.map(id => String(id)).filter(Boolean)
-  const current = opts?.append
-    ? new Set(selectedNodes.value)
-    : new Set<string>()
+  const current = opts?.append ? new Set(selectedNodes.value) : new Set<string>()
   for (const id of normalized) {
     if (!allowMultiple && current.size >= 1) {
       current.clear()
@@ -1949,7 +1906,7 @@ const selectNodesByIds = (ids: string[], opts?: { append?: boolean }) => {
     if (!allowMultiple) break
   }
   selectedNodes.value = current
-  emit('selection-change', Array.from(current), getSelectedNodes())
+  emit('selectionChange', Array.from(current), getSelectedNodes())
 
   // ✅ 重新计算选中后代计数
   // ✅ 使用完整的 props.nodes 而不是 filteredNodes，确保搜索状态下也能正确计算父节点的 indeterminate 状态
@@ -1979,10 +1936,10 @@ const selectNodesByIds = (ids: string[], opts?: { append?: boolean }) => {
 
   // ✅ 安全地更新 Map（处理可能的 Immer 冻结对象）
   try {
-      props.selectedDescCounts?.clear()
-      newCounts.forEach((value, key) => {
-        props.selectedDescCounts?.set(key, value)
-      })
+    props.selectedDescCounts?.clear()
+    newCounts.forEach((value, key) => {
+      props.selectedDescCounts?.set(key, value)
+    })
   } catch (error) {
     logger.warn('BookmarkTree', 'selectedDescCounts 被冻结，无法直接修改', {
       error
@@ -2028,12 +1985,7 @@ defineExpose({
 </script>
 
 <template>
-  <div 
-    class="simple-bookmark-tree" 
-    :class="treeClasses"
-    tabindex="0"
-    @keydown="handleTreeKeyDown"
-  >
+  <div class="simple-bookmark-tree" :class="treeClasses" tabindex="0" @keydown="handleTreeKeyDown">
     <!-- 搜索框 (可选) -->
     <div v-if="searchable" class="tree-search">
       <Input
@@ -2067,19 +2019,12 @@ defineExpose({
           v-if="shouldShowEmptyState"
           :icon="emptyStateConfig.icon"
           :title="emptyStateConfig.title"
-          v-bind="
-            emptyStateConfig.description
-              ? { description: emptyStateConfig.description }
-              : {}
-          "
+          v-bind="emptyStateConfig.description ? { description: emptyStateConfig.description } : {}"
           :icon-size="56"
         />
 
         <!-- 标准渲染模式 -->
-        <div
-          v-if="!virtualEnabled && !shouldShowEmptyState"
-          class="standard-content"
-        >
+        <div v-if="!virtualEnabled && !shouldShowEmptyState" class="standard-content">
           <TreeNode
             v-for="node in filteredNodes"
             :key="node.id"
@@ -2118,10 +2063,7 @@ defineExpose({
         </div>
 
         <!-- 虚拟滚动模式 (TanStack Virtual) -->
-        <div
-          v-else-if="virtualEnabled && !shouldShowEmptyState"
-          class="virtual-content"
-        >
+        <div v-else-if="virtualEnabled && !shouldShowEmptyState" class="virtual-content">
           <div class="virtual-spacer" :style="{ height: `${totalHeight}px` }">
             <div
               v-for="row in virtualRows"

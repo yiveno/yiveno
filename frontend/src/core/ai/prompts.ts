@@ -2,7 +2,7 @@
  * LLM Prompt 模板
  *
  * 包含各种 AI 任务的 Prompt 模板
- * 
+ *
  * 注意：书签分类功能已迁移到基于向量的本地推荐（folderVectorService）
  */
 

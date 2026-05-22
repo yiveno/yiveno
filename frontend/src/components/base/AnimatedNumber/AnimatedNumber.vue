@@ -22,10 +22,7 @@ const animateTo = (target: number) => {
   const delta = target - startValue
 
   const tick = () => {
-    const progress = Math.min(
-      1,
-      (performance.now() - startTime) / props.duration
-    )
+    const progress = Math.min(1, (performance.now() - startTime) / props.duration)
     const eased = 1 - Math.pow(1 - progress, 3)
     display.value = Math.round(startValue + delta * eased)
     if (progress < 1) {

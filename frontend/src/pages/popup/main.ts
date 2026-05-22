@@ -36,19 +36,19 @@ app.use(VueQueryPlugin)
  */
 async function initializePopup(): Promise<void> {
   const startTime = performance.now()
-  
+
   // 启动性能监控
   performanceMonitor.initialize()
-  
+
   try {
     // ✅ 1. 先加载 Material Web 组件（确保在 Vue 组件渲染前注册）
     await preloadMaterialWebComponents('Popup')
-    
+
     // 2. 懒加载字体服务
     const { fontService, initializeSmartFonts } = await loadFontService()
-    
+
     fontService.injectDynamicFontLink()
-    
+
     // 启动基础字体系统（用户界面语言）
     await initializeSmartFonts()
 
@@ -68,7 +68,7 @@ async function initializePopup(): Promise<void> {
     const loadTime = performance.now() - startTime
     logger.info('Popup', `🎉 AcuityBookmarks Popup 启动完成 (${loadTime.toFixed(2)}ms)`)
     logger.info('Popup', '🧠 智能多语言字体系统已激活')
-    
+
     // 打印性能报告（延迟执行，避免阻塞）
     setTimeout(() => {
       performanceMonitor.printReport()

@@ -12,11 +12,7 @@
  * @module application/query/bookmark-search-service
  */
 
-import {
-  queryService,
-  type SearchResponse,
-  type EnhancedSearchResult
-} from '@/core/query-engine'
+import { queryService, type SearchResponse, type EnhancedSearchResult } from '@/core/query-engine'
 import type { SearchOptions } from '@/types/domain/query'
 import { logger } from '@/infrastructure/logging/logger'
 import { ok, err, type Result } from '@/core/common/result'
@@ -26,9 +22,7 @@ const getPerformanceMonitor = async () => {
   if (typeof document === 'undefined') {
     return null
   }
-  const { getPerformanceMonitor: monitor } = await import(
-    '@/services/query-performance-monitor'
-  )
+  const { getPerformanceMonitor: monitor } = await import('@/services/query-performance-monitor')
   return monitor()
 }
 
@@ -38,9 +32,7 @@ const getPerformanceMonitor = async () => {
  * 全局唯一的 IndexedDB 书签搜索入口
  */
 export class BookmarkSearchService {
-  private performanceMonitor: Awaited<
-    ReturnType<typeof getPerformanceMonitor>
-  > | null = null
+  private performanceMonitor: Awaited<ReturnType<typeof getPerformanceMonitor>> | null = null
   private initialized = false
 
   /** 获取性能监控器（延迟初始化） */
@@ -71,10 +63,7 @@ export class BookmarkSearchService {
    * @param options - 搜索选项（strategy / limit / highlight 等）
    * @returns Result 包装的搜索结果数组
    */
-  async search(
-    query: string,
-    options?: SearchOptions
-  ): Promise<Result<EnhancedSearchResult[]>> {
+  async search(query: string, options?: SearchOptions): Promise<Result<EnhancedSearchResult[]>> {
     const startTime = performance.now()
     await this.ensureInitialized()
 

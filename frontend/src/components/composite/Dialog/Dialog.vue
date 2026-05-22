@@ -5,14 +5,7 @@
   @see https://github.com/material-components/material-web/blob/main/docs/components/dialog.md
 -->
 <script setup lang="ts">
-import {
-  computed,
-  nextTick,
-  onBeforeUnmount,
-  ref,
-  useSlots,
-  watch
-} from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, useSlots, watch } from 'vue'
 import type { DialogProps } from './Dialog.d'
 import { LucideIcon } from '@/components/base/LucideIcon'
 
@@ -46,17 +39,14 @@ const emit = defineEmits<{
 const slots = useSlots()
 
 const show = computed({
-  get: () =>
-    props.show !== undefined ? props.show : (props.modelValue ?? false),
+  get: () => (props.show !== undefined ? props.show : (props.modelValue ?? false)),
   set: value => {
     emit('update:modelValue', value)
     emit('update:show', value)
   }
 })
 
-const showHeadline = computed(
-  () => !!(slots.header || props.title || slots['header-actions'])
-)
+const showHeadline = computed(() => !!(slots.header || props.title || slots['header-actions']))
 
 /** 无 headline 插槽时供屏幕阅读器使用 */
 const dialogAriaLabel = computed(() => {
@@ -122,9 +112,7 @@ const userDismissedViaCancel = ref(false)
 
 const detectUnsaved = (): boolean => {
   if (!bodyRef.value) return false
-  const inputs = Array.from(
-    bodyRef.value.querySelectorAll('input, textarea')
-  ) as HTMLInputElement[]
+  const inputs = Array.from(bodyRef.value.querySelectorAll('input, textarea')) as HTMLInputElement[]
   for (const el of inputs) {
     if (el.disabled || el.readOnly) continue
     const val = (el.value || '').trim()
@@ -267,33 +255,18 @@ onBeforeUnmount(() => {
           <slot v-if="$slots.header" name="header" />
           <template v-else>
             <div class="acuity-dialog-title">
-              <LucideIcon
-                v-if="icon"
-                :name="icon"
-                :color="iconColor"
-                class="title-icon"
-              />
+              <LucideIcon v-if="icon" :name="icon" :color="iconColor" class="title-icon" />
               <span>{{ title }}</span>
             </div>
           </template>
         </div>
-        <div
-          v-if="$slots['header-actions']"
-          class="acuity-dialog-header-actions"
-        >
+        <div v-if="$slots['header-actions']" class="acuity-dialog-header-actions">
           <slot name="header-actions" />
         </div>
       </div>
 
-      <div
-        slot="content"
-        class="acuity-dialog-content-slot"
-        @keydown="handleKeydown"
-      >
-        <div
-          ref="bodyRef"
-          :class="['acuity-dialog-body', bodyMinHeightClass]"
-        >
+      <div slot="content" class="acuity-dialog-content-slot" @keydown="handleKeydown">
+        <div ref="bodyRef" :class="['acuity-dialog-body', bodyMinHeightClass]">
           <slot />
         </div>
         <div v-if="showCancelConfirm" class="acuity-dialog-cancel-overlay">

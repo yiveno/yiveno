@@ -6,20 +6,20 @@
 
 ### 已移除 (2026-05-06)
 
-| 依赖包 | 版本 | 移除原因 | 备注 |
-|--------|------|----------|------|
-| `@atlaskit/pragmatic-drag-and-drop-auto-scroll` | ^2.1.2 | 未在代码中使用 | 如需自动滚动功能，可重新添加 |
-| `onnxruntime-web` | 1.26.0-dev.20260416-b7804b056c | 未在代码中使用 | AI 功能相关，如需启用可重新添加 |
+| 依赖包                                          | 版本                           | 移除原因       | 备注                            |
+| ----------------------------------------------- | ------------------------------ | -------------- | ------------------------------- |
+| `@atlaskit/pragmatic-drag-and-drop-auto-scroll` | ^2.1.2                         | 未在代码中使用 | 如需自动滚动功能，可重新添加    |
+| `onnxruntime-web`                               | 1.26.0-dev.20260416-b7804b056c | 未在代码中使用 | AI 功能相关，如需启用可重新添加 |
 
 ### 保留但未使用的依赖
 
 以下依赖虽然当前未使用，但保留用于未来功能：
 
-| 依赖包 | 版本 | 用途 | 状态 |
-|--------|------|------|------|
-| `@acuity-bookmarks/auth-core` | workspace:* | 认证核心库 | 计划中 |
-| `@acuity-bookmarks/design-tokens` | workspace:* | 设计系统 tokens | 计划中 |
-| `@huggingface/transformers` | ^4.2.0 | AI 模型推理 | 计划中 |
+| 依赖包                            | 版本         | 用途            | 状态   |
+| --------------------------------- | ------------ | --------------- | ------ |
+| `@acuity-bookmarks/auth-core`     | workspace:\* | 认证核心库      | 计划中 |
+| `@acuity-bookmarks/design-tokens` | workspace:\* | 设计系统 tokens | 计划中 |
+| `@huggingface/transformers`       | ^4.2.0       | AI 模型推理     | 计划中 |
 
 ## 如何重新添加
 

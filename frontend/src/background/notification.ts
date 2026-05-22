@@ -56,7 +56,7 @@ export async function showSystemNotification(
   } = options
 
   try {
-    const notificationId = await new Promise<string>((resolve) => {
+    const notificationId = await new Promise<string>(resolve => {
       chrome.notifications.create(
         {
           type: 'basic',
@@ -65,7 +65,7 @@ export async function showSystemNotification(
           iconUrl,
           requireInteraction
         },
-        (id) => resolve(id || '')
+        id => resolve(id || '')
       )
     })
 
@@ -89,14 +89,12 @@ export async function showSystemNotification(
  *
  * @param notificationId - 通知 ID
  */
-export async function clearSystemNotification(
-  notificationId: string
-): Promise<void> {
+export async function clearSystemNotification(notificationId: string): Promise<void> {
   if (!notificationId) return
   if (!chrome.notifications?.clear) return
 
   try {
-    await new Promise<void>((resolve) => {
+    await new Promise<void>(resolve => {
       chrome.notifications.clear(notificationId, () => resolve())
     })
     logger.debug('Notification', '系统通知已清除', { notificationId })

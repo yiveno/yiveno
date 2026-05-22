@@ -24,7 +24,6 @@ import { Dialog } from '@/components'
 - [Card](../../base/Card/README.md)
 - [Icon](../../base/Icon/README.md)
 
-
 ## 🎯 基础用法
 
 ### 默认用法
@@ -45,37 +44,30 @@ import { Dialog } from '@/components'
 
 ```vue
 <template>
-  <Dialog
-  :show="showDialog"
-  title="确认删除"
-  @confirm="handleConfirm"
-  @cancel="handleCancel"
->
-  <p>确定要删除这个项目吗？</p>
-</Dialog>
+  <Dialog :show="showDialog" title="确认删除" @confirm="handleConfirm" @cancel="handleCancel">
+    <p>确定要删除这个项目吗？</p>
+  </Dialog>
 </template>
 ```
-
-
 
 ## 📋 API
 
 ### Props
 
-| 属性 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| - | - | - | 待补充 |
+| 属性 | 类型 | 默认值 | 说明   |
+| ---- | ---- | ------ | ------ |
+| -    | -    | -      | 待补充 |
 
 ### Emits
 
-| 事件名 | 参数 | 说明 |
-|--------|------|------|
-| - | - | 待补充 |
+| 事件名 | 参数 | 说明   |
+| ------ | ---- | ------ |
+| -      | -    | 待补充 |
 
 ### Slots
 
-| 插槽名 | 说明 |
-|--------|------|
+| 插槽名    | 说明     |
+| --------- | -------- |
 | `default` | 默认内容 |
 
 ## 🎨 样式变量

@@ -5,11 +5,13 @@
 ## 包含的类型
 
 ### Subscription (订阅)
+
 - `Subscription` - 订阅记录接口
 - `SubscriptionStatus` - 订阅状态类型
 - `SubscriptionTier` - 订阅层级类型
 
 ### Payment (支付)
+
 - `PaymentRecord` - 支付记录接口
 - `PaymentStatus` - 支付状态类型
 

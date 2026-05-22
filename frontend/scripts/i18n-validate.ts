@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /**
  * 国际化翻译验证工具
- * 
+ *
  * 功能：
  * 1. 检查所有语言包的键是否一致
  * 2. 检测缺失的翻译
@@ -37,10 +37,10 @@ interface ValidationReport {
 async function loadAllLocales(): Promise<Map<string, Record<string, { message: string }>>> {
   const localesDir = join(process.cwd(), 'public/_locales')
   const locales = new Map<string, Record<string, { message: string }>>()
-  
+
   try {
     const entries = await readdir(localesDir, { withFileTypes: true })
-    
+
     for (const entry of entries) {
       if (entry.isDirectory()) {
         const messagesPath = join(localesDir, entry.name, 'messages.json')
@@ -56,7 +56,7 @@ async function loadAllLocales(): Promise<Map<string, Record<string, { message: s
   } catch (error) {
     console.error('读取 public/_locales 目录失败:', error)
   }
-  
+
   return locales
 }
 
@@ -67,11 +67,11 @@ function extractPlaceholders(text: string): string[] {
   const placeholders: string[] = []
   const regex = /\$(\d+)/g
   let match
-  
+
   while ((match = regex.exec(text)) !== null) {
     placeholders.push(match[1])
   }
-  
+
   return placeholders
 }
 
@@ -82,7 +82,7 @@ function validateTranslations(
   locales: Map<string, Record<string, { message: string }>>
 ): ValidationReport {
   const issues: ValidationIssue[] = []
-  
+
   // 获取所有键（以第一个语言包为基准）
   const baseLocale = locales.entries().next().value
   if (!baseLocale) {
@@ -98,10 +98,10 @@ function validateTranslations(
       }
     }
   }
-  
+
   const [, baseMessages] = baseLocale
   const allKeys = Object.keys(baseMessages)
-  
+
   // 检查每个语言包
   locales.forEach((messages, localeName) => {
     allKeys.forEach(key => {
@@ -115,9 +115,9 @@ function validateTranslations(
         })
         return
       }
-      
+
       const message = messages[key].message
-      
+
       // 检查空翻译
       if (!message || message.trim() === '') {
         issues.push({
@@ -128,11 +128,11 @@ function validateTranslations(
         })
         return
       }
-      
+
       // 检查占位符一致性
       const basePlaceholders = extractPlaceholders(baseMessages[key].message)
       const currentPlaceholders = extractPlaceholders(message)
-      
+
       if (basePlaceholders.length !== currentPlaceholders.length) {
         issues.push({
           type: 'placeholder_mismatch',
@@ -143,7 +143,7 @@ function validateTranslations(
       }
     })
   })
-  
+
   // 统计
   const summary = {
     totalKeys: allKeys.length,
@@ -152,7 +152,7 @@ function validateTranslations(
     emptyTranslations: issues.filter(i => i.type === 'empty').length,
     placeholderMismatches: issues.filter(i => i.type === 'placeholder_mismatch').length
   }
-  
+
   return {
     passed: issues.length === 0,
     issues,
@@ -165,12 +165,12 @@ function validateTranslations(
  */
 async function main() {
   console.log('🔍 开始验证国际化翻译...\n')
-  
+
   const locales = await loadAllLocales()
   console.log(`📚 加载语言包: ${Array.from(locales.keys()).join(', ')}\n`)
-  
+
   const report = validateTranslations(locales)
-  
+
   console.log('📊 验证结果:\n')
   console.log(`  总键数: ${report.summary.totalKeys}`)
   console.log(`  语言数: ${report.summary.totalLocales}`)
@@ -178,13 +178,13 @@ async function main() {
   console.log(`  空翻译: ${report.summary.emptyTranslations}`)
   console.log(`  占位符不匹配: ${report.summary.placeholderMismatches}`)
   console.log()
-  
+
   if (report.passed) {
     console.log('✅ 所有翻译验证通过！')
     process.exit(0)
   } else {
     console.log('❌ 发现翻译问题:\n')
-    
+
     // 按类型分组显示
     const byType = new Map<string, ValidationIssue[]>()
     report.issues.forEach(issue => {
@@ -192,7 +192,7 @@ async function main() {
       existing.push(issue)
       byType.set(issue.type, existing)
     })
-    
+
     byType.forEach((issues, type) => {
       console.log(`\n${getTypeEmoji(type)} ${getTypeName(type)} (${issues.length}):`)
       issues.slice(0, 10).forEach(issue => {
@@ -201,12 +201,12 @@ async function main() {
           console.log(`    ${issue.details}`)
         }
       })
-      
+
       if (issues.length > 10) {
         console.log(`  ... 还有 ${issues.length - 10} 个问题`)
       }
     })
-    
+
     process.exit(1)
   }
 }

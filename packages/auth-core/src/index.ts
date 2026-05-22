@@ -18,11 +18,7 @@ export {
 } from './validators'
 
 // 导出错误处理
-export {
-  SUPABASE_ERROR_CODES,
-  extractErrorCode,
-  getErrorMessage
-} from './error-codes'
+export { SUPABASE_ERROR_CODES, extractErrorCode, getErrorMessage } from './error-codes'
 
 // 导出类型
 export type {

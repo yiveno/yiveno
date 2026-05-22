@@ -15,14 +15,8 @@
 
 import type { Result } from '@/core/common/result'
 import { ok as Ok, err as Err } from '@/core/common/result'
-import {
-  smartBookmarkDiffEngine,
-  type DiffResult
-} from '@/core/bookmark/services/diff-engine'
-import {
-  SmartBookmarkExecutor,
-  type ExecutionResult
-} from '@/core/bookmark/services/executor'
+import { smartBookmarkDiffEngine, type DiffResult } from '@/core/bookmark/services/diff-engine'
+import { SmartBookmarkExecutor, type ExecutionResult } from '@/core/bookmark/services/executor'
 import type { ChromeBookmarkTreeNode, BookmarkNode } from '@/types'
 import type { PlanAndExecuteOptions } from '@/types/application/bookmark'
 

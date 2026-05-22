@@ -1,14 +1,5 @@
 <script setup lang="ts">
-import {
-  Brain,
-  Zap,
-  Layout,
-  Bot,
-  Lock,
-  Share2,
-  Check,
-  Github
-} from 'lucide-vue-next'
+import { Brain, Zap, Layout, Bot, Lock, Share2, Check, Github } from 'lucide-vue-next'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import Badge from '@/components/ui/Badge.vue'
@@ -136,8 +127,7 @@ useSeoMeta({
         <div
           class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-5"
         >
-          <span
-            class="text-xs font-medium text-primary-400 tracking-wider uppercase"
+          <span class="text-xs font-medium text-primary-400 tracking-wider uppercase"
             >Product Features</span
           >
         </div>
@@ -150,9 +140,7 @@ useSeoMeta({
           >
         </h1>
 
-        <p
-          class="text-base md:text-lg text-content-muted max-w-2xl mx-auto mb-8 leading-relaxed"
-        >
+        <p class="text-base md:text-lg text-content-muted max-w-2xl mx-auto mb-8 leading-relaxed">
           从本地检索、AI 推荐到失效书签检测，每个模块可独立启用，也能组合成完整知识工作流。
         </p>
 
@@ -173,9 +161,7 @@ useSeoMeta({
             :key="highlight.title"
             class="p-5 border-white/5 bg-white/[0.02]"
           >
-            <div
-              class="text-primary-400 text-xs font-bold uppercase tracking-widest mb-1.5"
-            >
+            <div class="text-primary-400 text-xs font-bold uppercase tracking-widest mb-1.5">
               {{ highlight.tag }}
             </div>
             <div class="text-base font-bold mb-1.5">{{ highlight.title }}</div>
@@ -191,17 +177,11 @@ useSeoMeta({
     <section class="py-16">
       <div class="container mx-auto px-4">
         <div class="mb-10 max-w-2xl">
-          <div
-            class="text-accent-400 text-xs font-bold uppercase tracking-widest mb-2"
-          >
+          <div class="text-accent-400 text-xs font-bold uppercase tracking-widest mb-2">
             核心模块
           </div>
-          <h2 class="text-2xl md:text-3xl font-bold mb-3">
-            六大模块覆盖日常高频动作
-          </h2>
-          <p class="text-content-muted">
-            所有模块基于统一 API / Store，可按需组合或单独启用。
-          </p>
+          <h2 class="text-2xl md:text-3xl font-bold mb-3">六大模块覆盖日常高频动作</h2>
+          <p class="text-content-muted">所有模块基于统一 API / Store，可按需组合或单独启用。</p>
         </div>
 
         <div class="modules-grid">
@@ -214,10 +194,7 @@ useSeoMeta({
             <div
               class="w-10 h-10 rounded-lg bg-bg-surface border border-white/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300"
             >
-              <component
-                :is="module.lucideIcon"
-                class="w-5 h-5 text-primary-400"
-              />
+              <component :is="module.lucideIcon" class="w-5 h-5 text-primary-400" />
             </div>
             <h3 class="text-base font-bold mb-2">{{ module.title }}</h3>
             <p class="text-content-muted text-sm mb-4 leading-relaxed">
@@ -242,17 +219,11 @@ useSeoMeta({
     <section class="py-16 bg-white/[0.02] border-y border-white/5">
       <div class="container mx-auto px-4">
         <div class="text-center mb-10 max-w-2xl mx-auto">
-          <div
-            class="text-primary-400 text-xs font-bold uppercase tracking-widest mb-2"
-          >
+          <div class="text-primary-400 text-xs font-bold uppercase tracking-widest mb-2">
             AI × 自动化
           </div>
-          <h2 class="text-2xl md:text-3xl font-bold mb-3">
-            AI 语义理解 + 失效书签检测
-          </h2>
-          <p class="text-content-muted">
-            构成真正可控的智能体验，全流程透明可见。
-          </p>
+          <h2 class="text-2xl md:text-3xl font-bold mb-3">AI 语义理解 + 失效书签检测</h2>
+          <p class="text-content-muted">构成真正可控的智能体验，全流程透明可见。</p>
         </div>
 
         <div class="flows-grid relative">
@@ -260,11 +231,7 @@ useSeoMeta({
             class="hidden md:block absolute top-10 left-[16%] right-[16%] h-0.5 bg-gradient-to-r from-primary-500/0 via-primary-500/20 to-primary-500/0 border-t border-dashed border-primary-500/30 z-0"
           ></div>
 
-          <div
-            v-for="(flow) in flows"
-            :key="flow.title"
-            class="relative z-10"
-          >
+          <div v-for="flow in flows" :key="flow.title" class="relative z-10">
             <Card class="p-6 h-full bg-bg-default border-white/10">
               <div
                 class="w-8 h-8 rounded-full bg-bg-surface border border-primary-500/20 text-primary-400 flex items-center justify-center font-bold text-sm mb-4 shadow-lg shadow-primary-500/5 mx-auto md:mx-0"
@@ -292,15 +259,11 @@ useSeoMeta({
     <section class="py-16">
       <div class="container mx-auto px-4">
         <div class="mb-10 max-w-2xl">
-          <div
-            class="text-accent-400 text-xs font-bold uppercase tracking-widest mb-2"
-          >
+          <div class="text-accent-400 text-xs font-bold uppercase tracking-widest mb-2">
             体验视图
           </div>
           <h2 class="text-2xl md:text-3xl font-bold mb-3">三套界面协同</h2>
-          <p class="text-content-muted">
-            同一套数据模型，针对不同场景提供最快捷的操作。
-          </p>
+          <p class="text-content-muted">同一套数据模型，针对不同场景提供最快捷的操作。</p>
         </div>
 
         <div class="views-grid">
@@ -309,9 +272,7 @@ useSeoMeta({
             :key="view.title"
             class="flex flex-col overflow-hidden border-white/10"
           >
-            <div
-              class="p-1 bg-white/5 border-b border-white/5 flex items-center gap-1.5 px-3 h-7"
-            >
+            <div class="p-1 bg-white/5 border-b border-white/5 flex items-center gap-1.5 px-3 h-7">
               <div class="w-2 h-2 rounded-full bg-red-500/30"></div>
               <div class="w-2 h-2 rounded-full bg-yellow-500/30"></div>
               <div class="w-2 h-2 rounded-full bg-green-500/30"></div>
@@ -319,9 +280,7 @@ useSeoMeta({
             <div class="p-6 flex-1 flex flex-col">
               <div class="flex justify-between items-start mb-3">
                 <div>
-                  <div
-                    class="text-xs font-bold text-primary-400 uppercase tracking-wider mb-1"
-                  >
+                  <div class="text-xs font-bold text-primary-400 uppercase tracking-wider mb-1">
                     {{ view.tag }}
                   </div>
                   <h3 class="text-lg font-bold">{{ view.title }}</h3>
@@ -337,9 +296,7 @@ useSeoMeta({
                   :key="item"
                   class="flex items-center text-xs text-content-subtle"
                 >
-                  <div
-                    class="w-1 h-1 rounded-full bg-accent-500 mr-2 shrink-0"
-                  ></div>
+                  <div class="w-1 h-1 rounded-full bg-accent-500 mr-2 shrink-0"></div>
                   {{ item }}
                 </li>
               </ul>
@@ -356,9 +313,7 @@ useSeoMeta({
           class="relative rounded-2xl bg-gradient-to-br from-primary-900/20 to-accent-900/20 border border-white/10 p-10 text-center overflow-hidden"
         >
           <div class="relative z-10 max-w-xl mx-auto">
-            <h2 class="text-2xl font-bold mb-4">
-              每周功能增量，路线图公开透明
-            </h2>
+            <h2 class="text-2xl font-bold mb-4">每周功能增量，路线图公开透明</h2>
             <p class="text-content-muted mb-6 text-sm leading-relaxed">
               访问路线图为新功能投票，或加入 GitHub 直接贡献。你的反馈是我们演进的主要驱动力。
             </p>
@@ -396,13 +351,13 @@ useSeoMeta({
   gap: 16px;
 }
 
-@media (max-width: 900px) {
+@media (width <= 900px) {
   .modules-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-@media (max-width: 600px) {
+@media (width <= 600px) {
   .highlights-grid,
   .modules-grid,
   .flows-grid,

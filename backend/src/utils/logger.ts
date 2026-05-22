@@ -87,10 +87,7 @@ export function error(message: string, data?: Record<string, any>): void {
  * @param operation - 要执行的操作
  * @returns 操作结果
  */
-export async function monitoredOperation<T>(
-  name: string,
-  operation: () => Promise<T>
-): Promise<T> {
+export async function monitoredOperation<T>(name: string, operation: () => Promise<T>): Promise<T> {
   const start = Date.now()
 
   try {
@@ -144,11 +141,7 @@ export function logRequest(request: Request, additionalData?: Record<string, any
  * @param response - HTTP 响应对象
  * @param duration - 请求处理时长（毫秒）
  */
-export function logResponse(
-  request: Request,
-  response: Response,
-  duration: number
-): void {
+export function logResponse(request: Request, response: Response, duration: number): void {
   const url = new URL(request.url)
 
   info('请求完成', {

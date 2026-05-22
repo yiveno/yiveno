@@ -12,7 +12,9 @@ export class OnnxEmbeddingProviderDirect implements EmbeddingProvider {
   readonly name = 'onnx-local'
   readonly dimensions = 384
 
-  private pipeline: ((text: string | string[], options?: Record<string, unknown>) => Promise<unknown>) | null = null
+  private pipeline:
+    | ((text: string | string[], options?: Record<string, unknown>) => Promise<unknown>)
+    | null = null
   private loadPromise: Promise<void> | null = null
   private loadFailed = false
 
@@ -38,7 +40,7 @@ export class OnnxEmbeddingProviderDirect implements EmbeddingProvider {
       env.useBrowserCache = true
       env.allowLocalModels = false
 
-      this.pipeline = await pipeline(
+      this.pipeline = (await pipeline(
         'feature-extraction',
         'Xenova/paraphrase-multilingual-MiniLM-L12-v2',
         {
@@ -47,10 +49,10 @@ export class OnnxEmbeddingProviderDirect implements EmbeddingProvider {
           // 禁用多线程，避免需要 blob: Worker（Chrome 扩展 CSP 不允许）
           session_options: {
             executionProviders: ['wasm'],
-            graphOptimizationLevel: 'all',
+            graphOptimizationLevel: 'all'
           }
         }
-      ) as (text: string | string[], options?: Record<string, unknown>) => Promise<unknown>
+      )) as (text: string | string[], options?: Record<string, unknown>) => Promise<unknown>
 
       logger.info(LOG_TAG, `模型加载完成，耗时 ${Date.now() - startTime}ms`)
     })()
@@ -94,9 +96,8 @@ function extractVector(output: unknown): number[] {
 function extractBatchVectors(output: unknown, count: number): number[][] {
   const tensor = output as { data: Float32Array | number[]; dims: number[] }
   if (tensor?.data && tensor?.dims) {
-    const dim = tensor.dims.length >= 2
-      ? tensor.dims[tensor.dims.length - 1]
-      : tensor.data.length / count
+    const dim =
+      tensor.dims.length >= 2 ? tensor.dims[tensor.dims.length - 1] : tensor.data.length / count
     if (dim === undefined) {
       return []
     }
@@ -109,7 +110,7 @@ function extractBatchVectors(output: unknown, count: number): number[][] {
   }
   if (Array.isArray(output)) {
     return output.map(item =>
-      Array.isArray(item) ? item as number[] : Array.from(item as Float32Array)
+      Array.isArray(item) ? (item as number[]) : Array.from(item as Float32Array)
     )
   }
   throw new Error('无法解析批量 embedding 输出格式')

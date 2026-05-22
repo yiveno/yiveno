@@ -6,7 +6,7 @@
  * 2. 根据新书签的向量推荐合适的文件夹
  * 3. 增量同步文件夹向量
  * 4. 支持用户习惯学习（强化学习）
- * 
+ *
  * 优化：使用 Summarizer API 预处理长文本，避免 token 限制
  */
 
@@ -48,9 +48,9 @@ export interface FolderVectorSyncProgress {
 export class FolderVectorService {
   /**
    * 预处理文本（长文本压缩）
-   * 
+   *
    * 使用 Summarizer API 压缩长文本，避免 Embedding 时超过 token 限制
-   * 
+   *
    * @param text 原始文本
    * @returns 压缩后的文本
    */
@@ -78,7 +78,7 @@ export class FolderVectorService {
         logger.info(LOG_TAG, '长文本压缩完成', {
           originalLength: text.length,
           compressedLength: result.summary.length,
-          compressionRatio: (result.summary.length / text.length * 100).toFixed(1) + '%'
+          compressionRatio: ((result.summary.length / text.length) * 100).toFixed(1) + '%'
         })
 
         return result.summary
@@ -133,9 +133,7 @@ export class FolderVectorService {
 
     // 3. 获取所有书签向量
     const allBookmarkVectors = await localVectorStore.getAll()
-    const bookmarkVectorMap = new Map(
-      allBookmarkVectors.map(v => [v.bookmarkId, v.vector])
-    )
+    const bookmarkVectorMap = new Map(allBookmarkVectors.map(v => [v.bookmarkId, v.vector]))
 
     // 4. 为每个文件夹生成向量
     for (const folder of folders) {
@@ -229,7 +227,7 @@ export class FolderVectorService {
    * 推荐文件夹
    *
    * 根据书签的标题和 URL 推荐最合适的文件夹
-   * 
+   *
    * 优化：使用 Summarizer API 预处理长文本，提升向量质量
    *
    * @param bookmarkTitle 书签标题
@@ -321,15 +319,11 @@ export class FolderVectorService {
 
     // 2. 获取该文件夹下的所有书签
     const allBookmarks = await indexedDBManager.getAllBookmarks()
-    const childBookmarks = allBookmarks.filter(
-      b => b.parentId === folderId && !b.isFolder && b.url
-    )
+    const childBookmarks = allBookmarks.filter(b => b.parentId === folderId && !b.isFolder && b.url)
 
     // 3. 获取所有书签向量
     const allBookmarkVectors = await localVectorStore.getAll()
-    const bookmarkVectorMap = new Map(
-      allBookmarkVectors.map(v => [v.bookmarkId, v.vector])
-    )
+    const bookmarkVectorMap = new Map(allBookmarkVectors.map(v => [v.bookmarkId, v.vector]))
 
     // 4. 收集向量
     const vectors: number[][] = []

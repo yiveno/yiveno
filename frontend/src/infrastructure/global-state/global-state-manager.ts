@@ -113,10 +113,7 @@ export class GlobalStateManager {
     this.initialized = false
   }
 
-  private ensureTheme(
-    value: unknown,
-    fallback: ThemeMode = DEFAULT_STATE.theme
-  ): ThemeMode {
+  private ensureTheme(value: unknown, fallback: ThemeMode = DEFAULT_STATE.theme): ThemeMode {
     return value === 'light' || value === 'dark' || value === 'system'
       ? (value as ThemeMode)
       : fallback
@@ -139,14 +136,8 @@ export class GlobalStateManager {
       theme: this.ensureTheme(rawState.theme, fallback.theme),
       colorPreset: this.ensureColorPreset(rawState.colorPreset, fallback.colorPreset),
       autoSync: this.ensureBoolean(rawState.autoSync, fallback.autoSync),
-      showFavicons: this.ensureBoolean(
-        rawState.showFavicons,
-        fallback.showFavicons
-      ),
-      compactMode: this.ensureBoolean(
-        rawState.compactMode,
-        fallback.compactMode
-      ),
+      showFavicons: this.ensureBoolean(rawState.showFavicons, fallback.showFavicons),
+      compactMode: this.ensureBoolean(rawState.compactMode, fallback.compactMode),
       autoFollowSystemTheme: this.ensureBoolean(
         rawState.autoFollowSystemTheme,
         fallback.autoFollowSystemTheme
@@ -224,11 +215,7 @@ export class GlobalStateManager {
    * 设置存储监听器
    */
   private setupStorageListener(): void {
-    if (
-      typeof chrome !== 'undefined' &&
-      chrome.storage &&
-      chrome.storage.onChanged
-    ) {
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
       chrome.storage.onChanged.addListener((changes, namespace) => {
         this.handleStorageChange(changes, namespace)
       })
@@ -252,10 +239,7 @@ export class GlobalStateManager {
         if (namespace === 'local') {
           switch (key) {
             case STORAGE_KEYS.LOCAL.THEME: {
-              const nextTheme = this.ensureTheme(
-                change.newValue,
-                newState.theme
-              )
+              const nextTheme = this.ensureTheme(change.newValue, newState.theme)
               if (nextTheme !== newState.theme) {
                 newState.theme = nextTheme
                 stateChanged = true
@@ -264,10 +248,7 @@ export class GlobalStateManager {
             }
 
             case STORAGE_KEYS.LOCAL.COLOR_PRESET: {
-              const nextPreset = this.ensureColorPreset(
-                change.newValue,
-                newState.colorPreset
-              )
+              const nextPreset = this.ensureColorPreset(change.newValue, newState.colorPreset)
               if (nextPreset !== newState.colorPreset) {
                 newState.colorPreset = nextPreset
                 stateChanged = true
@@ -276,10 +257,7 @@ export class GlobalStateManager {
             }
 
             case STORAGE_KEYS.LOCAL.AUTO_SYNC: {
-              const nextAutoSync = this.ensureBoolean(
-                change.newValue,
-                newState.autoSync
-              )
+              const nextAutoSync = this.ensureBoolean(change.newValue, newState.autoSync)
               if (nextAutoSync !== newState.autoSync) {
                 newState.autoSync = nextAutoSync
                 stateChanged = true
@@ -287,10 +265,7 @@ export class GlobalStateManager {
               break
             }
             case STORAGE_KEYS.LOCAL.SHOW_FAVICONS: {
-              const nextShowFavicons = this.ensureBoolean(
-                change.newValue,
-                newState.showFavicons
-              )
+              const nextShowFavicons = this.ensureBoolean(change.newValue, newState.showFavicons)
               if (nextShowFavicons !== newState.showFavicons) {
                 newState.showFavicons = nextShowFavicons
                 stateChanged = true
@@ -298,10 +273,7 @@ export class GlobalStateManager {
               break
             }
             case STORAGE_KEYS.LOCAL.COMPACT_MODE: {
-              const nextCompactMode = this.ensureBoolean(
-                change.newValue,
-                newState.compactMode
-              )
+              const nextCompactMode = this.ensureBoolean(change.newValue, newState.compactMode)
               if (nextCompactMode !== newState.compactMode) {
                 newState.compactMode = nextCompactMode
                 stateChanged = true
@@ -323,10 +295,7 @@ export class GlobalStateManager {
         } else if (namespace === 'sync') {
           switch (key) {
             case STORAGE_KEYS.SYNC.THEME: {
-              const nextTheme = this.ensureTheme(
-                change.newValue,
-                newState.theme
-              )
+              const nextTheme = this.ensureTheme(change.newValue, newState.theme)
               if (nextTheme !== newState.theme) {
                 newState.theme = nextTheme
                 stateChanged = true
@@ -335,17 +304,13 @@ export class GlobalStateManager {
             }
 
             case STORAGE_KEYS.SYNC.COLOR_PRESET: {
-              const nextPreset = this.ensureColorPreset(
-                change.newValue,
-                newState.colorPreset
-              )
+              const nextPreset = this.ensureColorPreset(change.newValue, newState.colorPreset)
               if (nextPreset !== newState.colorPreset) {
                 newState.colorPreset = nextPreset
                 stateChanged = true
               }
               break
             }
-
           }
         }
       }
@@ -388,11 +353,7 @@ export class GlobalStateManager {
     return new Promise(resolve => {
       storage.get(keys, result => {
         if (chrome.runtime.lastError) {
-          logger.error(
-            'GlobalStateManager',
-            `获取${area}存储失败`,
-            chrome.runtime.lastError
-          )
+          logger.error('GlobalStateManager', `获取${area}存储失败`, chrome.runtime.lastError)
           resolve({})
           return
         }
@@ -466,16 +427,8 @@ export class GlobalStateManager {
 
     try {
       await Promise.all([
-        this.setStorageData(
-          STORAGE_KEYS.LOCAL.COLOR_PRESET,
-          normalized,
-          'local'
-        ),
-        this.setStorageData(
-          STORAGE_KEYS.SYNC.COLOR_PRESET,
-          normalized,
-          'sync'
-        )
+        this.setStorageData(STORAGE_KEYS.LOCAL.COLOR_PRESET, normalized, 'local'),
+        this.setStorageData(STORAGE_KEYS.SYNC.COLOR_PRESET, normalized, 'sync')
       ])
 
       logger.info('GlobalStateManager', `配色预设已更新: ${oldValue} -> ${normalized}`)
@@ -515,9 +468,7 @@ export class GlobalStateManager {
    * 获取是否自动跟随系统主题
    */
   getAutoFollowSystemTheme(): boolean {
-    return (
-      this.state?.autoFollowSystemTheme ?? DEFAULT_STATE.autoFollowSystemTheme
-    )
+    return this.state?.autoFollowSystemTheme ?? DEFAULT_STATE.autoFollowSystemTheme
   }
 
   /**
@@ -538,10 +489,7 @@ export class GlobalStateManager {
 
     try {
       await this.setStorageData(STORAGE_KEYS.LOCAL.AUTO_SYNC, autoSync, 'local')
-      logger.info(
-        'GlobalStateManager',
-        `自动同步已更新: ${oldValue} -> ${autoSync}`
-      )
+      logger.info('GlobalStateManager', `自动同步已更新: ${oldValue} -> ${autoSync}`)
     } catch (error) {
       this.state.autoSync = oldValue
       logger.error('GlobalStateManager', '设置自动同步失败', error)
@@ -566,15 +514,8 @@ export class GlobalStateManager {
     this.state.showFavicons = showFavicons
 
     try {
-      await this.setStorageData(
-        STORAGE_KEYS.LOCAL.SHOW_FAVICONS,
-        showFavicons,
-        'local'
-      )
-      logger.info(
-        'GlobalStateManager',
-        `显示图标已更新: ${oldValue} -> ${showFavicons}`
-      )
+      await this.setStorageData(STORAGE_KEYS.LOCAL.SHOW_FAVICONS, showFavicons, 'local')
+      logger.info('GlobalStateManager', `显示图标已更新: ${oldValue} -> ${showFavicons}`)
     } catch (error) {
       this.state.showFavicons = oldValue
       logger.error('GlobalStateManager', '设置显示图标失败', error)
@@ -599,15 +540,8 @@ export class GlobalStateManager {
     this.state.compactMode = compactMode
 
     try {
-      await this.setStorageData(
-        STORAGE_KEYS.LOCAL.COMPACT_MODE,
-        compactMode,
-        'local'
-      )
-      logger.info(
-        'GlobalStateManager',
-        `紧凑模式已更新: ${oldValue} -> ${compactMode}`
-      )
+      await this.setStorageData(STORAGE_KEYS.LOCAL.COMPACT_MODE, compactMode, 'local')
+      logger.info('GlobalStateManager', `紧凑模式已更新: ${oldValue} -> ${compactMode}`)
     } catch (error) {
       this.state.compactMode = oldValue
       logger.error('GlobalStateManager', '设置紧凑模式失败', error)
@@ -625,15 +559,8 @@ export class GlobalStateManager {
     this.state.autoFollowSystemTheme = autoFollow
 
     try {
-      await this.setStorageData(
-        STORAGE_KEYS.LOCAL.AUTO_FOLLOW_SYSTEM_THEME,
-        autoFollow,
-        'local'
-      )
-      logger.info(
-        'GlobalStateManager',
-        `自动跟随系统主题已更新: ${oldValue} -> ${autoFollow}`
-      )
+      await this.setStorageData(STORAGE_KEYS.LOCAL.AUTO_FOLLOW_SYSTEM_THEME, autoFollow, 'local')
+      logger.info('GlobalStateManager', `自动跟随系统主题已更新: ${oldValue} -> ${autoFollow}`)
     } catch (error) {
       this.state.autoFollowSystemTheme = oldValue
       logger.error('GlobalStateManager', '设置自动跟随系统主题失败', error)
@@ -718,9 +645,7 @@ export async function getAutoFollowSystemTheme(): Promise<boolean> {
 /**
  * 便捷函数 - 设置是否自动跟随系统主题
  */
-export async function setAutoFollowSystemTheme(
-  autoFollow: boolean
-): Promise<void> {
+export async function setAutoFollowSystemTheme(autoFollow: boolean): Promise<void> {
   await globalStateManager.initialize()
   return globalStateManager.setAutoFollowSystemTheme(autoFollow)
 }
@@ -728,8 +653,6 @@ export async function setAutoFollowSystemTheme(
 /**
  * 便捷函数 - 添加状态监听器
  */
-export function addGlobalStateListener(
-  listener: (state: GlobalState) => void
-): () => void {
+export function addGlobalStateListener(listener: (state: GlobalState) => void): () => void {
   return globalStateManager.addListener(listener)
 }

@@ -5,7 +5,7 @@
  * 1. 根据文件夹下的书签内容自动生成文件夹描述
  * 2. 批量生成多个文件夹的描述
  * 3. 提升文件夹可读性和搜索体验
- * 
+ *
  * 使用 Summarizer API 生成高质量描述
  */
 
@@ -40,7 +40,7 @@ export interface FolderDescriptionProgress {
 export class FolderDescriptionService {
   /**
    * 为单个文件夹生成描述
-   * 
+   *
    * 优先级：
    * 1. Summarizer API（headline 类型，生成标题式摘要）
    * 2. Prompt API（fallback）
@@ -56,9 +56,7 @@ export class FolderDescriptionService {
 
     // 2. 获取该文件夹下的所有书签
     const allBookmarks = await indexedDBManager.getAllBookmarks()
-    const childBookmarks = allBookmarks.filter(
-      b => b.parentId === folderId && !b.isFolder && b.url
-    )
+    const childBookmarks = allBookmarks.filter(b => b.parentId === folderId && !b.isFolder && b.url)
 
     if (childBookmarks.length === 0) {
       // 空文件夹：返回默认描述
@@ -193,10 +191,7 @@ ${bookmarkTitles}
       await new Promise(resolve => setTimeout(resolve, 0))
     }
 
-    logger.info(
-      LOG_TAG,
-      `批量生成完成: 成功 ${results.length} 个，失败 ${progress.failed} 个`
-    )
+    logger.info(LOG_TAG, `批量生成完成: 成功 ${results.length} 个，失败 ${progress.failed} 个`)
 
     return results
   }

@@ -22,27 +22,27 @@ app.use('/api/gumroad/*', jwtAuth())
 
 ```typescript
 interface JWTPayload {
-  sub: string        // 用户 ID（格式：provider:id）
-  email: string      // 用户邮箱
-  tier: string       // 订阅等级（free/pro/premium）
-  features: Record<string, unknown>  // 功能权限
-  iat?: number       // 签发时间
-  exp?: number       // 过期时间
+  sub: string // 用户 ID（格式：provider:id）
+  email: string // 用户邮箱
+  tier: string // 订阅等级（free/pro/premium）
+  features: Record<string, unknown> // 功能权限
+  iat?: number // 签发时间
+  exp?: number // 过期时间
 }
 ```
 
 **在路由中获取 JWT Payload：**
 
 ```typescript
-adminRouter.get('/env/check', async (c) => {
+adminRouter.get('/env/check', async c => {
   // JWT payload 由 jwtAuth() 中间件自动注入到 c.get('jwtPayload')
   const jwtPayload = c.get('jwtPayload') as JWTPayload | undefined
-  
+
   // 使用 JWT payload
   if (jwtPayload) {
     console.log('User:', jwtPayload.sub, jwtPayload.email)
   }
-  
+
   // ...
 })
 ```
@@ -97,24 +97,27 @@ app.use('*', secureHeadersMiddleware())
 import { cors } from 'hono/cors'
 import { ALLOWED_ORIGINS } from './middleware/cors'
 
-app.use('*', cors({
-  origin: (origin) => {
-    // Chrome Extension 的 origin 格式：chrome-extension://extension-id
-    const isChromeExtension = origin.startsWith('chrome-extension://')
-    
-    // 检查是否为允许的来源
-    if (ALLOWED_ORIGINS.includes(origin) || isChromeExtension) {
-      return origin
-    }
-    
-    // 不允许的来源：返回 null（浏览器会阻止请求）
-    return null
-  },
-  allowMethods: ['GET', 'POST', 'OPTIONS'],
-  allowHeaders: ['content-type', 'authorization'],
-  credentials: true,
-  maxAge: 86400 // 24 小时
-}))
+app.use(
+  '*',
+  cors({
+    origin: origin => {
+      // Chrome Extension 的 origin 格式：chrome-extension://extension-id
+      const isChromeExtension = origin.startsWith('chrome-extension://')
+
+      // 检查是否为允许的来源
+      if (ALLOWED_ORIGINS.includes(origin) || isChromeExtension) {
+        return origin
+      }
+
+      // 不允许的来源：返回 null（浏览器会阻止请求）
+      return null
+    },
+    allowMethods: ['GET', 'POST', 'OPTIONS'],
+    allowHeaders: ['content-type', 'authorization'],
+    credentials: true,
+    maxAge: 86400 // 24 小时
+  })
+)
 ```
 
 ## 中间件执行顺序
@@ -150,21 +153,21 @@ app.use('/api/admin/*', jwtAuth())
 app.route('/api/admin', adminRouter)
 
 // ❌ 不推荐：在全局使用认证中间件
-app.use('*', jwtAuth())  // 会导致所有路由都需要认证
+app.use('*', jwtAuth()) // 会导致所有路由都需要认证
 ```
 
 ### 2. 权限检查
 
 ```typescript
 // 在路由处理器中检查用户权限
-adminRouter.get('/env/check', async (c) => {
+adminRouter.get('/env/check', async c => {
   const jwtPayload = c.get('jwtPayload') as JWTPayload | undefined
-  
+
   // 检查用户权限
   if (jwtPayload && jwtPayload.tier !== 'admin') {
     return c.json({ error: 'Forbidden: Admin access required' }, 403)
   }
-  
+
   // ...
 })
 ```

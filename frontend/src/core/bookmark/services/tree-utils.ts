@@ -48,8 +48,7 @@ export function findNodeById<T extends GenericTreeNode>(
   while (stack.length) {
     const { node, parent } = stack.pop() as { node: T; parent: T | null }
     if (node.id === id) return { node, parent }
-    if (node.children)
-      node.children.forEach(ch => stack.push({ node: ch as T, parent: node }))
+    if (node.children) node.children.forEach(ch => stack.push({ node: ch as T, parent: node }))
   }
   return { node: null, parent: null }
 }
@@ -63,10 +62,7 @@ export function findNodeById<T extends GenericTreeNode>(
  * @param id - 要移除的节点ID
  * @returns 如果成功移除返回 true，未找到节点返回 false
  */
-export function removeNodeById<T extends GenericTreeNode>(
-  nodes: T[],
-  id: string
-): boolean {
+export function removeNodeById<T extends GenericTreeNode>(nodes: T[], id: string): boolean {
   for (let i = 0; i < nodes.length; i++) {
     const n = nodes[i]
     if (!n) continue
@@ -116,9 +112,7 @@ export function insertNodeToParent<T extends GenericTreeNode>(
  *
  * @param nodes - 树节点数组
  */
-export function rebuildIndexesRecursively<T extends GenericTreeNode>(
-  nodes: T[]
-) {
+export function rebuildIndexesRecursively<T extends GenericTreeNode>(nodes: T[]) {
   nodes.forEach((n, i) => {
     n.index = i
     if (n.children) rebuildIndexesRecursively(n.children as T[])

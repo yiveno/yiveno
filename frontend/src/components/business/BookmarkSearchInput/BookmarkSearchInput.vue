@@ -8,7 +8,7 @@ BookmarkSearchInput - 书签筛选输入组件
 - 不负责展示结果（由父组件决定）
 
 数据流：
-用户输入 → 筛选服务 → emit('search-complete', results)
+用户输入 → 筛选服务 → emit('searchComplete', results)
 
 注意：
 - 数据源默认 IndexedDB，可外部传入
@@ -17,7 +17,7 @@ BookmarkSearchInput - 书签筛选输入组件
 -->
 
 <script setup lang="ts">
-import { watch, computed, ref, nextTick, onMounted, onUnmounted } from 'vue'
+import { watch, computed, ref, nextTick, onMounted, onUnmounted, toRefs } from 'vue'
 import { Chip, AnimatedNumber, LucideIcon, Input, Loading } from '@/components'
 import { useBookmarkSearch } from '@/composables/useBookmarkSearch'
 import { useSearchHistory } from '@/composables/useSearchHistory'
@@ -55,6 +55,10 @@ const props = withDefaults(defineProps<Props>(), {
   rounded: true
 })
 const emit = defineEmits<Emits>()
+
+// 解构 props 保持响应式
+const { mode, strategy, data, limit, initialQuery } = toRefs(props)
+
 // 展开状态
 const isExpanded = ref(false)
 const inputRef = ref<InstanceType<typeof Input>>()
@@ -138,19 +142,24 @@ const isLoadingState = computed(() => {
 const shouldShowPanel = computed(() => {
   // 有搜索历史（必须获取焦点）
   if (shouldShowSearchHistory.value) return true
-  
+
   // 有筛选标签
   if (showQuickTags.value && showFiltersInDropdown.value) return true
-  
+
   // 有搜索结果
   if (shouldShowResultsDropdown.value) return true
-  
+
   // 有搜索统计（有查询或有筛选）- 但必须有实际内容
-  if (props.showStats && props.showResultCount && displayResultCount.value >= 0 && (query.value.trim() || activeFilters.value.size > 0)) {
+  if (
+    props.showStats &&
+    props.showResultCount &&
+    displayResultCount.value >= 0 &&
+    (query.value.trim() || activeFilters.value.size > 0)
+  ) {
     // 只有在有查询内容或有激活的筛选器时才显示
     return true
   }
-  
+
   return false
 })
 
@@ -196,7 +205,7 @@ const hasMoreResults = computed(() => {
  */
 function flattenBookmarkTree(nodes: BookmarkNode[]): BookmarkNode[] {
   const result: BookmarkNode[] = []
-  
+
   function traverse(nodeList: BookmarkNode[]) {
     for (const node of nodeList) {
       // 只收集书签节点（有 URL 的）
@@ -209,7 +218,7 @@ function flattenBookmarkTree(nodes: BookmarkNode[]): BookmarkNode[] {
       }
     }
   }
-  
+
   traverse(nodes)
   return result
 }
@@ -382,36 +391,36 @@ interface Emits {
    * 搜索完成事件
    * @param results - 搜索结果（标准书签树结构）
    */
-  'search-complete': [results: BookmarkNode[]]
+  (e: 'searchComplete', results: BookmarkNode[]): void
 
   /**
    * 搜索开始事件
    * @param query - 搜索关键词
    */
-  'search-start': [query: string]
+  (e: 'searchStart', query: string): void
 
   /**
    * 搜索错误事件
    * @param error - 错误对象
    */
-  'search-error': [error: Error]
+  (e: 'searchError', error: Error): void
 
   /**
    * 搜索清空事件
    */
-  'search-clear': []
+  (e: 'searchClear'): void
 
   /**
    * 结果项点击事件（dropdown 模式）
    * @param bookmark - 被点击的书签
    */
-  'result-click': [bookmark: BookmarkNode]
+  (e: 'resultClick', bookmark: BookmarkNode): void
 
   /**
    * 查看全部结果事件（dropdown 模式）
    * @param results - 所有搜索结果
    */
-  'view-all': [results: BookmarkNode[]]
+  (e: 'viewAll', results: BookmarkNode[]): void
 }
 
 // ========== 快捷筛选器状态管理 ==========
@@ -500,8 +509,7 @@ const builtInTraitFilters = computed<QuickFilter[]>(() => {
       label: '重复书签',
       icon: 'copy',
       count: traitCounts.value.duplicate,
-      filter: (node: BookmarkNode) =>
-        node.traitTags?.includes('duplicate') ?? false
+      filter: (node: BookmarkNode) => node.traitTags?.includes('duplicate') ?? false
     }
   ]
 })
@@ -511,12 +519,12 @@ const builtInTraitFilters = computed<QuickFilter[]>(() => {
  */
 const allQuickFilters = computed<QuickFilter[]>(() => {
   const config = mergedQuickFilterConfig.value
-  
+
   // 如果禁用了快捷筛选，返回空数组
   if (!config.enabled) {
     return []
   }
-  
+
   // 合并内置特征筛选器和自定义筛选器
   return [...builtInTraitFilters.value, ...config.filters]
 })
@@ -573,11 +581,11 @@ const {
   filter,
   clear
 } = useBookmarkSearch({
-  mode: props.mode,
-  strategy: props.strategy,
-  data: computed(() => props.data ?? []),
-  limit: props.limit,
-  initialQuery: props.initialQuery,
+  mode,
+  strategy,
+  data: computed(() => data.value ?? []),
+  limit,
+  initialQuery,
   autoFilter: false // 手动控制搜索时机
 })
 
@@ -666,11 +674,7 @@ const applyQuickFilters = (nodes: BookmarkNode[]): BookmarkNode[] => {
       const matchesAllFilters = activeFilterFns.every(fn => fn(node))
 
       // ✅ 修复：不依赖 type 字段，直接检查 children 是否存在
-      if (
-        node.children &&
-        Array.isArray(node.children) &&
-        node.children.length > 0
-      ) {
+      if (node.children && Array.isArray(node.children) && node.children.length > 0) {
         // 递归筛选子节点
         const filteredChildren = filterNodes(node.children)
 
@@ -708,18 +712,18 @@ const executeFilter = async () => {
     if (!hasTextQuery && !hasActiveFilters) {
       clear()
       localFilteredCount.value = 0 // ✅ 清空本地计数
-      emit('search-complete', [])
-      emit('search-clear')
+      emit('searchComplete', [])
+      emit('searchClear')
       return
     }
 
     // 步骤 1: 如果有文本搜索，先执行文本筛选
     let results: BookmarkNode[] = []
     if (hasTextQuery) {
-      emit('search-start', query.value)
+      emit('searchStart', query.value)
       await filter(query.value)
       results = bookmarkNodes.value
-      
+
       // ✅ 保存到搜索历史
       await addToHistory(query.value, totalResults.value)
     } else {
@@ -736,17 +740,17 @@ const executeFilter = async () => {
     localFilteredCount.value = countFilteredItems(results)
 
     // 发送最终结果
-    emit('search-complete', results)
+    emit('searchComplete', results)
   } catch (err) {
-    const error = err instanceof Error ? err : new Error(String(err))
+    const searchError = err instanceof Error ? err : new Error(String(err))
     localFilteredCount.value = 0 // ✅ 出错时清空计数
     selectedResultIndex.value = -1 // ✅ 重置选中索引
-    emit('search-error', error)
+    emit('searchError', searchError)
   }
 }
 
 // 防抖搜索
-const debouncedSearch = useDebounceFn(executeFilter, props.debounce)
+const debouncedSearch = useDebounceFn(executeFilter, () => props.debounce)
 
 // 本地 loading 状态（用于显示防抖期间的加载动画）
 const isDebouncing = ref(false)
@@ -755,7 +759,7 @@ const isDebouncing = ref(false)
 watch(query, () => {
   // 开始防抖，显示加载动画
   isDebouncing.value = true
-  
+
   debouncedSearch().finally(() => {
     // 防抖完成，隐藏加载动画
     isDebouncing.value = false
@@ -867,7 +871,7 @@ const handleEscape = () => {
  */
 const handleArrowDown = () => {
   if (!shouldShowResultsDropdown.value) return
-  
+
   if (selectedResultIndex.value < dropdownResults.value.length - 1) {
     selectedResultIndex.value++
   }
@@ -878,7 +882,7 @@ const handleArrowDown = () => {
  */
 const handleArrowUp = () => {
   if (!shouldShowResultsDropdown.value) return
-  
+
   if (selectedResultIndex.value > 0) {
     selectedResultIndex.value--
   }
@@ -889,7 +893,7 @@ const handleArrowUp = () => {
  */
 const handleEnter = () => {
   if (!shouldShowResultsDropdown.value) return
-  
+
   // 如果有选中的结果，打开它
   if (selectedResultIndex.value >= 0 && selectedResultIndex.value < dropdownResults.value.length) {
     const selectedBookmark = dropdownResults.value[selectedResultIndex.value]
@@ -928,7 +932,7 @@ const handleBlur = () => {
 const handleClickOutside = (event: MouseEvent) => {
   const target = event.target as HTMLElement
   const wrapper = searchWrapperRef.value
-  
+
   // 如果点击的是外部区域，隐藏面板
   if (wrapper && !wrapper.contains(target)) {
     isFocused.value = false
@@ -967,10 +971,10 @@ const handleClearAllHistory = () => {
  */
 const handleResultClick = (bookmark: BookmarkNode) => {
   logger.info('BookmarkSearchInput', '结果项被点击', { bookmark })
-  
+
   // 先触发事件（让父组件有机会处理）
-  emit('result-click', bookmark)
-  
+  emit('resultClick', bookmark)
+
   // 根据 resultDisplay 模式决定默认行为
   if (props.resultDisplay === 'dropdown') {
     // dropdown 模式：在当前标签页打开书签
@@ -992,7 +996,7 @@ const handleResultClick = (bookmark: BookmarkNode) => {
  */
 const handleOpenInNewTab = (bookmark: BookmarkNode) => {
   logger.info('BookmarkSearchInput', '在新标签页打开书签', { bookmark })
-  
+
   if (bookmark.url) {
     // 安全检查：确保 chrome.tabs API 可用
     if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
@@ -1015,10 +1019,10 @@ const handleClear = () => {
   activeFilters.value.clear() // ✅ 清空激活的筛选器
   localFilteredCount.value = 0 // ✅ 重置本地计数
   selectedResultIndex.value = -1 // ✅ 重置选中索引
-  // ✅ 统一通过 search-complete 事件通知父组件（传递空数组）
-  emit('search-complete', [])
-  // 🔔 同时保留 search-clear 事件，用于特殊场景（如关闭搜索框）
-  emit('search-clear')
+  // ✅ 统一通过 searchComplete 事件通知父组件（传递空数组）
+  emit('searchComplete', [])
+  // 🔔 同时保留 searchClear 事件，用于特殊场景（如关闭搜索框）
+  emit('searchClear')
 }
 
 /**
@@ -1028,7 +1032,7 @@ const handleClear = () => {
 const search = async (searchQuery: string) => {
   query.value = searchQuery
   await filter(searchQuery)
-  emit('search-complete', bookmarkNodes.value)
+  emit('searchComplete', bookmarkNodes.value)
 }
 
 /**
@@ -1042,10 +1046,10 @@ const getResults = () => bookmarkNodes.value
 const clearSearch = () => {
   clear()
   activeFilters.value.clear() // ✅ 清空激活的筛选器
-  // ✅ 统一通过 search-complete 事件通知父组件（传递空数组）
-  emit('search-complete', [])
-  // 🔔 同时保留 search-clear 事件，用于特殊场景（如关闭搜索框）
-  emit('search-clear')
+  // ✅ 统一通过 searchComplete 事件通知父组件（传递空数组）
+  emit('searchComplete', [])
+  // 🔔 同时保留 searchClear 事件，用于特殊场景（如关闭搜索框）
+  emit('searchClear')
 }
 
 // ========== 生命周期 ==========
@@ -1059,19 +1063,19 @@ onMounted(() => {
     isExpanded.value = true
     showPanel.value = true
   }
-  
+
   // 如果启用了特征筛选，初始化特征统计
   if (mergedQuickFilterConfig.value.enabled) {
     updateTraitCounts()
   }
-  
+
   // 如果设置了自动聚焦
   if (props.autoFocus && isAlwaysExpanded.value) {
     nextTick(() => {
       inputRef.value?.$el?.querySelector('input')?.focus()
     })
   }
-  
+
   // 监听全局点击事件，处理点击外部区域
   document.addEventListener('click', handleClickOutside)
 })
@@ -1113,8 +1117,8 @@ defineExpose({
     <div
       ref="searchWrapperRef"
       class="search-wrapper"
-      :class="{ 
-        expanded: isExpanded || isAlwaysExpanded, 
+      :class="{
+        expanded: isExpanded || isAlwaysExpanded,
         searching: isLoadingState,
         'always-expanded': isAlwaysExpanded
       }"
@@ -1149,18 +1153,12 @@ defineExpose({
         :class="{ 'has-query': query.length > 0 }"
         :style="{ '--md-icon-button-icon-size': '20px' }"
         :title="isLoadingState ? '搜索中...' : query.length > 0 ? '清空' : '搜索'"
-        :aria-label="
-          isLoadingState ? '搜索中' : query.length > 0 ? '清空搜索' : '展开搜索'
-        "
+        :aria-label="isLoadingState ? '搜索中' : query.length > 0 ? '清空搜索' : '展开搜索'"
         :aria-expanded="isExpanded"
         @click="handleIconClick"
       >
         <Loading v-if="isLoadingState" size="xs" />
-        <LucideIcon
-          v-else-if="query.length > 0"
-          name="x"
-          :size="20"
-        />
+        <LucideIcon v-else-if="query.length > 0" name="x" :size="20" />
         <LucideIcon v-else name="search" :size="20" />
       </md-icon-button>
 
@@ -1171,10 +1169,7 @@ defineExpose({
           <div v-if="shouldShowSearchHistory" class="search-history-panel">
             <div class="history-header">
               <span class="history-title">最近搜索</span>
-              <button 
-                class="history-clear-btn" 
-                @click="handleClearAllHistory"
-              >
+              <button class="history-clear-btn" @click="handleClearAllHistory">
                 <LucideIcon name="trash-2" :size="14" />
                 <span>清空</span>
               </button>
@@ -1188,13 +1183,14 @@ defineExpose({
               >
                 <LucideIcon slot="start" name="clock" :size="14" />
                 <div slot="headline">{{ item.query }}</div>
-                <div v-if="item.resultCount !== undefined" slot="supporting-text" class="history-count">
+                <div
+                  v-if="item.resultCount !== undefined"
+                  slot="supporting-text"
+                  class="history-count"
+                >
                   {{ item.resultCount }} 个结果
                 </div>
-                <md-icon-button
-                  slot="end"
-                  @click.stop="handleRemoveHistory(item.query, $event)"
-                >
+                <md-icon-button slot="end" @click.stop="handleRemoveHistory(item.query, $event)">
                   <LucideIcon name="x" :size="14" />
                 </md-icon-button>
               </md-list-item>
@@ -1202,10 +1198,7 @@ defineExpose({
           </div>
 
           <!-- 快捷筛选标签（可选显示） -->
-          <div
-            v-if="showQuickTags && showFiltersInDropdown"
-            class="filter-quick-tags"
-          >
+          <div v-if="showQuickTags && showFiltersInDropdown" class="filter-quick-tags">
             <button
               v-for="quickFilter in allQuickFilters"
               :key="quickFilter.id"
@@ -1222,11 +1215,7 @@ defineExpose({
               @keydown.enter.prevent="toggleFilter(quickFilter.id)"
               @keydown.space.prevent="toggleFilter(quickFilter.id)"
             >
-              <LucideIcon
-                v-if="quickFilter.icon"
-                :name="quickFilter.icon"
-                :size="14"
-              />
+              <LucideIcon v-if="quickFilter.icon" :name="quickFilter.icon" :size="14" />
               <span class="filter-label">{{ quickFilter.label }}</span>
               <!-- ✅ 加载状态：显示动画 -->
               <Loading v-if="isLoadingTraitCounts" size="xs" />
@@ -1257,17 +1246,17 @@ defineExpose({
               >
                 <!-- 左侧图标 -->
                 <LucideIcon slot="start" name="bookmark" :size="16" />
-                
+
                 <!-- 主标题 -->
                 <div slot="headline" class="result-headline">
                   {{ bookmark.title || '无标题' }}
                 </div>
-                
+
                 <!-- 副标题（URL） -->
                 <div v-if="bookmark.url" slot="supporting-text" class="result-url">
                   {{ bookmark.url }}
                 </div>
-                
+
                 <!-- 右侧操作按钮：在新标签页打开 -->
                 <md-icon-button
                   slot="end"
@@ -1297,9 +1286,7 @@ defineExpose({
             class="search-stats"
           >
             <span class="stats-text">找到 {{ displayResultCount }} 个结果</span>
-            <span v-if="executionTime" class="stats-time">
-              ({{ executionTime }}ms)
-            </span>
+            <span v-if="executionTime" class="stats-time"> ({{ executionTime }}ms) </span>
           </div>
         </div>
       </Transition>
@@ -1527,7 +1514,7 @@ defineExpose({
   --md-icon-button-icon-color: var(--color-text-tertiary);
   --md-icon-button-state-layer-shape: var(--radius-sm);
   --md-icon-button-icon-size: 14px;
-  
+
   opacity: 0;
   transition: opacity 0.2s ease;
 }

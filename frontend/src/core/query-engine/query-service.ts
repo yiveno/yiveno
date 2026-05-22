@@ -14,10 +14,7 @@
 
 import type { ILogger } from '@/core/common/logger'
 import { noopLogger } from '@/core/common/logger'
-import {
-  indexedDBManager,
-  type BookmarkRecord
-} from '@/infrastructure/indexeddb/manager'
+import { indexedDBManager, type BookmarkRecord } from '@/infrastructure/indexeddb/manager'
 import { SearchEngine } from './engine'
 import { FlexSearchStrategy } from './strategies/flexsearch-strategy'
 import { semanticSearch } from './strategies/semantic-strategy'
@@ -98,10 +95,7 @@ export class QueryService {
   /**
    * 统一查询接口
    */
-  async search(
-    query: string,
-    options: SearchOptions = {}
-  ): Promise<SearchResponse> {
+  async search(query: string, options: SearchOptions = {}): Promise<SearchResponse> {
     const startTime = performance.now()
     const {
       limit = 100,
@@ -120,9 +114,7 @@ export class QueryService {
     }
 
     // 确定实际执行策略
-    let resolvedStrategy = strategy === 'auto'
-      ? detectIntent(normalizedQuery).intent
-      : strategy
+    let resolvedStrategy = strategy === 'auto' ? detectIntent(normalizedQuery).intent : strategy
 
     // 检查语义搜索设置（仅在策略为 semantic 或 hybrid 时检查）
     if (resolvedStrategy === 'semantic' || resolvedStrategy === 'hybrid') {
@@ -144,7 +136,13 @@ export class QueryService {
           this.logger.info('QueryService', `✅ 缓存命中: ${cacheKey}`)
           return {
             results: cached.slice(offset, offset + limit),
-            metadata: this.createMetadata(startTime, cached.length, true, resolvedStrategy, normalizedQuery)
+            metadata: this.createMetadata(
+              startTime,
+              cached.length,
+              true,
+              resolvedStrategy,
+              normalizedQuery
+            )
           }
         }
       }
@@ -172,11 +170,20 @@ export class QueryService {
       }
 
       const duration = performance.now() - startTime
-      this.logger.info('QueryService', `✅ 完成: "${normalizedQuery}" ${duration.toFixed(1)}ms ${results.length}条 [${resolvedStrategy}]`)
+      this.logger.info(
+        'QueryService',
+        `✅ 完成: "${normalizedQuery}" ${duration.toFixed(1)}ms ${results.length}条 [${resolvedStrategy}]`
+      )
 
       return {
         results: results.slice(offset, offset + limit),
-        metadata: this.createMetadata(startTime, results.length, false, resolvedStrategy, normalizedQuery)
+        metadata: this.createMetadata(
+          startTime,
+          results.length,
+          false,
+          resolvedStrategy,
+          normalizedQuery
+        )
       }
     } catch (error) {
       this.logger.error('QueryService', '❌ 查询失败:', error)
@@ -268,27 +275,29 @@ export class QueryService {
 
     // 立即返回 Fuse 结果
     const fuseResults = await this.searchWithFuse(normalizedQuery, { ...options, limit: limit * 2 })
-    const highlighted = options.highlight !== false
-      ? this.addHighlights(fuseResults, normalizedQuery)
-      : fuseResults
+    const highlighted =
+      options.highlight !== false ? this.addHighlights(fuseResults, normalizedQuery) : fuseResults
 
     // 异步执行 Semantic，完成后通知更新
-    semanticSearch(normalizedQuery, limit).then(semanticRaw => {
-      if (!semanticRaw.length) return
-      const semanticResults = semanticRaw.map(r => ({
-        bookmark: r.bookmark,
-        score: r.score,
-        pathString: r.bookmark.pathString,
-        matchedFields: ['semantic'] as string[],
-        highlights: {},
-        relevanceFactors: this.calculateRelevanceFactors(r.bookmark, normalizedQuery, r.score)
-      }))
-      const merged = this.mergeResults(fuseResults, semanticResults, limit)
-      const mergedHighlighted = options.highlight !== false
-        ? this.addHighlights(merged, normalizedQuery)
-        : merged
-      onUpdate(mergedHighlighted)
-    }).catch(() => {/* Semantic 失败静默处理 */})
+    semanticSearch(normalizedQuery, limit)
+      .then(semanticRaw => {
+        if (!semanticRaw.length) return
+        const semanticResults = semanticRaw.map(r => ({
+          bookmark: r.bookmark,
+          score: r.score,
+          pathString: r.bookmark.pathString,
+          matchedFields: ['semantic'] as string[],
+          highlights: {},
+          relevanceFactors: this.calculateRelevanceFactors(r.bookmark, normalizedQuery, r.score)
+        }))
+        const merged = this.mergeResults(fuseResults, semanticResults, limit)
+        const mergedHighlighted =
+          options.highlight !== false ? this.addHighlights(merged, normalizedQuery) : merged
+        onUpdate(mergedHighlighted)
+      })
+      .catch(() => {
+        /* Semantic 失败静默处理 */
+      })
 
     return highlighted.slice(0, limit)
   }
@@ -301,7 +310,10 @@ export class QueryService {
     semanticResults: EnhancedSearchResult[],
     limit: number
   ): EnhancedSearchResult[] {
-    const merged = new Map<string, EnhancedSearchResult & { _fuseScore: number; _semanticScore: number }>()
+    const merged = new Map<
+      string,
+      EnhancedSearchResult & { _fuseScore: number; _semanticScore: number }
+    >()
 
     // 录入 Fuse 结果
     for (const r of fuseResults) {
@@ -338,10 +350,7 @@ export class QueryService {
   ): Promise<EnhancedSearchResult[]> {
     try {
       // 优先使用 Worker
-      const workerResults = await queryWorkerAdapter.search(
-        query,
-        options.limit || 100
-      )
+      const workerResults = await queryWorkerAdapter.search(query, options.limit || 100)
       return this.convertToEnhanced(workerResults, query)
     } catch (_error) {
       // 降级到主线程
@@ -377,21 +386,14 @@ export class QueryService {
       pathString: result.bookmark.pathString,
       matchedFields: this.detectMatchedFields(result.bookmark, query),
       highlights: {},
-      relevanceFactors: this.calculateRelevanceFactors(
-        result.bookmark,
-        query,
-        result.score
-      )
+      relevanceFactors: this.calculateRelevanceFactors(result.bookmark, query, result.score)
     }))
   }
 
   /**
    * 检测匹配字段
    */
-  private detectMatchedFields(
-    bookmark: BookmarkRecord,
-    query: string
-  ): string[] {
+  private detectMatchedFields(bookmark: BookmarkRecord, query: string): string[] {
     const fields: string[] = []
     const lowerQuery = query.toLowerCase()
 
@@ -421,9 +423,7 @@ export class QueryService {
     return {
       titleMatch: bookmark.titleLower.includes(lowerQuery) ? 1.0 : 0.0,
       urlMatch: bookmark.urlLower?.includes(lowerQuery) ? 0.8 : 0.0,
-      domainMatch: bookmark.domain?.toLowerCase().includes(lowerQuery)
-        ? 0.6
-        : 0.0,
+      domainMatch: bookmark.domain?.toLowerCase().includes(lowerQuery) ? 0.6 : 0.0,
       keywordMatch: 0.0, // TODO: 实现关键词匹配
       exactMatch: bookmark.titleLower === lowerQuery ? 1.0 : 0.0,
       recencyBoost: 0.0, // TODO: 实现最近使用加分
@@ -434,17 +434,12 @@ export class QueryService {
   /**
    * 添加高亮
    */
-  private addHighlights(
-    results: EnhancedSearchResult[],
-    query: string
-  ): EnhancedSearchResult[] {
+  private addHighlights(results: EnhancedSearchResult[], query: string): EnhancedSearchResult[] {
     return results.map(result => ({
       ...result,
       highlights: {
         title: this.highlightEngine.highlight(result.bookmark.title, query),
-        url: result.bookmark.url
-          ? this.highlightEngine.highlight(result.bookmark.url, query)
-          : []
+        url: result.bookmark.url ? this.highlightEngine.highlight(result.bookmark.url, query) : []
       }
     }))
   }

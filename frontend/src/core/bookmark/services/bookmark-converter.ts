@@ -58,9 +58,7 @@ export class BookmarkConverter {
    * @param nodes - 最小树节点数组
    * @returns 标准化的 BookmarkNode 数组
    */
-  static listToBookmarkNodes<T extends MinimalTreeNode>(
-    nodes: T[]
-  ): BookmarkNode[] {
+  static listToBookmarkNodes<T extends MinimalTreeNode>(nodes: T[]): BookmarkNode[] {
     const mapNode = (n: MinimalTreeNode): BookmarkNode => {
       const node: BookmarkNode = {
         id: String(n.id),
@@ -78,20 +76,20 @@ export class BookmarkConverter {
       if (n.dateAdded !== undefined) {
         node.dateAdded = n.dateAdded
       }
-      
+
       if (typeof n.index === 'number') {
         node.index = n.index
       }
-      
+
       if (n.children?.length) {
         node.children = n.children.map(mapNode)
       } else if (!n.url) {
         node.children = []
       }
-      
+
       return node
     }
-    
+
     return Array.isArray(nodes) ? nodes.map(mapNode) : []
   }
 
@@ -200,10 +198,7 @@ export class BookmarkConverter {
    * @param parentId - 父节点ID（递归时使用）
    * @returns 扁平化的书签记录数组
    */
-  static bookmarkNodesToRecords(
-    nodes: BookmarkNode[],
-    parentId?: string
-  ): BookmarkRecord[] {
+  static bookmarkNodesToRecords(nodes: BookmarkNode[], parentId?: string): BookmarkRecord[] {
     const records: BookmarkRecord[] = []
 
     for (const node of nodes) {
@@ -289,11 +284,11 @@ export class BookmarkConverter {
       title: node.title?.trim() || '',
       children: node.children?.map(child => this.sanitizeBookmarkNode(child))
     }
-    
+
     if (trimmedUrl) {
       result.url = trimmedUrl
     }
-    
+
     return result
   }
 }

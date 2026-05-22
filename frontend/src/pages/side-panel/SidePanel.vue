@@ -5,11 +5,7 @@ import { storeToRefs } from 'pinia'
 defineOptions({
   name: 'SidePanelPage'
 })
-import {
-  Accordion,
-  AccordionItem,
-  Dialog
-} from '@/components'
+import { Accordion, AccordionItem, Dialog } from '@/components'
 import BookmarkTree from '@/components/business/BookmarkTree/BookmarkTree.vue'
 import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'
 import { FavoriteSection, RecentVisits } from './components'
@@ -18,22 +14,13 @@ import ShareDialog from '@/components/business/ShareDialog/ShareDialog.vue'
 import BookmarkSearchInput from '@/components/business/BookmarkSearchInput/BookmarkSearchInput.vue'
 
 import { useBookmarkStore } from '@/stores/bookmarkStore'
-import type {
-  BookmarkNode,
-  BookmarkUpdateDetail
-} from './types'
+import type { BookmarkNode, BookmarkUpdateDetail } from './types'
 import type { BookmarkRecord } from '@/infrastructure/indexeddb/types'
 import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
 import { logger } from '@/infrastructure/logging/logger'
 import { onEvent } from '@/infrastructure/events/event-bus'
-import {
-  notificationService,
-  notifyInfo
-} from '@/application/notification/notification-service'
-import {
-  scheduleUIUpdate,
-  scheduleMicrotask
-} from '@/application/scheduler/scheduler-service'
+import { notificationService, notifyInfo } from '@/application/notification/notification-service'
+import { scheduleUIUpdate, scheduleMicrotask } from '@/application/scheduler/scheduler-service'
 import { useThemeSync } from '@/composables/useThemeSync'
 import { t } from '@/utils/i18n-helpers'
 
@@ -134,12 +121,10 @@ const handleSearchClear = () => {
 const updateBookmarkVisitRecord = async (bookmarkId: string) => {
   try {
     // ✅ 正确：通过 application 层服务访问
-    const { bookmarkAppService } = await import(
-      '@/application/bookmark/bookmark-app-service'
-    )
-    
+    const { bookmarkAppService } = await import('@/application/bookmark/bookmark-app-service')
+
     const result = await bookmarkAppService.updateVisitRecord(bookmarkId)
-    
+
     if (!result.ok) {
       logger.warn('SidePanel', '⚠️ 更新访问记录失败', result.error)
     }
@@ -159,12 +144,12 @@ const updateBookmarkVisitRecord = async (bookmarkId: string) => {
 const handleBookmarkClick = async (bookmark: BookmarkNode, _event: MouseEvent) => {
   // 只处理书签（有 URL 的节点）
   if (!bookmark.url) return
-  
+
   logger.debug('SidePanel', '书签已打开，更新访问记录', {
     title: bookmark.title,
     url: bookmark.url
   })
-  
+
   // 更新访问记录
   await updateBookmarkVisitRecord(bookmark.id)
 }
@@ -209,11 +194,7 @@ const openBookmark = async (
  * @param {boolean} expanded 是否展开
  * @returns {void} 处理文件夹展开/收起
  */
-const handleFolderToggle = (
-  folderId: string,
-  node: BookmarkNode,
-  expanded: boolean
-) => {
+const handleFolderToggle = (folderId: string, node: BookmarkNode, expanded: boolean) => {
   // ✅ 展开状态由 BookmarkTree 内部管理，这里只记录日志
   logger.debug('SidePanel', '📂 文件夹状态变化', {
     folderId,
@@ -230,7 +211,7 @@ const handleFolderToggle = (
  */
 const handleRecentClick = async (bookmark: BookmarkRecord) => {
   logger.info('SidePanel', '🕐 点击最近访问:', bookmark.title)
-  
+
   // 转换为 BookmarkNode 格式并打开
   await openBookmark({
     id: bookmark.id,
@@ -258,7 +239,7 @@ const handleRecentRemove = (bookmark: BookmarkRecord) => {
  */
 const handleFavoriteClick = async (bookmark: BookmarkNode) => {
   logger.info('SidePanel', '⭐ 点击收藏书签:', bookmark.title)
-  
+
   // ✅ 打开收藏的书签
   await openBookmark(bookmark)
 }
@@ -283,12 +264,12 @@ const handleFavoriteRemove = (bookmark: BookmarkNode) => {
  */
 const handleShareFavorites = (bookmarks: BookmarkNode[]) => {
   logger.info('SidePanel', `📤 分享 ${bookmarks.length} 个收藏书签`)
-  
+
   // 设置分享数据
   shareBookmarks.value = bookmarks
   shareType.value = 'favorites'
   shareFolderName.value = undefined
-  
+
   // 打开分享弹窗
   showShareDialog.value = true
 }
@@ -302,14 +283,14 @@ const handleShareFavorites = (bookmarks: BookmarkNode[]) => {
 const handleFolderShare = (folder: BookmarkNode) => {
   // 递归收集文件夹中的所有书签
   const bookmarks = collectBookmarksFromFolder(folder)
-  
+
   logger.info('SidePanel', `📤 分享文件夹: ${folder.title}，包含 ${bookmarks.length} 个书签`)
-  
+
   // 设置分享数据
   shareBookmarks.value = bookmarks
   shareType.value = 'folder'
   shareFolderName.value = folder.title
-  
+
   // 打开分享弹窗
   showShareDialog.value = true
 }
@@ -322,12 +303,12 @@ const handleFolderShare = (folder: BookmarkNode) => {
  */
 const handleBookmarkShare = (bookmark: BookmarkNode) => {
   logger.info('SidePanel', `📤 分享书签: ${bookmark.title}`)
-  
+
   // 设置分享数据
   shareBookmarks.value = [bookmark]
   shareType.value = 'bookmark'
   shareFolderName.value = bookmark.title
-  
+
   // 打开分享弹窗
   showShareDialog.value = true
 }
@@ -347,25 +328,25 @@ const collectBookmarksFromFolder = (
   maxDepth: number = 50
 ): BookmarkNode[] => {
   const bookmarks: BookmarkNode[] = []
-  
+
   // 防止无限递归
   if (depth > maxDepth) {
     logger.warn('SidePanel', '⚠️ 递归深度超过限制，停止收集', { depth, folderId: folder.id })
     return bookmarks
   }
-  
+
   // 防止循环引用
   if (visited.has(folder.id)) {
     logger.warn('SidePanel', '⚠️ 检测到循环引用，跳过文件夹', { folderId: folder.id })
     return bookmarks
   }
-  
+
   visited.add(folder.id)
-  
+
   if (!folder.children) {
     return bookmarks
   }
-  
+
   for (const child of folder.children) {
     if (child.url) {
       // 是书签，添加到列表
@@ -375,7 +356,7 @@ const collectBookmarksFromFolder = (
       bookmarks.push(...collectBookmarksFromFolder(child, visited, depth + 1, maxDepth))
     }
   }
-  
+
   return bookmarks
 }
 
@@ -397,20 +378,11 @@ const handleShareComplete = () => {
  * @param {boolean} isFavorite 是否收藏
  * @returns {void} 无返回值
  */
-const handleBookmarkToggleFavorite = async (
-  node: BookmarkNode,
-  isFavorite: boolean
-) => {
-  logger.info(
-    'SidePanel',
-    `${isFavorite ? '⭐ 收藏' : '🗑️ 取消收藏'}书签:`,
-    node.title
-  )
+const handleBookmarkToggleFavorite = async (node: BookmarkNode, isFavorite: boolean) => {
+  logger.info('SidePanel', `${isFavorite ? '⭐ 收藏' : '🗑️ 取消收藏'}书签:`, node.title)
 
   try {
-    const { favoriteAppService } = await import(
-      '@/application/bookmark/favorite-app-service'
-    )
+    const { favoriteAppService } = await import('@/application/bookmark/favorite-app-service')
 
     // 执行收藏/取消收藏操作（会发送事件）
     const success = isFavorite
@@ -461,7 +433,7 @@ const isInternalProtocolUrl = (url: string): boolean => {
 
 const handleBookmarkOpenNewTab = async (node: BookmarkNode) => {
   logger.info('SidePanel', '📂 在新标签页打开', node.title, node.url)
-  
+
   if (!node.url) {
     notificationService.notify('该书签没有有效的 URL', { level: 'warning' })
     return
@@ -470,7 +442,7 @@ const handleBookmarkOpenNewTab = async (node: BookmarkNode) => {
   // 检查是否为内部协议书签（优先检查标签，兜底检查 URL）
   const hasInternalTag = node.traitTags?.includes('internal')
   const isInternalUrl = isInternalProtocolUrl(node.url)
-  
+
   if (hasInternalTag || isInternalUrl) {
     notificationService.notify('无法在新标签页打开浏览器内部链接', { level: 'warning' })
     logger.warn('SidePanel', '尝试打开内部协议书签:', node.url)
@@ -486,7 +458,7 @@ const handleBookmarkOpenNewTab = async (node: BookmarkNode) => {
     }
 
     const newWindow = window.open(node.url, '_blank')
-    
+
     // 检查是否被浏览器阻止
     if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
       notificationService.notify('链接被浏览器阻止，请检查弹窗设置', { level: 'warning' })
@@ -620,15 +592,15 @@ onMounted(async () => {
     try {
       await bookmarkStore.loadFromIndexedDB()
       logger.info('SidePanel', '✅ 书签数据加载完成')
-      
+
       // ✅ 初始化统计数据（不依赖子组件挂载）
       try {
         // favoriteCount 现在是 computed，会自动更新
-        
+
         // 从 IndexedDB 获取最近访问数量
         const recentVisits = await indexedDBManager.getRecentVisits(5)
         recentCount.value = recentVisits.length
-        
+
         logger.info('SidePanel', '📊 统计数据初始化完成', {
           recent: recentCount.value,
           favorites: favoriteCount.value
@@ -660,7 +632,7 @@ onMounted(async () => {
  */
 onUnmounted(() => {
   logger.info('SidePanel', '🧹 开始清理组件...')
-  
+
   // 清理实时同步监听器
   if (cleanupSyncRef) {
     try {
@@ -674,7 +646,7 @@ onUnmounted(() => {
 
   // 安全重置loading状态
   isLoading.value = false
-  
+
   logger.info('SidePanel', '✅ 组件清理完成')
 })
 
@@ -742,9 +714,12 @@ const postponeRefresh = () => {
     <div class="update-prompt-content">
       <p>{{ t('sidepanel_external_change_message') }}</p>
       <div v-if="pendingUpdateDetail" class="update-detail">
-        <small
-          >{{ t('sidepanel_external_change_detail', [pendingUpdateDetail.eventType, pendingUpdateDetail.id]) }}</small
-        >
+        <small>{{
+          t('sidepanel_external_change_detail', [
+            pendingUpdateDetail.eventType,
+            pendingUpdateDetail.id
+          ])
+        }}</small>
       </div>
     </div>
     <template #actions>
@@ -859,15 +834,13 @@ md-circular-progress {
   }
 }
 
-
-
 .side-panel-container {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  padding-left:var(--spacing-4);
-  padding-right:var(--spacing-4);
-  padding-bottom:var(--spacing-3);
+  padding-right: var(--spacing-4);
+  padding-bottom: var(--spacing-3);
+  padding-left: var(--spacing-4);
   color: var(--color-text-primary);
   background: var(--color-background);
   overflow: hidden;
@@ -876,13 +849,14 @@ md-circular-progress {
 /* 搜索区域固定高度 */
 .search-section {
   flex-shrink: 0;
+  padding: var(--spacing-3) 0;
 }
 
 /* Accordion 容器占据剩余空间 */
 .side-panel-container :deep(.accordion) {
   display: flex;
-  flex: 1;
   flex-direction: column;
+  flex: 1;
   min-height: 0;
   overflow: hidden;
 }
@@ -895,18 +869,17 @@ md-circular-progress {
 /* AccordionItem 内容区域：展开时占据所有剩余空间 */
 .side-panel-container :deep(.accordion-content) {
   display: flex;
-  flex: 1;
   flex-direction: column;
+  flex: 1;
   min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden auto;
 }
 
 /* BookmarkTree 容器：填充父容器，不设置滚动 */
 .side-panel-container :deep(.bookmark-tree-wrapper) {
   display: flex;
-  flex: 1;
   flex-direction: column;
+  flex: 1;
   min-height: 0;
 }
 
@@ -971,13 +944,7 @@ md-circular-progress {
   animation: sync-pulse 2s infinite;
 }
 
-/* 搜索区域 */
-.search-section {
-  padding: var(--spacing-3) 0;
-}
-
-
-
+/* 收藏夹区域 */
 .favorites-section {
   padding: 0 var(--spacing-4) var(--spacing-3) var(--spacing-4);
 }
@@ -1119,9 +1086,7 @@ md-circular-progress {
 }
 
 .search-item-url {
-  margin: -1px calc(-1 * var(--spacing-1)) var(--spacing-0-5)
-    calc(-1 * var(--spacing-1)); /* 添加底部间距与路径保持一致 */
-
+  margin: -1px calc(-1 * var(--spacing-1)) var(--spacing-0-5) calc(-1 * var(--spacing-1)); /* 添加底部间距与路径保持一致 */
   padding: 1px var(--spacing-1);
   border-radius: var(--radius-xs);
   outline: none; /* 移除focus时的边框 */

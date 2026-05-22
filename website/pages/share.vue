@@ -2,11 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { getShareDataFromUrl, type ShareData } from '@/utils/share-service'
 import { detectExtension } from '@/utils/extension-detector'
-import {
-  importService,
-  type FolderNode,
-  type ImportResult
-} from '@/utils/import-service'
+import { importService, type FolderNode, type ImportResult } from '@/utils/import-service'
 import { formatRelativeTime } from '@/utils/date-formatter'
 
 // 状态
@@ -32,18 +28,18 @@ const { extensionLink } = useProductLinks()
 // 检测是否为移动设备
 const checkMobile = () => {
   if (typeof window === 'undefined') return false
-  
+
   // 检查 User Agent
   const userAgent = navigator.userAgent.toLowerCase()
   const mobileKeywords = ['android', 'iphone', 'ipad', 'ipod', 'mobile', 'webos']
   const isMobileUA = mobileKeywords.some(keyword => userAgent.includes(keyword))
-  
+
   // 检查屏幕宽度
   const isMobileWidth = window.innerWidth < 768
-  
+
   // 检查触摸支持
   const hasTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0
-  
+
   return isMobileUA || (isMobileWidth && hasTouchScreen)
 }
 
@@ -161,9 +157,10 @@ const importSelected = async () => {
   }
 
   const bookmarksToImport = Array.from(selectedBookmarks.value)
-    .map((index) => shareData.value!.bookmarks[index])
-    .filter((bookmark): bookmark is { title: string; url: string; description?: string } => 
-      bookmark !== undefined
+    .map(index => shareData.value!.bookmarks[index])
+    .filter(
+      (bookmark): bookmark is { title: string; url: string; description?: string } =>
+        bookmark !== undefined
     )
 
   isImporting.value = true
@@ -185,7 +182,7 @@ const importSelected = async () => {
       alert(`✅ 成功导入 ${result.success} 个书签！`)
     } else {
       alert(
-        `⚠️ 导入完成：成功 ${result.success} 个，失败 ${result.failed} 个\n\n失败原因：\n${result.errors.map((e) => `- ${e.bookmark}: ${e.error}`).join('\n')}`
+        `⚠️ 导入完成：成功 ${result.success} 个，失败 ${result.failed} 个\n\n失败原因：\n${result.errors.map(e => `- ${e.bookmark}: ${e.error}`).join('\n')}`
       )
     }
 
@@ -193,7 +190,9 @@ const importSelected = async () => {
     selectedBookmarks.value.clear()
   } catch (importError) {
     console.error('导入失败:', importError)
-    alert(`❌ 导入失败：${importError instanceof Error ? importError.message : String(importError)}`)
+    alert(
+      `❌ 导入失败：${importError instanceof Error ? importError.message : String(importError)}`
+    )
   } finally {
     isImporting.value = false
   }
@@ -235,7 +234,7 @@ const copyShareLink = async () => {
 // 使用系统分享 API（移动端）
 const shareToFriends = async () => {
   if (!shareData.value) return
-  
+
   try {
     // 检查是否支持 Web Share API
     if (navigator.share) {
@@ -263,12 +262,12 @@ onMounted(async () => {
   // 检测移动设备
   isMobile.value = checkMobile()
   console.log('📱 移动端检测结果:', isMobile.value)
-  
+
   // 只在桌面端检测扩展
   if (!isMobile.value) {
     await checkExtension()
   }
-  
+
   loadShareData()
 })
 
@@ -293,7 +292,9 @@ useSeoMeta({
       <div class="error-icon" aria-hidden="true">⚠️</div>
       <h2 class="error-title">无法加载分享内容</h2>
       <p class="error-message">{{ error }}</p>
-      <button class="retry-button" aria-label="重新加载分享内容" @click="loadShareData">重试</button>
+      <button class="retry-button" aria-label="重新加载分享内容" @click="loadShareData">
+        重试
+      </button>
     </div>
 
     <!-- 分享内容 -->
@@ -304,15 +305,18 @@ useSeoMeta({
           <h1 class="share-title">{{ shareData.title }}</h1>
           <p class="share-meta">
             分享了 {{ shareData.bookmarks.length }} 个书签
-            <span class="share-time">
-              · {{ formatDate(shareData.timestamp) }}
-            </span>
+            <span class="share-time"> · {{ formatDate(shareData.timestamp) }} </span>
           </p>
         </div>
       </header>
 
       <!-- 扩展检测提示 -->
-      <div v-if="!isExtensionInstalled && !isMobile" class="extension-prompt" role="region" aria-label="扩展安装提示">
+      <div
+        v-if="!isExtensionInstalled && !isMobile"
+        class="extension-prompt"
+        role="region"
+        aria-label="扩展安装提示"
+      >
         <div class="container">
           <div class="prompt-content">
             <div class="prompt-icon" aria-hidden="true">🚀</div>
@@ -343,10 +347,18 @@ useSeoMeta({
               <p>要导入这些书签，请在电脑浏览器中打开此链接并安装 AcuityBookmarks 扩展</p>
             </div>
             <div class="mobile-actions">
-              <button class="action-button secondary" aria-label="复制分享链接到剪贴板" @click="copyShareLink">
+              <button
+                class="action-button secondary"
+                aria-label="复制分享链接到剪贴板"
+                @click="copyShareLink"
+              >
                 📋 复制链接
               </button>
-              <button class="action-button primary" aria-label="使用系统分享功能分享给朋友" @click="shareToFriends">
+              <button
+                class="action-button primary"
+                aria-label="使用系统分享功能分享给朋友"
+                @click="shareToFriends"
+              >
                 🔗 分享给朋友
               </button>
             </div>
@@ -368,11 +380,7 @@ useSeoMeta({
                 aria-label="选择目标文件夹"
               >
                 <option value="" disabled>选择目标文件夹</option>
-                <option
-                  v-for="folder in flatFolders"
-                  :key="folder.id"
-                  :value="folder.id"
-                >
+                <option v-for="folder in flatFolders" :key="folder.id" :value="folder.id">
                   {{ '　'.repeat(folder.level) }}{{ folder.title }}
                 </option>
               </select>
@@ -387,11 +395,7 @@ useSeoMeta({
               </button>
               <button
                 class="action-button primary"
-                :disabled="
-                  selectedBookmarks.size === 0 ||
-                  !selectedFolderId ||
-                  isImporting
-                "
+                :disabled="selectedBookmarks.size === 0 || !selectedFolderId || isImporting"
                 :aria-label="
                   isImporting
                     ? `正在导入，进度 ${importProgress.current} / ${importProgress.total}`
@@ -401,9 +405,7 @@ useSeoMeta({
                 @click="importSelected"
               >
                 <span v-if="isImporting">
-                  导入中... ({{ importProgress.current }}/{{
-                    importProgress.total
-                  }})
+                  导入中... ({{ importProgress.current }}/{{ importProgress.total }})
                 </span>
                 <span v-else> 导入选中 ({{ selectedBookmarks.size }}) </span>
               </button>
@@ -421,7 +423,11 @@ useSeoMeta({
             正在导入书签，进度 {{ importProgress.current }} / {{ importProgress.total }}
           </div>
 
-          <div class="bookmarks-list" role="list" :aria-label="`共 ${shareData.bookmarks.length} 个书签`">
+          <div
+            class="bookmarks-list"
+            role="list"
+            :aria-label="`共 ${shareData.bookmarks.length} 个书签`"
+          >
             <div
               v-for="(bookmark, index) in shareData.bookmarks"
               :key="index"
@@ -641,9 +647,38 @@ useSeoMeta({
   flex-wrap: wrap;
 }
 
+.action-button {
+  padding: 0.625rem 1.25rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.action-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.action-button.primary {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+
+.action-button.secondary {
+  background: rgb(255 255 255 / 10%);
+  color: var(--md-sys-color-on-background);
+}
+
 .mobile-actions .action-button {
   flex: 1;
   min-width: 140px;
+}
+
+.action-button:not(:disabled):hover {
+  opacity: 0.9;
 }
 
 .prompt-content {
@@ -727,48 +762,19 @@ useSeoMeta({
   min-width: 200px;
 }
 
-.folder-select:hover:not(:disabled) {
-  background: color-mix(in srgb, white 8%, transparent);
-  border-color: color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent);
-}
-
 .folder-select:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
+.folder-select:hover:not(:disabled) {
+  background: color-mix(in srgb, white 8%, transparent);
+  border-color: color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent);
+}
+
 .folder-select option {
   background: var(--md-sys-color-background);
   color: var(--md-sys-color-on-background);
-}
-
-.action-button {
-  padding: 0.625rem 1.25rem;
-  border: none;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.action-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.action-button.primary {
-  background: var(--md-sys-color-primary);
-  color: var(--md-sys-color-on-primary);
-}
-
-.action-button.secondary {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--md-sys-color-on-background);
-}
-
-.action-button:not(:disabled):hover {
-  opacity: 0.9;
 }
 
 /* 书签列表 */
@@ -784,7 +790,7 @@ useSeoMeta({
   gap: 1rem;
   padding: 1rem;
   border-radius: 0.5rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgb(255 255 255 / 5%);
   border: 1px solid transparent;
   transition: all 0.2s;
   cursor: pointer;
@@ -795,17 +801,17 @@ useSeoMeta({
 }
 
 .bookmark-item:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(131, 213, 197, 0.3);
+  background: rgb(255 255 255 / 8%);
+  border-color: rgb(131 213 197 / 30%);
 }
 
 .bookmark-item.mobile-item:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgb(255 255 255 / 5%);
   border-color: transparent;
 }
 
 .bookmark-item.selected {
-  background: rgba(131, 213, 197, 0.1);
+  background: rgb(131 213 197 / 10%);
   border-color: var(--md-sys-color-primary);
 }
 
@@ -828,7 +834,7 @@ useSeoMeta({
   align-items: center;
   justify-content: center;
   border-radius: 0.375rem;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgb(255 255 255 / 10%);
 }
 
 .bookmark-icon img {
@@ -882,7 +888,7 @@ useSeoMeta({
 }
 
 /* 响应式 */
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .share-title {
     font-size: 1.5rem;
   }

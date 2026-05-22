@@ -21,11 +21,7 @@ export interface ShareService {
    * @returns 压缩编码后的字符串
    * @throws {ShareError} 当数据过大时抛出错误
    */
-  encodeShareData(
-    bookmarks: BookmarkNode[],
-    title?: string,
-    sharedBy?: string
-  ): Promise<string>
+  encodeShareData(bookmarks: BookmarkNode[], title?: string, sharedBy?: string): Promise<string>
 
   /**
    * 解码分享数据
@@ -102,9 +98,7 @@ class ShareServiceImpl implements ShareService {
         b: bookmarks.map(bookmark => ({
           t: bookmark.title,
           u: bookmark.url || '',
-          ...(typeof bookmark.description === 'string'
-            ? { d: bookmark.description }
-            : {})
+          ...(typeof bookmark.description === 'string' ? { d: bookmark.description } : {})
         })),
         ...(title ? { t: title } : {}),
         ...(sharedBy ? { s: sharedBy } : {})
@@ -122,18 +116,18 @@ class ShareServiceImpl implements ShareService {
         // 计算建议的书签数量
         const ratio = this.MAX_DATA_LENGTH / compressed.length
         const suggestedCount = Math.floor(bookmarks.length * ratio * 0.9) // 留 10% 余量
-        
+
         logger.warn('ShareService', '分享数据过大', {
           length: compressed.length,
           maxLength: this.MAX_DATA_LENGTH,
           bookmarkCount: bookmarks.length,
           suggestedCount
         })
-        
+
         throw new ShareError(
           ShareErrorCode.DATA_TOO_LARGE,
           `分享数据过大（${compressed.length} 字符，限制 ${this.MAX_DATA_LENGTH} 字符）\n` +
-          `当前 ${bookmarks.length} 个书签，建议减少到 ${suggestedCount} 个以内`
+            `当前 ${bookmarks.length} 个书签，建议减少到 ${suggestedCount} 个以内`
         )
       }
 
@@ -150,10 +144,7 @@ class ShareServiceImpl implements ShareService {
         throw error
       }
       logger.error('ShareService', '数据编码失败', error)
-      throw new ShareError(
-        ShareErrorCode.INVALID_DATA,
-        '数据编码失败，请重试'
-      )
+      throw new ShareError(ShareErrorCode.INVALID_DATA, '数据编码失败，请重试')
     }
   }
 
@@ -186,10 +177,7 @@ class ShareServiceImpl implements ShareService {
       return data
     } catch (error) {
       logger.error('ShareService', '数据解码失败', error)
-      throw new ShareError(
-        ShareErrorCode.INVALID_DATA,
-        '分享链接无效或已损坏，请检查链接是否完整'
-      )
+      throw new ShareError(ShareErrorCode.INVALID_DATA, '分享链接无效或已损坏，请检查链接是否完整')
     }
   }
 
@@ -263,10 +251,7 @@ class ShareServiceImpl implements ShareService {
       })
     } catch (error) {
       logger.error('ShareService', '复制到剪贴板失败', error)
-      throw new ShareError(
-        ShareErrorCode.CLIPBOARD_NOT_SUPPORTED,
-        '复制失败，请手动复制'
-      )
+      throw new ShareError(ShareErrorCode.CLIPBOARD_NOT_SUPPORTED, '复制失败，请手动复制')
     }
   }
 

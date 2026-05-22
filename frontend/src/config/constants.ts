@@ -217,16 +217,12 @@ function getApiBase(): string {
   let apiBase =
     // 优先显式变量（两者都支持）
     (import.meta.env.VITE_CLOUDFLARE_MODE === 'true'
-      ? import.meta.env.VITE_CLOUDFLARE_WORKER_URL ||
-        import.meta.env.VITE_API_BASE_URL
-      : import.meta.env.VITE_API_BASE_URL ||
-        import.meta.env.VITE_CLOUDFLARE_WORKER_URL) ||
+      ? import.meta.env.VITE_CLOUDFLARE_WORKER_URL || import.meta.env.VITE_API_BASE_URL
+      : import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_CLOUDFLARE_WORKER_URL) ||
     // 开发默认走 Cloudflare 本地（wrangler dev 默认 8787）
     // 强制使用 HTTPS 模式：避免 Chrome Extension CSP 限制
     // 已完全禁用 HTTP，默认使用 HTTPS
-    (import.meta.env.DEV
-      ? 'https://localhost:8787'
-      : 'https://api.acuitybookmarks.com')
+    (import.meta.env.DEV ? 'https://localhost:8787' : 'https://api.acuitybookmarks.com')
 
   // 🚨 运行时检查：如果检测到 HTTP，自动转换为 HTTPS（防止缓存问题）
   // 热构建模式下，watch-build.js 已经确保是 HTTPS，但可能因为缓存导致旧值
@@ -257,9 +253,7 @@ function getApiBase(): string {
     console.debug(
       '💡 提示：当前使用本地 URL，如果后端运行在远程模式（bun run dev --remote），建议使用远程 Worker URL'
     )
-    console.debug(
-      '   远程 Worker URL: https://acuitybookmarks.cqw547847.workers.dev'
-    )
+    console.debug('   远程 Worker URL: https://acuitybookmarks.cqw547847.workers.dev')
   }
 
   return apiBase
@@ -277,36 +271,26 @@ if (import.meta.env.DEV) {
   console.log('🔧 API_CONFIG.API_BASE:', API_CONFIG.API_BASE)
   console.log('🔧 VITE_USE_LOCAL_HTTPS:', import.meta.env.VITE_USE_LOCAL_HTTPS)
   console.log('🔧 VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL)
-  console.log(
-    '🔧 VITE_CLOUDFLARE_WORKER_URL:',
-    import.meta.env.VITE_CLOUDFLARE_WORKER_URL
-  )
+  console.log('🔧 VITE_CLOUDFLARE_WORKER_URL:', import.meta.env.VITE_CLOUDFLARE_WORKER_URL)
 }
 
 // === 爬虫配置（新增：本地-only、限速与调度） ===
 export const CRAWLER_CONFIG = {
   // 模式：'local' | 'hybrid' | 'serverless'
-  MODE:
-    (import.meta.env.VITE_CRAWLER_MODE as 'local' | 'hybrid' | 'serverless') ||
-    'local',
+  MODE: (import.meta.env.VITE_CRAWLER_MODE as 'local' | 'hybrid' | 'serverless') || 'local',
 
   // 并发与批量控制（避免影响用户网络体验）
   CONCURRENCY: Number(import.meta.env.VITE_CRAWLER_CONCURRENCY || 2),
-  PER_DOMAIN_CONCURRENCY: Number(
-    import.meta.env.VITE_CRAWLER_PER_DOMAIN_CONCURRENCY || 1
-  ),
+  PER_DOMAIN_CONCURRENCY: Number(import.meta.env.VITE_CRAWLER_PER_DOMAIN_CONCURRENCY || 1),
   BATCH_SIZE: Number(import.meta.env.VITE_CRAWLER_BATCH_SIZE || 5),
-  BATCH_INTERVAL_MS: Number(
-    import.meta.env.VITE_CRAWLER_BATCH_INTERVAL_MS || 1500
-  ),
+  BATCH_INTERVAL_MS: Number(import.meta.env.VITE_CRAWLER_BATCH_INTERVAL_MS || 1500),
 
   // 频率控制
   DAILY_LIMIT: Number(import.meta.env.VITE_CRAWLER_DAILY_LIMIT || 200),
   FAILED_RETRY_INTERVAL_MS: 24 * 60 * 60 * 1000,
 
   // 调度策略
-  USE_IDLE_SCHEDULING:
-    import.meta.env.VITE_CRAWLER_USE_IDLE_SCHEDULING === 'false' ? false : true,
+  USE_IDLE_SCHEDULING: import.meta.env.VITE_CRAWLER_USE_IDLE_SCHEDULING === 'false' ? false : true,
   IDLE_DELAY_MS: Number(import.meta.env.VITE_CRAWLER_IDLE_DELAY_MS || 3000),
 
   // 请求头

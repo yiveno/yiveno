@@ -1,8 +1,8 @@
 /**
  * BookmarkAPIGateway 单元测试
- * 
+ *
  * 测试目标：infrastructure/chrome-api/bookmark-gateway.ts
- * 
+ *
  * 测试范围：
  * - 书签树构建
  * - 书签节点增强
@@ -34,7 +34,7 @@ describe('BookmarkAPIGateway', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(BookmarkAPIGateway as any)['instance'] = undefined
     gateway = BookmarkAPIGateway.getInstance()
-    
+
     // 默认 Mock：initialize 成功
     vi.mocked(indexedDBManager.initialize).mockResolvedValue()
   })
@@ -68,7 +68,9 @@ describe('BookmarkAPIGateway', () => {
         }
       ]
 
-      vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue(flatBookmarks as BookmarkRecord[])
+      vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue(
+        flatBookmarks as BookmarkRecord[]
+      )
 
       const tree = await gateway.getEnhancedBookmarkTree()
 
@@ -93,7 +95,9 @@ describe('BookmarkAPIGateway', () => {
         }
       ]
 
-      vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue(flatBookmarks as BookmarkRecord[])
+      vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue(
+        flatBookmarks as BookmarkRecord[]
+      )
 
       const tree = await gateway.getEnhancedBookmarkTree()
 
@@ -108,10 +112,19 @@ describe('BookmarkAPIGateway', () => {
         { id: '1', parentId: '0', title: 'Level 1', dateAdded: Date.now(), index: 0 },
         { id: '2', parentId: '1', title: 'Level 2', dateAdded: Date.now(), index: 0 },
         { id: '3', parentId: '2', title: 'Level 3', dateAdded: Date.now(), index: 0 },
-        { id: '4', parentId: '3', title: 'Level 4', url: 'https://example.com', dateAdded: Date.now(), index: 0 }
+        {
+          id: '4',
+          parentId: '3',
+          title: 'Level 4',
+          url: 'https://example.com',
+          dateAdded: Date.now(),
+          index: 0
+        }
       ]
 
-      vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue(flatBookmarks as BookmarkRecord[])
+      vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue(
+        flatBookmarks as BookmarkRecord[]
+      )
 
       const tree = await gateway.getEnhancedBookmarkTree()
 
@@ -120,17 +133,17 @@ describe('BookmarkAPIGateway', () => {
       expect(tree[0]).toBeDefined()
       expect(tree[0]!.id).toBe('1')
       expect(tree[0]!.children).toBeDefined()
-      
+
       // 验证深层嵌套
       const level1 = tree[0]!
       expect(level1.children?.[0]).toBeDefined()
       expect(level1.children?.[0]!.id).toBe('2')
-      
+
       const level2 = level1.children?.[0]
       expect(level2).toBeDefined()
       expect(level2?.children?.[0]).toBeDefined()
       expect(level2?.children?.[0]!.id).toBe('3')
-      
+
       const level3 = level2?.children?.[0]
       expect(level3).toBeDefined()
       expect(level3?.children?.[0]).toBeDefined()
@@ -151,7 +164,9 @@ describe('BookmarkAPIGateway', () => {
         }
       ]
 
-      vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue(flatBookmarks as BookmarkRecord[])
+      vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue(
+        flatBookmarks as BookmarkRecord[]
+      )
 
       const tree = await gateway.getEnhancedBookmarkTree()
       const bookmark = tree[0] as EnhancedBookmarkNode
@@ -171,7 +186,9 @@ describe('BookmarkAPIGateway', () => {
         }
       ]
 
-      vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue(flatBookmarks as BookmarkRecord[])
+      vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue(
+        flatBookmarks as BookmarkRecord[]
+      )
 
       const tree = await gateway.getEnhancedBookmarkTree()
       const bookmark = tree[0] as EnhancedBookmarkNode
@@ -191,7 +208,9 @@ describe('BookmarkAPIGateway', () => {
         }
       ]
 
-      vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue(flatBookmarks as BookmarkRecord[])
+      vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue(
+        flatBookmarks as BookmarkRecord[]
+      )
 
       const tree = await gateway.getEnhancedBookmarkTree()
       const folder = tree[0] as EnhancedBookmarkNode
@@ -206,7 +225,9 @@ describe('BookmarkAPIGateway', () => {
         { id: '3', parentId: '0', title: 'Mobile Bookmarks', dateAdded: Date.now(), index: 2 }
       ]
 
-      vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue(flatBookmarks as BookmarkRecord[])
+      vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue(
+        flatBookmarks as BookmarkRecord[]
+      )
 
       const tree = await gateway.getEnhancedBookmarkTree()
 
@@ -236,7 +257,10 @@ describe('BookmarkAPIGateway', () => {
         index: 1
       }
 
-      vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue([recentBookmark, oldBookmark] as BookmarkRecord[])
+      vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue([
+        recentBookmark,
+        oldBookmark
+      ] as BookmarkRecord[])
 
       const tree = await gateway.getEnhancedBookmarkTree()
 
@@ -257,7 +281,9 @@ describe('BookmarkAPIGateway', () => {
         }
       ]
 
-      vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue(flatBookmarks as BookmarkRecord[])
+      vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue(
+        flatBookmarks as BookmarkRecord[]
+      )
 
       const tree = await gateway.getEnhancedBookmarkTree()
       const folder = tree[0] as EnhancedBookmarkNode
@@ -378,9 +404,12 @@ describe('BookmarkAPIGateway', () => {
 
       vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue(bookmarks as BookmarkRecord[])
 
-      const recommendations = await gateway.getSmartRecommendations({
-        currentDomain: 'vuejs.org'
-      }, 5)
+      const recommendations = await gateway.getSmartRecommendations(
+        {
+          currentDomain: 'vuejs.org'
+        },
+        5
+      )
 
       expect(recommendations).toHaveLength(2)
       // Vue.js 应该排在前面（域名完全匹配）

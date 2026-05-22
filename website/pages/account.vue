@@ -71,19 +71,16 @@ const handleSignOut = async () => {
 const handleDeleteAccount = () => {
   const confirmed = confirm(
     '⚠️ 警告：删除账户是不可逆的操作！\n\n' +
-    '删除后将永久清除：\n' +
-    '• 您的所有书签数据\n' +
-    '• 订阅信息\n' +
-    '• 账户设置\n\n' +
-    '确定要继续吗？'
+      '删除后将永久清除：\n' +
+      '• 您的所有书签数据\n' +
+      '• 订阅信息\n' +
+      '• 账户设置\n\n' +
+      '确定要继续吗？'
   )
-  
+
   if (confirmed) {
-    const doubleConfirm = confirm(
-      '最后确认：您真的要删除账户吗？\n\n' +
-      '此操作无法撤销！'
-    )
-    
+    const doubleConfirm = confirm('最后确认：您真的要删除账户吗？\n\n' + '此操作无法撤销！')
+
     if (doubleConfirm) {
       // TODO: 调用删除账户 API
       alert('账户删除功能开发中...\n\n请联系客服协助删除账户。')
@@ -171,7 +168,7 @@ const handleDeleteAccount = () => {
           <div class="card-header">
             <h3 class="card-title">订阅状态</h3>
           </div>
-          
+
           <!-- 加载中状态（骨架屏） -->
           <div v-if="!isInitialized" class="subscription-body">
             <div class="plan-info">
@@ -185,7 +182,7 @@ const handleDeleteAccount = () => {
               <div class="skeleton-button"></div>
             </div>
           </div>
-          
+
           <!-- 加载完成后显示内容 -->
           <div v-else class="subscription-body">
             <div class="plan-info">
@@ -196,9 +193,7 @@ const handleDeleteAccount = () => {
                   <template v-if="isPro && expiryDate">
                     到期时间：{{ formatDateTime(expiryDate) }}
                   </template>
-                  <template v-else>
-                    升级到 Pro，解锁 AI 标签、无限书签同步等高级功能
-                  </template>
+                  <template v-else> 升级到 Pro，解锁 AI 标签、无限书签同步等高级功能 </template>
                 </div>
               </div>
             </div>
@@ -208,16 +203,13 @@ const handleDeleteAccount = () => {
               </NuxtLink>
               <template v-else>
                 <!-- 主按钮：查看方案对比 -->
-                <NuxtLink 
-                  to="/pricing" 
-                  class="account-button account-button--primary"
-                >
+                <NuxtLink to="/pricing" class="account-button account-button--primary">
                   查看方案对比
                 </NuxtLink>
                 <!-- 次要链接：续费/管理 -->
-                <a 
-                  :href="gumroadUrls.subscriptions" 
-                  target="_blank" 
+                <a
+                  :href="gumroadUrls.subscriptions"
+                  target="_blank"
                   rel="noopener noreferrer"
                   class="subscription-link"
                   title="在 Gumroad 续费或管理订阅（取消订阅、更新支付方式等）"
@@ -273,10 +265,7 @@ const handleDeleteAccount = () => {
             <h3 class="card-title">数据管理</h3>
           </div>
           <div class="danger-actions">
-            <button 
-              class="danger-action-item"
-              @click="handleDeleteAccount"
-            >
+            <button class="danger-action-item" @click="handleDeleteAccount">
               <div class="danger-action-content">
                 <div class="danger-action-title">🗑️ 删除账户</div>
                 <div class="danger-action-desc">永久删除您的账户和所有数据</div>
@@ -415,7 +404,7 @@ const handleDeleteAccount = () => {
   color: #000;
   border: 1px solid #ffd700;
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+  box-shadow: 0 2px 8px rgb(255 215 0 / 30%);
 }
 
 .tag--loading {
@@ -443,6 +432,7 @@ const handleDeleteAccount = () => {
   0% {
     transform: translateX(-100%);
   }
+
   100% {
     transform: translateX(100%);
   }
@@ -502,12 +492,12 @@ const handleDeleteAccount = () => {
 }
 
 .badge--success {
-  background-color: rgba(34, 197, 94, 0.12);
+  background-color: rgb(34 197 94 / 12%);
   color: #22c55e;
 }
 
 .badge--warning {
-  background-color: rgba(245, 158, 11, 0.12);
+  background-color: rgb(245 158 11 / 12%);
   color: #f59e0b;
 }
 
@@ -823,7 +813,9 @@ const handleDeleteAccount = () => {
   font-size: 0.875rem;
   color: var(--md-sys-color-on-surface-variant);
   opacity: 0;
-  transition: opacity 0.18s ease, transform 0.18s ease;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
 }
 
 .quick-item:hover .quick-arrow {
@@ -888,7 +880,9 @@ const handleDeleteAccount = () => {
   font-size: 0.875rem;
   color: var(--md-sys-color-error);
   opacity: 0;
-  transition: opacity 0.18s ease, transform 0.18s ease;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
 }
 
 .danger-action-item:hover .danger-action-arrow {
@@ -897,7 +891,7 @@ const handleDeleteAccount = () => {
 }
 
 /* ===== 响应式 ===== */
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .account-page {
     padding: var(--md-sys-spacing-md) var(--md-sys-spacing-sm);
   }

@@ -225,9 +225,7 @@ const handleSearchResultClick = async result => {
 ```typescript
 // 使用预设配置，简化代码
 const searchPresets = createBookmarkSearchPresets()
-const { searchQuery, searchResults, isSearching } = searchPresets.sidebarSearch(
-  bookmarkTree.value
-)
+const { searchQuery, searchResults, isSearching } = searchPresets.sidebarSearch(bookmarkTree.value)
 
 // 模板中的v-model会自动触发搜索
 // <Input v-model="searchQuery" placeholder="搜索..." />

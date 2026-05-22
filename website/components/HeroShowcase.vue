@@ -104,9 +104,9 @@ const aiSuggestions = [
 
 .window {
   border-radius: 24px;
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  background: rgba(2, 8, 23, 0.85);
-  box-shadow: 0 20px 60px rgba(2, 8, 23, 0.5);
+  border: 1px solid rgb(148 163 184 / 18%);
+  background: rgb(2 8 23 / 85%);
+  box-shadow: 0 20px 60px rgb(2 8 23 / 50%);
   overflow: hidden;
   animation: float 10s ease-in-out infinite;
 }
@@ -121,13 +121,15 @@ const aiSuggestions = [
 
 @keyframes float {
   0% {
-    transform: translateY(0px);
+    transform: translateY(0);
   }
+
   50% {
     transform: translateY(-8px);
   }
+
   100% {
-    transform: translateY(0px);
+    transform: translateY(0);
   }
 }
 
@@ -136,9 +138,9 @@ const aiSuggestions = [
   justify-content: space-between;
   align-items: center;
   padding: 1rem 1.25rem;
-  background: rgba(15, 23, 42, 0.7);
+  background: rgb(15 23 42 / 70%);
   font-size: 0.9rem;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  border-bottom: 1px solid rgb(148 163 184 / 10%);
 }
 
 .popup ul {
@@ -155,8 +157,8 @@ const aiSuggestions = [
   gap: 1rem;
   padding: 0.9rem 1rem;
   border-radius: 18px;
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid rgba(148, 163, 184, 0.15);
+  background: rgb(15 23 42 / 80%);
+  border: 1px solid rgb(148 163 184 / 15%);
 }
 
 .title {
@@ -175,16 +177,16 @@ small {
 }
 
 .badge.ai {
-  background: rgba(56, 189, 248, 0.2);
+  background: rgb(56 189 248 / 20%);
   color: #38bdf8;
 }
 
 .badge.pin {
-  border: 1px solid rgba(148, 163, 184, 0.3);
+  border: 1px solid rgb(148 163 184 / 30%);
 }
 
 .badge.fresh {
-  background: rgba(124, 58, 237, 0.2);
+  background: rgb(124 58 237 / 20%);
   color: #c084fc;
 }
 
@@ -200,13 +202,13 @@ small {
 }
 
 .column {
-  background: rgba(2, 8, 23, 0.4);
+  background: rgb(2 8 23 / 40%);
   border-radius: 18px;
   padding: 0.75rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  border: 1px solid rgba(148, 163, 184, 0.1);
+  border: 1px solid rgb(148 163 184 / 10%);
 }
 
 .column-name {
@@ -217,12 +219,8 @@ small {
 .card {
   border-radius: 14px;
   height: 46px;
-  background: linear-gradient(
-    120deg,
-    rgba(56, 189, 248, 0.15),
-    rgba(99, 102, 241, 0.1)
-  );
-  border: 1px solid rgba(56, 189, 248, 0.25);
+  background: linear-gradient(120deg, rgb(56 189 248 / 15%), rgb(99 102 241 / 10%));
+  border: 1px solid rgb(56 189 248 / 25%);
 }
 
 .panel {
@@ -243,12 +241,12 @@ small {
   gap: 1rem;
   padding: 0.9rem 1rem;
   border-radius: 16px;
-  border: 1px solid rgba(148, 163, 184, 0.18);
+  border: 1px solid rgb(148 163 184 / 18%);
 }
 
 .chip {
   border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.3);
+  border: 1px solid rgb(148 163 184 / 30%);
   padding: 0.25rem 0.9rem;
   font-size: 0.8rem;
 }
@@ -257,12 +255,12 @@ header .dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: rgba(148, 163, 184, 0.5);
+  background: rgb(148 163 184 / 50%);
   display: inline-flex;
   margin-right: 0.35rem;
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .window header {
     flex-direction: column;
     gap: 0.5rem;

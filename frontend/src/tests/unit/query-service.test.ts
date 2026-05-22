@@ -1,8 +1,8 @@
 /**
  * QueryService 单元测试
- * 
+ *
  * 测试目标：core/query-engine/query-service.ts
- * 
+ *
  * 测试范围：
  * - 基础查询功能
  * - 查询选项处理
@@ -38,7 +38,7 @@ vi.mock('@/services/query-worker-adapter', () => {
       index: 0
     }
   ]
-  
+
   return {
     queryWorkerAdapter: {
       initFromIDB: vi.fn().mockResolvedValue(undefined),
@@ -47,20 +47,21 @@ vi.mock('@/services/query-worker-adapter', () => {
         if (!query || query.trim() === '') {
           return Promise.resolve([])
         }
-        
+
         // 简单的匹配逻辑
         const lowerQuery = query.toLowerCase()
         const results = mockBookmarks
-          .filter(b => 
-            b.titleLower.includes(lowerQuery) || 
-            b.urlLower.includes(lowerQuery) ||
-            b.domain.includes(lowerQuery)
+          .filter(
+            b =>
+              b.titleLower.includes(lowerQuery) ||
+              b.urlLower.includes(lowerQuery) ||
+              b.domain.includes(lowerQuery)
           )
           .map(bookmark => ({
             bookmark,
             score: 0.9
           }))
-        
+
         return Promise.resolve(results)
       })
     }
@@ -103,7 +104,9 @@ describe('QueryService', () => {
         }
       ]
 
-      vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue(bookmarks as unknown as BookmarkRecord[])
+      vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue(
+        bookmarks as unknown as BookmarkRecord[]
+      )
 
       const response = await queryService.search('vue')
 
@@ -140,7 +143,9 @@ describe('QueryService', () => {
         index: i
       }))
 
-      vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue(bookmarks as unknown as BookmarkRecord[])
+      vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue(
+        bookmarks as unknown as BookmarkRecord[]
+      )
 
       const options: SearchOptions = { limit: 10 }
       const response = await queryService.search('vue', options)
@@ -163,7 +168,9 @@ describe('QueryService', () => {
         }
       ]
 
-      vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue(bookmarks as unknown as BookmarkRecord[])
+      vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue(
+        bookmarks as unknown as BookmarkRecord[]
+      )
 
       // 第一次查询
       const response1 = await queryService.search('vue', { useCache: true })
@@ -200,11 +207,13 @@ describe('QueryService', () => {
         }
       ]
 
-      vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue(bookmarks as unknown as BookmarkRecord[])
+      vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue(
+        bookmarks as unknown as BookmarkRecord[]
+      )
 
       // 按标题排序
       const response = await queryService.search('vue', { sortBy: 'title', sortOrder: 'asc' })
-      
+
       if (response.results.length >= 2) {
         expect(response.results[0]).toBeDefined()
         expect(response.results[1]).toBeDefined()
@@ -231,7 +240,9 @@ describe('QueryService', () => {
         }
       ]
 
-      vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue(bookmarks as unknown as BookmarkRecord[])
+      vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue(
+        bookmarks as unknown as BookmarkRecord[]
+      )
 
       // 查询并缓存
       await queryService.search('vue', { useCache: true })
@@ -255,7 +266,7 @@ describe('QueryService', () => {
   describe('边界情况', () => {
     it('应该处理空书签列表', async () => {
       vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue([])
-      
+
       // Mock worker 返回空结果
       const { queryWorkerAdapter } = await import('@/services/query-worker-adapter')
       vi.mocked(queryWorkerAdapter.search).mockResolvedValueOnce([])
@@ -280,7 +291,9 @@ describe('QueryService', () => {
         }
       ]
 
-      vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue(bookmarks as unknown as BookmarkRecord[])
+      vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue(
+        bookmarks as unknown as BookmarkRecord[]
+      )
 
       const longQuery = 'a'.repeat(1000)
       const response = await queryService.search(longQuery)

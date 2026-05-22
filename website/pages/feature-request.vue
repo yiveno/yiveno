@@ -85,15 +85,12 @@ useSeoMeta({
             <div
               class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-6"
             >
-              <span
-                class="text-sm font-medium text-accent-400 tracking-wider uppercase"
+              <span class="text-sm font-medium text-accent-400 tracking-wider uppercase"
                 >Roadmap & Feedback</span
               >
             </div>
 
-            <h1
-              class="text-4xl md:text-5xl font-bold tracking-tight mb-6 leading-tight"
-            >
+            <h1 class="text-4xl md:text-5xl font-bold tracking-tight mb-6 leading-tight">
               为下一批功能投票<br />
               <span
                 class="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-accent-400"
@@ -118,9 +115,7 @@ useSeoMeta({
                 class="flex justify-between items-center pb-4 border-b border-white/5 last:border-0"
               >
                 <span class="text-content-muted text-sm">{{ item.label }}</span>
-                <Badge variant="outline" class="font-mono text-xs">{{
-                  item.value
-                }}</Badge>
+                <Badge variant="outline" class="font-mono text-xs">{{ item.value }}</Badge>
               </li>
             </ul>
           </Card>
@@ -134,16 +129,12 @@ useSeoMeta({
         <Card class="p-10 border-white/10">
           <div class="mb-8">
             <h2 class="text-2xl font-bold mb-3">提交需求</h2>
-            <p class="text-content-muted">
-              留下邮箱以便我们在需求上线后通知你。
-            </p>
+            <p class="text-content-muted">留下邮箱以便我们在需求上线后通知你。</p>
           </div>
 
           <form class="space-y-6" @submit.prevent="handleSubmit">
             <div>
-              <label for="email" class="block text-sm font-bold mb-2"
-                >邮箱 *</label
-              >
+              <label for="email" class="block text-sm font-bold mb-2">邮箱 *</label>
               <input
                 id="email"
                 v-model="form.email"
@@ -155,9 +146,7 @@ useSeoMeta({
             </div>
 
             <div>
-              <label for="feature" class="block text-sm font-bold mb-2"
-                >功能名称 *</label
-              >
+              <label for="feature" class="block text-sm font-bold mb-2">功能名称 *</label>
               <input
                 id="feature"
                 v-model="form.feature"
@@ -169,9 +158,7 @@ useSeoMeta({
             </div>
 
             <div>
-              <label for="description" class="block text-sm font-bold mb-2"
-                >使用场景</label
-              >
+              <label for="description" class="block text-sm font-bold mb-2">使用场景</label>
               <textarea
                 id="description"
                 v-model="form.description"
@@ -198,10 +185,7 @@ useSeoMeta({
               </Button>
 
               <transition name="fade">
-                <div
-                  v-if="success"
-                  class="flex items-center text-green-400 text-sm"
-                >
+                <div v-if="success" class="flex items-center text-green-400 text-sm">
                   <CheckCircle class="w-4 h-4 mr-2" />
                   感谢你的建议！
                 </div>
@@ -233,12 +217,9 @@ useSeoMeta({
           >
             <div class="flex items-start justify-between mb-4">
               <h3 class="font-bold text-lg">{{ request.title }}</h3>
-              <Badge
-                :variant="
-                  request.status === 'In Progress' ? 'default' : 'outline'
-                "
-                >{{ request.status }}</Badge
-              >
+              <Badge :variant="request.status === 'In Progress' ? 'default' : 'outline'">{{
+                request.status
+              }}</Badge>
             </div>
             <p class="text-content-muted text-sm mb-4">
               {{ request.description }}

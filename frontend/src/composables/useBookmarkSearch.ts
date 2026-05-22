@@ -122,9 +122,7 @@ export interface UseBookmarkSearchReturn {
 /**
  * 书签筛选 Composable
  */
-export function useBookmarkSearch(
-  options: UseBookmarkSearchOptions = {}
-): UseBookmarkSearchReturn {
+export function useBookmarkSearch(options: UseBookmarkSearchOptions = {}): UseBookmarkSearchReturn {
   const {
     mode = 'indexeddb',
     strategy = 'auto',
@@ -211,31 +209,34 @@ export function useBookmarkSearch(
         const response = result.value
 
         // 转换为 FilteredBookmarkNode（扁平列表）
-        const nodes: FilteredBookmarkNode[] = response.results.map(r => ({
-          id: r.bookmark.id,
-          title: r.bookmark.title || '无标题',
-          url: r.bookmark.url,
-          dateAdded: r.bookmark.dateAdded || 0,
-          dateGroupModified: r.bookmark.dateGroupModified,
-          parentId: r.bookmark.parentId,
-          index: r.bookmark.index || 0,
-          children: !r.bookmark.url ? [] : undefined,
-          matchedFields: r.matchedFields,
-          filterScore: r.score,
-          path: r.bookmark.path || [],
-          pathString: r.bookmark.pathString || '',
-          pathIds: r.bookmark.pathIds || [],
-          pathIdsString: r.bookmark.pathIdsString || '',
-          ancestorIds: r.bookmark.ancestorIds || [],
-          siblingIds: r.bookmark.siblingIds || [],
-          depth: r.bookmark.depth || 0,
-          titleLower: r.bookmark.titleLower || r.bookmark.title?.toLowerCase() || '',
-          urlLower: r.bookmark.urlLower || r.bookmark.url?.toLowerCase(),
-          domain: r.bookmark.domain,
-          keywords: r.bookmark.keywords || [],
-          isFolder: !r.bookmark.url,
-          childrenCount: r.bookmark.childrenCount || 0
-        } as FilteredBookmarkNode))
+        const nodes: FilteredBookmarkNode[] = response.results.map(
+          r =>
+            ({
+              id: r.bookmark.id,
+              title: r.bookmark.title || '无标题',
+              url: r.bookmark.url,
+              dateAdded: r.bookmark.dateAdded || 0,
+              dateGroupModified: r.bookmark.dateGroupModified,
+              parentId: r.bookmark.parentId,
+              index: r.bookmark.index || 0,
+              children: !r.bookmark.url ? [] : undefined,
+              matchedFields: r.matchedFields,
+              filterScore: r.score,
+              path: r.bookmark.path || [],
+              pathString: r.bookmark.pathString || '',
+              pathIds: r.bookmark.pathIds || [],
+              pathIdsString: r.bookmark.pathIdsString || '',
+              ancestorIds: r.bookmark.ancestorIds || [],
+              siblingIds: r.bookmark.siblingIds || [],
+              depth: r.bookmark.depth || 0,
+              titleLower: r.bookmark.titleLower || r.bookmark.title?.toLowerCase() || '',
+              urlLower: r.bookmark.urlLower || r.bookmark.url?.toLowerCase(),
+              domain: r.bookmark.domain,
+              keywords: r.bookmark.keywords || [],
+              isFolder: !r.bookmark.url,
+              childrenCount: r.bookmark.childrenCount || 0
+            }) as FilteredBookmarkNode
+        )
 
         results.value = nodes
         totalResults.value = response.metadata.totalResults

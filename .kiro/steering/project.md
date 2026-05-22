@@ -9,9 +9,10 @@ inclusion: always
 > **与 Cursor 同步（2026-05）**：架构、质量门禁与「禁止事项」以仓库 **`.cursor/rules/project.mdc`** 为执行口径。本文若与 `.cursor` 冲突，**以 `.cursor` 为准**，并应回写修正本文件。
 
 ---
+
 # AcuityBookmarks 项目规范
-**本文档为 AI IDE 行为准则，必须严格遵守**
----
+
+## **本文档为 AI IDE 行为准则，必须严格遵守**
 
 ## 🎯 项目背景（最高优先级）
 
@@ -43,6 +44,7 @@ inclusion: always
 ## 🚨 AI 行为铁律（违反即为错误）
 
 ### 0. Git 操作限制（最高优先级）
+
 ```
 ❌ 绝对禁止：主动执行任何 git 命令（git add / git commit / git push / git pull 等）
 ❌ 绝对禁止：在完成任务后自动提交代码
@@ -57,6 +59,7 @@ inclusion: always
 ```
 
 ### 1. 禁止主动操作
+
 ```
 ❌ 绝对禁止：主动生成任何类型的文档（.md/.txt/.doc/.pdf 等）
 ❌ 绝对禁止：创建总结性文档（如 migration-report.md、summary.md、changelog.md）
@@ -66,6 +69,7 @@ inclusion: always
 ```
 
 ### 1.1. 文档生成补充说明（单人开发项目）
+
 ```
 ❌ 禁止场景：
   - 完成任务后自动生成总结文档
@@ -92,6 +96,7 @@ inclusion: always
 **✅ 已通过 Agent Hook 自动化，无需手动执行。**
 
 Hook `post-task-quality-check` 会在 AI 完成任务时自动运行：
+
 ```bash
 cd frontend
 bun run typecheck      # 类型检查
@@ -105,6 +110,7 @@ bun run stylelint:check # 样式规范
 **原因**：与 `.cursor/rules/project.mdc` 对齐，保证 CI 与本地一致。
 
 ### 3. 输出规范
+
 ```
 ✅ 允许：直接修改代码
 ✅ 允许：在对话中总结修改内容
@@ -117,6 +123,7 @@ bun run stylelint:check # 样式规范
 ```
 
 ### 3.2 测试文件规则
+
 ```
 ❌ 绝对禁止：主动创建测试文件
 ❌ 绝对禁止：创建任何形式的测试文件（.test.ts、.spec.ts、.test.vue 等）
@@ -128,13 +135,16 @@ bun run stylelint:check # 样式规范
   - 用户会在需要时主动要求创建测试
 ```
 
-### 3.3 示例文件规则（单人开发项目）
+### 3.3 示例文件规则（单人开发项目）- 强制执行
+
 ```
 ❌ 绝对禁止：主动创建示例文件（.example、.sample、.template 等后缀）
 ❌ 绝对禁止：创建配置示例文件（如 config.json.example、.env.example）
-❌ 绝对禁止：创建代码示例文件（如 example.ts、sample.vue）
+❌ 绝对禁止：创建代码示例文件（如 example.ts、sample.vue、button-example.vue）
+❌ 绝对禁止：创建 examples/ 或 samples/ 目录
 ❌ 绝对禁止：创建 README 或文档来说明如何使用配置
 ❌ 绝对禁止：创建"供团队成员参考"的任何文件
+❌ 绝对禁止：文件名或目录名包含 example、sample、template 等词
 ✅ 唯一例外：用户明确说"创建示例文件"、"生成模板"时
 
 ⚠️ 原因：
@@ -143,25 +153,50 @@ bun run stylelint:check # 样式规范
   - 示例文件会增加维护负担
   - 配置文件直接使用即可，不需要示例
   - 用户会在需要时主动要求创建示例
+
+🔍 检查清单（修改代码前必须确认）：
+  - [ ] 我是否要创建包含 example/sample/template 的文件或目录？
+  - [ ] 我是否要创建"供参考"的文件？
+  - [ ] 用户是否明确要求创建示例文件？
+
+如果前两个问题答案是"是"，且第三个问题答案是"否"，则不要创建！
+
+🗑️ 发现示例文件时的处理：
+  - 立即删除所有 example/sample/template 相关文件
+  - 删除空的 examples/samples/templates 目录
+  - 不需要询问用户，直接删除
+```
+
+- 示例文件会增加维护负担
+- 配置文件直接使用即可，不需要示例
+- 用户会在需要时主动要求创建示例
+
 ```
 
 ### 3.1 旧文件清理原则
+
 ```
+
 每次重构/重命名后，必须：
+
 1. 确认所有引用已迁移到新文件
 2. 立即删除旧文件，不保留任何形式的"兼容层"或"@deprecated 别名"
 3. 不允许以"向后兼容"为由保留无用文件
 
 ❌ 错误做法：
-  - 保留旧文件，在里面写 export { newThing as oldThing }
-  - 保留旧文件，加 @deprecated 注释
-  - "先保留，以后再删"
+
+- 保留旧文件，在里面写 export { newThing as oldThing }
+- 保留旧文件，加 @deprecated 注释
+- "先保留，以后再删"
 
 ✅ 正确做法：
-  - 迁移所有引用 → 确认无遗漏 → 立即删除旧文件
-```
+
+- 迁移所有引用 → 确认无遗漏 → 立即删除旧文件
+
+````
 
 ## 📚 必读文档
+
 - **产品文档（最重要）**：`docs/product/AcuityBookmarks-产品文档-v3.0.md`（含 **§零 文档治理与 AI 协作**；列表 hover 见 §1.1.1；实现约束见 §4.1.2.1）
 - 架构变更必须同步更新产品文档
 
@@ -174,21 +209,23 @@ bun run stylelint:check # 样式规范
 **Background Script 运行在 Service Worker 环境，没有 DOM API！**
 
 **绝对禁止：**
+
 ```typescript
 // ❌ 禁止：background/ 目录中的任何文件导入 Vue 相关的模块
-import { ref, computed } from 'vue'  // ❌ Service Worker 中不能用 Vue
-import { useStore } from '@/stores'   // ❌ Pinia Store 依赖 Vue
-import SomeComponent from '@/components/SomeComponent.vue'  // ❌ Vue 组件
+import { ref, computed } from 'vue' // ❌ Service Worker 中不能用 Vue
+import { useStore } from '@/stores' // ❌ Pinia Store 依赖 Vue
+import SomeComponent from '@/components/SomeComponent.vue' // ❌ Vue 组件
 
 // ❌ 禁止：background/ 依赖的模块（application/、services/、infrastructure/）导入 Vue
 // 文件：frontend/src/application/some-service.ts
-import { createApp } from 'vue'  // ❌ 会导致 background.js 间接依赖 Vue
+import { createApp } from 'vue' // ❌ 会导致 background.js 间接依赖 Vue
 
 // ❌ 禁止：从 @/application 或 @/components 导入，因为它们可能包含 Vue 代码
-import { someService } from '@/application'  // ❌ 可能包含 Vue 依赖
-```
+import { someService } from '@/application' // ❌ 可能包含 Vue 依赖
+````
 
 **正确做法：**
+
 ```typescript
 // ✅ 正确：只导入纯 TypeScript 模块
 import { logger } from '@/infrastructure/logging/logger'
@@ -201,6 +238,7 @@ import { bookmarkSearchService } from '@/application/query/bookmark-search-servi
 ```
 
 **检查清单（修改 background/ 相关代码前必须确认）：**
+
 - [ ] 我要导入的模块是否依赖 Vue？
 - [ ] 我要导入的模块是否依赖 Pinia Store？
 - [ ] 我要导入的模块是否依赖 Vue 组件？
@@ -208,6 +246,7 @@ import { bookmarkSearchService } from '@/application/query/bookmark-search-servi
 - [ ] 我导入的服务是否会在内部导入 Vue 相关的模块？
 
 **验证方法：**
+
 ```bash
 # 构建后会自动验证 background.js 是否包含 DOM API
 bun run build
@@ -220,6 +259,7 @@ bun run build
 ### 铁律 1：单向数据流（禁止违反）
 
 **数据流向图：**
+
 ```
 Chrome Bookmarks API
        ↓
@@ -235,16 +275,18 @@ Vue Components (UI 展示)
 ```
 
 **判断规则：**
+
 ```typescript
 // ❌ 错误：前端直接调用 Chrome API
 // 文件位置：frontend/src/pages/**/*.vue 或 frontend/src/components/**/*.vue
 async function createBookmark() {
-  await chrome.bookmarks.create({ title: '新书签' })  // ❌ 违反单向数据流
+  await chrome.bookmarks.create({ title: '新书签' }) // ❌ 违反单向数据流
 }
 
 // ✅ 正确：通过消息通知 Background Script
 async function createBookmark() {
-  await chrome.runtime.sendMessage({                   // ✅ 符合架构
+  await chrome.runtime.sendMessage({
+    // ✅ 符合架构
     type: 'CREATE_BOOKMARK',
     payload: { title: '新书签' }
   })
@@ -255,6 +297,7 @@ async function createBookmark() {
 ```
 
 **快速检查：**
+
 - 🔍 看到 `chrome.bookmarks.*` → 检查文件路径
   - ✅ 在 `frontend/src/background/` → 允许
   - ❌ 在其他位置 → **违反架构，必须修复**
@@ -262,34 +305,37 @@ async function createBookmark() {
 ### 铁律 2：DDD 分层架构（严格执行）
 
 **分层依赖规则：**
+
 ```
 frontend/src/
 ├── presentation/     (Vue组件、页面)
 │   ↓ 只能调用
 ├── application/      (业务逻辑、服务)
-│   ↓ 只能调用  
+│   ↓ 只能调用
 ├── core/             (领域模型、纯业务)
 │   ↓ 只能调用
 └── infrastructure/   (IndexedDB、Chrome API、HTTP)
 ```
 
 **判断规则：**
+
 ```typescript
 // ❌ 错误：跨层访问
 // 文件：frontend/src/presentation/components/BookmarkList.vue
-import { indexedDBManager } from '@/infrastructure/indexeddb/manager'  // ❌ presentation 直接访问 infrastructure
+import { indexedDBManager } from '@/infrastructure/indexeddb/manager' // ❌ presentation 直接访问 infrastructure
 
 // ✅ 正确：通过 application 层
 // 文件：frontend/src/presentation/components/BookmarkList.vue
-import { bookmarkService } from '@/application/bookmark/bookmark-service'  // ✅ 通过 application 层
+import { bookmarkService } from '@/application/bookmark/bookmark-service' // ✅ 通过 application 层
 
 // 文件：frontend/src/application/bookmark/bookmark-service.ts
-import { indexedDBManager } from '@/infrastructure/indexeddb/manager'     // ✅ application 访问 infrastructure
+import { indexedDBManager } from '@/infrastructure/indexeddb/manager' // ✅ application 访问 infrastructure
 ```
 
 ### 铁律 3：IndexedDB 唯一入口
 
 **必须使用：**
+
 ```typescript
 import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
 
@@ -299,10 +345,11 @@ await indexedDBManager.updateBookmark(id, updates)
 ```
 
 **绝对禁止：**
+
 ```typescript
 // ❌ 禁止直接使用原生 API
-const db = await indexedDB.open('bookmarks', 1)  // ❌
-const request = db.transaction('bookmarks').objectStore('bookmarks').getAll()  // ❌
+const db = await indexedDB.open('bookmarks', 1) // ❌
+const request = db.transaction('bookmarks').objectStore('bookmarks').getAll() // ❌
 ```
 
 ---
@@ -311,14 +358,14 @@ const request = db.transaction('bookmarks').objectStore('bookmarks').getAll()  /
 
 ### 存储类型对比表
 
-| 存储类型 | 容量 | 生命周期 | 使用场景 | 示例 |
-|---------|------|---------|---------|------|
-| **IndexedDB** | 无限* | 永久 | 大量结构化数据 | 2万+书签、爬取元数据、历史记录 |
-| **chrome.storage.local** | 10MB | 永久 | 少量配置数据 | 用户偏好、主题设置、快捷键配置 |
-| **chrome.storage.session** | 10MB | 会话级 | 临时状态 | 当前筛选条件、展开状态、同步进度 |
-| **Pinia Store** | 内存限制 | 页面级 | UI 响应式状态 | 选中项、loading 状态、modal 显示 |
+| 存储类型                   | 容量     | 生命周期 | 使用场景       | 示例                             |
+| -------------------------- | -------- | -------- | -------------- | -------------------------------- |
+| **IndexedDB**              | 无限\*   | 永久     | 大量结构化数据 | 2万+书签、爬取元数据、历史记录   |
+| **chrome.storage.local**   | 10MB     | 永久     | 少量配置数据   | 用户偏好、主题设置、快捷键配置   |
+| **chrome.storage.session** | 10MB     | 会话级   | 临时状态       | 当前筛选条件、展开状态、同步进度 |
+| **Pinia Store**            | 内存限制 | 页面级   | UI 响应式状态  | 选中项、loading 状态、modal 显示 |
 
-*实际受磁盘空间限制
+\*实际受磁盘空间限制
 
 ### 存储选择决策树
 
@@ -342,7 +389,7 @@ const request = db.transaction('bookmarks').objectStore('bookmarks').getAll()  /
 
 ```typescript
 // ✅ 正确：书签数据 → IndexedDB
-await indexedDBManager.getAllBookmarks()  // 2万+ 条数据
+await indexedDBManager.getAllBookmarks() // 2万+ 条数据
 
 // ✅ 正确：用户偏好 → chrome.storage.local
 await chrome.storage.local.set({ theme: 'dark', language: 'zh-CN' })
@@ -367,6 +414,7 @@ uiStore.selectedIds = ['abc', 'def']
 ```
 
 **职责边界：**
+
 - **搜索组件**（`BookmarkSearchInput`）：输入框交互、防抖、loading 状态、结果展示、emit 事件
 - **应用层搜索服务**（`bookmarkSearchService`）：统一入口，支持 fuse / semantic / hybrid / auto 策略
 - **内存搜索服务**（`bookmarkMemorySearchService`）：内存树形数据筛选（Management 页面等场景）
@@ -384,6 +432,7 @@ uiStore.selectedIds = ['abc', 'def']
 ```
 
 **数据源唯一性：**
+
 - 整个项目检索数据源只有一个：用户书签数据（IndexedDB）
 - 所有 IndexedDB 搜索场景都通过 `bookmarkSearchService` 统一入口，不允许绕过
 - 内存数据搜索通过 `bookmarkMemorySearchService`，不允许绕过
@@ -396,9 +445,9 @@ bookmarkSearchService.search(query, { strategy: 'hybrid', limit: 20 })
 
 // ❌ 错误：组件自己判断用哪个搜索引擎
 if (isSemanticEnabled) {
-  embeddingService.search(query)       // 绕过 bookmarkSearchService
+  embeddingService.search(query) // 绕过 bookmarkSearchService
 } else {
-  fuseEngine.search(query)             // 绕过 bookmarkSearchService
+  fuseEngine.search(query) // 绕过 bookmarkSearchService
 }
 ```
 
@@ -409,17 +458,20 @@ if (isSemanticEnabled) {
 ### ⚠️ 本项目中统一使用"筛选"概念
 
 **为什么不叫"搜索"？**
+
 - ✅ 所有数据都在本地 IndexedDB（2万+ 书签）
 - ✅ 不存在网络请求
 - ✅ 从已有集合中过滤符合条件的书签
 - ✅ 这是"筛选（Filter）"的定义，而非"搜索（Search）"
 
 **术语规范：**
+
 - ✅ 对外（UI、API、文档）：**筛选（Filter）**
 - ✅ 对内（技术实现、代码注释）：search/filter 都可以
 - ❌ 禁止在 UI 文案中使用"搜索"
 
 **相关组件与服务：**
+
 - `BookmarkSearchInput` 组件：书签搜索输入组件（唯一搜索组件）
 - `useBookmarkSearch` Composable：书签搜索 hook
 - `bookmarkSearchService`：IndexedDB 搜索服务（应用层统一入口）
@@ -428,17 +480,20 @@ if (isSemanticEnabled) {
 ## 🛠️ 技术栈规范
 
 ### 关键工具
+
 - **Immer**：`updateMap(nodes, draft => {...})`（不可变状态更新）
 - **mitt**：`emitEvent('bookmark:created', {...})`（事件总线）
 - **VueUse**：优先使用 `useEventListener`、`useDebounceFn`、`useTimeoutFn`
 - **Zod**：所有外部数据必须校验
 
 ### TypeScript 规范
+
 - ❌ 永久禁止 `any`、`as any`
 - ✅ 必须使用 Zod 校验外部数据
 - ✅ 必须添加 JSDoc 注释（中文）
 
 ### 注释规范
+
 ```
 ❌ 禁止的注释类型：
   - "已删除"、"已移除"、"已弃用"等状态标记
@@ -457,6 +512,7 @@ if (isSemanticEnabled) {
 ```
 
 ### Vue 组件规范
+
 - ✅ 必须使用 `defineOptions({ name: 'ComponentName' })`
 - ❌ 禁止组件内直接调用 `chrome.bookmarks.*`
 - ❌ 禁止组件内直接调用 `indexedDB.open()`
@@ -468,15 +524,17 @@ if (isSemanticEnabled) {
 ### 错误 1：违反单向数据流
 
 **错误代码：**
+
 ```typescript
 // ❌ 文件：frontend/src/components/BookmarkItem.vue
 async function deleteBookmark(id: string) {
-  await chrome.bookmarks.remove(id)  // ❌ 组件直接调用 Chrome API
+  await chrome.bookmarks.remove(id) // ❌ 组件直接调用 Chrome API
   // 问题：IndexedDB 不会同步，数据不一致
 }
 ```
 
 **正确代码：**
+
 ```typescript
 // ✅ 文件：frontend/src/components/BookmarkItem.vue
 async function deleteBookmark(id: string) {
@@ -495,22 +553,24 @@ async function deleteBookmark(id: string) {
 ### 错误 2：直接修改响应式对象
 
 **错误代码：**
+
 ```typescript
 // ❌ 直接修改 Map（Vue 无法检测变化）
 const nodes = ref(new Map())
-nodes.value.set('123', newNode)        // ❌ Vue 不会触发更新
-nodes.value.delete('456')               // ❌ UI 不会刷新
+nodes.value.set('123', newNode) // ❌ Vue 不会触发更新
+nodes.value.delete('456') // ❌ UI 不会刷新
 ```
 
 **正确代码：**
+
 ```typescript
 // ✅ 使用 Immer 更新（Vue 可以检测）
 import { updateMap } from '@/utils/immer-helpers'
 
 const nodes = ref(new Map())
 updateMap(nodes, draft => {
-  draft.set('123', newNode)     // ✅ Vue 会触发更新
-  draft.delete('456')            // ✅ UI 会自动刷新
+  draft.set('123', newNode) // ✅ Vue 会触发更新
+  draft.delete('456') // ✅ UI 会自动刷新
 })
 ```
 
@@ -520,91 +580,99 @@ updateMap(nodes, draft => {
 
 **环境对比表：**
 
-| API | 网页环境 | Service Worker | 正确用法 |
-|-----|---------|---------------|---------|
+| API    | 网页环境              | Service Worker | 正确用法                   |
+| ------ | --------------------- | -------------- | -------------------------- |
 | 定时器 | `window.setTimeout()` | `setTimeout()` | ✅ 直接用全局 `setTimeout` |
-| 网络 | `window.fetch()` | `fetch()` | ✅ 直接用全局 `fetch` |
-| 存储 | `localStorage` | ❌ 不存在 | ✅ 用 `chrome.storage.*` |
-| DOM | `document.*` | ❌ 不存在 | ❌ Background 中禁止使用 |
+| 网络   | `window.fetch()`      | `fetch()`      | ✅ 直接用全局 `fetch`      |
+| 存储   | `localStorage`        | ❌ 不存在      | ✅ 用 `chrome.storage.*`   |
+| DOM    | `document.*`          | ❌ 不存在      | ❌ Background 中禁止使用   |
 
 **错误代码：**
+
 ```typescript
 // ❌ 文件：frontend/src/background/bookmarks.ts
 class BookmarkSync {
-  private timer: number | null = null  // ❌ 类型错误
-  
+  private timer: number | null = null // ❌ 类型错误
+
   start() {
-    this.timer = window.setTimeout(() => {    // ❌ Service Worker 没有 window
+    this.timer = window.setTimeout(() => {
+      // ❌ Service Worker 没有 window
       const data = localStorage.getItem('key') // ❌ Service Worker 没有 localStorage
-      document.body.innerHTML = 'hi'           // ❌ Service Worker 没有 document
+      document.body.innerHTML = 'hi' // ❌ Service Worker 没有 document
     }, 1000)
   }
 }
 ```
 
 **正确代码：**
+
 ```typescript
 // ✅ 文件：frontend/src/background/bookmarks.ts
 class BookmarkSync {
-  private timer: ReturnType<typeof setTimeout> | null = null  // ✅ 正确类型
-  
+  private timer: ReturnType<typeof setTimeout> | null = null // ✅ 正确类型
+
   start() {
-    this.timer = setTimeout(async () => {           // ✅ 全局函数，无 window
-      const result = await chrome.storage.local.get('key')  // ✅ 用 chrome.storage
-      console.log(result.key)                       // ✅ console 在 Service Worker 可用
+    this.timer = setTimeout(async () => {
+      // ✅ 全局函数，无 window
+      const result = await chrome.storage.local.get('key') // ✅ 用 chrome.storage
+      console.log(result.key) // ✅ console 在 Service Worker 可用
     }, 1000)
   }
 }
 ```
 
 **受影响文件（写代码时必须检查）：**
+
 - `frontend/src/background/**/*.ts` - **所有文件**
 - `frontend/src/services/**/*-service.ts` - **可能在 Background 调用的服务**
 
 ### 错误 4：缺少数据校验
 
 **错误代码：**
+
 ```typescript
 // ❌ 直接使用外部数据（可能不符合类型）
 async function loadBookmarks() {
   const data = await indexedDBManager.getAllBookmarks()
-  nodes.value = flattenTreeToMap(data)  // ❌ 没有校验，可能运行时报错
+  nodes.value = flattenTreeToMap(data) // ❌ 没有校验，可能运行时报错
 }
 ```
 
 **正确代码：**
+
 ```typescript
 // ✅ 使用 Zod 校验外部数据
 import { BookmarkRecordArraySchema } from '@/core/types/bookmark'
 
 async function loadBookmarks() {
   const rawData = await indexedDBManager.getAllBookmarks()
-  const validated = BookmarkRecordArraySchema.parse(rawData)  // ✅ 运行时校验
-  nodes.value = flattenTreeToMap(validated)                    // ✅ 类型安全
+  const validated = BookmarkRecordArraySchema.parse(rawData) // ✅ 运行时校验
+  nodes.value = flattenTreeToMap(validated) // ✅ 类型安全
 }
 ```
 
 ### 错误 5：UI 术语不统一
 
 **错误代码：**
+
 ```vue
 <!-- ❌ UI 中使用"搜索" -->
 <template>
-  <Input placeholder="搜索书签" />     // ❌ 错误术语
-  <Button>开始搜索</Button>            // ❌ 应该用"筛选"
+  <Input placeholder="搜索书签" /> // ❌ 错误术语 <Button>开始搜索</Button> // ❌ 应该用"筛选"
 </template>
 ```
 
 **正确代码：**
+
 ```vue
 <!-- ✅ UI 中使用"筛选" -->
 <template>
-  <Input placeholder="筛选书签" />     // ✅ 正确术语
-  <Button>开始筛选</Button>            // ✅ 符合产品定位
+  <Input placeholder="筛选书签" /> // ✅ 正确术语 <Button>开始筛选</Button> // ✅ 符合产品定位
 </template>
 ```
 
 **原因：**
+
 - 所有数据在本地 IndexedDB，不是远程搜索
 - 从已有集合中过滤 = 筛选（Filter）
 - 对外统一使用"筛选"概念
@@ -621,17 +689,19 @@ async function loadBookmarks() {
 ## ⏱️ 长耗时任务设计原则
 
 ### 核心哲学
+
 **真实进度 > 假进度 > 无反馈**
 
 ### 业务分级
+
 - 🔴 **核心业务**（书签同步、导入）：同步执行 + 真实进度反馈
   - 必须显示：阶段指示器 + 百分比 + 当前/总数 + 预计剩余时间
   - 分批写入：每批后 `setTimeout(0)` 让出主线程
-  
 - 🟡 **辅助业务**（爬虫、AI 标签、健康扫描）：Worker 异步 + 队列调度
   - 优先级排序 + 并发控制 + 可暂停/取消
 
 **禁止：**
+
 - ❌ 核心业务放到 Worker（数据不完整时无法使用）
 - ❌ 只有转圈圈，没有百分比和预计时间
 - ❌ 假进度条（不基于真实数据）
@@ -651,13 +721,13 @@ bun run build:hot                # 热构建
 
 **牢记这 5 条铁律，避免 95% 的错误：**
 
-| # | 铁律 | 检查方法 | 违反后果 |
-|---|------|---------|---------|
-| 1 | **单向数据流** | 看到 `chrome.bookmarks.*` 检查文件路径 | 数据不一致、状态混乱 |
-| 2 | **IndexedDB 唯一数据源** | 所有读取都通过 `indexedDBManager` | UI 数据不准确 |
-| 3 | **禁止前端直接访问 Chrome API** | 前端只能用 `chrome.runtime.sendMessage` | 破坏架构、难以维护 |
-| 4 | **Service Worker 兼容** | Background 中禁用 `window.*` / `localStorage` | 运行时报错 |
-| 5 | **UI 术语统一** | UI 文案中用"筛选"而非"搜索" | 产品定位混乱 |
+| #   | 铁律                            | 检查方法                                      | 违反后果             |
+| --- | ------------------------------- | --------------------------------------------- | -------------------- |
+| 1   | **单向数据流**                  | 看到 `chrome.bookmarks.*` 检查文件路径        | 数据不一致、状态混乱 |
+| 2   | **IndexedDB 唯一数据源**        | 所有读取都通过 `indexedDBManager`             | UI 数据不准确        |
+| 3   | **禁止前端直接访问 Chrome API** | 前端只能用 `chrome.runtime.sendMessage`       | 破坏架构、难以维护   |
+| 4   | **Service Worker 兼容**         | Background 中禁用 `window.*` / `localStorage` | 运行时报错           |
+| 5   | **UI 术语统一**                 | UI 文案中用"筛选"而非"搜索"                   | 产品定位混乱         |
 
 ---
 
@@ -691,6 +761,3 @@ bun run typecheck:force
 bun run lint:check:force
 bun run stylelint:force
 ```
-
-
-

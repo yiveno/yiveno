@@ -1,6 +1,6 @@
 /**
  * 认证 Composable（仅 OAuth）
- * 
+ *
  * 职责：
  * - 封装 Supabase OAuth 认证（Google、Microsoft）
  * - 提供统一的认证接口
@@ -22,7 +22,7 @@ const error = ref<string | null>(null)
 export const useAuth = () => {
   const { supabase } = useSupabase()
   const config = useRuntimeConfig()
-  
+
   /**
    * 初始化：检查当前 session
    */
@@ -30,7 +30,7 @@ export const useAuth = () => {
     try {
       loading.value = true
       console.log('[useAuth] 开始初始化，检查 session...')
-      
+
       const {
         data: { session: currentSession },
         error: sessionError
@@ -60,35 +60,31 @@ export const useAuth = () => {
       loading.value = false
     }
   }
-  
+
   /**
    * OAuth 登录（Google、Microsoft）
-   * 
+   *
    * @param provider - OAuth 提供商：'google' 或 'microsoft'
    * @returns Promise<{ url: string }>
    */
-  const signInWithOAuth = async (
-    provider: 'google' | 'microsoft'
-  ): Promise<{ url: string }> => {
+  const signInWithOAuth = async (provider: 'google' | 'microsoft'): Promise<{ url: string }> => {
     try {
       loading.value = true
       error.value = null
 
       console.log('[useAuth] 开始 OAuth 登录:', provider)
-      
+
       // Supabase 内部使用 'azure' 作为 Microsoft 的 provider 名称
       const supabaseProvider = provider === 'microsoft' ? 'azure' : provider
-      
+
       // 获取当前 URL 作为回调地址
       const redirectUrl = `${window.location.origin}/auth/callback`
-      
+
       const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: supabaseProvider as 'google' | 'azure',
         options: {
           redirectTo: redirectUrl,
-          scopes: provider === 'microsoft' 
-            ? 'openid profile email User.Read'
-            : undefined,
+          scopes: provider === 'microsoft' ? 'openid profile email User.Read' : undefined
           // 移除 queryParams，使用默认的 OAuth 行为
           // 如果用户已登录且已授权，会直接完成登录
           // 如果是首次登录，会显示授权页面
@@ -106,7 +102,7 @@ export const useAuth = () => {
       }
 
       console.log('[useAuth] 获取到授权 URL')
-      
+
       return { url: data.url }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'OAuth 登录失败'
@@ -117,10 +113,10 @@ export const useAuth = () => {
       loading.value = false
     }
   }
-  
+
   /**
    * Google One Tap 登录
-   * 
+   *
    * @param idToken - Google ID Token（从 One Tap 回调中获取）
    * @returns Promise<{ user: User, session: Session }>
    */
@@ -130,7 +126,7 @@ export const useAuth = () => {
       error.value = null
 
       console.log('[useAuth] 开始 Google One Tap 登录...')
-      
+
       const { data, error: signInError } = await supabase.auth.signInWithIdToken({
         provider: 'google',
         token: idToken
@@ -164,7 +160,7 @@ export const useAuth = () => {
       loading.value = false
     }
   }
-  
+
   /**
    * 设置 OAuth Session（从回调中获取的 token）
    */
@@ -172,7 +168,7 @@ export const useAuth = () => {
     try {
       loading.value = true
       console.log('[useAuth] 设置 OAuth session...')
-      
+
       const { data, error: sessionError } = await supabase.auth.setSession({
         access_token: accessToken,
         refresh_token: refreshToken
@@ -200,7 +196,7 @@ export const useAuth = () => {
       loading.value = false
     }
   }
-  
+
   /**
    * 登出
    */
@@ -215,7 +211,7 @@ export const useAuth = () => {
 
       user.value = null
       session.value = null
-      
+
       console.log('[useAuth] 登出成功')
     } catch (err) {
       error.value = err instanceof Error ? err.message : '登出失败'
@@ -225,7 +221,7 @@ export const useAuth = () => {
       loading.value = false
     }
   }
-  
+
   /**
    * 监听认证状态变化
    */
@@ -238,7 +234,7 @@ export const useAuth = () => {
 
       session.value = newSession
       user.value = newSession?.user ?? null
-      
+
       // 🔑 当用户登录成功时，通知 Chrome 扩展同步 session
       if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && newSession) {
         console.log('[useAuth] 🔔 通知 Chrome 扩展同步 session...')
@@ -248,7 +244,7 @@ export const useAuth = () => {
           if (typeof chrome !== 'undefined' && chrome?.runtime?.sendMessage) {
             // 从 runtimeConfig 获取扩展 ID
             const extensionId = config.public.extensionId
-            
+
             // @ts-expect-error - chrome API 仅在浏览器环境中可用
             await chrome.runtime.sendMessage(extensionId, {
               type: 'SYNC_AUTH_SESSION',
@@ -266,7 +262,7 @@ export const useAuth = () => {
           console.warn('[useAuth] ⚠️ 无法同步到扩展（扩展可能未安装）:', extensionError)
         }
       }
-      
+
       // 🔑 当用户登出时，通知 Chrome 扩展清除 session
       if (event === 'SIGNED_OUT') {
         console.log('[useAuth] 🔔 通知 Chrome 扩展清除 session...')
@@ -275,7 +271,7 @@ export const useAuth = () => {
           if (typeof chrome !== 'undefined' && chrome?.runtime?.sendMessage) {
             // 从 runtimeConfig 获取扩展 ID
             const extensionId = config.public.extensionId
-            
+
             // @ts-expect-error - chrome API 仅在浏览器环境中可用
             await chrome.runtime.sendMessage(extensionId, {
               type: 'CLEAR_AUTH_SESSION'
@@ -288,24 +284,24 @@ export const useAuth = () => {
       }
     })
   }
-  
+
   /**
    * 监听其他标签页/窗口的认证状态变化
    */
   const setupStorageListener = () => {
     if (typeof window === 'undefined') return
-    
+
     const handleStorageChange = async (e: StorageEvent) => {
       // 监听 Supabase 的 storage 变化
       if (e.key?.startsWith('sb-') && e.key.includes('-auth-token')) {
         console.log('[useAuth] 检测到其他标签页的认证状态变化')
-        
+
         // 重新获取 session
         const {
           data: { session: currentSession },
           error: sessionError
         } = await supabase.auth.getSession()
-        
+
         if (!sessionError && currentSession) {
           console.log('[useAuth] 同步认证状态成功')
           session.value = currentSession
@@ -317,15 +313,15 @@ export const useAuth = () => {
         }
       }
     }
-    
+
     window.addEventListener('storage', handleStorageChange)
-    
+
     // 返回清理函数
     return () => {
       window.removeEventListener('storage', handleStorageChange)
     }
   }
-  
+
   return {
     // 状态
     user: computed(() => user.value),

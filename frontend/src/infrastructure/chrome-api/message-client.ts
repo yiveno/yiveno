@@ -98,10 +98,7 @@ export class ChromeMessageClient {
   /**
    * 带超时的消息发送
    */
-  private async sendWithTimeout(
-    message: Message,
-    timeoutMs: number
-  ): Promise<MessageResponse> {
+  private async sendWithTimeout(message: Message, timeoutMs: number): Promise<MessageResponse> {
     return new Promise((resolve, reject) => {
       if (!this.isExtensionContextAvailable()) {
         return reject(new Error('Extension context not available'))
@@ -188,9 +185,7 @@ export class ChromeMessageClient {
   /**
    * 获取统计信息
    */
-  async getStats(
-    options: MessageOptions = {}
-  ): Promise<Result<MessageResponse, Error>> {
+  async getStats(options: MessageOptions = {}): Promise<Result<MessageResponse, Error>> {
     return this.sendMessage(
       {
         type: 'GET_STATS'
@@ -209,10 +204,7 @@ export class ChromeMessageClient {
     options: MessageOptions = {}
   ): Promise<Result<MessageResponse<{ started: boolean }>, Error>> {
     const mergedOptions: MessageOptions = {
-      timeoutMs: Math.max(
-        options.timeoutMs ?? 45_000,
-        this.defaultOptions.timeoutMs
-      ),
+      timeoutMs: Math.max(options.timeoutMs ?? 45_000, this.defaultOptions.timeoutMs),
       ...options
     }
     return this.sendMessage(
@@ -242,9 +234,7 @@ export class ChromeMessageClient {
   /**
    * 停止清理扫描
    */
-  async stopCleanupScan(
-    options: MessageOptions = {}
-  ): Promise<Result<MessageResponse, Error>> {
+  async stopCleanupScan(options: MessageOptions = {}): Promise<Result<MessageResponse, Error>> {
     return this.sendMessage(
       {
         type: 'STOP_CLEANUP_SCAN'
@@ -311,12 +301,7 @@ export async function getChildrenPaged(
   offset?: number,
   options: MessageOptions = {}
 ): Promise<MessageResponse> {
-  const result = await messageClient.getChildrenPaged(
-    parentId,
-    limit,
-    offset,
-    options
-  )
+  const result = await messageClient.getChildrenPaged(parentId, limit, offset, options)
   if (result.ok) {
     return result.value
   }
