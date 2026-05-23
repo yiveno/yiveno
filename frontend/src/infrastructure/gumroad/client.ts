@@ -5,6 +5,7 @@ import { safeJsonFetch } from '@/infrastructure/http/safe-fetch'
 
 export interface GumroadSubscriptionPayload {
   success: boolean
+  hasSubscription: boolean // ✅ 新增：明确标志位
   subscription?: {
     id: string | null
     status: string
@@ -80,5 +81,10 @@ export async function getSubscriptionStatus(userId: string) {
     throw new Error(response?.error || '查询订阅状态失败')
   }
 
-  return response.subscription || null
+  // ✅ 改进：使用 hasSubscription 标志位，更清晰
+  if (!response.hasSubscription || !response.subscription) {
+    return null
+  }
+
+  return response.subscription
 }

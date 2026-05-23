@@ -1,7 +1,7 @@
 {
-  "enabled": true,
+  "enabled": false,
   "name": "Frontend Quality Check",
-  "description": "修改 frontend 文件后自动运行 typecheck、lint 和 stylelint 检查",
+  "description": "修改 frontend 文件后自动运行 typecheck、lint 和 stylelint 检查（已禁用，由用户手动触发）",
   "version": "1",
   "when": {
     "type": "fileEdited",

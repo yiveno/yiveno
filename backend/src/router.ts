@@ -1,5 +1,4 @@
 import { router } from './trpc'
-import { exampleRouter } from './routers/example'
 import { shareRouter } from './routers/share'
 
 /**
@@ -8,7 +7,6 @@ import { shareRouter } from './routers/share'
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = router({
-  example: exampleRouter,
   share: shareRouter
 })
 

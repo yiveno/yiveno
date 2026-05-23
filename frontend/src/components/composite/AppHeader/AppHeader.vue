@@ -188,7 +188,6 @@ onMounted(() => {
 
     <div class="app-header__col app-header__col--right">
       <ThemeToggle v-if="showTheme" />
-      <UserMenu v-if="showAccount" :size="30" />
       <md-icon-button
         v-if="showSettings"
         class="app-header__action"
@@ -200,6 +199,7 @@ onMounted(() => {
         <LucideIcon name="settings" :size="30" />
       </md-icon-button>
       <slot name="actions" />
+      <UserMenu v-if="showAccount" :size="30" />
     </div>
   </header>
 </template>

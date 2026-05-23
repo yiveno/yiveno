@@ -131,19 +131,23 @@ const clearInput = () => {
         :size="leadingIconSize"
       />
 
-      <!-- Trailing icon: 优先使用自定义 slot，否则使用默认的 loading/clear -->
+      <!-- Trailing icon: 优先使用自定义 slot，否则根据状态显示 clear/loading -->
       <slot v-if="$slots['trailing-icon']" slot="trailing-icon" name="trailing-icon"></slot>
-      <Loading v-else-if="loading" slot="trailing-icon" size="xs" />
-      <md-icon-button
-        v-else-if="clearable && modelValue"
-        slot="trailing-icon"
-        type="button"
-        class="md-input-clear-btn"
-        :aria-label="'清除'"
-        @click="clearInput"
-      >
-        <LucideIcon name="x" :size="16" />
-      </md-icon-button>
+      <template v-else>
+        <!-- 清除按钮：有值时显示（优先级高于 loading） -->
+        <md-icon-button
+          v-if="clearable && modelValue"
+          slot="trailing-icon"
+          type="button"
+          class="md-input-clear-btn"
+          :aria-label="'清除'"
+          @click="clearInput"
+        >
+          <LucideIcon name="x" :size="16" />
+        </md-icon-button>
+        <!-- Loading：只在没有值或不可清除时显示 -->
+        <Loading v-else-if="loading" slot="trailing-icon" size="xs" />
+      </template>
     </md-outlined-text-field>
 
     <md-filled-text-field
@@ -175,19 +179,23 @@ const clearInput = () => {
         :size="leadingIconSize"
       />
 
-      <!-- Trailing icon: 优先使用自定义 slot，否则使用默认的 loading/clear -->
+      <!-- Trailing icon: 优先使用自定义 slot，否则根据状态显示 clear/loading -->
       <slot v-if="$slots['trailing-icon']" slot="trailing-icon" name="trailing-icon"></slot>
-      <Loading v-else-if="loading" slot="trailing-icon" size="xs" />
-      <md-icon-button
-        v-else-if="clearable && modelValue"
-        slot="trailing-icon"
-        type="button"
-        class="md-input-clear-btn"
-        :aria-label="'清除'"
-        @click="clearInput"
-      >
-        <LucideIcon name="x" :size="16" />
-      </md-icon-button>
+      <template v-else>
+        <!-- 清除按钮：有值时显示（优先级高于 loading） -->
+        <md-icon-button
+          v-if="clearable && modelValue"
+          slot="trailing-icon"
+          type="button"
+          class="md-input-clear-btn"
+          :aria-label="'清除'"
+          @click="clearInput"
+        >
+          <LucideIcon name="x" :size="16" />
+        </md-icon-button>
+        <!-- Loading：只在没有值或不可清除时显示 -->
+        <Loading v-else-if="loading" slot="trailing-icon" size="xs" />
+      </template>
     </md-filled-text-field>
 
     <!-- Append slot (外部) -->

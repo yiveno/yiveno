@@ -16,6 +16,9 @@ export { default as ContextMenu } from './base/ContextMenu/ContextMenu.vue'
 export { default as Input } from './base/Input/Input.vue'
 export { default as Loading } from './base/Loading/Loading.vue'
 export { default as LucideIcon } from './base/LucideIcon/LucideIcon.vue'
+export { default as Skeleton } from './base/Skeleton/Skeleton.vue'
+export { default as SkeletonList } from './base/Skeleton/SkeletonList.vue'
+export { default as SkeletonTree } from './base/Skeleton/SkeletonTree.vue'
 export { default as Tooltip } from './base/Tooltip/Tooltip.vue'
 
 // ===== 复合组件 (从 composite/ 目录导出) =====
@@ -51,6 +54,7 @@ export { default as BookmarkTree } from './business/BookmarkTree/BookmarkTree.vu
 // TreeNode 是 BookmarkTree 的内部组件，不对外导出
 export { default as BookmarkRecommendations } from './business/BookmarkRecommendations/BookmarkRecommendations.vue'
 export { default as BookmarkSearchInput } from './business/BookmarkSearchInput/BookmarkSearchInput.vue'
+export { default as NotificationList } from './business/NotificationList/NotificationList.vue'
 export { default as QuickAddBookmarkDialog } from './business/QuickAddBookmarkDialog/QuickAddBookmarkDialog.vue'
 export { default as ShareDialog } from './business/ShareDialog/ShareDialog.vue'
 
@@ -63,6 +67,9 @@ export type * from './base/Chip/Chip.d'
 export type * from './base/ContextMenu/ContextMenu.d'
 export type * from './base/Input/Input.d'
 export type * from './base/Loading/Loading.d'
+export type * from './base/Skeleton/Skeleton.d'
+export type * from './base/Skeleton/SkeletonList.d'
+export type * from './base/Skeleton/SkeletonTree.d'
 export type * from './base/Tooltip/Tooltip.d'
 
 // 复合组件类型

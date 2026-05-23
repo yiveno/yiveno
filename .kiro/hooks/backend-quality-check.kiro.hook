@@ -1,7 +1,7 @@
 {
-  "enabled": true,
+  "enabled": false,
   "name": "Backend Quality Check",
-  "description": "修改 backend 文件后自动运行 typecheck 和 lint 检查",
+  "description": "修改 backend 文件后自动运行 typecheck 和 lint 检查（已禁用，由用户手动触发）",
   "version": "1",
   "when": {
     "type": "fileEdited",

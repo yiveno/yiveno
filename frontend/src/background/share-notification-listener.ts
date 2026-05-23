@@ -80,7 +80,8 @@ async function checkNewNotifications() {
       return
     }
 
-    const unreadCount = unreadCountResult.data.count
+    // ✅ 修复：count 为 0 是正常情况，不是错误
+    const unreadCount = unreadCountResult.data.count ?? 0
 
     logger.info('ShareNotificationListener', '未读通知数量', { unreadCount })
 

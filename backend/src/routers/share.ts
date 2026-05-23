@@ -410,15 +410,77 @@ export const shareRouter = router({
       }
 
       // 搜索用户（从 profiles 表）
-      // 注意：需要先创建 profiles 表或使用 auth.users 的视图
-      const { data: users, error: searchError } = await supabase
-        .from('profiles')
-        .select('id, name, email, avatar_url')
-        .or(`name.ilike.%${query}%,email.ilike.%${query}%`)
-        .neq('id', user.id) // 排除自己
-        .limit(10)
+      // 🔍 方法 1：使用 or 条件（原始方法）
+      let users: any[] | null = null
+      let searchError: any = null
+
+      try {
+        const result = await supabase
+          .from('profiles')
+          .select('id, name, email, avatar_url')
+          .or(`name.ilike.%${query}%,email.ilike.%${query}%`)
+          .neq('id', user.id)
+          .limit(10)
+
+        users = result.data
+        searchError = result.error
+      } catch (err) {
+        console.error('❌ 查询异常:', err)
+        searchError = err
+      }
+
+      // 🔍 如果方法 1 失败，尝试方法 2：分别查询 name 和 email
+      if (!users || users.length === 0) {
+        console.log('🔄 尝试备用查询方法...')
+
+        try {
+          const nameResult = await supabase
+            .from('profiles')
+            .select('id, name, email, avatar_url')
+            .ilike('name', `%${query}%`)
+            .neq('id', user.id)
+            .limit(10)
+
+          const emailResult = await supabase
+            .from('profiles')
+            .select('id, name, email, avatar_url')
+            .ilike('email', `%${query}%`)
+            .neq('id', user.id)
+            .limit(10)
+
+          // 合并结果并去重
+          const nameUsers = nameResult.data || []
+          const emailUsers = emailResult.data || []
+          const allUsers = [...nameUsers, ...emailUsers]
+          const uniqueUsers = Array.from(new Map(allUsers.map(u => [u.id, u])).values())
+
+          users = uniqueUsers
+          searchError = nameResult.error || emailResult.error
+
+          console.log('✅ 备用查询结果:', {
+            nameMatches: nameUsers.length,
+            emailMatches: emailUsers.length,
+            totalUnique: uniqueUsers.length
+          })
+        } catch (err) {
+          console.error('❌ 备用查询异常:', err)
+        }
+      }
+
+      // 🔍 详细调试日志
+      console.log('🔍 搜索用户详情:', {
+        query,
+        currentUserId: user.id,
+        currentUserEmail: user.email,
+        searchQuery: `name.ilike.%${query}%,email.ilike.%${query}%`,
+        foundUsers: users?.length || 0,
+        users: users?.map(u => ({ id: u.id, name: u.name, email: u.email })),
+        error: searchError?.message,
+        errorDetails: searchError
+      })
 
       if (searchError) {
+        console.error('❌ 搜索用户错误:', searchError)
         throw new Error(`搜索用户失败: ${searchError.message}`)
       }
 

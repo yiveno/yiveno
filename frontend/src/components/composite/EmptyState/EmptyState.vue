@@ -61,14 +61,14 @@ withDefaults(defineProps<EmptyStateProps>(), {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  min-height: 200px;
-  padding: var(--spacing-8) var(--spacing-4);
+  min-height: 120px;
+  padding: var(--spacing-4) var(--spacing-4);
   text-align: center;
   animation: fade-in-up var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized);
 }
 
 .empty-state__icon {
-  margin-bottom: var(--spacing-4);
+  margin-bottom: var(--spacing-3);
   opacity: 0.5;
   animation: fade-in-up var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized);
   will-change: opacity, transform;

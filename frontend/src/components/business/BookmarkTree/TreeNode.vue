@@ -850,12 +850,12 @@ defineExpose({
   background: var(--color-bookmark-hover);
 }
 
-/* ✅ 右键菜单打开时保持 hover 状态 */
-.node--context-menu-open .folder-content {
+/* ✅ 右键菜单打开时保持 hover 状态（只影响当前节点，不影响子节点） */
+.node--context-menu-open > .folder-content {
   background: linear-gradient(90deg, var(--color-folder-hover) 0%, transparent 100%);
 }
 
-.node--context-menu-open .bookmark-content {
+.node--context-menu-open > .bookmark-content {
   background: var(--color-bookmark-hover);
 }
 

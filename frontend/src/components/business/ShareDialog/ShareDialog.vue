@@ -184,15 +184,17 @@ const handleUserSearch = async (query: string) => {
         value: userData.id,
         label: userData.name || userData.email || userData.id,
         description: userData.email,
+        avatar: userData.avatar_url, // 添加头像 URL
         raw: userData
       }))
 
-      // 设置搜索结果
+      // 设置搜索结果（无论是否为空，都是正常业务状态，不显示错误通知）
       userSearchSelectRef.value?.setOptions(options)
     }
   } catch (error) {
+    // 捕获所有错误，但不显示通知（搜索失败是正常情况，用户会看到空状态）
     logger.error('ShareDialog', '搜索用户失败', error)
-    notifyError('搜索用户失败，请重试')
+    // 设置空结果，让用户看到空状态组件
     userSearchSelectRef.value?.setOptions([])
   }
 }

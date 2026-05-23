@@ -11,7 +11,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch, shallowRef } from 'vue'
 import { useVirtualizer } from '@tanstack/vue-virtual'
-import { ContextMenu, EmptyState, Input, Loading } from '@/components'
+import { ContextMenu, EmptyState, Input, Loading, SkeletonTree } from '@/components'
 import { LucideIcon } from '@/components/base/LucideIcon'
 import type { BookmarkNode } from '@/types'
 import { logger } from '@/infrastructure/logging/logger'
@@ -2144,9 +2144,9 @@ defineExpose({
           </div>
         </div>
 
-        <!-- 加载状态 -->
+        <!-- 加载状态 - 使用骨架屏 -->
         <div v-if="loading && !isOverlayLoading" class="loading-state">
-          <Loading size="md" text="加载中..." />
+          <SkeletonTree :count="8" :max-level="3" animation="pulse" />
         </div>
       </div>
     </div>
@@ -2226,8 +2226,7 @@ defineExpose({
   width: 100%;
 }
 
-.empty-state,
-.loading-state {
+.empty-state {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -2235,6 +2234,10 @@ defineExpose({
   gap: var(--spacing-3);
   padding: var(--spacing-xl);
   color: var(--color-text-secondary);
+}
+
+.loading-state {
+  padding: var(--spacing-3);
 }
 
 /* 尺寸变体 */

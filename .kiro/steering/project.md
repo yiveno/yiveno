@@ -91,23 +91,35 @@ inclusion: always
   - 如果理由是"方便团队"或"帮助其他人" → 绝对不要创建
 ```
 
-### 2. 代码修改检查流程（已自动化）
+### 2. 代码质量检查规则
 
-**✅ 已通过 Agent Hook 自动化，无需手动执行。**
+**❌ AI 不主动运行检查命令**
 
-Hook `post-task-quality-check` 会在 AI 完成任务时自动运行：
+AI 在编写代码后：
+
+- ✅ 遵循所有代码规范（TypeScript、ESLint、Stylelint）
+- ✅ 在编写时自我检查，避免常见错误
+- ❌ **不主动运行** `typecheck`、`lint:check`、`stylelint:check` 等验证命令
+- ✅ 等待用户手动运行验证和修复命令
+
+**用户手动验证流程：**
 
 ```bash
+# 自动修复大部分问题
+bun run lint:fix:enhanced
+
+# 如果需要单独检查
 cd frontend
-bun run typecheck      # 类型检查
-bun run lint:check     # 代码规范
-bun run stylelint:check # 样式规范
+bun run typecheck:force      # 类型检查
+bun run lint:check:force     # 代码规范
+bun run stylelint:force      # 样式规范
 ```
 
-- ✅ 无错误：任务完成
-- ❌ 有错误：AI 会在下次对话中自动修复
+**原因**：
 
-**原因**：与 `.cursor/rules/project.mdc` 对齐，保证 CI 与本地一致。
+- 避免每次修改都触发耗时的验证流程
+- 用户可以批量修改后统一验证
+- 与 `.kiro/steering/code-standards.md` 规则保持一致
 
 ### 3. 输出规范
 
@@ -713,6 +725,65 @@ bun run typecheck:force          # 类型检查（提交前必须）
 bun run lint:fix:enhanced        # 代码质量检查
 bun run format                   # 格式化
 bun run build:hot                # 热构建
+```
+
+---
+
+## 🚀 开发环境假设（重要）
+
+**用户的标准开发流程：**
+
+```bash
+# 用户在开发时会运行根目录的 watch 命令
+bun run watch
+```
+
+**`bun run watch` 会自动启动以下服务（并行运行）：**
+
+1. ✅ **Frontend 热构建**：`frontend` 的 `build:watch`
+2. ✅ **Backend 开发服务器**：`backend` 的 `dev`（Wrangler dev，运行在 `https://localhost:8787`）
+3. ✅ **Website 开发服务器**：`website` 的 `dev`（Nuxt dev）
+
+**AI 行为准则：**
+
+```
+❌ 禁止：提醒用户启动 `bun run watch` 包含的任何子命令
+❌ 禁止：建议用户单独运行 `cd backend && bun run dev`
+❌ 禁止：建议用户单独运行 `cd frontend && bun run build:watch`
+❌ 禁止：询问用户"是否已启动后端服务"
+
+✅ 假设：用户已经运行了 `bun run watch`，所有服务都在运行
+✅ 假设：后端服务已在 `https://localhost:8787` 运行
+✅ 假设：前端热构建已在监听文件变化
+
+⚠️ 唯一例外：
+  - 如果用户明确说"后端没有启动"或"服务没有运行"
+  - 如果用户报告连接错误，可以提醒检查 `bun run watch` 是否在运行
+```
+
+**正确的问题诊断流程：**
+
+当用户报告 API 请求问题时：
+
+1. ✅ 假设后端已在运行（因为用户会运行 `bun run watch`）
+2. ✅ 直接诊断具体问题（证书、CORS、代码逻辑等）
+3. ❌ 不要问"后端是否启动"
+4. ❌ 不要建议"启动后端服务"
+
+**示例对话：**
+
+```
+❌ 错误：
+用户："搜索用户接口没有响应"
+AI："请先启动后端服务：cd backend && bun run dev"
+
+✅ 正确：
+用户："搜索用户接口没有响应"
+AI："让我检查一下问题。可能的原因：
+1. 自签名证书未信任（需要手动访问 https://localhost:8787 并信任证书）
+2. CORS 配置问题
+3. 代码逻辑错误
+让我先检查代码..."
 ```
 
 ---

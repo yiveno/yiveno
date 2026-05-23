@@ -138,12 +138,20 @@ export async function handleGetSubscription(request: Request, env: Env): Promise
     const supabase = await import('./utils/supabase.ts')
     const subscription = await supabase.getUserSubscription(env, userId)
 
+    // ✅ 统一返回格式：subscription 字段永远存在，但可能为 null
+    // 这样前端可以安全地访问 response.subscription
     if (!subscription) {
-      return json({ success: true, subscription: null })
+      return json({
+        success: true,
+        subscription: null,
+        // ✅ 添加明确的标志位，避免前端需要判断 null
+        hasSubscription: false
+      })
     }
 
     return json({
       success: true,
+      hasSubscription: true,
       subscription: {
         id: subscription.gumroad_subscription_id || subscription.id || null,
         status: subscription.status,
