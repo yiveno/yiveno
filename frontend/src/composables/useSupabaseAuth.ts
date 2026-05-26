@@ -97,6 +97,54 @@ export function useSupabaseAuth() {
   }
 
   /**
+   * 获取当前 session
+   */
+  const fetchSession = async () => {
+    const {
+      data: { session: currentSession },
+      error: sessionError
+    } = await supabase.auth.getSession()
+
+    if (sessionError) {
+      logger.error('[useSupabaseAuth] 获取 session 失败:', sessionError)
+      console.error('[useSupabaseAuth] ❌ 获取 session 失败:', sessionError)
+      throw sessionError
+    }
+
+    logger.debug('[useSupabaseAuth] Session 获取成功:', {
+      hasSession: !!currentSession,
+      userId: currentSession?.user?.id,
+      email: currentSession?.user?.email
+    })
+    console.log('[useSupabaseAuth] ✅ Session 获取成功:', {
+      hasSession: !!currentSession,
+      userId: currentSession?.user?.id,
+      email: currentSession?.user?.email
+    })
+
+    return currentSession
+  }
+
+  /**
+   * 设置 session 和 user 状态
+   */
+  const setAuthState = (currentSession: Session | null) => {
+    session.value = currentSession
+    user.value = currentSession?.user ?? null
+  }
+
+  /**
+   * 处理初始化错误
+   */
+  const handleInitializeError = (err: unknown) => {
+    const authError = err as AuthError
+    error.value = authError.message || '获取 session 失败'
+    logger.error('[useSupabaseAuth] 初始化失败:', authError)
+    console.error('[useSupabaseAuth] ❌ 初始化失败:', authError)
+    setAuthState(null)
+  }
+
+  /**
    * 初始化：检查当前 session
    */
   const initialize = async () => {
@@ -113,30 +161,8 @@ export function useSupabaseAuth() {
       logger.debug('[useSupabaseAuth] 开始初始化，检查 session...')
       console.log('[useSupabaseAuth] 🔍 开始获取 session...')
 
-      const {
-        data: { session: currentSession },
-        error: sessionError
-      } = await supabase.auth.getSession()
-
-      if (sessionError) {
-        logger.error('[useSupabaseAuth] 获取 session 失败:', sessionError)
-        console.error('[useSupabaseAuth] ❌ 获取 session 失败:', sessionError)
-        throw sessionError
-      }
-
-      logger.debug('[useSupabaseAuth] Session 获取成功:', {
-        hasSession: !!currentSession,
-        userId: currentSession?.user?.id,
-        email: currentSession?.user?.email
-      })
-      console.log('[useSupabaseAuth] ✅ Session 获取成功:', {
-        hasSession: !!currentSession,
-        userId: currentSession?.user?.id,
-        email: currentSession?.user?.email
-      })
-
-      session.value = currentSession
-      user.value = currentSession?.user ?? null
+      const currentSession = await fetchSession()
+      setAuthState(currentSession)
 
       // 🔒 检查不活跃超时
       if (user.value) {
@@ -146,12 +172,7 @@ export function useSupabaseAuth() {
       logger.debug('[useSupabaseAuth] 初始化完成，登录状态:', !!user.value)
       console.log('[useSupabaseAuth] ✅ 初始化完成，登录状态:', !!user.value)
     } catch (err) {
-      const authError = err as AuthError
-      error.value = authError.message || '获取 session 失败'
-      logger.error('[useSupabaseAuth] 初始化失败:', authError)
-      console.error('[useSupabaseAuth] ❌ 初始化失败:', authError)
-      session.value = null
-      user.value = null
+      handleInitializeError(err)
     } finally {
       loading.value = false
     }
