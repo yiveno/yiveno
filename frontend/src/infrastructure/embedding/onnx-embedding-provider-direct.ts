@@ -39,18 +39,20 @@ export class OnnxEmbeddingProviderDirect implements EmbeddingProvider {
       const { pipeline, env } = await import('@huggingface/transformers')
       env.useBrowserCache = true
       env.allowLocalModels = false
+      const wasmBackend = env.backends.onnx.wasm
+      if (wasmBackend) {
+        wasmBackend.numThreads = 1
+      }
+      if (wasmBackend && typeof chrome !== 'undefined' && chrome.runtime?.getURL) {
+        wasmBackend.wasmPaths = chrome.runtime.getURL('assets/')
+      }
 
       this.pipeline = (await pipeline(
         'feature-extraction',
         'Xenova/paraphrase-multilingual-MiniLM-L12-v2',
         {
           dtype: 'q8',
-          device: 'wasm',
-          // 禁用多线程，避免需要 blob: Worker（Chrome 扩展 CSP 不允许）
-          session_options: {
-            executionProviders: ['wasm'],
-            graphOptimizationLevel: 'all'
-          }
+          device: 'wasm'
         }
       )) as (text: string | string[], options?: Record<string, unknown>) => Promise<unknown>
 

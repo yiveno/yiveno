@@ -5,7 +5,7 @@ import { storeToRefs } from 'pinia'
 defineOptions({
   name: 'SidePanelPage'
 })
-import { Accordion, AccordionItem, Dialog } from '@/components'
+import { Accordion, AccordionItem, Dialog, AppHeader } from '@/components'
 import BookmarkTree from '@/components/business/BookmarkTree/BookmarkTree.vue'
 import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'
 import { FavoriteSection, RecentVisits } from './components'
@@ -19,7 +19,7 @@ import type { BookmarkRecord } from '@/infrastructure/indexeddb/types'
 import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
 import { logger } from '@/infrastructure/logging/logger'
 import { onEvent } from '@/infrastructure/events/event-bus'
-import { notificationService, notifyInfo } from '@/application/notification/notification-service'
+import { message } from '@/application/message/message-service'
 import { scheduleUIUpdate, scheduleMicrotask } from '@/application/scheduler/scheduler-service'
 import { useThemeSync } from '@/composables/useThemeSync'
 import { t } from '@/utils/i18n-helpers'
@@ -182,7 +182,7 @@ const openBookmark = async (
     }
   } catch (error) {
     logger.error('SidePanel', '打开书签失败', error)
-    notifyInfo('打开书签失败，请重试')
+    message.info('打开书签失败，请重试')
   }
 }
 
@@ -228,7 +228,7 @@ const handleRecentClick = async (bookmark: BookmarkRecord) => {
  */
 const handleRecentRemove = (bookmark: BookmarkRecord) => {
   logger.info('SidePanel', '🗑️ 清除最近访问记录:', bookmark.title)
-  notifyInfo(`已清除访问记录: ${bookmark.title}`)
+  message.info(`已清除访问记录: ${bookmark.title}`)
 }
 
 /**
@@ -252,7 +252,7 @@ const handleFavoriteClick = async (bookmark: BookmarkNode) => {
  */
 const handleFavoriteRemove = (bookmark: BookmarkNode) => {
   logger.info('SidePanel', '🗑️ 移除收藏书签:', bookmark.title)
-  notifyInfo(`已取消收藏: ${bookmark.title}`)
+  message.info(`已取消收藏: ${bookmark.title}`)
   // FavoriteSection 已在内部调用 bookmarkStore.updateNode
 }
 
@@ -384,14 +384,14 @@ const handleBookmarkToggleFavorite = async (node: BookmarkNode, isFavorite: bool
   try {
     const { favoriteAppService } = await import('@/application/bookmark/favorite-app-service')
 
-    // 执行收藏/取消收藏操作（会发送事件）
+    // 执行收藏/取消收藏操作
     const success = isFavorite
-      ? await favoriteAppService.addToFavorites(node.id)
+      ? await favoriteAppService.addToFavorites(node.id) // 会自动进行去重检查
       : await favoriteAppService.removeFromFavorites(node.id)
 
     if (success) {
-      // 操作成功，显示提示
-      notifyInfo(isFavorite ? `书签已收藏` : `书签已取消收藏`)
+      // 操作成功，显示提示（根据实际操作显示正确的消息）
+      message.info(isFavorite ? '书签已收藏' : '已取消收藏')
 
       // ✅ 直接更新节点的收藏状态，避免重新加载整个树
       // FavoriteBookmarks 组件会通过 favorite:added/removed 事件自动更新
@@ -399,12 +399,12 @@ const handleBookmarkToggleFavorite = async (node: BookmarkNode, isFavorite: bool
 
       logger.debug('SidePanel', '✅ 书签收藏状态已更新')
     } else {
-      // 操作失败
-      notifyInfo('操作失败，请重试')
+      // 操作失败（可能是用户取消了重复确认）
+      logger.debug('SidePanel', '操作被取消或失败')
     }
   } catch (error) {
     logger.error('Component', 'SidePanel', '❌ 切换收藏状态失败:', error)
-    notifyInfo('操作失败，请重试')
+    message.error('操作失败，请重试')
   }
 }
 
@@ -435,7 +435,7 @@ const handleBookmarkOpenNewTab = async (node: BookmarkNode) => {
   logger.info('SidePanel', '📂 在新标签页打开', node.title, node.url)
 
   if (!node.url) {
-    notificationService.notify('该书签没有有效的 URL', { level: 'warning' })
+    message.warning('该书签没有有效的 URL')
     return
   }
 
@@ -444,7 +444,7 @@ const handleBookmarkOpenNewTab = async (node: BookmarkNode) => {
   const isInternalUrl = isInternalProtocolUrl(node.url)
 
   if (hasInternalTag || isInternalUrl) {
-    notificationService.notify('无法在新标签页打开浏览器内部链接', { level: 'warning' })
+    message.warning('无法在新标签页打开浏览器内部链接')
     logger.warn('SidePanel', '尝试打开内部协议书签:', node.url)
     return
   }
@@ -453,7 +453,7 @@ const handleBookmarkOpenNewTab = async (node: BookmarkNode) => {
     // 🔒 环境检查：确保在浏览器环境中运行
     if (typeof window === 'undefined') {
       logger.error('SidePanel', '非浏览器环境，无法打开链接')
-      notificationService.notify('当前环境不支持打开链接', { level: 'error' })
+      message.error('当前环境不支持打开链接')
       return
     }
 
@@ -461,14 +461,14 @@ const handleBookmarkOpenNewTab = async (node: BookmarkNode) => {
 
     // 检查是否被浏览器阻止
     if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-      notificationService.notify('链接被浏览器阻止，请检查弹窗设置', { level: 'warning' })
+      message.warning('链接被浏览器阻止，请检查弹窗设置')
       logger.warn('SidePanel', '链接被浏览器阻止:', node.url)
     } else {
       // 成功打开，更新访问记录
       await updateBookmarkVisitRecord(node.id)
     }
   } catch (error) {
-    notificationService.notify('打开链接失败', { level: 'error' })
+    message.error('打开链接失败')
     logger.error('SidePanel', '打开链接失败:', error, node.url)
   }
 }
@@ -485,7 +485,7 @@ const handleBookmarkCopyUrl = (node: BookmarkNode) => {
 
   // 统一通知封装
   try {
-    notifyInfo('书签链接已复制', '复制成功')
+    message.success('书签链接已复制')
   } catch {
     logger.info('SidePanel', '✅ URL已复制到剪贴板', node.url)
   }
@@ -729,7 +729,16 @@ const postponeRefresh = () => {
       </md-filled-button>
     </template>
   </Dialog>
+
   <div class="side-panel-container">
+    <!-- 顶部导航栏（侧边栏模式：隐藏 logo，避免与 Chrome 标题栏重复） -->
+    <AppHeader
+      :show-side-panel-toggle="false"
+      :show-logo="false"
+      :show-settings="false"
+      :show-notification="true"
+    />
+
     <!-- 搜索栏 -->
     <div class="search-section">
       <BookmarkSearchInput
@@ -838,9 +847,6 @@ md-circular-progress {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  padding-right: var(--spacing-4);
-  padding-bottom: var(--spacing-3);
-  padding-left: var(--spacing-4);
   color: var(--color-text-primary);
   background: var(--color-background);
   overflow: hidden;
@@ -849,7 +855,7 @@ md-circular-progress {
 /* 搜索区域固定高度 */
 .search-section {
   flex-shrink: 0;
-  padding: var(--spacing-3) 0;
+  padding: var(--spacing-3) var(--spacing-4) var(--spacing-3) var(--spacing-4);
 }
 
 /* Accordion 容器占据剩余空间 */
@@ -858,6 +864,8 @@ md-circular-progress {
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  margin-right: var(--spacing-4);
+  margin-left: var(--spacing-4);
   overflow: hidden;
 }
 

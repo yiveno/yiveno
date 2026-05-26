@@ -72,6 +72,7 @@ import {
 
   // 用户和账户
   User,
+  UserCircle,
   Users,
   UserPlus,
 
@@ -101,6 +102,7 @@ import {
   // 主题
   Sun,
   Moon,
+  Monitor,
 
   // 其他
   Tag,
@@ -116,6 +118,7 @@ import {
   Ban,
   // 通知
   Bell,
+  Inbox,
   // 用户操作
   LogOut,
   LogIn,
@@ -226,6 +229,7 @@ export const lucideIcons: Record<string, Component> = {
 
   // 用户和账户
   user: User,
+  'user-circle': UserCircle,
   account: User,
   users: Users,
   'user-plus': UserPlus,
@@ -263,6 +267,8 @@ export const lucideIcons: Record<string, Component> = {
   light: Sun,
   moon: Moon,
   dark: Moon,
+  monitor: Monitor,
+  system: Monitor,
 
   // 其他
   tag: Tag,
@@ -287,6 +293,7 @@ export const lucideIcons: Record<string, Component> = {
   // 通知
   bell: Bell,
   notification: Bell,
+  inbox: Inbox,
 
   // 用户操作
   'log-out': LogOut,

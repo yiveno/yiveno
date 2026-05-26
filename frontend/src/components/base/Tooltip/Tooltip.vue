@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useTimeoutFn } from '@vueuse/core'
 import type { TooltipProps } from './Tooltip.d'
 
@@ -13,7 +13,17 @@ const props = withDefaults(defineProps<TooltipProps>(), {
 })
 
 const show = ref(false)
+const triggerRef = ref<HTMLElement>()
 const tooltipRef = ref<HTMLElement>()
+const tooltipStyle = ref<Record<string, string>>({})
+
+const offsetMap: Record<NonNullable<TooltipProps['offset']>, number> = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 24
+}
 
 // 延迟显示
 const { start: startShowTimer, stop: stopShowTimer } = useTimeoutFn(
@@ -44,6 +54,46 @@ const tooltipClasses = computed(() => [
   }
 ])
 
+function updatePosition() {
+  const triggerEl = triggerRef.value
+  const tooltipEl = tooltipRef.value
+  if (!triggerEl || !tooltipEl) return
+
+  const rect = triggerEl.getBoundingClientRect()
+  const gap = offsetMap[props.offset] ?? offsetMap.sm
+  const tooltipRect = tooltipEl.getBoundingClientRect()
+
+  const style: Record<string, string> = {
+    position: 'fixed',
+    zIndex: '1000'
+  }
+
+  if (props.placement === 'bottom') {
+    style.top = `${Math.min(rect.bottom + gap, window.innerHeight - 8)}px`
+    style.left = `${rect.left + rect.width / 2}px`
+    style.transform = 'translateX(-50%)'
+  } else if (props.placement === 'left') {
+    style.top = `${rect.top + rect.height / 2}px`
+    style.left = `${Math.max(rect.left - tooltipRect.width - gap, 8)}px`
+    style.transform = 'translateY(-50%)'
+  } else if (props.placement === 'right') {
+    style.top = `${rect.top + rect.height / 2}px`
+    style.left = `${Math.min(rect.right + gap, window.innerWidth - 8)}px`
+    style.transform = 'translateY(-50%)'
+  } else {
+    style.top = `${Math.max(rect.top - tooltipRect.height - gap, 8)}px`
+    style.left = `${rect.left + rect.width / 2}px`
+    style.transform = 'translateX(-50%)'
+  }
+
+  tooltipStyle.value = style
+}
+
+async function refreshPosition() {
+  await nextTick()
+  updatePosition()
+}
+
 function handleMouseEnter() {
   stopHideTimer()
   startShowTimer()
@@ -72,10 +122,35 @@ function handleBlur() {
   stopShowTimer()
   startHideTimer()
 }
+
+watch(show, visible => {
+  if (visible) {
+    void refreshPosition()
+  }
+})
+
+function handleWindowChange() {
+  if (show.value) {
+    updatePosition()
+  }
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('scroll', handleWindowChange, true)
+  window.addEventListener('resize', handleWindowChange)
+}
+
+onBeforeUnmount(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('scroll', handleWindowChange, true)
+    window.removeEventListener('resize', handleWindowChange)
+  }
+})
 </script>
 
 <template>
   <div
+    ref="triggerRef"
     class="md-tooltip-wrapper"
     @mouseenter="handleMouseEnter"
     @mouseleave="handleMouseLeave"
@@ -83,12 +158,14 @@ function handleBlur() {
     @blur="handleBlur"
   >
     <slot :show="show" />
-
+  </div>
+  <Teleport to="body">
     <Transition name="md-tooltip">
       <div
         v-if="show"
         ref="tooltipRef"
         :class="tooltipClasses"
+        :style="tooltipStyle"
         role="tooltip"
         :aria-hidden="!show"
         @mouseenter="handleTooltipMouseEnter"
@@ -100,7 +177,7 @@ function handleBlur() {
         </div>
       </div>
     </Transition>
-  </div>
+  </Teleport>
 </template>
 
 <style scoped>

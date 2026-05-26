@@ -4,8 +4,8 @@
 -->
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
-import { shareNotificationService } from '@/application/share/share-notification-service'
-import type { ShareNotification } from '@/application/share/share-notification-service'
+import { inboxNotification } from '@/application/inbox-notification/inbox-notification-service'
+import type { InboxNotification } from '@/application/inbox-notification/inbox-notification-service'
 import { LucideIcon, EmptyState, SkeletonList } from '@/components'
 import { logger } from '@/infrastructure/logging/logger'
 
@@ -14,9 +14,9 @@ defineOptions({
 })
 
 // 从服务获取状态
-const notifications = computed(() => shareNotificationService.notifications.value)
-const isLoading = computed(() => shareNotificationService.isLoading.value)
-const error = computed(() => shareNotificationService.error.value)
+const notifications = computed(() => inboxNotification.notifications.value)
+const isLoading = computed(() => inboxNotification.isLoading.value)
+const error = computed(() => inboxNotification.error.value)
 
 /**
  * 格式化时间（相对时间）
@@ -43,27 +43,27 @@ function formatTime(dateString: string): string {
 
 /**
  * 处理通知点击
+ * Gmail 风格：点击未读通知时自动标记为已读
  */
-function handleNotificationClick(notification: ShareNotification): void {
+async function handleNotificationClick(notification: InboxNotification): Promise<void> {
   logger.info('NotificationList', '通知被点击', { notificationId: notification.id })
-  shareNotificationService.openNotification(notification)
-}
 
-/**
- * 标记为已读
- */
-async function handleMarkAsRead(notification: ShareNotification, event: Event): Promise<void> {
-  event.stopPropagation()
-  try {
-    await shareNotificationService.markAsRead(notification.id)
-  } catch (err) {
-    logger.error('NotificationList', '标记已读失败', err)
+  // 如果是未读通知，先标记为已读
+  if (!notification.is_read) {
+    try {
+      await inboxNotification.markAsRead(notification.id)
+    } catch (err) {
+      logger.error('NotificationList', '标记已读失败', err)
+    }
   }
+
+  // 打开通知详情
+  inboxNotification.openNotification(notification)
 }
 
 // 组件挂载时加载通知
 onMounted(() => {
-  shareNotificationService.fetchNotifications({ unreadOnly: false, limit: 20 })
+  inboxNotification.fetchNotifications({ unreadOnly: false, limit: 20 })
 })
 </script>
 
@@ -101,12 +101,9 @@ onMounted(() => {
         v-for="notification in notifications"
         :key="notification.id"
         class="notification-item"
-        :class="{ 'notification-item--unread': !notification.read }"
+        :class="{ 'notification-item--unread': !notification.is_read }"
         @click="handleNotificationClick(notification)"
       >
-        <!-- 未读指示器 -->
-        <div v-if="!notification.read" class="notification-item__indicator"></div>
-
         <!-- 发送者头像 -->
         <div class="notification-item__avatar">
           <LucideIcon name="user-circle" :size="40" />
@@ -120,19 +117,6 @@ onMounted(() => {
           </div>
           <p class="notification-item__message">{{ notification.message }}</p>
         </div>
-
-        <!-- 操作按钮 -->
-        <div class="notification-item__actions">
-          <md-icon-button
-            v-if="!notification.read"
-            class="notification-item__action"
-            :style="{ '--md-icon-button-icon-size': '18px' }"
-            title="标记为已读"
-            @click="handleMarkAsRead(notification, $event)"
-          >
-            <LucideIcon name="check" :size="18" />
-          </md-icon-button>
-        </div>
       </div>
     </div>
   </div>
@@ -142,17 +126,17 @@ onMounted(() => {
 .notification-list {
   display: flex;
   flex-direction: column;
-  width: 100%; /* ✅ 改为 100%，由父容器控制宽度 */
-  min-width: 260px;
-  max-height: 500px;
-  border-radius: var(--radius-md);
+  width: 100%;
+  min-width: 320px;
+  max-height: 470px;
+  border-radius: var(--radius-lg);
   background: var(--color-surface);
   overflow: hidden auto;
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-xl);
 }
 
 .notification-list__loading {
-  padding: var(--spacing-3);
+  padding: var(--spacing-2);
 }
 
 .notification-list__error,
@@ -162,7 +146,7 @@ onMounted(() => {
   justify-content: center;
   align-items: center;
   gap: var(--spacing-3);
-  padding: var(--spacing-6);
+  padding: var(--spacing-8);
   text-align: center;
 }
 
@@ -174,16 +158,23 @@ onMounted(() => {
 .notification-item {
   position: relative;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--spacing-3);
-  padding: var(--spacing-3);
+  min-height: 64px;
+  padding: var(--spacing-3) var(--spacing-4);
   border-bottom: 1px solid var(--color-border-subtle);
   cursor: pointer;
-  transition: background var(--transition-fast);
+  transition:
+    background var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .notification-item:hover {
   background: var(--color-surface-container-low);
+}
+
+.notification-item:active {
+  opacity: 0.8;
 }
 
 .notification-item:last-child {
@@ -191,21 +182,21 @@ onMounted(() => {
 }
 
 .notification-item--unread {
-  background: color-mix(in srgb, var(--color-primary) 5%, var(--color-surface));
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
 }
 
 .notification-item--unread:hover {
-  background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+  background: color-mix(in srgb, var(--color-primary) 16%, var(--color-surface));
 }
 
-.notification-item__indicator {
+.notification-item--unread::before {
   position: absolute;
-  top: var(--spacing-3);
-  left: var(--spacing-2);
-  width: 8px;
-  height: 8px;
-  border-radius: var(--radius-full);
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
   background: var(--color-primary);
+  content: '';
 }
 
 .notification-item__avatar {
@@ -218,6 +209,11 @@ onMounted(() => {
   border-radius: var(--radius-full);
   color: var(--color-text-secondary);
   background: var(--color-surface-container);
+  transition: all var(--transition-fast);
+}
+
+.notification-item:hover .notification-item__avatar {
+  background: var(--color-surface-container-high);
 }
 
 .notification-item__content {
@@ -231,20 +227,29 @@ onMounted(() => {
 .notification-item__header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: baseline;
   gap: var(--spacing-2);
 }
 
 .notification-item__title {
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   font-weight: var(--font-semibold);
+  line-height: var(--line-height-tight);
+  white-space: nowrap;
   color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notification-item--unread .notification-item__title {
+  font-weight: var(--font-bold);
 }
 
 .notification-item__time {
   flex-shrink: 0;
   font-size: var(--text-xs);
-  color: var(--color-text-secondary);
+  font-weight: var(--font-medium);
+  color: var(--color-text-tertiary);
 }
 
 .notification-item__message {
@@ -259,24 +264,21 @@ onMounted(() => {
   -webkit-box-orient: vertical;
 }
 
-.notification-item__actions {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  opacity: 0;
-  transition: opacity var(--transition-fast);
+/* 滚动条样式 */
+.notification-list::-webkit-scrollbar {
+  width: 6px;
 }
 
-.notification-item:hover .notification-item__actions {
-  opacity: 1;
+.notification-list::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.notification-item__action {
-  color: var(--color-text-secondary);
-  transition: color var(--transition-fast);
+.notification-list::-webkit-scrollbar-thumb {
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container-high);
 }
 
-.notification-item__action:hover {
-  color: var(--color-primary);
+.notification-list::-webkit-scrollbar-thumb:hover {
+  background: var(--color-surface-container-highest);
 }
 </style>

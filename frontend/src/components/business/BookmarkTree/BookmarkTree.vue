@@ -17,7 +17,7 @@ import type { BookmarkNode } from '@/types'
 import { logger } from '@/infrastructure/logging/logger'
 import TreeNode from './TreeNode.vue'
 import VirtualFolderList from './VirtualFolderList.vue'
-import { notificationService } from '@/application/notification/notification-service'
+import { message } from '@/application/message/message-service'
 import { t } from '@/utils/i18n-helpers'
 import { ContextMenuBuilder } from '@/core/bookmark/context-menu-config'
 import type { MenuItemConfig } from '@/core/bookmark/context-menu-config'
@@ -1124,8 +1124,8 @@ const handleContextMenuItemClick = (item: MenuItemConfig) => {
       emit('bookmarkCopyUrl', node)
       break
     case 'bookmark:toggle-favorite':
-      // 获取当前收藏状态（这里需要从 node 的 tags 中判断）
-      const isFavorite = node.tags?.includes('favorite') ?? false
+      // 获取当前收藏状态
+      const isFavorite = node.isFavorite ?? false
       emit('bookmarkToggleFavorite', node, !isFavorite)
       break
     case 'bookmark:share':
@@ -1169,7 +1169,7 @@ const openAllBookmarksInFolder = async (
 
   if (urls.length === 0) {
     logger.warn('BookmarkTree', '文件夹内没有书签', node.title)
-    notificationService.notify('文件夹内没有书签', { level: 'warning' })
+    message.warning('文件夹内没有书签')
     return
   }
 
@@ -1188,7 +1188,7 @@ const openAllBookmarksInFolder = async (
           url: urls // 直接传入所有 URL 数组
         })
 
-        notificationService.notify(`已在无痕窗口中打开 ${urls.length} 个书签`, { level: 'success' })
+        message.success(`已在无痕窗口中打开 ${urls.length} 个书签`)
         break
       }
 
@@ -1219,9 +1219,7 @@ const openAllBookmarksInFolder = async (
           })
         }
 
-        notificationService.notify(`已在标签页分组中打开 ${urls.length} 个书签`, {
-          level: 'success'
-        })
+        message.success(`已在标签页分组中打开 ${urls.length} 个书签`)
         break
       }
 
@@ -1237,7 +1235,7 @@ const openAllBookmarksInFolder = async (
           })
         }
 
-        notificationService.notify(`已打开 ${urls.length} 个书签`, { level: 'success' })
+        message.success(`已打开 ${urls.length} 个书签`)
         break
       }
 
@@ -1248,13 +1246,13 @@ const openAllBookmarksInFolder = async (
           url: urls // 直接传入所有 URL 数组
         })
 
-        notificationService.notify(`已在新窗口中打开 ${urls.length} 个书签`, { level: 'success' })
+        message.success(`已在新窗口中打开 ${urls.length} 个书签`)
         break
       }
     }
   } catch (error) {
     logger.error('BookmarkTree', '打开书签失败', error)
-    notificationService.notify('打开书签失败', { level: 'error' })
+    message.error('打开书签失败')
   }
 }
 
@@ -1721,9 +1719,7 @@ const expandAll = () => {
   const allFolderIds = getAllFolderIds(source)
   if (allFolderIds.length > 2000) {
     logger.warn('SimpleBookmarkTree', 'expandAll 被限制，节点过多')
-    notificationService.notify('节点过多，展开全部会影响性能，请按需展开。', {
-      level: 'warning'
-    })
+    message.warning('节点过多，展开全部会影响性能，请按需展开。')
     return
   }
   expandedFolders.value = new Set(allFolderIds)

@@ -171,48 +171,58 @@ frontend/src/
 
 #### P3 - 支撑功能（必要但非重点）
 
-- **设置页面**：AI API Key 配置、功能开关等用户配置项；向量嵌入（Embedding）的生成节奏与配额由产品侧默认策略管理，**不再**提供独立「Embedding 设置」页，相关说明集中在「语义搜索」等开关附近文案。
+- **设置页面**：AI 总开关与功能开关等用户配置项；包含「AI 自动添加到合适目录」开关，开启后添加书签将直接自动归类并给出结果通知；LLM / API Key 仅作为可选增强来源，不再绑定 AI 功能启用；向量嵌入（Embedding）的生成节奏与配额由产品侧默认策略管理，**不再**提供独立「Embedding 设置」页，相关说明集中在「语义搜索」等开关附近文案。
 - **数据统计**：Popup 页面展示书签总数、健康状态等基础指标
 
 ### 1.4 AI 能力架构策略
 
-作为个人开发者产品，AI 能力采用**隐私优先 + 成本可控**的分层策略：
+作为个人开发者产品，AcuityBookmarks 的 AI 能力遵循 **本地隐私优先、Embedding 为核心、LLM 渐进增强** 的策略。
 
-#### 第一层：本地检索（免费，始终可用）
+#### 第一层：本地 Embedding 与本地检索（核心主链路）
 
+- 基于 **ONNX / Hugging Face** 的本地向量嵌入（Embedding），用于语义搜索、相似度计算、自动归档、聚类整理
 - 基于 **FlexSearch** 的高性能模糊筛选（工程内部分 API 仍沿用历史命名 `fuse` / `Fuse`）
-- IndexedDB 持久化与索引；无需网络，无成本
+- IndexedDB 持久化与本地向量库；无需上传书签内容，无需联网，是产品 AI 体验的**基础能力层**
 
-#### 第二层：用户自带 API Key（推荐，隐私最优）
+#### 第二层：本地内置 AI（可选内部优化）
 
-- 用户在设置页填入自己的 OpenAI / Claude / Gemini API Key
-- 请求从用户浏览器直接发往 AI 服务商，产品服务器不经手任何书签数据
-- 隐私宣传点完整保留："你的书签数据只在你的设备和你选择的 AI 服务商之间流动"
+- 优先使用 Chrome Built-in AI（Summarizer API / Prompt API）进行摘要、长文本压缩等本地增强
+- 该层属于**本地增强能力**，目标是在不牺牲隐私的前提下提升 Embedding 和内容理解质量
+- 不在 UI 中强调具体模型概念，避免增加用户配置负担
 
-#### 第三层：产品托管 AI（付费订阅，便捷优先）
+#### 第三层：用户自带 API Key（可选增强，不是核心依赖）
 
-- 用户不想配置 API Key 时，使用产品提供的 AI 服务
-- 基于 Cloudflare Workers AI，成本极低
-- 付费订阅用户专属
+- 用户可在设置页填入自己的 OpenAI / Claude / Gemini / DeepSeek API Key
+- 请求从用户浏览器直接发往 AI 服务商，产品服务器不经手书签数据
+- 该层主要用于**高级增强任务**，如摘要润色、目录命名、复杂结构规划、解释说明
+- 该层是可选增强，而非产品核心能力成立的前提
+
+#### 当前产品判断
+
+- **Embedding 是 AI 核心引擎**：决定语义搜索、自动归档、相似推荐、聚类整理是否成立
+- **LLM 是增强模块**：主要用于抽象命名、自然语言解释、复杂规划等高阶体验
+- 当前阶段优先投入 **Embedding 的质量、速度、召回与排序优化**，在本地主链路足够强之后，再评估是否继续扩大 LLM 的职责范围
 
 #### 降级策略
 
 ```
-用户有 API Key → 使用用户 Key（语义搜索）
-用户无 API Key → 使用本地 FlexSearch 模糊筛选
-网络不可用    → 使用本地 IndexedDB 索引（关键词搜索）
+本地 Embedding 语义搜索 / 自动归档（主链路）
+    ↓ Embedding 不可用
+本地 FlexSearch 模糊筛选
+    ↓ 仍需兜底
+IndexedDB 关键词搜索
 ```
 
 #### Chrome Built-in AI 集成（内部优化）
 
-**目标**：利用 Chrome 138+ 的内置 AI 能力（Prompt API、Summarizer API 等）提升核心功能质量和性能，作为内部技术优化，不涉及用户 UI 层面。
+**目标**：利用 Chrome 138+ 的内置 AI 能力（Prompt API、Summarizer API 等）提升本地 Embedding 主链路的效果与体验，但不让产品核心能力依赖远程 LLM。
 
 **集成策略**：
 
 1. **Summarizer API（Chrome 138+）**
    - **用途**：书签摘要生成、长文本预处理、文件夹描述生成
-   - **优势**：专用摘要模型，质量比通用 Prompt API 高 30-50%，速度快 2-3x
-   - **降级**：Summarizer API 不可用时自动降级到 Prompt API 或用户自带 Key
+   - **优势**：专用摘要模型，质量比通用 Prompt API 高，且完全本地运行
+   - **定位**：作为 Embedding 与内容理解的本地增强层，而非独立产品卖点
    - **实现位置**：
      - `frontend/src/infrastructure/llm/builtin-summarizer-client.ts` - Summarizer API 客户端
      - `frontend/src/application/ai/ai-app-service.ts` - 书签摘要生成（优先使用 Summarizer API）
@@ -220,34 +230,33 @@ frontend/src/
      - `frontend/src/application/folder/folder-description-service.ts` - 文件夹描述生成
 
 2. **Prompt API（Chrome 127+）**
-   - **用途**：通用文本生成、标签生成、语义搜索增强
-   - **降级**：Prompt API 不可用时使用用户自带 Key 或产品托管 AI
+   - **用途**：通用文本生成、标签生成、少量解释型增强
+   - **定位**：本地可用时优先，本地不可用时再考虑用户自带 Key
 
 3. **技术收益**（内部优化，用户无感知）：
-   - 书签摘要质量提升 30-50%
-   - 书签分类准确率提升 15-20%（长文本压缩后 Embedding 质量更高）
-   - Token 超限率降至 0%（长文本智能压缩）
-   - 代码复杂度降低 60%（删除 Prompt 模板工程）
+   - 提升长文本进入 Embedding 前的压缩质量
+   - 改善自动归档与聚类整理的输入质量
+   - 在不上传数据的前提下增强摘要和说明能力
 
 4. **用户覆盖率**：
-   - 桌面端：85-90%（Chrome 138+ 用户）
+   - 桌面端：受 Chrome 版本约束
    - 移动端：0%（不支持）
-   - 整体：约 60-70%
+   - 整体：属于增强项，不影响产品核心主链路
 
 5. **隐私保护**：
    - Chrome Built-in AI 完全在本地运行，数据不上传
    - 与"隐私优先"产品定位完全一致
 
-**架构位置**：Chrome Built-in AI 作为 **第零层**（最优先），完整降级链路为：
+**架构位置**：Chrome Built-in AI 属于**本地主链路增强层**，不改变产品“Embedding 本地优先”的核心架构：
 
 ```
-Chrome Built-in AI（免费，本地，质量高）
+本地 Embedding（核心）
+    ↓ 需要长文本压缩/摘要增强
+Chrome Built-in AI（本地增强）
     ↓ 不可用
-用户自带 API Key（隐私最优）
-    ↓ 未配置
-产品托管 AI（付费订阅）
-    ↓ 网络不可用
-本地 FlexSearch 模糊筛选（始终可用）
+保持原始本地 Embedding / 规则链路
+    ↓ 如需更高阶生成与命名
+用户自带 API Key（可选增强）
 ```
 
 ---
@@ -386,13 +395,13 @@ frontend/src/
 
 ```
 书签摘要生成：
-  Summarizer API (tl;dr) → Prompt API → 用户 Key → 产品托管 AI
+  Summarizer API (tl;dr) → Prompt API → 用户 Key（可选增强）
 
 长文本预处理：
   Summarizer API (key-points) → 简单截断
 
 文件夹描述生成：
-  Summarizer API (headline) → Prompt API → 用户 Key
+  Summarizer API (headline) → Prompt API → 用户 Key（可选增强）
 ```
 
 **数据流**：
@@ -400,17 +409,19 @@ frontend/src/
 ```
 用户操作（如：收藏书签）
     ↓
-Application Service（如：ai-app-service）
+Application Service（如：ai-app-service / folder-vector-service）
     ↓
-LLM Adapter（选择最优提供者）
+本地 Embedding / 本地规则链路（核心）
+    ↓ 如需摘要、压缩、说明等增强
+Built-in AI / LLM Adapter（可选增强）
     ↓
 优先：Summarizer API（Chrome 138+，本地，免费）
     ↓ 不可用
 降级：Prompt API（Chrome 127+）
-    ↓ 不可用
-降级：用户自带 Key（OpenAI/Claude/Gemini）
-    ↓ 未配置
-降级：产品托管 AI（Cloudflare Workers AI）
+    ↓ 仍不可用
+保持本地 Embedding / 规则链路
+    ↓ 仅在需要更高阶生成能力时
+用户自带 Key（OpenAI/Claude/Gemini/DeepSeek）
     ↓
 返回结果 → 存储到 IndexedDB → 更新 UI
 ```
@@ -662,7 +673,7 @@ const virtualizer = useVirtualizer({
 
 1. **关键词搜索**：基于 IndexedDB 索引的精确匹配
 2. **模糊搜索**：基于 Fuse.js 的模糊匹配
-3. **语义搜索**：基于 LLM 的语义理解（需要后端支持）
+3. **语义搜索**：基于本地 Embedding 的向量相似度检索（主链路）
 
 ```typescript
 // 搜索流程
@@ -2158,11 +2169,6 @@ class LLMAdapter {
       return await this.userClient.complete(prompt, options)
     }
 
-    // 4. 降级：产品托管 AI（付费订阅）
-    if (this.isSubscribed()) {
-      return await this.hostedClient.complete(prompt, options)
-    }
-
     throw new Error('No LLM provider available')
   }
 }
@@ -2490,7 +2496,7 @@ bun run audit:lhci:summary      # 审计报告摘要
 | **traitTags**      | 书签特征标签（duplicate, invalid, internal）               |
 | **Summarizer API** | Chrome 138+ 内置的摘要生成 API，用于书签摘要和长文本预处理 |
 | **Prompt API**     | Chrome 127+ 内置的通用文本生成 API                         |
-| **Embedding**      | 文本向量化，用于语义搜索和书签分类                         |
+| **Embedding**      | 文本向量化，用于语义搜索、相似度计算、自动归档与聚类整理   |
 | **降级策略**       | AI 能力不可用时自动切换到备选方案的机制                    |
 
 ---
@@ -2577,13 +2583,15 @@ bun run stylelint:fix      # 样式检查
 **降级策略**：
 
 ```
+本地 Embedding（核心）
+    ↓ 需要长文本压缩/摘要
 Summarizer API (Chrome 138+, 本地, 免费)
     ↓ 不可用
 Prompt API (Chrome 127+)
-    ↓ 不可用
-用户自带 API Key (OpenAI/Claude/Gemini)
-    ↓ 未配置
-产品托管 AI (Cloudflare Workers AI, 付费)
+    ↓ 仍不可用
+保持原始本地 Embedding / 规则链路
+    ↓ 仅在需要更高阶生成能力时
+用户自带 API Key (OpenAI/Claude/Gemini/DeepSeek)
 ```
 
 **用户覆盖率**：

@@ -295,7 +295,7 @@ export const shareRouter = router({
   getShareByCode: publicProcedure
     .input(
       z.object({
-        shortCode: z.string().min(8).max(10) // 允许 8-10 位字符（兼容旧数据）
+        shortCode: z.string().min(6).max(10) // 允许 6-10 位字符（兼容测试数据）
       })
     )
     .query(async ({ input, ctx }) => {
@@ -640,7 +640,7 @@ export const shareRouter = router({
         .order('created_at', { ascending: false })
 
       if (unreadOnly) {
-        query = query.eq('read', false)
+        query = query.eq('is_read', false)
       }
 
       const { data: notifications, error: notificationsError } = await query.range(
@@ -692,7 +692,7 @@ export const shareRouter = router({
       // 更新通知状态
       const { error: updateError } = await supabase
         .from('notifications')
-        .update({ read: true })
+        .update({ is_read: true, read_at: new Date().toISOString() })
         .eq('id', notificationId)
         .eq('user_id', user.id)
 
@@ -740,7 +740,7 @@ export const shareRouter = router({
         .from('notifications')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id)
-        .eq('read', false)
+        .eq('is_read', false)
 
       if (countError) {
         throw new Error(`获取未读数量失败: ${countError.message}`)

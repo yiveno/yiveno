@@ -178,6 +178,7 @@
   );
   --color-scrim-012: color-mix(in srgb, var(--md-sys-color-scrim) 12%, transparent);
   --color-scrim-35: color-mix(in srgb, var(--md-sys-color-scrim) 35%, transparent);
+  --color-scrim-55: color-mix(in srgb, var(--md-sys-color-scrim) 55%, transparent);
   --color-shadow-003: color-mix(in srgb, var(--md-sys-color-shadow) 3%, transparent);
   --color-shadow-005: color-mix(in srgb, var(--md-sys-color-shadow) 5%, transparent);
   --color-shadow-006: color-mix(in srgb, var(--md-sys-color-shadow) 6%, transparent);

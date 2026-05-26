@@ -7,8 +7,7 @@ defineOptions({
 import { LucideIcon, Tooltip } from '@/components'
 import { settingsAppService } from '@/application/settings/settings-app-service'
 import { notificationService } from '@/application/notification/notification-service'
-// ⚠️ 不要从 @/application 导入 notifySuccess，因为它在 notification-service 中，依赖 Vue
-import { notifySuccess } from '@/application/notification/notification-service'
+import { message } from '@/application/message/message-service'
 import { t } from '@/utils/i18n-helpers'
 
 const mirror = ref<boolean>(true)
@@ -78,7 +77,7 @@ async function handleDoNotDisturbToggle(event: Event) {
     // 同步到通知服务
     notificationService.setDoNotDisturb(doNotDisturb.value)
 
-    notifySuccess(doNotDisturb.value ? '勿扰模式：已开启' : '勿扰模式：已关闭', '通知')
+    message.success(doNotDisturb.value ? '勿扰模式：已开启' : '勿扰模式：已关闭')
   } catch {
     /* 保留手动保存按钮 */
   }
@@ -95,7 +94,7 @@ async function handleMirrorToggle(event: Event) {
       'boolean',
       '后台通知提醒'
     )
-    notifySuccess(mirror.value ? '后台通知提醒：已开启' : '后台通知提醒：已关闭', '通知')
+    message.success(mirror.value ? '后台通知提醒：已开启' : '后台通知提醒：已关闭')
   } catch {
     /* 保留手动保存按钮 */
   }
@@ -123,7 +122,7 @@ async function handleDurationChange(event: Event) {
       '通知显示时长'
     )
 
-    notifySuccess(`通知显示时长：${notificationDuration.value} 秒`, '通知')
+    message.success(`通知显示时长：${notificationDuration.value} 秒`)
   } catch {
     /* 保留手动保存按钮 */
   }

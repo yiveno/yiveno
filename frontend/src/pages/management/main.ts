@@ -8,12 +8,13 @@ import '@acuity-bookmarks/design-tokens/css/semantic-colors.css'
 import '@/assets/main.css' // Import shared styles
 import '@/assets/fonts.css' // Import font system
 import '@/assets/smart-fonts.css' // Import smart font system
-import { notifyInfo } from '@/application/notification/notification-service'
+import { message } from '@/application/message/message-service'
 import { installQueryClient } from '@/infrastructure/query/plugin'
 import { initializeChromeMessageBridge } from '@/infrastructure/events/chrome-message-bridge'
 import { logger } from '@/infrastructure/logging/logger'
 import { performanceMonitor } from '@/utils/performance-monitor'
 import { preloadMaterialWebComponents } from '@/infrastructure/material/preload-material-web'
+import { installMessage } from '@/application/message/install'
 
 // 懒加载字体服务、跨页面同步和收藏服务
 const loadFontService = () => import('@/application/font/font-service')
@@ -35,6 +36,9 @@ async function initializeApp() {
   performanceMonitor.initialize()
 
   try {
+    // ✅ 安装 Message 组件（全局轻量级提示）
+    installMessage()
+
     // 懒加载字体服务
     const { fontService, initializeSmartFonts } = await loadFontService()
 
@@ -94,7 +98,7 @@ if (typeof window !== 'undefined') {
   const origAlert = window.alert?.bind(window)
   window.alert = (msg?: string | number | boolean | null | undefined) => {
     try {
-      notifyInfo(String(msg))
+      message.info(String(msg))
     } catch {}
     if (import.meta.env.DEV && origAlert) origAlert(msg)
   }

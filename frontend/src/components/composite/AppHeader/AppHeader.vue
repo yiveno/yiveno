@@ -2,10 +2,13 @@
 import ThemeToggle from '@/components/composite/ThemeToggle/ThemeToggle.vue'
 import UserMenu from '@/components/composite/UserMenu/UserMenu.vue'
 import LucideIcon from '@/components/base/LucideIcon/LucideIcon.vue'
+import NotificationList from '@/components/business/NotificationList/NotificationList.vue'
 import { ref, computed, toRefs, onMounted, onUnmounted } from 'vue'
 import { logger } from '@/infrastructure/logging/logger'
 import { onEvent } from '@/infrastructure/events/event-bus'
 import { globalStateManager } from '@/infrastructure/global-state/global-state-manager'
+import { inboxNotification } from '@/application/inbox-notification/inbox-notification-service'
+import { useSupabaseAuth } from '@/composables/useSupabaseAuth'
 
 const props = withDefaults(
   defineProps<{
@@ -14,27 +17,41 @@ const props = withDefaults(
     showName?: boolean
     showTheme?: boolean
     showSettings?: boolean
+    showNotification?: boolean
     showAccount?: boolean
   }>(),
   {
     showSidePanelToggle: true,
     showLogo: true,
-    showName: true,
+    showName: false,
     showTheme: true,
     showSettings: true,
+    showNotification: false,
     showAccount: true
   }
 )
 
-const { showSidePanelToggle, showLogo, showName, showTheme, showSettings, showAccount } =
-  toRefs(props)
+const {
+  showSidePanelToggle,
+  showLogo,
+  showName,
+  showTheme,
+  showSettings,
+  showNotification,
+  showAccount
+} = toRefs(props)
 
-// 当前主题
+// ==================== 认证状态 ====================
+const { isAuthenticated } = useSupabaseAuth()
+
+// 通知按钮只在登录状态下显示
+const shouldShowNotification = computed(() => showNotification.value && isAuthenticated.value)
+
+// ==================== 主题相关 ====================
 const currentTheme = ref<'light' | 'dark' | 'system'>('system')
 
 // 根据主题动态切换 logo
 const logoSrc = computed(() => {
-  // 如果是 system 模式，根据实际系统主题决定
   if (currentTheme.value === 'system') {
     const systemIsDark = window.matchMedia('(prefers-color-scheme: dark)').matches
     return systemIsDark ? '/logo-dark.webp' : '/logo.webp'
@@ -42,9 +59,39 @@ const logoSrc = computed(() => {
   return currentTheme.value === 'dark' ? '/logo-dark.webp' : '/logo.webp'
 })
 
-/**
- * 头部样式类，根据是否展示左侧面板按钮动态调整列布局。
- */
+// ==================== 通知相关 ====================
+const showNotificationList = ref(false)
+const unreadCount = computed(() => inboxNotification.unreadCount.value)
+const notificationWrapperRef = ref<HTMLElement | null>(null)
+const isBellRinging = ref(false)
+
+function toggleNotificationList(): void {
+  showNotificationList.value = !showNotificationList.value
+  logger.info('AppHeader', '切换通知列表', { show: showNotificationList.value })
+
+  if (showNotificationList.value) {
+    isBellRinging.value = true
+    setTimeout(() => {
+      isBellRinging.value = false
+    }, 500)
+  }
+}
+
+function closeNotificationList(): void {
+  showNotificationList.value = false
+}
+
+function handleClickOutside(event: MouseEvent): void {
+  if (
+    showNotificationList.value &&
+    notificationWrapperRef.value &&
+    !notificationWrapperRef.value.contains(event.target as Node)
+  ) {
+    closeNotificationList()
+  }
+}
+
+// ==================== 样式类 ====================
 const headerClasses = computed(() => [
   'app-header',
   {
@@ -52,13 +99,9 @@ const headerClasses = computed(() => [
   }
 ])
 
-// 固定提示文案
+// ==================== 侧边栏 ====================
 const sidePanelTooltip = '打开侧边栏'
 
-/**
- * 打开侧边栏
- * 注意：只负责打开，不处理关闭逻辑（side-panel 有自己的关闭按钮）
- */
 const handleOpenSidePanel = async () => {
   try {
     if (!chrome?.sidePanel) {
@@ -76,7 +119,6 @@ const handleOpenSidePanel = async () => {
       return
     }
 
-    // 打开侧边栏
     await chrome.sidePanel.setOptions({
       tabId: currentTab.id,
       path: 'side-panel.html',
@@ -96,30 +138,20 @@ const handleOpenSidePanel = async () => {
   }
 }
 
-/**
- * 打开设置页面
- * 智能行为：
- * - 如果 settings 页面已打开，则切换到该标签页
- * - 如果未打开，则打开新标签页
- *
- * 通过 background script 处理，确保有足够的权限访问所有标签页
- */
+// ==================== 设置 ====================
 const handleOpenSettings = async () => {
   try {
-    // 通过消息机制调用 background script 的智能打开功能
     if (chrome?.runtime?.sendMessage) {
       await chrome.runtime.sendMessage({
         type: 'OPEN_SETTINGS_PAGE'
       })
     } else {
-      // 降级方案：直接打开新标签页
       const settingsUrl = chrome?.runtime?.getURL
         ? chrome.runtime.getURL('settings.html')
         : '/settings.html'
       window.open(settingsUrl, '_blank')
     }
   } catch (error) {
-    // 降级方案：直接打开新标签页
     logger.warn('AppHeader', 'Settings', 'Failed to open settings via background', error)
     const fallbackUrl = chrome?.runtime?.getURL
       ? chrome.runtime.getURL('settings.html')
@@ -128,7 +160,7 @@ const handleOpenSettings = async () => {
   }
 }
 
-// 初始化主题
+// ==================== 初始化 ====================
 const initTheme = async () => {
   try {
     await globalStateManager.initialize()
@@ -138,9 +170,22 @@ const initTheme = async () => {
   }
 }
 
-// 组件挂载时检查主题
-onMounted(() => {
+onMounted(async () => {
+  // 初始化主题
   initTheme()
+
+  // 初始化通知服务（只在登录状态下）
+  if (shouldShowNotification.value) {
+    try {
+      await inboxNotification.initialize()
+      logger.info('AppHeader', '通知服务已初始化')
+    } catch (error) {
+      logger.warn('AppHeader', '通知服务初始化失败', error)
+    }
+
+    // 监听点击外部关闭通知列表
+    document.addEventListener('click', handleClickOutside)
+  }
 
   // 监听主题切换事件
   const unsubscribeTheme = onEvent('theme:changed', data => {
@@ -150,7 +195,7 @@ onMounted(() => {
     }
   })
 
-  // 监听页面可见性变化（当从其他页面返回时刷新主题）
+  // 监听页面可见性变化
   const handleVisibilityChange = () => {
     if (!document.hidden) {
       initTheme()
@@ -162,6 +207,7 @@ onMounted(() => {
   // 清理函数
   onUnmounted(() => {
     document.removeEventListener('visibilitychange', handleVisibilityChange)
+    document.removeEventListener('click', handleClickOutside)
     unsubscribeTheme()
   })
 })
@@ -198,6 +244,30 @@ onMounted(() => {
       >
         <LucideIcon name="settings" :size="30" />
       </md-icon-button>
+
+      <!-- 通知按钮（只在登录状态下显示） -->
+      <div v-if="shouldShowNotification" ref="notificationWrapperRef" class="notification-wrapper">
+        <md-icon-button
+          class="app-header__action notification-button"
+          :class="{ 'bell-ringing': isBellRinging }"
+          :style="{ '--md-icon-button-icon-size': '30px' }"
+          title="通知"
+          aria-label="通知"
+          @click="toggleNotificationList"
+        >
+          <LucideIcon name="bell" :size="30" />
+          <!-- 未读数量徽章 -->
+          <span v-if="unreadCount > 0" class="notification-badge">
+            {{ unreadCount > 99 ? '99+' : unreadCount }}
+          </span>
+        </md-icon-button>
+
+        <!-- 通知列表浮窗 -->
+        <div v-if="showNotificationList" class="notification-popover">
+          <NotificationList @close="closeNotificationList" />
+        </div>
+      </div>
+
       <slot name="actions" />
       <UserMenu v-if="showAccount" :size="30" />
     </div>
@@ -205,6 +275,53 @@ onMounted(() => {
 </template>
 
 <style scoped>
+/* 铃铛摇晃动画 */
+@keyframes bell-ring {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  10% {
+    transform: rotate(14deg);
+  }
+
+  20% {
+    transform: rotate(-12deg);
+  }
+
+  30% {
+    transform: rotate(10deg);
+  }
+
+  40% {
+    transform: rotate(-8deg);
+  }
+
+  50% {
+    transform: rotate(6deg);
+  }
+
+  60% {
+    transform: rotate(-4deg);
+  }
+
+  70% {
+    transform: rotate(2deg);
+  }
+
+  80% {
+    transform: rotate(-1deg);
+  }
+
+  90% {
+    transform: rotate(0.5deg);
+  }
+
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
 .app-header {
   position: sticky;
   top: 0;
@@ -269,5 +386,58 @@ onMounted(() => {
 
 .app-header__action:hover {
   color: var(--color-primary);
+}
+
+/* ==================== 通知相关样式 ==================== */
+
+/* 通知包装器 */
+.notification-wrapper {
+  position: relative;
+}
+
+/* 通知按钮 */
+.notification-button {
+  position: relative;
+}
+
+/* 未读数量徽章 */
+.notification-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border: 2px solid var(--color-surface);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: var(--font-bold);
+  line-height: 1;
+  color: var(--color-on-error);
+  background: var(--color-error);
+  pointer-events: none;
+}
+
+/* 通知列表浮窗 */
+.notification-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: -13px;
+  z-index: 1000;
+  width: 360px;
+  max-height: 480px;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.notification-button.bell-ringing {
+  transform-origin: center top;
+  animation: bell-ring 0.5s var(--md-sys-motion-easing-emphasized);
 }
 </style>

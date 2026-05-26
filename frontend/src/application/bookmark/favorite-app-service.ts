@@ -187,8 +187,9 @@ class FavoriteAppService {
   /**
    * 添加书签到收藏
    * @param bookmarkId 书签ID
+   * @param skipDuplicationCheck 是否跳过去重检查（默认 false）
    */
-  async addToFavorites(bookmarkId: string): Promise<boolean> {
+  async addToFavorites(bookmarkId: string, skipDuplicationCheck = false): Promise<boolean> {
     try {
       logger.info('FavoriteAppService', '⭐ 添加收藏:', bookmarkId)
 
@@ -209,6 +210,33 @@ class FavoriteAppService {
       if (bookmark.isFavorite) {
         logger.debug('FavoriteAppService', '📝 书签已在收藏中，跳过:', bookmarkId)
         return true
+      }
+
+      // ✅ 去重检查（如果未跳过且在浏览器环境中）
+      const isServiceWorker = typeof self !== 'undefined' && 'ServiceWorkerGlobalScope' in self
+      const isBrowserEnv =
+        !isServiceWorker && typeof window !== 'undefined' && typeof confirm === 'function'
+
+      if (!skipDuplicationCheck && bookmark.url && isBrowserEnv) {
+        // 获取当前所有收藏书签
+        const favorites = await this.getFavorites()
+
+        // 检查是否有相同 URL
+        const duplicate = favorites.find(f => f.url === bookmark.url)
+
+        if (duplicate) {
+          // 弹出确认对话框
+          const confirmed = confirm(
+            `收藏夹中已存在相同书签：\n📌 ${duplicate.title}\n\n是否仍要添加？`
+          )
+
+          if (!confirmed) {
+            logger.info('FavoriteAppService', '用户取消添加重复书签')
+            return false
+          }
+
+          logger.info('FavoriteAppService', '用户确认添加重复书签')
+        }
       }
 
       // 获取当前最大的 favoriteOrder
@@ -237,9 +265,6 @@ class FavoriteAppService {
 
       // ✅ 同步更新 bookmarkStore（确保 UI 立即响应）
       // ⚠️ 只在浏览器环境中更新，Service Worker 中跳过
-      // ⚠️ 使用 self 检查是否在 Service Worker 环境中
-      const isServiceWorker = typeof self !== 'undefined' && 'ServiceWorkerGlobalScope' in self
-
       if (!isServiceWorker && typeof window !== 'undefined' && typeof document !== 'undefined') {
         try {
           const { useBookmarkStore } = await import('@/stores/bookmarkStore')

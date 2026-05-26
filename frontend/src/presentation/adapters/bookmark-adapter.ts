@@ -10,7 +10,7 @@
 
 import { bookmarkAppService } from '@/application/bookmark/bookmark-app-service'
 import { bookmarkSearchService } from '@/application/query/bookmark-search-service'
-import { notificationService } from '@/application/notification/notification-service'
+import { message } from '@/application/message/message-service'
 import { logger } from '@/infrastructure/logging/logger'
 import type { BookmarkRecord } from '@/infrastructure/indexeddb/types'
 import type { EnhancedSearchResult } from '@/core/query-engine'
@@ -55,9 +55,7 @@ export class BookmarkPresentationAdapter {
 
       // 统一错误处理
       logger.error('BookmarkAdapter', '获取书签失败', result.error)
-      notificationService.notify('获取书签失败，请稍后重试', {
-        level: 'error'
-      })
+      message.error('获取书签失败，请稍后重试')
 
       return {
         data: null,
@@ -66,9 +64,7 @@ export class BookmarkPresentationAdapter {
       }
     } catch (error) {
       logger.error('BookmarkAdapter', '获取书签异常', error)
-      notificationService.notify('获取书签时发生错误', {
-        level: 'error'
-      })
+      message.error('获取书签时发生错误')
 
       return {
         data: null,
@@ -95,9 +91,7 @@ export class BookmarkPresentationAdapter {
         }
       }
 
-      notificationService.notify('书签不存在', {
-        level: 'warning'
-      })
+      message.warning('书签不存在')
       return {
         data: null,
         error: new Error('Bookmark not found'),
@@ -105,9 +99,7 @@ export class BookmarkPresentationAdapter {
       }
     } catch (error) {
       logger.error('BookmarkAdapter', '获取书签失败', { id, error })
-      notificationService.notify('获取书签时发生错误', {
-        level: 'error'
-      })
+      message.error('获取书签时发生错误')
 
       return {
         data: null,
@@ -140,9 +132,7 @@ export class BookmarkPresentationAdapter {
 
     if (!result.ok) {
       logger.error('BookmarkAdapter', '筛选书签失败', { query, error: result.error })
-      notificationService.notify('筛选失败，请稍后重试', {
-        level: 'error'
-      })
+      message.error('筛选失败，请稍后重试')
       return []
     }
 
@@ -170,9 +160,7 @@ export class BookmarkPresentationAdapter {
         parentId,
         error: result.error
       })
-      notificationService.notify('获取子节点失败', {
-        level: 'error'
-      })
+      message.error('获取子节点失败')
 
       return {
         data: null,
@@ -181,9 +169,7 @@ export class BookmarkPresentationAdapter {
       }
     } catch (error) {
       logger.error('BookmarkAdapter', '获取子节点异常', { parentId, error })
-      notificationService.notify('获取子节点时发生错误', {
-        level: 'error'
-      })
+      message.error('获取子节点时发生错误')
 
       return {
         data: null,

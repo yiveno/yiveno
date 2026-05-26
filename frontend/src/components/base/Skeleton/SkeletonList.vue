@@ -19,10 +19,10 @@ defineOptions({ name: 'SkeletonList' })
 
 const props = withDefaults(defineProps<SkeletonListProps>(), {
   count: 3,
-  itemHeight: '60px',
-  gap: 'md',
+  itemHeight: '56px', // ✅ 改为 56px，与通知列表一致
+  gap: 'none', // ✅ 改为 none，因为使用 border-bottom 分隔
   showAvatar: true,
-  avatarSize: 40,
+  avatarSize: 32, // ✅ 改为 32，与通知列表一致
   showSecondary: true,
   showActions: false,
   animation: 'pulse'
@@ -126,9 +126,10 @@ const itemStyles = computed(() => ({
 /* ========== 列表项 ========== */
 .skeleton-list__item {
   display: flex;
-  align-items: flex-start; /* ✅ 改为 flex-start，与真实数据对齐 */
-  gap: var(--spacing-3);
-  padding: var(--spacing-3);
+  align-items: center; /* ✅ 改为 center，与通知列表一致 */
+  gap: var(--spacing-sm); /* ✅ 改为 sm，与通知列表一致 */
+  min-height: 56px; /* ✅ 设置最小高度，与通知列表一致 */
+  padding: var(--spacing-2) var(--spacing-sm); /* ✅ 调整内边距，与通知列表一致 */
 
   /* ✅ 移除 border-radius，添加底部边框，与真实数据一致 */
   border-bottom: 1px solid var(--color-border-subtle);
@@ -152,7 +153,7 @@ const itemStyles = computed(() => ({
   display: flex;
   flex-direction: column;
   flex: 1;
-  gap: var(--spacing-1); /* ✅ 改为 spacing-1，与真实数据一致 */
+  gap: var(--spacing-0-5); /* ✅ 改为 spacing-0-5，与通知列表一致 */
   min-width: 0; /* 防止内容溢出 */
 }
 

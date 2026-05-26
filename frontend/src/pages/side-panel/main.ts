@@ -10,10 +10,11 @@ import '@/assets/fonts.css'
 import '@/assets/smart-fonts.css'
 import { initializeSmartFonts, fontService } from '@/application/font/font-service'
 import { logger } from '@/infrastructure/logging/logger'
-import { notifyInfo } from '@/application/notification/notification-service'
+import { message } from '@/application/message/message-service'
 import { initializeChromeMessageBridge } from '@/infrastructure/events/chrome-message-bridge'
 import { initCrossPageSync } from '@/composables/useCrossPageSync'
 import { preloadMaterialWebComponents } from '@/infrastructure/material/preload-material-web'
+import { installMessage } from '@/application/message/install'
 
 logger.debug('SidePanel', 'Init', '恢复完整的初始化逻辑')
 
@@ -25,6 +26,9 @@ initializeChromeMessageBridge() // 书签变更事件桥接（data:synced 等）
 
 // 初始化Side Panel应用
 async function initializeSidePanel() {
+  // ✅ 安装 Message 组件（全局轻量级提示）
+  installMessage()
+
   fontService.injectDynamicFontLink()
   try {
     // 启动基础字体系统
@@ -57,7 +61,7 @@ if (typeof window !== 'undefined') {
   const origAlert = window.alert?.bind(window)
   window.alert = (msg?: string | number | boolean | null | undefined) => {
     try {
-      notifyInfo(String(msg))
+      message.info(String(msg))
     } catch {}
     if (import.meta.env.DEV && origAlert) origAlert(msg)
   }

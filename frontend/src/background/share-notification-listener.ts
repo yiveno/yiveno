@@ -1,6 +1,6 @@
 /**
- * 分享通知监听器
- * 在 Background Script 中运行，监听新的分享通知
+ * 收件箱通知监听器
+ * 在 Background Script 中运行，监听新的收件箱通知
  *
  * ⚠️ Service Worker 环境限制：
  * - 不能导入任何包含 Vue 的模块
@@ -9,24 +9,13 @@
  */
 
 import { logger } from '@/infrastructure/logging/logger'
-import type * as TrpcService from '@/services/trpc'
-
-// ⚠️ 延迟导入 trpc，避免在模块加载时就引入依赖
-let trpcModule: typeof TrpcService | null = null
-
-async function getTrpc() {
-  if (!trpcModule) {
-    // eslint-disable-next-line require-atomic-updates -- 模块加载是原子操作，不会有竞态条件
-    trpcModule = await import('@/services/trpc')
-  }
-  return trpcModule.trpc
-}
+import { trpc } from '@/services/trpc'
 
 /**
- * 初始化分享通知监听器
+ * 初始化收件箱通知监听器
  */
 export function initShareNotificationListener() {
-  logger.info('ShareNotificationListener', '初始化分享通知监听器')
+  logger.info('InboxNotificationListener', '初始化收件箱通知监听器')
 
   // 定期检查新通知（每 5 分钟）
   const CHECK_INTERVAL = 5 * 60 * 1000 // 5 分钟
@@ -41,13 +30,13 @@ export function initShareNotificationListener() {
 
   // 监听扩展安装/更新事件
   chrome.runtime.onInstalled.addListener(() => {
-    logger.info('ShareNotificationListener', '扩展已安装/更新，检查通知')
+    logger.info('InboxNotificationListener', '扩展已安装/更新，检查通知')
     checkNewNotifications()
   })
 
   // 监听浏览器启动事件
   chrome.runtime.onStartup.addListener(() => {
-    logger.info('ShareNotificationListener', '浏览器已启动，检查通知')
+    logger.info('InboxNotificationListener', '浏览器已启动，检查通知')
     checkNewNotifications()
   })
 }
@@ -63,27 +52,24 @@ async function checkNewNotifications() {
     }
 
     if (!result.supabase_session?.access_token) {
-      logger.debug('ShareNotificationListener', '用户未登录，跳过通知检查')
+      logger.debug('InboxNotificationListener', '用户未登录，跳过通知检查')
       return
     }
 
     const accessToken = result.supabase_session.access_token
 
-    // ⚠️ 延迟导入 trpc，避免在模块加载时就引入依赖
-    const trpc = await getTrpc()
-
     // 获取未读通知数量
     const unreadCountResult = await trpc.share.getUnreadCount.query({ accessToken })
 
     if (!unreadCountResult.success) {
-      logger.error('ShareNotificationListener', '获取未读数量失败')
+      logger.error('InboxNotificationListener', '获取未读数量失败')
       return
     }
 
     // ✅ 修复：count 为 0 是正常情况，不是错误
     const unreadCount = unreadCountResult.data.count ?? 0
 
-    logger.info('ShareNotificationListener', '未读通知数量', { unreadCount })
+    logger.info('InboxNotificationListener', '未读通知数量', { unreadCount })
 
     // 更新 Badge
     await updateBadge(unreadCount)
@@ -97,7 +83,7 @@ async function checkNewNotifications() {
       })
 
       if (!notificationsResult.success) {
-        logger.error('ShareNotificationListener', '获取通知列表失败')
+        logger.error('InboxNotificationListener', '获取通知列表失败')
         return
       }
 
@@ -115,7 +101,7 @@ async function checkNewNotifications() {
       }
     }
   } catch (error) {
-    logger.error('ShareNotificationListener', '检查通知失败', error)
+    logger.error('InboxNotificationListener', '检查通知失败', error)
   }
 }
 
@@ -131,9 +117,9 @@ async function updateBadge(count: number): Promise<void> {
       await chrome.action.setBadgeText({ text: '' })
     }
 
-    logger.info('ShareNotificationListener', 'Badge 已更新', { count })
+    logger.info('InboxNotificationListener', 'Badge 已更新', { count })
   } catch (error) {
-    logger.error('ShareNotificationListener', '更新 Badge 失败', error)
+    logger.error('InboxNotificationListener', '更新 Badge 失败', error)
   }
 }
 
@@ -156,7 +142,7 @@ async function showChromeNotification(notification: {
       requireInteraction: true
     })
 
-    logger.info('ShareNotificationListener', 'Chrome 通知已显示', {
+    logger.info('InboxNotificationListener', 'Chrome 通知已显示', {
       notificationId: chromeNotification
     })
 
@@ -181,7 +167,7 @@ async function showChromeNotification(notification: {
       }
     })
   } catch (error) {
-    logger.error('ShareNotificationListener', '显示 Chrome 通知失败', error)
+    logger.error('InboxNotificationListener', '显示 Chrome 通知失败', error)
   }
 }
 
@@ -189,6 +175,6 @@ async function showChromeNotification(notification: {
  * 手动触发通知检查（供其他模块调用）
  */
 export function triggerNotificationCheck() {
-  logger.info('ShareNotificationListener', '手动触发通知检查')
+  logger.info('InboxNotificationListener', '手动触发通知检查')
   checkNewNotifications()
 }

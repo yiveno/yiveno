@@ -17,12 +17,25 @@
  */
 
 import { logger } from '@/infrastructure/logging/logger'
-// ⚠️ 不要从 @/application 导入，因为 application/index.ts 会导入所有服务
-// 其中 notification-service 依赖 Vue，会导致 Vue 被打包到 background.js
-import { bookmarkSearchService } from '@/application/query/bookmark-search-service'
 import { dispatchOffscreenRequest } from '@/infrastructure/offscreen/manager'
 import type { EnhancedSearchResult } from '@/core/query-engine'
 import type { VectorSearchResult } from '@/infrastructure/embedding/local-vector-store'
+import type { BookmarkSearchService } from '@/application/query/bookmark-search-service'
+
+let bookmarkSearchServicePromise: Promise<BookmarkSearchService> | null = null
+
+/**
+ * 懒加载搜索服务，避免 Service Worker 启动时静态引入 FlexSearch。
+ */
+async function getBookmarkSearchService(): Promise<BookmarkSearchService> {
+  if (!bookmarkSearchServicePromise) {
+    bookmarkSearchServicePromise = import('@/application/query/bookmark-search-service').then(
+      module => module.bookmarkSearchService
+    )
+  }
+
+  return bookmarkSearchServicePromise
+}
 
 /**
  * 将 Omnibox 描述中的特殊字符转义成 XML 安全字符，避免 chrome.omnibox 解析失败。
@@ -197,6 +210,7 @@ export function registerOmniboxHandlers(): void {
         setDefaultDescription(buildSearchingDescription(query))
 
         // 并行执行 Fuse 精确匹配 + 语义搜索（通过 Offscreen）
+        const bookmarkSearchService = await getBookmarkSearchService()
         const [fuseResult, semanticResults] = await Promise.all([
           bookmarkSearchService.search(query, {
             strategy: 'fuse',

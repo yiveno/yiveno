@@ -4,7 +4,7 @@
 
 LLM 模块提供了统一的 AI 功能接口，支持：
 
-- 用户自带 API Key（OpenAI / Claude / Gemini）- 最高优先级
+- 用户自带 API Key（OpenAI / Claude / Gemini / DeepSeek）- 最高优先级
 - Chrome 内置 LLM（Gemini Nano）- 免费、本地处理
 
 ## 架构
@@ -22,7 +22,7 @@ LLMAdapter (适配器层)
 
 ## Provider 优先级
 
-1. **用户自带 API Key**（OpenAI / Claude / Gemini）
+1. **用户自带 API Key**（OpenAI / Claude / Gemini / DeepSeek）
    - 隐私最优，数据不经过产品服务器
    - 直接调用第三方 API
    - 需要用户在设置页面配置
@@ -201,7 +201,7 @@ async function enhancedSearch(query: string) {
 ## 注意事项
 
 1. **用户 API Key 配置**
-   - 支持 OpenAI、Anthropic Claude、Google Gemini
+   - 支持 OpenAI、Anthropic Claude、Google Gemini、DeepSeek
    - 需要用户在设置页面填写 API Key
    - 数据直接发送到第三方 API，不经过产品服务器
 

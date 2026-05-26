@@ -15,9 +15,13 @@ import { createBuildOptions } from './build-options'
  * 创建构建配置
  */
 export function createBuildConfig(): BuildOptions {
+  const isWatchMode = process.argv.includes('--watch')
+
   const config: BuildOptions = {
     outDir: OUT_DIR,
-    emptyOutDir: true,
+    // watch 模式下 clean-dist 会回写 dist/_locales 等目录，二次构建时
+    // Vite 清空输出目录会触发 ENOTEMPTY，因此仅在 watch 中禁用该行为。
+    emptyOutDir: !isWatchMode,
 
     // 禁用模块预加载（Service Worker 不支持 document 操作）
     modulePreload: false,

@@ -1,7 +1,7 @@
 /**
  * 用户自带 API Key 的 LLM 客户端
  *
- * 支持 OpenAI / Anthropic Claude / Google Gemini
+ * 支持 OpenAI / Anthropic Claude / Google Gemini / DeepSeek
  * 请求从用户浏览器直接发往 AI 服务商，不经过产品服务器
  * 隐私优先：书签数据只在用户设备和用户选择的 AI 服务商之间流动
  */
@@ -16,7 +16,7 @@ import { logger } from '@/infrastructure/logging/logger'
 /**
  * 支持的第三方 AI 服务商
  */
-export type UserLLMProvider = 'openai' | 'claude' | 'gemini'
+export type UserLLMProvider = 'openai' | 'claude' | 'gemini' | 'deepseek'
 
 /**
  * 用户 API Key 配置
@@ -53,6 +53,11 @@ const PROVIDER_DEFAULTS: Record<
     baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
     completionModel: 'gemini-2.0-flash',
     embeddingModel: 'text-embedding-004'
+  },
+  deepseek: {
+    baseUrl: 'https://api.deepseek.com/v1',
+    completionModel: 'deepseek-chat',
+    embeddingModel: '' // DeepSeek 暂不支持 embedding，降级到 OpenAI
   }
 }
 
@@ -63,7 +68,8 @@ function friendlyError(provider: UserLLMProvider, status: number, rawMessage: st
   const providerName: Record<UserLLMProvider, string> = {
     openai: 'OpenAI',
     claude: 'Anthropic Claude',
-    gemini: 'Google Gemini'
+    gemini: 'Google Gemini',
+    deepseek: 'DeepSeek'
   }
   const name = providerName[provider]
 
@@ -74,6 +80,16 @@ function friendlyError(provider: UserLLMProvider, status: number, rawMessage: st
     }
     if (status === 429) {
       return `请求频率超限或免费额度已用完，请稍后重试。如需更高额度请前往 aistudio.google.com 查看配额`
+    }
+  }
+
+  // DeepSeek 特殊处理
+  if (provider === 'deepseek') {
+    if (status === 401) {
+      return `DeepSeek API Key 无效或已过期，请前往 platform.deepseek.com 检查您的 Key`
+    }
+    if (status === 429) {
+      return `DeepSeek 请求频率超限或余额不足，请稍后重试或前往 platform.deepseek.com 充值`
     }
   }
 
@@ -153,6 +169,8 @@ export class UserLLMClient {
         return this._completeClaude(prompt, config, options)
       case 'gemini':
         return this._completeGemini(prompt, config, options)
+      case 'deepseek':
+        return this._completeDeepSeek(prompt, config, options)
       default:
         throw new Error(`不支持的 AI 服务商: ${config.provider}`)
     }
@@ -175,6 +193,9 @@ export class UserLLMClient {
       case 'claude':
         // Claude 不支持 embedding，抛出错误让上层降级
         throw new Error('Claude 暂不支持向量嵌入，请切换到 OpenAI 或 Gemini')
+      case 'deepseek':
+        // DeepSeek 不支持 embedding，抛出错误让上层降级
+        throw new Error('DeepSeek 暂不支持向量嵌入，请切换到 OpenAI 或 Gemini')
       default:
         throw new Error(`不支持的 AI 服务商: ${config.provider}`)
     }
@@ -367,6 +388,46 @@ export class UserLLMClient {
     }
 
     return { vector, provider: 'gemini' as LLMProvider, dimensions: vector.length }
+  }
+
+  // ─── DeepSeek ─────────────────────────────────────────────────────────────
+
+  private async _completeDeepSeek(
+    prompt: string,
+    config: UserAPIKeyConfig,
+    options?: LLMCompleteOptions
+  ): Promise<LLMCompleteResult> {
+    const defaults = PROVIDER_DEFAULTS.deepseek
+    const baseUrl = config.baseUrl || defaults.baseUrl
+    const model = config.model || defaults.completionModel
+
+    const response = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${config.apiKey}`
+      },
+      body: JSON.stringify({
+        model,
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: options?.maxTokens || 256,
+        temperature: options?.temperature ?? 0.6
+      })
+    })
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}))
+      throw new Error(
+        friendlyError('deepseek', response.status, err?.error?.message || response.statusText)
+      )
+    }
+
+    const data = await response.json()
+    return {
+      text: data.choices?.[0]?.message?.content?.trim() || '',
+      provider: 'deepseek' as LLMProvider,
+      tokensUsed: data.usage?.total_tokens
+    }
   }
 }
 

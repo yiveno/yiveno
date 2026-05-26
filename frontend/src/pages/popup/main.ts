@@ -11,9 +11,10 @@ import '@/assets/main.css'
 import '@/assets/fonts.css'
 import '@/assets/smart-fonts.css'
 import { logger } from '@/infrastructure/logging/logger'
-import { notifyInfo } from '@/application/notification/notification-service'
+import { message } from '@/application/message/message-service'
 import { performanceMonitor } from '@/utils/performance-monitor'
 import { preloadMaterialWebComponents } from '@/infrastructure/material/preload-material-web'
+import { installMessage } from '@/application/message/install'
 
 // 懒加载字体服务和跨页面同步
 const loadFontService = () => import('@/application/font/font-service')
@@ -41,10 +42,13 @@ async function initializePopup(): Promise<void> {
   performanceMonitor.initialize()
 
   try {
-    // ✅ 1. 先加载 Material Web 组件（确保在 Vue 组件渲染前注册）
+    // ✅ 1. 安装 Message 组件（全局轻量级提示）
+    installMessage()
+
+    // ✅ 2. 先加载 Material Web 组件（确保在 Vue 组件渲染前注册）
     await preloadMaterialWebComponents('Popup')
 
-    // 2. 懒加载字体服务
+    // 3. 懒加载字体服务
     const { fontService, initializeSmartFonts } = await loadFontService()
 
     fontService.injectDynamicFontLink()
@@ -57,7 +61,7 @@ async function initializePopup(): Promise<void> {
 
     // 字体加载已由 Service Worker 统一预取和缓存，无需页面单独请求
 
-    // 3. 挂载应用
+    // 4. 挂载应用
     app.mount('#app')
 
     // ✅ 初始化跨页面同步（需在 Pinia 安装后调用）
@@ -89,7 +93,7 @@ if (typeof window !== 'undefined') {
   const origAlert = window.alert?.bind(window)
   window.alert = (msg?: string | number | boolean | null | undefined) => {
     try {
-      notifyInfo(String(msg))
+      message.info(String(msg))
     } catch {
       /* ignore */
     }

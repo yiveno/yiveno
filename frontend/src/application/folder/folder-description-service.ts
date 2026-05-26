@@ -25,7 +25,7 @@ export interface FolderDescriptionResult {
   /** 生成的描述 */
   description: string
   /** 使用的提供者 */
-  provider: 'builtin' | 'openai' | 'claude' | 'gemini'
+  provider: 'builtin' | 'openai' | 'claude' | 'gemini' | 'deepseek'
   /** 基于的书签数量 */
   bookmarkCount: number
 }

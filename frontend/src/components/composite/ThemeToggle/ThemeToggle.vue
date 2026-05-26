@@ -35,7 +35,7 @@ const isToggling = ref(false)
 
 // 主题选项配置
 const themeOptions = [
-  { value: 'system' as ThemeMode, label: '跟随系统', icon: 'sync' },
+  { value: 'system' as ThemeMode, label: '跟随系统', icon: 'monitor' },
   { value: 'light' as ThemeMode, label: '浅色主题', icon: 'sun' },
   { value: 'dark' as ThemeMode, label: '暗黑主题', icon: 'moon' }
 ]
@@ -43,9 +43,8 @@ const themeOptions = [
 // 计算当前主题的图标（Lucide Icons）
 const currentThemeIconLucide = computed(() => {
   if (currentTheme.value === 'system') {
-    // 跟随系统时，显示当前实际主题的图标
-    const systemIsDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    return systemIsDark ? 'moon' : 'sun'
+    // 跟随系统时，显示电脑图标
+    return 'monitor'
   }
   return currentTheme.value === 'dark' ? 'moon' : 'sun'
 })

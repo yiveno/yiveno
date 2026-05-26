@@ -9,7 +9,6 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'
 import GlobalQuickAddBookmark from '@/components/business/GlobalQuickAddBookmark/GlobalQuickAddBookmark.vue'
 import BookmarkSearchInput from '@/components/business/BookmarkSearchInput/BookmarkSearchInput.vue'
-import NotificationList from '@/components/business/NotificationList/NotificationList.vue'
 import { useThemeSync } from '@/composables/useThemeSync'
 import { useTraitStatistics, useTraitLoading } from '@/composables/useTraitData'
 import { logger } from '@/infrastructure/logging/logger'
@@ -20,7 +19,6 @@ import { usePopupStoreIndexedDB } from '@/stores/popup-store-indexeddb'
 import { AppHeader, AnimatedNumber, LucideIcon, Card } from '@/components'
 import { t } from '@/utils/i18n-helpers'
 import type { BookmarkNode } from '@/types'
-import { shareNotificationService } from '@/application/share/share-notification-service'
 
 // import { useQuery } from '@tanstack/vue-query'
 // import { trpc } from '../../services/trpc'
@@ -116,58 +114,6 @@ const popupCloseTimeout = ref<number | null>(null)
 
 // 搜索结果状态
 const searchResults = ref<BookmarkNode[]>([])
-
-// 通知相关状态
-const showNotificationList = ref(false)
-const unreadCount = computed(() => shareNotificationService.unreadCount.value)
-const notificationWrapperRef = ref<HTMLElement | null>(null)
-const isBellRinging = ref(false) // ✅ 临时测试：控制铃铛动画
-
-/**
- * 切换通知列表显示
- */
-function toggleNotificationList(): void {
-  showNotificationList.value = !showNotificationList.value
-  logger.info('Popup', '切换通知列表', { show: showNotificationList.value })
-
-  // ✅ 临时测试：点击时触发铃铛动画
-  triggerBellAnimation()
-}
-
-/**
- * 触发铃铛摇晃动画（临时测试用）
- */
-function triggerBellAnimation(): void {
-  // 重置动画：先移除类，然后在下一帧重新添加
-  isBellRinging.value = false
-  requestAnimationFrame(() => {
-    isBellRinging.value = true
-    // 动画持续 1 秒后自动重置
-    setTimeout(() => {
-      isBellRinging.value = false
-    }, 1000)
-  })
-}
-
-/**
- * 关闭通知列表
- */
-function closeNotificationList(): void {
-  showNotificationList.value = false
-}
-
-/**
- * 处理点击外部关闭通知列表
- */
-function handleClickOutside(event: MouseEvent): void {
-  if (
-    showNotificationList.value &&
-    notificationWrapperRef.value &&
-    !notificationWrapperRef.value.contains(event.target as Node)
-  ) {
-    closeNotificationList()
-  }
-}
 
 /**
  * 处理书签点击事件（从下拉列表）
@@ -421,23 +367,6 @@ onMounted(async () => {
   await initAuth()
   setupAuthListener() // ✅ 手动设置认证状态监听器
 
-  // ✅ 初始化通知服务（必须在认证初始化之后）
-  // 延迟 100ms 确保认证状态已完全同步
-  setTimeout(async () => {
-    try {
-      await shareNotificationService.initialize()
-      logger.info('Popup', '通知服务已初始化')
-    } catch (error) {
-      logger.warn('Popup', '通知服务初始化失败（可能未登录）', error)
-    }
-  }, 100)
-
-  // ✅ 监听点击外部关闭通知列表
-  document.addEventListener('click', handleClickOutside)
-  registerCleanup(() => {
-    document.removeEventListener('click', handleClickOutside)
-  })
-
   // ✅ 检查 URL 参数，如果是添加书签操作，自动触发对话框（从第一个 onMounted 合并）
   try {
     // 🔒 环境检查：确保在浏览器环境中运行
@@ -559,33 +488,9 @@ onUnmounted(() => {
       :show-name="false"
       :back-tooltip="t('popup_open_sidepanel')"
       :show-settings="false"
+      :show-notification="true"
       @back="openSidePanel"
-    >
-      <template #actions>
-        <!-- 通知图标 -->
-        <div ref="notificationWrapperRef" class="notification-wrapper">
-          <md-icon-button
-            class="notification-button"
-            :class="{ 'bell-ringing': isBellRinging }"
-            :style="{ '--md-icon-button-icon-size': '24px' }"
-            title="通知"
-            aria-label="通知"
-            @click="toggleNotificationList"
-          >
-            <LucideIcon name="bell" :size="24" />
-            <!-- 未读数量徽章 -->
-            <span v-if="unreadCount > 0" class="notification-badge">
-              {{ unreadCount > 99 ? '99+' : unreadCount }}
-            </span>
-          </md-icon-button>
-
-          <!-- 通知列表浮窗 -->
-          <div v-if="showNotificationList" class="notification-popover">
-            <NotificationList @close="closeNotificationList" />
-          </div>
-        </div>
-      </template>
-    </AppHeader>
+    />
     <!-- 加载状态 -->
     <div v-if="!isStoresReady" class="loading-container">
       <md-circular-progress indeterminate></md-circular-progress>
@@ -784,61 +689,6 @@ body::-webkit-scrollbar {
 </style>
 
 <style scoped>
-/* 通知相关样式 */
-
-/* ✅ 铃铛摇晃动画 - Material Design 3 风格 */
-@keyframes bell-ring {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  10% {
-    transform: rotate(14deg);
-  }
-
-  20% {
-    transform: rotate(-12deg);
-  }
-
-  30% {
-    transform: rotate(10deg);
-  }
-
-  40% {
-    transform: rotate(-8deg);
-  }
-
-  50% {
-    transform: rotate(6deg);
-  }
-
-  60% {
-    transform: rotate(-4deg);
-  }
-
-  70% {
-    transform: rotate(2deg);
-  }
-
-  80% {
-    transform: rotate(-1deg);
-  }
-
-  90% {
-    transform: rotate(0.5deg);
-  }
-
-  100% {
-    transform: rotate(0deg);
-  }
-}
-
-/* ✅ 临时测试：点击时触发动画 */
-.notification-button.bell-ringing {
-  transform-origin: center top;
-  animation: bell-ring 1s var(--md-sys-motion-easing-emphasized) 0.5s;
-}
-
 html,
 body {
   width: 420px;
@@ -1299,47 +1149,6 @@ body {
 
 .popup-actions-list md-list-item:hover .popup-action-start {
   color: var(--color-primary);
-}
-
-.notification-wrapper {
-  position: relative;
-}
-
-.notification-button {
-  position: relative;
-  color: var(--color-text-secondary);
-  transition: color var(--transition-fast);
-}
-
-.notification-button:hover {
-  color: var(--color-primary);
-}
-
-.notification-badge {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 4px;
-  border: 2px solid var(--color-surface);
-  border-radius: var(--radius-full);
-  font-size: 10px;
-  font-weight: var(--font-bold);
-  line-height: 1;
-  color: var(--color-on-error);
-  background: var(--color-error);
-  pointer-events: none;
-}
-
-.notification-popover {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  z-index: 1000;
 }
 
 /* 压平 MWC 列表项在 Popup 内的 elevation，贴近 Chrome 工具面板 */

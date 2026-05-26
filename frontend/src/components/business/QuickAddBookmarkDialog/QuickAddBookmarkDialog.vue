@@ -3,7 +3,7 @@ import { ref, watch } from 'vue'
 import { Dialog, LucideIcon } from '@/components'
 import { MdInput } from '@/components/base/Input'
 import { logger } from '@/infrastructure/logging/logger'
-import { notificationService } from '@/application/notification/notification-service'
+import { message } from '@/application/message/message-service'
 
 defineOptions({
   name: 'QuickAddBookmarkDialog'
@@ -224,20 +224,20 @@ function handleFaviconError() {
 /**
  * 确认添加
  */
-function handleConfirm() {
+async function handleConfirm() {
   // ✅ 验证数据
   if (!bookmarkTitle.value || bookmarkTitle.value.trim() === '') {
-    notificationService.notify('请填写书签名称', { level: 'warning' })
+    message.warning('请填写书签名称')
     return
   }
 
   if (!selectedFolderId.value) {
-    notificationService.notify('请选择文件夹', { level: 'warning' })
+    message.warning('请选择文件夹')
     return
   }
 
   if (!props.url || props.url.trim() === '') {
-    notificationService.notify('书签 URL 不能为空', { level: 'error' })
+    message.error('书签 URL 不能为空')
     return
   }
 

@@ -13,12 +13,16 @@ import '@/assets/smart-fonts.css'
 
 import { logger } from '@/infrastructure/logging/logger'
 import { preloadMaterialWebComponents } from '@/infrastructure/material/preload-material-web'
+import { installMessage } from '@/application/message/install'
 
 logger.info('Settings', 'Init', '开始加载 Material Web Components...')
 
 await preloadMaterialWebComponents('Settings')
 
 logger.info('Settings', 'Init', '开始初始化应用...')
+
+// ✅ 安装 Message 组件（全局轻量级提示）
+installMessage()
 
 try {
   const app = createApp(App)

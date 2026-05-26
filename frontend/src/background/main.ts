@@ -17,6 +17,7 @@ import { registerMenusAndShortcuts } from './menus'
 import { registerOmniboxHandlers } from './omnibox'
 import { registerBookmarkChangeListeners } from './bookmarks'
 import { initializeBookmarkTraitAutoSync } from '@/services/bookmark-trait-auto-sync'
+import { backgroundCrawlerManager } from './crawler-manager'
 
 /**
  * 初始化 Service Worker
@@ -76,17 +77,18 @@ async function initializeServiceWorker() {
       logger.warn('Background', '⚠️ 书签特征自动同步初始化失败（非致命）', error)
     }
 
-    // 3.2 后台爬取管理器（延迟导入，避免阻塞启动）
-    // ⚠️ 使用 setTimeout 延迟加载，避免阻塞核心功能
-    setTimeout(async () => {
-      try {
-        const { backgroundCrawlerManager } = await import('./crawler-manager')
-        void backgroundCrawlerManager // 触发初始化
-        logger.debug('Background', '✅ 后台爬取管理器已初始化')
-      } catch (error) {
-        logger.warn('Background', '⚠️ 后台爬取管理器初始化失败（非致命）', error)
+    // 3.2 后台爬取管理器（静态导入，自动初始化）
+    // ✅ 修复：改为静态导入，因为 Service Worker 不支持动态 import()
+    // ℹ️ backgroundCrawlerManager 是单例实例，在模块导入时就会自动初始化
+    // ℹ️ 初始化日志会在 crawler-manager.ts 中输出
+    try {
+      // 确保模块被正确加载（访问实例以防止 tree-shaking）
+      if (backgroundCrawlerManager) {
+        logger.info('Background', '✅ 后台爬取管理器模块已加载')
       }
-    }, 1000) // 延迟 1 秒，让核心功能先完成
+    } catch (error) {
+      logger.warn('Background', '⚠️ 后台爬取管理器加载失败（非致命）', error)
+    }
 
     logger.info('Background', '✅ 阶段 3 完成：后台任务已启动')
 

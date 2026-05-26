@@ -16,6 +16,7 @@
 import { logger } from '@/infrastructure/logging/logger'
 import { openManagementPage, openSettingsPage } from './navigation'
 import { showSystemNotification } from './notification'
+import { autoAddBookmark } from './auto-add-bookmark'
 
 // ✅ 菜单注册状态标记（避免重复注册）
 let menusRegistered = false
@@ -223,119 +224,21 @@ async function handleAIAutoAddBookmark(bookmarkData: {
   url: string
   favIconUrl?: string | undefined
 }): Promise<void> {
-  console.log('🤖 [DEBUG] handleAIAutoAddBookmark 开始', bookmarkData)
-
   try {
     logger.info('Menus', '🤖 AI 自动添加书签 - 开始', bookmarkData)
+    const result = await autoAddBookmark(bookmarkData)
 
-    // 1. 直接调用 messaging.ts 导出的函数获取 AI 推荐
-    // ✅ 避免使用 chrome.runtime.sendMessage（在 Service Worker 中可能不可靠）
-    logger.info('Menus', '📤 准备获取文件夹推荐...')
-    console.log('📤 [DEBUG] 准备获取文件夹推荐...')
-
-    let folderId: string
-
-    try {
-      // 动态导入 messaging.ts 的导出函数
-      const { getFolderRecommendations } = await import('./messaging')
-
-      console.log('✅ [DEBUG] messaging 模块已导入')
-      logger.info('Menus', '✅ messaging 模块已导入')
-
-      // 调用推荐函数
-      const recommendations = await getFolderRecommendations(
-        bookmarkData.title,
-        bookmarkData.url,
-        1,
-        0.3
-      )
-
-      console.log('📥 [DEBUG] 收到推荐响应', recommendations)
-      logger.info('Menus', '📥 收到推荐响应', {
-        hasRecommendations: recommendations && recommendations.length > 0,
-        recommendationCount: recommendations?.length || 0
-      })
-
-      if (recommendations && recommendations.length > 0) {
-        // 使用 AI 推荐的文件夹
-        const topRecommendation = recommendations[0]
-        if (!topRecommendation) {
-          throw new Error('推荐结果为空')
-        }
-        folderId = topRecommendation.folderId
-        console.log('✅ [DEBUG] 使用 AI 推荐', {
-          folderId,
-          folderPath: topRecommendation.folderPath
-        })
-        logger.info('Menus', '✅ AI 推荐文件夹', {
-          folderId,
-          folderPath: topRecommendation.folderPath,
-          score: topRecommendation.score
-        })
-      } else {
-        // 没有推荐，使用书签栏
-        console.warn('⚠️ [DEBUG] 没有 AI 推荐，使用书签栏')
-        logger.warn('Menus', '⚠️ 没有 AI 推荐，使用书签栏')
-        const tree = await chrome.bookmarks.getTree()
-        const bookmarksBar = tree[0]?.children?.find(
-          node => node.title === '书签栏' || node.title === 'Bookmarks Bar'
-        )
-        folderId = bookmarksBar?.id || '1'
-        console.log('📁 [DEBUG] 使用书签栏', { folderId })
-        logger.info('Menus', '📁 使用书签栏', { folderId })
-      }
-    } catch (recommendError) {
-      // 推荐失败，降级到书签栏
-      console.error('❌ [DEBUG] 推荐失败', recommendError)
-      logger.error('Menus', '❌ 推荐失败，使用书签栏', recommendError)
-      const tree = await chrome.bookmarks.getTree()
-      const bookmarksBar = tree[0]?.children?.find(
-        node => node.title === '书签栏' || node.title === 'Bookmarks Bar'
-      )
-      folderId = bookmarksBar?.id || '1'
-      console.log('📁 [DEBUG] 使用书签栏（降级）', { folderId })
-      logger.info('Menus', '📁 使用书签栏（降级）', { folderId })
+    if (!result.success || !result.bookmarkId || !result.folderPath) {
+      throw new Error(result.error || '添加失败')
     }
 
-    // 2. 创建书签
-    console.log('📝 [DEBUG] 开始创建书签...', { parentId: folderId })
-    logger.info('Menus', '📝 开始创建书签...', {
-      parentId: folderId,
-      title: bookmarkData.title,
-      url: bookmarkData.url
+    await showBookmarkAddedNotification(result.bookmarkId, result.folderPath)
+    logger.info('Menus', '✅ AI 自动添加书签 - 完成', {
+      folderId: result.folderId,
+      folderPath: result.folderPath
     })
-
-    const newBookmark = await chrome.bookmarks.create({
-      parentId: folderId,
-      title: bookmarkData.title,
-      url: bookmarkData.url
-    })
-
-    console.log('✅ [DEBUG] 书签已创建', newBookmark)
-    logger.info('Menus', '✅ 书签已自动添加', {
-      bookmarkId: newBookmark.id,
-      folderId,
-      title: newBookmark.title
-    })
-
-    // 3. 获取文件夹路径用于通知
-    const folderPath = await getFolderPath(folderId)
-    console.log('📂 [DEBUG] 文件夹路径', { folderPath })
-    logger.info('Menus', '📂 文件夹路径', { folderPath })
-
-    // 4. 显示通知（带撤销按钮）
-    console.log('🔔 [DEBUG] 显示通知...')
-    logger.info('Menus', '🔔 显示通知...')
-    await showBookmarkAddedNotification(newBookmark.id, folderPath)
-    console.log('✅ [DEBUG] AI 自动添加书签 - 完成')
-    logger.info('Menus', '✅ AI 自动添加书签 - 完成')
   } catch (error) {
-    console.error('❌ [DEBUG] AI 自动添加书签失败', error)
     logger.error('Menus', '❌ AI 自动添加书签失败', error)
-    logger.error('Menus', '错误详情', {
-      message: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
-    })
     void showSystemNotification('添加书签失败，请稍后重试', {
       title: '添加失败'
     })
@@ -505,35 +408,6 @@ async function handleManualAddBookmark(
     )
   } catch (error) {
     logger.error('Menus', '手动添加书签失败', error)
-  }
-}
-
-/**
- * 获取文件夹路径
- */
-async function getFolderPath(folderId: string): Promise<string> {
-  try {
-    const pathParts: string[] = []
-    let currentId = folderId
-
-    while (currentId) {
-      const nodes = await chrome.bookmarks.get(currentId)
-      if (nodes.length === 0) break
-
-      const node = nodes[0]
-      if (!node) break
-      if (node.title) {
-        pathParts.unshift(node.title)
-      }
-
-      if (!node.parentId) break
-      currentId = node.parentId
-    }
-
-    return pathParts.join(' > ') || '书签栏'
-  } catch (error) {
-    logger.error('Menus', '获取文件夹路径失败', error)
-    return '未知位置'
   }
 }
 

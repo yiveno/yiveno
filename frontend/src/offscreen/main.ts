@@ -21,6 +21,15 @@ const searchState: SearchState = {
   docCount: 0
 }
 
+interface OffscreenFolderRecommendation {
+  folderId: string
+  folderName: string
+  folderPath: string
+  score: number
+  bookmarkCount: number
+  reason: string
+}
+
 /**
  * 等待 Worker 就绪
  *
@@ -240,6 +249,84 @@ async function handleSearchQuery(payload: { query: string; limit?: number }) {
   }
 }
 
+function dotProduct(left: number[], right: number[]): number {
+  if (left.length !== right.length) {
+    return 0
+  }
+
+  let sum = 0
+  for (let index = 0; index < left.length; index++) {
+    const leftValue = left[index]
+    const rightValue = right[index]
+
+    if (leftValue === undefined || rightValue === undefined) {
+      return 0
+    }
+
+    sum += leftValue * rightValue
+  }
+
+  return sum
+}
+
+function buildFolderRecommendationReason(bookmarkCount: number, score: number): string {
+  if (score >= 0.8) {
+    return bookmarkCount > 0 ? '高匹配度推荐' : '基于文件夹名称的高匹配推荐'
+  }
+
+  if (score >= 0.6) {
+    return bookmarkCount > 0 ? '相似内容较多' : '与文件夹主题较接近'
+  }
+
+  return bookmarkCount > 0 ? '可作为候选目录' : '基于文件夹名称的候选推荐'
+}
+
+async function handleFolderRecommendations(payload: {
+  title: string
+  url: string
+  topK?: number
+  minScore?: number
+}): Promise<OffscreenFolderRecommendation[]> {
+  const title = payload.title?.trim()
+  const url = payload.url?.trim()
+
+  if (!title || !url) {
+    return []
+  }
+
+  const { onnxEmbeddingProviderDirect } =
+    await import('@/infrastructure/embedding/onnx-embedding-provider-direct')
+  const { folderVectorStore } = await import('@/infrastructure/folder-vector/folder-vector-store')
+
+  const bookmarkVector = await onnxEmbeddingProviderDirect.embed(`${title} | ${url}`)
+  const folderVectors = await folderVectorStore.getAll()
+
+  if (folderVectors.length === 0) {
+    logger.info('OffscreenFolderRecommendation', '文件夹向量库为空，跳过推荐')
+    return []
+  }
+
+  const minScore = payload.minScore ?? 0.3
+  const topK = payload.topK ?? 3
+
+  return folderVectors
+    .map(folder => {
+      const score = dotProduct(bookmarkVector, folder.vector)
+
+      return {
+        folderId: folder.folderId,
+        folderName: folder.folderName,
+        folderPath: folder.folderPath,
+        bookmarkCount: folder.bookmarkCount,
+        score,
+        reason: buildFolderRecommendationReason(folder.bookmarkCount, score)
+      }
+    })
+    .filter(folder => folder.score >= minScore)
+    .sort((left, right) => right.score - left.score)
+    .slice(0, topK)
+}
+
 /**
  * Offscreen 任务处理函数类型
  */
@@ -292,20 +379,13 @@ const handlers: Record<string, OffscreenHandler> = {
 
   // 文件夹推荐：在 Offscreen 里完成向量计算和推荐
   GET_FOLDER_RECOMMENDATIONS: async payload => {
-    const { folderVectorService } = await import('@/application/folder/folder-vector-service')
     const data = payload as {
       title: string
       url: string
       topK?: number
       minScore?: number
     }
-    return folderVectorService.recommendFolders(
-      data.title,
-      data.url,
-      undefined, // bookmarkContent
-      data.topK ?? 3,
-      data.minScore ?? 0.3
-    )
+    return handleFolderRecommendations(data)
   }
 }
 

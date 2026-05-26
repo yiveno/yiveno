@@ -15,6 +15,7 @@ import '@/assets/smart-fonts.css'
 import { initializeSmartFonts, fontService } from '@/application/font/font-service'
 import { logger } from '@/infrastructure/logging/logger'
 import { preloadMaterialWebComponents } from '@/infrastructure/material/preload-material-web'
+import { installMessage } from '@/application/message/install'
 
 const app = createApp(App)
 const pinia = createPinia()
@@ -22,6 +23,9 @@ const pinia = createPinia()
 app.use(pinia)
 
 async function initializeOnboarding() {
+  // ✅ 安装 Message 组件（轻量级提示）
+  installMessage()
+
   fontService.injectDynamicFontLink()
   try {
     await initializeSmartFonts()

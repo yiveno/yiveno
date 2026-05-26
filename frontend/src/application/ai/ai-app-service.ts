@@ -24,7 +24,7 @@ export interface BookmarkSummaryResult {
   /** 摘要文本 */
   summary: string
   /** 使用的 LLM 提供者 */
-  provider: 'builtin' | 'openai' | 'claude' | 'gemini'
+  provider: 'builtin' | 'openai' | 'claude' | 'gemini' | 'deepseek'
 }
 
 /**

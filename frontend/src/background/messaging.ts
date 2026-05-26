@@ -15,7 +15,10 @@ import { openManagementPage, openSettingsPage } from './navigation'
 import { getExtensionState } from './state'
 import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
 import { showSystemNotification, clearSystemNotification } from './notification'
-import { dispatchOffscreenRequest } from '@/infrastructure/offscreen/manager'
+import { autoAddBookmark } from './auto-add-bookmark'
+import { getFolderRecommendations } from './folder-recommendation'
+import { folderVectorService } from '@/application/folder/folder-vector-service'
+import { favoriteAppService } from '@/application/bookmark/favorite-app-service'
 
 /**
  * 运行时消息接口
@@ -172,6 +175,10 @@ async function handleMessage(message: RuntimeMessage, sendResponse: AsyncRespons
       }
       case 'ADD_TO_FAVORITES': {
         await handleAddToFavorites(message, sendResponse)
+        return
+      }
+      case 'AUTO_ADD_BOOKMARK': {
+        await handleAutoAddBookmark(message, sendResponse)
         return
       }
       case 'FAVORITE_CHANGED': {
@@ -511,6 +518,26 @@ async function handleDeleteBookmark(
 }
 
 /**
+ * 处理 AI 自动添加书签
+ */
+async function handleAutoAddBookmark(
+  message: RuntimeMessage,
+  sendResponse: AsyncResponse
+): Promise<void> {
+  const data = message.data || {}
+  const title = (data.title as string) || ''
+  const url = (data.url as string) || ''
+  const favIconUrl = data.favIconUrl as string | undefined
+
+  const result = await autoAddBookmark({
+    title,
+    url,
+    ...(favIconUrl ? { favIconUrl } : {})
+  })
+  sendResponse(result)
+}
+
+/**
  * 处理移动书签消息
  *
  * 架构：通过 Background Script 统一处理，确保数据一致性
@@ -671,116 +698,6 @@ async function handleGetBookmarkTree(sendResponse: AsyncResponse): Promise<void>
  * @param topK 返回数量
  * @param minScore 最低相似度阈值
  */
-export async function getFolderRecommendations(
-  title: string,
-  url: string,
-  topK = 3,
-  minScore = 0.3
-): Promise<
-  Array<{
-    folderId: string
-    folderName: string
-    folderPath: string
-    score: number
-    bookmarkCount: number
-    reason: string
-  }>
-> {
-  try {
-    if (!title || !url) {
-      logger.error('BackgroundMessaging', '❌ 标题和 URL 不能为空', { title, url })
-      return []
-    }
-
-    logger.info('BackgroundMessaging', '🔍 获取文件夹推荐 - 开始', {
-      title,
-      url: url.substring(0, 50),
-      topK,
-      minScore
-    })
-
-    // ✅ 使用 offscreen 文档来执行向量计算（避免在 Service Worker 中导入可能包含 DOM API 的模块）
-    try {
-      logger.info('BackgroundMessaging', '📤 发送请求到 Offscreen Document...')
-
-      const result = await dispatchOffscreenRequest({
-        type: 'GET_FOLDER_RECOMMENDATIONS',
-        payload: {
-          title,
-          url,
-          topK,
-          minScore
-        }
-      })
-
-      logger.info('BackgroundMessaging', '📥 收到 Offscreen 响应', {
-        resultType: typeof result,
-        isArray: Array.isArray(result),
-        length: Array.isArray(result) ? result.length : 0
-      })
-
-      if (result && Array.isArray(result)) {
-        logger.info('BackgroundMessaging', '✅ 文件夹推荐完成', {
-          count: result.length,
-          recommendations: result
-        })
-
-        return result as Array<{
-          folderId: string
-          folderName: string
-          folderPath: string
-          score: number
-          bookmarkCount: number
-          reason: string
-        }>
-      } else {
-        logger.error('BackgroundMessaging', '❌ Offscreen 返回的结果格式不正确', {
-          result
-        })
-        throw new Error('Offscreen 返回的结果格式不正确')
-      }
-    } catch (offscreenError) {
-      logger.warn('BackgroundMessaging', '⚠️ Offscreen 推荐失败，降级到简单推荐', {
-        error: offscreenError instanceof Error ? offscreenError.message : String(offscreenError),
-        stack: offscreenError instanceof Error ? offscreenError.stack : undefined
-      })
-
-      // 降级方案：返回书签栏作为默认推荐
-      logger.info('BackgroundMessaging', '📁 使用降级方案：返回书签栏')
-      const tree = await chrome.bookmarks.getTree()
-      const bookmarksBar = tree[0]?.children?.find(
-        node => node.title === '书签栏' || node.title === 'Bookmarks Bar'
-      )
-
-      if (bookmarksBar) {
-        logger.info('BackgroundMessaging', '✅ 找到书签栏', {
-          id: bookmarksBar.id,
-          title: bookmarksBar.title
-        })
-        return [
-          {
-            folderId: bookmarksBar.id,
-            folderName: bookmarksBar.title,
-            folderPath: bookmarksBar.title,
-            score: 0.5,
-            bookmarkCount: bookmarksBar.children?.length || 0,
-            reason: '默认推荐（书签栏）'
-          }
-        ]
-      } else {
-        logger.error('BackgroundMessaging', '❌ 未找到书签栏')
-        return []
-      }
-    }
-  } catch (error) {
-    logger.error('BackgroundMessaging', '❌ 获取文件夹推荐失败', {
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
-    })
-    return []
-  }
-}
-
 /**
  * 处理获取文件夹推荐请求
  *
@@ -819,13 +736,6 @@ async function handleSyncFolderVectors(
 ): Promise<void> {
   try {
     logger.info('BackgroundMessaging', '🔄 开始同步文件夹向量')
-
-    // 动态导入文件夹向量服务（使用 webpackChunkName 确保代码分割）
-    const { folderVectorService } = await import(
-      /* webpackChunkName: "folder-vector-service" */
-      /* @vite-ignore */
-      '@/application/folder/folder-vector-service'
-    )
 
     await folderVectorService.syncFolderVectors(progress => {
       logger.debug('BackgroundMessaging', '同步进度', progress)
@@ -985,10 +895,8 @@ async function handleAddToFavorites(
 
     logger.info('BackgroundMessaging', '⭐ 添加到收藏', { bookmarkId })
 
-    // 动态导入收藏服务（避免循环依赖）
-    const { favoriteAppService } = await import('@/application/bookmark/favorite-app-service')
-
-    const success = await favoriteAppService.addToFavorites(bookmarkId)
+    // 跳过去重检查（Background Script 无法弹出确认对话框）
+    const success = await favoriteAppService.addToFavorites(bookmarkId, true)
 
     if (success) {
       logger.info('BackgroundMessaging', '✅ 书签已添加到收藏', { bookmarkId })

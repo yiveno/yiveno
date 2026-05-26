@@ -25,6 +25,7 @@ import {
 } from '@/components'
 import { Loading } from '@/components/base/Loading'
 import { notificationService } from '@/application/notification/notification-service'
+import { message } from '@/application/message/message-service'
 import { NOTIFICATION_CONFIG } from '@/config/constants'
 import { onEvent } from '@/infrastructure/events/event-bus'
 import BookmarkTree from '@/components/business/BookmarkTree/BookmarkTree.vue'
@@ -552,7 +553,7 @@ const isInternalProtocolUrl = (url: string): boolean => {
 
 const handleBookmarkOpenNewTab = (node: BookmarkNode) => {
   if (!node.url) {
-    notificationService.notify(t('management_no_valid_url'), { level: 'warning' })
+    message.warning(t('management_no_valid_url'))
     return
   }
 
@@ -561,7 +562,7 @@ const handleBookmarkOpenNewTab = (node: BookmarkNode) => {
   const isInternalUrl = isInternalProtocolUrl(node.url)
 
   if (hasInternalTag || isInternalUrl) {
-    notificationService.notify(t('management_cannot_open_internal'), { level: 'warning' })
+    message.warning(t('management_cannot_open_internal'))
     logger.warn('Management', '尝试打开内部协议书签:', node.url)
     return
   }
@@ -569,7 +570,7 @@ const handleBookmarkOpenNewTab = (node: BookmarkNode) => {
   try {
     if (typeof window === 'undefined') {
       logger.error('Management', '非浏览器环境，无法打开链接')
-      notificationService.notify(t('management_open_link_failed'), { level: 'error' })
+      message.error(t('management_open_link_failed'))
       return
     }
 
@@ -578,11 +579,11 @@ const handleBookmarkOpenNewTab = (node: BookmarkNode) => {
 
     // 检查是否被浏览器阻止
     if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-      notificationService.notify(t('management_link_blocked'), { level: 'warning' })
+      message.warning(t('management_link_blocked'))
       logger.warn('Management', '链接被浏览器阻止:', node.url)
     }
   } catch (error) {
-    notificationService.notify(t('management_open_link_failed'), { level: 'error' })
+    message.error(t('management_open_link_failed'))
     logger.error('Management', '打开链接失败:', error, node.url)
   }
 }
@@ -652,10 +653,10 @@ const confirmAddNewItem = async () => {
     }
 
     await nextTick()
-    notificationService.notify(t('management_bookmark_added', itemType), { level: 'success' })
+    message.success(t('management_bookmark_added', itemType))
   } catch (error) {
     logger.error('Management', 'Add', '添加失败', error)
-    notificationService.notify(t('management_add_failed'), { level: 'error' })
+    message.error(t('management_add_failed'))
   } finally {
     // eslint-disable-next-line require-atomic-updates -- finally 块中的状态重置是安全的
     isAddingItem.value = false
@@ -697,10 +698,10 @@ const confirmEditBookmark = async () => {
     dialogStore.closeEditBookmarkDialog()
 
     await nextTick()
-    notificationService.notify(t('management_bookmark_updated'), { level: 'success' })
+    message.success(t('management_bookmark_updated'))
   } catch (error) {
     logger.error('Management', 'Edit', '编辑书签失败', error)
-    notificationService.notify(t('management_edit_failed'), { level: 'error' })
+    message.error(t('management_edit_failed'))
   } finally {
     // eslint-disable-next-line require-atomic-updates -- finally 块中的状态重置是安全的
     isEditingBookmark.value = false
@@ -732,10 +733,10 @@ const confirmEditFolder = async () => {
     dialogStore.closeEditFolderDialog()
 
     await nextTick()
-    notificationService.notify(t('management_folder_updated'), { level: 'success' })
+    message.success(t('management_folder_updated'))
   } catch (error) {
     logger.error('Management', 'Edit', '编辑文件夹失败', error)
-    notificationService.notify(t('management_edit_failed'), { level: 'error' })
+    message.error(t('management_edit_failed'))
   } finally {
     // eslint-disable-next-line require-atomic-updates -- finally 块中的状态重置是安全的
     isEditingFolder.value = false
@@ -754,14 +755,14 @@ const confirmDeleteFolder = async () => {
         await deleteFolder(folder.id)
       } catch (error) {
         logger.error('Management', '删除文件夹失败', error)
-        notificationService.notify(t('management_delete_failed'), { level: 'error' })
+        message.error(t('management_delete_failed'))
       } finally {
         // eslint-disable-next-line require-atomic-updates -- finally 块中的状态重置是安全的
         isDeletingFolder.value = false
       }
     } catch (error) {
       logger.error('Management', '删除文件夹失败', error)
-      notificationService.notify(t('management_delete_failed'), { level: 'error' })
+      message.error(t('management_delete_failed'))
       // eslint-disable-next-line require-atomic-updates -- 错误处理中的状态重置是安全的
       isDeletingFolder.value = false
     }
@@ -776,7 +777,7 @@ const confirmDeleteFolder = async () => {
 const handleBookmarkCopyUrl = (node: BookmarkNode) => {
   if (node.url) {
     navigator.clipboard.writeText(node.url)
-    notificationService.notify('URL copied!', { level: 'success' })
+    message.success('URL copied!')
   }
 }
 /**
@@ -804,12 +805,10 @@ const handleExternalChange = async (data: {
   try {
     await initializeStore()
     logger.info('Management', '✅ 已静默刷新书签数据')
-    notificationService.notify(t('management_external_change_detected'), {
-      level: 'info'
-    })
+    message.info(t('management_external_change_detected'))
   } catch (error) {
     logger.error('Management', '静默刷新失败', error)
-    notificationService.notify(t('management_refresh_failed'), { level: 'error' })
+    message.error(t('management_refresh_failed'))
   }
 }
 
@@ -1138,7 +1137,7 @@ const handleBulkDelete = async () => {
     } catch {}
   } catch (error) {
     logger.error('Management', '批量删除失败', error)
-    notificationService.notify(t('management_bulk_delete_failed'), { level: 'error' })
+    message.error(t('management_bulk_delete_failed'))
   } finally {
     isBulkDeleting.value = false
   }
@@ -1248,9 +1247,7 @@ async function handleAIOrganize() {
     isOrganizing.value = true
 
     // 临时提示：功能正在重构中
-    notificationService.notify('AI 整理功能正在重构中，即将推出基于向量的本地推荐功能', {
-      level: 'info'
-    })
+    message.info('AI 整理功能正在重构中，即将推出基于向量的本地推荐功能')
 
     /* 原实现已注释，等待使用 folderVectorService 重新实现
     showOrganizeProgress.value = true
@@ -1274,7 +1271,7 @@ async function handleAIOrganize() {
     )
 
     if (bookmarkRecords.length === 0) {
-      notificationService.notify(t('management_no_bookmarks_to_organize'), { level: 'info' })
+      message.info(t('management_no_bookmarks_to_organize'))
       return
     }
 
@@ -1287,14 +1284,13 @@ async function handleAIOrganize() {
     // TODO: 使用 folderVectorService 实现分类推荐
     // const results = await folderVectorService.recommendFolders(bookmarkRecords)
 
-    notificationService.notifySuccess(
-      t('management_organize_success', [String(bookmarkRecords.length), String(0)]),
-      'AI 整理'
+    message.success(
+      t('management_organize_success', [String(bookmarkRecords.length), String(0)])
     )
     */
   } catch (error) {
     logger.error('AI 整理失败', error)
-    notificationService.notifyError(t('management_organize_failed'), 'AI 整理')
+    message.error(t('management_organize_failed'))
   } finally {
     isOrganizing.value = false
     showOrganizeProgress.value = false
@@ -1309,7 +1305,7 @@ const handleApplyClick = () => {
   const tempNodeInfo = getTempNodesInfo(bookmarkManagementStore.newProposalTree.children)
 
   if (tempNodeInfo.count > 0) {
-    const message =
+    const confirmText =
       `⚠️ 检测到 ${tempNodeInfo.count} 个未保存的新增节点。\n\n` +
       `说明：新添加的节点（ID 以 temp_ 开头）尚未保存到浏览器书签。\n` +
       `这些节点的顺序调整无法应用，因为它们还不存在于浏览器中。\n\n` +
@@ -1317,7 +1313,7 @@ const handleApplyClick = () => {
       `1. 如果这些是误添加的节点，请刷新页面丢弃它们\n` +
       `2. 如果需要保留这些节点，暂时不支持保存（功能开发中）`
 
-    const shouldContinue = typeof window !== 'undefined' ? window.confirm(message) : false
+    const shouldContinue = typeof window !== 'undefined' ? window.confirm(confirmText) : false
 
     if (shouldContinue) {
       // 用户选择了解，继续显示差异（已过滤临时节点）
@@ -1326,9 +1322,7 @@ const handleApplyClick = () => {
       if (!diff || diff.statistics.total === 0) {
         // 如果实际没有差异，重置标志位，禁用按钮
         bookmarkManagementStore.hasUnsavedChanges = false
-        notificationService.notify(t('management_no_changes_detected'), {
-          level: 'info'
-        })
+        message.info(t('management_no_changes_detected'))
         return
       }
 
@@ -1344,7 +1338,7 @@ const handleApplyClick = () => {
   if (!diff || diff.statistics.total === 0) {
     // 如果实际没有差异，重置标志位，禁用按钮
     bookmarkManagementStore.hasUnsavedChanges = false
-    notificationService.notify(t('management_no_changes_detected'), { level: 'info' })
+    message.info(t('management_no_changes_detected'))
     return
   }
 
@@ -1395,12 +1389,9 @@ const confirmApplyChanges = async () => {
 
     // 显示结果
     if (result.success) {
-      notificationService.notify(t('management_all_changes_applied'), { level: 'success' })
+      message.success(t('management_all_changes_applied'))
     } else {
-      notificationService.notify(
-        t('management_some_changes_failed', String(result.errors.length)),
-        { level: 'warning' }
-      )
+      message.warning(t('management_some_changes_failed', String(result.errors.length)))
       logger.error('Management', '应用更改部分失败', result.errors)
     }
 
@@ -1409,7 +1400,7 @@ const confirmApplyChanges = async () => {
     diffResult.value = null
   } catch (error) {
     logger.error('Management', '应用更改失败', error)
-    notificationService.notify(t('management_apply_changes_failed'), { level: 'error' })
+    message.error(t('management_apply_changes_failed'))
   }
 }
 

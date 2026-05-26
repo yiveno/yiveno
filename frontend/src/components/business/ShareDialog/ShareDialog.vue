@@ -8,7 +8,7 @@ import AsyncSearchSelect from '@/components/base/AsyncSearchSelect/AsyncSearchSe
 import type { SelectOption, AsyncSearchSelectInstance } from '@/components/base/AsyncSearchSelect'
 import { shareService } from '@/application/share/share-service'
 import { posterService } from '@/application/share/poster-service'
-import { notifySuccess, notifyError } from '@/application/notification/notification-service'
+import { message } from '@/application/message/message-service'
 import { logger } from '@/infrastructure/logging/logger'
 import { useSupabaseAuth } from '@/composables/useSupabaseAuth'
 import { trpc } from '@/services/trpc'
@@ -165,7 +165,7 @@ const handleTabChange = (event: Event) => {
 // 用户搜索（异步）
 const handleUserSearch = async (query: string) => {
   if (!session.value?.access_token) {
-    notifyError('未登录，无法搜索用户')
+    message.error('未登录，无法搜索用户')
     return
   }
 
@@ -329,17 +329,17 @@ const handleCopyImage = async () => {
       })
     ])
 
-    const message = '图片已复制到剪贴板'
-    notifySuccess(message)
+    const successText = '图片已复制到剪贴板'
+    message.success(successText)
     // eslint-disable-next-line require-atomic-updates -- state.srMessage 在 await 期间不会被其他代码修改
-    state.srMessage = message
+    state.srMessage = successText
     logger.info('ShareDialog', '图片复制成功')
   } catch (error) {
-    const message = '图片复制失败，请尝试下载'
+    const errorText = '图片复制失败，请尝试下载'
     logger.error('ShareDialog', '图片复制失败', error)
-    notifyError(message)
+    message.error(errorText)
     // eslint-disable-next-line require-atomic-updates -- state.srMessage 在 await 期间不会被其他代码修改
-    state.srMessage = message
+    state.srMessage = errorText
   }
 }
 
@@ -352,22 +352,22 @@ const handleDownloadImage = () => {
     const filename = `bookmarks-share-${timestamp}.png`
 
     shareService.downloadImage(state.posterPreview, filename)
-    const message = '图片下载已开始'
-    notifySuccess(message)
-    state.srMessage = message
+    const successText = '图片下载已开始'
+    message.success(successText)
+    state.srMessage = successText
     logger.info('ShareDialog', '图片下载成功', { filename })
   } catch (error) {
-    const message = '图片下载失败，请重试'
+    const errorText = '图片下载失败，请重试'
     logger.error('ShareDialog', '图片下载失败', error)
-    notifyError(message)
-    state.srMessage = message
+    message.error(errorText)
+    state.srMessage = errorText
   }
 }
 
 // 创建链接分享
 const handleCreateLinkShare = async () => {
   if (!session.value?.access_token) {
-    notifyError('未登录，无法创建分享')
+    message.error('未登录，无法创建分享')
     return
   }
 
@@ -390,10 +390,10 @@ const handleCreateLinkShare = async () => {
       // 复制分享链接到剪贴板
       await navigator.clipboard.writeText(result.data.shareUrl)
 
-      const message = '分享链接已生成并复制到剪贴板'
-      notifySuccess(message)
+      const successText = '分享链接已生成并复制到剪贴板'
+      message.success(successText)
       // eslint-disable-next-line require-atomic-updates -- state.srMessage 在 await 期间不会被其他代码修改
-      state.srMessage = message
+      state.srMessage = successText
       logger.info('ShareDialog', '链接分享创建成功', {
         shareId: result.data.shareId,
         shortCode: result.data.shortCode,
@@ -407,11 +407,11 @@ const handleCreateLinkShare = async () => {
       emit('shareComplete')
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : '创建分享失败，请重试'
+    const errorText = error instanceof Error ? error.message : '创建分享失败，请重试'
     logger.error('ShareDialog', '创建链接分享失败', error)
-    notifyError(message)
+    message.error(errorText)
     // eslint-disable-next-line require-atomic-updates -- state.srMessage 在 await 期间不会被其他代码修改
-    state.srMessage = message
+    state.srMessage = errorText
   } finally {
     // eslint-disable-next-line require-atomic-updates -- state.isSharing 在 await 期间不会被其他代码修改
     state.isSharing = false
@@ -421,12 +421,12 @@ const handleCreateLinkShare = async () => {
 // 创建直接分享
 const handleCreateDirectShare = async () => {
   if (!session.value?.access_token) {
-    notifyError('未登录，无法创建分享')
+    message.error('未登录，无法创建分享')
     return
   }
 
   if (state.selectedUserIds.length === 0) {
-    notifyError('请至少选择一个用户')
+    message.error('请至少选择一个用户')
     return
   }
 
@@ -448,10 +448,10 @@ const handleCreateDirectShare = async () => {
     })
 
     if (result.success) {
-      const message = `已成功发送给 ${result.data.recipientCount} 个用户`
-      notifySuccess(message)
+      const successMessage = `已成功发送给 ${result.data.recipientCount} 个用户`
+      message.success(successMessage)
       // eslint-disable-next-line require-atomic-updates -- state.srMessage 在 await 期间不会被其他代码修改
-      state.srMessage = message
+      state.srMessage = successMessage
       logger.info('ShareDialog', '直接分享创建成功', {
         shareId: result.data.shareId,
         recipientCount: result.data.recipientCount
@@ -464,11 +464,11 @@ const handleCreateDirectShare = async () => {
       emit('update:show', false)
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : '发送分享失败，请重试'
+    const errorMessage = error instanceof Error ? error.message : '发送分享失败，请重试'
     logger.error('ShareDialog', '创建直接分享失败', error)
-    notifyError(message)
+    message.error(errorMessage)
     // eslint-disable-next-line require-atomic-updates -- state.srMessage 在 await 期间不会被其他代码修改
-    state.srMessage = message
+    state.srMessage = errorMessage
   } finally {
     // eslint-disable-next-line require-atomic-updates -- state.isSharing 在 await 期间不会被其他代码修改
     state.isSharing = false

@@ -6,7 +6,7 @@
 
 ### LLM Provider 优先级
 
-1. **用户自带 API Key**（OpenAI / Claude / Gemini）
+1. **用户自带 API Key**（OpenAI / Claude / Gemini / DeepSeek）
    - 隐私最优，数据不经过产品服务器
    - 直接调用第三方 API
    - 需要用户在设置页面配置
@@ -26,12 +26,12 @@
 
 ### ✅ 用户 API Key 优势
 
-| 优势     | 说明                             |
-| -------- | -------------------------------- |
-| 隐私最优 | 数据直接发送到第三方，不经过我们 |
-| 成本转移 | 用户自行承担 API 费用            |
-| 灵活选择 | 支持 OpenAI / Claude / Gemini    |
-| 功能完整 | 支持最新模型和所有功能           |
+| 优势     | 说明                                     |
+| -------- | ---------------------------------------- |
+| 隐私最优 | 数据直接发送到第三方，不经过我们         |
+| 成本转移 | 用户自行承担 API 费用                    |
+| 灵活选择 | 支持 OpenAI / Claude / Gemini / DeepSeek |
+| 功能完整 | 支持最新模型和所有功能                   |
 
 ### ✅ Chrome Built-in LLM 优势
 
@@ -207,7 +207,7 @@ async complete(prompt, options) {
 
 ## 核心文件
 
-- `user-llm-client.ts` - **主要使用**：用户自带 API Key 客户端（OpenAI / Claude / Gemini）
+- `user-llm-client.ts` - **主要使用**：用户自带 API Key 客户端（OpenAI / Claude / Gemini / DeepSeek）
 - `builtin-llm-client.ts` - **Fallback**：Chrome 内置 LLM 客户端（Gemini Nano）
 - `llm-adapter.ts` - LLM 适配器（自动选择最优 provider）
 - `llm-response-validator.ts` - 响应验证器（防止幻觉、格式容错）

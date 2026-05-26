@@ -50,6 +50,34 @@ export function createManualChunks(id: string) {
   // 注意：这个判断不够精确，但可以作为临时解决方案
 
   if (id.includes('node_modules')) {
+    // 虚拟滚动相关依赖必须整体隔离。
+    // `@tanstack/vue-virtual` 的底层实现依赖 `@tanstack/virtual-core`
+    // 和 `raf-schd`，后者在模块初始化时会访问 `window`。
+    // 如果它们落进通用 vendor，background Service Worker 在导入共享 chunk
+    // 时就会触发 `window is not defined`。
+    if (
+      id.includes('@tanstack/vue-virtual') ||
+      id.includes('@tanstack/virtual-core') ||
+      id.includes('/raf-schd/')
+    ) {
+      return 'vendor-virtual'
+    }
+
+    // ONNX / Transformers 运行时需要和后台通用 vendor 隔离，
+    // 避免 Service Worker 在初始化时提前执行重量级浏览器运行时代码。
+    if (
+      id.includes('@huggingface/transformers') ||
+      id.includes('/onnxruntime-web/') ||
+      id.includes('/onnxruntime-common/')
+    ) {
+      return 'vendor-transformers'
+    }
+
+    // QRCode 仅用于前端分享海报等页面能力，不应该混入后台共享 vendor。
+    if (id.includes('/qrcode/')) {
+      return 'vendor-qrcode'
+    }
+
     // ⚠️ 关键修复：Lit 和 Material Web 单独分包，不要放到 vendor
     // 这样可以避免 background.js 导入包含 DOM API 的 chunk
     // 使用更宽泛的匹配规则，确保所有 Lit 相关的包都被分离
@@ -70,12 +98,6 @@ export function createManualChunks(id: string) {
 
     // 搜索库 - 单独分包（体积较大）
     if (id.includes('flexsearch')) return 'vendor-flexsearch'
-
-    // AI/ML 库 - 单独分包（体积最大）
-    if (id.includes('@huggingface/transformers')) return 'vendor-transformers'
-
-    // 虚拟滚动 - 单独分包
-    if (id.includes('@tanstack/vue-virtual')) return 'vendor-virtual'
 
     // 查询库 - 合并 query 相关
     if (id.includes('@tanstack/vue-query') || id.includes('@tanstack/query-core'))
@@ -168,10 +190,7 @@ export function createBuildOptions() {
     input: createBuildInput(),
     output: {
       ...createOutputFileNames(),
-      manualChunks: createManualChunks,
-      // ⚠️ 关键修复：为 background.js 内联所有动态导入
-      // 这样可以避免它依赖包含 Vue 的 chunk
-      inlineDynamicImports: false
+      manualChunks: createManualChunks
     },
     // 🌳 Tree-shaking 优化配置
     // Vite 8 使用 Rolldown 的 tree-shaking，比 Rollup 更激进

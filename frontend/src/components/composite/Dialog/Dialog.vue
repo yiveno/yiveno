@@ -238,6 +238,7 @@ onBeforeUnmount(() => {
 
 <template>
   <Teleport :to="teleportTarget">
+    <div v-if="show" class="acuity-dialog-backdrop" aria-hidden="true"></div>
     <md-dialog
       class="acuity-md-dialog"
       :class="mdDialogClasses"
@@ -305,6 +306,15 @@ onBeforeUnmount(() => {
   --md-dialog-container-shape: var(--radius-lg);
 
   max-height: min(90vh, 900px);
+}
+
+.acuity-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal-backdrop);
+  background: var(--color-scrim-55);
+  backdrop-filter: blur(2px);
+  pointer-events: none;
 }
 
 .acuity-md-dialog--fullscreen {

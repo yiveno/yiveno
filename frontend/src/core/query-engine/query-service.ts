@@ -16,7 +16,6 @@ import type { ILogger } from '@/core/common/logger'
 import { noopLogger } from '@/core/common/logger'
 import { indexedDBManager, type BookmarkRecord } from '@/infrastructure/indexeddb/manager'
 import { SearchEngine } from './engine'
-import { FlexSearchStrategy } from './strategies/flexsearch-strategy'
 import { semanticSearch } from './strategies/semantic-strategy'
 import { detectIntent } from './intent-detector'
 import { QueryCache } from './query-cache'
@@ -35,7 +34,8 @@ export class QueryService {
   private static instance: QueryService
   private queryCache: QueryCache
   private highlightEngine: HighlightEngine
-  private fuseEngine: SearchEngine
+  private fuseEngine: SearchEngine | null = null
+  private fuseEnginePromise: Promise<SearchEngine> | null = null
   private indexStatus: IndexStatus
   private initialized: boolean = false
   private logger: ILogger
@@ -48,7 +48,6 @@ export class QueryService {
       logger: this.logger
     })
     this.highlightEngine = new HighlightEngine()
-    this.fuseEngine = new SearchEngine(new FlexSearchStrategy())
     this.indexStatus = {
       isBuilding: false,
       isReady: false,
@@ -56,6 +55,31 @@ export class QueryService {
       documentCount: 0,
       version: 1
     }
+  }
+
+  /**
+   * 懒加载 FlexSearch 引擎
+   *
+   * Service Worker 会在启动时加载 queryService 单例，
+   * 因此不能在构造函数中静态创建 FlexSearchStrategy。
+   */
+  private async getFuseEngine(): Promise<SearchEngine> {
+    if (this.fuseEngine) {
+      return this.fuseEngine
+    }
+
+    if (!this.fuseEnginePromise) {
+      this.fuseEnginePromise = (async () => {
+        const { FlexSearchStrategy } = await import('./strategies/flexsearch-strategy')
+        const engine = new SearchEngine(new FlexSearchStrategy())
+        this.fuseEngine = engine
+        return engine
+      })().finally(() => {
+        this.fuseEnginePromise = null
+      })
+    }
+
+    return this.fuseEnginePromise
   }
 
   static getInstance(logger?: ILogger): QueryService {
@@ -356,7 +380,8 @@ export class QueryService {
       // 降级到主线程
       this.logger.warn('QueryService', 'Worker 查询失败，降级到主线程')
       const bookmarks = await indexedDBManager.getAllBookmarks()
-      const results = this.fuseEngine.search(query, bookmarks)
+      const fuseEngine = await this.getFuseEngine()
+      const results = fuseEngine.search(query, bookmarks)
       return this.convertToEnhanced(results, query)
     }
   }

@@ -94,6 +94,33 @@ export function createForceHttpsPlugin(): Plugin {
 }
 
 /**
+ * 修复 Rolldown/Vite 注入的动态导入 helper 在 Service Worker 中访问 window 的问题。
+ *
+ * 背景：
+ * - background.js 的动态 import 会复用某个共享 chunk 中的 preload helper。
+ * - 当动态 import 失败时，helper 默认调用 window.dispatchEvent('vite:preloadError')。
+ * - Service Worker 没有 window，导致原始导入错误被二次错误「window is not defined」覆盖。
+ *
+ * 这里仅将该派发逻辑改为 globalThis 安全访问，不改变浏览器页面中的原有行为。
+ */
+export function createServiceWorkerSafePreloadHelperPlugin(): Plugin {
+  return {
+    name: 'service-worker-safe-preload-helper',
+    generateBundle(_options, bundle) {
+      for (const chunk of Object.values(bundle)) {
+        if (chunk.type !== 'chunk') continue
+        if (!chunk.code.includes('window.dispatchEvent')) continue
+
+        chunk.code = chunk.code.replaceAll(
+          'window.dispatchEvent(e)',
+          'globalThis.dispatchEvent?.(e)'
+        )
+      }
+    }
+  }
+}
+
+/**
  * 创建所有插件
  */
 export function createPlugins() {
@@ -101,6 +128,8 @@ export function createPlugins() {
     createVuePlugin(),
     // 🔒 启用 HTTPS 开发服务器
     basicSsl(),
+    // 🛡️ 让动态导入 preload helper 在 Service Worker 中安全运行
+    createServiceWorkerSafePreloadHelperPlugin(),
     // 🧹 构建完成后自动清理和整理 dist 目录
     createCleanDistPlugin(),
     // 🔒 强制 HTTPS 环境变量

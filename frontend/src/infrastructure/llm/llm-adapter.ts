@@ -2,7 +2,7 @@
  * LLM 统一适配器
  *
  * Provider 优先级：
- * 1. 用户自带 API Key（OpenAI / Claude / Gemini）- 隐私最优，数据不经过产品服务器
+ * 1. 用户自带 API Key（OpenAI / Claude / Gemini / DeepSeek）- 隐私最优，数据不经过产品服务器
  * 2. Chrome Built-in LLM - 极端 fallback（覆盖率低，功能受限）
  *
  * 降级策略：
@@ -47,7 +47,7 @@ export class LLMAdapter {
       ...(!userConfigured ? { reason: '未配置 API Key，请在设置页面填写' } : {}),
       features: {
         textCompletion: true,
-        embedding: userConfig?.provider !== 'claude',
+        embedding: userConfig?.provider !== 'claude' && userConfig?.provider !== 'deepseek',
         maxTokens: 128000,
         streaming: false
       }
@@ -129,7 +129,7 @@ export class LLMAdapter {
     }
 
     throw new Error(
-      '没有可用的 AI 服务。请在设置页面配置您的 API Key（支持 OpenAI / Claude / Gemini）'
+      '没有可用的 AI 服务。请在设置页面配置您的 API Key（支持 OpenAI / Claude / Gemini / DeepSeek）'
     )
   }
 
@@ -153,7 +153,8 @@ export class LLMAdapter {
       const labels: Record<string, string> = {
         openai: 'OpenAI',
         claude: 'Anthropic Claude',
-        gemini: 'Google Gemini'
+        gemini: 'Google Gemini',
+        deepseek: 'DeepSeek'
       }
       return labels[config?.provider || ''] || '用户自定义'
     }
