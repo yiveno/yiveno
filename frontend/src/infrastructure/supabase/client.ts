@@ -9,7 +9,7 @@
  */
 
 /* eslint-disable no-restricted-imports -- 这是 Supabase 客户端的封装层，必须直接导入 @supabase/supabase-js */
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type User, type Session, type AuthError } from '@supabase/supabase-js'
 import { logger } from '@/infrastructure/logging/logger'
 
 /**
@@ -106,3 +106,8 @@ export const supabase = createClient(
 export function isSupabaseConfigured(): boolean {
   return isConfigured
 }
+
+/**
+ * 导出 Supabase 类型（供外部使用）
+ */
+export type { User, Session, AuthError }

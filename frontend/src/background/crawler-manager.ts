@@ -23,7 +23,7 @@ declare global {
 
   var __crawlerClearConfirmed: boolean | null | undefined
 
-  var crawlerDebug: Record<string, (...args: unknown[]) => unknown>
+  var crawlerDebug: unknown
 }
 
 /**
@@ -249,7 +249,7 @@ export const crawlerDebug = {
       console.log(`  ${i + 1}. ${b.title} - ${b.url}`)
     })
 
-    await crawlMultipleBookmarks(testBookmarks, {
+    await crawlMultipleBookmarks(testBookmarks as unknown as chrome.bookmarks.BookmarkTreeNode[], {
       skipExisting: false,
       onProgress: progress => {
         console.log(`📊 进度更新: ${progress.progress}%`, progress)
@@ -278,7 +278,7 @@ export const crawlerDebug = {
 
     console.log(`📋 找到 ${urlBookmarks.length} 个书签`)
 
-    await crawlMultipleBookmarks(urlBookmarks, {
+    await crawlMultipleBookmarks(urlBookmarks as unknown as chrome.bookmarks.BookmarkTreeNode[], {
       skipExisting,
       onProgress: progress => {
         const timestamp = new Date().toLocaleTimeString()

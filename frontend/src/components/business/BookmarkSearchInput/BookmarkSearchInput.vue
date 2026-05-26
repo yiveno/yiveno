@@ -581,11 +581,15 @@ const {
   filter,
   clear
 } = useBookmarkSearch({
-  mode,
-  strategy,
+  // eslint-disable-next-line vue/no-ref-object-reactivity-loss
+  mode: mode.value,
+  // eslint-disable-next-line vue/no-ref-object-reactivity-loss
+  strategy: strategy.value,
   data: computed(() => data.value ?? []),
-  limit,
-  initialQuery,
+  // eslint-disable-next-line vue/no-ref-object-reactivity-loss
+  limit: limit.value,
+  // eslint-disable-next-line vue/no-ref-object-reactivity-loss
+  initialQuery: initialQuery.value,
   autoFilter: false // 手动控制搜索时机
 })
 
