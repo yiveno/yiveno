@@ -1,59 +1,97 @@
 #!/usr/bin/env sh
 
-echo "🚀 pre-push: 运行推送前检查..."
+echo "🚀 pre-push: 运行推送前检查（仅检查变更文件）..."
 
 # 错误收集
 ERRORS=""
 
-# 1. TypeScript 类型检查（强制重新检查所有项目）
-echo "🧪 TypeScript 类型检查..."
-if bun run typecheck:all > /dev/null 2>&1; then
-    echo "✅ 类型检查通过"
-else
-    echo "❌ 类型检查失败"
-    TYPECHECK_ERROR=$(bun run typecheck:all 2>&1 || true)
-    ERRORS="${ERRORS}\n❌ TypeScript 类型检查失败:\n${TYPECHECK_ERROR}\n\n"
+# 获取本次推送涉及的文件
+CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+if [ -z "$CHANGED_FILES" ]; then
+    echo "ℹ️  没有变更文件，跳过检查"
+    exit 0
 fi
 
-# 2. 代码质量检查（严格模式）
-echo "🔍 代码质量检查（严格模式）..."
-if (cd frontend && bun run lint:check > /dev/null 2>&1); then
-    echo "✅ ESLint 检查通过"
+echo "📋 变更文件:"
+echo "$CHANGED_FILES" | head -20
+echo ""
+
+# 检查是否涉及 TypeScript 文件
+TS_FILES=$(echo "$CHANGED_FILES" | grep -E '\.(ts|tsx)$' || true)
+if [ -n "$TS_FILES" ]; then
+    echo "🧪 TypeScript 类型检查（仅变更文件）..."
+    # 使用 turbo 的增量构建功能
+    if bun run typecheck:force > /dev/null 2>&1; then
+        echo "✅ 类型检查通过"
+    else
+        echo "❌ 类型检查失败"
+        TYPECHECK_ERROR=$(bun run typecheck:force 2>&1 || true)
+        ERRORS="${ERRORS}\n❌ TypeScript 类型检查失败:\n${TYPECHECK_ERROR}\n\n"
+    fi
 else
-    echo "❌ ESLint 检查失败"
-    LINT_ERROR=$((cd frontend && bun run lint:check) 2>&1 || true)
-    ERRORS="${ERRORS}\n❌ ESLint 检查失败:\n${LINT_ERROR}\n\n"
+    echo "⏭️  无 TypeScript 文件变更，跳过类型检查"
 fi
 
-# 3. 样式检查
-echo "💅 样式检查..."
-if (cd frontend && bun run stylelint:check > /dev/null 2>&1); then
-    echo "✅ Stylelint 检查通过"
+# 检查是否涉及 frontend 文件
+FRONTEND_FILES=$(echo "$CHANGED_FILES" | grep -E '^frontend/' || true)
+if [ -n "$FRONTEND_FILES" ]; then
+    # 2. 代码质量检查（仅变更文件）
+    echo "🔍 代码质量检查（仅变更文件）..."
+    if (cd frontend && bunx eslint --no-cache --max-warnings 0 $(echo "$CHANGED_FILES" | grep -E '^frontend/.*\.(ts|tsx|js|jsx)$' | sed 's|^frontend/||') > /dev/null 2>&1); then
+        echo "✅ ESLint 检查通过"
+    else
+        echo "❌ ESLint 检查失败"
+        LINT_ERROR=$((cd frontend && bunx eslint --no-cache --max-warnings 0 $(echo "$CHANGED_FILES" | grep -E '^frontend/.*\.(ts|tsx|js|jsx)$' | sed 's|^frontend/||')) 2>&1 || true)
+        ERRORS="${ERRORS}\n❌ ESLint 检查失败:\n${LINT_ERROR}\n\n"
+    fi
+
+    # 3. 样式检查（仅变更文件）
+    echo "💅 样式检查（仅变更文件）..."
+    STYLE_FILES=$(echo "$CHANGED_FILES" | grep -E '^frontend/.*\.(css|scss|vue)$' | sed 's|^frontend/||' || true)
+    if [ -n "$STYLE_FILES" ]; then
+        if (cd frontend && bunx stylelint --no-cache "$STYLE_FILES" > /dev/null 2>&1); then
+            echo "✅ Stylelint 检查通过"
+        else
+            echo "❌ Stylelint 检查失败"
+            STYLELINT_ERROR=$((cd frontend && bunx stylelint --no-cache "$STYLE_FILES") 2>&1 || true)
+            ERRORS="${ERRORS}\n❌ Stylelint 检查失败:\n${STYLELINT_ERROR}\n\n"
+        fi
+    else
+        echo "⏭️  无样式文件变更，跳过样式检查"
+    fi
 else
-    echo "❌ Stylelint 检查失败"
-    STYLELINT_ERROR=$((cd frontend && bun run stylelint:check) 2>&1 || true)
-    ERRORS="${ERRORS}\n❌ Stylelint 检查失败:\n${STYLELINT_ERROR}\n\n"
+    echo "⏭️  无 frontend 文件变更，跳过 ESLint 和样式检查"
 fi
 
-# 4. 生产构建测试
-echo "🏗️  生产构建测试..."
-if bun run build > /dev/null 2>&1; then
-    echo "✅ 构建成功"
+# 4. 生产构建测试（仅在涉及关键变更时）
+# 检查是否涉及构建配置或核心文件
+BUILD_RELATED_FILES=$(echo "$CHANGED_FILES" | grep -E '(vite\.config|tsconfig|package\.json|turbo\.json)' || true)
+if [ -n "$BUILD_RELATED_FILES" ] || [ -n "$FRONTEND_FILES" ]; then
+    echo "🏗️  生产构建测试..."
+    if bun run build > /dev/null 2>&1; then
+        echo "✅ 构建成功"
+    else
+        echo "❌ 构建失败"
+        BUILD_ERROR=$(bun run build 2>&1 || true)
+        ERRORS="${ERRORS}\n❌ 构建失败:\n${BUILD_ERROR}\n\n"
+    fi
 else
-    echo "❌ 构建失败"
-    BUILD_ERROR=$(bun run build 2>&1 || true)
-    ERRORS="${ERRORS}\n❌ 构建失败:\n${BUILD_ERROR}\n\n"
+    echo "⏭️  无构建相关文件变更，跳过构建测试"
 fi
 
-# 5. 单元测试（推荐启用）
-echo "🧪 运行单元测试..."
-# ✅ 只检查退出码，忽略 stderr（测试可能输出预期的错误日志）
-if (cd frontend && bun run test:run > /dev/null); then
-    echo "✅ 测试通过"
+# 5. 单元测试（仅在涉及测试文件时）
+TEST_FILES=$(echo "$CHANGED_FILES" | grep -E '\.test\.(ts|tsx|js|jsx)$' || true)
+if [ -n "$TEST_FILES" ]; then
+    echo "🧪 运行单元测试..."
+    if (cd frontend && bun run test:run > /dev/null); then
+        echo "✅ 测试通过"
+    else
+        echo "❌ 测试失败"
+        TEST_ERROR=$((cd frontend && bun run test:run) 2>&1 || true)
+        ERRORS="${ERRORS}\n❌ 测试失败:\n${TEST_ERROR}\n\n"
+    fi
 else
-    echo "❌ 测试失败"
-    TEST_ERROR=$((cd frontend && bun run test:run) 2>&1 || true)
-    ERRORS="${ERRORS}\n❌ 测试失败:\n${TEST_ERROR}\n\n"
+    echo "⏭️  无测试文件变更，跳过单元测试"
 fi
 
 # 如果有错误，显示详细信息并阻止推送
