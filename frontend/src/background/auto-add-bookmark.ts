@@ -67,7 +67,7 @@ async function resolveFolderId(bookmarkData: AutoAddBookmarkData): Promise<{
     bookmarkData.title,
     bookmarkData.url,
     1,
-    0.3
+    0.1 // 使用正常的阈值
   )
 
   if (recommendations.length > 0) {

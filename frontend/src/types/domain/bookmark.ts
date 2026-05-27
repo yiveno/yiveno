@@ -69,7 +69,7 @@ export interface BookmarkNode extends Omit<ChromeBookmarkTreeNode, 'children' | 
   modified?: boolean | undefined
   /** 子节点是否已加载完成 */
   _childrenLoaded?: boolean | undefined
-  /** 特征标签，例如 invalid（失效书签）/ duplicate（重复书签）/ internal（内部书签）等 */
+  /** 特征标签，例如 invalid（无效书签）/ duplicate（重复书签）/ internal（内部书签）等 */
   traitTags?: string[] | undefined
   /** 特征标签元数据（检测时间、来源等） */
   traitMetadata?:

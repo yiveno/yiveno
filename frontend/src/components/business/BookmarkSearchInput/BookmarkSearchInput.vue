@@ -28,6 +28,7 @@ import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
 import type { TraitTag } from '@/infrastructure/indexeddb/types/bookmark-record'
 import { t } from '@/utils/i18n-helpers'
 import { logger } from '@/infrastructure/logging/logger'
+import { faviconService } from '@/services/favicon-service'
 
 defineOptions({
   name: 'BookmarkSearchInput'
@@ -77,6 +78,9 @@ const isCollapsing = ref(false)
 
 // 选中的结果索引（用于键盘导航）
 const selectedResultIndex = ref(-1)
+
+// Favicon 缓存（书签ID -> favicon URL）
+const faviconCache = ref<Map<string, string>>(new Map())
 
 // ========== 搜索历史 ==========
 const {
@@ -468,7 +472,7 @@ async function updateTraitCounts(): Promise<void> {
       b => b.url && b.traitTags && b.traitTags.includes('duplicate')
     ).length
 
-    // ✅ 统计失效书签：从 traitTags 读取，只统计有 URL 的书签
+    // ✅ 统计无效书签：从 traitTags 读取，只统计有 URL 的书签
     const invalidCount = allBookmarks.filter(
       b => b.url && b.traitTags && b.traitTags.includes('invalid')
     ).length
@@ -494,13 +498,13 @@ const builtInTraitFilters = computed<QuickFilter[]>(() => {
   return [
     {
       id: 'invalid',
-      label: '失效书签',
+      label: '无效书签',
       icon: 'alert-circle',
       count: traitCounts.value.invalid,
       filter: (node: BookmarkNode) => {
         const isRootNode = !node.parentId || node.parentId === '0'
         if (isRootNode) return false
-        // 失效书签（合并了404和URL格式错误）
+        // 无效书签（URL格式错误）
         return node.traitTags?.includes('invalid') ?? false
       }
     },
@@ -626,7 +630,7 @@ const displayResultCount = computed(() => {
  *
  * 统计规则：只统计"叶子节点"（在最终结果树中最深层的匹配节点）
  * - 空文件夹：children 为空数组 [] 的节点（是叶子节点）
- * - 重复书签/失效链接：没有 children 属性的节点（是叶子节点）
+ * - 重复书签/无效链接：没有 children 属性的节点（是叶子节点）
  * - 父文件夹：有非空 children 的节点（不是叶子节点，不统计）
  *
  * @param nodes - 节点数组
@@ -1013,6 +1017,48 @@ const handleOpenInNewTab = (bookmark: BookmarkNode) => {
   }
 }
 
+/**
+ * 处理 favicon 加载错误
+ */
+const handleFaviconError = (event: Event) => {
+  const img = event.target as HTMLImageElement
+  img.style.display = 'none' // 隐藏加载失败的图片，显示回退图标
+}
+
+/**
+ * 为书签加载 favicon
+ */
+const loadFavicon = async (bookmark: BookmarkNode) => {
+  if (!bookmark.url || faviconCache.value.has(bookmark.id)) return
+
+  try {
+    const faviconUrl = await faviconService.getFavicon(bookmark.url)
+    if (faviconUrl) {
+      faviconCache.value.set(bookmark.id, faviconUrl)
+    }
+  } catch (faviconError) {
+    logger.debug('BookmarkSearchInput', 'Favicon加载失败', {
+      bookmarkId: bookmark.id,
+      error: faviconError
+    })
+  }
+}
+
+/**
+ * 批量加载搜索结果的 favicon
+ */
+watch(
+  dropdownResults,
+  newResults => {
+    newResults.forEach(bookmark => {
+      if (bookmark.url && !faviconCache.value.has(bookmark.id)) {
+        loadFavicon(bookmark)
+      }
+    })
+  },
+  { immediate: true }
+)
+
 // ✅ 移除"查看全部"按钮功能（已废弃）
 // 用户可以直接在下拉列表中滚动查看最多 50 条结果
 // 如果需要查看更多，可以去 Management 页面
@@ -1093,14 +1139,17 @@ onUnmounted(() => {
 })
 
 /**
- * 监听书签数据同步消息，自动刷新特征统计
+ * 监听书签数据同步消息，自动刷新特征统计和清除搜索缓存
  */
 if (typeof chrome !== 'undefined' && chrome.runtime) {
   chrome.runtime.onMessage.addListener(message => {
     if (message.type === 'acuity-bookmarks-db-synced') {
       // 使用 queueMicrotask 避免阻塞消息处理
-      queueMicrotask(() => {
+      queueMicrotask(async () => {
         void updateTraitCounts()
+        // 清除 Worker 适配器的缓存，确保搜索使用最新数据
+        const { queryWorkerAdapter } = await import('@/services/query-worker-adapter')
+        queryWorkerAdapter.clearCache()
       })
     }
   })
@@ -1248,8 +1297,17 @@ defineExpose({
                 @click="handleResultClick(bookmark)"
                 @mouseenter="selectedResultIndex = index"
               >
-                <!-- 左侧图标 -->
-                <LucideIcon slot="start" name="bookmark" :size="16" />
+                <!-- 左侧图标：书签网站图标 -->
+                <div slot="start" class="result-favicon">
+                  <img
+                    v-if="faviconCache.get(bookmark.id)"
+                    :src="faviconCache.get(bookmark.id)"
+                    :alt="bookmark.title || '书签图标'"
+                    class="favicon-img"
+                    @error="handleFaviconError"
+                  />
+                  <LucideIcon v-else name="bookmark" :size="24" />
+                </div>
 
                 <!-- 主标题 -->
                 <div slot="headline" class="result-headline">
@@ -1511,6 +1569,23 @@ defineExpose({
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* 结果项 favicon 样式 */
+.result-favicon {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: center;
+  align-items: center;
+  width: 24px;
+  height: 24px;
+}
+
+.favicon-img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  border-radius: 4px;
 }
 
 /* 结果项右侧操作按钮 */

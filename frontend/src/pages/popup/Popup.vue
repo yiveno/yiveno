@@ -7,7 +7,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'
-import GlobalQuickAddBookmark from '@/components/business/GlobalQuickAddBookmark/GlobalQuickAddBookmark.vue'
 import BookmarkSearchInput from '@/components/business/BookmarkSearchInput/BookmarkSearchInput.vue'
 import { useThemeSync } from '@/composables/useThemeSync'
 import { useTraitStatistics, useTraitLoading } from '@/composables/useTraitData'
@@ -288,7 +287,7 @@ async function openManagementWithFilter(key: string): Promise<void> {
         break
       case 'dead':
       case 'invalid':
-        // "失效书签"（已合并404和URL格式错误）
+        // "无效书签"（URL格式错误，不符合http/https规范）
         tags.push('invalid')
         break
       case 'internal':
@@ -479,9 +478,6 @@ onUnmounted(() => {
 <template>
   <!-- 📊 全局书签同步进度对话框 -->
   <GlobalSyncProgress />
-
-  <!-- ⚡ 全局快速添加书签对话框 -->
-  <GlobalQuickAddBookmark ref="quickAddRef" />
 
   <div class="popup-container">
     <AppHeader
@@ -689,6 +685,16 @@ body::-webkit-scrollbar {
 </style>
 
 <style scoped>
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 html,
 body {
   width: 420px;

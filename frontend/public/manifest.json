@@ -101,8 +101,9 @@
     "128": "images/icon128.png"
   },
   "content_security_policy": {
-    "extension_pages": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com; img-src 'self' data: https: http:; connect-src 'self' https://localhost:8787 https://127.0.0.1:8787 https://acuitybookmarks.cqw547847.workers.dev https://api.acuitybookmarks.com https://*.supabase.co https://*.supabase.io https://graph.microsoft.com https://api.openai.com https://api.anthropic.com https://generativelanguage.googleapis.com https://huggingface.co https://*.huggingface.co https://*.xethub.hf.co https://cdn.jsdelivr.net data: blob: wss:"
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
   },
+
   "web_accessible_resources": [
     {
       "resources": [
@@ -111,7 +112,8 @@
         "settings.html",
         "offscreen.html",
         "offscreen.js",
-        "onboarding.html"
+        "onboarding.html",
+        "save-popup.html"
       ],
       "matches": ["<all_urls>"],
       "use_dynamic_url": true

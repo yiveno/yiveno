@@ -78,6 +78,61 @@ export function registerMessageHandlers(): void {
 }
 
 /**
+ * 消息处理器映射
+ * 将消息类型映射到对应的处理函数
+ */
+const MESSAGE_HANDLERS: Record<
+  string,
+  (message: RuntimeMessage, sendResponse: AsyncResponse) => Promise<void>
+> = {
+  ACUITY_NOTIFY_PING: async (_message, sendResponse) => {
+    sendResponse({ ok: true } as unknown)
+  },
+  ACUITY_NOTIFY: handleNotification,
+  ACUITY_NOTIFY_CLEAR: handleNotificationClear,
+  OPEN_MANAGEMENT_PAGE: async (_message, sendResponse) => {
+    openManagementPage()
+    sendResponse({ success: true } as unknown)
+  },
+  OPEN_SETTINGS_PAGE: async (_message, sendResponse) => {
+    openSettingsPage()
+    sendResponse({ success: true } as unknown)
+  },
+  SYNC_BOOKMARKS: async (_message, sendResponse) => {
+    sendResponse({ ok: true } as unknown)
+  },
+  'get-bookmarks-paged': handlePagedBookmarks,
+  'get-children-paged': handleChildrenPaged,
+  'get-tree-root': handleTreeRoot,
+  'get-global-stats': handleGlobalStats,
+  CREATE_BOOKMARK: handleCreateBookmark,
+  UPDATE_BOOKMARK: handleUpdateBookmark,
+  DELETE_BOOKMARK: handleDeleteBookmark,
+  MOVE_BOOKMARK: handleMoveBookmark,
+  REMOVE_TREE_BOOKMARK: handleRemoveTreeBookmark,
+  GET_BOOKMARK_TREE: async (message, sendResponse) => {
+    logger.info('BackgroundMessaging', '📥 收到 GET_BOOKMARK_TREE 请求')
+    await handleGetBookmarkTree(message, sendResponse)
+  },
+  GET_FOLDER_RECOMMENDATIONS: handleGetFolderRecommendations,
+  SYNC_FOLDER_VECTORS: handleSyncFolderVectors,
+  CHECK_DUPLICATE_BOOKMARK: handleCheckDuplicateBookmark,
+  ADD_TO_FAVORITES: handleAddToFavorites,
+  AUTO_ADD_BOOKMARK: handleAutoAddBookmark,
+  FAVORITE_CHANGED: async (message, sendResponse) => {
+    await broadcastToAllTabs(message)
+    sendResponse({ ok: true } as unknown)
+  },
+  PROXY_API_REQUEST: handleProxyApiRequest,
+  BATCH_DELETE_BY_TRAIT: handleBatchDeleteByTrait,
+  CHECK_EXTENSION_INSTALLED: async (_message, sendResponse) => {
+    sendResponse({ installed: true, version: chrome.runtime.getManifest().version } as unknown)
+  },
+  SYNC_AUTH_SESSION: handleSyncAuthSession,
+  CLEAR_AUTH_SESSION: handleClearAuthSession
+}
+
+/**
  * 处理接收到的消息
  *
  * 根据消息类型路由到对应的处理函数
@@ -93,124 +148,11 @@ async function handleMessage(message: RuntimeMessage, sendResponse: AsyncRespons
   logger.info('BackgroundMessaging', '📨 收到消息', { type })
 
   try {
-    switch (type) {
-      case 'ACUITY_NOTIFY_PING': {
-        sendResponse({ ok: true })
-        return
-      }
-      case 'ACUITY_NOTIFY': {
-        await handleNotification(message, sendResponse)
-        return
-      }
-      case 'ACUITY_NOTIFY_CLEAR': {
-        await handleNotificationClear(message, sendResponse)
-        return
-      }
-      case 'OPEN_MANAGEMENT_PAGE': {
-        openManagementPage()
-        sendResponse({ success: true })
-        return
-      }
-      case 'OPEN_SETTINGS_PAGE': {
-        openSettingsPage()
-        sendResponse({ success: true })
-        return
-      }
-      case 'SYNC_BOOKMARKS': {
-        sendResponse({ ok: true })
-        return
-      }
-      case 'get-bookmarks-paged': {
-        await handlePagedBookmarks(message, sendResponse)
-        return
-      }
-      case 'get-children-paged': {
-        await handleChildrenPaged(message, sendResponse)
-        return
-      }
-      case 'get-tree-root': {
-        await handleTreeRoot(sendResponse)
-        return
-      }
-      case 'get-global-stats': {
-        await handleGlobalStats(sendResponse)
-        return
-      }
-      case 'CREATE_BOOKMARK': {
-        await handleCreateBookmark(message, sendResponse)
-        return
-      }
-      case 'UPDATE_BOOKMARK': {
-        await handleUpdateBookmark(message, sendResponse)
-        return
-      }
-      case 'DELETE_BOOKMARK': {
-        await handleDeleteBookmark(message, sendResponse)
-        return
-      }
-      case 'MOVE_BOOKMARK': {
-        await handleMoveBookmark(message, sendResponse)
-        return
-      }
-      case 'REMOVE_TREE_BOOKMARK': {
-        await handleRemoveTreeBookmark(message, sendResponse)
-        return
-      }
-      case 'GET_BOOKMARK_TREE': {
-        logger.info('BackgroundMessaging', '📥 收到 GET_BOOKMARK_TREE 请求')
-        await handleGetBookmarkTree(sendResponse)
-        return
-      }
-      case 'GET_FOLDER_RECOMMENDATIONS': {
-        await handleGetFolderRecommendations(message, sendResponse)
-        return
-      }
-      case 'SYNC_FOLDER_VECTORS': {
-        await handleSyncFolderVectors(message, sendResponse)
-        return
-      }
-      case 'CHECK_DUPLICATE_BOOKMARK': {
-        await handleCheckDuplicateBookmark(message, sendResponse)
-        return
-      }
-      case 'ADD_TO_FAVORITES': {
-        await handleAddToFavorites(message, sendResponse)
-        return
-      }
-      case 'AUTO_ADD_BOOKMARK': {
-        await handleAutoAddBookmark(message, sendResponse)
-        return
-      }
-      case 'FAVORITE_CHANGED': {
-        // 广播收藏变更到所有页面
-        await broadcastToAllTabs(message)
-        sendResponse({ ok: true })
-        return
-      }
-      case 'PROXY_API_REQUEST': {
-        await handleProxyApiRequest(message, sendResponse)
-        return
-      }
-      case 'BATCH_DELETE_BY_TRAIT': {
-        await handleBatchDeleteByTrait(message, sendResponse)
-        return
-      }
-      case 'CHECK_EXTENSION_INSTALLED': {
-        // 简单的 ping 响应，用于网页检测扩展是否安装
-        sendResponse({ installed: true, version: chrome.runtime.getManifest().version })
-        return
-      }
-      case 'SYNC_AUTH_SESSION': {
-        await handleSyncAuthSession(message, sendResponse)
-        return
-      }
-      case 'CLEAR_AUTH_SESSION': {
-        await handleClearAuthSession(sendResponse)
-        return
-      }
-      default: {
-        sendResponse({ status: 'noop' })
-      }
+    const handler = MESSAGE_HANDLERS[type]
+    if (handler) {
+      await handler(message, sendResponse)
+    } else {
+      sendResponse({ status: 'noop' })
     }
   } catch (error) {
     logger.error('BackgroundMessaging', `处理消息 ${type} 失败`, error)
@@ -301,9 +243,13 @@ async function handleChildrenPaged(
  *
  * 带超时保护，避免长时间等待
  *
+ * @param _message - 消息对象（未使用）
  * @param sendResponse - 响应回调函数
  */
-async function handleTreeRoot(sendResponse: AsyncResponse): Promise<void> {
+async function handleTreeRoot(
+  _message: RuntimeMessage,
+  sendResponse: AsyncResponse
+): Promise<void> {
   let responded = false
 
   const done = (payload: unknown) => {
@@ -337,9 +283,13 @@ async function handleTreeRoot(sendResponse: AsyncResponse): Promise<void> {
 /**
  * 处理获取全局统计数据消息
  *
+ * @param _message - 消息对象（未使用）
  * @param sendResponse - 响应回调函数
  */
-async function handleGlobalStats(sendResponse: AsyncResponse): Promise<void> {
+async function handleGlobalStats(
+  _message: RuntimeMessage,
+  sendResponse: AsyncResponse
+): Promise<void> {
   const all = await bookmarkSyncService.getAllBookmarks(999_999, 0)
   const totalBookmarks = all.filter((item: BookmarkRecord) => item.url && !item.isFolder).length
   const totalFolders = all.filter((item: BookmarkRecord) => item.isFolder).length
@@ -366,6 +316,7 @@ async function handleCreateBookmark(
     const title = (data.title as string)?.trim()
     const url = (data.url as string)?.trim()
     const parentId = data.parentId as string | undefined
+    const showNotification = data.showNotification !== false // 默认显示通知
 
     if (!url || url === '') {
       const error = '❌ 无法创建书签：URL 为空或未定义'
@@ -381,7 +332,8 @@ async function handleCreateBookmark(
     logger.info('BackgroundMessaging', '创建书签', {
       title: title || url,
       url,
-      parentId
+      parentId,
+      showNotification
     })
 
     // 1. 调用 Chrome API 创建书签
@@ -408,6 +360,18 @@ async function handleCreateBookmark(
     // 因此此处不需要手动调用同步
 
     logger.info('BackgroundMessaging', `✅ 书签已创建: ${node.title || node.id}`)
+
+    // ✅ 显示系统通知（如果需要）
+    if (showNotification) {
+      try {
+        // 获取文件夹路径
+        const folderPath = await getFolderPath(node.id)
+        await showBookmarkAddedNotification(node.id, folderPath)
+      } catch (error) {
+        logger.warn('BackgroundMessaging', '显示通知失败，但不影响书签创建', error)
+      }
+    }
+
     sendResponse({ success: true, bookmark: node, bookmarkId: node.id })
   } catch (error) {
     logger.error('BackgroundMessaging', '创建书签失败', error)
@@ -415,6 +379,108 @@ async function handleCreateBookmark(
       success: false,
       error: error instanceof Error ? error.message : String(error)
     })
+  }
+}
+
+/**
+ * 获取书签所在文件夹的路径
+ */
+export async function getFolderPath(bookmarkId: string): Promise<string> {
+  try {
+    const node = await chrome.bookmarks.get(bookmarkId)
+    if (!node || node.length === 0) return '未知文件夹'
+
+    const bookmark = node[0]
+    if (!bookmark || !bookmark.parentId) return '书签栏'
+
+    // 递归获取父级路径
+    const path: string[] = []
+    let currentId = bookmark.parentId
+
+    while (currentId && currentId !== '0') {
+      const parents = await chrome.bookmarks.get(currentId)
+      if (parents && parents.length > 0) {
+        const parent = parents[0]
+        if (parent) {
+          path.unshift(parent.title || '未命名')
+          currentId = parent.parentId || '0'
+        } else {
+          break
+        }
+      } else {
+        break
+      }
+    }
+
+    return path.join(' > ')
+  } catch (error) {
+    logger.warn('BackgroundMessaging', '获取文件夹路径失败', error)
+    return '未知文件夹'
+  }
+}
+
+/**
+ * 显示书签已添加通知（带撤销按钮）
+ */
+export async function showBookmarkAddedNotification(
+  bookmarkId: string,
+  folderPath: string
+): Promise<void> {
+  try {
+    const notificationId = await chrome.notifications.create({
+      type: 'basic',
+      iconUrl: chrome.runtime.getURL('images/icon128.png'),
+      title: '✅ 书签已添加',
+      message: `已添加到：${folderPath}`,
+      buttons: [{ title: '撤销' }, { title: '查看' }],
+      requireInteraction: true, // 强制用户交互，确保通知被看到
+      priority: 2 // 提高优先级
+    })
+
+    logger.info('BackgroundMessaging', '✅ 通知已创建', { notificationId, bookmarkId, folderPath })
+
+    // 监听通知按钮点击
+    const handleNotificationClick = async (clickedNotificationId: string, buttonIndex?: number) => {
+      // 只处理当前通知的点击事件
+      if (clickedNotificationId !== notificationId) {
+        return
+      }
+
+      logger.info('BackgroundMessaging', '📱 通知按钮点击', { notificationId, buttonIndex })
+
+      if (buttonIndex === 0) {
+        // 撤销：删除书签
+        try {
+          await chrome.bookmarks.remove(bookmarkId)
+          logger.info('BackgroundMessaging', '✅ 书签已撤销', { bookmarkId })
+        } catch (error) {
+          logger.error('BackgroundMessaging', '撤销书签失败', error)
+        }
+      } else if (buttonIndex === 1) {
+        // 查看：打开管理页面
+        openManagementPage()
+      }
+
+      // 清除通知
+      await chrome.notifications.clear(notificationId)
+    }
+
+    // 监听通知点击事件（使用一次性监听器）
+    chrome.notifications.onButtonClicked.addListener(handleNotificationClick)
+    chrome.notifications.onClicked.addListener(clickedNotificationId => {
+      void handleNotificationClick(clickedNotificationId, undefined)
+    })
+
+    // 监听通知关闭事件，清理监听器
+    chrome.notifications.onClosed.addListener(closedNotificationId => {
+      if (closedNotificationId === notificationId) {
+        logger.info('BackgroundMessaging', '📱 通知已关闭', { notificationId })
+        // 清理监听器
+        chrome.notifications.onButtonClicked.removeListener(handleNotificationClick)
+      }
+    })
+  } catch (error) {
+    logger.error('BackgroundMessaging', '显示通知失败', error)
   }
 }
 
@@ -648,9 +714,13 @@ async function handleRemoveTreeBookmark(
  *
  * 返回 Chrome 原生的书签树结构（用于文件夹选择）
  *
+ * @param _message - 消息对象（未使用）
  * @param sendResponse - 响应回调函数
  */
-async function handleGetBookmarkTree(sendResponse: AsyncResponse): Promise<void> {
+async function handleGetBookmarkTree(
+  _message: RuntimeMessage,
+  sendResponse: AsyncResponse
+): Promise<void> {
   try {
     logger.info('BackgroundMessaging', '🔄 开始获取书签树...')
 
@@ -761,7 +831,7 @@ async function handleSyncFolderVectors(
  * 直接使用 IndexedDB 中预处理好的 pathString 或 path 字段
  * 如果 pathString 包含书签名称，需要去掉最后一节
  */
-function getFolderPath(bookmark: BookmarkRecord, allBookmarks: BookmarkRecord[]): string {
+function getFolderPathFromRecord(bookmark: BookmarkRecord, allBookmarks: BookmarkRecord[]): string {
   // 优先使用 pathString（完整路径，包括当前节点）
   if (bookmark.pathString) {
     const parts = bookmark.pathString.split(' / ')
@@ -855,7 +925,7 @@ async function handleCheckDuplicateBookmark(
           title: bookmark.title,
           url: bookmark.url,
           pathString: bookmark.pathString || '', // 完整的路径字符串
-          folderPath: getFolderPath(bookmark, allBookmarks) // 父级路径（兼容旧代码）
+          folderPath: getFolderPathFromRecord(bookmark, allBookmarks) // 父级路径（兼容旧代码）
         }))
       })
     } else {
@@ -915,6 +985,148 @@ async function handleAddToFavorites(
 }
 
 /**
+ * 处理 fetch 错误
+ */
+function handleFetchError(
+  fetchError: unknown,
+  url: string
+): {
+  error: string
+  status: number
+  isCertError?: boolean
+} {
+  const errorMessage = fetchError instanceof Error ? fetchError.message : String(fetchError)
+
+  logger.error('BackgroundMessaging', '❌ fetch 失败', {
+    error: errorMessage,
+    url,
+    errorType: fetchError instanceof Error ? fetchError.constructor.name : typeof fetchError,
+    stack: fetchError instanceof Error ? fetchError.stack : undefined
+  })
+
+  // 检查是否是 CSP 错误
+  if (
+    errorMessage.includes('CSP') ||
+    errorMessage.includes('Content Security Policy') ||
+    errorMessage.includes('violates')
+  ) {
+    logger.error('BackgroundMessaging', '⚠️ Service Worker fetch 被 CSP 阻止！这不应该发生。', {
+      url,
+      error: errorMessage,
+      suggestion: '请检查 manifest.json 中的 host_permissions 是否正确配置'
+    })
+
+    return {
+      error: `CSP 限制：${errorMessage}。Service Worker 理论上不应该受到 CSP 限制。请检查 manifest.json 中的 host_permissions 配置，并确保扩展已重新加载。`,
+      status: 0
+    }
+  }
+
+  // 检查是否是证书错误（自签名证书）
+  const isCertError =
+    errorMessage.includes('Failed to fetch') ||
+    errorMessage.includes('ERR_CERT') ||
+    errorMessage.includes('certificate') ||
+    errorMessage.includes('SSL') ||
+    errorMessage.includes('TLS')
+
+  if (isCertError && (url.includes('localhost') || url.includes('127.0.0.1'))) {
+    logger.error(
+      'BackgroundMessaging',
+      '⚠️ 自签名证书错误：Chrome Extension Service Worker 不接受自签名证书',
+      {
+        url,
+        error: errorMessage,
+        solution:
+          '请先手动访问 https://localhost:8787/api/health 并接受证书，或使用 mkcert 生成受信任的本地证书'
+      }
+    )
+
+    return {
+      error: `证书错误：Chrome Extension Service Worker 不接受自签名证书。请先手动访问 https://localhost:8787/api/health 并接受证书，或使用 mkcert 生成受信任的本地证书。原错误：${errorMessage}`,
+      status: 0,
+      isCertError: true
+    }
+  }
+
+  return {
+    error: errorMessage,
+    status: 0
+  }
+}
+
+/**
+ * 验证代理请求参数
+ *
+ * @param data - 请求数据
+ * @returns 验证结果
+ */
+function validateProxyRequest(data: Record<string, unknown>): { valid: boolean; error?: string } {
+  const url = data.url as string
+  if (!url) {
+    return { valid: false, error: 'URL 为空' }
+  }
+  return { valid: true }
+}
+
+/**
+ * 执行代理 fetch 请求
+ *
+ * @param url - 请求 URL
+ * @param method - HTTP 方法
+ * @param headers - 请求头
+ * @param body - 请求体
+ * @returns fetch 响应
+ */
+async function executeProxyFetch(
+  url: string,
+  method: string,
+  headers: Record<string, string>,
+  body?: string
+): Promise<Response> {
+  logger.info('BackgroundMessaging', '🔄 代理 API 请求', {
+    url,
+    method,
+    isServiceWorker: typeof self !== 'undefined' && 'ServiceWorkerGlobalScope' in self,
+    hasFetch: typeof fetch !== 'undefined'
+  })
+
+  const urlObj = new URL(url)
+  const origin = `${urlObj.protocol}//${urlObj.host}`
+
+  logger.info('BackgroundMessaging', '📍 请求详情', {
+    origin,
+    fullUrl: url,
+    method,
+    headersKeys: Object.keys(headers)
+  })
+
+  return fetch(url, {
+    method,
+    headers,
+    ...(body !== undefined ? { body } : {})
+  })
+}
+
+/**
+ * 解析代理响应数据
+ *
+ * @param response - fetch 响应
+ * @returns 解析后的数据
+ */
+async function parseProxyResponse(response: Response): Promise<unknown> {
+  const contentType = response.headers.get('content-type')
+
+  if (contentType?.includes('application/json')) {
+    return await response.json()
+  } else if (contentType?.includes('text/')) {
+    return await response.text()
+  } else {
+    return await response.blob()
+  }
+}
+
+/**
  * 代理 API 请求（绕过 CSP 限制）
  *
  * Background Script 不受 CSP 限制，可以自由访问任何 HTTP/HTTPS 端点
@@ -934,131 +1146,36 @@ async function handleProxyApiRequest(
     const headers = (data.headers as Record<string, string>) || {}
     const body = data.body as string | undefined
 
-    if (!url) {
-      sendResponse({ success: false, error: 'URL 为空' })
+    // 验证参数
+    const validation = validateProxyRequest(data)
+    if (!validation.valid) {
+      sendResponse({ success: false, error: validation.error })
       return
     }
 
-    logger.info('BackgroundMessaging', '🔄 代理 API 请求', {
+    // 执行请求
+    const response = await executeProxyFetch(url, method, headers, body)
+
+    // 解析响应
+    const responseData = await parseProxyResponse(response)
+
+    logger.info('BackgroundMessaging', '✅ 代理 API 请求成功', {
       url,
-      method,
-      // 调试信息：确认这是在 Service Worker 环境中
-      isServiceWorker: typeof self !== 'undefined' && 'ServiceWorkerGlobalScope' in self,
-      hasFetch: typeof fetch !== 'undefined'
+      status: response.status
     })
 
-    // Service Worker 应该不受 CSP 限制，只要有 host_permissions
-    // 但为了调试，我们先检查 URL 是否在 host_permissions 中
-    const urlObj = new URL(url)
-    const origin = `${urlObj.protocol}//${urlObj.host}`
-
-    logger.info('BackgroundMessaging', '📍 请求详情', {
-      origin,
-      fullUrl: url,
-      method,
-      headersKeys: Object.keys(headers)
+    sendResponse({
+      success: true,
+      status: response.status,
+      statusText: response.statusText,
+      data: responseData,
+      headers: Object.fromEntries(response.headers.entries())
     })
-
-    try {
-      const response = await fetch(url, {
-        method,
-        headers,
-        ...(body !== undefined ? { body } : {})
-      })
-
-      const contentType = response.headers.get('content-type')
-      let responseData: unknown
-
-      if (contentType?.includes('application/json')) {
-        responseData = await response.json()
-      } else if (contentType?.includes('text/')) {
-        responseData = await response.text()
-      } else {
-        responseData = await response.blob()
-      }
-
-      logger.info('BackgroundMessaging', '✅ 代理 API 请求成功', {
-        url,
-        status: response.status
-      })
-
-      sendResponse({
-        success: true,
-        status: response.status,
-        statusText: response.statusText,
-        data: responseData,
-        headers: Object.fromEntries(response.headers.entries())
-      })
-    } catch (fetchError) {
-      // 如果 fetch 失败，记录详细错误信息
-      const errorMessage = fetchError instanceof Error ? fetchError.message : String(fetchError)
-
-      logger.error('BackgroundMessaging', '❌ fetch 失败', {
-        error: errorMessage,
-        url,
-        errorType: fetchError instanceof Error ? fetchError.constructor.name : typeof fetchError,
-        stack: fetchError instanceof Error ? fetchError.stack : undefined
-      })
-
-      // 检查是否是 CSP 错误
-      if (
-        errorMessage.includes('CSP') ||
-        errorMessage.includes('Content Security Policy') ||
-        errorMessage.includes('violates')
-      ) {
-        logger.error('BackgroundMessaging', '⚠️ Service Worker fetch 被 CSP 阻止！这不应该发生。', {
-          url,
-          error: errorMessage,
-          suggestion: '请检查 manifest.json 中的 host_permissions 是否正确配置'
-        })
-
-        sendResponse({
-          success: false,
-          error: `CSP 限制：${errorMessage}。Service Worker 理论上不应该受到 CSP 限制。请检查 manifest.json 中的 host_permissions 配置，并确保扩展已重新加载。`,
-          status: 0
-        })
-      } else {
-        // 检查是否是证书错误（自签名证书）
-        const isCertError =
-          errorMessage.includes('Failed to fetch') ||
-          errorMessage.includes('ERR_CERT') ||
-          errorMessage.includes('certificate') ||
-          errorMessage.includes('SSL') ||
-          errorMessage.includes('TLS')
-
-        if (isCertError && (url.includes('localhost') || url.includes('127.0.0.1'))) {
-          logger.error(
-            'BackgroundMessaging',
-            '⚠️ 自签名证书错误：Chrome Extension Service Worker 不接受自签名证书',
-            {
-              url,
-              error: errorMessage,
-              solution:
-                '请先手动访问 https://localhost:8787/api/health 并接受证书，或使用 mkcert 生成受信任的本地证书'
-            }
-          )
-
-          sendResponse({
-            success: false,
-            error: `证书错误：Chrome Extension Service Worker 不接受自签名证书。请先手动访问 https://localhost:8787/api/health 并接受证书，或使用 mkcert 生成受信任的本地证书。原错误：${errorMessage}`,
-            status: 0,
-            isCertError: true
-          })
-        } else {
-          sendResponse({
-            success: false,
-            error: errorMessage,
-            status: 0
-          })
-        }
-      }
-    }
-  } catch (error) {
-    logger.error('BackgroundMessaging', '❌ 代理 API 请求失败', error)
+  } catch (fetchError) {
+    const errorResult = handleFetchError(fetchError, (message.data || {}).url as string)
     sendResponse({
       success: false,
-      error: error instanceof Error ? error.message : String(error),
-      status: 0
+      ...errorResult
     })
   }
 }
@@ -1250,9 +1367,13 @@ async function handleSyncAuthSession(
  *
  * 从 Chrome Storage 中删除 Supabase session
  *
+ * @param _message - 消息对象（未使用）
  * @param sendResponse - 响应回调函数
  */
-async function handleClearAuthSession(sendResponse: AsyncResponse): Promise<void> {
+async function handleClearAuthSession(
+  _message: RuntimeMessage,
+  sendResponse: AsyncResponse
+): Promise<void> {
   try {
     logger.info('BackgroundMessaging', '🧹 清除 Chrome Storage 中的 session')
 

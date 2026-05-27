@@ -9,6 +9,3 @@ export * from './performance'
 
 // Favicon 类型
 export * from './favicon'
-
-// 爬虫类型
-export * from './crawler'

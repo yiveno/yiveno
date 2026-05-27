@@ -10,6 +10,7 @@ import type { ExtensionState } from './state'
 import { CURRENT_SCHEMA_VERSION, getExtensionState, updateExtensionState } from './state'
 import { bookmarkSyncService } from '@/services/bookmark-sync-service'
 import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
+import { folderVectorService } from '@/application/folder/folder-vector-service'
 
 /**
  * 首次安装流程处理
@@ -45,6 +46,17 @@ async function handleFirstInstall(reason: string): Promise<void> {
   try {
     await indexedDBManager.initialize()
     await bookmarkSyncService.syncAllBookmarks()
+
+    // ✅ 同步文件夹向量（AI 功能需要）
+    try {
+      logger.info('Bootstrap', '开始同步文件夹向量...')
+      await folderVectorService.syncFolderVectors(progress => {
+        logger.debug('Bootstrap', `文件夹向量同步进度: ${progress.processed}/${progress.total}`)
+      })
+      logger.info('Bootstrap', '文件夹向量同步完成')
+    } catch (error) {
+      logger.warn('Bootstrap', '文件夹向量同步失败（非致命，AI 功能可能受限）', error)
+    }
 
     // ✅ 从 IndexedDB 查询实际的书签总数（不依赖已废弃的 bookmarksCount 字段）
     const allBookmarks = await indexedDBManager.getAllBookmarks()
@@ -87,6 +99,17 @@ async function handleSchemaUpgrade(state: ExtensionState): Promise<void> {
     await bookmarkSyncService.syncAllBookmarks()
     allBookmarks = await indexedDBManager.getAllBookmarks()
     totalBookmarks = allBookmarks.filter(node => node.url && !node.isFolder).length
+  }
+
+  // ✅ 同步文件夹向量（AI 功能需要）
+  try {
+    logger.info('Bootstrap', '开始同步文件夹向量...')
+    await folderVectorService.syncFolderVectors(progress => {
+      logger.debug('Bootstrap', `文件夹向量同步进度: ${progress.processed}/${progress.total}`)
+    })
+    logger.info('Bootstrap', '文件夹向量同步完成')
+  } catch (error) {
+    logger.warn('Bootstrap', '文件夹向量同步失败（非致命，AI 功能可能受限）', error)
   }
 
   await updateExtensionState({
@@ -160,6 +183,18 @@ async function handleDataRecovery(): Promise<void> {
   logger.warn('Bootstrap', '检测到数据丢失，重新同步')
   await indexedDBManager.initialize()
   await bookmarkSyncService.syncAllBookmarks()
+
+  // ✅ 同步文件夹向量（AI 功能需要）
+  try {
+    logger.info('Bootstrap', '开始同步文件夹向量...')
+    await folderVectorService.syncFolderVectors(progress => {
+      logger.debug('Bootstrap', `文件夹向量同步进度: ${progress.processed}/${progress.total}`)
+    })
+    logger.info('Bootstrap', '文件夹向量同步完成')
+  } catch (error) {
+    logger.warn('Bootstrap', '文件夹向量同步失败（非致命，AI 功能可能受限）', error)
+  }
+
   const allBookmarks = await indexedDBManager.getAllBookmarks()
   const totalBookmarks = allBookmarks.filter(node => node.url && !node.isFolder).length
   await updateExtensionState({
@@ -239,6 +274,17 @@ export function registerLifecycleHandlers(): void {
       }
 
       await bookmarkSyncService.syncAllBookmarks()
+
+      // ✅ 同步文件夹向量（AI 功能需要）
+      try {
+        logger.info('Bootstrap', '开始同步文件夹向量...')
+        await folderVectorService.syncFolderVectors(progress => {
+          logger.debug('Bootstrap', `文件夹向量同步进度: ${progress.processed}/${progress.total}`)
+        })
+        logger.info('Bootstrap', '文件夹向量同步完成')
+      } catch (error) {
+        logger.warn('Bootstrap', '文件夹向量同步失败（非致命，AI 功能可能受限）', error)
+      }
 
       // ⚠️ 收藏数据同步已移到页面打开时执行
       // Service Worker 环境中不适合执行可能触发 DOM API 的操作

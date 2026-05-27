@@ -20,7 +20,7 @@ export function createBuildInput() {
     background: resolve(SRC_DIR, 'background/main.ts'),
     offscreen: resolve(SRC_DIR, 'offscreen/main.ts'),
     onboarding: resolve(SRC_DIR, 'pages/onboarding/index.html'),
-    'content/inject-quick-add-dialog': resolve(SRC_DIR, 'content/inject-quick-add-dialog.ts'),
+    'save-popup': resolve(SRC_DIR, 'pages/save-popup/index.html'),
     'auth-sync': resolve(SRC_DIR, 'content/auth-sync.ts')
   }
 }
@@ -139,10 +139,6 @@ export function createOutputFileNames() {
     entryFileNames: (chunkInfo: { name: string }) => {
       if (['background', 'offscreen'].includes(chunkInfo.name)) {
         return '[name].js'
-      }
-      // Content script 也需要固定文件名（manifest 中引用）
-      if (chunkInfo.name === 'content/inject-quick-add-dialog') {
-        return 'content/inject-quick-add-dialog.js'
       }
       if (chunkInfo.name === 'auth-sync') {
         return 'auth-sync.js'

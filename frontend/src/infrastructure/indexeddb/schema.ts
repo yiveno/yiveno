@@ -25,7 +25,6 @@ export const DB_CONFIG = {
     SEARCH_HISTORY: 'searchHistory',
     FAVICON_CACHE: 'faviconCache',
     FAVICON_STATS: 'faviconStats',
-    CRAWL_METADATA: 'crawlMetadata',
     EMBEDDINGS: 'embeddings',
     FOLDER_VECTORS: 'folderVectors', // 新增：文件夹向量存储
     AI_JOBS: 'ai_jobs'
@@ -166,36 +165,6 @@ export interface FaviconCacheRecord {
   isBlocked: boolean
   /** 更新时间 */
   updatedAt: number
-}
-
-/**
- * 爬虫元数据记录
- *
- * 精简版：只保留失效书签检测所需的核心字段
- */
-export interface CrawlMetadataRecord {
-  /** 关联书签ID（主键） */
-  bookmarkId: string
-  /** 原始URL */
-  url: string
-  /** 状态与来源 */
-  source: 'chrome' | 'crawler' | 'merged'
-  /** 状态 */
-  status?: 'success' | 'failed' | 'partial'
-  /** HTTP状态码（核心字段：用于失效书签检测） */
-  httpStatus?: number
-  /** 爬取成功 */
-  crawlSuccess?: boolean
-  /** 爬取次数 */
-  crawlCount?: number
-  /** 最后爬取时间 */
-  lastCrawled?: number
-
-  // 维护信息
-  /** 记录更新时间 */
-  updatedAt: number
-  /** 记录版本 */
-  version: string
 }
 
 /**
@@ -377,8 +346,6 @@ export interface DatabaseStats {
   searchHistoryCount: number
   /** 设置数量 */
   settingsCount: number
-  /** 爬虫元数据数量 */
-  crawlMetadataCount: number
   /** 总大小 */
   totalSize: number
   /** 索引大小 */

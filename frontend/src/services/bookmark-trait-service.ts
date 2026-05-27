@@ -2,14 +2,13 @@
  * 书签特征计算服务
  *
  * 职责：
- * - 读取 IndexedDB 中的所有书签与爬虫元数据
- * - 预计算书签特征（重复、失效、内部）
+ * - 读取 IndexedDB 中的所有书签
+ * - 预计算书签特征（重复、内部、过时等）
  * - 将计算结果写回 IndexedDB，供前端页面直接消费
  * - 对外提供调度方法，避免重复触发导致的性能抖动
  */
 
 import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
-import type { CrawlMetadataRecord } from '@/infrastructure/indexeddb/types'
 import type { BookmarkRecord } from '@/infrastructure/indexeddb/schema'
 import { logger } from '@/infrastructure/logging/logger'
 import { TRAIT_TAG_ORDER, type TraitTag } from '@/core/bookmark/trait-rules'
@@ -194,15 +193,10 @@ export async function evaluateAllBookmarkTraits(): Promise<void> {
     return
   }
 
-  const crawlMetadataList = await indexedDBManager.getAllCrawlMetadata()
-  const metadataMap = new Map<string, CrawlMetadataRecord>(
-    crawlMetadataList.map(item => [item.bookmarkId, item])
-  )
-
   const duplicateInfo = buildDuplicateInfo(bookmarks)
 
   const evaluations: BookmarkTraitEvaluation[] = bookmarks.map(record =>
-    evaluateBookmarkTraits(record, metadataMap.get(record.id), duplicateInfo)
+    evaluateBookmarkTraits(record, duplicateInfo)
   )
 
   await persistTraitEvaluations(evaluations)
@@ -254,19 +248,10 @@ async function evaluateBookmarksTraitsIncremental(bookmarkIds: string[]): Promis
     }
   }
 
-  const metadataList = await Promise.all(
-    relatedBookmarks.map(b => indexedDBManager.getCrawlMetadata(b.id))
-  )
-  const metadataMap = new Map<string, CrawlMetadataRecord>(
-    metadataList
-      .filter((m): m is CrawlMetadataRecord => m !== null)
-      .map(item => [item.bookmarkId, item])
-  )
-
   const duplicateInfo = buildDuplicateInfo(relatedBookmarks)
 
   const evaluations: BookmarkTraitEvaluation[] = relatedBookmarks.map(record =>
-    evaluateBookmarkTraits(record, metadataMap.get(record.id), duplicateInfo)
+    evaluateBookmarkTraits(record, duplicateInfo)
   )
 
   await persistTraitEvaluations(evaluations)
@@ -355,7 +340,6 @@ function getBookmarkOrderKey(record: BookmarkRecord): string {
  */
 function evaluateBookmarkTraits(
   record: BookmarkRecord,
-  metadata: CrawlMetadataRecord | undefined,
   duplicateInfo: {
     duplicateIds: Set<string>
     canonicalMap: Map<string, string>
@@ -391,11 +375,6 @@ function evaluateBookmarkTraits(
       // 2.1 URL格式检测
       if (!isValidBookmarkUrl(record.url)) {
         addTag('invalid', 'URL 不符合 http/https 规范')
-      }
-      // 2.2 HTTP错误检测
-      else if (metadata && isHttpFailure(metadata)) {
-        const status = metadata.httpStatus ?? '未知'
-        addTag('invalid', `HTTP 状态码 ${status}`)
       }
     }
 
@@ -484,16 +463,6 @@ function isValidBookmarkUrl(url: string): boolean {
   } catch {
     return false
   }
-}
-
-/**
- * 判断爬虫元数据是否表示访问失败
- */
-function isHttpFailure(metadata: CrawlMetadataRecord): boolean {
-  if (metadata.crawlSuccess === false) return true
-  const status = metadata.httpStatus ?? 0
-  if (status >= 400) return true
-  return false
 }
 
 /**

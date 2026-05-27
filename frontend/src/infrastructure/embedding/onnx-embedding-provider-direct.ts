@@ -36,27 +36,42 @@ export class OnnxEmbeddingProviderDirect implements EmbeddingProvider {
       logger.info(LOG_TAG, '加载模型: Xenova/paraphrase-multilingual-MiniLM-L12-v2')
       const startTime = Date.now()
 
-      const { pipeline, env } = await import('@huggingface/transformers')
-      env.useBrowserCache = true
-      env.allowLocalModels = false
-      const wasmBackend = env.backends.onnx.wasm
-      if (wasmBackend) {
-        wasmBackend.numThreads = 1
-      }
-      if (wasmBackend && typeof chrome !== 'undefined' && chrome.runtime?.getURL) {
-        wasmBackend.wasmPaths = chrome.runtime.getURL('assets/')
-      }
+      try {
+        const { pipeline, env } = await import('@huggingface/transformers')
 
-      this.pipeline = (await pipeline(
-        'feature-extraction',
-        'Xenova/paraphrase-multilingual-MiniLM-L12-v2',
-        {
-          dtype: 'q8',
-          device: 'wasm'
+        // 配置环境以支持 Chrome 扩展的 CSP 限制
+        env.useBrowserCache = true
+        env.allowLocalModels = false
+
+        // 配置 WASM 后端，尝试使用单线程模式避免 CSP 问题
+        const wasmBackend = env.backends.onnx.wasm
+        if (wasmBackend) {
+          wasmBackend.numThreads = 1
+          // 设置 WASM 路径
+          if (typeof chrome !== 'undefined' && chrome.runtime?.getURL) {
+            wasmBackend.wasmPaths = chrome.runtime.getURL('assets/')
+          }
         }
-      )) as (text: string | string[], options?: Record<string, unknown>) => Promise<unknown>
 
-      logger.info(LOG_TAG, `模型加载完成，耗时 ${Date.now() - startTime}ms`)
+        // 尝试使用 WASM 设备加载模型
+        this.pipeline = (await pipeline(
+          'feature-extraction',
+          'Xenova/paraphrase-multilingual-MiniLM-L12-v2',
+          {
+            dtype: 'q8',
+            device: 'wasm'
+          }
+        )) as (text: string | string[], options?: Record<string, unknown>) => Promise<unknown>
+
+        logger.info(LOG_TAG, `模型加载完成，耗时 ${Date.now() - startTime}ms`)
+      } catch (error) {
+        logger.error(LOG_TAG, '模型加载失败', error)
+        // 如果是 CSP 相关错误，提供更详细的错误信息
+        if (error instanceof Error && error.message.includes('Content Security Policy')) {
+          logger.error(LOG_TAG, 'CSP 错误：需要允许 WebAssembly 执行。请检查扩展的 CSP 配置。')
+        }
+        throw error
+      }
     })()
 
     try {

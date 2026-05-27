@@ -18,7 +18,7 @@ export type TraitMetadataSource = 'worker' | 'user' | 'imported'
 
 export type InvalidReason = 'url_format' | 'http_error' | 'network_error' | 'timeout' | 'unknown'
 
-export type MetadataSource = 'chrome' | 'crawler' | 'merged'
+export type MetadataSource = 'chrome' | 'merged'
 
 export interface TraitMetadata {
   tag: string // 使用 string 而不是 TraitTag，避免循环依赖

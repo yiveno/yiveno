@@ -31,7 +31,7 @@ const chromeAIAvailable = ref(false)
 const recheckingChromeAI = ref(false)
 
 const aiEnabled = ref(false)
-const aiAutoEnabled = ref(true)
+const aiAutoEnabled = ref(false)
 const semanticSearchEnabled = ref(false)
 
 const selectedProvider = ref<UserLLMProvider>('openai')
@@ -357,8 +357,16 @@ onMounted(async () => {
   // 加载 AI 功能开关状态
   try {
     const result = await chrome.storage.local.get(['aiAutoBookmark', 'semanticSearchEnabled'])
-    aiAutoEnabled.value = result.aiAutoBookmark !== false
+    aiAutoEnabled.value = result.aiAutoBookmark === true
     semanticSearchEnabled.value = result.semanticSearchEnabled === true
+
+    // 迁移逻辑：如果 AI 自动添加开关为 true 但 AI 功能未启用，自动关闭自动添加
+    if (result.aiAutoBookmark === true && aiEnabled.value === false) {
+      aiAutoEnabled.value = false
+      await chrome.storage.local.set({ aiAutoBookmark: false })
+      logger.info('AISettings', '检测到 AI 自动添加开启但 AI 功能未启用，已自动关闭')
+    }
+
     logger.info('AISettings', '设置已加载', {
       aiAuto: aiAutoEnabled.value,
       semanticSearch: semanticSearchEnabled.value
@@ -717,7 +725,7 @@ onMounted(async () => {
       <!-- AI 自动归纳书签 -->
       <div class="feature-row">
         <label class="feature-label">
-          <span>AI 自动添加到合适目录</span>
+          <span>自动添加书签</span>
           <Tooltip offset="md">
             <LucideIcon name="info" class="label-info-icon" />
             <template #content>

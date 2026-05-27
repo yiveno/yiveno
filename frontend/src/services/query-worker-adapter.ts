@@ -324,6 +324,17 @@ export class QueryWorkerAdapter {
     }
   }
 
+  /**
+   * 清除内存缓存
+   *
+   * @description
+   * 当书签数据更新时调用此方法，确保搜索使用最新的数据
+   */
+  clearCache(): void {
+    this.byId = null
+    logger.info('QueryWorkerAdapter', '🧹 内存缓存已清除')
+  }
+
   private async ensureOffscreenInitialized(): Promise<void> {
     if (!this.isServiceWorkerContext || !this.offscreenSupported) {
       return

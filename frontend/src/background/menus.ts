@@ -17,6 +17,7 @@ import { logger } from '@/infrastructure/logging/logger'
 import { openManagementPage, openSettingsPage } from './navigation'
 import { showSystemNotification } from './notification'
 import { autoAddBookmark } from './auto-add-bookmark'
+import { showBookmarkAddedNotification } from './messaging'
 
 // ✅ 菜单注册状态标记（避免重复注册）
 let menusRegistered = false
@@ -193,12 +194,31 @@ async function handleQuickAddBookmark(
     logger.info('Menus', '触发快速添加书签', bookmarkData)
     console.log('✅ [DEBUG] 触发快速添加书签', bookmarkData)
 
-    // ✅ 检查 AI 自动归纳开关
-    const settings = await chrome.storage.local.get('aiAutoBookmark')
-    const aiAutoEnabled = settings.aiAutoBookmark !== false // 默认 true
+    // ✅ 检查 AI 功能总开关和 AI 自动归纳开关
+    const settings = await chrome.storage.local.get(['aiEnabled', 'aiAutoBookmark'])
+    const aiEnabled = settings.aiEnabled === true // AI 功能总开关
+    let aiAutoBookmark = settings.aiAutoBookmark === true // AI 自动归纳开关，默认 false
 
-    logger.info('Menus', 'AI 自动归纳状态', { enabled: aiAutoEnabled })
-    console.log('🤖 [DEBUG] AI 自动归纳状态', { enabled: aiAutoEnabled, settings })
+    // 迁移逻辑：如果 AI 自动添加为 true 但 AI 功能未启用，自动关闭
+    if (settings.aiAutoBookmark === true && !aiEnabled) {
+      aiAutoBookmark = false
+      await chrome.storage.local.set({ aiAutoBookmark: false })
+      logger.info('Menus', '检测到 AI 自动添加开启但 AI 功能未启用，已自动关闭')
+    }
+
+    const aiAutoEnabled = aiEnabled && aiAutoBookmark
+
+    logger.info('Menus', 'AI 自动归纳状态', {
+      aiEnabled,
+      aiAutoBookmark,
+      aiAutoEnabled
+    })
+    console.log('🤖 [DEBUG] AI 自动归纳状态', {
+      aiEnabled,
+      aiAutoBookmark,
+      aiAutoEnabled,
+      settings
+    })
 
     if (aiAutoEnabled) {
       console.log('➡️ [DEBUG] 进入 AI 自动模式')
@@ -249,7 +269,7 @@ async function handleAIAutoAddBookmark(bookmarkData: {
  * 手动添加书签（显示对话框）
  */
 async function handleManualAddBookmark(
-  tab: chrome.tabs.Tab,
+  _tab: chrome.tabs.Tab,
   bookmarkData: {
     title: string
     url: string
@@ -257,210 +277,46 @@ async function handleManualAddBookmark(
   }
 ): Promise<void> {
   try {
-    // ✅ 检查 URL 是否支持注入 content script
-    const url = tab.url || ''
-    const isSpecialPage =
-      url.startsWith('chrome://') ||
-      url.startsWith('chrome-extension://') ||
-      url.startsWith('edge://') ||
-      url.startsWith('about:') ||
-      url.startsWith('moz-extension://')
-
-    if (isSpecialPage) {
-      // 特殊页面无法注入 content script，直接提示不支持
-      void showSystemNotification('此页面类型不支持快速添加书签功能。请在普通网页上使用此功能。', {
-        title: '无法添加书签'
-      })
-      return
-    }
-
-    // ✅ 核心功能：必须成功注入，这是书签管理插件的核心功能
-    // 前置检查：确保tab状态正常
-    if (!tab.id || tab.id < 0) {
-      logger.error('Menus', '❌ Tab ID 无效', { tabId: tab.id })
-      void showSystemNotification('无法获取当前标签页信息，请刷新页面后重试。', {
-        title: '无法添加书签'
-      })
-      return
-    }
-
-    // 检查URL是否有效（避免about:blank等无效状态）
-    if (!url || url === 'about:blank' || url === 'about:srcdoc') {
-      logger.error('Menus', '❌ URL 无效或页面未加载完成', { url })
-      void showSystemNotification('当前页面还未加载完成，请等待页面加载后再试。', {
-        title: '无法添加书签'
-      })
-      return
-    }
-
-    // 验证content script文件是否存在（通过runtime.getURL检查）
-    const scriptUrl = chrome.runtime.getURL('content/inject-quick-add-dialog.js')
-    logger.info('Menus', '准备注入 content script', {
-      tabId: tab.id,
-      url,
-      scriptUrl
-    })
-
-    // ✅ 核心注入逻辑：重试机制确保成功（最多5次，每次递增延迟）
-    let lastError: Error | null = null
-    const maxRetries = 5
-
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        logger.info('Menus', `🔄 注入尝试 ${attempt}/${maxRetries}`, {
-          tabId: tab.id,
-          url: url.substring(0, 100) // 限制日志长度
-        })
-
-        // 步骤1: 验证tab仍然有效
-        const currentTab = await chrome.tabs.get(tab.id).catch(() => null)
-        if (!currentTab || !currentTab.url || currentTab.url !== url) {
-          throw new Error(`Tab状态已改变: ${currentTab?.url || '已关闭'}`)
-        }
-
-        // 步骤2: 注入 content script（使用完整的文件路径）
-        await chrome.scripting.executeScript({
-          target: { tabId: tab.id },
-          files: ['content/inject-quick-add-dialog.js']
-        })
-
-        logger.info('Menus', '✅ Content script 文件注入成功')
-
-        // 步骤3: 等待脚本加载并验证（最多等待1秒）
-        let scriptReady = false
-        const maxPingAttempts = 20 // 20次 × 50ms = 1秒
-        for (let i = 0; i < maxPingAttempts; i++) {
-          try {
-            const pingResponse = await chrome.tabs
-              .sendMessage(tab.id, {
-                type: 'PING_QUICK_ADD_DIALOG'
-              })
-              .catch(() => null)
-
-            if (pingResponse?.ready) {
-              scriptReady = true
-              logger.info('Menus', `✅ Content script 已就绪 (等待了 ${i * 50}ms)`)
-              break
-            }
-          } catch {
-            // 继续等待脚本加载
-          }
-          await new Promise(resolve => setTimeout(resolve, 50))
-        }
-
-        if (!scriptReady) {
-          throw new Error(`Content script未响应心跳检测（等待了${maxPingAttempts * 50}ms）`)
-        }
-
-        // 步骤4: 发送显示对话框消息
-        const response = await chrome.tabs.sendMessage(tab.id, {
-          type: 'SHOW_QUICK_ADD_DIALOG',
-          data: bookmarkData
-        })
-
-        if (!response || !response.success) {
-          throw new Error(`对话框创建失败: ${response?.error || '未知错误'}`)
-        }
-
-        logger.info('Menus', '✅✅✅ 树形对话框已成功显示')
-        return // 成功！退出函数
-      } catch (error) {
-        lastError = error as Error
-        const errorDetails = {
-          attempt: `${attempt}/${maxRetries}`,
-          error: lastError.message,
-          url: url.substring(0, 100),
-          tabId: tab.id
-        }
-
-        logger.warn('Menus', `❌ 注入失败 (尝试 ${attempt}/${maxRetries})`, errorDetails)
-
-        // 如果是最后一次尝试，记录完整错误
-        if (attempt === maxRetries) {
-          logger.error('Menus', '❌ 所有注入尝试均失败', {
-            ...errorDetails,
-            stack: lastError.stack,
-            finalAttempt: true
-          })
-        } else {
-          // 递增延迟重试：100ms, 200ms, 300ms, 400ms
-          const delay = 100 * attempt
-          logger.info('Menus', `等待 ${delay}ms 后重试...`)
-          await new Promise(resolve => setTimeout(resolve, delay))
-        }
-      }
-    }
-
-    // ❌ 所有重试都失败 - 这是严重问题，必须详细记录
-    logger.error('Menus', '🚨🚨🚨 核心功能失败：无法添加书签', {
-      error: lastError?.message,
-      stack: lastError?.stack,
-      tabId: tab.id,
-      url: url.substring(0, 200),
-      allAttemptsFailed: true,
-      critical: true
-    })
-
-    // 提供详细的用户提示
-    void showSystemNotification(
-      `无法在当前页面注入对话框。错误: ${lastError?.message || '未知错误'}\n\n请尝试：\n1. 刷新页面后重试\n2. 检查扩展程序权限\n3. 如问题持续，请重启浏览器`,
-      { title: '无法添加书签' }
+    // ✅ 使用 chrome.windows.create 打开独立弹窗
+    const popupUrl = chrome.runtime.getURL(
+      'save-popup.html?' +
+        `title=${encodeURIComponent(bookmarkData.title)}&` +
+        `url=${encodeURIComponent(bookmarkData.url)}&` +
+        `favIconUrl=${encodeURIComponent(bookmarkData.favIconUrl || '')}`
     )
-  } catch (error) {
-    logger.error('Menus', '手动添加书签失败', error)
-  }
-}
 
-/**
- * 显示书签已添加通知（带撤销按钮）
- */
-async function showBookmarkAddedNotification(
-  bookmarkId: string,
-  folderPath: string
-): Promise<void> {
-  try {
-    const notificationId = await chrome.notifications.create({
-      type: 'basic',
-      iconUrl: chrome.runtime.getURL('images/icon128.png'),
-      title: '✅ 书签已添加',
-      message: `已自动添加到：${folderPath}`,
-      buttons: [{ title: '撤销' }, { title: '查看' }],
-      requireInteraction: false,
-      priority: 1
+    logger.info('Menus', '打开添加书签弹窗', {
+      popupUrl,
+      title: bookmarkData.title,
+      url: bookmarkData.url
     })
 
-    // 监听通知按钮点击
-    const handleNotificationClick = async (clickedNotificationId: string, buttonIndex?: number) => {
-      // 只处理当前通知的点击事件
-      if (clickedNotificationId !== notificationId) {
-        return
-      }
+    // 获取当前窗口信息以计算居中位置
+    const currentWindow = await chrome.windows.getCurrent()
+    const screenWidth = currentWindow.width || screen.width
+    const screenHeight = currentWindow.height || screen.height
+    const popupWidth = 420
+    const popupHeight = 520
 
-      if (buttonIndex === 0) {
-        // 撤销：删除书签
-        try {
-          await chrome.bookmarks.remove(bookmarkId)
-          logger.info('Menus', '✅ 书签已撤销', { bookmarkId })
-          void showSystemNotification('书签已撤销', { title: '撤销成功' })
-        } catch (error) {
-          logger.error('Menus', '撤销书签失败', error)
-          void showSystemNotification('撤销失败，请手动删除', {
-            title: '撤销失败'
-          })
-        }
-      } else if (buttonIndex === 1) {
-        // 查看：打开 Management 页面
-        const url = chrome.runtime.getURL('management.html')
-        await chrome.tabs.create({ url })
-      }
+    // 计算居中位置
+    const left = Math.round((screenWidth - popupWidth) / 2)
+    const top = Math.round((screenHeight - popupHeight) / 2)
 
-      // 清除通知
-      await chrome.notifications.clear(notificationId)
-      chrome.notifications.onButtonClicked.removeListener(handleNotificationClick)
-    }
+    await chrome.windows.create({
+      url: popupUrl,
+      type: 'popup',
+      width: popupWidth,
+      height: popupHeight,
+      left,
+      top,
+      focused: true
+    })
 
-    chrome.notifications.onButtonClicked.addListener(handleNotificationClick)
+    logger.info('Menus', '✅ 添加书签弹窗已打开')
   } catch (error) {
-    logger.error('Menus', '显示通知失败', error)
+    logger.error('Menus', '❌ 打开添加书签弹窗失败', error)
+    void showSystemNotification('打开添加书签弹窗失败，请稍后重试', {
+      title: '打开弹窗失败'
+    })
   }
 }

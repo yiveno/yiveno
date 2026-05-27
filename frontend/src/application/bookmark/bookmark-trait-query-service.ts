@@ -129,7 +129,7 @@ class BookmarkTraitQueryService {
    * 查询具有多个特征的书签（交集）
    *
    * 用于查询同时具有多个特征的书签，例如：
-   * - 既是重复又是失效的书签
+   * - 既是重复又是无效的书签
    * - 既是内部又是未访问的书签
    *
    * @param traits - 特征类型数组
@@ -138,7 +138,7 @@ class BookmarkTraitQueryService {
    *
    * @example
    * ```typescript
-   * // 查询既是重复又是失效的书签
+   * // 查询既是重复又是无效的书签
    * const result = await queryByTraits(['duplicate', 'invalid'])
    * ```
    */
@@ -293,7 +293,7 @@ class BookmarkTraitQueryService {
    *
    * @example
    * ```typescript
-   * // 获取所有失效书签
+   * // 获取所有无效书签
    * const invalidBookmarks = await getBookmarksByTrait('invalid')
    *
    * // 获取所有重复书签，按日期排序
@@ -323,7 +323,7 @@ class BookmarkTraitQueryService {
    *
    * @example
    * ```typescript
-   * // 获取既是重复又是失效的书签
+   * // 获取既是重复又是无效的书签
    * const bookmarks = await getBookmarksByTraits(['duplicate', 'invalid'])
    * ```
    */
@@ -385,7 +385,7 @@ class BookmarkTraitQueryService {
    * ```typescript
    * const isInvalid = await hasBookmarkTrait('bookmark-123', 'invalid')
    * if (isInvalid) {
-   *   console.log('这是一个失效书签')
+   *   console.log('这是一个无效书签')
    * }
    * ```
    */
@@ -402,7 +402,7 @@ class BookmarkTraitQueryService {
    *
    * @example
    * ```typescript
-   * // 获取所有需要关注的书签（重复、失效）
+   * // 获取所有需要关注的书签（重复、无效）
    * const problemBookmarks = await getNegativeTraitBookmarks()
    * ```
    */

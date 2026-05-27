@@ -69,6 +69,8 @@ import {
   CheckCircle,
   XCircle,
   HelpCircle,
+  CheckSquare,
+  Square,
 
   // 用户和账户
   User,
@@ -110,7 +112,6 @@ import {
   Hash,
   Zap,
   Crown,
-  Brain,
   Sparkles,
   Lock,
   Unlock,
@@ -141,7 +142,16 @@ import {
   Palette,
   // 分享相关
   Send,
-  Image
+  Image,
+  // AI 和活动相关
+  BrainCircuit,
+  Activity,
+  // 服务器和网络相关
+  ServerCrash,
+  WifiOff,
+  // 计时器和仪表
+  TimerOff,
+  Gauge
 } from 'lucide-vue-next'
 
 /**
@@ -226,6 +236,8 @@ export const lucideIcons: Record<string, Component> = {
   'x-circle': XCircle,
   help: HelpCircle,
   'help-circle': HelpCircle,
+  'check-square': CheckSquare,
+  square: Square,
 
   // 用户和账户
   user: User,
@@ -243,6 +255,7 @@ export const lucideIcons: Record<string, Component> = {
   'cloud-off': CloudOff,
   'cloud-sync': RefreshCw,
   refresh: RefreshCw,
+  'refresh-cw': RefreshCw,
   sync: RefreshCw,
   loader: Loader2,
   'loader-2': Loader2,
@@ -277,7 +290,6 @@ export const lucideIcons: Record<string, Component> = {
   flash: Zap,
   zap: Zap,
   crown: Crown,
-  brain: Brain,
   sparkles: Sparkles,
   ai: Sparkles,
   auto: Sparkles,
@@ -327,7 +339,20 @@ export const lucideIcons: Record<string, Component> = {
 
   // 分享相关
   send: Send,
-  image: Image
+  image: Image,
+
+  // AI 和活动相关
+  'brain-circuit': BrainCircuit,
+  brain: BrainCircuit,
+  activity: Activity,
+
+  // 服务器和网络相关
+  'server-crash': ServerCrash,
+  'wifi-off': WifiOff,
+
+  // 计时器和仪表
+  'timer-off': TimerOff,
+  gauge: Gauge
 }
 
 /**

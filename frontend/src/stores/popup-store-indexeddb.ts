@@ -32,7 +32,7 @@ export interface BookmarkStats {
 export interface TraitOverview {
   /** 已扫描书签数量 */
   totalScanned: number
-  /** 失效书签数量 */
+  /** 无效书签数量 */
   invalid: number
   /** 重复书签数量 */
   duplicate: number
@@ -268,8 +268,11 @@ export const usePopupStoreIndexedDB = defineStore('popup-indexeddb', () => {
         logger.info('PopupStore', `📡 收到书签同步消息 (${message.eventType})，自动刷新数据`)
 
         // 使用 queueMicrotask 避免阻塞消息处理
-        queueMicrotask(() => {
+        queueMicrotask(async () => {
           void autoRefreshData()
+          // 清除 Worker 适配器的缓存，确保搜索使用最新数据
+          const { queryWorkerAdapter } = await import('@/services/query-worker-adapter')
+          queryWorkerAdapter.clearCache()
         })
       }
     })

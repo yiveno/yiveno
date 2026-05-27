@@ -47,6 +47,90 @@ export interface FolderVectorSyncProgress {
 
 export class FolderVectorService {
   /**
+   * 检查是否为根文件夹
+   *
+   * Chrome 不允许向根文件夹添加书签，需要过滤掉
+   *
+   * @param folderId 文件夹 ID
+   * @returns 是否为根文件夹
+   */
+  private isRootFolder(folderId: string): boolean {
+    return folderId === '0' || folderId === '1'
+  }
+
+  /**
+   * 过滤根文件夹
+   *
+   * @param folders 所有文件夹
+   * @returns 非根文件夹列表
+   */
+  private filterRootFolders(
+    folders: Array<{ id: string; title: string; pathString?: string }>
+  ): Array<{ id: string; title: string; pathString?: string }> {
+    return folders.filter(folder => {
+      if (this.isRootFolder(folder.id)) {
+        logger.debug(LOG_TAG, '跳过根文件夹', {
+          folderId: folder.id,
+          folderTitle: folder.title
+        })
+        return false
+      }
+      return true
+    })
+  }
+
+  /**
+   * 为单个文件夹生成向量
+   *
+   * @param folder 文件夹对象
+   * @param allBookmarks 所有书签
+   * @param bookmarkVectorMap 书签向量映射
+   * @param provider Embedding Provider
+   * @returns 文件夹向量
+   */
+  private async generateFolderVector(
+    folder: { id: string; title: string; pathString?: string },
+    allBookmarks: Array<{
+      parentId?: string | undefined
+      isFolder?: boolean
+      url?: string | undefined
+      id: string
+    }>,
+    bookmarkVectorMap: Map<string, number[]>,
+    provider: { embed: (text: string) => Promise<number[]>; name: string }
+  ): Promise<{ vector: number[]; bookmarkCount: number }> {
+    // 找出该文件夹下的所有书签（直接子节点）
+    const childBookmarks = allBookmarks.filter(
+      b => b.parentId === folder.id && !b.isFolder && b.url
+    )
+
+    if (childBookmarks.length === 0) {
+      // 空文件夹：使用文件夹名称生成向量
+      const folderNameVector = await provider.embed(folder.title)
+      return { vector: folderNameVector, bookmarkCount: 0 }
+    }
+
+    // 收集该文件夹下所有书签的向量
+    const vectors: number[][] = []
+    for (const bookmark of childBookmarks) {
+      const vector = bookmarkVectorMap.get(bookmark.id)
+      if (vector) {
+        vectors.push(vector)
+      }
+    }
+
+    if (vectors.length === 0) {
+      // 没有书签有向量：使用文件夹名称生成向量
+      const folderNameVector = await provider.embed(folder.title)
+      return { vector: folderNameVector, bookmarkCount: childBookmarks.length }
+    }
+
+    // 计算平均向量
+    const avgVector = computeAverageVector(vectors)
+    return { vector: avgVector, bookmarkCount: childBookmarks.length }
+  }
+
+  /**
    * 预处理文本（长文本压缩）
    *
    * 使用 Summarizer API 压缩长文本，避免 Embedding 时超过 token 限制
@@ -123,10 +207,18 @@ export class FolderVectorService {
       return
     }
 
-    logger.info(LOG_TAG, `开始同步文件夹向量: ${folders.length} 个文件夹`)
+    // 过滤掉根文件夹（Chrome 不允许向根文件夹添加书签）
+    const nonRootFolders = this.filterRootFolders(folders)
+
+    if (nonRootFolders.length === 0) {
+      logger.info(LOG_TAG, '没有非根文件夹，无需同步')
+      return
+    }
+
+    logger.info(LOG_TAG, `开始同步文件夹向量: ${nonRootFolders.length} 个文件夹（已过滤根文件夹）`)
 
     const progress: FolderVectorSyncProgress = {
-      total: folders.length,
+      total: nonRootFolders.length,
       processed: 0,
       failed: 0
     }
@@ -136,70 +228,22 @@ export class FolderVectorService {
     const bookmarkVectorMap = new Map(allBookmarkVectors.map(v => [v.bookmarkId, v.vector]))
 
     // 4. 为每个文件夹生成向量
-    for (const folder of folders) {
+    for (const folder of nonRootFolders) {
       try {
-        // 找出该文件夹下的所有书签（直接子节点）
-        const childBookmarks = allBookmarks.filter(
-          b => b.parentId === folder.id && !b.isFolder && b.url
+        const { vector, bookmarkCount } = await this.generateFolderVector(
+          folder,
+          allBookmarks,
+          bookmarkVectorMap,
+          provider
         )
-
-        if (childBookmarks.length === 0) {
-          // 空文件夹：使用文件夹名称生成向量
-          const folderNameVector = await provider.embed(folder.title)
-
-          await folderVectorStore.upsert({
-            folderId: folder.id,
-            folderName: folder.title,
-            folderPath: folder.pathString || folder.title,
-            vector: folderNameVector,
-            bookmarkCount: 0,
-            model: provider.name,
-            updatedAt: Date.now()
-          })
-
-          progress.processed++
-          onProgress?.(progress)
-          continue
-        }
-
-        // 收集该文件夹下所有书签的向量
-        const vectors: number[][] = []
-        for (const bookmark of childBookmarks) {
-          const vector = bookmarkVectorMap.get(bookmark.id)
-          if (vector) {
-            vectors.push(vector)
-          }
-        }
-
-        if (vectors.length === 0) {
-          // 没有书签有向量：使用文件夹名称生成向量
-          const folderNameVector = await provider.embed(folder.title)
-
-          await folderVectorStore.upsert({
-            folderId: folder.id,
-            folderName: folder.title,
-            folderPath: folder.pathString || folder.title,
-            vector: folderNameVector,
-            bookmarkCount: childBookmarks.length,
-            model: provider.name,
-            updatedAt: Date.now()
-          })
-
-          progress.processed++
-          onProgress?.(progress)
-          continue
-        }
-
-        // 计算平均向量
-        const avgVector = computeAverageVector(vectors)
 
         // 存储文件夹向量
         await folderVectorStore.upsert({
           folderId: folder.id,
           folderName: folder.title,
           folderPath: folder.pathString || folder.title,
-          vector: avgVector,
-          bookmarkCount: childBookmarks.length,
+          vector,
+          bookmarkCount,
           model: provider.name,
           updatedAt: Date.now()
         })

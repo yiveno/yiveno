@@ -36,7 +36,6 @@ import { logger } from '@/infrastructure/logging/logger'
 import type { BookmarkNode } from '@/types'
 // 数据健康检查已移除，使用特征检测代替
 import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'
-import GlobalQuickAddBookmark from '@/components/business/GlobalQuickAddBookmark/GlobalQuickAddBookmark.vue'
 import type {
   DiffResult,
   BookmarkOperation,
@@ -1423,8 +1422,6 @@ const handleApply = () => {
       </div>
     </div>
     <GlobalSyncProgress />
-
-    <GlobalQuickAddBookmark />
 
     <Dialog
       :show="showOrganizeProgress"

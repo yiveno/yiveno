@@ -161,7 +161,7 @@ try {
 }
 
 // 复制images文件夹
-const imagesSrc = path.join(rootDir, 'images');
+const imagesSrc = path.join(__dirname, '../public/images');
 const imagesDest = path.join(distDir, 'images');
 if (fs.existsSync(imagesSrc)) {
   try {
@@ -230,7 +230,8 @@ const pagesToMove = [
   { src: 'src/pages/settings/index.html', dest: 'settings.html' },
   { src: 'src/pages/auth/index.html', dest: 'auth.html' },
   { src: 'src/pages/subscription/index.html', dest: 'subscription.html' },
-  { src: 'src/pages/onboarding/index.html', dest: 'onboarding.html' }
+  { src: 'src/pages/onboarding/index.html', dest: 'onboarding.html' },
+  { src: 'src/pages/save-popup/index.html', dest: 'save-popup.html' }
 ]
 
 let movedAnyPage = false

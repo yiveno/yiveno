@@ -11,7 +11,6 @@ import type {
   AppSettings,
   BatchOptions,
   BookmarkRecord,
-  CrawlMetadataRecord,
   DatabaseHealth,
   DatabaseStats,
   FaviconCacheRecord,
@@ -26,7 +25,6 @@ export type {
   AppSettings,
   BatchOptions,
   BookmarkRecord,
-  CrawlMetadataRecord,
   DatabaseHealth,
   DatabaseStats,
   FaviconCacheRecord,
@@ -85,7 +83,6 @@ export class IndexedDBManager {
     [DB_CONFIG.STORES.SEARCH_HISTORY]: { keyPath: 'id', autoIncrement: true },
     [DB_CONFIG.STORES.FAVICON_CACHE]: { keyPath: 'domain' },
     [DB_CONFIG.STORES.FAVICON_STATS]: { keyPath: 'key' },
-    [DB_CONFIG.STORES.CRAWL_METADATA]: { keyPath: 'bookmarkId' },
     [DB_CONFIG.STORES.EMBEDDINGS]: { keyPath: 'bookmarkId' },
     [DB_CONFIG.STORES.FOLDER_VECTORS]: { keyPath: 'folderId' }, // 新增：文件夹向量存储
     [DB_CONFIG.STORES.AI_JOBS]: { keyPath: 'id' }
@@ -143,13 +140,6 @@ export class IndexedDBManager {
     ],
     [DB_CONFIG.STORES.FAVICON_STATS]: [
       { name: 'key', keyPath: 'key' },
-      { name: 'updatedAt', keyPath: 'updatedAt' }
-    ],
-    [DB_CONFIG.STORES.CRAWL_METADATA]: [
-      { name: 'bookmarkId', keyPath: 'bookmarkId' },
-      { name: 'source', keyPath: 'source' },
-      { name: 'httpStatus', keyPath: 'httpStatus' },
-      { name: 'lastCrawled', keyPath: 'lastCrawled' },
       { name: 'updatedAt', keyPath: 'updatedAt' }
     ],
     [DB_CONFIG.STORES.EMBEDDINGS]: [
@@ -634,92 +624,6 @@ export class IndexedDBManager {
             error
           })
         }
-      }
-    })
-  }
-
-  /**
-   * 标记书签为失效（供爬虫使用）
-   *
-   * @param bookmarkId - 书签ID
-   * @param reason - 失效原因（http_error表示404/500等）
-   * @param httpStatus - HTTP状态码（可选）
-   */
-  async markBookmarkAsInvalid(
-    bookmarkId: string,
-    reason: 'http_error' | 'network_error' | 'timeout' | 'unknown',
-    httpStatus?: number
-  ): Promise<void> {
-    await this.runWriteTransaction(DB_CONFIG.STORES.BOOKMARKS, async (_tx, store) => {
-      try {
-        const existing = (await this.wrapRequest(store.get(bookmarkId))) as
-          | BookmarkRecord
-          | undefined
-        if (!existing) {
-          logger.warn('IndexedDBManager', '书签不存在，无法标记为失效', {
-            bookmarkId
-          })
-          return
-        }
-
-        // 如果已经标记为失效，跳过
-        if (existing.isInvalid) {
-          logger.debug('IndexedDBManager', '书签已标记为失效，跳过', {
-            bookmarkId
-          })
-          return
-        }
-
-        // 添加 invalid 标签（如果还没有）
-        const traitTags = existing.traitTags ?? []
-        if (!traitTags.includes('invalid')) {
-          traitTags.push('invalid')
-        }
-
-        // 添加元数据
-        const traitMetadata = existing.traitMetadata ?? []
-        const statusText = httpStatus
-          ? `HTTP ${httpStatus}`
-          : reason === 'http_error'
-            ? 'HTTP错误'
-            : '未知错误'
-
-        traitMetadata.push({
-          tag: 'invalid',
-          detectedAt: Date.now(),
-          source: 'worker',
-          notes: statusText
-        })
-
-        const nextRecord: BookmarkRecord = {
-          ...existing,
-          isInvalid: true,
-          invalidReason: reason,
-          httpStatus,
-          traitTags,
-          traitMetadata
-        }
-
-        const parsed = BookmarkRecordSchema.safeParse(nextRecord)
-        if (!parsed.success) {
-          logger.error('IndexedDBManager', 'markBookmarkAsInvalid 数据校验失败', {
-            bookmarkId,
-            error: parsed.error
-          })
-          return
-        }
-
-        await this.wrapRequest(store.put(parsed.data))
-        logger.info('IndexedDBManager', '已标记书签为失效', {
-          bookmarkId,
-          reason,
-          httpStatus
-        })
-      } catch (error) {
-        logger.error('IndexedDBManager', '标记书签失效时出错', {
-          bookmarkId,
-          error
-        })
       }
     })
   }
@@ -1225,28 +1129,21 @@ export class IndexedDBManager {
   }
 
   async getDatabaseStats(): Promise<DatabaseStats> {
-    const [bookmarkCount, faviconCount, searchHistoryCount, settingsCount, crawlMetadataCount] =
-      await Promise.all([
-        this.getStoreCount(DB_CONFIG.STORES.BOOKMARKS),
-        this.getStoreCount(DB_CONFIG.STORES.FAVICON_CACHE),
-        this.getStoreCount(DB_CONFIG.STORES.SEARCH_HISTORY),
-        this.getStoreCount(DB_CONFIG.STORES.SETTINGS),
-        this.getStoreCount(DB_CONFIG.STORES.CRAWL_METADATA)
-      ])
+    const [bookmarkCount, faviconCount, searchHistoryCount, settingsCount] = await Promise.all([
+      this.getStoreCount(DB_CONFIG.STORES.BOOKMARKS),
+      this.getStoreCount(DB_CONFIG.STORES.FAVICON_CACHE),
+      this.getStoreCount(DB_CONFIG.STORES.SEARCH_HISTORY),
+      this.getStoreCount(DB_CONFIG.STORES.SETTINGS)
+    ])
 
     const totalSize =
-      bookmarkCount * 1000 +
-      faviconCount * 2000 +
-      searchHistoryCount * 100 +
-      settingsCount * 50 +
-      crawlMetadataCount * 1500
+      bookmarkCount * 1000 + faviconCount * 2000 + searchHistoryCount * 100 + settingsCount * 50
 
     return {
       bookmarkCount,
       faviconCount,
       searchHistoryCount,
       settingsCount,
-      crawlMetadataCount,
       totalSize,
       indexSize: Math.round(totalSize * 0.1),
       lastOptimized: Date.now()
@@ -1401,59 +1298,6 @@ export class IndexedDBManager {
     return (result ?? null) as FaviconCacheRecord | null
   }
 
-  async saveCrawlMetadata(metadata: CrawlMetadataRecord): Promise<void> {
-    await this.runWriteTransaction(DB_CONFIG.STORES.CRAWL_METADATA, async (_tx, store) => {
-      await this.wrapRequest(
-        store.put({
-          ...metadata,
-          updatedAt: Date.now()
-        })
-      )
-    })
-  }
-
-  async getCrawlMetadata(bookmarkId: string): Promise<CrawlMetadataRecord | null> {
-    const result = await this.runReadTransaction(
-      DB_CONFIG.STORES.CRAWL_METADATA,
-      async (_tx, store) => await this.wrapRequest(store.get(bookmarkId))
-    )
-
-    return (result ?? null) as CrawlMetadataRecord | null
-  }
-
-  async getAllCrawlMetadata(): Promise<CrawlMetadataRecord[]> {
-    return await this.runReadTransaction(
-      DB_CONFIG.STORES.CRAWL_METADATA,
-      async (_tx, store) => (await this.wrapRequest(store.getAll())) as CrawlMetadataRecord[]
-    )
-  }
-
-  async getBatchCrawlMetadata(bookmarkIds: string[]): Promise<Map<string, CrawlMetadataRecord>> {
-    const result = new Map<string, CrawlMetadataRecord>()
-
-    for (const id of bookmarkIds) {
-      try {
-        const record = await this.getCrawlMetadata(id)
-        if (record) {
-          result.set(id, record)
-        }
-      } catch (error) {
-        logger.warn('IndexedDBManager', '获取爬取元数据失败，已跳过', {
-          bookmarkId: id,
-          error
-        })
-      }
-    }
-
-    return result
-  }
-
-  async deleteCrawlMetadata(bookmarkId: string): Promise<void> {
-    await this.runWriteTransaction(DB_CONFIG.STORES.CRAWL_METADATA, async (_tx, store) => {
-      await this.wrapRequest(store.delete(bookmarkId))
-    })
-  }
-
   private async getStoreCount(
     storeName: (typeof DB_CONFIG.STORES)[keyof typeof DB_CONFIG.STORES]
   ): Promise<number> {
@@ -1479,7 +1323,7 @@ export class IndexedDBManager {
    * // 统计重复书签数量
    * const count = await indexedDBManager.countByBooleanIndex('isDuplicate', true)
    *
-   * // 统计失效书签数量
+   * // 统计无效书签数量
    * const count = await indexedDBManager.countByBooleanIndex('isInvalid', true)
    * ```
    */

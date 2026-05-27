@@ -32,7 +32,7 @@ import type { TraitTag } from '@/core/bookmark/trait-rules'
  * <template>
  *   <div>
  *     <p>重复: {{ statistics.duplicate }}</p>
- *     <p>失效: {{ statistics.invalid }}</p>
+ *     <p>无效: {{ statistics.invalid }}</p>
  *   </div>
  * </template>
  * ```
@@ -63,7 +63,7 @@ export function useTraitStatistics(): ComputedRef<TraitStatistics> {
  *
  * <template>
  *   <div>
- *     <p>失效书签: {{ invalidCount }}</p>
+ *     <p>无效书签: {{ invalidCount }}</p>
  *     <p>重复书签: {{ duplicateCount }}</p>
  *   </div>
  * </template>

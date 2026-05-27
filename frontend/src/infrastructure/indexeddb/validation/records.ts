@@ -133,7 +133,7 @@ export const BookmarkRecordSchema = z
     favoritedAt: z.number().optional(),
     hasMetadata: z.boolean().optional(),
     metadataUpdatedAt: z.number().optional(),
-    metadataSource: z.enum(['chrome', 'crawler', 'merged']).optional(),
+    metadataSource: z.enum(['chrome', 'merged']).optional(),
     metaTitleLower: z.string().optional(),
     metaDescriptionLower: z.string().optional(),
     metaKeywordsTokens: z.array(z.string()).optional(),

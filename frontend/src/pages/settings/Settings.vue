@@ -3,7 +3,6 @@ import { computed, defineAsyncComponent, nextTick, onMounted, onUnmounted, ref, 
 import { AppHeader, Card } from '@/components'
 import LucideIcon from '@/components/base/LucideIcon/LucideIcon.vue'
 import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'
-import GlobalQuickAddBookmark from '@/components/business/GlobalQuickAddBookmark/GlobalQuickAddBookmark.vue'
 import { t } from '@/infrastructure'
 import { onEvent } from '@/infrastructure/events/event-bus'
 import { useSupabaseAuth, useThemeSync } from '@/composables'
@@ -252,9 +251,6 @@ watch(tab, v => {
     <!-- 📊 全局书签同步进度对话框 -->
     <GlobalSyncProgress />
 
-    <!-- ⚡ 全局快速添加书签对话框 -->
-    <GlobalQuickAddBookmark />
-
     <AppHeader :show-side-panel-toggle="false" :show-settings="false" :show-account="false" />
     <main class="main-content">
       <div class="settings-body">
@@ -401,7 +397,4 @@ watch(tab, v => {
 /* Card body 已经有 overflow-y: auto，这里不需要额外设置 */
 
 /* section 组件的内容会在 Card body 中滚动 */
-
-.pane {
-}
 </style>

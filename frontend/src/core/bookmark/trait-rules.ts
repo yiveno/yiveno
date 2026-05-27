@@ -17,7 +17,7 @@
  *
  * 所有可能的书签特征：
  * - duplicate: 重复书签（URL 完全相同的书签，从第二个开始）
- * - invalid: 失效书签（无法正常访问的书签）
+ * - invalid: 无效书签（URL 格式错误的书签）
  * - internal: 内部书签（浏览器内部地址）
  * - outdated: 过时书签（超过 1 年未访问）
  * - untagged: 未分类书签（直接在根目录或书签栏）
@@ -74,18 +74,15 @@ export const TRAIT_RULES: Record<TraitTag, TraitMetadata> = {
   },
 
   /**
-   * 失效书签
+   * 无效书签
    *
    * 检测规则：
    * 1. URL 格式错误（协议不是 http/https、域名格式错误、TLD 不完整）
-   * 2. HTTP 4xx 错误（404、403 等）
-   * 3. HTTP 5xx 错误（500、502 等）
-   * 4. 网络错误（DNS 失败、连接失败、超时）
    */
   invalid: {
     id: 'invalid',
-    name: '失效书签',
-    description: '无法正常访问的书签',
+    name: '无效书签',
+    description: 'URL 格式错误的书签',
     icon: '❌',
     priority: 2,
     isNegative: true,

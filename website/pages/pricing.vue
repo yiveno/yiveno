@@ -17,7 +17,7 @@ const metas = [
 
 const plans = [
   {
-    features: ['多索引检索、标签、备注', '失效书签检测', 'Popup / Side Panel 全功能']
+    features: ['多索引检索、标签、备注', '无效书签检测', 'Popup / Side Panel 全功能']
   },
   {
     features: [

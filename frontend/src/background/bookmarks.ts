@@ -17,8 +17,6 @@ import { logger } from '@/infrastructure/logging/logger'
 import { bookmarkSyncService } from '@/services/bookmark-sync-service'
 // ⚠️ 临时注释：scheduleTraitRebuildForIds 导致 background.js 导入 app-components
 // import { scheduleTraitRebuildForIds } from '@/services/bookmark-trait-service'
-import { crawlMultipleBookmarks } from '@/services/local-bookmark-crawler'
-import { deleteBookmarkMetadata } from '@/services/local-bookmark-crawler'
 
 /**
  * 同步到 IndexedDB 并广播更新消息
@@ -113,15 +111,6 @@ export function registerBookmarkChangeListeners(): void {
 
     // ✅ 创建操作使用增量同步
     await syncAndBroadcast('created', id, false)
-
-    // ✅ 优化：新书签创建时立即爬取（事件驱动）
-    if (bookmark.url && !bookmark.url.startsWith('chrome://')) {
-      logger.info('BackgroundBookmarks', '🕷️ 新书签立即爬取:', bookmark.title || bookmark.url)
-      // 异步爬取，不阻塞主流程
-      crawlMultipleBookmarks([bookmark], { skipExisting: false }).catch(err => {
-        logger.warn('BackgroundBookmarks', '新书签爬取失败（非致命）:', err)
-      })
-    }
   })
 
   // 监听书签修改
@@ -144,15 +133,6 @@ export function registerBookmarkChangeListeners(): void {
 
     // ✅ 删除操作使用增量同步
     await syncAndBroadcast('removed', id, false)
-
-    // ✅ 清理对应的爬取元数据
-    try {
-      await deleteBookmarkMetadata(id)
-      logger.info('BackgroundBookmarks', `✅ 已清理书签 ${id} 的爬取元数据`)
-    } catch (error) {
-      // 非致命错误，只记录日志
-      logger.warn('BackgroundBookmarks', `⚠️ 清理书签 ${id} 的爬取元数据失败（非致命）`, error)
-    }
   })
 
   // 监听导入开始

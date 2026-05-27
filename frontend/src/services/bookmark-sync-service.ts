@@ -877,24 +877,22 @@ export class BookmarkSyncService {
           // 1. 先插入当前批次（可能标记不准确）
           await indexedDBManager.insertBookmarks(toUpsert)
 
-          // 2. 异步重新检测：加载所有书签，找到相同 URL 的，重新标记
-          // 使用 setTimeout 避免阻塞当前同步
-          setTimeout(async () => {
-            try {
-              logger.debug('BookmarkSync', ' 🔍 重新检测重复书签...')
-              const allBookmarks = await indexedDBManager.getAllBookmarks()
-              const markedAll = markDuplicateBookmarks(allBookmarks)
+          // 2. 同步重新检测：加载所有书签，找到相同 URL 的，重新标记
+          // 改为同步执行以避免重复书签出现在搜索结果中
+          try {
+            logger.debug('BookmarkSync', ' 🔍 重新检测重复书签...')
+            const allBookmarks = await indexedDBManager.getAllBookmarks()
+            const markedAll = markDuplicateBookmarks(allBookmarks)
 
-              // 只更新受影响 URL 的书签
-              const toUpdate = markedAll.filter(r => affectedUrls.has(r.url))
-              if (toUpdate.length > 0) {
-                await indexedDBManager.insertBookmarks(toUpdate)
-                logger.debug('BookmarkSync', ` ✅ 已更新 ${toUpdate.length} 个书签的重复状态`)
-              }
-            } catch (error) {
-              logger.error('BookmarkSync', ' 重新检测重复书签失败:', error)
+            // 只更新受影响 URL 的书签
+            const toUpdate = markedAll.filter(r => affectedUrls.has(r.url))
+            if (toUpdate.length > 0) {
+              await indexedDBManager.insertBookmarks(toUpdate)
+              logger.debug('BookmarkSync', ` ✅ 已更新 ${toUpdate.length} 个书签的重复状态`)
             }
-          }, 0)
+          } catch (error) {
+            logger.error('BookmarkSync', ' 重新检测重复书签失败:', error)
+          }
 
           scheduleTraitRebuildForIds(
             Array.from(new Set(toUpsert.map(record => record.id))),

@@ -27,6 +27,7 @@ export type OffscreenTaskType =
   | 'EMBEDDING_IS_AVAILABLE'
   | 'SEMANTIC_SEARCH'
   | 'GET_FOLDER_RECOMMENDATIONS'
+  | 'GET_RECOMMENDED_BATCH_SIZE'
 
 interface OffscreenRequest<TPayload = unknown> {
   type: OffscreenTaskType
@@ -94,13 +95,16 @@ export async function ensureOffscreenDocument(
         // 等待 Offscreen Document 加载并验证其可用性
         logger.info('OffscreenManager', '⏱️ 等待 Offscreen Document 加载...')
 
-        // 尝试 ping Offscreen Document，最多等待 3 秒
-        const maxAttempts = 30 // 30 次 × 100ms = 3 秒
+        // 给 Offscreen Document 额外的初始化时间
+        await new Promise(resolve => setTimeout(resolve, 300))
+
+        // 尝试 ping Offscreen Document，最多等待 5 秒
+        const maxAttempts = 50 // 50 次 × 100ms = 5 秒
         for (let i = 0; i < maxAttempts; i++) {
           try {
             // 发送 ping 消息
             const response = await new Promise<{ ok: boolean }>((resolve, reject) => {
-              const timer = setTimeout(() => reject(new Error('Ping timeout')), 200)
+              const timer = setTimeout(() => reject(new Error('Ping timeout')), 500)
 
               chrome.runtime.sendMessage(
                 { __offscreenRequest__: true, type: 'PING' },
@@ -122,9 +126,15 @@ export async function ensureOffscreenDocument(
               )
               return
             }
-          } catch (_error) {
+          } catch (error) {
             // 继续等待
-            logger.debug('OffscreenManager', `⏳ Ping 失败，继续等待... (${i + 1}/${maxAttempts})`)
+            logger.debug(
+              'OffscreenManager',
+              `⏳ Ping 失败，继续等待... (${i + 1}/${maxAttempts})`,
+              {
+                error: error instanceof Error ? error.message : String(error)
+              }
+            )
           }
 
           // 等待 100ms 后重试

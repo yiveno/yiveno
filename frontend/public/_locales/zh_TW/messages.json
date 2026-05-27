@@ -1977,13 +1977,13 @@
     "message": "重複書籤"
   },
   "popup_issue_invalid": {
-    "message": "失效書籤"
+    "message": "無效書籤"
   },
   "popup_issue_delete_tooltip_duplicate": {
     "message": "批次刪除重複書籤"
   },
   "popup_issue_delete_tooltip_invalid": {
-    "message": "批次刪除失效書籤"
+    "message": "批次刪除無效書籤"
   },
   "popup_actions_title": {
     "message": "快速操作"

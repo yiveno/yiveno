@@ -281,6 +281,36 @@ function buildFolderRecommendationReason(bookmarkCount: number, score: number): 
   return bookmarkCount > 0 ? '可作为候选目录' : '基于文件夹名称的候选推荐'
 }
 
+/**
+ * 计算文件夹名称相似度
+ */
+function calculateNameSimilarity(bookmarkTitle: string, folderName: string): number {
+  const bookmarkLower = bookmarkTitle.toLowerCase()
+  const folderLower = folderName.toLowerCase()
+
+  // 完全匹配
+  if (bookmarkLower.includes(folderLower) || folderLower.includes(bookmarkLower)) {
+    return 0.8
+  }
+
+  // 部分匹配（包含关键词）
+  const folderWords = folderLower.split(/\s+/)
+  const bookmarkWords = bookmarkLower.split(/\s+/)
+  let matchCount = 0
+
+  for (const folderWord of folderWords) {
+    if (bookmarkWords.some(bw => bw.includes(folderWord) || folderWord.includes(bw))) {
+      matchCount++
+    }
+  }
+
+  if (matchCount > 0) {
+    return (matchCount / folderWords.length) * 0.6
+  }
+
+  return 0
+}
+
 async function handleFolderRecommendations(payload: {
   title: string
   url: string
@@ -291,40 +321,125 @@ async function handleFolderRecommendations(payload: {
   const url = payload.url?.trim()
 
   if (!title || !url) {
+    logger.warn('OffscreenFolderRecommendation', '参数无效', { title, url })
     return []
   }
 
-  const { onnxEmbeddingProviderDirect } =
-    await import('@/infrastructure/embedding/onnx-embedding-provider-direct')
-  const { folderVectorStore } = await import('@/infrastructure/folder-vector/folder-vector-store')
+  try {
+    logger.info('OffscreenFolderRecommendation', '开始文件夹推荐', { title, url })
 
-  const bookmarkVector = await onnxEmbeddingProviderDirect.embed(`${title} | ${url}`)
-  const folderVectors = await folderVectorStore.getAll()
+    const { onnxEmbeddingProviderDirect } =
+      await import('@/infrastructure/embedding/onnx-embedding-provider-direct')
+    const { folderVectorStore } = await import('@/infrastructure/folder-vector/folder-vector-store')
 
-  if (folderVectors.length === 0) {
-    logger.info('OffscreenFolderRecommendation', '文件夹向量库为空，跳过推荐')
-    return []
-  }
+    // 检查 ONNX 是否可用
+    const isAvailable = await onnxEmbeddingProviderDirect.isAvailable()
+    if (!isAvailable) {
+      logger.warn('OffscreenFolderRecommendation', 'ONNX Provider 不可用，跳过推荐')
+      return []
+    }
 
-  const minScore = payload.minScore ?? 0.3
-  const topK = payload.topK ?? 3
+    logger.info('OffscreenFolderRecommendation', '生成书签向量...')
+    const bookmarkVector = await onnxEmbeddingProviderDirect.embed(`${title} | ${url}`)
+    logger.info('OffscreenFolderRecommendation', '书签向量生成完成', {
+      dimension: bookmarkVector.length
+    })
 
-  return folderVectors
-    .map(folder => {
-      const score = dotProduct(bookmarkVector, folder.vector)
+    logger.info('OffscreenFolderRecommendation', '获取文件夹向量...')
+    const folderVectors = await folderVectorStore.getAll()
+    logger.info('OffscreenFolderRecommendation', '文件夹向量获取完成', {
+      count: folderVectors.length
+    })
+
+    if (folderVectors.length === 0) {
+      logger.info('OffscreenFolderRecommendation', '文件夹向量库为空，跳过推荐')
+      return []
+    }
+
+    const minScore = payload.minScore ?? 0.1 // 使用正常的阈值
+    const topK = payload.topK ?? 3
+
+    const scoredFolders = folderVectors.map(folder => {
+      // 1. 语义相似度（向量点积）
+      const semanticScore = dotProduct(bookmarkVector, folder.vector)
+
+      // 2. 文件夹名称匹配（字符串相似度）
+      const nameScore = calculateNameSimilarity(title, folder.folderName)
+
+      // 3. 域名匹配（如果文件夹下有相同域名的书签）
+      // TODO: 实现域名匹配逻辑
+      const domainScore = 0
+
+      // 4. 综合评分（加权平均）
+      // 语义相似度权重最高，域名匹配次之，名称匹配再次
+      const combinedScore = semanticScore * 0.6 + domainScore * 0.3 + nameScore * 0.1
 
       return {
         folderId: folder.folderId,
         folderName: folder.folderName,
         folderPath: folder.folderPath,
         bookmarkCount: folder.bookmarkCount,
-        score,
-        reason: buildFolderRecommendationReason(folder.bookmarkCount, score)
+        score: combinedScore,
+        semanticScore,
+        nameScore,
+        domainScore,
+        reason: buildFolderRecommendationReason(folder.bookmarkCount, combinedScore)
       }
     })
-    .filter(folder => folder.score >= minScore)
-    .sort((left, right) => right.score - left.score)
-    .slice(0, topK)
+
+    // 调试：显示所有文件夹的相似度（包括被过滤掉的）
+    logger.info('OffscreenFolderRecommendation', '所有文件夹相似度', {
+      minScore,
+      folders: scoredFolders.map(f => ({
+        folderId: f.folderId,
+        folder: f.folderPath,
+        score: f.score.toFixed(4),
+        semanticScore: f.semanticScore.toFixed(4),
+        nameScore: f.nameScore.toFixed(4),
+        domainScore: f.domainScore.toFixed(4),
+        passed: f.score >= minScore,
+        bookmarkCount: f.bookmarkCount
+      }))
+    })
+
+    const recommendations = scoredFolders
+      .filter(folder => {
+        // 过滤掉根文件夹（Chrome 不允许向根文件夹添加书签）
+        // 根文件夹通常 ID 为 "0" 或 "1"，且路径为 "书签栏" 或 "其他书签"
+        const isRootFolder = folder.folderId === '0' || folder.folderId === '1'
+        if (isRootFolder) {
+          logger.debug('OffscreenFolderRecommendation', '跳过根文件夹', {
+            folderId: folder.folderId,
+            folderPath: folder.folderPath
+          })
+          return false
+        }
+        return folder.score >= minScore
+      })
+      .sort((left, right) => right.score - left.score)
+      .slice(0, topK)
+      .map(r => ({
+        folderId: r.folderId,
+        folderName: r.folderName,
+        folderPath: r.folderPath,
+        bookmarkCount: r.bookmarkCount,
+        score: r.score,
+        reason: r.reason
+      }))
+
+    logger.info('OffscreenFolderRecommendation', '推荐完成', {
+      total: recommendations.length,
+      recommendations: recommendations.map(r => ({
+        folder: r.folderPath,
+        score: r.score.toFixed(3)
+      }))
+    })
+
+    return recommendations
+  } catch (error) {
+    logger.error('OffscreenFolderRecommendation', '文件夹推荐失败', error)
+    return []
+  }
 }
 
 /**

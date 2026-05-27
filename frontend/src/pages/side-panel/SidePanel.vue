@@ -9,7 +9,6 @@ import { Accordion, AccordionItem, Dialog, AppHeader } from '@/components'
 import BookmarkTree from '@/components/business/BookmarkTree/BookmarkTree.vue'
 import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'
 import { FavoriteSection, RecentVisits } from './components'
-import GlobalQuickAddBookmark from '@/components/business/GlobalQuickAddBookmark/GlobalQuickAddBookmark.vue'
 import ShareDialog from '@/components/business/ShareDialog/ShareDialog.vue'
 import BookmarkSearchInput from '@/components/business/BookmarkSearchInput/BookmarkSearchInput.vue'
 
@@ -691,9 +690,6 @@ const postponeRefresh = () => {
 <template>
   <!-- 📊 全局书签同步进度对话框 -->
   <GlobalSyncProgress />
-
-  <!-- ⚡ 全局快速添加书签对话框 -->
-  <GlobalQuickAddBookmark />
 
   <!-- 📤 分享弹窗 -->
   <ShareDialog

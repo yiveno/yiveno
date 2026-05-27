@@ -334,7 +334,7 @@ async function run() {
   // Step 3: 测试健康度筛选标签
   try {
     const t0 = Date.now()
-    // 点击"失效书签"筛选标签
+    // 点击"无效书签"筛选标签
     const filterTag = await page.$('.filter-tag')
     if (filterTag) {
       await filterTag.click()

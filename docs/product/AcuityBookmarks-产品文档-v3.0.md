@@ -707,7 +707,7 @@ class UnifiedSearchService {
 
 支持的特征标签：
 
-- `invalid`：失效书签（HTTP 404/500 或无效 URL）
+- `invalid`：失效书签（无效 URL）
 - `duplicate`：重复 URL
 - `internal`：浏览器内部链接（chrome://、file:// 等）
 

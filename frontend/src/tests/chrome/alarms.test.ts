@@ -129,9 +129,9 @@ describe('Chrome Alarms API', () => {
 
   describe('实际使用场景', () => {
     it('应该能够实现后台定时任务', async () => {
-      // 模拟后台爬取任务调度器
-      class CrawlerScheduler {
-        private alarmName = 'crawler-task'
+      // 模拟后台任务调度器
+      class BackgroundTaskScheduler {
+        private alarmName = 'background-task'
 
         async start() {
           // 创建周期性 Alarm（每 5 分钟执行一次）
@@ -146,13 +146,13 @@ describe('Chrome Alarms API', () => {
 
         handleAlarm = (alarm: chrome.alarms.Alarm) => {
           if (alarm.name === this.alarmName) {
-            // 执行爬取任务
-            this.runCrawlerTask()
+            // 执行后台任务
+            this.runBackgroundTask()
           }
         }
 
-        runCrawlerTask() {
-          // 爬取逻辑
+        runBackgroundTask() {
+          // 任务逻辑
         }
 
         async stop() {
@@ -161,21 +161,21 @@ describe('Chrome Alarms API', () => {
         }
       }
 
-      const scheduler = new CrawlerScheduler()
-      const runTaskSpy = vi.spyOn(scheduler, 'runCrawlerTask')
+      const scheduler = new BackgroundTaskScheduler()
+      const runTaskSpy = vi.spyOn(scheduler, 'runBackgroundTask')
 
       // 启动调度器
       await scheduler.start()
 
       // 验证 Alarm 已创建
-      expect(chrome.alarms.create).toHaveBeenCalledWith('crawler-task', {
+      expect(chrome.alarms.create).toHaveBeenCalledWith('background-task', {
         delayInMinutes: 1,
         periodInMinutes: 5
       })
 
       // 模拟 Alarm 触发
       const alarm: chrome.alarms.Alarm = {
-        name: 'crawler-task',
+        name: 'background-task',
         scheduledTime: Date.now()
       }
       // @ts-expect-error - trigger 是自定义的测试方法
@@ -186,7 +186,7 @@ describe('Chrome Alarms API', () => {
 
       // 停止调度器
       await scheduler.stop()
-      expect(chrome.alarms.clear).toHaveBeenCalledWith('crawler-task')
+      expect(chrome.alarms.clear).toHaveBeenCalledWith('background-task')
     })
   })
 })

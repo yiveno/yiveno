@@ -38,15 +38,6 @@
 | `bookmark-trait-service.ts`   | 特征检测和标记              | Infrastructure |
 | `bookmark-trait-auto-sync.ts` | 特征自动同步                | Infrastructure |
 
-### 爬虫相关
-
-| 文件                           | 职责           | 类型           |
-| ------------------------------ | -------------- | -------------- |
-| `local-bookmark-crawler.ts`    | 本地书签爬虫   | Infrastructure |
-| `local-crawler-worker.ts`      | 爬虫 Worker    | Infrastructure |
-| `crawl-task-scheduler.ts`      | 爬虫任务调度   | Infrastructure |
-| `background-crawler-client.ts` | 后台爬虫客户端 | Infrastructure |
-
 ### 查询和性能
 
 | 文件                           | 职责               | 类型           |
@@ -92,7 +83,6 @@
 bookmark - sync - service.ts // 书签同步服务
 favicon - gateway.ts // Favicon 网关
 query - worker - adapter.ts // 查询 Worker 适配器
-background - crawler - client.ts // 后台爬虫客户端
 
 // ❌ 不好的命名
 smart - recommendation.ts // 太模糊，应该在 application 层
@@ -142,7 +132,6 @@ import { bookmarkSyncService } from '@/services/bookmark-sync-service'
 ```typescript
 // ✅ 正确：Background Script 可以直接使用 Infrastructure
 import { bookmarkSyncService } from '@/services/bookmark-sync-service'
-import { crawlMultipleBookmarks } from '@/services/local-bookmark-crawler'
 ```
 
 ### 在 Composables 使用
@@ -409,10 +398,6 @@ const execResult = await executor.executeDiff(diffResult, p => {
   - Diff 引擎：`core/bookmark/services/diff-engine.ts`
   - 执行器：`core/bookmark/services/executor.ts`
   - 应用层封装：`application/bookmark/bookmark-change-app-service.ts`
-
-- 本地书签爬虫：`services/local-bookmark-crawler.ts`
-  - 定位：低成本抓取标题/描述/基础 meta 与本地缓存
-  - 提供：`crawlSingleBookmark`, `crawlMultipleBookmarks`, `getBookmarkMetadata`, `getCrawlStatistics`
 
 - 现代化书签服务：`services/modern-bookmark-service.ts`
   - 定位：原生事件/特性桥接，统一代理到应用层服务（如筛选）
