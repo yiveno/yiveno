@@ -16,14 +16,14 @@ import { queryService, type SearchResponse, type EnhancedSearchResult } from '@/
 import type { SearchOptions } from '@/types/domain/query'
 import { logger } from '@/infrastructure/logging/logger'
 import { ok, err, type Result } from '@/core/common/result'
+import { getPerformanceMonitor as importPerformanceMonitor } from '@/services/query-performance-monitor'
 
 // 动态导入性能监控，避免在 Service Worker 中加载不必要的依赖
 const getPerformanceMonitor = async () => {
   if (typeof document === 'undefined') {
     return null
   }
-  const { getPerformanceMonitor: monitor } = await import('@/services/query-performance-monitor')
-  return monitor()
+  return importPerformanceMonitor()
 }
 
 /**

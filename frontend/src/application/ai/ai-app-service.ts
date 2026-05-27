@@ -13,7 +13,8 @@ import { builtInSummarizerClient } from '@/infrastructure/llm/builtin-summarizer
 import {
   createSummarizePrompt,
   createSemanticSearchPrompt,
-  createTagGenerationPrompt
+  createTagGenerationPrompt,
+  createAutoOrganizePrompt
 } from '@/core/ai/prompts'
 import { logger } from '@/infrastructure/logging/logger'
 
@@ -219,6 +220,71 @@ export class AIAppService {
    */
   getSummarizerGuide() {
     return builtInSummarizerClient.getEnableGuide()
+  }
+
+  /**
+   * 自动分类书签
+   *
+   * 使用 LLM 分析书签内容，生成合理的文件夹结构
+   *
+   * @param bookmarks 书签列表
+   * @returns 文件夹结构
+   */
+  async autoOrganizeBookmarks(
+    bookmarks: Array<{
+      id: string
+      title: string
+      url: string
+      content?: string
+      existingTags?: string[]
+    }>
+  ): Promise<{
+    folders: Array<{
+      name: string
+      path: string
+      bookmarkIds: string[]
+    }>
+  }> {
+    if (bookmarks.length === 0) {
+      return { folders: [] }
+    }
+
+    const prompt = createAutoOrganizePrompt(bookmarks)
+
+    try {
+      const result = await llmAdapter.complete(prompt, {
+        maxTokens: 2000,
+        temperature: 0.3
+      })
+
+      // 尝试解析 JSON
+      try {
+        const parsed = JSON.parse(result.text)
+        if (parsed.folders && Array.isArray(parsed.folders)) {
+          logger.info(this.loggerPrefix, 'AI 自动分类成功', {
+            folderCount: parsed.folders.length,
+            bookmarkCount: bookmarks.length
+          })
+          return parsed
+        }
+      } catch (parseError) {
+        logger.error(this.loggerPrefix, 'AI 分类结果解析失败', { parseError, result: result.text })
+      }
+
+      // 解析失败，返回默认结构（所有书签放到"未分类"）
+      return {
+        folders: [
+          {
+            name: '未分类',
+            path: '未分类',
+            bookmarkIds: bookmarks.map(b => b.id)
+          }
+        ]
+      }
+    } catch (error) {
+      logger.error(this.loggerPrefix, 'AI 自动分类失败', { error, bookmarkCount: bookmarks.length })
+      throw new Error(`AI 自动分类失败: ${String(error)}`)
+    }
   }
 }
 

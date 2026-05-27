@@ -11,6 +11,32 @@ import { CURRENT_SCHEMA_VERSION, getExtensionState, updateExtensionState } from 
 import { bookmarkSyncService } from '@/services/bookmark-sync-service'
 import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
 import { folderVectorService } from '@/application/folder/folder-vector-service'
+import { dispatchOffscreenRequest } from '@/background/offscreen-manager'
+
+/**
+ * 同步书签 Embedding（通过 Offscreen Document 执行）
+ *
+ * 由于 @huggingface/transformers 库内部使用动态导入，
+ * 在 Service Worker 环境中无法使用，需要通过 Offscreen Document 执行
+ */
+async function syncBookmarkEmbeddings(): Promise<void> {
+  try {
+    logger.info('Bootstrap', '开始同步书签 embedding（通过 Offscreen）...')
+    const result = await dispatchOffscreenRequest<{ success: boolean; message?: string }>(
+      {
+        type: 'SYNC_BOOKMARK_EMBEDDINGS'
+      },
+      { timeout: 300000 } // 5分钟超时，embedding 可能需要较长时间
+    )
+    if (result.success) {
+      logger.info('Bootstrap', '✅ 书签 embedding 同步完成')
+    } else {
+      logger.warn('Bootstrap', '⚠️ 书签 embedding 同步失败', result.message)
+    }
+  } catch (error) {
+    logger.warn('Bootstrap', '⚠️ 书签 embedding 同步异常（非致命，语义搜索可能不可用）', error)
+  }
+}
 
 /**
  * 首次安装流程处理
@@ -57,6 +83,10 @@ async function handleFirstInstall(reason: string): Promise<void> {
     } catch (error) {
       logger.warn('Bootstrap', '文件夹向量同步失败（非致命，AI 功能可能受限）', error)
     }
+
+    // ✅ 同步书签 embedding（语义搜索需要）
+    // 异步执行，不阻塞主流程
+    void syncBookmarkEmbeddings()
 
     // ✅ 从 IndexedDB 查询实际的书签总数（不依赖已废弃的 bookmarksCount 字段）
     const allBookmarks = await indexedDBManager.getAllBookmarks()
@@ -111,6 +141,10 @@ async function handleSchemaUpgrade(state: ExtensionState): Promise<void> {
   } catch (error) {
     logger.warn('Bootstrap', '文件夹向量同步失败（非致命，AI 功能可能受限）', error)
   }
+
+  // ✅ 同步书签 embedding（语义搜索需要）
+  // 异步执行，不阻塞主流程
+  void syncBookmarkEmbeddings()
 
   await updateExtensionState({
     dbReady: true,
@@ -195,6 +229,10 @@ async function handleDataRecovery(): Promise<void> {
     logger.warn('Bootstrap', '文件夹向量同步失败（非致命，AI 功能可能受限）', error)
   }
 
+  // ✅ 同步书签 embedding（语义搜索需要）
+  // 异步执行，不阻塞主流程
+  void syncBookmarkEmbeddings()
+
   const allBookmarks = await indexedDBManager.getAllBookmarks()
   const totalBookmarks = allBookmarks.filter(node => node.url && !node.isFolder).length
   await updateExtensionState({
@@ -215,6 +253,21 @@ async function handleRegularReload(reason: string): Promise<void> {
   // ⚠️ 收藏数据同步已移到页面打开时执行
   // Service Worker 环境中不适合执行可能触发 DOM API 的操作
   logger.debug('Bootstrap', '收藏数据同步将在页面打开时执行')
+
+  // ✅ 异步同步书签 embedding（语义搜索需要）
+  // 不阻塞主流程，在后台执行
+  try {
+    await indexedDBManager.initialize()
+    const allBookmarks = await indexedDBManager.getAllBookmarks(1)
+    if (allBookmarks.length > 0) {
+      logger.info('Bootstrap', '检测到书签数据，开始异步同步 embedding')
+      void syncBookmarkEmbeddings()
+    } else {
+      logger.debug('Bootstrap', '书签数据为空，跳过 embedding 同步')
+    }
+  } catch (error) {
+    logger.warn('Bootstrap', '检查书签数据失败，跳过 embedding 同步', error)
+  }
 }
 
 /**

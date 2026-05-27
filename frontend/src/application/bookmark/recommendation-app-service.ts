@@ -15,6 +15,9 @@ import type { BookmarkRecord } from '@/infrastructure/indexeddb/types'
 
 // 动态导入性能监控
 async function getPerformanceMonitor() {
+  if (typeof document === 'undefined') {
+    return null
+  }
   const { getPerformanceMonitor: monitor } = await import('@/services/query-performance-monitor')
   return monitor()
 }

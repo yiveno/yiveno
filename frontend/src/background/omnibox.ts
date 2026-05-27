@@ -17,24 +17,66 @@
  */
 
 import { logger } from '@/infrastructure/logging/logger'
-import { dispatchOffscreenRequest } from '@/infrastructure/offscreen/manager'
 import type { EnhancedSearchResult } from '@/core/query-engine'
-import type { VectorSearchResult } from '@/infrastructure/embedding/local-vector-store'
-import type { BookmarkSearchService } from '@/application/query/bookmark-search-service'
+import { bookmarkSearchService } from '@/application/query/bookmark-search-service'
+import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
+import { bookmarkSyncService } from '@/services/bookmark-sync-service'
+import { localVectorStore } from '@/infrastructure/embedding/local-vector-store'
 
-let bookmarkSearchServicePromise: Promise<BookmarkSearchService> | null = null
+let dataReadyPromise: Promise<void> | null = null
 
 /**
- * 懒加载搜索服务，避免 Service Worker 启动时静态引入 FlexSearch。
+ * 确保书签数据已准备好
+ *
+ * 在 Service Worker 重启后，书签同步被延迟到页面打开时执行。
+ * 但 Omnibox 可能是用户第一个使用的功能，需要确保数据已同步。
  */
-async function getBookmarkSearchService(): Promise<BookmarkSearchService> {
-  if (!bookmarkSearchServicePromise) {
-    bookmarkSearchServicePromise = import('@/application/query/bookmark-search-service').then(
-      module => module.bookmarkSearchService
-    )
+async function ensureDataReady(): Promise<void> {
+  if (dataReadyPromise) {
+    logger.debug('Omnibox', '🔄 数据准备已在进行中，等待完成')
+    return dataReadyPromise
   }
 
-  return bookmarkSearchServicePromise
+  dataReadyPromise = (async () => {
+    try {
+      logger.info('Omnibox', '🔍 开始检查数据准备状态...')
+
+      // 1. 检查 IndexedDB 中是否有书签数据
+      logger.debug('Omnibox', '📍 步骤 1: 初始化 IndexedDB...')
+      await indexedDBManager.initialize()
+      logger.debug('Omnibox', '✅ IndexedDB 初始化完成')
+
+      logger.debug('Omnibox', '📍 步骤 2: 读取书签数据...')
+      const sampleBookmarks = await indexedDBManager.getAllBookmarks(1)
+      logger.info('Omnibox', `📊 IndexedDB 中书签数量: ${sampleBookmarks.length}`)
+
+      // 检查向量库状态
+      try {
+        const vectorCount = await localVectorStore.count()
+        logger.info('Omnibox', `🧠 向量库中向量数量: ${vectorCount}`)
+        if (vectorCount === 0) {
+          logger.warn('Omnibox', '⚠️ 向量库为空，语义搜索将不可用')
+        }
+      } catch (error) {
+        logger.warn('Omnibox', '⚠️ 无法检查向量库状态', error)
+      }
+
+      if (sampleBookmarks.length > 0) {
+        logger.info('Omnibox', '✅ IndexedDB 中已有书签数据，跳过同步')
+        return
+      }
+
+      // 2. 如果没有数据，触发同步
+      logger.warn('Omnibox', '⚠️ IndexedDB 为空，准备触发书签同步...')
+      await bookmarkSyncService.syncAllBookmarks()
+      logger.info('Omnibox', '✅ 书签同步完成')
+    } catch (error) {
+      logger.error('Omnibox', '❌ 数据准备失败', error)
+      // 不抛出错误，允许降级使用
+    }
+  })()
+
+  return dataReadyPromise
 }
 
 /**
@@ -117,7 +159,7 @@ function buildNoResultDescription(query: string): string {
  */
 function buildErrorDescription(query: string): string {
   const safeQuery = escapeOmniboxText(truncateWithEllipsis(query, 80) || '（空）')
-  return `<dim>查询暂时不可用，请稍后重试：</dim> <match>${safeQuery}</match>`
+  return `<dim>查询暂时不可用，请稍后重试或先打开扩展页面：</dim> <match>${safeQuery}</match>`
 }
 
 /**
@@ -154,8 +196,12 @@ function setDefaultDescription(description: string): void {
   chrome.omnibox.setDefaultSuggestion?.({ description })
 }
 
-/** 建议结果最大数量 */
-const SUGGESTION_LIMIT = 4
+/** 匹配度阈值 - 只显示匹配度 >= 0.35 的结果 */
+const MIN_SCORE_THRESHOLD = 0.35
+/** 最少显示数量 - 即使匹配度较低也至少显示 1 条，避免空结果 */
+const MIN_DISPLAY_COUNT = 1
+/** 最多显示数量 - 避免过多结果影响地址栏体验 */
+const MAX_DISPLAY_COUNT = 6
 /** 防抖延迟（毫秒）- 尽量短，给查询留更多时间 */
 const DEBOUNCE_MS = 50
 
@@ -206,47 +252,70 @@ export function registerOmniboxHandlers(): void {
     const currentSeq = ++sequence
     debounceTimer = setTimeout(async () => {
       try {
-        logger.info('Omnibox', `🔍 开始查询: ${query}`)
+        logger.info('Omnibox', `🔍 开始查询: "${query}"`)
         setDefaultDescription(buildSearchingDescription(query))
 
-        // 并行执行 Fuse 精确匹配 + 语义搜索（通过 Offscreen）
-        const bookmarkSearchService = await getBookmarkSearchService()
-        const [fuseResult, semanticResults] = await Promise.all([
-          bookmarkSearchService.search(query, {
-            strategy: 'fuse',
-            limit: SUGGESTION_LIMIT * 2,
-            highlight: false,
-            useCache: false
-          }),
-          dispatchOffscreenRequest<VectorSearchResult[]>(
-            {
-              type: 'SEMANTIC_SEARCH',
-              payload: { query, topK: SUGGESTION_LIMIT, minScore: 0.2 }
-            },
-            { timeout: 3000 }
-          ).catch(() => [] as VectorSearchResult[])
-        ])
+        // 确保书签数据已准备好
+        logger.debug('Omnibox', '📍 步骤 0: 确保数据准备...')
+        await ensureDataReady()
+        logger.debug('Omnibox', '✅ 数据准备完成')
 
-        if (currentSeq !== sequence) return
+        // 使用统一的 queryService 进行 hybrid 搜索
+        logger.debug('Omnibox', '📍 步骤 1: 执行搜索...')
+        const searchResult = await bookmarkSearchService.searchWithMetadata(query, {
+          strategy: 'hybrid', // 使用 hybrid 策略（Fuse + Semantic）
+          limit: 50, // 获取更多结果，按匹配度过滤
+          highlight: false,
+          useCache: false
+        })
+        logger.debug('Omnibox', '✅ 搜索执行完成')
 
-        if (!fuseResult.ok) {
-          logger.error('Omnibox', '查询失败', fuseResult.error)
+        if (currentSeq !== sequence) {
+          logger.warn('Omnibox', '⚠️ 查询结果已过期，丢弃')
+          return
+        }
+
+        if (!searchResult.ok) {
+          logger.error('Omnibox', '❌ 搜索失败', {
+            error: searchResult.error,
+            message: searchResult.error?.message,
+            stack: searchResult.error?.stack
+          })
           setDefaultDescription(buildErrorDescription(query))
           return
         }
 
-        // 合并结果：语义搜索结果优先，Fuse 补充
-        const fuseResults = fuseResult.value
-        const mergedResults = mergeOmniboxResults(fuseResults, semanticResults, SUGGESTION_LIMIT)
-        const suggestions = buildSuggestions(mergedResults, query)
+        // 按匹配度过滤：只显示 score >= MIN_SCORE_THRESHOLD 的结果
+        const filteredResults = searchResult.value.results.filter(
+          r => r.score >= MIN_SCORE_THRESHOLD
+        )
+
+        // 确保至少显示 1 条，最多显示 MAX_DISPLAY_COUNT 条
+        let displayResults: EnhancedSearchResult[]
+        if (filteredResults.length === 0) {
+          // 如果没有匹配度达标的结果，显示匹配度最高的 1 条
+          displayResults = searchResult.value.results.slice(0, MIN_DISPLAY_COUNT)
+          logger.info(
+            'Omnibox',
+            `没有匹配度 >= ${MIN_SCORE_THRESHOLD} 的结果，显示最高匹配度的结果`
+          )
+        } else {
+          displayResults = filteredResults.slice(0, MAX_DISPLAY_COUNT)
+        }
+
         logger.info(
           'Omnibox',
-          `📊 Fuse: ${fuseResults.length}, 语义: ${semanticResults.length}, 合并: ${mergedResults.length}`
+          `📊 过滤结果: 总数 ${searchResult.value.results.length}, 匹配度达标 ${filteredResults.length}, 显示 ${displayResults.length} 条`
+        )
+        const suggestions = buildSuggestions(displayResults, query)
+        logger.info(
+          'Omnibox',
+          `📊 搜索完成: ${displayResults.length} 条结果 [策略: ${searchResult.value.metadata.strategy}]`
         )
         safeSuggest(suggest, suggestions, 'query-results')
 
-        if (mergedResults.length > 0) {
-          setDefaultDescription(buildResultSummaryDescription(query, mergedResults.length))
+        if (displayResults.length > 0) {
+          setDefaultDescription(buildResultSummaryDescription(query, displayResults.length))
         } else {
           setDefaultDescription(buildNoResultDescription(query))
         }
@@ -303,29 +372,6 @@ function safeSuggest(
   } catch (error) {
     logger.warn('Omnibox', `suggest 调用失败（${source}）`, error)
   }
-}
-
-/**
- * 合并 Fuse 和语义搜索结果
- * 语义搜索命中的书签排在前面，Fuse 补充剩余位置
- */
-function mergeOmniboxResults(
-  fuseResults: EnhancedSearchResult[],
-  semanticResults: VectorSearchResult[],
-  limit: number
-): EnhancedSearchResult[] {
-  if (semanticResults.length === 0) return fuseResults.slice(0, limit)
-
-  // 语义搜索命中的 bookmarkId 集合
-  const semanticIds = new Set(semanticResults.map(r => r.bookmarkId))
-
-  // 按语义分数排序的 Fuse 结果（语义命中的优先）
-  const semanticFirst = fuseResults.filter(r => semanticIds.has(String(r.bookmark.id)))
-  const fuseOnly = fuseResults.filter(r => !semanticIds.has(String(r.bookmark.id)))
-
-  // 语义命中但 Fuse 没有的书签，从 Fuse 结果里找不到，需要从语义结果里补充
-  // 这里简单处理：语义命中的 Fuse 结果排前面，其余 Fuse 结果补充
-  return [...semanticFirst, ...fuseOnly].slice(0, limit)
 }
 
 /**
@@ -420,8 +466,12 @@ function parseSuggestionContent(text: string): ParsedSuggestion {
     const url = new URL(text)
     if (url.protocol === 'acuity:') {
       const rawView = url.hostname
-      const normalizedView: ParsedSuggestion['view'] =
-        rawView === 'manage' ? 'manage' : rawView === 'error' ? 'error' : 'noop'
+      let normalizedView: ParsedSuggestion['view'] = 'noop'
+      if (rawView === 'manage') {
+        normalizedView = 'manage'
+      } else if (rawView === 'error') {
+        normalizedView = 'error'
+      }
       const params = new URLSearchParams(url.search.replace(/^\?/, ''))
       return {
         url: null,

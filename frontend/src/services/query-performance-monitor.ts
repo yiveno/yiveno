@@ -18,16 +18,6 @@
  */
 
 import { logger } from '@/infrastructure/logging/logger'
-// Service Worker 环境中不能导入 notification-service（包含 Vue）
-// 使用动态导入避免在 Service Worker 中加载 Vue
-const getNotify = async () => {
-  // Service Worker 环境检查
-  if (typeof document === 'undefined') {
-    return null
-  }
-  const { notify } = await import('@/application/notification/notification-service')
-  return notify
-}
 
 // 从统一类型定义导入
 import type {
@@ -282,9 +272,6 @@ export class QueryPerformanceMonitor {
     // 检查慢查询
     if (metric.duration > this.analysisConfig.slowQueryThreshold) {
       logger.warn('PerformanceMonitor', `🐌 慢查询检测: "${metric.query}" - ${metric.duration}ms`)
-
-      // 可以触发实时告警
-      this.triggerSlowQueryAlert(metric)
     }
 
     // 检查错误
@@ -306,30 +293,6 @@ export class QueryPerformanceMonitor {
         `⚡ 响应时间异常: ${metric.duration}ms (平均: ${recentAverage.toFixed(0)}ms)`
       )
     }
-  }
-
-  /**
-   * 慢查询告警
-   */
-  private triggerSlowQueryAlert(metric: PerformanceMetric): void {
-    // 系统通知（warning 级），短时间内相同查询抑制
-    const title = '慢查询告警'
-    const msg = `"${metric.query}" ${metric.duration}ms / 结果 ${metric.resultCount}`
-
-    // Service Worker 环境中使用动态导入，避免加载 Vue
-    void getNotify().then(notify => {
-      if (notify) {
-        notify(msg, { level: 'warning', title, key: `slow:${metric.query}` })
-      }
-    })
-
-    logger.info('SlowQuery', '🚨 慢查询告警')
-    logger.info('SlowQuery', `查询: "${metric.query}"`)
-    logger.info('SlowQuery', `耗时: ${metric.duration}ms`)
-    logger.info('SlowQuery', `结果数: ${metric.resultCount}`)
-    logger.info('SlowQuery', `查询模式: ${metric.searchMode}`)
-    logger.info('SlowQuery', `查询源: ${metric.sources.join(', ')}`)
-    logger.info('SlowQuery', `缓存命中: ${metric.cacheHit ? '是' : '否'}`)
   }
 
   // ==================== 统计计算方法 ====================

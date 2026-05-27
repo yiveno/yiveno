@@ -5,6 +5,7 @@
 
 import type { EmbeddingProvider } from './embedding-provider'
 import { logger } from '@/infrastructure/logging/logger'
+import { pipeline, env } from '@huggingface/transformers'
 
 const LOG_TAG = 'OnnxEmbeddingProviderDirect'
 
@@ -37,8 +38,6 @@ export class OnnxEmbeddingProviderDirect implements EmbeddingProvider {
       const startTime = Date.now()
 
       try {
-        const { pipeline, env } = await import('@huggingface/transformers')
-
         // 配置环境以支持 Chrome 扩展的 CSP 限制
         env.useBrowserCache = true
         env.allowLocalModels = false

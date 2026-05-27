@@ -66,7 +66,6 @@ const emit = defineEmits<{
   (e: 'ready'): void
   (e: 'nodeEdit', node: BookmarkNode): void
   (e: 'nodeDelete', node: BookmarkNode): void
-  (e: 'folderAdd', node: BookmarkNode): void
   (e: 'bookmarkOpenNewTab', node: BookmarkNode): void
   (e: 'bookmarkCopyUrl', node: BookmarkNode): void
   (e: 'bookmarkToggleFavorite', node: BookmarkNode, isFavorite: boolean): void
@@ -1105,9 +1104,6 @@ const handleContextMenuItemClick = (item: MenuItemConfig) => {
     case 'folder:open-all-new-window':
       openAllBookmarksInFolder(node, 'new-window')
       break
-    case 'folder:add':
-      emit('folderAdd', node)
-      break
     case 'folder:edit':
       emit('nodeEdit', node)
       break
@@ -1366,10 +1362,6 @@ const handleNodeEdit = (node: BookmarkNode) => {
 
 const handleNodeDelete = (node: BookmarkNode) => {
   emit('nodeDelete', node)
-}
-
-const handleFolderAdd = (parentNode: BookmarkNode) => {
-  emit('folderAdd', parentNode)
 }
 
 const handleFolderShare = (node: BookmarkNode) => {
@@ -2044,7 +2036,6 @@ defineExpose({
             @node-select="handleNodeSelect"
             @node-edit="handleNodeEdit"
             @node-delete="handleNodeDelete"
-            @folder-add="handleFolderAdd"
             @bookmark-open-new-tab="handleBookmarkOpenNewTab"
             @bookmark-copy-url="handleBookmarkCopyUrl"
             @bookmark-toggle-favorite="handleBookmarkToggleFavorite"
@@ -2098,7 +2089,6 @@ defineExpose({
                 @node-select="handleNodeSelect"
                 @node-edit="handleNodeEdit"
                 @node-delete="handleNodeDelete"
-                @folder-add="handleFolderAdd"
                 @bookmark-open-new-tab="handleBookmarkOpenNewTab"
                 @bookmark-copy-url="handleBookmarkCopyUrl"
                 @bookmark-toggle-favorite="handleBookmarkToggleFavorite"
@@ -2130,7 +2120,6 @@ defineExpose({
                 @node-select="handleNodeSelect"
                 @node-edit="handleNodeEdit"
                 @node-delete="handleNodeDelete"
-                @folder-add="handleFolderAdd"
                 @bookmark-open-new-tab="handleBookmarkOpenNewTab"
                 @bookmark-copy-url="handleBookmarkCopyUrl"
                 @bookmark-toggle-favorite="handleBookmarkToggleFavorite"

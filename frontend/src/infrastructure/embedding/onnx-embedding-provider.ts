@@ -7,6 +7,7 @@
 
 import type { EmbeddingProvider } from './embedding-provider'
 import { logger } from '@/infrastructure/logging/logger'
+import { pipeline, env } from '@huggingface/transformers'
 
 const LOG_TAG = 'OnnxEmbeddingProvider'
 const DEFAULT_DIMENSIONS = 384
@@ -37,7 +38,6 @@ class OnnxEmbeddingProviderDirect implements EmbeddingProvider {
       logger.info(LOG_TAG, '加载模型: Xenova/paraphrase-multilingual-MiniLM-L12-v2')
       const startTime = Date.now()
 
-      const { pipeline, env } = await import('@huggingface/transformers')
       env.useBrowserCache = true
       env.allowLocalModels = false
       // 强制单线程，禁止从外部 CDN 加载 WASM 运行时文件

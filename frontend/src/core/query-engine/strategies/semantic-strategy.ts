@@ -7,17 +7,29 @@
  * 降级策略：
  * - 向量库为空 → 返回空数组（上层会降级到 Fuse）
  * - Provider 不可用 → 返回空数组
+ *
+ * 环境适配：
+ * - 在 Service Worker 环境中，通过 Offscreen Document 代理语义搜索（避免 ONNX WASM 加载失败）
+ * - 在普通页面环境中，直接使用 embeddingService
  */
 import type { BookmarkRecord } from '@/infrastructure/indexeddb/manager'
 import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
 import { embeddingService } from '@/infrastructure/embedding/embedding-service'
 import { logger } from '@/infrastructure/logging/logger'
+import { dispatchOffscreenRequest } from '@/infrastructure/offscreen/manager'
 
 const LOG_TAG = 'SemanticStrategy'
 
 export interface SemanticSearchResult {
   bookmark: BookmarkRecord
   score: number
+}
+
+/**
+ * 检测是否在 Service Worker 环境
+ */
+function isServiceWorker(): boolean {
+  return typeof self !== 'undefined' && 'ServiceWorkerGlobalScope' in self
 }
 
 /**
@@ -32,7 +44,22 @@ export async function semanticSearch(
   minScore = 0.2
 ): Promise<SemanticSearchResult[]> {
   try {
-    // 本地向量搜索
+    // Service Worker 环境中，通过 Offscreen Document 代理语义搜索
+    if (isServiceWorker()) {
+      logger.debug(LOG_TAG, 'Service Worker 环境，通过 Offscreen Document 代理语义搜索')
+      const offscreenResults = await dispatchOffscreenRequest<SemanticSearchResult[]>(
+        {
+          type: 'SEMANTIC_SEARCH',
+          payload: { query, topK, minScore }
+        },
+        { timeout: 3000 }
+      )
+      logger.info(LOG_TAG, `Offscreen 语义搜索完成: "${query}" → ${offscreenResults.length} 条`)
+      return offscreenResults
+    }
+
+    // 普通页面环境，直接使用 embeddingService
+    logger.debug(LOG_TAG, '普通页面环境，直接使用 embeddingService')
     const vectorResults = await embeddingService.search(query, topK, minScore)
 
     if (!vectorResults.length) return []

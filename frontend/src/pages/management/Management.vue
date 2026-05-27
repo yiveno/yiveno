@@ -1,3 +1,5 @@
+/* eslint-disable require-atomic-updates -- 所有 try/finally 模式的状态管理都是安全的：await
+期间不会读取这些状态变量 */
 <script setup lang="ts">
 import { schedulerService } from '@/application/scheduler/scheduler-service'
 import { useNotification } from '@/composables/useNotification'
@@ -28,6 +30,8 @@ import { notificationService } from '@/application/notification/notification-ser
 import { message } from '@/application/message/message-service'
 import { NOTIFICATION_CONFIG } from '@/config/constants'
 import { onEvent } from '@/infrastructure/events/event-bus'
+import { bookmarkOrganizeService } from '@/application/bookmark/bookmark-organize-service'
+import type { OrganizeProgress } from '@/application/bookmark/bookmark-organize-service'
 import BookmarkTree from '@/components/business/BookmarkTree/BookmarkTree.vue'
 // 导入书签 API 网关：以 side-effect 方式初始化并设置事件监听与消息桥接
 import '@/infrastructure/chrome-api/bookmark-gateway'
@@ -41,12 +45,7 @@ import type {
   BookmarkOperation,
   BookmarkOperationType
 } from '@/application/bookmark/bookmark-diff-service'
-import type { AddItemData, EditBookmarkData } from '@/stores/bookmark/bookmark-management-store'
-// AI 整理功能临时禁用，等待重构
-// import { aiAppService } from '@/application/ai/ai-app-service'
-// import { bookmarkAppService } from '@/application/bookmark/bookmark-app-service'
-// import { treeAppService } from '@/application/bookmark/tree-app-service'
-// import type { BookmarkRecord } from '@/infrastructure/indexeddb/schema'
+import type { EditBookmarkData } from '@/stores/bookmark/bookmark-management-store'
 import { enableEnvSnapshotBridge } from '@/devtools/env-snapshot'
 import { enableEmbeddingDebugBridge } from '@/devtools/embedding-debug'
 import { enableFolderVectorDebugBridge } from '@/devtools/folder-vector-debug'
@@ -65,10 +64,13 @@ const applyStartTime = ref(0)
 
 // AI 整理相关状态
 const isOrganizing = ref(false)
-const organizeProgress = ref({
-  current: 0,
-  total: 0,
-  message: t('management_preparing_organize')
+const organizeProgress = ref<OrganizeProgress>({
+  totalStages: 0,
+  currentStage: 0,
+  stageName: '',
+  totalBookmarks: 0,
+  processedBookmarks: 0,
+  isComplete: false
 })
 const showOrganizeProgress = ref(false)
 
@@ -146,7 +148,6 @@ const deleteButtonTooltip = computed(() => {
  * @deprecated isCleanupLoading 已移除，特征检测在后台异步执行
  */
 
-const isAddingItem = ref(false)
 const isEditingBookmark = ref(false)
 const isEditingFolder = ref(false)
 const isDeletingFolder = ref(false)
@@ -224,24 +225,6 @@ const rightTreeData = computed(() =>
 )
 
 const MSG_CANCEL_EDIT = t('management_cancel_edit_message')
-const MSG_CANCEL_ADD = t('management_cancel_add_message')
-const addDialogTitle = computed(() =>
-  dialogStore.addItemDialog.type === 'bookmark'
-    ? t('management_add_new_bookmark')
-    : t('management_add_new_folder')
-)
-const addDialogIcon = computed(() =>
-  dialogStore.addItemDialog.type === 'bookmark' ? 'icon-bookmark' : 'icon-folder'
-)
-const addConfirmText = computed(() => t('management_add'))
-
-/** 添加对话框：当前父文件夹展示（无选中时视为「我的书签」根区） */
-const addItemParentFolderLabel = computed(() => {
-  const folder = dialogStore.addItemDialog.parentFolder
-  const title = folder?.title?.trim()
-  if (title) return title
-  return t('management_my_bookmarks')
-})
 
 function readMwcTextFieldValue(ev: Event): string {
   const el = ev.target as unknown as { value?: string }
@@ -260,37 +243,6 @@ function onEditFolderTitleInput(ev: Event) {
   dialogStore.editFolderDialog.title = readMwcTextFieldValue(ev)
 }
 
-function onAddItemTitleInput(ev: Event) {
-  dialogStore.addItemDialog.title = readMwcTextFieldValue(ev)
-}
-
-function onAddItemUrlInput(ev: Event) {
-  dialogStore.addItemDialog.url = readMwcTextFieldValue(ev)
-}
-
-const addDialogContentRef = ref<HTMLElement | null>(null)
-const addDialogMinHeight = ref<string>('')
-
-watch(
-  () => dialogStore.addItemDialog.isOpen,
-  async open => {
-    if (open) {
-      await nextTick()
-      requestAnimationFrame(() => {
-        const el = addDialogContentRef.value
-        if (el) {
-          const h = el.offsetHeight
-          if (h && h > 0) {
-            addDialogMinHeight.value = `${h}px`
-          }
-        }
-      })
-    } else {
-      addDialogMinHeight.value = ''
-    }
-  }
-)
-
 const pendingTagSelection = ref<TraitTag[] | null>(null)
 
 const leftTreeRef = ref<InstanceType<typeof BookmarkTree> | null>(null)
@@ -308,7 +260,7 @@ watch(
   { immediate: true, deep: false }
 )
 
-// eslint-disable-next-line complexity -- 此函数需要处理多种书签节点类型和层级关系，复杂度较高但逻辑清晰
+/* eslint-disable complexity, max-depth -- 此函数需要处理多种书签节点类型和层级关系，复杂度较高但逻辑清晰；嵌套深度由书签树结构决定，无法简化 */
 const selectedCounts = computed(() => {
   const bookmarkIds = new Set<string>()
   const selectedFolderIds = new Set<string>()
@@ -353,7 +305,6 @@ const selectedCounts = computed(() => {
               current.parentId === '0' ||
               current.id === '1' ||
               current.id === '2'
-            // eslint-disable-next-line max-depth -- 嵌套深度由书签树结构决定，无法简化
             if (!isChildTopLevelRoot) {
               selectedFolderIds.add(currentId)
             }
@@ -367,6 +318,7 @@ const selectedCounts = computed(() => {
 
   return { bookmarks: bookmarkIds.size, folders: selectedFolderIds.size }
 })
+/* eslint-enable complexity, max-depth */
 
 watch(
   () => bookmarkManagementStore.hasUnsavedChanges,
@@ -385,6 +337,7 @@ watch(
   () => bookmarkManagementStore.newProposalTree,
   async newTree => {
     if (!newTree || !pendingTagSelection.value?.length) return
+
     await nextTick()
     // 清除待选中标签（已经应用筛选）
     // eslint-disable-next-line require-atomic-updates -- 清除待选中标签是原子操作，不会有竞态条件
@@ -394,9 +347,10 @@ watch(
     const ids = traitFilterStore.filterResultIds
     if (!ids.length || !rightTreeRef.value) return
 
+    const instance = rightTreeRef.value
+    if (!instance) return
+
     try {
-      const instance = rightTreeRef.value
-      if (!instance) return
       if (typeof instance.selectNodesByIds === 'function') {
         instance.selectNodesByIds(ids, { append: false })
       }
@@ -428,20 +382,11 @@ const editFormErrors = ref<{ title: string; url: string }>({
   title: '',
   url: ''
 })
-const addFormErrors = ref<{ title: string; url: string }>({
-  title: '',
-  url: ''
-})
 
 // ✅ 性能优化：合并多个表单字段的 watch 为单个 watch
 watch(
-  () => [
-    dialogStore.editBookmarkDialog.url,
-    dialogStore.editBookmarkDialog.title,
-    dialogStore.addItemDialog.url,
-    dialogStore.addItemDialog.title
-  ],
-  ([editUrl, editTitle, addUrl, addTitle]) => {
+  () => [dialogStore.editBookmarkDialog.url, dialogStore.editBookmarkDialog.title],
+  ([editUrl, editTitle]) => {
     // 清除编辑对话框错误
     if (editFormErrors.value.url && (editUrl || '').trim()) {
       editFormErrors.value.url = ''
@@ -449,23 +394,6 @@ watch(
     if (editFormErrors.value.title && (editTitle || '').trim()) {
       editFormErrors.value.title = ''
     }
-    // 清除添加对话框错误
-    if (addFormErrors.value.url && (addUrl || '').trim()) {
-      addFormErrors.value.url = ''
-    }
-    if (addFormErrors.value.title && (addTitle || '').trim()) {
-      addFormErrors.value.title = ''
-    }
-  }
-)
-watch(
-  () => dialogStore.addItemDialog.type,
-  () => {
-    if (!dialogStore.addItemDialog.isOpen) return
-    dialogStore.addItemDialog.title = ''
-    dialogStore.addItemDialog.url = ''
-    addFormErrors.value.title = ''
-    addFormErrors.value.url = ''
   }
 )
 
@@ -527,12 +455,45 @@ const handleRightNodeDelete = (node: BookmarkNode) => {
   }
 }
 
+/* eslint-disable require-atomic-updates -- handleAutoOrganize 使用 try/finally 模式安全地管理 isOrganizing 状态，await 期间不会读取 isOrganizing */
 /**
- * 右侧面板：添加书签/文件夹（仅内存操作）
+ * 一键整理书签
  */
-const handleRightFolderAdd = (node: BookmarkNode) => {
-  dialogStore.openAddItemDialog('bookmark', node)
+const handleAutoOrganize = async () => {
+  if (isOrganizing.value) return
+
+  isOrganizing.value = true
+  showOrganizeProgress.value = true
+
+  try {
+    logger.info('Management', '开始一键整理书签')
+
+    // 阶段 1: 生成文件夹结构
+    const result = await bookmarkOrganizeService.organizeBookmarks(progress => {
+      organizeProgress.value = progress
+    })
+
+    logger.info('Management', '文件夹结构生成完成', result)
+
+    // 阶段 2: 应用整理结果
+    await bookmarkOrganizeService.applyOrganization(result.folders, progress => {
+      organizeProgress.value = progress
+    })
+
+    message.success(
+      `整理完成：${result.organizedCount}/${result.originalCount} 个书签已分类，${result.folders.length} 个文件夹`
+    )
+
+    logger.info('Management', '一键整理完成', result)
+  } catch (error) {
+    logger.error('Management', '一键整理失败', error)
+    message.error('AI 整理失败，请检查 LLM 配置')
+  } finally {
+    isOrganizing.value = false
+    showOrganizeProgress.value = false
+  }
 }
+/* eslint-enable require-atomic-updates */
 
 /**
  * 检查 URL 是否为浏览器内部协议
@@ -584,81 +545,6 @@ const handleBookmarkOpenNewTab = (node: BookmarkNode) => {
   } catch (error) {
     message.error(t('management_open_link_failed'))
     logger.error('Management', '打开链接失败:', error, node.url)
-  }
-}
-
-/**
- * 处理添加对话框的 Tab 切换
- * Material Web Tabs 的 change 事件会传递 CustomEvent，包含 activeTabIndex
- */
-const handleAddDialogTabChange = (event: Event) => {
-  const customEvent = event as CustomEvent<{ activeTabIndex: number }>
-  const activeTabIndex = customEvent.detail?.activeTabIndex ?? 0
-
-  // 根据 tab index 更新对话框类型
-  dialogStore.addItemDialog.type = activeTabIndex === 0 ? 'bookmark' : 'folder'
-
-  // 清空表单数据和错误
-  dialogStore.addItemDialog.title = ''
-  dialogStore.addItemDialog.url = ''
-  addFormErrors.value.title = ''
-  addFormErrors.value.url = ''
-}
-
-const confirmAddNewItem = async () => {
-  const title = (dialogStore.addItemDialog.title || '').trim()
-  if (!title) {
-    addFormErrors.value.title = t('management_title_required')
-    return
-  }
-  if (dialogStore.addItemDialog.type === 'bookmark') {
-    const url = (dialogStore.addItemDialog.url || '').trim()
-    if (!DataValidator.validateUrl(url)) {
-      addFormErrors.value.url = t('management_url_invalid')
-      return
-    }
-  }
-
-  if (isAddingItem.value) return
-
-  try {
-    isAddingItem.value = true
-
-    const itemType = dialogStore.addItemDialog.type === 'bookmark' ? '书签' : '文件夹'
-
-    const addData: AddItemData = {
-      type: dialogStore.addItemDialog.type,
-      title: dialogStore.addItemDialog.title,
-      url: dialogStore.addItemDialog.url
-    }
-    if (dialogStore.addItemDialog.parentFolder?.id) {
-      addData.parentId = dialogStore.addItemDialog.parentFolder.id
-    }
-
-    const res = await bookmarkManagementStore.addBookmark(addData)
-
-    dialogStore.closeAddItemDialog()
-
-    if (res && rightTreeRef.value && typeof rightTreeRef.value.focusNodeById === 'function') {
-      await nextTick()
-      try {
-        await rightTreeRef.value.focusNodeById(res.id, {
-          collapseOthers: true,
-          scrollIntoViewCenter: true
-        })
-      } catch (e) {
-        logger.error('Management', 'Focus', '新增后定位失败', e)
-      }
-    }
-
-    await nextTick()
-    message.success(t('management_bookmark_added', itemType))
-  } catch (error) {
-    logger.error('Management', 'Add', '添加失败', error)
-    message.error(t('management_add_failed'))
-  } finally {
-    // eslint-disable-next-line require-atomic-updates -- finally 块中的状态重置是安全的
-    isAddingItem.value = false
   }
 }
 
@@ -1232,71 +1118,6 @@ const getOperationsByType = (type: BookmarkOperationType): BookmarkOperation[] =
 }
 
 /**
- * 一键整理书签栏（AI 自动分类）
- *
- * ⚠️ 临时禁用：organizeBookmarks 方法已从 aiAppService 中移除
- * TODO: 使用 folderVectorService 实现基于向量的本地推荐
- */
-async function handleAIOrganize() {
-  if (isOrganizing.value || isPageLoading.value) {
-    return
-  }
-
-  try {
-    isOrganizing.value = true
-
-    // 临时提示：功能正在重构中
-    message.info('AI 整理功能正在重构中，即将推出基于向量的本地推荐功能')
-
-    /* 原实现已注释，等待使用 folderVectorService 重新实现
-    showOrganizeProgress.value = true
-    organizeProgress.value = {
-      current: 0,
-      total: 0,
-      message: '正在加载书签...'
-    }
-
-    // 获取所有书签（只获取书签，不包括文件夹）
-    const allBookmarksResult = await bookmarkAppService.getAllBookmarks()
-    if (!allBookmarksResult.ok) {
-      notificationService.notifyError('获取书签失败', 'AI 整理')
-      return
-    }
-
-    const allBookmarks = allBookmarksResult.value
-    // 过滤出书签（有 URL 的），排除文件夹和 Chrome 内部链接
-    const bookmarkRecords = allBookmarks.filter(
-      record => record.url && !record.url.startsWith('chrome://')
-    )
-
-    if (bookmarkRecords.length === 0) {
-      message.info(t('management_no_bookmarks_to_organize'))
-      return
-    }
-
-    organizeProgress.value = {
-      current: 0,
-      total: bookmarkRecords.length,
-      message: t('management_organizing_bookmarks', String(bookmarkRecords.length))
-    }
-
-    // TODO: 使用 folderVectorService 实现分类推荐
-    // const results = await folderVectorService.recommendFolders(bookmarkRecords)
-
-    message.success(
-      t('management_organize_success', [String(bookmarkRecords.length), String(0)])
-    )
-    */
-  } catch (error) {
-    logger.error('AI 整理失败', error)
-    message.error(t('management_organize_failed'))
-  } finally {
-    isOrganizing.value = false
-    showOrganizeProgress.value = false
-  }
-}
-
-/**
  * 点击应用更改按钮
  */
 const handleApplyClick = () => {
@@ -1431,14 +1252,16 @@ const handleApply = () => {
     >
       <div class="trait-scan-progress">
         <div class="progress-info">
-          <div class="progress-message">{{ organizeProgress.message }}</div>
+          <div class="progress-message">{{ organizeProgress.stageName }}</div>
           <div class="progress-stats">
-            {{ organizeProgress.current }} / {{ organizeProgress.total }}
+            {{ organizeProgress.processedBookmarks }} / {{ organizeProgress.totalBookmarks }}
           </div>
         </div>
         <md-linear-progress
           :value="
-            organizeProgress.total > 0 ? organizeProgress.current / organizeProgress.total : 0
+            organizeProgress.totalBookmarks > 0
+              ? organizeProgress.processedBookmarks / organizeProgress.totalBookmarks
+              : 0
           "
         ></md-linear-progress>
       </div>
@@ -1745,7 +1568,7 @@ const handleApply = () => {
                       <div class="panel-actions-divider"></div>
                       <md-filled-button
                         :disabled="isPageLoading || isOrganizing"
-                        @click="handleAIOrganize"
+                        @click="handleAutoOrganize"
                       >
                         <LucideIcon slot="icon" name="sparkles" :spin="isOrganizing" />
                         {{
@@ -1803,14 +1626,13 @@ const handleApply = () => {
                   :show-favorite-button="false"
                   :show-edit-button="true"
                   :show-delete-button="true"
-                  :show-add-button="true"
+                  :show-add-button="false"
                   :show-open-new-tab-button="true"
                   :show-copy-url-button="true"
                   @desc-counts-updated="rightTreeSelectedDescCounts = $event"
                   @request-clear-filters="traitFilterStore.clearFilters()"
                   @node-edit="handleRightNodeEdit"
                   @node-delete="handleRightNodeDelete"
-                  @folder-add="handleRightFolderAdd"
                   @selection-change="onRightSelectionChange"
                   @bookmark-open-new-tab="handleBookmarkOpenNewTab"
                   @bookmark-copy-url="handleBookmarkCopyUrl"
@@ -1994,89 +1816,6 @@ const handleApply = () => {
         >
           {{ t('management_confirm_delete') }}
         </md-filled-tonal-button>
-      </template>
-    </Dialog>
-
-    <!-- Add New Item Dialog -->
-    <Dialog
-      :show="dialogStore.addItemDialog.isOpen"
-      :title="addDialogTitle"
-      :icon="addDialogIcon"
-      :persistent="true"
-      :esc-to-close="true"
-      :enter-to-confirm="true"
-      :enable-cancel-guard="true"
-      :cancel-confirm-text="MSG_CANCEL_ADD"
-      :body-min-height="addDialogMinHeight"
-      max-width="500px"
-      min-width="500px"
-      @update:show="
-        (v: boolean) => {
-          if (v) {
-            const parentFolder = dialogStore.addItemDialog.parentFolder
-            dialogStore.openAddItemDialog(dialogStore.addItemDialog.type, parentFolder || undefined)
-          } else {
-            dialogStore.closeAddItemDialog()
-          }
-        }
-      "
-      @confirm="confirmAddNewItem"
-    >
-      <div ref="addDialogContentRef" class="add-item-form">
-        <md-outlined-text-field
-          class="form-field"
-          :label="t('form_parent_folder')"
-          :value="addItemParentFolderLabel"
-          readonly
-        />
-        <!-- ✅ Material Web Tabs -->
-        <md-tabs
-          :active-tab-index="dialogStore.addItemDialog.type === 'bookmark' ? 0 : 1"
-          @change="handleAddDialogTabChange"
-        >
-          <md-primary-tab>{{ t('management_bookmark') }}</md-primary-tab>
-          <md-primary-tab>{{ t('management_folder') }}</md-primary-tab>
-        </md-tabs>
-
-        <!-- 书签表单 -->
-        <div v-if="dialogStore.addItemDialog.type === 'bookmark'" class="form-fields">
-          <md-outlined-text-field
-            class="form-field"
-            :label="t('management_title')"
-            :value="dialogStore.addItemDialog.title"
-            :error="!!addFormErrors.title"
-            :error-text="addFormErrors.title"
-            @input="onAddItemTitleInput"
-          />
-          <md-outlined-text-field
-            class="form-field"
-            :label="t('management_url')"
-            type="url"
-            :value="dialogStore.addItemDialog.url"
-            :error="!!addFormErrors.url"
-            :error-text="addFormErrors.url"
-            @input="onAddItemUrlInput"
-          />
-        </div>
-        <!-- 文件夹表单 -->
-        <div v-else class="form-fields">
-          <md-outlined-text-field
-            class="form-field"
-            :label="t('management_folder_name')"
-            :value="dialogStore.addItemDialog.title"
-            :error="!!addFormErrors.title"
-            :error-text="addFormErrors.title"
-            @input="onAddItemTitleInput"
-          />
-        </div>
-      </div>
-      <template #actions>
-        <md-text-button @click="dialogStore.closeAddItemDialog()">
-          {{ t('common_cancel') }}
-        </md-text-button>
-        <md-filled-button :loading="isAddingItem" @click="confirmAddNewItem">
-          {{ addConfirmText }}
-        </md-filled-button>
       </template>
     </Dialog>
   </div>
@@ -2437,7 +2176,6 @@ p.warning-text {
 .main-content {
   flex: none;
   height: calc(100vh - var(--spacing-16));
-  padding: var(--spacing-lg);
   overflow: hidden;
 }
 

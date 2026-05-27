@@ -37,7 +37,6 @@ export interface MenuItemConfig {
  */
 export interface TreeConfig {
   editable?: boolean | undefined
-  showAddButton?: boolean | undefined
   showEditButton?: boolean | undefined
   showDeleteButton?: boolean | undefined
   showOpenNewTabButton?: boolean | undefined
@@ -95,13 +94,6 @@ export class ContextMenuBuilder {
         icon: 'icon-window',
         action: 'folder:open-all-new-window',
         visible: bookmarkCount > 0
-      },
-      {
-        id: 'add',
-        label: '添加书签',
-        icon: 'icon-add-circle',
-        action: 'folder:add',
-        visible: config.showAddButton || config.editable
       },
       {
         id: 'edit',

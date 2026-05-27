@@ -47,7 +47,6 @@ const emit = defineEmits<{
   (e: 'nodeSelect', nodeId: string, node: BookmarkNode): void
   (e: 'nodeEdit', node: BookmarkNode): void
   (e: 'nodeDelete', node: BookmarkNode): void
-  (e: 'folderAdd', parentNode: BookmarkNode): void
   (e: 'bookmarkOpenNewTab', node: BookmarkNode): void
   (e: 'bookmarkCopyUrl', node: BookmarkNode): void
   (e: 'bookmarkToggleFavorite', node: BookmarkNode, isFavorite: boolean): void
@@ -113,7 +112,6 @@ interface Props {
     showFavoriteButton?: boolean | undefined
     showEditButton?: boolean | undefined
     showDeleteButton?: boolean | undefined
-    showAddButton?: boolean | undefined
     showOpenNewTabButton?: boolean | undefined
     showCopyUrlButton?: boolean | undefined
     showShareButton?: boolean | undefined
@@ -571,10 +569,6 @@ const handleChildNodeDelete = (node: BookmarkNode) => {
   emit('nodeDelete', node)
 }
 
-const handleChildFolderAdd = (parentNode: BookmarkNode) => {
-  emit('folderAdd', parentNode)
-}
-
 const handleChildBookmarkOpenNewTab = (node: BookmarkNode) => {
   emit('bookmarkOpenNewTab', node)
 }
@@ -766,7 +760,6 @@ defineExpose({
         @node-select="handleChildNodeSelect"
         @node-edit="handleChildNodeEdit"
         @node-delete="handleChildNodeDelete"
-        @folder-add="handleChildFolderAdd"
         @bookmark-open-new-tab="handleChildBookmarkOpenNewTab"
         @bookmark-copy-url="handleChildBookmarkCopyUrl"
         @bookmark-toggle-favorite="handleChildBookmarkToggleFavorite"

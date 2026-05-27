@@ -32,7 +32,6 @@ const recheckingChromeAI = ref(false)
 
 const aiEnabled = ref(false)
 const aiAutoEnabled = ref(false)
-const semanticSearchEnabled = ref(false)
 
 const selectedProvider = ref<UserLLMProvider>('openai')
 const apiKey = ref('')
@@ -179,17 +178,6 @@ async function handleAIAutoToggle(event: Event) {
   }
 }
 
-/** 处理语义搜索开关切换 */
-async function handleSemanticSearchToggle(event: Event) {
-  semanticSearchEnabled.value = getSwitchSelected(event)
-  try {
-    await chrome.storage.local.set({ semanticSearchEnabled: semanticSearchEnabled.value })
-    logger.info('AISettings', '语义搜索设置已更新', { enabled: semanticSearchEnabled.value })
-  } catch (error) {
-    logger.error('AISettings', '保存语义搜索设置失败', error)
-  }
-}
-
 /** 保存配置 */
 async function saveConfig() {
   if (!apiKey.value.trim()) {
@@ -315,8 +303,8 @@ async function recheckChromeAI() {
   }
 }
 
-onMounted(async () => {
-  // 加载 AI 配置
+/** 加载 AI 配置 */
+async function loadAIConfig() {
   const config = await userLLMClient.getConfig()
   if (config) {
     selectedProvider.value = config.provider
@@ -342,8 +330,10 @@ onMounted(async () => {
     const defaultModels = modelsByProvider[selectedProvider.value]
     selectedModel.value = defaultModels?.[0]?.value || 'custom'
   }
+}
 
-  // 加载 AI 总开关状态（与 LLM 配置解耦）
+/** 加载 AI 总开关状态 */
+async function loadAISwitchState() {
   try {
     const result = await chrome.storage.local.get('aiEnabled')
     aiEnabled.value = result.aiEnabled === true
@@ -353,12 +343,13 @@ onMounted(async () => {
   } catch (error) {
     logger.error('AISettings', '加载 AI 总开关失败', error)
   }
+}
 
-  // 加载 AI 功能开关状态
+/** 加载 AI 功能开关状态 */
+async function loadAIFeatureState() {
   try {
-    const result = await chrome.storage.local.get(['aiAutoBookmark', 'semanticSearchEnabled'])
+    const result = await chrome.storage.local.get(['aiAutoBookmark'])
     aiAutoEnabled.value = result.aiAutoBookmark === true
-    semanticSearchEnabled.value = result.semanticSearchEnabled === true
 
     // 迁移逻辑：如果 AI 自动添加开关为 true 但 AI 功能未启用，自动关闭自动添加
     if (result.aiAutoBookmark === true && aiEnabled.value === false) {
@@ -368,14 +359,15 @@ onMounted(async () => {
     }
 
     logger.info('AISettings', '设置已加载', {
-      aiAuto: aiAutoEnabled.value,
-      semanticSearch: semanticSearchEnabled.value
+      aiAuto: aiAutoEnabled.value
     })
   } catch (error) {
     logger.error('AISettings', '加载设置失败', error)
   }
+}
 
-  // 检测 Chrome AI 是否可用
+/** 检测 Chrome AI 是否可用 */
+async function checkChromeAIAvailable() {
   try {
     chromeAIAvailable.value = await builtInLLMClient.isAvailable()
     logger.info('AISettings', 'Chrome AI 可用性检测', { available: chromeAIAvailable.value })
@@ -383,6 +375,13 @@ onMounted(async () => {
     logger.error('AISettings', 'Chrome AI 检测失败', error)
     chromeAIAvailable.value = false
   }
+}
+
+onMounted(async () => {
+  await loadAIConfig()
+  await loadAISwitchState()
+  await loadAIFeatureState()
+  await checkChromeAIAvailable()
 })
 </script>
 
@@ -741,28 +740,6 @@ onMounted(async () => {
           :selected="aiAutoEnabled"
           :disabled="!aiEnabled"
           @change="handleAIAutoToggle"
-        ></md-switch>
-      </div>
-
-      <!-- 语义搜索 -->
-      <div class="feature-row">
-        <label class="feature-label">
-          <span>语义搜索</span>
-          <Tooltip offset="md">
-            <LucideIcon name="info" class="label-info-icon" />
-            <template #content>
-              <div class="tooltip-content">
-                使用 AI 理解搜索意图，提供更智能的搜索结果。<br />
-                后台自动生成语义向量，完全本地化，无需联网。
-              </div>
-            </template>
-          </Tooltip>
-        </label>
-        <md-switch
-          icons
-          :selected="semanticSearchEnabled"
-          :disabled="!aiEnabled"
-          @change="handleSemanticSearchToggle"
         ></md-switch>
       </div>
     </div>

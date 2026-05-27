@@ -500,7 +500,7 @@ onUnmounted(() => {
           <BookmarkSearchInput
             display-mode="full"
             mode="indexeddb"
-            strategy="auto"
+            strategy="hybrid"
             result-display="dropdown"
             :show-stats="true"
             :show-result-count="true"

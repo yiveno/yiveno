@@ -33,24 +33,14 @@ export interface EditFolderDialogState {
   title: string
 }
 
-export interface AddItemDialogState {
-  isOpen: boolean
-  type: 'folder' | 'bookmark'
-  parentFolder: BookmarkNode | null
-  title: string
-  url: string
-}
-
 /**
  * 🔴 Session Storage Keys:
  * - `dialog_edit_bookmark_draft`: 编辑书签对话框草稿
  * - `dialog_edit_folder_draft`: 编辑文件夹对话框草稿
- * - `dialog_add_item_draft`: 添加新项目对话框草稿
  */
 const SESSION_KEYS = {
   EDIT_BOOKMARK_DRAFT: 'dialog_edit_bookmark_draft',
-  EDIT_FOLDER_DRAFT: 'dialog_edit_folder_draft',
-  ADD_ITEM_DRAFT: 'dialog_add_item_draft'
+  EDIT_FOLDER_DRAFT: 'dialog_edit_folder_draft'
 } as const
 
 export const useDialogStore = defineStore('dialog', () => {
@@ -79,15 +69,6 @@ export const useDialogStore = defineStore('dialog', () => {
     title: ''
   })
 
-  // === 添加新项目对话框 ===
-  const addItemDialog = ref<AddItemDialogState>({
-    isOpen: false,
-    type: 'bookmark',
-    parentFolder: null,
-    title: '',
-    url: ''
-  })
-
   // === Session Storage 辅助方法 ===
   /**
    * 从 Session Storage 加载对话框草稿
@@ -97,12 +78,11 @@ export const useDialogStore = defineStore('dialog', () => {
    */
   const loadDialogDrafts = async () => {
     try {
-      const [editBookmarkDraft, editFolderDraft, addItemDraft] = await Promise.all([
+      const [editBookmarkDraft, editFolderDraft] = await Promise.all([
         chromeStorage.getSession<Partial<EditBookmarkDialogState>>(
           SESSION_KEYS.EDIT_BOOKMARK_DRAFT
         ),
-        chromeStorage.getSession<Partial<EditFolderDialogState>>(SESSION_KEYS.EDIT_FOLDER_DRAFT),
-        chromeStorage.getSession<Partial<AddItemDialogState>>(SESSION_KEYS.ADD_ITEM_DRAFT)
+        chromeStorage.getSession<Partial<EditFolderDialogState>>(SESSION_KEYS.EDIT_FOLDER_DRAFT)
       ])
 
       // ✅ 只恢复表单数据，不恢复打开状态（避免刷新后弹窗自动打开）
@@ -131,22 +111,6 @@ export const useDialogStore = defineStore('dialog', () => {
           editFolderDialog.value.title = editFolderDraft.title
         }
         logger.debug('DialogStore', '恢复编辑文件夹草稿（不打开弹窗）')
-      }
-
-      if (addItemDraft) {
-        if (addItemDraft.type !== undefined) {
-          addItemDialog.value.type = addItemDraft.type
-        }
-        if (addItemDraft.parentFolder !== undefined) {
-          addItemDialog.value.parentFolder = addItemDraft.parentFolder
-        }
-        if (addItemDraft.title !== undefined) {
-          addItemDialog.value.title = addItemDraft.title
-        }
-        if (addItemDraft.url !== undefined) {
-          addItemDialog.value.url = addItemDraft.url
-        }
-        logger.debug('DialogStore', '恢复添加项目草稿（不打开弹窗）')
       }
 
       logger.debug('DialogStore', '✅ 对话框草稿已从 session storage 恢复')
@@ -193,26 +157,6 @@ export const useDialogStore = defineStore('dialog', () => {
       await chromeStorage.setSession(SESSION_KEYS.EDIT_FOLDER_DRAFT, draftData)
     } catch (error) {
       logger.warn('DialogStore', '保存编辑文件夹草稿失败', error)
-    }
-  }
-
-  /**
-   * 保存添加新项目对话框草稿
-   *
-   * ⚠️ 只保存表单数据，不保存 isOpen 状态
-   */
-  const saveAddItemDraft = async () => {
-    try {
-      if (!addItemDialog.value.isOpen) {
-        await chromeStorage.setSession(SESSION_KEYS.ADD_ITEM_DRAFT, null)
-        return
-      }
-
-      // ✅ 只保存表单数据，不包含 isOpen
-      const { isOpen, ...draftData } = addItemDialog.value
-      await chromeStorage.setSession(SESSION_KEYS.ADD_ITEM_DRAFT, draftData)
-    } catch (error) {
-      logger.warn('DialogStore', '保存添加项目草稿失败', error)
     }
   }
 
@@ -393,66 +337,6 @@ export const useDialogStore = defineStore('dialog', () => {
 
   // === 添加新项目对话框 Actions ===
 
-  /**
-   * 打开添加新项目对话框
-   */
-  const openAddItemDialog = (type: 'folder' | 'bookmark', parentFolder?: BookmarkNode) => {
-    addItemDialog.value = {
-      isOpen: true,
-      type,
-      parentFolder: parentFolder || null,
-      title: '',
-      url: ''
-    }
-
-    logger.info('Dialog', '打开添加新项目对话框', {
-      type,
-      parentId: parentFolder?.id
-    })
-
-    // 🔴 保存草稿到 session storage
-    saveAddItemDraft().catch(err => {
-      logger.warn('Dialog', '保存添加项目草稿失败', err)
-    })
-  }
-
-  /**
-   * 关闭添加新项目对话框
-   */
-  const closeAddItemDialog = () => {
-    addItemDialog.value = {
-      isOpen: false,
-      type: 'bookmark',
-      parentFolder: null,
-      title: '',
-      url: ''
-    }
-
-    logger.info('Dialog', '关闭添加新项目对话框')
-
-    // 🔴 清除草稿
-    saveAddItemDraft().catch(err => {
-      logger.warn('Dialog', '清除添加项目草稿失败', err)
-    })
-  }
-
-  /**
-   * 更新添加新项目数据
-   */
-  const updateAddItemData = (
-    data: Partial<Pick<AddItemDialogState, 'type' | 'title' | 'url' | 'parentFolder'>>
-  ) => {
-    if (data.type !== undefined) addItemDialog.value.type = data.type
-    if (data.title !== undefined) addItemDialog.value.title = data.title
-    if (data.url !== undefined) addItemDialog.value.url = data.url
-    if (data.parentFolder !== undefined) addItemDialog.value.parentFolder = data.parentFolder
-
-    // 🔴 同步草稿到 session storage
-    saveAddItemDraft().catch(err => {
-      logger.warn('Dialog', '更新添加项目草稿失败', err)
-    })
-  }
-
   // === 批量操作 Actions ===
 
   /**
@@ -462,7 +346,6 @@ export const useDialogStore = defineStore('dialog', () => {
     hideDialog()
     closeEditBookmarkDialog()
     closeEditFolderDialog()
-    closeAddItemDialog()
     logger.info('Dialog', '关闭所有对话框')
     // Note: closeXxxDialog() 方法已经包含了清除 session storage 的逻辑
   }
@@ -493,18 +376,10 @@ export const useDialogStore = defineStore('dialog', () => {
       title: ''
     }
 
-    addItemDialog.value = {
-      isOpen: false,
-      type: 'bookmark',
-      parentFolder: null,
-      title: '',
-      url: ''
-    }
-
     logger.info('Dialog', '重置所有对话框状态')
 
     // 🔴 清除所有草稿
-    Promise.all([saveEditBookmarkDraft(), saveEditFolderDraft(), saveAddItemDraft()]).catch(err => {
+    Promise.all([saveEditBookmarkDraft(), saveEditFolderDraft()]).catch(err => {
       logger.warn('Dialog', '清除所有草稿失败', err)
     })
   }
@@ -514,7 +389,6 @@ export const useDialogStore = defineStore('dialog', () => {
     dialogState,
     editBookmarkDialog,
     editFolderDialog,
-    addItemDialog,
 
     // General Dialog Actions
     showConfirmDialog,
@@ -531,11 +405,6 @@ export const useDialogStore = defineStore('dialog', () => {
     openEditFolderDialog,
     closeEditFolderDialog,
     updateEditFolderData,
-
-    // Add Item Dialog Actions
-    openAddItemDialog,
-    closeAddItemDialog,
-    updateAddItemData,
 
     // Batch Actions
     closeAllDialogs,

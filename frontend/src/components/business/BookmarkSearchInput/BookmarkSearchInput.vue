@@ -37,7 +37,7 @@ defineOptions({
 const props = withDefaults(defineProps<Props>(), {
   displayMode: 'icon',
   mode: 'indexeddb',
-  strategy: 'auto',
+  strategy: 'hybrid',
   limit: 100,
   debounce: 300,
   disabled: false,

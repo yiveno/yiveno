@@ -3,6 +3,7 @@
 import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
 import { logger } from '@/infrastructure/logging/logger'
 import type { SearchResult } from '@/infrastructure/indexeddb/manager'
+import type { BookmarkRecord } from '@/infrastructure/indexeddb/manager'
 import type { WorkerDoc } from '@/types/domain/query'
 
 interface SearchState {
@@ -482,14 +483,57 @@ const handlers: Record<string, OffscreenHandler> = {
     return onnxEmbeddingProviderDirect.isAvailable()
   },
 
-  // 语义搜索：在 Offscreen 里完成 embed + 向量相似度计算，供 background/omnibox 调用
+  // 语义搜索：在 Offscreen 里完成 embed + 向量相似度计算 + IndexedDB 补全，供 background/omnibox 调用
   SEMANTIC_SEARCH: async payload => {
     const { onnxEmbeddingProviderDirect } =
       await import('@/infrastructure/embedding/onnx-embedding-provider-direct')
     const { localVectorStore } = await import('@/infrastructure/embedding/local-vector-store')
     const data = payload as { query: string; topK?: number; minScore?: number }
+
+    // 检查向量库是否为空
+    const count = await localVectorStore.count()
+    if (count === 0) {
+      console.log('[Offscreen] 向量库为空，跳过语义搜索')
+      return []
+    }
+
     const queryVector = await onnxEmbeddingProviderDirect.embed(data.query.trim())
-    return localVectorStore.search(queryVector, data.topK ?? 10, data.minScore ?? 0.2)
+    const vectorResults = await localVectorStore.search(
+      queryVector,
+      data.topK ?? 10,
+      data.minScore ?? 0.2
+    )
+
+    if (!vectorResults.length) return []
+
+    // 从 IndexedDB 补全书签详情
+    const allBookmarks = await indexedDBManager.getAllBookmarks()
+    const bookmarkMap = new Map<string, BookmarkRecord>()
+    for (const bm of allBookmarks) {
+      bookmarkMap.set(bm.id, bm)
+    }
+
+    const results: Array<{ bookmark: BookmarkRecord; score: number }> = []
+    for (const match of vectorResults) {
+      const bm = bookmarkMap.get(match.bookmarkId)
+      if (bm && bm.url) {
+        results.push({ bookmark: bm, score: match.score })
+      }
+    }
+
+    console.log(`[Offscreen] 语义搜索完成: "${data.query}" → ${results.length} 条`)
+    return results
+  },
+
+  // 同步书签 embedding：在 Offscreen 里执行完整的 embedding 同步流程
+  SYNC_BOOKMARK_EMBEDDINGS: async () => {
+    const { embeddingService } = await import('@/infrastructure/embedding/embedding-service')
+    const allBookmarks = await indexedDBManager.getAllBookmarks()
+    await embeddingService.syncBookmarks(allBookmarks, progress => {
+      const pct = Math.round((progress.processed / progress.total) * 100)
+      console.log(`[Offscreen] Embedding 进度: ${progress.processed}/${progress.total} (${pct}%)`)
+    })
+    return { success: true }
   },
 
   // 文件夹推荐：在 Offscreen 里完成向量计算和推荐

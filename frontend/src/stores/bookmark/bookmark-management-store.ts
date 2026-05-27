@@ -28,13 +28,6 @@ export interface EditBookmarkData {
   parentId?: string | undefined
 }
 
-export interface AddItemData {
-  type: 'folder' | 'bookmark'
-  title: string
-  url?: string | undefined
-  parentId?: string | undefined
-}
-
 /**
  * 🔴 Session Storage Keys:
  * - `bookmark_mgmt_original_expanded`: 原始树展开状态
@@ -362,30 +355,6 @@ export const useBookmarkManagementStore = defineStore('bookmark-management', () 
   const setProposalTreeFromRecords = (records: BookmarkRecord[]): void => {
     const viewTree = treeAppService.buildViewTreeFromFlat(records)
     setProposalTree(viewTree)
-  }
-
-  /**
-   * 添加新书签或文件夹（✅ 仅内存操作，用于提案树）
-   */
-  const addBookmark = async (data: AddItemData) => {
-    try {
-      // ✅ 调用内存操作方法添加节点到提案树
-      const newId = addNodeToProposal(data)
-
-      if (!newId) {
-        throw new Error('添加节点到提案树失败')
-      }
-
-      logger.info('Management', '节点已添加到提案树（内存）', { id: newId })
-      return {
-        id: newId,
-        title: data.title,
-        url: data.url
-      }
-    } catch (error) {
-      logger.error('Management', '添加节点失败', error)
-      throw error
-    }
   }
 
   /**
@@ -772,65 +741,6 @@ export const useBookmarkManagementStore = defineStore('bookmark-management', () 
     } catch (error) {
       logger.error('Management', '编辑提案树节点失败', error)
       return false
-    }
-  }
-
-  /**
-   * 向提案树添加节点（仅内存操作）
-   * @param data 添加数据
-   */
-  const addNodeToProposal = (data: AddItemData): string | null => {
-    try {
-      // 生成临时 ID（以 temp_ 开头）
-      const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-
-      const newNode: BookmarkNode = {
-        id: tempId,
-        title: data.title,
-        parentId: data.parentId || 'root',
-        index: 0,
-        dateAdded: Date.now(),
-        ...(data.type === 'bookmark' && data.url ? { url: data.url } : {}),
-        ...(data.type === 'folder' ? { children: [] } : {})
-      }
-
-      if (data.parentId) {
-        // 添加到指定父文件夹
-        const addToParent = (nodes: BookmarkNode[]): boolean => {
-          for (const node of nodes) {
-            if (node.id === data.parentId) {
-              if (!node.children) {
-                node.children = []
-              }
-              node.children.unshift(newNode)
-              return true
-            }
-            if (node.children && node.children.length > 0) {
-              if (addToParent(node.children)) {
-                return true
-              }
-            }
-          }
-          return false
-        }
-
-        updateRef(newProposalTree, draft => {
-          addToParent(draft.children)
-        })
-      } else {
-        // 添加到根级别
-        updateRef(newProposalTree, draft => {
-          draft.children.unshift(newNode)
-        })
-      }
-
-      logger.info('Management', `✅ 向提案树添加节点（内存）: ${tempId}`)
-      hasUnsavedChanges.value = true
-
-      return tempId
-    } catch (error) {
-      logger.error('Management', '向提案树添加节点失败', error)
-      return null
     }
   }
 
@@ -1252,7 +1162,6 @@ export const useBookmarkManagementStore = defineStore('bookmark-management', () 
 
     // Actions
     loadBookmarks,
-    addBookmark,
     editBookmark,
     deleteBookmark,
     moveBookmark,
@@ -1272,7 +1181,6 @@ export const useBookmarkManagementStore = defineStore('bookmark-management', () 
     // 🔴 内存操作方法（仅用于提案树）
     deleteNodeFromProposal,
     editNodeInProposal,
-    addNodeToProposal,
 
     // 🔴 Session Storage 同步方法
     saveOriginalExpandedState,

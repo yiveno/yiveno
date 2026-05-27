@@ -106,6 +106,7 @@ const MESSAGE_HANDLERS: Record<
   'get-tree-root': handleTreeRoot,
   'get-global-stats': handleGlobalStats,
   CREATE_BOOKMARK: handleCreateBookmark,
+  CREATE_FOLDER: handleCreateFolder,
   UPDATE_BOOKMARK: handleUpdateBookmark,
   DELETE_BOOKMARK: handleDeleteBookmark,
   MOVE_BOOKMARK: handleMoveBookmark,
@@ -294,6 +295,65 @@ async function handleGlobalStats(
   const totalBookmarks = all.filter((item: BookmarkRecord) => item.url && !item.isFolder).length
   const totalFolders = all.filter((item: BookmarkRecord) => item.isFolder).length
   sendResponse({ ok: true, value: { totalBookmarks, totalFolders } })
+}
+
+/**
+ * 处理创建文件夹消息
+ *
+ * 架构：通过 Background Script 统一处理，确保数据一致性
+ * Chrome API → Background → IndexedDB → 广播通知
+ *
+ * @param message - 消息对象
+ * @param sendResponse - 响应回调函数
+ */
+async function handleCreateFolder(
+  message: RuntimeMessage,
+  sendResponse: AsyncResponse
+): Promise<void> {
+  try {
+    const data = message.data || {}
+    const title = (data.title as string)?.trim()
+    const parentId = data.parentId as string | undefined
+
+    if (!title || title === '') {
+      throw new Error('文件夹标题不能为空')
+    }
+
+    logger.info('BackgroundMessaging', '创建文件夹', {
+      title,
+      parentId
+    })
+
+    // 1. 调用 Chrome API 创建文件夹（不提供 URL）
+    const node = await new Promise<chrome.bookmarks.BookmarkTreeNode>((resolve, reject) => {
+      chrome.bookmarks.create(
+        {
+          title,
+          ...(parentId !== undefined ? { parentId } : {}),
+          ...(typeof data.index === 'number' ? { index: data.index } : {})
+        },
+        result => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message))
+          } else {
+            resolve(result)
+          }
+        }
+      )
+    })
+
+    // 注意：Chrome API 创建文件夹后会自动触发 chrome.bookmarks.onCreated 事件
+    // background/bookmarks.ts 的监听器会自动同步到 IndexedDB 并广播通知
+
+    logger.info('BackgroundMessaging', `✅ 文件夹已创建: ${node.title}`)
+    sendResponse({ success: true, folder: node, folderId: node.id })
+  } catch (error) {
+    logger.error('BackgroundMessaging', '创建文件夹失败', error)
+    sendResponse({
+      success: false,
+      error: error instanceof Error ? error.message : String(error)
+    })
+  }
 }
 
 /**

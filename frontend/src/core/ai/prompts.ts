@@ -57,3 +57,54 @@ ${bookmark.content ? `内容摘要：${bookmark.content.slice(0, 300)}` : ''}
 
 返回格式示例：["React", "Hook", "性能优化"]`
 }
+
+/**
+ * 书签自动分类 Prompt
+ */
+export function createAutoOrganizePrompt(
+  bookmarks: Array<{
+    id: string
+    title: string
+    url: string
+    content?: string
+    existingTags?: string[]
+  }>
+): string {
+  const bookmarksText = bookmarks
+    .slice(0, 50) // 限制数量避免 token 超限
+    .map(
+      (b, i) =>
+        `${i + 1}. ${b.title}\n   URL: ${b.url}\n   ${b.content ? `内容: ${b.content.slice(0, 100)}` : ''}\n   ${b.existingTags ? `标签: ${b.existingTags.join(', ')}` : ''}`
+    )
+    .join('\n\n')
+
+  return `你是一个专业的书签管理助手。请根据以下书签列表，生成一个合理的文件夹结构来组织这些书签。
+
+要求：
+1. 文件夹结构应该有层次关系（最多3层），例如："技术 → 前端 → React"
+2. 文件夹名称应该简洁、有意义、符合中文习惯
+3. 每个文件夹下的书签数量应该适中（建议5-20个）
+4. 考虑书签的主题、用途、类型等多个维度
+5. 对于无法明确分类的书签，可以放到"其他"或"未分类"文件夹
+
+书签列表：
+${bookmarksText}
+
+请返回 JSON 格式的文件夹结构，格式如下：
+{
+  "folders": [
+    {
+      "name": "技术文档",
+      "path": "技术文档",
+      "bookmarkIds": ["id1", "id2", ...]
+    },
+    {
+      "name": "前端开发",
+      "path": "技术文档/前端开发",
+      "bookmarkIds": ["id3", "id4", ...]
+    }
+  ]
+}
+
+只返回 JSON，不要其他内容。`
+}

@@ -18,11 +18,13 @@ import { indexedDBManager, type BookmarkRecord } from '@/infrastructure/indexedd
 import { SearchEngine } from './engine'
 import { semanticSearch } from './strategies/semantic-strategy'
 import { detectIntent } from './intent-detector'
+import { FlexSearchStrategy } from './strategies/flexsearch-strategy'
 import { QueryCache } from './query-cache'
 import { HighlightEngine } from './highlight'
 import { queryWorkerAdapter } from '@/services/query-worker-adapter'
 import type {
   SearchOptions,
+  SearchStrategy,
   EnhancedSearchResult,
   SearchResponse,
   SearchResultMetadata,
@@ -70,7 +72,6 @@ export class QueryService {
 
     if (!this.fuseEnginePromise) {
       this.fuseEnginePromise = (async () => {
-        const { FlexSearchStrategy } = await import('./strategies/flexsearch-strategy')
         const engine = new SearchEngine(new FlexSearchStrategy())
         this.fuseEngine = engine
         return engine
@@ -117,18 +118,92 @@ export class QueryService {
   }
 
   /**
+   * 解析查询策略
+   */
+  private async resolveStrategy(strategy: SearchStrategy, query: string): Promise<SearchStrategy> {
+    const resolvedStrategy = strategy === 'auto' ? detectIntent(query).intent : strategy
+    return resolvedStrategy
+  }
+
+  /**
+   * 检查缓存
+   */
+  private checkCache(
+    strategy: SearchStrategy,
+    query: string,
+    options: SearchOptions,
+    startTime: number
+  ): SearchResponse | null {
+    if (!options.useCache || strategy === 'hybrid') {
+      return null
+    }
+
+    const cacheKey = `${strategy}:${query}`
+    const cached = this.queryCache.get(cacheKey, options)
+    if (cached) {
+      this.logger.info('QueryService', `✅ 缓存命中: ${cacheKey}`)
+      return {
+        results: cached.slice(options.offset || 0, (options.offset || 0) + (options.limit || 100)),
+        metadata: this.createMetadata(startTime, cached.length, true, strategy, query)
+      }
+    }
+
+    return null
+  }
+
+  /**
+   * 执行查询
+   */
+  private async executeSearch(
+    strategy: SearchStrategy,
+    query: string,
+    options: SearchOptions
+  ): Promise<EnhancedSearchResult[]> {
+    let results: EnhancedSearchResult[]
+
+    if (strategy === 'semantic') {
+      results = await this.searchWithSemantic(query, options)
+    } else if (strategy === 'hybrid') {
+      results = await this.searchWithHybrid(query, options)
+    } else {
+      results = await this.searchWithFuse(query, options)
+    }
+
+    return results
+  }
+
+  /**
+   * 处理查询结果
+   */
+  private processResults(
+    results: EnhancedSearchResult[],
+    query: string,
+    options: SearchOptions,
+    strategy: SearchStrategy
+  ): EnhancedSearchResult[] {
+    let processed = results
+
+    if (options.highlight) {
+      processed = this.addHighlights(processed, query)
+    }
+
+    processed = this.sortResults(processed, options)
+
+    // 缓存结果（hybrid 不缓存）
+    if (options.useCache && strategy !== 'hybrid') {
+      const cacheKey = `${strategy}:${query}`
+      this.queryCache.set(cacheKey, processed, options)
+    }
+
+    return processed
+  }
+
+  /**
    * 统一查询接口
    */
   async search(query: string, options: SearchOptions = {}): Promise<SearchResponse> {
     const startTime = performance.now()
-    const {
-      limit = 100,
-      offset = 0,
-      useCache = true,
-      highlight = true,
-      timeout: _timeout = 5000,
-      strategy = 'auto'
-    } = options
+    const { limit = 100, offset = 0, timeout: _timeout = 5000, strategy = 'auto' } = options
 
     const normalizedQuery = this.normalizeQuery(query)
     this.logger.info('QueryService', `🔍 查询: "${normalizedQuery}" strategy=${strategy}`)
@@ -137,61 +212,22 @@ export class QueryService {
       return this.emptyResponse(startTime, 'fuse')
     }
 
-    // 确定实际执行策略
-    let resolvedStrategy = strategy === 'auto' ? detectIntent(normalizedQuery).intent : strategy
-
-    // 检查语义搜索设置（仅在策略为 semantic 或 hybrid 时检查）
-    if (resolvedStrategy === 'semantic' || resolvedStrategy === 'hybrid') {
-      const semanticEnabled = await this.isSemanticSearchEnabled()
-      if (!semanticEnabled) {
-        this.logger.info('QueryService', '语义搜索已禁用，降级到 fuse')
-        resolvedStrategy = 'fuse'
-      }
-    }
-
-    this.logger.info('QueryService', `📌 执行策略: ${resolvedStrategy}`)
-
     try {
-      // 检查缓存（仅 fuse/semantic 缓存，hybrid 不缓存避免过期）
-      if (useCache && resolvedStrategy !== 'hybrid') {
-        const cacheKey = `${resolvedStrategy}:${normalizedQuery}`
-        const cached = this.queryCache.get(cacheKey, options)
-        if (cached) {
-          this.logger.info('QueryService', `✅ 缓存命中: ${cacheKey}`)
-          return {
-            results: cached.slice(offset, offset + limit),
-            metadata: this.createMetadata(
-              startTime,
-              cached.length,
-              true,
-              resolvedStrategy,
-              normalizedQuery
-            )
-          }
-        }
+      // 解析策略
+      const resolvedStrategy = await this.resolveStrategy(strategy, normalizedQuery)
+      this.logger.info('QueryService', `📌 执行策略: ${resolvedStrategy}`)
+
+      // 检查缓存
+      const cached = this.checkCache(resolvedStrategy, normalizedQuery, options, startTime)
+      if (cached) {
+        return cached
       }
 
-      let results: EnhancedSearchResult[]
+      // 执行查询
+      let results = await this.executeSearch(resolvedStrategy, normalizedQuery, options)
 
-      if (resolvedStrategy === 'semantic') {
-        results = await this.searchWithSemantic(normalizedQuery, options)
-      } else if (resolvedStrategy === 'hybrid') {
-        results = await this.searchWithHybrid(normalizedQuery, options)
-      } else {
-        // fuse（默认）
-        results = await this.searchWithFuse(normalizedQuery, options)
-      }
-
-      if (highlight) {
-        results = this.addHighlights(results, normalizedQuery)
-      }
-
-      results = this.sortResults(results, options)
-
-      if (useCache && resolvedStrategy !== 'hybrid') {
-        const cacheKey = `${resolvedStrategy}:${normalizedQuery}`
-        this.queryCache.set(cacheKey, results, options)
-      }
+      // 处理结果
+      results = this.processResults(results, normalizedQuery, options, resolvedStrategy)
 
       const duration = performance.now() - startTime
       this.logger.info(
@@ -212,19 +248,6 @@ export class QueryService {
     } catch (error) {
       this.logger.error('QueryService', '❌ 查询失败:', error)
       throw error
-    }
-  }
-
-  /**
-   * 检查语义搜索是否启用
-   */
-  private async isSemanticSearchEnabled(): Promise<boolean> {
-    try {
-      const result = await chrome.storage.local.get('semanticSearchEnabled')
-      return result.semanticSearchEnabled === true
-    } catch (error) {
-      this.logger.warn('QueryService', '读取语义搜索设置失败，默认禁用', error)
-      return false
     }
   }
 

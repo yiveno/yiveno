@@ -14,6 +14,7 @@ import type { WorkerDoc, SearchWorkerCommand, SearchWorkerEvent } from '@/types/
 import type { SearchWorkerAdapterOptions } from '@/types/application/service'
 import { logger } from '@/infrastructure/logging/logger'
 import { TIMEOUT_CONFIG } from '@/config/constants'
+import { dispatchOffscreenRequest } from '@/background/offscreen-manager'
 
 type WorkerHandle = Worker | null
 
@@ -170,7 +171,6 @@ export class QueryWorkerAdapter {
     if (canUseOffscreen) {
       try {
         await this.ensureOffscreenInitialized()
-        const { dispatchOffscreenRequest } = await import('@/background/offscreen-manager')
         const offscreenHits = await dispatchOffscreenRequest<Array<{ id: string; score: number }>>(
           {
             type: 'SEARCH_QUERY',
@@ -347,7 +347,6 @@ export class QueryWorkerAdapter {
     if (!this.offscreenInitPromise) {
       this.offscreenInitPromise = (async () => {
         try {
-          const { dispatchOffscreenRequest } = await import('@/background/offscreen-manager')
           await dispatchOffscreenRequest(
             { type: 'SEARCH_INIT' },
             { timeout: TIMEOUT_CONFIG.API.STANDARD } // 标准API初始化超时

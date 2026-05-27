@@ -28,6 +28,7 @@ export type OffscreenTaskType =
   | 'SEMANTIC_SEARCH'
   | 'GET_FOLDER_RECOMMENDATIONS'
   | 'GET_RECOMMENDED_BATCH_SIZE'
+  | 'SYNC_BOOKMARK_EMBEDDINGS'
 
 interface OffscreenRequest<TPayload = unknown> {
   type: OffscreenTaskType
