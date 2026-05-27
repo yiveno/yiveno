@@ -32,7 +32,7 @@ const CHINESE_REGEX = /[\u4e00-\u9fa5]{2,}/g
 /**
  * 排除的目录
  */
-const EXCLUDED_DIRS = ['node_modules', 'dist', '.turbo', '.test-perf-data', '_locales']
+const EXCLUDED_DIRS = ['node_modules', 'dist', '.test-perf-data', '_locales']
 
 /**
  * 排除的文件模式

@@ -29,9 +29,6 @@
 # 添加到 frontend
 cd frontend
 bun add <package-name>
-
-# 或在根目录使用 turbo
-bun add <package-name> --filter=frontend
 ```
 
 ## 依赖审查建议

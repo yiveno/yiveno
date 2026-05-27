@@ -210,7 +210,6 @@ export default [
       '**/.vite/**',
       '**/.vite-temp/**',
       '**/.tmp/**',
-      '**/.turbo/**',
       '**/*.tsbuildinfo',
       '**/*.log',
 

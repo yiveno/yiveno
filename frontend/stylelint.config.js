@@ -14,7 +14,6 @@ export default {
     '**/.vite/**',
     '**/.vite-temp/**',
     '**/.cache/**',
-    '**/.turbo/**',
     
     // 测试相关
     '**/src/tests/**',

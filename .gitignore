@@ -58,7 +58,6 @@ htmlcov/
 
 # 部署和构建相关
 .vercel/
-.turbo/
 .next/
 .nuxt/
 .output/
