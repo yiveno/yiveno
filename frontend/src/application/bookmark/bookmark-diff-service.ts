@@ -100,12 +100,7 @@ class BookmarkDiffService {
   calculateDiff(original: BookmarkNode, proposal: BookmarkNode): DiffResult {
     logger.info('BookmarkDiffService', '🔍 开始计算差异')
 
-    // 1️⃣ 构建 ID -> Node 映射
-    const originalMap = new Map<string, BookmarkNode>()
-    const proposalMap = new Map<string, BookmarkNode>()
-
-    this.buildNodeMap(original, originalMap)
-    this.buildNodeMap(proposal, proposalMap)
+    const { originalMap, proposalMap } = this.buildNodeMaps(original, proposal)
 
     logger.debug('BookmarkDiffService', '✅ 映射表构建完成', {
       originalCount: originalMap.size,
@@ -113,8 +108,45 @@ class BookmarkDiffService {
     })
 
     const operations: BookmarkOperation[] = []
+    this.detectDeletions(originalMap, proposalMap, operations)
+    this.detectChanges(proposalMap, originalMap, operations)
 
-    // 2️⃣ 检测删除（original 有但 proposal 没有）
+    const filteredOperations = this.filterFalsePositiveMoves(operations)
+    const sortedOperations = this.sortOperations(filteredOperations)
+    const statistics = this.calculateStatistics(sortedOperations)
+
+    logger.info('BookmarkDiffService', '差异计算完成', statistics)
+
+    return {
+      operations: sortedOperations,
+      statistics
+    }
+  }
+
+  /**
+   * 构建 ID -> Node 映射
+   */
+  private buildNodeMaps(
+    original: BookmarkNode,
+    proposal: BookmarkNode
+  ): { originalMap: Map<string, BookmarkNode>; proposalMap: Map<string, BookmarkNode> } {
+    const originalMap = new Map<string, BookmarkNode>()
+    const proposalMap = new Map<string, BookmarkNode>()
+
+    this.buildNodeMap(original, originalMap)
+    this.buildNodeMap(proposal, proposalMap)
+
+    return { originalMap, proposalMap }
+  }
+
+  /**
+   * 检测删除操作
+   */
+  private detectDeletions(
+    originalMap: Map<string, BookmarkNode>,
+    proposalMap: Map<string, BookmarkNode>,
+    operations: BookmarkOperation[]
+  ): void {
     for (const [id, node] of originalMap) {
       if (!proposalMap.has(id)) {
         operations.push({
@@ -126,105 +158,158 @@ class BookmarkDiffService {
         })
       }
     }
+  }
 
-    // 3️⃣ 检测新增、编辑、移动
+  /**
+   * 检测新增、编辑、移动操作
+   */
+  private detectChanges(
+    proposalMap: Map<string, BookmarkNode>,
+    originalMap: Map<string, BookmarkNode>,
+    operations: BookmarkOperation[]
+  ): void {
     for (const [id, proposalNode] of proposalMap) {
       const originalNode = originalMap.get(id)
 
       if (!originalNode) {
-        // 新增节点
-        operations.push({
-          type: 'create',
-          nodeId: id,
-          title: proposalNode.title,
-          isFolder: !proposalNode.url,
-          parentId: proposalNode.parentId || 'root',
-          index: proposalNode.index ?? 0,
-          ...(proposalNode.url !== undefined ? { url: proposalNode.url } : {})
-        })
+        this.handleNewNode(proposalNode, id, operations)
       } else {
-        // 检测编辑（标题或URL变化）
-        const titleChanged = originalNode.title !== proposalNode.title
-        const urlChanged = originalNode.url !== proposalNode.url
-
-        if (titleChanged || urlChanged) {
-          operations.push({
-            type: 'edit',
-            nodeId: id,
-            title: proposalNode.title,
-            isFolder: !proposalNode.url,
-            oldTitle: originalNode.title,
-            newTitle: proposalNode.title,
-            ...(originalNode.url !== undefined ? { oldUrl: originalNode.url } : {}),
-            ...(proposalNode.url !== undefined ? { newUrl: proposalNode.url } : {})
-          })
-        }
-
-        // ✅ 检测移动（只有真正需要调用 Chrome API move 的情况）
-        const parentChanged = originalNode.parentId !== proposalNode.parentId
-        const indexChanged = originalNode.index !== proposalNode.index
-
-        // 🔑 关键优化：只有以下情况才算"真正的移动"
-        // 1. parentId 变化（跨文件夹移动）
-        // 2. 同一父节点内，且不是"整体偏移"（排除连锁反应）
-        if (parentChanged) {
-          // 跨文件夹移动，必须记录
-          logger.debug('BookmarkDiffService', '📦 检测到跨文件夹移动', {
-            title: proposalNode.title,
-            from: originalNode.parentId || 'root',
-            to: proposalNode.parentId || 'root'
-          })
-          operations.push({
-            type: 'move',
-            nodeId: id,
-            title: proposalNode.title,
-            isFolder: !proposalNode.url,
-            fromParentId: originalNode.parentId || 'root',
-            toParentId: proposalNode.parentId || 'root',
-            fromIndex: originalNode.index ?? 0,
-            toIndex: proposalNode.index ?? 0,
-            isSameParent: false
-          })
-        } else if (indexChanged) {
-          // 同一父节点内 index 变化
-          // 暂时记录，后面会过滤掉"整体偏移"造成的假移动
-          logger.debug('BookmarkDiffService', '🔄 检测到同级 index 变化', {
-            title: proposalNode.title,
-            parentId: originalNode.parentId || 'root',
-            fromIndex: originalNode.index,
-            toIndex: proposalNode.index,
-            delta: (proposalNode.index ?? 0) - (originalNode.index ?? 0)
-          })
-          operations.push({
-            type: 'move',
-            nodeId: id,
-            title: proposalNode.title,
-            isFolder: !proposalNode.url,
-            fromParentId: originalNode.parentId || 'root',
-            toParentId: proposalNode.parentId || 'root',
-            fromIndex: originalNode.index ?? 0,
-            toIndex: proposalNode.index ?? 0,
-            isSameParent: true
-          })
-        }
+        this.handleExistingNode(originalNode, proposalNode, id, operations)
       }
     }
+  }
 
-    // 4️⃣ 过滤掉"整体偏移"造成的假移动
-    const filteredOperations = this.filterFalsePositiveMoves(operations)
+  /**
+   * 处理新增节点
+   */
+  private handleNewNode(
+    proposalNode: BookmarkNode,
+    id: string,
+    operations: BookmarkOperation[]
+  ): void {
+    operations.push({
+      type: 'create',
+      nodeId: id,
+      title: proposalNode.title,
+      isFolder: !proposalNode.url,
+      parentId: proposalNode.parentId || 'root',
+      index: proposalNode.index ?? 0,
+      ...(proposalNode.url !== undefined ? { url: proposalNode.url } : {})
+    })
+  }
 
-    // 5️⃣ 按顺序排序：删除 → 移动 → 编辑 → 新增
-    const sortedOperations = this.sortOperations(filteredOperations)
+  /**
+   * 处理已存在的节点（检测编辑和移动）
+   */
+  private handleExistingNode(
+    originalNode: BookmarkNode,
+    proposalNode: BookmarkNode,
+    id: string,
+    operations: BookmarkOperation[]
+  ): void {
+    this.detectEdit(originalNode, proposalNode, id, operations)
+    this.detectMove(originalNode, proposalNode, id, operations)
+  }
 
-    // 6️⃣ 计算统计信息
-    const statistics = this.calculateStatistics(sortedOperations)
+  /**
+   * 检测编辑操作
+   */
+  private detectEdit(
+    originalNode: BookmarkNode,
+    proposalNode: BookmarkNode,
+    id: string,
+    operations: BookmarkOperation[]
+  ): void {
+    const titleChanged = originalNode.title !== proposalNode.title
+    const urlChanged = originalNode.url !== proposalNode.url
 
-    logger.info('BookmarkDiffService', '差异计算完成', statistics)
-
-    return {
-      operations: sortedOperations,
-      statistics
+    if (titleChanged || urlChanged) {
+      operations.push({
+        type: 'edit',
+        nodeId: id,
+        title: proposalNode.title,
+        isFolder: !proposalNode.url,
+        oldTitle: originalNode.title,
+        newTitle: proposalNode.title,
+        ...(originalNode.url !== undefined ? { oldUrl: originalNode.url } : {}),
+        ...(proposalNode.url !== undefined ? { newUrl: proposalNode.url } : {})
+      })
     }
+  }
+
+  /**
+   * 检测移动操作
+   */
+  private detectMove(
+    originalNode: BookmarkNode,
+    proposalNode: BookmarkNode,
+    id: string,
+    operations: BookmarkOperation[]
+  ): void {
+    const parentChanged = originalNode.parentId !== proposalNode.parentId
+    const indexChanged = originalNode.index !== proposalNode.index
+
+    if (parentChanged) {
+      this.handleCrossFolderMove(originalNode, proposalNode, id, operations)
+    } else if (indexChanged) {
+      this.handleSameParentMove(originalNode, proposalNode, id, operations)
+    }
+  }
+
+  /**
+   * 处理跨文件夹移动
+   */
+  private handleCrossFolderMove(
+    originalNode: BookmarkNode,
+    proposalNode: BookmarkNode,
+    id: string,
+    operations: BookmarkOperation[]
+  ): void {
+    logger.debug('BookmarkDiffService', '📦 检测到跨文件夹移动', {
+      title: proposalNode.title,
+      from: originalNode.parentId || 'root',
+      to: proposalNode.parentId || 'root'
+    })
+    operations.push({
+      type: 'move',
+      nodeId: id,
+      title: proposalNode.title,
+      isFolder: !proposalNode.url,
+      fromParentId: originalNode.parentId || 'root',
+      toParentId: proposalNode.parentId || 'root',
+      fromIndex: originalNode.index ?? 0,
+      toIndex: proposalNode.index ?? 0,
+      isSameParent: false
+    })
+  }
+
+  /**
+   * 处理同父节点内移动
+   */
+  private handleSameParentMove(
+    originalNode: BookmarkNode,
+    proposalNode: BookmarkNode,
+    id: string,
+    operations: BookmarkOperation[]
+  ): void {
+    logger.debug('BookmarkDiffService', '🔄 检测到同级 index 变化', {
+      title: proposalNode.title,
+      parentId: originalNode.parentId || 'root',
+      fromIndex: originalNode.index,
+      toIndex: proposalNode.index,
+      delta: (proposalNode.index ?? 0) - (originalNode.index ?? 0)
+    })
+    operations.push({
+      type: 'move',
+      nodeId: id,
+      title: proposalNode.title,
+      isFolder: !proposalNode.url,
+      fromParentId: originalNode.parentId || 'root',
+      toParentId: proposalNode.parentId || 'root',
+      fromIndex: originalNode.index ?? 0,
+      toIndex: proposalNode.index ?? 0,
+      isSameParent: true
+    })
   }
 
   /**

@@ -210,32 +210,42 @@ export function useBookmarkSearch(options: UseBookmarkSearchOptions = {}): UseBo
 
         // 转换为 FilteredBookmarkNode（扁平列表）
         const nodes: FilteredBookmarkNode[] = response.results.map(
-          r =>
-            ({
-              id: r.bookmark.id,
-              title: r.bookmark.title || '无标题',
-              url: r.bookmark.url,
-              dateAdded: r.bookmark.dateAdded || 0,
-              dateGroupModified: r.bookmark.dateGroupModified,
-              parentId: r.bookmark.parentId,
-              index: r.bookmark.index || 0,
-              children: !r.bookmark.url ? [] : undefined,
-              matchedFields: r.matchedFields,
-              filterScore: r.score,
-              path: r.bookmark.path || [],
-              pathString: r.bookmark.pathString || '',
-              pathIds: r.bookmark.pathIds || [],
-              pathIdsString: r.bookmark.pathIdsString || '',
-              ancestorIds: r.bookmark.ancestorIds || [],
-              siblingIds: r.bookmark.siblingIds || [],
-              depth: r.bookmark.depth || 0,
-              titleLower: r.bookmark.titleLower || r.bookmark.title?.toLowerCase() || '',
-              urlLower: r.bookmark.urlLower || r.bookmark.url?.toLowerCase(),
-              domain: r.bookmark.domain,
-              keywords: r.bookmark.keywords || [],
-              isFolder: !r.bookmark.url,
-              childrenCount: r.bookmark.childrenCount || 0
-            }) as FilteredBookmarkNode
+          // eslint-disable-next-line complexity
+          (r): FilteredBookmarkNode => {
+            const bookmark = r.bookmark
+            const node: FilteredBookmarkNode = {
+              id: bookmark.id,
+              title: bookmark.title || '无标题',
+              url: bookmark.url,
+              dateAdded: bookmark.dateAdded || 0,
+              dateGroupModified: bookmark.dateGroupModified,
+              parentId: bookmark.parentId,
+              index: bookmark.index || 0,
+              children: !bookmark.url ? [] : undefined,
+              filterScore: r.score
+            } as FilteredBookmarkNode
+
+            // 路径相关字段
+            node.path = bookmark.path || []
+            node.pathString = bookmark.pathString || ''
+            node.pathIds = bookmark.pathIds || []
+            node.pathIdsString = bookmark.pathIdsString || ''
+            node.ancestorIds = bookmark.ancestorIds || []
+            node.siblingIds = bookmark.siblingIds || []
+            node.depth = bookmark.depth || 0
+
+            // 搜索相关字段
+            node.titleLower = bookmark.titleLower || bookmark.title?.toLowerCase() || ''
+            node.urlLower = bookmark.urlLower || bookmark.url?.toLowerCase()
+            node.domain = bookmark.domain
+            node.keywords = bookmark.keywords || []
+
+            // 文件夹相关字段
+            node.isFolder = !bookmark.url
+            node.childrenCount = bookmark.childrenCount || 0
+
+            return node
+          }
         )
 
         results.value = nodes

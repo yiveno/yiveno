@@ -583,57 +583,123 @@ export class SmartRecommendationEngine {
     bookmark: BookmarkRecord,
     _context: RecommendationContext
   ): number {
-    let score = 0
     const bookmarkDomain = this.extractDomain(bookmark.url || '')
-    const currentPageTitle = _context.currentPageTitle || ''
-    const currentUrl = _context.currentUrl || ''
     const bookmarkUrl = bookmark.url || ''
     const bookmarkTitle = bookmark.title || ''
 
-    // 🎯 核心优化1：同域名书签获得最高优先级
-    if (_context.currentDomain && bookmarkDomain === _context.currentDomain) {
-      score += 60 // 大幅提升同域名权重
-      logger.debug('ContextScore', `🎯 同域名匹配: ${bookmarkDomain} (+60)`)
-    }
+    let score = 0
+    score += this.calculateDomainScore(bookmarkDomain || '', _context)
+    score += this.calculatePageTypeScore(bookmarkDomain || '', bookmarkUrl, bookmarkTitle, _context)
+    score += this.calculateRelatedDomainScore(bookmarkDomain || '', _context)
+    score += this.calculateTitleScore(_context.currentPageTitle || '', bookmarkTitle)
+    score += this.calculatePathScore(bookmarkDomain || '', bookmarkUrl, _context)
+    score += this.calculateSearchHistoryScore(
+      bookmarkTitle,
+      bookmarkUrl,
+      bookmarkDomain || '',
+      _context
+    )
+    score += this.calculateUserPreferenceScore(bookmarkDomain || '', _context)
+    score += this.calculateTimeScore(_context)
 
-    // 🎯 核心优化2：基于当前页面类型的智能推荐系统
+    return Math.min(100, score)
+  }
+
+  /**
+   * 计算域名分数
+   */
+  private calculateDomainScore(bookmarkDomain: string, _context: RecommendationContext): number {
+    if (_context.currentDomain && bookmarkDomain === _context.currentDomain) {
+      logger.debug('ContextScore', `🎯 同域名匹配: ${bookmarkDomain} (+60)`)
+      return 60
+    }
+    return 0
+  }
+
+  /**
+   * 计算页面类型分数
+   */
+  private calculatePageTypeScore(
+    bookmarkDomain: string,
+    bookmarkUrl: string,
+    bookmarkTitle: string,
+    _context: RecommendationContext
+  ): number {
     const currentPageType = this.detectPageType(
       _context.currentDomain || '',
-      currentUrl,
-      currentPageTitle
+      _context.currentUrl || '',
+      _context.currentPageTitle || ''
     )
     const bookmarkPageType = this.detectPageType(bookmarkDomain || '', bookmarkUrl, bookmarkTitle)
 
     if (currentPageType && bookmarkPageType === currentPageType) {
-      score += 50 // 同类型页面获得高分
       logger.debug('ContextScore', `🎯 页面类型匹配: ${currentPageType} (+50)`)
+      return 50
     }
+    return 0
+  }
 
-    // 🎯 核心优化3：内容相关域名推荐策略
+  /**
+   * 计算相关域名分数
+   */
+  private calculateRelatedDomainScore(
+    bookmarkDomain: string,
+    _context: RecommendationContext
+  ): number {
+    const currentPageType = this.detectPageType(
+      _context.currentDomain || '',
+      _context.currentUrl || '',
+      _context.currentPageTitle || ''
+    )
     const contentRelatedDomains = this.getContentRelatedDomains(currentPageType)
     if (bookmarkDomain && contentRelatedDomains.includes(bookmarkDomain)) {
-      score += 35
       logger.debug('ContextScore', `🎯 内容相关域名: ${bookmarkDomain} (+35)`)
+      return 35
     }
+    return 0
+  }
 
-    // 🎯 核心优化4：标题关键词匹配（当前页面标题 vs 书签标题）
+  /**
+   * 计算标题分数
+   */
+  private calculateTitleScore(currentPageTitle: string, bookmarkTitle: string): number {
     const titleMatchScore = this.calculateTitleContentMatch(currentPageTitle, bookmarkTitle)
     if (titleMatchScore > 0) {
-      score += titleMatchScore
       logger.debug('ContextScore', `🎯 标题内容匹配: ${titleMatchScore}`)
+      return titleMatchScore
     }
+    return 0
+  }
 
-    // 🎯 核心优化5：URL路径相似性（特别适用于同一网站的不同页面）
+  /**
+   * 计算路径分数
+   */
+  private calculatePathScore(
+    bookmarkDomain: string,
+    bookmarkUrl: string,
+    _context: RecommendationContext
+  ): number {
     if (_context.currentDomain && bookmarkDomain === _context.currentDomain) {
-      const pathSimilarity = this.calculatePathSimilarity(currentUrl, bookmarkUrl)
-      score += pathSimilarity
+      const pathSimilarity = this.calculatePathSimilarity(_context.currentUrl || '', bookmarkUrl)
       if (pathSimilarity > 0) {
         logger.debug('ContextScore', `🎯 路径相似性: ${pathSimilarity}`)
       }
+      return pathSimilarity
     }
+    return 0
+  }
 
-    // 传统逻辑：筛选历史相关性
+  /**
+   * 计算搜索历史分数
+   */
+  private calculateSearchHistoryScore(
+    bookmarkTitle: string,
+    bookmarkUrl: string,
+    bookmarkDomain: string,
+    _context: RecommendationContext
+  ): number {
     const bookmarkText = `${bookmarkTitle} ${bookmarkUrl}`.toLowerCase()
+    let score = 0
     for (const search of _context.recentSearches) {
       const searchLower = search.toLowerCase()
       if (
@@ -643,21 +709,33 @@ export class SmartRecommendationEngine {
         score += 15
       }
     }
+    return score
+  }
 
-    // 传统逻辑：用户偏好域名（降低权重）
+  /**
+   * 计算用户偏好分数
+   */
+  private calculateUserPreferenceScore(
+    bookmarkDomain: string,
+    _context: RecommendationContext
+  ): number {
     const userPrefs = _context.userBehaviorPattern.preferredDomains
     const domainPref = userPrefs.find(pref => pref.domain === bookmarkDomain)
     if (domainPref) {
-      score += domainPref.preference * 8 // 进一步降低权重
+      return domainPref.preference * 8
     }
+    return 0
+  }
 
-    // 传统逻辑：时间模式匹配
+  /**
+   * 计算时间分数
+   */
+  private calculateTimeScore(_context: RecommendationContext): number {
     const activeHours = _context.userBehaviorPattern.activeHours
     if (activeHours.includes(_context.currentHour)) {
-      score += 5 // 降低时间因素权重，突出内容相关性
+      return 5
     }
-
-    return Math.min(100, score)
+    return 0
   }
 
   /**
@@ -668,94 +746,126 @@ export class SmartRecommendationEngine {
 
     const content = `${domain} ${url} ${title}`.toLowerCase()
 
-    // 视频娱乐类
-    if (
-      ['youtube.com', 'bilibili.com', 'vimeo.com', 'twitch.tv'].includes(domain) ||
-      content.includes('video') ||
-      content.includes('watch') ||
-      content.includes('播放') ||
-      content.includes('直播') ||
-      content.includes('live')
-    ) {
+    return (
+      this.detectVideoType(domain, content) ||
+      this.detectMusicType(domain, content) ||
+      this.detectSocialType(domain, content) ||
+      this.detectEducationType(domain, content) ||
+      this.detectTechType(domain, content) ||
+      this.detectNewsType(domain, content) ||
+      this.detectShoppingType(domain, content) ||
+      null
+    )
+  }
+
+  /**
+   * 检测视频娱乐类
+   */
+  private detectVideoType(domain: string, content: string): string | null {
+    const videoDomains = ['youtube.com', 'bilibili.com', 'vimeo.com', 'twitch.tv']
+    const videoKeywords = ['video', 'watch', '播放', '直播', 'live']
+
+    if (videoDomains.includes(domain) || videoKeywords.some(k => content.includes(k))) {
       return 'video'
     }
+    return null
+  }
 
-    // 音乐类
-    if (
-      ['spotify.com', 'music.apple.com', 'soundcloud.com', 'netease.com'].includes(domain) ||
-      content.includes('music') ||
-      content.includes('song') ||
-      content.includes('音乐') ||
-      content.includes('歌曲') ||
-      content.includes('播放列表')
-    ) {
+  /**
+   * 检测音乐类
+   */
+  private detectMusicType(domain: string, content: string): string | null {
+    const musicDomains = ['spotify.com', 'music.apple.com', 'soundcloud.com', 'netease.com']
+    const musicKeywords = ['music', 'song', '音乐', '歌曲', '播放列表']
+
+    if (musicDomains.includes(domain) || musicKeywords.some(k => content.includes(k))) {
       return 'music'
     }
+    return null
+  }
 
-    // 社交媒体类
-    if (
-      ['twitter.com', 'facebook.com', 'instagram.com', 'linkedin.com', 'weibo.com'].includes(
-        domain
-      ) ||
-      content.includes('social') ||
-      content.includes('profile') ||
-      content.includes('follow')
-    ) {
+  /**
+   * 检测社交媒体类
+   */
+  private detectSocialType(domain: string, content: string): string | null {
+    const socialDomains = [
+      'twitter.com',
+      'facebook.com',
+      'instagram.com',
+      'linkedin.com',
+      'weibo.com'
+    ]
+    const socialKeywords = ['social', 'profile', 'follow']
+
+    if (socialDomains.includes(domain) || socialKeywords.some(k => content.includes(k))) {
       return 'social'
     }
+    return null
+  }
 
-    // 学习教育类
-    if (
-      ['coursera.org', 'udemy.com', 'edx.org', 'khan.academy.org', 'duolingo.com'].includes(
-        domain
-      ) ||
-      content.includes('course') ||
-      content.includes('learn') ||
-      content.includes('education') ||
-      content.includes('tutorial') ||
-      content.includes('课程') ||
-      content.includes('学习')
-    ) {
+  /**
+   * 检测学习教育类
+   */
+  private detectEducationType(domain: string, content: string): string | null {
+    const educationDomains = [
+      'coursera.org',
+      'udemy.com',
+      'edx.org',
+      'khan.academy.org',
+      'duolingo.com'
+    ]
+    const educationKeywords = ['course', 'learn', 'education', 'tutorial', '课程', '学习']
+
+    if (educationDomains.includes(domain) || educationKeywords.some(k => content.includes(k))) {
       return 'education'
     }
+    return null
+  }
 
-    // 技术开发类
+  /**
+   * 检测技术开发类
+   */
+  private detectTechType(domain: string, content: string): string | null {
+    const techDomains = ['github.com', 'stackoverflow.com', 'developer.mozilla.org']
+    const techPatterns = ['docs.', 'api.']
+    const techKeywords = ['docs', 'api', 'developer', 'programming', 'code']
+
     if (
-      ['github.com', 'stackoverflow.com', 'developer.mozilla.org', 'docs.', 'api.'].some(d =>
-        domain.includes(d)
-      ) ||
-      content.includes('docs') ||
-      content.includes('api') ||
-      content.includes('developer') ||
-      content.includes('programming') ||
-      content.includes('code')
+      techDomains.includes(domain) ||
+      techPatterns.some(p => domain.includes(p)) ||
+      techKeywords.some(k => content.includes(k))
     ) {
       return 'tech'
     }
+    return null
+  }
 
-    // 新闻资讯类
-    if (
-      ['news.', 'bbc.com', 'cnn.com', 'reuters.com', 'xinhua.net'].some(d => domain.includes(d)) ||
-      content.includes('news') ||
-      content.includes('article') ||
-      content.includes('新闻') ||
-      content.includes('资讯')
-    ) {
+  /**
+   * 检测新闻资讯类
+   */
+  private detectNewsType(domain: string, content: string): string | null {
+    const newsPatterns = ['news.', 'bbc.com', 'cnn.com', 'reuters.com', 'xinhua.net']
+    const newsKeywords = ['news', 'article', '新闻', '资讯']
+
+    if (newsPatterns.some(p => domain.includes(p)) || newsKeywords.some(k => content.includes(k))) {
       return 'news'
     }
+    return null
+  }
 
-    // 购物类
+  /**
+   * 检测购物类
+   */
+  private detectShoppingType(domain: string, content: string): string | null {
+    const shoppingPatterns = ['amazon.com', 'taobao.com', 'jd.com', 'ebay.com', 'shop']
+    const shoppingKeywords = ['shop', 'buy', 'product', '购买', '商品']
+
     if (
-      ['amazon.com', 'taobao.com', 'jd.com', 'ebay.com', 'shop'].some(d => domain.includes(d)) ||
-      content.includes('shop') ||
-      content.includes('buy') ||
-      content.includes('product') ||
-      content.includes('购买') ||
-      content.includes('商品')
+      shoppingPatterns.some(p => domain.includes(p)) ||
+      shoppingKeywords.some(k => content.includes(k))
     ) {
       return 'shopping'
     }
-
     return null
   }
 

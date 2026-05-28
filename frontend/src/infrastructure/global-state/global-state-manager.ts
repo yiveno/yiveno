@@ -235,83 +235,9 @@ export class GlobalStateManager {
     Object.keys(changes).forEach(key => {
       const change = changes[key]
       if (change?.newValue !== undefined) {
-        // 根据命名空间和键名更新对应状态
-        if (namespace === 'local') {
-          switch (key) {
-            case STORAGE_KEYS.LOCAL.THEME: {
-              const nextTheme = this.ensureTheme(change.newValue, newState.theme)
-              if (nextTheme !== newState.theme) {
-                newState.theme = nextTheme
-                stateChanged = true
-              }
-              break
-            }
-
-            case STORAGE_KEYS.LOCAL.COLOR_PRESET: {
-              const nextPreset = this.ensureColorPreset(change.newValue, newState.colorPreset)
-              if (nextPreset !== newState.colorPreset) {
-                newState.colorPreset = nextPreset
-                stateChanged = true
-              }
-              break
-            }
-
-            case STORAGE_KEYS.LOCAL.AUTO_SYNC: {
-              const nextAutoSync = this.ensureBoolean(change.newValue, newState.autoSync)
-              if (nextAutoSync !== newState.autoSync) {
-                newState.autoSync = nextAutoSync
-                stateChanged = true
-              }
-              break
-            }
-            case STORAGE_KEYS.LOCAL.SHOW_FAVICONS: {
-              const nextShowFavicons = this.ensureBoolean(change.newValue, newState.showFavicons)
-              if (nextShowFavicons !== newState.showFavicons) {
-                newState.showFavicons = nextShowFavicons
-                stateChanged = true
-              }
-              break
-            }
-            case STORAGE_KEYS.LOCAL.COMPACT_MODE: {
-              const nextCompactMode = this.ensureBoolean(change.newValue, newState.compactMode)
-              if (nextCompactMode !== newState.compactMode) {
-                newState.compactMode = nextCompactMode
-                stateChanged = true
-              }
-              break
-            }
-            case STORAGE_KEYS.LOCAL.AUTO_FOLLOW_SYSTEM_THEME: {
-              const nextAutoFollow = this.ensureBoolean(
-                change.newValue,
-                newState.autoFollowSystemTheme
-              )
-              if (nextAutoFollow !== newState.autoFollowSystemTheme) {
-                newState.autoFollowSystemTheme = nextAutoFollow
-                stateChanged = true
-              }
-              break
-            }
-          }
-        } else if (namespace === 'sync') {
-          switch (key) {
-            case STORAGE_KEYS.SYNC.THEME: {
-              const nextTheme = this.ensureTheme(change.newValue, newState.theme)
-              if (nextTheme !== newState.theme) {
-                newState.theme = nextTheme
-                stateChanged = true
-              }
-              break
-            }
-
-            case STORAGE_KEYS.SYNC.COLOR_PRESET: {
-              const nextPreset = this.ensureColorPreset(change.newValue, newState.colorPreset)
-              if (nextPreset !== newState.colorPreset) {
-                newState.colorPreset = nextPreset
-                stateChanged = true
-              }
-              break
-            }
-          }
+        const changed = this.updateStateForKey(newState, key, change.newValue, namespace)
+        if (changed) {
+          stateChanged = true
         }
       }
     })
@@ -320,6 +246,107 @@ export class GlobalStateManager {
       this.state = newState
       this.notifyListeners()
       logger.debug('GlobalStateManager', '状态已更新', newState)
+    }
+  }
+
+  /**
+   * 根据键名更新状态
+   */
+  private updateStateForKey(
+    newState: GlobalState,
+    key: string,
+    newValue: unknown,
+    namespace: string
+  ): boolean {
+    if (namespace === 'local') {
+      return this.updateLocalState(newState, key, newValue)
+    } else if (namespace === 'sync') {
+      return this.updateSyncState(newState, key, newValue)
+    }
+    return false
+  }
+
+  /**
+   * 更新 local 命名空间的状态
+   */
+  private updateLocalState(newState: GlobalState, key: string, newValue: unknown): boolean {
+    switch (key) {
+      case STORAGE_KEYS.LOCAL.THEME: {
+        const nextTheme = this.ensureTheme(newValue, newState.theme)
+        if (nextTheme !== newState.theme) {
+          newState.theme = nextTheme
+          return true
+        }
+        return false
+      }
+      case STORAGE_KEYS.LOCAL.COLOR_PRESET: {
+        const nextPreset = this.ensureColorPreset(newValue, newState.colorPreset)
+        if (nextPreset !== newState.colorPreset) {
+          newState.colorPreset = nextPreset
+          return true
+        }
+        return false
+      }
+      case STORAGE_KEYS.LOCAL.AUTO_SYNC: {
+        const nextAutoSync = this.ensureBoolean(newValue, newState.autoSync)
+        if (nextAutoSync !== newState.autoSync) {
+          newState.autoSync = nextAutoSync
+          return true
+        }
+        return false
+      }
+      case STORAGE_KEYS.LOCAL.SHOW_FAVICONS: {
+        const nextShowFavicons = this.ensureBoolean(newValue, newState.showFavicons)
+        if (nextShowFavicons !== newState.showFavicons) {
+          newState.showFavicons = nextShowFavicons
+          return true
+        }
+        return false
+      }
+      case STORAGE_KEYS.LOCAL.COMPACT_MODE: {
+        const nextCompactMode = this.ensureBoolean(newValue, newState.compactMode)
+        if (nextCompactMode !== newState.compactMode) {
+          newState.compactMode = nextCompactMode
+          return true
+        }
+        return false
+      }
+      case STORAGE_KEYS.LOCAL.AUTO_FOLLOW_SYSTEM_THEME: {
+        const nextAutoFollow = this.ensureBoolean(newValue, newState.autoFollowSystemTheme)
+        if (nextAutoFollow !== newState.autoFollowSystemTheme) {
+          newState.autoFollowSystemTheme = nextAutoFollow
+          return true
+        }
+        return false
+      }
+      default:
+        return false
+    }
+  }
+
+  /**
+   * 更新 sync 命名空间的状态
+   */
+  private updateSyncState(newState: GlobalState, key: string, newValue: unknown): boolean {
+    switch (key) {
+      case STORAGE_KEYS.SYNC.THEME: {
+        const nextTheme = this.ensureTheme(newValue, newState.theme)
+        if (nextTheme !== newState.theme) {
+          newState.theme = nextTheme
+          return true
+        }
+        return false
+      }
+      case STORAGE_KEYS.SYNC.COLOR_PRESET: {
+        const nextPreset = this.ensureColorPreset(newValue, newState.colorPreset)
+        if (nextPreset !== newState.colorPreset) {
+          newState.colorPreset = nextPreset
+          return true
+        }
+        return false
+      }
+      default:
+        return false
     }
   }
 

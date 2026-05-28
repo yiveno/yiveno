@@ -238,14 +238,17 @@ export function useKeyboard(options: UseKeyboardOptions = {}) {
 
   // 挂载时添加事件监听
   onMounted(() => {
-    const targetElement = global
-      ? window
-      : targetOption && 'value' in targetOption
-        ? targetOption.value
-        : targetOption
+    let targetElement: EventTarget | null = null
+    if (global) {
+      targetElement = window
+    } else if (targetOption && 'value' in targetOption) {
+      targetElement = targetOption.value
+    } else if (targetOption) {
+      targetElement = targetOption
+    }
 
     if (targetElement) {
-      ;(targetElement as EventTarget).addEventListener('keydown', handleKeydown as EventListener)
+      targetElement.addEventListener('keydown', handleKeydown as EventListener)
       logger.debug('Keyboard', '键盘监听已启动', {
         global,
         target: targetElement
@@ -257,11 +260,14 @@ export function useKeyboard(options: UseKeyboardOptions = {}) {
 
   // 卸载时移除事件监听
   onUnmounted(() => {
-    const targetElement = global
-      ? window
-      : targetOption && 'value' in targetOption
-        ? targetOption.value
-        : targetOption
+    let targetElement: EventTarget | null = null
+    if (global) {
+      targetElement = window
+    } else if (targetOption && 'value' in targetOption) {
+      targetElement = targetOption.value
+    } else if (targetOption) {
+      targetElement = targetOption
+    }
 
     if (targetElement) {
       ;(targetElement as EventTarget).removeEventListener('keydown', handleKeydown as EventListener)

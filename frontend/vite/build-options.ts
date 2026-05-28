@@ -36,97 +36,189 @@ export function createBuildInput() {
  * 注意：Rolldown 的 manualChunks 行为与 Rollup 略有不同
  * - Rollup: 只对匹配的模块分包
  * - Rolldown: 会自动提取共享依赖到 chunk
- *
+ /**
  * ⚠️ 关键修复：background.js 不能导入任何包含 Vue 的 chunk
  * 解决方案：将所有 background 依赖的模块都返回 undefined，让它们内联到 background.js
  */
 export function createManualChunks(id: string) {
-  // ⚠️ 关键修复：为 background.js 创建完全独立的构建
-  // 不对任何模块进行分包，让它们全部内联到 background.js 中
-  // 这样可以确保 background.js 不会导入任何包含 Vue 的 chunk
-
-  // 检查当前模块是否被 background.js 依赖
-  // 如果是，返回 undefined，让它内联到 background.js 中
-  // 注意：这个判断不够精确，但可以作为临时解决方案
-
-  if (id.includes('node_modules')) {
-    // 虚拟滚动相关依赖必须整体隔离。
-    // `@tanstack/vue-virtual` 的底层实现依赖 `@tanstack/virtual-core`
-    // 和 `raf-schd`，后者在模块初始化时会访问 `window`。
-    // 如果它们落进通用 vendor，background Service Worker 在导入共享 chunk
-    // 时就会触发 `window is not defined`。
-    if (
-      id.includes('@tanstack/vue-virtual') ||
-      id.includes('@tanstack/virtual-core') ||
-      id.includes('/raf-schd/')
-    ) {
-      return 'vendor-virtual'
-    }
-
-    // ONNX / Transformers 运行时需要和后台通用 vendor 隔离，
-    // 避免 Service Worker 在初始化时提前执行重量级浏览器运行时代码。
-    if (
-      id.includes('@huggingface/transformers') ||
-      id.includes('/onnxruntime-web/') ||
-      id.includes('/onnxruntime-common/')
-    ) {
-      return 'vendor-transformers'
-    }
-
-    // QRCode 仅用于前端分享海报等页面能力，不应该混入后台共享 vendor。
-    if (id.includes('/qrcode/')) {
-      return 'vendor-qrcode'
-    }
-
-    // ⚠️ 关键修复：Lit 和 Material Web 单独分包，不要放到 vendor
-    // 这样可以避免 background.js 导入包含 DOM API 的 chunk
-    // 使用更宽泛的匹配规则，确保所有 Lit 相关的包都被分离
-    if (id.includes('lit') && !id.includes('sqlite') && !id.includes('polyfill')) {
-      return 'vendor-lit'
-    }
-    if (id.includes('@material')) {
-      return 'vendor-material-web'
-    }
-
-    // 核心框架 - 单独分包，缓存友好
-    if (id.includes('/vue/') || id.includes('/vue-demi/') || id.includes('@vue/'))
-      return 'vendor-vue'
-    if (id.includes('/pinia/')) return 'vendor-pinia'
-
-    // 图标库 - 按需导入但仍单独分包
-    if (id.includes('lucide-vue-next')) return 'vendor-lucide'
-
-    // 搜索库 - 单独分包（体积较大）
-    if (id.includes('flexsearch')) return 'vendor-flexsearch'
-
-    // 查询库 - 合并 query 相关
-    if (id.includes('@tanstack/vue-query') || id.includes('@tanstack/query-core'))
-      return 'vendor-query'
-
-    // 工具库：vueuse + immer + mitt（体积小，合并）
-    if (id.includes('@vueuse/') || id.includes('immer') || id.includes('mitt'))
-      return 'vendor-utils'
-
-    // 数据校验 - 单独分包
-    if (id.includes('zod')) return 'vendor-zod'
-
-    // 拖拽库 - 单独分包
-    if (id.includes('@atlaskit/')) return 'vendor-dnd'
-
-    // Supabase 客户端 - 单独分包
-    if (id.includes('@supabase/')) return 'vendor-supabase'
-
-    // tRPC 客户端 - 单独分包
-    if (id.includes('@trpc/')) return 'vendor-trpc'
-
-    // 其他依赖归入 vendor
-    return 'vendor'
+  if (!id.includes('node_modules')) {
+    return undefined
   }
 
-  // ⚠️ 关键修复：不对任何应用代码进行分包
-  // 让 Rolldown 自动处理，或者让模块内联到各自的入口文件中
-  // 这样可以避免 background.js 导入包含 Vue 的 chunk
+  return categorizeVendor(id)
+}
 
+/**
+ * 分类 vendor 模块
+ */
+function categorizeVendor(id: string): string {
+  return (
+    checkVirtualVendor(id) ||
+    checkTransformersVendor(id) ||
+    checkQRCodeVendor(id) ||
+    checkLitVendor(id) ||
+    checkMaterialVendor(id) ||
+    checkFrameworkVendor(id) ||
+    checkIconVendor(id) ||
+    checkSearchVendor(id) ||
+    checkQueryVendor(id) ||
+    checkUtilsVendor(id) ||
+    checkZodVendor(id) ||
+    checkDndVendor(id) ||
+    checkSupabaseVendor(id) ||
+    checkTrpcVendor(id) ||
+    'vendor'
+  )
+}
+
+/**
+ * 检查虚拟滚动相关依赖
+ */
+function checkVirtualVendor(id: string): string | undefined {
+  if (
+    id.includes('@tanstack/vue-virtual') ||
+    id.includes('@tanstack/virtual-core') ||
+    id.includes('/raf-schd/')
+  ) {
+    return 'vendor-virtual'
+  }
+  return undefined
+}
+
+/**
+ * 检查 ONNX / Transformers 运行时
+ */
+function checkTransformersVendor(id: string): string | undefined {
+  if (
+    id.includes('@huggingface/transformers') ||
+    id.includes('/onnxruntime-web/') ||
+    id.includes('/onnxruntime-common/')
+  ) {
+    return 'vendor-transformers'
+  }
+  return undefined
+}
+
+/**
+ * 检查 QRCode 依赖
+ */
+function checkQRCodeVendor(id: string): string | undefined {
+  if (id.includes('/qrcode/')) {
+    return 'vendor-qrcode'
+  }
+  return undefined
+}
+
+/**
+ * 检查 Lit 依赖
+ */
+function checkLitVendor(id: string): string | undefined {
+  if (id.includes('lit') && !id.includes('sqlite') && !id.includes('polyfill')) {
+    return 'vendor-lit'
+  }
+  return undefined
+}
+
+/**
+ * 检查 Material Web 依赖
+ */
+function checkMaterialVendor(id: string): string | undefined {
+  if (id.includes('@material')) {
+    return 'vendor-material-web'
+  }
+  return undefined
+}
+
+/**
+ * 检查核心框架依赖
+ */
+function checkFrameworkVendor(id: string): string | undefined {
+  if (id.includes('/vue/') || id.includes('/vue-demi/') || id.includes('@vue/')) {
+    return 'vendor-vue'
+  }
+  if (id.includes('/pinia/')) {
+    return 'vendor-pinia'
+  }
+  return undefined
+}
+
+/**
+ * 检查图标库依赖
+ */
+function checkIconVendor(id: string): string | undefined {
+  if (id.includes('lucide-vue-next')) {
+    return 'vendor-lucide'
+  }
+  return undefined
+}
+
+/**
+ * 检查搜索库依赖
+ */
+function checkSearchVendor(id: string): string | undefined {
+  if (id.includes('flexsearch')) {
+    return 'vendor-flexsearch'
+  }
+  return undefined
+}
+
+/**
+ * 检查查询库依赖
+ */
+function checkQueryVendor(id: string): string | undefined {
+  if (id.includes('@tanstack/vue-query') || id.includes('@tanstack/query-core')) {
+    return 'vendor-query'
+  }
+  return undefined
+}
+
+/**
+ * 检查工具库依赖
+ */
+function checkUtilsVendor(id: string): string | undefined {
+  if (id.includes('@vueuse/') || id.includes('immer') || id.includes('mitt')) {
+    return 'vendor-utils'
+  }
+  return undefined
+}
+
+/**
+ * 检查数据校验依赖
+ */
+function checkZodVendor(id: string): string | undefined {
+  if (id.includes('zod')) {
+    return 'vendor-zod'
+  }
+  return undefined
+}
+
+/**
+ * 检查拖拽库依赖
+ */
+function checkDndVendor(id: string): string | undefined {
+  if (id.includes('@atlaskit/')) {
+    return 'vendor-dnd'
+  }
+  return undefined
+}
+
+/**
+ * 检查 Supabase 客户端依赖
+ */
+function checkSupabaseVendor(id: string): string | undefined {
+  if (id.includes('@supabase/')) {
+    return 'vendor-supabase'
+  }
+  return undefined
+}
+
+/**
+ * 检查 tRPC 客户端依赖
+ */
+function checkTrpcVendor(id: string): string | undefined {
+  if (id.includes('@trpc/')) {
+    return 'vendor-trpc'
+  }
   return undefined
 }
 

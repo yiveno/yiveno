@@ -95,25 +95,23 @@ export function detectIntent(query: string): IntentResult {
   const wordCount = words.length
 
   // 单个技术词 → Fuse
-  if (wordCount === 1 && TECH_KEYWORDS.has(lower)) {
+  if (isSingleTechKeyword(wordCount, lower)) {
     return { intent: 'fuse', confidence: 0.95, reason: 'tech_keyword' }
   }
 
   // 语义关键词（如"代码"、"编程"）→ Hybrid（结合 Fuse 和 Semantic）
-  if (SEMANTIC_KEYWORDS.has(lower) || words.some(w => SEMANTIC_KEYWORDS.has(w))) {
+  if (hasSemanticKeyword(lower, words)) {
     return { intent: 'hybrid', confidence: 0.9, reason: 'semantic_keyword' }
   }
 
   // 含特殊符号（域名/路径/版本号）→ Fuse
-  if (/[./\\@#:?=&]/.test(q)) {
+  if (hasSpecialChars(q)) {
     return { intent: 'fuse', confidence: 0.9, reason: 'special_chars' }
   }
 
   // 自然语言触发词 → Semantic
-  for (const pattern of NATURAL_TRIGGERS) {
-    if (pattern.test(q)) {
-      return { intent: 'semantic', confidence: 0.9, reason: 'natural_language_trigger' }
-    }
+  if (hasNaturalLanguageTrigger(q)) {
+    return { intent: 'semantic', confidence: 0.9, reason: 'natural_language_trigger' }
   }
 
   // 中文长句（> 4 汉字）→ Semantic
@@ -123,11 +121,7 @@ export function detectIntent(query: string): IntentResult {
   }
 
   // 多词英文短语（2-4 词，非技术词）→ Hybrid
-  if (wordCount >= 2 && wordCount <= 4 && !hasChineseChars) {
-    const allTech = words.every(w => TECH_KEYWORDS.has(w))
-    if (allTech) {
-      return { intent: 'fuse', confidence: 0.8, reason: 'multi_tech_keywords' }
-    }
+  if (isMultiWordEnglishPhrase(wordCount, hasChineseChars, words)) {
     return { intent: 'hybrid', confidence: 0.75, reason: 'multi_word_phrase' }
   }
 
@@ -143,4 +137,50 @@ export function detectIntent(query: string): IntentResult {
 
   // 默认 Hybrid
   return { intent: 'hybrid', confidence: 0.6, reason: 'default' }
+}
+
+/**
+ * 检查是否为单个技术关键词
+ */
+function isSingleTechKeyword(wordCount: number, lower: string): boolean {
+  return wordCount === 1 && TECH_KEYWORDS.has(lower)
+}
+
+/**
+ * 检查是否包含语义关键词
+ */
+function hasSemanticKeyword(lower: string, words: string[]): boolean {
+  return SEMANTIC_KEYWORDS.has(lower) || words.some(w => SEMANTIC_KEYWORDS.has(w))
+}
+
+/**
+ * 检查是否包含特殊字符
+ */
+function hasSpecialChars(q: string): boolean {
+  return /[./\\@#:?=&]/.test(q)
+}
+
+/**
+ * 检查是否包含自然语言触发词
+ */
+function hasNaturalLanguageTrigger(q: string): boolean {
+  return NATURAL_TRIGGERS.some(pattern => pattern.test(q))
+}
+
+/**
+ * 检查是否为多词英文短语
+ */
+function isMultiWordEnglishPhrase(
+  wordCount: number,
+  hasChineseChars: boolean,
+  words: string[]
+): boolean {
+  if (wordCount >= 2 && wordCount <= 4 && !hasChineseChars) {
+    const allTech = words.every(w => TECH_KEYWORDS.has(w))
+    if (allTech) {
+      return false
+    }
+    return true
+  }
+  return false
 }

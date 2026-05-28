@@ -369,6 +369,22 @@ watch(
 const leftExpandAll = ref(false)
 const rightExpandAll = ref(false)
 
+/** 左侧面板收起/展开状态，默认收起 */
+const isLeftPanelCollapsed = ref(true)
+
+/** 左侧面板宽度 CSS 变量，用于触发 grid-template-columns transition */
+const leftPanelWidthVar = computed(() => (isLeftPanelCollapsed.value ? '0px' : 'minmax(0, 1fr)'))
+
+/** 左侧面板 gap CSS 变量 */
+const leftPanelGapVar = computed(() =>
+  isLeftPanelCollapsed.value ? '0' : 'clamp(var(--spacing-3), 3vw, var(--spacing-10))'
+)
+
+/** 切换左侧面板收起/展开 */
+const toggleLeftPanel = () => {
+  isLeftPanelCollapsed.value = !isLeftPanelCollapsed.value
+}
+
 watch(
   () => rightTreeData.value,
   () => {
@@ -1464,9 +1480,18 @@ const handleApply = () => {
     <AppHeader :show-side-panel-toggle="false" />
     <main class="main-content">
       <div class="management-container">
-        <div class="management-row">
+        <div
+          class="management-row"
+          :style="{
+            '--left-panel-width': leftPanelWidthVar,
+            '--left-panel-gap': leftPanelGapVar
+          }"
+        >
           <!-- Left Panel -->
-          <div class="panel-col left-panel">
+          <div
+            class="panel-col left-panel"
+            :class="{ 'left-panel--collapsed': isLeftPanelCollapsed }"
+          >
             <Card class="panel-card" elevation="medium">
               <template #header>
                 <div class="panel-header">
@@ -1532,10 +1557,18 @@ const handleApply = () => {
             </Card>
           </div>
 
-          <!-- Middle Divider -->
+          <!-- Middle Divider - 可点击切换左侧面板收起/展开 -->
           <div class="panel-col divider-col">
-            <div class="panel-divider">
-              <LucideIcon name="chevrons-right" :size="24" color="muted" />
+            <div class="panel-divider" @click="toggleLeftPanel">
+              <md-icon-button
+                :title="isLeftPanelCollapsed ? '展开左侧面板' : '收起左侧面板'"
+                class="panel-toggle-btn"
+              >
+                <LucideIcon
+                  :name="isLeftPanelCollapsed ? 'chevrons-right' : 'chevrons-left'"
+                  :size="24"
+                />
+              </md-icon-button>
             </div>
           </div>
 
@@ -2152,6 +2185,7 @@ p.warning-text {
   flex-direction: column;
   width: 100vw;
   height: 100vh;
+  overflow: hidden;
 }
 
 /* 使用 Overlay 组件自身的全屏蒙版，已通过 props 统一透明度与模糊 */
@@ -2174,13 +2208,8 @@ p.warning-text {
 }
 
 .main-content {
-  flex: none;
-  height: calc(100vh - var(--spacing-16));
+  flex: 1;
   overflow: hidden;
-}
-
-.management-container {
-  height: 100%;
 }
 
 .panel-col {
@@ -2202,6 +2231,20 @@ p.warning-text {
   transition: background-color var(--md-sys-motion-duration-short2)
     var(--md-sys-motion-easing-standard);
   overflow: hidden;
+}
+
+/* 左侧面板收起/展开动画 */
+.left-panel {
+  transition: opacity var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-standard);
+  overflow: hidden;
+}
+
+.left-panel--collapsed {
+  opacity: 0;
+}
+
+.left-panel--collapsed .panel-card {
+  pointer-events: none;
 }
 
 /* 左右面板等宽（列宽由 .management-row 的 grid 控制） */
@@ -2291,25 +2334,56 @@ p.warning-text {
   overflow-y: auto;
 }
 
-/* 中间分隔区样式 */
+/* 中间分隔区样式 - Material Design 3 */
 .divider-col {
   display: flex;
   justify-content: center;
   align-items: center;
+  width: 40px;
+  min-width: 40px;
   padding: 0;
 }
 
 .panel-divider {
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
+  width: 100%;
   height: 100%;
-  opacity: 0.3;
-  transition: opacity var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+  cursor: pointer;
+  transition: background-color var(--md-sys-motion-duration-short2)
+    var(--md-sys-motion-easing-standard);
+}
+
+.panel-divider::before {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1px;
+  height: 30%;
+  background: var(--md-sys-color-outline-variant);
+  opacity: 0.4;
+  transform: translate(-50%, -50%);
+  transition:
+    height var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard),
+    opacity var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+  content: '';
+}
+
+.panel-divider:hover::before {
+  opacity: 0.6;
 }
 
 .panel-divider:hover {
-  opacity: 0.6;
+  background: var(--md-sys-color-surface-variant);
+}
+
+.panel-toggle-btn {
+  --md-icon-button-icon-size: 20px;
+
+  position: relative;
+  z-index: 1;
 }
 
 /* 右侧面板操作区的分隔符 */
@@ -2500,12 +2574,15 @@ md-icon-button {
   display: grid;
   flex: 1;
   align-items: stretch;
-  gap: clamp(var(--spacing-3), 3vw, var(--spacing-10));
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: var(--left-panel-gap, clamp(var(--spacing-3), 3vw, var(--spacing-10)));
+  grid-template-columns: var(--left-panel-width, minmax(0, 1fr)) auto minmax(0, 1fr);
   box-sizing: border-box;
   width: 100%;
   height: 100%;
   min-height: 0;
+  transition:
+    grid-template-columns var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-standard),
+    gap var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-standard);
 }
 
 .management-row > .panel-col {

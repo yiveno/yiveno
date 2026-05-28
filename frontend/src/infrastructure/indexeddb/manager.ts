@@ -909,102 +909,25 @@ export class IndexedDBManager {
     const matches = await this.runReadTransaction(
       DB_CONFIG.STORES.BOOKMARKS,
       async (_tx, store) => {
-        const candidateMap = new Map<string, BookmarkRecord>()
         const terms = normalized.query.toLowerCase().split(/\s+/).filter(Boolean)
 
         if (terms.length === 0) return []
 
-        const indexes: string[] = ['titleLower']
-        if (normalized.includeDomain && store.indexNames.contains('domain')) {
-          indexes.push('domain')
-        }
-        if (normalized.includeUrl && store.indexNames.contains('urlLower')) {
-          indexes.push('urlLower')
-        }
-        if (normalized.includeKeywords && store.indexNames.contains('keywords')) {
-          indexes.push('keywords')
-        }
-        if (normalized.includeTags && store.indexNames.contains('tags')) {
-          indexes.push('tags')
-        }
+        const indexes = this.buildSearchIndexes(normalized as SearchOptions, store)
+        const candidateMap = await this.collectCandidateBookmarks(
+          store,
+          indexes,
+          terms,
+          normalized.limit ?? 100
+        )
+        const scored = this.scoreAndFilterCandidates(
+          candidateMap,
+          terms,
+          normalized as SearchOptions
+        )
+        const sorted = this.sortSearchResults(scored, normalized.sortBy)
+        const limited = this.limitSearchResults(sorted, normalized.limit)
 
-        const perIndexCap = Math.max(200, (normalized.limit ?? 100) * 3)
-
-        for (const term of terms) {
-          for (const indexName of indexes) {
-            const index = store.index(indexName)
-            const range =
-              indexName === 'keywords' || indexName === 'tags'
-                ? IDBKeyRange.only(term)
-                : IDBKeyRange.bound(term, `${term}\uffff`)
-
-            await new Promise<void>((resolve, reject) => {
-              let collected = 0
-              const request = index.openCursor(range)
-              request.onsuccess = () => {
-                const cursor = request.result
-                if (!cursor || collected >= perIndexCap) {
-                  resolve()
-                  return
-                }
-
-                const parsed = BookmarkRecordSchema.safeParse(cursor.value)
-                if (!parsed.success) {
-                  reject(parsed.error)
-                  return
-                }
-
-                candidateMap.set(parsed.data.id, {
-                  ...parsed.data,
-                  traitTags: parsed.data.traitTags ?? [],
-                  traitMetadata: (parsed.data.traitMetadata ?? []) as TraitMetadata[]
-                } as BookmarkRecord)
-                collected++
-                cursor.continue()
-              }
-
-              request.onerror = () => {
-                reject(request.error ?? new Error('IndexedDB 游标遍历失败'))
-              }
-            })
-          }
-        }
-
-        const scored: SearchResult[] = []
-        for (const record of candidateMap.values()) {
-          const normalizedRecord: BookmarkRecord = {
-            ...record,
-            traitTags: record.traitTags ?? [],
-            traitMetadata: (record.traitMetadata ?? []) as TraitMetadata[]
-          } as BookmarkRecord
-          const score = this.calculateSearchScore(
-            normalizedRecord,
-            terms,
-            normalized as SearchOptions
-          )
-          if (score <= (normalized.minScore ?? 0)) continue
-
-          scored.push({
-            id: record.id,
-            score,
-            bookmark: normalizedRecord
-          })
-        }
-
-        if (normalized.sortBy === 'title') {
-          scored.sort((a, b) =>
-            (a.bookmark.title as string).localeCompare(b.bookmark.title as string)
-          )
-        } else if (normalized.sortBy === 'dateAdded') {
-          scored.sort((a, b) => (b.bookmark.dateAdded ?? 0) - (a.bookmark.dateAdded ?? 0))
-        } else if (normalized.sortBy === 'visitCount') {
-          scored.sort((a, b) => (b.bookmark.visitCount ?? 0) - (a.bookmark.visitCount ?? 0))
-        } else {
-          scored.sort((a, b) => b.score - a.score)
-        }
-
-        const limited =
-          normalized.limit && normalized.limit > 0 ? scored.slice(0, normalized.limit) : scored
         return limited
       }
     )
@@ -1394,6 +1317,131 @@ export class IndexedDBManager {
     }
 
     return { restoredStores, restoredRecords }
+  }
+
+  /**
+   * 构建搜索索引列表
+   */
+  private buildSearchIndexes(normalized: SearchOptions, store: IDBObjectStore): string[] {
+    const indexes: string[] = ['titleLower']
+    if (normalized.includeDomain && store.indexNames.contains('domain')) {
+      indexes.push('domain')
+    }
+    if (normalized.includeUrl && store.indexNames.contains('urlLower')) {
+      indexes.push('urlLower')
+    }
+    if (normalized.includeKeywords && store.indexNames.contains('keywords')) {
+      indexes.push('keywords')
+    }
+    if (normalized.includeTags && store.indexNames.contains('tags')) {
+      indexes.push('tags')
+    }
+    return indexes
+  }
+
+  /**
+   * 收集候选书签
+   */
+  private async collectCandidateBookmarks(
+    store: IDBObjectStore,
+    indexes: string[],
+    terms: string[],
+    limit: number
+  ): Promise<Map<string, BookmarkRecord>> {
+    const candidateMap = new Map<string, BookmarkRecord>()
+    const perIndexCap = Math.max(200, limit * 3)
+
+    for (const term of terms) {
+      for (const indexName of indexes) {
+        const index = store.index(indexName)
+        const range =
+          indexName === 'keywords' || indexName === 'tags'
+            ? IDBKeyRange.only(term)
+            : IDBKeyRange.bound(term, `${term}\uffff`)
+
+        await new Promise<void>((resolve, reject) => {
+          let collected = 0
+          const request = index.openCursor(range)
+          request.onsuccess = () => {
+            const cursor = request.result
+            if (!cursor || collected >= perIndexCap) {
+              resolve()
+              return
+            }
+
+            const parsed = BookmarkRecordSchema.safeParse(cursor.value)
+            if (!parsed.success) {
+              reject(parsed.error)
+              return
+            }
+
+            candidateMap.set(parsed.data.id, {
+              ...parsed.data,
+              traitTags: parsed.data.traitTags ?? [],
+              traitMetadata: (parsed.data.traitMetadata ?? []) as TraitMetadata[]
+            } as BookmarkRecord)
+            collected++
+            cursor.continue()
+          }
+
+          request.onerror = () => {
+            reject(request.error ?? new Error('IndexedDB 游标遍历失败'))
+          }
+        })
+      }
+    }
+
+    return candidateMap
+  }
+
+  /**
+   * 对候选书签进行评分和过滤
+   */
+  private scoreAndFilterCandidates(
+    candidateMap: Map<string, BookmarkRecord>,
+    terms: string[],
+    normalized: SearchOptions
+  ): SearchResult[] {
+    const scored: SearchResult[] = []
+    for (const record of candidateMap.values()) {
+      const normalizedRecord: BookmarkRecord = {
+        ...record,
+        traitTags: record.traitTags ?? [],
+        traitMetadata: (record.traitMetadata ?? []) as TraitMetadata[]
+      } as BookmarkRecord
+      const score = this.calculateSearchScore(normalizedRecord, terms, normalized)
+      if (score <= (normalized.minScore ?? 0)) continue
+
+      scored.push({
+        id: record.id,
+        score,
+        bookmark: normalizedRecord
+      })
+    }
+    return scored
+  }
+
+  /**
+   * 排序搜索结果
+   */
+  private sortSearchResults(scored: SearchResult[], sortBy?: string): SearchResult[] {
+    if (sortBy === 'title') {
+      scored.sort((a, b) => (a.bookmark.title as string).localeCompare(b.bookmark.title as string))
+    } else if (sortBy === 'dateAdded') {
+      scored.sort((a, b) => (b.bookmark.dateAdded ?? 0) - (a.bookmark.dateAdded ?? 0))
+    } else if (sortBy === 'visitCount') {
+      scored.sort((a, b) => (b.bookmark.visitCount ?? 0) - (a.bookmark.visitCount ?? 0))
+    } else {
+      scored.sort((a, b) => b.score - a.score)
+    }
+    return scored
+  }
+
+  /**
+   * 限制搜索结果数量
+   */
+  private limitSearchResults(scored: SearchResult[], limit: number | undefined): SearchResult[] {
+    return limit && limit > 0 ? scored.slice(0, limit) : scored
   }
 }
 

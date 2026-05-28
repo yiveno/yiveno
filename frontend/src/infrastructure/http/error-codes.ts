@@ -162,22 +162,42 @@ export function getErrorMessage(
     return fallback
   }
 
-  // 标准化错误码（转为小写，去除空格）
   const normalizedCode = errorCode.toLowerCase().trim()
 
-  // 直接匹配错误码
-  if (ERROR_CODE_MAP[normalizedCode]) {
-    return ERROR_CODE_MAP[normalizedCode]
+  const directMatch = ERROR_CODE_MAP[normalizedCode]
+  if (directMatch) {
+    return directMatch
   }
 
-  // 尝试匹配包含错误码的字符串（兼容性处理）
+  const partialMatch = findPartialMatch(normalizedCode)
+  if (partialMatch) {
+    return partialMatch
+  }
+
+  const heuristicMatch = findHeuristicMatch(normalizedCode)
+  if (heuristicMatch) {
+    return heuristicMatch
+  }
+
+  return fallback
+}
+
+/**
+ * 查找部分匹配的错误码
+ */
+function findPartialMatch(normalizedCode: string): string | undefined {
   for (const [code, message] of Object.entries(ERROR_CODE_MAP)) {
     if (normalizedCode.includes(code.toLowerCase())) {
       return message
     }
   }
+  return undefined
+}
 
-  // 如果找不到匹配，尝试从原始错误码中提取关键信息
+/**
+ * 根据启发式规则查找匹配的错误消息
+ */
+function findHeuristicMatch(normalizedCode: string): string | undefined {
   if (normalizedCode.includes('email') && normalizedCode.includes('invalid')) {
     return '邮箱格式不正确，请检查后重试'
   }
@@ -196,9 +216,7 @@ export function getErrorMessage(
   if (normalizedCode.includes('network') || normalizedCode.includes('timeout')) {
     return '网络连接失败，请检查网络后重试'
   }
-
-  // 最后返回原始错误码或默认文案（避免直接显示技术错误码）
-  return fallback
+  return undefined
 }
 
 /**

@@ -548,7 +548,7 @@ defineExpose({
 }
 
 .tag-avatar-initials-inline {
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: var(--font-semibold);
   color: var(--md-sys-color-on-primary);
 }

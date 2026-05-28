@@ -160,88 +160,162 @@ export class FontService {
   detectLanguage(text: string): DetectedLanguage {
     if (!text || text.trim().length === 0) return 'unknown'
 
-    // 移除标点符号和数字，只分析文字
-    const cleanText = text.replace(
+    const cleanText = this.cleanText(text)
+    if (cleanText.length === 0) return 'en'
+
+    const stats = this.countLanguageChars(cleanText)
+    const ratios = this.calculateLanguageRatios(stats)
+
+    return this.determinePrimaryLanguage(ratios, text)
+  }
+
+  /**
+   * 清理文本，移除标点符号和数字
+   */
+  private cleanText(text: string): string {
+    return text.replace(
       /[^\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af\u0600-\u06ff\u0750-\u077f\u3400-\u4dbf\u0041-\u005A\u0061-\u007A]/g,
       ''
     )
+  }
 
-    if (cleanText.length === 0) return 'en' // 纯数字/符号，默认英文字体
-
-    // 字符统计
+  /**
+   * 统计各种语言的字符数
+   */
+  private countLanguageChars(text: string): {
+    chinese: number
+    japanese: number
+    korean: number
+    arabic: number
+    latin: number
+    total: number
+  } {
     const stats = {
       chinese: 0,
       japanese: 0,
       korean: 0,
       arabic: 0,
       latin: 0,
-      total: cleanText.length
+      total: text.length
     }
 
-    for (const char of cleanText) {
+    for (const char of text) {
       const code = char.charCodeAt(0)
 
-      // 中文字符 (包括简繁体)
-      if ((code >= 0x4e00 && code <= 0x9fff) || (code >= 0x3400 && code <= 0x4dbf)) {
+      if (this.isChineseChar(code)) {
         stats.chinese++
-      }
-      // 日文假名
-      else if ((code >= 0x3040 && code <= 0x309f) || (code >= 0x30a0 && code <= 0x30ff)) {
+      } else if (this.isJapaneseChar(code)) {
         stats.japanese++
-      }
-      // 韩文
-      else if (code >= 0xac00 && code <= 0xd7af) {
+      } else if (this.isKoreanChar(code)) {
         stats.korean++
-      }
-      // 阿拉伯文
-      else if ((code >= 0x0600 && code <= 0x06ff) || (code >= 0x0750 && code <= 0x077f)) {
+      } else if (this.isArabicChar(code)) {
         stats.arabic++
-      }
-      // 拉丁字符
-      else if ((code >= 0x0041 && code <= 0x005a) || (code >= 0x0061 && code <= 0x007a)) {
+      } else if (this.isLatinChar(code)) {
         stats.latin++
       }
     }
 
-    // 计算比例
-    const chineseRatio = stats.chinese / stats.total
-    const japaneseRatio = stats.japanese / stats.total
-    const koreanRatio = stats.korean / stats.total
-    const arabicRatio = stats.arabic / stats.total
-    const latinRatio = stats.latin / stats.total
+    return stats
+  }
 
-    // 判断主要语言
-    if (chineseRatio > 0.3) {
-      return this.detectChineseVariant(text)
+  /**
+   * 计算各语言字符比例
+   */
+  private calculateLanguageRatios(stats: {
+    chinese: number
+    japanese: number
+    korean: number
+    arabic: number
+    latin: number
+    total: number
+  }): {
+    chinese: number
+    japanese: number
+    korean: number
+    arabic: number
+    latin: number
+  } {
+    return {
+      chinese: stats.chinese / stats.total,
+      japanese: stats.japanese / stats.total,
+      korean: stats.korean / stats.total,
+      arabic: stats.arabic / stats.total,
+      latin: stats.latin / stats.total
+    }
+  }
+
+  /**
+   * 判断主要语言
+   */
+  private determinePrimaryLanguage(
+    ratios: { chinese: number; japanese: number; korean: number; arabic: number; latin: number },
+    originalText: string
+  ): DetectedLanguage {
+    if (ratios.chinese > 0.3) {
+      return this.detectChineseVariant(originalText)
     }
 
-    if (japaneseRatio > 0.1 || (japaneseRatio > 0.05 && chineseRatio > 0.1)) {
+    if (ratios.japanese > 0.1 || (ratios.japanese > 0.05 && ratios.chinese > 0.1)) {
       return 'ja'
     }
 
-    if (koreanRatio > 0.3) {
+    if (ratios.korean > 0.3) {
       return 'ko'
     }
 
-    if (arabicRatio > 0.3) {
+    if (ratios.arabic > 0.3) {
       return 'ar'
     }
 
-    if (latinRatio > 0.7) {
+    if (ratios.latin > 0.7) {
       return 'en'
     }
 
-    // 检测是否为混合语言
-    const nonLatinTotal = chineseRatio + japaneseRatio + koreanRatio + arabicRatio
-    if (nonLatinTotal > 0.2 && latinRatio > 0.2) {
+    const nonLatinTotal = ratios.chinese + ratios.japanese + ratios.korean + ratios.arabic
+    if (nonLatinTotal > 0.2 && ratios.latin > 0.2) {
       return 'mixed'
     }
 
-    if (chineseRatio > 0.1) {
-      return this.detectChineseVariant(text)
+    if (ratios.chinese > 0.1) {
+      return this.detectChineseVariant(originalText)
     }
 
     return 'unknown'
+  }
+
+  /**
+   * 判断是否为中文字符
+   */
+  private isChineseChar(code: number): boolean {
+    return (code >= 0x4e00 && code <= 0x9fff) || (code >= 0x3400 && code <= 0x4dbf)
+  }
+
+  /**
+   * 判断是否为日文字符
+   */
+  private isJapaneseChar(code: number): boolean {
+    return (code >= 0x3040 && code <= 0x309f) || (code >= 0x30a0 && code <= 0x30ff)
+  }
+
+  /**
+   * 判断是否为韩文字符
+   */
+  private isKoreanChar(code: number): boolean {
+    return code >= 0xac00 && code <= 0xd7af
+  }
+
+  /**
+   * 判断是否为阿拉伯文字符
+   */
+  private isArabicChar(code: number): boolean {
+    return (code >= 0x0600 && code <= 0x06ff) || (code >= 0x0750 && code <= 0x077f)
+  }
+
+  /**
+   * 判断是否为拉丁字符
+   */
+  private isLatinChar(code: number): boolean {
+    return (code >= 0x0041 && code <= 0x005a) || (code >= 0x0061 && code <= 0x007a)
   }
 
   /**
@@ -444,57 +518,16 @@ export class FontService {
 
     try {
       const doInject = () => {
-        let lang = 'en'
-
-        // 检测浏览器语言
-        if (
-          typeof chrome !== 'undefined' &&
-          chrome.i18n &&
-          typeof chrome.i18n.getUILanguage === 'function'
-        ) {
-          lang = navigator.language
-        } else {
-          lang = navigator.language || navigator.languages?.[0] || 'en'
-        }
-
+        const lang = detectBrowserLanguage()
         logger.info('FontService', '检测到浏览器语言', { lang })
 
-        // 映射语言代码到字体配置
-        let langKey = 'default'
-        if (lang.startsWith('zh-CN') || lang.startsWith('zh-Hans')) langKey = 'zh-CN'
-        else if (lang.startsWith('zh-TW') || lang.startsWith('zh-Hant') || lang.startsWith('zh-HK'))
-          langKey = 'zh-TW'
-        else if (lang.startsWith('ja')) langKey = 'ja'
-        else if (lang.startsWith('ko')) langKey = 'ko'
-        else if (lang.startsWith('ar')) langKey = 'ar'
-
-        const font = GOOGLE_FONTS_MAP[langKey] ?? GOOGLE_FONTS_MAP.default
+        const font = getFontForLanguage(lang)
         if (!font) {
           return
         }
-        const href = `https://fonts.googleapis.com/css2?family=${font.google}:wght@100..900&display=swap`
 
-        // 移除已存在的动态字体 link
-        const old = document.getElementById('dynamic-google-font')
-        if (old) old.remove()
-
-        // 创建并注入新的字体链接
-        const link = document.createElement('link')
-        link.rel = 'stylesheet'
-        link.href = href
-        link.id = 'dynamic-google-font'
-        document.head.appendChild(link)
-
-        // 设置全局 CSS 变量，保证字体优先级
-        document.documentElement.style.setProperty(
-          '--font-family-dynamic',
-          `"${font.family}", sans-serif`
-        )
-
-        logger.info('FontService', '动态字体注入完成', {
-          font: font.family,
-          href
-        })
+        injectGoogleFont(font)
+        setFontFamilyCSSVariable(font)
       }
 
       if (document.readyState === 'loading') {
@@ -509,6 +542,66 @@ export class FontService {
       return err(error as Error)
     }
   }
+}
+
+/**
+ * 检测浏览器语言
+ */
+function detectBrowserLanguage(): string {
+  if (
+    typeof chrome !== 'undefined' &&
+    chrome.i18n &&
+    typeof chrome.i18n.getUILanguage === 'function'
+  ) {
+    return navigator.language
+  }
+  return navigator.language || navigator.languages?.[0] || 'en'
+}
+
+/**
+ * 根据语言获取字体配置
+ */
+function getFontForLanguage(lang: string): { family: string; google: string } | undefined {
+  let langKey = 'default'
+  if (lang.startsWith('zh-CN') || lang.startsWith('zh-Hans')) langKey = 'zh-CN'
+  else if (lang.startsWith('zh-TW') || lang.startsWith('zh-Hant') || lang.startsWith('zh-HK'))
+    langKey = 'zh-TW'
+  else if (lang.startsWith('ja')) langKey = 'ja'
+  else if (lang.startsWith('ko')) langKey = 'ko'
+  else if (lang.startsWith('ar')) langKey = 'ar'
+
+  return GOOGLE_FONTS_MAP[langKey] ?? GOOGLE_FONTS_MAP.default
+}
+
+/**
+ * 注入 Google 字体
+ */
+function injectGoogleFont(font: { family: string; google: string }): void {
+  const href = `https://fonts.googleapis.com/css2?family=${font.google}:wght@100..900&display=swap`
+
+  const old = document.getElementById('dynamic-google-font')
+  if (old) old.remove()
+
+  const link = document.createElement('link')
+  link.rel = 'stylesheet'
+  link.href = href
+  link.id = 'dynamic-google-font'
+  document.head.appendChild(link)
+
+  logger.info('FontService', '动态字体注入完成', {
+    font: font.family,
+    href
+  })
+}
+
+/**
+ * 设置字体族 CSS 变量
+ */
+function setFontFamilyCSSVariable(font: { family: string; google: string }): void {
+  document.documentElement.style.setProperty(
+    '--font-family-dynamic',
+    `"${font.family}", sans-serif`
+  )
 }
 
 /**

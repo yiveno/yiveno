@@ -86,57 +86,75 @@ export class SettingsAppService {
   async getSetting<T>(key: string): Promise<T | null> {
     await this.ensureInit()
 
-    // 全局状态优先从全局状态管理器获取
     if (this.isGlobalSetting(key)) {
-      try {
-        const state = globalStateManager.getState()
-        if (!state) {
-          logger.warn('SettingsAppService', '全局状态为空，尝试从 chrome.storage.local 获取', {
-            key
-          })
-          // 降级到 chrome.storage.local
-          const value = await chromeStorage.getLocal<T>(key)
-          return value ?? null
-        }
+      return this.getGlobalSetting<T>(key)
+    }
 
-        switch (key) {
-          case GLOBAL_SETTING_KEYS.THEME:
-            return (state.theme ?? null) as T
-          case GLOBAL_SETTING_KEYS.COLOR_PRESET:
-            return (state.colorPreset ?? null) as T
-          case GLOBAL_SETTING_KEYS.AUTO_SYNC:
-            return (state.autoSync ?? null) as T
-          case GLOBAL_SETTING_KEYS.SHOW_FAVICONS:
-            return (state.showFavicons ?? null) as T
-          case GLOBAL_SETTING_KEYS.COMPACT_MODE:
-            return (state.compactMode ?? null) as T
-          case GLOBAL_SETTING_KEYS.AUTO_FOLLOW_SYSTEM_THEME:
-            return (state.autoFollowSystemTheme ?? null) as T
-        }
-      } catch (error) {
-        logger.error('SettingsAppService', '从全局状态管理器获取设置失败', {
-          key,
-          error
+    if (this.isSmallDataKey(key)) {
+      return this.getSmallDataSetting<T>(key)
+    }
+
+    return indexedDBManager.getSetting<T>(key)
+  }
+
+  /**
+   * 获取全局设置
+   */
+  private async getGlobalSetting<T>(key: string): Promise<T | null> {
+    try {
+      const state = globalStateManager.getState()
+      if (!state) {
+        logger.warn('SettingsAppService', '全局状态为空，尝试从 chrome.storage.local 获取', {
+          key
         })
-        // 降级到 chrome.storage.local
         const value = await chromeStorage.getLocal<T>(key)
         return value ?? null
       }
-    }
 
-    // 小数据配置从 chrome.storage.local 获取
-    if (this.isSmallDataKey(key)) {
-      logger.debug('SettingsAppService', `🔍 从小数据配置读取: ${key}`)
-      const value = await chromeStorage.getLocal<T>(key)
-      logger.debug('SettingsAppService', `📖 读取结果: ${key}`, {
-        found: value !== undefined && value !== null,
-        valueType: typeof value
+      return this.getGlobalStateValue<T>(state, key)
+    } catch (error) {
+      logger.error('SettingsAppService', '从全局状态管理器获取设置失败', {
+        key,
+        error
       })
+      const value = await chromeStorage.getLocal<T>(key)
       return value ?? null
     }
+  }
 
-    // 大量数据从 IndexedDB 获取
-    return indexedDBManager.getSetting<T>(key)
+  /**
+   * 从全局状态获取值
+   */
+  private getGlobalStateValue<T>(state: GlobalState, key: string): T | null {
+    switch (key) {
+      case GLOBAL_SETTING_KEYS.THEME:
+        return (state.theme ?? null) as T
+      case GLOBAL_SETTING_KEYS.COLOR_PRESET:
+        return (state.colorPreset ?? null) as T
+      case GLOBAL_SETTING_KEYS.AUTO_SYNC:
+        return (state.autoSync ?? null) as T
+      case GLOBAL_SETTING_KEYS.SHOW_FAVICONS:
+        return (state.showFavicons ?? null) as T
+      case GLOBAL_SETTING_KEYS.COMPACT_MODE:
+        return (state.compactMode ?? null) as T
+      case GLOBAL_SETTING_KEYS.AUTO_FOLLOW_SYSTEM_THEME:
+        return (state.autoFollowSystemTheme ?? null) as T
+      default:
+        return null
+    }
+  }
+
+  /**
+   * 获取小数据配置
+   */
+  private async getSmallDataSetting<T>(key: string): Promise<T | null> {
+    logger.debug('SettingsAppService', `🔍 从小数据配置读取: ${key}`)
+    const value = await chromeStorage.getLocal<T>(key)
+    logger.debug('SettingsAppService', `📖 读取结果: ${key}`, {
+      found: value !== undefined && value !== null,
+      valueType: typeof value
+    })
+    return value ?? null
   }
 
   /**

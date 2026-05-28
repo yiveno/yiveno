@@ -100,67 +100,112 @@ export function filterBookmarkNodes(
     matchedFields: string[]
     score: number
   } {
-    const matchedFields: string[] = []
-    let score = 0
-
-    // 如果是文件夹且 filterFolders=true，跳过
     if (filterFolders && !node.url) {
-      return { matched: false, matchedFields, score: 0 }
+      return { matched: false, matchedFields: [], score: 0 }
     }
 
-    // 获取要匹配的字段值
+    const fieldValues = getFieldValues(node)
+    const result = { matchedFields: [] as string[], score: 0 }
+
+    if (isTagQuery) {
+      return handleTagQuery(fieldValues.tags, tagTerm)
+    }
+
+    handleFieldMatch(result, fieldValues, 'title', 0.9)
+    handleFieldMatch(result, fieldValues, 'url', 0.7)
+    handleFieldMatch(result, fieldValues, 'domain', 0.6)
+    handleTagMatch(result, fieldValues.tags, 0.8)
+    handleFuzzyMatch(result, fieldValues.title)
+
+    return {
+      matched: result.matchedFields.length > 0,
+      matchedFields: result.matchedFields,
+      score: result.score
+    }
+  }
+
+  /**
+   * 获取字段值
+   */
+  function getFieldValues(node: BookmarkNode): {
+    title: string
+    url: string
+    domain: string
+    tags: string[]
+  } {
     const title = caseSensitive ? node.title || '' : (node.title || '').toLowerCase()
     const url = caseSensitive ? node.url || '' : (node.url || '').toLowerCase()
     const domain = caseSensitive ? node.domain || '' : (node.domain || '').toLowerCase()
     const tags = (node.tags || []).map(t => (caseSensitive ? t : t.toLowerCase()))
+    return { title, url, domain, tags }
+  }
 
-    // 标签查询
-    if (isTagQuery) {
-      const hasTagMatch = tags.some(t => t.includes(tagTerm))
-      if (hasTagMatch) {
-        matchedFields.push('tags')
-        score = 1.0
-      }
-      return { matched: hasTagMatch, matchedFields, score }
+  /**
+   * 处理标签查询
+   */
+  function handleTagQuery(
+    tags: string[],
+    term: string
+  ): {
+    matched: boolean
+    matchedFields: string[]
+    score: number
+  } {
+    const hasTagMatch = tags.some(t => t.includes(term))
+    if (hasTagMatch) {
+      return { matched: true, matchedFields: ['tags'], score: 1.0 }
     }
+    return { matched: false, matchedFields: [], score: 0 }
+  }
 
-    // 普通查询：检查各个字段
-    if (fields.includes('title') && title.includes(lowerQuery)) {
-      matchedFields.push('title')
-      score = Math.max(score, 0.9) // 标题匹配权重最高
+  /**
+   * 处理字段匹配
+   */
+  function handleFieldMatch(
+    result: { matchedFields: string[]; score: number },
+    fieldValues: { title: string; url: string; domain: string },
+    fieldName: 'title' | 'url' | 'domain',
+    weight: number
+  ): void {
+    if (!fields.includes(fieldName)) return
+
+    const fieldValue = fieldValues[fieldName]
+    if (fieldValue.includes(lowerQuery)) {
+      result.matchedFields.push(fieldName)
+      result.score = Math.max(result.score, weight)
     }
+  }
 
-    if (fields.includes('url') && url.includes(lowerQuery)) {
-      matchedFields.push('url')
-      score = Math.max(score, 0.7)
+  /**
+   * 处理标签匹配
+   */
+  function handleTagMatch(
+    result: { matchedFields: string[]; score: number },
+    tags: string[],
+    weight: number
+  ): void {
+    if (!fields.includes('tags')) return
+
+    const hasTagMatch = tags.some(t => t.includes(lowerQuery))
+    if (hasTagMatch) {
+      result.matchedFields.push('tags')
+      result.score = Math.max(result.score, weight)
     }
+  }
 
-    if (fields.includes('domain') && domain.includes(lowerQuery)) {
-      matchedFields.push('domain')
-      score = Math.max(score, 0.6)
-    }
+  /**
+   * 处理模糊匹配
+   */
+  function handleFuzzyMatch(
+    result: { matchedFields: string[]; score: number },
+    title: string
+  ): void {
+    if (!fuzzy || result.matchedFields.length > 0) return
 
-    if (fields.includes('tags')) {
-      const hasTagMatch = tags.some(t => t.includes(lowerQuery))
-      if (hasTagMatch) {
-        matchedFields.push('tags')
-        score = Math.max(score, 0.8) // 标签匹配权重较高
-      }
-    }
-
-    // 模糊匹配逻辑（简化版）
-    if (fuzzy && matchedFields.length === 0) {
-      const fuzzyScore = calculateFuzzyScore(title, lowerQuery)
-      if (fuzzyScore >= threshold) {
-        matchedFields.push('title')
-        score = fuzzyScore
-      }
-    }
-
-    return {
-      matched: matchedFields.length > 0,
-      matchedFields,
-      score
+    const fuzzyScore = calculateFuzzyScore(title, lowerQuery)
+    if (fuzzyScore >= threshold) {
+      result.matchedFields.push('title')
+      result.score = fuzzyScore
     }
   }
 

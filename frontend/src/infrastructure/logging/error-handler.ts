@@ -143,45 +143,83 @@ export async function withRetry<T>(
   context?: ErrorContext
 ): Promise<Result<T, AppError>> {
   const { maxAttempts = 3, delay = 1000, backoff = true, shouldRetry = () => true } = options
-
   let lastError: Error | undefined
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      const result = await operation()
-
-      if (attempt > 1) {
-        logger.info('ErrorHandler', '重试成功', {
-          operation: context?.operation,
-          attempt,
-          maxAttempts
-        })
-      }
-
-      return ok(result) as Result<T, AppError>
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error))
-
-      // 检查是否应该重试
-      if (attempt >= maxAttempts || !shouldRetry(lastError)) {
-        break
-      }
-
-      logger.warn('ErrorHandler', '操作失败，准备重试', {
-        operation: context?.operation,
-        attempt,
-        maxAttempts,
-        error: lastError.message,
-        nextRetryIn: backoff ? delay * Math.pow(2, attempt - 1) : delay
-      })
-
-      // 等待后重试（支持指数退避）
-      const waitTime = backoff ? delay * Math.pow(2, attempt - 1) : delay
-      await new Promise(resolve => setTimeout(resolve, waitTime))
+    const result = await executeAttempt(operation, attempt, context)
+    if (result.ok) {
+      return result
     }
+
+    lastError = result.error
+
+    if (attempt >= maxAttempts || !shouldRetry(lastError)) {
+      break
+    }
+
+    await logAndRetry(attempt, maxAttempts, delay, backoff, lastError, context)
   }
 
-  // 所有重试失败，返回错误结果
+  return handleRetryFailure(lastError, context, maxAttempts)
+}
+
+/**
+ * 执行单次尝试
+ */
+async function executeAttempt<T>(
+  operation: () => Promise<T>,
+  attempt: number,
+  context?: ErrorContext
+): Promise<Result<T, AppError>> {
+  try {
+    const result = await operation()
+
+    if (attempt > 1) {
+      logger.info('ErrorHandler', '重试成功', {
+        operation: context?.operation,
+        attempt,
+        maxAttempts: 3
+      })
+    }
+
+    return ok(result) as Result<T, AppError>
+  } catch (error) {
+    const errorObj = error instanceof Error ? error : new Error(String(error))
+    return err(errorObj) as Result<T, AppError>
+  }
+}
+
+/**
+ * 记录错误并等待重试
+ */
+async function logAndRetry(
+  attempt: number,
+  maxAttempts: number,
+  delay: number,
+  backoff: boolean,
+  error: Error,
+  context?: ErrorContext
+): Promise<void> {
+  logger.warn('ErrorHandler', '操作失败，准备重试', {
+    operation: context?.operation,
+    attempt,
+    maxAttempts,
+    error: error.message,
+    nextRetryIn: backoff ? delay * Math.pow(2, attempt - 1) : delay
+  })
+
+  const waitTime = backoff ? delay * Math.pow(2, attempt - 1) : delay
+  await new Promise(resolve => setTimeout(resolve, waitTime))
+}
+
+/**
+ * 处理重试失败
+ */
+function handleRetryFailure(
+  lastError: Error | undefined,
+  context?: ErrorContext,
+  maxAttempts = 3
+): Result<never, AppError> {
   if (!lastError) {
     lastError = new Error('操作失败但没有捕获到具体错误')
   }

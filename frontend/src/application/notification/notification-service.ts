@@ -155,9 +155,7 @@ class PageNotificationManager {
    * @returns 通知 ID
    */
   async show(message: string, opts?: ToastShowOptions): Promise<string> {
-    // Service Worker 环境检查
-    if (typeof document === 'undefined' || !isRunningInExtension()) {
-      logger.debug('PageNotificationManager', 'Service Worker 环境，跳过通知显示')
+    if (!this.canShowNotification()) {
       return ''
     }
 
@@ -168,11 +166,39 @@ class PageNotificationManager {
       return ''
     }
 
-    // 转换为 Notification API 格式
     const level = opts?.level || 'info'
-    const duration = opts?.timeoutMs ? opts.timeoutMs / 1000 : 3 // 转换为秒
+    const duration = this.convertTimeoutToSeconds(opts?.timeoutMs)
+    const method = this.getNotifyMethod(level)
 
-    // 🎯 Ant Design 风格：使用对应的方法
+    this.callNotifyMethod(method, message, duration, opts)
+
+    return '' // Notification 内部管理 ID
+  }
+
+  /**
+   * 检查是否可以显示通知
+   */
+  private canShowNotification(): boolean {
+    if (typeof document === 'undefined' || !isRunningInExtension()) {
+      logger.debug('PageNotificationManager', 'Service Worker 环境，跳过通知显示')
+      return false
+    }
+    return true
+  }
+
+  /**
+   * 转换超时时间为秒
+   */
+  private convertTimeoutToSeconds(timeoutMs?: number): number {
+    return timeoutMs ? timeoutMs / 1000 : 3
+  }
+
+  /**
+   * 获取通知方法
+   */
+  private getNotifyMethod(
+    level: NonNullable<ToastShowOptions['level']> | 'info'
+  ): keyof NotificationComponentExposed {
     const methodMap: Record<
       NonNullable<ToastShowOptions['level']> | 'info',
       keyof NotificationComponentExposed
@@ -182,29 +208,22 @@ class PageNotificationManager {
       info: 'info',
       warning: 'warning'
     }
+    return methodMap[level] || 'info'
+  }
 
-    const method = methodMap[level] || 'info'
-    const notifyMethod = this.exposed[method]
+  /**
+   * 调用通知方法
+   */
+  private callNotifyMethod(
+    method: keyof NotificationComponentExposed,
+    message: string,
+    duration: number,
+    opts?: ToastShowOptions
+  ): void {
+    const notifyMethod = this.exposed?.[method]
 
     if (typeof notifyMethod === 'function') {
-      const notificationConfig: {
-        message: string
-        description?: string
-        duration: number
-        key?: string
-      } = {
-        message: opts?.title || message,
-        duration
-      }
-
-      if (opts?.title) {
-        notificationConfig.description = message
-      }
-
-      if (opts?.key) {
-        notificationConfig.key = opts.key
-      }
-
+      const notificationConfig = this.buildNotificationConfig(message, duration, opts)
       ;(
         notifyMethod as (config: {
           message: string
@@ -214,8 +233,40 @@ class PageNotificationManager {
         }) => void
       )(notificationConfig)
     }
+  }
 
-    return '' // Notification 内部管理 ID
+  /**
+   * 构建通知配置
+   */
+  private buildNotificationConfig(
+    message: string,
+    duration: number,
+    opts?: ToastShowOptions
+  ): {
+    message: string
+    description?: string
+    duration: number
+    key?: string
+  } {
+    const config: {
+      message: string
+      description?: string
+      duration: number
+      key?: string
+    } = {
+      message: opts?.title || message,
+      duration
+    }
+
+    if (opts?.title) {
+      config.description = message
+    }
+
+    if (opts?.key) {
+      config.key = opts.key
+    }
+
+    return config
   }
 
   /**
@@ -456,60 +507,16 @@ export class NotificationService {
    */
   async notify(message: string, opts?: NotificationOptions): Promise<Result<void, Error>> {
     try {
-      // ✨ 勿扰模式检查：如果开启勿扰模式，直接返回，不显示任何通知
-      if (this.config.enableDoNotDisturb) {
-        logger.debug('NotificationService', '🔕 勿扰模式已开启，跳过通知显示', {
-          message,
-          level: opts?.level || opts?.type || 'info'
-        })
+      if (this.shouldSuppressNotification(opts)) {
         return ok(undefined)
       }
 
-      // ✨ 如果没有明确指定 timeoutMs，从设置中读取用户配置的时长
-      if (!opts?.timeoutMs) {
-        await this.updateDefaultDuration()
-      }
-
+      await this.updateDefaultDurationIfNeeded(opts)
       const options = this.buildOptions(opts)
 
-      // 抑制同内容在短时间内重复
-      const suppressKey = options.key || `${options.level}:${message}`
-      const last = this.recentMap.get(suppressKey) || 0
-      const ts = Date.now()
-
-      // ✅ 动态计算去重窗口：Toast 显示时长 + 离场动画 + 额外缓冲
-      // 额外缓冲 500ms 防止在边界时刻的时序问题和快速连续操作
-      const timeoutMs = options.timeoutMs ?? this.config.defaultTimeout
-      const effectiveSuppressWindow = Math.max(
-        this.config.suppressWindowMs,
-        timeoutMs + ANIMATION_CONFIG.DURATION.TOAST_LEAVE + 500
-      )
-
-      logger.info('NotificationService', '🔔 Notify 调用', {
-        message,
-        suppressKey,
-        ts,
-        last,
-        elapsed: ts - last,
-        suppressWindow: effectiveSuppressWindow,
-        willSuppress: ts - last < effectiveSuppressWindow
-      })
-
-      if (ts - last < effectiveSuppressWindow) {
-        logger.warn('NotificationService', '❌ 通知被去重抑制', {
-          suppressKey,
-          elapsed: ts - last,
-          suppressWindow: effectiveSuppressWindow
-        })
+      if (!this.checkSuppression(options, message)) {
         return ok(undefined)
       }
-
-      // ✅ 记录本次通知的时间戳，用于后续去重判断
-      this.recentMap.set(suppressKey, ts)
-      logger.info('NotificationService', '✅ 通知通过去重检查，更新时间戳', {
-        suppressKey,
-        ts
-      })
 
       const item: QueuedNotification = {
         id: this.makeId(),
@@ -518,46 +525,133 @@ export class NotificationService {
         createdAt: Date.now()
       }
 
-      // ✨ Level 1: 更新徽章（如果需要）
-      if (opts?.updateBadge && this.config.enableBadge) {
-        const badgeText = opts.badgeText || opts.badge?.text || '!'
-        const badgeColor =
-          opts.badgeColor || opts.badge?.color || this.getBadgeColor(options.level || 'info')
-
-        await this.updateBadge(badgeText, badgeColor)
-
-        logger.debug('NotificationService', 'Badge 已更新', {
-          text: badgeText,
-          color: badgeColor
-        })
-
-        // ✅ 如果配置了自动清除，设置定时器
-        if (opts.badge?.autoClear) {
-          const clearDelay = opts.badge.clearDelay || NOTIFICATION_CONFIG.BADGE_AUTO_CLEAR_DELAY
-          if (clearDelay > 0) {
-            setTimeout(() => {
-              this.clearBadge()
-            }, clearDelay)
-          }
-        }
-      }
-
-      // ✨ Level 2: 显示页面 Toast（主通道）
-      if (this.config.enablePageToasts) {
-        await this.showPageToast(item)
-      }
-
-      // ✨ Level 3: 自动镜像系统通知（副通道）：仅当页面不可见时
-      const shouldMirror = typeof document !== 'undefined' ? document.hidden : true
-
-      if (shouldMirror && this.config.enableSystemNotifications) {
-        this.queue.push(item)
-        this.runNext()
-      }
+      await this.handleBadgeUpdate(opts, options)
+      await this.handlePageToast(item)
+      this.handleSystemNotification(item)
 
       return ok(undefined)
     } catch (error) {
       return err(error as Error)
+    }
+  }
+
+  /**
+   * 检查是否应该抑制通知（勿扰模式）
+   */
+  private shouldSuppressNotification(opts?: NotificationOptions): boolean {
+    if (!this.config.enableDoNotDisturb) return false
+
+    logger.debug('NotificationService', '🔕 勿扰模式已开启，跳过通知显示', {
+      message: opts?.message,
+      level: opts?.level || opts?.type || 'info'
+    })
+    return true
+  }
+
+  /**
+   * 如果需要，更新默认时长
+   */
+  private async updateDefaultDurationIfNeeded(opts?: NotificationOptions): Promise<void> {
+    if (!opts?.timeoutMs) {
+      await this.updateDefaultDuration()
+    }
+  }
+
+  /**
+   * 检查并处理去重逻辑
+   */
+  private checkSuppression(options: Required<NotificationOptions>, message: string): boolean {
+    const suppressKey = options.key || `${options.level}:${message}`
+    const last = this.recentMap.get(suppressKey) || 0
+    const ts = Date.now()
+
+    const timeoutMs = options.timeoutMs ?? this.config.defaultTimeout
+    const effectiveSuppressWindow = Math.max(
+      this.config.suppressWindowMs,
+      timeoutMs + ANIMATION_CONFIG.DURATION.TOAST_LEAVE + 500
+    )
+
+    logger.info('NotificationService', '🔔 Notify 调用', {
+      message,
+      suppressKey,
+      ts,
+      last,
+      elapsed: ts - last,
+      suppressWindow: effectiveSuppressWindow,
+      willSuppress: ts - last < effectiveSuppressWindow
+    })
+
+    if (ts - last < effectiveSuppressWindow) {
+      logger.warn('NotificationService', '❌ 通知被去重抑制', {
+        suppressKey,
+        elapsed: ts - last,
+        suppressWindow: effectiveSuppressWindow
+      })
+      return false
+    }
+
+    this.recentMap.set(suppressKey, ts)
+    logger.info('NotificationService', '✅ 通知通过去重检查，更新时间戳', {
+      suppressKey,
+      ts
+    })
+    return true
+  }
+
+  /**
+   * 处理徽章更新
+   */
+  private async handleBadgeUpdate(
+    opts?: NotificationOptions,
+    options?: Required<NotificationOptions>
+  ): Promise<void> {
+    if (!opts?.updateBadge || !this.config.enableBadge) return
+
+    const badgeText = opts.badgeText || opts.badge?.text || '!'
+    const badgeColor =
+      opts.badgeColor || opts.badge?.color || this.getBadgeColor(options?.level || 'info')
+
+    await this.updateBadge(badgeText, badgeColor)
+
+    logger.debug('NotificationService', 'Badge 已更新', {
+      text: badgeText,
+      color: badgeColor
+    })
+
+    this.scheduleBadgeAutoClear(opts)
+  }
+
+  /**
+   * 调度徽章自动清除
+   */
+  private scheduleBadgeAutoClear(opts?: NotificationOptions): void {
+    if (!opts?.badge?.autoClear) return
+
+    const clearDelay = opts.badge.clearDelay || NOTIFICATION_CONFIG.BADGE_AUTO_CLEAR_DELAY
+    if (clearDelay > 0) {
+      setTimeout(() => {
+        this.clearBadge()
+      }, clearDelay)
+    }
+  }
+
+  /**
+   * 处理页面 Toast 显示
+   */
+  private async handlePageToast(item: QueuedNotification): Promise<void> {
+    if (!this.config.enablePageToasts) return
+    await this.showPageToast(item)
+  }
+
+  /**
+   * 处理系统通知
+   */
+  private handleSystemNotification(item: QueuedNotification): void {
+    const shouldMirror = typeof document !== 'undefined' ? document.hidden : true
+
+    if (shouldMirror && this.config.enableSystemNotifications) {
+      this.queue.push(item)
+      this.runNext()
     }
   }
 
@@ -615,33 +709,105 @@ export class NotificationService {
    */
   private buildOptions(opts?: NotificationOptions): Required<NotificationOptions> {
     const level: NotificationLevel = opts?.level || opts?.type || 'info'
-    // ✨ 优先使用用户提供的 timeoutMs，否则使用配置的默认值
     const timeoutMs = opts?.timeoutMs ?? this.config.defaultTimeout
+
+    return {
+      ...this.buildBasicOptions(opts, level, timeoutMs),
+      ...this.buildBadgeOptions(opts)
+    } as Required<NotificationOptions>
+  }
+
+  /**
+   * 构建基本通知选项
+   */
+  private buildBasicOptions(
+    opts?: NotificationOptions,
+    level: NotificationLevel = 'info',
+    timeoutMs?: number
+  ): Partial<Required<NotificationOptions>> {
+    return {
+      ...this.buildTextOptions(opts),
+      ...this.buildLevelOptions(level, timeoutMs),
+      ...this.buildIconOptions(opts, level),
+      ...this.buildActionOptions(opts),
+      ...this.buildMetaOptions(opts)
+    }
+  }
+
+  /**
+   * 构建文本选项
+   */
+  private buildTextOptions(opts?: NotificationOptions): Partial<Required<NotificationOptions>> {
     return {
       title: opts?.title || this.config.defaultTitle,
-      message: opts?.message || '',
+      message: opts?.message || ''
+    }
+  }
+
+  /**
+   * 构建级别选项
+   */
+  private buildLevelOptions(
+    level: NotificationLevel,
+    timeoutMs?: number
+  ): Partial<Required<NotificationOptions>> {
+    return {
       level,
       type: level,
-      timeoutMs,
-      priority: opts?.priority || 'normal',
-      persistent: opts?.persistent || false,
-      autoClose: typeof opts?.autoClose === 'number' ? opts.autoClose : timeoutMs,
+      timeoutMs
+    }
+  }
+
+  /**
+   * 构建图标选项
+   */
+  private buildIconOptions(
+    opts?: NotificationOptions,
+    level: NotificationLevel = 'info'
+  ): Partial<Required<NotificationOptions>> {
+    return {
       iconUrl: this.resolveIconUrl(opts?.iconUrl, level),
       icon: opts?.icon || '',
-      imageUrl: opts?.imageUrl || '',
-      actions: opts?.actions || [],
+      imageUrl: opts?.imageUrl || ''
+    }
+  }
+
+  /**
+   * 构建操作选项
+   */
+  private buildActionOptions(opts?: NotificationOptions): Partial<Required<NotificationOptions>> {
+    return {
+      priority: opts?.priority || 'normal',
+      persistent: opts?.persistent || false,
+      autoClose: typeof opts?.autoClose === 'number' ? opts.autoClose : undefined,
+      actions: opts?.actions || []
+    }
+  }
+
+  /**
+   * 构建元数据选项
+   */
+  private buildMetaOptions(opts?: NotificationOptions): Partial<Required<NotificationOptions>> {
+    return {
       data: opts?.data || {},
       source: opts?.source || '',
       groupId: opts?.groupId || '',
       playSound: opts?.playSound || false,
       showDesktopNotification: opts?.showDesktopNotification || false,
-      key: opts?.key || '',
-      // ✨ Badge 相关字段（保持可选，提供明确的 undefined 类型）
+      key: opts?.key || ''
+    }
+  }
+
+  /**
+   * 构建 Badge 选项
+   */
+  private buildBadgeOptions(opts?: NotificationOptions): Partial<Required<NotificationOptions>> {
+    return {
       updateBadge: opts?.updateBadge || false,
       badge: opts?.badge ?? undefined,
       badgeText: opts?.badgeText ?? undefined,
       badgeColor: opts?.badgeColor ?? undefined
-    } as Required<NotificationOptions>
+    }
   }
 
   /**

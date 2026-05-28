@@ -67,7 +67,6 @@ class FavoriteAppService {
     try {
       logger.info('FavoriteAppService', '🔄 开始同步收藏数据...')
 
-      // 1. 从 chrome.storage.local 获取收藏 ID 列表（轻量级操作）
       const idsInStorage = await this.getFavoriteIdsFromStorage()
 
       if (idsInStorage.length === 0) {
@@ -79,77 +78,97 @@ class FavoriteAppService {
         count: idsInStorage.length
       })
 
-      // 2. 逐个检查 storage 中的书签是否在 DB 中标记为收藏
-      const toMarkAsFavorite: string[] = []
+      const toMarkAsFavorite = await this.checkFavoritesToRestore(idsInStorage)
 
-      for (const bookmarkId of idsInStorage) {
-        try {
-          const bookmark = await indexedDBManager.getBookmarkById(bookmarkId)
-
-          // 书签不存在或已被删除，从 storage 中移除
-          if (!bookmark) {
-            logger.debug('FavoriteAppService', `书签 ${bookmarkId} 不存在，将从 storage 移除`)
-            continue
-          }
-
-          // 书签存在但未标记为收藏，需要恢复
-          if (!bookmark.isFavorite) {
-            toMarkAsFavorite.push(bookmarkId)
-          }
-        } catch (error) {
-          logger.warn('FavoriteAppService', `检查书签 ${bookmarkId} 失败`, error)
-        }
-      }
-
-      // 3. 如果没有需要恢复的，直接返回
       if (toMarkAsFavorite.length === 0) {
         logger.info('FavoriteAppService', '✅ 收藏数据已同步，无需处理')
         return
       }
 
-      // 4. 恢复收藏标记
       logger.warn(
         'FavoriteAppService',
         `⚠️ 检测到 ${toMarkAsFavorite.length} 个书签需要恢复收藏状态`
       )
 
-      for (const bookmarkId of toMarkAsFavorite) {
-        try {
-          const bookmark = await indexedDBManager.getBookmarkById(bookmarkId)
-          if (bookmark && !bookmark.isFolder) {
-            const favoriteOrder = idsInStorage.indexOf(bookmarkId)
-            await indexedDBManager.updateBookmark({
-              ...bookmark,
-              isFavorite: true,
-              favoriteOrder,
-              favoritedAt: Date.now()
-            })
-            logger.debug('FavoriteAppService', `✅ 恢复收藏: ${bookmark.title}`)
-          }
-        } catch (error) {
-          logger.error('FavoriteAppService', `恢复书签 ${bookmarkId} 失败`, error)
-        }
-      }
-
+      await this.restoreFavorites(toMarkAsFavorite, idsInStorage)
       logger.info('FavoriteAppService', '✅ 收藏数据恢复完成')
 
-      const isServiceWorker = typeof self !== 'undefined' && 'ServiceWorkerGlobalScope' in self
-
-      if (!isServiceWorker && typeof window !== 'undefined' && typeof document !== 'undefined') {
-        try {
-          const { useBookmarkStore } = await import('@/stores/bookmarkStore')
-          const bookmarkStore = useBookmarkStore()
-
-          logger.info('FavoriteAppService', '🔄 重新加载书签数据以应用收藏状态')
-          await bookmarkStore.loadFromIndexedDB()
-        } catch (error) {
-          logger.debug('FavoriteAppService', 'bookmarkStore 未初始化（background 环境）', error)
-        }
-      } else {
-        logger.debug('FavoriteAppService', 'Service Worker 环境，跳过 bookmarkStore 更新')
-      }
+      await this.reloadBookmarkStore()
     } catch (error) {
       logger.error('FavoriteAppService', '❌ 同步收藏数据失败:', error)
+    }
+  }
+
+  /**
+   * 检查需要恢复的收藏
+   */
+  private async checkFavoritesToRestore(idsInStorage: string[]): Promise<string[]> {
+    const toMarkAsFavorite: string[] = []
+
+    for (const bookmarkId of idsInStorage) {
+      try {
+        const bookmark = await indexedDBManager.getBookmarkById(bookmarkId)
+
+        if (!bookmark) {
+          logger.debug('FavoriteAppService', `书签 ${bookmarkId} 不存在，将从 storage 移除`)
+          continue
+        }
+
+        if (!bookmark.isFavorite) {
+          toMarkAsFavorite.push(bookmarkId)
+        }
+      } catch (error) {
+        logger.warn('FavoriteAppService', `检查书签 ${bookmarkId} 失败`, error)
+      }
+    }
+
+    return toMarkAsFavorite
+  }
+
+  /**
+   * 恢复收藏标记
+   */
+  private async restoreFavorites(
+    toMarkAsFavorite: string[],
+    idsInStorage: string[]
+  ): Promise<void> {
+    for (const bookmarkId of toMarkAsFavorite) {
+      try {
+        const bookmark = await indexedDBManager.getBookmarkById(bookmarkId)
+        if (bookmark && !bookmark.isFolder) {
+          const favoriteOrder = idsInStorage.indexOf(bookmarkId)
+          await indexedDBManager.updateBookmark({
+            ...bookmark,
+            isFavorite: true,
+            favoriteOrder,
+            favoritedAt: Date.now()
+          })
+          logger.debug('FavoriteAppService', `✅ 恢复收藏: ${bookmark.title}`)
+        }
+      } catch (error) {
+        logger.error('FavoriteAppService', `恢复书签 ${bookmarkId} 失败`, error)
+      }
+    }
+  }
+
+  /**
+   * 重新加载 bookmarkStore
+   */
+  private async reloadBookmarkStore(): Promise<void> {
+    const isServiceWorker = typeof self !== 'undefined' && 'ServiceWorkerGlobalScope' in self
+
+    if (!isServiceWorker && typeof window !== 'undefined' && typeof document !== 'undefined') {
+      try {
+        const { useBookmarkStore } = await import('@/stores/bookmarkStore')
+        const bookmarkStore = useBookmarkStore()
+
+        logger.info('FavoriteAppService', '🔄 重新加载书签数据以应用收藏状态')
+        await bookmarkStore.loadFromIndexedDB()
+      } catch (error) {
+        logger.debug('FavoriteAppService', 'bookmarkStore 未初始化（background 环境）', error)
+      }
+    } else {
+      logger.debug('FavoriteAppService', 'Service Worker 环境，跳过 bookmarkStore 更新')
     }
   }
 
@@ -185,7 +204,7 @@ class FavoriteAppService {
   }
 
   /**
-   * 添加书签到收藏
+   * 添加到收藏夹
    * @param bookmarkId 书签ID
    * @param skipDuplicationCheck 是否跳过去重检查（默认 false）
    */
@@ -193,100 +212,138 @@ class FavoriteAppService {
     try {
       logger.info('FavoriteAppService', '⭐ 添加收藏:', bookmarkId)
 
-      // 获取书签数据
       const bookmark = await indexedDBManager.getBookmarkById(bookmarkId)
       if (!bookmark) {
         logger.error('Component', 'FavoriteAppService', '❌ 书签不存在:', bookmarkId)
         return false
       }
 
-      // 不允许收藏文件夹
       if (bookmark.isFolder) {
         logger.warn('FavoriteAppService', '⚠️ 不能收藏文件夹:', bookmarkId)
         return false
       }
 
-      // 检查是否已收藏（幂等性保证，正常情况不应触发）
       if (bookmark.isFavorite) {
         logger.debug('FavoriteAppService', '📝 书签已在收藏中，跳过:', bookmarkId)
         return true
       }
 
-      // ✅ 去重检查（如果未跳过且在浏览器环境中）
-      const isServiceWorker = typeof self !== 'undefined' && 'ServiceWorkerGlobalScope' in self
-      const isBrowserEnv =
-        !isServiceWorker && typeof window !== 'undefined' && typeof confirm === 'function'
+      const isServiceWorker = this.isServiceWorker()
+      const isBrowserEnv = this.isBrowserEnv(isServiceWorker)
 
       if (!skipDuplicationCheck && bookmark.url && isBrowserEnv) {
-        // 获取当前所有收藏书签
-        const favorites = await this.getFavorites()
-
-        // 检查是否有相同 URL
-        const duplicate = favorites.find(f => f.url === bookmark.url)
-
-        if (duplicate) {
-          // 弹出确认对话框
-          const confirmed = confirm(
-            `收藏夹中已存在相同书签：\n📌 ${duplicate.title}\n\n是否仍要添加？`
-          )
-
-          if (!confirmed) {
-            logger.info('FavoriteAppService', '用户取消添加重复书签')
-            return false
-          }
-
-          logger.info('FavoriteAppService', '用户确认添加重复书签')
+        const confirmed = await this.checkDuplicateAndConfirm(bookmark)
+        if (!confirmed) {
+          logger.info('FavoriteAppService', '用户取消添加重复书签')
+          return false
         }
+        logger.info('FavoriteAppService', '用户确认添加重复书签')
       }
 
-      // 获取当前最大的 favoriteOrder
-      const favorites = await this.getFavorites()
-      const maxOrder = favorites.length > 0 ? Math.max(...favorites.map(f => f.favoriteOrder)) : 0
-
-      const favoriteOrder = maxOrder + 1
-      const favoritedAt = Date.now()
-
-      // 更新书签数据到 IndexedDB
-      const updatedBookmark: BookmarkRecord = {
-        ...bookmark,
-        isFavorite: true,
-        favoriteOrder,
-        favoritedAt
-      }
+      const { favoriteOrder, favoritedAt } = await this.calculateFavoriteOrder()
+      const updatedBookmark = this.createFavoriteBookmark(bookmark, favoriteOrder, favoritedAt)
 
       await indexedDBManager.updateBookmark(updatedBookmark)
+      await this.syncFavoriteToStorage(bookmarkId)
+      await this.updateBookmarkStore(bookmarkId, favoriteOrder, favoritedAt, isServiceWorker)
 
-      // ✅ 同步更新 chrome.storage.local 中的收藏列表
-      const currentIds = await this.getFavoriteIdsFromStorage()
-      if (!currentIds.includes(bookmarkId)) {
-        currentIds.push(bookmarkId)
-        await this.saveFavoriteIdsToStorage(currentIds)
-      }
-
-      // ✅ 同步更新 bookmarkStore（确保 UI 立即响应）
-      // ⚠️ 只在浏览器环境中更新，Service Worker 中跳过
-      if (!isServiceWorker && typeof window !== 'undefined' && typeof document !== 'undefined') {
-        try {
-          const { useBookmarkStore } = await import('@/stores/bookmarkStore')
-          const bookmarkStore = useBookmarkStore()
-          bookmarkStore.updateNode(bookmarkId, {
-            isFavorite: true,
-            favoriteOrder,
-            favoritedAt
-          })
-        } catch (error) {
-          logger.warn('FavoriteAppService', '更新 bookmarkStore 失败（非致命错误）', error)
-        }
-      }
-
-      // 广播到其他页面（跨页面同步）
       this.broadcastFavoriteChange('added', bookmarkId)
-
       logger.info('FavoriteAppService', '✅ 添加收藏成功:', bookmarkId)
       return true
     } catch (error) {
       logger.error('Component', 'FavoriteAppService', '❌ 添加收藏失败:', error)
       return false
+    }
+  }
+
+  /**
+   * 判断是否为 Service Worker 环境
+   */
+  private isServiceWorker(): boolean {
+    return typeof self !== 'undefined' && 'ServiceWorkerGlobalScope' in self
+  }
+
+  /**
+   * 判断是否为浏览器环境
+   */
+  private isBrowserEnv(isServiceWorker: boolean): boolean {
+    return !isServiceWorker && typeof window !== 'undefined' && typeof confirm === 'function'
+  }
+
+  /**
+   * 检查重复并确认
+   */
+  private async checkDuplicateAndConfirm(bookmark: BookmarkRecord): Promise<boolean> {
+    const favorites = await this.getFavorites()
+    const duplicate = favorites.find(f => f.url === bookmark.url)
+
+    if (duplicate) {
+      const confirmed = confirm(`收藏夹中已存在相同书签：\n📌 ${duplicate.title}\n\n是否仍要添加？`)
+      return confirmed
+    }
+    return true
+  }
+
+  /**
+   * 计算 favoriteOrder
+   */
+  private async calculateFavoriteOrder(): Promise<{ favoriteOrder: number; favoritedAt: number }> {
+    const favorites = await this.getFavorites()
+    const maxOrder = favorites.length > 0 ? Math.max(...favorites.map(f => f.favoriteOrder)) : 0
+    return {
+      favoriteOrder: maxOrder + 1,
+      favoritedAt: Date.now()
+    }
+  }
+
+  /**
+   * 创建收藏书签
+   */
+  private createFavoriteBookmark(
+    bookmark: BookmarkRecord,
+    favoriteOrder: number,
+    favoritedAt: number
+  ): BookmarkRecord {
+    return {
+      ...bookmark,
+      isFavorite: true,
+      favoriteOrder,
+      favoritedAt
+    }
+  }
+
+  /**
+   * 同步收藏到存储
+   */
+  private async syncFavoriteToStorage(bookmarkId: string): Promise<void> {
+    const currentIds = await this.getFavoriteIdsFromStorage()
+    if (!currentIds.includes(bookmarkId)) {
+      currentIds.push(bookmarkId)
+      await this.saveFavoriteIdsToStorage(currentIds)
+    }
+  }
+
+  /**
+   * 更新 bookmarkStore
+   */
+  private async updateBookmarkStore(
+    bookmarkId: string,
+    favoriteOrder: number,
+    favoritedAt: number,
+    isServiceWorker: boolean
+  ): Promise<void> {
+    if (!isServiceWorker && typeof window !== 'undefined' && typeof document !== 'undefined') {
+      try {
+        const { useBookmarkStore } = await import('@/stores/bookmarkStore')
+        const bookmarkStore = useBookmarkStore()
+        bookmarkStore.updateNode(bookmarkId, {
+          isFavorite: true,
+          favoriteOrder,
+          favoritedAt
+        })
+      } catch (error) {
+        logger.warn('FavoriteAppService', '更新 bookmarkStore 失败（非致命错误）', error)
+      }
     }
   }
 

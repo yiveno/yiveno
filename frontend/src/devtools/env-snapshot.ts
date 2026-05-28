@@ -155,24 +155,8 @@ export async function importExtensionEnvironment(
 ): Promise<SnapshotImportResult> {
   const indexedDBResult = await indexedDBManager.importAllStores(snapshot?.indexedDB ?? {})
 
-  await storageClear('local')
-  const localData = snapshot?.chromeStorage?.local ?? {}
-  const localKeys = Object.keys(localData).length
-  await storageSet('local', localData)
-
-  let sessionKeys = 0
-  const sessionData = snapshot?.chromeStorage?.session ?? {}
-  if (chrome.storage?.session) {
-    await storageClear('session')
-    sessionKeys = Object.keys(sessionData).length
-    await storageSet('session', sessionData)
-  } else if (sessionData && Object.keys(sessionData).length > 0) {
-    sessionKeys = Object.keys(sessionData).length
-    const fallback = Object.fromEntries(
-      Object.entries(sessionData).map(([key, value]) => [`${SESSION_FALLBACK_PREFIX}${key}`, value])
-    )
-    await storageSet('local', fallback)
-  }
+  const localKeys = await importLocalStorage(snapshot)
+  const sessionKeys = await importSessionStorage(snapshot)
 
   return {
     ...indexedDBResult,
@@ -180,6 +164,38 @@ export async function importExtensionEnvironment(
     storageSessionKeys: sessionKeys,
     schemaVersion: snapshot?.metadata?.schemaVersion ?? DB_CONFIG.VERSION
   }
+}
+
+/**
+ * 导入本地存储数据
+ */
+async function importLocalStorage(snapshot: ExtensionEnvSnapshot): Promise<number> {
+  await storageClear('local')
+  const localData = snapshot?.chromeStorage?.local ?? {}
+  const localKeys = Object.keys(localData).length
+  await storageSet('local', localData)
+  return localKeys
+}
+
+/**
+ * 导入会话存储数据
+ */
+async function importSessionStorage(snapshot: ExtensionEnvSnapshot): Promise<number> {
+  const sessionData = snapshot?.chromeStorage?.session ?? {}
+  if (chrome.storage?.session) {
+    await storageClear('session')
+    const sessionKeys = Object.keys(sessionData).length
+    await storageSet('session', sessionData)
+    return sessionKeys
+  } else if (sessionData && Object.keys(sessionData).length > 0) {
+    const sessionKeys = Object.keys(sessionData).length
+    const fallback = Object.fromEntries(
+      Object.entries(sessionData).map(([key, value]) => [`${SESSION_FALLBACK_PREFIX}${key}`, value])
+    )
+    await storageSet('local', fallback)
+    return sessionKeys
+  }
+  return 0
 }
 
 /**

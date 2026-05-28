@@ -213,37 +213,63 @@ class PerformanceMonitor {
   getPerformanceScore(): number {
     let score = 100
 
-    // FCP 评分（< 1.8s 为优秀）
-    if (this.metrics.fcp) {
-      if (this.metrics.fcp > 3000) score -= 20
-      else if (this.metrics.fcp > 1800) score -= 10
-    }
-
-    // LCP 评分（< 2.5s 为优秀）
-    if (this.metrics.lcp) {
-      if (this.metrics.lcp > 4000) score -= 20
-      else if (this.metrics.lcp > 2500) score -= 10
-    }
-
-    // FID 评分（< 100ms 为优秀）
-    if (this.metrics.fid) {
-      if (this.metrics.fid > 300) score -= 20
-      else if (this.metrics.fid > 100) score -= 10
-    }
-
-    // CLS 评分（< 0.1 为优秀）
-    if (this.metrics.cls) {
-      if (this.metrics.cls > 0.25) score -= 20
-      else if (this.metrics.cls > 0.1) score -= 10
-    }
-
-    // 内存使用评分（< 50MB 为优秀）
-    if (this.metrics.memoryUsage) {
-      if (this.metrics.memoryUsage > 100) score -= 20
-      else if (this.metrics.memoryUsage > 50) score -= 10
-    }
+    score -= this.calculateFCPScore()
+    score -= this.calculateLCPScore()
+    score -= this.calculateFIDScore()
+    score -= this.calculateCLSScore()
+    score -= this.calculateMemoryScore()
 
     return Math.max(0, score)
+  }
+
+  /**
+   * 计算 FCP 评分
+   */
+  private calculateFCPScore(): number {
+    if (!this.metrics.fcp) return 0
+    if (this.metrics.fcp > 3000) return 20
+    if (this.metrics.fcp > 1800) return 10
+    return 0
+  }
+
+  /**
+   * 计算 LCP 评分
+   */
+  private calculateLCPScore(): number {
+    if (!this.metrics.lcp) return 0
+    if (this.metrics.lcp > 4000) return 20
+    if (this.metrics.lcp > 2500) return 10
+    return 0
+  }
+
+  /**
+   * 计算 FID 评分
+   */
+  private calculateFIDScore(): number {
+    if (!this.metrics.fid) return 0
+    if (this.metrics.fid > 300) return 20
+    if (this.metrics.fid > 100) return 10
+    return 0
+  }
+
+  /**
+   * 计算 CLS 评分
+   */
+  private calculateCLSScore(): number {
+    if (!this.metrics.cls) return 0
+    if (this.metrics.cls > 0.25) return 20
+    if (this.metrics.cls > 0.1) return 10
+    return 0
+  }
+
+  /**
+   * 计算内存使用评分
+   */
+  private calculateMemoryScore(): number {
+    if (!this.metrics.memoryUsage) return 0
+    if (this.metrics.memoryUsage > 100) return 20
+    if (this.metrics.memoryUsage > 50) return 10
+    return 0
   }
 
   /**

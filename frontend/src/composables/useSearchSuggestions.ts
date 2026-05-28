@@ -52,52 +52,49 @@ export function useSearchSuggestions() {
       // 生成建议
       const suggestionMap = new Map<string, SearchSuggestion>()
 
+      // 辅助函数：添加建议到 map
+      const addSuggestion = (
+        key: string,
+        text: string,
+        type: 'title' | 'url' | 'tag',
+        bookmark: BookmarkRecord
+      ) => {
+        if (!suggestionMap.has(key)) {
+          suggestionMap.set(key, {
+            text,
+            type,
+            bookmark,
+            score: calculateScore(text, trimmedQuery, type)
+          })
+        }
+      }
+
+      // 辅助函数：处理标签匹配
+      const processTags = (bookmark: BookmarkRecord) => {
+        if (!bookmark.tags || !Array.isArray(bookmark.tags)) return
+        for (const tag of bookmark.tags) {
+          if (tag.toLowerCase().includes(trimmedQuery)) {
+            addSuggestion(`tag:${tag}`, tag, 'tag', bookmark)
+          }
+        }
+      }
+
       for (const bookmark of allBookmarks) {
         // 跳过文件夹
         if (!bookmark.url) continue
 
         // 标题匹配
         if (bookmark.title && bookmark.title.toLowerCase().includes(trimmedQuery)) {
-          const key = `title:${bookmark.title}`
-          if (!suggestionMap.has(key)) {
-            suggestionMap.set(key, {
-              text: bookmark.title,
-              type: 'title',
-              bookmark,
-              score: calculateScore(bookmark.title, trimmedQuery, 'title')
-            })
-          }
+          addSuggestion(`title:${bookmark.title}`, bookmark.title, 'title', bookmark)
         }
 
         // URL 匹配
         if (bookmark.url && bookmark.url.toLowerCase().includes(trimmedQuery)) {
-          const key = `url:${bookmark.url}`
-          if (!suggestionMap.has(key)) {
-            suggestionMap.set(key, {
-              text: bookmark.url,
-              type: 'url',
-              bookmark,
-              score: calculateScore(bookmark.url, trimmedQuery, 'url')
-            })
-          }
+          addSuggestion(`url:${bookmark.url}`, bookmark.url, 'url', bookmark)
         }
 
-        // 标签匹配（如果有 tags 字段）
-        if (bookmark.tags && Array.isArray(bookmark.tags)) {
-          for (const tag of bookmark.tags) {
-            if (tag.toLowerCase().includes(trimmedQuery)) {
-              const key = `tag:${tag}`
-              if (!suggestionMap.has(key)) {
-                suggestionMap.set(key, {
-                  text: tag,
-                  type: 'tag',
-                  bookmark,
-                  score: calculateScore(tag, trimmedQuery, 'tag')
-                })
-              }
-            }
-          }
-        }
+        // 标签匹配
+        processTags(bookmark)
       }
 
       // 转换为数组并排序

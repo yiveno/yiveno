@@ -34,63 +34,129 @@ function convertChromeNodeToRecord(
   pathNames: string[] = [],
   flatIndex: number = 0
 ): BookmarkRecord {
-  const isFolder = !node.url
   const dateAdded = node.dateAdded ?? Date.now()
   const createdDate = new Date(dateAdded)
 
   return {
-    // Chrome原生字段
+    ...buildChromeFields(node, dateAdded),
+    ...buildPathFields(node, pathIds, pathNames),
+    ...buildFilterFields(node),
+    ...buildTypeFields(node),
+    ...buildMetadataFields(node),
+    ...buildTimeFields(createdDate),
+    ...buildVirtualFields(node, flatIndex),
+    ...buildVersionFields()
+  } as BookmarkRecord
+}
+
+/**
+ * 构建 Chrome 原生字段
+ */
+function buildChromeFields(
+  node: chrome.bookmarks.BookmarkTreeNode,
+  dateAdded: number
+): Partial<BookmarkRecord> {
+  return {
     id: node.id,
     parentId: node.parentId || '0',
     index: node.index ?? 0,
     title: node.title || '',
     url: node.url,
     dateAdded,
-    dateGroupModified: dateAdded,
+    dateGroupModified: dateAdded
+  }
+}
 
-    // 层级关系
-    path: [...pathNames, node.title || ''],
-    pathString: [...pathNames, node.title || ''].join(' / '),
-    pathIds: [...pathIds, node.id],
-    pathIdsString: [...pathIds, node.id].join(' / '),
+/**
+ * 构建路径字段
+ */
+function buildPathFields(
+  node: chrome.bookmarks.BookmarkTreeNode,
+  pathIds: string[],
+  pathNames: string[]
+): Partial<BookmarkRecord> {
+  const newPathIds = [...pathIds, node.id]
+  const newPathNames = [...pathNames, node.title || '']
+  return {
+    path: newPathNames,
+    pathString: newPathNames.join(' / '),
+    pathIds: newPathIds,
+    pathIdsString: newPathIds.join(' / '),
     ancestorIds: pathIds,
     siblingIds: [],
-    depth: pathIds.length,
+    depth: pathIds.length
+  }
+}
 
-    // 筛选优化字段
+/**
+ * 构建筛选字段
+ */
+function buildFilterFields(node: chrome.bookmarks.BookmarkTreeNode): Partial<BookmarkRecord> {
+  return {
     titleLower: (node.title || '').toLowerCase(),
     urlLower: node.url?.toLowerCase(),
     domain: extractDomain(node.url || ''),
-    keywords: [],
+    keywords: []
+  }
+}
 
-    // 类型和统计字段
-    isFolder,
-    childrenCount: node.children?.length ?? 0,
+/**
+ * 构建类型字段
+ */
+function buildTypeFields(node: chrome.bookmarks.BookmarkTreeNode): Partial<BookmarkRecord> {
+  return {
+    isFolder: !node.url,
+    childrenCount: node.children?.length ?? 0
+  }
+}
 
-    // 扩展属性（初始为空，由特征检测服务填充）
+/**
+ * 构建元数据字段
+ */
+function buildMetadataFields(node: chrome.bookmarks.BookmarkTreeNode): Partial<BookmarkRecord> {
+  return {
     tags: [],
     traitTags: [],
     traitMetadata: [],
     lastVisited: (node as chrome.bookmarks.BookmarkTreeNode & { dateLastUsed?: number })
       .dateLastUsed,
     visitCount: 0,
+    hasMetadata: false,
+    metadataUpdatedAt: 0
+  }
+}
 
-    // 时间分类
+/**
+ * 构建时间字段
+ */
+function buildTimeFields(createdDate: Date): Partial<BookmarkRecord> {
+  return {
     createdYear: createdDate.getFullYear(),
     createdMonth: createdDate.getMonth() + 1,
+    lastCalculated: Date.now()
+  }
+}
 
-    // 元数据标记
-    hasMetadata: false,
-    metadataUpdatedAt: 0,
-
-    // 虚拟化支持
+/**
+ * 构建虚拟化字段
+ */
+function buildVirtualFields(
+  node: chrome.bookmarks.BookmarkTreeNode,
+  flatIndex: number
+): Partial<BookmarkRecord> {
+  return {
     flatIndex,
     isVisible: true,
-    sortKey: `${node.index ?? 0}`.padStart(10, '0'),
+    sortKey: `${node.index ?? 0}`.padStart(10, '0')
+  }
+}
 
-    // 数据版本
-    dataVersion: 1,
-    lastCalculated: Date.now()
+/**
+ * 构建版本字段
+ */
+function buildVersionFields(): Partial<BookmarkRecord> {
+  return {
+    dataVersion: 1
   }
 }
 
@@ -151,26 +217,60 @@ function flattenBookmarkTree(
     path: PathInfo
   }> = []
 
-  // 先计算总节点数（用于进度反馈）
-  let totalNodes = 0
-  if (onProgress) {
-    const countStack = [...nodes]
-    while (countStack.length > 0) {
-      const node = countStack.pop()!
-      totalNodes++
-      if (node.children && node.children.length > 0) {
-        countStack.push(...node.children)
-      }
-    }
+  const totalNodes = onProgress ? countTotalNodes(nodes) : 0
+  const initialPath = createPathInfo(pathIds, pathNames)
+
+  initializeStack(nodes, initialPath, stack)
+
+  processStack(stack, records, flatIndex, onProgress, totalNodes)
+
+  if (onProgress && totalNodes > 0) {
+    onProgress(totalNodes, totalNodes)
   }
 
-  const initialPath = createPathInfo(pathIds, pathNames)
+  return records
+}
+
+/**
+ * 计算总节点数
+ */
+function countTotalNodes(nodes: chrome.bookmarks.BookmarkTreeNode[]): number {
+  let totalNodes = 0
+  const countStack = [...nodes]
+  while (countStack.length > 0) {
+    const node = countStack.pop()!
+    totalNodes++
+    if (node.children && node.children.length > 0) {
+      countStack.push(...node.children)
+    }
+  }
+  return totalNodes
+}
+
+/**
+ * 初始化栈
+ */
+function initializeStack(
+  nodes: chrome.bookmarks.BookmarkTreeNode[],
+  initialPath: PathInfo,
+  stack: Array<{ node: chrome.bookmarks.BookmarkTreeNode; path: PathInfo }>
+): void {
   for (let index = nodes.length - 1; index >= 0; index -= 1) {
     const node = nodes[index]!
     stack.push({ node, path: initialPath })
   }
+}
 
-  // 进度报告间隔：每 100 个节点报告一次
+/**
+ * 处理栈
+ */
+function processStack(
+  stack: Array<{ node: chrome.bookmarks.BookmarkTreeNode; path: PathInfo }>,
+  records: BookmarkRecord[],
+  flatIndex: { current: number },
+  onProgress?: (current: number, total: number) => void,
+  totalNodes = 0
+): number {
   const PROGRESS_INTERVAL = 100
   let processedCount = 0
 
@@ -179,7 +279,6 @@ function flattenBookmarkTree(
     const record = convertChromeNodeToRecord(node, path.ids, path.names, flatIndex.current++)
     records.push(record)
 
-    // 报告进度
     processedCount++
     if (onProgress && totalNodes > 0 && processedCount % PROGRESS_INTERVAL === 0) {
       onProgress(processedCount, totalNodes)
@@ -196,12 +295,7 @@ function flattenBookmarkTree(
     }
   }
 
-  // 最后报告一次进度（确保 100%）
-  if (onProgress && totalNodes > 0) {
-    onProgress(totalNodes, totalNodes)
-  }
-
-  return records
+  return processedCount
 }
 
 /**
@@ -785,6 +879,151 @@ export class BookmarkSyncService {
   }
 
   /**
+   * 获取父节点路径信息
+   */
+  private async getParentPath(nodeId: string): Promise<{ pathIds: string[]; pathNames: string[] }> {
+    const pathIds: string[] = []
+    const pathNames: string[] = []
+    let currentId = nodeId
+    const parentPath: Array<{ id: string; title: string }> = []
+
+    while (currentId && currentId !== '0') {
+      const parents = await chrome.bookmarks.get(currentId)
+      if (parents && parents.length > 0) {
+        const parent = parents[0]!
+        parentPath.unshift({ id: parent.id, title: parent.title || '' })
+        currentId = parent.parentId || '0'
+      } else {
+        break
+      }
+    }
+
+    pathIds.push(...parentPath.map(p => p.id))
+    pathNames.push(...parentPath.map(p => p.title))
+    return { pathIds, pathNames }
+  }
+
+  /**
+   * 处理 moved 事件
+   */
+  private async handleMovedEvent(evtId: string): Promise<BookmarkRecord[]> {
+    const subTree = await chrome.bookmarks.getSubTree(evtId)
+    if (!subTree || subTree.length === 0) return []
+
+    const node = subTree[0]
+    if (!node) return []
+    if (!node.parentId || node.parentId === '0') {
+      return flattenBookmarkTree([node])
+    }
+
+    const { pathIds, pathNames } = await this.getParentPath(node.parentId)
+    return flattenBookmarkTree([node], pathIds, pathNames)
+  }
+
+  /**
+   * 处理其他事件（created, changed）
+   */
+  private async handleOtherEvent(evtId: string): Promise<BookmarkRecord[]> {
+    const nodes = await chrome.bookmarks.get(evtId)
+    if (!nodes || nodes.length === 0) return []
+    return flattenBookmarkTree(nodes)
+  }
+
+  /**
+   * 重新检测并更新重复书签
+   */
+  private async refreshDuplicateBookmarks(affectedUrls: Set<string>): Promise<void> {
+    try {
+      logger.debug('BookmarkSync', ' 🔍 重新检测重复书签...')
+      const allBookmarks = await indexedDBManager.getAllBookmarks()
+      const markedAll = markDuplicateBookmarks(allBookmarks)
+
+      const toUpdate = markedAll.filter(r => r.url && affectedUrls.has(r.url))
+      if (toUpdate.length > 0) {
+        await indexedDBManager.insertBookmarks(toUpdate)
+        logger.debug('BookmarkSync', ` ✅ 已更新 ${toUpdate.length} 个书签的重复状态`)
+      }
+    } catch (error) {
+      logger.error('BookmarkSync', ' 重新检测重复书签失败:', error)
+    }
+  }
+
+  /**
+   * 处理事件队列
+   */
+  private async processQueue(
+    queue: Array<{ type: 'created' | 'removed' | 'changed' | 'moved'; id: string }>
+  ): Promise<{ toUpsert: BookmarkRecord[]; toDelete: string[] }> {
+    const toUpsert: BookmarkRecord[] = []
+    const toDelete: string[] = []
+
+    for (const evt of queue) {
+      if (evt.type === 'removed') {
+        toDelete.push(evt.id)
+        continue
+      }
+
+      try {
+        if (evt.type === 'moved') {
+          const recs = await this.handleMovedEvent(evt.id)
+          toUpsert.push(...recs)
+        } else {
+          const recs = await this.handleOtherEvent(evt.id)
+          toUpsert.push(...recs)
+        }
+      } catch (error) {
+        logger.warn('BookmarkSync', `⚠️ 增量同步处理节点 ${evt.id} 失败`, error)
+      }
+    }
+
+    return { toUpsert, toDelete }
+  }
+
+  /**
+   * 保存书签更新
+   */
+  private async saveBookmarkUpdates(toUpsert: BookmarkRecord[]): Promise<void> {
+    if (toUpsert.length === 0) return
+
+    const affectedUrls = new Set(
+      toUpsert.map(r => r.url).filter((url): url is string => Boolean(url))
+    )
+
+    if (affectedUrls.size > 0) {
+      await indexedDBManager.insertBookmarks(toUpsert)
+      await this.refreshDuplicateBookmarks(affectedUrls)
+    } else {
+      await indexedDBManager.insertBookmarks(toUpsert)
+    }
+
+    scheduleTraitRebuildForIds(
+      Array.from(new Set(toUpsert.map(record => record.id))),
+      'incremental-sync'
+    )
+  }
+
+  /**
+   * 更新同步时间和广播消息
+   */
+  private async finalizeSync(): Promise<void> {
+    this.lastSyncTime = Date.now()
+    try {
+      await chrome.storage.local.set({ AB_LAST_SYNCED_AT: this.lastSyncTime })
+    } catch {}
+    try {
+      chrome.runtime
+        .sendMessage({
+          type: 'acuity-bookmarks-db-synced',
+          eventType: 'incremental',
+          timestamp: Date.now()
+        })
+        .catch(() => {
+          logger.warn('BookmarkSync', '❌ 广播 acuity-bookmarks-db-synced 消息失败')
+        })
+    } catch {}
+  }
+
+  /**
    * 增量同步：仅根据事件队列对少量节点做插入/更新/删除
    * 为了安全与简洁：当前实现使用 Chrome API 查该节点，再转换为记录并写入；删除直接按 id 删除。
    */
@@ -801,129 +1040,14 @@ export class BookmarkSyncService {
       await indexedDBManager.initialize()
 
       const queue = this.incrementalQueue.splice(0, this.incrementalQueue.length)
-      const toUpsert: BookmarkRecord[] = []
-      const toDelete: string[] = []
-
-      for (const evt of queue) {
-        if (evt.type === 'removed') {
-          toDelete.push(evt.id)
-          continue
-        }
-
-        // ✅ 优化：对于 moved 事件，需要获取完整的父级路径信息
-        // 使用 getSubTree 而不是 get，以便正确计算 pathIds
-        try {
-          if (evt.type === 'moved') {
-            // 1. 获取节点的完整子树（包含层级信息）
-            const subTree = await chrome.bookmarks.getSubTree(evt.id)
-            if (subTree && subTree.length > 0) {
-              const node = subTree[0]
-
-              // 2. 获取父节点路径信息
-              let pathIds: string[] = []
-              let pathNames: string[] = []
-
-              if (node?.parentId && node.parentId !== '0') {
-                // 递归获取父级路径
-                let currentId = node.parentId
-                const parentPath: Array<{ id: string; title: string }> = []
-
-                while (currentId && currentId !== '0') {
-                  const parents = await chrome.bookmarks.get(currentId)
-                  if (parents && parents.length > 0) {
-                    const parent = parents[0]!
-                    parentPath.unshift({ id: parent.id, title: parent.title || '' })
-                    currentId = parent.parentId || '0'
-                  } else {
-                    break
-                  }
-                }
-
-                pathIds = parentPath.map(p => p.id)
-                pathNames = parentPath.map(p => p.title)
-              }
-
-              // 3. 转换节点（带正确的路径信息）
-              const recs = node ? flattenBookmarkTree([node], pathIds, pathNames) : []
-              toUpsert.push(...recs)
-            }
-          } else {
-            // 其他事件（created, changed）：使用简单的 get
-            const nodes = await chrome.bookmarks.get(evt.id)
-            if (nodes && nodes.length > 0) {
-              const recs = flattenBookmarkTree(nodes)
-              toUpsert.push(...recs)
-            }
-          }
-        } catch (error) {
-          logger.warn('BookmarkSync', `⚠️ 增量同步处理节点 ${evt.id} 失败`, error)
-          // 继续处理其他节点
-        }
-      }
+      const { toUpsert, toDelete } = await this.processQueue(queue)
 
       if (toDelete.length > 0) {
         await indexedDBManager.deleteBookmarksBatch(toDelete)
       }
 
-      if (toUpsert.length > 0) {
-        // ✅ 关键修复：增量更新时重新检测重复书签
-        // 收集本次更新涉及的所有 URL
-        const affectedUrls = new Set(toUpsert.map(r => r.url).filter(Boolean))
-
-        if (affectedUrls.size > 0) {
-          // 策略：先插入当前批次，然后异步重新检测所有相关 URL 的书签
-          // 这样可以保证增量同步的性能，同时确保最终一致性
-
-          // 1. 先插入当前批次（可能标记不准确）
-          await indexedDBManager.insertBookmarks(toUpsert)
-
-          // 2. 同步重新检测：加载所有书签，找到相同 URL 的，重新标记
-          // 改为同步执行以避免重复书签出现在搜索结果中
-          try {
-            logger.debug('BookmarkSync', ' 🔍 重新检测重复书签...')
-            const allBookmarks = await indexedDBManager.getAllBookmarks()
-            const markedAll = markDuplicateBookmarks(allBookmarks)
-
-            // 只更新受影响 URL 的书签
-            const toUpdate = markedAll.filter(r => affectedUrls.has(r.url))
-            if (toUpdate.length > 0) {
-              await indexedDBManager.insertBookmarks(toUpdate)
-              logger.debug('BookmarkSync', ` ✅ 已更新 ${toUpdate.length} 个书签的重复状态`)
-            }
-          } catch (error) {
-            logger.error('BookmarkSync', ' 重新检测重复书签失败:', error)
-          }
-
-          scheduleTraitRebuildForIds(
-            Array.from(new Set(toUpsert.map(record => record.id))),
-            'incremental-sync'
-          )
-        } else {
-          // 没有 URL 更新（例如文件夹），直接插入
-          await indexedDBManager.insertBookmarks(toUpsert)
-
-          scheduleTraitRebuildForIds(
-            Array.from(new Set(toUpsert.map(record => record.id))),
-            'incremental-sync'
-          )
-        }
-      }
-
-      this.lastSyncTime = Date.now()
-      try {
-        await chrome.storage.local.set({ AB_LAST_SYNCED_AT: this.lastSyncTime })
-      } catch {}
-      try {
-        chrome.runtime
-          .sendMessage({
-            type: 'acuity-bookmarks-db-synced',
-            eventType: 'incremental',
-            timestamp: Date.now()
-          })
-          .catch(() => {
-            logger.warn('BookmarkSync', '❌ 广播 acuity-bookmarks-db-synced 消息失败')
-          })
-      } catch {}
+      await this.saveBookmarkUpdates(toUpsert)
+      await this.finalizeSync()
 
       // ✅ 通知等待的 Promise
       if (this.pendingIncrementalPromise) {
