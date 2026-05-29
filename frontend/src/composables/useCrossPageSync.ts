@@ -38,10 +38,21 @@ interface CrossPageMessage {
  * initCrossPageSync()
  * ```
  */
+let crossPageListener:
+  | ((changes: { [key: string]: chrome.storage.StorageChange }, areaName: string) => void)
+  | null = null
+
 export function initCrossPageSync(): () => void {
   const bookmarkStore = useBookmarkStore()
 
-  const handleStorageChange = (
+  // 幂等：先移除旧监听器
+  if (crossPageListener && typeof chrome !== 'undefined' && chrome.storage?.onChanged) {
+    chrome.storage.onChanged.removeListener(crossPageListener)
+    crossPageListener = null
+    logger.debug('CrossPageSync', '🔁 移除旧 storage 监听器（防止重复注册）')
+  }
+
+  crossPageListener = (
     changes: { [key: string]: chrome.storage.StorageChange },
     areaName: string
   ) => {
@@ -65,21 +76,19 @@ export function initCrossPageSync(): () => void {
         bookmarkStore.updateNode(bookmarkId, { isFavorite: false })
       }
     }
-
-    // 可扩展：处理其他跨页面事件
-    // if (changes.__otherEvent) { ... }
   }
 
   // 注册监听器
   if (typeof chrome !== 'undefined' && chrome.storage?.onChanged) {
-    chrome.storage.onChanged.addListener(handleStorageChange)
+    chrome.storage.onChanged.addListener(crossPageListener)
     logger.debug('CrossPageSync', '✅ 跨页面同步已初始化')
   }
 
   // 返回清理函数
   return () => {
-    if (typeof chrome !== 'undefined' && chrome.storage?.onChanged) {
-      chrome.storage.onChanged.removeListener(handleStorageChange)
+    if (crossPageListener && typeof chrome !== 'undefined' && chrome.storage?.onChanged) {
+      chrome.storage.onChanged.removeListener(crossPageListener)
+      crossPageListener = null
       logger.debug('CrossPageSync', '🔌 跨页面同步已卸载')
     }
   }

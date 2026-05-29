@@ -31,20 +31,36 @@ interface ChromeMessage {
  * initializeChromeMessageBridge()
  * ```
  */
+let bridgeListener:
+  | ((
+      message: ChromeMessage,
+      sender: chrome.runtime.MessageSender,
+      sendResponse: (response?: unknown) => void
+    ) => boolean | undefined)
+  | null = null
+
 export function initializeChromeMessageBridge() {
   if (typeof chrome === 'undefined' || !chrome.runtime) {
     logger.warn('ChromeMessageBridge', 'Chrome runtime 不可用，跳过消息桥接初始化')
     return
   }
 
+  // 幂等：先移除旧监听器，防止 Service Worker 重启后 double-register 导致崩溃
+  if (bridgeListener) {
+    chrome.runtime.onMessage.removeListener(bridgeListener)
+    bridgeListener = null
+    logger.debug('ChromeMessageBridge', '🔁 移除旧消息监听器（防止重复注册）')
+  }
+
   logger.info('ChromeMessageBridge', '🔗 初始化 Chrome 消息桥接')
 
-  chrome.runtime.onMessage.addListener((message: ChromeMessage, _sender, _sendResponse) => {
+  bridgeListener = (message: ChromeMessage, _sender, _sendResponse) => {
+    if (typeof chrome === 'undefined' || !chrome.runtime?.id) return false
     handleChromeMessage(message)
-
-    // Chrome 消息处理器要求返回 false（不需要异步响应）
     return false
-  })
+  }
+
+  chrome.runtime.onMessage.addListener(bridgeListener)
 
   logger.info('ChromeMessageBridge', '✅ Chrome 消息桥接已启动')
 }
@@ -138,5 +154,13 @@ export async function sendToBackground<T = unknown>(message: ChromeMessage): Pro
   } catch (error) {
     logger.error('ChromeMessageBridge', '发送消息失败', error)
     throw error
+  }
+}
+
+export function disposeChromeMessageBridge() {
+  if (bridgeListener && typeof chrome !== 'undefined' && chrome.runtime) {
+    chrome.runtime.onMessage.removeListener(bridgeListener)
+    bridgeListener = null
+    logger.debug('ChromeMessageBridge', '🔌 消息桥接已卸载')
   }
 }

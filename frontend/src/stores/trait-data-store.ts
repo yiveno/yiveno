@@ -197,6 +197,7 @@ export const useTraitDataStore = defineStore('traitData', () => {
    */
   function setupAutoRefreshListener(): void {
     chrome.runtime.onMessage.addListener(message => {
+      if (typeof chrome === 'undefined' || !chrome.runtime?.id) return
       if (message.type === 'acuity-bookmarks-trait-updated') {
         logger.info('TraitDataStore', '🏷️ 收到特征更新消息，自动刷新')
 

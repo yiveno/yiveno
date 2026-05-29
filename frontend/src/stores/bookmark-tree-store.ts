@@ -544,6 +544,9 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
 
       chrome.runtime.onMessage.addListener(
         (message: ChromeRuntimeBookmarkMessage, _sender, sendResponse) => {
+          // EXTENSION CONTEXT GUARD: SW 重启后不再处理消息
+          if (typeof chrome === 'undefined' || !chrome.runtime?.id) return
+
           // 处理旧的 bookmarks-changed 消息
           if (message.channel === 'bookmarks-changed') {
             handleBookmarkChange(message.data)

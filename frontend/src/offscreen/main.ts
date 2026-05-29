@@ -562,6 +562,7 @@ logger.info('OffscreenDocument', '🚀 Offscreen Document 已加载，开始监�
 console.log('🚀 [Offscreen] Offscreen Document 已加载')
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (typeof chrome === 'undefined' || !chrome.runtime?.id) return false
   logger.info('OffscreenDocument', '📨 收到消息', {
     hasOffscreenFlag: !!message?.__offscreenRequest__,
     type: message?.type,

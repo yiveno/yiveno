@@ -1188,7 +1188,7 @@ defineExpose({
           variant="outlined"
           clearable
           leading-icon="search"
-          leading-icon-size="20"
+          :leading-icon-size="20"
           @focus="handleFocus"
           @blur="handleBlur"
           @keydown.esc="handleEscape"
