@@ -4,7 +4,7 @@
  * 提供基础性能优化功能，避免复杂的类型问题
  */
 
-import { ref, computed, onMounted, onUnmounted, watch, shallowRef } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 
 /**
  * 防抖函数
@@ -51,22 +51,6 @@ export function useDebounce<T extends object>(value: T, delay: number) {
  * @param delay 节流的时间间隔，单位为毫秒
  * @returns 一个新的 `ref`，在节流策略下更新
  */
-export function useThrottle<T extends object>(value: T, delay: number) {
-  const throttledValue = ref(value)
-  let lastUpdate = 0
-
-  const updateValue = (newValue: T) => {
-    const now = Date.now()
-    if (now - lastUpdate >= delay) {
-      throttledValue.value = newValue
-      lastUpdate = now
-    }
-  }
-
-  watch(value, updateValue)
-
-  return throttledValue
-}
 
 /**
  * 虚拟滚动组合式函数
@@ -82,65 +66,6 @@ export function useThrottle<T extends object>(value: T, delay: number) {
  * @param options 虚拟滚动参数：条目高度、容器高度以及 overscan 数量
  * @returns 包含可视数据、滚动范围、容器引用等信息的对象
  */
-export function useVirtualScroll<T>(
-  items: T[],
-  options: {
-    itemHeight?: number
-    containerHeight?: number
-    overscan?: number
-  } = {}
-) {
-  const { itemHeight = 32, containerHeight = 400, overscan = 5 } = options
-
-  const scrollTop = ref(0)
-  const containerRef = ref<HTMLElement>()
-
-  const visibleRange = computed(() => {
-    const start = Math.floor(scrollTop.value / itemHeight)
-    const end = Math.min(start + Math.ceil(containerHeight / itemHeight) + overscan, items.length)
-    return {
-      start: Math.max(0, start - overscan),
-      end
-    }
-  })
-
-  const visibleItems = computed(() => {
-    const { start, end } = visibleRange.value
-    return items.slice(start, end).map((item, index) => ({
-      item,
-      index: start + index
-    }))
-  })
-
-  const totalHeight = computed(() => items.length * itemHeight)
-
-  const handleScroll = (event: Event) => {
-    const target = event.target as HTMLElement
-    scrollTop.value = target.scrollTop
-  }
-
-  onMounted(() => {
-    if (containerRef.value) {
-      containerRef.value.addEventListener('scroll', handleScroll, {
-        passive: true
-      })
-    }
-  })
-
-  onUnmounted(() => {
-    if (containerRef.value) {
-      containerRef.value.removeEventListener('scroll', handleScroll)
-    }
-  })
-
-  return {
-    containerRef,
-    visibleItems,
-    totalHeight,
-    scrollTop,
-    visibleRange
-  }
-}
 
 /**
  * 懒加载组合式函数
@@ -154,41 +79,6 @@ export function useVirtualScroll<T>(
  *
  * @returns 提供元素引用、加载状态、控制方法等
  */
-export function useLazyLoad() {
-  const isVisible = ref(false)
-  const isLoaded = ref(false)
-  const elementRef = ref<HTMLElement>()
-
-  const load = () => {
-    if (!isLoaded.value) {
-      isLoaded.value = true
-    }
-  }
-
-  onMounted(() => {
-    if (elementRef.value) {
-      const observer = new IntersectionObserver(
-        entries => {
-          for (const entry of entries) {
-            if (entry.isIntersecting) {
-              load()
-              observer.unobserve(entry.target)
-            }
-          }
-        },
-        { rootMargin: '50px', threshold: 0.1 }
-      )
-      observer.observe(elementRef.value)
-    }
-  })
-
-  return {
-    elementRef,
-    isVisible,
-    isLoaded,
-    load
-  }
-}
 
 /**
  * 性能监控组合式函数
@@ -317,23 +207,3 @@ export function useMemoryManagement() {
     cleanup
   }
 }
-
-/**
- * 响应式优化组合式函数
- */
-/**
- * 响应式优化辅助
- *
- * @description
- * 对传入的对象使用 `shallowRef` 包裹，减少深层响应式的性能开销，
- * 适用于仅关心顶层引用变化的场景。
- *
- * @param data 原始数据对象
- * @returns 以 `shallowRef` 包裹后的数据引用
- */
-export function useReactiveOptimization<T>(data: T) {
-  return shallowRef(data)
-}
-
-// 导入 nextTick
-import { nextTick } from 'vue'

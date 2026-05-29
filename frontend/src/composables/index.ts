@@ -52,15 +52,7 @@ export { useNotification } from './useNotification'
 // ============================================
 // 性能和同步
 // ============================================
-export {
-  useDebounce,
-  useThrottle,
-  useVirtualScroll,
-  useLazyLoad,
-  usePerformanceMonitor,
-  useMemoryManagement,
-  useReactiveOptimization
-} from './useSimplePerformance'
+export { useDebounce, usePerformanceMonitor, useMemoryManagement } from './useSimplePerformance'
 export { useCrossPageSync } from './useCrossPageSync'
 export { useGlobalSyncProgress } from './useGlobalSyncProgress'
 export { useThemeSync, applyColorPresetToDocument } from './useThemeSync'
