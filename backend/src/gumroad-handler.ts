@@ -333,7 +333,7 @@ export async function handleWebhook(request: Request, env: Env): Promise<Respons
     // 插入支付记录（仅对收费事件）
     await insertPaymentIfCharged(
       payload,
-      { userId, subscriptionId, status, notificationType },
+      { userId, subscriptionId, status: subscriptionRecord.status!, notificationType },
       env,
       supabase
     )
