@@ -5,51 +5,61 @@
 /**
  * LLM 提供者类型
  */
-export type LLMProvider = 'builtin' | 'openai' | 'claude' | 'gemini' | 'deepseek'
+export type LLMProvider =
+  | "builtin"
+  | "openai"
+  | "claude"
+  | "gemini"
+  | "deepseek";
 
 /**
  * LLM 能力检测结果
  */
 export interface LLMCapability {
   /** 是否可用 */
-  available: boolean
+  available: boolean;
   /** 提供者类型 */
-  provider: LLMProvider
+  provider: LLMProvider;
   /** 不可用时的原因 */
-  reason?: string
+  reason?: string;
   /** 功能特性 */
   features: {
     /** 是否支持文本补全 */
-    textCompletion: boolean
+    textCompletion: boolean;
     /** 是否支持向量嵌入 */
-    embedding: boolean
+    embedding: boolean;
     /** 最大 token 数 */
-    maxTokens: number
+    maxTokens: number;
     /** 是否支持流式输出 */
-    streaming: boolean
-  }
+    streaming: boolean;
+  };
 }
 
 /**
  * LLM 任务类型
  */
-export type LLMTaskType = 'categorize' | 'summarize' | 'embedding' | 'deep-analysis' | 'organize'
+export type LLMTaskType =
+  | "categorize"
+  | "summarize"
+  | "embedding"
+  | "deep-analysis"
+  | "organize";
 
 /**
  * LLM 任务复杂度
  */
-export type LLMTaskComplexity = 'simple' | 'complex'
+export type LLMTaskComplexity = "simple" | "complex";
 
 /**
  * LLM 任务描述
  */
 export interface LLMTask {
   /** 任务类型 */
-  type: LLMTaskType
+  type: LLMTaskType;
   /** 任务复杂度 */
-  complexity: LLMTaskComplexity
+  complexity: LLMTaskComplexity;
   /** 数据大小（字符数） */
-  dataSize: number
+  dataSize: number;
 }
 
 /**
@@ -57,11 +67,11 @@ export interface LLMTask {
  */
 export interface LLMCompleteOptions {
   /** 最大 token 数 */
-  maxTokens?: number
+  maxTokens?: number;
   /** 温度（0-1），控制随机性 */
-  temperature?: number
+  temperature?: number;
   /** 是否流式输出 */
-  streaming?: boolean
+  streaming?: boolean;
 }
 
 /**
@@ -69,11 +79,11 @@ export interface LLMCompleteOptions {
  */
 export interface LLMCompleteResult {
   /** 生成的文本 */
-  text: string
+  text: string;
   /** 使用的提供者 */
-  provider: LLMProvider
+  provider: LLMProvider;
   /** token 使用量（如果可用） */
-  tokensUsed?: number
+  tokensUsed?: number;
 }
 
 /**
@@ -81,11 +91,11 @@ export interface LLMCompleteResult {
  */
 export interface LLMEmbeddingResult {
   /** 向量数组 */
-  vector: number[]
+  vector: number[];
   /** 使用的提供者 */
-  provider: LLMProvider
+  provider: LLMProvider;
   /** 维度 */
-  dimensions: number
+  dimensions: number;
 }
 
 /**
@@ -96,15 +106,15 @@ export interface BuiltInLLMAPI {
    * 检查是否可以创建文本会话
    * @returns 'readily' | 'no-model' | 'no-session' | 'no'
    */
-  canCreateTextSession(): Promise<'readily' | 'no-model' | 'no-session' | 'no'>
+  canCreateTextSession(): Promise<"readily" | "no-model" | "no-session" | "no">;
   /**
    * 创建文本会话
    */
-  createTextSession(): Promise<BuiltInTextSession>
+  createTextSession(): Promise<BuiltInTextSession>;
   /**
    * Summarizer API（Chrome 138+）
    */
-  summarizer?: BuiltInSummarizerAPI
+  summarizer?: BuiltInSummarizerAPI;
 }
 
 /**
@@ -114,11 +124,11 @@ export interface BuiltInTextSession {
   /**
    * 发送提示并获取完整结果
    */
-  prompt(prompt: string): Promise<string>
+  prompt(prompt: string): Promise<string>;
   /**
    * 发送提示并获取流式结果
    */
-  promptStreaming(prompt: string): AsyncIterable<string>
+  promptStreaming(prompt: string): AsyncIterable<string>;
 }
 
 /**
@@ -128,11 +138,11 @@ export interface BuiltInSummarizerAPI {
   /**
    * 检查 Summarizer 能力
    */
-  capabilities(): Promise<SummarizerCapabilities>
+  capabilities(): Promise<SummarizerCapabilities>;
   /**
    * 创建 Summarizer 实例
    */
-  create(options?: SummarizerOptions): Promise<BuiltInSummarizer>
+  create(options?: SummarizerOptions): Promise<BuiltInSummarizer>;
 }
 
 /**
@@ -140,13 +150,13 @@ export interface BuiltInSummarizerAPI {
  */
 export interface SummarizerCapabilities {
   /** 是否可用 */
-  available: 'readily' | 'after-download' | 'no'
+  available: "readily" | "after-download" | "no";
   /** 默认类型 */
-  defaultType?: SummarizerType
+  defaultType?: SummarizerType;
   /** 默认格式 */
-  defaultFormat?: SummarizerFormat
+  defaultFormat?: SummarizerFormat;
   /** 默认长度 */
-  defaultLength?: SummarizerLength
+  defaultLength?: SummarizerLength;
 }
 
 /**
@@ -154,38 +164,38 @@ export interface SummarizerCapabilities {
  */
 export interface SummarizerOptions {
   /** 摘要类型 */
-  type?: SummarizerType
+  type?: SummarizerType;
   /** 输出格式 */
-  format?: SummarizerFormat
+  format?: SummarizerFormat;
   /** 摘要长度 */
-  length?: SummarizerLength
+  length?: SummarizerLength;
   /** 上下文（可选） */
-  context?: string
+  context?: string;
 }
 
 /**
  * Summarizer 类型
  */
 export type SummarizerType =
-  | 'tl;dr' // 简短摘要（默认）
-  | 'key-points' // 关键点提取
-  | 'teaser' // 预览式摘要
-  | 'headline' // 标题式摘要
+  | "tl;dr" // 简短摘要（默认）
+  | "key-points" // 关键点提取
+  | "teaser" // 预览式摘要
+  | "headline"; // 标题式摘要
 
 /**
  * Summarizer 输出格式
  */
 export type SummarizerFormat =
-  | 'plain-text' // 纯文本（默认）
-  | 'markdown' // Markdown 格式
+  | "plain-text" // 纯文本（默认）
+  | "markdown"; // Markdown 格式
 
 /**
  * Summarizer 长度
  */
 export type SummarizerLength =
-  | 'short' // 短（默认）
-  | 'medium' // 中
-  | 'long' // 长
+  | "short" // 短（默认）
+  | "medium" // 中
+  | "long"; // 长
 
 /**
  * Chrome 内置 Summarizer 实例
@@ -194,15 +204,15 @@ export interface BuiltInSummarizer {
   /**
    * 生成摘要
    */
-  summarize(text: string): Promise<string>
+  summarize(text: string): Promise<string>;
   /**
    * 流式生成摘要
    */
-  summarizeStreaming(text: string): AsyncIterable<string>
+  summarizeStreaming(text: string): AsyncIterable<string>;
   /**
    * 销毁实例
    */
-  destroy(): void
+  destroy(): void;
 }
 
 /**
@@ -210,6 +220,6 @@ export interface BuiltInSummarizer {
  */
 declare global {
   interface Window {
-    ai?: BuiltInLLMAPI
+    ai?: BuiltInLLMAPI;
   }
 }

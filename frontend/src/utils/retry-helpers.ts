@@ -4,22 +4,22 @@
  * 提供统一的错误处理和重试机制
  */
 
-import { logger } from '@/infrastructure/logging/logger'
+import { logger } from "@/infrastructure/logging/logger";
 
 /**
  * 重试配置
  */
 export interface RetryOptions {
   /** 最大重试次数 */
-  maxRetries?: number
+  maxRetries?: number;
   /** 重试延迟（毫秒） */
-  delay?: number
+  delay?: number;
   /** 延迟倍增因子（指数退避） */
-  backoffFactor?: number
+  backoffFactor?: number;
   /** 是否应该重试的判断函数 */
-  shouldRetry?: (error: unknown) => boolean
+  shouldRetry?: (error: unknown) => boolean;
   /** 操作名称（用于日志） */
-  operationName?: string
+  operationName?: string;
 }
 
 /**
@@ -30,8 +30,8 @@ const DEFAULT_OPTIONS: Required<RetryOptions> = {
   delay: 1000,
   backoffFactor: 2,
   shouldRetry: () => true,
-  operationName: 'operation'
-}
+  operationName: "operation",
+};
 
 /**
  * 带重试的异步操作包装器
@@ -48,56 +48,70 @@ const DEFAULT_OPTIONS: Required<RetryOptions> = {
  * )
  * ```
  */
-export async function withRetry<T>(fn: () => Promise<T>, options: RetryOptions = {}): Promise<T> {
-  const opts = { ...DEFAULT_OPTIONS, ...options }
-  let lastError: unknown
+export async function withRetry<T>(
+  fn: () => Promise<T>,
+  options: RetryOptions = {},
+): Promise<T> {
+  const opts = { ...DEFAULT_OPTIONS, ...options };
+  let lastError: unknown;
 
   for (let attempt = 0; attempt <= opts.maxRetries; attempt++) {
     try {
       // 第一次尝试或重试
       if (attempt > 0) {
-        const delay = opts.delay * Math.pow(opts.backoffFactor, attempt - 1)
+        const delay = opts.delay * Math.pow(opts.backoffFactor, attempt - 1);
         logger.info(
-          'RetryHelper',
-          `🔄 重试 ${opts.operationName} (第 ${attempt}/${opts.maxRetries} 次)，延迟 ${delay}ms`
-        )
-        await sleep(delay)
+          "RetryHelper",
+          `🔄 重试 ${opts.operationName} (第 ${attempt}/${opts.maxRetries} 次)，延迟 ${delay}ms`,
+        );
+        await sleep(delay);
       }
 
-      const result = await fn()
+      const result = await fn();
 
       // 成功
       if (attempt > 0) {
-        logger.info('RetryHelper', `✅ ${opts.operationName} 重试成功 (第 ${attempt} 次尝试)`)
+        logger.info(
+          "RetryHelper",
+          `✅ ${opts.operationName} 重试成功 (第 ${attempt} 次尝试)`,
+        );
       }
 
-      return result
+      return result;
     } catch (error) {
-      lastError = error
+      lastError = error;
 
       // 判断是否应该重试
       if (!opts.shouldRetry(error)) {
-        logger.warn('RetryHelper', `❌ ${opts.operationName} 失败，不应重试`, error)
-        throw error
+        logger.warn(
+          "RetryHelper",
+          `❌ ${opts.operationName} 失败，不应重试`,
+          error,
+        );
+        throw error;
       }
 
       // 如果已达到最大重试次数，抛出错误
       if (attempt >= opts.maxRetries) {
         logger.error(
-          'RetryHelper',
+          "RetryHelper",
           `❌ ${opts.operationName} 失败，已达到最大重试次数 (${opts.maxRetries})`,
-          error
-        )
-        throw error
+          error,
+        );
+        throw error;
       }
 
       // 记录错误，继续重试
-      logger.warn('RetryHelper', `⚠️ ${opts.operationName} 失败 (第 ${attempt + 1} 次尝试)`, error)
+      logger.warn(
+        "RetryHelper",
+        `⚠️ ${opts.operationName} 失败 (第 ${attempt + 1} 次尝试)`,
+        error,
+      );
     }
   }
 
   // 理论上不会到这里，但为了类型安全
-  throw lastError
+  throw lastError;
 }
 
 /**
@@ -106,7 +120,7 @@ export async function withRetry<T>(fn: () => Promise<T>, options: RetryOptions =
  * @param ms - 延迟毫秒数
  */
 function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms))
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -128,11 +142,11 @@ function sleep(ms: number): Promise<void> {
  */
 export function createRetryWrapper<TArgs extends unknown[], TReturn>(
   fn: (...args: TArgs) => Promise<TReturn>,
-  options: RetryOptions = {}
+  options: RetryOptions = {},
 ): (...args: TArgs) => Promise<TReturn> {
   return (...args: TArgs) => {
-    return withRetry(() => fn(...args), options)
-  }
+    return withRetry(() => fn(...args), options);
+  };
 }
 
 /**
@@ -144,14 +158,14 @@ export function createRetryWrapper<TArgs extends unknown[], TReturn>(
 export function isNetworkError(error: unknown): boolean {
   if (error instanceof Error) {
     return (
-      error.message.includes('network') ||
-      error.message.includes('fetch') ||
-      error.message.includes('timeout') ||
-      error.name === 'NetworkError' ||
-      error.name === 'TimeoutError'
-    )
+      error.message.includes("network") ||
+      error.message.includes("fetch") ||
+      error.message.includes("timeout") ||
+      error.name === "NetworkError" ||
+      error.name === "TimeoutError"
+    );
   }
-  return false
+  return false;
 }
 
 /**
@@ -163,13 +177,13 @@ export function isNetworkError(error: unknown): boolean {
 export function isDatabaseError(error: unknown): boolean {
   if (error instanceof Error) {
     return (
-      error.message.includes('database') ||
-      error.message.includes('IndexedDB') ||
-      error.name === 'DatabaseError' ||
-      error.name === 'QuotaExceededError'
-    )
+      error.message.includes("database") ||
+      error.message.includes("IndexedDB") ||
+      error.name === "DatabaseError" ||
+      error.name === "QuotaExceededError"
+    );
   }
-  return false
+  return false;
 }
 
 /**
@@ -181,17 +195,17 @@ export function isDatabaseError(error: unknown): boolean {
 export function shouldRetryError(error: unknown): boolean {
   // 网络错误应该重试
   if (isNetworkError(error)) {
-    return true
+    return true;
   }
 
   // 数据库锁定错误应该重试
   if (isDatabaseError(error)) {
-    const message = error instanceof Error ? error.message : String(error)
-    if (message.includes('locked') || message.includes('busy')) {
-      return true
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.includes("locked") || message.includes("busy")) {
+      return true;
     }
   }
 
   // 其他错误不重试
-  return false
+  return false;
 }

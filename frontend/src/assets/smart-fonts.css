@@ -13,16 +13,18 @@
 
   /* 用户内容智能字体栈 - 处理多语言混合 */
   --font-family-content:
-    'NotoSansSC', /* 简体中文优先 */ 'NotoSansTC', /* 繁体中文 */ 'NotoSansJP',
-    /* 日文 */ 'NotoSansKR', /* 韩文 */ 'NotoSansArabic', /* 阿拉伯文 */ 'NotoSans',
-    /* 英文和其他拉丁字符 */ -apple-system, /* macOS 系统字体 */ BlinkMacSystemFont,
-    /* Chrome macOS */ 'Segoe UI', /* Windows */ 'PingFang SC', /* macOS 中文 */ 'Microsoft YaHei',
-    /* Windows 中文 */ 'Hiragino Kaku Gothic ProN', /* macOS 日文 */ 'Malgun Gothic',
-    /* Windows 韩文 */ system-ui, /* 现代浏览器 */ sans-serif; /* 通用备选 */
+    "NotoSansSC", /* 简体中文优先 */ "NotoSansTC", /* 繁体中文 */ "NotoSansJP",
+    /* 日文 */ "NotoSansKR", /* 韩文 */ "NotoSansArabic",
+    /* 阿拉伯文 */ "NotoSans", /* 英文和其他拉丁字符 */ -apple-system,
+    /* macOS 系统字体 */ BlinkMacSystemFont, /* Chrome macOS */ "Segoe UI",
+    /* Windows */ "PingFang SC", /* macOS 中文 */ "Microsoft YaHei",
+    /* Windows 中文 */ "Hiragino Kaku Gothic ProN",
+    /* macOS 日文 */ "Malgun Gothic", /* Windows 韩文 */ system-ui,
+    /* 现代浏览器 */ sans-serif; /* 通用备选 */
 
   /* 区域特定字体栈 */
   --font-family-bookmark-title: var(--font-family-content);
-  --font-family-bookmark-url: 'Consolas', 'Monaco', 'SF Mono', monospace;
+  --font-family-bookmark-url: "Consolas", "Monaco", "SF Mono", monospace;
   --font-family-folder-name: var(--font-family-content);
 
   /* 特殊内容字体 */
@@ -86,37 +88,44 @@
 /* 自动语言检测字体应用 */
 :lang(zh) {
   --font-family-content:
-    'NotoSansSC', 'NotoSansTC', 'NotoSansJP', 'NotoSansKR', 'NotoSans', system-ui, sans-serif;
+    "NotoSansSC", "NotoSansTC", "NotoSansJP", "NotoSansKR", "NotoSans",
+    system-ui, sans-serif;
 }
 
 :lang(zh-CN) {
   --font-family-content:
-    'NotoSansSC', 'NotoSansTC', 'NotoSansJP', 'NotoSansKR', 'NotoSans', system-ui, sans-serif;
+    "NotoSansSC", "NotoSansTC", "NotoSansJP", "NotoSansKR", "NotoSans",
+    system-ui, sans-serif;
 }
 
 :lang(zh-TW) {
   --font-family-content:
-    'NotoSansTC', 'NotoSansSC', 'NotoSansJP', 'NotoSansKR', 'NotoSans', system-ui, sans-serif;
+    "NotoSansTC", "NotoSansSC", "NotoSansJP", "NotoSansKR", "NotoSans",
+    system-ui, sans-serif;
 }
 
 :lang(ja) {
   --font-family-content:
-    'NotoSansJP', 'NotoSansSC', 'NotoSansTC', 'NotoSansKR', 'NotoSans', system-ui, sans-serif;
+    "NotoSansJP", "NotoSansSC", "NotoSansTC", "NotoSansKR", "NotoSans",
+    system-ui, sans-serif;
 }
 
 :lang(ko) {
   --font-family-content:
-    'NotoSansKR', 'NotoSansJP', 'NotoSansSC', 'NotoSansTC', 'NotoSans', system-ui, sans-serif;
+    "NotoSansKR", "NotoSansJP", "NotoSansSC", "NotoSansTC", "NotoSans",
+    system-ui, sans-serif;
 }
 
 :lang(ar) {
   --font-family-content:
-    'NotoSansArabic', 'NotoSans', 'NotoSansSC', 'NotoSansTC', system-ui, sans-serif;
+    "NotoSansArabic", "NotoSans", "NotoSansSC", "NotoSansTC", system-ui,
+    sans-serif;
 }
 
 :lang(en) {
   --font-family-content:
-    'NotoSans', 'NotoSansSC', 'NotoSansTC', 'NotoSansJP', 'NotoSansKR', system-ui, sans-serif;
+    "NotoSans", "NotoSansSC", "NotoSansTC", "NotoSansJP", "NotoSansKR",
+    system-ui, sans-serif;
 }
 
 /* ========================================

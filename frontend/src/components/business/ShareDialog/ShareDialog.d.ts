@@ -2,20 +2,20 @@
  * ShareDialog 组件类型定义
  */
 
-import type { BookmarkNode } from '@/types'
+import type { BookmarkNode } from "@/types";
 
 /**
  * ShareDialog Props
  */
 export interface ShareDialogProps {
   /** 是否显示弹窗 */
-  show: boolean
+  show: boolean;
   /** 书签列表 */
-  bookmarks: BookmarkNode[]
+  bookmarks: BookmarkNode[];
   /** 分享类型 */
-  shareType: 'favorites' | 'folder' | 'bookmark'
+  shareType: "favorites" | "folder" | "bookmark";
   /** 文件夹名称（分享文件夹时） */
-  folderName?: string
+  folderName?: string;
 }
 
 /**
@@ -23,7 +23,7 @@ export interface ShareDialogProps {
  */
 export interface ShareDialogEmits {
   /** 更新显示状态 */
-  (e: 'update:show', value: boolean): void
+  (e: "update:show", value: boolean): void;
   /** 分享完成 */
-  (e: 'shareComplete'): void
+  (e: "shareComplete"): void;
 }

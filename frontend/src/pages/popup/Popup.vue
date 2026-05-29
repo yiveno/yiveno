@@ -5,19 +5,22 @@
   - 遵循扩展 CSP：所有脚本为模块化引入，无内联脚本。
 -->
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
-import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'
-import BookmarkSearchInput from '@/components/business/BookmarkSearchInput/BookmarkSearchInput.vue'
-import { useThemeSync } from '@/composables/useThemeSync'
-import { useTraitStatistics, useTraitLoading } from '@/composables/useTraitData'
-import { logger } from '@/infrastructure/logging/logger'
+import { computed, onMounted, onUnmounted, ref } from "vue";
+import GlobalSyncProgress from "@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue";
+import BookmarkSearchInput from "@/components/business/BookmarkSearchInput/BookmarkSearchInput.vue";
+import { useThemeSync } from "@/composables/useThemeSync";
+import {
+  useTraitStatistics,
+  useTraitLoading,
+} from "@/composables/useTraitData";
+import { logger } from "@/infrastructure/logging/logger";
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-import { useUIStore } from '@/stores/ui-store'
+import { useUIStore } from "@/stores/ui-store";
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-import { usePopupStoreIndexedDB } from '@/stores/popup-store-indexeddb'
-import { AppHeader, AnimatedNumber, LucideIcon, Card } from '@/components'
-import { t } from '@/utils/i18n-helpers'
-import type { BookmarkNode } from '@/types'
+import { usePopupStoreIndexedDB } from "@/stores/popup-store-indexeddb";
+import { AppHeader, AnimatedNumber, LucideIcon, Card } from "@/components";
+import { t } from "@/utils/i18n-helpers";
+import type { BookmarkNode } from "@/types";
 
 // import { useQuery } from '@tanstack/vue-query'
 // import { trpc } from '../../services/trpc'
@@ -34,36 +37,36 @@ const {
 */
 
 defineOptions({
-  name: 'PopupPage'
-})
+  name: "PopupPage",
+});
 
 // 启用主题同步
-useThemeSync('Popup')
+useThemeSync("Popup");
 
 /**
  * 统一管理需要在组件销毁时执行的清理逻辑。
  */
-const cleanupCallbacks: Array<() => void> = []
+const cleanupCallbacks: Array<() => void> = [];
 
 /**
  * 注册一个清理回调，组件卸载时会批量执行。
  */
 function registerCleanup(callback: () => void): void {
-  cleanupCallbacks.push(callback)
+  cleanupCallbacks.push(callback);
 }
 
 // ✅ 第一个 onMounted 已移除，合并到下面的主 onMounted 中
 
 /** Store 实例 - 使用响应式引用以确保模板能正确更新。 */
-type UIStore = ReturnType<typeof useUIStore>
-type PopupStore = ReturnType<typeof usePopupStoreIndexedDB>
-const uiStore = ref<UIStore | null>(null)
-const popupStore = ref<PopupStore | null>(null)
+type UIStore = ReturnType<typeof useUIStore>;
+type PopupStore = ReturnType<typeof usePopupStoreIndexedDB>;
+const uiStore = ref<UIStore | null>(null);
+const popupStore = ref<PopupStore | null>(null);
 
 /**
  * 判断 store 是否已完整初始化。
  */
-const isStoresReady = computed(() => !!uiStore.value && !!popupStore.value)
+const isStoresReady = computed(() => !!uiStore.value && !!popupStore.value);
 
 /**
  * 提供安全的 PopupStore 访问对象，保证模板引用时有兜底数据
@@ -77,11 +80,11 @@ const safePopupStore = computed<PopupStore>(
         totalScanned: 0,
         invalid: 0,
         duplicate: 0,
-        internal: 0
+        internal: 0,
       },
-      isLoadingTraitOverview: false
-    } as unknown as PopupStore)
-)
+      isLoadingTraitOverview: false,
+    } as unknown as PopupStore),
+);
 
 // 📊 统计信息计算属性
 const stats = computed(
@@ -89,13 +92,13 @@ const stats = computed(
     safePopupStore.value.stats || {
       bookmarks: 0,
       todayAdded: 0,
-      recentlyOpened: 0
-    }
-)
+      recentlyOpened: 0,
+    },
+);
 
 // ✅ 使用新的 Composable API 获取特征数据
-const traitStatistics = useTraitStatistics()
-const isLoadingTraitOverview = useTraitLoading()
+const traitStatistics = useTraitStatistics();
+const isLoadingTraitOverview = useTraitLoading();
 
 // 兼容旧的 traitOverview 接口
 const traitOverview = computed(() => ({
@@ -105,21 +108,21 @@ const traitOverview = computed(() => ({
     traitStatistics.value.internal,
   invalid: traitStatistics.value.invalid,
   duplicate: traitStatistics.value.duplicate,
-  internal: traitStatistics.value.internal
-}))
+  internal: traitStatistics.value.internal,
+}));
 
 // 本地UI状态
-const popupCloseTimeout = ref<number | null>(null)
+const popupCloseTimeout = ref<number | null>(null);
 
 // 搜索结果状态
-const searchResults = ref<BookmarkNode[]>([])
+const searchResults = ref<BookmarkNode[]>([]);
 
 /**
  * 处理书签点击事件（从下拉列表）
  * @param bookmark - 被点击的书签
  */
 function handleBookmarkClick(bookmark: BookmarkNode): void {
-  logger.info('Popup', '书签被点击', { bookmark })
+  logger.info("Popup", "书签被点击", { bookmark });
   // 组件内部已经处理了打开书签的逻辑，这里只记录日志
   // 如果需要额外的处理（如统计、分析等），可以在这里添加
 }
@@ -132,8 +135,8 @@ function handleBookmarkClick(bookmark: BookmarkNode): void {
  * @param results - 搜索结果
  */
 function handleSearchComplete(results: BookmarkNode[]): void {
-  searchResults.value = results
-  logger.info('Popup', '搜索完成', { resultCount: results.length })
+  searchResults.value = results;
+  logger.info("Popup", "搜索完成", { resultCount: results.length });
 
   // dropdown 模式下不自动跳转，由用户点击单个结果
 }
@@ -142,21 +145,21 @@ function handleSearchComplete(results: BookmarkNode[]): void {
  * 处理搜索清空事件
  */
 function handleSearchClear(): void {
-  searchResults.value = []
-  logger.info('Popup', '搜索已清空')
+  searchResults.value = [];
+  logger.info("Popup", "搜索已清空");
 }
 
 // --- 操作函数 ---
 // 在弹出页中监听同一命令，收到时关闭自身，实现“切换展开收起”
 function handleTogglePopupCommand(command: string) {
-  if (command === 'open-popup' || command === '_execute_action') {
+  if (command === "open-popup" || command === "_execute_action") {
     try {
       // 🔒 环境检查：确保在浏览器环境中运行
-      if (typeof window !== 'undefined') {
-        window.close()
+      if (typeof window !== "undefined") {
+        window.close();
       }
     } catch (e) {
-      logger.warn('Popup', '尝试关闭弹出页失败', e)
+      logger.warn("Popup", "尝试关闭弹出页失败", e);
     }
   }
 }
@@ -167,32 +170,32 @@ function handleTogglePopupCommand(command: string) {
  */
 async function openSidePanel(): Promise<void> {
   try {
-    if (typeof chrome !== 'undefined' && chrome.sidePanel) {
+    if (typeof chrome !== "undefined" && chrome.sidePanel) {
       const [currentTab] = await chrome.tabs.query({
         active: true,
-        currentWindow: true
-      })
+        currentWindow: true,
+      });
 
       if (currentTab?.windowId) {
         // 打开侧边栏
         await chrome.sidePanel.setOptions({
           tabId: currentTab.id,
-          path: 'side-panel.html',
-          enabled: true
-        })
+          path: "side-panel.html",
+          enabled: true,
+        });
         await chrome.sidePanel.setPanelBehavior({
-          openPanelOnActionClick: false
-        })
-        await chrome.sidePanel.open({ windowId: currentTab.windowId })
-        logger.info('Popup', '侧边栏已打开')
+          openPanelOnActionClick: false,
+        });
+        await chrome.sidePanel.open({ windowId: currentTab.windowId });
+        logger.info("Popup", "侧边栏已打开");
       } else {
-        throw new Error('无法获取当前窗口信息')
+        throw new Error("无法获取当前窗口信息");
       }
     } else {
-      throw new Error('chrome.sidePanel API 不可用')
+      throw new Error("chrome.sidePanel API 不可用");
     }
   } catch (error) {
-    logger.error('Popup', '❌ 打开侧边栏失败', error)
+    logger.error("Popup", "❌ 打开侧边栏失败", error);
   }
 }
 
@@ -201,11 +204,11 @@ async function openSidePanel(): Promise<void> {
  */
 function openManualOrganizePage(): void {
   const url = chrome?.runtime?.getURL
-    ? chrome.runtime.getURL('management.html')
-    : '/management.html'
-  chrome.tabs.create({ url }).catch(err => {
-    logger.error('Component', 'Popup', '❌ 打开整理页面失败', err)
-  })
+    ? chrome.runtime.getURL("management.html")
+    : "/management.html";
+  chrome.tabs.create({ url }).catch((err) => {
+    logger.error("Component", "Popup", "❌ 打开整理页面失败", err);
+  });
 }
 
 /**
@@ -214,16 +217,18 @@ function openManualOrganizePage(): void {
 function openSettings(): void {
   try {
     // 🔒 环境检查：确保在浏览器环境中运行
-    if (typeof window === 'undefined') {
-      logger.error('Popup', '非浏览器环境，无法打开设置页面')
-      return
+    if (typeof window === "undefined") {
+      logger.error("Popup", "非浏览器环境，无法打开设置页面");
+      return;
     }
 
-    const url = chrome?.runtime?.getURL ? chrome.runtime.getURL('settings.html') : '/settings.html'
-    window.open(url, '_blank')
+    const url = chrome?.runtime?.getURL
+      ? chrome.runtime.getURL("settings.html")
+      : "/settings.html";
+    window.open(url, "_blank");
   } catch {
-    if (typeof window !== 'undefined') {
-      window.open('/settings.html', '_blank')
+    if (typeof window !== "undefined") {
+      window.open("/settings.html", "_blank");
     }
   }
 }
@@ -231,103 +236,111 @@ function openSettings(): void {
 /**
  * 处理批量删除操作
  */
-async function handleBatchDelete(type: 'duplicate' | 'invalid'): Promise<void> {
-  const typeLabel = type === 'duplicate' ? t('popup_issue_duplicate') : t('popup_issue_invalid')
+async function handleBatchDelete(type: "duplicate" | "invalid"): Promise<void> {
+  const typeLabel =
+    type === "duplicate"
+      ? t("popup_issue_duplicate")
+      : t("popup_issue_invalid");
 
-  if (!confirm(t('popup_batch_delete_confirm', typeLabel))) {
-    return
+  if (!confirm(t("popup_batch_delete_confirm", typeLabel))) {
+    return;
   }
 
   try {
-    logger.info('Popup', `开始批量删除${typeLabel}`)
+    logger.info("Popup", `开始批量删除${typeLabel}`);
 
     // 发送消息到 background script 执行批量删除
     const response = await chrome.runtime.sendMessage({
-      type: 'BATCH_DELETE_BY_TRAIT',
-      payload: { traitTag: type }
-    })
+      type: "BATCH_DELETE_BY_TRAIT",
+      payload: { traitTag: type },
+    });
 
     if (response?.success) {
       if (uiStore.value) {
         // ✅ 显示详细结果（包含失败数）
         const message =
           response.failed > 0
-            ? t('popup_batch_delete_partial', [
+            ? t("popup_batch_delete_partial", [
                 String(response.count),
                 typeLabel,
-                String(response.failed)
+                String(response.failed),
               ])
-            : t('popup_batch_delete_success', [String(response.count), typeLabel])
-        uiStore.value.showSuccess(message)
+            : t("popup_batch_delete_success", [
+                String(response.count),
+                typeLabel,
+              ]);
+        uiStore.value.showSuccess(message);
       }
       // ✅ 移除手动刷新，完全依赖自动刷新机制
       // setupAutoRefreshListener() 会在收到 'acuity-bookmarks-db-synced' 广播后自动刷新
       // 这样可以避免竞态条件，确保数据一致性
-      logger.info('Popup', '等待自动刷新机制更新 UI...')
+      logger.info("Popup", "等待自动刷新机制更新 UI...");
     } else {
-      throw new Error(response?.error || '删除失败')
+      throw new Error(response?.error || "删除失败");
     }
   } catch (error) {
-    logger.error('Popup', `批量删除${typeLabel}失败`, error)
+    logger.error("Popup", `批量删除${typeLabel}失败`, error);
     if (uiStore.value) {
-      uiStore.value.showError(t('popup_batch_delete_failed', [typeLabel, (error as Error).message]))
+      uiStore.value.showError(
+        t("popup_batch_delete_failed", [typeLabel, (error as Error).message]),
+      );
     }
   }
 }
 
 // 从统计卡片跳转到整理页并带上搜索参数
 async function openManagementWithFilter(key: string): Promise<void> {
-  logger.info('Popup', 'openManagementWithFilter 被调用:', key)
+  logger.info("Popup", "openManagementWithFilter 被调用:", key);
   try {
     // 将展示层的指标映射到整理页可识别的搜索键
-    const tags: string[] = []
+    const tags: string[] = [];
     switch (key) {
-      case 'duplicate':
-        tags.push('duplicate')
-        break
-      case 'dead':
-      case 'invalid':
+      case "duplicate":
+        tags.push("duplicate");
+        break;
+      case "dead":
+      case "invalid":
         // "无效书签"（URL格式错误，不符合http/https规范）
-        tags.push('invalid')
-        break
-      case 'internal':
-        tags.push('internal')
-        break
+        tags.push("invalid");
+        break;
+      case "internal":
+        tags.push("internal");
+        break;
       default:
-        break
+        break;
     }
 
     if (tags.length === 0) {
-      openManualOrganizePage()
-      return
+      openManualOrganizePage();
+      return;
     }
 
     // 1. 先将筛选状态保存到 session storage
     await chrome.storage.session.set({
       managementInitialFilter: {
         tags,
-        timestamp: Date.now()
-      }
-    })
+        timestamp: Date.now(),
+      },
+    });
 
-    logger.info('Popup', '筛选状态已保存到 session storage:', tags)
+    logger.info("Popup", "筛选状态已保存到 session storage:", tags);
 
     // 2. 打开 Management 页面（干净的 URL）
     const url = chrome?.runtime?.getURL
-      ? chrome.runtime.getURL('management.html')
-      : '/management.html'
+      ? chrome.runtime.getURL("management.html")
+      : "/management.html";
 
-    chrome.tabs.create({ url }).catch(err => {
-      logger.warn('Popup', 'chrome.tabs.create 失败，使用 window.open:', err)
+    chrome.tabs.create({ url }).catch((err) => {
+      logger.warn("Popup", "chrome.tabs.create 失败，使用 window.open:", err);
       // 🔒 环境检查：确保在浏览器环境中运行
-      if (typeof window !== 'undefined') {
-        window.open(url, '_blank')
+      if (typeof window !== "undefined") {
+        window.open(url, "_blank");
       }
-    })
+    });
   } catch (err) {
-    logger.error('Popup', 'openManagementWithFilter 错误:', err)
+    logger.error("Popup", "openManagementWithFilter 错误:", err);
     // 兜底：无参数打开
-    openManualOrganizePage()
+    openManualOrganizePage();
   }
 }
 
@@ -337,12 +350,15 @@ async function openManagementWithFilter(key: string): Promise<void> {
  * @param kind - duplicate | invalid
  * @param event - 鼠标事件
  */
-function handleIssueRowClick(kind: 'duplicate' | 'invalid', event: Event): void {
-  const el = event.target
-  if (el instanceof Element && el.closest('.issue-action')) {
-    return
+function handleIssueRowClick(
+  kind: "duplicate" | "invalid",
+  event: Event,
+): void {
+  const el = event.target;
+  if (el instanceof Element && el.closest(".issue-action")) {
+    return;
   }
-  void openManagementWithFilter(kind === 'duplicate' ? 'duplicate' : 'dead')
+  void openManagementWithFilter(kind === "duplicate" ? "duplicate" : "dead");
 }
 
 // --- 监听器 ---
@@ -350,129 +366,132 @@ function handleIssueRowClick(kind: 'duplicate' | 'invalid', event: Event): void 
 // 加载书签统计数据
 const loadBookmarkStats = async () => {
   try {
-    logger.info('Popup', '🚀 从 Pinia Store 加载书签统计数据...')
+    logger.info("Popup", "🚀 从 Pinia Store 加载书签统计数据...");
     // 统计由 Store 内部通过 bookmarkAppService 计算
-    await popupStore.value?.loadBookmarkStats?.()
+    await popupStore.value?.loadBookmarkStats?.();
   } catch (error) {
-    logger.error('Component', 'Popup', '❌ 加载书签统计失败', error)
+    logger.error("Component", "Popup", "❌ 加载书签统计失败", error);
   }
-}
+};
 
 // --- 生命周期钩子 ---
 onMounted(async () => {
   // ✅ 初始化 Supabase 认证（从第一个 onMounted 合并）
   const { initialize: initAuth, setupAuthListener } =
-    await import('@/composables/useSupabaseAuth').then(m => m.useSupabaseAuth())
-  await initAuth()
-  setupAuthListener() // ✅ 手动设置认证状态监听器
+    await import("@/composables/useSupabaseAuth").then((m) =>
+      m.useSupabaseAuth(),
+    );
+  await initAuth();
+  setupAuthListener(); // ✅ 手动设置认证状态监听器
 
   // ✅ 检查 URL 参数，如果是添加书签操作，自动触发对话框（从第一个 onMounted 合并）
   try {
     // 🔒 环境检查：确保在浏览器环境中运行
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search)
-      const action = urlParams.get('action')
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const action = urlParams.get("action");
 
-      if (action === 'add-bookmark') {
-        const title = urlParams.get('title') || ''
-        const url = urlParams.get('url') || ''
-        const favIconUrl = urlParams.get('favIconUrl') || ''
+      if (action === "add-bookmark") {
+        const title = urlParams.get("title") || "";
+        const url = urlParams.get("url") || "";
+        const favIconUrl = urlParams.get("favIconUrl") || "";
 
-        logger.info('Popup', '通过 URL 参数触发添加书签', { title, url })
+        logger.info("Popup", "通过 URL 参数触发添加书签", { title, url });
 
         // 延迟确保组件已挂载
         setTimeout(() => {
           chrome.runtime.sendMessage({
-            type: 'SHOW_ADD_BOOKMARK_DIALOG',
-            data: { title, url, favIconUrl }
-          })
-        }, 100)
+            type: "SHOW_ADD_BOOKMARK_DIALOG",
+            data: { title, url, favIconUrl },
+          });
+        }, 100);
       }
     }
   } catch (error) {
-    logger.warn('Popup', '处理 URL 参数失败', error)
+    logger.warn("Popup", "处理 URL 参数失败", error);
   }
 
   // ✅ 监听同一快捷键以实现"再次按下收起"效果（从第一个 onMounted 合并）
   try {
     if (chrome?.commands?.onCommand) {
-      chrome.commands.onCommand.addListener(handleTogglePopupCommand)
+      chrome.commands.onCommand.addListener(handleTogglePopupCommand);
       registerCleanup(() => {
         try {
-          chrome.commands.onCommand.removeListener(handleTogglePopupCommand)
+          chrome.commands.onCommand.removeListener(handleTogglePopupCommand);
         } catch (error) {
-          logger.warn('Popup', '移除命令快捷键监听失败', error)
+          logger.warn("Popup", "移除命令快捷键监听失败", error);
         }
-      })
+      });
     }
   } catch (error) {
-    logger.warn('Popup', '注册命令快捷键监听失败', error)
+    logger.warn("Popup", "注册命令快捷键监听失败", error);
   }
 
   // 延迟动态导入stores避免初始化顺序问题
   try {
-    logger.info('Popup', '开始动态导入stores...')
+    logger.info("Popup", "开始动态导入stores...");
 
     // 点击图标永远显示 popup，不需要状态查询
-    logger.info('Popup', 'Popup 启动，点击图标永远显示 popup 页面')
+    logger.info("Popup", "Popup 启动，点击图标永远显示 popup 页面");
 
     // 动态导入stores - 使用IndexedDB版本
-    const { useUIStore: importedUseUIStore } = await import('@/stores/ui-store')
+    const { useUIStore: importedUseUIStore } =
+      await import("@/stores/ui-store");
     const { usePopupStoreIndexedDB: importedUsePopupStoreIndexedDB } =
-      await import('@/stores/popup-store-indexeddb')
+      await import("@/stores/popup-store-indexeddb");
 
-    uiStore.value = importedUseUIStore()
-    popupStore.value = importedUsePopupStoreIndexedDB()
+    uiStore.value = importedUseUIStore();
+    popupStore.value = importedUsePopupStoreIndexedDB();
 
-    logger.info('Popup', 'Stores初始化完成')
+    logger.info("Popup", "Stores初始化完成");
 
     // 设置当前页面信息
-    uiStore.value.setCurrentPage('popup', 'AcuityBookmarksPopup')
+    uiStore.value.setCurrentPage("popup", "AcuityBookmarksPopup");
 
     // 测量启动时间
     // const startupTimer = performanceMonitor.measureStartupTime();
 
     // 初始化Popup状态 - 增强错误处理
-    logger.info('Popup', '开始初始化PopupStore...')
+    logger.info("Popup", "开始初始化PopupStore...");
     try {
       // 非阻塞地触发所有初始化和数据加载
-      popupStore.value.initialize()
-      logger.info('Popup', 'PopupStore 初始化已触发')
+      popupStore.value.initialize();
+      logger.info("Popup", "PopupStore 初始化已触发");
 
       // 加载书签统计数据
-      loadBookmarkStats()
+      loadBookmarkStats();
       // ✅ 特征数据由 TraitDataStore 自动加载，无需手动调用
       // ✅ 特征检测由 Background Script 自动维护，Popup 只负责显示结果
-      logger.info('Popup', '特征数据由 Background Script 自动维护')
+      logger.info("Popup", "特征数据由 Background Script 自动维护");
     } catch (initError) {
-      logger.warn('Popup', 'PopupStore初始化失败，使用默认状态', initError)
+      logger.warn("Popup", "PopupStore初始化失败，使用默认状态", initError);
       // 即使初始化失败，也要确保基本状态可用
       if (uiStore.value) {
-        uiStore.value.showWarning('部分功能初始化失败，但基本功能仍可使用')
+        uiStore.value.showWarning("部分功能初始化失败，但基本功能仍可使用");
       }
     }
   } catch (error) {
-    logger.error('Component', 'Popup', 'Popup整体初始化失败', error)
+    logger.error("Component", "Popup", "Popup整体初始化失败", error);
     // 即使出错也要确保stores可用，让界面能显示
     if (uiStore.value) {
-      uiStore.value.showError(`初始化失败: ${(error as Error).message}`)
+      uiStore.value.showError(`初始化失败: ${(error as Error).message}`);
     }
   }
-})
+});
 
 onUnmounted(() => {
-  if (popupCloseTimeout.value) clearTimeout(popupCloseTimeout.value)
+  if (popupCloseTimeout.value) clearTimeout(popupCloseTimeout.value);
 
   while (cleanupCallbacks.length) {
-    const callback = cleanupCallbacks.pop()
-    if (!callback) continue
+    const callback = cleanupCallbacks.pop();
+    if (!callback) continue;
     try {
-      callback()
+      callback();
     } catch (error) {
-      logger.warn('Popup', '执行清理回调失败', error)
+      logger.warn("Popup", "执行清理回调失败", error);
     }
   }
-})
+});
 </script>
 
 <template>
@@ -490,7 +509,9 @@ onUnmounted(() => {
     <!-- 加载状态 -->
     <div v-if="!isStoresReady" class="loading-container">
       <md-circular-progress indeterminate></md-circular-progress>
-      <p class="loading-text" data-testid="popup-loading-text">{{ t('popup_initializing') }}</p>
+      <p class="loading-text" data-testid="popup-loading-text">
+        {{ t("popup_initializing") }}
+      </p>
     </div>
     <!-- 主内容 - 只有当stores都存在时才显示 -->
     <div v-else class="main-container">
@@ -508,7 +529,7 @@ onUnmounted(() => {
             :quick-filters="{
               enabled: false,
               position: 'none',
-              filters: []
+              filters: [],
             }"
             :limit="50"
             @result-click="handleBookmarkClick"
@@ -524,7 +545,9 @@ onUnmounted(() => {
           <md-list class="popup-mwc-list popup-stat-list">
             <md-list-item type="text" class="popup-stat-item">
               <div slot="headline" class="popup-stat-stack">
-                <span class="popup-stat-label">{{ t('popup_stat_total') }}</span>
+                <span class="popup-stat-label">{{
+                  t("popup_stat_total")
+                }}</span>
                 <span class="popup-stat-value popup-stat-value--primary">
                   <AnimatedNumber :value="stats.bookmarks" />
                 </span>
@@ -532,7 +555,9 @@ onUnmounted(() => {
             </md-list-item>
             <md-list-item type="text" class="popup-stat-item">
               <div slot="headline" class="popup-stat-stack">
-                <span class="popup-stat-label">{{ t('popup_stat_today_added') }}</span>
+                <span class="popup-stat-label">{{
+                  t("popup_stat_today_added")
+                }}</span>
                 <span class="popup-stat-value popup-stat-value--secondary">
                   <AnimatedNumber :value="stats.todayAdded" />
                 </span>
@@ -540,7 +565,9 @@ onUnmounted(() => {
             </md-list-item>
             <md-list-item type="text" class="popup-stat-item">
               <div slot="headline" class="popup-stat-stack">
-                <span class="popup-stat-label">{{ t('popup_stat_recently_opened') }}</span>
+                <span class="popup-stat-label">{{
+                  t("popup_stat_recently_opened")
+                }}</span>
                 <span class="popup-stat-value popup-stat-value--secondary">
                   <AnimatedNumber :value="stats.recentlyOpened" />
                 </span>
@@ -569,7 +596,7 @@ onUnmounted(() => {
               <div class="issue-card-header">
                 <span class="issue-card-title">
                   <LucideIcon name="copy" :size="18" />
-                  <span>{{ t('popup_issue_duplicate') }}</span>
+                  <span>{{ t("popup_issue_duplicate") }}</span>
                 </span>
                 <md-icon-button
                   class="issue-action"
@@ -604,7 +631,7 @@ onUnmounted(() => {
               <div class="issue-card-header">
                 <span class="issue-card-title">
                   <LucideIcon name="unlink" :size="18" />
-                  <span>{{ t('popup_issue_invalid') }}</span>
+                  <span>{{ t("popup_issue_invalid") }}</span>
                 </span>
                 <md-icon-button
                   class="issue-action"
@@ -644,7 +671,9 @@ onUnmounted(() => {
               <div class="action-card-icon">
                 <LucideIcon name="folder" :size="24" />
               </div>
-              <div class="action-card-label">{{ t('popup_action_organize') }}</div>
+              <div class="action-card-label">
+                {{ t("popup_action_organize") }}
+              </div>
             </div>
           </Card>
           <Card
@@ -659,7 +688,9 @@ onUnmounted(() => {
               <div class="action-card-icon">
                 <LucideIcon name="settings" :size="24" />
               </div>
-              <div class="action-card-label">{{ t('popup_action_settings') }}</div>
+              <div class="action-card-label">
+                {{ t("popup_action_settings") }}
+              </div>
             </div>
           </Card>
         </div>
@@ -1030,7 +1061,11 @@ body {
 }
 
 .popup-issue-item--warning:hover {
-  background: color-mix(in srgb, var(--color-warning) 12%, var(--color-surface));
+  background: color-mix(
+    in srgb,
+    var(--color-warning) 12%,
+    var(--color-surface)
+  );
 }
 
 .popup-issue-item--danger {

@@ -11,111 +11,120 @@
 -->
 
 <script setup lang="ts">
-import { computed, defineOptions, onMounted, ref } from 'vue'
-import { useGlobalSyncProgress } from '@/composables/useGlobalSyncProgress'
-import { Dialog, LucideIcon } from '@/components'
-import type { SyncPhase } from '@/types/sync-progress'
-import { SYNC_PHASES, PHASE_TITLES, formatTime } from '@/types/sync-progress'
-import { formatNumber } from '@/utils/i18n-helpers'
+import { computed, onMounted, ref } from "vue";
+import { useGlobalSyncProgress } from "@/composables/useGlobalSyncProgress";
+import { Dialog, LucideIcon } from "@/components";
+import type { SyncPhase } from "@/types/sync-progress";
+import { SYNC_PHASES, PHASE_TITLES, formatTime } from "@/types/sync-progress";
+import { formatNumber } from "@/utils/i18n-helpers";
 
 defineOptions({
-  name: 'GlobalSyncProgress'
-})
+  name: "GlobalSyncProgress",
+});
 
-const { progress, isVisible, initialize, dismiss, retry, forceClose } = useGlobalSyncProgress()
+const { progress, isVisible, initialize, dismiss, retry, forceClose } =
+  useGlobalSyncProgress();
 
-const showForceCloseConfirm = ref(false)
+const showForceCloseConfirm = ref(false);
 
 // 初始化全局订阅
 onMounted(() => {
-  initialize()
-})
+  initialize();
+});
 
 /**
  * 所有阶段
  */
 const phases = computed(() => {
   // 只显示前4个阶段（不包括 'completed'）
-  return SYNC_PHASES.slice(0, 4)
-})
+  return SYNC_PHASES.slice(0, 4);
+});
 
 /**
  * 是否已完成
  */
 const isCompleted = computed(() => {
-  return progress.value.phase === 'completed'
-})
+  return progress.value.phase === "completed";
+});
 
 /**
  * 是否处于错误状态
  */
 const isError = computed(() => {
-  return progress.value.phase === 'failed' || progress.value.phase === 'timeout'
-})
+  return (
+    progress.value.phase === "failed" || progress.value.phase === "timeout"
+  );
+});
 
 /**
  * 对话框标题
  */
 const dialogTitle = computed(() => {
-  if (isCompleted.value) return '同步完成'
-  if (isError.value) return PHASE_TITLES[progress.value.phase]
-  return PHASE_TITLES[progress.value.phase] || '正在同步'
-})
+  if (isCompleted.value) return "同步完成";
+  if (isError.value) return PHASE_TITLES[progress.value.phase];
+  return PHASE_TITLES[progress.value.phase] || "正在同步";
+});
 
 /**
  * 标题图标
  */
 const titleIcon = computed(() => {
-  if (isCompleted.value) return 'check-circle'
-  if (isError.value) return 'alert-triangle'
-  return 'refresh'
-})
+  if (isCompleted.value) return "check-circle";
+  if (isError.value) return "alert-triangle";
+  return "refresh";
+});
 
 /**
  * 是否显示操作按钮
  */
 const showActions = computed(() => {
-  return isCompleted.value || isError.value
-})
+  return isCompleted.value || isError.value;
+});
 
 /**
  * 判断阶段是否已完成
  */
 function isPhaseCompleted(phase: SyncPhase): boolean {
-  const phaseOrder: SyncPhase[] = ['fetching', 'converting', 'writing', 'indexing', 'completed']
-  const currentIndex = phaseOrder.indexOf(progress.value.phase)
-  const checkIndex = phaseOrder.indexOf(phase)
+  const phaseOrder: SyncPhase[] = [
+    "fetching",
+    "converting",
+    "writing",
+    "indexing",
+    "completed",
+  ];
+  const currentIndex = phaseOrder.indexOf(progress.value.phase);
+  const checkIndex = phaseOrder.indexOf(phase);
 
-  return checkIndex < currentIndex || progress.value.phase === 'completed'
+  return checkIndex < currentIndex || progress.value.phase === "completed";
 }
 
 /**
  * 处理重试
  */
 function handleRetry() {
-  retry()
+  retry();
 }
 
 /**
  * 处理强制关闭（带警告）
  */
 function handleForceClose() {
-  showForceCloseConfirm.value = true
+  showForceCloseConfirm.value = true;
 }
 
 /**
  * 确认强制关闭
  */
 function confirmForceClose() {
-  showForceCloseConfirm.value = false
-  forceClose()
+  showForceCloseConfirm.value = false;
+  forceClose();
 }
 
 /**
  * 处理正常关闭（仅在完成时）
  */
 function handleClose() {
-  dismiss()
+  dismiss();
 }
 </script>
 
@@ -139,7 +148,7 @@ function handleClose() {
         <LucideIcon name="alert-circle" :size="64" />
       </div>
       <div class="error-message">
-        {{ progress.error?.message || '同步过程中发生错误' }}
+        {{ progress.error?.message || "同步过程中发生错误" }}
       </div>
       <div v-if="progress.error?.type === 'timeout'" class="error-hint">
         <LucideIcon name="info" :size="20" />
@@ -160,7 +169,7 @@ function handleClose() {
           class="phase-item"
           :class="{
             active: progress.phase === phase.key,
-            completed: isPhaseCompleted(phase.key)
+            completed: isPhaseCompleted(phase.key),
           }"
         >
           <div class="phase-icon">
@@ -175,8 +184,13 @@ function handleClose() {
 
       <!-- 进度条 -->
       <div class="progress-bar-container">
-        <md-linear-progress :value="progress.percentage / 100" class="progress-bar" />
-        <div class="progress-percentage">{{ Math.round(progress.percentage) }}%</div>
+        <md-linear-progress
+          :value="progress.percentage / 100"
+          class="progress-bar"
+        />
+        <div class="progress-percentage">
+          {{ Math.round(progress.percentage) }}%
+        </div>
       </div>
 
       <!-- 详细信息 -->
@@ -191,7 +205,9 @@ function handleClose() {
             {{ formatNumber(progress.total) }}
           </span>
           <span
-            v-if="progress.estimatedRemaining && progress.estimatedRemaining > 0"
+            v-if="
+              progress.estimatedRemaining && progress.estimatedRemaining > 0
+            "
             class="stat-item"
           >
             <LucideIcon name="clock" :size="14" class="stat-icon" />
@@ -224,7 +240,9 @@ function handleClose() {
       <p>建议点击"重试"按钮或等待同步自动重试。</p>
     </div>
     <template #actions>
-      <md-text-button @click="showForceCloseConfirm = false"> 取消 </md-text-button>
+      <md-text-button @click="showForceCloseConfirm = false">
+        取消
+      </md-text-button>
       <md-filled-button @click="confirmForceClose"> 确认关闭 </md-filled-button>
     </template>
   </Dialog>
@@ -329,7 +347,7 @@ function handleClose() {
   z-index: 0;
   height: 2px;
   background: var(--border-color);
-  content: '';
+  content: "";
 }
 
 .phase-item {
@@ -404,7 +422,9 @@ function handleClose() {
 }
 
 .progress-bar {
-  --md-linear-progress-track-color: var(--md-sys-color-surface-container-highest);
+  --md-linear-progress-track-color: var(
+    --md-sys-color-surface-container-highest
+  );
   --md-linear-progress-track-height: 12px;
   --md-linear-progress-track-shape: 6px;
   --md-linear-progress-active-indicator-height: 12px;
@@ -414,7 +434,7 @@ function handleClose() {
 
 /* 添加渐变效果和圆角 - 使用 :deep() 穿透 Shadow DOM */
 .progress-bar :deep(.active-indicator),
-.progress-bar :deep([part='active-indicator']) {
+.progress-bar :deep([part="active-indicator"]) {
   height: 12px !important;
   border-radius: var(--radius-md) !important;
   background: linear-gradient(

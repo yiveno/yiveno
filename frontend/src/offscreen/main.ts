@@ -1,17 +1,17 @@
 /// <reference lib="webworker" />
 
-import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
-import { logger } from '@/infrastructure/logging/logger'
-import type { SearchResult } from '@/infrastructure/indexeddb/manager'
-import type { BookmarkRecord } from '@/infrastructure/indexeddb/manager'
-import type { WorkerDoc } from '@/types/domain/query'
+import { indexedDBManager } from "@/infrastructure/indexeddb/manager";
+import { logger } from "@/infrastructure/logging/logger";
+import type { SearchResult } from "@/infrastructure/indexeddb/manager";
+import type { BookmarkRecord } from "@/infrastructure/indexeddb/manager";
+import type { WorkerDoc } from "@/types/domain/query";
 
 interface SearchState {
-  worker: Worker | undefined
-  ready: boolean
-  initializing: boolean
-  primed: boolean
-  docCount: number
+  worker: Worker | undefined;
+  ready: boolean;
+  initializing: boolean;
+  primed: boolean;
+  docCount: number;
 }
 
 const searchState: SearchState = {
@@ -19,16 +19,16 @@ const searchState: SearchState = {
   ready: false,
   initializing: false,
   primed: false,
-  docCount: 0
-}
+  docCount: 0,
+};
 
 interface OffscreenFolderRecommendation {
-  folderId: string
-  folderName: string
-  folderPath: string
-  score: number
-  bookmarkCount: number
-  reason: string
+  folderId: string;
+  folderName: string;
+  folderPath: string;
+  score: number;
+  bookmarkCount: number;
+  reason: string;
 }
 
 /**
@@ -41,83 +41,83 @@ interface OffscreenFolderRecommendation {
 async function waitForWorkerReady(timeout = 3000): Promise<void> {
   // 已就绪，立即返回
   if (searchState.ready && searchState.worker) {
-    return
+    return;
   }
 
   return new Promise<void>((resolve, reject) => {
-    const startTime = Date.now()
-    let timeoutTimer: ReturnType<typeof setTimeout> | null = null
-    let intervalTimer: ReturnType<typeof setInterval> | null = null
-    let messageHandler: ((event: MessageEvent) => void) | null = null
+    const startTime = Date.now();
+    let timeoutTimer: ReturnType<typeof setTimeout> | null = null;
+    let intervalTimer: ReturnType<typeof setInterval> | null = null;
+    let messageHandler: ((event: MessageEvent) => void) | null = null;
 
     // 清理所有资源
     const cleanup = () => {
       if (timeoutTimer) {
-        clearTimeout(timeoutTimer)
+        clearTimeout(timeoutTimer);
       }
       if (intervalTimer) {
-        clearInterval(intervalTimer)
-        intervalTimer = null
+        clearInterval(intervalTimer);
+        intervalTimer = null;
       }
       if (messageHandler && searchState.worker) {
-        searchState.worker.removeEventListener('message', messageHandler)
-        messageHandler = null
+        searchState.worker.removeEventListener("message", messageHandler);
+        messageHandler = null;
       }
-    }
+    };
 
     // 检查就绪状态
     const checkReady = () => {
       if (searchState.ready && searchState.worker) {
-        cleanup()
-        resolve()
-        return true
+        cleanup();
+        resolve();
+        return true;
       }
 
       // 检查超时
       if (Date.now() - startTime > timeout) {
-        cleanup()
-        reject(new Error('等待查询 Worker 超时'))
-        return true
+        cleanup();
+        reject(new Error("等待查询 Worker 超时"));
+        return true;
       }
 
-      return false
-    }
+      return false;
+    };
 
     // 立即检查
     if (checkReady()) {
-      return
+      return;
     }
 
     // 设置超时
     timeoutTimer = setTimeout(() => {
       if (!checkReady()) {
-        cleanup()
-        reject(new Error('等待查询 Worker 超时'))
+        cleanup();
+        reject(new Error("等待查询 Worker 超时"));
       }
-    }, timeout)
+    }, timeout);
 
     // 监听 Worker 消息事件
     if (searchState.worker) {
       messageHandler = (event: MessageEvent) => {
-        const message = event.data
-        if (message?.type === 'ready' || message?.type === 'inited') {
-          checkReady()
+        const message = event.data;
+        if (message?.type === "ready" || message?.type === "inited") {
+          checkReady();
         }
-      }
+      };
 
-      searchState.worker.addEventListener('message', messageHandler)
+      searchState.worker.addEventListener("message", messageHandler);
 
       // 定期检查（降级方案）
       intervalTimer = setInterval(() => {
-        checkReady()
-      }, 200)
+        checkReady();
+      }, 200);
     } else {
       // Worker 不存在，使用轮询
       intervalTimer = setInterval(() => {
-        checkReady()
-      }, 200)
+        checkReady();
+      }, 200);
     }
-  })
+  });
 }
 
 /**
@@ -127,59 +127,62 @@ async function waitForWorkerReady(timeout = 3000): Promise<void> {
  */
 async function ensureSearchWorker(): Promise<Worker> {
   if (searchState.ready && searchState.worker) {
-    return searchState.worker
+    return searchState.worker;
   }
 
   if (searchState.initializing) {
     // 等待 Worker 就绪
-    await waitForWorkerReady(3000)
+    await waitForWorkerReady(3000);
     if (!searchState.worker) {
-      throw new Error('查询 Worker 初始化失败')
+      throw new Error("查询 Worker 初始化失败");
     }
-    return searchState.worker
+    return searchState.worker;
   }
 
-  searchState.initializing = true
+  searchState.initializing = true;
   try {
-    const worker = new Worker(new URL('@/workers/query-worker.ts', import.meta.url), {
-      type: 'module'
-    })
+    const worker = new Worker(
+      new URL("@/workers/query-worker.ts", import.meta.url),
+      {
+        type: "module",
+      },
+    );
 
     await new Promise<void>((resolve, reject) => {
       const timer = setTimeout(() => {
-        reject(new Error('查询 Worker 启动超时'))
-      }, 5000)
+        reject(new Error("查询 Worker 启动超时"));
+      }, 5000);
 
       const handleReady = (event: MessageEvent) => {
-        const message = event.data
-        if (message?.type === 'ready' || message?.type === 'inited') {
-          clearTimeout(timer)
-          worker.removeEventListener('message', handleReady)
-          resolve()
+        const message = event.data;
+        if (message?.type === "ready" || message?.type === "inited") {
+          clearTimeout(timer);
+          worker.removeEventListener("message", handleReady);
+          resolve();
         }
-      }
+      };
 
-      worker.addEventListener('message', handleReady)
-      worker.onerror = error => {
-        clearTimeout(timer)
-        worker.removeEventListener('message', handleReady)
-        reject(error)
-      }
-    })
+      worker.addEventListener("message", handleReady);
+      worker.onerror = (error) => {
+        clearTimeout(timer);
+        worker.removeEventListener("message", handleReady);
+        reject(error);
+      };
+    });
 
     // eslint-disable-next-line require-atomic-updates -- Worker 初始化是原子操作，不会有竞态条件
-    searchState.worker = worker
+    searchState.worker = worker;
     // eslint-disable-next-line require-atomic-updates -- Worker 初始化是原子操作，不会有竞态条件
-    searchState.ready = true
-    return worker
+    searchState.ready = true;
+    return worker;
   } catch (error) {
-    logger.error('OffscreenSearch', '创建查询 Worker 失败', error)
-    searchState.worker = undefined
-    searchState.ready = false
-    throw error
+    logger.error("OffscreenSearch", "创建查询 Worker 失败", error);
+    searchState.worker = undefined;
+    searchState.ready = false;
+    throw error;
   } finally {
     // eslint-disable-next-line require-atomic-updates -- finally 块中的状态重置是安全的
-    searchState.initializing = false
+    searchState.initializing = false;
   }
 }
 
@@ -187,9 +190,9 @@ async function ensureSearchWorker(): Promise<Worker> {
  * 处理搜索初始化请求
  */
 async function handleSearchInit(payload: { docs?: WorkerDoc[] } | undefined) {
-  const worker = await ensureSearchWorker()
-  await primeWorkerDocs(worker, payload?.docs)
-  return { ok: true }
+  const worker = await ensureSearchWorker();
+  await primeWorkerDocs(worker, payload?.docs);
+  return { ok: true };
 }
 
 /**
@@ -198,182 +201,215 @@ async function handleSearchInit(payload: { docs?: WorkerDoc[] } | undefined) {
  * 优先使用 Worker 查询，失败时降级到 IndexedDB 直接查询
  */
 async function handleSearchQuery(payload: { query: string; limit?: number }) {
-  const query = payload?.query?.trim()
-  if (!query) return []
+  const query = payload?.query?.trim();
+  if (!query) return [];
 
   try {
-    const worker = await ensureSearchWorker()
-    await primeWorkerDocs(worker)
+    const worker = await ensureSearchWorker();
+    await primeWorkerDocs(worker);
 
     return await new Promise<SearchResult[]>((resolve, reject) => {
-      const reqId = Date.now()
+      const reqId = Date.now();
       const timer = setTimeout(() => {
-        reject(new Error('Offscreen Worker 查询超时'))
-      }, 5000)
+        reject(new Error("Offscreen Worker 查询超时"));
+      }, 5000);
 
       const cleanup = () => {
-        clearTimeout(timer)
-        worker.removeEventListener('message', listener as EventListener)
-      }
+        clearTimeout(timer);
+        worker.removeEventListener("message", listener as EventListener);
+      };
 
       const listener = (event: MessageEvent) => {
-        const message = event.data
-        if (message?.type === 'result' && message.reqId === reqId) {
-          cleanup()
-          logger.info('OffscreenSearch', `🔍 命中 ${message.hits?.length ?? 0} 条`)
-          resolve(message.hits ?? [])
-        } else if (message?.type === 'error' && message.reqId === reqId) {
-          cleanup()
-          reject(new Error(message.message ?? 'Worker 查询失败'))
+        const message = event.data;
+        if (message?.type === "result" && message.reqId === reqId) {
+          cleanup();
+          logger.info(
+            "OffscreenSearch",
+            `🔍 命中 ${message.hits?.length ?? 0} 条`,
+          );
+          resolve(message.hits ?? []);
+        } else if (message?.type === "error" && message.reqId === reqId) {
+          cleanup();
+          reject(new Error(message.message ?? "Worker 查询失败"));
         }
-      }
+      };
 
-      worker.addEventListener('message', listener as EventListener)
+      worker.addEventListener("message", listener as EventListener);
 
       worker.postMessage({
-        type: 'query',
+        type: "query",
         q: query,
         reqId,
-        limit: payload?.limit ?? 50
-      })
-    })
+        limit: payload?.limit ?? 50,
+      });
+    });
   } catch (error) {
-    logger.warn('OffscreenSearch', 'Worker 不可用，回退到 IndexedDB 查询', error)
+    logger.warn(
+      "OffscreenSearch",
+      "Worker 不可用，回退到 IndexedDB 查询",
+      error,
+    );
     return indexedDBManager.searchBookmarks(query, {
       query,
       limit: payload?.limit ?? 50,
       includeDomain: true,
       includeKeywords: true,
       includeTags: true,
-      includeUrl: true
-    })
+      includeUrl: true,
+    });
   }
 }
 
 function dotProduct(left: number[], right: number[]): number {
   if (left.length !== right.length) {
-    return 0
+    return 0;
   }
 
-  let sum = 0
+  let sum = 0;
   for (let index = 0; index < left.length; index++) {
-    const leftValue = left[index]
-    const rightValue = right[index]
+    const leftValue = left[index];
+    const rightValue = right[index];
 
     if (leftValue === undefined || rightValue === undefined) {
-      return 0
+      return 0;
     }
 
-    sum += leftValue * rightValue
+    sum += leftValue * rightValue;
   }
 
-  return sum
+  return sum;
 }
 
-function buildFolderRecommendationReason(bookmarkCount: number, score: number): string {
+function buildFolderRecommendationReason(
+  bookmarkCount: number,
+  score: number,
+): string {
   if (score >= 0.8) {
-    return bookmarkCount > 0 ? '高匹配度推荐' : '基于文件夹名称的高匹配推荐'
+    return bookmarkCount > 0 ? "高匹配度推荐" : "基于文件夹名称的高匹配推荐";
   }
 
   if (score >= 0.6) {
-    return bookmarkCount > 0 ? '相似内容较多' : '与文件夹主题较接近'
+    return bookmarkCount > 0 ? "相似内容较多" : "与文件夹主题较接近";
   }
 
-  return bookmarkCount > 0 ? '可作为候选目录' : '基于文件夹名称的候选推荐'
+  return bookmarkCount > 0 ? "可作为候选目录" : "基于文件夹名称的候选推荐";
 }
 
 /**
  * 计算文件夹名称相似度
  */
-function calculateNameSimilarity(bookmarkTitle: string, folderName: string): number {
-  const bookmarkLower = bookmarkTitle.toLowerCase()
-  const folderLower = folderName.toLowerCase()
+function calculateNameSimilarity(
+  bookmarkTitle: string,
+  folderName: string,
+): number {
+  const bookmarkLower = bookmarkTitle.toLowerCase();
+  const folderLower = folderName.toLowerCase();
 
   // 完全匹配
-  if (bookmarkLower.includes(folderLower) || folderLower.includes(bookmarkLower)) {
-    return 0.8
+  if (
+    bookmarkLower.includes(folderLower) ||
+    folderLower.includes(bookmarkLower)
+  ) {
+    return 0.8;
   }
 
   // 部分匹配（包含关键词）
-  const folderWords = folderLower.split(/\s+/)
-  const bookmarkWords = bookmarkLower.split(/\s+/)
-  let matchCount = 0
+  const folderWords = folderLower.split(/\s+/);
+  const bookmarkWords = bookmarkLower.split(/\s+/);
+  let matchCount = 0;
 
   for (const folderWord of folderWords) {
-    if (bookmarkWords.some(bw => bw.includes(folderWord) || folderWord.includes(bw))) {
-      matchCount++
+    if (
+      bookmarkWords.some(
+        (bw) => bw.includes(folderWord) || folderWord.includes(bw),
+      )
+    ) {
+      matchCount++;
     }
   }
 
   if (matchCount > 0) {
-    return (matchCount / folderWords.length) * 0.6
+    return (matchCount / folderWords.length) * 0.6;
   }
 
-  return 0
+  return 0;
 }
 
 async function handleFolderRecommendations(payload: {
-  title: string
-  url: string
-  topK?: number
-  minScore?: number
+  title: string;
+  url: string;
+  topK?: number;
+  minScore?: number;
 }): Promise<OffscreenFolderRecommendation[]> {
-  const title = payload.title?.trim()
-  const url = payload.url?.trim()
+  const title = payload.title?.trim();
+  const url = payload.url?.trim();
 
   if (!title || !url) {
-    logger.warn('OffscreenFolderRecommendation', '参数无效', { title, url })
-    return []
+    logger.warn("OffscreenFolderRecommendation", "参数无效", { title, url });
+    return [];
   }
 
   try {
-    logger.info('OffscreenFolderRecommendation', '开始文件夹推荐', { title, url })
+    logger.info("OffscreenFolderRecommendation", "开始文件夹推荐", {
+      title,
+      url,
+    });
 
     const { onnxEmbeddingProviderDirect } =
-      await import('@/infrastructure/embedding/onnx-embedding-provider-direct')
-    const { folderVectorStore } = await import('@/infrastructure/folder-vector/folder-vector-store')
+      await import("@/infrastructure/embedding/onnx-embedding-provider-direct");
+    const { folderVectorStore } =
+      await import("@/infrastructure/folder-vector/folder-vector-store");
 
     // 检查 ONNX 是否可用
-    const isAvailable = await onnxEmbeddingProviderDirect.isAvailable()
+    const isAvailable = await onnxEmbeddingProviderDirect.isAvailable();
     if (!isAvailable) {
-      logger.warn('OffscreenFolderRecommendation', 'ONNX Provider 不可用，跳过推荐')
-      return []
+      logger.warn(
+        "OffscreenFolderRecommendation",
+        "ONNX Provider 不可用，跳过推荐",
+      );
+      return [];
     }
 
-    logger.info('OffscreenFolderRecommendation', '生成书签向量...')
-    const bookmarkVector = await onnxEmbeddingProviderDirect.embed(`${title} | ${url}`)
-    logger.info('OffscreenFolderRecommendation', '书签向量生成完成', {
-      dimension: bookmarkVector.length
-    })
+    logger.info("OffscreenFolderRecommendation", "生成书签向量...");
+    const bookmarkVector = await onnxEmbeddingProviderDirect.embed(
+      `${title} | ${url}`,
+    );
+    logger.info("OffscreenFolderRecommendation", "书签向量生成完成", {
+      dimension: bookmarkVector.length,
+    });
 
-    logger.info('OffscreenFolderRecommendation', '获取文件夹向量...')
-    const folderVectors = await folderVectorStore.getAll()
-    logger.info('OffscreenFolderRecommendation', '文件夹向量获取完成', {
-      count: folderVectors.length
-    })
+    logger.info("OffscreenFolderRecommendation", "获取文件夹向量...");
+    const folderVectors = await folderVectorStore.getAll();
+    logger.info("OffscreenFolderRecommendation", "文件夹向量获取完成", {
+      count: folderVectors.length,
+    });
 
     if (folderVectors.length === 0) {
-      logger.info('OffscreenFolderRecommendation', '文件夹向量库为空，跳过推荐')
-      return []
+      logger.info(
+        "OffscreenFolderRecommendation",
+        "文件夹向量库为空，跳过推荐",
+      );
+      return [];
     }
 
-    const minScore = payload.minScore ?? 0.1 // 使用正常的阈值
-    const topK = payload.topK ?? 3
+    const minScore = payload.minScore ?? 0.1; // 使用正常的阈值
+    const topK = payload.topK ?? 3;
 
-    const scoredFolders = folderVectors.map(folder => {
+    const scoredFolders = folderVectors.map((folder) => {
       // 1. 语义相似度（向量点积）
-      const semanticScore = dotProduct(bookmarkVector, folder.vector)
+      const semanticScore = dotProduct(bookmarkVector, folder.vector);
 
       // 2. 文件夹名称匹配（字符串相似度）
-      const nameScore = calculateNameSimilarity(title, folder.folderName)
+      const nameScore = calculateNameSimilarity(title, folder.folderName);
 
       // 3. 域名匹配（如果文件夹下有相同域名的书签）
       // TODO: 实现域名匹配逻辑
-      const domainScore = 0
+      const domainScore = 0;
 
       // 4. 综合评分（加权平均）
       // 语义相似度权重最高，域名匹配次之，名称匹配再次
-      const combinedScore = semanticScore * 0.6 + domainScore * 0.3 + nameScore * 0.1
+      const combinedScore =
+        semanticScore * 0.6 + domainScore * 0.3 + nameScore * 0.1;
 
       return {
         folderId: folder.folderId,
@@ -384,14 +420,17 @@ async function handleFolderRecommendations(payload: {
         semanticScore,
         nameScore,
         domainScore,
-        reason: buildFolderRecommendationReason(folder.bookmarkCount, combinedScore)
-      }
-    })
+        reason: buildFolderRecommendationReason(
+          folder.bookmarkCount,
+          combinedScore,
+        ),
+      };
+    });
 
     // 调试：显示所有文件夹的相似度（包括被过滤掉的）
-    logger.info('OffscreenFolderRecommendation', '所有文件夹相似度', {
+    logger.info("OffscreenFolderRecommendation", "所有文件夹相似度", {
       minScore,
-      folders: scoredFolders.map(f => ({
+      folders: scoredFolders.map((f) => ({
         folderId: f.folderId,
         folder: f.folderPath,
         score: f.score.toFixed(4),
@@ -399,54 +438,54 @@ async function handleFolderRecommendations(payload: {
         nameScore: f.nameScore.toFixed(4),
         domainScore: f.domainScore.toFixed(4),
         passed: f.score >= minScore,
-        bookmarkCount: f.bookmarkCount
-      }))
-    })
+        bookmarkCount: f.bookmarkCount,
+      })),
+    });
 
     const recommendations = scoredFolders
-      .filter(folder => {
+      .filter((folder) => {
         // 过滤掉根文件夹（Chrome 不允许向根文件夹添加书签）
         // 根文件夹通常 ID 为 "0" 或 "1"，且路径为 "书签栏" 或 "其他书签"
-        const isRootFolder = folder.folderId === '0' || folder.folderId === '1'
+        const isRootFolder = folder.folderId === "0" || folder.folderId === "1";
         if (isRootFolder) {
-          logger.debug('OffscreenFolderRecommendation', '跳过根文件夹', {
+          logger.debug("OffscreenFolderRecommendation", "跳过根文件夹", {
             folderId: folder.folderId,
-            folderPath: folder.folderPath
-          })
-          return false
+            folderPath: folder.folderPath,
+          });
+          return false;
         }
-        return folder.score >= minScore
+        return folder.score >= minScore;
       })
       .sort((left, right) => right.score - left.score)
       .slice(0, topK)
-      .map(r => ({
+      .map((r) => ({
         folderId: r.folderId,
         folderName: r.folderName,
         folderPath: r.folderPath,
         bookmarkCount: r.bookmarkCount,
         score: r.score,
-        reason: r.reason
-      }))
+        reason: r.reason,
+      }));
 
-    logger.info('OffscreenFolderRecommendation', '推荐完成', {
+    logger.info("OffscreenFolderRecommendation", "推荐完成", {
       total: recommendations.length,
-      recommendations: recommendations.map(r => ({
+      recommendations: recommendations.map((r) => ({
         folder: r.folderPath,
-        score: r.score.toFixed(3)
-      }))
-    })
+        score: r.score.toFixed(3),
+      })),
+    });
 
-    return recommendations
+    return recommendations;
   } catch (error) {
-    logger.error('OffscreenFolderRecommendation', '文件夹推荐失败', error)
-    return []
+    logger.error("OffscreenFolderRecommendation", "文件夹推荐失败", error);
+    return [];
   }
 }
 
 /**
  * Offscreen 任务处理函数类型
  */
-type OffscreenHandler = (payload: unknown) => Promise<unknown>
+type OffscreenHandler = (payload: unknown) => Promise<unknown>;
 
 /**
  * Offscreen 任务处理器映射
@@ -454,99 +493,109 @@ type OffscreenHandler = (payload: unknown) => Promise<unknown>
 const handlers: Record<string, OffscreenHandler> = {
   PING: async () => {
     // 简单的 ping 响应，用于验证 Offscreen Document 已就绪
-    return { ok: true }
+    return { ok: true };
   },
-  PARSE_HTML: async payload => {
-    const { parseHtml } = await import('./tasks/parser')
-    const data = payload as { html?: string }
-    return parseHtml(data?.html ?? '')
+  PARSE_HTML: async (payload) => {
+    const { parseHtml } = await import("./tasks/parser");
+    const data = payload as { html?: string };
+    return parseHtml(data?.html ?? "");
   },
-  SEARCH_INIT: payload => handleSearchInit(payload as { docs?: WorkerDoc[] } | undefined),
-  SEARCH_QUERY: async payload => handleSearchQuery(payload as { query: string; limit?: number }),
+  SEARCH_INIT: (payload) =>
+    handleSearchInit(payload as { docs?: WorkerDoc[] } | undefined),
+  SEARCH_QUERY: async (payload) =>
+    handleSearchQuery(payload as { query: string; limit?: number }),
 
   // Embedding 任务：在 Offscreen Document 里运行 ONNX，绕过扩展页面的 CSP 限制
-  EMBEDDING_EMBED: async payload => {
+  EMBEDDING_EMBED: async (payload) => {
     const { onnxEmbeddingProviderDirect } =
-      await import('@/infrastructure/embedding/onnx-embedding-provider-direct')
-    const data = payload as { text: string }
-    return onnxEmbeddingProviderDirect.embed(data.text)
+      await import("@/infrastructure/embedding/onnx-embedding-provider-direct");
+    const data = payload as { text: string };
+    return onnxEmbeddingProviderDirect.embed(data.text);
   },
-  EMBEDDING_EMBED_BATCH: async payload => {
+  EMBEDDING_EMBED_BATCH: async (payload) => {
     const { onnxEmbeddingProviderDirect } =
-      await import('@/infrastructure/embedding/onnx-embedding-provider-direct')
-    const data = payload as { texts: string[] }
-    return onnxEmbeddingProviderDirect.embedBatch!(data.texts)
+      await import("@/infrastructure/embedding/onnx-embedding-provider-direct");
+    const data = payload as { texts: string[] };
+    return onnxEmbeddingProviderDirect.embedBatch!(data.texts);
   },
   EMBEDDING_IS_AVAILABLE: async () => {
     const { onnxEmbeddingProviderDirect } =
-      await import('@/infrastructure/embedding/onnx-embedding-provider-direct')
-    return onnxEmbeddingProviderDirect.isAvailable()
+      await import("@/infrastructure/embedding/onnx-embedding-provider-direct");
+    return onnxEmbeddingProviderDirect.isAvailable();
   },
 
   // 语义搜索：在 Offscreen 里完成 embed + 向量相似度计算 + IndexedDB 补全，供 background/omnibox 调用
-  SEMANTIC_SEARCH: async payload => {
+  SEMANTIC_SEARCH: async (payload) => {
     const { onnxEmbeddingProviderDirect } =
-      await import('@/infrastructure/embedding/onnx-embedding-provider-direct')
-    const { localVectorStore } = await import('@/infrastructure/embedding/local-vector-store')
-    const data = payload as { query: string; topK?: number; minScore?: number }
+      await import("@/infrastructure/embedding/onnx-embedding-provider-direct");
+    const { localVectorStore } =
+      await import("@/infrastructure/embedding/local-vector-store");
+    const data = payload as { query: string; topK?: number; minScore?: number };
 
     // 检查向量库是否为空
-    const count = await localVectorStore.count()
+    const count = await localVectorStore.count();
     if (count === 0) {
-      console.log('[Offscreen] 向量库为空，跳过语义搜索')
-      return []
+      console.log("[Offscreen] 向量库为空，跳过语义搜索");
+      return [];
     }
 
-    const queryVector = await onnxEmbeddingProviderDirect.embed(data.query.trim())
+    const queryVector = await onnxEmbeddingProviderDirect.embed(
+      data.query.trim(),
+    );
     const vectorResults = await localVectorStore.search(
       queryVector,
       data.topK ?? 10,
-      data.minScore ?? 0.2
-    )
+      data.minScore ?? 0.2,
+    );
 
-    if (!vectorResults.length) return []
+    if (!vectorResults.length) return [];
 
     // 从 IndexedDB 补全书签详情
-    const allBookmarks = await indexedDBManager.getAllBookmarks()
-    const bookmarkMap = new Map<string, BookmarkRecord>()
+    const allBookmarks = await indexedDBManager.getAllBookmarks();
+    const bookmarkMap = new Map<string, BookmarkRecord>();
     for (const bm of allBookmarks) {
-      bookmarkMap.set(bm.id, bm)
+      bookmarkMap.set(bm.id, bm);
     }
 
-    const results: Array<{ bookmark: BookmarkRecord; score: number }> = []
+    const results: Array<{ bookmark: BookmarkRecord; score: number }> = [];
     for (const match of vectorResults) {
-      const bm = bookmarkMap.get(match.bookmarkId)
+      const bm = bookmarkMap.get(match.bookmarkId);
       if (bm && bm.url) {
-        results.push({ bookmark: bm, score: match.score })
+        results.push({ bookmark: bm, score: match.score });
       }
     }
 
-    console.log(`[Offscreen] 语义搜索完成: "${data.query}" → ${results.length} 条`)
-    return results
+    console.log(
+      `[Offscreen] 语义搜索完成: "${data.query}" → ${results.length} 条`,
+    );
+    return results;
   },
 
   // 同步书签 embedding：在 Offscreen 里执行完整的 embedding 同步流程
   SYNC_BOOKMARK_EMBEDDINGS: async () => {
-    const { embeddingService } = await import('@/infrastructure/embedding/embedding-service')
-    const allBookmarks = await indexedDBManager.getAllBookmarks()
-    await embeddingService.syncBookmarks(allBookmarks, progress => {
-      const pct = Math.round((progress.processed / progress.total) * 100)
-      console.log(`[Offscreen] Embedding 进度: ${progress.processed}/${progress.total} (${pct}%)`)
-    })
-    return { success: true }
+    const { embeddingService } =
+      await import("@/infrastructure/embedding/embedding-service");
+    const allBookmarks = await indexedDBManager.getAllBookmarks();
+    await embeddingService.syncBookmarks(allBookmarks, (progress) => {
+      const pct = Math.round((progress.processed / progress.total) * 100);
+      console.log(
+        `[Offscreen] Embedding 进度: ${progress.processed}/${progress.total} (${pct}%)`,
+      );
+    });
+    return { success: true };
   },
 
   // 文件夹推荐：在 Offscreen 里完成向量计算和推荐
-  GET_FOLDER_RECOMMENDATIONS: async payload => {
+  GET_FOLDER_RECOMMENDATIONS: async (payload) => {
     const data = payload as {
-      title: string
-      url: string
-      topK?: number
-      minScore?: number
-    }
-    return handleFolderRecommendations(data)
-  }
-}
+      title: string;
+      url: string;
+      topK?: number;
+      minScore?: number;
+    };
+    return handleFolderRecommendations(data);
+  },
+};
 
 /**
  * 监听来自 Background Script 的消息
@@ -555,51 +604,51 @@ const handlers: Record<string, OffscreenHandler> = {
  */
 
 // 立即输出日志，确认 Offscreen Document 已加载
-logger.info('OffscreenDocument', '🚀 Offscreen Document 已加载，开始监听消息')
-console.log('🚀 [Offscreen] Offscreen Document 已加载')
+logger.info("OffscreenDocument", "🚀 Offscreen Document 已加载，开始监听消息");
+console.log("🚀 [Offscreen] Offscreen Document 已加载");
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  logger.info('OffscreenDocument', '📨 收到消息', {
+  logger.info("OffscreenDocument", "📨 收到消息", {
     hasOffscreenFlag: !!message?.__offscreenRequest__,
     type: message?.type,
-    messageKeys: message ? Object.keys(message) : []
-  })
+    messageKeys: message ? Object.keys(message) : [],
+  });
 
   if (!message || !message.__offscreenRequest__) {
-    logger.debug('OffscreenDocument', '⚠️ 消息不是 Offscreen 请求，忽略')
-    return false
+    logger.debug("OffscreenDocument", "⚠️ 消息不是 Offscreen 请求，忽略");
+    return false;
   }
 
-  const handler = handlers[message.type]
+  const handler = handlers[message.type];
 
-  logger.info('OffscreenDocument', `🔄 处理 Offscreen 任务: ${message.type}`, {
+  logger.info("OffscreenDocument", `🔄 处理 Offscreen 任务: ${message.type}`, {
     hasHandler: !!handler,
-    availableHandlers: Object.keys(handlers)
-  })
-  ;(async () => {
+    availableHandlers: Object.keys(handlers),
+  });
+  (async () => {
     try {
       if (!handler) {
-        const error = `Unsupported task: ${message.type}`
-        logger.error('OffscreenDocument', `❌ ${error}`)
-        sendResponse({ ok: false, error })
-        return
+        const error = `Unsupported task: ${message.type}`;
+        logger.error("OffscreenDocument", `❌ ${error}`);
+        sendResponse({ ok: false, error });
+        return;
       }
-      logger.info('OffscreenDocument', `⚙️ 执行任务: ${message.type}`)
-      const result = await handler(message.payload)
-      logger.info('OffscreenDocument', `✅ 任务完成: ${message.type}`)
-      sendResponse({ ok: true, result })
+      logger.info("OffscreenDocument", `⚙️ 执行任务: ${message.type}`);
+      const result = await handler(message.payload);
+      logger.info("OffscreenDocument", `✅ 任务完成: ${message.type}`);
+      sendResponse({ ok: true, result });
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error)
-      logger.error('OffscreenDocument', `❌ 任务失败: ${message.type}`, error)
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      logger.error("OffscreenDocument", `❌ 任务失败: ${message.type}`, error);
       sendResponse({
         ok: false,
-        error: errorMsg
-      })
+        error: errorMsg,
+      });
     }
-  })()
+  })();
 
-  return true
-})
+  return true;
+});
 
 /**
  * 初始化 Worker 文档索引
@@ -608,16 +657,16 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
  */
 async function primeWorkerDocs(worker: Worker, docsFromPayload?: WorkerDoc[]) {
   if (searchState.primed && !docsFromPayload) {
-    return
+    return;
   }
 
-  const docs = docsFromPayload ?? (await collectDocsFromIDB())
-  worker.postMessage({ type: 'init', docs })
+  const docs = docsFromPayload ?? (await collectDocsFromIDB());
+  worker.postMessage({ type: "init", docs });
   // eslint-disable-next-line require-atomic-updates -- 文档索引初始化是原子操作，不会有竞态条件
-  searchState.docCount = docs.length
+  searchState.docCount = docs.length;
   // eslint-disable-next-line require-atomic-updates -- 文档索引初始化是原子操作，不会有竞态条件
-  searchState.primed = docs.length > 0
-  logger.info('OffscreenSearch', `索引文档数量: ${searchState.docCount}`)
+  searchState.primed = docs.length > 0;
+  logger.info("OffscreenSearch", `索引文档数量: ${searchState.docCount}`);
 }
 
 /**
@@ -626,18 +675,18 @@ async function primeWorkerDocs(worker: Worker, docsFromPayload?: WorkerDoc[]) {
  * 将书签数据转换为 Worker 所需的文档格式
  */
 async function collectDocsFromIDB(): Promise<WorkerDoc[]> {
-  await indexedDBManager.initialize()
-  const bookmarks = await indexedDBManager.getAllBookmarks()
+  await indexedDBManager.initialize();
+  const bookmarks = await indexedDBManager.getAllBookmarks();
   return bookmarks
-    .filter(record => !record.isFolder)
-    .map(record => ({
+    .filter((record) => !record.isFolder)
+    .map((record) => ({
       id: String(record.id),
       titleLower: record.titleLower,
       urlLower: record.urlLower,
       domain: record.domain,
       keywords: record.keywords,
-      isFolder: record.isFolder
-    }))
+      isFolder: record.isFolder,
+    }));
 }
 
-export {}
+export {};

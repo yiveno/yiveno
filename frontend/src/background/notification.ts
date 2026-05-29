@@ -7,27 +7,27 @@
  * - 支持前端消息调用和 Background 内部调用
  */
 
-import { logger } from '@/infrastructure/logging/logger'
+import { logger } from "@/infrastructure/logging/logger";
 
 /**
  * 通知选项
  */
 export interface SystemNotificationOptions {
   /** 通知标题（默认：AcuityBookmarks） */
-  title?: string | undefined
+  title?: string | undefined;
   /** 通知图标 URL */
-  iconUrl?: string | undefined
+  iconUrl?: string | undefined;
   /** 是否需要用户交互才关闭 */
-  requireInteraction?: boolean | undefined
+  requireInteraction?: boolean | undefined;
   /** 自动关闭时间（毫秒），0 表示不自动关闭 */
-  autoCloseMs?: number | undefined
+  autoCloseMs?: number | undefined;
 }
 
 /**
  * 检查通知权限是否可用
  */
 export function isNotificationAvailable(): boolean {
-  return typeof chrome !== 'undefined' && !!chrome.notifications?.create
+  return typeof chrome !== "undefined" && !!chrome.notifications?.create;
 }
 
 /**
@@ -41,46 +41,47 @@ export function isNotificationAvailable(): boolean {
  */
 export async function showSystemNotification(
   message: string,
-  options: SystemNotificationOptions = {}
+  options: SystemNotificationOptions = {},
 ): Promise<string> {
   if (!isNotificationAvailable()) {
-    logger.debug('Notification', '系统通知不可用')
-    return ''
+    logger.debug("Notification", "系统通知不可用");
+    return "";
   }
 
   const {
-    title = 'AcuityBookmarks',
-    iconUrl = chrome.runtime.getURL?.('images/icon128.png') || 'images/icon128.png',
+    title = "AcuityBookmarks",
+    iconUrl = chrome.runtime.getURL?.("images/icon128.png") ||
+      "images/icon128.png",
     requireInteraction = false,
-    autoCloseMs = 0
-  } = options
+    autoCloseMs = 0,
+  } = options;
 
   try {
-    const notificationId = await new Promise<string>(resolve => {
+    const notificationId = await new Promise<string>((resolve) => {
       chrome.notifications.create(
         {
-          type: 'basic',
+          type: "basic",
           title,
           message,
           iconUrl,
-          requireInteraction
+          requireInteraction,
         },
-        id => resolve(id || '')
-      )
-    })
+        (id) => resolve(id || ""),
+      );
+    });
 
     // 自动关闭
     if (autoCloseMs > 0 && notificationId) {
       setTimeout(() => {
-        clearSystemNotification(notificationId)
-      }, autoCloseMs)
+        clearSystemNotification(notificationId);
+      }, autoCloseMs);
     }
 
-    logger.debug('Notification', '系统通知已显示', { notificationId, title })
-    return notificationId
+    logger.debug("Notification", "系统通知已显示", { notificationId, title });
+    return notificationId;
   } catch (error) {
-    logger.warn('Notification', '显示系统通知失败', error)
-    return ''
+    logger.warn("Notification", "显示系统通知失败", error);
+    return "";
   }
 }
 
@@ -89,16 +90,18 @@ export async function showSystemNotification(
  *
  * @param notificationId - 通知 ID
  */
-export async function clearSystemNotification(notificationId: string): Promise<void> {
-  if (!notificationId) return
-  if (!chrome.notifications?.clear) return
+export async function clearSystemNotification(
+  notificationId: string,
+): Promise<void> {
+  if (!notificationId) return;
+  if (!chrome.notifications?.clear) return;
 
   try {
-    await new Promise<void>(resolve => {
-      chrome.notifications.clear(notificationId, () => resolve())
-    })
-    logger.debug('Notification', '系统通知已清除', { notificationId })
+    await new Promise<void>((resolve) => {
+      chrome.notifications.clear(notificationId, () => resolve());
+    });
+    logger.debug("Notification", "系统通知已清除", { notificationId });
   } catch (error) {
-    logger.warn('Notification', '清除系统通知失败', { notificationId, error })
+    logger.warn("Notification", "清除系统通知失败", { notificationId, error });
   }
 }

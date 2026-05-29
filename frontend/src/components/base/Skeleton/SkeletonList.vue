@@ -11,55 +11,63 @@
   - 符合 Material Design 3 规范
 -->
 <script setup lang="ts">
-import { computed } from 'vue'
-import Skeleton from './Skeleton.vue'
-import type { SkeletonListProps } from './SkeletonList.d'
+import { computed } from "vue";
+import Skeleton from "./Skeleton.vue";
+import type { SkeletonListProps } from "./SkeletonList.d";
 
-defineOptions({ name: 'SkeletonList' })
+defineOptions({ name: "SkeletonList" });
 
 const props = withDefaults(defineProps<SkeletonListProps>(), {
   count: 3,
-  itemHeight: '56px', // ✅ 改为 56px，与通知列表一致
-  gap: 'none', // ✅ 改为 none，因为使用 border-bottom 分隔
+  itemHeight: "56px", // ✅ 改为 56px，与通知列表一致
+  gap: "none", // ✅ 改为 none，因为使用 border-bottom 分隔
   showAvatar: true,
   avatarSize: 32, // ✅ 改为 32，与通知列表一致
   showSecondary: true,
   showActions: false,
-  animation: 'pulse'
-})
+  animation: "pulse",
+});
 
 /**
  * 生成骨架屏项数组
  */
-const items = computed(() => Array.from({ length: props.count }, (_, i) => i))
+const items = computed(() => Array.from({ length: props.count }, (_, i) => i));
 
 /**
  * 计算列表容器样式
  */
 const listStyles = computed(() => {
   const gapMap = {
-    none: '0',
-    sm: 'var(--spacing-2)',
-    md: 'var(--spacing-3)',
-    lg: 'var(--spacing-4)'
-  }
+    none: "0",
+    sm: "var(--spacing-2)",
+    md: "var(--spacing-3)",
+    lg: "var(--spacing-4)",
+  };
 
   return {
-    gap: gapMap[props.gap]
-  }
-})
+    gap: gapMap[props.gap],
+  };
+});
 
 /**
  * 计算列表项样式
  */
 const itemStyles = computed(() => ({
-  height: typeof props.itemHeight === 'number' ? `${props.itemHeight}px` : props.itemHeight
-}))
+  height:
+    typeof props.itemHeight === "number"
+      ? `${props.itemHeight}px`
+      : props.itemHeight,
+}));
 </script>
 
 <template>
   <div class="skeleton-list" :style="listStyles">
-    <div v-for="index in items" :key="index" class="skeleton-list__item" :style="itemStyles">
+    <div
+      v-for="index in items"
+      :key="index"
+      class="skeleton-list__item"
+      :style="itemStyles"
+    >
       <!-- 头像/图标 -->
       <Skeleton
         v-if="showAvatar"

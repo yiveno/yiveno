@@ -5,7 +5,8 @@
  */
 
 // 官网基础 URL
-const WEBSITE_BASE_URL = import.meta.env.VITE_WEBSITE_URL || 'https://acuitybookmarks.com'
+const WEBSITE_BASE_URL =
+  import.meta.env.VITE_WEBSITE_URL || "https://acuitybookmarks.com";
 
 /**
  * 官网 URL 配置
@@ -27,8 +28,8 @@ export const websiteUrls = {
   terms: `${WEBSITE_BASE_URL}/terms`,
 
   /** 隐私政策 */
-  privacy: `${WEBSITE_BASE_URL}/privacy`
-} as const
+  privacy: `${WEBSITE_BASE_URL}/privacy`,
+} as const;
 
 /**
  * 在新标签页中打开官网 URL
@@ -37,14 +38,14 @@ export const websiteUrls = {
  */
 export async function openWebsiteUrl(url: string): Promise<void> {
   try {
-    if (typeof chrome !== 'undefined' && chrome.tabs?.create) {
-      await chrome.tabs.create({ url })
+    if (typeof chrome !== "undefined" && chrome.tabs?.create) {
+      await chrome.tabs.create({ url });
     } else {
-      window.open(url, '_blank')
+      window.open(url, "_blank");
     }
   } catch (error) {
-    console.error('[Website] 打开 URL 失败:', error)
+    console.error("[Website] 打开 URL 失败:", error);
     // 降级方案：直接使用 window.open
-    window.open(url, '_blank')
+    window.open(url, "_blank");
   }
 }

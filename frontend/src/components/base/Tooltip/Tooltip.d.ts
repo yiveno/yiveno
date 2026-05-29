@@ -10,33 +10,33 @@ export interface TooltipProps {
    * 简单文本内容（Plain Tooltip）
    * 如需富文本，请使用 content slot
    */
-  text?: string
+  text?: string;
 
   /**
    * Tooltip 位置
    * @default 'top'
    */
-  placement?: 'top' | 'bottom' | 'left' | 'right'
+  placement?: "top" | "bottom" | "left" | "right";
 
   /**
    * 显示延迟（毫秒）
    * MD3 推荐 500ms
    * @default 500
    */
-  delay?: number
+  delay?: number;
 
   /**
    * 是否禁用
    * @default false
    */
-  disabled?: boolean
+  disabled?: boolean;
 
   /**
    * 与触发元素的偏移量
    * MD3 推荐使用 sm (8px)
    * @default 'sm'
    */
-  offset?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
+  offset?: "xs" | "sm" | "md" | "lg" | "xl";
 }
 
 export interface TooltipEmits {}

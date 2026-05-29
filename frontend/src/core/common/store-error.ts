@@ -21,31 +21,31 @@
  */
 export enum StoreErrorType {
   /** 网络连接错误 */
-  NETWORK_ERROR = 'NETWORK_ERROR',
+  NETWORK_ERROR = "NETWORK_ERROR",
   /** 操作超时错误 */
-  TIMEOUT_ERROR = 'TIMEOUT_ERROR',
+  TIMEOUT_ERROR = "TIMEOUT_ERROR",
 
   /** 数据验证错误 */
-  DATA_VALIDATION_ERROR = 'DATA_VALIDATION_ERROR',
+  DATA_VALIDATION_ERROR = "DATA_VALIDATION_ERROR",
   /** 数据未找到 */
-  DATA_NOT_FOUND = 'DATA_NOT_FOUND',
+  DATA_NOT_FOUND = "DATA_NOT_FOUND",
   /** 数据同步错误 */
-  DATA_SYNC_ERROR = 'DATA_SYNC_ERROR',
+  DATA_SYNC_ERROR = "DATA_SYNC_ERROR",
 
   /** 权限被拒绝 */
-  PERMISSION_DENIED = 'PERMISSION_DENIED',
+  PERMISSION_DENIED = "PERMISSION_DENIED",
   /** 认证错误 */
-  AUTHENTICATION_ERROR = 'AUTHENTICATION_ERROR',
+  AUTHENTICATION_ERROR = "AUTHENTICATION_ERROR",
 
   /** 业务逻辑错误 */
-  BUSINESS_LOGIC_ERROR = 'BUSINESS_LOGIC_ERROR',
+  BUSINESS_LOGIC_ERROR = "BUSINESS_LOGIC_ERROR",
   /** 操作失败 */
-  OPERATION_FAILED = 'OPERATION_FAILED',
+  OPERATION_FAILED = "OPERATION_FAILED",
 
   /** 系统错误 */
-  SYSTEM_ERROR = 'SYSTEM_ERROR',
+  SYSTEM_ERROR = "SYSTEM_ERROR",
   /** 未知错误 */
-  UNKNOWN_ERROR = 'UNKNOWN_ERROR'
+  UNKNOWN_ERROR = "UNKNOWN_ERROR",
 }
 
 /**
@@ -53,13 +53,13 @@ export enum StoreErrorType {
  */
 export enum ErrorSeverity {
   /** 低 - 不影响核心功能 */
-  LOW = 'LOW',
+  LOW = "LOW",
   /** 中 - 影响部分功能 */
-  MEDIUM = 'MEDIUM',
+  MEDIUM = "MEDIUM",
   /** 高 - 影响核心功能 */
-  HIGH = 'HIGH',
+  HIGH = "HIGH",
   /** 严重 - 系统无法正常工作 */
-  CRITICAL = 'CRITICAL'
+  CRITICAL = "CRITICAL",
 }
 
 /**
@@ -67,13 +67,13 @@ export enum ErrorSeverity {
  */
 export enum RecoveryStrategy {
   /** 无恢复策略 */
-  NONE = 'NONE',
+  NONE = "NONE",
   /** 自动重试 */
-  RETRY = 'RETRY',
+  RETRY = "RETRY",
   /** 降级处理 */
-  FALLBACK = 'FALLBACK',
+  FALLBACK = "FALLBACK",
   /** 需要用户手动处理 */
-  MANUAL = 'MANUAL'
+  MANUAL = "MANUAL",
 }
 
 /**
@@ -100,10 +100,10 @@ export class StoreError extends Error {
     public userMessage: string,
     public technicalMessage: string,
     public context?: Record<string, unknown>,
-    public originalError?: Error
+    public originalError?: Error,
   ) {
-    super(technicalMessage)
-    this.name = 'StoreError'
+    super(technicalMessage);
+    this.name = "StoreError";
   }
 
   /**
@@ -115,23 +115,23 @@ export class StoreError extends Error {
    */
   static createUserFriendlyMessage(
     type: StoreErrorType,
-    _context?: Record<string, unknown>
+    _context?: Record<string, unknown>,
   ): string {
     const messages = {
-      [StoreErrorType.NETWORK_ERROR]: '网络连接异常，请检查网络设置',
-      [StoreErrorType.TIMEOUT_ERROR]: '操作超时，请稍后重试',
-      [StoreErrorType.DATA_VALIDATION_ERROR]: '数据格式错误，请检查输入',
-      [StoreErrorType.DATA_NOT_FOUND]: '未找到相关数据',
-      [StoreErrorType.DATA_SYNC_ERROR]: '数据同步失败，请刷新页面',
-      [StoreErrorType.PERMISSION_DENIED]: '权限不足，请检查权限设置',
-      [StoreErrorType.AUTHENTICATION_ERROR]: '身份验证失败，请重新登录',
-      [StoreErrorType.BUSINESS_LOGIC_ERROR]: '操作失败，请重试',
-      [StoreErrorType.OPERATION_FAILED]: '操作执行失败',
-      [StoreErrorType.SYSTEM_ERROR]: '系统错误，请联系技术支持',
-      [StoreErrorType.UNKNOWN_ERROR]: '未知错误，请重试'
-    }
+      [StoreErrorType.NETWORK_ERROR]: "网络连接异常，请检查网络设置",
+      [StoreErrorType.TIMEOUT_ERROR]: "操作超时，请稍后重试",
+      [StoreErrorType.DATA_VALIDATION_ERROR]: "数据格式错误，请检查输入",
+      [StoreErrorType.DATA_NOT_FOUND]: "未找到相关数据",
+      [StoreErrorType.DATA_SYNC_ERROR]: "数据同步失败，请刷新页面",
+      [StoreErrorType.PERMISSION_DENIED]: "权限不足，请检查权限设置",
+      [StoreErrorType.AUTHENTICATION_ERROR]: "身份验证失败，请重新登录",
+      [StoreErrorType.BUSINESS_LOGIC_ERROR]: "操作失败，请重试",
+      [StoreErrorType.OPERATION_FAILED]: "操作执行失败",
+      [StoreErrorType.SYSTEM_ERROR]: "系统错误，请联系技术支持",
+      [StoreErrorType.UNKNOWN_ERROR]: "未知错误，请重试",
+    };
 
-    return messages[type] || messages[StoreErrorType.UNKNOWN_ERROR]
+    return messages[type] || messages[StoreErrorType.UNKNOWN_ERROR];
   }
 
   /**
@@ -149,8 +149,8 @@ export class StoreError extends Error {
       userMessage: this.userMessage,
       technicalMessage: this.technicalMessage,
       context: this.context,
-      originalError: this.originalError?.message
-    }
+      originalError: this.originalError?.message,
+    };
   }
 }
 
@@ -158,10 +158,10 @@ export class StoreError extends Error {
  * Store 错误状态接口
  */
 export interface StoreErrorState {
-  lastError: StoreError | null
-  errorHistory: StoreError[]
-  isRecovering: boolean
-  recoveryProgress: number
+  lastError: StoreError | null;
+  errorHistory: StoreError[];
+  isRecovering: boolean;
+  recoveryProgress: number;
 }
 
 /**
@@ -172,8 +172,8 @@ export function createErrorState(): StoreErrorState {
     lastError: null,
     errorHistory: [],
     isRecovering: false,
-    recoveryProgress: 0
-  }
+    recoveryProgress: 0,
+  };
 }
 
 /**
@@ -183,17 +183,23 @@ export class DataValidator {
   /**
    * 检查是否为书签树节点
    */
-  static isBookmarkTreeNode(obj: unknown): obj is chrome.bookmarks.BookmarkTreeNode {
-    if (!obj || typeof obj !== 'object') return false
-    const node = obj as Record<string, unknown>
-    return typeof node.id === 'string' && typeof node.title === 'string'
+  static isBookmarkTreeNode(
+    obj: unknown,
+  ): obj is chrome.bookmarks.BookmarkTreeNode {
+    if (!obj || typeof obj !== "object") return false;
+    const node = obj as Record<string, unknown>;
+    return typeof node.id === "string" && typeof node.title === "string";
   }
 
   /**
    * 检查是否为书签数组
    */
-  static isBookmarkArray(arr: unknown): arr is chrome.bookmarks.BookmarkTreeNode[] {
-    return Array.isArray(arr) && arr.every(item => this.isBookmarkTreeNode(item))
+  static isBookmarkArray(
+    arr: unknown,
+  ): arr is chrome.bookmarks.BookmarkTreeNode[] {
+    return (
+      Array.isArray(arr) && arr.every((item) => this.isBookmarkTreeNode(item))
+    );
   }
 
   /**
@@ -201,40 +207,40 @@ export class DataValidator {
    */
   static validateUrl(url: string): boolean {
     try {
-      const urlObj = new URL(url)
+      const urlObj = new URL(url);
 
       // 仅允许 http/https
-      const protocol = urlObj.protocol.toLowerCase()
-      if (!['http:', 'https:'].includes(protocol)) return false
+      const protocol = urlObj.protocol.toLowerCase();
+      if (!["http:", "https:"].includes(protocol)) return false;
 
-      const host = urlObj.hostname.trim()
-      if (!host) return false
+      const host = urlObj.hostname.trim();
+      if (!host) return false;
 
       // 不允许 localhost 或 IPv4 地址作为有效域名
-      if (host === 'localhost') return false
-      if (/^\d{1,3}(?:\.\d{1,3}){3}$/.test(host)) return false
+      if (host === "localhost") return false;
+      if (/^\d{1,3}(?:\.\d{1,3}){3}$/.test(host)) return false;
 
-      const parts = host.split('.')
+      const parts = host.split(".");
       // 至少包含一个二级域名 + 顶级域名
-      if (parts.length < 2) return false
+      if (parts.length < 2) return false;
 
-      const tld = parts[parts.length - 1]
-      const sld = parts[parts.length - 2]
-      if (!tld || !sld) return false
+      const tld = parts[parts.length - 1];
+      const sld = parts[parts.length - 2];
+      if (!tld || !sld) return false;
 
       // 顶级域名需为字母，长度>=2（如 com, cn 等）
-      if (!/^[a-z]{2,}$/i.test(tld)) return false
+      if (!/^[a-z]{2,}$/i.test(tld)) return false;
 
       // 二级域名与各级标签规则：允许字母数字与连字符，中间最多63字符，首尾为字母数字；支持 punycode（xn--）
-      const labelRegex = /^(?:xn--)?[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i
-      if (!labelRegex.test(sld)) return false
+      const labelRegex = /^(?:xn--)?[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i;
+      if (!labelRegex.test(sld)) return false;
       for (const label of parts) {
-        if (!labelRegex.test(label)) return false
+        if (!labelRegex.test(label)) return false;
       }
 
-      return true
+      return true;
     } catch {
-      return false
+      return false;
     }
   }
 
@@ -245,6 +251,6 @@ export class DataValidator {
    * @returns 如果是有效的书签节点且 URL 有效则返回 true
    */
   static validateBookmarkNode(node: unknown): boolean {
-    return this.isBookmarkTreeNode(node) && this.validateUrl(node.url || '')
+    return this.isBookmarkTreeNode(node) && this.validateUrl(node.url || "");
   }
 }

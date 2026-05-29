@@ -12,41 +12,41 @@
 import type {
   EventDetail as AnyDetail,
   EventListener,
-  EventStreamConfig
-} from '@/types/infrastructure/events'
+  EventStreamConfig,
+} from "@/types/infrastructure/events";
 
 // 导出类型供外部使用
-export type { EventListener, EventStreamConfig }
+export type { EventListener, EventStreamConfig };
 
 /**
  * 事件历史记录项
  */
 export interface EventHistoryItem<T = AnyDetail> {
   /** 事件名称 */
-  name: string
+  name: string;
   /** 事件数据 */
-  detail: T
+  detail: T;
   /** 事件时间戳 */
-  timestamp: number
+  timestamp: number;
 }
 
 /**
  * 事件流管理器
  */
 export class EventStream {
-  private config: EventStreamConfig
-  private pendingTimers = new Map<string, number>()
-  private lastDetails = new Map<string, AnyDetail>()
-  private listeners = new Map<string, Set<EventListener>>()
-  private eventHistory: EventHistoryItem[] = []
+  private config: EventStreamConfig;
+  private pendingTimers = new Map<string, number>();
+  private lastDetails = new Map<string, AnyDetail>();
+  private listeners = new Map<string, Set<EventListener>>();
+  private eventHistory: EventHistoryItem[] = [];
 
   constructor(config: Partial<EventStreamConfig> = {}) {
     this.config = {
       defaultWaitMs: 100,
       maxListeners: 100,
       enableLogging: false,
-      ...config
-    }
+      ...config,
+    };
   }
 
   /**
@@ -64,33 +64,37 @@ export class EventStream {
    * stream.dispatchCoalescedEvent<{ ids: string[] }>('bulk-update', { ids: [...] })
    * ```
    */
-  dispatchCoalescedEvent<T = AnyDetail>(name: string, detail?: T, waitMs?: number): void {
-    const delay = waitMs ?? this.config.defaultWaitMs
+  dispatchCoalescedEvent<T = AnyDetail>(
+    name: string,
+    detail?: T,
+    waitMs?: number,
+  ): void {
+    const delay = waitMs ?? this.config.defaultWaitMs;
 
-    this.lastDetails.set(name, detail as AnyDetail)
+    this.lastDetails.set(name, detail as AnyDetail);
 
-    const existing = this.pendingTimers.get(name)
+    const existing = this.pendingTimers.get(name);
     if (existing) {
-      clearTimeout(existing)
+      clearTimeout(existing);
     }
 
     // 使用 globalThis 兼容 Service Worker
     const globalTimer = globalThis as typeof globalThis & {
-      setTimeout: typeof setTimeout
-    }
+      setTimeout: typeof setTimeout;
+    };
     const id = globalTimer.setTimeout(
       () => {
         try {
-          const finalDetail = this.lastDetails.get(name)
-          this.dispatchEventInternal(name, finalDetail)
+          const finalDetail = this.lastDetails.get(name);
+          this.dispatchEventInternal(name, finalDetail);
         } finally {
-          this.pendingTimers.delete(name)
+          this.pendingTimers.delete(name);
         }
       },
-      Math.max(0, delay)
-    )
+      Math.max(0, delay),
+    );
 
-    this.pendingTimers.set(name, Number(id))
+    this.pendingTimers.set(name, Number(id));
   }
 
   /**
@@ -107,7 +111,7 @@ export class EventStream {
    * ```
    */
   dispatchEventSafe<T = AnyDetail>(name: string, detail?: T): void {
-    this.dispatchEventInternal(name, detail as AnyDetail)
+    this.dispatchEventInternal(name, detail as AnyDetail);
   }
 
   /**
@@ -129,39 +133,41 @@ export class EventStream {
    */
   on<T = AnyDetail>(name: string, listener: EventListener<T>): () => void {
     if (!this.listeners.has(name)) {
-      this.listeners.set(name, new Set())
+      this.listeners.set(name, new Set());
     }
 
-    const listeners = this.listeners.get(name)!
+    const listeners = this.listeners.get(name)!;
 
     if (listeners.size >= this.config.maxListeners) {
-      console.warn(`EventStream: Too many listeners for event "${name}"`)
+      console.warn(`EventStream: Too many listeners for event "${name}"`);
       // 返回一个 no-op 函数，表示监听器未被添加
       return () => {
         // 无需执行任何操作，因为监听器从未被添加
         if (this.config.enableLogging) {
-          console.log(`EventStream: No-op unsubscribe for "${name}" (max listeners reached)`)
+          console.log(
+            `EventStream: No-op unsubscribe for "${name}" (max listeners reached)`,
+          );
         }
-      }
+      };
     }
 
-    listeners.add(listener as EventListener)
+    listeners.add(listener as EventListener);
 
     if (this.config.enableLogging) {
-      console.log(`EventStream: Added listener for "${name}"`)
+      console.log(`EventStream: Added listener for "${name}"`);
     }
 
     // 返回取消订阅函数
     return () => {
-      listeners.delete(listener as EventListener)
+      listeners.delete(listener as EventListener);
       if (listeners.size === 0) {
-        this.listeners.delete(name)
+        this.listeners.delete(name);
       }
 
       if (this.config.enableLogging) {
-        console.log(`EventStream: Removed listener for "${name}"`)
+        console.log(`EventStream: Removed listener for "${name}"`);
       }
-    }
+    };
   }
 
   /**
@@ -180,12 +186,12 @@ export class EventStream {
    * ```
    */
   once<T = AnyDetail>(name: string, listener: EventListener<T>): () => void {
-    const unsubscribe = this.on<T>(name, detail => {
-      listener(detail)
-      unsubscribe()
-    })
+    const unsubscribe = this.on<T>(name, (detail) => {
+      listener(detail);
+      unsubscribe();
+    });
 
-    return unsubscribe
+    return unsubscribe;
   }
 
   /**
@@ -193,19 +199,19 @@ export class EventStream {
    */
   off(name: string, listener?: EventListener): void {
     if (!this.listeners.has(name)) {
-      return
+      return;
     }
 
-    const listeners = this.listeners.get(name)!
+    const listeners = this.listeners.get(name)!;
 
     if (listener) {
-      listeners.delete(listener)
+      listeners.delete(listener);
     } else {
-      listeners.clear()
+      listeners.clear();
     }
 
     if (listeners.size === 0) {
-      this.listeners.delete(name)
+      this.listeners.delete(name);
     }
   }
 
@@ -214,9 +220,9 @@ export class EventStream {
    */
   removeAllListeners(name?: string): void {
     if (name) {
-      this.listeners.delete(name)
+      this.listeners.delete(name);
     } else {
-      this.listeners.clear()
+      this.listeners.clear();
     }
   }
 
@@ -224,14 +230,14 @@ export class EventStream {
    * 获取事件监听器数量
    */
   getListenerCount(name: string): number {
-    return this.listeners.get(name)?.size ?? 0
+    return this.listeners.get(name)?.size ?? 0;
   }
 
   /**
    * 获取所有事件名称
    */
   getEventNames(): string[] {
-    return Array.from(this.listeners.keys())
+    return Array.from(this.listeners.keys());
   }
 
   /**
@@ -242,38 +248,38 @@ export class EventStream {
     this.eventHistory.push({
       name,
       detail,
-      timestamp: Date.now()
-    })
+      timestamp: Date.now(),
+    });
 
     // 限制历史记录大小
     if (this.eventHistory.length > 1000) {
-      this.eventHistory = this.eventHistory.slice(-500)
+      this.eventHistory = this.eventHistory.slice(-500);
     }
 
     // 派发到浏览器事件系统（仅在浏览器环境）
-    if (typeof window !== 'undefined' && window.dispatchEvent) {
+    if (typeof window !== "undefined" && window.dispatchEvent) {
       try {
-        const evt = new CustomEvent(name, { detail })
-        window.dispatchEvent(evt)
+        const evt = new CustomEvent(name, { detail });
+        window.dispatchEvent(evt);
       } catch (error) {
-        console.error(`EventStream: Failed to dispatch event "${name}"`, error)
+        console.error(`EventStream: Failed to dispatch event "${name}"`, error);
       }
     }
 
     // 通知订阅者
-    const listeners = this.listeners.get(name)
+    const listeners = this.listeners.get(name);
     if (listeners) {
-      listeners.forEach(listener => {
+      listeners.forEach((listener) => {
         try {
-          listener(detail)
+          listener(detail);
         } catch (error) {
-          console.error(`EventStream: Error in listener for "${name}"`, error)
+          console.error(`EventStream: Error in listener for "${name}"`, error);
         }
-      })
+      });
     }
 
     if (this.config.enableLogging) {
-      console.log(`EventStream: Dispatched event "${name}"`, detail)
+      console.log(`EventStream: Dispatched event "${name}"`, detail);
     }
   }
 
@@ -291,30 +297,32 @@ export class EventStream {
    */
   getEventHistory<T = AnyDetail>(name?: string): Array<EventHistoryItem<T>> {
     if (name) {
-      return this.eventHistory.filter(event => event.name === name) as Array<EventHistoryItem<T>>
+      return this.eventHistory.filter((event) => event.name === name) as Array<
+        EventHistoryItem<T>
+      >;
     }
-    return [...this.eventHistory] as Array<EventHistoryItem<T>>
+    return [...this.eventHistory] as Array<EventHistoryItem<T>>;
   }
 
   /**
    * 清空事件历史
    */
   clearEventHistory(): void {
-    this.eventHistory = []
+    this.eventHistory = [];
   }
 
   /**
    * 设置配置
    */
   setConfig(config: Partial<EventStreamConfig>): void {
-    this.config = { ...this.config, ...config }
+    this.config = { ...this.config, ...config };
   }
 
   /**
    * 获取当前配置
    */
   getConfig(): EventStreamConfig {
-    return { ...this.config }
+    return { ...this.config };
   }
 
   /**
@@ -322,24 +330,24 @@ export class EventStream {
    */
   destroy(): void {
     // 清理所有定时器
-    this.pendingTimers.forEach(id => clearTimeout(id))
-    this.pendingTimers.clear()
+    this.pendingTimers.forEach((id) => clearTimeout(id));
+    this.pendingTimers.clear();
 
     // 清理所有监听器
-    this.listeners.clear()
+    this.listeners.clear();
 
     // 清理历史记录
-    this.eventHistory = []
+    this.eventHistory = [];
 
     // 清理最后详情
-    this.lastDetails.clear()
+    this.lastDetails.clear();
   }
 }
 
 /**
  * 默认事件流实例
  */
-export const eventStream = new EventStream()
+export const eventStream = new EventStream();
 
 /**
  * 便捷的事件派发函数（保持向后兼容）
@@ -357,9 +365,9 @@ export const eventStream = new EventStream()
 export function dispatchCoalescedEvent<T = AnyDetail>(
   name: string,
   detail?: T,
-  waitMs: number = 100
+  waitMs: number = 100,
 ): void {
-  eventStream.dispatchCoalescedEvent(name, detail, waitMs)
+  eventStream.dispatchCoalescedEvent(name, detail, waitMs);
 }
 
 /**
@@ -374,8 +382,11 @@ export function dispatchCoalescedEvent<T = AnyDetail>(
  * dispatchEventSafe<{ bookmarkId: string }>('bookmark:created', { bookmarkId: '123' })
  * ```
  */
-export function dispatchEventSafe<T = AnyDetail>(name: string, detail?: T): void {
-  eventStream.dispatchEventSafe(name, detail)
+export function dispatchEventSafe<T = AnyDetail>(
+  name: string,
+  detail?: T,
+): void {
+  eventStream.dispatchEventSafe(name, detail);
 }
 
 /**
@@ -393,8 +404,11 @@ export function dispatchEventSafe<T = AnyDetail>(name: string, detail?: T): void
  * })
  * ```
  */
-export function onEvent<T = AnyDetail>(name: string, listener: EventListener<T>): () => void {
-  return eventStream.on(name, listener)
+export function onEvent<T = AnyDetail>(
+  name: string,
+  listener: EventListener<T>,
+): () => void {
+  return eventStream.on(name, listener);
 }
 
 /**
@@ -412,13 +426,16 @@ export function onEvent<T = AnyDetail>(name: string, listener: EventListener<T>)
  * })
  * ```
  */
-export function onceEvent<T = AnyDetail>(name: string, listener: EventListener<T>): () => void {
-  return eventStream.once(name, listener)
+export function onceEvent<T = AnyDetail>(
+  name: string,
+  listener: EventListener<T>,
+): () => void {
+  return eventStream.once(name, listener);
 }
 
 /**
  * 便捷的事件取消订阅函数
  */
 export function offEvent(name: string, listener?: EventListener): void {
-  eventStream.off(name, listener)
+  eventStream.off(name, listener);
 }

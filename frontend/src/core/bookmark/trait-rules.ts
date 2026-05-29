@@ -23,26 +23,32 @@
  * - untagged: 未分类书签（直接在根目录或书签栏）
  * - untitled: 无标题书签（标题为空或等于 URL）
  */
-export type TraitTag = 'duplicate' | 'invalid' | 'internal' | 'outdated' | 'untagged' | 'untitled'
+export type TraitTag =
+  | "duplicate"
+  | "invalid"
+  | "internal"
+  | "outdated"
+  | "untagged"
+  | "untitled";
 
 /**
  * 特征元数据
  */
 export interface TraitMetadata {
   /** 特征 ID */
-  id: TraitTag
+  id: TraitTag;
   /** 特征名称（中文） */
-  name: string
+  name: string;
   /** 特征描述 */
-  description: string
+  description: string;
   /** 特征图标（emoji） */
-  icon: string
+  icon: string;
   /** 优先级（数字越小优先级越高） */
-  priority: number
+  priority: number;
   /** 是否为负面特征（需要用户关注） */
-  isNegative: boolean
+  isNegative: boolean;
   /** 检测规则描述 */
-  detectionRules: string[]
+  detectionRules: string[];
 }
 
 /**
@@ -60,17 +66,17 @@ export const TRAIT_RULES: Record<TraitTag, TraitMetadata> = {
    * 3. 第一个出现的是原始书签，后续的标记为重复
    */
   duplicate: {
-    id: 'duplicate',
-    name: '重复书签',
-    description: 'URL 完全相同的书签（从第二个开始）',
-    icon: '🔄',
+    id: "duplicate",
+    name: "重复书签",
+    description: "URL 完全相同的书签（从第二个开始）",
+    icon: "🔄",
     priority: 1,
     isNegative: true,
     detectionRules: [
-      'URL 完全相同（忽略大小写）',
-      '按 dateAdded + index 排序，第一个是原始书签',
-      '后续相同 URL 的标记为重复'
-    ]
+      "URL 完全相同（忽略大小写）",
+      "按 dateAdded + index 排序，第一个是原始书签",
+      "后续相同 URL 的标记为重复",
+    ],
   },
 
   /**
@@ -80,20 +86,20 @@ export const TRAIT_RULES: Record<TraitTag, TraitMetadata> = {
    * 1. URL 格式错误（协议不是 http/https、域名格式错误、TLD 不完整）
    */
   invalid: {
-    id: 'invalid',
-    name: '无效书签',
-    description: 'URL 格式错误的书签',
-    icon: '❌',
+    id: "invalid",
+    name: "无效书签",
+    description: "URL 格式错误的书签",
+    icon: "❌",
     priority: 2,
     isNegative: true,
     detectionRules: [
-      'URL 格式错误：协议不是 http/https',
-      'URL 格式错误：域名格式不正确',
-      'URL 格式错误：TLD 不完整（如 .o 而不是 .org）',
-      'HTTP 4xx 错误：404、403 等客户端错误',
-      'HTTP 5xx 错误：500、502 等服务器错误',
-      '网络错误：DNS 解析失败、连接失败、超时'
-    ]
+      "URL 格式错误：协议不是 http/https",
+      "URL 格式错误：域名格式不正确",
+      "URL 格式错误：TLD 不完整（如 .o 而不是 .org）",
+      "HTTP 4xx 错误：404、403 等客户端错误",
+      "HTTP 5xx 错误：500、502 等服务器错误",
+      "网络错误：DNS 解析失败、连接失败、超时",
+    ],
   },
 
   /**
@@ -108,20 +114,20 @@ export const TRAIT_RULES: Record<TraitTag, TraitMetadata> = {
    * 6. brave:// 协议（Brave 浏览器内部页面）
    */
   internal: {
-    id: 'internal',
-    name: '内部书签',
-    description: '浏览器内部地址，仅限本浏览器访问',
-    icon: '🔒',
+    id: "internal",
+    name: "内部书签",
+    description: "浏览器内部地址，仅限本浏览器访问",
+    icon: "🔒",
     priority: 3,
     isNegative: false,
     detectionRules: [
-      'chrome:// 协议（Chrome 内部页面）',
-      'chrome-extension:// 协议（扩展程序页面）',
-      'about: 协议（浏览器关于页面）',
-      'file:// 协议（本地文件系统）',
-      'edge:// 协议（Edge 浏览器）',
-      'brave:// 协议（Brave 浏览器）'
-    ]
+      "chrome:// 协议（Chrome 内部页面）",
+      "chrome-extension:// 协议（扩展程序页面）",
+      "about: 协议（浏览器关于页面）",
+      "file:// 协议（本地文件系统）",
+      "edge:// 协议（Edge 浏览器）",
+      "brave:// 协议（Brave 浏览器）",
+    ],
   },
 
   /**
@@ -133,17 +139,17 @@ export const TRAIT_RULES: Record<TraitTag, TraitMetadata> = {
    * 3. 文件夹不检测此特征
    */
   outdated: {
-    id: 'outdated',
-    name: '过时书签',
-    description: '超过 1 年未访问的书签',
-    icon: '📅',
+    id: "outdated",
+    name: "过时书签",
+    description: "超过 1 年未访问的书签",
+    icon: "📅",
     priority: 4,
     isNegative: true,
     detectionRules: [
-      '超过 365 天未访问（基于 lastVisited）',
-      '如果没有 lastVisited，使用 dateAdded 判断',
-      '文件夹不检测此特征'
-    ]
+      "超过 365 天未访问（基于 lastVisited）",
+      "如果没有 lastVisited，使用 dateAdded 判断",
+      "文件夹不检测此特征",
+    ],
   },
 
   /**
@@ -156,18 +162,18 @@ export const TRAIT_RULES: Record<TraitTag, TraitMetadata> = {
    * 4. 文件夹不检测此特征
    */
   untagged: {
-    id: 'untagged',
-    name: '未分类书签',
-    description: '直接在根目录或书签栏，未整理到文件夹',
-    icon: '📂',
+    id: "untagged",
+    name: "未分类书签",
+    description: "直接在根目录或书签栏，未整理到文件夹",
+    icon: "📂",
     priority: 5,
     isNegative: true,
     detectionRules: [
       '直接在根目录（parentId 为 "0"）',
       '直接在书签栏（parentId 为 "1"）',
-      '路径深度 <= 1',
-      '文件夹不检测此特征'
-    ]
+      "路径深度 <= 1",
+      "文件夹不检测此特征",
+    ],
   },
 
   /**
@@ -181,20 +187,20 @@ export const TRAIT_RULES: Record<TraitTag, TraitMetadata> = {
    * 5. 文件夹不检测此特征
    */
   untitled: {
-    id: 'untitled',
-    name: '无标题书签',
-    description: '标题为空或等于 URL，未添加有意义的标题',
-    icon: '✏️',
+    id: "untitled",
+    name: "无标题书签",
+    description: "标题为空或等于 URL，未添加有意义的标题",
+    icon: "✏️",
     priority: 6,
     isNegative: true,
     detectionRules: [
-      '标题为空字符串或只包含空格',
-      '标题等于 URL（未自定义标题）',
+      "标题为空字符串或只包含空格",
+      "标题等于 URL（未自定义标题）",
       '标题为默认值（"Untitled"、"无标题"等）',
-      '文件夹不检测此特征'
-    ]
-  }
-}
+      "文件夹不检测此特征",
+    ],
+  },
+};
 
 /**
  * 特征标签优先级顺序
@@ -202,13 +208,13 @@ export const TRAIT_RULES: Record<TraitTag, TraitMetadata> = {
  * 用于排序显示，优先级高的排在前面
  */
 export const TRAIT_TAG_ORDER: TraitTag[] = [
-  'duplicate',
-  'invalid',
-  'internal',
-  'outdated',
-  'untagged',
-  'untitled'
-]
+  "duplicate",
+  "invalid",
+  "internal",
+  "outdated",
+  "untagged",
+  "untitled",
+];
 
 /**
  * 获取特征元数据
@@ -217,7 +223,7 @@ export const TRAIT_TAG_ORDER: TraitTag[] = [
  * @returns 特征元数据
  */
 export function getTraitMetadata(tag: TraitTag): TraitMetadata {
-  return TRAIT_RULES[tag]
+  return TRAIT_RULES[tag];
 }
 
 /**
@@ -226,7 +232,7 @@ export function getTraitMetadata(tag: TraitTag): TraitMetadata {
  * @returns 所有特征标签数组
  */
 export function getAllTraitTags(): TraitTag[] {
-  return Object.keys(TRAIT_RULES) as TraitTag[]
+  return Object.keys(TRAIT_RULES) as TraitTag[];
 }
 
 /**
@@ -235,7 +241,7 @@ export function getAllTraitTags(): TraitTag[] {
  * @returns 负面特征标签数组
  */
 export function getNegativeTraitTags(): TraitTag[] {
-  return getAllTraitTags().filter(tag => TRAIT_RULES[tag].isNegative)
+  return getAllTraitTags().filter((tag) => TRAIT_RULES[tag].isNegative);
 }
 
 /**
@@ -246,10 +252,10 @@ export function getNegativeTraitTags(): TraitTag[] {
  */
 export function sortTraitTags(tags: TraitTag[]): TraitTag[] {
   return [...tags].sort((a, b) => {
-    const priorityA = TRAIT_RULES[a].priority
-    const priorityB = TRAIT_RULES[b].priority
-    return priorityA - priorityB
-  })
+    const priorityA = TRAIT_RULES[a].priority;
+    const priorityB = TRAIT_RULES[b].priority;
+    return priorityA - priorityB;
+  });
 }
 
 /**
@@ -266,8 +272,8 @@ export function sortTraitTags(tags: TraitTag[]): TraitTag[] {
  * ```
  */
 export function formatTraitTag(tag: TraitTag, includeIcon = true): string {
-  const metadata = TRAIT_RULES[tag]
-  return includeIcon ? `${metadata.icon} ${metadata.name}` : metadata.name
+  const metadata = TRAIT_RULES[tag];
+  return includeIcon ? `${metadata.icon} ${metadata.name}` : metadata.name;
 }
 
 /**
@@ -277,7 +283,9 @@ export function formatTraitTag(tag: TraitTag, includeIcon = true): string {
  * @returns 详细描述
  */
 export function getTraitDetailedDescription(tag: TraitTag): string {
-  const metadata = TRAIT_RULES[tag]
-  const rules = metadata.detectionRules.map((rule, index) => `${index + 1}. ${rule}`).join('\n')
-  return `${metadata.description}\n\n检测规则：\n${rules}`
+  const metadata = TRAIT_RULES[tag];
+  const rules = metadata.detectionRules
+    .map((rule, index) => `${index + 1}. ${rule}`)
+    .join("\n");
+  return `${metadata.description}\n\n检测规则：\n${rules}`;
 }

@@ -16,14 +16,14 @@
  * 在地址栏输入 "ab" 或扩展关键字，然后输入查询条件
  */
 
-import { logger } from '@/infrastructure/logging/logger'
-import type { EnhancedSearchResult } from '@/core/query-engine'
-import { bookmarkSearchService } from '@/application/query/bookmark-search-service'
-import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
-import { bookmarkSyncService } from '@/services/bookmark-sync-service'
-import { localVectorStore } from '@/infrastructure/embedding/local-vector-store'
+import { logger } from "@/infrastructure/logging/logger";
+import type { EnhancedSearchResult } from "@/core/query-engine";
+import { bookmarkSearchService } from "@/application/query/bookmark-search-service";
+import { indexedDBManager } from "@/infrastructure/indexeddb/manager";
+import { bookmarkSyncService } from "@/services/bookmark-sync-service";
+import { localVectorStore } from "@/infrastructure/embedding/local-vector-store";
 
-let dataReadyPromise: Promise<void> | null = null
+let dataReadyPromise: Promise<void> | null = null;
 
 /**
  * 确保书签数据已准备好
@@ -33,50 +33,53 @@ let dataReadyPromise: Promise<void> | null = null
  */
 async function ensureDataReady(): Promise<void> {
   if (dataReadyPromise) {
-    logger.debug('Omnibox', '🔄 数据准备已在进行中，等待完成')
-    return dataReadyPromise
+    logger.debug("Omnibox", "🔄 数据准备已在进行中，等待完成");
+    return dataReadyPromise;
   }
 
   dataReadyPromise = (async () => {
     try {
-      logger.info('Omnibox', '🔍 开始检查数据准备状态...')
+      logger.info("Omnibox", "🔍 开始检查数据准备状态...");
 
       // 1. 检查 IndexedDB 中是否有书签数据
-      logger.debug('Omnibox', '📍 步骤 1: 初始化 IndexedDB...')
-      await indexedDBManager.initialize()
-      logger.debug('Omnibox', '✅ IndexedDB 初始化完成')
+      logger.debug("Omnibox", "📍 步骤 1: 初始化 IndexedDB...");
+      await indexedDBManager.initialize();
+      logger.debug("Omnibox", "✅ IndexedDB 初始化完成");
 
-      logger.debug('Omnibox', '📍 步骤 2: 读取书签数据...')
-      const sampleBookmarks = await indexedDBManager.getAllBookmarks(1)
-      logger.info('Omnibox', `📊 IndexedDB 中书签数量: ${sampleBookmarks.length}`)
+      logger.debug("Omnibox", "📍 步骤 2: 读取书签数据...");
+      const sampleBookmarks = await indexedDBManager.getAllBookmarks(1);
+      logger.info(
+        "Omnibox",
+        `📊 IndexedDB 中书签数量: ${sampleBookmarks.length}`,
+      );
 
       // 检查向量库状态
       try {
-        const vectorCount = await localVectorStore.count()
-        logger.info('Omnibox', `🧠 向量库中向量数量: ${vectorCount}`)
+        const vectorCount = await localVectorStore.count();
+        logger.info("Omnibox", `🧠 向量库中向量数量: ${vectorCount}`);
         if (vectorCount === 0) {
-          logger.warn('Omnibox', '⚠️ 向量库为空，语义搜索将不可用')
+          logger.warn("Omnibox", "⚠️ 向量库为空，语义搜索将不可用");
         }
       } catch (error) {
-        logger.warn('Omnibox', '⚠️ 无法检查向量库状态', error)
+        logger.warn("Omnibox", "⚠️ 无法检查向量库状态", error);
       }
 
       if (sampleBookmarks.length > 0) {
-        logger.info('Omnibox', '✅ IndexedDB 中已有书签数据，跳过同步')
-        return
+        logger.info("Omnibox", "✅ IndexedDB 中已有书签数据，跳过同步");
+        return;
       }
 
       // 2. 如果没有数据，触发同步
-      logger.warn('Omnibox', '⚠️ IndexedDB 为空，准备触发书签同步...')
-      await bookmarkSyncService.syncAllBookmarks()
-      logger.info('Omnibox', '✅ 书签同步完成')
+      logger.warn("Omnibox", "⚠️ IndexedDB 为空，准备触发书签同步...");
+      await bookmarkSyncService.syncAllBookmarks();
+      logger.info("Omnibox", "✅ 书签同步完成");
     } catch (error) {
-      logger.error('Omnibox', '❌ 数据准备失败', error)
+      logger.error("Omnibox", "❌ 数据准备失败", error);
       // 不抛出错误，允许降级使用
     }
-  })()
+  })();
 
-  return dataReadyPromise
+  return dataReadyPromise;
 }
 
 /**
@@ -85,11 +88,11 @@ async function ensureDataReady(): Promise<void> {
  */
 function escapeOmniboxText(raw: string): string {
   return raw
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 /**
@@ -100,8 +103,8 @@ function escapeOmniboxText(raw: string): string {
  * @returns 截断后的文本，超长时以省略号结尾
  */
 function truncateWithEllipsis(text: string, maxLength: number): string {
-  if (text.length <= maxLength) return text
-  return `${text.slice(0, maxLength - 1)}…`
+  if (text.length <= maxLength) return text;
+  return `${text.slice(0, maxLength - 1)}…`;
 }
 
 /**
@@ -112,16 +115,16 @@ function truncateWithEllipsis(text: string, maxLength: number): string {
  * @returns 符合 Omnibox XML 语法的描述字符串
  */
 function buildDescription(title: string, url?: string): string {
-  const titleTrimmed = truncateWithEllipsis(title.trim(), 80)
-  const safeTitle = escapeOmniboxText(titleTrimmed || '未命名书签')
+  const titleTrimmed = truncateWithEllipsis(title.trim(), 80);
+  const safeTitle = escapeOmniboxText(titleTrimmed || "未命名书签");
 
   if (!url) {
-    return `<match>${safeTitle}</match>`
+    return `<match>${safeTitle}</match>`;
   }
 
-  const urlTrimmed = truncateWithEllipsis(url.trim(), 120)
-  const safeUrl = escapeOmniboxText(urlTrimmed)
-  return `<match>${safeTitle}</match><dim> - </dim><url>${safeUrl}</url>`
+  const urlTrimmed = truncateWithEllipsis(url.trim(), 120);
+  const safeUrl = escapeOmniboxText(urlTrimmed);
+  return `<match>${safeTitle}</match><dim> - </dim><url>${safeUrl}</url>`;
 }
 
 /**
@@ -132,51 +135,59 @@ function buildDescription(title: string, url?: string): string {
  * @returns 去除末尾标题后的路径字符串
  */
 function stripTrailingPathSegment(rawPath: string, title: string): string {
-  const normalizedPath = rawPath.trim()
-  if (!normalizedPath) return ''
+  const normalizedPath = rawPath.trim();
+  if (!normalizedPath) return "";
 
-  const segments = normalizedPath.split(/\s*\/\s*/)
-  if (!segments.length) return ''
+  const segments = normalizedPath.split(/\s*\/\s*/);
+  if (!segments.length) return "";
 
-  const lastSegment = segments[segments.length - 1]
+  const lastSegment = segments[segments.length - 1];
   if (lastSegment && lastSegment === title.trim()) {
-    segments.pop()
+    segments.pop();
   }
 
-  return segments.join(' / ')
+  return segments.join(" / ");
 }
 
 /**
  * 构造无查询结果时的提示描述，显式告知用户书签索引中没有匹配项。
  */
 function buildNoResultDescription(query: string): string {
-  const safeQuery = escapeOmniboxText(truncateWithEllipsis(query, 80) || '（空）')
-  return `<dim>未找到匹配书签：</dim> <match>${safeQuery}</match>`
+  const safeQuery = escapeOmniboxText(
+    truncateWithEllipsis(query, 80) || "（空）",
+  );
+  return `<dim>未找到匹配书签：</dim> <match>${safeQuery}</match>`;
 }
 
 /**
  * 构造查询失败后的提示描述，提示用户稍后重试或检查离线状态。
  */
 function buildErrorDescription(query: string): string {
-  const safeQuery = escapeOmniboxText(truncateWithEllipsis(query, 80) || '（空）')
-  return `<dim>查询暂时不可用，请稍后重试或先打开扩展页面：</dim> <match>${safeQuery}</match>`
+  const safeQuery = escapeOmniboxText(
+    truncateWithEllipsis(query, 80) || "（空）",
+  );
+  return `<dim>查询暂时不可用，请稍后重试或先打开扩展页面：</dim> <match>${safeQuery}</match>`;
 }
 
 /**
  * 构造"正在查询"提示描述，用于在异步请求过程中反馈状态。
  */
 function buildSearchingDescription(query: string): string {
-  const safeQuery = escapeOmniboxText(truncateWithEllipsis(query, 80) || '（空）')
-  return `<dim>正在检索书签：</dim> <match>${safeQuery}</match>`
+  const safeQuery = escapeOmniboxText(
+    truncateWithEllipsis(query, 80) || "（空）",
+  );
+  return `<dim>正在检索书签：</dim> <match>${safeQuery}</match>`;
 }
 
 /**
  * 构造"找到匹配数量"提示描述，提示当前命中情况。
  */
 function buildResultSummaryDescription(query: string, count: number): string {
-  const safeQuery = escapeOmniboxText(truncateWithEllipsis(query, 80) || '（空）')
-  const safeCount = Number.isFinite(count) && count >= 0 ? count : 0
-  return `<dim>已找到匹配书签：</dim> <match>${safeQuery}</match> <dim>（${safeCount} 条建议）</dim>`
+  const safeQuery = escapeOmniboxText(
+    truncateWithEllipsis(query, 80) || "（空）",
+  );
+  const safeCount = Number.isFinite(count) && count >= 0 ? count : 0;
+  return `<dim>已找到匹配书签：</dim> <match>${safeQuery}</match> <dim>（${safeCount} 条建议）</dim>`;
 }
 
 /**
@@ -185,36 +196,38 @@ function buildResultSummaryDescription(query: string, count: number): string {
 function createErrorSuggestion(query: string): chrome.omnibox.SuggestResult {
   return {
     content: `acuity://error?query=${encodeURIComponent(query)}`,
-    description: buildErrorDescription(query)
-  }
+    description: buildErrorDescription(query),
+  };
 }
 
 /**
  * 为 Omnibox 设置默认提示描述，调用前需保证描述已做 XML 转义。
  */
 function setDefaultDescription(description: string): void {
-  chrome.omnibox.setDefaultSuggestion?.({ description })
+  chrome.omnibox.setDefaultSuggestion?.({ description });
 }
 
 /** 匹配度阈值 - 只显示匹配度 >= 0.35 的结果 */
-const MIN_SCORE_THRESHOLD = 0.35
+const MIN_SCORE_THRESHOLD = 0.35;
 /** 最少显示数量 - 即使匹配度较低也至少显示 1 条，避免空结果 */
-const MIN_DISPLAY_COUNT = 1
+const MIN_DISPLAY_COUNT = 1;
 /** 最多显示数量 - 避免过多结果影响地址栏体验 */
-const MAX_DISPLAY_COUNT = 6
+const MAX_DISPLAY_COUNT = 6;
 /** 防抖延迟（毫秒）- 尽量短，给查询留更多时间 */
-const DEBOUNCE_MS = 50
+const DEBOUNCE_MS = 50;
 
 /**
  * 默认提示文案：仅在输入框为空时展示，提醒用户可以使用 Omnibox 查询书签。
  */
-const DEFAULT_IDLE_DESCRIPTION = buildDescription('AcuityBookmarks：输入关键字快速查找书签')
+const DEFAULT_IDLE_DESCRIPTION = buildDescription(
+  "AcuityBookmarks：输入关键字快速查找书签",
+);
 
 /**
  * 当存在查询时使用的“空白”占位文案，避免重复显示默认提示。
  * 这里使用单个空格，确保生成合法 XML，同时在 UI 上几乎不可见。
  */
-const ACTIVE_QUERY_PLACEHOLDER = '<dim>&#8203;</dim>'
+const ACTIVE_QUERY_PLACEHOLDER = "<dim>&#8203;</dim>";
 
 /**
  * 注册 Omnibox 事件监听器
@@ -223,133 +236,145 @@ const ACTIVE_QUERY_PLACEHOLDER = '<dim>&#8203;</dim>'
  */
 export function registerOmniboxHandlers(): void {
   if (!chrome?.omnibox?.setDefaultSuggestion) {
-    logger.debug('Omnibox', '当前环境不支持 Omnibox，跳过注册')
-    return
+    logger.debug("Omnibox", "当前环境不支持 Omnibox，跳过注册");
+    return;
   }
 
-  setDefaultDescription(DEFAULT_IDLE_DESCRIPTION)
+  setDefaultDescription(DEFAULT_IDLE_DESCRIPTION);
 
-  let debounceTimer: ReturnType<typeof setTimeout> | undefined
-  let sequence = 0
+  let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+  let sequence = 0;
 
   chrome.omnibox.onInputChanged.addListener((text, suggest) => {
-    const rawText = text || ''
-    const query = rawText.trim()
+    const rawText = text || "";
+    const query = rawText.trim();
 
     if (!query) {
-      sequence += 1
-      setDefaultDescription(DEFAULT_IDLE_DESCRIPTION)
-      if (debounceTimer) clearTimeout(debounceTimer)
-      safeSuggest(suggest, [], 'empty-query')
-      logger.info('Omnibox', '🔎 空查询，保持默认提示')
-      return
+      sequence += 1;
+      setDefaultDescription(DEFAULT_IDLE_DESCRIPTION);
+      if (debounceTimer) clearTimeout(debounceTimer);
+      safeSuggest(suggest, [], "empty-query");
+      logger.info("Omnibox", "🔎 空查询，保持默认提示");
+      return;
     }
 
-    setDefaultDescription(ACTIVE_QUERY_PLACEHOLDER)
+    setDefaultDescription(ACTIVE_QUERY_PLACEHOLDER);
 
-    if (debounceTimer) clearTimeout(debounceTimer)
+    if (debounceTimer) clearTimeout(debounceTimer);
 
-    const currentSeq = ++sequence
+    const currentSeq = ++sequence;
     debounceTimer = setTimeout(async () => {
       try {
-        logger.info('Omnibox', `🔍 开始查询: "${query}"`)
-        setDefaultDescription(buildSearchingDescription(query))
+        logger.info("Omnibox", `🔍 开始查询: "${query}"`);
+        setDefaultDescription(buildSearchingDescription(query));
 
         // 确保书签数据已准备好
-        logger.debug('Omnibox', '📍 步骤 0: 确保数据准备...')
-        await ensureDataReady()
-        logger.debug('Omnibox', '✅ 数据准备完成')
+        logger.debug("Omnibox", "📍 步骤 0: 确保数据准备...");
+        await ensureDataReady();
+        logger.debug("Omnibox", "✅ 数据准备完成");
 
         // 使用统一的 queryService 进行 hybrid 搜索
-        logger.debug('Omnibox', '📍 步骤 1: 执行搜索...')
-        const searchResult = await bookmarkSearchService.searchWithMetadata(query, {
-          strategy: 'hybrid', // 使用 hybrid 策略（Fuse + Semantic）
-          limit: 50, // 获取更多结果，按匹配度过滤
-          highlight: false,
-          useCache: false
-        })
-        logger.debug('Omnibox', '✅ 搜索执行完成')
+        logger.debug("Omnibox", "📍 步骤 1: 执行搜索...");
+        const searchResult = await bookmarkSearchService.searchWithMetadata(
+          query,
+          {
+            strategy: "hybrid", // 使用 hybrid 策略（Fuse + Semantic）
+            limit: 50, // 获取更多结果，按匹配度过滤
+            highlight: false,
+            useCache: false,
+          },
+        );
+        logger.debug("Omnibox", "✅ 搜索执行完成");
 
         if (currentSeq !== sequence) {
-          logger.warn('Omnibox', '⚠️ 查询结果已过期，丢弃')
-          return
+          logger.warn("Omnibox", "⚠️ 查询结果已过期，丢弃");
+          return;
         }
 
         if (!searchResult.ok) {
-          logger.error('Omnibox', '❌ 搜索失败', {
+          logger.error("Omnibox", "❌ 搜索失败", {
             error: searchResult.error,
             message: searchResult.error?.message,
-            stack: searchResult.error?.stack
-          })
-          setDefaultDescription(buildErrorDescription(query))
-          return
+            stack: searchResult.error?.stack,
+          });
+          setDefaultDescription(buildErrorDescription(query));
+          return;
         }
 
         // 按匹配度过滤：只显示 score >= MIN_SCORE_THRESHOLD 的结果
         const filteredResults = searchResult.value.results.filter(
-          r => r.score >= MIN_SCORE_THRESHOLD
-        )
+          (r) => r.score >= MIN_SCORE_THRESHOLD,
+        );
 
         // 确保至少显示 1 条，最多显示 MAX_DISPLAY_COUNT 条
-        let displayResults: EnhancedSearchResult[]
+        let displayResults: EnhancedSearchResult[];
         if (filteredResults.length === 0) {
           // 如果没有匹配度达标的结果，显示匹配度最高的 1 条
-          displayResults = searchResult.value.results.slice(0, MIN_DISPLAY_COUNT)
+          displayResults = searchResult.value.results.slice(
+            0,
+            MIN_DISPLAY_COUNT,
+          );
           logger.info(
-            'Omnibox',
-            `没有匹配度 >= ${MIN_SCORE_THRESHOLD} 的结果，显示最高匹配度的结果`
-          )
+            "Omnibox",
+            `没有匹配度 >= ${MIN_SCORE_THRESHOLD} 的结果，显示最高匹配度的结果`,
+          );
         } else {
-          displayResults = filteredResults.slice(0, MAX_DISPLAY_COUNT)
+          displayResults = filteredResults.slice(0, MAX_DISPLAY_COUNT);
         }
 
         logger.info(
-          'Omnibox',
-          `📊 过滤结果: 总数 ${searchResult.value.results.length}, 匹配度达标 ${filteredResults.length}, 显示 ${displayResults.length} 条`
-        )
-        const suggestions = buildSuggestions(displayResults, query)
+          "Omnibox",
+          `📊 过滤结果: 总数 ${searchResult.value.results.length}, 匹配度达标 ${filteredResults.length}, 显示 ${displayResults.length} 条`,
+        );
+        const suggestions = buildSuggestions(displayResults, query);
         logger.info(
-          'Omnibox',
-          `📊 搜索完成: ${displayResults.length} 条结果 [策略: ${searchResult.value.metadata.strategy}]`
-        )
-        safeSuggest(suggest, suggestions, 'query-results')
+          "Omnibox",
+          `📊 搜索完成: ${displayResults.length} 条结果 [策略: ${searchResult.value.metadata.strategy}]`,
+        );
+        safeSuggest(suggest, suggestions, "query-results");
 
         if (displayResults.length > 0) {
-          setDefaultDescription(buildResultSummaryDescription(query, displayResults.length))
+          setDefaultDescription(
+            buildResultSummaryDescription(query, displayResults.length),
+          );
         } else {
-          setDefaultDescription(buildNoResultDescription(query))
+          setDefaultDescription(buildNoResultDescription(query));
         }
       } catch (error) {
-        logger.warn('Omnibox', '查询失败，回退占位', error)
-        if (currentSeq !== sequence) return
-        safeSuggest(suggest, [createErrorSuggestion(query)], 'search-error-fallback')
-        setDefaultDescription(buildErrorDescription(query))
+        logger.warn("Omnibox", "查询失败，回退占位", error);
+        if (currentSeq !== sequence) return;
+        safeSuggest(
+          suggest,
+          [createErrorSuggestion(query)],
+          "search-error-fallback",
+        );
+        setDefaultDescription(buildErrorDescription(query));
       }
-    }, DEBOUNCE_MS)
-  })
+    }, DEBOUNCE_MS);
+  });
 
   chrome.omnibox.onInputEntered.addListener((text, disposition) => {
-    const parsed = parseSuggestionContent(text)
+    const parsed = parseSuggestionContent(text);
 
-    if (parsed.view === 'manage' && parsed.id) {
-      openManagement(parsed.id)
-      return
+    if (parsed.view === "manage" && parsed.id) {
+      openManagement(parsed.id);
+      return;
     }
 
-    if (parsed.view === 'noop' || parsed.view === 'error') {
-      return
+    if (parsed.view === "noop" || parsed.view === "error") {
+      return;
     }
 
     if (parsed.url) {
-      openUrl(parsed.url, disposition)
-      return
+      openUrl(parsed.url, disposition);
+      return;
     }
 
     if (parsed.id) {
-      openBookmarkById(parsed.id, disposition)
-      return
+      openBookmarkById(parsed.id, disposition);
+      return;
     }
-  })
+  });
 }
 
 /**
@@ -364,13 +389,13 @@ export function registerOmniboxHandlers(): void {
 function safeSuggest(
   suggest: (suggestResults: chrome.omnibox.SuggestResult[]) => void,
   suggestions: chrome.omnibox.SuggestResult[],
-  source: string
+  source: string,
 ): void {
   try {
-    logger.info('Omnibox', `safeSuggest(${source})`, suggestions)
-    suggest(suggestions)
+    logger.info("Omnibox", `safeSuggest(${source})`, suggestions);
+    suggest(suggestions);
   } catch (error) {
-    logger.warn('Omnibox', `suggest 调用失败（${source}）`, error)
+    logger.warn("Omnibox", `suggest 调用失败（${source}）`, error);
   }
 }
 
@@ -384,61 +409,61 @@ function safeSuggest(
  */
 function buildSuggestions(
   results: EnhancedSearchResult[],
-  query: string
+  query: string,
 ): chrome.omnibox.SuggestResult[] {
-  const uniqueByUrl = new Map<string, chrome.omnibox.SuggestResult>()
-  let deduped = 0
+  const uniqueByUrl = new Map<string, chrome.omnibox.SuggestResult>();
+  let deduped = 0;
 
   for (const item of results) {
-    const bookmark = item.bookmark
-    const url = bookmark.url || ''
-    const id = String(bookmark.id || '')
-    const title = bookmark.title || url || '未命名书签'
-    const descriptionSegments: string[] = [buildDescription(title, url)]
+    const bookmark = item.bookmark;
+    const url = bookmark.url || "";
+    const id = String(bookmark.id || "");
+    const title = bookmark.title || url || "未命名书签";
+    const descriptionSegments: string[] = [buildDescription(title, url)];
 
-    const rawPath = item.pathString || bookmark.pathString
+    const rawPath = item.pathString || bookmark.pathString;
     if (rawPath) {
-      const trimmedPath = stripTrailingPathSegment(rawPath, title)
+      const trimmedPath = stripTrailingPathSegment(rawPath, title);
       if (trimmedPath) {
-        const safePath = escapeOmniboxText(trimmedPath)
-        descriptionSegments.push(`<dim>${safePath}</dim>`)
+        const safePath = escapeOmniboxText(trimmedPath);
+        descriptionSegments.push(`<dim>${safePath}</dim>`);
       }
     }
 
-    const description = descriptionSegments.join('  ')
+    const description = descriptionSegments.join("  ");
 
     const meta = new URLSearchParams({
       id,
       title,
-      source: 'omnibox'
-    })
+      source: "omnibox",
+    });
 
-    const content = url ? url : `acuity://bookmark?${meta.toString()}`
+    const content = url ? url : `acuity://bookmark?${meta.toString()}`;
 
     const suggestion: chrome.omnibox.SuggestResult = {
       content,
-      description
-    }
+      description,
+    };
 
-    const dedupeKey = url || id
-    if (!dedupeKey) continue
+    const dedupeKey = url || id;
+    if (!dedupeKey) continue;
     if (uniqueByUrl.has(dedupeKey)) {
-      deduped += 1
-      continue
+      deduped += 1;
+      continue;
     }
-    uniqueByUrl.set(dedupeKey, suggestion)
+    uniqueByUrl.set(dedupeKey, suggestion);
   }
 
   logger.info(
-    'Omnibox',
-    `去重前数量: ${results.length}, 被去重: ${deduped}, 唯一项: ${uniqueByUrl.size}`
-  )
+    "Omnibox",
+    `去重前数量: ${results.length}, 被去重: ${deduped}, 唯一项: ${uniqueByUrl.size}`,
+  );
 
   if (uniqueByUrl.size === 0) {
-    logger.info('Omnibox', `ℹ️ 没有匹配书签: ${query}`)
+    logger.info("Omnibox", `ℹ️ 没有匹配书签: ${query}`);
   }
 
-  return Array.from(uniqueByUrl.values())
+  return Array.from(uniqueByUrl.values());
 }
 
 /**
@@ -446,11 +471,11 @@ function buildSuggestions(
  */
 interface ParsedSuggestion {
   /** 书签URL */
-  url: string | null
+  url: string | null;
   /** 书签ID */
-  id: string | null
+  id: string | null;
   /** 视图类型 */
-  view: 'open' | 'manage' | 'noop' | 'error'
+  view: "open" | "manage" | "noop" | "error";
 }
 
 /**
@@ -463,30 +488,30 @@ interface ParsedSuggestion {
  */
 function parseSuggestionContent(text: string): ParsedSuggestion {
   try {
-    const url = new URL(text)
-    if (url.protocol === 'acuity:') {
-      const rawView = url.hostname
-      let normalizedView: ParsedSuggestion['view'] = 'noop'
-      if (rawView === 'manage') {
-        normalizedView = 'manage'
-      } else if (rawView === 'error') {
-        normalizedView = 'error'
+    const url = new URL(text);
+    if (url.protocol === "acuity:") {
+      const rawView = url.hostname;
+      let normalizedView: ParsedSuggestion["view"] = "noop";
+      if (rawView === "manage") {
+        normalizedView = "manage";
+      } else if (rawView === "error") {
+        normalizedView = "error";
       }
-      const params = new URLSearchParams(url.search.replace(/^\?/, ''))
+      const params = new URLSearchParams(url.search.replace(/^\?/, ""));
       return {
         url: null,
-        id: params.get('id'),
-        view: normalizedView
-      }
+        id: params.get("id"),
+        view: normalizedView,
+      };
     }
-    const hashParams = new URLSearchParams(url.hash.replace(/^#/, ''))
+    const hashParams = new URLSearchParams(url.hash.replace(/^#/, ""));
     return {
-      url: url.href.split('#')[0] ?? null,
-      id: hashParams.get('id'),
-      view: (hashParams.get('view') as ParsedSuggestion['view']) || 'open'
-    }
+      url: url.href.split("#")[0] ?? null,
+      id: hashParams.get("id"),
+      view: (hashParams.get("view") as ParsedSuggestion["view"]) || "open",
+    };
   } catch {
-    return { url: null, id: null, view: 'open' }
+    return { url: null, id: null, view: "open" };
   }
 }
 
@@ -499,15 +524,18 @@ function parseSuggestionContent(text: string): ParsedSuggestion {
  * @param disposition - 打开方式
  */
 function openUrl(url: string, disposition: string): void {
-  const isForeground = disposition === 'currentTab' || disposition === 'newForegroundTab'
-  if (disposition === 'currentTab') {
-    chrome.tabs.update({ url }).catch(() => chrome.tabs.create({ url, active: true }))
-    return
+  const isForeground =
+    disposition === "currentTab" || disposition === "newForegroundTab";
+  if (disposition === "currentTab") {
+    chrome.tabs
+      .update({ url })
+      .catch(() => chrome.tabs.create({ url, active: true }));
+    return;
   }
 
-  chrome.tabs.create({ url, active: isForeground }).catch(error => {
-    logger.warn('Omnibox', 'tabs.create 调用失败', error)
-  })
+  chrome.tabs.create({ url, active: isForeground }).catch((error) => {
+    logger.warn("Omnibox", "tabs.create 调用失败", error);
+  });
 }
 
 /**
@@ -516,16 +544,19 @@ function openUrl(url: string, disposition: string): void {
  * @param id - 书签ID
  * @param disposition - 打开方式
  */
-async function openBookmarkById(id: string, disposition: string): Promise<void> {
+async function openBookmarkById(
+  id: string,
+  disposition: string,
+): Promise<void> {
   try {
-    const nodes = await chrome.bookmarks.get(id)
-    const target = Array.isArray(nodes) ? nodes[0] : null
+    const nodes = await chrome.bookmarks.get(id);
+    const target = Array.isArray(nodes) ? nodes[0] : null;
     if (target?.url) {
-      openUrl(target.url, disposition)
-      return
+      openUrl(target.url, disposition);
+      return;
     }
   } catch (error) {
-    logger.warn('Omnibox', '根据书签 ID 打开失败', error)
+    logger.warn("Omnibox", "根据书签 ID 打开失败", error);
   }
 }
 
@@ -536,10 +567,11 @@ async function openBookmarkById(id: string, disposition: string): Promise<void> 
  */
 function openManagement(id: string): void {
   try {
-    const base = chrome.runtime.getURL?.('management.html') ?? 'management.html'
-    const url = `${base}?id=${encodeURIComponent(id)}`
-    chrome.tabs.create?.({ url, active: true })
+    const base =
+      chrome.runtime.getURL?.("management.html") ?? "management.html";
+    const url = `${base}?id=${encodeURIComponent(id)}`;
+    chrome.tabs.create?.({ url, active: true });
   } catch (error) {
-    logger.warn('Omnibox', '打开整理页面失败', error)
+    logger.warn("Omnibox", "打开整理页面失败", error);
   }
 }

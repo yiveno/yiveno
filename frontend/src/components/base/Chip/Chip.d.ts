@@ -1,35 +1,35 @@
 export interface ChipProps {
   /** Chip 类型 */
-  type?: 'assist' | 'filter' | 'input' | 'suggestion'
+  type?: "assist" | "filter" | "input" | "suggestion";
   /** Chip 的样式 */
-  variant?: 'filled' | 'outlined' | 'soft'
+  variant?: "filled" | "outlined" | "soft";
   /** Chip 的颜色 */
-  color?: 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info'
+  color?: "primary" | "secondary" | "success" | "warning" | "error" | "info";
   /** Chip 的大小 */
-  size?: 'sm' | 'md' | 'lg'
+  size?: "sm" | "md" | "lg";
   /** Chip 的计数 */
-  count?: number
+  count?: number;
   /** Filter/Input Chip 是否选中 */
-  selected?: boolean
+  selected?: boolean;
   /** Input Chip 是否可移除 */
-  removable?: boolean
+  removable?: boolean;
   /** Assist Chip 是否提升样式 */
-  elevated?: boolean
+  elevated?: boolean;
   /** 链接地址 */
-  href?: string
+  href?: string;
   /** 链接 target */
-  target?: '_blank' | '_parent' | '_self' | '_top' | ''
+  target?: "_blank" | "_parent" | "_self" | "_top" | "";
   /** 下载文件名 */
-  download?: string
+  download?: string;
   /** 是否仅删除 */
-  removeOnly?: boolean
+  removeOnly?: boolean;
   /** 是否为头像 chip */
-  avatar?: boolean
+  avatar?: boolean;
 }
 
 export interface ChipEmits {
   /** Chip 点击事件 */
-  click: [event: MouseEvent]
+  click: [event: MouseEvent];
   /** 删除事件 */
-  remove: [event: Event]
+  remove: [event: Event];
 }

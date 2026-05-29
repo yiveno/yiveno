@@ -20,22 +20,22 @@
  * - 避免重复请求
  */
 
-import { ref, onMounted, onUnmounted, watch, type Ref } from 'vue'
-import { faviconService, type FaviconStatus } from '@/services/favicon-service'
-import { logger } from '@/infrastructure/logging/logger'
+import { ref, onMounted, onUnmounted, watch, type Ref } from "vue";
+import { faviconService, type FaviconStatus } from "@/services/favicon-service";
+import { logger } from "@/infrastructure/logging/logger";
 
 /**
  * 懒加载 Favicon 选项接口
  */
 export interface UseLazyFaviconOptions {
   /** 书签URL（响应式引用） */
-  url: Ref<string | undefined>
+  url: Ref<string | undefined>;
   /** 节点的根元素引用 */
-  rootEl: Ref<HTMLElement | null>
+  rootEl: Ref<HTMLElement | null>;
   /** Intersection Observer 的 root margin（默认：提前200px开始加载） */
-  rootMargin?: string
+  rootMargin?: string;
   /** 是否启用懒加载（默认：true，禁用时立即加载） */
-  enabled?: boolean
+  enabled?: boolean;
 }
 
 /**
@@ -43,21 +43,21 @@ export interface UseLazyFaviconOptions {
  */
 export interface UseLazyFaviconReturn {
   /** favicon URL（响应式） */
-  faviconUrl: Ref<string>
+  faviconUrl: Ref<string>;
   /** 加载状态（loading/loaded/error） */
-  status: Ref<FaviconStatus>
+  status: Ref<FaviconStatus>;
   /** 是否加载失败 */
-  isError: Ref<boolean>
+  isError: Ref<boolean>;
   /** 是否正在加载 */
-  isLoading: Ref<boolean>
+  isLoading: Ref<boolean>;
   /** 是否已加载成功 */
-  isLoaded: Ref<boolean>
+  isLoaded: Ref<boolean>;
   /** 手动触发加载函数 */
-  load: () => void
+  load: () => void;
   /** 图片加载成功处理函数 */
-  handleLoad: () => void
+  handleLoad: () => void;
   /** 图片加载失败处理函数 */
-  handleError: () => void
+  handleError: () => void;
 }
 
 /**
@@ -76,23 +76,25 @@ export interface UseLazyFaviconReturn {
  * })
  * ```
  */
-export function useLazyFavicon(options: UseLazyFaviconOptions): UseLazyFaviconReturn {
-  const { url, rootEl, rootMargin = '200px', enabled = true } = options
+export function useLazyFavicon(
+  options: UseLazyFaviconOptions,
+): UseLazyFaviconReturn {
+  const { url, rootEl, rootMargin = "200px", enabled = true } = options;
 
   // 响应式状态
-  const faviconUrl = ref('')
-  const status = ref<FaviconStatus>('loading')
-  const isIntersecting = ref(false)
-  const hasLoaded = ref(false)
+  const faviconUrl = ref("");
+  const status = ref<FaviconStatus>("loading");
+  const isIntersecting = ref(false);
+  const hasLoaded = ref(false);
 
   // Intersection Observer实例
-  let observer: IntersectionObserver | null = null
-  let unsubscribe: (() => void) | null = null
+  let observer: IntersectionObserver | null = null;
+  let unsubscribe: (() => void) | null = null;
 
   // 计算属性
-  const isError = ref(false)
-  const isLoading = ref(false)
-  const isLoaded = ref(false)
+  const isError = ref(false);
+  const isLoading = ref(false);
+  const isLoaded = ref(false);
 
   /**
    * 更新计算状态
@@ -100,10 +102,10 @@ export function useLazyFavicon(options: UseLazyFaviconOptions): UseLazyFaviconRe
    * 根据当前 status 更新派生的布尔状态值
    */
   const updateComputedState = () => {
-    isError.value = status.value === 'error'
-    isLoading.value = status.value === 'loading'
-    isLoaded.value = status.value === 'loaded'
-  }
+    isError.value = status.value === "error";
+    isLoading.value = status.value === "loading";
+    isLoaded.value = status.value === "loaded";
+  };
 
   /**
    * 加载 favicon
@@ -111,75 +113,78 @@ export function useLazyFavicon(options: UseLazyFaviconOptions): UseLazyFaviconRe
    * 从 FaviconService 获取 favicon URL，自动过滤特殊协议和本地URL
    */
   const load = async () => {
-    const bookmarkUrl = url.value
-    if (!bookmarkUrl || hasLoaded.value) return
+    const bookmarkUrl = url.value;
+    if (!bookmarkUrl || hasLoaded.value) return;
 
     // ✅ 检查是否是特殊协议URL或本地URL
     try {
-      const parsed = new URL(bookmarkUrl)
+      const parsed = new URL(bookmarkUrl);
 
       // 跳过特殊协议
       const specialProtocols = [
-        'chrome-extension:',
-        'chrome:',
-        'file:',
-        'about:',
-        'data:',
-        'javascript:'
-      ]
+        "chrome-extension:",
+        "chrome:",
+        "file:",
+        "about:",
+        "data:",
+        "javascript:",
+      ];
       if (specialProtocols.includes(parsed.protocol)) {
-        status.value = 'error'
-        updateComputedState()
-        return
+        status.value = "error";
+        updateComputedState();
+        return;
       }
 
       // 跳过localhost和本地IP
-      const hostname = parsed.hostname
+      const hostname = parsed.hostname;
       if (
-        hostname === 'localhost' ||
-        hostname === '127.0.0.1' ||
-        hostname.startsWith('192.168.') ||
-        hostname.startsWith('10.')
+        hostname === "localhost" ||
+        hostname === "127.0.0.1" ||
+        hostname.startsWith("192.168.") ||
+        hostname.startsWith("10.")
       ) {
-        status.value = 'error'
-        updateComputedState()
-        return
+        status.value = "error";
+        updateComputedState();
+        return;
       }
     } catch {
       // URL解析失败，跳过
-      status.value = 'error'
-      updateComputedState()
-      return
+      status.value = "error";
+      updateComputedState();
+      return;
     }
 
-    hasLoaded.value = true
+    hasLoaded.value = true;
 
     try {
       // 使用FaviconService获取favicon
-      const initialUrl = await faviconService.getFavicon(bookmarkUrl, (newStatus, newUrl) => {
-        status.value = newStatus
-        if (newUrl) {
-          faviconUrl.value = newUrl
-        }
-        updateComputedState()
-      })
+      const initialUrl = await faviconService.getFavicon(
+        bookmarkUrl,
+        (newStatus, newUrl) => {
+          status.value = newStatus;
+          if (newUrl) {
+            faviconUrl.value = newUrl;
+          }
+          updateComputedState();
+        },
+      );
 
       if (!initialUrl) {
         // 服务返回空（可能是特殊协议），标记为error
-        status.value = 'error'
-        updateComputedState()
-        return
+        status.value = "error";
+        updateComputedState();
+        return;
       }
 
-      faviconUrl.value = initialUrl
-      status.value = 'loading'
-      updateComputedState()
+      faviconUrl.value = initialUrl;
+      status.value = "loading";
+      updateComputedState();
     } catch (error) {
-      logger.error('useLazyFavicon', '加载favicon失败:', error)
-      status.value = 'error'
-      updateComputedState()
+      logger.error("useLazyFavicon", "加载favicon失败:", error);
+      status.value = "error";
+      updateComputedState();
     }
-  }
+  };
 
   /**
    * 处理图片加载成功
@@ -187,14 +192,17 @@ export function useLazyFavicon(options: UseLazyFaviconOptions): UseLazyFaviconRe
    * 通知 FaviconService 标记该 favicon 已成功加载
    */
   const handleLoad = () => {
-    const bookmarkUrl = url.value
-    if (!bookmarkUrl) return
+    const bookmarkUrl = url.value;
+    if (!bookmarkUrl) return;
 
-    logger.debug('useLazyFavicon', `✅ Favicon加载成功: ${bookmarkUrl} -> ${faviconUrl.value}`)
-    faviconService.markLoaded(bookmarkUrl, faviconUrl.value)
-    status.value = 'loaded'
-    updateComputedState()
-  }
+    logger.debug(
+      "useLazyFavicon",
+      `✅ Favicon加载成功: ${bookmarkUrl} -> ${faviconUrl.value}`,
+    );
+    faviconService.markLoaded(bookmarkUrl, faviconUrl.value);
+    status.value = "loaded";
+    updateComputedState();
+  };
 
   /**
    * 处理图片加载失败
@@ -202,26 +210,26 @@ export function useLazyFavicon(options: UseLazyFaviconOptions): UseLazyFaviconRe
    * 自动尝试下一个回退方案，直到所有方案都失败
    */
   const handleError = () => {
-    const bookmarkUrl = url.value
-    if (!bookmarkUrl) return
+    const bookmarkUrl = url.value;
+    if (!bookmarkUrl) return;
 
     logger.warn(
-      'useLazyFavicon',
-      `❌ Favicon加载失败: ${bookmarkUrl} (当前URL: ${faviconUrl.value})`
-    )
+      "useLazyFavicon",
+      `❌ Favicon加载失败: ${bookmarkUrl} (当前URL: ${faviconUrl.value})`,
+    );
 
     // 尝试下一个回退方案
-    const nextUrl = faviconService.markError(bookmarkUrl)
+    const nextUrl = faviconService.markError(bookmarkUrl);
     if (nextUrl) {
-      logger.debug('useLazyFavicon', `🔄 尝试回退URL: ${nextUrl}`)
-      faviconUrl.value = nextUrl
-      status.value = 'loading'
+      logger.debug("useLazyFavicon", `🔄 尝试回退URL: ${nextUrl}`);
+      faviconUrl.value = nextUrl;
+      status.value = "loading";
     } else {
-      logger.error('useLazyFavicon', `💀 所有回退方案失败: ${bookmarkUrl}`)
-      status.value = 'error'
+      logger.error("useLazyFavicon", `💀 所有回退方案失败: ${bookmarkUrl}`);
+      status.value = "error";
     }
-    updateComputedState()
-  }
+    updateComputedState();
+  };
 
   /**
    * 初始化 Intersection Observer
@@ -229,26 +237,26 @@ export function useLazyFavicon(options: UseLazyFaviconOptions): UseLazyFaviconRe
    * 监听元素进入可视区域，触发 favicon 加载
    */
   const initObserver = () => {
-    if (!enabled || !rootEl.value) return
+    if (!enabled || !rootEl.value) return;
 
     observer = new IntersectionObserver(
-      entries => {
-        entries.forEach(entry => {
+      (entries) => {
+        entries.forEach((entry) => {
           if (entry.isIntersecting && !isIntersecting.value) {
-            isIntersecting.value = true
+            isIntersecting.value = true;
             // 进入可视区域，开始加载
-            load()
+            load();
           }
-        })
+        });
       },
       {
         rootMargin,
-        threshold: 0.01 // 只要有1%可见就触发
-      }
-    )
+        threshold: 0.01, // 只要有1%可见就触发
+      },
+    );
 
-    observer.observe(rootEl.value)
-  }
+    observer.observe(rootEl.value);
+  };
 
   /**
    * 清理 Observer
@@ -257,54 +265,54 @@ export function useLazyFavicon(options: UseLazyFaviconOptions): UseLazyFaviconRe
    */
   const cleanupObserver = () => {
     if (observer) {
-      observer.disconnect()
-      observer = null
+      observer.disconnect();
+      observer = null;
     }
-  }
+  };
 
   // 监听rootEl变化
   watch(rootEl, (newEl, oldEl) => {
     if (oldEl && observer) {
-      observer.unobserve(oldEl)
+      observer.unobserve(oldEl);
     }
     if (newEl && enabled) {
-      initObserver()
+      initObserver();
     }
-  })
+  });
 
   // 监听URL变化
   watch(url, () => {
     // URL变化时重置状态
-    hasLoaded.value = false
-    faviconUrl.value = ''
-    status.value = 'loading'
-    updateComputedState()
+    hasLoaded.value = false;
+    faviconUrl.value = "";
+    status.value = "loading";
+    updateComputedState();
 
     // 如果已在可视区域，立即加载
     if (isIntersecting.value) {
-      load()
+      load();
     }
-  })
+  });
 
   // 组件挂载
   onMounted(() => {
     if (!enabled) {
       // 禁用懒加载，直接加载
-      load()
+      load();
     } else {
       // 启用懒加载，等待进入可视区域
-      initObserver()
+      initObserver();
     }
-  })
+  });
 
   // 组件卸载
   onUnmounted(() => {
-    cleanupObserver()
+    cleanupObserver();
     if (unsubscribe) {
-      unsubscribe()
-      unsubscribe = null
+      unsubscribe();
+      unsubscribe = null;
     }
-  })
+  });
 
   return {
     faviconUrl,
@@ -314,6 +322,6 @@ export function useLazyFavicon(options: UseLazyFaviconOptions): UseLazyFaviconRe
     isLoaded,
     load,
     handleLoad,
-    handleError
-  }
+    handleError,
+  };
 }

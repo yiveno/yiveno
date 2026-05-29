@@ -14,9 +14,12 @@
  * ```
  */
 
-import { computed, type ComputedRef } from 'vue'
-import { useTraitDataStore, type TraitStatistics } from '@/stores/trait-data-store'
-import type { TraitTag } from '@/core/bookmark/trait-rules'
+import { computed, type ComputedRef } from "vue";
+import {
+  useTraitDataStore,
+  type TraitStatistics,
+} from "@/stores/trait-data-store";
+import type { TraitTag } from "@/core/bookmark/trait-rules";
 
 /**
  * 使用特征统计（响应式）
@@ -38,14 +41,14 @@ import type { TraitTag } from '@/core/bookmark/trait-rules'
  * ```
  */
 export function useTraitStatistics(): ComputedRef<TraitStatistics> {
-  const store = useTraitDataStore()
+  const store = useTraitDataStore();
 
   // 确保已初始化
   if (!store.isInitialized) {
-    store.initialize()
+    store.initialize();
   }
 
-  return computed(() => store.statistics)
+  return computed(() => store.statistics);
 }
 
 /**
@@ -70,14 +73,14 @@ export function useTraitStatistics(): ComputedRef<TraitStatistics> {
  * ```
  */
 export function useTraitCount(trait: TraitTag): ComputedRef<number> {
-  const store = useTraitDataStore()
+  const store = useTraitDataStore();
 
   // 确保已初始化
   if (!store.isInitialized) {
-    store.initialize()
+    store.initialize();
   }
 
-  return computed(() => store.getCount(trait))
+  return computed(() => store.getCount(trait));
 }
 
 /**
@@ -97,14 +100,14 @@ export function useTraitCount(trait: TraitTag): ComputedRef<number> {
  * ```
  */
 export function useTotalNegativeTraits(): ComputedRef<number> {
-  const store = useTraitDataStore()
+  const store = useTraitDataStore();
 
   // 确保已初始化
   if (!store.isInitialized) {
-    store.initialize()
+    store.initialize();
   }
 
-  return computed(() => store.totalNegativeTraits)
+  return computed(() => store.totalNegativeTraits);
 }
 
 /**
@@ -126,14 +129,14 @@ export function useTotalNegativeTraits(): ComputedRef<number> {
  * ```
  */
 export function useHasNegativeTraits(): ComputedRef<boolean> {
-  const store = useTraitDataStore()
+  const store = useTraitDataStore();
 
   // 确保已初始化
   if (!store.isInitialized) {
-    store.initialize()
+    store.initialize();
   }
 
-  return computed(() => store.hasNegativeTraits)
+  return computed(() => store.hasNegativeTraits);
 }
 
 /**
@@ -153,14 +156,14 @@ export function useHasNegativeTraits(): ComputedRef<boolean> {
  * ```
  */
 export function useTraitLoading(): ComputedRef<boolean> {
-  const store = useTraitDataStore()
+  const store = useTraitDataStore();
 
   // 确保已初始化
   if (!store.isInitialized) {
-    store.initialize()
+    store.initialize();
   }
 
-  return computed(() => store.isLoading)
+  return computed(() => store.isLoading);
 }
 
 /**
@@ -184,14 +187,14 @@ export function useTraitLoading(): ComputedRef<boolean> {
  * ```
  */
 export function useTraitLastUpdated(): ComputedRef<number> {
-  const store = useTraitDataStore()
+  const store = useTraitDataStore();
 
   // 确保已初始化
   if (!store.isInitialized) {
-    store.initialize()
+    store.initialize();
   }
 
-  return computed(() => store.lastUpdated)
+  return computed(() => store.lastUpdated);
 }
 
 /**
@@ -216,12 +219,12 @@ export function useTraitLastUpdated(): ComputedRef<number> {
  * ```
  */
 export function useRefreshTraits(): () => Promise<void> {
-  const store = useTraitDataStore()
+  const store = useTraitDataStore();
 
   // 确保已初始化
   if (!store.isInitialized) {
-    store.initialize()
+    store.initialize();
   }
 
-  return () => store.refresh(true)
+  return () => store.refresh(true);
 }

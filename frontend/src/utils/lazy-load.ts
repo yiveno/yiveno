@@ -4,25 +4,29 @@
  * 提供组件和模块的懒加载功能，优化首屏加载速度
  */
 
-import { defineAsyncComponent, type Component, type AsyncComponentLoader } from 'vue'
-import { logger } from '@/infrastructure/logging/logger'
+import {
+  defineAsyncComponent,
+  type Component,
+  type AsyncComponentLoader,
+} from "vue";
+import { logger } from "@/infrastructure/logging/logger";
 
 /**
  * 懒加载组件配置
  */
 interface LazyComponentOptions {
   /** 加载组件的函数 */
-  loader: AsyncComponentLoader
+  loader: AsyncComponentLoader;
   /** 加载中显示的组件 */
-  loadingComponent?: Component
+  loadingComponent?: Component;
   /** 加载失败显示的组件 */
-  errorComponent?: Component
+  errorComponent?: Component;
   /** 延迟显示加载组件的时间（ms） */
-  delay?: number
+  delay?: number;
   /** 超时时间（ms） */
-  timeout?: number
+  timeout?: number;
   /** 是否在空闲时预加载 */
-  preloadOnIdle?: boolean
+  preloadOnIdle?: boolean;
 }
 
 /**
@@ -48,16 +52,16 @@ export function createLazyComponent(options: LazyComponentOptions) {
     errorComponent,
     delay = 200,
     timeout = 10000,
-    preloadOnIdle = false
-  } = options
+    preloadOnIdle = false,
+  } = options;
 
   // 空闲时预加载
-  if (preloadOnIdle && typeof requestIdleCallback !== 'undefined') {
+  if (preloadOnIdle && typeof requestIdleCallback !== "undefined") {
     requestIdleCallback(() => {
-      loader().catch(err => {
-        logger.warn('LazyLoad', '预加载组件失败', err)
-      })
-    })
+      loader().catch((err) => {
+        logger.warn("LazyLoad", "预加载组件失败", err);
+      });
+    });
   }
 
   return defineAsyncComponent({
@@ -67,16 +71,16 @@ export function createLazyComponent(options: LazyComponentOptions) {
     delay,
     timeout,
     onError(error, retry, fail, attempts) {
-      logger.error('LazyLoad', `组件加载失败 (尝试 ${attempts} 次)`, error)
+      logger.error("LazyLoad", `组件加载失败 (尝试 ${attempts} 次)`, error);
 
       // 最多重试 3 次
       if (attempts < 3) {
-        retry()
+        retry();
       } else {
-        fail()
+        fail();
       }
-    }
-  })
+    },
+  });
 }
 
 /**
@@ -96,19 +100,21 @@ export function createLazyComponent(options: LazyComponentOptions) {
  * const module2 = await loadHeavyModule()
  * ```
  */
-export function createLazyModule<T>(loader: () => Promise<T>): () => Promise<T> {
-  let cache: Promise<T> | null = null
+export function createLazyModule<T>(
+  loader: () => Promise<T>,
+): () => Promise<T> {
+  let cache: Promise<T> | null = null;
 
   return () => {
     if (!cache) {
-      cache = loader().catch(err => {
+      cache = loader().catch((err) => {
         // 加载失败时清除缓存，允许重试
-        cache = null
-        throw err
-      })
+        cache = null;
+        throw err;
+      });
     }
-    return cache
-  }
+    return cache;
+  };
 }
 
 /**
@@ -130,28 +136,28 @@ export function createLazyModule<T>(loader: () => Promise<T>): () => Promise<T> 
  */
 export function preloadComponent(
   loader: () => Promise<unknown>,
-  priority: 'high' | 'low' = 'low'
+  priority: "high" | "low" = "low",
 ): void {
-  if (priority === 'high') {
+  if (priority === "high") {
     // 高优先级：立即加载
-    loader().catch(err => {
-      logger.warn('LazyLoad', '预加载组件失败', err)
-    })
+    loader().catch((err) => {
+      logger.warn("LazyLoad", "预加载组件失败", err);
+    });
   } else {
     // 低优先级：空闲时加载
-    if (typeof requestIdleCallback !== 'undefined') {
+    if (typeof requestIdleCallback !== "undefined") {
       requestIdleCallback(() => {
-        loader().catch(err => {
-          logger.warn('LazyLoad', '预加载组件失败', err)
-        })
-      })
+        loader().catch((err) => {
+          logger.warn("LazyLoad", "预加载组件失败", err);
+        });
+      });
     } else {
       // 降级：使用 setTimeout
       setTimeout(() => {
-        loader().catch(err => {
-          logger.warn('LazyLoad', '预加载组件失败', err)
-        })
-      }, 1000)
+        loader().catch((err) => {
+          logger.warn("LazyLoad", "预加载组件失败", err);
+        });
+      }, 1000);
     }
   }
 }
@@ -173,9 +179,9 @@ export function preloadComponent(
  */
 export function preloadComponents(
   loaders: Array<() => Promise<unknown>>,
-  priority: 'high' | 'low' = 'low'
+  priority: "high" | "low" = "low",
 ): void {
-  loaders.forEach(loader => preloadComponent(loader, priority))
+  loaders.forEach((loader) => preloadComponent(loader, priority));
 }
 
 /**
@@ -194,34 +200,37 @@ export function preloadComponents(
  * })
  * ```
  */
-export function lazyLoadImages(selector: string, options?: IntersectionObserverInit): void {
-  if (typeof IntersectionObserver === 'undefined') {
+export function lazyLoadImages(
+  selector: string,
+  options?: IntersectionObserverInit,
+): void {
+  if (typeof IntersectionObserver === "undefined") {
     // 降级：立即加载所有图片
-    document.querySelectorAll<HTMLImageElement>(selector).forEach(img => {
-      const src = img.dataset.src
+    document.querySelectorAll<HTMLImageElement>(selector).forEach((img) => {
+      const src = img.dataset.src;
       if (src) {
-        img.src = src
-        delete img.dataset.src
+        img.src = src;
+        delete img.dataset.src;
       }
-    })
-    return
+    });
+    return;
   }
 
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
       if (entry.isIntersecting) {
-        const img = entry.target as HTMLImageElement
-        const src = img.dataset.src
+        const img = entry.target as HTMLImageElement;
+        const src = img.dataset.src;
         if (src) {
-          img.src = src
-          delete img.dataset.src
-          observer.unobserve(img)
+          img.src = src;
+          delete img.dataset.src;
+          observer.unobserve(img);
         }
       }
-    })
-  }, options)
+    });
+  }, options);
 
-  document.querySelectorAll<HTMLImageElement>(selector).forEach(img => {
-    observer.observe(img)
-  })
+  document.querySelectorAll<HTMLImageElement>(selector).forEach((img) => {
+    observer.observe(img);
+  });
 }

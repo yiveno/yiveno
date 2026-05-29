@@ -9,27 +9,27 @@ import type {
   LLMCompleteOptions,
   LLMCompleteResult,
   LLMEmbeddingResult,
-  LLMProvider
-} from '@/types/infrastructure/llm'
-import { logger } from '@/infrastructure/logging/logger'
+  LLMProvider,
+} from "@/types/infrastructure/llm";
+import { logger } from "@/infrastructure/logging/logger";
 
 /**
  * 支持的第三方 AI 服务商
  */
-export type UserLLMProvider = 'openai' | 'claude' | 'gemini' | 'deepseek'
+export type UserLLMProvider = "openai" | "claude" | "gemini" | "deepseek";
 
 /**
  * 用户 API Key 配置
  */
 export interface UserAPIKeyConfig {
   /** 服务商 */
-  provider: UserLLMProvider
+  provider: UserLLMProvider;
   /** API Key */
-  apiKey: string
+  apiKey: string;
   /** 自定义模型（可选，使用默认模型时留空） */
-  model?: string
+  model?: string;
   /** 自定义 API 端点（可选，用于代理或私有部署） */
-  baseUrl?: string
+  baseUrl?: string;
 }
 
 /**
@@ -40,56 +40,60 @@ const PROVIDER_DEFAULTS: Record<
   { baseUrl: string; completionModel: string; embeddingModel: string }
 > = {
   openai: {
-    baseUrl: 'https://api.openai.com/v1',
-    completionModel: 'gpt-4o-mini',
-    embeddingModel: 'text-embedding-3-small'
+    baseUrl: "https://api.openai.com/v1",
+    completionModel: "gpt-4o-mini",
+    embeddingModel: "text-embedding-3-small",
   },
   claude: {
-    baseUrl: 'https://api.anthropic.com/v1',
-    completionModel: 'claude-3-haiku-20240307',
-    embeddingModel: '' // Claude 暂不支持 embedding，降级到 OpenAI
+    baseUrl: "https://api.anthropic.com/v1",
+    completionModel: "claude-3-haiku-20240307",
+    embeddingModel: "", // Claude 暂不支持 embedding，降级到 OpenAI
   },
   gemini: {
-    baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
-    completionModel: 'gemini-2.0-flash',
-    embeddingModel: 'text-embedding-004'
+    baseUrl: "https://generativelanguage.googleapis.com/v1beta",
+    completionModel: "gemini-2.0-flash",
+    embeddingModel: "text-embedding-004",
   },
   deepseek: {
-    baseUrl: 'https://api.deepseek.com/v1',
-    completionModel: 'deepseek-chat',
-    embeddingModel: '' // DeepSeek 暂不支持 embedding，降级到 OpenAI
-  }
-}
+    baseUrl: "https://api.deepseek.com/v1",
+    completionModel: "deepseek-chat",
+    embeddingModel: "", // DeepSeek 暂不支持 embedding，降级到 OpenAI
+  },
+};
 
 /**
  * 将 HTTP 状态码翻译为用户友好的错误信息
  */
-function friendlyError(provider: UserLLMProvider, status: number, rawMessage: string): string {
+function friendlyError(
+  provider: UserLLMProvider,
+  status: number,
+  rawMessage: string,
+): string {
   const providerName: Record<UserLLMProvider, string> = {
-    openai: 'OpenAI',
-    claude: 'Anthropic Claude',
-    gemini: 'Google Gemini',
-    deepseek: 'DeepSeek'
-  }
-  const name = providerName[provider]
+    openai: "OpenAI",
+    claude: "Anthropic Claude",
+    gemini: "Google Gemini",
+    deepseek: "DeepSeek",
+  };
+  const name = providerName[provider];
 
   // Gemini 特殊处理：区分 AI Studio Key 和 Cloud Console Key
-  if (provider === 'gemini') {
+  if (provider === "gemini") {
     if (status === 400 || status === 404) {
-      return `API Key 类型不匹配。请使用 Google AI Studio（aistudio.google.com）申请的 Key（AIza 开头），而非 Google Cloud Console 的 Key`
+      return `API Key 类型不匹配。请使用 Google AI Studio（aistudio.google.com）申请的 Key（AIza 开头），而非 Google Cloud Console 的 Key`;
     }
     if (status === 429) {
-      return `请求频率超限或免费额度已用完，请稍后重试。如需更高额度请前往 aistudio.google.com 查看配额`
+      return `请求频率超限或免费额度已用完，请稍后重试。如需更高额度请前往 aistudio.google.com 查看配额`;
     }
   }
 
   // DeepSeek 特殊处理
-  if (provider === 'deepseek') {
+  if (provider === "deepseek") {
     if (status === 401) {
-      return `DeepSeek API Key 无效或已过期，请前往 platform.deepseek.com 检查您的 Key`
+      return `DeepSeek API Key 无效或已过期，请前往 platform.deepseek.com 检查您的 Key`;
     }
     if (status === 429) {
-      return `DeepSeek 请求频率超限或余额不足，请稍后重试或前往 platform.deepseek.com 充值`
+      return `DeepSeek 请求频率超限或余额不足，请稍后重试或前往 platform.deepseek.com 充值`;
     }
   }
 
@@ -98,32 +102,32 @@ function friendlyError(provider: UserLLMProvider, status: number, rawMessage: st
     403: `API Key 没有权限，请确认 ${name} 账号已开通 API 访问`,
     429: `请求频率超限或免费额度已用完，请稍后重试或在 ${name} 控制台充值`,
     500: `${name} 服务器内部错误，请稍后重试`,
-    503: `${name} 服务暂时不可用，请稍后重试`
-  }
+    503: `${name} 服务暂时不可用，请稍后重试`,
+  };
 
-  return common[status] ?? `${name} 返回错误 ${status}：${rawMessage}`
+  return common[status] ?? `${name} 返回错误 ${status}：${rawMessage}`;
 }
 
 /**
  * 用户自带 API Key 的 LLM 客户端
  */
 export class UserLLMClient {
-  private readonly loggerPrefix = 'UserLLMClient'
+  private readonly loggerPrefix = "UserLLMClient";
 
   /**
    * 从 chrome.storage.local 读取用户 API Key 配置
    */
   async getConfig(): Promise<UserAPIKeyConfig | null> {
     try {
-      const result = await chrome.storage.local.get('USER_AI_CONFIG')
-      const config = result['USER_AI_CONFIG'] as UserAPIKeyConfig | undefined
+      const result = await chrome.storage.local.get("USER_AI_CONFIG");
+      const config = result["USER_AI_CONFIG"] as UserAPIKeyConfig | undefined;
       if (!config || !config.apiKey || !config.provider) {
-        return null
+        return null;
       }
-      return config
+      return config;
     } catch (error) {
-      logger.warn(this.loggerPrefix, '读取用户 AI 配置失败', error)
-      return null
+      logger.warn(this.loggerPrefix, "读取用户 AI 配置失败", error);
+      return null;
     }
   }
 
@@ -131,48 +135,68 @@ export class UserLLMClient {
    * 保存用户 API Key 配置到 chrome.storage.local
    */
   async saveConfig(config: UserAPIKeyConfig): Promise<void> {
-    await chrome.storage.local.set({ USER_AI_CONFIG: config })
-    logger.info(this.loggerPrefix, '用户 AI 配置已保存', {
-      provider: config.provider
-    })
+    await chrome.storage.local.set({ USER_AI_CONFIG: config });
+    logger.info(this.loggerPrefix, "用户 AI 配置已保存", {
+      provider: config.provider,
+    });
   }
 
   /**
    * 清除用户 API Key 配置
    */
   async clearConfig(): Promise<void> {
-    await chrome.storage.local.remove('USER_AI_CONFIG')
-    logger.info(this.loggerPrefix, '用户 AI 配置已清除')
+    await chrome.storage.local.remove("USER_AI_CONFIG");
+    logger.info(this.loggerPrefix, "用户 AI 配置已清除");
   }
 
   /**
    * 检查用户是否已配置 AI 服务
    */
   async isConfigured(): Promise<boolean> {
-    const config = await this.getConfig()
-    return config !== null
+    const config = await this.getConfig();
+    return config !== null;
+  }
+
+  /**
+   * 通用的 fetch 错误处理
+   */
+  private async _handleFetchError(
+    response: Response,
+    provider: UserLLMProvider,
+  ): Promise<never> {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(
+      friendlyError(
+        provider,
+        response.status,
+        err?.error?.message || response.statusText,
+      ),
+    );
   }
 
   /**
    * 文本补全
    */
-  async complete(prompt: string, options?: LLMCompleteOptions): Promise<LLMCompleteResult> {
-    const config = await this.getConfig()
+  async complete(
+    prompt: string,
+    options?: LLMCompleteOptions,
+  ): Promise<LLMCompleteResult> {
+    const config = await this.getConfig();
     if (!config) {
-      throw new Error('未配置 API Key，请在设置页面填写您的 AI 服务商 Key')
+      throw new Error("未配置 API Key，请在设置页面填写您的 AI 服务商 Key");
     }
 
     switch (config.provider) {
-      case 'openai':
-        return this._completeOpenAI(prompt, config, options)
-      case 'claude':
-        return this._completeClaude(prompt, config, options)
-      case 'gemini':
-        return this._completeGemini(prompt, config, options)
-      case 'deepseek':
-        return this._completeDeepSeek(prompt, config, options)
+      case "openai":
+        return this._completeOpenAI(prompt, config, options);
+      case "claude":
+        return this._completeClaude(prompt, config, options);
+      case "gemini":
+        return this._completeGemini(prompt, config, options);
+      case "deepseek":
+        return this._completeDeepSeek(prompt, config, options);
       default:
-        throw new Error(`不支持的 AI 服务商: ${config.provider}`)
+        throw new Error(`不支持的 AI 服务商: ${config.provider}`);
     }
   }
 
@@ -180,258 +204,293 @@ export class UserLLMClient {
    * 生成向量嵌入
    */
   async generateEmbedding(text: string): Promise<LLMEmbeddingResult> {
-    const config = await this.getConfig()
+    const config = await this.getConfig();
     if (!config) {
-      throw new Error('未配置 API Key，请在设置页面填写您的 AI 服务商 Key')
+      throw new Error("未配置 API Key，请在设置页面填写您的 AI 服务商 Key");
     }
 
     switch (config.provider) {
-      case 'openai':
-        return this._embeddingOpenAI(text, config)
-      case 'gemini':
-        return this._embeddingGemini(text, config)
-      case 'claude':
+      case "openai":
+        return this._embeddingOpenAI(text, config);
+      case "gemini":
+        return this._embeddingGemini(text, config);
+      case "claude":
         // Claude 不支持 embedding，抛出错误让上层降级
-        throw new Error('Claude 暂不支持向量嵌入，请切换到 OpenAI 或 Gemini')
-      case 'deepseek':
+        throw new Error("Claude 暂不支持向量嵌入，请切换到 OpenAI 或 Gemini");
+      case "deepseek":
         // DeepSeek 不支持 embedding，抛出错误让上层降级
-        throw new Error('DeepSeek 暂不支持向量嵌入，请切换到 OpenAI 或 Gemini')
+        throw new Error("DeepSeek 暂不支持向量嵌入，请切换到 OpenAI 或 Gemini");
       default:
-        throw new Error(`不支持的 AI 服务商: ${config.provider}`)
+        throw new Error(`不支持的 AI 服务商: ${config.provider}`);
     }
   }
 
   // ─── OpenAI ───────────────────────────────────────────────────────────────
 
-  private async _completeOpenAI(
+  private async _sendOpenAICompletion(
     prompt: string,
     config: UserAPIKeyConfig,
-    options?: LLMCompleteOptions
-  ): Promise<LLMCompleteResult> {
-    const defaults = PROVIDER_DEFAULTS.openai
-    const baseUrl = config.baseUrl || defaults.baseUrl
-    const model = config.model || defaults.completionModel
-
-    const response = await fetch(`${baseUrl}/chat/completions`, {
-      method: 'POST',
+    options: LLMCompleteOptions | undefined,
+    path: string,
+  ): Promise<Response> {
+    const defaults = PROVIDER_DEFAULTS.openai;
+    const baseUrl = config.baseUrl || defaults.baseUrl;
+    const model = config.model || defaults.completionModel;
+    const response = await fetch(`${baseUrl}${path}`, {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${config.apiKey}`
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${config.apiKey}`,
       },
       body: JSON.stringify({
         model,
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: options?.maxTokens || 256,
-        temperature: options?.temperature ?? 0.6
-      })
-    })
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: options?.maxTokens ?? 256,
+        temperature: options?.temperature ?? 0.6,
+      }),
+    });
+    if (!response.ok) await this._handleFetchError(response, "openai");
+    return response;
+  }
 
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}))
-      throw new Error(
-        friendlyError('openai', response.status, err?.error?.message || response.statusText)
-      )
-    }
-
-    const data = await response.json()
+  private async _completeOpenAI(
+    prompt: string,
+    config: UserAPIKeyConfig,
+    options?: LLMCompleteOptions,
+  ): Promise<LLMCompleteResult> {
+    const response = await this._sendOpenAICompletion(
+      prompt,
+      config,
+      options,
+      "/chat/completions",
+    );
+    const data = await response.json();
     return {
-      text: data.choices?.[0]?.message?.content?.trim() || '',
-      provider: 'openai' as LLMProvider,
-      tokensUsed: data.usage?.total_tokens
-    }
+      text: data.choices?.[0]?.message?.content?.trim() || "",
+      provider: "openai" as LLMProvider,
+      tokensUsed: data.usage?.total_tokens,
+    };
   }
 
   private async _embeddingOpenAI(
     text: string,
-    config: UserAPIKeyConfig
+    config: UserAPIKeyConfig,
   ): Promise<LLMEmbeddingResult> {
-    const defaults = PROVIDER_DEFAULTS.openai
-    const baseUrl = config.baseUrl || defaults.baseUrl
-    const model = defaults.embeddingModel
+    const defaults = PROVIDER_DEFAULTS.openai;
+    const baseUrl = config.baseUrl || defaults.baseUrl;
+    const model = defaults.embeddingModel;
 
     const response = await fetch(`${baseUrl}/embeddings`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${config.apiKey}`
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${config.apiKey}`,
       },
-      body: JSON.stringify({ model, input: text.trim() })
-    })
+      body: JSON.stringify({ model, input: text.trim() }),
+    });
 
     if (!response.ok) {
-      const err = await response.json().catch(() => ({}))
+      const err = await response.json().catch(() => ({}));
       throw new Error(
-        friendlyError('openai', response.status, err?.error?.message || response.statusText)
-      )
+        friendlyError(
+          "openai",
+          response.status,
+          err?.error?.message || response.statusText,
+        ),
+      );
     }
 
-    const data = await response.json()
-    const vector: number[] = data.data?.[0]?.embedding || []
+    const data = await response.json();
+    const vector: number[] = data.data?.[0]?.embedding || [];
 
     if (vector.length === 0) {
-      throw new Error('OpenAI 返回的向量为空')
+      throw new Error("OpenAI 返回的向量为空");
     }
 
-    return { vector, provider: 'openai' as LLMProvider, dimensions: vector.length }
+    return {
+      vector,
+      provider: "openai" as LLMProvider,
+      dimensions: vector.length,
+    };
   }
 
   // ─── Claude ───────────────────────────────────────────────────────────────
 
-  private async _completeClaude(
+  private async _sendClaudeCompletion(
     prompt: string,
     config: UserAPIKeyConfig,
-    options?: LLMCompleteOptions
-  ): Promise<LLMCompleteResult> {
-    const defaults = PROVIDER_DEFAULTS.claude
-    const baseUrl = config.baseUrl || defaults.baseUrl
-    const model = config.model || defaults.completionModel
-
+    options: LLMCompleteOptions | undefined,
+  ): Promise<Response> {
+    const defaults = PROVIDER_DEFAULTS.claude;
+    const baseUrl = config.baseUrl || defaults.baseUrl;
+    const model = config.model || defaults.completionModel;
     const response = await fetch(`${baseUrl}/messages`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': config.apiKey,
-        'anthropic-version': '2023-06-01'
+        "Content-Type": "application/json",
+        "x-api-key": config.apiKey,
+        "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
         model,
-        max_tokens: options?.maxTokens || 256,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    })
+        max_tokens: options?.maxTokens ?? 256,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+    if (!response.ok) await this._handleFetchError(response, "claude");
+    return response;
+  }
 
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}))
-      throw new Error(
-        friendlyError('claude', response.status, err?.error?.message || response.statusText)
-      )
-    }
-
-    const data = await response.json()
+  private async _completeClaude(
+    prompt: string,
+    config: UserAPIKeyConfig,
+    options?: LLMCompleteOptions,
+  ): Promise<LLMCompleteResult> {
+    const response = await this._sendClaudeCompletion(prompt, config, options);
+    const data = await response.json();
     return {
-      text: data.content?.[0]?.text?.trim() || '',
-      provider: 'claude' as LLMProvider,
-      tokensUsed: data.usage?.input_tokens + data.usage?.output_tokens
-    }
+      text: data.content?.[0]?.text?.trim() || "",
+      provider: "claude" as LLMProvider,
+      tokensUsed: data.usage?.input_tokens + data.usage?.output_tokens,
+    };
   }
 
   // ─── Gemini ───────────────────────────────────────────────────────────────
 
-  private async _completeGemini(
+  private async _sendGeminiCompletion(
     prompt: string,
     config: UserAPIKeyConfig,
-    options?: LLMCompleteOptions
-  ): Promise<LLMCompleteResult> {
-    const defaults = PROVIDER_DEFAULTS.gemini
-    const baseUrl = config.baseUrl || defaults.baseUrl
-    const model = config.model || defaults.completionModel
-
+    options: LLMCompleteOptions | undefined,
+  ): Promise<Response> {
+    const defaults = PROVIDER_DEFAULTS.gemini;
+    const baseUrl = config.baseUrl || defaults.baseUrl;
+    const model = config.model || defaults.completionModel;
     const response = await fetch(
       `${baseUrl}/models/${model}:generateContent?key=${config.apiKey}`,
       {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
-            maxOutputTokens: options?.maxTokens || 256,
-            temperature: options?.temperature ?? 0.6
-          }
-        })
-      }
-    )
+            maxOutputTokens: options?.maxTokens ?? 256,
+            temperature: options?.temperature ?? 0.6,
+          },
+        }),
+      },
+    );
+    if (!response.ok) await this._handleFetchError(response, "gemini");
+    return response;
+  }
 
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}))
-      throw new Error(
-        friendlyError('gemini', response.status, err?.error?.message || response.statusText)
-      )
-    }
-
-    const data = await response.json()
+  private async _completeGemini(
+    prompt: string,
+    config: UserAPIKeyConfig,
+    options?: LLMCompleteOptions,
+  ): Promise<LLMCompleteResult> {
+    const response = await this._sendGeminiCompletion(prompt, config, options);
+    const data = await response.json();
     return {
-      text: data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '',
-      provider: 'gemini' as LLMProvider,
-      tokensUsed: data.usageMetadata?.totalTokenCount
-    }
+      text: data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "",
+      provider: "gemini" as LLMProvider,
+      tokensUsed: data.usageMetadata?.totalTokenCount,
+    };
   }
 
   private async _embeddingGemini(
     text: string,
-    config: UserAPIKeyConfig
+    config: UserAPIKeyConfig,
   ): Promise<LLMEmbeddingResult> {
-    const defaults = PROVIDER_DEFAULTS.gemini
-    const baseUrl = config.baseUrl || defaults.baseUrl
-    const model = defaults.embeddingModel
+    const defaults = PROVIDER_DEFAULTS.gemini;
+    const baseUrl = config.baseUrl || defaults.baseUrl;
+    const model = defaults.embeddingModel;
 
-    const response = await fetch(`${baseUrl}/models/${model}:embedContent?key=${config.apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: `models/${model}`,
-        content: { parts: [{ text: text.trim() }] }
-      })
-    })
+    const response = await fetch(
+      `${baseUrl}/models/${model}:embedContent?key=${config.apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: `models/${model}`,
+          content: { parts: [{ text: text.trim() }] },
+        }),
+      },
+    );
 
     if (!response.ok) {
-      const err = await response.json().catch(() => ({}))
+      const err = await response.json().catch(() => ({}));
       throw new Error(
-        friendlyError('gemini', response.status, err?.error?.message || response.statusText)
-      )
+        friendlyError(
+          "gemini",
+          response.status,
+          err?.error?.message || response.statusText,
+        ),
+      );
     }
 
-    const data = await response.json()
-    const vector: number[] = data.embedding?.values || []
+    const data = await response.json();
+    const vector: number[] = data.embedding?.values || [];
 
     if (vector.length === 0) {
-      throw new Error('Gemini 返回的向量为空')
+      throw new Error("Gemini 返回的向量为空");
     }
 
-    return { vector, provider: 'gemini' as LLMProvider, dimensions: vector.length }
+    return {
+      vector,
+      provider: "gemini" as LLMProvider,
+      dimensions: vector.length,
+    };
   }
 
   // ─── DeepSeek ─────────────────────────────────────────────────────────────
 
-  private async _completeDeepSeek(
+  private async _sendDeepSeekCompletion(
     prompt: string,
     config: UserAPIKeyConfig,
-    options?: LLMCompleteOptions
-  ): Promise<LLMCompleteResult> {
-    const defaults = PROVIDER_DEFAULTS.deepseek
-    const baseUrl = config.baseUrl || defaults.baseUrl
-    const model = config.model || defaults.completionModel
-
-    const response = await fetch(`${baseUrl}/chat/completions`, {
-      method: 'POST',
+    options: LLMCompleteOptions | undefined,
+    path: string,
+  ): Promise<Response> {
+    const defaults = PROVIDER_DEFAULTS.deepseek;
+    const baseUrl = config.baseUrl || defaults.baseUrl;
+    const model = config.model || defaults.completionModel;
+    const response = await fetch(`${baseUrl}${path}`, {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${config.apiKey}`
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${config.apiKey}`,
       },
       body: JSON.stringify({
         model,
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: options?.maxTokens || 256,
-        temperature: options?.temperature ?? 0.6
-      })
-    })
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: options?.maxTokens ?? 256,
+        temperature: options?.temperature ?? 0.6,
+      }),
+    });
+    if (!response.ok) await this._handleFetchError(response, "deepseek");
+    return response;
+  }
 
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}))
-      throw new Error(
-        friendlyError('deepseek', response.status, err?.error?.message || response.statusText)
-      )
-    }
-
-    const data = await response.json()
+  private async _completeDeepSeek(
+    prompt: string,
+    config: UserAPIKeyConfig,
+    options?: LLMCompleteOptions,
+  ): Promise<LLMCompleteResult> {
+    const response = await this._sendDeepSeekCompletion(
+      prompt,
+      config,
+      options,
+      "/chat/completions",
+    );
+    const data = await response.json();
     return {
-      text: data.choices?.[0]?.message?.content?.trim() || '',
-      provider: 'deepseek' as LLMProvider,
-      tokensUsed: data.usage?.total_tokens
-    }
+      text: data.choices?.[0]?.message?.content?.trim() || "",
+      provider: "deepseek" as LLMProvider,
+      tokensUsed: data.usage?.total_tokens,
+    };
   }
 }
 
 /**
  * 单例实例
  */
-export const userLLMClient = new UserLLMClient()
+export const userLLMClient = new UserLLMClient();

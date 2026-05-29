@@ -3,16 +3,16 @@
   用于展示无数据、筛选无结果等空状态
 -->
 <script setup lang="ts">
-import { LucideIcon } from '@/components/base/LucideIcon'
-import type { EmptyStateProps } from './EmptyState.d'
+import { LucideIcon } from "@/components/base/LucideIcon";
+import type { EmptyStateProps } from "./EmptyState.d";
 
-defineOptions({ name: 'EmptyState' })
+defineOptions({ name: "EmptyState" });
 
 withDefaults(defineProps<EmptyStateProps>(), {
-  icon: 'folder',
+  icon: "folder",
   iconSize: 48,
-  iconColor: 'muted'
-})
+  iconColor: "muted",
+});
 </script>
 
 <template>
@@ -64,13 +64,15 @@ withDefaults(defineProps<EmptyStateProps>(), {
   min-height: 120px;
   padding: var(--spacing-4) var(--spacing-4);
   text-align: center;
-  animation: fade-in-up var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized);
+  animation: fade-in-up var(--md-sys-motion-duration-medium2)
+    var(--md-sys-motion-easing-emphasized);
 }
 
 .empty-state__icon {
   margin-bottom: var(--spacing-3);
   opacity: 0.5;
-  animation: fade-in-up var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized);
+  animation: fade-in-up var(--md-sys-motion-duration-medium2)
+    var(--md-sys-motion-easing-emphasized);
   will-change: opacity, transform;
 }
 
@@ -79,7 +81,8 @@ withDefaults(defineProps<EmptyStateProps>(), {
   font-size: var(--md-sys-typescale-title-medium-size);
   font-weight: var(--md-sys-typescale-title-medium-weight);
   color: var(--color-text-primary);
-  animation: fade-in-up var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized);
+  animation: fade-in-up var(--md-sys-motion-duration-medium2)
+    var(--md-sys-motion-easing-emphasized);
   animation-delay: 50ms;
   animation-fill-mode: backwards;
   will-change: opacity, transform;
@@ -91,7 +94,8 @@ withDefaults(defineProps<EmptyStateProps>(), {
   font-size: var(--md-sys-typescale-body-medium-size);
   line-height: var(--md-sys-typescale-body-medium-line-height);
   color: var(--color-text-secondary);
-  animation: fade-in-up var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized);
+  animation: fade-in-up var(--md-sys-motion-duration-medium2)
+    var(--md-sys-motion-easing-emphasized);
   animation-delay: 100ms;
   animation-fill-mode: backwards;
   will-change: opacity, transform;
@@ -99,7 +103,8 @@ withDefaults(defineProps<EmptyStateProps>(), {
 
 .empty-state__actions {
   margin-top: var(--spacing-4);
-  animation: fade-in-up var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized);
+  animation: fade-in-up var(--md-sys-motion-duration-medium2)
+    var(--md-sys-motion-easing-emphasized);
   animation-delay: 150ms;
   animation-fill-mode: backwards;
   will-change: opacity, transform;

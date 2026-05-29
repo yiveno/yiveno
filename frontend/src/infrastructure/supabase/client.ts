@@ -9,8 +9,13 @@
  */
 
 /* eslint-disable no-restricted-imports -- 这是 Supabase 客户端的封装层，必须直接导入 @supabase/supabase-js */
-import { createClient, type User, type Session, type AuthError } from '@supabase/supabase-js'
-import { logger } from '@/infrastructure/logging/logger'
+import {
+  createClient,
+  type User,
+  type Session,
+  type AuthError,
+} from "@supabase/supabase-js";
+import { logger } from "@/infrastructure/logging/logger";
 
 /**
  * Supabase 配置
@@ -19,21 +24,23 @@ import { logger } from '@/infrastructure/logging/logger'
  * - VITE_SUPABASE_URL: Supabase 项目 URL
  * - VITE_SUPABASE_ANON_KEY: Supabase 匿名密钥（公开的，可在前端使用）
  */
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // 开发模式下打印环境变量状态（帮助调试）
 if (import.meta.env.DEV) {
-  logger.debug('Supabase', 'Config', '环境变量状态', {
+  logger.debug("Supabase", "Config", "环境变量状态", {
     hasUrl: !!supabaseUrl,
     hasKey: !!supabaseAnonKey,
-    url: supabaseUrl ? `${supabaseUrl.substring(0, 30)}...` : 'undefined',
-    keyPrefix: supabaseAnonKey ? `${supabaseAnonKey.substring(0, 20)}...` : 'undefined'
-  })
+    url: supabaseUrl ? `${supabaseUrl.substring(0, 30)}...` : "undefined",
+    keyPrefix: supabaseAnonKey
+      ? `${supabaseAnonKey.substring(0, 20)}...`
+      : "undefined",
+  });
 }
 
 // 检查配置是否完整
-const isConfigured = !!(supabaseUrl && supabaseAnonKey)
+const isConfigured = !!(supabaseUrl && supabaseAnonKey);
 
 // 注意：Supabase 是可选功能（仅用于认证）
 // 未配置时应用仍可正常使用核心书签管理功能
@@ -47,29 +54,29 @@ const isConfigured = !!(supabaseUrl && supabaseAnonKey)
 const chromeStorageAdapter = {
   async getItem(key: string): Promise<string | null> {
     try {
-      const result = await chrome.storage.local.get(key)
-      const value = result[key] as string | undefined
-      return value || null
+      const result = await chrome.storage.local.get(key);
+      const value = result[key] as string | undefined;
+      return value || null;
     } catch (error) {
-      console.error('[ChromeStorageAdapter] getItem 失败:', error)
-      return null
+      console.error("[ChromeStorageAdapter] getItem 失败:", error);
+      return null;
     }
   },
   async setItem(key: string, value: string): Promise<void> {
     try {
-      await chrome.storage.local.set({ [key]: value })
+      await chrome.storage.local.set({ [key]: value });
     } catch (error) {
-      console.error('[ChromeStorageAdapter] setItem 失败:', error)
+      console.error("[ChromeStorageAdapter] setItem 失败:", error);
     }
   },
   async removeItem(key: string): Promise<void> {
     try {
-      await chrome.storage.local.remove(key)
+      await chrome.storage.local.remove(key);
     } catch (error) {
-      console.error('[ChromeStorageAdapter] removeItem 失败:', error)
+      console.error("[ChromeStorageAdapter] removeItem 失败:", error);
     }
-  }
-}
+  },
+};
 
 /**
  * 创建 Supabase 客户端
@@ -84,30 +91,30 @@ const chromeStorageAdapter = {
  */
 
 export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'placeholder-key',
+  supabaseUrl || "https://placeholder.supabase.co",
+  supabaseAnonKey || "placeholder-key",
   {
     auth: {
       // 🔑 使用 Chrome Storage 存储 session
       // Content Script 会监听官网的 localStorage 变化，并同步到 Chrome Storage
       // 这样插件就能自动获取官网的登录状态
       storage: chromeStorageAdapter,
-      storageKey: 'supabase.auth.token', // 自定义 storage key
+      storageKey: "supabase.auth.token", // 自定义 storage key
       autoRefreshToken: true,
       persistSession: true,
-      detectSessionInUrl: false // Chrome Extension 不需要检测 URL 中的 session
-    }
-  }
-)
+      detectSessionInUrl: false, // Chrome Extension 不需要检测 URL 中的 session
+    },
+  },
+);
 
 /**
  * 验证 Supabase 配置是否完整
  */
 export function isSupabaseConfigured(): boolean {
-  return isConfigured
+  return isConfigured;
 }
 
 /**
  * 导出 Supabase 类型（供外部使用）
  */
-export type { User, Session, AuthError }
+export type { User, Session, AuthError };

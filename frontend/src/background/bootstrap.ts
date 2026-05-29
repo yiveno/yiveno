@@ -5,13 +5,17 @@
  * 根据当前扩展状态执行首次安装、架构升级、数据恢复等流程。
  */
 
-import { logger } from '@/infrastructure/logging/logger'
-import type { ExtensionState } from './state'
-import { CURRENT_SCHEMA_VERSION, getExtensionState, updateExtensionState } from './state'
-import { bookmarkSyncService } from '@/services/bookmark-sync-service'
-import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
-import { folderVectorService } from '@/application/folder/folder-vector-service'
-import { dispatchOffscreenRequest } from '@/background/offscreen-manager'
+import { logger } from "@/infrastructure/logging/logger";
+import type { ExtensionState } from "./state";
+import {
+  CURRENT_SCHEMA_VERSION,
+  getExtensionState,
+  updateExtensionState,
+} from "./state";
+import { bookmarkSyncService } from "@/services/bookmark-sync-service";
+import { indexedDBManager } from "@/infrastructure/indexeddb/manager";
+import { folderVectorService } from "@/application/folder/folder-vector-service";
+import { dispatchOffscreenRequest } from "@/background/offscreen-manager";
 
 /**
  * 同步书签 Embedding（通过 Offscreen Document 执行）
@@ -21,20 +25,27 @@ import { dispatchOffscreenRequest } from '@/background/offscreen-manager'
  */
 async function syncBookmarkEmbeddings(): Promise<void> {
   try {
-    logger.info('Bootstrap', '开始同步书签 embedding（通过 Offscreen）...')
-    const result = await dispatchOffscreenRequest<{ success: boolean; message?: string }>(
+    logger.info("Bootstrap", "开始同步书签 embedding（通过 Offscreen）...");
+    const result = await dispatchOffscreenRequest<{
+      success: boolean;
+      message?: string;
+    }>(
       {
-        type: 'SYNC_BOOKMARK_EMBEDDINGS'
+        type: "SYNC_BOOKMARK_EMBEDDINGS",
       },
-      { timeout: 300000 } // 5分钟超时，embedding 可能需要较长时间
-    )
+      { timeout: 300000 }, // 5分钟超时，embedding 可能需要较长时间
+    );
     if (result.success) {
-      logger.info('Bootstrap', '✅ 书签 embedding 同步完成')
+      logger.info("Bootstrap", "✅ 书签 embedding 同步完成");
     } else {
-      logger.warn('Bootstrap', '⚠️ 书签 embedding 同步失败', result.message)
+      logger.warn("Bootstrap", "⚠️ 书签 embedding 同步失败", result.message);
     }
   } catch (error) {
-    logger.warn('Bootstrap', '⚠️ 书签 embedding 同步异常（非致命，语义搜索可能不可用）', error)
+    logger.warn(
+      "Bootstrap",
+      "⚠️ 书签 embedding 同步异常（非致命，语义搜索可能不可用）",
+      error,
+    );
   }
 }
 
@@ -50,47 +61,56 @@ async function syncBookmarkEmbeddings(): Promise<void> {
  * @param reason - 安装原因（install/update等）
  */
 async function handleFirstInstall(reason: string): Promise<void> {
-  logger.info('Bootstrap', '首次安装：开始全量同步')
+  logger.info("Bootstrap", "首次安装：开始全量同步");
 
   // 1. 打开引导页
-  chrome.tabs.create({ url: 'onboarding.html' })
+  chrome.tabs.create({ url: "onboarding.html" });
 
   // 2. 监听并广播进度
   // 注意：这里的 unsubscribe 需要在同步完成后调用
-  const unsubscribe = bookmarkSyncService.onProgress(progress => {
+  const unsubscribe = bookmarkSyncService.onProgress((progress) => {
     // 广播进度给前端页面（引导页）
     chrome.runtime
       .sendMessage({
-        type: 'acuity-bookmarks-sync-progress',
-        data: progress
+        type: "acuity-bookmarks-sync-progress",
+        data: progress,
       })
       .catch(() => {
         // 忽略错误（例如没有页面在监听）
-      })
-  })
+      });
+  });
 
   try {
-    await indexedDBManager.initialize()
-    await bookmarkSyncService.syncAllBookmarks()
+    await indexedDBManager.initialize();
+    await bookmarkSyncService.syncAllBookmarks();
 
     // ✅ 同步文件夹向量（AI 功能需要）
     try {
-      logger.info('Bootstrap', '开始同步文件夹向量...')
-      await folderVectorService.syncFolderVectors(progress => {
-        logger.debug('Bootstrap', `文件夹向量同步进度: ${progress.processed}/${progress.total}`)
-      })
-      logger.info('Bootstrap', '文件夹向量同步完成')
+      logger.info("Bootstrap", "开始同步文件夹向量...");
+      await folderVectorService.syncFolderVectors((progress) => {
+        logger.debug(
+          "Bootstrap",
+          `文件夹向量同步进度: ${progress.processed}/${progress.total}`,
+        );
+      });
+      logger.info("Bootstrap", "文件夹向量同步完成");
     } catch (error) {
-      logger.warn('Bootstrap', '文件夹向量同步失败（非致命，AI 功能可能受限）', error)
+      logger.warn(
+        "Bootstrap",
+        "文件夹向量同步失败（非致命，AI 功能可能受限）",
+        error,
+      );
     }
 
     // ✅ 同步书签 embedding（语义搜索需要）
     // 异步执行，不阻塞主流程
-    void syncBookmarkEmbeddings()
+    void syncBookmarkEmbeddings();
 
     // ✅ 从 IndexedDB 查询实际的书签总数（不依赖已废弃的 bookmarksCount 字段）
-    const allBookmarks = await indexedDBManager.getAllBookmarks()
-    const totalBookmarks = allBookmarks.filter(node => node.url && !node.isFolder).length
+    const allBookmarks = await indexedDBManager.getAllBookmarks();
+    const totalBookmarks = allBookmarks.filter(
+      (node) => node.url && !node.isFolder,
+    ).length;
 
     await updateExtensionState({
       initialized: true,
@@ -98,12 +118,12 @@ async function handleFirstInstall(reason: string): Promise<void> {
       schemaVersion: CURRENT_SCHEMA_VERSION,
       bookmarkCount: totalBookmarks,
       lastSyncedAt: Date.now(),
-      installReason: reason
-    })
+      installReason: reason,
+    });
 
-    logger.info('Bootstrap', '首次安装完成', { totalBookmarks })
+    logger.info("Bootstrap", "首次安装完成", { totalBookmarks });
   } finally {
-    unsubscribe()
+    unsubscribe();
   }
 }
 
@@ -115,45 +135,59 @@ async function handleFirstInstall(reason: string): Promise<void> {
  * @param state - 当前扩展状态
  */
 async function handleSchemaUpgrade(state: ExtensionState): Promise<void> {
-  logger.info('Bootstrap', `架构升级：v${state.schemaVersion} → v${CURRENT_SCHEMA_VERSION}`)
+  logger.info(
+    "Bootstrap",
+    `架构升级：v${state.schemaVersion} → v${CURRENT_SCHEMA_VERSION}`,
+  );
 
   // ✅ 直接执行升级操作，移除无意义的固定延迟
-  await indexedDBManager.initialize()
+  await indexedDBManager.initialize();
 
   // ✅ 从 IndexedDB 查询实际的书签总数（不依赖已废弃的 bookmarksCount 字段）
-  let allBookmarks = await indexedDBManager.getAllBookmarks()
-  let totalBookmarks = allBookmarks.filter(node => node.url && !node.isFolder).length
+  let allBookmarks = await indexedDBManager.getAllBookmarks();
+  let totalBookmarks = allBookmarks.filter(
+    (node) => node.url && !node.isFolder,
+  ).length;
 
   if (totalBookmarks === 0) {
-    logger.warn('Bootstrap', '升级后书签为空，执行全量重建')
-    await bookmarkSyncService.syncAllBookmarks()
-    allBookmarks = await indexedDBManager.getAllBookmarks()
-    totalBookmarks = allBookmarks.filter(node => node.url && !node.isFolder).length
+    logger.warn("Bootstrap", "升级后书签为空，执行全量重建");
+    await bookmarkSyncService.syncAllBookmarks();
+    allBookmarks = await indexedDBManager.getAllBookmarks();
+    totalBookmarks = allBookmarks.filter(
+      (node) => node.url && !node.isFolder,
+    ).length;
   }
 
   // ✅ 同步文件夹向量（AI 功能需要）
   try {
-    logger.info('Bootstrap', '开始同步文件夹向量...')
-    await folderVectorService.syncFolderVectors(progress => {
-      logger.debug('Bootstrap', `文件夹向量同步进度: ${progress.processed}/${progress.total}`)
-    })
-    logger.info('Bootstrap', '文件夹向量同步完成')
+    logger.info("Bootstrap", "开始同步文件夹向量...");
+    await folderVectorService.syncFolderVectors((progress) => {
+      logger.debug(
+        "Bootstrap",
+        `文件夹向量同步进度: ${progress.processed}/${progress.total}`,
+      );
+    });
+    logger.info("Bootstrap", "文件夹向量同步完成");
   } catch (error) {
-    logger.warn('Bootstrap', '文件夹向量同步失败（非致命，AI 功能可能受限）', error)
+    logger.warn(
+      "Bootstrap",
+      "文件夹向量同步失败（非致命，AI 功能可能受限）",
+      error,
+    );
   }
 
   // ✅ 同步书签 embedding（语义搜索需要）
   // 异步执行，不阻塞主流程
-  void syncBookmarkEmbeddings()
+  void syncBookmarkEmbeddings();
 
   await updateExtensionState({
     dbReady: true,
     schemaVersion: CURRENT_SCHEMA_VERSION,
     bookmarkCount: totalBookmarks,
-    lastSyncedAt: Date.now()
-  })
+    lastSyncedAt: Date.now(),
+  });
 
-  logger.info('Bootstrap', '架构升级完成', { totalBookmarks })
+  logger.info("Bootstrap", "架构升级完成", { totalBookmarks });
 }
 
 /**
@@ -168,45 +202,49 @@ async function handleSchemaUpgrade(state: ExtensionState): Promise<void> {
  */
 async function checkDatabaseHealth(): Promise<boolean> {
   try {
-    logger.debug('Bootstrap', '🔍 开始数据库健康检查...')
+    logger.debug("Bootstrap", "🔍 开始数据库健康检查...");
 
     // 1. 尝试初始化 IndexedDB
-    await indexedDBManager.initialize()
+    await indexedDBManager.initialize();
 
     // 2. 尝试读取少量数据（只读 10 条，快速检查）
-    const sampleBookmarks = await indexedDBManager.getAllBookmarks(10)
+    const sampleBookmarks = await indexedDBManager.getAllBookmarks(10);
 
     // 3. 获取 storage 中记录的书签数量
-    const state = await getExtensionState()
+    const state = await getExtensionState();
 
     // 4. 数据一致性检查
     if (state.bookmarkCount > 0 && sampleBookmarks.length === 0) {
-      logger.warn('Bootstrap', '⚠️ 数据不一致：storage 显示有书签但 IndexedDB 为空', {
-        storageCount: state.bookmarkCount,
-        actualCount: 0
-      })
-      return false
+      logger.warn(
+        "Bootstrap",
+        "⚠️ 数据不一致：storage 显示有书签但 IndexedDB 为空",
+        {
+          storageCount: state.bookmarkCount,
+          actualCount: 0,
+        },
+      );
+      return false;
     }
 
     // 5. 如果 storage 说有很多书签，但实际只读到很少，可能数据损坏
     if (state.bookmarkCount > 100 && sampleBookmarks.length < 5) {
-      logger.warn('Bootstrap', '⚠️ 数据可能损坏：预期书签数量与实际不符', {
+      logger.warn("Bootstrap", "⚠️ 数据可能损坏：预期书签数量与实际不符", {
         storageCount: state.bookmarkCount,
-        sampleCount: sampleBookmarks.length
-      })
-      return false
+        sampleCount: sampleBookmarks.length,
+      });
+      return false;
     }
 
-    logger.debug('Bootstrap', '✅ 数据库健康检查通过', {
+    logger.debug("Bootstrap", "✅ 数据库健康检查通过", {
       storageCount: state.bookmarkCount,
-      sampleCount: sampleBookmarks.length
-    })
+      sampleCount: sampleBookmarks.length,
+    });
 
-    return true
+    return true;
   } catch (error) {
-    logger.error('Bootstrap', '❌ 数据库健康检查失败', error)
+    logger.error("Bootstrap", "❌ 数据库健康检查失败", error);
     // 检查失败视为不健康，触发恢复
-    return false
+    return false;
   }
 }
 
@@ -214,59 +252,68 @@ async function checkDatabaseHealth(): Promise<boolean> {
  * 数据丢失恢复流程
  */
 async function handleDataRecovery(): Promise<void> {
-  logger.warn('Bootstrap', '检测到数据丢失，重新同步')
-  await indexedDBManager.initialize()
-  await bookmarkSyncService.syncAllBookmarks()
+  logger.warn("Bootstrap", "检测到数据丢失，重新同步");
+  await indexedDBManager.initialize();
+  await bookmarkSyncService.syncAllBookmarks();
 
   // ✅ 同步文件夹向量（AI 功能需要）
   try {
-    logger.info('Bootstrap', '开始同步文件夹向量...')
-    await folderVectorService.syncFolderVectors(progress => {
-      logger.debug('Bootstrap', `文件夹向量同步进度: ${progress.processed}/${progress.total}`)
-    })
-    logger.info('Bootstrap', '文件夹向量同步完成')
+    logger.info("Bootstrap", "开始同步文件夹向量...");
+    await folderVectorService.syncFolderVectors((progress) => {
+      logger.debug(
+        "Bootstrap",
+        `文件夹向量同步进度: ${progress.processed}/${progress.total}`,
+      );
+    });
+    logger.info("Bootstrap", "文件夹向量同步完成");
   } catch (error) {
-    logger.warn('Bootstrap', '文件夹向量同步失败（非致命，AI 功能可能受限）', error)
+    logger.warn(
+      "Bootstrap",
+      "文件夹向量同步失败（非致命，AI 功能可能受限）",
+      error,
+    );
   }
 
   // ✅ 同步书签 embedding（语义搜索需要）
   // 异步执行，不阻塞主流程
-  void syncBookmarkEmbeddings()
+  void syncBookmarkEmbeddings();
 
-  const allBookmarks = await indexedDBManager.getAllBookmarks()
-  const totalBookmarks = allBookmarks.filter(node => node.url && !node.isFolder).length
+  const allBookmarks = await indexedDBManager.getAllBookmarks();
+  const totalBookmarks = allBookmarks.filter(
+    (node) => node.url && !node.isFolder,
+  ).length;
   await updateExtensionState({
     dbReady: true,
     bookmarkCount: totalBookmarks,
-    lastSyncedAt: Date.now()
-  })
-  logger.info('Bootstrap', '数据恢复完成', { totalBookmarks })
+    lastSyncedAt: Date.now(),
+  });
+  logger.info("Bootstrap", "数据恢复完成", { totalBookmarks });
 }
 
 /**
  * 常规重新加载流程
  */
 async function handleRegularReload(reason: string): Promise<void> {
-  logger.info('Bootstrap', '正常重新加载，标记 DB 已就绪')
-  await updateExtensionState({ dbReady: true, installReason: reason })
+  logger.info("Bootstrap", "正常重新加载，标记 DB 已就绪");
+  await updateExtensionState({ dbReady: true, installReason: reason });
 
   // ⚠️ 收藏数据同步已移到页面打开时执行
   // Service Worker 环境中不适合执行可能触发 DOM API 的操作
-  logger.debug('Bootstrap', '收藏数据同步将在页面打开时执行')
+  logger.debug("Bootstrap", "收藏数据同步将在页面打开时执行");
 
   // ✅ 异步同步书签 embedding（语义搜索需要）
   // 不阻塞主流程，在后台执行
   try {
-    await indexedDBManager.initialize()
-    const allBookmarks = await indexedDBManager.getAllBookmarks(1)
+    await indexedDBManager.initialize();
+    const allBookmarks = await indexedDBManager.getAllBookmarks(1);
     if (allBookmarks.length > 0) {
-      logger.info('Bootstrap', '检测到书签数据，开始异步同步 embedding')
-      void syncBookmarkEmbeddings()
+      logger.info("Bootstrap", "检测到书签数据，开始异步同步 embedding");
+      void syncBookmarkEmbeddings();
     } else {
-      logger.debug('Bootstrap', '书签数据为空，跳过 embedding 同步')
+      logger.debug("Bootstrap", "书签数据为空，跳过 embedding 同步");
     }
   } catch (error) {
-    logger.warn('Bootstrap', '检查书签数据失败，跳过 embedding 同步', error)
+    logger.warn("Bootstrap", "检查书签数据失败，跳过 embedding 同步", error);
   }
 }
 
@@ -280,70 +327,77 @@ async function handleRegularReload(reason: string): Promise<void> {
  * 根据不同情况执行相应的初始化流程
  */
 export function registerLifecycleHandlers(): void {
-  chrome.runtime.onInstalled.addListener(async details => {
+  chrome.runtime.onInstalled.addListener(async (details) => {
     try {
-      const reason = details.reason || 'unknown'
-      const state = await getExtensionState()
+      const reason = details.reason || "unknown";
+      const state = await getExtensionState();
 
       if (!state.initialized) {
-        await handleFirstInstall(reason)
-        return
+        await handleFirstInstall(reason);
+        return;
       }
 
       if (state.schemaVersion < CURRENT_SCHEMA_VERSION) {
-        await handleSchemaUpgrade(state)
-        return
+        await handleSchemaUpgrade(state);
+        return;
       }
 
       // ✅ 新增：数据库健康检查
       // 在检查 bookmarkCount 之前先验证数据库实际状态
-      const isHealthy = await checkDatabaseHealth()
+      const isHealthy = await checkDatabaseHealth();
       if (!isHealthy) {
-        logger.warn('Bootstrap', '🔧 数据库不健康，触发数据恢复流程')
-        await handleDataRecovery()
-        return
+        logger.warn("Bootstrap", "🔧 数据库不健康，触发数据恢复流程");
+        await handleDataRecovery();
+        return;
       }
 
       if (state.bookmarkCount === 0) {
-        await handleDataRecovery()
-        return
+        await handleDataRecovery();
+        return;
       }
 
-      await handleRegularReload(reason)
+      await handleRegularReload(reason);
     } catch (error) {
-      logger.error('Bootstrap', 'onInstalled 流程失败', error)
+      logger.error("Bootstrap", "onInstalled 流程失败", error);
     }
-  })
+  });
 
   chrome.runtime.onStartup?.addListener(async () => {
     try {
-      logger.info('Bootstrap', '浏览器启动：进行幂等同步')
+      logger.info("Bootstrap", "浏览器启动：进行幂等同步");
 
       // ✅ 启动时也进行健康检查
       // 如果数据不健康，syncAllBookmarks 会自动恢复
-      const isHealthy = await checkDatabaseHealth()
+      const isHealthy = await checkDatabaseHealth();
       if (!isHealthy) {
-        logger.warn('Bootstrap', '🔧 启动时检测到数据丢失，将触发全量同步恢复')
+        logger.warn("Bootstrap", "🔧 启动时检测到数据丢失，将触发全量同步恢复");
       }
 
-      await bookmarkSyncService.syncAllBookmarks()
+      await bookmarkSyncService.syncAllBookmarks();
 
       // ✅ 同步文件夹向量（AI 功能需要）
       try {
-        logger.info('Bootstrap', '开始同步文件夹向量...')
-        await folderVectorService.syncFolderVectors(progress => {
-          logger.debug('Bootstrap', `文件夹向量同步进度: ${progress.processed}/${progress.total}`)
-        })
-        logger.info('Bootstrap', '文件夹向量同步完成')
+        logger.info("Bootstrap", "开始同步文件夹向量...");
+        await folderVectorService.syncFolderVectors((progress) => {
+          logger.debug(
+            "Bootstrap",
+            `文件夹向量同步进度: ${progress.processed}/${progress.total}`,
+          );
+        });
+        logger.info("Bootstrap", "文件夹向量同步完成");
       } catch (error) {
-        logger.warn('Bootstrap', '文件夹向量同步失败（非致命，AI 功能可能受限）', error)
+        logger.warn(
+          "Bootstrap",
+          "文件夹向量同步失败（非致命，AI 功能可能受限）",
+          error,
+        );
       }
 
       // ⚠️ 收藏数据同步已移到页面打开时执行
       // Service Worker 环境中不适合执行可能触发 DOM API 的操作
-      logger.debug('Bootstrap', '收藏数据同步将在页面打开时执行')
+      logger.debug("Bootstrap", "收藏数据同步将在页面打开时执行");
     } catch (error) {
-      logger.warn('Bootstrap', '浏览器启动同步失败', error)
+      logger.warn("Bootstrap", "浏览器启动同步失败", error);
     }
-  })
+  });
 }

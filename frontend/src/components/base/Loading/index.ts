@@ -1,2 +1,2 @@
-export { default as Loading } from './Loading.vue'
-export type { LoadingProps } from './Loading.d'
+export { default as Loading } from "./Loading.vue";
+export type { LoadingProps } from "./Loading.d";

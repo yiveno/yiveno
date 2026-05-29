@@ -8,42 +8,43 @@
  * 参考：https://developer.chrome.com/docs/ai/built-in
  */
 
-import type { EmbeddingProvider } from './embedding-provider'
-import { logger } from '@/infrastructure/logging/logger'
+import type { EmbeddingProvider } from "./embedding-provider";
+import { logger } from "@/infrastructure/logging/logger";
 
-const LOG_TAG = 'ChromeBuiltinEmbeddingProvider'
+const LOG_TAG = "ChromeBuiltinEmbeddingProvider";
 
 export class ChromeBuiltinEmbeddingProvider implements EmbeddingProvider {
-  readonly name = 'chrome-builtin'
-  readonly dimensions = 768
+  readonly name = "chrome-builtin";
+  readonly dimensions = 768;
 
   async isAvailable(): Promise<boolean> {
     try {
-      if (typeof window === 'undefined') return false
+      if (typeof window === "undefined") return false;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const ai = (window as any).ai
-      if (!ai?.embedder) return false
-      const availability = await ai.embedder.availability()
-      return availability === 'available'
+      const ai = (window as any).ai;
+      if (!ai?.embedder) return false;
+      const availability = await ai.embedder.availability();
+      return availability === "available";
     } catch {
-      return false
+      return false;
     }
   }
 
   async embed(text: string): Promise<number[]> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const ai = (window as any).ai
-    if (!ai?.embedder) throw new Error('Chrome Built-in AI Embedder 不可用')
+    const ai = (window as any).ai;
+    if (!ai?.embedder) throw new Error("Chrome Built-in AI Embedder 不可用");
 
-    logger.info(LOG_TAG, '使用 Chrome Built-in AI 生成 embedding')
-    const session = await ai.embedder.create()
+    logger.info(LOG_TAG, "使用 Chrome Built-in AI 生成 embedding");
+    const session = await ai.embedder.create();
     try {
-      const vector = await session.computeEmbedding(text)
-      return Array.from(vector as Float32Array)
+      const vector = await session.computeEmbedding(text);
+      return Array.from(vector as Float32Array);
     } finally {
-      session.destroy()
+      session.destroy();
     }
   }
 }
 
-export const chromeBuiltinEmbeddingProvider = new ChromeBuiltinEmbeddingProvider()
+export const chromeBuiltinEmbeddingProvider =
+  new ChromeBuiltinEmbeddingProvider();

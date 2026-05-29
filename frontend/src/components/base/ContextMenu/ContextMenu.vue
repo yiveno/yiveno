@@ -17,129 +17,137 @@
 -->
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
-import { LucideIcon } from '@/components/base/LucideIcon'
-import type { MenuItemConfig } from '@/core/bookmark/context-menu-config'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
+import { LucideIcon } from "@/components/base/LucideIcon";
+import type { MenuItemConfig } from "@/core/bookmark/context-menu-config";
 
-defineOptions({ name: 'ContextMenu' })
+defineOptions({ name: "ContextMenu" });
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
 const emit = defineEmits<{
   /** 菜单项被点击 */
-  itemClick: [item: MenuItemConfig]
+  itemClick: [item: MenuItemConfig];
   /** 关闭菜单 */
-  close: []
-}>()
+  close: [];
+}>();
 
 interface Props {
   /** 是否显示菜单 */
-  show: boolean
+  show: boolean;
   /** 菜单项配置 */
-  items: MenuItemConfig[]
+  items: MenuItemConfig[];
   /** 菜单显示的 X 坐标 */
-  x: number
+  x: number;
   /** 菜单显示的 Y 坐标 */
-  y: number
+  y: number;
 }
 
-const menuRef = ref<HTMLElement | null>(null)
+const menuRef = ref<HTMLElement | null>(null);
 
 // 过滤出可见的菜单项
 const visibleItems = computed(() => {
-  return props.items.filter(item => item.visible !== false)
-})
+  return props.items.filter((item) => item.visible !== false);
+});
 
 // 计算菜单位置（防止超出视口）
 const menuStyle = computed(() => {
   const style: Record<string, string> = {
-    position: 'fixed',
-    zIndex: '9999'
-  }
+    position: "fixed",
+    zIndex: "9999",
+  };
 
   // 初始位置
   if (!menuRef.value) {
-    style.left = `${props.x}px`
-    style.top = `${props.y}px`
-    return style
+    style.left = `${props.x}px`;
+    style.top = `${props.y}px`;
+    return style;
   }
 
-  const menuRect = menuRef.value.getBoundingClientRect()
-  const viewportWidth = window.innerWidth
-  const viewportHeight = window.innerHeight
+  const menuRect = menuRef.value.getBoundingClientRect();
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
 
   // 水平方向：优先右侧，超出则左侧
   if (props.x + menuRect.width > viewportWidth) {
-    style.right = `${viewportWidth - props.x}px`
+    style.right = `${viewportWidth - props.x}px`;
   } else {
-    style.left = `${props.x}px`
+    style.left = `${props.x}px`;
   }
 
   // 垂直方向：优先下方，超出则上方
   if (props.y + menuRect.height > viewportHeight) {
-    style.bottom = `${viewportHeight - props.y}px`
+    style.bottom = `${viewportHeight - props.y}px`;
   } else {
-    style.top = `${props.y}px`
+    style.top = `${props.y}px`;
   }
 
-  return style
-})
+  return style;
+});
 
 /**
  * 处理菜单项点击
  */
 const handleItemClick = (item: MenuItemConfig) => {
-  if (item.disabled) return
-  emit('itemClick', item)
-  emit('close')
-}
+  if (item.disabled) return;
+  emit("itemClick", item);
+  emit("close");
+};
 
 /**
  * 处理键盘导航
  */
 const handleKeyDown = (event: KeyboardEvent) => {
-  if (!props.show) return
+  if (!props.show) return;
 
   switch (event.key) {
-    case 'Escape':
-      event.preventDefault()
-      emit('close')
-      break
-    case 'ArrowDown':
-    case 'ArrowUp':
+    case "Escape":
+      event.preventDefault();
+      emit("close");
+      break;
+    case "ArrowDown":
+    case "ArrowUp":
       // 键盘导航：可以在这里实现上下箭头切换焦点
-      break
+      break;
   }
-}
+};
 
 // 监听显示状态变化
 watch(
   () => props.show,
-  async newShow => {
+  async (newShow) => {
     if (newShow) {
-      await nextTick()
+      await nextTick();
       // 聚焦第一个可用的菜单项以支持键盘导航
-      const firstItem = menuRef.value?.querySelector('.context-menu-item:not([disabled])')
+      const firstItem = menuRef.value?.querySelector(
+        ".context-menu-item:not([disabled])",
+      );
       if (firstItem instanceof HTMLElement) {
-        firstItem.focus()
+        firstItem.focus();
       }
     }
-  }
-)
+  },
+);
 
 onMounted(() => {
-  document.addEventListener('keydown', handleKeyDown)
-})
+  document.addEventListener("keydown", handleKeyDown);
+});
 
 onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeyDown)
-})
+  document.removeEventListener("keydown", handleKeyDown);
+});
 </script>
 
 <template>
   <Teleport to="body">
     <!-- 自定义菜单容器 -->
-    <div v-if="show" ref="menuRef" class="context-menu" :style="menuStyle" @click.stop>
+    <div
+      v-if="show"
+      ref="menuRef"
+      class="context-menu"
+      :style="menuStyle"
+      @click.stop
+    >
       <!-- 菜单列表 -->
       <div class="context-menu__list">
         <button
@@ -149,7 +157,8 @@ onUnmounted(() => {
           :disabled="item.disabled"
           class="context-menu-item"
           :class="{
-            [`context-menu-item--${item.color}`]: item.color && item.color !== 'default'
+            [`context-menu-item--${item.color}`]:
+              item.color && item.color !== 'default',
           }"
           @click="handleItemClick(item)"
         >
@@ -160,7 +169,8 @@ onUnmounted(() => {
               :size="16"
               class="context-menu-item__icon"
               :class="{
-                'context-menu-item__icon--filled': item.icon === 'star' && item.color === 'primary'
+                'context-menu-item__icon--filled':
+                  item.icon === 'star' && item.color === 'primary',
               }"
             />
           </span>
@@ -238,7 +248,11 @@ onUnmounted(() => {
 
 .context-menu-item:focus-visible {
   outline: none;
-  background-color: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
+  background-color: color-mix(
+    in srgb,
+    var(--md-sys-color-on-surface) 12%,
+    transparent
+  );
 }
 
 .context-menu-item:disabled {
@@ -248,7 +262,11 @@ onUnmounted(() => {
 }
 
 .context-menu-item:hover:not(:disabled) {
-  background-color: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
+  background-color: color-mix(
+    in srgb,
+    var(--md-sys-color-on-surface) 8%,
+    transparent
+  );
 }
 
 /* 图标容器 */
@@ -300,7 +318,11 @@ onUnmounted(() => {
 }
 
 .context-menu-item--error:hover:not(:disabled) {
-  background-color: color-mix(in srgb, var(--md-sys-color-error) 12%, transparent);
+  background-color: color-mix(
+    in srgb,
+    var(--md-sys-color-error) 12%,
+    transparent
+  );
 }
 
 /* 颜色主题 - Warning */
@@ -339,6 +361,10 @@ onUnmounted(() => {
 }
 
 .context-menu-item--primary:hover:not(:disabled) {
-  background-color: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
+  background-color: color-mix(
+    in srgb,
+    var(--md-sys-color-primary) 12%,
+    transparent
+  );
 }
 </style>

@@ -242,13 +242,13 @@
     text-decoration: underline;
   }
 
-  a[role='button'],
-  a[aria-disabled='true'] {
+  a[role="button"],
+  a[aria-disabled="true"] {
     text-decoration: none;
   }
 
-  a[role='button']:hover,
-  a[aria-disabled='true']:hover {
+  a[role="button"]:hover,
+  a[aria-disabled="true"]:hover {
     text-decoration: none;
   }
 
@@ -277,14 +277,14 @@
     list-style: none;
   }
 
-  ul[role='list'],
-  ol[role='list'] {
+  ul[role="list"],
+  ol[role="list"] {
     margin: 0;
     padding: 0;
   }
 
   /* Form Elements */
-  button:not([class*='md-']) {
+  button:not([class*="md-"]) {
     padding: 0;
     border: none;
     font-family: inherit;
@@ -327,7 +327,7 @@
     background: transparent;
   }
 
-  input[type='file'] {
+  input[type="file"] {
     cursor: pointer;
   }
 
@@ -352,14 +352,14 @@
 
   /* 常见容器元素禁用文本选择 */
   body,
-  div:not([class*='md-']),
-  section:not([class*='md-']),
-  article:not([class*='md-']),
-  aside:not([class*='md-']),
-  nav:not([class*='md-']),
-  header:not([class*='md-']),
-  footer:not([class*='md-']),
-  main:not([class*='md-']) {
+  div:not([class*="md-"]),
+  section:not([class*="md-"]),
+  article:not([class*="md-"]),
+  aside:not([class*="md-"]),
+  nav:not([class*="md-"]),
+  header:not([class*="md-"]),
+  footer:not([class*="md-"]),
+  main:not([class*="md-"]) {
     /* stylelint-disable property-no-vendor-prefix -- 需要浏览器兼容性 */
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -369,10 +369,10 @@
   }
 
   /* 输入框和可编辑内容也禁用选择（完全客户端体验） */
-  input:not([class*='md-']),
-  textarea:not([class*='md-']),
-  [contenteditable='true'],
-  [contenteditable='plaintext-only'] {
+  input:not([class*="md-"]),
+  textarea:not([class*="md-"]),
+  [contenteditable="true"],
+  [contenteditable="plaintext-only"] {
     /* stylelint-disable property-no-vendor-prefix -- 需要浏览器兼容性 */
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -384,14 +384,14 @@
   /* 链接中的图片：允许点击事件（必须在 img 规则之前，避免优先级冲突） */
   /* stylelint-disable no-descending-specificity */
   a img,
-  button:not([class*='md-']) img {
+  button:not([class*="md-"]) img {
     pointer-events: auto;
   }
 
   /* 图片和图标：禁止拖拽和选择（排除 Material Web Components） */
-  img:not([class*='md-']),
-  svg:not([class*='md-']),
-  [role='img']:not([class*='md-']) {
+  img:not([class*="md-"]),
+  svg:not([class*="md-"]),
+  [role="img"]:not([class*="md-"]) {
     /* stylelint-enable no-descending-specificity */
     -webkit-user-drag: none;
     -khtml-user-drag: none;
@@ -588,17 +588,20 @@
 
 .animate-fade-in {
   will-change: opacity;
-  animation: fade-in var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-standard);
+  animation: fade-in var(--md-sys-motion-duration-medium2)
+    var(--md-sys-motion-easing-standard);
 }
 
 .animate-fade-out {
   will-change: opacity;
-  animation: fade-out var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-standard);
+  animation: fade-out var(--md-sys-motion-duration-medium2)
+    var(--md-sys-motion-easing-standard);
 }
 
 .animate-slide-in-up {
   will-change: transform, opacity;
-  animation: slide-in-up var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-standard);
+  animation: slide-in-up var(--md-sys-motion-duration-medium2)
+    var(--md-sys-motion-easing-standard);
 }
 
 .animate-slide-in-down {
@@ -621,12 +624,14 @@
 
 .animate-scale-in {
   will-change: transform, opacity;
-  animation: scale-in var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-standard);
+  animation: scale-in var(--md-sys-motion-duration-medium2)
+    var(--md-sys-motion-easing-standard);
 }
 
 .animate-scale-out {
   will-change: transform, opacity;
-  animation: scale-out var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-standard);
+  animation: scale-out var(--md-sys-motion-duration-medium2)
+    var(--md-sys-motion-easing-standard);
 }
 
 /* ========================================
@@ -699,7 +704,7 @@
 
   /* 显示链接URL */
   a[href]::after {
-    content: ' (' attr(href) ')';
+    content: " (" attr(href) ")";
   }
 
   /* 隐藏不必要的元素 */

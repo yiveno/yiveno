@@ -1,103 +1,121 @@
 <script setup lang="ts">
-import { reactive } from 'vue'
-import LucideIcon from '@/components/base/LucideIcon/LucideIcon.vue'
+import { reactive } from "vue";
+import LucideIcon from "@/components/base/LucideIcon/LucideIcon.vue";
 
-type NotificationType = 'success' | 'info' | 'warning' | 'error'
-type NotificationPlacement = 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight'
+type NotificationType = "success" | "info" | "warning" | "error";
+type NotificationPlacement =
+  | "topLeft"
+  | "topRight"
+  | "bottomLeft"
+  | "bottomRight";
 
 interface NotificationItem {
-  id: string
-  key?: string | undefined
-  type: NotificationType
-  message?: string | undefined
-  description?: string | undefined
-  duration?: number | undefined
-  closable?: boolean | undefined
-  icon?: boolean | undefined
-  placement: NotificationPlacement
-  createdAt: number
-  paused: boolean
-  pausedAt?: number | undefined // 暂停时的时间戳
-  remainingTime?: number | undefined // 暂停时的剩余时间（秒）
-  timer?: ReturnType<typeof setTimeout> | undefined
-  progressStartTime?: number | undefined // 进度条开始时间
-  progressKey?: number | undefined // 进度条 key，用于强制重新渲染
+  id: string;
+  key?: string | undefined;
+  type: NotificationType;
+  message?: string | undefined;
+  description?: string | undefined;
+  duration?: number | undefined;
+  closable?: boolean | undefined;
+  icon?: boolean | undefined;
+  placement: NotificationPlacement;
+  createdAt: number;
+  paused: boolean;
+  pausedAt?: number | undefined; // 暂停时的时间戳
+  remainingTime?: number | undefined; // 暂停时的剩余时间（秒）
+  timer?: ReturnType<typeof setTimeout> | undefined;
+  progressStartTime?: number | undefined; // 进度条开始时间
+  progressKey?: number | undefined; // 进度条 key，用于强制重新渲染
 }
 
 interface NotificationConfig {
-  key?: string | undefined
-  message?: string | undefined
-  description?: string | undefined
-  duration?: number | undefined
-  closable?: boolean | undefined
-  icon?: boolean | undefined
-  placement?: NotificationPlacement | undefined
+  key?: string | undefined;
+  message?: string | undefined;
+  description?: string | undefined;
+  duration?: number | undefined;
+  closable?: boolean | undefined;
+  icon?: boolean | undefined;
+  placement?: NotificationPlacement | undefined;
 }
 
 const state = reactive<{
-  notifications: NotificationItem[]
-  defaultPlacement: NotificationPlacement
-  defaultDuration: number
+  notifications: NotificationItem[];
+  defaultPlacement: NotificationPlacement;
+  defaultDuration: number;
 }>({
   notifications: [],
-  defaultPlacement: 'topRight',
-  defaultDuration: 4.5
-})
+  defaultPlacement: "topRight",
+  defaultDuration: 4.5,
+});
 
-const placements: NotificationPlacement[] = ['topLeft', 'topRight', 'bottomLeft', 'bottomRight']
+const placements: NotificationPlacement[] = [
+  "topLeft",
+  "topRight",
+  "bottomLeft",
+  "bottomRight",
+];
 
 function getNotificationsByPlacement(placement: NotificationPlacement) {
-  return state.notifications.filter(n => n.placement === placement)
+  return state.notifications.filter((n) => n.placement === placement);
 }
 
 function getIconName(type: NotificationType): string {
   const iconMap: Record<NotificationType, string> = {
-    success: 'check-circle',
-    info: 'info',
-    warning: 'alert-triangle',
-    error: 'x-circle'
-  }
-  return iconMap[type]
+    success: "check-circle",
+    info: "info",
+    warning: "alert-triangle",
+    error: "x-circle",
+  };
+  return iconMap[type];
 }
 
 function generateId(): string {
-  return `notification_${Date.now()}_${Math.random().toString(36).slice(2)}`
+  return `notification_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 }
 
 function open(config: NotificationConfig & { type: NotificationType }) {
-  const { key, type, message, description, duration, closable, icon, placement } = config
+  const {
+    key,
+    type,
+    message,
+    description,
+    duration,
+    closable,
+    icon,
+    placement,
+  } = config;
 
   // 🎯 Ant Design 核心特性：通过 key 判断是更新还是新建
   if (key) {
-    const existing = state.notifications.find(n => n.key === key)
+    const existing = state.notifications.find((n) => n.key === key);
     if (existing) {
       // 更新现有通知
-      existing.type = type
-      existing.message = message
-      existing.description = description
-      existing.duration = duration ?? state.defaultDuration
-      existing.closable = closable ?? true
-      existing.icon = icon ?? true
-      existing.paused = false
+      existing.type = type;
+      existing.message = message;
+      existing.description = description;
+      existing.duration = duration ?? state.defaultDuration;
+      existing.closable = closable ?? true;
+      existing.icon = icon ?? true;
+      existing.paused = false;
 
       // 清除旧定时器
       if (existing.timer) {
-        clearTimeout(existing.timer)
+        clearTimeout(existing.timer);
       }
 
       // 重新设置定时器
       if (existing.duration > 0) {
         existing.timer = setTimeout(() => {
-          close(existing.id)
-        }, existing.duration * 1000)
+          close(existing.id);
+        }, existing.duration * 1000);
       }
 
-      return
+      return;
     }
   }
 
   // 创建新通知
-  const id = generateId()
+  const id = generateId();
   const item: NotificationItem = {
     id,
     key,
@@ -111,120 +129,120 @@ function open(config: NotificationConfig & { type: NotificationType }) {
     createdAt: Date.now(),
     paused: false,
     progressStartTime: Date.now(),
-    progressKey: Date.now()
-  }
+    progressKey: Date.now(),
+  };
 
-  state.notifications.push(item)
+  state.notifications.push(item);
 
   // 自动关闭
   if (item.duration && item.duration > 0) {
     item.timer = setTimeout(() => {
-      close(id)
-    }, item.duration * 1000)
+      close(id);
+    }, item.duration * 1000);
   }
 }
 
 function close(id: string) {
-  const index = state.notifications.findIndex(n => n.id === id)
-  if (index === -1) return
+  const index = state.notifications.findIndex((n) => n.id === id);
+  if (index === -1) return;
 
-  const item = state.notifications[index]
-  if (!item) return
+  const item = state.notifications[index];
+  if (!item) return;
 
   // 清除定时器
   if (item.timer) {
-    clearTimeout(item.timer)
+    clearTimeout(item.timer);
   }
 
   // 移除通知
-  state.notifications.splice(index, 1)
+  state.notifications.splice(index, 1);
 }
 
 function destroy(key?: string) {
   if (key) {
-    const item = state.notifications.find(n => n.key === key)
+    const item = state.notifications.find((n) => n.key === key);
     if (item) {
-      close(item.id)
+      close(item.id);
     }
   } else {
     // 清除所有通知
-    state.notifications.forEach(n => {
+    state.notifications.forEach((n) => {
       if (n.timer) {
-        clearTimeout(n.timer)
+        clearTimeout(n.timer);
       }
-    })
-    state.notifications = []
+    });
+    state.notifications = [];
   }
 }
 
 function handleMouseEnter(id: string) {
-  const item = state.notifications.find(n => n.id === id)
-  if (!item || !item.duration) return
+  const item = state.notifications.find((n) => n.id === id);
+  if (!item || !item.duration) return;
 
-  item.paused = true
-  item.pausedAt = Date.now()
+  item.paused = true;
+  item.pausedAt = Date.now();
 
   // 计算并保存剩余时间
-  const elapsed = (Date.now() - item.createdAt) / 1000
-  item.remainingTime = Math.max(0, item.duration - elapsed)
+  const elapsed = (Date.now() - item.createdAt) / 1000;
+  item.remainingTime = Math.max(0, item.duration - elapsed);
 
   if (item.timer) {
-    clearTimeout(item.timer)
-    item.timer = undefined
+    clearTimeout(item.timer);
+    item.timer = undefined;
   }
 }
 
 function handleMouseLeave(id: string) {
-  const item = state.notifications.find(n => n.id === id)
-  if (!item || !item.duration) return
+  const item = state.notifications.find((n) => n.id === id);
+  if (!item || !item.duration) return;
 
-  item.paused = false
+  item.paused = false;
 
   // 使用暂停时记录的剩余时间
-  const remaining = item.remainingTime ?? item.duration
+  const remaining = item.remainingTime ?? item.duration;
 
   if (remaining > 0) {
     // ✅ 更新 progressKey 强制重新渲染进度条，使用剩余时间重新开始动画
     // 这样动画时长和定时器时长保持一致
-    item.progressKey = Date.now()
+    item.progressKey = Date.now();
 
     // 重启定时器（使用相同的剩余时间）
     item.timer = setTimeout(() => {
-      close(item.id)
-    }, remaining * 1000)
+      close(item.id);
+    }, remaining * 1000);
   } else {
-    close(item.id)
-    item.pausedAt = undefined
-    item.remainingTime = undefined
+    close(item.id);
+    item.pausedAt = undefined;
+    item.remainingTime = undefined;
   }
 }
 
 // 获取进度条样式（纯 CSS 动画驱动）
 function getProgressStyle(item: NotificationItem) {
-  if (!item.duration || item.duration <= 0) return {}
+  if (!item.duration || item.duration <= 0) return {};
 
   // ✅ 如果有剩余时间（恢复后），使用剩余时间作为动画时长
   // 这样动画时长和定时器时长保持一致
-  const duration = item.remainingTime ?? item.duration
+  const duration = item.remainingTime ?? item.duration;
 
   return {
-    animationDuration: `${duration}s`
-  }
+    animationDuration: `${duration}s`,
+  };
 }
 
 // 导出方法供外部调用
 defineExpose({
   open,
-  success: (config: NotificationConfig) => open({ ...config, type: 'success' }),
-  error: (config: NotificationConfig) => open({ ...config, type: 'error' }),
-  info: (config: NotificationConfig) => open({ ...config, type: 'info' }),
-  warning: (config: NotificationConfig) => open({ ...config, type: 'warning' }),
+  success: (config: NotificationConfig) => open({ ...config, type: "success" }),
+  error: (config: NotificationConfig) => open({ ...config, type: "error" }),
+  info: (config: NotificationConfig) => open({ ...config, type: "info" }),
+  warning: (config: NotificationConfig) => open({ ...config, type: "warning" }),
   destroy,
   config: (cfg: { placement?: NotificationPlacement; duration?: number }) => {
-    if (cfg.placement) state.defaultPlacement = cfg.placement
-    if (cfg.duration !== undefined) state.defaultDuration = cfg.duration
-  }
-})
+    if (cfg.placement) state.defaultPlacement = cfg.placement;
+    if (cfg.duration !== undefined) state.defaultDuration = cfg.duration;
+  },
+});
 </script>
 
 <template>
@@ -244,13 +262,16 @@ defineExpose({
           @mouseleave="handleMouseLeave(item.id)"
         >
           <!-- 进度条：使用纯 CSS 动画，零 JS 开销 -->
-          <div v-if="item.duration && item.duration > 0" class="ab-notification-progress-wrapper">
+          <div
+            v-if="item.duration && item.duration > 0"
+            class="ab-notification-progress-wrapper"
+          >
             <div
               :key="item.progressKey"
               class="ab-notification-progress-bar"
               :class="[
                 `ab-notification-progress-bar--${item.type}`,
-                { 'ab-notification-progress-bar--paused': item.paused }
+                { 'ab-notification-progress-bar--paused': item.paused },
               ]"
               :style="getProgressStyle(item)"
             ></div>
@@ -470,7 +491,8 @@ defineExpose({
   color: var(--color-text-tertiary);
   background: none;
   cursor: pointer;
-  transition: color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+  transition: color var(--md-sys-motion-duration-short2)
+    var(--md-sys-motion-easing-standard);
 }
 
 .ab-notification-close:hover {
