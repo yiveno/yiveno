@@ -42,6 +42,20 @@ function isHttpsLikeLocal(u: URL): boolean {
   return u.protocol === 'https:' && (u.hostname === 'localhost' || u.hostname === '127.0.0.1')
 }
 
+
+/**
+ * 检查 HTTPS 主机是否在许可列表中
+ */
+function isAllowedHttpsHost(u: URL, env: Env): boolean {
+  const host = u.hostname.toLowerCase()
+  if (DEFAULT_ALLOWED_REDIRECT_HOST_SUFFIXES.some(suf => host.endsWith(suf))) return true
+  const allow = parseAllowlist(env)
+  if (!allow.length) return false
+  const href = u.toString()
+  const origin = `${u.protocol}//${u.host}`
+  return allow.some(item => href.startsWith(item) || origin === item || host === item)
+}
+
 /**
  * 校验 redirect_uri 是否合法
  *
@@ -60,15 +74,8 @@ export function isAllowedRedirectUri(
       return { ok: false, error: 'unsupported scheme' }
     }
     if (scheme === 'https:') {
-      const host = u.hostname.toLowerCase()
-      if (!DEFAULT_ALLOWED_REDIRECT_HOST_SUFFIXES.some(suf => host.endsWith(suf))) {
-        const allow = parseAllowlist(env)
-        if (allow.length) {
-          const href = u.toString()
-          const origin = `${u.protocol}//${u.host}`
-          const ok = allow.some(item => href.startsWith(item) || origin === item || host === item)
-          if (!ok) return { ok: false, error: 'redirect not in allowlist' }
-        }
+      if (!isAllowedHttpsHost(u, env)) {
+        return { ok: false, error: 'redirect not in allowlist' }
       }
     }
     if (scheme === 'javascript:' || scheme === 'data:')

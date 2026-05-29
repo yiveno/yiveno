@@ -14,6 +14,21 @@ const DEFAULT_TEMPERATURE = 0.6
 /** 默认最大返回 Token 数量，防止生成过长响应。 */
 const DEFAULT_MAX_TOKENS = 256
 
+
+/**
+ * 从请求中提取 AI 参数
+ */
+function extractAIParams(body: AICompleteRequest, sp: URLSearchParams) {
+  return {
+    prompt: sp.get('prompt') || body.prompt || '',
+    messages: body.messages || undefined,
+    stream: body.stream === true || sp.get('stream') === 'true',
+    model: body.model || sp.get('model') || DEFAULT_MODEL,
+    temperature: body.temperature ?? DEFAULT_TEMPERATURE,
+    max_tokens: body.max_tokens ?? DEFAULT_MAX_TOKENS
+  }
+}
+
 /**
  * 处理 AI 文本补全请求
  *
@@ -28,12 +43,10 @@ export async function handleAIComplete(request: Request, env: Env): Promise<Resp
     const url = new URL(request.url)
     const rawBody = request.method === 'POST' ? await request.json().catch(() => ({})) : {}
     const body = rawBody as AICompleteRequest
-    const prompt = url.searchParams.get('prompt') || body.prompt || ''
-    const messages = body.messages || undefined
-    const stream = body.stream === true || url.searchParams.get('stream') === 'true'
-    const model = body.model || url.searchParams.get('model') || DEFAULT_MODEL
-    const temperature = body.temperature ?? DEFAULT_TEMPERATURE
-    const max_tokens = body.max_tokens ?? DEFAULT_MAX_TOKENS
+    const { prompt, messages, stream, model, temperature, max_tokens } = extractAIParams(
+      body,
+      url.searchParams
+    )
 
     if (!prompt && !Array.isArray(messages))
       return errorJson({ error: 'missing prompt or messages' }, 400, origin)
