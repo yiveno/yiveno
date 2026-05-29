@@ -1,5 +1,5 @@
 import { createTRPCProxyClient, httpBatchLink } from '@trpc/client'
-import type { AppRouter } from '../../../backend/src/router'
+import type { AppRouter } from '../../../backend/src/trpc-router'
 
 const getBaseUrl = () => {
   // Chrome Extension 环境中，必须使用完整的后端 URL

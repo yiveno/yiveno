@@ -1,6 +1,6 @@
 /**
  * 分享功能 tRPC 路由
- * @module routers/share
+ * @module trpc/share
  */
 
 import { z } from 'zod'

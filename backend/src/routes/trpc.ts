@@ -5,16 +5,12 @@
 import { Hono } from 'hono'
 import type { Env } from '../types/env'
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch'
-import { appRouter } from '../router'
+import { appRouter } from '../trpc-router'
 import { createContext } from '../trpc'
 
 export const trpcRouter = new Hono<{ Bindings: Env }>()
 
-/**
- * ALL /trpc/*
- *
- * tRPC 请求处理
- */
+/** ALL /trpc/* — tRPC 请求处理 */
 trpcRouter.all('/*', async c => {
   const request = c.req.raw
   const env = c.env
@@ -26,7 +22,6 @@ trpcRouter.all('/*', async c => {
     createContext: () => createContext({ req: request, resHeaders: new Headers() }, env)
   }
 
-  // 只在开发环境添加 onError
   if (env.NODE_ENV === 'development') {
     handlerOptions.onError = ({ path, error }) => {
       console.error(`❌ tRPC failed on ${path ?? '<no-path>'}: ${error.message}`)
