@@ -7,9 +7,7 @@ import { onEvent } from '@/infrastructure/events/event-bus'
 import { formatRecentVisitTime, formatFullDateTime } from '@/utils/time-formatter'
 import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
 
-defineOptions({
-  name: 'RecentVisits'
-})
+defineOptions({ name: 'RecentVisits' })
 
 const emit = defineEmits<{
   (e: 'bookmarkClick', bookmark: BookmarkRecord): void
@@ -18,154 +16,90 @@ const emit = defineEmits<{
 }>()
 
 const recentVisits = ref<BookmarkRecord[]>([])
-const faviconErrors = ref<Set<string>>(new Set())
+const faviconErrors = ref(new Set<string>())
 
-const loadRecentVisits = async () => {
+async function load() {
   try {
     recentVisits.value = await indexedDBManager.getRecentVisits(5)
-    logger.info('RecentVisits', '📊 加载最近访问', recentVisits.value.length)
   } catch (error) {
-    logger.error('RecentVisits', '❌ 加载最近访问失败', error)
+    logger.error('RecentVisits', '加载失败', error)
   }
 }
 
-/**
- * 获取 favicon URL
- */
-const getFaviconUrl = (bookmark: BookmarkRecord): string | undefined => {
-  if (faviconErrors.value.has(bookmark.id)) {
-    return undefined
-  }
-  if (!bookmark.url) {
-    return undefined
-  }
+const getFaviconUrl = (b: BookmarkRecord) => {
+  if (faviconErrors.value.has(b.id) || !b.url) return
   try {
-    const domain = new URL(bookmark.url).hostname
-    return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`
+    return `https://www.google.com/s2/favicons?domain=${new URL(b.url).hostname}&sz=32`
   } catch {
-    return undefined
+    return
   }
 }
 
-/**
- * 处理 favicon 加载错误
- */
-const handleFaviconError = (bookmarkId: string) => {
-  faviconErrors.value.add(bookmarkId)
-}
-
-onMounted(loadRecentVisits)
-
-// 监听书签访问事件，自动刷新列表
-const unsubscribe = onEvent('bookmark:visited', () => {
-  logger.debug('RecentVisits', '🔄 收到书签访问事件，刷新列表')
-  loadRecentVisits()
-})
-
-// 监听数据变化，自动更新数量
+onMounted(load)
+const unsub = onEvent('bookmark:visited', () => load())
 watch(
   () => recentVisits.value.length,
-  newCount => {
-    emit('countUpdate', newCount)
-  },
+  n => emit('countUpdate', n),
   { immediate: true }
 )
+onUnmounted(() => unsub())
 
-onUnmounted(() => {
-  unsubscribe()
-})
-
-const handleClick = (bookmark: BookmarkRecord) => {
-  logger.info('RecentVisits', '🔗 点击最近访问', bookmark.title)
-  emit('bookmarkClick', bookmark)
+function handleClick(b: BookmarkRecord) {
+  emit('bookmarkClick', b)
 }
 
-/**
- * 处理清除访问记录
- * @description 清除单条书签的访问记录（删除 lastVisited 和 visitCount 字段）
- */
-const handleRemove = async (bookmark: BookmarkRecord) => {
-  logger.info('RecentVisits', '🗑️ 清除访问记录', bookmark.title)
-
+async function handleRemove(b: BookmarkRecord) {
   try {
-    // 获取完整的书签记录
-    const existingBookmark = await indexedDBManager.getBookmarkById(bookmark.id)
-    if (!existingBookmark) {
-      logger.error('RecentVisits', '❌ 书签不存在', bookmark.id)
-      return
-    }
-
-    // 创建新的书签对象，删除访问记录字段
-    const updatedBookmark: BookmarkRecord = {
-      ...existingBookmark
-    }
-
-    // 删除访问记录字段
-    delete updatedBookmark.lastVisited
-    delete updatedBookmark.visitCount
-
-    // 直接调用 IndexedDBManager 更新
-    await indexedDBManager.updateBookmark(updatedBookmark)
-
-    // 从列表中移除
-    recentVisits.value = recentVisits.value.filter(b => b.id !== bookmark.id)
-
-    // 通知父组件
-    emit('bookmarkRemove', bookmark)
-
-    logger.debug('RecentVisits', '✅ 访问记录已清除')
+    const existing = await indexedDBManager.getBookmarkById(b.id)
+    if (!existing) return
+    const updated = { ...existing }
+    delete updated.lastVisited
+    delete updated.visitCount
+    await indexedDBManager.updateBookmark(updated)
+    recentVisits.value = recentVisits.value.filter(v => v.id !== b.id)
+    emit('bookmarkRemove', b)
   } catch (error) {
-    logger.error('RecentVisits', '❌ 清除访问记录失败', error)
+    logger.error('RecentVisits', '清除失败', error)
   }
 }
 
-// 暴露方法供父组件调用
-defineExpose({
-  loadRecentVisits
-})
+defineExpose({ loadRecentVisits: load })
 </script>
 
 <template>
   <div class="recent-visits">
-    <!-- 空状态 -->
     <EmptyState
       v-if="recentVisits.length === 0"
       icon="clock"
       title="暂无最近访问"
       :icon-size="32"
     />
-
-    <!-- 最近访问列表 -->
-    <md-list v-else class="recent-list">
+    <md-list v-else class="list">
       <md-list-item
-        v-for="bookmark in recentVisits"
-        :key="bookmark.id"
+        v-for="b in recentVisits"
+        :key="b.id"
         type="button"
-        class="recent-list-item"
-        :title="`${bookmark.title}\n${formatFullDateTime(bookmark.lastVisited)}`"
-        @click="handleClick(bookmark)"
+        class="item"
+        :title="`${b.title}\n${formatFullDateTime(b.lastVisited)}`"
+        @click="handleClick(b)"
       >
-        <div slot="start" class="recent-favicon">
+        <div slot="start" class="favicon">
           <img
-            v-if="getFaviconUrl(bookmark)"
-            :src="getFaviconUrl(bookmark)"
-            alt="favicon"
+            v-if="getFaviconUrl(b)"
+            :src="getFaviconUrl(b)"
+            alt=""
             loading="lazy"
-            @error="() => handleFaviconError(bookmark.id)"
+            @error="faviconErrors.add(b.id)"
           />
           <LucideIcon v-else name="bookmark" :size="32" />
         </div>
-
-        <div slot="headline" class="headline-text">{{ bookmark.title }}</div>
-        <div slot="supporting-text" class="supporting-text">
-          {{ formatRecentVisitTime(bookmark.lastVisited) }}
-        </div>
-
+        <div slot="headline" class="headline">{{ b.title }}</div>
+        <div slot="supporting-text" class="sub">{{ formatRecentVisitTime(b.lastVisited) }}</div>
         <md-icon-button
           slot="end"
-          class="remove-button"
+          class="rm-btn"
           title="清除访问记录"
-          @click.stop="handleRemove(bookmark)"
+          @click.stop="handleRemove(b)"
         >
           <LucideIcon name="x" :size="16" />
         </md-icon-button>
@@ -179,36 +113,29 @@ defineExpose({
   width: 100%;
 }
 
-/* Material Web List 样式 */
-.recent-list {
+.list {
   border-radius: var(--radius-md);
   overflow: hidden;
 }
 
-/* 列表项样式 */
-.recent-list-item {
-  position: relative;
+.item {
   border-bottom: 1px solid var(--color-border);
 }
 
-/* 最后一项不显示分隔线 */
-.recent-list-item:last-child {
+.item:last-child {
   border-bottom: none;
 }
 
-/* 清除按钮：默认隐藏 */
-.recent-list-item .remove-button {
+.item .rm-btn {
   opacity: 0;
-  transition: opacity var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+  transition: opacity 0.2s;
 }
 
-/* hover 时显示清除按钮 */
-.recent-list-item:hover .remove-button {
+.item:hover .rm-btn {
   opacity: 1;
 }
 
-/* 标题样式：单行显示，超出省略 */
-.headline-text {
+.headline {
   display: block;
   max-width: 100%;
   white-space: nowrap;
@@ -216,13 +143,12 @@ defineExpose({
   text-overflow: ellipsis;
 }
 
-/* 时间样式：单行显示 */
-.supporting-text {
+.sub {
   display: block;
   white-space: nowrap;
 }
 
-.recent-favicon {
+.favicon {
   display: flex;
   flex-shrink: 0;
   justify-content: center;
@@ -231,7 +157,7 @@ defineExpose({
   height: 32px;
 }
 
-.recent-favicon img {
+.favicon img {
   width: 32px;
   height: 32px;
   border-radius: var(--radius-sm);
