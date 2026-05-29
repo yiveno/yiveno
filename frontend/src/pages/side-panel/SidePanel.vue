@@ -1,7 +1,7 @@
 <script setup lang="ts">
 defineOptions({ name: 'SidePanelPage' })
 
-import { Accordion, AccordionItem, Dialog, AppHeader } from '@/components'
+import { Accordion, AccordionItem, Dialog, AppHeader, Button } from '@/components'
 import BookmarkTree from '@/components/business/BookmarkTree/BookmarkTree.vue'
 import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'
 import ShareDialog from '@/components/business/ShareDialog/ShareDialog.vue'
@@ -75,10 +75,10 @@ const {
       </div>
     </div>
     <template #actions>
-      <md-text-button @click="postponeRefresh">{{ t('sidepanel_postpone') }}</md-text-button>
-      <md-filled-button :disabled="isLoading" @click="confirmRefresh">
+      <Button variant="text" @click="postponeRefresh">{{ t('sidepanel_postpone') }}</Button>
+      <Button variant="filled" :disabled="isLoading" @click="confirmRefresh">
         {{ t('sidepanel_refresh_now') }}
-      </md-filled-button>
+      </Button>
     </template>
   </Dialog>
 
@@ -211,8 +211,8 @@ const {
   min-width: 20px;
   height: 20px;
   padding: 0 6px;
-  border-radius: 10px;
-  font-size: 12px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-body-small);
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0.01em;

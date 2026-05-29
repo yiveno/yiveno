@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { reactive } from 'vue'
 import LucideIcon from '@/components/base/LucideIcon/LucideIcon.vue'
+import { Button } from '@/components'
 
 type NotificationType = 'success' | 'info' | 'warning' | 'error'
 type NotificationPlacement = 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight'
@@ -267,15 +268,16 @@ defineExpose({
                 {{ item.description }}
               </div>
             </div>
-            <md-icon-button
+            <Button
               v-if="item.closable !== false"
+              variant="icon"
               class="ab-notification-close"
               :style="{ '--md-icon-button-icon-size': '14px' }"
               :aria-label="`关闭${item.message}通知`"
               @click="close(item.id)"
             >
               <LucideIcon name="x" :size="14" />
-            </md-icon-button>
+            </Button>
           </div>
         </div>
       </transition-group>

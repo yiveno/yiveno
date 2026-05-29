@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Avatar, LucideIcon } from '@/components'
+import { Avatar, LucideIcon, Button } from '@/components'
 import { useSupabaseAuth, useSubscription } from '@/composables'
 import { emitEvent } from '@/infrastructure/events/event-bus'
 import { logger } from '@/infrastructure/logging/logger'
@@ -134,8 +134,9 @@ async function handleLogout() {
 
 <template>
   <div class="user-menu">
-    <md-icon-button
+    <Button
       id="user-menu-anchor"
+      variant="icon"
       :class="avatarWrapperClasses"
       :title="avatarTitle"
       :style="{ '--md-icon-button-icon-size': `${size}px` }"
@@ -158,7 +159,7 @@ async function handleLogout() {
       <div v-if="isPro" class="user-menu__badge">
         <LucideIcon name="crown" :size="10" />
       </div>
-    </md-icon-button>
+    </Button>
   </div>
 
   <!-- Material Design 3 Menu -->

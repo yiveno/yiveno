@@ -2,7 +2,7 @@
 import { reactive, watch, onUnmounted, ref, nextTick, computed, onMounted } from 'vue'
 import { useDebounceFn, useEventListener } from '@vueuse/core'
 import type { ShareDialogProps, ShareDialogEmits } from './ShareDialog.d'
-import { Dialog, LucideIcon, Tooltip, Loading } from '@/components'
+import { Dialog, LucideIcon, Tooltip, Loading, Button } from '@/components'
 import { MdInput } from '@/components/base/Input'
 import AsyncSearchSelect from '@/components/base/AsyncSearchSelect/AsyncSearchSelect.vue'
 import type { SelectOption, AsyncSearchSelectInstance } from '@/components/base/AsyncSearchSelect'
@@ -554,9 +554,14 @@ onUnmounted(() => {
     @update:show="$emit('update:show', $event)"
   >
     <template #header-actions>
-      <md-icon-button title="关闭" aria-label="关闭分享对话框" @click="$emit('update:show', false)">
+      <Button
+        variant="icon"
+        title="关闭"
+        aria-label="关闭分享对话框"
+        @click="$emit('update:show', false)"
+      >
         <LucideIcon name="x" :size="20" />
-      </md-icon-button>
+      </Button>
     </template>
     <!-- 屏幕阅读器消息区域（视觉上隐藏） -->
     <div class="sr-only" role="status" aria-live="polite" aria-atomic="true">
@@ -569,10 +574,10 @@ onUnmounted(() => {
         <LucideIcon name="lock" :size="48" class="login-prompt__icon" />
         <h3 class="login-prompt__title">需要登录才能分享</h3>
         <p class="login-prompt__description">登录后可以生成分享链接或直接发送给其他用户</p>
-        <md-filled-button @click="handleGoToLogin">
+        <Button variant="filled" @click="handleGoToLogin">
           <LucideIcon slot="icon" name="log-in" :size="18" />
           前往登录
-        </md-filled-button>
+        </Button>
       </div>
 
       <!-- 已登录：分享功能 -->
@@ -621,9 +626,9 @@ onUnmounted(() => {
               显示用户名
             </label>
             <Tooltip placement="top" :delay="300" offset="sm">
-              <md-icon-button class="option-tip" aria-label="显示用户名说明">
+              <Button variant="icon" class="option-tip" aria-label="显示用户名说明">
                 <LucideIcon name="info" :size="16" />
-              </md-icon-button>
+              </Button>
               <template #content>
                 <div class="tip-content">
                   <div class="tip-title">显示用户名</div>
@@ -647,9 +652,9 @@ onUnmounted(() => {
               添加描述
             </label>
             <Tooltip placement="top" :delay="300" offset="sm">
-              <md-icon-button class="option-tip" aria-label="添加描述说明">
+              <Button variant="icon" class="option-tip" aria-label="添加描述说明">
                 <LucideIcon name="info" :size="16" />
-              </md-icon-button>
+              </Button>
               <template #content>
                 <div class="tip-content">
                   <div class="tip-title">添加分享描述</div>
@@ -739,7 +744,8 @@ onUnmounted(() => {
           <div class="link-share-section">
             <!-- 生成链接按钮 -->
             <div class="generate-link-container">
-              <md-filled-button
+              <Button
+                variant="filled"
                 :disabled="state.isSharing || bookmarks.length === 0 || bookmarks.length > 500"
                 class="generate-link-button"
                 @click="handleCreateLinkShare"
@@ -747,7 +753,7 @@ onUnmounted(() => {
                 <Loading v-if="state.isSharing" slot="icon" size="xs" />
                 <LucideIcon v-else slot="icon" name="link" :size="18" />
                 {{ state.isSharing ? '生成中...' : '生成分享链接' }}
-              </md-filled-button>
+              </Button>
               <div v-if="bookmarks.length > 500" class="error-hint">
                 <LucideIcon name="alert-circle" :size="16" />
                 <span>书签数量超出限制，请选择不超过 500 个书签</span>
@@ -787,9 +793,9 @@ onUnmounted(() => {
             <div v-else-if="state.error" class="preview-error" role="alert" aria-live="assertive">
               <LucideIcon name="alert-circle" :size="48" aria-hidden="true" />
               <span>{{ state.error }}</span>
-              <md-outlined-button aria-label="重新生成海报" @click="handleRetry">
+              <Button variant="outlined" aria-label="重新生成海报" @click="handleRetry">
                 重试
-              </md-outlined-button>
+              </Button>
             </div>
             <img
               v-else-if="state.posterPreview"
@@ -808,27 +814,30 @@ onUnmounted(() => {
       <template v-if="isAuthenticated">
         <!-- 海报分享的操作按钮 -->
         <template v-if="state.shareType === 'poster'">
-          <md-text-button
+          <Button
+            variant="text"
             :disabled="!state.posterPreview || state.isGenerating"
             aria-label="复制海报图片到剪贴板"
             @click="handleCopyImage"
           >
             <LucideIcon slot="icon" name="copy" :size="18" />
             复制图片
-          </md-text-button>
-          <md-filled-button
+          </Button>
+          <Button
+            variant="filled"
             :disabled="!state.posterPreview || state.isGenerating"
             aria-label="下载海报图片"
             @click="handleDownloadImage"
           >
             <LucideIcon slot="icon" name="download" :size="18" />
             下载图片
-          </md-filled-button>
+          </Button>
         </template>
 
         <!-- 直接分享的操作按钮 -->
         <template v-else-if="state.shareType === 'direct'">
-          <md-filled-button
+          <Button
+            variant="filled"
             :disabled="
               state.selectedUserIds.length === 0 || state.isSharing || bookmarks.length > 500
             "
@@ -838,7 +847,7 @@ onUnmounted(() => {
             <Loading v-if="state.isSharing" slot="icon" size="xs" />
             <LucideIcon v-else slot="icon" name="send" :size="18" />
             {{ state.isSharing ? '发送中...' : '发送分享' }}
-          </md-filled-button>
+          </Button>
         </template>
       </template>
     </template>
@@ -914,7 +923,7 @@ onUnmounted(() => {
 }
 
 .generate-link-button {
-  --md-filled-button-container-height: 48px;
+  --Button-container-height: 48px;
   --md-filled-button-label-text-size: var(--text-base);
 
   min-width: 200px;

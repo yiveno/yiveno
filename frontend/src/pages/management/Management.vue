@@ -5,7 +5,8 @@ import {
   Card,
   Dialog,
   LucideIcon,
-  AnimatedNumber
+  AnimatedNumber,
+  Button
 } from '@/components'
 import { Loading } from '@/components/base/Loading'
 import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'
@@ -301,12 +302,12 @@ const {
       </div>
 
       <template #actions>
-        <md-text-button @click="showApplyConfirmDialog = false">
+        <Button variant="text" @click="showApplyConfirmDialog = false">
           {{ t('common_cancel') }}
-        </md-text-button>
-        <md-filled-button @click="confirmApplyChanges">
+        </Button>
+        <Button variant="filled" @click="confirmApplyChanges">
           {{ t('common_apply') }}
-        </md-filled-button>
+        </Button>
       </template>
     </Dialog>
     <!-- 📈 应用更改进度对话框 -->
@@ -367,7 +368,8 @@ const {
                       @search-clear="handleLeftSearchClear"
                     />
 
-                    <md-icon-button
+                    <Button
+                      variant="icon"
                       :title="
                         leftExpandAll ? t('management_collapse_all') : t('management_expand_all')
                       "
@@ -383,7 +385,7 @@ const {
                       >
                         <LucideIcon :name="leftExpandAll ? 'chevrons-up' : 'chevrons-down'" />
                       </span>
-                    </md-icon-button>
+                    </Button>
                   </div>
                 </div>
               </template>
@@ -419,7 +421,8 @@ const {
           <!-- Middle Divider - 可点击切换左侧面板收起/展开 -->
           <div class="panel-col divider-col">
             <div class="panel-divider" @click="toggleLeftPanel">
-              <md-icon-button
+              <Button
+                variant="icon"
                 :title="isLeftPanelCollapsed ? '展开左侧面板' : '收起左侧面板'"
                 class="panel-toggle-btn"
               >
@@ -427,7 +430,7 @@ const {
                   :name="isLeftPanelCollapsed ? 'chevrons-right' : 'chevrons-left'"
                   :size="24"
                 />
-              </md-icon-button>
+              </Button>
             </div>
           </div>
 
@@ -449,16 +452,18 @@ const {
                     <div class="panel-actions">
                       <!-- ✅ 使用包装元素解决禁用状态下 tooltip 不显示的问题 -->
                       <span class="btn-wrapper" :title="applyButtonTooltip">
-                        <md-filled-button
+                        <Button
+                          variant="filled"
                           :disabled="isPageLoading || !bookmarkManagementStore.hasUnsavedChanges"
                           @click="handleApplyClick"
                         >
                           <LucideIcon slot="icon" name="check" />
                           {{ t('management_apply') }}
-                        </md-filled-button>
+                        </Button>
                       </span>
                       <div class="panel-actions-divider"></div>
-                      <md-filled-button
+                      <Button
+                        variant="filled"
                         :disabled="isPageLoading || isOrganizing"
                         @click="handleAutoOrganize"
                       >
@@ -466,7 +471,7 @@ const {
                         {{
                           isOrganizing ? t('management_organizing') : t('management_ai_organize')
                         }}
-                      </md-filled-button>
+                      </Button>
                       <div class="panel-actions-divider"></div>
                       <BookmarkSearchInput
                         mode="memory"
@@ -477,7 +482,8 @@ const {
                         @search-complete="handleRightSearch"
                         @search-clear="handleRightSearchClear"
                       />
-                      <md-icon-button
+                      <Button
+                        variant="icon"
                         :title="
                           rightExpandAll ? t('management_collapse_all') : t('management_expand_all')
                         "
@@ -492,7 +498,7 @@ const {
                         >
                           <LucideIcon :name="rightExpandAll ? 'chevrons-up' : 'chevrons-down'" />
                         </span>
-                      </md-icon-button>
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -567,14 +573,15 @@ const {
                     </span>
                     <!-- ✅ 删除按钮包装器 -->
                     <span class="btn-wrapper" :title="deleteButtonTooltip">
-                      <md-filled-button
+                      <Button
+                        variant="filled"
                         class="bulk-delete-btn error-button"
                         :disabled="selectedCounts.bookmarks === 0 && selectedCounts.folders === 0"
                         @click="handleBulkDelete"
                       >
                         <LucideIcon slot="icon" name="trash" />
                         {{ t('common_delete') }}
-                      </md-filled-button>
+                      </Button>
                     </span>
                   </div>
                 </div>
@@ -624,16 +631,17 @@ const {
         />
       </div>
       <template #actions>
-        <md-text-button @click="dialogStore.closeEditBookmarkDialog()">
+        <Button variant="text" @click="dialogStore.closeEditBookmarkDialog()">
           {{ t('common_cancel') }}
-        </md-text-button>
-        <md-filled-button
+        </Button>
+        <Button
+          variant="filled"
           :disabled="!isEditDirty"
           :loading="isEditingBookmark"
           @click="confirmEditBookmark"
         >
           {{ t('management_update') }}
-        </md-filled-button>
+        </Button>
       </template>
     </Dialog>
 
@@ -668,16 +676,17 @@ const {
         />
       </div>
       <template #actions>
-        <md-text-button @click="dialogStore.closeEditFolderDialog()">
+        <Button variant="text" @click="dialogStore.closeEditFolderDialog()">
           {{ t('common_cancel') }}
-        </md-text-button>
-        <md-filled-button
+        </Button>
+        <Button
+          variant="filled"
           :disabled="!isEditFolderDirty"
           :loading="isEditingFolder"
           @click="confirmEditFolder"
         >
           {{ t('management_update') }}
-        </md-filled-button>
+        </Button>
       </template>
     </Dialog>
 
@@ -698,9 +707,9 @@ const {
         {{ t('management_delete_folder_confirm', String(deleteFolderBookmarkCount)) }}
       </div>
       <template #actions>
-        <md-text-button @click="isConfirmDeleteDialogOpen = false">
+        <Button variant="text" @click="isConfirmDeleteDialogOpen = false">
           {{ t('common_cancel') }}
-        </md-text-button>
+        </Button>
         <md-filled-tonal-button
           class="error-button"
           :loading="isDeletingFolder"
@@ -1028,7 +1037,7 @@ p.warning-text {
 .bulk-delete-btn:disabled {
   --md-filled-button-container-color: var(--color-error-container);
   --md-filled-button-label-text-color: var(--md-sys-color-on-error-container);
-  --md-filled-button-icon-color: var(--md-sys-color-on-error-container);
+  --Button-icon-color: var(--md-sys-color-on-error-container);
 
   border-color: transparent;
   opacity: 1;
@@ -1406,10 +1415,9 @@ md-linear-progress {
   width: 100%;
 }
 
-md-text-button,
-md-filled-button,
+button,
 md-filled-tonal-button,
-md-icon-button {
+button.md-button--icon {
   --md-sys-color-primary: var(--md-sys-color-primary);
   --md-sys-color-on-primary: var(--md-sys-color-on-primary);
 }

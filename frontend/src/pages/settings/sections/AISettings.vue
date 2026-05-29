@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import { LucideIcon, Tooltip, Card, Input, Dialog } from '@/components'
+import { LucideIcon, Tooltip, Card, Input, Dialog, Button } from '@/components'
 import { userLLMClient } from '@/infrastructure/llm/user-llm-client'
 import type { UserLLMProvider } from '@/infrastructure/llm/user-llm-client'
 import { llmAdapter } from '@/infrastructure/llm/llm-adapter'
@@ -452,9 +452,9 @@ onMounted(async () => {
           <div class="llm-config-card__title">LLM 配置</div>
           <div class="llm-config-card__summary">{{ llmConfigSummary }}</div>
         </div>
-        <md-text-button @click="showLLMConfigDialog = true">
+        <Button variant="text" @click="showLLMConfigDialog = true">
           {{ hasApiKeyConfigured ? '管理配置' : '配置 LLM' }}
-        </md-text-button>
+        </Button>
       </div>
     </div>
 
@@ -611,13 +611,13 @@ onMounted(async () => {
 
           <!-- 操作按钮 -->
           <div class="actions">
-            <md-filled-button :disabled="saving" @click="saveConfig"> 保存配置 </md-filled-button>
-            <md-text-button v-if="isSaved" :disabled="testing" @click="testConnection">
+            <Button variant="filled" :disabled="saving" @click="saveConfig"> 保存配置 </Button>
+            <Button v-if="isSaved" variant="text" :disabled="testing" @click="testConnection">
               测试连接
-            </md-text-button>
-            <md-text-button v-if="isSaved" class="btn--danger" @click="clearConfig">
+            </Button>
+            <Button v-if="isSaved" variant="text" class="btn--danger" @click="() => clearConfig()">
               清除
-            </md-text-button>
+            </Button>
           </div>
 
           <!-- 隐私说明 -->
@@ -676,10 +676,10 @@ onMounted(async () => {
                   <h4>Chrome AI 已启用</h4>
                   <p>您的浏览器已启用 Gemini Nano 模型，可以免费使用本地 AI 功能。</p>
                 </div>
-                <md-text-button :disabled="recheckingChromeAI" @click="recheckChromeAI">
+                <Button variant="text" :disabled="recheckingChromeAI" @click="recheckChromeAI">
                   <LucideIcon name="refresh-cw" :size="16" />
                   重新检测
-                </md-text-button>
+                </Button>
               </div>
             </Card>
 
@@ -713,10 +713,10 @@ onMounted(async () => {
                   <h4>Chrome AI 未启用</h4>
                   <p>您的浏览器尚未启用 Gemini Nano 模型。</p>
                 </div>
-                <md-text-button :disabled="recheckingChromeAI" @click="recheckChromeAI">
+                <Button variant="text" :disabled="recheckingChromeAI" @click="recheckChromeAI">
                   <LucideIcon name="refresh-cw" :size="16" />
                   重新检测
-                </md-text-button>
+                </Button>
               </div>
             </Card>
 
@@ -957,10 +957,10 @@ md-outlined-text-field.text-field {
 }
 
 /* Material Web Components Button 样式 */
-md-text-button.btn--danger {
-  --md-text-button-label-text-color: var(--color-semantic-error);
-  --md-text-button-hover-label-text-color: var(--color-semantic-error);
-  --md-text-button-pressed-label-text-color: var(--color-semantic-error);
+button.btn--danger {
+  --md-filled-button-label-text-color: var(--color-semantic-error);
+  --Button-hover-label-text-color: var(--color-semantic-error);
+  --Button-pressed-label-text-color: var(--color-semantic-error);
 }
 
 .privacy-note {
@@ -1099,12 +1099,12 @@ md-tabs {
   padding: var(--spacing-4);
 }
 
-.status-card-content md-text-button {
+.status-card-content button {
   flex-shrink: 0;
   margin-left: auto;
 }
 
-.status-card-content md-text-button lucide-icon {
+.status-card-content button lucide-icon {
   margin-right: var(--spacing-1);
 }
 

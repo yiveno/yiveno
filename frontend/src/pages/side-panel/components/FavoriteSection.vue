@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useBookmarkStore } from '@/stores/bookmarkStore'
 import { favoriteAppService } from '@/application/bookmark/favorite-app-service'
-import { LucideIcon, EmptyState } from '@/components'
+import { LucideIcon, EmptyState, Button } from '@/components'
 import type { BookmarkNode } from '@/types'
 
 defineOptions({ name: 'FavoriteSection' })
@@ -79,9 +79,9 @@ async function handleRemove(bookmark: BookmarkNode) {
         </div>
         <div slot="headline" class="headline">{{ f.title }}</div>
         <div slot="supporting-text" class="sub">{{ formatFavoriteTime(f.favoritedAt) }}</div>
-        <md-icon-button slot="end" title="取消收藏" @click.stop="handleRemove(f)">
+        <Button slot="end" variant="icon" title="取消收藏" @click.stop="handleRemove(f)">
           <LucideIcon name="star" :size="16" fill="currentColor" />
-        </md-icon-button>
+        </Button>
       </md-list-item>
     </md-list>
   </section>

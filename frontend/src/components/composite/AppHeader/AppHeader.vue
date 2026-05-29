@@ -9,6 +9,7 @@ import { onEvent } from '@/infrastructure/events/event-bus'
 import { globalStateManager } from '@/infrastructure/global-state/global-state-manager'
 import { inboxNotification } from '@/application/inbox-notification/inbox-notification-service'
 import { useSupabaseAuth } from '@/composables/useSupabaseAuth'
+import { Button } from '@/components'
 
 const props = withDefaults(
   defineProps<{
@@ -218,7 +219,8 @@ onMounted(async () => {
 <template>
   <header :class="headerClasses" aria-label="AcuityBookmarks">
     <div v-if="showSidePanelToggle" class="app-header__col app-header__col--left">
-      <md-icon-button
+      <Button
+        variant="icon"
         class="app-header__action"
         :style="{ '--md-icon-button-icon-size': '30px' }"
         :title="sidePanelTooltip"
@@ -226,7 +228,7 @@ onMounted(async () => {
         @click="handleOpenSidePanel"
       >
         <LucideIcon name="panel-left" :size="30" />
-      </md-icon-button>
+      </Button>
     </div>
 
     <div class="app-header__col app-header__col--center">
@@ -236,8 +238,9 @@ onMounted(async () => {
 
     <div class="app-header__col app-header__col--right">
       <ThemeToggle v-if="showTheme" />
-      <md-icon-button
+      <Button
         v-if="showSettings"
+        variant="icon"
         class="app-header__action"
         :style="{ '--md-icon-button-icon-size': '30px' }"
         title="打开设置"
@@ -245,11 +248,12 @@ onMounted(async () => {
         @click="handleOpenSettings"
       >
         <LucideIcon name="settings" :size="30" />
-      </md-icon-button>
+      </Button>
 
       <!-- 通知按钮（只在登录状态下显示） -->
       <div v-if="shouldShowNotification" ref="notificationWrapperRef" class="notification-wrapper">
-        <md-icon-button
+        <Button
+          variant="icon"
           class="app-header__action notification-button"
           :class="{ 'bell-ringing': isBellRinging }"
           :style="{ '--md-icon-button-icon-size': '30px' }"
@@ -262,7 +266,7 @@ onMounted(async () => {
           <span v-if="unreadCount > 0" class="notification-badge">
             {{ unreadCount > 99 ? '99+' : unreadCount }}
           </span>
-        </md-icon-button>
+        </Button>
 
         <!-- 通知列表浮窗 -->
         <div v-if="showNotificationList" class="notification-popover">

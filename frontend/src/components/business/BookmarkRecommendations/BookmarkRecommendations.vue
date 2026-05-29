@@ -11,7 +11,7 @@ SmartRecommendationEngine → 推荐列表 → UI 展示 → 用户交互 → �
 -->
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { Chip, LucideIcon, Loading } from '@/components'
+import { Chip, LucideIcon, Loading, Button } from '@/components'
 import {
   type RecommendationOptions,
   type SmartRecommendation,
@@ -435,14 +435,15 @@ defineExpose({
         </Chip>
       </div>
       <div class="header-actions">
-        <md-icon-button
+        <Button
+          variant="icon"
           :disabled="isRefreshing"
           class="refresh-button"
           title="刷新推荐"
           @click="refreshRecommendations"
         >
           <LucideIcon name="refresh-cw" :size="20" :class="{ 'icon-spin': isRefreshing }" />
-        </md-icon-button>
+        </Button>
       </div>
     </div>
 
@@ -501,13 +502,14 @@ defineExpose({
 
     <!-- 更多推荐按钮 -->
     <div v-if="hasMoreRecommendations" class="recommendations-footer">
-      <md-outlined-button
+      <Button
+        variant="outlined"
         :disabled="isLoadingMore"
         class="load-more-button"
         @click="loadMoreRecommendations"
       >
         查看更多推荐
-      </md-outlined-button>
+      </Button>
     </div>
   </div>
 

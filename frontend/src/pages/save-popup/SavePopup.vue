@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, nextTick } from 'vue'
 import BookmarkTree from '@/components/business/BookmarkTree/BookmarkTree.vue'
-import { Input, Loading, Accordion, AccordionItem } from '@/components'
+import { Input, Loading, Accordion, AccordionItem, Button } from '@/components'
 import { LucideIcon } from '@/components/base/LucideIcon'
 
 import { logger } from '@/infrastructure/logging/logger'
@@ -339,13 +339,14 @@ function handleCancel() {
 
     <!-- 操作按钮 -->
     <div class="actions">
-      <md-text-button @click="handleCancel">取消</md-text-button>
-      <md-filled-button
+      <Button variant="text" @click="handleCancel">取消</Button>
+      <Button
+        variant="filled"
         :disabled="!bookmarkTitle || !selectedFolderId || isCheckingDuplicate"
         @click="handleConfirm"
       >
         {{ duplicateCheck?.exists ? '仍然添加' : '完成' }}
-      </md-filled-button>
+      </Button>
     </div>
   </div>
 </template>

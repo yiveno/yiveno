@@ -18,7 +18,7 @@ BookmarkSearchInput - 书签筛选输入组件
 
 <script setup lang="ts">
 import { watch, computed, ref, nextTick, onMounted, onUnmounted, toRefs } from 'vue'
-import { Chip, AnimatedNumber, LucideIcon, Input, Loading } from '@/components'
+import { Chip, AnimatedNumber, LucideIcon, Input, Loading, Button } from '@/components'
 import { useBookmarkSearch } from '@/composables/useBookmarkSearch'
 import { useSearchHistory } from '@/composables/useSearchHistory'
 import type { BookmarkNode } from '@/types'
@@ -1200,8 +1200,9 @@ defineExpose({
       </div>
 
       <!-- 搜索图标按钮（仅 icon 模式显示） -->
-      <md-icon-button
+      <Button
         v-if="props.displayMode === 'icon'"
+        variant="icon"
         class="search-icon-button"
         :class="{ 'has-query': query.length > 0 }"
         :style="{ '--md-icon-button-icon-size': '20px' }"
@@ -1213,7 +1214,7 @@ defineExpose({
         <Loading v-if="isLoadingState" size="xs" />
         <LucideIcon v-else-if="query.length > 0" name="x" :size="20" />
         <LucideIcon v-else name="search" :size="20" />
-      </md-icon-button>
+      </Button>
 
       <!-- 搜索结果面板（包含筛选标签 + 搜索结果） -->
       <Transition name="panel-fade" @after-leave="handlePanelTransitionEnd">
@@ -1243,9 +1244,13 @@ defineExpose({
                 >
                   {{ item.resultCount }} 个结果
                 </div>
-                <md-icon-button slot="end" @click.stop="handleRemoveHistory(item.query, $event)">
+                <Button
+                  slot="end"
+                  variant="icon"
+                  @click.stop="handleRemoveHistory(item.query, $event)"
+                >
                   <LucideIcon name="x" :size="14" />
-                </md-icon-button>
+                </Button>
               </md-list-item>
             </md-list>
           </div>
@@ -1322,13 +1327,14 @@ defineExpose({
                 </div>
 
                 <!-- 右侧操作按钮：在新标签页打开 -->
-                <md-icon-button
+                <Button
                   slot="end"
+                  variant="icon"
                   class="result-action-btn"
                   @click.stop="handleOpenInNewTab(bookmark)"
                 >
                   <LucideIcon name="external-link" :size="14" />
-                </md-icon-button>
+                </Button>
               </md-list-item>
             </md-list>
 
@@ -1729,13 +1735,13 @@ defineExpose({
   --md-list-item-hover-state-layer-opacity: 0.08;
 }
 
-.history-list md-icon-button {
+.history-list button.md-button--icon {
   --md-icon-button-icon-color: var(--color-text-tertiary);
   --md-icon-button-state-layer-shape: var(--radius-sm);
   --md-icon-button-icon-size: 14px;
 }
 
-.history-list md-icon-button:hover {
+.history-list button.md-button--icon:hover {
   --md-icon-button-icon-color: var(--color-error);
 }
 

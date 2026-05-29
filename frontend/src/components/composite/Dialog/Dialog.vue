@@ -8,6 +8,7 @@
 import { computed, nextTick, onBeforeUnmount, ref, useSlots, watch } from 'vue'
 import type { DialogProps } from './Dialog.d'
 import { LucideIcon } from '@/components/base/LucideIcon'
+import { Button } from '@/components'
 
 /**
  * `md-dialog` / 按钮由各 HTML 入口 `preloadMaterialWebComponents` 在 `mount` 前注册；
@@ -274,12 +275,12 @@ onBeforeUnmount(() => {
           <div class="acuity-dialog-cancel-box">
             <div class="cancel-text">{{ cancelConfirmText }}</div>
             <div class="cancel-actions">
-              <md-text-button @click="continueEditing">{{
+              <Button variant="text" @click="continueEditing">{{
                 cancelConfirmContinueText
-              }}</md-text-button>
-              <md-filled-button class="button--danger" @click="confirmCancel">{{
+              }}</Button>
+              <Button variant="filled" class="button--danger" @click="confirmCancel">{{
                 cancelConfirmOkText
-              }}</md-filled-button>
+              }}</Button>
             </div>
           </div>
         </div>

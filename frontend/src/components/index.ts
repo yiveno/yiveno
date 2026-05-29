@@ -20,6 +20,7 @@ export { default as Skeleton } from './base/Skeleton/Skeleton.vue'
 export { default as SkeletonList } from './base/Skeleton/SkeletonList.vue'
 export { default as SkeletonTree } from './base/Skeleton/SkeletonTree.vue'
 export { default as Tooltip } from './base/Tooltip/Tooltip.vue'
+export { default as Button } from './base/Button/Button.vue'
 
 // ===== 复合组件 (从 composite/ 目录导出) =====
 // 通用复合组件：多个基础组件组合，但无业务逻辑
@@ -70,6 +71,7 @@ export type * from './base/Skeleton/Skeleton.d'
 export type * from './base/Skeleton/SkeletonList.d'
 export type * from './base/Skeleton/SkeletonTree.d'
 export type * from './base/Tooltip/Tooltip.d'
+export type * from './base/Button/Button.d'
 
 // 复合组件类型
 export type * from './composite/AppHeader/AppHeader.d'

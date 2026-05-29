@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted } from 'vue'
-import { LucideIcon } from '@/components'
+import { LucideIcon, Button } from '@/components'
 import { useCommandsShortcuts } from '@/composables/useCommandsShortcuts'
 import { useUIStore } from '@/stores/ui-store'
 import { t } from '@/utils/i18n-helpers'
@@ -86,9 +86,9 @@ onUnmounted(() => {
 
     <!-- 操作按钮 -->
     <div class="shortcuts-actions">
-      <md-filled-button @click="openChromeShortcutSettings">
+      <Button variant="filled" @click="openChromeShortcutSettings">
         {{ t('settings_shortcut_open_chrome') }}
-      </md-filled-button>
+      </Button>
     </div>
   </div>
 </template>
@@ -178,7 +178,7 @@ md-list-item {
 }
 
 /* Button 样式 */
-md-filled-button {
+button {
   --md-filled-button-container-color: var(--md-sys-color-primary);
   --md-filled-button-label-text-color: var(--md-sys-color-on-primary);
   --md-filled-button-container-shape: var(--radius-md);

@@ -19,6 +19,7 @@ import { draggable, dropTargetForElements } from '@atlaskit/pragmatic-drag-and-d
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine'
 import { setCustomNativeDragPreview } from '@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview'
 import { pointerOutsideOfPreview } from '@atlaskit/pragmatic-drag-and-drop/element/pointer-outside-of-preview'
+import { Button } from '@/components'
 
 // ✅ 设置组件名称，方便调试与日志定位
 /**
@@ -666,14 +667,15 @@ defineExpose({
       </div>
 
       <!-- "⋮" 更多操作按钮 -->
-      <md-icon-button
+      <Button
         v-if="props.config.showMoreButton !== false"
+        variant="icon"
         class="more-actions-button"
         title="更多操作"
         @click.stop="openContextMenu"
       >
         <LucideIcon name="more-vertical" :size="16" />
-      </md-icon-button>
+      </Button>
     </div>
 
     <!-- 书签节点 -->
@@ -729,14 +731,15 @@ defineExpose({
       </div>
 
       <!-- "⋮" 更多操作按钮 -->
-      <md-icon-button
+      <Button
         v-if="props.config.showMoreButton !== false"
+        variant="icon"
         class="more-actions-button"
         title="更多操作"
         @click.stop="openContextMenu"
       >
         <LucideIcon name="more-vertical" :size="16" />
-      </md-icon-button>
+      </Button>
     </div>
 
     <!-- 子节点：仅文件夹节点在展开时显示子节点 -->

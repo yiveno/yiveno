@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue'
-import { LucideIcon, EmptyState } from '@/components'
+import { LucideIcon, EmptyState, Button } from '@/components'
 import type { BookmarkRecord } from '@/infrastructure/indexeddb/types'
 import { logger } from '@/infrastructure/logging/logger'
 import { onEvent } from '@/infrastructure/events/event-bus'
@@ -95,14 +95,15 @@ defineExpose({ loadRecentVisits: load })
         </div>
         <div slot="headline" class="headline">{{ b.title }}</div>
         <div slot="supporting-text" class="sub">{{ formatRecentVisitTime(b.lastVisited) }}</div>
-        <md-icon-button
+        <Button
           slot="end"
+          variant="icon"
           class="rm-btn"
           title="清除访问记录"
           @click.stop="handleRemove(b)"
         >
           <LucideIcon name="x" :size="16" />
-        </md-icon-button>
+        </Button>
       </md-list-item>
     </md-list>
   </div>

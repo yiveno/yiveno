@@ -13,7 +13,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useGlobalSyncProgress } from '@/composables/useGlobalSyncProgress'
-import { Dialog, LucideIcon } from '@/components'
+import { Dialog, LucideIcon, Button } from '@/components'
 import type { SyncPhase } from '@/types/sync-progress'
 import { SYNC_PHASES, PHASE_TITLES, formatTime } from '@/types/sync-progress'
 import { formatNumber } from '@/utils/i18n-helpers'
@@ -204,15 +204,15 @@ function handleClose() {
     <template v-if="showActions" #actions>
       <!-- 错误时的操作 -->
       <template v-if="isError">
-        <md-filled-button v-if="progress.error?.canRetry" @click="handleRetry">
+        <Button v-if="progress.error?.canRetry" variant="filled" @click="handleRetry">
           <LucideIcon slot="icon" name="refresh" />
           重试
-        </md-filled-button>
-        <md-text-button @click="handleForceClose"> 忽略并继续 </md-text-button>
+        </Button>
+        <Button variant="text" @click="handleForceClose"> 忽略并继续 </Button>
       </template>
 
       <!-- 完成时的操作 -->
-      <md-filled-button v-else @click="handleClose"> 关闭 </md-filled-button>
+      <Button v-else variant="filled" @click="handleClose"> 关闭 </Button>
     </template>
   </Dialog>
 
@@ -224,8 +224,8 @@ function handleClose() {
       <p>建议点击"重试"按钮或等待同步自动重试。</p>
     </div>
     <template #actions>
-      <md-text-button @click="showForceCloseConfirm = false"> 取消 </md-text-button>
-      <md-filled-button @click="confirmForceClose"> 确认关闭 </md-filled-button>
+      <Button variant="text" @click="showForceCloseConfirm = false"> 取消 </Button>
+      <Button variant="filled" @click="confirmForceClose"> 确认关闭 </Button>
     </template>
   </Dialog>
 </template>

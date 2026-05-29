@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { usePerformanceMonitor, useMemoryManagement } from '@/composables/useSimplePerformance'
+import { Button } from '@/components'
 
 const showMonitor = ref(true) // 简化：总是显示
 const isExpanded = ref(false)
@@ -34,9 +35,9 @@ const toggleOptimizations = () => {
   <div v-if="showMonitor" class="performance-monitor">
     <div class="monitor-header">
       <h4>性能监控</h4>
-      <md-icon-button @click="toggleMonitor">
+      <Button variant="icon" @click="toggleMonitor">
         <LucideIcon :name="isExpanded ? 'chevron-up' : 'chevron-down'" :size="20" />
-      </md-icon-button>
+      </Button>
     </div>
 
     <div v-if="isExpanded" class="monitor-content">
@@ -63,10 +64,10 @@ const toggleOptimizations = () => {
       </div>
 
       <div class="actions">
-        <md-outlined-button @click="cleanup">清理缓存</md-outlined-button>
-        <md-outlined-button @click="toggleOptimizations">
+        <Button variant="outlined" @click="cleanup">清理缓存</Button>
+        <Button variant="outlined" @click="toggleOptimizations">
           {{ optimizationsEnabled ? '禁用' : '启用' }}优化
-        </md-outlined-button>
+        </Button>
       </div>
     </div>
   </div>

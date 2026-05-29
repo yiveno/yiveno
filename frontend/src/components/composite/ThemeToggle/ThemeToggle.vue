@@ -13,7 +13,7 @@ import {
 } from '@/infrastructure/global-state/global-state-manager'
 import { emitEvent } from '@/infrastructure/events/event-bus'
 import { applyColorPresetToDocument } from '@/composables/useThemeSync'
-import { LucideIcon } from '@/components'
+import { LucideIcon, Button } from '@/components'
 
 // 当前主题状态（从全局状态管理器获取）
 const currentTheme = ref<ThemeMode>('system')
@@ -338,9 +338,10 @@ onUnmounted(() => {
 
 <template>
   <div class="theme-toggle">
-    <md-icon-button
+    <Button
       id="theme-toggle-anchor"
       ref="toggleBtnRef"
+      variant="icon"
       class="theme-toggle__button"
       :style="{ '--md-icon-button-icon-size': '30px' }"
       :title="currentThemeLabel"
@@ -348,7 +349,7 @@ onUnmounted(() => {
       @click="showMenu = !showMenu"
     >
       <LucideIcon :name="currentThemeIconLucide" :size="30" />
-    </md-icon-button>
+    </Button>
 
     <!-- Material Design 3 Menu -->
     <md-menu

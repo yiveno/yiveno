@@ -5,6 +5,7 @@ import LucideIcon from '@/components/base/LucideIcon/LucideIcon.vue'
 import type { SyncProgress, SyncPhase } from '@/types/sync-progress'
 import { SYNC_PHASES, PHASE_TITLES, formatTime } from '@/types/sync-progress'
 import { formatNumber } from '@/utils/i18n-helpers'
+import { Button } from '@/components'
 
 defineOptions({
   name: 'SyncProgressDialog'
@@ -173,15 +174,15 @@ function isPhaseCompleted(phase: SyncPhase): boolean {
     <template v-if="showActions" #actions>
       <!-- ✅ 错误时的操作 -->
       <template v-if="isError">
-        <md-filled-button v-if="progress.error?.canRetry" @click="emit('retry')">
+        <Button v-if="progress.error?.canRetry" variant="filled" @click="emit('retry')">
           <LucideIcon slot="icon" name="refresh" />
           重试
-        </md-filled-button>
-        <md-text-button @click="emit('forceClose')"> 忽略并继续 </md-text-button>
+        </Button>
+        <Button variant="text" @click="emit('forceClose')"> 忽略并继续 </Button>
       </template>
 
       <!-- ✅ 完成时的操作 -->
-      <md-filled-button v-else @click="emit('close')"> 关闭 </md-filled-button>
+      <Button v-else variant="filled" @click="emit('close')"> 关闭 </Button>
     </template>
   </Dialog>
 </template>
