@@ -8,9 +8,6 @@ import { logger } from '@/infrastructure/logging/logger'
 import type { BookmarkNode } from '@/types'
 import type { TraitTag } from '@/types/domain/trait'
 import type BookmarkTree from '@/components/business/BookmarkTree/BookmarkTree.vue'
-import { enableEnvSnapshotBridge } from '@/devtools/env-snapshot'
-import { enableEmbeddingDebugBridge } from '@/devtools/embedding-debug'
-import { enableFolderVectorDebugBridge } from '@/devtools/folder-vector-debug'
 import { t } from '@/utils/i18n-helpers'
 
 type BookmarkTreeInstance = InstanceType<typeof BookmarkTree>
@@ -86,31 +83,6 @@ export function useManagementLifecycle(options: UseManagementLifecycleOptions): 
   pendingTagSelection: Ref<TraitTag[] | null>
 } {
   const pendingTagSelection = ref<TraitTag[] | null>(null)
-
-  const shouldExposeEnvSnapshot =
-    typeof window !== 'undefined' &&
-    (import.meta.env.DEV || new URLSearchParams(window.location.search).get('abDevtools') === '1')
-
-  let envSnapshotCleanup: (() => void) | null = null
-  let embeddingDebugCleanup: (() => void) | null = null
-  let folderVectorDebugCleanup: (() => void) | null = null
-
-  function setupDebugBridges(): void {
-    if (!shouldExposeEnvSnapshot) return
-
-    envSnapshotCleanup = enableEnvSnapshotBridge()
-    embeddingDebugCleanup = enableEmbeddingDebugBridge()
-    folderVectorDebugCleanup = enableFolderVectorDebugBridge()
-  }
-
-  function cleanupDebugBridges(): void {
-    envSnapshotCleanup?.()
-    envSnapshotCleanup = null
-    embeddingDebugCleanup?.()
-    embeddingDebugCleanup = null
-    folderVectorDebugCleanup?.()
-    folderVectorDebugCleanup = null
-  }
 
   function handleBeforeUnload(event: BeforeUnloadEvent): void {
     if (options.bookmarkManagementStore.hasUnsavedChanges) {
@@ -283,7 +255,6 @@ export function useManagementLifecycle(options: UseManagementLifecycleOptions): 
 
   onMounted(async () => {
     try {
-      setupDebugBridges()
       await initializeManagementPage()
     } catch (error) {
       logger.error('Management', '❌ Management初始化失败', error)
@@ -295,7 +266,6 @@ export function useManagementLifecycle(options: UseManagementLifecycleOptions): 
     if (typeof window !== 'undefined') {
       window.removeEventListener('beforeunload', handleBeforeUnload)
     }
-    cleanupDebugBridges()
   })
 
   return { pendingTagSelection }

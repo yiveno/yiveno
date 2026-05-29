@@ -114,34 +114,28 @@ export function registerMenusAndShortcuts(): void {
   })
 
   chrome.commands?.onCommand?.addListener(async command => {
-    console.log('⌨️ [DEBUG] 收到快捷键命令', { command })
     logger.info('Menus', '⌨️ 收到快捷键命令', { command })
 
     switch (command) {
       case 'open-management':
-        console.log('➡️ [DEBUG] 打开 Management')
         openManagementPage()
         break
       case 'open-settings':
-        console.log('➡️ [DEBUG] 打开 Settings')
         openSettingsPage()
         break
       case 'quick-add-bookmark':
         {
-          console.log('🎯 [DEBUG] 触发快速添加书签快捷键')
           logger.info('Menus', '🎯 触发快速添加书签快捷键')
           // 获取当前活动标签页
           const [activeTab] = await chrome.tabs.query({
             active: true,
             currentWindow: true
           })
-          console.log('📍 [DEBUG] 查询到的标签页', activeTab)
           if (activeTab) {
             logger.info('Menus', '找到活动标签页', {
               url: activeTab.url,
               title: activeTab.title
             })
-            console.log('✅ [DEBUG] 找到活动标签页，调用 handleQuickAddBookmark')
             await handleQuickAddBookmark(activeTab)
           } else {
             console.warn('⚠️ [DEBUG] 未找到活动标签页')
@@ -150,7 +144,6 @@ export function registerMenusAndShortcuts(): void {
         }
         break
       default:
-        console.log('❓ [DEBUG] 未知快捷键命令', command)
         logger.debug('Menus', '收到未知快捷键命令', command)
     }
   })
@@ -166,8 +159,6 @@ async function handleQuickAddBookmark(
   tab: chrome.tabs.Tab | undefined,
   linkUrl?: string
 ): Promise<void> {
-  console.log('🚀 [DEBUG] handleQuickAddBookmark 被调用', { tab, linkUrl })
-
   if (!tab) {
     logger.warn('Menus', '无法获取当前标签页')
     console.warn('⚠️ [DEBUG] 无法获取当前标签页')
@@ -182,8 +173,6 @@ async function handleQuickAddBookmark(
       ...(tab.favIconUrl ? { favIconUrl: tab.favIconUrl } : {})
     }
 
-    console.log('📋 [DEBUG] 书签数据', bookmarkData)
-
     // ✅ 验证 URL
     if (!bookmarkData.url || bookmarkData.url.trim() === '') {
       logger.error('Menus', 'URL 为空，无法添加书签', bookmarkData)
@@ -192,7 +181,6 @@ async function handleQuickAddBookmark(
     }
 
     logger.info('Menus', '触发快速添加书签', bookmarkData)
-    console.log('✅ [DEBUG] 触发快速添加书签', bookmarkData)
 
     // ✅ 检查 AI 功能总开关和 AI 自动归纳开关
     const settings = await chrome.storage.local.get(['aiEnabled', 'aiAutoBookmark'])
@@ -211,23 +199,16 @@ async function handleQuickAddBookmark(
     logger.info('Menus', 'AI 自动归纳状态', {
       aiEnabled,
       aiAutoBookmark,
-      aiAutoEnabled
-    })
-    console.log('🤖 [DEBUG] AI 自动归纳状态', {
-      aiEnabled,
-      aiAutoBookmark,
       aiAutoEnabled,
       settings
     })
 
     if (aiAutoEnabled) {
-      console.log('➡️ [DEBUG] 进入 AI 自动模式')
       // AI 自动模式：直接添加，不弹窗
       await handleAIAutoAddBookmark(bookmarkData)
       return
     }
 
-    console.log('➡️ [DEBUG] 进入手动模式')
     // 手动模式：显示对话框
     await handleManualAddBookmark(tab, bookmarkData)
   } catch (error) {

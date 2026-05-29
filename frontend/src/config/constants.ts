@@ -218,7 +218,7 @@ export const DEBUG_CONFIG = {
 // === API 基础配置（新增：支持线上/本地环境切换） ===
 function getApiBase(): string {
   // 优先使用显式配置，其次使用开发环境默认值
-  console.log('🔧 import.meta.env:', import.meta.env)
+  if (import.meta.env.DEV) console.log('🔧 import.meta.env:', import.meta.env)
   let apiBase =
     // 优先显式变量（两者都支持）
     (import.meta.env.VITE_CLOUDFLARE_MODE === 'true'
@@ -241,7 +241,7 @@ function getApiBase(): string {
     apiBase = apiBase.replace('http://', 'https://')
   }
 
-  console.log('🔧 apiBase:', apiBase)
+  if (import.meta.env.DEV) console.log('🔧 apiBase:', apiBase)
 
   // ⚠️ 仅在使用远程模式（bun run dev --remote）但配置指向本地时给出警告
   // 如果明确使用本地模式（bun run dev:local）或设置了 VITE_HOT_BUILD，则不警告
@@ -273,10 +273,12 @@ export const API_CONFIG = {
 
 // 开发环境调试：输出 API 配置
 if (import.meta.env.DEV) {
-  console.log('🔧 API_CONFIG.API_BASE:', API_CONFIG.API_BASE)
-  console.log('🔧 VITE_USE_LOCAL_HTTPS:', import.meta.env.VITE_USE_LOCAL_HTTPS)
-  console.log('🔧 VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL)
-  console.log('🔧 VITE_CLOUDFLARE_WORKER_URL:', import.meta.env.VITE_CLOUDFLARE_WORKER_URL)
+  if (import.meta.env.DEV) console.log('🔧 API_CONFIG.API_BASE:', API_CONFIG.API_BASE)
+  if (import.meta.env.DEV)
+    console.log('🔧 VITE_USE_LOCAL_HTTPS:', import.meta.env.VITE_USE_LOCAL_HTTPS)
+  if (import.meta.env.DEV) console.log('🔧 VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL)
+  if (import.meta.env.DEV)
+    console.log('🔧 VITE_CLOUDFLARE_WORKER_URL:', import.meta.env.VITE_CLOUDFLARE_WORKER_URL)
 }
 
 // === 爬虫配置（新增：本地-only、限速与调度） ===

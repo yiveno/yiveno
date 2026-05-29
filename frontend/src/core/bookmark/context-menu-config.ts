@@ -180,7 +180,7 @@ export class ContextMenuBuilder {
         icon: isFavorited ? 'icon-favorite-outline' : 'icon-favorite',
         color: isFavorited ? 'warning' : 'default',
         action: 'bookmark:toggle-favorite',
-        visible: true // ✅ 始终显示收藏选项
+        visible: config.showFavoriteButton
       },
       {
         id: 'share',
