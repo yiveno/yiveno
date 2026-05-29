@@ -12,18 +12,18 @@
  * - 不使用 Event Bus，避免多个消息系统混用
  */
 
-import { onMounted, onUnmounted } from "vue";
-import { useBookmarkStore } from "@/stores/bookmarkStore";
-import { logger } from "@/infrastructure/logging/logger";
+import { onMounted, onUnmounted } from 'vue'
+import { useBookmarkStore } from '@/stores/bookmarkStore'
+import { logger } from '@/infrastructure/logging/logger'
 
 /**
  * 跨页面消息类型
  */
 interface CrossPageMessage {
-  type: string;
-  action?: string;
-  bookmarkId?: string;
-  timestamp?: number;
+  type: string
+  action?: string
+  bookmarkId?: string
+  timestamp?: number
 }
 
 /**
@@ -39,53 +39,50 @@ interface CrossPageMessage {
  * ```
  */
 export function initCrossPageSync(): () => void {
-  const bookmarkStore = useBookmarkStore();
+  const bookmarkStore = useBookmarkStore()
 
   const handleStorageChange = (
     changes: { [key: string]: chrome.storage.StorageChange },
-    areaName: string,
+    areaName: string
   ) => {
     // 只处理 session storage 中的事件
-    if (areaName !== "session") return;
+    if (areaName !== 'session') return
 
     // 处理收藏变更事件
     if (changes.__favoriteEvent) {
-      const event = changes.__favoriteEvent.newValue as CrossPageMessage | null;
-      if (!event || event.type !== "FAVORITE_CHANGED") return;
+      const event = changes.__favoriteEvent.newValue as CrossPageMessage | null
+      if (!event || event.type !== 'FAVORITE_CHANGED') return
 
-      const { action, bookmarkId } = event;
-      if (!bookmarkId) return;
+      const { action, bookmarkId } = event
+      if (!bookmarkId) return
 
-      logger.debug(
-        "CrossPageSync",
-        `📨 收到跨页面收藏事件: ${action} - ${bookmarkId}`,
-      );
+      logger.debug('CrossPageSync', `📨 收到跨页面收藏事件: ${action} - ${bookmarkId}`)
 
       // ✅ 直接更新 Pinia Store，Vue 响应式自动更新 UI
-      if (action === "added") {
-        bookmarkStore.updateNode(bookmarkId, { isFavorite: true });
-      } else if (action === "removed") {
-        bookmarkStore.updateNode(bookmarkId, { isFavorite: false });
+      if (action === 'added') {
+        bookmarkStore.updateNode(bookmarkId, { isFavorite: true })
+      } else if (action === 'removed') {
+        bookmarkStore.updateNode(bookmarkId, { isFavorite: false })
       }
     }
 
     // 可扩展：处理其他跨页面事件
     // if (changes.__otherEvent) { ... }
-  };
+  }
 
   // 注册监听器
-  if (typeof chrome !== "undefined" && chrome.storage?.onChanged) {
-    chrome.storage.onChanged.addListener(handleStorageChange);
-    logger.debug("CrossPageSync", "✅ 跨页面同步已初始化");
+  if (typeof chrome !== 'undefined' && chrome.storage?.onChanged) {
+    chrome.storage.onChanged.addListener(handleStorageChange)
+    logger.debug('CrossPageSync', '✅ 跨页面同步已初始化')
   }
 
   // 返回清理函数
   return () => {
-    if (typeof chrome !== "undefined" && chrome.storage?.onChanged) {
-      chrome.storage.onChanged.removeListener(handleStorageChange);
-      logger.debug("CrossPageSync", "🔌 跨页面同步已卸载");
+    if (typeof chrome !== 'undefined' && chrome.storage?.onChanged) {
+      chrome.storage.onChanged.removeListener(handleStorageChange)
+      logger.debug('CrossPageSync', '🔌 跨页面同步已卸载')
     }
-  };
+  }
 }
 
 /**
@@ -102,13 +99,13 @@ export function initCrossPageSync(): () => void {
  * ```
  */
 export function useCrossPageSync() {
-  let cleanup: (() => void) | null = null;
+  let cleanup: (() => void) | null = null
 
   onMounted(() => {
-    cleanup = initCrossPageSync();
-  });
+    cleanup = initCrossPageSync()
+  })
 
   onUnmounted(() => {
-    cleanup?.();
-  });
+    cleanup?.()
+  })
 }

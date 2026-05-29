@@ -4,8 +4,8 @@
  * 包含查询功能相关的所有类型定义
  */
 
-import type { ID, Timestamp } from "../core/common";
-import type { BookmarkRecord } from "./bookmark";
+import type { ID, Timestamp } from '../core/common'
+import type { BookmarkRecord } from './bookmark'
 
 /**
  * 查询策略类型
@@ -15,21 +15,21 @@ import type { BookmarkRecord } from "./bookmark";
  * hybrid   - 先 Fuse 立即返回，异步 Semantic 合并更新
  * auto     - 自动根据输入意图选择策略（推荐）
  */
-export type SearchStrategy = "fuse" | "semantic" | "hybrid" | "auto";
+export type SearchStrategy = 'fuse' | 'semantic' | 'hybrid' | 'auto'
 
 /**
  * 查询排序字段
  *
  * 可以用于排序的字段
  */
-export type SearchSortBy = "relevance" | "title" | "date" | "frequency" | "url";
+export type SearchSortBy = 'relevance' | 'title' | 'date' | 'frequency' | 'url'
 
 /**
  * 排序顺序
  *
  * 升序或降序
  */
-export type SortOrder = "asc" | "desc";
+export type SortOrder = 'asc' | 'desc'
 
 /**
  * 查询选项接口
@@ -48,52 +48,52 @@ export type SortOrder = "asc" | "desc";
  */
 export interface SearchOptions extends Record<string, unknown> {
   /** 查询策略（可选，默认为 'fuse'） */
-  strategy?: SearchStrategy | undefined;
+  strategy?: SearchStrategy | undefined
 
   /** 结果限制数量 */
-  limit?: number | undefined;
+  limit?: number | undefined
 
   /** 偏移量（分页） */
-  offset?: number | undefined;
+  offset?: number | undefined
 
   /** 排序字段 */
-  sortBy?: SearchSortBy | undefined;
+  sortBy?: SearchSortBy | undefined
 
   /** 排序顺序 */
-  sortOrder?: SortOrder | undefined;
+  sortOrder?: SortOrder | undefined
 
   /** 是否过滤文件夹 */
-  filterFolders?: boolean | undefined;
+  filterFolders?: boolean | undefined
 
   /** 是否过滤书签 */
-  filterBookmarks?: boolean | undefined;
+  filterBookmarks?: boolean | undefined
 
   /** 域名过滤列表 */
-  domainFilter?: string[] | undefined;
+  domainFilter?: string[] | undefined
 
   /** 是否启用高亮 */
-  highlight?: boolean | undefined;
+  highlight?: boolean | undefined
 
   /** 高亮标签名 */
-  highlightTag?: string | undefined;
+  highlightTag?: string | undefined
 
   /** 是否使用缓存 */
-  useCache?: boolean | undefined;
+  useCache?: boolean | undefined
 
   /** 仅使用缓存（不执行新查询） */
-  cacheOnly?: boolean | undefined;
+  cacheOnly?: boolean | undefined
 
   /** 超时时间（毫秒） */
-  timeout?: number | undefined;
+  timeout?: number | undefined
 
   /** 最低分数阈值 */
-  minScore?: number | undefined;
+  minScore?: number | undefined
 
   /** 模糊匹配阈值 (0-1) */
-  fuzzyThreshold?: number | undefined;
+  fuzzyThreshold?: number | undefined
 
   /** 是否包含元数据 */
-  includeMetadata?: boolean | undefined;
+  includeMetadata?: boolean | undefined
 }
 
 /**
@@ -113,16 +113,16 @@ export interface SearchOptions extends Record<string, unknown> {
  */
 export interface HighlightSegment {
   /** 片段文本内容 */
-  text: string;
+  text: string
 
   /** 是否为匹配部分 */
-  isMatch: boolean;
+  isMatch: boolean
 
   /** 起始位置 */
-  start: number;
+  start: number
 
   /** 结束位置 */
-  end: number;
+  end: number
 }
 
 /**
@@ -132,25 +132,25 @@ export interface HighlightSegment {
  */
 export interface RelevanceFactors {
   /** 标题匹配度 (0-1) */
-  titleMatch: number;
+  titleMatch: number
 
   /** URL匹配度 (0-1) */
-  urlMatch: number;
+  urlMatch: number
 
   /** 域名匹配度 (0-1) */
-  domainMatch: number;
+  domainMatch: number
 
   /** 关键词匹配度 (0-1) */
-  keywordMatch: number;
+  keywordMatch: number
 
   /** 精确匹配加分 (0-1) */
-  exactMatch: number;
+  exactMatch: number
 
   /** 最近使用加分 (0-1) */
-  recencyBoost: number;
+  recencyBoost: number
 
   /** 点击频率加分 (0-1) */
-  clickBoost: number;
+  clickBoost: number
 }
 
 /**
@@ -172,29 +172,29 @@ export interface RelevanceFactors {
  */
 export interface EnhancedSearchResult {
   /** 书签记录 */
-  bookmark: BookmarkRecord;
+  bookmark: BookmarkRecord
 
   /** 相关性分数 (0-1，越大越相关) */
-  score: number;
+  score: number
 
   /** 书签完整路径字符串（用于展示层级信息） */
-  pathString?: string;
+  pathString?: string
 
   /** 匹配的字段列表 */
-  matchedFields: string[];
+  matchedFields: string[]
 
   /** 高亮信息 */
   highlights: {
     /** 标题高亮 */
-    title?: HighlightSegment[];
+    title?: HighlightSegment[]
     /** URL高亮 */
-    url?: HighlightSegment[];
+    url?: HighlightSegment[]
     /** 域名高亮 */
-    domain?: HighlightSegment[];
-  };
+    domain?: HighlightSegment[]
+  }
 
   /** 相关性因素（可选） */
-  relevanceFactors?: RelevanceFactors;
+  relevanceFactors?: RelevanceFactors
 }
 
 /**
@@ -204,22 +204,22 @@ export interface EnhancedSearchResult {
  */
 export interface SearchResultMetadata {
   /** 查询耗时（毫秒） */
-  searchTime: number;
+  searchTime: number
 
   /** 总结果数量 */
-  totalResults: number;
+  totalResults: number
 
   /** 是否缓存命中 */
-  cacheHit: boolean;
+  cacheHit: boolean
 
   /** 使用的查询策略 */
-  strategy: string;
+  strategy: string
 
   /** 规范化后的查询 */
-  queryNormalized: string;
+  queryNormalized: string
 
   /** 查询时间戳 */
-  timestamp?: Timestamp;
+  timestamp?: Timestamp
 }
 
 /**
@@ -244,16 +244,16 @@ export interface SearchResultMetadata {
  */
 export interface SearchResponse {
   /** 查询结果列表 */
-  results: EnhancedSearchResult[];
+  results: EnhancedSearchResult[]
 
   /** 查询元数据 */
-  metadata: SearchResultMetadata;
+  metadata: SearchResultMetadata
 
   /** 查询建议（可选） */
-  suggestions?: string[];
+  suggestions?: string[]
 
   /** 相关查询（可选） */
-  relatedSearches?: string[];
+  relatedSearches?: string[]
 }
 
 /**
@@ -263,37 +263,37 @@ export interface SearchResponse {
  */
 export interface SearchStats {
   /** 总查询次数 */
-  totalSearches: number;
+  totalSearches: number
 
   /** 缓存命中率 (0-1) */
-  cacheHitRate: number;
+  cacheHitRate: number
 
   /** 平均查询时间（毫秒） */
-  averageSearchTime: number;
+  averageSearchTime: number
 
   /** 中位数查询时间（毫秒） */
-  medianSearchTime?: number;
+  medianSearchTime?: number
 
   /** P95 响应时间（毫秒） */
-  p95ResponseTime?: number;
+  p95ResponseTime?: number
 
   /** 热门查询列表 */
   popularQueries: Array<{
     /** 查询文本 */
-    query: string;
+    query: string
     /** 查询次数 */
-    count: number;
+    count: number
     /** 平均耗时 */
-    avgTime: number;
+    avgTime: number
     /** 最后使用时间 */
-    lastUsed?: Timestamp;
-  }>;
+    lastUsed?: Timestamp
+  }>
 
   /** 成功率 (0-1) */
-  successRate?: number;
+  successRate?: number
 
   /** 错误率 (0-1) */
-  errorRate?: number;
+  errorRate?: number
 }
 
 /**
@@ -302,14 +302,14 @@ export interface SearchStats {
  * 查询过程中可能触发的事件类型
  */
 export type SearchEventType =
-  | "search:start"
-  | "search:complete"
-  | "search:error"
-  | "search:cached"
-  | "index:building"
-  | "index:ready"
-  | "index:updated"
-  | "index:error";
+  | 'search:start'
+  | 'search:complete'
+  | 'search:error'
+  | 'search:cached'
+  | 'index:building'
+  | 'index:ready'
+  | 'index:updated'
+  | 'index:error'
 
 /**
  * 查询事件接口
@@ -318,19 +318,19 @@ export type SearchEventType =
  */
 export interface SearchEvent {
   /** 事件类型 */
-  type: SearchEventType;
+  type: SearchEventType
 
   /** 事件时间戳 */
-  timestamp: Timestamp;
+  timestamp: Timestamp
 
   /** 事件数据 */
-  data?: Record<string, unknown>;
+  data?: Record<string, unknown>
 
   /** 相关查询 */
-  query?: string;
+  query?: string
 
   /** 错误信息（如果是错误事件） */
-  error?: string;
+  error?: string
 }
 
 /**
@@ -340,25 +340,25 @@ export interface SearchEvent {
  */
 export interface IndexStatus {
   /** 是否正在构建 */
-  isBuilding: boolean;
+  isBuilding: boolean
 
   /** 是否已就绪 */
-  isReady: boolean;
+  isReady: boolean
 
   /** 最后构建时间 */
-  lastBuilt: Timestamp | null;
+  lastBuilt: Timestamp | null
 
   /** 文档数量 */
-  documentCount: number;
+  documentCount: number
 
   /** 索引版本 */
-  version: number;
+  version: number
 
   /** 索引大小（字节） */
-  size?: number;
+  size?: number
 
   /** 错误信息 */
-  error?: string;
+  error?: string
 }
 
 /**
@@ -368,19 +368,19 @@ export interface IndexStatus {
  */
 export interface CacheConfig {
   /** 是否启用缓存 */
-  enabled: boolean;
+  enabled: boolean
 
   /** 最大缓存条目数 */
-  maxSize: number;
+  maxSize: number
 
   /** 缓存过期时间（毫秒） */
-  ttl: number;
+  ttl: number
 
   /** 缓存策略 */
-  strategy: "lru" | "lfu" | "fifo";
+  strategy: 'lru' | 'lfu' | 'fifo'
 
   /** 是否持久化 */
-  persistent?: boolean;
+  persistent?: boolean
 }
 
 /**
@@ -390,19 +390,19 @@ export interface CacheConfig {
  */
 export interface WorkerConfig {
   /** 是否启用 Worker */
-  enabled: boolean;
+  enabled: boolean
 
   /** Worker 池大小 */
-  poolSize: number;
+  poolSize: number
 
   /** 超时时间（毫秒） */
-  timeout: number;
+  timeout: number
 
   /** 批处理大小 */
-  batchSize: number;
+  batchSize: number
 
   /** 是否预热 */
-  warmup?: boolean;
+  warmup?: boolean
 }
 
 /**
@@ -412,25 +412,25 @@ export interface WorkerConfig {
  */
 export interface SearchHistory {
   /** 历史记录ID */
-  id: ID;
+  id: ID
 
   /** 查询文本 */
-  query: string;
+  query: string
 
   /** 查询时间 */
-  timestamp: Timestamp;
+  timestamp: Timestamp
 
   /** 结果数量 */
-  resultCount: number;
+  resultCount: number
 
   /** 是否点击了结果 */
-  clicked: boolean;
+  clicked: boolean
 
   /** 点击的书签ID */
-  clickedBookmarkId?: ID;
+  clickedBookmarkId?: ID
 
   /** 查询耗时 */
-  duration?: number;
+  duration?: number
 }
 
 /**
@@ -440,19 +440,19 @@ export interface SearchHistory {
  */
 export interface SearchSuggestion {
   /** 建议文本 */
-  text: string;
+  text: string
 
   /** 建议类型 */
-  type: "history" | "popular" | "completion" | "related";
+  type: 'history' | 'popular' | 'completion' | 'related'
 
   /** 相关性分数 */
-  score: number;
+  score: number
 
   /** 使用次数 */
-  frequency?: number;
+  frequency?: number
 
   /** 最后使用时间 */
-  lastUsed?: Timestamp;
+  lastUsed?: Timestamp
 }
 
 /**
@@ -462,27 +462,27 @@ export interface SearchSuggestion {
  */
 export interface SearchFilter {
   /** 域名过滤 */
-  domains?: string[];
+  domains?: string[]
 
   /** 标签过滤 */
-  tags?: string[];
+  tags?: string[]
 
   /** 日期范围 */
   dateRange?: {
     /** 开始时间 */
-    start?: Timestamp;
+    start?: Timestamp
     /** 结束时间 */
-    end?: Timestamp;
-  };
+    end?: Timestamp
+  }
 
   /** 文件夹ID过滤 */
-  folderIds?: ID[];
+  folderIds?: ID[]
 
   /** 是否已访问 */
-  visited?: boolean;
+  visited?: boolean
 
   /** 是否收藏 */
-  favorited?: boolean;
+  favorited?: boolean
 }
 
 /**
@@ -492,16 +492,16 @@ export interface SearchFilter {
  */
 export interface SearchResult {
   /** 书签 ID */
-  id: ID;
+  id: ID
 
   /** 评分（0-1） */
-  score: number;
+  score: number
 
   /** 书签记录 */
-  bookmark: BookmarkRecord;
+  bookmark: BookmarkRecord
 
   /** 书签完整路径字符串（用于展示层级信息） */
-  pathString?: string;
+  pathString?: string
 }
 
 /**
@@ -511,28 +511,28 @@ export interface SearchResult {
  */
 export interface WorkerDoc {
   /** 文档ID */
-  id: string;
+  id: string
 
   /** 标题（小写） */
-  titleLower: string;
+  titleLower: string
 
   /** 原始标题（用于展示） */
-  title?: string | undefined;
+  title?: string | undefined
 
   /** URL（小写） */
-  urlLower?: string | undefined;
+  urlLower?: string | undefined
 
   /** 原始 URL（用于展示） */
-  url?: string | undefined;
+  url?: string | undefined
 
   /** 域名 */
-  domain?: string | undefined;
+  domain?: string | undefined
 
   /** 关键词 */
-  keywords?: string[] | undefined;
+  keywords?: string[] | undefined
 
   /** 是否为文件夹 */
-  isFolder?: boolean | undefined;
+  isFolder?: boolean | undefined
 }
 
 /**
@@ -542,10 +542,10 @@ export interface WorkerDoc {
  */
 export interface WorkerHit {
   /** 文档ID */
-  id: string;
+  id: string
 
   /** 相关性分数 */
-  score: number;
+  score: number
 }
 
 /**
@@ -553,10 +553,10 @@ export interface WorkerHit {
  */
 export interface WorkerInitOptions {
   /** 搜索字段配置 */
-  keys?: Array<{ name: string; weight: number }>;
+  keys?: Array<{ name: string; weight: number }>
 
   /** 模糊匹配阈值 (0-1) */
-  threshold?: number;
+  threshold?: number
 }
 
 /**
@@ -567,36 +567,36 @@ export interface WorkerInitOptions {
 export type SearchWorkerCommand =
   | {
       /** 初始化命令 */
-      type: "init";
+      type: 'init'
       /** 初始文档列表 */
-      docs: WorkerDoc[];
+      docs: WorkerDoc[]
       /** 初始化选项 */
-      options?: WorkerInitOptions | undefined;
+      options?: WorkerInitOptions | undefined
     }
   | {
       /** 查询命令 */
-      type: "query";
+      type: 'query'
       /** 查询文本 */
-      q: string;
+      q: string
       /** 结果数量限制 */
-      limit?: number | undefined;
+      limit?: number | undefined
       /** 请求ID */
-      reqId?: number | undefined;
+      reqId?: number | undefined
     }
   | {
       /** 增量更新命令 */
-      type: "applyPatch";
+      type: 'applyPatch'
       /** 新增文档 */
-      adds?: WorkerDoc[] | undefined;
+      adds?: WorkerDoc[] | undefined
       /** 更新文档 */
-      updates?: WorkerDoc[] | undefined;
+      updates?: WorkerDoc[] | undefined
       /** 删除文档ID */
-      removes?: string[] | undefined;
+      removes?: string[] | undefined
     }
   | {
       /** 销毁命令 */
-      type: "dispose";
-    };
+      type: 'dispose'
+    }
 
 /**
  * Worker 事件类型
@@ -606,30 +606,30 @@ export type SearchWorkerCommand =
 export type SearchWorkerEvent =
   | {
       /** Worker 就绪事件 */
-      type: "ready";
+      type: 'ready'
     }
   | {
       /** 初始化完成事件 */
-      type: "inited";
+      type: 'inited'
       /** 文档数量 */
-      docCount: number;
+      docCount: number
     }
   | {
       /** 查询结果事件 */
-      type: "result";
+      type: 'result'
       /** 请求ID */
-      reqId?: number | undefined;
+      reqId?: number | undefined
       /** 命中结果 */
-      hits: WorkerHit[];
+      hits: WorkerHit[]
     }
   | {
       /** 错误事件 */
-      type: "error";
+      type: 'error'
       /** 错误消息 */
-      message: string;
+      message: string
       /** 请求ID */
-      reqId?: number | undefined;
-    };
+      reqId?: number | undefined
+    }
 
 /**
  * 查询性能指标接口
@@ -638,32 +638,32 @@ export type SearchWorkerEvent =
  */
 export interface SearchPerformanceMetrics {
   /** 查询文本 */
-  query: string;
+  query: string
 
   /** 查询耗时 */
-  duration: number;
+  duration: number
 
   /** 结果数量 */
-  resultCount: number;
+  resultCount: number
 
   /** 是否缓存命中 */
-  cacheHit: boolean;
+  cacheHit: boolean
 
   /** 查询模式 */
-  searchMode: string;
+  searchMode: string
 
   /** 时间戳 */
-  timestamp: Timestamp;
+  timestamp: Timestamp
 
   /** 会话ID */
-  sessionId?: string | undefined;
+  sessionId?: string | undefined
 
   /** 数据源 */
-  sources: string[];
+  sources: string[]
 
   /** 是否成功 */
-  success: boolean;
+  success: boolean
 
   /** 错误信息 */
-  errorMessage?: string | undefined;
+  errorMessage?: string | undefined
 }

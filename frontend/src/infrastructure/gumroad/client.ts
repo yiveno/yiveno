@@ -1,31 +1,29 @@
 // Gumroad 客户端工具
 
-import { API_CONFIG } from "@/config/constants";
-import { safeJsonFetch } from "@/infrastructure/http/safe-fetch";
+import { API_CONFIG } from '@/config/constants'
+import { safeJsonFetch } from '@/infrastructure/http/safe-fetch'
 
 export interface GumroadSubscriptionPayload {
-  success: boolean;
-  hasSubscription: boolean; // ✅ 新增：明确标志位
+  success: boolean
+  hasSubscription: boolean // ✅ 新增：明确标志位
   subscription?: {
-    id: string | null;
-    status: string;
-    tier: "free" | "pro";
-    current_period_end: string;
-    cancel_at_period_end: boolean;
-  };
-  error?: string;
+    id: string | null
+    status: string
+    tier: 'free' | 'pro'
+    current_period_end: string
+    cancel_at_period_end: boolean
+  }
+  error?: string
 }
 
 export const GUMROAD_CONFIG = {
-  productUrl: import.meta.env.VITE_GUMROAD_PRODUCT_URL || "",
+  productUrl: import.meta.env.VITE_GUMROAD_PRODUCT_URL || '',
   planIds: {
-    PRO_MONTHLY: import.meta.env.VITE_GUMROAD_PLAN_ID_MONTHLY || "",
-    PRO_YEARLY: import.meta.env.VITE_GUMROAD_PLAN_ID_YEARLY || "",
+    PRO_MONTHLY: import.meta.env.VITE_GUMROAD_PLAN_ID_MONTHLY || '',
+    PRO_YEARLY: import.meta.env.VITE_GUMROAD_PLAN_ID_YEARLY || ''
   },
-  manageUrl:
-    import.meta.env.VITE_GUMROAD_MANAGE_URL ||
-    "https://app.gumroad.com/subscriptions",
-} as const;
+  manageUrl: import.meta.env.VITE_GUMROAD_MANAGE_URL || 'https://app.gumroad.com/subscriptions'
+} as const
 
 /**
  * 构建 Gumroad 结账链接
@@ -34,59 +32,59 @@ export function buildCheckoutUrl(
   planId: string,
   userId: string,
   email: string,
-  tier: "pro" | "free" = "pro",
+  tier: 'pro' | 'free' = 'pro'
 ): string {
   if (!GUMROAD_CONFIG.productUrl) {
-    throw new Error("Gumroad 产品链接未配置");
+    throw new Error('Gumroad 产品链接未配置')
   }
 
   if (!planId) {
-    throw new Error("Gumroad 计划 ID 未配置");
+    throw new Error('Gumroad 计划 ID 未配置')
   }
 
-  const url = new URL(GUMROAD_CONFIG.productUrl);
+  const url = new URL(GUMROAD_CONFIG.productUrl)
   // 预选计划
-  url.searchParams.set("plan", planId);
+  url.searchParams.set('plan', planId)
 
   if (email) {
-    url.searchParams.set("email", email);
+    url.searchParams.set('email', email)
   }
 
-  url.searchParams.set("custom_fields[user_id]", userId);
-  url.searchParams.set("custom_fields[tier]", tier);
+  url.searchParams.set('custom_fields[user_id]', userId)
+  url.searchParams.set('custom_fields[tier]', tier)
 
-  return url.toString();
+  return url.toString()
 }
 
 /**
  * 获取 Gumroad 订阅管理地址
  */
 export function getManageSubscriptionUrl(): string {
-  return GUMROAD_CONFIG.manageUrl;
+  return GUMROAD_CONFIG.manageUrl
 }
 
 /**
  * 查询当前用户订阅状态
  */
 export async function getSubscriptionStatus(userId: string) {
-  const apiBase = API_CONFIG.API_BASE;
-  const url = `${apiBase}/api/gumroad/subscription?user_id=${encodeURIComponent(userId)}`;
+  const apiBase = API_CONFIG.API_BASE
+  const url = `${apiBase}/api/gumroad/subscription?user_id=${encodeURIComponent(userId)}`
 
   const response = await safeJsonFetch<GumroadSubscriptionPayload>(url, 5000, {
-    method: "GET",
+    method: 'GET',
     headers: {
-      "Content-Type": "application/json",
-    },
-  });
+      'Content-Type': 'application/json'
+    }
+  })
 
   if (!response || !response.success) {
-    throw new Error(response?.error || "查询订阅状态失败");
+    throw new Error(response?.error || '查询订阅状态失败')
   }
 
   // ✅ 改进：使用 hasSubscription 标志位，更清晰
   if (!response.hasSubscription || !response.subscription) {
-    return null;
+    return null
   }
 
-  return response.subscription;
+  return response.subscription
 }

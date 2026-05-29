@@ -12,24 +12,24 @@
  * - 在 Service Worker 环境中，通过 Offscreen Document 代理语义搜索（避免 ONNX WASM 加载失败）
  * - 在普通页面环境中，直接使用 embeddingService
  */
-import type { BookmarkRecord } from "@/infrastructure/indexeddb/manager";
-import { indexedDBManager } from "@/infrastructure/indexeddb/manager";
-import { embeddingService } from "@/infrastructure/embedding/embedding-service";
-import { logger } from "@/infrastructure/logging/logger";
-import { dispatchOffscreenRequest } from "@/infrastructure/offscreen/manager";
+import type { BookmarkRecord } from '@/infrastructure/indexeddb/manager'
+import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
+import { embeddingService } from '@/infrastructure/embedding/embedding-service'
+import { logger } from '@/infrastructure/logging/logger'
+import { dispatchOffscreenRequest } from '@/infrastructure/offscreen/manager'
 
-const LOG_TAG = "SemanticStrategy";
+const LOG_TAG = 'SemanticStrategy'
 
 export interface SemanticSearchResult {
-  bookmark: BookmarkRecord;
-  score: number;
+  bookmark: BookmarkRecord
+  score: number
 }
 
 /**
  * 检测是否在 Service Worker 环境
  */
 function isServiceWorker(): boolean {
-  return typeof self !== "undefined" && "ServiceWorkerGlobalScope" in self;
+  return typeof self !== 'undefined' && 'ServiceWorkerGlobalScope' in self
 }
 
 /**
@@ -41,56 +41,48 @@ function isServiceWorker(): boolean {
 export async function semanticSearch(
   query: string,
   topK = 10,
-  minScore = 0.2,
+  minScore = 0.2
 ): Promise<SemanticSearchResult[]> {
   try {
     // Service Worker 环境中，通过 Offscreen Document 代理语义搜索
     if (isServiceWorker()) {
-      logger.debug(
-        LOG_TAG,
-        "Service Worker 环境，通过 Offscreen Document 代理语义搜索",
-      );
-      const offscreenResults = await dispatchOffscreenRequest<
-        SemanticSearchResult[]
-      >(
+      logger.debug(LOG_TAG, 'Service Worker 环境，通过 Offscreen Document 代理语义搜索')
+      const offscreenResults = await dispatchOffscreenRequest<SemanticSearchResult[]>(
         {
-          type: "SEMANTIC_SEARCH",
-          payload: { query, topK, minScore },
+          type: 'SEMANTIC_SEARCH',
+          payload: { query, topK, minScore }
         },
-        { timeout: 3000 },
-      );
-      logger.info(
-        LOG_TAG,
-        `Offscreen 语义搜索完成: "${query}" → ${offscreenResults.length} 条`,
-      );
-      return offscreenResults;
+        { timeout: 3000 }
+      )
+      logger.info(LOG_TAG, `Offscreen 语义搜索完成: "${query}" → ${offscreenResults.length} 条`)
+      return offscreenResults
     }
 
     // 普通页面环境，直接使用 embeddingService
-    logger.debug(LOG_TAG, "普通页面环境，直接使用 embeddingService");
-    const vectorResults = await embeddingService.search(query, topK, minScore);
+    logger.debug(LOG_TAG, '普通页面环境，直接使用 embeddingService')
+    const vectorResults = await embeddingService.search(query, topK, minScore)
 
-    if (!vectorResults.length) return [];
+    if (!vectorResults.length) return []
 
     // 从 IndexedDB 补全书签详情
-    const allBookmarks = await indexedDBManager.getAllBookmarks();
-    const bookmarkMap = new Map<string, BookmarkRecord>();
+    const allBookmarks = await indexedDBManager.getAllBookmarks()
+    const bookmarkMap = new Map<string, BookmarkRecord>()
     for (const bm of allBookmarks) {
-      bookmarkMap.set(bm.id, bm);
+      bookmarkMap.set(bm.id, bm)
     }
 
-    const results: SemanticSearchResult[] = [];
+    const results: SemanticSearchResult[] = []
     for (const match of vectorResults) {
-      const bm = bookmarkMap.get(match.bookmarkId);
+      const bm = bookmarkMap.get(match.bookmarkId)
       if (bm && bm.url) {
-        results.push({ bookmark: bm, score: match.score });
+        results.push({ bookmark: bm, score: match.score })
       }
     }
 
-    logger.info(LOG_TAG, `本地语义搜索完成: "${query}" → ${results.length} 条`);
-    return results;
+    logger.info(LOG_TAG, `本地语义搜索完成: "${query}" → ${results.length} 条`)
+    return results
   } catch (error) {
-    logger.warn(LOG_TAG, "语义搜索异常", error);
-    return [];
+    logger.warn(LOG_TAG, '语义搜索异常', error)
+    return []
   }
 }

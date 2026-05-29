@@ -12,23 +12,19 @@
  * @module application/query/bookmark-search-service
  */
 
-import {
-  queryService,
-  type SearchResponse,
-  type EnhancedSearchResult,
-} from "@/core/query-engine";
-import type { SearchOptions } from "@/types/domain/query";
-import { logger } from "@/infrastructure/logging/logger";
-import { ok, err, type Result } from "@/core/common/result";
-import { getPerformanceMonitor as importPerformanceMonitor } from "@/services/query-performance-monitor";
+import { queryService, type SearchResponse, type EnhancedSearchResult } from '@/core/query-engine'
+import type { SearchOptions } from '@/types/domain/query'
+import { logger } from '@/infrastructure/logging/logger'
+import { ok, err, type Result } from '@/core/common/result'
+import { getPerformanceMonitor as importPerformanceMonitor } from '@/services/query-performance-monitor'
 
 // 动态导入性能监控，避免在 Service Worker 中加载不必要的依赖
 const getPerformanceMonitor = async () => {
-  if (typeof document === "undefined") {
-    return null;
+  if (typeof document === 'undefined') {
+    return null
   }
-  return importPerformanceMonitor();
-};
+  return importPerformanceMonitor()
+}
 
 /**
  * 书签搜索服务类
@@ -36,30 +32,28 @@ const getPerformanceMonitor = async () => {
  * 全局唯一的 IndexedDB 书签搜索入口
  */
 export class BookmarkSearchService {
-  private performanceMonitor: Awaited<
-    ReturnType<typeof getPerformanceMonitor>
-  > | null = null;
-  private initialized = false;
+  private performanceMonitor: Awaited<ReturnType<typeof getPerformanceMonitor>> | null = null
+  private initialized = false
 
   /** 获取性能监控器（延迟初始化） */
   private async getPerformanceMonitorInstance() {
     if (!this.performanceMonitor) {
-      this.performanceMonitor = await getPerformanceMonitor();
+      this.performanceMonitor = await getPerformanceMonitor()
     }
-    return this.performanceMonitor;
+    return this.performanceMonitor
   }
 
   /** 初始化搜索服务 */
   async initialize(): Promise<void> {
-    await queryService.initialize();
-    this.initialized = true;
-    logger.info("BookmarkSearchService", "✅ 搜索服务初始化完成");
+    await queryService.initialize()
+    this.initialized = true
+    logger.info('BookmarkSearchService', '✅ 搜索服务初始化完成')
   }
 
   /** 确保服务已初始化 */
   private async ensureInitialized(): Promise<void> {
-    if (this.initialized) return;
-    await this.initialize();
+    if (this.initialized) return
+    await this.initialize()
   }
 
   /**
@@ -69,25 +63,22 @@ export class BookmarkSearchService {
    * @param options - 搜索选项（strategy / limit / highlight 等）
    * @returns Result 包装的搜索结果数组
    */
-  async search(
-    query: string,
-    options?: SearchOptions,
-  ): Promise<Result<EnhancedSearchResult[]>> {
-    const startTime = performance.now();
-    await this.ensureInitialized();
+  async search(query: string, options?: SearchOptions): Promise<Result<EnhancedSearchResult[]>> {
+    const startTime = performance.now()
+    await this.ensureInitialized()
 
     try {
-      const response = await queryService.search(query, options);
-      void this.recordPerformance(query, startTime, response, true);
-      return ok(response.results);
+      const response = await queryService.search(query, options)
+      void this.recordPerformance(query, startTime, response, true)
+      return ok(response.results)
     } catch (error) {
-      const errorObj = error as Error;
-      void this.recordPerformance(query, startTime, null, false, errorObj);
-      logger.error("BookmarkSearchService", "搜索失败", {
+      const errorObj = error as Error
+      void this.recordPerformance(query, startTime, null, false, errorObj)
+      logger.error('BookmarkSearchService', '搜索失败', {
         query,
-        error: errorObj,
-      });
-      return err(errorObj);
+        error: errorObj
+      })
+      return err(errorObj)
     }
   }
 
@@ -100,23 +91,23 @@ export class BookmarkSearchService {
    */
   async searchWithMetadata(
     query: string,
-    options?: SearchOptions,
+    options?: SearchOptions
   ): Promise<Result<SearchResponse>> {
-    const startTime = performance.now();
-    await this.ensureInitialized();
+    const startTime = performance.now()
+    await this.ensureInitialized()
 
     try {
-      const response = await queryService.search(query, options);
-      void this.recordPerformance(query, startTime, response, true);
-      return ok(response);
+      const response = await queryService.search(query, options)
+      void this.recordPerformance(query, startTime, response, true)
+      return ok(response)
     } catch (error) {
-      const errorObj = error as Error;
-      void this.recordPerformance(query, startTime, null, false, errorObj);
-      logger.error("BookmarkSearchService", "搜索失败", {
+      const errorObj = error as Error
+      void this.recordPerformance(query, startTime, null, false, errorObj)
+      logger.error('BookmarkSearchService', '搜索失败', {
         query,
-        error: errorObj,
-      });
-      return err(errorObj);
+        error: errorObj
+      })
+      return err(errorObj)
     }
   }
 
@@ -126,66 +117,61 @@ export class BookmarkSearchService {
     startTime: number,
     response: SearchResponse | null,
     success: boolean,
-    error?: Error,
+    error?: Error
   ): Promise<void> {
-    const duration = performance.now() - startTime;
-    const monitor = await this.getPerformanceMonitorInstance();
+    const duration = performance.now() - startTime
+    const monitor = await this.getPerformanceMonitorInstance()
     if (monitor) {
       monitor.recordSearch({
         query,
         duration,
         resultCount: response?.results.length || 0,
         cacheHit: response?.metadata.cacheHit || false,
-        searchMode: response?.metadata.strategy || "unknown",
-        sources: response?.metadata.strategy
-          ? [response.metadata.strategy]
-          : [],
+        searchMode: response?.metadata.strategy || 'unknown',
+        sources: response?.metadata.strategy ? [response.metadata.strategy] : [],
         success,
-        ...(error?.message ? { errorMessage: error.message } : {}),
-      });
+        ...(error?.message ? { errorMessage: error.message } : {})
+      })
     }
   }
 
   /** 使缓存失效 */
   invalidateCache(pattern?: string): void {
-    queryService.invalidateCache(pattern);
-    logger.info(
-      "BookmarkSearchService",
-      `✅ 缓存已失效${pattern ? `: ${pattern}` : ""}`,
-    );
+    queryService.invalidateCache(pattern)
+    logger.info('BookmarkSearchService', `✅ 缓存已失效${pattern ? `: ${pattern}` : ''}`)
   }
 
   /** 清空所有缓存 */
   clearCache(): void {
-    queryService.clearCache();
-    logger.info("BookmarkSearchService", "✅ 缓存已清空");
+    queryService.clearCache()
+    logger.info('BookmarkSearchService', '✅ 缓存已清空')
   }
 
   /** 获取缓存统计信息 */
   getCacheStats() {
-    return queryService.getCacheStats();
+    return queryService.getCacheStats()
   }
 
   /** 获取索引状态 */
   getIndexStatus() {
-    return queryService.getIndexStatus();
+    return queryService.getIndexStatus()
   }
 
   /** 获取性能统计 */
   async getPerformanceStats() {
-    const monitor = await this.getPerformanceMonitorInstance();
-    return monitor?.getPerformanceStats() || null;
+    const monitor = await this.getPerformanceMonitorInstance()
+    return monitor?.getPerformanceStats() || null
   }
 
   /** 获取优化建议 */
   async getOptimizationSuggestions() {
-    const monitor = await this.getPerformanceMonitorInstance();
-    return monitor?.getOptimizationSuggestions() || [];
+    const monitor = await this.getPerformanceMonitorInstance()
+    return monitor?.getOptimizationSuggestions() || []
   }
 }
 
 /** 全局唯一书签搜索服务实例 */
-export const bookmarkSearchService = new BookmarkSearchService();
+export const bookmarkSearchService = new BookmarkSearchService()
 
 // 默认导出
-export default bookmarkSearchService;
+export default bookmarkSearchService

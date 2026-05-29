@@ -21,5 +21,5 @@ export type {
   SearchEventType,
   IndexStatus,
   CacheConfig,
-  WorkerConfig,
-} from "@/types/domain/query";
+  WorkerConfig
+} from '@/types/domain/query'

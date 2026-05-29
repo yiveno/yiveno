@@ -14,7 +14,6 @@ const DEFAULT_TEMPERATURE = 0.6
 /** 默认最大返回 Token 数量，防止生成过长响应。 */
 const DEFAULT_MAX_TOKENS = 256
 
-
 /**
  * 从请求中提取 AI 参数
  */

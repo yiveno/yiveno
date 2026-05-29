@@ -1,35 +1,35 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import { useDebounceFn } from "@vueuse/core";
-import { LucideIcon } from "@/components";
-import EmptyState from "@/components/composite/EmptyState/EmptyState.vue";
+import { ref, computed } from 'vue'
+import { useDebounceFn } from '@vueuse/core'
+import { LucideIcon } from '@/components'
+import EmptyState from '@/components/composite/EmptyState/EmptyState.vue'
 
-defineOptions({ name: "AsyncSearchSelect" });
+defineOptions({ name: 'AsyncSearchSelect' })
 
 const props = withDefaults(defineProps<AsyncSearchSelectProps>(), {
-  label: "搜索",
-  placeholder: "输入关键词搜索...",
+  label: '搜索',
+  placeholder: '输入关键词搜索...',
   multiple: false,
-  emptyText: "未找到匹配结果",
-  debounce: 300,
-});
+  emptyText: '未找到匹配结果',
+  debounce: 300
+})
 
-const emit = defineEmits<AsyncSearchSelectEmits>();
+const emit = defineEmits<AsyncSearchSelectEmits>()
 
 /**
  * 选项接口
  */
 export interface SelectOption {
   /** 选项值（唯一标识） */
-  value: string;
+  value: string
   /** 选项标签（显示文本） */
-  label: string;
+  label: string
   /** 选项描述（可选） */
-  description?: string;
+  description?: string
   /** 头像 URL（可选） */
-  avatar?: string;
+  avatar?: string
   /** 原始数据（可选） */
-  raw?: unknown;
+  raw?: unknown
 }
 
 /**
@@ -37,15 +37,15 @@ export interface SelectOption {
  */
 interface AsyncSearchSelectProps {
   /** 标签 */
-  label?: string;
+  label?: string
   /** 占位符 */
-  placeholder?: string;
+  placeholder?: string
   /** 是否多选 */
-  multiple?: boolean;
+  multiple?: boolean
   /** 空结果提示文本 */
-  emptyText?: string;
+  emptyText?: string
   /** 防抖延迟（毫秒） */
-  debounce?: number;
+  debounce?: number
 }
 
 /**
@@ -53,36 +53,36 @@ interface AsyncSearchSelectProps {
  */
 interface AsyncSearchSelectEmits {
   /** 搜索事件（返回搜索关键词） */
-  (e: "search", query: string): void;
+  (e: 'search', query: string): void
   /** 选择变化事件（返回选中的值数组） */
-  (e: "change", values: string[]): void;
+  (e: 'change', values: string[]): void
   /** 选择变化事件（返回选中的选项对象数组） */
-  (e: "update:selected", options: SelectOption[]): void;
+  (e: 'update:selected', options: SelectOption[]): void
 }
 
 // 状态
-const searchQuery = ref("");
-const showDropdown = ref(false);
-const loading = ref(false);
-const options = ref<SelectOption[]>([]);
-const selectedValues = ref<Set<string>>(new Set());
-const isFocused = ref(false);
-const inputRef = ref<HTMLInputElement | null>(null);
+const searchQuery = ref('')
+const showDropdown = ref(false)
+const loading = ref(false)
+const options = ref<SelectOption[]>([])
+const selectedValues = ref<Set<string>>(new Set())
+const isFocused = ref(false)
+const inputRef = ref<HTMLInputElement | null>(null)
 
 // 已选择的选项（保留完整信息）
-const selectedOptionsMap = ref<Map<string, SelectOption>>(new Map());
+const selectedOptionsMap = ref<Map<string, SelectOption>>(new Map())
 
 // 已选择的选项数组
 const selectedOptions = computed(() => {
-  return Array.from(selectedOptionsMap.value.values());
-});
+  return Array.from(selectedOptionsMap.value.values())
+})
 
 /**
  * 判断选项是否已选中
  */
 const isSelected = (value: string): boolean => {
-  return selectedValues.value.has(value);
-};
+  return selectedValues.value.has(value)
+}
 
 /**
  * 切换选项选中状态
@@ -91,95 +91,95 @@ const toggleOption = (option: SelectOption) => {
   if (props.multiple) {
     // 多选模式
     if (selectedValues.value.has(option.value)) {
-      selectedValues.value.delete(option.value);
-      selectedOptionsMap.value.delete(option.value);
+      selectedValues.value.delete(option.value)
+      selectedOptionsMap.value.delete(option.value)
     } else {
-      selectedValues.value.add(option.value);
-      selectedOptionsMap.value.set(option.value, option);
+      selectedValues.value.add(option.value)
+      selectedOptionsMap.value.set(option.value, option)
     }
 
     // 多选模式：选中后清空搜索输入，关闭下拉框
-    searchQuery.value = "";
-    showDropdown.value = false;
-    options.value = [];
-    loading.value = false;
+    searchQuery.value = ''
+    showDropdown.value = false
+    options.value = []
+    loading.value = false
   } else {
     // 单选模式
-    selectedValues.value.clear();
-    selectedOptionsMap.value.clear();
-    selectedValues.value.add(option.value);
-    selectedOptionsMap.value.set(option.value, option);
+    selectedValues.value.clear()
+    selectedOptionsMap.value.clear()
+    selectedValues.value.add(option.value)
+    selectedOptionsMap.value.set(option.value, option)
 
     // 单选模式：选中后清空搜索输入，关闭下拉框
-    searchQuery.value = "";
-    closeDropdown();
+    searchQuery.value = ''
+    closeDropdown()
   }
 
   // 触发变化事件
-  emit("change", Array.from(selectedValues.value));
-  emit("update:selected", selectedOptions.value);
-};
+  emit('change', Array.from(selectedValues.value))
+  emit('update:selected', selectedOptions.value)
+}
 
 /**
  * 移除选项（从标签中删除）
  */
 const removeOption = (value: string, event?: Event) => {
-  event?.stopPropagation();
-  selectedValues.value.delete(value);
-  selectedOptionsMap.value.delete(value);
-  emit("change", Array.from(selectedValues.value));
-  emit("update:selected", selectedOptions.value);
-};
+  event?.stopPropagation()
+  selectedValues.value.delete(value)
+  selectedOptionsMap.value.delete(value)
+  emit('change', Array.from(selectedValues.value))
+  emit('update:selected', selectedOptions.value)
+}
 
 /**
  * 处理输入框容器点击（聚焦输入框）
  */
 const handleWrapperClick = () => {
-  inputRef.value?.focus();
-};
+  inputRef.value?.focus()
+}
 
 /**
  * 处理输入框获取焦点
  */
 const handleFocus = () => {
-  isFocused.value = true;
+  isFocused.value = true
   // 多选模式：总是显示下拉框（如果有输入值）
   if (props.multiple && searchQuery.value.length > 0) {
-    showDropdown.value = true;
+    showDropdown.value = true
   }
-};
+}
 
 /**
  * 处理输入框失去焦点
  */
 const handleBlur = () => {
-  isFocused.value = false;
-};
+  isFocused.value = false
+}
 
 /**
  * 处理输入变化（防抖）
  */
 const handleInput = useDebounceFn(
   () => {
-    const query = searchQuery.value.trim();
+    const query = searchQuery.value.trim()
 
     if (query.length === 0) {
       // 输入为空：隐藏下拉框，清空选项，不调用接口
-      showDropdown.value = false;
-      options.value = [];
-      loading.value = false;
-      return;
+      showDropdown.value = false
+      options.value = []
+      loading.value = false
+      return
     }
 
     // 有输入值：设置 loading 状态，隐藏下拉框（等待接口响应），触发搜索
-    loading.value = true;
-    showDropdown.value = false; // 隐藏下拉框，等待接口响应
+    loading.value = true
+    showDropdown.value = false // 隐藏下拉框，等待接口响应
     // 清空之前的选项，避免显示旧数据
-    options.value = [];
-    emit("search", query);
+    options.value = []
+    emit('search', query)
   },
-  () => props.debounce,
-);
+  () => props.debounce
+)
 
 /**
  * 处理清除按钮点击
@@ -187,116 +187,115 @@ const handleInput = useDebounceFn(
 const handleClear = () => {
   if (searchQuery.value) {
     // 如果有搜索输入，清空搜索
-    searchQuery.value = "";
-    showDropdown.value = false;
-    options.value = [];
-    loading.value = false;
+    searchQuery.value = ''
+    showDropdown.value = false
+    options.value = []
+    loading.value = false
   } else if (selectedOptions.value.length > 0) {
     // 如果没有搜索输入但有选中项，清空所有选中
-    clearSelection();
+    clearSelection()
   }
-};
+}
 
 /**
  * 关闭下拉框
  */
 const closeDropdown = () => {
-  showDropdown.value = false;
+  showDropdown.value = false
   // 多选模式：清空搜索输入
   if (props.multiple) {
-    searchQuery.value = "";
-    options.value = [];
+    searchQuery.value = ''
+    options.value = []
   }
-};
+}
 
 /**
  * 设置搜索结果（供父组件调用）
  */
 const setOptions = (newOptions: SelectOption[]) => {
-  options.value = newOptions;
-  loading.value = false;
+  options.value = newOptions
+  loading.value = false
   // 接口响应后，显示下拉框（无论结果是否为空）
-  showDropdown.value = true;
-};
+  showDropdown.value = true
+}
 
 /**
  * 设置 loading 状态（供父组件调用）
  */
 const setLoading = (isLoading: boolean) => {
-  loading.value = isLoading;
-};
+  loading.value = isLoading
+}
 
 /**
  * 清空选择
  */
 const clearSelection = () => {
-  selectedValues.value.clear();
-  selectedOptionsMap.value.clear();
-  emit("change", []);
-  emit("update:selected", []);
-};
+  selectedValues.value.clear()
+  selectedOptionsMap.value.clear()
+  emit('change', [])
+  emit('update:selected', [])
+}
 
 /**
  * 清空搜索输入
  */
 const clearSearch = () => {
-  searchQuery.value = "";
-  showDropdown.value = false;
-  options.value = [];
-  loading.value = false;
-};
+  searchQuery.value = ''
+  showDropdown.value = false
+  options.value = []
+  loading.value = false
+}
 
 /**
  * 获取选中的值
  */
 const getSelectedValues = (): string[] => {
-  return Array.from(selectedValues.value);
-};
+  return Array.from(selectedValues.value)
+}
 
 /**
  * 获取选中的选项
  */
 const getSelectedOptions = (): SelectOption[] => {
-  return selectedOptions.value;
-};
+  return selectedOptions.value
+}
 
 /**
  * 获取头像 URL（支持 Gravatar）
  */
 const getAvatarUrl = (option: SelectOption): string => {
   if (option.avatar) {
-    return option.avatar;
+    return option.avatar
   }
   // 如果没有头像，返回默认头像（使用首字母）
-  return "";
-};
+  return ''
+}
 
 /**
  * 获取用户名首字母（用于默认头像）
  */
 const getInitials = (label: string): string => {
-  return label.charAt(0).toUpperCase();
-};
+  return label.charAt(0).toUpperCase()
+}
 
 // 点击外部关闭下拉框的指令
 const vClickOutside = {
   mounted(el: HTMLElement, binding: { value: () => void }) {
     const clickOutsideEvent = (event: Event) => {
       if (!(el === event.target || el.contains(event.target as Node))) {
-        binding.value();
+        binding.value()
       }
-    };
-    (
-      el as HTMLElement & { clickOutsideEvent?: (event: Event) => void }
-    ).clickOutsideEvent = clickOutsideEvent;
-    document.addEventListener("click", clickOutsideEvent);
+    }
+    ;(el as HTMLElement & { clickOutsideEvent?: (event: Event) => void }).clickOutsideEvent =
+      clickOutsideEvent
+    document.addEventListener('click', clickOutsideEvent)
   },
   unmounted(el: HTMLElement & { clickOutsideEvent?: (event: Event) => void }) {
     if (el.clickOutsideEvent) {
-      document.removeEventListener("click", el.clickOutsideEvent);
+      document.removeEventListener('click', el.clickOutsideEvent)
     }
-  },
-};
+  }
+}
 
 // 暴露方法给父组件
 defineExpose({
@@ -305,27 +304,21 @@ defineExpose({
   clearSelection,
   clearSearch,
   getSelectedValues,
-  getSelectedOptions,
-});
+  getSelectedOptions
+})
 </script>
 
 <template>
   <div v-click-outside="closeDropdown" class="async-search-select">
     <!-- 自定义输入框容器（包含标签和输入） -->
-    <div
-      class="input-container"
-      :class="{ 'input-container--focused': isFocused }"
-    >
+    <div class="input-container" :class="{ 'input-container--focused': isFocused }">
       <!-- Label -->
       <label v-if="label" class="input-label">{{ label }}</label>
 
       <!-- 输入区域 -->
       <div class="input-wrapper" @click="handleWrapperClick">
         <!-- 已选择的标签（显示在输入框内部） -->
-        <div
-          v-if="multiple && selectedOptions.length > 0"
-          class="selected-tags-inline"
-        >
+        <div v-if="multiple && selectedOptions.length > 0" class="selected-tags-inline">
           <div
             v-for="option in selectedOptions"
             :key="option.value"
@@ -334,14 +327,8 @@ defineExpose({
           >
             <!-- 头像 -->
             <div class="tag-avatar-inline">
-              <img
-                v-if="option.avatar"
-                :src="getAvatarUrl(option)"
-                :alt="option.label"
-              />
-              <span v-else class="tag-avatar-initials-inline">{{
-                getInitials(option.label)
-              }}</span>
+              <img v-if="option.avatar" :src="getAvatarUrl(option)" :alt="option.label" />
+              <span v-else class="tag-avatar-initials-inline">{{ getInitials(option.label) }}</span>
             </div>
             <!-- 标签文本 -->
             <span class="tag-label-inline">{{ option.label }}</span>
@@ -395,12 +382,7 @@ defineExpose({
     </div>
 
     <!-- 下拉菜单 -->
-    <div
-      v-if="showDropdown"
-      class="dropdown-menu"
-      role="listbox"
-      :aria-label="label"
-    >
+    <div v-if="showDropdown" class="dropdown-menu" role="listbox" :aria-label="label">
       <!-- 搜索结果 -->
       <div v-if="options.length > 0" class="dropdown-options">
         <div
@@ -414,14 +396,8 @@ defineExpose({
         >
           <!-- 头像 -->
           <div class="option-avatar">
-            <img
-              v-if="option.avatar"
-              :src="getAvatarUrl(option)"
-              :alt="option.label"
-            />
-            <span v-else class="option-avatar-initials">{{
-              getInitials(option.label)
-            }}</span>
+            <img v-if="option.avatar" :src="getAvatarUrl(option)" :alt="option.label" />
+            <span v-else class="option-avatar-initials">{{ getInitials(option.label) }}</span>
           </div>
 
           <!-- 选项内容 -->
@@ -509,8 +485,7 @@ defineExpose({
   border-radius: var(--radius-md);
   background: var(--md-sys-color-surface-container-low);
   cursor: text;
-  transition: all var(--md-sys-motion-duration-short2)
-    var(--md-sys-motion-easing-standard);
+  transition: all var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
 }
 
 .input-wrapper:hover {
@@ -592,8 +567,7 @@ defineExpose({
   flex-shrink: 0;
   color: var(--md-sys-color-on-primary-container);
   opacity: 0.7;
-  transition: opacity var(--md-sys-motion-duration-short2)
-    var(--md-sys-motion-easing-standard);
+  transition: opacity var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
 }
 
 .selected-tag-inline:hover .tag-remove-icon-inline {
@@ -653,8 +627,7 @@ defineExpose({
   color: var(--color-text-tertiary);
   background: transparent;
   cursor: pointer;
-  transition: all var(--md-sys-motion-duration-short2)
-    var(--md-sys-motion-easing-standard);
+  transition: all var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
 }
 
 .input-clear-btn:hover {

@@ -1,13 +1,10 @@
-export type { EmbeddingProvider } from "./embedding-provider";
-export { onnxEmbeddingProvider } from "./onnx-embedding-provider";
+export type { EmbeddingProvider } from './embedding-provider'
+export { onnxEmbeddingProvider } from './onnx-embedding-provider'
 export {
   ChromeBuiltinEmbeddingProvider,
-  chromeBuiltinEmbeddingProvider,
-} from "./chrome-builtin-embedding-provider";
-export { LocalVectorStore, localVectorStore } from "./local-vector-store";
-export { EmbeddingService, embeddingService } from "./embedding-service";
-export type {
-  EmbeddingSyncProgress,
-  LocalSemanticResult,
-} from "./embedding-service";
-export type { VectorRecord, VectorSearchResult } from "./local-vector-store";
+  chromeBuiltinEmbeddingProvider
+} from './chrome-builtin-embedding-provider'
+export { LocalVectorStore, localVectorStore } from './local-vector-store'
+export { EmbeddingService, embeddingService } from './embedding-service'
+export type { EmbeddingSyncProgress, LocalSemanticResult } from './embedding-service'
+export type { VectorRecord, VectorSearchResult } from './local-vector-store'

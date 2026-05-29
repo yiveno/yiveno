@@ -7,125 +7,99 @@
  * - 以“最新请求优先”的策略丢弃过期结果，提升交互响应；
  * - 同步内存缓存 byId，减少重复读取。
  */
-import type {
-  BookmarkRecord,
-  SearchResult,
-} from "@/infrastructure/indexeddb/manager";
-import { indexedDBManager } from "@/infrastructure/indexeddb/manager";
-import type {
-  WorkerDoc,
-  SearchWorkerCommand,
-  SearchWorkerEvent,
-} from "@/types/domain/query";
+import type { BookmarkRecord, SearchResult } from '@/infrastructure/indexeddb/manager'
+import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
+import type { WorkerDoc, SearchWorkerCommand, SearchWorkerEvent } from '@/types/domain/query'
 
-import type { SearchWorkerAdapterOptions } from "@/types/application/service";
-import { logger } from "@/infrastructure/logging/logger";
-import { TIMEOUT_CONFIG } from "@/config/constants";
-import { dispatchOffscreenRequest } from "@/background/offscreen-manager";
+import type { SearchWorkerAdapterOptions } from '@/types/application/service'
+import { logger } from '@/infrastructure/logging/logger'
+import { TIMEOUT_CONFIG } from '@/config/constants'
+import { dispatchOffscreenRequest } from '@/background/offscreen-manager'
 
-type WorkerHandle = Worker | null;
+type WorkerHandle = Worker | null
 
 /**
  * 查询 Worker 适配器，实现 Offscreen、Worker 与主线程三种执行路径。
  */
 export class QueryWorkerAdapter {
-  private worker: WorkerHandle = null;
-  private reqCounter = 1;
+  private worker: WorkerHandle = null
+  private reqCounter = 1
   /** 当前待完成请求的回调映射表 */
-  private pending = new Map<
-    number,
-    (hits: Array<{ id: string; score: number }>) => void
-  >();
+  private pending = new Map<number, (hits: Array<{ id: string; score: number }>) => void>()
   /** Worker 是否已完成初始化 */
-  private inited = false;
-  private options: SearchWorkerAdapterOptions;
-  private byId: Map<string, BookmarkRecord> | null = null;
-  private currentReqId: number | null = null;
-  private workerSupported: boolean;
-  private offscreenSupported =
-    typeof chrome !== "undefined" && !!chrome.offscreen;
-  private offscreenInitialized = false;
-  private offscreenInitPromise: Promise<void> | null = null;
+  private inited = false
+  private options: SearchWorkerAdapterOptions
+  private byId: Map<string, BookmarkRecord> | null = null
+  private currentReqId: number | null = null
+  private workerSupported: boolean
+  private offscreenSupported = typeof chrome !== 'undefined' && !!chrome.offscreen
+  private offscreenInitialized = false
+  private offscreenInitPromise: Promise<void> | null = null
 
   private isServiceWorkerContext =
-    typeof globalThis !== "undefined" &&
-    typeof (globalThis as unknown as ServiceWorkerGlobalScope).clients ===
-      "object";
+    typeof globalThis !== 'undefined' &&
+    typeof (globalThis as unknown as ServiceWorkerGlobalScope).clients === 'object'
 
   constructor(options: SearchWorkerAdapterOptions = {}) {
-    this.options = { workerUrl: "", cacheSize: 500, ...options };
-    this.workerSupported = typeof Worker !== "undefined";
+    this.options = { workerUrl: '', cacheSize: 500, ...options }
+    this.workerSupported = typeof Worker !== 'undefined'
 
     if (this.isServiceWorkerContext && this.offscreenSupported) {
-      logger.info(
-        "QueryWorkerAdapter",
-        "🔀 将通过 Offscreen Document 代理查询",
-      );
+      logger.info('QueryWorkerAdapter', '🔀 将通过 Offscreen Document 代理查询')
     } else if (!this.workerSupported) {
-      logger.warn(
-        "QueryWorkerAdapter",
-        "当前运行环境不支持 Worker，将退化为主线程查询",
-      );
+      logger.warn('QueryWorkerAdapter', '当前运行环境不支持 Worker，将退化为主线程查询')
     }
   }
 
   async ensureWorker(): Promise<void> {
-    if (!this.workerSupported) return;
-    if (this.worker) return;
+    if (!this.workerSupported) return
+    if (this.worker) return
     try {
       // Vite module worker
-      this.worker = new Worker(
-        new URL("@/workers/query-worker.ts", import.meta.url),
-        {
-          type: "module",
-        },
-      );
-      this.worker.onmessage = (e) =>
-        this.onMessage(e.data as SearchWorkerEvent);
+      this.worker = new Worker(new URL('@/workers/query-worker.ts', import.meta.url), {
+        type: 'module'
+      })
+      this.worker.onmessage = e => this.onMessage(e.data as SearchWorkerEvent)
     } catch (error) {
-      this.workerSupported = false;
-      this.worker = null;
-      logger.warn(
-        "QueryWorkerAdapter",
-        "创建 Worker 失败，退化为主线程查询",
-        error,
-      );
+      this.workerSupported = false
+      this.worker = null
+      logger.warn('QueryWorkerAdapter', '创建 Worker 失败，退化为主线程查询', error)
     }
   }
 
   private onMessage(evt: SearchWorkerEvent) {
     switch (evt.type) {
-      case "ready":
-        break;
-      case "inited":
-        this.inited = true;
-        break;
-      case "result": {
+      case 'ready':
+        break
+      case 'inited':
+        this.inited = true
+        break
+      case 'result': {
         // 仅处理最新的一次查询结果，其它丢弃
         if (this.currentReqId !== null && evt.reqId !== this.currentReqId) {
           // 丢弃过期请求
           if (evt.reqId !== undefined) {
-            this.pending.delete(evt.reqId);
+            this.pending.delete(evt.reqId)
           }
-          break;
+          break
         }
-        const cb = evt.reqId ? this.pending.get(evt.reqId) : undefined;
+        const cb = evt.reqId ? this.pending.get(evt.reqId) : undefined
         if (cb) {
           if (evt.reqId !== undefined) {
-            this.pending.delete(evt.reqId);
+            this.pending.delete(evt.reqId)
           }
-          cb(evt.hits);
+          cb(evt.hits)
         }
-        break;
+        break
       }
-      case "error":
+      case 'error':
         // 将错误反馈到对应的 pending 请求
         if (evt.reqId && this.pending.has(evt.reqId)) {
-          const cb = this.pending.get(evt.reqId)!;
-          this.pending.delete(evt.reqId);
-          cb([]);
+          const cb = this.pending.get(evt.reqId)!
+          this.pending.delete(evt.reqId)
+          cb([])
         }
-        break;
+        break
     }
   }
 
@@ -137,239 +111,216 @@ export class QueryWorkerAdapter {
       domain: rec.domain,
       keywords: rec.keywords,
       isFolder: rec.isFolder,
-      url: rec.url ?? "",
-      title: rec.title,
-    };
+      url: rec.url ?? '',
+      title: rec.title
+    }
   }
 
   async initFromIDB(): Promise<void> {
-    await this.ensureWorker();
-    await indexedDBManager.initialize();
+    await this.ensureWorker()
+    await indexedDBManager.initialize()
 
     if (!this.workerSupported || !this.worker) {
-      this.inited = true;
-      return;
+      this.inited = true
+      return
     }
 
     // 先发送空初始化，随后分批 applyPatch(adds) 流式加载
-    this.worker!.postMessage({ type: "init", docs: [] } as SearchWorkerCommand);
+    this.worker!.postMessage({ type: 'init', docs: [] } as SearchWorkerCommand)
 
-    const pageSize = 2000;
-    let offset = 0;
-    let _totalLoaded = 0;
+    const pageSize = 2000
+    let offset = 0
+    let _totalLoaded = 0
 
     // 按页拉取，批次间让出事件循环，避免阻塞
     while (true) {
-      const batch = await indexedDBManager.getAllBookmarks(pageSize, offset);
-      if (!batch.length) break;
-      offset += batch.length;
-      _totalLoaded += batch.length;
+      const batch = await indexedDBManager.getAllBookmarks(pageSize, offset)
+      if (!batch.length) break
+      offset += batch.length
+      _totalLoaded += batch.length
 
       // 维护 byId 的渐进式缓存（避免一次性占用大内存）
-      if (!this.byId) this.byId = new Map<string, BookmarkRecord>();
+      if (!this.byId) this.byId = new Map<string, BookmarkRecord>()
       for (const b of batch) {
-        this.byId.set(String(b.id), b);
+        this.byId.set(String(b.id), b)
       }
 
       const adds = batch
         .filter((b: BookmarkRecord) => !b.isFolder)
-        .map((b: BookmarkRecord) => this.toDoc(b));
+        .map((b: BookmarkRecord) => this.toDoc(b))
       if (adds.length) {
         const patch: SearchWorkerCommand = {
-          type: "applyPatch",
-          adds,
-        };
-        this.worker!.postMessage(patch);
+          type: 'applyPatch',
+          adds
+        }
+        this.worker!.postMessage(patch)
       }
 
       // 批次间让步，提升交互响应
-      await new Promise((r) => setTimeout(r, 0));
+      await new Promise(r => setTimeout(r, 0))
     }
     // 标记初始化完成
-    this.inited = true;
+    this.inited = true
   }
 
-  async search(
-    query: string,
-    limit = this.options.limit ?? 100,
-  ): Promise<SearchResult[]> {
-    if (!query.trim()) return [];
+  async search(query: string, limit = this.options.limit ?? 100): Promise<SearchResult[]> {
+    if (!query.trim()) return []
 
-    const canUseOffscreen =
-      this.isServiceWorkerContext && this.offscreenSupported;
+    const canUseOffscreen = this.isServiceWorkerContext && this.offscreenSupported
 
     if (canUseOffscreen) {
       try {
-        await this.ensureOffscreenInitialized();
-        const offscreenHits = await dispatchOffscreenRequest<
-          Array<{ id: string; score: number }>
-        >(
+        await this.ensureOffscreenInitialized()
+        const offscreenHits = await dispatchOffscreenRequest<Array<{ id: string; score: number }>>(
           {
-            type: "SEARCH_QUERY",
-            payload: { query, limit },
+            type: 'SEARCH_QUERY',
+            payload: { query, limit }
           },
-          { timeout: TIMEOUT_CONFIG.API.FAST }, // 快速搜索查询超时
-        );
+          { timeout: TIMEOUT_CONFIG.API.FAST } // 快速搜索查询超时
+        )
         logger.info(
-          "QueryWorkerAdapter",
+          'QueryWorkerAdapter',
           `Offscreen 返回命中: ${offscreenHits.length}`,
-          offscreenHits.slice(0, 5),
-        );
-        const mappedResults = await this.mapHitsToResults(offscreenHits, query);
+          offscreenHits.slice(0, 5)
+        )
+        const mappedResults = await this.mapHitsToResults(offscreenHits, query)
         logger.info(
-          "QueryWorkerAdapter",
+          'QueryWorkerAdapter',
           `Offscreen 命中映射后: ${mappedResults.length}`,
-          mappedResults.slice(0, 3).map((item) => ({
+          mappedResults.slice(0, 3).map(item => ({
             id: item.id,
             score: item.score,
             title: item.bookmark.title,
-            url: item.bookmark.url,
-          })),
-        );
+            url: item.bookmark.url
+          }))
+        )
         if (!mappedResults.length) {
-          logger.warn("QueryWorkerAdapter", `Offscreen 命中为空: ${query}`);
+          logger.warn('QueryWorkerAdapter', `Offscreen 命中为空: ${query}`)
         }
-        return mappedResults;
+        return mappedResults
       } catch (error) {
-        logger.warn(
-          "QueryWorkerAdapter",
-          "Offscreen 查询失败，退回本地 fallback",
-          error,
-        );
+        logger.warn('QueryWorkerAdapter', 'Offscreen 查询失败，退回本地 fallback', error)
       }
     }
 
     if (!this.workerSupported) {
-      return this.fallbackSearch(query, limit);
+      return this.fallbackSearch(query, limit)
     }
-    await this.ensureWorker();
+    await this.ensureWorker()
     if (!this.workerSupported || !this.worker) {
-      return this.fallbackSearch(query, limit);
+      return this.fallbackSearch(query, limit)
     }
     if (!this.inited) {
-      await this.initFromIDB();
+      await this.initFromIDB()
     }
 
     if (this.currentReqId && this.pending.has(this.currentReqId)) {
-      const prev = this.pending.get(this.currentReqId)!;
-      this.pending.delete(this.currentReqId);
-      prev([]);
+      const prev = this.pending.get(this.currentReqId)!
+      this.pending.delete(this.currentReqId)
+      prev([])
     }
-    const reqId = this.reqCounter++;
-    this.currentReqId = reqId;
-    const cmd: SearchWorkerCommand = { type: "query", q: query, limit, reqId };
+    const reqId = this.reqCounter++
+    this.currentReqId = reqId
+    const cmd: SearchWorkerCommand = { type: 'query', q: query, limit, reqId }
 
-    const hits = await new Promise<Array<{ id: string; score: number }>>(
-      (resolve) => {
-        this.pending.set(reqId, resolve);
-        this.worker!.postMessage(cmd);
-      },
-    );
+    const hits = await new Promise<Array<{ id: string; score: number }>>(resolve => {
+      this.pending.set(reqId, resolve)
+      this.worker!.postMessage(cmd)
+    })
 
-    return this.mapHitsToResults(hits, query);
+    return this.mapHitsToResults(hits, query)
   }
 
-  private async fallbackSearch(
-    query: string,
-    limit: number,
-  ): Promise<SearchResult[]> {
-    logger.info(
-      "QueryWorkerAdapter",
-      `⚠️ 使用主线程 fallback 查询: "${query}"`,
-    );
-    await indexedDBManager.initialize();
+  private async fallbackSearch(query: string, limit: number): Promise<SearchResult[]> {
+    logger.info('QueryWorkerAdapter', `⚠️ 使用主线程 fallback 查询: "${query}"`)
+    await indexedDBManager.initialize()
     const results = await indexedDBManager.searchBookmarks(query, {
       query,
       limit,
       includeDomain: true,
       includeUrl: true,
       includeKeywords: true,
-      includeTags: true,
-    });
-    return results;
+      includeTags: true
+    })
+    return results
   }
 
   private async mapHitsToResults(
     hits: Array<{ id: string; score: number }>,
-    query: string,
+    query: string
   ): Promise<SearchResult[]> {
-    if (!hits.length) return [];
+    if (!hits.length) return []
 
-    let byId = this.byId;
+    let byId = this.byId
     if (!byId) {
-      await indexedDBManager.initialize();
-      const data = await indexedDBManager.getAllBookmarks();
-      byId = new Map<string, BookmarkRecord>(
-        data.map((b: BookmarkRecord) => [String(b.id), b]),
-      );
-      this.byId = byId;
+      await indexedDBManager.initialize()
+      const data = await indexedDBManager.getAllBookmarks()
+      byId = new Map<string, BookmarkRecord>(data.map((b: BookmarkRecord) => [String(b.id), b]))
+      this.byId = byId
     }
 
-    const normalizedQuery = query.trim().toLowerCase();
-    const results: SearchResult[] = [];
+    const normalizedQuery = query.trim().toLowerCase()
+    const results: SearchResult[] = []
     for (const h of hits) {
-      const rec = byId.get(h.id);
+      const rec = byId.get(h.id)
       if (rec && !rec.isFolder) {
         results.push({
           id: rec.id,
           bookmark: rec,
           score: h.score,
           highlights: [],
-          pathString: rec.pathString,
-        });
+          pathString: rec.pathString
+        })
       }
     }
     if (normalizedQuery.length < 4) {
-      return results;
+      return results
     }
-    return results.filter((result) =>
-      this.includesQuery(result.bookmark, normalizedQuery),
-    );
+    return results.filter(result => this.includesQuery(result.bookmark, normalizedQuery))
   }
 
   private includesQuery(bookmark: BookmarkRecord, query: string): boolean {
-    if (bookmark.titleLower.includes(query)) return true;
-    if (bookmark.urlLower?.includes(query)) return true;
-    if (bookmark.domain?.includes(query)) return true;
-    if (bookmark.keywords?.some((keyword) => keyword.includes(query)))
-      return true;
-    return false;
+    if (bookmark.titleLower.includes(query)) return true
+    if (bookmark.urlLower?.includes(query)) return true
+    if (bookmark.domain?.includes(query)) return true
+    if (bookmark.keywords?.some(keyword => keyword.includes(query))) return true
+    return false
   }
 
   async applyPatch(delta: {
-    adds?: BookmarkRecord[];
-    updates?: BookmarkRecord[];
-    removes?: string[];
+    adds?: BookmarkRecord[]
+    updates?: BookmarkRecord[]
+    removes?: string[]
   }): Promise<void> {
-    await this.ensureWorker();
+    await this.ensureWorker()
     const cmd: SearchWorkerCommand = {
-      type: "applyPatch",
-      adds: delta.adds?.map((b) => this.toDoc(b)),
-      updates: delta.updates?.map((b) => this.toDoc(b)),
-      removes: delta.removes,
-    };
-    this.worker!.postMessage(cmd);
+      type: 'applyPatch',
+      adds: delta.adds?.map(b => this.toDoc(b)),
+      updates: delta.updates?.map(b => this.toDoc(b)),
+      removes: delta.removes
+    }
+    this.worker!.postMessage(cmd)
 
     // 同步内存缓存
-    if (!this.byId) this.byId = new Map<string, BookmarkRecord>();
+    if (!this.byId) this.byId = new Map<string, BookmarkRecord>()
     if (delta.removes?.length) {
-      for (const id of delta.removes) this.byId.delete(String(id));
+      for (const id of delta.removes) this.byId.delete(String(id))
     }
     if (delta.updates?.length) {
-      for (const b of delta.updates) this.byId.set(String(b.id), b);
+      for (const b of delta.updates) this.byId.set(String(b.id), b)
     }
     if (delta.adds?.length) {
-      for (const b of delta.adds) this.byId.set(String(b.id), b);
+      for (const b of delta.adds) this.byId.set(String(b.id), b)
     }
   }
 
   terminate(): void {
     if (this.worker) {
-      this.worker.postMessage({ type: "dispose" } as SearchWorkerCommand);
-      this.worker.terminate();
-      this.worker = null;
+      this.worker.postMessage({ type: 'dispose' } as SearchWorkerCommand)
+      this.worker.terminate()
+      this.worker = null
 
-      this.inited = false;
+      this.inited = false
     }
   }
 
@@ -380,42 +331,42 @@ export class QueryWorkerAdapter {
    * 当书签数据更新时调用此方法，确保搜索使用最新的数据
    */
   clearCache(): void {
-    this.byId = null;
-    logger.info("QueryWorkerAdapter", "🧹 内存缓存已清除");
+    this.byId = null
+    logger.info('QueryWorkerAdapter', '🧹 内存缓存已清除')
   }
 
   private async ensureOffscreenInitialized(): Promise<void> {
     if (!this.isServiceWorkerContext || !this.offscreenSupported) {
-      return;
+      return
     }
 
     if (this.offscreenInitialized) {
-      return;
+      return
     }
 
     if (!this.offscreenInitPromise) {
       this.offscreenInitPromise = (async () => {
         try {
           await dispatchOffscreenRequest(
-            { type: "SEARCH_INIT" },
-            { timeout: TIMEOUT_CONFIG.API.STANDARD }, // 标准API初始化超时
-          );
-          this.offscreenInitialized = true;
+            { type: 'SEARCH_INIT' },
+            { timeout: TIMEOUT_CONFIG.API.STANDARD } // 标准API初始化超时
+          )
+          this.offscreenInitialized = true
         } catch (error) {
-          this.offscreenInitialized = false;
-          throw error;
+          this.offscreenInitialized = false
+          throw error
         } finally {
-          this.offscreenInitPromise = null;
+          this.offscreenInitPromise = null
         }
-      })();
+      })()
     }
 
     try {
-      await this.offscreenInitPromise;
+      await this.offscreenInitPromise
     } catch (_error) {
       // 初始化失败：继续后续 fallback
     }
   }
 }
 
-export const queryWorkerAdapter = new QueryWorkerAdapter();
+export const queryWorkerAdapter = new QueryWorkerAdapter()

@@ -9,12 +9,12 @@ export {
   ensureOffscreenDocument,
   dispatchOffscreenRequest,
   disposeOffscreenDocument,
-  OffscreenManager,
-} from "@/infrastructure/offscreen/manager";
+  OffscreenManager
+} from '@/infrastructure/offscreen/manager'
 
 export type {
   OffscreenReason,
   OffscreenTaskType,
   OffscreenRequest,
-  OffscreenResponse,
-} from "@/infrastructure/offscreen/manager";
+  OffscreenResponse
+} from '@/infrastructure/offscreen/manager'

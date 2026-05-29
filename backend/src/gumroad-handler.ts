@@ -166,7 +166,6 @@ export async function handleGetSubscription(request: Request, env: Env): Promise
   }
 }
 
-
 /**
  * 从 webhook payload 提取自定义字段
  */
@@ -204,7 +203,6 @@ async function insertPaymentIfCharged(
   }
   await supabase.insertPaymentRecord(env, paymentRecord)
 }
-
 
 /**
  * 计算订阅周期日期
@@ -274,7 +272,6 @@ function extractCustomFields(payload: GumroadWebhookPayload): {
   return { userId, tier }
 }
 
-
 /**
  * 验证 webhook 签名
  */
@@ -334,7 +331,12 @@ export async function handleWebhook(request: Request, env: Env): Promise<Respons
     await supabase.upsertSubscription(env, subscriptionRecord)
 
     // 插入支付记录（仅对收费事件）
-    await insertPaymentIfCharged(payload, { userId, subscriptionId, status, notificationType }, env, supabase)
+    await insertPaymentIfCharged(
+      payload,
+      { userId, subscriptionId, status, notificationType },
+      env,
+      supabase
+    )
 
     console.log('[Gumroad] Webhook 处理完成:', notificationType, subscriptionId)
 

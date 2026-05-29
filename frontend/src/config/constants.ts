@@ -24,8 +24,8 @@ export const PERFORMANCE_CONFIG = {
   COPY_SIMULATION_DELAY: 300,
 
   // 指纹校验延迟（毫秒）- 避免初始化冲突
-  FINGERPRINT_CHECK_DELAY: 300,
-} as const;
+  FINGERPRINT_CHECK_DELAY: 300
+} as const
 
 // === 通知系统配置 ===
 /**
@@ -103,24 +103,24 @@ export const NOTIFICATION_CONFIG = {
           /** 警告徽章：使用语义 Warning 色 */
           warning: semanticColors.warning.rgb,
           /** 错误徽章：使用 MD3 Error 色 */
-          error: materialColors.error.rgb,
-        };
+          error: materialColors.error.rgb
+        }
       } catch {
         // 降级方案：如果导入失败，使用硬编码值
         return {
-          info: "rgb(68, 94, 145)",
-          success: "rgb(87, 94, 113)",
-          warning: "rgb(113, 85, 115)",
-          error: "rgb(186, 26, 26)",
-        };
+          info: 'rgb(68, 94, 145)',
+          success: 'rgb(87, 94, 113)',
+          warning: 'rgb(113, 85, 115)',
+          error: 'rgb(186, 26, 26)'
+        }
       }
-    };
-    return getColors();
+    }
+    return getColors()
   })() as {
-    info: string;
-    success: string;
-    warning: string;
-    error: string;
+    info: string
+    success: string
+    warning: string
+    error: string
   },
 
   /**
@@ -129,8 +129,8 @@ export const NOTIFICATION_CONFIG = {
    * @default 0 (立即清除)
    * @reasoning 徽章通常用于持久状态，默认不自动清除
    */
-  BADGE_AUTO_CLEAR_DELAY: 0,
-} as const;
+  BADGE_AUTO_CLEAR_DELAY: 0
+} as const
 
 // === 书签管理配置 ===
 export const BOOKMARK_CONFIG = {
@@ -144,14 +144,14 @@ export const BOOKMARK_CONFIG = {
   BATCH_PROCESS_SIZE: 100,
 
   // IntersectionObserver根边距 - 优化懒加载
-  OBSERVER_ROOT_MARGIN: "100px",
+  OBSERVER_ROOT_MARGIN: '100px',
 
   // IntersectionObserver阈值
   OBSERVER_THRESHOLD: 0.01,
 
   // 筛选历史最大长度
-  MAX_SEARCH_HISTORY: 10,
-} as const;
+  MAX_SEARCH_HISTORY: 10
+} as const
 
 // === UI交互配置 ===
 export const UI_CONFIG = {
@@ -160,19 +160,19 @@ export const UI_CONFIG = {
 
   // 滚动行为配置
   SCROLL_BEHAVIOR: {
-    behavior: "smooth" as const,
-    block: "nearest" as const,
-    inline: "center" as const,
-  },
-} as const;
+    behavior: 'smooth' as const,
+    block: 'nearest' as const,
+    inline: 'center' as const
+  }
+} as const
 
 // === Chrome API配置 ===
 export const CHROME_CONFIG = {
   // 书签栏ID
-  BOOKMARKS_BAR_ID: "1",
+  BOOKMARKS_BAR_ID: '1',
 
   // 其他书签ID
-  OTHER_BOOKMARKS_ID: "2",
+  OTHER_BOOKMARKS_ID: '2',
 
   // API调用重试次数
   API_RETRY_COUNT: 3,
@@ -181,27 +181,27 @@ export const CHROME_CONFIG = {
   API_TIMEOUT: 10000,
 
   // 并发API调用限制
-  MAX_CONCURRENT_CALLS: 5,
-} as const;
+  MAX_CONCURRENT_CALLS: 5
+} as const
 
 // === 错误处理配置 ===
 export const ERROR_CONFIG = {
   // 默认错误消息
-  DEFAULT_ERROR_MESSAGE: "操作失败，请重试",
+  DEFAULT_ERROR_MESSAGE: '操作失败，请重试',
 
   // Chrome API错误消息映射
   CHROME_ERROR_MESSAGES: {
-    "Extension context invalidated": "扩展上下文已失效，请刷新页面",
-    "Cannot access contents of the page": "无法访问页面内容，请检查权限",
-    "The operation was interrupted": "操作被中断，请重试",
+    'Extension context invalidated': '扩展上下文已失效，请刷新页面',
+    'Cannot access contents of the page': '无法访问页面内容，请检查权限',
+    'The operation was interrupted': '操作被中断，请重试'
   },
 
   // 错误重试间隔（毫秒）
   RETRY_DELAY: 1000,
 
   // 最大重试次数
-  MAX_RETRY_ATTEMPTS: 3,
-} as const;
+  MAX_RETRY_ATTEMPTS: 3
+} as const
 
 // === 调试配置 ===
 export const DEBUG_CONFIG = {
@@ -212,114 +212,98 @@ export const DEBUG_CONFIG = {
   PERFORMANCE_MONITORING: true,
 
   // 详细日志启用状态
-  VERBOSE_LOGGING: false,
-} as const;
+  VERBOSE_LOGGING: false
+} as const
 
 // === API 基础配置（新增：支持线上/本地环境切换） ===
 function getApiBase(): string {
   // 优先使用显式配置，其次使用开发环境默认值
-  console.log("🔧 import.meta.env:", import.meta.env);
+  console.log('🔧 import.meta.env:', import.meta.env)
   let apiBase =
     // 优先显式变量（两者都支持）
-    (import.meta.env.VITE_CLOUDFLARE_MODE === "true"
-      ? import.meta.env.VITE_CLOUDFLARE_WORKER_URL ||
-        import.meta.env.VITE_API_BASE_URL
-      : import.meta.env.VITE_API_BASE_URL ||
-        import.meta.env.VITE_CLOUDFLARE_WORKER_URL) ||
+    (import.meta.env.VITE_CLOUDFLARE_MODE === 'true'
+      ? import.meta.env.VITE_CLOUDFLARE_WORKER_URL || import.meta.env.VITE_API_BASE_URL
+      : import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_CLOUDFLARE_WORKER_URL) ||
     // 开发默认走 Cloudflare 本地（wrangler dev 默认 8787）
     // 强制使用 HTTPS 模式：避免 Chrome Extension CSP 限制
     // 已完全禁用 HTTP，默认使用 HTTPS
-    (import.meta.env.DEV
-      ? "https://localhost:8787"
-      : "https://api.acuitybookmarks.com");
+    (import.meta.env.DEV ? 'https://localhost:8787' : 'https://api.acuitybookmarks.com')
 
   // 🚨 运行时检查：如果检测到 HTTP，自动转换为 HTTPS（防止缓存问题）
   // 热构建模式下，watch-build.js 已经确保是 HTTPS，但可能因为缓存导致旧值
-  if (apiBase.startsWith("http://")) {
+  if (apiBase.startsWith('http://')) {
     // 仅在开发环境显示警告（生产环境不应该有 HTTP）
     if (import.meta.env.DEV) {
       console.debug(
-        `🔧 检测到 HTTP URL，自动转换为 HTTPS: ${apiBase} → ${apiBase.replace("http://", "https://")}`,
-      );
+        `🔧 检测到 HTTP URL，自动转换为 HTTPS: ${apiBase} → ${apiBase.replace('http://', 'https://')}`
+      )
     }
-    apiBase = apiBase.replace("http://", "https://");
+    apiBase = apiBase.replace('http://', 'https://')
   }
 
-  console.log("🔧 apiBase:", apiBase);
+  console.log('🔧 apiBase:', apiBase)
 
   // ⚠️ 仅在使用远程模式（bun run dev --remote）但配置指向本地时给出警告
   // 如果明确使用本地模式（bun run dev:local）或设置了 VITE_HOT_BUILD，则不警告
   if (
     import.meta.env.DEV &&
-    apiBase.includes("localhost:8787") &&
-    !apiBase.includes("127.0.0.1") &&
+    apiBase.includes('localhost:8787') &&
+    !apiBase.includes('127.0.0.1') &&
     !import.meta.env.VITE_HOT_BUILD && // 热构建模式（build:hot）不警告
     !import.meta.env.VITE_USE_REMOTE && // 明确不使用远程模式时不警告
-    import.meta.env.VITE_API_BASE_URL?.includes("localhost") // 只有明确设置了本地 URL 时才警告
+    import.meta.env.VITE_API_BASE_URL?.includes('localhost') // 只有明确设置了本地 URL 时才警告
   ) {
     // 这个警告仅用于提醒：如果后端运行在远程模式（--remote），应该使用远程 Worker URL
     // 但如果用户明确使用本地模式（dev:local），这个警告是误报，应该忽略
     console.debug(
-      "💡 提示：当前使用本地 URL，如果后端运行在远程模式（bun run dev --remote），建议使用远程 Worker URL",
-    );
-    console.debug(
-      "   远程 Worker URL: https://acuitybookmarks.cqw547847.workers.dev",
-    );
+      '💡 提示：当前使用本地 URL，如果后端运行在远程模式（bun run dev --remote），建议使用远程 Worker URL'
+    )
+    console.debug('   远程 Worker URL: https://acuitybookmarks.cqw547847.workers.dev')
   }
 
-  return apiBase;
+  return apiBase
 }
 
 export const API_CONFIG = {
   // 使用函数动态获取，确保运行时强制 HTTPS
   get API_BASE() {
-    return getApiBase();
-  },
-} as const;
+    return getApiBase()
+  }
+} as const
 
 // 开发环境调试：输出 API 配置
 if (import.meta.env.DEV) {
-  console.log("🔧 API_CONFIG.API_BASE:", API_CONFIG.API_BASE);
-  console.log("🔧 VITE_USE_LOCAL_HTTPS:", import.meta.env.VITE_USE_LOCAL_HTTPS);
-  console.log("🔧 VITE_API_BASE_URL:", import.meta.env.VITE_API_BASE_URL);
-  console.log(
-    "🔧 VITE_CLOUDFLARE_WORKER_URL:",
-    import.meta.env.VITE_CLOUDFLARE_WORKER_URL,
-  );
+  console.log('🔧 API_CONFIG.API_BASE:', API_CONFIG.API_BASE)
+  console.log('🔧 VITE_USE_LOCAL_HTTPS:', import.meta.env.VITE_USE_LOCAL_HTTPS)
+  console.log('🔧 VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL)
+  console.log('🔧 VITE_CLOUDFLARE_WORKER_URL:', import.meta.env.VITE_CLOUDFLARE_WORKER_URL)
 }
 
 // === 爬虫配置（新增：本地-only、限速与调度） ===
 export const CRAWLER_CONFIG = {
   // 模式：'local' | 'hybrid' | 'serverless'
-  MODE:
-    (import.meta.env.VITE_CRAWLER_MODE as "local" | "hybrid" | "serverless") ||
-    "local",
+  MODE: (import.meta.env.VITE_CRAWLER_MODE as 'local' | 'hybrid' | 'serverless') || 'local',
 
   // 并发与批量控制（避免影响用户网络体验）
   CONCURRENCY: Number(import.meta.env.VITE_CRAWLER_CONCURRENCY || 2),
-  PER_DOMAIN_CONCURRENCY: Number(
-    import.meta.env.VITE_CRAWLER_PER_DOMAIN_CONCURRENCY || 1,
-  ),
+  PER_DOMAIN_CONCURRENCY: Number(import.meta.env.VITE_CRAWLER_PER_DOMAIN_CONCURRENCY || 1),
   BATCH_SIZE: Number(import.meta.env.VITE_CRAWLER_BATCH_SIZE || 5),
-  BATCH_INTERVAL_MS: Number(
-    import.meta.env.VITE_CRAWLER_BATCH_INTERVAL_MS || 1500,
-  ),
+  BATCH_INTERVAL_MS: Number(import.meta.env.VITE_CRAWLER_BATCH_INTERVAL_MS || 1500),
 
   // 频率控制
   DAILY_LIMIT: Number(import.meta.env.VITE_CRAWLER_DAILY_LIMIT || 200),
   FAILED_RETRY_INTERVAL_MS: 24 * 60 * 60 * 1000,
 
   // 调度策略
-  USE_IDLE_SCHEDULING:
-    import.meta.env.VITE_CRAWLER_USE_IDLE_SCHEDULING === "false" ? false : true,
+  USE_IDLE_SCHEDULING: import.meta.env.VITE_CRAWLER_USE_IDLE_SCHEDULING === 'false' ? false : true,
   IDLE_DELAY_MS: Number(import.meta.env.VITE_CRAWLER_IDLE_DELAY_MS || 3000),
 
   // 请求头
   REQUEST_HEADERS: {
-    userAgent: "AcuityBookmarks-Extension/1.0",
-    accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-  },
-} as const;
+    userAgent: 'AcuityBookmarks-Extension/1.0',
+    accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+  }
+} as const
 
 // === AI配置（新增：支持提供者选择与自动检测） ===
 export const AI_CONFIG = {
@@ -329,25 +313,25 @@ export const AI_CONFIG = {
   DEFAULT_TOP_K: 40,
   // 初始提示（系统指令等），用于会话初始化
   INITIAL_PROMPTS: (() => {
-    const raw = import.meta.env.VITE_AI_INITIAL_PROMPTS as string | undefined;
+    const raw = import.meta.env.VITE_AI_INITIAL_PROMPTS as string | undefined
     if (raw?.trim()) {
       // 约定以 \n\n 分隔多段初始提示
       return raw
-        .split("\n\n")
-        .map((s) => s.trim())
-        .filter(Boolean);
+        .split('\n\n')
+        .map(s => s.trim())
+        .filter(Boolean)
     }
     return [
-      "You are AcuityBookmarks assistant. Help organize and search bookmarks efficiently.",
-      "Prefer concise, actionable answers. Chinese UI; respond in Chinese by default.",
-    ];
+      'You are AcuityBookmarks assistant. Help organize and search bookmarks efficiently.',
+      'Prefer concise, actionable answers. Chinese UI; respond in Chinese by default.'
+    ]
   })(),
   TAG_GENERATION_PROMPT: `You are a bookmark tagging assistant. Based on the bookmark's title and content, generate 2-3 relevant tags.
 - Tags should be concise and high-level (e.g., "React", "JavaScript", "Web Development").
 - Output only a JSON array of strings, with no extra explanations.
 - Example input: "useCallback - React", content: "useCallback is a React Hook..."
-- Example output: ["React", "Hook", "Performance"]`,
-} as const;
+- Example output: ["React", "Hook", "Performance"]`
+} as const
 
 // === 动画与过渡配置 ===
 /**
@@ -384,7 +368,7 @@ export const ANIMATION_CONFIG = {
     /** 进度条 Shimmer 效果 */
     SHIMMER: 2000,
     /** 环形进度条旋转 */
-    CIRCLE_ROTATE: 1400,
+    CIRCLE_ROTATE: 1400
   },
 
   /**
@@ -392,21 +376,21 @@ export const ANIMATION_CONFIG = {
    */
   EASING: {
     /** 标准缓动 - 推荐用于大多数场景 */
-    STANDARD: "cubic-bezier(0.4, 0, 0.2, 1)",
+    STANDARD: 'cubic-bezier(0.4, 0, 0.2, 1)',
     /** 强调缓动 - 入场动画 */
-    EMPHASIZED: "cubic-bezier(0.23, 1, 0.32, 1)",
+    EMPHASIZED: 'cubic-bezier(0.23, 1, 0.32, 1)',
     /** 减速缓动 - 离场动画 */
-    DECELERATE: "cubic-bezier(0, 0, 0.2, 1)",
+    DECELERATE: 'cubic-bezier(0, 0, 0.2, 1)',
     /** 加速缓动 - 元素移出 */
-    ACCELERATE: "cubic-bezier(0.4, 0, 1, 1)",
+    ACCELERATE: 'cubic-bezier(0.4, 0, 1, 1)',
     /** 阴影过渡专用 */
-    SHADOW: "cubic-bezier(0.645, 0.045, 0.355, 1)",
+    SHADOW: 'cubic-bezier(0.645, 0.045, 0.355, 1)',
     /** 线性缓动 */
-    LINEAR: "linear",
+    LINEAR: 'linear',
     /** 淡入淡出 */
-    EASE_IN_OUT: "ease-in-out",
-  },
-} as const;
+    EASE_IN_OUT: 'ease-in-out'
+  }
+} as const
 
 // === 尺寸与间距配置 ===
 /**
@@ -431,7 +415,7 @@ export const SIZE_CONFIG = {
     /** 大图标 - 24px */
     LG: 24,
     /** 极大图标 - 32px */
-    XL: 32,
+    XL: 32
   },
 
   /**
@@ -453,7 +437,7 @@ export const SIZE_CONFIG = {
     /** 极大间距 - 24px */
     XL: 24,
     /** 超大间距 - 32px */
-    XXL: 32,
+    XXL: 32
   },
 
   /**
@@ -469,7 +453,7 @@ export const SIZE_CONFIG = {
     /** 大圆角 - 12px */
     LG: 12,
     /** 完全圆角 */
-    FULL: 9999,
+    FULL: 9999
   },
 
   /**
@@ -485,7 +469,7 @@ export const SIZE_CONFIG = {
     /** 间距 */
     GAP: 12,
     /** 外边距 */
-    MARGIN: 16,
+    MARGIN: 16
   },
 
   /**
@@ -499,17 +483,17 @@ export const SIZE_CONFIG = {
       SM: 32,
       MD: 40,
       LG: 48,
-      XL: 60,
+      XL: 60
     },
     /** 环形进度条线宽 */
     STROKE_WIDTH: {
       SM: 2.5,
       MD: 3,
       LG: 3.5,
-      XL: 4,
-    },
-  },
-} as const;
+      XL: 4
+    }
+  }
+} as const
 
 // === 超时与延迟配置 ===
 /**
@@ -530,7 +514,7 @@ export const TIMEOUT_CONFIG = {
     /** 慢速请求超时（大数据量） */
     SLOW: 30000,
     /** 同步操作超时 */
-    SYNC: 30000,
+    SYNC: 30000
   },
 
   /**
@@ -544,7 +528,7 @@ export const TIMEOUT_CONFIG = {
     /** 元数据提取超时 */
     METADATA: 5000,
     /** 空闲等待超时 */
-    IDLE_WAIT: 5000,
+    IDLE_WAIT: 5000
   },
 
   /**
@@ -576,7 +560,7 @@ export const TIMEOUT_CONFIG = {
     /** 爬虫任务等待 */
     CRAWLER_TASK_WAIT: 1000,
     /** 爬虫任务重试 */
-    CRAWLER_TASK_RETRY: 500,
+    CRAWLER_TASK_RETRY: 500
   },
 
   /**
@@ -588,7 +572,7 @@ export const TIMEOUT_CONFIG = {
     /** 最大重试次数 */
     MAX_ATTEMPTS: 3,
     /** 失败后重试间隔（24小时） */
-    FAILED_INTERVAL: 24 * 60 * 60 * 1000,
+    FAILED_INTERVAL: 24 * 60 * 60 * 1000
   },
 
   /**
@@ -602,7 +586,7 @@ export const TIMEOUT_CONFIG = {
     /** 长期缓存 - 1小时 */
     LONG: 60 * 60 * 1000,
     /** 极长缓存 - 24小时 */
-    VERY_LONG: 24 * 60 * 60 * 1000,
+    VERY_LONG: 24 * 60 * 60 * 1000
   },
 
   /**
@@ -610,9 +594,9 @@ export const TIMEOUT_CONFIG = {
    */
   MONITORING: {
     /** 内存使用更新间隔 */
-    MEMORY_UPDATE: 5000,
-  },
-} as const;
+    MEMORY_UPDATE: 5000
+  }
+} as const
 
 // === Worker 与并发配置 ===
 /**
@@ -633,7 +617,7 @@ export const WORKER_CONFIG = {
     /** 大批次大小 */
     LARGE: 2000,
     /** 爬虫批次大小 */
-    CRAWLER: 5,
+    CRAWLER: 5
   },
 
   /**
@@ -645,7 +629,7 @@ export const WORKER_CONFIG = {
     /** 爬虫全局并发 */
     CRAWLER_GLOBAL: 2,
     /** 爬虫单域名并发 */
-    CRAWLER_PER_DOMAIN: 1,
+    CRAWLER_PER_DOMAIN: 1
   },
 
   /**
@@ -655,9 +639,9 @@ export const WORKER_CONFIG = {
     /** 标准超时 */
     STANDARD: 10000,
     /** 快速超时 */
-    FAST: 5000,
-  },
-} as const;
+    FAST: 5000
+  }
+} as const
 
 // === 限制与阈值配置 ===
 /**
@@ -675,7 +659,7 @@ export const LIMIT_CONFIG = {
     /** 搜索历史最大长度 */
     SEARCH_HISTORY: 10,
     /** 大数据集阈值 */
-    LARGE_DATASET: 1000,
+    LARGE_DATASET: 1000
   },
 
   /**
@@ -683,23 +667,23 @@ export const LIMIT_CONFIG = {
    */
   CRAWLER: {
     /** 每日爬取限制 */
-    DAILY_LIMIT: 200,
-  },
-} as const;
+    DAILY_LIMIT: 200
+  }
+} as const
 
 // === 导出类型 ===
-export type PerformanceConfig = typeof PERFORMANCE_CONFIG;
-export type NotificationConfig = typeof NOTIFICATION_CONFIG;
-export type BookmarkConfig = typeof BOOKMARK_CONFIG;
-export type UIConfig = typeof UI_CONFIG;
-export type ChromeConfig = typeof CHROME_CONFIG;
-export type ErrorConfig = typeof ERROR_CONFIG;
-export type DebugConfig = typeof DEBUG_CONFIG;
-export type ApiConfig = typeof API_CONFIG;
-export type CrawlerConfig = typeof CRAWLER_CONFIG;
-export type AiConfig = typeof AI_CONFIG;
-export type AnimationConfig = typeof ANIMATION_CONFIG;
-export type SizeConfig = typeof SIZE_CONFIG;
-export type TimeoutConfig = typeof TIMEOUT_CONFIG;
-export type WorkerConfig = typeof WORKER_CONFIG;
-export type LimitConfig = typeof LIMIT_CONFIG;
+export type PerformanceConfig = typeof PERFORMANCE_CONFIG
+export type NotificationConfig = typeof NOTIFICATION_CONFIG
+export type BookmarkConfig = typeof BOOKMARK_CONFIG
+export type UIConfig = typeof UI_CONFIG
+export type ChromeConfig = typeof CHROME_CONFIG
+export type ErrorConfig = typeof ERROR_CONFIG
+export type DebugConfig = typeof DEBUG_CONFIG
+export type ApiConfig = typeof API_CONFIG
+export type CrawlerConfig = typeof CRAWLER_CONFIG
+export type AiConfig = typeof AI_CONFIG
+export type AnimationConfig = typeof ANIMATION_CONFIG
+export type SizeConfig = typeof SIZE_CONFIG
+export type TimeoutConfig = typeof TIMEOUT_CONFIG
+export type WorkerConfig = typeof WORKER_CONFIG
+export type LimitConfig = typeof LIMIT_CONFIG

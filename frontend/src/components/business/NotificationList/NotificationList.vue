@@ -3,72 +3,70 @@
   显示分享通知列表，支持标记为已读和跳转到分享页面
 -->
 <script setup lang="ts">
-import { computed, onMounted } from "vue";
-import { inboxNotification } from "@/application/inbox-notification/inbox-notification-service";
-import type { InboxNotification } from "@/application/inbox-notification/inbox-notification-service";
-import { LucideIcon, EmptyState, SkeletonList } from "@/components";
-import { logger } from "@/infrastructure/logging/logger";
+import { computed, onMounted } from 'vue'
+import { inboxNotification } from '@/application/inbox-notification/inbox-notification-service'
+import type { InboxNotification } from '@/application/inbox-notification/inbox-notification-service'
+import { LucideIcon, EmptyState, SkeletonList } from '@/components'
+import { logger } from '@/infrastructure/logging/logger'
 
 defineOptions({
-  name: "NotificationList",
-});
+  name: 'NotificationList'
+})
 
 // 从服务获取状态
-const notifications = computed(() => inboxNotification.notifications.value);
-const isLoading = computed(() => inboxNotification.isLoading.value);
-const error = computed(() => inboxNotification.error.value);
+const notifications = computed(() => inboxNotification.notifications.value)
+const isLoading = computed(() => inboxNotification.isLoading.value)
+const error = computed(() => inboxNotification.error.value)
 
 /**
  * 格式化时间（相对时间）
  */
 function formatTime(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diff = now.getTime() - date.getTime();
+  const date = new Date(dateString)
+  const now = new Date()
+  const diff = now.getTime() - date.getTime()
 
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
+  const minutes = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days = Math.floor(diff / 86400000)
 
-  if (minutes < 1) return "刚刚";
-  if (minutes < 60) return `${minutes} 分钟前`;
-  if (hours < 24) return `${hours} 小时前`;
-  if (days < 7) return `${days} 天前`;
+  if (minutes < 1) return '刚刚'
+  if (minutes < 60) return `${minutes} 分钟前`
+  if (hours < 24) return `${hours} 小时前`
+  if (days < 7) return `${days} 天前`
 
-  return date.toLocaleDateString("zh-CN", {
-    month: "short",
-    day: "numeric",
-  });
+  return date.toLocaleDateString('zh-CN', {
+    month: 'short',
+    day: 'numeric'
+  })
 }
 
 /**
  * 处理通知点击
  * Gmail 风格：点击未读通知时自动标记为已读
  */
-async function handleNotificationClick(
-  notification: InboxNotification,
-): Promise<void> {
-  logger.info("NotificationList", "通知被点击", {
-    notificationId: notification.id,
-  });
+async function handleNotificationClick(notification: InboxNotification): Promise<void> {
+  logger.info('NotificationList', '通知被点击', {
+    notificationId: notification.id
+  })
 
   // 如果是未读通知，先标记为已读
   if (!notification.is_read) {
     try {
-      await inboxNotification.markAsRead(notification.id);
+      await inboxNotification.markAsRead(notification.id)
     } catch (err) {
-      logger.error("NotificationList", "标记已读失败", err);
+      logger.error('NotificationList', '标记已读失败', err)
     }
   }
 
   // 打开通知详情
-  inboxNotification.openNotification(notification);
+  inboxNotification.openNotification(notification)
 }
 
 // 组件挂载时加载通知
 onMounted(() => {
-  inboxNotification.fetchNotifications({ unreadOnly: false, limit: 20 });
-});
+  inboxNotification.fetchNotifications({ unreadOnly: false, limit: 20 })
+})
 </script>
 
 <template>
@@ -86,19 +84,11 @@ onMounted(() => {
 
     <!-- 错误状态 -->
     <div v-else-if="error" class="notification-list__error">
-      <EmptyState
-        icon="alert-circle"
-        title="加载失败"
-        :description="error"
-        :show-action="false"
-      />
+      <EmptyState icon="alert-circle" title="加载失败" :description="error" :show-action="false" />
     </div>
 
     <!-- 空状态 -->
-    <div
-      v-else-if="notifications.length === 0"
-      class="notification-list__empty"
-    >
+    <div v-else-if="notifications.length === 0" class="notification-list__empty">
       <EmptyState
         icon="inbox"
         title="暂无通知"
@@ -124,12 +114,8 @@ onMounted(() => {
         <!-- 通知内容 -->
         <div class="notification-item__content">
           <div class="notification-item__header">
-            <span class="notification-item__title">{{
-              notification.title
-            }}</span>
-            <span class="notification-item__time">{{
-              formatTime(notification.created_at)
-            }}</span>
+            <span class="notification-item__title">{{ notification.title }}</span>
+            <span class="notification-item__time">{{ formatTime(notification.created_at) }}</span>
           </div>
           <p class="notification-item__message">{{ notification.message }}</p>
         </div>
@@ -198,19 +184,11 @@ onMounted(() => {
 }
 
 .notification-item--unread {
-  background: color-mix(
-    in srgb,
-    var(--color-primary) 12%,
-    var(--color-surface)
-  );
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
 }
 
 .notification-item--unread:hover {
-  background: color-mix(
-    in srgb,
-    var(--color-primary) 16%,
-    var(--color-surface)
-  );
+  background: color-mix(in srgb, var(--color-primary) 16%, var(--color-surface));
 }
 
 .notification-item--unread::before {
@@ -220,7 +198,7 @@ onMounted(() => {
   width: 3px;
   height: 100%;
   background: var(--color-primary);
-  content: "";
+  content: '';
 }
 
 .notification-item__avatar {

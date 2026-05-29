@@ -10,46 +10,46 @@
  * - `dbReady` 已迁移到 chrome.storage.session（临时运行状态）
  */
 
-import { logger } from "@/infrastructure/logging/logger";
-import { chromeStorage } from "@/infrastructure/storage/chrome-storage";
+import { logger } from '@/infrastructure/logging/logger'
+import { chromeStorage } from '@/infrastructure/storage/chrome-storage'
 
 /**
  * 本地存储键位常量
  * 使用常量而非字符串字面量，避免各处拼写不一致导致的状态偏差
  */
 export const STATE_KEYS = {
-  INITIALIZED: "AB_INITIALIZED",
-  SCHEMA_VERSION: "AB_SCHEMA_VERSION",
-  BOOKMARK_COUNT: "AB_BOOKMARK_COUNT",
-  LAST_SYNCED_AT: "AB_LAST_SYNCED_AT",
-  INSTALL_REASON: "AB_INSTALL_REASON",
-} as const;
+  INITIALIZED: 'AB_INITIALIZED',
+  SCHEMA_VERSION: 'AB_SCHEMA_VERSION',
+  BOOKMARK_COUNT: 'AB_BOOKMARK_COUNT',
+  LAST_SYNCED_AT: 'AB_LAST_SYNCED_AT',
+  INSTALL_REASON: 'AB_INSTALL_REASON'
+} as const
 
 /**
  * Session Storage 键位常量
  */
 const SESSION_KEYS = {
-  DB_READY: "ab_db_ready", // 🔴 迁移：数据库就绪状态（会话级别）
-} as const;
+  DB_READY: 'ab_db_ready' // 🔴 迁移：数据库就绪状态（会话级别）
+} as const
 
-export type StateKey = (typeof STATE_KEYS)[keyof typeof STATE_KEYS];
+export type StateKey = (typeof STATE_KEYS)[keyof typeof STATE_KEYS]
 
 /**
  * 当前 IndexedDB 架构版本
  * 每次 schema 演进都需要同步更新该常量，以便 onInstalled/onStartup 判定是否需要迁移
  */
-export const CURRENT_SCHEMA_VERSION = 9;
+export const CURRENT_SCHEMA_VERSION = 9
 
 /**
  * Service Worker 关心的扩展状态结构
  */
 export interface ExtensionState {
-  initialized: boolean;
-  dbReady: boolean;
-  schemaVersion: number;
-  bookmarkCount: number;
-  lastSyncedAt: number;
-  installReason: string | null;
+  initialized: boolean
+  dbReady: boolean
+  schemaVersion: number
+  bookmarkCount: number
+  lastSyncedAt: number
+  installReason: string | null
 }
 
 const DEFAULT_STATE: ExtensionState = {
@@ -58,8 +58,8 @@ const DEFAULT_STATE: ExtensionState = {
   schemaVersion: 0,
   bookmarkCount: 0,
   lastSyncedAt: 0,
-  installReason: null,
-};
+  installReason: null
+}
 
 /**
  * 🔴 获取数据库就绪状态（Session Storage）
@@ -70,14 +70,11 @@ const DEFAULT_STATE: ExtensionState = {
  */
 export async function getDatabaseReady(): Promise<boolean> {
   try {
-    const ready = await chromeStorage.getSession<boolean>(
-      SESSION_KEYS.DB_READY,
-      false,
-    );
-    return ready ?? false;
+    const ready = await chromeStorage.getSession<boolean>(SESSION_KEYS.DB_READY, false)
+    return ready ?? false
   } catch (error) {
-    logger.error("BackgroundState", "读取 DB_READY 失败", error);
-    return false;
+    logger.error('BackgroundState', '读取 DB_READY 失败', error)
+    return false
   }
 }
 
@@ -86,10 +83,10 @@ export async function getDatabaseReady(): Promise<boolean> {
  */
 export async function setDatabaseReady(ready: boolean): Promise<void> {
   try {
-    await chromeStorage.setSession(SESSION_KEYS.DB_READY, ready);
-    logger.debug("BackgroundState", `DB_READY 已更新: ${ready}`);
+    await chromeStorage.setSession(SESSION_KEYS.DB_READY, ready)
+    logger.debug('BackgroundState', `DB_READY 已更新: ${ready}`)
   } catch (error) {
-    logger.error("BackgroundState", "设置 DB_READY 失败", error);
+    logger.error('BackgroundState', '设置 DB_READY 失败', error)
   }
 }
 
@@ -101,10 +98,10 @@ export async function setDatabaseReady(ready: boolean): Promise<void> {
 export async function getExtensionState(): Promise<ExtensionState> {
   try {
     // ✅ 直接使用 chrome.storage.local（更清晰）
-    const raw = await chrome.storage.local.get(Object.values(STATE_KEYS));
+    const raw = await chrome.storage.local.get(Object.values(STATE_KEYS))
 
     // 🔴 dbReady 从 session storage 读取
-    const dbReady = await getDatabaseReady();
+    const dbReady = await getDatabaseReady()
 
     return {
       initialized: Boolean(raw[STATE_KEYS.INITIALIZED]),
@@ -113,13 +110,13 @@ export async function getExtensionState(): Promise<ExtensionState> {
       bookmarkCount: Number(raw[STATE_KEYS.BOOKMARK_COUNT] ?? 0),
       lastSyncedAt: Number(raw[STATE_KEYS.LAST_SYNCED_AT] ?? 0),
       installReason:
-        typeof raw[STATE_KEYS.INSTALL_REASON] === "string"
+        typeof raw[STATE_KEYS.INSTALL_REASON] === 'string'
           ? (raw[STATE_KEYS.INSTALL_REASON] as string)
-          : null,
-    };
+          : null
+    }
   } catch (error) {
-    logger.error("BackgroundState", "读取扩展状态失败，返回默认值", error);
-    return { ...DEFAULT_STATE };
+    logger.error('BackgroundState', '读取扩展状态失败，返回默认值', error)
+    return { ...DEFAULT_STATE }
   }
 }
 
@@ -129,38 +126,36 @@ export async function getExtensionState(): Promise<ExtensionState> {
  *
  * ⚠️ dbReady 已迁移到 session storage，使用 setDatabaseReady()
  */
-export async function updateExtensionState(
-  updates: Partial<ExtensionState>,
-): Promise<void> {
-  const payload: Partial<Record<StateKey, unknown>> = {};
+export async function updateExtensionState(updates: Partial<ExtensionState>): Promise<void> {
+  const payload: Partial<Record<StateKey, unknown>> = {}
 
   if (updates.initialized !== undefined) {
-    payload[STATE_KEYS.INITIALIZED] = updates.initialized;
+    payload[STATE_KEYS.INITIALIZED] = updates.initialized
   }
 
   // 🔴 dbReady 写入 session storage
   if (updates.dbReady !== undefined) {
-    await setDatabaseReady(updates.dbReady);
+    await setDatabaseReady(updates.dbReady)
   }
 
   if (updates.schemaVersion !== undefined) {
-    payload[STATE_KEYS.SCHEMA_VERSION] = updates.schemaVersion;
+    payload[STATE_KEYS.SCHEMA_VERSION] = updates.schemaVersion
   }
   if (updates.bookmarkCount !== undefined) {
-    payload[STATE_KEYS.BOOKMARK_COUNT] = updates.bookmarkCount;
+    payload[STATE_KEYS.BOOKMARK_COUNT] = updates.bookmarkCount
   }
   if (updates.lastSyncedAt !== undefined) {
-    payload[STATE_KEYS.LAST_SYNCED_AT] = updates.lastSyncedAt;
+    payload[STATE_KEYS.LAST_SYNCED_AT] = updates.lastSyncedAt
   }
   if (updates.installReason !== undefined) {
-    payload[STATE_KEYS.INSTALL_REASON] = updates.installReason;
+    payload[STATE_KEYS.INSTALL_REASON] = updates.installReason
   }
 
   if (Object.keys(payload).length === 0) {
-    return;
+    return
   }
 
   // ✅ 直接使用 chrome.storage.local（更清晰）
-  await chrome.storage.local.set(payload);
-  logger.debug("BackgroundState", "扩展状态已更新", payload);
+  await chrome.storage.local.set(payload)
+  logger.debug('BackgroundState', '扩展状态已更新', payload)
 }

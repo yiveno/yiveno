@@ -5,5 +5,5 @@ export type {
   SearchHistoryRecord,
   FaviconCacheRecord,
   DatabaseHealth,
-  DatabaseStats,
-} from "../schema";
+  DatabaseStats
+} from '../schema'

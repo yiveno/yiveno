@@ -7,8 +7,8 @@
  * - 提供错误处理和重试策略
  */
 
-import { QueryClient } from "@tanstack/vue-query";
-import { logger } from "@/infrastructure/logging/logger";
+import { QueryClient } from '@tanstack/vue-query'
+import { logger } from '@/infrastructure/logging/logger'
 
 /**
  * 创建 Query Client 实例
@@ -32,25 +32,25 @@ export const queryClient = new QueryClient({
       retry: 2,
 
       // 重试延迟：指数退避
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
 
       // 窗口聚焦时不自动重新获取（Chrome 扩展特性）
       refetchOnWindowFocus: false,
 
       // 错误处理
-      throwOnError: false,
+      throwOnError: false
     },
     mutations: {
       // 失败重试：1次
       retry: 1,
 
       // 错误处理
-      onError: (error) => {
-        logger.error("QueryClient", "Mutation 失败", error);
-      },
-    },
-  },
-});
+      onError: error => {
+        logger.error('QueryClient', 'Mutation 失败', error)
+      }
+    }
+  }
+})
 
 /**
  * Query Keys 工厂函数
@@ -63,23 +63,17 @@ export const queryKeys = {
    */
   bookmarks: {
     /** 所有书签 */
-    all: ["bookmarks"] as const,
+    all: ['bookmarks'] as const,
 
     /** 书签列表（可带过滤条件） */
-    lists: () => [...queryKeys.bookmarks.all, "list"] as const,
+    lists: () => [...queryKeys.bookmarks.all, 'list'] as const,
 
     /** 单个书签详情 */
-    detail: (id: string) => [...queryKeys.bookmarks.all, "detail", id] as const,
+    detail: (id: string) => [...queryKeys.bookmarks.all, 'detail', id] as const,
 
     /** 子书签 */
     children: (parentId: string, offset: number, limit: number) =>
-      [
-        ...queryKeys.bookmarks.all,
-        "children",
-        parentId,
-        offset,
-        limit,
-      ] as const,
+      [...queryKeys.bookmarks.all, 'children', parentId, offset, limit] as const
   },
 
   /**
@@ -88,7 +82,7 @@ export const queryKeys = {
   search: {
     /** 筛选结果 */
     results: (query: string, options?: Record<string, unknown>) =>
-      ["search", query, options] as const,
+      ['search', query, options] as const
   },
 
   /**
@@ -96,6 +90,6 @@ export const queryKeys = {
    */
   trait: {
     /** 特征检测状态 */
-    status: ["trait", "status"] as const,
-  },
-} as const;
+    status: ['trait', 'status'] as const
+  }
+} as const

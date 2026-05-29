@@ -10,39 +10,39 @@
  * 优化：使用 Summarizer API 预处理长文本，避免 token 限制
  */
 
-import { indexedDBManager } from "@/infrastructure/indexeddb/manager";
-import { embeddingService } from "@/infrastructure/embedding/embedding-service";
-import { localVectorStore } from "@/infrastructure/embedding/local-vector-store";
-import { folderVectorStore } from "@/infrastructure/folder-vector/folder-vector-store";
-import { builtInSummarizerClient } from "@/infrastructure/llm/builtin-summarizer-client";
-import { logger } from "@/infrastructure/logging/logger";
+import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
+import { embeddingService } from '@/infrastructure/embedding/embedding-service'
+import { localVectorStore } from '@/infrastructure/embedding/local-vector-store'
+import { folderVectorStore } from '@/infrastructure/folder-vector/folder-vector-store'
+import { builtInSummarizerClient } from '@/infrastructure/llm/builtin-summarizer-client'
+import { logger } from '@/infrastructure/logging/logger'
 
-const LOG_TAG = "FolderVectorService";
+const LOG_TAG = 'FolderVectorService'
 
 /** Token 限制阈值（字符数估算：1 token ≈ 4 字符） */
-const TOKEN_LIMIT_CHARS = 2000; // 约 500 tokens
+const TOKEN_LIMIT_CHARS = 2000 // 约 500 tokens
 
 /** 推荐结果 */
 export interface FolderRecommendation {
   /** 文件夹 ID */
-  folderId: string;
+  folderId: string
   /** 文件夹名称 */
-  folderName: string;
+  folderName: string
   /** 文件夹路径 */
-  folderPath: string;
+  folderPath: string
   /** 相似度分数（0-1） */
-  score: number;
+  score: number
   /** 该文件夹下的书签数量 */
-  bookmarkCount: number;
+  bookmarkCount: number
   /** 推荐原因 */
-  reason: string;
+  reason: string
 }
 
 /** 同步进度 */
 export interface FolderVectorSyncProgress {
-  total: number;
-  processed: number;
-  failed: number;
+  total: number
+  processed: number
+  failed: number
 }
 
 export class FolderVectorService {
@@ -55,7 +55,7 @@ export class FolderVectorService {
    * @returns 是否为根文件夹
    */
   private isRootFolder(folderId: string): boolean {
-    return folderId === "0" || folderId === "1";
+    return folderId === '0' || folderId === '1'
   }
 
   /**
@@ -65,18 +65,18 @@ export class FolderVectorService {
    * @returns 非根文件夹列表
    */
   private filterRootFolders(
-    folders: Array<{ id: string; title: string; pathString?: string }>,
+    folders: Array<{ id: string; title: string; pathString?: string }>
   ): Array<{ id: string; title: string; pathString?: string }> {
-    return folders.filter((folder) => {
+    return folders.filter(folder => {
       if (this.isRootFolder(folder.id)) {
-        logger.debug(LOG_TAG, "跳过根文件夹", {
+        logger.debug(LOG_TAG, '跳过根文件夹', {
           folderId: folder.id,
-          folderTitle: folder.title,
-        });
-        return false;
+          folderTitle: folder.title
+        })
+        return false
       }
-      return true;
-    });
+      return true
+    })
   }
 
   /**
@@ -91,43 +91,43 @@ export class FolderVectorService {
   private async generateFolderVector(
     folder: { id: string; title: string; pathString?: string },
     allBookmarks: Array<{
-      parentId?: string | undefined;
-      isFolder?: boolean;
-      url?: string | undefined;
-      id: string;
+      parentId?: string | undefined
+      isFolder?: boolean
+      url?: string | undefined
+      id: string
     }>,
     bookmarkVectorMap: Map<string, number[]>,
-    provider: { embed: (text: string) => Promise<number[]>; name: string },
+    provider: { embed: (text: string) => Promise<number[]>; name: string }
   ): Promise<{ vector: number[]; bookmarkCount: number }> {
     // 找出该文件夹下的所有书签（直接子节点）
     const childBookmarks = allBookmarks.filter(
-      (b) => b.parentId === folder.id && !b.isFolder && b.url,
-    );
+      b => b.parentId === folder.id && !b.isFolder && b.url
+    )
 
     if (childBookmarks.length === 0) {
       // 空文件夹：使用文件夹名称生成向量
-      const folderNameVector = await provider.embed(folder.title);
-      return { vector: folderNameVector, bookmarkCount: 0 };
+      const folderNameVector = await provider.embed(folder.title)
+      return { vector: folderNameVector, bookmarkCount: 0 }
     }
 
     // 收集该文件夹下所有书签的向量
-    const vectors: number[][] = [];
+    const vectors: number[][] = []
     for (const bookmark of childBookmarks) {
-      const vector = bookmarkVectorMap.get(bookmark.id);
+      const vector = bookmarkVectorMap.get(bookmark.id)
       if (vector) {
-        vectors.push(vector);
+        vectors.push(vector)
       }
     }
 
     if (vectors.length === 0) {
       // 没有书签有向量：使用文件夹名称生成向量
-      const folderNameVector = await provider.embed(folder.title);
-      return { vector: folderNameVector, bookmarkCount: childBookmarks.length };
+      const folderNameVector = await provider.embed(folder.title)
+      return { vector: folderNameVector, bookmarkCount: childBookmarks.length }
     }
 
     // 计算平均向量
-    const avgVector = computeAverageVector(vectors);
-    return { vector: avgVector, bookmarkCount: childBookmarks.length };
+    const avgVector = computeAverageVector(vectors)
+    return { vector: avgVector, bookmarkCount: childBookmarks.length }
   }
 
   /**
@@ -141,44 +141,43 @@ export class FolderVectorService {
   private async preprocessText(text: string): Promise<string> {
     // 短文本直接返回
     if (text.length <= TOKEN_LIMIT_CHARS) {
-      return text;
+      return text
     }
 
     // 尝试使用 Summarizer API 压缩
     try {
-      const summarizerAvailable = await builtInSummarizerClient.isAvailable();
+      const summarizerAvailable = await builtInSummarizerClient.isAvailable()
 
       if (summarizerAvailable) {
-        logger.info(LOG_TAG, "使用 Summarizer API 压缩长文本", {
-          originalLength: text.length,
-        });
+        logger.info(LOG_TAG, '使用 Summarizer API 压缩长文本', {
+          originalLength: text.length
+        })
 
         const result = await builtInSummarizerClient.summarize(text, {
-          type: "key-points",
-          format: "plain-text",
-          length: "short",
-        });
+          type: 'key-points',
+          format: 'plain-text',
+          length: 'short'
+        })
 
-        logger.info(LOG_TAG, "长文本压缩完成", {
+        logger.info(LOG_TAG, '长文本压缩完成', {
           originalLength: text.length,
           compressedLength: result.summary.length,
-          compressionRatio:
-            ((result.summary.length / text.length) * 100).toFixed(1) + "%",
-        });
+          compressionRatio: ((result.summary.length / text.length) * 100).toFixed(1) + '%'
+        })
 
-        return result.summary;
+        return result.summary
       }
     } catch (error) {
-      logger.warn(LOG_TAG, "Summarizer API 压缩失败，降级到截断", error);
+      logger.warn(LOG_TAG, 'Summarizer API 压缩失败，降级到截断', error)
     }
 
     // 降级：简单截断
-    logger.info(LOG_TAG, "降级到简单截断", {
+    logger.info(LOG_TAG, '降级到简单截断', {
       originalLength: text.length,
-      truncatedLength: TOKEN_LIMIT_CHARS,
-    });
+      truncatedLength: TOKEN_LIMIT_CHARS
+    })
 
-    return text.slice(0, TOKEN_LIMIT_CHARS);
+    return text.slice(0, TOKEN_LIMIT_CHARS)
   }
 
   /**
@@ -189,49 +188,44 @@ export class FolderVectorService {
    * @param onProgress 进度回调
    */
   async syncFolderVectors(
-    onProgress?: (progress: FolderVectorSyncProgress) => void,
+    onProgress?: (progress: FolderVectorSyncProgress) => void
   ): Promise<void> {
-    const provider = await embeddingService.getProvider();
+    const provider = await embeddingService.getProvider()
     if (!provider) {
-      logger.warn(LOG_TAG, "Embedding Provider 不可用，跳过同步");
-      return;
+      logger.warn(LOG_TAG, 'Embedding Provider 不可用，跳过同步')
+      return
     }
 
     // 1. 获取所有书签
-    const allBookmarks = await indexedDBManager.getAllBookmarks();
+    const allBookmarks = await indexedDBManager.getAllBookmarks()
 
     // 2. 找出所有文件夹
-    const folders = allBookmarks.filter((b) => b.isFolder);
+    const folders = allBookmarks.filter(b => b.isFolder)
 
     if (folders.length === 0) {
-      logger.info(LOG_TAG, "没有文件夹，无需同步");
-      return;
+      logger.info(LOG_TAG, '没有文件夹，无需同步')
+      return
     }
 
     // 过滤掉根文件夹（Chrome 不允许向根文件夹添加书签）
-    const nonRootFolders = this.filterRootFolders(folders);
+    const nonRootFolders = this.filterRootFolders(folders)
 
     if (nonRootFolders.length === 0) {
-      logger.info(LOG_TAG, "没有非根文件夹，无需同步");
-      return;
+      logger.info(LOG_TAG, '没有非根文件夹，无需同步')
+      return
     }
 
-    logger.info(
-      LOG_TAG,
-      `开始同步文件夹向量: ${nonRootFolders.length} 个文件夹（已过滤根文件夹）`,
-    );
+    logger.info(LOG_TAG, `开始同步文件夹向量: ${nonRootFolders.length} 个文件夹（已过滤根文件夹）`)
 
     const progress: FolderVectorSyncProgress = {
       total: nonRootFolders.length,
       processed: 0,
-      failed: 0,
-    };
+      failed: 0
+    }
 
     // 3. 获取所有书签向量
-    const allBookmarkVectors = await localVectorStore.getAll();
-    const bookmarkVectorMap = new Map(
-      allBookmarkVectors.map((v) => [v.bookmarkId, v.vector]),
-    );
+    const allBookmarkVectors = await localVectorStore.getAll()
+    const bookmarkVectorMap = new Map(allBookmarkVectors.map(v => [v.bookmarkId, v.vector]))
 
     // 4. 为每个文件夹生成向量
     for (const folder of nonRootFolders) {
@@ -240,8 +234,8 @@ export class FolderVectorService {
           folder,
           allBookmarks,
           bookmarkVectorMap,
-          provider,
-        );
+          provider
+        )
 
         // 存储文件夹向量
         await folderVectorStore.upsert({
@@ -251,26 +245,26 @@ export class FolderVectorService {
           vector,
           bookmarkCount,
           model: provider.name,
-          updatedAt: Date.now(),
-        });
+          updatedAt: Date.now()
+        })
 
-        progress.processed++;
+        progress.processed++
       } catch (error) {
-        logger.warn(LOG_TAG, `文件夹向量生成失败: ${folder.title}`, error);
-        progress.failed++;
-        progress.processed++;
+        logger.warn(LOG_TAG, `文件夹向量生成失败: ${folder.title}`, error)
+        progress.failed++
+        progress.processed++
       }
 
-      onProgress?.(progress);
+      onProgress?.(progress)
 
       // 让出主线程
-      await new Promise((resolve) => setTimeout(resolve, 0));
+      await new Promise(resolve => setTimeout(resolve, 0))
     }
 
     logger.info(
       LOG_TAG,
-      `同步完成: 成功 ${progress.processed - progress.failed} 个，失败 ${progress.failed} 个`,
-    );
+      `同步完成: 成功 ${progress.processed - progress.failed} 个，失败 ${progress.failed} 个`
+    )
   }
 
   /**
@@ -291,59 +285,59 @@ export class FolderVectorService {
     bookmarkUrl: string,
     bookmarkContent?: string,
     topK = 3,
-    minScore = 0.3,
+    minScore = 0.3
   ): Promise<FolderRecommendation[]> {
-    const provider = await embeddingService.getProvider();
+    const provider = await embeddingService.getProvider()
     if (!provider) {
-      logger.warn(LOG_TAG, "Embedding Provider 不可用");
-      return [];
+      logger.warn(LOG_TAG, 'Embedding Provider 不可用')
+      return []
     }
 
     // 1. 构造书签文本
-    let bookmarkText = `${bookmarkTitle} | ${bookmarkUrl}`;
+    let bookmarkText = `${bookmarkTitle} | ${bookmarkUrl}`
 
     // 如果有内容，添加内容（预处理长文本）
     if (bookmarkContent) {
-      const processedContent = await this.preprocessText(bookmarkContent);
-      bookmarkText += ` | ${processedContent}`;
+      const processedContent = await this.preprocessText(bookmarkContent)
+      bookmarkText += ` | ${processedContent}`
     }
 
     // 2. 生成书签的向量
-    const bookmarkVector = await provider.embed(bookmarkText);
+    const bookmarkVector = await provider.embed(bookmarkText)
 
     // 3. 获取所有文件夹向量
-    const allFolderVectors = await folderVectorStore.getAll();
+    const allFolderVectors = await folderVectorStore.getAll()
 
     if (allFolderVectors.length === 0) {
-      logger.info(LOG_TAG, "文件夹向量库为空，请先同步");
-      return [];
+      logger.info(LOG_TAG, '文件夹向量库为空，请先同步')
+      return []
     }
 
     // 4. 计算相似度
     const scored = allFolderVectors
-      .map((folder) => ({
+      .map(folder => ({
         folderId: folder.folderId,
         folderName: folder.folderName,
         folderPath: folder.folderPath,
         bookmarkCount: folder.bookmarkCount,
-        score: dotProduct(bookmarkVector, folder.vector),
+        score: dotProduct(bookmarkVector, folder.vector)
       }))
-      .filter((r) => r.score >= minScore)
+      .filter(r => r.score >= minScore)
       .sort((a, b) => b.score - a.score)
-      .slice(0, topK);
+      .slice(0, topK)
 
     // 5. 生成推荐原因
-    const recommendations: FolderRecommendation[] = scored.map((item) => ({
+    const recommendations: FolderRecommendation[] = scored.map(item => ({
       ...item,
-      reason: generateReason(item.bookmarkCount, item.score),
-    }));
+      reason: generateReason(item.bookmarkCount, item.score)
+    }))
 
     logger.info(
       LOG_TAG,
-      `推荐完成: ${allFolderVectors.length} 个文件夹 → ${recommendations.length} 个推荐`,
-    );
+      `推荐完成: ${allFolderVectors.length} 个文件夹 → ${recommendations.length} 个推荐`
+    )
 
-    return recommendations;
+    return recommendations
   }
 
   /**
@@ -354,48 +348,44 @@ export class FolderVectorService {
    * @param folderId 文件夹 ID
    */
   async updateFolderVector(folderId: string): Promise<void> {
-    const provider = await embeddingService.getProvider();
+    const provider = await embeddingService.getProvider()
     if (!provider) {
-      logger.warn(LOG_TAG, "Embedding Provider 不可用");
-      return;
+      logger.warn(LOG_TAG, 'Embedding Provider 不可用')
+      return
     }
 
     // 1. 获取文件夹信息
-    const folder = await indexedDBManager.getBookmarkById(folderId);
+    const folder = await indexedDBManager.getBookmarkById(folderId)
     if (!folder || !folder.isFolder) {
-      logger.warn(LOG_TAG, `文件夹不存在或不是文件夹: ${folderId}`);
-      return;
+      logger.warn(LOG_TAG, `文件夹不存在或不是文件夹: ${folderId}`)
+      return
     }
 
     // 2. 获取该文件夹下的所有书签
-    const allBookmarks = await indexedDBManager.getAllBookmarks();
-    const childBookmarks = allBookmarks.filter(
-      (b) => b.parentId === folderId && !b.isFolder && b.url,
-    );
+    const allBookmarks = await indexedDBManager.getAllBookmarks()
+    const childBookmarks = allBookmarks.filter(b => b.parentId === folderId && !b.isFolder && b.url)
 
     // 3. 获取所有书签向量
-    const allBookmarkVectors = await localVectorStore.getAll();
-    const bookmarkVectorMap = new Map(
-      allBookmarkVectors.map((v) => [v.bookmarkId, v.vector]),
-    );
+    const allBookmarkVectors = await localVectorStore.getAll()
+    const bookmarkVectorMap = new Map(allBookmarkVectors.map(v => [v.bookmarkId, v.vector]))
 
     // 4. 收集向量
-    const vectors: number[][] = [];
+    const vectors: number[][] = []
     for (const bookmark of childBookmarks) {
-      const vector = bookmarkVectorMap.get(bookmark.id);
+      const vector = bookmarkVectorMap.get(bookmark.id)
       if (vector) {
-        vectors.push(vector);
+        vectors.push(vector)
       }
     }
 
-    let folderVector: number[];
+    let folderVector: number[]
 
     if (vectors.length === 0) {
       // 空文件夹或没有书签有向量：使用文件夹名称生成向量
-      folderVector = await provider.embed(folder.title);
+      folderVector = await provider.embed(folder.title)
     } else {
       // 计算平均向量
-      folderVector = computeAverageVector(vectors);
+      folderVector = computeAverageVector(vectors)
     }
 
     // 5. 存储文件夹向量
@@ -406,32 +396,32 @@ export class FolderVectorService {
       vector: folderVector,
       bookmarkCount: childBookmarks.length,
       model: provider.name,
-      updatedAt: Date.now(),
-    });
+      updatedAt: Date.now()
+    })
 
-    logger.info(LOG_TAG, `文件夹向量已更新: ${folder.title}`);
+    logger.info(LOG_TAG, `文件夹向量已更新: ${folder.title}`)
   }
 
   /**
    * 获取统计信息
    */
   async getStats(): Promise<{
-    folderCount: number;
-    providerName: string | null;
+    folderCount: number
+    providerName: string | null
   }> {
     const [folderCount, provider] = await Promise.all([
       folderVectorStore.count(),
-      embeddingService.getProvider(),
-    ]);
-    return { folderCount, providerName: provider?.name ?? null };
+      embeddingService.getProvider()
+    ])
+    return { folderCount, providerName: provider?.name ?? null }
   }
 
   /**
    * 清空所有文件夹向量（用于重置）
    */
   async clearAll(): Promise<void> {
-    await folderVectorStore.clear();
-    logger.info(LOG_TAG, "已清空所有文件夹向量");
+    await folderVectorStore.clear()
+    logger.info(LOG_TAG, '已清空所有文件夹向量')
   }
 }
 
@@ -440,62 +430,60 @@ export class FolderVectorService {
  */
 function computeAverageVector(vectors: number[][]): number[] {
   if (vectors.length === 0) {
-    throw new Error("向量数组为空");
+    throw new Error('向量数组为空')
   }
 
-  const dimension = vectors[0]?.length ?? 0;
-  const avgVector = new Array(dimension).fill(0);
+  const dimension = vectors[0]?.length ?? 0
+  const avgVector = new Array(dimension).fill(0)
 
   for (const vector of vectors) {
     for (let i = 0; i < dimension; i++) {
-      avgVector[i] += vector[i] ?? 0;
+      avgVector[i] += vector[i] ?? 0
     }
   }
 
   for (let i = 0; i < dimension; i++) {
-    avgVector[i] /= vectors.length;
+    avgVector[i] /= vectors.length
   }
 
   // 归一化
-  const magnitude = Math.sqrt(
-    avgVector.reduce((sum, val) => sum + val * val, 0),
-  );
+  const magnitude = Math.sqrt(avgVector.reduce((sum, val) => sum + val * val, 0))
   if (magnitude > 0) {
     for (let i = 0; i < dimension; i++) {
-      avgVector[i] /= magnitude;
+      avgVector[i] /= magnitude
     }
   }
 
-  return avgVector;
+  return avgVector
 }
 
 /**
  * 点积（归一化向量的余弦相似度 = 点积）
  */
 function dotProduct(a: number[], b: number[]): number {
-  if (a.length !== b.length) return 0;
-  let sum = 0;
+  if (a.length !== b.length) return 0
+  let sum = 0
   for (let i = 0; i < a.length; i++) {
-    sum += (a[i] ?? 0) * (b[i] ?? 0);
+    sum += (a[i] ?? 0) * (b[i] ?? 0)
   }
-  return sum;
+  return sum
 }
 
 /**
  * 生成推荐原因
  */
 function generateReason(bookmarkCount: number, score: number): string {
-  const percentage = Math.round(score * 100);
+  const percentage = Math.round(score * 100)
 
   if (bookmarkCount === 0) {
-    return `新文件夹（匹配度 ${percentage}%）`;
+    return `新文件夹（匹配度 ${percentage}%）`
   }
 
   if (bookmarkCount === 1) {
-    return `包含 1 个相似书签（匹配度 ${percentage}%）`;
+    return `包含 1 个相似书签（匹配度 ${percentage}%）`
   }
 
-  return `包含 ${bookmarkCount} 个相似书签（匹配度 ${percentage}%）`;
+  return `包含 ${bookmarkCount} 个相似书签（匹配度 ${percentage}%）`
 }
 
-export const folderVectorService = new FolderVectorService();
+export const folderVectorService = new FolderVectorService()

@@ -1,35 +1,35 @@
 <script setup lang="ts">
-import { t } from "@/utils/i18n-helpers";
-import { computed } from "vue";
+import { t } from '@/utils/i18n-helpers'
+import { computed } from 'vue'
 
 defineOptions({
-  name: "GeneralSettings",
-});
+  name: 'GeneralSettings'
+})
 
 // 语言显示名称映射
 // 支持多种语言代码格式（连字符和下划线）
 const languageNames: Record<string, string> = {
-  "zh-CN": "简体中文",
-  zh_CN: "简体中文",
-  "zh-TW": "繁體中文",
-  zh_TW: "繁體中文",
-  en: "English",
-  "en-US": "English",
-  en_US: "English",
-  ja: "日本語",
-  ko: "한국어",
-  de: "Deutsch",
-  es: "Español",
-};
+  'zh-CN': '简体中文',
+  zh_CN: '简体中文',
+  'zh-TW': '繁體中文',
+  zh_TW: '繁體中文',
+  en: 'English',
+  'en-US': 'English',
+  en_US: 'English',
+  ja: '日本語',
+  ko: '한국어',
+  de: 'Deutsch',
+  es: 'Español'
+}
 
 // 获取当前语言名称
 const currentLanguageName = computed(() => {
-  if (typeof chrome !== "undefined" && chrome.i18n) {
-    const uiLanguage = chrome.i18n.getUILanguage();
-    return languageNames[uiLanguage] || uiLanguage;
+  if (typeof chrome !== 'undefined' && chrome.i18n) {
+    const uiLanguage = chrome.i18n.getUILanguage()
+    return languageNames[uiLanguage] || uiLanguage
   }
-  return "English";
-});
+  return 'English'
+})
 </script>
 
 <template>
@@ -37,18 +37,14 @@ const currentLanguageName = computed(() => {
     <!-- 语言说明 -->
     <div class="row">
       <div class="label">
-        {{ t("settings_general_language") }}
+        {{ t('settings_general_language') }}
       </div>
       <div class="field">
         <div class="language-info">
           <p class="language-info__text">
-            扩展语言由浏览器语言设置决定。当前语言：<strong>{{
-              currentLanguageName
-            }}</strong>
+            扩展语言由浏览器语言设置决定。当前语言：<strong>{{ currentLanguageName }}</strong>
           </p>
-          <p class="language-info__hint">
-            如需更改，请在 Chrome 设置 > 语言 中修改浏览器语言。
-          </p>
+          <p class="language-info__hint">如需更改，请在 Chrome 设置 > 语言 中修改浏览器语言。</p>
         </div>
       </div>
     </div>

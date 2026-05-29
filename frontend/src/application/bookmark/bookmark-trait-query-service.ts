@@ -23,36 +23,36 @@
  * ```
  */
 
-import { indexedDBManager } from "@/infrastructure/indexeddb/manager";
-import type { BookmarkRecord } from "@/infrastructure/indexeddb/types";
-import { logger } from "@/infrastructure/logging/logger";
-import type { TraitTag } from "@/core/bookmark/trait-rules";
-import { TRAIT_RULES } from "@/core/bookmark/trait-rules";
+import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
+import type { BookmarkRecord } from '@/infrastructure/indexeddb/types'
+import { logger } from '@/infrastructure/logging/logger'
+import type { TraitTag } from '@/core/bookmark/trait-rules'
+import { TRAIT_RULES } from '@/core/bookmark/trait-rules'
 
 /**
  * 书签特征类型（重新导出，方便使用）
  */
-export type { TraitTag } from "@/core/bookmark/trait-rules";
+export type { TraitTag } from '@/core/bookmark/trait-rules'
 
 /**
  * 查询选项
  */
 export interface TraitQueryOptions {
   /** 是否返回完整的书签对象（默认只返回 ID） */
-  includeFullRecord?: boolean;
+  includeFullRecord?: boolean
   /** 排序字段 */
-  sortBy?: "dateAdded" | "title" | "url";
+  sortBy?: 'dateAdded' | 'title' | 'url'
   /** 排序方向 */
-  sortOrder?: "asc" | "desc";
+  sortOrder?: 'asc' | 'desc'
 }
 
 /**
  * 查询结果
  */
 export interface TraitQueryResult {
-  ids: string[];
-  records?: BookmarkRecord[];
-  count: number;
+  ids: string[]
+  records?: BookmarkRecord[]
+  count: number
 }
 
 /**
@@ -85,49 +85,43 @@ class BookmarkTraitQueryService {
    * })
    * ```
    */
-  async queryByTrait(
-    trait: TraitTag,
-    options: TraitQueryOptions = {},
-  ): Promise<TraitQueryResult> {
+  async queryByTrait(trait: TraitTag, options: TraitQueryOptions = {}): Promise<TraitQueryResult> {
     try {
       // 获取所有书签，然后筛选具有指定特征的书签
-      const allBookmarks = await indexedDBManager.getAllBookmarks();
+      const allBookmarks = await indexedDBManager.getAllBookmarks()
 
       // 筛选具有指定特征的书签
       let records = allBookmarks.filter(
-        (record) => record.traitTags && record.traitTags.includes(trait),
-      );
+        record => record.traitTags && record.traitTags.includes(trait)
+      )
 
       // 排序
       if (options.sortBy) {
-        records = this.sortRecords(records, options.sortBy, options.sortOrder);
+        records = this.sortRecords(records, options.sortBy, options.sortOrder)
       }
 
-      const ids = records.map((r) => r.id);
+      const ids = records.map(r => r.id)
 
-      const traitName = TRAIT_RULES[trait]?.name || trait;
-      logger.debug(
-        "TraitQueryService",
-        `查询特征 "${traitName}": ${records.length} 条`,
-      );
+      const traitName = TRAIT_RULES[trait]?.name || trait
+      logger.debug('TraitQueryService', `查询特征 "${traitName}": ${records.length} 条`)
 
       const result: {
-        ids: string[];
-        records?: BookmarkRecord[];
-        count: number;
+        ids: string[]
+        records?: BookmarkRecord[]
+        count: number
       } = {
         ids,
-        count: records.length,
-      };
-
-      if (options.includeFullRecord) {
-        result.records = records;
+        count: records.length
       }
 
-      return result;
+      if (options.includeFullRecord) {
+        result.records = records
+      }
+
+      return result
     } catch (error) {
-      logger.error("TraitQueryService", "查询特征异常", error);
-      throw error;
+      logger.error('TraitQueryService', '查询特征异常', error)
+      throw error
     }
   }
 
@@ -150,51 +144,49 @@ class BookmarkTraitQueryService {
    */
   async queryByTraits(
     traits: TraitTag[],
-    options: TraitQueryOptions = {},
+    options: TraitQueryOptions = {}
   ): Promise<TraitQueryResult> {
     if (traits.length === 0) {
-      return { ids: [], count: 0 };
+      return { ids: [], count: 0 }
     }
 
-    const firstTrait = traits[0];
+    const firstTrait = traits[0]
     if (traits.length === 1 && firstTrait) {
-      return this.queryByTrait(firstTrait, options);
+      return this.queryByTrait(firstTrait, options)
     }
 
     // 查询每个特征的结果
     const results = await Promise.all(
-      traits.map((trait) =>
-        this.queryByTrait(trait, { includeFullRecord: true }),
-      ),
-    );
+      traits.map(trait => this.queryByTrait(trait, { includeFullRecord: true }))
+    )
 
     // 计算交集
-    const idSets = results.map((r) => new Set(r.ids));
+    const idSets = results.map(r => new Set(r.ids))
     const intersection = idSets.reduce((acc, set) => {
-      return new Set([...acc].filter((id) => set.has(id)));
-    });
+      return new Set([...acc].filter(id => set.has(id)))
+    })
 
-    const ids = Array.from(intersection);
+    const ids = Array.from(intersection)
 
     // 如果需要完整记录，从第一个结果中筛选
     if (options.includeFullRecord && results[0]?.records) {
-      let records = results[0].records.filter((r) => intersection.has(r.id));
+      let records = results[0].records.filter(r => intersection.has(r.id))
 
       if (options.sortBy) {
-        records = this.sortRecords(records, options.sortBy, options.sortOrder);
+        records = this.sortRecords(records, options.sortBy, options.sortOrder)
       }
 
       return {
         ids,
         records,
-        count: ids.length,
-      };
+        count: ids.length
+      }
     }
 
     return {
       ids,
-      count: ids.length,
-    };
+      count: ids.length
+    }
   }
 
   /**
@@ -210,9 +202,9 @@ class BookmarkTraitQueryService {
    * ```
    */
   async getBookmarkTraits(bookmarkId: string): Promise<TraitTag[]> {
-    const allBookmarks = await indexedDBManager.getAllBookmarks();
-    const bookmark = allBookmarks.find((b) => b.id === bookmarkId);
-    return (bookmark?.traitTags || []) as TraitTag[];
+    const allBookmarks = await indexedDBManager.getAllBookmarks()
+    const bookmark = allBookmarks.find(b => b.id === bookmarkId)
+    return (bookmark?.traitTags || []) as TraitTag[]
   }
 
   /**
@@ -232,20 +224,20 @@ class BookmarkTraitQueryService {
    */
   async getTraitStatistics(): Promise<Record<TraitTag, number>> {
     const traits: TraitTag[] = [
-      "duplicate",
-      "invalid",
-      "internal",
-      "outdated",
-      "untagged",
-      "untitled",
-    ];
+      'duplicate',
+      'invalid',
+      'internal',
+      'outdated',
+      'untagged',
+      'untitled'
+    ]
 
     const counts = await Promise.all(
-      traits.map(async (trait) => {
-        const result = await this.queryByTrait(trait);
-        return result.count;
-      }),
-    );
+      traits.map(async trait => {
+        const result = await this.queryByTrait(trait)
+        return result.count
+      })
+    )
 
     return {
       duplicate: counts[0] ?? 0,
@@ -253,8 +245,8 @@ class BookmarkTraitQueryService {
       internal: counts[2] ?? 0,
       outdated: counts[3] ?? 0,
       untagged: counts[4] ?? 0,
-      untitled: counts[5] ?? 0,
-    };
+      untitled: counts[5] ?? 0
+    }
   }
 
   /**
@@ -264,28 +256,28 @@ class BookmarkTraitQueryService {
    */
   private sortRecords(
     records: BookmarkRecord[],
-    sortBy: "dateAdded" | "title" | "url",
-    sortOrder: "asc" | "desc" = "asc",
+    sortBy: 'dateAdded' | 'title' | 'url',
+    sortOrder: 'asc' | 'desc' = 'asc'
   ): BookmarkRecord[] {
     const sorted = [...records].sort((a, b) => {
-      let comparison = 0;
+      let comparison = 0
 
       switch (sortBy) {
-        case "dateAdded":
-          comparison = (a.dateAdded || 0) - (b.dateAdded || 0);
-          break;
-        case "title":
-          comparison = a.title.localeCompare(b.title);
-          break;
-        case "url":
-          comparison = (a.url || "").localeCompare(b.url || "");
-          break;
+        case 'dateAdded':
+          comparison = (a.dateAdded || 0) - (b.dateAdded || 0)
+          break
+        case 'title':
+          comparison = a.title.localeCompare(b.title)
+          break
+        case 'url':
+          comparison = (a.url || '').localeCompare(b.url || '')
+          break
       }
 
-      return sortOrder === "asc" ? comparison : -comparison;
-    });
+      return sortOrder === 'asc' ? comparison : -comparison
+    })
 
-    return sorted;
+    return sorted
   }
 
   // ==================== 扩展查询方法 ====================
@@ -313,13 +305,13 @@ class BookmarkTraitQueryService {
    */
   async getBookmarksByTrait(
     trait: TraitTag,
-    options?: Omit<TraitQueryOptions, "includeFullRecord">,
+    options?: Omit<TraitQueryOptions, 'includeFullRecord'>
   ): Promise<BookmarkRecord[]> {
     const result = await this.queryByTrait(trait, {
       ...options,
-      includeFullRecord: true,
-    });
-    return result.records || [];
+      includeFullRecord: true
+    })
+    return result.records || []
   }
 
   /**
@@ -337,13 +329,13 @@ class BookmarkTraitQueryService {
    */
   async getBookmarksByTraits(
     traits: TraitTag[],
-    options?: Omit<TraitQueryOptions, "includeFullRecord">,
+    options?: Omit<TraitQueryOptions, 'includeFullRecord'>
   ): Promise<BookmarkRecord[]> {
     const result = await this.queryByTraits(traits, {
       ...options,
-      includeFullRecord: true,
-    });
-    return result.records || [];
+      includeFullRecord: true
+    })
+    return result.records || []
   }
 
   /**
@@ -360,11 +352,9 @@ class BookmarkTraitQueryService {
    * }
    * ```
    */
-  async getBookmarkWithTraits(
-    bookmarkId: string,
-  ): Promise<BookmarkRecord | null> {
-    const allBookmarks = await indexedDBManager.getAllBookmarks();
-    return allBookmarks.find((b) => b.id === bookmarkId) || null;
+  async getBookmarkWithTraits(bookmarkId: string): Promise<BookmarkRecord | null> {
+    const allBookmarks = await indexedDBManager.getAllBookmarks()
+    return allBookmarks.find(b => b.id === bookmarkId) || null
   }
 
   /**
@@ -378,12 +368,10 @@ class BookmarkTraitQueryService {
    * const bookmarks = await getBatchBookmarksWithTraits(['id1', 'id2', 'id3'])
    * ```
    */
-  async getBatchBookmarksWithTraits(
-    bookmarkIds: string[],
-  ): Promise<BookmarkRecord[]> {
-    const allBookmarks = await indexedDBManager.getAllBookmarks();
-    const idSet = new Set(bookmarkIds);
-    return allBookmarks.filter((b) => idSet.has(b.id));
+  async getBatchBookmarksWithTraits(bookmarkIds: string[]): Promise<BookmarkRecord[]> {
+    const allBookmarks = await indexedDBManager.getAllBookmarks()
+    const idSet = new Set(bookmarkIds)
+    return allBookmarks.filter(b => idSet.has(b.id))
   }
 
   /**
@@ -401,12 +389,9 @@ class BookmarkTraitQueryService {
    * }
    * ```
    */
-  async hasBookmarkTrait(
-    bookmarkId: string,
-    trait: TraitTag,
-  ): Promise<boolean> {
-    const traits = await this.getBookmarkTraits(bookmarkId);
-    return traits.includes(trait);
+  async hasBookmarkTrait(bookmarkId: string, trait: TraitTag): Promise<boolean> {
+    const traits = await this.getBookmarkTraits(bookmarkId)
+    return traits.includes(trait)
   }
 
   /**
@@ -422,27 +407,27 @@ class BookmarkTraitQueryService {
    * ```
    */
   async getNegativeTraitBookmarks(
-    options?: Omit<TraitQueryOptions, "includeFullRecord">,
+    options?: Omit<TraitQueryOptions, 'includeFullRecord'>
   ): Promise<BookmarkRecord[]> {
-    const allBookmarks = await indexedDBManager.getAllBookmarks();
+    const allBookmarks = await indexedDBManager.getAllBookmarks()
 
     // 筛选具有负面特征的书签
-    let records = allBookmarks.filter((record) => {
-      if (!record.traitTags || record.traitTags.length === 0) return false;
+    let records = allBookmarks.filter(record => {
+      if (!record.traitTags || record.traitTags.length === 0) return false
 
       // 检查是否有负面特征
-      return record.traitTags.some((tag) => {
-        const metadata = TRAIT_RULES[tag as TraitTag];
-        return metadata && metadata.isNegative;
-      });
-    });
+      return record.traitTags.some(tag => {
+        const metadata = TRAIT_RULES[tag as TraitTag]
+        return metadata && metadata.isNegative
+      })
+    })
 
     // 排序
     if (options?.sortBy) {
-      records = this.sortRecords(records, options.sortBy, options.sortOrder);
+      records = this.sortRecords(records, options.sortBy, options.sortOrder)
     }
 
-    return records;
+    return records
   }
 
   /**
@@ -461,30 +446,30 @@ class BookmarkTraitQueryService {
     Record<
       TraitTag,
       {
-        count: number;
-        bookmarks: BookmarkRecord[];
+        count: number
+        bookmarks: BookmarkRecord[]
       }
     >
   > {
     const traits: TraitTag[] = [
-      "duplicate",
-      "invalid",
-      "internal",
-      "outdated",
-      "untagged",
-      "untitled",
-    ];
+      'duplicate',
+      'invalid',
+      'internal',
+      'outdated',
+      'untagged',
+      'untitled'
+    ]
 
     const results = await Promise.all(
-      traits.map(async (trait) => {
-        const bookmarks = await this.getBookmarksByTrait(trait);
+      traits.map(async trait => {
+        const bookmarks = await this.getBookmarksByTrait(trait)
         return {
           trait,
           count: bookmarks.length,
-          bookmarks,
-        };
-      }),
-    );
+          bookmarks
+        }
+      })
+    )
 
     return {
       duplicate: results[0] ?? { count: 0, bookmarks: [] },
@@ -492,9 +477,9 @@ class BookmarkTraitQueryService {
       internal: results[2] ?? { count: 0, bookmarks: [] },
       outdated: results[3] ?? { count: 0, bookmarks: [] },
       untagged: results[4] ?? { count: 0, bookmarks: [] },
-      untitled: results[5] ?? { count: 0, bookmarks: [] },
-    };
+      untitled: results[5] ?? { count: 0, bookmarks: [] }
+    }
   }
 }
 
-export const bookmarkTraitQueryService = new BookmarkTraitQueryService();
+export const bookmarkTraitQueryService = new BookmarkTraitQueryService()

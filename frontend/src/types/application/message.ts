@@ -9,26 +9,26 @@
 /**
  * Message 级别
  */
-export type MessageLevel = "success" | "error" | "warning" | "info" | "loading";
+export type MessageLevel = 'success' | 'error' | 'warning' | 'info' | 'loading'
 
 /**
  * Message 配置选项
  */
 export interface MessageOptions {
   /** 消息内容 */
-  content: string;
+  content: string
   /** 消息级别 */
-  type: MessageLevel;
+  type: MessageLevel
   /** 显示时长（毫秒），0 表示不自动关闭 */
-  duration?: number;
+  duration?: number
   /** 唯一标识（用于更新或关闭特定消息） */
-  key?: string;
+  key?: string
   /** 是否显示图标 */
-  showIcon?: boolean;
+  showIcon?: boolean
   /** 自定义图标名称 */
-  icon?: string;
+  icon?: string
   /** 关闭时的回调 */
-  onClose?: () => void;
+  onClose?: () => void
 }
 
 /**
@@ -36,23 +36,23 @@ export interface MessageOptions {
  */
 export interface QueuedMessage {
   /** 唯一 ID */
-  id: string;
+  id: string
   /** 消息内容 */
-  content: string;
+  content: string
   /** 消息级别 */
-  type: MessageLevel;
+  type: MessageLevel
   /** 显示时长 */
-  duration: number;
+  duration: number
   /** 用户指定的 key */
-  key?: string;
+  key?: string
   /** 是否显示图标 */
-  showIcon: boolean;
+  showIcon: boolean
   /** 图标名称 */
-  icon?: string;
+  icon?: string
   /** 创建时间 */
-  createdAt: number;
+  createdAt: number
   /** 关闭回调 */
-  onClose?: () => void;
+  onClose?: () => void
 }
 
 /**
@@ -60,11 +60,11 @@ export interface QueuedMessage {
  */
 export interface MessageServiceConfig {
   /** 默认显示时长（毫秒） */
-  defaultDuration: number;
+  defaultDuration: number
   /** 最大同时显示数量 */
-  maxCount: number;
+  maxCount: number
   /** 是否显示图标 */
-  showIcon: boolean;
+  showIcon: boolean
   /** 顶部偏移量（像素） */
-  top: number;
+  top: number
 }

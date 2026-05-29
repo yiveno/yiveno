@@ -5,13 +5,13 @@
  */
 export interface ApiResponse<T> {
   /** 调用是否成功 */
-  ok: boolean;
+  ok: boolean
   /** 服务端返回的主体数据 */
-  data: T;
+  data: T
   /** HTTP 状态码 */
-  status: number;
+  status: number
   /** 额外的响应头信息 */
-  headers?: Record<string, string>;
+  headers?: Record<string, string>
 }
 
 /**
@@ -21,11 +21,11 @@ export interface ApiResponse<T> {
  */
 export interface ApiError {
   /** HTTP 状态码或业务错误码 */
-  status: number;
+  status: number
   /** 错误简要描述 */
-  message: string;
+  message: string
   /** 附加上下文信息（例如校验失败字段） */
-  details?: Record<string, unknown>;
+  details?: Record<string, unknown>
 }
 
 /**
@@ -35,13 +35,13 @@ export interface ApiError {
  */
 export interface BookmarkCreateDetails {
   /** 目标父级 ID，缺省表示根目录 */
-  parentId?: string;
+  parentId?: string
   /** 在父级下的插入位置 */
-  index?: number;
+  index?: number
   /** 书签标题 */
-  title?: string;
+  title?: string
   /** 书签 URL，文件夹可为空 */
-  url?: string;
+  url?: string
 }
 
 /**
@@ -49,9 +49,9 @@ export interface BookmarkCreateDetails {
  */
 export interface BookmarkDestination {
   /** 新的父级 ID */
-  parentId?: string;
+  parentId?: string
   /** 在新父级下的索引位置 */
-  index?: number;
+  index?: number
 }
 
 /**
@@ -59,9 +59,9 @@ export interface BookmarkDestination {
  */
 export interface BookmarkUpdateDetails {
   /** 新标题 */
-  title?: string;
+  title?: string
   /** 新 URL，文件夹保持为空 */
-  url?: string;
+  url?: string
 }
 
 /**
@@ -72,17 +72,17 @@ export interface BookmarkUpdateDetails {
  */
 export interface LoginResponse {
   /** 是否登录成功 */
-  success: boolean;
+  success: boolean
   /** 访问令牌（旧字段名，下划线格式） */
-  access_token?: string;
+  access_token?: string
   /** 刷新令牌（旧字段名，下划线格式） */
-  refresh_token?: string;
+  refresh_token?: string
   /** 访问令牌（新字段名，驼峰格式） */
-  accessToken?: string;
+  accessToken?: string
   /** 刷新令牌（新字段名，驼峰格式） */
-  refreshToken?: string;
+  refreshToken?: string
   /** 失败时返回的错误信息 */
-  error?: string;
+  error?: string
 }
 
 /**
@@ -90,9 +90,9 @@ export interface LoginResponse {
  */
 export interface BasicOk {
   /** 操作是否成功 */
-  success: boolean;
+  success: boolean
   /** 失败时的错误信息 */
-  error?: string;
+  error?: string
 }
 
 /**
@@ -100,18 +100,18 @@ export interface BasicOk {
  */
 export interface MeResponse {
   /** 调用是否成功 */
-  success: boolean;
+  success: boolean
   /** 用户基本资料，可能因未登录而不存在 */
   user?: {
     /** 用户ID */
-    id?: string;
+    id?: string
     /** 用户邮箱 */
-    email: string;
+    email: string
     /** 用户昵称 */
-    nickname?: string;
+    nickname?: string
     /** 付费等级 */
-    tier: "free" | "pro";
+    tier: 'free' | 'pro'
     /** 订阅到期时间戳 */
-    expiresAt?: number;
-  };
+    expiresAt?: number
+  }
 }

@@ -12,56 +12,49 @@
   - 响应式设计，自适应容器宽度
 -->
 <script setup lang="ts">
-import { computed } from "vue";
-import type { SkeletonProps } from "./Skeleton.d";
+import { computed } from 'vue'
+import type { SkeletonProps } from './Skeleton.d'
 
-defineOptions({ name: "Skeleton" });
+defineOptions({ name: 'Skeleton' })
 
 const props = withDefaults(defineProps<SkeletonProps>(), {
-  variant: "text",
-  animation: "pulse",
-  borderRadius: "md",
-});
+  variant: 'text',
+  animation: 'pulse',
+  borderRadius: 'md'
+})
 
 /**
  * 计算样式类
  */
 const skeletonClasses = computed(() => [
-  "skeleton",
+  'skeleton',
   `skeleton--${props.variant}`,
   `skeleton--animation-${props.animation}`,
-  props.variant === "rounded" && `skeleton--radius-${props.borderRadius}`,
-]);
+  props.variant === 'rounded' && `skeleton--radius-${props.borderRadius}`
+])
 
 /**
  * 计算内联样式
  */
 const skeletonStyles = computed(() => {
-  const styles: Record<string, string> = {};
+  const styles: Record<string, string> = {}
 
   // 宽度
   if (props.width !== undefined) {
-    styles.width =
-      typeof props.width === "number" ? `${props.width}px` : props.width;
+    styles.width = typeof props.width === 'number' ? `${props.width}px` : props.width
   }
 
   // 高度
   if (props.height !== undefined) {
-    styles.height =
-      typeof props.height === "number" ? `${props.height}px` : props.height;
+    styles.height = typeof props.height === 'number' ? `${props.height}px` : props.height
   }
 
-  return styles;
-});
+  return styles
+})
 </script>
 
 <template>
-  <div
-    :class="skeletonClasses"
-    :style="skeletonStyles"
-    aria-busy="true"
-    aria-live="polite"
-  >
+  <div :class="skeletonClasses" :style="skeletonStyles" aria-busy="true" aria-live="polite">
     <!-- 波浪动画的渐变层 -->
     <div v-if="animation === 'wave'" class="skeleton__wave" />
   </div>
@@ -212,7 +205,7 @@ const skeletonStyles = computed(() => {
 /* ========== 可访问性 ========== */
 
 /* 屏幕阅读器提示 */
-.skeleton[aria-busy="true"] {
+.skeleton[aria-busy='true'] {
   /* 确保屏幕阅读器能识别加载状态 */
 }
 

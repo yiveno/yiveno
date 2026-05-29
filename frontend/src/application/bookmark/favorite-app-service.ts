@@ -8,21 +8,21 @@
  * - 双重存储：IndexedDB（书签状态） + chrome.storage.local（收藏列表备份）
  */
 
-import { indexedDBManager } from "@/infrastructure/indexeddb/manager";
-import type { BookmarkRecord } from "@/infrastructure/indexeddb/schema";
-import { logger } from "@/infrastructure/logging/logger";
-import { chromeStorage } from "@/infrastructure/storage/chrome-storage";
-import type { BookmarkNode } from "@/types";
+import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
+import type { BookmarkRecord } from '@/infrastructure/indexeddb/schema'
+import { logger } from '@/infrastructure/logging/logger'
+import { chromeStorage } from '@/infrastructure/storage/chrome-storage'
+import type { BookmarkNode } from '@/types'
 
 /**
  * 收藏书签项
  */
 export interface FavoriteBookmark {
-  id: string;
-  title: string;
-  url: string;
-  favoriteOrder: number;
-  favoritedAt: number;
+  id: string
+  title: string
+  url: string
+  favoriteOrder: number
+  favoritedAt: number
 }
 
 /**
@@ -30,7 +30,7 @@ export interface FavoriteBookmark {
  */
 class FavoriteAppService {
   /** chrome.storage.local 中存储收藏书签 ID 列表的键名 */
-  private readonly STORAGE_KEY = "AB_FAVORITE_BOOKMARKS";
+  private readonly STORAGE_KEY = 'AB_FAVORITE_BOOKMARKS'
 
   /**
    * 从 chrome.storage.local 获取收藏书签 ID 列表
@@ -38,15 +38,11 @@ class FavoriteAppService {
    */
   private async getFavoriteIdsFromStorage(): Promise<string[]> {
     try {
-      const ids = await chromeStorage.getLocal<string[]>(this.STORAGE_KEY, []);
-      return ids ?? [];
+      const ids = await chromeStorage.getLocal<string[]>(this.STORAGE_KEY, [])
+      return ids ?? []
     } catch (error) {
-      logger.error(
-        "FavoriteAppService",
-        "❌ 从 storage 获取收藏列表失败:",
-        error,
-      );
-      return [];
+      logger.error('FavoriteAppService', '❌ 从 storage 获取收藏列表失败:', error)
+      return []
     }
   }
 
@@ -56,17 +52,10 @@ class FavoriteAppService {
    */
   private async saveFavoriteIdsToStorage(ids: string[]): Promise<void> {
     try {
-      await chromeStorage.setLocal(this.STORAGE_KEY, ids);
-      logger.debug(
-        "FavoriteAppService",
-        `✅ 收藏列表已保存到 storage: ${ids.length} 个`,
-      );
+      await chromeStorage.setLocal(this.STORAGE_KEY, ids)
+      logger.debug('FavoriteAppService', `✅ 收藏列表已保存到 storage: ${ids.length} 个`)
     } catch (error) {
-      logger.error(
-        "FavoriteAppService",
-        "❌ 保存收藏列表到 storage 失败:",
-        error,
-      );
+      logger.error('FavoriteAppService', '❌ 保存收藏列表到 storage 失败:', error)
     }
   }
 
@@ -76,69 +65,64 @@ class FavoriteAppService {
    */
   async syncFavoriteData(): Promise<void> {
     try {
-      logger.info("FavoriteAppService", "🔄 开始同步收藏数据...");
+      logger.info('FavoriteAppService', '🔄 开始同步收藏数据...')
 
-      const idsInStorage = await this.getFavoriteIdsFromStorage();
+      const idsInStorage = await this.getFavoriteIdsFromStorage()
 
       if (idsInStorage.length === 0) {
-        logger.info("FavoriteAppService", "✅ storage 中无收藏数据，跳过同步");
-        return;
+        logger.info('FavoriteAppService', '✅ storage 中无收藏数据，跳过同步')
+        return
       }
 
-      logger.debug("FavoriteAppService", "📊 storage 中有收藏数据:", {
-        count: idsInStorage.length,
-      });
+      logger.debug('FavoriteAppService', '📊 storage 中有收藏数据:', {
+        count: idsInStorage.length
+      })
 
-      const toMarkAsFavorite = await this.checkFavoritesToRestore(idsInStorage);
+      const toMarkAsFavorite = await this.checkFavoritesToRestore(idsInStorage)
 
       if (toMarkAsFavorite.length === 0) {
-        logger.info("FavoriteAppService", "✅ 收藏数据已同步，无需处理");
-        return;
+        logger.info('FavoriteAppService', '✅ 收藏数据已同步，无需处理')
+        return
       }
 
       logger.warn(
-        "FavoriteAppService",
-        `⚠️ 检测到 ${toMarkAsFavorite.length} 个书签需要恢复收藏状态`,
-      );
+        'FavoriteAppService',
+        `⚠️ 检测到 ${toMarkAsFavorite.length} 个书签需要恢复收藏状态`
+      )
 
-      await this.restoreFavorites(toMarkAsFavorite, idsInStorage);
-      logger.info("FavoriteAppService", "✅ 收藏数据恢复完成");
+      await this.restoreFavorites(toMarkAsFavorite, idsInStorage)
+      logger.info('FavoriteAppService', '✅ 收藏数据恢复完成')
 
-      await this.reloadBookmarkStore();
+      await this.reloadBookmarkStore()
     } catch (error) {
-      logger.error("FavoriteAppService", "❌ 同步收藏数据失败:", error);
+      logger.error('FavoriteAppService', '❌ 同步收藏数据失败:', error)
     }
   }
 
   /**
    * 检查需要恢复的收藏
    */
-  private async checkFavoritesToRestore(
-    idsInStorage: string[],
-  ): Promise<string[]> {
-    const toMarkAsFavorite: string[] = [];
+  private async checkFavoritesToRestore(idsInStorage: string[]): Promise<string[]> {
+    const toMarkAsFavorite: string[] = []
 
     for (const bookmarkId of idsInStorage) {
       try {
-        const bookmark = await indexedDBManager.getBookmarkById(bookmarkId);
+        const bookmark = await indexedDBManager.getBookmarkById(bookmarkId)
 
         if (!bookmark) {
-          logger.debug(
-            "FavoriteAppService",
-            `书签 ${bookmarkId} 不存在，将从 storage 移除`,
-          );
-          continue;
+          logger.debug('FavoriteAppService', `书签 ${bookmarkId} 不存在，将从 storage 移除`)
+          continue
         }
 
         if (!bookmark.isFavorite) {
-          toMarkAsFavorite.push(bookmarkId);
+          toMarkAsFavorite.push(bookmarkId)
         }
       } catch (error) {
-        logger.warn("FavoriteAppService", `检查书签 ${bookmarkId} 失败`, error);
+        logger.warn('FavoriteAppService', `检查书签 ${bookmarkId} 失败`, error)
       }
     }
 
-    return toMarkAsFavorite;
+    return toMarkAsFavorite
   }
 
   /**
@@ -146,27 +130,23 @@ class FavoriteAppService {
    */
   private async restoreFavorites(
     toMarkAsFavorite: string[],
-    idsInStorage: string[],
+    idsInStorage: string[]
   ): Promise<void> {
     for (const bookmarkId of toMarkAsFavorite) {
       try {
-        const bookmark = await indexedDBManager.getBookmarkById(bookmarkId);
+        const bookmark = await indexedDBManager.getBookmarkById(bookmarkId)
         if (bookmark && !bookmark.isFolder) {
-          const favoriteOrder = idsInStorage.indexOf(bookmarkId);
+          const favoriteOrder = idsInStorage.indexOf(bookmarkId)
           await indexedDBManager.updateBookmark({
             ...bookmark,
             isFavorite: true,
             favoriteOrder,
-            favoritedAt: Date.now(),
-          });
-          logger.debug("FavoriteAppService", `✅ 恢复收藏: ${bookmark.title}`);
+            favoritedAt: Date.now()
+          })
+          logger.debug('FavoriteAppService', `✅ 恢复收藏: ${bookmark.title}`)
         }
       } catch (error) {
-        logger.error(
-          "FavoriteAppService",
-          `恢复书签 ${bookmarkId} 失败`,
-          error,
-        );
+        logger.error('FavoriteAppService', `恢复书签 ${bookmarkId} 失败`, error)
       }
     }
   }
@@ -175,32 +155,20 @@ class FavoriteAppService {
    * 重新加载 bookmarkStore
    */
   private async reloadBookmarkStore(): Promise<void> {
-    const isServiceWorker =
-      typeof self !== "undefined" && "ServiceWorkerGlobalScope" in self;
+    const isServiceWorker = typeof self !== 'undefined' && 'ServiceWorkerGlobalScope' in self
 
-    if (
-      !isServiceWorker &&
-      typeof window !== "undefined" &&
-      typeof document !== "undefined"
-    ) {
+    if (!isServiceWorker && typeof window !== 'undefined' && typeof document !== 'undefined') {
       try {
-        const { useBookmarkStore } = await import("@/stores/bookmarkStore");
-        const bookmarkStore = useBookmarkStore();
+        const { useBookmarkStore } = await import('@/stores/bookmarkStore')
+        const bookmarkStore = useBookmarkStore()
 
-        logger.info("FavoriteAppService", "🔄 重新加载书签数据以应用收藏状态");
-        await bookmarkStore.loadFromIndexedDB();
+        logger.info('FavoriteAppService', '🔄 重新加载书签数据以应用收藏状态')
+        await bookmarkStore.loadFromIndexedDB()
       } catch (error) {
-        logger.debug(
-          "FavoriteAppService",
-          "bookmarkStore 未初始化（background 环境）",
-          error,
-        );
+        logger.debug('FavoriteAppService', 'bookmarkStore 未初始化（background 环境）', error)
       }
     } else {
-      logger.debug(
-        "FavoriteAppService",
-        "Service Worker 环境，跳过 bookmarkStore 更新",
-      );
+      logger.debug('FavoriteAppService', 'Service Worker 环境，跳过 bookmarkStore 更新')
     }
   }
 
@@ -210,36 +178,28 @@ class FavoriteAppService {
    */
   async getFavorites(): Promise<FavoriteBookmark[]> {
     try {
-      logger.debug("FavoriteAppService", "📋 获取收藏书签列表");
+      logger.debug('FavoriteAppService', '📋 获取收藏书签列表')
 
       // 从 IndexedDB 获取所有书签
-      const allBookmarks = await indexedDBManager.getAllBookmarks();
+      const allBookmarks = await indexedDBManager.getAllBookmarks()
 
       // 筛选出已收藏的书签
       const favorites = allBookmarks
-        .filter((bookmark) => bookmark.isFavorite && bookmark.url) // 只要书签，不要文件夹
-        .map((bookmark) => ({
+        .filter(bookmark => bookmark.isFavorite && bookmark.url) // 只要书签，不要文件夹
+        .map(bookmark => ({
           id: bookmark.id,
           title: bookmark.title,
           url: bookmark.url!,
           favoriteOrder: bookmark.favoriteOrder ?? 999,
-          favoritedAt: bookmark.favoritedAt ?? Date.now(),
+          favoritedAt: bookmark.favoritedAt ?? Date.now()
         }))
-        .sort((a, b) => a.favoriteOrder - b.favoriteOrder); // 按收藏顺序排序
+        .sort((a, b) => a.favoriteOrder - b.favoriteOrder) // 按收藏顺序排序
 
-      logger.info(
-        "FavoriteAppService",
-        `✅ 获取到 ${favorites.length} 个收藏书签`,
-      );
-      return favorites;
+      logger.info('FavoriteAppService', `✅ 获取到 ${favorites.length} 个收藏书签`)
+      return favorites
     } catch (error) {
-      logger.error(
-        "Component",
-        "FavoriteAppService",
-        "❌ 获取收藏书签失败:",
-        error,
-      );
-      return [];
+      logger.error('Component', 'FavoriteAppService', '❌ 获取收藏书签失败:', error)
+      return []
     }
   }
 
@@ -248,78 +208,51 @@ class FavoriteAppService {
    * @param bookmarkId 书签ID
    * @param skipDuplicationCheck 是否跳过去重检查（默认 false）
    */
-  async addToFavorites(
-    bookmarkId: string,
-    skipDuplicationCheck = false,
-  ): Promise<boolean> {
+  async addToFavorites(bookmarkId: string, skipDuplicationCheck = false): Promise<boolean> {
     try {
-      logger.info("FavoriteAppService", "⭐ 添加收藏:", bookmarkId);
+      logger.info('FavoriteAppService', '⭐ 添加收藏:', bookmarkId)
 
-      const bookmark = await indexedDBManager.getBookmarkById(bookmarkId);
+      const bookmark = await indexedDBManager.getBookmarkById(bookmarkId)
       if (!bookmark) {
-        logger.error(
-          "Component",
-          "FavoriteAppService",
-          "❌ 书签不存在:",
-          bookmarkId,
-        );
-        return false;
+        logger.error('Component', 'FavoriteAppService', '❌ 书签不存在:', bookmarkId)
+        return false
       }
 
       if (bookmark.isFolder) {
-        logger.warn("FavoriteAppService", "⚠️ 不能收藏文件夹:", bookmarkId);
-        return false;
+        logger.warn('FavoriteAppService', '⚠️ 不能收藏文件夹:', bookmarkId)
+        return false
       }
 
       if (bookmark.isFavorite) {
-        logger.debug(
-          "FavoriteAppService",
-          "📝 书签已在收藏中，跳过:",
-          bookmarkId,
-        );
-        return true;
+        logger.debug('FavoriteAppService', '📝 书签已在收藏中，跳过:', bookmarkId)
+        return true
       }
 
-      const isServiceWorker = this.isServiceWorker();
-      const isBrowserEnv = this.isBrowserEnv(isServiceWorker);
+      const isServiceWorker = this.isServiceWorker()
+      const isBrowserEnv = this.isBrowserEnv(isServiceWorker)
 
       if (!skipDuplicationCheck && bookmark.url && isBrowserEnv) {
-        const confirmed = await this.checkDuplicateAndConfirm(bookmark);
+        const confirmed = await this.checkDuplicateAndConfirm(bookmark)
         if (!confirmed) {
-          logger.info("FavoriteAppService", "用户取消添加重复书签");
-          return false;
+          logger.info('FavoriteAppService', '用户取消添加重复书签')
+          return false
         }
-        logger.info("FavoriteAppService", "用户确认添加重复书签");
+        logger.info('FavoriteAppService', '用户确认添加重复书签')
       }
 
-      const { favoriteOrder, favoritedAt } =
-        await this.calculateFavoriteOrder();
-      const updatedBookmark = this.createFavoriteBookmark(
-        bookmark,
-        favoriteOrder,
-        favoritedAt,
-      );
+      const { favoriteOrder, favoritedAt } = await this.calculateFavoriteOrder()
+      const updatedBookmark = this.createFavoriteBookmark(bookmark, favoriteOrder, favoritedAt)
 
-      await indexedDBManager.updateBookmark(updatedBookmark);
-      await this.syncFavoriteToStorage(bookmarkId);
-      await this.updateBookmarkStore(
-        bookmarkId,
-        favoriteOrder,
-        favoritedAt,
-        isServiceWorker,
-      );
+      await indexedDBManager.updateBookmark(updatedBookmark)
+      await this.syncFavoriteToStorage(bookmarkId)
+      await this.updateBookmarkStore(bookmarkId, favoriteOrder, favoritedAt, isServiceWorker)
 
-      this.broadcastFavoriteChange("added", bookmarkId);
-      logger.info("FavoriteAppService", "✅ 添加收藏成功:", bookmarkId);
-      return true;
+      this.broadcastFavoriteChange('added', bookmarkId)
+      logger.info('FavoriteAppService', '✅ 添加收藏成功:', bookmarkId)
+      return true
     } catch (error) {
-      logger.error(
-        "Component",
-        "FavoriteAppService",
-        "❌ 添加收藏失败:",
-        error,
-      );
-      return false;
+      logger.error('Component', 'FavoriteAppService', '❌ 添加收藏失败:', error)
+      return false
     }
   }
 
@@ -327,54 +260,43 @@ class FavoriteAppService {
    * 判断是否为 Service Worker 环境
    */
   private isServiceWorker(): boolean {
-    return typeof self !== "undefined" && "ServiceWorkerGlobalScope" in self;
+    return typeof self !== 'undefined' && 'ServiceWorkerGlobalScope' in self
   }
 
   /**
    * 判断是否为浏览器环境
    */
   private isBrowserEnv(isServiceWorker: boolean): boolean {
-    return (
-      !isServiceWorker &&
-      typeof window !== "undefined" &&
-      typeof confirm === "function"
-    );
+    return !isServiceWorker && typeof window !== 'undefined' && typeof confirm === 'function'
   }
 
   /**
    * 检查重复并确认
    */
-  private async checkDuplicateAndConfirm(
-    bookmark: BookmarkRecord,
-  ): Promise<boolean> {
-    const favorites = await this.getFavorites();
-    const duplicate = favorites.find((f) => f.url === bookmark.url);
+  private async checkDuplicateAndConfirm(bookmark: BookmarkRecord): Promise<boolean> {
+    const favorites = await this.getFavorites()
+    const duplicate = favorites.find(f => f.url === bookmark.url)
 
     if (duplicate) {
-      const confirmed = confirm(
-        `收藏夹中已存在相同书签：\n📌 ${duplicate.title}\n\n是否仍要添加？`,
-      );
-      return confirmed;
+      const confirmed = confirm(`收藏夹中已存在相同书签：\n📌 ${duplicate.title}\n\n是否仍要添加？`)
+      return confirmed
     }
-    return true;
+    return true
   }
 
   /**
    * 计算 favoriteOrder
    */
   private async calculateFavoriteOrder(): Promise<{
-    favoriteOrder: number;
-    favoritedAt: number;
+    favoriteOrder: number
+    favoritedAt: number
   }> {
-    const favorites = await this.getFavorites();
-    const maxOrder =
-      favorites.length > 0
-        ? Math.max(...favorites.map((f) => f.favoriteOrder))
-        : 0;
+    const favorites = await this.getFavorites()
+    const maxOrder = favorites.length > 0 ? Math.max(...favorites.map(f => f.favoriteOrder)) : 0
     return {
       favoriteOrder: maxOrder + 1,
-      favoritedAt: Date.now(),
-    };
+      favoritedAt: Date.now()
+    }
   }
 
   /**
@@ -383,24 +305,24 @@ class FavoriteAppService {
   private createFavoriteBookmark(
     bookmark: BookmarkRecord,
     favoriteOrder: number,
-    favoritedAt: number,
+    favoritedAt: number
   ): BookmarkRecord {
     return {
       ...bookmark,
       isFavorite: true,
       favoriteOrder,
-      favoritedAt,
-    };
+      favoritedAt
+    }
   }
 
   /**
    * 同步收藏到存储
    */
   private async syncFavoriteToStorage(bookmarkId: string): Promise<void> {
-    const currentIds = await this.getFavoriteIdsFromStorage();
+    const currentIds = await this.getFavoriteIdsFromStorage()
     if (!currentIds.includes(bookmarkId)) {
-      currentIds.push(bookmarkId);
-      await this.saveFavoriteIdsToStorage(currentIds);
+      currentIds.push(bookmarkId)
+      await this.saveFavoriteIdsToStorage(currentIds)
     }
   }
 
@@ -411,27 +333,19 @@ class FavoriteAppService {
     bookmarkId: string,
     favoriteOrder: number,
     favoritedAt: number,
-    isServiceWorker: boolean,
+    isServiceWorker: boolean
   ): Promise<void> {
-    if (
-      !isServiceWorker &&
-      typeof window !== "undefined" &&
-      typeof document !== "undefined"
-    ) {
+    if (!isServiceWorker && typeof window !== 'undefined' && typeof document !== 'undefined') {
       try {
-        const { useBookmarkStore } = await import("@/stores/bookmarkStore");
-        const bookmarkStore = useBookmarkStore();
+        const { useBookmarkStore } = await import('@/stores/bookmarkStore')
+        const bookmarkStore = useBookmarkStore()
         bookmarkStore.updateNode(bookmarkId, {
           isFavorite: true,
           favoriteOrder,
-          favoritedAt,
-        });
+          favoritedAt
+        })
       } catch (error) {
-        logger.warn(
-          "FavoriteAppService",
-          "更新 bookmarkStore 失败（非致命错误）",
-          error,
-        );
+        logger.warn('FavoriteAppService', '更新 bookmarkStore 失败（非致命错误）', error)
       }
     }
   }
@@ -442,77 +356,58 @@ class FavoriteAppService {
    */
   async removeFromFavorites(bookmarkId: string): Promise<boolean> {
     try {
-      logger.info("FavoriteAppService", "⭐ 移除收藏:", bookmarkId);
+      logger.info('FavoriteAppService', '⭐ 移除收藏:', bookmarkId)
 
       // 获取书签数据
-      const bookmark = await indexedDBManager.getBookmarkById(bookmarkId);
+      const bookmark = await indexedDBManager.getBookmarkById(bookmarkId)
       if (!bookmark) {
-        logger.error(
-          "Component",
-          "FavoriteAppService",
-          "❌ 书签不存在:",
-          bookmarkId,
-        );
-        return false;
+        logger.error('Component', 'FavoriteAppService', '❌ 书签不存在:', bookmarkId)
+        return false
       }
 
       // 更新书签数据到 IndexedDB
       const updatedBookmark: BookmarkRecord = {
         ...bookmark,
-        isFavorite: false,
-      };
+        isFavorite: false
+      }
 
       // 删除可选属性
-      delete updatedBookmark.favoriteOrder;
-      delete updatedBookmark.favoritedAt;
+      delete updatedBookmark.favoriteOrder
+      delete updatedBookmark.favoritedAt
 
-      await indexedDBManager.updateBookmark(updatedBookmark);
+      await indexedDBManager.updateBookmark(updatedBookmark)
 
       // ✅ 同步更新 chrome.storage.local 中的收藏列表
-      const currentIds = await this.getFavoriteIdsFromStorage();
-      const updatedIds = currentIds.filter((id) => id !== bookmarkId);
-      await this.saveFavoriteIdsToStorage(updatedIds);
+      const currentIds = await this.getFavoriteIdsFromStorage()
+      const updatedIds = currentIds.filter(id => id !== bookmarkId)
+      await this.saveFavoriteIdsToStorage(updatedIds)
 
       // ✅ 同步更新 bookmarkStore（确保 UI 立即响应）
       // ⚠️ 只在浏览器环境中更新，Service Worker 中跳过
       // ⚠️ 使用 self 检查是否在 Service Worker 环境中
-      const isServiceWorker =
-        typeof self !== "undefined" && "ServiceWorkerGlobalScope" in self;
+      const isServiceWorker = typeof self !== 'undefined' && 'ServiceWorkerGlobalScope' in self
 
-      if (
-        !isServiceWorker &&
-        typeof window !== "undefined" &&
-        typeof document !== "undefined"
-      ) {
+      if (!isServiceWorker && typeof window !== 'undefined' && typeof document !== 'undefined') {
         try {
-          const { useBookmarkStore } = await import("@/stores/bookmarkStore");
-          const bookmarkStore = useBookmarkStore();
+          const { useBookmarkStore } = await import('@/stores/bookmarkStore')
+          const bookmarkStore = useBookmarkStore()
           const updates: Partial<BookmarkNode> = {
-            isFavorite: false,
-          };
-          bookmarkStore.updateNode(bookmarkId, updates);
+            isFavorite: false
+          }
+          bookmarkStore.updateNode(bookmarkId, updates)
         } catch (error) {
-          logger.warn(
-            "FavoriteAppService",
-            "更新 bookmarkStore 失败（非致命错误）",
-            error,
-          );
+          logger.warn('FavoriteAppService', '更新 bookmarkStore 失败（非致命错误）', error)
         }
       }
 
       // 广播到其他页面（跨页面同步）
-      this.broadcastFavoriteChange("removed", bookmarkId);
+      this.broadcastFavoriteChange('removed', bookmarkId)
 
-      logger.info("FavoriteAppService", "✅ 移除收藏成功:", bookmarkId);
-      return true;
+      logger.info('FavoriteAppService', '✅ 移除收藏成功:', bookmarkId)
+      return true
     } catch (error) {
-      logger.error(
-        "Component",
-        "FavoriteAppService",
-        "❌ 移除收藏失败:",
-        error,
-      );
-      return false;
+      logger.error('Component', 'FavoriteAppService', '❌ 移除收藏失败:', error)
+      return false
     }
   }
 
@@ -521,13 +416,13 @@ class FavoriteAppService {
    * @param bookmarkId 书签ID
    */
   async toggleFavorite(bookmarkId: string): Promise<boolean> {
-    const bookmark = await indexedDBManager.getBookmarkById(bookmarkId);
-    if (!bookmark) return false;
+    const bookmark = await indexedDBManager.getBookmarkById(bookmarkId)
+    if (!bookmark) return false
 
     if (bookmark.isFavorite) {
-      return await this.removeFromFavorites(bookmarkId);
+      return await this.removeFromFavorites(bookmarkId)
     } else {
-      return await this.addToFavorites(bookmarkId);
+      return await this.addToFavorites(bookmarkId)
     }
   }
 
@@ -537,34 +432,29 @@ class FavoriteAppService {
    */
   async updateFavoritesOrder(bookmarkIds: string[]): Promise<boolean> {
     try {
-      logger.info("FavoriteAppService", "📊 更新收藏排序:", bookmarkIds.length);
+      logger.info('FavoriteAppService', '📊 更新收藏排序:', bookmarkIds.length)
 
       // 批量更新 favoriteOrder
       for (const [i, bookmarkId] of bookmarkIds.entries()) {
-        const bookmark = await indexedDBManager.getBookmarkById(bookmarkId);
+        const bookmark = await indexedDBManager.getBookmarkById(bookmarkId)
 
         if (bookmark && bookmark.isFavorite) {
           const updatedBookmark: BookmarkRecord = {
             ...bookmark,
-            favoriteOrder: i,
-          };
-          await indexedDBManager.updateBookmark(updatedBookmark);
+            favoriteOrder: i
+          }
+          await indexedDBManager.updateBookmark(updatedBookmark)
         }
       }
 
       // ✅ 同步更新 chrome.storage.local 中的收藏列表顺序
-      await this.saveFavoriteIdsToStorage(bookmarkIds);
+      await this.saveFavoriteIdsToStorage(bookmarkIds)
 
-      logger.info("FavoriteAppService", "✅ 更新收藏排序成功");
-      return true;
+      logger.info('FavoriteAppService', '✅ 更新收藏排序成功')
+      return true
     } catch (error) {
-      logger.error(
-        "Component",
-        "FavoriteAppService",
-        "❌ 更新收藏排序失败:",
-        error,
-      );
-      return false;
+      logger.error('Component', 'FavoriteAppService', '❌ 更新收藏排序失败:', error)
+      return false
     }
   }
 
@@ -574,16 +464,11 @@ class FavoriteAppService {
    */
   async isFavorite(bookmarkId: string): Promise<boolean> {
     try {
-      const bookmark = await indexedDBManager.getBookmarkById(bookmarkId);
-      return bookmark?.isFavorite ?? false;
+      const bookmark = await indexedDBManager.getBookmarkById(bookmarkId)
+      return bookmark?.isFavorite ?? false
     } catch (error) {
-      logger.error(
-        "Component",
-        "FavoriteAppService",
-        "❌ 检查收藏状态失败:",
-        error,
-      );
-      return false;
+      logger.error('Component', 'FavoriteAppService', '❌ 检查收藏状态失败:', error)
+      return false
     }
   }
 
@@ -592,41 +477,35 @@ class FavoriteAppService {
    * @param action 动作类型
    * @param bookmarkId 书签ID
    */
-  private broadcastFavoriteChange(
-    action: "added" | "removed",
-    bookmarkId: string,
-  ) {
-    if (typeof chrome !== "undefined" && chrome.runtime?.sendMessage) {
+  private broadcastFavoriteChange(action: 'added' | 'removed', bookmarkId: string) {
+    if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
       try {
         chrome.runtime.sendMessage(
           {
-            type: "FAVORITE_CHANGED",
+            type: 'FAVORITE_CHANGED',
             action,
-            bookmarkId,
+            bookmarkId
           },
           () => {
             // 使用回调函数来捕获错误，避免 Promise rejection
             if (chrome.runtime.lastError) {
               logger.debug(
-                "FavoriteAppService",
-                "广播失败（可能无其他页面）",
-                chrome.runtime.lastError.message,
-              );
+                'FavoriteAppService',
+                '广播失败（可能无其他页面）',
+                chrome.runtime.lastError.message
+              )
             } else {
-              logger.debug(
-                "FavoriteAppService",
-                `📡 广播收藏变更: ${action} - ${bookmarkId}`,
-              );
+              logger.debug('FavoriteAppService', `📡 广播收藏变更: ${action} - ${bookmarkId}`)
             }
-          },
-        );
+          }
+        )
       } catch (error) {
         // 忽略广播失败，不影响主流程
-        logger.debug("FavoriteAppService", "广播异常", error);
+        logger.debug('FavoriteAppService', '广播异常', error)
       }
     }
   }
 }
 
 // 导出单例
-export const favoriteAppService = new FavoriteAppService();
+export const favoriteAppService = new FavoriteAppService()

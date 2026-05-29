@@ -13,8 +13,8 @@
  * @see /单向数据流架构说明.md
  */
 
-import { logger } from "@/infrastructure/logging/logger";
-import { bookmarkSyncService } from "@/services/bookmark-sync-service";
+import { logger } from '@/infrastructure/logging/logger'
+import { bookmarkSyncService } from '@/services/bookmark-sync-service'
 // ⚠️ 临时注释：scheduleTraitRebuildForIds 导致 background.js 导入 app-components
 // import { scheduleTraitRebuildForIds } from '@/services/bookmark-trait-service'
 
@@ -26,27 +26,24 @@ import { bookmarkSyncService } from "@/services/bookmark-sync-service";
  * @param forceFullSync - 是否强制全量同步（默认 false，使用增量同步）
  */
 async function syncAndBroadcast(
-  eventType: "created" | "changed" | "moved" | "removed",
+  eventType: 'created' | 'changed' | 'moved' | 'removed',
   bookmarkId: string,
-  forceFullSync = false,
+  forceFullSync = false
 ): Promise<void> {
   try {
-    logger.info("BackgroundBookmarks", `🔄 书签 ${eventType}:`, bookmarkId);
+    logger.info('BackgroundBookmarks', `🔄 书签 ${eventType}:`, bookmarkId)
 
     // 1. 根据情况选择全量或增量同步（无论内部/外部都需要同步数据）
     if (forceFullSync) {
-      logger.info(
-        "BackgroundBookmarks",
-        "🔄 执行全量同步（移动操作需重建 pathIds）",
-      );
-      await bookmarkSyncService.syncAllBookmarks();
+      logger.info('BackgroundBookmarks', '🔄 执行全量同步（移动操作需重建 pathIds）')
+      await bookmarkSyncService.syncAllBookmarks()
     } else {
       // ✅ 优先使用增量同步，性能更好
-      logger.info("BackgroundBookmarks", "⚡ 执行增量同步（单节点更新）");
+      logger.info('BackgroundBookmarks', '⚡ 执行增量同步（单节点更新）')
       // ✅ 关键修复：等待增量同步完成后再广播
       // enqueueIncremental 返回的 Promise 会在 syncIncremental 完成时 resolve
-      await bookmarkSyncService.enqueueIncremental(eventType, bookmarkId);
-      logger.info("BackgroundBookmarks", "✅ 增量同步已完成，准备广播");
+      await bookmarkSyncService.enqueueIncremental(eventType, bookmarkId)
+      logger.info('BackgroundBookmarks', '✅ 增量同步已完成，准备广播')
     }
 
     // 2. 广播"书签变更"消息
@@ -57,48 +54,41 @@ async function syncAndBroadcast(
     try {
       chrome.runtime.sendMessage(
         {
-          type: "acuity-bookmarks-db-synced",
+          type: 'acuity-bookmarks-db-synced',
           eventType: eventType,
           bookmarkId: bookmarkId,
-          timestamp: Date.now(),
+          timestamp: Date.now()
         },
         () => {
           // 使用回调函数来捕获错误，避免 Promise rejection
           if (chrome.runtime.lastError) {
-            const errorMsg = chrome.runtime.lastError.message || "";
+            const errorMsg = chrome.runtime.lastError.message || ''
             const isNoReceiver =
-              errorMsg.includes("Could not establish connection") ||
-              errorMsg.includes("Receiving end does not exist") ||
-              errorMsg.includes("Extension context invalidated");
+              errorMsg.includes('Could not establish connection') ||
+              errorMsg.includes('Receiving end does not exist') ||
+              errorMsg.includes('Extension context invalidated')
 
             if (!isNoReceiver) {
-              logger.warn(
-                "BackgroundBookmarks",
-                "广播消息失败（非接收端问题）",
-                {
-                  error: chrome.runtime.lastError.message,
-                  eventType,
-                },
-              );
+              logger.warn('BackgroundBookmarks', '广播消息失败（非接收端问题）', {
+                error: chrome.runtime.lastError.message,
+                eventType
+              })
             }
             // 没有接收端是正常的，不需要警告
           } else {
-            logger.info(
-              "BackgroundBookmarks",
-              `✅ 已广播书签变更: ${eventType}`,
-            );
+            logger.info('BackgroundBookmarks', `✅ 已广播书签变更: ${eventType}`)
           }
-        },
-      );
+        }
+      )
     } catch (error) {
-      logger.warn("BackgroundBookmarks", "广播消息异常", { error, eventType });
+      logger.warn('BackgroundBookmarks', '广播消息异常', { error, eventType })
     }
 
     // ⚠️ 临时注释：scheduleTraitRebuildForIds 导致 background.js 导入 app-components
     // 特征重建将在前端页面打开时自动执行
     // scheduleTraitRebuildForIds([bookmarkId], `background-${eventType}`)
   } catch (error) {
-    logger.error("BackgroundBookmarks", `❌ 同步失败: ${eventType}`, error);
+    logger.error('BackgroundBookmarks', `❌ 同步失败: ${eventType}`, error)
   }
 }
 
@@ -113,53 +103,49 @@ async function syncAndBroadcast(
  * - onImportBegan/onImportEnded: 书签导入
  */
 export function registerBookmarkChangeListeners(): void {
-  logger.info("BackgroundBookmarks", "🔧 注册书签变化监听器...");
+  logger.info('BackgroundBookmarks', '🔧 注册书签变化监听器...')
 
   // 监听书签创建
   chrome.bookmarks.onCreated.addListener(async (id, bookmark) => {
-    logger.info("BackgroundBookmarks", "📝 书签已创建:", bookmark.title || id);
+    logger.info('BackgroundBookmarks', '📝 书签已创建:', bookmark.title || id)
 
     // ✅ 创建操作使用增量同步
-    await syncAndBroadcast("created", id, false);
-  });
+    await syncAndBroadcast('created', id, false)
+  })
 
   // 监听书签修改
   chrome.bookmarks.onChanged.addListener(async (id, changeInfo) => {
-    logger.info(
-      "BackgroundBookmarks",
-      "✏️ 书签已修改:",
-      changeInfo.title || id,
-    );
+    logger.info('BackgroundBookmarks', '✏️ 书签已修改:', changeInfo.title || id)
     // ✅ 修改操作使用增量同步
-    await syncAndBroadcast("changed", id, false);
-  });
+    await syncAndBroadcast('changed', id, false)
+  })
 
   // 监听书签移动
   chrome.bookmarks.onMoved.addListener(async (id, _moveInfo) => {
-    logger.info("BackgroundBookmarks", "📁 书签已移动:", id);
+    logger.info('BackgroundBookmarks', '📁 书签已移动:', id)
     // ⚠️ 移动操作需要全量同步，因为会影响 pathIds、ancestorIds 等层级字段
-    await syncAndBroadcast("moved", id, true);
-  });
+    await syncAndBroadcast('moved', id, true)
+  })
 
   // 监听书签删除
   chrome.bookmarks.onRemoved.addListener(async (id, _removeInfo) => {
-    logger.info("BackgroundBookmarks", "🗑️ 书签已删除:", id);
+    logger.info('BackgroundBookmarks', '🗑️ 书签已删除:', id)
 
     // ✅ 删除操作使用增量同步
-    await syncAndBroadcast("removed", id, false);
-  });
+    await syncAndBroadcast('removed', id, false)
+  })
 
   // 监听导入开始
   chrome.bookmarks.onImportBegan?.addListener(() => {
-    logger.info("BackgroundBookmarks", "📥 书签导入开始...");
-  });
+    logger.info('BackgroundBookmarks', '📥 书签导入开始...')
+  })
 
   // 监听导入结束
   chrome.bookmarks.onImportEnded?.addListener(async () => {
-    logger.info("BackgroundBookmarks", "📥 书签导入结束，开始同步...");
+    logger.info('BackgroundBookmarks', '📥 书签导入结束，开始同步...')
     // ✅ 导入操作涉及大量变更且无具体 ID，必须使用全量同步
-    await syncAndBroadcast("created", "import-batch", true);
-  });
+    await syncAndBroadcast('created', 'import-batch', true)
+  })
 
-  logger.info("BackgroundBookmarks", "✅ 书签变化监听器已注册");
+  logger.info('BackgroundBookmarks', '✅ 书签变化监听器已注册')
 }

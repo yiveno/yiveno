@@ -10,8 +10,8 @@
  * - 不持久化、不变更业务逻辑，仅做纯转换
  * - 保持叶子节点包含 `url`，文件夹 `children` 至少为空数组的约定
  */
-import type { BookmarkNode } from "@/types";
-import type { BookmarkRecord } from "@/infrastructure/indexeddb/schema";
+import type { BookmarkNode } from '@/types'
+import type { BookmarkRecord } from '@/infrastructure/indexeddb/schema'
 
 /**
  * 最小树节点接口
@@ -20,19 +20,19 @@ import type { BookmarkRecord } from "@/infrastructure/indexeddb/schema";
  */
 export interface MinimalTreeNode {
   /** 节点唯一标识 */
-  id: string;
+  id: string
   /** 节点标题 */
-  title: string;
+  title: string
   /** 书签URL（文件夹为空） */
-  url?: string | undefined;
+  url?: string | undefined
   /** 子节点（文件夹使用） */
-  children?: MinimalTreeNode[] | undefined;
+  children?: MinimalTreeNode[] | undefined
   /** 父节点ID */
-  parentId?: string | undefined;
+  parentId?: string | undefined
   /** 位置索引 */
-  index?: number | undefined;
+  index?: number | undefined
   /** 创建时间 */
-  dateAdded?: number | undefined;
+  dateAdded?: number | undefined
 }
 
 /**
@@ -45,40 +45,38 @@ export interface MinimalTreeNode {
  * @param nodes - 最小树节点数组
  * @returns 标准化的 BookmarkNode 数组
  */
-export function listToBookmarkNodes<T extends MinimalTreeNode>(
-  nodes: T[],
-): BookmarkNode[] {
+export function listToBookmarkNodes<T extends MinimalTreeNode>(nodes: T[]): BookmarkNode[] {
   const mapNode = (n: MinimalTreeNode): BookmarkNode => {
     const node: BookmarkNode = {
       id: String(n.id),
-      title: n.title,
-    };
+      title: n.title
+    }
 
     if (n.url !== undefined) {
-      node.url = n.url;
+      node.url = n.url
     }
 
     if (n.parentId !== undefined) {
-      node.parentId = n.parentId;
+      node.parentId = n.parentId
     }
 
     if (n.dateAdded !== undefined) {
-      node.dateAdded = n.dateAdded;
+      node.dateAdded = n.dateAdded
     }
 
-    if (typeof n.index === "number") {
-      node.index = n.index;
+    if (typeof n.index === 'number') {
+      node.index = n.index
     }
 
     if (n.children?.length) {
-      node.children = n.children.map(mapNode);
+      node.children = n.children.map(mapNode)
     } else if (!n.url) {
-      node.children = [];
+      node.children = []
     }
 
-    return node;
-  };
-  return Array.isArray(nodes) ? nodes.map(mapNode) : [];
+    return node
+  }
+  return Array.isArray(nodes) ? nodes.map(mapNode) : []
 }
 
 /**
@@ -89,10 +87,8 @@ export function listToBookmarkNodes<T extends MinimalTreeNode>(
  * @param nodes - Chrome 书签树节点数组
  * @returns 标准化的 BookmarkNode 数组
  */
-export function chromeToBookmarkNodes(
-  nodes: MinimalTreeNode[],
-): BookmarkNode[] {
-  return listToBookmarkNodes(nodes);
+export function chromeToBookmarkNodes(nodes: MinimalTreeNode[]): BookmarkNode[] {
+  return listToBookmarkNodes(nodes)
 }
 
 /**
@@ -103,10 +99,8 @@ export function chromeToBookmarkNodes(
  * @param nodes - 提案草稿节点数组
  * @returns 标准化的 BookmarkNode 数组
  */
-export function proposalsToBookmarkNodes(
-  nodes: MinimalTreeNode[],
-): BookmarkNode[] {
-  return listToBookmarkNodes(nodes);
+export function proposalsToBookmarkNodes(nodes: MinimalTreeNode[]): BookmarkNode[] {
+  return listToBookmarkNodes(nodes)
 }
 
 /**
@@ -117,17 +111,15 @@ export function proposalsToBookmarkNodes(
  * @param records - IndexedDB 书签记录数组
  * @returns 重建后的 BookmarkNode 树
  */
-export function recordsToBookmarkNodes(
-  records: BookmarkRecord[],
-): BookmarkNode[] {
-  if (!Array.isArray(records) || records.length === 0) return [];
+export function recordsToBookmarkNodes(records: BookmarkRecord[]): BookmarkNode[] {
+  if (!Array.isArray(records) || records.length === 0) return []
 
   // 去重后构建节点映射
-  const unique = new Map<string, BookmarkRecord>();
-  for (const r of records) unique.set(String(r.id), r);
-  const items = Array.from(unique.values());
+  const unique = new Map<string, BookmarkRecord>()
+  for (const r of records) unique.set(String(r.id), r)
+  const items = Array.from(unique.values())
 
-  const nodeMap = new Map<string, BookmarkNode>();
+  const nodeMap = new Map<string, BookmarkNode>()
   for (const it of items) {
     nodeMap.set(String(it.id), {
       id: String(it.id),
@@ -140,36 +132,35 @@ export function recordsToBookmarkNodes(
       domain: it.domain,
       titleLower: it.titleLower,
       urlLower: it.urlLower,
-      childrenCount: it.childrenCount,
-    } as BookmarkNode);
+      childrenCount: it.childrenCount
+    } as BookmarkNode)
   }
 
-  const roots: BookmarkNode[] = [];
+  const roots: BookmarkNode[] = []
   for (const it of items) {
-    const id = String(it.id);
-    const parentId = it.parentId ? String(it.parentId) : undefined;
-    const node = nodeMap.get(id)!;
-    if (parentId && nodeMap.has(parentId) && parentId !== "0") {
-      const parent = nodeMap.get(parentId)!;
+    const id = String(it.id)
+    const parentId = it.parentId ? String(it.parentId) : undefined
+    const node = nodeMap.get(id)!
+    if (parentId && nodeMap.has(parentId) && parentId !== '0') {
+      const parent = nodeMap.get(parentId)!
       if (parent.children) {
-        if (!parent.children.some((c) => String(c.id) === id))
-          parent.children.push(node);
+        if (!parent.children.some(c => String(c.id) === id)) parent.children.push(node)
       }
     } else {
-      if (id !== "0" && !roots.some((r) => r.id === id)) roots.push(node);
+      if (id !== '0' && !roots.some(r => r.id === id)) roots.push(node)
     }
   }
 
   // 排序（若存在 index）
   const getIndex = (id: string) => {
-    const raw = unique.get(id);
-    return raw && typeof raw.index === "number" ? raw.index : 0;
-  };
+    const raw = unique.get(id)
+    return raw && typeof raw.index === 'number' ? raw.index : 0
+  }
   const sortChildren = (nodes: BookmarkNode[]) => {
-    nodes.sort((a, b) => getIndex(a.id) - getIndex(b.id));
-    for (const n of nodes) if (n.children?.length) sortChildren(n.children);
-  };
-  sortChildren(roots);
+    nodes.sort((a, b) => getIndex(a.id) - getIndex(b.id))
+    for (const n of nodes) if (n.children?.length) sortChildren(n.children)
+  }
+  sortChildren(roots)
 
-  return roots;
+  return roots
 }

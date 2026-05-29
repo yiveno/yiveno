@@ -3,7 +3,7 @@
  *
  * 提供更接近 Vue 3 模板修饰符的 API
  */
-import { useKeyboard, type KeyboardShortcut } from "./useKeyboard";
+import { useKeyboard, type KeyboardShortcut } from './useKeyboard'
 
 /**
  * 解析 Vue 风格的快捷键字符串
@@ -13,24 +13,22 @@ import { useKeyboard, type KeyboardShortcut } from "./useKeyboard";
  * parseModifierString('alt.shift.s') // { key: 's', alt: true, shift: true }
  * parseModifierString('meta.k') // { key: 'k', meta: true }
  */
-export function parseModifierString(
-  modifierString: string,
-): Partial<KeyboardShortcut> {
-  const parts = modifierString.toLowerCase().split(".");
-  const key = parts[parts.length - 1]; // 最后一个是按键
+export function parseModifierString(modifierString: string): Partial<KeyboardShortcut> {
+  const parts = modifierString.toLowerCase().split('.')
+  const key = parts[parts.length - 1] // 最后一个是按键
 
-  const modifiers: Partial<KeyboardShortcut> = {};
+  const modifiers: Partial<KeyboardShortcut> = {}
   if (key) {
-    modifiers.key = key;
+    modifiers.key = key
   }
 
   // 解析修饰键
-  if (parts.includes("ctrl")) modifiers.ctrl = true;
-  if (parts.includes("alt")) modifiers.alt = true;
-  if (parts.includes("shift")) modifiers.shift = true;
-  if (parts.includes("meta")) modifiers.meta = true;
+  if (parts.includes('ctrl')) modifiers.ctrl = true
+  if (parts.includes('alt')) modifiers.alt = true
+  if (parts.includes('shift')) modifiers.shift = true
+  if (parts.includes('meta')) modifiers.meta = true
 
-  return modifiers;
+  return modifiers
 }
 
 /**
@@ -48,7 +46,7 @@ export function parseModifierString(
  * ```
  */
 export function useKeyboardModifier() {
-  const { register, unregister, clear, getShortcuts } = useKeyboard();
+  const { register, unregister, clear, getShortcuts } = useKeyboard()
 
   /**
    * 使用修饰符字符串注册快捷键（类似 @keydown.ctrl.enter）
@@ -62,37 +60,32 @@ export function useKeyboardModifier() {
     modifierString: string,
     handler: (event: KeyboardEvent) => void,
     description?: string,
-    options?: Partial<
-      Pick<
-        KeyboardShortcut,
-        "preventDefault" | "stopPropagation" | "allowInInput"
-      >
-    >,
+    options?: Partial<Pick<KeyboardShortcut, 'preventDefault' | 'stopPropagation' | 'allowInInput'>>
   ): () => void {
-    const modifiers = parseModifierString(modifierString);
+    const modifiers = parseModifierString(modifierString)
 
     return register({
       ...modifiers,
       ...options,
       handler,
-      description,
-    } as KeyboardShortcut);
+      description
+    } as KeyboardShortcut)
   }
 
   /**
    * 注销快捷键
    */
   function off(modifierString: string): void {
-    const modifiers = parseModifierString(modifierString);
-    unregister(modifiers as KeyboardShortcut);
+    const modifiers = parseModifierString(modifierString)
+    unregister(modifiers as KeyboardShortcut)
   }
 
   return {
     on,
     off,
     clear,
-    getShortcuts,
-  };
+    getShortcuts
+  }
 }
 
 /**
@@ -100,47 +93,47 @@ export function useKeyboardModifier() {
  */
 export const ModifierShortcuts = {
   /** 保存 - Ctrl/Cmd + S */
-  SAVE: "ctrl.s",
+  SAVE: 'ctrl.s',
 
   /** 撤销 - Ctrl/Cmd + Z */
-  UNDO: "ctrl.z",
+  UNDO: 'ctrl.z',
 
   /** 重做 - Ctrl/Cmd + Shift + Z */
-  REDO: "ctrl.shift.z",
+  REDO: 'ctrl.shift.z',
 
   /** 筛选 - Ctrl/Cmd + F */
-  SEARCH: "ctrl.f",
+  SEARCH: 'ctrl.f',
 
   /** 全选 - Ctrl/Cmd + A */
-  SELECT_ALL: "ctrl.a",
+  SELECT_ALL: 'ctrl.a',
 
   /** 复制 - Ctrl/Cmd + C */
-  COPY: "ctrl.c",
+  COPY: 'ctrl.c',
 
   /** 粘贴 - Ctrl/Cmd + V */
-  PASTE: "ctrl.v",
+  PASTE: 'ctrl.v',
 
   /** 剪切 - Ctrl/Cmd + X */
-  CUT: "ctrl.x",
+  CUT: 'ctrl.x',
 
   /** Enter */
-  ENTER: "enter",
+  ENTER: 'enter',
 
   /** Escape */
-  ESCAPE: "esc",
+  ESCAPE: 'esc',
 
   /** Delete */
-  DELETE: "delete",
+  DELETE: 'delete',
 
   /** Tab */
-  TAB: "tab",
+  TAB: 'tab',
 
   /** 空格 */
-  SPACE: "space",
+  SPACE: 'space',
 
   /** 方向键 */
-  ARROW_UP: "up",
-  ARROW_DOWN: "down",
-  ARROW_LEFT: "left",
-  ARROW_RIGHT: "right",
-} as const;
+  ARROW_UP: 'up',
+  ARROW_DOWN: 'down',
+  ARROW_LEFT: 'left',
+  ARROW_RIGHT: 'right'
+} as const

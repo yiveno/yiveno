@@ -1,38 +1,37 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import { LucideIcon } from "@/components/base/LucideIcon";
-import { Loading } from "@/components/base/Loading";
-import type { InputProps, InputEmits } from "./Input.d";
-import "@material/web/textfield/outlined-text-field.js";
-import "@material/web/textfield/filled-text-field.js";
-import "@material/web/iconbutton/icon-button.js";
+import { computed, ref } from 'vue'
+import { LucideIcon } from '@/components/base/LucideIcon'
+import { Loading } from '@/components/base/Loading'
+import type { InputProps, InputEmits } from './Input.d'
+import '@material/web/textfield/outlined-text-field.js'
+import '@material/web/textfield/filled-text-field.js'
+import '@material/web/iconbutton/icon-button.js'
 
 defineOptions({
-  name: "MdInput",
-});
+  name: 'MdInput'
+})
 
 const props = withDefaults(defineProps<InputProps>(), {
-  label: "",
-  variant: "outlined",
-  density: "default",
-  autocomplete: "off",
-  placeholder: "",
+  label: '',
+  variant: 'outlined',
+  density: 'default',
+  autocomplete: 'off',
+  placeholder: '',
   disabled: false,
   readonly: false,
   clearable: false,
-  hint: "",
+  hint: '',
   error: false,
-  errorMessage: "",
-  size: "md",
-  type: "text",
-  leadingIconSize: 20,
-});
+  errorMessage: '',
+  size: 'md',
+  type: 'text',
+  leadingIconSize: 20
+})
 
-const emit = defineEmits<InputEmits>();
+const emit = defineEmits<InputEmits>()
 
-// @ts-expect-error Vue template ref
-const textFieldRef = ref<HTMLElement>();
-const isFocused = ref(false);
+const textFieldRef = ref<HTMLElement>()
+const isFocused = ref(false)
 
 /**
  * Wrapper 类名
@@ -41,58 +40,58 @@ const wrapperClasses = computed(() => [
   `md-input-wrapper--${props.size}`,
   `md-input-wrapper--${props.density}`,
   {
-    "md-input-wrapper--disabled": props.disabled,
-    "md-input-wrapper--error": props.error || props.errorMessage,
-  },
-]);
+    'md-input-wrapper--disabled': props.disabled,
+    'md-input-wrapper--error': props.error || props.errorMessage
+  }
+])
 
 /**
  * 处理输入事件
  */
 const handleInput = (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  const raw = target.value;
-  const value = props.modelModifiers?.number ? Number(raw) : raw;
-  emit("update:modelValue", value);
-  emit("input", value);
-};
+  const target = event.target as HTMLInputElement
+  const raw = target.value
+  const value = props.modelModifiers?.number ? Number(raw) : raw
+  emit('update:modelValue', value)
+  emit('input', value)
+}
 
 /**
  * 处理聚焦事件
  */
 const handleFocus = (event: FocusEvent) => {
-  isFocused.value = true;
-  emit("focus", event);
-};
+  isFocused.value = true
+  emit('focus', event)
+}
 
 /**
  * 处理失焦事件
  */
 const handleBlur = (event: FocusEvent) => {
-  isFocused.value = false;
-  emit("blur", event);
-};
+  isFocused.value = false
+  emit('blur', event)
+}
 
 /**
  * 处理键盘事件
  */
 const handleKeydown = (event: KeyboardEvent) => {
-  emit("keydown", event);
-};
+  emit('keydown', event)
+}
 
 /**
  * 清空输入
  */
 const clearInput = () => {
-  let clearedValue: string | number | undefined = props.clearValue;
+  let clearedValue: string | number | undefined = props.clearValue
 
   if (clearedValue === undefined) {
-    clearedValue = props.modelModifiers?.number ? undefined : "";
+    clearedValue = props.modelModifiers?.number ? undefined : ''
   }
 
-  emit("update:modelValue", clearedValue as string | number);
-  emit("clear");
-};
+  emit('update:modelValue', clearedValue as string | number)
+  emit('clear')
+}
 </script>
 
 <template>
@@ -133,11 +132,7 @@ const clearInput = () => {
       />
 
       <!-- Trailing icon: 优先使用自定义 slot，否则根据状态显示 clear/loading -->
-      <slot
-        v-if="$slots['trailing-icon']"
-        slot="trailing-icon"
-        name="trailing-icon"
-      ></slot>
+      <slot v-if="$slots['trailing-icon']" slot="trailing-icon" name="trailing-icon"></slot>
       <template v-else>
         <!-- 清除按钮：有值时显示（优先级高于 loading） -->
         <md-icon-button
@@ -185,11 +180,7 @@ const clearInput = () => {
       />
 
       <!-- Trailing icon: 优先使用自定义 slot，否则根据状态显示 clear/loading -->
-      <slot
-        v-if="$slots['trailing-icon']"
-        slot="trailing-icon"
-        name="trailing-icon"
-      ></slot>
+      <slot v-if="$slots['trailing-icon']" slot="trailing-icon" name="trailing-icon"></slot>
       <template v-else>
         <!-- 清除按钮：有值时显示（优先级高于 loading） -->
         <md-icon-button
@@ -290,8 +281,7 @@ md-filled-text-field {
   display: flex;
   align-items: center;
   color: var(--md-sys-color-on-surface-variant);
-  transition: color var(--md-sys-motion-duration-short2)
-    var(--md-sys-motion-easing-standard);
+  transition: color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
 }
 
 .md-input-wrapper:has(.md-text-field:focus-within) .md-input-prepend,

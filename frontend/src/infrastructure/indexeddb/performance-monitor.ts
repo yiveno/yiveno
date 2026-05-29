@@ -8,31 +8,31 @@
  * - 检测性能瓶颈
  */
 
-import { logger } from "@/infrastructure/logging/logger";
+import { logger } from '@/infrastructure/logging/logger'
 
 /**
  * 操作类型
  */
-export type OperationType = "read" | "write" | "delete" | "clear" | "count";
+export type OperationType = 'read' | 'write' | 'delete' | 'clear' | 'count'
 
 /**
  * 性能指标
  */
 interface PerformanceMetric {
   /** 操作类型 */
-  type: OperationType;
+  type: OperationType
   /** 对象存储名称 */
-  storeName: string;
+  storeName: string
   /** 操作耗时（毫秒） */
-  duration: number;
+  duration: number
   /** 记录数量 */
-  recordCount?: number;
+  recordCount?: number
   /** 是否成功 */
-  success: boolean;
+  success: boolean
   /** 错误信息 */
-  error?: string;
+  error?: string
   /** 时间戳 */
-  timestamp: number;
+  timestamp: number
 }
 
 /**
@@ -40,48 +40,48 @@ interface PerformanceMetric {
  */
 interface PerformanceStats {
   /** 总操作数 */
-  totalOperations: number;
+  totalOperations: number
   /** 成功操作数 */
-  successfulOperations: number;
+  successfulOperations: number
   /** 失败操作数 */
-  failedOperations: number;
+  failedOperations: number
   /** 成功率 */
-  successRate: number;
+  successRate: number
   /** 平均耗时（毫秒） */
-  averageDuration: number;
+  averageDuration: number
   /** 最小耗时（毫秒） */
-  minDuration: number;
+  minDuration: number
   /** 最大耗时（毫秒） */
-  maxDuration: number;
+  maxDuration: number
   /** 总耗时（毫秒） */
-  totalDuration: number;
+  totalDuration: number
   /** 按操作类型分组的统计 */
   byType: Record<
     OperationType,
     {
-      count: number;
-      averageDuration: number;
-      successRate: number;
+      count: number
+      averageDuration: number
+      successRate: number
     }
-  >;
+  >
   /** 按对象存储分组的统计 */
   byStore: Record<
     string,
     {
-      count: number;
-      averageDuration: number;
-      successRate: number;
+      count: number
+      averageDuration: number
+      successRate: number
     }
-  >;
+  >
 }
 
 /**
  * 性能监控器
  */
 export class PerformanceMonitor {
-  private metrics: PerformanceMetric[] = [];
-  private maxMetrics = 1000; // 最多保留 1000 条记录
-  private enabled = true;
+  private metrics: PerformanceMetric[] = []
+  private maxMetrics = 1000 // 最多保留 1000 条记录
+  private enabled = true
 
   /**
    * 记录操作性能
@@ -89,32 +89,32 @@ export class PerformanceMonitor {
    * @param metric - 性能指标
    */
   record(metric: PerformanceMetric): void {
-    if (!this.enabled) return;
+    if (!this.enabled) return
 
-    this.metrics.push(metric);
+    this.metrics.push(metric)
 
     // 限制记录数量，避免内存泄漏
     if (this.metrics.length > this.maxMetrics) {
-      this.metrics.shift();
+      this.metrics.shift()
     }
 
     // 记录慢查询（超过 100ms）
     if (metric.duration > 100) {
-      logger.warn("IndexedDB", "慢查询检测", {
+      logger.warn('IndexedDB', '慢查询检测', {
         type: metric.type,
         storeName: metric.storeName,
         duration: `${metric.duration.toFixed(0)}ms`,
-        recordCount: metric.recordCount,
-      });
+        recordCount: metric.recordCount
+      })
     }
 
     // 记录失败操作
     if (!metric.success) {
-      logger.error("IndexedDB", "操作失败", {
+      logger.error('IndexedDB', '操作失败', {
         type: metric.type,
         storeName: metric.storeName,
-        error: metric.error,
-      });
+        error: metric.error
+      })
     }
   }
 
@@ -125,66 +125,52 @@ export class PerformanceMonitor {
    * @returns 性能统计
    */
   getStats(timeRange: number = 5 * 60 * 1000): PerformanceStats {
-    const now = Date.now();
-    const recentMetrics = this.metrics.filter(
-      (m) => now - m.timestamp <= timeRange,
-    );
+    const now = Date.now()
+    const recentMetrics = this.metrics.filter(m => now - m.timestamp <= timeRange)
 
     if (recentMetrics.length === 0) {
-      return this.getEmptyStats();
+      return this.getEmptyStats()
     }
 
-    const totalOperations = recentMetrics.length;
-    const successfulOperations = recentMetrics.filter((m) => m.success).length;
-    const failedOperations = totalOperations - successfulOperations;
-    const successRate = successfulOperations / totalOperations;
+    const totalOperations = recentMetrics.length
+    const successfulOperations = recentMetrics.filter(m => m.success).length
+    const failedOperations = totalOperations - successfulOperations
+    const successRate = successfulOperations / totalOperations
 
-    const durations = recentMetrics.map((m) => m.duration);
-    const totalDuration = durations.reduce((sum, d) => sum + d, 0);
-    const averageDuration = totalDuration / totalOperations;
-    const minDuration = Math.min(...durations);
-    const maxDuration = Math.max(...durations);
+    const durations = recentMetrics.map(m => m.duration)
+    const totalDuration = durations.reduce((sum, d) => sum + d, 0)
+    const averageDuration = totalDuration / totalOperations
+    const minDuration = Math.min(...durations)
+    const maxDuration = Math.max(...durations)
 
     // 按操作类型分组
-    const byType: PerformanceStats["byType"] = {} as PerformanceStats["byType"];
-    const types: OperationType[] = [
-      "read",
-      "write",
-      "delete",
-      "clear",
-      "count",
-    ];
+    const byType: PerformanceStats['byType'] = {} as PerformanceStats['byType']
+    const types: OperationType[] = ['read', 'write', 'delete', 'clear', 'count']
 
     for (const type of types) {
-      const typeMetrics = recentMetrics.filter((m) => m.type === type);
+      const typeMetrics = recentMetrics.filter(m => m.type === type)
       if (typeMetrics.length > 0) {
-        const typeSuccessful = typeMetrics.filter((m) => m.success).length;
+        const typeSuccessful = typeMetrics.filter(m => m.success).length
         byType[type] = {
           count: typeMetrics.length,
-          averageDuration:
-            typeMetrics.reduce((sum, m) => sum + m.duration, 0) /
-            typeMetrics.length,
-          successRate: typeSuccessful / typeMetrics.length,
-        };
+          averageDuration: typeMetrics.reduce((sum, m) => sum + m.duration, 0) / typeMetrics.length,
+          successRate: typeSuccessful / typeMetrics.length
+        }
       }
     }
 
     // 按对象存储分组
-    const byStore: PerformanceStats["byStore"] = {};
-    const storeNames = [...new Set(recentMetrics.map((m) => m.storeName))];
+    const byStore: PerformanceStats['byStore'] = {}
+    const storeNames = [...new Set(recentMetrics.map(m => m.storeName))]
 
     for (const storeName of storeNames) {
-      const storeMetrics = recentMetrics.filter(
-        (m) => m.storeName === storeName,
-      );
-      const storeSuccessful = storeMetrics.filter((m) => m.success).length;
+      const storeMetrics = recentMetrics.filter(m => m.storeName === storeName)
+      const storeSuccessful = storeMetrics.filter(m => m.success).length
       byStore[storeName] = {
         count: storeMetrics.length,
-        averageDuration:
-          storeMetrics.reduce((sum, m) => sum + m.duration, 0) /
-          storeMetrics.length,
-        successRate: storeSuccessful / storeMetrics.length,
-      };
+        averageDuration: storeMetrics.reduce((sum, m) => sum + m.duration, 0) / storeMetrics.length,
+        successRate: storeSuccessful / storeMetrics.length
+      }
     }
 
     return {
@@ -197,8 +183,8 @@ export class PerformanceMonitor {
       maxDuration,
       totalDuration,
       byType,
-      byStore,
-    };
+      byStore
+    }
   }
 
   /**
@@ -214,17 +200,17 @@ export class PerformanceMonitor {
       minDuration: 0,
       maxDuration: 0,
       totalDuration: 0,
-      byType: {} as PerformanceStats["byType"],
-      byStore: {},
-    };
+      byType: {} as PerformanceStats['byType'],
+      byStore: {}
+    }
   }
 
   /**
    * 清空性能记录
    */
   clear(): void {
-    this.metrics = [];
-    logger.info("IndexedDB", "性能监控记录已清空");
+    this.metrics = []
+    logger.info('IndexedDB', '性能监控记录已清空')
   }
 
   /**
@@ -233,8 +219,8 @@ export class PerformanceMonitor {
    * @param enabled - 是否启用
    */
   setEnabled(enabled: boolean): void {
-    this.enabled = enabled;
-    logger.info("IndexedDB", `性能监控已${enabled ? "启用" : "禁用"}`);
+    this.enabled = enabled
+    logger.info('IndexedDB', `性能监控已${enabled ? '启用' : '禁用'}`)
   }
 
   /**
@@ -244,14 +230,11 @@ export class PerformanceMonitor {
    * @param limit - 返回数量限制，默认 10 条
    * @returns 慢查询列表
    */
-  getSlowQueries(
-    threshold: number = 100,
-    limit: number = 10,
-  ): PerformanceMetric[] {
+  getSlowQueries(threshold: number = 100, limit: number = 10): PerformanceMetric[] {
     return this.metrics
-      .filter((m) => m.duration > threshold)
+      .filter(m => m.duration > threshold)
       .sort((a, b) => b.duration - a.duration)
-      .slice(0, limit);
+      .slice(0, limit)
   }
 
   /**
@@ -262,9 +245,9 @@ export class PerformanceMonitor {
    */
   getFailedOperations(limit: number = 10): PerformanceMetric[] {
     return this.metrics
-      .filter((m) => !m.success)
+      .filter(m => !m.success)
       .sort((a, b) => b.timestamp - a.timestamp)
-      .slice(0, limit);
+      .slice(0, limit)
   }
 
   /**
@@ -273,14 +256,14 @@ export class PerformanceMonitor {
    * @returns 性能指标数组
    */
   export(): PerformanceMetric[] {
-    return [...this.metrics];
+    return [...this.metrics]
   }
 }
 
 /**
  * 全局性能监控器实例
  */
-export const performanceMonitor = new PerformanceMonitor();
+export const performanceMonitor = new PerformanceMonitor()
 
 /**
  * 性能监控装饰器
@@ -302,40 +285,36 @@ export const performanceMonitor = new PerformanceMonitor();
  * ```
  */
 export function monitorPerformance(type: OperationType, storeName: string) {
-  return function (
-    _target: unknown,
-    _propertyKey: string,
-    descriptor: PropertyDescriptor,
-  ) {
-    const originalMethod = descriptor.value;
+  return function (_target: unknown, _propertyKey: string, descriptor: PropertyDescriptor) {
+    const originalMethod = descriptor.value
 
     descriptor.value = async function (...args: unknown[]) {
-      const startTime = performance.now();
-      let success = true;
-      let error: string | undefined;
+      const startTime = performance.now()
+      let success = true
+      let error: string | undefined
 
       try {
-        const result = await originalMethod.apply(this, args);
-        return result;
+        const result = await originalMethod.apply(this, args)
+        return result
       } catch (e) {
-        success = false;
-        error = e instanceof Error ? e.message : String(e);
-        throw e;
+        success = false
+        error = e instanceof Error ? e.message : String(e)
+        throw e
       } finally {
-        const duration = performance.now() - startTime;
+        const duration = performance.now() - startTime
         performanceMonitor.record({
           type,
           storeName,
           duration,
           success,
           ...(error !== undefined ? { error } : {}),
-          timestamp: Date.now(),
-        });
+          timestamp: Date.now()
+        })
       }
-    };
+    }
 
-    return descriptor;
-  };
+    return descriptor
+  }
 }
 
 /**
@@ -360,21 +339,21 @@ export async function monitorOperation<T>(
   type: OperationType,
   storeName: string,
   operation: () => Promise<T>,
-  recordCount?: number,
+  recordCount?: number
 ): Promise<T> {
-  const startTime = performance.now();
-  let success = true;
-  let error: string | undefined;
+  const startTime = performance.now()
+  let success = true
+  let error: string | undefined
 
   try {
-    const result = await operation();
-    return result;
+    const result = await operation()
+    return result
   } catch (e) {
-    success = false;
-    error = e instanceof Error ? e.message : String(e);
-    throw e;
+    success = false
+    error = e instanceof Error ? e.message : String(e)
+    throw e
   } finally {
-    const duration = performance.now() - startTime;
+    const duration = performance.now() - startTime
     performanceMonitor.record({
       type,
       storeName,
@@ -382,7 +361,7 @@ export async function monitorOperation<T>(
       ...(recordCount !== undefined ? { recordCount } : {}),
       success,
       ...(error !== undefined ? { error } : {}),
-      timestamp: Date.now(),
-    });
+      timestamp: Date.now()
+    })
   }
 }

@@ -4,7 +4,7 @@
  * 包含查询性能监控系统的所有类型
  */
 
-import type { ID, Timestamp } from "../core/common";
+import type { ID, Timestamp } from '../core/common'
 
 /**
  * 性能指标记录接口
@@ -13,37 +13,37 @@ import type { ID, Timestamp } from "../core/common";
  */
 export interface PerformanceMetric {
   /** 记录唯一ID */
-  id: ID;
+  id: ID
 
   /** 查询查询字符串 */
-  query: string;
+  query: string
 
   /** 查询耗时（毫秒） */
-  duration: number;
+  duration: number
 
   /** 结果数量 */
-  resultCount: number;
+  resultCount: number
 
   /** 是否命中缓存 */
-  cacheHit: boolean;
+  cacheHit: boolean
 
   /** 查询模式 */
-  searchMode: string;
+  searchMode: string
 
   /** 时间戳 */
-  timestamp: Timestamp;
+  timestamp: Timestamp
 
   /** 会话ID */
-  sessionId: string;
+  sessionId: string
 
   /** 数据源列表 */
-  sources: string[];
+  sources: string[]
 
   /** 是否成功 */
-  success: boolean;
+  success: boolean
 
   /** 错误消息（如果失败） */
-  errorMessage?: string;
+  errorMessage?: string
 }
 
 /**
@@ -53,43 +53,43 @@ export interface PerformanceMetric {
  */
 export interface PerformanceStats {
   /** 总查询次数 */
-  totalSearches: number;
+  totalSearches: number
 
   /** 平均响应时间（毫秒） */
-  averageResponseTime: number;
+  averageResponseTime: number
 
   /** 中位数响应时间（毫秒） */
-  medianResponseTime: number;
+  medianResponseTime: number
 
   /** P95 响应时间（毫秒） */
-  p95ResponseTime: number;
+  p95ResponseTime: number
 
   /** P99 响应时间（毫秒） */
-  p99ResponseTime: number;
+  p99ResponseTime: number
 
   /** 缓存命中率（0-1） */
-  cacheHitRate: number;
+  cacheHitRate: number
 
   /** 缓存大小 */
-  cacheSize: number;
+  cacheSize: number
 
   /** 成功率（0-1） */
-  successRate: number;
+  successRate: number
 
   /** 错误率（0-1） */
-  errorRate: number;
+  errorRate: number
 
   /** 查询模式分布统计 */
-  searchModeDistribution: Record<string, number>;
+  searchModeDistribution: Record<string, number>
 
   /** 性能趋势数据 */
-  performanceTrend: PerformanceTrend[];
+  performanceTrend: PerformanceTrend[]
 
   /** 慢查询列表 */
-  slowQueries: SlowQuery[];
+  slowQueries: SlowQuery[]
 
   /** 热门查询列表 */
-  topQueries: TopQuery[];
+  topQueries: TopQuery[]
 }
 
 /**
@@ -99,16 +99,16 @@ export interface PerformanceStats {
  */
 export interface PerformanceTrend {
   /** 时间戳 */
-  timestamp: Timestamp;
+  timestamp: Timestamp
 
   /** 平均响应时间 */
-  averageTime: number;
+  averageTime: number
 
   /** 查询数量 */
-  queryCount: number;
+  queryCount: number
 
   /** 缓存命中率 */
-  cacheHitRate: number;
+  cacheHitRate: number
 }
 
 /**
@@ -118,19 +118,19 @@ export interface PerformanceTrend {
  */
 export interface SlowQuery {
   /** 查询字符串 */
-  query: string;
+  query: string
 
   /** 耗时（毫秒） */
-  duration: number;
+  duration: number
 
   /** 时间戳 */
-  timestamp: Timestamp;
+  timestamp: Timestamp
 
   /** 结果数量 */
-  resultCount: number;
+  resultCount: number
 
   /** 慢查询原因列表 */
-  reasons: string[];
+  reasons: string[]
 }
 
 /**
@@ -140,19 +140,19 @@ export interface SlowQuery {
  */
 export interface TopQuery {
   /** 查询字符串 */
-  query: string;
+  query: string
 
   /** 使用次数 */
-  count: number;
+  count: number
 
   /** 平均耗时（毫秒） */
-  averageDuration: number;
+  averageDuration: number
 
   /** 最后使用时间 */
-  lastUsed: Timestamp;
+  lastUsed: Timestamp
 
   /** 成功率（0-1） */
-  successRate: number;
+  successRate: number
 }
 
 /**
@@ -162,25 +162,25 @@ export interface TopQuery {
  */
 export interface OptimizationSuggestion {
   /** 建议类型 */
-  type: "performance" | "caching" | "indexing" | "configuration";
+  type: 'performance' | 'caching' | 'indexing' | 'configuration'
 
   /** 严重程度 */
-  severity: "low" | "medium" | "high" | "critical";
+  severity: 'low' | 'medium' | 'high' | 'critical'
 
   /** 建议消息 */
-  message: string;
+  message: string
 
   /** 建议的操作 */
-  action: string;
+  action: string
 
   /** 影响程度 */
-  impact: "low" | "medium" | "high";
+  impact: 'low' | 'medium' | 'high'
 
   /** 实施难度 */
-  effort: "low" | "medium" | "high";
+  effort: 'low' | 'medium' | 'high'
 
   /** 优先级（数值越大越优先） */
-  priority: number;
+  priority: number
 }
 
 /**
@@ -190,14 +190,14 @@ export interface OptimizationSuggestion {
  */
 export interface AlertThreshold {
   /** 平均响应时间阈值（毫秒） */
-  averageResponseTime: number;
+  averageResponseTime: number
 
   /** 缓存命中率阈值（0-1） */
-  cacheHitRate: number;
+  cacheHitRate: number
 
   /** 错误率阈值（0-1） */
-  errorRate: number;
+  errorRate: number
 
   /** 慢查询阈值（毫秒） */
-  slowQueryThreshold: number;
+  slowQueryThreshold: number
 }

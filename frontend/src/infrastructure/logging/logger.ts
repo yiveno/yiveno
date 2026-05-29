@@ -9,14 +9,10 @@
  */
 
 // 从统一类型定义导入
-import type {
-  LogLevel,
-  LoggerConfig,
-  LogEntry,
-} from "@/types/infrastructure/logging";
+import type { LogLevel, LoggerConfig, LogEntry } from '@/types/infrastructure/logging'
 
 // 导出类型供外部使用
-export type { LogLevel, LoggerConfig, LogEntry };
+export type { LogLevel, LoggerConfig, LogEntry }
 
 /**
  * 日志样式配置
@@ -41,22 +37,22 @@ const getLevelToStyle = (): Record<LogLevel, string> => {
       // Error: 使用 MD3 Error 容器色（需要从 material-theme.css 获取）
       error: `background: rgb(255, 235, 238); color: rgb(183, 28, 28); padding: 2px 6px; border-radius: 3px;`,
       // Debug: 使用 MD3 Tertiary 容器色（需要从 material-theme.css 获取）
-      debug: `background: rgb(243, 229, 245); color: rgb(74, 20, 140); padding: 2px 6px; border-radius: 3px;`,
-    };
+      debug: `background: rgb(243, 229, 245); color: rgb(74, 20, 140); padding: 2px 6px; border-radius: 3px;`
+    }
   } catch {
     // 降级方案：如果导入失败，使用硬编码值
     return {
-      info: "background: rgb(216, 226, 255); color: rgb(68, 94, 145); padding: 2px 6px; border-radius: 3px;",
-      warn: "background: rgb(252, 215, 251); color: rgb(113, 85, 115); padding: 2px 6px; border-radius: 3px;",
+      info: 'background: rgb(216, 226, 255); color: rgb(68, 94, 145); padding: 2px 6px; border-radius: 3px;',
+      warn: 'background: rgb(252, 215, 251); color: rgb(113, 85, 115); padding: 2px 6px; border-radius: 3px;',
       error:
-        "background: rgb(255, 235, 238); color: rgb(183, 28, 28); padding: 2px 6px; border-radius: 3px;",
+        'background: rgb(255, 235, 238); color: rgb(183, 28, 28); padding: 2px 6px; border-radius: 3px;',
       debug:
-        "background: rgb(243, 229, 245); color: rgb(74, 20, 140); padding: 2px 6px; border-radius: 3px;",
-    };
+        'background: rgb(243, 229, 245); color: rgb(74, 20, 140); padding: 2px 6px; border-radius: 3px;'
+    }
   }
-};
+}
 
-const levelToStyle = getLevelToStyle();
+const levelToStyle = getLevelToStyle()
 
 /**
  * 日志级别权重
@@ -65,24 +61,24 @@ const levelWeights: Record<LogLevel, number> = {
   debug: 0,
   info: 1,
   warn: 2,
-  error: 3,
-};
+  error: 3
+}
 
 /**
  * 日志器类
  */
 export class Logger {
-  private config: LoggerConfig;
-  private buffer: LogEntry[] = [];
+  private config: LoggerConfig
+  private buffer: LogEntry[] = []
 
   constructor(config: Partial<LoggerConfig> = {}) {
     this.config = {
-      level: "info",
+      level: 'info',
       enableConsole: true,
       enableRemote: false,
       maxBufferSize: 1000,
-      ...config,
-    };
+      ...config
+    }
   }
 
   /**
@@ -93,8 +89,8 @@ export class Logger {
    * logger.info('Component', 'Message')
    */
   info(...args: unknown[]): void {
-    const { titles, data } = this.parseArgs(args);
-    this.log("info", titles, data);
+    const { titles, data } = this.parseArgs(args)
+    this.log('info', titles, data)
   }
 
   /**
@@ -102,8 +98,8 @@ export class Logger {
    * 支持可变数量的标题参数，最后一个参数作为数据
    */
   warn(...args: unknown[]): void {
-    const { titles, data } = this.parseArgs(args);
-    this.log("warn", titles, data);
+    const { titles, data } = this.parseArgs(args)
+    this.log('warn', titles, data)
   }
 
   /**
@@ -111,8 +107,8 @@ export class Logger {
    * 支持可变数量的标题参数，最后一个参数作为数据
    */
   error(...args: unknown[]): void {
-    const { titles, data } = this.parseArgs(args);
-    this.log("error", titles, data);
+    const { titles, data } = this.parseArgs(args)
+    this.log('error', titles, data)
   }
 
   /**
@@ -120,8 +116,8 @@ export class Logger {
    * 支持可变数量的标题参数，最后一个参数作为数据
    */
   debug(...args: unknown[]): void {
-    const { titles, data } = this.parseArgs(args);
-    this.log("debug", titles, data);
+    const { titles, data } = this.parseArgs(args)
+    this.log('debug', titles, data)
   }
 
   /**
@@ -131,33 +127,33 @@ export class Logger {
    */
   private parseArgs(args: unknown[]): { titles: string; data?: unknown } {
     if (args.length === 0) {
-      return { titles: "Unknown" };
+      return { titles: 'Unknown' }
     }
 
-    const lastArg = args[args.length - 1];
+    const lastArg = args[args.length - 1]
 
     // 判断最后一个参数是否为数据（Error、对象、数组等非字符串类型）
     const isLastArgData =
       lastArg instanceof Error ||
-      (typeof lastArg === "object" && lastArg !== null) ||
-      typeof lastArg === "number" ||
-      typeof lastArg === "boolean";
+      (typeof lastArg === 'object' && lastArg !== null) ||
+      typeof lastArg === 'number' ||
+      typeof lastArg === 'boolean'
 
     if (isLastArgData && args.length > 1) {
       // 最后一个参数是数据，前面的都是标题
-      const titleArgs = args.slice(0, -1);
+      const titleArgs = args.slice(0, -1)
       const titles = titleArgs
-        .filter((arg) => typeof arg === "string" || typeof arg === "number")
-        .map((arg) => String(arg))
-        .join(" | ");
-      return { titles, data: lastArg };
+        .filter(arg => typeof arg === 'string' || typeof arg === 'number')
+        .map(arg => String(arg))
+        .join(' | ')
+      return { titles, data: lastArg }
     } else {
       // 所有参数都是标题
       const titles = args
-        .filter((arg) => typeof arg === "string" || typeof arg === "number")
-        .map((arg) => String(arg))
-        .join(" | ");
-      return { titles };
+        .filter(arg => typeof arg === 'string' || typeof arg === 'number')
+        .map(arg => String(arg))
+        .join(' | ')
+      return { titles }
     }
   }
 
@@ -167,28 +163,28 @@ export class Logger {
   private log(level: LogLevel, titles: string, data?: unknown): void {
     // 检查日志级别
     if (levelWeights[level] < levelWeights[this.config.level]) {
-      return;
+      return
     }
 
     const entry: LogEntry = {
       timestamp: Date.now(),
       level,
       scope: titles,
-      message: "",
-      data,
-    };
+      message: '',
+      data
+    }
 
     // 添加到缓冲区
-    this.addToBuffer(entry);
+    this.addToBuffer(entry)
 
     // 控制台输出
     if (this.config.enableConsole) {
-      this.logToConsole(entry);
+      this.logToConsole(entry)
     }
 
     // 远程日志
     if (this.config.enableRemote && this.config.remoteEndpoint) {
-      this.logToRemote(entry);
+      this.logToRemote(entry)
     }
   }
 
@@ -196,11 +192,11 @@ export class Logger {
    * 添加到缓冲区
    */
   private addToBuffer(entry: LogEntry): void {
-    this.buffer.push(entry);
+    this.buffer.push(entry)
 
     // 限制缓冲区大小
     if (this.buffer.length > this.config.maxBufferSize) {
-      this.buffer = this.buffer.slice(-this.config.maxBufferSize);
+      this.buffer = this.buffer.slice(-this.config.maxBufferSize)
     }
   }
 
@@ -208,47 +204,47 @@ export class Logger {
    * 输出到控制台
    */
   private logToConsole(entry: LogEntry): void {
-    const [label, style] = this.formatLabel(entry.scope, entry.level);
+    const [label, style] = this.formatLabel(entry.scope, entry.level)
 
     // 如果有数据，使用 console.group 来更好地组织输出
     if (entry.data !== undefined && entry.data !== null) {
       switch (entry.level) {
-        case "info":
-          console.info(label, style);
-          console.info("  ↳", entry.data);
-          break;
-        case "warn":
-          console.warn(label, style);
-          console.warn("  ↳", entry.data);
-          break;
-        case "error":
-          console.error(label, style);
-          console.error("  ↳", entry.data);
-          break;
-        case "debug":
+        case 'info':
+          console.info(label, style)
+          console.info('  ↳', entry.data)
+          break
+        case 'warn':
+          console.warn(label, style)
+          console.warn('  ↳', entry.data)
+          break
+        case 'error':
+          console.error(label, style)
+          console.error('  ↳', entry.data)
+          break
+        case 'debug':
           if (import.meta.env.DEV) {
-            console.info(label, style);
-            console.info("  ↳", entry.data);
+            console.info(label, style)
+            console.info('  ↳', entry.data)
           }
-          break;
+          break
       }
     } else {
       // 没有数据时，直接输出标签
       switch (entry.level) {
-        case "info":
-          console.info(label, style);
-          break;
-        case "warn":
-          console.warn(label, style);
-          break;
-        case "error":
-          console.error(label, style);
-          break;
-        case "debug":
+        case 'info':
+          console.info(label, style)
+          break
+        case 'warn':
+          console.warn(label, style)
+          break
+        case 'error':
+          console.error(label, style)
+          break
+        case 'debug':
           if (import.meta.env.DEV) {
-            console.info(label, style);
+            console.info(label, style)
           }
-          break;
+          break
       }
     }
   }
@@ -259,15 +255,15 @@ export class Logger {
   private async logToRemote(entry: LogEntry): Promise<void> {
     try {
       await fetch(this.config.remoteEndpoint!, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify(entry),
-      });
+        body: JSON.stringify(entry)
+      })
     } catch (error) {
       // 避免远程日志错误影响主流程
-      console.error("Failed to send log to remote:", error);
+      console.error('Failed to send log to remote:', error)
     }
   }
 
@@ -275,43 +271,43 @@ export class Logger {
    * 格式化标签
    */
   private formatLabel(scope: string, level: LogLevel): [string, string] {
-    const style = levelToStyle[level] || levelToStyle.info;
-    return [`%c${scope}`, style];
+    const style = levelToStyle[level] || levelToStyle.info
+    return [`%c${scope}`, style]
   }
 
   /**
    * 获取日志缓冲区
    */
   getBuffer(): LogEntry[] {
-    return [...this.buffer];
+    return [...this.buffer]
   }
 
   /**
    * 清空日志缓冲区
    */
   clearBuffer(): void {
-    this.buffer = [];
+    this.buffer = []
   }
 
   /**
    * 设置配置
    */
   setConfig(config: Partial<LoggerConfig>): void {
-    this.config = { ...this.config, ...config };
+    this.config = { ...this.config, ...config }
   }
 
   /**
    * 获取当前配置
    */
   getConfig(): LoggerConfig {
-    return { ...this.config };
+    return { ...this.config }
   }
 
   /**
    * 导出日志
    */
   exportLogs(): string {
-    return JSON.stringify(this.buffer, null, 2);
+    return JSON.stringify(this.buffer, null, 2)
   }
 
   /**
@@ -319,10 +315,10 @@ export class Logger {
    */
   importLogs(logs: string): void {
     try {
-      const entries = JSON.parse(logs) as LogEntry[];
-      this.buffer = entries;
+      const entries = JSON.parse(logs) as LogEntry[]
+      this.buffer = entries
     } catch (error) {
-      this.error("Logger", "Failed to import logs", error);
+      this.error('Logger', 'Failed to import logs', error)
     }
   }
 }
@@ -330,46 +326,45 @@ export class Logger {
 /**
  * 默认日志器实例
  */
-const rawLevel = import.meta.env?.VITE_LOG_LEVEL as string | undefined;
-const desiredLevel =
-  rawLevel && rawLevel in levelWeights ? (rawLevel as LogLevel) : "info";
+const rawLevel = import.meta.env?.VITE_LOG_LEVEL as string | undefined
+const desiredLevel = rawLevel && rawLevel in levelWeights ? (rawLevel as LogLevel) : 'info'
 
-const rawConsole = import.meta.env?.VITE_LOG_CONSOLE as string | undefined;
-const runtimeEnv = import.meta.env?.VITE_RUNTIME_ENV || "dev";
+const rawConsole = import.meta.env?.VITE_LOG_CONSOLE as string | undefined
+const runtimeEnv = import.meta.env?.VITE_RUNTIME_ENV || 'dev'
 
 const enableConsole = (() => {
-  if (runtimeEnv !== "prod") return true;
+  if (runtimeEnv !== 'prod') return true
   if (import.meta.env?.PROD) {
-    return rawConsole?.toLowerCase() === "true";
+    return rawConsole?.toLowerCase() === 'true'
   }
-  return false;
-})();
+  return false
+})()
 
 export const logger = new Logger({
   level: desiredLevel,
   enableConsole,
-  enableRemote: false,
-});
+  enableRemote: false
+})
 
 /**
  * 创建新的日志器实例
  */
 export function createLogger(config: Partial<LoggerConfig> = {}): Logger {
-  return new Logger(config);
+  return new Logger(config)
 }
 
 /**
  * 设置全局日志级别
  */
 export function setLogLevel(level: LogLevel): void {
-  logger.setConfig({ level });
+  logger.setConfig({ level })
 }
 
 /**
  * 启用/禁用控制台日志
  */
 export function setConsoleLogging(enabled: boolean): void {
-  logger.setConfig({ enableConsole: enabled });
+  logger.setConfig({ enableConsole: enabled })
 }
 
 /**
@@ -378,6 +373,6 @@ export function setConsoleLogging(enabled: boolean): void {
 export function setRemoteLogging(enabled: boolean, endpoint?: string): void {
   logger.setConfig({
     enableRemote: enabled,
-    ...(endpoint !== undefined ? { remoteEndpoint: endpoint } : {}),
-  });
+    ...(endpoint !== undefined ? { remoteEndpoint: endpoint } : {})
+  })
 }

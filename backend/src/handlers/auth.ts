@@ -156,11 +156,9 @@ export async function handleAuthCallback(
   }
 }
 
-
 /**
  * 验证回调参数
  */
-
 
 /**
  * OAuth 提供商配置
@@ -264,7 +262,6 @@ export function handleAuthProviders(_request: Request, env: Env, origin: string 
   }
 }
 
-
 /**
  * 获取缺失的配置键名
  */
@@ -343,7 +340,6 @@ async function exchangeCodeForToken(
   return accessToken
 }
 
-
 /**
  * 获取 GitHub 用户信息（含邮箱回退）
  */
@@ -358,7 +354,10 @@ async function fetchGitHubUserInfo(
       'user-agent': 'AcuityBookmarks'
     }
   })
-  const u: Record<string, unknown> = (await uResp.json().catch(() => ({}))) as Record<string, unknown>
+  const u: Record<string, unknown> = (await uResp.json().catch(() => ({}))) as Record<
+    string,
+    unknown
+  >
   let email = String(u.email || '')
   const sub = String(u.id || '')
   if (!email) {

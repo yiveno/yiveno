@@ -4,23 +4,23 @@
  * 支持十万条书签的高性能搜索
  */
 
-import { ref, computed } from "vue";
-import { defineStore } from "pinia";
-import { bookmarkAppService } from "@/application/bookmark/bookmark-app-service";
-import { indexedDBManager } from "@/infrastructure/indexeddb/manager";
-import { logger } from "@/infrastructure/logging/logger";
-import { useTraitDataStore } from "./trait-data-store";
+import { ref, computed } from 'vue'
+import { defineStore } from 'pinia'
+import { bookmarkAppService } from '@/application/bookmark/bookmark-app-service'
+import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
+import { logger } from '@/infrastructure/logging/logger'
+import { useTraitDataStore } from './trait-data-store'
 
 /**
  * 书签数量统计，用于展示总书签条目。
  */
 export interface BookmarkStats {
   /** 书签总数 */
-  bookmarks: number;
+  bookmarks: number
   /** 今日新增书签数量 */
-  todayAdded: number;
+  todayAdded: number
   /** 最近打开书签数量（通过插件打开） */
-  recentlyOpened: number;
+  recentlyOpened: number
 }
 
 /**
@@ -31,13 +31,13 @@ export interface BookmarkStats {
  */
 export interface TraitOverview {
   /** 已扫描书签数量 */
-  totalScanned: number;
+  totalScanned: number
   /** 无效书签数量 */
-  invalid: number;
+  invalid: number
   /** 重复书签数量 */
-  duplicate: number;
+  duplicate: number
   /** 内部书签数量 */
-  internal: number;
+  internal: number
 }
 
 /**
@@ -46,7 +46,7 @@ export interface TraitOverview {
 /**
  * 弹窗状态管理存储 - IndexedDB版本
  */
-export const usePopupStoreIndexedDB = defineStore("popup-indexeddb", () => {
+export const usePopupStoreIndexedDB = defineStore('popup-indexeddb', () => {
   // ==================== 状态 ====================
 
   // 统一书签API
@@ -54,25 +54,25 @@ export const usePopupStoreIndexedDB = defineStore("popup-indexeddb", () => {
 
   // 加载状态
   /** 当前是否处于加载数据状态 */
-  const isLoading = ref(false);
+  const isLoading = ref(false)
   /** 最近一次操作的错误消息 */
-  const lastError = ref<string | null>(null);
+  const lastError = ref<string | null>(null)
 
   // 当前标签页信息
   /** 当前激活标签页 URL */
-  const currentTabUrl = ref("");
+  const currentTabUrl = ref('')
   /** 当前激活标签页标题 */
-  const currentTabTitle = ref("");
+  const currentTabTitle = ref('')
   /** 当前激活标签页 ID */
-  const currentTabId = ref<number | null>(null);
+  const currentTabId = ref<number | null>(null)
 
   // 书签统计
   /** 书签统计信息 */
   const stats = ref<BookmarkStats>({
     bookmarks: 0,
     todayAdded: 0,
-    recentlyOpened: 0,
-  });
+    recentlyOpened: 0
+  })
 
   // 书签特征概览
   /**
@@ -80,7 +80,7 @@ export const usePopupStoreIndexedDB = defineStore("popup-indexeddb", () => {
    * 保留此 ref 仅为向后兼容，实际数据从 TraitDataStore 获取
    */
   const traitOverview = computed(() => {
-    const traitStore = useTraitDataStore();
+    const traitStore = useTraitDataStore()
     return {
       totalScanned:
         traitStore.statistics.duplicate +
@@ -88,19 +88,19 @@ export const usePopupStoreIndexedDB = defineStore("popup-indexeddb", () => {
         traitStore.statistics.internal,
       invalid: traitStore.statistics.invalid,
       duplicate: traitStore.statistics.duplicate,
-      internal: traitStore.statistics.internal,
-    };
-  });
+      internal: traitStore.statistics.internal
+    }
+  })
 
   // ==================== 计算属性 ====================
 
   /** 当前是否存在可用的激活标签页 */
   const hasCurrentTab = computed(() => {
-    return currentTabId.value !== null && currentTabUrl.value.length > 0;
-  });
+    return currentTabId.value !== null && currentTabUrl.value.length > 0
+  })
 
   /** 统计总条目数 */
-  const totalItems = computed(() => stats.value.bookmarks);
+  const totalItems = computed(() => stats.value.bookmarks)
 
   // ==================== 方法 ====================
 
@@ -111,36 +111,33 @@ export const usePopupStoreIndexedDB = defineStore("popup-indexeddb", () => {
    * 加载当前标签页信息、统计数据，并记录性能耗时。
    */
   async function initialize(): Promise<void> {
-    const startTime = performance.now();
-    isLoading.value = true;
-    lastError.value = null;
+    const startTime = performance.now()
+    isLoading.value = true
+    lastError.value = null
 
     try {
-      logger.info("PopupStore", "初始化 Popup Store (IndexedDB版本) ...");
+      logger.info('PopupStore', '初始化 Popup Store (IndexedDB版本) ...')
 
       // 1. 初始化统一API (自动完成)
       // 统一API自动初始化
 
       // 2. 获取当前标签页信息
-      await getCurrentTab();
+      await getCurrentTab()
 
       // 3. 加载书签统计
-      await loadBookmarkStats();
+      await loadBookmarkStats()
 
       // 5. 数据更新监听 (新架构中由Service Worker处理)
 
-      logger.info("PopupStore", "初始化完成");
+      logger.info('PopupStore', '初始化完成')
     } catch (error) {
-      lastError.value = `初始化失败: ${(error as Error).message}`;
-      logger.error("PopupStore", "初始化失败", error);
-      throw error;
+      lastError.value = `初始化失败: ${(error as Error).message}`
+      logger.error('PopupStore', '初始化失败', error)
+      throw error
     } finally {
-      isLoading.value = false;
-      const endTime = performance.now();
-      logger.info(
-        "PopupStore",
-        `初始化耗时: ${(endTime - startTime).toFixed(2)}ms`,
-      );
+      isLoading.value = false
+      const endTime = performance.now()
+      logger.info('PopupStore', `初始化耗时: ${(endTime - startTime).toFixed(2)}ms`)
     }
   }
 
@@ -152,22 +149,22 @@ export const usePopupStoreIndexedDB = defineStore("popup-indexeddb", () => {
    */
   async function getCurrentTab(): Promise<void> {
     try {
-      if (typeof chrome !== "undefined" && chrome.tabs) {
+      if (typeof chrome !== 'undefined' && chrome.tabs) {
         const tabs = await chrome.tabs.query({
           active: true,
-          currentWindow: true,
-        });
+          currentWindow: true
+        })
         if (tabs.length > 0) {
-          const tab = tabs[0];
+          const tab = tabs[0]
           if (tab) {
-            currentTabId.value = tab.id || null;
-            currentTabUrl.value = tab.url || "";
-            currentTabTitle.value = tab.title || "";
+            currentTabId.value = tab.id || null
+            currentTabUrl.value = tab.url || ''
+            currentTabTitle.value = tab.title || ''
           }
         }
       }
     } catch (error) {
-      logger.warn("PopupStore", "获取当前标签页失败", error);
+      logger.warn('PopupStore', '获取当前标签页失败', error)
     }
   }
 
@@ -181,36 +178,36 @@ export const usePopupStoreIndexedDB = defineStore("popup-indexeddb", () => {
   async function loadBookmarkStats(): Promise<void> {
     try {
       // 获取所有书签数据来计算详细统计
-      const allBookmarks = await indexedDBManager.getAllBookmarks();
+      const allBookmarks = await indexedDBManager.getAllBookmarks()
 
       // 计算总数
-      const totalBookmarks = allBookmarks.filter((b) => !b.isFolder).length;
+      const totalBookmarks = allBookmarks.filter(b => !b.isFolder).length
 
       // 计算今日新增（dateAdded 是今天的书签）
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
-      const todayTimestamp = todayStart.getTime();
+      const todayStart = new Date()
+      todayStart.setHours(0, 0, 0, 0)
+      const todayTimestamp = todayStart.getTime()
 
       const todayAdded = allBookmarks.filter(
-        (b) => !b.isFolder && b.dateAdded && b.dateAdded >= todayTimestamp,
-      ).length;
+        b => !b.isFolder && b.dateAdded && b.dateAdded >= todayTimestamp
+      ).length
 
       // 计算最近打开（lastVisited 存在的书签，表示通过插件打开过）
       // 只统计最近 30 天内打开过的书签
-      const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+      const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000
       const recentlyOpened = allBookmarks.filter(
-        (b) => !b.isFolder && b.lastVisited && b.lastVisited >= thirtyDaysAgo,
-      ).length;
+        b => !b.isFolder && b.lastVisited && b.lastVisited >= thirtyDaysAgo
+      ).length
 
       stats.value = {
         bookmarks: totalBookmarks,
         todayAdded,
-        recentlyOpened,
-      };
+        recentlyOpened
+      }
 
-      logger.info("PopupStore", "📊 统计数据已更新", stats.value);
+      logger.info('PopupStore', '📊 统计数据已更新', stats.value)
     } catch (error) {
-      logger.warn("PopupStore", "加载书签统计失败", error);
+      logger.warn('PopupStore', '加载书签统计失败', error)
     }
   }
 
@@ -219,9 +216,9 @@ export const usePopupStoreIndexedDB = defineStore("popup-indexeddb", () => {
    * @deprecated 使用 useTraitDataStore().isLoading 替代
    */
   const isLoadingTraitOverview = computed(() => {
-    const traitStore = useTraitDataStore();
-    return traitStore.isLoading;
-  });
+    const traitStore = useTraitDataStore()
+    return traitStore.isLoading
+  })
 
   /**
    * 加载特征概览
@@ -230,8 +227,8 @@ export const usePopupStoreIndexedDB = defineStore("popup-indexeddb", () => {
    * 保留此方法仅为向后兼容
    */
   async function loadBookmarkTraitOverview(): Promise<void> {
-    const traitStore = useTraitDataStore();
-    await traitStore.refresh(true);
+    const traitStore = useTraitDataStore()
+    await traitStore.refresh(true)
   }
 
   /**
@@ -244,14 +241,14 @@ export const usePopupStoreIndexedDB = defineStore("popup-indexeddb", () => {
    */
   async function autoRefreshData(): Promise<void> {
     try {
-      logger.info("PopupStore", "🔄 自动刷新数据...");
+      logger.info('PopupStore', '🔄 自动刷新数据...')
 
       // 只刷新书签统计，特征数据由 TraitDataStore 自动处理
-      await loadBookmarkStats();
+      await loadBookmarkStats()
 
-      logger.info("PopupStore", "✅ 自动刷新完成");
+      logger.info('PopupStore', '✅ 自动刷新完成')
     } catch (error) {
-      logger.error("PopupStore", "❌ 自动刷新失败:", error);
+      logger.error('PopupStore', '❌ 自动刷新失败:', error)
     }
   }
 
@@ -265,30 +262,26 @@ export const usePopupStoreIndexedDB = defineStore("popup-indexeddb", () => {
    * 注意：特征更新消息由 TraitDataStore 自动监听，无需在此处理
    */
   function setupAutoRefreshListener(): void {
-    chrome.runtime.onMessage.addListener((message) => {
+    chrome.runtime.onMessage.addListener(message => {
       // 监听书签同步完成消息
-      if (message.type === "acuity-bookmarks-db-synced") {
-        logger.info(
-          "PopupStore",
-          `📡 收到书签同步消息 (${message.eventType})，自动刷新数据`,
-        );
+      if (message.type === 'acuity-bookmarks-db-synced') {
+        logger.info('PopupStore', `📡 收到书签同步消息 (${message.eventType})，自动刷新数据`)
 
         // 使用 queueMicrotask 避免阻塞消息处理
         queueMicrotask(async () => {
-          void autoRefreshData();
+          void autoRefreshData()
           // 清除 Worker 适配器的缓存，确保搜索使用最新数据
-          const { queryWorkerAdapter } =
-            await import("@/services/query-worker-adapter");
-          queryWorkerAdapter.clearCache();
-        });
+          const { queryWorkerAdapter } = await import('@/services/query-worker-adapter')
+          queryWorkerAdapter.clearCache()
+        })
       }
-    });
+    })
 
-    logger.info("PopupStore", "✅ 自动刷新监听器已设置");
+    logger.info('PopupStore', '✅ 自动刷新监听器已设置')
   }
 
   // 初始化时设置自动刷新监听器
-  setupAutoRefreshListener();
+  setupAutoRefreshListener()
 
   /**
    * 打开书签
@@ -298,50 +291,48 @@ export const usePopupStoreIndexedDB = defineStore("popup-indexeddb", () => {
    */
   async function openBookmark(
     bookmark: { id?: string; url?: string; domain?: string },
-    inNewTab: boolean = false,
+    inNewTab: boolean = false
   ): Promise<void> {
-    if (!bookmark.url) return;
+    if (!bookmark.url) return
 
     try {
       // 1. 打开书签
-      if (typeof chrome !== "undefined" && chrome.tabs) {
+      if (typeof chrome !== 'undefined' && chrome.tabs) {
         if (inNewTab) {
-          await chrome.tabs.create({ url: bookmark.url });
+          await chrome.tabs.create({ url: bookmark.url })
         } else {
-          await chrome.tabs.update({ url: bookmark.url });
+          await chrome.tabs.update({ url: bookmark.url })
         }
       } else {
         // 开发环境或不支持Chrome API时
-        window.open(bookmark.url, inNewTab ? "_blank" : "_self");
+        window.open(bookmark.url, inNewTab ? '_blank' : '_self')
       }
 
       // 2. 记录访问（如果有 bookmarkId）
       if (bookmark.id) {
         try {
-          const result = await bookmarkAppService.updateVisitRecord(
-            bookmark.id,
-          );
+          const result = await bookmarkAppService.updateVisitRecord(bookmark.id)
           if (!result.ok) {
-            logger.warn("PopupStore", "⚠️ 更新访问记录失败", result.error);
+            logger.warn('PopupStore', '⚠️ 更新访问记录失败', result.error)
           } else {
-            logger.debug("PopupStore", "✅ 访问记录已更新", {
-              id: bookmark.id,
-            });
+            logger.debug('PopupStore', '✅ 访问记录已更新', {
+              id: bookmark.id
+            })
           }
         } catch (error) {
-          logger.warn("PopupStore", "更新访问记录失败", error);
+          logger.warn('PopupStore', '更新访问记录失败', error)
           // 不影响打开书签的操作
         }
       }
 
-      logger.info("PopupStore", "📊 书签已打开", {
+      logger.info('PopupStore', '📊 书签已打开', {
         inNewTab,
         fromSearch: true,
         domain: bookmark.domain,
-        recordedVisit: !!bookmark.id,
-      });
+        recordedVisit: !!bookmark.id
+      })
     } catch (error) {
-      logger.error("PopupStore", "打开书签失败:", error);
+      logger.error('PopupStore', '打开书签失败:', error)
     }
   }
 
@@ -351,19 +342,19 @@ export const usePopupStoreIndexedDB = defineStore("popup-indexeddb", () => {
    * @returns 书签数量等调试数据
    */
   async function getDatabaseInfo(): Promise<{
-    bookmarkCount: number;
-    searchHistoryCount: number;
-    settingsCount: number;
-    estimatedSize: number;
+    bookmarkCount: number
+    searchHistoryCount: number
+    settingsCount: number
+    estimatedSize: number
   }> {
     // 数据库信息现在通过统一API获取
-    const res = await bookmarkAppService.getAllBookmarks();
+    const res = await bookmarkAppService.getAllBookmarks()
     return {
-      bookmarkCount: res.ok ? res.value?.filter((b) => !!b.url).length || 0 : 0,
+      bookmarkCount: res.ok ? res.value?.filter(b => !!b.url).length || 0 : 0,
       searchHistoryCount: 0, // 暂时设为0
       settingsCount: 0, // 暂时设为0
-      estimatedSize: 0, // 暂时设为0，可以后续实现
-    };
+      estimatedSize: 0 // 暂时设为0，可以后续实现
+    }
   }
 
   // ==================== 监听器设置 ====================
@@ -391,6 +382,6 @@ export const usePopupStoreIndexedDB = defineStore("popup-indexeddb", () => {
     loadBookmarkStats,
     loadBookmarkTraitOverview,
     openBookmark,
-    getDatabaseInfo,
-  };
-});
+    getDatabaseInfo
+  }
+})

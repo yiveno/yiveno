@@ -1,30 +1,30 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import Dialog from "@/components/composite/Dialog/Dialog.vue";
-import LucideIcon from "@/components/base/LucideIcon/LucideIcon.vue";
-import type { SyncProgress, SyncPhase } from "@/types/sync-progress";
-import { SYNC_PHASES, PHASE_TITLES, formatTime } from "@/types/sync-progress";
-import { formatNumber } from "@/utils/i18n-helpers";
+import { computed } from 'vue'
+import Dialog from '@/components/composite/Dialog/Dialog.vue'
+import LucideIcon from '@/components/base/LucideIcon/LucideIcon.vue'
+import type { SyncProgress, SyncPhase } from '@/types/sync-progress'
+import { SYNC_PHASES, PHASE_TITLES, formatTime } from '@/types/sync-progress'
+import { formatNumber } from '@/utils/i18n-helpers'
 
 defineOptions({
-  name: "SyncProgressDialog",
-});
+  name: 'SyncProgressDialog'
+})
 
-const props = defineProps<Props>();
+const props = defineProps<Props>()
 
-const emit = defineEmits<Emits>();
+const emit = defineEmits<Emits>()
 
 interface Props {
   /** 是否显示对话框 */
-  show: boolean;
+  show: boolean
   /** 进度数据 */
-  progress: SyncProgress;
+  progress: SyncProgress
 }
 
 interface Emits {
-  (e: "close"): void;
-  (e: "retry"): void;
-  (e: "forceClose"): void;
+  (e: 'close'): void
+  (e: 'retry'): void
+  (e: 'forceClose'): void
 }
 
 /**
@@ -32,65 +32,57 @@ interface Emits {
  */
 const phases = computed(() => {
   // 只显示前4个阶段（不包括 'completed'）
-  return SYNC_PHASES.slice(0, 4);
-});
+  return SYNC_PHASES.slice(0, 4)
+})
 
 /**
  * 是否已完成
  */
 const isCompleted = computed(() => {
-  return props.progress.phase === "completed";
-});
+  return props.progress.phase === 'completed'
+})
 
 /**
  * 是否处于错误状态
  */
 const isError = computed(() => {
-  return (
-    props.progress.phase === "failed" || props.progress.phase === "timeout"
-  );
-});
+  return props.progress.phase === 'failed' || props.progress.phase === 'timeout'
+})
 
 /**
  * 对话框标题
  */
 const dialogTitle = computed(() => {
-  if (isCompleted.value) return "同步完成";
-  if (isError.value) return PHASE_TITLES[props.progress.phase];
-  return PHASE_TITLES[props.progress.phase] || "正在同步";
-});
+  if (isCompleted.value) return '同步完成'
+  if (isError.value) return PHASE_TITLES[props.progress.phase]
+  return PHASE_TITLES[props.progress.phase] || '正在同步'
+})
 
 /**
  * 标题图标
  */
 const titleIcon = computed(() => {
-  if (isCompleted.value) return "check-circle";
-  if (isError.value) return "alert-triangle";
-  return "refresh";
-});
+  if (isCompleted.value) return 'check-circle'
+  if (isError.value) return 'alert-triangle'
+  return 'refresh'
+})
 
 /**
  * 是否显示操作按钮
  */
 const showActions = computed(() => {
-  return isCompleted.value || isError.value;
-});
+  return isCompleted.value || isError.value
+})
 
 /**
  * 判断阶段是否已完成
  */
 function isPhaseCompleted(phase: SyncPhase): boolean {
-  const phaseOrder: SyncPhase[] = [
-    "fetching",
-    "converting",
-    "writing",
-    "indexing",
-    "completed",
-  ];
-  const currentIndex = phaseOrder.indexOf(props.progress.phase);
-  const checkIndex = phaseOrder.indexOf(phase);
+  const phaseOrder: SyncPhase[] = ['fetching', 'converting', 'writing', 'indexing', 'completed']
+  const currentIndex = phaseOrder.indexOf(props.progress.phase)
+  const checkIndex = phaseOrder.indexOf(phase)
 
-  return checkIndex < currentIndex || props.progress.phase === "completed";
+  return checkIndex < currentIndex || props.progress.phase === 'completed'
 }
 </script>
 
@@ -114,7 +106,7 @@ function isPhaseCompleted(phase: SyncPhase): boolean {
         <LucideIcon name="alert-circle" :size="64" />
       </div>
       <div class="error-message">
-        {{ progress.error?.message || "同步过程中发生错误" }}
+        {{ progress.error?.message || '同步过程中发生错误' }}
       </div>
       <div v-if="progress.error?.type === 'timeout'" class="error-hint">
         <LucideIcon name="info" :size="20" />
@@ -135,7 +127,7 @@ function isPhaseCompleted(phase: SyncPhase): boolean {
           class="phase-item"
           :class="{
             active: progress.phase === phase.key,
-            completed: isPhaseCompleted(phase.key),
+            completed: isPhaseCompleted(phase.key)
           }"
         >
           <div class="phase-icon">
@@ -151,14 +143,9 @@ function isPhaseCompleted(phase: SyncPhase): boolean {
       <!-- 进度条 -->
       <div class="progress-bar-container">
         <div class="progress-bar">
-          <div
-            class="progress-fill"
-            :style="{ width: `${progress.percentage}%` }"
-          />
+          <div class="progress-fill" :style="{ width: `${progress.percentage}%` }" />
         </div>
-        <div class="progress-percentage">
-          {{ Math.round(progress.percentage) }}%
-        </div>
+        <div class="progress-percentage">{{ Math.round(progress.percentage) }}%</div>
       </div>
 
       <!-- 详细信息 -->
@@ -173,9 +160,7 @@ function isPhaseCompleted(phase: SyncPhase): boolean {
             {{ formatNumber(progress.total) }}
           </span>
           <span
-            v-if="
-              progress.estimatedRemaining && progress.estimatedRemaining > 0
-            "
+            v-if="progress.estimatedRemaining && progress.estimatedRemaining > 0"
             class="stat-item"
           >
             <LucideIcon name="clock" :size="14" class="stat-icon" />
@@ -188,16 +173,11 @@ function isPhaseCompleted(phase: SyncPhase): boolean {
     <template v-if="showActions" #actions>
       <!-- ✅ 错误时的操作 -->
       <template v-if="isError">
-        <md-filled-button
-          v-if="progress.error?.canRetry"
-          @click="emit('retry')"
-        >
+        <md-filled-button v-if="progress.error?.canRetry" @click="emit('retry')">
           <LucideIcon slot="icon" name="refresh" />
           重试
         </md-filled-button>
-        <md-text-button @click="emit('forceClose')">
-          忽略并继续
-        </md-text-button>
+        <md-text-button @click="emit('forceClose')"> 忽略并继续 </md-text-button>
       </template>
 
       <!-- ✅ 完成时的操作 -->
@@ -310,7 +290,7 @@ function isPhaseCompleted(phase: SyncPhase): boolean {
   z-index: 0;
   height: 2px;
   background: var(--border-color);
-  content: "";
+  content: '';
 }
 
 .phase-item {
@@ -396,11 +376,7 @@ function isPhaseCompleted(phase: SyncPhase): boolean {
 .progress-fill {
   height: 100%;
   border-radius: var(--radius-md);
-  background: linear-gradient(
-    90deg,
-    var(--primary-color),
-    var(--primary-color-dark)
-  );
+  background: linear-gradient(90deg, var(--primary-color), var(--primary-color-dark));
   transition: width 0.3s ease;
 }
 

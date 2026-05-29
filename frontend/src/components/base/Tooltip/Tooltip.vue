@@ -1,151 +1,151 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
-import { useTimeoutFn } from "@vueuse/core";
-import type { TooltipProps } from "./Tooltip.d";
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { useTimeoutFn } from '@vueuse/core'
+import type { TooltipProps } from './Tooltip.d'
 
-defineOptions({ name: "Tooltip" });
+defineOptions({ name: 'Tooltip' })
 
 const props = withDefaults(defineProps<TooltipProps>(), {
-  placement: "top",
+  placement: 'top',
   delay: 500, // MD3 推荐 500ms 延迟
   disabled: false,
-  offset: "sm", // MD3 推荐较小的偏移
-});
+  offset: 'sm' // MD3 推荐较小的偏移
+})
 
-const show = ref(false);
-const triggerRef = ref<HTMLElement>();
-const tooltipRef = ref<HTMLElement>();
-const tooltipStyle = ref<Record<string, string>>({});
+const show = ref(false)
+const triggerRef = ref<HTMLElement>()
+const tooltipRef = ref<HTMLElement>()
+const tooltipStyle = ref<Record<string, string>>({})
 
-const offsetMap: Record<NonNullable<TooltipProps["offset"]>, number> = {
+const offsetMap: Record<NonNullable<TooltipProps['offset']>, number> = {
   xs: 4,
   sm: 8,
   md: 12,
   lg: 16,
-  xl: 24,
-};
+  xl: 24
+}
 
 // 延迟显示
 const { start: startShowTimer, stop: stopShowTimer } = useTimeoutFn(
   () => {
     if (!props.disabled) {
-      show.value = true;
+      show.value = true
     }
   },
   () => props.delay,
-  { immediate: false },
-);
+  { immediate: false }
+)
 
 // 延迟隐藏（更短的延迟）
 const { start: startHideTimer, stop: stopHideTimer } = useTimeoutFn(
   () => {
-    show.value = false;
+    show.value = false
   },
   150, // MD3 推荐快速隐藏
-  { immediate: false },
-);
+  { immediate: false }
+)
 
 const tooltipClasses = computed(() => [
-  "md-tooltip",
+  'md-tooltip',
   `md-tooltip--${props.placement}`,
   `md-tooltip--offset-${props.offset}`,
   {
-    "md-tooltip--disabled": props.disabled,
-  },
-]);
+    'md-tooltip--disabled': props.disabled
+  }
+])
 
 function updatePosition() {
-  const triggerEl = triggerRef.value;
-  const tooltipEl = tooltipRef.value;
-  if (!triggerEl || !tooltipEl) return;
+  const triggerEl = triggerRef.value
+  const tooltipEl = tooltipRef.value
+  if (!triggerEl || !tooltipEl) return
 
-  const rect = triggerEl.getBoundingClientRect();
-  const gap = offsetMap[props.offset] ?? offsetMap.sm;
-  const tooltipRect = tooltipEl.getBoundingClientRect();
+  const rect = triggerEl.getBoundingClientRect()
+  const gap = offsetMap[props.offset] ?? offsetMap.sm
+  const tooltipRect = tooltipEl.getBoundingClientRect()
 
   const style: Record<string, string> = {
-    position: "fixed",
-    zIndex: "1000",
-  };
-
-  if (props.placement === "bottom") {
-    style.top = `${Math.min(rect.bottom + gap, window.innerHeight - 8)}px`;
-    style.left = `${rect.left + rect.width / 2}px`;
-    style.transform = "translateX(-50%)";
-  } else if (props.placement === "left") {
-    style.top = `${rect.top + rect.height / 2}px`;
-    style.left = `${Math.max(rect.left - tooltipRect.width - gap, 8)}px`;
-    style.transform = "translateY(-50%)";
-  } else if (props.placement === "right") {
-    style.top = `${rect.top + rect.height / 2}px`;
-    style.left = `${Math.min(rect.right + gap, window.innerWidth - 8)}px`;
-    style.transform = "translateY(-50%)";
-  } else {
-    style.top = `${Math.max(rect.top - tooltipRect.height - gap, 8)}px`;
-    style.left = `${rect.left + rect.width / 2}px`;
-    style.transform = "translateX(-50%)";
+    position: 'fixed',
+    zIndex: '1000'
   }
 
-  tooltipStyle.value = style;
+  if (props.placement === 'bottom') {
+    style.top = `${Math.min(rect.bottom + gap, window.innerHeight - 8)}px`
+    style.left = `${rect.left + rect.width / 2}px`
+    style.transform = 'translateX(-50%)'
+  } else if (props.placement === 'left') {
+    style.top = `${rect.top + rect.height / 2}px`
+    style.left = `${Math.max(rect.left - tooltipRect.width - gap, 8)}px`
+    style.transform = 'translateY(-50%)'
+  } else if (props.placement === 'right') {
+    style.top = `${rect.top + rect.height / 2}px`
+    style.left = `${Math.min(rect.right + gap, window.innerWidth - 8)}px`
+    style.transform = 'translateY(-50%)'
+  } else {
+    style.top = `${Math.max(rect.top - tooltipRect.height - gap, 8)}px`
+    style.left = `${rect.left + rect.width / 2}px`
+    style.transform = 'translateX(-50%)'
+  }
+
+  tooltipStyle.value = style
 }
 
 async function refreshPosition() {
-  await nextTick();
-  updatePosition();
+  await nextTick()
+  updatePosition()
 }
 
 function handleMouseEnter() {
-  stopHideTimer();
-  startShowTimer();
+  stopHideTimer()
+  startShowTimer()
 }
 
 function handleMouseLeave() {
-  stopShowTimer();
-  startHideTimer();
+  stopShowTimer()
+  startHideTimer()
 }
 
 function handleTooltipMouseEnter() {
-  stopHideTimer();
-  stopShowTimer();
+  stopHideTimer()
+  stopShowTimer()
 }
 
 function handleTooltipMouseLeave() {
-  startHideTimer();
+  startHideTimer()
 }
 
 function handleFocus() {
-  stopHideTimer();
-  startShowTimer();
+  stopHideTimer()
+  startShowTimer()
 }
 
 function handleBlur() {
-  stopShowTimer();
-  startHideTimer();
+  stopShowTimer()
+  startHideTimer()
 }
 
-watch(show, (visible) => {
+watch(show, visible => {
   if (visible) {
-    void refreshPosition();
+    void refreshPosition()
   }
-});
+})
 
 function handleWindowChange() {
   if (show.value) {
-    updatePosition();
+    updatePosition()
   }
 }
 
-if (typeof window !== "undefined") {
-  window.addEventListener("scroll", handleWindowChange, true);
-  window.addEventListener("resize", handleWindowChange);
+if (typeof window !== 'undefined') {
+  window.addEventListener('scroll', handleWindowChange, true)
+  window.addEventListener('resize', handleWindowChange)
 }
 
 onBeforeUnmount(() => {
-  if (typeof window !== "undefined") {
-    window.removeEventListener("scroll", handleWindowChange, true);
-    window.removeEventListener("resize", handleWindowChange);
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('scroll', handleWindowChange, true)
+    window.removeEventListener('resize', handleWindowChange)
   }
-});
+})
 </script>
 
 <template>
@@ -262,7 +262,7 @@ onBeforeUnmount(() => {
 .md-tooltip__surface :deep(br) {
   display: block;
   margin-top: var(--spacing-1);
-  content: "";
+  content: '';
 }
 
 /* ===== Positioning (基于 placement) ===== */
@@ -386,18 +386,14 @@ onBeforeUnmount(() => {
 /* ===== MD3 Transitions (Emphasized Easing) ===== */
 .md-tooltip-enter-active {
   transition:
-    opacity var(--md-sys-motion-duration-short2)
-      var(--md-sys-motion-easing-emphasized),
-    transform var(--md-sys-motion-duration-short2)
-      var(--md-sys-motion-easing-emphasized);
+    opacity var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-emphasized),
+    transform var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-emphasized);
 }
 
 .md-tooltip-leave-active {
   transition:
-    opacity var(--md-sys-motion-duration-short1)
-      var(--md-sys-motion-easing-emphasized),
-    transform var(--md-sys-motion-duration-short1)
-      var(--md-sys-motion-easing-emphasized);
+    opacity var(--md-sys-motion-duration-short1) var(--md-sys-motion-easing-emphasized),
+    transform var(--md-sys-motion-duration-short1) var(--md-sys-motion-easing-emphasized);
 }
 
 .md-tooltip-enter-from {

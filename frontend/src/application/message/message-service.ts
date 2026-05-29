@@ -14,19 +14,19 @@
  * @module application/message/message-service
  */
 
-import { ref, computed } from "vue";
+import { ref, computed } from 'vue'
 import type {
   MessageLevel,
   MessageOptions,
   QueuedMessage,
-  MessageServiceConfig,
-} from "@/types/application/message";
-import { logger } from "@/infrastructure/logging/logger";
+  MessageServiceConfig
+} from '@/types/application/message'
+import { logger } from '@/infrastructure/logging/logger'
 
 /**
  * Message 队列（响应式）
  */
-const messages = ref<QueuedMessage[]>([]);
+const messages = ref<QueuedMessage[]>([])
 
 /**
  * 默认配置
@@ -35,24 +35,24 @@ const defaultConfig: MessageServiceConfig = {
   defaultDuration: 2000, // 2 秒
   maxCount: 3, // 最多同时显示 3 条
   showIcon: true,
-  top: 24, // 距离顶部 24px
-};
+  top: 24 // 距离顶部 24px
+}
 
 /**
  * 当前配置
  */
-let config: MessageServiceConfig = { ...defaultConfig };
+let config: MessageServiceConfig = { ...defaultConfig }
 
 /**
  * 定时器映射（用于自动关闭）
  */
-const timers = new Map<string, ReturnType<typeof setTimeout>>();
+const timers = new Map<string, ReturnType<typeof setTimeout>>()
 
 /**
  * 生成唯一 ID
  */
 function generateId(): string {
-  return `message_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+  return `message_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
 }
 
 /**
@@ -60,44 +60,40 @@ function generateId(): string {
  */
 function getIcon(type: MessageLevel): string {
   const iconMap: Record<MessageLevel, string> = {
-    success: "check-circle",
-    error: "error",
-    warning: "warning",
-    info: "info",
-    loading: "progress-activity",
-  };
-  return iconMap[type];
+    success: 'check-circle',
+    error: 'error',
+    warning: 'warning',
+    info: 'info',
+    loading: 'progress-activity'
+  }
+  return iconMap[type]
 }
 
 /**
  * 显示消息
  */
-function show(
-  options: Partial<MessageOptions> & { content: string; type: MessageLevel },
-): string {
-  const id = options.key || generateId();
-  const duration = options.duration ?? config.defaultDuration;
-  const showIcon = options.showIcon ?? config.showIcon;
-  const icon = options.icon || getIcon(options.type);
+function show(options: Partial<MessageOptions> & { content: string; type: MessageLevel }): string {
+  const id = options.key || generateId()
+  const duration = options.duration ?? config.defaultDuration
+  const showIcon = options.showIcon ?? config.showIcon
+  const icon = options.icon || getIcon(options.type)
 
   // 如果已存在相同 key 的消息，先移除
   if (options.key) {
-    const existingIndex = messages.value.findIndex(
-      (m) => m.key === options.key,
-    );
+    const existingIndex = messages.value.findIndex(m => m.key === options.key)
     if (existingIndex !== -1) {
-      const existingMessage = messages.value[existingIndex];
+      const existingMessage = messages.value[existingIndex]
       if (existingMessage) {
-        close(existingMessage.id);
+        close(existingMessage.id)
       }
     }
   }
 
   // 如果超过最大数量，移除最早的消息
   if (messages.value.length >= config.maxCount) {
-    const oldest = messages.value[0];
+    const oldest = messages.value[0]
     if (oldest) {
-      close(oldest.id);
+      close(oldest.id)
     }
   }
 
@@ -108,66 +104,66 @@ function show(
     type: options.type,
     duration,
     showIcon,
-    createdAt: Date.now(),
-  };
+    createdAt: Date.now()
+  }
 
   if (options.key !== undefined) {
-    nextMessage.key = options.key;
+    nextMessage.key = options.key
   }
 
   if (icon) {
-    nextMessage.icon = icon;
+    nextMessage.icon = icon
   }
 
   if (options.onClose !== undefined) {
-    nextMessage.onClose = options.onClose;
+    nextMessage.onClose = options.onClose
   }
 
-  messages.value.push(nextMessage);
+  messages.value.push(nextMessage)
 
-  logger.debug("MessageService", "消息已显示", {
+  logger.debug('MessageService', '消息已显示', {
     id,
     type: options.type,
     content: options.content,
-    duration,
-  });
+    duration
+  })
 
   // 设置自动关闭定时器
   if (duration > 0) {
     const timer = setTimeout(() => {
-      close(id);
-    }, duration);
-    timers.set(id, timer);
+      close(id)
+    }, duration)
+    timers.set(id, timer)
   }
 
-  return id;
+  return id
 }
 
 /**
  * 关闭消息
  */
 function close(id: string): void {
-  const index = messages.value.findIndex((m) => m.id === id);
-  if (index === -1) return;
+  const index = messages.value.findIndex(m => m.id === id)
+  if (index === -1) return
 
-  const message = messages.value[index];
+  const message = messages.value[index]
 
   // 清除定时器
-  const timer = timers.get(id);
+  const timer = timers.get(id)
   if (timer) {
-    clearTimeout(timer);
-    timers.delete(id);
+    clearTimeout(timer)
+    timers.delete(id)
   }
 
   // 移除消息
-  messages.value.splice(index, 1);
+  messages.value.splice(index, 1)
 
   // 调用关闭回调
   if (message?.onClose) {
-    message.onClose();
+    message.onClose()
   }
 
-  logger.debug("MessageService", "消息已关闭", { id });
+  logger.debug('MessageService', '消息已关闭', { id })
 }
 
 /**
@@ -175,35 +171,35 @@ function close(id: string): void {
  */
 function closeAll(): void {
   // 清除所有定时器
-  timers.forEach((timer) => clearTimeout(timer));
-  timers.clear();
+  timers.forEach(timer => clearTimeout(timer))
+  timers.clear()
 
   // 调用所有关闭回调
-  messages.value.forEach((message) => {
+  messages.value.forEach(message => {
     if (message.onClose) {
-      message.onClose();
+      message.onClose()
     }
-  });
+  })
 
   // 清空消息队列
-  messages.value = [];
+  messages.value = []
 
-  logger.debug("MessageService", "所有消息已关闭");
+  logger.debug('MessageService', '所有消息已关闭')
 }
 
 /**
  * 更新配置
  */
 function setConfig(newConfig: Partial<MessageServiceConfig>): void {
-  config = { ...config, ...newConfig };
-  logger.debug("MessageService", "配置已更新", config);
+  config = { ...config, ...newConfig }
+  logger.debug('MessageService', '配置已更新', config)
 }
 
 /**
  * 获取当前配置
  */
 function getConfig(): MessageServiceConfig {
-  return { ...config };
+  return { ...config }
 }
 
 /**
@@ -230,8 +226,8 @@ export const messageService = {
    */
   success(content: string, duration?: number): string {
     return duration === undefined
-      ? show({ content, type: "success" })
-      : show({ content, type: "success", duration });
+      ? show({ content, type: 'success' })
+      : show({ content, type: 'success', duration })
   },
 
   /**
@@ -248,7 +244,7 @@ export const messageService = {
    * ```
    */
   error(content: string, duration?: number): string {
-    return show({ content, type: "error", duration: duration ?? 3000 });
+    return show({ content, type: 'error', duration: duration ?? 3000 })
   },
 
   /**
@@ -264,7 +260,7 @@ export const messageService = {
    * ```
    */
   warning(content: string, duration?: number): string {
-    return show({ content, type: "warning", duration: duration ?? 2500 });
+    return show({ content, type: 'warning', duration: duration ?? 2500 })
   },
 
   /**
@@ -281,8 +277,8 @@ export const messageService = {
    */
   info(content: string, duration?: number): string {
     return duration === undefined
-      ? show({ content, type: "info" })
-      : show({ content, type: "info", duration });
+      ? show({ content, type: 'info' })
+      : show({ content, type: 'info', duration })
   },
 
   /**
@@ -298,9 +294,9 @@ export const messageService = {
    * hide()
    * ```
    */
-  loading(content = "加载中..."): () => void {
-    const id = show({ content, type: "loading", duration: 0 });
-    return () => close(id);
+  loading(content = '加载中...'): () => void {
+    const id = show({ content, type: 'loading', duration: 0 })
+    return () => close(id)
   },
 
   /**
@@ -320,10 +316,8 @@ export const messageService = {
    * })
    * ```
    */
-  show(
-    options: Partial<MessageOptions> & { content: string; type: MessageLevel },
-  ): string {
-    return show(options);
+  show(options: Partial<MessageOptions> & { content: string; type: MessageLevel }): string {
+    return show(options)
   },
 
   /**
@@ -369,10 +363,10 @@ export const messageService = {
    *
    * @returns 当前配置
    */
-  getConfig,
-};
+  getConfig
+}
 
 /**
  * 便捷导出（保持向后兼容）
  */
-export const message = messageService;
+export const message = messageService

@@ -8,37 +8,37 @@
  * - 支持请求/响应拦截器
  */
 
-import type { Result } from "../../core/common/result";
-import { ok, err } from "../../core/common/result";
+import type { Result } from '../../core/common/result'
+import { ok, err } from '../../core/common/result'
 
 /**
  * API 客户端配置
  */
 export interface ApiClientConfig {
-  baseURL?: string;
-  timeout?: number;
-  retries?: number;
-  retryDelay?: number;
-  headers?: Record<string, string>;
+  baseURL?: string
+  timeout?: number
+  retries?: number
+  retryDelay?: number
+  headers?: Record<string, string>
 }
 
 /**
  * 请求选项
  */
 export interface RequestOptions extends RequestInit {
-  timeout?: number;
-  retries?: number;
-  retryDelay?: number;
+  timeout?: number
+  retries?: number
+  retryDelay?: number
 }
 
 /**
  * API 响应
  */
 export interface ApiResponse<T = unknown> {
-  data: T;
-  status: number;
-  statusText: string;
-  headers: Headers;
+  data: T
+  status: number
+  statusText: string
+  headers: Headers
 }
 
 /**
@@ -49,10 +49,10 @@ export class ApiError extends Error {
     message: string,
     public status?: number,
     public statusText?: string,
-    public response?: Response,
+    public response?: Response
   ) {
-    super(message);
-    this.name = "ApiError";
+    super(message)
+    this.name = 'ApiError'
   }
 }
 
@@ -60,19 +60,19 @@ export class ApiError extends Error {
  * HTTP API 客户端
  */
 export class ApiClient {
-  private config: Required<ApiClientConfig>;
+  private config: Required<ApiClientConfig>
 
   constructor(config: ApiClientConfig = {}) {
     this.config = {
-      baseURL: "",
+      baseURL: '',
       timeout: 10000,
       retries: 3,
       retryDelay: 1000,
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json'
       },
-      ...config,
-    };
+      ...config
+    }
   }
 
   /**
@@ -80,28 +80,26 @@ export class ApiClient {
    */
   async request<T = unknown>(
     url: string,
-    options: RequestOptions = {},
+    options: RequestOptions = {}
   ): Promise<Result<ApiResponse<T>, ApiError>> {
     try {
-      const fullUrl = this.buildUrl(url);
-      const requestOptions = this.buildRequestOptions(options);
+      const fullUrl = this.buildUrl(url)
+      const requestOptions = this.buildRequestOptions(options)
 
-      const response = await this.executeRequest(fullUrl, requestOptions);
-      const data = await this.parseResponse<T>(response);
+      const response = await this.executeRequest(fullUrl, requestOptions)
+      const data = await this.parseResponse<T>(response)
 
       return ok({
         data,
         status: response.status,
         statusText: response.statusText,
-        headers: response.headers,
-      });
+        headers: response.headers
+      })
     } catch (error) {
       if (error instanceof ApiError) {
-        return err(error);
+        return err(error)
       }
-      return err(
-        new ApiError(error instanceof Error ? error.message : "Unknown error"),
-      );
+      return err(new ApiError(error instanceof Error ? error.message : 'Unknown error'))
     }
   }
 
@@ -110,9 +108,9 @@ export class ApiClient {
    */
   async get<T = unknown>(
     url: string,
-    options: RequestOptions = {},
+    options: RequestOptions = {}
   ): Promise<Result<ApiResponse<T>, ApiError>> {
-    return this.request<T>(url, { ...options, method: "GET" });
+    return this.request<T>(url, { ...options, method: 'GET' })
   }
 
   /**
@@ -121,13 +119,13 @@ export class ApiClient {
   async post<T = unknown>(
     url: string,
     data?: unknown,
-    options: RequestOptions = {},
+    options: RequestOptions = {}
   ): Promise<Result<ApiResponse<T>, ApiError>> {
     return this.request<T>(url, {
       ...options,
-      method: "POST",
-      ...(data !== undefined ? { body: JSON.stringify(data) } : {}),
-    });
+      method: 'POST',
+      ...(data !== undefined ? { body: JSON.stringify(data) } : {})
+    })
   }
 
   /**
@@ -136,13 +134,13 @@ export class ApiClient {
   async put<T = unknown>(
     url: string,
     data?: unknown,
-    options: RequestOptions = {},
+    options: RequestOptions = {}
   ): Promise<Result<ApiResponse<T>, ApiError>> {
     return this.request<T>(url, {
       ...options,
-      method: "PUT",
-      ...(data !== undefined ? { body: JSON.stringify(data) } : {}),
-    });
+      method: 'PUT',
+      ...(data !== undefined ? { body: JSON.stringify(data) } : {})
+    })
   }
 
   /**
@@ -150,19 +148,19 @@ export class ApiClient {
    */
   async delete<T = unknown>(
     url: string,
-    options: RequestOptions = {},
+    options: RequestOptions = {}
   ): Promise<Result<ApiResponse<T>, ApiError>> {
-    return this.request<T>(url, { ...options, method: "DELETE" });
+    return this.request<T>(url, { ...options, method: 'DELETE' })
   }
 
   /**
    * 构建完整URL
    */
   private buildUrl(url: string): string {
-    if (url.startsWith("http://") || url.startsWith("https://")) {
-      return url;
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url
     }
-    return `${this.config.baseURL}${url.startsWith("/") ? url : `/${url}`}`;
+    return `${this.config.baseURL}${url.startsWith('/') ? url : `/${url}`}`
   }
 
   /**
@@ -174,121 +172,115 @@ export class ApiClient {
       retries: _retries = this.config.retries,
       retryDelay: _retryDelay = this.config.retryDelay,
       ...fetchOptions
-    } = options;
+    } = options
 
     return {
       ...fetchOptions,
       headers: {
         ...this.config.headers,
-        ...fetchOptions.headers,
-      },
-    };
+        ...fetchOptions.headers
+      }
+    }
   }
 
   /**
    * 执行请求（带重试机制）
    */
-  private async executeRequest(
-    url: string,
-    options: RequestOptions,
-  ): Promise<Response> {
-    const {
-      retries = this.config.retries,
-      retryDelay = this.config.retryDelay,
-    } = options;
-    let lastError: Error | null = null;
+  private async executeRequest(url: string, options: RequestOptions): Promise<Response> {
+    const { retries = this.config.retries, retryDelay = this.config.retryDelay } = options
+    let lastError: Error | null = null
 
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
-        const controller = new AbortController();
+        const controller = new AbortController()
         const timeoutId = setTimeout(
           () => controller.abort(),
-          options.timeout || this.config.timeout,
-        );
+          options.timeout || this.config.timeout
+        )
 
         const response = await fetch(url, {
           ...options,
-          signal: controller.signal,
-        });
+          signal: controller.signal
+        })
 
-        clearTimeout(timeoutId);
+        clearTimeout(timeoutId)
 
         if (!response.ok) {
           throw new ApiError(
             `HTTP ${response.status}: ${response.statusText}`,
             response.status,
             response.statusText,
-            response,
-          );
+            response
+          )
         }
 
-        return response;
+        return response
       } catch (error) {
-        lastError = error as Error;
+        lastError = error as Error
 
         // 如果是最后一次尝试，直接抛出错误
         if (attempt === retries) {
-          break;
+          break
         }
 
         // 等待后重试
-        await this.delay(retryDelay * Math.pow(2, attempt));
+        await this.delay(retryDelay * Math.pow(2, attempt))
       }
     }
 
-    throw lastError || new Error("Request failed");
+    throw lastError || new Error('Request failed')
   }
 
   /**
    * 解析响应
    */
   private async parseResponse<T>(response: Response): Promise<T> {
-    const contentType = response.headers.get("content-type");
+    const contentType = response.headers.get('content-type')
 
-    if (contentType?.includes("application/json")) {
-      return response.json();
+    if (contentType?.includes('application/json')) {
+      return response.json()
     }
 
-    if (contentType?.includes("text/")) {
-      return response.text() as unknown as T;
+    if (contentType?.includes('text/')) {
+      return response.text() as unknown as T
     }
 
-    return response.blob() as unknown as T;
+    return response.blob() as unknown as T
   }
 
   /**
    * 延迟函数
    */
   private delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise(resolve => setTimeout(resolve, ms))
   }
 
   /**
    * 设置默认配置
    */
   setConfig(config: Partial<ApiClientConfig>): void {
-    this.config = { ...this.config, ...config };
+    this.config = { ...this.config, ...config }
   }
 
   /**
    * 获取当前配置
    */
   getConfig(): Required<ApiClientConfig> {
-    return { ...this.config };
+    return { ...this.config }
   }
 }
 
 /**
  * 默认 API 客户端实例
  */
-export const apiClient = new ApiClient();
+export const apiClient = new ApiClient()
 
 /**
  * 便捷的请求函数（保持向后兼容）
  */
 export async function request<T = unknown>(
   url: string,
-  options?: RequestOptions,
+  options?: RequestOptions
 ): Promise<Result<ApiResponse<T>, ApiError>> {
-  return apiClient.request<T>(url, options);
+  return apiClient.request<T>(url, options)
 }

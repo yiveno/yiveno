@@ -7,13 +7,13 @@
  */
 export interface SelectOption {
   /** 选项值（唯一标识） */
-  value: string;
+  value: string
   /** 选项标签（显示文本） */
-  label: string;
+  label: string
   /** 选项描述（可选） */
-  description?: string;
+  description?: string
   /** 原始数据（可选） */
-  raw?: unknown;
+  raw?: unknown
 }
 
 /**
@@ -21,15 +21,15 @@ export interface SelectOption {
  */
 export interface AsyncSearchSelectProps {
   /** 标签 */
-  label?: string;
+  label?: string
   /** 占位符 */
-  placeholder?: string;
+  placeholder?: string
   /** 是否多选 */
-  multiple?: boolean;
+  multiple?: boolean
   /** 空结果提示文本 */
-  emptyText?: string;
+  emptyText?: string
   /** 防抖延迟（毫秒） */
-  debounce?: number;
+  debounce?: number
 }
 
 /**
@@ -37,11 +37,11 @@ export interface AsyncSearchSelectProps {
  */
 export interface AsyncSearchSelectEmits {
   /** 搜索事件（返回搜索关键词） */
-  (e: "search", query: string): void;
+  (e: 'search', query: string): void
   /** 选择变化事件（返回选中的值数组） */
-  (e: "change", values: string[]): void;
+  (e: 'change', values: string[]): void
   /** 选择变化事件（返回选中的选项对象数组） */
-  (e: "update:selected", options: SelectOption[]): void;
+  (e: 'update:selected', options: SelectOption[]): void
 }
 
 /**
@@ -49,13 +49,13 @@ export interface AsyncSearchSelectEmits {
  */
 export interface AsyncSearchSelectInstance {
   /** 设置搜索结果 */
-  setOptions: (options: SelectOption[]) => void;
+  setOptions: (options: SelectOption[]) => void
   /** 设置 loading 状态 */
-  setLoading: (loading: boolean) => void;
+  setLoading: (loading: boolean) => void
   /** 清空选择 */
-  clearSelection: () => void;
+  clearSelection: () => void
   /** 获取选中的值 */
-  getSelectedValues: () => string[];
+  getSelectedValues: () => string[]
   /** 获取选中的选项 */
-  getSelectedOptions: () => SelectOption[];
+  getSelectedOptions: () => SelectOption[]
 }

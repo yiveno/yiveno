@@ -7,19 +7,19 @@
 export type {
   TraitTag,
   TraitMetadata,
-  TraitMetadataSource,
-} from "@/infrastructure/indexeddb/types/bookmark-record";
+  TraitMetadataSource
+} from '@/infrastructure/indexeddb/types/bookmark-record'
 
 /**
  * 特征筛选选项
  */
 export interface TraitFilterOptions {
   /** 是否返回完整的书签对象（默认只返回 ID） */
-  includeFullRecord?: boolean;
+  includeFullRecord?: boolean
   /** 排序字段 */
-  sortBy?: "dateAdded" | "title" | "url";
+  sortBy?: 'dateAdded' | 'title' | 'url'
   /** 排序方向 */
-  sortOrder?: "asc" | "desc";
+  sortOrder?: 'asc' | 'desc'
 }
 
 /**
@@ -27,30 +27,30 @@ export interface TraitFilterOptions {
  */
 export interface TraitFilterResult {
   /** 书签 ID 列表 */
-  ids: string[];
+  ids: string[]
   /** 完整书签记录（如果请求） */
   records?: Array<{
-    id: string;
-    title: string;
-    url?: string;
-    traitTags?: string[];
+    id: string
+    title: string
+    url?: string
+    traitTags?: string[]
     traitMetadata?: Array<{
-      tag: string;
-      detectedAt: number;
-      source: string;
-      notes?: string;
-    }>;
-  }>;
+      tag: string
+      detectedAt: number
+      source: string
+      notes?: string
+    }>
+  }>
   /** 结果数量 */
-  count: number;
+  count: number
 }
 
 /**
  * 特征统计信息
  */
 export interface TraitStatistics {
-  duplicate: number;
-  invalid: number;
-  internal: number;
-  total: number;
+  duplicate: number
+  invalid: number
+  internal: number
+  total: number
 }

@@ -12,12 +12,12 @@
  * - 统一的类型安全接口
  */
 
-import { logger } from "@/infrastructure/logging/logger";
+import { logger } from '@/infrastructure/logging/logger'
 
 /**
  * 存储区域类型
  */
-export type StorageArea = "session" | "local" | "sync";
+export type StorageArea = 'session' | 'local' | 'sync'
 
 /**
  * 可序列化的数据类型（JSON-safe）
@@ -25,24 +25,24 @@ export type StorageArea = "session" | "local" | "sync";
  * Chrome Storage API 只能存储 JSON-safe 的数据
  * 使用 unknown 以便实际使用时可以传入任意类型，但提醒开发者必须是可序列化的
  */
-export type SerializableValue = unknown;
+export type SerializableValue = unknown
 
 /**
  * 存储项配置
  */
 export interface StorageItemConfig<T = SerializableValue> {
   /** 存储键 */
-  key: string;
+  key: string
   /** 默认值 */
-  defaultValue?: T;
+  defaultValue?: T
   /** 是否启用日志 */
-  enableLogging?: boolean;
+  enableLogging?: boolean
 }
 
 /**
  * 批量存储项
  */
-export type BatchStorageItems = Record<string, SerializableValue>;
+export type BatchStorageItems = Record<string, SerializableValue>
 
 /**
  * Chrome Storage 服务
@@ -54,7 +54,7 @@ export class ChromeStorageService {
    * 检查 storage.session API 是否可用
    */
   private get isSessionStorageAvailable(): boolean {
-    return typeof chrome !== "undefined" && !!chrome.storage?.session;
+    return typeof chrome !== 'undefined' && !!chrome.storage?.session
   }
 
   /**
@@ -72,23 +72,20 @@ export class ChromeStorageService {
    * await storage.setSession('currentTab', { id: '123', title: 'Example' })
    * ```
    */
-  async setSession<T extends SerializableValue>(
-    key: string,
-    value: T,
-  ): Promise<void> {
+  async setSession<T extends SerializableValue>(key: string, value: T): Promise<void> {
     try {
       if (this.isSessionStorageAvailable) {
         // 🆕 使用 storage.session（自动清理）
-        await chrome.storage.session.set({ [key]: value });
-        logger.debug("ChromeStorage", `✅ Session 存储成功: ${key}`);
+        await chrome.storage.session.set({ [key]: value })
+        logger.debug('ChromeStorage', `✅ Session 存储成功: ${key}`)
       } else {
         // 降级：使用 local 存储（带前缀标记）
-        await chrome.storage.local.set({ [`_session_${key}`]: value });
-        logger.debug("ChromeStorage", `⚠️ Session 降级到 Local: ${key}`);
+        await chrome.storage.local.set({ [`_session_${key}`]: value })
+        logger.debug('ChromeStorage', `⚠️ Session 降级到 Local: ${key}`)
       }
     } catch (error) {
-      logger.error("ChromeStorage", `❌ Session 存储失败: ${key}`, error);
-      throw error;
+      logger.error('ChromeStorage', `❌ Session 存储失败: ${key}`, error)
+      throw error
     }
   }
 
@@ -107,20 +104,20 @@ export class ChromeStorageService {
    */
   async getSession<T extends SerializableValue>(
     key: string,
-    defaultValue?: T,
+    defaultValue?: T
   ): Promise<T | undefined> {
     try {
       if (this.isSessionStorageAvailable) {
-        const result = await chrome.storage.session.get(key);
-        return (result[key] as T) ?? defaultValue;
+        const result = await chrome.storage.session.get(key)
+        return (result[key] as T) ?? defaultValue
       } else {
         // 降级：从 local 读取
-        const result = await chrome.storage.local.get(`_session_${key}`);
-        return (result[`_session_${key}`] as T) ?? defaultValue;
+        const result = await chrome.storage.local.get(`_session_${key}`)
+        return (result[`_session_${key}`] as T) ?? defaultValue
       }
     } catch (error) {
-      logger.error("ChromeStorage", `❌ Session 读取失败: ${key}`, error);
-      return defaultValue;
+      logger.error('ChromeStorage', `❌ Session 读取失败: ${key}`, error)
+      return defaultValue
     }
   }
 
@@ -137,13 +134,13 @@ export class ChromeStorageService {
   async removeSession(key: string): Promise<void> {
     try {
       if (this.isSessionStorageAvailable) {
-        await chrome.storage.session.remove(key);
+        await chrome.storage.session.remove(key)
       } else {
-        await chrome.storage.local.remove(`_session_${key}`);
+        await chrome.storage.local.remove(`_session_${key}`)
       }
-      logger.debug("ChromeStorage", `✅ Session 删除成功: ${key}`);
+      logger.debug('ChromeStorage', `✅ Session 删除成功: ${key}`)
     } catch (error) {
-      logger.error("ChromeStorage", `❌ Session 删除失败: ${key}`, error);
+      logger.error('ChromeStorage', `❌ Session 删除失败: ${key}`, error)
     }
   }
 
@@ -161,16 +158,13 @@ export class ChromeStorageService {
    * await storage.setLocal('theme', 'dark')
    * ```
    */
-  async setLocal<T extends SerializableValue>(
-    key: string,
-    value: T,
-  ): Promise<void> {
+  async setLocal<T extends SerializableValue>(key: string, value: T): Promise<void> {
     try {
-      await chrome.storage.local.set({ [key]: value });
-      logger.debug("ChromeStorage", `✅ Local 存储成功: ${key}`);
+      await chrome.storage.local.set({ [key]: value })
+      logger.debug('ChromeStorage', `✅ Local 存储成功: ${key}`)
     } catch (error) {
-      logger.error("ChromeStorage", `❌ Local 存储失败: ${key}`, error);
-      throw error;
+      logger.error('ChromeStorage', `❌ Local 存储失败: ${key}`, error)
+      throw error
     }
   }
 
@@ -189,14 +183,14 @@ export class ChromeStorageService {
    */
   async getLocal<T extends SerializableValue>(
     key: string,
-    defaultValue?: T,
+    defaultValue?: T
   ): Promise<T | undefined> {
     try {
-      const result = await chrome.storage.local.get(key);
-      return (result[key] as T) ?? defaultValue;
+      const result = await chrome.storage.local.get(key)
+      return (result[key] as T) ?? defaultValue
     } catch (error) {
-      logger.error("ChromeStorage", `❌ Local 读取失败: ${key}`, error);
-      return defaultValue;
+      logger.error('ChromeStorage', `❌ Local 读取失败: ${key}`, error)
+      return defaultValue
     }
   }
 
@@ -212,10 +206,10 @@ export class ChromeStorageService {
    */
   async removeLocal(key: string): Promise<void> {
     try {
-      await chrome.storage.local.remove(key);
-      logger.debug("ChromeStorage", `✅ Local 删除成功: ${key}`);
+      await chrome.storage.local.remove(key)
+      logger.debug('ChromeStorage', `✅ Local 删除成功: ${key}`)
     } catch (error) {
-      logger.error("ChromeStorage", `❌ Local 删除失败: ${key}`, error);
+      logger.error('ChromeStorage', `❌ Local 删除失败: ${key}`, error)
     }
   }
 
@@ -234,16 +228,13 @@ export class ChromeStorageService {
    * await storage.setSync('userPrefs', { language: 'zh-CN' })
    * ```
    */
-  async setSync<T extends SerializableValue>(
-    key: string,
-    value: T,
-  ): Promise<void> {
+  async setSync<T extends SerializableValue>(key: string, value: T): Promise<void> {
     try {
-      await chrome.storage.sync.set({ [key]: value });
-      logger.debug("ChromeStorage", `✅ Sync 存储成功: ${key}`);
+      await chrome.storage.sync.set({ [key]: value })
+      logger.debug('ChromeStorage', `✅ Sync 存储成功: ${key}`)
     } catch (error) {
-      logger.error("ChromeStorage", `❌ Sync 存储失败: ${key}`, error);
-      throw error;
+      logger.error('ChromeStorage', `❌ Sync 存储失败: ${key}`, error)
+      throw error
     }
   }
 
@@ -262,14 +253,14 @@ export class ChromeStorageService {
    */
   async getSync<T extends SerializableValue>(
     key: string,
-    defaultValue?: T,
+    defaultValue?: T
   ): Promise<T | undefined> {
     try {
-      const result = await chrome.storage.sync.get(key);
-      return (result[key] as T) ?? defaultValue;
+      const result = await chrome.storage.sync.get(key)
+      return (result[key] as T) ?? defaultValue
     } catch (error) {
-      logger.error("ChromeStorage", `❌ Sync 读取失败: ${key}`, error);
-      return defaultValue;
+      logger.error('ChromeStorage', `❌ Sync 读取失败: ${key}`, error)
+      return defaultValue
     }
   }
 
@@ -289,20 +280,17 @@ export class ChromeStorageService {
   async setBatchSession(items: BatchStorageItems): Promise<void> {
     try {
       if (this.isSessionStorageAvailable) {
-        await chrome.storage.session.set(items);
+        await chrome.storage.session.set(items)
       } else {
         const prefixedItems = Object.fromEntries(
-          Object.entries(items).map(([k, v]) => [`_session_${k}`, v]),
-        );
-        await chrome.storage.local.set(prefixedItems);
+          Object.entries(items).map(([k, v]) => [`_session_${k}`, v])
+        )
+        await chrome.storage.local.set(prefixedItems)
       }
-      logger.debug(
-        "ChromeStorage",
-        `✅ 批量 Session 存储成功，数量: ${Object.keys(items).length}`,
-      );
+      logger.debug('ChromeStorage', `✅ 批量 Session 存储成功，数量: ${Object.keys(items).length}`)
     } catch (error) {
-      logger.error("ChromeStorage", "❌ 批量 Session 存储失败", error);
-      throw error;
+      logger.error('ChromeStorage', '❌ 批量 Session 存储失败', error)
+      throw error
     }
   }
 
@@ -312,20 +300,18 @@ export class ChromeStorageService {
   async clearAllSession(): Promise<void> {
     try {
       if (this.isSessionStorageAvailable) {
-        await chrome.storage.session.clear();
+        await chrome.storage.session.clear()
       } else {
         // 降级：清空所有 _session_ 前缀的键
-        const allItems = await chrome.storage.local.get(null);
-        const sessionKeys = Object.keys(allItems).filter((k) =>
-          k.startsWith("_session_"),
-        );
+        const allItems = await chrome.storage.local.get(null)
+        const sessionKeys = Object.keys(allItems).filter(k => k.startsWith('_session_'))
         if (sessionKeys.length > 0) {
-          await chrome.storage.local.remove(sessionKeys);
+          await chrome.storage.local.remove(sessionKeys)
         }
       }
-      logger.info("ChromeStorage", "✅ 所有 Session 数据已清空");
+      logger.info('ChromeStorage', '✅ 所有 Session 数据已清空')
     } catch (error) {
-      logger.error("ChromeStorage", "❌ Session 清空失败", error);
+      logger.error('ChromeStorage', '❌ Session 清空失败', error)
     }
   }
 
@@ -336,37 +322,31 @@ export class ChromeStorageService {
    * @param area - 监听的存储区域（可选）
    */
   onChanged(
-    callback: (
-      changes: Record<string, chrome.storage.StorageChange>,
-      area: StorageArea,
-    ) => void,
-    area?: StorageArea,
+    callback: (changes: Record<string, chrome.storage.StorageChange>, area: StorageArea) => void,
+    area?: StorageArea
   ): () => void {
-    const listener = (
-      changes: Record<string, chrome.storage.StorageChange>,
-      areaName: string,
-    ) => {
+    const listener = (changes: Record<string, chrome.storage.StorageChange>, areaName: string) => {
       if (!area || areaName === area) {
-        callback(changes, areaName as StorageArea);
+        callback(changes, areaName as StorageArea)
       }
-    };
+    }
 
-    chrome.storage.onChanged.addListener(listener);
+    chrome.storage.onChanged.addListener(listener)
 
     // 返回取消订阅函数
     return () => {
-      chrome.storage.onChanged.removeListener(listener);
-    };
+      chrome.storage.onChanged.removeListener(listener)
+    }
   }
 }
 
 /**
  * 单例实例
  */
-export const chromeStorage = new ChromeStorageService();
+export const chromeStorage = new ChromeStorageService()
 
 // 默认导出
-export default chromeStorage;
+export default chromeStorage
 
 /**
  * 推荐使用场景：

@@ -3,19 +3,19 @@
  *
  * 提供显示键盘快捷键帮助对话框的功能
  */
-import { ref } from "vue";
-import { useKeyboard } from "./useKeyboard";
+import { ref } from 'vue'
+import { useKeyboard } from './useKeyboard'
 
 /**
  * 快捷键信息
  */
 export interface ShortcutInfo {
   /** 快捷键组合 */
-  keys: string[];
+  keys: string[]
   /** 描述 */
-  description: string;
+  description: string
   /** 分类 */
-  category?: string;
+  category?: string
 }
 
 /**
@@ -23,9 +23,9 @@ export interface ShortcutInfo {
  */
 export interface UseKeyboardHelpOptions {
   /** 快捷键列表 */
-  shortcuts: ShortcutInfo[];
+  shortcuts: ShortcutInfo[]
   /** 是否自动注册 ? 快捷键来显示帮助（默认 true） */
-  autoRegisterHelp?: boolean;
+  autoRegisterHelp?: boolean
 }
 
 /**
@@ -54,39 +54,39 @@ export interface UseKeyboardHelpOptions {
  * ```
  */
 export function useKeyboardHelp(options: UseKeyboardHelpOptions) {
-  const { shortcuts, autoRegisterHelp = true } = options;
+  const { shortcuts, autoRegisterHelp = true } = options
 
-  const showHelp = ref(false);
+  const showHelp = ref(false)
 
   function toggleHelp() {
-    showHelp.value = !showHelp.value;
+    showHelp.value = !showHelp.value
   }
 
   function openHelp() {
-    showHelp.value = true;
+    showHelp.value = true
   }
 
   function closeHelp() {
-    showHelp.value = false;
+    showHelp.value = false
   }
 
   // 自动注册 ? 快捷键
   if (autoRegisterHelp) {
-    const { register } = useKeyboard();
+    const { register } = useKeyboard()
 
     // Shift + ? 或 F1 - 显示快捷键帮助
     register({
-      key: "?",
+      key: '?',
       shift: true,
       handler: toggleHelp,
-      description: "显示快捷键帮助",
-    });
+      description: '显示快捷键帮助'
+    })
 
     register({
-      key: "f1",
+      key: 'f1',
       handler: toggleHelp,
-      description: "显示快捷键帮助",
-    });
+      description: '显示快捷键帮助'
+    })
   }
 
   return {
@@ -94,24 +94,24 @@ export function useKeyboardHelp(options: UseKeyboardHelpOptions) {
     toggleHelp,
     openHelp,
     closeHelp,
-    shortcuts,
-  };
+    shortcuts
+  }
 }
 
 /**
  * 从 useKeyboard 的快捷键 Map 转换为 ShortcutInfo 数组
  */
 export function convertToShortcutInfo(
-  shortcutsMap: ReadonlyMap<string, { description?: string }>,
+  shortcutsMap: ReadonlyMap<string, { description?: string }>
 ): ShortcutInfo[] {
-  const shortcuts: ShortcutInfo[] = [];
+  const shortcuts: ShortcutInfo[] = []
 
   shortcutsMap.forEach((shortcut, key) => {
     shortcuts.push({
       keys: [key],
-      description: shortcut.description || "",
-    });
-  });
+      description: shortcut.description || ''
+    })
+  })
 
-  return shortcuts;
+  return shortcuts
 }

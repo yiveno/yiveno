@@ -4,11 +4,11 @@
  * @module components/base/Message
  */
 
-export { default as Message } from "./Message.vue";
-export { message, messageService } from "@/application/message/message-service";
+export { default as Message } from './Message.vue'
+export { message, messageService } from '@/application/message/message-service'
 export type {
   MessageLevel,
   MessageOptions,
   QueuedMessage,
-  MessageServiceConfig,
-} from "@/types/application/message";
+  MessageServiceConfig
+} from '@/types/application/message'

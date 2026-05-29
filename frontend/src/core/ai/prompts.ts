@@ -10,17 +10,17 @@
  * 书签摘要 Prompt
  */
 export function createSummarizePrompt(bookmark: {
-  title: string;
-  url: string;
-  content?: string;
+  title: string
+  url: string
+  content?: string
 }): string {
   return `请为这个书签生成一个简洁的摘要（50字以内）：
 
 标题：${bookmark.title}
 URL：${bookmark.url}
-${bookmark.content ? `内容：${bookmark.content.slice(0, 500)}` : ""}
+${bookmark.content ? `内容：${bookmark.content.slice(0, 500)}` : ''}
 
-摘要：`;
+摘要：`
 }
 
 /**
@@ -35,16 +35,16 @@ export function createSemanticSearchPrompt(query: string): string {
 - concepts: 核心概念数组
 - synonyms: 同义词数组
 
-只返回 JSON，不要其他内容。`;
+只返回 JSON，不要其他内容。`
 }
 
 /**
  * 标签生成 Prompt
  */
 export function createTagGenerationPrompt(bookmark: {
-  title: string;
-  url: string;
-  content?: string;
+  title: string
+  url: string
+  content?: string
 }): string {
   return `基于这个书签的信息，生成 2-3 个相关标签：
 - 标签应该简洁且高级（例如："React", "JavaScript", "Web开发"）
@@ -53,9 +53,9 @@ export function createTagGenerationPrompt(bookmark: {
 书签信息：
 标题：${bookmark.title}
 URL：${bookmark.url}
-${bookmark.content ? `内容摘要：${bookmark.content.slice(0, 300)}` : ""}
+${bookmark.content ? `内容摘要：${bookmark.content.slice(0, 300)}` : ''}
 
-返回格式示例：["React", "Hook", "性能优化"]`;
+返回格式示例：["React", "Hook", "性能优化"]`
 }
 
 /**
@@ -63,20 +63,20 @@ ${bookmark.content ? `内容摘要：${bookmark.content.slice(0, 300)}` : ""}
  */
 export function createAutoOrganizePrompt(
   bookmarks: Array<{
-    id: string;
-    title: string;
-    url: string;
-    content?: string;
-    existingTags?: string[];
-  }>,
+    id: string
+    title: string
+    url: string
+    content?: string
+    existingTags?: string[]
+  }>
 ): string {
   const bookmarksText = bookmarks
     .slice(0, 50) // 限制数量避免 token 超限
     .map(
       (b, i) =>
-        `${i + 1}. ${b.title}\n   URL: ${b.url}\n   ${b.content ? `内容: ${b.content.slice(0, 100)}` : ""}\n   ${b.existingTags ? `标签: ${b.existingTags.join(", ")}` : ""}`,
+        `${i + 1}. ${b.title}\n   URL: ${b.url}\n   ${b.content ? `内容: ${b.content.slice(0, 100)}` : ''}\n   ${b.existingTags ? `标签: ${b.existingTags.join(', ')}` : ''}`
     )
-    .join("\n\n");
+    .join('\n\n')
 
   return `你是一个专业的书签管理助手。请根据以下书签列表，生成一个合理的文件夹结构来组织这些书签。
 
@@ -106,5 +106,5 @@ ${bookmarksText}
   ]
 }
 
-只返回 JSON，不要其他内容。`;
+只返回 JSON，不要其他内容。`
 }

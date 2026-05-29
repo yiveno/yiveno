@@ -17,17 +17,17 @@
  */
 export interface GenericTreeNode {
   /** 节点唯一标识符 */
-  id: string;
+  id: string
   /** 节点标题 */
-  title?: string;
+  title?: string
   /** 节点URL（如果是书签） */
-  url?: string;
+  url?: string
   /** 父节点ID */
-  parentId?: string;
+  parentId?: string
   /** 在父节点中的位置索引 */
-  index?: number;
+  index?: number
   /** 子节点列表 */
-  children?: GenericTreeNode[];
+  children?: GenericTreeNode[]
 }
 
 /**
@@ -41,19 +41,16 @@ export interface GenericTreeNode {
  */
 export function findNodeById<T extends GenericTreeNode>(
   nodes: T[],
-  id: string,
+  id: string
 ): { node: T | null; parent: T | null } {
-  const stack: Array<{ node: T; parent: T | null }> = [];
-  nodes.forEach((n) => stack.push({ node: n, parent: null }));
+  const stack: Array<{ node: T; parent: T | null }> = []
+  nodes.forEach(n => stack.push({ node: n, parent: null }))
   while (stack.length) {
-    const { node, parent } = stack.pop() as { node: T; parent: T | null };
-    if (node.id === id) return { node, parent };
-    if (node.children)
-      node.children.forEach((ch) =>
-        stack.push({ node: ch as T, parent: node }),
-      );
+    const { node, parent } = stack.pop() as { node: T; parent: T | null }
+    if (node.id === id) return { node, parent }
+    if (node.children) node.children.forEach(ch => stack.push({ node: ch as T, parent: node }))
   }
-  return { node: null, parent: null };
+  return { node: null, parent: null }
 }
 
 /**
@@ -65,24 +62,21 @@ export function findNodeById<T extends GenericTreeNode>(
  * @param id - 要移除的节点ID
  * @returns 如果成功移除返回 true，未找到节点返回 false
  */
-export function removeNodeById<T extends GenericTreeNode>(
-  nodes: T[],
-  id: string,
-): boolean {
+export function removeNodeById<T extends GenericTreeNode>(nodes: T[], id: string): boolean {
   for (let i = 0; i < nodes.length; i++) {
-    const n = nodes[i];
-    if (!n) continue;
+    const n = nodes[i]
+    if (!n) continue
 
     if (n.id === id) {
-      nodes.splice(i, 1);
-      return true;
+      nodes.splice(i, 1)
+      return true
     }
     if (n.children?.length) {
-      const removed = removeNodeById(n.children as T[], id);
-      if (removed) return true;
+      const removed = removeNodeById(n.children as T[], id)
+      if (removed) return true
     }
   }
-  return false;
+  return false
 }
 
 /**
@@ -98,17 +92,17 @@ export function insertNodeToParent<T extends GenericTreeNode>(
   nodes: T[],
   parentId: string | undefined,
   newNode: T,
-  index = 0,
+  index = 0
 ): boolean {
-  if (!parentId) return false;
-  const { node: parent } = findNodeById(nodes, parentId);
-  if (!parent) return false;
-  if (!parent.children) parent.children = [];
-  const clampedIndex = Math.max(0, Math.min(index, parent.children.length));
-  (parent.children as T[]).splice(clampedIndex, 0, newNode);
+  if (!parentId) return false
+  const { node: parent } = findNodeById(nodes, parentId)
+  if (!parent) return false
+  if (!parent.children) parent.children = []
+  const clampedIndex = Math.max(0, Math.min(index, parent.children.length))
+  ;(parent.children as T[]).splice(clampedIndex, 0, newNode)
   // 重建index字段，确保顺序一致
-  parent.children.forEach((c, i) => (c.index = i));
-  return true;
+  parent.children.forEach((c, i) => (c.index = i))
+  return true
 }
 
 /**
@@ -118,11 +112,9 @@ export function insertNodeToParent<T extends GenericTreeNode>(
  *
  * @param nodes - 树节点数组
  */
-export function rebuildIndexesRecursively<T extends GenericTreeNode>(
-  nodes: T[],
-) {
+export function rebuildIndexesRecursively<T extends GenericTreeNode>(nodes: T[]) {
   nodes.forEach((n, i) => {
-    n.index = i;
-    if (n.children) rebuildIndexesRecursively(n.children as T[]);
-  });
+    n.index = i
+    if (n.children) rebuildIndexesRecursively(n.children as T[])
+  })
 }

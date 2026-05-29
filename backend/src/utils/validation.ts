@@ -42,7 +42,6 @@ function isHttpsLikeLocal(u: URL): boolean {
   return u.protocol === 'https:' && (u.hostname === 'localhost' || u.hostname === '127.0.0.1')
 }
 
-
 /**
  * 检查 HTTPS 主机是否在许可列表中
  */

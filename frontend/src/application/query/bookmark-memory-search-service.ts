@@ -18,21 +18,21 @@ import {
   highlightMatches,
   recalculateChildrenCount,
   type BookmarkFilterOptions,
-  type FilteredBookmarkNode,
-} from "@/core/filter/bookmark-filter";
-import type { BookmarkNode } from "@/types";
-import { logger } from "@/infrastructure/logging/logger";
+  type FilteredBookmarkNode
+} from '@/core/filter/bookmark-filter'
+import type { BookmarkNode } from '@/types'
+import { logger } from '@/infrastructure/logging/logger'
 
 /**
  * 内存搜索结果
  */
 export interface MemorySearchResult {
   /** 搜索后的树形节点 */
-  nodes: FilteredBookmarkNode[];
+  nodes: FilteredBookmarkNode[]
   /** 总结果数（叶子节点数量） */
-  total: number;
+  total: number
   /** 执行时间（毫秒） */
-  executionTime: number;
+  executionTime: number
 }
 
 /**
@@ -50,27 +50,27 @@ class BookmarkMemorySearchService {
   search(
     nodes: BookmarkNode[],
     query: string,
-    options: BookmarkFilterOptions = {},
+    options: BookmarkFilterOptions = {}
   ): MemorySearchResult {
-    const startTime = performance.now();
+    const startTime = performance.now()
 
     try {
-      let filteredNodes = filterBookmarkNodes(nodes, query, options);
-      filteredNodes = recalculateChildrenCount(filteredNodes);
+      let filteredNodes = filterBookmarkNodes(nodes, query, options)
+      filteredNodes = recalculateChildrenCount(filteredNodes)
 
-      const flattenedResults = flattenFilterResults(filteredNodes);
-      const total = flattenedResults.length;
-      const executionTime = Math.round(performance.now() - startTime);
+      const flattenedResults = flattenFilterResults(filteredNodes)
+      const total = flattenedResults.length
+      const executionTime = Math.round(performance.now() - startTime)
 
-      logger.info("BookmarkMemorySearchService", `内存搜索完成: "${query}"`, {
+      logger.info('BookmarkMemorySearchService', `内存搜索完成: "${query}"`, {
         total,
-        executionTime,
-      });
+        executionTime
+      })
 
-      return { nodes: filteredNodes, total, executionTime };
+      return { nodes: filteredNodes, total, executionTime }
     } catch (error) {
-      logger.error("BookmarkMemorySearchService", "内存搜索失败", error);
-      throw error;
+      logger.error('BookmarkMemorySearchService', '内存搜索失败', error)
+      throw error
     }
   }
 
@@ -78,7 +78,7 @@ class BookmarkMemorySearchService {
    * 扁平化搜索结果（树形 → 列表）
    */
   flatten(nodes: FilteredBookmarkNode[]): FilteredBookmarkNode[] {
-    return flattenFilterResults(nodes);
+    return flattenFilterResults(nodes)
   }
 
   /**
@@ -87,14 +87,14 @@ class BookmarkMemorySearchService {
   highlight(
     text: string,
     query: string,
-    caseSensitive = false,
+    caseSensitive = false
   ): Array<{ text: string; highlighted: boolean }> {
-    return highlightMatches(text, query, caseSensitive);
+    return highlightMatches(text, query, caseSensitive)
   }
 }
 
 /** 全局唯一书签内存搜索服务实例 */
-export const bookmarkMemorySearchService = new BookmarkMemorySearchService();
+export const bookmarkMemorySearchService = new BookmarkMemorySearchService()
 
 // 导出类型
-export type { BookmarkFilterOptions, FilteredBookmarkNode };
+export type { BookmarkFilterOptions, FilteredBookmarkNode }

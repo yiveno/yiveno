@@ -1,125 +1,109 @@
 <script setup lang="ts">
-import {
-  computed,
-  defineAsyncComponent,
-  nextTick,
-  onMounted,
-  onUnmounted,
-  ref,
-  watch,
-} from "vue";
-import { AppHeader, Card } from "@/components";
-import LucideIcon from "@/components/base/LucideIcon/LucideIcon.vue";
-import GlobalSyncProgress from "@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue";
-import { t } from "@/infrastructure";
-import { onEvent } from "@/infrastructure/events/event-bus";
-import { useSupabaseAuth, useThemeSync } from "@/composables";
-import { logger } from "@/infrastructure/logging/logger";
+import { computed, defineAsyncComponent, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { AppHeader, Card } from '@/components'
+import LucideIcon from '@/components/base/LucideIcon/LucideIcon.vue'
+import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'
+import { t } from '@/infrastructure'
+import { onEvent } from '@/infrastructure/events/event-bus'
+import { useSupabaseAuth, useThemeSync } from '@/composables'
+import { logger } from '@/infrastructure/logging/logger'
 
 defineOptions({
-  name: "SettingsPage",
-  inheritAttrs: false,
-});
+  name: 'SettingsPage',
+  inheritAttrs: false
+})
 // 使用 Supabase Auth 检查登录状态
-const { isAuthenticated, initialize, setupAuthListener } = useSupabaseAuth();
-const isLoggedIn = computed(() => isAuthenticated.value);
+const { isAuthenticated, initialize, setupAuthListener } = useSupabaseAuth()
+const isLoggedIn = computed(() => isAuthenticated.value)
 
 // 懒加载分区组件（首屏更快）
-const GeneralSettings = defineAsyncComponent(
-  () => import("./sections/GeneralSettings.vue"),
-);
-const ColorPresetSettings = defineAsyncComponent(
-  () => import("./sections/ColorPresetSettings.vue"),
-);
-const AISettings = defineAsyncComponent(
-  () => import("./sections/AISettings.vue"),
-);
+const GeneralSettings = defineAsyncComponent(() => import('./sections/GeneralSettings.vue'))
+const ColorPresetSettings = defineAsyncComponent(() => import('./sections/ColorPresetSettings.vue'))
+const AISettings = defineAsyncComponent(() => import('./sections/AISettings.vue'))
 const NotificationSettings = defineAsyncComponent(
-  () => import("./sections/NotificationSettings.vue"),
-);
-const ShortcutSettings = defineAsyncComponent(
-  () => import("./sections/ShortcutSettings.vue"),
-);
+  () => import('./sections/NotificationSettings.vue')
+)
+const ShortcutSettings = defineAsyncComponent(() => import('./sections/ShortcutSettings.vue'))
 
-type TabKey = "general" | "colorPreset" | "ai" | "notifications" | "shortcuts";
-const tab = ref<TabKey>("general");
+type TabKey = 'general' | 'colorPreset' | 'ai' | 'notifications' | 'shortcuts'
+const tab = ref<TabKey>('general')
 const tabs = [
   {
-    value: "general",
-    key: "settings_tab_general",
-    fallback: "通用",
-    icon: "settings",
+    value: 'general',
+    key: 'settings_tab_general',
+    fallback: '通用',
+    icon: 'settings'
   },
   {
-    value: "colorPreset",
-    key: "settings_tab_color_preset",
-    fallback: "配色",
-    icon: "palette",
+    value: 'colorPreset',
+    key: 'settings_tab_color_preset',
+    fallback: '配色',
+    icon: 'palette'
   },
   {
-    value: "ai",
-    key: "settings_tab_ai",
-    fallback: "AI 配置",
-    icon: "sparkles",
+    value: 'ai',
+    key: 'settings_tab_ai',
+    fallback: 'AI 配置',
+    icon: 'sparkles'
   },
   {
-    value: "notifications",
-    key: "settings_tab_notifications",
-    fallback: "通知",
-    icon: "bell",
+    value: 'notifications',
+    key: 'settings_tab_notifications',
+    fallback: '通知',
+    icon: 'bell'
   },
   {
-    value: "shortcuts",
-    key: "settings_tab_shortcuts",
-    fallback: "快捷键",
-    icon: "keyboard",
-  },
-] as const;
+    value: 'shortcuts',
+    key: 'settings_tab_shortcuts',
+    fallback: '快捷键',
+    icon: 'keyboard'
+  }
+] as const
 
 function tf(key: string, fallback: string) {
-  const v = t(key);
+  const v = t(key)
   // 若返回与 key 相同，说明没有命中字典，使用 fallback
-  if (!v || v === key) return fallback;
-  return v;
+  if (!v || v === key) return fallback
+  return v
 }
 
 const tabsI18n = computed(() =>
-  tabs.map((tabItem) => ({
+  tabs.map(tabItem => ({
     value: tabItem.value,
     text: tf(tabItem.key, tabItem.fallback),
-    icon: tabItem.icon,
-  })),
-);
+    icon: tabItem.icon
+  }))
+)
 
 /** 与 `md-tabs.activeTabIndex` 对齐的当前索引（Material Web 使用 0-based） */
 const tabsActiveIndex = computed(() => {
-  const i = tabs.findIndex((tabItem) => tabItem.value === tab.value);
-  return i >= 0 ? i : 0;
-});
+  const i = tabs.findIndex(tabItem => tabItem.value === tab.value)
+  return i >= 0 ? i : 0
+})
 
 /** 当前 tab 的标题 */
 const currentTabTitle = computed(() => {
-  const currentTab = tabs.find((tabItem) => tabItem.value === tab.value);
-  return currentTab ? tf(currentTab.key, currentTab.fallback) : "";
-});
+  const currentTab = tabs.find(tabItem => tabItem.value === tab.value)
+  return currentTab ? tf(currentTab.key, currentTab.fallback) : ''
+})
 
 /** 当前 tab 的图标 */
 const currentTabIcon = computed(() => {
-  const currentTab = tabs.find((tabItem) => tabItem.value === tab.value);
-  return currentTab?.icon || "settings";
-});
+  const currentTab = tabs.find(tabItem => tabItem.value === tab.value)
+  return currentTab?.icon || 'settings'
+})
 
-const mdTabsRef = ref<HTMLElement | null>(null);
+const mdTabsRef = ref<HTMLElement | null>(null)
 
 /**
  * 将 Vue 状态同步到 Lit `md-tabs`（仅靠模板绑定时，部分情况下指示器与选中态不会更新）。
  */
 function syncMdTabsActiveIndex(): void {
-  const el = mdTabsRef.value as { activeTabIndex?: number } | null;
-  if (!el || typeof el.activeTabIndex !== "number") return;
-  const next = tabsActiveIndex.value;
+  const el = mdTabsRef.value as { activeTabIndex?: number } | null
+  if (!el || typeof el.activeTabIndex !== 'number') return
+  const next = tabsActiveIndex.value
   if (el.activeTabIndex !== next) {
-    el.activeTabIndex = next;
+    el.activeTabIndex = next
   }
 }
 
@@ -127,11 +111,11 @@ function syncMdTabsActiveIndex(): void {
  * 处理 tab 切换：`change` 可能从子节点冒泡，必须用 `currentTarget` 取 `md-tabs`。
  */
 function handleTabChange(event: Event): void {
-  const host = event.currentTarget as HTMLElement & { activeTabIndex: number };
-  const index = host.activeTabIndex;
-  const nextTab = tabs[index];
+  const host = event.currentTarget as HTMLElement & { activeTabIndex: number }
+  const index = host.activeTabIndex
+  const nextTab = tabs[index]
   if (nextTab) {
-    tab.value = nextTab.value;
+    tab.value = nextTab.value
   }
 }
 
@@ -140,135 +124,126 @@ async function checkLoginStatus() {
   // Supabase Auth 的 isAuthenticated 是响应式的，会自动更新
 }
 
-const allowed = new Set<TabKey>([
-  "general",
-  "colorPreset",
-  "ai",
-  "notifications",
-  "shortcuts",
-]);
+const allowed = new Set<TabKey>(['general', 'colorPreset', 'ai', 'notifications', 'shortcuts'])
 
-useThemeSync("Settings");
+useThemeSync('Settings')
 
 function readTabFromURL(): TabKey | null {
   try {
     // 🔒 环境检查：确保在浏览器环境中运行
-    if (typeof window === "undefined") {
-      return null;
+    if (typeof window === 'undefined') {
+      return null
     }
-    const url = new URL(window.location.href);
-    const q = (url.searchParams.get("tab") || "").toLowerCase();
-    if (q && allowed.has(q as TabKey)) return q as TabKey;
-    const h = (url.hash || "").toLowerCase();
+    const url = new URL(window.location.href)
+    const q = (url.searchParams.get('tab') || '').toLowerCase()
+    if (q && allowed.has(q as TabKey)) return q as TabKey
+    const h = (url.hash || '').toLowerCase()
     // 支持 #tab=xxx 或 #/tab/xxx 两种形式（宽松匹配）
-    if (h.startsWith("#tab=")) {
-      const v = h.slice(5);
-      if (allowed.has(v as TabKey)) return v as TabKey;
+    if (h.startsWith('#tab=')) {
+      const v = h.slice(5)
+      if (allowed.has(v as TabKey)) return v as TabKey
     }
-    if (h.startsWith("#/tab/")) {
-      const v = h.slice("#/tab/".length);
-      if (allowed.has(v as TabKey)) return v as TabKey;
+    if (h.startsWith('#/tab/')) {
+      const v = h.slice('#/tab/'.length)
+      if (allowed.has(v as TabKey)) return v as TabKey
     }
   } catch {}
-  return null;
+  return null
 }
 
 function writeTabToURL(v: TabKey) {
   try {
     // 🔒 环境检查：确保在浏览器环境中运行
-    if (typeof window === "undefined") {
-      return;
+    if (typeof window === 'undefined') {
+      return
     }
-    const url = new URL(window.location.href);
-    url.searchParams.set("tab", v);
+    const url = new URL(window.location.href)
+    url.searchParams.set('tab', v)
     // 清理旧的 #tab 片段，统一用查询参数
-    if (
-      url.hash &&
-      (url.hash.startsWith("#tab=") || url.hash.startsWith("#/tab/"))
-    ) {
-      url.hash = "";
+    if (url.hash && (url.hash.startsWith('#tab=') || url.hash.startsWith('#/tab/'))) {
+      url.hash = ''
     }
-    window.history.replaceState({}, "", url.toString());
+    window.history.replaceState({}, '', url.toString())
   } catch {}
 }
 
 function syncFromURL() {
-  const urlTab = readTabFromURL();
-  if (urlTab && urlTab !== tab.value) tab.value = urlTab;
+  const urlTab = readTabFromURL()
+  if (urlTab && urlTab !== tab.value) tab.value = urlTab
 }
 
-let unsubscribeLogin: (() => void) | null = null;
-let unsubscribeLogout: (() => void) | null = null;
+let unsubscribeLogin: (() => void) | null = null
+let unsubscribeLogout: (() => void) | null = null
 
 // 监听页面可见性变化（当从其他页面返回时刷新状态）
 const handleVisibilityChange = () => {
   if (!document.hidden) {
-    logger.debug("Settings", "Visibility", "页面变为可见，重新检查登录状态...");
-    checkLoginStatus();
+    logger.debug('Settings', 'Visibility', '页面变为可见，重新检查登录状态...')
+    checkLoginStatus()
   }
-};
+}
 
 onMounted(async () => {
-  logger.info("Settings", "Mount", "页面挂载，开始检查登录状态...");
+  logger.info('Settings', 'Mount', '页面挂载，开始检查登录状态...')
 
   // 等待 Supabase Auth 初始化完成（首次加载需要时间）
-  await initialize();
-  setupAuthListener(); // ✅ 手动设置认证状态监听器
+  await initialize()
+  setupAuthListener() // ✅ 手动设置认证状态监听器
 
   // 检查登录状态
-  await checkLoginStatus();
+  await checkLoginStatus()
 
-  logger.info("Settings", "Init", "初始化完成，登录状态", {
+  logger.info('Settings', 'Init', '初始化完成，登录状态', {
     isLoggedIn: isLoggedIn.value,
     isAuthenticated: isAuthenticated.value,
-    currentTab: tab.value,
-  });
+    currentTab: tab.value
+  })
 
-  const initial = readTabFromURL();
+  const initial = readTabFromURL()
   if (initial && initial !== tab.value) {
-    tab.value = initial;
+    tab.value = initial
   }
 
-  await nextTick();
-  syncMdTabsActiveIndex();
+  await nextTick()
+  syncMdTabsActiveIndex()
 
   // 监听浏览器前进/后退
   // 🔒 环境检查：确保在浏览器环境中运行
-  if (typeof window !== "undefined") {
-    window.addEventListener("popstate", syncFromURL);
-    window.addEventListener("hashchange", syncFromURL);
+  if (typeof window !== 'undefined') {
+    window.addEventListener('popstate', syncFromURL)
+    window.addEventListener('hashchange', syncFromURL)
   }
 
   // 监听页面可见性变化
-  document.addEventListener("visibilitychange", handleVisibilityChange);
+  document.addEventListener('visibilitychange', handleVisibilityChange)
 
   // 监听登录/退出事件
-  unsubscribeLogin = onEvent("auth:logged-in", async () => {
-    await initialize();
-    await checkLoginStatus();
-  });
+  unsubscribeLogin = onEvent('auth:logged-in', async () => {
+    await initialize()
+    await checkLoginStatus()
+  })
 
-  unsubscribeLogout = onEvent("auth:logged-out", async () => {
-    await initialize();
-    await checkLoginStatus();
-  });
-});
+  unsubscribeLogout = onEvent('auth:logged-out', async () => {
+    await initialize()
+    await checkLoginStatus()
+  })
+})
 
 onUnmounted(() => {
   // 🔒 环境检查：确保在浏览器环境中运行
-  if (typeof window !== "undefined") {
-    window.removeEventListener("popstate", syncFromURL);
-    window.removeEventListener("hashchange", syncFromURL);
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('popstate', syncFromURL)
+    window.removeEventListener('hashchange', syncFromURL)
   }
-  document.removeEventListener("visibilitychange", handleVisibilityChange);
-  if (unsubscribeLogin) unsubscribeLogin();
-  if (unsubscribeLogout) unsubscribeLogout();
-});
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
+  if (unsubscribeLogin) unsubscribeLogin()
+  if (unsubscribeLogout) unsubscribeLogout()
+})
 
-watch(tab, (v) => {
-  writeTabToURL(v);
-  void nextTick(() => syncMdTabsActiveIndex());
-});
+watch(tab, v => {
+  writeTabToURL(v)
+  void nextTick(() => syncMdTabsActiveIndex())
+})
 </script>
 
 <template>
@@ -276,11 +251,7 @@ watch(tab, (v) => {
     <!-- 📊 全局书签同步进度对话框 -->
     <GlobalSyncProgress />
 
-    <AppHeader
-      :show-side-panel-toggle="false"
-      :show-settings="false"
-      :show-account="false"
-    />
+    <AppHeader :show-side-panel-toggle="false" :show-settings="false" :show-account="false" />
     <main class="main-content">
       <div class="settings-body">
         <!-- ✅ Material Web Tabs - 横向布局 -->

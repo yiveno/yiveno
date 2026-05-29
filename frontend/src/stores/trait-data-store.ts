@@ -12,30 +12,30 @@
  * - 响应式：使用 Pinia 的响应式 API
  */
 
-import { defineStore } from "pinia";
-import { ref, computed } from "vue";
-import { bookmarkTraitQueryService } from "@/application/bookmark/bookmark-trait-query-service";
-import type { TraitTag } from "@/core/bookmark/trait-rules";
-import { logger } from "@/infrastructure/logging/logger";
-import { withRetry, shouldRetryError } from "@/utils/retry-helpers";
-import { requestDeduplication } from "@/utils/request-deduplication";
+import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
+import { bookmarkTraitQueryService } from '@/application/bookmark/bookmark-trait-query-service'
+import type { TraitTag } from '@/core/bookmark/trait-rules'
+import { logger } from '@/infrastructure/logging/logger'
+import { withRetry, shouldRetryError } from '@/utils/retry-helpers'
+import { requestDeduplication } from '@/utils/request-deduplication'
 
 /**
  * 特征统计数据
  */
 export interface TraitStatistics {
-  duplicate: number;
-  invalid: number;
-  internal: number;
-  outdated?: number;
-  untagged?: number;
-  untitled?: number;
+  duplicate: number
+  invalid: number
+  internal: number
+  outdated?: number
+  untagged?: number
+  untitled?: number
 }
 
 /**
  * 特征数据 Store
  */
-export const useTraitDataStore = defineStore("traitData", () => {
+export const useTraitDataStore = defineStore('traitData', () => {
   // === 状态 ===
 
   /**
@@ -44,57 +44,55 @@ export const useTraitDataStore = defineStore("traitData", () => {
   const statistics = ref<TraitStatistics>({
     duplicate: 0,
     invalid: 0,
-    internal: 0,
-  });
+    internal: 0
+  })
 
   /**
    * 最后更新时间
    */
-  const lastUpdated = ref(0);
+  const lastUpdated = ref(0)
 
   /**
    * 是否正在加载
    */
-  const isLoading = ref(false);
+  const isLoading = ref(false)
 
   /**
    * 是否已初始化
    */
-  const isInitialized = ref(false);
+  const isInitialized = ref(false)
 
   /**
    * 最后一次错误
    */
-  const lastError = ref<Error | null>(null);
+  const lastError = ref<Error | null>(null)
 
   /**
    * 重试次数
    */
-  const retryCount = ref(0);
+  const retryCount = ref(0)
 
   // === 计算属性 ===
 
   /**
    * 负面特征总数（需要用户关注的）
    */
-  const totalNegativeTraits = computed(
-    () => statistics.value.duplicate + statistics.value.invalid,
-  );
+  const totalNegativeTraits = computed(() => statistics.value.duplicate + statistics.value.invalid)
 
   /**
    * 是否有需要关注的特征
    */
-  const hasNegativeTraits = computed(() => totalNegativeTraits.value > 0);
+  const hasNegativeTraits = computed(() => totalNegativeTraits.value > 0)
 
   /**
    * 数据是否过期（超过 5 分钟）
    */
   const isStale = computed(() => {
-    if (lastUpdated.value === 0) return true;
-    const now = Date.now();
-    const fiveMinutes = 5 * 60 * 1000;
-    return now - lastUpdated.value > fiveMinutes;
-  });
+    if (lastUpdated.value === 0) return true
+    const now = Date.now()
+    const fiveMinutes = 5 * 60 * 1000
+    return now - lastUpdated.value > fiveMinutes
+  })
 
   // === 方法 ===
 
@@ -111,56 +109,52 @@ export const useTraitDataStore = defineStore("traitData", () => {
   async function refresh(force = false): Promise<void> {
     // 如果正在加载且不是强制刷新，跳过
     if (isLoading.value && !force) {
-      logger.debug("TraitDataStore", "正在加载中，跳过刷新");
-      return;
+      logger.debug('TraitDataStore', '正在加载中，跳过刷新')
+      return
     }
 
     // 如果数据未过期且不是强制刷新，跳过
     if (!isStale.value && !force) {
-      logger.debug("TraitDataStore", "数据未过期，跳过刷新");
-      return;
+      logger.debug('TraitDataStore', '数据未过期，跳过刷新')
+      return
     }
 
     // ✅ 使用请求去重，防止并发重复请求
     return requestDeduplication.execute(
-      "trait-data-store-refresh",
+      'trait-data-store-refresh',
       async () => {
-        isLoading.value = true;
-        lastError.value = null;
+        isLoading.value = true
+        lastError.value = null
 
         try {
-          logger.debug("TraitDataStore", "开始刷新特征统计...");
+          logger.debug('TraitDataStore', '开始刷新特征统计...')
 
           // ✅ 使用重试机制，提升容错能力
-          const stats = await withRetry(
-            () => bookmarkTraitQueryService.getTraitStatistics(),
-            {
-              maxRetries: 3,
-              delay: 500,
-              backoffFactor: 2,
-              shouldRetry: shouldRetryError,
-              operationName: "获取特征统计",
-            },
-          );
+          const stats = await withRetry(() => bookmarkTraitQueryService.getTraitStatistics(), {
+            maxRetries: 3,
+            delay: 500,
+            backoffFactor: 2,
+            shouldRetry: shouldRetryError,
+            operationName: '获取特征统计'
+          })
 
-          statistics.value = stats;
-          lastUpdated.value = Date.now();
-          retryCount.value = 0;
+          statistics.value = stats
+          lastUpdated.value = Date.now()
+          retryCount.value = 0
 
-          logger.info("TraitDataStore", "✅ 特征统计已更新", stats);
+          logger.info('TraitDataStore', '✅ 特征统计已更新', stats)
         } catch (error) {
-          lastError.value =
-            error instanceof Error ? error : new Error(String(error));
-          retryCount.value++;
+          lastError.value = error instanceof Error ? error : new Error(String(error))
+          retryCount.value++
 
-          logger.error("TraitDataStore", "刷新特征统计失败", error);
-          throw error;
+          logger.error('TraitDataStore', '刷新特征统计失败', error)
+          throw error
         } finally {
-          isLoading.value = false;
+          isLoading.value = false
         }
       },
-      1000, // 1 秒内的重复请求会被去重
-    );
+      1000 // 1 秒内的重复请求会被去重
+    )
   }
 
   /**
@@ -170,7 +164,7 @@ export const useTraitDataStore = defineStore("traitData", () => {
    * @returns 数量
    */
   function getCount(trait: TraitTag): number {
-    return statistics.value[trait] ?? 0;
+    return statistics.value[trait] ?? 0
   }
 
   /**
@@ -178,22 +172,22 @@ export const useTraitDataStore = defineStore("traitData", () => {
    */
   function initialize(): void {
     if (isInitialized.value) {
-      logger.warn("TraitDataStore", "已经初始化，跳过");
-      return;
+      logger.warn('TraitDataStore', '已经初始化，跳过')
+      return
     }
 
-    logger.info("TraitDataStore", "初始化特征数据 Store");
+    logger.info('TraitDataStore', '初始化特征数据 Store')
 
     // 设置自动刷新监听器
-    setupAutoRefreshListener();
+    setupAutoRefreshListener()
 
     // 初始加载
-    refresh().catch((err) => {
-      logger.error("TraitDataStore", "初始加载失败", err);
-    });
+    refresh().catch(err => {
+      logger.error('TraitDataStore', '初始加载失败', err)
+    })
 
-    isInitialized.value = true;
-    logger.info("TraitDataStore", "✅ 初始化完成");
+    isInitialized.value = true
+    logger.info('TraitDataStore', '✅ 初始化完成')
   }
 
   /**
@@ -202,18 +196,18 @@ export const useTraitDataStore = defineStore("traitData", () => {
    * 监听特征更新消息，自动刷新统计数据
    */
   function setupAutoRefreshListener(): void {
-    chrome.runtime.onMessage.addListener((message) => {
-      if (message.type === "acuity-bookmarks-trait-updated") {
-        logger.info("TraitDataStore", "🏷️ 收到特征更新消息，自动刷新");
+    chrome.runtime.onMessage.addListener(message => {
+      if (message.type === 'acuity-bookmarks-trait-updated') {
+        logger.info('TraitDataStore', '🏷️ 收到特征更新消息，自动刷新')
 
         // 强制刷新（忽略缓存）
-        refresh(true).catch((err) => {
-          logger.error("TraitDataStore", "自动刷新失败", err);
-        });
+        refresh(true).catch(err => {
+          logger.error('TraitDataStore', '自动刷新失败', err)
+        })
       }
-    });
+    })
 
-    logger.info("TraitDataStore", "✅ 自动刷新监听器已设置");
+    logger.info('TraitDataStore', '✅ 自动刷新监听器已设置')
   }
 
   /**
@@ -223,13 +217,13 @@ export const useTraitDataStore = defineStore("traitData", () => {
     statistics.value = {
       duplicate: 0,
       invalid: 0,
-      internal: 0,
-    };
-    lastUpdated.value = 0;
-    isLoading.value = false;
-    isInitialized.value = false;
-    lastError.value = null;
-    retryCount.value = 0;
+      internal: 0
+    }
+    lastUpdated.value = 0
+    isLoading.value = false
+    isInitialized.value = false
+    lastError.value = null
+    retryCount.value = 0
   }
 
   return {
@@ -250,6 +244,6 @@ export const useTraitDataStore = defineStore("traitData", () => {
     refresh,
     getCount,
     initialize,
-    reset,
-  };
-});
+    reset
+  }
+})

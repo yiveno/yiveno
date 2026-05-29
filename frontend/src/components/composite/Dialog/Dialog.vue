@@ -5,240 +5,235 @@
   @see https://github.com/material-components/material-web/blob/main/docs/components/dialog.md
 -->
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, ref, useSlots, watch } from "vue";
-import type { DialogProps } from "./Dialog.d";
-import { LucideIcon } from "@/components/base/LucideIcon";
+import { computed, nextTick, onBeforeUnmount, ref, useSlots, watch } from 'vue'
+import type { DialogProps } from './Dialog.d'
+import { LucideIcon } from '@/components/base/LucideIcon'
 
 /**
  * `md-dialog` / 按钮由各 HTML 入口 `preloadMaterialWebComponents` 在 `mount` 前注册；
  * 勿在此再写仅副作用的 `import '@material/web/...'`，避免与入口策略分叉。
  */
 defineOptions({
-  name: "AcuityDialog",
-});
+  name: 'AcuityDialog'
+})
 
 const props = withDefaults(defineProps<DialogProps>(), {
-  width: "480px",
+  width: '480px',
   persistent: false,
   dense: false,
   hideClose: false,
-  teleportTarget: "body",
+  teleportTarget: 'body',
   closeOnOverlay: true,
   escToClose: true,
-  cancelable: true,
-});
+  cancelable: true
+})
 
 const emit = defineEmits<{
-  "update:modelValue": [value: boolean];
-  "update:show": [value: boolean];
-  open: [];
-  close: [];
-  confirm: [];
-}>();
+  'update:modelValue': [value: boolean]
+  'update:show': [value: boolean]
+  open: []
+  close: []
+  confirm: []
+}>()
 
-const slots = useSlots();
+const slots = useSlots()
 
 const show = computed({
-  get: () =>
-    props.show !== undefined ? props.show : (props.modelValue ?? false),
-  set: (value) => {
-    emit("update:modelValue", value);
-    emit("update:show", value);
-  },
-});
+  get: () => (props.show !== undefined ? props.show : (props.modelValue ?? false)),
+  set: value => {
+    emit('update:modelValue', value)
+    emit('update:show', value)
+  }
+})
 
-const showHeadline = computed(
-  () => !!(slots.header || props.title || slots["header-actions"]),
-);
+const showHeadline = computed(() => !!(slots.header || props.title || slots['header-actions']))
 
 /** 无 headline 插槽时供屏幕阅读器使用 */
 const dialogAriaLabel = computed(() => {
-  if (props.title?.trim()) return props.title.trim();
-  return "AcuityBookmarks";
-});
+  if (props.title?.trim()) return props.title.trim()
+  return 'AcuityBookmarks'
+})
 
 const mdDialogClasses = computed(() => [
   {
-    "acuity-md-dialog--fullscreen": props.fullscreen,
-    "acuity-md-dialog--scrollable": props.scrollable,
+    'acuity-md-dialog--fullscreen': props.fullscreen,
+    'acuity-md-dialog--scrollable': props.scrollable
   },
-  ...mdDialogSizeClasses.value,
-]);
+  ...mdDialogSizeClasses.value
+])
 
 const mdDialogSizeClasses = computed(() => {
-  const classes: string[] = [];
-  if (props.fullscreen) return classes;
-  const mw = (props.maxWidth || props.width || "").trim();
-  if (mw === "480px") classes.push("acuity-md-dialog--size-480");
-  else if (mw === "500px") classes.push("acuity-md-dialog--size-500");
-  else if (mw === "520px") classes.push("acuity-md-dialog--size-520");
-  else if (mw === "440px") classes.push("acuity-md-dialog--size-440");
-  return classes;
-});
+  const classes: string[] = []
+  if (props.fullscreen) return classes
+  const mw = (props.maxWidth || props.width || '').trim()
+  if (mw === '480px') classes.push('acuity-md-dialog--size-480')
+  else if (mw === '500px') classes.push('acuity-md-dialog--size-500')
+  else if (mw === '520px') classes.push('acuity-md-dialog--size-520')
+  else if (mw === '440px') classes.push('acuity-md-dialog--size-440')
+  return classes
+})
 
 const dialogInlineStyle = computed(() => {
-  if (props.fullscreen) return undefined;
-  const mw = (props.maxWidth || props.width || "").trim();
-  const known = ["440px", "480px", "500px", "520px"];
-  const style: Record<string, string> = {};
+  if (props.fullscreen) return undefined
+  const mw = (props.maxWidth || props.width || '').trim()
+  const known = ['440px', '480px', '500px', '520px']
+  const style: Record<string, string> = {}
   if (props.minWidth?.trim()) {
-    style.minWidth = props.minWidth.trim();
+    style.minWidth = props.minWidth.trim()
   }
   if (mw && !known.includes(mw)) {
-    style.width = "min(100vw - 32px, " + mw + ")";
-    style.maxWidth = mw;
+    style.width = 'min(100vw - 32px, ' + mw + ')'
+    style.maxWidth = mw
   }
-  return Object.keys(style).length ? style : undefined;
-});
+  return Object.keys(style).length ? style : undefined
+})
 
 const bodyMinHeightClass = computed(() => {
-  const val = (props.bodyMinHeight || "").trim();
-  if (!val.endsWith("px")) return undefined;
-  const n = Number(val.replace("px", ""));
-  const steps = [320, 360, 400, 420, 440, 480, 520, 560, 600];
-  let picked = steps[0];
+  const val = (props.bodyMinHeight || '').trim()
+  if (!val.endsWith('px')) return undefined
+  const n = Number(val.replace('px', ''))
+  const steps = [320, 360, 400, 420, 440, 480, 520, 560, 600]
+  let picked = steps[0]
   for (const s of steps) {
     if (n <= s) {
-      picked = s;
-      break;
+      picked = s
+      break
     }
-    picked = s;
+    picked = s
   }
-  return `min-h-${picked}`;
-});
+  return `min-h-${picked}`
+})
 
-const bodyRef = ref<HTMLElement | null>(null);
-const showCancelConfirm = ref(false);
+const bodyRef = ref<HTMLElement | null>(null)
+const showCancelConfirm = ref(false)
 
 /** 用户通过 scrim / Esc 触发的 cancel 且未被拦截时，在 closed 中发出 close */
-const userDismissedViaCancel = ref(false);
+const userDismissedViaCancel = ref(false)
 
 const detectUnsaved = (): boolean => {
-  if (!bodyRef.value) return false;
-  const inputs = Array.from(
-    bodyRef.value.querySelectorAll("input, textarea"),
-  ) as HTMLInputElement[];
+  if (!bodyRef.value) return false
+  const inputs = Array.from(bodyRef.value.querySelectorAll('input, textarea')) as HTMLInputElement[]
   for (const el of inputs) {
-    if (el.disabled || el.readOnly) continue;
-    const val = (el.value || "").trim();
-    if (val.length > 0) return true;
+    if (el.disabled || el.readOnly) continue
+    const val = (el.value || '').trim()
+    if (val.length > 0) return true
   }
-  const dirty = bodyRef.value.querySelector('[data-dirty="true"]');
-  return !!dirty;
-};
+  const dirty = bodyRef.value.querySelector('[data-dirty="true"]')
+  return !!dirty
+}
 
 /**
  * scrim / Esc 触发的 cancel：可 preventDefault 以阻止关闭（与 Material 文档一致）
  */
 const handleMdCancel = (ev: Event) => {
   if (!props.cancelable) {
-    ev.preventDefault();
-    return;
+    ev.preventDefault()
+    return
   }
   if (props.persistent) {
-    ev.preventDefault();
-    return;
+    ev.preventDefault()
+    return
   }
   if (props.enableCancelGuard && !showCancelConfirm.value && detectUnsaved()) {
-    ev.preventDefault();
-    showCancelConfirm.value = true;
-    return;
+    ev.preventDefault()
+    showCancelConfirm.value = true
+    return
   }
-  userDismissedViaCancel.value = true;
-};
+  userDismissedViaCancel.value = true
+}
 
 const handleMdClosed = () => {
-  emit("update:modelValue", false);
-  emit("update:show", false);
+  emit('update:modelValue', false)
+  emit('update:show', false)
   if (userDismissedViaCancel.value) {
-    emit("close");
-    userDismissedViaCancel.value = false;
+    emit('close')
+    userDismissedViaCancel.value = false
   }
-};
+}
 
 const handleMdOpened = () => {
-  emit("open");
+  emit('open')
   nextTick(() => {
     const firstFocusable = bodyRef.value?.querySelector<HTMLElement>(
-      'input, textarea, button, [tabindex]:not([tabindex="-1"])',
-    );
-    firstFocusable?.focus();
-  });
-};
+      'input, textarea, button, [tabindex]:not([tabindex="-1"])'
+    )
+    firstFocusable?.focus()
+  })
+}
 
 const confirmCancel = () => {
-  showCancelConfirm.value = false;
-  show.value = false;
-  emit("close");
-};
+  showCancelConfirm.value = false
+  show.value = false
+  emit('close')
+}
 
 const continueEditing = () => {
-  showCancelConfirm.value = false;
-};
+  showCancelConfirm.value = false
+}
 
 const handleKeydown = (event: KeyboardEvent) => {
-  if (event.key === "Tab") {
+  if (event.key === 'Tab') {
     const activeTabButton = bodyRef.value?.querySelector(
-      ".acuity-tabs-nav .acuity-tab--active",
-    ) as HTMLButtonElement;
+      '.acuity-tabs-nav .acuity-tab--active'
+    ) as HTMLButtonElement
     if (activeTabButton) {
-      activeTabButton.focus();
-      const tabsEvent = new KeyboardEvent("keydown", {
-        key: "Tab",
+      activeTabButton.focus()
+      const tabsEvent = new KeyboardEvent('keydown', {
+        key: 'Tab',
         shiftKey: event.shiftKey,
         bubbles: false,
-        cancelable: true,
-      });
-      activeTabButton.dispatchEvent(tabsEvent);
-      event.preventDefault();
-      return;
+        cancelable: true
+      })
+      activeTabButton.dispatchEvent(tabsEvent)
+      event.preventDefault()
+      return
     }
   }
 
-  if (event.key === "Enter" && props.enterToConfirm) {
-    emit("confirm");
-    event.preventDefault();
+  if (event.key === 'Enter' && props.enterToConfirm) {
+    emit('confirm')
+    event.preventDefault()
   }
-};
+}
 
 /** escToClose 为 false 时仅拦截 Esc，不拦截 scrim（与旧版 window 监听行为一致） */
-let escapeBlockHandler: ((e: KeyboardEvent) => void) | null = null;
+let escapeBlockHandler: ((e: KeyboardEvent) => void) | null = null
 
 const detachEscapeBlock = () => {
   if (escapeBlockHandler) {
-    window.removeEventListener("keydown", escapeBlockHandler, true);
-    escapeBlockHandler = null;
+    window.removeEventListener('keydown', escapeBlockHandler, true)
+    escapeBlockHandler = null
   }
-};
+}
 
 watch(
   () => [show.value, props.escToClose, props.persistent] as const,
   ([isOpen, escToClose, persistent]) => {
-    detachEscapeBlock();
+    detachEscapeBlock()
     if (!isOpen || persistent || escToClose) {
-      return;
+      return
     }
     escapeBlockHandler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        e.stopPropagation();
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        e.stopPropagation()
       }
-    };
-    window.addEventListener("keydown", escapeBlockHandler, true);
+    }
+    window.addEventListener('keydown', escapeBlockHandler, true)
   },
-  { immediate: true },
-);
+  { immediate: true }
+)
 
-watch(show, (isShown) => {
+watch(show, isShown => {
   if (!isShown) {
-    showCancelConfirm.value = false;
-    userDismissedViaCancel.value = false;
+    showCancelConfirm.value = false
+    userDismissedViaCancel.value = false
   }
-});
+})
 
 onBeforeUnmount(() => {
-  detachEscapeBlock();
-});
+  detachEscapeBlock()
+})
 </script>
 
 <template>
@@ -261,29 +256,17 @@ onBeforeUnmount(() => {
           <slot v-if="$slots.header" name="header" />
           <template v-else>
             <div class="acuity-dialog-title">
-              <LucideIcon
-                v-if="icon"
-                :name="icon"
-                :color="iconColor"
-                class="title-icon"
-              />
+              <LucideIcon v-if="icon" :name="icon" :color="iconColor" class="title-icon" />
               <span>{{ title }}</span>
             </div>
           </template>
         </div>
-        <div
-          v-if="$slots['header-actions']"
-          class="acuity-dialog-header-actions"
-        >
+        <div v-if="$slots['header-actions']" class="acuity-dialog-header-actions">
           <slot name="header-actions" />
         </div>
       </div>
 
-      <div
-        slot="content"
-        class="acuity-dialog-content-slot"
-        @keydown="handleKeydown"
-      >
+      <div slot="content" class="acuity-dialog-content-slot" @keydown="handleKeydown">
         <div ref="bodyRef" :class="['acuity-dialog-body', bodyMinHeightClass]">
           <slot />
         </div>

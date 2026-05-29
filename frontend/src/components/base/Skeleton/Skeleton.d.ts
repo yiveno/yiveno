@@ -13,19 +13,19 @@ export interface SkeletonProps {
    * - rounded: 圆角矩形（按钮、标签）
    * @default 'text'
    */
-  variant?: "text" | "circular" | "rectangular" | "rounded";
+  variant?: 'text' | 'circular' | 'rectangular' | 'rounded'
 
   /**
    * 宽度（支持 CSS 单位）
    * @default undefined（自动填充父容器）
    */
-  width?: string | number;
+  width?: string | number
 
   /**
    * 高度（支持 CSS 单位）
    * @default undefined（根据 variant 自动计算）
    */
-  height?: string | number;
+  height?: string | number
 
   /**
    * 动画类型
@@ -34,11 +34,11 @@ export interface SkeletonProps {
    * - none: 无动画（静态占位符）
    * @default 'pulse'
    */
-  animation?: "pulse" | "wave" | "none";
+  animation?: 'pulse' | 'wave' | 'none'
 
   /**
    * 圆角大小（仅 rounded 变体有效）
    * @default 'md'
    */
-  borderRadius?: "sm" | "md" | "lg" | "full";
+  borderRadius?: 'sm' | 'md' | 'lg' | 'full'
 }

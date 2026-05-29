@@ -1,44 +1,41 @@
-import { createApp } from "vue";
-import { createPinia } from "pinia";
-import App from "./Onboarding.vue";
+import { createApp } from 'vue'
+import { createPinia } from 'pinia'
+import App from './Onboarding.vue'
 // ✅ 导入设计标准（必须在所有样式之前）
-import "@acuity-bookmarks/design-tokens/css/material-theme.css";
-import "@acuity-bookmarks/design-tokens/css/variables.css";
-import "@acuity-bookmarks/design-tokens/css/semantic-colors.css";
+import '@acuity-bookmarks/design-tokens/css/material-theme.css'
+import '@acuity-bookmarks/design-tokens/css/variables.css'
+import '@acuity-bookmarks/design-tokens/css/semantic-colors.css'
 // ❌ 移除自定义 tokens（违反设计标准）
 // import '@/design-system/tokens.css'
 // import '@/design-system/typography.css'
 // import '@/design-system/base.css'
-import "@/assets/main.css";
-import "@/assets/fonts.css";
-import "@/assets/smart-fonts.css";
-import {
-  initializeSmartFonts,
-  fontService,
-} from "@/application/font/font-service";
-import { logger } from "@/infrastructure/logging/logger";
-import { preloadMaterialWebComponents } from "@/infrastructure/material/preload-material-web";
-import { installMessage } from "@/application/message/install";
+import '@/assets/main.css'
+import '@/assets/fonts.css'
+import '@/assets/smart-fonts.css'
+import { initializeSmartFonts, fontService } from '@/application/font/font-service'
+import { logger } from '@/infrastructure/logging/logger'
+import { preloadMaterialWebComponents } from '@/infrastructure/material/preload-material-web'
+import { installMessage } from '@/application/message/install'
 
-const app = createApp(App);
-const pinia = createPinia();
+const app = createApp(App)
+const pinia = createPinia()
 
-app.use(pinia);
+app.use(pinia)
 
 async function initializeOnboarding() {
   // ✅ 安装 Message 组件（轻量级提示）
-  installMessage();
+  installMessage()
 
-  fontService.injectDynamicFontLink();
+  fontService.injectDynamicFontLink()
   try {
-    await initializeSmartFonts();
-    await preloadMaterialWebComponents("Onboarding");
-    app.mount("#app");
-    logger.info("Onboarding", "🎉 引导页启动完成");
+    await initializeSmartFonts()
+    await preloadMaterialWebComponents('Onboarding')
+    app.mount('#app')
+    logger.info('Onboarding', '🎉 引导页启动完成')
   } catch (error) {
-    logger.error("Onboarding", "❌ 引导页启动失败:", error);
-    app.mount("#app");
+    logger.error('Onboarding', '❌ 引导页启动失败:', error)
+    app.mount('#app')
   }
 }
 
-initializeOnboarding();
+initializeOnboarding()

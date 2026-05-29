@@ -10,34 +10,31 @@
 -->
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, toRef } from "vue";
-import { LucideIcon } from "@/components/base/LucideIcon";
-import type { BookmarkNode } from "@/types";
-import { logger } from "@/infrastructure/logging/logger";
-import { useLazyFavicon } from "@/composables/useLazyFavicon";
-import {
-  draggable,
-  dropTargetForElements,
-} from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
-import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview";
-import { pointerOutsideOfPreview } from "@atlaskit/pragmatic-drag-and-drop/element/pointer-outside-of-preview";
+import { computed, onMounted, onUnmounted, ref, toRef } from 'vue'
+import { LucideIcon } from '@/components/base/LucideIcon'
+import type { BookmarkNode } from '@/types'
+import { logger } from '@/infrastructure/logging/logger'
+import { useLazyFavicon } from '@/composables/useLazyFavicon'
+import { draggable, dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
+import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine'
+import { setCustomNativeDragPreview } from '@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview'
+import { pointerOutsideOfPreview } from '@atlaskit/pragmatic-drag-and-drop/element/pointer-outside-of-preview'
 
 // ✅ 设置组件名称，方便调试与日志定位
 /**
  * TreeNode - 树节点渲染单元
  * - 负责单个节点的交互与展示
  */
-defineOptions({ name: "TreeNode" });
+defineOptions({ name: 'TreeNode' })
 
 const props = withDefaults(defineProps<Props>(), {
   level: 0,
-  searchQuery: "",
+  searchQuery: '',
   highlightMatches: true,
   isVirtualMode: false,
   strictOrder: false,
-  loadingMoreFolders: () => new Set(),
-});
+  loadingMoreFolders: () => new Set()
+})
 
 // === Emits 定义 ===
 /**
@@ -45,55 +42,47 @@ const props = withDefaults(defineProps<Props>(), {
  * - 与父组件联动，完成节点操作
  */
 const emit = defineEmits<{
-  (e: "nodeClick", node: BookmarkNode, event: MouseEvent): void;
-  (e: "folderToggle", folderId: string, node: BookmarkNode): void;
-  (e: "nodeSelect", nodeId: string, node: BookmarkNode): void;
-  (e: "nodeEdit", node: BookmarkNode): void;
-  (e: "nodeDelete", node: BookmarkNode): void;
-  (e: "bookmarkOpenNewTab", node: BookmarkNode): void;
-  (e: "bookmarkCopyUrl", node: BookmarkNode): void;
-  (e: "bookmarkToggleFavorite", node: BookmarkNode, isFavorite: boolean): void;
-  (e: "nodeMounted", id: string, el: HTMLElement): void;
-  (e: "nodeUnmounted", id: string): void;
-  (e: "dragStart", node: BookmarkNode): void;
+  (e: 'nodeClick', node: BookmarkNode, event: MouseEvent): void
+  (e: 'folderToggle', folderId: string, node: BookmarkNode): void
+  (e: 'nodeSelect', nodeId: string, node: BookmarkNode): void
+  (e: 'nodeEdit', node: BookmarkNode): void
+  (e: 'nodeDelete', node: BookmarkNode): void
+  (e: 'bookmarkOpenNewTab', node: BookmarkNode): void
+  (e: 'bookmarkCopyUrl', node: BookmarkNode): void
+  (e: 'bookmarkToggleFavorite', node: BookmarkNode, isFavorite: boolean): void
+  (e: 'nodeMounted', id: string, el: HTMLElement): void
+  (e: 'nodeUnmounted', id: string): void
+  (e: 'dragStart', node: BookmarkNode): void
+  (e: 'dragOver', data: { node: BookmarkNode; position: 'before' | 'inside' | 'after' }): void
+  (e: 'dragLeave', node: BookmarkNode): void
   (
-    e: "dragOver",
-    data: { node: BookmarkNode; position: "before" | "inside" | "after" },
-  ): void;
-  (e: "dragLeave", node: BookmarkNode): void;
-  (
-    e: "drop",
+    e: 'drop',
     data: {
-      sourceId: string;
-      targetId: string;
-      position: "before" | "inside" | "after";
-    },
-  ): void;
-  (e: "dragEnd"): void;
-  (e: "folderShare", node: BookmarkNode): void;
-  (e: "openContextMenu", nodeId: string, x: number, y: number): void;
-}>();
+      sourceId: string
+      targetId: string
+      position: 'before' | 'inside' | 'after'
+    }
+  ): void
+  (e: 'dragEnd'): void
+  (e: 'folderShare', node: BookmarkNode): void
+  (e: 'openContextMenu', nodeId: string, x: number, y: number): void
+}>()
 
 // ✅ i18n 已移除（收藏功能已移至右键菜单，不再需要 tooltip 文本）
 // const { t } = useI18n()
 
-const ALLOWED_FAVICON_PROTOCOLS = new Set([
-  "http:",
-  "https:",
-  "data:",
-  "blob:",
-]);
+const ALLOWED_FAVICON_PROTOCOLS = new Set(['http:', 'https:', 'data:', 'blob:'])
 
 function sanitizeFaviconUrl(rawUrl: string | undefined): string | undefined {
-  if (!rawUrl) return undefined;
+  if (!rawUrl) return undefined
   try {
-    const parsed = new URL(rawUrl, window.location.origin);
+    const parsed = new URL(rawUrl, window.location.origin)
     if (!ALLOWED_FAVICON_PROTOCOLS.has(parsed.protocol)) {
-      return undefined;
+      return undefined
     }
-    return parsed.toString();
+    return parsed.toString()
   } catch {
-    return undefined;
+    return undefined
   }
 }
 
@@ -104,61 +93,61 @@ function sanitizeFaviconUrl(rawUrl: string | undefined): string | undefined {
  * - 所有属性均补充中文说明，便于协作
  */
 interface Props {
-  node: BookmarkNode;
-  level: number;
-  expandedFolders: Set<string>;
-  selectedNodes: Set<string>;
-  searchQuery?: string | undefined;
+  node: BookmarkNode
+  level: number
+  expandedFolders: Set<string>
+  selectedNodes: Set<string>
+  searchQuery?: string | undefined
   /** 是否对标题进行关键字高亮 */
-  highlightMatches?: boolean | undefined;
+  highlightMatches?: boolean | undefined
   config: {
-    size?: "compact" | "comfortable" | "spacious" | undefined;
-    searchable?: boolean | undefined;
-    selectable?: boolean | "single" | "multiple" | undefined;
-    editable?: boolean | undefined;
-    showSelectionCheckbox?: boolean | undefined;
-    draggable?: boolean | undefined; // ✅ 是否启用拖拽
-    showBookmarkUrl?: boolean | undefined; // ✅ 是否显示书签 URL
+    size?: 'compact' | 'comfortable' | 'spacious' | undefined
+    searchable?: boolean | undefined
+    selectable?: boolean | 'single' | 'multiple' | undefined
+    editable?: boolean | undefined
+    showSelectionCheckbox?: boolean | undefined
+    draggable?: boolean | undefined // ✅ 是否启用拖拽
+    showBookmarkUrl?: boolean | undefined // ✅ 是否显示书签 URL
     // 细粒度按钮控制
-    showFavoriteButton?: boolean | undefined;
-    showEditButton?: boolean | undefined;
-    showDeleteButton?: boolean | undefined;
-    showOpenNewTabButton?: boolean | undefined;
-    showCopyUrlButton?: boolean | undefined;
-    showShareButton?: boolean | undefined;
-    showMoreButton?: boolean | undefined; // ✅ 是否显示"更多操作"按钮
-  };
-  isVirtualMode?: boolean | undefined;
+    showFavoriteButton?: boolean | undefined
+    showEditButton?: boolean | undefined
+    showDeleteButton?: boolean | undefined
+    showOpenNewTabButton?: boolean | undefined
+    showCopyUrlButton?: boolean | undefined
+    showShareButton?: boolean | undefined
+    showMoreButton?: boolean | undefined // ✅ 是否显示"更多操作"按钮
+  }
+  isVirtualMode?: boolean | undefined
   /** 严格顺序渲染：不对 children 去重/重排 */
-  strictOrder?: boolean | undefined;
+  strictOrder?: boolean | undefined
   /** 当前激活高亮的节点ID（用于 SidePanel 当前页面高亮） */
-  activeId?: string | null | undefined;
+  activeId?: string | null | undefined
   /** 键盘导航焦点的节点ID */
-  focusedId?: string | null | undefined;
+  focusedId?: string | null | undefined
   /** 正在自动加载更多子节点的文件夹ID集合 */
-  loadingMoreFolders?: Set<string> | undefined;
+  loadingMoreFolders?: Set<string> | undefined
   /** 已选后代计数 Map（folderId -> 已选书签数）*/
-  selectedDescCounts?: Map<string, number> | undefined;
+  selectedDescCounts?: Map<string, number> | undefined
   /** 拖拽状态（由 BookmarkTree 传入） */
   dragState?:
     | {
-        isDragging: boolean;
-        dragSourceId: string | null;
-        dropTargetId: string | null;
-        dropPosition: "before" | "inside" | "after" | null;
+        isDragging: boolean
+        dragSourceId: string | null
+        dropTargetId: string | null
+        dropPosition: 'before' | 'inside' | 'after' | null
       }
-    | undefined;
+    | undefined
   /** 当前打开右键菜单的节点 ID */
-  contextMenuNodeId?: string | null | undefined;
+  contextMenuNodeId?: string | null | undefined
 }
 // 根元素引用与生命周期上报，用于构建元素注册表以优化滚动定位
-const rootRef = ref<HTMLElement | null>(null);
+const rootRef = ref<HTMLElement | null>(null)
 // ✅ 拖拽清理函数引用
-let cleanupDrag: (() => void) | null = null;
+let cleanupDrag: (() => void) | null = null
 
 onMounted(() => {
   if (rootRef.value) {
-    emit("nodeMounted", String(props.node.id), rootRef.value);
+    emit('nodeMounted', String(props.node.id), rootRef.value)
   }
 
   // ✅ 启用拖拽功能
@@ -168,187 +157,179 @@ onMounted(() => {
       draggable({
         element: rootRef.value,
         getInitialData: () => ({
-          type: "bookmark-node",
+          type: 'bookmark-node',
           nodeId: String(props.node.id),
-          node: props.node,
+          node: props.node
         }),
         onGenerateDragPreview: ({ nativeSetDragImage }) => {
           // 🎨 生成自定义拖拽预览（类似 Chrome 书签管理器）
           setCustomNativeDragPreview({
             nativeSetDragImage,
             getOffset: pointerOutsideOfPreview({
-              x: "16px",
-              y: "8px",
+              x: '16px',
+              y: '8px'
             }),
             render: ({ container }) => {
-              const preview = document.createElement("div");
-              preview.className = "bookmark-drag-preview";
+              const preview = document.createElement('div')
+              preview.className = 'bookmark-drag-preview'
 
               // 创建图标
-              const icon = document.createElement("div");
-              icon.className = "preview-icon";
+              const icon = document.createElement('div')
+              icon.className = 'preview-icon'
 
               if (props.node.url) {
                 // 书签：显示 favicon
-                const favicon = document.createElement("img");
-                favicon.className = "preview-favicon";
+                const favicon = document.createElement('img')
+                favicon.className = 'preview-favicon'
                 favicon.src =
                   safeFaviconUrl.value ||
-                  'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect width="24" height="24" fill="%23e0e0e0"/></svg>';
+                  'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect width="24" height="24" fill="%23e0e0e0"/></svg>'
                 favicon.onerror = () => {
-                  favicon.style.display = "none";
-                  icon.innerHTML = "📄";
-                  icon.style.fontSize = "16px";
-                };
-                icon.appendChild(favicon);
+                  favicon.style.display = 'none'
+                  icon.innerHTML = '📄'
+                  icon.style.fontSize = '16px'
+                }
+                icon.appendChild(favicon)
               } else {
                 // 文件夹：显示文件夹图标
-                icon.innerHTML = isExpanded.value ? "📂" : "📁";
-                icon.style.fontSize = "16px";
+                icon.innerHTML = isExpanded.value ? '📂' : '📁'
+                icon.style.fontSize = '16px'
               }
 
               // 创建标题
-              const title = document.createElement("div");
-              title.className = "preview-title";
-              title.textContent = props.node.title || "未命名";
+              const title = document.createElement('div')
+              title.className = 'preview-title'
+              title.textContent = props.node.title || '未命名'
 
-              preview.appendChild(icon);
-              preview.appendChild(title);
-              container.appendChild(preview);
-            },
-          });
+              preview.appendChild(icon)
+              preview.appendChild(title)
+              container.appendChild(preview)
+            }
+          })
         },
         onDragStart: () => {
-          logger.debug("TreeNode", "开始拖拽", { nodeId: props.node.id });
-          emit("dragStart", props.node);
+          logger.debug('TreeNode', '开始拖拽', { nodeId: props.node.id })
+          emit('dragStart', props.node)
         },
         onDrop: () => {
-          logger.debug("TreeNode", "拖拽结束", { nodeId: props.node.id });
-          emit("dragEnd");
-        },
+          logger.debug('TreeNode', '拖拽结束', { nodeId: props.node.id })
+          emit('dragEnd')
+        }
       }),
 
       // 2️⃣ 将节点设置为可放置目标
       dropTargetForElements({
         element: rootRef.value,
         canDrop: ({ source }) => {
-          const sourceId = String(source.data.nodeId);
-          const targetId = String(props.node.id);
+          const sourceId = String(source.data.nodeId)
+          const targetId = String(props.node.id)
 
           // ✅ 禁止自己拖到自己
           if (sourceId === targetId) {
-            return false;
+            return false
           }
 
           // ✅ 禁止将父文件夹拖入其子文件夹（循环引用检查）
           // 检查目标节点是否在源节点的子树中
-          const sourceNode = source.data.node as BookmarkNode | undefined;
+          const sourceNode = source.data.node as BookmarkNode | undefined
           if (sourceNode && !props.node.url) {
             // 如果目标节点的祖先链中包含源节点ID，则禁止
-            const checkIsDescendant = (
-              node: BookmarkNode,
-              ancestorId: string,
-            ): boolean => {
-              if (node.id === ancestorId) return true;
-              if (node.parentId === ancestorId) return true;
+            const checkIsDescendant = (node: BookmarkNode, ancestorId: string): boolean => {
+              if (node.id === ancestorId) return true
+              if (node.parentId === ancestorId) return true
               // 通过 ancestorIds 检查（如果有的话）
-              if (
-                Array.isArray(node.ancestorIds) &&
-                node.ancestorIds.includes(ancestorId)
-              ) {
-                return true;
+              if (Array.isArray(node.ancestorIds) && node.ancestorIds.includes(ancestorId)) {
+                return true
               }
-              return false;
-            };
+              return false
+            }
 
             if (checkIsDescendant(props.node, sourceId)) {
-              return false;
+              return false
             }
           }
 
-          return true;
+          return true
         },
         getData: ({ input, element }) => {
           // 根据鼠标位置计算放置位置
-          const rect = element.getBoundingClientRect();
-          const relativeY = input.clientY - rect.top;
-          const height = rect.height;
-          const isFolder = !props.node.url;
+          const rect = element.getBoundingClientRect()
+          const relativeY = input.clientY - rect.top
+          const height = rect.height
+          const isFolder = !props.node.url
 
-          let position: "before" | "inside" | "after";
+          let position: 'before' | 'inside' | 'after'
 
           if (isFolder) {
             // 📁 文件夹：上 1/4 为 before，中间 1/2 为 inside，下 1/4 为 after
             if (relativeY < height / 4) {
-              position = "before";
+              position = 'before'
             } else if (relativeY > (height * 3) / 4) {
-              position = "after";
+              position = 'after'
             } else {
-              position = "inside";
+              position = 'inside'
             }
           } else {
             // 📄 书签：只能 before/after，不能 inside（书签不能包含其他节点）
-            position = relativeY < height / 2 ? "before" : "after";
+            position = relativeY < height / 2 ? 'before' : 'after'
           }
 
           return {
-            type: "bookmark-node-drop",
+            type: 'bookmark-node-drop',
             nodeId: String(props.node.id),
-            position,
-          };
+            position
+          }
         },
         onDragEnter: ({ self }) => {
-          const position = self.data.position as "before" | "inside" | "after";
-          logger.debug("TreeNode", "拖拽进入", {
+          const position = self.data.position as 'before' | 'inside' | 'after'
+          logger.debug('TreeNode', '拖拽进入', {
             nodeId: props.node.id,
-            position,
-          });
-          emit("dragOver", { node: props.node, position });
+            position
+          })
+          emit('dragOver', { node: props.node, position })
         },
         onDrag: ({ self }) => {
-          const position = self.data.position as "before" | "inside" | "after";
-          emit("dragOver", { node: props.node, position });
+          const position = self.data.position as 'before' | 'inside' | 'after'
+          emit('dragOver', { node: props.node, position })
         },
         onDragLeave: () => {
-          logger.debug("TreeNode", "拖拽离开", { nodeId: props.node.id });
-          emit("dragLeave", props.node);
+          logger.debug('TreeNode', '拖拽离开', { nodeId: props.node.id })
+          emit('dragLeave', props.node)
         },
         onDrop: ({ source, self }) => {
-          const sourceId = String(source.data.nodeId);
-          const targetId = String(props.node.id);
-          const position = self.data.position as "before" | "inside" | "after";
+          const sourceId = String(source.data.nodeId)
+          const targetId = String(props.node.id)
+          const position = self.data.position as 'before' | 'inside' | 'after'
 
-          logger.info("TreeNode", "拖拽放置", {
+          logger.info('TreeNode', '拖拽放置', {
             sourceId,
             targetId,
-            position,
-          });
+            position
+          })
 
-          emit("drop", { sourceId, targetId, position });
-        },
-      }),
-    );
+          emit('drop', { sourceId, targetId, position })
+        }
+      })
+    )
   }
-});
+})
 
 onUnmounted(() => {
-  emit("nodeUnmounted", String(props.node.id));
+  emit('nodeUnmounted', String(props.node.id))
   // ✅ 清理拖拽事件监听
   if (cleanupDrag) {
-    cleanupDrag();
-    cleanupDrag = null;
+    cleanupDrag()
+    cleanupDrag = null
   }
-});
+})
 
 // === 计算属性 ===
 // 🚀 性能优化:缓存基础计算属性
-const isFolder = computed(() => !props.node.url);
+const isFolder = computed(() => !props.node.url)
 
 // 🚀 性能优化：缓存展开状态检查
-const isExpanded = computed(() => props.expandedFolders.has(props.node.id));
-const isSelected = computed(() =>
-  props.selectedNodes.has(String(props.node.id)),
-);
+const isExpanded = computed(() => props.expandedFolders.has(props.node.id))
+const isSelected = computed(() => props.selectedNodes.has(String(props.node.id)))
 
 // 🆕 收藏状态（已移除，收藏功能已移至右键菜单）
 // const isFavorited = computed(() => {
@@ -356,54 +337,54 @@ const isSelected = computed(() =>
 // })
 
 // 根目录（level === 0）不允许编辑/删除
-const isRootFolder = computed(() => isFolder.value && props.level === 0);
+const isRootFolder = computed(() => isFolder.value && props.level === 0)
 
 // 🚀 性能优化：缓存半选中状态计算
 const isIndeterminate = computed(() => {
-  if (!isFolder.value) return false;
+  if (!isFolder.value) return false
 
   // 如果父节点本身被选中，则不显示半选中
-  if (isSelected.value) return false;
+  if (isSelected.value) return false
 
   // 如果有任何子孙节点被选中，则显示半选中
-  const counts = props.selectedDescCounts;
-  if (!counts) return false;
-  const selected = counts.get(String(props.node.id)) || 0;
-  return selected > 0;
-});
+  const counts = props.selectedDescCounts
+  if (!counts) return false
+  const selected = counts.get(String(props.node.id)) || 0
+  return selected > 0
+})
 
 // ✅ 使用懒加载Favicon服务（带缓存、域名复用、可视区域加载）
 const {
   faviconUrl,
   // isError: faviconLoadFailed,
   handleLoad: handleFaviconLoad,
-  handleError: handleFaviconErrorNew,
+  handleError: handleFaviconErrorNew
 } = useLazyFavicon({
   url: toRef(() => props.node.url),
   rootEl: rootRef,
-  enabled: false, // ⚠️ 临时禁用懒加载，立即加载所有favicon以快速填充缓存
-});
+  enabled: false // ⚠️ 临时禁用懒加载，立即加载所有favicon以快速填充缓存
+})
 
-const safeFaviconUrl = computed(() => sanitizeFaviconUrl(faviconUrl.value));
+const safeFaviconUrl = computed(() => sanitizeFaviconUrl(faviconUrl.value))
 
 // 🚀 性能优化：缓存高亮标题计算
 const highlightedTitle = computed(() => {
-  if (!props.node.title) return "";
-  if (!props.highlightMatches) return props.node.title;
-  if (!props.searchQuery) return props.node.title;
-  const query = props.searchQuery;
-  const title = props.node.title;
-  const regex = new RegExp(`(${escapeRegExp(query)})`, "gi");
-  return title.replace(regex, "<mark>$1</mark>");
-});
+  if (!props.node.title) return ''
+  if (!props.highlightMatches) return props.node.title
+  if (!props.searchQuery) return props.node.title
+  const query = props.searchQuery
+  const title = props.node.title
+  const regex = new RegExp(`(${escapeRegExp(query)})`, 'gi')
+  return title.replace(regex, '<mark>$1</mark>')
+})
 
 const truncatedUrl = computed(() => {
-  if (!props.node.url) return "";
-  const maxLength = 40;
+  if (!props.node.url) return ''
+  const maxLength = 40
   return props.node.url.length > maxLength
     ? `${props.node.url.substring(0, maxLength)}...`
-    : props.node.url;
-});
+    : props.node.url
+})
 
 // ✅ 国际化 tooltip 文本（已移除，收藏功能已移至右键菜单）
 // const tooltips = computed(() => ({
@@ -421,25 +402,20 @@ const truncatedUrl = computed(() => {
 
 // 渲染用子节点：保持传入顺序，不做去重
 const renderChildren = computed(() => {
-  const children = Array.isArray(props.node.children)
-    ? props.node.children
-    : [];
-  return children;
-});
+  const children = Array.isArray(props.node.children) ? props.node.children : []
+  return children
+})
 
 // ✅ 拖拽状态计算属性
 const isDraggingSource = computed(() => {
-  return (
-    props.dragState?.isDragging &&
-    props.dragState.dragSourceId === String(props.node.id)
-  );
-});
+  return props.dragState?.isDragging && props.dragState.dragSourceId === String(props.node.id)
+})
 
 const dropPosition = computed(() => {
   // 只有当前节点是放置目标时，才返回放置位置
-  const isDropTarget = props.dragState?.dropTargetId === String(props.node.id);
-  return isDropTarget ? props.dragState?.dropPosition : null;
-});
+  const isDropTarget = props.dragState?.dropTargetId === String(props.node.id)
+  return isDropTarget ? props.dragState?.dropPosition : null
+})
 
 // === 性能优化：缓存节点样式类
 const nodeClasses = computed(() => {
@@ -447,115 +423,115 @@ const nodeClasses = computed(() => {
   const isActive =
     props.activeId != null &&
     props.node.id != null &&
-    String(props.activeId) === String(props.node.id);
+    String(props.activeId) === String(props.node.id)
 
   // ✅ 焦点状态：键盘导航焦点
   const isFocused =
     props.focusedId != null &&
     props.node.id != null &&
-    String(props.focusedId) === String(props.node.id);
+    String(props.focusedId) === String(props.node.id)
 
   // ✅ 右键菜单打开状态：当前节点打开了右键菜单
   const hasContextMenuOpen =
     props.contextMenuNodeId != null &&
     props.node.id != null &&
-    String(props.contextMenuNodeId) === String(props.node.id);
+    String(props.contextMenuNodeId) === String(props.node.id)
 
   // 🐛 调试日志
   if (isFocused) {
-    logger.debug("TreeNode", "节点获得焦点", {
+    logger.debug('TreeNode', '节点获得焦点', {
       nodeId: props.node.id,
       title: props.node.title,
       focusedId: props.focusedId,
       isActive,
-      isFocused,
-    });
+      isFocused
+    })
   }
 
   return {
-    "node--folder": isFolder.value,
-    "node--bookmark": !isFolder.value,
-    "node--expanded": isExpanded.value,
-    "node--active": isActive,
-    "node--focused": isFocused,
-    "node--context-menu-open": hasContextMenuOpen,
+    'node--folder': isFolder.value,
+    'node--bookmark': !isFolder.value,
+    'node--expanded': isExpanded.value,
+    'node--active': isActive,
+    'node--focused': isFocused,
+    'node--context-menu-open': hasContextMenuOpen,
     // ✅ 拖拽功能启用标识
-    "node--draggable": props.config.draggable === true,
+    'node--draggable': props.config.draggable === true,
     // ✅ 拖拽状态类
-    "node--dragging": isDraggingSource.value,
-    "node--drop-before": dropPosition.value === "before",
-    "node--drop-inside": dropPosition.value === "inside",
-    "node--drop-after": dropPosition.value === "after",
+    'node--dragging': isDraggingSource.value,
+    'node--drop-before': dropPosition.value === 'before',
+    'node--drop-inside': dropPosition.value === 'inside',
+    'node--drop-after': dropPosition.value === 'after',
     [`node--level-${props.level}`]: true,
-    [`node--${props.config.size || "comfortable"}`]: true,
-  };
-});
+    [`node--${props.config.size || 'comfortable'}`]: true
+  }
+})
 
 /**
  * 固定行高样式：结合 size 映射到统一高度 + 缩进
  */
 const itemStyle = computed(() => {
-  const size = props.config.size || "comfortable";
-  const heightMap: Record<"compact" | "comfortable" | "spacious", number> = {
+  const size = props.config.size || 'comfortable'
+  const heightMap: Record<'compact' | 'comfortable' | 'spacious', number> = {
     compact: 30,
     comfortable: 36,
-    spacious: 44,
-  };
+    spacious: 44
+  }
 
   // ✅ 计算缩进 - 使用 margin-left 实现，避免 hover 背景色延伸到缩进区域
-  const level = props.level ?? 0;
-  const indentSize = getIndentSize();
-  const marginLeft = level * indentSize;
+  const level = props.level ?? 0
+  const indentSize = getIndentSize()
+  const marginLeft = level * indentSize
 
   return {
-    "--item-height": `${heightMap[size]}px`,
-    marginLeft: `${marginLeft}px`,
-  };
-});
+    '--item-height': `${heightMap[size]}px`,
+    marginLeft: `${marginLeft}px`
+  }
+})
 
 // ✅ 移除了 v-memo 优化，不再需要缓存子节点状态检查函数
 
 // === 事件处理 ===
 
 const handleFolderToggleClick = (event: MouseEvent) => {
-  const t = event.target as HTMLElement;
-  if (t.closest(".node-actions")) {
-    return;
+  const t = event.target as HTMLElement
+  if (t.closest('.node-actions')) {
+    return
   }
 
   // 点击选择框时只走 md-checkbox 的 change（全选/取消），勿冒泡触发展开收起
-  if (t.closest("md-checkbox")) {
-    return;
+  if (t.closest('md-checkbox')) {
+    return
   }
 
   // 如果是文件夹，总是处理展开/收起逻辑
   if (isFolder.value) {
-    emit("nodeClick", props.node, event);
-    emit("folderToggle", props.node.id, props.node);
-    return;
+    emit('nodeClick', props.node, event)
+    emit('folderToggle', props.node.id, props.node)
+    return
   }
 
   // 对于非文件夹节点（书签），触发点击事件
-  emit("nodeClick", props.node, event);
-};
+  emit('nodeClick', props.node, event)
+}
 
 const handleBookmarkClick = (event: MouseEvent) => {
-  const t = event.target as HTMLElement;
-  if (t.closest(".node-actions")) {
-    return;
+  const t = event.target as HTMLElement
+  if (t.closest('.node-actions')) {
+    return
   }
 
-  if (t.closest("md-checkbox")) {
-    return;
+  if (t.closest('md-checkbox')) {
+    return
   }
 
   // ✅ 普通点击：触发 node-click 事件（由父组件决定行为）
-  emit("nodeClick", props.node, event);
-};
+  emit('nodeClick', props.node, event)
+}
 
 const toggleSelection = () => {
-  emit("nodeSelect", String(props.node.id), props.node);
-};
+  emit('nodeSelect', String(props.node.id), props.node)
+}
 
 // ✅ 收藏功能已移至右键菜单
 // const handleToggleFavorite = () => {
@@ -569,57 +545,54 @@ const toggleSelection = () => {
 // }
 
 const handleFaviconError = () => {
-  handleFaviconErrorNew();
-};
+  handleFaviconErrorNew()
+}
 
 // === 工具函数 ===
 const handleChildNodeClick = (node: BookmarkNode, event: MouseEvent) => {
-  emit("nodeClick", node, event);
-};
+  emit('nodeClick', node, event)
+}
 
 const handleChildFolderToggle = (folderId: string, node: BookmarkNode) => {
-  emit("folderToggle", folderId, node);
-};
+  emit('folderToggle', folderId, node)
+}
 
 const handleChildNodeSelect = (nodeId: string, node: BookmarkNode) => {
-  emit("nodeSelect", nodeId, node);
-};
+  emit('nodeSelect', nodeId, node)
+}
 
 const handleChildNodeEdit = (node: BookmarkNode) => {
-  emit("nodeEdit", node);
-};
+  emit('nodeEdit', node)
+}
 
 const handleChildNodeDelete = (node: BookmarkNode) => {
-  emit("nodeDelete", node);
-};
+  emit('nodeDelete', node)
+}
 
 const handleChildBookmarkOpenNewTab = (node: BookmarkNode) => {
-  emit("bookmarkOpenNewTab", node);
-};
+  emit('bookmarkOpenNewTab', node)
+}
 
 const handleChildBookmarkCopyUrl = (node: BookmarkNode) => {
-  emit("bookmarkCopyUrl", node);
-};
+  emit('bookmarkCopyUrl', node)
+}
 
-const handleChildBookmarkToggleFavorite = (
-  node: BookmarkNode,
-  isFavorite: boolean,
-) => {
-  emit("bookmarkToggleFavorite", node, isFavorite);
-};
+const handleChildBookmarkToggleFavorite = (node: BookmarkNode, isFavorite: boolean) => {
+  emit('bookmarkToggleFavorite', node, isFavorite)
+}
 
 function escapeRegExp(string: string): string {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
 function getIndentSize(): number {
   switch (props.config.size) {
-    case "compact":
-      return 20; // ✅ 增加缩进：16 → 20
-    case "spacious":
-      return 32; // ✅ 增加缩进：24 → 32
+    case 'compact':
+      return 20 // ✅ 增加缩进：16 → 20
+    case 'spacious':
+      return 32 // ✅ 增加缩进：24 → 32
     default:
-      return 24; // ✅ 增加缩进：20 → 24
+      return 24 // ✅ 增加缩进：20 → 24
   }
 }
 
@@ -629,43 +602,38 @@ function getIndentSize(): number {
  */
 const openContextMenu = (event?: Event) => {
   // 获取节点元素的位置
-  const nodeEl = rootRef.value;
+  const nodeEl = rootRef.value
   if (!nodeEl) {
-    logger.warn("TreeNode", "无法获取节点元素", props.node.id);
-    return;
+    logger.warn('TreeNode', '无法获取节点元素', props.node.id)
+    return
   }
 
-  const rect = nodeEl.getBoundingClientRect();
+  const rect = nodeEl.getBoundingClientRect()
 
   // 如果是鼠标事件，使用鼠标位置；否则使用节点位置
-  const mouseEvent = event as MouseEvent | undefined;
-  const x = mouseEvent ? mouseEvent.clientX : rect.right - 30;
-  const y = mouseEvent ? mouseEvent.clientY : rect.top + rect.height / 2;
+  const mouseEvent = event as MouseEvent | undefined
+  const x = mouseEvent ? mouseEvent.clientX : rect.right - 30
+  const y = mouseEvent ? mouseEvent.clientY : rect.top + rect.height / 2
 
   // 通知父组件打开菜单
-  emit("openContextMenu", String(props.node.id), x, y);
+  emit('openContextMenu', String(props.node.id), x, y)
 
-  logger.debug("TreeNode", "请求打开右键菜单", {
+  logger.debug('TreeNode', '请求打开右键菜单', {
     nodeId: props.node.id,
     title: props.node.title,
     x,
-    y,
-  });
-};
+    y
+  })
+}
 
 // ✅ 暴露方法给父组件
 defineExpose({
-  openContextMenu,
-});
+  openContextMenu
+})
 </script>
 
 <template>
-  <div
-    ref="rootRef"
-    class="simple-tree-node"
-    :class="nodeClasses"
-    :data-node-id="String(node.id)"
-  >
+  <div ref="rootRef" class="simple-tree-node" :class="nodeClasses" :data-node-id="String(node.id)">
     <!-- 文件夹节点 -->
     <div
       v-if="isFolder"
@@ -676,11 +644,7 @@ defineExpose({
     >
       <!-- 选择复选框 -->
       <md-checkbox
-        v-if="
-          config.showSelectionCheckbox &&
-          config.selectable === 'multiple' &&
-          !isRootFolder
-        "
+        v-if="config.showSelectionCheckbox && config.selectable === 'multiple' && !isRootFolder"
         :checked="isSelected"
         :indeterminate="isIndeterminate"
         class="select-checkbox"
@@ -752,24 +716,13 @@ defineExpose({
       </div>
 
       <!-- AI标签 -->
-      <md-chip-set
-        v-if="Array.isArray(node.tags) && node.tags.length > 0"
-        class="bookmark-tags"
-      >
-        <md-input-chip
-          v-for="tag in node.tags"
-          :key="tag"
-          :label="tag"
-        ></md-input-chip>
+      <md-chip-set v-if="Array.isArray(node.tags) && node.tags.length > 0" class="bookmark-tags">
+        <md-input-chip v-for="tag in node.tags" :key="tag" :label="tag"></md-input-chip>
       </md-chip-set>
 
       <!-- 书签URL (hover时显示) -->
       <div
-        v-if="
-          config.showBookmarkUrl !== false &&
-          config.size === 'spacious' &&
-          node.url
-        "
+        v-if="config.showBookmarkUrl !== false && config.size === 'spacious' && node.url"
         class="bookmark-url"
       >
         {{ truncatedUrl }}
@@ -787,10 +740,7 @@ defineExpose({
     </div>
 
     <!-- 子节点：仅文件夹节点在展开时显示子节点 -->
-    <div
-      v-if="isFolder && isExpanded && node.children && !isVirtualMode"
-      class="children"
-    >
+    <div v-if="isFolder && isExpanded && node.children && !isVirtualMode" class="children">
       <TreeNode
         v-for="child in renderChildren"
         :key="child.id"
@@ -813,13 +763,10 @@ defineExpose({
         @bookmark-open-new-tab="handleChildBookmarkOpenNewTab"
         @bookmark-copy-url="handleChildBookmarkCopyUrl"
         @bookmark-toggle-favorite="handleChildBookmarkToggleFavorite"
-        @node-mounted="
-          (id: string, el: HTMLElement) => $emit('nodeMounted', id, el)
-        "
+        @node-mounted="(id: string, el: HTMLElement) => $emit('nodeMounted', id, el)"
         @node-unmounted="(id: string) => $emit('nodeUnmounted', id)"
         @open-context-menu="
-          (id: string, x: number, y: number) =>
-            $emit('openContextMenu', id, x, y)
+          (id: string, x: number, y: number) => $emit('openContextMenu', id, x, y)
         "
         @drag-start="$emit('dragStart', $event)"
         @drag-over="$emit('dragOver', $event)"
@@ -871,12 +818,9 @@ defineExpose({
   /* stylelint-disable-next-line declaration-property-value-disallowed-list */
   border-radius: 18px; /* 36px / 2 = 胶囊形状 */
   transition:
-    background var(--md-sys-motion-duration-short2)
-      var(--md-sys-motion-easing-standard),
-    border-left-color var(--md-sys-motion-duration-short2)
-      var(--md-sys-motion-easing-standard),
-    box-shadow var(--md-sys-motion-duration-short2)
-      var(--md-sys-motion-easing-standard);
+    background var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard),
+    border-left-color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard),
+    box-shadow var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
 }
 
 /* 书签行高紧凑 */
@@ -888,18 +832,12 @@ defineExpose({
   /* stylelint-disable-next-line declaration-property-value-disallowed-list */
   border-radius: 15px; /* 30px / 2 = 胶囊形状 */
   transition:
-    background var(--md-sys-motion-duration-short2)
-      var(--md-sys-motion-easing-standard),
-    box-shadow var(--md-sys-motion-duration-short2)
-      var(--md-sys-motion-easing-standard);
+    background var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard),
+    box-shadow var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
 }
 
 .folder-content:hover {
-  background: linear-gradient(
-    90deg,
-    var(--color-folder-hover) 0%,
-    transparent 100%
-  );
+  background: linear-gradient(90deg, var(--color-folder-hover) 0%, transparent 100%);
 }
 
 /* 书签悬停效果 - 蓝色系 */
@@ -909,11 +847,7 @@ defineExpose({
 
 /* ✅ 右键菜单打开时保持 hover 状态（只影响当前节点，不影响子节点） */
 .node--context-menu-open > .folder-content {
-  background: linear-gradient(
-    90deg,
-    var(--color-folder-hover) 0%,
-    transparent 100%
-  );
+  background: linear-gradient(90deg, var(--color-folder-hover) 0%, transparent 100%);
 }
 
 .node--context-menu-open > .bookmark-content {
@@ -929,11 +863,7 @@ defineExpose({
 
 /* 书签选中 + hover */
 .simple-tree-node .bookmark-content.node-content--selected:hover {
-  background: color-mix(
-    in srgb,
-    var(--color-bookmark-selected),
-    var(--color-surface) 5%
-  );
+  background: color-mix(in srgb, var(--color-bookmark-selected), var(--color-surface) 5%);
 }
 
 /* 文件夹选中 - 黄色背景（无边框） */
@@ -943,11 +873,7 @@ defineExpose({
 
 /* 文件夹选中 + hover */
 .simple-tree-node .folder-content.node-content--selected:hover {
-  background: color-mix(
-    in srgb,
-    var(--color-folder-selected),
-    var(--color-surface) 5%
-  );
+  background: color-mix(in srgb, var(--color-folder-selected), var(--color-surface) 5%);
 }
 
 /* 点击反馈（未选中时）- 区分文件夹和书签 */
@@ -1065,10 +991,8 @@ defineExpose({
   opacity: 0;
   visibility: hidden;
   transition:
-    opacity var(--md-sys-motion-duration-short4)
-      var(--md-sys-motion-easing-standard),
-    visibility var(--md-sys-motion-duration-short4)
-      var(--md-sys-motion-easing-standard);
+    opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    visibility var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
 /* hover 时显示"⋮"按钮 */
@@ -1085,8 +1009,7 @@ defineExpose({
   will-change: transform, opacity;
 
   /* ✅ 优化：使用 emphasized 缓动函数，更流畅的展开动画 */
-  animation: slide-down var(--md-sys-motion-duration-medium2)
-    var(--md-sys-motion-easing-emphasized);
+  animation: slide-down var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized);
 }
 
 .children::before {
@@ -1100,7 +1023,7 @@ defineExpose({
   border-radius: 1px;
   background: var(--color-border);
   opacity: 0.4;
-  content: "";
+  content: '';
 }
 
 /* 尺寸变体 */
@@ -1231,7 +1154,7 @@ defineExpose({
   height: 2px;
   background: var(--color-primary);
   pointer-events: none;
-  content: "";
+  content: '';
   box-shadow: 0 0 4px color-mix(in srgb, var(--color-primary) 50%, transparent);
 }
 
@@ -1263,7 +1186,7 @@ defineExpose({
   /* stylelint-disable-next-line declaration-property-value-disallowed-list */
   border-radius: 0 2px 2px 0;
   background: var(--color-primary);
-  content: "";
+  content: '';
 }
 
 /* 🔆 激活 + 焦点状态（两种状态叠加）- 激活边框优先 */
@@ -1279,8 +1202,7 @@ defineExpose({
 
 /* 书签：激活边框 + 蓝色选中背景 */
 /* stylelint-disable-next-line no-descending-specificity, selector-max-specificity -- 需要覆盖前面的样式 */
-.simple-tree-node.node--active.node--focused
-  > .bookmark-content.node-content--selected {
+.simple-tree-node.node--active.node--focused > .bookmark-content.node-content--selected {
   outline: none;
   background: var(--color-bookmark-selected);
   box-shadow: inset 0 0 0 2px var(--color-primary);
@@ -1288,8 +1210,7 @@ defineExpose({
 
 /* 文件夹：激活边框 + 黄色选中背景 */
 /* stylelint-disable-next-line no-descending-specificity, selector-max-specificity -- 需要覆盖前面的样式 */
-.simple-tree-node.node--active.node--focused
-  > .folder-content.node-content--selected {
+.simple-tree-node.node--active.node--focused > .folder-content.node-content--selected {
   outline: none;
   background: var(--color-folder-selected);
   box-shadow: inset 0 0 0 2px var(--color-primary);
@@ -1316,10 +1237,8 @@ defineExpose({
   opacity: 0;
   visibility: hidden;
   transition:
-    opacity var(--md-sys-motion-duration-short4)
-      var(--md-sys-motion-easing-standard),
-    visibility var(--md-sys-motion-duration-short4)
-      var(--md-sys-motion-easing-standard);
+    opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    visibility var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
 /* hover 效果（按特异性从低到高排序） */
@@ -1360,10 +1279,8 @@ defineExpose({
   opacity: 0;
   visibility: hidden;
   transition:
-    opacity var(--md-sys-motion-duration-short2)
-      var(--md-sys-motion-easing-standard),
-    visibility var(--md-sys-motion-duration-short2)
-      var(--md-sys-motion-easing-standard);
+    opacity var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard),
+    visibility var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -1414,8 +1331,7 @@ md-input-chip {
   max-width: 280px;
   padding: var(--spacing-2) var(--spacing-3);
   border-radius: var(--radius-sm);
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background: var(--color-surface);
 
   /* ✅ 仅用于hover时的subtle scale效果，不包含rotate */

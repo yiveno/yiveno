@@ -9,7 +9,7 @@
  *
  * 事件携带的数据
  */
-export type EventDetail = Record<string, unknown> | undefined;
+export type EventDetail = Record<string, unknown> | undefined
 
 /**
  * 事件监听器类型
@@ -18,7 +18,7 @@ export type EventDetail = Record<string, unknown> | undefined;
  *
  * @template T - 事件详情的类型
  */
-export type EventListener<T = unknown> = (detail: T) => void;
+export type EventListener<T = unknown> = (detail: T) => void
 
 /**
  * 事件流配置接口
@@ -27,13 +27,13 @@ export type EventListener<T = unknown> = (detail: T) => void;
  */
 export interface EventStreamConfig {
   /** 默认等待时间（毫秒） */
-  defaultWaitMs: number;
+  defaultWaitMs: number
 
   /** 最大监听器数量 */
-  maxListeners: number;
+  maxListeners: number
 
   /** 是否启用日志 */
-  enableLogging: boolean;
+  enableLogging: boolean
 }
 
 /**
@@ -43,11 +43,11 @@ export interface EventStreamConfig {
  */
 export interface EventHistoryEntry {
   /** 事件名称 */
-  name: string;
+  name: string
 
   /** 事件详情 */
-  detail: EventDetail;
+  detail: EventDetail
 
   /** 时间戳 */
-  timestamp: number;
+  timestamp: number
 }

@@ -1,69 +1,68 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted } from "vue";
-import { LucideIcon } from "@/components";
-import { useCommandsShortcuts } from "@/composables/useCommandsShortcuts";
-import { useUIStore } from "@/stores/ui-store";
-import { t } from "@/utils/i18n-helpers";
+import { computed, onMounted, onUnmounted } from 'vue'
+import { LucideIcon } from '@/components'
+import { useCommandsShortcuts } from '@/composables/useCommandsShortcuts'
+import { useUIStore } from '@/stores/ui-store'
+import { t } from '@/utils/i18n-helpers'
 
 defineOptions({
-  name: "ShortcutSettings",
-});
+  name: 'ShortcutSettings'
+})
 
-const uiStore = useUIStore();
+const uiStore = useUIStore()
 
 /**
  * 全局命令快捷键工具集
  */
-const { shortcuts, loadShortcuts, startAutoRefresh, stopAutoRefresh } =
-  useCommandsShortcuts();
+const { shortcuts, loadShortcuts, startAutoRefresh, stopAutoRefresh } = useCommandsShortcuts()
 
 /**
  * 快捷键标签映射
  */
 const labelMap: Record<string, string> = {
-  _execute_action: t("settings_shortcut_label_execute_action"),
-  "open-management": t("settings_shortcut_label_open_management"),
-  "open-settings": t("settings_shortcut_label_open_settings"),
-  "quick-add-bookmark": t("settings_shortcut_label_quick_add_bookmark"),
-};
+  _execute_action: t('settings_shortcut_label_execute_action'),
+  'open-management': t('settings_shortcut_label_open_management'),
+  'open-settings': t('settings_shortcut_label_open_settings'),
+  'quick-add-bookmark': t('settings_shortcut_label_quick_add_bookmark')
+}
 
 /**
  * 格式化快捷键列表
  */
 const shortcutItems = computed(() => {
-  const items: Array<{ command: string; label: string; keys: string }> = [];
+  const items: Array<{ command: string; label: string; keys: string }> = []
 
-  Object.keys(labelMap).forEach((cmd) => {
-    const keys = shortcuts.value[cmd];
+  Object.keys(labelMap).forEach(cmd => {
+    const keys = shortcuts.value[cmd]
     items.push({
       command: cmd,
       label: labelMap[cmd] ?? cmd,
-      keys: keys && keys.trim() ? keys : "",
-    });
-  });
+      keys: keys && keys.trim() ? keys : ''
+    })
+  })
 
-  return items;
-});
+  return items
+})
 
 /**
  * 打开 Chrome 快捷键设置页面
  */
 function openChromeShortcutSettings(): void {
   try {
-    chrome.tabs.create({ url: "chrome://extensions/shortcuts" });
+    chrome.tabs.create({ url: 'chrome://extensions/shortcuts' })
   } catch {
-    uiStore.showInfo(t("settings_shortcut_chrome_url_hint"));
+    uiStore.showInfo(t('settings_shortcut_chrome_url_hint'))
   }
 }
 
 onMounted(() => {
-  loadShortcuts();
-  startAutoRefresh();
-});
+  loadShortcuts()
+  startAutoRefresh()
+})
 
 onUnmounted(() => {
-  stopAutoRefresh();
-});
+  stopAutoRefresh()
+})
 </script>
 
 <template>
@@ -74,9 +73,7 @@ onUnmounted(() => {
         <div slot="headline">{{ item.label }}</div>
         <div slot="trailing-supporting-text" class="shortcut-keys">
           <kbd v-if="item.keys" class="shortcut-kbd">{{ item.keys }}</kbd>
-          <span v-else class="shortcut-empty">{{
-            t("settings_shortcut_not_set")
-          }}</span>
+          <span v-else class="shortcut-empty">{{ t('settings_shortcut_not_set') }}</span>
         </div>
       </md-list-item>
     </md-list>
@@ -84,13 +81,13 @@ onUnmounted(() => {
     <!-- 未配置提示 -->
     <div v-else class="shortcuts-empty">
       <LucideIcon name="info" :size="24" />
-      <p>{{ t("settings_shortcut_empty") }}</p>
+      <p>{{ t('settings_shortcut_empty') }}</p>
     </div>
 
     <!-- 操作按钮 -->
     <div class="shortcuts-actions">
       <md-filled-button @click="openChromeShortcutSettings">
-        {{ t("settings_shortcut_open_chrome") }}
+        {{ t('settings_shortcut_open_chrome') }}
       </md-filled-button>
     </div>
   </div>
@@ -169,9 +166,7 @@ md-list {
 md-list-item {
   --md-list-item-label-text-color: var(--md-sys-color-on-surface);
   --md-list-item-supporting-text-color: var(--md-sys-color-on-surface-variant);
-  --md-list-item-trailing-supporting-text-color: var(
-    --md-sys-color-on-surface-variant
-  );
+  --md-list-item-trailing-supporting-text-color: var(--md-sys-color-on-surface-variant);
   --md-list-item-container-shape: 0;
   --md-list-item-label-text-font: var(--font-family-base);
   --md-list-item-label-text-size: var(--md-sys-typescale-body-large-size);

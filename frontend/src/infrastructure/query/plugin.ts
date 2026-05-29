@@ -6,9 +6,9 @@
  * - 提供全局查询功能
  */
 
-import { VueQueryPlugin } from "@tanstack/vue-query";
-import { queryClient } from "./query-client";
-import type { App } from "vue";
+import { VueQueryPlugin } from '@tanstack/vue-query'
+import { queryClient } from './query-client'
+import type { App } from 'vue'
 
 /**
  * 安装 TanStack Query 插件到 Vue 应用
@@ -27,9 +27,9 @@ import type { App } from "vue";
  */
 export function installQueryClient(app: App) {
   app.use(VueQueryPlugin, {
-    queryClient,
-  });
+    queryClient
+  })
 }
 
 // 导出 queryClient 供其他地方使用
-export { queryClient };
+export { queryClient }

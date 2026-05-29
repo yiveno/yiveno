@@ -154,17 +154,13 @@ md-switch {
 md-outlined-text-field {
   --md-outlined-text-field-container-shape: var(--radius-md);
   --md-outlined-text-field-input-text-font: var(--font-family-base);
-  --md-outlined-text-field-input-text-size: var(
-    --md-sys-typescale-body-medium-size
-  );
+  --md-outlined-text-field-input-text-size: var(--md-sys-typescale-body-medium-size);
 }
 
 md-filled-text-field {
   --md-filled-text-field-container-shape: var(--radius-md);
   --md-filled-text-field-input-text-font: var(--font-family-base);
-  --md-filled-text-field-input-text-size: var(
-    --md-sys-typescale-body-medium-size
-  );
+  --md-filled-text-field-input-text-size: var(--md-sys-typescale-body-medium-size);
 }
 
 /* ============================================
@@ -173,17 +169,13 @@ md-filled-text-field {
 md-outlined-select {
   --md-outlined-select-text-field-container-shape: var(--radius-md);
   --md-outlined-select-text-field-input-text-font: var(--font-family-base);
-  --md-outlined-select-text-field-input-text-size: var(
-    --md-sys-typescale-body-medium-size
-  );
+  --md-outlined-select-text-field-input-text-size: var(--md-sys-typescale-body-medium-size);
 }
 
 md-filled-select {
   --md-filled-select-text-field-container-shape: var(--radius-md);
   --md-filled-select-text-field-input-text-font: var(--font-family-base);
-  --md-filled-select-text-field-input-text-size: var(
-    --md-sys-typescale-body-medium-size
-  );
+  --md-filled-select-text-field-input-text-size: var(--md-sys-typescale-body-medium-size);
 }
 
 /* Select Option 组件（下拉选项） */
@@ -223,9 +215,7 @@ md-text-button {
 md-outlined-button {
   --md-outlined-button-container-shape: var(--radius-md);
   --md-outlined-button-label-text-font: var(--font-family-base);
-  --md-outlined-button-label-text-size: var(
-    --md-sys-typescale-label-large-size
-  );
+  --md-outlined-button-label-text-size: var(--md-sys-typescale-label-large-size);
 }
 
 /* ============================================

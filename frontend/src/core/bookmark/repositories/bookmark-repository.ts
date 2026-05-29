@@ -7,14 +7,11 @@
  * - 管理 IndexedDB 的初始化和数据操作
  */
 
-import type { Result } from "@/core/common/result";
-import { ok as Ok, err as Err } from "@/core/common/result";
-import type { ILogger } from "@/core/common/logger";
-import { noopLogger } from "@/core/common/logger";
-import {
-  indexedDBManager,
-  type BookmarkRecord,
-} from "@/infrastructure/indexeddb/manager";
+import type { Result } from '@/core/common/result'
+import { ok as Ok, err as Err } from '@/core/common/result'
+import type { ILogger } from '@/core/common/logger'
+import { noopLogger } from '@/core/common/logger'
+import { indexedDBManager, type BookmarkRecord } from '@/infrastructure/indexeddb/manager'
 
 /**
  * 书签仓储类
@@ -22,7 +19,7 @@ import {
  * 负责书签数据的持久化操作，是核心层与基础设施层的桥梁
  */
 export class BookmarkRepository {
-  private logger: ILogger;
+  private logger: ILogger
 
   /**
    * 构造函数
@@ -30,7 +27,7 @@ export class BookmarkRepository {
    * @param logger - Logger 实例，默认使用 noopLogger
    */
   constructor(logger?: ILogger) {
-    this.logger = logger || noopLogger;
+    this.logger = logger || noopLogger
   }
   /**
    * 获取所有书签记录
@@ -39,17 +36,14 @@ export class BookmarkRepository {
    * @param offset - 可选的偏移量（用于分页）
    * @returns 包含书签记录数组的 Result 对象
    */
-  async getAllBookmarks(
-    limit?: number,
-    offset?: number,
-  ): Promise<Result<BookmarkRecord[]>> {
+  async getAllBookmarks(limit?: number, offset?: number): Promise<Result<BookmarkRecord[]>> {
     try {
-      await indexedDBManager.initialize();
-      const data = await indexedDBManager.getAllBookmarks(limit, offset);
-      return Ok(data);
+      await indexedDBManager.initialize()
+      const data = await indexedDBManager.getAllBookmarks(limit, offset)
+      return Ok(data)
     } catch (e: unknown) {
-      this.logger.error("BookmarkRepository", "getAllBookmarks failed", e);
-      return Err(e instanceof Error ? e : new Error(String(e)));
+      this.logger.error('BookmarkRepository', 'getAllBookmarks failed', e)
+      return Err(e instanceof Error ? e : new Error(String(e)))
     }
   }
 
@@ -61,12 +55,12 @@ export class BookmarkRepository {
    */
   async getBookmarkById(id: string): Promise<Result<BookmarkRecord | null>> {
     try {
-      await indexedDBManager.initialize();
-      const data = await indexedDBManager.getBookmarkById(id);
-      return Ok(data);
+      await indexedDBManager.initialize()
+      const data = await indexedDBManager.getBookmarkById(id)
+      return Ok(data)
     } catch (e: unknown) {
-      this.logger.error("BookmarkRepository", "getBookmarkById failed", e);
-      return Err(e instanceof Error ? e : new Error(String(e)));
+      this.logger.error('BookmarkRepository', 'getBookmarkById failed', e)
+      return Err(e instanceof Error ? e : new Error(String(e)))
     }
   }
 
@@ -81,23 +75,15 @@ export class BookmarkRepository {
   async getChildrenByParentId(
     parentId: string,
     offset?: number,
-    limit?: number,
+    limit?: number
   ): Promise<Result<BookmarkRecord[]>> {
     try {
-      await indexedDBManager.initialize();
-      const data = await indexedDBManager.getChildrenByParentId(
-        parentId,
-        offset ?? 0,
-        limit,
-      );
-      return Ok(data);
+      await indexedDBManager.initialize()
+      const data = await indexedDBManager.getChildrenByParentId(parentId, offset ?? 0, limit)
+      return Ok(data)
     } catch (e: unknown) {
-      this.logger.error(
-        "BookmarkRepository",
-        "getChildrenByParentId failed",
-        e,
-      );
-      return Err(e instanceof Error ? e : new Error(String(e)));
+      this.logger.error('BookmarkRepository', 'getChildrenByParentId failed', e)
+      return Err(e instanceof Error ? e : new Error(String(e)))
     }
   }
 
@@ -108,12 +94,12 @@ export class BookmarkRepository {
    */
   async getGlobalStats(): Promise<Result<unknown>> {
     try {
-      await indexedDBManager.initialize();
-      const data = await indexedDBManager.getGlobalStats();
-      return Ok(data);
+      await indexedDBManager.initialize()
+      const data = await indexedDBManager.getGlobalStats()
+      return Ok(data)
     } catch (e: unknown) {
-      this.logger.error("BookmarkRepository", "getGlobalStats failed", e);
-      return Err(e instanceof Error ? e : new Error(String(e)));
+      this.logger.error('BookmarkRepository', 'getGlobalStats failed', e)
+      return Err(e instanceof Error ? e : new Error(String(e)))
     }
   }
 
@@ -124,42 +110,35 @@ export class BookmarkRepository {
    * @param updates - 要更新的字段（部分 BookmarkRecord）
    * @returns 包含 void 的 Result 对象
    */
-  async updateBookmark(
-    id: string,
-    updates: Partial<BookmarkRecord>,
-  ): Promise<Result<void>> {
+  async updateBookmark(id: string, updates: Partial<BookmarkRecord>): Promise<Result<void>> {
     try {
-      await indexedDBManager.initialize();
+      await indexedDBManager.initialize()
 
       // 1. 获取完整的书签记录
-      const existingBookmark = await indexedDBManager.getBookmarkById(id);
+      const existingBookmark = await indexedDBManager.getBookmarkById(id)
       if (!existingBookmark) {
-        this.logger.error(
-          "BookmarkRepository",
-          "updateBookmark: 书签不存在",
-          id,
-        );
-        return Err(new Error(`书签不存在: ${id}`));
+        this.logger.error('BookmarkRepository', 'updateBookmark: 书签不存在', id)
+        return Err(new Error(`书签不存在: ${id}`))
       }
 
       // 2. 合并更新字段
       const updatedBookmark: BookmarkRecord = {
         ...existingBookmark,
         ...updates,
-        id: existingBookmark.id, // 确保 id 不被覆盖
-      };
+        id: existingBookmark.id // 确保 id 不被覆盖
+      }
 
       // 3. 调用 IndexedDBManager 更新
-      await indexedDBManager.updateBookmark(updatedBookmark);
+      await indexedDBManager.updateBookmark(updatedBookmark)
 
-      this.logger.debug("BookmarkRepository", "updateBookmark 成功", {
+      this.logger.debug('BookmarkRepository', 'updateBookmark 成功', {
         id,
-        updates,
-      });
-      return Ok(undefined);
+        updates
+      })
+      return Ok(undefined)
     } catch (e: unknown) {
-      this.logger.error("BookmarkRepository", "updateBookmark failed", e);
-      return Err(e instanceof Error ? e : new Error(String(e)));
+      this.logger.error('BookmarkRepository', 'updateBookmark failed', e)
+      return Err(e instanceof Error ? e : new Error(String(e)))
     }
   }
 }
@@ -170,4 +149,4 @@ export class BookmarkRepository {
  * 全局共享的仓储实例，避免重复创建
  * 注意：默认使用 noopLogger，如需日志功能，请通过应用层注入 logger
  */
-export const bookmarkRepository = new BookmarkRepository();
+export const bookmarkRepository = new BookmarkRepository()

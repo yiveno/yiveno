@@ -4,53 +4,50 @@
   集成 Material Design 3 md-elevation 组件
 -->
 <script setup lang="ts">
-import { computed } from "vue";
-import "@material/web/elevation/elevation.js";
-import { LucideIcon } from "@/components/base/LucideIcon";
-import type { CardProps, CardEmits } from "./Card.d";
+import { computed } from 'vue'
+import '@material/web/elevation/elevation.js'
+import { LucideIcon } from '@/components/base/LucideIcon'
+import type { CardProps, CardEmits } from './Card.d'
 
 /**
  * 卡片默认属性设置，保障视觉与交互一致性。
  */
 const props = withDefaults(defineProps<CardProps>(), {
-  variant: "default",
-  size: "md",
+  variant: 'default',
+  size: 'md',
   padding: true,
   borderless: false,
-  footerTransition: "",
-});
+  footerTransition: ''
+})
 
-defineEmits<CardEmits>();
+defineEmits<CardEmits>()
 
 // Card classes
 /**
  * 根据属性生成卡片的样式类集合。
  */
 const cardClasses = computed(() => [
-  "card",
+  'card',
   `card--${props.variant}`,
   `card--${props.size}`,
   {
-    "card--no-padding": !props.padding,
-    "card--hover": props.hover,
-    "card--clickable": props.clickable,
-    "card--borderless": props.borderless,
-  },
-]);
+    'card--no-padding': !props.padding,
+    'card--hover': props.hover,
+    'card--clickable': props.clickable,
+    'card--borderless': props.borderless
+  }
+])
 
 /**
  * Elevation 类名（用于控制 hover 状态）
  */
-const elevationClass = computed(() => "card__elevation");
+const elevationClass = computed(() => 'card__elevation')
 
 // 类型已从 Card.types.ts 导入
 </script>
 
 <template>
-  <div
-    :class="cardClasses"
-    @click="props.clickable ? $emit('click', $event) : undefined"
-  >
+  <div :class="cardClasses" @click="props.clickable ? $emit('click', $event) : undefined">
     <!-- Material Design 3 Elevation -->
     <md-elevation :class="elevationClass"></md-elevation>
 
@@ -58,12 +55,7 @@ const elevationClass = computed(() => "card__elevation");
     <header v-if="$slots.header || title" class="card__header">
       <slot name="header">
         <div class="card__title-section">
-          <LucideIcon
-            v-if="icon"
-            :name="icon"
-            :color="iconColor"
-            class="card__icon"
-          />
+          <LucideIcon v-if="icon" :name="icon" :color="iconColor" class="card__icon" />
           <h3 v-if="title" class="card__title">{{ title }}</h3>
           <p v-if="subtitle" class="card__subtitle">{{ subtitle }}</p>
         </div>
@@ -81,10 +73,7 @@ const elevationClass = computed(() => "card__elevation");
 
     <!-- Footer -->
     <Transition :name="props.footerTransition">
-      <footer
-        v-if="(props.footerVisible ?? !!$slots.footer) && $slots.footer"
-        class="card__footer"
-      >
+      <footer v-if="(props.footerVisible ?? !!$slots.footer) && $slots.footer" class="card__footer">
         <slot name="footer" />
       </footer>
     </Transition>
@@ -257,11 +246,7 @@ const elevationClass = computed(() => "card__elevation");
 
 /* Warning variant hover */
 .card--warning.card--clickable:hover {
-  background: color-mix(
-    in srgb,
-    var(--color-warning) 12%,
-    var(--color-surface)
-  );
+  background: color-mix(in srgb, var(--color-warning) 12%, var(--color-surface));
 }
 
 .card--warning.card--clickable:hover .card__elevation {
@@ -279,11 +264,7 @@ const elevationClass = computed(() => "card__elevation");
 
 /* Success variant hover */
 .card--success.card--clickable:hover {
-  background: color-mix(
-    in srgb,
-    var(--color-success) 12%,
-    var(--color-surface)
-  );
+  background: color-mix(in srgb, var(--color-success) 12%, var(--color-surface));
 }
 
 .card--success.card--clickable:hover .card__elevation {
@@ -394,14 +375,9 @@ const elevationClass = computed(() => "card__elevation");
   position: absolute;
   inset: 0;
   z-index: 2;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--color-loading-shimmer-mid),
-    transparent
-  );
+  background: linear-gradient(90deg, transparent, var(--color-loading-shimmer-mid), transparent);
   animation: card-loading 1.5s infinite;
-  content: "";
+  content: '';
 
   /* ✅ 性能优化：提示浏览器优化动画性能 */
   will-change: transform;

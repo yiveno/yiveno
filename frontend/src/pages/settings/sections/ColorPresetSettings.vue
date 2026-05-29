@@ -1,81 +1,77 @@
 <script setup lang="ts">
-import { t } from "@/infrastructure";
+import { t } from '@/infrastructure'
 import {
   COLOR_PRESET_DEFINITIONS,
   type ColorPresetDefinition,
-  type ColorPresetId,
-} from "@acuity-bookmarks/design-tokens/color-presets";
-import { computed, onMounted, ref } from "vue";
-import { logger } from "@/infrastructure/logging/logger";
-import { globalStateManager } from "@/infrastructure/global-state/global-state-manager";
+  type ColorPresetId
+} from '@acuity-bookmarks/design-tokens/color-presets'
+import { computed, onMounted, ref } from 'vue'
+import { logger } from '@/infrastructure/logging/logger'
+import { globalStateManager } from '@/infrastructure/global-state/global-state-manager'
 
 defineOptions({
-  name: "ColorPresetSettings",
-});
+  name: 'ColorPresetSettings'
+})
 
-const presets = COLOR_PRESET_DEFINITIONS;
+const presets = COLOR_PRESET_DEFINITIONS
 
-const currentPreset = ref<ColorPresetId>("default");
-const busy = ref(false);
+const currentPreset = ref<ColorPresetId>('default')
+const busy = ref(false)
 
 /**
  * 中文界面展示 `vibeZh` 辅助说明；其他语言仅展示英文名避免硬编码中文副文案。
  */
 const showVibeZh = computed(() => {
-  if (typeof chrome === "undefined" || !chrome.i18n) return false;
-  const lang = chrome.i18n.getUILanguage();
-  return lang === "zh-CN" || lang === "zh_TW" || lang.startsWith("zh");
-});
+  if (typeof chrome === 'undefined' || !chrome.i18n) return false
+  const lang = chrome.i18n.getUILanguage()
+  return lang === 'zh-CN' || lang === 'zh_TW' || lang.startsWith('zh')
+})
 
 /**
  * 根据浏览器 UI 语言在中文名与英文名之间切换展示标题。
  */
 function presetDisplayName(def: ColorPresetDefinition): string {
-  if (typeof chrome !== "undefined" && chrome.i18n) {
-    const lang = chrome.i18n.getUILanguage();
-    if (lang === "zh-CN" || lang === "zh_TW" || lang.startsWith("zh")) {
-      return def.nameZh;
+  if (typeof chrome !== 'undefined' && chrome.i18n) {
+    const lang = chrome.i18n.getUILanguage()
+    if (lang === 'zh-CN' || lang === 'zh_TW' || lang.startsWith('zh')) {
+      return def.nameZh
     }
   }
-  return def.nameEn;
+  return def.nameEn
 }
 
 onMounted(async () => {
   try {
-    await globalStateManager.initialize();
-    currentPreset.value = globalStateManager.getColorPreset();
+    await globalStateManager.initialize()
+    currentPreset.value = globalStateManager.getColorPreset()
   } catch (error) {
-    logger.error("ColorPresetSettings", "加载配色预设失败", error);
+    logger.error('ColorPresetSettings', '加载配色预设失败', error)
   }
-});
+})
 
 /**
  * 用户选择配色预设：写入 chrome.storage 并由全局状态广播 DOM 更新。
  */
 async function selectPreset(id: ColorPresetId) {
-  if (id === currentPreset.value || busy.value) return;
-  busy.value = true;
+  if (id === currentPreset.value || busy.value) return
+  busy.value = true
   try {
-    await globalStateManager.setColorPreset(id);
-    currentPreset.value = globalStateManager.getColorPreset(); // eslint-disable-line require-atomic-updates
-    logger.info("ColorPresetSettings", "配色预设已切换", { preset: id });
+    await globalStateManager.setColorPreset(id)
+    currentPreset.value = globalStateManager.getColorPreset() // eslint-disable-line require-atomic-updates
+    logger.info('ColorPresetSettings', '配色预设已切换', { preset: id })
   } catch (error) {
-    logger.error("ColorPresetSettings", "保存配色预设失败", error);
+    logger.error('ColorPresetSettings', '保存配色预设失败', error)
   } finally {
-    busy.value = false; // eslint-disable-line require-atomic-updates
+    busy.value = false // eslint-disable-line require-atomic-updates
   }
 }
 </script>
 
 <template>
   <div>
-    <p class="intro">{{ t("settings_color_presets_intro") }}</p>
+    <p class="intro">{{ t('settings_color_presets_intro') }}</p>
 
-    <div
-      class="preset-grid"
-      role="radiogroup"
-      :aria-label="t('settings_color_presets_title')"
-    >
+    <div class="preset-grid" role="radiogroup" :aria-label="t('settings_color_presets_title')">
       <button
         v-for="def in presets"
         :key="def.id"
@@ -93,9 +89,7 @@ async function selectPreset(id: ColorPresetId) {
           aria-hidden="true"
         />
         <span class="preset-card__name">{{ presetDisplayName(def) }}</span>
-        <span v-if="showVibeZh" class="preset-card__vibe">{{
-          def.vibeZh
-        }}</span>
+        <span v-if="showVibeZh" class="preset-card__vibe">{{ def.vibeZh }}</span>
       </button>
     </div>
   </div>

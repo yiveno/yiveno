@@ -3,22 +3,22 @@
  * 管理全局UI状态，如Snackbar、对话框、加载状态等
  */
 
-import { defineStore } from "pinia";
-import { ref, computed } from "vue";
-import { notify } from "@/application/notification/notification-service";
+import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
+import { notify } from '@/application/notification/notification-service'
 
 /**
  * Snackbar 状态接口
  */
 export interface SnackbarState {
   /** 是否显示 */
-  show: boolean;
+  show: boolean
   /** 显示文本 */
-  text: string;
+  text: string
   /** 颜色类型 */
-  color: "success" | "error" | "warning" | "info";
+  color: 'success' | 'error' | 'warning' | 'info'
   /** 自动隐藏时长（毫秒） */
-  timeout: number;
+  timeout: number
 }
 
 /**
@@ -26,19 +26,19 @@ export interface SnackbarState {
  */
 export interface DialogState {
   /** 是否显示 */
-  show: boolean;
+  show: boolean
   /** 标题 */
-  title: string;
+  title: string
   /** 内容 */
-  content: string;
+  content: string
   /** 确认按钮文本 */
-  confirmText: string;
+  confirmText: string
   /** 取消按钮文本 */
-  cancelText: string;
+  cancelText: string
   /** 确认回调函数 */
-  onConfirm?: (() => void) | undefined;
+  onConfirm?: (() => void) | undefined
   /** 取消回调函数 */
-  onCancel?: (() => void) | undefined;
+  onCancel?: (() => void) | undefined
 }
 
 /**
@@ -46,13 +46,13 @@ export interface DialogState {
  */
 export interface LoadingState {
   /** 是否正在加载 */
-  isLoading: boolean;
+  isLoading: boolean
   /** 加载提示消息 */
-  message: string;
+  message: string
   /** 当前进度 */
-  progress: number;
+  progress: number
   /** 总数 */
-  total: number;
+  total: number
 }
 
 /**
@@ -63,59 +63,59 @@ export interface LoadingState {
  * - 提供统一的消息提示接口
  * - 管理页面状态和错误状态
  */
-export const useUIStore = defineStore("ui", () => {
+export const useUIStore = defineStore('ui', () => {
   // === 状态 ===
 
   /** Snackbar 状态 */
   const snackbar = ref<SnackbarState>({
     show: false,
-    text: "",
-    color: "info",
-    timeout: 2000,
-  });
+    text: '',
+    color: 'info',
+    timeout: 2000
+  })
 
   /** 确认对话框状态 */
   const confirmDialog = ref<DialogState>({
     show: false,
-    title: "",
-    content: "",
-    confirmText: "确认",
-    cancelText: "取消",
+    title: '',
+    content: '',
+    confirmText: '确认',
+    cancelText: '取消',
     onConfirm: undefined,
-    onCancel: undefined,
-  });
+    onCancel: undefined
+  })
 
   /** 全局加载状态 */
   const loading = ref<LoadingState>({
     isLoading: false,
-    message: "加载中...",
+    message: '加载中...',
     progress: 0,
-    total: 0,
-  });
+    total: 0
+  })
 
   /** 当前页面标识 */
-  const currentPage = ref<string>(""); // 'popup', 'management', 'search', 'debug'
+  const currentPage = ref<string>('') // 'popup', 'management', 'search', 'debug'
   /** 页面标题 */
-  const pageTitle = ref<string>("");
+  const pageTitle = ref<string>('')
 
   /** 最后一次错误消息 */
-  const lastError = ref<string | null>(null);
+  const lastError = ref<string | null>(null)
   /** 错误计数 */
-  const errorCount = ref<number>(0);
+  const errorCount = ref<number>(0)
 
   // === 书签状态管理 ===
 
   /** 选中的书签ID集合（用于批量操作） */
-  const selectedBookmarkIds = ref<Set<string>>(new Set());
+  const selectedBookmarkIds = ref<Set<string>>(new Set())
 
   /** 当前激活的书签ID（表示当前打开页面对应的书签，用于 SidePanel） */
-  const activeBookmarkId = ref<string | null>(null);
+  const activeBookmarkId = ref<string | null>(null)
 
   /** 键盘导航焦点的书签ID - Popup 面板（用于方向键导航） */
-  const focusedBookmarkIdPopup = ref<string | null>(null);
+  const focusedBookmarkIdPopup = ref<string | null>(null)
 
   /** 键盘导航焦点的书签ID - SidePanel 面板（用于方向键导航） */
-  const focusedBookmarkIdSidePanel = ref<string | null>(null);
+  const focusedBookmarkIdSidePanel = ref<string | null>(null)
 
   // === 计算属性 ===
 
@@ -123,23 +123,23 @@ export const useUIStore = defineStore("ui", () => {
    * 加载进度百分比
    */
   const loadingPercent = computed(() => {
-    if (loading.value.total === 0) return 0;
-    return Math.round((loading.value.progress / loading.value.total) * 100);
-  });
+    if (loading.value.total === 0) return 0
+    return Math.round((loading.value.progress / loading.value.total) * 100)
+  })
 
   /**
    * 是否有活动的对话框
    */
   const hasActiveDialog = computed(() => {
-    return confirmDialog.value.show;
-  });
+    return confirmDialog.value.show
+  })
 
   /**
    * 是否存在错误
    */
   const hasError = computed(() => {
-    return lastError.value !== null;
-  });
+    return lastError.value !== null
+  })
 
   // === 动作 ===
 
@@ -152,55 +152,55 @@ export const useUIStore = defineStore("ui", () => {
    */
   function showSnackbar(
     text: string,
-    color: SnackbarState["color"] = "info",
-    timeout: number = 2000,
+    color: SnackbarState['color'] = 'info',
+    timeout: number = 2000
   ) {
     // 统一路由到系统通知队列
-    notify(text, { level: color, timeoutMs: timeout });
+    notify(text, { level: color, timeoutMs: timeout })
     // 保持状态但不触发页面内 Toast 显示，减少DOM抖动
     snackbar.value = {
       show: false,
       text,
       color,
-      timeout,
-    };
+      timeout
+    }
   }
 
   /**
    * 隐藏Snackbar
    */
   function hideSnackbar() {
-    snackbar.value.show = false;
+    snackbar.value.show = false
   }
 
   /**
    * 显示成功消息
    */
   function showSuccess(text: string, timeout: number = 2000) {
-    showSnackbar(text, "success", timeout);
+    showSnackbar(text, 'success', timeout)
   }
 
   /**
    * 显示错误消息
    */
   function showError(text: string, timeout: number = 5000) {
-    showSnackbar(text, "error", timeout);
-    lastError.value = text;
-    errorCount.value++;
+    showSnackbar(text, 'error', timeout)
+    lastError.value = text
+    errorCount.value++
   }
 
   /**
    * 显示警告消息
    */
   function showWarning(text: string, timeout: number = 4000) {
-    showSnackbar(text, "warning", timeout);
+    showSnackbar(text, 'warning', timeout)
   }
 
   /**
    * 显示信息消息
    */
   function showInfo(text: string, timeout: number = 2000) {
-    showSnackbar(text, "info", timeout);
+    showSnackbar(text, 'info', timeout)
   }
 
   /**
@@ -211,8 +211,8 @@ export const useUIStore = defineStore("ui", () => {
     content: string,
     onConfirm?: () => void,
     onCancel?: () => void,
-    confirmText: string = "确认",
-    cancelText: string = "取消",
+    confirmText: string = '确认',
+    cancelText: string = '取消'
   ) {
     confirmDialog.value = {
       show: true,
@@ -221,17 +221,17 @@ export const useUIStore = defineStore("ui", () => {
       confirmText,
       cancelText,
       onConfirm,
-      onCancel,
-    };
+      onCancel
+    }
   }
 
   /**
    * 隐藏确认对话框
    */
   function hideConfirm() {
-    confirmDialog.value.show = false;
-    confirmDialog.value.onConfirm = undefined;
-    confirmDialog.value.onCancel = undefined;
+    confirmDialog.value.show = false
+    confirmDialog.value.onConfirm = undefined
+    confirmDialog.value.onCancel = undefined
   }
 
   /**
@@ -239,9 +239,9 @@ export const useUIStore = defineStore("ui", () => {
    */
   function confirmAction() {
     if (confirmDialog.value.onConfirm) {
-      confirmDialog.value.onConfirm();
+      confirmDialog.value.onConfirm()
     }
-    hideConfirm();
+    hideConfirm()
   }
 
   /**
@@ -249,9 +249,9 @@ export const useUIStore = defineStore("ui", () => {
    */
   function cancelAction() {
     if (confirmDialog.value.onCancel) {
-      confirmDialog.value.onCancel();
+      confirmDialog.value.onCancel()
     }
-    hideConfirm();
+    hideConfirm()
   }
 
   /**
@@ -259,66 +259,66 @@ export const useUIStore = defineStore("ui", () => {
    */
   function setLoading(
     isLoading: boolean,
-    message: string = "加载中...",
+    message: string = '加载中...',
     progress: number = 0,
-    total: number = 0,
+    total: number = 0
   ) {
     loading.value = {
       isLoading,
       message,
       progress,
-      total,
-    };
+      total
+    }
   }
 
   /**
    * 开始加载
    */
-  function startLoading(message: string = "加载中...") {
-    setLoading(true, message);
+  function startLoading(message: string = '加载中...') {
+    setLoading(true, message)
   }
 
   /**
    * 结束加载
    */
   function stopLoading() {
-    setLoading(false);
+    setLoading(false)
   }
 
   /**
    * 更新加载进度
    */
   function updateProgress(progress: number, total: number, message?: string) {
-    loading.value.progress = progress;
-    loading.value.total = total;
+    loading.value.progress = progress
+    loading.value.total = total
     if (message) {
-      loading.value.message = message;
+      loading.value.message = message
     }
   }
 
   /**
    * 设置当前页面
    */
-  function setCurrentPage(page: string, title: string = "") {
-    currentPage.value = page;
-    pageTitle.value = title;
+  function setCurrentPage(page: string, title: string = '') {
+    currentPage.value = page
+    pageTitle.value = title
   }
 
   /**
    * 清除错误状态
    */
   function clearError() {
-    lastError.value = null;
+    lastError.value = null
   }
 
   /**
    * 清除所有状态
    */
   function reset() {
-    hideSnackbar();
-    hideConfirm();
-    stopLoading();
-    clearError();
+    hideSnackbar()
+    hideConfirm()
+    stopLoading()
+    clearError()
   }
 
   // === 书签状态管理动作 ===
@@ -328,14 +328,14 @@ export const useUIStore = defineStore("ui", () => {
    * @param id - 书签ID，null 表示清除激活状态
    */
   function setActiveBookmark(id: string | null) {
-    activeBookmarkId.value = id;
+    activeBookmarkId.value = id
   }
 
   /**
    * 清除激活状态
    */
   function clearActiveBookmark() {
-    activeBookmarkId.value = null;
+    activeBookmarkId.value = null
   }
 
   /**
@@ -343,10 +343,10 @@ export const useUIStore = defineStore("ui", () => {
    * @param id - 书签ID，null 表示清除焦点
    */
   function setFocusedBookmarkPopup(id: string | null) {
-    focusedBookmarkIdPopup.value = id;
+    focusedBookmarkIdPopup.value = id
     // ✅ 切换面板时，清除另一个面板的焦点
     if (id !== null) {
-      focusedBookmarkIdSidePanel.value = null;
+      focusedBookmarkIdSidePanel.value = null
     }
   }
 
@@ -354,7 +354,7 @@ export const useUIStore = defineStore("ui", () => {
    * 清除键盘导航焦点（Popup 面板）
    */
   function clearFocusedBookmarkPopup() {
-    focusedBookmarkIdPopup.value = null;
+    focusedBookmarkIdPopup.value = null
   }
 
   /**
@@ -362,10 +362,10 @@ export const useUIStore = defineStore("ui", () => {
    * @param id - 书签ID，null 表示清除焦点
    */
   function setFocusedBookmarkSidePanel(id: string | null) {
-    focusedBookmarkIdSidePanel.value = id;
+    focusedBookmarkIdSidePanel.value = id
     // ✅ 切换面板时，清除另一个面板的焦点
     if (id !== null) {
-      focusedBookmarkIdPopup.value = null;
+      focusedBookmarkIdPopup.value = null
     }
   }
 
@@ -373,7 +373,7 @@ export const useUIStore = defineStore("ui", () => {
    * 清除键盘导航焦点（SidePanel 面板）
    */
   function clearFocusedBookmarkSidePanel() {
-    focusedBookmarkIdSidePanel.value = null;
+    focusedBookmarkIdSidePanel.value = null
   }
 
   /**
@@ -382,20 +382,20 @@ export const useUIStore = defineStore("ui", () => {
    */
   function toggleBookmarkSelection(id: string) {
     if (selectedBookmarkIds.value.has(id)) {
-      selectedBookmarkIds.value.delete(id);
+      selectedBookmarkIds.value.delete(id)
     } else {
-      selectedBookmarkIds.value.add(id);
+      selectedBookmarkIds.value.add(id)
     }
     // 强制触发响应式更新
-    selectedBookmarkIds.value = new Set(selectedBookmarkIds.value);
+    selectedBookmarkIds.value = new Set(selectedBookmarkIds.value)
   }
 
   /**
    * 清除所有选中状态
    */
   function clearBookmarkSelection() {
-    selectedBookmarkIds.value.clear();
-    selectedBookmarkIds.value = new Set();
+    selectedBookmarkIds.value.clear()
+    selectedBookmarkIds.value = new Set()
   }
 
   /**
@@ -403,7 +403,7 @@ export const useUIStore = defineStore("ui", () => {
    * @param ids - 书签ID数组
    */
   function selectBookmarks(ids: string[]) {
-    selectedBookmarkIds.value = new Set(ids);
+    selectedBookmarkIds.value = new Set(ids)
   }
 
   // 返回公共API
@@ -453,6 +453,6 @@ export const useUIStore = defineStore("ui", () => {
     clearFocusedBookmarkSidePanel,
     toggleBookmarkSelection,
     clearBookmarkSelection,
-    selectBookmarks,
-  };
-});
+    selectBookmarks
+  }
+})

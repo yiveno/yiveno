@@ -2,22 +2,8 @@
  * 📄 Popup - 弹出窗口页面类型定义
  */
 
-/**
- * 页面状态
- */
-export interface PopupState {
-  // 其他状态
-}
+/** 需要关注的问题类型 */
+export type PopupIssueType = 'duplicate' | 'invalid'
 
-/**
- * 书签项（从 IndexedDB 读取）
- */
-export interface PopupBookmarkItem {
-  id: string;
-  title: string;
-  url?: string;
-  favicon?: string;
-  dateAdded?: number;
-  dateLastUsed?: number;
-  [key: string]: unknown;
-}
+/** 管理页筛选键 */
+export type PopupFilterKey = PopupIssueType | 'dead' | 'internal'

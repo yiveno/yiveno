@@ -6,10 +6,7 @@
  * - 统一处理输入规范（trim/空串），保持上层调用简洁；
  * - 与数据来源无关，仅接收 BookmarkRecord 列表进行检索。
  */
-import type {
-  BookmarkRecord,
-  SearchResult,
-} from "@/infrastructure/indexeddb/manager";
+import type { BookmarkRecord, SearchResult } from '@/infrastructure/indexeddb/manager'
 
 /**
  * 查询策略接口
@@ -24,7 +21,7 @@ export interface SearchStrategy {
    * @param bookmarks - 待查询的书签记录列表
    * @returns 匹配的查询结果数组，按相关性排序
    */
-  search(query: string, bookmarks: BookmarkRecord[]): SearchResult[];
+  search(query: string, bookmarks: BookmarkRecord[]): SearchResult[]
 }
 
 /**
@@ -48,8 +45,8 @@ export class SearchEngine {
    * @returns 匹配的查询结果数组，如果查询为空则返回空数组
    */
   search(query: string, bookmarks: BookmarkRecord[]): SearchResult[] {
-    const q = String(query || "").trim();
-    if (!q) return [];
-    return this.strategy.search(q, bookmarks);
+    const q = String(query || '').trim()
+    if (!q) return []
+    return this.strategy.search(q, bookmarks)
   }
 }

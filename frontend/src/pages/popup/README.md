@@ -29,6 +29,10 @@
 
 - 待添加（如果有页面专用组件）
 
+### 页面逻辑
+
+- `composables/usePopupPage.ts` - 集中管理弹窗初始化、快捷操作和页面事件处理
+
 ## 🏗️ 文件结构
 
 ```
@@ -36,9 +40,9 @@ pages/popup/
 ├── index.html          # HTML 模板
 ├── main.ts             # 入口文件
 ├── Popup.vue           # 主组件
+├── composables/        # 页面逻辑 composable
 ├── styles.css          # 页面专属样式
 ├── components/         # 页面专用组件（待添加）
-├── composables/        # 页面专用 Composables（待添加）
 └── README.md           # 本文档
 ```
 

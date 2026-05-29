@@ -20,9 +20,9 @@
  */
 export class IndexedDBConnectionPool {
   /** 单例实例 */
-  private static _instance: IndexedDBConnectionPool | null = null;
+  private static _instance: IndexedDBConnectionPool | null = null
   /** 数据库连接实例 */
-  private _db: IDBDatabase | null = null;
+  private _db: IDBDatabase | null = null
 
   /**
    * 获取单例实例
@@ -30,8 +30,8 @@ export class IndexedDBConnectionPool {
    * @returns 连接池实例
    */
   static get instance(): IndexedDBConnectionPool {
-    if (!this._instance) this._instance = new IndexedDBConnectionPool();
-    return this._instance;
+    if (!this._instance) this._instance = new IndexedDBConnectionPool()
+    return this._instance
   }
 
   /**
@@ -42,7 +42,7 @@ export class IndexedDBConnectionPool {
    * @param db - IndexedDB 数据库实例
    */
   setDB(db: IDBDatabase) {
-    this._db = db;
+    this._db = db
   }
 
   /**
@@ -52,8 +52,8 @@ export class IndexedDBConnectionPool {
    * @throws 如果数据库尚未初始化则抛出错误
    */
   getDB(): IDBDatabase {
-    if (!this._db) throw new Error("IndexedDBConnectionPool: 数据库尚未初始化");
-    return this._db;
+    if (!this._db) throw new Error('IndexedDBConnectionPool: 数据库尚未初始化')
+    return this._db
   }
 
   /**
@@ -63,8 +63,8 @@ export class IndexedDBConnectionPool {
    */
   close(): void {
     if (this._db) {
-      this._db.close();
-      this._db = null;
+      this._db.close()
+      this._db = null
     }
   }
 }
@@ -74,4 +74,4 @@ export class IndexedDBConnectionPool {
  *
  * 全局共享的连接池
  */
-export const idbConnectionPool = IndexedDBConnectionPool.instance;
+export const idbConnectionPool = IndexedDBConnectionPool.instance

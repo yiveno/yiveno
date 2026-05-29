@@ -30,16 +30,16 @@
  * ```
  */
 
-import { ref, computed, watch } from "vue";
-import { bookmarkMemorySearchService } from "@/application/query/bookmark-memory-search-service";
+import { ref, computed, watch } from 'vue'
+import { bookmarkMemorySearchService } from '@/application/query/bookmark-memory-search-service'
 import type {
   FilteredBookmarkNode,
-  BookmarkFilterOptions,
-} from "@/application/query/bookmark-memory-search-service";
-import { bookmarkSearchService } from "@/application/query/bookmark-search-service";
-import type { BookmarkNode } from "@/types";
-import type { SearchStrategy } from "@/types/domain/query";
-import { logger } from "@/infrastructure/logging/logger";
+  BookmarkFilterOptions
+} from '@/application/query/bookmark-memory-search-service'
+import { bookmarkSearchService } from '@/application/query/bookmark-search-service'
+import type { BookmarkNode } from '@/types'
+import type { SearchStrategy } from '@/types/domain/query'
+import { logger } from '@/infrastructure/logging/logger'
 
 /**
  * Composable 选项
@@ -50,7 +50,7 @@ export interface UseBookmarkSearchOptions {
    * - indexeddb: 从 IndexedDB 筛选（异步）
    * - memory: 从内存数据筛选（同步）
    */
-  mode?: "indexeddb" | "memory";
+  mode?: 'indexeddb' | 'memory'
 
   /**
    * 搜索策略（仅 indexeddb 模式有效）
@@ -59,26 +59,26 @@ export interface UseBookmarkSearchOptions {
    * - semantic: 本地语义向量搜索
    * - hybrid: Fuse 立即返回 + Semantic 异步合并
    */
-  strategy?: SearchStrategy;
+  strategy?: SearchStrategy
 
   /**
    * 内存数据源
    * - mode='memory' 时使用
    * - 可以是 Ref 或普通数组
    */
-  data?: Ref<BookmarkNode[]> | BookmarkNode[];
+  data?: Ref<BookmarkNode[]> | BookmarkNode[]
 
   /** 筛选结果数量限制 */
-  limit?: number;
+  limit?: number
 
   /** 是否自动筛选（当 query 变化时） */
-  autoFilter?: boolean;
+  autoFilter?: boolean
 
   /** 初始筛选条件 */
-  initialQuery?: string;
+  initialQuery?: string
 
   /** 筛选选项 */
-  filterOptions?: Partial<BookmarkFilterOptions>;
+  filterOptions?: Partial<BookmarkFilterOptions>
 }
 
 /**
@@ -86,66 +86,64 @@ export interface UseBookmarkSearchOptions {
  */
 export interface UseBookmarkSearchReturn {
   /** 筛选条件 */
-  query: Ref<string>;
+  query: Ref<string>
 
   /** 筛选结果 */
-  results: Ref<FilteredBookmarkNode[]>;
+  results: Ref<FilteredBookmarkNode[]>
 
   /** 筛选结果（BookmarkNode 格式） */
-  bookmarkNodes: Ref<BookmarkNode[]>;
+  bookmarkNodes: Ref<BookmarkNode[]>
 
   /** 是否正在筛选 */
-  isFiltering: Ref<boolean>;
+  isFiltering: Ref<boolean>
 
   /** 筛选错误 */
-  error: Ref<Error | null>;
+  error: Ref<Error | null>
 
   /** 总结果数 */
-  totalResults: Ref<number>;
+  totalResults: Ref<number>
 
   /** 执行时间（毫秒） */
-  executionTime: Ref<number>;
+  executionTime: Ref<number>
 
   /** 筛选数据源 */
-  filterSource: Ref<"indexeddb" | "memory">;
+  filterSource: Ref<'indexeddb' | 'memory'>
 
   /** 执行筛选 */
-  filter: (q: string) => Promise<void>;
+  filter: (q: string) => Promise<void>
 
   /** 清空筛选结果 */
-  clear: () => void;
+  clear: () => void
 
   /** 重新筛选（使用当前 query） */
-  refresh: () => Promise<void>;
+  refresh: () => Promise<void>
 }
 
 /**
  * 书签筛选 Composable
  */
-export function useBookmarkSearch(
-  options: UseBookmarkSearchOptions = {},
-): UseBookmarkSearchReturn {
+export function useBookmarkSearch(options: UseBookmarkSearchOptions = {}): UseBookmarkSearchReturn {
   const {
-    mode = "indexeddb",
-    strategy = "auto",
+    mode = 'indexeddb',
+    strategy = 'auto',
     data,
     limit = 100,
     autoFilter = true,
-    initialQuery = "",
-    filterOptions = {},
-  } = options;
+    initialQuery = '',
+    filterOptions = {}
+  } = options
 
   // 将 data 转换为 Ref
-  const dataRef = ref(data);
+  const dataRef = ref(data)
 
   // ==================== State ====================
-  const query = ref(initialQuery);
-  const results = ref<FilteredBookmarkNode[]>([]);
-  const isFiltering = ref(false);
-  const error = ref<Error | null>(null);
-  const totalResults = ref(0);
-  const executionTime = ref(0);
-  const filterSource = ref<"indexeddb" | "memory">(mode);
+  const query = ref(initialQuery)
+  const results = ref<FilteredBookmarkNode[]>([])
+  const isFiltering = ref(false)
+  const error = ref<Error | null>(null)
+  const totalResults = ref(0)
+  const executionTime = ref(0)
+  const filterSource = ref<'indexeddb' | 'memory'>(mode)
 
   // ==================== Computed ====================
   /**
@@ -153,128 +151,124 @@ export function useBookmarkSearch(
    * FilteredBookmarkNode 继承自 BookmarkNode
    */
   const bookmarkNodes = computed((): BookmarkNode[] => {
-    return results.value;
-  });
+    return results.value
+  })
 
   // ==================== Methods ====================
   /**
    * 执行筛选（支持双模式）
    */
   async function filter(q: string): Promise<void> {
-    const trimmedQuery = q.trim();
+    const trimmedQuery = q.trim()
 
     // 更新 query
-    query.value = q;
+    query.value = q
 
     // 空查询，清空结果
     if (!trimmedQuery) {
-      clear();
-      return;
+      clear()
+      return
     }
 
     // 验证：memory 模式下必须提供 data
-    if (mode === "memory" && (!dataRef.value || dataRef.value.length === 0)) {
-      logger.warn("useBookmarkSearch", "内存模式下未提供数据源，跳过筛选");
-      clear();
-      return;
+    if (mode === 'memory' && (!dataRef.value || dataRef.value.length === 0)) {
+      logger.warn('useBookmarkSearch', '内存模式下未提供数据源，跳过筛选')
+      clear()
+      return
     }
 
-    isFiltering.value = true;
-    error.value = null;
+    isFiltering.value = true
+    error.value = null
 
     try {
-      if (mode === "memory") {
+      if (mode === 'memory') {
         // 内存模式：使用 bookmarkMemorySearchService（树形结构筛选）
         const result = bookmarkMemorySearchService.search(
           dataRef.value as BookmarkNode[],
           trimmedQuery,
-          { limit, ...filterOptions },
-        );
-        results.value = result.nodes;
-        totalResults.value = result.total;
-        executionTime.value = result.executionTime;
-        filterSource.value = "memory";
+          { limit, ...filterOptions }
+        )
+        results.value = result.nodes
+        totalResults.value = result.total
+        executionTime.value = result.executionTime
+        filterSource.value = 'memory'
       } else {
         // IndexedDB 模式：通过 bookmarkSearchService，支持 strategy
-        const result = await bookmarkSearchService.searchWithMetadata(
-          trimmedQuery,
-          {
-            strategy,
-            limit,
-            highlight: true,
-            filterFolders: filterOptions.filterFolders,
-            fuzzyThreshold: filterOptions.threshold,
-          },
-        );
+        const result = await bookmarkSearchService.searchWithMetadata(trimmedQuery, {
+          strategy,
+          limit,
+          highlight: true,
+          filterFolders: filterOptions.filterFolders,
+          fuzzyThreshold: filterOptions.threshold
+        })
 
         if (!result.ok) {
-          throw result.error;
+          throw result.error
         }
 
-        const response = result.value;
+        const response = result.value
 
         // 转换为 FilteredBookmarkNode（扁平列表）
         const nodes: FilteredBookmarkNode[] = response.results.map(
           // eslint-disable-next-line complexity
           (r): FilteredBookmarkNode => {
-            const bookmark = r.bookmark;
+            const bookmark = r.bookmark
             const node: FilteredBookmarkNode = {
               id: bookmark.id,
-              title: bookmark.title || "无标题",
+              title: bookmark.title || '无标题',
               url: bookmark.url,
               dateAdded: bookmark.dateAdded || 0,
               dateGroupModified: bookmark.dateGroupModified,
               parentId: bookmark.parentId,
               index: bookmark.index || 0,
               children: !bookmark.url ? [] : undefined,
-              filterScore: r.score,
-            } as FilteredBookmarkNode;
+              filterScore: r.score
+            } as FilteredBookmarkNode
 
             // 路径相关字段
-            node.path = bookmark.path || [];
-            node.pathString = bookmark.pathString || "";
-            node.pathIds = bookmark.pathIds || [];
-            node.pathIdsString = bookmark.pathIdsString || "";
-            node.ancestorIds = bookmark.ancestorIds || [];
-            node.siblingIds = bookmark.siblingIds || [];
-            node.depth = bookmark.depth || 0;
+            node.path = bookmark.path || []
+            node.pathString = bookmark.pathString || ''
+            node.pathIds = bookmark.pathIds || []
+            node.pathIdsString = bookmark.pathIdsString || ''
+            node.ancestorIds = bookmark.ancestorIds || []
+            node.siblingIds = bookmark.siblingIds || []
+            node.depth = bookmark.depth || 0
 
             // 搜索相关字段
-            node.titleLower =
-              bookmark.titleLower || bookmark.title?.toLowerCase() || "";
-            node.urlLower = bookmark.urlLower || bookmark.url?.toLowerCase();
-            node.domain = bookmark.domain;
-            node.keywords = bookmark.keywords || [];
+            node.titleLower = bookmark.titleLower || bookmark.title?.toLowerCase() || ''
+            node.urlLower = bookmark.urlLower || bookmark.url?.toLowerCase()
+            node.domain = bookmark.domain
+            node.keywords = bookmark.keywords || []
 
             // 文件夹相关字段
-            node.isFolder = !bookmark.url;
-            node.childrenCount = bookmark.childrenCount || 0;
+            node.isFolder = !bookmark.url
+            node.childrenCount = bookmark.childrenCount || 0
 
-            return node;
-          },
-        );
+            return node
+          }
+        )
 
-        results.value = nodes;
-        totalResults.value = response.metadata.totalResults;
-        executionTime.value = Math.round(response.metadata.searchTime);
-        filterSource.value = "indexeddb";
+        results.value = nodes
+        totalResults.value = response.metadata.totalResults
+        executionTime.value = Math.round(response.metadata.searchTime)
+        filterSource.value = 'indexeddb'
       }
 
       logger.info(
-        "useBookmarkSearch",
+        'useBookmarkSearch',
         `筛选完成 (${filterSource.value}, strategy=${strategy}): "${trimmedQuery}"`,
-        { total: totalResults.value, executionTime: executionTime.value },
-      );
+        { total: totalResults.value, executionTime: executionTime.value }
+      )
     } catch (err) {
-      const filterError = err as Error;
-      error.value = filterError;
-      results.value = [];
-      totalResults.value = 0;
-      executionTime.value = 0;
+      const filterError = err as Error
+      error.value = filterError
+      results.value = []
+      totalResults.value = 0
+      executionTime.value = 0
 
-      logger.error("useBookmarkSearch", "筛选失败", filterError);
+      logger.error('useBookmarkSearch', '筛选失败', filterError)
     } finally {
-      isFiltering.value = false;
+      isFiltering.value = false
     }
   }
 
@@ -282,32 +276,32 @@ export function useBookmarkSearch(
    * 清空筛选结果
    */
   function clear(): void {
-    query.value = "";
-    results.value = [];
-    totalResults.value = 0;
-    executionTime.value = 0;
-    error.value = null;
+    query.value = ''
+    results.value = []
+    totalResults.value = 0
+    executionTime.value = 0
+    error.value = null
   }
 
   /**
    * 重新筛选（使用当前 query）
    */
   async function refresh(): Promise<void> {
-    await filter(query.value);
+    await filter(query.value)
   }
 
   // ==================== Watchers ====================
   // 自动筛选
   if (autoFilter) {
-    watch(query, (newQuery) => {
-      filter(newQuery);
-    });
+    watch(query, newQuery => {
+      filter(newQuery)
+    })
   }
 
   // ==================== Initialization ====================
   // 如果有初始查询，执行筛选
   if (initialQuery && autoFilter) {
-    filter(initialQuery);
+    filter(initialQuery)
   }
 
   // ==================== Return ====================
@@ -322,9 +316,9 @@ export function useBookmarkSearch(
     filterSource,
     filter,
     clear,
-    refresh,
-  };
+    refresh
+  }
 }
 
 // 类型声明
-import type { Ref } from "vue";
+import type { Ref } from 'vue'

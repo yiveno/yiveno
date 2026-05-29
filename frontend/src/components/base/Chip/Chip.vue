@@ -1,65 +1,65 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import type { ChipProps } from "./Chip.d";
+import { computed } from 'vue'
+import type { ChipProps } from './Chip.d'
 
 defineOptions({
-  name: "AcuityChip",
-});
+  name: 'AcuityChip'
+})
 
 const props = withDefaults(defineProps<ChipProps>(), {
-  type: "assist",
-  variant: "filled",
-  color: "primary",
-  size: "md",
+  type: 'assist',
+  variant: 'filled',
+  color: 'primary',
+  size: 'md',
   selected: false,
   removable: false,
   elevated: false,
   removeOnly: false,
-  avatar: false,
-});
+  avatar: false
+})
 
 const chipTag = computed(() => {
   switch (props.type) {
-    case "filter":
-      return "md-filter-chip";
-    case "input":
-      return "md-input-chip";
-    case "suggestion":
-      return "md-suggestion-chip";
-    case "assist":
+    case 'filter':
+      return 'md-filter-chip'
+    case 'input':
+      return 'md-input-chip'
+    case 'suggestion':
+      return 'md-suggestion-chip'
+    case 'assist':
     default:
-      return "md-assist-chip";
+      return 'md-assist-chip'
   }
-});
+})
 
 const chipAttrs = computed(() => {
-  const attrs: Record<string, unknown> = {};
-  if (props.type === "filter" || props.type === "input") {
-    attrs.selected = props.selected;
-    attrs.removable = props.removable;
+  const attrs: Record<string, unknown> = {}
+  if (props.type === 'filter' || props.type === 'input') {
+    attrs.selected = props.selected
+    attrs.removable = props.removable
   }
-  if (props.type === "input") {
-    attrs.avatar = props.avatar;
-    attrs.removeOnly = props.removeOnly;
+  if (props.type === 'input') {
+    attrs.avatar = props.avatar
+    attrs.removeOnly = props.removeOnly
   }
-  if (props.type === "assist" || props.type === "suggestion") {
-    attrs.elevated = props.elevated;
+  if (props.type === 'assist' || props.type === 'suggestion') {
+    attrs.elevated = props.elevated
   }
   if (props.href) {
-    attrs.href = props.href;
-    if (props.target) attrs.target = props.target;
-    if (props.download) attrs.download = props.download;
+    attrs.href = props.href
+    if (props.target) attrs.target = props.target
+    if (props.download) attrs.download = props.download
   }
-  return attrs;
-});
+  return attrs
+})
 
 const chipClasses = computed(() => [
-  "acuity-chip",
+  'acuity-chip',
   `acuity-chip--${props.type}`,
   `acuity-chip--${props.variant}`,
   `acuity-chip--${props.color}`,
-  `acuity-chip--${props.size}`,
-]);
+  `acuity-chip--${props.size}`
+])
 </script>
 
 <template>
