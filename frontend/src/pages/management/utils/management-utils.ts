@@ -5,6 +5,10 @@ import type {
 } from '@/application/bookmark/bookmark-diff-service'
 
 /**
+ * Management page utility helpers.
+ */
+
+/**
  * 读取 Material Web TextField 的值。
  */
 export function readMwcTextFieldValue(ev: Event): string {
@@ -17,16 +21,8 @@ export function readMwcTextFieldValue(ev: Event): string {
  */
 export function isInternalProtocolUrl(url: string): boolean {
   if (!url) return false
-
-  const lowerUrl = url.toLowerCase()
-  return (
-    lowerUrl.startsWith('chrome://') ||
-    lowerUrl.startsWith('chrome-extension://') ||
-    lowerUrl.startsWith('about:') ||
-    lowerUrl.startsWith('file://') ||
-    lowerUrl.startsWith('edge://') ||
-    lowerUrl.startsWith('brave://')
-  )
+  const lower = url.toLowerCase()
+  return /^(chrome|chrome-extension|about|file|edge|brave):\/\//i.test(lower)
 }
 
 /**
@@ -39,21 +35,14 @@ export function collectBookmarksFromFolder(
   maxDepth = 50
 ): BookmarkNode[] {
   const bookmarks: BookmarkNode[] = []
-
   if (depth > maxDepth) {
     return bookmarks
   }
-
   if (visited.has(folder.id)) {
     return bookmarks
   }
-
   visited.add(folder.id)
-
-  if (!folder.children) {
-    return bookmarks
-  }
-
+  if (!folder.children) return bookmarks
   for (const child of folder.children) {
     if (child.url) {
       bookmarks.push(child)
@@ -61,7 +50,6 @@ export function collectBookmarksFromFolder(
       bookmarks.push(...collectBookmarksFromFolder(child, visited, depth + 1, maxDepth))
     }
   }
-
   return bookmarks
 }
 

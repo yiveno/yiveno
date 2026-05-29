@@ -83,19 +83,17 @@ export function useManagementTreeActions(options: UseManagementTreeActionsOption
     }
   }
 
-  function handleLeftSearch(results: BookmarkNode[]): Promise<void> | void {
+  async function handleLeftSearch(results: BookmarkNode[]): Promise<void> {
     options.leftSearchResults.value = results
     options.isLeftSearchActive.value = true
-
+    await nextTick()
     if (results.length > 0) {
-      return nextTick().then(() => {
-        options.leftTreeRef.value?.expandAll?.()
-        options.leftExpandAll.value = true
-      })
+      options.leftTreeRef.value?.expandAll?.()
+      options.leftExpandAll.value = true
+    } else {
+      options.leftTreeRef.value?.collapseAll?.()
+      options.leftExpandAll.value = false
     }
-
-    options.leftTreeRef.value?.collapseAll?.()
-    options.leftExpandAll.value = false
   }
 
   function handleLeftSearchClear(): void {
@@ -105,19 +103,17 @@ export function useManagementTreeActions(options: UseManagementTreeActionsOption
     options.leftExpandAll.value = false
   }
 
-  function handleRightSearch(results: BookmarkNode[]): Promise<void> | void {
+  async function handleRightSearch(results: BookmarkNode[]): Promise<void> {
     options.rightSearchResults.value = results
     options.isRightSearchActive.value = true
-
+    await nextTick()
     if (results.length > 0) {
-      return nextTick().then(() => {
-        options.rightTreeRef.value?.expandAll?.()
-        options.rightExpandAll.value = true
-      })
+      options.rightTreeRef.value?.expandAll?.()
+      options.rightExpandAll.value = true
+    } else {
+      options.rightTreeRef.value?.collapseAll?.()
+      options.rightExpandAll.value = false
     }
-
-    options.rightTreeRef.value?.collapseAll?.()
-    options.rightExpandAll.value = false
   }
 
   function handleRightSearchClear(): void {
@@ -172,70 +168,54 @@ export function useManagementTreeActions(options: UseManagementTreeActionsOption
     options.isLeftPanelCollapsed.value = !options.isLeftPanelCollapsed.value
   }
 
-  function toggleLeftExpandAll(): Promise<void> | void {
-    if (!options.leftTreeRef.value) return
-    if (isExpanding.value) return
+  async function toggleLeftExpandAll(): Promise<void> {
+    if (!options.leftTreeRef.value || isExpanding.value) return
 
-    isExpanding.value = true
+    const expanding = true
+    isExpanding.value = expanding
     options.isPageLoading.value = true
     options.loadingMessage.value = options.leftExpandAll.value ? '正在收起...' : '正在展开...'
 
-    return nextTick().then(
-      () =>
-        new Promise<void>(resolve => {
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              setTimeout(() => {
-                if (options.leftExpandAll.value) {
-                  options.leftTreeRef.value?.collapseAll?.()
-                  options.leftExpandAll.value = false
-                } else {
-                  options.leftTreeRef.value?.expandAll?.()
-                  options.leftExpandAll.value = true
-                }
+    await nextTick()
+    await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
 
-                options.isPageLoading.value = false
-                isExpanding.value = false
-                resolve()
-              }, 0)
-            })
-          })
-        })
-    )
+    if (options.leftExpandAll.value) {
+      options.leftTreeRef.value?.collapseAll?.()
+      options.leftExpandAll.value = false
+    } else {
+      options.leftTreeRef.value?.expandAll?.()
+      options.leftExpandAll.value = true
+    }
+
+    options.isPageLoading.value = false
+    if (isExpanding.value === expanding) {
+      isExpanding.value = false
+    }
   }
 
-  function toggleRightExpandAll(): Promise<void> | void {
-    if (!options.rightTreeRef.value) return
-    if (isExpanding.value) return
+  async function toggleRightExpandAll(): Promise<void> {
+    if (!options.rightTreeRef.value || isExpanding.value) return
 
-    isExpanding.value = true
+    const expanding = true
+    isExpanding.value = expanding
     options.isPageLoading.value = true
     options.loadingMessage.value = options.rightExpandAll.value ? '正在收起...' : '正在展开...'
 
-    return nextTick().then(
-      () =>
-        new Promise<void>(resolve => {
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              setTimeout(() => {
-                if (options.rightExpandAll.value) {
-                  options.rightTreeRef.value?.collapseAll?.()
-                  options.rightExpandAll.value = false
-                } else {
-                  options.rightTreeRef.value?.expandAll?.()
-                  options.rightExpandAll.value = true
-                }
+    await nextTick()
+    await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
 
-                requestAnimationFrame(() => {
-                  options.isPageLoading.value = false
-                  isExpanding.value = false
-                  resolve()
-                })
-              }, 0)
-            })
-          })
-        })
-    )
+    if (options.rightExpandAll.value) {
+      options.rightTreeRef.value?.collapseAll?.()
+      options.rightExpandAll.value = false
+    } else {
+      options.rightTreeRef.value?.expandAll?.()
+      options.rightExpandAll.value = true
+    }
+
+    options.isPageLoading.value = false
+    if (isExpanding.value === expanding) {
+      isExpanding.value = false
+    }
   }
 
   function onRightSelectionChange(ids: string[]): void {

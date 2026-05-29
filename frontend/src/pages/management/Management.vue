@@ -84,7 +84,7 @@ const {
   getDiffOperationsByType,
   getOperationIcon,
   getOperationTypeText,
-  handleApply,
+  handleApplyClick,
   confirmApplyChanges,
   handleAutoOrganize,
   confirmEditBookmark,
@@ -451,9 +451,9 @@ const {
                       <span class="btn-wrapper" :title="applyButtonTooltip">
                         <md-filled-button
                           :disabled="isPageLoading || !bookmarkManagementStore.hasUnsavedChanges"
-                          @click="handleApply"
+                          @click="handleApplyClick"
                         >
-                          <LucideIcon slot="icon" name="check-circle" />
+                          <LucideIcon slot="icon" name="check" />
                           {{ t('management_apply') }}
                         </md-filled-button>
                       </span>
@@ -713,10 +713,9 @@ const {
   </div>
 </template>
 
+<!-- 无 scoped：Material 根节点 token + 管理页主栅格（此前误写在 style 外导致未生效） -->
+
 <style scoped>
-/* ========================================
- * Material Web Tabs 样式配置
- * ======================================== */
 md-tabs {
   width: 100%;
   margin-bottom: var(--spacing-4);
@@ -934,13 +933,11 @@ p.warning-text {
   text-align: center;
   color: var(--color-text-secondary);
 }
-</style>
-<style scoped>
+
 .ai-status-right {
   margin-left: var(--spacing-3);
 }
-</style>
-<style scoped>
+
 .mt-sm {
   margin-top: var(--spacing-2);
 }
@@ -959,9 +956,7 @@ p.warning-text {
 .expand-toggle-icon.expanding {
   opacity: 0.85;
 }
-</style>
 
-<style scoped>
 .bulk-delete-in-panel {
   display: flex;
   justify-content: space-between;
@@ -1027,6 +1022,16 @@ p.warning-text {
   border: 1px solid var(--color-error);
   color: var(--color-text-on-primary);
   background: var(--color-error);
+}
+
+/* disabled: 降低容器对比度但标签/icon 仍清晰可读 */
+.bulk-delete-btn:disabled {
+  --md-filled-button-container-color: var(--color-error-container);
+  --md-filled-button-label-text-color: var(--md-sys-color-on-error-container);
+  --md-filled-button-icon-color: var(--md-sys-color-on-error-container);
+
+  border-color: transparent;
+  opacity: 1;
 }
 
 .bulk-actions {
@@ -1298,12 +1303,6 @@ p.warning-text {
   overflow: hidden;
 }
 
-/* 语义搜索样式 */
-.semantic-search-panel {
-  padding: var(--spacing-sm) var(--spacing-3);
-  border-bottom: 1px solid var(--color-border);
-}
-
 .semantic-controls {
   display: flex;
   flex-wrap: wrap;
@@ -1399,8 +1398,8 @@ p.warning-text {
 }
 </style>
 
-<!-- 无 scoped：Material 根节点 token + 管理页主栅格（此前误写在 style 外导致未生效） -->
 <style>
+/* Material 根节点 token + 管理页主栅格 */
 md-linear-progress {
   --md-linear-progress-track-height: 8px;
 

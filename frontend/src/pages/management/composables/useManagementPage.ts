@@ -283,7 +283,6 @@ export function useManagementPage() {
 
   function handleApplyClick(): void {
     const tempNodeInfo = getTempNodesInfo(bookmarkManagementStore.newProposalTree.children)
-
     if (tempNodeInfo.count > 0) {
       const confirmText =
         `⚠️ 检测到 ${tempNodeInfo.count} 个未保存的新增节点。\n\n` +
@@ -292,38 +291,18 @@ export function useManagementPage() {
         `建议操作流程：\n` +
         `1. 如果这些是误添加的节点，请刷新页面丢弃它们\n` +
         `2. 如果需要保留这些节点，暂时不支持保存（功能开发中）`
-
       const shouldContinue = typeof window !== 'undefined' ? window.confirm(confirmText) : false
-
-      if (shouldContinue) {
-        const diff = bookmarkManagementStore.calculateDiff()
-
-        if (!diff || diff.statistics.total === 0) {
-          bookmarkManagementStore.hasUnsavedChanges = false
-          message.info(t('management_no_changes_detected'))
-          return
-        }
-
-        diffResult.value = diff
-        showApplyConfirmDialog.value = true
-      }
-      return
+      if (!shouldContinue) return
     }
 
     const diff = bookmarkManagementStore.calculateDiff()
-
     if (!diff || diff.statistics.total === 0) {
       bookmarkManagementStore.hasUnsavedChanges = false
       message.info(t('management_no_changes_detected'))
       return
     }
-
     diffResult.value = diff
     showApplyConfirmDialog.value = true
-  }
-
-  function handleApply(): void {
-    handleApplyClick()
   }
 
   function getTempNodesInfo(_nodes: BookmarkNode[]): { count: number; ids: string[] } {
@@ -395,49 +374,43 @@ export function useManagementPage() {
     }
   }
 
-  function confirmEditBookmark(): Promise<void> | void {
+  async function confirmEditBookmark(): Promise<void> {
     if (!isEditDirty.value) {
       dialogStore.closeEditBookmarkDialog()
       return
     }
-
     const title = (dialogStore.editBookmarkDialog.title || '').trim()
     if (!title) {
       editFormErrors.value.title = t('management_title_required')
       return
     }
-
     const url = (dialogStore.editBookmarkDialog.url || '').trim()
     if (!DataValidator.validateUrl(url)) {
       editFormErrors.value.url = t('management_url_invalid')
       return
     }
-
     if (isEditingBookmark.value) return
 
-    return (async () => {
-      try {
-        isEditingBookmark.value = true
-        const editData: EditBookmarkData = {
-          id: dialogStore.editBookmarkDialog.bookmark!.id,
-          title: dialogStore.editBookmarkDialog.title,
-          url: dialogStore.editBookmarkDialog.url
-        }
-        if (dialogStore.editBookmarkDialog.parentId) {
-          editData.parentId = dialogStore.editBookmarkDialog.parentId
-        }
-
-        await bookmarkManagementStore.editBookmark(editData)
-        dialogStore.closeEditBookmarkDialog()
-        await nextTick()
-        message.success(t('management_bookmark_updated'))
-      } catch (error) {
-        logger.error('Management', 'Edit', '编辑书签失败', error)
-        message.error(t('management_edit_failed'))
-      } finally {
-        isEditingBookmark.value = false
+    isEditingBookmark.value = true
+    try {
+      const editData: EditBookmarkData = {
+        id: dialogStore.editBookmarkDialog.bookmark!.id,
+        title: dialogStore.editBookmarkDialog.title,
+        url: dialogStore.editBookmarkDialog.url
       }
-    })()
+      if (dialogStore.editBookmarkDialog.parentId) {
+        editData.parentId = dialogStore.editBookmarkDialog.parentId
+      }
+      await bookmarkManagementStore.editBookmark(editData)
+      dialogStore.closeEditBookmarkDialog()
+      await nextTick()
+      message.success(t('management_bookmark_updated'))
+    } catch (error) {
+      logger.error('Management', 'Edit', '编辑书签失败', error)
+      message.error(t('management_edit_failed'))
+    } finally {
+      isEditingBookmark.value = false
+    }
   }
 
   const isEditDirty = computed(() => {
@@ -454,127 +427,100 @@ export function useManagementPage() {
     return originalTitle !== curTitle
   })
 
-  function confirmEditFolder(): Promise<void> | void {
+  async function confirmEditFolder(): Promise<void> {
     if (!isEditFolderDirty.value) {
       dialogStore.closeEditFolderDialog()
       return
     }
-
     const title = (dialogStore.editFolderDialog.title || '').trim()
     if (!title) {
       folderEditFormErrors.value.title = t('management_title_required')
       return
     }
-
     if (isEditingFolder.value) return
 
-    return (async () => {
-      try {
-        isEditingFolder.value = true
-        await bookmarkManagementStore.editBookmark({
-          id: dialogStore.editFolderDialog.folder!.id,
-          title: dialogStore.editFolderDialog.title,
-          url: ''
-        })
-
-        dialogStore.closeEditFolderDialog()
-        await nextTick()
-        message.success(t('management_folder_updated'))
-      } catch (error) {
-        logger.error('Management', 'Edit', '编辑文件夹失败', error)
-        message.error(t('management_edit_failed'))
-      } finally {
-        isEditingFolder.value = false
-      }
-    })()
+    isEditingFolder.value = true
+    try {
+      await bookmarkManagementStore.editBookmark({
+        id: dialogStore.editFolderDialog.folder!.id,
+        title: dialogStore.editFolderDialog.title,
+        url: ''
+      })
+      dialogStore.closeEditFolderDialog()
+      await nextTick()
+      message.success(t('management_folder_updated'))
+    } catch (error) {
+      logger.error('Management', 'Edit', '编辑文件夹失败', error)
+      message.error(t('management_edit_failed'))
+    } finally {
+      isEditingFolder.value = false
+    }
   }
 
   async function confirmDeleteFolder(): Promise<void> {
-    if (deleteTargetFolder.value) {
-      const folder = deleteTargetFolder.value
-
-      if (isDeletingFolder.value) return
-
+    if (deleteTargetFolder.value && !isDeletingFolder.value) {
+      isDeletingFolder.value = true
       try {
-        isDeletingFolder.value = true
-        try {
-          await deleteFolder(folder.id)
-        } catch (error) {
-          logger.error('Management', '删除文件夹失败', error)
-          message.error(t('management_delete_failed'))
-        } finally {
-          isDeletingFolder.value = false
-        }
+        await deleteFolder(deleteTargetFolder.value.id)
       } catch (error) {
         logger.error('Management', '删除文件夹失败', error)
         message.error(t('management_delete_failed'))
+      } finally {
         isDeletingFolder.value = false
       }
     }
-
     isConfirmDeleteDialogOpen.value = false
     deleteTargetFolder.value = null
     deleteFolderBookmarkCount.value = 0
   }
 
-  function handleBookmarkMove(data: {
+  async function handleBookmarkMove(data: {
     sourceId: string
     targetId: string
     position: 'before' | 'inside' | 'after'
   }): Promise<void> {
-    const callTime = Date.now()
-    logger.info('Management', '🔵 拖拽移动书签开始', { ...data, callTime })
-
-    return (async () => {
-      try {
-        const result = await bookmarkManagementStore.moveBookmark(data)
-
-        if (result) {
-          logger.info('Management', '📦 移动结果（可用于 Chrome API）', {
-            nodeId: result.nodeId,
-            newParentId: result.newParentId,
-            newIndex: result.newIndex,
-            chromeApiCall: `chrome.bookmarks.move('${result.nodeId}', { parentId: '${result.newParentId}', index: ${result.newIndex} })`
-          })
-        }
-
-        notification.success({
-          message: t('management_bookmark_moved'),
-          key: 'bookmark-moved',
-          duration: 2
-        })
-      } catch (error) {
-        logger.error('Management', '移动书签失败', error)
-        notification.error({
-          message: t('management_move_failed'),
-          description: t('management_move_failed_retry'),
-          duration: 3
+    logger.info('Management', '🔵 拖拽移动书签开始', { ...data, callTime: Date.now() })
+    try {
+      const result = await bookmarkManagementStore.moveBookmark(data)
+      if (result) {
+        logger.info('Management', '📦 移动结果', {
+          nodeId: result.nodeId,
+          newParentId: result.newParentId,
+          newIndex: result.newIndex
         })
       }
-    })()
+      notification.success({
+        message: t('management_bookmark_moved'),
+        key: 'bookmark-moved',
+        duration: 2
+      })
+    } catch (error) {
+      logger.error('Management', '移动书签失败', error)
+      notification.error({
+        message: t('management_move_failed'),
+        description: t('management_move_failed_retry'),
+        duration: 3
+      })
+    }
   }
 
-  function handleBulkDelete(): Promise<void> | void {
+  async function handleBulkDelete(): Promise<void> {
     const ids = rightSelectedIds.value.filter(Boolean)
-    if (!ids.length) return
-    if (isBulkDeleting.value) return
-
-    return (async () => {
+    if (!ids.length || isBulkDeleting.value) return
+    isBulkDeleting.value = true
+    try {
+      bulkDeleteByIds(ids)
       try {
-        isBulkDeleting.value = true
-        bulkDeleteByIds(ids)
-        try {
-          rightTreeRef.value?.clearSelection?.()
-        } catch {
-          /* ignore */
-        }
-      } catch (error) {
-        logger.error('Management', '批量删除失败', error)
-        message.error(t('management_bulk_delete_failed'))
-      } finally {
-        isBulkDeleting.value = false
+        rightTreeRef.value?.clearSelection?.()
+      } catch {
+        /* ignore */
       }
-    })()
+    } catch (error) {
+      logger.error('Management', '批量删除失败', error)
+      message.error(t('management_bulk_delete_failed'))
+    } finally {
+      isBulkDeleting.value = false
+    }
   }
 
   return {
@@ -648,7 +594,6 @@ export function useManagementPage() {
     handleBookmarkCopyUrl,
     handleBookmarkOpenNewTab,
     handleApplyClick,
-    handleApply,
     getTempNodesInfo,
     confirmApplyChanges,
     handleAutoOrganize,

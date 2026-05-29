@@ -1,5 +1,5 @@
 /* eslint-disable require-atomic-updates */
-import { computed, nextTick, onMounted, onUnmounted, ref, watch, type Ref } from 'vue'
+import { nextTick, onMounted, onUnmounted, ref, watch, type Ref } from 'vue'
 import { message } from '@/application/message/message-service'
 import { notificationService } from '@/application/notification/notification-service'
 import { NOTIFICATION_CONFIG } from '@/config/constants'
@@ -279,40 +279,6 @@ export function useManagementLifecycle(options: UseManagementLifecycleOptions): 
       }
     },
     { deep: false }
-  )
-
-  const rightTreeDataStats = computed(() => {
-    let bookmarkCount = 0
-    let folderCount = 0
-
-    const countNodes = (nodes: BookmarkNode[]) => {
-      for (const node of nodes) {
-        if (!node || !node.id) continue
-        if (node.url) {
-          bookmarkCount++
-        } else {
-          folderCount++
-        }
-        if (node.children && node.children.length) {
-          countNodes(node.children)
-        }
-      }
-    }
-
-    countNodes(options.rightTreeData.value)
-    return { bookmarkCount, folderCount, total: bookmarkCount + folderCount }
-  })
-
-  watch(
-    () => rightTreeDataStats.value,
-    stats => {
-      logger.debug('Management', '右侧树数据统计', {
-        bookmarks: stats.bookmarkCount,
-        folders: stats.folderCount,
-        total: stats.total
-      })
-    },
-    { immediate: true }
   )
 
   onMounted(async () => {
