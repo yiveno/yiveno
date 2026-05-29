@@ -4,14 +4,14 @@
  * 包含 Favicon 加载和缓存的所有类型
  */
 
-import type { Timestamp } from '../core/common'
+import type { Timestamp } from "../core/common";
 
 /**
  * Favicon 状态类型
  *
  * Favicon 的加载状态
  */
-export type FaviconStatus = 'loading' | 'loaded' | 'error'
+export type FaviconStatus = "loading" | "loaded" | "error";
 
 /**
  * Favicon 记录接口（内存缓存）
@@ -20,14 +20,14 @@ export type FaviconStatus = 'loading' | 'loaded' | 'error'
  */
 export interface FaviconRecord {
   /** Favicon URL */
-  url: string
+  url: string;
 
   /** 加载状态 */
-  status: FaviconStatus
+  status: FaviconStatus;
 
   /** 已尝试的回退次数 */
-  attempts: number
+  attempts: number;
 
   /** 时间戳 */
-  timestamp: Timestamp
+  timestamp: Timestamp;
 }

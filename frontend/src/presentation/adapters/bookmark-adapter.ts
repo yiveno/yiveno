@@ -8,29 +8,29 @@
  * - 数据格式转换
  */
 
-import { bookmarkAppService } from '@/application/bookmark/bookmark-app-service'
-import { bookmarkSearchService } from '@/application/query/bookmark-search-service'
-import { message } from '@/application/message/message-service'
-import { logger } from '@/infrastructure/logging/logger'
-import type { BookmarkRecord } from '@/infrastructure/indexeddb/types'
-import type { EnhancedSearchResult } from '@/core/query-engine'
+import { bookmarkAppService } from "@/application/bookmark/bookmark-app-service";
+import { bookmarkSearchService } from "@/application/query/bookmark-search-service";
+import { message } from "@/application/message/message-service";
+import { logger } from "@/infrastructure/logging/logger";
+import type { BookmarkRecord } from "@/infrastructure/indexeddb/types";
+import type { EnhancedSearchResult } from "@/core/query-engine";
 
 /**
  * 加载结果接口
  */
 export interface LoadResult<T> {
-  data: T | null
-  error: Error | null
-  loading: boolean
+  data: T | null;
+  error: Error | null;
+  loading: boolean;
 }
 
 /**
  * 操作结果接口
  */
 export interface OperationResult<T = void> {
-  success: boolean
-  data?: T
-  error?: string
+  success: boolean;
+  data?: T;
+  error?: string;
 }
 
 /**
@@ -44,33 +44,33 @@ export class BookmarkPresentationAdapter {
    */
   async getBookmarks(): Promise<LoadResult<BookmarkRecord[]>> {
     try {
-      const result = await bookmarkAppService.getAllBookmarks()
+      const result = await bookmarkAppService.getAllBookmarks();
       if (result.ok) {
         return {
           data: result.value,
           error: null,
-          loading: false
-        }
+          loading: false,
+        };
       }
 
       // 统一错误处理
-      logger.error('BookmarkAdapter', '获取书签失败', result.error)
-      message.error('获取书签失败，请稍后重试')
+      logger.error("BookmarkAdapter", "获取书签失败", result.error);
+      message.error("获取书签失败，请稍后重试");
 
       return {
         data: null,
         error: result.error,
-        loading: false
-      }
+        loading: false,
+      };
     } catch (error) {
-      logger.error('BookmarkAdapter', '获取书签异常', error)
-      message.error('获取书签时发生错误')
+      logger.error("BookmarkAdapter", "获取书签异常", error);
+      message.error("获取书签时发生错误");
 
       return {
         data: null,
         error: error instanceof Error ? error : new Error(String(error)),
-        loading: false
-      }
+        loading: false,
+      };
     }
   }
 
@@ -82,30 +82,30 @@ export class BookmarkPresentationAdapter {
    */
   async getBookmarkById(id: string): Promise<LoadResult<BookmarkRecord>> {
     try {
-      const result = await bookmarkAppService.getBookmarkById(id)
+      const result = await bookmarkAppService.getBookmarkById(id);
       if (result.ok && result.value) {
         return {
           data: result.value,
           error: null,
-          loading: false
-        }
+          loading: false,
+        };
       }
 
-      message.warning('书签不存在')
+      message.warning("书签不存在");
       return {
         data: null,
-        error: new Error('Bookmark not found'),
-        loading: false
-      }
+        error: new Error("Bookmark not found"),
+        loading: false,
+      };
     } catch (error) {
-      logger.error('BookmarkAdapter', '获取书签失败', { id, error })
-      message.error('获取书签时发生错误')
+      logger.error("BookmarkAdapter", "获取书签失败", { id, error });
+      message.error("获取书签时发生错误");
 
       return {
         data: null,
         error: error instanceof Error ? error : new Error(String(error)),
-        loading: false
-      }
+        loading: false,
+      };
     }
   }
 
@@ -120,23 +120,26 @@ export class BookmarkPresentationAdapter {
    */
   async searchBookmarks(
     query: string,
-    options?: { limit?: number }
+    options?: { limit?: number },
   ): Promise<EnhancedSearchResult[]> {
     if (!query.trim()) {
-      return []
+      return [];
     }
 
     const result = await bookmarkSearchService.search(query, {
-      limit: options?.limit || 50
-    })
+      limit: options?.limit || 50,
+    });
 
     if (!result.ok) {
-      logger.error('BookmarkAdapter', '筛选书签失败', { query, error: result.error })
-      message.error('筛选失败，请稍后重试')
-      return []
+      logger.error("BookmarkAdapter", "筛选书签失败", {
+        query,
+        error: result.error,
+      });
+      message.error("筛选失败，请稍后重试");
+      return [];
     }
 
-    return result.value
+    return result.value;
   }
 
   /**
@@ -145,37 +148,39 @@ export class BookmarkPresentationAdapter {
    * @param parentId - 父节点 ID
    * @returns 包含数据、错误和加载状态的结果
    */
-  async getChildrenByParentId(parentId: string): Promise<LoadResult<BookmarkRecord[]>> {
+  async getChildrenByParentId(
+    parentId: string,
+  ): Promise<LoadResult<BookmarkRecord[]>> {
     try {
-      const result = await bookmarkAppService.getChildrenByParentId(parentId)
+      const result = await bookmarkAppService.getChildrenByParentId(parentId);
       if (result.ok) {
         return {
           data: result.value,
           error: null,
-          loading: false
-        }
+          loading: false,
+        };
       }
 
-      logger.error('BookmarkAdapter', '获取子节点失败', {
+      logger.error("BookmarkAdapter", "获取子节点失败", {
         parentId,
-        error: result.error
-      })
-      message.error('获取子节点失败')
+        error: result.error,
+      });
+      message.error("获取子节点失败");
 
       return {
         data: null,
         error: result.error,
-        loading: false
-      }
+        loading: false,
+      };
     } catch (error) {
-      logger.error('BookmarkAdapter', '获取子节点异常', { parentId, error })
-      message.error('获取子节点时发生错误')
+      logger.error("BookmarkAdapter", "获取子节点异常", { parentId, error });
+      message.error("获取子节点时发生错误");
 
       return {
         data: null,
         error: error instanceof Error ? error : new Error(String(error)),
-        loading: false
-      }
+        loading: false,
+      };
     }
   }
 }
@@ -183,4 +188,4 @@ export class BookmarkPresentationAdapter {
 /**
  * 默认书签适配器实例
  */
-export const bookmarkPresentationAdapter = new BookmarkPresentationAdapter()
+export const bookmarkPresentationAdapter = new BookmarkPresentationAdapter();

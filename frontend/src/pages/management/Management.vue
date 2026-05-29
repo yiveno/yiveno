@@ -1,100 +1,107 @@
-/* eslint-disable require-atomic-updates -- 所有 try/finally 模式的状态管理都是安全的：await
-期间不会读取这些状态变量 */
+/* eslint-disable require-atomic-updates -- 所有 try/finally
+模式的状态管理都是安全的：await 期间不会读取这些状态变量 */
 <script setup lang="ts">
-import { schedulerService } from '@/application/scheduler/scheduler-service'
-import { useNotification } from '@/composables/useNotification'
-import { useThemeSync } from '@/composables/useThemeSync'
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
-import { t } from '@/utils/i18n-helpers'
+import { schedulerService } from "@/application/scheduler/scheduler-service";
+import { useNotification } from "@/composables/useNotification";
+import { useThemeSync } from "@/composables/useThemeSync";
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
+import { t } from "@/utils/i18n-helpers";
 
 defineOptions({
-  name: 'ManagementPage'
-})
+  name: "ManagementPage",
+});
 
 // 启用主题同步
-useThemeSync('Management')
-import { storeToRefs } from 'pinia'
+useThemeSync("Management");
+import { storeToRefs } from "pinia";
 // useManagementStore 已迁移到新的专业化 Store
-import { useDialogStore, useBookmarkManagementStore, useTraitFilterStore } from '@/stores'
-import type { TraitTag } from '@/types/domain/trait'
+import {
+  useDialogStore,
+  useBookmarkManagementStore,
+  useTraitFilterStore,
+} from "@/stores";
+import type { TraitTag } from "@/types/domain/trait";
 import {
   AppHeader,
   BookmarkSearchInput,
   Card,
   Dialog,
   LucideIcon,
-  AnimatedNumber
-} from '@/components'
-import { Loading } from '@/components/base/Loading'
-import { notificationService } from '@/application/notification/notification-service'
-import { message } from '@/application/message/message-service'
-import { NOTIFICATION_CONFIG } from '@/config/constants'
-import { onEvent } from '@/infrastructure/events/event-bus'
-import { bookmarkOrganizeService } from '@/application/bookmark/bookmark-organize-service'
-import type { OrganizeProgress } from '@/application/bookmark/bookmark-organize-service'
-import BookmarkTree from '@/components/business/BookmarkTree/BookmarkTree.vue'
+  AnimatedNumber,
+} from "@/components";
+import { Loading } from "@/components/base/Loading";
+import { notificationService } from "@/application/notification/notification-service";
+import { message } from "@/application/message/message-service";
+import { NOTIFICATION_CONFIG } from "@/config/constants";
+import { onEvent } from "@/infrastructure/events/event-bus";
+import { bookmarkOrganizeService } from "@/application/bookmark/bookmark-organize-service";
+import type { OrganizeProgress } from "@/application/bookmark/bookmark-organize-service";
+import BookmarkTree from "@/components/business/BookmarkTree/BookmarkTree.vue";
 // 导入书签 API 网关：以 side-effect 方式初始化并设置事件监听与消息桥接
-import '@/infrastructure/chrome-api/bookmark-gateway'
-import { DataValidator } from '@/core/common/store-error'
-import { logger } from '@/infrastructure/logging/logger'
-import type { BookmarkNode } from '@/types'
+import "@/infrastructure/chrome-api/bookmark-gateway";
+import { DataValidator } from "@/core/common/store-error";
+import { logger } from "@/infrastructure/logging/logger";
+import type { BookmarkNode } from "@/types";
 // 数据健康检查已移除，使用特征检测代替
-import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'
+import GlobalSyncProgress from "@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue";
 import type {
   DiffResult,
   BookmarkOperation,
-  BookmarkOperationType
-} from '@/application/bookmark/bookmark-diff-service'
-import type { EditBookmarkData } from '@/stores/bookmark/bookmark-management-store'
-import { enableEnvSnapshotBridge } from '@/devtools/env-snapshot'
-import { enableEmbeddingDebugBridge } from '@/devtools/embedding-debug'
-import { enableFolderVectorDebugBridge } from '@/devtools/folder-vector-debug'
-import { createBookmarkIndex } from '@/application/bookmark/bookmark-index-app-service'
+  BookmarkOperationType,
+} from "@/application/bookmark/bookmark-diff-service";
+import type { EditBookmarkData } from "@/stores/bookmark/bookmark-management-store";
+import { enableEnvSnapshotBridge } from "@/devtools/env-snapshot";
+import { enableEmbeddingDebugBridge } from "@/devtools/embedding-debug";
+import { enableFolderVectorDebugBridge } from "@/devtools/folder-vector-debug";
+import { createBookmarkIndex } from "@/application/bookmark/bookmark-index-app-service";
 
-const dialogStore = useDialogStore()
-const bookmarkManagementStore = useBookmarkManagementStore()
-const traitFilterStore = useTraitFilterStore()
+const dialogStore = useDialogStore();
+const bookmarkManagementStore = useBookmarkManagementStore();
+const traitFilterStore = useTraitFilterStore();
 
-const { originalExpandedFolders, proposalExpandedFolders } = storeToRefs(bookmarkManagementStore)
+const { originalExpandedFolders, proposalExpandedFolders } = storeToRefs(
+  bookmarkManagementStore,
+);
 
 // 应用更改相关状态
-const showApplyConfirmDialog = ref(false)
-const diffResult = ref<DiffResult | null>(null)
-const applyStartTime = ref(0)
+const showApplyConfirmDialog = ref(false);
+const diffResult = ref<DiffResult | null>(null);
+const applyStartTime = ref(0);
 
 // AI 整理相关状态
-const isOrganizing = ref(false)
+const isOrganizing = ref(false);
 const organizeProgress = ref<OrganizeProgress>({
   totalStages: 0,
   currentStage: 0,
-  stageName: '',
+  stageName: "",
   totalBookmarks: 0,
   processedBookmarks: 0,
-  isComplete: false
-})
-const showOrganizeProgress = ref(false)
+  isComplete: false,
+});
+const showOrganizeProgress = ref(false);
 
-let envSnapshotCleanup: (() => void) | null = null
-let embeddingDebugCleanup: (() => void) | null = null
-let folderVectorDebugCleanup: (() => void) | null = null
+let envSnapshotCleanup: (() => void) | null = null;
+let embeddingDebugCleanup: (() => void) | null = null;
+let folderVectorDebugCleanup: (() => void) | null = null;
 const shouldExposeEnvSnapshot =
-  typeof window !== 'undefined' &&
-  (import.meta.env.DEV || new URLSearchParams(window.location.search).get('abDevtools') === '1')
+  typeof window !== "undefined" &&
+  (import.meta.env.DEV ||
+    new URLSearchParams(window.location.search).get("abDevtools") === "1");
 
 if (shouldExposeEnvSnapshot) {
   onMounted(() => {
-    envSnapshotCleanup = enableEnvSnapshotBridge()
-    embeddingDebugCleanup = enableEmbeddingDebugBridge()
-    folderVectorDebugCleanup = enableFolderVectorDebugBridge()
-  })
+    envSnapshotCleanup = enableEnvSnapshotBridge();
+    embeddingDebugCleanup = enableEmbeddingDebugBridge();
+    folderVectorDebugCleanup = enableFolderVectorDebugBridge();
+  });
   onUnmounted(() => {
-    envSnapshotCleanup?.()
-    envSnapshotCleanup = null
-    embeddingDebugCleanup?.()
-    embeddingDebugCleanup = null
-    folderVectorDebugCleanup?.()
-    folderVectorDebugCleanup = null
-  })
+    envSnapshotCleanup?.();
+    envSnapshotCleanup = null;
+    embeddingDebugCleanup?.();
+    embeddingDebugCleanup = null;
+    folderVectorDebugCleanup?.();
+    folderVectorDebugCleanup = null;
+  });
 }
 
 /**
@@ -104,850 +111,909 @@ if (shouldExposeEnvSnapshot) {
 const applyButtonTooltip = computed(() => {
   // 1. 页面加载中
   if (isPageLoading.value) {
-    return t('management_tooltip_page_loading')
+    return t("management_tooltip_page_loading");
   }
 
   // 2. 没有未保存的更改
   if (!bookmarkManagementStore.hasUnsavedChanges) {
-    return t('management_tooltip_no_changes')
+    return t("management_tooltip_no_changes");
   }
 
   // 3. 正常可用状态
-  return t('management_tooltip_apply_ready')
-})
+  return t("management_tooltip_apply_ready");
+});
 
 /**
  * 动态生成"清除选择"按钮的 tooltip
  */
 const clearSelectionTooltip = computed(() => {
   if (rightSelectedIds.value.length === 0) {
-    return t('management_tooltip_no_selection')
+    return t("management_tooltip_no_selection");
   }
-  return t('management_tooltip_clear_selection')
-})
+  return t("management_tooltip_clear_selection");
+});
 
 /**
  * 动态生成"删除"按钮的 tooltip
  */
 const deleteButtonTooltip = computed(() => {
-  if (selectedCounts.value.bookmarks === 0 && selectedCounts.value.folders === 0) {
-    return t('management_tooltip_no_selection')
+  if (
+    selectedCounts.value.bookmarks === 0 &&
+    selectedCounts.value.folders === 0
+  ) {
+    return t("management_tooltip_no_selection");
   }
-  const parts = []
+  const parts = [];
   if (selectedCounts.value.bookmarks > 0) {
-    parts.push(`${selectedCounts.value.bookmarks} ${t('management_bookmarks_count')}`)
+    parts.push(
+      `${selectedCounts.value.bookmarks} ${t("management_bookmarks_count")}`,
+    );
   }
   if (selectedCounts.value.folders > 0) {
-    parts.push(`${selectedCounts.value.folders} ${t('management_folders_count')}`)
+    parts.push(
+      `${selectedCounts.value.folders} ${t("management_folders_count")}`,
+    );
   }
-  return t('management_tooltip_delete_selected', parts.join('和'))
-})
+  return t("management_tooltip_delete_selected", parts.join("和"));
+});
 
 /**
  * ✅ 特征检测由 Background Script 自动维护，无需 loading 状态
  * @deprecated isCleanupLoading 已移除，特征检测在后台异步执行
  */
 
-const isEditingBookmark = ref(false)
-const isEditingFolder = ref(false)
-const isDeletingFolder = ref(false)
-const isBulkDeleting = ref(false)
+const isEditingBookmark = ref(false);
+const isEditingFolder = ref(false);
+const isDeletingFolder = ref(false);
+const isBulkDeleting = ref(false);
 
 const { originalTree, newProposalTree, isPageLoading, loadingMessage } =
-  storeToRefs(bookmarkManagementStore)
+  storeToRefs(bookmarkManagementStore);
 
-const rightTreeSelectedDescCounts = ref(new Map<string, number>())
+const rightTreeSelectedDescCounts = ref(new Map<string, number>());
 
-const rightTreeIndex = createBookmarkIndex()
+const rightTreeIndex = createBookmarkIndex();
 
 const {
   getProposalPanelTitle,
   getProposalPanelIcon,
   initialize: initializeStore,
   deleteFolder,
-  bulkDeleteByIds
+  bulkDeleteByIds,
   // setProposalTree - AI 整理功能临时禁用
-} = bookmarkManagementStore
+} = bookmarkManagementStore;
 
-const leftSearchResults = ref<BookmarkNode[]>([])
-const isLeftSearchActive = ref(false)
+const leftSearchResults = ref<BookmarkNode[]>([]);
+const isLeftSearchActive = ref(false);
 
-const rightSearchResults = ref<BookmarkNode[]>([])
-const isRightSearchActive = ref(false)
+const rightSearchResults = ref<BookmarkNode[]>([]);
+const isRightSearchActive = ref(false);
 const handleLeftSearch = async (results: BookmarkNode[]) => {
-  leftSearchResults.value = results
-  isLeftSearchActive.value = true
+  leftSearchResults.value = results;
+  isLeftSearchActive.value = true;
 
   if (results.length > 0) {
-    await nextTick()
-    leftTreeRef.value?.expandAll?.()
-    leftExpandAll.value = true
+    await nextTick();
+    leftTreeRef.value?.expandAll?.();
+    leftExpandAll.value = true;
   } else {
-    leftTreeRef.value?.collapseAll?.()
-    leftExpandAll.value = false
+    leftTreeRef.value?.collapseAll?.();
+    leftExpandAll.value = false;
   }
-}
+};
 
 const handleLeftSearchClear = () => {
-  isLeftSearchActive.value = false
-  leftSearchResults.value = []
-  leftTreeRef.value?.collapseAll?.()
-  leftExpandAll.value = false
-}
+  isLeftSearchActive.value = false;
+  leftSearchResults.value = [];
+  leftTreeRef.value?.collapseAll?.();
+  leftExpandAll.value = false;
+};
 
 const handleRightSearch = async (results: BookmarkNode[]) => {
-  rightSearchResults.value = results
-  isRightSearchActive.value = true
+  rightSearchResults.value = results;
+  isRightSearchActive.value = true;
 
   if (results.length > 0) {
-    await nextTick()
-    rightTreeRef.value?.expandAll?.()
-    rightExpandAll.value = true
+    await nextTick();
+    rightTreeRef.value?.expandAll?.();
+    rightExpandAll.value = true;
   } else {
-    rightTreeRef.value?.collapseAll?.()
-    rightExpandAll.value = false
+    rightTreeRef.value?.collapseAll?.();
+    rightExpandAll.value = false;
   }
-}
+};
 
 const handleRightSearchClear = () => {
-  isRightSearchActive.value = false
-  rightSearchResults.value = []
-  rightTreeRef.value?.collapseAll?.()
-  rightExpandAll.value = false
-}
+  isRightSearchActive.value = false;
+  rightSearchResults.value = [];
+  rightTreeRef.value?.collapseAll?.();
+  rightExpandAll.value = false;
+};
 
 const leftTreeData = computed(() =>
-  isLeftSearchActive.value ? leftSearchResults.value : originalTree.value
-)
+  isLeftSearchActive.value ? leftSearchResults.value : originalTree.value,
+);
 
 const rightTreeData = computed(() =>
-  isRightSearchActive.value ? rightSearchResults.value : newProposalTree.value.children || []
-)
+  isRightSearchActive.value
+    ? rightSearchResults.value
+    : newProposalTree.value.children || [],
+);
 
-const MSG_CANCEL_EDIT = t('management_cancel_edit_message')
+const MSG_CANCEL_EDIT = t("management_cancel_edit_message");
 
 function readMwcTextFieldValue(ev: Event): string {
-  const el = ev.target as unknown as { value?: string }
-  return typeof el.value === 'string' ? el.value : ''
+  const el = ev.target as unknown as { value?: string };
+  return typeof el.value === "string" ? el.value : "";
 }
 
 function onEditBookmarkTitleInput(ev: Event) {
-  dialogStore.editBookmarkDialog.title = readMwcTextFieldValue(ev)
+  dialogStore.editBookmarkDialog.title = readMwcTextFieldValue(ev);
 }
 
 function onEditBookmarkUrlInput(ev: Event) {
-  dialogStore.editBookmarkDialog.url = readMwcTextFieldValue(ev)
+  dialogStore.editBookmarkDialog.url = readMwcTextFieldValue(ev);
 }
 
 function onEditFolderTitleInput(ev: Event) {
-  dialogStore.editFolderDialog.title = readMwcTextFieldValue(ev)
+  dialogStore.editFolderDialog.title = readMwcTextFieldValue(ev);
 }
 
-const pendingTagSelection = ref<TraitTag[] | null>(null)
+const pendingTagSelection = ref<TraitTag[] | null>(null);
 
-const leftTreeRef = ref<InstanceType<typeof BookmarkTree> | null>(null)
-const rightTreeRef = ref<InstanceType<typeof BookmarkTree> | null>(null)
-const rightSelectedIds = ref<string[]>([])
+const leftTreeRef = ref<InstanceType<typeof BookmarkTree> | null>(null);
+const rightTreeRef = ref<InstanceType<typeof BookmarkTree> | null>(null);
+const rightSelectedIds = ref<string[]>([]);
 
 watch(
   () => rightTreeData.value,
-  newData => {
+  (newData) => {
     if (Array.isArray(newData) && newData.length > 0) {
-      rightTreeIndex.buildFromTree(newData)
-      logger.info('Management', `右侧树索引已更新: ${rightTreeIndex.getSize()} 个节点`)
+      rightTreeIndex.buildFromTree(newData);
+      logger.info(
+        "Management",
+        `右侧树索引已更新: ${rightTreeIndex.getSize()} 个节点`,
+      );
     }
   },
-  { immediate: true, deep: false }
-)
+  { immediate: true, deep: false },
+);
 
 /* eslint-disable complexity, max-depth -- 此函数需要处理多种书签节点类型和层级关系，复杂度较高但逻辑清晰；嵌套深度由书签树结构决定，无法简化 */
 const selectedCounts = computed(() => {
-  const bookmarkIds = new Set<string>()
-  const selectedFolderIds = new Set<string>()
+  const bookmarkIds = new Set<string>();
+  const selectedFolderIds = new Set<string>();
 
   for (const rawId of rightSelectedIds.value) {
-    const id = String(rawId)
-    const node = rightTreeIndex.getNode(id)
-    if (!node) continue
+    const id = String(rawId);
+    const node = rightTreeIndex.getNode(id);
+    if (!node) continue;
 
     if (node.url) {
       // 这是一个书签
-      bookmarkIds.add(id)
+      bookmarkIds.add(id);
     } else {
       // 这是一个文件夹
       // ✅ 修复：排除顶层根节点（书签栏、其他书签等）
       // Chrome 书签结构：'0' 是根容器，'1' 是书签栏，'2' 是其他书签
       // 只统计用户可见的子文件夹，不包括这些顶层容器
       const isTopLevelRoot =
-        !node.parentId || node.parentId === '0' || node.id === '1' || node.id === '2'
+        !node.parentId ||
+        node.parentId === "0" ||
+        node.id === "1" ||
+        node.id === "2";
 
       if (!isTopLevelRoot) {
-        selectedFolderIds.add(id)
+        selectedFolderIds.add(id);
       }
 
       // 遍历该文件夹的所有子节点
-      const stack: string[] = [id]
+      const stack: string[] = [id];
       while (stack.length > 0) {
-        const currentId = stack.pop()!
-        const current = rightTreeIndex.getNode(currentId)
+        const currentId = stack.pop()!;
+        const current = rightTreeIndex.getNode(currentId);
 
-        if (!current) continue
+        if (!current) continue;
 
         if (current.url) {
           // 子节点是书签
-          bookmarkIds.add(currentId)
+          bookmarkIds.add(currentId);
         } else {
           // 子节点是文件夹
           // ✅ 所有子文件夹都应该被计入 selectedFolderIds（除了顶层根节点）
           if (currentId !== id) {
             const isChildTopLevelRoot =
               !current.parentId ||
-              current.parentId === '0' ||
-              current.id === '1' ||
-              current.id === '2'
+              current.parentId === "0" ||
+              current.id === "1" ||
+              current.id === "2";
             if (!isChildTopLevelRoot) {
-              selectedFolderIds.add(currentId)
+              selectedFolderIds.add(currentId);
             }
           }
-          const childrenIds = rightTreeIndex.getChildrenIds(currentId)
-          stack.push(...Array.from(childrenIds))
+          const childrenIds = rightTreeIndex.getChildrenIds(currentId);
+          stack.push(...Array.from(childrenIds));
         }
       }
     }
   }
 
-  return { bookmarks: bookmarkIds.size, folders: selectedFolderIds.size }
-})
+  return { bookmarks: bookmarkIds.size, folders: selectedFolderIds.size };
+});
 /* eslint-enable complexity, max-depth */
 
 watch(
   () => bookmarkManagementStore.hasUnsavedChanges,
-  hasChanges => {
+  (hasChanges) => {
     if (hasChanges) {
       // ✅ 使用常量中定义的徽章颜色
-      notificationService.updateBadge('!', NOTIFICATION_CONFIG.BADGE_COLORS.warning)
+      notificationService.updateBadge(
+        "!",
+        NOTIFICATION_CONFIG.BADGE_COLORS.warning,
+      );
     } else {
-      notificationService.clearBadge()
+      notificationService.clearBadge();
     }
   },
-  { immediate: true }
-)
+  { immediate: true },
+);
 
 watch(
   () => bookmarkManagementStore.newProposalTree,
-  async newTree => {
-    if (!newTree || !pendingTagSelection.value?.length) return
+  async (newTree) => {
+    if (!newTree || !pendingTagSelection.value?.length) return;
 
-    await nextTick()
+    await nextTick();
     // 清除待选中标签（已经应用筛选）
     // eslint-disable-next-line require-atomic-updates -- 清除待选中标签是原子操作，不会有竞态条件
-    pendingTagSelection.value = null
+    pendingTagSelection.value = null;
 
     // 使用 traitFilterStore 的 filterResultIds 获取筛选结果
-    const ids = traitFilterStore.filterResultIds
-    if (!ids.length || !rightTreeRef.value) return
+    const ids = traitFilterStore.filterResultIds;
+    if (!ids.length || !rightTreeRef.value) return;
 
-    const instance = rightTreeRef.value
-    if (!instance) return
+    const instance = rightTreeRef.value;
+    if (!instance) return;
 
     try {
-      if (typeof instance.selectNodesByIds === 'function') {
-        instance.selectNodesByIds(ids, { append: false })
+      if (typeof instance.selectNodesByIds === "function") {
+        instance.selectNodesByIds(ids, { append: false });
       }
-      const firstId = ids[0]
-      if (firstId && typeof instance.focusNodeById === 'function') {
+      const firstId = ids[0];
+      if (firstId && typeof instance.focusNodeById === "function") {
         await instance.focusNodeById(firstId, {
-          scrollIntoViewCenter: true
-        })
+          scrollIntoViewCenter: true,
+        });
       }
     } catch (error) {
-      logger.warn('Management', 'Focus', '自动选中健康问题节点失败', error)
+      logger.warn("Management", "Focus", "自动选中健康问题节点失败", error);
     }
   },
-  { deep: false }
-)
-const leftExpandAll = ref(false)
-const rightExpandAll = ref(false)
+  { deep: false },
+);
+const leftExpandAll = ref(false);
+const rightExpandAll = ref(false);
 
 /** 左侧面板收起/展开状态，默认收起 */
-const isLeftPanelCollapsed = ref(true)
+const isLeftPanelCollapsed = ref(true);
 
 /** 左侧面板宽度 CSS 变量，用于触发 grid-template-columns transition */
-const leftPanelWidthVar = computed(() => (isLeftPanelCollapsed.value ? '0px' : 'minmax(0, 1fr)'))
+const leftPanelWidthVar = computed(() =>
+  isLeftPanelCollapsed.value ? "0px" : "minmax(0, 1fr)",
+);
 
 /** 左侧面板 gap CSS 变量 */
 const leftPanelGapVar = computed(() =>
-  isLeftPanelCollapsed.value ? '0' : 'clamp(var(--spacing-3), 3vw, var(--spacing-10))'
-)
+  isLeftPanelCollapsed.value
+    ? "0"
+    : "clamp(var(--spacing-3), 3vw, var(--spacing-10))",
+);
 
 /** 切换左侧面板收起/展开 */
 const toggleLeftPanel = () => {
-  isLeftPanelCollapsed.value = !isLeftPanelCollapsed.value
-}
+  isLeftPanelCollapsed.value = !isLeftPanelCollapsed.value;
+};
 
 watch(
   () => rightTreeData.value,
   () => {
-    clearRightSelection()
+    clearRightSelection();
   },
-  { deep: true }
-)
+  { deep: true },
+);
 
-const isExpanding = ref(false)
+const isExpanding = ref(false);
 const editFormErrors = ref<{ title: string; url: string }>({
-  title: '',
-  url: ''
-})
+  title: "",
+  url: "",
+});
 
 // ✅ 性能优化：合并多个表单字段的 watch 为单个 watch
 watch(
-  () => [dialogStore.editBookmarkDialog.url, dialogStore.editBookmarkDialog.title],
+  () => [
+    dialogStore.editBookmarkDialog.url,
+    dialogStore.editBookmarkDialog.title,
+  ],
   ([editUrl, editTitle]) => {
     // 清除编辑对话框错误
-    if (editFormErrors.value.url && (editUrl || '').trim()) {
-      editFormErrors.value.url = ''
+    if (editFormErrors.value.url && (editUrl || "").trim()) {
+      editFormErrors.value.url = "";
     }
-    if (editFormErrors.value.title && (editTitle || '').trim()) {
-      editFormErrors.value.title = ''
+    if (editFormErrors.value.title && (editTitle || "").trim()) {
+      editFormErrors.value.title = "";
     }
-  }
-)
+  },
+);
 
 const handleLeftTreeReady = () => {
   try {
-    const hasData = Array.isArray(originalTree.value) && originalTree.value.length > 0
+    const hasData =
+      Array.isArray(originalTree.value) && originalTree.value.length > 0;
     if (isPageLoading.value && hasData) {
-      isPageLoading.value = false
+      isPageLoading.value = false;
     }
   } catch (error) {
-    logger.error('Management', '❌ handleLeftTreeReady 失败', error)
+    logger.error("Management", "❌ handleLeftTreeReady 失败", error);
   }
-}
+};
 const isEditDirty = computed(() => {
-  const originalTitle = (dialogStore.editBookmarkDialog.bookmark?.title || '').trim()
-  const originalUrl = (dialogStore.editBookmarkDialog.bookmark?.url || '').trim()
-  const curTitle = (dialogStore.editBookmarkDialog.title || '').trim()
-  const curUrl = (dialogStore.editBookmarkDialog.url || '').trim()
-  return originalTitle !== curTitle || originalUrl !== curUrl
-})
+  const originalTitle = (
+    dialogStore.editBookmarkDialog.bookmark?.title || ""
+  ).trim();
+  const originalUrl = (
+    dialogStore.editBookmarkDialog.bookmark?.url || ""
+  ).trim();
+  const curTitle = (dialogStore.editBookmarkDialog.title || "").trim();
+  const curUrl = (dialogStore.editBookmarkDialog.url || "").trim();
+  return originalTitle !== curTitle || originalUrl !== curUrl;
+});
 const isEditFolderDirty = computed(() => {
-  const originalTitle = (dialogStore.editFolderDialog.folder?.title || '').trim()
-  const curTitle = (dialogStore.editFolderDialog.title || '').trim()
-  return originalTitle !== curTitle
-})
-const folderEditFormErrors = ref<{ title: string }>({ title: '' })
+  const originalTitle = (
+    dialogStore.editFolderDialog.folder?.title || ""
+  ).trim();
+  const curTitle = (dialogStore.editFolderDialog.title || "").trim();
+  return originalTitle !== curTitle;
+});
+const folderEditFormErrors = ref<{ title: string }>({ title: "" });
 watch(
   () => dialogStore.editFolderDialog.title,
-  val => {
-    if (folderEditFormErrors.value.title && (val || '').trim()) {
-      folderEditFormErrors.value.title = ''
+  (val) => {
+    if (folderEditFormErrors.value.title && (val || "").trim()) {
+      folderEditFormErrors.value.title = "";
     }
-  }
-)
+  },
+);
 
-const isConfirmDeleteDialogOpen = ref(false)
-const deleteTargetFolder = ref<BookmarkNode | null>(null)
-const deleteFolderBookmarkCount = ref(0)
+const isConfirmDeleteDialogOpen = ref(false);
+const deleteTargetFolder = ref<BookmarkNode | null>(null);
+const deleteFolderBookmarkCount = ref(0);
 
 /**
  * 右侧面板：编辑节点（仅内存操作）
  */
 const handleRightNodeEdit = (node: BookmarkNode) => {
   if (node.url) {
-    dialogStore.openEditBookmarkDialog(node)
+    dialogStore.openEditBookmarkDialog(node);
   } else {
-    dialogStore.openEditFolderDialog(node)
+    dialogStore.openEditFolderDialog(node);
   }
-}
+};
 
 /**
  * 右侧面板：删除节点（仅内存操作）
  */
 const handleRightNodeDelete = (node: BookmarkNode) => {
-  const success = bookmarkManagementStore.deleteNodeFromProposal(node.id)
+  const success = bookmarkManagementStore.deleteNodeFromProposal(node.id);
 
   if (!success) {
-    logger.error('Management', 'Delete', '删除提案树节点失败', { nodeId: node.id })
+    logger.error("Management", "Delete", "删除提案树节点失败", {
+      nodeId: node.id,
+    });
   }
-}
+};
 
 /* eslint-disable require-atomic-updates -- handleAutoOrganize 使用 try/finally 模式安全地管理 isOrganizing 状态，await 期间不会读取 isOrganizing */
 /**
  * 一键整理书签
  */
 const handleAutoOrganize = async () => {
-  if (isOrganizing.value) return
+  if (isOrganizing.value) return;
 
-  isOrganizing.value = true
-  showOrganizeProgress.value = true
+  isOrganizing.value = true;
+  showOrganizeProgress.value = true;
 
   try {
-    logger.info('Management', '开始一键整理书签')
+    logger.info("Management", "开始一键整理书签");
 
     // 阶段 1: 生成文件夹结构
-    const result = await bookmarkOrganizeService.organizeBookmarks(progress => {
-      organizeProgress.value = progress
-    })
+    const result = await bookmarkOrganizeService.organizeBookmarks(
+      (progress) => {
+        organizeProgress.value = progress;
+      },
+    );
 
-    logger.info('Management', '文件夹结构生成完成', result)
+    logger.info("Management", "文件夹结构生成完成", result);
 
     // 阶段 2: 应用整理结果
-    await bookmarkOrganizeService.applyOrganization(result.folders, progress => {
-      organizeProgress.value = progress
-    })
+    await bookmarkOrganizeService.applyOrganization(
+      result.folders,
+      (progress) => {
+        organizeProgress.value = progress;
+      },
+    );
 
     message.success(
-      `整理完成：${result.organizedCount}/${result.originalCount} 个书签已分类，${result.folders.length} 个文件夹`
-    )
+      `整理完成：${result.organizedCount}/${result.originalCount} 个书签已分类，${result.folders.length} 个文件夹`,
+    );
 
-    logger.info('Management', '一键整理完成', result)
+    logger.info("Management", "一键整理完成", result);
   } catch (error) {
-    logger.error('Management', '一键整理失败', error)
-    message.error('AI 整理失败，请检查 LLM 配置')
+    logger.error("Management", "一键整理失败", error);
+    message.error("AI 整理失败，请检查 LLM 配置");
   } finally {
-    isOrganizing.value = false
-    showOrganizeProgress.value = false
+    isOrganizing.value = false;
+    showOrganizeProgress.value = false;
   }
-}
+};
 /* eslint-enable require-atomic-updates */
 
 /**
  * 检查 URL 是否为浏览器内部协议
  */
 const isInternalProtocolUrl = (url: string): boolean => {
-  if (!url) return false
-  const lowerUrl = url.toLowerCase()
+  if (!url) return false;
+  const lowerUrl = url.toLowerCase();
   return (
-    lowerUrl.startsWith('chrome://') ||
-    lowerUrl.startsWith('chrome-extension://') ||
-    lowerUrl.startsWith('about:') ||
-    lowerUrl.startsWith('file://') ||
-    lowerUrl.startsWith('edge://') ||
-    lowerUrl.startsWith('brave://')
-  )
-}
+    lowerUrl.startsWith("chrome://") ||
+    lowerUrl.startsWith("chrome-extension://") ||
+    lowerUrl.startsWith("about:") ||
+    lowerUrl.startsWith("file://") ||
+    lowerUrl.startsWith("edge://") ||
+    lowerUrl.startsWith("brave://")
+  );
+};
 
 const handleBookmarkOpenNewTab = (node: BookmarkNode) => {
   if (!node.url) {
-    message.warning(t('management_no_valid_url'))
-    return
+    message.warning(t("management_no_valid_url"));
+    return;
   }
 
   // 检查是否为内部协议书签（优先检查标签，兜底检查 URL）
-  const hasInternalTag = node.traitTags?.includes('internal')
-  const isInternalUrl = isInternalProtocolUrl(node.url)
+  const hasInternalTag = node.traitTags?.includes("internal");
+  const isInternalUrl = isInternalProtocolUrl(node.url);
 
   if (hasInternalTag || isInternalUrl) {
-    message.warning(t('management_cannot_open_internal'))
-    logger.warn('Management', '尝试打开内部协议书签:', node.url)
-    return
+    message.warning(t("management_cannot_open_internal"));
+    logger.warn("Management", "尝试打开内部协议书签:", node.url);
+    return;
   }
 
   try {
-    if (typeof window === 'undefined') {
-      logger.error('Management', '非浏览器环境，无法打开链接')
-      message.error(t('management_open_link_failed'))
-      return
+    if (typeof window === "undefined") {
+      logger.error("Management", "非浏览器环境，无法打开链接");
+      message.error(t("management_open_link_failed"));
+      return;
     }
 
     // 打开书签（不记录访问，因为这是管理操作，不是真实使用）
-    const newWindow = window.open(node.url, '_blank')
+    const newWindow = window.open(node.url, "_blank");
 
     // 检查是否被浏览器阻止
-    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-      message.warning(t('management_link_blocked'))
-      logger.warn('Management', '链接被浏览器阻止:', node.url)
+    if (
+      !newWindow ||
+      newWindow.closed ||
+      typeof newWindow.closed === "undefined"
+    ) {
+      message.warning(t("management_link_blocked"));
+      logger.warn("Management", "链接被浏览器阻止:", node.url);
     }
   } catch (error) {
-    message.error(t('management_open_link_failed'))
-    logger.error('Management', '打开链接失败:', error, node.url)
+    message.error(t("management_open_link_failed"));
+    logger.error("Management", "打开链接失败:", error, node.url);
   }
-}
+};
 
 const confirmEditBookmark = async () => {
   if (!isEditDirty.value) {
-    dialogStore.closeEditBookmarkDialog()
-    return
+    dialogStore.closeEditBookmarkDialog();
+    return;
   }
-  const title = (dialogStore.editBookmarkDialog.title || '').trim()
+  const title = (dialogStore.editBookmarkDialog.title || "").trim();
   if (!title) {
-    editFormErrors.value.title = t('management_title_required')
-    return
+    editFormErrors.value.title = t("management_title_required");
+    return;
   }
-  const url = (dialogStore.editBookmarkDialog.url || '').trim()
+  const url = (dialogStore.editBookmarkDialog.url || "").trim();
   if (!DataValidator.validateUrl(url)) {
-    editFormErrors.value.url = t('management_url_invalid')
-    return
+    editFormErrors.value.url = t("management_url_invalid");
+    return;
   }
 
-  if (isEditingBookmark.value) return
+  if (isEditingBookmark.value) return;
 
   try {
-    isEditingBookmark.value = true
+    isEditingBookmark.value = true;
 
     const editData: EditBookmarkData = {
       id: dialogStore.editBookmarkDialog.bookmark!.id,
       title: dialogStore.editBookmarkDialog.title,
-      url: dialogStore.editBookmarkDialog.url
-    }
+      url: dialogStore.editBookmarkDialog.url,
+    };
     if (dialogStore.editBookmarkDialog.parentId) {
-      editData.parentId = dialogStore.editBookmarkDialog.parentId
+      editData.parentId = dialogStore.editBookmarkDialog.parentId;
     }
 
-    await bookmarkManagementStore.editBookmark(editData)
+    await bookmarkManagementStore.editBookmark(editData);
 
-    dialogStore.closeEditBookmarkDialog()
+    dialogStore.closeEditBookmarkDialog();
 
-    await nextTick()
-    message.success(t('management_bookmark_updated'))
+    await nextTick();
+    message.success(t("management_bookmark_updated"));
   } catch (error) {
-    logger.error('Management', 'Edit', '编辑书签失败', error)
-    message.error(t('management_edit_failed'))
+    logger.error("Management", "Edit", "编辑书签失败", error);
+    message.error(t("management_edit_failed"));
   } finally {
     // eslint-disable-next-line require-atomic-updates -- finally 块中的状态重置是安全的
-    isEditingBookmark.value = false
+    isEditingBookmark.value = false;
   }
-}
+};
 
 const confirmEditFolder = async () => {
   if (!isEditFolderDirty.value) {
-    dialogStore.closeEditFolderDialog()
-    return
+    dialogStore.closeEditFolderDialog();
+    return;
   }
-  const title = (dialogStore.editFolderDialog.title || '').trim()
+  const title = (dialogStore.editFolderDialog.title || "").trim();
   if (!title) {
-    folderEditFormErrors.value.title = t('management_title_required')
-    return
+    folderEditFormErrors.value.title = t("management_title_required");
+    return;
   }
 
-  if (isEditingFolder.value) return
+  if (isEditingFolder.value) return;
 
   try {
-    isEditingFolder.value = true
+    isEditingFolder.value = true;
 
     await bookmarkManagementStore.editBookmark({
       id: dialogStore.editFolderDialog.folder!.id,
       title: dialogStore.editFolderDialog.title,
-      url: ''
-    })
+      url: "",
+    });
 
-    dialogStore.closeEditFolderDialog()
+    dialogStore.closeEditFolderDialog();
 
-    await nextTick()
-    message.success(t('management_folder_updated'))
+    await nextTick();
+    message.success(t("management_folder_updated"));
   } catch (error) {
-    logger.error('Management', 'Edit', '编辑文件夹失败', error)
-    message.error(t('management_edit_failed'))
+    logger.error("Management", "Edit", "编辑文件夹失败", error);
+    message.error(t("management_edit_failed"));
   } finally {
     // eslint-disable-next-line require-atomic-updates -- finally 块中的状态重置是安全的
-    isEditingFolder.value = false
+    isEditingFolder.value = false;
   }
-}
+};
 const confirmDeleteFolder = async () => {
   if (deleteTargetFolder.value) {
-    const folder = deleteTargetFolder.value
+    const folder = deleteTargetFolder.value;
 
-    if (isDeletingFolder.value) return
+    if (isDeletingFolder.value) return;
 
     try {
-      isDeletingFolder.value = true
+      isDeletingFolder.value = true;
 
       try {
-        await deleteFolder(folder.id)
+        await deleteFolder(folder.id);
       } catch (error) {
-        logger.error('Management', '删除文件夹失败', error)
-        message.error(t('management_delete_failed'))
+        logger.error("Management", "删除文件夹失败", error);
+        message.error(t("management_delete_failed"));
       } finally {
         // eslint-disable-next-line require-atomic-updates -- finally 块中的状态重置是安全的
-        isDeletingFolder.value = false
+        isDeletingFolder.value = false;
       }
     } catch (error) {
-      logger.error('Management', '删除文件夹失败', error)
-      message.error(t('management_delete_failed'))
+      logger.error("Management", "删除文件夹失败", error);
+      message.error(t("management_delete_failed"));
       // eslint-disable-next-line require-atomic-updates -- 错误处理中的状态重置是安全的
-      isDeletingFolder.value = false
+      isDeletingFolder.value = false;
     }
   }
 
-  isConfirmDeleteDialogOpen.value = false
+  isConfirmDeleteDialogOpen.value = false;
   // eslint-disable-next-line require-atomic-updates -- 清理状态是原子操作，不会有竞态条件
-  deleteTargetFolder.value = null
-  deleteFolderBookmarkCount.value = 0
-}
+  deleteTargetFolder.value = null;
+  deleteFolderBookmarkCount.value = 0;
+};
 
 const handleBookmarkCopyUrl = (node: BookmarkNode) => {
   if (node.url) {
-    navigator.clipboard.writeText(node.url)
-    message.success('URL copied!')
+    navigator.clipboard.writeText(node.url);
+    message.success("URL copied!");
   }
-}
+};
 /**
  * 处理外部书签变更事件
  * 当检测到外部书签变更时（如 Chrome Sync、其他设备、书签管理器），
  * 如果用户没有未保存的修改，则静默刷新数据
  */
 const handleExternalChange = async (data: {
-  eventType: 'created' | 'changed' | 'moved' | 'removed'
-  bookmarkId?: string
-  timestamp: number
+  eventType: "created" | "changed" | "moved" | "removed";
+  bookmarkId?: string;
+  timestamp: number;
 }) => {
   if (bookmarkManagementStore.isApplyingOwnChanges) {
-    logger.debug('Management', '检测到自己触发的变更，忽略', data)
-    return
+    logger.debug("Management", "检测到自己触发的变更，忽略", data);
+    return;
   }
 
-  logger.info('Management', '🔄 检测到外部书签变更', data)
+  logger.info("Management", "🔄 检测到外部书签变更", data);
 
   if (bookmarkManagementStore.hasUnsavedChanges) {
-    logger.warn('Management', '用户有未保存的修改，暂不自动刷新')
-    return
+    logger.warn("Management", "用户有未保存的修改，暂不自动刷新");
+    return;
   }
 
   try {
-    await initializeStore()
-    logger.info('Management', '✅ 已静默刷新书签数据')
-    message.info(t('management_external_change_detected'))
+    await initializeStore();
+    logger.info("Management", "✅ 已静默刷新书签数据");
+    message.info(t("management_external_change_detected"));
   } catch (error) {
-    logger.error('Management', '静默刷新失败', error)
-    message.error(t('management_refresh_failed'))
+    logger.error("Management", "静默刷新失败", error);
+    message.error(t("management_refresh_failed"));
   }
-}
+};
 
-const unsubscribeExternalChange = onEvent('data:synced', handleExternalChange)
+const unsubscribeExternalChange = onEvent("data:synced", handleExternalChange);
 const handleBeforeUnload = (e: BeforeUnloadEvent) => {
   if (bookmarkManagementStore.hasUnsavedChanges) {
-    e.preventDefault()
-    e.returnValue = ''
+    e.preventDefault();
+    e.returnValue = "";
   }
-}
+};
 
 onUnmounted(() => {
-  unsubscribeExternalChange()
-  if (typeof window !== 'undefined') {
-    window.removeEventListener('beforeunload', handleBeforeUnload)
+  unsubscribeExternalChange();
+  if (typeof window !== "undefined") {
+    window.removeEventListener("beforeunload", handleBeforeUnload);
   }
-})
+});
 
 onMounted(async () => {
   // ✅ 先初始化 store，等待数据加载完成
-  await initializeStore()
+  await initializeStore();
 
   // 1. 从 session storage 读取初始筛选参数（优先级最高）
-  let pendingTags: TraitTag[] = []
+  let pendingTags: TraitTag[] = [];
   try {
-    const result = await chrome.storage.session.get('managementInitialFilter')
+    const result = await chrome.storage.session.get("managementInitialFilter");
     if (result.managementInitialFilter) {
-      const filter = result.managementInitialFilter as { tags?: string[]; timestamp?: number }
-      const { tags, timestamp } = filter
+      const filter = result.managementInitialFilter as {
+        tags?: string[];
+        timestamp?: number;
+      };
+      const { tags, timestamp } = filter;
       // 检查时间戳，避免使用过期的筛选状态（5秒内有效）
       if (tags && timestamp && Date.now() - timestamp < 5000) {
         pendingTags = tags.filter((tag: string): tag is TraitTag =>
-          ['duplicate', 'invalid', 'internal'].includes(tag)
-        )
-        logger.info('Management', '从 session storage 读取筛选参数:', pendingTags)
+          ["duplicate", "invalid", "internal"].includes(tag),
+        );
+        logger.info(
+          "Management",
+          "从 session storage 读取筛选参数:",
+          pendingTags,
+        );
         // 使用后立即清除，避免影响下次打开
-        await chrome.storage.session.remove('managementInitialFilter')
+        await chrome.storage.session.remove("managementInitialFilter");
       }
     }
   } catch (error) {
-    logger.warn('Management', '读取 session storage 失败:', error)
+    logger.warn("Management", "读取 session storage 失败:", error);
   }
 
   // 2. 兜底：从 URL 参数读取（向后兼容）
   if (pendingTags.length === 0) {
     try {
-      if (typeof window !== 'undefined') {
-        const params = new URLSearchParams(window.location.search)
-        const tagsParam = params.get('tags')
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search);
+        const tagsParam = params.get("tags");
         if (tagsParam) {
           pendingTags = tagsParam
-            .split(',')
-            .map(tag => tag.trim())
-            .filter((tag): tag is TraitTag => ['duplicate', 'invalid', 'internal'].includes(tag))
-          logger.info('Management', '从 URL 参数读取筛选:', pendingTags)
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter((tag): tag is TraitTag =>
+              ["duplicate", "invalid", "internal"].includes(tag),
+            );
+          logger.info("Management", "从 URL 参数读取筛选:", pendingTags);
         }
       }
     } catch (error) {
-      logger.warn('Management', '解析 URL 参数失败:', error)
+      logger.warn("Management", "解析 URL 参数失败:", error);
     }
   }
 
   // 3. 应用筛选（如果有待处理的筛选条件）
   // ✅ 特征数据由 Background Script 自动维护，无需手动触发检测
   if (pendingTags.length > 0) {
-    logger.info('Management', '准备激活筛选:', pendingTags)
+    logger.info("Management", "准备激活筛选:", pendingTags);
 
     // 等待下一帧，确保 UI 已更新
-    await nextTick()
+    await nextTick();
 
     // 设置筛选状态（会触发 BookmarkSearchInput 的 watch）
-    traitFilterStore.setActiveFilters(pendingTags)
-    logger.info('Management', '✅ traitFilterStore.setActiveFilters 已调用')
+    traitFilterStore.setActiveFilters(pendingTags);
+    logger.info("Management", "✅ traitFilterStore.setActiveFilters 已调用");
 
     // 设置待选中的节点（用于自动选中问题节点）
-    pendingTagSelection.value = pendingTags
-    logger.info('Management', '✅ pendingTagSelection 已设置')
+    pendingTagSelection.value = pendingTags;
+    logger.info("Management", "✅ pendingTagSelection 已设置");
 
     // 再等待一帧，确保筛选已应用
-    await nextTick()
+    await nextTick();
     logger.info(
-      'Management',
-      '✅ 筛选应该已经生效，当前 activeFilters:',
-      traitFilterStore.activeFilters
-    )
+      "Management",
+      "✅ 筛选应该已经生效，当前 activeFilters:",
+      traitFilterStore.activeFilters,
+    );
   }
 
-  if (typeof window !== 'undefined') {
-    window.addEventListener('beforeunload', handleBeforeUnload)
+  if (typeof window !== "undefined") {
+    window.addEventListener("beforeunload", handleBeforeUnload);
 
-    const g = window as unknown as Record<string, unknown>
+    const g = window as unknown as Record<string, unknown>;
     g.AB_setFolderExpanded = (id: string, expanded?: boolean) => {
-      const comp = leftTreeRef.value
-      if (!comp) return
-      const sid = String(id)
+      const comp = leftTreeRef.value;
+      if (!comp) return;
+      const sid = String(id);
       if (expanded === undefined) {
-        if (typeof comp.toggleFolderById === 'function') comp.toggleFolderById(sid)
-        return
+        if (typeof comp.toggleFolderById === "function")
+          comp.toggleFolderById(sid);
+        return;
       }
       if (expanded) {
-        if (typeof comp.expandFolderById === 'function') comp.expandFolderById(sid)
+        if (typeof comp.expandFolderById === "function")
+          comp.expandFolderById(sid);
       } else {
-        if (typeof comp.collapseFolderById === 'function') comp.collapseFolderById(sid)
+        if (typeof comp.collapseFolderById === "function")
+          comp.collapseFolderById(sid);
       }
-    }
+    };
     g.AB_toggleFolder = (id: string) => {
-      const comp = leftTreeRef.value
-      if (!comp) return
-      const sid = String(id)
-      if (typeof comp.toggleFolderById === 'function') comp.toggleFolderById(sid)
-    }
+      const comp = leftTreeRef.value;
+      if (!comp) return;
+      const sid = String(id);
+      if (typeof comp.toggleFolderById === "function")
+        comp.toggleFolderById(sid);
+    };
     g.AB_focusBookmark = (
       id: string,
       opts?: {
-        collapseOthers?: boolean
-        scrollIntoViewCenter?: boolean
-        pathIds?: string[]
-      }
+        collapseOthers?: boolean;
+        scrollIntoViewCenter?: boolean;
+        pathIds?: string[];
+      },
     ) => {
-      const comp = leftTreeRef.value
-      if (!comp || !comp.focusNodeById) return
-      comp.focusNodeById(String(id), opts || { collapseOthers: true, scrollIntoViewCenter: true })
-    }
+      const comp = leftTreeRef.value;
+      if (!comp || !comp.focusNodeById) return;
+      comp.focusNodeById(
+        String(id),
+        opts || { collapseOthers: true, scrollIntoViewCenter: true },
+      );
+    };
   }
-})
+});
 
 const toggleLeftExpandAll = async () => {
-  if (!leftTreeRef.value) return
-  if (isExpanding.value) return
-  isExpanding.value = true
+  if (!leftTreeRef.value) return;
+  if (isExpanding.value) return;
+  isExpanding.value = true;
   schedulerService.scheduleUIUpdate(() => {
-    isPageLoading.value = true
-    loadingMessage.value = leftExpandAll.value ? '正在收起...' : '正在展开...'
-  })
-  await nextTick()
-  await new Promise(r => requestAnimationFrame(r))
-  await new Promise(r => requestAnimationFrame(r))
-  await new Promise(r => setTimeout(r, 0))
+    isPageLoading.value = true;
+    loadingMessage.value = leftExpandAll.value ? "正在收起..." : "正在展开...";
+  });
+  await nextTick();
+  await new Promise((r) => requestAnimationFrame(r));
+  await new Promise((r) => requestAnimationFrame(r));
+  await new Promise((r) => setTimeout(r, 0));
   if (leftExpandAll.value) {
-    leftTreeRef.value.collapseAll()
-    leftExpandAll.value = false
+    leftTreeRef.value.collapseAll();
+    leftExpandAll.value = false;
   } else {
-    leftTreeRef.value.expandAll()
-    leftExpandAll.value = true
+    leftTreeRef.value.expandAll();
+    leftExpandAll.value = true;
   }
   schedulerService.scheduleUIUpdate(() => {
-    isPageLoading.value = false
-    isExpanding.value = false
-  })
-}
+    isPageLoading.value = false;
+    isExpanding.value = false;
+  });
+};
 
 const toggleRightExpandAll = async () => {
-  if (!rightTreeRef.value) return
-  if (isExpanding.value) return
-  isExpanding.value = true
-  isPageLoading.value = true
-  loadingMessage.value = rightExpandAll.value ? '正在收起...' : '正在展开...'
+  if (!rightTreeRef.value) return;
+  if (isExpanding.value) return;
+  isExpanding.value = true;
+  isPageLoading.value = true;
+  loadingMessage.value = rightExpandAll.value ? "正在收起..." : "正在展开...";
   // 让出两帧以确保蒙层先绘制（处理主线程阻塞导致的晚出现）
-  await nextTick()
-  await new Promise(r => requestAnimationFrame(r))
-  await new Promise(r => requestAnimationFrame(r))
-  await new Promise(r => setTimeout(r, 0))
+  await nextTick();
+  await new Promise((r) => requestAnimationFrame(r));
+  await new Promise((r) => requestAnimationFrame(r));
+  await new Promise((r) => setTimeout(r, 0));
   if (rightExpandAll.value) {
-    rightTreeRef.value.collapseAll()
-    rightExpandAll.value = false
+    rightTreeRef.value.collapseAll();
+    rightExpandAll.value = false;
   } else {
-    rightTreeRef.value.expandAll()
-    rightExpandAll.value = true
+    rightTreeRef.value.expandAll();
+    rightExpandAll.value = true;
   }
   requestAnimationFrame(() => {
-    isPageLoading.value = false
-    isExpanding.value = false
-  })
-}
+    isPageLoading.value = false;
+    isExpanding.value = false;
+  });
+};
 
 // 右侧选择变化：用于批量删除
 const onRightSelectionChange = (ids: string[]) => {
-  rightSelectedIds.value = Array.isArray(ids) ? ids.map(String) : []
-}
+  rightSelectedIds.value = Array.isArray(ids) ? ids.map(String) : [];
+};
 
 // 清空选择：调用树组件 API，状态通过 selection-change 事件自动同步
 const clearRightSelection = () => {
   try {
-    rightTreeRef.value?.clearSelection?.()
+    rightTreeRef.value?.clearSelection?.();
   } catch {}
-}
+};
 
 // 计算右侧树的全选状态
 const rightSelectAllState = computed(() => {
-  const totalNodes = getAllRightTreeNodeIds()
-  const selectedCount = rightSelectedIds.value.length
+  const totalNodes = getAllRightTreeNodeIds();
+  const selectedCount = rightSelectedIds.value.length;
 
   if (selectedCount === 0) {
-    return { checked: false, indeterminate: false }
+    return { checked: false, indeterminate: false };
   }
 
   if (selectedCount === totalNodes.length) {
-    return { checked: true, indeterminate: false }
+    return { checked: true, indeterminate: false };
   }
 
-  return { checked: false, indeterminate: true }
-})
+  return { checked: false, indeterminate: true };
+});
 
 // 统计右侧树数据中的实际书签和文件夹数量（用于调试和验证）
 const rightTreeDataStats = computed(() => {
-  let bookmarkCount = 0
-  let folderCount = 0
+  let bookmarkCount = 0;
+  let folderCount = 0;
 
   const countNodes = (nodes: BookmarkNode[]) => {
     for (const node of nodes) {
-      if (!node || !node.id) continue
+      if (!node || !node.id) continue;
       if (node.url) {
-        bookmarkCount++
+        bookmarkCount++;
       } else {
-        folderCount++
+        folderCount++;
       }
       if (node.children && node.children.length) {
-        countNodes(node.children)
+        countNodes(node.children);
       }
     }
-  }
+  };
 
-  countNodes(rightTreeData.value)
-  return { bookmarkCount, folderCount, total: bookmarkCount + folderCount }
-})
+  countNodes(rightTreeData.value);
+  return { bookmarkCount, folderCount, total: bookmarkCount + folderCount };
+});
 
 // 监控右侧树数据统计（用于调试数量不一致问题）
 watch(
   () => rightTreeDataStats.value,
-  stats => {
-    logger.debug('Management', '右侧树数据统计', {
+  (stats) => {
+    logger.debug("Management", "右侧树数据统计", {
       bookmarks: stats.bookmarkCount,
       folders: stats.folderCount,
-      total: stats.total
-    })
+      total: stats.total,
+    });
   },
-  { immediate: true }
-)
+  { immediate: true },
+);
 
 /**
  * 获取右侧树所有节点 ID
@@ -956,63 +1022,63 @@ watch(
  * @returns 所有节点 ID 数组
  */
 const getAllRightTreeNodeIds = (): string[] => {
-  return rightTreeIndex.getAllNodeIds()
-}
+  return rightTreeIndex.getAllNodeIds();
+};
 
 // 全选/取消全选切换
 const toggleRightSelectAll = (checked: boolean) => {
   if (checked) {
     // 全选
-    const allIds = getAllRightTreeNodeIds()
-    rightTreeRef.value?.selectNodesByIds?.(allIds, { append: false })
+    const allIds = getAllRightTreeNodeIds();
+    rightTreeRef.value?.selectNodesByIds?.(allIds, { append: false });
     // 全选后自动展开所有文件夹，方便用户确认选中内容
     nextTick(() => {
-      rightTreeRef.value?.expandAll?.()
-      rightExpandAll.value = true
-    })
+      rightTreeRef.value?.expandAll?.();
+      rightExpandAll.value = true;
+    });
   } else {
     // 取消全选：显式传递空数组，确保所有节点（包括文件夹）都被取消选中
-    rightTreeRef.value?.selectNodesByIds?.([], { append: false })
+    rightTreeRef.value?.selectNodesByIds?.([], { append: false });
   }
-}
+};
 
 // 使用 Notification 组件
-const notification = useNotification()
+const notification = useNotification();
 
 const handleBookmarkMove = async (data: {
-  sourceId: string
-  targetId: string
-  position: 'before' | 'inside' | 'after'
+  sourceId: string;
+  targetId: string;
+  position: "before" | "inside" | "after";
 }) => {
-  const callTime = Date.now()
-  logger.info('Management', '🔵 拖拽移动书签开始', { ...data, callTime })
+  const callTime = Date.now();
+  logger.info("Management", "🔵 拖拽移动书签开始", { ...data, callTime });
 
   try {
-    const result = await bookmarkManagementStore.moveBookmark(data)
+    const result = await bookmarkManagementStore.moveBookmark(data);
 
     if (result) {
-      logger.info('Management', '📦 移动结果（可用于 Chrome API）', {
+      logger.info("Management", "📦 移动结果（可用于 Chrome API）", {
         nodeId: result.nodeId,
         newParentId: result.newParentId,
         newIndex: result.newIndex,
-        chromeApiCall: `chrome.bookmarks.move('${result.nodeId}', { parentId: '${result.newParentId}', index: ${result.newIndex} })`
-      })
+        chromeApiCall: `chrome.bookmarks.move('${result.nodeId}', { parentId: '${result.newParentId}', index: ${result.newIndex} })`,
+      });
     }
 
     notification.success({
-      message: t('management_bookmark_moved'),
-      key: 'bookmark-moved',
-      duration: 2 // duration 单位为秒
-    })
+      message: t("management_bookmark_moved"),
+      key: "bookmark-moved",
+      duration: 2, // duration 单位为秒
+    });
   } catch (error) {
-    logger.error('Management', '移动书签失败', error)
+    logger.error("Management", "移动书签失败", error);
     notification.error({
-      message: t('management_move_failed'),
-      description: t('management_move_failed_retry'),
-      duration: 3 // duration 单位为秒
-    })
+      message: t("management_move_failed"),
+      description: t("management_move_failed_retry"),
+      duration: 3, // duration 单位为秒
+    });
   }
-}
+};
 
 /**
  * 批量删除选中的书签和文件夹
@@ -1022,27 +1088,27 @@ const handleBookmarkMove = async (data: {
  * 应用时会有全面的确认提示
  */
 const handleBulkDelete = async () => {
-  const ids = rightSelectedIds.value.filter(Boolean)
-  if (!ids.length) return
+  const ids = rightSelectedIds.value.filter(Boolean);
+  if (!ids.length) return;
 
-  if (isBulkDeleting.value) return // 防止重复点击
+  if (isBulkDeleting.value) return; // 防止重复点击
 
   try {
-    isBulkDeleting.value = true
+    isBulkDeleting.value = true;
 
-    bulkDeleteByIds(ids)
+    bulkDeleteByIds(ids);
 
     // 清空选择，避免再次误删
     try {
-      rightTreeRef.value?.clearSelection?.()
+      rightTreeRef.value?.clearSelection?.();
     } catch {}
   } catch (error) {
-    logger.error('Management', '批量删除失败', error)
-    message.error(t('management_bulk_delete_failed'))
+    logger.error("Management", "批量删除失败", error);
+    message.error(t("management_bulk_delete_failed"));
   } finally {
-    isBulkDeleting.value = false
+    isBulkDeleting.value = false;
   }
-}
+};
 
 // ==================== 应用更改相关方法 ====================
 
@@ -1050,95 +1116,99 @@ const handleBulkDelete = async () => {
  * 确认对话框标题
  */
 const applyConfirmTitle = computed(() => {
-  if (!diffResult.value) return t('management_apply')
+  if (!diffResult.value) return t("management_apply");
 
-  const total = diffResult.value.statistics.total
+  const total = diffResult.value.statistics.total;
   if (total < 100) {
-    return t('management_confirm_apply_changes')
+    return t("management_confirm_apply_changes");
   } else if (total < 500) {
-    return '⚠️ ' + t('management_confirm_apply_changes')
+    return "⚠️ " + t("management_confirm_apply_changes");
   } else {
-    return '⚠️ ' + t('management_large_operation_warning')
+    return "⚠️ " + t("management_large_operation_warning");
   }
-})
+});
 
 /**
  * 确认对话框图标
  */
 const applyConfirmIcon = computed(() => {
-  if (!diffResult.value) return 'icon-check'
+  if (!diffResult.value) return "icon-check";
 
-  const total = diffResult.value.statistics.total
+  const total = diffResult.value.statistics.total;
   if (total < 100) {
-    return 'icon-check'
+    return "icon-check";
   } else {
-    return 'icon-warning'
+    return "icon-warning";
   }
-})
+});
 
 /**
  * 预计剩余时间
  */
 const estimatedRemainingTime = computed(() => {
-  const progress = bookmarkManagementStore.applyProgress
+  const progress = bookmarkManagementStore.applyProgress;
   if (!progress.isApplying || progress.currentIndex === 0) {
-    return t('management_calculating')
+    return t("management_calculating");
   }
 
-  const elapsed = Date.now() - applyStartTime.value
-  const avgTimePerOp = elapsed / progress.currentIndex
+  const elapsed = Date.now() - applyStartTime.value;
+  const avgTimePerOp = elapsed / progress.currentIndex;
   const remaining = Math.ceil(
-    ((progress.totalOperations - progress.currentIndex) * avgTimePerOp) / 1000
-  )
+    ((progress.totalOperations - progress.currentIndex) * avgTimePerOp) / 1000,
+  );
 
   if (remaining < 60) {
-    return t('management_about_seconds', String(remaining))
+    return t("management_about_seconds", String(remaining));
   } else {
-    const minutes = Math.ceil(remaining / 60)
-    return t('management_about_minutes', String(minutes))
+    const minutes = Math.ceil(remaining / 60);
+    return t("management_about_minutes", String(minutes));
   }
-})
+});
 
 /**
  * 获取操作图标
  */
 const getOperationIcon = (type: BookmarkOperationType): string => {
   const icons: Record<BookmarkOperationType, string> = {
-    create: 'plus',
-    move: 'refresh',
-    edit: 'edit',
-    delete: 'trash'
-  }
-  return icons[type] || 'bookmark'
-}
+    create: "plus",
+    move: "refresh",
+    edit: "edit",
+    delete: "trash",
+  };
+  return icons[type] || "bookmark";
+};
 
 /**
  * 获取操作类型文本
  */
 const getOperationTypeText = (type: BookmarkOperationType): string => {
   const texts: Record<BookmarkOperationType, string> = {
-    create: '新增',
-    move: '移动',
-    edit: '编辑',
-    delete: '删除'
-  }
-  return texts[type] || type
-}
+    create: "新增",
+    move: "移动",
+    edit: "编辑",
+    delete: "删除",
+  };
+  return texts[type] || type;
+};
 
 /**
  * 按类型获取操作列表
  */
-const getOperationsByType = (type: BookmarkOperationType): BookmarkOperation[] => {
-  if (!diffResult.value) return []
-  return diffResult.value.operations.filter(op => op.type === type)
-}
+const getOperationsByType = (
+  type: BookmarkOperationType,
+): BookmarkOperation[] => {
+  if (!diffResult.value) return [];
+  return diffResult.value.operations.filter((op) => op.type === type);
+};
 
 /**
  * 点击应用更改按钮
  */
 const handleApplyClick = () => {
   // 检查是否有临时节点
-  const tempNodeInfo = getTempNodesInfo(bookmarkManagementStore.newProposalTree.children)
+  const tempNodeInfo = getTempNodesInfo(
+    bookmarkManagementStore.newProposalTree.children,
+  );
 
   if (tempNodeInfo.count > 0) {
     const confirmText =
@@ -1147,40 +1217,41 @@ const handleApplyClick = () => {
       `这些节点的顺序调整无法应用，因为它们还不存在于浏览器中。\n\n` +
       `建议操作流程：\n` +
       `1. 如果这些是误添加的节点，请刷新页面丢弃它们\n` +
-      `2. 如果需要保留这些节点，暂时不支持保存（功能开发中）`
+      `2. 如果需要保留这些节点，暂时不支持保存（功能开发中）`;
 
-    const shouldContinue = typeof window !== 'undefined' ? window.confirm(confirmText) : false
+    const shouldContinue =
+      typeof window !== "undefined" ? window.confirm(confirmText) : false;
 
     if (shouldContinue) {
       // 用户选择了解，继续显示差异（已过滤临时节点）
-      const diff = bookmarkManagementStore.calculateDiff()
+      const diff = bookmarkManagementStore.calculateDiff();
 
       if (!diff || diff.statistics.total === 0) {
         // 如果实际没有差异，重置标志位，禁用按钮
-        bookmarkManagementStore.hasUnsavedChanges = false
-        message.info(t('management_no_changes_detected'))
-        return
+        bookmarkManagementStore.hasUnsavedChanges = false;
+        message.info(t("management_no_changes_detected"));
+        return;
       }
 
-      diffResult.value = diff
-      showApplyConfirmDialog.value = true
+      diffResult.value = diff;
+      showApplyConfirmDialog.value = true;
     }
-    return
+    return;
   }
 
   // 计算差异
-  const diff = bookmarkManagementStore.calculateDiff()
+  const diff = bookmarkManagementStore.calculateDiff();
 
   if (!diff || diff.statistics.total === 0) {
     // 如果实际没有差异，重置标志位，禁用按钮
-    bookmarkManagementStore.hasUnsavedChanges = false
-    message.info(t('management_no_changes_detected'))
-    return
+    bookmarkManagementStore.hasUnsavedChanges = false;
+    message.info(t("management_no_changes_detected"));
+    return;
   }
 
-  diffResult.value = diff
-  showApplyConfirmDialog.value = true
-}
+  diffResult.value = diff;
+  showApplyConfirmDialog.value = true;
+};
 
 /**
  * 获取临时节点信息
@@ -1189,64 +1260,68 @@ const handleApplyClick = () => {
  * @param _nodes 节点数组（未使用，保留兼容性）
  * @returns 临时节点信息
  */
-const getTempNodesInfo = (_nodes: BookmarkNode[]): { count: number; ids: string[] } => {
-  const allIds = rightTreeIndex.getAllNodeIds()
-  const tempIds = allIds.filter(id => id.startsWith('temp_'))
+const getTempNodesInfo = (
+  _nodes: BookmarkNode[],
+): { count: number; ids: string[] } => {
+  const allIds = rightTreeIndex.getAllNodeIds();
+  const tempIds = allIds.filter((id) => id.startsWith("temp_"));
 
   return {
     count: tempIds.length,
-    ids: tempIds
-  }
-}
+    ids: tempIds,
+  };
+};
 
 /**
  * 确认应用更改
  */
 const confirmApplyChanges = async () => {
-  if (!diffResult.value) return
+  if (!diffResult.value) return;
 
   try {
     // 关闭确认对话框
-    showApplyConfirmDialog.value = false
+    showApplyConfirmDialog.value = false;
 
     // 记录开始时间
-    applyStartTime.value = Date.now()
+    applyStartTime.value = Date.now();
 
     // 应用更改
     const result = await bookmarkManagementStore.applyChanges(
       diffResult.value.operations,
       (current, total, operation) => {
         // 进度回调（已在 store 中更新状态）
-        logger.debug('Management', `应用进度: ${current}/${total}`, {
-          operation
-        })
-      }
-    )
+        logger.debug("Management", `应用进度: ${current}/${total}`, {
+          operation,
+        });
+      },
+    );
 
     // 显示结果
     if (result.success) {
-      message.success(t('management_all_changes_applied'))
+      message.success(t("management_all_changes_applied"));
     } else {
-      message.warning(t('management_some_changes_failed', String(result.errors.length)))
-      logger.error('Management', '应用更改部分失败', result.errors)
+      message.warning(
+        t("management_some_changes_failed", String(result.errors.length)),
+      );
+      logger.error("Management", "应用更改部分失败", result.errors);
     }
 
     // 清空差异结果
     // eslint-disable-next-line require-atomic-updates -- 清空差异结果是原子操作，不会有竞态条件
-    diffResult.value = null
+    diffResult.value = null;
   } catch (error) {
-    logger.error('Management', '应用更改失败', error)
-    message.error(t('management_apply_changes_failed'))
+    logger.error("Management", "应用更改失败", error);
+    message.error(t("management_apply_changes_failed"));
   }
-}
+};
 
 /**
  * 顶部"应用"按钮点击事件
  */
 const handleApply = () => {
   // 复用 handleApplyClick 的逻辑
-  handleApplyClick()
-}
+  handleApplyClick();
+};
 
 // =============================
 </script>
@@ -1270,13 +1345,15 @@ const handleApply = () => {
         <div class="progress-info">
           <div class="progress-message">{{ organizeProgress.stageName }}</div>
           <div class="progress-stats">
-            {{ organizeProgress.processedBookmarks }} / {{ organizeProgress.totalBookmarks }}
+            {{ organizeProgress.processedBookmarks }} /
+            {{ organizeProgress.totalBookmarks }}
           </div>
         </div>
         <md-linear-progress
           :value="
             organizeProgress.totalBookmarks > 0
-              ? organizeProgress.processedBookmarks / organizeProgress.totalBookmarks
+              ? organizeProgress.processedBookmarks /
+                organizeProgress.totalBookmarks
               : 0
           "
         ></md-linear-progress>
@@ -1297,36 +1374,50 @@ const handleApply = () => {
         <!-- AI 生成标记 -->
         <div v-if="bookmarkManagementStore.isAIGenerated" class="ai-badge">
           <LucideIcon name="sparkles" color="primary" />
-          <span>{{ t('management_ai_generated_badge') }}</span>
+          <span>{{ t("management_ai_generated_badge") }}</span>
         </div>
 
         <!-- 统计信息 -->
         <div class="statistics-section">
-          <h3 class="section-title">{{ t('management_changes_overview') }}</h3>
+          <h3 class="section-title">{{ t("management_changes_overview") }}</h3>
           <div class="statistics-grid">
             <div class="stat-item">
-              <span class="stat-label">{{ t('management_new_folders') }}</span>
-              <span class="stat-value">{{ diffResult?.statistics.newFolders || 0 }}</span>
+              <span class="stat-label">{{ t("management_new_folders") }}</span>
+              <span class="stat-value">{{
+                diffResult?.statistics.newFolders || 0
+              }}</span>
             </div>
             <div class="stat-item">
-              <span class="stat-label">{{ t('management_new_bookmarks') }}</span>
-              <span class="stat-value">{{ diffResult?.statistics.newBookmarks || 0 }}</span>
+              <span class="stat-label">{{
+                t("management_new_bookmarks")
+              }}</span>
+              <span class="stat-value">{{
+                diffResult?.statistics.newBookmarks || 0
+              }}</span>
             </div>
             <div class="stat-item">
-              <span class="stat-label">{{ t('management_moved') }}</span>
-              <span class="stat-value">{{ diffResult?.statistics.move || 0 }}</span>
+              <span class="stat-label">{{ t("management_moved") }}</span>
+              <span class="stat-value">{{
+                diffResult?.statistics.move || 0
+              }}</span>
             </div>
             <div class="stat-item">
-              <span class="stat-label">{{ t('management_edited') }}</span>
-              <span class="stat-value">{{ diffResult?.statistics.edit || 0 }}</span>
+              <span class="stat-label">{{ t("management_edited") }}</span>
+              <span class="stat-value">{{
+                diffResult?.statistics.edit || 0
+              }}</span>
             </div>
             <div class="stat-item">
-              <span class="stat-label">{{ t('management_deleted') }}</span>
-              <span class="stat-value error">{{ diffResult?.statistics.delete || 0 }}</span>
+              <span class="stat-label">{{ t("management_deleted") }}</span>
+              <span class="stat-value error">{{
+                diffResult?.statistics.delete || 0
+              }}</span>
             </div>
             <div class="stat-item total">
-              <span class="stat-label">{{ t('management_total') }}</span>
-              <span class="stat-value">{{ diffResult?.statistics.total || 0 }}</span>
+              <span class="stat-label">{{ t("management_total") }}</span>
+              <span class="stat-value">{{
+                diffResult?.statistics.total || 0
+              }}</span>
             </div>
           </div>
         </div>
@@ -1334,7 +1425,9 @@ const handleApply = () => {
         <!-- 详细列表（仅在操作数 < 100 时显示完整列表，100-500 显示汇总，>500 只显示统计） -->
         <div v-if="diffResult" class="details-section">
           <div v-if="diffResult.statistics.total < 100" class="detailed-list">
-            <h3 class="section-title">{{ t('management_detailed_operations') }}</h3>
+            <h3 class="section-title">
+              {{ t("management_detailed_operations") }}
+            </h3>
             <div class="operations-list">
               <div
                 v-for="(op, index) in diffResult.operations.slice(0, 100)"
@@ -1342,89 +1435,157 @@ const handleApply = () => {
                 class="operation-item"
               >
                 <LucideIcon :name="getOperationIcon(op.type)" />
-                <span class="operation-type">{{ getOperationTypeText(op.type) }}</span>
+                <span class="operation-type">{{
+                  getOperationTypeText(op.type)
+                }}</span>
                 <span class="operation-title">{{ op.title }}</span>
               </div>
             </div>
           </div>
-          <div v-else-if="diffResult.statistics.total < 500" class="grouped-summary">
-            <h3 class="section-title">{{ t('management_grouped_summary') }}</h3>
-            <details v-if="diffResult.statistics.create > 0" class="summary-group" open>
+          <div
+            v-else-if="diffResult.statistics.total < 500"
+            class="grouped-summary"
+          >
+            <h3 class="section-title">{{ t("management_grouped_summary") }}</h3>
+            <details
+              v-if="diffResult.statistics.create > 0"
+              class="summary-group"
+              open
+            >
               <summary>
                 <LucideIcon name="plus" color="success" />
                 <span>{{
-                  t('management_create_nodes', String(diffResult.statistics.create))
+                  t(
+                    "management_create_nodes",
+                    String(diffResult.statistics.create),
+                  )
                 }}</span>
               </summary>
               <div class="group-items">
                 <div
-                  v-for="(op, index) in getOperationsByType('create').slice(0, 50)"
+                  v-for="(op, index) in getOperationsByType('create').slice(
+                    0,
+                    50,
+                  )"
                   :key="index"
                   class="group-item"
                 >
-                  {{ op.isFolder ? '📁' : '📄' }} {{ op.title }}
+                  {{ op.isFolder ? "📁" : "📄" }} {{ op.title }}
                 </div>
-                <div v-if="getOperationsByType('create').length > 50" class="more-items">
+                <div
+                  v-if="getOperationsByType('create').length > 50"
+                  class="more-items"
+                >
                   {{
-                    t('management_more_items', String(getOperationsByType('create').length - 50))
+                    t(
+                      "management_more_items",
+                      String(getOperationsByType("create").length - 50),
+                    )
                   }}
                 </div>
               </div>
             </details>
-            <details v-if="diffResult.statistics.move > 0" class="summary-group">
+            <details
+              v-if="diffResult.statistics.move > 0"
+              class="summary-group"
+            >
               <summary>
                 <LucideIcon name="refresh" color="primary" />
-                <span>{{ t('management_move_nodes', String(diffResult.statistics.move)) }}</span>
-              </summary>
-              <div class="group-items">
-                <div
-                  v-for="(op, index) in getOperationsByType('move').slice(0, 50)"
-                  :key="index"
-                  class="group-item"
-                >
-                  {{ op.title }}
-                </div>
-                <div v-if="getOperationsByType('move').length > 50" class="more-items">
-                  {{ t('management_more_items', String(getOperationsByType('move').length - 50)) }}
-                </div>
-              </div>
-            </details>
-            <details v-if="diffResult.statistics.edit > 0" class="summary-group">
-              <summary>
-                <LucideIcon name="edit" color="warning" />
-                <span>{{ t('management_edit_nodes', String(diffResult.statistics.edit)) }}</span>
-              </summary>
-              <div class="group-items">
-                <div
-                  v-for="(op, index) in getOperationsByType('edit').slice(0, 50)"
-                  :key="index"
-                  class="group-item"
-                >
-                  {{ op.title }}
-                </div>
-                <div v-if="getOperationsByType('edit').length > 50" class="more-items">
-                  {{ t('management_more_items', String(getOperationsByType('edit').length - 50)) }}
-                </div>
-              </div>
-            </details>
-            <details v-if="diffResult.statistics.delete > 0" class="summary-group">
-              <summary>
-                <LucideIcon name="trash" color="error" />
                 <span>{{
-                  t('management_delete_nodes', String(diffResult.statistics.delete))
+                  t("management_move_nodes", String(diffResult.statistics.move))
                 }}</span>
               </summary>
               <div class="group-items">
                 <div
-                  v-for="(op, index) in getOperationsByType('delete').slice(0, 50)"
+                  v-for="(op, index) in getOperationsByType('move').slice(
+                    0,
+                    50,
+                  )"
                   :key="index"
                   class="group-item"
                 >
                   {{ op.title }}
                 </div>
-                <div v-if="getOperationsByType('delete').length > 50" class="more-items">
+                <div
+                  v-if="getOperationsByType('move').length > 50"
+                  class="more-items"
+                >
                   {{
-                    t('management_more_items', String(getOperationsByType('delete').length - 50))
+                    t(
+                      "management_more_items",
+                      String(getOperationsByType("move").length - 50),
+                    )
+                  }}
+                </div>
+              </div>
+            </details>
+            <details
+              v-if="diffResult.statistics.edit > 0"
+              class="summary-group"
+            >
+              <summary>
+                <LucideIcon name="edit" color="warning" />
+                <span>{{
+                  t("management_edit_nodes", String(diffResult.statistics.edit))
+                }}</span>
+              </summary>
+              <div class="group-items">
+                <div
+                  v-for="(op, index) in getOperationsByType('edit').slice(
+                    0,
+                    50,
+                  )"
+                  :key="index"
+                  class="group-item"
+                >
+                  {{ op.title }}
+                </div>
+                <div
+                  v-if="getOperationsByType('edit').length > 50"
+                  class="more-items"
+                >
+                  {{
+                    t(
+                      "management_more_items",
+                      String(getOperationsByType("edit").length - 50),
+                    )
+                  }}
+                </div>
+              </div>
+            </details>
+            <details
+              v-if="diffResult.statistics.delete > 0"
+              class="summary-group"
+            >
+              <summary>
+                <LucideIcon name="trash" color="error" />
+                <span>{{
+                  t(
+                    "management_delete_nodes",
+                    String(diffResult.statistics.delete),
+                  )
+                }}</span>
+              </summary>
+              <div class="group-items">
+                <div
+                  v-for="(op, index) in getOperationsByType('delete').slice(
+                    0,
+                    50,
+                  )"
+                  :key="index"
+                  class="group-item"
+                >
+                  {{ op.title }}
+                </div>
+                <div
+                  v-if="getOperationsByType('delete').length > 50"
+                  class="more-items"
+                >
+                  {{
+                    t(
+                      "management_more_items",
+                      String(getOperationsByType("delete").length - 50),
+                    )
                   }}
                 </div>
               </div>
@@ -1432,21 +1593,28 @@ const handleApply = () => {
           </div>
           <div v-else class="large-operation-warning">
             <LucideIcon name="alert-triangle" color="warning" :size="48" />
-            <h3>{{ t('management_large_operation_warning') }}</h3>
+            <h3>{{ t("management_large_operation_warning") }}</h3>
             <p
-              v-html="t('management_large_operation_desc', String(diffResult.statistics.total))"
+              v-html="
+                t(
+                  'management_large_operation_desc',
+                  String(diffResult.statistics.total),
+                )
+              "
             ></p>
-            <p class="warning-text">{{ t('management_large_operation_warning_text') }}</p>
+            <p class="warning-text">
+              {{ t("management_large_operation_warning_text") }}
+            </p>
           </div>
         </div>
       </div>
 
       <template #actions>
         <md-text-button @click="showApplyConfirmDialog = false">
-          {{ t('common_cancel') }}
+          {{ t("common_cancel") }}
         </md-text-button>
         <md-filled-button @click="confirmApplyChanges">
-          {{ t('common_apply') }}
+          {{ t("common_apply") }}
         </md-filled-button>
       </template>
     </Dialog>
@@ -1473,7 +1641,7 @@ const handleApply = () => {
           :value="bookmarkManagementStore.applyProgress.percentage / 100"
         ></md-linear-progress>
         <div class="progress-tip">
-          {{ t('management_estimated_time', estimatedRemainingTime) }}
+          {{ t("management_estimated_time", estimatedRemainingTime) }}
         </div>
       </div>
     </Dialog>
@@ -1484,7 +1652,7 @@ const handleApply = () => {
           class="management-row"
           :style="{
             '--left-panel-width': leftPanelWidthVar,
-            '--left-panel-gap': leftPanelGapVar
+            '--left-panel-gap': leftPanelGapVar,
           }"
         >
           <!-- Left Panel -->
@@ -1497,7 +1665,9 @@ const handleApply = () => {
                 <div class="panel-header">
                   <div class="panel-title-section">
                     <LucideIcon name="folder" color="primary" />
-                    <span class="panel-title">{{ t('management_my_bookmarks') }}</span>
+                    <span class="panel-title">{{
+                      t("management_my_bookmarks")
+                    }}</span>
                   </div>
                   <div class="panel-title-section">
                     <BookmarkSearchInput
@@ -1510,7 +1680,9 @@ const handleApply = () => {
 
                     <md-icon-button
                       :title="
-                        leftExpandAll ? t('management_collapse_all') : t('management_expand_all')
+                        leftExpandAll
+                          ? t('management_collapse_all')
+                          : t('management_expand_all')
                       "
                       :disabled="isPageLoading"
                       @click="toggleLeftExpandAll"
@@ -1519,10 +1691,14 @@ const handleApply = () => {
                         class="expand-toggle-icon"
                         :class="{
                           expanded: leftExpandAll,
-                          expanding: isPageLoading
+                          expanding: isPageLoading,
                         }"
                       >
-                        <LucideIcon :name="leftExpandAll ? 'chevrons-up' : 'chevrons-down'" />
+                        <LucideIcon
+                          :name="
+                            leftExpandAll ? 'chevrons-up' : 'chevrons-down'
+                          "
+                        />
                       </span>
                     </md-icon-button>
                   </div>
@@ -1565,7 +1741,9 @@ const handleApply = () => {
                 class="panel-toggle-btn"
               >
                 <LucideIcon
-                  :name="isLeftPanelCollapsed ? 'chevrons-right' : 'chevrons-left'"
+                  :name="
+                    isLeftPanelCollapsed ? 'chevrons-right' : 'chevrons-left'
+                  "
                   :size="24"
                 />
               </md-icon-button>
@@ -1584,18 +1762,23 @@ const handleApply = () => {
                 <div class="panel-header">
                   <div class="panel-title-section">
                     <LucideIcon :name="getProposalPanelIcon()" />
-                    <span class="panel-title">{{ getProposalPanelTitle() }}</span>
+                    <span class="panel-title">{{
+                      getProposalPanelTitle()
+                    }}</span>
                   </div>
                   <div class="panel-title-section">
                     <div class="panel-actions">
                       <!-- ✅ 使用包装元素解决禁用状态下 tooltip 不显示的问题 -->
                       <span class="btn-wrapper" :title="applyButtonTooltip">
                         <md-filled-button
-                          :disabled="isPageLoading || !bookmarkManagementStore.hasUnsavedChanges"
+                          :disabled="
+                            isPageLoading ||
+                            !bookmarkManagementStore.hasUnsavedChanges
+                          "
                           @click="handleApply"
                         >
                           <LucideIcon slot="icon" name="check-circle" />
-                          {{ t('management_apply') }}
+                          {{ t("management_apply") }}
                         </md-filled-button>
                       </span>
                       <div class="panel-actions-divider"></div>
@@ -1603,9 +1786,15 @@ const handleApply = () => {
                         :disabled="isPageLoading || isOrganizing"
                         @click="handleAutoOrganize"
                       >
-                        <LucideIcon slot="icon" name="sparkles" :spin="isOrganizing" />
+                        <LucideIcon
+                          slot="icon"
+                          name="sparkles"
+                          :spin="isOrganizing"
+                        />
                         {{
-                          isOrganizing ? t('management_organizing') : t('management_ai_organize')
+                          isOrganizing
+                            ? t("management_organizing")
+                            : t("management_ai_organize")
                         }}
                       </md-filled-button>
                       <div class="panel-actions-divider"></div>
@@ -1620,7 +1809,9 @@ const handleApply = () => {
                       />
                       <md-icon-button
                         :title="
-                          rightExpandAll ? t('management_collapse_all') : t('management_expand_all')
+                          rightExpandAll
+                            ? t('management_collapse_all')
+                            : t('management_expand_all')
                         "
                         :disabled="isPageLoading"
                         @click="toggleRightExpandAll"
@@ -1628,10 +1819,14 @@ const handleApply = () => {
                         <span
                           class="expand-toggle-icon"
                           :class="{
-                            expanded: rightExpandAll
+                            expanded: rightExpandAll,
                           }"
                         >
-                          <LucideIcon :name="rightExpandAll ? 'chevrons-up' : 'chevrons-down'" />
+                          <LucideIcon
+                            :name="
+                              rightExpandAll ? 'chevrons-up' : 'chevrons-down'
+                            "
+                          />
                         </span>
                       </md-icon-button>
                     </div>
@@ -1684,15 +1879,24 @@ const handleApply = () => {
                     ></md-checkbox>
                     <!-- ✅ 全选时文案变化 -->
                     <span class="text">{{
-                      rightSelectAllState.checked && !rightSelectAllState.indeterminate
-                        ? t('management_all_selected')
-                        : t('management_selected')
+                      rightSelectAllState.checked &&
+                      !rightSelectAllState.indeterminate
+                        ? t("management_all_selected")
+                        : t("management_selected")
                     }}</span>
-                    <span class="count"><AnimatedNumber :value="selectedCounts.bookmarks" /></span>
-                    <span class="text">{{ t('management_bookmarks_count') }}</span>
+                    <span class="count"
+                      ><AnimatedNumber :value="selectedCounts.bookmarks"
+                    /></span>
+                    <span class="text">{{
+                      t("management_bookmarks_count")
+                    }}</span>
                     <span class="gap"></span>
-                    <span class="count"><AnimatedNumber :value="selectedCounts.folders" /></span>
-                    <span class="text">{{ t('management_folders_count') }}</span>
+                    <span class="count"
+                      ><AnimatedNumber :value="selectedCounts.folders"
+                    /></span>
+                    <span class="text">{{
+                      t("management_folders_count")
+                    }}</span>
                   </div>
                   <div class="bulk-actions">
                     <!-- ✅ 清除选择按钮包装器 -->
@@ -1703,18 +1907,26 @@ const handleApply = () => {
                         :disabled="rightSelectedIds.length === 0"
                         @click="clearRightSelection"
                       >
-                        {{ t('management_clear_selection', String(rightSelectedIds.length)) }}
+                        {{
+                          t(
+                            "management_clear_selection",
+                            String(rightSelectedIds.length),
+                          )
+                        }}
                       </Button>
                     </span>
                     <!-- ✅ 删除按钮包装器 -->
                     <span class="btn-wrapper" :title="deleteButtonTooltip">
                       <md-filled-button
                         class="bulk-delete-btn error-button"
-                        :disabled="selectedCounts.bookmarks === 0 && selectedCounts.folders === 0"
+                        :disabled="
+                          selectedCounts.bookmarks === 0 &&
+                          selectedCounts.folders === 0
+                        "
                         @click="handleBulkDelete"
                       >
                         <LucideIcon slot="icon" name="trash" />
-                        {{ t('common_delete') }}
+                        {{ t("common_delete") }}
                       </md-filled-button>
                     </span>
                   </div>
@@ -1740,7 +1952,9 @@ const handleApply = () => {
       @update:show="
         (v: boolean) =>
           v
-            ? dialogStore.openEditBookmarkDialog(dialogStore.editBookmarkDialog.bookmark!)
+            ? dialogStore.openEditBookmarkDialog(
+                dialogStore.editBookmarkDialog.bookmark!,
+              )
             : dialogStore.closeEditBookmarkDialog()
       "
       @confirm="confirmEditBookmark"
@@ -1766,14 +1980,14 @@ const handleApply = () => {
       </div>
       <template #actions>
         <md-text-button @click="dialogStore.closeEditBookmarkDialog()">
-          {{ t('common_cancel') }}
+          {{ t("common_cancel") }}
         </md-text-button>
         <md-filled-button
           :disabled="!isEditDirty"
           :loading="isEditingBookmark"
           @click="confirmEditBookmark"
         >
-          {{ t('management_update') }}
+          {{ t("management_update") }}
         </md-filled-button>
       </template>
     </Dialog>
@@ -1793,7 +2007,9 @@ const handleApply = () => {
       @update:show="
         (v: boolean) =>
           v
-            ? dialogStore.openEditFolderDialog(dialogStore.editFolderDialog.folder!)
+            ? dialogStore.openEditFolderDialog(
+                dialogStore.editFolderDialog.folder!,
+              )
             : dialogStore.closeEditFolderDialog()
       "
       @confirm="confirmEditFolder"
@@ -1810,14 +2026,14 @@ const handleApply = () => {
       </div>
       <template #actions>
         <md-text-button @click="dialogStore.closeEditFolderDialog()">
-          {{ t('common_cancel') }}
+          {{ t("common_cancel") }}
         </md-text-button>
         <md-filled-button
           :disabled="!isEditFolderDirty"
           :loading="isEditingFolder"
           @click="confirmEditFolder"
         >
-          {{ t('management_update') }}
+          {{ t("management_update") }}
         </md-filled-button>
       </template>
     </Dialog>
@@ -1836,18 +2052,23 @@ const handleApply = () => {
       @confirm="confirmDeleteFolder"
     >
       <div class="confirm-content">
-        {{ t('management_delete_folder_confirm', String(deleteFolderBookmarkCount)) }}
+        {{
+          t(
+            "management_delete_folder_confirm",
+            String(deleteFolderBookmarkCount),
+          )
+        }}
       </div>
       <template #actions>
         <md-text-button @click="isConfirmDeleteDialogOpen = false">
-          {{ t('common_cancel') }}
+          {{ t("common_cancel") }}
         </md-text-button>
         <md-filled-tonal-button
           class="error-button"
           :loading="isDeletingFolder"
           @click="confirmDeleteFolder"
         >
-          {{ t('management_confirm_delete') }}
+          {{ t("management_confirm_delete") }}
         </md-filled-tonal-button>
       </template>
     </Dialog>
@@ -2089,8 +2310,10 @@ p.warning-text {
 .expand-toggle-icon {
   display: inline-flex;
   transition:
-    transform var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
-    opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+    transform var(--md-sys-motion-duration-short4)
+      var(--md-sys-motion-easing-standard),
+    opacity var(--md-sys-motion-duration-short4)
+      var(--md-sys-motion-easing-standard);
 }
 
 .expand-toggle-icon.expanded {
@@ -2235,7 +2458,8 @@ p.warning-text {
 
 /* 左侧面板收起/展开动画 */
 .left-panel {
-  transition: opacity var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-standard);
+  transition: opacity var(--md-sys-motion-duration-medium2)
+    var(--md-sys-motion-easing-standard);
   overflow: hidden;
 }
 
@@ -2366,9 +2590,11 @@ p.warning-text {
   opacity: 0.4;
   transform: translate(-50%, -50%);
   transition:
-    height var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard),
-    opacity var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
-  content: '';
+    height var(--md-sys-motion-duration-short2)
+      var(--md-sys-motion-easing-standard),
+    opacity var(--md-sys-motion-duration-short2)
+      var(--md-sys-motion-easing-standard);
+  content: "";
 }
 
 .panel-divider:hover::before {
@@ -2513,8 +2739,10 @@ p.warning-text {
 .card-footer-slide-enter-active,
 .card-footer-slide-leave-active {
   transition:
-    transform var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
-    opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+    transform var(--md-sys-motion-duration-short4)
+      var(--md-sys-motion-easing-standard),
+    opacity var(--md-sys-motion-duration-short4)
+      var(--md-sys-motion-easing-standard);
   will-change: transform, opacity;
 }
 
@@ -2575,14 +2803,19 @@ md-icon-button {
   flex: 1;
   align-items: stretch;
   gap: var(--left-panel-gap, clamp(var(--spacing-3), 3vw, var(--spacing-10)));
-  grid-template-columns: var(--left-panel-width, minmax(0, 1fr)) auto minmax(0, 1fr);
+  grid-template-columns: var(--left-panel-width, minmax(0, 1fr)) auto minmax(
+      0,
+      1fr
+    );
   box-sizing: border-box;
   width: 100%;
   height: 100%;
   min-height: 0;
   transition:
-    grid-template-columns var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-standard),
-    gap var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-standard);
+    grid-template-columns var(--md-sys-motion-duration-medium2)
+      var(--md-sys-motion-easing-standard),
+    gap var(--md-sys-motion-duration-medium2)
+      var(--md-sys-motion-easing-standard);
 }
 
 .management-row > .panel-col {

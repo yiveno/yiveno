@@ -21,28 +21,28 @@
  */
 
 /* 1. Layers 定义（必须最先导入） */
-@import url('../design-system/layers.css');
+@import url("../design-system/layers.css");
 
 /* 2. 设计令牌映射（将 Material Design 变量映射到项目内部使用的简化变量） */
-@import url('../design-system/tokens.css');
+@import url("../design-system/tokens.css");
 
 /* 2.5 业务主题映射（项目特定） */
-@import url('../design-system/theme-mappings.css');
+@import url("../design-system/theme-mappings.css");
 
 /* 3. 排版系统 */
-@import url('../design-system/typography.css');
+@import url("../design-system/typography.css");
 
 /* 4. 基础样式（reset + base layers） */
-@import url('../design-system/base.css');
+@import url("../design-system/base.css");
 
 /* 5. 工具类（utilities layer - 最高优先级） */
-@import url('../design-system/utilities-minimal.css');
+@import url("../design-system/utilities-minimal.css");
 
 /* 6. 动画系统 */
-@import url('../design-system/animations.css');
+@import url("../design-system/animations.css");
 
 /* 7. Material Web 组件样式覆盖 */
-@import url('../design-system/material-web-overrides.css');
+@import url("../design-system/material-web-overrides.css");
 
 /* === Material Design Icons === */
 

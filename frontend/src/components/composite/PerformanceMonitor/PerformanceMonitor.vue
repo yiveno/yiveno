@@ -1,33 +1,36 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { usePerformanceMonitor, useMemoryManagement } from '@/composables/useSimplePerformance'
+import { ref } from "vue";
+import {
+  usePerformanceMonitor,
+  useMemoryManagement,
+} from "@/composables/useSimplePerformance";
 
-const showMonitor = ref(true) // 简化：总是显示
-const isExpanded = ref(false)
+const showMonitor = ref(true); // 简化：总是显示
+const isExpanded = ref(false);
 
-const { metrics } = usePerformanceMonitor('PerformanceMonitor')
-const { memoryUsage, cleanup: cleanupMemory } = useMemoryManagement()
+const { metrics } = usePerformanceMonitor("PerformanceMonitor");
+const { memoryUsage, cleanup: cleanupMemory } = useMemoryManagement();
 
-const optimizationsEnabled = ref(true)
-const cacheSize = ref(0)
+const optimizationsEnabled = ref(true);
+const cacheSize = ref(0);
 
 const toggleMonitor = () => {
-  isExpanded.value = !isExpanded.value
-}
+  isExpanded.value = !isExpanded.value;
+};
 
 const getMemoryClass = () => {
-  if (memoryUsage.value.percentage > 80) return 'error'
-  if (memoryUsage.value.percentage > 60) return 'warning'
-  return 'success'
-}
+  if (memoryUsage.value.percentage > 80) return "error";
+  if (memoryUsage.value.percentage > 60) return "warning";
+  return "success";
+};
 
 const cleanup = () => {
-  cleanupMemory()
-}
+  cleanupMemory();
+};
 
 const toggleOptimizations = () => {
-  optimizationsEnabled.value = !optimizationsEnabled.value
-}
+  optimizationsEnabled.value = !optimizationsEnabled.value;
+};
 </script>
 
 <template>
@@ -35,7 +38,10 @@ const toggleOptimizations = () => {
     <div class="monitor-header">
       <h4>性能监控</h4>
       <md-icon-button @click="toggleMonitor">
-        <LucideIcon :name="isExpanded ? 'chevron-up' : 'chevron-down'" :size="20" />
+        <LucideIcon
+          :name="isExpanded ? 'chevron-up' : 'chevron-down'"
+          :size="20"
+        />
       </md-icon-button>
     </div>
 
@@ -65,7 +71,7 @@ const toggleOptimizations = () => {
       <div class="actions">
         <md-outlined-button @click="cleanup">清理缓存</md-outlined-button>
         <md-outlined-button @click="toggleOptimizations">
-          {{ optimizationsEnabled ? '禁用' : '启用' }}优化
+          {{ optimizationsEnabled ? "禁用" : "启用" }}优化
         </md-outlined-button>
       </div>
     </div>

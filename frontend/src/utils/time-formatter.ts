@@ -14,7 +14,11 @@
  * @returns 用户的语言代码，如 'zh-CN', 'en-US', 'ja-JP'
  */
 function getUserLocale(): string {
-  return navigator.language || (navigator.languages && navigator.languages[0]) || 'en-US'
+  return (
+    navigator.language ||
+    (navigator.languages && navigator.languages[0]) ||
+    "en-US"
+  );
 }
 
 /**
@@ -25,27 +29,27 @@ function getUserLocale(): string {
  * formatRelativeTime(Date.now() - 3600000) // "1 hour ago" (en-US) 或 "1小时前" (zh-CN)
  */
 export function formatRelativeTime(timestamp: number): string {
-  const now = Date.now()
-  const diff = now - timestamp
-  const locale = getUserLocale()
+  const now = Date.now();
+  const diff = now - timestamp;
+  const locale = getUserLocale();
 
   // 使用原生 Intl.RelativeTimeFormat
-  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' })
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
 
-  const seconds = Math.floor(diff / 1000)
-  const minutes = Math.floor(seconds / 60)
-  const hours = Math.floor(minutes / 60)
-  const days = Math.floor(hours / 24)
-  const weeks = Math.floor(days / 7)
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+  const weeks = Math.floor(days / 7);
 
-  if (seconds < 60) return rtf.format(-seconds, 'second')
-  if (minutes < 60) return rtf.format(-minutes, 'minute')
-  if (hours < 24) return rtf.format(-hours, 'hour')
-  if (days < 7) return rtf.format(-days, 'day')
-  if (weeks < 4) return rtf.format(-weeks, 'week')
+  if (seconds < 60) return rtf.format(-seconds, "second");
+  if (minutes < 60) return rtf.format(-minutes, "minute");
+  if (hours < 24) return rtf.format(-hours, "hour");
+  if (days < 7) return rtf.format(-days, "day");
+  if (weeks < 4) return rtf.format(-weeks, "week");
 
   // 超过4周，显示具体日期
-  return formatDateTime(timestamp, { dateStyle: 'short' })
+  return formatDateTime(timestamp, { dateStyle: "short" });
 }
 
 /**
@@ -56,14 +60,14 @@ export function formatRelativeTime(timestamp: number): string {
  * formatTime(Date.now()) // "14:30:25" (zh-CN) 或 "2:30:25 PM" (en-US)
  */
 export function formatTime(timestamp: number): string {
-  const locale = getUserLocale()
+  const locale = getUserLocale();
 
   return new Intl.DateTimeFormat(locale, {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: locale.startsWith('en-US') // 美国用12小时制
-  }).format(timestamp)
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: locale.startsWith("en-US"), // 美国用12小时制
+  }).format(timestamp);
 }
 
 /**
@@ -72,19 +76,24 @@ export function formatTime(timestamp: number): string {
  * @param options 格式化选项
  * @returns 本地化的日期时间字符串
  */
-export function formatDateTime(timestamp: number, options?: Intl.DateTimeFormatOptions): string {
-  const locale = getUserLocale()
+export function formatDateTime(
+  timestamp: number,
+  options?: Intl.DateTimeFormatOptions,
+): string {
+  const locale = getUserLocale();
 
   const defaultOptions: Intl.DateTimeFormatOptions = {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  }
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  };
 
-  return new Intl.DateTimeFormat(locale, options || defaultOptions).format(timestamp)
+  return new Intl.DateTimeFormat(locale, options || defaultOptions).format(
+    timestamp,
+  );
 }
 
 /**
@@ -96,9 +105,9 @@ export function formatDateTime(timestamp: number, options?: Intl.DateTimeFormatO
  * // 英文: "2 hours ago"、"yesterday"、"2 days ago"
  */
 export function formatRecentVisitTime(timestamp?: number): string {
-  if (!timestamp) return ''
+  if (!timestamp) return "";
 
-  return formatRelativeTime(timestamp)
+  return formatRelativeTime(timestamp);
 }
 
 /**
@@ -110,17 +119,17 @@ export function formatRecentVisitTime(timestamp?: number): string {
  * // 英文: "Jan 16, 2025, 2:30:23 PM"
  */
 export function formatFullDateTime(timestamp?: number): string {
-  if (!timestamp) return ''
+  if (!timestamp) return "";
 
-  const locale = getUserLocale()
+  const locale = getUserLocale();
 
   return new Intl.DateTimeFormat(locale, {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: locale.startsWith('en-US')
-  }).format(timestamp)
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: locale.startsWith("en-US"),
+  }).format(timestamp);
 }

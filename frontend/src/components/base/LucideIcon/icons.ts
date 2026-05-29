@@ -5,7 +5,7 @@
  * 按需导入,减少打包体积
  */
 
-import type { Component } from 'vue'
+import type { Component } from "vue";
 
 // 导入常用图标
 import {
@@ -151,8 +151,8 @@ import {
   WifiOff,
   // 计时器和仪表
   TimerOff,
-  Gauge
-} from 'lucide-vue-next'
+  Gauge,
+} from "lucide-vue-next";
 
 /**
  * Lucide 图标映射表
@@ -166,26 +166,26 @@ export const lucideIcons: Record<string, Component> = {
   x: X,
   close: X,
   check: Check,
-  'chevron-down': ChevronDown,
-  'chevron-right': ChevronRight,
-  'chevron-left': ChevronLeft,
-  'chevron-up': ChevronUp,
-  'chevrons-right': ChevronsRight,
-  'chevrons-left': ChevronsLeft,
-  'arrow-right': ArrowRight,
-  'arrow-left': ArrowLeft,
-  'arrow-up': ArrowUp,
-  'arrow-down': ArrowDown,
+  "chevron-down": ChevronDown,
+  "chevron-right": ChevronRight,
+  "chevron-left": ChevronLeft,
+  "chevron-up": ChevronUp,
+  "chevrons-right": ChevronsRight,
+  "chevrons-left": ChevronsLeft,
+  "arrow-right": ArrowRight,
+  "arrow-left": ArrowLeft,
+  "arrow-up": ArrowUp,
+  "arrow-down": ArrowDown,
   circle: Circle,
-  'circle-outline': Circle,
-  'minus-circle': MinusCircle,
-  'circle-minus': MinusCircle,
+  "circle-outline": Circle,
+  "minus-circle": MinusCircle,
+  "circle-minus": MinusCircle,
 
   // 编辑操作
   edit: Edit,
   delete: Trash2,
   trash: Trash2,
-  'trash-2': Trash2,
+  "trash-2": Trash2,
   copy: Copy,
   clipboard: Clipboard,
   save: Save,
@@ -195,23 +195,23 @@ export const lucideIcons: Record<string, Component> = {
   // 文件和文件夹
   file: File,
   folder: Folder,
-  'folder-open': FolderOpen,
-  'folder-plus': FolderPlus,
-  'folder-add': FolderPlus,
-  'folder-minus': FolderMinus,
-  'folder-delete': FolderMinus,
+  "folder-open": FolderOpen,
+  "folder-plus": FolderPlus,
+  "folder-add": FolderPlus,
+  "folder-minus": FolderMinus,
+  "folder-delete": FolderMinus,
 
   // 书签相关
   bookmark: Bookmark,
-  'bookmark-plus': BookmarkPlus,
-  'bookmark-add': BookmarkPlus,
-  'bookmark-minus': BookmarkMinus,
-  'bookmark-delete': BookmarkMinus,
-  'bookmark-check': BookmarkCheck,
+  "bookmark-plus": BookmarkPlus,
+  "bookmark-add": BookmarkPlus,
+  "bookmark-minus": BookmarkMinus,
+  "bookmark-delete": BookmarkMinus,
+  "bookmark-check": BookmarkCheck,
   star: Star,
   favorite: Star,
-  'star-off': StarOff,
-  'favorite-outline': StarOff,
+  "star-off": StarOff,
+  "favorite-outline": StarOff,
 
   // 搜索和筛选
   search: Search,
@@ -220,31 +220,31 @@ export const lucideIcons: Record<string, Component> = {
 
   // 设置和配置
   settings: Settings,
-  'more-vertical': MoreVertical,
-  'more-horizontal': MoreHorizontal,
+  "more-vertical": MoreVertical,
+  "more-horizontal": MoreHorizontal,
   menu: Menu,
 
   // 状态指示
   alert: AlertCircle,
-  'alert-circle': AlertCircle,
-  'alert-triangle': AlertTriangle,
+  "alert-circle": AlertCircle,
+  "alert-triangle": AlertTriangle,
   warning: AlertTriangle,
   info: Info,
   success: CheckCircle,
-  'check-circle': CheckCircle,
+  "check-circle": CheckCircle,
   error: XCircle,
-  'x-circle': XCircle,
+  "x-circle": XCircle,
   help: HelpCircle,
-  'help-circle': HelpCircle,
-  'check-square': CheckSquare,
+  "help-circle": HelpCircle,
+  "check-square": CheckSquare,
   square: Square,
 
   // 用户和账户
   user: User,
-  'user-circle': UserCircle,
+  "user-circle": UserCircle,
   account: User,
   users: Users,
-  'user-plus': UserPlus,
+  "user-plus": UserPlus,
 
   // 时间和日期
   clock: Clock,
@@ -252,18 +252,18 @@ export const lucideIcons: Record<string, Component> = {
 
   // 网络和同步
   cloud: Cloud,
-  'cloud-off': CloudOff,
-  'cloud-sync': RefreshCw,
+  "cloud-off": CloudOff,
+  "cloud-sync": RefreshCw,
   refresh: RefreshCw,
-  'refresh-cw': RefreshCw,
+  "refresh-cw": RefreshCw,
   sync: RefreshCw,
   loader: Loader2,
-  'loader-2': Loader2,
+  "loader-2": Loader2,
   loading: Loader2,
 
   // 视图和布局
   eye: Eye,
-  'eye-off': EyeOff,
+  "eye-off": EyeOff,
   layout: Layout,
   grid: Grid,
   list: List,
@@ -271,7 +271,7 @@ export const lucideIcons: Record<string, Component> = {
 
   // 导航
   home: Home,
-  'external-link': ExternalLink,
+  "external-link": ExternalLink,
   link: Link,
   unlink: Unlink,
 
@@ -295,7 +295,7 @@ export const lucideIcons: Record<string, Component> = {
   auto: Sparkles,
   /** 配色 / 主题色 */
   palette: Palette,
-  'color-palette': Palette,
+  "color-palette": Palette,
   lock: Lock,
   unlock: Unlock,
   shield: Shield,
@@ -308,17 +308,17 @@ export const lucideIcons: Record<string, Component> = {
   inbox: Inbox,
 
   // 用户操作
-  'log-out': LogOut,
+  "log-out": LogOut,
   logout: LogOut,
-  'log-in': LogIn,
+  "log-in": LogIn,
   login: LogIn,
 
   // 展开收起
-  'chevrons-up': ChevronsUp,
-  'chevrons-down': ChevronsDown,
+  "chevrons-up": ChevronsUp,
+  "chevrons-down": ChevronsDown,
 
   // 布局
-  'panel-left': PanelLeft,
+  "panel-left": PanelLeft,
   sidebar: PanelLeft,
 
   // 数据库
@@ -334,26 +334,26 @@ export const lucideIcons: Record<string, Component> = {
 
   /** 浏览器 / 窗口 / 标签组（右键菜单等） */
   glasses: Glasses,
-  'notebook-tabs': NotebookTabs,
-  'app-window': AppWindow,
+  "notebook-tabs": NotebookTabs,
+  "app-window": AppWindow,
 
   // 分享相关
   send: Send,
   image: Image,
 
   // AI 和活动相关
-  'brain-circuit': BrainCircuit,
+  "brain-circuit": BrainCircuit,
   brain: BrainCircuit,
   activity: Activity,
 
   // 服务器和网络相关
-  'server-crash': ServerCrash,
-  'wifi-off': WifiOff,
+  "server-crash": ServerCrash,
+  "wifi-off": WifiOff,
 
   // 计时器和仪表
-  'timer-off': TimerOff,
-  gauge: Gauge
-}
+  "timer-off": TimerOff,
+  gauge: Gauge,
+};
 
 /**
  * Material Icons 到 Lucide Icons 的映射
@@ -361,83 +361,83 @@ export const lucideIcons: Record<string, Component> = {
  */
 export const materialToLucideMap: Record<string, string> = {
   // 基础操作
-  'icon-add': 'plus',
-  'icon-add-circle': 'plus',
-  'icon-cancel': 'x',
-  'icon-check': 'check',
-  'icon-chevron-down': 'chevron-down',
-  'icon-chevron-right': 'chevron-right',
-  'icon-arrow-right-double': 'chevrons-right',
+  "icon-add": "plus",
+  "icon-add-circle": "plus",
+  "icon-cancel": "x",
+  "icon-check": "check",
+  "icon-chevron-down": "chevron-down",
+  "icon-chevron-right": "chevron-right",
+  "icon-arrow-right-double": "chevrons-right",
 
   // 编辑操作
-  'icon-edit-bookmark': 'edit',
-  'icon-edit-folder': 'edit',
-  'icon-folder-edit': 'edit',
-  'icon-delete': 'trash',
-  'icon-delete-sweep': 'trash',
-  'icon-copy': 'copy',
-  'icon-duplicate': 'copy',
+  "icon-edit-bookmark": "edit",
+  "icon-edit-folder": "edit",
+  "icon-folder-edit": "edit",
+  "icon-delete": "trash",
+  "icon-delete-sweep": "trash",
+  "icon-copy": "copy",
+  "icon-duplicate": "copy",
 
   // 文件和文件夹
-  'icon-file': 'file',
-  'icon-folder': 'folder',
-  'icon-folder-add': 'folder-plus',
-  'icon-folder-delete': 'folder-minus',
+  "icon-file": "file",
+  "icon-folder": "folder",
+  "icon-folder-add": "folder-plus",
+  "icon-folder-delete": "folder-minus",
 
   // 书签相关
-  'icon-bookmark': 'bookmark',
-  'icon-bookmark-Add': 'bookmark-plus',
-  'icon-bookmark-delete': 'bookmark-minus',
-  'icon-favorite': 'star',
-  'icon-favorite-outline': 'star-off',
-  'icon-star': 'star',
+  "icon-bookmark": "bookmark",
+  "icon-bookmark-Add": "bookmark-plus",
+  "icon-bookmark-delete": "bookmark-minus",
+  "icon-favorite": "star",
+  "icon-favorite-outline": "star-off",
+  "icon-star": "star",
 
   // 状态指示
-  'icon-alert': 'alert-circle',
-  'icon-error': 'x-circle',
-  'icon-success': 'check-circle',
-  'icon-approval': 'check-circle',
-  'icon-circle-outline': 'circle',
-  'icon-circle-minus': 'minus-circle',
-  'icon-warning': 'alert-triangle',
+  "icon-alert": "alert-circle",
+  "icon-error": "x-circle",
+  "icon-success": "check-circle",
+  "icon-approval": "check-circle",
+  "icon-circle-outline": "circle",
+  "icon-circle-minus": "minus-circle",
+  "icon-warning": "alert-triangle",
 
   // 用户
-  'icon-account': 'user',
+  "icon-account": "user",
 
   // 时间
-  'icon-clock': 'clock',
+  "icon-clock": "clock",
 
   // 网络和同步
-  'icon-cloud-sync': 'refresh',
-  'icon-swap': 'refresh',
-  'icon-sync-alert': 'alert-circle',
+  "icon-cloud-sync": "refresh",
+  "icon-swap": "refresh",
+  "icon-sync-alert": "alert-circle",
 
   // 视图
-  'icon-expand-All': 'chevrons-up',
-  'icon-collapse-All': 'chevrons-down',
+  "icon-expand-All": "chevrons-up",
+  "icon-collapse-All": "chevrons-down",
 
   // 主题
-  'icon-dark': 'moon',
+  "icon-dark": "moon",
 
   // 分享
-  'icon-share': 'external-link',
-  'icon-link': 'link',
+  "icon-share": "external-link",
+  "icon-link": "link",
 
   /** 文件夹「打开全部」等菜单（原 Material 名 → Lucide 键） */
-  'icon-incognito': 'glasses',
-  'icon-tab-group': 'notebook-tabs',
-  'icon-open-link': 'external-link',
-  'icon-window': 'app-window',
+  "icon-incognito": "glasses",
+  "icon-tab-group": "notebook-tabs",
+  "icon-open-link": "external-link",
+  "icon-window": "app-window",
 
   // 其他
-  'icon-flash': 'zap',
-  'icon-crown': 'crown',
-  'icon-brain': 'brain',
-  'icon-auto': 'sparkles',
-  'icon-block': 'ban',
-  'icon-clean': 'sparkles',
-  'icon-comparison': 'arrow-right',
-  'icon-down-arrow': 'arrow-down',
-  'icon-check-outline': 'check',
-  'icon-check-blank': 'minus'
-}
+  "icon-flash": "zap",
+  "icon-crown": "crown",
+  "icon-brain": "brain",
+  "icon-auto": "sparkles",
+  "icon-block": "ban",
+  "icon-clean": "sparkles",
+  "icon-comparison": "arrow-right",
+  "icon-down-arrow": "arrow-down",
+  "icon-check-outline": "check",
+  "icon-check-blank": "minus",
+};

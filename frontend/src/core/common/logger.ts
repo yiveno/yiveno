@@ -17,7 +17,7 @@ export interface ILogger {
    * @param message - 日志消息
    * @param args - 额外的上下文参数
    */
-  debug(namespace: string, message: string, ...args: unknown[]): void
+  debug(namespace: string, message: string, ...args: unknown[]): void;
 
   /**
    * 记录信息
@@ -25,7 +25,7 @@ export interface ILogger {
    * @param message - 日志消息
    * @param args - 额外的上下文参数
    */
-  info(namespace: string, message: string, ...args: unknown[]): void
+  info(namespace: string, message: string, ...args: unknown[]): void;
 
   /**
    * 记录警告
@@ -33,7 +33,7 @@ export interface ILogger {
    * @param message - 日志消息
    * @param args - 额外的上下文参数
    */
-  warn(namespace: string, message: string, ...args: unknown[]): void
+  warn(namespace: string, message: string, ...args: unknown[]): void;
 
   /**
    * 记录错误
@@ -41,7 +41,7 @@ export interface ILogger {
    * @param message - 日志消息
    * @param args - 额外的上下文参数
    */
-  error(namespace: string, message: string, ...args: unknown[]): void
+  error(namespace: string, message: string, ...args: unknown[]): void;
 }
 
 /**
@@ -51,5 +51,5 @@ export const noopLogger: ILogger = {
   debug: () => {},
   info: () => {},
   warn: () => {},
-  error: () => {}
-}
+  error: () => {},
+};

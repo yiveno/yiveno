@@ -1,5 +1,5 @@
-import { z } from 'zod'
-import type { BookmarkRecord } from '../types/bookmark-record'
+import { z } from "zod";
+import type { BookmarkRecord } from "../types/bookmark-record";
 
 /**
  * 简化的 Zod Schema 验证策略
@@ -14,11 +14,11 @@ import type { BookmarkRecord } from '../types/bookmark-record'
 // ==================== 公共 Schema 定义 ====================
 
 const TraitMetadataItemSchema = z.object({
-  tag: z.enum(['duplicate', 'invalid', 'internal']),
+  tag: z.enum(["duplicate", "invalid", "internal"]),
   detectedAt: z.number(),
-  source: z.enum(['worker', 'user', 'imported']),
-  notes: z.string().optional()
-})
+  source: z.enum(["worker", "user", "imported"]),
+  notes: z.string().optional(),
+});
 
 // ==================== 数据迁移工具 ====================
 
@@ -28,11 +28,13 @@ const TraitMetadataItemSchema = z.object({
  * '404' → 'invalid'
  * 'untagged' → 删除（不是有效的特征标签）
  */
-export function migrateTraitTags(tags: string[] | undefined): string[] | undefined {
-  if (!tags || tags.length === 0) return tags
+export function migrateTraitTags(
+  tags: string[] | undefined,
+): string[] | undefined {
+  if (!tags || tags.length === 0) return tags;
   return tags
-    .filter(tag => tag !== 'empty' && tag !== 'untagged')
-    .map(tag => (tag === '404' ? 'invalid' : tag))
+    .filter((tag) => tag !== "empty" && tag !== "untagged")
+    .map((tag) => (tag === "404" ? "invalid" : tag));
 }
 
 /**
@@ -43,33 +45,42 @@ export function migrateTraitTags(tags: string[] | undefined): string[] | undefin
  */
 export function migrateTraitMetadata(
   metadata:
-    | Array<{ tag: string; detectedAt: number; source: string; notes?: string | undefined }>
-    | undefined
+    | Array<{
+        tag: string;
+        detectedAt: number;
+        source: string;
+        notes?: string | undefined;
+      }>
+    | undefined,
 ):
   | Array<{
-      tag: 'duplicate' | 'invalid' | 'internal'
-      detectedAt: number
-      source: 'worker' | 'user' | 'imported'
-      notes?: string
+      tag: "duplicate" | "invalid" | "internal";
+      detectedAt: number;
+      source: "worker" | "user" | "imported";
+      notes?: string;
     }>
   | undefined {
-  if (!metadata || metadata.length === 0) return undefined
+  if (!metadata || metadata.length === 0) return undefined;
 
   const migrated = metadata
-    .filter(m => m.tag !== 'empty' && m.tag !== 'untagged')
-    .map(m => {
+    .filter((m) => m.tag !== "empty" && m.tag !== "untagged")
+    .map((m) => {
       const normalized = {
         tag:
-          m.tag === '404' ? ('invalid' as const) : (m.tag as 'duplicate' | 'invalid' | 'internal'),
+          m.tag === "404"
+            ? ("invalid" as const)
+            : (m.tag as "duplicate" | "invalid" | "internal"),
         detectedAt: m.detectedAt,
-        source: m.source as 'worker' | 'user' | 'imported'
-      }
+        source: m.source as "worker" | "user" | "imported",
+      };
 
-      return m.notes !== undefined ? { ...normalized, notes: m.notes } : normalized
-    })
+      return m.notes !== undefined
+        ? { ...normalized, notes: m.notes }
+        : normalized;
+    });
 
   // 如果过滤后为空，返回 undefined
-  return migrated.length > 0 ? migrated : undefined
+  return migrated.length > 0 ? migrated : undefined;
 }
 
 // ==================== BookmarkRecord Schema ====================
@@ -118,7 +129,7 @@ export const BookmarkRecordSchema = z
     traitMetadata: z.array(TraitMetadataItemSchema).optional(),
     isInvalid: z.boolean().optional(),
     invalidReason: z
-      .enum(['url_format', 'http_error', 'network_error', 'timeout', 'unknown'])
+      .enum(["url_format", "http_error", "network_error", "timeout", "unknown"])
       .optional(),
     httpStatus: z.number().optional(),
     isDuplicate: z.boolean().optional(),
@@ -133,22 +144,22 @@ export const BookmarkRecordSchema = z
     favoritedAt: z.number().optional(),
     hasMetadata: z.boolean().optional(),
     metadataUpdatedAt: z.number().optional(),
-    metadataSource: z.enum(['chrome', 'merged']).optional(),
+    metadataSource: z.enum(["chrome", "merged"]).optional(),
     metaTitleLower: z.string().optional(),
     metaDescriptionLower: z.string().optional(),
     metaKeywordsTokens: z.array(z.string()).optional(),
     metaBoost: z.number().optional(),
     flatIndex: z.number().optional(),
     isVisible: z.boolean().optional(),
-    sortKey: z.string().optional()
+    sortKey: z.string().optional(),
   })
-  .passthrough()
+  .passthrough();
 
-export const BookmarkRecordArraySchema = z.array(BookmarkRecordSchema)
+export const BookmarkRecordArraySchema = z.array(BookmarkRecordSchema);
 
 // ✅ 使用明确的类型定义，而不是 z.infer
 // 这样可以避免 Zod 类型推断的复杂性
-export type { BookmarkRecord }
+export type { BookmarkRecord };
 
 // ==================== Search Options Schema ====================
 
@@ -156,7 +167,9 @@ export const BookmarkSearchOptionsSchema = z
   .object({
     query: z.string().min(1),
     limit: z.number().int().nonnegative().optional(),
-    sortBy: z.enum(['relevance', 'title', 'dateAdded', 'visitCount']).optional(),
+    sortBy: z
+      .enum(["relevance", "title", "dateAdded", "visitCount"])
+      .optional(),
     minScore: z.number().nonnegative().optional(),
     includeDomain: z.boolean().optional(),
     includeUrl: z.boolean().optional(),
@@ -164,9 +177,9 @@ export const BookmarkSearchOptionsSchema = z
     includeTags: z.boolean().optional(),
     includeContent: z.boolean().optional(),
     exactMatch: z.boolean().optional(),
-    fuzzyMatch: z.boolean().optional()
+    fuzzyMatch: z.boolean().optional(),
   })
-  .passthrough()
+  .passthrough();
 
 export const BookmarkSearchResultSchema = z.object({
   id: z.string(),
@@ -176,10 +189,12 @@ export const BookmarkSearchResultSchema = z.object({
     .array(
       z.object({
         field: z.string(),
-        matchedText: z.string()
-      })
+        matchedText: z.string(),
+      }),
     )
-    .optional()
-})
+    .optional(),
+});
 
-export const BookmarkSearchResultArraySchema = z.array(BookmarkSearchResultSchema)
+export const BookmarkSearchResultArraySchema = z.array(
+  BookmarkSearchResultSchema,
+);

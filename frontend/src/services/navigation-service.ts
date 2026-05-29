@@ -13,7 +13,7 @@
  * - 清除通知
  */
 
-import { logger } from '@/infrastructure/logging/logger'
+import { logger } from "@/infrastructure/logging/logger";
 
 /**
  * 获取扩展内资源的完整URL
@@ -22,8 +22,8 @@ import { logger } from '@/infrastructure/logging/logger'
  * @returns 完整的扩展资源URL
  */
 function getExtensionUrl(path: string): string {
-  const normalized = path.startsWith('/') ? path.slice(1) : path
-  return chrome.runtime.getURL?.(normalized) ?? normalized
+  const normalized = path.startsWith("/") ? path.slice(1) : path;
+  return chrome.runtime.getURL?.(normalized) ?? normalized;
 }
 
 /**
@@ -33,12 +33,12 @@ function getExtensionUrl(path: string): string {
  * @throws 当标签页创建失败时抛出错误
  */
 async function openExtensionUrl(path: string): Promise<void> {
-  const url = getExtensionUrl(path)
+  const url = getExtensionUrl(path);
   try {
-    await chrome.tabs.create?.({ url, active: true })
+    await chrome.tabs.create?.({ url, active: true });
   } catch (error) {
-    logger.warn('NavigationService', `tabs.create 调用失败: ${url}`, error)
-    throw error
+    logger.warn("NavigationService", `tabs.create 调用失败: ${url}`, error);
+    throw error;
   }
 }
 
@@ -51,49 +51,53 @@ async function openExtensionUrl(path: string): Promise<void> {
  */
 async function openSidePanel(): Promise<void> {
   if (!chrome.sidePanel?.open || !chrome.sidePanel?.setOptions) {
-    const error = new Error('当前浏览器不支持侧边栏功能，请升级到 Chrome 116 或更高版本')
-    logger.error('NavigationService', error.message)
-    throw error
+    const error = new Error(
+      "当前浏览器不支持侧边栏功能，请升级到 Chrome 116 或更高版本",
+    );
+    logger.error("NavigationService", error.message);
+    throw error;
   }
 
   // 获取当前活动标签页
   const [currentTab] = await chrome.tabs.query({
     active: true,
-    lastFocusedWindow: true
-  })
+    lastFocusedWindow: true,
+  });
 
   if (!currentTab?.windowId) {
-    const error = new Error('无法获取当前窗口信息，请确保至少有一个浏览器窗口处于打开状态')
-    logger.error('NavigationService', error.message)
-    throw error
+    const error = new Error(
+      "无法获取当前窗口信息，请确保至少有一个浏览器窗口处于打开状态",
+    );
+    logger.error("NavigationService", error.message);
+    throw error;
   }
 
   logger.debug(
-    'NavigationService',
-    `尝试打开侧边栏，窗口ID: ${currentTab.windowId}, 标签ID: ${currentTab.id}`
-  )
+    "NavigationService",
+    `尝试打开侧边栏，窗口ID: ${currentTab.windowId}, 标签ID: ${currentTab.id}`,
+  );
 
   try {
     // 设置侧边栏选项
     await chrome.sidePanel.setOptions({
       tabId: currentTab.id,
-      path: 'side-panel.html',
-      enabled: true
-    })
+      path: "side-panel.html",
+      enabled: true,
+    });
 
     // 设置侧边栏行为（不在点击扩展图标时自动打开）
     if (chrome.sidePanel.setPanelBehavior) {
       await chrome.sidePanel.setPanelBehavior({
-        openPanelOnActionClick: false
-      })
+        openPanelOnActionClick: false,
+      });
     }
 
     // 打开侧边栏
-    await chrome.sidePanel.open({ windowId: currentTab.windowId })
-    logger.info('NavigationService', '侧边栏打开成功')
+    await chrome.sidePanel.open({ windowId: currentTab.windowId });
+    logger.info("NavigationService", "侧边栏打开成功");
   } catch (error) {
-    logger.error('NavigationService', '打开侧边栏失败', error)
-    throw error
+    logger.error("NavigationService", "打开侧边栏失败", error);
+    throw error;
   }
 }
 
@@ -107,25 +111,25 @@ async function openSidePanel(): Promise<void> {
  * @returns 通知ID，用于后续清除通知
  */
 async function showChromeNotification(options: {
-  title: string
-  message: string
-  iconUrl?: string
+  title: string;
+  message: string;
+  iconUrl?: string;
 }): Promise<string> {
   try {
     // 通过消息发送到 Background Script 创建系统通知
     // 因为 chrome.notifications API 只在 Background Script 中可用
     const response = await chrome.runtime.sendMessage({
-      type: 'NOTIFICATION',
+      type: "NOTIFICATION",
       data: {
         title: options.title,
         message: options.message,
-        iconUrl: options.iconUrl
-      }
-    })
-    return response?.notificationId || ''
+        iconUrl: options.iconUrl,
+      },
+    });
+    return response?.notificationId || "";
   } catch (error) {
-    logger.warn('NavigationService', '创建通知失败', error)
-    return ''
+    logger.warn("NavigationService", "创建通知失败", error);
+    return "";
   }
 }
 
@@ -135,17 +139,17 @@ async function showChromeNotification(options: {
  * @param id - 通知ID
  */
 async function clearChromeNotification(id: string): Promise<void> {
-  if (!id) return
+  if (!id) return;
 
   try {
     // 通过消息发送到 Background Script 清除系统通知
     // 因为 chrome.notifications API 只在 Background Script 中可用
     await chrome.runtime.sendMessage({
-      type: 'NOTIFICATION_CLEAR',
-      data: { notificationId: id }
-    })
+      type: "NOTIFICATION_CLEAR",
+      data: { notificationId: id },
+    });
   } catch (error) {
-    logger.warn('NavigationService', '清除通知失败', { id, error })
+    logger.warn("NavigationService", "清除通知失败", { id, error });
   }
 }
 
@@ -158,10 +162,10 @@ export const navigationService = {
   openExtensionUrl,
   openSidePanel,
   showChromeNotification,
-  clearChromeNotification
-}
+  clearChromeNotification,
+};
 
 /**
  * 导航服务类型
  */
-export type NavigationService = typeof navigationService
+export type NavigationService = typeof navigationService;

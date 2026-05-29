@@ -1,1 +1,1 @@
-export { default } from './GlobalSyncProgress.vue'
+export { default } from "./GlobalSyncProgress.vue";

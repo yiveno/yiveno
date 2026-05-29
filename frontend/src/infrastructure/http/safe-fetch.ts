@@ -8,25 +8,25 @@
  * - 与CSP兼容
  */
 
-import { apiClient } from './api-client'
+import { apiClient } from "./api-client";
 
 /**
  * 安全JSON请求选项
  */
 export interface SafeFetchOptions extends RequestInit {
-  timeout?: number
-  retries?: number
-  retryDelay?: number
+  timeout?: number;
+  retries?: number;
+  retryDelay?: number;
 }
 
 /**
  * 安全JSON请求结果
  */
 export interface SafeFetchResult<T = unknown> {
-  data: T | null
-  success: boolean
-  error?: string
-  status?: number
+  data: T | null;
+  success: boolean;
+  error?: string;
+  status?: number;
 }
 
 /**
@@ -40,28 +40,28 @@ export interface SafeFetchResult<T = unknown> {
 export async function safeJsonFetch<T = unknown>(
   url: string,
   a?: number | SafeFetchOptions,
-  b?: SafeFetchOptions
+  b?: SafeFetchOptions,
 ): Promise<T | null> {
   try {
-    let options: SafeFetchOptions | undefined
+    let options: SafeFetchOptions | undefined;
 
-    if (typeof a === 'number') {
+    if (typeof a === "number") {
       // safeJsonFetch(url, timeout, options)
-      options = { ...b, timeout: a }
+      options = { ...b, timeout: a };
     } else {
       // safeJsonFetch(url, options)
-      options = a
+      options = a;
     }
 
-    const result = await apiClient.request<T>(url, options)
+    const result = await apiClient.request<T>(url, options);
 
     if (result.ok) {
-      return result.value.data
+      return result.value.data;
     } else {
-      return null
+      return null;
     }
   } catch {
-    return null
+    return null;
   }
 }
 
@@ -70,31 +70,33 @@ export async function safeJsonFetch<T = unknown>(
  */
 export async function safeJsonFetchWithResult<T = unknown>(
   url: string,
-  options: SafeFetchOptions = {}
+  options: SafeFetchOptions = {},
 ): Promise<SafeFetchResult<T>> {
   try {
-    const result = await apiClient.request<T>(url, options)
+    const result = await apiClient.request<T>(url, options);
 
     if (result.ok) {
       return {
         data: result.value.data,
         success: true,
-        status: result.value.status
-      }
+        status: result.value.status,
+      };
     } else {
       return {
         data: null,
         success: false,
         error: result.error.message,
-        ...(result.error.status !== undefined ? { status: result.error.status } : {})
-      }
+        ...(result.error.status !== undefined
+          ? { status: result.error.status }
+          : {}),
+      };
     }
   } catch (error) {
     return {
       data: null,
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    }
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
   }
 }
 
@@ -103,24 +105,24 @@ export async function safeJsonFetchWithResult<T = unknown>(
  */
 export async function safeTextFetch(
   url: string,
-  options: SafeFetchOptions = {}
+  options: SafeFetchOptions = {},
 ): Promise<string | null> {
   try {
     const result = await apiClient.request<string>(url, {
       ...options,
       headers: {
-        Accept: 'text/plain',
-        ...options.headers
-      }
-    })
+        Accept: "text/plain",
+        ...options.headers,
+      },
+    });
 
     if (result.ok) {
-      return result.value.data
+      return result.value.data;
     } else {
-      return null
+      return null;
     }
   } catch {
-    return null
+    return null;
   }
 }
 
@@ -129,24 +131,24 @@ export async function safeTextFetch(
  */
 export async function safeBlobFetch(
   url: string,
-  options: SafeFetchOptions = {}
+  options: SafeFetchOptions = {},
 ): Promise<Blob | null> {
   try {
     const result = await apiClient.request<Blob>(url, {
       ...options,
       headers: {
-        Accept: 'application/octet-stream',
-        ...options.headers
-      }
-    })
+        Accept: "application/octet-stream",
+        ...options.headers,
+      },
+    });
 
     if (result.ok) {
-      return result.value.data
+      return result.value.data;
     } else {
-      return null
+      return null;
     }
   } catch {
-    return null
+    return null;
   }
 }
 
@@ -156,18 +158,18 @@ export async function safeBlobFetch(
 export async function safePost<T = unknown>(
   url: string,
   data?: unknown,
-  options: SafeFetchOptions = {}
+  options: SafeFetchOptions = {},
 ): Promise<T | null> {
   try {
-    const result = await apiClient.post<T>(url, data, options)
+    const result = await apiClient.post<T>(url, data, options);
 
     if (result.ok) {
-      return result.value.data
+      return result.value.data;
     } else {
-      return null
+      return null;
     }
   } catch {
-    return null
+    return null;
   }
 }
 
@@ -177,18 +179,18 @@ export async function safePost<T = unknown>(
 export async function safePut<T = unknown>(
   url: string,
   data?: unknown,
-  options: SafeFetchOptions = {}
+  options: SafeFetchOptions = {},
 ): Promise<T | null> {
   try {
-    const result = await apiClient.put<T>(url, data, options)
+    const result = await apiClient.put<T>(url, data, options);
 
     if (result.ok) {
-      return result.value.data
+      return result.value.data;
     } else {
-      return null
+      return null;
     }
   } catch {
-    return null
+    return null;
   }
 }
 
@@ -197,18 +199,18 @@ export async function safePut<T = unknown>(
  */
 export async function safeDelete<T = unknown>(
   url: string,
-  options: SafeFetchOptions = {}
+  options: SafeFetchOptions = {},
 ): Promise<T | null> {
   try {
-    const result = await apiClient.delete<T>(url, options)
+    const result = await apiClient.delete<T>(url, options);
 
     if (result.ok) {
-      return result.value.data
+      return result.value.data;
     } else {
-      return null
+      return null;
     }
   } catch {
-    return null
+    return null;
   }
 }
 
@@ -217,13 +219,15 @@ export async function safeDelete<T = unknown>(
  */
 export async function safeBatchFetch<T = unknown>(
   requests: Array<{
-    url: string
-    options?: SafeFetchOptions
-  }>
+    url: string;
+    options?: SafeFetchOptions;
+  }>,
 ): Promise<Array<T | null>> {
-  const promises = requests.map(({ url, options }) => safeJsonFetch<T>(url, options))
+  const promises = requests.map(({ url, options }) =>
+    safeJsonFetch<T>(url, options),
+  );
 
-  return Promise.all(promises)
+  return Promise.all(promises);
 }
 
 /**
@@ -232,9 +236,9 @@ export async function safeBatchFetch<T = unknown>(
 export async function safeFetchWithTimeout<T = unknown>(
   url: string,
   timeout: number,
-  options: SafeFetchOptions = {}
+  options: SafeFetchOptions = {},
 ): Promise<T | null> {
-  return safeJsonFetch<T>(url, { ...options, timeout })
+  return safeJsonFetch<T>(url, { ...options, timeout });
 }
 
 /**
@@ -243,7 +247,7 @@ export async function safeFetchWithTimeout<T = unknown>(
 export async function safeFetchWithRetry<T = unknown>(
   url: string,
   retries: number = 3,
-  options: SafeFetchOptions = {}
+  options: SafeFetchOptions = {},
 ): Promise<T | null> {
-  return safeJsonFetch<T>(url, { ...options, retries })
+  return safeJsonFetch<T>(url, { ...options, retries });
 }

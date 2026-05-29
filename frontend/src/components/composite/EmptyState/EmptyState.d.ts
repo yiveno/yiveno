@@ -3,13 +3,13 @@
  */
 export interface EmptyStateProps {
   /** 图标名称 */
-  icon?: string
+  icon?: string;
   /** 标题 */
-  title?: string
+  title?: string;
   /** 描述文字 */
-  description?: string
+  description?: string;
   /** 图标大小 */
-  iconSize?: number
+  iconSize?: number;
   /** 图标颜色 */
-  iconColor?: string
+  iconColor?: string;
 }

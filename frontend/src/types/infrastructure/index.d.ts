@@ -5,13 +5,13 @@
  */
 
 // IndexedDB 类型
-export * from './indexeddb'
+export * from "./indexeddb";
 
 // HTTP 类型
-export * from './http'
+export * from "./http";
 
 // 日志类型
-export * from './logging'
+export * from "./logging";
 
 // 事件类型
-export * from './events'
+export * from "./events";

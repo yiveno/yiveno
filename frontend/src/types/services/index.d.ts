@@ -5,7 +5,7 @@
  */
 
 // 性能监控类型
-export * from './performance'
+export * from "./performance";
 
 // Favicon 类型
-export * from './favicon'
+export * from "./favicon";

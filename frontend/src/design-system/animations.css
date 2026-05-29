@@ -319,7 +319,8 @@
   }
 
   .anim-highlight {
-    animation: highlight-flash var(--anim-duration-slow) var(--anim-ease-standard);
+    animation: highlight-flash var(--anim-duration-slow)
+      var(--anim-ease-standard);
   }
 
   /* === 过渡预设类 === */
@@ -455,11 +456,11 @@
  * - 新视图（暗黑）在上层
  * - 从点击位置向外扩散
  */
-html[data-theme='dark']::view-transition-old(root) {
+html[data-theme="dark"]::view-transition-old(root) {
   z-index: 1;
 }
 
-html[data-theme='dark']::view-transition-new(root) {
+html[data-theme="dark"]::view-transition-new(root) {
   z-index: 9999;
 }
 
@@ -469,10 +470,10 @@ html[data-theme='dark']::view-transition-new(root) {
  * - 从边缘向点击位置收缩
  * - 新视图（明亮）在底层完全可见，等待暗黑收缩露出
  */
-html[data-theme='light']::view-transition-old(root) {
+html[data-theme="light"]::view-transition-old(root) {
   z-index: 9999;
 }
 
-html[data-theme='light']::view-transition-new(root) {
+html[data-theme="light"]::view-transition-new(root) {
   z-index: 1;
 }

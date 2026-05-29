@@ -11,72 +11,75 @@
   - 符合 Material Design 3 规范
 -->
 <script setup lang="ts">
-import { computed } from 'vue'
-import Skeleton from './Skeleton.vue'
-import type { SkeletonTreeProps } from './SkeletonTree.d'
+import { computed } from "vue";
+import Skeleton from "./Skeleton.vue";
+import type { SkeletonTreeProps } from "./SkeletonTree.d";
 
-defineOptions({ name: 'SkeletonTree' })
+defineOptions({ name: "SkeletonTree" });
 
 const props = withDefaults(defineProps<SkeletonTreeProps>(), {
   count: 5,
-  nodeHeight: '36px',
-  gap: 'sm',
+  nodeHeight: "36px",
+  gap: "sm",
   showIcon: true,
   iconSize: 20,
   showIndent: true,
   indentWidth: 24,
-  animation: 'pulse'
-})
+  animation: "pulse",
+});
 
 /**
  * 生成树节点数组（包含随机层级）
  */
 const nodes = computed(() => {
-  const result: Array<{ index: number; level: number }> = []
+  const result: Array<{ index: number; level: number }> = [];
 
   for (let i = 0; i < props.count; i++) {
     // 随机生成层级（0-2 层）
     // 第一个节点总是根节点（level 0）
-    const level = i === 0 ? 0 : Math.floor(Math.random() * 3)
-    result.push({ index: i, level })
+    const level = i === 0 ? 0 : Math.floor(Math.random() * 3);
+    result.push({ index: i, level });
   }
 
-  return result
-})
+  return result;
+});
 
 /**
  * 计算树容器样式
  */
 const treeStyles = computed(() => {
   const gapMap = {
-    none: '0',
-    sm: 'var(--spacing-1)',
-    md: 'var(--spacing-2)',
-    lg: 'var(--spacing-3)'
-  }
+    none: "0",
+    sm: "var(--spacing-1)",
+    md: "var(--spacing-2)",
+    lg: "var(--spacing-3)",
+  };
 
   return {
-    gap: gapMap[props.gap]
-  }
-})
+    gap: gapMap[props.gap],
+  };
+});
 
 /**
  * 计算树节点样式
  */
 const nodeStyles = computed(() => ({
-  height: typeof props.nodeHeight === 'number' ? `${props.nodeHeight}px` : props.nodeHeight
-}))
+  height:
+    typeof props.nodeHeight === "number"
+      ? `${props.nodeHeight}px`
+      : props.nodeHeight,
+}));
 
 /**
  * 计算节点缩进样式
  */
 const getNodeIndentStyle = (level: number) => {
-  if (!props.showIndent) return {}
+  if (!props.showIndent) return {};
 
   return {
-    paddingLeft: `${level * props.indentWidth}px`
-  }
-}
+    paddingLeft: `${level * props.indentWidth}px`,
+  };
+};
 </script>
 
 <template>
@@ -128,7 +131,8 @@ const getNodeIndentStyle = (level: number) => {
   background-color: var(--md-sys-color-surface);
 
   /* 过渡动画（用于缩进变化） */
-  transition: padding-left var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+  transition: padding-left var(--md-sys-motion-duration-short2)
+    var(--md-sys-motion-easing-standard);
 }
 
 /* ========== 图标 ========== */

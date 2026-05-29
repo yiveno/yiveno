@@ -1,148 +1,157 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { LucideIcon } from '@/components'
-import type { ChromeExtensionMessage } from '@/types/chrome-messages'
-import { t } from '@/utils/i18n-helpers'
-import { logger } from '@/infrastructure/logging/logger'
+import { ref, onMounted, onUnmounted, computed } from "vue";
+import { LucideIcon } from "@/components";
+import type { ChromeExtensionMessage } from "@/types/chrome-messages";
+import { t } from "@/utils/i18n-helpers";
+import { logger } from "@/infrastructure/logging/logger";
 
 interface Step {
-  id: string
-  titleKey: string
-  subtitleKey?: string
-  descriptionKey: string
-  visual: 'hero' | 'sync' | 'search' | 'omnibox' | 'complete'
-  showAction?: boolean
+  id: string;
+  titleKey: string;
+  subtitleKey?: string;
+  descriptionKey: string;
+  visual: "hero" | "sync" | "search" | "omnibox" | "complete";
+  showAction?: boolean;
 }
 
 const steps: Step[] = [
   {
-    id: 'welcome',
-    titleKey: 'onboarding_welcome_title',
-    subtitleKey: 'onboarding_welcome_subtitle',
-    descriptionKey: 'onboarding_welcome_description',
-    visual: 'hero',
-    showAction: true
+    id: "welcome",
+    titleKey: "onboarding_welcome_title",
+    subtitleKey: "onboarding_welcome_subtitle",
+    descriptionKey: "onboarding_welcome_description",
+    visual: "hero",
+    showAction: true,
   },
   {
-    id: 'performance',
-    titleKey: 'onboarding_performance_title',
-    subtitleKey: 'onboarding_performance_subtitle',
-    descriptionKey: 'onboarding_performance_description',
-    visual: 'hero',
-    showAction: true
+    id: "performance",
+    titleKey: "onboarding_performance_title",
+    subtitleKey: "onboarding_performance_subtitle",
+    descriptionKey: "onboarding_performance_description",
+    visual: "hero",
+    showAction: true,
   },
   {
-    id: 'ai-powered',
-    titleKey: 'onboarding_ai_title',
-    subtitleKey: 'onboarding_ai_subtitle',
-    descriptionKey: 'onboarding_ai_description',
-    visual: 'search',
-    showAction: true
+    id: "ai-powered",
+    titleKey: "onboarding_ai_title",
+    subtitleKey: "onboarding_ai_subtitle",
+    descriptionKey: "onboarding_ai_description",
+    visual: "search",
+    showAction: true,
   },
   {
-    id: 'omnibox',
-    titleKey: 'onboarding_omnibox_title',
-    subtitleKey: 'onboarding_omnibox_subtitle',
-    descriptionKey: 'onboarding_omnibox_description',
-    visual: 'omnibox',
-    showAction: true
+    id: "omnibox",
+    titleKey: "onboarding_omnibox_title",
+    subtitleKey: "onboarding_omnibox_subtitle",
+    descriptionKey: "onboarding_omnibox_description",
+    visual: "omnibox",
+    showAction: true,
   },
   {
-    id: 'privacy',
-    titleKey: 'onboarding_privacy_title',
-    subtitleKey: 'onboarding_privacy_subtitle',
-    descriptionKey: 'onboarding_privacy_description',
-    visual: 'sync',
-    showAction: true
+    id: "privacy",
+    titleKey: "onboarding_privacy_title",
+    subtitleKey: "onboarding_privacy_subtitle",
+    descriptionKey: "onboarding_privacy_description",
+    visual: "sync",
+    showAction: true,
   },
   {
-    id: 'ready',
-    titleKey: 'onboarding_ready_title',
-    subtitleKey: 'onboarding_ready_subtitle',
-    descriptionKey: 'onboarding_ready_description',
-    visual: 'complete',
-    showAction: true
-  }
-]
+    id: "ready",
+    titleKey: "onboarding_ready_title",
+    subtitleKey: "onboarding_ready_subtitle",
+    descriptionKey: "onboarding_ready_description",
+    visual: "complete",
+    showAction: true,
+  },
+];
 
-const currentStepIndex = ref(0)
-const progress = ref(0)
-const progressMessage = ref(t('onboarding_initializing'))
-const isSyncing = ref(true)
-const isCompleted = ref(false)
+const currentStepIndex = ref(0);
+const progress = ref(0);
+const progressMessage = ref(t("onboarding_initializing"));
+const isSyncing = ref(true);
+const isCompleted = ref(false);
 
-const fallbackStep: Step = steps[0]!
+const fallbackStep: Step = steps[0]!;
 
-const currentStep = computed<Step>(() => steps[currentStepIndex.value] ?? fallbackStep)
-const isLast = computed(() => currentStepIndex.value === steps.length - 1)
+const currentStep = computed<Step>(
+  () => steps[currentStepIndex.value] ?? fallbackStep,
+);
+const isLast = computed(() => currentStepIndex.value === steps.length - 1);
 
 function nextStep() {
   if (currentStepIndex.value < steps.length - 1) {
-    currentStepIndex.value++
+    currentStepIndex.value++;
   } else {
-    if (typeof window !== 'undefined') {
-      window.close()
+    if (typeof window !== "undefined") {
+      window.close();
     }
   }
 }
 
 const messageListener = (message: ChromeExtensionMessage) => {
-  if (message.type === 'acuity-bookmarks-sync-progress') {
-    progress.value = message.data.percentage
-    progressMessage.value = message.data.message
+  if (message.type === "acuity-bookmarks-sync-progress") {
+    progress.value = message.data.percentage;
+    progressMessage.value = message.data.message;
 
-    if (message.data.phase === 'completed') {
-      completeSync()
+    if (message.data.phase === "completed") {
+      completeSync();
     }
-  } else if (message.type === 'acuity-bookmarks-db-ready') {
-    completeSync()
+  } else if (message.type === "acuity-bookmarks-db-ready") {
+    completeSync();
   }
-}
+};
 
 function completeSync() {
   if (!isCompleted.value) {
-    isSyncing.value = false
-    isCompleted.value = true
-    progress.value = 100
-    progressMessage.value = t('onboarding_ready')
+    isSyncing.value = false;
+    isCompleted.value = true;
+    progress.value = 100;
+    progressMessage.value = t("onboarding_ready");
   }
 }
 
 onMounted(() => {
   // 检查 Chrome API 是否可用
-  if (typeof chrome !== 'undefined' && chrome.runtime) {
-    chrome.runtime.onMessage.addListener(messageListener)
+  if (typeof chrome !== "undefined" && chrome.runtime) {
+    chrome.runtime.onMessage.addListener(messageListener);
 
     if (chrome.storage?.local) {
-      chrome.storage.local.get(['AB_INITIALIZED'], result => {
+      chrome.storage.local.get(["AB_INITIALIZED"], (result) => {
         if (result.AB_INITIALIZED) {
-          completeSync()
+          completeSync();
         }
-      })
+      });
     }
   } else {
     // 非扩展环境：模拟开发/演示模式
-    logger.warn('Onboarding', 'Env', 'Chrome Extension APIs not available. Running in demo mode.')
+    logger.warn(
+      "Onboarding",
+      "Env",
+      "Chrome Extension APIs not available. Running in demo mode.",
+    );
     // 模拟进度
-    let currentProgress = 0
+    let currentProgress = 0;
     const interval = setInterval(() => {
-      currentProgress += 10
-      progress.value = currentProgress
-      progressMessage.value = t('onboarding_processing', String(currentProgress))
+      currentProgress += 10;
+      progress.value = currentProgress;
+      progressMessage.value = t(
+        "onboarding_processing",
+        String(currentProgress),
+      );
 
       if (currentProgress >= 100) {
-        clearInterval(interval)
-        completeSync()
+        clearInterval(interval);
+        completeSync();
       }
-    }, 300)
+    }, 300);
   }
-})
+});
 
 onUnmounted(() => {
-  if (typeof chrome !== 'undefined' && chrome.runtime) {
-    chrome.runtime.onMessage.removeListener(messageListener)
+  if (typeof chrome !== "undefined" && chrome.runtime) {
+    chrome.runtime.onMessage.removeListener(messageListener);
   }
-})
+});
 </script>
 
 <template>
@@ -173,7 +182,12 @@ onUnmounted(() => {
             <div v-else-if="currentStep.visual === 'sync'" class="visual-sync">
               <div class="progress-circle">
                 <svg class="progress-ring" viewBox="0 0 120 120">
-                  <circle class="progress-ring__background" cx="60" cy="60" r="54" />
+                  <circle
+                    class="progress-ring__background"
+                    cx="60"
+                    cy="60"
+                    r="54"
+                  />
                   <circle
                     class="progress-ring__progress"
                     cx="60"
@@ -183,25 +197,35 @@ onUnmounted(() => {
                   />
                 </svg>
                 <div class="progress-text">
-                  <div class="progress-percentage">{{ Math.round(progress) }}%</div>
-                  <div class="progress-label">{{ t('onboarding_synced') }}</div>
+                  <div class="progress-percentage">
+                    {{ Math.round(progress) }}%
+                  </div>
+                  <div class="progress-label">{{ t("onboarding_synced") }}</div>
                 </div>
               </div>
               <div class="sync-status">
-                <span :class="['status-dot', { 'status-dot--active': isSyncing }]"></span>
+                <span
+                  :class="['status-dot', { 'status-dot--active': isSyncing }]"
+                ></span>
                 <span class="status-message">{{ progressMessage }}</span>
               </div>
             </div>
 
             <!-- Search Mockup -->
-            <div v-else-if="currentStep.visual === 'search'" class="visual-search">
+            <div
+              v-else-if="currentStep.visual === 'search'"
+              class="visual-search"
+            >
               <div class="search-box">
                 <LucideIcon name="search" size="sm" />
                 <span class="search-placeholder">"design resources"</span>
               </div>
               <div class="search-results">
                 <div class="result-item">
-                  <div class="result-icon" style="background: var(--color-primary-100)">
+                  <div
+                    class="result-icon"
+                    style="background: var(--color-primary-100)"
+                  >
                     <span style="color: var(--color-primary)">F</span>
                   </div>
                   <div class="result-content">
@@ -210,7 +234,10 @@ onUnmounted(() => {
                   </div>
                 </div>
                 <div class="result-item">
-                  <div class="result-icon" style="background: var(--color-warning-container)">
+                  <div
+                    class="result-icon"
+                    style="background: var(--color-warning-container)"
+                  >
                     <span style="color: var(--color-warning)">D</span>
                   </div>
                   <div class="result-content">
@@ -222,7 +249,10 @@ onUnmounted(() => {
             </div>
 
             <!-- Omnibox Visual -->
-            <div v-else-if="currentStep.visual === 'omnibox'" class="visual-omnibox">
+            <div
+              v-else-if="currentStep.visual === 'omnibox'"
+              class="visual-omnibox"
+            >
               <div class="omnibox-bar">
                 <div class="omnibox-icon">
                   <LucideIcon name="search" size="sm" />
@@ -236,14 +266,18 @@ onUnmounted(() => {
                 <div class="omnibox-result omnibox-result--active">
                   <LucideIcon name="bookmark" size="sm" />
                   <div class="omnibox-result-text">
-                    <div class="omnibox-result-title">Figma Design Resources</div>
+                    <div class="omnibox-result-title">
+                      Figma Design Resources
+                    </div>
                     <div class="omnibox-result-url">figma.com/resources</div>
                   </div>
                 </div>
                 <div class="omnibox-result">
                   <LucideIcon name="bookmark" size="sm" />
                   <div class="omnibox-result-text">
-                    <div class="omnibox-result-title">Design Systems Database</div>
+                    <div class="omnibox-result-title">
+                      Design Systems Database
+                    </div>
                     <div class="omnibox-result-url">designsystems.com</div>
                   </div>
                 </div>
@@ -251,7 +285,10 @@ onUnmounted(() => {
             </div>
 
             <!-- Complete Visual -->
-            <div v-else-if="currentStep.visual === 'complete'" class="visual-complete">
+            <div
+              v-else-if="currentStep.visual === 'complete'"
+              class="visual-complete"
+            >
               <div class="complete-icon">
                 <LucideIcon name="check" size="xl" />
               </div>
@@ -268,7 +305,9 @@ onUnmounted(() => {
 
             <div v-if="currentStep.showAction" class="action-area">
               <button class="action-button" @click="nextStep">
-                {{ isLast ? t('onboarding_get_started') : t('onboarding_next') }}
+                {{
+                  isLast ? t("onboarding_get_started") : t("onboarding_next")
+                }}
                 <LucideIcon name="arrow-right" size="sm" />
               </button>
             </div>
@@ -445,7 +484,11 @@ onUnmounted(() => {
   width: 300px;
   height: 300px;
   border-radius: 50%;
-  background: radial-gradient(circle, var(--color-primary-alpha-20) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    var(--color-primary-alpha-20) 0%,
+    transparent 70%
+  );
   animation: pulse 3s ease-in-out infinite;
   filter: blur(40px);
 }

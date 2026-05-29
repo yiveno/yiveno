@@ -5,7 +5,7 @@ export enum TaskPriority {
   LOW = 0,
   NORMAL = 1,
   HIGH = 2,
-  CRITICAL = 3
+  CRITICAL = 3,
 }
 
 /**
@@ -13,15 +13,15 @@ export enum TaskPriority {
  */
 export interface ScheduleOptions {
   /** 延迟执行毫秒数 */
-  delayMs?: number
+  delayMs?: number;
   /** 任务优先级 */
-  priority?: TaskPriority
+  priority?: TaskPriority;
   /** 超时时间（毫秒） */
-  timeoutMs?: number
+  timeoutMs?: number;
   /** 最大重试次数 */
-  retries?: number
+  retries?: number;
   /** 重试间隔（毫秒） */
-  retryDelay?: number
+  retryDelay?: number;
 }
 
 /**
@@ -29,13 +29,13 @@ export interface ScheduleOptions {
  */
 export interface TaskOptions {
   /** 超时时间（毫秒） */
-  timeoutMs: number
+  timeoutMs: number;
   /** 调度时的优先级 */
-  priority: TaskPriority
+  priority: TaskPriority;
   /** 最大重试次数 */
-  retries: number
+  retries: number;
   /** 重试间隔（毫秒） */
-  retryDelay: number
+  retryDelay: number;
 }
 
 /**
@@ -43,21 +43,21 @@ export interface TaskOptions {
  */
 export interface Task {
   /** 任务 ID */
-  id: string
+  id: string;
   /** 任务展示名称 */
-  name: string
+  name: string;
   /** 任务类型（UI、背景等） */
-  type: string
+  type: string;
   /** 当前优先级 */
-  priority: TaskPriority
+  priority: TaskPriority;
   /** 实际执行函数 */
-  fn: () => void | Promise<void>
+  fn: () => void | Promise<void>;
   /** 固有配置 */
-  options: TaskOptions
+  options: TaskOptions;
   /** 创建时间戳 */
-  createdAt: number
+  createdAt: number;
   /** 已执行的重试次数 */
-  retryCount: number
+  retryCount: number;
 }
 
 /**
@@ -65,27 +65,27 @@ export interface Task {
  */
 export interface SchedulerConfig {
   /** 默认超时时间（毫秒） */
-  defaultTimeout: number
+  defaultTimeout: number;
   /** 默认重试间隔（毫秒） */
-  retryDelay: number
+  retryDelay: number;
   /** 默认最大重试次数 */
-  maxRetries: number
+  maxRetries: number;
   /** 并发执行的最大任务数 */
-  maxConcurrentTasks: number
+  maxConcurrentTasks: number;
   /** 是否开启优先级队列 */
-  enablePriorityQueue: boolean
+  enablePriorityQueue: boolean;
   /** 是否支持自动重试 */
-  enableRetry: boolean
+  enableRetry: boolean;
 }
 
 /**
  * 调度器统计信息
  */
 export interface SchedulerStats {
-  totalTasks: number
-  completedTasks: number
-  failedTasks: number
-  pendingTasks: number
-  activeTasks: number
-  averageExecutionTime: number
+  totalTasks: number;
+  completedTasks: number;
+  failedTasks: number;
+  pendingTasks: number;
+  activeTasks: number;
+  averageExecutionTime: number;
 }

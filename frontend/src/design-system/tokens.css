@@ -32,11 +32,15 @@
   /* === 表面色系 (Surface Colors) === */
   --color-surface: var(--md-sys-color-surface);
   --color-surface-variant: var(--md-sys-color-surface-variant);
-  --color-surface-container-lowest: var(--md-sys-color-surface-container-lowest);
+  --color-surface-container-lowest: var(
+    --md-sys-color-surface-container-lowest
+  );
   --color-surface-container-low: var(--md-sys-color-surface-container-low);
   --color-surface-container: var(--md-sys-color-surface-container);
   --color-surface-container-high: var(--md-sys-color-surface-container-high);
-  --color-surface-container-highest: var(--md-sys-color-surface-container-highest);
+  --color-surface-container-highest: var(
+    --md-sys-color-surface-container-highest
+  );
   --color-surface-inverse: var(--md-sys-color-inverse-surface);
   --color-on-surface-inverse: var(--md-sys-color-inverse-on-surface);
 
@@ -108,20 +112,72 @@
   --color-white: #fff;
 
   /* === Hover 状态色彩 (使用 color-mix 算法自动计算) === */
-  --color-primary-hover: color-mix(in srgb, var(--color-primary), var(--color-black) 15%);
-  --color-primary-active: color-mix(in srgb, var(--color-primary), var(--color-black) 25%);
-  --color-secondary-hover: color-mix(in srgb, var(--color-secondary), var(--color-black) 15%);
-  --color-secondary-active: color-mix(in srgb, var(--color-secondary), var(--color-black) 25%);
-  --color-error-hover: color-mix(in srgb, var(--color-error), var(--color-black) 15%);
-  --color-error-active: color-mix(in srgb, var(--color-error), var(--color-black) 25%);
-  --color-warning-hover: color-mix(in srgb, var(--color-warning), var(--color-black) 15%);
-  --color-warning-active: color-mix(in srgb, var(--color-warning), var(--color-black) 25%);
-  --color-success-hover: color-mix(in srgb, var(--color-success), var(--color-black) 15%);
-  --color-success-active: color-mix(in srgb, var(--color-success), var(--color-black) 25%);
-  --color-surface-hover: color-mix(in srgb, var(--color-surface), var(--color-primary) 8%);
-  --color-surface-active: color-mix(in srgb, var(--color-surface), var(--color-primary) 12%);
+  --color-primary-hover: color-mix(
+    in srgb,
+    var(--color-primary),
+    var(--color-black) 15%
+  );
+  --color-primary-active: color-mix(
+    in srgb,
+    var(--color-primary),
+    var(--color-black) 25%
+  );
+  --color-secondary-hover: color-mix(
+    in srgb,
+    var(--color-secondary),
+    var(--color-black) 15%
+  );
+  --color-secondary-active: color-mix(
+    in srgb,
+    var(--color-secondary),
+    var(--color-black) 25%
+  );
+  --color-error-hover: color-mix(
+    in srgb,
+    var(--color-error),
+    var(--color-black) 15%
+  );
+  --color-error-active: color-mix(
+    in srgb,
+    var(--color-error),
+    var(--color-black) 25%
+  );
+  --color-warning-hover: color-mix(
+    in srgb,
+    var(--color-warning),
+    var(--color-black) 15%
+  );
+  --color-warning-active: color-mix(
+    in srgb,
+    var(--color-warning),
+    var(--color-black) 25%
+  );
+  --color-success-hover: color-mix(
+    in srgb,
+    var(--color-success),
+    var(--color-black) 15%
+  );
+  --color-success-active: color-mix(
+    in srgb,
+    var(--color-success),
+    var(--color-black) 25%
+  );
+  --color-surface-hover: color-mix(
+    in srgb,
+    var(--color-surface),
+    var(--color-primary) 8%
+  );
+  --color-surface-active: color-mix(
+    in srgb,
+    var(--color-surface),
+    var(--color-primary) 12%
+  );
   --color-border-hover: var(--md-sys-color-outline);
-  --color-primary-soft: color-mix(in srgb, var(--color-surface), var(--color-primary) 5%);
+  --color-primary-soft: color-mix(
+    in srgb,
+    var(--color-surface),
+    var(--color-primary) 5%
+  );
 
   /* === 强调色状态变体 (Accent State Variants) === */
   --color-accent-amber-hover: color-mix(
@@ -165,44 +221,132 @@
   --color-info-alpha-10: var(--acuity-info-alpha-10);
 
   /* === 阴影 / 遮罩 / 高光（P3：统一自 md-sys shadow、scrim，禁止组件内 rgb(0,0,0/…)）=== */
-  --color-error-alpha-30: color-mix(in srgb, var(--md-sys-color-error) 30%, transparent);
-  --color-on-primary-faint-020: color-mix(in srgb, var(--md-sys-color-on-primary) 20%, transparent);
-  --color-on-primary-faint-025: color-mix(in srgb, var(--md-sys-color-on-primary) 25%, transparent);
-  --color-on-primary-faint-030: color-mix(in srgb, var(--md-sys-color-on-primary) 30%, transparent);
-  --color-primary-alpha-30: color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent);
-  --color-primary-surface: color-mix(in srgb, var(--color-surface), var(--color-primary) 8%);
+  --color-error-alpha-30: color-mix(
+    in srgb,
+    var(--md-sys-color-error) 30%,
+    transparent
+  );
+  --color-on-primary-faint-020: color-mix(
+    in srgb,
+    var(--md-sys-color-on-primary) 20%,
+    transparent
+  );
+  --color-on-primary-faint-025: color-mix(
+    in srgb,
+    var(--md-sys-color-on-primary) 25%,
+    transparent
+  );
+  --color-on-primary-faint-030: color-mix(
+    in srgb,
+    var(--md-sys-color-on-primary) 30%,
+    transparent
+  );
+  --color-primary-alpha-30: color-mix(
+    in srgb,
+    var(--md-sys-color-primary) 30%,
+    transparent
+  );
+  --color-primary-surface: color-mix(
+    in srgb,
+    var(--color-surface),
+    var(--color-primary) 8%
+  );
   --color-primary-surface-strong: color-mix(
     in srgb,
     var(--color-surface),
     var(--color-primary) 12%
   );
-  --color-scrim-012: color-mix(in srgb, var(--md-sys-color-scrim) 12%, transparent);
-  --color-scrim-35: color-mix(in srgb, var(--md-sys-color-scrim) 35%, transparent);
-  --color-scrim-55: color-mix(in srgb, var(--md-sys-color-scrim) 55%, transparent);
-  --color-shadow-003: color-mix(in srgb, var(--md-sys-color-shadow) 3%, transparent);
-  --color-shadow-005: color-mix(in srgb, var(--md-sys-color-shadow) 5%, transparent);
-  --color-shadow-006: color-mix(in srgb, var(--md-sys-color-shadow) 6%, transparent);
-  --color-shadow-008: color-mix(in srgb, var(--md-sys-color-shadow) 8%, transparent);
-  --color-shadow-010: color-mix(in srgb, var(--md-sys-color-shadow) 10%, transparent);
-  --color-shadow-015: color-mix(in srgb, var(--md-sys-color-shadow) 15%, transparent);
-  --color-shadow-020: color-mix(in srgb, var(--md-sys-color-shadow) 20%, transparent);
-  --color-shadow-025: color-mix(in srgb, var(--md-sys-color-shadow) 25%, transparent);
-  --color-shadow-030: color-mix(in srgb, var(--md-sys-color-shadow) 30%, transparent);
-  --color-shadow-035: color-mix(in srgb, var(--md-sys-color-shadow) 35%, transparent);
+  --color-scrim-012: color-mix(
+    in srgb,
+    var(--md-sys-color-scrim) 12%,
+    transparent
+  );
+  --color-scrim-35: color-mix(
+    in srgb,
+    var(--md-sys-color-scrim) 35%,
+    transparent
+  );
+  --color-scrim-55: color-mix(
+    in srgb,
+    var(--md-sys-color-scrim) 55%,
+    transparent
+  );
+  --color-shadow-003: color-mix(
+    in srgb,
+    var(--md-sys-color-shadow) 3%,
+    transparent
+  );
+  --color-shadow-005: color-mix(
+    in srgb,
+    var(--md-sys-color-shadow) 5%,
+    transparent
+  );
+  --color-shadow-006: color-mix(
+    in srgb,
+    var(--md-sys-color-shadow) 6%,
+    transparent
+  );
+  --color-shadow-008: color-mix(
+    in srgb,
+    var(--md-sys-color-shadow) 8%,
+    transparent
+  );
+  --color-shadow-010: color-mix(
+    in srgb,
+    var(--md-sys-color-shadow) 10%,
+    transparent
+  );
+  --color-shadow-015: color-mix(
+    in srgb,
+    var(--md-sys-color-shadow) 15%,
+    transparent
+  );
+  --color-shadow-020: color-mix(
+    in srgb,
+    var(--md-sys-color-shadow) 20%,
+    transparent
+  );
+  --color-shadow-025: color-mix(
+    in srgb,
+    var(--md-sys-color-shadow) 25%,
+    transparent
+  );
+  --color-shadow-030: color-mix(
+    in srgb,
+    var(--md-sys-color-shadow) 30%,
+    transparent
+  );
+  --color-shadow-035: color-mix(
+    in srgb,
+    var(--md-sys-color-shadow) 35%,
+    transparent
+  );
   --color-success-background: var(--color-success-alpha-10);
-  --color-success-border: color-mix(in srgb, var(--md-sys-color-secondary) 20%, transparent);
+  --color-success-border: color-mix(
+    in srgb,
+    var(--md-sys-color-secondary) 20%,
+    transparent
+  );
   --color-surface-edge-010: color-mix(
     in srgb,
     var(--md-sys-color-inverse-on-surface) 10%,
     transparent
   );
-  --color-surface-glass-040: color-mix(in srgb, var(--md-sys-color-surface) 40%, transparent);
+  --color-surface-glass-040: color-mix(
+    in srgb,
+    var(--md-sys-color-surface) 40%,
+    transparent
+  );
   --color-loading-shimmer-mid: color-mix(
     in srgb,
     var(--md-sys-color-inverse-on-surface) 42%,
     transparent
   );
-  --color-surface-outline-soft: color-mix(in srgb, var(--md-sys-color-outline) 18%, transparent);
+  --color-surface-outline-soft: color-mix(
+    in srgb,
+    var(--md-sys-color-outline) 18%,
+    transparent
+  );
 
   /* === Legacy Support === */
   --color-success-light: var(--color-success-container);
@@ -246,13 +390,14 @@
     --font-family-dynamic,
     -apple-system,
     BlinkMacSystemFont,
-    'Segoe UI',
+    "Segoe UI",
     system-ui,
     sans-serif
   );
   --font-family-global: var(--font-family-base);
   --font-family-mono:
-    'SF Mono', 'Monaco', 'Consolas', 'Roboto Mono', 'Liberation Mono', 'Courier New', monospace;
+    "SF Mono", "Monaco", "Consolas", "Roboto Mono", "Liberation Mono",
+    "Courier New", monospace;
   --font-family-monospace: var(--font-family-mono);
 
   /* === Material Type Scale 语义别名 === */
@@ -271,12 +416,24 @@
   --typescale-label-lg-size: var(--md-sys-typescale-label-large-size);
   --typescale-label-md-size: var(--md-sys-typescale-label-medium-size);
   --typescale-label-sm-size: var(--md-sys-typescale-label-small-size);
-  --typescale-display-lg-line: var(--md-sys-typescale-display-large-line-height);
-  --typescale-display-md-line: var(--md-sys-typescale-display-medium-line-height);
-  --typescale-display-sm-line: var(--md-sys-typescale-display-small-line-height);
-  --typescale-headline-lg-line: var(--md-sys-typescale-headline-large-line-height);
-  --typescale-headline-md-line: var(--md-sys-typescale-headline-medium-line-height);
-  --typescale-headline-sm-line: var(--md-sys-typescale-headline-small-line-height);
+  --typescale-display-lg-line: var(
+    --md-sys-typescale-display-large-line-height
+  );
+  --typescale-display-md-line: var(
+    --md-sys-typescale-display-medium-line-height
+  );
+  --typescale-display-sm-line: var(
+    --md-sys-typescale-display-small-line-height
+  );
+  --typescale-headline-lg-line: var(
+    --md-sys-typescale-headline-large-line-height
+  );
+  --typescale-headline-md-line: var(
+    --md-sys-typescale-headline-medium-line-height
+  );
+  --typescale-headline-sm-line: var(
+    --md-sys-typescale-headline-small-line-height
+  );
   --typescale-title-lg-line: var(--md-sys-typescale-title-large-line-height);
   --typescale-title-md-line: var(--md-sys-typescale-title-medium-line-height);
   --typescale-title-sm-line: var(--md-sys-typescale-title-small-line-height);
@@ -286,12 +443,24 @@
   --typescale-label-lg-line: var(--md-sys-typescale-label-large-line-height);
   --typescale-label-md-line: var(--md-sys-typescale-label-medium-line-height);
   --typescale-label-sm-line: var(--md-sys-typescale-label-small-line-height);
-  --typescale-display-lg-tracking: var(--md-sys-typescale-display-large-tracking);
-  --typescale-display-md-tracking: var(--md-sys-typescale-display-medium-tracking);
-  --typescale-display-sm-tracking: var(--md-sys-typescale-display-small-tracking);
-  --typescale-headline-lg-tracking: var(--md-sys-typescale-headline-large-tracking);
-  --typescale-headline-md-tracking: var(--md-sys-typescale-headline-medium-tracking);
-  --typescale-headline-sm-tracking: var(--md-sys-typescale-headline-small-tracking);
+  --typescale-display-lg-tracking: var(
+    --md-sys-typescale-display-large-tracking
+  );
+  --typescale-display-md-tracking: var(
+    --md-sys-typescale-display-medium-tracking
+  );
+  --typescale-display-sm-tracking: var(
+    --md-sys-typescale-display-small-tracking
+  );
+  --typescale-headline-lg-tracking: var(
+    --md-sys-typescale-headline-large-tracking
+  );
+  --typescale-headline-md-tracking: var(
+    --md-sys-typescale-headline-medium-tracking
+  );
+  --typescale-headline-sm-tracking: var(
+    --md-sys-typescale-headline-small-tracking
+  );
   --typescale-title-lg-tracking: var(--md-sys-typescale-title-large-tracking);
   --typescale-title-md-tracking: var(--md-sys-typescale-title-medium-tracking);
   --typescale-title-sm-tracking: var(--md-sys-typescale-title-small-tracking);
@@ -418,10 +587,14 @@
    * 动画和过渡映射 (Motion System Mapping)
    * ======================================== */
 
-  --transition-fastest: var(--md-sys-motion-duration-short1) var(--md-sys-motion-easing-standard);
-  --transition-fast: var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
-  --transition-medium: var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-standard);
-  --transition-slow: var(--md-sys-motion-duration-long2) var(--md-sys-motion-easing-standard);
+  --transition-fastest: var(--md-sys-motion-duration-short1)
+    var(--md-sys-motion-easing-standard);
+  --transition-fast: var(--md-sys-motion-duration-short4)
+    var(--md-sys-motion-easing-standard);
+  --transition-medium: var(--md-sys-motion-duration-medium2)
+    var(--md-sys-motion-easing-standard);
+  --transition-slow: var(--md-sys-motion-duration-long2)
+    var(--md-sys-motion-easing-standard);
   --transition-slowest: var(--md-sys-motion-duration-extra-long2)
     var(--md-sys-motion-easing-standard);
 
@@ -474,20 +647,72 @@
  * 暗色主题派生变量 (Dark Theme Derived Variables)
  * ======================================== */
 
-:root[data-theme='dark'] {
+:root[data-theme="dark"] {
   /* === Hover 状态色彩 (Dark Mode - 与白色混合变亮) === */
-  --color-primary-hover: color-mix(in srgb, var(--color-primary), var(--color-white) 15%);
-  --color-primary-active: color-mix(in srgb, var(--color-primary), var(--color-white) 25%);
-  --color-secondary-hover: color-mix(in srgb, var(--color-secondary), var(--color-white) 15%);
-  --color-secondary-active: color-mix(in srgb, var(--color-secondary), var(--color-white) 25%);
-  --color-error-hover: color-mix(in srgb, var(--color-error), var(--color-white) 15%);
-  --color-error-active: color-mix(in srgb, var(--color-error), var(--color-white) 25%);
-  --color-warning-hover: color-mix(in srgb, var(--color-warning), var(--color-white) 15%);
-  --color-warning-active: color-mix(in srgb, var(--color-warning), var(--color-white) 25%);
-  --color-success-hover: color-mix(in srgb, var(--color-success), var(--color-white) 15%);
-  --color-success-active: color-mix(in srgb, var(--color-success), var(--color-white) 25%);
-  --color-surface-hover: color-mix(in srgb, var(--color-surface), var(--color-primary) 8%);
-  --color-surface-active: color-mix(in srgb, var(--color-surface), var(--color-primary) 12%);
+  --color-primary-hover: color-mix(
+    in srgb,
+    var(--color-primary),
+    var(--color-white) 15%
+  );
+  --color-primary-active: color-mix(
+    in srgb,
+    var(--color-primary),
+    var(--color-white) 25%
+  );
+  --color-secondary-hover: color-mix(
+    in srgb,
+    var(--color-secondary),
+    var(--color-white) 15%
+  );
+  --color-secondary-active: color-mix(
+    in srgb,
+    var(--color-secondary),
+    var(--color-white) 25%
+  );
+  --color-error-hover: color-mix(
+    in srgb,
+    var(--color-error),
+    var(--color-white) 15%
+  );
+  --color-error-active: color-mix(
+    in srgb,
+    var(--color-error),
+    var(--color-white) 25%
+  );
+  --color-warning-hover: color-mix(
+    in srgb,
+    var(--color-warning),
+    var(--color-white) 15%
+  );
+  --color-warning-active: color-mix(
+    in srgb,
+    var(--color-warning),
+    var(--color-white) 25%
+  );
+  --color-success-hover: color-mix(
+    in srgb,
+    var(--color-success),
+    var(--color-white) 15%
+  );
+  --color-success-active: color-mix(
+    in srgb,
+    var(--color-success),
+    var(--color-white) 25%
+  );
+  --color-surface-hover: color-mix(
+    in srgb,
+    var(--color-surface),
+    var(--color-primary) 8%
+  );
+  --color-surface-active: color-mix(
+    in srgb,
+    var(--color-surface),
+    var(--color-primary) 12%
+  );
   --color-border-hover: var(--md-sys-color-outline);
-  --color-primary-soft: color-mix(in srgb, var(--color-surface), var(--color-primary) 5%);
+  --color-primary-soft: color-mix(
+    in srgb,
+    var(--color-surface),
+    var(--color-primary) 5%
+  );
 }

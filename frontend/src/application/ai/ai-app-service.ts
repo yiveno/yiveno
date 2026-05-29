@@ -8,31 +8,31 @@
  *
  * 注意：书签分类功能已迁移到基于向量的本地推荐（folderVectorService）
  */
-import { llmAdapter } from '@/infrastructure/llm/llm-adapter'
-import { builtInSummarizerClient } from '@/infrastructure/llm/builtin-summarizer-client'
+import { llmAdapter } from "@/infrastructure/llm/llm-adapter";
+import { builtInSummarizerClient } from "@/infrastructure/llm/builtin-summarizer-client";
 import {
   createSummarizePrompt,
   createSemanticSearchPrompt,
   createTagGenerationPrompt,
-  createAutoOrganizePrompt
-} from '@/core/ai/prompts'
-import { logger } from '@/infrastructure/logging/logger'
+  createAutoOrganizePrompt,
+} from "@/core/ai/prompts";
+import { logger } from "@/infrastructure/logging/logger";
 
 /**
  * 书签摘要结果
  */
 export interface BookmarkSummaryResult {
   /** 摘要文本 */
-  summary: string
+  summary: string;
   /** 使用的 LLM 提供者 */
-  provider: 'builtin' | 'openai' | 'claude' | 'gemini' | 'deepseek'
+  provider: "builtin" | "openai" | "claude" | "gemini" | "deepseek";
 }
 
 /**
  * AI 应用服务
  */
 export class AIAppService {
-  private readonly loggerPrefix = 'AIAppService'
+  private readonly loggerPrefix = "AIAppService";
 
   /**
    * 生成书签摘要
@@ -42,61 +42,65 @@ export class AIAppService {
    * 2. Prompt API（通用 LLM，fallback）
    */
   async summarizeBookmark(bookmark: {
-    title: string
-    url: string
-    content?: string
+    title: string;
+    url: string;
+    content?: string;
   }): Promise<BookmarkSummaryResult> {
     // 1. 优先尝试 Summarizer API
     try {
-      const summarizerAvailable = await builtInSummarizerClient.isAvailable()
+      const summarizerAvailable = await builtInSummarizerClient.isAvailable();
 
       if (summarizerAvailable) {
-        logger.info(this.loggerPrefix, '使用 Summarizer API 生成摘要')
+        logger.info(this.loggerPrefix, "使用 Summarizer API 生成摘要");
 
         // 构造输入文本
         const text = [
           `标题：${bookmark.title}`,
           `URL：${bookmark.url}`,
-          bookmark.content ? `内容：${bookmark.content.slice(0, 1000)}` : ''
+          bookmark.content ? `内容：${bookmark.content.slice(0, 1000)}` : "",
         ]
           .filter(Boolean)
-          .join('\n')
+          .join("\n");
 
         // 使用 Summarizer API
         const result = await builtInSummarizerClient.summarize(text, {
-          type: 'tl;dr',
-          format: 'plain-text',
-          length: 'short'
-        })
+          type: "tl;dr",
+          format: "plain-text",
+          length: "short",
+        });
 
         return {
           summary: result.summary,
-          provider: 'builtin'
-        }
+          provider: "builtin",
+        };
       }
     } catch (error) {
-      logger.warn(this.loggerPrefix, 'Summarizer API 失败，降级到 Prompt API', error)
+      logger.warn(
+        this.loggerPrefix,
+        "Summarizer API 失败，降级到 Prompt API",
+        error,
+      );
       // 继续执行，降级到 Prompt API
     }
 
     // 2. 降级到 Prompt API
-    logger.info(this.loggerPrefix, '使用 Prompt API 生成摘要')
+    logger.info(this.loggerPrefix, "使用 Prompt API 生成摘要");
 
-    const prompt = createSummarizePrompt(bookmark)
+    const prompt = createSummarizePrompt(bookmark);
 
     try {
       const result = await llmAdapter.complete(prompt, {
         maxTokens: 100,
-        temperature: 0.5
-      })
+        temperature: 0.5,
+      });
 
       return {
         summary: result.text.trim(),
-        provider: result.provider
-      }
+        provider: result.provider,
+      };
     } catch (error) {
-      logger.error(this.loggerPrefix, '书签摘要生成失败', { error, bookmark })
-      throw new Error(`书签摘要生成失败: ${String(error)}`)
+      logger.error(this.loggerPrefix, "书签摘要生成失败", { error, bookmark });
+      throw new Error(`书签摘要生成失败: ${String(error)}`);
     }
   }
 
@@ -106,42 +110,42 @@ export class AIAppService {
    * 理解用户搜索意图，提取关键词和概念
    */
   async enhanceSemanticSearch(query: string): Promise<{
-    keywords: string[]
-    concepts: string[]
-    synonyms: string[]
+    keywords: string[];
+    concepts: string[];
+    synonyms: string[];
   }> {
-    const prompt = createSemanticSearchPrompt(query)
+    const prompt = createSemanticSearchPrompt(query);
 
     try {
       const result = await llmAdapter.complete(prompt, {
         maxTokens: 200,
-        temperature: 0.4
-      })
+        temperature: 0.4,
+      });
 
       // 尝试解析 JSON
       try {
-        const parsed = JSON.parse(result.text)
+        const parsed = JSON.parse(result.text);
         return {
           keywords: parsed.keywords || [],
           concepts: parsed.concepts || [],
-          synonyms: parsed.synonyms || []
-        }
+          synonyms: parsed.synonyms || [],
+        };
       } catch {
         // JSON 解析失败，返回默认值
         return {
           keywords: query.split(/\s+/),
           concepts: [],
-          synonyms: []
-        }
+          synonyms: [],
+        };
       }
     } catch (error) {
-      logger.error(this.loggerPrefix, '语义搜索增强失败', { error, query })
+      logger.error(this.loggerPrefix, "语义搜索增强失败", { error, query });
       // 降级：返回原始查询的关键词
       return {
         keywords: query.split(/\s+/),
         concepts: [],
-        synonyms: []
-      }
+        synonyms: [],
+      };
     }
   }
 
@@ -149,42 +153,43 @@ export class AIAppService {
    * 生成书签标签
    */
   async generateTags(bookmark: {
-    title: string
-    url: string
-    content?: string
+    title: string;
+    url: string;
+    content?: string;
   }): Promise<string[]> {
-    const prompt = createTagGenerationPrompt(bookmark)
+    const prompt = createTagGenerationPrompt(bookmark);
 
     try {
       const result = await llmAdapter.complete(prompt, {
         maxTokens: 50,
-        temperature: 0.5
-      })
+        temperature: 0.5,
+      });
 
       // 尝试解析 JSON 数组
       try {
-        const parsed = JSON.parse(result.text)
+        const parsed = JSON.parse(result.text);
         if (Array.isArray(parsed)) {
           return parsed.filter(
-            (tag): tag is string => typeof tag === 'string' && tag.trim().length > 0
-          )
+            (tag): tag is string =>
+              typeof tag === "string" && tag.trim().length > 0,
+          );
         }
       } catch {
         // JSON 解析失败，尝试提取标签
         const tags =
           result.text
             .match(/\[(.*?)\]/)?.[1]
-            ?.split(',')
-            .map(tag => tag.trim().replace(/['"]/g, ''))
-            .filter(Boolean) || []
+            ?.split(",")
+            .map((tag) => tag.trim().replace(/['"]/g, ""))
+            .filter(Boolean) || [];
 
-        return tags
+        return tags;
       }
 
-      return []
+      return [];
     } catch (error) {
-      logger.error(this.loggerPrefix, '标签生成失败', { error, bookmark })
-      return []
+      logger.error(this.loggerPrefix, "标签生成失败", { error, bookmark });
+      return [];
     }
   }
 
@@ -194,32 +199,34 @@ export class AIAppService {
    * 包含 Summarizer API 的能力检测
    */
   async detectCapabilities() {
-    const capabilities = await llmAdapter.detectCapabilities()
+    const capabilities = await llmAdapter.detectCapabilities();
 
     // 额外检测 Summarizer API
-    const summarizerAvailable = await builtInSummarizerClient.isAvailable()
+    const summarizerAvailable = await builtInSummarizerClient.isAvailable();
 
     return {
       ...capabilities,
       summarizer: {
         available: summarizerAvailable,
-        capabilities: summarizerAvailable ? await builtInSummarizerClient.getCapabilities() : null
-      }
-    }
+        capabilities: summarizerAvailable
+          ? await builtInSummarizerClient.getCapabilities()
+          : null,
+      },
+    };
   }
 
   /**
    * 获取 Chrome 内置 LLM 启用指南
    */
   getBuiltInLLMGuide() {
-    return llmAdapter.getBuiltInLLMGuide()
+    return llmAdapter.getBuiltInLLMGuide();
   }
 
   /**
    * 获取 Summarizer API 启用指南
    */
   getSummarizerGuide() {
-    return builtInSummarizerClient.getEnableGuide()
+    return builtInSummarizerClient.getEnableGuide();
   }
 
   /**
@@ -232,58 +239,64 @@ export class AIAppService {
    */
   async autoOrganizeBookmarks(
     bookmarks: Array<{
-      id: string
-      title: string
-      url: string
-      content?: string
-      existingTags?: string[]
-    }>
+      id: string;
+      title: string;
+      url: string;
+      content?: string;
+      existingTags?: string[];
+    }>,
   ): Promise<{
     folders: Array<{
-      name: string
-      path: string
-      bookmarkIds: string[]
-    }>
+      name: string;
+      path: string;
+      bookmarkIds: string[];
+    }>;
   }> {
     if (bookmarks.length === 0) {
-      return { folders: [] }
+      return { folders: [] };
     }
 
-    const prompt = createAutoOrganizePrompt(bookmarks)
+    const prompt = createAutoOrganizePrompt(bookmarks);
 
     try {
       const result = await llmAdapter.complete(prompt, {
         maxTokens: 2000,
-        temperature: 0.3
-      })
+        temperature: 0.3,
+      });
 
       // 尝试解析 JSON
       try {
-        const parsed = JSON.parse(result.text)
+        const parsed = JSON.parse(result.text);
         if (parsed.folders && Array.isArray(parsed.folders)) {
-          logger.info(this.loggerPrefix, 'AI 自动分类成功', {
+          logger.info(this.loggerPrefix, "AI 自动分类成功", {
             folderCount: parsed.folders.length,
-            bookmarkCount: bookmarks.length
-          })
-          return parsed
+            bookmarkCount: bookmarks.length,
+          });
+          return parsed;
         }
       } catch (parseError) {
-        logger.error(this.loggerPrefix, 'AI 分类结果解析失败', { parseError, result: result.text })
+        logger.error(this.loggerPrefix, "AI 分类结果解析失败", {
+          parseError,
+          result: result.text,
+        });
       }
 
       // 解析失败，返回默认结构（所有书签放到"未分类"）
       return {
         folders: [
           {
-            name: '未分类',
-            path: '未分类',
-            bookmarkIds: bookmarks.map(b => b.id)
-          }
-        ]
-      }
+            name: "未分类",
+            path: "未分类",
+            bookmarkIds: bookmarks.map((b) => b.id),
+          },
+        ],
+      };
     } catch (error) {
-      logger.error(this.loggerPrefix, 'AI 自动分类失败', { error, bookmarkCount: bookmarks.length })
-      throw new Error(`AI 自动分类失败: ${String(error)}`)
+      logger.error(this.loggerPrefix, "AI 自动分类失败", {
+        error,
+        bookmarkCount: bookmarks.length,
+      });
+      throw new Error(`AI 自动分类失败: ${String(error)}`);
     }
   }
 }
@@ -291,4 +304,4 @@ export class AIAppService {
 /**
  * 单例实例
  */
-export const aiAppService = new AIAppService()
+export const aiAppService = new AIAppService();

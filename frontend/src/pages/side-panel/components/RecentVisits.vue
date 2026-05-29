@@ -1,134 +1,139 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue'
-import { LucideIcon, EmptyState } from '@/components'
-import type { BookmarkRecord } from '@/infrastructure/indexeddb/types'
-import { logger } from '@/infrastructure/logging/logger'
-import { onEvent } from '@/infrastructure/events/event-bus'
-import { formatRecentVisitTime, formatFullDateTime } from '@/utils/time-formatter'
-import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
+import { ref, onMounted, onUnmounted, watch } from "vue";
+import { LucideIcon, EmptyState } from "@/components";
+import type { BookmarkRecord } from "@/infrastructure/indexeddb/types";
+import { logger } from "@/infrastructure/logging/logger";
+import { onEvent } from "@/infrastructure/events/event-bus";
+import {
+  formatRecentVisitTime,
+  formatFullDateTime,
+} from "@/utils/time-formatter";
+import { indexedDBManager } from "@/infrastructure/indexeddb/manager";
 
 defineOptions({
-  name: 'RecentVisits'
-})
+  name: "RecentVisits",
+});
 
 const emit = defineEmits<{
-  (e: 'bookmarkClick', bookmark: BookmarkRecord): void
-  (e: 'countUpdate', count: number): void
-  (e: 'bookmarkRemove', bookmark: BookmarkRecord): void
-}>()
+  (e: "bookmarkClick", bookmark: BookmarkRecord): void;
+  (e: "countUpdate", count: number): void;
+  (e: "bookmarkRemove", bookmark: BookmarkRecord): void;
+}>();
 
-const recentVisits = ref<BookmarkRecord[]>([])
-const faviconErrors = ref<Set<string>>(new Set())
+const recentVisits = ref<BookmarkRecord[]>([]);
+const faviconErrors = ref<Set<string>>(new Set());
 
 const loadRecentVisits = async () => {
   try {
-    recentVisits.value = await indexedDBManager.getRecentVisits(5)
-    emit('countUpdate', recentVisits.value.length)
-    logger.info('RecentVisits', '📊 加载最近访问', recentVisits.value.length)
+    recentVisits.value = await indexedDBManager.getRecentVisits(5);
+    emit("countUpdate", recentVisits.value.length);
+    logger.info("RecentVisits", "📊 加载最近访问", recentVisits.value.length);
   } catch (error) {
-    logger.error('RecentVisits', '❌ 加载最近访问失败', error)
+    logger.error("RecentVisits", "❌ 加载最近访问失败", error);
   }
-}
+};
 
 /**
  * 获取 favicon URL
  */
 const getFaviconUrl = (bookmark: BookmarkRecord): string | undefined => {
   if (faviconErrors.value.has(bookmark.id)) {
-    return undefined
+    return undefined;
   }
   if (!bookmark.url) {
-    return undefined
+    return undefined;
   }
   try {
-    const domain = new URL(bookmark.url).hostname
-    return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`
+    const domain = new URL(bookmark.url).hostname;
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
   } catch {
-    return undefined
+    return undefined;
   }
-}
+};
 
 /**
  * 处理 favicon 加载错误
  */
 const handleFaviconError = (bookmarkId: string) => {
-  faviconErrors.value.add(bookmarkId)
-}
+  faviconErrors.value.add(bookmarkId);
+};
 
-onMounted(loadRecentVisits)
+onMounted(loadRecentVisits);
 
 // 监听书签访问事件，自动刷新列表
-const unsubscribe = onEvent('bookmark:visited', () => {
-  logger.debug('RecentVisits', '🔄 收到书签访问事件，刷新列表')
-  loadRecentVisits()
-})
+const unsubscribe = onEvent("bookmark:visited", () => {
+  logger.debug("RecentVisits", "🔄 收到书签访问事件，刷新列表");
+  loadRecentVisits();
+});
 
 onUnmounted(() => {
-  unsubscribe()
+  unsubscribe();
   if (stopWatch) {
-    stopWatch()
+    stopWatch();
   }
-})
+});
 
 // 监听数据变化，自动更新数量
 const stopWatch = watch(
   () => recentVisits.value.length,
-  newCount => {
-    emit('countUpdate', newCount)
-  }
-)
+  (newCount) => {
+    emit("countUpdate", newCount);
+  },
+);
 
 const handleClick = (bookmark: BookmarkRecord) => {
-  logger.info('RecentVisits', '🔗 点击最近访问', bookmark.title)
-  emit('bookmarkClick', bookmark)
-}
+  logger.info("RecentVisits", "🔗 点击最近访问", bookmark.title);
+  emit("bookmarkClick", bookmark);
+};
 
 /**
  * 处理清除访问记录
  * @description 清除单条书签的访问记录（删除 lastVisited 和 visitCount 字段）
  */
 const handleRemove = async (bookmark: BookmarkRecord) => {
-  logger.info('RecentVisits', '🗑️ 清除访问记录', bookmark.title)
+  logger.info("RecentVisits", "🗑️ 清除访问记录", bookmark.title);
 
   try {
     // 获取完整的书签记录
-    const existingBookmark = await indexedDBManager.getBookmarkById(bookmark.id)
+    const existingBookmark = await indexedDBManager.getBookmarkById(
+      bookmark.id,
+    );
     if (!existingBookmark) {
-      logger.error('RecentVisits', '❌ 书签不存在', bookmark.id)
-      return
+      logger.error("RecentVisits", "❌ 书签不存在", bookmark.id);
+      return;
     }
 
     // 创建新的书签对象，删除访问记录字段
     const updatedBookmark: BookmarkRecord = {
-      ...existingBookmark
-    }
+      ...existingBookmark,
+    };
 
     // 删除访问记录字段
-    delete updatedBookmark.lastVisited
-    delete updatedBookmark.visitCount
+    delete updatedBookmark.lastVisited;
+    delete updatedBookmark.visitCount;
 
     // 直接调用 IndexedDBManager 更新
-    await indexedDBManager.updateBookmark(updatedBookmark)
+    await indexedDBManager.updateBookmark(updatedBookmark);
 
     // 从列表中移除
-    recentVisits.value = recentVisits.value.filter(b => b.id !== bookmark.id)
+    recentVisits.value = recentVisits.value.filter((b) => b.id !== bookmark.id);
 
     // 更新数量
-    emit('countUpdate', recentVisits.value.length)
+    emit("countUpdate", recentVisits.value.length);
 
     // 通知父组件
-    emit('bookmarkRemove', bookmark)
+    emit("bookmarkRemove", bookmark);
 
-    logger.debug('RecentVisits', '✅ 访问记录已清除')
+    logger.debug("RecentVisits", "✅ 访问记录已清除");
   } catch (error) {
-    logger.error('RecentVisits', '❌ 清除访问记录失败', error)
+    logger.error("RecentVisits", "❌ 清除访问记录失败", error);
   }
-}
+};
 
 // 暴露方法供父组件调用
 defineExpose({
-  loadRecentVisits
-})
+  loadRecentVisits,
+});
 </script>
 
 <template>
@@ -205,7 +210,8 @@ defineExpose({
 /* 清除按钮：默认隐藏 */
 .recent-list-item .remove-button {
   opacity: 0;
-  transition: opacity var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+  transition: opacity var(--md-sys-motion-duration-short2)
+    var(--md-sys-motion-easing-standard);
 }
 
 /* hover 时显示清除按钮 */

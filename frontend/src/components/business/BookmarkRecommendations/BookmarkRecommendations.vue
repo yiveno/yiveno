@@ -10,57 +10,60 @@
 SmartRecommendationEngine → 推荐列表 → UI 展示 → 用户交互 → 反馈记录
 -->
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import { Chip, LucideIcon, Loading } from '@/components'
+import { onMounted, ref } from "vue";
+import { Chip, LucideIcon, Loading } from "@/components";
 import {
   type RecommendationOptions,
   type SmartRecommendation,
-  getSmartRecommendationEngine
-} from '@/application/bookmark/recommendation-app-service'
+  getSmartRecommendationEngine,
+} from "@/application/bookmark/recommendation-app-service";
 
-import { logger } from '@/infrastructure/logging/logger'
+import { logger } from "@/infrastructure/logging/logger";
 
 // Props
 interface Props {
-  maxRecommendations?: number
-  showDebugInfo?: boolean
+  maxRecommendations?: number;
+  showDebugInfo?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   maxRecommendations: 5,
-  showDebugInfo: false
-})
+  showDebugInfo: false,
+});
 
 // Emits
 const emit = defineEmits<{
-  bookmarkClick: [bookmark: SmartRecommendation, event: MouseEvent]
-  recommendationUpdate: [recommendations: SmartRecommendation[]]
-  recommendationFeedback: [recommendationId: string, feedback: 'accepted' | 'rejected' | 'clicked']
-}>()
+  bookmarkClick: [bookmark: SmartRecommendation, event: MouseEvent];
+  recommendationUpdate: [recommendations: SmartRecommendation[]];
+  recommendationFeedback: [
+    recommendationId: string,
+    feedback: "accepted" | "rejected" | "clicked",
+  ];
+}>();
 
 // 响应式状态
-const recommendations = ref<SmartRecommendation[]>([])
-const isLoading = ref(true)
-const isRefreshing = ref(false)
-const isLoadingMore = ref(false)
-const hasMoreRecommendations = ref(false)
-const recommendationEngine = getSmartRecommendationEngine()
+const recommendations = ref<SmartRecommendation[]>([]);
+const isLoading = ref(true);
+const isRefreshing = ref(false);
+const isLoadingMore = ref(false);
+const hasMoreRecommendations = ref(false);
+const recommendationEngine = getSmartRecommendationEngine();
 
 // ✅ Favicon状态管理
-const faviconLoaded = ref<Record<string, boolean>>({})
-const faviconError = ref<Record<string, boolean>>({})
+const faviconLoaded = ref<Record<string, boolean>>({});
+const faviconError = ref<Record<string, boolean>>({});
 
 // 计算属性已移除，按需使用 props.showDebugInfo
 
 // 生命周期
 onMounted(async () => {
-  await loadRecommendations()
-})
+  await loadRecommendations();
+});
 
 async function loadRecommendations() {
   try {
-    isLoading.value = true
-    logger.info('SmartRecommendation', '🧠 开始加载智能推荐...')
+    isLoading.value = true;
+    logger.info("SmartRecommendation", "🧠 开始加载智能推荐...");
 
     // 构建推荐选项
     const options: RecommendationOptions = {
@@ -69,32 +72,34 @@ async function loadRecommendations() {
       includeRecentOnly: false,
       contextWeight: 0.3,
       diversityFactor: 0.25,
-      userContext: await getCurrentUserContext()
-    }
+      userContext: await getCurrentUserContext(),
+    };
 
     // 使用智能推荐引擎获取推荐
-    const newRecommendations = await recommendationEngine.generateRecommendations(options)
+    const newRecommendations =
+      await recommendationEngine.generateRecommendations(options);
 
-    recommendations.value = newRecommendations
-    hasMoreRecommendations.value = newRecommendations.length >= props.maxRecommendations
+    recommendations.value = newRecommendations;
+    hasMoreRecommendations.value =
+      newRecommendations.length >= props.maxRecommendations;
 
     // ✅ 初始化favicon状态
-    initializeFaviconState(newRecommendations)
+    initializeFaviconState(newRecommendations);
 
-    emit('recommendationUpdate', newRecommendations)
+    emit("recommendationUpdate", newRecommendations);
 
     logger.info(
-      'Component',
-      '✅ [SmartRecommendation] 加载完成: ${newRecommendations.length}个智能推荐'
-    )
+      "Component",
+      "✅ [SmartRecommendation] 加载完成: ${newRecommendations.length}个智能推荐",
+    );
     if (props.showDebugInfo) {
-      logger.info('📊 推荐详情:', newRecommendations)
+      logger.info("📊 推荐详情:", newRecommendations);
     }
   } catch (error) {
-    logger.error('Component', '❌ [SmartRecommendation] 加载推荐失败:', error)
-    recommendations.value = []
+    logger.error("Component", "❌ [SmartRecommendation] 加载推荐失败:", error);
+    recommendations.value = [];
   } finally {
-    isLoading.value = false
+    isLoading.value = false;
   }
 }
 
@@ -102,22 +107,22 @@ async function loadRecommendations() {
  * 刷新推荐
  */
 async function refreshRecommendations() {
-  if (isRefreshing.value) return
+  if (isRefreshing.value) return;
 
-  isRefreshing.value = true
+  isRefreshing.value = true;
   try {
-    await loadRecommendations()
+    await loadRecommendations();
   } finally {
-    isRefreshing.value = false // eslint-disable-line require-atomic-updates
+    isRefreshing.value = false; // eslint-disable-line require-atomic-updates
   }
 }
 
 async function loadMoreRecommendations() {
-  if (isLoadingMore.value) return
+  if (isLoadingMore.value) return;
 
-  isLoadingMore.value = true
+  isLoadingMore.value = true;
   try {
-    logger.info('Component', '🔄 [SmartRecommendation] 加载更多推荐...')
+    logger.info("Component", "🔄 [SmartRecommendation] 加载更多推荐...");
 
     // 构建选项（更大的范围）
     const options: RecommendationOptions = {
@@ -126,26 +131,34 @@ async function loadMoreRecommendations() {
       includeRecentOnly: false,
       contextWeight: 0.2,
       diversityFactor: 0.3, // 增加多样性
-      userContext: await getCurrentUserContext()
-    }
+      userContext: await getCurrentUserContext(),
+    };
 
-    const moreRecommendations = await recommendationEngine.generateRecommendations(options)
+    const moreRecommendations =
+      await recommendationEngine.generateRecommendations(options);
 
     // 添加新的推荐（去重）
-    const existingIds = new Set(recommendations.value.map(r => r.id))
-    const newOnes = moreRecommendations.filter(r => !existingIds.has(r.id))
+    const existingIds = new Set(recommendations.value.map((r) => r.id));
+    const newOnes = moreRecommendations.filter((r) => !existingIds.has(r.id));
 
     recommendations.value = [...recommendations.value, ...newOnes].slice(
       0,
-      props.maxRecommendations * 3
-    )
-    hasMoreRecommendations.value = newOnes.length > 0
+      props.maxRecommendations * 3,
+    );
+    hasMoreRecommendations.value = newOnes.length > 0;
 
-    logger.info('Component', '✅ [SmartRecommendation] 新增${newOnes.length}个推荐')
+    logger.info(
+      "Component",
+      "✅ [SmartRecommendation] 新增${newOnes.length}个推荐",
+    );
   } catch (error) {
-    logger.error('Component', '❌ [SmartRecommendation] 加载更多推荐失败:', error)
+    logger.error(
+      "Component",
+      "❌ [SmartRecommendation] 加载更多推荐失败:",
+      error,
+    );
   } finally {
-    isLoadingMore.value = false // eslint-disable-line require-atomic-updates
+    isLoadingMore.value = false; // eslint-disable-line require-atomic-updates
   }
 }
 /**
@@ -153,49 +166,52 @@ async function loadMoreRecommendations() {
  */
 async function getCurrentUserContext() {
   try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-    const now = new Date()
+    const [tab] = await chrome.tabs.query({
+      active: true,
+      currentWindow: true,
+    });
+    const now = new Date();
 
     return {
       currentTime: Date.now(),
       currentHour: now.getHours(),
       currentDayOfWeek: now.getDay(),
       currentUrl: tab?.url,
-      currentDomain: tab?.url ? new URL(tab.url).hostname : undefined
-    }
+      currentDomain: tab?.url ? new URL(tab.url).hostname : undefined,
+    };
   } catch (error) {
-    logger.warn('⚠️ [SmartRecommendation] 获取用户上下文失败:', error)
+    logger.warn("⚠️ [SmartRecommendation] 获取用户上下文失败:", error);
     return {
       currentTime: Date.now(),
       currentHour: new Date().getHours(),
-      currentDayOfWeek: new Date().getDay()
-    }
+      currentDayOfWeek: new Date().getDay(),
+    };
   }
 }
 
 async function openBookmark(bookmark: SmartRecommendation, event: MouseEvent) {
-  if (!bookmark.url) return
+  if (!bookmark.url) return;
 
   try {
-    const inNewTab = event.ctrlKey || event.metaKey || event.button === 1
+    const inNewTab = event.ctrlKey || event.metaKey || event.button === 1;
 
     if (inNewTab) {
-      await chrome.tabs.create({ url: bookmark.url })
+      await chrome.tabs.create({ url: bookmark.url });
     } else {
-      await chrome.tabs.update({ url: bookmark.url })
+      await chrome.tabs.update({ url: bookmark.url });
     }
 
     // 跟踪推荐点击并记录反馈
-    trackRecommendationClick(bookmark)
-    recordRecommendationFeedback(bookmark.id, 'clicked')
+    trackRecommendationClick(bookmark);
+    recordRecommendationFeedback(bookmark.id, "clicked");
 
-    emit('bookmarkClick', bookmark, event)
+    emit("bookmarkClick", bookmark, event);
     logger.info(
-      'SmartRecommendation',
-      `🔗 打开书签: ${bookmark.title} (${bookmark.recommendationType})`
-    )
+      "SmartRecommendation",
+      `🔗 打开书签: ${bookmark.title} (${bookmark.recommendationType})`,
+    );
   } catch (error) {
-    logger.error('Component', 'SmartRecommendation', '❌ 打开书签失败', error)
+    logger.error("Component", "SmartRecommendation", "❌ 打开书签失败", error);
   }
 }
 
@@ -214,104 +230,110 @@ function trackRecommendationClick(bookmark: SmartRecommendation) {
     timePatternScore: bookmark.timePatternScore,
     frequencyScore: bookmark.frequencyScore,
     similarityScore: bookmark.similarityScore,
-    reasons: bookmark.recommendationReason.map(r => ({
+    reasons: bookmark.recommendationReason.map((r) => ({
       type: r.type,
       description: r.description,
-      weight: r.weight
+      weight: r.weight,
     })),
-    timestamp: Date.now()
-  }
-  logger.info('SmartRecommendation', '📊 点击跟踪', trackingData)
+    timestamp: Date.now(),
+  };
+  logger.info("SmartRecommendation", "📊 点击跟踪", trackingData);
 }
 
 function recordRecommendationFeedback(
   recommendationId: string,
-  feedback: 'accepted' | 'rejected' | 'clicked'
+  feedback: "accepted" | "rejected" | "clicked",
 ) {
   // 记录到推荐引擎
-  recommendationEngine.recordRecommendationFeedback(recommendationId, feedback)
+  recommendationEngine.recordRecommendationFeedback(recommendationId, feedback);
 
   // 发出事件供父组件监听
-  emit('recommendationFeedback', recommendationId, feedback)
+  emit("recommendationFeedback", recommendationId, feedback);
 
-  logger.info('SmartRecommendation', `📝 记录反馈: ${recommendationId} -> ${feedback}`)
+  logger.info(
+    "SmartRecommendation",
+    `📝 记录反馈: ${recommendationId} -> ${feedback}`,
+  );
 }
 
 // eslint-disable-next-line complexity -- 推荐原因判断逻辑需要多个条件分支，拆分会降低可读性
 function getRecommendationReason(bookmark: SmartRecommendation): string {
   // 优先使用智能推荐引擎提供的推荐类型
   switch (bookmark.recommendationType) {
-    case 'frequent':
-      return '高频使用'
-    case 'recent':
-      return '最近访问'
-    case 'similar':
-      return '相似内容'
-    case 'contextual':
-      return '相关推荐'
-    case 'temporal':
-      return '时间匹配'
-    case 'trending':
-      return '热门趋势'
-    case 'seasonal':
-      return '季节推荐'
+    case "frequent":
+      return "高频使用";
+    case "recent":
+      return "最近访问";
+    case "similar":
+      return "相似内容";
+    case "contextual":
+      return "相关推荐";
+    case "temporal":
+      return "时间匹配";
+    case "trending":
+      return "热门趋势";
+    case "seasonal":
+      return "季节推荐";
     default:
-      break
+      break;
   }
 
   // 备用逻辑：基于具体推荐原因
   if (bookmark.recommendationReason.length > 0) {
-    const topReason = bookmark.recommendationReason[0]
+    const topReason = bookmark.recommendationReason[0];
     if (topReason) {
-      return topReason.description
+      return topReason.description;
     }
   }
 
   // 最后的备用逻辑
-  const score = bookmark.recommendationScore || 0
-  const visitCount = bookmark.visitCount || 0
+  const score = bookmark.recommendationScore || 0;
+  const visitCount = bookmark.visitCount || 0;
 
-  if (visitCount > 10) return '常用书签'
-  if (bookmark.recentVisitCount && bookmark.recentVisitCount > 0) return '最近使用'
-  if (score > 50) return '高分推荐'
-  if (bookmark.contextScore > 40) return '上下文相关'
+  if (visitCount > 10) return "常用书签";
+  if (bookmark.recentVisitCount && bookmark.recentVisitCount > 0)
+    return "最近使用";
+  if (score > 50) return "高分推荐";
+  if (bookmark.contextScore > 40) return "上下文相关";
 
-  return '智能推荐'
+  return "智能推荐";
 }
 
-function getReasonBadgeVariant(bookmark: SmartRecommendation): 'outlined' | 'soft' {
-  const type = bookmark.recommendationType
+function getReasonBadgeVariant(
+  bookmark: SmartRecommendation,
+): "outlined" | "soft" {
+  const type = bookmark.recommendationType;
 
   switch (type) {
-    case 'frequent':
-    case 'contextual':
-      return 'soft'
-    case 'recent':
-    case 'temporal':
-      return 'outlined'
-    case 'similar':
-    case 'trending':
-    case 'seasonal':
-      return 'soft'
+    case "frequent":
+    case "contextual":
+      return "soft";
+    case "recent":
+    case "temporal":
+      return "outlined";
+    case "similar":
+    case "trending":
+    case "seasonal":
+      return "soft";
     default:
       // 基于置信度决定
-      return bookmark.confidence > 0.7 ? 'soft' : 'outlined'
+      return bookmark.confidence > 0.7 ? "soft" : "outlined";
   }
 }
 
 function getFaviconUrl(url: string): string {
   try {
-    const domain = new URL(url).hostname
+    const domain = new URL(url).hostname;
 
     // 跳过chrome://favicon/，直接使用更可靠的方式
     // 原因：某些网站的favicon无法通过chrome://favicon/加载，会产生控制台错误
 
     // 方案1: 使用Google的favicon服务 (更稳定)
-    return `https://www.google.com/s2/favicons?domain=${domain}&sz=16`
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=16`;
   } catch {
     return chrome.runtime?.getURL
-      ? chrome.runtime.getURL('images/icon16.png')
-      : '/favicon-16x16.png'
+      ? chrome.runtime.getURL("images/icon16.png")
+      : "/favicon-16x16.png";
   }
 }
 
@@ -319,20 +341,20 @@ function getFaviconUrl(url: string): string {
  * 处理图标加载错误 - ✅ 优化版 (简化错误处理)
  */
 function handleFaviconError(event: Event, url: string) {
-  const img = event.target as HTMLImageElement
-  const bookmarkId = findBookmarkIdByUrl(url)
+  const img = event.target as HTMLImageElement;
+  const bookmarkId = findBookmarkIdByUrl(url);
 
   if (bookmarkId) {
-    faviconError.value[bookmarkId] = true
-    faviconLoaded.value[bookmarkId] = false
+    faviconError.value[bookmarkId] = true;
+    faviconLoaded.value[bookmarkId] = false;
   }
 
   // 如果Google favicon服务也失败了，尝试直接从域名获取
-  if (!img.src.includes('/favicon.ico')) {
+  if (!img.src.includes("/favicon.ico")) {
     try {
-      const domain = new URL(url).hostname
-      img.src = `https://${domain}/favicon.ico`
-      return
+      const domain = new URL(url).hostname;
+      img.src = `https://${domain}/favicon.ico`;
+      return;
     } catch {
       // 忽略错误，继续使用默认图标
     }
@@ -340,23 +362,26 @@ function handleFaviconError(event: Event, url: string) {
 
   // 最后使用默认图标
   img.src = chrome.runtime?.getURL
-    ? chrome.runtime.getURL('images/icon16.png')
-    : '/favicon-16x16.png'
+    ? chrome.runtime.getURL("images/icon16.png")
+    : "/favicon-16x16.png";
 }
 
 /**
  * 处理图标加载成功 - ✅ 新增
  */
 function handleFaviconLoad(event: Event) {
-  const img = event.target as HTMLImageElement
+  const img = event.target as HTMLImageElement;
   // 从data属性或通过parent找到对应的书签
-  const bookmarkElement = img.closest('.recommendation-item')
+  const bookmarkElement = img.closest(".recommendation-item");
   if (bookmarkElement) {
-    const bookmarkTitle = bookmarkElement.querySelector('.bookmark-title')?.textContent
-    const bookmark = recommendations.value.find(b => b.title === bookmarkTitle)
+    const bookmarkTitle =
+      bookmarkElement.querySelector(".bookmark-title")?.textContent;
+    const bookmark = recommendations.value.find(
+      (b) => b.title === bookmarkTitle,
+    );
     if (bookmark) {
-      faviconLoaded.value[bookmark.id] = true
-      faviconError.value[bookmark.id] = false
+      faviconLoaded.value[bookmark.id] = true;
+      faviconError.value[bookmark.id] = false;
     }
   }
 }
@@ -365,8 +390,8 @@ function handleFaviconLoad(event: Event) {
  * 根据URL查找书签ID
  */
 function findBookmarkIdByUrl(url: string): string | null {
-  const bookmark = recommendations.value.find(b => b.url === url)
-  return bookmark ? bookmark.id : null
+  const bookmark = recommendations.value.find((b) => b.url === url);
+  return bookmark ? bookmark.id : null;
 }
 
 /**
@@ -374,14 +399,14 @@ function findBookmarkIdByUrl(url: string): string | null {
  */
 function initializeFaviconState(bookmarks: SmartRecommendation[]) {
   // 清理旧状态
-  faviconLoaded.value = {}
-  faviconError.value = {}
+  faviconLoaded.value = {};
+  faviconError.value = {};
 
   // 为每个书签初始化状态
-  bookmarks.forEach(bookmark => {
-    faviconLoaded.value[bookmark.id] = false
-    faviconError.value[bookmark.id] = false
-  })
+  bookmarks.forEach((bookmark) => {
+    faviconLoaded.value[bookmark.id] = false;
+    faviconError.value[bookmark.id] = false;
+  });
 }
 
 /**
@@ -389,21 +414,21 @@ function initializeFaviconState(bookmarks: SmartRecommendation[]) {
  */
 function extractDomain(url: string): string {
   try {
-    return new URL(url).hostname
+    return new URL(url).hostname;
   } catch {
-    return 'Unknown'
+    return "Unknown";
   }
 }
 
 function showContextMenu(bookmark: SmartRecommendation) {
-  logger.info('SmartRecommendation', '🖱️ 右键菜单', {
+  logger.info("SmartRecommendation", "🖱️ 右键菜单", {
     id: bookmark.id,
     title: bookmark.title,
     type: bookmark.recommendationType,
     score: bookmark.recommendationScore,
     confidence: bookmark.confidence,
-    reasons: bookmark.recommendationReason
-  })
+    reasons: bookmark.recommendationReason,
+  });
 
   // TODO: 实现智能推荐专属的右键菜单
   // 可以包括：
@@ -416,8 +441,8 @@ function showContextMenu(bookmark: SmartRecommendation) {
 // 暴露方法给父组件
 defineExpose({
   refreshRecommendations,
-  loadMoreRecommendations
-})
+  loadMoreRecommendations,
+});
 </script>
 
 <template>
@@ -438,7 +463,11 @@ defineExpose({
           title="刷新推荐"
           @click="refreshRecommendations"
         >
-          <LucideIcon name="refresh-cw" :size="20" :class="{ 'icon-spin': isRefreshing }" />
+          <LucideIcon
+            name="refresh-cw"
+            :size="20"
+            :class="{ 'icon-spin': isRefreshing }"
+          />
         </md-icon-button>
       </div>
     </div>
@@ -484,11 +513,14 @@ defineExpose({
         </div>
 
         <!-- 使用指示器 -->
-        <div v-if="bookmark.visitCount && bookmark.visitCount > 0" class="usage-indicator">
+        <div
+          v-if="bookmark.visitCount && bookmark.visitCount > 0"
+          class="usage-indicator"
+        >
           <div
             class="usage-bar"
             :style="{
-              width: `${Math.min((bookmark.visitCount || 0) * 5, 100)}%`
+              width: `${Math.min((bookmark.visitCount || 0) * 5, 100)}%`,
             }"
             :title="`访问${bookmark.visitCount}次，置信度${(bookmark.confidence * 100).toFixed(1)}%`"
           ></div>
@@ -616,7 +648,8 @@ defineExpose({
   height: 100%;
   object-fit: cover;
   border-radius: var(--radius-xs);
-  transition: opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+  transition: opacity var(--md-sys-motion-duration-short4)
+    var(--md-sys-motion-easing-standard);
 }
 
 .favicon-image.favicon-loading {
@@ -682,8 +715,13 @@ defineExpose({
 
 .usage-bar {
   height: 100%;
-  background: linear-gradient(90deg, var(--color-success), var(--color-warning));
-  transition: width var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-standard);
+  background: linear-gradient(
+    90deg,
+    var(--color-success),
+    var(--color-warning)
+  );
+  transition: width var(--md-sys-motion-duration-medium2)
+    var(--md-sys-motion-easing-standard);
 }
 
 /* Material Web List 样式 */

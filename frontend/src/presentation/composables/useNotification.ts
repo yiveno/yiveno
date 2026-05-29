@@ -4,7 +4,7 @@
  * 提供统一的通知接口，简化组件中的通知调用
  */
 
-import { notificationPresentationAdapter } from '@/presentation/adapters/notification-adapter'
+import { notificationPresentationAdapter } from "@/presentation/adapters/notification-adapter";
 
 /**
  * 通知组合式函数
@@ -31,35 +31,35 @@ export function useNotification() {
      * 显示成功消息
      */
     success: (message: string, duration?: number) => {
-      notificationPresentationAdapter.showSuccess(message, duration)
+      notificationPresentationAdapter.showSuccess(message, duration);
     },
 
     /**
      * 显示错误消息
      */
     error: (message: string, duration?: number) => {
-      notificationPresentationAdapter.showError(message, duration)
+      notificationPresentationAdapter.showError(message, duration);
     },
 
     /**
      * 显示警告消息
      */
     warning: (message: string, duration?: number) => {
-      notificationPresentationAdapter.showWarning(message, duration)
+      notificationPresentationAdapter.showWarning(message, duration);
     },
 
     /**
      * 显示信息消息
      */
     info: (message: string, duration?: number) => {
-      notificationPresentationAdapter.showInfo(message, duration)
+      notificationPresentationAdapter.showInfo(message, duration);
     },
 
     /**
      * 显示加载提示
      */
-    loading: (message: string = '加载中...') => {
-      return notificationPresentationAdapter.showLoading(message)
+    loading: (message: string = "加载中...") => {
+      return notificationPresentationAdapter.showLoading(message);
     },
 
     /**
@@ -68,9 +68,13 @@ export function useNotification() {
     notification: (
       title: string,
       message: string,
-      level: 'info' | 'success' | 'warning' | 'error' = 'info'
+      level: "info" | "success" | "warning" | "error" = "info",
     ) => {
-      notificationPresentationAdapter.showSystemNotification(title, message, level)
-    }
-  }
+      notificationPresentationAdapter.showSystemNotification(
+        title,
+        message,
+        level,
+      );
+    },
+  };
 }

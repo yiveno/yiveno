@@ -4,8 +4,8 @@
  * 提供便捷的国际化函数和 Vue Composable
  */
 
-import { computed } from 'vue'
-import { i18nService } from '@/infrastructure/i18n/i18n-service'
+import { computed } from "vue";
+import { i18nService } from "@/infrastructure/i18n/i18n-service";
 
 /**
  * Vue Composable - 国际化
@@ -25,23 +25,23 @@ import { i18nService } from '@/infrastructure/i18n/i18n-service'
  * ```
  */
 export function useI18n() {
-  const locale = computed(() => i18nService.getCurrentLanguage())
+  const locale = computed(() => i18nService.getCurrentLanguage());
 
   const isRTL = computed(() => {
     // 当前不支持 RTL 语言
-    const rtlLanguages: string[] = []
-    return rtlLanguages.some(lang => locale.value.startsWith(lang))
-  })
+    const rtlLanguages: string[] = [];
+    return rtlLanguages.some((lang) => locale.value.startsWith(lang));
+  });
 
   const translate = (key: string, substitutions?: string | string[]) => {
-    return i18nService.t(key, substitutions)
-  }
+    return i18nService.t(key, substitutions);
+  };
 
   return {
     t: translate,
     locale,
-    isRTL
-  }
+    isRTL,
+  };
 }
 
 /**
@@ -51,7 +51,7 @@ export function useI18n() {
  * @returns 翻译后的文本
  */
 export function t(key: string, substitutions?: string | string[]): string {
-  return i18nService.t(key, substitutions)
+  return i18nService.t(key, substitutions);
 }
 
 /**
@@ -59,7 +59,7 @@ export function t(key: string, substitutions?: string | string[]): string {
  * @returns 语言代码，如 'zh-CN', 'en', 'ja'
  */
 export function getCurrentLocale(): string {
-  return i18nService.getCurrentLanguage()
+  return i18nService.getCurrentLanguage();
 }
 
 /**
@@ -67,10 +67,10 @@ export function getCurrentLocale(): string {
  * @returns 是否为从右到左的语言
  */
 export function isRTLLanguage(): boolean {
-  const locale = getCurrentLocale()
+  const locale = getCurrentLocale();
   // 当前不支持 RTL 语言
-  const rtlLanguages: string[] = []
-  return rtlLanguages.some(lang => locale.startsWith(lang))
+  const rtlLanguages: string[] = [];
+  return rtlLanguages.some((lang) => locale.startsWith(lang));
 }
 
 /**
@@ -80,16 +80,16 @@ export function isRTLLanguage(): boolean {
  */
 export function getLanguageDisplayName(locale: string): string {
   const displayNames: Record<string, string> = {
-    'zh-CN': '简体中文',
-    'zh-TW': '繁體中文',
-    en: 'English',
-    ja: '日本語',
-    ko: '한국어',
-    de: 'Deutsch',
-    es: 'Español'
-  }
+    "zh-CN": "简体中文",
+    "zh-TW": "繁體中文",
+    en: "English",
+    ja: "日本語",
+    ko: "한국어",
+    de: "Deutsch",
+    es: "Español",
+  };
 
-  return displayNames[locale] || locale
+  return displayNames[locale] || locale;
 }
 
 /**
@@ -97,7 +97,7 @@ export function getLanguageDisplayName(locale: string): string {
  * @returns 支持的语言代码数组
  */
 export function getSupportedLocales(): readonly string[] {
-  return ['zh-CN', 'zh-TW', 'en', 'ja', 'ko', 'de', 'es'] as const
+  return ["zh-CN", "zh-TW", "en", "ja", "ko", "de", "es"] as const;
 }
 
 /**
@@ -110,9 +110,12 @@ export function getSupportedLocales(): readonly string[] {
  * formatNumber(1234.56) // "1,234.56" (en) 或 "1,234.56" (zh-CN)
  * formatNumber(0.85, { style: 'percent' }) // "85%" (en) 或 "85%" (zh-CN)
  */
-export function formatNumber(value: number, options?: Intl.NumberFormatOptions): string {
-  const locale = getCurrentLocale()
-  return new Intl.NumberFormat(locale, options).format(value)
+export function formatNumber(
+  value: number,
+  options?: Intl.NumberFormatOptions,
+): string {
+  const locale = getCurrentLocale();
+  return new Intl.NumberFormat(locale, options).format(value);
 }
 
 /**
@@ -126,11 +129,11 @@ export function formatNumber(value: number, options?: Intl.NumberFormatOptions):
  * formatCurrency(99.99, 'CNY') // "¥99.99" (zh-CN)
  */
 export function formatCurrency(value: number, currency: string): string {
-  const locale = getCurrentLocale()
+  const locale = getCurrentLocale();
   return new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency
-  }).format(value)
+    style: "currency",
+    currency,
+  }).format(value);
 }
 
 /**
@@ -147,5 +150,5 @@ export function formatCurrency(value: number, currency: string): string {
  * pluralize(5, 'bookmark_count') // "5 bookmarks"
  */
 export function pluralize(count: number, key: string): string {
-  return t(key, String(count))
+  return t(key, String(count));
 }

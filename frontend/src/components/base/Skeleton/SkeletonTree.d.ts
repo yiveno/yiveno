@@ -9,47 +9,47 @@ export interface SkeletonTreeProps {
    * 显示的骨架屏项数量
    * @default 5
    */
-  count?: number
+  count?: number;
 
   /**
    * 树节点高度（支持 CSS 单位）
    * @default '36px'
    */
-  nodeHeight?: string | number
+  nodeHeight?: string | number;
 
   /**
    * 树节点之间的间距
    * @default 'sm'
    */
-  gap?: 'none' | 'sm' | 'md' | 'lg'
+  gap?: "none" | "sm" | "md" | "lg";
 
   /**
    * 是否显示图标
    * @default true
    */
-  showIcon?: boolean
+  showIcon?: boolean;
 
   /**
    * 图标尺寸
    * @default 20
    */
-  iconSize?: number
+  iconSize?: number;
 
   /**
    * 是否显示缩进层级
    * @default true
    */
-  showIndent?: boolean
+  showIndent?: boolean;
 
   /**
    * 缩进宽度（每层级）
    * @default 24
    */
-  indentWidth?: number
+  indentWidth?: number;
 
   /**
    * 动画类型
    * @default 'pulse'
    */
-  animation?: 'pulse' | 'wave' | 'none'
+  animation?: "pulse" | "wave" | "none";
 }

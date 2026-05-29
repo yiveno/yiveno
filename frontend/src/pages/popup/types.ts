@@ -13,11 +13,11 @@ export interface PopupState {
  * 书签项（从 IndexedDB 读取）
  */
 export interface PopupBookmarkItem {
-  id: string
-  title: string
-  url?: string
-  favicon?: string
-  dateAdded?: number
-  dateLastUsed?: number
-  [key: string]: unknown
+  id: string;
+  title: string;
+  url?: string;
+  favicon?: string;
+  dateAdded?: number;
+  dateLastUsed?: number;
+  [key: string]: unknown;
 }

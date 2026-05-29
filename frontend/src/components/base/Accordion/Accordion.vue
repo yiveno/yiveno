@@ -1,63 +1,63 @@
 <script setup lang="ts">
-import { provide, ref } from 'vue'
-import type { AccordionProps } from './Accordion.d'
+import { provide, ref } from "vue";
+import type { AccordionProps } from "./Accordion.d";
 
 defineOptions({
-  name: 'Accordion'
-})
+  name: "Accordion",
+});
 
 const props = withDefaults(defineProps<AccordionProps>(), {
-  exclusive: true
-})
+  exclusive: true,
+});
 
 // 当前展开的项目 ID
-const expandedItems = ref<Set<string>>(new Set())
+const expandedItems = ref<Set<string>>(new Set());
 
 // 初始化默认展开项
 if (props.defaultExpanded) {
-  const initialExpanded = new Set<string>()
+  const initialExpanded = new Set<string>();
   if (Array.isArray(props.defaultExpanded)) {
-    props.defaultExpanded.forEach(id => initialExpanded.add(id))
+    props.defaultExpanded.forEach((id) => initialExpanded.add(id));
   } else {
-    initialExpanded.add(props.defaultExpanded)
+    initialExpanded.add(props.defaultExpanded);
   }
-  expandedItems.value = initialExpanded
+  expandedItems.value = initialExpanded;
 }
 
 /**
  * 切换项目展开状态
  */
 const toggleItem = (itemId: string) => {
-  const currentExpanded = expandedItems.value
-  const isExpanded = currentExpanded.has(itemId)
+  const currentExpanded = expandedItems.value;
+  const isExpanded = currentExpanded.has(itemId);
 
   if (props.exclusive) {
     // 独占模式：展开一个会关闭其他
-    expandedItems.value = new Set(isExpanded ? [] : [itemId])
+    expandedItems.value = new Set(isExpanded ? [] : [itemId]);
   } else {
     // 多选模式：可以同时展开多个
-    const newExpanded = new Set(currentExpanded)
+    const newExpanded = new Set(currentExpanded);
     if (isExpanded) {
-      newExpanded.delete(itemId)
+      newExpanded.delete(itemId);
     } else {
-      newExpanded.add(itemId)
+      newExpanded.add(itemId);
     }
-    expandedItems.value = newExpanded
+    expandedItems.value = newExpanded;
   }
-}
+};
 
 /**
  * 检查项目是否展开
  */
 const isItemExpanded = (itemId: string) => {
-  return expandedItems.value.has(itemId)
-}
+  return expandedItems.value.has(itemId);
+};
 
 // 提供给子组件使用
-provide('accordion', {
+provide("accordion", {
   toggleItem,
-  isItemExpanded
-})
+  isItemExpanded,
+});
 </script>
 
 <template>

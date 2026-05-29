@@ -14,23 +14,23 @@
  * - 可配置的重试策略
  */
 
-import { idbConnectionPool } from './connection-pool'
+import { idbConnectionPool } from "./connection-pool";
 
 /**
  * IndexedDB 事务模式类型
  */
-export type IDBTransactionMode = 'readonly' | 'readwrite'
+export type IDBTransactionMode = "readonly" | "readwrite";
 
 /**
  * 事务选项接口
  */
 export interface TransactionOptions {
   /** 重试次数，默认 0 */
-  retries?: number
+  retries?: number;
   /** 重试延迟（毫秒），默认 50 */
-  retryDelayMs?: number
+  retryDelayMs?: number;
   /** 重试回调函数 */
-  onRetry?: (attempt: number, error: unknown) => void
+  onRetry?: (attempt: number, error: unknown) => void;
 }
 
 /**
@@ -39,7 +39,7 @@ export interface TransactionOptions {
  * @param ms - 延迟时间（毫秒）
  */
 async function delay(ms: number) {
-  await new Promise(r => setTimeout(r, ms))
+  await new Promise((r) => setTimeout(r, ms));
 }
 
 /**
@@ -58,53 +58,53 @@ export async function withTransaction<T>(
   stores: string[],
   mode: IDBTransactionMode,
   cb: (tx: IDBTransaction) => Promise<T>,
-  options: TransactionOptions = {}
+  options: TransactionOptions = {},
 ): Promise<T> {
-  const retries = Math.max(0, options.retries ?? 0)
-  const retryDelayMs = options.retryDelayMs ?? 50
-  let attempt = 0
+  const retries = Math.max(0, options.retries ?? 0);
+  const retryDelayMs = options.retryDelayMs ?? 50;
+  let attempt = 0;
 
   while (true) {
     try {
-      const db = idbConnectionPool.getDB()
+      const db = idbConnectionPool.getDB();
       return await new Promise<T>((resolve, reject) => {
-        const tx = db.transaction(stores, mode)
-        let resultValue: T | undefined
-        let cbErrored = false
+        const tx = db.transaction(stores, mode);
+        let resultValue: T | undefined;
+        let cbErrored = false;
 
         tx.oncomplete = () => {
-          if (!cbErrored) resolve(resultValue as T)
-        }
+          if (!cbErrored) resolve(resultValue as T);
+        };
         tx.onerror = () => {
-          cbErrored = true
-          reject(tx.error)
-        }
+          cbErrored = true;
+          reject(tx.error);
+        };
         tx.onabort = () => {
-          cbErrored = true
-          reject(tx.error || new Error('IndexedDB 事务已中止'))
-        }
+          cbErrored = true;
+          reject(tx.error || new Error("IndexedDB 事务已中止"));
+        };
 
         // 执行业务回调，等待其完成后由 oncomplete 统一 resolve
-        ;(async () => {
+        (async () => {
           try {
-            resultValue = await cb(tx)
+            resultValue = await cb(tx);
           } catch (err) {
-            cbErrored = true
+            cbErrored = true;
             try {
-              tx.abort()
+              tx.abort();
             } catch {}
-            reject(err)
+            reject(err);
           }
-        })()
-      })
+        })();
+      });
     } catch (error) {
       if (attempt < retries) {
-        attempt++
-        options.onRetry?.(attempt, error)
-        await delay(retryDelayMs)
-        continue
+        attempt++;
+        options.onRetry?.(attempt, error);
+        await delay(retryDelayMs);
+        continue;
       }
-      throw error
+      throw error;
     }
   }
 }

@@ -1,21 +1,27 @@
 <script setup lang="ts">
-import '@material/web/progress/circular-progress.js'
-import type { LoadingProps } from './Loading.d'
+import "@material/web/progress/circular-progress.js";
+import type { LoadingProps } from "./Loading.d";
 
-defineOptions({ name: 'Loading' })
+defineOptions({ name: "Loading" });
 
 withDefaults(defineProps<LoadingProps>(), {
-  size: 'md',
-  indeterminate: true
-})
+  size: "md",
+  indeterminate: true,
+});
 </script>
 
 <template>
   <div
     class="loading-container"
-    :class="[`loading-container--${size}`, { 'loading-container--with-text': text }]"
+    :class="[
+      `loading-container--${size}`,
+      { 'loading-container--with-text': text },
+    ]"
   >
-    <md-circular-progress :indeterminate="indeterminate" class="loading-spinner" />
+    <md-circular-progress
+      :indeterminate="indeterminate"
+      class="loading-spinner"
+    />
     <span v-if="text" class="loading-text">{{ text }}</span>
   </div>
 </template>
