@@ -8,7 +8,7 @@
 import { computed } from 'vue'
 import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'
 import BookmarkSearchInput from '@/components/business/BookmarkSearchInput/BookmarkSearchInput.vue'
-import { AppHeader, AnimatedNumber, LucideIcon, Card } from '@/components'
+import { AppHeader, AnimatedNumber, LucideIcon, Card, Button } from '@/components'
 import { t } from '@/utils/i18n-helpers'
 import { usePopupPage } from './composables/usePopupPage'
 import { usePopupStoreIndexedDB } from '@/stores/popup-store-indexeddb'
@@ -182,14 +182,14 @@ const actionCards = computed<ActionCardDef[]>(() => [
                   <LucideIcon :name="card.icon" :size="18" />
                   <span>{{ t(card.labelKey) }}</span>
                 </span>
-                <md-icon-button
+                <Button
+                  variant="icon"
                   class="issue-action"
-                  :style="{ '--md-icon-button-icon-size': '16px' }"
                   :title="t(card.tooltipKey)"
                   @click.stop="openManagementWithFilter(card.filterKey)"
                 >
                   <LucideIcon slot="icon" name="trash-2" :size="16" />
-                </md-icon-button>
+                </Button>
               </div>
               <div :class="['issue-card-count', card.countClass]">
                 <template v-if="!isLoadingTraitOverview">

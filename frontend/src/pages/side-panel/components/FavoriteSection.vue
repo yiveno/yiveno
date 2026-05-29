@@ -58,7 +58,7 @@ async function handleRemove(bookmark: BookmarkNode) {
 
 <template>
   <section class="favorite-section">
-    <EmptyState v-if="favorites.length === 0" icon="star" title="暂无收藏书签" :icon-size="32" />
+    <EmptyState v-if="favorites.length === 0" icon="star" title="暂无收藏书签" ::icon-size="32" />
     <md-list v-else class="list">
       <md-list-item
         v-for="f in favorites"

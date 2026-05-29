@@ -1188,7 +1188,7 @@ defineExpose({
           variant="outlined"
           clearable
           leading-icon="search"
-          :leading-icon-size="20"
+          leading-icon-size="20"
           @focus="handleFocus"
           @blur="handleBlur"
           @keydown.esc="handleEscape"
@@ -1205,7 +1205,7 @@ defineExpose({
         variant="icon"
         class="search-icon-button"
         :class="{ 'has-query': query.length > 0 }"
-        :style="{ '--md-icon-button-icon-size': '20px' }"
+        :icon-size="20"
         :title="isLoadingState ? '搜索中...' : query.length > 0 ? '清空' : '搜索'"
         :aria-label="isLoadingState ? '搜索中' : query.length > 0 ? '清空搜索' : '展开搜索'"
         :aria-expanded="isExpanded"

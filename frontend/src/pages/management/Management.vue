@@ -710,13 +710,14 @@ const {
         <Button variant="text" @click="isConfirmDeleteDialogOpen = false">
           {{ t('common_cancel') }}
         </Button>
-        <md-filled-tonal-button
+        <Button
+          variant="tonal"
           class="error-button"
           :loading="isDeletingFolder"
           @click="confirmDeleteFolder"
         >
           {{ t('management_confirm_delete') }}
-        </md-filled-tonal-button>
+        </Button>
       </template>
     </Dialog>
   </div>

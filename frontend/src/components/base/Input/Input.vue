@@ -3,9 +3,6 @@ import { computed, ref } from 'vue'
 import { LucideIcon } from '@/components/base/LucideIcon'
 import { Loading } from '@/components/base/Loading'
 import type { InputProps, InputEmits } from './Input.d'
-import '@material/web/textfield/outlined-text-field.js'
-import '@material/web/textfield/filled-text-field.js'
-import '@material/web/iconbutton/icon-button.js'
 
 defineOptions({
   name: 'MdInput'

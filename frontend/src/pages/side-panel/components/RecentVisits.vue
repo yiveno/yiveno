@@ -72,7 +72,7 @@ defineExpose({ loadRecentVisits: load })
       v-if="recentVisits.length === 0"
       icon="clock"
       title="暂无最近访问"
-      :icon-size="32"
+      ::icon-size="32"
     />
     <md-list v-else class="list">
       <md-list-item

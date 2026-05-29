@@ -9,16 +9,6 @@ import { message } from '@/application/message/message-service'
 import { useSubscription } from '@/composables/useSubscription'
 import { logger } from '@/infrastructure/logging/logger'
 
-// 导入 Material Web Components
-import '@material/web/select/outlined-select.js'
-import '@material/web/select/select-option.js'
-import '@material/web/button/filled-button.js'
-import '@material/web/tabs/tabs.js'
-import '@material/web/tabs/primary-tab.js'
-import '@material/web/button/text-button.js'
-import '@material/web/textfield/outlined-text-field.js'
-import '@material/web/switch/switch.js'
-
 defineOptions({ name: 'AISettings' })
 
 const { isPro } = useSubscription()
@@ -528,7 +518,7 @@ onMounted(async () => {
                   :type="showKey ? 'text' : 'password'"
                   :placeholder="keyPlaceholder"
                   :trailing-icon="showKey ? 'eye-off' : 'eye'"
-                  :trailing-icon-size="18"
+                  :trailing-:icon-size="18"
                   class="text-field"
                   variant="outlined"
                   @keydown.enter.prevent="saveConfig"
@@ -1056,13 +1046,6 @@ button.btn--danger {
 /* Tab 切换区域 */
 .provider-tabs {
   margin-bottom: var(--spacing-4);
-}
-
-md-tabs {
-  --md-primary-tab-container-color: transparent;
-  --md-primary-tab-label-text-color: var(--color-text-secondary);
-  --md-primary-tab-active-label-text-color: var(--md-sys-color-primary);
-  --md-primary-tab-active-indicator-color: var(--md-sys-color-primary);
 }
 
 .tab-status-icon {

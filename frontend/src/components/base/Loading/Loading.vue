@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import '@material/web/progress/circular-progress.js'
 import type { LoadingProps } from './Loading.d'
 
 defineOptions({ name: 'Loading' })
@@ -52,11 +51,6 @@ withDefaults(defineProps<LoadingProps>(), {
 .loading-container--md .loading-spinner {
   --md-circular-progress-size: 32px;
   --md-circular-progress-active-indicator-width: 3px;
-}
-
-.loading-container--lg .loading-spinner {
-  --md-circular-progress-size: 48px;
-  --md-circular-progress-active-indicator-width: 4px;
 }
 
 .loading-container--xl .loading-spinner {

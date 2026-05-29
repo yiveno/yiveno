@@ -64,9 +64,9 @@ export async function preloadMaterialWebComponents(context: string): Promise<voi
     import('@material/web/switch/switch.js'),
     import('@material/web/tabs/tabs.js'),
     import('@material/web/tabs/primary-tab.js'),
-    import('@material/web/textfield/outlined-text-field.js')
+    import('@material/web/textfield/outlined-text-field.js'),
+    import('@material/web/textfield/filled-text-field.js')
   ])
-
   if (typeof customElements === 'undefined') {
     logger.warn(context, 'MaterialWeb', '当前环境无 customElements，跳过注册检查')
     return

@@ -424,7 +424,7 @@ defineExpose({
           icon="circle-slash"
           title="未找到匹配的用户"
           description="请尝试其他关键词"
-          :icon-size="48"
+          ::icon-size="48"
         />
       </div>
     </div>

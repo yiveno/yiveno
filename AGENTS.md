@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
+This file provides guidance to Codex (Codex.ai/code) when working w/ code in this repo.
 
 ## Single source of truth (read first)
 
@@ -9,7 +9,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 ## Project Overview
 
-**AcuityBookmarks** is an intelligent Chrome extension built with Vue 3, TypeScript, and Cloudflare Workers that provides AI-powered bookmark organization, content-aware search, and smart recommendations. The project follows a sophisticated Domain-Driven Design (DDD) architecture and is optimized for high performance with features like virtual scrolling, IndexedDB caching, and background crawling.
+**AcuityBookmarks** is intelligent Chrome extension built w/ Vue 3, TypeScript, and Cloudflare Workers that provides AI-powered bookmark organization, content-aware search, and smart recommendations. project follows sophisticated Domain-Driven Design (DDD) architecture and is optimized for high performance w/ features like virtual scrolling, IndexedDB caching, and background crawling.
 
 ## Available Scripts
 
@@ -75,12 +75,12 @@ acuityBookmarks/
 **Layer 1: Presentation Layer** (`frontend/src/presentation/`)
 
 - UI adapters and presentation-specific composables
-- Bridges UI components with application services
+- Bridges UI components w/ application services
 
 **Layer 2: Application Layer** (`frontend/src/application/`)
 
 - Business process orchestration (auth, bookmarks, fonts, notifications, queries, scheduler, settings)
-- Coordinates between core and infrastructure layers
+- Coordinates btw core and infrastructure layers
 
 **Layer 3: Core Layer** (`frontend/src/core/`)
 
@@ -123,8 +123,8 @@ Chrome API → Background Script → IndexedDB → Pinia Store → Vue Component
 
 **Strict Rules:**
 
-- ✅ IndexedDB is the single source of truth
-- ✅ Background Script is the only listener (`background/bookmarks.ts`)
+- ✅ IndexedDB is single source of truth
+- ✅ Background Script is only listener (`background/bookmarks.ts`)
 - ✅ Frontend MUST NOT directly access Chrome APIs
 - ❌ FORBIDDEN: Frontend direct calls to `chrome.bookmarks.*`
 
@@ -145,7 +145,7 @@ presentation/ → application/ → core/ → infrastructure/
 
 ### 4. Service Worker Compatibility (CRITICAL)
 
-**Background Scripts run in Service Worker environment without `window`, `document`, `localStorage`!**
+**Background Scripts run in Service Worker environment w/o `window` `document` `localStorage`!**
 
 | Correct ✅                      | Incorrect ❌          |
 | ------------------------------- | --------------------- |
@@ -174,10 +174,10 @@ presentation/ → application/ → core/ → infrastructure/
 
 ### Frontend (Chrome Extension)
 
-- **Framework**: Vue 3.5.18 with Composition API + `<script setup>`
+- **Framework**: Vue 3.5.18 w/ Composition API + `<script setup>`
 - **Language**: TypeScript 5.8.3 (strict mode + Project References)
 - **State Management**: Pinia 3.0.3
-- **Build Tool**: Vite 8.0.0 (fast HMR + Rolldown bundling with Rust)
+- **Build Tool**: Vite 8.0.0 (fast HMR + Rolldown bundling w/ Rust)
 - **Search**: Fuse.js 6.6.2 (fuzzy search)
 - **Virtual Scroll**: @tanstack/vue-virtual 3.13.12 (large dataset optimization)
 - **Chrome API**: Manifest V3
@@ -195,11 +195,11 @@ presentation/ → application/ → core/ → infrastructure/
 
 ### Embedding Service (Automatic Behavior)
 
-**Local ONNX Embeddings are fully automatic with smart defaults:**
+**Local ONNX Embeddings are fully automatic w/ smart defaults:**
 
-- ✅ **No user configuration needed** - All settings removed from UI
+- ✅ **No user config needed** - All settings removed from UI
 - ✅ **Automatic quota management** - Adjusts based on bookmark count
-- ✅ **Background processing** - Runs during idle time without blocking UI
+- ✅ **Background processing** - Runs during idle time w/o blocking UI
 - ✅ **Incremental sync** - Only processes new/changed bookmarks
 - ✅ **Fully local** - No network requests, complete privacy
 
@@ -240,11 +240,11 @@ bun run format
 
 1. **Production build**: `bun run build:all`
 2. **Clean dist**: Automatically runs `bun scripts/clean-dist.cjs`
-3. **Package extension**: Zip `dist/` directory for Chrome Web Store
+3. **Package extension**: Zip `dist/` dir for Chrome Web Store
 
 ## Performance Requirements
 
-**Target: Smooth operation with 20k bookmarks**
+**Target: Smooth operation w/ 20k bookmarks**
 
 - ✅ Virtual scrolling: `@tanstack/vue-virtual` for large datasets
 - ✅ Batch operations: IndexedDB batching (2000/batch)
@@ -265,11 +265,11 @@ bun run format
 
 - `BookmarkFilter` component: Bookmark filtering component
 - `useBookmarkFilter` Composable: Bookmark filtering hook
-- `searchAppService`: Underlying filtering service (technical term保留)
+- `searchAppService`Underlying filtering service (technical term保留)
 
 ### TypeScript Standards
 
-- ❌ PERMANENTLY FORBIDDEN: `any`, `as any`
+- ❌ PERMANENTLY FORBIDDEN: `any` `as any`
 - ✅ MUST use Zod for external data validation
 - ✅ MUST add JSDoc comments (Chinese)
 
@@ -283,7 +283,7 @@ bun run format
 
 - **Immer**: `updateMap(nodes, draft => {...})` (immutable state updates)
 - **mitt**: `emitEvent('bookmark:created', {...})` (event bus)
-- **VueUse**: Prefer `useEventListener`, `useDebounceFn`, `useTimeoutFn`
+- **VueUse**: Prefer `useEventListener` `useDebounceFn` `useTimeoutFn`
 - **Zod**: All external data must be validated
 
 ## Common Errors (FORBIDDEN)
@@ -329,13 +329,13 @@ this.timer = setTimeout(() => {...}, 1000)
 
 - **Authentication**: Google, GitHub OAuth + Supabase
 - **Payment Processing**: Gumroad integration (Lemon Squeezy removed)
-- **AI Services**: User-provided API Keys (OpenAI / Codex / Gemini) + Local ONNX embeddings (fully automatic, no user configuration needed)
+- **AI Services**: User-provided API Keys (OpenAI / Codex / Gemini) + Local ONNX embeddings (fully automatic, no user config needed)
 - **Storage**: IndexedDB + Chrome Bookmarks API sync
 
 ## File Organization
 
 - **Frontend**: Strict DDD 8-layer architecture
-- **Backend**: Service Worker with event-driven architecture
+- **Backend**: Service Worker w/ event-driven architecture
 - **Naming**: Consistent `useXXXStore` for Pinia stores
 - **Import paths**: Aliased paths (`@/`) for clean imports
 
@@ -343,13 +343,13 @@ this.timer = setTimeout(() => {...}, 1000)
 
 ### E2E Testing
 
-- **Management Page**: Full functional testing with Puppeteer
+- **Management Page**: Full functional testing w/ Puppeteer
 - **Performance Testing**: CPU throttling + network simulation
 - **Chrome Extension Testing**: Extension lifecycle and API interactions
 
 ### Quality Metrics
 
-- **Bundle Size**: Optimized with code splitting and tree shaking
+- **Bundle Size**: Optimized w/ code splitting and tree shaking
 - **Performance**: Virtual scrolling for large datasets
 - **Memory Usage**: IndexedDB caching reduces API calls
 - **User Experience**: Progress indicators and error handling
@@ -359,12 +359,12 @@ this.timer = setTimeout(() => {...}, 1000)
 ### Frontend (Chrome Extension)
 
 - **Build Target**: Optimized for Chrome 100+ browsers
-- **Output**: `dist/` directory with manifest.json
+- **Output**: `dist/` dir w/ manifest.json
 - **Deployment**: Chrome Web Store + GitHub Releases
 
 ### Backend (Cloudflare Worker)
 
-- **Runtime**: Edge network with global distribution
-- **Database**: Supabase (PostgreSQL) with vector search
+- **Runtime**: Edge network w/ global distribution
+- **Database**: Supabase (PostgreSQL) w/ vector search
 - **AI**: User-provided API Keys (OpenAI / Codex / Gemini) + Local ONNX embeddings (automatic)
 - **Custom Domain**: api.acuitybookmarks.com

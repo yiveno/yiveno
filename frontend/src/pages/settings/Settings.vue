@@ -349,11 +349,6 @@ watch(tab, v => {
 }
 
 .settings-md-tabs {
-  --md-primary-tab-active-indicator-height: 3px;
-  --md-primary-tab-container-height: 56px;
-  --md-primary-tab-label-text-size: var(--text-base);
-  --md-icon-size: 20px;
-
   display: block;
   width: 100%;
   min-height: 56px;

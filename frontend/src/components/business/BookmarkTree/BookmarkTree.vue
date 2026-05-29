@@ -2014,7 +2014,7 @@ defineExpose({
           :icon="emptyStateConfig.icon"
           :title="emptyStateConfig.title"
           v-bind="emptyStateConfig.description ? { description: emptyStateConfig.description } : {}"
-          :icon-size="56"
+          ::icon-size="56"
         />
 
         <!-- 标准渲染模式 -->

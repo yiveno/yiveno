@@ -343,7 +343,7 @@ onUnmounted(() => {
       ref="toggleBtnRef"
       variant="icon"
       class="theme-toggle__button"
-      :style="{ '--md-icon-button-icon-size': '30px' }"
+      :icon-size="30"
       :title="currentThemeLabel"
       :aria-label="currentThemeLabel"
       @click="showMenu = !showMenu"

@@ -272,7 +272,7 @@ defineExpose({
               v-if="item.closable !== false"
               variant="icon"
               class="ab-notification-close"
-              :style="{ '--md-icon-button-icon-size': '14px' }"
+              :icon-size="14"
               :aria-label="`关闭${item.message}通知`"
               @click="close(item.id)"
             >

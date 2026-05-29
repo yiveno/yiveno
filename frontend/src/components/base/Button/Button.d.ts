@@ -1,4 +1,4 @@
-export type ButtonVariant = 'filled' | 'text' | 'outlined' | 'icon'
+export type ButtonVariant = 'filled' | 'text' | 'outlined' | 'icon' | 'tonal'
 
 export interface ButtonProps {
   /** 按钮变体 */

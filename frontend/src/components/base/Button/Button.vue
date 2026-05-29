@@ -3,10 +3,6 @@ import { computed } from 'vue'
 import { LucideIcon } from '@/components/base/LucideIcon'
 import { Loading } from '@/components/base/Loading'
 import type { ButtonProps, ButtonEmits } from './Button.d'
-import '@material/web/button/filled-button.js'
-import '@material/web/button/text-button.js'
-import '@material/web/button/outlined-button.js'
-import '@material/web/iconbutton/icon-button.js'
 
 defineOptions({
   name: 'MdButton'
@@ -38,6 +34,14 @@ const showLoading = computed(() => props.loading && props.variant !== 'icon')
 const computedAriaLabel = computed(() => {
   return props.ariaLabel || props.title || ''
 })
+
+/**
+ * icon 按钮变体时，将 iconSize 映射到 MWC CSS 变量
+ */
+const iconStyleComputed = computed(() => {
+  if (props.variant !== 'icon') return {} as Record<string, string>
+  return { '--md-icon-button-icon-size': `${props.iconSize}px` }
+})
 </script>
 
 <template>
@@ -47,6 +51,7 @@ const computedAriaLabel = computed(() => {
     :disabled="disabled || loading"
     :type="type"
     v-bind="$attrs"
+    :style="iconStyleComputed"
     @click="handleClick"
   >
     <LucideIcon v-if="icon" slot="icon" :name="icon" :size="iconSize" />
@@ -62,6 +67,7 @@ const computedAriaLabel = computed(() => {
     :disabled="disabled || loading"
     :type="type"
     v-bind="$attrs"
+    :style="iconStyleComputed"
     @click="handleClick"
   >
     <LucideIcon v-if="icon" slot="icon" :name="icon" :size="iconSize" />
@@ -77,6 +83,7 @@ const computedAriaLabel = computed(() => {
     :disabled="disabled || loading"
     :type="type"
     v-bind="$attrs"
+    :style="iconStyleComputed"
     @click="handleClick"
   >
     <LucideIcon v-if="icon" slot="icon" :name="icon" :size="iconSize" />
@@ -94,6 +101,7 @@ const computedAriaLabel = computed(() => {
     :aria-label="computedAriaLabel"
     :title="title"
     v-bind="$attrs"
+    :style="iconStyleComputed"
     @click="handleClick"
   >
     <LucideIcon v-if="icon" :name="icon" :size="iconSize" />

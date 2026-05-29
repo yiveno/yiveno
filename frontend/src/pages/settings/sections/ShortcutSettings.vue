@@ -156,35 +156,15 @@ onUnmounted(() => {
   padding-top: var(--spacing-2);
 }
 
-/* Material Web Components 样式 */
-
-/* List 样式 */
+/* Material Web 组件覆盖（与全局不一致的特化值） */
 md-list {
   --md-list-container-color: transparent;
 }
 
 md-list-item {
-  --md-list-item-label-text-color: var(--md-sys-color-on-surface);
-  --md-list-item-supporting-text-color: var(--md-sys-color-on-surface-variant);
   --md-list-item-trailing-supporting-text-color: var(--md-sys-color-on-surface-variant);
-  --md-list-item-container-shape: 0;
-  --md-list-item-label-text-font: var(--font-family-base);
   --md-list-item-label-text-size: var(--md-sys-typescale-body-large-size);
-  --md-list-item-supporting-text-font: var(--font-family-base);
   --md-list-item-supporting-text-size: var(--md-sys-typescale-body-medium-size);
   --md-list-item-one-line-container-height: 56px;
-  --md-list-item-hover-state-layer-color: var(--md-sys-color-on-surface);
-  --md-list-item-hover-state-layer-opacity: 0.08;
-}
-
-/* Button 样式 */
-button {
-  --md-filled-button-container-color: var(--md-sys-color-primary);
-  --md-filled-button-label-text-color: var(--md-sys-color-on-primary);
-  --md-filled-button-container-shape: var(--radius-md);
-  --md-filled-button-label-text-font: var(--font-family-base);
-  --md-filled-button-label-text-size: var(--md-sys-typescale-label-large-size);
-  --md-filled-button-hover-state-layer-color: var(--md-sys-color-on-primary);
-  --md-filled-button-hover-state-layer-opacity: 0.08;
 }
 </style>
