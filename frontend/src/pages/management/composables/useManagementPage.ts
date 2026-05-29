@@ -13,7 +13,7 @@ import type {
   BookmarkOperationType,
   DiffResult
 } from '@/application/bookmark/bookmark-diff-service'
-import type { EditBookmarkData } from '@/stores/bookmark/bookmark-management-store'
+import type { EditBookmarkData } from '@/stores/bookmark-management-store'
 import { DataValidator } from '@/core/common/store-error'
 import { logger } from '@/infrastructure/logging/logger'
 import type BookmarkTree from '@/components/business/BookmarkTree/BookmarkTree.vue'

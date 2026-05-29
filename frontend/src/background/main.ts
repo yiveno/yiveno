@@ -11,11 +11,11 @@
  */
 
 import { logger } from '@/infrastructure/logging/logger'
-import { registerLifecycleHandlers } from './bootstrap'
-import { registerMessageHandlers } from './messaging'
-import { registerMenusAndShortcuts } from './menus'
-import { registerOmniboxHandlers } from './omnibox'
-import { registerBookmarkChangeListeners } from './bookmarks'
+import { registerLifecycleHandlers } from './managers/bootstrap'
+import { registerMessageHandlers } from './listeners/messaging'
+import { registerMenusAndShortcuts } from './listeners/menus'
+import { registerOmniboxHandlers } from './listeners/omnibox'
+import { registerBookmarkChangeListeners } from './listeners/bookmarks'
 import { initializeBookmarkTraitAutoSync } from '@/services/bookmark-trait-auto-sync'
 
 /**

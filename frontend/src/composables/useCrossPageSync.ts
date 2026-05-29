@@ -13,7 +13,7 @@
  */
 
 import { onMounted, onUnmounted } from 'vue'
-import { useBookmarkStore } from '@/stores/bookmarkStore'
+import { useBookmarkStore } from '@/stores/bookmark-tree-store'
 import { logger } from '@/infrastructure/logging/logger'
 
 /**

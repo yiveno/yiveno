@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useBookmarkStore } from '@/stores/bookmarkStore'
+import { useBookmarkStore } from '@/stores/bookmark-tree-store'
 import { favoriteAppService } from '@/application/bookmark/favorite-app-service'
 import { LucideIcon, EmptyState, Button } from '@/components'
 import type { BookmarkNode } from '@/types'

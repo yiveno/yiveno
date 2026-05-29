@@ -1,6 +1,6 @@
 import { computed, onMounted, onUnmounted, ref, shallowRef } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useBookmarkStore } from '@/stores/bookmarkStore'
+import { useBookmarkStore } from '@/stores/bookmark-tree-store'
 import type { BookmarkNode } from '../types'
 import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
 import type { BookmarkRecord } from '@/infrastructure/indexeddb/types'

@@ -11,7 +11,7 @@ import { CURRENT_SCHEMA_VERSION, getExtensionState, updateExtensionState } from 
 import { bookmarkSyncService } from '@/services/bookmark-sync-service'
 import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
 import { folderVectorService } from '@/application/folder/folder-vector-service'
-import { dispatchOffscreenRequest } from '@/background/offscreen-manager'
+import { dispatchOffscreenRequest } from '@/background/managers/offscreen-manager'
 
 /**
  * 同步书签 Embedding（通过 Offscreen Document 执行）

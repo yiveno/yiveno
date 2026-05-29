@@ -15,7 +15,10 @@
  * - 智能推荐系统
  */
 import { logger } from '@/infrastructure/logging/logger'
-import { AB_EVENTS } from '@/constants/events'
+const AB_EVENTS = {
+  BOOKMARK_UPDATED: 'acuity-bookmark-updated' as const,
+  BOOKMARKS_DB_SYNCED: 'acuity-bookmarks-db-synced' as const
+}
 import { bookmarkSearchService } from '@/application/query/bookmark-search-service'
 import { dispatchCoalescedEvent } from '@/infrastructure/events/event-stream'
 import { indexedDBManager } from '@/infrastructure/indexeddb/manager'

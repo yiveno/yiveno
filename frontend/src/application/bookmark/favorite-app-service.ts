@@ -159,7 +159,7 @@ class FavoriteAppService {
 
     if (!isServiceWorker && typeof window !== 'undefined' && typeof document !== 'undefined') {
       try {
-        const { useBookmarkStore } = await import('@/stores/bookmarkStore')
+        const { useBookmarkStore } = await import('@/stores/bookmark-tree-store')
         const bookmarkStore = useBookmarkStore()
 
         logger.info('FavoriteAppService', '🔄 重新加载书签数据以应用收藏状态')
@@ -337,7 +337,7 @@ class FavoriteAppService {
   ): Promise<void> {
     if (!isServiceWorker && typeof window !== 'undefined' && typeof document !== 'undefined') {
       try {
-        const { useBookmarkStore } = await import('@/stores/bookmarkStore')
+        const { useBookmarkStore } = await import('@/stores/bookmark-tree-store')
         const bookmarkStore = useBookmarkStore()
         bookmarkStore.updateNode(bookmarkId, {
           isFavorite: true,
@@ -389,7 +389,7 @@ class FavoriteAppService {
 
       if (!isServiceWorker && typeof window !== 'undefined' && typeof document !== 'undefined') {
         try {
-          const { useBookmarkStore } = await import('@/stores/bookmarkStore')
+          const { useBookmarkStore } = await import('@/stores/bookmark-tree-store')
           const bookmarkStore = useBookmarkStore()
           const updates: Partial<BookmarkNode> = {
             isFavorite: false

@@ -14,7 +14,7 @@ import type { WorkerDoc, SearchWorkerCommand, SearchWorkerEvent } from '@/types/
 import type { SearchWorkerAdapterOptions } from '@/types/application/service'
 import { logger } from '@/infrastructure/logging/logger'
 import { TIMEOUT_CONFIG } from '@/config/constants'
-import { dispatchOffscreenRequest } from '@/background/offscreen-manager'
+import { dispatchOffscreenRequest } from '@/background/managers/offscreen-manager'
 
 type WorkerHandle = Worker | null
 

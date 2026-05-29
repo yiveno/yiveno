@@ -14,9 +14,9 @@
  */
 
 import { logger } from '@/infrastructure/logging/logger'
-import { openManagementPage, openSettingsPage } from './navigation'
+import { openManagementPage, openSettingsPage } from '../managers/navigation'
 import { showSystemNotification } from './notification'
-import { autoAddBookmark } from './auto-add-bookmark'
+import { autoAddBookmark } from '../managers/auto-add-bookmark'
 import { showBookmarkAddedNotification } from './messaging'
 
 // ✅ 菜单注册状态标记（避免重复注册）
