@@ -143,7 +143,7 @@ const loadShareData = async () => {
 const checkIfOwnShare = async () => {
   try {
     // 从扩展获取当前登录用户信息
-    // @ts-expect-error
+    // @ts-expect-error - chrome runtime API
     if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
       // ✅ 修复：使用统一的消息发送方式
       const sendMessageToExtension = (
@@ -151,16 +151,16 @@ const checkIfOwnShare = async () => {
         callback: (response: ExtensionMessageResponse) => void
       ) => {
         if (EXTENSION_ID) {
-          // @ts-expect-error
+          // @ts-expect-error - chrome runtime API
           chrome.runtime.sendMessage(EXTENSION_ID, message, callback)
         } else {
-          // @ts-expect-error
+          // @ts-expect-error - chrome runtime API
           chrome.runtime.sendMessage(message, callback)
         }
       }
 
       sendMessageToExtension({ type: 'GET_CURRENT_USER' }, (response: ExtensionMessageResponse) => {
-        // @ts-expect-error
+        // @ts-expect-error - chrome runtime API
         if (!chrome.runtime.lastError && response && response.user) {
           currentUserId.value = response.user.id
           console.log('📍 当前用户 ID:', currentUserId.value)
@@ -196,12 +196,12 @@ const checkExtension = async () => {
         if (EXTENSION_ID) {
           // 生产环境：指定扩展 ID
           console.log('📍 使用固定扩展 ID:', EXTENSION_ID)
-          // @ts-expect-error
+          // @ts-expect-error - chrome runtime API
           chrome.runtime.sendMessage(EXTENSION_ID, message, callback)
         } else {
           // 本地开发：不指定 ID，让扩展自动接收（通过 externally_connectable）
           console.log('📍 本地开发模式：不指定扩展 ID')
-          // @ts-expect-error
+          // @ts-expect-error - chrome runtime API
           chrome.runtime.sendMessage(message, callback)
         }
       }
@@ -210,9 +210,9 @@ const checkExtension = async () => {
       sendMessageToExtension(
         { type: 'CHECK_EXTENSION_INSTALLED' },
         (response: ExtensionMessageResponse) => {
-          // @ts-expect-error
+          // @ts-expect-error - chrome runtime API
           if (chrome.runtime.lastError) {
-            // @ts-expect-error
+            // @ts-expect-error - chrome runtime API
             console.log('❌ 扩展未安装或未响应:', chrome.runtime.lastError.message)
             isExtensionInstalled.value = false
           } else if (response && response.installed) {
@@ -279,7 +279,7 @@ const importSelected = async () => {
     })
 
     // 使用 chrome.runtime.sendMessage 发送导入请求
-    // @ts-expect-error
+    // @ts-expect-error - chrome runtime API
     if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
       // ✅ 修复：使用统一的消息发送方式
       const sendMessageToExtension = (
@@ -287,10 +287,10 @@ const importSelected = async () => {
         callback: (response: ExtensionMessageResponse) => void
       ) => {
         if (EXTENSION_ID) {
-          // @ts-expect-error
+          // @ts-expect-error - chrome runtime API
           chrome.runtime.sendMessage(EXTENSION_ID, message, callback)
         } else {
-          // @ts-expect-error
+          // @ts-expect-error - chrome runtime API
           chrome.runtime.sendMessage(message, callback)
         }
       }
@@ -308,11 +308,11 @@ const importSelected = async () => {
           }
         },
         (response: ExtensionMessageResponse) => {
-          // @ts-expect-error
+          // @ts-expect-error - chrome runtime API
           if (chrome.runtime.lastError) {
-            // @ts-expect-error
+            // @ts-expect-error - chrome runtime API
             console.error('❌ 导入失败:', chrome.runtime.lastError.message)
-            // @ts-expect-error
+            // @ts-expect-error - chrome runtime API
             alert(`❌ 导入失败：${chrome.runtime.lastError.message}`)
             isImporting.value = false
             return

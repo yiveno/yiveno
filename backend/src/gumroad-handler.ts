@@ -166,6 +166,135 @@ export async function handleGetSubscription(request: Request, env: Env): Promise
   }
 }
 
+
+/**
+ * 从 webhook payload 提取自定义字段
+ */
+
+/**
+ * 根据 endedAt 和失败标志确定订阅状态
+ */
+
+/**
+ * 对收费事件插入支付记录
+ */
+async function insertPaymentIfCharged(
+  payload: GumroadWebhookPayload,
+  ctx: {
+    userId: string
+    subscriptionId: string
+    status: Subscription['status']
+    notificationType: string
+  },
+  env: Env,
+  supabase: any
+): Promise<void> {
+  if (!(payload.charge_id || payload.sale_id)) return
+  const paymentRecord: PaymentRecord = {
+    user_id: ctx.userId,
+    subscription_id: ctx.subscriptionId,
+    gumroad_order_id: payload.sale_id || payload.order_id || payload.purchase_id || null,
+    gumroad_payment_id: payload.charge_id || null,
+    amount: Number(payload.price || payload.charge_amount || 0),
+    currency: payload.currency || 'USD',
+    status: ctx.status,
+    payment_method: payload.payment_method || null,
+    event_type: ctx.notificationType,
+    metadata: payload
+  }
+  await supabase.insertPaymentRecord(env, paymentRecord)
+}
+
+
+/**
+ * 计算订阅周期日期
+ */
+
+/**
+ * 从 webhook payload 构建订阅记录
+ */
+function buildSubscriptionRecord(
+  payload: GumroadWebhookPayload,
+  userId: string,
+  subscriptionId: string,
+  tier: SubscriptionTier
+): Partial<Subscription> {
+  const cancelled = toBoolean(payload.cancelled)
+  const endedAt = toIsoDate(payload.ended_at)
+  const { currentPeriodStart, currentPeriodEnd } = computePeriodDates(payload, endedAt)
+  const cancelAtPeriodEnd = cancelled && !endedAt
+  const status = computeSubscriptionStatus(endedAt, payload)
+
+  return {
+    user_id: userId,
+    gumroad_subscription_id: subscriptionId,
+    gumroad_order_id: payload.order_id || payload.sale_id || payload.purchase_id || null,
+    gumroad_variant_id: payload.plan_id || payload.price_id || null,
+    status,
+    tier,
+    current_period_start: currentPeriodStart,
+    current_period_end: currentPeriodEnd,
+    cancel_at_period_end: cancelAtPeriodEnd,
+    cancelled_at: endedAt
+  }
+}
+
+function computePeriodDates(
+  payload: GumroadWebhookPayload,
+  endedAt: string | null
+): { currentPeriodStart: string; currentPeriodEnd: string } {
+  const nextChargeAt =
+    toIsoDate(payload.next_charge_at) ||
+    toIsoDate(payload.renewal_at) ||
+    toIsoDate(payload.subscription_renewal_at)
+  const currentPeriodEnd = nextChargeAt || endedAt || new Date().toISOString()
+  const currentPeriodStart =
+    toIsoDate(payload.charge_created_at) ||
+    toIsoDate(payload.sale_timestamp) ||
+    new Date().toISOString()
+  return { currentPeriodStart, currentPeriodEnd }
+}
+
+function computeSubscriptionStatus(
+  endedAt: string | null,
+  payload: GumroadWebhookPayload
+): Subscription['status'] {
+  if (endedAt) return 'expired'
+  const isFailed =
+    toBoolean(payload.is_failed || payload.failed) || toBoolean(payload.charge_failed)
+  return isFailed ? 'past_due' : 'active'
+}
+
+function extractCustomFields(payload: GumroadWebhookPayload): {
+  userId: string | null
+  tier: SubscriptionTier
+} {
+  const userId = payload['custom_fields[user_id]'] || payload['custom_fields[userId]'] || null
+  const tier = (payload['custom_fields[tier]'] || 'pro') as SubscriptionTier
+  return { userId, tier }
+}
+
+
+/**
+ * 验证 webhook 签名
+ */
+async function webhookVerifySignature(
+  secret: string,
+  rawBody: string,
+  signature: string
+): Promise<Response | null> {
+  if (secret && signature) {
+    const valid = await verifySignature(secret, rawBody, signature)
+    if (!valid) {
+      console.error('[Gumroad] Webhook 验签失败')
+      return json({ success: false, error: 'Invalid signature' }, 401)
+    }
+    return null
+  }
+  console.warn('[Gumroad] 未配置 Webhook Secret，跳过签名验证（仅用于开发测试）')
+  return null
+}
+
 /**
  * POST /api/gumroad/webhook
  *
@@ -184,23 +313,13 @@ export async function handleWebhook(request: Request, env: Env): Promise<Respons
   const signature = request.headers.get('X-Gumroad-Signature') || ''
   const secret = env.GUMROAD_WEBHOOK_SECRET || ''
 
-  // 如果配置了 Secret，进行验证
-  if (secret && signature) {
-    const valid = await verifySignature(secret, rawBody, signature)
-    if (!valid) {
-      console.error('[Gumroad] Webhook 验签失败')
-      return json({ success: false, error: 'Invalid signature' }, 401)
-    }
-  } else {
-    // 如果没有配置 Secret，记录警告但继续处理（开发环境）
-    console.warn('[Gumroad] 未配置 Webhook Secret，跳过签名验证（仅用于开发测试）')
-  }
+  const sigCheck = await webhookVerifySignature(secret, rawBody, signature)
+  if (sigCheck) return sigCheck
 
   const payload = parseWebhookPayload(rawBody)
   const notificationType = payload.notification_type || payload.kind || 'unknown'
   const subscriptionId = payload.subscription_id || payload.sale_id || null
-  const userId = payload['custom_fields[user_id]'] || payload['custom_fields[userId]'] || null
-  const tier = (payload['custom_fields[tier]'] || 'pro') as SubscriptionTier
+  const { userId, tier } = extractCustomFields(payload)
 
   if (!subscriptionId || !userId) {
     console.error('[Gumroad] Webhook 缺少 subscription_id 或 user_id', payload)
@@ -210,56 +329,12 @@ export async function handleWebhook(request: Request, env: Env): Promise<Respons
   try {
     const supabase = await import('./utils/supabase.ts')
 
-    const cancelled = toBoolean(payload.cancelled)
-    const endedAt = toIsoDate(payload.ended_at)
-    const nextChargeAt =
-      toIsoDate(payload.next_charge_at) ||
-      toIsoDate(payload.renewal_at) ||
-      toIsoDate(payload.subscription_renewal_at)
-    const currentPeriodEnd = nextChargeAt || endedAt || new Date().toISOString()
-    const currentPeriodStart =
-      toIsoDate(payload.charge_created_at) ||
-      toIsoDate(payload.sale_timestamp) ||
-      new Date().toISOString()
-
-    const cancelAtPeriodEnd = cancelled && !endedAt
-    const status: Subscription['status'] = endedAt
-      ? 'expired'
-      : toBoolean(payload.is_failed || payload.failed) || toBoolean(payload.charge_failed)
-        ? 'past_due'
-        : 'active'
-
-    const subscriptionRecord: Partial<Subscription> = {
-      user_id: userId,
-      gumroad_subscription_id: subscriptionId,
-      gumroad_order_id: payload.order_id || payload.sale_id || payload.purchase_id || null,
-      gumroad_variant_id: payload.plan_id || payload.price_id || null,
-      status,
-      tier,
-      current_period_start: currentPeriodStart,
-      current_period_end: currentPeriodEnd,
-      cancel_at_period_end: cancelAtPeriodEnd,
-      cancelled_at: endedAt
-    }
+    const subscriptionRecord = buildSubscriptionRecord(payload, userId, subscriptionId, tier)
 
     await supabase.upsertSubscription(env, subscriptionRecord)
 
     // 插入支付记录（仅对收费事件）
-    if (payload.charge_id || payload.sale_id) {
-      const paymentRecord: PaymentRecord = {
-        user_id: userId,
-        subscription_id: subscriptionId,
-        gumroad_order_id: payload.sale_id || payload.order_id || payload.purchase_id || null,
-        gumroad_payment_id: payload.charge_id || null,
-        amount: Number(payload.price || payload.charge_amount || 0),
-        currency: payload.currency || 'USD',
-        status,
-        payment_method: payload.payment_method || null,
-        event_type: notificationType,
-        metadata: payload
-      }
-      await supabase.insertPaymentRecord(env, paymentRecord)
-    }
+    await insertPaymentIfCharged(payload, { userId, subscriptionId, status, notificationType }, env, supabase)
 
     console.log('[Gumroad] Webhook 处理完成:', notificationType, subscriptionId)
 

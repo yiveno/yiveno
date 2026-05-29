@@ -22,6 +22,66 @@ function generateShortCode(): string {
 /**
  * 分享路由
  */
+
+/**
+ * 双重查询策略搜索 profiles
+ * 方法1：OR 条件；方法2：分别按 name 和 email 查询后合并去重
+ */
+async function searchProfiles(
+  supabase: any,
+  query: string,
+  currentUserId: string
+): Promise<{ users: any[] | null; searchError: any }> {
+  let users: any[] | null = null
+  let searchError: any = null
+
+  try {
+    const result = await supabase
+      .from('profiles')
+      .select('id, name, email, avatar_url')
+      .or(`name.ilike.%${query}%,email.ilike.%${query}%`)
+      .neq('id', currentUserId)
+      .limit(10)
+    users = result.data
+    searchError = result.error
+  } catch (err) {
+    console.error('❌ 查询异常:', err)
+    searchError = err
+  }
+
+  if (!users || users.length === 0) {
+    console.log('🔄 尝试备用查询方法...')
+    try {
+      const nameResult = await supabase
+        .from('profiles')
+        .select('id, name, email, avatar_url')
+        .ilike('name', `%${query}%`)
+        .neq('id', currentUserId)
+        .limit(10)
+      const emailResult = await supabase
+        .from('profiles')
+        .select('id, name, email, avatar_url')
+        .ilike('email', `%${query}%`)
+        .neq('id', currentUserId)
+        .limit(10)
+      const nameUsers = nameResult.data || []
+      const emailUsers = emailResult.data || []
+      const allUsers = [...nameUsers, ...emailUsers]
+      users = Array.from(new Map(allUsers.map(u => [u.id, u])).values())
+      searchError = nameResult.error || emailResult.error
+      console.log('✅ 备用查询结果:', {
+        nameMatches: nameUsers.length,
+        emailMatches: emailUsers.length,
+        totalUnique: users.length
+      })
+    } catch (err) {
+      console.error('❌ 备用查询异常:', err)
+    }
+  }
+
+  return { users, searchError }
+}
+
 export const shareRouter = router({
   /**
    * 创建链接分享
@@ -409,63 +469,8 @@ export const shareRouter = router({
         throw new Error('未授权：请先登录')
       }
 
-      // 搜索用户（从 profiles 表）
-      // 🔍 方法 1：使用 or 条件（原始方法）
-      let users: any[] | null = null
-      let searchError: any = null
-
-      try {
-        const result = await supabase
-          .from('profiles')
-          .select('id, name, email, avatar_url')
-          .or(`name.ilike.%${query}%,email.ilike.%${query}%`)
-          .neq('id', user.id)
-          .limit(10)
-
-        users = result.data
-        searchError = result.error
-      } catch (err) {
-        console.error('❌ 查询异常:', err)
-        searchError = err
-      }
-
-      // 🔍 如果方法 1 失败，尝试方法 2：分别查询 name 和 email
-      if (!users || users.length === 0) {
-        console.log('🔄 尝试备用查询方法...')
-
-        try {
-          const nameResult = await supabase
-            .from('profiles')
-            .select('id, name, email, avatar_url')
-            .ilike('name', `%${query}%`)
-            .neq('id', user.id)
-            .limit(10)
-
-          const emailResult = await supabase
-            .from('profiles')
-            .select('id, name, email, avatar_url')
-            .ilike('email', `%${query}%`)
-            .neq('id', user.id)
-            .limit(10)
-
-          // 合并结果并去重
-          const nameUsers = nameResult.data || []
-          const emailUsers = emailResult.data || []
-          const allUsers = [...nameUsers, ...emailUsers]
-          const uniqueUsers = Array.from(new Map(allUsers.map(u => [u.id, u])).values())
-
-          users = uniqueUsers
-          searchError = nameResult.error || emailResult.error
-
-          console.log('✅ 备用查询结果:', {
-            nameMatches: nameUsers.length,
-            emailMatches: emailUsers.length,
-            totalUnique: uniqueUsers.length
-          })
-        } catch (err) {
-          console.error('❌ 备用查询异常:', err)
-        }
-      }
+      // 搜索用户（从 profiles 表），使用双重查询策略
+      const { users, searchError } = await searchProfiles(supabase, query, user.id)
 
       // 🔍 详细调试日志
       console.log('🔍 搜索用户详情:', {

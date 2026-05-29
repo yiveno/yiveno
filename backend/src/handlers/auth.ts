@@ -9,6 +9,158 @@ import type { OAuthTokenResponse, OAuthUserInfo } from '../types/auth'
 import { okJson, errorJson } from '../utils/response'
 import { parseAllowlist, isAllowedRedirectUri } from '../utils/validation'
 import { signJWT } from '../utils/jwt'
+function validateCallbackRequest(
+  code: string,
+  provider: string,
+  redirectUri: string,
+  env: Env,
+  origin: string | null
+): Response | null {
+  if (!code) return errorJson({ error: 'missing code' }, 400, origin)
+  if (!['google', 'microsoft'].includes(provider)) {
+    return errorJson({ error: `unsupported provider: ${provider}` }, 400, origin)
+  }
+  if (!redirectUri) return errorJson({ error: 'missing redirect_uri' }, 400, origin)
+  const redirCheck = isAllowedRedirectUri(redirectUri, env)
+  if (!redirCheck.ok)
+    return errorJson({ error: `invalid redirect_uri: ${redirCheck.error}` }, 400, origin)
+  const cfg = getProviderConfig(provider, env)
+  if (!cfg) {
+    return errorJson(
+      { error: `provider not configured: ${provider}`, missing: missingKeys(provider, env, true) },
+      400,
+      origin
+    )
+  }
+  return null
+}
+
+function validateStartParams(
+  redirectUri: string,
+  provider: string,
+  env: Env,
+  origin: string | null
+): Response | null {
+  if (!redirectUri) return errorJson({ error: 'missing redirect_uri' }, 400, origin)
+  const redirCheck = isAllowedRedirectUri(redirectUri, env)
+  if (!redirCheck.ok)
+    return errorJson({ error: `invalid redirect_uri: ${redirCheck.error}` }, 400, origin)
+  if (!['google', 'microsoft'].includes(provider)) {
+    return errorJson({ error: `unsupported provider: ${provider}` }, 400, origin)
+  }
+  const cfg = getProviderConfig(provider, env)
+  if (!cfg) {
+    return errorJson(
+      { error: `provider not configured: ${provider}`, missing: missingKeys(provider, env) },
+      400,
+      origin
+    )
+  }
+  return null
+}
+
+/**
+ * 处理认证开始请求
+ *
+ * @param request - 请求对象
+ * @param env - 环境变量
+ * @param origin - 请求来源
+ * @returns 认证 URL 响应
+ */
+export function handleAuthStart(request: Request, env: Env, origin: string | null): Response {
+  try {
+    const url = new URL(request.url)
+    const provider = (url.searchParams.get('provider') || 'google').toLowerCase()
+    const redirectUri = url.searchParams.get('redirect_uri') || ''
+    const codeChallenge = url.searchParams.get('code_challenge') || ''
+    const scope = url.searchParams.get('scope') || ''
+    const validation = validateStartParams(redirectUri, provider, env, origin)
+    if (validation) return validation
+    const cfg = getProviderConfig(provider, env)!
+    const state = url.searchParams.get('state') || Math.random().toString(36).slice(2)
+    const authUrl = new URL(cfg.authUrl)
+    authUrl.searchParams.set('response_type', 'code')
+    authUrl.searchParams.set('client_id', cfg.clientId)
+    authUrl.searchParams.set('redirect_uri', redirectUri)
+    if (codeChallenge) {
+      authUrl.searchParams.set('code_challenge', codeChallenge)
+      authUrl.searchParams.set('code_challenge_method', 'S256')
+    }
+    authUrl.searchParams.set('scope', scope || cfg.scope || '')
+    authUrl.searchParams.set('state', state)
+    if (provider === 'google') {
+      authUrl.searchParams.set('prompt', 'consent')
+      authUrl.searchParams.set('access_type', 'offline')
+    }
+    return okJson(
+      {
+        success: true,
+        provider,
+        authUrl: authUrl.toString(),
+        state
+      },
+      origin
+    )
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    return errorJson({ error: msg }, 500, origin)
+  }
+}
+
+/**
+ * 处理认证回调请求
+ *
+ * @param request - 请求对象
+ * @param env - 环境变量
+ * @param origin - 请求来源
+ * @returns JWT token 响应
+ */
+export async function handleAuthCallback(
+  request: Request,
+  env: Env,
+  origin: string | null
+): Promise<Response> {
+  try {
+    const url = new URL(request.url)
+    const provider = (url.searchParams.get('provider') || 'google').toLowerCase()
+    const code = url.searchParams.get('code') || ''
+    const redirectUri = url.searchParams.get('redirect_uri') || ''
+    const codeVerifier = url.searchParams.get('code_verifier') || ''
+    const cbValidation = validateCallbackRequest(code, provider, redirectUri, env, origin)
+    if (cbValidation) return cbValidation
+    const cfg = getProviderConfig(provider, env)!
+    const accessToken = await exchangeCodeForToken(cfg, code, redirectUri, codeVerifier)
+    const { email, sub } = await fetchUserInfoWithAccessToken(provider, cfg, accessToken)
+    const userId = `${provider}:${sub || email || Math.random().toString(36).slice(2)}`
+    const tier = 'free'
+    const secret = env.JWT_SECRET || env.SECRET || 'dev-secret'
+    const token = await signJWT(
+      secret,
+      { sub: userId, email, tier, features: {} },
+      7 * 24 * 60 * 60
+    )
+    const now = Math.floor(Date.now() / 1000)
+    return okJson(
+      {
+        success: true,
+        token,
+        tier,
+        user: { id: userId, email },
+        expiresAt: now + 7 * 24 * 60 * 60
+      },
+      origin
+    )
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    return errorJson({ error: msg }, 500, origin)
+  }
+}
+
+
+/**
+ * 验证回调参数
+ */
+
 
 /**
  * OAuth 提供商配置
@@ -112,136 +264,32 @@ export function handleAuthProviders(_request: Request, env: Env, origin: string 
   }
 }
 
+
 /**
- * 处理认证开始请求
- *
- * @param request - 请求对象
- * @param env - 环境变量
- * @param origin - 请求来源
- * @returns 认证 URL 响应
+ * 获取缺失的配置键名
  */
-export function handleAuthStart(request: Request, env: Env, origin: string | null): Response {
-  try {
-    const url = new URL(request.url)
-    const provider = (url.searchParams.get('provider') || 'google').toLowerCase()
-    const redirectUri = url.searchParams.get('redirect_uri') || ''
-    const codeChallenge = url.searchParams.get('code_challenge') || ''
-    const scope = url.searchParams.get('scope') || ''
-    if (!redirectUri) return errorJson({ error: 'missing redirect_uri' }, 400, origin)
-    const redirCheck = isAllowedRedirectUri(redirectUri, env)
-    if (!redirCheck.ok)
-      return errorJson({ error: `invalid redirect_uri: ${redirCheck.error}` }, 400, origin)
-    if (!['google', 'microsoft'].includes(provider)) {
-      return errorJson({ error: `unsupported provider: ${provider}` }, 400, origin)
-    }
-    const cfg = getProviderConfig(provider, env)
-    if (!cfg) {
-      const envRecord = env as unknown as Record<string, unknown>
-      const missing =
-        provider === 'google'
-          ? ['AUTH_GOOGLE_CLIENT_ID'].filter(k => !envRecord[k])
-          : provider === 'microsoft'
-            ? ['AUTH_MICROSOFT_CLIENT_ID'].filter(k => !envRecord[k])
-            : []
-      return errorJson({ error: `provider not configured: ${provider}`, missing }, 400, origin)
-    }
-    const state = url.searchParams.get('state') || Math.random().toString(36).slice(2)
-    const authUrl = new URL(cfg.authUrl)
-    authUrl.searchParams.set('response_type', 'code')
-    authUrl.searchParams.set('client_id', cfg.clientId)
-    authUrl.searchParams.set('redirect_uri', redirectUri)
-    if (codeChallenge) {
-      authUrl.searchParams.set('code_challenge', codeChallenge)
-      authUrl.searchParams.set('code_challenge_method', 'S256')
-    }
-    authUrl.searchParams.set('scope', scope || cfg.scope || '')
-    authUrl.searchParams.set('state', state)
-    if (provider === 'google') {
-      authUrl.searchParams.set('prompt', 'consent')
-      authUrl.searchParams.set('access_type', 'offline')
-    }
-    return okJson(
-      {
-        success: true,
-        provider,
-        authUrl: authUrl.toString(),
-        state
-      },
-      origin
-    )
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err)
-    return errorJson({ error: msg }, 500, origin)
+function missingKeys(provider: string, env: unknown, includeSecret = false): string[] {
+  const envRecord = env as Record<string, unknown>
+  if (provider === 'google') {
+    const keys = ['AUTH_GOOGLE_CLIENT_ID']
+    if (includeSecret) keys.push('AUTH_GOOGLE_CLIENT_SECRET')
+    return keys.filter(k => !envRecord[k])
   }
+  if (provider === 'microsoft') {
+    const keys = ['AUTH_MICROSOFT_CLIENT_ID']
+    if (includeSecret) keys.push('AUTH_MICROSOFT_CLIENT_SECRET')
+    return keys.filter(k => !envRecord[k])
+  }
+  return []
 }
 
 /**
- * 处理认证回调请求
- *
- * @param request - 请求对象
- * @param env - 环境变量
- * @param origin - 请求来源
- * @returns JWT token 响应
+ * 构建 OAuth 授权 URL
  */
-export async function handleAuthCallback(
-  request: Request,
-  env: Env,
-  origin: string | null
-): Promise<Response> {
-  try {
-    const url = new URL(request.url)
-    const provider = (url.searchParams.get('provider') || 'google').toLowerCase()
-    const code = url.searchParams.get('code') || ''
-    const redirectUri = url.searchParams.get('redirect_uri') || ''
-    const codeVerifier = url.searchParams.get('code_verifier') || ''
-    if (!code) return errorJson({ error: 'missing code' }, 400, origin)
-    if (!['google', 'microsoft'].includes(provider)) {
-      return errorJson({ error: `unsupported provider: ${provider}` }, 400, origin)
-    }
-    const cfg = getProviderConfig(provider, env)
-    if (!cfg) {
-      const envRecord = env as unknown as Record<string, unknown>
-      const missing =
-        provider === 'google'
-          ? ['AUTH_GOOGLE_CLIENT_ID', 'AUTH_GOOGLE_CLIENT_SECRET'].filter(k => !envRecord[k])
-          : provider === 'microsoft'
-            ? ['AUTH_MICROSOFT_CLIENT_ID', 'AUTH_MICROSOFT_CLIENT_SECRET'].filter(
-                k => !envRecord[k]
-              )
-            : []
-      return errorJson({ error: `provider not configured: ${provider}`, missing }, 400, origin)
-    }
-    if (!redirectUri) return errorJson({ error: 'missing redirect_uri' }, 400, origin)
-    const redirCheck = isAllowedRedirectUri(redirectUri, env)
-    if (!redirCheck.ok)
-      return errorJson({ error: `invalid redirect_uri: ${redirCheck.error}` }, 400, origin)
-    if (!codeVerifier) return errorJson({ error: 'missing code_verifier' }, 400, origin)
-    const accessToken = await exchangeCodeForToken(cfg, code, redirectUri, codeVerifier)
-    const { email, sub } = await fetchUserInfoWithAccessToken(provider, cfg, accessToken)
-    const userId = `${provider}:${sub || email || Math.random().toString(36).slice(2)}`
-    const tier = 'free'
-    const secret = env.JWT_SECRET || env.SECRET || 'dev-secret'
-    const token = await signJWT(
-      secret,
-      { sub: userId, email, tier, features: {} },
-      7 * 24 * 60 * 60
-    )
-    const now = Math.floor(Date.now() / 1000)
-    return okJson(
-      {
-        success: true,
-        token,
-        tier,
-        user: { id: userId, email },
-        expiresAt: now + 7 * 24 * 60 * 60
-      },
-      origin
-    )
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err)
-    return errorJson({ error: msg }, 500, origin)
-  }
-}
+/**
+ * 使用授权码交换访问令牌
+
+
 
 /**
  * 使用授权码交换访问令牌
@@ -295,6 +343,50 @@ async function exchangeCodeForToken(
   return accessToken
 }
 
+
+/**
+ * 获取 GitHub 用户信息（含邮箱回退）
+ */
+async function fetchGitHubUserInfo(
+  userInfoUrl: string,
+  accessToken: string
+): Promise<OAuthUserInfo> {
+  const uResp = await fetch(userInfoUrl, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      accept: 'application/json',
+      'user-agent': 'AcuityBookmarks'
+    }
+  })
+  const u: Record<string, unknown> = (await uResp.json().catch(() => ({}))) as Record<string, unknown>
+  let email = String(u.email || '')
+  const sub = String(u.id || '')
+  if (!email) {
+    email = await fetchGitHubPrimaryEmail(accessToken)
+  }
+  return { email, sub }
+}
+
+/**
+ * 获取 GitHub 主邮箱
+ */
+async function fetchGitHubPrimaryEmail(accessToken: string): Promise<string> {
+  const eResp = await fetch('https://api.github.com/user/emails', {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      accept: 'application/json',
+      'user-agent': 'AcuityBookmarks'
+    }
+  })
+  const arr = await eResp.json().catch(() => [])
+  if (!Array.isArray(arr) || !arr.length) return ''
+  const primary = arr.find((x: Record<string, unknown>) => x && x.primary) || arr[0]
+  if (primary && typeof primary === 'object' && 'email' in primary) {
+    return String(primary.email)
+  }
+  return ''
+}
+
 /**
  * 使用访问令牌获取用户信息
  *
@@ -317,40 +409,7 @@ async function fetchUserInfoWithAccessToken(
     return { email: String(u.email || ''), sub: String(u.sub || '') }
   }
   if (provider === 'github') {
-    const uResp = await fetch(cfg.userInfoUrl, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        accept: 'application/json',
-        'user-agent': 'AcuityBookmarks'
-      }
-    })
-    const u: Record<string, unknown> = (await uResp.json().catch(() => ({}))) as Record<
-      string,
-      unknown
-    >
-    let email = String(u.email || '')
-    const sub = String(u.id || '')
-    if (!email) {
-      try {
-        const eResp = await fetch('https://api.github.com/user/emails', {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            accept: 'application/json',
-            'user-agent': 'AcuityBookmarks'
-          }
-        })
-        const arr = await eResp.json().catch(() => [])
-        if (Array.isArray(arr) && arr.length) {
-          const primary = arr.find((x: Record<string, unknown>) => x && x.primary) || arr[0]
-          if (primary && typeof primary === 'object' && 'email' in primary) {
-            email = String(primary.email)
-          }
-        }
-      } catch (e) {
-        console.error('fetchUserInfoWithAccessToken failed', e)
-      }
-    }
-    return { email, sub }
+    return fetchGitHubUserInfo(cfg.userInfoUrl, accessToken)
   }
   if (provider === 'microsoft') {
     const uResp = await fetch(cfg.userInfoUrl, {

@@ -226,6 +226,7 @@ export const useAuth = () => {
    * 监听认证状态变化
    */
   const setupAuthListener = () => {
+    // eslint-disable-next-line complexity
     supabase.auth.onAuthStateChange(async (event: string, newSession: Session | null) => {
       console.log('[useAuth] 认证状态变化:', event, {
         hasSession: !!newSession,
@@ -240,12 +241,12 @@ export const useAuth = () => {
         console.log('[useAuth] 🔔 通知 Chrome 扩展同步 session...')
         try {
           // 检查是否安装了扩展
-          // @ts-expect-error - chrome API 仅在浏览器环境中可用
+          // @ts-expect-error chrome API - 仅在浏览器环境中可用
           if (typeof chrome !== 'undefined' && chrome?.runtime?.sendMessage) {
             // 从 runtimeConfig 获取扩展 ID
             const extensionId = config.public.extensionId
 
-            // @ts-expect-error - chrome API 仅在浏览器环境中可用
+            // @ts-expect-error chrome API - 仅在浏览器环境中可用
             await chrome.runtime.sendMessage(extensionId, {
               type: 'SYNC_AUTH_SESSION',
               data: {
@@ -267,12 +268,12 @@ export const useAuth = () => {
       if (event === 'SIGNED_OUT') {
         console.log('[useAuth] 🔔 通知 Chrome 扩展清除 session...')
         try {
-          // @ts-expect-error - chrome API 仅在浏览器环境中可用
+          // @ts-expect-error chrome API - 仅在浏览器环境中可用
           if (typeof chrome !== 'undefined' && chrome?.runtime?.sendMessage) {
             // 从 runtimeConfig 获取扩展 ID
             const extensionId = config.public.extensionId
 
-            // @ts-expect-error - chrome API 仅在浏览器环境中可用
+            // @ts-expect-error chrome API - 仅在浏览器环境中可用
             await chrome.runtime.sendMessage(extensionId, {
               type: 'CLEAR_AUTH_SESSION'
             })
