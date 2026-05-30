@@ -6,7 +6,6 @@
 
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-import { logger as honoLogger } from 'hono/logger'
 import type { Env } from './types/env'
 import { ALLOWED_ORIGINS } from './middleware/cors'
 import { logRequest, logResponse, logError } from './utils/logger'
@@ -44,22 +43,19 @@ export function createApp() {
     })
   )
 
-  app.use(
-    '*',
-    honoLogger(message => {
-      console.log(message)
-    })
-  )
-
   app.use('*', async (c, next) => {
     const startTime = Date.now()
     const request = c.req.raw
-    logRequest(request)
+    const requestId = request.headers.get('cf-ray') ?? crypto.randomUUID()
+    c.header('x-request-id', requestId)
+
+    logRequest(request, { requestId })
     try {
       await next()
-      logResponse(request, c.res, Date.now() - startTime)
+      logResponse(request, c.res, Date.now() - startTime, { requestId })
     } catch (err) {
       logError(err, {
+        requestId,
         method: request.method,
         path: new URL(request.url).pathname,
         duration: Date.now() - startTime

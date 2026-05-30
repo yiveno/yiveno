@@ -64,6 +64,7 @@ export function createCleanDistPlugin(): Plugin {
         })
       } catch (error) {
         console.error('❌ 清理脚本执行失败:', error)
+        throw error
       }
     }
   }

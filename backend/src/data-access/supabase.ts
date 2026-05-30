@@ -11,6 +11,7 @@ import { createClient } from '@supabase/supabase-js'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Env } from '../types/env'
 import type { Subscription, PaymentRecord } from '@acuity-bookmarks/types'
+import { warn } from '../utils/logger'
 
 // Re-export types for use in other files
 export type { Subscription, PaymentRecord }
@@ -26,7 +27,10 @@ export function createSupabaseClient(env: Env): SupabaseClient | null {
   const supabaseServiceKey = env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!supabaseUrl || !supabaseServiceKey) {
-    console.warn('[Supabase] 配置缺失，无法创建客户端')
+    warn('[Supabase] 配置缺失，无法创建客户端', {
+      hasUrl: Boolean(supabaseUrl),
+      hasServiceKey: Boolean(supabaseServiceKey)
+    })
     return null
   }
 
@@ -45,11 +49,14 @@ export function createSupabaseClient(env: Env): SupabaseClient | null {
  * @returns {boolean} 如果配置完整返回 true
  */
 export function hasSupabase(env: Env): boolean {
-  console.log('[Supabase] 环境变量检查:', {
-    SUPABASE_URL: env.SUPABASE_URL ? '✅ 已配置' : '❌ 缺失',
-    SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_ROLE_KEY ? '✅ 已配置' : '❌ 缺失'
-  })
-  return Boolean(env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY)
+  const hasUrl = Boolean(env.SUPABASE_URL)
+  const hasServiceKey = Boolean(env.SUPABASE_SERVICE_ROLE_KEY)
+
+  if (!hasUrl || !hasServiceKey) {
+    warn('[Supabase] 配置缺失', { hasUrl, hasServiceKey })
+  }
+
+  return hasUrl && hasServiceKey
 }
 
 /**

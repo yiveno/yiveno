@@ -9,7 +9,7 @@
 
 import type { BuildOptions } from 'vite'
 import { OUT_DIR, ENABLE_SOURCEMAP } from './constants'
-import { createBuildOptions } from './build-options'
+import { createBuildOptions, type RolldownBuildOptions } from './build-options'
 
 /**
  * 创建构建配置
@@ -17,7 +17,7 @@ import { createBuildOptions } from './build-options'
 export function createBuildConfig(): BuildOptions {
   const isWatchMode = process.argv.includes('--watch')
 
-  const config: BuildOptions = {
+  const config: BuildOptions & { rolldownOptions?: RolldownBuildOptions } = {
     outDir: OUT_DIR,
     // watch 模式下 clean-dist 会回写 dist/_locales 等目录，二次构建时
     // Vite 清空输出目录会触发 ENOTEMPTY，因此仅在 watch 中禁用该行为。
@@ -77,9 +77,7 @@ export function createBuildConfig(): BuildOptions {
   }
 
   // Vite 8: 使用 rolldownOptions（rollupOptions 已弃用）
-  // 注意：类型定义尚未更新，使用 any 绕过类型检查
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ;(config as any).rolldownOptions = createBuildOptions()
+  config.rolldownOptions = createBuildOptions()
 
   return config
 }

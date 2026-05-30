@@ -9,6 +9,21 @@ import { resolve } from 'path'
 import { SRC_DIR } from './constants'
 
 /**
+ * 当前仅使用 Vite 8 rolldownOptions 的稳定子集。
+ */
+export interface RolldownBuildOptions {
+  input: ReturnType<typeof createBuildInput>
+  output: ReturnType<typeof createOutputFileNames> & {
+    manualChunks: typeof createManualChunks
+  }
+  treeshake: {
+    moduleSideEffects: (id: string) => boolean
+    propertyReadSideEffects: false
+  }
+  preserveEntrySignatures: 'strict'
+}
+
+/**
  * 创建构建输入配置
  */
 export function createBuildInput() {
@@ -273,7 +288,7 @@ export function createOutputFileNames() {
  * ⚠️ 关键问题：Rolldown 的 manualChunks 无法完全阻止 chunk 依赖
  * 解决方案：对于 background.js，我们需要确保它不导入任何包含 DOM API 的模块
  */
-export function createBuildOptions() {
+export function createBuildOptions(): RolldownBuildOptions {
   return {
     input: createBuildInput(),
     output: {

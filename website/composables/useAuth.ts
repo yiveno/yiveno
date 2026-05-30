@@ -19,6 +19,28 @@ const session = ref<Session | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
 
+/**
+ * 检查当前浏览器是否可与扩展通信
+ */
+const getChromeRuntime = () => {
+  if (typeof window === 'undefined') return null
+  return window.chrome?.runtime?.sendMessage ? window.chrome.runtime : null
+}
+
+/**
+ * 向 Chrome 扩展发送认证同步消息
+ */
+const sendExtensionMessage = async (
+  extensionId: string,
+  message: Record<string, unknown>
+): Promise<boolean> => {
+  const runtime = getChromeRuntime()
+  if (!runtime) return false
+
+  await runtime.sendMessage(extensionId, message)
+  return true
+}
+
 export const useAuth = () => {
   const { supabase } = useSupabase()
   const config = useRuntimeConfig()
@@ -226,7 +248,6 @@ export const useAuth = () => {
    * 监听认证状态变化
    */
   const setupAuthListener = () => {
-    // eslint-disable-next-line complexity
     supabase.auth.onAuthStateChange(async (event: string, newSession: Session | null) => {
       console.log('[useAuth] 认证状态变化:', event, {
         hasSession: !!newSession,
@@ -240,22 +261,16 @@ export const useAuth = () => {
       if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && newSession) {
         console.log('[useAuth] 🔔 通知 Chrome 扩展同步 session...')
         try {
-          // 检查是否安装了扩展
-          // @ts-expect-error chrome API - 仅在浏览器环境中可用
-          if (typeof chrome !== 'undefined' && chrome?.runtime?.sendMessage) {
-            // 从 runtimeConfig 获取扩展 ID
-            const extensionId = config.public.extensionId
-
-            // @ts-expect-error chrome API - 仅在浏览器环境中可用
-            await chrome.runtime.sendMessage(extensionId, {
-              type: 'SYNC_AUTH_SESSION',
-              data: {
-                access_token: newSession.access_token,
-                refresh_token: newSession.refresh_token,
-                expires_at: newSession.expires_at,
-                user: newSession.user
-              }
-            })
+          const didSend = await sendExtensionMessage(config.public.extensionId, {
+            type: 'SYNC_AUTH_SESSION',
+            data: {
+              access_token: newSession.access_token,
+              refresh_token: newSession.refresh_token,
+              expires_at: newSession.expires_at,
+              user: newSession.user
+            }
+          })
+          if (didSend) {
             console.log('[useAuth] ✅ Session 已同步到扩展')
           }
         } catch (extensionError) {
@@ -268,15 +283,10 @@ export const useAuth = () => {
       if (event === 'SIGNED_OUT') {
         console.log('[useAuth] 🔔 通知 Chrome 扩展清除 session...')
         try {
-          // @ts-expect-error chrome API - 仅在浏览器环境中可用
-          if (typeof chrome !== 'undefined' && chrome?.runtime?.sendMessage) {
-            // 从 runtimeConfig 获取扩展 ID
-            const extensionId = config.public.extensionId
-
-            // @ts-expect-error chrome API - 仅在浏览器环境中可用
-            await chrome.runtime.sendMessage(extensionId, {
-              type: 'CLEAR_AUTH_SESSION'
-            })
+          const didSend = await sendExtensionMessage(config.public.extensionId, {
+            type: 'CLEAR_AUTH_SESSION'
+          })
+          if (didSend) {
             console.log('[useAuth] ✅ 扩展 session 已清除')
           }
         } catch (extensionError) {

@@ -9,6 +9,20 @@ import tseslint from 'typescript-eslint'
 import prettierConfig from 'eslint-config-prettier'
 import unusedImports from 'eslint-plugin-unused-imports'
 
+const configRootDir = new URL('.', import.meta.url).pathname
+const isFrontendCwd = process.cwd().endsWith('/frontend')
+const isBackendCwd = process.cwd().endsWith('/backend')
+const isWebsiteCwd = process.cwd().endsWith('/website')
+const frontendVueFiles = isFrontendCwd ? ['src/**/*.vue'] : ['frontend/src/**/*.vue']
+const frontendTsFiles = isFrontendCwd
+  ? ['src/**/*.ts', 'src/**/*.tsx']
+  : ['frontend/src/**/*.ts', 'frontend/src/**/*.tsx']
+const frontendScriptTsFiles = isFrontendCwd ? ['scripts/**/*.ts'] : ['frontend/scripts/**/*.ts']
+const backendTsFiles = isBackendCwd ? ['src/**/*.ts'] : ['backend/src/**/*.ts']
+const websiteTsFiles = isWebsiteCwd
+  ? ['**/*.ts', '**/*.tsx']
+  : ['website/**/*.ts', 'website/**/*.tsx']
+
 // ============================================================================
 // 📦 公共配置
 // ============================================================================
@@ -288,7 +302,7 @@ export default [
 
   // Vue 文件配置
   {
-    files: ['frontend/src/**/*.vue'],
+    files: frontendVueFiles,
     languageOptions: {
       parser: pluginVue.configs['flat/recommended'][1].languageOptions.parser,
       parserOptions: {
@@ -299,7 +313,8 @@ export default [
         extraFileExtensions: ['.vue'],
         ecmaVersion: 'latest',
         sourceType: 'module',
-        tsconfigRootDir: process.cwd()
+        projectService: true,
+        tsconfigRootDir: configRootDir
       }
     },
     plugins: {
@@ -365,13 +380,14 @@ export default [
 
   // Frontend TypeScript 文件配置
   {
-    files: ['frontend/src/**/*.ts', 'frontend/src/**/*.tsx'],
+    files: frontendTsFiles,
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
-        tsconfigRootDir: process.cwd()
+        projectService: true,
+        tsconfigRootDir: configRootDir
       }
     },
     plugins: {
@@ -382,15 +398,32 @@ export default [
     }
   },
 
+  // Frontend 工具脚本配置
+  {
+    files: frontendScriptTsFiles,
+    rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          caughtErrors: 'all',
+          caughtErrorsIgnorePattern: '^_',
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_'
+        }
+      ]
+    }
+  },
+
   // Backend TypeScript 文件配置
   {
-    files: ['backend/src/**/*.ts'],
+    files: backendTsFiles,
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
-        tsconfigRootDir: process.cwd()
+        projectService: true,
+        tsconfigRootDir: configRootDir
       }
     },
     plugins: {
@@ -403,14 +436,14 @@ export default [
 
   // Website TypeScript 文件配置
   {
-    files: ['website/**/*.ts', 'website/**/*.tsx'],
+    files: websiteTsFiles,
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
-        project: 'website/tsconfig.json',
-        tsconfigRootDir: process.cwd()
+        projectService: true,
+        tsconfigRootDir: configRootDir
       }
     },
     plugins: {

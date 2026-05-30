@@ -21,8 +21,18 @@ interface LogEntry {
   timestamp: string
   level: LogLevel
   message: string
-  [key: string]: string | number | boolean | undefined
+  [key: string]: LogValue
 }
+
+type LogValue =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | LogValue[]
+  | { [key: string]: LogValue }
+type LogData = Record<string, LogValue>
 
 /**
  * 记录结构化日志
@@ -31,7 +41,7 @@ interface LogEntry {
  * @param message - 日志消息
  * @param data - 附加数据
  */
-export function log(level: LogLevel, message: string, data?: Record<string, any>): void {
+export function log(level: LogLevel, message: string, data?: LogData): void {
   const logEntry: LogEntry = {
     timestamp: new Date().toISOString(),
     level,
@@ -55,28 +65,28 @@ export function log(level: LogLevel, message: string, data?: Record<string, any>
 /**
  * 记录 DEBUG 级别日志
  */
-export function debug(message: string, data?: Record<string, any>): void {
+export function debug(message: string, data?: LogData): void {
   log(LogLevel.DEBUG, message, data)
 }
 
 /**
  * 记录 INFO 级别日志
  */
-export function info(message: string, data?: Record<string, any>): void {
+export function info(message: string, data?: LogData): void {
   log(LogLevel.INFO, message, data)
 }
 
 /**
  * 记录 WARN 级别日志
  */
-export function warn(message: string, data?: Record<string, any>): void {
+export function warn(message: string, data?: LogData): void {
   log(LogLevel.WARN, message, data)
 }
 
 /**
  * 记录 ERROR 级别日志
  */
-export function error(message: string, data?: Record<string, any>): void {
+export function error(message: string, data?: LogData): void {
   log(LogLevel.ERROR, message, data)
 }
 
@@ -122,7 +132,7 @@ export async function monitoredOperation<T>(name: string, operation: () => Promi
  * @param request - HTTP 请求对象
  * @param additionalData - 附加数据
  */
-export function logRequest(request: Request, additionalData?: Record<string, any>): void {
+export function logRequest(request: Request, additionalData?: LogData): void {
   const url = new URL(request.url)
 
   info('收到请求', {
@@ -141,14 +151,20 @@ export function logRequest(request: Request, additionalData?: Record<string, any
  * @param response - HTTP 响应对象
  * @param duration - 请求处理时长（毫秒）
  */
-export function logResponse(request: Request, response: Response, duration: number): void {
+export function logResponse(
+  request: Request,
+  response: Response,
+  duration: number,
+  additionalData?: LogData
+): void {
   const url = new URL(request.url)
 
   info('请求完成', {
     method: request.method,
     path: url.pathname,
     status: response.status,
-    duration
+    duration,
+    ...additionalData
   })
 }
 
@@ -158,7 +174,7 @@ export function logResponse(request: Request, response: Response, duration: numb
  * @param err - 错误对象
  * @param context - 错误上下文
  */
-export function logError(err: unknown, context?: Record<string, any>): void {
+export function logError(err: unknown, context?: LogData): void {
   const errorMessage = err instanceof Error ? err.message : String(err)
   const stack = err instanceof Error ? err.stack : undefined
 

@@ -22,10 +22,10 @@ export const useSupabase = () => {
 
     supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
-        // Web 环境使用默认的 localStorage
+        // 仅浏览器环境持久化 session，避免 SSR 访问 Web Storage。
         autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: true
+        persistSession: import.meta.client,
+        detectSessionInUrl: import.meta.client
       }
     })
   }
