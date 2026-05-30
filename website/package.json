@@ -22,14 +22,12 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@acuity-bookmarks/auth-core": "workspace:*",
     "@acuity-bookmarks/design-tokens": "workspace:*",
     "@nuxtjs/seo": "^3.2.2",
     "@supabase/supabase-js": "^2.79.0",
     "lz-string": "^1.5.0",
     "nuxt": "^4.2.1",
-    "vue": "^3.5.18",
-    "vue-router": "^4.6.3"
+    "vue": "^3.5.18"
   },
   "devDependencies": {
     "lucide-vue-next": "^0.554.0",

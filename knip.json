@@ -1,0 +1,76 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignoreDependencies": ["puppeteer-core", "h3", "@material/web", "@tanstack/vue-query", "vue-tsc"],
+  "ignoreBinaries": ["wait"],
+  "tags": ["-lintignore"],
+  "vue": {
+    "entry": [
+      "src/**/*.vue",
+      "app.vue",
+      "components/**/*.vue",
+      "composables/**/*.vue",
+      "layouts/**/*.vue",
+      "pages/**/*.vue"
+    ],
+    "project": [
+      "src/**/*.vue",
+      "app.vue",
+      "components/**/*.vue",
+      "composables/**/*.vue",
+      "layouts/**/*.vue",
+      "pages/**/*.vue"
+    ]
+  },
+  "workspaces": {
+    "frontend": {
+      "entry": [
+        "src/pages/*/index.html",
+        "src/background/main.ts",
+        "src/offscreen/main.ts",
+        "src/content/auth-sync.ts",
+        "vite.config.ts",
+        "vitest.config.ts",
+        "vitest.e2e.config.ts"
+      ],
+      "project": [
+        "src/**/*",
+        "src/**/*.vue",
+        "vite/**/*.ts",
+        "scripts/**/*.js",
+        "scripts/**/*.ts",
+        "test-puppeteer.js"
+      ]
+    },
+    "backend": {
+      "entry": ["src/**/*.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "website": {
+      "entry": [
+        "nuxt.config.ts",
+        "app.vue",
+        "components/**/*",
+        "composables/**/*",
+        "layouts/**/*",
+        "pages/**/*",
+        "server/**/*",
+        "utils/**/*"
+      ],
+      "project": [
+        "app.vue",
+        "components/**/*",
+        "composables/**/*",
+        "layouts/**/*",
+        "pages/**/*",
+        "pages/**/*.vue",
+        "server/**/*",
+        "utils/**/*",
+        "nuxt.config.ts"
+      ]
+    },
+    "packages/*": {
+      "entry": ["src/**/*.ts"],
+      "project": ["src/**/*.ts"]
+    }
+  }
+}

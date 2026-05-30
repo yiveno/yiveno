@@ -71,25 +71,28 @@
     "db:logs": "cd backend && bun run logs",
     "clean": "cd frontend && bun run clean && cd ../backend && bun run clean && cd ../website && bun run clean",
     "export:env": "bun ./scripts/export-env.mjs --ext ${EXT_ID:-gdjcmpenmogdikhnnaebmddhmdgbfcgl}",
-    "import:env": "bun ./scripts/import-env.mjs --ext ${EXT_ID:-gdjcmpenmogdikhnnaebmddhmdgbfcgl}"
+    "import:env": "bun ./scripts/import-env.mjs --ext ${EXT_ID:-gdjcmpenmogdikhnnaebmddhmdgbfcgl}",
+    "knip": "bun scripts/knip-runner.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.35.0",
+    "@types/node": "^24.10.1",
     "eslint": "^9.35.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-unused-imports": "^3.2.0",
     "eslint-plugin-vue": "^10.4.0",
     "husky": "^9.0.11",
     "lint-staged": "^15.2.7",
-    "postcss": "^8.4.41",
     "postcss-html": "^1.7.0",
     "stylelint": "^16.25.0",
     "stylelint-config-recommended-vue": "^1.6.1",
     "stylelint-config-standard": "^36.0.1",
     "stylelint-order": "^7.0.0",
-    "supabase": "^2.66.0",
-    "typescript": "~5.8.3",
+    "typescript": "^5.8.3",
     "typescript-eslint": "^8.43.0",
     "wrangler": "^4.81.1"
+  },
+  "overrides": {
+    "zod": "3.23.8"
   }
 }

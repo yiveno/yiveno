@@ -42,7 +42,6 @@
     "i18n:replace": "bun scripts/i18n-replace.ts"
   },
   "dependencies": {
-    "@acuity-bookmarks/auth-core": "workspace:*",
     "@acuity-bookmarks/design-tokens": "workspace:*",
     "@atlaskit/pragmatic-drag-and-drop": "^1.7.7",
     "@huggingface/transformers": "^4.2.0",
@@ -65,12 +64,10 @@
   "devDependencies": {
     "@playwright/test": "^1.40.0",
     "@types/chrome": "^0.1.4",
-    "@types/flexsearch": "^0.7.42",
-    "@types/lz-string": "^1.5.0",
     "@types/node": "^24.3.0",
-    "@types/qrcode": "^1.5.6",
     "@vitejs/plugin-basic-ssl": "^2.1.0",
     "@vitejs/plugin-vue": "^6.0.1",
+    "@vitest/coverage-v8": "^4.0.17",
     "@vitest/ui": "^4.0.17",
     "@vue/test-utils": "^2.4.6",
     "@vue/tsconfig": "^0.7.0",
