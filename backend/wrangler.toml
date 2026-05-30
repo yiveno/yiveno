@@ -27,18 +27,14 @@ head_sampling_rate = 0
 # 为避免 wrangler dev 校验失败，将自定义域名路由仅放在 production 环境里。
 
 # 共享配置（所有环境）
+# 注意：以下变量将由 Cloudflare Secrets 自动替换。
+# 在本地开发时，`wrangler dev` 会从 .dev.vars 文件中读取这些值。
 [vars]
-# Gumroad 配置（需要填入实际值）
-GUMROAD_PLAN_ID_MONTHLY = "o7qLAIuwtSQWZjaFr2EabQ%3D%3D&_gl=1*8l61ck*_ga*MTM3NDU3NDY4OS4xNzYyNzg1NzA3*_ga_6LJN6D94N6*czE3NjI4NDQ4MTYkbzMkZzEkdDE3NjI4NDQ5NDMkajYwJGwwJGgw"
+GUMROAD_PLAN_ID_MONTHLY = ""
 GUMROAD_PLAN_ID_YEARLY = ""
-# GUMROAD_WEBHOOK_SECRET = ""  # 可选，如果 Gumroad 提供 Secret
-
-# Supabase 配置（这些是公开配置，敏感信息使用 Secrets）
-SUPABASE_URL = "https://ugxgxytykxblctsyulsg.supabase.co"
-SUPABASE_ANON_KEY = "sb_publishable_2FY9uDfqNbLwUYXxgcu8lw_qQ8SEbXo"
-
-# 官网 URL（用于生成分享链接）
-WEBSITE_URL = "http://localhost:3001"
+SUPABASE_URL = ""
+SUPABASE_ANON_KEY = ""
+WEBSITE_URL = "http://localhost:3001" # 本地开发 URL，生产环境将使用 Secret
 
 [ai]
 binding = "AI"
@@ -66,12 +62,10 @@ persist = false
 head_sampling_rate = 0
 
 [env.production.vars]
-# Production 环境变量（继承顶层 vars，可覆盖）
-GUMROAD_PLAN_ID_MONTHLY = "o7qLAIuwtSQWZjaFr2EabQ%3D%3D&_gl=1*8l61ck*_ga*MTM3NDU3NDY4OS4xNzYyNzg1NzA3*_ga_6LJN6D94N6*czE3NjI4NDQ4MTYkbzMkZzEkdDE3NjI4NDQ5NDMkajYwJGwwJGgw"
-GUMROAD_PLAN_ID_YEARLY = ""
-SUPABASE_URL = "https://ugxgxytykxblctsyulsg.supabase.co"
-SUPABASE_ANON_KEY = "sb_publishable_2FY9uDfqNbLwUYXxgcu8lw_qQ8SEbXo"
-WEBSITE_URL = "https://acuitybookmarks.com"
+# Production 环境变量将从顶层 [vars] 继承。
+# 在部署时，Cloudflare 会自动使用为 "production" 环境设置的同名 Secrets 替换这些值。
+# 例如，WEBSITE_URL 将被替换为生产环境的 Secret 值（如 "https://acuitybookmarks.com"）。
+# 无需在此处重复定义变量，除非需要覆盖顶层定义。
 
 [env.production.ai]
 binding = "AI"

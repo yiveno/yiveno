@@ -168,8 +168,7 @@ const typescriptCommonRules = {
   '@typescript-eslint/prefer-enum-initializers': 'warn',
 
   // Phase 1 优化：异步代码规则（防止 Promise 相关 Bug）
-  // 注意：这些规则需要类型信息，在 monorepo 中配置复杂，暂时禁用
-  // '@typescript-eslint/no-floating-promises': 'error',
+  '@typescript-eslint/no-floating-promises': 'warn', // 需要类型信息，monorepo 中配置复杂，暂用 warn
   // '@typescript-eslint/no-misused-promises': 'error',
   // '@typescript-eslint/await-thenable': 'error',
   // '@typescript-eslint/promise-function-async': 'warn',
@@ -289,14 +288,18 @@ export default [
 
   // Vue 文件配置
   {
-    files: ['**/*.vue'],
+    files: ['frontend/src/**/*.vue'],
     languageOptions: {
       parser: pluginVue.configs['flat/recommended'][1].languageOptions.parser,
       parserOptions: {
-        parser: { ts: tseslint.parser },
+        parser: {
+          ts: tseslint.parser,
+          typescript: tseslint.parser
+        },
         extraFileExtensions: ['.vue'],
         ecmaVersion: 'latest',
-        sourceType: 'module'
+        sourceType: 'module',
+        tsconfigRootDir: process.cwd()
       }
     },
     plugins: {
@@ -362,7 +365,7 @@ export default [
 
   // Frontend TypeScript 文件配置
   {
-    files: ['frontend/**/*.ts', 'frontend/**/*.tsx'],
+    files: ['frontend/src/**/*.ts', 'frontend/src/**/*.tsx'],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
@@ -381,7 +384,7 @@ export default [
 
   // Backend TypeScript 文件配置
   {
-    files: ['backend/**/*.ts'],
+    files: ['backend/src/**/*.ts'],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
@@ -406,6 +409,7 @@ export default [
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
+        project: 'website/tsconfig.json',
         tsconfigRootDir: process.cwd()
       }
     },

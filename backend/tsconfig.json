@@ -8,9 +8,8 @@
     "noEmit": true,
 
     /* Path Aliases */
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
+      "@/*": ["./src/*"],
       "@acuity-bookmarks/types": ["../packages/types/src/index.ts"]
     }
   },
