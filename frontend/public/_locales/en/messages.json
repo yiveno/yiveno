@@ -1,12 +1,12 @@
 {
   "app_name": {
-    "message": "AcuityBookmarks"
+    "message": "otterSage"
   },
   "app_description": {
     "message": "Unlock the knowledge in your bookmarks. AI-powered organization, content-aware search."
   },
   "welcome": {
-    "message": "Welcome to AcuityBookmarks!"
+    "message": "Welcome to otterSage!"
   },
   "search_placeholder": {
     "message": "Filter bookmarks…"
@@ -1134,7 +1134,7 @@
     "message": "of"
   },
   "onboarding_welcome_title": {
-    "message": "Welcome to AcuityBookmarks"
+    "message": "Welcome to otterSage"
   },
   "onboarding_welcome_subtitle": {
     "message": "AI-Powered Bookmark Manager"
@@ -2118,7 +2118,7 @@
     "message": "ALL SET"
   },
   "onboarding_ready_description": {
-    "message": "Thank you for taking the time to learn about AcuityBookmarks features. After clicking \"Get Started\", this page will automatically close and you can immediately start enjoying intelligent bookmark management."
+    "message": "Thank you for taking the time to learn about otterSage features. After clicking \"Get Started\", this page will automatically close and you can immediately start enjoying intelligent bookmark management."
   },
   "onboarding_initializing": {
     "message": "Initializing..."

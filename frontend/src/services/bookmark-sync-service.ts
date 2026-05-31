@@ -783,20 +783,20 @@ export class BookmarkSyncService {
       try {
         chrome.runtime
           .sendMessage({
-            type: 'acuity-bookmarks-db-ready',
+            type: 'ottersage-db-ready',
             timestamp: Date.now()
           })
           .catch(() => {
-            logger.warn('BookmarkSync', '❌ 广播 acuity-bookmarks-db-ready 消息失败')
+            logger.warn('BookmarkSync', '❌ 广播 ottersage-db-ready 消息失败')
           })
         chrome.runtime
           .sendMessage({
-            type: 'acuity-bookmarks-db-synced',
+            type: 'ottersage-db-synced',
             eventType: 'full-sync',
             timestamp: Date.now()
           })
           .catch(() => {
-            logger.warn('BookmarkSync', '❌ 广播 acuity-bookmarks-db-synced 消息失败')
+            logger.warn('BookmarkSync', '❌ 广播 ottersage-db-synced 消息失败')
           })
       } catch {}
     } catch (error) {
@@ -1016,12 +1016,12 @@ export class BookmarkSyncService {
     try {
       chrome.runtime
         .sendMessage({
-          type: 'acuity-bookmarks-db-synced',
+          type: 'ottersage-db-synced',
           eventType: 'incremental',
           timestamp: Date.now()
         })
         .catch(() => {
-          logger.warn('BookmarkSync', '❌ 广播 acuity-bookmarks-db-synced 消息失败')
+          logger.warn('BookmarkSync', '❌ 广播 ottersage-db-synced 消息失败')
         })
     } catch {}
   }

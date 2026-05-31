@@ -10,7 +10,7 @@ const props = withDefaults(defineProps<AvatarProps>(), {
 
 const imageError = ref(false)
 
-const avatarClasses = computed(() => ['acuity-avatar', `acuity-avatar--${props.variant}`])
+const avatarClasses = computed(() => ['ottersage-avatar', `ottersage-avatar--${props.variant}`])
 
 const avatarStyle = computed(() => ({
   width: typeof props.size === 'number' ? `${props.size}px` : props.size,
@@ -42,14 +42,14 @@ const handleImageError = () => {
 
 <template>
   <div :class="avatarClasses">
-    <img v-if="src" :src="src" :alt="alt" class="acuity-avatar-img" @error="handleImageError" />
+    <img v-if="src" :src="src" :alt="alt" class="ottersage-avatar-img" @error="handleImageError" />
     <LucideIcon v-else-if="icon" :name="icon" :size="iconSize" />
-    <span v-else class="acuity-avatar-text">{{ initials }}</span>
+    <span v-else class="ottersage-avatar-text">{{ initials }}</span>
   </div>
 </template>
 
 <style scoped>
-.acuity-avatar {
+.ottersage-avatar {
   position: relative;
   display: inline-flex;
   flex-shrink: 0;
@@ -64,25 +64,25 @@ const handleImageError = () => {
   overflow: hidden;
 }
 
-.acuity-avatar--circle {
+.ottersage-avatar--circle {
   border-radius: 50%;
 }
 
-.acuity-avatar--rounded {
+.ottersage-avatar--rounded {
   border-radius: var(--radius-md);
 }
 
-.acuity-avatar--square {
+.ottersage-avatar--square {
   border-radius: 0;
 }
 
-.acuity-avatar-img {
+.ottersage-avatar-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.acuity-avatar-text {
+.ottersage-avatar-text {
   line-height: 1;
 }
 </style>

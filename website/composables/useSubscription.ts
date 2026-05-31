@@ -7,7 +7,7 @@
  * - 缓存时长：15 分钟
  */
 
-const CACHE_KEY = 'acuity_subscription_cache'
+const CACHE_KEY = 'ottersage_subscription_cache'
 const CACHE_DURATION = 15 * 60 * 1000 // 15 分钟
 
 interface SubscriptionCache {

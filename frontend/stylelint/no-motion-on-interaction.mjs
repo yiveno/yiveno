@@ -3,7 +3,7 @@
 
 import stylelint from "stylelint";
 
-const ruleName = "acuity/no-motion-on-interaction";
+const ruleName = "ottersage/no-motion-on-interaction";
 const messages = stylelint.utils.ruleMessages(ruleName, {
   rejected: (prop, selector) => `Disallowed property "${prop}" in interaction selector "${selector}". Avoid geometric changes on :hover/:focus/:active. Prefer color/opacity/shadow/outline.`,
   transitionAll: (selector) => `Disallowed \`transition: all\` in interaction selector "${selector}". Do not transition all properties; restrict to non-geometric (e.g., color, opacity, box-shadow).`,

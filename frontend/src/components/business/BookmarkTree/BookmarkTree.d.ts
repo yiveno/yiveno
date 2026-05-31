@@ -1,19 +1,18 @@
-// 新增类型定义文件
 import type { BookmarkNode } from '@/types'
 
-export type SimpleBookmarkTreeSource = 'sidePanel' | 'management'
+export type BookmarkTreeSource = 'sidePanel' | 'management'
 
 // ✅ 选择模式支持布尔或显式 'single'/'multiple'
-export type SimpleBookmarkTreeSelectable = boolean | 'single' | 'multiple'
+export type BookmarkTreeSelectable = boolean | 'single' | 'multiple'
 
-export interface SimpleBookmarkTreeVirtualOptions {
+export interface BookmarkTreeVirtualOptions {
   enabled: boolean
   itemHeight?: number | undefined
   threshold?: number | undefined
 }
 
 // ✅ defineExpose 暴露给父组件的能力集合
-export interface SimpleBookmarkTreeExpose {
+export interface BookmarkTreeExpose {
   expandAll(): void
   collapseAll(): void
   clearSelection(): void
@@ -41,19 +40,19 @@ export interface SimpleBookmarkTreeExpose {
 }
 
 // ✅ 组件 Props：中文注释解释业务语义
-export interface SimpleBookmarkTreeProps {
+export interface BookmarkTreeProps {
   nodes?: BookmarkNode[] | undefined
   loading?: boolean | undefined
   height?: string | number | undefined
   searchable?: boolean | undefined
-  selectable?: SimpleBookmarkTreeSelectable | undefined
+  selectable?: BookmarkTreeSelectable | undefined
   editable?: boolean | undefined
   strictChromeOrder?: boolean | undefined
-  virtual?: boolean | SimpleBookmarkTreeVirtualOptions | undefined
+  virtual?: boolean | BookmarkTreeVirtualOptions | undefined
   size?: 'compact' | 'comfortable' | 'spacious' | undefined
   showToolbar?: boolean | undefined
   toolbarExpandCollapse?: boolean | undefined
-  source?: SimpleBookmarkTreeSource | undefined
+  source?: BookmarkTreeSource | undefined
   highlightMatches?: boolean | undefined
   showSelectionCheckbox?: boolean | undefined
   loadingChildren?: Set<string> | undefined
@@ -61,7 +60,7 @@ export interface SimpleBookmarkTreeProps {
 }
 
 // ✅ 组件 Emits：列出所有事件供 TS 推断
-export interface SimpleBookmarkTreeEmits {
+export interface BookmarkTreeEmits {
   (event: 'nodeClick', node: BookmarkNode, e: MouseEvent): void
   (event: 'folderToggle', folderId: string, node: BookmarkNode, expanded: boolean): void
   (event: 'nodeSelect', nodeId: string, node: BookmarkNode, selected: boolean): void

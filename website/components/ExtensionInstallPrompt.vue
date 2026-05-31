@@ -19,7 +19,7 @@ interface Props {
 }
 
 withDefaults(defineProps<Props>(), {
-  title: '安装 AcuityBookmarks 扩展',
+  title: '安装 otterSage 扩展',
   description: '安装扩展后，您可以一键导入书签到您的 Chrome 浏览器',
   buttonText: '前往 Chrome 商店安装',
   icon: '🚀',
@@ -30,7 +30,7 @@ withDefaults(defineProps<Props>(), {
 
 const extensionLink = chromeStoreUrls.extension
 
-const buttonAriaLabel = `在新标签页中打开 Chrome 网上应用店安装 AcuityBookmarks 扩展`
+const buttonAriaLabel = `在新标签页中打开 Chrome 网上应用店安装 otterSage 扩展`
 </script>
 
 <template>
@@ -74,12 +74,12 @@ const buttonAriaLabel = `在新标签页中打开 Chrome 网上应用店安装 A
 <style scoped>
 .extension-install-prompt {
   padding: 2rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
   background: linear-gradient(
     135deg,
     color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent),
     color-mix(in srgb, var(--md-sys-color-primary) 5%, transparent)
   );
-  border-bottom: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
 }
 
 .extension-install-prompt.compact {
@@ -96,8 +96,8 @@ const buttonAriaLabel = `在新标签页中打开 Chrome 网上应用店安装 A
 }
 
 .prompt-icon {
-  font-size: 2.5rem;
   flex-shrink: 0;
+  font-size: 2.5rem;
 }
 
 .prompt-text {
@@ -105,9 +105,9 @@ const buttonAriaLabel = `在新标签页中打开 Chrome 网上应用店安装 A
 }
 
 .prompt-text h3 {
+  margin-bottom: 0.25rem;
   font-size: 1.25rem;
   font-weight: 600;
-  margin-bottom: 0.25rem;
 }
 
 .prompt-text p {
@@ -118,12 +118,12 @@ const buttonAriaLabel = `在新标签页中打开 Chrome 网上应用店安装 A
 .install-button {
   padding: 0.75rem 1.5rem;
   border-radius: 0.5rem;
-  background: var(--md-sys-color-primary);
-  color: var(--md-sys-color-on-primary);
   font-size: 1rem;
   font-weight: 500;
   text-decoration: none;
   white-space: nowrap;
+  color: var(--md-sys-color-on-primary);
+  background: var(--md-sys-color-primary);
   transition: opacity 0.2s;
 }
 
@@ -132,10 +132,10 @@ const buttonAriaLabel = `在新标签页中打开 Chrome 网上应用店安装 A
 }
 
 .install-steps {
-  margin-top: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  margin-top: 1.5rem;
 }
 
 .step {
@@ -149,22 +149,22 @@ const buttonAriaLabel = `在新标签页中打开 Chrome 网上应用店安装 A
 
 .step-number {
   display: flex;
-  align-items: center;
+  flex-shrink: 0;
   justify-content: center;
+  align-items: center;
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: var(--md-sys-color-primary);
-  color: var(--md-sys-color-on-primary);
   font-size: 0.875rem;
   font-weight: 600;
-  flex-shrink: 0;
+  color: var(--md-sys-color-on-primary);
+  background: var(--md-sys-color-primary);
 }
 
 .step-text {
   font-size: 0.875rem;
-  color: var(--md-sys-color-on-surface);
   line-height: 1.5;
+  color: var(--md-sys-color-on-surface);
 }
 
 @media (width <= 768px) {

@@ -150,7 +150,7 @@ async function flushTraitQueue(): Promise<void> {
       try {
         chrome.runtime.sendMessage(
           {
-            type: 'acuity-bookmarks-trait-updated',
+            type: 'ottersage-trait-updated',
             timestamp: Date.now(),
             reason: reasons.join(','),
             affectedCount: needFullRebuild ? 'all' : pendingIds.length

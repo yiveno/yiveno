@@ -86,7 +86,7 @@ function handleClick(event: MouseEvent) {
 
   // 🔥 未登录：直接跳转登录页，不显示下拉菜单
   if (!isLoggedIn.value) {
-    handleLogin()
+    void handleLogin()
     return
   }
 
@@ -246,8 +246,8 @@ async function handleLogout() {
 
 /* PRO 用户：头像外层容器添加金色边框 + 光晕 */
 .user-menu__avatar-wrapper--pro .user-menu__avatar {
-  border: 2px solid var(--acuity-accent-gold);
-  box-shadow: 0 0 12px color-mix(in srgb, var(--acuity-accent-gold) 40%, transparent);
+  border: 2px solid var(--ottersage-accent-gold);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--ottersage-accent-gold) 40%, transparent);
 }
 
 .user-menu__avatar-wrapper--free:hover .user-menu__avatar {
@@ -255,7 +255,7 @@ async function handleLogout() {
 }
 
 .user-menu__avatar-wrapper--pro:hover .user-menu__avatar {
-  box-shadow: 0 0 16px color-mix(in srgb, var(--acuity-accent-gold) 60%, transparent);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--ottersage-accent-gold) 60%, transparent);
 }
 
 /* PRO 徽章（右下角小皇冠，与官网一致） */

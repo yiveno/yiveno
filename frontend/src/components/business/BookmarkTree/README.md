@@ -54,7 +54,7 @@ BookmarkTree/
 
 ```vue
 <script setup lang="ts">
-import BookmarkTree from '@/components/composite/BookmarkTree/BookmarkTree.vue'
+import BookmarkTree from '@/components/business/BookmarkTree/BookmarkTree.vue'
 
 const bookmarkNodes = ref([...])
 const treeConfig = {

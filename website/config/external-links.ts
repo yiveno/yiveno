@@ -20,8 +20,7 @@ export const gumroadUrls = {
  */
 export const chromeStoreUrls = {
   /** 扩展详情页（完整链接） */
-  extension:
-    'https://chrome.google.com/webstore/detail/acuitybookmarks/gdjcmpenmogdikhnnaebmddhmdgbfcgl',
+  extension: 'https://chrome.google.com/webstore/detail/ottersage/gdjcmpenmogdikhnnaebmddhmdgbfcgl',
 
   /** Chrome Web Store 首页 */
   home: 'https://chrome.google.com/webstore',
@@ -34,8 +33,8 @@ export const chromeStoreUrls = {
  * 社交媒体链接
  */
 export const socialUrls = {
-  // twitter: 'https://twitter.com/acuitybookmarks',
-  // github: 'https://github.com/acuitybookmarks',
+  // twitter: 'https://twitter.com/ottersage',
+  // github: 'https://github.com/ottersage',
 } as const
 
 /**

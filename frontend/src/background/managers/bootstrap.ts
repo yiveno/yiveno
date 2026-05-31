@@ -64,7 +64,7 @@ async function handleFirstInstall(reason: string): Promise<void> {
     // 广播进度给前端页面（引导页）
     chrome.runtime
       .sendMessage({
-        type: 'acuity-bookmarks-sync-progress',
+        type: 'ottersage-sync-progress',
         data: progress
       })
       .catch(() => {

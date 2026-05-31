@@ -1,5 +1,5 @@
 /**
- * @acuity-bookmarks/auth-core
+ * @ottersage/auth-core
  *
  * 认证核心逻辑共享包
  * 提供平台无关的认证服务、验证器和错误处理

@@ -53,8 +53,8 @@ const roadmap = [
 ]
 
 useSeoMeta({
-  title: '关于我们 - AcuityBookmarks',
-  description: '认识 AcuityBookmarks 团队：使命、价值观、路线图与加入方式。'
+  title: '关于我们 - otterSage',
+  description: '认识 otterSage 团队：使命、价值观、路线图与加入方式。'
 })
 </script>
 
@@ -73,7 +73,7 @@ useSeoMeta({
               class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-6"
             >
               <span class="text-sm font-medium text-accent-400 tracking-wider uppercase"
-                >AcuityBookmarks Team</span
+                >otterSage Team</span
               >
             </div>
 
@@ -202,7 +202,7 @@ useSeoMeta({
               或发送邮件介绍你的想法。
             </p>
             <div class="flex flex-col sm:flex-row justify-center gap-4">
-              <Button href="https://github.com/ChenQiWen/acuityBookmarks" target="_blank" :as="'a'">
+              <Button href="https://github.com/ChenQiWen/otterSage" target="_blank" :as="'a'">
                 <Github class="w-4 h-4 mr-2" />
                 访问 GitHub
               </Button>

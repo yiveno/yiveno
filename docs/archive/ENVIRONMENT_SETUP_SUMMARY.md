@@ -19,7 +19,7 @@
 ### 2. 文件结构
 
 ```
-acuityBookmarks/
+otterSage/
 ├── .env                          # ✅ 公共配置（已提交）
 ├── .env.local                    # ✅ 本地开发配置（不提交）
 ├── .gitignore                    # ✅ 已配置忽略 .env.local
@@ -46,11 +46,11 @@ GOOGLE_CLIENT_ID=977490496631-7fgq659gokn6oe4jr2b38udpm2ooshm1.apps.googleuserco
 
 # Cloudflare Worker（生产环境）
 VITE_CLOUDFLARE_MODE=true
-VITE_API_BASE_URL=https://api.acuitybookmarks.com
-VITE_CLOUDFLARE_WORKER_URL=https://acuitybookmarks.cqw547847.workers.dev
+VITE_API_BASE_URL=https://api.ottersage.com
+VITE_CLOUDFLARE_WORKER_URL=https://ottersage.cqw547847.workers.dev
 
 # Gumroad
-VITE_GUMROAD_PRODUCT_URL=https://cqw5478.gumroad.com/l/acuitybookmarks-pro
+VITE_GUMROAD_PRODUCT_URL=https://cqw5478.gumroad.com/l/ottersage-pro
 VITE_GUMROAD_PLAN_ID_MONTHLY=...
 VITE_GUMROAD_MANAGE_URL=https://app.gumroad.com/subscriptions
 ```
@@ -132,7 +132,7 @@ bun run dev
 
 ```bash
 # 根目录 .env.local
-VITE_API_BASE_URL=https://acuitybookmarks.cqw547847.workers.dev
+VITE_API_BASE_URL=https://ottersage.cqw547847.workers.dev
 ```
 
 ### 生产构建
@@ -163,7 +163,7 @@ bun run build
 
 ```bash
 bun run build
-grep -r "api.acuitybookmarks.com" frontend/dist/
+grep -r "api.ottersage.com" frontend/dist/
 ```
 
 应该能找到生产环境的 API 地址。
@@ -180,7 +180,7 @@ const apiBase =
   import.meta.env.VITE_API_BASE_URL || // 优先使用环境变量
   (import.meta.env.DEV
     ? 'https://localhost:8787' // 开发环境默认
-    : 'https://api.acuitybookmarks.com') // 生产环境默认
+    : 'https://api.ottersage.com') // 生产环境默认
 ```
 
 ### Q: 如何确认配置生效？

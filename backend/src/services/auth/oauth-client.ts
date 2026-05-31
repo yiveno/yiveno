@@ -88,7 +88,7 @@ async function fetchGitHubUserInfo(
     headers: {
       Authorization: `Bearer ${accessToken}`,
       accept: 'application/json',
-      'user-agent': 'AcuityBookmarks'
+      'user-agent': 'otterSage'
     }
   })
   const u: Record<string, unknown> = (await uResp.json().catch(() => ({}))) as Record<
@@ -109,7 +109,7 @@ async function fetchGitHubPrimaryEmail(accessToken: string): Promise<string> {
     headers: {
       Authorization: `Bearer ${accessToken}`,
       accept: 'application/json',
-      'user-agent': 'AcuityBookmarks'
+      'user-agent': 'otterSage'
     }
   })
   const arr = await eResp.json().catch(() => [])

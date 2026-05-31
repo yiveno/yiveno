@@ -17,7 +17,7 @@ export function useOnboardingFlow() {
   const steps: Step[] = [
     {
       id: 'welcome',
-      title: 'Welcome to AcuityBookmarks',
+      title: 'Welcome to otterSage',
       subtitle: 'AI-Powered Bookmark Management',
       description:
         'Unlock the knowledge in your bookmarks with intelligent organization and semantic search.',

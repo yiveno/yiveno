@@ -1,8 +1,8 @@
-# AcuityBookmarks - 完整产品文档 v3.0
+# otterSage - 完整产品文档 v3.0
 
 > 📘 **文档目标**：为 AI 编程助手（Cursor / Kiro / Claude 等）提供完整项目上下文，确保生成代码符合本仓库架构与规范。
 >
-> 🎯 **最后更新**：2026-05-14  
+> 🎯 **最后更新**：2026-05-31  
 > 📦 **项目版本**：v1.0  
 > 🏗️ **架构版本**：v3.0（DDD + 单向数据流 + 现代技术栈）
 
@@ -37,13 +37,13 @@
 
 | 类型                                      | 路径                                                             | 说明                                                                                               |
 | ----------------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| **产品 + 架构 + 交互 + 开发规范（正文）** | `docs/product/AcuityBookmarks-产品文档-v3.0.md`                  | **唯一**需要与「当前真实实现」持续对齐的规格文档；架构/数据流/UI 约定/质量门禁等**以本文件为准**。 |
+| **产品 + 架构 + 交互 + 开发规范（正文）** | `docs/product/otterSage-产品文档-v3.0.md`                        | **唯一**需要与「当前真实实现」持续对齐的规格文档；架构/数据流/UI 约定/质量门禁等**以本文件为准**。 |
 | IDE 规则                                  | `.cursor/rules/project.mdc`、`.kiro/steering/*.md`               | **执行层**：行为约束、速查表；**不得**与产品正文冲突；若冲突**以本文件为准**并应立刻改 IDE 规则。  |
 | 运维/接入说明（非产品规格）               | 如 `docs/AUTH_GUIDE.md`                                          | 操作步骤类可暂存；**与正文冲突时以正文为准**；结论性内容应迁回正文后删或缩为链接。                 |
 | 阶段复盘 / 历史                           | ~~`docs/PHASE*.md`~~（**已移除**，考古用 Git）、`docs/archive/*` | **不作为规格引用**；新结论必须写回正文。                                                           |
 | 开发事实清单                              | `docs/development/`（现仅保留环境变量、依赖移除等**可查表**）    | 非产品规格；与正文冲突以正文为准。                                                                 |
 | 组件 / 模块 README                        | `frontend/src/**/README.md` 等                                   | **局部说明**（用法、边界），不替代正文。                                                           |
-| Material 清单与迁移备忘                   | `frontend/MATERIAL_WEB_COMPONENTS_GUIDE.md` 等                   | **实现备忘**；与正文重复时以**代码与本文件**为准。                                                 |
+| Material Web 使用说明                     | `frontend/MATERIAL_WEB_COMPONENTS_GUIDE.md`                      | **实现说明**；与正文重复时以**代码与本文件**为准。                                                 |
 
 **禁止**：在仓库根目录或 `frontend/` 根目录再新增 `*_PROGRESS.md`、`*_MIGRATION_COMPLETE.md`、`*_SUMMARY.md` 等平行「产品规格」类文档；阶段性结论应**写回本文件**或仅存于 **Git 提交说明**，不再在 `docs/` 根目录堆积「PHASE 完成报告」类 Markdown。
 
@@ -84,9 +84,9 @@ frontend/src/
 
 ### 1.1 产品定位
 
-**AcuityBookmarks** 是一款以 AI 语义检索为核心的 Chrome 书签扩展。
+**otterSage** 是一款以 AI 语义检索为核心的 Chrome 书签扩展。
 
-**产品原点**：用户长年累月收藏了大量书签，收藏时不想花时间分类，用的时候又找不到。AcuityBookmarks 解决的就是这个问题——**收藏零摩擦，检索靠语义**，让 AI 替用户记住每一条书签的内容，用户只需要输入脑海中模糊的关键词就能精准找到。
+**产品原点**：用户长年累月收藏了大量书签，收藏时不想花时间分类，用的时候又找不到。otterSage 解决的就是这个问题——**收藏零摩擦，检索靠语义**，让 AI 替用户记住每一条书签的内容，用户只需要输入脑海中模糊的关键词就能精准找到。
 
 #### 核心设计哲学
 
@@ -118,7 +118,7 @@ frontend/src/
 
 **与 Material Design 3 的关系**：MD3 将 hover 列为标准 [Interaction states](https://m3.material.io/foundations/interaction/states) 之一，推荐通过 **state layer**（叠在组件表面上的半透明 on-container / on-surface 色层）与**容器属性**（底色、描边、阴影层级）区分状态；**不推荐**在**高密度列表行**上用位移、整行缩放充当 hover 主效果。
 
-**AcuityBookmarks 约定（扩展 / 管理页 / 侧栏等书签列表与类列表 UI）**
+**otterSage 约定（扩展 / 管理页 / 侧栏等书签列表与类列表 UI）**
 
 | 场景                                                           | 推荐                                                                                                      | 避免                                                                                                            |
 | -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
@@ -176,7 +176,7 @@ frontend/src/
 
 ### 1.4 AI 能力架构策略
 
-作为个人开发者产品，AcuityBookmarks 的 AI 能力遵循 **本地隐私优先、Embedding 为核心、LLM 渐进增强** 的策略。
+作为个人开发者产品，otterSage 的 AI 能力遵循 **本地隐私优先、Embedding 为核心、LLM 渐进增强** 的策略。
 
 #### 第一层：本地 Embedding 与本地检索（核心主链路）
 
@@ -324,13 +324,13 @@ Chrome Built-in AI（本地增强）
 
 | 维度                             | 约定                                                                                                                                                                                                                                                                                |
 | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **用户登录 / 账户 / 定价等外链** | 统一使用 `frontend/src/config/website.ts` 中的 `websiteUrls` 与 `openWebsiteUrl()`（如 `UserMenu` 跳转登录页）；基地址由 `VITE_WEBSITE_URL` 覆盖，默认生产域为 `https://acuitybookmarks.com`。                                                                                      |
+| **用户登录 / 账户 / 定价等外链** | 统一使用 `frontend/src/config/website.ts` 中的 `websiteUrls` 与 `openWebsiteUrl()`（如 `UserMenu` 跳转登录页）；基地址由 `VITE_WEBSITE_URL` 覆盖，默认生产域为 `https://ottersage.com`。                                                                                            |
 | **官网与扩展的会话**             | 在官网匹配域上注入内容脚本 `auth-sync.js`（源码 `frontend/src/content/auth-sync.ts`）：监听官网 `localStorage` 中 Supabase session（`sb-*-auth-token`），通过 `chrome.runtime.sendMessage` 向 Background 发送 `SYNC_AUTH_SESSION` / `CLEAR_AUTH_SESSION`，由扩展侧持久化并驱动 UI。 |
 | **职责边界**                     | 登录与账户主流程在 **官网（Nuxt `website/`）**；扩展负责书签核心能力、展示登录态与跳转；避免在扩展内再维护一套完整账户注册页（与已删文档中的目标一致，实现路径已演进为 content script 同步而非独立 `auth.html` 页）。                                                               |
 
 ### 2.2 DDD 分层架构
 
-AcuityBookmarks 严格遵循 **领域驱动设计（DDD）** 的分层架构：
+otterSage 严格遵循 **领域驱动设计（DDD）** 的分层架构：
 
 ```
 frontend/src/
@@ -479,7 +479,7 @@ chrome.bookmarks.onCreated.addListener(async (id, bookmark) => {
 
   // 2. 广播消息到所有前端页面
   chrome.runtime.sendMessage({
-    type: 'acuity-bookmarks-db-synced',
+    type: 'ottersage-db-synced',
     eventType: 'created',
     bookmarkId: id,
     timestamp: Date.now()
@@ -496,10 +496,10 @@ chrome.bookmarks.onCreated.addListener(async (id, bookmark) => {
 bun install
 
 # 前端开发（热更新）
-bun run dev:frontend
+bun run dev:fe
 
-# 前端构建（带热重载）
-bun run build:hot
+# 前端构建监听
+bun run watch:fe
 
 # 类型检查
 bun run typecheck:force
@@ -509,10 +509,10 @@ bun run typecheck:force
 
 ```bash
 # ESLint 检查与修复
-bun run lint:fix:enhanced
+bun run eslint
 
 # Stylelint 检查与修复
-bun run stylelint:fix:enhanced
+bun run stylelint
 
 # 格式化代码
 bun run format
@@ -533,12 +533,12 @@ bun run format
 | **`packages/design-tokens/css/presets/*.css`**       | **六套配色**的亮/暗 `--md-sys-color-*`（由根目录 Builder 导出 + `build-material-color-presets.mjs` 生成）；运行时由 `data-color-preset` 选择。                                                           |
 | **`packages/design-tokens/css/material-theme.css`**  | 总入口：`@import` 各 `presets/*.css`，并含中等/高对比度与 `color-scheme` 段；**不**再内联整套标准亮/暗色（已拆至 presets）。                                                                             |
 | **`packages/design-tokens/css/semantic-colors.css`** | 业务语义色（success / warning / info、强调色、primary 阶梯、alpha）由 **`var(--md-sys-color-*)` 与 `color-mix`** 派生；换 M3 导出后一般**只需核对映射**，无需再堆 Hex。                                  |
-| **`frontend/src/design-system/tokens.css`**          | 扩展将 `--md-sys-*` / `--acuity-*` 映射为项目对外的 **`--color-*`**（含阴影、遮罩、语义浅底等 P3 集中变量）。换肤后重点检查 **混色与阴影** 是否仍协调。                                                  |
+| **`frontend/src/design-system/tokens.css`**          | 扩展将 `--md-sys-*` / `--ottersage-*` 映射为项目对外的 **`--color-*`**（含阴影、遮罩、语义浅底等 P3 集中变量）。换肤后重点检查 **混色与阴影** 是否仍协调。                                               |
 | **`packages/design-tokens/src/colors.ts`**           | 供 **无法使用 CSS 变量** 的场景（如控制台样式字符串、Badge API）：`.css` 仍指向变量名；`.rgb` / `.hex` 为与 **默认 preset 亮侧** 一致的近似快照，换 `presets/default.css` 后应**同步校对** `colors.ts`。 |
 
 主题应用逻辑（不负责写死颜色，但换肤后需回归）：`frontend/src/composables/useThemeSync.ts`（同步 `data-theme` 与 `data-color-preset`）、`frontend/src/components/composite/ThemeToggle/ThemeToggle.vue`；**配色预设**在设置页「配色」标签 `frontend/src/pages/settings/sections/ColorPresetSettings.vue` 中选择，经 `frontend/src/infrastructure/global-state/global-state-manager.ts` 写入 `chrome.storage.local` / `sync` 的 `colorPreset` 键。View Transition 与主题相关选择器：`frontend/src/design-system/animations.css`。
 
-**官网（Nuxt）**：`website/nuxt.config.ts` 已引入 `@acuity-bookmarks/design-tokens/css/material-theme.css`；`website/app.vue` 使用 `data-theme`。若官网要与扩展同一套色盘，需与上述 CSS **同源提交**，避免两处分叉。
+**官网（Nuxt）**：`website/nuxt.config.ts` 已引入 `@ottersage/design-tokens/css/material-theme.css`；`website/app.vue` 使用 `data-theme`。若官网要与扩展同一套色盘，需与上述 CSS **同源提交**，避免两处分叉。
 
 #### 2.5.2 换肤时要改 / 核对的文件清单
 
@@ -549,7 +549,7 @@ bun run format
    - **总入口**：`packages/design-tokens/css/material-theme.css` — `@import` 上述 preset，并保留中等/高对比度与 `color-scheme` 段。若仅替换「晴空」单套，可只更新 `Skyline` 源文件后重跑脚本。
 
 2. **强烈建议核对（派生与映射）**
-   - `packages/design-tokens/css/semantic-colors.css` — 确认 `--acuity-*` 仍指向有效的 `--md-sys-color-*`。
+   - `packages/design-tokens/css/semantic-colors.css` — 确认 `--ottersage-*` 仍指向有效的 `--md-sys-color-*`。
    - `packages/design-tokens/src/colors.ts` — 更新 `materialColors` 及依赖新映射的 `semanticColors` / `accentColors` / `primaryScale` 的 **rgb/hex 快照**（若仅改 CSS 而不改 TS，非 CSS 场景可能仍显示旧色）。
 
 3. **按需核对（项目层）**
@@ -603,7 +603,7 @@ bun run stylelint:check
 
 **接入说明（后续开发）**：每套预设对应 Builder 导出的 **light + dark** 两套 `--md-sys-color-*` 赋值，经 `data-color-preset="<id>"` 与现有 `data-theme` 组合选择器挂到 `html`；默认套对应 `presets/default.css`（源目录 `Skyline`），更新流程见 §2.5.2。
 
-**文档路径（单一来源）**：`docs/product/AcuityBookmarks-产品文档-v3.0.md` — 仓库内产品说明、架构与规范均以本文件为准，不另设平行「产品说明」文档。
+**文档路径（单一来源）**：`docs/product/otterSage-产品文档-v3.0.md` — 仓库内产品说明、架构与规范均以本文件为准，不另设平行「产品说明」文档。
 
 ---
 
@@ -617,8 +617,8 @@ bun run stylelint:check
 
 **页面路径**：`frontend/src/pages/management/Management.vue`
 
-- **左侧面板**：原始书签结构（`SimpleBookmarkTree`）
-- **右侧面板**：编辑后结构（`SimpleBookmarkTree`）
+- **左侧面板**：原始书签结构（`BookmarkTree`）
+- **右侧面板**：编辑后结构（`BookmarkTree`）
 - **数据源**：统一从 IndexedDB 加载
 
 ```typescript
@@ -640,7 +640,7 @@ onMounted(async () => {
 
 #### 3.1.2 虚拟滚动
 
-**组件路径**：`frontend/src/components/composite/SimpleBookmarkTree/SimpleBookmarkTree.vue`
+**组件路径**：`frontend/src/components/business/BookmarkTree/BookmarkTree.vue`
 
 使用 `@tanstack/vue-virtual` 实现虚拟滚动：
 
@@ -769,7 +769,7 @@ async function evaluateBookmarkTraits(bookmarkId: string) {
 
 - **TraitDataStore**: 单一数据源,管理所有特征统计
 - **智能缓存**: 5 分钟缓存,减少查询次数
-- **自动更新**: 监听 `acuity-bookmarks-trait-updated` 消息自动刷新
+- **自动更新**: 监听 `ottersage-trait-updated` 消息自动刷新
 - **请求去重**: 防止并发重复请求
 - **自动重试**: 网络/数据库错误自动重试 3 次
 
@@ -806,7 +806,7 @@ const invalidCount = useTraitCount('invalid')
 
 #### 3.4.1 爬取架构
 
-**核心文件**：`frontend/src/services/local-bookmark-crawler.ts`
+**核心文件**：`frontend/src/services/bookmark-sync-service.ts`、`frontend/src/infrastructure/indexeddb/manager.ts`
 
 - **爬取方式**：通过 `fetch` API 直接请求书签 URL
 - **并发控制**：使用 `p-queue` 限制并发数（默认 5）
@@ -1020,10 +1020,10 @@ const handleCreateLinkShare = async () => {
 }
 ```
 
-**短链接格式**：`https://acuitybookmarks.com/s/{shortCode}`
+**短链接格式**：`https://ottersage.com/s/{shortCode}`
 
 - `shortCode`：8 位随机字符串（a-zA-Z0-9）
-- 示例：`https://acuitybookmarks.com/s/abc12345`
+- 示例：`https://ottersage.com/s/abc12345`
 
 **统计数据**：
 
@@ -1105,8 +1105,8 @@ const handleCreateDirectShare = async () => {
 │                                     │
 │  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
 │                                     │
-│  由 AcuityBookmarks 生成             │
-│  acuitybookmarks.com                │
+│  由 otterSage 生成             │
+│  ottersage.com                │
 │                                     │
 └─────────────────────────────────────┘
 ```
@@ -1146,8 +1146,8 @@ async function generatePoster(options: PosterOptions): Promise<string> {
   // 4. 绘制品牌标识
   ctx.font = '14px sans-serif'
   ctx.fillStyle = '#83d5c5'
-  ctx.fillText('由 AcuityBookmarks 生成', 40, canvas.height - 60)
-  ctx.fillText('acuitybookmarks.com', 40, canvas.height - 30)
+  ctx.fillText('由 otterSage 生成', 40, canvas.height - 60)
+  ctx.fillText('ottersage.com', 40, canvas.height - 30)
 
   // 5. 返回 Data URL
   return canvas.toDataURL('image/png')
@@ -1189,7 +1189,7 @@ async function generatePoster(options: PosterOptions): Promise<string> {
 
 - 当有移动端 App/网页时，可以在海报上添加二维码
 - 用户扫码 → 跳转到移动端 → 显示书签列表 → 一键导入
-- 二维码指向短链接：`https://acuitybookmarks.com/s/{shortCode}`
+- 二维码指向短链接：`https://ottersage.com/s/{shortCode}`
 
 **分享统计增强**：
 
@@ -1231,15 +1231,15 @@ async function loadAllBookmarks(): Promise<BookmarkNode[]> {
 #### 4.1.2 Vue 组件规范
 
 - ✅ **使用 `<script setup>` + Composition API**
-- ✅ **组件命名使用 PascalCase**：`SimpleBookmarkTree.vue`
-- ✅ **导出组件名**：`defineOptions({ name: "SimpleBookmarkTree" })`
+- ✅ **组件命名使用 PascalCase**：`BookmarkTree.vue`
+- ✅ **导出组件名**：`defineOptions({ name: "BookmarkTree" })`
 
 ```vue
 <script setup lang="ts">
 import { defineOptions } from 'vue'
 
 defineOptions({
-  name: 'SimpleBookmarkTree'
+  name: 'BookmarkTree'
 })
 
 // 组件逻辑
@@ -1291,8 +1291,8 @@ components/
 │   │   ├── Button.d.ts       # TypeScript 类型定义
 │   │   └── Button.README.md  # 组件文档
 │   └── ...
-└── composite/         # 复合组件（业务组件）
-    ├── SimpleBookmarkTree/
+└── business/          # 业务组件
+    ├── BookmarkTree/
     └── ...
 ```
 
@@ -1402,7 +1402,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 chrome.bookmarks.onCreated.addListener(async (id, bookmark) => {
   await bookmarkSyncService.syncIncremental('created', id)
   chrome.runtime.sendMessage({
-    type: 'acuity-bookmarks-db-synced',
+    type: 'ottersage-db-synced',
     eventType: 'created',
     bookmarkId: id
   })
@@ -1484,7 +1484,7 @@ unsubscribe()
 ```typescript
 export function initializeChromeMessageBridge() {
   chrome.runtime.onMessage.addListener(message => {
-    if (message.type === 'acuity-bookmarks-db-synced') {
+    if (message.type === 'ottersage-db-synced') {
       // 将 Chrome 消息转换为 mitt 事件
       emitEvent('data:synced', {
         eventType: message.eventType,
@@ -1502,7 +1502,7 @@ export function initializeChromeMessageBridge() {
 
 ### 6.1 存储层级划分
 
-AcuityBookmarks 使用 **四层存储架构**，每层有明确的职责：
+otterSage 使用 **四层存储架构**，每层有明确的职责：
 
 | 存储类型                   | 生命周期                   | 容量限制           | 使用场景                                    | Chrome 版本要求 |
 | -------------------------- | -------------------------- | ------------------ | ------------------------------------------- | --------------- |
@@ -1515,7 +1515,7 @@ AcuityBookmarks 使用 **四层存储架构**，每层有明确的职责：
 
 #### 6.2.1 数据库结构
 
-**数据库名称**：`AcuityBookmarksDB`  
+**数据库名称**：`otterSageDB`  
 **版本号**：`11`
 
 **对象存储（Object Stores）**：
@@ -1643,11 +1643,11 @@ interface BookmarkRecord {
 
 #### 6.3.1 chrome.storage.session（临时数据）
 
-**文件路径**：`frontend/src/infrastructure/storage/modern-storage.ts`
+**文件路径**：`frontend/src/infrastructure/storage/chrome-storage.ts`
 
 ```typescript
 // 1. 数据库就绪状态（会话级）
-await modernStorage.setSession('AB_DB_READY', true)
+await chromeStorage.setSession('AB_DB_READY', true)
 
 // 2. 同步状态（防止重复同步）
 await modernStorage.setSession('SYNC_STATE', { isSyncing: true })
@@ -1679,7 +1679,7 @@ await modernStorage.setLocal('USER_PREFERENCES', {
 
 // 2. 扩展配置
 await modernStorage.setLocal('EXTENSION_CONFIG', {
-  apiEndpoint: 'https://api.acuitybookmarks.com',
+  apiEndpoint: 'https://api.ottersage.com',
   enableAI: true
 })
 
@@ -2102,7 +2102,7 @@ Worker 异步带来的"UI 流畅度"毫无价值
 
 2. **特征检测支持 Worker 异步执行**
    - 当前：`bookmark-trait-service.ts` 提供同步和异步两种模式
-   - 已实现：`trait-detection-service.ts` 提供 Worker 异步检测，支持进度反馈和取消操作
+   - 已实现：`bookmark-trait-service.ts` / `bookmark-trait-auto-sync.ts` 提供特征检测与自动同步
 
 3. **缺少进度组件**
    - 当前：静态 Loading 文本
@@ -2329,7 +2329,7 @@ describe('Button', () => {
 
 ```bash
 # 运行 E2E 测试
-bun run e2e:management --ext $EXT_ID
+bun run e2e --ext $EXT_ID
 ```
 
 #### 8.1.4 Service Worker 与消息边界测试
@@ -2343,7 +2343,7 @@ bun run e2e:management --ext $EXT_ID
 #### 8.1.5 测试分层原则
 
 - **默认**：以 Vitest 单元 / 组件测试为主，保证快速反馈。
-- **补充**：管理页 E2E（`bun run e2e:management`）、上文 Service Worker 脚本覆盖关键链路与休眠边界。
+- **补充**：管理页 E2E（`bun run e2e`）、上文 Service Worker 脚本覆盖关键链路与休眠边界。
 - **参考**：Chrome 官方扩展测试指引：<https://developer.chrome.com/docs/extensions/how-to/test/>
 
 ### 8.2 代码质量工具
@@ -2355,7 +2355,7 @@ bun run e2e:management --ext $EXT_ID
 bun run lint:check
 
 # 自动修复
-bun run lint:fix:enhanced
+bun run eslint
 ```
 
 #### 8.2.2 Stylelint
@@ -2365,7 +2365,7 @@ bun run lint:fix:enhanced
 bun run stylelint
 
 # 自动修复
-bun run stylelint:fix:enhanced
+bun run stylelint
 ```
 
 #### 8.2.3 TypeScript
@@ -2388,10 +2388,7 @@ bun run format
 
 ```bash
 # 运行 Lighthouse 审计
-bun run audit:lhci
-
-# 查看审计报告
-bun run audit:lhci:summary
+bun run audit:fe
 ```
 
 ### 8.4 Git Hooks
@@ -2400,7 +2397,8 @@ bun run audit:lhci:summary
 
 ```bash
 # .husky/pre-commit
-bun run lint:fix:enhanced
+bun run eslint
+bun run stylelint
 bun run typecheck:force
 ```
 
@@ -2411,29 +2409,27 @@ bun run typecheck:force
 ```bash
 # ========== 开发 ==========
 bun install                     # 安装依赖
-bun run dev:frontend            # 前端开发服务器
-bun run build:hot               # 前端热构建（推荐）
-bun run build:hot:no-lint       # 跳过 ESLint 的热构建
+bun run dev:fe                  # 前端开发服务器
+bun run watch:fe                # 前端监听构建
 
 # ========== 构建 ==========
-bun run build:frontend          # 前端构建（开发模式）
-bun run build:frontend:fast     # 前端构建（生产模式）
-bun run build:frontend:analyze  # 分析构建体积
+bun run build:fe                # 前端构建
+bun run build                   # 全仓构建
+cd frontend && bun run build:analyze  # 分析构建体积
 
 # ========== 代码质量 ==========
 bun run typecheck:force         # 类型检查（强制）
-bun run lint:fix:enhanced       # ESLint 自动修复
-bun run stylelint:fix:enhanced  # Stylelint 自动修复
+bun run eslint                  # ESLint 自动修复
+bun run stylelint               # Stylelint 自动修复
 bun run format                  # Prettier 格式化
 
 # ========== 测试 ==========
 bun run test                    # 运行所有测试
-bun run test:coverage           # 生成覆盖率报告
-bun run e2e:management          # E2E 测试
+cd frontend && bun run test:coverage  # 生成覆盖率报告
+bun run e2e                    # E2E 测试
 
 # ========== 审计 ==========
-bun run audit:lhci              # Lighthouse 审计
-bun run audit:lhci:summary      # 审计报告摘要
+bun run audit:fe                # Lighthouse 审计
 ```
 
 ---
@@ -2445,23 +2441,23 @@ bun run audit:lhci:summary      # 审计报告摘要
 | **架构文档**      |                                                                 |
 | 单向数据流说明    | `/单向数据流架构说明.md`                                        |
 | **前端核心**      |                                                                 |
-| 书签 Store        | `frontend/src/stores/bookmarkStore.ts`                          |
+| 书签 Store        | `frontend/src/stores/bookmark-tree-store.ts`                    |
 | 管理页面          | `frontend/src/pages/management/Management.vue`                  |
-| 书签树组件        | `frontend/src/components/composite/SimpleBookmarkTree/`         |
+| 书签树组件        | `frontend/src/components/business/BookmarkTree/`                |
 | **基础设施**      |                                                                 |
 | IndexedDB 管理器  | `frontend/src/infrastructure/indexeddb/manager.ts`              |
-| 存储抽象层        | `frontend/src/infrastructure/storage/modern-storage.ts`         |
+| Chrome Storage    | `frontend/src/infrastructure/storage/chrome-storage.ts`         |
 | 事件总线          | `frontend/src/infrastructure/events/event-bus.ts`               |
 | Immer 工具        | `frontend/src/infrastructure/state/immer-helpers.ts`            |
 | **后台脚本**      |                                                                 |
-| 书签监听          | `frontend/src/background/bookmarks.ts`                          |
-| 消息处理          | `frontend/src/background/messaging.ts`                          |
-| 爬虫管理器        | `frontend/src/background/crawler-manager.ts`                    |
+| 书签监听          | `frontend/src/background/listeners/bookmarks.ts`                |
+| 消息处理          | `frontend/src/background/listeners/messaging.ts`                |
+| 引导管理器        | `frontend/src/background/managers/bootstrap.ts`                 |
 | **服务层**        |                                                                 |
 | 书签同步服务      | `frontend/src/services/bookmark-sync-service.ts`                |
 | 书签特征服务      | `frontend/src/services/bookmark-trait-service.ts`               |
-| 特征检测服务      | `frontend/src/services/trait-detection-service.ts`              |
-| 本地爬取服务      | `frontend/src/services/local-bookmark-crawler.ts`               |
+| 特征自动同步      | `frontend/src/services/bookmark-trait-auto-sync.ts`             |
+| Favicon 服务      | `frontend/src/services/favicon-service.ts`                      |
 | **AI 能力**       |                                                                 |
 | AI 应用服务       | `frontend/src/application/ai/ai-app-service.ts`                 |
 | Summarizer 客户端 | `frontend/src/infrastructure/llm/builtin-summarizer-client.ts`  |
@@ -2559,9 +2555,9 @@ updateMap(nodes, draft => {
 **A**: 在每次提交前执行：
 
 ```bash
-bun run lint:fix:enhanced  # ESLint 自动修复
+bun run eslint             # ESLint 自动修复
 bun run typecheck:force    # TypeScript 检查
-bun run stylelint:fix      # 样式检查
+bun run stylelint          # 样式检查
 ```
 
 或者依赖 Git Hooks 自动执行（已配置 Husky）。
@@ -2633,7 +2629,7 @@ Prompt API (Chrome 127+)
 
 ## 结语
 
-这份文档涵盖了 AcuityBookmarks 项目的所有关键信息，旨在帮助 AI 编程助手（Cursor/Copilot）：
+这份文档涵盖了 otterSage 项目的所有关键信息，旨在帮助 AI 编程助手（Cursor/Copilot）：
 
 1. ✅ **理解架构**：DDD 分层、单向数据流、存储方案
 2. ✅ **遵循规范**：TypeScript、Vue、Pinia、命名规范
@@ -2650,10 +2646,10 @@ Prompt API (Chrome 127+)
 
 ---
 
-**文档维护者**：AcuityBookmarks 开发团队  
+**文档维护者**：otterSage 开发团队  
 **联系方式**：通过 GitHub Issues 反馈问题  
 **最后更新**：2026-04-24
 
 ---
 
-© 2025 AcuityBookmarks. All Rights Reserved.
+© 2025 otterSage. All Rights Reserved.

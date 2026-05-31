@@ -1,5 +1,5 @@
 /**
- * AcuityBookmarks Main Styles
+ * otterSage Main Styles
  * 导入设计系统和全局样式
  */
 
@@ -15,9 +15,9 @@
  * 原因：确保 Material Design 3 主题在所有样式之前加载
  * 
  * 在入口文件中导入：
- * import '@acuity-bookmarks/design-tokens/css/material-theme.css'
- * import '@acuity-bookmarks/design-tokens/css/variables.css'
- * import '@acuity-bookmarks/design-tokens/css/semantic-colors.css'
+ * import '@ottersage/design-tokens/css/material-theme.css'
+ * import '@ottersage/design-tokens/css/variables.css'
+ * import '@ottersage/design-tokens/css/semantic-colors.css'
  */
 
 /* 1. Layers 定义（必须最先导入） */

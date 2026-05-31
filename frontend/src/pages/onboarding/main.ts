@@ -2,9 +2,9 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './Onboarding.vue'
 // ✅ 导入设计标准（必须在所有样式之前）
-import '@acuity-bookmarks/design-tokens/css/material-theme.css'
-import '@acuity-bookmarks/design-tokens/css/variables.css'
-import '@acuity-bookmarks/design-tokens/css/semantic-colors.css'
+import '@ottersage/design-tokens/css/material-theme.css'
+import '@ottersage/design-tokens/css/variables.css'
+import '@ottersage/design-tokens/css/semantic-colors.css'
 // ❌ 移除自定义 tokens（违反设计标准）
 // import '@/design-system/tokens.css'
 // import '@/design-system/typography.css'

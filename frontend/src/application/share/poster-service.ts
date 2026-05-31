@@ -176,7 +176,7 @@ class PosterServiceImpl implements PosterService {
       /* eslint-disable @typescript-eslint/no-var-requires */
       const {
         materialColors,
-      } = require("@acuity-bookmarks/design-tokens/colors");
+      } = require("@ottersage/design-tokens/colors");
       /* eslint-enable @typescript-eslint/no-var-requires */
       if (theme === 'dark') {
         return {
@@ -479,7 +479,7 @@ class PosterServiceImpl implements PosterService {
     ctx.font = '14px Inter, -apple-system, BlinkMacSystemFont, sans-serif'
     ctx.textBaseline = 'middle'
 
-    ctx.fillText('AcuityBookmarks', this.PADDING, y)
+    ctx.fillText('otterSage', this.PADDING, y)
 
     // 副标题
     ctx.fillStyle = config.colors.secondary

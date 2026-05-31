@@ -98,7 +98,7 @@ http://localhost:3000/share?data=<encoded_data>
 
 ### 任务 8.2 - 扩展检测逻辑
 
-- [ ] 检测是否安装 AcuityBookmarks 扩展
+- [ ] 检测是否安装 otterSage 扩展
 - [ ] 显示安装引导（未安装时）
 - [ ] 显示导入界面（已安装时）
 

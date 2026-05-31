@@ -7,7 +7,7 @@ const contacts = [
   {
     icon: Mail,
     label: '邮箱',
-    value: 'hi@acuitybookmarks.com',
+    value: 'hi@ottersage.com',
     description: '适用于合作、媒体采访、企业采购相关事宜'
   },
   {
@@ -36,8 +36,8 @@ const faqs = [
 ]
 
 useSeoMeta({
-  title: '联系我们 - AcuityBookmarks',
-  description: '通过邮件、社区或表单联系 AcuityBookmarks 团队，反馈问题或探讨合作。'
+  title: '联系我们 - otterSage',
+  description: '通过邮件、社区或表单联系 otterSage 团队，反馈问题或探讨合作。'
 })
 </script>
 

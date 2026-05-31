@@ -27,7 +27,7 @@ const getLevelToStyle = (): Record<LogLevel, string> => {
     /* eslint-disable @typescript-eslint/no-var-requires */
     const {
       semanticColors,
-    } = require("@acuity-bookmarks/design-tokens/colors");
+    } = require("@ottersage/design-tokens/colors");
     /* eslint-enable @typescript-eslint/no-var-requires */
     return {
       // Info: 使用语义 Info 容器色

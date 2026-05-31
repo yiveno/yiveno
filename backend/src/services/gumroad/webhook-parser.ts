@@ -2,7 +2,7 @@
  * Gumroad Webhook Payload 解析
  */
 
-import type { SubscriptionTier } from '@acuity-bookmarks/types'
+import type { SubscriptionTier } from '@ottersage/types'
 
 /** Gumroad Webhook payload 的基本结构 */
 export interface GumroadWebhookPayload {

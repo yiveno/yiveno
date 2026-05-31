@@ -1,5 +1,5 @@
 {
-  "name": "acuitybookmarks-website",
+  "name": "ottersage-website",
   "type": "module",
   "private": true,
   "scripts": {
@@ -22,7 +22,7 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@acuity-bookmarks/design-tokens": "workspace:*",
+    "@ottersage/design-tokens": "workspace:*",
     "@nuxtjs/seo": "^3.2.2",
     "@supabase/supabase-js": "^2.79.0",
     "lz-string": "^1.5.0",

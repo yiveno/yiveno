@@ -1,4 +1,4 @@
-name = "acuitybookmarks"
+name = "ottersage"
 main = "src/index.ts"
 compatibility_date = "2024-10-01"
 workers_dev = true
@@ -42,7 +42,7 @@ binding = "AI"
 # Production 环境配置
 [env.production]
 routes = [
-  { pattern = "api.acuitybookmarks.com", custom_domain = true }
+  { pattern = "api.ottersage.com", custom_domain = true }
 ]
 
 # Production 环境的可观测性配置（更保守的采样率）
@@ -64,7 +64,7 @@ head_sampling_rate = 0
 [env.production.vars]
 # Production 环境变量将从顶层 [vars] 继承。
 # 在部署时，Cloudflare 会自动使用为 "production" 环境设置的同名 Secrets 替换这些值。
-# 例如，WEBSITE_URL 将被替换为生产环境的 Secret 值（如 "https://acuitybookmarks.com"）。
+# 例如，WEBSITE_URL 将被替换为生产环境的 Secret 值（如 "https://ottersage.com"）。
 # 无需在此处重复定义变量，除非需要覆盖顶层定义。
 
 [env.production.ai]
@@ -85,5 +85,5 @@ binding = "AI"
 # GUMROAD_PRODUCT_ID = "<optional>"               # Gumroad 产品 ID（非必填，仅用于记录）
 
 # 推荐域名规划（已采用）：
-# - API: api.acuitybookmarks.com （本文件 routes 已设置）
-# - App: app.acuitybookmarks.com （前端承载重置/设置等页面）
+# - API: api.ottersage.com （本文件 routes 已设置）
+# - App: app.ottersage.com （前端承载重置/设置等页面）

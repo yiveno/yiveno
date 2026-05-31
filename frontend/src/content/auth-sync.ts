@@ -16,8 +16,8 @@
 const WEBSITE_DOMAINS = [
   'localhost:3000', // ✅ 修复：官网实际运行在 3000 端口
   'localhost:3001',
-  'acuitybookmarks.com',
-  'www.acuitybookmarks.com'
+  'ottersage.com',
+  'www.ottersage.com'
 ]
 
 const currentHost = window.location.host

@@ -1,4 +1,4 @@
-# @acuity-bookmarks/auth-core
+# @ottersage/auth-core
 
 认证核心逻辑共享包，提供平台无关的 Supabase 认证服务。
 
@@ -25,7 +25,7 @@
 ### 1. 基础用法
 
 ```typescript
-import { AuthService } from '@acuity-bookmarks/auth-core'
+import { AuthService } from '@ottersage/auth-core'
 import { createClient } from '@supabase/supabase-js'
 
 // 初始化 Supabase 客户端
@@ -53,7 +53,7 @@ await authService.signOut()
 ### 2. 表单验证
 
 ```typescript
-import { validateEmail, validatePassword } from '@acuity-bookmarks/auth-core'
+import { validateEmail, validatePassword } from '@ottersage/auth-core'
 
 // 验证邮箱
 const emailResult = validateEmail('user@example.com')
@@ -71,7 +71,7 @@ if (!passwordResult.valid) {
 ### 3. 错误处理
 
 ```typescript
-import { getErrorMessage, extractErrorCode } from '@acuity-bookmarks/auth-core'
+import { getErrorMessage, extractErrorCode } from '@ottersage/auth-core'
 
 try {
   await authService.signIn(credentials)

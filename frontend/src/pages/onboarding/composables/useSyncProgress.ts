@@ -28,13 +28,13 @@ export function useSyncProgress() {
 
   // Chrome Extension 消息监听
   const messageListener = (message: ChromeExtensionMessage) => {
-    if (message.type === 'acuity-bookmarks-sync-progress') {
+    if (message.type === 'ottersage-sync-progress') {
       updateProgress(message.data.percentage, message.data.message)
 
       if (message.data.phase === 'completed') {
         completeSync()
       }
-    } else if (message.type === 'acuity-bookmarks-db-ready') {
+    } else if (message.type === 'ottersage-db-ready') {
       completeSync()
     }
   }

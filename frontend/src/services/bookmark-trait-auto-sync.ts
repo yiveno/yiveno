@@ -83,7 +83,7 @@ class BookmarkTraitAutoSync {
   private setupCustomEventListeners(): void {
     // 监听同步完成事件
     chrome.runtime.onMessage.addListener((message, _sender, _sendResponse) => {
-      if (message.type === 'acuity-bookmarks-db-synced') {
+      if (message.type === 'ottersage-db-synced') {
         const eventType = message.eventType as
           | 'full-sync'
           | 'incremental'
@@ -102,7 +102,7 @@ class BookmarkTraitAutoSync {
       }
 
       // 监听爬虫完成事件
-      if (message.type === 'acuity-bookmarks-crawl-complete') {
+      if (message.type === 'ottersage-crawl-complete') {
         const bookmarkId = message.bookmarkId as string
         logger.debug('BookmarkTraitAutoSync', `爬虫完成: ${bookmarkId}`)
         this.handleBookmarkChange('crawled', [bookmarkId])

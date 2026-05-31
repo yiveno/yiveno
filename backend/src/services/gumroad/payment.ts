@@ -3,7 +3,7 @@
  */
 
 import type { Env } from '../../types/env'
-import type { PaymentRecord, PaymentStatus } from '@acuity-bookmarks/types'
+import type { PaymentRecord, PaymentStatus } from '@ottersage/types'
 import type { GumroadWebhookPayload } from './webhook-parser'
 
 /** 支付上下文 */

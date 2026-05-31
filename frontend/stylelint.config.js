@@ -263,7 +263,7 @@ export default {
     ],
 
     // Prefer opacity/background/shadow/outline over geometric changes on interactions
-    'acuity/no-motion-on-interaction': [
+    'ottersage/no-motion-on-interaction': [
       true,
       {
         // allow-list examples: color, background, opacity, box-shadow, outline, text-decoration

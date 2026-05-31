@@ -26,8 +26,8 @@ bun run build:watch
     "matches": [
       "http://localhost:3000/*",
       "https://localhost:3000/*",
-      "https://acuitybookmarks.com/*",
-      "https://*.acuitybookmarks.com/*"
+      "https://ottersage.com/*",
+      "https://*.ottersage.com/*"
     ]
   }
 }
@@ -48,7 +48,7 @@ bun run build:watch
 5. 确认链接已复制到剪贴板
 6. 粘贴链接，格式应为：
    ```
-   https://acuitybookmarks.com/share?data=<encoded_data>
+   https://ottersage.com/share?data=<encoded_data>
    ```
 
 **预期结果：**
@@ -61,20 +61,20 @@ bun run build:watch
 ### 测试 2：打开分享链接（未安装扩展）
 
 1. 在隐身模式或其他浏览器中打开分享链接
-2. 或者在 Chrome 中禁用 AcuityBookmarks 扩展后打开
+2. 或者在 Chrome 中禁用 otterSage 扩展后打开
 
 **预期结果：**
 
 - ✅ 页面正确加载分享内容
 - ✅ 显示书签列表（标题、URL、描述）
-- ✅ 显示"安装 AcuityBookmarks 扩展"提示
+- ✅ 显示"安装 otterSage 扩展"提示
 - ✅ 点击"立即安装"按钮跳转到 Chrome Web Store
 - ✅ 点击书签 URL 可以在新标签页打开
 - ✅ 不显示复选框和导入按钮
 
 ### 测试 3：打开分享链接（已安装扩展）
 
-1. 在已安装 AcuityBookmarks 扩展的 Chrome 中打开分享链接
+1. 在已安装 otterSage 扩展的 Chrome 中打开分享链接
 2. 等待页面加载
 
 **预期结果：**

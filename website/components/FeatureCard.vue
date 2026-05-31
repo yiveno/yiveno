@@ -17,33 +17,33 @@ defineProps<{
 <style scoped>
 .feature-card {
   padding: 2rem;
-  background: white;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   text-align: center;
+  background: white;
   transition:
     transform 0.3s ease,
     box-shadow 0.3s ease;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
 }
 
 .feature-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 15%);
 }
 
 .feature-icon {
-  font-size: 3rem;
   margin-bottom: 1rem;
+  font-size: 3rem;
 }
 
 .feature-card h3 {
-  font-size: 1.5rem;
   margin-bottom: 1rem;
+  font-size: 1.5rem;
   color: #333;
 }
 
 .feature-card p {
-  color: #666;
   line-height: 1.6;
+  color: #666;
 }
 </style>

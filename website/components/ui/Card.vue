@@ -35,25 +35,25 @@ const computedClass = computed(() => {
 /* 基础卡片样式 */
 .card {
   border-radius: var(--md-sys-shape-corner-extra-large);
-  overflow: hidden;
   transition: all 0.3s ease;
+  overflow: hidden;
 }
 
 /* 卡片变体 */
 .card-default {
-  background-color: var(--md-sys-color-surface);
   border: 1px solid color-mix(in srgb, white 10%, transparent);
+  background-color: var(--md-sys-color-surface);
 }
 
 .card-glass {
-  background-color: rgb(255 255 255 / 2%);
   border: 1px solid rgb(255 255 255 / 5%);
+  background-color: rgb(255 255 255 / 2%);
   backdrop-filter: blur(12px);
 }
 
 .card-outline {
-  background-color: transparent;
   border: 1px solid color-mix(in srgb, white 10%, transparent);
+  background-color: transparent;
 }
 
 /* Hover 效果 */

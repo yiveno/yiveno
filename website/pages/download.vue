@@ -32,14 +32,14 @@ const builds = [
     description: 'Fork 项目或从 Release 下载 zip，完全掌控环境。',
     notes: ['遵循 MIT 许可', '支持 Cloudflare Worker 自托管', '欢迎提交 PR'],
     linkLabel: 'GitHub Releases',
-    link: 'https://github.com/ChenQiWen/acuityBookmarks',
+    link: 'https://github.com/ChenQiWen/otterSage',
     external: true
   }
 ]
 
 useSeoMeta({
-  title: '下载 - AcuityBookmarks',
-  description: '通过 Chrome Web Store 或本地构建方式安装 AcuityBookmarks。'
+  title: '下载 - otterSage',
+  description: '通过 Chrome Web Store 或本地构建方式安装 otterSage。'
 })
 </script>
 
@@ -66,7 +66,7 @@ useSeoMeta({
               立即安装<br />
               <span
                 class="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-accent-400"
-                >AcuityBookmarks</span
+                >otterSage</span
               ><br />
               开启智能书签体验
             </h1>

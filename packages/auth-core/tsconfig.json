@@ -5,7 +5,7 @@
     "rootDir": "./src",
     "baseUrl": ".",
     "paths": {
-      "@acuity-bookmarks/types": ["../types/src/index.ts"]
+      "@ottersage/types": ["../types/src/index.ts"]
     }
   },
   "include": ["src/**/*"],

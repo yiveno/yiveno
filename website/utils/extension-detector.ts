@@ -1,6 +1,6 @@
 /**
  * 扩展检测工具
- * 用于检测 AcuityBookmarks 扩展是否已安装
+ * 用于检测 otterSage 扩展是否已安装
  */
 
 /**

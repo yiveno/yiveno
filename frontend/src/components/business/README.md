@@ -138,7 +138,7 @@ const tooltips = computed(() => ({
 
 3. **使用项目的 Store**
    ```typescript
-   import { useBookmarkStore } from '@/stores/bookmarkStore'
+   import { useBookmarkStore } from '@/stores/bookmark-tree-store'
    ```
 
 ### ❌ 禁止

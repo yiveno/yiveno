@@ -28,8 +28,7 @@ const painPoints = [
           <p class="text-accent-400 text-xs tracking-widest uppercase mb-3 font-bold">真实痛点</p>
           <h2 class="text-2xl font-bold mb-4 leading-tight">我们解决最难啃的问题</h2>
           <p class="text-content-muted text-sm leading-relaxed">
-            设计 AcuityBookmarks
-            的初衷，就是解决「书签堆成山却找不到」、「跨设备无法同步」等长期痛点。
+            设计 otterSage 的初衷，就是解决「书签堆成山却找不到」、「跨设备无法同步」等长期痛点。
           </p>
         </div>
 
@@ -58,15 +57,15 @@ const painPoints = [
 <style scoped>
 .painpoints-grid {
   display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 32px;
   align-items: start;
+  gap: 32px;
+  grid-template-columns: 1fr 2fr;
 }
 
 @media (width <= 768px) {
   .painpoints-grid {
-    grid-template-columns: 1fr;
     gap: 24px;
+    grid-template-columns: 1fr;
   }
 }
 </style>

@@ -110,25 +110,6 @@ import Badge from '@/components/ui/Badge.vue'
 </template>
 
 <style scoped>
-/* Bento grid: 3 columns, wide cards span 2 */
-.features-bento {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-}
-
-.features-bento__wide {
-  grid-column: span 2;
-}
-
-.sync-inner {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  align-items: center;
-  height: 100%;
-}
-
 @media (width <= 768px) {
   .features-bento {
     grid-template-columns: 1fr;
@@ -142,4 +123,24 @@ import Badge from '@/components/ui/Badge.vue'
     grid-template-columns: 1fr;
   }
 }
+
+.features-bento {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.features-bento__wide {
+  grid-column: span 2;
+}
+
+.sync-inner {
+  display: grid;
+  align-items: center;
+  gap: 24px;
+  grid-template-columns: 1fr 1fr;
+  height: 100%;
+}
+
+/* Bento grid: 3 columns, wide cards span 2 */
 </style>

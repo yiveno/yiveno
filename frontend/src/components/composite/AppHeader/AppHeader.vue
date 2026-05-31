@@ -175,7 +175,7 @@ const initTheme = async () => {
 
 onMounted(async () => {
   // 初始化主题
-  initTheme()
+  void initTheme()
 
   // 初始化通知服务（只在登录状态下）
   if (shouldShowNotification.value) {
@@ -201,7 +201,7 @@ onMounted(async () => {
   // 监听页面可见性变化
   const handleVisibilityChange = () => {
     if (!document.hidden) {
-      initTheme()
+      void initTheme()
     }
   }
 
@@ -217,7 +217,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <header :class="headerClasses" aria-label="AcuityBookmarks">
+  <header :class="headerClasses" aria-label="otterSage">
     <div v-if="showSidePanelToggle" class="app-header__col app-header__col--left">
       <Button
         variant="icon"
@@ -232,8 +232,8 @@ onMounted(async () => {
     </div>
 
     <div class="app-header__col app-header__col--center">
-      <img v-if="showLogo" :src="logoSrc" alt="AcuityBookmarks Logo" class="app-header__logo" />
-      <span v-if="showName" class="app-header__name">AcuityBookmarks</span>
+      <img v-if="showLogo" :src="logoSrc" alt="otterSage Logo" class="app-header__logo" />
+      <span v-if="showName" class="app-header__name">otterSage</span>
     </div>
 
     <div class="app-header__col app-header__col--right">

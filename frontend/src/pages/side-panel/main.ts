@@ -2,9 +2,9 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import SidePanel from './SidePanel.vue'
 // ✅ 导入设计标准（必须在所有样式之前）
-import '@acuity-bookmarks/design-tokens/css/material-theme.css'
-import '@acuity-bookmarks/design-tokens/css/variables.css'
-import '@acuity-bookmarks/design-tokens/css/semantic-colors.css'
+import '@ottersage/design-tokens/css/material-theme.css'
+import '@ottersage/design-tokens/css/variables.css'
+import '@ottersage/design-tokens/css/semantic-colors.css'
 import '@/assets/main.css'
 import '@/assets/fonts.css'
 import '@/assets/smart-fonts.css'
@@ -40,7 +40,7 @@ async function initializeSidePanel() {
     app.mount('#app')
     crossPageCleanup = initCrossPageSync()
 
-    logger.info('SidePanel', 'Init', 'AcuityBookmarks Side Panel 启动完成')
+    logger.info('SidePanel', 'Init', 'otterSage Side Panel 启动完成')
     logger.info('SidePanel', 'Mode', '侧边栏模式已激活')
   } catch (error) {
     logger.error('SidePanel', 'Init', 'Side Panel启动失败', error)

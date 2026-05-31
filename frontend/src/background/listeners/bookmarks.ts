@@ -54,7 +54,7 @@ async function syncAndBroadcast(
     try {
       chrome.runtime.sendMessage(
         {
-          type: 'acuity-bookmarks-db-synced',
+          type: 'ottersage-db-synced',
           eventType: eventType,
           bookmarkId: bookmarkId,
           timestamp: Date.now()

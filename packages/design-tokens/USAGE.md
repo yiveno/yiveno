@@ -1,6 +1,6 @@
 # 🎨 Design Tokens 使用指南
 
-本文档说明如何在项目中使用 AcuityBookmarks 的设计 tokens。
+本文档说明如何在项目中使用 otterSage 的设计 tokens。
 
 ---
 
@@ -12,7 +12,7 @@
 // frontend/package.json
 {
   "dependencies": {
-    "@acuity-bookmarks/design-tokens": "workspace:*"
+    "@ottersage/design-tokens": "workspace:*"
   }
 }
 ```
@@ -25,19 +25,12 @@
 
 ```typescript
 // 导入所有 tokens
-import {
-  colors,
-  spacing,
-  shadows,
-  duration,
-  easing,
-  glassmorphism
-} from '@acuity-bookmarks/design-tokens'
+import { colors, spacing, shadows, duration, easing, glassmorphism } from '@ottersage/design-tokens'
 
 // 或者按需导入
-import { colors } from '@acuity-bookmarks/design-tokens/colors'
-import { duration, easing } from '@acuity-bookmarks/design-tokens/animations'
-import { glassmorphism } from '@acuity-bookmarks/design-tokens/effects'
+import { colors } from '@ottersage/design-tokens/colors'
+import { duration, easing } from '@ottersage/design-tokens/animations'
+import { glassmorphism } from '@ottersage/design-tokens/effects'
 
 // 使用示例
 const buttonStyle = {
@@ -52,7 +45,7 @@ const buttonStyle = {
 
 ```vue
 <script setup lang="ts">
-import { colors, shadows, duration } from '@acuity-bookmarks/design-tokens'
+import { colors, shadows, duration } from '@ottersage/design-tokens'
 
 const cardStyle = {
   background: colors.primary[50],
@@ -73,7 +66,7 @@ const cardStyle = {
 ```vue
 <style scoped>
 /* 导入 CSS 变量 */
-@import '@acuity-bookmarks/design-tokens/css/material-theme.css';
+@import '@ottersage/design-tokens/css/material-theme.css';
 
 .button {
   /* 使用 Material Design 颜色 */
@@ -228,7 +221,7 @@ blur.lg // 大模糊
 
 ```vue
 <script setup lang="ts">
-import { glassmorphism, shadows, spacing } from '@acuity-bookmarks/design-tokens'
+import { glassmorphism, shadows, spacing } from '@ottersage/design-tokens'
 </script>
 
 <template>
@@ -257,7 +250,7 @@ import { glassmorphism, shadows, spacing } from '@acuity-bookmarks/design-tokens
 
 ```vue
 <script setup lang="ts">
-import { colors, shadows, duration, easing } from '@acuity-bookmarks/design-tokens'
+import { colors, shadows, duration, easing } from '@ottersage/design-tokens'
 </script>
 
 <template>
@@ -294,12 +287,12 @@ import { colors, shadows, duration, easing } from '@acuity-bookmarks/design-toke
 
 ```vue
 <script setup lang="ts">
-import { gradients, spacing } from '@acuity-bookmarks/design-tokens'
+import { gradients, spacing } from '@ottersage/design-tokens'
 </script>
 
 <template>
   <div class="gradient-hero">
-    <h1>欢迎使用 AcuityBookmarks</h1>
+    <h1>欢迎使用 otterSage</h1>
   </div>
 </template>
 

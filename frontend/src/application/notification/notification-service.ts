@@ -950,7 +950,7 @@ export class NotificationService {
       const response = await chrome.runtime.sendMessage({
         type: 'NOTIFICATION',
         data: {
-          title: notification.options.title || 'AcuityBookmarks',
+          title: notification.options.title || 'otterSage',
           message: notification.message,
           iconUrl: notification.options.iconUrl || ''
         }
@@ -1078,7 +1078,7 @@ export class NotificationService {
 
       try {
         await new Promise<void>(resolve => {
-          chrome.runtime.sendMessage({ type: 'ACUITY_NOTIFY_PING' }, resp => {
+          chrome.runtime.sendMessage({ type: 'OTTERSAGE_NOTIFY_PING' }, resp => {
             try {
               if (chrome?.runtime?.lastError) {
                 diagnostics.swReachable = false

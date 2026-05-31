@@ -27,8 +27,8 @@
   "host_permissions": [
     "https://localhost:8787/*",
     "https://127.0.0.1:8787/*",
-    "https://api.acuitybookmarks.com/*",
-    "https://acuitybookmarks.cqw547847.workers.dev/*",
+    "https://api.ottersage.com/*",
+    "https://ottersage.cqw547847.workers.dev/*",
     "https://*.supabase.co/*",
     "https://*.supabase.io/*",
     "https://*/*"
@@ -52,8 +52,8 @@
         "https://localhost:3000/*",
         "http://localhost:3001/*",
         "https://localhost:3001/*",
-        "https://acuitybookmarks.com/*",
-        "https://*.acuitybookmarks.com/*"
+        "https://ottersage.com/*",
+        "https://*.ottersage.com/*"
       ],
       "js": ["auth-sync.js"],
       "run_at": "document_start"
@@ -134,8 +134,8 @@
       "https://localhost:3000/*",
       "http://localhost:3001/*",
       "https://localhost:3001/*",
-      "https://acuitybookmarks.com/*",
-      "https://*.acuitybookmarks.com/*"
+      "https://ottersage.com/*",
+      "https://*.ottersage.com/*"
     ]
   }
 }

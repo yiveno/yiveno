@@ -4,7 +4,7 @@
 
 **正确的项目信息：**
 
-- **Project name**: acuityBookmarks
+- **Project name**: otterSage
 - **Project ID**: ugxgxytykxblctsyulsg
 - **项目地址**: https://ugxgxytykxblctsyulsg.supabase.co
 

@@ -1,5 +1,5 @@
 <!--
-  AcuityCard - 卡片组件
+  OtterSageCard - 卡片组件
   通用卡片布局组件，支持标题、内容、操作区域
   集成 Material Design 3 md-elevation 组件
 -->

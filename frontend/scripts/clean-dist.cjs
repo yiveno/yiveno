@@ -85,7 +85,7 @@ let manifestContent;
   // 备用的默认配置（不包含side_panel）
   manifestContent = {
     "manifest_version": 3,
-    "name": "AcuityBookmarks",
+    "name": "otterSage",
     "version": "1.0",
     "description": "Unlock the knowledge in your bookmarks. AI-powered organization, content-aware search.",
     "permissions": [
@@ -135,7 +135,7 @@ let manifestContent;
       "128": "images/icon128.png"
     },
     "content_security_policy": {
-        "extension_pages": "default-src 'self'; script-src 'self'; object-src 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com; img-src 'self' data: https: http:; connect-src 'self' https://localhost:8787 https://127.0.0.1:8787 https://acuitybookmarks.cqw547847.workers.dev https://api.acuitybookmarks.com https://*.supabase.co https://*.supabase.io data: blob: wss:"
+        "extension_pages": "default-src 'self'; script-src 'self'; object-src 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com; img-src 'self' data: https: http:; connect-src 'self' https://localhost:8787 https://127.0.0.1:8787 https://ottersage.cqw547847.workers.dev https://api.ottersage.com https://*.supabase.co https://*.supabase.io data: blob: wss:"
     },
     "web_accessible_resources": [
       {

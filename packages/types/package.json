@@ -1,7 +1,7 @@
 {
-  "name": "@acuity-bookmarks/types",
+  "name": "@ottersage/types",
   "version": "1.0.0",
-  "description": "Shared TypeScript types for AcuityBookmarks",
+  "description": "Shared TypeScript types for otterSage",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",

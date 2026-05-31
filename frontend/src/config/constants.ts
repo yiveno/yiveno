@@ -93,7 +93,7 @@ export const NOTIFICATION_CONFIG = {
         const {
           materialColors,
           semanticColors,
-        } = require("@acuity-bookmarks/design-tokens/colors");
+        } = require("@ottersage/design-tokens/colors");
         /* eslint-enable @typescript-eslint/no-var-requires */
         return {
           /** 信息徽章：使用 MD3 Primary 色 */
@@ -216,49 +216,54 @@ export const DEBUG_CONFIG = {
 } as const
 
 // === API 基础配置（新增：支持线上/本地环境切换） ===
-function getApiBase(): string {
-  // 优先使用显式配置，其次使用开发环境默认值
-  if (import.meta.env.DEV) console.log('🔧 import.meta.env:', import.meta.env)
-  let apiBase =
-    // 优先显式变量（两者都支持）
-    (import.meta.env.VITE_CLOUDFLARE_MODE === 'true'
+function resolveApiBase(): string {
+  const configuredApiBase =
+    import.meta.env.VITE_CLOUDFLARE_MODE === 'true'
       ? import.meta.env.VITE_CLOUDFLARE_WORKER_URL || import.meta.env.VITE_API_BASE_URL
-      : import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_CLOUDFLARE_WORKER_URL) ||
-    // 开发默认走 Cloudflare 本地（wrangler dev 默认 8787）
-    // 强制使用 HTTPS 模式：避免 Chrome Extension CSP 限制
-    // 已完全禁用 HTTP，默认使用 HTTPS
-    (import.meta.env.DEV ? 'https://localhost:8787' : 'https://api.acuitybookmarks.com')
+      : import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_CLOUDFLARE_WORKER_URL
 
-  // 🚨 运行时检查：如果检测到 HTTP，自动转换为 HTTPS（防止缓存问题）
-  // 热构建模式下，watch-build.js 已经确保是 HTTPS，但可能因为缓存导致旧值
+  return (
+    configuredApiBase ||
+    (import.meta.env.DEV ? 'https://localhost:8787' : 'https://api.ottersage.com')
+  )
+}
+
+function normalizeHttpsUrl(apiBase: string): string {
   if (apiBase.startsWith('http://')) {
-    // 仅在开发环境显示警告（生产环境不应该有 HTTP）
     if (import.meta.env.DEV) {
       console.debug(
         `🔧 检测到 HTTP URL，自动转换为 HTTPS: ${apiBase} → ${apiBase.replace('http://', 'https://')}`
       )
     }
-    apiBase = apiBase.replace('http://', 'https://')
+    return apiBase.replace('http://', 'https://')
   }
 
-  if (import.meta.env.DEV) console.log('🔧 apiBase:', apiBase)
+  return apiBase
+}
 
-  // ⚠️ 仅在使用远程模式（bun run dev --remote）但配置指向本地时给出警告
-  // 如果明确使用本地模式（bun run dev:local）或设置了 VITE_HOT_BUILD，则不警告
-  if (
+function shouldWarnLocalApiBase(apiBase: string): boolean {
+  return (
     import.meta.env.DEV &&
     apiBase.includes('localhost:8787') &&
     !apiBase.includes('127.0.0.1') &&
-    !import.meta.env.VITE_HOT_BUILD && // 热构建模式（build:hot）不警告
-    !import.meta.env.VITE_USE_REMOTE && // 明确不使用远程模式时不警告
-    import.meta.env.VITE_API_BASE_URL?.includes('localhost') // 只有明确设置了本地 URL 时才警告
-  ) {
-    // 这个警告仅用于提醒：如果后端运行在远程模式（--remote），应该使用远程 Worker URL
-    // 但如果用户明确使用本地模式（dev:local），这个警告是误报，应该忽略
+    !import.meta.env.VITE_HOT_BUILD &&
+    !import.meta.env.VITE_USE_REMOTE &&
+    Boolean(import.meta.env.VITE_API_BASE_URL?.includes('localhost'))
+  )
+}
+
+function getApiBase(): string {
+  // 优先使用显式配置，其次使用开发环境默认值；运行时兜底防止旧 HTTP 值。
+  if (import.meta.env.DEV) console.log('🔧 import.meta.env:', import.meta.env)
+  const apiBase = normalizeHttpsUrl(resolveApiBase())
+
+  if (import.meta.env.DEV) console.log('🔧 apiBase:', apiBase)
+
+  if (shouldWarnLocalApiBase(apiBase)) {
     console.debug(
       '💡 提示：当前使用本地 URL，如果后端运行在远程模式（bun run dev --remote），建议使用远程 Worker URL'
     )
-    console.debug('   远程 Worker URL: https://acuitybookmarks.cqw547847.workers.dev')
+    console.debug('   远程 Worker URL: https://ottersage.cqw547847.workers.dev')
   }
 
   return apiBase
@@ -302,7 +307,7 @@ export const CRAWLER_CONFIG = {
 
   // 请求头
   REQUEST_HEADERS: {
-    userAgent: 'AcuityBookmarks-Extension/1.0',
+    userAgent: 'otterSage-Extension/1.0',
     accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
   }
 } as const
@@ -324,7 +329,7 @@ export const AI_CONFIG = {
         .filter(Boolean)
     }
     return [
-      'You are AcuityBookmarks assistant. Help organize and search bookmarks efficiently.',
+      'You are otterSage assistant. Help organize and search bookmarks efficiently.',
       'Prefer concise, actionable answers. Chinese UI; respond in Chinese by default.'
     ]
   })(),

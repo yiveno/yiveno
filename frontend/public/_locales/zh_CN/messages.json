@@ -1,12 +1,12 @@
 {
   "app_name": {
-    "message": "Acuity书签"
+    "message": "OtterSage书签"
   },
   "app_description": {
     "message": "解锁书签中的知识。AI 驱动的组织管理，内容感知搜索。"
   },
   "welcome": {
-    "message": "欢迎使用Acuity书签！"
+    "message": "欢迎使用OtterSage书签！"
   },
   "search_placeholder": {
     "message": "筛选书签…"
@@ -1134,7 +1134,7 @@
     "message": "共"
   },
   "onboarding_welcome_title": {
-    "message": "欢迎使用 AcuityBookmarks"
+    "message": "欢迎使用 otterSage"
   },
   "onboarding_welcome_subtitle": {
     "message": "AI 驱动的书签管理器"
@@ -2116,7 +2116,7 @@
     "message": "全部就绪"
   },
   "onboarding_ready_description": {
-    "message": "感谢你花时间了解 AcuityBookmarks 的特色功能。点击\"开始使用\"后，本页面将自动关闭，你可以立即开始享受智能书签管理体验。"
+    "message": "感谢你花时间了解 otterSage 的特色功能。点击\"开始使用\"后，本页面将自动关闭，你可以立即开始享受智能书签管理体验。"
   },
   "onboarding_initializing": {
     "message": "初始化中..."
@@ -2723,7 +2723,7 @@
     "description": "ShareLanding: Days ago"
   },
   "share_landing_install_extension_title": {
-    "message": "安装 AcuityBookmarks 扩展",
+    "message": "安装 otterSage 扩展",
     "description": "ShareLanding: Install extension title"
   },
   "share_landing_install_extension_desc": {
@@ -2739,7 +2739,7 @@
     "description": "ShareLanding: Mobile prompt title"
   },
   "share_landing_mobile_desc": {
-    "message": "要导入这些书签，请在电脑浏览器中打开此链接并安装 AcuityBookmarks 扩展",
+    "message": "要导入这些书签，请在电脑浏览器中打开此链接并安装 otterSage 扩展",
     "description": "ShareLanding: Mobile prompt description"
   },
   "share_landing_mobile_copy_link": {

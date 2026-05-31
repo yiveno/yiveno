@@ -19,7 +19,7 @@ const steps: Step[] = [
   {
     id: 'welcome',
     title: 'New Power-ups 11Unlocked',
-    subtitle: 'Explore new features AcuityBookmarks brings to Chrome',
+    subtitle: 'Explore new features otterSage brings to Chrome',
     layout: 'centered',
     visualType: 'hero'
   },
@@ -84,14 +84,14 @@ function prevStep() {
 
 // --- 消息监听 ---
 const messageListener = (message: ChromeExtensionMessage) => {
-  if (message.type === 'acuity-bookmarks-sync-progress') {
+  if (message.type === 'ottersage-sync-progress') {
     progress.value = message.data.percentage
     progressMessage.value = message.data.message
 
     if (message.data.phase === 'completed') {
       completeSync()
     }
-  } else if (message.type === 'acuity-bookmarks-db-ready') {
+  } else if (message.type === 'ottersage-db-ready') {
     completeSync()
   }
 }
@@ -146,7 +146,7 @@ function closeWindow() {
         >
           <LucideIcon name="bookmark" size="sm" />
         </div>
-        <span class="font-bold text-lg tracking-tight">AcuityBookmarks</span>
+        <span class="font-bold text-lg tracking-tight">otterSage</span>
       </div>
 
       <!-- 快捷跳过 -->

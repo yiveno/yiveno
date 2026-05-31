@@ -15,7 +15,7 @@ import { Button } from '@/components'
  * 勿在此再写仅副作用的 `import '@material/web/...'`，避免与入口策略分叉。
  */
 defineOptions({
-  name: 'AcuityDialog'
+  name: 'OtterSageDialog'
 })
 
 const props = withDefaults(defineProps<DialogProps>(), {
@@ -52,13 +52,13 @@ const showHeadline = computed(() => !!(slots.header || props.title || slots['hea
 /** 无 headline 插槽时供屏幕阅读器使用 */
 const dialogAriaLabel = computed(() => {
   if (props.title?.trim()) return props.title.trim()
-  return 'AcuityBookmarks'
+  return 'otterSage'
 })
 
 const mdDialogClasses = computed(() => [
   {
-    'acuity-md-dialog--fullscreen': props.fullscreen,
-    'acuity-md-dialog--scrollable': props.scrollable
+    'ottersage-md-dialog--fullscreen': props.fullscreen,
+    'ottersage-md-dialog--scrollable': props.scrollable
   },
   ...mdDialogSizeClasses.value
 ])
@@ -67,10 +67,10 @@ const mdDialogSizeClasses = computed(() => {
   const classes: string[] = []
   if (props.fullscreen) return classes
   const mw = (props.maxWidth || props.width || '').trim()
-  if (mw === '480px') classes.push('acuity-md-dialog--size-480')
-  else if (mw === '500px') classes.push('acuity-md-dialog--size-500')
-  else if (mw === '520px') classes.push('acuity-md-dialog--size-520')
-  else if (mw === '440px') classes.push('acuity-md-dialog--size-440')
+  if (mw === '480px') classes.push('ottersage-md-dialog--size-480')
+  else if (mw === '500px') classes.push('ottersage-md-dialog--size-500')
+  else if (mw === '520px') classes.push('ottersage-md-dialog--size-520')
+  else if (mw === '440px') classes.push('ottersage-md-dialog--size-440')
   return classes
 })
 
@@ -154,7 +154,7 @@ const handleMdClosed = () => {
 
 const handleMdOpened = () => {
   emit('open')
-  nextTick(() => {
+  void nextTick(() => {
     const firstFocusable = bodyRef.value?.querySelector<HTMLElement>(
       'input, textarea, button, [tabindex]:not([tabindex="-1"])'
     )
@@ -175,7 +175,7 @@ const continueEditing = () => {
 const handleKeydown = (event: KeyboardEvent) => {
   if (event.key === 'Tab') {
     const activeTabButton = bodyRef.value?.querySelector(
-      '.acuity-tabs-nav .acuity-tab--active'
+      '.ottersage-tabs-nav .ottersage-tab--active'
     ) as HTMLButtonElement
     if (activeTabButton) {
       activeTabButton.focus()
@@ -239,9 +239,9 @@ onBeforeUnmount(() => {
 
 <template>
   <Teleport :to="teleportTarget">
-    <div v-if="show" class="acuity-dialog-backdrop" aria-hidden="true"></div>
+    <div v-if="show" class="ottersage-dialog-backdrop" aria-hidden="true"></div>
     <md-dialog
-      class="acuity-md-dialog"
+      class="ottersage-md-dialog"
       :class="mdDialogClasses"
       :style="dialogInlineStyle"
       :open="show"
@@ -252,27 +252,27 @@ onBeforeUnmount(() => {
       @opened="handleMdOpened"
     >
       <!-- headline：与 md-dialog 无障碍约定一致（无标题时用 aria-label） -->
-      <div v-if="showHeadline" slot="headline" class="acuity-dialog-header">
-        <div class="acuity-dialog-header-main">
+      <div v-if="showHeadline" slot="headline" class="ottersage-dialog-header">
+        <div class="ottersage-dialog-header-main">
           <slot v-if="$slots.header" name="header" />
           <template v-else>
-            <div class="acuity-dialog-title">
+            <div class="ottersage-dialog-title">
               <LucideIcon v-if="icon" :name="icon" :color="iconColor" class="title-icon" />
               <span>{{ title }}</span>
             </div>
           </template>
         </div>
-        <div v-if="$slots['header-actions']" class="acuity-dialog-header-actions">
+        <div v-if="$slots['header-actions']" class="ottersage-dialog-header-actions">
           <slot name="header-actions" />
         </div>
       </div>
 
-      <div slot="content" class="acuity-dialog-content-slot" @keydown="handleKeydown">
-        <div ref="bodyRef" :class="['acuity-dialog-body', bodyMinHeightClass]">
+      <div slot="content" class="ottersage-dialog-content-slot" @keydown="handleKeydown">
+        <div ref="bodyRef" :class="['ottersage-dialog-body', bodyMinHeightClass]">
           <slot />
         </div>
-        <div v-if="showCancelConfirm" class="acuity-dialog-cancel-overlay">
-          <div class="acuity-dialog-cancel-box">
+        <div v-if="showCancelConfirm" class="ottersage-dialog-cancel-overlay">
+          <div class="ottersage-dialog-cancel-box">
             <div class="cancel-text">{{ cancelConfirmText }}</div>
             <div class="cancel-actions">
               <Button variant="text" @click="continueEditing">{{
@@ -286,7 +286,7 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
-      <div v-if="$slots.actions" slot="actions" class="acuity-dialog-actions">
+      <div v-if="$slots.actions" slot="actions" class="ottersage-dialog-actions">
         <slot name="actions" />
       </div>
     </md-dialog>
@@ -298,18 +298,18 @@ onBeforeUnmount(() => {
  * ♿ 尊重用户的动画偏好（Material 内部动画另受组件 quick 控制）
  */
 @media (prefers-reduced-motion: reduce) {
-  .acuity-md-dialog {
+  .ottersage-md-dialog {
     --md-dialog-container-motion-duration: 0ms;
   }
 }
 
-.acuity-md-dialog {
+.ottersage-md-dialog {
   --md-dialog-container-shape: var(--radius-lg);
 
   max-height: min(90vh, 900px);
 }
 
-.acuity-dialog-backdrop {
+.ottersage-dialog-backdrop {
   position: fixed;
   inset: 0;
   z-index: var(--z-modal-backdrop);
@@ -318,49 +318,49 @@ onBeforeUnmount(() => {
   pointer-events: none;
 }
 
-.acuity-md-dialog--fullscreen {
+.ottersage-md-dialog--fullscreen {
   width: 100vw;
   max-width: 100vw;
   height: 100vh;
   max-height: 100vh;
 }
 
-.acuity-md-dialog--scrollable :deep(.scroller) {
+.ottersage-md-dialog--scrollable :deep(.scroller) {
   max-height: min(70vh, 640px);
 }
 
-.acuity-md-dialog--size-440 {
+.ottersage-md-dialog--size-440 {
   width: min(100vw - 32px, 440px);
   min-width: min(100vw - 32px, 440px);
   max-width: 440px;
 }
 
-.acuity-md-dialog--size-480 {
+.ottersage-md-dialog--size-480 {
   width: min(100vw - 32px, 480px);
   min-width: min(100vw - 32px, 480px);
   max-width: 480px;
 }
 
-.acuity-md-dialog--size-500 {
+.ottersage-md-dialog--size-500 {
   width: min(100vw - 32px, 500px);
   min-width: min(100vw - 32px, 500px);
   max-width: 500px;
 }
 
-.acuity-md-dialog--size-520 {
+.ottersage-md-dialog--size-520 {
   width: min(100vw - 32px, 520px);
   min-width: min(100vw - 32px, 520px);
   max-width: 520px;
 }
 
-.acuity-dialog-content-slot {
+.ottersage-dialog-content-slot {
   position: relative;
   display: flex;
   flex-direction: column;
   min-height: 0;
 }
 
-.acuity-dialog-header {
+.ottersage-dialog-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -368,21 +368,21 @@ onBeforeUnmount(() => {
   padding: var(--spacing-md) var(--spacing-lg) 0;
 }
 
-.acuity-dialog-header-main {
+.ottersage-dialog-header-main {
   display: flex;
   flex: 1;
   align-items: center;
   min-width: 0;
 }
 
-.acuity-dialog-header-actions {
+.ottersage-dialog-header-actions {
   display: flex;
   flex-shrink: 0;
   align-items: center;
   gap: var(--spacing-sm);
 }
 
-.acuity-dialog-title {
+.ottersage-dialog-title {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
@@ -392,7 +392,7 @@ onBeforeUnmount(() => {
   color: var(--color-text-primary);
 }
 
-.acuity-dialog-title span {
+.ottersage-dialog-title span {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -402,7 +402,7 @@ onBeforeUnmount(() => {
   flex-shrink: 0;
 }
 
-.acuity-dialog-body {
+.ottersage-dialog-body {
   flex: 1;
   padding: var(--spacing-lg);
   font-size: var(--md-sys-typescale-body-large-size);
@@ -410,7 +410,7 @@ onBeforeUnmount(() => {
   overflow-y: auto;
 }
 
-.acuity-dialog-cancel-overlay {
+.ottersage-dialog-cancel-overlay {
   position: absolute;
   inset: 0;
   z-index: 10;
@@ -420,7 +420,7 @@ onBeforeUnmount(() => {
   background: var(--color-scrim-35);
 }
 
-.acuity-dialog-cancel-box {
+.ottersage-dialog-cancel-box {
   width: 420px;
   max-width: 90%;
   padding: var(--spacing-lg);
@@ -445,7 +445,7 @@ onBeforeUnmount(() => {
   gap: var(--spacing-md);
 }
 
-.acuity-dialog-actions {
+.ottersage-dialog-actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
@@ -454,39 +454,39 @@ onBeforeUnmount(() => {
   padding: var(--spacing-sm) var(--spacing-md) var(--spacing-md);
 }
 
-.acuity-dialog-body.min-h-320 {
+.ottersage-dialog-body.min-h-320 {
   min-height: 320px;
 }
 
-.acuity-dialog-body.min-h-360 {
+.ottersage-dialog-body.min-h-360 {
   min-height: 360px;
 }
 
-.acuity-dialog-body.min-h-400 {
+.ottersage-dialog-body.min-h-400 {
   min-height: 400px;
 }
 
-.acuity-dialog-body.min-h-420 {
+.ottersage-dialog-body.min-h-420 {
   min-height: 420px;
 }
 
-.acuity-dialog-body.min-h-440 {
+.ottersage-dialog-body.min-h-440 {
   min-height: 440px;
 }
 
-.acuity-dialog-body.min-h-480 {
+.ottersage-dialog-body.min-h-480 {
   min-height: 480px;
 }
 
-.acuity-dialog-body.min-h-520 {
+.ottersage-dialog-body.min-h-520 {
   min-height: 520px;
 }
 
-.acuity-dialog-body.min-h-560 {
+.ottersage-dialog-body.min-h-560 {
   min-height: 560px;
 }
 
-.acuity-dialog-body.min-h-600 {
+.ottersage-dialog-body.min-h-600 {
   min-height: 600px;
 }
 

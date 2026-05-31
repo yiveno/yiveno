@@ -1,6 +1,6 @@
 # Google One Tap 登录配置指南
 
-本文档说明如何为 AcuityBookmarks 官网配置 Google One Tap 登录功能。
+本文档说明如何为 otterSage 官网配置 Google One Tap 登录功能。
 
 ## 📋 前置条件
 
@@ -44,7 +44,7 @@
 **生产环境：**
 
 ```
-https://acuitybookmarks.com
+https://ottersage.com
 ```
 
 **开发环境：**

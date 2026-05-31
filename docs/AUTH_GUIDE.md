@@ -2,7 +2,7 @@
 
 ## 🎯 概述
 
-AcuityBookmarks 使用 **OAuth 登录**（Google、Microsoft），不支持邮箱密码登录。
+otterSage 使用 **OAuth 登录**（Google、Microsoft），不支持邮箱密码登录。
 
 ## 🚀 快速开始
 
@@ -200,7 +200,7 @@ chrome.storage.local.get(null, items => {
 
 - [Supabase Auth 文档](https://supabase.com/docs/guides/auth)
 - [Chrome Extension OAuth](https://developer.chrome.com/docs/extensions/reference/identity/)
-- [AcuityBookmarks 产品文档 v3.0（唯一正文）](../product/AcuityBookmarks-产品文档-v3.0.md)
+- [otterSage 产品文档 v3.0（唯一正文）](../product/otterSage-产品文档-v3.0.md)
 
 ## ❓ 常见问题
 

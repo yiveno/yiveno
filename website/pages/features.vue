@@ -109,9 +109,9 @@ const views = [
 ]
 
 useSeoMeta({
-  title: '功能特性 - AcuityBookmarks',
+  title: '功能特性 - otterSage',
   description:
-    '了解 AcuityBookmarks 六大模块：AI 语义引擎、多索引检索、分层工作台、失效检测、同步安全与开放接口。'
+    '了解 otterSage 六大模块：AI 语义引擎、多索引检索、分层工作台、失效检测、同步安全与开放接口。'
 })
 </script>
 
@@ -321,7 +321,7 @@ useSeoMeta({
               <Button to="/feature-request" :as="NuxtLink">查看路线图</Button>
               <Button
                 variant="outline"
-                href="https://github.com/ChenQiWen/acuityBookmarks"
+                href="https://github.com/ChenQiWen/otterSage"
                 target="_blank"
                 :as="'a'"
               >
@@ -341,14 +341,14 @@ useSeoMeta({
 .flows-grid,
 .views-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .modules-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
+  grid-template-columns: repeat(3, 1fr);
 }
 
 @media (width <= 900px) {

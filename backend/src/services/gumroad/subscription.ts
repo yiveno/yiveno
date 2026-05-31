@@ -2,8 +2,8 @@
  * Gumroad 订阅记录构建
  */
 
-import type { Subscription } from '@acuity-bookmarks/types'
-import type { SubscriptionTier } from '@acuity-bookmarks/types'
+import type { Subscription } from '@ottersage/types'
+import type { SubscriptionTier } from '@ottersage/types'
 import type { GumroadWebhookPayload } from './webhook-parser'
 import { toBoolean, toIsoDate } from '../../utils/gumroad-helpers'
 

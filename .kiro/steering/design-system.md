@@ -2,21 +2,21 @@
 inclusion: always
 ---
 
-# AcuityBookmarks 设计系统规则
+# otterSage 设计系统规则
 
-本文档定义了 AcuityBookmarks 项目的设计系统规范，用于指导 Figma 设计到代码的转换。
+本文档定义了 otterSage 项目的设计系统规范，用于指导 Figma 设计到代码的转换。
 
 ## 🚨 强制规则（必须严格遵守）
 
 ### 1. 唯一设计标准
 
-**该产品的任何终端项目必须引用 `@acuity-bookmarks/design-tokens` 作为唯一设计标准。**
+**该产品的任何终端项目必须引用 `@ottersage/design-tokens` 作为唯一设计标准。**
 
 ```typescript
 // ✅ 正确：在所有入口文件中导入
-import '@acuity-bookmarks/design-tokens/css/material-theme.css'
-import '@acuity-bookmarks/design-tokens/css/variables.css'
-import '@acuity-bookmarks/design-tokens/css/semantic-colors.css'
+import '@ottersage/design-tokens/css/material-theme.css'
+import '@ottersage/design-tokens/css/variables.css'
+import '@ottersage/design-tokens/css/semantic-colors.css'
 
 // ❌ 错误：自定义颜色、间距、字体等设计 tokens
 // import '@/design-system/tokens.css'  // 禁止！
@@ -48,16 +48,16 @@ import '@acuity-bookmarks/design-tokens/css/semantic-colors.css'
 
 ```typescript
 // 1. design-tokens 包（必须最先导入）
-import '@acuity-bookmarks/design-tokens/css/material-theme.css'
-import '@acuity-bookmarks/design-tokens/css/variables.css'
-import '@acuity-bookmarks/design-tokens/css/semantic-colors.css'
+import '@ottersage/design-tokens/css/material-theme.css'
+import '@ottersage/design-tokens/css/variables.css'
+import '@ottersage/design-tokens/css/semantic-colors.css'
 
 // 2. 项目样式
 import '@/assets/main.css'
 import '@/assets/fonts.css'
 ```
 
-import '@acuity-bookmarks/design-tokens/css/variables.css'
+import '@ottersage/design-tokens/css/variables.css'
 
 // 2. 项目样式
 import '@/assets/main.css'
@@ -120,7 +120,7 @@ md-tabs {
 
 在修改任何样式代码前，必须确认：
 
-- [ ] 是否导入了 `@acuity-bookmarks/design-tokens` 的 CSS？
+- [ ] 是否导入了 `@ottersage/design-tokens` 的 CSS？
 - [ ] 是否使用了硬编码的颜色值？（如 `#3B82F6`、`rgb(59, 130, 246)`）
 - [ ] 是否使用了硬编码的间距值？（如 `16px`、`1rem`）
 - [ ] 是否使用了硬编码的字号？（如 `14px`、`0.875rem`）
@@ -131,7 +131,7 @@ md-tabs {
 
 ## 🎨 设计系统概览
 
-AcuityBookmarks 采用 **Material Design 3** 设计系统，基于薄荷绿色系（种子色 #89EAD7）。
+otterSage 采用 **Material Design 3** 设计系统，基于薄荷绿色系（种子色 #89EAD7）。
 
 ### 核心原则
 
@@ -158,7 +158,7 @@ AcuityBookmarks 采用 **Material Design 3** 设计系统，基于薄荷绿色�
 
 ```json
 {
-  "@acuity-bookmarks/design-tokens": "workspace:*",
+  "@ottersage/design-tokens": "workspace:*",
   "@vueuse/core": "^14.0.0",
   "immer": "^10.2.0",
   "mitt": "^3.0.1",
@@ -449,7 +449,7 @@ frontend/src/components/
 
 - **文件名**: PascalCase (e.g., `Button.vue`, `Dialog.vue`)
 - **组件名**: 使用 `defineOptions({ name: 'ComponentName' })`
-- **CSS 类名**: kebab-case with prefix (e.g., `acuity-button`, `acuity-dialog`)
+- **CSS 类名**: kebab-case with prefix (e.g., `ottersage-button`, `ottersage-dialog`)
 
 ### 组件示例
 
@@ -459,7 +459,7 @@ frontend/src/components/
 import { computed } from 'vue'
 import type { ButtonProps } from './Button.d'
 
-defineOptions({ name: 'AcuityButton' })
+defineOptions({ name: 'OtterSageButton' })
 
 const props = withDefaults(defineProps<ButtonProps>(), {
   variant: 'primary',
@@ -467,9 +467,9 @@ const props = withDefaults(defineProps<ButtonProps>(), {
 })
 
 const buttonClasses = computed(() => [
-  'acuity-button',
-  `acuity-button--${props.variant}`,
-  `acuity-button--${props.size}`
+  'ottersage-button',
+  `ottersage-button--${props.variant}`,
+  `ottersage-button--${props.size}`
 ])
 </script>
 
@@ -480,7 +480,7 @@ const buttonClasses = computed(() => [
 </template>
 
 <style scoped>
-.acuity-button {
+.ottersage-button {
   padding: var(--spacing-3) var(--spacing-4);
   font-size: var(--text-sm);
   font-weight: var(--font-medium);
@@ -488,12 +488,12 @@ const buttonClasses = computed(() => [
   transition: all var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
 }
 
-.acuity-button--primary {
+.ottersage-button--primary {
   background-color: var(--md-sys-color-primary);
   color: var(--md-sys-color-on-primary);
 }
 
-.acuity-button--primary:hover {
+.ottersage-button--primary:hover {
   background-color: color-mix(in srgb, var(--md-sys-color-primary), black 8%);
 }
 </style>
@@ -596,7 +596,7 @@ const buttonClasses = computed(() => [
 
 ```typescript
 // 在 TypeScript 中使用
-import { colors, spacing, fontSize } from '@acuity-bookmarks/design-tokens'
+import { colors, spacing, fontSize } from '@ottersage/design-tokens'
 
 const buttonStyle = {
   backgroundColor: colors.brand.primary,

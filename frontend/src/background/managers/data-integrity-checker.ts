@@ -16,7 +16,7 @@ import { logger } from '@/infrastructure/logging/logger'
 import { bookmarkSyncService } from '@/services/bookmark-sync-service'
 
 /** Alarm 名称 */
-const ALARM_NAME = 'acuity-daily-sync'
+const ALARM_NAME = 'ottersage-daily-sync'
 
 /** 同步间隔（分钟）- 24 小时 */
 const SYNC_INTERVAL_MINUTES = 24 * 60

@@ -100,12 +100,12 @@ const checkExtension = async () => {
     isExtensionInstalled.value = installed
 
     if (installed) {
-      console.log('✅ 检测到 AcuityBookmarks 扩展已安装')
+      console.log('✅ 检测到 otterSage 扩展已安装')
 
       // 加载文件夹树
       await loadFolderTree()
     } else {
-      console.log('❌ 未检测到 AcuityBookmarks 扩展')
+      console.log('❌ 未检测到 otterSage 扩展')
     }
   } catch (extensionError) {
     console.error('检测扩展失败:', extensionError)
@@ -273,7 +273,7 @@ onMounted(async () => {
 
 // SEO
 useSeoMeta({
-  title: '分享的书签 - AcuityBookmarks',
+  title: '分享的书签 - otterSage',
   description: '查看朋友分享的书签收藏',
   robots: 'noindex, nofollow' // 分享页面不需要被搜索引擎索引
 })
@@ -321,7 +321,7 @@ useSeoMeta({
           <div class="prompt-content">
             <div class="prompt-icon" aria-hidden="true">🚀</div>
             <div class="prompt-text">
-              <h3>安装 AcuityBookmarks 扩展</h3>
+              <h3>安装 otterSage 扩展</h3>
               <p>安装扩展后，您可以选择性导入这些书签到您的浏览器</p>
             </div>
             <a
@@ -329,7 +329,7 @@ useSeoMeta({
               target="_blank"
               rel="noopener noreferrer"
               class="install-button"
-              aria-label="在新标签页中打开 Chrome 网上应用店安装 AcuityBookmarks 扩展"
+              aria-label="在新标签页中打开 Chrome 网上应用店安装 otterSage 扩展"
             >
               立即安装
             </a>
@@ -344,7 +344,7 @@ useSeoMeta({
             <div class="prompt-icon" aria-hidden="true">💻</div>
             <div class="prompt-text">
               <h3>请在电脑上打开</h3>
-              <p>要导入这些书签，请在电脑浏览器中打开此链接并安装 AcuityBookmarks 扩展</p>
+              <p>要导入这些书签，请在电脑浏览器中打开此链接并安装 otterSage 扩展</p>
             </div>
             <div class="mobile-actions">
               <button
@@ -487,23 +487,68 @@ useSeoMeta({
 </template>
 
 <style scoped>
-/* 屏幕阅读器专用（视觉上隐藏） */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 响应式 */
+@media (width <= 768px) {
+  .share-title {
+    font-size: 1.5rem;
+  }
+
+  .prompt-content {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .bookmarks-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .bookmarks-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .action-button {
+    flex: 1;
+    width: 100%;
+  }
+
+  .folder-select {
+    width: 100%;
+  }
+
+  .mobile-actions {
+    width: 100%;
+  }
+
+  .mobile-actions .action-button {
+    min-width: auto;
+  }
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
   height: 1px;
-  padding: 0;
   margin: -1px;
+  padding: 0;
+  border-width: 0;
+  white-space: nowrap;
   overflow: hidden;
   clip-path: inset(50%);
-  white-space: nowrap;
-  border-width: 0;
 }
 
 .share-landing-page {
   min-height: 100vh;
-  background: var(--md-sys-color-background);
   color: var(--md-sys-color-on-background);
+  background: var(--md-sys-color-background);
 }
 
 /* 容器 */
@@ -519,8 +564,8 @@ useSeoMeta({
 .empty-container {
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   min-height: 100vh;
   padding: 2rem;
   text-align: center;
@@ -535,12 +580,6 @@ useSeoMeta({
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .loading-text {
   margin-top: 1rem;
   font-size: 1.125rem;
@@ -549,30 +588,30 @@ useSeoMeta({
 
 /* 错误状态 */
 .error-icon {
-  font-size: 4rem;
   margin-bottom: 1rem;
+  font-size: 4rem;
 }
 
 .error-title {
+  margin-bottom: 0.5rem;
   font-size: 1.5rem;
   font-weight: 600;
-  margin-bottom: 0.5rem;
 }
 
 .error-message {
+  margin-bottom: 1.5rem;
   font-size: 1rem;
   color: var(--md-sys-color-on-surface-variant);
-  margin-bottom: 1.5rem;
 }
 
 .retry-button {
   padding: 0.75rem 1.5rem;
   border: none;
   border-radius: 0.5rem;
-  background: var(--md-sys-color-primary);
-  color: var(--md-sys-color-on-primary);
   font-size: 1rem;
   font-weight: 500;
+  color: var(--md-sys-color-on-primary);
+  background: var(--md-sys-color-primary);
   cursor: pointer;
   transition: opacity 0.2s;
 }
@@ -583,14 +622,14 @@ useSeoMeta({
 
 /* 空状态 */
 .empty-icon {
-  font-size: 4rem;
   margin-bottom: 1rem;
+  font-size: 4rem;
 }
 
 .empty-title {
+  margin-bottom: 0.5rem;
   font-size: 1.5rem;
   font-weight: 600;
-  margin-bottom: 0.5rem;
 }
 
 .empty-message {
@@ -605,9 +644,9 @@ useSeoMeta({
 }
 
 .share-title {
+  margin-bottom: 0.5rem;
   font-size: 2rem;
   font-weight: 700;
-  margin-bottom: 0.5rem;
 }
 
 .share-meta {
@@ -622,29 +661,29 @@ useSeoMeta({
 /* 扩展提示 */
 .extension-prompt {
   padding: 2rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
   background: linear-gradient(
     135deg,
     color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent),
     color-mix(in srgb, var(--md-sys-color-primary) 5%, transparent)
   );
-  border-bottom: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
 }
 
 /* 移动端提示 */
 .mobile-prompt {
   padding: 2rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--ottersage-semantic-info) 20%, transparent);
   background: linear-gradient(
     135deg,
-    color-mix(in srgb, var(--acuity-semantic-info) 10%, transparent),
-    color-mix(in srgb, var(--acuity-semantic-info) 5%, transparent)
+    color-mix(in srgb, var(--ottersage-semantic-info) 10%, transparent),
+    color-mix(in srgb, var(--ottersage-semantic-info) 5%, transparent)
   );
-  border-bottom: 1px solid color-mix(in srgb, var(--acuity-semantic-info) 20%, transparent);
 }
 
 .mobile-actions {
   display: flex;
-  gap: 0.75rem;
   flex-wrap: wrap;
+  gap: 0.75rem;
 }
 
 .action-button {
@@ -663,13 +702,13 @@ useSeoMeta({
 }
 
 .action-button.primary {
-  background: var(--md-sys-color-primary);
   color: var(--md-sys-color-on-primary);
+  background: var(--md-sys-color-primary);
 }
 
 .action-button.secondary {
-  background: rgb(255 255 255 / 10%);
   color: var(--md-sys-color-on-background);
+  background: rgb(255 255 255 / 10%);
 }
 
 .mobile-actions .action-button {
@@ -691,8 +730,8 @@ useSeoMeta({
 }
 
 .prompt-icon {
-  font-size: 2.5rem;
   flex-shrink: 0;
+  font-size: 2.5rem;
 }
 
 .prompt-text {
@@ -700,9 +739,9 @@ useSeoMeta({
 }
 
 .prompt-text h3 {
+  margin-bottom: 0.25rem;
   font-size: 1.25rem;
   font-weight: 600;
-  margin-bottom: 0.25rem;
 }
 
 .prompt-text p {
@@ -713,12 +752,12 @@ useSeoMeta({
 .install-button {
   padding: 0.75rem 1.5rem;
   border-radius: 0.5rem;
-  background: var(--md-sys-color-primary);
-  color: var(--md-sys-color-on-primary);
   font-size: 1rem;
   font-weight: 500;
   text-decoration: none;
   white-space: nowrap;
+  color: var(--md-sys-color-on-primary);
+  background: var(--md-sys-color-primary);
   transition: opacity 0.2s;
 }
 
@@ -745,21 +784,21 @@ useSeoMeta({
 
 .bookmarks-actions {
   display: flex;
-  gap: 0.75rem;
   align-items: center;
+  gap: 0.75rem;
 }
 
 .folder-select {
+  min-width: 200px;
   padding: 0.625rem 1rem;
   border: 1px solid color-mix(in srgb, white 20%, transparent);
   border-radius: 0.5rem;
-  background: color-mix(in srgb, white 5%, transparent);
-  color: var(--md-sys-color-on-background);
   font-size: 0.875rem;
   font-weight: 500;
+  color: var(--md-sys-color-on-background);
+  background: color-mix(in srgb, white 5%, transparent);
   cursor: pointer;
   transition: all 0.2s;
-  min-width: 200px;
 }
 
 .folder-select:disabled {
@@ -768,13 +807,13 @@ useSeoMeta({
 }
 
 .folder-select:hover:not(:disabled) {
-  background: color-mix(in srgb, white 8%, transparent);
   border-color: color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent);
+  background: color-mix(in srgb, white 8%, transparent);
 }
 
 .folder-select option {
-  background: var(--md-sys-color-background);
   color: var(--md-sys-color-on-background);
+  background: var(--md-sys-color-background);
 }
 
 /* 书签列表 */
@@ -789,11 +828,11 @@ useSeoMeta({
   align-items: flex-start;
   gap: 1rem;
   padding: 1rem;
+  border: 1px solid transparent;
   border-radius: 0.5rem;
   background: rgb(255 255 255 / 5%);
-  border: 1px solid transparent;
-  transition: all 0.2s;
   cursor: pointer;
+  transition: all 0.2s;
 }
 
 .bookmark-item.mobile-item {
@@ -801,18 +840,18 @@ useSeoMeta({
 }
 
 .bookmark-item:hover {
-  background: rgb(255 255 255 / 8%);
   border-color: rgb(131 213 197 / 30%);
+  background: rgb(255 255 255 / 8%);
 }
 
 .bookmark-item.mobile-item:hover {
-  background: rgb(255 255 255 / 5%);
   border-color: transparent;
+  background: rgb(255 255 255 / 5%);
 }
 
 .bookmark-item.selected {
-  background: rgb(131 213 197 / 10%);
   border-color: var(--md-sys-color-primary);
+  background: rgb(131 213 197 / 10%);
 }
 
 .bookmark-checkbox {
@@ -827,12 +866,12 @@ useSeoMeta({
 }
 
 .bookmark-icon {
+  display: flex;
   flex-shrink: 0;
+  justify-content: center;
+  align-items: center;
   width: 32px;
   height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   border-radius: 0.375rem;
   background: rgb(255 255 255 / 10%);
 }
@@ -853,23 +892,23 @@ useSeoMeta({
 }
 
 .bookmark-title {
+  margin-bottom: 0.25rem;
   font-size: 1rem;
   font-weight: 500;
-  margin-bottom: 0.25rem;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .bookmark-url {
   display: block;
+  margin-bottom: 0.25rem;
   font-size: 0.875rem;
-  color: var(--md-sys-color-primary);
   text-decoration: none;
+  white-space: nowrap;
+  color: var(--md-sys-color-primary);
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-  margin-bottom: 0.25rem;
 }
 
 .bookmark-url:hover {
@@ -877,53 +916,15 @@ useSeoMeta({
 }
 
 .bookmark-description {
-  font-size: 0.875rem;
-  color: var(--md-sys-color-on-surface-variant);
-  line-height: 1.5;
   display: -webkit-box;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--md-sys-color-on-surface-variant);
+  overflow: hidden;
   -webkit-line-clamp: 2;
   line-clamp: 2;
   -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
-/* 响应式 */
-@media (width <= 768px) {
-  .share-title {
-    font-size: 1.5rem;
-  }
-
-  .prompt-content {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .bookmarks-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-
-  .bookmarks-actions {
-    width: 100%;
-    flex-direction: column;
-  }
-
-  .action-button {
-    flex: 1;
-    width: 100%;
-  }
-
-  .folder-select {
-    width: 100%;
-  }
-
-  .mobile-actions {
-    width: 100%;
-  }
-
-  .mobile-actions .action-button {
-    min-width: auto;
-  }
-}
+/* 屏幕阅读器专用（视觉上隐藏） */
 </style>

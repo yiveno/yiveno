@@ -211,7 +211,7 @@ async function run() {
     
     // 验证：检查输入框是否垂直居中（包含文本样式）
     const inputAlignment = await page.evaluate(() => {
-      const container = document.querySelector('.search-input .acuity-input-container')
+      const container = document.querySelector('.search-input .ottersage-input-container')
       const input = document.querySelector('.search-input input')
       if (!container || !input) return { error: '元素不存在' }
       

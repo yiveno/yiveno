@@ -1,5 +1,5 @@
 # ===============================================
-# 🚀 AcuityBookmarks 纯Bun CI/CD管道
+# 🚀 otterSage 纯Bun CI/CD管道
 # ===============================================
 # 
 # 🎯 完全基于Bun的现代化工作流：
@@ -232,7 +232,7 @@ jobs:
       - name: 📦 创建扩展安装包
         run: |
           cd frontend/dist
-          ZIP_NAME="acuity-bookmarks-v${{ github.run_number }}.zip"
+          ZIP_NAME="ottersage-v${{ github.run_number }}.zip"
           # 将压缩包输出到仓库根目录，便于后续步骤引用
           zip -r "../../${ZIP_NAME}" . -x "*.DS_Store" "*.gitkeep"
           echo "EXTENSION_ZIP=${ZIP_NAME}" >> $GITHUB_ENV
@@ -274,7 +274,7 @@ jobs:
           client_secret: ${{ secrets.CHROME_CLIENT_SECRET || '' }}
           refresh_token: ${{ secrets.CHROME_REFRESH_TOKEN || '' }}
           extension_id: ${{ secrets.CHROME_EXTENSION_ID || '' }}
-          zip_file: "${{ env.EXTENSION_ZIP || './acuity-bookmarks.zip' }}"
+          zip_file: "${{ env.EXTENSION_ZIP || './ottersage.zip' }}"
           
       # ⚠️ 已移除 Vercel 部署：后端统一在 Cloudflare Worker
       # 📝 创建GitHub Release (仅在主分支推送时)
@@ -285,11 +285,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: v${{ github.run_number }}
-          name: 🚀 AcuityBookmarks v${{ github.run_number }}
+          name: 🚀 otterSage v${{ github.run_number }}
           files: |
-            ${{ env.EXTENSION_ZIP || 'acuity-bookmarks.zip' }}
+            ${{ env.EXTENSION_ZIP || 'ottersage.zip' }}
           body: |
-            ## 🚀 AcuityBookmarks Release (Pure Bun Build)
+            ## 🚀 otterSage Release (Pure Bun Build)
             
             ### 🔧 Build Information
             - **Runtime**: Pure Bun ${{ env.BUN_VERSION }}

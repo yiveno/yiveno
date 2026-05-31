@@ -2,7 +2,7 @@
 
 ## 📋 概述
 
-成功将 Chrome 138+ 的 Summarizer API 集成到 AcuityBookmarks 项目中，提升书签摘要质量、分类准确率和用户体验。
+成功将 Chrome 138+ 的 Summarizer API 集成到 otterSage 项目中，提升书签摘要质量、分类准确率和用户体验。
 
 **完成时间**: 2025-01-XX  
 **状态**: ✅ 已完成并通过所有检查

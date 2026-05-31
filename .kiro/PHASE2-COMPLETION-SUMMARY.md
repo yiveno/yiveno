@@ -467,12 +467,12 @@ Time:    4.033s
 
 **检查的项目**:
 
-- ✅ `@acuity-bookmarks/types`
-- ✅ `@acuity-bookmarks/auth-core`
-- ✅ `@acuity-bookmarks/design-tokens`
+- ✅ `@ottersage/types`
+- ✅ `@ottersage/auth-core`
+- ✅ `@ottersage/design-tokens`
 - ✅ `frontend`
 - ✅ `backend`
-- ✅ `acuitybookmarks-website`
+- ✅ `ottersage-website`
 
 ---
 

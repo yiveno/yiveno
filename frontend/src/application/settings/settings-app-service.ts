@@ -21,7 +21,7 @@ import {
 } from '@/infrastructure/global-state/global-state-manager'
 import { chromeStorage } from '@/infrastructure/storage/chrome-storage'
 import { logger } from '@/infrastructure/logging/logger'
-import { normalizeColorPresetId } from '@acuity-bookmarks/design-tokens/color-presets'
+import { normalizeColorPresetId } from '@ottersage/design-tokens/color-presets'
 
 /**
  * 全局设置键名枚举

@@ -49,32 +49,32 @@ const computedClass = computed(() => {
 
 /* 变体 */
 .badge-default {
-  background-color: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
-  color: var(--md-sys-color-primary);
   border: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
+  color: var(--md-sys-color-primary);
+  background-color: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
 }
 
 .badge-outline {
-  background-color: transparent;
   border: 1px solid color-mix(in srgb, white 10%, transparent);
   color: var(--md-sys-color-on-surface-variant);
+  background-color: transparent;
 }
 
 .badge-success {
-  background-color: color-mix(in srgb, var(--acuity-semantic-success) 10%, transparent);
-  color: var(--acuity-semantic-success);
-  border: 1px solid color-mix(in srgb, var(--acuity-semantic-success) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ottersage-semantic-success) 20%, transparent);
+  color: var(--ottersage-semantic-success);
+  background-color: color-mix(in srgb, var(--ottersage-semantic-success) 10%, transparent);
 }
 
 .badge-warning {
-  background-color: color-mix(in srgb, var(--acuity-semantic-warning) 10%, transparent);
-  color: var(--acuity-semantic-warning);
-  border: 1px solid color-mix(in srgb, var(--acuity-semantic-warning) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ottersage-semantic-warning) 20%, transparent);
+  color: var(--ottersage-semantic-warning);
+  background-color: color-mix(in srgb, var(--ottersage-semantic-warning) 10%, transparent);
 }
 
 .badge-danger {
-  background-color: color-mix(in srgb, var(--md-sys-color-error) 10%, transparent);
-  color: var(--md-sys-color-error);
   border: 1px solid color-mix(in srgb, var(--md-sys-color-error) 20%, transparent);
+  color: var(--md-sys-color-error);
+  background-color: color-mix(in srgb, var(--md-sys-color-error) 10%, transparent);
 }
 </style>

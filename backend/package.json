@@ -1,7 +1,7 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "Backend for AcuityBookmarks - Cloudflare Worker",
+  "description": "Backend for otterSage - Cloudflare Worker",
   "type": "module",
   "main": "cloudflare-worker.js",
   "scripts": {
@@ -26,7 +26,7 @@
     "clean": "rm -rf .wrangler node_modules/.cache"
   },
   "dependencies": {
-    "@acuity-bookmarks/types": "workspace:*",
+    "@ottersage/types": "workspace:*",
     "@supabase/supabase-js": "^2.79.0",
     "@trpc/server": "^10.45.2",
     "hono": "^4.12.18",

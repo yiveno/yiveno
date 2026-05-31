@@ -1,8 +1,8 @@
 /**
- * Nuxt composable for AcuityBookmarks design tokens
+ * Nuxt composable for otterSage design tokens
  */
 
-import { generateCSSVars } from '@acuity-bookmarks/design-tokens/css-vars'
+import { generateCSSVars } from '@ottersage/design-tokens/css-vars'
 
 /**
  * 将 design tokens 注入到 CSS 变量中

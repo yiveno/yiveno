@@ -1,4 +1,4 @@
-# 🔍 AcuityBookmarks 配置审计报告
+# 🔍 otterSage 配置审计报告
 
 **审计日期**: 2026-05-20  
 **审计范围**: ESLint, TypeScript, Prettier, Stylelint  

@@ -571,7 +571,7 @@ const toggleFilter = async (filterId: string) => {
   }
 
   // 重新触发筛选
-  executeFilter()
+  void executeFilter()
 }
 
 // 使用书签搜索 Composable
@@ -768,7 +768,7 @@ watch(query, () => {
   // 开始防抖，显示加载动画
   isDebouncing.value = true
 
-  debouncedSearch().finally(() => {
+  void debouncedSearch().finally(() => {
     // 防抖完成，隐藏加载动画
     isDebouncing.value = false
   })
@@ -808,7 +808,7 @@ watch(
       }
 
       // 触发筛选
-      executeFilter()
+      void executeFilter()
     }
   },
   { deep: true, immediate: true }
@@ -956,7 +956,7 @@ const handleHistoryClick = (historyQuery: string) => {
   // 重新获取焦点
   isFocused.value = true
   // 触发搜索
-  executeFilter()
+  void executeFilter()
 }
 
 /**
@@ -964,14 +964,14 @@ const handleHistoryClick = (historyQuery: string) => {
  */
 const handleRemoveHistory = (historyQuery: string, event: Event) => {
   event.stopPropagation() // 阻止触发点击事件
-  removeFromHistory(historyQuery)
+  void removeFromHistory(historyQuery)
 }
 
 /**
  * 处理清空所有历史
  */
 const handleClearAllHistory = () => {
-  clearHistory()
+  void clearHistory()
 }
 
 /**
@@ -1052,7 +1052,7 @@ watch(
   newResults => {
     newResults.forEach(bookmark => {
       if (bookmark.url && !faviconCache.value.has(bookmark.id)) {
-        loadFavicon(bookmark)
+        void loadFavicon(bookmark)
       }
     })
   },
@@ -1116,12 +1116,12 @@ onMounted(() => {
 
   // 如果启用了特征筛选，初始化特征统计
   if (mergedQuickFilterConfig.value.enabled) {
-    updateTraitCounts()
+    void updateTraitCounts()
   }
 
   // 如果设置了自动聚焦
   if (props.autoFocus && isAlwaysExpanded.value) {
-    nextTick(() => {
+    void nextTick(() => {
       inputRef.value?.$el?.querySelector('input')?.focus()
     })
   }
@@ -1143,7 +1143,7 @@ onUnmounted(() => {
  */
 if (typeof chrome !== 'undefined' && chrome.runtime) {
   chrome.runtime.onMessage.addListener(message => {
-    if (message.type === 'acuity-bookmarks-db-synced') {
+    if (message.type === 'ottersage-db-synced') {
       // 使用 queueMicrotask 避免阻塞消息处理
       queueMicrotask(async () => {
         void updateTraitCounts()
@@ -1501,7 +1501,7 @@ defineExpose({
   box-shadow: 0 2px 6px var(--color-error-alpha-30);
 }
 
-.search-icon-button.has-query:hover :deep(.acuity-icon) {
+.search-icon-button.has-query:hover :deep(.ottersage-icon) {
   color: var(--color-text-on-primary);
 }
 

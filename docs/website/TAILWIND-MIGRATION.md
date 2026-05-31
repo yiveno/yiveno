@@ -2,7 +2,7 @@
 
 ## 目标
 
-移除 Tailwind CSS 依赖，统一使用 `@acuity-bookmarks/design-tokens` 的 Material Design 系统。
+移除 Tailwind CSS 依赖，统一使用 `@ottersage/design-tokens` 的 Material Design 系统。
 
 ## Tailwind 到 Material Design 映射
 

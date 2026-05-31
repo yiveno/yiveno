@@ -10,10 +10,10 @@
  * 安全策略：只允许特定域名访问 API
  */
 export const ALLOWED_ORIGINS = [
-  'https://acuitybookmarks.com',
-  'https://www.acuitybookmarks.com',
-  'https://app.acuitybookmarks.com',
-  'https://api.acuitybookmarks.com',
+  'https://ottersage.com',
+  'https://www.ottersage.com',
+  'https://app.ottersage.com',
+  'https://api.ottersage.com',
   // 开发环境
   'http://localhost:3001',
   'https://localhost:3001',

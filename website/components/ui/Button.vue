@@ -62,17 +62,27 @@ const computedClass = computed(() => {
 </template>
 
 <style scoped>
-/* 按钮基础样式 */
+/* Loading 图标动画 */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .btn {
   display: inline-flex;
-  align-items: center;
   justify-content: center;
-  border-radius: var(--md-sys-shape-corner-extra-large);
-  font-weight: 500;
-  transition: all 200ms ease;
+  align-items: center;
   border: none;
-  cursor: pointer;
+  border-radius: var(--md-sys-shape-corner-extra-large);
   font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 200ms ease;
 }
 
 .btn:focus {
@@ -87,8 +97,8 @@ const computedClass = computed(() => {
 
 /* 变体样式 */
 .btn-primary {
-  background: linear-gradient(to right, var(--md-sys-color-primary), var(--md-sys-color-secondary));
   color: white;
+  background: linear-gradient(to right, var(--md-sys-color-primary), var(--md-sys-color-secondary));
   box-shadow: 0 4px 12px color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
 }
 
@@ -103,9 +113,9 @@ const computedClass = computed(() => {
 }
 
 .btn-secondary {
-  background-color: rgb(255 255 255 / 10%);
-  color: white;
   border: 1px solid rgb(255 255 255 / 10%);
+  color: white;
+  background-color: rgb(255 255 255 / 10%);
   backdrop-filter: blur(8px);
 }
 
@@ -114,9 +124,9 @@ const computedClass = computed(() => {
 }
 
 .btn-outline {
-  background-color: transparent;
-  color: var(--md-sys-color-primary);
   border: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent);
+  color: var(--md-sys-color-primary);
+  background-color: transparent;
 }
 
 .btn-outline:hover:not(:disabled) {
@@ -124,8 +134,8 @@ const computedClass = computed(() => {
 }
 
 .btn-ghost {
-  background-color: transparent;
   color: var(--md-sys-color-on-surface-variant);
+  background-color: transparent;
 }
 
 .btn-ghost:hover:not(:disabled) {
@@ -134,10 +144,10 @@ const computedClass = computed(() => {
 }
 
 .btn-link {
-  background-color: transparent;
-  color: var(--md-sys-color-primary);
   padding: 0;
   text-decoration: underline;
+  color: var(--md-sys-color-primary);
+  background-color: transparent;
   text-underline-offset: 4px;
 }
 
@@ -168,25 +178,14 @@ const computedClass = computed(() => {
   width: 100%;
 }
 
-/* Loading 图标动画 */
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .animate-spin {
   animation: spin 1s linear infinite;
 }
 
 .btn svg {
-  margin-right: 8px;
   width: 16px;
   height: 16px;
+  margin-right: 8px;
 }
 
 .opacity-25 {
@@ -196,4 +195,6 @@ const computedClass = computed(() => {
 .opacity-75 {
   opacity: 0.75;
 }
+
+/* 按钮基础样式 */
 </style>

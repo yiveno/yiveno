@@ -41,10 +41,10 @@ const handleOneTapDismissed = () => {
 }
 
 useSeoMeta({
-  title: 'AcuityBookmarks · AI 驱动的智能书签工作台',
+  title: 'otterSage · AI 驱动的智能书签工作台',
   description:
-    'Fuse.js 模糊检索 × AI 语义推荐 × Cloudflare Worker API。AcuityBookmarks 为高密度知识工作者打造极速、离线、安全的书签体验。',
-  ogTitle: 'AcuityBookmarks · AI 驱动的智能书签工作台',
+    'Fuse.js 模糊检索 × AI 语义推荐 × Cloudflare Worker API。otterSage 为高密度知识工作者打造极速、离线、安全的书签体验。',
+  ogTitle: 'otterSage · AI 驱动的智能书签工作台',
   ogDescription: '结合离线索引、AI 推荐、失效检测和 Cloudflare Worker，重新定义书签管理。',
   twitterCard: 'summary_large_image'
 })
@@ -98,7 +98,7 @@ useSeoMeta({
           准备好重塑您的<span class="text-accent-400">知识工作流</span>了吗？
         </h3>
         <p class="text-base text-content-muted mb-8 max-w-xl mx-auto leading-relaxed">
-          立即安装扩展，或约我们演示如何把 AcuityBookmarks 部署到你的团队。
+          立即安装扩展，或约我们演示如何把 otterSage 部署到你的团队。
         </p>
         <div class="flex flex-col sm:flex-row justify-center gap-3">
           <Button @click="openExtension">免费安装扩展</Button>

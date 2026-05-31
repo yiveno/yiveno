@@ -33,7 +33,7 @@ export const HTTPS_ENV_VARS = ['VITE_API_BASE_URL', 'VITE_CLOUDFLARE_WORKER_URL'
  * Console 删除策略：只有明确设置 NODE_ENV=production 且没有调试标志时才删除 console
  * - build:prod (NODE_ENV=production) → 删除 console
  * - build (CRAWLER_DEBUG=true) → 保留 console
- * - build:hot, build:analyze → 保留 console（默认）
+ * - build:watch, build:analyze → 保留 console（默认）
  *
  * 注意：Vite 8 使用 Oxc Minifier，不支持 drop_console 配置
  * 需要通过 Rolldown 的 output.minify.compress.drop_console 配置

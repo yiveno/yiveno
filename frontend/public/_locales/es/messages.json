@@ -1,12 +1,12 @@
 {
   "app_name": {
-    "message": "AcuityBookmarks"
+    "message": "otterSage"
   },
   "app_description": {
     "message": "Desbloquea el conocimiento en tus marcadores. Organización impulsada por IA, búsqueda consciente del contenido."
   },
   "welcome": {
-    "message": "¡Bienvenido a AcuityBookmarks!"
+    "message": "¡Bienvenido a otterSage!"
   },
   "search_placeholder": {
     "message": "Filtrar marcadores…"
@@ -1122,7 +1122,7 @@
     "message": "de"
   },
   "onboarding_welcome_title": {
-    "message": "Bienvenido a AcuityBookmarks"
+    "message": "Bienvenido a otterSage"
   },
   "onboarding_welcome_subtitle": {
     "message": "Gestor de marcadores con IA"
@@ -2106,7 +2106,7 @@
     "message": "TODO LISTO"
   },
   "onboarding_ready_description": {
-    "message": "Gracias por tomarte el tiempo para conocer las características de AcuityBookmarks. Después de hacer clic en \"Comenzar\", esta página se cerrará automáticamente y podrás comenzar a disfrutar de la gestión inteligente de marcadores."
+    "message": "Gracias por tomarte el tiempo para conocer las características de otterSage. Después de hacer clic en \"Comenzar\", esta página se cerrará automáticamente y podrás comenzar a disfrutar de la gestión inteligente de marcadores."
   },
   "onboarding_initializing": {
     "message": "Inicializando..."

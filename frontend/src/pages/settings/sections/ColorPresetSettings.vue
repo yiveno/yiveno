@@ -4,7 +4,7 @@ import {
   COLOR_PRESET_DEFINITIONS,
   type ColorPresetDefinition,
   type ColorPresetId
-} from '@acuity-bookmarks/design-tokens/color-presets'
+} from '@ottersage/design-tokens/color-presets'
 import { computed, onMounted, ref } from 'vue'
 import { logger } from '@/infrastructure/logging/logger'
 import { globalStateManager } from '@/infrastructure/global-state/global-state-manager'

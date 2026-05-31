@@ -103,19 +103,19 @@ export function generateCSSString(): string {
 export function generateMaterialCSSVars() {
   return {
     // Material Design 主题色
-    '--acuity-brand-primary': colors.material.primary.css,
-    '--acuity-brand-secondary': colors.material.secondary.css,
+    '--ottersage-brand-primary': colors.material.primary.css,
+    '--ottersage-brand-secondary': colors.material.secondary.css,
 
     // 语义化颜色
-    '--acuity-semantic-success': colors.semantic.success.css,
-    '--acuity-semantic-warning': colors.semantic.warning.css,
-    '--acuity-semantic-info': colors.semantic.info.css,
+    '--ottersage-semantic-success': colors.semantic.success.css,
+    '--ottersage-semantic-warning': colors.semantic.warning.css,
+    '--ottersage-semantic-info': colors.semantic.info.css,
 
     // 强调色
-    '--acuity-accent-gold': colors.accent.gold.css,
-    '--acuity-accent-teal': colors.accent.teal.css,
-    '--acuity-accent-amber': colors.accent.amber.css,
-    '--acuity-accent-purple': colors.accent.purple.css
+    '--ottersage-accent-gold': colors.accent.gold.css,
+    '--ottersage-accent-teal': colors.accent.teal.css,
+    '--ottersage-accent-amber': colors.accent.amber.css,
+    '--ottersage-accent-purple': colors.accent.purple.css
   }
 }
 

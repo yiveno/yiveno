@@ -98,17 +98,17 @@ const aiSuggestions = [
 .hero-showcase {
   position: relative;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
 .window {
-  border-radius: 24px;
   border: 1px solid rgb(148 163 184 / 18%);
+  border-radius: 24px;
   background: rgb(2 8 23 / 85%);
-  box-shadow: 0 20px 60px rgb(2 8 23 / 50%);
-  overflow: hidden;
   animation: float 10s ease-in-out infinite;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgb(2 8 23 / 50%);
 }
 
 .window:nth-child(2) {
@@ -138,17 +138,17 @@ const aiSuggestions = [
   justify-content: space-between;
   align-items: center;
   padding: 1rem 1.25rem;
-  background: rgb(15 23 42 / 70%);
-  font-size: 0.9rem;
   border-bottom: 1px solid rgb(148 163 184 / 10%);
+  font-size: 0.9rem;
+  background: rgb(15 23 42 / 70%);
 }
 
 .popup ul {
-  list-style: none;
-  padding: 1rem;
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
+  padding: 1rem;
+  list-style: none;
 }
 
 .popup li {
@@ -156,9 +156,9 @@ const aiSuggestions = [
   justify-content: space-between;
   gap: 1rem;
   padding: 0.9rem 1rem;
+  border: 1px solid rgb(148 163 184 / 15%);
   border-radius: 18px;
   background: rgb(15 23 42 / 80%);
-  border: 1px solid rgb(148 163 184 / 15%);
 }
 
 .title {
@@ -170,15 +170,15 @@ small {
 }
 
 .badge {
-  border-radius: 999px;
   padding: 0.2rem 0.9rem;
+  border-radius: 999px;
   font-size: 0.8rem;
   font-weight: 600;
 }
 
 .badge.ai {
-  background: rgb(56 189 248 / 20%);
   color: #38bdf8;
+  background: rgb(56 189 248 / 20%);
 }
 
 .badge.pin {
@@ -186,8 +186,8 @@ small {
 }
 
 .badge.fresh {
-  background: rgb(124 58 237 / 20%);
   color: #c084fc;
+  background: rgb(124 58 237 / 20%);
 }
 
 .board {
@@ -196,19 +196,19 @@ small {
 
 .columns {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.75rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   padding: 1rem 1.25rem;
 }
 
 .column {
-  background: rgb(2 8 23 / 40%);
-  border-radius: 18px;
-  padding: 0.75rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  padding: 0.75rem;
   border: 1px solid rgb(148 163 184 / 10%);
+  border-radius: 18px;
+  background: rgb(2 8 23 / 40%);
 }
 
 .column-name {
@@ -217,10 +217,10 @@ small {
 }
 
 .card {
-  border-radius: 14px;
   height: 46px;
-  background: linear-gradient(120deg, rgb(56 189 248 / 15%), rgb(99 102 241 / 10%));
   border: 1px solid rgb(56 189 248 / 25%);
+  border-radius: 14px;
+  background: linear-gradient(120deg, rgb(56 189 248 / 15%), rgb(99 102 241 / 10%));
 }
 
 .panel {
@@ -240,24 +240,24 @@ small {
   align-items: center;
   gap: 1rem;
   padding: 0.9rem 1rem;
-  border-radius: 16px;
   border: 1px solid rgb(148 163 184 / 18%);
+  border-radius: 16px;
 }
 
 .chip {
-  border-radius: 999px;
-  border: 1px solid rgb(148 163 184 / 30%);
   padding: 0.25rem 0.9rem;
+  border: 1px solid rgb(148 163 184 / 30%);
+  border-radius: 999px;
   font-size: 0.8rem;
 }
 
 header .dot {
+  display: inline-flex;
   width: 8px;
   height: 8px;
+  margin-right: 0.35rem;
   border-radius: 50%;
   background: rgb(148 163 184 / 50%);
-  display: inline-flex;
-  margin-right: 0.35rem;
 }
 
 @media (width <= 640px) {

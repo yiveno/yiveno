@@ -1,12 +1,12 @@
 /**
- * AcuityBookmarks Design System - Design Tokens Mapping
+ * otterSage Design System - Design Tokens Mapping
  * 
  * ⚠️ 本文件仅用于将 Material Design 3 变量映射到项目内部使用的简化变量名
  * ⚠️ 禁止在此文件中定义任何硬编码的颜色、间距、字号等值
  * 
  * Material Design 3 变量来源：
- * - @acuity-bookmarks/design-tokens/css/material-theme.css
- * - @acuity-bookmarks/design-tokens/css/variables.css
+ * - @ottersage/design-tokens/css/material-theme.css
+ * - @ottersage/design-tokens/css/variables.css
  * 
  * 这些文件必须在入口文件中先导入，然后才能使用本文件的映射。
  */
@@ -64,40 +64,40 @@
   --color-error-foreground: var(--color-on-error);
 
   /* ✅ Warning、Success、Info 颜色映射自 design-tokens 包 */
-  --color-warning: var(--acuity-semantic-warning);
-  --color-warning-container: var(--acuity-semantic-warning-container);
-  --color-on-warning: var(--acuity-semantic-on-warning);
-  --color-on-warning-container: var(--acuity-semantic-on-warning-container);
+  --color-warning: var(--ottersage-semantic-warning);
+  --color-warning-container: var(--ottersage-semantic-warning-container);
+  --color-on-warning: var(--ottersage-semantic-on-warning);
+  --color-on-warning-container: var(--ottersage-semantic-on-warning-container);
   --color-warning-foreground: var(--color-on-warning);
   --color-warning-container-foreground: var(--color-on-warning-container);
-  --color-success: var(--acuity-semantic-success);
-  --color-success-container: var(--acuity-semantic-success-container);
-  --color-on-success: var(--acuity-semantic-on-success);
-  --color-on-success-container: var(--acuity-semantic-on-success-container);
+  --color-success: var(--ottersage-semantic-success);
+  --color-success-container: var(--ottersage-semantic-success-container);
+  --color-on-success: var(--ottersage-semantic-on-success);
+  --color-on-success-container: var(--ottersage-semantic-on-success-container);
   --color-success-foreground: var(--color-on-success);
   --color-success-container-foreground: var(--color-on-success-container);
-  --color-info: var(--acuity-semantic-info);
-  --color-info-container: var(--acuity-semantic-info-container);
-  --color-on-info: var(--acuity-semantic-on-info);
-  --color-on-info-container: var(--acuity-semantic-on-info-container);
+  --color-info: var(--ottersage-semantic-info);
+  --color-info-container: var(--ottersage-semantic-info-container);
+  --color-on-info: var(--ottersage-semantic-on-info);
+  --color-on-info-container: var(--ottersage-semantic-on-info-container);
   --color-info-foreground: var(--color-on-info);
   --color-info-container-foreground: var(--color-on-info-container);
 
   /* ✅ 这些颜色映射自 design-tokens 包 */
-  --color-accent-teal: var(--acuity-accent-teal);
-  --color-accent-teal-hover: var(--acuity-accent-teal-hover);
-  --color-accent-gold: var(--acuity-accent-gold);
-  --color-accent-gold-hover: var(--acuity-accent-gold-hover);
-  --color-accent-amber: var(--acuity-accent-amber);
-  --color-accent-amber-container: var(--acuity-accent-amber-container);
-  --color-accent-purple: var(--acuity-accent-purple);
-  --color-accent-purple-container: var(--acuity-accent-purple-container);
+  --color-accent-teal: var(--ottersage-accent-teal);
+  --color-accent-teal-hover: var(--ottersage-accent-teal-hover);
+  --color-accent-gold: var(--ottersage-accent-gold);
+  --color-accent-gold-hover: var(--ottersage-accent-gold-hover);
+  --color-accent-amber: var(--ottersage-accent-amber);
+  --color-accent-amber-container: var(--ottersage-accent-amber-container);
+  --color-accent-purple: var(--ottersage-accent-purple);
+  --color-accent-purple-container: var(--ottersage-accent-purple-container);
 
   /* AI 功能色（映射到强调色） */
-  --color-ai: var(--acuity-accent-ai);
-  --color-ai-container: var(--acuity-accent-ai-container);
-  --color-on-ai: var(--acuity-accent-on-ai);
-  --color-on-ai-container: var(--acuity-accent-on-ai-container);
+  --color-ai: var(--ottersage-accent-ai);
+  --color-ai-container: var(--ottersage-accent-ai-container);
+  --color-on-ai: var(--ottersage-accent-on-ai);
+  --color-on-ai-container: var(--ottersage-accent-on-ai-container);
 
   /* === 基础颜色 (Base Colors) === */
 
@@ -143,26 +143,26 @@
   /* === 扩展 Primary 色彩系列 === */
 
   /* ✅ 这些颜色映射自 design-tokens 包，用于渐变和特殊效果 */
-  --color-primary-50: var(--acuity-primary-50);
-  --color-primary-100: var(--acuity-primary-100);
-  --color-primary-200: var(--acuity-primary-200);
-  --color-primary-300: var(--acuity-primary-300);
-  --color-primary-400: var(--acuity-primary-400);
-  --color-primary-500: var(--acuity-primary-500);
-  --color-primary-600: var(--acuity-primary-600);
-  --color-primary-700: var(--acuity-primary-700);
-  --color-primary-800: var(--acuity-primary-800);
-  --color-primary-900: var(--acuity-primary-900);
+  --color-primary-50: var(--ottersage-primary-50);
+  --color-primary-100: var(--ottersage-primary-100);
+  --color-primary-200: var(--ottersage-primary-200);
+  --color-primary-300: var(--ottersage-primary-300);
+  --color-primary-400: var(--ottersage-primary-400);
+  --color-primary-500: var(--ottersage-primary-500);
+  --color-primary-600: var(--ottersage-primary-600);
+  --color-primary-700: var(--ottersage-primary-700);
+  --color-primary-800: var(--ottersage-primary-800);
+  --color-primary-900: var(--ottersage-primary-900);
 
   /* === Alpha 透明度色彩 === */
-  --color-primary-alpha-10: var(--acuity-primary-alpha-10);
-  --color-primary-alpha-20: var(--acuity-primary-alpha-20);
-  --color-secondary-alpha-10: var(--acuity-secondary-alpha-10);
-  --color-error-alpha-10: var(--acuity-error-alpha-10);
-  --color-warning-alpha-10: var(--acuity-warning-alpha-10);
-  --color-warning-alpha-20: var(--acuity-warning-alpha-20);
-  --color-success-alpha-10: var(--acuity-success-alpha-10);
-  --color-info-alpha-10: var(--acuity-info-alpha-10);
+  --color-primary-alpha-10: var(--ottersage-primary-alpha-10);
+  --color-primary-alpha-20: var(--ottersage-primary-alpha-20);
+  --color-secondary-alpha-10: var(--ottersage-secondary-alpha-10);
+  --color-error-alpha-10: var(--ottersage-error-alpha-10);
+  --color-warning-alpha-10: var(--ottersage-warning-alpha-10);
+  --color-warning-alpha-20: var(--ottersage-warning-alpha-20);
+  --color-success-alpha-10: var(--ottersage-success-alpha-10);
+  --color-info-alpha-10: var(--ottersage-info-alpha-10);
 
   /* === 阴影 / 遮罩 / 高光（P3：统一自 md-sys shadow、scrim，禁止组件内 rgb(0,0,0/…)）=== */
   --color-error-alpha-30: color-mix(in srgb, var(--md-sys-color-error) 30%, transparent);

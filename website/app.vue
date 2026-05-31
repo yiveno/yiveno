@@ -1,7 +1,7 @@
 <script setup lang="ts">
 useHead({
   titleTemplate: titleChunk => {
-    return titleChunk ? `${titleChunk} - AcuityBookmarks` : 'AcuityBookmarks'
+    return titleChunk ? `${titleChunk} - otterSage` : 'otterSage'
   },
   htmlAttrs: {
     'data-theme': 'dark'

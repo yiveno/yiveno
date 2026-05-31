@@ -14,7 +14,7 @@ import type { BookmarkRecord } from './types/bookmark-record'
  * IndexedDB 数据库配置
  */
 export const DB_CONFIG = {
-  NAME: 'AcuityBookmarksDB',
+  NAME: 'otterSageDB',
   VERSION: 12, // 升级：添加 FOLDER_VECTORS 存储文件夹向量
 
   // 存储表名

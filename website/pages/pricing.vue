@@ -82,7 +82,7 @@ const faqs = [
 ]
 
 useSeoMeta({
-  title: '定价 - AcuityBookmarks',
+  title: '定价 - otterSage',
   description: '了解 Free、Pro、Team/Enterprise 三种方案，覆盖个人到团队的智能书签需求。'
 })
 </script>
@@ -343,53 +343,17 @@ useSeoMeta({
 </template>
 
 <style scoped>
-.plans-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-  max-width: 960px;
-  margin: 0 auto;
-}
-
-/* 当前方案高亮样式 - Free（绿色） */
-.plan-card--current {
-  border: 2px solid color-mix(in srgb, var(--acuity-semantic-success) 50%, transparent) !important;
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--acuity-semantic-success) 8%, transparent) 0%,
-    transparent 100%
-  ) !important;
-  box-shadow: 0 8px 24px color-mix(in srgb, var(--acuity-semantic-success) 15%, transparent) !important;
-  animation:
-    card-pulse-green 3s ease-in-out infinite,
-    card-fade-in 0.6s ease-out;
-}
-
-/* 当前方案高亮样式 - Pro（金色） */
-.plan-card--current-pro {
-  border: 2px solid color-mix(in srgb, var(--acuity-accent-gold) 60%, transparent) !important;
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--acuity-accent-gold) 10%, transparent) 0%,
-    transparent 100%
-  ) !important;
-  box-shadow: 0 8px 32px color-mix(in srgb, var(--acuity-accent-gold) 25%, transparent) !important;
-  animation:
-    card-pulse-gold 3s ease-in-out infinite,
-    card-fade-in 0.6s ease-out;
-}
-
 /* 卡片脉冲动画 - 绿色 */
 @keyframes card-pulse-green {
   0%,
   100% {
-    box-shadow: 0 8px 24px color-mix(in srgb, var(--acuity-semantic-success) 15%, transparent);
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--ottersage-semantic-success) 15%, transparent);
   }
 
   50% {
     box-shadow:
-      0 8px 32px color-mix(in srgb, var(--acuity-semantic-success) 30%, transparent),
-      0 0 0 4px color-mix(in srgb, var(--acuity-semantic-success) 10%, transparent);
+      0 8px 32px color-mix(in srgb, var(--ottersage-semantic-success) 30%, transparent),
+      0 0 0 4px color-mix(in srgb, var(--ottersage-semantic-success) 10%, transparent);
   }
 }
 
@@ -397,13 +361,13 @@ useSeoMeta({
 @keyframes card-pulse-gold {
   0%,
   100% {
-    box-shadow: 0 8px 32px color-mix(in srgb, var(--acuity-accent-gold) 25%, transparent);
+    box-shadow: 0 8px 32px color-mix(in srgb, var(--ottersage-accent-gold) 25%, transparent);
   }
 
   50% {
     box-shadow:
-      0 8px 40px color-mix(in srgb, var(--acuity-accent-gold) 40%, transparent),
-      0 0 0 4px color-mix(in srgb, var(--acuity-accent-gold) 15%, transparent);
+      0 8px 40px color-mix(in srgb, var(--ottersage-accent-gold) 40%, transparent),
+      0 0 0 4px color-mix(in srgb, var(--ottersage-accent-gold) 15%, transparent);
   }
 }
 
@@ -420,12 +384,6 @@ useSeoMeta({
   }
 }
 
-/* 徽章脉冲动画 - 应用到徽章元素 */
-.plan-card--current :deep(.bg-green-500),
-.plan-card--current-pro :deep(.bg-gradient-to-r) {
-  animation: badge-pulse 2s ease-in-out infinite;
-}
-
 @keyframes badge-pulse {
   0%,
   100% {
@@ -435,18 +393,6 @@ useSeoMeta({
   50% {
     transform: scale(1.05);
   }
-}
-
-/* 悬停时暂停动画，增强交互感 */
-.plan-card--current:hover,
-.plan-card--current-pro:hover {
-  animation-play-state: paused;
-}
-
-.plan-card--current:hover :deep(.bg-green-500),
-.plan-card--current-pro:hover :deep(.bg-gradient-to-r) {
-  animation-play-state: paused;
-  transform: scale(1.05);
 }
 
 @media (width <= 768px) {
@@ -466,5 +412,59 @@ useSeoMeta({
   .plan-card--current-pro :deep(.bg-gradient-to-r) {
     animation: none;
   }
+}
+
+.plans-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(3, 1fr);
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+/* 当前方案高亮样式 - Free（绿色） */
+.plan-card--current {
+  border: 2px solid color-mix(in srgb, var(--ottersage-semantic-success) 50%, transparent) !important;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ottersage-semantic-success) 8%, transparent) 0%,
+    transparent 100%
+  ) !important;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--ottersage-semantic-success) 15%, transparent) !important;
+  animation:
+    card-pulse-green 3s ease-in-out infinite,
+    card-fade-in 0.6s ease-out;
+}
+
+/* 当前方案高亮样式 - Pro（金色） */
+.plan-card--current-pro {
+  border: 2px solid color-mix(in srgb, var(--ottersage-accent-gold) 60%, transparent) !important;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ottersage-accent-gold) 10%, transparent) 0%,
+    transparent 100%
+  ) !important;
+  box-shadow: 0 8px 32px color-mix(in srgb, var(--ottersage-accent-gold) 25%, transparent) !important;
+  animation:
+    card-pulse-gold 3s ease-in-out infinite,
+    card-fade-in 0.6s ease-out;
+}
+
+/* 徽章脉冲动画 - 应用到徽章元素 */
+.plan-card--current :deep(.bg-green-500),
+.plan-card--current-pro :deep(.bg-gradient-to-r) {
+  animation: badge-pulse 2s ease-in-out infinite;
+}
+
+/* 悬停时暂停动画，增强交互感 */
+.plan-card--current:hover,
+.plan-card--current-pro:hover {
+  animation-play-state: paused;
+}
+
+.plan-card--current:hover :deep(.bg-green-500),
+.plan-card--current-pro:hover :deep(.bg-gradient-to-r) {
+  animation-play-state: paused;
+  transform: scale(1.05);
 }
 </style>

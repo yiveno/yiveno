@@ -1,6 +1,6 @@
-# @acuity-bookmarks/types
+# @ottersage/types
 
-共享 TypeScript 类型定义包，用于 AcuityBookmarks 项目的类型共享。
+共享 TypeScript 类型定义包，用于 otterSage 项目的类型共享。
 
 ## 包含的类型
 
@@ -18,11 +18,11 @@
 ## 使用方式
 
 ```typescript
-import type { Subscription, PaymentRecord } from '@acuity-bookmarks/types'
+import type { Subscription, PaymentRecord } from '@ottersage/types'
 
 // 或者按需导入
-import type { Subscription } from '@acuity-bookmarks/types/subscription'
-import type { PaymentRecord } from '@acuity-bookmarks/types/payment'
+import type { Subscription } from '@ottersage/types/subscription'
+import type { PaymentRecord } from '@ottersage/types/payment'
 ```
 
 ## 维护指南

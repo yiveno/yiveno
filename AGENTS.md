@@ -4,12 +4,12 @@ This file provides guidance to Codex (Codex.ai/code) when working w/ code in thi
 
 ## Single source of truth (read first)
 
-- **Authoritative product + architecture spec (Chinese):** `docs/product/AcuityBookmarks-产品文档-v3.0.md` — **only** product document; update it when behavior or architecture changes.
+- **Authoritative product + architecture spec (Chinese):** `docs/product/otterSage-产品文档-v3.0.md` — **only** product document; update it when behavior or architecture changes.
 - **Cursor / IDE enforcement:** `.cursor/rules/project.mdc` (and `.kiro/steering/*.md` must not contradict it).
 
 ## Project Overview
 
-**AcuityBookmarks** is intelligent Chrome extension built w/ Vue 3, TypeScript, and Cloudflare Workers that provides AI-powered bookmark organization, content-aware search, and smart recommendations. project follows sophisticated Domain-Driven Design (DDD) architecture and is optimized for high performance w/ features like virtual scrolling, IndexedDB caching, and background crawling.
+**otterSage** is intelligent Chrome extension built w/ Vue 3, TypeScript, and Cloudflare Workers that provides AI-powered bookmark organization, content-aware search, and smart recommendations. project follows sophisticated Domain-Driven Design (DDD) architecture and is optimized for high performance w/ features like virtual scrolling, IndexedDB caching, and background crawling.
 
 ## Available Scripts
 
@@ -17,26 +17,26 @@ This file provides guidance to Codex (Codex.ai/code) when working w/ code in thi
 
 ```bash
 # Development
-bun run dev:frontend          # Start frontend (Vite - port 5173)
-bun run dev:backend           # Start backend (Worker - port 8787)
-bun run dev:all               # Start both frontends and backend
+bun run dev:fe                # Start frontend (Vite - port 5173)
+bun run dev:be                # Start backend (Worker - port 8787)
+bun run dev                   # Start frontend, backend, and website
 
 # Build
-bun run build:frontend        # Build frontend with type checking
-bun run build:frontend:fast   # Fast build (skip some checks)
-bun run build:all             # Build all workspaces
+bun run build:fe              # Build frontend with type checking
+bun run build                 # Build all workspaces
 
 # Quality (must run after code changes)
 bun run typecheck:force       # TypeScript type checking (force rebuild)
-bun run lint:fix:enhanced     # Auto-fix ESLint + Stylelint + Prettier
+bun run eslint                # Auto-fix ESLint
+bun run stylelint             # Auto-fix Stylelint
 bun run format                # Format all code (Prettier)
 
 # Testing
-bun run e2e:management        # E2E tests for management page
-bun run audit:lhci            # Lighthouse CI performance audit
+bun run e2e                   # E2E tests for management page
+bun run audit:fe              # Lighthouse CI performance audit
 
 # Deployment
-bun run deploy:backend        # Deploy backend to Cloudflare
+bun run deploy:be             # Deploy backend to Cloudflare
 ```
 
 ### Frontend Commands
@@ -45,8 +45,8 @@ bun run deploy:backend        # Deploy backend to Cloudflare
 cd frontend
 bun run dev                   # Development server
 bun run build                 # Production build with type checking
-bun run build:hot             # Hot reload build (auto-rebundle)
-bun run type-check            # TypeScript type checking only
+bun run build:watch           # Watch build
+bun run typecheck             # TypeScript type checking only
 ```
 
 ### Backend Commands
@@ -63,7 +63,7 @@ bun run health-check          # Local health check (HTTPS)
 ### Monorepo Structure
 
 ```
-acuityBookmarks/
+otterSage/
 ├── frontend/              # Vue 3 Chrome Extension
 ├── backend/               # Cloudflare Worker API
 ├── website/               # Marketing website (Nuxt)
@@ -229,7 +229,8 @@ const MAX_TEXT_LENGTH = 512 // Truncate text to 512 chars
 
 ```bash
 bun run typecheck:force
-bun run lint:fix:enhanced
+bun run eslint
+bun run stylelint
 bun run format
 ```
 
@@ -238,7 +239,7 @@ bun run format
 
 ### Building for Production
 
-1. **Production build**: `bun run build:all`
+1. **Production build**: `bun run build`
 2. **Clean dist**: Automatically runs `bun scripts/clean-dist.cjs`
 3. **Package extension**: Zip `dist/` dir for Chrome Web Store
 
@@ -367,4 +368,4 @@ this.timer = setTimeout(() => {...}, 1000)
 - **Runtime**: Edge network w/ global distribution
 - **Database**: Supabase (PostgreSQL) w/ vector search
 - **AI**: User-provided API Keys (OpenAI / Codex / Gemini) + Local ONNX embeddings (automatic)
-- **Custom Domain**: api.acuitybookmarks.com
+- **Custom Domain**: api.ottersage.com

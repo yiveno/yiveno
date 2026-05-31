@@ -16,8 +16,8 @@
  */
 import { logger } from '@/infrastructure/logging/logger'
 const AB_EVENTS = {
-  BOOKMARK_UPDATED: 'acuity-bookmark-updated' as const,
-  BOOKMARKS_DB_SYNCED: 'acuity-bookmarks-db-synced' as const
+  BOOKMARK_UPDATED: 'ottersage-bookmark-updated' as const,
+  BOOKMARKS_DB_SYNCED: 'ottersage-db-synced' as const
 }
 import { bookmarkSearchService } from '@/application/query/bookmark-search-service'
 import { dispatchCoalescedEvent } from '@/infrastructure/events/event-stream'
@@ -82,14 +82,14 @@ export class BookmarkAPIGateway {
       if (message.type === 'BOOKMARK_UPDATED') {
         this.handleBackgroundBookmarkUpdate(message)
       }
-      if (message.type === 'acuity-bookmarks-db-synced') {
+      if (message.type === 'ottersage-db-synced') {
         // 合并与节流：150ms 内仅派发一次
         dispatchCoalescedEvent(
           AB_EVENTS.BOOKMARKS_DB_SYNCED,
           { timestamp: message.timestamp || Date.now() },
           150
         )
-        logger.info('Component', '📡 [前端] 已合并派发 acuity-bookmarks-db-synced 事件')
+        logger.info('Component', '📡 [前端] 已合并派发 ottersage-db-synced 事件')
       }
       // 不需要响应，所以不调用sendResponse
     })

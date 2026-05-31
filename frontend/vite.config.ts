@@ -30,7 +30,7 @@ export default defineConfig((_env: ConfigEnv) => {
 
   return {
     base: './',
-    // ⚠️ 重要：强制从项目根目录读取环境变量文件，与 watch-build.js 保持一致
+    // ⚠️ 重要：强制从项目根目录读取环境变量文件，与根级 dev/build 脚本保持一致
     // 默认情况下，Vite 会从 vite.config.ts 所在目录读取 .env 文件
     // 但我们需要从项目根目录读取，确保环境变量一致
     // 注意：.env.local 也应该放在项目根目录，而不是 frontend/ 目录

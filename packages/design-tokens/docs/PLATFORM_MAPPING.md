@@ -1,6 +1,6 @@
 # 跨平台映射表
 
-本文档说明如何将 AcuityBookmarks 设计 tokens 映射到不同平台的实现。
+本文档说明如何将 otterSage 设计 tokens 映射到不同平台的实现。
 
 ---
 
@@ -23,15 +23,15 @@
 # 已自动配置 workspace:*
 
 # 外部项目
-npm install @acuity-bookmarks/design-tokens
+npm install @ottersage/design-tokens
 # 或
-bun add @acuity-bookmarks/design-tokens
+bun add @ottersage/design-tokens
 ```
 
 ### React Native
 
 ```bash
-npm install @acuity-bookmarks/design-tokens
+npm install @ottersage/design-tokens
 ```
 
 ### Flutter
@@ -39,9 +39,9 @@ npm install @acuity-bookmarks/design-tokens
 ```yaml
 # pubspec.yaml
 dependencies:
-  acuity_bookmarks_design_tokens:
+  ottersage_bookmarks_design_tokens:
     git:
-      url: https://github.com/your-org/acuity-bookmarks-design-tokens-flutter
+      url: https://github.com/your-org/ottersage-design-tokens-flutter
       ref: main
 ```
 
@@ -53,8 +53,8 @@ dependencies:
 
 ```typescript
 // 方式 1: CSS 变量（推荐）
-import '@acuity-bookmarks/design-tokens/css/material-theme.css'
-import '@acuity-bookmarks/design-tokens/css/variables.css'
+import '@ottersage/design-tokens/css/material-theme.css'
+import '@ottersage/design-tokens/css/variables.css'
 
 // 在 CSS 中使用
 .button {
@@ -65,7 +65,7 @@ import '@acuity-bookmarks/design-tokens/css/variables.css'
 
 ```typescript
 // 方式 2: TypeScript tokens
-import { colors } from '@acuity-bookmarks/design-tokens'
+import { colors } from '@ottersage/design-tokens'
 
 const buttonStyle = {
   backgroundColor: colors.brand.primary, // #3B82F6
@@ -76,7 +76,7 @@ const buttonStyle = {
 ### React Native
 
 ```typescript
-import { colors } from '@acuity-bookmarks/design-tokens'
+import { colors } from '@ottersage/design-tokens'
 
 const styles = StyleSheet.create({
   button: {
@@ -89,13 +89,13 @@ const styles = StyleSheet.create({
 ### Flutter
 
 ```dart
-import 'package:acuity_bookmarks_design_tokens/colors.dart';
+import 'package:ottersage_bookmarks_design_tokens/colors.dart';
 
 Container(
-  color: AcuityColors.brandPrimary,  // Color(0xFF3B82F6)
+  color: OtterSageColors.brandPrimary,  // Color(0xFF3B82F6)
   child: Text(
     'Button',
-    style: TextStyle(color: AcuityColors.neutralWhite),  // Color(0xFFFFFFFF)
+    style: TextStyle(color: OtterSageColors.neutralWhite),  // Color(0xFFFFFFFF)
   ),
 )
 ```
@@ -116,7 +116,7 @@ Container(
 
 ```typescript
 // TypeScript
-import { spacing } from '@acuity-bookmarks/design-tokens'
+import { spacing } from '@ottersage/design-tokens'
 
 const cardStyle = {
   padding: spacing.base, // '1rem' (16px)
@@ -127,7 +127,7 @@ const cardStyle = {
 ### React Native
 
 ```typescript
-import { spacing } from '@acuity-bookmarks/design-tokens'
+import { spacing } from '@ottersage/design-tokens'
 
 const styles = StyleSheet.create({
   card: {
@@ -140,11 +140,11 @@ const styles = StyleSheet.create({
 ### Flutter
 
 ```dart
-import 'package:acuity_bookmarks_design_tokens/spacing.dart';
+import 'package:ottersage_bookmarks_design_tokens/spacing.dart';
 
 Container(
-  padding: EdgeInsets.all(AcuitySpacing.base),  // 16.0
-  margin: EdgeInsets.only(bottom: AcuitySpacing.lg),  // 24.0
+  padding: EdgeInsets.all(OtterSageSpacing.base),  // 16.0
+  margin: EdgeInsets.only(bottom: OtterSageSpacing.lg),  // 24.0
 )
 ```
 
@@ -165,7 +165,7 @@ Container(
 
 ```typescript
 // TypeScript
-import { fontSize, fontWeight, lineHeight } from '@acuity-bookmarks/design-tokens'
+import { fontSize, fontWeight, lineHeight } from '@ottersage/design-tokens'
 
 const titleStyle = {
   fontSize: fontSize.xl, // '1.25rem' (20px)
@@ -177,7 +177,7 @@ const titleStyle = {
 ### React Native
 
 ```typescript
-import { fontSize, fontWeight, lineHeight } from '@acuity-bookmarks/design-tokens'
+import { fontSize, fontWeight, lineHeight } from '@ottersage/design-tokens'
 
 const styles = StyleSheet.create({
   title: {
@@ -191,14 +191,14 @@ const styles = StyleSheet.create({
 ### Flutter
 
 ```dart
-import 'package:acuity_bookmarks_design_tokens/typography.dart';
+import 'package:ottersage_bookmarks_design_tokens/typography.dart';
 
 Text(
   'Title',
   style: TextStyle(
-    fontSize: AcuityFontSize.xl,              // 20.0
-    fontWeight: AcuityFontWeight.semibold,    // FontWeight.w600
-    height: AcuityLineHeight.tight,           // 1.25
+    fontSize: OtterSageFontSize.xl,              // 20.0
+    fontWeight: OtterSageFontWeight.semibold,    // FontWeight.w600
+    height: OtterSageLineHeight.tight,           // 1.25
   ),
 )
 ```
@@ -218,7 +218,7 @@ Text(
 ### React Native
 
 ```typescript
-import { borderRadius } from '@acuity-bookmarks/design-tokens'
+import { borderRadius } from '@ottersage/design-tokens'
 
 const styles = StyleSheet.create({
   card: {
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
 ```dart
 Container(
   decoration: BoxDecoration(
-    borderRadius: BorderRadius.circular(AcuityBorderRadius.md),  // 8.0
+    borderRadius: BorderRadius.circular(OtterSageBorderRadius.md),  // 8.0
   ),
 )
 ```
@@ -252,7 +252,7 @@ Container(
 ### React Native
 
 ```typescript
-import { shadows } from '@acuity-bookmarks/design-tokens'
+import { shadows } from '@ottersage/design-tokens'
 
 // React Native 需要手动解析阴影
 const styles = StyleSheet.create({
@@ -292,13 +292,13 @@ Container(
 
 ```vue
 <template>
-  <button class="acuity-button">
+  <button class="ottersage-button">
     <slot />
   </button>
 </template>
 
 <style scoped>
-.acuity-button {
+.ottersage-button {
   background-color: var(--md-sys-color-primary);
   color: var(--md-sys-color-on-primary);
   padding: var(--spacing-md) var(--spacing-base);
@@ -313,7 +313,7 @@ Container(
 #### React Native
 
 ```typescript
-import { colors, spacing, fontSize, fontWeight, borderRadius } from '@acuity-bookmarks/design-tokens'
+import { colors, spacing, fontSize, fontWeight, borderRadius } from '@ottersage/design-tokens'
 
 const Button = ({ children }) => (
   <TouchableOpacity style={styles.button}>
@@ -344,27 +344,27 @@ const styles = StyleSheet.create({
 #### Flutter
 
 ```dart
-import 'package:acuity_bookmarks_design_tokens/tokens.dart';
+import 'package:ottersage_bookmarks_design_tokens/tokens.dart';
 
 ElevatedButton(
   onPressed: () {},
   style: ElevatedButton.styleFrom(
-    backgroundColor: AcuityColors.brandPrimary,
-    foregroundColor: AcuityColors.neutralWhite,
+    backgroundColor: OtterSageColors.brandPrimary,
+    foregroundColor: OtterSageColors.neutralWhite,
     padding: EdgeInsets.symmetric(
-      vertical: AcuitySpacing.md,
-      horizontal: AcuitySpacing.base,
+      vertical: OtterSageSpacing.md,
+      horizontal: OtterSageSpacing.base,
     ),
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(AcuityBorderRadius.md),
+      borderRadius: BorderRadius.circular(OtterSageBorderRadius.md),
     ),
     elevation: 2,
   ),
   child: Text(
     'Button',
     style: TextStyle(
-      fontSize: AcuityFontSize.sm,
-      fontWeight: AcuityFontWeight.medium,
+      fontSize: OtterSageFontSize.sm,
+      fontWeight: OtterSageFontWeight.medium,
     ),
   ),
 )
@@ -374,13 +374,13 @@ ElevatedButton(
 
 ## 📊 Token 映射对照表
 
-| Design Token           | Web/CSS                       | React Native                | Flutter                     |
-| ---------------------- | ----------------------------- | --------------------------- | --------------------------- |
-| `colors.brand.primary` | `var(--md-sys-color-primary)` | `colors.brand.primary`      | `AcuityColors.brandPrimary` |
-| `spacing.base`         | `var(--spacing-base)`         | `parseInt(spacing.base)`    | `AcuitySpacing.base`        |
-| `fontSize.base`        | `var(--text-base)`            | `parseInt(fontSize.base)`   | `AcuityFontSize.base`       |
-| `fontWeight.medium`    | `var(--font-medium)`          | `fontWeight.medium`         | `AcuityFontWeight.medium`   |
-| `borderRadius.md`      | `var(--radius-md)`            | `parseInt(borderRadius.md)` | `AcuityBorderRadius.md`     |
+| Design Token           | Web/CSS                       | React Native                | Flutter                        |
+| ---------------------- | ----------------------------- | --------------------------- | ------------------------------ |
+| `colors.brand.primary` | `var(--md-sys-color-primary)` | `colors.brand.primary`      | `OtterSageColors.brandPrimary` |
+| `spacing.base`         | `var(--spacing-base)`         | `parseInt(spacing.base)`    | `OtterSageSpacing.base`        |
+| `fontSize.base`        | `var(--text-base)`            | `parseInt(fontSize.base)`   | `OtterSageFontSize.base`       |
+| `fontWeight.medium`    | `var(--font-medium)`          | `fontWeight.medium`         | `OtterSageFontWeight.medium`   |
+| `borderRadius.md`      | `var(--radius-md)`            | `parseInt(borderRadius.md)` | `OtterSageBorderRadius.md`     |
 
 ---
 
@@ -389,7 +389,7 @@ ElevatedButton(
 ### TypeScript 类型支持
 
 ```typescript
-import type { Colors, Spacing, FontSize } from '@acuity-bookmarks/design-tokens'
+import type { Colors, Spacing, FontSize } from '@ottersage/design-tokens'
 
 // 自动补全和类型检查
 const myColor: Colors['brand']['primary'] = colors.brand.primary

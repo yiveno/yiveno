@@ -110,8 +110,8 @@ const teamFeatures = [
 <style scoped>
 .pricing-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
   gap: 20px;
+  grid-template-columns: repeat(3, 1fr);
   max-width: 960px;
   margin: 0 auto;
 }

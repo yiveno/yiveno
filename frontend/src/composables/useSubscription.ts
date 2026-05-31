@@ -22,7 +22,7 @@ import { GUMROAD_CONFIG } from '@/infrastructure/gumroad/client'
 /**
  * 缓存配置
  */
-const CACHE_KEY = 'acuity_subscription_cache'
+const CACHE_KEY = 'ottersage_subscription_cache'
 const CACHE_DURATION = 15 * 60 * 1000 // 15 分钟
 
 interface SubscriptionCache {

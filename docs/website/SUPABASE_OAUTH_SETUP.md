@@ -6,7 +6,7 @@
 
 当前 Supabase 项目信息：
 
-- **Project name**: acuityBookmarks
+- **Project name**: otterSage
 - **Project ID**: ugxgxytykxblctsyulsg
 - **项目地址**: https://ugxgxytykxblctsyulsg.supabase.co
 
@@ -17,7 +17,7 @@
 官网需要额外添加以下回调 URL：
 
 - `http://localhost:3001/auth/callback` （开发环境）
-- `https://acuitybookmarks.com/auth/callback` （生产环境）
+- `https://ottersage.com/auth/callback` （生产环境）
 
 ## 配置步骤
 
@@ -39,7 +39,7 @@ https://supabase.com/dashboard/project/ugxgxytykxblctsyulsg/auth/url-configurati
 
 ```
 http://localhost:3001/auth/callback
-https://acuitybookmarks.com/auth/callback
+https://ottersage.com/auth/callback
 ```
 
 **重要提示：**
@@ -60,7 +60,7 @@ https://acuitybookmarks.com/auth/callback
 ```
 https://<extension-id>.chromiumapp.org/
 http://localhost:3001/auth/callback
-https://acuitybookmarks.com/auth/callback
+https://ottersage.com/auth/callback
 ```
 
 ## 测试 OAuth 流程
@@ -92,7 +92,7 @@ https://acuitybookmarks.com/auth/callback
 部署到生产环境后，访问：
 
 ```
-https://acuitybookmarks.com/login
+https://ottersage.com/login
 ```
 
 流程与开发环境相同，只是回调 URL 变为生产环境的 URL。
@@ -127,7 +127,7 @@ https://supabase.com/dashboard/project/cqw547847/auth/url-configuration
 **A:**
 
 - `http://localhost:3001/auth/callback` - 开发环境使用
-- `https://acuitybookmarks.com/auth/callback` - 生产环境使用
+- `https://ottersage.com/auth/callback` - 生产环境使用
 
 Supabase 会根据请求的来源自动选择正确的回调 URL。
 
@@ -135,11 +135,11 @@ Supabase 会根据请求的来源自动选择正确的回调 URL。
 
 ### 插件 vs 官网的 OAuth 差异
 
-| 项目 | 回调 URL                                    | 环境             | OAuth 流程                          |
-| ---- | ------------------------------------------- | ---------------- | ----------------------------------- |
-| 插件 | `https://<extension-id>.chromiumapp.org/`   | Chrome Extension | `chrome.identity.launchWebAuthFlow` |
-| 官网 | `http://localhost:3001/auth/callback`       | Web (开发)       | 标准 Web OAuth                      |
-| 官网 | `https://acuitybookmarks.com/auth/callback` | Web (生产)       | 标准 Web OAuth                      |
+| 项目 | 回调 URL                                  | 环境             | OAuth 流程                          |
+| ---- | ----------------------------------------- | ---------------- | ----------------------------------- |
+| 插件 | `https://<extension-id>.chromiumapp.org/` | Chrome Extension | `chrome.identity.launchWebAuthFlow` |
+| 官网 | `http://localhost:3001/auth/callback`     | Web (开发)       | 标准 Web OAuth                      |
+| 官网 | `https://ottersage.com/auth/callback`     | Web (生产)       | 标准 Web OAuth                      |
 
 ### OAuth 流程对比
 

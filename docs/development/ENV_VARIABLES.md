@@ -3,7 +3,7 @@
 ## 📁 文件结构
 
 ```
-acuityBookmarks/
+otterSage/
 ├── .env                    # ✅ 公共配置（可提交到 Git）
 ├── .env.local              # ✅ 本地开发配置（不提交，需手动创建）
 ├── .gitignore              # 已配置忽略 .env.local
@@ -57,8 +57,8 @@ VITE_SUPABASE_ANON_KEY=sb_publishable_2FY9uDfqNbLwUYXxgcu8lw_qQ8SEbXo
 ```bash
 # 根目录 .env（生产环境）
 VITE_CLOUDFLARE_MODE=true
-VITE_API_BASE_URL=https://api.acuitybookmarks.com
-VITE_CLOUDFLARE_WORKER_URL=https://acuitybookmarks.cqw547847.workers.dev
+VITE_API_BASE_URL=https://api.ottersage.com
+VITE_CLOUDFLARE_WORKER_URL=https://ottersage.cqw547847.workers.dev
 ```
 
 **本地开发覆盖**（可选）：
@@ -78,7 +78,7 @@ VITE_CLOUDFLARE_WORKER_URL=https://localhost:8787
 
 ```bash
 # 根目录 .env
-VITE_GUMROAD_PRODUCT_URL=https://cqw5478.gumroad.com/l/acuitybookmarks-pro
+VITE_GUMROAD_PRODUCT_URL=https://cqw5478.gumroad.com/l/ottersage-pro
 VITE_GUMROAD_PLAN_ID_MONTHLY=...
 VITE_GUMROAD_PLAN_ID_YEARLY=
 VITE_GUMROAD_MANAGE_URL=https://app.gumroad.com/subscriptions
@@ -106,8 +106,8 @@ VITE_WEBSITE_URL=http://localhost:3001
 
 ```bash
 # 根目录 .env.local
-VITE_API_BASE_URL=https://acuitybookmarks.cqw547847.workers.dev
-VITE_CLOUDFLARE_WORKER_URL=https://acuitybookmarks.cqw547847.workers.dev
+VITE_API_BASE_URL=https://ottersage.cqw547847.workers.dev
+VITE_CLOUDFLARE_WORKER_URL=https://ottersage.cqw547847.workers.dev
 ```
 
 ### 场景 3：生产构建
@@ -152,7 +152,7 @@ bun run dev
 bun run build
 
 # 检查 dist 目录中的文件
-grep -r "api.acuitybookmarks.com" frontend/dist/
+grep -r "api.ottersage.com" frontend/dist/
 ```
 
 ## ⚠️ 常见问题
@@ -167,7 +167,7 @@ const apiBase =
   import.meta.env.VITE_API_BASE_URL || // 优先使用环境变量
   (import.meta.env.DEV
     ? 'https://localhost:8787' // 开发环境默认
-    : 'https://api.acuitybookmarks.com') // 生产环境默认
+    : 'https://api.ottersage.com') // 生产环境默认
 ```
 
 ### Q2: 如何确认环境变量生效？

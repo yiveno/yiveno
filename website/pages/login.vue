@@ -3,14 +3,14 @@ import { ref, computed, onMounted } from 'vue'
 
 definePageMeta({
   title: '登录',
-  description: '登录您的 AcuityBookmarks 账户'
+  description: '登录您的 otterSage 账户'
 })
 
 useSeoMeta({
-  title: '登录 - AcuityBookmarks',
-  description: '登录您的 AcuityBookmarks 账户，开始高效管理您的书签',
-  ogTitle: '登录 - AcuityBookmarks',
-  ogDescription: '登录您的 AcuityBookmarks 账户，开始高效管理您的书签'
+  title: '登录 - otterSage',
+  description: '登录您的 otterSage 账户，开始高效管理您的书签',
+  ogTitle: '登录 - otterSage',
+  ogDescription: '登录您的 otterSage 账户，开始高效管理您的书签'
 })
 
 const { signInWithOAuth, setOAuthSession, user, initialize } = useAuth()
@@ -159,8 +159,8 @@ const handleMicrosoftLogin = async () => {
   <div class="auth-page">
     <!-- Logo 和标题 -->
     <div class="auth-header">
-      <img src="/logo.webp" alt="AcuityBookmarks Logo" class="auth-logo" />
-      <h1 class="auth-title">AcuityBookmarks</h1>
+      <img src="/logo.webp" alt="otterSage Logo" class="auth-logo" />
+      <h1 class="auth-title">otterSage</h1>
       <p class="auth-subtitle">智能书签管理，一键登录</p>
     </div>
 
@@ -231,7 +231,6 @@ const handleMicrosoftLogin = async () => {
 </template>
 
 <style scoped>
-/* ===== 动画 ===== */
 @keyframes float {
   0%,
   100% {
@@ -246,13 +245,13 @@ const handleMicrosoftLogin = async () => {
 @keyframes pulse {
   0%,
   100% {
-    transform: scale(1);
     opacity: 1;
+    transform: scale(1);
   }
 
   50% {
-    transform: scale(1.05);
     opacity: 0.9;
+    transform: scale(1.05);
   }
 }
 
@@ -276,272 +275,6 @@ const handleMicrosoftLogin = async () => {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-/* ===== 页面容器 ===== */
-.auth-page {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  padding: var(--spacing-6);
-
-  /* 🎨 深色背景，提高对比度 */
-  background: linear-gradient(135deg, #0a1612 0%, #0e1a17 50%, #0a1410 100%);
-  overflow: hidden;
-}
-
-/* 🎨 背景装饰元素 - 薄荷绿光晕 */
-.auth-page::before,
-.auth-page::after {
-  position: absolute;
-  border-radius: 50%;
-  content: '';
-  pointer-events: none;
-  opacity: 0.15;
-}
-
-.auth-page::before {
-  top: -10%;
-  right: -5%;
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, var(--md-sys-color-primary) 0%, transparent 70%);
-  animation: float 20s ease-in-out infinite;
-}
-
-.auth-page::after {
-  bottom: -10%;
-  left: -5%;
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, var(--md-sys-color-secondary) 0%, transparent 70%);
-  animation: float 25s ease-in-out infinite reverse;
-}
-
-/* ===== 头部区域 ===== */
-.auth-header {
-  position: relative;
-  z-index: 1;
-  margin-bottom: var(--spacing-10);
-  text-align: center;
-  animation: fade-in-up 0.6s ease-out;
-}
-
-.auth-logo {
-  width: 96px;
-  height: 96px;
-  margin: 0 auto var(--spacing-5);
-  filter: drop-shadow(0 8px 24px color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent));
-  animation: pulse 3s ease-in-out infinite;
-  object-fit: contain;
-}
-
-.auth-title {
-  margin: 0 0 var(--spacing-3) 0;
-  font-size: 2.25rem;
-  font-weight: 700;
-  color: #fff;
-  text-shadow: 0 2px 12px rgb(0 0 0 / 30%);
-  letter-spacing: -0.02em;
-}
-
-.auth-subtitle {
-  margin: 0;
-  font-size: 1.0625rem;
-  color: rgb(255 255 255 / 70%);
-  font-weight: 400;
-}
-
-/* ===== 登录表单卡片 ===== */
-.auth-form {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  max-width: 440px;
-  padding: var(--spacing-10) var(--spacing-8);
-
-  /* 🎨 现代化卡片样式 - 更高对比度 */
-  border-radius: var(--radius-lg);
-  background: rgb(20 30 26 / 85%);
-  backdrop-filter: blur(24px);
-  border: 1px solid rgb(131 213 197 / 15%);
-  box-shadow:
-    0 24px 64px rgb(0 0 0 / 40%),
-    0 12px 32px rgb(0 0 0 / 30%),
-    inset 0 1px 0 rgb(255 255 255 / 5%);
-  animation: fade-in-up 0.6s ease-out 0.2s both;
-}
-
-.form-title {
-  margin: 0 0 24px;
-  font-size: 1.5rem;
-  font-weight: 600;
-  text-align: center;
-  color: #fff;
-}
-
-.form-subtitle {
-  margin: 0 0 40px;
-  font-size: 0.9375rem;
-  text-align: center;
-  color: rgb(255 255 255 / 60%);
-}
-
-/* ===== 错误提示 ===== */
-.auth-alert {
-  margin-bottom: var(--spacing-4);
-  padding: var(--spacing-3) var(--spacing-4);
-  border-radius: var(--radius-md);
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--md-sys-color-error) 12%, transparent) 0%,
-    color-mix(in srgb, var(--md-sys-color-error) 8%, transparent) 100%
-  );
-  border: 1px solid color-mix(in srgb, var(--md-sys-color-error) 30%, transparent);
-  animation: fade-in-up 0.3s ease-out;
-}
-
-.auth-alert-text {
-  margin: 0;
-  font-size: 0.875rem;
-  color: var(--md-sys-color-error);
-  text-align: center;
-  font-weight: 500;
-}
-
-/* ===== OAuth 登录按钮 ===== */
-.oauth-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  margin-bottom: 40px;
-}
-
-.oauth-btn {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 18px 20px;
-  font-size: 0.9375rem;
-  font-weight: 500;
-  border: 1.5px solid rgb(131 213 197 / 20%);
-  border-radius: var(--radius-md);
-  background: rgb(30 45 40 / 60%);
-  color: #fff;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
-}
-
-/* 按钮悬停效果 */
-.oauth-btn::before {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  border-radius: 50%;
-  background: rgb(131 213 197 / 15%);
-  content: '';
-  transition:
-    width 0.6s ease,
-    height 0.6s ease,
-    top 0.6s ease,
-    left 0.6s ease;
-  transform: translate(-50%, -50%);
-}
-
-.oauth-btn:hover::before {
-  width: 300px;
-  height: 300px;
-}
-
-.oauth-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.oauth-btn:disabled::before {
-  display: none;
-}
-
-/* Google 按钮 */
-.oauth-btn--google {
-  border-color: rgb(131 213 197 / 30%);
-}
-
-.oauth-btn--google:hover:not(:disabled) {
-  border-color: var(--md-sys-color-primary);
-  background: rgb(30 45 40 / 80%);
-  box-shadow:
-    0 8px 24px rgb(131 213 197 / 20%),
-    0 4px 12px rgb(131 213 197 / 10%);
-  transform: translateY(-2px);
-}
-
-.oauth-btn--google:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-/* Microsoft 按钮 */
-.oauth-btn--microsoft {
-  border-color: rgb(177 204 197 / 30%);
-}
-
-.oauth-btn--microsoft:hover:not(:disabled) {
-  border-color: var(--md-sys-color-secondary);
-  background: rgb(30 45 40 / 80%);
-  box-shadow:
-    0 8px 24px rgb(177 204 197 / 20%),
-    0 4px 12px rgb(177 204 197 / 10%);
-  transform: translateY(-2px);
-}
-
-.oauth-btn--microsoft:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-/* 图标 */
-.oauth-icon {
-  position: relative;
-  z-index: 1;
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-}
-
-.oauth-btn span {
-  position: relative;
-  z-index: 1;
-}
-
-/* ===== 隐私提示 ===== */
-.auth-privacy-notice {
-  margin: 0;
-  padding-top: 28px;
-  border-top: 1px solid rgb(131 213 197 / 15%);
-  font-size: 0.8125rem;
-  line-height: 1.6;
-  text-align: center;
-  color: rgb(255 255 255 / 50%);
-}
-
-.auth-privacy-notice a {
-  text-decoration: none;
-  color: var(--md-sys-color-primary);
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.auth-privacy-notice a:hover {
-  text-decoration: underline;
-  color: rgb(131 213 197 / 100%);
 }
 
 /* ===== 响应式 ===== */
@@ -599,12 +332,280 @@ const handleMicrosoftLogin = async () => {
   }
 
   .auth-form {
-    background: rgb(20 30 26 / 90%);
     border-color: rgb(131 213 197 / 20%);
+    background: rgb(20 30 26 / 90%);
     box-shadow:
       0 24px 64px rgb(0 0 0 / 50%),
       0 12px 32px rgb(0 0 0 / 40%),
       inset 0 1px 0 rgb(255 255 255 / 8%);
   }
 }
+
+/* ===== 页面容器 ===== */
+.auth-page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: var(--spacing-6);
+
+  /* 🎨 深色背景，提高对比度 */
+  background: linear-gradient(135deg, #0a1612 0%, #0e1a17 50%, #0a1410 100%);
+  overflow: hidden;
+}
+
+/* 🎨 背景装饰元素 - 薄荷绿光晕 */
+.auth-page::before,
+.auth-page::after {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.15;
+  pointer-events: none;
+  content: '';
+}
+
+.auth-page::before {
+  top: -10%;
+  right: -5%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, var(--md-sys-color-primary) 0%, transparent 70%);
+  animation: float 20s ease-in-out infinite;
+}
+
+.auth-page::after {
+  bottom: -10%;
+  left: -5%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, var(--md-sys-color-secondary) 0%, transparent 70%);
+  animation: float 25s ease-in-out infinite reverse;
+}
+
+/* ===== 头部区域 ===== */
+.auth-header {
+  position: relative;
+  z-index: 1;
+  margin-bottom: var(--spacing-10);
+  text-align: center;
+  animation: fade-in-up 0.6s ease-out;
+}
+
+.auth-logo {
+  width: 96px;
+  height: 96px;
+  margin: 0 auto var(--spacing-5);
+  filter: drop-shadow(0 8px 24px color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent));
+  animation: pulse 3s ease-in-out infinite;
+  object-fit: contain;
+}
+
+.auth-title {
+  margin: 0 0 var(--spacing-3) 0;
+  font-size: 2.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #fff;
+  text-shadow: 0 2px 12px rgb(0 0 0 / 30%);
+}
+
+.auth-subtitle {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 400;
+  color: rgb(255 255 255 / 70%);
+}
+
+/* ===== 登录表单卡片 ===== */
+.auth-form {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 440px;
+  padding: var(--spacing-10) var(--spacing-8);
+  border: 1px solid rgb(131 213 197 / 15%);
+
+  /* 🎨 现代化卡片样式 - 更高对比度 */
+  border-radius: var(--radius-lg);
+  background: rgb(20 30 26 / 85%);
+  animation: fade-in-up 0.6s ease-out 0.2s both;
+  backdrop-filter: blur(24px);
+  box-shadow:
+    0 24px 64px rgb(0 0 0 / 40%),
+    0 12px 32px rgb(0 0 0 / 30%),
+    inset 0 1px 0 rgb(255 255 255 / 5%);
+}
+
+.form-title {
+  margin: 0 0 24px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+  color: #fff;
+}
+
+.form-subtitle {
+  margin: 0 0 40px;
+  font-size: 0.9375rem;
+  text-align: center;
+  color: rgb(255 255 255 / 60%);
+}
+
+/* ===== 错误提示 ===== */
+.auth-alert {
+  margin-bottom: var(--spacing-4);
+  padding: var(--spacing-3) var(--spacing-4);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-error) 30%, transparent);
+  border-radius: var(--radius-md);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--md-sys-color-error) 12%, transparent) 0%,
+    color-mix(in srgb, var(--md-sys-color-error) 8%, transparent) 100%
+  );
+  animation: fade-in-up 0.3s ease-out;
+}
+
+.auth-alert-text {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+  color: var(--md-sys-color-error);
+}
+
+/* ===== OAuth 登录按钮 ===== */
+.oauth-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.oauth-btn {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 18px 20px;
+  border: 1.5px solid rgb(131 213 197 / 20%);
+  border-radius: var(--radius-md);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #fff;
+  background: rgb(30 45 40 / 60%);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+/* 按钮悬停效果 */
+.oauth-btn::before {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgb(131 213 197 / 15%);
+  transform: translate(-50%, -50%);
+  transition:
+    width 0.6s ease,
+    height 0.6s ease,
+    top 0.6s ease,
+    left 0.6s ease;
+  content: '';
+}
+
+.oauth-btn:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.oauth-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.oauth-btn:disabled::before {
+  display: none;
+}
+
+/* Google 按钮 */
+.oauth-btn--google {
+  border-color: rgb(131 213 197 / 30%);
+}
+
+.oauth-btn--google:hover:not(:disabled) {
+  border-color: var(--md-sys-color-primary);
+  background: rgb(30 45 40 / 80%);
+  box-shadow:
+    0 8px 24px rgb(131 213 197 / 20%),
+    0 4px 12px rgb(131 213 197 / 10%);
+  transform: translateY(-2px);
+}
+
+.oauth-btn--google:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Microsoft 按钮 */
+.oauth-btn--microsoft {
+  border-color: rgb(177 204 197 / 30%);
+}
+
+.oauth-btn--microsoft:hover:not(:disabled) {
+  border-color: var(--md-sys-color-secondary);
+  background: rgb(30 45 40 / 80%);
+  box-shadow:
+    0 8px 24px rgb(177 204 197 / 20%),
+    0 4px 12px rgb(177 204 197 / 10%);
+  transform: translateY(-2px);
+}
+
+.oauth-btn--microsoft:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* 图标 */
+.oauth-icon {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}
+
+.oauth-btn span {
+  position: relative;
+  z-index: 1;
+}
+
+/* ===== 隐私提示 ===== */
+.auth-privacy-notice {
+  margin: 0;
+  padding-top: 28px;
+  border-top: 1px solid rgb(131 213 197 / 15%);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  text-align: center;
+  color: rgb(255 255 255 / 50%);
+}
+
+.auth-privacy-notice a {
+  font-weight: 500;
+  text-decoration: none;
+  color: var(--md-sys-color-primary);
+  transition: all 0.2s ease;
+}
+
+.auth-privacy-notice a:hover {
+  text-decoration: underline;
+  color: rgb(131 213 197 / 100%);
+}
+
+/* ===== 动画 ===== */
 </style>

@@ -1,12 +1,12 @@
 {
   "app_name": {
-    "message": "Acuity북마크"
+    "message": "OtterSage북마크"
   },
   "app_description": {
     "message": "북마크의 지식을 잠금 해제하세요. AI 기반 정리, 콘텐츠 인식 검색."
   },
   "welcome": {
-    "message": "Acuity북마크에 오신 것을 환영합니다!"
+    "message": "OtterSage북마크에 오신 것을 환영합니다!"
   },
   "search_placeholder": {
     "message": "북마크 필터…"
@@ -1122,7 +1122,7 @@
     "message": "/"
   },
   "onboarding_welcome_title": {
-    "message": "AcuityBookmarks에 오신 것을 환영합니다"
+    "message": "otterSage에 오신 것을 환영합니다"
   },
   "onboarding_welcome_subtitle": {
     "message": "AI 기반 북마크 관리자"
@@ -2106,7 +2106,7 @@
     "message": "모두 준비됨"
   },
   "onboarding_ready_description": {
-    "message": "AcuityBookmarks 기능에 대해 배우는 시간을 가져주셔서 감사합니다. \"시작하기\"를 클릭하면 이 페이지가 자동으로 닫히고 즉시 지능형 북마크 관리를 즐길 수 있습니다."
+    "message": "otterSage 기능에 대해 배우는 시간을 가져주셔서 감사합니다. \"시작하기\"를 클릭하면 이 페이지가 자동으로 닫히고 즉시 지능형 북마크 관리를 즐길 수 있습니다."
   },
   "onboarding_initializing": {
     "message": "초기화 중..."

@@ -11,7 +11,7 @@
 import { ref, onMounted } from 'vue'
 import { logger } from '@/infrastructure/logging/logger'
 
-const STORAGE_KEY = 'acuity_search_history'
+const STORAGE_KEY = 'ottersage_search_history'
 const MAX_HISTORY_SIZE = 20 // 最多保存 20 条历史记录
 
 export interface SearchHistoryItem {

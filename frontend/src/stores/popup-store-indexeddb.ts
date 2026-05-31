@@ -265,7 +265,7 @@ export const usePopupStoreIndexedDB = defineStore('popup-indexeddb', () => {
     chrome.runtime.onMessage.addListener(message => {
       if (typeof chrome === 'undefined' || !chrome.runtime?.id) return
       // 监听书签同步完成消息
-      if (message.type === 'acuity-bookmarks-db-synced') {
+      if (message.type === 'ottersage-db-synced') {
         logger.info('PopupStore', `📡 收到书签同步消息 (${message.eventType})，自动刷新数据`)
 
         // 使用 queueMicrotask 避免阻塞消息处理

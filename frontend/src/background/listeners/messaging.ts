@@ -57,7 +57,7 @@ export function registerMessageHandlers(): void {
 
     // 只接受来自官网的消息
     const allowedOrigins = [
-      'https://acuitybookmarks.com',
+      'https://ottersage.com',
       'http://localhost:3000',
       'https://localhost:3000',
       'http://localhost:3001',
@@ -85,11 +85,11 @@ const MESSAGE_HANDLERS: Record<
   string,
   (message: RuntimeMessage, sendResponse: AsyncResponse) => Promise<void>
 > = {
-  ACUITY_NOTIFY_PING: async (_message, sendResponse) => {
+  OTTERSAGE_NOTIFY_PING: async (_message, sendResponse) => {
     sendResponse({ ok: true } as unknown)
   },
-  ACUITY_NOTIFY: handleNotification,
-  ACUITY_NOTIFY_CLEAR: handleNotificationClear,
+  OTTERSAGE_NOTIFY: handleNotification,
+  OTTERSAGE_NOTIFY_CLEAR: handleNotificationClear,
   OPEN_MANAGEMENT_PAGE: async (_message, sendResponse) => {
     openManagementPage()
     sendResponse({ success: true } as unknown)
@@ -101,7 +101,7 @@ const MESSAGE_HANDLERS: Record<
   SYNC_BOOKMARKS: async (_message, sendResponse) => {
     sendResponse({ ok: true } as unknown)
   },
-  'get-bookmarks-paged': handlePagedBookmarks,
+  'get-paged': handlePagedBookmarks,
   'get-children-paged': handleChildrenPaged,
   'get-tree-root': handleTreeRoot,
   'get-global-stats': handleGlobalStats,
@@ -180,7 +180,7 @@ async function handleNotification(
   sendResponse: AsyncResponse
 ): Promise<void> {
   const data = message.data || {}
-  const title = (data.title as string) || 'AcuityBookmarks'
+  const title = (data.title as string) || 'otterSage'
   const content = (data.message as string) || ''
   const iconUrl = data.iconUrl as string | undefined
 

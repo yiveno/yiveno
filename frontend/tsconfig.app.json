@@ -25,7 +25,7 @@
     /* Path mapping (TS#62508): remove baseUrl and use relative path mapping */
     "paths": {
       "@/*": ["./src/*"],
-      "@acuity-bookmarks/types": ["../packages/types/src/index.ts"]
+      "@ottersage/types": ["../packages/types/src/index.ts"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"],

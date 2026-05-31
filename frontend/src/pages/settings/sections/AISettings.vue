@@ -614,8 +614,8 @@ onMounted(async () => {
           <div class="privacy-note">
             <LucideIcon name="shield" :size="14" />
             <span
-              >您的 API Key 和书签数据只在您的设备和您选择的 AI 服务商之间流动，不经过
-              AcuityBookmarks 服务器。</span
+              >您的 API Key 和书签数据只在您的设备和您选择的 AI 服务商之间流动，不经过 otterSage
+              服务器。</span
             >
           </div>
 

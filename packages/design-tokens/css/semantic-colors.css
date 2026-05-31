@@ -1,5 +1,5 @@
 /**
- * AcuityBookmarks Design Tokens - Semantic Colors
+ * otterSage Design Tokens - Semantic Colors
  *
  * 语义色与强调色：全部派生自 material-theme.css 的 M3 角色（--md-sys-color-*），
  * 换 Theme Builder 导出种子后自动联动，勿在此文件写死 Hex（P2）。
@@ -17,91 +17,95 @@
    * 语义色 (Semantic) — 映射到 M3 角色
    * ======================================== */
 
-  --acuity-semantic-info: var(--md-sys-color-primary);
-  --acuity-semantic-info-container: var(--md-sys-color-primary-container);
-  --acuity-semantic-on-info: var(--md-sys-color-on-primary);
-  --acuity-semantic-on-info-container: var(--md-sys-color-on-primary-container);
+  --ottersage-semantic-info: var(--md-sys-color-primary);
+  --ottersage-semantic-info-container: var(--md-sys-color-primary-container);
+  --ottersage-semantic-on-info: var(--md-sys-color-on-primary);
+  --ottersage-semantic-on-info-container: var(--md-sys-color-on-primary-container);
 
-  --acuity-semantic-success: var(--md-sys-color-secondary);
-  --acuity-semantic-success-container: var(--md-sys-color-secondary-container);
-  --acuity-semantic-on-success: var(--md-sys-color-on-secondary);
-  --acuity-semantic-on-success-container: var(--md-sys-color-on-secondary-container);
+  --ottersage-semantic-success: var(--md-sys-color-secondary);
+  --ottersage-semantic-success-container: var(--md-sys-color-secondary-container);
+  --ottersage-semantic-on-success: var(--md-sys-color-on-secondary);
+  --ottersage-semantic-on-success-container: var(--md-sys-color-on-secondary-container);
 
-  --acuity-semantic-warning: var(--md-sys-color-tertiary);
-  --acuity-semantic-warning-container: var(--md-sys-color-tertiary-container);
-  --acuity-semantic-on-warning: var(--md-sys-color-on-tertiary);
-  --acuity-semantic-on-warning-container: var(--md-sys-color-on-tertiary-container);
+  --ottersage-semantic-warning: var(--md-sys-color-tertiary);
+  --ottersage-semantic-warning-container: var(--md-sys-color-tertiary-container);
+  --ottersage-semantic-on-warning: var(--md-sys-color-on-tertiary);
+  --ottersage-semantic-on-warning-container: var(--md-sys-color-on-tertiary-container);
 
   /* ========================================
    * 强调色 (Accent) — color-mix 自 M3，无独立 Hex
    * ======================================== */
 
-  --acuity-accent-teal: color-mix(
+  --ottersage-accent-teal: color-mix(
     in srgb,
     var(--md-sys-color-primary) 45%,
     var(--md-sys-color-secondary) 55%
   );
-  --acuity-accent-teal-hover: color-mix(
+  --ottersage-accent-teal-hover: color-mix(
     in srgb,
-    var(--acuity-accent-teal) 88%,
+    var(--ottersage-accent-teal) 88%,
     var(--md-sys-color-on-surface) 12%
   );
 
   /* 暖色高光：在蓝种子下用 error 少量掺入 primary-fixed-dim，避免脱离色板 */
-  --acuity-accent-gold: color-mix(
+  --ottersage-accent-gold: color-mix(
     in srgb,
     var(--md-sys-color-error) 12%,
     var(--md-sys-color-primary-fixed-dim) 88%
   );
-  --acuity-accent-gold-hover: color-mix(
+  --ottersage-accent-gold-hover: color-mix(
     in srgb,
-    var(--acuity-accent-gold) 88%,
+    var(--ottersage-accent-gold) 88%,
     var(--md-sys-color-surface) 12%
   );
 
-  --acuity-accent-amber: color-mix(
+  --ottersage-accent-amber: color-mix(
     in srgb,
     var(--md-sys-color-error) 28%,
     var(--md-sys-color-primary-fixed-dim) 72%
   );
-  --acuity-accent-amber-container: color-mix(
+  --ottersage-accent-amber-container: color-mix(
     in srgb,
     var(--md-sys-color-primary-container) 55%,
     var(--md-sys-color-tertiary-container) 45%
   );
 
-  --acuity-accent-purple: var(--md-sys-color-tertiary);
-  --acuity-accent-purple-container: var(--md-sys-color-tertiary-container);
-  --acuity-accent-ai: var(--acuity-accent-purple);
-  --acuity-accent-ai-container: var(--acuity-accent-purple-container);
-  --acuity-accent-on-ai: var(--md-sys-color-on-tertiary);
-  --acuity-accent-on-ai-container: var(--md-sys-color-on-tertiary-container);
+  --ottersage-accent-purple: var(--md-sys-color-tertiary);
+  --ottersage-accent-purple-container: var(--md-sys-color-tertiary-container);
+  --ottersage-accent-ai: var(--ottersage-accent-purple);
+  --ottersage-accent-ai-container: var(--ottersage-accent-purple-container);
+  --ottersage-accent-on-ai: var(--md-sys-color-on-tertiary);
+  --ottersage-accent-on-ai-container: var(--md-sys-color-on-tertiary-container);
 
   /* ========================================
    * Primary 阶梯 — 由当前主题 primary 混色生成（非 Tailwind 固定板）
    * ======================================== */
 
-  --acuity-primary-50: color-mix(in srgb, var(--md-sys-color-primary) 14%, white);
-  --acuity-primary-100: color-mix(in srgb, var(--md-sys-color-primary) 28%, white);
-  --acuity-primary-200: color-mix(in srgb, var(--md-sys-color-primary) 42%, white);
-  --acuity-primary-300: color-mix(in srgb, var(--md-sys-color-primary) 58%, white);
-  --acuity-primary-400: color-mix(in srgb, var(--md-sys-color-primary) 75%, white);
-  --acuity-primary-500: var(--md-sys-color-primary);
-  --acuity-primary-600: color-mix(in srgb, var(--md-sys-color-primary) 90%, black);
-  --acuity-primary-700: color-mix(in srgb, var(--md-sys-color-primary) 78%, black);
-  --acuity-primary-800: color-mix(in srgb, var(--md-sys-color-primary) 65%, black);
-  --acuity-primary-900: color-mix(in srgb, var(--md-sys-color-primary) 52%, black);
+  --ottersage-primary-50: color-mix(in srgb, var(--md-sys-color-primary) 14%, white);
+  --ottersage-primary-100: color-mix(in srgb, var(--md-sys-color-primary) 28%, white);
+  --ottersage-primary-200: color-mix(in srgb, var(--md-sys-color-primary) 42%, white);
+  --ottersage-primary-300: color-mix(in srgb, var(--md-sys-color-primary) 58%, white);
+  --ottersage-primary-400: color-mix(in srgb, var(--md-sys-color-primary) 75%, white);
+  --ottersage-primary-500: var(--md-sys-color-primary);
+  --ottersage-primary-600: color-mix(in srgb, var(--md-sys-color-primary) 90%, black);
+  --ottersage-primary-700: color-mix(in srgb, var(--md-sys-color-primary) 78%, black);
+  --ottersage-primary-800: color-mix(in srgb, var(--md-sys-color-primary) 65%, black);
+  --ottersage-primary-900: color-mix(in srgb, var(--md-sys-color-primary) 52%, black);
 
   /* ========================================
    * Alpha — color-mix(in srgb, …, transparent)
    * ======================================== */
 
-  --acuity-primary-alpha-10: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
-  --acuity-primary-alpha-20: color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
-  --acuity-secondary-alpha-10: color-mix(in srgb, var(--md-sys-color-secondary) 10%, transparent);
-  --acuity-error-alpha-10: color-mix(in srgb, var(--md-sys-color-error) 10%, transparent);
-  --acuity-warning-alpha-10: color-mix(in srgb, var(--md-sys-color-tertiary) 10%, transparent);
-  --acuity-warning-alpha-20: color-mix(in srgb, var(--md-sys-color-tertiary) 20%, transparent);
-  --acuity-success-alpha-10: color-mix(in srgb, var(--md-sys-color-secondary) 10%, transparent);
-  --acuity-info-alpha-10: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
+  --ottersage-primary-alpha-10: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
+  --ottersage-primary-alpha-20: color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
+  --ottersage-secondary-alpha-10: color-mix(
+    in srgb,
+    var(--md-sys-color-secondary) 10%,
+    transparent
+  );
+  --ottersage-error-alpha-10: color-mix(in srgb, var(--md-sys-color-error) 10%, transparent);
+  --ottersage-warning-alpha-10: color-mix(in srgb, var(--md-sys-color-tertiary) 10%, transparent);
+  --ottersage-warning-alpha-20: color-mix(in srgb, var(--md-sys-color-tertiary) 20%, transparent);
+  --ottersage-success-alpha-10: color-mix(in srgb, var(--md-sys-color-secondary) 10%, transparent);
+  --ottersage-info-alpha-10: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
 }

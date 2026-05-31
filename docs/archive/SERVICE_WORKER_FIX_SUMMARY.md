@@ -293,7 +293,7 @@ CRAWLER_DEBUG=true bunx vite build
 ### 2. 重新加载扩展
 
 1. 打开 `chrome://extensions/`
-2. 找到 AcuityBookmarks
+2. 找到 otterSage
 3. 点击"重新加载"按钮
 
 ### 3. 检查 Service Worker 控制台

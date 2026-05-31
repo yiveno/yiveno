@@ -94,13 +94,13 @@ label {
 
 input,
 textarea {
-  border-radius: 14px;
-  border: 1px solid rgb(148 163 184 / 30%);
-  background: rgb(15 23 42 / 60%);
   padding: 0.85rem 1rem;
-  color: var(--text-primary);
-  font-size: 0.95rem;
+  border: 1px solid rgb(148 163 184 / 30%);
+  border-radius: 14px;
   font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  background: rgb(15 23 42 / 60%);
   transition:
     border 0.2s ease,
     box-shadow 0.2s ease;
@@ -114,12 +114,12 @@ textarea:focus {
 }
 
 .btn {
-  border-radius: 999px;
-  background: linear-gradient(120deg, #38bdf8, #7c3aed);
-  color: #050f1f;
-  border: none;
   padding: 0.85rem 1.75rem;
+  border: none;
+  border-radius: 999px;
   font-weight: 600;
+  color: #050f1f;
+  background: linear-gradient(120deg, #38bdf8, #7c3aed);
   cursor: pointer;
   transition: transform 0.2s ease;
 }

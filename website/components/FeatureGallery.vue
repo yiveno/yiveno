@@ -62,24 +62,24 @@ const chartValues = [30, 70, 45, 90, 55]
 <style scoped>
 .feature-gallery {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
 article {
-  padding: 1.75rem;
-  border-radius: var(--radius-sm);
-  border: 1px solid rgb(148 163 184 / 15%);
-  background: rgb(15 23 42 / 65%);
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  padding: 1.75rem;
+  border: 1px solid rgb(148 163 184 / 15%);
+  border-radius: var(--radius-sm);
+  background: rgb(15 23 42 / 65%);
 }
 
 .head {
   display: flex;
-  gap: 0.75rem;
   align-items: center;
+  gap: 0.75rem;
 }
 
 .icon {
@@ -93,11 +93,11 @@ article {
 }
 
 .preview {
-  border-radius: 18px;
-  border: 1px solid rgb(148 163 184 / 12%);
-  padding: 1rem;
-  background: rgb(2 8 23 / 70%);
   min-height: 150px;
+  padding: 1rem;
+  border: 1px solid rgb(148 163 184 / 12%);
+  border-radius: 18px;
+  background: rgb(2 8 23 / 70%);
 }
 
 .preview.list .row {
@@ -123,22 +123,22 @@ article {
 
 .preview.chart .bars {
   display: flex;
-  gap: 0.5rem;
   align-items: flex-end;
+  gap: 0.5rem;
   height: 120px;
 }
 
 .preview.chart span {
   flex: 1;
-  background: linear-gradient(180deg, rgb(56 189 248 / 90%), rgb(56 189 248 / 10%));
   border-radius: 8px 8px 4px 4px;
+  background: linear-gradient(180deg, rgb(56 189 248 / 90%), rgb(56 189 248 / 10%));
   animation: pulse 4s ease-in-out infinite;
 }
 
 .preview.grid .grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
   gap: 0.5rem;
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .preview.grid span {

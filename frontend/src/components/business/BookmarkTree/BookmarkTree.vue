@@ -692,7 +692,7 @@ const openBookmark = async (node: BookmarkNode, event: MouseEvent) => {
 
 const handleFolderToggle = (folderId: string, node: BookmarkNode) => {
   const isExpanded = expandedFolders.value.has(folderId)
-  logger.debug('SimpleBookmarkTree', 'handleFolderToggle', {
+  logger.debug('BookmarkTree', 'handleFolderToggle', {
     folderId,
     title: node.title,
     isExpanded,
@@ -742,7 +742,7 @@ const handleFolderToggle = (folderId: string, node: BookmarkNode) => {
       for (const sibling of siblings) {
         if (sibling.id !== folderId && !sibling.url && expandedFolders.value.has(sibling.id)) {
           expandedFolders.value.delete(sibling.id)
-          logger.debug('SimpleBookmarkTree', '📁 手风琴模式：收起同级文件夹', sibling.id)
+          logger.debug('BookmarkTree', '📁 手风琴模式：收起同级文件夹', sibling.id)
         }
       }
     }
@@ -933,7 +933,7 @@ const handleKeyboardNavigation = (event: KeyboardEvent) => {
         if (node) {
           if (node.url) {
             // 是书签，打开它
-            openBookmark(node, event as unknown as MouseEvent)
+            void openBookmark(node, event as unknown as MouseEvent)
           } else {
             // 是文件夹，切换展开/收起
             handleFolderToggle(String(node.id), node)
@@ -1043,7 +1043,7 @@ const closeContextMenu = () => {
   contextMenuNodeId.value = null
 
   // ✅ 关闭菜单后，将焦点返回到树容器，确保键盘导航继续工作
-  nextTick(() => {
+  void nextTick(() => {
     if (containerRef.value) {
       const treeContainer = containerRef.value.closest('.simple-bookmark-tree') as HTMLElement
       if (treeContainer) {
@@ -1095,16 +1095,16 @@ const handleContextMenuItemClick = (item: MenuItemConfig) => {
   // 根据 action 触发对应的事件
   switch (item.action) {
     case 'folder:open-all-incognito':
-      openAllBookmarksInFolder(node, 'incognito')
+      void openAllBookmarksInFolder(node, 'incognito')
       break
     case 'folder:open-all-tab-group':
-      openAllBookmarksInFolder(node, 'tab-group')
+      void openAllBookmarksInFolder(node, 'tab-group')
       break
     case 'folder:open-all':
-      openAllBookmarksInFolder(node, 'current-window')
+      void openAllBookmarksInFolder(node, 'current-window')
       break
     case 'folder:open-all-new-window':
-      openAllBookmarksInFolder(node, 'new-window')
+      void openAllBookmarksInFolder(node, 'new-window')
       break
     case 'folder:edit':
       emit('nodeEdit', node)
@@ -1716,7 +1716,7 @@ const expandAll = () => {
   const source = treeSource.value
   const allFolderIds = getAllFolderIds(source)
   if (allFolderIds.length > 2000) {
-    logger.warn('SimpleBookmarkTree', 'expandAll 被限制，节点过多')
+    logger.warn('BookmarkTree', 'expandAll 被限制，节点过多')
     message.warning('节点过多，展开全部会影响性能，请按需展开。')
     return
   }
@@ -1800,7 +1800,7 @@ const focusNodeById = async (
 
   // 滚动操作：非阻塞异步执行
   if (options?.scrollIntoView || options?.scrollIntoViewCenter) {
-    nextTick(() => {
+    void nextTick(() => {
       const element = nodeElRegistry.get(id)
       if (element) {
         element.scrollIntoView({

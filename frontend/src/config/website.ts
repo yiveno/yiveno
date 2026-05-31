@@ -5,7 +5,7 @@
  */
 
 // 官网基础 URL
-const WEBSITE_BASE_URL = import.meta.env.VITE_WEBSITE_URL || 'https://acuitybookmarks.com'
+const WEBSITE_BASE_URL = import.meta.env.VITE_WEBSITE_URL || 'https://ottersage.com'
 
 /**
  * 官网 URL 配置

@@ -4,7 +4,7 @@
  * 与「外观」亮/暗（data-theme）正交；每套预设对应 Material Theme Builder 以 `seedHex`
  * 生成的一整族 M3 变量（含 light + dark）。
  *
- * **产品文档**：`docs/product/AcuityBookmarks-产品文档-v3.0.md` §2.5.5 与本文件保持同步；
+ * **产品文档**：`docs/product/otterSage-产品文档-v3.0.md` §2.5.5 与本文件保持同步；
  * 增删改预设时请先改此处，再更新文档表格。
  *
  * **CSS 产物**：`packages/design-tokens/css/presets/<id>.css` 由根目录 Builder 导出文件夹经

@@ -161,7 +161,7 @@ export function usePopupPage() {
 
       uiStore.value = uiStoreModule.useUIStore()
       popupStore.value = popupStoreModule.usePopupStoreIndexedDB()
-      uiStore.value.setCurrentPage('popup', 'AcuityBookmarksPopup')
+      uiStore.value.setCurrentPage('popup', 'otterSagePopup')
 
       try {
         popupStore.value.initialize()

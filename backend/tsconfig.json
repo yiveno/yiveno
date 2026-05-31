@@ -10,7 +10,7 @@
     /* Path Aliases */
     "paths": {
       "@/*": ["./src/*"],
-      "@acuity-bookmarks/types": ["../packages/types/src/index.ts"]
+      "@ottersage/types": ["../packages/types/src/index.ts"]
     }
   },
   "include": ["src"]

@@ -7,9 +7,9 @@ export default defineNuxtConfig({
   modules: ['@nuxtjs/seo'],
 
   css: [
-    '@acuity-bookmarks/design-tokens/css/material-theme.css',
-    '@acuity-bookmarks/design-tokens/css/variables.css',
-    '@acuity-bookmarks/design-tokens/css/semantic-colors.css',
+    '@ottersage/design-tokens/css/material-theme.css',
+    '@ottersage/design-tokens/css/variables.css',
+    '@ottersage/design-tokens/css/semantic-colors.css',
     // 移除 brand-override.css，严格使用 Material Design tokens 原始配置
     '~/assets/css/utilities.css',
     '~/assets/css/main.css'
@@ -17,8 +17,8 @@ export default defineNuxtConfig({
 
   // 站点配置
   site: {
-    url: 'https://acuitybookmarks.com',
-    name: 'AcuityBookmarks',
+    url: 'https://ottersage.com',
+    name: 'otterSage',
     description: 'AI 驱动的智能书签管理工具，让您的书签井然有序',
     defaultLocale: 'zh-CN'
   },
@@ -33,12 +33,12 @@ export default defineNuxtConfig({
     head: {
       charset: 'utf-8',
       viewport: 'width=device-width, initial-scale=1',
-      title: 'AcuityBookmarks - AI 驱动的智能书签管理',
+      title: 'otterSage - AI 驱动的智能书签管理',
       meta: [
         {
           name: 'description',
           content:
-            'AcuityBookmarks 是一款基于 AI 技术的 Chrome 浏览器扩展，专为解决书签混乱、查找困难等问题而设计。支持 2 万+ 书签的流畅管理，本地优先，隐私安全。'
+            'otterSage 是一款基于 AI 技术的 Chrome 浏览器扩展，专为解决书签混乱、查找困难等问题而设计。支持 2 万+ 书签的流畅管理，本地优先，隐私安全。'
         },
         {
           name: 'keywords',
@@ -58,8 +58,8 @@ export default defineNuxtConfig({
 
     // 公共配置（客户端和服务端都可用）
     public: {
-      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://acuitybookmarks.com',
-      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || 'https://api.acuitybookmarks.com',
+      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://ottersage.com',
+      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || 'https://api.ottersage.com',
       supabase: {
         url: process.env.NUXT_PUBLIC_SUPABASE_URL || '',
         anonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY || ''

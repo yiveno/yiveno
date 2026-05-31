@@ -51,7 +51,7 @@ export default defineEventHandler(async event => {
     // TODO: 这里可以集成邮件服务（如 SendGrid、Brevo）或保存到数据库
     // 示例：发送邮件通知
     // await sendEmail({
-    //   to: 'contact@acuitybookmarks.com',
+    //   to: 'contact@ottersage.com',
     //   subject: `新联系表单：${body.name}`,
     //   html: `
     //     <h2>新联系表单提交</h2>

@@ -1,4 +1,4 @@
-# AcuityBookmarks 国际化实施指南
+# otterSage 国际化实施指南
 
 ## 📋 目录
 
@@ -583,4 +583,4 @@ jobs:
 ---
 
 **最后更新**: 2025-01-02
-**维护者**: AcuityBookmarks Team
+**维护者**: otterSage Team

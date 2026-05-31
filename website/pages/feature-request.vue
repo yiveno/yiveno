@@ -66,7 +66,7 @@ const popularRequests = [
 ]
 
 useSeoMeta({
-  title: '新功能预约 - AcuityBookmarks',
+  title: '新功能预约 - otterSage',
   description: '提交或投票你想要的功能，我们会同步在路线图中显示进度。'
 })
 </script>

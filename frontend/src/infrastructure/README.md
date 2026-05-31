@@ -162,7 +162,7 @@ const bookmarks = await indexedDBManager.getAllBookmarks()
 await indexedDBManager.saveBookmark(bookmark)
 
 // ❌ 禁止直接使用原生 API
-const db = indexedDB.open('AcuityBookmarks', 9) // 错误！
+const db = indexedDB.open('otterSage', 9) // 错误！
 ```
 
 **核心能力**：
@@ -190,18 +190,18 @@ Chrome API → Background Script → IndexedDB → Pinia Store → UI
 
 ### 4. 存储 (`storage/`)
 
-#### `modern-storage.ts` - Chrome Storage 封装
+#### `storage/chrome-storage.ts` - Chrome Storage 封装
 
 ```typescript
-import { modernStorage } from '@/infrastructure/storage/modern-storage'
+import { chromeStorage } from '@/infrastructure/storage/chrome-storage'
 
 // chrome.storage.local（永久）
-await modernStorage.setLocal('theme', 'dark')
-const theme = await modernStorage.getLocal('theme', 'light')
+await chromeStorage.setLocal('theme', 'dark')
+const theme = await chromeStorage.getLocal('theme', 'light')
 
 // chrome.storage.session（会话级）
-await modernStorage.setSession('db_ready', true)
-const ready = await modernStorage.getSession('db_ready', false)
+await chromeStorage.setSession('db_ready', true)
+const ready = await chromeStorage.getSession('db_ready', false)
 ```
 
 **存储方案对比**：
@@ -332,7 +332,7 @@ return bookmarks // 可能不符合类型
 | `indexeddb/manager`      | 50+      | ⭐⭐⭐⭐⭐ | 核心模块 |
 | `logging/logger`         | 100+     | ⭐⭐⭐⭐⭐ | 核心模块 |
 | `events/event-bus`       | 30+      | ⭐⭐⭐⭐⭐ | 核心模块 |
-| `storage/modern-storage` | 15+      | ⭐⭐⭐⭐☆  | 重要模块 |
+| `storage/chrome-storage` | 15+      | ⭐⭐⭐⭐☆  | 重要模块 |
 | `http/api-client`        | 2        | ⭐⭐⭐☆☆   | 有价值   |
 | `http/safe-fetch`        | 2        | ⭐⭐⭐☆☆   | 有价值   |
 | `events/event-stream`    | 1        | ⭐⭐⭐☆☆   | 专用场景 |

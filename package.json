@@ -1,8 +1,8 @@
 {
-  "name": "acuitybookmarks-root",
+  "name": "ottersage-root",
   "private": true,
   "version": "1.0.0",
-  "description": "AcuityBookmarks monorepo (Bun workspaces)",
+  "description": "otterSage monorepo (Bun workspaces)",
   "type": "module",
   "workspaces": [
     "frontend",

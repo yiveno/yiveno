@@ -1,6 +1,6 @@
 /**
  * Material Design 工具类
- * 基于 @acuity-bookmarks/design-tokens
+ * 基于 @ottersage/design-tokens
  * 
  * 原则：
  * - 所有值来自 Material Design tokens
@@ -444,7 +444,7 @@
 }
 
 .text-green-400 {
-  color: var(--acuity-semantic-success);
+  color: var(--ottersage-semantic-success);
 }
 
 .text-primary-400 {
@@ -555,7 +555,7 @@
 }
 
 .bg-green-500\/20 {
-  background-color: color-mix(in srgb, var(--acuity-semantic-success) 20%, transparent);
+  background-color: color-mix(in srgb, var(--ottersage-semantic-success) 20%, transparent);
 }
 
 .bg-accent-500\/20 {

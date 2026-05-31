@@ -17,7 +17,7 @@ const getBaseUrl = () => {
   }
 
   // 生产环境默认值：使用部署的 Cloudflare Workers
-  return 'https://api.acuitybookmarks.com'
+  return 'https://api.ottersage.com'
 }
 
 export const trpc = createTRPCProxyClient<AppRouter>({

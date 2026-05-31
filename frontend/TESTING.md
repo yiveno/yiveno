@@ -1,4 +1,4 @@
-# 🧪 AcuityBookmarks 测试指南
+# 🧪 otterSage 测试指南
 
 ## 📊 测试策略概览
 
@@ -472,4 +472,4 @@ bun run test:ui
 ---
 
 **最后更新**: 2025-01-22  
-**维护者**: AcuityBookmarks Team
+**维护者**: otterSage Team

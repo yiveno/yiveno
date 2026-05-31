@@ -13,10 +13,7 @@
  */
 
 import { onMounted, onUnmounted } from 'vue'
-import {
-  normalizeColorPresetId,
-  type ColorPresetId
-} from '@acuity-bookmarks/design-tokens/color-presets'
+import { normalizeColorPresetId, type ColorPresetId } from '@ottersage/design-tokens/color-presets'
 import { logger } from '@/infrastructure/logging/logger'
 import { onEvent } from '@/infrastructure/events/event-bus'
 import type { ThemeMode } from '@/infrastructure/global-state/global-state-manager'

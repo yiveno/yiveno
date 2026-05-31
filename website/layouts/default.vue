@@ -125,7 +125,7 @@ const footerGroups = [
       { label: '发布日志', to: '/about' },
       {
         label: 'GitHub 仓库',
-        to: 'https://github.com/ChenQiWen/acuityBookmarks',
+        to: 'https://github.com/ChenQiWen/otterSage',
         external: true
       }
     ]
@@ -151,7 +151,7 @@ const footerGroups = [
         <NuxtLink to="/" class="flex items-center gap-2 group">
           <img
             src="/logo.webp"
-            alt="AcuityBookmarks Logo"
+            alt="otterSage Logo"
             class="w-8 h-8 object-contain group-hover:scale-105 transition-transform"
           />
         </NuxtLink>
@@ -299,7 +299,7 @@ const footerGroups = [
         <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
           <!-- Brand Column -->
           <div class="md:col-span-1">
-            <div class="font-bold text-xl mb-4 text-content">AcuityBookmarks</div>
+            <div class="font-bold text-xl mb-4 text-content">otterSage</div>
             <p class="text-content-muted text-sm leading-relaxed mb-6">
               AI
               驱动的智能书签工作台，帮助高密度信息工作者在任何设备、任何网络环境下快速找到灵感与知识。
@@ -343,13 +343,13 @@ const footerGroups = [
           class="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4"
         >
           <p class="text-xs text-content-subtle">
-            © {{ copyrightYear }} AcuityBookmarks. All rights reserved.
+            © {{ copyrightYear }} otterSage. All rights reserved.
           </p>
           <div class="flex gap-6 text-xs text-content-muted">
             <NuxtLink to="/privacy" class="hover:text-content">隐私政策</NuxtLink>
             <NuxtLink to="/terms" class="hover:text-content">使用条款</NuxtLink>
             <a
-              href="https://github.com/ChenQiWen/acuityBookmarks"
+              href="https://github.com/ChenQiWen/otterSage"
               target="_blank"
               class="hover:text-content"
               >GitHub</a
@@ -363,13 +363,13 @@ const footerGroups = [
 
 <style scoped>
 .user-avatar-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   width: 32px;
   height: 32px;
   border-radius: 50%;
   overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .user-avatar-image {
@@ -379,14 +379,14 @@ const footerGroups = [
 }
 
 .user-avatar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   width: 100%;
   height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, var(--acuity-primary-400), var(--acuity-primary-600));
-  color: white;
   font-size: 14px;
   font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, var(--ottersage-primary-400), var(--ottersage-primary-600));
 }
 </style>

@@ -98,11 +98,11 @@ onMounted(async () => {
   display: inline-block;
   margin-top: var(--spacing-4);
   padding: var(--spacing-3) var(--spacing-6);
-  background-color: var(--md-sys-color-primary);
-  color: var(--md-sys-color-on-primary);
   border-radius: var(--radius-md);
-  text-decoration: none;
   font-weight: var(--font-medium);
+  text-decoration: none;
+  color: var(--md-sys-color-on-primary);
+  background-color: var(--md-sys-color-primary);
   transition: all 0.2s ease;
 }
 

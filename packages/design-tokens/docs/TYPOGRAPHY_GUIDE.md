@@ -1,17 +1,17 @@
 # 字体使用指南
 
-本文档说明如何在不同平台使用 AcuityBookmarks 的字体系统。
+本文档说明如何在不同平台使用 otterSage 的字体系统。
 
 ## 📝 字体系统概览
 
-AcuityBookmarks 采用系统字体栈，确保在所有平台上都有良好的阅读体验。
+otterSage 采用系统字体栈，确保在所有平台上都有良好的阅读体验。
 
 ## 📦 字体 Tokens
 
 ### 1. 字体家族（Font Family）
 
 ```typescript
-import { fontFamily } from '@acuity-bookmarks/design-tokens'
+import { fontFamily } from '@ottersage/design-tokens'
 
 fontFamily.sans // 无衬线字体（默认）
 fontFamily.mono // 等宽字体（代码）
@@ -29,7 +29,7 @@ var(--font-family-serif)  /* Georgia, Cambria, "Times New Roman", Times, serif *
 ### 2. 字体大小（Font Size）
 
 ```typescript
-import { fontSize } from '@acuity-bookmarks/design-tokens'
+import { fontSize } from '@ottersage/design-tokens'
 
 fontSize.xs // 10px - 极小文字
 fontSize.sm // 12px - 辅助文字、标签
@@ -61,7 +61,7 @@ var(--text-5xl)   /* 48px */
 ### 3. 字重（Font Weight）
 
 ```typescript
-import { fontWeight } from '@acuity-bookmarks/design-tokens'
+import { fontWeight } from '@ottersage/design-tokens'
 
 fontWeight.light // 300
 fontWeight.normal // 400 - 正文
@@ -85,7 +85,7 @@ var(--font-extrabold)  /* 800 */
 ### 4. 行高（Line Height）
 
 ```typescript
-import { lineHeight } from '@acuity-bookmarks/design-tokens'
+import { lineHeight } from '@ottersage/design-tokens'
 
 lineHeight.tight // 1.25 - 标题
 lineHeight.snug // 1.375 - 紧密
@@ -107,7 +107,7 @@ var(--line-height-loose)    /* 2 */
 ### 5. 字母间距（Letter Spacing）
 
 ```typescript
-import { letterSpacing } from '@acuity-bookmarks/design-tokens'
+import { letterSpacing } from '@ottersage/design-tokens'
 
 letterSpacing.tighter // -0.05em
 letterSpacing.tight // -0.025em
@@ -206,7 +206,7 @@ letterSpacing.widest // 0.1em
 ### React Native
 
 ```typescript
-import { fontSize, fontWeight, lineHeight } from '@acuity-bookmarks/design-tokens'
+import { fontSize, fontWeight, lineHeight } from '@ottersage/design-tokens'
 
 const styles = StyleSheet.create({
   title: {
@@ -225,23 +225,23 @@ const styles = StyleSheet.create({
 ### Flutter
 
 ```dart
-import 'package:acuity_bookmarks_design_tokens/typography.dart';
+import 'package:ottersage_bookmarks_design_tokens/typography.dart';
 
 Text(
   'Title',
   style: TextStyle(
-    fontSize: AcuityFontSize.xl,              // 20
-    fontWeight: AcuityFontWeight.semibold,    // FontWeight.w600
-    height: AcuityLineHeight.tight,           // 1.25
+    fontSize: OtterSageFontSize.xl,              // 20
+    fontWeight: OtterSageFontWeight.semibold,    // FontWeight.w600
+    height: OtterSageLineHeight.tight,           // 1.25
   ),
 )
 
 Text(
   'Body text',
   style: TextStyle(
-    fontSize: AcuityFontSize.base,            // 14
-    fontWeight: AcuityFontWeight.normal,      // FontWeight.w400
-    height: AcuityLineHeight.normal,          // 1.5
+    fontSize: OtterSageFontSize.base,            // 14
+    fontWeight: OtterSageFontWeight.normal,      // FontWeight.w400
+    height: OtterSageLineHeight.normal,          // 1.5
   ),
 )
 ```

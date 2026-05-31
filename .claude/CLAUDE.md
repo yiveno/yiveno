@@ -4,12 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Single source of truth (read first)
 
-- **Authoritative product + architecture spec (Chinese):** `docs/product/AcuityBookmarks-产品文档-v3.0.md` — **only** product document; update it when behavior or architecture changes.
+- **Authoritative product + architecture spec (Chinese):** `docs/product/otterSage-产品文档-v3.0.md` — **only** product document; update it when behavior or architecture changes.
 - **Cursor / IDE enforcement:** `.cursor/rules/project.mdc` (and `.kiro/steering/*.md` must not contradict it).
 
 ## Project Overview
 
-**AcuityBookmarks** is an intelligent Chrome extension built with Vue 3, TypeScript, and Cloudflare Workers that provides AI-powered bookmark organization, content-aware search, and smart recommendations. The project follows a sophisticated Domain-Driven Design (DDD) architecture and is optimized for high performance with features like virtual scrolling, IndexedDB caching, and background crawling.
+**otterSage** is an intelligent Chrome extension built with Vue 3, TypeScript, and Cloudflare Workers that provides AI-powered bookmark organization, content-aware search, and smart recommendations. The project follows a sophisticated Domain-Driven Design (DDD) architecture and is optimized for high performance with features like virtual scrolling, IndexedDB caching, and background crawling.
 
 ## Available Scripts
 
@@ -63,7 +63,7 @@ bun run health-check          # Local health check (HTTPS)
 ### Monorepo Structure
 
 ```
-acuityBookmarks/
+otterSage/
 ├── frontend/              # Vue 3 Chrome Extension
 ├── backend/               # Cloudflare Worker API
 ├── website/               # Marketing website (Nuxt)
@@ -367,4 +367,4 @@ this.timer = setTimeout(() => {...}, 1000)
 - **Runtime**: Edge network with global distribution
 - **Database**: Supabase (PostgreSQL) with vector search
 - **AI**: User-provided API Keys (OpenAI / Claude / Gemini) + Local ONNX embeddings (automatic)
-- **Custom Domain**: api.acuitybookmarks.com
+- **Custom Domain**: api.ottersage.com

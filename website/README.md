@@ -1,8 +1,8 @@
-# AcuityBookmarks 官网
+# otterSage 官网
 
-基于 Nuxt.js 构建的 AcuityBookmarks 官方网站，支持 SEO 优化和服务器端交互。
+基于 Nuxt.js 构建的 otterSage 官方网站，支持 SEO 优化和服务器端交互。
 
-> 📦 本项目是 AcuityBookmarks Monorepo 的一部分，位于 `website/` 目录。
+> 📦 本项目是 otterSage Monorepo 的一部分，位于 `website/` 目录。
 
 ## 🚀 技术栈
 

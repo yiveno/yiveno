@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import type { ChipProps } from './Chip.d'
 
 defineOptions({
-  name: 'AcuityChip'
+  name: 'OtterSageChip'
 })
 
 const props = withDefaults(defineProps<ChipProps>(), {
@@ -54,11 +54,11 @@ const chipAttrs = computed(() => {
 })
 
 const chipClasses = computed(() => [
-  'acuity-chip',
-  `acuity-chip--${props.type}`,
-  `acuity-chip--${props.variant}`,
-  `acuity-chip--${props.color}`,
-  `acuity-chip--${props.size}`
+  'ottersage-chip',
+  `ottersage-chip--${props.type}`,
+  `ottersage-chip--${props.variant}`,
+  `ottersage-chip--${props.color}`,
+  `ottersage-chip--${props.size}`
 ])
 </script>
 
@@ -69,110 +69,110 @@ const chipClasses = computed(() => [
 </template>
 
 <style scoped>
-.acuity-chip {
+.ottersage-chip {
   --md-assist-chip-container-shape: var(--radius-full);
   --md-assist-chip-label-text-font: var(--font-family-base);
   --md-assist-chip-label-text-weight: var(--font-weight-medium);
   --md-assist-chip-label-text-tracking: var(--typescale-label-md-tracking);
 }
 
-.acuity-chip--sm {
+.ottersage-chip--sm {
   --md-assist-chip-label-text-size: var(--typescale-label-md-size);
   --md-assist-chip-label-text-line-height: var(--typescale-label-md-line);
 }
 
-.acuity-chip--md {
+.ottersage-chip--md {
   --md-assist-chip-label-text-size: var(--typescale-label-lg-size);
   --md-assist-chip-label-text-line-height: var(--typescale-label-lg-line);
   --md-assist-chip-label-text-tracking: var(--typescale-label-lg-tracking);
 }
 
-.acuity-chip--lg {
+.ottersage-chip--lg {
   --md-assist-chip-label-text-size: var(--typescale-title-sm-size);
   --md-assist-chip-label-text-line-height: var(--typescale-title-sm-line);
   --md-assist-chip-label-text-tracking: var(--typescale-title-sm-tracking);
 }
 
-.acuity-chip--filled.acuity-chip--primary {
+.ottersage-chip--filled.ottersage-chip--primary {
   --md-assist-chip-label-text-color: var(--color-primary-foreground);
   --md-assist-chip-container-color: var(--color-primary);
 }
 
-.acuity-chip--filled.acuity-chip--secondary {
+.ottersage-chip--filled.ottersage-chip--secondary {
   --md-assist-chip-label-text-color: var(--color-secondary-foreground);
   --md-assist-chip-container-color: var(--color-secondary);
 }
 
-.acuity-chip--filled.acuity-chip--success {
+.ottersage-chip--filled.ottersage-chip--success {
   --md-assist-chip-label-text-color: var(--color-success-container-foreground);
   --md-assist-chip-container-color: var(--color-success-container);
 }
 
-.acuity-chip--filled.acuity-chip--warning {
+.ottersage-chip--filled.ottersage-chip--warning {
   --md-assist-chip-label-text-color: var(--color-warning-container-foreground);
   --md-assist-chip-container-color: var(--color-warning-container);
 }
 
-.acuity-chip--filled.acuity-chip--error {
+.ottersage-chip--filled.ottersage-chip--error {
   --md-assist-chip-label-text-color: var(--color-error-container-foreground);
   --md-assist-chip-container-color: var(--color-error-container);
 }
 
-.acuity-chip--filled.acuity-chip--info {
+.ottersage-chip--filled.ottersage-chip--info {
   --md-assist-chip-label-text-color: var(--color-info-container-foreground);
   --md-assist-chip-container-color: var(--color-info-container);
 }
 
-.acuity-chip--outlined.acuity-chip--primary {
+.ottersage-chip--outlined.ottersage-chip--primary {
   --md-assist-chip-label-text-color: var(--color-primary);
 }
 
-.acuity-chip--outlined.acuity-chip--secondary {
+.ottersage-chip--outlined.ottersage-chip--secondary {
   --md-assist-chip-label-text-color: var(--color-secondary);
 }
 
-.acuity-chip--outlined.acuity-chip--success {
+.ottersage-chip--outlined.ottersage-chip--success {
   --md-assist-chip-label-text-color: var(--color-success);
 }
 
-.acuity-chip--outlined.acuity-chip--warning {
+.ottersage-chip--outlined.ottersage-chip--warning {
   --md-assist-chip-label-text-color: var(--color-warning);
 }
 
-.acuity-chip--outlined.acuity-chip--error {
+.ottersage-chip--outlined.ottersage-chip--error {
   --md-assist-chip-label-text-color: var(--color-error);
 }
 
-.acuity-chip--outlined.acuity-chip--info {
+.ottersage-chip--outlined.ottersage-chip--info {
   --md-assist-chip-label-text-color: var(--color-info);
 }
 
-.acuity-chip--soft.acuity-chip--primary {
+.ottersage-chip--soft.ottersage-chip--primary {
   --md-assist-chip-label-text-color: var(--color-primary);
   --md-assist-chip-container-color: var(--color-primary-alpha-10);
 }
 
-.acuity-chip--soft.acuity-chip--secondary {
+.ottersage-chip--soft.ottersage-chip--secondary {
   --md-assist-chip-label-text-color: var(--color-secondary);
   --md-assist-chip-container-color: var(--color-secondary-alpha-10);
 }
 
-.acuity-chip--soft.acuity-chip--success {
+.ottersage-chip--soft.ottersage-chip--success {
   --md-assist-chip-label-text-color: var(--color-success);
   --md-assist-chip-container-color: var(--color-success-alpha-10);
 }
 
-.acuity-chip--soft.acuity-chip--warning {
+.ottersage-chip--soft.ottersage-chip--warning {
   --md-assist-chip-label-text-color: var(--color-warning);
   --md-assist-chip-container-color: var(--color-warning-alpha-10);
 }
 
-.acuity-chip--soft.acuity-chip--error {
+.ottersage-chip--soft.ottersage-chip--error {
   --md-assist-chip-label-text-color: var(--color-error);
   --md-assist-chip-container-color: var(--color-error-alpha-10);
 }
 
-.acuity-chip--soft.acuity-chip--info {
+.ottersage-chip--soft.ottersage-chip--info {
   --md-assist-chip-label-text-color: var(--color-info);
   --md-assist-chip-container-color: var(--color-info-alpha-10);
 }

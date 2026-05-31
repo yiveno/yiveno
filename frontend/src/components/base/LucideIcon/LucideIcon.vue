@@ -105,15 +105,15 @@ const transformStyle = computed(() => {
     :size="computedSize"
     :color="computedColor"
     :stroke-width="strokeWidth"
-    :class="['acuity-lucide-icon', { spin }]"
+    :class="['ottersage-lucide-icon', { spin }]"
     :style="transformStyle"
     v-bind="$attrs"
   />
-  <span v-else class="acuity-lucide-icon acuity-lucide-icon--missing">?</span>
+  <span v-else class="ottersage-lucide-icon ottersage-lucide-icon--missing">?</span>
 </template>
 
 <style scoped>
-.acuity-lucide-icon {
+.ottersage-lucide-icon {
   display: inline-flex;
   flex-shrink: 0;
   justify-content: center;
@@ -129,7 +129,7 @@ const transformStyle = computed(() => {
   will-change: transform;
 }
 
-.acuity-lucide-icon--missing {
+.ottersage-lucide-icon--missing {
   display: inline-flex;
   justify-content: center;
   align-items: center;
@@ -141,12 +141,12 @@ const transformStyle = computed(() => {
   background: color-mix(in srgb, var(--md-sys-color-error) 10%, transparent);
 }
 
-.acuity-lucide-icon.spin {
+.ottersage-lucide-icon.spin {
   will-change: transform;
-  animation: acuity-lucide-spin 1s linear infinite;
+  animation: ottersage-lucide-spin 1s linear infinite;
 }
 
-@keyframes acuity-lucide-spin {
+@keyframes ottersage-lucide-spin {
   from {
     transform: rotate(0deg);
   }

@@ -1,6 +1,6 @@
-# AcuityBookmarks 设计原则
+# otterSage 设计原则
 
-本文档定义了 AcuityBookmarks 设计系统的核心设计原则，指导所有平台的 UI 设计和实现。
+本文档定义了 otterSage 设计系统的核心设计原则，指导所有平台的 UI 设计和实现。
 
 ---
 
@@ -85,7 +85,7 @@
 
 **为什么？**
 
-- AcuityBookmarks 的目标用户是专业人士，长时间使用电脑
+- otterSage 的目标用户是专业人士，长时间使用电脑
 - 深色主题减少眼睛疲劳
 - 更符合现代审美
 

@@ -1,5 +1,5 @@
 /**
- * AcuityBookmarks 间距系统
+ * otterSage 间距系统
  *
  * 基于 8px 网格系统，确保设计的一致性和可预测性
  */

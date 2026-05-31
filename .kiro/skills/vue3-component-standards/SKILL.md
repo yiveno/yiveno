@@ -14,7 +14,7 @@ description: Ensure Vue 3 components follow project standards for naming, props,
 ```vue
 <script setup lang="ts">
 // ✅ 必须：使用 defineOptions 设置组件名
-defineOptions({ name: 'AcuityButton' })
+defineOptions({ name: 'OtterSageButton' })
 
 // ❌ 错误：不设置组件名
 // 组件名用于 Vue DevTools 调试和错误追踪
@@ -23,8 +23,8 @@ defineOptions({ name: 'AcuityButton' })
 
 **命名规范：**
 
-- ✅ 使用 PascalCase（如 `AcuityButton`、`BookmarkTree`）
-- ✅ 基础组件加 `Acuity` 前缀（如 `AcuityButton`、`AcuityInput`）
+- ✅ 使用 PascalCase（如 `OtterSageButton`、`BookmarkTree`）
+- ✅ 基础组件加 `OtterSage` 前缀（如 `OtterSageButton`、`OtterSageInput`）
 - ✅ 业务组件使用描述性名称（如 `BookmarkSearchInput`）
 
 ---
@@ -137,7 +137,7 @@ const emit = defineEmits(['click'])
 **样式规范：**
 
 - ✅ 必须使用 `scoped` 避免样式泄漏
-- ✅ 必须使用 CSS 变量（来自 `@acuity-bookmarks/design-tokens`）
+- ✅ 必须使用 CSS 变量（来自 `@ottersage/design-tokens`）
 - ✅ 类名使用 kebab-case（如 `button-primary`）
 - ❌ 禁止硬编码颜色、间距、字号
 
@@ -300,7 +300,7 @@ import { bookmarkService } from '@/application/bookmark/bookmark-service' // ✅
 import { computed } from 'vue'
 import type { ButtonProps, ButtonEmits } from './Button.d'
 
-defineOptions({ name: 'AcuityButton' })
+defineOptions({ name: 'OtterSageButton' })
 
 const props = withDefaults(defineProps<ButtonProps>(), {
   variant: 'primary',

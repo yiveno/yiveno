@@ -38,41 +38,41 @@ const handleSubmit = async () => {
 
 <style scoped>
 .subscription {
-  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  width: 100%;
 }
 
 .inputs {
   display: flex;
-  gap: 0.5rem;
   flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 input {
   flex: 1;
-  border-radius: 999px;
-  border: 1px solid rgb(148 163 184 / 35%);
-  background: rgb(3 6 17 / 75%);
-  padding: 0.85rem 1.2rem;
-  color: var(--text-primary);
   min-width: 220px;
+  padding: 0.85rem 1.2rem;
+  border: 1px solid rgb(148 163 184 / 35%);
+  border-radius: 999px;
+  color: var(--text-primary);
+  background: rgb(3 6 17 / 75%);
 }
 
 input:focus {
-  outline: none;
   border-color: rgb(56 189 248 / 60%);
+  outline: none;
   box-shadow: 0 0 0 3px rgb(56 189 248 / 15%);
 }
 
 button {
-  border-radius: 999px;
-  border: none;
   padding: 0.85rem 1.75rem;
-  background: linear-gradient(120deg, #38bdf8, #7c3aed);
-  color: #050f1f;
+  border: none;
+  border-radius: 999px;
   font-weight: 600;
+  color: #050f1f;
+  background: linear-gradient(120deg, #38bdf8, #7c3aed);
   cursor: pointer;
 }
 

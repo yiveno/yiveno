@@ -141,9 +141,9 @@ h2 {
 .test-result {
   padding: var(--spacing-3);
   border-radius: var(--radius-md);
-  background: var(--md-sys-color-surface-variant);
   font-family: monospace;
   font-size: var(--text-sm);
+  background: var(--md-sys-color-surface-variant);
 }
 
 .test-result p {
@@ -154,9 +154,9 @@ h2 {
 .test-warning {
   margin-top: var(--spacing-3);
   padding: var(--spacing-3);
+  border: 1px solid color-mix(in srgb, var(--ottersage-semantic-warning) 30%, transparent);
   border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--acuity-semantic-warning) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--acuity-semantic-warning) 30%, transparent);
+  background: color-mix(in srgb, var(--ottersage-semantic-warning) 10%, transparent);
 }
 
 .test-warning p {
@@ -169,25 +169,25 @@ h2 {
   display: block;
   margin-top: var(--spacing-2);
   padding: var(--spacing-2);
-  background: color-mix(in srgb, black 20%, transparent);
   border-radius: var(--radius-sm);
   font-family: monospace;
   font-size: var(--text-xs);
-  color: var(--acuity-semantic-warning);
+  color: var(--ottersage-semantic-warning);
+  background: color-mix(in srgb, black 20%, transparent);
 }
 
 .warning-link {
-  color: var(--acuity-semantic-warning);
   text-decoration: underline;
+  color: var(--ottersage-semantic-warning);
 }
 
 .test-button {
   padding: var(--spacing-3) var(--spacing-6);
-  background-color: var(--md-sys-color-primary);
-  color: var(--md-sys-color-on-primary);
   border: none;
   border-radius: var(--radius-md);
   font-weight: var(--font-medium);
+  color: var(--md-sys-color-on-primary);
+  background-color: var(--md-sys-color-primary);
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -208,13 +208,13 @@ h2 {
   padding: var(--spacing-2) var(--spacing-3);
   border: 1px solid color-mix(in srgb, white 10%, transparent);
   border-radius: var(--radius-md);
-  color: var(--md-sys-color-primary);
   text-decoration: none;
+  color: var(--md-sys-color-primary);
   transition: all 0.2s ease;
 }
 
 .test-link:hover {
-  background: var(--md-sys-color-surface-variant);
   border-color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-surface-variant);
 }
 </style>

@@ -2,10 +2,10 @@
 const lastUpdated = '2025年1月21日'
 
 useSeoMeta({
-  title: '隐私政策 - AcuityBookmarks',
-  description: 'AcuityBookmarks 隐私政策，了解我们如何收集、使用和保护您的个人信息。',
-  ogTitle: '隐私政策 - AcuityBookmarks',
-  ogDescription: 'AcuityBookmarks 隐私政策，了解我们如何收集、使用和保护您的个人信息。'
+  title: '隐私政策 - otterSage',
+  description: 'otterSage 隐私政策，了解我们如何收集、使用和保护您的个人信息。',
+  ogTitle: '隐私政策 - otterSage',
+  ogDescription: 'otterSage 隐私政策，了解我们如何收集、使用和保护您的个人信息。'
 })
 </script>
 
@@ -20,7 +20,7 @@ useSeoMeta({
           <section class="mb-8">
             <h2 class="text-2xl font-semibold text-gray-900 mb-4">1. 引言</h2>
             <p class="text-gray-700 mb-4">
-              AcuityBookmarks（以下简称"我们"）重视您的隐私。本隐私政策说明我们如何收集、使用、存储和保护您的个人信息。
+              otterSage（以下简称"我们"）重视您的隐私。本隐私政策说明我们如何收集、使用、存储和保护您的个人信息。
             </p>
             <p class="text-gray-700">使用我们的服务即表示您同意本隐私政策中描述的做法。</p>
           </section>
@@ -115,9 +115,7 @@ useSeoMeta({
               <li><strong>反对权：</strong>反对某些数据处理活动</li>
               <li><strong>撤回同意：</strong>撤回之前给予的同意</li>
             </ul>
-            <p class="text-gray-700">
-              要行使这些权利，请通过 support@acuitybookmarks.com 联系我们。
-            </p>
+            <p class="text-gray-700">要行使这些权利，请通过 support@ottersage.com 联系我们。</p>
           </section>
 
           <section class="mb-8">
@@ -166,7 +164,7 @@ useSeoMeta({
               如果您对本隐私政策或数据处理有任何疑问或顾虑，请联系我们：
             </p>
             <ul class="list-none text-gray-700 space-y-2">
-              <li>📧 邮箱：support@acuitybookmarks.com</li>
+              <li>📧 邮箱：support@ottersage.com</li>
               <li>
                 🌐 网站：<NuxtLink to="/contact" class="text-blue-600 hover:text-blue-800 underline"
                   >联系我们</NuxtLink

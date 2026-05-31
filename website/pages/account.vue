@@ -280,7 +280,48 @@ const handleDeleteAccount = () => {
 </template>
 
 <style scoped>
-/* ===== 页面容器 ===== */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ===== 响应式 ===== */
+@media (width <= 768px) {
+  .account-page {
+    padding: var(--md-sys-spacing-md) var(--md-sys-spacing-sm);
+  }
+
+  .account-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-sidebar {
+    position: static;
+  }
+
+  .subscription-body {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .subscription-actions {
+    width: 100%;
+  }
+
+  .subscription-actions .account-button {
+    width: 100%;
+  }
+
+  .subscription-link {
+    width: 100%;
+  }
+}
+
 .account-page {
   min-height: 100vh;
   padding: var(--md-sys-spacing-lg) var(--md-sys-spacing-md);
@@ -290,11 +331,11 @@ const handleDeleteAccount = () => {
 /* ===== 双栏布局 ===== */
 .account-layout {
   display: grid;
-  grid-template-columns: 280px 1fr;
+  align-items: start;
   gap: var(--md-sys-spacing-lg);
+  grid-template-columns: 280px 1fr;
   max-width: 1000px;
   margin: 0 auto;
-  align-items: start;
 }
 
 /* ===== 左侧 Profile 卡片 ===== */
@@ -307,12 +348,12 @@ const handleDeleteAccount = () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-align: center;
+  gap: var(--md-sys-spacing-sm);
   padding: var(--md-sys-spacing-xl) var(--md-sys-spacing-lg);
-  background-color: var(--md-sys-color-surface-variant);
   border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: var(--md-sys-shape-corner-extra-large);
-  gap: var(--md-sys-spacing-sm);
+  text-align: center;
+  background-color: var(--md-sys-color-surface-variant);
 }
 
 /* 头像 */
@@ -324,58 +365,58 @@ const handleDeleteAccount = () => {
 }
 
 .avatar-img {
+  position: relative;
+  z-index: 1;
   width: 96px;
   height: 96px;
   border-radius: 50%;
   object-fit: cover;
-  position: relative;
-  z-index: 1;
 }
 
 .avatar-fallback {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   width: 96px;
   height: 96px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--md-sys-color-primary), var(--md-sys-color-secondary));
-  color: var(--md-sys-color-on-primary);
   font-size: 2.5rem;
   font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  z-index: 1;
+  color: var(--md-sys-color-on-primary);
+  background: linear-gradient(135deg, var(--md-sys-color-primary), var(--md-sys-color-secondary));
 }
 
 .avatar-ring {
   position: absolute;
   inset: -3px;
+  z-index: 0;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--md-sys-color-primary), var(--md-sys-color-secondary));
-  z-index: 0;
 }
 
 /* 用户名 & 邮箱 */
 .profile-name {
+  margin: 0;
   font-size: 1.125rem;
   font-weight: 600;
   color: var(--md-sys-color-on-surface);
-  margin: 0;
 }
 
 .profile-email {
+  margin: 0;
   font-size: 0.8125rem;
   color: var(--md-sys-color-on-surface-variant);
-  margin: 0;
   word-break: break-all;
 }
 
 /* 标签 */
 .profile-tags {
   display: flex;
-  gap: var(--md-sys-spacing-xs);
   flex-wrap: wrap;
   justify-content: center;
+  gap: var(--md-sys-spacing-xs);
 }
 
 .tag {
@@ -388,22 +429,22 @@ const handleDeleteAccount = () => {
 }
 
 .tag--provider {
-  background-color: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
-  color: var(--md-sys-color-primary);
   border: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 25%, transparent);
+  color: var(--md-sys-color-primary);
+  background-color: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
 }
 
 .tag--plan {
-  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 15%, transparent);
-  color: var(--md-sys-color-on-surface-variant);
   border: 1px solid color-mix(in srgb, var(--md-sys-color-on-surface-variant) 30%, transparent);
+  color: var(--md-sys-color-on-surface-variant);
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 15%, transparent);
 }
 
 .tag--pro {
-  background: linear-gradient(135deg, #ffd700, #ffed4e);
-  color: #000;
   border: 1px solid #ffd700;
   font-weight: 600;
+  color: #000;
+  background: linear-gradient(135deg, #ffd700, #ffed4e);
   box-shadow: 0 2px 8px rgb(255 215 0 / 30%);
 }
 
@@ -411,8 +452,8 @@ const handleDeleteAccount = () => {
   width: 60px;
   height: 24px;
   padding: 0;
-  overflow: hidden;
   background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 15%, transparent);
+  overflow: hidden;
 }
 
 .loading-shimmer {
@@ -428,30 +469,20 @@ const handleDeleteAccount = () => {
   animation: shimmer 1.5s infinite;
 }
 
-@keyframes shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-
-  100% {
-    transform: translateX(100%);
-  }
-}
-
 /* 分隔线 */
 .divider {
   width: 100%;
   height: 1px;
-  background-color: var(--md-sys-color-outline-variant);
   margin: var(--md-sys-spacing-xs) 0;
+  background-color: var(--md-sys-color-outline-variant);
 }
 
 /* 元信息列表 */
 .profile-meta {
-  width: 100%;
   display: flex;
   flex-direction: column;
   gap: var(--md-sys-spacing-sm);
+  width: 100%;
 }
 
 .meta-row {
@@ -462,17 +493,17 @@ const handleDeleteAccount = () => {
 }
 
 .meta-key {
-  font-size: 0.75rem;
-  color: var(--md-sys-color-on-surface-variant);
-  white-space: nowrap;
   flex-shrink: 0;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .meta-val {
   font-size: 0.8125rem;
   font-weight: 500;
-  color: var(--md-sys-color-on-surface);
   text-align: right;
+  color: var(--md-sys-color-on-surface);
 }
 
 .meta-val.mono {
@@ -492,43 +523,43 @@ const handleDeleteAccount = () => {
 }
 
 .badge--success {
-  background-color: rgb(34 197 94 / 12%);
   color: #22c55e;
+  background-color: rgb(34 197 94 / 12%);
 }
 
 .badge--warning {
-  background-color: rgb(245 158 11 / 12%);
   color: #f59e0b;
+  background-color: rgb(245 158 11 / 12%);
 }
 
 /* 操作按钮区 */
 .profile-actions {
-  width: 100%;
   display: flex;
   flex-direction: column;
   gap: var(--md-sys-spacing-xs);
+  width: 100%;
   margin-top: var(--md-sys-spacing-xs);
 }
 
 /* ===== 通用按钮 ===== */
 .account-button {
   display: inline-flex;
-  align-items: center;
   justify-content: center;
-  padding: 10px 20px;
-  border-radius: var(--md-sys-shape-corner-medium);
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 0.875rem;
-  transition: all 0.2s ease;
-  cursor: pointer;
-  border: none;
+  align-items: center;
   width: 100%;
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--md-sys-shape-corner-medium);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .account-button--primary {
-  background-color: var(--md-sys-color-primary);
   color: var(--md-sys-color-on-primary);
+  background-color: var(--md-sys-color-primary);
 }
 
 .account-button--primary:hover:not(:disabled) {
@@ -538,9 +569,9 @@ const handleDeleteAccount = () => {
 }
 
 .account-button--danger {
-  background-color: color-mix(in srgb, var(--md-sys-color-error) 12%, transparent);
-  color: var(--md-sys-color-error);
   border: 1px solid color-mix(in srgb, var(--md-sys-color-error) 25%, transparent);
+  color: var(--md-sys-color-error);
+  background-color: color-mix(in srgb, var(--md-sys-color-error) 12%, transparent);
 }
 
 .account-button--danger:hover:not(:disabled) {
@@ -549,14 +580,14 @@ const handleDeleteAccount = () => {
 }
 
 .account-button--ghost {
-  background-color: transparent;
-  color: var(--md-sys-color-on-surface-variant);
   border: 1px solid var(--md-sys-color-outline-variant);
+  color: var(--md-sys-color-on-surface-variant);
+  background-color: transparent;
 }
 
 .account-button--ghost:hover {
-  background-color: color-mix(in srgb, var(--md-sys-color-on-surface) 5%, transparent);
   color: var(--md-sys-color-on-surface);
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface) 5%, transparent);
 }
 
 .account-button:disabled {
@@ -574,9 +605,9 @@ const handleDeleteAccount = () => {
 
 .content-card {
   padding: var(--md-sys-spacing-lg);
-  background-color: var(--md-sys-color-surface-variant);
   border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: var(--md-sys-shape-corner-extra-large);
+  background-color: var(--md-sys-color-surface-variant);
 }
 
 .card-header {
@@ -584,10 +615,10 @@ const handleDeleteAccount = () => {
 }
 
 .card-title {
+  margin: 0;
   font-size: 0.9375rem;
   font-weight: 600;
   color: var(--md-sys-color-on-surface);
-  margin: 0;
 }
 
 /* 订阅卡片 */
@@ -601,17 +632,16 @@ const handleDeleteAccount = () => {
 
 /* 骨架屏样式 */
 .plan-icon-skeleton {
+  position: relative;
+  flex-shrink: 0;
   width: 52px;
   height: 52px;
   border-radius: var(--md-sys-shape-corner-medium);
   background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 10%, transparent);
-  position: relative;
   overflow: hidden;
-  flex-shrink: 0;
 }
 
 .plan-icon-skeleton::after {
-  content: '';
   position: absolute;
   top: 0;
   left: 0;
@@ -624,18 +654,18 @@ const handleDeleteAccount = () => {
     transparent 100%
   );
   animation: shimmer 1.5s infinite;
+  content: '';
 }
 
 .skeleton-line {
+  position: relative;
   height: 16px;
   border-radius: 4px;
   background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 10%, transparent);
-  position: relative;
   overflow: hidden;
 }
 
 .skeleton-line::after {
-  content: '';
   position: absolute;
   top: 0;
   left: 0;
@@ -648,6 +678,7 @@ const handleDeleteAccount = () => {
     transparent 100%
   );
   animation: shimmer 1.5s infinite;
+  content: '';
 }
 
 .skeleton-line--title {
@@ -662,16 +693,15 @@ const handleDeleteAccount = () => {
 }
 
 .skeleton-button {
+  position: relative;
   width: 120px;
   height: 40px;
   border-radius: var(--md-sys-shape-corner-medium);
   background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 10%, transparent);
-  position: relative;
   overflow: hidden;
 }
 
 .skeleton-button::after {
-  content: '';
   position: absolute;
   top: 0;
   left: 0;
@@ -684,22 +714,23 @@ const handleDeleteAccount = () => {
     transparent 100%
   );
   animation: shimmer 1.5s infinite;
+  content: '';
 }
 
 .subscription-body {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--md-sys-spacing-md);
   flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--md-sys-spacing-md);
 }
 
 .subscription-actions {
   display: flex;
   flex-direction: column;
-  gap: var(--md-sys-spacing-xs);
   flex-shrink: 0;
   align-items: stretch;
+  gap: var(--md-sys-spacing-xs);
 }
 
 .subscription-actions .account-button {
@@ -710,20 +741,20 @@ const handleDeleteAccount = () => {
 /* 订阅管理次要链接 */
 .subscription-link {
   display: inline-flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   padding: var(--md-sys-spacing-xs) 0;
   font-size: 0.8125rem;
-  color: var(--md-sys-color-on-surface-variant);
-  text-decoration: none;
   text-align: center;
-  transition: all 0.2s ease;
+  text-decoration: none;
+  color: var(--md-sys-color-on-surface-variant);
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .subscription-link:hover {
-  color: var(--md-sys-color-primary);
   text-decoration: underline;
+  color: var(--md-sys-color-primary);
 }
 
 .plan-info {
@@ -733,28 +764,28 @@ const handleDeleteAccount = () => {
 }
 
 .plan-icon {
-  font-size: 2rem;
+  display: flex;
+  flex-shrink: 0;
+  justify-content: center;
+  align-items: center;
   width: 52px;
   height: 52px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 10%, transparent);
   border-radius: var(--md-sys-shape-corner-medium);
-  flex-shrink: 0;
+  font-size: 2rem;
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 10%, transparent);
 }
 
 .plan-name {
+  margin-bottom: 2px;
   font-size: 1rem;
   font-weight: 600;
   color: var(--md-sys-color-on-surface);
-  margin-bottom: 2px;
 }
 
 .plan-desc {
+  max-width: 280px;
   font-size: 0.8125rem;
   color: var(--md-sys-color-on-surface-variant);
-  max-width: 280px;
 }
 
 /* 快捷操作 */
@@ -769,28 +800,28 @@ const handleDeleteAccount = () => {
   align-items: center;
   gap: var(--md-sys-spacing-md);
   padding: var(--md-sys-spacing-md);
+  border: 1px solid transparent;
   border-radius: var(--md-sys-shape-corner-large);
   text-decoration: none;
   color: var(--md-sys-color-on-surface);
   transition: all 0.18s ease;
-  border: 1px solid transparent;
 }
 
 .quick-item:hover {
-  background-color: color-mix(in srgb, var(--md-sys-color-primary) 6%, transparent);
   border-color: color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
+  background-color: color-mix(in srgb, var(--md-sys-color-primary) 6%, transparent);
 }
 
 .quick-icon {
-  font-size: 1.375rem;
+  display: flex;
+  flex-shrink: 0;
+  justify-content: center;
+  align-items: center;
   width: 40px;
   height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
   border-radius: var(--md-sys-shape-corner-small);
-  flex-shrink: 0;
+  font-size: 1.375rem;
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
 }
 
 .quick-text {
@@ -804,9 +835,9 @@ const handleDeleteAccount = () => {
 }
 
 .quick-sub {
+  margin-top: 1px;
   font-size: 0.75rem;
   color: var(--md-sys-color-on-surface-variant);
-  margin-top: 1px;
 }
 
 .quick-arrow {
@@ -841,23 +872,23 @@ const handleDeleteAccount = () => {
 
 .danger-action-item {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   gap: var(--md-sys-spacing-md);
+  width: 100%;
   padding: var(--md-sys-spacing-md);
-  border-radius: var(--md-sys-shape-corner-large);
-  background-color: transparent;
   border: 1px solid color-mix(in srgb, var(--md-sys-color-error) 20%, transparent);
+  border-radius: var(--md-sys-shape-corner-large);
+  text-align: left;
   color: var(--md-sys-color-on-surface);
+  background-color: transparent;
   cursor: pointer;
   transition: all 0.18s ease;
-  text-align: left;
-  width: 100%;
 }
 
 .danger-action-item:hover {
-  background-color: color-mix(in srgb, var(--md-sys-color-error) 8%, transparent);
   border-color: color-mix(in srgb, var(--md-sys-color-error) 40%, transparent);
+  background-color: color-mix(in srgb, var(--md-sys-color-error) 8%, transparent);
 }
 
 .danger-action-content {
@@ -865,10 +896,10 @@ const handleDeleteAccount = () => {
 }
 
 .danger-action-title {
+  margin-bottom: 2px;
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--md-sys-color-error);
-  margin-bottom: 2px;
 }
 
 .danger-action-desc {
@@ -890,35 +921,5 @@ const handleDeleteAccount = () => {
   transform: translateX(3px);
 }
 
-/* ===== 响应式 ===== */
-@media (width <= 768px) {
-  .account-page {
-    padding: var(--md-sys-spacing-md) var(--md-sys-spacing-sm);
-  }
-
-  .account-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .profile-sidebar {
-    position: static;
-  }
-
-  .subscription-body {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .subscription-actions {
-    width: 100%;
-  }
-
-  .subscription-actions .account-button {
-    width: 100%;
-  }
-
-  .subscription-link {
-    width: 100%;
-  }
-}
+/* ===== 页面容器 ===== */
 </style>

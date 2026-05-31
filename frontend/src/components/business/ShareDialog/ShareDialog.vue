@@ -115,7 +115,7 @@ const activeTabIndex = computed(() => shareTypeToIndex[state.shareType])
 // 前往登录页面
 const handleGoToLogin = () => {
   // 从环境变量读取官网 URL
-  const websiteUrl = import.meta.env.VITE_WEBSITE_URL || 'https://acuitybookmarks.com'
+  const websiteUrl = import.meta.env.VITE_WEBSITE_URL || 'https://ottersage.com'
   // 打开官网登录页面
   window.open(`${websiteUrl}/login`, '_blank')
 }
@@ -152,7 +152,7 @@ const handleTabChange = (event: Event) => {
 
   // 切换到海报分享时，生成海报
   if (type === 'poster') {
-    generatePoster()
+    void generatePoster()
   }
 
   // 切换到其他方式时，清空海报
@@ -212,7 +212,7 @@ const handleShowUsernameChange = (event: Event) => {
 
   // 如果在海报模式，重新生成海报
   if (state.shareType === 'poster') {
-    generatePoster()
+    void generatePoster()
   }
 }
 
@@ -287,7 +287,7 @@ const generatePoster = useDebounceFn(async () => {
 // 标题变化（防抖）
 const handleTitleChange = useDebounceFn(() => {
   if (state.shareType === 'poster') {
-    generatePoster()
+    void generatePoster()
   }
 }, 500)
 
@@ -312,7 +312,7 @@ const handleShowDescriptionChange = (event: Event) => {
 
 // 重试
 const handleRetry = () => {
-  generatePoster()
+  void generatePoster()
 }
 
 // 复制图片
@@ -518,7 +518,7 @@ watch(
       // 清空用户搜索选择器
       userSearchSelectRef.value?.clearSelection()
 
-      manageFocus(true)
+      void manageFocus(true)
     } else {
       // 弹窗关闭时清理状态
       state.currentGenerationId++
@@ -534,7 +534,7 @@ watch(
       // 清空用户搜索选择器
       userSearchSelectRef.value?.clearSelection()
 
-      manageFocus(false)
+      void manageFocus(false)
     }
   }
 )

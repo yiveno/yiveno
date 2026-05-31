@@ -4,7 +4,7 @@
 
 手机扫码后显示"网页无法打开"错误（`net::ERR_HTTP_RESPONSE_CODE_FAILURE`），原因是：
 
-1. 二维码中的链接是 `https://acuitybookmarks.com/share?data=...`
+1. 二维码中的链接是 `https://ottersage.com/share?data=...`
 2. 该域名还未部署到生产环境
 3. 手机访问时服务器无响应
 
@@ -87,7 +87,7 @@ bun run build:watch
 
 #### 步骤 1：部署官网
 
-将官网部署到 `https://acuitybookmarks.com`，可以使用：
+将官网部署到 `https://ottersage.com`，可以使用：
 
 - **Vercel**（推荐）
 - **Netlify**
@@ -96,7 +96,7 @@ bun run build:watch
 
 #### 步骤 2：配置域名和 HTTPS
 
-1. 购买域名 `acuitybookmarks.com`
+1. 购买域名 `ottersage.com`
 2. 配置 DNS 解析到部署平台
 3. 启用 HTTPS（部署平台通常自动配置）
 
@@ -106,7 +106,7 @@ bun run build:watch
 
 ```typescript
 if (import.meta.env.PROD) {
-  return 'https://acuitybookmarks.com/share'
+  return 'https://ottersage.com/share'
 }
 ```
 
@@ -171,7 +171,7 @@ ngrok http 3001
 ```typescript
 // 生产环境
 if (import.meta.env.PROD) {
-  return 'https://acuitybookmarks.com/share' // 硬编码
+  return 'https://ottersage.com/share' // 硬编码
 }
 
 // 开发环境

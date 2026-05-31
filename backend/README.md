@@ -1,4 +1,4 @@
-# 🔧 AcuityBookmarks Backend - Cloudflare Worker
+# 🔧 otterSage Backend - Cloudflare Worker
 
 Cloudflare Workers 驱动的后端服务，简洁稳定、易于部署与维护。
 
@@ -110,7 +110,7 @@ curl -k -X POST https://localhost:8787/api/ai/embedding \
   -d '{
     "provider": "openai",
     "model": "text-embedding-3-small",
-    "text": "AcuityBookmarks 是一个高性能书签管理扩展"
+    "text": "otterSage 是一个高性能书签管理扩展"
   }'
 ```
 
@@ -128,7 +128,7 @@ curl -k -X POST https://localhost:8787/api/ai/embedding \
   -H 'Content-Type: application/json' \
   -d '{
     "model": "@cf/baai/bge-m3",
-    "text": "AcuityBookmarks"
+    "text": "otterSage"
   }'
 ```
 
@@ -460,9 +460,9 @@ CMD ["bun", "start"]
 
 ```bash
 # 创建systemd服务
-sudo cp acuity-bookmarks.service /etc/systemd/system/
-sudo systemctl enable acuity-bookmarks
-sudo systemctl start acuity-bookmarks
+sudo cp ottersage.service /etc/systemd/system/
+sudo systemctl enable ottersage
+sudo systemctl start ottersage
 ```
 
 ## 📝 开发指南

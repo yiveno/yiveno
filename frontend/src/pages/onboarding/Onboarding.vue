@@ -87,14 +87,14 @@ function nextStep() {
 }
 
 const messageListener = (message: ChromeExtensionMessage) => {
-  if (message.type === 'acuity-bookmarks-sync-progress') {
+  if (message.type === 'ottersage-sync-progress') {
     progress.value = message.data.percentage
     progressMessage.value = message.data.message
 
     if (message.data.phase === 'completed') {
       completeSync()
     }
-  } else if (message.type === 'acuity-bookmarks-db-ready') {
+  } else if (message.type === 'ottersage-db-ready') {
     completeSync()
   }
 }
@@ -150,8 +150,8 @@ onUnmounted(() => {
     <!-- Header -->
     <header class="onboarding-header">
       <div class="logo-container">
-        <img src="/logo.webp" alt="AcuityBookmarks Logo" class="logo-icon" />
-        <span class="logo-text">AcuityBookmarks</span>
+        <img src="/logo.webp" alt="otterSage Logo" class="logo-icon" />
+        <span class="logo-text">otterSage</span>
       </div>
     </header>
 
@@ -165,7 +165,7 @@ onUnmounted(() => {
             <div v-if="currentStep.visual === 'hero'" class="visual-hero">
               <div class="hero-glow"></div>
               <div class="hero-icon">
-                <img src="/logo.webp" alt="AcuityBookmarks" class="hero-logo" />
+                <img src="/logo.webp" alt="otterSage" class="hero-logo" />
               </div>
             </div>
 

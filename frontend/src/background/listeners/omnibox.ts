@@ -184,7 +184,7 @@ function buildResultSummaryDescription(query: string, count: number): string {
  */
 function createErrorSuggestion(query: string): chrome.omnibox.SuggestResult {
   return {
-    content: `acuity://error?query=${encodeURIComponent(query)}`,
+    content: `ottersage://error?query=${encodeURIComponent(query)}`,
     description: buildErrorDescription(query)
   }
 }
@@ -208,7 +208,7 @@ const DEBOUNCE_MS = 50
 /**
  * 默认提示文案：仅在输入框为空时展示，提醒用户可以使用 Omnibox 查询书签。
  */
-const DEFAULT_IDLE_DESCRIPTION = buildDescription('AcuityBookmarks：输入关键字快速查找书签')
+const DEFAULT_IDLE_DESCRIPTION = buildDescription('otterSage：输入关键字快速查找书签')
 
 /**
  * 当存在查询时使用的“空白”占位文案，避免重复显示默认提示。
@@ -413,7 +413,7 @@ function buildSuggestions(
       source: 'omnibox'
     })
 
-    const content = url ? url : `acuity://bookmark?${meta.toString()}`
+    const content = url ? url : `ottersage://bookmark?${meta.toString()}`
 
     const suggestion: chrome.omnibox.SuggestResult = {
       content,
@@ -464,7 +464,7 @@ interface ParsedSuggestion {
 function parseSuggestionContent(text: string): ParsedSuggestion {
   try {
     const url = new URL(text)
-    if (url.protocol === 'acuity:') {
+    if (url.protocol === 'ottersage:') {
       const rawView = url.hostname
       let normalizedView: ParsedSuggestion['view'] = 'noop'
       if (rawView === 'manage') {

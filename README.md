@@ -1,4 +1,4 @@
-# 📖 AcuityBookmarks
+# 📖 otterSage
 
 > 🎯 智能书签管理 Chrome 扩展 - 高性能 Monorepo 项目
 
@@ -35,8 +35,8 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/your-org/acuityBookmarks.git
-cd acuityBookmarks
+git clone https://github.com/your-org/otterSage.git
+cd otterSage
 
 # 安装所有依赖 (使用Bun Workspaces)
 bun install
@@ -74,7 +74,7 @@ bun run build:all
 ## 📂 项目结构
 
 ```
-acuityBookmarks/                    # Monorepo根目录
+otterSage/                    # Monorepo根目录
 ├── frontend/                       # 🎨 Frontend Workspace (Vue 3 Chrome Extension)
 │   ├── src/
 │   │   ├── application/           # 应用层 (App Services)
@@ -241,7 +241,7 @@ bun run lint:fix              # ESLint 自动修复
 
 ### 📦 产品文档（唯一正文）
 
-- [AcuityBookmarks 完整产品文档 v3.0](docs/product/AcuityBookmarks-产品文档-v3.0.md)
+- [otterSage 完整产品文档 v3.0](docs/product/otterSage-产品文档-v3.0.md)
 - [`docs/` 目录说明](docs/README.md)（`development/` 保留清单、`archive/`、官网等）
 
 ### 其他文档
@@ -251,7 +251,7 @@ bun run lint:fix              # ESLint 自动修复
 
 ### 🏗️ 架构与工程
 
-- 以 [产品文档 v3.0 — 第二部分](docs/product/AcuityBookmarks-产品文档-v3.0.md#第二部分技术架构) 为准；仓库内若仍有独立架构 `.md` 与正文冲突，以正文为准。
+- 以 [产品文档 v3.0 — 第二部分](docs/product/otterSage-产品文档-v3.0.md#第二部分技术架构) 为准；仓库内若仍有独立架构 `.md` 与正文冲突，以正文为准。
 
 ---
 
@@ -357,7 +357,7 @@ bun run build:all
 
 # 2. 打包扩展 (手动或使用脚本)
 cd dist
-zip -r ../acuity-bookmarks-v1.0.0.zip .
+zip -r ../ottersage-v1.0.0.zip .
 
 # 3. 上传到 Chrome Web Store
 # https://chrome.google.com/webstore/devconsole
@@ -417,7 +417,7 @@ chore: 升级依赖版本
 
 ## 📄 许可证
 
-[MIT License](LICENSE) © 2025 AcuityBookmarks Team
+[MIT License](LICENSE) © 2025 otterSage Team
 
 ---
 
@@ -433,12 +433,12 @@ chore: 升级依赖版本
 
 ## 📞 联系我们
 
-- **Issues**: [GitHub Issues](https://github.com/your-org/acuityBookmarks/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-org/acuityBookmarks/discussions)
-- **Email**: support@acuitybookmarks.com
+- **Issues**: [GitHub Issues](https://github.com/your-org/otterSage/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/your-org/otterSage/discussions)
+- **Email**: support@ottersage.com
 
 ---
 
 <p align="center">
-  Made with ❤️ by AcuityBookmarks Team
+  Made with ❤️ by otterSage Team
 </p>

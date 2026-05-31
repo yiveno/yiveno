@@ -1,12 +1,12 @@
 {
   "app_name": {
-    "message": "Acuity書籤"
+    "message": "OtterSage書籤"
   },
   "app_description": {
     "message": "解鎖書籤中的知識。AI 驅動的組織管理，內容感知搜尋。"
   },
   "welcome": {
-    "message": "歡迎使用Acuity書籤！"
+    "message": "歡迎使用OtterSage書籤！"
   },
   "search_placeholder": {
     "message": "篩選書籤…"
@@ -1122,7 +1122,7 @@
     "message": "共"
   },
   "onboarding_welcome_title": {
-    "message": "歡迎使用 AcuityBookmarks"
+    "message": "歡迎使用 otterSage"
   },
   "onboarding_welcome_subtitle": {
     "message": "AI 驅動的書籤管理器"
@@ -2106,7 +2106,7 @@
     "message": "全部就緒"
   },
   "onboarding_ready_description": {
-    "message": "感謝你花時間了解 AcuityBookmarks 的特色功能。點擊「開始使用」後，本頁面將自動關閉，你可以立即開始享受智慧書籤管理體驗。"
+    "message": "感謝你花時間了解 otterSage 的特色功能。點擊「開始使用」後，本頁面將自動關閉，你可以立即開始享受智慧書籤管理體驗。"
   },
   "onboarding_initializing": {
     "message": "初始化中..."

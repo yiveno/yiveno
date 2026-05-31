@@ -1,7 +1,7 @@
 {
-  "name": "@acuity-bookmarks/design-tokens",
+  "name": "@ottersage/design-tokens",
   "version": "1.1.1",
-  "description": "Shared design tokens for AcuityBookmarks - Material Design 3 based design system with colors, spacing, typography, and more",
+  "description": "Shared design tokens for otterSage - Material Design 3 based design system with colors, spacing, typography, and more",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
@@ -86,23 +86,23 @@
     "material-design-3",
     "css-variables",
     "typescript",
-    "acuity-bookmarks",
+    "ottersage",
     "ui",
     "colors",
     "spacing",
     "typography"
   ],
-  "author": "AcuityBookmarks Team",
+  "author": "otterSage Team",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/acuity-bookmarks/acuitybookmarks.git",
+    "url": "https://github.com/ottersage/ottersage.git",
     "directory": "packages/design-tokens"
   },
   "bugs": {
-    "url": "https://github.com/acuity-bookmarks/acuitybookmarks/issues"
+    "url": "https://github.com/ottersage/ottersage/issues"
   },
-  "homepage": "https://github.com/acuity-bookmarks/acuitybookmarks/tree/main/packages/design-tokens#readme",
+  "homepage": "https://github.com/ottersage/ottersage/tree/main/packages/design-tokens#readme",
   "publishConfig": {
     "access": "public"
   },
