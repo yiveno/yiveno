@@ -116,3 +116,6 @@ $RECYCLE.BIN/
 *.sql
 # 但保留 Supabase 迁移文件（数据库版本控制）
 !supabase/migrations/*.sql
+
+# Astro 构建缓存
+website/.astro/
