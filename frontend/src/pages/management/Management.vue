@@ -37,8 +37,6 @@ const {
   showOrganizeProgress,
   leftTreeData,
   rightTreeData,
-  leftTreeRef,
-  rightTreeRef,
   leftExpandAll,
   rightExpandAll,
   isLeftPanelCollapsed,

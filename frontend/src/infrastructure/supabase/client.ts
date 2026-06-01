@@ -19,8 +19,8 @@ import { logger } from '@/infrastructure/logging/logger'
  * - VITE_SUPABASE_URL: Supabase 项目 URL
  * - VITE_SUPABASE_ANON_KEY: Supabase 匿名密钥（公开的，可在前端使用）
  */
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ugxgxytykxblctsyulsg.supabase.co'
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_2FY9uDfqNbLwUYXxgcu8lw_qQ8SEbXo'
 
 // 开发模式下打印环境变量状态（帮助调试）
 if (import.meta.env.DEV) {

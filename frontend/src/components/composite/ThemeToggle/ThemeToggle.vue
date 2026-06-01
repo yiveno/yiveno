@@ -25,7 +25,6 @@ const showMenu = ref(false)
 const toggleBtnRef = ref<HTMLElement | null>(null)
 
 // 菜单引用
-const menuRef = ref<HTMLElement | null>(null)
 
 // 系统主题变化监听器（MediaQueryList）
 let systemThemeQuery: MediaQueryList | null = null

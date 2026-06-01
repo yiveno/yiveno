@@ -196,7 +196,7 @@ export const shareRouter = router({
         data: {
           shareId: share.id,
           shortCode: share.short_code,
-          shareUrl: `${ctx.env.WEBSITE_URL}/s/${share.short_code}`
+          shareUrl: `${ctx.env.WEBSITE_URL}/share?code=${share.short_code}`
         }
       }
     }),
@@ -326,7 +326,7 @@ export const shareRouter = router({
           data: {
             share_id: share.id,
             short_code: share.short_code,
-            share_url: `${ctx.env.WEBSITE_URL}/s/${share.short_code}`,
+            share_url: `${ctx.env.WEBSITE_URL}/share?code=${share.short_code}`,
             sender_id: user.id,
             sender_name: user.user_metadata?.name || user.email
           }
@@ -343,7 +343,7 @@ export const shareRouter = router({
         data: {
           shareId: share.id,
           shortCode: share.short_code,
-          shareUrl: `${ctx.env.WEBSITE_URL}/s/${share.short_code}`,
+          shareUrl: `${ctx.env.WEBSITE_URL}/share?code=${share.short_code}`,
           recipientCount: recipientIds.length
         }
       }

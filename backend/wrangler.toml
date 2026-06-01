@@ -30,60 +30,11 @@ head_sampling_rate = 0
 # 注意：以下变量将由 Cloudflare Secrets 自动替换。
 # 在本地开发时，`wrangler dev` 会从 .dev.vars 文件中读取这些值。
 [vars]
-GUMROAD_PLAN_ID_MONTHLY = ""
-GUMROAD_PLAN_ID_YEARLY = ""
-SUPABASE_URL = ""
-SUPABASE_ANON_KEY = ""
-WEBSITE_URL = "http://localhost:3001" # 本地开发 URL，生产环境将使用 Secret
-
+REDIRECT_URI_ALLOWLIST = "https://ottersage.com,http://localhost:3001,http://localhost:3002"
 [ai]
 binding = "AI"
 
 # Production 环境配置
-[env.production]
 routes = [
   { pattern = "api.ottersage.com", custom_domain = true }
 ]
-
-# Production 环境的可观测性配置（更保守的采样率）
-[env.production.observability]
-enabled = true
-head_sampling_rate = 0.1  # 生产环境采样 10%，降低成本
-
-[env.production.observability.logs]
-enabled = true
-head_sampling_rate = 0.1  # 记录 10% 的日志
-persist = true
-invocation_logs = true
-
-[env.production.observability.traces]
-enabled = false           # 与日志互斥，已禁用
-persist = false
-head_sampling_rate = 0
-
-[env.production.vars]
-# Production 环境变量将从顶层 [vars] 继承。
-# 在部署时，Cloudflare 会自动使用为 "production" 环境设置的同名 Secrets 替换这些值。
-# 例如，WEBSITE_URL 将被替换为生产环境的 Secret 值（如 "https://ottersage.com"）。
-# 无需在此处重复定义变量，除非需要覆盖顶层定义。
-
-[env.production.ai]
-binding = "AI"
-
-
-# ===================== 环境变量建议（部署前请在 Dashboard/Secrets 配置） =====================
-# JWT_SECRET = "<high-entropy-production-secret>"
-# SUPABASE_SERVICE_ROLE_KEY = "<service-role-key>"  # Supabase Service Role Key（⚠️ 保密，只在后端使用）
-# AUTH_GOOGLE_CLIENT_ID = "<optional>"            # Google OAuth 客户端 ID
-# AUTH_GOOGLE_CLIENT_SECRET = "<optional>"        # Google OAuth 客户端 Secret
-# AUTH_MICROSOFT_CLIENT_ID = "<optional>"         # Microsoft Azure 客户端 ID
-# AUTH_MICROSOFT_CLIENT_SECRET = "<optional>"     # Microsoft Azure 客户端 Secret
-# AUTH_APPLE_CLIENT_ID = "<optional>"             # Apple Sign In 客户端 ID
-# AUTH_APPLE_CLIENT_SECRET = "<optional>"         # Apple Sign In 客户端 Secret
-# GUMROAD_ACCESS_TOKEN = "<optional>"             # Gumroad API Access Token（用于必要的查询，可选）
-# GUMROAD_WEBHOOK_SECRET = "<optional>"           # Gumroad Webhook 签名 Secret
-# GUMROAD_PRODUCT_ID = "<optional>"               # Gumroad 产品 ID（非必填，仅用于记录）
-
-# 推荐域名规划（已采用）：
-# - API: api.ottersage.com （本文件 routes 已设置）
-# - App: app.ottersage.com （前端承载重置/设置等页面）

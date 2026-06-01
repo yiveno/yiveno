@@ -21,7 +21,6 @@ const { isPro, subscriptionStatus } = useSubscription()
 const isLoggedIn = computed(() => isAuthenticated.value)
 const isLoggingOut = ref(false)
 const showMenu = ref(false)
-const menuRef = ref<HTMLElement | null>(null)
 
 /** 用户邮箱 */
 const userEmail = computed(() => user.value?.email ?? '')

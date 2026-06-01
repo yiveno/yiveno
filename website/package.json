@@ -3,34 +3,16 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "NUXT_PUBLIC_API_BASE_URL=https://localhost:8787 nuxt dev",
-    "preview": "nuxt preview",
-    "build": "nuxt build",
-    "generate": "nuxt generate",
-    "typecheck": "nuxt typecheck",
-    "typecheck:force": "nuxt typecheck --force",
-    "lint": "bun run format && bun run eslint && bun run stylelint",
-    "lint:check": "bun run eslint:check && bun run stylelint:check",
-    "format": "bunx prettier --write \"**/*.{js,ts,json,vue,css}\"",
-    "eslint": "eslint . --no-cache --fix --max-warnings 0 --fix-type problem,suggestion,layout && echo '✅ ESLint: 所有问题已修复'",
-    "eslint:check": "eslint . --no-cache --max-warnings 0",
-    "stylelint": "stylelint \"app.vue\" \"assets/**/*.css\" \"components/**/*.vue\" \"layouts/**/*.vue\" \"pages/**/*.vue\" --config ../frontend/stylelint.config.js --no-cache --fix && echo '✅ Stylelint: 所有问题已修复'",
-    "stylelint:check": "stylelint \"app.vue\" \"assets/**/*.css\" \"components/**/*.vue\" \"layouts/**/*.vue\" \"pages/**/*.vue\" --config ../frontend/stylelint.config.js --no-cache",
-    "test": "echo 'Website: 暂无测试'",
-    "clean": "rm -rf .nuxt .output dist node_modules/.cache",
-    "clean:lighthouse": "rm -rf .lighthouseci/*.json .lighthouseci/*.html && echo '✅ Lighthouse 报告已清理'",
-    "postinstall": "nuxt prepare"
+    "dev": "./dev.sh --host --port 3001",
+    "build": "astro build",
+    "preview": "astro preview",
+    "deploy": "bun run build && bunx wrangler pages deploy dist --project-name ottersage-website --branch main"
   },
   "dependencies": {
-    "@ottersage/design-tokens": "workspace:*",
-    "@nuxtjs/seo": "^3.2.2",
-    "@supabase/supabase-js": "^2.79.0",
-    "lz-string": "^1.5.0",
-    "nuxt": "^4.2.1",
-    "vue": "^3.5.18"
-  },
-  "devDependencies": {
-    "lucide-vue-next": "^0.554.0",
-    "vue-tsc": "^2.1.10"
+    "@astrojs/vue": "^6.0.1",
+    "@supabase/supabase-js": "^2.49.4",
+    "astro": "^5.18.2",
+    "vue": "^3.5.35",
+    "zod": "^3.23.8"
   }
 }

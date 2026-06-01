@@ -27,7 +27,7 @@ const props = withDefaults(defineProps<InputProps>(), {
 
 const emit = defineEmits<InputEmits>()
 
-const textFieldRef = ref<HTMLElement>()
+// @ts-ignore template ref
 const isFocused = ref(false)
 
 /**
