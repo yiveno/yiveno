@@ -1,5 +1,10 @@
+import type { Provider, Session } from '@supabase/supabase-js'
 import { getSupabase } from './supabase'
-import type { Session } from '@supabase/supabase-js'
+
+const providerMap: Record<'google' | 'microsoft', Provider> = {
+  google: 'google',
+  microsoft: 'azure'
+}
 
 export async function getSession(): Promise<Session | null> {
   const supabase = await getSupabase()
@@ -10,7 +15,7 @@ export async function getSession(): Promise<Session | null> {
 export async function signInWithOAuth(provider: 'google' | 'microsoft') {
   const supabase = await getSupabase()
   const { data, error } = await supabase.auth.signInWithOAuth({
-    provider,
+    provider: providerMap[provider],
     options: {
       redirectTo: `${window.location.origin}/auth/callback`
     }
@@ -25,7 +30,7 @@ export async function signOut() {
 }
 
 export function onAuthStateChange(callback: (event: string, userId?: string) => void) {
-  getSupabase().then((supabase: any) => {
+  void getSupabase().then(supabase => {
     supabase.auth.onAuthStateChange((event: string, session: Session | null) => {
       callback(event, session?.user?.id)
     })

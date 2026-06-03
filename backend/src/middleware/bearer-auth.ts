@@ -14,11 +14,6 @@ import { bearerAuth } from 'hono/bearer-auth'
  * @param token - Bearer token 字符串
  * @returns Bearer Auth 中间件
  *
- * @example
- * ```typescript
- * // 在路由中使用
- * app.use('/api/webhook/*', bearerAuthMiddleware('your-secret-token'))
- * ```
  */
 export function bearerAuthMiddleware(token: string) {
   return bearerAuth({

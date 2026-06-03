@@ -35,7 +35,7 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/your-org/otterSage.git
+git clone https://github.com/ChenQiWen/otterSage.git
 cd otterSage
 
 # 安装所有依赖 (使用Bun Workspaces)
@@ -104,9 +104,7 @@ otterSage/                    # Monorepo根目录
 │
 ├── docs/                           # 📚 项目文档
 │   ├── product/                    # 产品文档（唯一正文见该目录下 v3.0）
-│   ├── development/                # 开发 / 性能 / 阶段记录
-│   ├── website/                    # 官网相关
-│   └── archive/                    # 历史归档
+│   └── AUTH_GUIDE.md               # OAuth 接入说明
 │
 ├── .husky/                         # 🐕 Git Hooks
 ├── .vscode/                        # VS Code 配置
@@ -242,11 +240,7 @@ bun run lint:fix              # ESLint 自动修复
 ### 📦 产品文档（唯一正文）
 
 - [otterSage 完整产品文档 v3.0](docs/product/otterSage-产品文档-v3.0.md)
-- [`docs/` 目录说明](docs/README.md)（`development/` 保留清单、`archive/`、官网等）
-
-### 其他文档
-
-- 环境变量与依赖移除等事实清单见 [`docs/development/`](docs/development/)。
+- [`docs/` 目录说明](docs/README.md)
 - 架构与分层约定以 **产品文档** 为准；代码入口见 `frontend/src/` 各层目录。
 
 ### 🏗️ 架构与工程
@@ -433,8 +427,8 @@ chore: 升级依赖版本
 
 ## 📞 联系我们
 
-- **Issues**: [GitHub Issues](https://github.com/your-org/otterSage/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-org/otterSage/discussions)
+- **Issues**: [GitHub Issues](https://github.com/ChenQiWen/otterSage/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/ChenQiWen/otterSage/discussions)
 - **Email**: support@ottersage.com
 
 ---

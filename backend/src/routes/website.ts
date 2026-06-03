@@ -30,13 +30,6 @@ const SharedBookmarkSchema = z.object({
 const ShareRecordArraySchema = z.array(ShareRecordSchema)
 const SharedBookmarkArraySchema = z.array(SharedBookmarkSchema)
 
-websiteRouter.get('/debug', async c => {
-  const SUPABASE_URL = c.env.SUPABASE_URL ?? 'not set'
-  const SUPABASE_ANON_KEY = (c.env.SUPABASE_ANON_KEY || 'not set').substring(0, 20)
-  const WEBSITE_URL = c.env.WEBSITE_URL ?? 'not set'
-  return c.json({ SUPABASE_URL, SUPABASE_ANON_KEY, WEBSITE_URL })
-})
-
 /** GET /api/website/share/:shortCode — 分享详情（含书签列表） */
 websiteRouter.get('/share/:shortCode', async c => {
   try {

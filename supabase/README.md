@@ -121,10 +121,7 @@ supabase db push
 
 ### 从云端拉取 Schema
 
-```bash
-# 注意：如果使用 VPN（如 Clash），需要关闭 TUN 模式
-supabase db pull --password 'your_db_password'
-```
+注意：如果使用 VPN（如 Clash），需要关闭 TUN 模式。
 
 ---
 

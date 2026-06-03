@@ -11,9 +11,6 @@ import type { Env } from '../types/env'
 /**
  * JWT 认证中间件工厂函数
  *
- * 注意：由于 Hono JWT 中间件的 secret 参数不支持动态获取，
- * 这里使用默认密钥。在生产环境中，应该在应用启动时设置环境变量。
- *
  * @returns JWT 中间件
  *
  * @example
@@ -27,7 +24,11 @@ export function jwtAuth(): MiddlewareHandler {
   // 在 Cloudflare Worker 中，环境变量在运行时可用
   return async (c, next) => {
     const env = c.env as Env
-    const secret = env.JWT_SECRET || env.SECRET || 'dev-secret'
+    const secret = env.JWT_SECRET || env.SECRET
+
+    if (!secret) {
+      return c.json({ error: 'JWT_SECRET 未配置' }, 500)
+    }
 
     // 创建 JWT 中间件实例
     const jwtMiddleware = jwt({

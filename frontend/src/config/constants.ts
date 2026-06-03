@@ -3,6 +3,8 @@
  * 基于产品文档的设计理念，优化性能和用户体验
  */
 
+import { frontendEnv } from './env'
+
 // === 性能配置 ===
 export const PERFORMANCE_CONFIG = {
   // 数据缓存时间（毫秒）- 平衡性能和数据新鲜度
@@ -217,28 +219,10 @@ export const DEBUG_CONFIG = {
 
 // === API 基础配置（新增：支持线上/本地环境切换） ===
 function resolveApiBase(): string {
-  const configuredApiBase =
-    import.meta.env.VITE_CLOUDFLARE_MODE === 'true'
-      ? import.meta.env.VITE_CLOUDFLARE_WORKER_URL || import.meta.env.VITE_API_BASE_URL
-      : import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_CLOUDFLARE_WORKER_URL
-
   return (
-    configuredApiBase ||
-    (import.meta.env.DEV ? 'https://localhost:8787' : 'https://api.ottersage.com')
+    frontendEnv.apiBaseUrl ||
+    (import.meta.env.DEV ? 'http://localhost:8787' : 'https://api.ottersage.com')
   )
-}
-
-function normalizeHttpsUrl(apiBase: string): string {
-  if (apiBase.startsWith('http://')) {
-    if (import.meta.env.DEV) {
-      console.debug(
-        `🔧 检测到 HTTP URL，自动转换为 HTTPS: ${apiBase} → ${apiBase.replace('http://', 'https://')}`
-      )
-    }
-    return apiBase.replace('http://', 'https://')
-  }
-
-  return apiBase
 }
 
 function shouldWarnLocalApiBase(apiBase: string): boolean {
@@ -246,18 +230,14 @@ function shouldWarnLocalApiBase(apiBase: string): boolean {
     import.meta.env.DEV &&
     apiBase.includes('localhost:8787') &&
     !apiBase.includes('127.0.0.1') &&
-    !import.meta.env.VITE_HOT_BUILD &&
-    !import.meta.env.VITE_USE_REMOTE &&
-    Boolean(import.meta.env.VITE_API_BASE_URL?.includes('localhost'))
+    !frontendEnv.hotBuild &&
+    !frontendEnv.useRemote &&
+    Boolean(frontendEnv.apiBaseUrl?.includes('localhost'))
   )
 }
 
 function getApiBase(): string {
-  // 优先使用显式配置，其次使用开发环境默认值；运行时兜底防止旧 HTTP 值。
-  if (import.meta.env.DEV) console.log('🔧 import.meta.env:', import.meta.env)
-  const apiBase = normalizeHttpsUrl(resolveApiBase())
-
-  if (import.meta.env.DEV) console.log('🔧 apiBase:', apiBase)
+  const apiBase = resolveApiBase()
 
   if (shouldWarnLocalApiBase(apiBase)) {
     console.debug(
@@ -278,32 +258,27 @@ export const API_CONFIG = {
 
 // 开发环境调试：输出 API 配置
 if (import.meta.env.DEV) {
-  if (import.meta.env.DEV) console.log('🔧 API_CONFIG.API_BASE:', API_CONFIG.API_BASE)
-  if (import.meta.env.DEV)
-    console.log('🔧 VITE_USE_LOCAL_HTTPS:', import.meta.env.VITE_USE_LOCAL_HTTPS)
-  if (import.meta.env.DEV) console.log('🔧 VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL)
-  if (import.meta.env.DEV)
-    console.log('🔧 VITE_CLOUDFLARE_WORKER_URL:', import.meta.env.VITE_CLOUDFLARE_WORKER_URL)
+  console.debug('🔧 API_CONFIG.API_BASE:', API_CONFIG.API_BASE)
 }
 
 // === 爬虫配置（新增：本地-only、限速与调度） ===
 export const CRAWLER_CONFIG = {
   // 模式：'local' | 'hybrid' | 'serverless'
-  MODE: (import.meta.env.VITE_CRAWLER_MODE as 'local' | 'hybrid' | 'serverless') || 'local',
+  MODE: frontendEnv.crawlerMode,
 
   // 并发与批量控制（避免影响用户网络体验）
-  CONCURRENCY: Number(import.meta.env.VITE_CRAWLER_CONCURRENCY || 2),
-  PER_DOMAIN_CONCURRENCY: Number(import.meta.env.VITE_CRAWLER_PER_DOMAIN_CONCURRENCY || 1),
-  BATCH_SIZE: Number(import.meta.env.VITE_CRAWLER_BATCH_SIZE || 5),
-  BATCH_INTERVAL_MS: Number(import.meta.env.VITE_CRAWLER_BATCH_INTERVAL_MS || 1500),
+  CONCURRENCY: frontendEnv.crawlerConcurrency,
+  PER_DOMAIN_CONCURRENCY: frontendEnv.crawlerPerDomainConcurrency,
+  BATCH_SIZE: frontendEnv.crawlerBatchSize,
+  BATCH_INTERVAL_MS: frontendEnv.crawlerBatchIntervalMs,
 
   // 频率控制
-  DAILY_LIMIT: Number(import.meta.env.VITE_CRAWLER_DAILY_LIMIT || 200),
+  DAILY_LIMIT: frontendEnv.crawlerDailyLimit,
   FAILED_RETRY_INTERVAL_MS: 24 * 60 * 60 * 1000,
 
   // 调度策略
-  USE_IDLE_SCHEDULING: import.meta.env.VITE_CRAWLER_USE_IDLE_SCHEDULING === 'false' ? false : true,
-  IDLE_DELAY_MS: Number(import.meta.env.VITE_CRAWLER_IDLE_DELAY_MS || 3000),
+  USE_IDLE_SCHEDULING: frontendEnv.crawlerUseIdleScheduling,
+  IDLE_DELAY_MS: frontendEnv.crawlerIdleDelayMs,
 
   // 请求头
   REQUEST_HEADERS: {
@@ -320,7 +295,7 @@ export const AI_CONFIG = {
   DEFAULT_TOP_K: 40,
   // 初始提示（系统指令等），用于会话初始化
   INITIAL_PROMPTS: (() => {
-    const raw = import.meta.env.VITE_AI_INITIAL_PROMPTS as string | undefined
+    const raw = frontendEnv.aiInitialPrompts
     if (raw?.trim()) {
       // 约定以 \n\n 分隔多段初始提示
       return raw

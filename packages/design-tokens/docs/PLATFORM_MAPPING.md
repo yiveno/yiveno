@@ -40,9 +40,7 @@ npm install @ottersage/design-tokens
 # pubspec.yaml
 dependencies:
   ottersage_bookmarks_design_tokens:
-    git:
-      url: https://github.com/your-org/ottersage-design-tokens-flutter
-      ref: main
+    path: ../packages/design-tokens
 ```
 
 ---

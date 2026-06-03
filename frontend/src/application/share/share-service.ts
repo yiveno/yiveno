@@ -8,6 +8,7 @@ import type { BookmarkNode } from '@/types'
 import { ShareError, ShareErrorCode, type ShareData } from './types'
 import { logger } from '@/infrastructure/logging/logger'
 import { websiteUrls } from '@/config/website'
+import { frontendEnv } from '@/config/env'
 
 /**
  * 分享服务接口
@@ -80,7 +81,7 @@ class ShareServiceImpl implements ShareService {
     // 开发环境：优先使用环境变量，否则使用 localhost
     // 设置方法：在 frontend/.env.development.local 中配置 VITE_SHARE_BASE_URL
     // 例如：VITE_SHARE_BASE_URL=http://192.168.1.100:3001/share
-    return import.meta.env.VITE_SHARE_BASE_URL || 'http://localhost:3001/share'
+    return frontendEnv.shareBaseUrl || 'http://localhost:3001/share'
   }
 
   /**

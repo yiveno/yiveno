@@ -9,6 +9,7 @@
  */
 
 // 从统一类型定义导入
+import { frontendEnv } from '@/config/env'
 import type { LogLevel, LoggerConfig, LogEntry } from '@/types/infrastructure/logging'
 
 // 导出类型供外部使用
@@ -326,16 +327,13 @@ export class Logger {
 /**
  * 默认日志器实例
  */
-const rawLevel = import.meta.env?.VITE_LOG_LEVEL as string | undefined
-const desiredLevel = rawLevel && rawLevel in levelWeights ? (rawLevel as LogLevel) : 'info'
-
-const rawConsole = import.meta.env?.VITE_LOG_CONSOLE as string | undefined
-const runtimeEnv = import.meta.env?.VITE_RUNTIME_ENV || 'dev'
+const desiredLevel =
+  frontendEnv.logLevel && frontendEnv.logLevel in levelWeights ? frontendEnv.logLevel : 'info'
 
 const enableConsole = (() => {
-  if (runtimeEnv !== 'prod') return true
+  if (frontendEnv.runtimeEnv !== 'prod') return true
   if (import.meta.env?.PROD) {
-    return rawConsole?.toLowerCase() === 'true'
+    return frontendEnv.logConsole === true
   }
   return false
 })()

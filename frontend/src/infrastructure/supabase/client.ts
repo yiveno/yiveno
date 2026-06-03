@@ -11,6 +11,7 @@
 /* eslint-disable no-restricted-imports -- 这是 Supabase 客户端的封装层，必须直接导入 @supabase/supabase-js */
 import { createClient, type User, type Session, type AuthError } from '@supabase/supabase-js'
 import { logger } from '@/infrastructure/logging/logger'
+import { frontendEnv } from '@/config/env'
 
 /**
  * Supabase 配置
@@ -19,9 +20,8 @@ import { logger } from '@/infrastructure/logging/logger'
  * - VITE_SUPABASE_URL: Supabase 项目 URL
  * - VITE_SUPABASE_ANON_KEY: Supabase 匿名密钥（公开的，可在前端使用）
  */
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ugxgxytykxblctsyulsg.supabase.co'
-const supabaseAnonKey =
-  import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_2FY9uDfqNbLwUYXxgcu8lw_qQ8SEbXo'
+const supabaseUrl = frontendEnv.supabaseUrl
+const supabaseAnonKey = frontendEnv.supabaseAnonKey
 
 // 开发模式下打印环境变量状态（帮助调试）
 if (import.meta.env.DEV) {
@@ -80,26 +80,21 @@ const chromeStorageAdapter = {
  * - autoRefreshToken: 自动刷新 token
  * - persistSession: 持久化 session
  *
- * 注意：如果环境变量未配置，使用占位符 URL 避免崩溃
  * 实际使用时应该通过 isSupabaseConfigured() 检查配置状态
  */
 
-export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'placeholder-key',
-  {
-    auth: {
-      // 🔑 使用 Chrome Storage 存储 session
-      // Content Script 会监听官网的 localStorage 变化，并同步到 Chrome Storage
-      // 这样插件就能自动获取官网的登录状态
-      storage: chromeStorageAdapter,
-      storageKey: 'supabase.auth.token', // 自定义 storage key
-      autoRefreshToken: true,
-      persistSession: true,
-      detectSessionInUrl: false // Chrome Extension 不需要检测 URL 中的 session
-    }
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    // 🔑 使用 Chrome Storage 存储 session
+    // Content Script 会监听官网的 localStorage 变化，并同步到 Chrome Storage
+    // 这样插件就能自动获取官网的登录状态
+    storage: chromeStorageAdapter,
+    storageKey: 'supabase.auth.token', // 自定义 storage key
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false // Chrome Extension 不需要检测 URL 中的 session
   }
-)
+})
 
 /**
  * 验证 Supabase 配置是否完整

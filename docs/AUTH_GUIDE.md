@@ -73,14 +73,6 @@ await signOut()
 3. **禁用邮箱注册**
    - Authentication → Providers → Email → Disable sign ups
 
-### 环境变量
-
-```bash
-# .env.local
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
-```
-
 ## 💡 最佳实践
 
 ### 1. 错误处理

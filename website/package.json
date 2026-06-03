@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "./dev.sh --host --port 3001",
     "build": "astro build",
+    "typecheck": "astro check",
+    "typecheck:force": "astro check",
     "preview": "astro preview",
     "deploy": "bun run build && bunx wrangler pages deploy dist --project-name ottersage-website --branch main"
   },
@@ -14,5 +16,8 @@
     "astro": "^5.18.2",
     "vue": "^3.5.35",
     "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.9"
   }
 }

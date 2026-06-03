@@ -72,7 +72,10 @@ export async function handleAuthCallback(
 
     const userId = `${provider}:${sub || email || Math.random().toString(36).slice(2)}`
     const tier = 'free'
-    const secret = env.JWT_SECRET || env.SECRET || 'dev-secret'
+    const secret = env.JWT_SECRET || env.SECRET
+    if (!secret) {
+      return errorJson({ error: 'JWT_SECRET 未配置' }, 500, origin)
+    }
     const token = await signJWT(
       secret,
       { sub: userId, email, tier, features: {} },

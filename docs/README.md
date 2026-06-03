@@ -8,14 +8,4 @@
 
 - [`AUTH_GUIDE.md`](./AUTH_GUIDE.md) — OAuth 使用说明
 
-**开发事实清单（非规格）**：
-
-- [`development/ENV_VARIABLES.md`](./development/ENV_VARIABLES.md)
-- [`development/REMOVED_DEPENDENCIES.md`](./development/REMOVED_DEPENDENCIES.md)
-
-**其他**：
-
-- [`archive/`](./archive/) — 历史归档（不作为规格引用）
-- [`website/`](./website/) — 官网相关说明
-
 `frontend/docs/` **仅长期保留** `i18n-implementation-guide.md`、`i18n-workflow.md`、`time-i18n-checklist.md`；其余结论应写回产品正文后删除对应文件。

@@ -87,7 +87,6 @@ curl -k -X POST https://localhost:8787/api/check-urls \
 ### AI 提供商与配置
 
 - 通过环境变量 `AI_PROVIDER` 切换：`cloudflare | openai | groq | deepseek | gateway`
-- 示例环境配置见 `backend/.env.example`
 - 默认模型：
   - 文本补全 `DEFAULT_AI_MODEL`（默认 `@cf/meta/llama-3.1-8b-instruct`）
   - 向量嵌入 `DEFAULT_EMBEDDING_MODEL`（默认 `@cf/baai/bge-m3`）
@@ -140,7 +139,7 @@ curl -k -X POST https://localhost:8787/api/ai/embedding \
   - 每日调用次数护栏：由 `AI_DAILY_MAX_CALLS` 控制，包含聊天与嵌入总调用数。
   - 结果缓存：对 `complete` 与 `embedding` 进行去重缓存，降低重复请求成本。
 
-配置示例（见 `.env.example`）：
+配置示例：
 
 ```bash
 # Max output tokens per request (hard cap)
@@ -209,9 +208,6 @@ AUTH_GOOGLE_CLIENT_SECRET=xxxxxxxxxxxxxxxxxxxx
 AUTH_MICROSOFT_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 AUTH_MICROSOFT_CLIENT_SECRET=xxxxxxxxxxxxxxxxxxxx
 
-# Apple
-AUTH_APPLE_CLIENT_ID=com.yourapp.service
-AUTH_APPLE_CLIENT_SECRET=-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----
 ```
 
 线上（Cloudflare）：在 Dashboard > Workers & Pages > Settings > Variables 中添加同名 `Secrets`。
@@ -223,12 +219,12 @@ AUTH_APPLE_CLIENT_SECRET=-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-
 1. **Google Cloud Console**
 
 - 创建"OAuth 同意屏幕"和"凭据 > OAuth 客户端 ID（Web application）"
-- 授权重定向 URI：`https://your-domain.com/api/auth/callback`
+- 授权重定向 URI：`https://ottersage.com/api/auth/callback`
 
 2. **Microsoft Azure Portal**
 
 - 在 Azure Active Directory > 应用注册中创建新应用
-- 重定向 URI：`https://your-domain.com/api/auth/callback`
+- 重定向 URI：`https://ottersage.com/api/auth/callback`
 - API 权限：添加 `User.Read` 基本权限
 
 3. **Apple Developer**
@@ -282,12 +278,6 @@ async function signInWithProvider(provider, redirectUri) {
 **注意：D1 数据库已移除，已迁移到 Supabase**
 
 在 Cloudflare Workers Dashboard 或 `wrangler.toml` 中配置：
-
-```toml
-# 环境变量（在 Cloudflare Dashboard → Settings → Variables 中配置）
-SUPABASE_URL = "https://your-project.supabase.co"
-SUPABASE_SERVICE_ROLE_KEY = "your-service-role-key"
-```
 
 **获取 Supabase 配置：**
 

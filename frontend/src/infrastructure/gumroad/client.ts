@@ -1,6 +1,7 @@
 // Gumroad 客户端工具
 
 import { API_CONFIG } from '@/config/constants'
+import { frontendEnv } from '@/config/env'
 import { safeJsonFetch } from '@/infrastructure/http/safe-fetch'
 
 export interface GumroadSubscriptionPayload {
@@ -17,12 +18,12 @@ export interface GumroadSubscriptionPayload {
 }
 
 export const GUMROAD_CONFIG = {
-  productUrl: import.meta.env.VITE_GUMROAD_PRODUCT_URL || '',
+  productUrl: frontendEnv.gumroadProductUrl,
   planIds: {
-    PRO_MONTHLY: import.meta.env.VITE_GUMROAD_PLAN_ID_MONTHLY || '',
-    PRO_YEARLY: import.meta.env.VITE_GUMROAD_PLAN_ID_YEARLY || ''
+    PRO_MONTHLY: frontendEnv.gumroadPlanIdMonthly,
+    PRO_YEARLY: frontendEnv.gumroadPlanIdYearly
   },
-  manageUrl: import.meta.env.VITE_GUMROAD_MANAGE_URL || 'https://app.gumroad.com/subscriptions'
+  manageUrl: frontendEnv.gumroadManageUrl
 } as const
 
 /**

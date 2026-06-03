@@ -12,6 +12,7 @@ import { message } from '@/application/message/message-service'
 import { logger } from '@/infrastructure/logging/logger'
 import { useSupabaseAuth } from '@/composables/useSupabaseAuth'
 import { trpc } from '@/services/trpc'
+import { websiteUrls } from '@/config/website'
 
 defineOptions({ name: 'ShareDialog' })
 
@@ -114,10 +115,8 @@ const activeTabIndex = computed(() => shareTypeToIndex[state.shareType])
 
 // 前往登录页面
 const handleGoToLogin = () => {
-  // 从环境变量读取官网 URL
-  const websiteUrl = import.meta.env.VITE_WEBSITE_URL || 'https://ottersage.com'
   // 打开官网登录页面
-  window.open(`${websiteUrl}/login`, '_blank')
+  window.open(websiteUrls.login, '_blank')
 }
 
 // Material Web Tabs 事件类型定义

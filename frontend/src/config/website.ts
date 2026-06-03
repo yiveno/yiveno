@@ -4,8 +4,10 @@
  * 插件中所有需要跳转到官网的地方都应该使用这个配置
  */
 
+import { frontendEnv } from './env'
+
 // 官网基础 URL
-const WEBSITE_BASE_URL = import.meta.env.VITE_WEBSITE_URL || 'https://ottersage.com'
+const WEBSITE_BASE_URL = frontendEnv.websiteUrl
 
 /**
  * 官网 URL 配置

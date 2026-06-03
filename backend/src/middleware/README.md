@@ -51,15 +51,6 @@ adminRouter.get('/env/check', async c => {
 
 使用 Hono 的 Bearer Auth 中间件验证 Bearer token。
 
-**使用方法：**
-
-```typescript
-import { bearerAuthMiddleware } from './middleware/bearer-auth'
-
-// 在路由中使用
-app.use('/api/webhook/*', bearerAuthMiddleware('your-secret-token'))
-```
-
 **适用场景：**
 
 - Webhook 回调验证
