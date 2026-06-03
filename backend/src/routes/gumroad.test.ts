@@ -1,0 +1,327 @@
+import { afterEach, describe, expect, jest, test } from 'bun:test'
+import { createApp } from '../app'
+import { signJWT } from '../utils/jwt'
+import type { Env } from '../types/env'
+import type { PaymentRecord, Subscription } from '@ottersage/types'
+import * as supabaseModule from '../data-access/supabase'
+
+const baseEnv = {
+  JWT_SECRET: 'test-secret',
+  SUPABASE_URL: 'https://example.supabase.co',
+  SUPABASE_ANON_KEY: 'anon-key',
+  SUPABASE_SERVICE_ROLE_KEY: 'service-role-key',
+  WEBSITE_URL: 'https://example.com'
+} as Env
+
+async function createAuthHeaders() {
+  const token = await signJWT(baseEnv.JWT_SECRET, {
+    sub: 'google:test-user',
+    email: 'test@example.com',
+    tier: 'free',
+    features: {}
+  })
+
+  return {
+    Authorization: `Bearer ${token}`
+  }
+}
+
+afterEach(() => {
+  jest.restoreAllMocks()
+})
+
+describe('gumroad routes', () => {
+  test('GET /api/gumroad/subscription rejects missing user_id', async () => {
+    const app = createApp()
+    const response = await app.request(
+      '/api/gumroad/subscription',
+      {
+        headers: await createAuthHeaders()
+      },
+      baseEnv
+    )
+
+    expect(response.status).toBe(400)
+
+    const data = (await response.json()) as { error: string }
+    expect(data.error).toBe('Missing user_id parameter')
+  })
+
+  test('POST /api/gumroad/webhook rejects invalid signature', async () => {
+    const app = createApp()
+    const response = await app.request(
+      '/api/gumroad/webhook',
+      {
+        method: 'POST',
+        headers: {
+          ...(await createAuthHeaders()),
+          'content-type': 'application/x-www-form-urlencoded',
+          'X-Gumroad-Signature': 'invalid-signature'
+        },
+        body: 'subscription_id=sub_123&custom_fields[user_id]=user_123'
+      },
+      {
+        ...baseEnv,
+        GUMROAD_WEBHOOK_SECRET: 'webhook-secret'
+      } as Env
+    )
+
+    expect(response.status).toBe(401)
+
+    const data = (await response.json()) as { error: string }
+    expect(data.error).toBe('Invalid signature')
+  })
+
+  test('POST /api/gumroad/webhook rejects payload without subscription_id or user_id', async () => {
+    const app = createApp()
+    const response = await app.request(
+      '/api/gumroad/webhook',
+      {
+        method: 'POST',
+        headers: {
+          ...(await createAuthHeaders()),
+          'content-type': 'application/x-www-form-urlencoded'
+        },
+        body: 'notification_type=sale'
+      },
+      baseEnv
+    )
+
+    expect(response.status).toBe(400)
+
+    const data = (await response.json()) as { error: string }
+    expect(data.error).toBe('Missing subscription_id or user_id')
+  })
+
+  test('POST /api/gumroad/webhook persists subscription and payment on success', async () => {
+    const app = createApp()
+    const upsertSpy = jest
+      .spyOn(supabaseModule, 'upsertSubscription')
+      .mockResolvedValue({ id: 'sub-row-id' } as Subscription)
+    const paymentSpy = jest
+      .spyOn(supabaseModule, 'insertPaymentRecord')
+      .mockResolvedValue({ id: 'payment-row-id' } as PaymentRecord)
+
+    const response = await app.request(
+      '/api/gumroad/webhook',
+      {
+        method: 'POST',
+        headers: {
+          ...(await createAuthHeaders()),
+          'content-type': 'application/x-www-form-urlencoded'
+        },
+        body: [
+          'notification_type=sale',
+          'subscription_id=sub_123',
+          'sale_id=order_456',
+          'price=9.99',
+          'currency=USD',
+          'custom_fields[user_id]=user_123',
+          'custom_fields[tier]=pro'
+        ].join('&')
+      },
+      baseEnv
+    )
+
+    expect(response.status).toBe(200)
+    expect(upsertSpy).toHaveBeenCalledTimes(1)
+    expect(paymentSpy).toHaveBeenCalledTimes(1)
+
+    const subscriptionArgs = upsertSpy.mock.calls[0]?.[1] as Partial<Subscription>
+    expect(subscriptionArgs.user_id).toBe('user_123')
+    expect(subscriptionArgs.gumroad_subscription_id).toBe('sub_123')
+    expect(subscriptionArgs.tier).toBe('pro')
+    expect(subscriptionArgs.status).toBe('active')
+
+    const paymentArgs = paymentSpy.mock.calls[0]?.[1] as Partial<PaymentRecord>
+    expect(paymentArgs.user_id).toBe('user_123')
+    expect(paymentArgs.gumroad_subscription_id).toBe('sub_123')
+    expect(paymentArgs.status).toBe('paid')
+    expect(paymentArgs.event_type).toBe('sale')
+
+    const data = (await response.json()) as { success: boolean }
+    expect(data.success).toBe(true)
+  })
+
+  test('POST /api/gumroad/webhook returns 500 when subscription upsert fails', async () => {
+    const app = createApp()
+
+    jest
+      .spyOn(supabaseModule, 'upsertSubscription')
+      .mockRejectedValue(new Error('upsert failed'))
+
+    const paymentSpy = jest.spyOn(supabaseModule, 'insertPaymentRecord')
+
+    const response = await app.request(
+      '/api/gumroad/webhook',
+      {
+        method: 'POST',
+        headers: {
+          ...(await createAuthHeaders()),
+          'content-type': 'application/x-www-form-urlencoded'
+        },
+        body: [
+          'notification_type=sale',
+          'subscription_id=sub_123',
+          'sale_id=order_456',
+          'price=9.99',
+          'currency=USD',
+          'custom_fields[user_id]=user_123'
+        ].join('&')
+      },
+      baseEnv
+    )
+
+    expect(response.status).toBe(500)
+    expect(paymentSpy).not.toHaveBeenCalled()
+
+    const data = (await response.json()) as { error: string }
+    expect(data.error).toBe('Internal server error')
+  })
+
+  test('POST /api/gumroad/webhook returns 500 when payment insert fails', async () => {
+    const app = createApp()
+
+    jest
+      .spyOn(supabaseModule, 'upsertSubscription')
+      .mockResolvedValue({ id: 'sub-row-id' } as Subscription)
+    jest
+      .spyOn(supabaseModule, 'insertPaymentRecord')
+      .mockRejectedValue(new Error('payment failed'))
+
+    const response = await app.request(
+      '/api/gumroad/webhook',
+      {
+        method: 'POST',
+        headers: {
+          ...(await createAuthHeaders()),
+          'content-type': 'application/x-www-form-urlencoded'
+        },
+        body: [
+          'notification_type=sale',
+          'subscription_id=sub_123',
+          'sale_id=order_456',
+          'price=9.99',
+          'currency=USD',
+          'custom_fields[user_id]=user_123'
+        ].join('&')
+      },
+      baseEnv
+    )
+
+    expect(response.status).toBe(500)
+
+    const data = (await response.json()) as { error: string }
+    expect(data.error).toBe('Internal server error')
+  })
+
+  test('POST /api/gumroad/webhook marks subscription expired when ended_at exists', async () => {
+    const app = createApp()
+    const upsertSpy = jest
+      .spyOn(supabaseModule, 'upsertSubscription')
+      .mockResolvedValue({ id: 'sub-row-id' } as Subscription)
+    const paymentSpy = jest
+      .spyOn(supabaseModule, 'insertPaymentRecord')
+      .mockResolvedValue({ id: 'payment-row-id' } as PaymentRecord)
+
+    const response = await app.request(
+      '/api/gumroad/webhook',
+      {
+        method: 'POST',
+        headers: {
+          ...(await createAuthHeaders()),
+          'content-type': 'application/x-www-form-urlencoded'
+        },
+        body: [
+          'notification_type=subscription_cancelled',
+          'subscription_id=sub_123',
+          'sale_id=order_456',
+          'ended_at=2026-06-01T00:00:00.000Z',
+          'custom_fields[user_id]=user_123'
+        ].join('&')
+      },
+      baseEnv
+    )
+
+    expect(response.status).toBe(200)
+    expect(upsertSpy).toHaveBeenCalledTimes(1)
+    expect(paymentSpy).not.toHaveBeenCalled()
+
+    const subscriptionArgs = upsertSpy.mock.calls[0]?.[1] as Partial<Subscription>
+    expect(subscriptionArgs.status).toBe('expired')
+    expect(subscriptionArgs.cancelled_at).toBe('2026-06-01T00:00:00.000Z')
+  })
+
+  test('POST /api/gumroad/webhook marks subscription past_due and payment failed on charge failure', async () => {
+    const app = createApp()
+    const upsertSpy = jest
+      .spyOn(supabaseModule, 'upsertSubscription')
+      .mockResolvedValue({ id: 'sub-row-id' } as Subscription)
+    const paymentSpy = jest
+      .spyOn(supabaseModule, 'insertPaymentRecord')
+      .mockResolvedValue({ id: 'payment-row-id' } as PaymentRecord)
+
+    const response = await app.request(
+      '/api/gumroad/webhook',
+      {
+        method: 'POST',
+        headers: {
+          ...(await createAuthHeaders()),
+          'content-type': 'application/x-www-form-urlencoded'
+        },
+        body: [
+          'notification_type=payment_failed',
+          'subscription_id=sub_123',
+          'sale_id=order_456',
+          'charge_failed=true',
+          'price=19.99',
+          'custom_fields[user_id]=user_123'
+        ].join('&')
+      },
+      baseEnv
+    )
+
+    expect(response.status).toBe(200)
+
+    const subscriptionArgs = upsertSpy.mock.calls[0]?.[1] as Partial<Subscription>
+    expect(subscriptionArgs.status).toBe('past_due')
+
+    const paymentArgs = paymentSpy.mock.calls[0]?.[1] as Partial<PaymentRecord>
+    expect(paymentArgs.status).toBe('failed')
+    expect(paymentArgs.event_type).toBe('payment_failed')
+  })
+
+  test('POST /api/gumroad/webhook marks payment refunded for refund event', async () => {
+    const app = createApp()
+    jest
+      .spyOn(supabaseModule, 'upsertSubscription')
+      .mockResolvedValue({ id: 'sub-row-id' } as Subscription)
+    const paymentSpy = jest
+      .spyOn(supabaseModule, 'insertPaymentRecord')
+      .mockResolvedValue({ id: 'payment-row-id' } as PaymentRecord)
+
+    const response = await app.request(
+      '/api/gumroad/webhook',
+      {
+        method: 'POST',
+        headers: {
+          ...(await createAuthHeaders()),
+          'content-type': 'application/x-www-form-urlencoded'
+        },
+        body: [
+          'notification_type=refund',
+          'subscription_id=sub_123',
+          'sale_id=order_456',
+          'price=9.99',
+          'custom_fields[user_id]=user_123'
+        ].join('&')
+      },
+      baseEnv
+    )
+
+    expect(response.status).toBe(200)
+
+    const paymentArgs = paymentSpy.mock.calls[0]?.[1] as Partial<PaymentRecord>
+    expect(paymentArgs.status).toBe('refunded')
+  })
+})

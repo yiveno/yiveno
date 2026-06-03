@@ -3,7 +3,7 @@
   "compilerOptions": {
     /* Cloudflare Workers environment */
     "lib": ["ES2022", "WebWorker"],
-    "types": ["@cloudflare/workers-types", "@types/node"],
+    "types": ["@cloudflare/workers-types", "@types/node", "@types/bun"],
     "allowImportingTsExtensions": true,
     "noEmit": true,
 

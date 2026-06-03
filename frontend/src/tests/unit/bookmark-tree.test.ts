@@ -1,34 +1,19 @@
 /**
  * 书签树结构转换单元测试
  *
- * 测试目标：flattenTreeToMap 函数
+ * 测试目标：bookmark-tree-store.ts 中的真实树扁平化函数
  */
 
 import { describe, it, expect } from 'vitest'
+import { flattenBookmarkTreeToMap } from '@/stores/bookmark-tree-store'
 import { createMockBookmark, createMockFolder } from '../setup'
-
-// 从 bookmarkStore 提取的 flattenTreeToMap 函数
-function flattenTreeToMap(
-  treeNodes: chrome.bookmarks.BookmarkTreeNode[],
-  targetMap: Map<string, chrome.bookmarks.BookmarkTreeNode>
-): void {
-  for (const node of treeNodes) {
-    const nodeId = String(node.id)
-    targetMap.set(nodeId, node)
-
-    // 递归处理子节点
-    if (Array.isArray(node.children) && node.children.length > 0) {
-      flattenTreeToMap(node.children, targetMap)
-    }
-  }
-}
 
 // 包装函数，返回 Map（与原测试兼容）
 function flattenTreeToMapWrapper(
   nodes: chrome.bookmarks.BookmarkTreeNode[]
 ): Map<string, chrome.bookmarks.BookmarkTreeNode> {
   const map = new Map<string, chrome.bookmarks.BookmarkTreeNode>()
-  flattenTreeToMap(nodes, map)
+  flattenBookmarkTreeToMap(nodes, map)
   return map
 }
 

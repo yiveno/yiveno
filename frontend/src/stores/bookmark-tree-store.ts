@@ -80,6 +80,28 @@ type BookmarkChangeData =
   | { type: 'CHILDREN_REORDERED'; payload: ChildrenReorderedPayload }
 
 /**
+ * 递归扁平化树节点到 Map（确保所有子节点都被添加）
+ *
+ * 抽为独立导出，便于单元测试直接覆盖生产实现。
+ *
+ * @param treeNodes - 树形结构的节点数组
+ * @param targetMap - 目标 Map 存储
+ */
+export function flattenBookmarkTreeToMap(
+  treeNodes: BookmarkNode[],
+  targetMap: Map<string, BookmarkNode>
+): void {
+  for (const node of treeNodes) {
+    const nodeId = String(node.id)
+    targetMap.set(nodeId, node)
+
+    if (Array.isArray(node.children) && node.children.length > 0) {
+      flattenBookmarkTreeToMap(node.children, targetMap)
+    }
+  }
+}
+
+/**
  * Chrome 运行时书签消息结构
  */
 interface ChromeRuntimeBookmarkMessage {
@@ -188,24 +210,6 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
   // --- Actions ---
 
   /**
-   * 🆕 递归扁平化树节点到 Map（确保所有子节点都被添加）
-   *
-   * @param treeNodes - 树形结构的节点数组
-   * @param targetMap - 目标 Map 存储
-   */
-  function flattenTreeToMap(treeNodes: BookmarkNode[], targetMap: Map<string, BookmarkNode>): void {
-    for (const node of treeNodes) {
-      const nodeId = String(node.id)
-      targetMap.set(nodeId, node)
-
-      // 递归处理子节点
-      if (Array.isArray(node.children) && node.children.length > 0) {
-        flattenTreeToMap(node.children, targetMap)
-      }
-    }
-  }
-
-  /**
    * 添加书签节点到存储
    *
    * @param nodeArray - 要添加的书签节点数组（根节点）
@@ -273,7 +277,7 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
 
         // 🆕 递归扁平化所有子节点到 Map
         if (cachedTree.value.length > 0) {
-          flattenTreeToMap(cachedTree.value, draftNodes)
+          flattenBookmarkTreeToMap(cachedTree.value, draftNodes)
         }
       })
     })
@@ -416,7 +420,7 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
       reset()
       const newNodeMap = new Map<string, BookmarkNode>()
       const newChildrenIndex = new Map<string, BookmarkNode[]>()
-      flattenTreeToMap(viewTree, newNodeMap)
+      flattenBookmarkTreeToMap(viewTree, newNodeMap)
 
       // ⑤ 构建 childrenIndex（用于增量更新场景的降级重建）
       for (const node of newNodeMap.values()) {

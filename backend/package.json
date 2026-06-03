@@ -15,6 +15,7 @@
     "eslint": "eslint . --no-cache --fix --max-warnings 0 --fix-type problem,suggestion,layout && echo '✅ ESLint: 所有问题已修复'",
     "eslint:check": "eslint . --no-cache --max-warnings 0 && echo '✅ ESLint: 检查通过'",
     "test": "bun test",
+    "test:watch": "bun test --watch",
     "deploy": "wrangler deploy --env production",
     "deploy:dev": "wrangler deploy",
     "deploy:preview": "wrangler deploy --env preview",
@@ -38,6 +39,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240403.0",
+    "@types/bun": "^1.3.14",
     "@types/node": "^24.3.0",
     "supabase": "^1.187.3"
   },

@@ -85,6 +85,18 @@ jobs:
           echo "💅 Running Stylelint checks..."
           bun run stylelint
 
+      - name: 🧪 前端自动化测试
+        run: |
+          echo "🧪 Running frontend unit tests..."
+          cd frontend
+          bun run test:run
+
+      - name: 🧪 后端自动化测试
+        run: |
+          echo "🧪 Running backend route tests..."
+          cd backend
+          bun run test
+
   # ===============================
   # 🔨 构建验证
   # ===============================
