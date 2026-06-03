@@ -1,371 +1,146 @@
 # AGENTS.md
 
-This file provides guidance to Codex (Codex.ai/code) when working w/ code in this repo.
+为 Codex (Codex.ai/code) 在此仓库中的工作提供指导。
 
-## Single source of truth (read first)
+## 唯一真理
 
-- **Authoritative product + architecture spec (Chinese):** `docs/product/otterSage-产品文档-v3.0.md` — **only** product document; update it when behavior or architecture changes.
-- **Cursor / IDE enforcement:** `.cursor/rules/project.mdc` (and `.kiro/steering/*.md` must not contradict it).
+- **产品 + 架构文档（中文）：** `docs/product/otterSage-产品文档-v3.0.md`
+- Cursor 规则：`.cursor/rules/project.mdc`（不得与此文件冲突）
 
-## Project Overview
+## 项目概要
 
-**otterSage** is intelligent Chrome extension built w/ Vue 3, TypeScript, and Cloudflare Workers that provides AI-powered bookmark organization, content-aware search, and smart recommendations. project follows sophisticated Domain-Driven Design (DDD) architecture and is optimized for high performance w/ features like virtual scrolling, IndexedDB caching, and background crawling.
-
-## Available Scripts
-
-### Root Level Commands (Monorepo)
-
-```bash
-# Development
-bun run dev:fe                # Start frontend (Vite - port 5173)
-bun run dev:be                # Start backend (Worker - port 8787)
-bun run dev                   # Start frontend, backend, and website
-
-# Build
-bun run build:fe              # Build frontend with type checking
-bun run build                 # Build all workspaces
-
-# Quality (must run after code changes)
-bun run typecheck:force       # TypeScript type checking (force rebuild)
-bun run eslint                # Auto-fix ESLint
-bun run stylelint             # Auto-fix Stylelint
-bun run format                # Format all code (Prettier)
-
-# Testing
-bun run e2e                   # E2E tests for management page
-bun run audit:fe              # Lighthouse CI performance audit
-
-# Deployment
-bun run deploy:be             # Deploy backend to Cloudflare
-```
-
-### Frontend Commands
-
-```bash
-cd frontend
-bun run dev                   # Development server
-bun run build                 # Production build with type checking
-bun run build:watch           # Watch build
-bun run typecheck             # TypeScript type checking only
-```
-
-### Backend Commands
-
-```bash
-cd backend
-bun run dev                   # Start Wrangler dev server
-bun run deploy                # Deploy to Cloudflare Worker
-bun run health-check          # Local health check (HTTPS)
-```
-
-## Architecture Overview
-
-### Monorepo Structure
+**otterSage** — Vue 3 + TypeScript + Cloudflare Workers 构建的智能 Chrome 扩展，提供 AI 书签管理、内容搜索和推荐。DDD 8 层架构。
 
 ```
 otterSage/
-├── frontend/              # Vue 3 Chrome Extension
-├── backend/               # Cloudflare Worker API
-├── website/               # Marketing website (Nuxt)
-└── scripts/               # Build & utility scripts
+├── frontend/          # Vue 3 Chrome Extension
+├── backend/           # Cloudflare Worker API
+├── website/           # Nuxt 营销站
+└── scripts/           # 构建工具脚本
 ```
 
-### Frontend Architecture (DDD 8-Layer System)
+## 关键架构规则（MUST NOT VIOLATE）
 
-**Layer 1: Presentation Layer** (`frontend/src/presentation/`)
-
-- UI adapters and presentation-specific composables
-- Bridges UI components w/ application services
-
-**Layer 2: Application Layer** (`frontend/src/application/`)
-
-- Business process orchestration (auth, bookmarks, fonts, notifications, queries, scheduler, settings)
-- Coordinates btw core and infrastructure layers
-
-**Layer 3: Core Layer** (`frontend/src/core/`)
-
-- Domain models and business rules (pure TypeScript)
-- Independent of external implementations
-- Contains domain services (diff-engine, executor, query-engine)
-
-**Layer 4: Infrastructure Layer** (`frontend/src/infrastructure/`)
-
-- Technical implementations (IndexedDB, HTTP, logging, events)
-- Chrome API wrappers and storage management
-
-**Layer 5: Services Layer** (`frontend/src/services/`)
-
-- Background Script and Worker-specific services
-- Legacy services being migrated to application layer
-
-**Layer 6: Stores Layer** (`frontend/src/stores/`)
-
-- Pinia state management for UI state and lightweight caching
-
-**Layer 7: Composables Layer** (`frontend/src/composables/`)
-
-- Global Vue 3 composables (keyboard shortcuts, search, performance)
-
-**Layer 8: Background Layer** (`frontend/src/background/`)
-
-- Chrome Extension Background Script (Service Worker)
-- Chrome API event listeners and data synchronization
-
-## Critical Architecture Rules
-
-### 1. Unidirectional Data Flow (MUST NOT VIOLATE)
+### 1. 单向数据流
 
 ```
 Chrome API → Background Script → IndexedDB → Pinia Store → Vue Components
      ↑                                                           ↓
-     └─────────────── chrome.runtime.sendMessage ────────────────┘
+     └─────────── chrome.runtime.sendMessage ────────────────────┘
 ```
 
-**Strict Rules:**
+- ✅ IndexedDB 是唯一事实源
+- ✅ Background Script 是唯一 API 监听者（`background/bookmarks.ts`）
+- ❌ **禁止**：前端直接调 `chrome.bookmarks.*` 或 `chrome.tabs.*`
 
-- ✅ IndexedDB is single source of truth
-- ✅ Background Script is only listener (`background/bookmarks.ts`)
-- ✅ Frontend MUST NOT directly access Chrome APIs
-- ❌ FORBIDDEN: Frontend direct calls to `chrome.bookmarks.*`
-
-### 2. DDD Layer Boundaries (Strict Enforcement)
+### 2. DDD 层边界
 
 ```
 presentation/ → application/ → core/ → infrastructure/
 ```
 
-- ❌ `presentation/` cannot directly access `infrastructure/`
-- ❌ `core/` cannot depend on `infrastructure/`
+- ❌ `presentation/` 不能直接访问 `infrastructure/`
+- ❌ `core/` 不能依赖 `infrastructure/`
 
-### 3. IndexedDB Manager (Single Entry Point)
+### 3. IndexedDB 单入口
 
-- Path: `frontend/src/infrastructure/indexeddb/manager.ts`
-- ✅ All IndexedDB operations MUST go through `indexedDBManager` instance
-- ❌ FORBIDDEN: Direct use of `indexedDB.open()` or native APIs
+- 路径：`frontend/src/infrastructure/indexeddb/manager.ts`
+- ✅ 所有 IndexedDB 操作必须通过 `indexedDBManager`
+- ❌ **禁止**：直接调 `indexedDB.open()` 或原生 API
 
-### 4. Service Worker Compatibility (CRITICAL)
+### 4. Service Worker 兼容性
 
-**Background Scripts run in Service Worker environment w/o `window` `document` `localStorage`!**
+Background Script 运行在 Service Worker 环境，**没有** `window` / `document` / `localStorage`。
 
-| Correct ✅                      | Incorrect ❌          |
-| ------------------------------- | --------------------- |
-| `setTimeout()`                  | `window.setTimeout()` |
-| `fetch()`                       | `window.fetch()`      |
-| `chrome.storage.*`              | `localStorage.*`      |
-| `ReturnType<typeof setTimeout>` | `number` (timer type) |
+| 正确 ✅ | 错误 ❌ |
+|---|---|
+| `setTimeout()` | `window.setTimeout()` |
+| `fetch()` | `window.fetch()` |
+| `chrome.storage.*` | `localStorage.*` |
+| `ReturnType<typeof setTimeout>` | `number`（定时器类型） |
 
-## Storage Responsibility Matrix
+## 存储决策
 
-| Storage Type           | Lifecycle  | Use Cases                                    |
-| ---------------------- | ---------- | -------------------------------------------- |
-| IndexedDB              | Permanent  | Bookmark data (20k+), crawled metadata       |
-| chrome.storage.local   | Permanent  | User preferences, extension config           |
-| chrome.storage.session | Session    | Temporary data, UI state, sync status        |
-| Pinia Store            | Page-level | High-frequency UI state, computed properties |
+| 存储 | 生命周期 | 用途 |
+|---|---|---|
+| IndexedDB | 永久 | 书签数据（2w+）、爬取元数据 |
+| `chrome.storage.local` | 永久 | 用户偏好、扩展配置 |
+| `chrome.storage.session` | 会话 | 临时数据、UI 状态、同步状态 |
+| Pinia Store | 页面级 | 高频 UI 状态、计算属性 |
 
-**Decision Tree:**
+> 数据量 > 1000 → IndexedDB。需跨页面持久化 → `chrome.storage.local`。仅当前页可用 → Pinia。
 
-1. Data volume > 1000 items? → IndexedDB
-2. Need persistence after browser close? → chrome.storage.local
-3. Need cross-page sharing but session-bound? → chrome.storage.session
-4. Current page only, can rebuild on refresh? → Pinia Store
+## 关键约定
 
-## Technology Stack
+### Filter vs Search
 
-### Frontend (Chrome Extension)
+- UI/API/文档：一律用 **Filter（筛选）**
+- 实现层（代码、注释）：search/filter 均可
+- ❌ **禁止**：UI 文案中出现 "Search"
 
-- **Framework**: Vue 3.5.18 w/ Composition API + `<script setup>`
-- **Language**: TypeScript 5.8.3 (strict mode + Project References)
-- **State Management**: Pinia 3.0.3
-- **Build Tool**: Vite 8.0.0 (fast HMR + Rolldown bundling w/ Rust)
-- **Search**: Fuse.js 6.6.2 (fuzzy search)
-- **Virtual Scroll**: @tanstack/vue-virtual 3.13.12 (large dataset optimization)
-- **Chrome API**: Manifest V3
+### TypeScript
 
-### Backend (API Server)
+- ❌ **禁止**：`any`、`as any`
+- ✅ 外部数据必须用 Zod 校验
+- ✅ JSDoc 用中文
 
-- **Runtime**: Cloudflare Worker (global edge computing)
-- **Language**: JavaScript (ESM) ES2022 (Bun-optimized)
-- **Validation**: Zod 3.22.4 (type-safe data validation)
-- **UUID**: uuid 11.1.0
-- **Database**: Supabase (PostgreSQL + real-time)
-- **AI**: User-provided API Keys (OpenAI / Codex / Gemini) or Chrome Built-in AI (future)
+### Vue 组件
 
-## Key Development Workflows
+- ✅ 必须用 `defineOptions({ name: 'ComponentName' })`
+- ❌ 禁止在组件内调 `chrome.bookmarks.*` 或 `indexedDB.open()`
 
-### Embedding Service (Automatic Behavior)
+### 关键库用法
 
-**Local ONNX Embeddings are fully automatic w/ smart defaults:**
+- **Immer**: `updateMap(nodes, draft => { draft.set('123', newNode) })`
+- **mitt**: `emitEvent('bookmark:created', {...})`
+- **VueUse**: 优先用 `useEventListener` / `useDebounceFn` / `useTimeoutFn`
 
-- ✅ **No user config needed** - All settings removed from UI
-- ✅ **Automatic quota management** - Adjusts based on bookmark count
-- ✅ **Background processing** - Runs during idle time w/o blocking UI
-- ✅ **Incremental sync** - Only processes new/changed bookmarks
-- ✅ **Fully local** - No network requests, complete privacy
-
-**Implementation:**
-
-- Service: `frontend/src/infrastructure/embedding/embedding-service.ts`
-- Provider: `frontend/src/infrastructure/embedding/onnx-embedding-provider.ts`
-- Storage: `frontend/src/infrastructure/embedding/local-vector-store.ts`
-
-**Smart Defaults (hardcoded):**
+## 常见错误（FORBIDDEN）
 
 ```typescript
-const BATCH_SIZE = 32 // Process 32 bookmarks per batch
-const MAX_TEXT_LENGTH = 512 // Truncate text to 512 chars
-// Daily quota and other limits are automatically calculated based on bookmark count
-```
-
-### Local Development
-
-1. **Install dependencies**: `bun install`
-2. **Start all services**: `bun run watch` (frontend build + backend + website)
-3. **Load extension**: Chrome → Extensions → Load unpacked → `dist/`
-
-### Code Quality Assurance (MANDATORY)
-
-**After any code changes, MUST run:**
-
-```bash
-bun run typecheck:force
-bun run eslint
-bun run stylelint
-bun run format
-```
-
-- ✅ If errors exist, must fix immediately
-- ✅ Only complete after confirming no errors
-
-### Building for Production
-
-1. **Production build**: `bun run build`
-2. **Clean dist**: Automatically runs `bun scripts/clean-dist.cjs`
-3. **Package extension**: Zip `dist/` dir for Chrome Web Store
-
-## Performance Requirements
-
-**Target: Smooth operation w/ 20k bookmarks**
-
-- ✅ Virtual scrolling: `@tanstack/vue-virtual` for large datasets
-- ✅ Batch operations: IndexedDB batching (2000/batch)
-- ✅ Cached tree structure: `flattenTreeToMap` to Map (O(1) lookup)
-- ❌ FORBIDDEN: Full tree recursive traversal
-
-## Important Conventions
-
-### Terminology: Filter vs Search
-
-**Project uses "Filter" concept consistently:**
-
-- ✅ External (UI, API, docs): **Filter (筛选)**
-- ✅ Internal (tech implementation, comments): search/filter both acceptable
-- ❌ FORBIDDEN: Using "Search" in UI copy
-
-**Related Components:**
-
-- `BookmarkFilter` component: Bookmark filtering component
-- `useBookmarkFilter` Composable: Bookmark filtering hook
-- `searchAppService`Underlying filtering service (technical term保留)
-
-### TypeScript Standards
-
-- ❌ PERMANENTLY FORBIDDEN: `any` `as any`
-- ✅ MUST use Zod for external data validation
-- ✅ MUST add JSDoc comments (Chinese)
-
-### Vue Component Standards
-
-- ✅ MUST use `defineOptions({ name: 'ComponentName' })`
-- ❌ FORBIDDEN: Direct calls to `chrome.bookmarks.*` in components
-- ❌ FORBIDDEN: Direct calls to `indexedDB.open()` in components
-
-### Key Libraries
-
-- **Immer**: `updateMap(nodes, draft => {...})` (immutable state updates)
-- **mitt**: `emitEvent('bookmark:created', {...})` (event bus)
-- **VueUse**: Prefer `useEventListener` `useDebounceFn` `useTimeoutFn`
-- **Zod**: All external data must be validated
-
-## Common Errors (FORBIDDEN)
-
-### 1. Data Flow Violation
-
-```typescript
-// ❌ FORBIDDEN: Frontend direct Chrome API access
+// ❌ 前端直接调 Chrome API
 await chrome.bookmarks.create({ title: 'New Bookmark' })
 
-// ✅ CORRECT: Through Background Script
-await chrome.runtime.sendMessage({
-  type: 'CREATE_BOOKMARK',
-  title: 'New Bookmark'
-})
+// ✅ 通过 Background Script
+await chrome.runtime.sendMessage({ type: 'CREATE_BOOKMARK', title: 'New Bookmark' })
 ```
 
-### 2. State Update Error
-
 ```typescript
-// ❌ FORBIDDEN: Direct Map modification (Vue can't detect)
+// ❌ 直接改 Map（Vue 检测不到）
 nodes.value.set('123', newNode)
 
-// ✅ CORRECT: Use Immer
-updateMap(nodes, draft => {
-  draft.set('123', newNode)
-})
+// ✅ 用 Immer
+updateMap(nodes, draft => { draft.set('123', newNode) })
 ```
 
-### 3. Service Worker Compatibility
-
 ```typescript
-// ❌ FORBIDDEN
+// ❌ Service Worker 中用了 window
 private timer: number | null = null
 this.timer = window.setTimeout(() => {...}, 1000)
 
-// ✅ CORRECT
+// ✅
 private timer: ReturnType<typeof setTimeout> | null = null
 this.timer = setTimeout(() => {...}, 1000)
 ```
 
-## Integration Points
+## 修改代码后必须运行
 
-- **Authentication**: Google, GitHub OAuth + Supabase
-- **Payment Processing**: Gumroad integration (Lemon Squeezy removed)
-- **AI Services**: User-provided API Keys (OpenAI / Codex / Gemini) + Local ONNX embeddings (fully automatic, no user config needed)
-- **Storage**: IndexedDB + Chrome Bookmarks API sync
+```bash
+bun run typecheck:force  # 类型检查必须通过
+bun run eslint           # ESLint 自动修复
+bun run stylelint        # Stylelint 自动修复
+bun run format           # Prettier 格式化
+```
 
-## File Organization
+## 交互规范
 
-- **Frontend**: Strict DDD 8-layer architecture
-- **Backend**: Service Worker w/ event-driven architecture
-- **Naming**: Consistent `useXXXStore` for Pinia stores
-- **Import paths**: Aliased paths (`@/`) for clean imports
+### 1. 回复风格
 
-## Testing Strategy
+- 严格精简 token，不浪费任何多余字符
+- 去掉开场白、客套话、道歉、过渡句
+- 只输出精炼的工程术语和精确的改动
+- 少 token 搞定，就用少 token
 
-### E2E Testing
+### 2. 语言
 
-- **Management Page**: Full functional testing w/ Puppeteer
-- **Performance Testing**: CPU throttling + network simulation
-- **Chrome Extension Testing**: Extension lifecycle and API interactions
-
-### Quality Metrics
-
-- **Bundle Size**: Optimized w/ code splitting and tree shaking
-- **Performance**: Virtual scrolling for large datasets
-- **Memory Usage**: IndexedDB caching reduces API calls
-- **User Experience**: Progress indicators and error handling
-
-## Deployment Configuration
-
-### Frontend (Chrome Extension)
-
-- **Build Target**: Optimized for Chrome 100+ browsers
-- **Output**: `dist/` dir w/ manifest.json
-- **Deployment**: Chrome Web Store + GitHub Releases
-
-### Backend (Cloudflare Worker)
-
-- **Runtime**: Edge network w/ global distribution
-- **Database**: Supabase (PostgreSQL) w/ vector search
-- **AI**: User-provided API Keys (OpenAI / Codex / Gemini) + Local ONNX embeddings (automatic)
-- **Custom Domain**: api.ottersage.com
+- 所有回复用中文

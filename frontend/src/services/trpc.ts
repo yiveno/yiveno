@@ -5,10 +5,9 @@ const getBaseUrl = () => {
   // Chrome Extension 环境中，必须使用完整的后端 URL
   // 不能使用相对路径，因为会被解析为 chrome-extension:// 协议
 
-  // 开发环境：强制使用本地 Cloudflare Workers（HTTPS）
-  // 注意：必须在环境变量检查之前，因为 .env 中配置的是生产环境 URL
+  // 开发环境：优先用 VITE_API_BASE_URL，否则默认本地 HTTP
   if (import.meta.env.DEV) {
-    return 'https://localhost:8787'
+    return import.meta.env.VITE_API_BASE_URL || 'http://localhost:8787'
   }
 
   // 生产环境：优先使用环境变量配置的 API URL
@@ -24,11 +23,8 @@ export const trpc = createTRPCProxyClient<AppRouter>({
   links: [
     httpBatchLink({
       url: `${getBaseUrl()}/trpc`,
-      // You can pass any HTTP headers you wish here
       async headers() {
-        return {
-          // authorization: getAuthCookie(),
-        }
+        return {}
       }
     })
   ]

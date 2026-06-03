@@ -1,14 +1,23 @@
 const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.ottersage.com'
 
-export interface ShareData {
-  short_code: string
-  share_url: string
+export interface ShareBookmark {
   title: string
   url: string
-  created_at: string
+  description?: string
+  position: number
 }
 
-export async function getShare(shortCode: string): Promise<ShareData | null> {
+export interface ShareDetail {
+  short_code: string
+  title: string
+  description?: string
+  bookmark_count: number
+  show_username: boolean
+  created_at: string
+  bookmarks: ShareBookmark[]
+}
+
+export async function getShareDetail(shortCode: string): Promise<ShareDetail | null> {
   try {
     const res = await fetch(`${API_BASE}/api/website/share/${shortCode}`)
     if (!res.ok) return null

@@ -78,6 +78,10 @@ export function createBuildConfig(): BuildOptions {
 
   // Vite 8: 使用 rolldownOptions（rollupOptions 已弃用）
   config.rolldownOptions = createBuildOptions()
+  // 过滤 Rolldown 对 @vueuse/core 等三方包的 INVALID_ANNOTATION 告警（无害）
+  ;(config.rolldownOptions as any).onLog = (_level: string, log: any) => {
+    if (log.code === 'INVALID_ANNOTATION') return
+  }
 
   return config
 }

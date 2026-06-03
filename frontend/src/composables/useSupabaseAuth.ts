@@ -148,11 +148,11 @@ export function useSupabaseAuth() {
    * 初始化：检查当前 session
    */
   const initialize = async () => {
+    logger.warn('[useSupabaseAuth] 🚀 开始初始化认证状态...')
     if (!isSupabaseConfigured()) {
       loading.value = false
       error.value = 'Supabase 未配置'
       logger.warn('[useSupabaseAuth] ⚠️ Supabase 未配置，跳过认证初始化')
-      console.log('[useSupabaseAuth] ⚠️ Supabase 未配置')
       return
     }
 

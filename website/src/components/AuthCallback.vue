@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
+import { getSupabase } from '../services/supabase'
 
 onMounted(async () => {
   try {
@@ -12,48 +13,19 @@ onMounted(async () => {
     const params = new URLSearchParams(hash.replace('#', ''))
     const accessToken = params.get('access_token') || ''
     const refreshToken = params.get('refresh_token') || ''
-    const expiresAt = params.get('expires_at')
 
-    // 解码 JWT 获取 payload
-    let payload: any = {}
-    try {
-      payload = JSON.parse(atob(accessToken.split('.')[1]))
-    } catch {}
-
-    // 构造完整的 session 对象
-    const session = {
+    // 用 Supabase SDK 的 setSession，自动处理存储和 token 刷新
+    const supabase = await getSupabase()
+    const { error } = await supabase.auth.setSession({
       access_token: accessToken,
-      refresh_token: refreshToken,
-      expires_in: 3600,
-      expires_at: expiresAt ? parseInt(expiresAt) : Math.floor(Date.now() / 1000) + 3600,
-      token_type: 'bearer',
-      user: {
-        id: payload.sub || '',
-        aud: 'authenticated',
-        role: 'authenticated',
-        email: payload.email || '',
-        app_metadata: { provider: 'google' },
-        user_metadata: {
-          name: payload.name || payload.email || '',
-          avatar_url: payload.picture || payload.avatar_url || '',
-          email: payload.email || ''
-        },
-        last_sign_in_at: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        identities: [{
-          id: payload.sub || '',
-          provider: 'google',
-          created_at: new Date().toISOString(),
-          last_sign_in_at: new Date().toISOString()
-        }]
-      }
-    }
+      refresh_token: refreshToken
+    })
 
-    // 直接写 localStorage
-    const projectRef = 'ugxgxytykxblctsyulsg'
-    const storageKey = `sb-${projectRef}-auth-token`
-    localStorage.setItem(storageKey, JSON.stringify(session))
+    if (error) {
+      console.error('[AuthCallback] setSession error:', error)
+      window.location.href = '/login?error=session_error'
+      return
+    }
 
     window.location.href = '/account'
   } catch (e) {

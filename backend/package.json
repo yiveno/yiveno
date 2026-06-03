@@ -5,7 +5,7 @@
   "type": "module",
   "main": "cloudflare-worker.js",
   "scripts": {
-    "dev": "wrangler dev --local --port 8787 --local-protocol https --https-cert-path ./localhost+2.pem --https-key-path ./localhost+2-key.pem",
+    "dev": "wrangler dev --local --port 8787",
     "build": "echo 'Backend: Cloudflare Worker 无需构建'",
     "typecheck": "tsc --noEmit --skipLibCheck",
     "typecheck:force": "tsc --noEmit --skipLibCheck",

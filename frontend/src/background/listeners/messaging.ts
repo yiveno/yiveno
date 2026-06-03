@@ -133,7 +133,44 @@ const MESSAGE_HANDLERS: Record<
     } as unknown)
   },
   SYNC_AUTH_SESSION: handleSyncAuthSession,
-  CLEAR_AUTH_SESSION: handleClearAuthSession
+  CLEAR_AUTH_SESSION: handleClearAuthSession,
+  IMPORT_SHARED_BOOKMARKS: async (message, sendResponse) => {
+    logger.info('BackgroundMessaging', '📥 收到 IMPORT_SHARED_BOOKMARKS 请求')
+    try {
+      const bookmarks = message.data?.bookmarks as Array<{ title: string; url: string }> | undefined
+      if (!bookmarks || !Array.isArray(bookmarks) || bookmarks.length === 0) {
+        sendResponse({ success: false, error: '没有书签数据' })
+        return
+      }
+
+      // 获取书签栏根目录 ID
+      const tree = await new Promise<chrome.bookmarks.BookmarkTreeNode[]>((resolve) => {
+        chrome.bookmarks.getTree((t) => resolve(t))
+      })
+      const bookmarkBar = tree[0]?.children?.[0]
+      const parentId = bookmarkBar?.id || '1'
+
+      let ok = 0, fail = 0
+      for (const bm of bookmarks) {
+        try {
+          await new Promise<void>((res, rej) => {
+            chrome.bookmarks.create({ parentId, title: bm.title, url: bm.url }, () => {
+              chrome.runtime.lastError ? rej(new Error(chrome.runtime.lastError.message)) : res()
+            })
+          })
+          ok++
+        } catch (e) {
+          fail++
+          logger.error('BackgroundMessaging', '导入书签失败', { title: bm.title, error: e })
+        }
+      }
+      logger.info('BackgroundMessaging', '✅ 导入完成', { ok, fail })
+      sendResponse({ success: true, ok, fail })
+    } catch (e) {
+      logger.error('BackgroundMessaging', '❌ 导入失败', e)
+      sendResponse({ success: false, error: String(e) })
+    }
+  }
 }
 
 /**

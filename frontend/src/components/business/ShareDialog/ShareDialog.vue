@@ -387,8 +387,12 @@ const handleCreateLinkShare = async () => {
     })
 
     if (result.success) {
-      // 复制分享链接到剪贴板
-      await navigator.clipboard.writeText(result.data.shareUrl)
+
+      try {
+        await navigator.clipboard.writeText(result.data.shareUrl)
+      } catch {
+        // 忽略剪贴板错误，继续显示成功消息
+      }
 
       const successText = '分享链接已生成并复制到剪贴板'
       message.success(successText)
@@ -401,7 +405,12 @@ const handleCreateLinkShare = async () => {
       })
 
       // 在新标签页打开分享链接
-      window.open(result.data.shareUrl, '_blank', 'noopener,noreferrer')
+      const shareUrl = result.data.shareUrl
+      if (typeof chrome !== 'undefined' && chrome?.tabs?.create) {
+        chrome.tabs.create({ url: shareUrl })
+      } else {
+        window.open(shareUrl, '_blank', 'noopener,noreferrer')
+      }
 
       // 触发分享完成事件
       emit('shareComplete')

@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getShare } from '../services/share'
+import { getShareDetail } from '../services/share'
 
 const error = ref('')
-const title = ref('')
 
 onMounted(async () => {
   const params = new URLSearchParams(window.location.search)
@@ -15,11 +14,9 @@ onMounted(async () => {
     error.value = '无效的链接'
     return
   }
-  const data = await getShare(shortCode)
+  const data = await getShareDetail(shortCode)
   if (data) {
-    title.value = data.title
-    // 分享本质是书签列表，跳转到 account 页面
-    window.location.href = '/account'
+    window.location.href = `/share?code=${shortCode}`
   } else {
     error.value = '链接已失效'
   }

@@ -104,6 +104,7 @@ export const supabase = createClient(
  * 验证 Supabase 配置是否完整
  */
 export function isSupabaseConfigured(): boolean {
+  console.warn('[Supabase Client] ⚠️ Supabase 配置检查: ' + (isConfigured ? '✅ 已配置' : '❌ 未配置'))
   return isConfigured
 }
 
