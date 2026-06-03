@@ -1,7 +1,7 @@
 /**
  * 订阅状态类型
  */
-export type SubscriptionStatus = 'active' | 'past_due' | 'canceled' | 'expired'
+export type SubscriptionStatus = 'active' | 'past_due' | 'cancelled' | 'expired' | 'paused'
 
 /**
  * 订阅层级类型

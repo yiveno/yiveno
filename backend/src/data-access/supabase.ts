@@ -290,7 +290,7 @@ export async function insertPaymentRecord(
   try {
     const paymentData: Omit<PaymentRecord, 'id'> & { id?: string } = {
       user_id: payment.user_id,
-      subscription_id: payment.subscription_id || null,
+      gumroad_subscription_id: payment.gumroad_subscription_id || null,
       gumroad_order_id: payment.gumroad_order_id,
       gumroad_payment_id: payment.gumroad_payment_id || null,
       amount: payment.amount,

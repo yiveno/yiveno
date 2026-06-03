@@ -387,7 +387,6 @@ const handleCreateLinkShare = async () => {
     })
 
     if (result.success) {
-
       try {
         await navigator.clipboard.writeText(result.data.shareUrl)
       } catch {

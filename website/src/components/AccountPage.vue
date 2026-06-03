@@ -32,7 +32,11 @@ async function handleSignOut() {
   <div class="account-page" v-if="!loading">
     <div v-if="user" class="card">
       <div class="user-header">
-        <img v-if="user.user_metadata?.avatar_url" :src="user.user_metadata.avatar_url" class="avatar" />
+        <img
+          v-if="user.user_metadata?.avatar_url"
+          :src="user.user_metadata.avatar_url"
+          class="avatar"
+        />
         <div>
           <h2>{{ user.user_metadata?.name || user.email }}</h2>
           <p class="email">{{ user.email }}</p>
@@ -40,7 +44,9 @@ async function handleSignOut() {
       </div>
       <section>
         <h3>订阅计划</h3>
-        <p>当前计划：<strong>{{ subscription ? subscription.plan_id : '免费版' }}</strong></p>
+        <p>
+          当前计划：<strong>{{ subscription ? subscription.plan_id : '免费版' }}</strong>
+        </p>
       </section>
       <section>
         <h3>账户信息</h3>
@@ -63,15 +69,58 @@ async function handleSignOut() {
 </template>
 
 <style scoped>
-.account-page { max-width:600px; margin:2rem auto; padding:0 1rem; }
-.card { background:#fff; border:1px solid #eee; border-radius:12px; padding:2rem; }
-.user-header { display:flex; align-items:center; gap:1rem; margin-bottom:1.5rem; }
-.avatar { width:64px; height:64px; border-radius:50%; }
-.email { color:#666; font-size:0.875rem; }
-section { margin:1.5rem 0; }
-dl dt { font-weight:600; margin-top:0.5rem; color:#333; }
-dl dd { margin:0.25rem 0 0 0; color:#666; font-size:0.9rem; }
-.btn { padding:0.5rem 1.5rem; border:1px solid #ddd; border-radius:8px; background:#fff; cursor:pointer; }
-.btn:hover { background:#f5f5f5; }
-.loading { text-align:center; padding:4rem; color:#999; }
+.account-page {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+.card {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 2rem;
+}
+.user-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+}
+.email {
+  color: #666;
+  font-size: 0.875rem;
+}
+section {
+  margin: 1.5rem 0;
+}
+dl dt {
+  font-weight: 600;
+  margin-top: 0.5rem;
+  color: #333;
+}
+dl dd {
+  margin: 0.25rem 0 0 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+.btn {
+  padding: 0.5rem 1.5rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+.btn:hover {
+  background: #f5f5f5;
+}
+.loading {
+  text-align: center;
+  padding: 4rem;
+  color: #999;
+}
 </style>

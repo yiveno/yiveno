@@ -52,21 +52,21 @@ presentation/ → application/ → core/ → infrastructure/
 
 Background Script 运行在 Service Worker 环境，**没有** `window` / `document` / `localStorage`。
 
-| 正确 ✅ | 错误 ❌ |
-|---|---|
-| `setTimeout()` | `window.setTimeout()` |
-| `fetch()` | `window.fetch()` |
-| `chrome.storage.*` | `localStorage.*` |
+| 正确 ✅                         | 错误 ❌                |
+| ------------------------------- | ---------------------- |
+| `setTimeout()`                  | `window.setTimeout()`  |
+| `fetch()`                       | `window.fetch()`       |
+| `chrome.storage.*`              | `localStorage.*`       |
 | `ReturnType<typeof setTimeout>` | `number`（定时器类型） |
 
 ## 存储决策
 
-| 存储 | 生命周期 | 用途 |
-|---|---|---|
-| IndexedDB | 永久 | 书签数据（2w+）、爬取元数据 |
-| `chrome.storage.local` | 永久 | 用户偏好、扩展配置 |
-| `chrome.storage.session` | 会话 | 临时数据、UI 状态、同步状态 |
-| Pinia Store | 页面级 | 高频 UI 状态、计算属性 |
+| 存储                     | 生命周期 | 用途                        |
+| ------------------------ | -------- | --------------------------- |
+| IndexedDB                | 永久     | 书签数据（2w+）、爬取元数据 |
+| `chrome.storage.local`   | 永久     | 用户偏好、扩展配置          |
+| `chrome.storage.session` | 会话     | 临时数据、UI 状态、同步状态 |
+| Pinia Store              | 页面级   | 高频 UI 状态、计算属性      |
 
 > 数据量 > 1000 → IndexedDB。需跨页面持久化 → `chrome.storage.local`。仅当前页可用 → Pinia。
 
@@ -110,7 +110,9 @@ await chrome.runtime.sendMessage({ type: 'CREATE_BOOKMARK', title: 'New Bookmark
 nodes.value.set('123', newNode)
 
 // ✅ 用 Immer
-updateMap(nodes, draft => { draft.set('123', newNode) })
+updateMap(nodes, draft => {
+  draft.set('123', newNode)
+})
 ```
 
 ```typescript

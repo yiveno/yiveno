@@ -11,6 +11,7 @@
 import { logger } from '@/infrastructure/logging/logger'
 import { bookmarkSyncService } from '@/services/bookmark-sync-service'
 import type { BookmarkRecord } from '@/infrastructure/indexeddb/types'
+import { z } from 'zod'
 import { openManagementPage, openSettingsPage } from '../managers/navigation'
 import { getExtensionState } from '../managers/state'
 import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
@@ -29,6 +30,34 @@ interface RuntimeMessage {
   /** 可选的消息数据 */
   data?: Record<string, unknown>
 }
+
+const WEB_URL_PROTOCOLS = new Set(['http:', 'https:'])
+
+/**
+ * 校验共享导入书签 URL。
+ *
+ * @param value - 待校验 URL
+ * @returns 是否为可导入的网页 URL
+ */
+function isValidSharedBookmarkUrl(value: string): boolean {
+  try {
+    const url = new URL(value)
+    return WEB_URL_PROTOCOLS.has(url.protocol)
+  } catch {
+    return false
+  }
+}
+
+const SharedBookmarkImportItemSchema = z.object({
+  title: z.string().trim().min(1, '书签标题不能为空'),
+  url: z.string().trim().min(1, '书签 URL 不能为空').refine(isValidSharedBookmarkUrl, {
+    message: '书签 URL 必须是有效的 http(s) 地址'
+  })
+})
+
+const SharedBookmarkImportPayloadSchema = z.object({
+  bookmarks: z.array(SharedBookmarkImportItemSchema).min(1, '没有书签数据')
+})
 
 /**
  * 异步响应函数类型
@@ -91,11 +120,11 @@ const MESSAGE_HANDLERS: Record<
   OTTERSAGE_NOTIFY: handleNotification,
   OTTERSAGE_NOTIFY_CLEAR: handleNotificationClear,
   OPEN_MANAGEMENT_PAGE: async (_message, sendResponse) => {
-    openManagementPage()
+    await openManagementPage()
     sendResponse({ success: true } as unknown)
   },
   OPEN_SETTINGS_PAGE: async (_message, sendResponse) => {
-    openSettingsPage()
+    await openSettingsPage()
     sendResponse({ success: true } as unknown)
   },
   SYNC_BOOKMARKS: async (_message, sendResponse) => {
@@ -137,25 +166,38 @@ const MESSAGE_HANDLERS: Record<
   IMPORT_SHARED_BOOKMARKS: async (message, sendResponse) => {
     logger.info('BackgroundMessaging', '📥 收到 IMPORT_SHARED_BOOKMARKS 请求')
     try {
-      const bookmarks = message.data?.bookmarks as Array<{ title: string; url: string }> | undefined
-      if (!bookmarks || !Array.isArray(bookmarks) || bookmarks.length === 0) {
-        sendResponse({ success: false, error: '没有书签数据' })
+      const payloadResult = SharedBookmarkImportPayloadSchema.safeParse(message.data)
+      if (!payloadResult.success) {
+        const error = payloadResult.error.issues[0]?.message ?? '书签数据格式错误'
+        sendResponse({ success: false, error })
         return
       }
 
+      const { bookmarks } = payloadResult.data
+
       // 获取书签栏根目录 ID
-      const tree = await new Promise<chrome.bookmarks.BookmarkTreeNode[]>((resolve) => {
-        chrome.bookmarks.getTree((t) => resolve(t))
+      const tree = await new Promise<chrome.bookmarks.BookmarkTreeNode[]>(resolve => {
+        chrome.bookmarks.getTree(t => resolve(t))
       })
       const bookmarkBar = tree[0]?.children?.[0]
-      const parentId = bookmarkBar?.id || '1'
+      if (!bookmarkBar?.id) {
+        logger.error('BackgroundMessaging', '获取书签栏失败', { tree })
+        sendResponse({ success: false, error: '获取书签栏失败' })
+        return
+      }
+      const parentId = bookmarkBar.id
 
-      let ok = 0, fail = 0
+      let ok = 0,
+        fail = 0
       for (const bm of bookmarks) {
         try {
           await new Promise<void>((res, rej) => {
             chrome.bookmarks.create({ parentId, title: bm.title, url: bm.url }, () => {
-              chrome.runtime.lastError ? rej(new Error(chrome.runtime.lastError.message)) : res()
+              if (chrome.runtime.lastError) {
+                rej(new Error(chrome.runtime.lastError.message))
+              } else {
+                res()
+              }
             })
           })
           ok++
@@ -568,7 +610,7 @@ export async function showBookmarkAddedNotification(
         }
       } else if (buttonIndex === 1) {
         // 查看：打开管理页面
-        openManagementPage()
+        await openManagementPage()
       }
 
       // 清除通知

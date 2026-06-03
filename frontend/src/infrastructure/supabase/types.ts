@@ -54,7 +54,7 @@ export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded'
 export interface PaymentRecord {
   id: string
   user_id: string
-  subscription_id: string | null
+  gumroad_subscription_id: string | null
   /** Gumroad 订单/销售 ID */
   gumroad_order_id: string
   /** Gumroad 付款 ID */

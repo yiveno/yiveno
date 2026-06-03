@@ -10,7 +10,6 @@ fi
 # 转为 Astro PUBLIC_ 前缀（Astro 客户端可用）
 export PUBLIC_SUPABASE_URL="${SUPABASE_URL}"
 export PUBLIC_SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY}"
-export PUBLIC_API_URL="${API_BASE_URL}"
 export PUBLIC_WEBSITE_URL="${WEBSITE_URL}"
 
 bunx --bun astro dev "$@"

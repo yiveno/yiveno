@@ -24,8 +24,8 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div style="text-align:center;padding:4rem;">
-    <p v-if="error" style="color:#e53e3e;">{{ error }}</p>
+  <div style="text-align: center; padding: 4rem">
+    <p v-if="error" style="color: #e53e3e">{{ error }}</p>
     <p v-else>正在跳转...</p>
   </div>
 </template>

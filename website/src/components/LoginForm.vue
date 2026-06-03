@@ -31,9 +31,30 @@ async function login(provider: 'google' | 'microsoft') {
 </template>
 
 <style scoped>
-.login-form { max-width:360px; margin:4rem auto; text-align:center; }
-.btn { display:block; width:100%; padding:0.75rem; margin:0.5rem 0; border:1px solid #ddd; border-radius:8px; background:#fff; cursor:pointer; font-size:1rem; }
-.btn:hover { background:#f5f5f5; }
-.btn:disabled { opacity:0.5; }
-.error { color:#e53e3e; font-size:0.875rem; }
+.login-form {
+  max-width: 360px;
+  margin: 4rem auto;
+  text-align: center;
+}
+.btn {
+  display: block;
+  width: 100%;
+  padding: 0.75rem;
+  margin: 0.5rem 0;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 1rem;
+}
+.btn:hover {
+  background: #f5f5f5;
+}
+.btn:disabled {
+  opacity: 0.5;
+}
+.error {
+  color: #e53e3e;
+  font-size: 0.875rem;
+}
 </style>

@@ -9,9 +9,20 @@ import type { GumroadWebhookPayload } from './webhook-parser'
 /** 支付上下文 */
 export interface PaymentContext {
   userId: string
-  subscriptionId: string
-  status: string
+  gumroadSubscriptionId: string
   notificationType: string
+}
+
+/** 根据 Gumroad 事件计算支付状态 */
+function computePaymentStatus(
+  payload: GumroadWebhookPayload,
+  notificationType: string
+): PaymentStatus {
+  const event = notificationType.toLowerCase()
+  if (event.includes('refund')) return 'refunded'
+  if (event.includes('fail') || payload.failed || payload.is_failed || payload.charge_failed)
+    return 'failed'
+  return 'paid'
 }
 
 /** 从 webhook payload 构建支付记录 */
@@ -21,11 +32,12 @@ export function buildPaymentRecord(
 ): Partial<PaymentRecord> {
   return {
     user_id: ctx.userId,
-    subscription_id: ctx.subscriptionId,
-    gumroad_order_id: payload.charge_id || payload.sale_id || null,
+    gumroad_subscription_id: ctx.gumroadSubscriptionId,
+    gumroad_order_id: payload.order_id || payload.sale_id || payload.purchase_id || null,
+    gumroad_payment_id: payload.charge_id || null,
     amount: Number(payload.price || payload.charge_amount || 0),
     currency: payload.currency || 'USD',
-    status: ctx.status as PaymentStatus,
+    status: computePaymentStatus(payload, ctx.notificationType),
     payment_method: payload.payment_method || null,
     event_type: ctx.notificationType,
     metadata: payload
@@ -39,7 +51,7 @@ export async function insertPaymentIfCharged(
   env: Env,
   supabase: any
 ): Promise<void> {
-  const chargeEvents = ['sale', 'charge', 'payment_success']
+  const chargeEvents = ['sale', 'charge', 'payment_success', 'payment_failed', 'refund']
   const currentState = payload.notification_type || payload.kind || ''
   if (!chargeEvents.some(e => currentState.toLowerCase().includes(e.toLowerCase()))) {
     return

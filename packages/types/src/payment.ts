@@ -1,7 +1,7 @@
 /**
  * 支付状态类型
  */
-export type PaymentStatus = 'active' | 'past_due' | 'canceled' | 'expired' | 'pending' | 'failed'
+export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded'
 
 /**
  * 支付记录接口
@@ -13,8 +13,8 @@ export interface PaymentRecord {
   /** 用户 ID (Supabase UUID) */
   user_id: string
 
-  /** 关联的订阅 ID */
-  subscription_id?: string | null
+  /** Gumroad 订阅 ID */
+  gumroad_subscription_id?: string | null
 
   /** Gumroad 订单 ID */
   gumroad_order_id: string | null

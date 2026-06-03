@@ -24,10 +24,12 @@ const isInitialized = ref(false)
 
 // 去重锁：同一页面多个组件同时调用时只发一次请求
 let inflightLoad: Promise<void> | null = null
+let inflightLoadUserId: string | null = null
 let watchAttached = false
+let lastUserId: string | null = null
 
-const isPro = computed(() =>
-  subscriptionStatus.value?.tier === 'pro' && subscriptionStatus.value?.status === 'active'
+const isPro = computed(
+  () => subscriptionStatus.value?.tier === 'pro' && subscriptionStatus.value?.status === 'active'
 )
 
 const isExpiringSoon = computed(() => {
@@ -36,9 +38,10 @@ const isExpiringSoon = computed(() => {
   return (new Date(end).getTime() - Date.now()) / 86400000 <= 7
 })
 
-const isCancelledButActive = computed(() =>
-  subscriptionStatus.value?.cancel_at_period_end === true &&
-  subscriptionStatus.value?.status === 'active'
+const isCancelledButActive = computed(
+  () =>
+    subscriptionStatus.value?.cancel_at_period_end === true &&
+    subscriptionStatus.value?.status === 'active'
 )
 
 async function loadSubscription(forceRefresh = false) {
@@ -52,12 +55,16 @@ async function loadSubscription(forceRefresh = false) {
     return
   }
 
+  const cached = await chromeStorage.getLocal<SubscriptionCache>(CACHE_KEY)
+  if (cached && cached.userId !== uid) {
+    await chromeStorage.removeLocal(CACHE_KEY)
+  }
+
   // 复用进行中的请求
-  if (inflightLoad && !forceRefresh) return inflightLoad
+  if (inflightLoad && inflightLoadUserId === uid && !forceRefresh) return inflightLoad
 
   // 缓存命中
   if (!forceRefresh && !isInitialized.value) {
-    const cached = await chromeStorage.getLocal<SubscriptionCache>(CACHE_KEY)
     if (cached && cached.userId === uid && Date.now() - cached.timestamp < CACHE_DURATION) {
       subscription.value = cached.subscription
       subscriptionStatus.value = cached.subscriptionStatus
@@ -66,12 +73,27 @@ async function loadSubscription(forceRefresh = false) {
       inflightLoad = Promise.all([
         subscriptionAppService.getSubscriptionDetails(uid),
         subscriptionAppService.getUserSubscription(uid)
-      ]).then(([d, s]) => {
-        subscription.value = d
-        subscriptionStatus.value = s
-        if (d || s) chromeStorage.setLocal(CACHE_KEY, { subscription: d, subscriptionStatus: s, timestamp: Date.now(), userId: uid })
-        else chromeStorage.removeLocal(CACHE_KEY)
-      }).finally(() => { inflightLoad = null })
+      ])
+        .then(async ([d, s]) => {
+          subscription.value = d
+          subscriptionStatus.value = s
+          if (d || s)
+            await chromeStorage.setLocal(CACHE_KEY, {
+              subscription: d,
+              subscriptionStatus: s,
+              timestamp: Date.now(),
+              userId: uid
+            })
+          else await chromeStorage.removeLocal(CACHE_KEY)
+        })
+        .catch(async () => {
+          await chromeStorage.removeLocal(CACHE_KEY)
+        })
+        .finally(() => {
+          inflightLoad = null
+          inflightLoadUserId = null
+        })
+      inflightLoadUserId = uid
       return
     }
   }
@@ -82,19 +104,36 @@ async function loadSubscription(forceRefresh = false) {
   inflightLoad = Promise.all([
     subscriptionAppService.getSubscriptionDetails(uid),
     subscriptionAppService.getUserSubscription(uid)
-  ]).then(([d, s]) => {
-    subscription.value = d
-    subscriptionStatus.value = s
-    if (d || s) chromeStorage.setLocal(CACHE_KEY, { subscription: d, subscriptionStatus: s, timestamp: Date.now(), userId: uid })
-  }).catch(err => {
-    error.value = err instanceof Error ? err.message : '加载订阅状态失败'
-    subscription.value = null
-    subscriptionStatus.value = { tier: 'free', status: 'expired', current_period_end: new Date().toISOString(), cancel_at_period_end: false }
-  }).finally(() => {
-    loading.value = false
-    isInitialized.value = true
-    inflightLoad = null
-  })
+  ])
+    .then(async ([d, s]) => {
+      subscription.value = d
+      subscriptionStatus.value = s
+      if (d || s)
+        await chromeStorage.setLocal(CACHE_KEY, {
+          subscription: d,
+          subscriptionStatus: s,
+          timestamp: Date.now(),
+          userId: uid
+        })
+    })
+    .catch(async err => {
+      error.value = err instanceof Error ? err.message : '加载订阅状态失败'
+      subscription.value = null
+      subscriptionStatus.value = {
+        tier: 'free',
+        status: 'expired',
+        current_period_end: new Date().toISOString(),
+        cancel_at_period_end: false
+      }
+      await chromeStorage.removeLocal(CACHE_KEY)
+    })
+    .finally(() => {
+      loading.value = false
+      isInitialized.value = true
+      inflightLoad = null
+      inflightLoadUserId = null
+    })
+  inflightLoadUserId = uid
 
   return inflightLoad
 }
@@ -105,12 +144,19 @@ export function useSubscription() {
     watchAttached = true
     watchEffect(() => {
       const { user, isAuthenticated } = useSupabaseAuth()
-      if (isAuthenticated.value && user.value?.id) loadSubscription()
+      const currentUserId = user.value?.id || null
+      // 用户切换时清理缓存
+      if (lastUserId !== null && currentUserId !== null && lastUserId !== currentUserId) {
+        void chromeStorage.removeLocal(CACHE_KEY)
+      }
+      lastUserId = currentUserId
+
+      if (isAuthenticated.value && user.value?.id) void loadSubscription()
       else {
         subscription.value = null
         subscriptionStatus.value = null
         isInitialized.value = true
-        chromeStorage.removeLocal(CACHE_KEY)
+        void chromeStorage.removeLocal(CACHE_KEY)
       }
     })
   }
@@ -121,8 +167,17 @@ export function useSubscription() {
     loading.value = true
     error.value = null
     try {
-      window.open(await subscriptionAppService.createCheckoutLink(variantId, user.value.id, user.value.email || ''), '_blank')
-    } finally { loading.value = false }
+      window.open(
+        await subscriptionAppService.createCheckoutLink(
+          variantId,
+          user.value.id,
+          user.value.email || ''
+        ),
+        '_blank'
+      )
+    } finally {
+      loading.value = false
+    }
   }
 
   return {
@@ -137,7 +192,8 @@ export function useSubscription() {
     loadSubscription,
     clearCache: () => chromeStorage.removeLocal(CACHE_KEY),
     checkout,
-    openManagePortal: () => window.open(subscriptionAppService.getManagePortalUrl(), '_blank', 'noopener'),
+    openManagePortal: () =>
+      window.open(subscriptionAppService.getManagePortalUrl(), '_blank', 'noopener'),
     subscribeMonthly: () => checkout(GUMROAD_CONFIG.planIds.PRO_MONTHLY),
     subscribeYearly: () => checkout(GUMROAD_CONFIG.planIds.PRO_YEARLY)
   }

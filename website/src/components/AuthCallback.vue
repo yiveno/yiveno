@@ -36,5 +36,5 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div style="text-align:center;padding:4rem;">正在登录...</div>
+  <div style="text-align: center; padding: 4rem">正在登录...</div>
 </template>

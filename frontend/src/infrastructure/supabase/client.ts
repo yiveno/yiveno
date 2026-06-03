@@ -20,7 +20,8 @@ import { logger } from '@/infrastructure/logging/logger'
  * - VITE_SUPABASE_ANON_KEY: Supabase 匿名密钥（公开的，可在前端使用）
  */
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ugxgxytykxblctsyulsg.supabase.co'
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_2FY9uDfqNbLwUYXxgcu8lw_qQ8SEbXo'
+const supabaseAnonKey =
+  import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_2FY9uDfqNbLwUYXxgcu8lw_qQ8SEbXo'
 
 // 开发模式下打印环境变量状态（帮助调试）
 if (import.meta.env.DEV) {
@@ -104,7 +105,9 @@ export const supabase = createClient(
  * 验证 Supabase 配置是否完整
  */
 export function isSupabaseConfigured(): boolean {
-  console.warn('[Supabase Client] ⚠️ Supabase 配置检查: ' + (isConfigured ? '✅ 已配置' : '❌ 未配置'))
+  console.warn(
+    '[Supabase Client] ⚠️ Supabase 配置检查: ' + (isConfigured ? '✅ 已配置' : '❌ 未配置')
+  )
   return isConfigured
 }
 

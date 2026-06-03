@@ -12,6 +12,26 @@ import { parseWebhookPayload, extractCustomFields } from '../services/gumroad/we
 import { webhookVerifySignature } from '../services/gumroad/signature'
 import { buildSubscriptionRecord } from '../services/gumroad/subscription'
 import { insertPaymentIfCharged } from '../services/gumroad/payment'
+import type { Subscription } from '@ottersage/types'
+
+interface SubscriptionDto {
+  id: string | null
+  status: Subscription['status']
+  tier: Subscription['tier']
+  currentPeriodEnd: string
+  cancelAtPeriodEnd: boolean
+}
+
+function toSubscriptionDto(subscription: Subscription | null): SubscriptionDto | null {
+  if (!subscription) return null
+  return {
+    id: subscription.id ?? null,
+    status: subscription.status,
+    tier: subscription.tier,
+    currentPeriodEnd: subscription.current_period_end,
+    cancelAtPeriodEnd: subscription.cancel_at_period_end ?? false
+  }
+}
 
 /** GET /api/gumroad/subscription?user_id=xxx */
 export async function handleGetSubscription(
@@ -34,7 +54,16 @@ export async function handleGetSubscription(
     const supabase = await import('../data-access/supabase')
     const subscription = await supabase.getUserSubscription(env, userId)
 
-    return okJson({ success: true, data: { subscription } }, origin)
+    return okJson(
+      {
+        success: true,
+        data: {
+          hasSubscription: Boolean(subscription),
+          subscription: toSubscriptionDto(subscription)
+        }
+      },
+      origin
+    )
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     console.error('[Gumroad] 获取订阅失败:', msg)
@@ -78,7 +107,7 @@ export async function handleWebhook(
 
     await insertPaymentIfCharged(
       payload,
-      { userId, subscriptionId, status: subscriptionRecord.status!, notificationType },
+      { userId, gumroadSubscriptionId: subscriptionId, notificationType },
       env,
       supabase
     )

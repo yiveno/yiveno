@@ -1,18 +1,39 @@
 import { Hono } from 'hono'
+import { z } from 'zod'
 import type { Env } from '../types/env'
 import { createSupabaseClient } from '../data-access/supabase'
 
 export const websiteRouter = new Hono<{ Bindings: Env }>()
 
 function supabaseHeaders(env: Env): Record<string, string> {
-  const key = (env as any)["SUPABASE_ANON_KEY"] ?? ''
-  return { 'apikey': key, 'Authorization': `Bearer ${key}` }
+  const key = env.SUPABASE_ANON_KEY ?? ''
+  return { apikey: key, Authorization: `Bearer ${key}` }
 }
 
+const ShareRecordSchema = z.object({
+  id: z.string(),
+  short_code: z.string(),
+  title: z.string().nullable(),
+  description: z.string().nullable(),
+  bookmark_count: z.number().nullable(),
+  show_username: z.boolean().nullable(),
+  created_at: z.string().nullable()
+})
+
+const SharedBookmarkSchema = z.object({
+  title: z.string(),
+  url: z.string(),
+  description: z.string().nullable(),
+  position: z.number().nullable()
+})
+
+const ShareRecordArraySchema = z.array(ShareRecordSchema)
+const SharedBookmarkArraySchema = z.array(SharedBookmarkSchema)
+
 websiteRouter.get('/debug', async c => {
-  const SUPABASE_URL = (c.env as any)["SUPABASE_URL"] ?? 'not set'
+  const SUPABASE_URL = c.env.SUPABASE_URL ?? 'not set'
   const SUPABASE_ANON_KEY = (c.env.SUPABASE_ANON_KEY || 'not set').substring(0, 20)
-  const WEBSITE_URL = (c.env as any)["WEBSITE_URL"] ?? 'not set'
+  const WEBSITE_URL = c.env.WEBSITE_URL ?? 'not set'
   return c.json({ SUPABASE_URL, SUPABASE_ANON_KEY, WEBSITE_URL })
 })
 
@@ -20,8 +41,8 @@ websiteRouter.get('/debug', async c => {
 websiteRouter.get('/share/:shortCode', async c => {
   try {
     const shortCode = c.req.param('shortCode')
-    const baseUrl = (c.env as any)["SUPABASE_URL"] ?? 'https://ugxgxytykxblctsyulsg.supabase.co'
-    const headers = supabaseHeaders(c.env as Env)
+    const baseUrl = c.env.SUPABASE_URL ?? 'https://ugxgxytykxblctsyulsg.supabase.co'
+    const headers = supabaseHeaders(c.env)
 
     // 查询分享记录
     const shareRes = await fetch(
@@ -32,18 +53,33 @@ websiteRouter.get('/share/:shortCode', async c => {
       const body = await shareRes.text()
       return c.json({ error: '查询失败', detail: body.substring(0, 200) }, 500)
     }
-    const shares = await shareRes.json() as any[]
-    if (!shares || shares.length === 0) {
+    const shareResult = ShareRecordArraySchema.safeParse(await shareRes.json())
+    if (!shareResult.success) {
+      console.error('[website/share] 分享数据格式错误:', shareResult.error)
+      return c.json({ error: '分享数据格式错误' }, 500)
+    }
+    const share = shareResult.data.at(0)
+    if (!share) {
       return c.json({ error: '分享不存在或已过期' }, 404)
     }
-    const share = shares[0]
 
     // 查询书签列表
     const bmRes = await fetch(
       `${baseUrl}/rest/v1/shared_bookmarks?share_id=eq.${share.id}&select=title,url,description,position&order=position.asc`,
       { headers }
     )
-    const bookmarks: any[] = bmRes.ok ? await bmRes.json() as any[] : []
+    if (!bmRes.ok) {
+      const body = await bmRes.text()
+      console.error('[website/share] 书签查询失败:', body)
+      return c.json({ error: '查询书签失败', detail: body.substring(0, 200) }, 500)
+    }
+
+    const bookmarkResult = SharedBookmarkArraySchema.safeParse(await bmRes.json())
+    if (!bookmarkResult.success) {
+      console.error('[website/share] 书签数据格式错误:', bookmarkResult.error)
+      return c.json({ error: '书签数据格式错误' }, 500)
+    }
+    const bookmarks = bookmarkResult.data
 
     return c.json({
       short_code: share.short_code,
@@ -66,7 +102,7 @@ websiteRouter.get('/subscription', async c => {
     const userId = c.req.query('userId')
     if (!userId) return c.json({ error: '缺少 userId 参数' }, 400)
 
-    const supabase = createSupabaseClient(c.env as Env)
+    const supabase = createSupabaseClient(c.env)
     if (!supabase) return c.json({ error: '数据库未配置' }, 500)
 
     const { data, error } = await supabase
@@ -84,14 +120,14 @@ websiteRouter.get('/subscription', async c => {
       return c.json({ error: '查询订阅失败' }, 500)
     }
 
-    if (!data) return c.json({ plan_id: 'free', status: 'inactive' })
+    if (!data) return c.json({ tier: 'free', status: 'inactive' })
 
     return c.json({
-      plan_id: data.tier || 'free',
+      tier: data.tier || 'free',
       status: data.status,
-      current_period_start: data.current_period_start,
-      current_period_end: data.current_period_end,
-      cancel_at_period_end: data.cancel_at_period_end
+      currentPeriodStart: data.current_period_start,
+      currentPeriodEnd: data.current_period_end,
+      cancelAtPeriodEnd: data.cancel_at_period_end
     })
   } catch (err) {
     console.error('[website/subscription] error:', err)
