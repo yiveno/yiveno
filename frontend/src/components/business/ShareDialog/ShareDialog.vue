@@ -59,9 +59,6 @@ const userName = computed(() => {
 
 // 计算默认标题
 const defaultTitle = computed(() => {
-  if (props.shareType === 'folder' && props.folderName) {
-    return `${props.folderName}的分享书签`
-  }
   return `${userName.value}的分享书签`
 })
 

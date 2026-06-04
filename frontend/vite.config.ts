@@ -14,7 +14,7 @@ export default defineConfig(() => {
 
   return {
     base: './',
-    envDir: resolve(PROJECT_ROOT, '..', '.env.runtime'),
+    envDir: resolve(PROJECT_ROOT, '.env.runtime'),
     plugins: createPlugins(),
     resolve: {
       alias: {
