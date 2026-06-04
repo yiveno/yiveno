@@ -53,6 +53,38 @@ bun run dev:backend           # 后端 (Cloudflare Worker - 端口8787)
 bun run dev:website           # 官网 (Nuxt - 端口3000)
 ```
 
+### 环境变量
+
+只维护 3 个源文件：
+
+- `.env.shared.local`
+- `.env.development.local`
+- `.env.production.local`
+
+生成产物不手改：
+
+- `.env.runtime/.env.development`
+- `.env.runtime/.env.production`
+- `backend/.dev.vars`
+- `website/.env`
+
+常用命令：
+
+```bash
+bun run env:sync:dev
+bun run env:check:dev
+bun run env:sync:prod
+bun run env:check:prod
+```
+
+规则：
+
+- 第三方共享值放 `.env.shared.local`
+- `localhost` 只允许出现在 development
+- 正式域名只允许出现在 production
+
+详见：`docs/ENVIRONMENT.md`
+
 ### 构建扩展
 
 ```bash
@@ -241,6 +273,7 @@ bun run lint:fix              # ESLint 自动修复
 
 - [otterSage 完整产品文档 v3.0](docs/product/otterSage-产品文档-v3.0.md)
 - [`docs/` 目录说明](docs/README.md)
+- [环境变量方案](docs/ENVIRONMENT.md)
 - 架构与分层约定以 **产品文档** 为准；代码入口见 `frontend/src/` 各层目录。
 
 ### 🏗️ 架构与工程

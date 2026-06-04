@@ -11,7 +11,7 @@ import { createClient } from '@supabase/supabase-js'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Env } from '../types/env'
 import type { Subscription, PaymentRecord } from '@ottersage/types'
-import { warn } from '../utils/logger'
+import { warn, error as logErrorMessage, toLogError } from '../utils/logger'
 
 // Re-export types for use in other files
 export type { Subscription, PaymentRecord }
@@ -68,7 +68,7 @@ export function hasSupabase(env: Env): boolean {
  */
 export async function getUserSubscription(env: Env, userId: string): Promise<Subscription | null> {
   if (!hasSupabase(env)) {
-    console.warn('[Supabase] 未配置，跳过查询')
+    warn('[Supabase] 未配置，跳过查询')
     return null
   }
 
@@ -87,13 +87,13 @@ export async function getUserSubscription(env: Env, userId: string): Promise<Sub
       .maybeSingle<Subscription>()
 
     if (error) {
-      console.error('[Supabase] 查询订阅失败:', error)
+      logErrorMessage('[Supabase] 查询订阅失败', { detail: toLogError(error) })
       return null
     }
 
     return data
-  } catch (error) {
-    console.error('[Supabase] 查询订阅异常:', error)
+  } catch (err) {
+    logErrorMessage('[Supabase] 查询订阅异常', { detail: toLogError(err) })
     return null
   }
 }
@@ -125,13 +125,13 @@ export async function getSubscriptionDetails(
       .maybeSingle<Subscription>()
 
     if (error) {
-      console.error('[Supabase] 查询订阅详情失败:', error)
+      logErrorMessage('[Supabase] 查询订阅详情失败', { detail: toLogError(error) })
       return null
     }
 
     return data
-  } catch (error) {
-    console.error('[Supabase] 查询订阅详情异常:', error)
+  } catch (err) {
+    logErrorMessage('[Supabase] 查询订阅详情异常', { detail: toLogError(err) })
     return null
   }
 }
@@ -148,7 +148,7 @@ export async function upsertSubscription(
   subscription: Partial<Subscription>
 ): Promise<Subscription> {
   if (!hasSupabase(env)) {
-    console.warn('[Supabase] 未配置，跳过插入订阅')
+    warn('[Supabase] 未配置，跳过插入订阅')
     return subscription as Subscription
   }
 
@@ -185,7 +185,7 @@ export async function upsertSubscription(
         .single<Subscription>()
 
       if (error) {
-        console.error('[Supabase] 更新订阅失败:', error)
+        logErrorMessage('[Supabase] 更新订阅失败', { detail: toLogError(error) })
         throw error
       }
       result = data
@@ -197,7 +197,7 @@ export async function upsertSubscription(
         .single<Subscription>()
 
       if (error) {
-        console.error('[Supabase] 插入订阅失败:', error)
+        logErrorMessage('[Supabase] 插入订阅失败', { detail: toLogError(error) })
         throw error
       }
       result = data
@@ -207,9 +207,9 @@ export async function upsertSubscription(
       throw new Error('Upsert operation failed to return a result.')
     }
     return result
-  } catch (error) {
-    console.error('[Supabase] 插入订阅异常:', error)
-    throw error
+  } catch (err) {
+    logErrorMessage('[Supabase] 插入订阅异常', { detail: toLogError(err) })
+    throw err
   }
 }
 
@@ -227,7 +227,7 @@ export async function updateSubscriptionCancelStatus(
   cancelAtPeriodEnd: boolean
 ): Promise<Subscription> {
   if (!hasSupabase(env)) {
-    console.warn('[Supabase] 未配置，跳过更新订阅')
+    warn('[Supabase] 未配置，跳过更新订阅')
     return { id: subscriptionId } as Subscription
   }
 
@@ -254,7 +254,7 @@ export async function updateSubscriptionCancelStatus(
       .single<Subscription>()
 
     if (error) {
-      console.error('[Supabase] 更新订阅取消状态失败:', error)
+      logErrorMessage('[Supabase] 更新订阅取消状态失败', { detail: toLogError(error) })
       throw error
     }
 
@@ -262,9 +262,9 @@ export async function updateSubscriptionCancelStatus(
       throw new Error('Update operation failed to return a result.')
     }
     return data
-  } catch (error) {
-    console.error('[Supabase] 更新订阅取消状态异常:', error)
-    throw error
+  } catch (err) {
+    logErrorMessage('[Supabase] 更新订阅取消状态异常', { detail: toLogError(err) })
+    throw err
   }
 }
 
@@ -280,7 +280,7 @@ export async function insertPaymentRecord(
   payment: PaymentRecord
 ): Promise<PaymentRecord> {
   if (!hasSupabase(env)) {
-    console.warn('[Supabase] 未配置，跳过插入支付记录')
+    warn('[Supabase] 未配置，跳过插入支付记录')
     return payment
   }
 
@@ -313,7 +313,7 @@ export async function insertPaymentRecord(
       .single<PaymentRecord>()
 
     if (error) {
-      console.error('[Supabase] 插入支付记录失败:', error)
+      logErrorMessage('[Supabase] 插入支付记录失败', { detail: toLogError(error) })
       throw error
     }
 
@@ -321,9 +321,9 @@ export async function insertPaymentRecord(
       throw new Error('Insert operation failed to return a result.')
     }
     return data
-  } catch (error) {
-    console.error('[Supabase] 插入支付记录异常:', error)
-    throw error
+  } catch (err) {
+    logErrorMessage('[Supabase] 插入支付记录异常', { detail: toLogError(err) })
+    throw err
   }
 }
 
@@ -351,13 +351,13 @@ export async function getSubscriptionByGumroadId(
       .maybeSingle<Subscription>()
 
     if (error) {
-      console.error('[Supabase] 查询订阅失败:', error)
+      logErrorMessage('[Supabase] 查询订阅失败', { detail: toLogError(error) })
       return null
     }
 
     return data
-  } catch (error) {
-    console.error('[Supabase] 查询订阅异常:', error)
+  } catch (err) {
+    logErrorMessage('[Supabase] 查询订阅异常', { detail: toLogError(err) })
     return null
   }
 }

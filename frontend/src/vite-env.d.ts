@@ -7,8 +7,6 @@ interface ImportMetaEnv {
   readonly VITE_SUPABASE_ANON_KEY?: string
   readonly VITE_SHARE_BASE_URL?: string
   readonly VITE_GUMROAD_PRODUCT_URL?: string
-  readonly VITE_GUMROAD_PLAN_ID_MONTHLY?: string
-  readonly VITE_GUMROAD_PLAN_ID_YEARLY?: string
   readonly VITE_GUMROAD_MANAGE_URL?: string
   readonly VITE_CRAWLER_MODE?: 'local' | 'hybrid' | 'serverless'
   readonly VITE_CRAWLER_CONCURRENCY?: string

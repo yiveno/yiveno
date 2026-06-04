@@ -134,6 +134,36 @@ bun run stylelint        # Stylelint 自动修复
 bun run format           # Prettier 格式化
 ```
 
+## 环境变量规则
+
+- 环境变量方案文档：`docs/ENVIRONMENT.md`
+- 只维护 3 个源文件：
+  - `.env.shared.local`
+  - `.env.development.local`
+  - `.env.production.local`
+- 禁止手改生成产物：
+  - `.env.runtime/.env.development`
+  - `.env.runtime/.env.production`
+  - `backend/.dev.vars`
+  - `website/.env`
+- 共享第三方配置必须优先放 `.env.shared.local`
+- `localhost` / 正式域名切换必须放环境覆盖文件，不得混放到 shared
+- 修改环境变量后必须运行：
+
+```bash
+bun run env:sync:dev
+bun run env:check:dev
+```
+
+- 发布前必须运行：
+
+```bash
+bun run env:sync:prod
+bun run env:check:prod
+```
+
+- 若 Cloudflare Worker Dashboard 变量与本地源文件不一致，必须以统一字段名补齐，不允许各项目自造别名
+
 ## 交互规范
 
 ### 1. 回复风格

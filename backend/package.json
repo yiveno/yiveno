@@ -5,7 +5,7 @@
   "type": "module",
   "main": "cloudflare-worker.js",
   "scripts": {
-    "dev": "wrangler dev --local --port 8787",
+    "dev": "bun ../scripts/dev-env.mjs sync --profile=development --target=backend --quiet && wrangler dev --local --port 8787",
     "build": "echo 'Backend: Cloudflare Worker 无需构建'",
     "typecheck": "tsc --noEmit --skipLibCheck",
     "typecheck:force": "tsc --noEmit --skipLibCheck",
@@ -32,7 +32,7 @@
     "@trpc/server": "^10.45.2",
     "hono": "^4.12.18",
     "jose": "^6.2.3",
-    "zod": "^3.25.8"
+    "zod": "^3.25.76"
   },
   "engines": {
     "bun": ">=1.0.0"

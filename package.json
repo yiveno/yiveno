@@ -15,7 +15,7 @@
   },
   "packageManager": "bun@1.2.21",
   "resolutions": {
-    "zod": "^3.25.8",
+    "zod": "^3.25.76",
     "@types/node": "^24.3.0",
     "postcss": "^8.4.41",
     "stylelint": "^16.25.0",
@@ -27,19 +27,27 @@
   "scripts": {
     "prepare": "husky",
     "lint-staged": "lint-staged",
+    "env:sync": "bun run env:sync:dev",
+    "env:sync:dev": "bun ./scripts/dev-env.mjs sync --profile=development",
+    "env:sync:prod": "bun ./scripts/dev-env.mjs sync --profile=production",
+    "env:check": "bun run env:check:dev",
+    "env:check:dev": "bun ./scripts/dev-env.mjs check --profile=development",
+    "env:check:prod": "bun ./scripts/dev-env.mjs check --profile=production",
     "clean:deps": "rm -rf node_modules frontend/node_modules backend/node_modules website/node_modules packages/*/node_modules bun.lockb frontend/bun.lock backend/bun.lock 2>/dev/null || true && echo '🧹 清理完成'",
     "reinstall": "bun run clean:deps && bun install && echo '✅ 依赖已清理并重新安装'",
-    "dev": "bun run dev:fe & bun run dev:be & bun run dev:web & wait",
+    "dev": "bun run env:sync:dev && (bun run dev:fe & bun run dev:be & bun run dev:web & wait)",
     "dev:fe": "cd frontend && bun run dev",
     "dev:be": "cd backend && bun run dev",
     "dev:web": "cd website && bun run dev",
     "build": "cd packages/design-tokens && bun run typecheck && cd ../.. && bun run build:fe && bun run build:be && bun run build:web",
     "build:fe": "cd frontend && bun run build",
+    "build:fe:prod": "cd frontend && bun run build:prod",
     "build:be": "cd backend && bun run build",
-    "build:web": "cd website && bun run build",
-    "build:prod": "NODE_ENV=production bun run build",
+    "build:web": "cd website && bun run build:dev",
+    "build:web:prod": "cd website && bun run build:prod",
+    "build:prod": "bun run env:sync:prod && bun run env:check:prod && cd packages/design-tokens && bun run typecheck && cd ../.. && bun run build:fe:prod && bun run build:be && bun run build:web:prod",
     "build:color-presets": "bun scripts/build-material-color-presets.mjs",
-    "watch": "concurrently --names fe,be,web --prefix-colors cyan,green,yellow \"bun run build:fe --watch\" \"bun run dev:be\" \"bun run dev:web\"",
+    "watch": "bun run env:sync:dev && concurrently --names fe,be,web --prefix-colors cyan,green,yellow \"bun run build:fe --watch\" \"bun run dev:be\" \"bun run dev:web\"",
     "watch:fe": "cd frontend && bun run build:watch",
     "typecheck": "cd packages/design-tokens && bun run typecheck && cd ../.. && cd packages/auth-core && bun run typecheck && cd ../.. && bun run typecheck:fe && bun run typecheck:be && bun run typecheck:web",
     "typecheck:fe": "cd frontend && bun run typecheck",
@@ -93,8 +101,5 @@
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.43.0",
     "wrangler": "^4.81.1"
-  },
-  "overrides": {
-    "zod": "3.23.8"
   }
 }

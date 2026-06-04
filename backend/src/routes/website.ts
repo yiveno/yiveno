@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { z } from 'zod'
 import type { Env } from '../types/env'
 import { createSupabaseClient } from '../data-access/supabase'
+import { error as logErrorMessage, toLogError } from '../utils/logger'
 
 export const websiteRouter = new Hono<{ Bindings: Env }>()
 
@@ -48,7 +49,7 @@ websiteRouter.get('/share/:shortCode', async c => {
     }
     const shareResult = ShareRecordArraySchema.safeParse(await shareRes.json())
     if (!shareResult.success) {
-      console.error('[website/share] 分享数据格式错误:', shareResult.error)
+      logErrorMessage('[website/share] 分享数据格式错误', { detail: shareResult.error.message })
       return c.json({ error: '分享数据格式错误' }, 500)
     }
     const share = shareResult.data.at(0)
@@ -63,13 +64,13 @@ websiteRouter.get('/share/:shortCode', async c => {
     )
     if (!bmRes.ok) {
       const body = await bmRes.text()
-      console.error('[website/share] 书签查询失败:', body)
+      logErrorMessage('[website/share] 书签查询失败', { detail: body.substring(0, 200) })
       return c.json({ error: '查询书签失败', detail: body.substring(0, 200) }, 500)
     }
 
     const bookmarkResult = SharedBookmarkArraySchema.safeParse(await bmRes.json())
     if (!bookmarkResult.success) {
-      console.error('[website/share] 书签数据格式错误:', bookmarkResult.error)
+      logErrorMessage('[website/share] 书签数据格式错误', { detail: bookmarkResult.error.message })
       return c.json({ error: '书签数据格式错误' }, 500)
     }
     const bookmarks = bookmarkResult.data
@@ -84,7 +85,7 @@ websiteRouter.get('/share/:shortCode', async c => {
       bookmarks
     })
   } catch (err) {
-    console.error('[website/share] error:', err)
+    logErrorMessage('[website/share] error', { detail: toLogError(err) })
     return c.json({ error: 'Internal Server Error' }, 500)
   }
 })
@@ -109,7 +110,7 @@ websiteRouter.get('/subscription', async c => {
       .maybeSingle()
 
     if (error) {
-      console.error('[website/subscription] 查询失败:', error)
+      logErrorMessage('[website/subscription] 查询失败', { detail: toLogError(error) })
       return c.json({ error: '查询订阅失败' }, 500)
     }
 
@@ -123,7 +124,7 @@ websiteRouter.get('/subscription', async c => {
       cancelAtPeriodEnd: data.cancel_at_period_end
     })
   } catch (err) {
-    console.error('[website/subscription] error:', err)
+    logErrorMessage('[website/subscription] error', { detail: toLogError(err) })
     return c.json({ error: 'Internal Server Error' }, 500)
   }
 })

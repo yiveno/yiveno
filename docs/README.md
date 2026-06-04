@@ -7,5 +7,6 @@
 **运维 / 接入（非规格，与正文冲突时以正文为准）**：
 
 - [`AUTH_GUIDE.md`](./AUTH_GUIDE.md) — OAuth 使用说明
+- [`ENVIRONMENT.md`](./ENVIRONMENT.md) — 环境变量分层、同步与校验规则
 
 `frontend/docs/` **仅长期保留** `i18n-implementation-guide.md`、`i18n-workflow.md`、`time-i18n-checklist.md`；其余结论应写回产品正文后删除对应文件。

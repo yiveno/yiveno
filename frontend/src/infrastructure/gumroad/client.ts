@@ -17,12 +17,10 @@ export interface GumroadSubscriptionPayload {
   error?: string
 }
 
+export type GumroadBillingFrequency = 'monthly' | 'yearly'
+
 export const GUMROAD_CONFIG = {
   productUrl: frontendEnv.gumroadProductUrl,
-  planIds: {
-    PRO_MONTHLY: frontendEnv.gumroadPlanIdMonthly,
-    PRO_YEARLY: frontendEnv.gumroadPlanIdYearly
-  },
   manageUrl: frontendEnv.gumroadManageUrl
 } as const
 
@@ -30,7 +28,7 @@ export const GUMROAD_CONFIG = {
  * 构建 Gumroad 结账链接
  */
 export function buildCheckoutUrl(
-  planId: string,
+  billingFrequency: GumroadBillingFrequency,
   userId: string,
   email: string,
   tier: 'pro' | 'free' = 'pro'
@@ -39,13 +37,10 @@ export function buildCheckoutUrl(
     throw new Error('Gumroad 产品链接未配置')
   }
 
-  if (!planId) {
-    throw new Error('Gumroad 计划 ID 未配置')
-  }
-
   const url = new URL(GUMROAD_CONFIG.productUrl)
-  // 预选计划
-  url.searchParams.set('plan', planId)
+  url.searchParams.set('wanted', 'true')
+  url.searchParams.set('monthly', billingFrequency === 'monthly' ? 'true' : 'false')
+  url.searchParams.set('yearly', billingFrequency === 'yearly' ? 'true' : 'false')
 
   if (email) {
     url.searchParams.set('email', email)

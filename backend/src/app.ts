@@ -82,7 +82,7 @@ export function createApp() {
   app.notFound(c => c.json({ error: 'Not Found' }, 404))
 
   app.onError((err, c) => {
-    console.error('❌ Unhandled error:', err)
+    logError(err, { path: c.req.path, method: c.req.method })
     return c.json({ error: 'Internal Server Error' }, 500)
   })
 

@@ -55,21 +55,20 @@ describe('gumroad routes', () => {
         method: 'POST',
         headers: {
           ...(await createAuthHeaders()),
-          'content-type': 'application/x-www-form-urlencoded',
-          'X-Gumroad-Signature': 'invalid-signature'
+          'content-type': 'application/x-www-form-urlencoded'
         },
-        body: 'subscription_id=sub_123&custom_fields[user_id]=user_123'
+        body: 'seller_id=wrong-seller&subscription_id=sub_123&custom_fields[user_id]=user_123'
       },
       {
         ...baseEnv,
-        GUMROAD_WEBHOOK_SECRET: 'webhook-secret'
+        GUMROAD_SELLER_ID: 'expected-seller-id'
       } as Env
     )
 
     expect(response.status).toBe(401)
 
     const data = (await response.json()) as { error: string }
-    expect(data.error).toBe('Invalid signature')
+    expect(data.error).toBe('Invalid seller_id')
   })
 
   test('POST /api/gumroad/webhook rejects payload without subscription_id or user_id', async () => {
@@ -82,9 +81,12 @@ describe('gumroad routes', () => {
           ...(await createAuthHeaders()),
           'content-type': 'application/x-www-form-urlencoded'
         },
-        body: 'notification_type=sale'
+        body: 'seller_id=test-seller&notification_type=sale'
       },
-      baseEnv
+      {
+        ...baseEnv,
+        GUMROAD_SELLER_ID: 'test-seller'
+      } as Env
     )
 
     expect(response.status).toBe(400)
@@ -111,6 +113,7 @@ describe('gumroad routes', () => {
           'content-type': 'application/x-www-form-urlencoded'
         },
         body: [
+          'seller_id=test-seller',
           'notification_type=sale',
           'subscription_id=sub_123',
           'sale_id=order_456',
@@ -120,7 +123,10 @@ describe('gumroad routes', () => {
           'custom_fields[tier]=pro'
         ].join('&')
       },
-      baseEnv
+      {
+        ...baseEnv,
+        GUMROAD_SELLER_ID: 'test-seller'
+      } as Env
     )
 
     expect(response.status).toBe(200)
@@ -146,9 +152,7 @@ describe('gumroad routes', () => {
   test('POST /api/gumroad/webhook returns 500 when subscription upsert fails', async () => {
     const app = createApp()
 
-    jest
-      .spyOn(supabaseModule, 'upsertSubscription')
-      .mockRejectedValue(new Error('upsert failed'))
+    jest.spyOn(supabaseModule, 'upsertSubscription').mockRejectedValue(new Error('upsert failed'))
 
     const paymentSpy = jest.spyOn(supabaseModule, 'insertPaymentRecord')
 
@@ -161,6 +165,7 @@ describe('gumroad routes', () => {
           'content-type': 'application/x-www-form-urlencoded'
         },
         body: [
+          'seller_id=test-seller',
           'notification_type=sale',
           'subscription_id=sub_123',
           'sale_id=order_456',
@@ -169,7 +174,10 @@ describe('gumroad routes', () => {
           'custom_fields[user_id]=user_123'
         ].join('&')
       },
-      baseEnv
+      {
+        ...baseEnv,
+        GUMROAD_SELLER_ID: 'test-seller'
+      } as Env
     )
 
     expect(response.status).toBe(500)
@@ -185,9 +193,7 @@ describe('gumroad routes', () => {
     jest
       .spyOn(supabaseModule, 'upsertSubscription')
       .mockResolvedValue({ id: 'sub-row-id' } as Subscription)
-    jest
-      .spyOn(supabaseModule, 'insertPaymentRecord')
-      .mockRejectedValue(new Error('payment failed'))
+    jest.spyOn(supabaseModule, 'insertPaymentRecord').mockRejectedValue(new Error('payment failed'))
 
     const response = await app.request(
       '/api/gumroad/webhook',
@@ -198,6 +204,7 @@ describe('gumroad routes', () => {
           'content-type': 'application/x-www-form-urlencoded'
         },
         body: [
+          'seller_id=test-seller',
           'notification_type=sale',
           'subscription_id=sub_123',
           'sale_id=order_456',
@@ -206,7 +213,10 @@ describe('gumroad routes', () => {
           'custom_fields[user_id]=user_123'
         ].join('&')
       },
-      baseEnv
+      {
+        ...baseEnv,
+        GUMROAD_SELLER_ID: 'test-seller'
+      } as Env
     )
 
     expect(response.status).toBe(500)
@@ -233,6 +243,7 @@ describe('gumroad routes', () => {
           'content-type': 'application/x-www-form-urlencoded'
         },
         body: [
+          'seller_id=test-seller',
           'notification_type=subscription_cancelled',
           'subscription_id=sub_123',
           'sale_id=order_456',
@@ -240,7 +251,10 @@ describe('gumroad routes', () => {
           'custom_fields[user_id]=user_123'
         ].join('&')
       },
-      baseEnv
+      {
+        ...baseEnv,
+        GUMROAD_SELLER_ID: 'test-seller'
+      } as Env
     )
 
     expect(response.status).toBe(200)
@@ -270,6 +284,7 @@ describe('gumroad routes', () => {
           'content-type': 'application/x-www-form-urlencoded'
         },
         body: [
+          'seller_id=test-seller',
           'notification_type=payment_failed',
           'subscription_id=sub_123',
           'sale_id=order_456',
@@ -278,7 +293,10 @@ describe('gumroad routes', () => {
           'custom_fields[user_id]=user_123'
         ].join('&')
       },
-      baseEnv
+      {
+        ...baseEnv,
+        GUMROAD_SELLER_ID: 'test-seller'
+      } as Env
     )
 
     expect(response.status).toBe(200)
@@ -309,6 +327,7 @@ describe('gumroad routes', () => {
           'content-type': 'application/x-www-form-urlencoded'
         },
         body: [
+          'seller_id=test-seller',
           'notification_type=refund',
           'subscription_id=sub_123',
           'sale_id=order_456',
@@ -316,7 +335,10 @@ describe('gumroad routes', () => {
           'custom_fields[user_id]=user_123'
         ].join('&')
       },
-      baseEnv
+      {
+        ...baseEnv,
+        GUMROAD_SELLER_ID: 'test-seller'
+      } as Env
     )
 
     expect(response.status).toBe(200)

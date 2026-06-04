@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "./dev.sh --host --port 3001",
-    "build": "astro build",
+    "build:dev": "bun ../scripts/dev-env.mjs sync --profile=development --target=website --quiet && astro build",
+    "build": "bun run build:prod",
+    "build:prod": "bun ../scripts/dev-env.mjs sync --profile=production --target=website --quiet && bun ../scripts/dev-env.mjs check --profile=production --target=website --quiet && astro build",
     "typecheck": "astro check",
     "typecheck:force": "astro check",
     "preview": "astro preview",
@@ -15,7 +17,7 @@
     "@supabase/supabase-js": "^2.49.4",
     "astro": "^5.18.2",
     "vue": "^3.5.35",
-    "zod": "^3.23.8"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9"

@@ -14,6 +14,8 @@ export enum LogLevel {
   ERROR = 'ERROR'
 }
 
+const TEST_LOG_OVERRIDE_ENV = 'BACKEND_TEST_LOGS'
+
 /**
  * 日志条目接口
  */
@@ -34,6 +36,24 @@ type LogValue =
   | { [key: string]: LogValue }
 type LogData = Record<string, LogValue>
 
+function isTestEnv(): boolean {
+  return typeof process !== 'undefined' && process.env.NODE_ENV === 'test'
+}
+
+function shouldEmitLogs(): boolean {
+  if (!isTestEnv()) return true
+  return typeof process !== 'undefined' && process.env[TEST_LOG_OVERRIDE_ENV] === '1'
+}
+
+export function toLogError(err: unknown): string {
+  if (err instanceof Error) return err.message
+  try {
+    return JSON.stringify(err)
+  } catch {
+    return String(err)
+  }
+}
+
 /**
  * 记录结构化日志
  *
@@ -42,6 +62,8 @@ type LogData = Record<string, LogValue>
  * @param data - 附加数据
  */
 export function log(level: LogLevel, message: string, data?: LogData): void {
+  if (!shouldEmitLogs()) return
+
   const logEntry: LogEntry = {
     timestamp: new Date().toISOString(),
     level,

@@ -2,20 +2,19 @@
  * Vite 配置主入口
  */
 
-import { defineConfig, type ConfigEnv } from 'vite'
+import { defineConfig } from 'vite'
 import { resolve } from 'path'
 import { PROJECT_ROOT, SRC_DIR, logBuildConfig } from './vite/constants'
 import { createPlugins } from './vite/plugins'
 import { createBuildConfig } from './vite/build'
 import { createServerConfig } from './vite/server'
 
-export default defineConfig((_env: ConfigEnv) => {
-
+export default defineConfig(() => {
   logBuildConfig()
 
   return {
     base: './',
-    envDir: PROJECT_ROOT,
+    envDir: resolve(PROJECT_ROOT, '..', '.env.runtime'),
     plugins: createPlugins(),
     resolve: {
       alias: {

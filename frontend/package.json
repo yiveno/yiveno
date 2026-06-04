@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "build": "NODE_ENV=development VITE_RUNTIME_ENV=dev CRAWLER_DEBUG=true vue-tsc -b && NODE_ENV=development VITE_RUNTIME_ENV=dev CRAWLER_DEBUG=true vite build",
+    "build": "bun ../scripts/dev-env.mjs sync --profile=development --target=frontend --quiet && NODE_ENV=development VITE_RUNTIME_ENV=dev CRAWLER_DEBUG=true vue-tsc -b && NODE_ENV=development VITE_RUNTIME_ENV=dev CRAWLER_DEBUG=true vite build --mode development",
     "build:watch": "NODE_ENV=development VITE_RUNTIME_ENV=dev CRAWLER_DEBUG=true vite build --watch --mode development",
-    "build:prod": "NODE_ENV=production VITE_RUNTIME_ENV=prod vue-tsc -b && NODE_ENV=production VITE_RUNTIME_ENV=prod vite build && bun scripts/clean-dist.cjs",
+    "build:prod": "bun ../scripts/dev-env.mjs sync --profile=production --target=frontend --quiet && bun ../scripts/dev-env.mjs check --profile=production --target=frontend --quiet && NODE_ENV=production VITE_RUNTIME_ENV=prod vue-tsc -b && NODE_ENV=production VITE_RUNTIME_ENV=prod vite build --mode production && bun scripts/clean-dist.cjs",
     "build:analyze": "ANALYZE=true vite build",
     "build:perf": "bun scripts/build-perf.mjs",
     "typecheck": "vue-tsc --noEmit",
@@ -54,7 +54,7 @@
     "pinia": "^3.0.3",
     "qrcode": "^1.5.4",
     "vue": "^3.5.18",
-    "zod": "^3.25.8"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@playwright/test": "^1.40.0",

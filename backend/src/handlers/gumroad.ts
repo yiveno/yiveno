@@ -9,10 +9,11 @@
 import type { Env } from '../types/env'
 import { okJson, errorJson } from '../utils/response'
 import { parseWebhookPayload, extractCustomFields } from '../services/gumroad/webhook-parser'
-import { webhookVerifySignature } from '../services/gumroad/signature'
+import { webhookVerifySeller } from '../services/gumroad/signature'
 import { buildSubscriptionRecord } from '../services/gumroad/subscription'
 import { insertPaymentIfCharged } from '../services/gumroad/payment'
 import type { Subscription } from '@ottersage/types'
+import { error as logErrorMessage, info } from '../utils/logger'
 
 interface SubscriptionDto {
   id: string | null
@@ -66,7 +67,7 @@ export async function handleGetSubscription(
     )
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
-    console.error('[Gumroad] 获取订阅失败:', msg)
+    logErrorMessage('[Gumroad] 获取订阅失败', { detail: msg })
     return errorJson({ error: 'Internal server error' }, 500, origin)
   }
 }
@@ -83,19 +84,20 @@ export async function handleWebhook(
 
   const rawBody = await request.text()
 
-  const signature = request.headers.get('X-Gumroad-Signature') || ''
-  const secret = env.GUMROAD_WEBHOOK_SECRET || ''
-
-  const sigCheck = await webhookVerifySignature(secret, rawBody, signature)
-  if (sigCheck) return sigCheck
-
   const payload = parseWebhookPayload(rawBody)
+  const sellerCheck = await webhookVerifySeller(env.GUMROAD_SELLER_ID || '', payload)
+  if (sellerCheck) return sellerCheck
+
   const notificationType = payload.notification_type || payload.kind || 'unknown'
   const subscriptionId = payload.subscription_id || payload.sale_id || null
   const { userId, tier } = extractCustomFields(payload)
 
   if (!subscriptionId || !userId) {
-    console.error('[Gumroad] Webhook 缺少 subscription_id 或 user_id', payload)
+    logErrorMessage('[Gumroad] Webhook 缺少 subscription_id 或 user_id', {
+      notificationType,
+      hasSubscriptionId: Boolean(subscriptionId),
+      hasUserId: Boolean(userId)
+    })
     return errorJson({ error: 'Missing subscription_id or user_id' }, 400, origin)
   }
 
@@ -112,11 +114,11 @@ export async function handleWebhook(
       supabase
     )
 
-    console.log('[Gumroad] Webhook 处理完成:', notificationType, subscriptionId)
+    info('[Gumroad] Webhook 处理完成', { notificationType, subscriptionId })
     return okJson({ success: true }, origin)
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
-    console.error('[Gumroad] 处理 Webhook 异常:', msg)
+    logErrorMessage('[Gumroad] 处理 Webhook 异常', { detail: msg })
     return errorJson({ error: 'Internal server error' }, 500, origin)
   }
 }

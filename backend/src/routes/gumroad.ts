@@ -6,6 +6,7 @@ import { Hono } from 'hono'
 import type { Env } from '../types/env'
 import type { JWTPayload } from '../middleware/jwt'
 import { handleGetSubscription, handleWebhook } from '../handlers/gumroad'
+import { info } from '../utils/logger'
 
 export const gumroadRouter = new Hono<{ Bindings: Env }>()
 
@@ -13,7 +14,10 @@ export const gumroadRouter = new Hono<{ Bindings: Env }>()
 gumroadRouter.get('/subscription', c => {
   const jwtPayload = c.get('jwtPayload') as JWTPayload | undefined
   if (jwtPayload) {
-    console.log('User:', jwtPayload.sub, jwtPayload.email)
+    info('User', {
+      sub: jwtPayload.sub,
+      email: jwtPayload.email
+    })
   }
   return handleGetSubscription(c.req.raw, c.env, c.req.header('origin') ?? null)
 })

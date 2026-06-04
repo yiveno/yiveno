@@ -3,7 +3,7 @@ import { subscriptionAppService } from '@/application/subscription/subscription-
 import { useSupabaseAuth } from './useSupabaseAuth'
 import { chromeStorage } from '@/infrastructure/storage/chrome-storage'
 import type { Subscription, UserSubscriptionStatus } from '@/infrastructure/supabase/types'
-import { GUMROAD_CONFIG } from '@/infrastructure/gumroad/client'
+import type { GumroadBillingFrequency } from '@/infrastructure/gumroad/client'
 
 const CACHE_KEY = 'ottersage_subscription_cache'
 const CACHE_DURATION = 15 * 60 * 1000
@@ -161,7 +161,7 @@ export function useSubscription() {
     })
   }
 
-  const checkout = async (variantId: string) => {
+  const checkout = async (billingFrequency: GumroadBillingFrequency) => {
     const { user, isAuthenticated } = useSupabaseAuth()
     if (!isAuthenticated.value || !user.value) throw new Error('请先登录')
     loading.value = true
@@ -169,7 +169,7 @@ export function useSubscription() {
     try {
       window.open(
         await subscriptionAppService.createCheckoutLink(
-          variantId,
+          billingFrequency,
           user.value.id,
           user.value.email || ''
         ),
@@ -194,7 +194,7 @@ export function useSubscription() {
     checkout,
     openManagePortal: () =>
       window.open(subscriptionAppService.getManagePortalUrl(), '_blank', 'noopener'),
-    subscribeMonthly: () => checkout(GUMROAD_CONFIG.planIds.PRO_MONTHLY),
-    subscribeYearly: () => checkout(GUMROAD_CONFIG.planIds.PRO_YEARLY)
+    subscribeMonthly: () => checkout('monthly'),
+    subscribeYearly: () => checkout('yearly')
   }
 }

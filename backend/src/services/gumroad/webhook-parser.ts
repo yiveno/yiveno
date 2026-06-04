@@ -8,6 +8,7 @@ import type { SubscriptionTier } from '@ottersage/types'
 export interface GumroadWebhookPayload {
   notification_type?: string
   kind?: string
+  seller_id?: string
   subscription_id?: string
   sale_id?: string
   'custom_fields[user_id]'?: string

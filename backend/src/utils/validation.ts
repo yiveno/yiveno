@@ -5,6 +5,7 @@
  */
 
 import type { Env } from '../types/env'
+import { error as logErrorMessage, toLogError } from './logger'
 
 /** 默认允许的重定向域后缀，用于 Chrome 扩展 WebAuthFlow。 */
 const DEFAULT_ALLOWED_REDIRECT_HOST_SUFFIXES = ['.chromiumapp.org']
@@ -24,7 +25,7 @@ export function parseAllowlist(env: Env): string[] {
       return Array.isArray(arr) ? arr.map(String) : []
     }
   } catch (e) {
-    console.error('parseAllowlist failed', e)
+    logErrorMessage('parseAllowlist failed', { detail: toLogError(e) })
   }
   return String(raw)
     .split(',')

@@ -11,7 +11,11 @@
  * - 不再通过后端 API 中转，减少网络请求
  */
 
-import { buildCheckoutUrl, getManageSubscriptionUrl } from '@/infrastructure/gumroad/client'
+import {
+  buildCheckoutUrl,
+  getManageSubscriptionUrl,
+  type GumroadBillingFrequency
+} from '@/infrastructure/gumroad/client'
 import {
   getSubscriptionFromSupabase,
   isProUser as checkIsProUser
@@ -91,14 +95,18 @@ export class SubscriptionAppService {
   /**
    * 构建支付链接
    *
-   * @param planId - Gumroad 计划 ID
+   * @param billingFrequency - Gumroad 订阅周期
    * @param userId - Supabase 用户 ID
    * @param email - 用户邮箱
    * @returns 支付链接
    */
-  async createCheckoutLink(planId: string, userId: string, email: string): Promise<string> {
+  async createCheckoutLink(
+    billingFrequency: GumroadBillingFrequency,
+    userId: string,
+    email: string
+  ): Promise<string> {
     try {
-      const checkoutUrl = buildCheckoutUrl(planId, userId, email)
+      const checkoutUrl = buildCheckoutUrl(billingFrequency, userId, email)
       return checkoutUrl
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '创建支付链接失败'

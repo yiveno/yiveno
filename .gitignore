@@ -18,6 +18,7 @@ artifacts/
 .env.*
 .env.local
 .env.*.local
+.env.runtime/
 website/.env
 
 # 本地开发 SSL 证书（不应提交到仓库）
