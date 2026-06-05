@@ -17,6 +17,7 @@ import { registerMenusAndShortcuts } from './listeners/menus'
 import { registerOmniboxHandlers } from './listeners/omnibox'
 import { registerBookmarkChangeListeners } from './listeners/bookmarks'
 import { initializeBookmarkTraitAutoSync } from '@/services/bookmark-trait-auto-sync'
+import { purgeCrossEnvironmentAuthStorage } from '@/config/auth-sync-env'
 
 /**
  * 初始化 Service Worker
@@ -27,6 +28,8 @@ async function initializeServiceWorker() {
   logger.info('Background', '🚀 开始初始化 Service Worker...')
 
   try {
+    await purgeCrossEnvironmentAuthStorage()
+
     // ==================== 阶段 1：核心功能（必须成功） ====================
     logger.info('Background', '📍 阶段 1：注册核心功能...')
 

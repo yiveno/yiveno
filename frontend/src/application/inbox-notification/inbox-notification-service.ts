@@ -8,6 +8,7 @@
 import { ref, computed } from 'vue'
 import { trpc } from '@/services/trpc'
 import { logger } from '@/infrastructure/logging/logger'
+import { AUTH_STORAGE_KEY } from '@/config/auth-sync-env'
 
 /**
  * 收件箱通知类型定义
@@ -45,11 +46,12 @@ const error = ref<string | null>(null)
 async function getAccessToken(): Promise<string | null> {
   try {
     // ✅ 从正确的 storage key 读取 session
-    const result = (await chrome.storage.local.get(['supabase.auth.token'])) as {
-      'supabase.auth.token'?: string
-    }
+    const result = (await chrome.storage.local.get([AUTH_STORAGE_KEY])) as Record<
+      string,
+      string | undefined
+    >
 
-    const sessionStr = result['supabase.auth.token']
+    const sessionStr = result[AUTH_STORAGE_KEY]
     if (!sessionStr) {
       logger.debug('InboxNotificationService', '未找到 session')
       return null

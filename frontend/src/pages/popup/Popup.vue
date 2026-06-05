@@ -30,6 +30,10 @@ const {
 const popupStore = usePopupStoreIndexedDB()
 const traitStore = useTraitDataStore()
 
+if (!traitStore.isInitialized) {
+  traitStore.initialize()
+}
+
 const stats = computed(() => popupStore.stats)
 const traitOverview = computed(() => traitStore.statistics)
 
@@ -183,13 +187,15 @@ const actionCards = computed<ActionCardDef[]>(() => [
                   <span>{{ t(card.labelKey) }}</span>
                 </span>
                 <Button
+                  v-if="card.count > 0"
                   variant="icon"
                   class="issue-action"
+                  icon="trash-2"
+                  :icon-size="16"
                   :title="t(card.tooltipKey)"
+                  :aria-label="t(card.tooltipKey)"
                   @click.stop="openManagementWithFilter(card.filterKey)"
-                >
-                  <LucideIcon slot="icon" name="trash-2" :size="16" />
-                </Button>
+                />
               </div>
               <div :class="['issue-card-count', card.countClass]">
                 <template v-if="!isLoadingTraitOverview">
@@ -368,20 +374,13 @@ const actionCards = computed<ActionCardDef[]>(() => [
 }
 
 .issue-action {
+  flex-shrink: 0;
   color: var(--color-text-secondary);
-  opacity: 0;
-  transition:
-    color var(--transition-fast),
-    opacity var(--transition-fast);
+  transition: color var(--transition-fast);
 }
 
 .issue-action:hover {
   color: var(--color-error);
-}
-
-.issue-card:hover .issue-action,
-.issue-card:focus-within .issue-action {
-  opacity: 1;
 }
 
 :deep(.issue-card-count md-circular-progress) {

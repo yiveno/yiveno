@@ -262,11 +262,12 @@ async function handleRegularReload(reason: string): Promise<void> {
   try {
     await indexedDBManager.initialize()
     const allBookmarks = await indexedDBManager.getAllBookmarks(1)
-    if (allBookmarks.length > 0) {
+    if (allBookmarks.length === 0) {
+      logger.info('Bootstrap', 'IndexedDB 为空，后台启动全量同步')
+      void bookmarkSyncService.syncAllBookmarks()
+    } else {
       logger.info('Bootstrap', '检测到书签数据，开始异步同步 embedding')
       void syncBookmarkEmbeddings()
-    } else {
-      logger.debug('Bootstrap', '书签数据为空，跳过 embedding 同步')
     }
   } catch (error) {
     logger.warn('Bootstrap', '检查书签数据失败，跳过 embedding 同步', error)

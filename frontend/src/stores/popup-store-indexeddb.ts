@@ -105,6 +105,55 @@ export const usePopupStoreIndexedDB = defineStore('popup-indexeddb', () => {
   // ==================== 方法 ====================
 
   /**
+   * 确保 IndexedDB 已有书签数据；若为空则等待或请求 Background 全量同步
+   */
+  async function ensureBookmarkDataReady(): Promise<void> {
+    await indexedDBManager.initialize()
+
+    const hasBookmarkData = async (): Promise<boolean> => {
+      const sample = await indexedDBManager.getAllBookmarks(1)
+      return sample.length > 0
+    }
+
+    if (await hasBookmarkData()) {
+      return
+    }
+
+    logger.debug('PopupStore', '书签库尚未就绪，等待 Background 同步')
+
+    await new Promise<void>((resolve, reject) => {
+      chrome.runtime.sendMessage({ type: 'SYNC_BOOKMARKS' }, response => {
+        const chromeLastError = chrome.runtime.lastError
+        if (chromeLastError) {
+          reject(new Error(chromeLastError.message))
+          return
+        }
+
+        if (response && typeof response === 'object' && 'ok' in response && response.ok === false) {
+          const message =
+            'error' in response && typeof response.error === 'string'
+              ? response.error
+              : '全量同步失败'
+          reject(new Error(message))
+          return
+        }
+
+        resolve()
+      })
+    })
+
+    const deadline = Date.now() + 60_000
+    while (Date.now() < deadline) {
+      if (await hasBookmarkData()) {
+        return
+      }
+      await new Promise<void>(resolve => setTimeout(resolve, 150))
+    }
+
+    throw new Error('书签数据同步超时，请稍后重试')
+  }
+
+  /**
    * 初始化弹窗
    *
    * @description
@@ -121,10 +170,13 @@ export const usePopupStoreIndexedDB = defineStore('popup-indexeddb', () => {
       // 1. 初始化统一API (自动完成)
       // 统一API自动初始化
 
-      // 2. 获取当前标签页信息
+      // 2. 确保书签数据已同步（扩展重载后 IndexedDB 可能尚未写入）
+      await ensureBookmarkDataReady()
+
+      // 3. 获取当前标签页信息
       await getCurrentTab()
 
-      // 3. 加载书签统计
+      // 4. 加载书签统计
       await loadBookmarkStats()
 
       // 5. 数据更新监听 (新架构中由Service Worker处理)

@@ -22,6 +22,7 @@ const backendTsFiles = isBackendCwd ? ['src/**/*.ts'] : ['backend/src/**/*.ts']
 const websiteTsFiles = isWebsiteCwd
   ? ['**/*.ts', '**/*.tsx']
   : ['website/**/*.ts', 'website/**/*.tsx']
+const websiteVueFiles = isWebsiteCwd ? ['**/*.vue'] : ['website/**/*.vue']
 
 // ============================================================================
 // 📦 公共配置
@@ -303,6 +304,84 @@ export default [
   // Vue 文件配置
   {
     files: frontendVueFiles,
+    languageOptions: {
+      parser: pluginVue.configs['flat/recommended'][1].languageOptions.parser,
+      parserOptions: {
+        parser: {
+          ts: tseslint.parser,
+          typescript: tseslint.parser
+        },
+        extraFileExtensions: ['.vue'],
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        projectService: true,
+        tsconfigRootDir: configRootDir
+      }
+    },
+    plugins: {
+      'unused-imports': unusedImports
+    },
+    rules: {
+      // Vue 特定规则（宽松配置）
+      'vue/multi-word-component-names': 'off',
+      'vue/attribute-hyphenation': 'off',
+      'vue/max-attributes-per-line': 'off',
+      'vue/html-indent': 'off',
+      'vue/html-closing-bracket-newline': 'off',
+      'vue/html-closing-bracket-spacing': 'off',
+      'vue/singleline-html-element-content-newline': 'off',
+      'vue/multiline-html-element-content-newline': 'off',
+      'vue/no-v-html': 'off',
+      'vue/no-use-v-if-with-v-for': 'off',
+      'vue/require-default-prop': 'off',
+      'vue/no-required-prop-with-default': 'off',
+
+      // 🔒 安全规则：防止在 computed 中修改响应式状态
+      'vue/no-side-effects-in-computed-properties': 'error',
+      'vue/no-mutating-props': 'error',
+      'vue/no-async-in-computed-properties': 'error',
+      'vue/no-ref-as-operand': 'error',
+      'vue/no-watch-after-await': 'error',
+      'vue/require-explicit-emits': 'warn',
+
+      // Phase 1 优化：Vue 3 响应式规则（防止响应式丢失）
+      'vue/no-ref-object-reactivity-loss': 'error',
+      'vue/no-setup-props-reactivity-loss': 'error',
+
+      // Phase 1 优化：组件规范
+      'vue/component-name-in-template-casing': ['error', 'PascalCase'],
+      'vue/custom-event-name-casing': ['error', 'camelCase'],
+      'vue/define-macros-order': [
+        'warn',
+        {
+          order: ['defineOptions', 'defineProps', 'defineEmits', 'defineSlots']
+        }
+      ],
+      'vue/block-order': [
+        'error',
+        {
+          order: ['script', 'template', 'style']
+        }
+      ],
+
+      // Material Web Components 使用原生 slot 属性，不是 Vue 的 v-slot
+      'vue/no-deprecated-slot-attribute': 'off',
+      'vue/no-deprecated-slot-scope-attribute': 'error',
+
+      // ⚡ 性能优化规则
+      'vue/no-v-for-template-key': 'error',
+      'vue/no-useless-v-bind': 'off', // 关闭：太严格，影响代码可读性
+      'vue/no-useless-mustaches': 'off', // 关闭：太严格，影响代码可读性
+      'vue/prefer-true-attribute-shorthand': 'off', // 关闭：太严格，影响代码可读性
+
+      // TypeScript 规则
+      ...typescriptCommonRules
+    }
+  },
+
+  // Website Vue 文件配置
+  {
+    files: websiteVueFiles,
     languageOptions: {
       parser: pluginVue.configs['flat/recommended'][1].languageOptions.parser,
       parserOptions: {

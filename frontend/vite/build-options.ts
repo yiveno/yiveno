@@ -35,8 +35,8 @@ export function createBuildInput() {
     background: resolve(SRC_DIR, 'background/main.ts'),
     offscreen: resolve(SRC_DIR, 'offscreen/main.ts'),
     onboarding: resolve(SRC_DIR, 'pages/onboarding/index.html'),
-    'save-popup': resolve(SRC_DIR, 'pages/save-popup/index.html'),
-    'auth-sync': resolve(SRC_DIR, 'content/auth-sync.ts')
+    'save-popup': resolve(SRC_DIR, 'pages/save-popup/index.html')
+    // auth-sync 由 auth-sync IIFE 独立构建（见 vite/auth-sync-build.ts）
   }
 }
 
@@ -246,9 +246,6 @@ export function createOutputFileNames() {
     entryFileNames: (chunkInfo: { name: string }) => {
       if (['background', 'offscreen'].includes(chunkInfo.name)) {
         return '[name].js'
-      }
-      if (chunkInfo.name === 'auth-sync') {
-        return 'auth-sync.js'
       }
       return 'assets/[name].[hash:8].js'
     },

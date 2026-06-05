@@ -42,7 +42,7 @@ const {
   showAccount
 } = toRefs(props)
 
-// ==================== 认证状态 ====================
+// ==================== 认证状态（useSupabaseAuth 首次调用时会自动 initialize） ====================
 const { isAuthenticated } = useSupabaseAuth()
 
 // 通知按钮只在登录状态下显示

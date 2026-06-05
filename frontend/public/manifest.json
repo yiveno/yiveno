@@ -51,11 +51,9 @@
         "http://localhost:3000/*",
         "https://localhost:3000/*",
         "http://localhost:3001/*",
-        "https://localhost:3001/*",
-        "https://ottersage.com/*",
-        "https://*.ottersage.com/*"
+        "https://localhost:3001/*"
       ],
-      "js": ["auth-sync.js"],
+      "js": ["auth-sync.bundle.js"],
       "run_at": "document_start"
     }
   ],

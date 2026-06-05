@@ -8,7 +8,8 @@
  */
 
 import type { BuildOptions } from 'vite'
-import { OUT_DIR, ENABLE_SOURCEMAP } from './constants'
+import { resolve } from 'path'
+import { OUT_DIR, ENABLE_SOURCEMAP, PROJECT_ROOT } from './constants'
 import { createBuildOptions, type RolldownBuildOptions } from './build-options'
 
 /**
@@ -73,14 +74,32 @@ export function createBuildConfig(): BuildOptions {
     sourcemap: ENABLE_SOURCEMAP,
 
     // 资源处理优化 - 小资源内联以减少请求；字体仍按文件输出
-    assetsInlineLimit: 4096
+    assetsInlineLimit: 4096,
+
+    // 避免 auth-sync IIFE 写入后触发 watch 二次构建并覆盖为 ES module
+    watch: isWatchMode
+      ? {
+          exclude: [
+            resolve(PROJECT_ROOT, 'dist/auth-sync.bundle.js'),
+            resolve(PROJECT_ROOT, 'dist/auth-sync.bundle.js.map'),
+            resolve(PROJECT_ROOT, 'dist/auth-sync.js'),
+            resolve(PROJECT_ROOT, 'dist/auth-sync.js.map')
+          ]
+        }
+      : null
   }
 
   // Vite 8: 使用 rolldownOptions（rollupOptions 已弃用）
   config.rolldownOptions = createBuildOptions()
   // 过滤 Rolldown 对 @vueuse/core 等三方包的 INVALID_ANNOTATION 告警（无害）
-  ;(config.rolldownOptions as any).onLog = (_level: string, log: any) => {
-    if (log.code === 'INVALID_ANNOTATION') return
+  ;(config.rolldownOptions as RolldownBuildOptions).onLog = (_level: string, log: unknown) => {
+    if (
+      typeof log === 'object' &&
+      log !== null &&
+      'code' in log &&
+      log.code === 'INVALID_ANNOTATION'
+    )
+      return
   }
 
   return config

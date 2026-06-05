@@ -164,7 +164,7 @@ export function usePopupPage() {
       uiStore.value.setCurrentPage('popup', 'otterSagePopup')
 
       try {
-        popupStore.value.initialize()
+        await popupStore.value.initialize()
       } catch (initError) {
         logger.warn('Popup', 'PopupStore初始化失败，使用默认状态', initError)
         uiStore.value.showWarning('部分功能初始化失败，但基本功能仍可使用')

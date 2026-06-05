@@ -2,63 +2,82 @@
  * 认证状态同步 Content Script
  *
  * 职责：
- * - 监听官网 localStorage 中的 Supabase session 变化
- * - 将 session 同步到 Chrome Extension Storage
- * - 实现官网和插件的认证状态自动同步
+ * - 仅在当前构建环境允许的官网域名上运行
+ * - 监听官网 localStorage 中的 Supabase session
+ * - 同步到 Chrome Storage（环境隔离的 storage key）
  *
- * ⚠️ 注意：此文件是 Content Script，运行在网页环境中
- * 必须使用 localStorage 来读取官网的 Supabase session
+ * ⚠️ Content Script 运行在网页环境，必须使用 localStorage 读取官网 session
  */
 
 /* eslint-disable no-restricted-syntax -- Content Script 必须使用 localStorage 读取官网的 Supabase session */
 
-// 只在官网域名下运行
-const WEBSITE_DOMAINS = [
-  'localhost:3000', // ✅ 修复：官网实际运行在 3000 端口
-  'localhost:3001',
-  'ottersage.com',
-  'www.ottersage.com'
-]
+import {
+  AUTH_STORAGE_KEY,
+  AUTH_SUPABASE_URL,
+  getSupabaseProjectRef,
+  getWebsiteSupabaseSessionKey,
+  isAuthSyncHostAllowed
+} from '@/config/auth-sync-env'
+import { parseWebsiteAuthStorage, type AuthSyncSessionPayload } from '@/config/auth-sync-session'
 
 const currentHost = window.location.host
-const isWebsiteDomain = WEBSITE_DOMAINS.some(domain => currentHost.includes(domain))
 
-interface SupabaseSession {
-  access_token?: string
-  refresh_token?: string
-  expires_at?: number
-  user?: unknown
+/** 扩展重载后旧 content script 会失效，避免每秒刷错误日志 */
+function isExtensionContextValid(): boolean {
+  try {
+    return Boolean(chrome.runtime?.id)
+  } catch {
+    return false
+  }
 }
 
-if (!isWebsiteDomain) {
-  // 非官网域名，跳过同步
+function isExtensionContextInvalidatedError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error)
+  return message.includes('Extension context invalidated')
+}
+
+if (!isAuthSyncHostAllowed(currentHost)) {
+  // 非本环境官网（如 dev 扩展访问 ottersage.com），彻底不同步
 } else {
+  const projectRef = getSupabaseProjectRef(AUTH_SUPABASE_URL)
+  const websiteSessionKey = projectRef ? getWebsiteSupabaseSessionKey(projectRef) : null
+
+  let syncDisabled = false
+  let pollTimer: ReturnType<typeof setInterval> | null = null
+  let contextInvalidLogged = false
+
+  function disableSync(reason: string): void {
+    if (syncDisabled) {
+      return
+    }
+    syncDisabled = true
+    if (pollTimer !== null) {
+      clearInterval(pollTimer)
+      pollTimer = null
+    }
+    if (!contextInvalidLogged) {
+      contextInvalidLogged = true
+      console.info(`[AuthSync] ${reason}，已停止同步。请刷新本页以恢复。`)
+    }
+  }
+
   /**
-   * 从 localStorage 读取 Supabase session
+   * 从 localStorage 读取与当前扩展 Supabase 项目一致的 session
    */
-  function getSupabaseSession(): SupabaseSession | null {
+  function getSupabaseSession(): AuthSyncSessionPayload | null {
+    if (!websiteSessionKey) {
+      return null
+    }
+
     try {
-      // Supabase 的 session key 格式：sb-<project-ref>-auth-token
-      const keys = Object.keys(localStorage).filter(
-        key => key.startsWith('sb-') && key.endsWith('-auth-token')
-      )
-
-      if (keys.length === 0) {
-        return null
-      }
-
-      const sessionKey = keys[0]
-      if (!sessionKey) {
-        return null
-      }
-
-      const sessionData = localStorage.getItem(sessionKey)
-
+      const sessionData = localStorage.getItem(websiteSessionKey)
       if (!sessionData) {
         return null
       }
-
-      const session = JSON.parse(sessionData) as SupabaseSession
+      const session = parseWebsiteAuthStorage(sessionData)
+      if (!session) {
+        console.warn('[AuthSync] localStorage session 格式无法解析:', websiteSessionKey)
+      }
       return session
     } catch (error) {
       console.error('[AuthSync] 读取 session 失败:', error)
@@ -69,117 +88,119 @@ if (!isWebsiteDomain) {
   /**
    * 将 session 同步到 Chrome Storage
    */
-  async function syncSessionToExtension(session: SupabaseSession | null) {
+  async function syncSessionToExtension(session: AuthSyncSessionPayload | null): Promise<boolean> {
+    if (syncDisabled) {
+      return false
+    }
+
+    if (!isExtensionContextValid()) {
+      disableSync('扩展上下文已失效（常见于扩展重载后）')
+      return false
+    }
+
     try {
       if (!session) {
-        await chrome.runtime.sendMessage({
-          type: 'CLEAR_AUTH_SESSION'
-        })
-        return
+        const response = await chrome.runtime.sendMessage({ type: 'CLEAR_AUTH_SESSION' })
+        if (
+          response &&
+          typeof response === 'object' &&
+          'success' in response &&
+          !response.success
+        ) {
+          console.error('[AuthSync] 清除 session 失败:', response)
+          return false
+        }
+        return true
       }
 
-      await chrome.runtime.sendMessage({
+      const response = await chrome.runtime.sendMessage({
         type: 'SYNC_AUTH_SESSION',
-        data: {
-          access_token: session.access_token,
-          refresh_token: session.refresh_token,
-          expires_at: session.expires_at,
-          user: session.user
-        }
+        data: session
       })
+      if (response && typeof response === 'object' && 'success' in response && !response.success) {
+        console.error('[AuthSync] 同步 session 失败:', response)
+        return false
+      }
+      return true
     } catch (error) {
+      if (isExtensionContextInvalidatedError(error)) {
+        disableSync('扩展上下文已失效（常见于扩展重载后）')
+        return false
+      }
       console.error('[AuthSync] 同步 session 失败:', error)
+      return false
     }
   }
 
   /**
-   * 初始化：检查 localStorage 和 Chrome Storage 的一致性
+   * 初始化：对齐官网 localStorage 与扩展 Chrome Storage
    */
   async function initializeSync() {
+    if (!isExtensionContextValid()) {
+      disableSync('扩展上下文不可用')
+      return
+    }
+
     const localSession = getSupabaseSession()
+    const chromeSession = await chrome.storage.local.get(AUTH_STORAGE_KEY)
+    const hasChromeSession = !!chromeSession[AUTH_STORAGE_KEY]
 
-    // 从 Chrome Storage 读取当前存储的 session
-    const chromeSession = await chrome.storage.local.get('supabase.auth.token')
-    const hasChromeSession = !!chromeSession['supabase.auth.token']
-
-    // 情况 1：localStorage 有 session，同步到 Chrome Storage
     if (localSession) {
       await syncSessionToExtension(localSession)
-    }
-    // 情况 2：localStorage 没有 session，但 Chrome Storage 有（不一致）
-    else if (hasChromeSession) {
+    } else if (hasChromeSession) {
       await syncSessionToExtension(null)
     }
   }
 
-  // 执行初始化同步
-  initializeSync()
+  void initializeSync()
 
-  /**
-   * 监听 localStorage 变化（只能监听其他标签页的变化）
-   */
   window.addEventListener('storage', event => {
-    // 只关心 Supabase session 的变化
-    if (event.key?.startsWith('sb-') && event.key?.endsWith('-auth-token')) {
-      if (event.newValue) {
-        try {
-          const session = JSON.parse(event.newValue)
-          syncSessionToExtension(session)
-        } catch (error) {
-          console.error('[AuthSync] 解析 session 失败:', error)
-        }
+    if (syncDisabled || !websiteSessionKey || event.key !== websiteSessionKey) {
+      return
+    }
+
+    if (event.newValue) {
+      const session = parseWebsiteAuthStorage(event.newValue)
+      if (session) {
+        void syncSessionToExtension(session)
       } else {
-        // Session 被删除（登出）
-        syncSessionToExtension(null)
+        console.error('[AuthSync] storage 事件 session 解析失败')
       }
+    } else {
+      void syncSessionToExtension(null)
     }
   })
 
-  /**
-   * 使用 MutationObserver 监听 localStorage 的变化（当前标签页）
-   *
-   * 注意：storage 事件只能监听其他标签页的变化，无法监听当前标签页
-   * 因此我们需要定期轮询来检测当前标签页的 localStorage 变化
-   */
-  let lastSessionData: string | null = null
+  let lastSessionData: string | null = websiteSessionKey
+    ? localStorage.getItem(websiteSessionKey)
+    : null
 
-  // 获取初始 session 数据
-  const keys = Object.keys(localStorage).filter(
-    key => key.startsWith('sb-') && key.endsWith('-auth-token')
-  )
-  if (keys.length > 0) {
-    const firstKey = keys[0]
-    if (firstKey) {
-      lastSessionData = localStorage.getItem(firstKey)
+  pollTimer = setInterval(() => {
+    if (syncDisabled || !websiteSessionKey) {
+      return
     }
-  }
 
-  /**
-   * 定期检查 session（检测当前标签页的变化）
-   */
-  setInterval(() => {
-    const sessionKeys = Object.keys(localStorage).filter(
-      key => key.startsWith('sb-') && key.endsWith('-auth-token')
-    )
+    if (!isExtensionContextValid()) {
+      disableSync('扩展上下文已失效（常见于扩展重载后）')
+      return
+    }
 
-    const firstSessionKey = sessionKeys[0]
-    const currentSessionData = firstSessionKey ? localStorage.getItem(firstSessionKey) : null
+    const currentSessionData = localStorage.getItem(websiteSessionKey)
+    if (currentSessionData === lastSessionData) {
+      return
+    }
 
-    // 检查 session 是否发生变化
-    if (currentSessionData !== lastSessionData) {
-      lastSessionData = currentSessionData
+    lastSessionData = currentSessionData
 
-      if (currentSessionData) {
-        try {
-          const session = JSON.parse(currentSessionData)
-          syncSessionToExtension(session)
-        } catch (error) {
-          console.error('[AuthSync] 解析 session 失败:', error)
-        }
+    if (currentSessionData) {
+      const session = parseWebsiteAuthStorage(currentSessionData)
+      if (session) {
+        void syncSessionToExtension(session)
       } else {
-        // Session 被删除（登出）
-        syncSessionToExtension(null)
+        console.error('[AuthSync] 轮询 session 解析失败')
       }
+    } else {
+      void syncSessionToExtension(null)
     }
-  }, 1000) // 每 1 秒检查一次（更频繁，以便快速检测登出）
+  }, 1000)
 }

@@ -53,9 +53,14 @@ if (!parsed.success && import.meta.env.DEV) {
 
 const rawEnv = parsed.success ? parsed.data : {}
 
+const runtimeEnv = rawEnv.VITE_RUNTIME_ENV ?? 'dev'
+
+/** dev 构建未注入 VITE_WEBSITE_URL 时默认本地官网，避免误跳生产站 */
+const defaultWebsiteUrl = runtimeEnv === 'prod' ? 'https://ottersage.com' : 'http://localhost:3001'
+
 export const frontendEnv = {
   apiBaseUrl: rawEnv.VITE_API_BASE_URL,
-  websiteUrl: rawEnv.VITE_WEBSITE_URL ?? 'https://ottersage.com',
+  websiteUrl: rawEnv.VITE_WEBSITE_URL ?? defaultWebsiteUrl,
   supabaseUrl: rawEnv.VITE_SUPABASE_URL ?? 'https://ugxgxytykxblctsyulsg.supabase.co',
   supabaseAnonKey:
     rawEnv.VITE_SUPABASE_ANON_KEY ?? 'sb_publishable_2FY9uDfqNbLwUYXxgcu8lw_qQ8SEbXo',
@@ -73,7 +78,7 @@ export const frontendEnv = {
   aiInitialPrompts: rawEnv.VITE_AI_INITIAL_PROMPTS,
   logLevel: rawEnv.VITE_LOG_LEVEL,
   logConsole: rawEnv.VITE_LOG_CONSOLE,
-  runtimeEnv: rawEnv.VITE_RUNTIME_ENV ?? 'dev',
+  runtimeEnv,
   hotBuild: Boolean(rawEnv.VITE_HOT_BUILD),
   useRemote: Boolean(rawEnv.VITE_USE_REMOTE)
 } as const

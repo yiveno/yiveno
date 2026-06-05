@@ -12,6 +12,7 @@
 import { createClient, type User, type Session, type AuthError } from '@supabase/supabase-js'
 import { logger } from '@/infrastructure/logging/logger'
 import { frontendEnv } from '@/config/env'
+import { AUTH_STORAGE_KEY } from '@/config/auth-sync-env'
 
 /**
  * Supabase 配置
@@ -89,7 +90,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     // Content Script 会监听官网的 localStorage 变化，并同步到 Chrome Storage
     // 这样插件就能自动获取官网的登录状态
     storage: chromeStorageAdapter,
-    storageKey: 'supabase.auth.token', // 自定义 storage key
+    storageKey: AUTH_STORAGE_KEY,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false // Chrome Extension 不需要检测 URL 中的 session
@@ -100,9 +101,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
  * 验证 Supabase 配置是否完整
  */
 export function isSupabaseConfigured(): boolean {
-  console.warn(
-    '[Supabase Client] ⚠️ Supabase 配置检查: ' + (isConfigured ? '✅ 已配置' : '❌ 未配置')
-  )
   return isConfigured
 }
 

@@ -8,9 +8,8 @@
  * - 检测用户不活跃超时（30 天）
  *
  * 同步机制：
- * - 插件和官网共享 localStorage 中的 Supabase session
- * - 通过 storage 事件实现跨标签页/跨环境自动同步
- * - 用户在官网登录后，插件会自动检测到 session 变化并同步状态
+ * - 官网登录后由 content script 同步到 Chrome Storage（dev/prod 使用不同 storage key）
+ * - 通过 chrome.storage.onChanged 刷新插件内登录态
  *
  * 安全策略：
  * - Access Token 过期时间：1 小时
@@ -23,6 +22,7 @@ import { supabase, isSupabaseConfigured } from '@/infrastructure/supabase/client
 import type { User, Session, AuthError } from '@/infrastructure/supabase/client'
 import { logger } from '@/infrastructure/logging/logger'
 import { chromeStorage } from '@/infrastructure/storage/chrome-storage'
+import { AUTH_STORAGE_KEY } from '@/config/auth-sync-env'
 
 /**
  * 不活跃超时时间：30 天（毫秒）
@@ -45,6 +45,9 @@ const user = ref<User | null>(null)
 const session = ref<Session | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
+
+/** 首次使用 composable 时从 Chrome Storage 加载已有 session（侧边栏等页面依赖） */
+let authBootstrapped = false
 
 /**
  * Supabase 认证状态管理 Composable
@@ -148,7 +151,6 @@ export function useSupabaseAuth() {
    * 初始化：检查当前 session
    */
   const initialize = async () => {
-    logger.warn('[useSupabaseAuth] 🚀 开始初始化认证状态...')
     if (!isSupabaseConfigured()) {
       loading.value = false
       error.value = 'Supabase 未配置'
@@ -264,8 +266,11 @@ export function useSupabaseAuth() {
   if (typeof chrome !== 'undefined' && chrome.storage) {
     console.log('[useSupabaseAuth] 👂 设置 Chrome Storage 监听器（全局）')
     chrome.storage.onChanged.addListener((changes, areaName) => {
-      if (areaName === 'local' && changes['supabase.auth.token']) {
-        const change = changes['supabase.auth.token']
+      if (areaName === 'local' && changes[AUTH_STORAGE_KEY]) {
+        const change = changes[AUTH_STORAGE_KEY]
+        if (!change) {
+          return
+        }
         console.log('[useSupabaseAuth] 📨 检测到 Chrome Storage session 变化:', {
           hasOldValue: !!change.oldValue,
           hasNewValue: !!change.newValue,
@@ -293,8 +298,13 @@ export function useSupabaseAuth() {
     })
   }
 
-  // ✅ 移除自动初始化的 onMounted，让调用者自己决定何时初始化
-  // 调用者应该在自己的 onMounted 中调用 initialize() 和 setupAuthListener()
+  // 侧边栏 / 管理页等通过 AppHeader 使用认证，但不会单独调用 initialize()
+  // 首次使用时主动拉取 Chrome Storage 中已由 auth-sync 写入的 session
+  if (!authBootstrapped) {
+    authBootstrapped = true
+    setupAuthListener()
+    void initialize()
+  }
 
   return {
     // 状态

@@ -20,6 +20,8 @@ import { autoAddBookmark } from '../managers/auto-add-bookmark'
 import { getFolderRecommendations } from '../managers/folder-recommendation'
 import { folderVectorService } from '@/application/folder/folder-vector-service'
 import { favoriteAppService } from '@/application/bookmark/favorite-app-service'
+import { AUTH_STORAGE_KEY } from '@/config/auth-sync-env'
+import type { AuthSyncSessionPayload } from '@/config/auth-sync-session'
 
 /**
  * 运行时消息接口
@@ -128,7 +130,16 @@ const MESSAGE_HANDLERS: Record<
     sendResponse({ success: true } as unknown)
   },
   SYNC_BOOKMARKS: async (_message, sendResponse) => {
-    sendResponse({ ok: true } as unknown)
+    try {
+      await bookmarkSyncService.syncAllBookmarks()
+      sendResponse({ ok: true } as unknown)
+    } catch (error) {
+      logger.error('BackgroundMessaging', 'SYNC_BOOKMARKS 全量同步失败', error)
+      sendResponse({
+        ok: false,
+        error: error instanceof Error ? error.message : String(error)
+      } as unknown)
+    }
   },
   'get-paged': handlePagedBookmarks,
   'get-children-paged': handleChildrenPaged,
@@ -1453,7 +1464,7 @@ async function handleBatchDeleteByTrait(
  *
  * 从 Content Script 接收官网的 Supabase session，存储到 Chrome Storage
  *
- * @param message - 消息对象（包含 access_token、refresh_token、expires_at、user）
+ * @param message - 消息对象（包含 access_token、refresh_token，及可选的 expires_at、user）
  * @param sendResponse - 响应回调函数
  */
 async function handleSyncAuthSession(
@@ -1464,14 +1475,7 @@ async function handleSyncAuthSession(
     console.log('[BackgroundMessaging] 📨 收到 SYNC_AUTH_SESSION 消息')
     console.log('[BackgroundMessaging] message.data:', message.data)
 
-    const data = message.data as
-      | {
-          access_token: string
-          refresh_token: string
-          expires_at: number
-          user: Record<string, unknown>
-        }
-      | undefined
+    const data = message.data as AuthSyncSessionPayload | undefined
 
     if (!data || !data.access_token || !data.refresh_token) {
       console.error('[BackgroundMessaging] ❌ Session 数据不完整:', data)
@@ -1480,28 +1484,47 @@ async function handleSyncAuthSession(
       return
     }
 
+    const userId =
+      data.user && typeof data.user === 'object' && 'id' in data.user
+        ? String((data.user as { id: unknown }).id)
+        : undefined
+    const expiresAtIso =
+      typeof data.expires_at === 'number'
+        ? new Date(data.expires_at * 1000).toISOString()
+        : undefined
+
     console.log('[BackgroundMessaging] 🔑 Session 数据完整，开始存储...')
     logger.info('BackgroundMessaging', '🔑 同步 session 到 Chrome Storage', {
-      userId: data.user?.id,
-      expiresAt: new Date(data.expires_at * 1000).toISOString()
+      userId,
+      expiresAt: expiresAtIso
     })
 
     // 存储到 Chrome Storage Local（持久化）
-    const sessionData = {
+    const sessionData: Record<string, unknown> = {
       access_token: data.access_token,
-      refresh_token: data.refresh_token,
-      expires_at: data.expires_at,
-      user: data.user
+      refresh_token: data.refresh_token
+    }
+    if (data.expires_at !== undefined) {
+      sessionData.expires_at = data.expires_at
+    }
+    if (data.user !== undefined) {
+      sessionData.user = data.user
+    }
+    if (data.expires_in !== undefined) {
+      sessionData.expires_in = data.expires_in
+    }
+    if (data.token_type !== undefined) {
+      sessionData.token_type = data.token_type
     }
 
     console.log('[BackgroundMessaging] 准备存储的 session:', {
       hasAccessToken: !!sessionData.access_token,
       hasRefreshToken: !!sessionData.refresh_token,
-      userId: sessionData.user?.id
+      userId
     })
 
     await chrome.storage.local.set({
-      'supabase.auth.token': JSON.stringify(sessionData)
+      [AUTH_STORAGE_KEY]: JSON.stringify(sessionData)
     })
 
     console.log('[BackgroundMessaging] ✅ Session 已存储到 Chrome Storage')
@@ -1532,7 +1555,7 @@ async function handleClearAuthSession(
   try {
     logger.info('BackgroundMessaging', '🧹 清除 Chrome Storage 中的 session')
 
-    await chrome.storage.local.remove('supabase.auth.token')
+    await chrome.storage.local.remove(AUTH_STORAGE_KEY)
 
     logger.info('BackgroundMessaging', '✅ Session 已清除')
     sendResponse({ success: true })

@@ -407,6 +407,9 @@ export class BookmarkSyncService {
 
   private syncTimeoutTimer: ReturnType<typeof setTimeout> | null = null
 
+  /** 进行中的全量同步 Promise，供并发调用方等待同一轮同步 */
+  private activeFullSyncPromise: Promise<void> | null = null
+
   static getInstance(): BookmarkSyncService {
     if (!BookmarkSyncService.instance) {
       BookmarkSyncService.instance = new BookmarkSyncService()
@@ -503,31 +506,66 @@ export class BookmarkSyncService {
    * 全量同步：从 Chrome API 获取所有书签并写入 IndexedDB
    */
   async syncAllBookmarks(): Promise<void> {
+    if (this.activeFullSyncPromise) {
+      return this.activeFullSyncPromise
+    }
+
+    this.activeFullSyncPromise = this.runFullSync()
+    try {
+      await this.activeFullSyncPromise
+    } finally {
+      this.activeFullSyncPromise = null
+    }
+  }
+
+  /**
+   * 等待 session 中的同步锁释放（用于并发调用或 SW 重启后的残留锁）
+   */
+  private async waitForSyncSessionIdle(timeoutMs = 60_000): Promise<void> {
+    const started = Date.now()
+    while (Date.now() - started < timeoutMs) {
+      const isSyncing =
+        (await chromeStorage.getSession<boolean>(this.SYNC_STATE_KEY, false)) ?? false
+      if (!isSyncing) {
+        return
+      }
+      await new Promise<void>(resolve => setTimeout(resolve, 100))
+    }
+
+    logger.warn('BookmarkSync', '等待同步锁释放超时，清除残留锁')
+    await chromeStorage.setSession(this.SYNC_STATE_KEY, false)
+  }
+
+  /**
+   * 执行单轮全量同步（内部实现）
+   */
+  private async runFullSync(): Promise<void> {
     const syncStart = performance.now()
     logger.info('BookmarkSync', '🚀 开始全量同步...')
 
-    // 🔴 检查 session storage 中的同步状态
     const isSyncing = (await chromeStorage.getSession<boolean>(this.SYNC_STATE_KEY, false)) ?? false
 
     if (isSyncing) {
-      logger.warn('BookmarkSync', '⚠️ 同步正在进行中，记录挂起请求')
-      this.pendingFullSync = true
+      logger.debug('BookmarkSync', '已有全量同步进行中，等待完成')
+      await this.waitForSyncSessionIdle()
       return
     }
 
     try {
-      // ✅ 只在初次同步时标记 DB 未就绪，避免重新同步时影响正常读取
-      // 检查是否有现有数据
-      const hasExistingData = this.lastSyncTime > 0
+      const idbSample = await indexedDBManager.getAllBookmarks(1)
+      const lastSyncedSetting = await indexedDBManager.getSetting<number>('LAST_SYNCED_AT')
+      const hasExistingData =
+        this.lastSyncTime > 0 || idbSample.length > 0 || (lastSyncedSetting ?? 0) > 0
+
       if (!hasExistingData) {
         try {
-          // 🔴 使用 session storage
           await setDatabaseReady(false)
           logger.info('BookmarkSync', '首次同步，标记 DB 未就绪')
-        } catch {}
+        } catch {
+          // 忽略 session 写入失败
+        }
       }
 
-      // 🔴 设置 session storage 同步状态
       await chromeStorage.setSession(this.SYNC_STATE_KEY, true)
       this.pendingFullSync = false
       logger.info('BookmarkSync', '🚀 开始同步书签...')

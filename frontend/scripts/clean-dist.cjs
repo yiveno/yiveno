@@ -8,6 +8,7 @@
 void (async () => {
   const fs = await import('fs')
   const path = await import('path')
+  const { execSync } = await import('child_process')
   const loggerMod = await import('./logger.cjs')
   const { createLogger } = loggerMod.default ?? loggerMod
 
@@ -152,6 +153,45 @@ let manifestContent;
   };
 }
 
+// 按构建环境限制 auth-sync 注入域名（dev 与生产站彻底隔离）
+const authSyncRuntimeEnv = process.env.VITE_RUNTIME_ENV === 'prod' ? 'prod' : 'dev';
+const authSyncMatchesByEnv = {
+  dev: [
+    'http://localhost:3000/*',
+    'https://localhost:3000/*',
+    'http://localhost:3001/*',
+    'https://localhost:3001/*',
+  ],
+  prod: ['https://ottersage.com/*', 'https://www.ottersage.com/*'],
+};
+
+/** @param {Record<string, unknown>} manifest */
+function applyAuthSyncManifestPatch(manifest) {
+  if (!manifest?.content_scripts?.length) {
+    return;
+  }
+  for (const script of manifest.content_scripts) {
+    if (!Array.isArray(script.js)) {
+      continue;
+    }
+    const isAuthSync = script.js.some(
+      (file) => file === 'auth-sync.bundle.js' || file === 'auth-sync.js',
+    );
+    if (!isAuthSync) {
+      continue;
+    }
+    script.matches = [...authSyncMatchesByEnv[authSyncRuntimeEnv]];
+    script.js = ['auth-sync.bundle.js'];
+    delete script.type;
+    __scriptLogger__.info(
+      `✅ auth-sync 注入域名已设为 ${authSyncRuntimeEnv} 环境（${script.matches.length} 条）`,
+    );
+    return;
+  }
+}
+
+applyAuthSyncManifestPatch(manifestContent);
+
 const manifestPath = path.join(distDir, 'manifest.json');
 try {
   fs.writeFileSync(manifestPath, JSON.stringify(manifestContent, null, 2));
@@ -273,25 +313,81 @@ if (movedAnyPage) {
 __scriptLogger__.info('🎉 dist文件夹清理和文件复制完成！');
 
 // 复制 ONNX Runtime WASM 文件到 dist/assets（避免从 cdn.jsdelivr.net 加载，绕过 CSP 限制）
-const onnxWasmSrc = path.join(__dirname, '../node_modules/onnxruntime-web/dist');
+// 依赖可能安装在 frontend/node_modules 或 monorepo 根 node_modules
+const onnxWasmSrcCandidates = [
+  path.join(__dirname, '../node_modules/onnxruntime-web/dist'),
+  path.join(__dirname, '../../node_modules/onnxruntime-web/dist'),
+];
+const onnxWasmSrc = onnxWasmSrcCandidates.find(candidate => fs.existsSync(candidate));
 const onnxWasmFiles = [
   'ort-wasm-simd-threaded.asyncify.wasm',
   'ort-wasm-simd-threaded.asyncify.mjs',
 ];
 const assetsDir = path.join(distDir, 'assets');
-if (fs.existsSync(onnxWasmSrc) && fs.existsSync(assetsDir)) {
+if (!onnxWasmSrc) {
+  __scriptLogger__.warn('⚠️ 未找到 onnxruntime-web/dist，跳过 ONNX WASM 复制');
+} else if (!fs.existsSync(assetsDir)) {
+  __scriptLogger__.warn('⚠️ dist/assets 不存在，跳过 ONNX WASM 复制');
+} else {
   onnxWasmFiles.forEach(fname => {
     const src = path.join(onnxWasmSrc, fname);
     const dest = path.join(assetsDir, fname);
-    if (fs.existsSync(src)) {
-      try {
-        fs.copyFileSync(src, dest);
-        __scriptLogger__.info(`✅ 复制 ONNX WASM: ${fname}`);
-      } catch (err) {
-        __scriptLogger__.warn(`⚠️ 复制 ONNX WASM 失败: ${fname}`, err.message);
-      }
+    if (!fs.existsSync(src)) {
+      __scriptLogger__.warn(`⚠️ 源文件不存在，跳过: ${fname}`);
+      return;
+    }
+    try {
+      fs.copyFileSync(src, dest);
+      __scriptLogger__.info(`✅ 复制 ONNX WASM: ${fname}`);
+    } catch (err) {
+      __scriptLogger__.warn(`⚠️ 复制 ONNX WASM 失败: ${fname}`, err.message);
     }
   });
+}
+
+// 始终用 IIFE 重建 auth-sync.js（主构建/watch 可能残留 ES module 版本）
+const frontendDir = path.join(__dirname, '..');
+try {
+  __scriptLogger__.info('📦 构建 auth-sync.js (IIFE)...');
+  execSync('bun run build:auth-sync', {
+    cwd: frontendDir,
+    stdio: 'inherit',
+    env: {
+      ...process.env,
+      NODE_ENV: process.env.NODE_ENV || 'development',
+      VITE_RUNTIME_ENV: authSyncRuntimeEnv,
+    },
+  });
+  const legacyAuthSyncPath = path.join(distDir, 'auth-sync.js');
+  if (fs.existsSync(legacyAuthSyncPath)) {
+    fs.unlinkSync(legacyAuthSyncPath);
+    __scriptLogger__.info('✅ 删除旧版 auth-sync.js（避免 Chrome 加载 ES module 缓存）');
+  }
+  const legacyAuthSyncMap = path.join(distDir, 'auth-sync.js.map');
+  if (fs.existsSync(legacyAuthSyncMap)) {
+    fs.unlinkSync(legacyAuthSyncMap);
+  }
+
+  const authSyncPath = path.join(distDir, 'auth-sync.bundle.js');
+  if (fs.existsSync(authSyncPath)) {
+    const head = fs.readFileSync(authSyncPath, 'utf8').trimStart().slice(0, 12);
+    if (head.startsWith('(function')) {
+      __scriptLogger__.info('✅ auth-sync.bundle.js 已为 IIFE 格式');
+    } else {
+      __scriptLogger__.warn(`⚠️ auth-sync.bundle.js 格式异常，开头为: ${head}`);
+    }
+  }
+} catch (err) {
+  __scriptLogger__.warn('⚠️ auth-sync IIFE 构建失败:', err.message);
+}
+
+// 最后再写一次 manifest（避免构建流程覆盖 content_scripts 配置）
+try {
+  applyAuthSyncManifestPatch(manifestContent);
+  fs.writeFileSync(manifestPath, JSON.stringify(manifestContent, null, 2));
+  __scriptLogger__.info('✅ 最终 manifest.json 已落盘');
+} catch (err) {
+  __scriptLogger__.warn('⚠️ 最终 manifest 写入失败:', err.message);
 }
 
 // 更新 offscreen.html 里的 offscreen.js 版本号，强制 Chrome 加载新版本（避免缓存问题）
