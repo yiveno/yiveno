@@ -1,13 +1,18 @@
 /* eslint-disable require-atomic-updates */
-import { computed, nextTick, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useDialogStore, useBookmarkManagementStore, useTraitFilterStore } from '@/stores'
 import type { BookmarkNode } from '@/types'
 import { useNotification } from '@/composables/useNotification'
+import { useSubscription } from '@/composables/useSubscription'
+import { useSupabaseAuth } from '@/composables/useSupabaseAuth'
 import { useThemeSync } from '@/composables/useThemeSync'
+import { detectAiEngineUiReady } from '@/application/ai/ai-engine-availability'
 import { message } from '@/application/message/message-service'
 import { bookmarkOrganizeService } from '@/application/bookmark/bookmark-organize-service'
+import { llmAdapter } from '@/infrastructure/llm/llm-adapter'
 import type { OrganizeProgress } from '@/application/bookmark/bookmark-organize-service'
+import { createInitialOrganizeProgress } from '@/core/bookmark/organize-progress'
 import type {
   BookmarkOperation,
   BookmarkOperationType,
@@ -22,6 +27,11 @@ import { t } from '@/utils/i18n-helpers'
 import { countSelectedNodes, getOperationsByType } from '../utils/management-utils'
 import { useManagementLifecycle } from './useManagementLifecycle'
 import { useManagementTreeActions } from './useManagementTreeActions'
+import { useManagementUnifiedSearch } from './useManagementUnifiedSearch'
+import {
+  AI_ONE_CLICK_ORGANIZE_STORAGE_KEY,
+  isAiOneClickOrganizeEnabled
+} from '@/core/ai/ai-feature-settings'
 
 type BookmarkTreeInstance = InstanceType<typeof BookmarkTree>
 
@@ -35,6 +45,10 @@ export function useManagementPage() {
   const bookmarkManagementStore = useBookmarkManagementStore()
   const traitFilterStore = useTraitFilterStore()
   const notification = useNotification()
+  const { isPro } = useSubscription()
+  const { isAuthenticated } = useSupabaseAuth()
+  const aiOneClickOrganizeEnabled = ref(true)
+  const aiEngineReady = ref(false)
   const { getProposalPanelTitle, getProposalPanelIcon, deleteFolder, bulkDeleteByIds } =
     bookmarkManagementStore
 
@@ -47,20 +61,11 @@ export function useManagementPage() {
   const applyStartTime = ref(0)
 
   const isOrganizing = ref(false)
-  const organizeProgress = ref<OrganizeProgress>({
-    totalStages: 0,
-    currentStage: 0,
-    stageName: '',
-    totalBookmarks: 0,
-    processedBookmarks: 0,
-    isComplete: false
-  })
+  const organizeProgress = ref<OrganizeProgress>(createInitialOrganizeProgress())
   const showOrganizeProgress = ref(false)
-
-  const leftSearchResults = ref<BookmarkNode[]>([])
-  const isLeftSearchActive = ref(false)
-  const rightSearchResults = ref<BookmarkNode[]>([])
-  const isRightSearchActive = ref(false)
+  const showOrganizeNotesDialog = ref(false)
+  const organizeUserNotes = ref('')
+  const ORGANIZE_USER_NOTES_MAX_LENGTH = 500
 
   const rightTreeSelectedDescCounts = ref(new Map<string, number>())
   const rightTreeIndex = createBookmarkIndex()
@@ -91,13 +96,27 @@ export function useManagementPage() {
   const deleteTargetFolder = ref<BookmarkNode | null>(null)
   const deleteFolderBookmarkCount = ref(0)
 
-  const rightTreeData = computed(() =>
-    isRightSearchActive.value ? rightSearchResults.value : newProposalTree.value.children || []
-  )
+  const proposalTreeChildren = computed(() => newProposalTree.value.children || [])
 
-  const leftTreeData = computed(() =>
-    isLeftSearchActive.value ? leftSearchResults.value : originalTree.value
-  )
+  const {
+    leftTreeData,
+    rightTreeData,
+    leftMatchCount,
+    rightMatchCount,
+    isLeftFiltered,
+    isRightFiltered,
+    isUnifiedSearchActive,
+    isUnifiedSearchFiltering,
+    handleFilterRequest,
+    clearUnifiedSearch
+  } = useManagementUnifiedSearch({
+    originalTree,
+    proposalTreeChildren,
+    leftTreeRef,
+    rightTreeRef,
+    leftExpandAll,
+    rightExpandAll
+  })
 
   const selectedCounts = computed(() => {
     return countSelectedNodes(rightTreeIndex, rightSelectedIds.value)
@@ -117,6 +136,10 @@ export function useManagementPage() {
 
     return { checked: false, indeterminate: true }
   })
+
+  const showOneClickOrganizeButton = computed(
+    () => isPro.value && aiOneClickOrganizeEnabled.value && aiEngineReady.value
+  )
 
   const applyButtonTooltip = computed(() => {
     if (isPageLoading.value) {
@@ -224,6 +247,61 @@ export function useManagementPage() {
     return getOperationsByDiffType(type)
   }
 
+  async function loadOneClickOrganizeSetting(): Promise<void> {
+    try {
+      const result = await chrome.storage.local.get(AI_ONE_CLICK_ORGANIZE_STORAGE_KEY)
+      aiOneClickOrganizeEnabled.value = isAiOneClickOrganizeEnabled(
+        result[AI_ONE_CLICK_ORGANIZE_STORAGE_KEY]
+      )
+    } catch (error) {
+      logger.error('Management', '加载一键整理设置失败', error)
+    }
+  }
+
+  async function refreshAIEngineReady(): Promise<void> {
+    try {
+      llmAdapter.clearCapabilitiesCache()
+      aiEngineReady.value = await detectAiEngineUiReady({
+        isPro: isPro.value,
+        isLoggedIn: isAuthenticated.value
+      })
+    } catch (error) {
+      logger.error('Management', '检测 AI 引擎状态失败', error)
+      aiEngineReady.value = false
+    }
+  }
+
+  const storageListener = (
+    changes: Record<string, chrome.storage.StorageChange>,
+    areaName: string
+  ): void => {
+    if (areaName !== 'local') return
+
+    if (changes[AI_ONE_CLICK_ORGANIZE_STORAGE_KEY]) {
+      aiOneClickOrganizeEnabled.value = isAiOneClickOrganizeEnabled(
+        changes[AI_ONE_CLICK_ORGANIZE_STORAGE_KEY].newValue
+      )
+    }
+
+    if (changes.USER_AI_CONFIG) {
+      void refreshAIEngineReady()
+    }
+  }
+
+  onMounted(() => {
+    void loadOneClickOrganizeSetting()
+    void refreshAIEngineReady()
+    chrome.storage.onChanged.addListener(storageListener)
+  })
+
+  watch([isPro, isAuthenticated], () => {
+    void refreshAIEngineReady()
+  })
+
+  onUnmounted(() => {
+    chrome.storage.onChanged.removeListener(storageListener)
+  })
+
   const { pendingTagSelection } = useManagementLifecycle({
     bookmarkManagementStore,
     traitFilterStore,
@@ -244,10 +322,6 @@ export function useManagementPage() {
   })
   const {
     clearRightSelection,
-    handleLeftSearch,
-    handleLeftSearchClear,
-    handleRightSearch,
-    handleRightSearchClear,
     onEditBookmarkTitleInput,
     onEditBookmarkUrlInput,
     onEditFolderTitleInput,
@@ -274,52 +348,52 @@ export function useManagementPage() {
     isLeftPanelCollapsed,
     isPageLoading,
     loadingMessage,
-    leftSearchResults,
-    rightSearchResults,
-    isLeftSearchActive,
-    isRightSearchActive,
     rightSelectedIds
   })
 
   function handleApplyClick(): void {
-    const tempNodeInfo = getTempNodesInfo(bookmarkManagementStore.newProposalTree.children)
-    if (tempNodeInfo.count > 0) {
-      const confirmText =
-        `⚠️ 检测到 ${tempNodeInfo.count} 个未保存的新增节点。\n\n` +
-        `说明：新添加的节点（ID 以 temp_ 开头）尚未保存到浏览器书签。\n` +
-        `这些节点的顺序调整无法应用，因为它们还不存在于浏览器中。\n\n` +
-        `建议操作流程：\n` +
-        `1. 如果这些是误添加的节点，请刷新页面丢弃它们\n` +
-        `2. 如果需要保留这些节点，暂时不支持保存（功能开发中）`
-      const shouldContinue = typeof window !== 'undefined' ? window.confirm(confirmText) : false
-      if (!shouldContinue) return
-    }
-
     const diff = bookmarkManagementStore.calculateDiff()
     if (!diff || diff.statistics.total === 0) {
       bookmarkManagementStore.hasUnsavedChanges = false
       message.info(t('management_no_changes_detected'))
       return
     }
+
+    const validation = bookmarkManagementStore.validateCurrentProposalApply(diff.operations)
+    if (!validation.ok) {
+      logger.error('Management', '提案应用前校验失败', validation.issues)
+      message.error(t('management_apply_validation_failed'))
+      return
+    }
+
     diffResult.value = diff
     showApplyConfirmDialog.value = true
   }
 
-  function getTempNodesInfo(_nodes: BookmarkNode[]): { count: number; ids: string[] } {
-    const allIds = rightTreeIndex.getAllNodeIds()
-    const tempIds = allIds.filter(id => id.startsWith('temp_'))
-    return { count: tempIds.length, ids: tempIds }
-  }
-
   async function confirmApplyChanges(): Promise<void> {
-    if (!diffResult.value) return
-
     try {
       showApplyConfirmDialog.value = false
       applyStartTime.value = Date.now()
 
+      // 执行前重算 diff，避免确认期间左侧树变化导致过期操作
+      const freshDiff = bookmarkManagementStore.calculateDiff()
+      if (!freshDiff || freshDiff.statistics.total === 0) {
+        bookmarkManagementStore.hasUnsavedChanges = false
+        message.info(t('management_no_changes_detected'))
+        diffResult.value = null
+        return
+      }
+
+      const validation = bookmarkManagementStore.validateCurrentProposalApply(freshDiff.operations)
+      if (!validation.ok) {
+        logger.error('Management', '提案应用前校验失败', validation.issues)
+        message.error(t('management_apply_validation_failed'))
+        diffResult.value = null
+        return
+      }
+
       const result = await bookmarkManagementStore.applyChanges(
-        diffResult.value.operations,
+        freshDiff.operations,
         (current, total, operation) => {
           logger.debug('Management', `应用进度: ${current}/${total}`, {
             operation
@@ -329,9 +403,10 @@ export function useManagementPage() {
 
       if (result.success) {
         message.success(t('management_all_changes_applied'))
+        bookmarkManagementStore.markAsAIGenerated(false)
       } else {
-        message.warning(t('management_some_changes_failed', String(result.errors.length)))
-        logger.error('Management', '应用更改部分失败', result.errors)
+        logger.error('Management', '应用更改失败', result.errors)
+        message.error(t('management_apply_changes_failed'))
       }
 
       diffResult.value = null
@@ -341,33 +416,58 @@ export function useManagementPage() {
     }
   }
 
-  async function handleAutoOrganize(): Promise<void> {
+  function handleAutoOrganize(): void {
+    if (isOrganizing.value) return
+    showOrganizeNotesDialog.value = true
+  }
+
+  function closeOrganizeNotesDialog(): void {
+    showOrganizeNotesDialog.value = false
+  }
+
+  async function confirmStartOrganize(): Promise<void> {
+    if (isOrganizing.value) return
+
+    const userNotes = organizeUserNotes.value.trim()
+    showOrganizeNotesDialog.value = false
+    await runAutoOrganize(userNotes)
+  }
+
+  async function runAutoOrganize(userNotes?: string): Promise<void> {
     if (isOrganizing.value) return
 
     isOrganizing.value = true
+    organizeProgress.value = createInitialOrganizeProgress()
     showOrganizeProgress.value = true
 
     try {
-      logger.info('Management', '开始一键整理书签')
-
-      const result = await bookmarkOrganizeService.organizeBookmarks(progress => {
-        organizeProgress.value = progress
+      await bookmarkOrganizeService.ensureLlmReady()
+      logger.info('Management', '开始一键整理书签', {
+        hasUserNotes: Boolean(userNotes)
       })
 
-      logger.info('Management', '文件夹结构生成完成', result)
-
-      await bookmarkOrganizeService.applyOrganization(result.folders, progress => {
-        organizeProgress.value = progress
-      })
-
-      message.success(
-        `整理完成：${result.organizedCount}/${result.originalCount} 个书签已分类，${result.folders.length} 个文件夹`
+      const result = await bookmarkOrganizeService.organizeBookmarks(
+        progress => {
+          organizeProgress.value = progress
+        },
+        userNotes ? { userNotes } : undefined
       )
 
-      logger.info('Management', '一键整理完成', result)
+      const proposalTree = bookmarkOrganizeService.buildValidatedProposalPreview(
+        originalTree.value,
+        result
+      )
+
+      bookmarkManagementStore.applyOrganizeProposal(proposalTree)
+
+      isLeftPanelCollapsed.value = false
+
+      message.success(t('management_organize_success'))
+
+      logger.info('Management', 'AI 整理提案已生成', result)
     } catch (error) {
       logger.error('Management', '一键整理失败', error)
-      message.error('AI 整理失败，请检查 LLM 配置')
+      message.error(t('management_organize_failed_retry'))
     } finally {
       isOrganizing.value = false
       showOrganizeProgress.value = false
@@ -474,6 +574,18 @@ export function useManagementPage() {
     deleteFolderBookmarkCount.value = 0
   }
 
+  function handleRightFolderAdd(parent: BookmarkNode): void {
+    const created = bookmarkManagementStore.createFolderInProposal(
+      String(parent.id),
+      t('management_new_folder_default')
+    )
+    if (!created) {
+      message.error(t('management_create_folder_failed'))
+      return
+    }
+    dialogStore.openEditFolderDialog(created)
+  }
+
   async function handleBookmarkMove(data: {
     sourceId: string
     targetId: string
@@ -538,15 +650,23 @@ export function useManagementPage() {
     showApplyConfirmDialog,
     diffResult,
     applyStartTime,
+    showOneClickOrganizeButton,
     isOrganizing,
     organizeProgress,
     showOrganizeProgress,
-    leftSearchResults,
-    rightSearchResults,
-    isLeftSearchActive,
-    isRightSearchActive,
+    showOrganizeNotesDialog,
+    organizeUserNotes,
+    ORGANIZE_USER_NOTES_MAX_LENGTH,
     leftTreeData,
     rightTreeData,
+    leftMatchCount,
+    rightMatchCount,
+    isLeftFiltered,
+    isRightFiltered,
+    isUnifiedSearchActive,
+    isUnifiedSearchFiltering,
+    handleFilterRequest,
+    clearUnifiedSearch,
     leftTreeRef,
     rightTreeRef,
     leftExpandAll,
@@ -574,10 +694,6 @@ export function useManagementPage() {
     deleteFolderBookmarkCount,
     isEditDirty,
     isEditFolderDirty,
-    handleLeftSearch,
-    handleLeftSearchClear,
-    handleRightSearch,
-    handleRightSearchClear,
     onEditBookmarkTitleInput,
     onEditBookmarkUrlInput,
     onEditFolderTitleInput,
@@ -594,12 +710,14 @@ export function useManagementPage() {
     handleBookmarkCopyUrl,
     handleBookmarkOpenNewTab,
     handleApplyClick,
-    getTempNodesInfo,
     confirmApplyChanges,
     handleAutoOrganize,
+    closeOrganizeNotesDialog,
+    confirmStartOrganize,
     confirmEditBookmark,
     confirmEditFolder,
     confirmDeleteFolder,
+    handleRightFolderAdd,
     handleBookmarkMove,
     handleBulkDelete,
     leftPanelWidthVar,

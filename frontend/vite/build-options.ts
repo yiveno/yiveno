@@ -21,6 +21,8 @@ export interface RolldownBuildOptions {
     propertyReadSideEffects: false
   }
   preserveEntrySignatures: 'strict'
+  /** Rolldown 日志回调（Vite 8 类型定义尚未包含） */
+  onLog?: (level: string, log: unknown) => void
 }
 
 /**

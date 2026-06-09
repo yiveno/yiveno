@@ -38,6 +38,14 @@ const STORAGE_KEYS = {
   DEVICE_FINGERPRINT: 'auth_device_fingerprint'
 } as const
 
+const LOGIN_SCOPED_STORAGE_KEYS = [
+  'current_login_provider',
+  STORAGE_KEYS.LAST_ACTIVITY,
+  'ottersage_subscription_cache',
+  'USER_AI_CONFIG',
+  'supabase_session'
+] as const
+
 /**
  * 认证状态
  */
@@ -48,6 +56,20 @@ const error = ref<string | null>(null)
 
 /** 首次使用 composable 时从 Chrome Storage 加载已有 session（侧边栏等页面依赖） */
 let authBootstrapped = false
+
+/**
+ * 清除需要登录后才能使用的本地数据。
+ */
+async function clearLoginScopedLocalData(): Promise<void> {
+  try {
+    await chrome.storage.local.remove([...LOGIN_SCOPED_STORAGE_KEYS])
+    logger.debug('[useSupabaseAuth] ✅ 已清除登录态绑定本地数据', {
+      keys: LOGIN_SCOPED_STORAGE_KEYS
+    })
+  } catch (err) {
+    logger.error('[useSupabaseAuth] ❌ 清除登录态绑定本地数据失败:', err)
+  }
+}
 
 /**
  * Supabase 认证状态管理 Composable
@@ -199,8 +221,7 @@ export function useSupabaseAuth() {
       user.value = null
       session.value = null
 
-      // 🧹 清除本地活跃时间记录
-      await chromeStorage.removeLocal(STORAGE_KEYS.LAST_ACTIVITY)
+      await clearLoginScopedLocalData()
 
       logger.debug('[useSupabaseAuth] ✅ 登出成功')
     } catch (err) {
@@ -235,13 +256,7 @@ export function useSupabaseAuth() {
       // 🔑 当用户登出或 session 失效时，清除本地存储
       if (event === 'SIGNED_OUT' || !newSession) {
         logger.debug('[useSupabaseAuth] 🧹 清除本地用户数据...')
-        try {
-          await chromeStorage.removeLocal('current_login_provider')
-          await chromeStorage.removeLocal(STORAGE_KEYS.LAST_ACTIVITY)
-          logger.debug('[useSupabaseAuth] ✅ 已清除本地用户数据')
-        } catch (err) {
-          logger.error('[useSupabaseAuth] ❌ 清除本地数据失败:', err)
-        }
+        await clearLoginScopedLocalData()
       }
 
       // 🔒 当用户登录或 session 刷新时，更新活跃时间
@@ -286,9 +301,7 @@ export function useSupabaseAuth() {
           user.value = null
           session.value = null
 
-          // 清除本地存储
-          void chromeStorage.removeLocal('current_login_provider')
-          void chromeStorage.removeLocal(STORAGE_KEYS.LAST_ACTIVITY)
+          void clearLoginScopedLocalData()
         } else {
           // Session 更新（登录或刷新），重新初始化
           logger.info('[useSupabaseAuth] 🔔 检测到 Chrome Storage session 变化，刷新状态...')

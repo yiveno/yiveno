@@ -22,6 +22,8 @@ import { folderVectorService } from '@/application/folder/folder-vector-service'
 import { favoriteAppService } from '@/application/bookmark/favorite-app-service'
 import { AUTH_STORAGE_KEY } from '@/config/auth-sync-env'
 import type { AuthSyncSessionPayload } from '@/config/auth-sync-session'
+import { scheduleBookmarkEmbeddingSync } from '@/background/managers/embedding-sync'
+import { normalizeWritableBookmarkParentId } from '@/core/bookmark/chrome-system-ids'
 
 /**
  * 运行时消息接口
@@ -174,6 +176,10 @@ const MESSAGE_HANDLERS: Record<
   },
   SYNC_AUTH_SESSION: handleSyncAuthSession,
   CLEAR_AUTH_SESSION: handleClearAuthSession,
+  REQUEST_EMBEDDING_SYNC: async (_message, sendResponse) => {
+    scheduleBookmarkEmbeddingSync('page-request', 0)
+    sendResponse({ ok: true } as unknown)
+  },
   IMPORT_SHARED_BOOKMARKS: async (message, sendResponse) => {
     logger.info('BackgroundMessaging', '📥 收到 IMPORT_SHARED_BOOKMARKS 请求')
     try {
@@ -409,7 +415,8 @@ async function handleCreateFolder(
   try {
     const data = message.data || {}
     const title = (data.title as string)?.trim()
-    const parentId = data.parentId as string | undefined
+    const rawParentId = data.parentId as string | undefined
+    const parentId = normalizeWritableBookmarkParentId(rawParentId)
 
     if (!title || title === '') {
       throw new Error('文件夹标题不能为空')
@@ -417,7 +424,8 @@ async function handleCreateFolder(
 
     logger.info('BackgroundMessaging', '创建文件夹', {
       title,
-      parentId
+      parentId,
+      rawParentId
     })
 
     // 1. 调用 Chrome API 创建文件夹（不提供 URL）
@@ -425,7 +433,7 @@ async function handleCreateFolder(
       chrome.bookmarks.create(
         {
           title,
-          ...(parentId !== undefined ? { parentId } : {}),
+          parentId,
           ...(typeof data.index === 'number' ? { index: data.index } : {})
         },
         result => {
@@ -471,7 +479,8 @@ async function handleCreateBookmark(
     // ✅ 严格验证数据（防止创建文件夹而不是书签）
     const title = (data.title as string)?.trim()
     const url = (data.url as string)?.trim()
-    const parentId = data.parentId as string | undefined
+    const rawParentId = data.parentId as string | undefined
+    const parentId = normalizeWritableBookmarkParentId(rawParentId)
     const showNotification = data.showNotification !== false // 默认显示通知
 
     if (!url || url === '') {
@@ -489,6 +498,7 @@ async function handleCreateBookmark(
       title: title || url,
       url,
       parentId,
+      rawParentId,
       showNotification
     })
 
@@ -498,7 +508,7 @@ async function handleCreateBookmark(
         {
           title: title || url, // ✅ 如果标题为空，使用 URL
           url, // ✅ 必须提供 URL（否则会创建文件夹）
-          ...(parentId !== undefined ? { parentId } : {}),
+          parentId,
           ...(typeof data.index === 'number' ? { index: data.index } : {})
         },
         result => {
@@ -781,17 +791,11 @@ async function handleMoveBookmark(
   try {
     const data = message.data || {}
     const id = data.id as string
-    const parentId = data.parentId as string | undefined
+    const parentId = normalizeWritableBookmarkParentId(data.parentId as string | undefined)
     const index = data.index as number | undefined
 
     if (!id) {
       throw new Error('缺少书签 ID')
-    }
-
-    // ✅ 处理 parentId（root 需要转换为 undefined）
-    let targetParentId: string | undefined = parentId
-    if (targetParentId === 'root' || targetParentId === 'virtual-root') {
-      targetParentId = undefined
     }
 
     // 1. 调用 Chrome API 移动书签
@@ -799,7 +803,7 @@ async function handleMoveBookmark(
       chrome.bookmarks.move(
         id,
         {
-          ...(targetParentId !== undefined ? { parentId: targetParentId } : {}),
+          parentId,
           ...(typeof index === 'number' ? { index } : {})
         },
         result => {
@@ -1529,6 +1533,9 @@ async function handleSyncAuthSession(
 
     console.log('[BackgroundMessaging] ✅ Session 已存储到 Chrome Storage')
     logger.info('BackgroundMessaging', '✅ Session 已存储到 Chrome Storage')
+
+    scheduleBookmarkEmbeddingSync('auth-session-sync')
+
     sendResponse({ success: true })
   } catch (error) {
     console.error('[BackgroundMessaging] ❌ 同步 session 失败:', error)
@@ -1555,7 +1562,14 @@ async function handleClearAuthSession(
   try {
     logger.info('BackgroundMessaging', '🧹 清除 Chrome Storage 中的 session')
 
-    await chrome.storage.local.remove(AUTH_STORAGE_KEY)
+    await chrome.storage.local.remove([
+      AUTH_STORAGE_KEY,
+      'current_login_provider',
+      'auth_last_activity',
+      'ottersage_subscription_cache',
+      'USER_AI_CONFIG',
+      'supabase_session'
+    ])
 
     logger.info('BackgroundMessaging', '✅ Session 已清除')
     sendResponse({ success: true })

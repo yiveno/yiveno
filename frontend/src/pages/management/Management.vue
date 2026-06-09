@@ -1,18 +1,14 @@
 <script setup lang="ts">
-import {
-  AppHeader,
-  BookmarkSearchInput,
-  Card,
-  Dialog,
-  LucideIcon,
-  AnimatedNumber,
-  Button
-} from '@/components'
+import { AppHeader, Card, Dialog, LucideIcon, AnimatedNumber, Button } from '@/components'
 import { Loading } from '@/components/base/Loading'
 import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'
 import BookmarkTree from '@/components/business/BookmarkTree/BookmarkTree.vue'
+import { MdInput } from '@/components/base/Input'
 import { useManagementPage } from './composables/useManagementPage'
+import OrganizeProgressPanel from './components/OrganizeProgressPanel.vue'
+import ManagementSearchBar from './components/ManagementSearchBar.vue'
 import { t } from '@/utils/i18n-helpers'
+import { ref } from 'vue'
 
 defineOptions({
   name: 'ManagementPage'
@@ -21,20 +17,21 @@ defineOptions({
 const {
   dialogStore,
   bookmarkManagementStore,
-  traitFilterStore,
   getProposalPanelTitle,
   getProposalPanelIcon,
-  originalTree,
-  newProposalTree,
   isPageLoading,
   loadingMessage,
   originalExpandedFolders,
   proposalExpandedFolders,
   showApplyConfirmDialog,
   diffResult,
+  showOneClickOrganizeButton,
   isOrganizing,
   organizeProgress,
   showOrganizeProgress,
+  showOrganizeNotesDialog,
+  organizeUserNotes,
+  ORGANIZE_USER_NOTES_MAX_LENGTH,
   leftTreeData,
   rightTreeData,
   leftExpandAll,
@@ -62,10 +59,13 @@ const {
   deleteFolderBookmarkCount,
   isEditDirty,
   isEditFolderDirty,
-  handleLeftSearch,
-  handleLeftSearchClear,
-  handleRightSearch,
-  handleRightSearchClear,
+  leftMatchCount,
+  rightMatchCount,
+  isLeftFiltered,
+  isRightFiltered,
+  isUnifiedSearchFiltering,
+  handleFilterRequest,
+  clearUnifiedSearch,
   onEditBookmarkTitleInput,
   onEditBookmarkUrlInput,
   onEditFolderTitleInput,
@@ -86,12 +86,21 @@ const {
   handleApplyClick,
   confirmApplyChanges,
   handleAutoOrganize,
+  closeOrganizeNotesDialog,
+  confirmStartOrganize,
   confirmEditBookmark,
   confirmEditFolder,
   confirmDeleteFolder,
+  handleRightFolderAdd,
   handleBookmarkMove,
   handleBulkDelete
 } = useManagementPage()
+
+const managementSearchBarRef = ref<InstanceType<typeof ManagementSearchBar> | null>(null)
+
+function handleClearManagementFilters(): void {
+  managementSearchBarRef.value?.clearTraitFiltersOnly()
+}
 </script>
 
 <template>
@@ -104,27 +113,55 @@ const {
     <GlobalSyncProgress />
 
     <Dialog
+      :show="showOrganizeNotesDialog"
+      :title="t('management_organize_notes_dialog_title')"
+      icon="sparkles"
+      :persistent="true"
+      :esc-to-close="true"
+      :enter-to-confirm="true"
+      max-width="560px"
+      @update:show="(visible: boolean) => (showOrganizeNotesDialog = visible)"
+      @confirm="confirmStartOrganize"
+    >
+      <div class="organize-notes-dialog">
+        <p class="organize-notes-hint">{{ t('management_organize_notes_hint') }}</p>
+        <MdInput
+          v-model="organizeUserNotes"
+          :label="t('management_organize_notes_label')"
+          variant="outlined"
+          size="md"
+          type="textarea"
+          :rows="5"
+          :maxlength="ORGANIZE_USER_NOTES_MAX_LENGTH"
+          :placeholder="t('management_organize_notes_placeholder')"
+        />
+        <div
+          class="organize-notes-count"
+          :class="{
+            'organize-notes-count--warning':
+              organizeUserNotes.length > ORGANIZE_USER_NOTES_MAX_LENGTH * 0.9
+          }"
+        >
+          {{ organizeUserNotes.length }}/{{ ORGANIZE_USER_NOTES_MAX_LENGTH }}
+        </div>
+      </div>
+      <template #actions>
+        <Button variant="text" @click="closeOrganizeNotesDialog">
+          {{ t('common_cancel') }}
+        </Button>
+        <Button variant="filled" :loading="isOrganizing" @click="confirmStartOrganize">
+          {{ t('management_organize_notes_start') }}
+        </Button>
+      </template>
+    </Dialog>
+
+    <Dialog
       :show="showOrganizeProgress"
       :title="t('management_ai_organize_bookmarks')"
       persistent
       max-width="500px"
     >
-      <div class="trait-scan-progress">
-        <div class="progress-info">
-          <div class="progress-message">{{ organizeProgress.stageName }}</div>
-          <div class="progress-stats">
-            {{ organizeProgress.processedBookmarks }} /
-            {{ organizeProgress.totalBookmarks }}
-          </div>
-        </div>
-        <md-linear-progress
-          :value="
-            organizeProgress.totalBookmarks > 0
-              ? organizeProgress.processedBookmarks / organizeProgress.totalBookmarks
-              : 0
-          "
-        ></md-linear-progress>
-      </div>
+      <OrganizeProgressPanel :progress="organizeProgress" />
     </Dialog>
     <!-- 📝 应用更改确认对话框 -->
     <Dialog
@@ -338,6 +375,17 @@ const {
     <AppHeader :show-side-panel-toggle="false" />
     <main class="main-content">
       <div class="management-container">
+        <ManagementSearchBar
+          ref="managementSearchBarRef"
+          :is-filtering="isUnifiedSearchFiltering"
+          :left-match-count="leftMatchCount"
+          :right-match-count="rightMatchCount"
+          :is-left-filtered="isLeftFiltered"
+          :is-right-filtered="isRightFiltered"
+          :disabled="isPageLoading"
+          @filter-request="handleFilterRequest"
+          @clear="clearUnifiedSearch"
+        />
         <div
           class="management-row"
           :style="{
@@ -358,14 +406,6 @@ const {
                     <span class="panel-title">{{ t('management_my_bookmarks') }}</span>
                   </div>
                   <div class="panel-title-section">
-                    <BookmarkSearchInput
-                      mode="memory"
-                      :data="originalTree"
-                      :debounce="300"
-                      @search-complete="handleLeftSearch"
-                      @search-clear="handleLeftSearchClear"
-                    />
-
                     <Button
                       variant="icon"
                       :title="
@@ -459,27 +499,19 @@ const {
                           {{ t('management_apply') }}
                         </Button>
                       </span>
-                      <div class="panel-actions-divider"></div>
-                      <Button
-                        variant="filled"
-                        :disabled="isPageLoading || isOrganizing"
-                        @click="handleAutoOrganize"
-                      >
-                        <LucideIcon slot="icon" name="sparkles" :spin="isOrganizing" />
-                        {{
-                          isOrganizing ? t('management_organizing') : t('management_ai_organize')
-                        }}
-                      </Button>
-                      <div class="panel-actions-divider"></div>
-                      <BookmarkSearchInput
-                        mode="memory"
-                        :data="newProposalTree.children"
-                        :debounce="300"
-                        :enable-trait-filters="true"
-                        :sync-with-store="true"
-                        @search-complete="handleRightSearch"
-                        @search-clear="handleRightSearchClear"
-                      />
+                      <template v-if="showOneClickOrganizeButton">
+                        <div class="panel-actions-divider"></div>
+                        <Button
+                          variant="filled"
+                          :disabled="isPageLoading || isOrganizing"
+                          @click="handleAutoOrganize"
+                        >
+                          <LucideIcon slot="icon" name="sparkles" :spin="isOrganizing" />
+                          {{
+                            isOrganizing ? t('management_organizing') : t('management_ai_organize')
+                          }}
+                        </Button>
+                      </template>
                       <Button
                         variant="icon"
                         :title="
@@ -503,7 +535,6 @@ const {
               </template>
 
               <div class="panel-content">
-                <!-- 特征筛选面板已移至 BookmarkSearchInput 组件 -->
                 <BookmarkTree
                   ref="rightTreeRef"
                   :nodes="rightTreeData"
@@ -522,11 +553,12 @@ const {
                   :show-favorite-button="false"
                   :show-edit-button="true"
                   :show-delete-button="true"
-                  :show-add-button="false"
+                  :show-add-button="true"
                   :show-open-new-tab-button="true"
                   :show-copy-url-button="true"
                   @desc-counts-updated="rightTreeSelectedDescCounts = $event"
-                  @request-clear-filters="traitFilterStore.clearFilters()"
+                  @request-clear-filters="handleClearManagementFilters"
+                  @folder-add="handleRightFolderAdd"
                   @node-edit="handleRightNodeEdit"
                   @node-delete="handleRightNodeDelete"
                   @selection-change="onRightSelectionChange"
@@ -1296,11 +1328,29 @@ p.warning-text {
 }
 
 .edit-form,
-.add-item-form {
+.add-item-form,
+.organize-notes-dialog {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-4);
   padding: var(--spacing-4);
+}
+
+.organize-notes-hint {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.organize-notes-count {
+  align-self: flex-end;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.organize-notes-count--warning {
+  color: var(--md-sys-color-error);
 }
 
 .form-fields {

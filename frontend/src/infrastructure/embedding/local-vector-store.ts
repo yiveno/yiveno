@@ -141,6 +141,35 @@ export class LocalVectorStore {
   }
 
   /**
+   * 读取少量样本记录（用于模型版本探测，避免全量加载）
+   */
+  async getSample(limit: number): Promise<VectorRecord[]> {
+    if (limit <= 0) return []
+
+    return await indexedDBManager.withTransaction(
+      [DB_CONFIG.STORES.EMBEDDINGS],
+      'readonly',
+      async tx => {
+        const store = tx.objectStore(DB_CONFIG.STORES.EMBEDDINGS)
+        return new Promise<VectorRecord[]>((resolve, reject) => {
+          const records: VectorRecord[] = []
+          const request = store.openCursor()
+          request.onsuccess = () => {
+            const cursor = request.result
+            if (!cursor || records.length >= limit) {
+              resolve(records)
+              return
+            }
+            records.push(cursor.value as VectorRecord)
+            cursor.continue()
+          }
+          request.onerror = () => reject(request.error)
+        })
+      }
+    )
+  }
+
+  /**
    * 获取向量总数
    */
   async count(): Promise<number> {
@@ -156,6 +185,16 @@ export class LocalVectorStore {
         })
       }
     )
+  }
+
+  /**
+   * 清空全部向量（模型升级迁移时使用）
+   */
+  async clearAll(): Promise<void> {
+    const allIds = await this.getAllIds()
+    if (allIds.size === 0) return
+    await this.deleteBatch(Array.from(allIds))
+    logger.info(LOG_TAG, `已清空向量库: ${allIds.size} 条`)
   }
 
   /**

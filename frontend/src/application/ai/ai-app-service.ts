@@ -2,21 +2,40 @@
  * AI 应用服务
  *
  * 提供高级 AI 功能：
- * - 书签摘要（优先使用 Summarizer API，降级到 Prompt API）
+ * - 书签摘要
  * - 语义搜索增强
  * - 标签生成
+ * - 一键整理
  *
  * 注意：书签分类功能已迁移到基于向量的本地推荐（folderVectorService）
  */
 import { llmAdapter } from '@/infrastructure/llm/llm-adapter'
-import { builtInSummarizerClient } from '@/infrastructure/llm/builtin-summarizer-client'
 import {
   createSummarizePrompt,
   createSemanticSearchPrompt,
   createTagGenerationPrompt,
   createAutoOrganizePrompt
 } from '@/core/ai/prompts'
+import {
+  createDeterministicChunkFallback,
+  mergeOrganizeFolderBatches,
+  parseOrganizeLlmResponse,
+  sanitizeOrganizeFolders,
+  type ParsedOrganizeFolder
+} from '@/application/ai/organize-response-parser'
+import type { LLMProvider } from '@/types/infrastructure/llm'
 import { logger } from '@/infrastructure/logging/logger'
+
+/** 一键整理每批发送给 LLM 的书签数量 */
+export const AI_ORGANIZE_BATCH_SIZE = 40
+
+/** 一键整理 AI 批次进度 */
+export interface AutoOrganizeBatchProgress {
+  processedBatches: number
+  totalBatches: number
+  processedBookmarks: number
+  totalBookmarks: number
+}
 
 /**
  * 书签摘要结果
@@ -25,7 +44,7 @@ export interface BookmarkSummaryResult {
   /** 摘要文本 */
   summary: string
   /** 使用的 LLM 提供者 */
-  provider: 'builtin' | 'openai' | 'claude' | 'gemini' | 'deepseek'
+  provider: LLMProvider
 }
 
 /**
@@ -36,52 +55,12 @@ export class AIAppService {
 
   /**
    * 生成书签摘要
-   *
-   * 优先级：
-   * 1. Chrome Summarizer API（Chrome 138+，专用摘要模型，质量更高、速度更快）
-   * 2. Prompt API（通用 LLM，fallback）
    */
   async summarizeBookmark(bookmark: {
     title: string
     url: string
     content?: string
   }): Promise<BookmarkSummaryResult> {
-    // 1. 优先尝试 Summarizer API
-    try {
-      const summarizerAvailable = await builtInSummarizerClient.isAvailable()
-
-      if (summarizerAvailable) {
-        logger.info(this.loggerPrefix, '使用 Summarizer API 生成摘要')
-
-        // 构造输入文本
-        const text = [
-          `标题：${bookmark.title}`,
-          `URL：${bookmark.url}`,
-          bookmark.content ? `内容：${bookmark.content.slice(0, 1000)}` : ''
-        ]
-          .filter(Boolean)
-          .join('\n')
-
-        // 使用 Summarizer API
-        const result = await builtInSummarizerClient.summarize(text, {
-          type: 'tl;dr',
-          format: 'plain-text',
-          length: 'short'
-        })
-
-        return {
-          summary: result.summary,
-          provider: 'builtin'
-        }
-      }
-    } catch (error) {
-      logger.warn(this.loggerPrefix, 'Summarizer API 失败，降级到 Prompt API', error)
-      // 继续执行，降级到 Prompt API
-    }
-
-    // 2. 降级到 Prompt API
-    logger.info(this.loggerPrefix, '使用 Prompt API 生成摘要')
-
     const prompt = createSummarizePrompt(bookmark)
 
     try {
@@ -102,8 +81,6 @@ export class AIAppService {
 
   /**
    * 语义搜索增强
-   *
-   * 理解用户搜索意图，提取关键词和概念
    */
   async enhanceSemanticSearch(query: string): Promise<{
     keywords: string[]
@@ -118,7 +95,6 @@ export class AIAppService {
         temperature: 0.4
       })
 
-      // 尝试解析 JSON
       try {
         const parsed = JSON.parse(result.text)
         return {
@@ -127,7 +103,6 @@ export class AIAppService {
           synonyms: parsed.synonyms || []
         }
       } catch {
-        // JSON 解析失败，返回默认值
         return {
           keywords: query.split(/\s+/),
           concepts: [],
@@ -136,7 +111,6 @@ export class AIAppService {
       }
     } catch (error) {
       logger.error(this.loggerPrefix, '语义搜索增强失败', { error, query })
-      // 降级：返回原始查询的关键词
       return {
         keywords: query.split(/\s+/),
         concepts: [],
@@ -161,7 +135,6 @@ export class AIAppService {
         temperature: 0.5
       })
 
-      // 尝试解析 JSON 数组
       try {
         const parsed = JSON.parse(result.text)
         if (Array.isArray(parsed)) {
@@ -170,7 +143,6 @@ export class AIAppService {
           )
         }
       } catch {
-        // JSON 解析失败，尝试提取标签
         const tags =
           result.text
             .match(/\[(.*?)\]/)?.[1]
@@ -190,45 +162,13 @@ export class AIAppService {
 
   /**
    * 检测可用 LLM 提供者
-   *
-   * 包含 Summarizer API 的能力检测
    */
   async detectCapabilities() {
-    const capabilities = await llmAdapter.detectCapabilities()
-
-    // 额外检测 Summarizer API
-    const summarizerAvailable = await builtInSummarizerClient.isAvailable()
-
-    return {
-      ...capabilities,
-      summarizer: {
-        available: summarizerAvailable,
-        capabilities: summarizerAvailable ? await builtInSummarizerClient.getCapabilities() : null
-      }
-    }
-  }
-
-  /**
-   * 获取 Chrome 内置 LLM 启用指南
-   */
-  getBuiltInLLMGuide() {
-    return llmAdapter.getBuiltInLLMGuide()
-  }
-
-  /**
-   * 获取 Summarizer API 启用指南
-   */
-  getSummarizerGuide() {
-    return builtInSummarizerClient.getEnableGuide()
+    return llmAdapter.detectCapabilities()
   }
 
   /**
    * 自动分类书签
-   *
-   * 使用 LLM 分析书签内容，生成合理的文件夹结构
-   *
-   * @param bookmarks 书签列表
-   * @returns 文件夹结构
    */
   async autoOrganizeBookmarks(
     bookmarks: Array<{
@@ -237,64 +177,106 @@ export class AIAppService {
       url: string
       content?: string
       existingTags?: string[]
-    }>
+    }>,
+    options?: {
+      userNotes?: string
+      /** 批次进度回调（每批开始前与完成后触发） */
+      onProgress?: (progress: AutoOrganizeBatchProgress) => void
+    }
   ): Promise<{
-    folders: Array<{
-      name: string
-      path: string
-      bookmarkIds: string[]
-    }>
+    folders: ParsedOrganizeFolder[]
+    provider: BookmarkSummaryResult['provider']
   }> {
     if (bookmarks.length === 0) {
-      return { folders: [] }
+      return { folders: [], provider: 'hosted' }
     }
 
-    const prompt = createAutoOrganizePrompt(bookmarks)
+    const validIds = new Set(bookmarks.map(b => b.id))
+    const allBookmarkIds = bookmarks.map(bookmark => bookmark.id)
+    const MAX_BATCH_PARSE_RETRIES = 1
+    const batches: ParsedOrganizeFolder[][] = []
+    let lastProvider: BookmarkSummaryResult['provider'] = 'hosted'
+    const totalBatches = Math.max(1, Math.ceil(bookmarks.length / AI_ORGANIZE_BATCH_SIZE))
+
+    const reportProgress = (processedBatches: number, processedBookmarks: number) => {
+      options?.onProgress?.({
+        processedBatches,
+        totalBatches,
+        processedBookmarks,
+        totalBookmarks: bookmarks.length
+      })
+    }
 
     try {
-      const result = await llmAdapter.complete(prompt, {
-        maxTokens: 2000,
-        temperature: 0.3
-      })
+      reportProgress(0, 0)
 
-      // 尝试解析 JSON
-      try {
-        const parsed = JSON.parse(result.text)
-        if (parsed.folders && Array.isArray(parsed.folders)) {
-          logger.info(this.loggerPrefix, 'AI 自动分类成功', {
-            folderCount: parsed.folders.length,
-            bookmarkCount: bookmarks.length
+      for (let offset = 0; offset < bookmarks.length; offset += AI_ORGANIZE_BATCH_SIZE) {
+        const batchIndex = Math.floor(offset / AI_ORGANIZE_BATCH_SIZE)
+        const chunk = bookmarks.slice(offset, offset + AI_ORGANIZE_BATCH_SIZE)
+        const chunkIds = chunk.map(bookmark => bookmark.id)
+        const prompt = createAutoOrganizePrompt(chunk, options?.userNotes)
+
+        const idByListIndex = new Map(
+          chunk.map((bookmark, index) => [String(index + 1), bookmark.id])
+        )
+
+        let parsed: ParsedOrganizeFolder[] = []
+        for (let attempt = 0; attempt <= MAX_BATCH_PARSE_RETRIES; attempt++) {
+          const result = await llmAdapter.complete(prompt, {
+            maxTokens: 4000,
+            temperature: attempt === 0 ? 0.3 : 0.1
           })
-          return parsed
-        }
-      } catch (parseError) {
-        logger.error(this.loggerPrefix, 'AI 分类结果解析失败', {
-          parseError,
-          result: result.text
-        })
-      }
+          lastProvider = result.provider
+          parsed = parseOrganizeLlmResponse(result.text, validIds, idByListIndex)
 
-      // 解析失败，返回默认结构（所有书签放到"未分类"）
-      return {
-        folders: [
-          {
-            name: '未分类',
-            path: '未分类',
-            bookmarkIds: bookmarks.map(b => b.id)
+          if (parsed.length > 0) {
+            break
           }
-        ]
+
+          if (attempt < MAX_BATCH_PARSE_RETRIES) {
+            logger.warn(this.loggerPrefix, '批次解析失败，重试 LLM', {
+              offset,
+              chunkSize: chunk.length,
+              attempt: attempt + 1
+            })
+          }
+        }
+
+        if (parsed.length > 0) {
+          batches.push(parsed)
+        } else {
+          logger.warn(this.loggerPrefix, '批次解析仍失败，使用确定性兜底文件夹', {
+            offset,
+            chunkSize: chunk.length
+          })
+          batches.push([createDeterministicChunkFallback(chunkIds)])
+        }
+
+        reportProgress(batchIndex + 1, Math.min(offset + chunk.length, bookmarks.length))
       }
     } catch (error) {
       logger.error(this.loggerPrefix, 'AI 自动分类失败', {
         error,
         bookmarkCount: bookmarks.length
       })
-      throw new Error(`AI 自动分类失败: ${String(error)}`)
+      throw new Error(`AI 自动分类失败: ${error instanceof Error ? error.message : String(error)}`)
     }
+
+    let folders = mergeOrganizeFolderBatches(batches)
+    folders = sanitizeOrganizeFolders(folders, allBookmarkIds)
+
+    if (folders.length === 0) {
+      folders = [createDeterministicChunkFallback(allBookmarkIds)]
+    }
+
+    logger.info(this.loggerPrefix, 'AI 自动分类成功', {
+      folderCount: folders.length,
+      bookmarkCount: bookmarks.length,
+      batchCount: batches.length
+    })
+
+    return { folders, provider: lastProvider }
   }
 }
 
-/**
- * 单例实例
- */
 export const aiAppService = new AIAppService()

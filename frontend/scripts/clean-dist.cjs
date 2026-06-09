@@ -312,7 +312,7 @@ if (movedAnyPage) {
 
 __scriptLogger__.info('🎉 dist文件夹清理和文件复制完成！');
 
-// 复制 ONNX Runtime WASM 文件到 dist/assets（避免从 cdn.jsdelivr.net 加载，绕过 CSP 限制）
+// 复制 ONNX Runtime WASM 到 dist/assets（扩展内本地加载，不依赖外部 CDN）
 // 依赖可能安装在 frontend/node_modules 或 monorepo 根 node_modules
 const onnxWasmSrcCandidates = [
   path.join(__dirname, '../node_modules/onnxruntime-web/dist'),
@@ -424,6 +424,18 @@ if (process.env.NODE_ENV === 'production') {
   if (removedMaps > 0) {
     __scriptLogger__.info(`✅ 删除 ${removedMaps} 个 sourcemap 文件`)
   }
+}
+
+// 校验 dist 内 Embedding 模型与 ONNX WASM 完整性
+try {
+  __scriptLogger__.info('🔍 校验 dist Embedding 产物完整性...')
+  execSync('bun scripts/validate-dist-embedding.mjs', {
+    cwd: path.join(__dirname, '..'),
+    stdio: 'inherit',
+  })
+} catch (err) {
+  __scriptLogger__.error('❌ dist Embedding 完整性校验失败，扩展包不可用')
+  process.exit(1)
 }
 
 // 显示清理后的文件夹大小

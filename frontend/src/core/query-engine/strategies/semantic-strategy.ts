@@ -38,11 +38,19 @@ function isServiceWorker(): boolean {
  * @param topK 返回数量
  * @param minScore 最低相似度阈值（0-1），默认 0.2 过滤低相关性结果
  */
+export interface SemanticSearchOptions {
+  /** Offscreen / 模型冷启动超时（毫秒） */
+  timeout?: number
+}
+
 export async function semanticSearch(
   query: string,
   topK = 10,
-  minScore = 0.2
+  minScore = 0.2,
+  options: SemanticSearchOptions = {}
 ): Promise<SemanticSearchResult[]> {
+  const timeout = options.timeout ?? (isServiceWorker() ? 30_000 : 10_000)
+
   try {
     // Service Worker 环境中，通过 Offscreen Document 代理语义搜索
     if (isServiceWorker()) {
@@ -52,7 +60,7 @@ export async function semanticSearch(
           type: 'SEMANTIC_SEARCH',
           payload: { query, topK, minScore }
         },
-        { timeout: 3000 }
+        { timeout }
       )
       logger.info(LOG_TAG, `Offscreen 语义搜索完成: "${query}" → ${offscreenResults.length} 条`)
       return offscreenResults

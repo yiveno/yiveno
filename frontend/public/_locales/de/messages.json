@@ -1670,6 +1670,21 @@
   "management_organizing": {
     "message": "Organisiere..."
   },
+  "management_organize_notes_dialog_title": {
+    "message": "Hinweise zur KI-Organisation"
+  },
+  "management_organize_notes_hint": {
+    "message": "Optional: Wünsche wie Arbeit/Lernen trennen oder bestimmte Ordnernamen beibehalten. Leer lassen für Standardregeln."
+  },
+  "management_organize_notes_label": {
+    "message": "Zusätzliche Hinweise (optional)"
+  },
+  "management_organize_notes_placeholder": {
+    "message": "z. B. AI-Lesezeichen in eine Gruppe; Musik getrennt von Entertainment …"
+  },
+  "management_organize_notes_start": {
+    "message": "Organisation starten"
+  },
   "management_expand_all": {
     "message": "Alle erweitern"
   },
@@ -1677,7 +1692,32 @@
     "message": "Alle einklappen"
   },
   "management_filter_bookmarks": {
-    "message": "Lesezeichen filtern"
+    "message": "Lesezeichen filtern..."
+  },
+  "management_search_filtering": {
+    "message": "Filter wird angewendet..."
+  },
+  "management_search_left_matches": {
+    "message": "Links: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "management_search_right_matches": {
+    "message": "Rechts: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "management_trait_filter_invalid": {
+    "message": "Ungültige Links"
+  },
+  "management_trait_filter_duplicate": {
+    "message": "Duplikate"
   },
   "management_trait_detection": {
     "message": "Merkmalserkennung"
@@ -1690,6 +1730,48 @@
   },
   "management_preparing_organize": {
     "message": "Organisation wird vorbereitet..."
+  },
+  "management_organize_stage_load_bookmarks": {
+    "message": "Lese Lesezeichen…"
+  },
+  "management_organize_stage_index_bookmarks": {
+    "message": "Verstehe Lesezeichen-Inhalte…"
+  },
+  "management_organize_stage_ai_organize": {
+    "message": "KI sortiert Lesezeichen…"
+  },
+  "management_organize_stage_complete": {
+    "message": "Organisation abgeschlossen"
+  },
+  "management_organize_overall_label": {
+    "message": "Gesamtfortschritt"
+  },
+  "management_organize_step_load_title": {
+    "message": "Lesezeichen lesen"
+  },
+  "management_organize_step_index_title": {
+    "message": "Inhalt verstehen"
+  },
+  "management_organize_step_ai_title": {
+    "message": "KI-Sortierung"
+  },
+  "management_organize_step_preview_title": {
+    "message": "Vorschau erstellen"
+  },
+  "management_organize_detail_bookmarks": {
+    "message": "$1 / $2 Lesezeichen"
+  },
+  "management_organize_detail_batches": {
+    "message": "Stapel $1 / $2"
+  },
+  "management_organize_detail_loaded": {
+    "message": "$1 Lesezeichen gelesen"
+  },
+  "management_organize_detail_preview": {
+    "message": "Vorschau wird erstellt…"
+  },
+  "management_organize_detail_loading": {
+    "message": "Wird gelesen…"
   },
   "management_confirm_apply_changes": {
     "message": "Änderungen bestätigen"
@@ -1906,6 +1988,15 @@
   },
   "management_apply_changes_failed": {
     "message": "Anwenden der Änderungen fehlgeschlagen"
+  },
+  "management_apply_validation_failed": {
+    "message": "Diese Änderungen können nicht angewendet werden. Seite aktualisieren und erneut versuchen."
+  },
+  "management_new_folder_default": {
+    "message": "Neuer Ordner"
+  },
+  "management_create_folder_failed": {
+    "message": "Ordner konnte nicht erstellt werden"
   },
   "management_no_bookmarks_to_organize": {
     "message": "Keine Lesezeichen zum Organisieren gefunden"

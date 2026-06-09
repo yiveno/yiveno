@@ -12,6 +12,7 @@
  */
 import type { BookmarkNode } from '@/types'
 import type { BookmarkRecord } from '@/infrastructure/indexeddb/schema'
+import { isChromeVisibleRootId } from '@/core/bookmark/chrome-system-ids'
 
 /**
  * 最小树节点接口
@@ -146,8 +147,8 @@ export function recordsToBookmarkNodes(records: BookmarkRecord[]): BookmarkNode[
       if (parent.children) {
         if (!parent.children.some(c => String(c.id) === id)) parent.children.push(node)
       }
-    } else {
-      if (id !== '0' && !roots.some(r => r.id === id)) roots.push(node)
+    } else if (isChromeVisibleRootId(id) && !roots.some(r => r.id === id)) {
+      roots.push(node)
     }
   }
 

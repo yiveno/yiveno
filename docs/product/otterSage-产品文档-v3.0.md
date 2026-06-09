@@ -35,13 +35,13 @@
 
 ### 0.1 单一产品正文（规格唯一出口）
 
-| 类型                                      | 路径                                                             | 说明                                                                                               |
-| ----------------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| **产品 + 架构 + 交互 + 开发规范（正文）** | `docs/product/otterSage-产品文档-v3.0.md`                        | **唯一**需要与「当前真实实现」持续对齐的规格文档；架构/数据流/UI 约定/质量门禁等**以本文件为准**。 |
-| IDE 规则                                  | `.cursor/rules/project.mdc`、`.kiro/steering/*.md`               | **执行层**：行为约束、速查表；**不得**与产品正文冲突；若冲突**以本文件为准**并应立刻改 IDE 规则。  |
-| 运维/接入说明（非产品规格）               | 如 `docs/AUTH_GUIDE.md`                                          | 操作步骤类可暂存；**与正文冲突时以正文为准**；结论性内容应迁回正文后删或缩为链接。                 |
-| 组件 / 模块 README                        | `frontend/src/**/README.md` 等                                   | **局部说明**（用法、边界），不替代正文。                                                           |
-| Material Web 使用说明                     | `frontend/MATERIAL_WEB_COMPONENTS_GUIDE.md`                      | **实现说明**；与正文重复时以**代码与本文件**为准。                                                 |
+| 类型                                      | 路径                                               | 说明                                                                                               |
+| ----------------------------------------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| **产品 + 架构 + 交互 + 开发规范（正文）** | `docs/product/otterSage-产品文档-v3.0.md`          | **唯一**需要与「当前真实实现」持续对齐的规格文档；架构/数据流/UI 约定/质量门禁等**以本文件为准**。 |
+| IDE 规则                                  | `.cursor/rules/project.mdc`、`.kiro/steering/*.md` | **执行层**：行为约束、速查表；**不得**与产品正文冲突；若冲突**以本文件为准**并应立刻改 IDE 规则。  |
+| 运维/接入说明（非产品规格）               | 如 `docs/AUTH_GUIDE.md`                            | 操作步骤类可暂存；**与正文冲突时以正文为准**；结论性内容应迁回正文后删或缩为链接。                 |
+| 组件 / 模块 README                        | `frontend/src/**/README.md` 等                     | **局部说明**（用法、边界），不替代正文。                                                           |
+| Material Web 使用说明                     | `frontend/MATERIAL_WEB_COMPONENTS_GUIDE.md`        | **实现说明**；与正文重复时以**代码与本文件**为准。                                                 |
 
 **禁止**：在仓库根目录或 `frontend/` 根目录再新增 `*_PROGRESS.md`、`*_MIGRATION_COMPLETE.md`、`*_SUMMARY.md` 等平行「产品规格」类文档；阶段性结论应**写回本文件**或仅存于 **Git 提交说明**，不再在 `docs/` 根目录堆积「PHASE 完成报告」类 Markdown。
 
@@ -96,8 +96,8 @@ frontend/src/
 
 #### 核心价值主张
 
-- **AI 语义检索**：不记得书签标题也能找到，输入"那篇讲 React 性能的文章"即可召回
-- **隐私优先**：书签数据存储在本地 IndexedDB，AI 能力支持用户自带 API Key，数据不经过产品服务器
+- **Pro 语义检索**：不记得书签标题也能找到，输入模糊关键词（如「听歌」）即可召回相关书签；Free 用户为关键词筛选
+- **隐私优先**：书签数据存储在本地 IndexedDB；**Pro 语义检索**的 Embedding 完全本地计算；LLM 增强任务 Pro 用户默认使用托管 AI，也可选自定义 API Key 直连第三方
 - **高性能本地**：支持 2 万+ 书签流畅操作，核心功能完全离线可用
 - **融入浏览器**：支持 Chrome Omnibox 直接调用，无需打开任何页面
 
@@ -152,8 +152,8 @@ frontend/src/
 
 #### P0 - AI 检索（产品核心，不可妥协）
 
-- **Popup AI 搜索框**：打开插件即可输入关键词，AI 语义召回相关书签
-- **Chrome Omnibox 集成**：地址栏输入触发词直接调用 AI 检索，零切换成本
+- **Popup 筛选框**：打开插件即可输入关键词筛选书签；**Free** 为标题 / URL / 域名关键词匹配，**Pro + 语义检索开关** 支持模糊语义召回（如「听歌」→ 音乐平台书签）
+- **Chrome Omnibox 集成**：地址栏输入触发词直接筛选书签，策略与 Popup 一致
 - **快捷键一键收藏**：浏览网页时按快捷键立即收藏，无需选择分类
 
 #### P1 - AI 整理（留存关键，体现 AI 价值）
@@ -169,93 +169,86 @@ frontend/src/
 
 #### P3 - 支撑功能（必要但非重点）
 
-- **设置页面**：AI 总开关与功能开关等用户配置项；包含「AI 自动添加到合适目录」开关，开启后添加书签将直接自动归类并给出结果通知；LLM / API Key 仅作为可选增强来源，不再绑定 AI 功能启用；向量嵌入（Embedding）的生成节奏与配额由产品侧默认策略管理，**不再**提供独立「Embedding 设置」页，相关说明集中在「语义搜索」等开关附近文案。
+- **设置页面**：AI 功能开关等用户配置项；包含「语义检索」「AI 自动添加到合适目录」「一键整理」等开关；**Pro 用户默认启用 otterSage 托管 LLM**（DeepSeek V4 Flash，无需配置 API Key）；自定义 API Key 为可选项，配置后优先于托管 AI；向量嵌入（Embedding）仅在 **Pro 且开启语义检索** 时后台同步，**不再**提供独立「Embedding 设置」页
 - **数据统计**：Popup 页面展示书签总数、健康状态等基础指标
 
 ### 1.4 AI 能力架构策略
 
-作为个人开发者产品，otterSage 的 AI 能力遵循 **本地隐私优先、Embedding 为核心、LLM 渐进增强** 的策略。
+作为个人开发者产品，otterSage 的 AI 能力遵循 **本地隐私优先、Embedding 为核心、LLM 按需增强** 的策略。
 
-#### 第一层：本地 Embedding 与本地检索（核心主链路）
+#### 第一层：本地检索（全员）与 Pro 语义检索
 
-- 基于 **ONNX / Hugging Face** 的本地向量嵌入（Embedding），用于语义搜索、相似度计算、自动归档、聚类整理
-- 基于 **FlexSearch** 的高性能模糊筛选（工程内部分 API 仍沿用历史命名 `fuse` / `Fuse`）
-- IndexedDB 持久化与本地向量库；无需上传书签内容，无需联网，是产品 AI 体验的**基础能力层**
+- **Free / 未登录**：基于 **FlexSearch** 的关键词模糊筛选（工程内 API 仍沿用历史命名 `fuse`），匹配标题 / URL / 域名 / 关键词
+- **Pro + 语义检索开关**：在上述基础上叠加本地 **ONNX Embedding**（`multilingual-e5-small`）语义召回，形成 **Hybrid**（关键词 + 向量相似度合并）
+- Embedding 向量在本地 IndexedDB 持久化，**不上传书签内容**；仅 Pro 且开启语义检索时后台同步向量
 
-#### 第二层：本地内置 AI（可选内部优化）
+#### 第二层：Pro 托管 LLM（默认增强，开箱即用）
 
-- 优先使用 Chrome Built-in AI（Summarizer API / Prompt API）进行摘要、长文本压缩等本地增强
-- 该层属于**本地增强能力**，目标是在不牺牲隐私的前提下提升 Embedding 和内容理解质量
-- 不在 UI 中强调具体模型概念，避免增加用户配置负担
+- **Pro 用户默认**使用 otterSage 服务端托管的 **DeepSeek V4 Flash**，无需配置 API Key
+- 主要用于：一键整理、书签摘要、标签生成、文件夹描述等 **LLM 增强任务**（**不含**书签检索本身的 Embedding，检索向量为本地计算）
+- 调用经 `POST /api/ai/hosted/complete` 代理，**Supabase Access Token + Pro 订阅**鉴权
+- **月度配额由服务端控制**（默认 999 次/月，可通过 `AI_HOSTED_MONTHLY_QUOTA` 调整）
+- 一键整理等场景会发送**书签标题 + URL**到服务器转发 DeepSeek；设置页须明确披露
 
-#### 第三层：用户自带 API Key（可选增强，不是核心依赖）
+#### 第三层：用户自带 API Key（可选，隐私优先）
 
-- 用户可在设置页填入自己的 OpenAI / Claude / Gemini / DeepSeek API Key
-- 请求从用户浏览器直接发往 AI 服务商，产品服务器不经手书签数据
-- 该层主要用于**高级增强任务**，如摘要润色、目录命名、复杂结构规划、解释说明
-- 该层是可选增强，而非产品核心能力成立的前提
+- Pro 用户可在设置页填入 OpenAI / Claude / Gemini / DeepSeek API Key
+- **配置后优先级高于托管 AI**；请求从浏览器直连第三方，产品服务器不经手书签数据
+- 适用于：隐私敏感用户、超额后继续使用、或希望使用特定模型
 
 #### 当前产品判断
 
-- **Embedding 是 AI 核心引擎**：决定语义搜索、自动归档、相似推荐、聚类整理是否成立
-- **LLM 是增强模块**：主要用于抽象命名、自然语言解释、复杂规划等高阶体验
-- 当前阶段优先投入 **Embedding 的质量、速度、召回与排序优化**，在本地主链路足够强之后，再评估是否继续扩大 LLM 的职责范围
+- **Embedding 是 Pro 语义检索引擎**：决定模糊语义筛选、文件夹向量推荐等是否可用
+- **FlexSearch 是全员基础检索**：Free 用户与 Pro 关闭语义开关时的默认路径
+- **LLM 是增强模块**：一键整理等 Pro 功能默认由托管 LLM 提供，降低配置门槛
+- **自定义 API Key 是可选增强**：不绑定 Pro 功能启用，但配置后优先使用
 
 #### 降级策略
 
 ```
-本地 Embedding 语义搜索 / 自动归档（主链路）
-    ↓ Embedding 不可用
-本地 FlexSearch 模糊筛选
-    ↓ 仍需兜底
-IndexedDB 关键词搜索
+书签检索：
+Pro + 语义开关 → Hybrid（FlexSearch + 本地 Embedding）
+    ↓ 非 Pro / 未登录 / 关闭语义开关 / 向量未就绪
+仅 FlexSearch 关键词筛选
+
+LLM 增强（摘要 / 整理 / 标签等）：
+自定义 API Key（已配置时优先）
+    ↓ 未配置
+Pro 托管 LLM（DeepSeek V4 Flash）
+    ↓ 非 Pro / 未登录 / 配额用尽
+抛出错误，上层降级到本地规则 / Embedding 链路
 ```
 
-#### Chrome Built-in AI 集成（内部优化）
+#### Pro 托管 LLM 技术要点
 
-**目标**：利用 Chrome 138+ 的内置 AI 能力（Prompt API、Summarizer API 等）提升本地 Embedding 主链路的效果与体验，但不让产品核心能力依赖远程 LLM。
+**服务端配置**（`backend/wrangler.toml` + Secrets）：
 
-**集成策略**：
+| 配置项                    | 说明                       | 默认值              |
+| ------------------------- | -------------------------- | ------------------- |
+| `AI_HOSTED_MODEL`         | 托管模型                   | `deepseek-v4-flash` |
+| `AI_HOSTED_MONTHLY_QUOTA` | 每用户每月调用上限         | `999`               |
+| `DEEPSEEK_API_KEY`        | DeepSeek API Key（Secret） | —                   |
+| `AI_USAGE_KV`             | 月度用量计数（KV binding） | —                   |
 
-1. **Summarizer API（Chrome 138+）**
-   - **用途**：书签摘要生成、长文本预处理、文件夹描述生成
-   - **优势**：专用摘要模型，质量比通用 Prompt API 高，且完全本地运行
-   - **定位**：作为 Embedding 与内容理解的本地增强层，而非独立产品卖点
-   - **实现位置**：
-     - `frontend/src/infrastructure/llm/builtin-summarizer-client.ts` - Summarizer API 客户端
-     - `frontend/src/application/ai/ai-app-service.ts` - 书签摘要生成（优先使用 Summarizer API）
-     - `frontend/src/application/folder/folder-vector-service.ts` - 长文本预处理（Embedding 前压缩）
-     - `frontend/src/application/folder/folder-description-service.ts` - 文件夹描述生成
+**API 端点**：
 
-2. **Prompt API（Chrome 127+）**
-   - **用途**：通用文本生成、标签生成、少量解释型增强
-   - **定位**：本地可用时优先，本地不可用时再考虑用户自带 Key
+- `GET /api/ai/hosted/quota` — 查询当月配额（需 Supabase Token + Pro）
+- `POST /api/ai/hosted/complete` — 文本补全（需 Supabase Token + Pro，成功后递增配额）
 
-3. **技术收益**（内部优化，用户无感知）：
-   - 提升长文本进入 Embedding 前的压缩质量
-   - 改善自动归档与聚类整理的输入质量
-   - 在不上传数据的前提下增强摘要和说明能力
-
-4. **用户覆盖率**：
-   - 桌面端：受 Chrome 版本约束
-   - 移动端：0%（不支持）
-   - 整体：属于增强项，不影响产品核心主链路
-
-5. **隐私保护**：
-   - Chrome Built-in AI 完全在本地运行，数据不上传
-   - 与"隐私优先"产品定位完全一致
-
-**架构位置**：Chrome Built-in AI 属于**本地主链路增强层**，不改变产品“Embedding 本地优先”的核心架构：
+**前端 Provider 优先级**（`llm-adapter.ts`）：
 
 ```
-本地 Embedding（核心）
-    ↓ 需要长文本压缩/摘要增强
-Chrome Built-in AI（本地增强）
-    ↓ 不可用
-保持原始本地 Embedding / 规则链路
-    ↓ 如需更高阶生成与命名
-用户自带 API Key（可选增强）
+用户自带 API Key → Pro 托管 LLM（hostedLLMClient）→ 错误 / 本地兜底
 ```
+
+**实现位置**：
+
+- `backend/src/handlers/ai-hosted.ts` — 托管 LLM 接口
+- `backend/src/services/ai/deepseek-client.ts` — DeepSeek 代理
+- `backend/src/services/ai/usage-quota.ts` — 月度配额（KV）
+- `frontend/src/infrastructure/llm/hosted-llm-client.ts` — 扩展端托管客户端
+- `frontend/src/infrastructure/llm/llm-adapter.ts` — 统一适配器
+- `frontend/src/pages/settings/sections/AISettings.vue` — 设置页（托管 AI / 自定义 Key）
 
 ---
 
@@ -301,8 +294,8 @@ Chrome Built-in AI（本地增强）
   // Cloudflare Workers
   runtime: "Bun 1.2.21+",           // 高性能 JavaScript 运行时
   platform: "Cloudflare Workers",   // Serverless 平台
-  ai: "Cloudflare AI (Workers AI)", // LLM 推理
-  database: "Cloudflare D1"         // SQLite 数据库
+  ai: "DeepSeek API (Pro 托管 LLM)", // Pro 用户 LLM 代理
+  storage: "Cloudflare KV"           // 托管 LLM 月度配额计数
 }
 ```
 
@@ -363,74 +356,72 @@ frontend/src/
 ```
 frontend/src/
 ├── application/ai/                    # AI 应用服务层
-│   └── ai-app-service.ts             # 统一 AI 服务入口（书签摘要、标签生成等）
+│   └── ai-app-service.ts             # 统一 AI 服务入口（书签摘要、标签生成、一键整理等）
 ├── application/folder/                # 文件夹相关服务
 │   ├── folder-vector-service.ts      # 文件夹向量服务（书签分类推荐）
-│   └── folder-description-service.ts # 文件夹描述生成服务（新增）
+│   └── folder-description-service.ts # 文件夹描述生成服务
 ├── infrastructure/llm/                # LLM 基础设施层
 │   ├── llm-adapter.ts                # LLM 统一适配器（提供者选择与降级）
-│   ├── builtin-llm-client.ts         # Chrome Prompt API 客户端
-│   ├── builtin-summarizer-client.ts  # Chrome Summarizer API 客户端（新增）
-│   └── user-llm-client.ts            # 用户自带 API Key 客户端
+│   ├── hosted-llm-client.ts          # Pro 托管 LLM 客户端（DeepSeek 代理）
+│   └── user-llm-client.ts            # 用户自带 API Key 客户端（可选）
 ├── infrastructure/embedding/          # Embedding 向量服务
 │   ├── embedding-service.ts          # Embedding 统一服务
 │   ├── local-vector-store.ts         # 本地向量存储（IndexedDB）
 │   └── ...
 └── types/infrastructure/llm.ts        # LLM 类型定义
+
+backend/src/
+├── handlers/ai-hosted.ts             # Pro 托管 LLM 接口
+├── services/ai/deepseek-client.ts      # DeepSeek API 代理
+├── services/ai/usage-quota.ts          # 月度配额（KV）
+└── config/ai-hosted.ts               # 托管模型与配额配置
 ```
 
 **职责说明**：
 
-| 模块                              | 职责                                | 关键方法                                                                                                        |
-| --------------------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| **ai-app-service.ts**             | 统一 AI 服务入口，协调各 LLM 提供者 | `summarizeBookmark()` - 书签摘要生成<br>`generateTags()` - 标签生成<br>`enhanceSemanticSearch()` - 语义搜索增强 |
-| **builtin-summarizer-client.ts**  | Chrome Summarizer API 封装          | `summarize()` - 生成摘要<br>`summarizeStreaming()` - 流式生成<br>`summarizeBatch()` - 批量生成                  |
-| **folder-vector-service.ts**      | 文件夹向量管理与推荐                | `recommendFolders()` - 推荐文件夹（含长文本预处理）<br>`syncFolderVectors()` - 同步文件夹向量                   |
-| **folder-description-service.ts** | 文件夹描述自动生成                  | `generateDescription()` - 生成单个描述<br>`generateBatch()` - 批量生成                                          |
-| **llm-adapter.ts**                | LLM 提供者选择与降级策略            | `selectProvider()` - 选择最优提供者<br>`complete()` - 统一文本补全接口                                          |
+| 模块                              | 职责                                | 关键方法                                                                                                |
+| --------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| **ai-app-service.ts**             | 统一 AI 服务入口，协调各 LLM 提供者 | `summarizeBookmark()` - 书签摘要<br>`generateTags()` - 标签生成<br>`autoOrganizeBookmarks()` - 一键整理 |
+| **hosted-llm-client.ts**          | Pro 托管 LLM 客户端                 | `complete()` - 调用后端代理<br>`fetchQuota()` - 查询当月配额                                            |
+| **user-llm-client.ts**            | 用户自带 API Key 客户端             | `complete()` - 直连第三方 API                                                                           |
+| **folder-vector-service.ts**      | 文件夹向量管理与推荐                | `recommendFolders()` - 推荐文件夹<br>长文本超限时简单截断                                               |
+| **folder-description-service.ts** | 文件夹描述自动生成                  | `generateDescription()` - 经 llm-adapter 生成描述                                                       |
+| **llm-adapter.ts**                | LLM 提供者选择与降级策略            | `complete()` - 统一文本补全<br>`hasAvailableProvider()` - 检测可用性                                    |
 
-**降级链路**（自动，用户无感知）：
+**降级链路**（LLM 增强任务）：
 
 ```
-书签摘要生成：
-  Summarizer API (tl;dr) → Prompt API → 用户 Key（可选增强）
-
-长文本预处理：
-  Summarizer API (key-points) → 简单截断
-
-文件夹描述生成：
-  Summarizer API (headline) → Prompt API → 用户 Key（可选增强）
+自定义 API Key（已配置时优先，直连第三方）
+    ↓ 未配置
+Pro 托管 LLM（DeepSeek V4 Flash，服务端配额）
+    ↓ 非 Pro / 未登录 / 配额用尽
+抛出错误 → 上层降级到本地 Embedding / 规则链路
 ```
 
 **数据流**：
 
 ```
-用户操作（如：收藏书签）
+用户操作（如：一键整理）
     ↓
-Application Service（如：ai-app-service / folder-vector-service）
+Application Service（bookmark-organize-service / ai-app-service）
     ↓
-本地 Embedding / 本地规则链路（核心）
-    ↓ 如需摘要、压缩、说明等增强
-Built-in AI / LLM Adapter（可选增强）
+llm-adapter.complete()
     ↓
-优先：Summarizer API（Chrome 138+，本地，免费）
-    ↓ 不可用
-降级：Prompt API（Chrome 127+）
-    ↓ 仍不可用
-保持本地 Embedding / 规则链路
-    ↓ 仅在需要更高阶生成能力时
-用户自带 Key（OpenAI/Claude/Gemini/DeepSeek）
+┌─────────────────────┬──────────────────────────┐
+│ user-llm-client     │ hosted-llm-client        │
+│ 浏览器 → 第三方 API  │ 浏览器 → Worker → DeepSeek│
+└─────────────────────┴──────────────────────────┘
     ↓
-返回结果 → 存储到 IndexedDB → 更新 UI
+返回结果 → 预览 / 应用 → Background → IndexedDB → UI
 ```
 
 **关键约束**：
 
-- ✅ AI 能力作为**内部优化**，不在 UI 中暴露 Summarizer API 的开关或配置
-- ✅ 所有 AI 调用必须通过 `llm-adapter.ts` 统一入口，不得直接调用具体客户端
-- ✅ 降级策略自动执行，用户无感知
-- ✅ Chrome Built-in AI 不可用时，不影响核心功能（自动降级）
-- ❌ 禁止在 UI 中显示"Summarizer API 状态"或"启用 Summarizer API"等选项
+- ✅ 所有 LLM 调用必须通过 `llm-adapter.ts` 统一入口
+- ✅ Pro 托管 LLM 配额与模型由**服务端**控制，前端仅展示
+- ✅ 自定义 API Key 配置后**优先于**托管 AI
+- ✅ 设置页须披露托管模式下发送的数据范围（标题 + URL）
+- ❌ 禁止前端直接调用 DeepSeek 或托管 API（须经 adapter / hosted client）
 
 ### 2.3 单向数据流架构
 
@@ -2106,166 +2097,88 @@ Worker 异步带来的"UI 流畅度"毫无价值
    - 当前：静态 Loading 文本
    - 期望：通用的 `SyncProgressDialog` 组件，复用于所有长耗时任务
 
-### 7.7 书签筛选与混合检索（实现口径）
+### 7.7 书签筛选与检索模式（实现口径）
 
 > 对外 UI 与交互文案统一称 **「筛选」**；本节描述技术实现。
 
-- **意图路由**：`frontend/src/core/query-engine/intent-detector.ts` 根据查询长度、技术词 / 语义关键词集合等选择 `fuse` / `semantic` / `hybrid` / `auto`；短查询阈值 **`MIN_SEMANTIC_LENGTH = 2`**（支持「代码」等双字词走语义倾向）。
-- **本地模糊层**：`FlexSearchStrategy`（`query-service.ts` 中仍以 `searchWithFuse` 等历史命名调用）负责标题 / URL / 域名 / 关键词的快速命中。
-- **语义层**：在已开通 PRO 或已配置用户 Key 等前提下，由语义检索补充概念相近结果。
-- **Hybrid 超时**：`QueryService.searchWithHybrid` 中语义分支与 **600ms** 超时竞速，超时则降级为**仅本地模糊**结果，避免 UI 长时间等待。
+**仅两种有效模式**（由 `frontend/src/core/query/search-mode.ts` 统一解析，调用方勿手动指定策略）：
 
-### 7.8 AI 能力内部优化（技术实现）
+| 条件                                 | 模式     | 实现                                                                |
+| ------------------------------------ | -------- | ------------------------------------------------------------------- |
+| 未登录 / Free / Pro 关闭「语义检索」 | `fuse`   | `FlexSearchStrategy` + Query Worker，匹配标题 / URL / 域名 / 关键词 |
+| 已登录 Pro 且开启「语义检索」        | `hybrid` | FlexSearch 与本地 E5 Embedding 并行，合并去重评分                   |
 
-> **说明**：本节描述 Chrome Built-in AI 的技术实现细节，作为内部优化，不涉及用户 UI 配置。
+- **开关存储**：`chrome.storage.local` 键 `semanticSearchEnabled`（默认 `true`，Pro 可在设置页关闭）
+- **Pro 判定**：读取 `ottersage_subscription_cache` 中 `subscriptionStatus.tier === 'pro' && status === 'active'`
+- **登录判定**：读取 `supabase.auth.token`（或 dev 对应键）中有效 `access_token`
+- **Embedding 同步**：仅 `hybrid` 模式触发 `SYNC_BOOKMARK_EMBEDDINGS`；Free 不同步向量
+- **Omnibox**：Service Worker 经 `bookmarkSearchService.searchHybridProgressive` 检索；语义分支默认 **30s** 超时（含 Offscreen + 模型冷启动），超时降级为 Fuse 结果
+- **已废弃**：`auto` / `semantic` 单独策略及 `intent-detector` 路由（代码可保留但不再接入主链路）
 
-#### 7.8.1 Summarizer API 集成
+### 7.8 Pro 托管 LLM（技术实现）
 
-**核心文件**：`frontend/src/infrastructure/llm/builtin-summarizer-client.ts`
+> **说明**：本节描述 Pro 托管 LLM 与 LLM 适配器的技术实现。
 
-Chrome Summarizer API 提供三种摘要类型：
+#### 7.8.1 后端代理
+
+**核心文件**：`backend/src/handlers/ai-hosted.ts`、`backend/src/services/ai/deepseek-client.ts`
 
 ```typescript
-type SummarizerType = 'tl;dr' | 'key-points' | 'teaser' | 'headline'
+// POST /api/ai/hosted/complete
+// Authorization: Bearer <supabase_access_token>
 
-// 1. tl;dr - 书签摘要生成（P0-1）
-const summary = await summarizerClient.summarize(content, {
-  type: 'tl;dr',
-  length: 'medium'
-})
-
-// 2. key-points - 长文本预处理（P0-2）
-const keyPoints = await summarizerClient.summarize(content, {
-  type: 'key-points',
-  length: 'short'
-})
-
-// 3. headline - 文件夹描述生成（P1）
-const headline = await summarizerClient.summarize(content, {
-  type: 'headline',
-  length: 'short'
-})
+// 1. supabaseAuth 中间件验证 Token，提取 userId
+// 2. isActiveProUser() 查 subscriptions 表
+// 3. consumeHostedQuota() 检查并递增 KV 计数
+// 4. completeWithDeepSeek() 代理 DeepSeek Chat Completions
+// 5. 返回 { text, provider: 'hosted', model, quota: { used, limit, remaining } }
 ```
 
-#### 7.8.2 降级策略实现
+**配额 Key 格式**：`ai_usage:{userId}:{YYYY-MM}`（UTC 月，存于 `AI_USAGE_KV`）
+
+#### 7.8.2 前端 LLM 适配器
 
 **核心文件**：`frontend/src/infrastructure/llm/llm-adapter.ts`
 
 ```typescript
 class LLMAdapter {
-  async complete(prompt: string, options: LLMOptions): Promise<string> {
-    // 1. 优先：Chrome Summarizer API（Chrome 138+，本地，免费）
-    if (await this.isSummarizerAvailable()) {
-      return await this.summarizerClient.summarize(prompt, options)
+  async complete(prompt: string, options?: LLMCompleteOptions): Promise<LLMCompleteResult> {
+    // 1. 优先：用户自带 API Key（直连第三方）
+    if (await userLLMClient.isConfigured()) {
+      return await userLLMClient.complete(prompt, options)
     }
 
-    // 2. 降级：Chrome Prompt API（Chrome 127+）
-    if (await this.isPromptAPIAvailable()) {
-      return await this.promptClient.complete(prompt, options)
-    }
-
-    // 3. 降级：用户自带 API Key
-    if (this.hasUserKey()) {
-      return await this.userClient.complete(prompt, options)
-    }
-
-    throw new Error('No LLM provider available')
+    // 2. Pro 托管 LLM（经后端代理 DeepSeek）
+    return await hostedLLMClient.complete(prompt, options)
   }
 }
 ```
 
-#### 7.8.3 长文本预处理流程
+#### 7.8.3 一键整理批次策略
+
+**核心文件**：`frontend/src/application/ai/ai-app-service.ts`
+
+- 每批 `BATCH_SIZE = 40` 条书签
+- 每批 `maxTokens: 4000`，解析失败最多重试 1 次
+- 1000 条书签 ≈ 25 次 LLM 调用（计入月度配额）
+
+#### 7.8.4 长文本预处理
 
 **核心文件**：`frontend/src/application/folder/folder-vector-service.ts`
 
-```typescript
-class FolderVectorService {
-  private async preprocessText(text: string): Promise<string> {
-    // 1. 检查文本长度
-    const TOKEN_LIMIT = 2000 // 约 500 tokens
+- Embedding 前超长文本**简单截断**
+- 核心语义能力仍由本地 ONNX Embedding 提供
 
-    if (text.length <= TOKEN_LIMIT) {
-      return text // 无需压缩
-    }
+#### 7.8.5 错误与配额处理
 
-    // 2. 使用 Summarizer API 压缩
-    try {
-      const compressed = await summarizerClient.summarize(text, {
-        type: 'key-points',
-        length: 'short'
-      })
-      return compressed
-    } catch (error) {
-      // 3. 降级：简单截断
-      logger.warn('Summarizer API 不可用，使用简单截断', { error })
-      return text.slice(0, TOKEN_LIMIT)
-    }
-  }
+| HTTP 状态 | 含义                  | 前端处理                          |
+| --------- | --------------------- | --------------------------------- |
+| 401       | Token 无效 / 未登录   | 提示登录                          |
+| 403       | 非 Pro 用户           | 提示升级 Pro                      |
+| 429       | 月度配额用尽          | 提示配置自定义 API Key 或下月再用 |
+| 500       | DeepSeek 或服务器错误 | 通用失败提示，上层降级            |
 
-  async recommendFolders(bookmarkId: string): Promise<FolderRecommendation[]> {
-    const bookmark = await indexedDBManager.getBookmarkById(bookmarkId)
-
-    // 1. 预处理长文本
-    const processedText = await this.preprocessText(bookmark.content)
-
-    // 2. 生成 Embedding 向量
-    const vector = await embeddingService.embed(processedText)
-
-    // 3. 余弦相似度计算
-    return this.findSimilarFolders(vector)
-  }
-}
-```
-
-#### 7.8.4 性能监控
-
-**关键指标**：
-
-```typescript
-interface SummarizerMetrics {
-  // 可用性
-  isAvailable: boolean // Chrome 138+ 检测
-  userCoverage: number // 用户覆盖率（约 60-70%）
-
-  // 性能
-  avgLatency: number // 平均延迟（vs Prompt API 快 2-3x）
-  successRate: number // 成功率
-
-  // 质量
-  summaryQuality: number // 摘要质量（vs Prompt API 高 30-50%）
-  tokenSavings: number // Token 节省（长文本压缩）
-}
-```
-
-#### 7.8.5 错误处理
-
-```typescript
-class BuiltinSummarizerClient {
-  async summarize(text: string, options: SummarizerOptions): Promise<string> {
-    try {
-      // 1. 检查可用性
-      if (!('ai' in window) || !('summarizer' in window.ai)) {
-        throw new Error('Summarizer API not available')
-      }
-
-      // 2. 创建 summarizer
-      const summarizer = await window.ai.summarizer.create(options)
-
-      // 3. 生成摘要
-      const result = await summarizer.summarize(text)
-
-      return result
-    } catch (error) {
-      logger.error('Summarizer API 调用失败', { error, text: text.slice(0, 100) })
-
-      // 4. 自动降级到 Prompt API
-      return await this.fallbackToPromptAPI(text, options)
-    }
-  }
-}
-```
-
-### 7.8 跨页面同步与扩展内通信
+### 7.9 跨页面同步与扩展内通信
 
 - **推荐机制**：Popup、Side Panel、Management、Background 等多进程场景，以 **`chrome.storage.*` + `chrome.storage.onChanged`** 做状态广播；**不要**将 `BroadcastChannel` 作为主同步路径（扩展内上下文隔离，可靠性差、难测）。
 - **收藏夹 UI 同步**：`frontend/src/composables/useCrossPageSync.ts` 的 `initCrossPageSync()` 已在 **Popup、Side Panel、Management** 各入口 `main.ts` 调用；会话域约定键 **`__favoriteEvent`**（`chrome.storage.session`）用于收藏相关增量信号。
@@ -2434,66 +2347,68 @@ bun run audit:fe                # Lighthouse 审计
 
 ## 附录 B：关键文件路径速查表
 
-| 功能              | 文件路径                                                        |
-| ----------------- | --------------------------------------------------------------- |
-| **架构文档**      |                                                                 |
-| 单向数据流说明    | `/单向数据流架构说明.md`                                        |
-| **前端核心**      |                                                                 |
-| 书签 Store        | `frontend/src/stores/bookmark-tree-store.ts`                    |
-| 管理页面          | `frontend/src/pages/management/Management.vue`                  |
-| 书签树组件        | `frontend/src/components/business/BookmarkTree/`                |
-| **基础设施**      |                                                                 |
-| IndexedDB 管理器  | `frontend/src/infrastructure/indexeddb/manager.ts`              |
-| Chrome Storage    | `frontend/src/infrastructure/storage/chrome-storage.ts`         |
-| 事件总线          | `frontend/src/infrastructure/events/event-bus.ts`               |
-| Immer 工具        | `frontend/src/infrastructure/state/immer-helpers.ts`            |
-| **后台脚本**      |                                                                 |
-| 书签监听          | `frontend/src/background/listeners/bookmarks.ts`                |
-| 消息处理          | `frontend/src/background/listeners/messaging.ts`                |
-| 引导管理器        | `frontend/src/background/managers/bootstrap.ts`                 |
-| **服务层**        |                                                                 |
-| 书签同步服务      | `frontend/src/services/bookmark-sync-service.ts`                |
-| 书签特征服务      | `frontend/src/services/bookmark-trait-service.ts`               |
-| 特征自动同步      | `frontend/src/services/bookmark-trait-auto-sync.ts`             |
-| Favicon 服务      | `frontend/src/services/favicon-service.ts`                      |
-| **AI 能力**       |                                                                 |
-| AI 应用服务       | `frontend/src/application/ai/ai-app-service.ts`                 |
-| Summarizer 客户端 | `frontend/src/infrastructure/llm/builtin-summarizer-client.ts`  |
-| Prompt API 客户端 | `frontend/src/infrastructure/llm/builtin-llm-client.ts`         |
-| LLM 适配器        | `frontend/src/infrastructure/llm/llm-adapter.ts`                |
-| 文件夹向量服务    | `frontend/src/application/folder/folder-vector-service.ts`      |
-| 文件夹描述服务    | `frontend/src/application/folder/folder-description-service.ts` |
-| **配置文件**      |                                                                 |
-| Manifest          | `frontend/public/manifest.json`                                 |
-| Vite 配置         | `frontend/vite.config.ts`                                       |
-| TypeScript 配置   | `frontend/tsconfig.json`                                        |
-| ESLint 配置       | `eslint.config.js`                                              |
-| Stylelint 配置    | `frontend/stylelint.config.js`                                  |
+| 功能             | 文件路径                                                        |
+| ---------------- | --------------------------------------------------------------- |
+| **架构文档**     |                                                                 |
+| 单向数据流说明   | `/单向数据流架构说明.md`                                        |
+| **前端核心**     |                                                                 |
+| 书签 Store       | `frontend/src/stores/bookmark-tree-store.ts`                    |
+| 管理页面         | `frontend/src/pages/management/Management.vue`                  |
+| 书签树组件       | `frontend/src/components/business/BookmarkTree/`                |
+| **基础设施**     |                                                                 |
+| IndexedDB 管理器 | `frontend/src/infrastructure/indexeddb/manager.ts`              |
+| Chrome Storage   | `frontend/src/infrastructure/storage/chrome-storage.ts`         |
+| 事件总线         | `frontend/src/infrastructure/events/event-bus.ts`               |
+| Immer 工具       | `frontend/src/infrastructure/state/immer-helpers.ts`            |
+| **后台脚本**     |                                                                 |
+| 书签监听         | `frontend/src/background/listeners/bookmarks.ts`                |
+| 消息处理         | `frontend/src/background/listeners/messaging.ts`                |
+| 引导管理器       | `frontend/src/background/managers/bootstrap.ts`                 |
+| **服务层**       |                                                                 |
+| 书签同步服务     | `frontend/src/services/bookmark-sync-service.ts`                |
+| 书签特征服务     | `frontend/src/services/bookmark-trait-service.ts`               |
+| 特征自动同步     | `frontend/src/services/bookmark-trait-auto-sync.ts`             |
+| Favicon 服务     | `frontend/src/services/favicon-service.ts`                      |
+| **AI 能力**      |                                                                 |
+| AI 应用服务      | `frontend/src/application/ai/ai-app-service.ts`                 |
+| 托管 LLM 客户端  | `frontend/src/infrastructure/llm/hosted-llm-client.ts`          |
+| 用户 Key 客户端  | `frontend/src/infrastructure/llm/user-llm-client.ts`            |
+| LLM 适配器       | `frontend/src/infrastructure/llm/llm-adapter.ts`                |
+| 托管 LLM 接口    | `backend/src/handlers/ai-hosted.ts`                             |
+| DeepSeek 代理    | `backend/src/services/ai/deepseek-client.ts`                    |
+| 月度配额服务     | `backend/src/services/ai/usage-quota.ts`                        |
+| 文件夹向量服务   | `frontend/src/application/folder/folder-vector-service.ts`      |
+| 文件夹描述服务   | `frontend/src/application/folder/folder-description-service.ts` |
+| **配置文件**     |                                                                 |
+| Manifest         | `frontend/public/manifest.json`                                 |
+| Vite 配置        | `frontend/vite.config.ts`                                       |
+| TypeScript 配置  | `frontend/tsconfig.json`                                        |
+| ESLint 配置      | `eslint.config.js`                                              |
+| Stylelint 配置   | `frontend/stylelint.config.js`                                  |
 
 ---
 
 ## 附录 C：术语表
 
-| 术语               | 解释                                                       |
-| ------------------ | ---------------------------------------------------------- |
-| **DDD**            | Domain-Driven Design（领域驱动设计）                       |
-| **单向数据流**     | Chrome API → Background → IndexedDB → UI 的单向数据流动    |
-| **IndexedDB**      | 浏览器端的 NoSQL 数据库，本项目的唯一数据源                |
-| **BookmarkRecord** | IndexedDB 中存储的书签数据结构                             |
-| **BookmarkNode**   | 前端 Vue 组件使用的书签节点数据结构                        |
-| **Pinia Store**    | Vue 的状态管理库                                           |
-| **mitt**           | 轻量级事件总线库                                           |
-| **Immer**          | 不可变状态更新库                                           |
-| **TanStack Query** | 异步状态管理和缓存库                                       |
-| **VueUse**         | Vue Composition API 实用工具集                             |
-| **Zod**            | TypeScript 运行时数据校验库                                |
-| **虚拟滚动**       | 只渲染可见区域的节点，提升大列表性能                       |
-| **pathIds**        | 从根节点到当前节点的所有父节点 ID 数组                     |
-| **traitTags**      | 书签特征标签（duplicate, invalid, internal）               |
-| **Summarizer API** | Chrome 138+ 内置的摘要生成 API，用于书签摘要和长文本预处理 |
-| **Prompt API**     | Chrome 127+ 内置的通用文本生成 API                         |
-| **Embedding**      | 文本向量化，用于语义搜索、相似度计算、自动归档与聚类整理   |
-| **降级策略**       | AI 能力不可用时自动切换到备选方案的机制                    |
+| 术语               | 解释                                                            |
+| ------------------ | --------------------------------------------------------------- |
+| **DDD**            | Domain-Driven Design（领域驱动设计）                            |
+| **单向数据流**     | Chrome API → Background → IndexedDB → UI 的单向数据流动         |
+| **IndexedDB**      | 浏览器端的 NoSQL 数据库，本项目的唯一数据源                     |
+| **BookmarkRecord** | IndexedDB 中存储的书签数据结构                                  |
+| **BookmarkNode**   | 前端 Vue 组件使用的书签节点数据结构                             |
+| **Pinia Store**    | Vue 的状态管理库                                                |
+| **mitt**           | 轻量级事件总线库                                                |
+| **Immer**          | 不可变状态更新库                                                |
+| **TanStack Query** | 异步状态管理和缓存库                                            |
+| **VueUse**         | Vue Composition API 实用工具集                                  |
+| **Zod**            | TypeScript 运行时数据校验库                                     |
+| **虚拟滚动**       | 只渲染可见区域的节点，提升大列表性能                            |
+| **pathIds**        | 从根节点到当前节点的所有父节点 ID 数组                          |
+| **traitTags**      | 书签特征标签（duplicate, invalid, internal）                    |
+| **托管 LLM**       | Pro 用户默认使用的服务端 DeepSeek 代理，配额由 KV 计数          |
+| **Embedding**      | 文本向量化，用于语义搜索、相似度计算、自动归档与聚类整理        |
+| **降级策略**       | AI 能力不可用时的备选方案（本地 Embedding / FlexSearch / 规则） |
 
 ---
 
@@ -2560,68 +2475,31 @@ bun run stylelint          # 样式检查
 
 或者依赖 Git Hooks 自动执行（已配置 Husky）。
 
-### Q6: Chrome Built-in AI (Summarizer API) 是如何工作的？
+### Q6: Pro 托管 LLM 是如何工作的？
 
-**A**: Summarizer API 是 Chrome 138+ 内置的摘要生成能力，作为内部技术优化使用：
+**A**: Pro 用户默认使用 otterSage 服务端代理的 **DeepSeek V4 Flash**，无需配置 API Key。
 
-**工作原理**：
+**工作流程**：
 
-- ✅ 完全在本地运行，数据不上传
-- ✅ 专用摘要模型，质量比通用 Prompt API 高 30-50%
-- ✅ 速度快 2-3x，无需网络请求
+1. 扩展携带 Supabase Access Token 调用 `POST /api/ai/hosted/complete`
+2. 后端验证 Pro 订阅 + 检查月度配额（默认 999 次/月）
+3. 后端代理 DeepSeek API，返回生成结果与剩余配额
+4. 一键整理等任务经 `llm-adapter` 统一调用
 
-**使用场景**：
-
-1. **书签摘要生成**（P0-1）：使用 `tl;dr` 类型生成书签内容摘要
-2. **长文本预处理**（P0-2）：使用 `key-points` 类型压缩长文本后再生成 Embedding
-3. **文件夹描述生成**（P1）：使用 `headline` 类型生成文件夹标题
-
-**降级策略**：
+**Provider 优先级**：
 
 ```
-本地 Embedding（核心）
-    ↓ 需要长文本压缩/摘要
-Summarizer API (Chrome 138+, 本地, 免费)
-    ↓ 不可用
-Prompt API (Chrome 127+)
-    ↓ 仍不可用
-保持原始本地 Embedding / 规则链路
-    ↓ 仅在需要更高阶生成能力时
-用户自带 API Key (OpenAI/Claude/Gemini/DeepSeek)
+自定义 API Key（已配置时优先，直连第三方）
+    ↓
+Pro 托管 LLM（DeepSeek V4 Flash）
+    ↓
+错误 / 本地 Embedding 兜底
 ```
 
-**用户覆盖率**：
+**隐私说明**：
 
-- 桌面端：85-90%（Chrome 138+ 用户）
-- 移动端：0%（不支持）
-- 整体：约 60-70%
-
-**隐私保护**：
-
-- ✅ 完全本地运行，符合"隐私优先"产品定位
-- ✅ 不经过产品服务器
-- ✅ 用户无感知，自动降级
-
-### Q7: 为什么 Summarizer API 不在 UI 中显示？
-
-**A**: Summarizer API 是**内部技术优化**，不是用户功能：
-
-**设计理念**：
-
-- ✅ 用户只需要知道"书签摘要质量更好了"
-- ✅ 不需要知道"是用 Summarizer API 还是 Prompt API"
-- ✅ 降级策略自动执行，用户无感知
-
-**类比**：
-
-- 就像浏览器使用 GPU 加速渲染，用户不需要在设置中看到"启用 GPU 加速"开关
-- 技术细节对用户来说是黑盒，只要结果好就行
-
-**实现约束**：
-
-- ❌ 禁止在 UI 中显示"Summarizer API 状态"
-- ❌ 禁止在设置中添加"启用 Summarizer API"开关
-- ✅ 只在开发者工具的日志中记录使用情况
+- 托管模式会发送**书签标题 + URL**到服务器
+- 配置自定义 API Key 后，数据直连第三方，不经 otterSage 服务器
 
 ---
 

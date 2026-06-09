@@ -14,6 +14,7 @@
  */
 
 import { logger } from '@/infrastructure/logging/logger'
+import { isBookmarkSyncBatchSuspended } from '@/core/bookmark/bookmark-sync-batch'
 import { bookmarkSyncService } from '@/services/bookmark-sync-service'
 // ⚠️ 临时注释：scheduleTraitRebuildForIds 导致 background.js 导入 app-components
 // import { scheduleTraitRebuildForIds } from '@/services/bookmark-trait-service'
@@ -31,6 +32,14 @@ async function syncAndBroadcast(
   forceFullSync = false
 ): Promise<void> {
   try {
+    if (await isBookmarkSyncBatchSuspended()) {
+      logger.debug('BackgroundBookmarks', '批量应用进行中，跳过自动同步', {
+        eventType,
+        bookmarkId
+      })
+      return
+    }
+
     logger.info('BackgroundBookmarks', `🔄 书签 ${eventType}:`, bookmarkId)
 
     // 1. 根据情况选择全量或增量同步（无论内部/外部都需要同步数据）

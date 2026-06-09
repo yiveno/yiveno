@@ -30,7 +30,18 @@ head_sampling_rate = 0
 # 注意：以下变量将由 Cloudflare Secrets 自动替换。
 # 在本地开发时，`wrangler dev` 会从 .dev.vars 文件中读取这些值。
 [vars]
+SUPABASE_URL = "https://ugxgxytykxblctsyulsg.supabase.co"
+SUPABASE_ANON_KEY = "sb_publishable_2FY9uDfqNbLwUYXxgcu8lw_qQ8SEbXo"
 REDIRECT_URI_ALLOWLIST = "https://ottersage.com,http://localhost:3001,http://localhost:3002"
+AI_HOSTED_MODEL = "deepseek-v4-flash"
+AI_HOSTED_MONTHLY_QUOTA = "999"
+DEEPSEEK_API_BASE = "https://api.deepseek.com"
+
+[[kv_namespaces]]
+binding = "AI_USAGE_KV"
+id = "7e3a0b3f52654b7194ed21015f1779c5"
+preview_id = "1bc22ced5a424d55ad14ca9f748ba900"
+
 [ai]
 binding = "AI"
 

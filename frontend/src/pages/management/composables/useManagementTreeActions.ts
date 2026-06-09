@@ -1,12 +1,13 @@
-import { nextTick, ref, type Ref } from 'vue'
+import { ref, type Ref } from 'vue'
 import type { BookmarkNode } from '@/types'
 import { logger } from '@/infrastructure/logging/logger'
 import { message } from '@/application/message/message-service'
 import { isInternalProtocolUrl, readMwcTextFieldValue } from '../utils/management-utils'
+import { waitForTreePaint } from '../utils/management-tree-expand'
 import { t } from '@/utils/i18n-helpers'
 
 interface BookmarkTreeInstance {
-  expandAll?: () => void
+  expandAll?: () => boolean | void
   collapseAll?: () => void
   clearSelection?: () => void
   selectNodesByIds?: (ids: string[], options?: { append?: boolean }) => void
@@ -45,19 +46,11 @@ interface UseManagementTreeActionsOptions {
   isLeftPanelCollapsed: Ref<boolean>
   isPageLoading: Ref<boolean>
   loadingMessage: Ref<string>
-  leftSearchResults: Ref<BookmarkNode[]>
-  rightSearchResults: Ref<BookmarkNode[]>
-  isLeftSearchActive: Ref<boolean>
-  isRightSearchActive: Ref<boolean>
   rightSelectedIds: Ref<string[]>
 }
 
 export function useManagementTreeActions(options: UseManagementTreeActionsOptions): {
   clearRightSelection: () => void
-  handleLeftSearch: (results: BookmarkNode[]) => Promise<void> | void
-  handleLeftSearchClear: () => void
-  handleRightSearch: (results: BookmarkNode[]) => Promise<void> | void
-  handleRightSearchClear: () => void
   onEditBookmarkTitleInput: (ev: Event) => void
   onEditBookmarkUrlInput: (ev: Event) => void
   onEditFolderTitleInput: (ev: Event) => void
@@ -81,46 +74,6 @@ export function useManagementTreeActions(options: UseManagementTreeActionsOption
     } catch {
       /* ignore */
     }
-  }
-
-  async function handleLeftSearch(results: BookmarkNode[]): Promise<void> {
-    options.leftSearchResults.value = results
-    options.isLeftSearchActive.value = true
-    await nextTick()
-    if (results.length > 0) {
-      options.leftTreeRef.value?.expandAll?.()
-      options.leftExpandAll.value = true
-    } else {
-      options.leftTreeRef.value?.collapseAll?.()
-      options.leftExpandAll.value = false
-    }
-  }
-
-  function handleLeftSearchClear(): void {
-    options.isLeftSearchActive.value = false
-    options.leftSearchResults.value = []
-    options.leftTreeRef.value?.collapseAll?.()
-    options.leftExpandAll.value = false
-  }
-
-  async function handleRightSearch(results: BookmarkNode[]): Promise<void> {
-    options.rightSearchResults.value = results
-    options.isRightSearchActive.value = true
-    await nextTick()
-    if (results.length > 0) {
-      options.rightTreeRef.value?.expandAll?.()
-      options.rightExpandAll.value = true
-    } else {
-      options.rightTreeRef.value?.collapseAll?.()
-      options.rightExpandAll.value = false
-    }
-  }
-
-  function handleRightSearchClear(): void {
-    options.isRightSearchActive.value = false
-    options.rightSearchResults.value = []
-    options.rightTreeRef.value?.collapseAll?.()
-    options.rightExpandAll.value = false
   }
 
   function onEditBookmarkTitleInput(ev: Event): void {
@@ -173,21 +126,17 @@ export function useManagementTreeActions(options: UseManagementTreeActionsOption
 
     const expanding = true
     isExpanding.value = expanding
-    options.isPageLoading.value = true
-    options.loadingMessage.value = options.leftExpandAll.value ? '正在收起...' : '正在展开...'
 
-    await nextTick()
-    await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
+    await waitForTreePaint()
 
     if (options.leftExpandAll.value) {
       options.leftTreeRef.value?.collapseAll?.()
       options.leftExpandAll.value = false
     } else {
-      options.leftTreeRef.value?.expandAll?.()
-      options.leftExpandAll.value = true
+      const expanded = options.leftTreeRef.value?.expandAll?.()
+      options.leftExpandAll.value = expanded !== false
     }
 
-    options.isPageLoading.value = false
     if (isExpanding.value === expanding) {
       isExpanding.value = false
     }
@@ -198,21 +147,17 @@ export function useManagementTreeActions(options: UseManagementTreeActionsOption
 
     const expanding = true
     isExpanding.value = expanding
-    options.isPageLoading.value = true
-    options.loadingMessage.value = options.rightExpandAll.value ? '正在收起...' : '正在展开...'
 
-    await nextTick()
-    await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
+    await waitForTreePaint()
 
     if (options.rightExpandAll.value) {
       options.rightTreeRef.value?.collapseAll?.()
       options.rightExpandAll.value = false
     } else {
-      options.rightTreeRef.value?.expandAll?.()
-      options.rightExpandAll.value = true
+      const expanded = options.rightTreeRef.value?.expandAll?.()
+      options.rightExpandAll.value = expanded !== false
     }
 
-    options.isPageLoading.value = false
     if (isExpanding.value === expanding) {
       isExpanding.value = false
     }
@@ -226,9 +171,9 @@ export function useManagementTreeActions(options: UseManagementTreeActionsOption
     if (checked) {
       const allIds = options.rightTreeIndex.getAllNodeIds()
       options.rightTreeRef.value?.selectNodesByIds?.(allIds, { append: false })
-      nextTick(() => {
-        options.rightTreeRef.value?.expandAll?.()
-        options.rightExpandAll.value = true
+      void waitForTreePaint().then(() => {
+        const expanded = options.rightTreeRef.value?.expandAll?.()
+        options.rightExpandAll.value = expanded !== false
       })
     } else {
       options.rightTreeRef.value?.selectNodesByIds?.([], { append: false })
@@ -281,10 +226,6 @@ export function useManagementTreeActions(options: UseManagementTreeActionsOption
 
   return {
     clearRightSelection,
-    handleLeftSearch,
-    handleLeftSearchClear,
-    handleRightSearch,
-    handleRightSearchClear,
     onEditBookmarkTitleInput,
     onEditBookmarkUrlInput,
     onEditFolderTitleInput,

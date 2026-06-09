@@ -17,7 +17,6 @@ import { noopLogger } from '@/core/common/logger'
 import { indexedDBManager, type BookmarkRecord } from '@/infrastructure/indexeddb/manager'
 import { SearchEngine } from './engine'
 import { semanticSearch } from './strategies/semantic-strategy'
-import { detectIntent } from './intent-detector'
 import { FlexSearchStrategy } from './strategies/flexsearch-strategy'
 import { QueryCache } from './query-cache'
 import { HighlightEngine } from './highlight'
@@ -118,11 +117,10 @@ export class QueryService {
   }
 
   /**
-   * 解析查询策略
+   * 规范化查询策略（仅 fuse / hybrid）
    */
-  private async resolveStrategy(strategy: SearchStrategy, query: string): Promise<SearchStrategy> {
-    const resolvedStrategy = strategy === 'auto' ? detectIntent(query).intent : strategy
-    return resolvedStrategy
+  private normalizeStrategy(strategy: SearchStrategy | undefined): SearchStrategy {
+    return strategy === 'hybrid' ? 'hybrid' : 'fuse'
   }
 
   /**
@@ -161,9 +159,7 @@ export class QueryService {
   ): Promise<EnhancedSearchResult[]> {
     let results: EnhancedSearchResult[]
 
-    if (strategy === 'semantic') {
-      results = await this.searchWithSemantic(query, options)
-    } else if (strategy === 'hybrid') {
+    if (strategy === 'hybrid') {
       results = await this.searchWithHybrid(query, options)
     } else {
       results = await this.searchWithFuse(query, options)
@@ -203,18 +199,17 @@ export class QueryService {
    */
   async search(query: string, options: SearchOptions = {}): Promise<SearchResponse> {
     const startTime = performance.now()
-    const { limit = 100, offset = 0, timeout: _timeout = 5000, strategy = 'auto' } = options
+    const { limit = 100, offset = 0, timeout: _timeout = 5000, strategy } = options
 
     const normalizedQuery = this.normalizeQuery(query)
-    this.logger.info('QueryService', `🔍 查询: "${normalizedQuery}" strategy=${strategy}`)
+    const resolvedStrategy = this.normalizeStrategy(strategy)
+    this.logger.info('QueryService', `🔍 查询: "${normalizedQuery}" strategy=${resolvedStrategy}`)
 
     if (!normalizedQuery) {
       return this.emptyResponse(startTime, 'fuse')
     }
 
     try {
-      // 解析策略
-      const resolvedStrategy = await this.resolveStrategy(strategy, normalizedQuery)
       this.logger.info('QueryService', `📌 执行策略: ${resolvedStrategy}`)
 
       // 检查缓存
@@ -254,25 +249,12 @@ export class QueryService {
   /**
    * 语义搜索
    */
-  private async searchWithSemantic(
-    query: string,
-    options: SearchOptions
-  ): Promise<EnhancedSearchResult[]> {
-    const topK = options.limit || 20
-    const semanticResults = await semanticSearch(query, topK)
-    return semanticResults.map(r => ({
-      bookmark: r.bookmark,
-      score: r.score,
-      pathString: r.bookmark.pathString,
-      matchedFields: ['semantic'],
-      highlights: {},
-      relevanceFactors: this.calculateRelevanceFactors(r.bookmark, query, r.score)
-    }))
+  private getSemanticTimeout(options: SearchOptions): number {
+    return options.timeout ?? 600
   }
 
   /**
    * Hybrid 搜索：Fuse 立即返回，Semantic 异步合并
-   * 加入超时保护：600ms 内 Semantic 未返回则只用 Fuse 结果
    */
   private async searchWithHybrid(
     query: string,
@@ -286,10 +268,10 @@ export class QueryService {
       limit: limit * 2
     })
 
-    // Semantic 加超时保护，600ms 内未返回则降级到空数组
+    const semanticTimeout = this.getSemanticTimeout(options)
     const semanticPromise: Promise<SemanticRaw> = Promise.race([
-      semanticSearch(query, limit),
-      new Promise<SemanticRaw>(resolve => setTimeout(() => resolve([]), 600))
+      semanticSearch(query, limit, options.minScore, { timeout: semanticTimeout }),
+      new Promise<SemanticRaw>(resolve => setTimeout(() => resolve([]), semanticTimeout))
     ]).catch((): SemanticRaw => [])
 
     const [fuseResults, semanticRaw] = await Promise.all([fusePromise, semanticPromise])
@@ -322,6 +304,14 @@ export class QueryService {
   ): Promise<EnhancedSearchResult[]> {
     const normalizedQuery = this.normalizeQuery(query)
     const limit = options.limit || 20
+    const strategy = this.normalizeStrategy(options.strategy)
+
+    if (strategy === 'fuse') {
+      const fuseOnly = await this.searchWithFuse(normalizedQuery, { ...options, limit })
+      const highlighted =
+        options.highlight !== false ? this.addHighlights(fuseOnly, normalizedQuery) : fuseOnly
+      return highlighted.slice(0, limit)
+    }
 
     // 立即返回 Fuse 结果
     const fuseResults = await this.searchWithFuse(normalizedQuery, {
@@ -331,8 +321,10 @@ export class QueryService {
     const highlighted =
       options.highlight !== false ? this.addHighlights(fuseResults, normalizedQuery) : fuseResults
 
+    const semanticTimeout = this.getSemanticTimeout(options)
+
     // 异步执行 Semantic，完成后通知更新
-    semanticSearch(normalizedQuery, limit)
+    semanticSearch(normalizedQuery, limit, options.minScore, { timeout: semanticTimeout })
       .then(semanticRaw => {
         if (!semanticRaw.length) return
         const semanticResults = semanticRaw.map(r => ({

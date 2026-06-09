@@ -38,7 +38,6 @@ import type {
 } from '@/application/query/bookmark-memory-search-service'
 import { bookmarkSearchService } from '@/application/query/bookmark-search-service'
 import type { BookmarkNode } from '@/types'
-import type { SearchStrategy } from '@/types/domain/query'
 import { logger } from '@/infrastructure/logging/logger'
 
 /**
@@ -51,15 +50,6 @@ export interface UseBookmarkSearchOptions {
    * - memory: 从内存数据筛选（同步）
    */
   mode?: 'indexeddb' | 'memory'
-
-  /**
-   * 搜索策略（仅 indexeddb 模式有效）
-   * - auto: 自动根据输入意图选择（默认）
-   * - fuse: 本地 Fuse.js 模糊匹配
-   * - semantic: 本地语义向量搜索
-   * - hybrid: Fuse 立即返回 + Semantic 异步合并
-   */
-  strategy?: SearchStrategy
 
   /**
    * 内存数据源
@@ -125,7 +115,6 @@ export interface UseBookmarkSearchReturn {
 export function useBookmarkSearch(options: UseBookmarkSearchOptions = {}): UseBookmarkSearchReturn {
   const {
     mode = 'indexeddb',
-    strategy = 'auto',
     data,
     limit = 100,
     autoFilter = true,
@@ -193,9 +182,8 @@ export function useBookmarkSearch(options: UseBookmarkSearchOptions = {}): UseBo
         executionTime.value = result.executionTime
         filterSource.value = 'memory'
       } else {
-        // IndexedDB 模式：通过 bookmarkSearchService，支持 strategy
+        // IndexedDB 模式：通过 bookmarkSearchService（策略由 Pro + 语义开关自动解析）
         const result = await bookmarkSearchService.searchWithMetadata(trimmedQuery, {
-          strategy,
           limit,
           highlight: true,
           filterFolders: filterOptions.filterFolders,
@@ -254,11 +242,10 @@ export function useBookmarkSearch(options: UseBookmarkSearchOptions = {}): UseBo
         filterSource.value = 'indexeddb'
       }
 
-      logger.info(
-        'useBookmarkSearch',
-        `筛选完成 (${filterSource.value}, strategy=${strategy}): "${trimmedQuery}"`,
-        { total: totalResults.value, executionTime: executionTime.value }
-      )
+      logger.info('useBookmarkSearch', `筛选完成 (${filterSource.value}): "${trimmedQuery}"`, {
+        total: totalResults.value,
+        executionTime: executionTime.value
+      })
     } catch (err) {
       const filterError = err as Error
       error.value = filterError

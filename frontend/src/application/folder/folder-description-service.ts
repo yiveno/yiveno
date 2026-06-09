@@ -1,32 +1,20 @@
 /**
  * 文件夹描述生成服务
- *
- * 职责：
- * 1. 根据文件夹下的书签内容自动生成文件夹描述
- * 2. 批量生成多个文件夹的描述
- * 3. 提升文件夹可读性和搜索体验
- *
- * 使用 Summarizer API 生成高质量描述
  */
 
 import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
-import { builtInSummarizerClient } from '@/infrastructure/llm/builtin-summarizer-client'
 import { llmAdapter } from '@/infrastructure/llm/llm-adapter'
+import type { LLMProvider } from '@/types/infrastructure/llm'
 import { logger } from '@/infrastructure/logging/logger'
 
 const LOG_TAG = 'FolderDescriptionService'
 
 /** 文件夹描述结果 */
 export interface FolderDescriptionResult {
-  /** 文件夹 ID */
   folderId: string
-  /** 文件夹名称 */
   folderName: string
-  /** 生成的描述 */
   description: string
-  /** 使用的提供者 */
-  provider: 'builtin' | 'openai' | 'claude' | 'gemini' | 'deepseek'
-  /** 基于的书签数量 */
+  provider: LLMProvider
   bookmarkCount: number
 }
 
@@ -40,76 +28,31 @@ export interface FolderDescriptionProgress {
 export class FolderDescriptionService {
   /**
    * 为单个文件夹生成描述
-   *
-   * 优先级：
-   * 1. Summarizer API（headline 类型，生成标题式摘要）
-   * 2. Prompt API（fallback）
-   *
-   * @param folderId 文件夹 ID
    */
   async generateDescription(folderId: string): Promise<FolderDescriptionResult> {
-    // 1. 获取文件夹信息
     const folder = await indexedDBManager.getBookmarkById(folderId)
     if (!folder || !folder.isFolder) {
       throw new Error(`文件夹不存在或不是文件夹: ${folderId}`)
     }
 
-    // 2. 获取该文件夹下的所有书签
     const allBookmarks = await indexedDBManager.getAllBookmarks()
     const childBookmarks = allBookmarks.filter(b => b.parentId === folderId && !b.isFolder && b.url)
 
     if (childBookmarks.length === 0) {
-      // 空文件夹：返回默认描述
       return {
         folderId: folder.id,
         folderName: folder.title,
         description: '空文件夹',
-        provider: 'builtin',
+        provider: 'hosted',
         bookmarkCount: 0
       }
     }
 
-    // 3. 构造输入文本（所有书签标题）
     const bookmarkTitles = childBookmarks
       .map(b => b.title)
       .filter(Boolean)
-      .slice(0, 50) // 最多取 50 个书签
+      .slice(0, 50)
       .join('\n')
-
-    // 4. 优先尝试 Summarizer API
-    try {
-      const summarizerAvailable = await builtInSummarizerClient.isAvailable()
-
-      if (summarizerAvailable) {
-        logger.info(LOG_TAG, '使用 Summarizer API 生成文件夹描述', {
-          folderId,
-          folderName: folder.title,
-          bookmarkCount: childBookmarks.length
-        })
-
-        const result = await builtInSummarizerClient.summarize(bookmarkTitles, {
-          type: 'headline',
-          format: 'plain-text',
-          length: 'short'
-        })
-
-        return {
-          folderId: folder.id,
-          folderName: folder.title,
-          description: result.summary,
-          provider: 'builtin',
-          bookmarkCount: childBookmarks.length
-        }
-      }
-    } catch (error) {
-      logger.warn(LOG_TAG, 'Summarizer API 失败，降级到 Prompt API', error)
-    }
-
-    // 5. 降级到 Prompt API
-    logger.info(LOG_TAG, '使用 Prompt API 生成文件夹描述', {
-      folderId,
-      folderName: folder.title
-    })
 
     try {
       const prompt = `请为这个书签文件夹生成一个简洁的描述（30字以内）：
@@ -140,21 +83,14 @@ ${bookmarkTitles}
 
   /**
    * 批量生成文件夹描述
-   *
-   * @param folderIds 文件夹 ID 数组（如果为空，则处理所有文件夹）
-   * @param onProgress 进度回调
    */
   async generateBatch(
     folderIds?: string[],
     onProgress?: (progress: FolderDescriptionProgress) => void
   ): Promise<FolderDescriptionResult[]> {
-    // 1. 获取所有书签
     const allBookmarks = await indexedDBManager.getAllBookmarks()
-
-    // 2. 找出所有文件夹
     let folders = allBookmarks.filter(b => b.isFolder)
 
-    // 3. 如果指定了 folderIds，则只处理这些文件夹
     if (folderIds && folderIds.length > 0) {
       folders = folders.filter(f => folderIds.includes(f.id))
     }
@@ -174,7 +110,6 @@ ${bookmarkTitles}
 
     const results: FolderDescriptionResult[] = []
 
-    // 4. 逐个生成描述
     for (const folder of folders) {
       try {
         const result = await this.generateDescription(folder.id)
@@ -186,8 +121,6 @@ ${bookmarkTitles}
 
       progress.processed++
       onProgress?.(progress)
-
-      // 让出主线程
       await new Promise(resolve => setTimeout(resolve, 0))
     }
 
@@ -200,14 +133,7 @@ ${bookmarkTitles}
    * 检查是否有可用的描述生成服务
    */
   async isAvailable(): Promise<boolean> {
-    // 检查 Summarizer API
-    const summarizerAvailable = await builtInSummarizerClient.isAvailable()
-    if (summarizerAvailable) {
-      return true
-    }
-
-    // 检查 Prompt API
-    return await llmAdapter.hasAvailableProvider()
+    return llmAdapter.hasAvailableProvider()
   }
 
   /**
@@ -215,36 +141,24 @@ ${bookmarkTitles}
    */
   async getStatus(): Promise<{
     available: boolean
-    provider: 'summarizer' | 'prompt' | 'none'
+    provider: 'llm' | 'none'
     message: string
   }> {
-    const summarizerAvailable = await builtInSummarizerClient.isAvailable()
-    if (summarizerAvailable) {
+    const available = await llmAdapter.hasAvailableProvider()
+    if (available) {
       return {
         available: true,
-        provider: 'summarizer',
-        message: '使用 Summarizer API（质量更高、速度更快）'
-      }
-    }
-
-    const promptAvailable = await llmAdapter.hasAvailableProvider()
-    if (promptAvailable) {
-      return {
-        available: true,
-        provider: 'prompt',
-        message: '使用 Prompt API（通用 LLM）'
+        provider: 'llm',
+        message: '使用 otterSage 托管 AI 或自定义 API Key'
       }
     }
 
     return {
       available: false,
       provider: 'none',
-      message: '没有可用的 AI 服务，请在设置页面配置'
+      message: '没有可用的 AI 服务，请登录 Pro 或配置 API Key'
     }
   }
 }
 
-/**
- * 单例实例
- */
 export const folderDescriptionService = new FolderDescriptionService()

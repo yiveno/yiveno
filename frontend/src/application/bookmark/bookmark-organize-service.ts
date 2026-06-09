@@ -3,32 +3,48 @@
  *
  * 职责：
  * - 一键整理书签（AI 生成文件夹结构）
- * - 结合 Embedding 和 LLM 的混合方案
+ * - LLM 生成分类结构（整理流程不阻塞等待 Embedding）
  * - 提供预览和手动调整功能
  * - 执行书签移动操作
  */
 
-import { aiAppService } from '@/application/ai/ai-app-service'
+import { aiAppService, AI_ORGANIZE_BATCH_SIZE } from '@/application/ai/ai-app-service'
+import { buildProposalTreeFromOrganizeResult } from '@/application/bookmark/bookmark-organize-proposal-builder'
+import {
+  auditOrganizeProposalIntegrity,
+  type OrganizeProposalAuditResult
+} from '@/application/bookmark/organize-proposal-audit'
 import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
-import { embeddingService } from '@/infrastructure/embedding/embedding-service'
 import { logger } from '@/infrastructure/logging/logger'
+import { llmAdapter } from '@/infrastructure/llm/llm-adapter'
+import {
+  ORGANIZE_TOTAL_STAGES,
+  type OrganizeProgress,
+  type OrganizeStageKey
+} from '@/core/bookmark/organize-progress'
+import type { BookmarkNode } from '@/types'
+
+export type { OrganizeProgress, OrganizeStageKey } from '@/core/bookmark/organize-progress'
 
 /**
- * 整理进度
+ * 整理提案完整性校验失败（不可自动修复时使用）
  */
-export interface OrganizeProgress {
-  /** 总阶段数 */
-  totalStages: number
-  /** 当前阶段 */
-  currentStage: number
-  /** 当前阶段名称 */
-  stageName: string
-  /** 总书签数 */
-  totalBookmarks: number
-  /** 已处理书签数 */
-  processedBookmarks: number
-  /** 是否完成 */
-  isComplete: boolean
+export class OrganizeIntegrityError extends Error {
+  readonly audit: OrganizeProposalAuditResult
+
+  constructor(audit: OrganizeProposalAuditResult) {
+    super('organize proposal integrity failed')
+    this.name = 'OrganizeIntegrityError'
+    this.audit = audit
+  }
+}
+
+/** 一键整理失败（对用户仅展示统一失败提示） */
+export class OrganizeFailureError extends Error {
+  constructor(message = 'organize failed') {
+    super(message)
+    this.name = 'OrganizeFailureError'
+  }
 }
 
 /**
@@ -43,9 +59,26 @@ export interface FolderStructure {
 /**
  * 整理结果
  */
+/** 提案树构建用的书签快照 */
+export interface OrganizeBookmarkSnapshot {
+  id: string
+  title: string
+  url: string
+  parentId?: string
+  index?: number
+}
+
+/** 一键整理可选参数 */
+export interface OrganizeOptions {
+  /** 用户补充说明，会一并传给 LLM */
+  userNotes?: string
+}
+
 export interface OrganizeResult {
   /** 生成的文件夹结构 */
   folders: FolderStructure[]
+  /** 参与整理的书签快照（供提案树挂载） */
+  bookmarkItems: OrganizeBookmarkSnapshot[]
   /** 原始书签数量 */
   originalCount: number
   /** 分类书签数量 */
@@ -75,79 +108,148 @@ export class BookmarkOrganizeService {
    * @returns 整理结果
    */
   async organizeBookmarks(
-    progressCallback?: (progress: OrganizeProgress) => void
+    progressCallback?: (progress: OrganizeProgress) => void,
+    options?: OrganizeOptions
   ): Promise<OrganizeResult> {
-    logger.info(this.loggerPrefix, '开始一键整理书签')
+    const userNotes = options?.userNotes?.trim() || undefined
+    logger.info(this.loggerPrefix, '开始一键整理书签', {
+      hasUserNotes: Boolean(userNotes)
+    })
 
     // 阶段 1: 获取书签数据
-    this.updateProgress(progressCallback, {
-      totalStages: 4,
-      currentStage: 1,
-      stageName: '获取书签数据',
-      totalBookmarks: 0,
-      processedBookmarks: 0,
+    this.emitProgress(progressCallback, 'load_bookmarks', 1, {
+      stageProgress: 0,
+      stageCurrent: 0,
+      stageTotal: 0,
+      stageUnit: 'none',
+      bookmarkCount: 0,
       isComplete: false
     })
 
     const bookmarks = await indexedDBManager.getAllBookmarks()
     logger.info(this.loggerPrefix, `获取到 ${bookmarks.length} 个书签`)
 
-    // 过滤掉文件夹
+    // 按书签 ID 逐条参与整理：全部叶子书签（含无 URL / 失效链接，URL 非必填）
     const bookmarkItems = bookmarks.filter(b => !b.isFolder)
-    logger.info(this.loggerPrefix, `过滤后剩余 ${bookmarkItems.length} 个书签项`)
+    const noUrlCount = bookmarkItems.filter(b => !b.url?.trim()).length
+    if (noUrlCount > 0) {
+      logger.info(this.loggerPrefix, '含无 URL 书签，仍按 ID 参与整理', { noUrlCount })
+    }
+    logger.info(this.loggerPrefix, `参与整理的书签项: ${bookmarkItems.length}`)
 
-    // 阶段 2: 生成 Embedding
-    this.updateProgress(progressCallback, {
-      totalStages: 4,
-      currentStage: 2,
-      stageName: '生成向量嵌入',
-      totalBookmarks: bookmarkItems.length,
-      processedBookmarks: 0,
+    if (bookmarkItems.length === 0) {
+      throw new OrganizeFailureError('no bookmarks to organize')
+    }
+
+    const bookmarkCount = bookmarkItems.length
+
+    this.emitProgress(progressCallback, 'load_bookmarks', 1, {
+      stageProgress: 1,
+      stageCurrent: bookmarkCount,
+      stageTotal: bookmarkCount,
+      stageUnit: 'bookmarks',
+      bookmarkCount,
       isComplete: false
     })
 
-    try {
-      await embeddingService.syncBookmarks(bookmarkItems, progress => {
-        this.updateProgress(progressCallback, {
-          totalStages: 4,
-          currentStage: 2,
-          stageName: '生成向量嵌入',
-          totalBookmarks: progress.total,
-          processedBookmarks: progress.processed,
-          isComplete: false
-        })
-      })
-    } catch (error) {
-      logger.warn(this.loggerPrefix, 'Embedding 同步失败，继续使用 AI 分析', error)
-    }
+    // 阶段 2: 理解书签内容（一键整理仅依赖 LLM 标题/URL，不阻塞等待 ONNX 模型下载）
+    logger.info(this.loggerPrefix, '跳过 Embedding 同步，直接进入 AI 分类')
+    this.emitProgress(progressCallback, 'index_bookmarks', 2, {
+      stageProgress: 1,
+      stageCurrent: bookmarkCount,
+      stageTotal: bookmarkCount,
+      stageUnit: 'bookmarks',
+      bookmarkCount,
+      isComplete: false
+    })
 
     // 阶段 3: AI 分析并生成文件夹结构
-    this.updateProgress(progressCallback, {
-      totalStages: 4,
-      currentStage: 3,
-      stageName: 'AI 分析书签内容',
-      totalBookmarks: bookmarkItems.length,
-      processedBookmarks: bookmarkItems.length,
+    const totalAiBatches = Math.max(1, Math.ceil(bookmarkCount / AI_ORGANIZE_BATCH_SIZE))
+    this.emitProgress(progressCallback, 'ai_organize', 3, {
+      stageProgress: 0,
+      stageCurrent: 0,
+      stageTotal: totalAiBatches,
+      stageUnit: 'batches',
+      bookmarkCount,
       isComplete: false
     })
 
     // 准备发送给 AI 的数据
-    const aiBookmarks = bookmarkItems.map(b => ({
-      id: b.id,
-      title: b.title,
-      url: b.url || '',
-      existingTags: b.tags
-    }))
+    const organizeSnapshots: OrganizeBookmarkSnapshot[] = bookmarkItems.map(bookmark => {
+      const snapshot: OrganizeBookmarkSnapshot = {
+        id: bookmark.id,
+        title: bookmark.title,
+        url: bookmark.url || '',
+        index: bookmark.index
+      }
+      if (bookmark.parentId) {
+        snapshot.parentId = bookmark.parentId
+      }
+      return snapshot
+    })
 
-    const aiResult = await aiAppService.autoOrganizeBookmarks(aiBookmarks)
+    const aiBookmarks = organizeSnapshots.map(bookmark => {
+      const tags = bookmarkItems.find(item => item.id === bookmark.id)?.tags
+      const payload: {
+        id: string
+        title: string
+        url: string
+        existingTags?: string[]
+      } = {
+        id: bookmark.id,
+        title: bookmark.title,
+        url: bookmark.url
+      }
+      if (tags && tags.length > 0) {
+        payload.existingTags = tags
+      }
+      return payload
+    })
 
-    // 阶段 4: 完成
-    this.updateProgress(progressCallback, {
-      totalStages: 4,
-      currentStage: 4,
-      stageName: '整理完成',
-      totalBookmarks: bookmarkItems.length,
-      processedBookmarks: bookmarkItems.length,
+    const aiResult = await aiAppService.autoOrganizeBookmarks(aiBookmarks, {
+      ...(userNotes ? { userNotes } : {}),
+      onProgress: aiProgress => {
+        const stageTotal = aiProgress.totalBatches > 0 ? aiProgress.totalBatches : totalAiBatches
+        const stageCurrent = aiProgress.processedBatches
+        this.emitProgress(progressCallback, 'ai_organize', 3, {
+          stageProgress: stageTotal > 0 ? stageCurrent / stageTotal : 0,
+          stageCurrent,
+          stageTotal,
+          stageUnit: 'batches',
+          detailCurrent: aiProgress.processedBookmarks,
+          detailTotal: aiProgress.totalBookmarks,
+          detailUnit: 'bookmarks',
+          bookmarkCount,
+          isComplete: false
+        })
+      }
+    })
+
+    this.emitProgress(progressCallback, 'ai_organize', 3, {
+      stageProgress: 1,
+      stageCurrent: totalAiBatches,
+      stageTotal: totalAiBatches,
+      stageUnit: 'batches',
+      bookmarkCount,
+      isComplete: false
+    })
+
+    // 阶段 4: 生成整理预览
+    this.emitProgress(progressCallback, 'complete', 4, {
+      stageProgress: 0,
+      stageCurrent: 0,
+      stageTotal: 1,
+      stageUnit: 'none',
+      bookmarkCount,
+      isComplete: false
+    })
+
+    this.emitProgress(progressCallback, 'complete', 4, {
+      stageProgress: 1,
+      stageCurrent: 1,
+      stageTotal: 1,
+      stageUnit: 'none',
+      bookmarkCount,
       isComplete: true
     })
 
@@ -160,10 +262,11 @@ export class BookmarkOrganizeService {
 
     const result: OrganizeResult = {
       folders: aiResult.folders,
+      bookmarkItems: organizeSnapshots,
       originalCount: bookmarkItems.length,
       organizedCount,
       unclassifiedCount,
-      aiProvider: 'llm' // 实际应该从 aiResult 中获取
+      aiProvider: aiResult.provider
     }
 
     logger.info(this.loggerPrefix, '一键整理完成', {
@@ -177,154 +280,85 @@ export class BookmarkOrganizeService {
   }
 
   /**
-   * 应用整理结果
-   *
-   * 根据用户确认的文件夹结构，执行书签移动操作
-   *
-   * @param folderStructure 文件夹结构
-   * @param progressCallback 进度回调
+   * 将 AI 整理结果转为提案树（供管理页右侧预览）
    */
-  async applyOrganization(
-    folderStructure: FolderStructure[],
-    progressCallback?: (progress: OrganizeProgress) => void
-  ): Promise<void> {
-    logger.info(this.loggerPrefix, '开始应用整理结果', {
-      folderCount: folderStructure.length
-    })
-
-    const totalBookmarks = folderStructure.reduce((sum, f) => sum + f.bookmarkIds.length, 0)
-    let processedBookmarks = 0
-
-    // 阶段 1: 创建文件夹
-    this.updateProgress(progressCallback, {
-      totalStages: 3,
-      currentStage: 1,
-      stageName: '创建文件夹',
-      totalBookmarks,
-      processedBookmarks: 0,
-      isComplete: false
-    })
-
-    const folderIdMap = new Map<string, string>() // path -> folderId
-
-    for (const folder of folderStructure) {
-      try {
-        // 解析文件夹路径（例如："技术 > 前端 > React"）
-        const pathParts = folder.path.split(' > ').filter(p => p.trim())
-        let currentParentId = '1' // 默认创建在书签栏
-
-        // 逐级创建文件夹
-        for (let i = 0; i < pathParts.length; i++) {
-          const folderName = pathParts[i]
-          const currentPath = pathParts.slice(0, i + 1).join(' > ')
-
-          // 检查是否已创建
-          if (folderIdMap.has(currentPath)) {
-            currentParentId = folderIdMap.get(currentPath)!
-            continue
-          }
-
-          // 创建文件夹
-          const response = await chrome.runtime.sendMessage({
-            type: 'CREATE_FOLDER',
-            data: {
-              title: folderName,
-              parentId: currentParentId
-            }
-          })
-
-          if (response.success) {
-            folderIdMap.set(currentPath, response.folderId)
-            currentParentId = response.folderId
-            logger.info(this.loggerPrefix, `创建文件夹: ${currentPath} -> ${response.folderId}`)
-          } else {
-            throw new Error(`创建文件夹失败: ${response.error}`)
-          }
-        }
-
-        // 保存最终文件夹 ID
-        folderIdMap.set(folder.path, currentParentId)
-      } catch (error) {
-        logger.warn(this.loggerPrefix, `创建文件夹失败: ${folder.path}`, error)
-      }
-    }
-
-    // 阶段 2: 移动书签
-    this.updateProgress(progressCallback, {
-      totalStages: 3,
-      currentStage: 2,
-      stageName: '移动书签',
-      totalBookmarks,
-      processedBookmarks: 0,
-      isComplete: false
-    })
-
-    for (const folder of folderStructure) {
-      const targetFolderId = folderIdMap.get(folder.path)
-      if (!targetFolderId) {
-        logger.warn(this.loggerPrefix, `跳过文件夹（未创建）: ${folder.path}`)
-        continue
-      }
-
-      for (const bookmarkId of folder.bookmarkIds) {
-        try {
-          const response = await chrome.runtime.sendMessage({
-            type: 'MOVE_BOOKMARK',
-            data: {
-              id: bookmarkId,
-              parentId: targetFolderId
-            }
-          })
-
-          if (response.success) {
-            processedBookmarks++
-            this.updateProgress(progressCallback, {
-              totalStages: 3,
-              currentStage: 2,
-              stageName: '移动书签',
-              totalBookmarks,
-              processedBookmarks,
-              isComplete: false
-            })
-          } else {
-            logger.warn(this.loggerPrefix, `移动书签失败: ${bookmarkId}`, response.error)
-          }
-
-          // 让出主线程
-          await new Promise(resolve => setTimeout(resolve, 0))
-        } catch (error) {
-          logger.warn(this.loggerPrefix, `移动书签失败: ${bookmarkId}`, error)
-        }
-      }
-    }
-
-    // 阶段 3: 完成
-    this.updateProgress(progressCallback, {
-      totalStages: 3,
-      currentStage: 3,
-      stageName: '整理完成',
-      totalBookmarks,
-      processedBookmarks,
-      isComplete: true
-    })
-
-    logger.info(this.loggerPrefix, '整理结果应用完成', {
-      totalBookmarks,
-      processedBookmarks,
-      folderCount: folderStructure.length
-    })
+  buildProposalPreview(
+    originalRoots: BookmarkNode[],
+    folders: FolderStructure[],
+    bookmarkItems: OrganizeBookmarkSnapshot[]
+  ): BookmarkNode[] {
+    return buildProposalTreeFromOrganizeResult(originalRoots, folders, bookmarkItems)
   }
 
   /**
-   * 更新进度
+   * 校验整理提案是否包含全部参与整理的书签（按 ID，一本不少）。
    */
-  private updateProgress(
-    callback: ((progress: OrganizeProgress) => void) | undefined,
-    progress: OrganizeProgress
-  ): void {
-    if (callback) {
-      callback(progress)
+  auditProposalIntegrity(
+    bookmarkItems: OrganizeBookmarkSnapshot[],
+    proposalRoots: BookmarkNode[]
+  ): OrganizeProposalAuditResult {
+    return auditOrganizeProposalIntegrity(bookmarkItems, proposalRoots)
+  }
+
+  /**
+   * 构建并通过完整性审计的整理提案树；失败则抛出 OrganizeIntegrityError。
+   */
+  buildValidatedProposalPreview(
+    originalRoots: BookmarkNode[],
+    result: OrganizeResult
+  ): BookmarkNode[] {
+    const proposal = buildProposalTreeFromOrganizeResult(
+      originalRoots,
+      result.folders,
+      result.bookmarkItems
+    )
+    const audit = auditOrganizeProposalIntegrity(result.bookmarkItems, proposal)
+    if (!audit.ok) {
+      throw new OrganizeIntegrityError(audit)
     }
+    return proposal
+  }
+
+  /**
+   * 检查 LLM 是否可用
+   */
+  async ensureLlmReady(): Promise<void> {
+    const ready = await llmAdapter.hasAvailableProvider()
+    if (!ready) {
+      throw new Error('请先登录或配置 API Key 后使用 AI 整理')
+    }
+  }
+
+  /**
+   * 推送整理进度
+   */
+  private emitProgress(
+    callback: ((progress: OrganizeProgress) => void) | undefined,
+    stageKey: OrganizeStageKey,
+    currentStage: number,
+    partial: Partial<Omit<OrganizeProgress, 'totalStages' | 'currentStage' | 'stageKey'>> &
+      Pick<OrganizeProgress, 'bookmarkCount' | 'isComplete'>
+  ): void {
+    if (!callback) return
+
+    const stageCurrent = partial.stageCurrent ?? 0
+    const stageTotal = partial.stageTotal ?? 0
+    const stageUnit = partial.stageUnit ?? 'none'
+
+    callback({
+      totalStages: ORGANIZE_TOTAL_STAGES,
+      currentStage,
+      stageKey,
+      stageProgress: partial.stageProgress ?? 0,
+      stageCurrent,
+      stageTotal,
+      stageUnit,
+      detailCurrent: partial.detailCurrent ?? stageCurrent,
+      detailTotal: partial.detailTotal ?? stageTotal,
+      detailUnit: partial.detailUnit ?? stageUnit,
+      bookmarkCount: partial.bookmarkCount,
+      isComplete: partial.isComplete
+    })
   }
 }
 

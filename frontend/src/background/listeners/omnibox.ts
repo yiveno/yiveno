@@ -22,8 +22,18 @@ import { bookmarkSearchService } from '@/application/query/bookmark-search-servi
 import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
 import { bookmarkSyncService } from '@/services/bookmark-sync-service'
 import { localVectorStore } from '@/infrastructure/embedding/local-vector-store'
+import { areEmbeddingVectorsReady } from '@/infrastructure/embedding/embedding-migration'
+import {
+  resolveEffectiveSearchStrategy,
+  shouldSyncBookmarkEmbeddings
+} from '@/core/query/search-mode'
+import { scheduleBookmarkEmbeddingSync } from '@/background/managers/embedding-sync'
+import { dispatchOffscreenRequest } from '@/infrastructure/offscreen/manager'
 
 let dataReadyPromise: Promise<void> | null = null
+
+/** Omnibox 语义检索超时（含 Offscreen 创建 + E5 冷启动） */
+const OMNIBOX_SEMANTIC_TIMEOUT_MS = 30_000
 
 /**
  * 确保书签数据已准备好
@@ -50,12 +60,21 @@ async function ensureDataReady(): Promise<void> {
       const sampleBookmarks = await indexedDBManager.getAllBookmarks(1)
       logger.info('Omnibox', `📊 IndexedDB 中书签数量: ${sampleBookmarks.length}`)
 
-      // 检查向量库状态
+      // 检查向量库状态，未就绪则后台触发 re-embed
       try {
         const vectorCount = await localVectorStore.count()
-        logger.info('Omnibox', `🧠 向量库中向量数量: ${vectorCount}`)
-        if (vectorCount === 0) {
-          logger.warn('Omnibox', '⚠️ 向量库为空，语义搜索将不可用')
+        const vectorsReady = await areEmbeddingVectorsReady()
+        logger.info('Omnibox', `🧠 向量库: ${vectorCount} 条, 就绪=${vectorsReady}`)
+        const semanticAllowed = await shouldSyncBookmarkEmbeddings()
+        if (semanticAllowed && !vectorsReady) {
+          logger.warn('Omnibox', '⚠️ 向量未就绪，后台启动 embedding 同步')
+          scheduleBookmarkEmbeddingSync('omnibox-data-ready', 0)
+        } else if (semanticAllowed) {
+          void dispatchOffscreenRequest({ type: 'EMBEDDING_WARMUP' }, { timeout: 60_000 }).catch(
+            () => {
+              /* 预热失败不阻塞检索 */
+            }
+          )
         }
       } catch (error) {
         logger.warn('Omnibox', '⚠️ 无法检查向量库状态', error)
@@ -171,6 +190,14 @@ function buildSearchingDescription(query: string): string {
 }
 
 /**
+ * 向量索引建立中的提示
+ */
+function buildIndexingDescription(query: string): string {
+  const safeQuery = escapeOmniboxText(truncateWithEllipsis(query, 80) || '（空）')
+  return `<dim>正在建立语义索引，请稍候再试：</dim> <match>${safeQuery}</match>`
+}
+
+/**
  * 构造"找到匹配数量"提示描述，提示当前命中情况。
  */
 function buildResultSummaryDescription(query: string, count: number): string {
@@ -202,6 +229,39 @@ const MIN_SCORE_THRESHOLD = 0.35
 const MIN_DISPLAY_COUNT = 1
 /** 最多显示数量 - 避免过多结果影响地址栏体验 */
 const MAX_DISPLAY_COUNT = 6
+
+/**
+ * 从搜索结果中挑选 Omnibox 展示项
+ */
+function pickDisplayResults(results: EnhancedSearchResult[]): EnhancedSearchResult[] {
+  const filteredResults = results.filter(r => r.score >= MIN_SCORE_THRESHOLD)
+  if (filteredResults.length === 0) {
+    return results.slice(0, MIN_DISPLAY_COUNT)
+  }
+  return filteredResults.slice(0, MAX_DISPLAY_COUNT)
+}
+
+/**
+ * 将搜索结果应用到 Omnibox 建议列表
+ */
+function applyOmniboxResults(
+  query: string,
+  results: EnhancedSearchResult[],
+  suggest: (suggestResults: chrome.omnibox.SuggestResult[]) => void,
+  source: string
+): EnhancedSearchResult[] {
+  const displayResults = pickDisplayResults(results)
+  const suggestions = buildSuggestions(displayResults, query)
+  safeSuggest(suggest, suggestions, source)
+
+  if (displayResults.length > 0) {
+    setDefaultDescription(buildResultSummaryDescription(query, displayResults.length))
+  } else {
+    setDefaultDescription(buildNoResultDescription(query))
+  }
+
+  return displayResults
+}
 /** 防抖延迟（毫秒）- 尽量短，给查询留更多时间 */
 const DEBOUNCE_MS = 50
 
@@ -260,15 +320,23 @@ export function registerOmniboxHandlers(): void {
         await ensureDataReady()
         logger.debug('Omnibox', '✅ 数据准备完成')
 
-        // 使用统一的 queryService 进行 hybrid 搜索
-        logger.debug('Omnibox', '📍 步骤 1: 执行搜索...')
+        const searchStrategy = await resolveEffectiveSearchStrategy()
+        const vectorsReady = await areEmbeddingVectorsReady()
+        if (searchStrategy === 'hybrid' && !vectorsReady) {
+          scheduleBookmarkEmbeddingSync('omnibox-data-ready', 0)
+          setDefaultDescription(buildIndexingDescription(query))
+        }
+
+        logger.debug('Omnibox', `📍 步骤 1: 执行检索 (${searchStrategy})...`)
+
+        // Chrome Omnibox：每次 onInputChanged 只能调用 suggest() 一次；
+        // 不可先提交 Fuse 空结果再异步更新 Semantic（第二次会被忽略）。
         const searchResult = await bookmarkSearchService.searchWithMetadata(query, {
-          strategy: 'hybrid', // 使用 hybrid 策略（Fuse + Semantic）
-          limit: 50, // 获取更多结果，按匹配度过滤
+          limit: 50,
           highlight: false,
-          useCache: false
+          useCache: false,
+          timeout: OMNIBOX_SEMANTIC_TIMEOUT_MS
         })
-        logger.debug('Omnibox', '✅ 搜索执行完成')
 
         if (currentSeq !== sequence) {
           logger.warn('Omnibox', '⚠️ 查询结果已过期，丢弃')
@@ -276,49 +344,22 @@ export function registerOmniboxHandlers(): void {
         }
 
         if (!searchResult.ok) {
-          logger.error('Omnibox', '❌ 搜索失败', {
-            error: searchResult.error,
-            message: searchResult.error?.message,
-            stack: searchResult.error?.stack
-          })
+          logger.error('Omnibox', '❌ 搜索失败', searchResult.error)
+          safeSuggest(suggest, [createErrorSuggestion(query)], 'search-error')
           setDefaultDescription(buildErrorDescription(query))
           return
         }
 
-        // 按匹配度过滤：只显示 score >= MIN_SCORE_THRESHOLD 的结果
-        const filteredResults = searchResult.value.results.filter(
-          r => r.score >= MIN_SCORE_THRESHOLD
+        const displayResults = applyOmniboxResults(
+          query,
+          searchResult.value.results,
+          suggest,
+          'query-results'
         )
-
-        // 确保至少显示 1 条，最多显示 MAX_DISPLAY_COUNT 条
-        let displayResults: EnhancedSearchResult[]
-        if (filteredResults.length === 0) {
-          // 如果没有匹配度达标的结果，显示匹配度最高的 1 条
-          displayResults = searchResult.value.results.slice(0, MIN_DISPLAY_COUNT)
-          logger.info(
-            'Omnibox',
-            `没有匹配度 >= ${MIN_SCORE_THRESHOLD} 的结果，显示最高匹配度的结果`
-          )
-        } else {
-          displayResults = filteredResults.slice(0, MAX_DISPLAY_COUNT)
-        }
-
         logger.info(
           'Omnibox',
-          `📊 过滤结果: 总数 ${searchResult.value.results.length}, 匹配度达标 ${filteredResults.length}, 显示 ${displayResults.length} 条`
+          `📊 检索完成: ${displayResults.length} 条 (策略=${searchStrategy}, 向量就绪=${vectorsReady})`
         )
-        const suggestions = buildSuggestions(displayResults, query)
-        logger.info(
-          'Omnibox',
-          `📊 搜索完成: ${displayResults.length} 条结果 [策略: ${searchResult.value.metadata.strategy}]`
-        )
-        safeSuggest(suggest, suggestions, 'query-results')
-
-        if (displayResults.length > 0) {
-          setDefaultDescription(buildResultSummaryDescription(query, displayResults.length))
-        } else {
-          setDefaultDescription(buildNoResultDescription(query))
-        }
       } catch (error) {
         logger.warn('Omnibox', '查询失败，回退占位', error)
         if (currentSeq !== sequence) return

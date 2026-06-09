@@ -14,6 +14,7 @@ import {
   proposalsToBookmarkNodes
 } from '@/core/bookmark/services/bookmark-converters'
 import { logger } from '@/infrastructure/logging/logger'
+import { isChromeVisibleRootId, isInvalidRootLayerNode } from '@/core/bookmark/chrome-system-ids'
 
 export type ProposalNodeLike = ProposalNode
 
@@ -257,19 +258,37 @@ export const treeAppService = {
       `父子关系构建完成，耗时 ${(t3 - t2).toFixed(0)}ms`
     )
 
-    // 4) 建立根列表：未作为子节点出现过、且 id !== '0' 的节点
+    // 4) 建立根列表：UI 第一层只允许 Chrome 系统目录
     // ✅ 按照 IndexedDB 返回的顺序添加根节点，保持 Chrome 原始顺序
     const roots: BookmarkNode[] = []
     const rootIds = new Set<string>()
+    const invalidRootNodes: Array<{ id: string; title: string; parentId?: string }> = []
     for (const it of items) {
       const id = String(it.id)
-      if (id !== '0' && !childIds.has(id) && !rootIds.has(id)) {
+      if (isChromeVisibleRootId(id) && !childIds.has(id) && !rootIds.has(id)) {
         const node = nodeMap.get(id)
         if (node) {
           roots.push(node)
           rootIds.add(id)
         }
+        continue
       }
+
+      const parentId = it.parentId ? String(it.parentId) : undefined
+      if (isInvalidRootLayerNode(id, parentId)) {
+        invalidRootNodes.push({
+          id,
+          title: it.title,
+          ...(parentId !== undefined ? { parentId } : {})
+        })
+      }
+    }
+
+    if (invalidRootNodes.length > 0) {
+      logger.warn('TreeAppService', '检测到异常根层普通节点，已从 UI 第一层过滤', {
+        count: invalidRootNodes.length,
+        nodes: invalidRootNodes.slice(0, 10)
+      })
     }
     const t4 = performance.now()
     logger.debug(

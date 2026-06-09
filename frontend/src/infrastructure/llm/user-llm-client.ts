@@ -28,8 +28,6 @@ export interface UserAPIKeyConfig {
   apiKey: string
   /** 自定义模型（可选，使用默认模型时留空） */
   model?: string
-  /** 自定义 API 端点（可选，用于代理或私有部署） */
-  baseUrl?: string
 }
 
 /**
@@ -120,7 +118,11 @@ export class UserLLMClient {
       if (!config || !config.apiKey || !config.provider) {
         return null
       }
-      return config
+      return {
+        provider: config.provider,
+        apiKey: config.apiKey,
+        ...(config.model ? { model: config.model } : {})
+      }
     } catch (error) {
       logger.warn(this.loggerPrefix, '读取用户 AI 配置失败', error)
       return null
@@ -131,7 +133,12 @@ export class UserLLMClient {
    * 保存用户 API Key 配置到 chrome.storage.local
    */
   async saveConfig(config: UserAPIKeyConfig): Promise<void> {
-    await chrome.storage.local.set({ USER_AI_CONFIG: config })
+    const payload: UserAPIKeyConfig = {
+      provider: config.provider,
+      apiKey: config.apiKey,
+      ...(config.model ? { model: config.model } : {})
+    }
+    await chrome.storage.local.set({ USER_AI_CONFIG: payload })
     logger.info(this.loggerPrefix, '用户 AI 配置已保存', {
       provider: config.provider
     })
@@ -220,9 +227,8 @@ export class UserLLMClient {
     path: string
   ): Promise<Response> {
     const defaults = PROVIDER_DEFAULTS.openai
-    const baseUrl = config.baseUrl || defaults.baseUrl
     const model = config.model || defaults.completionModel
-    const response = await fetch(`${baseUrl}${path}`, {
+    const response = await fetch(`${defaults.baseUrl}${path}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -258,10 +264,9 @@ export class UserLLMClient {
     config: UserAPIKeyConfig
   ): Promise<LLMEmbeddingResult> {
     const defaults = PROVIDER_DEFAULTS.openai
-    const baseUrl = config.baseUrl || defaults.baseUrl
     const model = defaults.embeddingModel
 
-    const response = await fetch(`${baseUrl}/embeddings`, {
+    const response = await fetch(`${defaults.baseUrl}/embeddings`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -299,9 +304,8 @@ export class UserLLMClient {
     options: LLMCompleteOptions | undefined
   ): Promise<Response> {
     const defaults = PROVIDER_DEFAULTS.claude
-    const baseUrl = config.baseUrl || defaults.baseUrl
     const model = config.model || defaults.completionModel
-    const response = await fetch(`${baseUrl}/messages`, {
+    const response = await fetch(`${defaults.baseUrl}/messages`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -340,10 +344,9 @@ export class UserLLMClient {
     options: LLMCompleteOptions | undefined
   ): Promise<Response> {
     const defaults = PROVIDER_DEFAULTS.gemini
-    const baseUrl = config.baseUrl || defaults.baseUrl
     const model = config.model || defaults.completionModel
     const response = await fetch(
-      `${baseUrl}/models/${model}:generateContent?key=${config.apiKey}`,
+      `${defaults.baseUrl}/models/${model}:generateContent?key=${config.apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -379,17 +382,19 @@ export class UserLLMClient {
     config: UserAPIKeyConfig
   ): Promise<LLMEmbeddingResult> {
     const defaults = PROVIDER_DEFAULTS.gemini
-    const baseUrl = config.baseUrl || defaults.baseUrl
     const model = defaults.embeddingModel
 
-    const response = await fetch(`${baseUrl}/models/${model}:embedContent?key=${config.apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: `models/${model}`,
-        content: { parts: [{ text: text.trim() }] }
-      })
-    })
+    const response = await fetch(
+      `${defaults.baseUrl}/models/${model}:embedContent?key=${config.apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: `models/${model}`,
+          content: { parts: [{ text: text.trim() }] }
+        })
+      }
+    )
 
     if (!response.ok) {
       const err = await response.json().catch(() => ({}))
@@ -421,9 +426,8 @@ export class UserLLMClient {
     path: string
   ): Promise<Response> {
     const defaults = PROVIDER_DEFAULTS.deepseek
-    const baseUrl = config.baseUrl || defaults.baseUrl
     const model = config.model || defaults.completionModel
-    const response = await fetch(`${baseUrl}${path}`, {
+    const response = await fetch(`${defaults.baseUrl}${path}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

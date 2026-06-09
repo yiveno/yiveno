@@ -39,6 +39,7 @@ export interface TreeConfig {
   editable?: boolean | undefined
   showEditButton?: boolean | undefined
   showDeleteButton?: boolean | undefined
+  showAddButton?: boolean | undefined
   showOpenNewTabButton?: boolean | undefined
   showCopyUrlButton?: boolean | undefined
   showShareButton?: boolean | undefined
@@ -94,6 +95,13 @@ export class ContextMenuBuilder {
         icon: 'icon-window',
         action: 'folder:open-all-new-window',
         visible: bookmarkCount > 0
+      },
+      {
+        id: 'create-subfolder',
+        label: '新建子文件夹',
+        icon: 'icon-folder-add',
+        action: 'folder:create-subfolder',
+        visible: config.showAddButton || config.editable
       },
       {
         id: 'edit',

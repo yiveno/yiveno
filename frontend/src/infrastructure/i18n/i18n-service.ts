@@ -8,6 +8,7 @@
  * - 兼容扩展环境和普通网页环境
  */
 
+import { getBundledMessage } from './bundled-messages'
 import { logger } from '../logging/logger'
 
 /**
@@ -76,11 +77,26 @@ export class I18nService {
           })
         }
 
-        // 如果成功获取到消息，返回结果；否则返回键值（回退）
-        return message || key
+        if (message) {
+          return message
+        }
+
+        const bundled = getBundledMessage(key, this.getCurrentLanguage(), substitutions)
+        if (bundled) {
+          if (this.config.debugMode) {
+            logger.debug('I18nService', '使用内嵌 locale 回退', { key })
+          }
+          return bundled
+        }
+
+        return key
       }
 
-      // 非扩展环境回退：直接返回 key
+      const bundled = getBundledMessage(key, this.getCurrentLanguage(), substitutions)
+      if (bundled) {
+        return bundled
+      }
+
       if (this.config.debugMode) {
         logger.debug('I18nService', '非扩展环境，回退到 key', { key })
       }

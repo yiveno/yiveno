@@ -17,6 +17,10 @@ import { logger } from '@/infrastructure/logging/logger'
 import { openManagementPage, openSettingsPage } from '../managers/navigation'
 import { showSystemNotification } from './notification'
 import { autoAddBookmark } from '../managers/auto-add-bookmark'
+import {
+  AI_AUTO_BOOKMARK_STORAGE_KEY,
+  isAiAutoBookmarkEnabled
+} from '@/core/ai/ai-feature-settings'
 import { showBookmarkAddedNotification } from './messaging'
 
 // ✅ 菜单注册状态标记（避免重复注册）
@@ -182,23 +186,11 @@ async function handleQuickAddBookmark(
 
     logger.info('Menus', '触发快速添加书签', bookmarkData)
 
-    // ✅ 检查 AI 功能总开关和 AI 自动归纳开关
-    const settings = await chrome.storage.local.get(['aiEnabled', 'aiAutoBookmark'])
-    const aiEnabled = settings.aiEnabled === true // AI 功能总开关
-    let aiAutoBookmark = settings.aiAutoBookmark === true // AI 自动归纳开关，默认 false
-
-    // 迁移逻辑：如果 AI 自动添加为 true 但 AI 功能未启用，自动关闭
-    if (settings.aiAutoBookmark === true && !aiEnabled) {
-      aiAutoBookmark = false
-      await chrome.storage.local.set({ aiAutoBookmark: false })
-      logger.info('Menus', '检测到 AI 自动添加开启但 AI 功能未启用，已自动关闭')
-    }
-
-    const aiAutoEnabled = aiEnabled && aiAutoBookmark
+    // ✅ 检查 AI 自动归纳开关
+    const settings = await chrome.storage.local.get([AI_AUTO_BOOKMARK_STORAGE_KEY])
+    const aiAutoEnabled = isAiAutoBookmarkEnabled(settings[AI_AUTO_BOOKMARK_STORAGE_KEY])
 
     logger.info('Menus', 'AI 自动归纳状态', {
-      aiEnabled,
-      aiAutoBookmark,
       aiAutoEnabled,
       settings
     })

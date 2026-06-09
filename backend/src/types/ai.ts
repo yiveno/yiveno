@@ -38,3 +38,26 @@ export interface AICompleteResponse {
   /** 错误信息 */
   error?: string
 }
+
+/**
+ * Pro 托管 LLM 补全请求体
+ */
+export interface AIHostedCompleteRequest {
+  /** 提示词 */
+  prompt?: string
+  /** 最大返回 Token 数 */
+  maxTokens?: number
+  /** 采样温度 */
+  temperature?: number
+}
+
+/**
+ * Pro 托管 LLM 配额响应
+ */
+export interface AIHostedQuotaResponse {
+  model: string
+  used: number
+  limit: number
+  remaining: number
+  monthKey: string
+}

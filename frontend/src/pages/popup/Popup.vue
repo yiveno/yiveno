@@ -131,7 +131,6 @@ const actionCards = computed<ActionCardDef[]>(() => [
           <BookmarkSearchInput
             display-mode="full"
             mode="indexeddb"
-            strategy="hybrid"
             result-display="dropdown"
             :show-stats="true"
             :show-result-count="true"

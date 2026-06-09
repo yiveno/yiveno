@@ -4,6 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "download:embedding-model": "bun scripts/download-embedding-model.mjs",
+    "update:embedding-manifest-hashes": "bun scripts/update-embedding-manifest-hashes.mjs",
+    "validate:embedding-model": "bun scripts/validate-embedding-model.mjs",
+    "validate:dist-embedding": "bun scripts/validate-dist-embedding.mjs",
     "build": "bun ../scripts/dev-env.mjs sync --profile=development --target=frontend --quiet && NODE_ENV=development VITE_RUNTIME_ENV=dev CRAWLER_DEBUG=true vue-tsc -b && NODE_ENV=development VITE_RUNTIME_ENV=dev CRAWLER_DEBUG=true vite build --mode development",
     "build:auth-sync": "bunx vite build --config vite.auth-sync.config.ts",
     "build:watch": "bun ../scripts/dev-env.mjs sync --profile=development --target=frontend --quiet && NODE_ENV=development VITE_RUNTIME_ENV=dev CRAWLER_DEBUG=true vite build --watch --mode development",

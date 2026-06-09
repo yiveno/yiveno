@@ -65,7 +65,7 @@ function updatePosition() {
 
   const style: Record<string, string> = {
     position: 'fixed',
-    zIndex: '1000'
+    zIndex: 'var(--z-tooltip, 1070)'
   }
 
   if (props.placement === 'bottom') {

@@ -189,7 +189,7 @@ presentation/ → application/ → core/ → infrastructure/
 - **Validation**: Zod 3.22.4 (type-safe data validation)
 - **UUID**: uuid 11.1.0
 - **Database**: Supabase (PostgreSQL + real-time)
-- **AI**: User-provided API Keys (OpenAI / Claude / Gemini) or Chrome Built-in AI (future)
+- **AI**: Pro hosted LLM (DeepSeek V4 Flash) + optional user API Keys (OpenAI / Claude / Gemini / DeepSeek)
 
 ## Key Development Workflows
 
@@ -329,7 +329,7 @@ this.timer = setTimeout(() => {...}, 1000)
 
 - **Authentication**: Google, GitHub OAuth + Supabase
 - **Payment Processing**: Gumroad integration (Lemon Squeezy removed)
-- **AI Services**: User-provided API Keys (OpenAI / Claude / Gemini) + Local ONNX embeddings (fully automatic, no user configuration needed)
+- **AI Services**: Pro hosted LLM + optional user API Keys + Local ONNX embeddings (fully automatic, no user configuration needed)
 - **Storage**: IndexedDB + Chrome Bookmarks API sync
 
 ## File Organization
@@ -366,5 +366,5 @@ this.timer = setTimeout(() => {...}, 1000)
 
 - **Runtime**: Edge network with global distribution
 - **Database**: Supabase (PostgreSQL) with vector search
-- **AI**: User-provided API Keys (OpenAI / Claude / Gemini) + Local ONNX embeddings (automatic)
+- **AI**: Pro hosted LLM (DeepSeek) + optional user API Keys + Local ONNX embeddings (automatic)
 - **Custom Domain**: api.ottersage.com

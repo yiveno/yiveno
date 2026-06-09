@@ -122,3 +122,7 @@ $RECYCLE.BIN/
 
 # Astro 构建缓存
 website/.astro/
+
+# Embedding ONNX 模型（构建时 download:embedding-model 拉取，不入库）
+frontend/public/models/Xenova/
+frontend/public/models/**/.model-ready.json

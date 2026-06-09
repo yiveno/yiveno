@@ -66,6 +66,7 @@ const emit = defineEmits<{
   (e: 'ready'): void
   (e: 'nodeEdit', node: BookmarkNode): void
   (e: 'nodeDelete', node: BookmarkNode): void
+  (e: 'folderAdd', parent: BookmarkNode): void
   (e: 'bookmarkOpenNewTab', node: BookmarkNode): void
   (e: 'bookmarkCopyUrl', node: BookmarkNode): void
   (e: 'bookmarkToggleFavorite', node: BookmarkNode, isFavorite: boolean): void
@@ -1106,6 +1107,9 @@ const handleContextMenuItemClick = (item: MenuItemConfig) => {
     case 'folder:open-all-new-window':
       void openAllBookmarksInFolder(node, 'new-window')
       break
+    case 'folder:create-subfolder':
+      emit('folderAdd', node)
+      break
     case 'folder:edit':
       emit('nodeEdit', node)
       break
@@ -1712,18 +1716,19 @@ onUnmounted(() => {
 })
 
 // === 暴露的方法 ===
-const expandAll = () => {
+const expandAll = (): boolean => {
   const source = treeSource.value
   const allFolderIds = getAllFolderIds(source)
   if (allFolderIds.length > 2000) {
     logger.warn('BookmarkTree', 'expandAll 被限制，节点过多')
     message.warning('节点过多，展开全部会影响性能，请按需展开。')
-    return
+    return false
   }
   expandedFolders.value = new Set(allFolderIds)
   // 强制触发响应式更新
   expandedFolders.value = new Set(expandedFolders.value)
   emit('expandStateChange', true)
+  return true
 }
 
 const collapseAll = () => {

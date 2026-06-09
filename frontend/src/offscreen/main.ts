@@ -332,19 +332,15 @@ async function handleFolderRecommendations(payload: {
       url
     })
 
-    const { onnxEmbeddingProviderDirect } =
-      await import('@/infrastructure/embedding/onnx-embedding-provider-direct')
+    const { onnxEmbeddingProvider } =
+      await import('@/infrastructure/embedding/onnx-embedding-provider')
+    const { formatEmbeddingPassage } = await import('@/infrastructure/embedding/embedding-text')
     const { folderVectorStore } = await import('@/infrastructure/folder-vector/folder-vector-store')
 
-    // 检查 ONNX 是否可用
-    const isAvailable = await onnxEmbeddingProviderDirect.isAvailable()
-    if (!isAvailable) {
-      logger.warn('OffscreenFolderRecommendation', 'ONNX Provider 不可用，跳过推荐')
-      return []
-    }
-
     logger.info('OffscreenFolderRecommendation', '生成书签向量...')
-    const bookmarkVector = await onnxEmbeddingProviderDirect.embed(`${title} | ${url}`)
+    const bookmarkVector = await onnxEmbeddingProvider.embedPassage(
+      formatEmbeddingPassage(`${title} | ${url}`)
+    )
     logger.info('OffscreenFolderRecommendation', '书签向量生成完成', {
       dimension: bookmarkVector.length
     })
@@ -469,38 +465,51 @@ const handlers: Record<string, OffscreenHandler> = {
 
   // Embedding 任务：在 Offscreen Document 里运行 ONNX，绕过扩展页面的 CSP 限制
   EMBEDDING_EMBED: async payload => {
-    const { onnxEmbeddingProviderDirect } =
-      await import('@/infrastructure/embedding/onnx-embedding-provider-direct')
-    const data = payload as { text: string }
-    return onnxEmbeddingProviderDirect.embed(data.text)
+    const { onnxEmbeddingProvider } =
+      await import('@/infrastructure/embedding/onnx-embedding-provider')
+    const data = payload as { text: string; mode?: 'query' | 'passage' }
+    if (data.mode === 'query') {
+      return onnxEmbeddingProvider.embedQuery(data.text)
+    }
+    return onnxEmbeddingProvider.embedPassage(data.text)
   },
   EMBEDDING_EMBED_BATCH: async payload => {
-    const { onnxEmbeddingProviderDirect } =
-      await import('@/infrastructure/embedding/onnx-embedding-provider-direct')
+    const { onnxEmbeddingProvider } =
+      await import('@/infrastructure/embedding/onnx-embedding-provider')
     const data = payload as { texts: string[] }
-    return onnxEmbeddingProviderDirect.embedBatch!(data.texts)
+    return onnxEmbeddingProvider.embedPassageBatch(data.texts)
   },
   EMBEDDING_IS_AVAILABLE: async () => {
-    const { onnxEmbeddingProviderDirect } =
-      await import('@/infrastructure/embedding/onnx-embedding-provider-direct')
-    return onnxEmbeddingProviderDirect.isAvailable()
+    const { onnxEmbeddingProvider } =
+      await import('@/infrastructure/embedding/onnx-embedding-provider')
+    return onnxEmbeddingProvider.isAvailable()
+  },
+  EMBEDDING_HEALTH_CHECK: async () => {
+    const { verifyEmbeddingBundleHealth } =
+      await import('@/infrastructure/embedding/embedding-bundle-health')
+    return verifyEmbeddingBundleHealth()
+  },
+  EMBEDDING_WARMUP: async () => {
+    const { warmupEmbeddingEngine } =
+      await import('@/infrastructure/embedding/embedding-bundle-health')
+    return warmupEmbeddingEngine()
   },
 
   // 语义搜索：在 Offscreen 里完成 embed + 向量相似度计算 + IndexedDB 补全，供 background/omnibox 调用
   SEMANTIC_SEARCH: async payload => {
-    const { onnxEmbeddingProviderDirect } =
-      await import('@/infrastructure/embedding/onnx-embedding-provider-direct')
+    const { onnxEmbeddingProvider } =
+      await import('@/infrastructure/embedding/onnx-embedding-provider')
     const { localVectorStore } = await import('@/infrastructure/embedding/local-vector-store')
+    const { areEmbeddingVectorsReady } =
+      await import('@/infrastructure/embedding/embedding-migration')
     const data = payload as { query: string; topK?: number; minScore?: number }
 
-    // 检查向量库是否为空
-    const count = await localVectorStore.count()
-    if (count === 0) {
-      console.log('[Offscreen] 向量库为空，跳过语义搜索')
+    if (!(await areEmbeddingVectorsReady())) {
+      console.log('[Offscreen] 向量未就绪（空库或旧模型），跳过语义搜索')
       return []
     }
 
-    const queryVector = await onnxEmbeddingProviderDirect.embed(data.query.trim())
+    const queryVector = await onnxEmbeddingProvider.embedQuery(data.query.trim())
     const vectorResults = await localVectorStore.search(
       queryVector,
       data.topK ?? 10,
@@ -560,6 +569,19 @@ const handlers: Record<string, OffscreenHandler> = {
 // 立即输出日志，确认 Offscreen Document 已加载
 logger.info('OffscreenDocument', '🚀 Offscreen Document 已加载，开始监听消息')
 console.log('🚀 [Offscreen] Offscreen Document 已加载')
+
+void (async () => {
+  try {
+    const { warmupEmbeddingEngine } =
+      await import('@/infrastructure/embedding/embedding-bundle-health')
+    const health = await warmupEmbeddingEngine()
+    if (!health.ok) {
+      logger.error('OffscreenDocument', 'Embedding 引擎预热失败', { issues: health.issues })
+    }
+  } catch (error) {
+    logger.error('OffscreenDocument', 'Embedding 引擎预热异常', error)
+  }
+})()
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (typeof chrome === 'undefined' || !chrome.runtime?.id) return false

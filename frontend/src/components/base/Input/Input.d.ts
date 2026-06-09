@@ -59,5 +59,5 @@ export interface InputEmits {
   (event: 'suffix-click', e: MouseEvent): void
   (event: 'input', value: string | number): void
   (event: 'keydown', e: KeyboardEvent): void
-  (event: 'trailing-icon-click', e: MouseEvent): void
+  (event: 'trailingIconClick', e: MouseEvent): void
 } // 输入框组件事件

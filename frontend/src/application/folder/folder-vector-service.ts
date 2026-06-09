@@ -7,14 +7,20 @@
  * 3. 增量同步文件夹向量
  * 4. 支持用户习惯学习（强化学习）
  *
- * 优化：使用 Summarizer API 预处理长文本，避免 token 限制
+ * 优化：超长文本截断后再 Embedding，避免 token 限制
  */
 
 import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
-import { embeddingService } from '@/infrastructure/embedding/embedding-service'
+import {
+  embeddingService,
+  buildFolderPassageText
+} from '@/infrastructure/embedding/embedding-service'
+import { ensureEmbeddingVectorsMigrated } from '@/infrastructure/embedding/embedding-migration'
+import { EMBEDDING_VECTOR_MODEL_KEY } from '@/infrastructure/embedding/embedding-model-config'
+import { formatEmbeddingPassage } from '@/infrastructure/embedding/embedding-text'
+import type { EmbeddingProvider } from '@/infrastructure/embedding/embedding-provider'
 import { localVectorStore } from '@/infrastructure/embedding/local-vector-store'
 import { folderVectorStore } from '@/infrastructure/folder-vector/folder-vector-store'
-import { builtInSummarizerClient } from '@/infrastructure/llm/builtin-summarizer-client'
 import { logger } from '@/infrastructure/logging/logger'
 
 const LOG_TAG = 'FolderVectorService'
@@ -97,7 +103,7 @@ export class FolderVectorService {
       id: string
     }>,
     bookmarkVectorMap: Map<string, number[]>,
-    provider: { embed: (text: string) => Promise<number[]>; name: string }
+    provider: EmbeddingProvider
   ): Promise<{ vector: number[]; bookmarkCount: number }> {
     // 找出该文件夹下的所有书签（直接子节点）
     const childBookmarks = allBookmarks.filter(
@@ -106,7 +112,9 @@ export class FolderVectorService {
 
     if (childBookmarks.length === 0) {
       // 空文件夹：使用文件夹名称生成向量
-      const folderNameVector = await provider.embed(folder.title)
+      const folderNameVector = await provider.embedPassage(
+        buildFolderPassageText(folder.title, folder.pathString)
+      )
       return { vector: folderNameVector, bookmarkCount: 0 }
     }
 
@@ -121,7 +129,9 @@ export class FolderVectorService {
 
     if (vectors.length === 0) {
       // 没有书签有向量：使用文件夹名称生成向量
-      const folderNameVector = await provider.embed(folder.title)
+      const folderNameVector = await provider.embedPassage(
+        buildFolderPassageText(folder.title, folder.pathString)
+      )
       return { vector: folderNameVector, bookmarkCount: childBookmarks.length }
     }
 
@@ -133,7 +143,7 @@ export class FolderVectorService {
   /**
    * 预处理文本（长文本压缩）
    *
-   * 使用 Summarizer API 压缩长文本，避免 Embedding 时超过 token 限制
+   * 超长文本截断，避免 Embedding 时超过 token 限制
    *
    * @param text 原始文本
    * @returns 压缩后的文本
@@ -144,34 +154,7 @@ export class FolderVectorService {
       return text
     }
 
-    // 尝试使用 Summarizer API 压缩
-    try {
-      const summarizerAvailable = await builtInSummarizerClient.isAvailable()
-
-      if (summarizerAvailable) {
-        logger.info(LOG_TAG, '使用 Summarizer API 压缩长文本', {
-          originalLength: text.length
-        })
-
-        const result = await builtInSummarizerClient.summarize(text, {
-          type: 'key-points',
-          format: 'plain-text',
-          length: 'short'
-        })
-
-        logger.info(LOG_TAG, '长文本压缩完成', {
-          originalLength: text.length,
-          compressedLength: result.summary.length,
-          compressionRatio: ((result.summary.length / text.length) * 100).toFixed(1) + '%'
-        })
-
-        return result.summary
-      }
-    } catch (error) {
-      logger.warn(LOG_TAG, 'Summarizer API 压缩失败，降级到截断', error)
-    }
-
-    // 降级：简单截断
+    // 长文本直接截断，避免 Embedding 超长
     logger.info(LOG_TAG, '降级到简单截断', {
       originalLength: text.length,
       truncatedLength: TOKEN_LIMIT_CHARS
@@ -190,6 +173,8 @@ export class FolderVectorService {
   async syncFolderVectors(
     onProgress?: (progress: FolderVectorSyncProgress) => void
   ): Promise<void> {
+    await ensureEmbeddingVectorsMigrated()
+
     const provider = await embeddingService.getProvider()
     if (!provider) {
       logger.warn(LOG_TAG, 'Embedding Provider 不可用，跳过同步')
@@ -244,7 +229,7 @@ export class FolderVectorService {
           folderPath: folder.pathString || folder.title,
           vector,
           bookmarkCount,
-          model: provider.name,
+          model: EMBEDDING_VECTOR_MODEL_KEY,
           updatedAt: Date.now()
         })
 
@@ -272,7 +257,7 @@ export class FolderVectorService {
    *
    * 根据书签的标题和 URL 推荐最合适的文件夹
    *
-   * 优化：使用 Summarizer API 预处理长文本，提升向量质量
+   * 优化：超长文本截断后再 Embedding，提升向量质量
    *
    * @param bookmarkTitle 书签标题
    * @param bookmarkUrl 书签 URL
@@ -303,7 +288,7 @@ export class FolderVectorService {
     }
 
     // 2. 生成书签的向量
-    const bookmarkVector = await provider.embed(bookmarkText)
+    const bookmarkVector = await provider.embedPassage(formatEmbeddingPassage(bookmarkText))
 
     // 3. 获取所有文件夹向量
     const allFolderVectors = await folderVectorStore.getAll()
@@ -382,7 +367,9 @@ export class FolderVectorService {
 
     if (vectors.length === 0) {
       // 空文件夹或没有书签有向量：使用文件夹名称生成向量
-      folderVector = await provider.embed(folder.title)
+      folderVector = await provider.embedPassage(
+        buildFolderPassageText(folder.title, folder.pathString)
+      )
     } else {
       // 计算平均向量
       folderVector = computeAverageVector(vectors)
@@ -395,7 +382,7 @@ export class FolderVectorService {
       folderPath: folder.pathString || folder.title,
       vector: folderVector,
       bookmarkCount: childBookmarks.length,
-      model: provider.name,
+      model: EMBEDDING_VECTOR_MODEL_KEY,
       updatedAt: Date.now()
     })
 

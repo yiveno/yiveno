@@ -241,9 +241,11 @@ function getApiBase(): string {
 
   if (shouldWarnLocalApiBase(apiBase)) {
     console.debug(
-      '💡 提示：当前使用本地 URL，如果后端运行在远程模式（bun run dev --remote），建议使用远程 Worker URL'
+      '💡 提示：当前使用本地 Worker (localhost:8787)。托管 AI 需在 backend/.dev.vars 配置 DEEPSEEK_API_KEY（bun run env:sync:dev）'
     )
-    console.debug('   远程 Worker URL: https://ottersage.cqw547847.workers.dev')
+    console.debug(
+      '   或使用已部署 API：在 .env.development.local 设置 VITE_API_BASE_URL=https://api.ottersage.com'
+    )
   }
 
   return apiBase

@@ -20,6 +20,21 @@ import {
 } from '@/application/bookmark/bookmark-diff-service'
 import { onceEvent } from '@/infrastructure/events/event-bus'
 import { TIMEOUT_CONFIG } from '@/config/constants'
+import {
+  isChromeSystemBookmarkId,
+  normalizeWritableBookmarkParentId
+} from '@/core/bookmark/chrome-system-ids'
+import {
+  findRecentFolderInTree,
+  isTransientMessageError
+} from '@/application/bookmark/bookmark-apply-guards'
+import { setBookmarkSyncBatchSuspended } from '@/core/bookmark/bookmark-sync-batch'
+import {
+  validateProposalBeforeApply,
+  type ProposalApplyValidationResult
+} from '@/application/bookmark/proposal-apply-validation'
+import { pruneEmptiedLegacyBookmarksBarFolders } from '@/application/bookmark/proposal-tree-normalize'
+import { allocateTempFolderId } from '@/core/bookmark/temp-folder-ids'
 
 export interface EditBookmarkData {
   id: string
@@ -92,6 +107,26 @@ export const useBookmarkManagementStore = defineStore('bookmark-management', () 
   // === AI 生成标记 ===
   const isAIGenerated = ref(false)
 
+  /**
+   * 提案编辑后移除书签栏已搬空的旧目录（与 AI 整理提案构建共用规则）
+   */
+  const normalizeProposalAfterEdit = (): void => {
+    updateRef(newProposalTree, draft => {
+      draft.children = pruneEmptiedLegacyBookmarksBarFolders(draft.children, originalTree.value)
+    })
+  }
+
+  /**
+   * 用户手动改动提案树后取消 AI 标记（与「右侧手动编辑」语义一致）
+   */
+  const markProposalAsManuallyEdited = (): void => {
+    if (!isAIGenerated.value) {
+      return
+    }
+    isAIGenerated.value = false
+    logger.info('Management', '提案树已改为手动编辑（取消 AI 标记）')
+  }
+
   // === 应用变更标志位（用于区分主动应用和外部变更） ===
   const isApplyingOwnChanges = ref(false)
 
@@ -124,6 +159,139 @@ export const useBookmarkManagementStore = defineStore('bookmark-management', () 
         }
       })
     })
+  }
+
+  /**
+   * 向 Background 发送消息。
+   *
+   * Service Worker 冷启动时首条消息可能端口提前关闭，需短暂重试。
+   */
+  const sendRuntimeMessage = async <TResponse>(
+    message: { type: string; data?: unknown },
+    retries = 2
+  ): Promise<TResponse> => {
+    let lastError: Error | null = null
+
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        return await new Promise<TResponse>((resolve, reject) => {
+          chrome.runtime.sendMessage(message, response => {
+            if (chrome.runtime.lastError) {
+              reject(new Error(chrome.runtime.lastError.message))
+              return
+            }
+            resolve(response as TResponse)
+          })
+        })
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error))
+        if (!isTransientMessageError(lastError.message) || attempt === retries) {
+          throw lastError
+        }
+
+        logger.warn('BookmarkManagement', 'Background 消息发送失败，准备重试', {
+          type: message.type,
+          attempt: attempt + 1,
+          error: lastError.message
+        })
+        await new Promise(resolve => setTimeout(resolve, 150 * (attempt + 1)))
+      }
+    }
+
+    throw lastError ?? new Error('Background 消息发送失败')
+  }
+
+  const findRecentFolder = async (
+    parentId: string,
+    title: string,
+    since: number
+  ): Promise<chrome.bookmarks.BookmarkTreeNode | null> => {
+    const response = await sendRuntimeMessage<{
+      success?: boolean
+      tree?: chrome.bookmarks.BookmarkTreeNode[]
+      error?: string
+    }>(
+      {
+        type: 'GET_BOOKMARK_TREE'
+      },
+      2
+    )
+
+    if (!response.success || !response.tree) {
+      return null
+    }
+
+    return findRecentFolderInTree(response.tree, parentId, title, since)
+  }
+
+  const createFolderWithRecovery = async (folderData: {
+    title: string
+    parentId: string
+    index?: number
+  }): Promise<{ success: boolean; folderId?: string; error?: string }> => {
+    const startedAt = Date.now()
+
+    try {
+      return await sendRuntimeMessage<{
+        success: boolean
+        folderId?: string
+        error?: string
+      }>(
+        {
+          type: 'CREATE_FOLDER',
+          data: folderData
+        },
+        0
+      )
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      if (!isTransientMessageError(errorMessage)) {
+        throw error
+      }
+
+      const existingFolder = await findRecentFolder(
+        folderData.parentId,
+        folderData.title,
+        startedAt
+      )
+      if (existingFolder) {
+        logger.warn('BookmarkManagement', '文件夹创建响应丢失，已通过 Chrome 树回查恢复', {
+          title: folderData.title,
+          folderId: existingFolder.id
+        })
+        return { success: true, folderId: existingFolder.id }
+      }
+
+      logger.warn('BookmarkManagement', '文件夹创建响应丢失且未回查到结果，重试创建', {
+        title: folderData.title,
+        parentId: folderData.parentId
+      })
+      return await sendRuntimeMessage<{
+        success: boolean
+        folderId?: string
+        error?: string
+      }>(
+        {
+          type: 'CREATE_FOLDER',
+          data: folderData
+        },
+        2
+      )
+    }
+  }
+
+  /**
+   * 应用批量变更后请求 Background 做一次权威全量同步。
+   */
+  const requestFullBookmarkSync = async (): Promise<void> => {
+    const response = await sendRuntimeMessage<{ ok?: boolean; success?: boolean; error?: string }>(
+      { type: 'SYNC_BOOKMARKS' },
+      3
+    )
+
+    if (response.ok !== true && response.success !== true) {
+      throw new Error(response.error || '同步失败')
+    }
   }
 
   // === 书签树展开状态 ===
@@ -279,18 +447,20 @@ export const useBookmarkManagementStore = defineStore('bookmark-management', () 
    *
    * 🆕 使用 Immer 进行不可变更新
    */
-  const loadBookmarks = async () => {
+  const loadBookmarks = async (options?: { preserveProposal?: boolean }) => {
     try {
       isPageLoading.value = true
       loadingMessage.value = '正在加载书签数据...'
 
-      // 🔴 清空展开状态并同步到 session storage
+      // 🔴 清空展开状态并同步到 session storage（保留提案时不动右侧展开）
       updateRef(originalExpandedFolders, draft => {
         draft.clear()
       })
-      updateRef(proposalExpandedFolders, draft => {
-        draft.clear()
-      })
+      if (!options?.preserveProposal) {
+        updateRef(proposalExpandedFolders, draft => {
+          draft.clear()
+        })
+      }
       // ✅ 性能优化：使用批量保存方法
       await saveExpandedState()
 
@@ -309,12 +479,15 @@ export const useBookmarkManagementStore = defineStore('bookmark-management', () 
       bookmarkStore.reset()
       bookmarkStore.addNodes(viewTree)
 
-      // 更新右侧树（直接设置）
-      setProposalTreeFromRecords(recordsResult.value)
+      // 更新右侧树（直接设置）；部分 apply 失败时保留用户提案供重试
+      if (!options?.preserveProposal) {
+        setProposalTreeFromRecords(recordsResult.value)
+      }
 
       logger.info('Management', '✅ 从 IndexedDB 加载书签完成', {
         leftTreeRoots: originalTree.value.length,
-        totalRecords: recordsResult.value.length
+        totalRecords: recordsResult.value.length,
+        preserveProposal: Boolean(options?.preserveProposal)
       })
     } catch (error) {
       logger.error('Management', '❌ 从 IndexedDB 加载书签失败', error)
@@ -536,6 +709,8 @@ export const useBookmarkManagementStore = defineStore('bookmark-management', () 
         result: moveResult
       })
       hasUnsavedChanges.value = true
+      markProposalAsManuallyEdited()
+      normalizeProposalAfterEdit()
 
       return moveResult
     } catch (error) {
@@ -695,6 +870,8 @@ export const useBookmarkManagementStore = defineStore('bookmark-management', () 
       if (deleted) {
         logger.info('Management', `✅ 从提案树删除节点（内存）: ${nodeId}`)
         hasUnsavedChanges.value = true
+        markProposalAsManuallyEdited()
+        normalizeProposalAfterEdit()
       }
 
       return deleted
@@ -702,6 +879,107 @@ export const useBookmarkManagementStore = defineStore('bookmark-management', () 
       logger.error('Management', '从提案树删除节点失败', error)
       return false
     }
+  }
+
+  /**
+   * 收集提案树全部节点 ID
+   */
+  const collectProposalNodeIds = (nodes: BookmarkNode[]): string[] => {
+    const ids: string[] = []
+    const walk = (list: BookmarkNode[]) => {
+      for (const node of list) {
+        ids.push(String(node.id))
+        if (node.children?.length) {
+          walk(node.children)
+        }
+      }
+    }
+    walk(nodes)
+    return ids
+  }
+
+  /**
+   * 在提案树中新建临时文件夹（仅内存，apply 时映射为 Chrome 真实 ID）
+   */
+  const createFolderInProposal = (parentId: string, title = '新建文件夹'): BookmarkNode | null => {
+    const trimmedTitle = title.trim()
+    if (!trimmedTitle) {
+      return null
+    }
+
+    const newId = allocateTempFolderId(
+      collectProposalNodeIds(newProposalTree.value.children),
+      'manual'
+    )
+    let created: BookmarkNode | null = null
+
+    const insertIntoParent = (nodes: BookmarkNode[]): boolean => {
+      for (const node of nodes) {
+        if (String(node.id) === parentId) {
+          if (!node.children) {
+            node.children = []
+          }
+          const newFolder: BookmarkNode = {
+            id: newId,
+            title: trimmedTitle,
+            parentId: String(node.id),
+            index: node.children.length,
+            children: []
+          }
+          node.children.push(newFolder)
+          node.children.forEach((child, index) => {
+            child.index = index
+          })
+          created = newFolder
+          return true
+        }
+        if (node.children?.length && insertIntoParent(node.children)) {
+          return true
+        }
+      }
+      return false
+    }
+
+    updateRef(newProposalTree, draft => {
+      if (!insertIntoParent(draft.children)) {
+        logger.warn('Management', '新建文件夹失败：未找到父节点', { parentId })
+      }
+    })
+
+    if (!created) {
+      return null
+    }
+
+    updateRef(proposalExpandedFolders, draft => {
+      draft.add(parentId)
+      draft.add(newId)
+    })
+    void saveExpandedState()
+
+    hasUnsavedChanges.value = true
+    markProposalAsManuallyEdited()
+    logger.info('Management', '✅ 提案树新建文件夹（内存）', {
+      id: newId,
+      parentId,
+      title: trimmedTitle
+    })
+
+    return created
+  }
+
+  /**
+   * 校验当前提案 diff 是否可执行（AI / 手动通用）
+   */
+  const validateCurrentProposalApply = (
+    operations: BookmarkOperation[]
+  ): ProposalApplyValidationResult => {
+    const flatOriginalNodes =
+      bookmarkStore.nodes.size > 0 ? bookmarkStore.nodes : new Map<string, BookmarkNode>()
+    return validateProposalBeforeApply(
+      operations,
+      newProposalTree.value.children,
+      flatOriginalNodes
+    )
   }
 
   /**
@@ -735,6 +1013,7 @@ export const useBookmarkManagementStore = defineStore('bookmark-management', () 
       if (edited) {
         logger.info('Management', `✅ 编辑提案树节点（内存）: ${data.id}`)
         hasUnsavedChanges.value = true
+        markProposalAsManuallyEdited()
       }
 
       return edited
@@ -762,10 +1041,18 @@ export const useBookmarkManagementStore = defineStore('bookmark-management', () 
         children: newProposalTree.value.children
       }
 
-      const diff = bookmarkDiffService.calculateDiff(originalRoot, proposalRoot)
+      const flatOriginalNodes = bookmarkStore.nodes.size > 0 ? bookmarkStore.nodes : undefined
 
-      // ✅ 过滤掉虚拟根节点的操作（不应该出现在用户界面）
-      let filteredOperations = diff.operations.filter(op => op.nodeId !== 'virtual-root')
+      const diff = bookmarkDiffService.calculateDiff(
+        originalRoot,
+        proposalRoot,
+        flatOriginalNodes ? { flatOriginalNodes } : undefined
+      )
+
+      // ✅ 过滤掉虚拟根节点与 Chrome 系统节点的操作
+      let filteredOperations = diff.operations.filter(
+        op => op.nodeId !== 'virtual-root' && !isChromeSystemBookmarkId(op.nodeId)
+      )
 
       // ✅ 过滤掉临时节点的操作（temp_ 开头的 ID 无法应用到 Chrome API）
       const tempNodeIds = new Set<string>()
@@ -782,23 +1069,22 @@ export const useBookmarkManagementStore = defineStore('bookmark-management', () 
       findTempNodes(newProposalTree.value.children)
 
       if (tempNodeIds.size > 0) {
-        logger.warn('Management', '⚠️ 检测到临时节点，这些操作需要先新增节点才能应用', {
-          tempNodeCount: tempNodeIds.size,
-          tempNodeIds: Array.from(tempNodeIds)
+        logger.info('Management', '检测到临时文件夹，应用时将先创建文件夹', {
+          tempNodeCount: tempNodeIds.size
         })
 
-        // 过滤掉涉及临时节点的操作
+        // 仅过滤临时书签节点；保留 temp_ 文件夹的 create 与指向它们的 move
         filteredOperations = filteredOperations.filter(op => {
-          const involvesTempNode =
-            tempNodeIds.has(op.nodeId) ||
-            (op.type === 'move' && tempNodeIds.has(op.nodeId)) ||
-            (op.type === 'create' && op.nodeId.startsWith('temp_'))
-
-          if (involvesTempNode) {
-            logger.debug('Management', '跳过临时节点操作', { operation: op })
+          if (op.type === 'create' && op.nodeId.startsWith('temp_') && op.isFolder) {
+            return true
           }
-
-          return !involvesTempNode
+          if (op.type === 'create' && op.nodeId.startsWith('temp_') && !op.isFolder) {
+            return false
+          }
+          if (tempNodeIds.has(op.nodeId) && op.type !== 'create') {
+            return false
+          }
+          return true
         })
       }
 
@@ -833,6 +1119,83 @@ export const useBookmarkManagementStore = defineStore('bookmark-management', () 
   }
 
   /**
+   * 解析 parentId（临时文件夹 ID → Chrome 真实 ID）
+   */
+  const resolveParentId = (parentId: string | undefined, tempIdMap: Map<string, string>): string =>
+    normalizeWritableBookmarkParentId(parentId ? (tempIdMap.get(parentId) ?? parentId) : undefined)
+
+  /**
+   * 为应用更改排序：先建文件夹（父先于子），再移动，再编辑，最后删除
+   */
+  const sortOperationsForApply = (operations: BookmarkOperation[]): BookmarkOperation[] => {
+    const folderCreates = operations.filter(
+      (op): op is BookmarkOperation & { type: 'create'; isFolder: true } =>
+        op.type === 'create' && op.isFolder
+    )
+    const others = operations.filter(op => !(op.type === 'create' && op.isFolder))
+
+    const sortedFolders: BookmarkOperation[] = []
+    const pending = [...folderCreates]
+    const createdTempIds = new Set<string>()
+
+    while (pending.length > 0) {
+      const sizeBefore = pending.length
+      for (let i = pending.length - 1; i >= 0; i--) {
+        const op = pending[i]
+        if (!op) continue
+        const parentId = op.parentId
+        const parentReady = !parentId.startsWith('temp_') || createdTempIds.has(parentId)
+        if (parentReady) {
+          sortedFolders.push(op)
+          if (op.nodeId.startsWith('temp_')) {
+            createdTempIds.add(op.nodeId)
+          }
+          pending.splice(i, 1)
+        }
+      }
+      if (pending.length === sizeBefore) {
+        sortedFolders.push(...pending)
+        break
+      }
+    }
+
+    const weight = (op: BookmarkOperation): number => {
+      if (op.type === 'move') return 1
+      if (op.type === 'edit') return 2
+      if (op.type === 'create' && !op.isFolder) return 3
+      return 4
+    }
+
+    return [...sortedFolders, ...others.sort((a, b) => weight(a) - weight(b))]
+  }
+
+  /**
+   * 加载整理提案到右侧预览（与 setProposalTree 相同落点，仅额外标记来源为 AI）
+   */
+  const applyOrganizeProposal = (nodes: BookmarkNode[]): void => {
+    setProposalTree(nodes)
+    markAsAIGenerated(true)
+    hasUnsavedChanges.value = true
+
+    updateRef(proposalExpandedFolders, draft => {
+      const expandFolders = (folderNodes: BookmarkNode[]) => {
+        for (const node of folderNodes) {
+          if (!node.url) {
+            draft.add(String(node.id))
+            if (node.children?.length) {
+              expandFolders(node.children)
+            }
+          }
+        }
+      }
+      expandFolders(nodes)
+    })
+    void saveExpandedState()
+
+    logger.info('Management', 'AI 整理提案已加载到右侧预览')
+  }
+
+  /**
    * 应用更改到 Chrome API
    * @param operations 操作列表
    * @param onProgress 进度回调
@@ -844,7 +1207,32 @@ export const useBookmarkManagementStore = defineStore('bookmark-management', () 
     success: boolean
     errors: Array<{ operation: BookmarkOperation; error: string }>
   }> => {
+    const preApplyValidation = validateCurrentProposalApply(operations)
+    if (!preApplyValidation.ok) {
+      logger.error('Management', '应用前校验未通过，已中止', preApplyValidation.issues)
+      return {
+        success: false,
+        errors: preApplyValidation.issues.map(issue => ({
+          operation: {
+            type: 'edit',
+            nodeId: issue.nodeId ?? 'validation',
+            title: issue.message,
+            oldTitle: '',
+            newTitle: issue.message,
+            isFolder: false
+          },
+          error: issue.message
+        }))
+      }
+    }
+
+    await setBookmarkSyncBatchSuspended(true)
+
     try {
+      const tempIdMap = new Map<string, string>()
+      const folderCreateIndexByParent = new Map<string, number>()
+      const orderedOperations = sortOperationsForApply(operations)
+
       // ✅ 标记为正在应用自己的更改（用于区分外部变更）
       isApplyingOwnChanges.value = true
 
@@ -852,41 +1240,47 @@ export const useBookmarkManagementStore = defineStore('bookmark-management', () 
       updateRef(applyProgress, draft => {
         draft.isApplying = true
         draft.currentIndex = 0
-        draft.totalOperations = operations.length
+        draft.totalOperations = orderedOperations.length
         draft.percentage = 0
         draft.errors = []
         draft.currentOperation = '开始应用更改...'
       })
 
       const errors: Array<{ operation: BookmarkOperation; error: string }> = []
+      let applyAborted = false
 
-      // 批量执行操作（每批 50 个，避免阻塞主线程）
+      // 批量执行操作（每批 50 个，避免阻塞主线程）；遇错即停，避免 Chrome 部分改动
       const BATCH_SIZE = 50
-      for (let i = 0; i < operations.length; i += BATCH_SIZE) {
-        const batch = operations.slice(i, Math.min(i + BATCH_SIZE, operations.length))
+      for (let i = 0; i < orderedOperations.length && !applyAborted; i += BATCH_SIZE) {
+        const batch = orderedOperations.slice(i, Math.min(i + BATCH_SIZE, orderedOperations.length))
 
         for (const operation of batch) {
+          if (applyAborted) {
+            break
+          }
+
           const currentIndex = i + batch.indexOf(operation) + 1
 
           // 更新进度
           updateRef(applyProgress, draft => {
             draft.currentIndex = currentIndex
-            draft.percentage = Math.round((currentIndex / operations.length) * 100)
+            draft.percentage = Math.round((currentIndex / orderedOperations.length) * 100)
             draft.currentOperation = `${operation.type}: ${operation.title}`
           })
 
           // 调用进度回调
-          onProgress?.(currentIndex, operations.length, operation.title)
+          onProgress?.(currentIndex, orderedOperations.length, operation.title)
 
           try {
-            await executeOperation(operation)
+            await executeOperation(operation, tempIdMap, folderCreateIndexByParent)
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error)
-            logger.error('Management', `操作失败: ${operation.type}`, {
+            logger.error('Management', `操作失败，已中止后续 apply: ${operation.type}`, {
               nodeId: operation.nodeId,
               error: errorMessage
             })
             errors.push({ operation, error: errorMessage })
+            applyAborted = true
           }
         }
 
@@ -894,11 +1288,13 @@ export const useBookmarkManagementStore = defineStore('bookmark-management', () 
         await new Promise(resolve => setTimeout(resolve, TIMEOUT_CONFIG.DELAY.IMMEDIATE))
       }
 
-      // ✅ 使用事件机制等待 Chrome API 事件传播完成，替代固定延迟
-      await waitForSyncComplete(5000) // 批量操作可能需要更长时间
+      const allSucceeded = errors.length === 0
 
-      // 应用完成后重新加载数据
-      await loadBookmarks()
+      // 批量操作期间会触发多次增量/全量事件；结束后再做一次权威全量同步。
+      await requestFullBookmarkSync()
+
+      // 全部成功：左右树对齐；部分失败：仅刷新左侧现状，保留右侧提案
+      await loadBookmarks({ preserveProposal: !allSucceeded })
 
       // 重置应用状态
       updateRef(applyProgress, draft => {
@@ -906,19 +1302,21 @@ export const useBookmarkManagementStore = defineStore('bookmark-management', () 
         draft.errors = errors
       })
 
-      hasUnsavedChanges.value = false
+      hasUnsavedChanges.value = !allSucceeded
 
-      logger.info('Management', '✅ 应用更改完成', {
-        total: operations.length,
-        errors: errors.length
-      })
+      logger.info(
+        'Management',
+        allSucceeded ? '✅ 应用更改完成' : '⚠️ 应用更改已中止，已保留提案供重试',
+        {
+          total: orderedOperations.length,
+          aborted: applyAborted,
+          failedNodeId: errors[0]?.operation.nodeId
+        }
+      )
 
-      // ✅ 使用事件机制等待所有同步事件处理完成，替代固定延迟
-      // 等待最后一次同步事件完成后再重置标志位
-      await waitForSyncComplete(1000) // 短暂等待，确保最后的同步事件已处理
       isApplyingOwnChanges.value = false
 
-      return { success: errors.length === 0, errors }
+      return { success: allSucceeded, errors }
     } catch (error) {
       logger.error('Management', '应用更改失败', error)
 
@@ -930,25 +1328,31 @@ export const useBookmarkManagementStore = defineStore('bookmark-management', () 
       isApplyingOwnChanges.value = false
 
       throw error
+    } finally {
+      await setBookmarkSyncBatchSuspended(false)
     }
   }
 
   /**
    * 执行单个操作
    */
-  const executeOperation = async (operation: BookmarkOperation): Promise<void> => {
+  const executeOperation = async (
+    operation: BookmarkOperation,
+    tempIdMap: Map<string, string>,
+    folderCreateIndexByParent: Map<string, number>
+  ): Promise<void> => {
     switch (operation.type) {
       case 'delete':
         await executeDelete(operation)
         break
       case 'move':
-        await executeMove(operation)
+        await executeMove(operation, tempIdMap)
         break
       case 'edit':
         await executeEdit(operation)
         break
       case 'create':
-        await executeCreate(operation)
+        await executeCreate(operation, tempIdMap, folderCreateIndexByParent)
         break
     }
   }
@@ -960,23 +1364,12 @@ export const useBookmarkManagementStore = defineStore('bookmark-management', () 
     if (operation.type !== 'delete') return
 
     // ✅ 通过 Background Script 删除书签/文件夹（符合单向数据流）
-    const deleteOpResponse = await new Promise<{
+    const deleteOpResponse = await sendRuntimeMessage<{
       success: boolean
       error?: string
-    }>((resolve, reject) => {
-      chrome.runtime.sendMessage(
-        {
-          type: operation.isFolder ? 'REMOVE_TREE_BOOKMARK' : 'DELETE_BOOKMARK',
-          data: { id: operation.nodeId }
-        },
-        response => {
-          if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message))
-          } else {
-            resolve(response || { success: false })
-          }
-        }
-      )
+    }>({
+      type: operation.isFolder ? 'REMOVE_TREE_BOOKMARK' : 'DELETE_BOOKMARK',
+      data: { id: operation.nodeId }
     })
 
     if (!deleteOpResponse.success) {
@@ -987,7 +1380,10 @@ export const useBookmarkManagementStore = defineStore('bookmark-management', () 
   /**
    * 执行移动操作
    */
-  const executeMove = async (operation: BookmarkOperation): Promise<void> => {
+  const executeMove = async (
+    operation: BookmarkOperation,
+    tempIdMap: Map<string, string>
+  ): Promise<void> => {
     if (operation.type !== 'move') return
 
     // ✅ 验证节点 ID 是否有效
@@ -995,28 +1391,31 @@ export const useBookmarkManagementStore = defineStore('bookmark-management', () 
       throw new Error(`无效的书签 ID: ${operation.nodeId}`)
     }
 
+    if (isChromeSystemBookmarkId(operation.nodeId)) {
+      return
+    }
+
+    const parentId = resolveParentId(operation.toParentId, tempIdMap)
+    if (parentId.startsWith('temp_')) {
+      throw new Error(`目标文件夹尚未创建: ${parentId}`)
+    }
+
+    // 移到新建临时文件夹时省略 index，由 Chrome 追加到末尾，避免提案 index 与实位子项数不一致
+    const movePayload: { id: string; parentId: string; index?: number } = {
+      id: operation.nodeId,
+      parentId
+    }
+    if (!operation.toParentId.startsWith('temp_')) {
+      movePayload.index = operation.toIndex
+    }
+
     // ✅ 通过 Background Script 移动书签（符合单向数据流）
-    const moveResponse = await new Promise<{
+    const moveResponse = await sendRuntimeMessage<{
       success: boolean
       error?: string
-    }>((resolve, reject) => {
-      chrome.runtime.sendMessage(
-        {
-          type: 'MOVE_BOOKMARK',
-          data: {
-            id: operation.nodeId,
-            parentId: operation.toParentId,
-            index: operation.toIndex
-          }
-        },
-        response => {
-          if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message))
-          } else {
-            resolve(response || { success: false })
-          }
-        }
-      )
+    }>({
+      type: 'MOVE_BOOKMARK',
+      data: movePayload
     })
 
     if (!moveResponse.success) {
@@ -1031,27 +1430,16 @@ export const useBookmarkManagementStore = defineStore('bookmark-management', () 
     if (operation.type !== 'edit') return
 
     // ✅ 通过 Background Script 更新书签（符合单向数据流）
-    const editResponse = await new Promise<{
+    const editResponse = await sendRuntimeMessage<{
       success: boolean
       error?: string
-    }>((resolve, reject) => {
-      chrome.runtime.sendMessage(
-        {
-          type: 'UPDATE_BOOKMARK',
-          data: {
-            id: operation.nodeId,
-            title: operation.newTitle,
-            url: operation.newUrl
-          }
-        },
-        response => {
-          if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message))
-          } else {
-            resolve(response || { success: false })
-          }
-        }
-      )
+    }>({
+      type: 'UPDATE_BOOKMARK',
+      data: {
+        id: operation.nodeId,
+        title: operation.newTitle,
+        url: operation.newUrl
+      }
     })
 
     if (!editResponse.success) {
@@ -1062,33 +1450,55 @@ export const useBookmarkManagementStore = defineStore('bookmark-management', () 
   /**
    * 执行创建操作
    */
-  const executeCreate = async (operation: BookmarkOperation): Promise<void> => {
+  const executeCreate = async (
+    operation: BookmarkOperation,
+    tempIdMap: Map<string, string>,
+    folderCreateIndexByParent: Map<string, number>
+  ): Promise<void> => {
     if (operation.type !== 'create') return
 
-    // ✅ 通过 Background Script 创建书签/文件夹（符合单向数据流）
-    const createResponse = await new Promise<{
+    const parentId = resolveParentId(operation.parentId, tempIdMap)
+    if (parentId.startsWith('temp_')) {
+      throw new Error(`父文件夹尚未创建: ${parentId}`)
+    }
+
+    if (operation.isFolder) {
+      const folderData: { title: string; parentId: string; index?: number } = {
+        title: operation.title,
+        parentId
+      }
+      // 新建 AI 文件夹按父级顺序递增 index，避免提案树 index 越界
+      if (operation.nodeId.startsWith('temp_')) {
+        const nextIndex = folderCreateIndexByParent.get(parentId) ?? 0
+        folderData.index = nextIndex
+        folderCreateIndexByParent.set(parentId, nextIndex + 1)
+      }
+
+      const createFolderResponse = await createFolderWithRecovery(folderData)
+
+      if (!createFolderResponse.success || !createFolderResponse.folderId) {
+        throw new Error(createFolderResponse.error || '创建文件夹失败')
+      }
+
+      if (operation.nodeId.startsWith('temp_')) {
+        tempIdMap.set(operation.nodeId, createFolderResponse.folderId)
+      }
+      return
+    }
+
+    // ✅ 通过 Background Script 创建书签（符合单向数据流）
+    const createResponse = await sendRuntimeMessage<{
       success: boolean
       bookmark?: chrome.bookmarks.BookmarkTreeNode
       error?: string
-    }>((resolve, reject) => {
-      chrome.runtime.sendMessage(
-        {
-          type: 'CREATE_BOOKMARK',
-          data: {
-            title: operation.title,
-            url: operation.url,
-            parentId: operation.parentId,
-            index: operation.index
-          }
-        },
-        response => {
-          if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message))
-          } else {
-            resolve(response || { success: false })
-          }
-        }
-      )
+    }>({
+      type: 'CREATE_BOOKMARK',
+      data: {
+        title: operation.title,
+        url: operation.url,
+        parentId,
+        index: operation.index
+      }
     })
 
     if (!createResponse.success) {
@@ -1181,6 +1591,8 @@ export const useBookmarkManagementStore = defineStore('bookmark-management', () 
     // 🔴 内存操作方法（仅用于提案树）
     deleteNodeFromProposal,
     editNodeInProposal,
+    createFolderInProposal,
+    validateCurrentProposalApply,
 
     // 🔴 Session Storage 同步方法
     saveOriginalExpandedState,
@@ -1189,6 +1601,7 @@ export const useBookmarkManagementStore = defineStore('bookmark-management', () 
     // 🔴 应用更改方法
     calculateDiff,
     applyChanges,
-    markAsAIGenerated
+    markAsAIGenerated,
+    applyOrganizeProposal
   }
 })

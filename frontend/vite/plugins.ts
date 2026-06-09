@@ -5,7 +5,7 @@
 import vue from '@vitejs/plugin-vue'
 import basicSsl from '@vitejs/plugin-basic-ssl'
 import { visualizer } from 'rollup-plugin-visualizer'
-import { existsSync, unlinkSync } from 'fs'
+import { cpSync, existsSync, rmSync, unlinkSync } from 'fs'
 import { resolve } from 'path'
 import type { Plugin } from 'vite'
 import { execSync } from 'child_process'
@@ -116,10 +116,112 @@ export function createServiceWorkerSafePreloadHelperPlugin(): Plugin {
 }
 
 /**
+ * 构建前校验 Embedding 模型；缺失时才下载（避免每次 build 访问 HuggingFace）
+ */
+export function createEmbeddingModelPlugin(): Plugin {
+  const validateScript = 'bun scripts/validate-embedding-model.mjs'
+  const downloadScript = 'bun scripts/download-embedding-model.mjs'
+
+  const run = (command: string, stdio: 'inherit' | 'pipe' = 'inherit') => {
+    execSync(command, { cwd: ROOT_DIR, stdio })
+  }
+
+  const isModelReady = (): boolean => {
+    try {
+      run(validateScript, 'pipe')
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  return {
+    name: 'embedding-model',
+    apply: 'build',
+    enforce: 'pre',
+    buildStart() {
+      if (isModelReady()) {
+        console.log('✅ Embedding 模型已存在，跳过下载')
+        return
+      }
+
+      console.log('📦 Embedding 模型缺失，开始下载（约 140MB，支持镜像回退）...')
+      run(downloadScript)
+      run(validateScript)
+    }
+  }
+}
+
+/**
+ * 将 public/models 同步到 dist（watch 模式下 Vite 可能不重复复制大文件）
+ */
+export function createModelsSyncPlugin(): Plugin {
+  const modelsSrc = resolve(ROOT_DIR, 'public/models')
+  const modelsDest = resolve(OUT_DIR, 'models')
+
+  const syncModels = () => {
+    if (!existsSync(modelsSrc)) {
+      return
+    }
+    if (existsSync(modelsDest)) {
+      rmSync(modelsDest, { recursive: true, force: true })
+    }
+    cpSync(modelsSrc, modelsDest, { recursive: true })
+  }
+
+  return {
+    name: 'sync-models',
+    apply: 'build',
+    buildStart() {
+      syncModels()
+    },
+    closeBundle() {
+      syncModels()
+    }
+  }
+}
+
+/**
+ * 将 public/_locales 同步到 dist，避免 watch 只更新 JS 时 chrome.i18n 读不到新 key
+ */
+export function createLocalesSyncPlugin(): Plugin {
+  const localesSrc = resolve(ROOT_DIR, 'public/_locales')
+  const localesDest = resolve(OUT_DIR, '_locales')
+
+  const syncLocales = () => {
+    if (!existsSync(localesSrc)) {
+      return
+    }
+    if (existsSync(localesDest)) {
+      rmSync(localesDest, { recursive: true, force: true })
+    }
+    cpSync(localesSrc, localesDest, { recursive: true })
+  }
+
+  return {
+    name: 'sync-locales',
+    apply: 'build',
+    buildStart() {
+      syncLocales()
+    },
+    handleHotUpdate({ file, server }) {
+      if (!file.includes('public/_locales') || !file.endsWith('messages.json')) {
+        return
+      }
+      syncLocales()
+      server.ws.send({ type: 'full-reload' })
+    }
+  }
+}
+
+/**
  * 创建所有插件
  */
 export function createPlugins() {
   const plugins: Plugin[] = [
+    createEmbeddingModelPlugin(),
+    createModelsSyncPlugin(),
+    createLocalesSyncPlugin(),
     createAuthSyncIifePlugin(),
     createVuePlugin(),
     basicSsl(),

@@ -2,11 +2,12 @@
  * Cloudflare Worker 环境变量类型定义
  */
 
-import type { Ai } from '@cloudflare/workers-types'
+import type { Ai, KVNamespace } from '@cloudflare/workers-types'
 
 export interface Env {
   // Bindings
   AI: Ai
+  AI_USAGE_KV?: KVNamespace
 
   // Secrets & Vars from wrangler.toml
   JWT_SECRET: string
@@ -36,4 +37,13 @@ export interface Env {
   AUTH_MICROSOFT_AUTH_URL?: string
   AUTH_MICROSOFT_TOKEN_URL?: string
   AUTH_MICROSOFT_USERINFO_URL?: string
+
+  /** Pro 托管 LLM：DeepSeek API Key（Secret） */
+  DEEPSEEK_API_KEY?: string
+  /** Pro 托管 LLM：DeepSeek API Base URL */
+  DEEPSEEK_API_BASE?: string
+  /** Pro 托管 LLM：模型名称 */
+  AI_HOSTED_MODEL?: string
+  /** Pro 托管 LLM：每月调用次数上限 */
+  AI_HOSTED_MONTHLY_QUOTA?: string
 }

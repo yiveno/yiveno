@@ -37,7 +37,6 @@ defineOptions({
 const props = withDefaults(defineProps<Props>(), {
   displayMode: 'icon',
   mode: 'indexeddb',
-  strategy: 'hybrid',
   limit: 100,
   debounce: 300,
   disabled: false,
@@ -58,7 +57,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<Emits>()
 
 // 解构 props 保持响应式
-const { mode, strategy, data, limit, initialQuery } = toRefs(props)
+const { mode, data, limit, initialQuery } = toRefs(props)
 
 // 展开状态
 const isExpanded = ref(false)
@@ -270,15 +269,6 @@ interface Props {
    * - memory: 从内存数据搜索
    */
   mode?: 'indexeddb' | 'memory'
-
-  /**
-   * 搜索策略（仅 indexeddb 模式有效）
-   * - auto: 自动根据输入意图选择（默认）
-   * - fuse: 本地 Fuse.js 模糊匹配
-   * - semantic: 本地语义向量搜索
-   * - hybrid: Fuse 立即返回 + Semantic 异步合并
-   */
-  strategy?: 'auto' | 'fuse' | 'semantic' | 'hybrid'
 
   /**
    * 内存数据源（mode='memory' 时使用）
@@ -587,8 +577,6 @@ const {
 } = useBookmarkSearch({
   // eslint-disable-next-line vue/no-ref-object-reactivity-loss
   mode: mode.value,
-  // eslint-disable-next-line vue/no-ref-object-reactivity-loss
-  strategy: strategy.value,
   data: computed(() => data.value ?? []),
   // eslint-disable-next-line vue/no-ref-object-reactivity-loss
   limit: limit.value,

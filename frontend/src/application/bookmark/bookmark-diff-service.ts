@@ -4,6 +4,10 @@
  */
 
 import type { BookmarkNode } from '@/types'
+import {
+  isChromeSystemBookmarkId,
+  normalizeBookmarkParentId
+} from '@/core/bookmark/chrome-system-ids'
 import { logger } from '@/infrastructure/logging/logger'
 
 /**
@@ -96,11 +100,16 @@ class BookmarkDiffService {
    * 计算两棵树的差异
    * @param original 原始树（来自 IndexedDB）
    * @param proposal 提案树（用户编辑后或 LLM 生成）
+   * @param options.flatOriginalNodes 完整扁平节点集（优先 IndexedDB），避免懒加载树漏节点导致误判
    */
-  calculateDiff(original: BookmarkNode, proposal: BookmarkNode): DiffResult {
+  calculateDiff(
+    original: BookmarkNode,
+    proposal: BookmarkNode,
+    options?: { flatOriginalNodes?: Map<string, BookmarkNode> }
+  ): DiffResult {
     logger.info('BookmarkDiffService', '🔍 开始计算差异')
 
-    const { originalMap, proposalMap } = this.buildNodeMaps(original, proposal)
+    const { originalMap, proposalMap } = this.buildNodeMaps(original, proposal, options)
 
     logger.debug('BookmarkDiffService', '✅ 映射表构建完成', {
       originalCount: originalMap.size,
@@ -111,7 +120,8 @@ class BookmarkDiffService {
     this.detectDeletions(originalMap, proposalMap, operations)
     this.detectChanges(proposalMap, originalMap, operations)
 
-    const filteredOperations = this.filterFalsePositiveMoves(operations)
+    const withoutRedundantDeletes = this.filterRedundantDescendantDeletes(operations, originalMap)
+    const filteredOperations = this.filterFalsePositiveMoves(withoutRedundantDeletes)
     const sortedOperations = this.sortOperations(filteredOperations)
     const statistics = this.calculateStatistics(sortedOperations)
 
@@ -128,7 +138,8 @@ class BookmarkDiffService {
    */
   private buildNodeMaps(
     original: BookmarkNode,
-    proposal: BookmarkNode
+    proposal: BookmarkNode,
+    options?: { flatOriginalNodes?: Map<string, BookmarkNode> }
   ): {
     originalMap: Map<string, BookmarkNode>
     proposalMap: Map<string, BookmarkNode>
@@ -136,7 +147,13 @@ class BookmarkDiffService {
     const originalMap = new Map<string, BookmarkNode>()
     const proposalMap = new Map<string, BookmarkNode>()
 
-    this.buildNodeMap(original, originalMap)
+    if (options?.flatOriginalNodes) {
+      for (const [id, node] of options.flatOriginalNodes) {
+        originalMap.set(id, node)
+      }
+    } else {
+      this.buildNodeMap(original, originalMap)
+    }
     this.buildNodeMap(proposal, proposalMap)
 
     return { originalMap, proposalMap }
@@ -151,6 +168,9 @@ class BookmarkDiffService {
     operations: BookmarkOperation[]
   ): void {
     for (const [id, node] of originalMap) {
+      if (isChromeSystemBookmarkId(id)) {
+        continue
+      }
       if (!proposalMap.has(id)) {
         operations.push({
           type: 'delete',
@@ -172,6 +192,9 @@ class BookmarkDiffService {
     operations: BookmarkOperation[]
   ): void {
     for (const [id, proposalNode] of proposalMap) {
+      if (isChromeSystemBookmarkId(id)) {
+        continue
+      }
       const originalNode = originalMap.get(id)
 
       if (!originalNode) {
@@ -249,7 +272,13 @@ class BookmarkDiffService {
     id: string,
     operations: BookmarkOperation[]
   ): void {
-    const parentChanged = originalNode.parentId !== proposalNode.parentId
+    if (isChromeSystemBookmarkId(id)) {
+      return
+    }
+
+    const originalParent = normalizeBookmarkParentId(originalNode.parentId)
+    const proposalParent = normalizeBookmarkParentId(proposalNode.parentId)
+    const parentChanged = originalParent !== proposalParent
     const indexChanged = originalNode.index !== proposalNode.index
 
     if (parentChanged) {
@@ -396,6 +425,56 @@ class BookmarkDiffService {
     })
 
     return [...otherOperations, ...genuineMoves]
+  }
+
+  /**
+   * 过滤被祖先文件夹递归删除覆盖的后代删除操作。
+   *
+   * Chrome removeTree 会一次性删除整棵子树；如果继续删除子节点，会得到
+   * "Can't find bookmark for id."。
+   */
+  private filterRedundantDescendantDeletes(
+    operations: BookmarkOperation[],
+    originalMap: Map<string, BookmarkNode>
+  ): BookmarkOperation[] {
+    const deletedFolderIds = new Set(
+      operations
+        .filter((op): op is DeleteOperation => op.type === 'delete' && op.isFolder)
+        .map(op => op.nodeId)
+    )
+
+    if (deletedFolderIds.size === 0) {
+      return operations
+    }
+
+    let filteredCount = 0
+    const filtered = operations.filter(op => {
+      if (op.type !== 'delete') {
+        return true
+      }
+
+      let parentId = originalMap.get(op.nodeId)?.parentId
+      const visited = new Set<string>()
+
+      while (parentId && !visited.has(parentId)) {
+        if (deletedFolderIds.has(parentId)) {
+          filteredCount++
+          return false
+        }
+        visited.add(parentId)
+        parentId = originalMap.get(parentId)?.parentId
+      }
+
+      return true
+    })
+
+    if (filteredCount > 0) {
+      logger.info('BookmarkDiffService', '已过滤祖先删除覆盖的后代删除操作', {
+        filteredCount
+      })
+    }
+
+    return filtered
   }
 
   /**

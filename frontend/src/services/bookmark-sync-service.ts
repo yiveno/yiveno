@@ -16,6 +16,7 @@ import { chromeStorage } from '@/infrastructure/storage/chrome-storage'
 import type { ProgressCallback, SyncProgress, SyncErrorType } from '@/types/sync-progress'
 import { calculateEstimatedRemaining, ERROR_MESSAGES } from '@/types/sync-progress'
 import { TIMEOUT_CONFIG } from '@/config/constants'
+import { detectInvalidRootLayerNodes } from '@/core/bookmark/chrome-system-ids'
 
 /** 数据库就绪状态的 session storage key（与 background/state.ts 保持一致） */
 const DB_READY_SESSION_KEY = 'ab_db_ready'
@@ -800,6 +801,14 @@ export class BookmarkSyncService {
         'BookmarkSync',
         `✅ 同步完成！共写入 ${allRecords.length} 条书签，总耗时: ${totalElapsed.toFixed(0)}ms`
       )
+
+      const invalidRootNodes = detectInvalidRootLayerNodes(allRecords)
+      if (invalidRootNodes.length > 0) {
+        logger.warn('BookmarkSync', '全量同步后检测到异常根层普通节点', {
+          count: invalidRootNodes.length,
+          nodes: invalidRootNodes.slice(0, 10)
+        })
+      }
 
       // ✅ 清除超时定时器
       this.clearSyncTimeout()

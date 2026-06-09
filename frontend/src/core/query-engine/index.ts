@@ -10,8 +10,6 @@ export type { SearchStrategy as SearchEngineStrategy } from './engine'
 export { semanticSearch } from './strategies/semantic-strategy'
 
 // 意图识别
-export { detectIntent } from './intent-detector'
-export type { QueryIntent, IntentResult } from './intent-detector'
 
 // 查询服务
 export { QueryService, queryService } from './query-service'

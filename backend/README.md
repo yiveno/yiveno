@@ -47,8 +47,9 @@ curl -k https://localhost:8787/api/health  # -k 忽略自签名证书
 - `GET /api/get-progress/:jobId` - 获取任务进度
 - `POST /api/check-urls` - 批量URL状态检测
 - `POST /api/classify-single` - 单个书签智能分类
-- `POST /api/ai/complete` - AI聊天/补全（支持多提供商）
-- `POST /api/ai/embedding` - 生成向量嵌入（支持多提供商）
+- `POST /api/ai/complete` - 旧版 Workers AI 补全（兼容保留，无鉴权）
+- `POST /api/ai/hosted/complete` - **Pro 托管 LLM 补全**（Supabase Token + Pro 鉴权）
+- `GET /api/ai/hosted/quota` - 查询 Pro 托管 LLM 当月配额
 - `GET /health` - 服务器健康状态
 
 ### 认证与账户
@@ -84,81 +85,62 @@ curl -k -X POST https://localhost:8787/api/check-urls \
   }'
 ```
 
-### AI 提供商与配置
+### Pro 托管 LLM
 
-- 通过环境变量 `AI_PROVIDER` 切换：`cloudflare | openai | groq | deepseek | gateway`
-- 默认模型：
-  - 文本补全 `DEFAULT_AI_MODEL`（默认 `@cf/meta/llama-3.1-8b-instruct`）
-  - 向量嵌入 `DEFAULT_EMBEDDING_MODEL`（默认 `@cf/baai/bge-m3`）
+Pro 用户默认使用的 LLM 代理，前端经 `hosted-llm-client.ts` 调用。
 
-示例：OpenAI 兼容聊天与嵌入
+**端点**：
+
+| 方法 | 路径                      | 鉴权                        | 说明                     |
+| ---- | ------------------------- | --------------------------- | ------------------------ |
+| POST | `/api/ai/hosted/complete` | Supabase Bearer Token + Pro | 文本补全，成功后递增配额 |
+| GET  | `/api/ai/hosted/quota`    | Supabase Bearer Token + Pro | 查询当月用量             |
+
+**请求示例**：
+
+```bash
+curl -X POST https://api.ottersage.com/api/ai/hosted/complete \
+  -H "Authorization: Bearer <supabase_access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"prompt":"整理这些书签","maxTokens":4000,"temperature":0.3}'
+```
+
+**响应示例**：
+
+```json
+{
+  "text": "{ \"folders\": [...] }",
+  "provider": "hosted",
+  "model": "deepseek-v4-flash",
+  "quota": { "used": 1, "limit": 999, "remaining": 998 }
+}
+```
+
+### 配置
+
+**wrangler.toml vars**：
+
+```toml
+AI_HOSTED_MODEL = "deepseek-v4-flash"
+AI_HOSTED_MONTHLY_QUOTA = "999"
+DEEPSEEK_API_BASE = "https://api.deepseek.com"
+```
+
+**Secrets**（`wrangler secret put DEEPSEEK_API_KEY`）
+
+**KV binding**（月度配额计数，`AI_USAGE_KV`）
+
+配额 Key 格式：`ai_usage:{userId}:{YYYY-MM}`
+
+### 旧版 `/api/ai/complete`
+
+保留 Cloudflare Workers AI 兼容端点（无鉴权），供内部测试。新功能请使用 `/api/ai/hosted/*`。
 
 ```bash
 curl -k -X POST https://localhost:8787/api/ai/complete \
   -H 'Content-Type: application/json' \
-  -d '{
-    "provider": "openai",
-    "model": "gpt-4o-mini",
-    "messages": [{"role":"user","content":"你好，简要总结这个项目。"}],
-    "temperature": 0.6,
-    "max_tokens": 256
-  }'
-
-curl -k -X POST https://localhost:8787/api/ai/embedding \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "provider": "openai",
-    "model": "text-embedding-3-small",
-    "text": "otterSage 是一个高性能书签管理扩展"
-  }'
+  -d '{"prompt":"用一句话介绍此项目"}'
 ```
-
-示例：Cloudflare Workers AI（默认）
-
-```bash
-curl -k -X POST https://localhost:8787/api/ai/complete \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "model": "@cf/meta/llama-3.1-8b-instruct",
-    "prompt": "用一句话介绍此项目"
-  }'
-
-curl -k -X POST https://localhost:8787/api/ai/embedding \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "model": "@cf/baai/bge-m3",
-    "text": "otterSage"
-  }'
-```
-
-### 成本与护栏（推荐策略）
-
-- 默认启用“就绪优先、云端回退”策略：前端优先使用 Chrome 内置 AI，就绪则本地推理；不可用或能力不足时回退至后端提供商。
-- 后端统一路由已内置以下成本控制措施：
-  - 最大输出 token 硬上限：由 `AI_MAX_OUTPUT_TOKENS` 控制，防止长输出导致费用飙升。
-  - 每日调用次数护栏：由 `AI_DAILY_MAX_CALLS` 控制，包含聊天与嵌入总调用数。
-  - 结果缓存：对 `complete` 与 `embedding` 进行去重缓存，降低重复请求成本。
-
-配置示例：
-
-```bash
-# Max output tokens per request (hard cap)
-AI_MAX_OUTPUT_TOKENS=512
-# Daily max total AI calls (chat+embedding)
-AI_DAILY_MAX_CALLS=2000
-# Cache TTL for chat/completion results (seconds)
-AI_CACHE_TTL_SECONDS=3600
-# Cache TTL for embeddings (seconds)
-AI_EMBED_CACHE_TTL_SECONDS=604800
-# Max cache entries in memory
-AI_CACHE_MAX_ENTRIES=1000
-```
-
-说明：
-
-- 缓存键包含 `provider/model/prompt(messages)` 等要素，确保同一输入稳定命中；嵌入默认长TTL（7天），文本补全默认中TTL（1小时）。
-- `AI_MAX_OUTPUT_TOKENS` 会在路由层强制生效，优先取较小值保证预算安全。
-- 超出每日调用上限时，后端返回错误（429语义），前端应提示并延迟重试或切换到离线策略。
 
 ## 🔧 配置
 

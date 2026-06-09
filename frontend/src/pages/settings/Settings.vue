@@ -251,7 +251,7 @@ watch(tab, v => {
     <!-- 📊 全局书签同步进度对话框 -->
     <GlobalSyncProgress />
 
-    <AppHeader :show-side-panel-toggle="false" :show-settings="false" :show-account="false" />
+    <AppHeader :show-side-panel-toggle="false" :show-settings="false" />
     <main class="main-content">
       <div class="settings-body">
         <!-- ✅ Material Web Tabs - 横向布局 -->

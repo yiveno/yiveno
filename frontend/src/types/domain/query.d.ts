@@ -8,14 +8,12 @@ import type { ID, Timestamp } from '../core/common'
 import type { BookmarkRecord } from './bookmark'
 
 /**
- * 查询策略类型
+ * 查询策略类型（由订阅与语义开关统一解析，调用方勿手动指定）
  *
- * fuse     - 本地 Fuse.js 模糊匹配（快，适合精确关键词）
- * semantic - Vectorize 语义搜索（准，适合自然语言）
- * hybrid   - 先 Fuse 立即返回，异步 Semantic 合并更新
- * auto     - 自动根据输入意图选择策略（推荐）
+ * fuse   - 本地 FlexSearch 模糊匹配（Free / 未开启语义检索）
+ * hybrid - FlexSearch + 本地 Embedding 语义检索（Pro 且开启语义检索）
  */
-export type SearchStrategy = 'fuse' | 'semantic' | 'hybrid' | 'auto'
+export type SearchStrategy = 'fuse' | 'hybrid'
 
 /**
  * 查询排序字段

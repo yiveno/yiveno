@@ -4,6 +4,7 @@ import { useSupabaseAuth } from './useSupabaseAuth'
 import { chromeStorage } from '@/infrastructure/storage/chrome-storage'
 import type { Subscription, UserSubscriptionStatus } from '@/infrastructure/supabase/types'
 import type { GumroadBillingFrequency } from '@/infrastructure/gumroad/client'
+import { requestBookmarkEmbeddingSyncFromPage } from '@/application/embedding/request-embedding-sync'
 
 const CACHE_KEY = 'ottersage_subscription_cache'
 const CACHE_DURATION = 15 * 60 * 1000
@@ -31,6 +32,12 @@ let lastUserId: string | null = null
 const isPro = computed(
   () => subscriptionStatus.value?.tier === 'pro' && subscriptionStatus.value?.status === 'active'
 )
+
+function notifyEmbeddingSyncIfPro(): void {
+  if (isPro.value) {
+    requestBookmarkEmbeddingSyncFromPage()
+  }
+}
 
 const isExpiringSoon = computed(() => {
   const end = subscriptionStatus.value?.current_period_end
@@ -69,6 +76,7 @@ async function loadSubscription(forceRefresh = false) {
       subscription.value = cached.subscription
       subscriptionStatus.value = cached.subscriptionStatus
       isInitialized.value = true
+      notifyEmbeddingSyncIfPro()
       // 后台刷新
       inflightLoad = Promise.all([
         subscriptionAppService.getSubscriptionDetails(uid),
@@ -85,6 +93,7 @@ async function loadSubscription(forceRefresh = false) {
               userId: uid
             })
           else await chromeStorage.removeLocal(CACHE_KEY)
+          notifyEmbeddingSyncIfPro()
         })
         .catch(async () => {
           await chromeStorage.removeLocal(CACHE_KEY)
@@ -115,6 +124,7 @@ async function loadSubscription(forceRefresh = false) {
           timestamp: Date.now(),
           userId: uid
         })
+      notifyEmbeddingSyncIfPro()
     })
     .catch(async err => {
       error.value = err instanceof Error ? err.message : '加载订阅状态失败'

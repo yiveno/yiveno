@@ -22,7 +22,8 @@ const props = withDefaults(defineProps<InputProps>(), {
   errorMessage: '',
   size: 'md',
   type: 'text',
-  leadingIconSize: 20
+  leadingIconSize: 20,
+  trailingIconSize: 20
 })
 
 const emit = defineEmits<InputEmits>()
@@ -89,6 +90,11 @@ const clearInput = () => {
   emit('update:modelValue', clearedValue as string | number)
   emit('clear')
 }
+
+/** 处理后置图标点击 */
+const handleTrailingIconClick = (event: MouseEvent) => {
+  emit('trailingIconClick', event)
+}
 </script>
 
 <template>
@@ -128,8 +134,18 @@ const clearInput = () => {
         :size="leadingIconSize"
       />
 
-      <!-- Trailing icon: 优先使用自定义 slot，否则根据状态显示 clear/loading -->
+      <!-- Trailing icon: 优先使用自定义 slot，否则 props / clear / loading -->
       <slot v-if="$slots['trailing-icon']" slot="trailing-icon" name="trailing-icon"></slot>
+      <md-icon-button
+        v-else-if="trailingIcon"
+        slot="trailing-icon"
+        type="button"
+        class="md-input-trailing-btn"
+        aria-label="切换显示"
+        @click="handleTrailingIconClick"
+      >
+        <LucideIcon :name="trailingIcon" :size="trailingIconSize" />
+      </md-icon-button>
       <template v-else>
         <!-- 清除按钮：有值时显示（优先级高于 loading） -->
         <md-icon-button
@@ -176,8 +192,18 @@ const clearInput = () => {
         :size="leadingIconSize"
       />
 
-      <!-- Trailing icon: 优先使用自定义 slot，否则根据状态显示 clear/loading -->
+      <!-- Trailing icon: 优先使用自定义 slot，否则 props / clear / loading -->
       <slot v-if="$slots['trailing-icon']" slot="trailing-icon" name="trailing-icon"></slot>
+      <md-icon-button
+        v-else-if="trailingIcon"
+        slot="trailing-icon"
+        type="button"
+        class="md-input-trailing-btn"
+        aria-label="切换显示"
+        @click="handleTrailingIconClick"
+      >
+        <LucideIcon :name="trailingIcon" :size="trailingIconSize" />
+      </md-icon-button>
       <template v-else>
         <!-- 清除按钮：有值时显示（优先级高于 loading） -->
         <md-icon-button
@@ -287,7 +313,8 @@ md-filled-text-field {
 }
 
 /* Loading & Clear 按钮 */
-.md-input-clear-btn {
+.md-input-clear-btn,
+.md-input-trailing-btn {
   --md-icon-button-icon-size: 16px;
   --md-icon-button-state-layer-shape: var(--radius-full);
 }
@@ -303,7 +330,7 @@ md-filled-text-field {
  * - 支持 loading 状态
  * - 支持 prepend/append slots（外部）
  * - 支持 leading-icon prop（内部左侧图标）
- * - 支持 trailing-icon slot（内部右侧自定义内容）
+ * - 支持 trailing-icon prop / slot（内部右侧自定义内容）
  * - 完全符合 Material Design 3 规范
  */
 </style>

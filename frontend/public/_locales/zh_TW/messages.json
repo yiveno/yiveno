@@ -1658,6 +1658,21 @@
   "management_organizing": {
     "message": "整理中..."
   },
+  "management_organize_notes_dialog_title": {
+    "message": "AI 整理說明"
+  },
+  "management_organize_notes_hint": {
+    "message": "可補充整理偏好，例如希望按工作/學習分類、保留某些資料夾名稱等。留空則按預設規則整理。"
+  },
+  "management_organize_notes_label": {
+    "message": "補充說明（可選）"
+  },
+  "management_organize_notes_placeholder": {
+    "message": "例如：把 AI 相關書籤單獨成組，音樂類不要和娛樂混在一起……"
+  },
+  "management_organize_notes_start": {
+    "message": "開始整理"
+  },
   "management_expand_all": {
     "message": "全部展開"
   },
@@ -1665,7 +1680,32 @@
     "message": "全部收合"
   },
   "management_filter_bookmarks": {
-    "message": "篩選書籤"
+    "message": "篩選書籤..."
+  },
+  "management_search_filtering": {
+    "message": "篩選中..."
+  },
+  "management_search_left_matches": {
+    "message": "左側 $1 條",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "management_search_right_matches": {
+    "message": "右側 $1 條",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "management_trait_filter_invalid": {
+    "message": "無效書籤"
+  },
+  "management_trait_filter_duplicate": {
+    "message": "重複書籤"
   },
   "management_trait_detection": {
     "message": "特徵偵測"
@@ -1678,6 +1718,48 @@
   },
   "management_preparing_organize": {
     "message": "準備整理中..."
+  },
+  "management_organize_stage_load_bookmarks": {
+    "message": "正在讀取書籤…"
+  },
+  "management_organize_stage_index_bookmarks": {
+    "message": "正在理解書籤內容…"
+  },
+  "management_organize_stage_ai_organize": {
+    "message": "AI 正在智慧分類…"
+  },
+  "management_organize_stage_complete": {
+    "message": "整理完成"
+  },
+  "management_organize_overall_label": {
+    "message": "整體進度"
+  },
+  "management_organize_step_load_title": {
+    "message": "讀取書籤"
+  },
+  "management_organize_step_index_title": {
+    "message": "理解書籤內容"
+  },
+  "management_organize_step_ai_title": {
+    "message": "AI 智慧分類"
+  },
+  "management_organize_step_preview_title": {
+    "message": "生成整理方案"
+  },
+  "management_organize_detail_bookmarks": {
+    "message": "$1 / $2 個書籤"
+  },
+  "management_organize_detail_batches": {
+    "message": "第 $1 / $2 批"
+  },
+  "management_organize_detail_loaded": {
+    "message": "已讀取 $1 個書籤"
+  },
+  "management_organize_detail_preview": {
+    "message": "正在生成右側預覽…"
+  },
+  "management_organize_detail_loading": {
+    "message": "讀取中…"
   },
   "management_confirm_apply_changes": {
     "message": "確認套用變更"
@@ -1894,6 +1976,15 @@
   },
   "management_apply_changes_failed": {
     "message": "套用變更失敗"
+  },
+  "management_apply_validation_failed": {
+    "message": "目前變更無法套用，請重新整理頁面後再試"
+  },
+  "management_new_folder_default": {
+    "message": "新建資料夾"
+  },
+  "management_create_folder_failed": {
+    "message": "新建資料夾失敗"
   },
   "management_no_bookmarks_to_organize": {
     "message": "找不到要整理的書籤"

@@ -1670,6 +1670,36 @@
   "management_organizing": {
     "message": "Organizing..."
   },
+  "management_organize_notes_dialog_title": {
+    "message": "AI Organize Notes"
+  },
+  "management_organize_notes_hint": {
+    "message": "Add preferences such as grouping by work vs study or keeping certain folder names. Leave blank for default rules."
+  },
+  "management_organize_notes_label": {
+    "message": "Additional notes (optional)"
+  },
+  "management_organize_notes_placeholder": {
+    "message": "e.g. Put AI bookmarks in one group; keep music separate from entertainment..."
+  },
+  "management_organize_notes_start": {
+    "message": "Start Organizing"
+  },
+  "management_organize_preview_ready": {
+    "message": "Organize plan is ready. Review on the right and click Apply to finish."
+  },
+  "management_organize_empty_result": {
+    "message": "Organize failed. Please try again later."
+  },
+  "management_organize_integrity_failed": {
+    "message": "Organize failed. Please try again later."
+  },
+  "management_organize_failed_retry": {
+    "message": "Organize failed. Please try again later."
+  },
+  "management_organize_failed": {
+    "message": "Organize failed. Please try again later."
+  },
   "management_expand_all": {
     "message": "Expand All"
   },
@@ -1677,7 +1707,32 @@
     "message": "Collapse All"
   },
   "management_filter_bookmarks": {
-    "message": "Filter Bookmarks"
+    "message": "Filter bookmarks..."
+  },
+  "management_search_filtering": {
+    "message": "Filtering..."
+  },
+  "management_search_left_matches": {
+    "message": "Left: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "management_search_right_matches": {
+    "message": "Right: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "management_trait_filter_invalid": {
+    "message": "Invalid links"
+  },
+  "management_trait_filter_duplicate": {
+    "message": "Duplicates"
   },
   "management_trait_detection": {
     "message": "Trait Detection"
@@ -1690,6 +1745,48 @@
   },
   "management_preparing_organize": {
     "message": "Preparing to organize..."
+  },
+  "management_organize_stage_load_bookmarks": {
+    "message": "Reading your bookmarks…"
+  },
+  "management_organize_stage_index_bookmarks": {
+    "message": "Understanding bookmark content…"
+  },
+  "management_organize_stage_ai_organize": {
+    "message": "AI is sorting your bookmarks…"
+  },
+  "management_organize_stage_complete": {
+    "message": "Organization complete"
+  },
+  "management_organize_overall_label": {
+    "message": "Overall progress"
+  },
+  "management_organize_step_load_title": {
+    "message": "Read bookmarks"
+  },
+  "management_organize_step_index_title": {
+    "message": "Understand content"
+  },
+  "management_organize_step_ai_title": {
+    "message": "AI sorting"
+  },
+  "management_organize_step_preview_title": {
+    "message": "Build preview"
+  },
+  "management_organize_detail_bookmarks": {
+    "message": "$1 / $2 bookmarks"
+  },
+  "management_organize_detail_batches": {
+    "message": "Batch $1 / $2"
+  },
+  "management_organize_detail_loaded": {
+    "message": "Read $1 bookmarks"
+  },
+  "management_organize_detail_preview": {
+    "message": "Building preview panel…"
+  },
+  "management_organize_detail_loading": {
+    "message": "Reading…"
   },
   "management_confirm_apply_changes": {
     "message": "Confirm Apply Changes"
@@ -1907,6 +2004,15 @@
   "management_apply_changes_failed": {
     "message": "Apply changes failed"
   },
+  "management_apply_validation_failed": {
+    "message": "These changes cannot be applied. Refresh the page and try again."
+  },
+  "management_new_folder_default": {
+    "message": "New folder"
+  },
+  "management_create_folder_failed": {
+    "message": "Failed to create folder"
+  },
   "management_no_bookmarks_to_organize": {
     "message": "No bookmarks found to organize"
   },
@@ -1914,10 +2020,13 @@
     "message": "Organizing $1 bookmarks..."
   },
   "management_organize_success": {
-    "message": "Successfully organized $1 bookmarks into $2 categories"
+    "message": "Organize plan is ready. Review on the right and click Apply to finish."
+  },
+  "management_organize_apply_success": {
+    "message": "Organize completed. All bookmarks are in the new folders."
   },
   "management_organize_failed": {
-    "message": "Organization failed, please try again later"
+    "message": "Organize failed. Please try again later."
   },
   "management_no_valid_url": {
     "message": "This bookmark has no valid URL"
