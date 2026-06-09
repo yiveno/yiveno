@@ -5,8 +5,8 @@ echo "🚀 pre-push: 运行推送前检查（仅检查变更文件）..."
 # 错误收集
 ERRORS=""
 
-# 获取本次推送涉及的文件
-CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+# 获取本次推送涉及的文件（排除已删除，避免 lint 报 NoFilesFound）
+CHANGED_FILES=$(git diff --name-only --diff-filter=ACMR HEAD~1 HEAD)
 if [ -z "$CHANGED_FILES" ]; then
     echo "ℹ️  没有变更文件，跳过检查"
     exit 0
@@ -37,23 +37,26 @@ FRONTEND_FILES=$(echo "$CHANGED_FILES" | grep -E '^frontend/' || true)
 if [ -n "$FRONTEND_FILES" ]; then
     # 2. 代码质量检查（仅变更文件）
     echo "🔍 代码质量检查（仅变更文件）..."
-    if (cd frontend && bunx eslint --no-cache --max-warnings 0 $(echo "$CHANGED_FILES" | grep -E '^frontend/.*\.(ts|tsx|js|jsx)$' | sed 's|^frontend/||') > /dev/null 2>&1); then
+    ESLINT_FILES=$(echo "$CHANGED_FILES" | grep -E '^frontend/.*\.(ts|tsx|js|jsx)$' | sed 's|^frontend/||' | tr '\n' ' ')
+    if [ -z "$ESLINT_FILES" ]; then
+        echo "⏭️  无可 lint 的 frontend 脚本文件，跳过 ESLint"
+    elif (cd frontend && bunx eslint --no-cache --max-warnings 0 $ESLINT_FILES > /dev/null 2>&1); then
         echo "✅ ESLint 检查通过"
     else
         echo "❌ ESLint 检查失败"
-        LINT_ERROR=$((cd frontend && bunx eslint --no-cache --max-warnings 0 $(echo "$CHANGED_FILES" | grep -E '^frontend/.*\.(ts|tsx|js|jsx)$' | sed 's|^frontend/||')) 2>&1 || true)
+        LINT_ERROR=$((cd frontend && bunx eslint --no-cache --max-warnings 0 $ESLINT_FILES) 2>&1 || true)
         ERRORS="${ERRORS}\n❌ ESLint 检查失败:\n${LINT_ERROR}\n\n"
     fi
 
     # 3. 样式检查（仅变更文件）
     echo "💅 样式检查（仅变更文件）..."
-    STYLE_FILES=$(echo "$CHANGED_FILES" | grep -E '^frontend/.*\.(css|scss|vue)$' | sed 's|^frontend/||' || true)
+    STYLE_FILES=$(echo "$CHANGED_FILES" | grep -E '^frontend/.*\.(css|scss|vue)$' | sed 's|^frontend/||' | tr '\n' ' ')
     if [ -n "$STYLE_FILES" ]; then
-        if (cd frontend && bunx stylelint --no-cache "$STYLE_FILES" > /dev/null 2>&1); then
+        if (cd frontend && bunx stylelint --no-cache $STYLE_FILES > /dev/null 2>&1); then
             echo "✅ Stylelint 检查通过"
         else
             echo "❌ Stylelint 检查失败"
-            STYLELINT_ERROR=$((cd frontend && bunx stylelint --no-cache "$STYLE_FILES") 2>&1 || true)
+            STYLELINT_ERROR=$((cd frontend && bunx stylelint --no-cache $STYLE_FILES) 2>&1 || true)
             ERRORS="${ERRORS}\n❌ Stylelint 检查失败:\n${STYLELINT_ERROR}\n\n"
         fi
     else
