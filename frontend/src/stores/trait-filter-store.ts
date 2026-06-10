@@ -180,6 +180,8 @@ export const useTraitFilterStore = defineStore('traitFilter', () => {
     })
   }
 
+  let _abortController: AbortController | null = null
+
   /**
    * 应用筛选（不删除，只筛选）
    */
@@ -189,18 +191,22 @@ export const useTraitFilterStore = defineStore('traitFilter', () => {
       return
     }
 
+    _abortController?.abort()
+    const ac = new AbortController()
+    _abortController = ac
+
     try {
-      // 使用 bookmarkTraitQueryService 查询
       const result = await bookmarkTraitQueryService.queryByTraits(state.value.activeFilters, {
         includeFullRecord: true
       })
 
-      // 更新筛选结果
+      if (ac.signal.aborted) return
+
       const newResults = new Map<string, TraitTag[]>()
       result.records?.forEach(record => {
         newResults.set(record.id, (record.traitTags || []) as TraitTag[])
       })
-      // eslint-disable-next-line require-atomic-updates -- state.value.filterResults 在 await 期间不会被其他代码修改
+      // eslint-disable-next-line require-atomic-updates -- AbortController 运行时保护
       state.value.filterResults = newResults
 
       logger.debug('TraitFilterStore', '筛选完成', {
@@ -208,6 +214,7 @@ export const useTraitFilterStore = defineStore('traitFilter', () => {
         results: newResults.size
       })
     } catch (error) {
+      if (ac.signal.aborted) return
       logger.error('TraitFilterStore', '筛选失败', error)
     }
   }

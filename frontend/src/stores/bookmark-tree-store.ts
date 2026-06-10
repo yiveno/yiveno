@@ -28,7 +28,7 @@ import { updateMap } from '@/infrastructure/state/immer-helpers'
 /**
  * 书签创建事件载荷
  */
-interface BookmarkCreatedPayload extends BookmarkNode {}
+type BookmarkCreatedPayload = BookmarkNode
 
 /**
  * 书签删除事件载荷
@@ -699,7 +699,7 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
 
     // ✅ 同时更新 childrenIndex 中的节点引用
     updateMap(childrenIndex, draft => {
-      for (const [_parentId, children] of draft.entries()) {
+      for (const [, children] of draft.entries()) {
         const index = children.findIndex(child => child.id === id)
         if (index !== -1) {
           const currentNode = children[index]
