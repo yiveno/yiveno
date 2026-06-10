@@ -40,11 +40,11 @@ if [ -n "$FRONTEND_FILES" ]; then
     ESLINT_FILES=$(echo "$CHANGED_FILES" | grep -E '^frontend/.*\.(ts|tsx|js|jsx)$' | sed 's|^frontend/||' | tr '\n' ' ')
     if [ -z "$ESLINT_FILES" ]; then
         echo "⏭️  无可 lint 的 frontend 脚本文件，跳过 ESLint"
-    elif (cd frontend && bunx eslint --no-cache --max-warnings 0 $ESLINT_FILES > /dev/null 2>&1); then
+    elif (cd frontend && bunx eslint --no-cache --max-warnings 0 --no-warn-ignored $ESLINT_FILES > /dev/null 2>&1); then
         echo "✅ ESLint 检查通过"
     else
         echo "❌ ESLint 检查失败"
-        LINT_ERROR=$((cd frontend && bunx eslint --no-cache --max-warnings 0 $ESLINT_FILES) 2>&1 || true)
+        LINT_ERROR=$((cd frontend && bunx eslint --no-cache --max-warnings 0 --no-warn-ignored $ESLINT_FILES) 2>&1 || true)
         ERRORS="${ERRORS}\n❌ ESLint 检查失败:\n${LINT_ERROR}\n\n"
     fi
 
