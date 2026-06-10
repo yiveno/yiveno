@@ -193,7 +193,8 @@ describe('auth routes', () => {
     const redirectUri = 'https://example.chromiumapp.org/callback'
 
     globalThis.fetch = (async (input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
+      const url =
+        typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
 
       if (url.includes('oauth2.googleapis.com/token')) {
         return new Response(

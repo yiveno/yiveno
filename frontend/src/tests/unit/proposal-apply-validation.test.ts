@@ -90,6 +90,25 @@ describe('proposal-apply-validation', () => {
     expect(result.issues.some(issue => issue.code === 'MISSING_ORIGINAL_NODE')).toBe(true)
   })
 
+  it('移动到虚拟根 root 应通过校验', () => {
+    const operations: BookmarkOperation[] = [
+      {
+        type: 'move',
+        nodeId: 'bm-1',
+        title: 'Example',
+        isFolder: false,
+        fromParentId: '1',
+        toParentId: 'root',
+        fromIndex: 0,
+        toIndex: 1,
+        isSameParent: false
+      }
+    ]
+
+    const result = validateProposalBeforeApply(operations, proposalRoots, originalMap)
+    expect(result.ok).toBe(true)
+  })
+
   it('移动目标文件夹不存在时应校验失败', () => {
     const operations: BookmarkOperation[] = [
       {

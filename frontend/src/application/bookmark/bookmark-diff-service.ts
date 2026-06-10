@@ -554,6 +554,65 @@ class BookmarkDiffService {
       delete: operations.filter(op => op.type === 'delete')
     }
   }
+
+  /**
+   * 管理页提案 diff 后处理：过滤虚拟根、Chrome 系统节点与临时节点噪音
+   */
+  postProcessManagementProposalDiff(
+    diff: DiffResult,
+    proposalChildren: BookmarkNode[]
+  ): DiffResult {
+    let filteredOperations = diff.operations.filter(
+      op => op.nodeId !== 'virtual-root' && !isChromeSystemBookmarkId(op.nodeId)
+    )
+
+    const tempNodeIds = this.collectTempNodeIds(proposalChildren)
+
+    if (tempNodeIds.size > 0) {
+      logger.info('BookmarkDiffService', '检测到临时文件夹，应用时将先创建文件夹', {
+        tempNodeCount: tempNodeIds.size
+      })
+
+      filteredOperations = filteredOperations.filter(op => {
+        if (op.type === 'create' && op.nodeId.startsWith('temp_') && op.isFolder) {
+          return true
+        }
+        if (op.type === 'create' && op.nodeId.startsWith('temp_') && !op.isFolder) {
+          return false
+        }
+        if (tempNodeIds.has(op.nodeId) && op.type !== 'create') {
+          return false
+        }
+        return true
+      })
+    }
+
+    const statistics = this.calculateStatistics(filteredOperations)
+
+    logger.info('BookmarkDiffService', '管理页 diff 后处理完成', {
+      ...statistics,
+      filteredTempNodes: tempNodeIds.size
+    })
+
+    return { operations: filteredOperations, statistics }
+  }
+
+  /** 收集提案树中的临时节点 ID */
+  private collectTempNodeIds(nodes: BookmarkNode[]): Set<string> {
+    const ids = new Set<string>()
+    const walk = (list: BookmarkNode[]) => {
+      for (const node of list) {
+        if (node.id.startsWith('temp_')) {
+          ids.add(node.id)
+        }
+        if (node.children?.length) {
+          walk(node.children)
+        }
+      }
+    }
+    walk(nodes)
+    return ids
+  }
 }
 
 /**

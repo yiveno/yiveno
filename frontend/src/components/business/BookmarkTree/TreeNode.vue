@@ -20,6 +20,12 @@ import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine'
 import { setCustomNativeDragPreview } from '@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview'
 import { pointerOutsideOfPreview } from '@atlaskit/pragmatic-drag-and-drop/element/pointer-outside-of-preview'
 import { Button } from '@/components'
+import { isChromeVisibleRootId } from '@/core/bookmark/chrome-system-ids'
+import {
+  isProposalDropAllowed,
+  isProposalNodeDraggable,
+  type ProposalDropPosition
+} from '@/application/bookmark/proposal-tree-move'
 
 // ✅ 设置组件名称，方便调试与日志定位
 /**
@@ -54,14 +60,14 @@ const emit = defineEmits<{
   (e: 'nodeMounted', id: string, el: HTMLElement): void
   (e: 'nodeUnmounted', id: string): void
   (e: 'dragStart', node: BookmarkNode): void
-  (e: 'dragOver', data: { node: BookmarkNode; position: 'before' | 'inside' | 'after' }): void
+  (e: 'dragOver', data: { node: BookmarkNode; position: ProposalDropPosition }): void
   (e: 'dragLeave', node: BookmarkNode): void
   (
     e: 'drop',
     data: {
       sourceId: string
       targetId: string
-      position: 'before' | 'inside' | 'after'
+      position: ProposalDropPosition
     }
   ): void
   (e: 'dragEnd'): void
@@ -117,6 +123,8 @@ interface Props {
     showCopyUrlButton?: boolean | undefined
     showShareButton?: boolean | undefined
     showMoreButton?: boolean | undefined // ✅ 是否显示"更多操作"按钮
+    /** 提案树 parentId 解析（拖拽环检测） */
+    resolveParentId?: ((nodeId: string) => string | undefined) | undefined
   }
   isVirtualMode?: boolean | undefined
   /** 严格顺序渲染：不对 children 去重/重排 */
@@ -135,7 +143,7 @@ interface Props {
         isDragging: boolean
         dragSourceId: string | null
         dropTargetId: string | null
-        dropPosition: 'before' | 'inside' | 'after' | null
+        dropPosition: ProposalDropPosition | null
       }
     | undefined
   /** 当前打开右键菜单的节点 ID */
@@ -145,6 +153,31 @@ interface Props {
 const rootRef = ref<HTMLElement | null>(null)
 // ✅ 拖拽清理函数引用
 let cleanupDrag: (() => void) | null = null
+
+/**
+ * 根据指针位置计算文件夹/书签行的放置落点
+ */
+function resolveDropPosition(clientY: number, element: HTMLElement): ProposalDropPosition {
+  const rect = element.getBoundingClientRect()
+  const relativeY = clientY - rect.top
+  const height = rect.height
+  const folder = !props.node.url
+
+  if (folder) {
+    if (isChromeVisibleRootId(String(props.node.id))) {
+      return relativeY < height / 2 ? 'inside' : 'inside-last'
+    }
+    if (relativeY < height / 4) {
+      return 'before'
+    }
+    if (relativeY > (height * 3) / 4) {
+      return 'inside-last'
+    }
+    return 'inside'
+  }
+
+  return relativeY < height / 2 ? 'before' : 'after'
+}
 
 onMounted(() => {
   if (rootRef.value) {
@@ -157,6 +190,7 @@ onMounted(() => {
       // 1️⃣ 将节点设置为可拖拽源
       draggable({
         element: rootRef.value,
+        canDrag: () => isProposalNodeDraggable(String(props.node.id)),
         getInitialData: () => ({
           type: 'bookmark-node',
           nodeId: String(props.node.id),
@@ -221,59 +255,28 @@ onMounted(() => {
       // 2️⃣ 将节点设置为可放置目标
       dropTargetForElements({
         element: rootRef.value,
-        canDrop: ({ source }) => {
+        canDrop: ({ source, input }) => {
           const sourceId = String(source.data.nodeId)
           const targetId = String(props.node.id)
+          const sourceNode = source.data.node as BookmarkNode | undefined
+          const resolveParentId = props.config.resolveParentId ?? (() => undefined)
 
-          // ✅ 禁止自己拖到自己
-          if (sourceId === targetId) {
+          if (!rootRef.value) {
             return false
           }
 
-          // ✅ 禁止将父文件夹拖入其子文件夹（循环引用检查）
-          // 检查目标节点是否在源节点的子树中
-          const sourceNode = source.data.node as BookmarkNode | undefined
-          if (sourceNode && !props.node.url) {
-            // 如果目标节点的祖先链中包含源节点ID，则禁止
-            const checkIsDescendant = (node: BookmarkNode, ancestorId: string): boolean => {
-              if (node.id === ancestorId) return true
-              if (node.parentId === ancestorId) return true
-              // 通过 ancestorIds 检查（如果有的话）
-              if (Array.isArray(node.ancestorIds) && node.ancestorIds.includes(ancestorId)) {
-                return true
-              }
-              return false
-            }
+          const position = resolveDropPosition(input.clientY, rootRef.value)
 
-            if (checkIsDescendant(props.node, sourceId)) {
-              return false
-            }
-          }
-
-          return true
+          return isProposalDropAllowed({
+            sourceId,
+            targetId,
+            sourceIsFolder: Boolean(sourceNode && !sourceNode.url),
+            position,
+            resolveParentId
+          })
         },
         getData: ({ input, element }) => {
-          // 根据鼠标位置计算放置位置
-          const rect = element.getBoundingClientRect()
-          const relativeY = input.clientY - rect.top
-          const height = rect.height
-          const isFolder = !props.node.url
-
-          let position: 'before' | 'inside' | 'after'
-
-          if (isFolder) {
-            // 📁 文件夹：上 1/4 为 before，中间 1/2 为 inside，下 1/4 为 after
-            if (relativeY < height / 4) {
-              position = 'before'
-            } else if (relativeY > (height * 3) / 4) {
-              position = 'after'
-            } else {
-              position = 'inside'
-            }
-          } else {
-            // 📄 书签：只能 before/after，不能 inside（书签不能包含其他节点）
-            position = relativeY < height / 2 ? 'before' : 'after'
-          }
+          const position = resolveDropPosition(input.clientY, element as HTMLElement)
 
           return {
             type: 'bookmark-node-drop',
@@ -282,7 +285,7 @@ onMounted(() => {
           }
         },
         onDragEnter: ({ self }) => {
-          const position = self.data.position as 'before' | 'inside' | 'after'
+          const position = self.data.position as ProposalDropPosition
           logger.debug('TreeNode', '拖拽进入', {
             nodeId: props.node.id,
             position
@@ -290,7 +293,7 @@ onMounted(() => {
           emit('dragOver', { node: props.node, position })
         },
         onDrag: ({ self }) => {
-          const position = self.data.position as 'before' | 'inside' | 'after'
+          const position = self.data.position as ProposalDropPosition
           emit('dragOver', { node: props.node, position })
         },
         onDragLeave: () => {
@@ -300,7 +303,7 @@ onMounted(() => {
         onDrop: ({ source, self }) => {
           const sourceId = String(source.data.nodeId)
           const targetId = String(props.node.id)
-          const position = self.data.position as 'before' | 'inside' | 'after'
+          const position = self.data.position as ProposalDropPosition
 
           logger.info('TreeNode', '拖拽放置', {
             sourceId,
@@ -329,8 +332,17 @@ onUnmounted(() => {
 const isFolder = computed(() => !props.node.url)
 
 // 🚀 性能优化：缓存展开状态检查
-const isExpanded = computed(() => props.expandedFolders.has(props.node.id))
+const isExpanded = computed(() => props.expandedFolders.has(String(props.node.id)))
 const isSelected = computed(() => props.selectedNodes.has(String(props.node.id)))
+const isEmptyFolder = computed(() => {
+  if (!isFolder.value) return false
+  if (typeof props.node.childrenCount === 'number') return props.node.childrenCount === 0
+  return Array.isArray(props.node.children) && props.node.children.length === 0
+})
+const folderIconName = computed(() => {
+  if (isEmptyFolder.value) return 'folder-minus'
+  return isExpanded.value ? 'folder-open' : 'folder'
+})
 
 // 🆕 收藏状态（已移除，收藏功能已移至右键菜单）
 // const isFavorited = computed(() => {
@@ -461,8 +473,9 @@ const nodeClasses = computed(() => {
     // ✅ 拖拽状态类
     'node--dragging': isDraggingSource.value,
     'node--drop-before': dropPosition.value === 'before',
-    'node--drop-inside': dropPosition.value === 'inside',
+    'node--drop-inside': dropPosition.value === 'inside' || dropPosition.value === 'inside-last',
     'node--drop-after': dropPosition.value === 'after',
+    'node--drop-inside-last': dropPosition.value === 'inside-last',
     [`node--level-${props.level}`]: true,
     [`node--${props.config.size || 'comfortable'}`]: true
   }
@@ -655,9 +668,9 @@ defineExpose({
       <!-- 文件夹图标 -->
       <div class="folder-icon">
         <LucideIcon
-          :name="isExpanded ? 'folder-open' : 'folder'"
+          :name="folderIconName"
           :size="18"
-          class="folder-icon-svg"
+          :class="['folder-icon-svg', { 'folder-icon-svg--empty': isEmptyFolder }]"
         />
       </div>
 
@@ -903,6 +916,10 @@ defineExpose({
 /* 文件夹图标颜色 - 橙黄色 */
 .folder-icon-svg {
   color: var(--color-folder);
+}
+
+.folder-icon-svg--empty {
+  opacity: 0.72;
 }
 
 /* 书签样式 */

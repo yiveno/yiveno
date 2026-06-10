@@ -339,48 +339,23 @@ const cacheStats = bookmarkSearchService.getCacheStats()
 logger.info('SearchService', `缓存大小: ${cacheStats.size}/${cacheStats.maxSize}`)
 ```
 
-## 书签变更：计划与执行（Plan & Execute）
+## 整理页提案：Diff 与应用
 
-推荐通过应用层服务一次性完成差异分析与执行，并在 UI 中获取可视化进度：
-
-```ts
-import { bookmarkChangeAppService } from '@/application/bookmark/bookmark-change-app-service'
-
-// original 与 target 为 Chrome 的书签树结构（或经过转换的等价结构）
-const { ok, value, error } = await bookmarkChangeAppService.planAndExecute(original, target, {
-  onProgress: p => {
-    // 进度指标：总任务、已完成、失败
-    // p.total, p.completed, p.failed, p.currentOperation, p.estimatedTimeRemaining
-  }
-})
-
-if (ok) {
-  // value.diff: DiffResult（来自 core/bookmark/services/diff-engine）
-  // value.execution: ExecutionResult（来自 core/bookmark/services/executor）
-}
-```
-
-如需单独执行（已获得 DiffResult）：
+管理页右侧提案树与左侧原始树的差异计算、校验与应用：
 
 ```ts
-import { SmartBookmarkExecutor } from '@/core/bookmark/services/executor'
+import { calculateManagementProposalDiff } from '@/application/bookmark/management-proposal-diff'
+import { proposalApplyService } from '@/application/bookmark/proposal-apply-service'
 
-const executor = new SmartBookmarkExecutor()
-const execResult = await executor.executeDiff(diffResult, p => {
-  /* 同上 */
-})
+const diff = calculateManagementProposalDiff(originalChildren, proposalChildren, flatOriginalNodes)
+const result = await proposalApplyService.applyOperations(diff.operations, { onProgress })
 ```
 
-注意：避免在 UI/store 中直接操作 Chrome API，统一通过应用层或核心执行器处理。
+- Diff：`@/application/bookmark/bookmark-diff-service` + `management-proposal-diff.ts`
+- 应用：`@/application/bookmark/proposal-apply-service.ts`（经 Background Script 写入 Chrome）
+- 提案树编辑：`@/application/bookmark/proposal-tree-edit-service.ts`
 
-### Diff 与执行器（核心能力）
-
-- Diff 引擎：`@/core/bookmark/services/diff-engine`
-  - 导出：`smartBookmarkDiffEngine`、`OperationType`、`BookmarkOperation`、`DiffResult`
-- 执行器：`@/core/bookmark/services/executor`
-  - 导出：`SmartBookmarkExecutor`、`smartBookmarkExecutor`、`ExecutionResult`、`ProgressCallback`
-
-> 兼容说明：`utils/smart-bookmark-diff-engine` 与 `utils/smart-bookmark-executor` 仍保留转发导出，但请尽快迁移到 core 路径。
+注意：避免在 UI/store 中直接操作 Chrome API。
 
 ## 命名规范与职责边界（重要）
 
@@ -394,10 +369,9 @@ const execResult = await executor.executeDiff(diffResult, p => {
   - 策略：fuse / semantic / hybrid / auto
   - 组合式封装：`composables/useBookmarkSearch.ts`
 
-- 书签变更（Plan & Execute）：
-  - Diff 引擎：`core/bookmark/services/diff-engine.ts`
-  - 执行器：`core/bookmark/services/executor.ts`
-  - 应用层封装：`application/bookmark/bookmark-change-app-service.ts`
+- 整理页提案变更：
+  - Diff：`application/bookmark/bookmark-diff-service.ts` + `management-proposal-diff.ts`
+  - Apply：`application/bookmark/proposal-apply-service.ts`
 
 - 现代化书签服务：`services/modern-bookmark-service.ts`
   - 定位：原生事件/特性桥接，统一代理到应用层服务（如筛选）
@@ -418,14 +392,14 @@ const execResult = await executor.executeDiff(diffResult, p => {
 
 ## 迁移对照表（从旧名到规范名）
 
-| 旧文件/概念                           | 现行/规范位置                                                                                             |
-| ------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `services/hybrid-search-engine.ts`    | `application/query/bookmark-search-service.ts`（策略统一）                                                |
-| `services/fuse-search.ts`             | `core/query-engine/strategies/fuse-strategy.ts`（由应用层封装调度）                                       |
-| `utils/smart-bookmark-diff-engine.ts` | `core/bookmark/services/diff-engine.ts`                                                                   |
-| `utils/smart-bookmark-executor.ts`    | `core/bookmark/services/executor.ts`                                                                      |
-| `utils/smart-bookmark-manager.ts`     | `application/bookmark/bookmark-change-app-service.ts` 或 `application/bookmark/smart-bookmark-manager.ts` |
-| `unified-*.ts`（API 门面）            | `utils/unified-bookmark-api.ts`（职责收敛为通信与回退）                                                   |
+| 旧文件/概念                           | 现行/规范位置                                                       |
+| ------------------------------------- | ------------------------------------------------------------------- |
+| `services/hybrid-search-engine.ts`    | `application/query/bookmark-search-service.ts`（策略统一）          |
+| `services/fuse-search.ts`             | `core/query-engine/strategies/fuse-strategy.ts`（由应用层封装调度） |
+| `utils/smart-bookmark-diff-engine.ts` | `application/bookmark/bookmark-diff-service.ts`                     |
+| `utils/smart-bookmark-executor.ts`    | `application/bookmark/proposal-apply-service.ts`                    |
+| `bookmark-change-app-service.ts`      | `management-proposal-diff.ts` + `proposal-apply-service.ts`         |
+| `unified-*.ts`（API 门面）            | `utils/unified-bookmark-api.ts`（职责收敛为通信与回退）             |
 
 > 如需进一步统一命名为 `bookmark-api.ts` 等，将在后续版本按低风险路径进行重命名并提供 codemod。
 

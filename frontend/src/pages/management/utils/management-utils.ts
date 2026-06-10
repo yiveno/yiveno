@@ -26,34 +26,6 @@ export function isInternalProtocolUrl(url: string): boolean {
 }
 
 /**
- * 递归收集文件夹中的所有书签。
- */
-export function collectBookmarksFromFolder(
-  folder: BookmarkNode,
-  visited: Set<string> = new Set(),
-  depth = 0,
-  maxDepth = 50
-): BookmarkNode[] {
-  const bookmarks: BookmarkNode[] = []
-  if (depth > maxDepth) {
-    return bookmarks
-  }
-  if (visited.has(folder.id)) {
-    return bookmarks
-  }
-  visited.add(folder.id)
-  if (!folder.children) return bookmarks
-  for (const child of folder.children) {
-    if (child.url) {
-      bookmarks.push(child)
-    } else if (child.children) {
-      bookmarks.push(...collectBookmarksFromFolder(child, visited, depth + 1, maxDepth))
-    }
-  }
-  return bookmarks
-}
-
-/**
  * 按类型过滤操作列表。
  */
 export function getOperationsByType(

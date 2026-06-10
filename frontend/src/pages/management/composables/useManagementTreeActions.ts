@@ -3,21 +3,11 @@ import type { BookmarkNode } from '@/types'
 import { logger } from '@/infrastructure/logging/logger'
 import { message } from '@/application/message/message-service'
 import { isInternalProtocolUrl, readMwcTextFieldValue } from '../utils/management-utils'
-import { waitForTreePaint } from '../utils/management-tree-expand'
 import { t } from '@/utils/i18n-helpers'
 
 interface BookmarkTreeInstance {
-  expandAll?: () => boolean | void
-  collapseAll?: () => void
   clearSelection?: () => void
   selectNodesByIds?: (ids: string[], options?: { append?: boolean }) => void
-  toggleFolderById?: (id: string) => void
-  expandFolderById?: (id: string) => void
-  collapseFolderById?: (id: string) => void
-  focusNodeById?: (
-    id: string,
-    options?: { collapseOthers?: boolean; scrollIntoViewCenter?: boolean; pathIds?: string[] }
-  ) => Promise<void> | void
 }
 
 interface UseManagementTreeActionsOptions {
@@ -43,6 +33,10 @@ interface UseManagementTreeActionsOptions {
   originalTree: Ref<BookmarkNode[]>
   leftExpandAll: Ref<boolean>
   rightExpandAll: Ref<boolean>
+  leftExpandCommandExpanded: Ref<boolean>
+  rightExpandCommandExpanded: Ref<boolean>
+  setLeftTreeExpanded: (expanded: boolean) => void
+  setRightTreeExpanded: (expanded: boolean) => void
   isLeftPanelCollapsed: Ref<boolean>
   isPageLoading: Ref<boolean>
   loadingMessage: Ref<string>
@@ -58,15 +52,15 @@ export function useManagementTreeActions(options: UseManagementTreeActionsOption
   handleRightNodeEdit: (node: BookmarkNode) => void
   handleRightNodeDelete: (node: BookmarkNode) => void
   toggleLeftPanel: () => void
-  toggleLeftExpandAll: () => Promise<void> | void
-  toggleRightExpandAll: () => Promise<void> | void
+  toggleLeftExpandAll: () => void
+  toggleRightExpandAll: () => void
   onRightSelectionChange: (ids: string[]) => void
   toggleRightSelectAll: (checked: boolean) => void
   handleBookmarkCopyUrl: (node: BookmarkNode) => void
   handleBookmarkOpenNewTab: (node: BookmarkNode) => void
-  getAllRightTreeNodeIds: () => string[]
 } {
-  const isExpanding = ref(false)
+  const isLeftExpanding = ref(false)
+  const isRightExpanding = ref(false)
 
   function clearRightSelection(): void {
     try {
@@ -121,45 +115,23 @@ export function useManagementTreeActions(options: UseManagementTreeActionsOption
     options.isLeftPanelCollapsed.value = !options.isLeftPanelCollapsed.value
   }
 
-  async function toggleLeftExpandAll(): Promise<void> {
-    if (!options.leftTreeRef.value || isExpanding.value) return
-
-    const expanding = true
-    isExpanding.value = expanding
-
-    await waitForTreePaint()
-
-    if (options.leftExpandAll.value) {
-      options.leftTreeRef.value?.collapseAll?.()
-      options.leftExpandAll.value = false
-    } else {
-      const expanded = options.leftTreeRef.value?.expandAll?.()
-      options.leftExpandAll.value = expanded !== false
-    }
-
-    if (isExpanding.value === expanding) {
-      isExpanding.value = false
+  function toggleLeftExpandAll(): void {
+    if (isLeftExpanding.value) return
+    isLeftExpanding.value = true
+    try {
+      options.setLeftTreeExpanded(!options.leftExpandCommandExpanded.value)
+    } finally {
+      isLeftExpanding.value = false
     }
   }
 
-  async function toggleRightExpandAll(): Promise<void> {
-    if (!options.rightTreeRef.value || isExpanding.value) return
-
-    const expanding = true
-    isExpanding.value = expanding
-
-    await waitForTreePaint()
-
-    if (options.rightExpandAll.value) {
-      options.rightTreeRef.value?.collapseAll?.()
-      options.rightExpandAll.value = false
-    } else {
-      const expanded = options.rightTreeRef.value?.expandAll?.()
-      options.rightExpandAll.value = expanded !== false
-    }
-
-    if (isExpanding.value === expanding) {
-      isExpanding.value = false
+  function toggleRightExpandAll(): void {
+    if (isRightExpanding.value) return
+    isRightExpanding.value = true
+    try {
+      options.setRightTreeExpanded(!options.rightExpandCommandExpanded.value)
+    } finally {
+      isRightExpanding.value = false
     }
   }
 
@@ -171,10 +143,7 @@ export function useManagementTreeActions(options: UseManagementTreeActionsOption
     if (checked) {
       const allIds = options.rightTreeIndex.getAllNodeIds()
       options.rightTreeRef.value?.selectNodesByIds?.(allIds, { append: false })
-      void waitForTreePaint().then(() => {
-        const expanded = options.rightTreeRef.value?.expandAll?.()
-        options.rightExpandAll.value = expanded !== false
-      })
+      options.setRightTreeExpanded(true)
     } else {
       options.rightTreeRef.value?.selectNodesByIds?.([], { append: false })
     }
@@ -220,10 +189,6 @@ export function useManagementTreeActions(options: UseManagementTreeActionsOption
     }
   }
 
-  function getAllRightTreeNodeIds(): string[] {
-    return options.rightTreeIndex.getAllNodeIds()
-  }
-
   return {
     clearRightSelection,
     onEditBookmarkTitleInput,
@@ -238,7 +203,6 @@ export function useManagementTreeActions(options: UseManagementTreeActionsOption
     onRightSelectionChange,
     toggleRightSelectAll,
     handleBookmarkCopyUrl,
-    handleBookmarkOpenNewTab,
-    getAllRightTreeNodeIds
+    handleBookmarkOpenNewTab
   }
 }

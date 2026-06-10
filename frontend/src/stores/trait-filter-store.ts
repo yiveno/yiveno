@@ -65,11 +65,18 @@ export const useTraitFilterStore = defineStore('traitFilter', () => {
       logger.warn('TraitFilterStore', '重置 isDetecting 失败', err)
     })
 
+  /**
+   * 规范化从 storage 恢复的活动筛选器（历史数据可能非数组）
+   */
+  function normalizeStoredActiveFilters(value: unknown): TraitTag[] {
+    return Array.isArray(value) ? [...value] : []
+  }
+
   // 从 local storage 读取活动筛选器
   chromeStorage
     .getLocal<TraitTag[]>(LOCAL_KEYS.ACTIVE_FILTERS, [])
     .then(value => {
-      initialActiveFilters.value = value ?? []
+      initialActiveFilters.value = normalizeStoredActiveFilters(value)
       if (state.value) {
         state.value.activeFilters = initialActiveFilters.value
       }

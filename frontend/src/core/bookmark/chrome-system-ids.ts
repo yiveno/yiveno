@@ -59,6 +59,16 @@ export function normalizeWritableBookmarkParentId(parentId?: string): string {
 }
 
 /**
+ * 是否为提案树虚拟根 parentId（应用时会归一到 Chrome 可写父级）
+ */
+export function isVirtualBookmarkRootId(parentId?: string): boolean {
+  if (!parentId) {
+    return true
+  }
+  return parentId === 'root' || parentId === 'virtual-root' || parentId === CHROME_ROOT_ID
+}
+
+/**
  * 规范化 parentId，便于 diff 比较（undefined / root / 0 视为等价）
  */
 export function normalizeBookmarkParentId(parentId?: string): string {

@@ -4,7 +4,10 @@
 
 import type { BookmarkOperation } from '@/application/bookmark/bookmark-diff-service'
 import { flattenProposalNodeMap } from '@/application/bookmark/organize-proposal-audit'
-import { isChromeSystemBookmarkId } from '@/core/bookmark/chrome-system-ids'
+import {
+  isChromeSystemBookmarkId,
+  isVirtualBookmarkRootId
+} from '@/core/bookmark/chrome-system-ids'
 import { isTempFolderId } from '@/core/bookmark/temp-folder-ids'
 import { logger } from '@/infrastructure/logging/logger'
 import type { BookmarkNode } from '@/types'
@@ -107,6 +110,7 @@ export function validateProposalBeforeApply(
           })
         }
       } else if (
+        !isVirtualBookmarkRootId(targetParentId) &&
         !isChromeSystemBookmarkId(targetParentId) &&
         !flatOriginalNodes.has(targetParentId) &&
         !proposalMap.has(targetParentId)
@@ -136,6 +140,7 @@ export function validateProposalBeforeApply(
           })
         }
       } else if (
+        !isVirtualBookmarkRootId(parentId) &&
         !isChromeSystemBookmarkId(parentId) &&
         !flatOriginalNodes.has(parentId) &&
         !proposalMap.has(parentId)

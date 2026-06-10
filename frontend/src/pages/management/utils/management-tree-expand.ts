@@ -1,13 +1,19 @@
 import { nextTick, type Ref } from 'vue'
 
-/** 书签树实例（整理页展开/收起） */
-export interface ManagementBookmarkTreeInstance {
-  expandAll?: () => boolean | void
-  collapseAll?: () => void
+/**
+ * 通过 expandCommand prop 触发 BookmarkTree 展开/收起（避免 ref 时序问题）
+ */
+export function dispatchTreeExpandCommand(
+  commandRef: Ref<number>,
+  expandedRef: Ref<boolean>,
+  expanded: boolean
+): void {
+  expandedRef.value = expanded
+  commandRef.value += 1
 }
 
 /**
- * 等待 Vue 完成 DOM 更新并完成一帧绘制，避免 ref 尚未挂载或 props 未落地就调用 expandAll。
+ * 等待 Vue 完成 DOM 更新并完成一帧绘制
  */
 export async function waitForTreePaint(): Promise<void> {
   await nextTick()
@@ -21,12 +27,10 @@ export async function waitForTreePaint(): Promise<void> {
  * 同步单侧树的展开状态（筛选命中展开 / 清空收起 / 未参与筛选则保持原状）
  */
 export async function applyTreeExpandState(
-  treeRef: Ref<ManagementBookmarkTreeInstance | null>,
   expandAllRef: Ref<boolean>,
+  setExpanded: (expanded: boolean) => void,
   options: {
-    /** 当前侧是否参与筛选 */
     isFiltered: boolean
-    /** 是否有命中结果 */
     hasMatches: boolean
   }
 ): Promise<void> {
@@ -37,12 +41,12 @@ export async function applyTreeExpandState(
   await waitForTreePaint()
 
   if (options.hasMatches) {
-    const expanded = treeRef.value?.expandAll?.()
-    expandAllRef.value = expanded !== false
+    setExpanded(true)
+    expandAllRef.value = true
     return
   }
 
-  treeRef.value?.collapseAll?.()
+  setExpanded(false)
   expandAllRef.value = false
 }
 
@@ -50,15 +54,15 @@ export async function applyTreeExpandState(
  * 清空筛选后收起两侧树
  */
 export async function collapseManagementTrees(
-  leftTreeRef: Ref<ManagementBookmarkTreeInstance | null>,
-  rightTreeRef: Ref<ManagementBookmarkTreeInstance | null>,
+  setLeftExpanded: (expanded: boolean) => void,
+  setRightExpanded: (expanded: boolean) => void,
   leftExpandAll: Ref<boolean>,
   rightExpandAll: Ref<boolean>
 ): Promise<void> {
   await waitForTreePaint()
 
-  leftTreeRef.value?.collapseAll?.()
-  rightTreeRef.value?.collapseAll?.()
+  setLeftExpanded(false)
+  setRightExpanded(false)
   leftExpandAll.value = false
   rightExpandAll.value = false
 }

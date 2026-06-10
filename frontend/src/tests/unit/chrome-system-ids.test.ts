@@ -3,10 +3,22 @@ import {
   BOOKMARKS_BAR_ID,
   detectInvalidRootLayerNodes,
   isInvalidRootLayerNode,
+  isVirtualBookmarkRootId,
   normalizeWritableBookmarkParentId
 } from '@/core/bookmark/chrome-system-ids'
 
 describe('chrome-system-ids', () => {
+  describe('isVirtualBookmarkRootId', () => {
+    it.each(['root', 'virtual-root', '0', undefined] as const)('应将 %s 识别为虚拟根', parentId => {
+      expect(isVirtualBookmarkRootId(parentId)).toBe(true)
+    })
+
+    it('普通文件夹 ID 不应视为虚拟根', () => {
+      expect(isVirtualBookmarkRootId('1')).toBe(false)
+      expect(isVirtualBookmarkRootId('42')).toBe(false)
+    })
+  })
+
   describe('normalizeWritableBookmarkParentId', () => {
     it.each(['root', 'virtual-root', '0', undefined] as const)('应将 %s 归一到书签栏', parentId => {
       expect(normalizeWritableBookmarkParentId(parentId)).toBe(BOOKMARKS_BAR_ID)

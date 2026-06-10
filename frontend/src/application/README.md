@@ -35,8 +35,10 @@ application/
 │   └── llm-response-validator.ts
 ├── bookmark/              # 书签相关应用服务
 │   ├── bookmark-app-service.ts
-│   ├── bookmark-change-app-service.ts
 │   ├── bookmark-diff-service.ts
+│   ├── management-proposal-diff.ts
+│   ├── proposal-apply-service.ts
+│   ├── proposal-tree-edit-service.ts
 │   ├── bookmark-index-app-service.ts
 │   ├── favorite-app-service.ts
 │   ├── recommendation-app-service.ts

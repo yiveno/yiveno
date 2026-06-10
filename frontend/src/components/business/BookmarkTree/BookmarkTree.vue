@@ -20,6 +20,10 @@ import VirtualFolderList from './VirtualFolderList.vue'
 import { message } from '@/application/message/message-service'
 import { t } from '@/utils/i18n-helpers'
 import { ContextMenuBuilder } from '@/core/bookmark/context-menu-config'
+import {
+  buildProposalParentMap,
+  type ProposalDropPosition
+} from '@/application/bookmark/proposal-tree-move'
 import type { MenuItemConfig } from '@/core/bookmark/context-menu-config'
 import { useUIStore } from '@/stores/ui-store'
 
@@ -99,7 +103,7 @@ const emit = defineEmits<{
     payload: {
       sourceId: string
       targetId: string
-      position: 'before' | 'inside' | 'after'
+      position: ProposalDropPosition
     }
   ): void
   (e: 'descCountsUpdated', counts: Map<string, number>): void
@@ -183,6 +187,10 @@ interface Props {
    */
   draggable?: boolean | undefined
   /**
+   * 拖拽环检测用的完整树（整理页传入 live 提案树，避免筛选裁剪树导致 parent 链不完整）
+   */
+  dragValidationRoots?: BookmarkNode[] | undefined
+  /**
    * 点击书签的默认打开方式
    * - 'new-tab-background': 新标签页打开（后台）- 默认
    * - 'new-tab-foreground': 新标签页打开（前台）
@@ -203,6 +211,12 @@ interface Props {
    * @default true
    */
   showBookmarkUrl?: boolean | undefined
+  /**
+   * 父组件递增此值以程序化展开/收起（整理页一键展开按钮）
+   */
+  expandCommand?: number
+  /** 与 expandCommand 配套：true 展开全部，false 收起全部 */
+  expandCommandExpanded?: boolean
 }
 
 // === 响应式状态 ===
@@ -220,7 +234,7 @@ const dragState = ref<{
   isDragging: boolean
   dragSourceId: string | null
   dropTargetId: string | null
-  dropPosition: 'before' | 'inside' | 'after' | null
+  dropPosition: ProposalDropPosition | null
 }>({
   isDragging: false,
   dragSourceId: null,
@@ -285,6 +299,10 @@ const treeSource = computed(() => {
   return props.nodes
 })
 
+/** 拖拽校验 parent 索引：优先完整树，回退展示树 */
+const dragValidationSource = computed(() => props.dragValidationRoots ?? treeSource.value)
+const proposalParentMap = computed(() => buildProposalParentMap(dragValidationSource.value))
+
 // 🚀 性能优化：缓存树配置对象
 const treeConfig = computed(() => ({
   size: props.size,
@@ -294,6 +312,7 @@ const treeConfig = computed(() => ({
   showSelectionCheckbox: props.showSelectionCheckbox,
   draggable: props.draggable, // ✅ 拖拽功能配置
   showBookmarkUrl: props.showBookmarkUrl, // ✅ 是否显示书签 URL
+  resolveParentId: (nodeId: string) => proposalParentMap.value.get(nodeId),
   // 细粒度按钮控制
   showFavoriteButton: props.showFavoriteButton,
   showEditButton: props.showEditButton,
@@ -530,11 +549,26 @@ function getAllFolderIds(nodes: BookmarkNode[]): string[] {
   const ids: string[] = []
   for (const node of nodes) {
     if (node.children) {
-      ids.push(node.id)
+      ids.push(String(node.id))
       ids.push(...getAllFolderIds(node.children))
     }
   }
   return ids
+}
+
+/** 展开/收起后刷新虚拟滚动布局 */
+function syncVirtualLayoutAfterExpandChange(): void {
+  if (!virtualEnabled.value) return
+  void nextTick(() => {
+    scheduleVirtualizerUpdate()
+    try {
+      if (flattenedItems.value.length > 0) {
+        virtualizer.value.scrollToIndex(0, { align: 'start' })
+      }
+    } catch {
+      // 虚拟滚动器尚未就绪
+    }
+  })
 }
 
 /**
@@ -755,6 +789,7 @@ const handleFolderToggle = (folderId: string, node: BookmarkNode) => {
 
   // 强制触发响应式更新
   expandedFolders.value = new Set(expandedFolders.value)
+  syncVirtualLayoutAfterExpandChange()
 
   emit('folderToggle', folderId, node, !isExpanded)
 }
@@ -1395,7 +1430,7 @@ const handleDragStart = (node: BookmarkNode) => {
   logger.debug('BookmarkTree', '开始拖拽', { nodeId: node.id })
 }
 
-const handleDragOver = (data: { node: BookmarkNode; position: 'before' | 'inside' | 'after' }) => {
+const handleDragOver = (data: { node: BookmarkNode; position: ProposalDropPosition }) => {
   dragState.value.dropTargetId = String(data.node.id)
   dragState.value.dropPosition = data.position
 }
@@ -1408,7 +1443,7 @@ const handleDragLeave = () => {
 const handleDrop = (data: {
   sourceId: string
   targetId: string
-  position: 'before' | 'inside' | 'after'
+  position: ProposalDropPosition
 }) => {
   logger.info('BookmarkTree', '拖拽放置', data)
   emit('bookmarkMove', data)
@@ -1655,6 +1690,15 @@ function filterNodes(nodes: BookmarkNode[], query: string): BookmarkNode[] {
   return recurse(nodes)
 }
 
+watch(
+  () => flattenedItems.value.length,
+  () => {
+    if (virtualEnabled.value) {
+      scheduleVirtualizerUpdate()
+    }
+  }
+)
+
 // === 监听器 ===
 watch(searchQuery, (newQuery: string) => {
   const trimmed = newQuery?.trim() || ''
@@ -1722,11 +1766,13 @@ const expandAll = (): boolean => {
   if (allFolderIds.length > 2000) {
     logger.warn('BookmarkTree', 'expandAll 被限制，节点过多')
     message.warning('节点过多，展开全部会影响性能，请按需展开。')
+    emit('expandStateChange', false)
     return false
   }
   expandedFolders.value = new Set(allFolderIds)
   // 强制触发响应式更新
   expandedFolders.value = new Set(expandedFolders.value)
+  syncVirtualLayoutAfterExpandChange()
   emit('expandStateChange', true)
   return true
 }
@@ -1735,8 +1781,23 @@ const collapseAll = () => {
   expandedFolders.value = new Set()
   // 强制触发响应式更新
   expandedFolders.value = new Set(expandedFolders.value)
+  syncVirtualLayoutAfterExpandChange()
   emit('expandStateChange', false)
 }
+
+watch(
+  () => props.expandCommand,
+  (command, previousCommand) => {
+    if (command === undefined || command === 0) return
+    if (previousCommand !== undefined && command === previousCommand) return
+
+    if (props.expandCommandExpanded) {
+      expandAll()
+      return
+    }
+    collapseAll()
+  }
+)
 
 const clearSelection = () => {
   selectedNodes.value = new Set()

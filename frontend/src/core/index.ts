@@ -8,7 +8,6 @@ export * from './common/logger'
 
 // 书签领域
 export * from './bookmark/domain'
-export * from './bookmark/services/bookmark-converter'
 export * from './bookmark/repositories/indexeddb-repository'
 export * from './bookmark/trait-rules'
 export * from './bookmark/context-menu-config'

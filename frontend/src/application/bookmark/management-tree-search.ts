@@ -180,7 +180,31 @@ function cloneTreeSnapshot(nodes: BookmarkNode[]): BookmarkNode[] {
   })
 }
 
-function buildPrunedTree(
+/**
+ * 管理页筛选命中 ID 状态（仅存 ID，展示树由 live 数据派生）
+ */
+export interface ManagementSearchMatchState {
+  query: string
+  traitFilterIds: string[]
+  leftMatchedIds: Set<string> | null
+  rightMatchedIds: Set<string> | null
+  isTextFilterActive: boolean
+  hasTraitFilterActive: boolean
+}
+
+export const EMPTY_MANAGEMENT_SEARCH_MATCH: ManagementSearchMatchState = {
+  query: '',
+  traitFilterIds: [],
+  leftMatchedIds: null,
+  rightMatchedIds: null,
+  isTextFilterActive: false,
+  hasTraitFilterActive: false
+}
+
+/**
+ * 按命中 ID 同步裁剪树（纯函数，可基于最新提案树重复调用）
+ */
+export function buildManagementPrunedTree(
   nodes: BookmarkNode[],
   query: string,
   matchedIds: Set<string>
@@ -198,30 +222,25 @@ function buildPrunedTree(
 }
 
 /**
- * 整理页检索：IndexedDB hybrid 命中 ID → 双树裁剪；特征筛选仅作用于右侧提案树
+ * 异步解析双树文本命中 ID（特征筛选在派生阶段同步处理）
  */
-export async function searchManagementTrees(
+export async function resolveManagementSearchMatchIds(
   input: ManagementTreeSearchInput
-): Promise<ManagementTreeSearchResult> {
+): Promise<ManagementSearchMatchState> {
   const trimmedQuery = input.query.trim()
   const traitFilterIds = input.traitFilterIds
   const hasTextQuery = trimmedQuery.length > 0
   const hasTraitFilters = traitFilterIds.length > 0
 
   if (!hasTextQuery && !hasTraitFilters) {
-    return {
-      leftTree: input.originalTree,
-      rightTree: input.proposalTree,
-      leftMatchCount: 0,
-      rightMatchCount: 0,
-      isLeftFiltered: false,
-      isRightFiltered: false
-    }
+    return { ...EMPTY_MANAGEMENT_SEARCH_MATCH }
   }
 
-  let hybridResults: EnhancedSearchResult[] = []
+  let leftMatchedIds: Set<string> | null = null
+  let rightMatchedIds: Set<string> | null = null
 
   if (hasTextQuery) {
+    let hybridResults: EnhancedSearchResult[] = []
     const searchResult = await bookmarkSearchService.searchWithMetadata(trimmedQuery, {
       limit: input.limit ?? 500,
       highlight: false,
@@ -232,34 +251,83 @@ export async function searchManagementTrees(
     if (searchResult.ok) {
       hybridResults = searchResult.value.results
     }
+
+    leftMatchedIds = collectStrictMatchIds(input.originalTree, trimmedQuery, hybridResults)
+    rightMatchedIds = collectStrictMatchIds(input.proposalTree, trimmedQuery, hybridResults)
   }
 
-  let leftTree = input.originalTree
-  let rightTree = input.proposalTree
-  let isLeftFiltered = false
-  let isRightFiltered = false
+  return {
+    query: trimmedQuery,
+    traitFilterIds: [...traitFilterIds],
+    leftMatchedIds,
+    rightMatchedIds,
+    isTextFilterActive: hasTextQuery,
+    hasTraitFilterActive: hasTraitFilters
+  }
+}
 
-  if (hasTextQuery) {
-    const leftIds = collectStrictMatchIds(input.originalTree, trimmedQuery, hybridResults)
-    const rightIds = collectStrictMatchIds(input.proposalTree, trimmedQuery, hybridResults)
+/**
+ * 由 live 左侧树 + 命中状态派生展示树
+ */
+export function buildFilteredManagementLeftTree(
+  originalTree: BookmarkNode[],
+  match: ManagementSearchMatchState
+): BookmarkNode[] {
+  if (!match.isTextFilterActive || !match.leftMatchedIds) {
+    return originalTree
+  }
+  return buildManagementPrunedTree(originalTree, match.query, match.leftMatchedIds)
+}
 
-    leftTree = buildPrunedTree(input.originalTree, trimmedQuery, leftIds)
-    rightTree = buildPrunedTree(input.proposalTree, trimmedQuery, rightIds)
-    isLeftFiltered = true
-    isRightFiltered = true
+/**
+ * 由 live 右侧提案树 + 命中状态派生展示树
+ */
+export function buildFilteredManagementRightTree(
+  proposalTree: BookmarkNode[],
+  match: ManagementSearchMatchState
+): BookmarkNode[] {
+  let tree = proposalTree
+
+  if (match.isTextFilterActive && match.rightMatchedIds) {
+    tree = buildManagementPrunedTree(proposalTree, match.query, match.rightMatchedIds)
   }
 
-  if (hasTraitFilters) {
-    rightTree = recalculateChildrenCount(applyTraitFiltersToTree(rightTree, traitFilterIds))
-    isRightFiltered = true
+  if (match.hasTraitFilterActive && match.traitFilterIds.length > 0) {
+    tree = recalculateChildrenCount(applyTraitFiltersToTree(tree, match.traitFilterIds))
   }
+
+  return tree
+}
+
+/**
+ * 整理页检索：IndexedDB hybrid 命中 ID → 双树裁剪；特征筛选仅作用于右侧提案树
+ */
+export async function searchManagementTrees(
+  input: ManagementTreeSearchInput
+): Promise<ManagementTreeSearchResult> {
+  const match = await resolveManagementSearchMatchIds(input)
+
+  if (!match.isTextFilterActive && !match.hasTraitFilterActive) {
+    return {
+      leftTree: input.originalTree,
+      rightTree: input.proposalTree,
+      leftMatchCount: 0,
+      rightMatchCount: 0,
+      isLeftFiltered: false,
+      isRightFiltered: false
+    }
+  }
+
+  const leftTree = buildFilteredManagementLeftTree(input.originalTree, match)
+  const rightTree = buildFilteredManagementRightTree(input.proposalTree, match)
 
   return {
     leftTree,
     rightTree,
-    leftMatchCount: isLeftFiltered ? countBookmarkLeaves(leftTree) : 0,
-    rightMatchCount: isRightFiltered ? countBookmarkLeaves(rightTree) : 0,
-    isLeftFiltered,
-    isRightFiltered
+    leftMatchCount: match.isTextFilterActive ? countBookmarkLeaves(leftTree) : 0,
+    rightMatchCount:
+      match.isTextFilterActive || match.hasTraitFilterActive ? countBookmarkLeaves(rightTree) : 0,
+    isLeftFiltered: match.isTextFilterActive,
+    isRightFiltered: match.isTextFilterActive || match.hasTraitFilterActive
   }
 }

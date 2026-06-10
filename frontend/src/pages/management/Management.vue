@@ -14,6 +14,9 @@ defineOptions({
   name: 'ManagementPage'
 })
 
+const leftTreeRef = ref<InstanceType<typeof BookmarkTree> | null>(null)
+const rightTreeRef = ref<InstanceType<typeof BookmarkTree> | null>(null)
+
 const {
   dialogStore,
   bookmarkManagementStore,
@@ -32,10 +35,17 @@ const {
   showOrganizeNotesDialog,
   organizeUserNotes,
   ORGANIZE_USER_NOTES_MAX_LENGTH,
+  proposalTreeChildren,
   leftTreeData,
   rightTreeData,
-  leftExpandAll,
-  rightExpandAll,
+  leftExpandCommand,
+  leftExpandCommandExpanded,
+  rightExpandCommand,
+  rightExpandCommandExpanded,
+  isLeftTreeExpanded,
+  isRightTreeExpanded,
+  handleLeftExpandStateChange,
+  handleRightExpandStateChange,
   isLeftPanelCollapsed,
   leftPanelWidthVar,
   leftPanelGapVar,
@@ -54,9 +64,6 @@ const {
   folderEditFormErrors,
   isEditingBookmark,
   isEditingFolder,
-  isDeletingFolder,
-  isConfirmDeleteDialogOpen,
-  deleteFolderBookmarkCount,
   isEditDirty,
   isEditFolderDirty,
   leftMatchCount,
@@ -80,7 +87,7 @@ const {
   clearRightSelection,
   handleBookmarkCopyUrl,
   handleBookmarkOpenNewTab,
-  getDiffOperationsByType,
+  getOperationsByDiffType,
   getOperationIcon,
   getOperationTypeText,
   handleApplyClick,
@@ -90,11 +97,10 @@ const {
   confirmStartOrganize,
   confirmEditBookmark,
   confirmEditFolder,
-  confirmDeleteFolder,
   handleRightFolderAdd,
   handleBookmarkMove,
   handleBulkDelete
-} = useManagementPage()
+} = useManagementPage({ leftTreeRef, rightTreeRef })
 
 const managementSearchBarRef = ref<InstanceType<typeof ManagementSearchBar> | null>(null)
 
@@ -241,17 +247,17 @@ function handleClearManagementFilters(): void {
               </summary>
               <div class="group-items">
                 <div
-                  v-for="(op, index) in getDiffOperationsByType('create').slice(0, 50)"
+                  v-for="(op, index) in getOperationsByDiffType('create').slice(0, 50)"
                   :key="index"
                   class="group-item"
                 >
                   {{ op.isFolder ? '📁' : '📄' }} {{ op.title }}
                 </div>
-                <div v-if="getDiffOperationsByType('create').length > 50" class="more-items">
+                <div v-if="getOperationsByDiffType('create').length > 50" class="more-items">
                   {{
                     t(
                       'management_more_items',
-                      String(getDiffOperationsByType('create').length - 50)
+                      String(getOperationsByDiffType('create').length - 50)
                     )
                   }}
                 </div>
@@ -264,15 +270,15 @@ function handleClearManagementFilters(): void {
               </summary>
               <div class="group-items">
                 <div
-                  v-for="(op, index) in getDiffOperationsByType('move').slice(0, 50)"
+                  v-for="(op, index) in getOperationsByDiffType('move').slice(0, 50)"
                   :key="index"
                   class="group-item"
                 >
                   {{ op.title }}
                 </div>
-                <div v-if="getDiffOperationsByType('move').length > 50" class="more-items">
+                <div v-if="getOperationsByDiffType('move').length > 50" class="more-items">
                   {{
-                    t('management_more_items', String(getDiffOperationsByType('move').length - 50))
+                    t('management_more_items', String(getOperationsByDiffType('move').length - 50))
                   }}
                 </div>
               </div>
@@ -284,15 +290,15 @@ function handleClearManagementFilters(): void {
               </summary>
               <div class="group-items">
                 <div
-                  v-for="(op, index) in getDiffOperationsByType('edit').slice(0, 50)"
+                  v-for="(op, index) in getOperationsByDiffType('edit').slice(0, 50)"
                   :key="index"
                   class="group-item"
                 >
                   {{ op.title }}
                 </div>
-                <div v-if="getDiffOperationsByType('edit').length > 50" class="more-items">
+                <div v-if="getOperationsByDiffType('edit').length > 50" class="more-items">
                   {{
-                    t('management_more_items', String(getDiffOperationsByType('edit').length - 50))
+                    t('management_more_items', String(getOperationsByDiffType('edit').length - 50))
                   }}
                 </div>
               </div>
@@ -306,17 +312,17 @@ function handleClearManagementFilters(): void {
               </summary>
               <div class="group-items">
                 <div
-                  v-for="(op, index) in getDiffOperationsByType('delete').slice(0, 50)"
+                  v-for="(op, index) in getOperationsByDiffType('delete').slice(0, 50)"
                   :key="index"
                   class="group-item"
                 >
                   {{ op.title }}
                 </div>
-                <div v-if="getDiffOperationsByType('delete').length > 50" class="more-items">
+                <div v-if="getOperationsByDiffType('delete').length > 50" class="more-items">
                   {{
                     t(
                       'management_more_items',
-                      String(getDiffOperationsByType('delete').length - 50)
+                      String(getOperationsByDiffType('delete').length - 50)
                     )
                   }}
                 </div>
@@ -409,19 +415,17 @@ function handleClearManagementFilters(): void {
                     <Button
                       variant="icon"
                       :title="
-                        leftExpandAll ? t('management_collapse_all') : t('management_expand_all')
+                        isLeftTreeExpanded
+                          ? t('management_collapse_all')
+                          : t('management_expand_all')
                       "
                       :disabled="isPageLoading"
                       @click="toggleLeftExpandAll"
                     >
-                      <span
-                        class="expand-toggle-icon"
-                        :class="{
-                          expanded: leftExpandAll,
-                          expanding: isPageLoading
-                        }"
-                      >
-                        <LucideIcon :name="leftExpandAll ? 'chevrons-up' : 'chevrons-down'" />
+                      <span class="expand-toggle-icon" :class="{ expanding: isPageLoading }">
+                        <LucideIcon
+                          :name="leftExpandCommandExpanded ? 'chevrons-up' : 'chevrons-down'"
+                        />
                       </span>
                     </Button>
                   </div>
@@ -432,6 +436,8 @@ function handleClearManagementFilters(): void {
                 <BookmarkTree
                   ref="leftTreeRef"
                   :nodes="leftTreeData"
+                  :expand-command="leftExpandCommand"
+                  :expand-command-expanded="leftExpandCommandExpanded"
                   source="management"
                   height="100%"
                   size="spacious"
@@ -451,6 +457,7 @@ function handleClearManagementFilters(): void {
                   :show-share-button="false"
                   :show-more-button="false"
                   @ready="handleLeftTreeReady"
+                  @expand-state-change="handleLeftExpandStateChange"
                 />
               </div>
             </Card>
@@ -515,18 +522,17 @@ function handleClearManagementFilters(): void {
                       <Button
                         variant="icon"
                         :title="
-                          rightExpandAll ? t('management_collapse_all') : t('management_expand_all')
+                          isRightTreeExpanded
+                            ? t('management_collapse_all')
+                            : t('management_expand_all')
                         "
                         :disabled="isPageLoading"
                         @click="toggleRightExpandAll"
                       >
-                        <span
-                          class="expand-toggle-icon"
-                          :class="{
-                            expanded: rightExpandAll
-                          }"
-                        >
-                          <LucideIcon :name="rightExpandAll ? 'chevrons-up' : 'chevrons-down'" />
+                        <span class="expand-toggle-icon">
+                          <LucideIcon
+                            :name="rightExpandCommandExpanded ? 'chevrons-up' : 'chevrons-down'"
+                          />
                         </span>
                       </Button>
                     </div>
@@ -538,6 +544,9 @@ function handleClearManagementFilters(): void {
                 <BookmarkTree
                   ref="rightTreeRef"
                   :nodes="rightTreeData"
+                  :drag-validation-roots="proposalTreeChildren"
+                  :expand-command="rightExpandCommand"
+                  :expand-command-expanded="rightExpandCommandExpanded"
                   :selected-desc-counts="rightTreeSelectedDescCounts"
                   height="100%"
                   size="spacious"
@@ -565,6 +574,7 @@ function handleClearManagementFilters(): void {
                   @bookmark-open-new-tab="handleBookmarkOpenNewTab"
                   @bookmark-copy-url="handleBookmarkCopyUrl"
                   @bookmark-move="handleBookmarkMove"
+                  @expand-state-change="handleRightExpandStateChange"
                 />
               </div>
               <template #footer>
@@ -719,53 +729,12 @@ function handleClearManagementFilters(): void {
         </Button>
       </template>
     </Dialog>
-
-    <!-- Delete Folder Confirm Dialog -->
-    <Dialog
-      :show="isConfirmDeleteDialogOpen"
-      :esc-to-close="true"
-      :enter-to-confirm="true"
-      :title="t('management_confirm_delete')"
-      icon="icon-delete"
-      :persistent="true"
-      max-width="480px"
-      min-width="480px"
-      @update:show="(v: boolean) => (isConfirmDeleteDialogOpen = v)"
-      @confirm="confirmDeleteFolder"
-    >
-      <div class="confirm-content">
-        {{ t('management_delete_folder_confirm', String(deleteFolderBookmarkCount)) }}
-      </div>
-      <template #actions>
-        <Button variant="text" @click="isConfirmDeleteDialogOpen = false">
-          {{ t('common_cancel') }}
-        </Button>
-        <Button
-          variant="tonal"
-          class="error-button"
-          :loading="isDeletingFolder"
-          @click="confirmDeleteFolder"
-        >
-          {{ t('management_confirm_delete') }}
-        </Button>
-      </template>
-    </Dialog>
   </div>
 </template>
 
 <!-- 无 scoped：Material 根节点 token + 管理页主栅格（此前误写在 style 外导致未生效） -->
 
 <style scoped>
-md-tabs {
-  width: 100%;
-  margin-bottom: var(--spacing-4);
-}
-
-/* 特征扫描进度对话框样式 */
-.trait-scan-progress {
-  padding: var(--spacing-4);
-}
-
 .progress-info {
   display: flex;
   justify-content: space-between;
@@ -974,23 +943,9 @@ p.warning-text {
   color: var(--color-text-secondary);
 }
 
-.ai-status-right {
-  margin-left: var(--spacing-3);
-}
-
-.mt-sm {
-  margin-top: var(--spacing-2);
-}
-
 .expand-toggle-icon {
   display: inline-flex;
-  transition:
-    transform var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
-    opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
-}
-
-.expand-toggle-icon.expanded {
-  transform: rotate(180deg);
+  transition: opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
 .expand-toggle-icon.expanding {
@@ -1092,25 +1047,6 @@ p.warning-text {
   overflow: hidden;
 }
 
-/* 使用 Overlay 组件自身的全屏蒙版，已通过 props 统一透明度与模糊 */
-
-.loading-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-6);
-}
-
-.loading-text {
-  font-size: 1.2rem;
-  font-weight: 500;
-}
-
-.loading-subtitle {
-  font-size: 0.9rem;
-  color: var(--color-text-secondary);
-}
-
 .main-content {
   flex: 1;
   overflow: hidden;
@@ -1206,28 +1142,6 @@ p.warning-text {
   text-overflow: ellipsis;
 }
 
-.panel-stats {
-  font-size: 0.8rem;
-  color: var(--color-text-secondary);
-}
-
-.stats-separator {
-  margin: 0 var(--spacing-1);
-}
-
-.stats-change {
-  margin-left: var(--spacing-sm);
-  font-weight: 500;
-}
-
-.stats-increase {
-  color: var(--color-success);
-}
-
-.stats-decrease {
-  color: var(--color-error);
-}
-
 .panel-content {
   display: flex;
   flex-direction: column;
@@ -1312,23 +1226,11 @@ p.warning-text {
   padding-left: var(--spacing-3);
 }
 
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: var(--spacing-4);
-  height: 100%;
-  color: var(--color-text-secondary);
-}
-
-.edit-form md-outlined-text-field,
-.add-item-form md-outlined-text-field {
+.edit-form md-outlined-text-field {
   width: 100%;
 }
 
 .edit-form,
-.add-item-form,
 .organize-notes-dialog {
   display: flex;
   flex-direction: column;
@@ -1353,78 +1255,6 @@ p.warning-text {
   color: var(--md-sys-color-error);
 }
 
-.form-fields {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-4);
-  overflow: hidden;
-}
-
-.semantic-controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.semantic-input {
-  flex: 1;
-  min-width: 160px;
-}
-
-.semantic-topk {
-  width: 120px;
-}
-
-.semantic-minsim {
-  width: 140px;
-}
-
-.semantic-loading {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-1-5) 0;
-}
-
-.semantic-loading-text {
-  font-size: 0.85rem;
-  color: var(--color-text-secondary);
-}
-
-.semantic-results {
-  display: grid;
-  gap: var(--spacing-1-5);
-  grid-template-columns: 1fr;
-  padding: var(--spacing-sm) 0;
-}
-
-.semantic-item {
-  padding: var(--spacing-sm);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-}
-
-.semantic-item:hover {
-  background: var(--color-surface-hover);
-}
-
-.semantic-title {
-  font-weight: 500;
-}
-
-.semantic-url {
-  font-size: 0.85rem;
-  color: var(--color-text-secondary);
-}
-
-.semantic-score {
-  font-size: 0.8rem;
-  color: var(--color-text-secondary);
-}
-
 /* 局部：底部批量操作条入场/出场动画（出现：自下而上；消失：向下） */
 .card-footer-slide-enter-active,
 .card-footer-slide-leave-active {
@@ -1442,17 +1272,6 @@ p.warning-text {
 .card-footer-slide-leave-to {
   opacity: 0;
   transform: translateY(var(--spacing-4));
-}
-
-.control-btn--icon {
-  width: 48px;
-  height: 48px;
-  padding: 0;
-  border-radius: 50%;
-}
-
-.control-btn--icon .btn__icon {
-  margin: 0;
 }
 </style>
 

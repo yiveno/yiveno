@@ -3,6 +3,7 @@
  * 整理页顶部共用筛选栏：关键词 + 特征标签，同步裁剪左右书签树
  */
 import { computed, onMounted, ref, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useDebounceFn } from '@vueuse/core'
 import { Input, LucideIcon, Loading } from '@/components'
 import { useTraitFilterStore } from '@/stores'
@@ -53,7 +54,14 @@ const TRAIT_QUICK_FILTERS: TraitQuickFilter[] = [
 const query = ref('')
 const activeTraitFilters = ref<Set<TraitTag>>(new Set())
 const traitFilterStore = useTraitFilterStore()
+const { activeFilters: storeActiveFilters } = storeToRefs(traitFilterStore)
 const traitDataStore = useTraitDataStore()
+
+/** 将 store 筛选值规范为数组（storage 可能写入非数组） */
+function normalizeStoreFilters(filters: unknown): TraitTag[] {
+  if (!Array.isArray(filters)) return []
+  return filters.filter((tag): tag is TraitTag => tag === 'invalid' || tag === 'duplicate')
+}
 
 const isBusy = computed(() => props.isFiltering)
 
@@ -117,9 +125,8 @@ function toggleTraitFilter(trait: TraitTag): void {
   void debouncedEmitFilterRequest()
 }
 
-function applyStoreFilters(storeFilters: TraitTag[]): void {
-  const supported = storeFilters.filter(tag => tag === 'invalid' || tag === 'duplicate')
-  activeTraitFilters.value = new Set(supported)
+function applyStoreFilters(storeFilters: unknown): void {
+  activeTraitFilters.value = new Set(normalizeStoreFilters(storeFilters))
 }
 
 function handleClearQuery(): void {
@@ -148,29 +155,26 @@ watch(query, () => {
   void debouncedEmitFilterRequest()
 })
 
-watch(
-  () => traitFilterStore.activeFilters,
-  storeFilters => {
-    const supported = storeFilters.filter(tag => tag === 'invalid' || tag === 'duplicate')
-    const current = Array.from(activeTraitFilters.value)
-    const changed =
-      supported.length !== current.length ||
-      supported.some(tag => !activeTraitFilters.value.has(tag))
+watch(storeActiveFilters, storeFilters => {
+  const supported = normalizeStoreFilters(storeFilters)
+  const current = Array.from(activeTraitFilters.value)
+  const changed =
+    supported.length !== current.length || supported.some(tag => !activeTraitFilters.value.has(tag))
 
-    if (!changed) return
+  if (!changed) return
 
-    applyStoreFilters(supported)
-    void debouncedEmitFilterRequest()
-  }
-)
+  applyStoreFilters(supported)
+  void debouncedEmitFilterRequest()
+})
 
 onMounted(() => {
   if (!traitDataStore.isInitialized) {
     void traitDataStore.initialize()
   }
 
-  if (traitFilterStore.activeFilters.length > 0) {
-    applyStoreFilters(traitFilterStore.activeFilters)
+  const initialStoreFilters = normalizeStoreFilters(storeActiveFilters.value)
+  if (initialStoreFilters.length > 0) {
+    applyStoreFilters(initialStoreFilters)
     void debouncedEmitFilterRequest()
   }
 })

@@ -30,7 +30,11 @@ describe('ai routes', () => {
 
   test('GET /api/ai/complete forwards prompt query to AI binding', async () => {
     const app = createApp()
-    const response = await app.request('/api/ai/complete?prompt=hello&model=test-model', {}, baseEnv)
+    const response = await app.request(
+      '/api/ai/complete?prompt=hello&model=test-model',
+      {},
+      baseEnv
+    )
 
     expect(response.status).toBe(200)
 

@@ -18,6 +18,7 @@ import { ref, computed } from 'vue'
 import { logger } from '@/infrastructure/logging/logger'
 import { bookmarkAppService } from '@/application/bookmark/bookmark-app-service'
 import { treeAppService } from '@/application/bookmark/tree-app-service'
+import { isBookmarkSyncBatchSuspended } from '@/core/bookmark/bookmark-sync-batch'
 import type { BookmarkNode } from '@/types'
 import { updateMap } from '@/infrastructure/state/immer-helpers'
 
@@ -575,7 +576,18 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
 
               // 使用 queueMicrotask 避免阻塞消息处理
               queueMicrotask(() => {
-                loadFromIndexedDB().catch(error => {
+                void (async () => {
+                  // 管理页批量 apply 期间由 loadBookmarks 统一重载，避免与提案树重置竞态
+                  if (await isBookmarkSyncBatchSuspended()) {
+                    logger.debug(
+                      'BookmarkStore',
+                      '批量 apply 期间跳过自动重载（由管理页 loadBookmarks 负责）'
+                    )
+                    return
+                  }
+
+                  await loadFromIndexedDB()
+                })().catch(error => {
                   logger.error('BookmarkStore', '重新加载书签数据失败', error)
                 })
               })

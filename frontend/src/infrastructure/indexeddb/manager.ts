@@ -557,6 +557,60 @@ export class IndexedDBManager {
   }
 
   /**
+   * 用 Chrome 当前快照替换书签表内容。
+   *
+   * 用于全量同步：保留仍存在节点的本地扩展字段，并删除快照外的旧记录。
+   */
+  async replaceBookmarkSnapshot(
+    bookmarks: BookmarkRecord[],
+    options?: BatchOptions<BookmarkRecord>
+  ): Promise<{ upserted: number; deleted: number }> {
+    const parsed = BookmarkRecordArraySchema.safeParse(bookmarks)
+    if (!parsed.success) {
+      logger.error('IndexedDBManager', 'replaceBookmarkSnapshot 数据校验失败', parsed.error)
+      throw parsed.error
+    }
+
+    const existingBookmarks = await this.getAllBookmarks()
+    const existingMap = new Map(existingBookmarks.map(b => [b.id, b]))
+    const snapshotIds = new Set(parsed.data.map(record => record.id))
+    const staleIds = existingBookmarks
+      .filter(record => !snapshotIds.has(record.id))
+      .map(record => record.id)
+
+    await this.runBatchOperation(
+      parsed.data.map(record => {
+        const existing = existingMap.get(record.id)
+        return {
+          ...record,
+          traitTags: record.traitTags ?? [],
+          traitMetadata: (record.traitMetadata ?? []) as TraitMetadata[],
+          isFavorite: existing?.isFavorite ?? record.isFavorite,
+          favoriteOrder: existing?.favoriteOrder ?? record.favoriteOrder,
+          favoritedAt: existing?.favoritedAt ?? record.favoritedAt,
+          notes: existing?.notes ?? record.notes,
+          lastVisited: existing?.lastVisited ?? record.lastVisited,
+          visitCount: existing?.visitCount ?? record.visitCount
+        }
+      }) as BookmarkRecord[],
+      DB_CONFIG.STORES.BOOKMARKS,
+      async (store, bookmark) => {
+        await this.wrapRequest(store.put(bookmark))
+      },
+      options
+    )
+
+    if (staleIds.length > 0) {
+      await this.deleteBookmarksBatch(staleIds)
+    }
+
+    return {
+      upserted: parsed.data.length,
+      deleted: staleIds.length
+    }
+  }
+
+  /**
    * 更新单条书签信息。
    */
   async updateBookmark(bookmark: BookmarkRecord): Promise<void> {

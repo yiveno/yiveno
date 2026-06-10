@@ -693,7 +693,7 @@ export class BookmarkSyncService {
       logger.debug('BookmarkSync', '💾 开始批量写入 IndexedDB...')
       logger.info('BookmarkSync', '💾 开始批量写入 IndexedDB...')
       const writeStart = performance.now()
-      await indexedDBManager.insertBookmarks(markedRecords, {
+      const snapshotResult = await indexedDBManager.replaceBookmarkSnapshot(markedRecords, {
         progressCallback: (processed, total) => {
           // 写入阶段占 40%-90%
           const percentage = 40 + (processed / total) * 50
@@ -728,6 +728,12 @@ export class BookmarkSyncService {
           return undefined
         }
       })
+      if (snapshotResult.deleted > 0) {
+        logger.info('BookmarkSync', '全量同步已清理 IndexedDB 旧书签记录', {
+          deleted: snapshotResult.deleted,
+          upserted: snapshotResult.upserted
+        })
+      }
       const writeElapsed = performance.now() - writeStart
       const avgRate = (allRecords.length / (writeElapsed / 1000)).toFixed(0)
       logger.debug(

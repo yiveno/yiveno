@@ -1,12 +1,15 @@
 import { computed, ref, type Ref } from 'vue'
 import type { BookmarkNode } from '@/types'
-import { searchManagementTrees } from '@/application/bookmark/management-tree-search'
-import { logger } from '@/infrastructure/logging/logger'
 import {
-  applyTreeExpandState,
-  collapseManagementTrees,
-  type ManagementBookmarkTreeInstance
-} from '../utils/management-tree-expand'
+  buildFilteredManagementLeftTree,
+  buildFilteredManagementRightTree,
+  EMPTY_MANAGEMENT_SEARCH_MATCH,
+  resolveManagementSearchMatchIds,
+  type ManagementSearchMatchState
+} from '@/application/bookmark/management-tree-search'
+import { countBookmarkLeaves } from '@/core/filter/tree-prune'
+import { logger } from '@/infrastructure/logging/logger'
+import { applyTreeExpandState, collapseManagementTrees } from '../utils/management-tree-expand'
 
 export interface ManagementFilterRequestPayload {
   query: string
@@ -16,58 +19,60 @@ export interface ManagementFilterRequestPayload {
 interface UseManagementUnifiedSearchOptions {
   originalTree: Ref<BookmarkNode[]>
   proposalTreeChildren: Ref<BookmarkNode[]>
-  leftTreeRef: Ref<ManagementBookmarkTreeInstance | null>
-  rightTreeRef: Ref<ManagementBookmarkTreeInstance | null>
   leftExpandAll: Ref<boolean>
   rightExpandAll: Ref<boolean>
+  setLeftTreeExpanded: (expanded: boolean) => void
+  setRightTreeExpanded: (expanded: boolean) => void
 }
 
 /**
- * 整理页顶部共用检索：同步裁剪左右书签树
+ * 整理页顶部共用检索：异步解析命中 ID，展示树由 live 数据派生（避免快照过期）
  */
 export function useManagementUnifiedSearch(options: UseManagementUnifiedSearchOptions) {
-  const leftSearchResults = ref<BookmarkNode[]>([])
-  const rightSearchResults = ref<BookmarkNode[]>([])
-  const isLeftSearchActive = ref(false)
-  const isRightSearchActive = ref(false)
-  const leftMatchCount = ref(0)
-  const rightMatchCount = ref(0)
+  const searchMatch = ref<ManagementSearchMatchState>({ ...EMPTY_MANAGEMENT_SEARCH_MATCH })
   const isUnifiedSearchFiltering = ref(false)
 
-  const isLeftFiltered = computed(() => isLeftSearchActive.value)
-  const isRightFiltered = computed(() => isRightSearchActive.value)
-
-  const isUnifiedSearchActive = computed(() => isLeftFiltered.value || isRightFiltered.value)
+  const isLeftFiltered = computed(() => searchMatch.value.isTextFilterActive)
+  const isRightFiltered = computed(
+    () => searchMatch.value.isTextFilterActive || searchMatch.value.hasTraitFilterActive
+  )
 
   const leftTreeData = computed(() =>
-    isLeftSearchActive.value ? leftSearchResults.value : options.originalTree.value
+    buildFilteredManagementLeftTree(options.originalTree.value, searchMatch.value)
   )
 
   const rightTreeData = computed(() =>
-    isRightSearchActive.value ? rightSearchResults.value : options.proposalTreeChildren.value
+    buildFilteredManagementRightTree(options.proposalTreeChildren.value, searchMatch.value)
   )
 
-  async function applyTreesAfterSearch(
-    leftTree: BookmarkNode[],
-    rightTree: BookmarkNode[],
-    leftFiltered: boolean,
-    rightFiltered: boolean,
-    leftCount: number,
-    rightCount: number
-  ): Promise<void> {
-    leftSearchResults.value = leftTree
-    rightSearchResults.value = rightTree
-    isLeftSearchActive.value = leftFiltered
-    isRightSearchActive.value = rightFiltered
-    leftMatchCount.value = leftCount
-    rightMatchCount.value = rightCount
+  const leftMatchCount = computed(() =>
+    isLeftFiltered.value ? countBookmarkLeaves(leftTreeData.value) : 0
+  )
+
+  const rightMatchCount = computed(() =>
+    isRightFiltered.value ? countBookmarkLeaves(rightTreeData.value) : 0
+  )
+
+  async function applySearchMatchState(match: ManagementSearchMatchState): Promise<void> {
+    searchMatch.value = match
+
+    const leftFiltered = match.isTextFilterActive
+    const rightFiltered = match.isTextFilterActive || match.hasTraitFilterActive
+    const leftCount = leftFiltered
+      ? countBookmarkLeaves(buildFilteredManagementLeftTree(options.originalTree.value, match))
+      : 0
+    const rightCount = rightFiltered
+      ? countBookmarkLeaves(
+          buildFilteredManagementRightTree(options.proposalTreeChildren.value, match)
+        )
+      : 0
 
     await Promise.all([
-      applyTreeExpandState(options.leftTreeRef, options.leftExpandAll, {
+      applyTreeExpandState(options.leftExpandAll, options.setLeftTreeExpanded, {
         isFiltered: leftFiltered,
         hasMatches: leftCount > 0
       }),
-      applyTreeExpandState(options.rightTreeRef, options.rightExpandAll, {
+      applyTreeExpandState(options.rightExpandAll, options.setRightTreeExpanded, {
         isFiltered: rightFiltered,
         hasMatches: rightCount > 0
       })
@@ -86,27 +91,20 @@ export function useManagementUnifiedSearch(options: UseManagementUnifiedSearchOp
     isUnifiedSearchFiltering.value = true
 
     try {
-      const result = await searchManagementTrees({
+      const match = await resolveManagementSearchMatchIds({
         query: trimmedQuery,
         traitFilterIds: payload.activeFilterIds,
         originalTree: options.originalTree.value,
         proposalTree: options.proposalTreeChildren.value
       })
 
-      await applyTreesAfterSearch(
-        result.leftTree,
-        result.rightTree,
-        result.isLeftFiltered,
-        result.isRightFiltered,
-        result.leftMatchCount,
-        result.rightMatchCount
-      )
+      await applySearchMatchState(match)
 
       logger.info('ManagementUnifiedSearch', '双树检索完成', {
         query: trimmedQuery,
         traitFilters: payload.activeFilterIds,
-        left: result.leftMatchCount,
-        right: result.rightMatchCount
+        left: leftMatchCount.value,
+        right: rightMatchCount.value
       })
     } catch (error) {
       logger.error('ManagementUnifiedSearch', '双树检索失败', error)
@@ -117,16 +115,11 @@ export function useManagementUnifiedSearch(options: UseManagementUnifiedSearchOp
   }
 
   async function clearUnifiedSearch(): Promise<void> {
-    leftSearchResults.value = []
-    rightSearchResults.value = []
-    isLeftSearchActive.value = false
-    isRightSearchActive.value = false
-    leftMatchCount.value = 0
-    rightMatchCount.value = 0
+    searchMatch.value = { ...EMPTY_MANAGEMENT_SEARCH_MATCH }
 
     await collapseManagementTrees(
-      options.leftTreeRef,
-      options.rightTreeRef,
+      options.setLeftTreeExpanded,
+      options.setRightTreeExpanded,
       options.leftExpandAll,
       options.rightExpandAll
     )
@@ -139,7 +132,6 @@ export function useManagementUnifiedSearch(options: UseManagementUnifiedSearchOp
     rightMatchCount,
     isLeftFiltered,
     isRightFiltered,
-    isUnifiedSearchActive,
     isUnifiedSearchFiltering,
     handleFilterRequest,
     clearUnifiedSearch

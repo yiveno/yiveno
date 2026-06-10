@@ -27,7 +27,8 @@ describe('website routes', () => {
     const app = createApp()
 
     globalThis.fetch = (async (input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
+      const url =
+        typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
 
       if (url.includes('/rest/v1/shares?')) {
         return new Response(
@@ -337,14 +338,10 @@ describe('website routes', () => {
 
   test('GET /api/website/subscription returns 500 when database is not configured', async () => {
     const app = createApp()
-    const response = await app.request(
-      '/api/website/subscription?userId=user_123',
-      {},
-      {
-        JWT_SECRET: 'test-secret',
-        WEBSITE_URL: 'https://example.com'
-      } as Env
-    )
+    const response = await app.request('/api/website/subscription?userId=user_123', {}, {
+      JWT_SECRET: 'test-secret',
+      WEBSITE_URL: 'https://example.com'
+    } as Env)
 
     expect(response.status).toBe(500)
 
