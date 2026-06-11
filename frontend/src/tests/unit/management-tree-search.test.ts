@@ -135,7 +135,7 @@ describe('management-tree-search', () => {
     expect(result.rightMatchCount).toBe(1)
   })
 
-  it('过滤低相关语义噪声，仅保留文本命中与高分语义补充', async () => {
+  it('双树文本检索使用统一搜索服务返回的命中 ID', async () => {
     const noisyTree: BookmarkNode[] = [
       {
         id: 'bar',
@@ -160,11 +160,6 @@ describe('management-tree-search', () => {
                 id: 'taobao',
                 title: '淘宝',
                 url: 'https://www.taobao.com'
-              },
-              {
-                id: 'landsend',
-                title: "Women's Crepe Fluid Blazer | Lands' End",
-                url: 'https://www.landsend.com/item'
               }
             ]
           }
@@ -180,15 +175,11 @@ describe('management-tree-search', () => {
             '开年焕新，限时特惠',
             'https://www.aliyun.com/minisite/goods',
             0.91
-          ),
-          makeSemanticResult('taobao', '淘宝', 'https://www.taobao.com', 0.84),
-          makeSemanticResult('landsend', "Women's Crepe", 'https://www.landsend.com/item', 0.83),
-          makeSemanticResult('b-extra-1', '其他 1', 'https://example.com/1', 0.82),
-          makeSemanticResult('b-extra-2', '其他 2', 'https://example.com/2', 0.81)
+          )
         ],
         metadata: {
           duration: 1,
-          totalCount: 5,
+          totalResults: 1,
           cacheHit: false,
           strategy: 'hybrid',
           query: '阿里云'
@@ -205,11 +196,7 @@ describe('management-tree-search', () => {
 
     expect(result.leftMatchCount).toBe(1)
     expect(result.rightMatchCount).toBe(1)
-    expect(result.leftTree[0]?.children).toHaveLength(1)
-    expect(result.leftTree[0]?.children?.[0]?.id).toBe('cloud')
-    expect(result.leftTree[0]?.children?.[0]?.children).toHaveLength(1)
     expect(result.leftTree[0]?.children?.[0]?.children?.[0]?.id).toBe('aliyun')
-    expect(result.leftTree[0]?.children?.[0]?.children?.[0]?.children).toBeUndefined()
   })
 
   it('pickSemanticSupplementIds 仅保留接近最高分的少量语义结果', () => {

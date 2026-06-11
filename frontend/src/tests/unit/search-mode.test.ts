@@ -6,14 +6,14 @@ import {
 } from '@/core/query/search-mode'
 
 describe('search-mode', () => {
-  it('Free 或未登录仅使用 fuse', () => {
+  it('Free 或未登录仅使用 flexsearch', () => {
     expect(
       resolveSearchStrategyFromSnapshot({
         isLoggedIn: false,
         isPro: false,
         semanticSearchEnabled: true
       })
-    ).toBe('fuse')
+    ).toBe('flexsearch')
 
     expect(
       resolveSearchStrategyFromSnapshot({
@@ -21,7 +21,7 @@ describe('search-mode', () => {
         isPro: false,
         semanticSearchEnabled: true
       })
-    ).toBe('fuse')
+    ).toBe('flexsearch')
   })
 
   it('Pro 且开启语义检索使用 hybrid', () => {
@@ -34,14 +34,14 @@ describe('search-mode', () => {
     ).toBe('hybrid')
   })
 
-  it('Pro 关闭语义开关降级为 fuse', () => {
+  it('Pro 关闭语义开关降级为 flexsearch', () => {
     expect(
       resolveSearchStrategyFromSnapshot({
         isLoggedIn: true,
         isPro: true,
         semanticSearchEnabled: false
       })
-    ).toBe('fuse')
+    ).toBe('flexsearch')
   })
 
   it('parseIsLoggedInFromAuthStorage 识别有效 session', () => {

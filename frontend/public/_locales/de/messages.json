@@ -539,6 +539,12 @@
   "search_advanced": {
     "message": "Erweiterte Suche"
   },
+  "search_section_matches": {
+    "message": "Treffer"
+  },
+  "search_section_semantic": {
+    "message": "Das könntest du wollen"
+  },
   "settings_general_language": {
     "message": "Sprache"
   },

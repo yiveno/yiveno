@@ -223,26 +223,11 @@ function setDefaultDescription(description: string): void {
   chrome.omnibox.setDefaultSuggestion?.({ description })
 }
 
-/** 匹配度阈值 - 只显示匹配度 >= 0.35 的结果 */
-const MIN_SCORE_THRESHOLD = 0.35
-/** 最少显示数量 - 即使匹配度较低也至少显示 1 条，避免空结果 */
-const MIN_DISPLAY_COUNT = 1
 /** 最多显示数量 - 避免过多结果影响地址栏体验 */
 const MAX_DISPLAY_COUNT = 6
 
 /**
- * 从搜索结果中挑选 Omnibox 展示项
- */
-function pickDisplayResults(results: EnhancedSearchResult[]): EnhancedSearchResult[] {
-  const filteredResults = results.filter(r => r.score >= MIN_SCORE_THRESHOLD)
-  if (filteredResults.length === 0) {
-    return results.slice(0, MIN_DISPLAY_COUNT)
-  }
-  return filteredResults.slice(0, MAX_DISPLAY_COUNT)
-}
-
-/**
- * 将搜索结果应用到 Omnibox 建议列表
+ * 将统一检索结果应用到 Omnibox 建议列表
  */
 function applyOmniboxResults(
   query: string,
@@ -250,7 +235,7 @@ function applyOmniboxResults(
   suggest: (suggestResults: chrome.omnibox.SuggestResult[]) => void,
   source: string
 ): EnhancedSearchResult[] {
-  const displayResults = pickDisplayResults(results)
+  const displayResults = results.slice(0, MAX_DISPLAY_COUNT)
   const suggestions = buildSuggestions(displayResults, query)
   safeSuggest(suggest, suggestions, source)
 
@@ -330,7 +315,7 @@ export function registerOmniboxHandlers(): void {
         logger.debug('Omnibox', `📍 步骤 1: 执行检索 (${searchStrategy})...`)
 
         // Chrome Omnibox：每次 onInputChanged 只能调用 suggest() 一次；
-        // 不可先提交 Fuse 空结果再异步更新 Semantic（第二次会被忽略）。
+        // 不可先提交 FlexSearch 空结果再异步更新 Semantic（第二次会被忽略）。
         const searchResult = await bookmarkSearchService.searchWithMetadata(query, {
           limit: 50,
           highlight: false,

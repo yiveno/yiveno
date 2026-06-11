@@ -18,9 +18,8 @@ BookmarkSearchInput - 书签筛选输入组件
 
 <script setup lang="ts">
 import { watch, computed, ref, nextTick, onMounted, onUnmounted, toRefs } from 'vue'
-import { Chip, AnimatedNumber, LucideIcon, Input, Loading, Button } from '@/components'
+import { Chip, AnimatedNumber, LucideIcon, Input, Loading, Button, EmptyState } from '@/components'
 import { useBookmarkSearch } from '@/composables/useBookmarkSearch'
-import { useSearchHistory } from '@/composables/useSearchHistory'
 import type { BookmarkNode } from '@/types'
 import { useDebounceFn } from '@vueuse/core'
 import { useTraitFilterStore } from '@/stores/trait-filter-store'
@@ -29,6 +28,10 @@ import type { TraitTag } from '@/infrastructure/indexeddb/types/bookmark-record'
 import { t } from '@/utils/i18n-helpers'
 import { logger } from '@/infrastructure/logging/logger'
 import { faviconService } from '@/services/favicon-service'
+import type { FilteredBookmarkNode } from '@/core/filter/bookmark-filter'
+import { isSemanticSupplementBookmark } from '@/core/filter/search-hit-kind'
+import { highlightQueryTextAsSegments } from '@/core/filter/query-text-highlight'
+import type { QueryHighlightSegment } from '@/core/filter/query-text-highlight'
 
 defineOptions({
   name: 'BookmarkSearchInput'
@@ -52,7 +55,8 @@ const props = withDefaults(defineProps<Props>(), {
   showStats: true,
   autoFocus: false,
   size: 'md',
-  rounded: true
+  rounded: true,
+  groupSemanticResults: true
 })
 const emit = defineEmits<Emits>()
 
@@ -75,23 +79,14 @@ const showQuickTags = ref(false)
 // 收起中标志（防止在收起过程中重复操作）
 const isCollapsing = ref(false)
 
+/** 当前筛选是否已完成（防抖 + 请求结束后才展示结果面板） */
+const isSearchSettled = ref(false)
+
 // 选中的结果索引（用于键盘导航）
 const selectedResultIndex = ref(-1)
 
 // Favicon 缓存（书签ID -> favicon URL）
 const faviconCache = ref<Map<string, string>>(new Map())
-
-// ========== 搜索历史 ==========
-const {
-  // history: searchHistory,
-  addToHistory,
-  removeFromHistory,
-  clearHistory,
-  getRecentHistory
-} = useSearchHistory()
-
-// 是否显示搜索历史
-// const showSearchHistory = ref(false)
 
 // ========== 计算属性：处理新配置 ==========
 
@@ -139,47 +134,48 @@ const isLoadingState = computed(() => {
 })
 
 /**
- * 是否应该显示面板
- * 只有在有内容时才显示面板（搜索历史、筛选标签、搜索结果）
+ * 是否存在有效筛选条件（文本或快捷筛选）
  */
-const shouldShowPanel = computed(() => {
-  // 有搜索历史（必须获取焦点）
-  if (shouldShowSearchHistory.value) return true
+const hasActiveSearchCriteria = computed(
+  () => query.value.trim().length > 0 || activeFilters.value.size > 0
+)
 
-  // 有筛选标签
-  if (showQuickTags.value && showFiltersInDropdown.value) return true
-
-  // 有搜索结果
-  if (shouldShowResultsDropdown.value) return true
-
-  // 有搜索统计（有查询或有筛选）- 但必须有实际内容
-  if (
-    props.showStats &&
-    props.showResultCount &&
-    displayResultCount.value >= 0 &&
-    (query.value.trim() || activeFilters.value.size > 0)
-  ) {
-    // 只有在有查询内容或有激活的筛选器时才显示
-    return true
-  }
-
-  return false
+/**
+ * 搜索结果面板是否就绪（筛选完成后才展示结果/空状态/统计）
+ */
+const shouldShowSearchResultsPanel = computed(() => {
+  return (
+    props.resultDisplay === 'dropdown' &&
+    hasActiveSearchCriteria.value &&
+    isSearchSettled.value &&
+    !isLoadingState.value
+  )
 })
 
 /**
- * 是否应该显示搜索历史
- * 只在输入框获取焦点且为空时显示
+ * 是否应该显示面板
+ * 快捷筛选标签随面板展开；结果区需等待筛选完成
  */
-const shouldShowSearchHistory = computed(() => {
-  // 必须同时满足：输入框为空 + 获取焦点 + 有历史记录
-  return !query.value.trim() && isFocused.value && getRecentHistory(5).length > 0
+const shouldShowPanel = computed(() => {
+  if (showQuickTags.value && showFiltersInDropdown.value) {
+    return true
+  }
+
+  return shouldShowSearchResultsPanel.value
 })
 
 /**
  * 是否显示搜索结果下拉列表
  */
 const shouldShowResultsDropdown = computed(() => {
-  return props.resultDisplay === 'dropdown' && hasSearchResults.value
+  return shouldShowSearchResultsPanel.value && hasSearchResults.value
+})
+
+/**
+ * 是否显示无结果空状态
+ */
+const shouldShowEmptyResults = computed(() => {
+  return shouldShowSearchResultsPanel.value && !hasSearchResults.value && !error.value
 })
 
 /**
@@ -190,11 +186,99 @@ const hasSearchResults = computed(() => {
 })
 
 /**
- * 下拉列表中显示的结果（限制数量）
+ * 扁平化后的全部筛选结果
+ */
+const flatSearchResults = computed(() => flattenBookmarkTree(bookmarkNodes.value))
+
+/**
+ * 判断节点是否为语义补位命中（与统一检索管道分层规则一致）
+ */
+function isSemanticSupplementNode(node: BookmarkNode): boolean {
+  const filtered = node as FilteredBookmarkNode
+  const trimmedQuery = query.value.trim()
+  if (!trimmedQuery) {
+    return false
+  }
+  return isSemanticSupplementBookmark(filtered, trimmedQuery, filtered.matchedFields)
+}
+
+/**
+ * 文本命中结果（FlexSearch 层）
+ */
+const textMatchResults = computed(() =>
+  flatSearchResults.value.filter(node => !isSemanticSupplementNode(node))
+)
+
+/**
+ * 语义补位结果（Hybrid 第二层）
+ */
+const semanticSupplementResults = computed(() =>
+  flatSearchResults.value.filter(node => isSemanticSupplementNode(node))
+)
+
+/**
+ * 是否展示语义分组（有补位且开启分组）
+ */
+const showSemanticGrouping = computed(
+  () => props.groupSemanticResults && semanticSupplementResults.value.length > 0
+)
+
+/**
+ * 下拉列表：文本命中区（受 maxDropdownResults 限制）
+ */
+const displayedTextResults = computed(() =>
+  textMatchResults.value.slice(0, props.maxDropdownResults)
+)
+
+/**
+ * 下拉列表：语义补位区（占用剩余配额）
+ */
+const displayedSemanticResults = computed(() => {
+  if (!showSemanticGrouping.value) {
+    return []
+  }
+  const remaining = props.maxDropdownResults - displayedTextResults.value.length
+  if (remaining <= 0) {
+    return []
+  }
+  return semanticSupplementResults.value.slice(0, remaining)
+})
+
+/**
+ * 下拉列表扁平结果（键盘导航用）
  */
 const dropdownResults = computed(() => {
-  return flattenBookmarkTree(bookmarkNodes.value).slice(0, props.maxDropdownResults)
+  if (!showSemanticGrouping.value) {
+    return flatSearchResults.value.slice(0, props.maxDropdownResults)
+  }
+  return [...displayedTextResults.value, ...displayedSemanticResults.value]
 })
+
+/**
+ * 语义区分组起始索引（键盘高亮）
+ */
+const semanticSectionStartIndex = computed(() => displayedTextResults.value.length)
+
+/**
+ * 文本命中区标题高亮片段（仅 FlexSearch 层）
+ */
+function highlightResultTitleSegments(bookmark: BookmarkNode): QueryHighlightSegment[] {
+  const title = bookmark.title?.trim()
+  if (!title) {
+    return [{ text: '无标题', highlighted: false }]
+  }
+  return highlightQueryTextAsSegments(title, query.value)
+}
+
+/**
+ * 文本命中区 URL 高亮片段（仅 FlexSearch 层）
+ */
+function highlightResultUrlSegments(bookmark: BookmarkNode): QueryHighlightSegment[] {
+  if (!bookmark.url) {
+    return []
+  }
+  return highlightQueryTextAsSegments(bookmark.url, query.value)
+}
 
 /**
  * 是否有更多结果（超过下拉列表显示数量）
@@ -320,6 +404,12 @@ interface Props {
    * @default 50
    */
   maxDropdownResults?: number
+
+  /**
+   * Hybrid 模式下是否将语义补位结果分组展示（Popup / Side Panel）
+   * @default true
+   */
+  groupSemanticResults?: boolean
 
   // ========== 快捷筛选 ==========
   /**
@@ -571,7 +661,6 @@ const {
   isFiltering: isSearching,
   error,
   totalResults,
-  executionTime,
   filter,
   clear
 } = useBookmarkSearch({
@@ -697,31 +786,31 @@ const applyQuickFilters = (nodes: BookmarkNode[]): BookmarkNode[] => {
  * 执行筛选（组合文本搜索 + 快捷筛选器）
  */
 const executeFilter = async () => {
+  const hasTextQuery = query.value.trim().length > 0
+  const hasActiveFilters = activeFilters.value.size > 0
+
+  // 重置选中索引
+  selectedResultIndex.value = -1
+
+  // 如果既无文本又无筛选器，清空结果并隐藏结果面板
+  if (!hasTextQuery && !hasActiveFilters) {
+    isSearchSettled.value = false
+    clear()
+    localFilteredCount.value = 0 // ✅ 清空本地计数
+    emit('searchComplete', [])
+    emit('searchClear')
+    return
+  }
+
+  isSearchSettled.value = false
+
   try {
-    const hasTextQuery = query.value.trim().length > 0
-    const hasActiveFilters = activeFilters.value.size > 0
-
-    // 重置选中索引
-    selectedResultIndex.value = -1
-
-    // 如果既无文本又无筛选器，清空结果
-    if (!hasTextQuery && !hasActiveFilters) {
-      clear()
-      localFilteredCount.value = 0 // ✅ 清空本地计数
-      emit('searchComplete', [])
-      emit('searchClear')
-      return
-    }
-
     // 步骤 1: 如果有文本搜索，先执行文本筛选
     let results: BookmarkNode[] = []
     if (hasTextQuery) {
       emit('searchStart', query.value)
       await filter(query.value)
       results = bookmarkNodes.value
-
-      // ✅ 保存到搜索历史
-      await addToHistory(query.value, totalResults.value)
     } else {
       // 如果没有文本搜索，使用完整的数据源
       results = props.data ?? []
@@ -742,6 +831,8 @@ const executeFilter = async () => {
     localFilteredCount.value = 0 // ✅ 出错时清空计数
     selectedResultIndex.value = -1 // ✅ 重置选中索引
     emit('searchError', searchError)
+  } finally {
+    isSearchSettled.value = true
   }
 }
 
@@ -753,6 +844,10 @@ const isDebouncing = ref(false)
 
 // 监听搜索关键词变化
 watch(query, () => {
+  if (query.value.trim().length > 0 || activeFilters.value.size > 0) {
+    isSearchSettled.value = false
+  }
+
   // 开始防抖，显示加载动画
   isDebouncing.value = true
 
@@ -911,12 +1006,10 @@ const handleFocus = () => {
  * 处理输入框失去焦点
  */
 const handleBlur = () => {
-  // 延迟隐藏，避免点击历史项时立即隐藏
   setTimeout(() => {
     isFocused.value = false
     logger.info('BookmarkSearchInput', '输入框失去焦点', {
       isFocused: isFocused.value,
-      shouldShowSearchHistory: shouldShowSearchHistory.value,
       shouldShowPanel: shouldShowPanel.value
     })
   }, 200)
@@ -934,32 +1027,6 @@ const handleClickOutside = (event: MouseEvent) => {
     isFocused.value = false
     logger.info('BookmarkSearchInput', '点击外部区域，隐藏面板')
   }
-}
-
-/**
- * 处理历史记录项点击
- */
-const handleHistoryClick = (historyQuery: string) => {
-  query.value = historyQuery
-  // 重新获取焦点
-  isFocused.value = true
-  // 触发搜索
-  void executeFilter()
-}
-
-/**
- * 处理删除历史记录
- */
-const handleRemoveHistory = (historyQuery: string, event: Event) => {
-  event.stopPropagation() // 阻止触发点击事件
-  void removeFromHistory(historyQuery)
-}
-
-/**
- * 处理清空所有历史
- */
-const handleClearAllHistory = () => {
-  void clearHistory()
 }
 
 /**
@@ -1053,6 +1120,7 @@ watch(
 
 // 清空搜索
 const handleClear = () => {
+  isSearchSettled.value = false
   clear()
   activeFilters.value.clear() // ✅ 清空激活的筛选器
   localFilteredCount.value = 0 // ✅ 重置本地计数
@@ -1068,8 +1136,10 @@ const handleClear = () => {
  * @param searchQuery - 搜索关键词
  */
 const search = async (searchQuery: string) => {
+  isSearchSettled.value = false
   query.value = searchQuery
   await filter(searchQuery)
+  isSearchSettled.value = true
   emit('searchComplete', bookmarkNodes.value)
 }
 
@@ -1174,7 +1244,8 @@ defineExpose({
           :placeholder="actualPlaceholder"
           :disabled="disabled"
           variant="outlined"
-          clearable
+          :clearable="!isLoadingState"
+          :loading="isLoadingState"
           leading-icon="search"
           :leading-icon-size="20"
           @focus="handleFocus"
@@ -1207,42 +1278,6 @@ defineExpose({
       <!-- 搜索结果面板（包含筛选标签 + 搜索结果） -->
       <Transition name="panel-fade" @after-leave="handlePanelTransitionEnd">
         <div v-if="showPanel && shouldShowPanel" class="search-result-panel">
-          <!-- 搜索历史（输入框为空时显示） -->
-          <div v-if="shouldShowSearchHistory" class="search-history-panel">
-            <div class="history-header">
-              <span class="history-title">最近搜索</span>
-              <button class="history-clear-btn" @click="handleClearAllHistory">
-                <LucideIcon name="trash-2" :size="14" />
-                <span>清空</span>
-              </button>
-            </div>
-            <md-list class="history-list">
-              <md-list-item
-                v-for="item in getRecentHistory(5)"
-                :key="item.timestamp"
-                type="button"
-                @click="handleHistoryClick(item.query)"
-              >
-                <LucideIcon slot="start" name="clock" :size="14" />
-                <div slot="headline">{{ item.query }}</div>
-                <div
-                  v-if="item.resultCount !== undefined"
-                  slot="supporting-text"
-                  class="history-count"
-                >
-                  {{ item.resultCount }} 个结果
-                </div>
-                <Button
-                  slot="end"
-                  variant="icon"
-                  @click.stop="handleRemoveHistory(item.query, $event)"
-                >
-                  <LucideIcon name="x" :size="14" />
-                </Button>
-              </md-list-item>
-            </md-list>
-          </div>
-
           <!-- 快捷筛选标签（可选显示） -->
           <div v-if="showQuickTags && showFiltersInDropdown" class="filter-quick-tags">
             <button
@@ -1279,72 +1314,133 @@ defineExpose({
             </button>
           </div>
 
+          <!-- 结果计数（列表顶部，筛选完成后显示） -->
+          <div
+            v-if="showStats && showResultCount && shouldShowSearchResultsPanel"
+            class="search-stats search-stats--top"
+          >
+            <span class="stats-text">
+              {{ t('search_results_count', String(displayResultCount)) }}
+            </span>
+          </div>
+
+          <!-- 无结果空状态 -->
+          <div v-if="shouldShowEmptyResults" class="search-results-empty">
+            <EmptyState icon="search" :icon-size="32" :title="t('search_no_results')" />
+          </div>
+
           <!-- 搜索结果下拉列表 -->
           <div v-if="shouldShowResultsDropdown" class="search-results-dropdown">
-            <md-list class="result-list">
-              <md-list-item
-                v-for="(bookmark, index) in dropdownResults"
-                :key="bookmark.id"
-                type="button"
-                :class="{
-                  'result-item--selected': selectedResultIndex === index
-                }"
-                @click="handleResultClick(bookmark)"
-                @mouseenter="selectedResultIndex = index"
-              >
-                <!-- 左侧图标：书签网站图标 -->
-                <div slot="start" class="result-favicon">
-                  <img
-                    v-if="faviconCache.get(bookmark.id)"
-                    :src="faviconCache.get(bookmark.id)"
-                    :alt="bookmark.title || '书签图标'"
-                    class="favicon-img"
-                    @error="handleFaviconError"
-                  />
-                  <LucideIcon v-else name="bookmark" :size="24" />
-                </div>
-
-                <!-- 主标题 -->
-                <div slot="headline" class="result-headline">
-                  {{ bookmark.title || '无标题' }}
-                </div>
-
-                <!-- 副标题（URL） -->
-                <div v-if="bookmark.url" slot="supporting-text" class="result-url">
-                  {{ bookmark.url }}
-                </div>
-
-                <!-- 右侧操作按钮：在新标签页打开 -->
-                <Button
-                  slot="end"
-                  variant="icon"
-                  class="result-action-btn"
-                  @click.stop="handleOpenInNewTab(bookmark)"
+            <!-- 文本命中 -->
+            <div v-if="displayedTextResults.length > 0" class="result-section">
+              <div v-if="showSemanticGrouping" class="result-section-header">
+                {{ t('search_section_matches') }}
+              </div>
+              <md-list class="result-list">
+                <md-list-item
+                  v-for="(bookmark, index) in displayedTextResults"
+                  :key="bookmark.id"
+                  type="button"
+                  :class="{
+                    'result-item--selected': selectedResultIndex === index
+                  }"
+                  @click="handleResultClick(bookmark)"
+                  @mouseenter="selectedResultIndex = index"
                 >
-                  <LucideIcon name="external-link" :size="14" />
-                </Button>
-              </md-list-item>
-            </md-list>
+                  <div slot="start" class="result-favicon">
+                    <img
+                      v-if="faviconCache.get(bookmark.id)"
+                      :src="faviconCache.get(bookmark.id)"
+                      :alt="bookmark.title || '书签图标'"
+                      class="favicon-img"
+                      @error="handleFaviconError"
+                    />
+                    <LucideIcon v-else name="bookmark" :size="24" />
+                  </div>
+                  <div slot="headline" class="result-headline">
+                    <span
+                      v-for="(segment, segmentIndex) in highlightResultTitleSegments(bookmark)"
+                      :key="`${bookmark.id}-title-${segmentIndex}`"
+                    >
+                      <mark v-if="segment.highlighted">{{ segment.text }}</mark>
+                      <span v-else>{{ segment.text }}</span>
+                    </span>
+                  </div>
+                  <div v-if="bookmark.url" slot="supporting-text" class="result-url">
+                    <span
+                      v-for="(segment, segmentIndex) in highlightResultUrlSegments(bookmark)"
+                      :key="`${bookmark.id}-url-${segmentIndex}`"
+                    >
+                      <mark v-if="segment.highlighted">{{ segment.text }}</mark>
+                      <span v-else>{{ segment.text }}</span>
+                    </span>
+                  </div>
+                  <Button
+                    slot="end"
+                    variant="icon"
+                    class="result-action-btn"
+                    @click.stop="handleOpenInNewTab(bookmark)"
+                  >
+                    <LucideIcon name="external-link" :size="14" />
+                  </Button>
+                </md-list-item>
+              </md-list>
+            </div>
+
+            <!-- 语义补位 -->
+            <div
+              v-if="displayedSemanticResults.length > 0"
+              class="result-section result-section--semantic"
+            >
+              <div class="result-section-header result-section-header--semantic">
+                <LucideIcon name="sparkles" :size="14" class="result-section-icon" />
+                <span class="result-section-title">{{ t('search_section_semantic') }}</span>
+              </div>
+              <md-list class="result-list">
+                <md-list-item
+                  v-for="(bookmark, index) in displayedSemanticResults"
+                  :key="bookmark.id"
+                  type="button"
+                  :class="{
+                    'result-item--selected':
+                      selectedResultIndex === semanticSectionStartIndex + index
+                  }"
+                  @click="handleResultClick(bookmark)"
+                  @mouseenter="selectedResultIndex = semanticSectionStartIndex + index"
+                >
+                  <div slot="start" class="result-favicon">
+                    <img
+                      v-if="faviconCache.get(bookmark.id)"
+                      :src="faviconCache.get(bookmark.id)"
+                      :alt="bookmark.title || '书签图标'"
+                      class="favicon-img"
+                      @error="handleFaviconError"
+                    />
+                    <LucideIcon v-else name="bookmark" :size="24" />
+                  </div>
+                  <div slot="headline" class="result-headline">
+                    {{ bookmark.title || '无标题' }}
+                  </div>
+                  <div v-if="bookmark.url" slot="supporting-text" class="result-url">
+                    {{ bookmark.url }}
+                  </div>
+                  <Button
+                    slot="end"
+                    variant="icon"
+                    class="result-action-btn"
+                    @click.stop="handleOpenInNewTab(bookmark)"
+                  >
+                    <LucideIcon name="external-link" :size="14" />
+                  </Button>
+                </md-list-item>
+              </md-list>
+            </div>
 
             <!-- 底部提示：当结果超过 50 条时显示 -->
             <div v-if="hasMoreResults" class="more-results-hint">
               <LucideIcon name="info" :size="14" />
               <span>在 Management 页面可以查看全部 {{ totalResults }} 个结果</span>
             </div>
-          </div>
-
-          <!-- 搜索结果统计（只在有搜索内容时显示，0 个结果也显示） -->
-          <div
-            v-if="
-              showStats &&
-              showResultCount &&
-              displayResultCount >= 0 &&
-              (query.trim() || activeFilters.size > 0)
-            "
-            class="search-stats"
-          >
-            <span class="stats-text">找到 {{ displayResultCount }} 个结果</span>
-            <span v-if="executionTime" class="stats-time"> ({{ executionTime }}ms) </span>
           </div>
         </div>
       </Transition>
@@ -1512,11 +1608,62 @@ defineExpose({
   overflow-y: auto;
 }
 
+/* 无结果空状态 */
+.search-results-empty :deep(.empty-state) {
+  min-height: 88px;
+  padding: var(--spacing-3) var(--spacing-2);
+  animation: none;
+}
+
+.search-results-empty :deep(.empty-state__icon) {
+  margin-bottom: var(--spacing-2);
+  animation: none;
+}
+
+.search-results-empty :deep(.empty-state__title) {
+  font-size: var(--md-sys-typescale-body-medium-size);
+}
+
 /* 搜索结果下拉列表 */
 .search-results-dropdown {
   display: flex;
   flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.result-section {
+  display: flex;
+  flex-direction: column;
   gap: var(--spacing-1);
+}
+
+.result-section--semantic {
+  padding-top: var(--spacing-1);
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.result-section-header {
+  padding: var(--spacing-1) var(--spacing-2) 0;
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  color: var(--color-text-secondary);
+}
+
+.result-section-header--semantic {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-1) var(--spacing-2);
+}
+
+.result-section-icon {
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+
+.result-section-title {
+  font-weight: var(--font-medium);
+  color: var(--color-text-primary);
 }
 
 .result-list {
@@ -1557,6 +1704,15 @@ defineExpose({
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.result-headline mark,
+.result-url mark {
+  padding: 0 2px;
+  border-radius: 2px;
+  font-weight: 600;
+  color: var(--color-warning-emphasis);
+  background-color: var(--color-warning-subtle);
 }
 
 /* 结果项 URL 样式 */
@@ -1616,21 +1772,13 @@ defineExpose({
   background: var(--color-background);
 }
 
-/* 统计信息（在面板内） */
-.search-stats {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-1);
-  padding: var(--spacing-1) var(--spacing-2);
-  border-radius: var(--border-radius-sm);
+/* 结果计数（列表顶部） */
+.search-stats--top {
+  flex-shrink: 0;
+  padding: 0 var(--spacing-2) var(--spacing-1);
   font-size: var(--text-xs);
   white-space: nowrap;
   color: var(--color-text-secondary);
-  background: var(--color-background);
-}
-
-.stats-time {
-  color: var(--color-text-tertiary);
 }
 
 /* 错误提示（绝对定位在搜索框下方） */
@@ -1654,83 +1802,6 @@ defineExpose({
 .error-text {
   flex: 1;
   color: var(--color-error-emphasis);
-}
-
-/* 搜索历史面板 */
-.search-history-panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2);
-}
-
-.history-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 var(--spacing-1);
-}
-
-.history-title {
-  font-size: var(--text-xs);
-  font-weight: var(--font-medium);
-  color: var(--color-text-secondary);
-}
-
-.history-clear-btn {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-1);
-  padding: var(--spacing-1) var(--spacing-2);
-  border: none;
-  border-radius: var(--border-radius-sm);
-  font-size: var(--text-xs);
-  color: var(--color-text-tertiary);
-  background: transparent;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.history-clear-btn:hover {
-  color: var(--color-error);
-  background: var(--color-error-alpha-5);
-}
-
-.history-list {
-  border-radius: var(--radius-md);
-  overflow: hidden;
-}
-
-.history-count {
-  font-size: var(--text-xs);
-  color: var(--color-text-tertiary);
-}
-
-/* Material Web List 样式 */
-.history-list md-list {
-  --md-list-container-color: transparent;
-}
-
-.history-list md-list-item {
-  --md-list-item-label-text-color: var(--md-sys-color-on-surface);
-  --md-list-item-supporting-text-color: var(--md-sys-color-on-surface-variant);
-  --md-list-item-container-shape: var(--radius-sm);
-  --md-list-item-label-text-font: var(--font-family-base);
-  --md-list-item-label-text-size: var(--md-sys-typescale-body-medium-size);
-  --md-list-item-supporting-text-font: var(--font-family-base);
-  --md-list-item-supporting-text-size: var(--md-sys-typescale-body-small-size);
-  --md-list-item-one-line-container-height: 40px;
-  --md-list-item-hover-state-layer-color: var(--md-sys-color-on-surface);
-  --md-list-item-hover-state-layer-opacity: 0.08;
-}
-
-.history-list button.md-button--icon {
-  --md-icon-button-icon-color: var(--color-text-tertiary);
-  --md-icon-button-state-layer-shape: var(--radius-sm);
-  --md-icon-button-icon-size: 14px;
-}
-
-.history-list button.md-button--icon:hover {
-  --md-icon-button-icon-color: var(--color-error);
 }
 
 /* 快捷筛选标签容器（在面板内） */

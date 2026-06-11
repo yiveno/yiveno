@@ -1198,60 +1198,6 @@ export class IndexedDBManager {
     })
   }
 
-  async addSearchHistory(
-    query: string,
-    results: number,
-    executionTime?: number,
-    source?: SearchHistoryRecord['source']
-  ): Promise<void> {
-    await this.runWriteTransaction(DB_CONFIG.STORES.SEARCH_HISTORY, async (_tx, store) => {
-      const record: Omit<SearchHistoryRecord, 'id'> = {
-        query,
-        results,
-        executionTime: executionTime ?? 0,
-        source: source ?? 'management',
-        timestamp: Date.now()
-      }
-
-      await this.wrapRequest(store.add(record))
-    })
-  }
-
-  async getSearchHistory(limit?: number): Promise<SearchHistoryRecord[]> {
-    const cappedLimit = Math.max(0, limit ?? 20)
-
-    return await this.runReadTransaction(
-      DB_CONFIG.STORES.SEARCH_HISTORY,
-      async (_tx, store) =>
-        await new Promise<SearchHistoryRecord[]>((resolve, reject) => {
-          const index = store.index('timestamp')
-          const results: SearchHistoryRecord[] = []
-          const request = index.openCursor(undefined, 'prev')
-
-          request.onsuccess = () => {
-            const cursor = request.result
-            if (!cursor || results.length >= cappedLimit) {
-              resolve(results)
-              return
-            }
-
-            results.push(cursor.value as SearchHistoryRecord)
-            cursor.continue()
-          }
-
-          request.onerror = () => {
-            reject(request.error ?? new Error('读取筛选历史失败'))
-          }
-        })
-    )
-  }
-
-  async clearSearchHistory(): Promise<void> {
-    await this.runWriteTransaction(DB_CONFIG.STORES.SEARCH_HISTORY, async (_tx, store) => {
-      await this.wrapRequest(store.clear())
-    })
-  }
-
   async saveFaviconCache(record: FaviconCacheRecord): Promise<void> {
     await this.runWriteTransaction(DB_CONFIG.STORES.FAVICON_CACHE, async (_tx, store) => {
       const now = Date.now()

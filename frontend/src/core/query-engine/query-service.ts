@@ -3,9 +3,8 @@
  *
  * 功能：
  * - 统一查询接口
- * - 多策略支持（Fuse、Semantic、Hybrid、Auto）
- * - 查询意图自动识别
- * - 渐进式返回（Hybrid 模式先返回 Fuse 结果，Semantic 异步合并）
+ * - 多策略支持（FlexSearch、Semantic、Hybrid）
+ * - 渐进式返回（Hybrid：先 FlexSearch，Semantic 补位追加）
  * - 查询缓存
  * - 结果高亮
  * - 性能监控
@@ -18,6 +17,7 @@ import { indexedDBManager, type BookmarkRecord } from '@/infrastructure/indexedd
 import { SearchEngine } from './engine'
 import { semanticSearch } from './strategies/semantic-strategy'
 import { FlexSearchStrategy } from './strategies/flexsearch-strategy'
+import { mergeHybridSearchResults } from './hybrid-merge'
 import { QueryCache } from './query-cache'
 import { HighlightEngine } from './highlight'
 import { queryWorkerAdapter } from '@/services/query-worker-adapter'
@@ -35,8 +35,8 @@ export class QueryService {
   private static instance: QueryService
   private queryCache: QueryCache
   private highlightEngine: HighlightEngine
-  private fuseEngine: SearchEngine | null = null
-  private fuseEnginePromise: Promise<SearchEngine> | null = null
+  private flexSearchEngine: SearchEngine | null = null
+  private flexSearchEnginePromise: Promise<SearchEngine> | null = null
   private indexStatus: IndexStatus
   private initialized: boolean = false
   private logger: ILogger
@@ -64,22 +64,22 @@ export class QueryService {
    * Service Worker 会在启动时加载 queryService 单例，
    * 因此不能在构造函数中静态创建 FlexSearchStrategy。
    */
-  private async getFuseEngine(): Promise<SearchEngine> {
-    if (this.fuseEngine) {
-      return this.fuseEngine
+  private async getFlexSearchEngine(): Promise<SearchEngine> {
+    if (this.flexSearchEngine) {
+      return this.flexSearchEngine
     }
 
-    if (!this.fuseEnginePromise) {
-      this.fuseEnginePromise = (async () => {
+    if (!this.flexSearchEnginePromise) {
+      this.flexSearchEnginePromise = (async () => {
         const engine = new SearchEngine(new FlexSearchStrategy())
-        this.fuseEngine = engine
+        this.flexSearchEngine = engine
         return engine
       })().finally(() => {
-        this.fuseEnginePromise = null
+        this.flexSearchEnginePromise = null
       })
     }
 
-    return this.fuseEnginePromise
+    return this.flexSearchEnginePromise
   }
 
   static getInstance(logger?: ILogger): QueryService {
@@ -117,10 +117,10 @@ export class QueryService {
   }
 
   /**
-   * 规范化查询策略（仅 fuse / hybrid）
+   * 规范化查询策略（仅 flexsearch / hybrid）
    */
   private normalizeStrategy(strategy: SearchStrategy | undefined): SearchStrategy {
-    return strategy === 'hybrid' ? 'hybrid' : 'fuse'
+    return strategy === 'hybrid' ? 'hybrid' : 'flexsearch'
   }
 
   /**
@@ -162,7 +162,7 @@ export class QueryService {
     if (strategy === 'hybrid') {
       results = await this.searchWithHybrid(query, options)
     } else {
-      results = await this.searchWithFuse(query, options)
+      results = await this.searchWithFlexSearch(query, options)
     }
 
     return results
@@ -206,7 +206,7 @@ export class QueryService {
     this.logger.info('QueryService', `🔍 查询: "${normalizedQuery}" strategy=${resolvedStrategy}`)
 
     if (!normalizedQuery) {
-      return this.emptyResponse(startTime, 'fuse')
+      return this.emptyResponse(startTime, 'flexsearch')
     }
 
     try {
@@ -254,7 +254,7 @@ export class QueryService {
   }
 
   /**
-   * Hybrid 搜索：Fuse 立即返回，Semantic 异步合并
+   * Hybrid 搜索：FlexSearch 先返回，Semantic 仅补充未命中项
    */
   private async searchWithHybrid(
     query: string,
@@ -263,22 +263,20 @@ export class QueryService {
     const limit = options.limit || 20
     type SemanticRaw = Awaited<ReturnType<typeof semanticSearch>>
 
-    const fusePromise = this.searchWithFuse(query, {
+    const flexSearchResults = await this.searchWithFlexSearch(query, {
       ...options,
       limit: limit * 2
     })
 
     const semanticTimeout = this.getSemanticTimeout(options)
-    const semanticPromise: Promise<SemanticRaw> = Promise.race([
+    const semanticRaw: SemanticRaw = await Promise.race([
       semanticSearch(query, limit, options.minScore, { timeout: semanticTimeout }),
       new Promise<SemanticRaw>(resolve => setTimeout(() => resolve([]), semanticTimeout))
     ]).catch((): SemanticRaw => [])
 
-    const [fuseResults, semanticRaw] = await Promise.all([fusePromise, semanticPromise])
-
     if (!semanticRaw.length) {
-      this.logger.info('QueryService', 'Hybrid: Semantic 超时或无结果，仅用 Fuse')
-      return fuseResults.slice(0, limit)
+      this.logger.info('QueryService', 'Hybrid: Semantic 超时或无结果，仅用 FlexSearch')
+      return flexSearchResults
     }
 
     const semanticResults = semanticRaw.map(r => ({
@@ -290,12 +288,12 @@ export class QueryService {
       relevanceFactors: this.calculateRelevanceFactors(r.bookmark, query, r.score)
     }))
 
-    return this.mergeResults(fuseResults, semanticResults, limit)
+    return mergeHybridSearchResults(flexSearchResults, semanticResults)
   }
 
   /**
    * Hybrid 渐进式搜索
-   * 立即返回 Fuse 结果，通过回调通知 Semantic 合并后的更新
+   * 立即返回 FlexSearch 结果，通过回调通知 Semantic 合并后的更新
    */
   async searchHybridProgressive(
     query: string,
@@ -306,20 +304,24 @@ export class QueryService {
     const limit = options.limit || 20
     const strategy = this.normalizeStrategy(options.strategy)
 
-    if (strategy === 'fuse') {
-      const fuseOnly = await this.searchWithFuse(normalizedQuery, { ...options, limit })
+    if (strategy === 'flexsearch') {
+      const flexSearchOnly = await this.searchWithFlexSearch(normalizedQuery, { ...options, limit })
       const highlighted =
-        options.highlight !== false ? this.addHighlights(fuseOnly, normalizedQuery) : fuseOnly
+        options.highlight !== false
+          ? this.addHighlights(flexSearchOnly, normalizedQuery)
+          : flexSearchOnly
       return highlighted.slice(0, limit)
     }
 
-    // 立即返回 Fuse 结果
-    const fuseResults = await this.searchWithFuse(normalizedQuery, {
+    // 立即返回 FlexSearch 结果
+    const flexSearchResults = await this.searchWithFlexSearch(normalizedQuery, {
       ...options,
       limit: limit * 2
     })
     const highlighted =
-      options.highlight !== false ? this.addHighlights(fuseResults, normalizedQuery) : fuseResults
+      options.highlight !== false
+        ? this.addHighlights(flexSearchResults, normalizedQuery)
+        : flexSearchResults
 
     const semanticTimeout = this.getSemanticTimeout(options)
 
@@ -335,7 +337,7 @@ export class QueryService {
           highlights: {},
           relevanceFactors: this.calculateRelevanceFactors(r.bookmark, normalizedQuery, r.score)
         }))
-        const merged = this.mergeResults(fuseResults, semanticResults, limit)
+        const merged = mergeHybridSearchResults(flexSearchResults, semanticResults)
         const mergedHighlighted =
           options.highlight !== false ? this.addHighlights(merged, normalizedQuery) : merged
         onUpdate(mergedHighlighted)
@@ -348,48 +350,9 @@ export class QueryService {
   }
 
   /**
-   * 合并 Fuse 和 Semantic 结果，去重并重新评分
+   * FlexSearch 查询
    */
-  private mergeResults(
-    fuseResults: EnhancedSearchResult[],
-    semanticResults: EnhancedSearchResult[],
-    limit: number
-  ): EnhancedSearchResult[] {
-    const merged = new Map<
-      string,
-      EnhancedSearchResult & { _fuseScore: number; _semanticScore: number }
-    >()
-
-    // 录入 Fuse 结果
-    for (const r of fuseResults) {
-      const key = r.bookmark.url || String(r.bookmark.id)
-      merged.set(key, { ...r, _fuseScore: r.score, _semanticScore: 0 })
-    }
-
-    // 合并 Semantic 结果
-    for (const r of semanticResults) {
-      const key = r.bookmark.url || String(r.bookmark.id)
-      const existing = merged.get(key)
-      if (existing) {
-        existing._semanticScore = r.score
-        // 两者都命中时，Fuse 精确匹配权重更高
-        const fuseWeight = existing._fuseScore > 0.8 ? 0.6 : 0.35
-        existing.score = existing._fuseScore * fuseWeight + r.score * (1 - fuseWeight)
-        existing.matchedFields = [...new Set([...existing.matchedFields, 'semantic'])]
-      } else {
-        merged.set(key, { ...r, _fuseScore: 0, _semanticScore: r.score })
-      }
-    }
-
-    return Array.from(merged.values())
-      .sort((a, b) => b.score - a.score)
-      .slice(0, limit)
-  }
-
-  /**
-   * Fuse 查询
-   */
-  private async searchWithFuse(
+  private async searchWithFlexSearch(
     query: string,
     options: SearchOptions
   ): Promise<EnhancedSearchResult[]> {
@@ -401,8 +364,8 @@ export class QueryService {
       // 降级到主线程
       this.logger.warn('QueryService', 'Worker 查询失败，降级到主线程')
       const bookmarks = await indexedDBManager.getAllBookmarks()
-      const fuseEngine = await this.getFuseEngine()
-      const results = fuseEngine.search(query, bookmarks)
+      const flexSearchEngine = await this.getFlexSearchEngine()
+      const results = flexSearchEngine.search(query, bookmarks)
       return this.convertToEnhanced(results, query)
     }
   }

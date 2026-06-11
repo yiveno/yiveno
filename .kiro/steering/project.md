@@ -428,7 +428,7 @@ uiStore.selectedIds = ['abc', 'def']
 **职责边界：**
 
 - **搜索组件**（`BookmarkSearchInput`）：输入框交互、防抖、loading 状态、结果展示、emit 事件
-- **应用层搜索服务**（`bookmarkSearchService`）：统一入口，支持 fuse / semantic / hybrid / auto 策略
+- **应用层搜索服务**（`bookmarkSearchService`）：统一入口，策略为 `flexsearch` / `hybrid`
 - **内存搜索服务**（`bookmarkMemorySearchService`）：内存树形数据筛选（Management 页面等场景）
 - **核心搜索引擎**（`queryService`）：底层实现，由 `bookmarkSearchService` 调用，不直接暴露给 UI
 
@@ -459,7 +459,7 @@ bookmarkSearchService.search(query, { strategy: 'hybrid', limit: 20 })
 if (isSemanticEnabled) {
   embeddingService.search(query) // 绕过 bookmarkSearchService
 } else {
-  fuseEngine.search(query) // 绕过 bookmarkSearchService
+  flexSearchEngine.search(query) // 绕过 bookmarkSearchService
 }
 ```
 

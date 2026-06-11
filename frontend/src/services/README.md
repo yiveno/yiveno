@@ -198,7 +198,8 @@ import { faviconService } from '@/services/favicon-service'
 
 ### 🚀 **筛选策略**
 
-- `fuse`: 基于 IndexedDB + Fuse 的本地模糊筛选（唯一实现）
+- `flexsearch`: 基于 FlexSearch + IndexedDB 的本地关键词筛选（Free / 未开启语义检索）
+- `hybrid`: FlexSearch + 本地 Embedding 语义召回（Pro 且开启语义检索）
 
 ### 🎯 **智能匹配算法**
 
@@ -294,10 +295,10 @@ search.searchImmediate('react')
 
 ### 选项（统一入口）
 
-| 选项       | 类型     | 默认值 | 说明                    |
-| ---------- | -------- | ------ | ----------------------- |
-| `strategy` | `never`  | `-`    | 已废弃，统一使用 `fuse` |
-| `limit`    | `number` | `100`  | 结果数量上限            |
+| 选项       | 类型     | 默认值 | 说明                                                           |
+| ---------- | -------- | ------ | -------------------------------------------------------------- |
+| `strategy` | `never`  | `-`    | 已废弃，由 `search-mode.ts` 自动解析为 `flexsearch` / `hybrid` |
+| `limit`    | `number` | `100`  | 结果数量上限                                                   |
 
 ### 筛选结果格式
 
@@ -366,7 +367,7 @@ const result = await proposalApplyService.applyOperations(diff.operations, { onP
   - 页面若需要筛选/执行等能力，优先调用应用层服务（如 `bookmarkSearchService`、`bookmarkChangeAppService`）
 
 - 筛选：`application/query/bookmark-search-service.ts`
-  - 策略：fuse / semantic / hybrid / auto
+  - 策略：`flexsearch` / `hybrid`（由 `core/query/search-mode.ts` 自动解析）
   - 组合式封装：`composables/useBookmarkSearch.ts`
 
 - 整理页提案变更：
@@ -392,14 +393,14 @@ const result = await proposalApplyService.applyOperations(diff.operations, { onP
 
 ## 迁移对照表（从旧名到规范名）
 
-| 旧文件/概念                           | 现行/规范位置                                                       |
-| ------------------------------------- | ------------------------------------------------------------------- |
-| `services/hybrid-search-engine.ts`    | `application/query/bookmark-search-service.ts`（策略统一）          |
-| `services/fuse-search.ts`             | `core/query-engine/strategies/fuse-strategy.ts`（由应用层封装调度） |
-| `utils/smart-bookmark-diff-engine.ts` | `application/bookmark/bookmark-diff-service.ts`                     |
-| `utils/smart-bookmark-executor.ts`    | `application/bookmark/proposal-apply-service.ts`                    |
-| `bookmark-change-app-service.ts`      | `management-proposal-diff.ts` + `proposal-apply-service.ts`         |
-| `unified-*.ts`（API 门面）            | `utils/unified-bookmark-api.ts`（职责收敛为通信与回退）             |
+| 旧文件/概念                           | 现行/规范位置                                               |
+| ------------------------------------- | ----------------------------------------------------------- |
+| `services/hybrid-search-engine.ts`    | `application/query/bookmark-search-service.ts`（策略统一）  |
+| `services/fuse-search.ts`             | `core/query-engine/strategies/flexsearch-strategy.ts`       |
+| `utils/smart-bookmark-diff-engine.ts` | `application/bookmark/bookmark-diff-service.ts`             |
+| `utils/smart-bookmark-executor.ts`    | `application/bookmark/proposal-apply-service.ts`            |
+| `bookmark-change-app-service.ts`      | `management-proposal-diff.ts` + `proposal-apply-service.ts` |
+| `unified-*.ts`（API 门面）            | `utils/unified-bookmark-api.ts`（职责收敛为通信与回退）     |
 
 > 如需进一步统一命名为 `bookmark-api.ts` 等，将在后续版本按低风险路径进行重命名并提供 codemod。
 
@@ -451,7 +452,7 @@ const results = await bookmarkSearchService.search(query)
 // 未来的omnibox实现
 chrome.omnibox.onInputChanged.addListener(async (text, suggest) => {
   const results = await bookmarkSearchService.search(text, {
-    strategy: 'fuse',
+    strategy: 'flexsearch',
     limit: 5
   })
 
@@ -469,7 +470,7 @@ chrome.omnibox.onInputChanged.addListener(async (text, suggest) => {
 1. 初始化：应用层服务负责数据初始化与降级处理，无需手动干预
 2. 错误处理：应用层服务包含完整错误处理，Composable 可通过 onError 覆盖
 3. 性能：Hybrid 会自动合并去重并排序，limit 控制返回量
-4. 兼容性：旧的 hybrid/fuse 服务已弃用，请迁移到 `bookmarkSearchService` 或 `useBookmarkSearch`
+4. 兼容性：旧的 hybrid/flexsearch 独立服务已弃用，请迁移到 `bookmarkSearchService` 或 `useBookmarkSearch`
 
 ## 故障排除
 

@@ -149,10 +149,7 @@ export const BOOKMARK_CONFIG = {
   OBSERVER_ROOT_MARGIN: '100px',
 
   // IntersectionObserver阈值
-  OBSERVER_THRESHOLD: 0.01,
-
-  // 筛选历史最大长度
-  MAX_SEARCH_HISTORY: 10
+  OBSERVER_THRESHOLD: 0.01
 } as const
 
 // === UI交互配置 ===
@@ -640,8 +637,6 @@ export const LIMIT_CONFIG = {
   DATA: {
     /** 搜索结果限制 */
     SEARCH_RESULTS: 20,
-    /** 搜索历史最大长度 */
-    SEARCH_HISTORY: 10,
     /** 大数据集阈值 */
     LARGE_DATASET: 1000
   },

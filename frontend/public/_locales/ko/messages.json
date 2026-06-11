@@ -527,6 +527,12 @@
   "search_advanced": {
     "message": "고급 검색"
   },
+  "search_section_matches": {
+    "message": "일치 결과"
+  },
+  "search_section_semantic": {
+    "message": "이런 건 어때요"
+  },
   "settings_general_language": {
     "message": "언어"
   },

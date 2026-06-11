@@ -10,10 +10,10 @@ import type { BookmarkRecord } from './bookmark'
 /**
  * 查询策略类型（由订阅与语义开关统一解析，调用方勿手动指定）
  *
- * fuse   - 本地 FlexSearch 模糊匹配（Free / 未开启语义检索）
- * hybrid - FlexSearch + 本地 Embedding 语义检索（Pro 且开启语义检索）
+ * flexsearch - 本地 FlexSearch 模糊匹配（Free / 未开启语义检索）
+ * hybrid   - FlexSearch + 本地 Embedding 语义检索（Pro 且开启语义检索）
  */
-export type SearchStrategy = 'fuse' | 'hybrid'
+export type SearchStrategy = 'flexsearch' | 'hybrid'
 
 /**
  * 查询排序字段
@@ -37,7 +37,7 @@ export type SortOrder = 'asc' | 'desc'
  * @example
  * ```typescript
  * const options: SearchOptions = {
- *   strategy: 'fuse',
+ *   strategy: 'flexsearch',
  *   limit: 50,
  *   highlight: true,
  *   sortBy: 'relevance'
@@ -45,7 +45,7 @@ export type SortOrder = 'asc' | 'desc'
  * ```
  */
 export interface SearchOptions extends Record<string, unknown> {
-  /** 查询策略（可选，默认为 'fuse'） */
+  /** 查询策略（可选，默认为 'flexsearch'） */
   strategy?: SearchStrategy | undefined
 
   /** 结果限制数量 */
@@ -233,7 +233,7 @@ export interface SearchResultMetadata {
  *     searchTime: 45,
  *     totalResults: 100,
  *     cacheHit: false,
- *     strategy: 'fuse',
+ *     strategy: 'flexsearch',
  *     queryNormalized: 'react'
  *   },
  *   suggestions: ['react hooks', 'react native']
@@ -401,34 +401,6 @@ export interface WorkerConfig {
 
   /** 是否预热 */
   warmup?: boolean
-}
-
-/**
- * 查询历史记录接口
- *
- * 用户的查询历史
- */
-export interface SearchHistory {
-  /** 历史记录ID */
-  id: ID
-
-  /** 查询文本 */
-  query: string
-
-  /** 查询时间 */
-  timestamp: Timestamp
-
-  /** 结果数量 */
-  resultCount: number
-
-  /** 是否点击了结果 */
-  clicked: boolean
-
-  /** 点击的书签ID */
-  clickedBookmarkId?: ID
-
-  /** 查询耗时 */
-  duration?: number
 }
 
 /**

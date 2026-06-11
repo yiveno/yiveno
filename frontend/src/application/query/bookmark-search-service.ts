@@ -1,23 +1,34 @@
 /**
  * 书签搜索服务（Application 层）
  *
- * 统一检索入口：根据 Pro + 语义开关自动选择 fuse 或 hybrid。
+ * 唯一检索入口：Chrome 书签 → IndexedDB → 统一结果管道 → 各 UI 入口。
+ * 所有入口必须调用本服务；禁止在 UI / Composable 层重复过滤或兜底。
  *
  * @module application/query/bookmark-search-service
  */
 
 import { queryService, type SearchResponse, type EnhancedSearchResult } from '@/core/query-engine'
 import { resolveEffectiveSearchStrategy } from '@/core/query/search-mode'
-import type { SearchOptions } from '@/types/domain/query'
+import type { SearchOptions, SearchStrategy } from '@/types/domain/query'
 import { logger } from '@/infrastructure/logging/logger'
 import { ok, err, type Result } from '@/core/common/result'
 import { getPerformanceMonitor as importPerformanceMonitor } from '@/services/query-performance-monitor'
+import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
+import { SEMANTIC_MIN_SCORE } from '@/application/query/search-result-filter'
+import { finalizeBookmarkSearchResults } from '@/application/query/unified-search-pipeline'
 
 const getPerformanceMonitor = async () => {
   if (typeof document === 'undefined') {
     return null
   }
   return importPerformanceMonitor()
+}
+
+/** 各入口共享的检索默认项（limit 由调用方按场景覆盖） */
+const UNIFIED_SEARCH_DEFAULTS: SearchOptions = {
+  useCache: true,
+  highlight: false,
+  minScore: SEMANTIC_MIN_SCORE
 }
 
 export class BookmarkSearchService {
@@ -45,28 +56,46 @@ export class BookmarkSearchService {
   /** 合并用户选项与当前账号解析出的检索策略 */
   private async withResolvedStrategy(options?: SearchOptions): Promise<SearchOptions> {
     const strategy = await resolveEffectiveSearchStrategy()
-    return { ...options, strategy }
-  }
-
-  async search(query: string, options?: SearchOptions): Promise<Result<EnhancedSearchResult[]>> {
-    const startTime = performance.now()
-    await this.ensureInitialized()
-
-    try {
-      const resolvedOptions = await this.withResolvedStrategy(options)
-      const response = await queryService.search(query, resolvedOptions)
-      void this.recordPerformance(query, startTime, response, true)
-      return ok(response.results)
-    } catch (error) {
-      const errorObj = error as Error
-      void this.recordPerformance(query, startTime, null, false, errorObj)
-      logger.error('BookmarkSearchService', '搜索失败', { query, error: errorObj })
-      return err(errorObj)
-    }
+    return { ...UNIFIED_SEARCH_DEFAULTS, ...options, strategy }
   }
 
   /**
-   * 渐进式检索：Fuse 先返回；Pro 语义开启时 Semantic 完成后回调 onUpdate
+   * 统一结果管道：相关性过滤 + IndexedDB 子串兜底
+   */
+  private async finalizeResults(
+    query: string,
+    response: SearchResponse,
+    limit: number
+  ): Promise<EnhancedSearchResult[]> {
+    const strategy = (response.metadata.strategy ?? 'flexsearch') as SearchStrategy
+
+    return finalizeBookmarkSearchResults(
+      query,
+      response.results,
+      strategy,
+      limit,
+      async (trimmedQuery, fallbackLimit) =>
+        indexedDBManager.searchBookmarks(trimmedQuery, {
+          query: trimmedQuery,
+          limit: fallbackLimit,
+          includeDomain: true,
+          includeUrl: true,
+          includeKeywords: true,
+          includeTags: true
+        })
+    )
+  }
+
+  async search(query: string, options?: SearchOptions): Promise<Result<EnhancedSearchResult[]>> {
+    const metadataResult = await this.searchWithMetadata(query, options)
+    if (!metadataResult.ok) {
+      return metadataResult
+    }
+    return ok(metadataResult.value.results)
+  }
+
+  /**
+   * 渐进式检索：FlexSearch 先返回；Pro 语义开启时 Semantic 完成后回调 onUpdate
    */
   async searchHybridProgressive(
     query: string,
@@ -87,7 +116,16 @@ export class BookmarkSearchService {
 
     try {
       const resolvedOptions = await this.withResolvedStrategy(options)
-      const response = await queryService.search(query, resolvedOptions)
+      const limit = resolvedOptions.limit ?? 100
+      const rawResponse = await queryService.search(query, resolvedOptions)
+      const results = await this.finalizeResults(query, rawResponse, limit)
+      const response: SearchResponse = {
+        results,
+        metadata: {
+          ...rawResponse.metadata,
+          totalResults: results.length
+        }
+      }
       void this.recordPerformance(query, startTime, response, true)
       return ok(response)
     } catch (error) {

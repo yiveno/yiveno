@@ -70,6 +70,8 @@
   --color-on-warning-container: var(--ottersage-semantic-on-warning-container);
   --color-warning-foreground: var(--color-on-warning);
   --color-warning-container-foreground: var(--color-on-warning-container);
+  --color-warning-emphasis: var(--color-on-warning-container);
+  --color-warning-subtle: var(--color-warning-alpha-20);
   --color-success: var(--ottersage-semantic-success);
   --color-success-container: var(--ottersage-semantic-success-container);
   --color-on-success: var(--ottersage-semantic-on-success);

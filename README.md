@@ -13,7 +13,7 @@
 
 ## ✨ 特性
 
-- 🚀 **高性能搜索** - 基于Fuse.js的模糊搜索 + 混合搜索引擎
+- 🚀 **高性能搜索** - 基于 FlexSearch 的关键词筛选 + Hybrid 语义检索（Pro）
 - 🎯 **智能推荐** - AI驱动的书签推荐系统
 - 💾 **离线优先** - IndexedDB本地存储，支持离线访问
 - 🎨 **现代化UI** - Vue 3 Composition API + 虚拟滚动优化
@@ -177,7 +177,7 @@ otterSage/                    # Monorepo根目录
 | **语言**       | TypeScript            | 5.8.3   | 严格模式 + Project References      |
 | **状态管理**   | Pinia                 | 3.0.3   | Vue官方推荐                        |
 | **构建工具**   | Vite                  | 8.0.0   | 极速HMR + Rolldown打包（Rust）     |
-| **搜索引擎**   | Fuse.js               | 6.6.2   | 模糊搜索                           |
+| **搜索引擎**   | FlexSearch            | 0.8.x   | 本地关键词筛选                     |
 | **虚拟滚动**   | @tanstack/vue-virtual | 3.13.12 | 大数据列表优化                     |
 | **Chrome API** | Manifest V3           | -       | 最新标准                           |
 
@@ -454,7 +454,7 @@ chore: 升级依赖版本
 - [Vite](https://vitejs.dev) - 下一代前端构建工具
 - [Bun](https://bun.sh) - 高性能JavaScript运行时
 - [Cloudflare Workers](https://workers.cloudflare.com) - 边缘计算平台
-- [Fuse.js](https://fusejs.io) - 轻量级模糊搜索库
+- [FlexSearch](https://github.com/nextapps-de/flexsearch) - 高性能本地全文索引
 
 ---
 

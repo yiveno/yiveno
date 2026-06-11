@@ -527,6 +527,12 @@
   "search_advanced": {
     "message": "Búsqueda avanzada"
   },
+  "search_section_matches": {
+    "message": "Resultados coincidentes"
+  },
+  "search_section_semantic": {
+    "message": "Quizás quieras"
+  },
   "settings_general_language": {
     "message": "Idioma"
   },

@@ -178,7 +178,7 @@ presentation/ → application/ → core/ → infrastructure/
 - **Language**: TypeScript 5.8.3 (strict mode + Project References)
 - **State Management**: Pinia 3.0.3
 - **Build Tool**: Vite 8.0.0 (fast HMR + Rolldown bundling with Rust)
-- **Search**: Fuse.js 6.6.2 (fuzzy search)
+- **Search**: FlexSearch 0.8.x (local keyword index) + Hybrid embedding (Pro)
 - **Virtual Scroll**: @tanstack/vue-virtual 3.13.12 (large dataset optimization)
 - **Chrome API**: Manifest V3
 

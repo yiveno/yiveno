@@ -9,6 +9,7 @@
  */
 import type { BookmarkRecord, SearchResult } from '@/infrastructure/indexeddb/manager'
 import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
+import { bookmarkMatchesQueryText } from '@/core/filter/bookmark-text-match'
 import type { WorkerDoc, SearchWorkerCommand, SearchWorkerEvent } from '@/types/domain/query'
 
 import type { SearchWorkerAdapterOptions } from '@/types/application/service'
@@ -273,18 +274,14 @@ export class QueryWorkerAdapter {
         })
       }
     }
-    if (normalizedQuery.length < 4) {
-      return results
+    if (!normalizedQuery) {
+      return []
     }
     return results.filter(result => this.includesQuery(result.bookmark, normalizedQuery))
   }
 
   private includesQuery(bookmark: BookmarkRecord, query: string): boolean {
-    if (bookmark.titleLower.includes(query)) return true
-    if (bookmark.urlLower?.includes(query)) return true
-    if (bookmark.domain?.includes(query)) return true
-    if (bookmark.keywords?.some(keyword => keyword.includes(query))) return true
-    return false
+    return bookmarkMatchesQueryText(bookmark, query)
   }
 
   async applyPatch(delta: {

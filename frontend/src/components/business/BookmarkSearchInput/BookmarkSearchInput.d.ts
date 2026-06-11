@@ -116,6 +116,12 @@ export interface BookmarkSearchInputProps {
    */
   maxDropdownResults?: number
 
+  /**
+   * Hybrid 模式下是否将语义补位结果分组展示
+   * @default true
+   */
+  groupSemanticResults?: boolean
+
   // ========== 快捷筛选 ==========
   /**
    * 快捷筛选配置

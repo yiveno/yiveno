@@ -527,6 +527,12 @@
   "search_advanced": {
     "message": "詳細検索"
   },
+  "search_section_matches": {
+    "message": "一致する結果"
+  },
+  "search_section_semantic": {
+    "message": "こんなのはどう"
+  },
   "settings_general_language": {
     "message": "言語"
   },

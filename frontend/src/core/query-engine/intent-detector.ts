@@ -1,13 +1,13 @@
 /**
- * 查询意图识别器
+ * 查询意图识别器（遗留模块，主链路不再使用）
  *
  * 根据用户输入特征自动判断最优搜索策略：
- * - fuse     精确关键词，本地快速匹配
- * - semantic 自然语言描述，语义理解
- * - hybrid   模糊区域，Fuse 先返回 + Semantic 异步补充
+ * - flexsearch  精确关键词，本地 FlexSearch 快速匹配
+ * - semantic    自然语言描述，语义理解
+ * - hybrid      模糊区域，FlexSearch 先返回 + Semantic 异步补充
  */
 
-/** 技术关键词集合（命中则倾向 Fuse） */
+/** 技术关键词集合（命中则倾向 FlexSearch） */
 const TECH_KEYWORDS = new Set([
   'css',
   'js',
@@ -69,7 +69,7 @@ const NATURAL_TRIGGERS = [
 /** 最小触发语义搜索的字符数 */
 const MIN_SEMANTIC_LENGTH = 2 // 降低到 2，支持"代码"这样的短词
 
-export type QueryIntent = 'fuse' | 'semantic' | 'hybrid'
+export type QueryIntent = 'flexsearch' | 'semantic' | 'hybrid'
 
 export interface IntentResult {
   intent: QueryIntent
@@ -83,9 +83,9 @@ export interface IntentResult {
 export function detectIntent(query: string): IntentResult {
   const q = query.trim()
 
-  // 太短，直接 Fuse
+  // 太短，直接 FlexSearch
   if (q.length < MIN_SEMANTIC_LENGTH) {
-    return { intent: 'fuse', confidence: 1, reason: 'too_short' }
+    return { intent: 'flexsearch', confidence: 1, reason: 'too_short' }
   }
 
   const lower = q.toLowerCase()
@@ -94,19 +94,19 @@ export function detectIntent(query: string): IntentResult {
   const hasChineseChars = /[\u4e00-\u9fa5]/.test(q)
   const wordCount = words.length
 
-  // 单个技术词 → Fuse
+  // 单个技术词 → FlexSearch
   if (isSingleTechKeyword(wordCount, lower)) {
-    return { intent: 'fuse', confidence: 0.95, reason: 'tech_keyword' }
+    return { intent: 'flexsearch', confidence: 0.95, reason: 'tech_keyword' }
   }
 
-  // 语义关键词（如"代码"、"编程"）→ Hybrid（结合 Fuse 和 Semantic）
+  // 语义关键词（如"代码"、"编程"）→ Hybrid（结合 FlexSearch 和 Semantic）
   if (hasSemanticKeyword(lower, words)) {
     return { intent: 'hybrid', confidence: 0.9, reason: 'semantic_keyword' }
   }
 
-  // 含特殊符号（域名/路径/版本号）→ Fuse
+  // 含特殊符号（域名/路径/版本号）→ FlexSearch
   if (hasSpecialChars(q)) {
-    return { intent: 'fuse', confidence: 0.9, reason: 'special_chars' }
+    return { intent: 'flexsearch', confidence: 0.9, reason: 'special_chars' }
   }
 
   // 自然语言触发词 → Semantic

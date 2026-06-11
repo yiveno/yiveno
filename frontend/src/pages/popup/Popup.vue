@@ -8,7 +8,7 @@
 import { computed } from 'vue'
 import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'
 import BookmarkSearchInput from '@/components/business/BookmarkSearchInput/BookmarkSearchInput.vue'
-import { AppHeader, AnimatedNumber, LucideIcon, Card, Button } from '@/components'
+import { AppHeader, AnimatedNumber, LucideIcon, Card, Button, Loading } from '@/components'
 import { t } from '@/utils/i18n-helpers'
 import { usePopupPage } from './composables/usePopupPage'
 import { usePopupStoreIndexedDB } from '@/stores/popup-store-indexeddb'
@@ -118,10 +118,9 @@ const actionCards = computed<ActionCardDef[]>(() => [
       :show-notification="true"
       @back="openSidePanel"
     />
-
+    <!-- 加载中状态 -->
     <div v-if="!isStoresReady" class="loading-container">
-      <md-circular-progress indeterminate></md-circular-progress>
-      <p class="loading-text" data-testid="popup-loading-text">{{ t('popup_initializing') }}</p>
+      <Loading size="xl" :text="t('popup_initializing')" data-testid="popup-loading-text" />
     </div>
 
     <div v-else class="main-container">
@@ -200,7 +199,7 @@ const actionCards = computed<ActionCardDef[]>(() => [
                 <template v-if="!isLoadingTraitOverview">
                   <AnimatedNumber :value="card.count" />
                 </template>
-                <md-circular-progress v-else indeterminate></md-circular-progress>
+                <Loading v-else size="lg" />
               </div>
             </div>
           </Card>
@@ -256,11 +255,6 @@ const actionCards = computed<ActionCardDef[]>(() => [
   justify-content: center;
   align-items: center;
   gap: var(--spacing-4);
-}
-
-.loading-text {
-  font-size: var(--text-sm);
-  color: var(--color-text-secondary);
 }
 
 .main-container {
@@ -380,11 +374,6 @@ const actionCards = computed<ActionCardDef[]>(() => [
 
 .issue-action:hover {
   color: var(--color-error);
-}
-
-:deep(.issue-card-count md-circular-progress) {
-  --md-circular-progress-size: 48px;
-  --md-circular-progress-active-indicator-width: 5px;
 }
 
 /* ===== 快捷操作卡片 ===== */

@@ -171,7 +171,7 @@ export function useBookmarkSearch(options: UseBookmarkSearchOptions = {}): UseBo
 
     try {
       if (mode === 'memory') {
-        // 内存模式：使用 bookmarkMemorySearchService（树形结构筛选）
+        // 内存模式：仅用于未持久化的树形草稿（非 Chrome 书签主数据源）
         const result = bookmarkMemorySearchService.search(
           dataRef.value as BookmarkNode[],
           trimmedQuery,
@@ -182,7 +182,6 @@ export function useBookmarkSearch(options: UseBookmarkSearchOptions = {}): UseBo
         executionTime.value = result.executionTime
         filterSource.value = 'memory'
       } else {
-        // IndexedDB 模式：通过 bookmarkSearchService（策略由 Pro + 语义开关自动解析）
         const result = await bookmarkSearchService.searchWithMetadata(trimmedQuery, {
           limit,
           highlight: true,
@@ -195,9 +194,10 @@ export function useBookmarkSearch(options: UseBookmarkSearchOptions = {}): UseBo
         }
 
         const response = result.value
+        const relevantResults = response.results
 
         // 转换为 FilteredBookmarkNode（扁平列表）
-        const nodes: FilteredBookmarkNode[] = response.results.map(
+        const nodes: FilteredBookmarkNode[] = relevantResults.map(
           // eslint-disable-next-line complexity
           (r): FilteredBookmarkNode => {
             const bookmark = r.bookmark
@@ -210,7 +210,8 @@ export function useBookmarkSearch(options: UseBookmarkSearchOptions = {}): UseBo
               parentId: bookmark.parentId,
               index: bookmark.index || 0,
               children: !bookmark.url ? [] : undefined,
-              filterScore: r.score
+              filterScore: r.score,
+              matchedFields: r.matchedFields ?? []
             } as FilteredBookmarkNode
 
             // 路径相关字段
@@ -237,7 +238,7 @@ export function useBookmarkSearch(options: UseBookmarkSearchOptions = {}): UseBo
         )
 
         results.value = nodes
-        totalResults.value = response.metadata.totalResults
+        totalResults.value = relevantResults.length
         executionTime.value = Math.round(response.metadata.searchTime)
         filterSource.value = 'indexeddb'
       }

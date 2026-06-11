@@ -178,7 +178,7 @@ frontend/src/
 
 #### 第一层：本地检索（全员）与 Pro 语义检索
 
-- **Free / 未登录**：基于 **FlexSearch** 的关键词模糊筛选（工程内 API 仍沿用历史命名 `fuse`），匹配标题 / URL / 域名 / 关键词
+- **Free / 未登录**：基于 **FlexSearch** 的关键词模糊筛选（策略名 `flexsearch`），匹配标题 / URL / 域名 / 关键词
 - **Pro + 语义检索开关**：在上述基础上叠加本地 **ONNX Embedding**（`multilingual-e5-small`）语义召回，形成 **Hybrid**（关键词 + 向量相似度合并）
 - Embedding 向量在本地 IndexedDB 持久化，**不上传书签内容**；仅 Pro 且开启语义检索时后台同步向量
 
@@ -275,7 +275,6 @@ Pro 托管 LLM（DeepSeek V4 Flash）
   "zod": "^3.25.8",
 
   // 🔷 搜索与索引
-  "fuse.js": "^6.6.2",
   "flexsearch": "^0.8.212",
 
   // 🔷 UI 与扩展
@@ -658,31 +657,14 @@ const virtualizer = useVirtualizer({
 
 #### 3.2.1 搜索架构
 
-**核心文件**：`frontend/src/core/search/unified-search-service.ts`
+**核心文件**：`frontend/src/application/query/bookmark-search-service.ts`、`frontend/src/core/query-engine/query-service.ts`
 
-支持三种搜索模式：
+支持两种有效检索策略（由 `search-mode.ts` 统一解析）：
 
-1. **关键词搜索**：基于 IndexedDB 索引的精确匹配
-2. **模糊搜索**：基于 Fuse.js 的模糊匹配
-3. **语义搜索**：基于本地 Embedding 的向量相似度检索（主链路）
+1. **flexsearch**：FlexSearch + Query Worker，匹配标题 / URL / 域名 / 关键词（Free / 未登录 / Pro 关闭语义检索）
+2. **hybrid**：FlexSearch + 本地 Embedding 语义召回并行合并（Pro 且开启语义检索）
 
-```typescript
-// 搜索流程
-class UnifiedSearchService {
-  async search(query: string, options: SearchOptions) {
-    // 1. 从 IndexedDB 获取候选结果
-    const candidates = await indexedDBManager.searchBookmarks(query, options)
-
-    // 2. 如果启用模糊搜索，使用 Fuse.js 再次过滤
-    if (options.fuzzyMatch) {
-      return this.fuseSearch(candidates, query)
-    }
-
-    // 3. 返回结果
-    return candidates
-  }
-}
-```
+统一结果管道（`unified-search-pipeline.ts`）对所有入口施加相同的相关性过滤与 IndexedDB 子串兜底。
 
 #### 3.2.2 搜索性能优化
 
@@ -2103,16 +2085,16 @@ Worker 异步带来的"UI 流畅度"毫无价值
 
 **仅两种有效模式**（由 `frontend/src/core/query/search-mode.ts` 统一解析，调用方勿手动指定策略）：
 
-| 条件                                 | 模式     | 实现                                                                |
-| ------------------------------------ | -------- | ------------------------------------------------------------------- |
-| 未登录 / Free / Pro 关闭「语义检索」 | `fuse`   | `FlexSearchStrategy` + Query Worker，匹配标题 / URL / 域名 / 关键词 |
-| 已登录 Pro 且开启「语义检索」        | `hybrid` | FlexSearch 与本地 E5 Embedding 并行，合并去重评分                   |
+| 条件                                 | 模式         | 实现                                                                               |
+| ------------------------------------ | ------------ | ---------------------------------------------------------------------------------- |
+| 未登录 / Free / Pro 关闭「语义检索」 | `flexsearch` | `FlexSearchStrategy` + Query Worker，匹配标题 / URL / 域名 / 关键词                |
+| 已登录 Pro 且开启「语义检索」        | `hybrid`     | FlexSearch 文本命中优先；Embedding 仅补充未命中项（最多 3 条，不重复、不混合打分） |
 
 - **开关存储**：`chrome.storage.local` 键 `semanticSearchEnabled`（默认 `true`，Pro 可在设置页关闭）
 - **Pro 判定**：读取 `ottersage_subscription_cache` 中 `subscriptionStatus.tier === 'pro' && status === 'active'`
 - **登录判定**：读取 `supabase.auth.token`（或 dev 对应键）中有效 `access_token`
 - **Embedding 同步**：仅 `hybrid` 模式触发 `SYNC_BOOKMARK_EMBEDDINGS`；Free 不同步向量
-- **Omnibox**：Service Worker 经 `bookmarkSearchService.searchHybridProgressive` 检索；语义分支默认 **30s** 超时（含 Offscreen + 模型冷启动），超时降级为 Fuse 结果
+- **Omnibox**：Service Worker 经 `bookmarkSearchService.searchWithMetadata` 检索；语义分支默认 **30s** 超时（含 Offscreen + 模型冷启动），超时降级为 FlexSearch 结果
 - **已废弃**：`auto` / `semantic` 单独策略及 `intent-detector` 路由（代码可保留但不再接入主链路）
 
 ### 7.8 Pro 托管 LLM（技术实现）

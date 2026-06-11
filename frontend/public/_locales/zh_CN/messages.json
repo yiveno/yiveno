@@ -527,6 +527,12 @@
   "search_advanced": {
     "message": "高级搜索"
   },
+  "search_section_matches": {
+    "message": "匹配结果"
+  },
+  "search_section_semantic": {
+    "message": "猜你想要"
+  },
   "settings_general_language": {
     "message": "语言"
   },

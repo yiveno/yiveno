@@ -1,16 +1,17 @@
 /**
- * 书签检索模式：Free 仅 Fuse；Pro + 语义开关开启时为 Hybrid
+ * 书签检索模式：Free 仅 FlexSearch；Pro + 语义开关开启时为 Hybrid
  */
 
 import { AUTH_STORAGE_KEY } from '@/config/auth-sync-env'
 import { parseWebsiteAuthStorage } from '@/config/auth-sync-session'
 import { isSemanticSearchEnabled, SEMANTIC_SEARCH_STORAGE_KEY } from '@/core/ai/ai-feature-settings'
+import type { SearchStrategy } from '@/types/domain/query'
 
 /** 订阅缓存键（与 useSubscription 一致） */
 export const SUBSCRIPTION_CACHE_KEY = 'ottersage_subscription_cache'
 
-/** 对外有效检索策略（仅两种） */
-export type EffectiveSearchStrategy = 'fuse' | 'hybrid'
+/** 对外有效检索策略（与 SearchStrategy 一致） */
+export type EffectiveSearchStrategy = SearchStrategy
 
 /** 检索权限快照 */
 export interface SearchModeSnapshot {
@@ -35,7 +36,7 @@ export function resolveSearchStrategyFromSnapshot(
   if (snapshot.isLoggedIn && snapshot.isPro && snapshot.semanticSearchEnabled) {
     return 'hybrid'
   }
-  return 'fuse'
+  return 'flexsearch'
 }
 
 /**
