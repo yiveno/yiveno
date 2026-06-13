@@ -22,8 +22,6 @@ export { useCommandsShortcuts } from './useCommandsShortcuts'
 // 键盘快捷键基础工具
 // ============================================
 export { useKeyboard } from './useKeyboard'
-export { useKeyboardModifier } from './useKeyboardModifier'
-export { useKeyboardHelp } from './useKeyboardHelp'
 
 // ============================================
 // 书签相关

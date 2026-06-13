@@ -15,9 +15,9 @@
 
 import { logger } from '@/infrastructure/logging/logger'
 import { isBookmarkSyncBatchSuspended } from '@/core/bookmark/bookmark-sync-batch'
-import { bookmarkSyncService } from '@/services/bookmark-sync-service'
+import { bookmarkSyncService } from '@/infrastructure/services/bookmark-sync-service'
 // ⚠️ 临时注释：scheduleTraitRebuildForIds 导致 background.js 导入 app-components
-// import { scheduleTraitRebuildForIds } from '@/services/bookmark-trait-service'
+// import { scheduleTraitRebuildForIds } from '@/infrastructure/services/bookmark-trait-service'
 
 /**
  * 同步到 IndexedDB 并广播更新消息

@@ -9,7 +9,7 @@
  */
 
 import { ref, computed } from 'vue'
-import { bookmarkSyncService } from '@/services/bookmark-sync-service'
+import { bookmarkSyncService } from '@/infrastructure/services/bookmark-sync-service'
 import type { SyncProgress } from '@/types/sync-progress'
 import { createInitialProgress } from '@/types/sync-progress'
 import { logger } from '@/infrastructure/logging/logger'

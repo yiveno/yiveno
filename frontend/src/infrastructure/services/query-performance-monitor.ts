@@ -28,7 +28,7 @@ import type {
   TopQuery,
   OptimizationSuggestion,
   AlertThreshold
-} from '@/types/services/performance'
+} from '@/types/infrastructure/services/performance'
 
 // ==================== 性能监控主类 ====================
 

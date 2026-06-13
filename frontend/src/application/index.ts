@@ -15,12 +15,7 @@ export { bookmarkMemorySearchService } from './query/bookmark-memory-search-serv
 
 // AI 服务
 export { AIAppService, aiAppService } from './ai/ai-app-service'
+export type { UserLLMProvider, UserLLMConfig } from './ai/ai-app-service'
 
-// 推荐服务
-export {
-  getSmartRecommendationEngine,
-  type SmartRecommendation,
-  type RecommendationType,
-  type RecommendationReason,
-  type RecommendationContext
-} from './bookmark/recommendation-app-service'
+export { tabBrowserAppService, TabBrowserAppService } from './browser/tab-browser-app-service'
+export type { ActiveTabInfo } from './browser/tab-browser-app-service'

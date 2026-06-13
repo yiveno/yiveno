@@ -9,10 +9,18 @@
  */
 
 import { logger } from '@/infrastructure/logging/logger'
-import { bookmarkSyncService } from '@/services/bookmark-sync-service'
+import { bookmarkSyncService } from '@/infrastructure/services/bookmark-sync-service'
 import type { BookmarkRecord } from '@/infrastructure/indexeddb/types'
 import { z } from 'zod'
-import { openManagementPage, openSettingsPage } from '../managers/navigation'
+import {
+  openManagementPage,
+  openSettingsPage,
+  openSidePanel,
+  getCurrentActiveTab,
+  openUrlInActiveTab,
+  openUrlInNewTab,
+  openSystemUrl
+} from '../managers/navigation'
 import { getExtensionState } from '../managers/state'
 import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
 import { showSystemNotification, clearSystemNotification } from './notification'
@@ -130,6 +138,51 @@ const MESSAGE_HANDLERS: Record<
   OPEN_SETTINGS_PAGE: async (_message, sendResponse) => {
     await openSettingsPage()
     sendResponse({ success: true } as unknown)
+  },
+  OPEN_SIDE_PANEL: async (_message, sendResponse) => {
+    await openSidePanel()
+    sendResponse({ success: true } as unknown)
+  },
+  GET_CURRENT_TAB: async (_message, sendResponse) => {
+    const tab = await getCurrentActiveTab()
+    sendResponse({ success: true, tab } as unknown)
+  },
+  OPEN_BOOKMARK_URL: async (message, sendResponse) => {
+    try {
+      const url = typeof message.data?.url === 'string' ? message.data.url : ''
+      const mode = message.data?.mode === 'new_tab' ? 'new_tab' : 'active'
+      if (!url) {
+        sendResponse({ success: false, error: '缺少 URL' } as unknown)
+        return
+      }
+      if (mode === 'new_tab') {
+        await openUrlInNewTab(url)
+      } else {
+        await openUrlInActiveTab(url)
+      }
+      sendResponse({ success: true } as unknown)
+    } catch (error) {
+      sendResponse({
+        success: false,
+        error: error instanceof Error ? error.message : String(error)
+      } as unknown)
+    }
+  },
+  OPEN_SYSTEM_URL: async (message, sendResponse) => {
+    try {
+      const url = typeof message.data?.url === 'string' ? message.data.url : ''
+      if (!url) {
+        sendResponse({ success: false, error: '缺少 URL' } as unknown)
+        return
+      }
+      await openSystemUrl(url)
+      sendResponse({ success: true } as unknown)
+    } catch (error) {
+      sendResponse({
+        success: false,
+        error: error instanceof Error ? error.message : String(error)
+      } as unknown)
+    }
   },
   SYNC_BOOKMARKS: async (_message, sendResponse) => {
     try {

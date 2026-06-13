@@ -15,3 +15,6 @@ export * from './logging'
 
 // 事件类型
 export * from './events'
+
+// 基础设施服务类型
+export * from './services'

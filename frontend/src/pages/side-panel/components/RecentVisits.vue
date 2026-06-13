@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { LucideIcon, EmptyState, Button } from '@/components'
+import { bookmarkAppService } from '@/application/bookmark/bookmark-app-service'
 import type { BookmarkRecord } from '@/infrastructure/indexeddb/types'
 import { logger } from '@/infrastructure/logging/logger'
 import { onEvent } from '@/infrastructure/events/event-bus'
 import { formatRecentVisitTime, formatFullDateTime } from '@/utils/time-formatter'
-import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
 
 defineOptions({ name: 'RecentVisits' })
 
@@ -20,7 +20,8 @@ const faviconErrors = ref(new Set<string>())
 
 async function load() {
   try {
-    recentVisits.value = await indexedDBManager.getRecentVisits(5)
+    const result = await bookmarkAppService.getRecentVisits(5)
+    recentVisits.value = result.ok && result.value ? result.value : []
   } catch (error) {
     logger.error('RecentVisits', '加载失败', error)
   }
@@ -50,12 +51,8 @@ function handleClick(b: BookmarkRecord) {
 
 async function handleRemove(b: BookmarkRecord) {
   try {
-    const existing = await indexedDBManager.getBookmarkById(b.id)
-    if (!existing) return
-    const updated = { ...existing }
-    delete updated.lastVisited
-    delete updated.visitCount
-    await indexedDBManager.updateBookmark(updated)
+    const result = await bookmarkAppService.clearVisitRecord(b.id)
+    if (!result.ok) return
     recentVisits.value = recentVisits.value.filter(v => v.id !== b.id)
     emit('bookmarkRemove', b)
   } catch (error) {

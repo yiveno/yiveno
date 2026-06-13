@@ -1,8 +1,10 @@
 /**
  * 日志系统类型定义。
  */
-import type { Timestamp } from '../core/common'
 import type { ErrorType, ErrorSeverity } from '../core/error'
+
+/** 时间戳（毫秒）。 */
+type Timestamp = number
 
 /** 日志级别。 */
 export type LogLevel = 'info' | 'warn' | 'error' | 'debug'

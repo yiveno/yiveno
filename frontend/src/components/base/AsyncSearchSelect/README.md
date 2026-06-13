@@ -185,7 +185,7 @@ interface SelectOption {
 import { ref } from 'vue'
 import { AsyncSearchSelect } from '@/components'
 import type { SelectOption, AsyncSearchSelectInstance } from '@/components'
-import { trpc } from '@/services/trpc'
+import { trpc } from '@/infrastructure/services/trpc'
 
 const userSelectRef = ref<AsyncSearchSelectInstance | null>(null)
 const selectedUserIds = ref<string[]>([])

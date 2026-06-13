@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import {
-  filterFlatSearchResults,
-  mergeHybridSearchResults
-} from '@/application/query/search-result-filter'
-import { mergeHybridSearchResults as mergeFromCore } from '@/core/query-engine/hybrid-merge'
+import { filterFlatSearchResults } from '@/application/query/search-result-filter'
+import { mergeHybridSearchResults } from '@/core/query-engine/hybrid-merge'
 import type { EnhancedSearchResult } from '@/core/query-engine'
 
 function makeResult(
@@ -182,7 +179,7 @@ describe('search-result-filter', () => {
   })
 
   it('hybrid 单字符查询 Flex 有命中时不强行语义补位', () => {
-    const merged = mergeFromCore(
+    const merged = mergeHybridSearchResults(
       [makeResult('github', 'v3.16.1 Release', 'https://github.com/org/v3.16.1', 0.9, ['title'])],
       [
         makeResult('reddit', 'Reddit - 全网主阵地', 'https://www.reddit.com', 0.92, ['semantic']),
@@ -202,7 +199,7 @@ describe('search-result-filter', () => {
       makeResult('2', '文明起源', 'https://civilization.example.com', 0.88, ['semantic'])
     ]
 
-    const merged = mergeFromCore(flex, semantic)
+    const merged = mergeHybridSearchResults(flex, semantic)
 
     expect(merged).toHaveLength(2)
     expect(merged[0]?.bookmark.id).toBe('1')

@@ -14,7 +14,7 @@
  */
 
 import { logger } from '@/infrastructure/logging/logger'
-import { navigationService } from '@/services/navigation-service'
+import { navigationService } from '@/infrastructure/services/navigation-service'
 
 /**
  * 导航工作流接口
@@ -146,4 +146,57 @@ export async function openSidePanel(): Promise<void> {
   } catch (error) {
     logger.warn('Navigation', '打开侧边栏失败', error)
   }
+}
+
+/** 当前活动标签页摘要 */
+export interface ActiveTabInfo {
+  id: number | null
+  url: string
+  title: string
+  windowId: number | null
+}
+
+/**
+ * 获取当前活动标签页信息
+ */
+export async function getCurrentActiveTab(): Promise<ActiveTabInfo | null> {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+    if (!tab) return null
+    return {
+      id: tab.id ?? null,
+      url: tab.url ?? '',
+      title: tab.title ?? '',
+      windowId: tab.windowId ?? null
+    }
+  } catch (error) {
+    logger.warn('Navigation', '获取当前标签页失败', error)
+    return null
+  }
+}
+
+/**
+ * 在当前活动标签页打开 URL，若无活动标签则新建
+ */
+export async function openUrlInActiveTab(url: string): Promise<void> {
+  const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true })
+  if (tab?.id) {
+    await chrome.tabs.update(tab.id, { url })
+    return
+  }
+  await chrome.tabs.create({ url, active: true })
+}
+
+/**
+ * 在新标签页打开 URL
+ */
+export async function openUrlInNewTab(url: string): Promise<void> {
+  await chrome.tabs.create({ url, active: true })
+}
+
+/**
+ * 打开浏览器系统页面（如 chrome://extensions/shortcuts）
+ */
+export async function openSystemUrl(url: string): Promise<void> {
+  await chrome.tabs.create({ url, active: true })
 }

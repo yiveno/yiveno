@@ -165,7 +165,7 @@ export const bookmarkTraitAutoSync = BookmarkTraitAutoSync.getInstance()
  * @example
  * ```typescript
  * // background/index.ts
- * import { initializeBookmarkTraitAutoSync } from '@/services/bookmark-trait-auto-sync'
+ * import { initializeBookmarkTraitAutoSync } from '@/infrastructure/services/bookmark-trait-auto-sync'
  *
  * initializeBookmarkTraitAutoSync()
  * ```

@@ -14,6 +14,16 @@ import type { BookmarkNode } from '@/types'
 import { logger } from '@/infrastructure/logging/logger'
 import { emitEvent } from '@/infrastructure/events/event-bus'
 
+/** 书签数量摘要统计 */
+export interface BookmarkSummaryStats {
+  /** 书签总数 */
+  bookmarks: number
+  /** 今日新增书签数量 */
+  todayAdded: number
+  /** 最近 30 天内打开过的书签数量 */
+  recentlyOpened: number
+}
+
 function toBookmarkNode(record: BookmarkRecord): BookmarkNode {
   return {
     id: String(record.id),
@@ -235,6 +245,73 @@ export class BookmarkAppService {
 
   async getGlobalStats(): Promise<Result<unknown>> {
     return bookmarkRepository.getGlobalStats()
+  }
+
+  /**
+   * 获取最近访问的书签列表
+   */
+  async getRecentVisits(limit: number = 10): Promise<Result<BookmarkRecord[]>> {
+    return bookmarkRepository.getRecentVisits(limit)
+  }
+
+  /**
+   * 清除书签访问记录
+   */
+  async clearVisitRecord(bookmarkId: string): Promise<Result<void>> {
+    try {
+      return await bookmarkRepository.clearVisitRecord(bookmarkId)
+    } catch (error) {
+      logger.error('BookmarkAppService', '清除访问记录失败', error)
+      return err(error instanceof Error ? error : new Error('清除访问记录失败'))
+    }
+  }
+
+  /**
+   * 计算书签摘要统计（总数、今日新增、近期打开）
+   */
+  async getBookmarkSummaryStats(): Promise<Result<BookmarkSummaryStats>> {
+    try {
+      const result = await this.getAllBookmarks()
+      if (!result.ok || !result.value) {
+        return err(new Error('获取书签统计失败'))
+      }
+
+      const allBookmarks = result.value
+      const totalBookmarks = allBookmarks.filter(b => !b.isFolder).length
+
+      const todayStart = new Date()
+      todayStart.setHours(0, 0, 0, 0)
+      const todayTimestamp = todayStart.getTime()
+
+      const todayAdded = allBookmarks.filter(
+        b => !b.isFolder && b.dateAdded && b.dateAdded >= todayTimestamp
+      ).length
+
+      const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000
+      const recentlyOpened = allBookmarks.filter(
+        b => !b.isFolder && b.lastVisited && b.lastVisited >= thirtyDaysAgo
+      ).length
+
+      return ok({
+        bookmarks: totalBookmarks,
+        todayAdded,
+        recentlyOpened
+      })
+    } catch (error) {
+      logger.error('BookmarkAppService', '计算书签统计失败', error)
+      return err(error instanceof Error ? error : new Error('计算书签统计失败'))
+    }
+  }
+
+  /**
+   * 检查书签库是否已有数据
+   */
+  async hasBookmarkData(): Promise<Result<boolean>> {
+    const sample = await this.getAllBookmarks(1)
+    if (!sample.ok) {
+      return err(sample.error ?? new Error('检查书签数据失败'))
+    }
+    return ok((sample.value?.length ?? 0) > 0)
   }
 
   /**

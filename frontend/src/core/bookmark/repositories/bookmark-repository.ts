@@ -103,13 +103,6 @@ export class BookmarkRepository {
     }
   }
 
-  /**
-   * 更新书签（部分更新）
-   *
-   * @param id - 书签的唯一标识符
-   * @param updates - 要更新的字段（部分 BookmarkRecord）
-   * @returns 包含 void 的 Result 对象
-   */
   async updateBookmark(id: string, updates: Partial<BookmarkRecord>): Promise<Result<void>> {
     try {
       await indexedDBManager.initialize()
@@ -138,6 +131,44 @@ export class BookmarkRepository {
       return Ok(undefined)
     } catch (e: unknown) {
       this.logger.error('BookmarkRepository', 'updateBookmark failed', e)
+      return Err(e instanceof Error ? e : new Error(String(e)))
+    }
+  }
+
+  /**
+   * 获取最近访问的书签列表（按 lastVisited 降序）
+   */
+  async getRecentVisits(limit: number = 10): Promise<Result<BookmarkRecord[]>> {
+    try {
+      await indexedDBManager.initialize()
+      const data = await indexedDBManager.getRecentVisits(limit)
+      return Ok(data)
+    } catch (e: unknown) {
+      this.logger.error('BookmarkRepository', 'getRecentVisits failed', e)
+      return Err(e instanceof Error ? e : new Error(String(e)))
+    }
+  }
+
+  /**
+   * 清除书签的访问记录（lastVisited / visitCount）
+   */
+  async clearVisitRecord(id: string): Promise<Result<void>> {
+    try {
+      await indexedDBManager.initialize()
+
+      const existingBookmark = await indexedDBManager.getBookmarkById(id)
+      if (!existingBookmark) {
+        return Err(new Error(`书签不存在: ${id}`))
+      }
+
+      const updatedBookmark = { ...existingBookmark }
+      delete updatedBookmark.lastVisited
+      delete updatedBookmark.visitCount
+
+      await indexedDBManager.updateBookmark(updatedBookmark)
+      return Ok(undefined)
+    } catch (e: unknown) {
+      this.logger.error('BookmarkRepository', 'clearVisitRecord failed', e)
       return Err(e instanceof Error ? e : new Error(String(e)))
     }
   }

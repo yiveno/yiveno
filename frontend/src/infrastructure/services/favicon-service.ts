@@ -14,7 +14,7 @@ import type { FaviconCacheRecord } from '@/infrastructure/indexeddb/types'
 import { logger } from '@/infrastructure/logging/logger'
 
 // 从统一类型定义导入
-import type { FaviconStatus, FaviconRecord } from '@/types/services/favicon'
+import type { FaviconStatus, FaviconRecord } from '@/types/infrastructure/services/favicon'
 
 const FAVICON_CACHE_DURATION = 7 * 24 * 60 * 60 * 1000 // 7天
 

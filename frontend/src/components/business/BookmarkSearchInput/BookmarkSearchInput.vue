@@ -23,11 +23,11 @@ import { useBookmarkSearch } from '@/composables/useBookmarkSearch'
 import type { BookmarkNode } from '@/types'
 import { useDebounceFn } from '@vueuse/core'
 import { useTraitFilterStore } from '@/stores/trait-filter-store'
-import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
+import { bookmarkTraitQueryService } from '@/application/bookmark/bookmark-trait-query-service'
 import type { TraitTag } from '@/infrastructure/indexeddb/types/bookmark-record'
 import { t } from '@/utils/i18n-helpers'
 import { logger } from '@/infrastructure/logging/logger'
-import { faviconService } from '@/services/favicon-service'
+import { faviconService } from '@/infrastructure/services/favicon-service'
 import type { FilteredBookmarkNode } from '@/core/filter/bookmark-filter'
 import { hasFlexChannelHits, isSemanticSupplementBookmark } from '@/core/filter/search-hit-kind'
 import { highlightQueryTextAsSegments } from '@/core/filter/query-text-highlight'
@@ -569,25 +569,14 @@ async function updateTraitCounts(): Promise<void> {
   isLoadingTraitCounts.value = true
 
   try {
-    // ✅ 加载所有书签，从 traitTags 字段统计（与筛选逻辑一致）
-    const allBookmarks = await indexedDBManager.getAllBookmarks()
-
-    // ✅ 统计重复书签：从 traitTags 读取，只统计有 URL 的书签
-    const duplicateCount = allBookmarks.filter(
-      b => b.url && b.traitTags && b.traitTags.includes('duplicate')
-    ).length
-
-    // ✅ 统计无效书签：从 traitTags 读取，只统计有 URL 的书签
-    const invalidCount = allBookmarks.filter(
-      b => b.url && b.traitTags && b.traitTags.includes('invalid')
-    ).length
+    const stats = await bookmarkTraitQueryService.getTraitStatistics()
 
     traitCounts.value = {
-      invalid: invalidCount,
-      duplicate: duplicateCount
+      invalid: stats.invalid,
+      duplicate: stats.duplicate
     }
   } catch (error) {
-    console.error('[BookmarkSearchInput] 更新特征统计失败:', error)
+    logger.error('BookmarkSearchInput', '更新特征统计失败', error)
     traitCounts.value = { invalid: 0, duplicate: 0 }
   } finally {
     isLoadingTraitCounts.value = false
@@ -1231,7 +1220,8 @@ if (typeof chrome !== 'undefined' && chrome.runtime) {
       queueMicrotask(async () => {
         void updateTraitCounts()
         // 清除 Worker 适配器的缓存，确保搜索使用最新数据
-        const { queryWorkerAdapter } = await import('@/services/query-worker-adapter')
+        const { queryWorkerAdapter } =
+          await import('@/infrastructure/services/query-worker-adapter')
         queryWorkerAdapter.clearCache()
       })
     }

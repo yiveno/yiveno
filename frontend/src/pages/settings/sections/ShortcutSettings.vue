@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted } from 'vue'
 import { LucideIcon, Button } from '@/components'
+import { tabBrowserAppService } from '@/application/browser/tab-browser-app-service'
 import { useCommandsShortcuts } from '@/composables/useCommandsShortcuts'
 import { useUIStore } from '@/stores/ui-store'
 import { t } from '@/utils/i18n-helpers'
@@ -47,10 +48,9 @@ const shortcutItems = computed(() => {
 /**
  * 打开 Chrome 快捷键设置页面
  */
-function openChromeShortcutSettings(): void {
-  try {
-    chrome.tabs.create({ url: 'chrome://extensions/shortcuts' })
-  } catch {
+async function openChromeShortcutSettings(): Promise<void> {
+  const result = await tabBrowserAppService.openSystemUrl('chrome://extensions/shortcuts')
+  if (!result.ok) {
     uiStore.showInfo(t('settings_shortcut_chrome_url_hint'))
   }
 }

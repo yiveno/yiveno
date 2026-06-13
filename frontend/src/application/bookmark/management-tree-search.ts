@@ -31,9 +31,6 @@ export {
   isRelevantSearchHit
 } from '@/application/query/search-result-filter'
 
-/** @deprecated 使用 isRelevantSearchHit */
-export { isRelevantSearchHit as isRelevantManagementSearchHit } from '@/application/query/search-result-filter'
-
 /**
  * 从树形筛选结果收集书签叶子 ID（严格文本，禁用模糊）
  */

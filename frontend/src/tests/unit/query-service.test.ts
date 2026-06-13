@@ -24,7 +24,7 @@ vi.mock('@/infrastructure/indexeddb/manager', () => ({
 }))
 
 // Mock Query Worker Adapter
-vi.mock('@/services/query-worker-adapter', () => {
+vi.mock('@/infrastructure/services/query-worker-adapter', () => {
   const mockBookmarks = [
     {
       id: '1',
@@ -271,7 +271,7 @@ describe('QueryService', () => {
       vi.mocked(indexedDBManager.getAllBookmarks).mockResolvedValue([])
 
       // Mock worker 返回空结果
-      const { queryWorkerAdapter } = await import('@/services/query-worker-adapter')
+      const { queryWorkerAdapter } = await import('@/infrastructure/services/query-worker-adapter')
       vi.mocked(queryWorkerAdapter.search).mockResolvedValueOnce([])
 
       const response = await queryService.search('vue')

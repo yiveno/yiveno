@@ -13,7 +13,7 @@
  */
 
 import { logger } from '@/infrastructure/logging/logger'
-import { bookmarkSyncService } from '@/services/bookmark-sync-service'
+import { bookmarkSyncService } from '@/infrastructure/services/bookmark-sync-service'
 
 /** Alarm 名称 */
 const ALARM_NAME = 'ottersage-daily-sync'

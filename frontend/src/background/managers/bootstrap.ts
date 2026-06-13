@@ -8,7 +8,7 @@
 import { logger } from '@/infrastructure/logging/logger'
 import type { ExtensionState } from './state'
 import { CURRENT_SCHEMA_VERSION, getExtensionState, updateExtensionState } from './state'
-import { bookmarkSyncService } from '@/services/bookmark-sync-service'
+import { bookmarkSyncService } from '@/infrastructure/services/bookmark-sync-service'
 import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
 import { folderVectorService } from '@/application/folder/folder-vector-service'
 import { registerEmbeddingSyncTriggers } from '@/background/managers/embedding-sync'

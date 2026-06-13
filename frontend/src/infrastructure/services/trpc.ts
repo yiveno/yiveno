@@ -1,5 +1,5 @@
 import { createTRPCProxyClient, httpBatchLink } from '@trpc/client'
-import type { AppRouter } from '../../../backend/src/trpc-router'
+import type { AppRouter } from '../../../../backend/src/trpc-router'
 import { API_CONFIG } from '@/config/constants'
 
 const getBaseUrl = () => {

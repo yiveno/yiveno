@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { LucideIcon, Tooltip, Card, Input, Dialog, Button } from '@/components'
-import { userLLMClient } from '@/infrastructure/llm/user-llm-client'
-import type { UserLLMProvider } from '@/infrastructure/llm/user-llm-client'
-import { llmAdapter } from '@/infrastructure/llm/llm-adapter'
-import { hostedLLMClient, type HostedQuotaInfo } from '@/infrastructure/llm/hosted-llm-client'
+import { aiAppService } from '@/application/ai/ai-app-service'
+import type { UserLLMProvider, HostedQuotaInfo } from '@/application/ai/ai-app-service'
 import { message } from '@/application/message/message-service'
 import { useSubscription } from '@/composables/useSubscription'
 import { useSupabaseAuth } from '@/composables/useSupabaseAuth'
@@ -320,7 +318,7 @@ const consoleLinks: Record<UserLLMProvider, { url: string; text: string }> = {
 async function verifySavedCloudConnection(): Promise<boolean> {
   const provider = providerNames[selectedProvider.value]
   try {
-    await userLLMClient.complete('请回复"ok"', { maxTokens: 5 })
+    await aiAppService.testUserLlmConnection()
     message.success(`配置已保存，${provider} 连接正常`)
     return true
   } catch (e) {
@@ -362,12 +360,11 @@ async function saveConfig() {
     // 确保 model 不为空字符串
     const modelValue = finalModel || undefined
 
-    await userLLMClient.saveConfig({
+    await aiAppService.saveUserLlmConfig({
       provider: selectedProvider.value,
       apiKey: apiKey.value.trim(),
       ...(modelValue && { model: modelValue })
     })
-    llmAdapter.clearCapabilitiesCache()
     isSaved.value = true
     await verifySavedCloudConnection()
   } catch (_e) {
@@ -379,8 +376,7 @@ async function saveConfig() {
 
 /** 清除配置 */
 async function clearConfig(silent = false) {
-  await userLLMClient.clearConfig()
-  llmAdapter.clearCapabilitiesCache()
+  await aiAppService.clearUserLlmConfig()
   apiKey.value = ''
   applyDefaultModelForProvider(selectedProvider.value)
   isSaved.value = false
@@ -398,7 +394,7 @@ async function loadHostedQuota(forceRefresh = false) {
 
   loadingHostedQuota.value = true
   try {
-    hostedQuota.value = await hostedLLMClient.fetchQuota(forceRefresh)
+    hostedQuota.value = await aiAppService.fetchHostedQuota(forceRefresh)
   } catch (error) {
     logger.error('AISettings', '加载托管 AI 配额失败', error)
     hostedQuota.value = null
@@ -409,7 +405,7 @@ async function loadHostedQuota(forceRefresh = false) {
 
 /** 加载 AI 配置 */
 async function loadAIConfig() {
-  const config = await userLLMClient.getConfig()
+  const config = await aiAppService.getUserLlmConfig()
   if (config) {
     selectedProvider.value = config.provider
     apiKey.value = config.apiKey

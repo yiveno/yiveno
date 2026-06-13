@@ -1,6 +1,7 @@
 import { computed, onMounted, onUnmounted, shallowRef } from 'vue'
 import { useThemeSync } from '@/composables/useThemeSync'
 import { useTraitLoading } from '@/composables/useTraitData'
+import { tabBrowserAppService } from '@/application/browser/tab-browser-app-service'
 import { logger } from '@/infrastructure/logging/logger'
 import type { useUIStore } from '@/stores/ui-store'
 import type { usePopupStoreIndexedDB } from '@/stores/popup-store-indexeddb'
@@ -21,13 +22,18 @@ function getExtensionPageUrl(page: 'management' | 'settings'): string {
   return chrome?.runtime?.getURL ? chrome.runtime.getURL(`${page}.html`) : `/${page}.html`
 }
 
-/** 在新标签页打开扩展内部页面 */
-function openExtensionPage(page: 'management' | 'settings'): void {
-  const url = getExtensionPageUrl(page)
-  chrome.tabs.create({ url }).catch(err => {
-    logger.warn('Popup', `chrome.tabs.create 失败，使用 window.open:`, err)
+/** 在新标签页打开扩展内部页面（经 Background 路由） */
+async function openExtensionPage(page: 'management' | 'settings'): Promise<void> {
+  const result =
+    page === 'management'
+      ? await tabBrowserAppService.openManagementPage()
+      : await tabBrowserAppService.openSettingsPage()
+
+  if (!result.ok) {
+    const url = getExtensionPageUrl(page)
+    logger.warn('Popup', `Background 打开 ${page} 失败，使用 window.open`, result.error)
     window.open(url, '_blank')
-  })
+  }
 }
 
 /**
@@ -66,29 +72,17 @@ export function usePopupPage() {
   }
 
   function openManualOrganizePage(): void {
-    openExtensionPage('management')
+    void openExtensionPage('management')
   }
 
   function openSettings(): void {
-    openExtensionPage('settings')
+    void openExtensionPage('settings')
   }
 
   async function openSidePanel(): Promise<void> {
-    try {
-      if (!chrome?.sidePanel) throw new Error('chrome.sidePanel API 不可用')
-
-      const [currentTab] = await chrome.tabs.query({ active: true, currentWindow: true })
-      if (!currentTab?.windowId) throw new Error('无法获取当前窗口信息')
-
-      await chrome.sidePanel.setOptions({
-        tabId: currentTab.id,
-        path: 'side-panel.html',
-        enabled: true
-      })
-      await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false })
-      await chrome.sidePanel.open({ windowId: currentTab.windowId })
-    } catch (error) {
-      logger.warn('Popup', '侧边栏打开失败', error)
+    const result = await tabBrowserAppService.openSidePanel()
+    if (!result.ok) {
+      logger.warn('Popup', '侧边栏打开失败', result.error)
       uiStore.value?.showWarning(t('popup_sidepanel_unavailable'))
     }
   }
@@ -103,7 +97,7 @@ export function usePopupPage() {
       await chrome.storage.session.set({
         managementInitialFilter: { tags, timestamp: Date.now() }
       })
-      openExtensionPage('management')
+      void openExtensionPage('management')
     } catch (error) {
       logger.error('Popup', 'openManagementWithFilter 错误:', error)
       openManualOrganizePage()
@@ -121,7 +115,7 @@ export function usePopupPage() {
 
     setTimeout(() => {
       try {
-        chrome.runtime.sendMessage({
+        void chrome.runtime.sendMessage({
           type: 'SHOW_ADD_BOOKMARK_DIALOG',
           data: {
             title: params.get('title') || '',

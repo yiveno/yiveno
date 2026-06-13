@@ -2,7 +2,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useSubscription } from '@/composables/useSubscription'
 import { useSupabaseAuth } from '@/composables/useSupabaseAuth'
 import { detectAiEngineUiReady } from '@/application/ai/ai-engine-availability'
-import { llmAdapter } from '@/infrastructure/llm/llm-adapter'
+import { aiAppService } from '@/application/ai/ai-app-service'
 import { logger } from '@/infrastructure/logging/logger'
 import {
   AI_ONE_CLICK_ORGANIZE_STORAGE_KEY,
@@ -35,7 +35,7 @@ export function useManagementAiSettings() {
 
   async function refreshAIEngineReady(): Promise<void> {
     try {
-      llmAdapter.clearCapabilitiesCache()
+      aiAppService.clearLlmCapabilitiesCache()
       aiEngineReady.value = await detectAiEngineUiReady({
         isPro: isPro.value,
         isLoggedIn: isAuthenticated.value

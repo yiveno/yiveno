@@ -1,8 +1,9 @@
 import { computed, onMounted, onUnmounted, ref, shallowRef } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useBookmarkStore } from '@/stores/bookmark-tree-store'
-import type { BookmarkNode } from '../types'
-import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
+import type { BookmarkNode } from '@/types'
+import { bookmarkAppService } from '@/application/bookmark/bookmark-app-service'
+import { tabBrowserAppService } from '@/application/browser/tab-browser-app-service'
 import type { BookmarkRecord } from '@/infrastructure/indexeddb/types'
 import { logger } from '@/infrastructure/logging/logger'
 import { onEvent } from '@/infrastructure/events/event-bus'
@@ -46,7 +47,6 @@ export function useSidePanelPage() {
   // ========== Helpers ==========
   async function updateVisitRecord(bookmarkId: string) {
     try {
-      const { bookmarkAppService } = await import('@/application/bookmark/bookmark-app-service')
       const result = await bookmarkAppService.updateVisitRecord(bookmarkId)
       if (!result.ok) logger.warn('SidePanel', '更新访问记录失败', result.error)
     } catch (error) {
@@ -95,15 +95,12 @@ export function useSidePanelPage() {
 
   async function openBookmark(b: OpenableBookmark) {
     if (!b.url) return
-    try {
-      const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true })
-      if (tabs[0]?.id) await chrome.tabs.update(tabs[0].id, { url: b.url })
-      else await chrome.tabs.create({ url: b.url, active: true })
-      await updateVisitRecord(b.id)
-    } catch {
-      if (typeof window !== 'undefined') window.open(b.url, '_blank')
+    const result = await tabBrowserAppService.openUrlInActiveTab(b.url)
+    if (!result.ok) {
       message.info('打开书签失败，请重试')
+      return
     }
+    await updateVisitRecord(b.id)
   }
 
   async function handleBookmarkClick(node: BookmarkNode) {
@@ -158,13 +155,9 @@ export function useSidePanelPage() {
       message.error('无法打开内部链接')
       return
     }
-    if (typeof window === 'undefined' || !window?.open) {
-      message.error('当前环境不支持')
-      return
-    }
-    const w = window.open(node.url, '_blank')
-    if (!w || w.closed) {
-      message.warning('链接被浏览器阻止')
+    const result = await tabBrowserAppService.openUrlInNewTab(node.url)
+    if (!result.ok) {
+      message.warning('链接打开失败，请重试')
       return
     }
     await updateVisitRecord(node.id)
@@ -175,6 +168,11 @@ export function useSidePanelPage() {
   }
   function handleTreeReady() {
     isLoading.value = false
+  }
+
+  async function fetchRecentVisitCount(limit = 5): Promise<number> {
+    const result = await bookmarkAppService.getRecentVisits(limit)
+    return result.ok && result.value ? result.value.length : 0
   }
 
   // ========== Lifecycle ==========
@@ -193,10 +191,10 @@ export function useSidePanelPage() {
 
     const u3 = onEvent('bookmark:visited', async () => {
       try {
-        const visits = await indexedDBManager.getRecentVisits(5)
+        const count = await fetchRecentVisitCount(5)
         scheduleUIUpdate(
           () => {
-            recentCount.value = visits.length
+            recentCount.value = count
           },
           { timeoutMs: 150 }
         )
@@ -216,8 +214,7 @@ export function useSidePanelPage() {
     try {
       isLoading.value = true
       await bookmarkStore.loadFromIndexedDB()
-      const visits = await indexedDBManager.getRecentVisits(5)
-      recentCount.value = visits.length
+      recentCount.value = await fetchRecentVisitCount(5)
       cleanupSyncRef = setupRealtimeSync()
     } catch (error) {
       logger.error('SidePanel', '初始化失败', error)
@@ -237,7 +234,7 @@ export function useSidePanelPage() {
   }
 
   onMounted(() => {
-    initialize()
+    void initialize()
   })
   onUnmounted(() => {
     if (cleanupSyncRef) {

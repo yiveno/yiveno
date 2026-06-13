@@ -9,7 +9,7 @@
  */
 
 import { logger } from '@/infrastructure/logging/logger'
-import { trpc } from '@/services/trpc'
+import { trpc } from '@/infrastructure/services/trpc'
 
 /**
  * 初始化收件箱通知监听器

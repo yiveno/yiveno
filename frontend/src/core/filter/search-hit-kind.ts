@@ -19,11 +19,6 @@ export function isSemanticChannelHit(matchedFields?: string[]): boolean {
   return (matchedFields ?? []).includes('semantic')
 }
 
-/** @deprecated 使用 isSemanticChannelHit */
-export function isSemanticSupplementHit(matchedFields?: string[]): boolean {
-  return isSemanticChannelHit(matchedFields)
-}
-
 /**
  * 结果集中是否存在 FlexSearch 通道命中
  */

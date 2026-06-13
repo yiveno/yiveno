@@ -21,7 +21,7 @@
  */
 
 import { ref, onMounted, onUnmounted, watch, type Ref } from 'vue'
-import { faviconService, type FaviconStatus } from '@/services/favicon-service'
+import { faviconService, type FaviconStatus } from '@/infrastructure/services/favicon-service'
 import { logger } from '@/infrastructure/logging/logger'
 
 /**

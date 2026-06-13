@@ -29,8 +29,6 @@ const LOG_TAG = 'SearchResultFilter'
 
 /** Embedding 向量召回下限（宽召回，最终展示由 pick* 裁切） */
 export const SEMANTIC_VECTOR_MIN_SCORE = SEMANTIC_VECTOR_RECALL_MIN_SCORE
-/** @deprecated 使用 SEMANTIC_VECTOR_MIN_SCORE */
-export const SEMANTIC_MIN_SCORE = SEMANTIC_VECTOR_MIN_SCORE
 /** 语义最多补充条数 */
 export const SEMANTIC_MAX_EXTRA = 2
 /** 无文本命中时最多展示的语义直达条数 */
@@ -61,11 +59,6 @@ function getSemanticCandidates(
     })
     .sort((a, b) => b.score - a.score)
 }
-
-/**
- * @deprecated 使用 core/query-engine/hybrid-merge 中的 mergeHybridSearchResults
- */
-export { mergeHybridSearchResults } from '@/core/query-engine/hybrid-merge'
 
 /**
  * 提取第一层（FlexSearch 通道）命中，保持 merge 后的原序

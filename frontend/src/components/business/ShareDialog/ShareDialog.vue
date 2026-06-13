@@ -11,7 +11,7 @@ import { posterService } from '@/application/share/poster-service'
 import { message } from '@/application/message/message-service'
 import { logger } from '@/infrastructure/logging/logger'
 import { useSupabaseAuth } from '@/composables/useSupabaseAuth'
-import { trpc } from '@/services/trpc'
+import { trpc } from '@/infrastructure/services/trpc'
 import { websiteUrls } from '@/config/website'
 
 defineOptions({ name: 'ShareDialog' })

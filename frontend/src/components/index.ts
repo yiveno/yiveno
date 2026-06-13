@@ -53,7 +53,6 @@ export { default as ThemeToggle } from './composite/ThemeToggle/ThemeToggle.vue'
 // 包含业务逻辑的项目专属组件
 export { default as BookmarkTree } from './business/BookmarkTree/BookmarkTree.vue'
 // TreeNode 是 BookmarkTree 的内部组件，不对外导出
-export { default as BookmarkRecommendations } from './business/BookmarkRecommendations/BookmarkRecommendations.vue'
 export { default as BookmarkSearchInput } from './business/BookmarkSearchInput/BookmarkSearchInput.vue'
 export { default as NotificationList } from './business/NotificationList/NotificationList.vue'
 export { default as ShareDialog } from './business/ShareDialog/ShareDialog.vue'
@@ -84,7 +83,6 @@ export type * from './composite/ThemeToggle/ThemeToggle.d'
 // 业务组件类型
 export type * from './business/BookmarkTree/BookmarkTree.d'
 // TreeNode 类型不对外导出（内部组件）
-export type * from './business/BookmarkRecommendations/BookmarkRecommendations.d'
 export type * from './business/BookmarkSearchInput/BookmarkSearchInput.d'
 export type * from './business/ShareDialog/ShareDialog.d'
 

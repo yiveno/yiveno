@@ -16,7 +16,7 @@ import { registerMessageHandlers } from './listeners/messaging'
 import { registerMenusAndShortcuts } from './listeners/menus'
 import { registerOmniboxHandlers } from './listeners/omnibox'
 import { registerBookmarkChangeListeners } from './listeners/bookmarks'
-import { initializeBookmarkTraitAutoSync } from '@/services/bookmark-trait-auto-sync'
+import { initializeBookmarkTraitAutoSync } from '@/infrastructure/services/bookmark-trait-auto-sync'
 import { purgeCrossEnvironmentAuthStorage } from '@/config/auth-sync-env'
 
 /**

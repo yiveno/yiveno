@@ -11,7 +11,7 @@
 import type { Result } from '../../core/common/result'
 import { ok, err } from '../../core/common/result'
 import { logger } from '../../infrastructure/logging/logger'
-import { navigationService } from '@/services/navigation-service'
+import { navigationService } from '@/infrastructure/services/navigation-service'
 import { NOTIFICATION_CONFIG, ANIMATION_CONFIG } from '@/config/constants'
 import type * as Vue from 'vue'
 

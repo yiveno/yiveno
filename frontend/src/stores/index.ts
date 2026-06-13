@@ -11,7 +11,7 @@ export { useTraitDataStore } from './trait-data-store'
 // === 类型导出 ===
 export type { BookmarkNode, ChromeBookmarkTreeNode, ProposalNode } from '@/types'
 
-export type { BookmarkStats, TraitOverview } from './popup-store-indexeddb'
+export type { BookmarkStats } from './popup-store-indexeddb'
 
 export type { SnackbarState, LoadingState } from './ui-store'
 

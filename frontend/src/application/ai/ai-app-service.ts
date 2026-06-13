@@ -10,6 +10,8 @@
  * 注意：书签分类功能已迁移到基于向量的本地推荐（folderVectorService）
  */
 import { llmAdapter } from '@/infrastructure/llm/llm-adapter'
+import { userLLMClient, type UserAPIKeyConfig } from '@/infrastructure/llm/user-llm-client'
+import { hostedLLMClient, type HostedQuotaInfo } from '@/infrastructure/llm/hosted-llm-client'
 import {
   createSummarizePrompt,
   createSemanticSearchPrompt,
@@ -25,6 +27,10 @@ import {
 } from '@/application/ai/organize-response-parser'
 import type { LLMProvider } from '@/types/infrastructure/llm'
 import { logger } from '@/infrastructure/logging/logger'
+
+export type { UserLLMProvider } from '@/infrastructure/llm/user-llm-client'
+export type UserLLMConfig = UserAPIKeyConfig
+export type { HostedQuotaInfo } from '@/infrastructure/llm/hosted-llm-client'
 
 /** 一键整理每批发送给 LLM 的书签数量 */
 export const AI_ORGANIZE_BATCH_SIZE = 40
@@ -165,6 +171,38 @@ export class AIAppService {
    */
   async detectCapabilities() {
     return llmAdapter.detectCapabilities()
+  }
+
+  /** 清除 LLM 能力探测缓存 */
+  clearLlmCapabilitiesCache(): void {
+    llmAdapter.clearCapabilitiesCache()
+  }
+
+  /** 读取用户自带 API Key 配置 */
+  async getUserLlmConfig(): Promise<UserAPIKeyConfig | null> {
+    return userLLMClient.getConfig()
+  }
+
+  /** 保存用户自带 API Key 配置 */
+  async saveUserLlmConfig(config: UserAPIKeyConfig): Promise<void> {
+    await userLLMClient.saveConfig(config)
+    this.clearLlmCapabilitiesCache()
+  }
+
+  /** 清除用户自带 API Key 配置 */
+  async clearUserLlmConfig(): Promise<void> {
+    await userLLMClient.clearConfig()
+    this.clearLlmCapabilitiesCache()
+  }
+
+  /** 测试用户自带 API Key 连通性 */
+  async testUserLlmConnection(): Promise<void> {
+    await userLLMClient.complete('请回复"ok"', { maxTokens: 5 })
+  }
+
+  /** 查询 Pro 托管 AI 配额 */
+  async fetchHostedQuota(forceRefresh = false): Promise<HostedQuotaInfo | null> {
+    return hostedLLMClient.fetchQuota(forceRefresh)
   }
 
   /**

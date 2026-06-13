@@ -20,7 +20,7 @@ import { FlexSearchStrategy } from './strategies/flexsearch-strategy'
 import { mergeHybridSearchResults } from './hybrid-merge'
 import { QueryCache } from './query-cache'
 import { HighlightEngine } from './highlight'
-import { queryWorkerAdapter } from '@/services/query-worker-adapter'
+import { queryWorkerAdapter } from '@/infrastructure/services/query-worker-adapter'
 import type {
   SearchOptions,
   SearchStrategy,

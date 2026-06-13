@@ -7,9 +7,8 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { bookmarkAppService } from '@/application/bookmark/bookmark-app-service'
-import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
+import { tabBrowserAppService } from '@/application/browser/tab-browser-app-service'
 import { logger } from '@/infrastructure/logging/logger'
-import { useTraitDataStore } from './trait-data-store'
 
 /**
  * 书签数量统计，用于展示总书签条目。
@@ -23,26 +22,6 @@ export interface BookmarkStats {
   recentlyOpened: number
 }
 
-/**
- * 书签特征概览数据结构
- *
- * @deprecated 使用 useTraitDataStore 替代
- * 保留此接口仅为向后兼容
- */
-export interface TraitOverview {
-  /** 已扫描书签数量 */
-  totalScanned: number
-  /** 无效书签数量 */
-  invalid: number
-  /** 重复书签数量 */
-  duplicate: number
-  /** 内部书签数量 */
-  internal: number
-}
-
-/**
- * 弹窗状态管理存储 - IndexedDB版本
- */
 /**
  * 弹窗状态管理存储 - IndexedDB版本
  */
@@ -74,24 +53,6 @@ export const usePopupStoreIndexedDB = defineStore('popup-indexeddb', () => {
     recentlyOpened: 0
   })
 
-  // 书签特征概览
-  /**
-   * @deprecated 使用 useTraitDataStore 替代
-   * 保留此 ref 仅为向后兼容，实际数据从 TraitDataStore 获取
-   */
-  const traitOverview = computed(() => {
-    const traitStore = useTraitDataStore()
-    return {
-      totalScanned:
-        traitStore.statistics.duplicate +
-        traitStore.statistics.invalid +
-        traitStore.statistics.internal,
-      invalid: traitStore.statistics.invalid,
-      duplicate: traitStore.statistics.duplicate,
-      internal: traitStore.statistics.internal
-    }
-  })
-
   // ==================== 计算属性 ====================
 
   /** 当前是否存在可用的激活标签页 */
@@ -108,11 +69,9 @@ export const usePopupStoreIndexedDB = defineStore('popup-indexeddb', () => {
    * 确保 IndexedDB 已有书签数据；若为空则等待或请求 Background 全量同步
    */
   async function ensureBookmarkDataReady(): Promise<void> {
-    await indexedDBManager.initialize()
-
     const hasBookmarkData = async (): Promise<boolean> => {
-      const sample = await indexedDBManager.getAllBookmarks(1)
-      return sample.length > 0
+      const sample = await bookmarkAppService.hasBookmarkData()
+      return sample.ok && sample.value === true
     }
 
     if (await hasBookmarkData()) {
@@ -201,19 +160,11 @@ export const usePopupStoreIndexedDB = defineStore('popup-indexeddb', () => {
    */
   async function getCurrentTab(): Promise<void> {
     try {
-      if (typeof chrome !== 'undefined' && chrome.tabs) {
-        const tabs = await chrome.tabs.query({
-          active: true,
-          currentWindow: true
-        })
-        if (tabs.length > 0) {
-          const tab = tabs[0]
-          if (tab) {
-            currentTabId.value = tab.id || null
-            currentTabUrl.value = tab.url || ''
-            currentTabTitle.value = tab.title || ''
-          }
-        }
+      const result = await tabBrowserAppService.getCurrentActiveTab()
+      if (result.ok && result.value) {
+        currentTabId.value = result.value.id
+        currentTabUrl.value = result.value.url
+        currentTabTitle.value = result.value.title
       }
     } catch (error) {
       logger.warn('PopupStore', '获取当前标签页失败', error)
@@ -229,58 +180,18 @@ export const usePopupStoreIndexedDB = defineStore('popup-indexeddb', () => {
    */
   async function loadBookmarkStats(): Promise<void> {
     try {
-      // 获取所有书签数据来计算详细统计
-      const allBookmarks = await indexedDBManager.getAllBookmarks()
-
-      // 计算总数
-      const totalBookmarks = allBookmarks.filter(b => !b.isFolder).length
-
-      // 计算今日新增（dateAdded 是今天的书签）
-      const todayStart = new Date()
-      todayStart.setHours(0, 0, 0, 0)
-      const todayTimestamp = todayStart.getTime()
-
-      const todayAdded = allBookmarks.filter(
-        b => !b.isFolder && b.dateAdded && b.dateAdded >= todayTimestamp
-      ).length
-
-      // 计算最近打开（lastVisited 存在的书签，表示通过插件打开过）
-      // 只统计最近 30 天内打开过的书签
-      const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000
-      const recentlyOpened = allBookmarks.filter(
-        b => !b.isFolder && b.lastVisited && b.lastVisited >= thirtyDaysAgo
-      ).length
-
-      stats.value = {
-        bookmarks: totalBookmarks,
-        todayAdded,
-        recentlyOpened
+      const result = await bookmarkAppService.getBookmarkSummaryStats()
+      if (!result.ok || !result.value) {
+        logger.warn('PopupStore', '加载书签统计失败', result.ok ? undefined : result.error)
+        return
       }
+
+      stats.value = result.value
 
       logger.info('PopupStore', '📊 统计数据已更新', stats.value)
     } catch (error) {
       logger.warn('PopupStore', '加载书签统计失败', error)
     }
-  }
-
-  /**
-   * 特征概览是否正在加载
-   * @deprecated 使用 useTraitDataStore().isLoading 替代
-   */
-  const isLoadingTraitOverview = computed(() => {
-    const traitStore = useTraitDataStore()
-    return traitStore.isLoading
-  })
-
-  /**
-   * 加载特征概览
-   *
-   * @deprecated 使用 useTraitDataStore().refresh() 替代
-   * 保留此方法仅为向后兼容
-   */
-  async function loadBookmarkTraitOverview(): Promise<void> {
-    const traitStore = useTraitDataStore()
-    await traitStore.refresh(true)
   }
 
   /**
@@ -324,7 +235,8 @@ export const usePopupStoreIndexedDB = defineStore('popup-indexeddb', () => {
         queueMicrotask(async () => {
           void autoRefreshData()
           // 清除 Worker 适配器的缓存，确保搜索使用最新数据
-          const { queryWorkerAdapter } = await import('@/services/query-worker-adapter')
+          const { queryWorkerAdapter } =
+            await import('@/infrastructure/services/query-worker-adapter')
           queryWorkerAdapter.clearCache()
         })
       }
@@ -349,16 +261,10 @@ export const usePopupStoreIndexedDB = defineStore('popup-indexeddb', () => {
     if (!bookmark.url) return
 
     try {
-      // 1. 打开书签
-      if (typeof chrome !== 'undefined' && chrome.tabs) {
-        if (inNewTab) {
-          await chrome.tabs.create({ url: bookmark.url })
-        } else {
-          await chrome.tabs.update({ url: bookmark.url })
-        }
+      if (inNewTab) {
+        await tabBrowserAppService.openUrlInNewTab(bookmark.url)
       } else {
-        // 开发环境或不支持Chrome API时
-        window.open(bookmark.url, inNewTab ? '_blank' : '_self')
+        await tabBrowserAppService.openUrlInActiveTab(bookmark.url)
       }
 
       // 2. 记录访问（如果有 bookmarkId）
@@ -420,8 +326,6 @@ export const usePopupStoreIndexedDB = defineStore('popup-indexeddb', () => {
     currentTabTitle,
     currentTabId,
     stats,
-    traitOverview,
-    isLoadingTraitOverview,
 
     // 计算属性
     hasCurrentTab,
@@ -431,7 +335,6 @@ export const usePopupStoreIndexedDB = defineStore('popup-indexeddb', () => {
     initialize,
     getCurrentTab,
     loadBookmarkStats,
-    loadBookmarkTraitOverview,
     openBookmark,
     getDatabaseInfo
   }

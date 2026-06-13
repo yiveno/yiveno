@@ -6,7 +6,7 @@
  */
 
 import { ref, computed } from 'vue'
-import { trpc } from '@/services/trpc'
+import { trpc } from '@/infrastructure/services/trpc'
 import { logger } from '@/infrastructure/logging/logger'
 import { AUTH_STORAGE_KEY } from '@/config/auth-sync-env'
 

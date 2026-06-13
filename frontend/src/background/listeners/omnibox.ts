@@ -20,7 +20,7 @@ import { logger } from '@/infrastructure/logging/logger'
 import type { EnhancedSearchResult } from '@/core/query-engine'
 import { bookmarkSearchService } from '@/application/query/bookmark-search-service'
 import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
-import { bookmarkSyncService } from '@/services/bookmark-sync-service'
+import { bookmarkSyncService } from '@/infrastructure/services/bookmark-sync-service'
 import { localVectorStore } from '@/infrastructure/embedding/local-vector-store'
 import { areEmbeddingVectorsReady } from '@/infrastructure/embedding/embedding-migration'
 import {
