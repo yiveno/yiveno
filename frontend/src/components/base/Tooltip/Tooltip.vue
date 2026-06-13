@@ -386,14 +386,14 @@ onBeforeUnmount(() => {
 /* ===== MD3 Transitions (Emphasized Easing) ===== */
 .md-tooltip-enter-active {
   transition:
-    opacity var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-emphasized),
-    transform var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-emphasized);
+    opacity var(--motion-enter),
+    transform var(--motion-enter);
 }
 
 .md-tooltip-leave-active {
   transition:
-    opacity var(--md-sys-motion-duration-short1) var(--md-sys-motion-easing-emphasized),
-    transform var(--md-sys-motion-duration-short1) var(--md-sys-motion-easing-emphasized);
+    opacity var(--motion-exit),
+    transform var(--motion-exit);
 }
 
 .md-tooltip-enter-from {

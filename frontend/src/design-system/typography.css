@@ -29,36 +29,8 @@
 /* 字体变量定义已迁移至 tokens.css，保留语义化样式 */
 
 /* ========================================
- * 全局字体应用
- * ======================================== */
-
-/* 应用全局字体到整个应用 */
-html {
-  font-family: var(--font-family-base);
-  font-size: var(--typescale-body-lg-size);
-  font-weight: var(--font-weight-regular);
-  line-height: var(--typescale-body-lg-line);
-  letter-spacing: var(--typescale-body-lg-tracking);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-  font-feature-settings:
-    'kern' 1,
-    'liga' 1,
-    'calt' 1;
-}
-
-body {
-  font-family: inherit;
-  color: var(--color-text-primary);
-}
-
-/* ========================================
- * 字体优化设置
- * ======================================== */
-
-/* ========================================
- * 注：语言特定字体由 fonts.css 和 font-service.ts 管理
+ * 注：html / body 基础排版由 base.css @layer base 统一管理
+ * 语言特定字体由 fonts.css 和 font-service.ts 管理
  * ======================================== */
 
 /* ========================================
@@ -80,7 +52,7 @@ body {
   font-family: var(--font-family-mono);
   font-size: 0.9em;
   font-weight: var(--font-weight-regular);
-  line-height: var(--line-body-lg);
+  line-height: var(--typescale-body-lg-line);
   letter-spacing: 0;
 }
 

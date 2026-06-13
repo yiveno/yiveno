@@ -163,7 +163,7 @@ function closeWindow() {
     <!-- 主内容区域 -->
     <main class="relative w-full h-screen flex flex-col">
       <!-- 过渡容器 -->
-      <Transition :name="direction > 0 ? 'slide-left' : 'slide-right'" mode="out-in">
+      <Transition :name="direction > 0 ? 'v-slide-x-forward' : 'v-slide-x-back'" mode="out-in">
         <!-- 动态内容渲染 -->
         <div :key="currentStep.id" class="w-full h-full flex flex-col justify-center items-center">
           <!-- 布局：Centered (欢迎页/结束页) -->
@@ -200,7 +200,7 @@ function closeWindow() {
 
               <div v-else class="relative">
                 <div
-                  class="w-32 h-32 bg-green-500 rounded-full flex items-center justify-center text-white shadow-2xl shadow-green-500/40 animate-bounce-slow"
+                  class="w-32 h-32 bg-green-500 rounded-full flex items-center justify-center text-white shadow-2xl shadow-green-500/40 md-appear-scale"
                 >
                   <LucideIcon name="check" class="w-16 h-16" />
                 </div>
@@ -336,10 +336,7 @@ function closeWindow() {
                   <div
                     class="mt-8 bg-slate-100 dark:bg-slate-700/50 rounded-full px-4 py-2 flex items-center gap-2"
                   >
-                    <div
-                      v-if="isSyncing"
-                      class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"
-                    ></div>
+                    <div v-if="isSyncing" class="w-2 h-2 bg-blue-500 rounded-full"></div>
                     <div v-else class="w-2 h-2 bg-green-500 rounded-full"></div>
                     <span class="text-sm text-slate-600 dark:text-slate-300 font-medium">{{
                       progressMessage
@@ -437,49 +434,3 @@ function closeWindow() {
     </main>
   </div>
 </template>
-
-<style scoped>
-@keyframes bounce {
-  0%,
-  100% {
-    transform: translateY(-5%);
-  }
-
-  50% {
-    transform: translateY(5%);
-  }
-}
-
-.slide-left-enter-active,
-.slide-left-leave-active,
-.slide-right-enter-active,
-.slide-right-leave-active {
-  transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
-}
-
-.slide-left-enter-from {
-  opacity: 0;
-  transform: translateX(40px);
-}
-
-.slide-left-leave-to {
-  opacity: 0;
-  transform: translateX(-40px);
-}
-
-.slide-right-enter-from {
-  opacity: 0;
-  transform: translateX(-40px);
-}
-
-.slide-right-leave-to {
-  opacity: 0;
-  transform: translateX(40px);
-}
-
-.animate-bounce-slow {
-  animation: bounce 3s infinite;
-}
-
-/* Slide Transitions */
-</style>

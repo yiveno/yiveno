@@ -124,11 +124,7 @@ function handleClose() {
   <Dialog :show="isVisible" persistent :hide-close="!showActions">
     <template #header>
       <div class="dialog-title" :class="{ 'is-error': isError }">
-        <LucideIcon
-          :name="titleIcon"
-          :class="{ spin: !isCompleted && !isError }"
-          class="title-icon"
-        />
+        <LucideIcon :name="titleIcon" :spin="!isCompleted && !isError" class="title-icon" />
         <span>{{ dialogTitle }}</span>
       </div>
     </template>
@@ -164,10 +160,7 @@ function handleClose() {
           }"
         >
           <div class="phase-icon">
-            <LucideIcon
-              :name="phase.icon"
-              :class="{ spin: progress.phase === phase.key && !isCompleted }"
-            />
+            <LucideIcon :name="phase.icon" :spin="progress.phase === phase.key && !isCompleted" />
           </div>
           <span class="phase-label">{{ phase.label }}</span>
         </div>
@@ -231,21 +224,6 @@ function handleClose() {
 </template>
 
 <style scoped>
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.spin {
-  will-change: transform;
-  animation: spin 1s linear infinite;
-}
-
 .dialog-title {
   display: flex;
   align-items: center;
@@ -374,11 +352,6 @@ function handleClose() {
 
 .phase-item.completed .phase-icon :deep(svg) {
   color: var(--color-on-primary);
-}
-
-.phase-icon :deep(svg.spin) {
-  will-change: transform;
-  animation: spin 1s linear infinite;
 }
 
 .phase-label {

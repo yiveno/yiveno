@@ -87,7 +87,7 @@ const iconComponent = computed<Component | null>(() => {
 })
 
 /**
- * 变换样式
+ * 变换样式（flip / rotate）
  */
 const transformStyle = computed(() => {
   const transforms: string[] = []
@@ -96,16 +96,30 @@ const transformStyle = computed(() => {
   if (props.rotate) transforms.push(`rotate(${props.rotate}deg)`)
   return transforms.length ? { transform: transforms.join(' ') } : undefined
 })
+
+/** M3 加载态：由 md-circular-progress 内置动效驱动，不用 CSS keyframes */
+const progressStyle = computed(() => ({
+  '--md-circular-progress-size': `${computedSize.value}px`,
+  '--md-circular-progress-active-indicator-width': `${Math.max(2, Math.round(computedSize.value / 8))}px`,
+  '--md-circular-progress-active-indicator-color': computedColor.value
+}))
 </script>
 
 <template>
+  <md-circular-progress
+    v-if="spin && iconComponent"
+    indeterminate
+    class="ottersage-lucide-icon ottersage-lucide-icon--progress"
+    :style="progressStyle"
+    v-bind="$attrs"
+  />
   <component
     :is="iconComponent"
-    v-if="iconComponent"
+    v-else-if="iconComponent"
     :size="computedSize"
     :color="computedColor"
     :stroke-width="strokeWidth"
-    :class="['ottersage-lucide-icon', { spin }]"
+    class="ottersage-lucide-icon"
     :style="transformStyle"
     v-bind="$attrs"
   />
@@ -141,18 +155,9 @@ const transformStyle = computed(() => {
   background: color-mix(in srgb, var(--md-sys-color-error) 10%, transparent);
 }
 
-.ottersage-lucide-icon.spin {
-  will-change: transform;
-  animation: ottersage-lucide-spin 1s linear infinite;
-}
-
-@keyframes ottersage-lucide-spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
+.ottersage-lucide-icon--progress {
+  display: inline-flex;
+  flex-shrink: 0;
+  vertical-align: middle;
 }
 </style>

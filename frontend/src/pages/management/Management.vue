@@ -485,7 +485,7 @@ function handleClearManagementFilters(): void {
               class="panel-card right-panel-card"
               elevation="medium"
               :footer-visible="true"
-              footer-transition="card-footer-slide"
+              footer-transition="v-slide"
             >
               <template #header>
                 <div class="panel-header">
@@ -1253,25 +1253,6 @@ p.warning-text {
 
 .organize-notes-count--warning {
   color: var(--md-sys-color-error);
-}
-
-/* 局部：底部批量操作条入场/出场动画（出现：自下而上；消失：向下） */
-.card-footer-slide-enter-active,
-.card-footer-slide-leave-active {
-  transition:
-    transform var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
-    opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
-  will-change: transform, opacity;
-}
-
-.card-footer-slide-enter-from {
-  opacity: 0;
-  transform: translateY(var(--spacing-4));
-}
-
-.card-footer-slide-leave-to {
-  opacity: 0;
-  transform: translateY(var(--spacing-4));
 }
 </style>
 

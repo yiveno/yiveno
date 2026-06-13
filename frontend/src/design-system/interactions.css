@@ -1,0 +1,55 @@
+/**
+ * MD3 交互模式 (Interaction Patterns)
+ *
+ * 统一 hover / focus / active 表面反馈，禁止几何位移（见产品文档 §1.1.1）
+ * State layer 不透明度遵循 Material Design 3 规范
+ */
+
+:root {
+  --state-hover-opacity: var(--md-sys-state-hover-opacity);
+  --state-focus-opacity: var(--md-sys-state-focus-opacity);
+  --state-pressed-opacity: var(--md-sys-state-pressed-opacity);
+  --state-dragged-opacity: var(--md-sys-state-dragged-opacity);
+}
+
+@layer utilities {
+  /* 可交互行 / 卡片：仅背景色反馈 */
+  .surface-interactive {
+    transition:
+      background-color var(--motion-standard),
+      color var(--motion-standard),
+      box-shadow var(--motion-standard),
+      opacity var(--motion-standard),
+      border-color var(--motion-standard);
+  }
+
+  .surface-interactive:hover:not(:disabled, [aria-disabled='true']) {
+    background-color: var(--color-surface-hover);
+  }
+
+  .surface-interactive:active:not(:disabled, [aria-disabled='true']) {
+    background-color: var(--color-surface-active);
+  }
+
+  /* 图标按钮 hover：MD3 state layer 等效 */
+  .icon-interactive {
+    border-radius: var(--radius-full);
+    transition: background-color var(--motion-standard);
+  }
+
+  .icon-interactive:hover:not(:disabled) {
+    background-color: color-mix(
+      in srgb,
+      var(--md-sys-color-on-surface) calc(var(--state-hover-opacity) * 100%),
+      transparent
+    );
+  }
+
+  .icon-interactive:active:not(:disabled) {
+    background-color: color-mix(
+      in srgb,
+      var(--md-sys-color-on-surface) calc(var(--state-pressed-opacity) * 100%),
+      transparent
+    );
+  }
+}

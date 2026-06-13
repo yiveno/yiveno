@@ -103,7 +103,10 @@ onMounted(() => {
         v-for="notification in notifications"
         :key="notification.id"
         class="notification-item"
-        :class="{ 'notification-item--unread': !notification.is_read }"
+        :class="{
+          'surface-interactive': notification.is_read,
+          'notification-item--unread': !notification.is_read
+        }"
         @click="handleNotificationClick(notification)"
       >
         <!-- 发送者头像 -->
@@ -166,13 +169,6 @@ onMounted(() => {
   padding: var(--spacing-3) var(--spacing-4);
   border-bottom: 1px solid var(--color-border-subtle);
   cursor: pointer;
-  transition:
-    background var(--transition-fast),
-    transform var(--transition-fast);
-}
-
-.notification-item:hover {
-  background: var(--color-surface-container-low);
 }
 
 .notification-item:active {

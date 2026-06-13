@@ -254,8 +254,8 @@ onMounted(async () => {
       <div v-if="shouldShowNotification" ref="notificationWrapperRef" class="notification-wrapper">
         <Button
           variant="icon"
-          class="app-header__action notification-button"
-          :class="{ 'bell-ringing': isBellRinging }"
+          class="app-header__action notification-button md-emphasis-flash"
+          :class="{ 'md-emphasis-flash--active': isBellRinging }"
           :icon-size="30"
           title="通知"
           aria-label="通知"
@@ -281,53 +281,6 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-/* 铃铛摇晃动画 */
-@keyframes bell-ring {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  10% {
-    transform: rotate(14deg);
-  }
-
-  20% {
-    transform: rotate(-12deg);
-  }
-
-  30% {
-    transform: rotate(10deg);
-  }
-
-  40% {
-    transform: rotate(-8deg);
-  }
-
-  50% {
-    transform: rotate(6deg);
-  }
-
-  60% {
-    transform: rotate(-4deg);
-  }
-
-  70% {
-    transform: rotate(2deg);
-  }
-
-  80% {
-    transform: rotate(-1deg);
-  }
-
-  90% {
-    transform: rotate(0.5deg);
-  }
-
-  100% {
-    transform: rotate(0deg);
-  }
-}
-
 .app-header {
   position: sticky;
   top: 0;
@@ -440,10 +393,5 @@ onMounted(async () => {
   background: var(--color-surface-container);
   box-shadow: var(--shadow-lg);
   overflow: hidden;
-}
-
-.notification-button.bell-ringing {
-  transform-origin: center top;
-  animation: bell-ring 0.5s var(--md-sys-motion-easing-emphasized);
 }
 </style>

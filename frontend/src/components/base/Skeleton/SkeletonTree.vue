@@ -25,7 +25,7 @@ const props = withDefaults(defineProps<SkeletonTreeProps>(), {
   iconSize: 20,
   showIndent: true,
   indentWidth: 24,
-  animation: 'pulse'
+  animation: 'none'
 })
 
 /**

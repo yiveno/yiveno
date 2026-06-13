@@ -19,7 +19,7 @@ defineOptions({ name: 'Skeleton' })
 
 const props = withDefaults(defineProps<SkeletonProps>(), {
   variant: 'text',
-  animation: 'pulse',
+  animation: 'none',
   borderRadius: 'md'
 })
 
@@ -54,34 +54,10 @@ const skeletonStyles = computed(() => {
 </script>
 
 <template>
-  <div :class="skeletonClasses" :style="skeletonStyles" aria-busy="true" aria-live="polite">
-    <!-- 波浪动画的渐变层 -->
-    <div v-if="animation === 'wave'" class="skeleton__wave" />
-  </div>
+  <div :class="skeletonClasses" :style="skeletonStyles" aria-busy="true" aria-live="polite" />
 </template>
 
 <style scoped>
-@keyframes skeleton-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.4;
-  }
-}
-
-@keyframes skeleton-wave {
-  0% {
-    transform: translateX(-100%);
-  }
-
-  100% {
-    transform: translateX(100%);
-  }
-}
-
 .skeleton {
   /* 相对定位，用于波浪动画 */
   position: relative;
@@ -167,39 +143,15 @@ const skeletonStyles = computed(() => {
 
 /* ========== 动画样式 ========== */
 
-/* 脉冲动画（Material Design 推荐） */
+/* M3：占位块默认静态；pulse 仅用 opacity transition（非 keyframes） */
 .skeleton--animation-pulse {
-  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  transition: opacity var(--md-sys-motion-duration-long2) var(--md-sys-motion-easing-standard);
+  animation: none;
 }
 
-/* 波浪动画（从左到右扫过） */
-.skeleton--animation-wave {
-  /* 波浪动画不需要 opacity 变化 */
-}
-
-.skeleton__wave {
-  /* 绝对定位，覆盖整个骨架屏 */
-  position: absolute;
-  inset: 0;
-
-  /* 渐变背景：从透明到半透明再到透明 */
-  background: linear-gradient(
-    90deg,
-    transparent,
-    color-mix(in srgb, var(--md-sys-color-surface) 30%, transparent),
-    transparent
-  );
-
-  /* 变换原点：左侧 */
-  transform-origin: left;
-
-  /* 波浪动画 */
-  animation: skeleton-wave 1.5s linear infinite;
-}
-
-/* 无动画 */
+.skeleton--animation-wave,
 .skeleton--animation-none {
-  /* 静态占位符，无动画 */
+  animation: none;
 }
 
 /* ========== 可访问性 ========== */

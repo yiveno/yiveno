@@ -147,7 +147,7 @@ onUnmounted(() => {
           :key="item.id"
           type="button"
           :disabled="item.disabled"
-          class="context-menu-item"
+          class="context-menu-item surface-interactive"
           :class="{
             [`context-menu-item--${item.color}`]: item.color && item.color !== 'default'
           }"
@@ -232,8 +232,6 @@ onUnmounted(() => {
   color: var(--md-sys-color-on-surface);
   background: transparent;
   cursor: pointer;
-  transition: background-color var(--md-sys-motion-duration-short2)
-    var(--md-sys-motion-easing-standard);
 }
 
 .context-menu-item:focus-visible {
@@ -245,10 +243,6 @@ onUnmounted(() => {
   color: var(--color-text-disabled);
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-.context-menu-item:hover:not(:disabled) {
-  background-color: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
 }
 
 /* 图标容器 */

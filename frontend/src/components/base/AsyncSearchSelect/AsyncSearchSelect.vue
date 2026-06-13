@@ -353,19 +353,7 @@ defineExpose({
         <div class="input-actions">
           <!-- Loading 图标 -->
           <div v-if="loading" class="input-loading">
-            <svg class="loading-spinner" viewBox="0 0 24 24">
-              <circle
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                stroke-width="2"
-                fill="none"
-                stroke-dasharray="60"
-                stroke-dashoffset="15"
-                stroke-linecap="round"
-              />
-            </svg>
+            <md-circular-progress indeterminate class="loading-spinner size-xs" />
           </div>
 
           <!-- 清除按钮 -->
@@ -432,24 +420,6 @@ defineExpose({
 </template>
 
 <style scoped>
-@keyframes dropdown-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .async-search-select {
   position: relative;
   display: flex;
@@ -608,10 +578,7 @@ defineExpose({
 }
 
 .loading-spinner {
-  width: 16px;
-  height: 16px;
-  color: var(--md-sys-color-primary);
-  animation: spin 1s linear infinite;
+  --md-circular-progress-active-indicator-color: var(--md-sys-color-primary);
 }
 
 /* 清除按钮 */
@@ -646,7 +613,9 @@ defineExpose({
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--md-sys-color-surface-container);
-  animation: dropdown-fade-in 0.15s ease-out;
+  transition:
+    opacity var(--motion-enter),
+    transform var(--motion-enter);
   overflow-y: auto;
   box-shadow: var(--shadow-lg);
 }

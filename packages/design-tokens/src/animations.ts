@@ -55,8 +55,7 @@ export const easing = {
 } as const
 
 /**
- * 预设动画配置
- * 常用的动画组合
+ * 预设过渡配置（M3 transition，非 @keyframes）
  */
 export const presets = {
   /** 淡入淡出 */
@@ -92,43 +91,10 @@ export const presets = {
 } as const
 
 /**
- * 关键帧动画名称
- * 用于 CSS @keyframes
+ * @deprecated M3 Web 不使用自定义 keyframes；加载态请用 md-circular-progress / md-linear-progress
  */
-export const keyframes = {
-  /** 淡入 */
-  fadeIn: 'fadeIn',
-  /** 淡出 */
-  fadeOut: 'fadeOut',
-  /** 从上滑入 */
-  slideInUp: 'slideInUp',
-  /** 从下滑入 */
-  slideInDown: 'slideInDown',
-  /** 从左滑入 */
-  slideInLeft: 'slideInLeft',
-  /** 从右滑入 */
-  slideInRight: 'slideInRight',
-  /** 缩放进入 */
-  scaleIn: 'scaleIn',
-  /** 缩放退出 */
-  scaleOut: 'scaleOut',
-  /** 旋转 */
-  spin: 'spin',
-  /** 脉冲 */
-  pulse: 'pulse',
-  /** 摇晃 */
-  shake: 'shake',
-  /** 弹跳 */
-  bounce: 'bounce',
-  /** 闪烁 */
-  blink: 'blink',
-  /** 波纹扩散 */
-  ripple: 'ripple',
-  /** 骨架屏闪烁 */
-  shimmer: 'shimmer'
-} as const
+export const keyframes = {} as const
 
 export type Duration = typeof duration
 export type Easing = typeof easing
 export type Presets = typeof presets
-export type Keyframes = typeof keyframes

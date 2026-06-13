@@ -25,7 +25,7 @@ const props = withDefaults(defineProps<SkeletonListProps>(), {
   avatarSize: 32, // ✅ 改为 32，与通知列表一致
   showSecondary: true,
   showActions: false,
-  animation: 'pulse'
+  animation: 'none'
 })
 
 /**

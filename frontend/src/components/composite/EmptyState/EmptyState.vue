@@ -44,18 +44,6 @@ withDefaults(defineProps<EmptyStateProps>(), {
   }
 }
 
-@keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -64,14 +52,11 @@ withDefaults(defineProps<EmptyStateProps>(), {
   min-height: 120px;
   padding: var(--spacing-4) var(--spacing-4);
   text-align: center;
-  animation: fade-in-up var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized);
 }
 
 .empty-state__icon {
   margin-bottom: var(--spacing-3);
   opacity: 0.5;
-  animation: fade-in-up var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized);
-  will-change: opacity, transform;
 }
 
 .empty-state__title {
@@ -79,10 +64,6 @@ withDefaults(defineProps<EmptyStateProps>(), {
   font-size: var(--md-sys-typescale-title-medium-size);
   font-weight: var(--md-sys-typescale-title-medium-weight);
   color: var(--color-text-primary);
-  animation: fade-in-up var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized);
-  animation-delay: 50ms;
-  animation-fill-mode: backwards;
-  will-change: opacity, transform;
 }
 
 .empty-state__description {
@@ -91,17 +72,9 @@ withDefaults(defineProps<EmptyStateProps>(), {
   font-size: var(--md-sys-typescale-body-medium-size);
   line-height: var(--md-sys-typescale-body-medium-line-height);
   color: var(--color-text-secondary);
-  animation: fade-in-up var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized);
-  animation-delay: 100ms;
-  animation-fill-mode: backwards;
-  will-change: opacity, transform;
 }
 
 .empty-state__actions {
   margin-top: var(--spacing-4);
-  animation: fade-in-up var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized);
-  animation-delay: 150ms;
-  animation-fill-mode: backwards;
-  will-change: opacity, transform;
 }
 </style>

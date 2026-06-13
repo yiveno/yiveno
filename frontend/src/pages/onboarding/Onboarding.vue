@@ -158,7 +158,7 @@ onUnmounted(() => {
 
     <!-- Main Content -->
     <main class="onboarding-main">
-      <Transition name="fade" mode="out-in">
+      <Transition name="v-step" mode="out-in">
         <div :key="currentStep.id" class="step-content">
           <!-- Visual Area -->
           <div class="visual-area">
@@ -252,7 +252,10 @@ onUnmounted(() => {
             </div>
 
             <!-- Complete Visual -->
-            <div v-else-if="currentStep.visual === 'complete'" class="visual-complete">
+            <div
+              v-else-if="currentStep.visual === 'complete'"
+              class="visual-complete md-appear-scale"
+            >
               <div class="complete-icon">
                 <LucideIcon name="check" size="xl" />
               </div>
@@ -293,57 +296,6 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 0.5;
-    transform: scale(1);
-  }
-
-  50% {
-    opacity: 0.8;
-    transform: scale(1.05);
-  }
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: rotate(3deg) translateY(0);
-  }
-
-  50% {
-    transform: rotate(3deg) translateY(-10px);
-  }
-}
-
-@keyframes pulse-dot {
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.5;
-  }
-}
-
-@keyframes bounce-in {
-  0% {
-    opacity: 0;
-    transform: scale(0);
-  }
-
-  50% {
-    transform: scale(1.1);
-  }
-
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
 /* Responsive */
 @media (width <= 768px) {
   .onboarding-header,
@@ -447,7 +399,6 @@ onUnmounted(() => {
   height: 300px;
   border-radius: 50%;
   background: radial-gradient(circle, var(--color-primary-alpha-20) 0%, transparent 70%);
-  animation: pulse 3s ease-in-out infinite;
   filter: blur(40px);
 }
 
@@ -459,7 +410,6 @@ onUnmounted(() => {
   width: 120px;
   height: 120px;
   transform: rotate(3deg);
-  animation: float 3s ease-in-out infinite;
 }
 
 .hero-logo {
@@ -543,7 +493,7 @@ onUnmounted(() => {
 
 .status-dot--active {
   background: var(--color-primary);
-  animation: pulse-dot 2s ease-in-out infinite;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 25%, transparent);
 }
 
 .status-message {
@@ -737,7 +687,6 @@ onUnmounted(() => {
   border-radius: 50%;
   color: var(--color-on-success);
   background: var(--color-success);
-  animation: bounce-in 0.6s ease-out;
   box-shadow: 0 20px 60px var(--color-success-alpha-10);
 }
 
@@ -840,24 +789,6 @@ onUnmounted(() => {
   width: 32px;
   border-radius: var(--radius-full);
   background: var(--color-primary);
-}
-
-/* Transitions */
-.fade-enter-active,
-.fade-leave-active {
-  transition:
-    opacity 0.3s ease,
-    transform 0.3s ease;
-}
-
-.fade-enter-from {
-  opacity: 0;
-  transform: translateY(20px);
-}
-
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(-20px);
 }
 
 /* Container */

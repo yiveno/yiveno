@@ -795,18 +795,6 @@ defineExpose({
 </template>
 
 <style scoped>
-@keyframes slide-down {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 .simple-tree-node {
   position: relative;
   user-select: none;
@@ -1023,11 +1011,7 @@ defineExpose({
 
 /* 子节点 */
 .children {
-  /* ✅ 性能优化：提示浏览器优化动画性能 */
-  will-change: transform, opacity;
-
-  /* ✅ 优化：使用 emphasized 缓动函数，更流畅的展开动画 */
-  animation: slide-down var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized);
+  /* M3：子树展开不使用 keyframe，由 DOM 挂载即时呈现 */
 }
 
 /* 尺寸变体 */

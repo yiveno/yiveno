@@ -200,17 +200,23 @@ function handleMouseLeave(id: string) {
   }
 }
 
-// 获取进度条样式（纯 CSS 动画驱动）
+// 进度条样式（M3 transition 驱动）
 function getProgressStyle(item: NotificationItem) {
   if (!item.duration || item.duration <= 0) return {}
 
-  // ✅ 如果有剩余时间（恢复后），使用剩余时间作为动画时长
-  // 这样动画时长和定时器时长保持一致
   const duration = item.remainingTime ?? item.duration
 
   return {
-    animationDuration: `${duration}s`
+    transitionDuration: `${duration}s`
   }
+}
+
+/** 进度条挂载后启动 M3 transition（scaleX 1 → 0） */
+function startProgressBar(el: Element) {
+  const bar = el as HTMLElement
+  requestAnimationFrame(() => {
+    bar.classList.add('os-notification-progress-bar--running')
+  })
 }
 
 // 导出方法供外部调用
@@ -235,7 +241,7 @@ defineExpose({
       :key="placement"
       :class="['os-notification-container', `os-notification-${placement}`]"
     >
-      <transition-group name="os-notification" tag="div">
+      <transition-group name="v-toast" tag="div">
         <div
           v-for="item in getNotificationsByPlacement(placement)"
           :key="item.key || item.id"
@@ -244,7 +250,7 @@ defineExpose({
           @mouseenter="handleMouseEnter(item.id)"
           @mouseleave="handleMouseLeave(item.id)"
         >
-          <!-- 进度条：使用纯 CSS 动画，零 JS 开销 -->
+          <!-- 进度条：M3 transition（scaleX），零 keyframes -->
           <div v-if="item.duration && item.duration > 0" class="os-notification-progress-wrapper">
             <div
               :key="item.progressKey"
@@ -254,6 +260,7 @@ defineExpose({
                 { 'os-notification-progress-bar--paused': item.paused }
               ]"
               :style="getProgressStyle(item)"
+              @vue:mounted="startProgressBar"
             ></div>
           </div>
           <div class="os-notification-content">
@@ -286,50 +293,6 @@ defineExpose({
 </template>
 
 <style scoped>
-@keyframes notification-slide-in {
-  from {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes notification-slide-out {
-  0% {
-    opacity: 1;
-    transform: translateX(0);
-  }
-
-  50% {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-
-  100% {
-    max-height: 0;
-    margin-bottom: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    opacity: 0;
-    transform: translateX(100%);
-  }
-}
-
-/* 进度条动画 */
-@keyframes progress-countdown {
-  from {
-    width: 100%;
-  }
-
-  to {
-    width: 0%;
-  }
-}
-
 .os-notification-container {
   position: fixed;
   z-index: 9999;
@@ -367,17 +330,21 @@ defineExpose({
   overflow: hidden;
 }
 
-/* 进度条 */
+/* 进度条：M3 transition（scaleX），不用 keyframes */
 .os-notification-progress-bar {
   width: 100%;
   height: 100%;
-  transition: width 0.1s ease-out;
-  animation: progress-countdown linear forwards;
+  transform: scaleX(1);
+  transform-origin: left center;
+  transition: transform linear;
 }
 
-/* 暂停状态 */
 .os-notification-progress-bar--paused {
-  animation-play-state: paused;
+  transition-play-state: paused;
+}
+
+.os-notification-progress-bar--running {
+  transform: scaleX(0);
 }
 
 /* 颜色 */
@@ -477,16 +444,5 @@ defineExpose({
 
 .os-notification-close:hover {
   color: var(--color-text-primary);
-}
-
-/* 动画 */
-.os-notification-enter-active {
-  animation: notification-slide-in var(--md-sys-motion-duration-medium1)
-    var(--md-sys-motion-easing-emphasized);
-}
-
-.os-notification-leave-active {
-  animation: notification-slide-out var(--md-sys-motion-duration-medium1)
-    var(--md-sys-motion-easing-emphasized);
 }
 </style>

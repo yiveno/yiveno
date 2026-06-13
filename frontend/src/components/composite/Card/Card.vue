@@ -105,16 +105,6 @@ const elevationClass = computed(() => 'card__elevation')
   }
 }
 
-@keyframes card-loading {
-  0% {
-    transform: translateX(-100%);
-  }
-
-  100% {
-    transform: translateX(100%);
-  }
-}
-
 .card {
   position: relative;
 
@@ -123,12 +113,9 @@ const elevationClass = computed(() => 'card__elevation')
   flex-direction: column;
   border-radius: var(--radius-lg);
   background-color: var(--color-surface);
-
-  /* ✨ 优化过渡动画：边框 + 变换 */
   transition:
-    border-color var(--anim-duration-fast) var(--anim-ease-standard),
-    transform var(--anim-duration-fast) var(--anim-ease-spring),
-    opacity var(--anim-duration-instant) var(--anim-ease-standard);
+    border-color var(--motion-standard),
+    opacity var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
   overflow: hidden;
 }
 
@@ -374,30 +361,8 @@ const elevationClass = computed(() => 'card__elevation')
   position: absolute;
   inset: 0;
   z-index: 2;
-  background: linear-gradient(90deg, transparent, var(--color-loading-shimmer-mid), transparent);
-  animation: card-loading 1.5s infinite;
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 4%, transparent);
+  pointer-events: none;
   content: '';
-
-  /* ✅ 性能优化：提示浏览器优化动画性能 */
-  will-change: transform;
-}
-
-/* === Footer slide transition (可按需启用) === */
-.card-footer-slide-enter-active,
-.card-footer-slide-leave-active {
-  transition:
-    transform var(--anim-duration-fast) var(--anim-ease-standard),
-    opacity var(--anim-duration-fast) var(--anim-ease-standard);
-  will-change: transform, opacity;
-}
-
-.card-footer-slide-enter-from {
-  opacity: 0;
-  transform: translateY(12px);
-}
-
-.card-footer-slide-leave-to {
-  opacity: 0;
-  transform: translateY(12px);
 }
 </style>

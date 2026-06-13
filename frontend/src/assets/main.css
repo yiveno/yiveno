@@ -35,11 +35,14 @@
 /* 4. 基础样式（reset + base layers） */
 @import url('../design-system/base.css');
 
+/* 4.5 MD3 交互模式（hover / state layer） */
+@import url('../design-system/interactions.css');
+
 /* 5. 工具类（utilities layer - 最高优先级） */
 @import url('../design-system/utilities-minimal.css');
 
-/* 6. 动画系统 */
-@import url('../design-system/animations.css');
+/* 6. M3 动效系统（transition + tokens，无自定义 keyframes） */
+@import url('../design-system/motion.css');
 
 /* 7. Material Web 组件样式覆盖 */
 @import url('../design-system/material-web-overrides.css');
@@ -80,7 +83,7 @@
   display: flex;
   align-items: center;
   height: 64px;
-  padding: 0 var(--space-4);
+  padding: 0 var(--spacing-4);
   border-bottom: 1px solid var(--color-border);
   background-color: var(--color-surface);
   box-shadow: var(--shadow-sm);
@@ -89,7 +92,7 @@
 .app-bar__title {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--spacing-2);
   font-size: var(--text-lg);
   font-weight: var(--font-normal);
   color: var(--color-text-primary);
@@ -103,13 +106,13 @@
 /* 主内容区域 */
 .main-content {
   min-height: 0; /* 重要：允许flex收缩 */
-  padding: var(--space-4);
+  padding: var(--spacing-4);
 }
 
 /* 面板布局 */
 .panel-layout {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--spacing-4);
   grid-template-columns: 1fr auto 1fr;
   height: 100%;
   min-height: 0;
@@ -129,7 +132,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--space-4);
+  padding: var(--spacing-4);
   border-bottom: 1px solid var(--color-border);
   background-color: var(--color-surface-variant);
 }
@@ -137,7 +140,7 @@
 .panel__title {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--spacing-2);
   font-size: var(--text-base);
   font-weight: var(--font-medium);
   color: var(--color-text-primary);
@@ -146,7 +149,7 @@
 .panel__actions {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--spacing-2);
 }
 
 .panel__content {
@@ -161,8 +164,8 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-6);
+  gap: var(--spacing-4);
+  padding: var(--spacing-6);
 }
 
 .control-panel__button {
@@ -205,29 +208,33 @@
 .status-indicator {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-1) var(--space-2);
+  gap: var(--spacing-1);
+  padding: var(--spacing-1) var(--spacing-2);
   border-radius: var(--radius-base);
   font-size: var(--text-sm);
   font-weight: var(--font-medium);
 }
 
-.status-indicator--success {
+.status-indicator--success,
+.status-surface--success {
   color: var(--color-on-success-container);
   background-color: var(--color-success-container);
 }
 
-.status-indicator--warning {
+.status-indicator--warning,
+.status-surface--warning {
   color: var(--color-on-warning-container);
   background-color: var(--color-warning-container);
 }
 
-.status-indicator--error {
+.status-indicator--error,
+.status-surface--error {
   color: var(--color-on-error-container);
   background-color: var(--color-error-container);
 }
 
-.status-indicator--info {
+.status-indicator--info,
+.status-surface--info {
   color: var(--color-on-info-container);
   background-color: var(--color-info-container);
 }
@@ -238,53 +245,23 @@
 
 .notification {
   position: fixed;
-  top: var(--space-4);
-  right: var(--space-4);
+  top: var(--spacing-4);
+  right: var(--spacing-4);
   z-index: var(--z-toast);
   max-width: 400px;
-  padding: var(--space-4);
+  padding: var(--spacing-4);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-base);
   background-color: var(--color-surface);
-  animation: slide-in-right 0.3s ease;
   box-shadow: var(--shadow-lg);
-
-  /* ✅ 性能优化：提示浏览器优化动画性能 */
-  will-change: transform, opacity;
-}
-
-@keyframes slide-in-right {
-  from {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+  transition:
+    opacity var(--motion-enter),
+    transform var(--motion-enter);
 }
 
 /* === 可访问性支持 === */
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-  }
-}
-
-/* 高对比度模式 */
-@media (prefers-contrast: high) {
-  :root {
-    --color-border: var(--color-black);
-    --color-text-primary: var(--color-black);
-    --color-background: var(--color-white);
-  }
-}
+/* reduced-motion / 高对比度：由 design-system/base.css 与 motion.css 统一处理 */
 
 /* === 性能优化 === */
 

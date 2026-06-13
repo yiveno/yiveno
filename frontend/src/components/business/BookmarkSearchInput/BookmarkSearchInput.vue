@@ -1291,14 +1291,14 @@ defineExpose({
       </Button>
 
       <!-- 搜索结果面板（包含筛选标签 + 搜索结果） -->
-      <Transition name="panel-fade" @after-leave="handlePanelTransitionEnd">
+      <Transition name="v-slide-down" @after-leave="handlePanelTransitionEnd">
         <div v-if="showPanel && shouldShowPanel" class="search-result-panel">
           <!-- 快捷筛选标签（可选显示） -->
           <div v-if="showQuickTags && showFiltersInDropdown" class="filter-quick-tags">
             <button
               v-for="quickFilter in allQuickFilters"
               :key="quickFilter.id"
-              class="filter-tag"
+              class="filter-tag surface-interactive"
               :class="{
                 active: activeFilters.has(quickFilter.id),
                 loading: isLoadingTraitCounts
@@ -1461,7 +1461,7 @@ defineExpose({
       </Transition>
 
       <!-- 错误提示（绝对定位在搜索框下方） -->
-      <Transition name="error-fade">
+      <Transition name="v-fade-offset">
         <div v-if="error && isExpanded" class="search-error">
           <LucideIcon name="alert-circle" :size="16" />
           <span class="error-text">{{ error.message }}</span>
@@ -1627,12 +1627,6 @@ defineExpose({
 .search-results-empty :deep(.empty-state) {
   min-height: 88px;
   padding: var(--spacing-3) var(--spacing-2);
-  animation: none;
-}
-
-.search-results-empty :deep(.empty-state__icon) {
-  margin-bottom: var(--spacing-2);
-  animation: none;
 }
 
 .search-results-empty :deep(.empty-state__title) {
@@ -1843,7 +1837,6 @@ defineExpose({
   background: var(--color-bg);
   cursor: pointer;
   transition:
-    background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
     border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
     color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
     box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1852,7 +1845,6 @@ defineExpose({
 .filter-tag:hover {
   border-color: var(--color-primary);
   color: var(--color-text);
-  background: var(--color-bg-hover);
   box-shadow: 0 1px 3px var(--color-shadow-010);
 }
 
@@ -1883,39 +1875,5 @@ defineExpose({
 .filter-tag.active .filter-count {
   --md-assist-chip-label-text-color: var(--color-text-on-primary);
   --md-assist-chip-container-color: var(--color-on-primary-faint-025);
-}
-
-/* 过渡动画 */
-.panel-fade-enter-active,
-.panel-fade-leave-active {
-  transition:
-    opacity 0.2s ease,
-    transform 0.2s ease;
-}
-
-/* 入场：从上方向下渐入 */
-.panel-fade-enter-from {
-  opacity: 0;
-  transform: translateY(-8px);
-}
-
-/* 离场：向上渐出 */
-.panel-fade-leave-to {
-  opacity: 0;
-  transform: translateY(-8px);
-}
-
-/* 错误提示动画 */
-.error-fade-enter-active,
-.error-fade-leave-active {
-  transition:
-    opacity 0.2s ease,
-    transform 0.2s ease;
-}
-
-.error-fade-enter-from,
-.error-fade-leave-to {
-  opacity: 0;
-  transform: translateY(-4px);
 }
 </style>

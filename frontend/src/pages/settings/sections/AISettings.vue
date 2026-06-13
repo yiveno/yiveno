@@ -954,18 +954,6 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 @media (width <= 560px) {
   .ai-engine-sources {
     grid-template-columns: 1fr;
@@ -1484,7 +1472,7 @@ button.btn--danger {
 }
 
 .tab-panel {
-  animation: fade-in var(--md-sys-motion-duration-medium1) var(--md-sys-motion-easing-standard);
+  /* 切换动效由 Tabs 组件 state layer 承担，tab 内容静态呈现 */
 }
 
 /* Chrome AI Tab 样式 */

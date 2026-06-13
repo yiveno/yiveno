@@ -12,7 +12,7 @@ const config = messageService.config
 <template>
   <Teleport to="body">
     <div class="message-container" :style="{ top: `${config.top}px` }">
-      <TransitionGroup name="message">
+      <TransitionGroup name="v-fade-offset">
         <div
           v-for="item in messages"
           :key="item.id"
@@ -70,16 +70,11 @@ const config = messageService.config
               <line x1="12" y1="16" x2="12" y2="12" />
               <line x1="12" y1="8" x2="12.01" y2="8" />
             </svg>
-            <svg
+            <md-circular-progress
               v-else-if="item.type === 'loading'"
-              class="message-icon-svg message-icon-loading"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path d="M21 12a9 9 0 11-6.219-8.56" />
-            </svg>
+              indeterminate
+              class="message-icon-progress size-xs"
+            />
           </div>
 
           <!-- 消息内容 -->
@@ -91,16 +86,6 @@ const config = messageService.config
 </template>
 
 <style scoped>
-@keyframes message-loading-spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .message-container {
   position: fixed;
   left: 50%;
@@ -150,9 +135,8 @@ const config = messageService.config
   height: 100%;
 }
 
-/* 加载图标旋转动画 */
-.message-icon-loading {
-  animation: message-loading-spin 1s linear infinite;
+.message-icon-progress {
+  --md-circular-progress-active-indicator-color: var(--md-sys-color-primary);
 }
 
 /* ============================================
@@ -209,37 +193,4 @@ const config = messageService.config
 .message--loading .message-icon {
   color: var(--md-sys-color-primary);
 }
-
-/* ============================================
-   动画
-   ============================================ */
-.message-enter-active {
-  transition:
-    opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.message-leave-active {
-  transition:
-    opacity 0.2s cubic-bezier(0.4, 0, 1, 1),
-    transform 0.2s cubic-bezier(0.4, 0, 1, 1);
-}
-
-.message-enter-from {
-  opacity: 0;
-  transform: translateY(-20px);
-}
-
-.message-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-
-.message-move {
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* ============================================
-   Message 容器
-   ============================================ */
 </style>
