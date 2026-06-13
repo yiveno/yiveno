@@ -29,7 +29,7 @@ import { t } from '@/utils/i18n-helpers'
 import { logger } from '@/infrastructure/logging/logger'
 import { faviconService } from '@/services/favicon-service'
 import type { FilteredBookmarkNode } from '@/core/filter/bookmark-filter'
-import { isSemanticSupplementBookmark } from '@/core/filter/search-hit-kind'
+import { hasFlexChannelHits, isSemanticSupplementBookmark } from '@/core/filter/search-hit-kind'
 import { highlightQueryTextAsSegments } from '@/core/filter/query-text-highlight'
 import type { QueryHighlightSegment } from '@/core/filter/query-text-highlight'
 
@@ -191,6 +191,17 @@ const hasSearchResults = computed(() => {
 const flatSearchResults = computed(() => flattenBookmarkTree(bookmarkNodes.value))
 
 /**
+ * 当前结果集是否含 FlexSearch 通道命中（与 filterFlatSearchResults 分层一致）
+ */
+const flexChannelPresent = computed(() => {
+  const hits = flatSearchResults.value.map(node => {
+    const matchedFields = (node as FilteredBookmarkNode).matchedFields
+    return matchedFields ? { matchedFields } : {}
+  })
+  return hasFlexChannelHits(hits)
+})
+
+/**
  * 判断节点是否为语义补位命中（与统一检索管道分层规则一致）
  */
 function isSemanticSupplementNode(node: BookmarkNode): boolean {
@@ -199,7 +210,12 @@ function isSemanticSupplementNode(node: BookmarkNode): boolean {
   if (!trimmedQuery) {
     return false
   }
-  return isSemanticSupplementBookmark(filtered, trimmedQuery, filtered.matchedFields)
+  return isSemanticSupplementBookmark(
+    filtered,
+    trimmedQuery,
+    filtered.matchedFields,
+    flexChannelPresent.value
+  )
 }
 
 /**
@@ -217,10 +233,19 @@ const semanticSupplementResults = computed(() =>
 )
 
 /**
- * 是否展示语义分组（有补位且开启分组）
+ * 是否启用双层分区布局（groupSemanticResults 开启且任一层有命中）
  */
-const showSemanticGrouping = computed(
-  () => props.groupSemanticResults && semanticSupplementResults.value.length > 0
+const usesSectionedResults = computed(
+  () =>
+    props.groupSemanticResults &&
+    (textMatchResults.value.length > 0 || semanticSupplementResults.value.length > 0)
+)
+
+/**
+ * 是否展示「匹配结果」分区标题（有文本命中即展示，不依赖语义层）
+ */
+const showTextSectionHeader = computed(
+  () => props.groupSemanticResults && textMatchResults.value.length > 0
 )
 
 /**
@@ -234,7 +259,7 @@ const displayedTextResults = computed(() =>
  * 下拉列表：语义补位区（占用剩余配额）
  */
 const displayedSemanticResults = computed(() => {
-  if (!showSemanticGrouping.value) {
+  if (!props.groupSemanticResults || semanticSupplementResults.value.length === 0) {
     return []
   }
   const remaining = props.maxDropdownResults - displayedTextResults.value.length
@@ -248,7 +273,7 @@ const displayedSemanticResults = computed(() => {
  * 下拉列表扁平结果（键盘导航用）
  */
 const dropdownResults = computed(() => {
-  if (!showSemanticGrouping.value) {
+  if (!usesSectionedResults.value) {
     return flatSearchResults.value.slice(0, props.maxDropdownResults)
   }
   return [...displayedTextResults.value, ...displayedSemanticResults.value]
@@ -1333,7 +1358,7 @@ defineExpose({
           <div v-if="shouldShowResultsDropdown" class="search-results-dropdown">
             <!-- 文本命中 -->
             <div v-if="displayedTextResults.length > 0" class="result-section">
-              <div v-if="showSemanticGrouping" class="result-section-header">
+              <div v-if="showTextSectionHeader" class="result-section-header">
                 {{ t('search_section_matches') }}
               </div>
               <md-list class="result-list">

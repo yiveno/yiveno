@@ -27,6 +27,7 @@
  */
 import { Document } from 'flexsearch'
 import type { BookmarkRecord, SearchResult } from '@/infrastructure/indexeddb/manager'
+import { formatBookmarkSearchKeywordsText } from '@/core/bookmark/bookmark-search-keywords'
 import type { SearchStrategy } from '../engine'
 
 /**
@@ -108,7 +109,7 @@ export class FlexSearchStrategy implements SearchStrategy {
           title: bookmark.titleLower || bookmark.title.toLowerCase(),
           url: bookmark.urlLower || bookmark.url?.toLowerCase() || '',
           domain: bookmark.domain?.toLowerCase() || '',
-          keywords: (bookmark.keywords || []).join(' ').toLowerCase()
+          keywords: formatBookmarkSearchKeywordsText(bookmark)
         })
       }
 

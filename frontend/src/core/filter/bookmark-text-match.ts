@@ -6,6 +6,8 @@ export interface BookmarkTextMatchInput {
   titleLower?: string | null | undefined
   urlLower?: string | null | undefined
   keywords?: string[] | null | undefined
+  retrievalKeywords?: string[] | null | undefined
+  retrievalProfile?: string | null | undefined
   tags?: string[] | null | undefined
 }
 
@@ -22,13 +24,19 @@ export function bookmarkMatchesQueryText(bookmark: BookmarkTextMatchInput, query
   const titleLower = (bookmark.titleLower ?? title).toLowerCase()
   const urlLower = (bookmark.urlLower ?? url).toLowerCase()
 
+  const profile = (bookmark.retrievalProfile ?? '').toLowerCase()
+
   return (
     title.includes(normalizedQuery) ||
     url.includes(normalizedQuery) ||
     domain.includes(normalizedQuery) ||
     titleLower.includes(normalizedQuery) ||
     urlLower.includes(normalizedQuery) ||
+    profile.includes(normalizedQuery) ||
     (bookmark.keywords ?? []).some(keyword => keyword.toLowerCase().includes(normalizedQuery)) ||
+    (bookmark.retrievalKeywords ?? []).some(keyword =>
+      keyword.toLowerCase().includes(normalizedQuery)
+    ) ||
     (bookmark.tags ?? []).some(tag => tag.toLowerCase().includes(normalizedQuery))
   )
 }

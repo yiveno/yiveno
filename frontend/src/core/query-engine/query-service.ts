@@ -89,6 +89,12 @@ export class QueryService {
     return QueryService.instance
   }
 
+  /** 运行时注入 Logger（Application 层启动时调用） */
+  useLogger(logger: ILogger): void {
+    this.logger = logger
+    this.queryCache.useLogger(logger)
+  }
+
   /**
    * 初始化查询服务
    */
@@ -133,19 +139,29 @@ export class QueryService {
     startTime: number
   ): SearchResponse | null {
     if (!options.useCache || strategy === 'hybrid') {
+      this.logger.debug('QueryService', '跳过缓存检查', {
+        useCache: options.useCache,
+        strategy,
+        reason: strategy === 'hybrid' ? 'hybrid 不缓存' : 'useCache=false'
+      })
       return null
     }
 
     const cacheKey = `${strategy}:${query}`
     const cached = this.queryCache.get(cacheKey, options)
     if (cached) {
-      this.logger.info('QueryService', `✅ 缓存命中: ${cacheKey}`)
+      this.logger.info('QueryService', `✅ 缓存命中: ${cacheKey}`, {
+        cachedCount: cached.length,
+        limit: options.limit,
+        offset: options.offset
+      })
       return {
         results: cached.slice(options.offset || 0, (options.offset || 0) + (options.limit || 100)),
         metadata: this.createMetadata(startTime, cached.length, true, strategy, query)
       }
     }
 
+    this.logger.debug('QueryService', '缓存未命中', { cacheKey, strategy })
     return null
   }
 
@@ -157,13 +173,33 @@ export class QueryService {
     query: string,
     options: SearchOptions
   ): Promise<EnhancedSearchResult[]> {
+    const execStart = performance.now()
     let results: EnhancedSearchResult[]
 
     if (strategy === 'hybrid') {
+      this.logger.info('QueryService', '执行 Hybrid 检索', {
+        query,
+        limit: options.limit,
+        minScore: options.minScore
+      })
       results = await this.searchWithHybrid(query, options)
     } else {
+      this.logger.info('QueryService', '执行 FlexSearch 检索', { query, limit: options.limit })
       results = await this.searchWithFlexSearch(query, options)
     }
+
+    this.logger.info('QueryService', '策略执行完成', {
+      strategy,
+      query,
+      resultCount: results.length,
+      durationMs: Number((performance.now() - execStart).toFixed(1)),
+      topResults: results.slice(0, 8).map(r => ({
+        id: r.bookmark.id,
+        title: r.bookmark.title,
+        score: Number(r.score.toFixed(4)),
+        matchedFields: r.matchedFields
+      }))
+    })
 
     return results
   }
@@ -178,17 +214,26 @@ export class QueryService {
     strategy: SearchStrategy
   ): EnhancedSearchResult[] {
     let processed = results
+    const beforeCount = processed.length
 
     if (options.highlight) {
       processed = this.addHighlights(processed, query)
+      this.logger.debug('QueryService', '已添加高亮', { query, count: processed.length })
     }
 
     processed = this.sortResults(processed, options)
+    this.logger.debug('QueryService', '结果已排序', {
+      sortBy: options.sortBy ?? 'relevance',
+      sortOrder: options.sortOrder ?? 'desc',
+      beforeCount,
+      afterCount: processed.length
+    })
 
     // 缓存结果（hybrid 不缓存）
     if (options.useCache && strategy !== 'hybrid') {
       const cacheKey = `${strategy}:${query}`
       this.queryCache.set(cacheKey, processed, options)
+      this.logger.debug('QueryService', '结果已写入缓存', { cacheKey, count: processed.length })
     }
 
     return processed
@@ -199,13 +244,25 @@ export class QueryService {
    */
   async search(query: string, options: SearchOptions = {}): Promise<SearchResponse> {
     const startTime = performance.now()
-    const { limit = 100, offset = 0, timeout: _timeout = 5000, strategy } = options
+    const { limit = 100, offset = 0, strategy } = options
 
     const normalizedQuery = this.normalizeQuery(query)
     const resolvedStrategy = this.normalizeStrategy(strategy)
-    this.logger.info('QueryService', `🔍 查询: "${normalizedQuery}" strategy=${resolvedStrategy}`)
+    this.logger.info('QueryService', `🔍 查询入口`, {
+      rawQuery: query,
+      normalizedQuery,
+      strategy: resolvedStrategy,
+      options: {
+        limit,
+        offset,
+        useCache: options.useCache,
+        minScore: options.minScore,
+        highlight: options.highlight
+      }
+    })
 
     if (!normalizedQuery) {
+      this.logger.info('QueryService', '空查询，返回空结果')
       return this.emptyResponse(startTime, 'flexsearch')
     }
 
@@ -263,19 +320,56 @@ export class QueryService {
     const limit = options.limit || 20
     type SemanticRaw = Awaited<ReturnType<typeof semanticSearch>>
 
+    const flexStart = performance.now()
     const flexSearchResults = await this.searchWithFlexSearch(query, {
       ...options,
       limit: limit * 2
     })
+    const flexDuration = performance.now() - flexStart
+
+    this.logger.info('QueryService', 'Hybrid FlexSearch 阶段完成', {
+      query,
+      flexCount: flexSearchResults.length,
+      flexDurationMs: Number(flexDuration.toFixed(1)),
+      flexTop: flexSearchResults.slice(0, 5).map(r => ({
+        id: r.bookmark.id,
+        title: r.bookmark.title,
+        score: Number(r.score.toFixed(4))
+      }))
+    })
 
     const semanticTimeout = this.getSemanticTimeout(options)
+    const semanticStart = performance.now()
     const semanticRaw: SemanticRaw = await Promise.race([
       semanticSearch(query, limit, options.minScore, { timeout: semanticTimeout }),
       new Promise<SemanticRaw>(resolve => setTimeout(() => resolve([]), semanticTimeout))
     ]).catch((): SemanticRaw => [])
+    const semanticDuration = performance.now() - semanticStart
+    const semanticTimedOut = semanticRaw.length === 0 && semanticDuration >= semanticTimeout - 10
+
+    this.logger.info('QueryService', 'Hybrid Semantic 原始结果', {
+      query,
+      limit,
+      minScore: options.minScore,
+      timeout: semanticTimeout,
+      semanticDurationMs: Number(semanticDuration.toFixed(1)),
+      semanticTimedOut,
+      flexCount: flexSearchResults.length,
+      semanticCount: semanticRaw.length,
+      semanticResults: semanticRaw.map(result => ({
+        id: result.bookmark.id,
+        title: result.bookmark.title,
+        url: result.bookmark.url,
+        score: Number(result.score.toFixed(4))
+      }))
+    })
 
     if (!semanticRaw.length) {
-      this.logger.info('QueryService', 'Hybrid: Semantic 超时或无结果，仅用 FlexSearch')
+      this.logger.info('QueryService', 'Hybrid: Semantic 超时或无结果，仅用 FlexSearch', {
+        query,
+        semanticTimedOut,
+        semanticDurationMs: Number(semanticDuration.toFixed(1))
+      })
       return flexSearchResults
     }
 
@@ -285,7 +379,7 @@ export class QueryService {
       pathString: r.bookmark.pathString,
       matchedFields: ['semantic'] as string[],
       highlights: {},
-      relevanceFactors: this.calculateRelevanceFactors(r.bookmark, query, r.score)
+      relevanceFactors: this.calculateRelevanceFactors(r.bookmark, query)
     }))
 
     return mergeHybridSearchResults(flexSearchResults, semanticResults)
@@ -304,12 +398,23 @@ export class QueryService {
     const limit = options.limit || 20
     const strategy = this.normalizeStrategy(options.strategy)
 
+    this.logger.info('QueryService', '渐进式 Hybrid 检索入口', {
+      rawQuery: query,
+      normalizedQuery,
+      strategy,
+      limit
+    })
+
     if (strategy === 'flexsearch') {
       const flexSearchOnly = await this.searchWithFlexSearch(normalizedQuery, { ...options, limit })
       const highlighted =
         options.highlight !== false
           ? this.addHighlights(flexSearchOnly, normalizedQuery)
           : flexSearchOnly
+      this.logger.info('QueryService', '渐进式：仅 FlexSearch', {
+        query: normalizedQuery,
+        count: highlighted.length
+      })
       return highlighted.slice(0, limit)
     }
 
@@ -323,27 +428,43 @@ export class QueryService {
         ? this.addHighlights(flexSearchResults, normalizedQuery)
         : flexSearchResults
 
+    this.logger.info('QueryService', '渐进式：FlexSearch 首屏返回', {
+      query: normalizedQuery,
+      flexCount: highlighted.length,
+      returning: Math.min(highlighted.length, limit)
+    })
+
     const semanticTimeout = this.getSemanticTimeout(options)
 
     // 异步执行 Semantic，完成后通知更新
     semanticSearch(normalizedQuery, limit, options.minScore, { timeout: semanticTimeout })
       .then(semanticRaw => {
-        if (!semanticRaw.length) return
+        if (!semanticRaw.length) {
+          this.logger.info('QueryService', '渐进式：Semantic 无结果，跳过更新', {
+            query: normalizedQuery
+          })
+          return
+        }
         const semanticResults = semanticRaw.map(r => ({
           bookmark: r.bookmark,
           score: r.score,
           pathString: r.bookmark.pathString,
           matchedFields: ['semantic'] as string[],
           highlights: {},
-          relevanceFactors: this.calculateRelevanceFactors(r.bookmark, normalizedQuery, r.score)
+          relevanceFactors: this.calculateRelevanceFactors(r.bookmark, normalizedQuery)
         }))
         const merged = mergeHybridSearchResults(flexSearchResults, semanticResults)
         const mergedHighlighted =
           options.highlight !== false ? this.addHighlights(merged, normalizedQuery) : merged
+        this.logger.info('QueryService', '渐进式：Semantic 合并后回调更新', {
+          query: normalizedQuery,
+          semanticCount: semanticRaw.length,
+          mergedCount: mergedHighlighted.length
+        })
         onUpdate(mergedHighlighted)
       })
-      .catch(() => {
-        /* Semantic 失败静默处理 */
+      .catch(error => {
+        this.logger.warn('QueryService', '渐进式：Semantic 失败', { query: normalizedQuery, error })
       })
 
     return highlighted.slice(0, limit)
@@ -356,17 +477,41 @@ export class QueryService {
     query: string,
     options: SearchOptions
   ): Promise<EnhancedSearchResult[]> {
+    const limit = options.limit || 100
+    const flexStart = performance.now()
+
     try {
-      // 优先使用 Worker
-      const workerResults = await queryWorkerAdapter.search(query, options.limit || 100)
-      return this.convertToEnhanced(workerResults, query)
-    } catch (_error) {
-      // 降级到主线程
-      this.logger.warn('QueryService', 'Worker 查询失败，降级到主线程')
+      this.logger.debug('QueryService', 'FlexSearch → Worker/Offscreen', { query, limit })
+      const workerResults = await queryWorkerAdapter.search(query, limit)
+      const enhanced = this.convertToEnhanced(workerResults, query)
+      this.logger.info('QueryService', 'FlexSearch Worker 命中', {
+        query,
+        limit,
+        hitCount: enhanced.length,
+        durationMs: Number((performance.now() - flexStart).toFixed(1)),
+        topHits: enhanced.slice(0, 5).map(r => ({
+          id: r.bookmark.id,
+          title: r.bookmark.title,
+          score: Number(r.score.toFixed(4))
+        }))
+      })
+      return enhanced
+    } catch (workerError) {
+      this.logger.warn('QueryService', 'Worker 查询失败，降级到主线程', {
+        query,
+        error: workerError
+      })
       const bookmarks = await indexedDBManager.getAllBookmarks()
       const flexSearchEngine = await this.getFlexSearchEngine()
       const results = flexSearchEngine.search(query, bookmarks)
-      return this.convertToEnhanced(results, query)
+      const enhanced = this.convertToEnhanced(results, query)
+      this.logger.info('QueryService', 'FlexSearch 主线程降级命中', {
+        query,
+        bookmarkPoolSize: bookmarks.length,
+        hitCount: enhanced.length,
+        durationMs: Number((performance.now() - flexStart).toFixed(1))
+      })
+      return enhanced
     }
   }
 
@@ -395,7 +540,7 @@ export class QueryService {
       pathString: result.bookmark.pathString,
       matchedFields: this.detectMatchedFields(result.bookmark, query),
       highlights: {},
-      relevanceFactors: this.calculateRelevanceFactors(result.bookmark, query, result.score)
+      relevanceFactors: this.calculateRelevanceFactors(result.bookmark, query)
     }))
   }
 
@@ -422,11 +567,7 @@ export class QueryService {
   /**
    * 计算相关性因素
    */
-  private calculateRelevanceFactors(
-    bookmark: BookmarkRecord,
-    query: string,
-    _baseScore: number
-  ): RelevanceFactors {
+  private calculateRelevanceFactors(bookmark: BookmarkRecord, query: string): RelevanceFactors {
     const lowerQuery = query.toLowerCase()
 
     return {

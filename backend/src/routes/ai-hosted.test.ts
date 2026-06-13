@@ -132,6 +132,11 @@ describe('hosted ai routes', () => {
       expect(data.quota.used).toBe(1)
       expect(await kv.get(monthKey)).toBe('1')
       expect(fetchMock).toHaveBeenCalled()
+      const fetchInit = fetchMock.mock.calls[0]?.[1] as RequestInit | undefined
+      const requestBody = JSON.parse(String(fetchInit?.body)) as {
+        thinking?: { type?: string }
+      }
+      expect(requestBody.thinking).toEqual({ type: 'disabled' })
     } finally {
       globalThis.fetch = originalFetch
     }

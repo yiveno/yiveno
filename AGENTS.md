@@ -1,178 +1,63 @@
 # AGENTS.md
 
-为 Codex (Codex.ai/code) 在此仓库中的工作提供指导。
+## 项目
 
-## 唯一真理
+- otterSage：Vue 3 + TypeScript Chrome 扩展，Backend 为 Cloudflare Workers，Website 为营销站。
+- 唯一产品/架构真相：`docs/product/otterSage-产品文档-v3.0.md`
+- Cursor 规则：`.cursor/rules/project.mdc`，不得冲突。
 
-- **产品 + 架构文档（中文）：** `docs/product/otterSage-产品文档-v3.0.md`
-- Cursor 规则：`.cursor/rules/project.mdc`（不得与此文件冲突）
+## 架构硬规则
 
-## 项目概要
+- 数据流：Chrome API → Background Script → IndexedDB → Pinia Store → Vue Components。
+- IndexedDB 是书签数据唯一事实源；所有 IndexedDB 操作必须通过 `frontend/src/infrastructure/indexeddb/manager.ts` 的 `indexedDBManager`。
+- Background Script 是唯一 Chrome API 监听者；前端组件禁止直接调 `chrome.bookmarks.*` / `chrome.tabs.*`。
+- DDD 依赖方向：`presentation/ → application/ → core/ → infrastructure/`；禁止反向依赖，`presentation/` 不得直连 `infrastructure/`。
+- Service Worker 环境无 `window` / `document` / `localStorage`；用 `setTimeout`、`fetch`、`chrome.storage.*`、`ReturnType<typeof setTimeout>`。
 
-**otterSage** — Vue 3 + TypeScript + Cloudflare Workers 构建的智能 Chrome 扩展，提供 AI 书签管理、内容搜索和推荐。DDD 8 层架构。
+## 代码约定
 
-```
-otterSage/
-├── frontend/          # Vue 3 Chrome Extension
-├── backend/           # Cloudflare Worker API
-├── website/           # Nuxt 营销站
-└── scripts/           # 构建工具脚本
-```
-
-## 关键架构规则（MUST NOT VIOLATE）
-
-### 1. 单向数据流
-
-```
-Chrome API → Background Script → IndexedDB → Pinia Store → Vue Components
-     ↑                                                           ↓
-     └─────────── chrome.runtime.sendMessage ────────────────────┘
-```
-
-- ✅ IndexedDB 是唯一事实源
-- ✅ Background Script 是唯一 API 监听者（`background/bookmarks.ts`）
-- ❌ **禁止**：前端直接调 `chrome.bookmarks.*` 或 `chrome.tabs.*`
-
-### 2. DDD 层边界
-
-```
-presentation/ → application/ → core/ → infrastructure/
-```
-
-- ❌ `presentation/` 不能直接访问 `infrastructure/`
-- ❌ `core/` 不能依赖 `infrastructure/`
-
-### 3. IndexedDB 单入口
-
-- 路径：`frontend/src/infrastructure/indexeddb/manager.ts`
-- ✅ 所有 IndexedDB 操作必须通过 `indexedDBManager`
-- ❌ **禁止**：直接调 `indexedDB.open()` 或原生 API
-
-### 4. Service Worker 兼容性
-
-Background Script 运行在 Service Worker 环境，**没有** `window` / `document` / `localStorage`。
-
-| 正确 ✅                         | 错误 ❌                |
-| ------------------------------- | ---------------------- |
-| `setTimeout()`                  | `window.setTimeout()`  |
-| `fetch()`                       | `window.fetch()`       |
-| `chrome.storage.*`              | `localStorage.*`       |
-| `ReturnType<typeof setTimeout>` | `number`（定时器类型） |
+- UI/API/文档统一用 **Filter（筛选）**；UI 文案禁止出现 `Search`。
+- TypeScript 禁止 `any` / `as any`；外部数据用 Zod 校验；JSDoc 用中文。
+- Vue 组件必须 `defineOptions({ name: 'ComponentName' })`。
+- Map 响应式更新用 Immer：`updateMap(nodes, draft => { ... })`。
+- 事件用 mitt：`emitEvent(...)`。
+- VueUse 优先：`useEventListener` / `useDebounceFn` / `useTimeoutFn`。
 
 ## 存储决策
 
-| 存储                     | 生命周期 | 用途                        |
-| ------------------------ | -------- | --------------------------- |
-| IndexedDB                | 永久     | 书签数据（2w+）、爬取元数据 |
-| `chrome.storage.local`   | 永久     | 用户偏好、扩展配置          |
-| `chrome.storage.session` | 会话     | 临时数据、UI 状态、同步状态 |
-| Pinia Store              | 页面级   | 高频 UI 状态、计算属性      |
+- 数据量 > 1000：IndexedDB。
+- 跨页面持久化：`chrome.storage.local`。
+- 会话临时状态：`chrome.storage.session`。
+- 页面高频 UI 状态：Pinia。
 
-> 数据量 > 1000 → IndexedDB。需跨页面持久化 → `chrome.storage.local`。仅当前页可用 → Pinia。
+## 验证策略
 
-## 关键约定
+- 默认只跑与本次改动直接相关的最小验证：目标单测、局部 typecheck、局部 lint。
+- 禁止每次改动后自动跑全仓检查。
+- 仅用户明确要求、发布前、合并前、或大范围改动时运行：
+  - `bun run typecheck:force`
+  - `bun run eslint`
+  - `bun run stylelint`
+  - `bun run format`
 
-### Filter vs Search
+## Token / 工具输出预算
 
-- UI/API/文档：一律用 **Filter（筛选）**
-- 实现层（代码、注释）：search/filter 均可
-- ❌ **禁止**：UI 文案中出现 "Search"
+- 优先窄范围读取文件；禁止无筛选全仓 `cat` / `sed` / `rg`。
+- `rg` 必须带路径或精确模式；大范围搜索需限制输出。
+- 长命令输出重定向到 `/tmp`，只 `tail -n 80` 或提取关键错误。
+- 工具 `max_output_tokens` 默认 ≤ 12000；除非必要不要超过 30000。
+- 不粘贴大文件、大日志、大 diff；用文件路径 + 行号摘要。
+- 优先修改已有文件，避免无关格式化导致大 diff。
 
-### TypeScript
+## 环境变量
 
-- ❌ **禁止**：`any`、`as any`
-- ✅ 外部数据必须用 Zod 校验
-- ✅ JSDoc 用中文
+- 规则文档：`docs/ENVIRONMENT.md`
+- 只维护：`.env.shared.local`、`.env.development.local`、`.env.production.local`。
+- 禁止手改生成物：`.env.runtime/*`、`backend/.dev.vars`、`website/.env`。
+- 修改环境变量后运行：`bun run env:sync:dev && bun run env:check:dev`。
+- 发布前运行：`bun run env:sync:prod && bun run env:check:prod`。
 
-### Vue 组件
+## 回复
 
-- ✅ 必须用 `defineOptions({ name: 'ComponentName' })`
-- ❌ 禁止在组件内调 `chrome.bookmarks.*` 或 `indexedDB.open()`
-
-### 关键库用法
-
-- **Immer**: `updateMap(nodes, draft => { draft.set('123', newNode) })`
-- **mitt**: `emitEvent('bookmark:created', {...})`
-- **VueUse**: 优先用 `useEventListener` / `useDebounceFn` / `useTimeoutFn`
-
-## 常见错误（FORBIDDEN）
-
-```typescript
-// ❌ 前端直接调 Chrome API
-await chrome.bookmarks.create({ title: 'New Bookmark' })
-
-// ✅ 通过 Background Script
-await chrome.runtime.sendMessage({ type: 'CREATE_BOOKMARK', title: 'New Bookmark' })
-```
-
-```typescript
-// ❌ 直接改 Map（Vue 检测不到）
-nodes.value.set('123', newNode)
-
-// ✅ 用 Immer
-updateMap(nodes, draft => {
-  draft.set('123', newNode)
-})
-```
-
-```typescript
-// ❌ Service Worker 中用了 window
-private timer: number | null = null
-this.timer = window.setTimeout(() => {...}, 1000)
-
-// ✅
-private timer: ReturnType<typeof setTimeout> | null = null
-this.timer = setTimeout(() => {...}, 1000)
-```
-
-## 修改代码后必须运行
-
-```bash
-bun run typecheck:force  # 类型检查必须通过
-bun run eslint           # ESLint 自动修复
-bun run stylelint        # Stylelint 自动修复
-bun run format           # Prettier 格式化
-```
-
-## 环境变量规则
-
-- 环境变量方案文档：`docs/ENVIRONMENT.md`
-- 只维护 3 个源文件：
-  - `.env.shared.local`
-  - `.env.development.local`
-  - `.env.production.local`
-- 禁止手改生成产物：
-  - `.env.runtime/.env.development`
-  - `.env.runtime/.env.production`
-  - `backend/.dev.vars`
-  - `website/.env`
-- 共享第三方配置必须优先放 `.env.shared.local`
-- `localhost` / 正式域名切换必须放环境覆盖文件，不得混放到 shared
-- 修改环境变量后必须运行：
-
-```bash
-bun run env:sync:dev
-bun run env:check:dev
-```
-
-- 发布前必须运行：
-
-```bash
-bun run env:sync:prod
-bun run env:check:prod
-```
-
-- 若 Cloudflare Worker Dashboard 变量与本地源文件不一致，必须以统一字段名补齐，不允许各项目自造别名
-
-## 交互规范
-
-### 1. 回复风格
-
-- 严格精简 token，不浪费任何多余字符
-- 去掉开场白、客套话、道歉、过渡句
-- 只输出精炼的工程术语和精确的改动
-- 少 token 搞定，就用少 token
-
-### 2. 语言
-
-- 所有回复用中文
+- 全部中文。
+- 精简、工程化、少 token；避免客套和重复。

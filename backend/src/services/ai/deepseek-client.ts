@@ -8,6 +8,8 @@ import type { Env } from '../../types/env'
 export interface DeepSeekCompleteOptions {
   maxTokens?: number
   temperature?: number
+  /** 关闭 V4 思考模式；结构化输出默认关闭，避免 content 为空 */
+  disableThinking?: boolean
 }
 
 export interface DeepSeekCompleteResult {
@@ -18,8 +20,10 @@ export interface DeepSeekCompleteResult {
 
 interface DeepSeekChatResponse {
   choices?: Array<{
+    finish_reason?: string
     message?: {
       content?: string
+      reasoning_content?: string
     }
   }>
   usage?: {
@@ -49,6 +53,7 @@ export async function completeWithDeepSeek(
   const model = resolveHostedModel(env)
   const maxTokens = options?.maxTokens ?? 256
   const temperature = options?.temperature ?? 0.6
+  const disableThinking = options?.disableThinking !== false
 
   const response = await fetch(`${baseUrl}/v1/chat/completions`, {
     method: 'POST',
@@ -60,7 +65,8 @@ export async function completeWithDeepSeek(
       model,
       messages: [{ role: 'user', content: prompt }],
       max_tokens: maxTokens,
-      temperature
+      temperature,
+      thinking: { type: disableThinking ? 'disabled' : 'enabled' }
     })
   })
 
@@ -71,9 +77,12 @@ export async function completeWithDeepSeek(
     throw new Error(message)
   }
 
-  const text = payload.choices?.[0]?.message?.content?.trim()
+  const choice = payload.choices?.[0]
+  const message = choice?.message
+  const text = message?.content?.trim() || message?.reasoning_content?.trim()
   if (!text) {
-    throw new Error('deepseek_empty_response')
+    const finishReason = choice?.finish_reason ?? 'unknown'
+    throw new Error(`deepseek_empty_response:${finishReason}`)
   }
 
   return {

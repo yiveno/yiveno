@@ -455,9 +455,7 @@ export class IndexedDBBookmarkRepository implements BookmarkRepository {
       path: [],
       pathString: '',
       pathIds: [],
-      pathIdsString: '',
       ancestorIds: [],
-      siblingIds: [],
       depth: 0,
 
       // 筛选优化字段
@@ -471,17 +469,7 @@ export class IndexedDBBookmarkRepository implements BookmarkRepository {
       // 扩展属性
       tags: [],
       traitTags: [],
-      traitMetadata: [],
-
-      // 元数据
-      createdYear: node.dateAdded
-        ? new Date(node.dateAdded).getFullYear()
-        : new Date().getFullYear(),
-      createdMonth: node.dateAdded ? new Date(node.dateAdded).getMonth() : new Date().getMonth(),
-
-      // 版本控制
-      dataVersion: 1,
-      lastCalculated: Date.now()
+      traitMetadata: []
     }
 
     // 条件添加 urlLower 和 domain

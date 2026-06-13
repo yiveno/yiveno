@@ -5,6 +5,7 @@ import { logger } from '@/infrastructure/logging/logger'
 import type { SearchResult } from '@/infrastructure/indexeddb/manager'
 import type { BookmarkRecord } from '@/infrastructure/indexeddb/manager'
 import type { WorkerDoc } from '@/types/domain/query'
+import { formatBookmarkSearchKeywordsText } from '@/core/bookmark/bookmark-search-keywords'
 
 interface SearchState {
   worker: Worker | undefined
@@ -201,6 +202,12 @@ async function handleSearchQuery(payload: { query: string; limit?: number }) {
   const query = payload?.query?.trim()
   if (!query) return []
 
+  const searchStart = performance.now()
+  logger.info('OffscreenSearch', '▶ FlexSearch 查询入口', {
+    query,
+    limit: payload?.limit ?? 50
+  })
+
   try {
     const worker = await ensureSearchWorker()
     await primeWorkerDocs(worker)
@@ -220,8 +227,17 @@ async function handleSearchQuery(payload: { query: string; limit?: number }) {
         const message = event.data
         if (message?.type === 'result' && message.reqId === reqId) {
           cleanup()
-          logger.info('OffscreenSearch', `🔍 命中 ${message.hits?.length ?? 0} 条`)
-          resolve(message.hits ?? [])
+          const hits = message.hits ?? []
+          logger.info('OffscreenSearch', '✅ FlexSearch 查询完成', {
+            query,
+            hitCount: hits.length,
+            durationMs: Number((performance.now() - searchStart).toFixed(1)),
+            topHits: hits.slice(0, 8).map((h: { id: string; score: number }) => ({
+              id: h.id,
+              score: Number(h.score.toFixed(4))
+            }))
+          })
+          resolve(hits)
         } else if (message?.type === 'error' && message.reqId === reqId) {
           cleanup()
           reject(new Error(message.message ?? 'Worker 查询失败'))
@@ -238,8 +254,12 @@ async function handleSearchQuery(payload: { query: string; limit?: number }) {
       })
     })
   } catch (error) {
-    logger.warn('OffscreenSearch', 'Worker 不可用，回退到 IndexedDB 查询', error)
-    return indexedDBManager.searchBookmarks(query, {
+    logger.warn('OffscreenSearch', 'Worker 不可用，回退到 IndexedDB 查询', {
+      query,
+      error,
+      durationMs: Number((performance.now() - searchStart).toFixed(1))
+    })
+    const fallback = await indexedDBManager.searchBookmarks(query, {
       query,
       limit: payload?.limit ?? 50,
       includeDomain: true,
@@ -247,6 +267,16 @@ async function handleSearchQuery(payload: { query: string; limit?: number }) {
       includeTags: true,
       includeUrl: true
     })
+    logger.info('OffscreenSearch', 'IndexedDB 兜底查询完成', {
+      query,
+      hitCount: fallback.length,
+      topHits: fallback.slice(0, 8).map(r => ({
+        id: r.id,
+        title: r.bookmark.title,
+        score: Number(r.score.toFixed(4))
+      }))
+    })
+    return fallback
   }
 }
 
@@ -503,18 +533,48 @@ const handlers: Record<string, OffscreenHandler> = {
     const { areEmbeddingVectorsReady } =
       await import('@/infrastructure/embedding/embedding-migration')
     const data = payload as { query: string; topK?: number; minScore?: number }
+    const searchStart = performance.now()
+
+    logger.info('OffscreenSemantic', '▶ 语义搜索入口', {
+      query: data.query,
+      topK: data.topK ?? 10,
+      minScore: data.minScore ?? 0.2
+    })
 
     if (!(await areEmbeddingVectorsReady())) {
-      console.log('[Offscreen] 向量未就绪（空库或旧模型），跳过语义搜索')
+      logger.info('OffscreenSemantic', '向量未就绪（空库或旧模型），跳过语义搜索', {
+        query: data.query
+      })
       return []
     }
 
+    const embedStart = performance.now()
     const queryVector = await onnxEmbeddingProvider.embedQuery(data.query.trim())
+    const embedDuration = performance.now() - embedStart
+
+    const vectorStart = performance.now()
     const vectorResults = await localVectorStore.search(
       queryVector,
       data.topK ?? 10,
       data.minScore ?? 0.2
     )
+    const vectorDuration = performance.now() - vectorStart
+
+    logger.info('OffscreenSemantic', '语义向量命中明细', {
+      query: data.query,
+      topK: data.topK ?? 10,
+      minScore: data.minScore ?? 0.2,
+      vectorDim: queryVector.length,
+      embedDurationMs: Number(embedDuration.toFixed(1)),
+      vectorSearchDurationMs: Number(vectorDuration.toFixed(1)),
+      hitCount: vectorResults.length,
+      results: vectorResults.map(result => ({
+        bookmarkId: result.bookmarkId,
+        title: result.title,
+        url: result.url,
+        score: Number(result.score.toFixed(4))
+      }))
+    })
 
     if (!vectorResults.length) return []
 
@@ -526,14 +586,29 @@ const handlers: Record<string, OffscreenHandler> = {
     }
 
     const results: Array<{ bookmark: BookmarkRecord; score: number }> = []
+    const missingIds: string[] = []
     for (const match of vectorResults) {
       const bm = bookmarkMap.get(match.bookmarkId)
       if (bm && bm.url) {
         results.push({ bookmark: bm, score: match.score })
+      } else {
+        missingIds.push(match.bookmarkId)
       }
     }
 
-    console.log(`[Offscreen] 语义搜索完成: "${data.query}" → ${results.length} 条`)
+    logger.info('OffscreenSemantic', '✅ 语义搜索完成', {
+      query: data.query,
+      vectorHitCount: vectorResults.length,
+      resolvedCount: results.length,
+      missingBookmarkIds: missingIds,
+      totalDurationMs: Number((performance.now() - searchStart).toFixed(1)),
+      results: results.map(result => ({
+        id: result.bookmark.id,
+        title: result.bookmark.title,
+        url: result.bookmark.url,
+        score: Number(result.score.toFixed(4))
+      }))
+    })
     return results
   },
 
@@ -661,7 +736,7 @@ async function collectDocsFromIDB(): Promise<WorkerDoc[]> {
       titleLower: record.titleLower,
       urlLower: record.urlLower,
       domain: record.domain,
-      keywords: record.keywords,
+      keywords: formatBookmarkSearchKeywordsText(record).split(/\s+/).filter(Boolean),
       isFolder: record.isFolder
     }))
 }

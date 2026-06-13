@@ -21,8 +21,8 @@ const currentTheme = ref<ThemeMode>('system')
 // 菜单显示状态
 const showMenu = ref(false)
 
-// 按钮引用（用于获取点击位置）
-const toggleBtnRef = ref<HTMLElement | null>(null)
+// 主题切换按钮 anchor id（用于定位扩散动画起点）
+const themeToggleAnchorId = 'theme-toggle-anchor'
 
 // 菜单引用
 
@@ -118,8 +118,9 @@ const toggleTheme = async (newTheme: ThemeMode) => {
     // 获取按钮位置（用于圆形扩散动画）
     let x = window.innerWidth - 50 // 默认右上角
     let y = 50
-    if (toggleBtnRef.value) {
-      const rect = toggleBtnRef.value.getBoundingClientRect()
+    const toggleButton = document.getElementById(themeToggleAnchorId)
+    if (toggleButton) {
+      const rect = toggleButton.getBoundingClientRect()
       x = rect.left + rect.width / 2
       y = rect.top + rect.height / 2
     }
@@ -338,8 +339,7 @@ onUnmounted(() => {
 <template>
   <div class="theme-toggle">
     <Button
-      id="theme-toggle-anchor"
-      ref="toggleBtnRef"
+      :id="themeToggleAnchorId"
       variant="icon"
       class="theme-toggle__button"
       :icon-size="30"
@@ -354,7 +354,7 @@ onUnmounted(() => {
     <md-menu
       id="theme-menu"
       ref="menuRef"
-      anchor="theme-toggle-anchor"
+      :anchor="themeToggleAnchorId"
       :open="showMenu"
       :quick="true"
       @closed="showMenu = false"

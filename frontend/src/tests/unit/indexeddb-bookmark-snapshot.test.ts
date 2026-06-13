@@ -20,7 +20,6 @@ function createBookmarkRecord(overrides: Partial<BookmarkRecord>): BookmarkRecor
   const title = overrides.title ?? id
   const isFolder = overrides.isFolder ?? false
   const url = overrides.url ?? (isFolder ? undefined : `https://${id}.example.com`)
-  const now = 1_780_000_000_000
 
   return {
     id,
@@ -30,9 +29,7 @@ function createBookmarkRecord(overrides: Partial<BookmarkRecord>): BookmarkRecor
     path: overrides.path ?? ['书签栏', title],
     pathString: overrides.pathString ?? `书签栏 / ${title}`,
     pathIds: overrides.pathIds ?? ['0', '1', id],
-    pathIdsString: overrides.pathIdsString ?? `0/1/${id}`,
     ancestorIds: overrides.ancestorIds ?? ['0', '1'],
-    siblingIds: overrides.siblingIds ?? [],
     depth: overrides.depth ?? 2,
     titleLower: overrides.titleLower ?? title.toLowerCase(),
     keywords: overrides.keywords ?? [title.toLowerCase()],
@@ -40,10 +37,6 @@ function createBookmarkRecord(overrides: Partial<BookmarkRecord>): BookmarkRecor
     childrenCount: overrides.childrenCount ?? 0,
     tags: overrides.tags ?? [],
     traitTags: overrides.traitTags ?? [],
-    createdYear: overrides.createdYear ?? 2026,
-    createdMonth: overrides.createdMonth ?? 6,
-    dataVersion: overrides.dataVersion ?? DB_CONFIG.VERSION,
-    lastCalculated: overrides.lastCalculated ?? now,
     ...(url
       ? {
           url,

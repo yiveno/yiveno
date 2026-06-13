@@ -32,21 +32,16 @@ async function setDatabaseReady(ready: boolean): Promise<void> {
 function convertChromeNodeToRecord(
   node: chrome.bookmarks.BookmarkTreeNode,
   pathIds: string[] = [],
-  pathNames: string[] = [],
-  flatIndex: number = 0
+  pathNames: string[] = []
 ): BookmarkRecord {
   const dateAdded = node.dateAdded ?? Date.now()
-  const createdDate = new Date(dateAdded)
 
   return {
     ...buildChromeFields(node, dateAdded),
     ...buildPathFields(node, pathIds, pathNames),
     ...buildFilterFields(node),
     ...buildTypeFields(node),
-    ...buildMetadataFields(node),
-    ...buildTimeFields(createdDate),
-    ...buildVirtualFields(node, flatIndex),
-    ...buildVersionFields()
+    ...buildMetadataFields(node)
   } as BookmarkRecord
 }
 
@@ -82,9 +77,7 @@ function buildPathFields(
     path: newPathNames,
     pathString: newPathNames.join(' / '),
     pathIds: newPathIds,
-    pathIdsString: newPathIds.join(' / '),
     ancestorIds: pathIds,
-    siblingIds: [],
     depth: pathIds.length
   }
 }
@@ -121,43 +114,7 @@ function buildMetadataFields(node: chrome.bookmarks.BookmarkTreeNode): Partial<B
     traitMetadata: [],
     lastVisited: (node as chrome.bookmarks.BookmarkTreeNode & { dateLastUsed?: number })
       .dateLastUsed,
-    visitCount: 0,
-    hasMetadata: false,
-    metadataUpdatedAt: 0
-  }
-}
-
-/**
- * 构建时间字段
- */
-function buildTimeFields(createdDate: Date): Partial<BookmarkRecord> {
-  return {
-    createdYear: createdDate.getFullYear(),
-    createdMonth: createdDate.getMonth() + 1,
-    lastCalculated: Date.now()
-  }
-}
-
-/**
- * 构建虚拟化字段
- */
-function buildVirtualFields(
-  node: chrome.bookmarks.BookmarkTreeNode,
-  flatIndex: number
-): Partial<BookmarkRecord> {
-  return {
-    flatIndex,
-    isVisible: true,
-    sortKey: `${node.index ?? 0}`.padStart(10, '0')
-  }
-}
-
-/**
- * 构建版本字段
- */
-function buildVersionFields(): Partial<BookmarkRecord> {
-  return {
-    dataVersion: 1
+    visitCount: 0
   }
 }
 
@@ -201,7 +158,6 @@ function appendPathInfo(path: PathInfo, id: string, name: string): PathInfo {
  * @param nodes - Chrome 书签树节点数组
  * @param pathIds - 父级路径 ID
  * @param pathNames - 父级路径名称
- * @param flatIndex - 扁平化索引
  * @param onProgress - 进度回调函数（可选）
  * @returns 扁平化的书签记录数组
  */
@@ -209,7 +165,6 @@ function flattenBookmarkTree(
   nodes: chrome.bookmarks.BookmarkTreeNode[],
   pathIds: string[] = [],
   pathNames: string[] = [],
-  flatIndex = { current: 0 },
   onProgress?: (current: number, total: number) => void
 ): BookmarkRecord[] {
   const records: BookmarkRecord[] = []
@@ -223,7 +178,7 @@ function flattenBookmarkTree(
 
   initializeStack(nodes, initialPath, stack)
 
-  processStack(stack, records, flatIndex, onProgress, totalNodes)
+  processStack(stack, records, onProgress, totalNodes)
 
   if (onProgress && totalNodes > 0) {
     onProgress(totalNodes, totalNodes)
@@ -268,7 +223,6 @@ function initializeStack(
 function processStack(
   stack: Array<{ node: chrome.bookmarks.BookmarkTreeNode; path: PathInfo }>,
   records: BookmarkRecord[],
-  flatIndex: { current: number },
   onProgress?: (current: number, total: number) => void,
   totalNodes = 0
 ): number {
@@ -277,7 +231,7 @@ function processStack(
 
   while (stack.length > 0) {
     const { node, path } = stack.pop()!
-    const record = convertChromeNodeToRecord(node, path.ids, path.names, flatIndex.current++)
+    const record = convertChromeNodeToRecord(node, path.ids, path.names)
     records.push(record)
 
     processedCount++
@@ -642,7 +596,7 @@ export class BookmarkSyncService {
       // 3. 扁平化书签树（带进度回调）
       logger.debug('BookmarkSync', '🔄 扁平化书签树...')
       const flattenStart = performance.now()
-      const allRecords = flattenBookmarkTree(tree, [], [], { current: 0 }, (current, total) => {
+      const allRecords = flattenBookmarkTree(tree, [], [], (current, total) => {
         // 转换阶段占 20%-40%
         const percentage = 20 + (current / total) * 20
         this.notifyProgress({

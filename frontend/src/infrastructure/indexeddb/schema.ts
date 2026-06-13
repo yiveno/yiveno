@@ -15,7 +15,7 @@ import type { BookmarkRecord } from './types/bookmark-record'
  */
 export const DB_CONFIG = {
   NAME: 'otterSageDB',
-  VERSION: 12, // 升级：添加 FOLDER_VECTORS 存储文件夹向量
+  VERSION: 13, // 升级：清理 bookmarks 冗余字段与未使用索引
 
   // 存储表名
   STORES: {
@@ -35,33 +35,16 @@ export const DB_CONFIG = {
 /**
  * 索引配置
  */
+/** bookmarks 表实际使用的索引名（与 manager.storeIndexConfigMap 保持一致） */
 export const INDEX_CONFIG = {
   BOOKMARKS: {
-    // 主键
     PRIMARY_KEY: 'id',
-
-    // 单字段索引
     PARENT_ID: 'parentId',
     TITLE_LOWER: 'titleLower',
     URL_LOWER: 'urlLower',
     DOMAIN: 'domain',
-    IS_FOLDER: 'isFolder',
     IS_INVALID: 'isInvalid',
     IS_DUPLICATE: 'isDuplicate',
-    DEPTH: 'depth',
-    CREATED_YEAR: 'createdYear',
-    CREATED_MONTH: 'createdMonth',
-    LAST_VISITED: 'lastVisited',
-    VISIT_COUNT: 'visitCount',
-
-    // 复合索引
-    PARENT_INDEX: 'parentIndex',
-    DOMAIN_CATEGORY: 'domainCategory',
-    METADATA_UPDATED: 'metadataUpdatedAt',
-
-    // 数组字段索引
-    PATH_IDS: 'pathIds',
-    ANCESTOR_IDS: 'ancestorIds',
     KEYWORDS: 'keywords',
     TAGS: 'tags'
   }
@@ -171,16 +154,18 @@ export interface FaviconCacheRecord {
  * 嵌入向量记录
  */
 export interface EmbeddingRecord {
-  /** 主键 */
-  id: string
-  /** 关联书签ID */
+  /** 主键，与书签 ID 一致 */
   bookmarkId: string
   /** 向量 */
   vector: number[]
   /** 模型 */
   model: string
-  /** 创建时间 */
-  createdAt: number
+  /** 书签标题（冗余，避免查询回表） */
+  title: string
+  /** 书签 URL */
+  url: string
+  /** 创建/更新时间 */
+  updatedAt: number
 }
 
 /**

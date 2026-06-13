@@ -11,10 +11,11 @@ import { CURRENT_SCHEMA_VERSION, getExtensionState, updateExtensionState } from 
 import { bookmarkSyncService } from '@/services/bookmark-sync-service'
 import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
 import { folderVectorService } from '@/application/folder/folder-vector-service'
+import { registerEmbeddingSyncTriggers } from '@/background/managers/embedding-sync'
 import {
-  registerEmbeddingSyncTriggers,
-  runBookmarkEmbeddingSync
-} from '@/background/managers/embedding-sync'
+  registerRetrievalProfileSyncTriggers,
+  runRetrievalProfileThenEmbedding
+} from '@/background/managers/retrieval-profile-sync'
 
 /**
  * 首次安装流程处理
@@ -64,7 +65,7 @@ async function handleFirstInstall(reason: string): Promise<void> {
 
     // ✅ 同步书签 embedding（语义搜索需要）
     // 异步执行，不阻塞主流程
-    void runBookmarkEmbeddingSync('first-install')
+    void runRetrievalProfileThenEmbedding('first-install')
 
     // ✅ 从 IndexedDB 查询实际的书签总数（不依赖已废弃的 bookmarksCount 字段）
     const allBookmarks = await indexedDBManager.getAllBookmarks()
@@ -121,7 +122,7 @@ async function handleSchemaUpgrade(state: ExtensionState): Promise<void> {
   }
 
   // ✅ 同步书签 embedding（语义搜索需要）
-  void runBookmarkEmbeddingSync('schema-upgrade')
+  void runRetrievalProfileThenEmbedding('schema-upgrade')
 
   await updateExtensionState({
     dbReady: true,
@@ -206,7 +207,7 @@ async function handleDataRecovery(): Promise<void> {
     logger.warn('Bootstrap', '文件夹向量同步失败（非致命，AI 功能可能受限）', error)
   }
 
-  void runBookmarkEmbeddingSync('data-recovery')
+  void runRetrievalProfileThenEmbedding('data-recovery')
 
   const allBookmarks = await indexedDBManager.getAllBookmarks()
   const totalBookmarks = allBookmarks.filter(node => node.url && !node.isFolder).length
@@ -239,7 +240,7 @@ async function handleRegularReload(reason: string): Promise<void> {
       void bookmarkSyncService.syncAllBookmarks()
     } else {
       logger.info('Bootstrap', '检测到书签数据，开始异步同步 embedding')
-      void runBookmarkEmbeddingSync('regular-reload')
+      void runRetrievalProfileThenEmbedding('regular-reload')
     }
   } catch (error) {
     logger.warn('Bootstrap', '检查书签数据失败，跳过 embedding 同步', error)
@@ -257,6 +258,7 @@ async function handleRegularReload(reason: string): Promise<void> {
  */
 export function registerLifecycleHandlers(): void {
   registerEmbeddingSyncTriggers()
+  registerRetrievalProfileSyncTriggers()
 
   chrome.runtime.onInstalled.addListener(async details => {
     try {
@@ -320,7 +322,7 @@ export function registerLifecycleHandlers(): void {
       // ⚠️ 收藏数据同步已移到页面打开时执行
       logger.debug('Bootstrap', '收藏数据同步将在页面打开时执行')
 
-      void runBookmarkEmbeddingSync('browser-startup')
+      void runRetrievalProfileThenEmbedding('browser-startup')
     } catch (error) {
       logger.warn('Bootstrap', '浏览器启动同步失败', error)
     }

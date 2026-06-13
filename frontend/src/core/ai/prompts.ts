@@ -113,3 +113,49 @@ ${bookmarksText}
 
 只返回 JSON，不要其他内容。`
 }
+
+/** 批处理检索 Profile 每批条数（控制输出 token，避免 JSON 截断） */
+export const RETRIEVAL_PROFILE_BATCH_SIZE = 8
+
+/**
+ * 批量生成书签检索 Profile（仅 title + URL）
+ *
+ * 输出供本地 FlexSearch / Embedding 索引，非 UI 展示摘要。
+ */
+export function createRetrievalProfileBatchPrompt(
+  bookmarks: Array<{
+    id: string
+    title: string
+    url: string
+  }>
+): string {
+  const bookmarksText = bookmarks
+    .map(
+      (bookmark, index) =>
+        `${index + 1}. [id: ${bookmark.id}] ${bookmark.title}\n   URL: ${bookmark.url}`
+    )
+    .join('\n\n')
+
+  return `你是书签语义检索助手。用户只有标题和 URL，请推断每条书签的用途，生成「检索专用」描述。
+
+要求：
+1. profile：30~55 字，说明站点类型与用户可能的使用场景（如听歌、购物、查文档）
+2. keywords：4~6 个检索词，含中文口语同义词（如「听歌」「购物」「摸鱼」），不要重复标题原文
+3. bookmarkId 必须逐字复制列表中的 [id: xxx]，禁止编造
+4. 根据域名与 URL 路径合理推断，不确定时用通用描述
+5. 只输出合法 JSON：keywords 数组内字符串必须用英文双引号，禁止 trailing comma
+
+书签列表：
+${bookmarksText}
+
+只返回 JSON：
+{
+  "profiles": [
+    {
+      "bookmarkId": "真实id",
+      "profile": "检索描述",
+      "keywords": ["词1", "词2"]
+    }
+  ]
+}`
+}

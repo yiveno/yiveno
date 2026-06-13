@@ -199,12 +199,25 @@ describe('management-tree-search', () => {
     expect(result.leftTree[0]?.children?.[0]?.children?.[0]?.id).toBe('aliyun')
   })
 
-  it('pickSemanticSupplementIds 仅保留接近最高分的少量语义结果', () => {
+  it('pickSemanticSupplementIds 置信不足时不强行补位', () => {
     const ids = pickSemanticSupplementIds(
       [
         makeSemanticResult('aliyun', '开年焕新，限时特惠', 'https://www.aliyun.com', 0.91),
         makeSemanticResult('taobao', '淘宝', 'https://www.taobao.com', 0.84),
         makeSemanticResult('github', 'GitHub', 'https://github.com', 0.83)
+      ],
+      '阿里云'
+    )
+
+    expect(Array.from(ids)).toEqual([])
+  })
+
+  it('pickSemanticSupplementIds 明显领先时保留 Top 语义结果', () => {
+    const ids = pickSemanticSupplementIds(
+      [
+        makeSemanticResult('aliyun', '开年焕新，限时特惠', 'https://www.aliyun.com', 0.92),
+        makeSemanticResult('taobao', '淘宝', 'https://www.taobao.com', 0.82),
+        makeSemanticResult('github', 'GitHub', 'https://github.com', 0.79)
       ],
       '阿里云'
     )

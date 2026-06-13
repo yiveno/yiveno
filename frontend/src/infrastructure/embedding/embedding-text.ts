@@ -38,9 +38,15 @@ export function formatEmbeddingPassage(text: string): string {
 export function buildBookmarkPassageBody(bookmark: BookmarkRecord): string {
   const parts: string[] = []
 
-  if (bookmark.metaTitleLower) {
-    parts.push(bookmark.metaTitleLower)
-  } else if (bookmark.title) {
+  if (bookmark.retrievalProfile) {
+    parts.push(bookmark.retrievalProfile.trim())
+  }
+
+  if (bookmark.retrievalKeywords && bookmark.retrievalKeywords.length > 0) {
+    parts.push(bookmark.retrievalKeywords.slice(0, 8).join(' '))
+  }
+
+  if (bookmark.title) {
     parts.push(bookmark.title)
   }
 
@@ -49,14 +55,6 @@ export function buildBookmarkPassageBody(bookmark: BookmarkRecord): string {
     if (folderPath) {
       parts.push(folderPath)
     }
-  }
-
-  if (bookmark.metaDescriptionLower) {
-    parts.push(bookmark.metaDescriptionLower.slice(0, 200))
-  }
-
-  if (bookmark.metaKeywordsTokens && bookmark.metaKeywordsTokens.length > 0) {
-    parts.push(bookmark.metaKeywordsTokens.slice(0, 10).join(' '))
   }
 
   if (bookmark.domain) {

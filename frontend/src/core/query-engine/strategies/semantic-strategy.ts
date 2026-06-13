@@ -25,6 +25,15 @@ export interface SemanticSearchResult {
   score: number
 }
 
+function formatSemanticResults(results: SemanticSearchResult[]) {
+  return results.map(result => ({
+    id: result.bookmark.id,
+    title: result.bookmark.title,
+    url: result.bookmark.url,
+    score: Number(result.score.toFixed(4))
+  }))
+}
+
 /**
  * 检测是否在 Service Worker 环境
  */
@@ -50,6 +59,15 @@ export async function semanticSearch(
   options: SemanticSearchOptions = {}
 ): Promise<SemanticSearchResult[]> {
   const timeout = options.timeout ?? (isServiceWorker() ? 30_000 : 10_000)
+  const searchStart = performance.now()
+
+  logger.info(LOG_TAG, '▶ 语义策略入口', {
+    query,
+    topK,
+    minScore,
+    timeout,
+    environment: isServiceWorker() ? 'service-worker' : 'page'
+  })
 
   try {
     // Service Worker 环境中，通过 Offscreen Document 代理语义搜索
@@ -62,15 +80,33 @@ export async function semanticSearch(
         },
         { timeout }
       )
-      logger.info(LOG_TAG, `Offscreen 语义搜索完成: "${query}" → ${offscreenResults.length} 条`)
+      logger.info(LOG_TAG, `Offscreen 语义搜索完成: "${query}" → ${offscreenResults.length} 条`, {
+        query,
+        topK,
+        minScore,
+        results: formatSemanticResults(offscreenResults)
+      })
       return offscreenResults
     }
 
     // 普通页面环境，直接使用 embeddingService
-    logger.debug(LOG_TAG, '普通页面环境，直接使用 embeddingService')
+    logger.info(LOG_TAG, '开始本地语义搜索', { query, topK, minScore })
     const vectorResults = await embeddingService.search(query, topK, minScore)
 
-    if (!vectorResults.length) return []
+    if (!vectorResults.length) {
+      logger.info(LOG_TAG, `本地语义搜索无向量结果: "${query}"`, { query, topK, minScore })
+      return []
+    }
+
+    logger.info(LOG_TAG, '本地语义向量命中', {
+      query,
+      results: vectorResults.map(result => ({
+        bookmarkId: result.bookmarkId,
+        title: result.title,
+        url: result.url,
+        score: Number(result.score.toFixed(4))
+      }))
+    })
 
     // 从 IndexedDB 补全书签详情
     const allBookmarks = await indexedDBManager.getAllBookmarks()
@@ -87,10 +123,22 @@ export async function semanticSearch(
       }
     }
 
-    logger.info(LOG_TAG, `本地语义搜索完成: "${query}" → ${results.length} 条`)
+    logger.info(LOG_TAG, `本地语义搜索完成: "${query}" → ${results.length} 条`, {
+      query,
+      topK,
+      minScore,
+      totalDurationMs: Number((performance.now() - searchStart).toFixed(1)),
+      results: formatSemanticResults(results)
+    })
     return results
   } catch (error) {
-    logger.warn(LOG_TAG, '语义搜索异常', error)
+    logger.warn(LOG_TAG, '语义搜索异常', {
+      query,
+      topK,
+      minScore,
+      durationMs: Number((performance.now() - searchStart).toFixed(1)),
+      error
+    })
     return []
   }
 }

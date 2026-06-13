@@ -11,6 +11,7 @@ import type { BookmarkRecord, SearchResult } from '@/infrastructure/indexeddb/ma
 import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
 import { bookmarkMatchesQueryText } from '@/core/filter/bookmark-text-match'
 import type { WorkerDoc, SearchWorkerCommand, SearchWorkerEvent } from '@/types/domain/query'
+import { formatBookmarkSearchKeywordsText } from '@/core/bookmark/bookmark-search-keywords'
 
 import type { SearchWorkerAdapterOptions } from '@/types/application/service'
 import { logger } from '@/infrastructure/logging/logger'
@@ -110,7 +111,7 @@ export class QueryWorkerAdapter {
       titleLower: rec.titleLower,
       urlLower: rec.urlLower,
       domain: rec.domain,
-      keywords: rec.keywords,
+      keywords: formatBookmarkSearchKeywordsText(rec).split(/\s+/).filter(Boolean),
       isFolder: rec.isFolder,
       url: rec.url ?? '',
       title: rec.title
@@ -167,7 +168,14 @@ export class QueryWorkerAdapter {
   async search(query: string, limit = this.options.limit ?? 100): Promise<SearchResult[]> {
     if (!query.trim()) return []
 
+    const searchStart = performance.now()
     const canUseOffscreen = this.isServiceWorkerContext && this.offscreenSupported
+
+    logger.info('QueryWorkerAdapter', '▶ 检索入口', {
+      query,
+      limit,
+      path: canUseOffscreen ? 'offscreen' : this.workerSupported ? 'worker' : 'fallback'
+    })
 
     if (canUseOffscreen) {
       try {
@@ -179,22 +187,20 @@ export class QueryWorkerAdapter {
           },
           { timeout: TIMEOUT_CONFIG.API.FAST } // 快速搜索查询超时
         )
-        logger.info(
-          'QueryWorkerAdapter',
-          `Offscreen 返回命中: ${offscreenHits.length}`,
-          offscreenHits.slice(0, 5)
-        )
         const mappedResults = await this.mapHitsToResults(offscreenHits, query)
-        logger.info(
-          'QueryWorkerAdapter',
-          `Offscreen 命中映射后: ${mappedResults.length}`,
-          mappedResults.slice(0, 3).map(item => ({
+        logger.info('QueryWorkerAdapter', 'Offscreen 路径完成', {
+          query,
+          rawHitCount: offscreenHits.length,
+          mappedCount: mappedResults.length,
+          durationMs: Number((performance.now() - searchStart).toFixed(1)),
+          rawTop: offscreenHits.slice(0, 5),
+          mappedTop: mappedResults.slice(0, 3).map(item => ({
             id: item.id,
             score: item.score,
             title: item.bookmark.title,
             url: item.bookmark.url
           }))
-        )
+        })
         if (!mappedResults.length) {
           logger.warn('QueryWorkerAdapter', `Offscreen 命中为空: ${query}`)
         }
@@ -229,11 +235,19 @@ export class QueryWorkerAdapter {
       this.worker!.postMessage(cmd)
     })
 
-    return this.mapHitsToResults(hits, query)
+    const mapped = await this.mapHitsToResults(hits, query)
+    logger.info('QueryWorkerAdapter', 'Worker 路径完成', {
+      query,
+      rawHitCount: hits.length,
+      mappedCount: mapped.length,
+      durationMs: Number((performance.now() - searchStart).toFixed(1))
+    })
+    return mapped
   }
 
   private async fallbackSearch(query: string, limit: number): Promise<SearchResult[]> {
-    logger.info('QueryWorkerAdapter', `⚠️ 使用主线程 fallback 查询: "${query}"`)
+    const fallbackStart = performance.now()
+    logger.info('QueryWorkerAdapter', '▶ 主线程 fallback 查询', { query, limit })
     await indexedDBManager.initialize()
     const results = await indexedDBManager.searchBookmarks(query, {
       query,
@@ -242,6 +256,16 @@ export class QueryWorkerAdapter {
       includeUrl: true,
       includeKeywords: true,
       includeTags: true
+    })
+    logger.info('QueryWorkerAdapter', '主线程 fallback 完成', {
+      query,
+      hitCount: results.length,
+      durationMs: Number((performance.now() - fallbackStart).toFixed(1)),
+      topHits: results.slice(0, 5).map(r => ({
+        id: r.id,
+        title: r.bookmark.title,
+        score: Number(r.score.toFixed(4))
+      }))
     })
     return results
   }

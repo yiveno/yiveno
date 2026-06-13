@@ -8,13 +8,17 @@
  */
 
 import { queryService, type SearchResponse, type EnhancedSearchResult } from '@/core/query-engine'
-import { resolveEffectiveSearchStrategy } from '@/core/query/search-mode'
+import {
+  resolveEffectiveSearchStrategy,
+  readSearchModeSnapshotFromStorage
+} from '@/core/query/search-mode'
 import type { SearchOptions, SearchStrategy } from '@/types/domain/query'
 import { logger } from '@/infrastructure/logging/logger'
+import { adaptInfrastructureLogger } from '@/infrastructure/logging/core-logger-adapter'
 import { ok, err, type Result } from '@/core/common/result'
 import { getPerformanceMonitor as importPerformanceMonitor } from '@/services/query-performance-monitor'
 import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
-import { SEMANTIC_MIN_SCORE } from '@/application/query/search-result-filter'
+import { SEMANTIC_VECTOR_MIN_SCORE } from '@/application/query/search-result-filter'
 import { finalizeBookmarkSearchResults } from '@/application/query/unified-search-pipeline'
 
 const getPerformanceMonitor = async () => {
@@ -28,7 +32,23 @@ const getPerformanceMonitor = async () => {
 const UNIFIED_SEARCH_DEFAULTS: SearchOptions = {
   useCache: true,
   highlight: false,
-  minScore: SEMANTIC_MIN_SCORE
+  minScore: SEMANTIC_VECTOR_MIN_SCORE
+}
+
+const LOG_TAG = 'BookmarkSearchService'
+
+/** 注入 Core 层 QueryService 日志，确保检索链路日志可见 */
+queryService.useLogger(adaptInfrastructureLogger())
+
+function formatResultBrief(result: EnhancedSearchResult) {
+  return {
+    id: result.bookmark.id,
+    title: result.bookmark.title,
+    url: result.bookmark.url,
+    score: Number(result.score.toFixed(4)),
+    matchedFields: result.matchedFields ?? [],
+    pathString: result.bookmark.pathString
+  }
 }
 
 export class BookmarkSearchService {
@@ -55,8 +75,26 @@ export class BookmarkSearchService {
 
   /** 合并用户选项与当前账号解析出的检索策略 */
   private async withResolvedStrategy(options?: SearchOptions): Promise<SearchOptions> {
+    const snapshot = await readSearchModeSnapshotFromStorage()
     const strategy = await resolveEffectiveSearchStrategy()
-    return { ...UNIFIED_SEARCH_DEFAULTS, ...options, strategy }
+    const resolvedOptions = { ...UNIFIED_SEARCH_DEFAULTS, ...options, strategy }
+    logger.info(LOG_TAG, '解析检索策略', {
+      snapshot,
+      strategy,
+      requestedStrategy: options?.strategy,
+      limit: resolvedOptions.limit,
+      minScore: resolvedOptions.minScore,
+      useCache: resolvedOptions.useCache,
+      reason:
+        strategy === 'hybrid'
+          ? '已登录 + Pro + 语义开关开启'
+          : !snapshot.isLoggedIn
+            ? '未登录'
+            : !snapshot.isPro
+              ? '非 Pro'
+              : '语义开关关闭'
+    })
+    return resolvedOptions
   }
 
   /**
@@ -111,14 +149,55 @@ export class BookmarkSearchService {
     query: string,
     options?: SearchOptions
   ): Promise<Result<SearchResponse>> {
+    const traceId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
     const startTime = performance.now()
     await this.ensureInitialized()
+
+    logger.info(LOG_TAG, '▶ 检索入口', {
+      traceId,
+      query,
+      options: {
+        limit: options?.limit,
+        strategy: options?.strategy,
+        useCache: options?.useCache,
+        highlight: options?.highlight,
+        minScore: options?.minScore,
+        sortBy: options?.sortBy,
+        sortOrder: options?.sortOrder
+      }
+    })
 
     try {
       const resolvedOptions = await this.withResolvedStrategy(options)
       const limit = resolvedOptions.limit ?? 100
+      const queryStart = performance.now()
       const rawResponse = await queryService.search(query, resolvedOptions)
+      const queryDuration = performance.now() - queryStart
+
+      logger.info(LOG_TAG, '原始检索结果', {
+        traceId,
+        query,
+        strategy: rawResponse.metadata.strategy,
+        cacheHit: rawResponse.metadata.cacheHit,
+        searchTimeMs: Number(rawResponse.metadata.searchTime.toFixed(1)),
+        queryDurationMs: Number(queryDuration.toFixed(1)),
+        rawCount: rawResponse.results.length,
+        rawResults: rawResponse.results.slice(0, 12).map(formatResultBrief)
+      })
+
+      const finalizeStart = performance.now()
       const results = await this.finalizeResults(query, rawResponse, limit)
+      const finalizeDuration = performance.now() - finalizeStart
+
+      logger.info(LOG_TAG, '最终检索结果', {
+        traceId,
+        query,
+        strategy: rawResponse.metadata.strategy,
+        finalCount: results.length,
+        finalizeDurationMs: Number(finalizeDuration.toFixed(1)),
+        totalDurationMs: Number((performance.now() - startTime).toFixed(1)),
+        finalResults: results.slice(0, 12).map(formatResultBrief)
+      })
       const response: SearchResponse = {
         results,
         metadata: {
@@ -131,7 +210,7 @@ export class BookmarkSearchService {
     } catch (error) {
       const errorObj = error as Error
       void this.recordPerformance(query, startTime, null, false, errorObj)
-      logger.error('BookmarkSearchService', '搜索失败', { query, error: errorObj })
+      logger.error(LOG_TAG, '搜索失败', { traceId, query, error: errorObj })
       return err(errorObj)
     }
   }

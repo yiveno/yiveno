@@ -24,16 +24,18 @@ describe('embedding-text', () => {
     )
   })
 
-  it('buildBookmarkPassageBody 组合标题与路径', () => {
+  it('buildBookmarkPassageBody 优先包含检索 Profile', () => {
     const body = buildBookmarkPassageBody({
       id: '1',
-      title: 'Vue 3 指南',
-      url: 'https://vuejs.org/guide/',
-      path: ['书签栏', '前端', 'Vue 3 指南'],
+      title: '网易云音乐',
+      url: 'https://music.163.com',
+      retrievalProfile: '在线听歌、播放歌曲、创建歌单',
+      retrievalKeywords: ['听歌', '音乐'],
       isFolder: false
     } as Parameters<typeof buildBookmarkPassageBody>[0])
 
-    expect(body).toContain('Vue 3 指南')
-    expect(body).toContain('书签栏 > 前端')
+    expect(body.startsWith('在线听歌、播放歌曲、创建歌单')).toBe(true)
+    expect(body).toContain('听歌')
+    expect(body).toContain('网易云音乐')
   })
 })

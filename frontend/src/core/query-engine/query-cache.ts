@@ -72,6 +72,11 @@ export class QueryCache {
     this.logger = options.logger || noopLogger
   }
 
+  /** 运行时注入 Logger（Application 层启动时调用） */
+  useLogger(logger: ILogger): void {
+    this.logger = logger
+  }
+
   /**
    * 生成缓存键
    *

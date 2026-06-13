@@ -208,6 +208,13 @@ export class LocalVectorStore {
    * @param minScore 最低相似度阈值（0-1），过滤不相关结果，默认 0.2
    */
   async search(queryVector: number[], topK = 10, minScore = 0.2): Promise<VectorSearchResult[]> {
+    const searchStart = performance.now()
+    logger.info(LOG_TAG, '▶ 向量相似度搜索开始', {
+      topK,
+      minScore,
+      queryVectorDim: queryVector.length
+    })
+
     const allRecords = await this.getAll()
 
     if (allRecords.length === 0) {
@@ -215,19 +222,43 @@ export class LocalVectorStore {
       return []
     }
 
+    logger.debug(LOG_TAG, '向量库加载完成', {
+      totalVectors: allRecords.length,
+      loadDurationMs: Number((performance.now() - searchStart).toFixed(1))
+    })
+
     // 计算余弦相似度（向量已归一化，直接点积即可）
-    const scored = allRecords
+    const scoredAll = allRecords
       .map(record => ({
         bookmarkId: record.bookmarkId,
         title: record.title,
         url: record.url,
         score: dotProduct(queryVector, record.vector)
       }))
-      .filter(r => r.score >= minScore)
       .sort((a, b) => b.score - a.score)
-      .slice(0, topK)
 
-    logger.info(LOG_TAG, `向量搜索完成: ${allRecords.length} 条 → ${scored.length} 条结果`)
+    const topCandidates = scoredAll.slice(0, Math.min(topK, 10))
+    const scored = scoredAll.filter(r => r.score >= minScore).slice(0, topK)
+
+    logger.info(LOG_TAG, `向量搜索完成: ${allRecords.length} 条 → ${scored.length} 条结果`, {
+      totalVectors: allRecords.length,
+      topK,
+      minScore,
+      acceptedCount: scored.length,
+      totalDurationMs: Number((performance.now() - searchStart).toFixed(1)),
+      topCandidates: topCandidates.map(candidate => ({
+        bookmarkId: candidate.bookmarkId,
+        title: candidate.title,
+        url: candidate.url,
+        score: Number(candidate.score.toFixed(4)),
+        accepted: candidate.score >= minScore
+      })),
+      acceptedResults: scored.map(r => ({
+        bookmarkId: r.bookmarkId,
+        title: r.title,
+        score: Number(r.score.toFixed(4))
+      }))
+    })
     return scored
   }
 }

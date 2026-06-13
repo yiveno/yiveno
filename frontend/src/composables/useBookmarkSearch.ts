@@ -169,6 +169,13 @@ export function useBookmarkSearch(options: UseBookmarkSearchOptions = {}): UseBo
     isFiltering.value = true
     error.value = null
 
+    logger.info('useBookmarkSearch', '▶ UI 筛选入口', {
+      query: trimmedQuery,
+      mode,
+      limit,
+      filterOptions
+    })
+
     try {
       if (mode === 'memory') {
         // 内存模式：仅用于未持久化的树形草稿（非 Chrome 书签主数据源）
@@ -218,9 +225,7 @@ export function useBookmarkSearch(options: UseBookmarkSearchOptions = {}): UseBo
             node.path = bookmark.path || []
             node.pathString = bookmark.pathString || ''
             node.pathIds = bookmark.pathIds || []
-            node.pathIdsString = bookmark.pathIdsString || ''
             node.ancestorIds = bookmark.ancestorIds || []
-            node.siblingIds = bookmark.siblingIds || []
             node.depth = bookmark.depth || 0
 
             // 搜索相关字段
@@ -245,7 +250,14 @@ export function useBookmarkSearch(options: UseBookmarkSearchOptions = {}): UseBo
 
       logger.info('useBookmarkSearch', `筛选完成 (${filterSource.value}): "${trimmedQuery}"`, {
         total: totalResults.value,
-        executionTime: executionTime.value
+        executionTime: executionTime.value,
+        strategy: mode === 'indexeddb' ? 'via-bookmarkSearchService' : 'memory',
+        topResults: results.value.slice(0, 5).map(n => ({
+          id: n.id,
+          title: n.title,
+          score: n.filterScore,
+          matchedFields: n.matchedFields
+        }))
       })
     } catch (err) {
       const filterError = err as Error

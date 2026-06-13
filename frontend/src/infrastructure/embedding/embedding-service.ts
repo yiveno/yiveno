@@ -135,17 +135,49 @@ export class EmbeddingService {
    * 本地语义搜索（query 编码 vs passage 向量库）
    */
   async search(query: string, topK = 10, minScore = 0.2): Promise<LocalSemanticResult[]> {
+    const searchStart = performance.now()
     const provider = await this.getProvider()
-    if (!provider) return []
-
-    const count = await localVectorStore.count()
-    if (count === 0) {
-      logger.info(LOG_TAG, '向量库为空，请先同步书签')
+    if (!provider) {
+      logger.warn(LOG_TAG, 'Provider 不可用，跳过语义搜索', { query })
       return []
     }
 
+    const count = await localVectorStore.count()
+    if (count === 0) {
+      logger.info(LOG_TAG, '向量库为空，请先同步书签', { query })
+      return []
+    }
+
+    logger.info(LOG_TAG, '▶ 语义搜索开始', { query, topK, minScore, vectorCount: count })
+
+    const embedStart = performance.now()
     const queryVector = await provider.embedQuery(query.trim())
-    return localVectorStore.search(queryVector, topK, minScore)
+    const embedDuration = performance.now() - embedStart
+    logger.debug(LOG_TAG, 'Query 向量编码完成', {
+      query,
+      vectorDim: queryVector.length,
+      embedDurationMs: Number(embedDuration.toFixed(1))
+    })
+
+    const vectorStart = performance.now()
+    const results = await localVectorStore.search(queryVector, topK, minScore)
+    logger.info(LOG_TAG, '✅ 语义搜索完成', {
+      query,
+      topK,
+      minScore,
+      vectorCount: count,
+      resultCount: results.length,
+      embedDurationMs: Number(embedDuration.toFixed(1)),
+      vectorSearchDurationMs: Number((performance.now() - vectorStart).toFixed(1)),
+      totalDurationMs: Number((performance.now() - searchStart).toFixed(1)),
+      results: results.map(r => ({
+        bookmarkId: r.bookmarkId,
+        title: r.title,
+        score: Number(r.score.toFixed(4))
+      }))
+    })
+
+    return results
   }
 
   async getStats(): Promise<{ count: number; providerName: string | null }> {

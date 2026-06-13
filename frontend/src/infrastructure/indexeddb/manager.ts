@@ -43,7 +43,8 @@ import {
   BookmarkSearchOptionsSchema,
   BookmarkSearchResultArraySchema,
   migrateTraitTags,
-  migrateTraitMetadata
+  migrateTraitMetadata,
+  normalizeBookmarkRecord
 } from './validation/records'
 
 import {
@@ -99,22 +100,13 @@ export class IndexedDBManager {
   > = {
     [DB_CONFIG.STORES.BOOKMARKS]: [
       { name: 'parentId', keyPath: 'parentId' },
-      { name: 'url', keyPath: 'url' },
       { name: 'urlLower', keyPath: 'urlLower' },
       { name: 'domain', keyPath: 'domain' },
       { name: 'titleLower', keyPath: 'titleLower' },
-      { name: 'parentId_index', keyPath: ['parentId', 'index'] },
-      { name: 'pathIds', keyPath: 'pathIds', options: { multiEntry: true } },
       { name: 'keywords', keyPath: 'keywords', options: { multiEntry: true } },
       { name: 'tags', keyPath: 'tags', options: { multiEntry: true } },
-      {
-        name: 'traitTags',
-        keyPath: 'traitTags',
-        options: { multiEntry: true }
-      },
       { name: 'isInvalid', keyPath: 'isInvalid' },
-      { name: 'isDuplicate', keyPath: 'isDuplicate' },
-      { name: 'dateAdded', keyPath: 'dateAdded' }
+      { name: 'isDuplicate', keyPath: 'isDuplicate' }
     ],
     [DB_CONFIG.STORES.GLOBAL_STATS]: [
       { name: 'key', keyPath: 'key' },
@@ -144,7 +136,6 @@ export class IndexedDBManager {
     ],
     [DB_CONFIG.STORES.EMBEDDINGS]: [
       { name: 'bookmarkId', keyPath: 'bookmarkId' },
-      { name: 'domain', keyPath: 'domain' },
       { name: 'updatedAt', keyPath: 'updatedAt' }
     ],
     [DB_CONFIG.STORES.FOLDER_VECTORS]: [
@@ -240,6 +231,7 @@ export class IndexedDBManager {
       request.onupgradeneeded = event => {
         const db = (event.target as IDBOpenDBRequest).result
         const tx = (event.target as IDBOpenDBRequest).transaction
+        const oldVersion = event.oldVersion
         if (!tx) {
           const upgradeError = new Error('IndexedDB 升级事务缺失')
           logger.error('IndexedDBManager', 'openDatabase 升级事务缺失', upgradeError)
@@ -247,6 +239,9 @@ export class IndexedDBManager {
           return
         }
         this.createStores(db, tx)
+        if (oldVersion > 0 && oldVersion < 13) {
+          this.stripLegacyBookmarkFields(tx)
+        }
       }
 
       request.onsuccess = () => {
@@ -269,6 +264,29 @@ export class IndexedDBManager {
         reject(blockedError)
       }
     })
+  }
+
+  /**
+   * v13 迁移：从已有书签记录中物理删除冗余字段，缩小存储体积。
+   */
+  private stripLegacyBookmarkFields(tx: IDBTransaction): void {
+    const store = tx.objectStore(DB_CONFIG.STORES.BOOKMARKS)
+    const request = store.openCursor()
+
+    request.onsuccess = () => {
+      const cursor = request.result
+      if (!cursor) return
+
+      const parsed = BookmarkRecordSchema.safeParse(cursor.value)
+      if (parsed.success) {
+        cursor.update(normalizeBookmarkRecord(parsed.data))
+      }
+      cursor.continue()
+    }
+
+    request.onerror = () => {
+      logger.warn('IndexedDBManager', 'stripLegacyBookmarkFields 游标失败', request.error)
+    }
   }
 
   /**
