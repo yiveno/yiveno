@@ -31,8 +31,8 @@ onMounted(async () => {
 // 焦点管理
 const previousActiveElement = ref<HTMLElement | null>(null)
 
-// 用户搜索选择器 ref
-const userSearchSelectRef = ref<AsyncSearchSelectInstance | null>(null)
+// 用户筛选选择器 ref
+const userFilterSelectRef = ref<AsyncSearchSelectInstance | null>(null)
 
 // 获取用户名（优先使用用户设置的昵称，其次使用 user_metadata.name，最后使用 email 的前缀）
 const userName = computed(() => {
@@ -158,16 +158,16 @@ const handleTabChange = (event: Event) => {
   }
 }
 
-// 用户搜索（异步）
-const handleUserSearch = async (query: string) => {
+// 用户筛选（异步）
+const handleUserFilter = async (query: string) => {
   if (!session.value?.access_token) {
-    message.error('未登录，无法搜索用户')
+    message.error('未登录，无法筛选用户')
     return
   }
 
   try {
     // 设置 loading 状态
-    userSearchSelectRef.value?.setLoading(true)
+    userFilterSelectRef.value?.setLoading(true)
 
     const result = await trpc.share.searchUsers.query({
       query,
@@ -184,14 +184,14 @@ const handleUserSearch = async (query: string) => {
         raw: userData
       }))
 
-      // 设置搜索结果（无论是否为空，都是正常业务状态，不显示错误通知）
-      userSearchSelectRef.value?.setOptions(options)
+      // 设置筛选结果（无论是否为空，都是正常业务状态，不显示错误通知）
+      userFilterSelectRef.value?.setOptions(options)
     }
   } catch (error) {
-    // 捕获所有错误，但不显示通知（搜索失败是正常情况，用户会看到空状态）
-    logger.error('ShareDialog', '搜索用户失败', error)
+    // 捕获所有错误，但不显示通知（筛选失败是正常情况，用户会看到空状态）
+    logger.error('ShareDialog', '筛选用户失败', error)
     // 设置空结果，让用户看到空状态组件
-    userSearchSelectRef.value?.setOptions([])
+    userFilterSelectRef.value?.setOptions([])
   }
 }
 
@@ -402,7 +402,7 @@ const handleCreateLinkShare = async () => {
       // 在新标签页打开分享链接
       const shareUrl = result.data.shareUrl
       if (typeof chrome !== 'undefined' && chrome?.tabs?.create) {
-        chrome.tabs.create({ url: shareUrl })
+        void chrome.tabs.create({ url: shareUrl })
       } else {
         window.open(shareUrl, '_blank', 'noopener,noreferrer')
       }
@@ -519,8 +519,8 @@ watch(
       state.selectedUserIds = []
       state.message = ''
 
-      // 清空用户搜索选择器
-      userSearchSelectRef.value?.clearSelection()
+      // 清空用户筛选选择器
+      userFilterSelectRef.value?.clearSelection()
 
       void manageFocus(true)
     } else {
@@ -535,8 +535,8 @@ watch(
       state.selectedUserIds = []
       state.message = ''
 
-      // 清空用户搜索选择器
-      userSearchSelectRef.value?.clearSelection()
+      // 清空用户筛选选择器
+      userFilterSelectRef.value?.clearSelection()
 
       void manageFocus(false)
     }
@@ -711,22 +711,22 @@ onUnmounted(() => {
           </md-primary-tab>
         </md-tabs>
 
-        <!-- 直接分享：用户搜索 -->
-        <div v-if="state.shareType === 'direct'" class="user-search-section">
+        <!-- 直接分享：用户筛选 -->
+        <div v-if="state.shareType === 'direct'" class="user-filter-section">
           <!-- 书签数量超限提示 -->
           <div v-if="bookmarks.length > 500" class="error-hint">
             <LucideIcon name="alert-circle" :size="16" />
             <span>书签数量超出限制（{{ bookmarks.length }}/500），请减少选择的书签数量</span>
           </div>
 
-          <!-- 用户搜索选择器 -->
+          <!-- 用户筛选选择器 -->
           <AsyncSearchSelect
-            ref="userSearchSelectRef"
-            label="搜索用户"
+            ref="userFilterSelectRef"
+            label="筛选用户"
             placeholder="输入用户名或邮箱"
             :multiple="true"
             empty-text="未找到匹配的用户"
-            @search="handleUserSearch"
+            @search="handleUserFilter"
             @change="handleUserSelectionChange"
           />
 
@@ -1164,8 +1164,8 @@ md-primary-tab [slot='icon'] {
   align-items: center;
 }
 
-/* 用户搜索区域 */
-.user-search-section {
+/* 用户筛选区域 */
+.user-filter-section {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-3);

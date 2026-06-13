@@ -1,5 +1,7 @@
 # CSS 设计系统使用指南
 
+Material 组件采用边界见：[`material-coverage.md`](./material-coverage.md)。
+
 ## 核心原则
 
 1. **禁止魔法数字** - 所有间距、字号、颜色必须使用变量

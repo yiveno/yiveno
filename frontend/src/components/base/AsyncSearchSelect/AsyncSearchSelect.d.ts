@@ -1,5 +1,5 @@
 /**
- * 异步搜索选择器组件类型定义
+ * 异步筛选选择器组件类型定义
  */
 
 /**
@@ -36,7 +36,7 @@ export interface AsyncSearchSelectProps {
  * 组件 Emits
  */
 export interface AsyncSearchSelectEmits {
-  /** 搜索事件（返回搜索关键词） */
+  /** 筛选事件（返回筛选关键词） */
   (e: 'search', query: string): void
   /** 选择变化事件（返回选中的值数组） */
   (e: 'change', values: string[]): void
@@ -48,7 +48,7 @@ export interface AsyncSearchSelectEmits {
  * 组件实例方法
  */
 export interface AsyncSearchSelectInstance {
-  /** 设置搜索结果 */
+  /** 设置筛选结果 */
   setOptions: (options: SelectOption[]) => void
   /** 设置 loading 状态 */
   setLoading: (loading: boolean) => void

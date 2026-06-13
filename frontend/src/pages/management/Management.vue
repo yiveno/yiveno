@@ -465,11 +465,20 @@ function handleClearManagementFilters(): void {
 
           <!-- Middle Divider - 可点击切换左侧面板收起/展开 -->
           <div class="panel-col divider-col">
-            <div class="panel-divider" @click="toggleLeftPanel">
+            <div
+              class="panel-divider"
+              role="button"
+              tabindex="0"
+              :aria-label="isLeftPanelCollapsed ? '展开左侧面板' : '收起左侧面板'"
+              @click="toggleLeftPanel"
+              @keydown.enter.prevent="toggleLeftPanel"
+              @keydown.space.prevent="toggleLeftPanel"
+            >
               <Button
                 variant="icon"
                 :title="isLeftPanelCollapsed ? '展开左侧面板' : '收起左侧面板'"
                 class="panel-toggle-btn"
+                @click.stop="toggleLeftPanel"
               >
                 <LucideIcon
                   :name="isLeftPanelCollapsed ? 'chevrons-right' : 'chevrons-left'"

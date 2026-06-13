@@ -11,7 +11,7 @@ interface Step {
   titleKey: string
   subtitleKey?: string
   descriptionKey: string
-  visual: 'hero' | 'sync' | 'search' | 'omnibox' | 'complete'
+  visual: 'hero' | 'sync' | 'filter' | 'omnibox' | 'complete'
   showAction?: boolean
 }
 
@@ -37,7 +37,7 @@ const steps: Step[] = [
     titleKey: 'onboarding_ai_title',
     subtitleKey: 'onboarding_ai_subtitle',
     descriptionKey: 'onboarding_ai_description',
-    visual: 'search',
+    visual: 'filter',
     showAction: true
   },
   {
@@ -194,13 +194,13 @@ onUnmounted(() => {
               </div>
             </div>
 
-            <!-- Search Mockup -->
-            <div v-else-if="currentStep.visual === 'search'" class="visual-search">
-              <div class="search-box">
+            <!-- Filter Mockup -->
+            <div v-else-if="currentStep.visual === 'filter'" class="visual-filter">
+              <div class="filter-box">
                 <LucideIcon name="search" size="sm" />
-                <span class="search-placeholder">"design resources"</span>
+                <span class="filter-placeholder">"design resources"</span>
               </div>
-              <div class="search-results">
+              <div class="filter-results">
                 <div class="result-item">
                   <div class="result-icon" style="background: var(--color-primary-100)">
                     <span style="color: var(--color-primary)">F</span>
@@ -271,7 +271,7 @@ onUnmounted(() => {
             <p class="step-description">{{ t(currentStep.descriptionKey) }}</p>
 
             <div v-if="currentStep.showAction" class="action-area">
-              <button class="action-button" @click="nextStep">
+              <button type="button" class="action-button" @click="nextStep">
                 {{ isLast ? t('onboarding_get_started') : t('onboarding_next') }}
                 <LucideIcon name="arrow-right" size="sm" />
               </button>
@@ -287,7 +287,10 @@ onUnmounted(() => {
         <button
           v-for="(_, idx) in steps"
           :key="idx"
+          type="button"
           :class="['dot', { 'dot--active': currentStepIndex === idx }]"
+          :aria-label="`跳转到第 ${idx + 1} 步`"
+          :aria-current="currentStepIndex === idx ? 'step' : undefined"
           @click="currentStepIndex = idx"
         ></button>
       </div>
@@ -502,8 +505,8 @@ onUnmounted(() => {
   color: var(--color-text-secondary);
 }
 
-/* Search Visual */
-.visual-search {
+/* Filter Visual */
+.visual-filter {
   width: 100%;
   padding: var(--space-8);
   border: 1px solid var(--color-border);
@@ -511,7 +514,7 @@ onUnmounted(() => {
   background: var(--color-surface-container);
 }
 
-.search-box {
+.filter-box {
   display: flex;
   align-items: center;
   gap: var(--space-3);
@@ -523,12 +526,12 @@ onUnmounted(() => {
   box-shadow: 0 2px 8px var(--color-shadow-005);
 }
 
-.search-placeholder {
+.filter-placeholder {
   font-size: var(--md-sys-typescale-body-large-size); /* 16px */
   color: var(--color-text-secondary);
 }
 
-.search-results {
+.filter-results {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);

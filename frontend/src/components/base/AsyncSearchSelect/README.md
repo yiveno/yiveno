@@ -1,11 +1,11 @@
-# AsyncSearchSelect 异步搜索选择器
+# AsyncSearchSelect 异步筛选选择器
 
-通用的异步搜索选择器组件，支持单选/多选、防抖搜索、loading 状态等功能。
+通用的异步筛选选择器组件，支持单选/多选、防抖筛选、loading 状态等功能。
 
 ## 特性
 
 - ✅ 支持单选/多选模式
-- ✅ 异步搜索（防抖）
+- ✅ 异步筛选（防抖）
 - ✅ Loading 状态显示
 - ✅ 无结果提示
 - ✅ 已选项 Chips 展示（多选模式）
@@ -22,7 +22,7 @@
   <AsyncSearchSelect
     ref="selectRef"
     label="选择用户"
-    placeholder="输入用户名搜索..."
+    placeholder="输入用户名筛选..."
     @search="handleSearch"
     @change="handleChange"
   />
@@ -35,9 +35,9 @@ import type { SelectOption, AsyncSearchSelectInstance } from '@/components'
 
 const selectRef = ref<AsyncSearchSelectInstance | null>(null)
 
-// 处理搜索
+// 处理筛选
 const handleSearch = async (query: string) => {
-  // 调用 API 搜索
+  // 调用 API 筛选
   const results = await searchAPI(query)
 
   // 转换为 SelectOption 格式
@@ -48,7 +48,7 @@ const handleSearch = async (query: string) => {
     raw: item
   }))
 
-  // 设置搜索结果
+  // 设置筛选结果
   selectRef.value?.setOptions(options)
 }
 
@@ -66,7 +66,7 @@ const handleChange = (values: string[]) => {
   <AsyncSearchSelect
     ref="selectRef"
     label="选择多个用户"
-    placeholder="输入用户名搜索..."
+    placeholder="输入用户名筛选..."
     :multiple="true"
     @search="handleSearch"
     @change="handleChange"
@@ -82,7 +82,7 @@ import type { SelectOption, AsyncSearchSelectInstance } from '@/components'
 const selectRef = ref<AsyncSearchSelectInstance | null>(null)
 
 const handleSearch = async (query: string) => {
-  // 搜索逻辑...
+  // 筛选逻辑...
   selectRef.value?.setOptions(options)
 }
 
@@ -102,7 +102,7 @@ const handleSelectedChange = (options: SelectOption[]) => {
 <template>
   <AsyncSearchSelect
     ref="selectRef"
-    label="搜索商品"
+    label="筛选商品"
     placeholder="输入商品名称..."
     :multiple="true"
     :min-search-length="3"
@@ -117,8 +117,8 @@ const handleSelectedChange = (options: SelectOption[]) => {
 
 | 属性              | 类型      | 默认值                | 说明             |
 | ----------------- | --------- | --------------------- | ---------------- |
-| `label`           | `string`  | `'搜索'`              | 输入框标签       |
-| `placeholder`     | `string`  | `'输入关键词搜索...'` | 输入框占位符     |
+| `label`           | `string`  | `'筛选'`              | 输入框标签       |
+| `placeholder`     | `string`  | `'输入关键词筛选...'` | 输入框占位符     |
 | `multiple`        | `boolean` | `false`               | 是否多选         |
 | `minSearchLength` | `number`  | `2`                   | 最小搜索长度     |
 | `emptyText`       | `string`  | `'未找到匹配结果'`    | 无结果提示文本   |
@@ -128,7 +128,7 @@ const handleSelectedChange = (options: SelectOption[]) => {
 
 | 事件              | 参数                        | 说明                             |
 | ----------------- | --------------------------- | -------------------------------- |
-| `search`          | `(query: string)`           | 搜索事件，返回搜索关键词         |
+| `search`          | `(query: string)`           | 筛选事件，返回筛选关键词         |
 | `change`          | `(values: string[])`        | 选择变化，返回选中的值数组       |
 | `update:selected` | `(options: SelectOption[])` | 选择变化，返回选中的选项对象数组 |
 
@@ -138,7 +138,7 @@ const handleSelectedChange = (options: SelectOption[]) => {
 
 | 方法                 | 参数                        | 返回值           | 说明              |
 | -------------------- | --------------------------- | ---------------- | ----------------- |
-| `setOptions`         | `(options: SelectOption[])` | `void`           | 设置搜索结果      |
+| `setOptions`         | `(options: SelectOption[])` | `void`           | 设置筛选结果      |
 | `setLoading`         | `(loading: boolean)`        | `void`           | 设置 loading 状态 |
 | `clearSelection`     | `()`                        | `void`           | 清空选择          |
 | `getSelectedValues`  | `()`                        | `string[]`       | 获取选中的值      |
@@ -155,18 +155,18 @@ interface SelectOption {
   /** 选项描述（可选） */
   description?: string
   /** 原始数据（可选） */
-  raw?: any
+  raw?: unknown
 }
 ```
 
-## 完整示例（用户搜索）
+## 完整示例（用户筛选）
 
 ```vue
 <template>
-  <div class="user-search-demo">
+  <div class="user-filter-demo">
     <AsyncSearchSelect
       ref="userSelectRef"
-      label="搜索用户"
+      label="筛选用户"
       placeholder="输入用户名或邮箱"
       :multiple="true"
       :min-search-length="2"
@@ -209,7 +209,7 @@ const handleUserSearch = async (query: string) => {
     // 设置结果
     userSelectRef.value?.setOptions(options)
   } catch (error) {
-    console.error('搜索失败:', error)
+    console.error('筛选失败:', error)
     userSelectRef.value?.setOptions([])
   }
 }
@@ -236,17 +236,17 @@ const handleUserChange = (userIds: string[]) => {
 
 ## 注意事项
 
-1. **异步搜索**：组件本身不处理搜索逻辑，需要在 `@search` 事件中调用 API 并通过 `setOptions` 设置结果
-2. **Loading 状态**：搜索时会自动显示 loading，但需要在搜索完成后调用 `setOptions` 来关闭 loading
+1. **异步筛选**：组件本身不处理筛选逻辑，需要在 `@search` 事件中调用 API 并通过 `setOptions` 设置结果
+2. **Loading 状态**：筛选时会自动显示 loading，但需要在筛选完成后调用 `setOptions` 来关闭 loading
 3. **防抖**：输入已内置防抖，默认 300ms，可通过 `debounce` prop 调整
-4. **最小搜索长度**：默认需要输入至少 2 个字符才会触发搜索，可通过 `minSearchLength` 调整
+4. **最小筛选长度**：默认需要输入至少 2 个字符才会触发筛选，可通过 `minSearchLength` 调整
 5. **清空选择**：弹窗关闭时记得调用 `clearSelection()` 清空选择状态
 
 ## 与 Ant Design Select 的对比
 
 | 特性         | AsyncSearchSelect | Ant Design Select |
 | ------------ | ----------------- | ----------------- |
-| 异步搜索     | ✅                | ✅                |
+| 异步筛选     | ✅                | ✅                |
 | 多选         | ✅                | ✅                |
 | Loading 状态 | ✅                | ✅                |
 | 防抖         | ✅ 内置           | ❌ 需手动实现     |

@@ -1,5 +1,5 @@
 /**
- * 异步搜索选择器组件
+ * 异步筛选选择器组件
  */
 
 export { default as AsyncSearchSelect } from './AsyncSearchSelect.vue'

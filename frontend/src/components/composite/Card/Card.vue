@@ -42,11 +42,25 @@ const cardClasses = computed(() => [
  */
 const elevationClass = computed(() => 'card__elevation')
 
+const handleKeydown = (event: KeyboardEvent) => {
+  if (!props.clickable) return
+  if (event.key !== 'Enter' && event.key !== ' ') return
+  event.preventDefault()
+  const mouseEvent = new MouseEvent('click', { bubbles: true, cancelable: true })
+  event.currentTarget?.dispatchEvent(mouseEvent)
+}
+
 // 类型已从 Card.types.ts 导入
 </script>
 
 <template>
-  <div :class="cardClasses" @click="props.clickable ? $emit('click', $event) : undefined">
+  <div
+    :class="cardClasses"
+    :role="props.clickable ? 'button' : undefined"
+    :tabindex="props.clickable ? 0 : undefined"
+    @click="props.clickable ? $emit('click', $event) : undefined"
+    @keydown="handleKeydown"
+  >
     <!-- Material Design 3 Elevation -->
     <md-elevation :class="elevationClass"></md-elevation>
 
@@ -106,13 +120,19 @@ const elevationClass = computed(() => 'card__elevation')
 }
 
 .card {
+  --ottersage-card-container-color: var(--md-sys-color-surface);
+  --ottersage-card-outline-color: var(--md-sys-color-outline-variant);
+  --ottersage-card-outline-width: 1px;
+  --ottersage-card-shape: var(--radius-lg);
+
   position: relative;
 
   /* Base styles */
   display: flex;
   flex-direction: column;
-  border-radius: var(--radius-lg);
-  background-color: var(--color-surface);
+  border: var(--ottersage-card-outline-width) solid var(--ottersage-card-outline-color);
+  border-radius: var(--ottersage-card-shape);
+  background-color: var(--ottersage-card-container-color);
   transition:
     border-color var(--motion-standard),
     opacity var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
@@ -128,7 +148,8 @@ const elevationClass = computed(() => 'card__elevation')
 
 /* === Variants === */
 .card--default {
-  border: 1px solid var(--color-border);
+  --ottersage-card-container-color: var(--md-sys-color-surface-container-low);
+  --ottersage-card-outline-color: var(--md-sys-color-outline-variant);
 }
 
 .card--default .card__elevation {
@@ -136,7 +157,9 @@ const elevationClass = computed(() => 'card__elevation')
 }
 
 .card--outlined {
-  border: 2px solid var(--color-border);
+  --ottersage-card-container-color: var(--md-sys-color-surface);
+  --ottersage-card-outline-color: var(--md-sys-color-outline);
+  --ottersage-card-outline-width: 1px;
 }
 
 .card--outlined .card__elevation {
@@ -144,7 +167,8 @@ const elevationClass = computed(() => 'card__elevation')
 }
 
 .card--elevated {
-  border: 1px solid var(--color-border);
+  --ottersage-card-container-color: var(--md-sys-color-surface-container-low);
+  --ottersage-card-outline-color: transparent;
 }
 
 .card--elevated .card__elevation {

@@ -7,8 +7,8 @@ import EmptyState from '@/components/composite/EmptyState/EmptyState.vue'
 defineOptions({ name: 'AsyncSearchSelect' })
 
 const props = withDefaults(defineProps<AsyncSearchSelectProps>(), {
-  label: '搜索',
-  placeholder: '输入关键词搜索...',
+  label: '筛选',
+  placeholder: '输入关键词筛选...',
   multiple: false,
   emptyText: '未找到匹配结果',
   debounce: 300
@@ -52,7 +52,7 @@ interface AsyncSearchSelectProps {
  * 组件 Emits
  */
 interface AsyncSearchSelectEmits {
-  /** 搜索事件（返回搜索关键词） */
+  /** 筛选事件（返回筛选关键词） */
   (e: 'search', query: string): void
   /** 选择变化事件（返回选中的值数组） */
   (e: 'change', values: string[]): void
@@ -68,6 +68,8 @@ const options = ref<SelectOption[]>([])
 const selectedValues = ref<Set<string>>(new Set())
 const isFocused = ref(false)
 const inputRef = ref<HTMLInputElement | null>(null)
+const inputId = `async-filter-${Math.random().toString(36).slice(2)}`
+const dropdownId = `${inputId}-listbox`
 
 // 已选择的选项（保留完整信息）
 const selectedOptionsMap = ref<Map<string, SelectOption>>(new Map())
@@ -98,7 +100,7 @@ const toggleOption = (option: SelectOption) => {
       selectedOptionsMap.value.set(option.value, option)
     }
 
-    // 多选模式：选中后清空搜索输入，关闭下拉框
+    // 多选模式：选中后清空筛选输入，关闭下拉框
     searchQuery.value = ''
     showDropdown.value = false
     options.value = []
@@ -110,7 +112,7 @@ const toggleOption = (option: SelectOption) => {
     selectedValues.value.add(option.value)
     selectedOptionsMap.value.set(option.value, option)
 
-    // 单选模式：选中后清空搜索输入，关闭下拉框
+    // 单选模式：选中后清空筛选输入，关闭下拉框
     searchQuery.value = ''
     closeDropdown()
   }
@@ -136,6 +138,12 @@ const removeOption = (value: string, event?: Event) => {
  */
 const handleWrapperClick = () => {
   inputRef.value?.focus()
+}
+
+const handleInputKeydown = (event: KeyboardEvent) => {
+  if (event.key === 'Escape') {
+    closeDropdown()
+  }
 }
 
 /**
@@ -171,7 +179,7 @@ const handleInput = useDebounceFn(
       return
     }
 
-    // 有输入值：设置 loading 状态，隐藏下拉框（等待接口响应），触发搜索
+    // 有输入值：设置 loading 状态，隐藏下拉框（等待接口响应），触发筛选
     loading.value = true
     showDropdown.value = false // 隐藏下拉框，等待接口响应
     // 清空之前的选项，避免显示旧数据
@@ -186,13 +194,13 @@ const handleInput = useDebounceFn(
  */
 const handleClear = () => {
   if (searchQuery.value) {
-    // 如果有搜索输入，清空搜索
+    // 如果有筛选输入，清空筛选
     searchQuery.value = ''
     showDropdown.value = false
     options.value = []
     loading.value = false
   } else if (selectedOptions.value.length > 0) {
-    // 如果没有搜索输入但有选中项，清空所有选中
+    // 如果没有筛选输入但有选中项，清空所有选中
     clearSelection()
   }
 }
@@ -202,7 +210,7 @@ const handleClear = () => {
  */
 const closeDropdown = () => {
   showDropdown.value = false
-  // 多选模式：清空搜索输入
+  // 多选模式：清空筛选输入
   if (props.multiple) {
     searchQuery.value = ''
     options.value = []
@@ -210,7 +218,7 @@ const closeDropdown = () => {
 }
 
 /**
- * 设置搜索结果（供父组件调用）
+ * 设置筛选结果（供父组件调用）
  */
 const setOptions = (newOptions: SelectOption[]) => {
   options.value = newOptions
@@ -237,7 +245,7 @@ const clearSelection = () => {
 }
 
 /**
- * 清空搜索输入
+ * 清空筛选输入
  */
 const clearSearch = () => {
   searchQuery.value = ''
@@ -313,16 +321,18 @@ defineExpose({
     <!-- 自定义输入框容器（包含标签和输入） -->
     <div class="input-container" :class="{ 'input-container--focused': isFocused }">
       <!-- Label -->
-      <label v-if="label" class="input-label">{{ label }}</label>
+      <label v-if="label" class="input-label" :for="inputId">{{ label }}</label>
 
       <!-- 输入区域 -->
       <div class="input-wrapper" @click="handleWrapperClick">
         <!-- 已选择的标签（显示在输入框内部） -->
         <div v-if="multiple && selectedOptions.length > 0" class="selected-tags-inline">
-          <div
+          <button
             v-for="option in selectedOptions"
             :key="option.value"
+            type="button"
             class="selected-tag-inline"
+            :aria-label="`移除 ${option.label}`"
             @click.stop="removeOption(option.value, $event)"
           >
             <!-- 头像 -->
@@ -334,19 +344,25 @@ defineExpose({
             <span class="tag-label-inline">{{ option.label }}</span>
             <!-- 删除按钮 -->
             <LucideIcon name="x" :size="12" class="tag-remove-icon-inline" />
-          </div>
+          </button>
         </div>
 
         <!-- 实际的输入框 -->
         <input
+          :id="inputId"
           ref="inputRef"
           v-model="searchQuery"
           type="text"
+          role="combobox"
           class="input-field"
           :placeholder="selectedOptions.length > 0 ? '' : placeholder"
+          :aria-expanded="showDropdown"
+          :aria-controls="showDropdown ? dropdownId : undefined"
+          :aria-autocomplete="'list'"
           @focus="handleFocus"
           @blur="handleBlur"
           @input="handleInput"
+          @keydown="handleInputKeydown"
         />
 
         <!-- 右侧图标区域 -->
@@ -357,23 +373,30 @@ defineExpose({
           </div>
 
           <!-- 清除按钮 -->
-          <button
+          <md-icon-button
             v-else-if="searchQuery || selectedOptions.length > 0"
             type="button"
             class="input-clear-btn"
+            aria-label="清除筛选"
             @click.stop="handleClear"
           >
             <LucideIcon name="x" :size="16" />
-          </button>
+          </md-icon-button>
         </div>
       </div>
     </div>
 
     <!-- 下拉菜单 -->
-    <div v-if="showDropdown" class="dropdown-menu" role="listbox" :aria-label="label">
-      <!-- 搜索结果 -->
-      <div v-if="options.length > 0" class="dropdown-options">
-        <div
+    <div
+      v-if="showDropdown"
+      :id="dropdownId"
+      class="dropdown-menu"
+      role="listbox"
+      :aria-label="label"
+    >
+      <!-- 筛选结果 -->
+      <md-list v-if="options.length > 0" class="dropdown-options">
+        <md-list-item
           v-for="option in options"
           :key="option.value"
           class="dropdown-option"
@@ -383,7 +406,7 @@ defineExpose({
           @click="toggleOption(option)"
         >
           <!-- 头像 -->
-          <div class="option-avatar">
+          <div slot="start" class="option-avatar">
             <img v-if="option.avatar" :src="getAvatarUrl(option)" :alt="option.label" />
             <span v-else class="option-avatar-initials">{{ getInitials(option.label) }}</span>
           </div>
@@ -397,14 +420,11 @@ defineExpose({
           </div>
 
           <!-- 选中标记（打勾） -->
-          <LucideIcon
-            v-if="isSelected(option.value)"
-            name="check"
-            :size="18"
-            class="option-check-icon"
-          />
-        </div>
-      </div>
+          <span v-if="isSelected(option.value)" slot="end" class="option-check">
+            <LucideIcon name="check" :size="18" class="option-check-icon" />
+          </span>
+        </md-list-item>
+      </md-list>
 
       <!-- 无结果（只在非 loading 状态显示） -->
       <div v-else-if="!loading" class="dropdown-empty">
@@ -482,7 +502,9 @@ defineExpose({
   align-items: center;
   gap: var(--spacing-1);
   padding: var(--spacing-1) var(--spacing-2);
+  border: 0;
   border-radius: var(--radius-sm);
+  font: inherit;
   font-size: var(--text-sm);
   color: var(--md-sys-color-on-primary-container);
   background: var(--md-sys-color-primary-container);
@@ -581,25 +603,13 @@ defineExpose({
   --md-circular-progress-active-indicator-color: var(--md-sys-color-primary);
 }
 
-/* 清除按钮 */
 .input-clear-btn {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: none;
-  border-radius: var(--radius-full);
-  color: var(--color-text-tertiary);
-  background: transparent;
-  cursor: pointer;
-  transition: all var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
-}
+  --md-icon-button-icon-color: var(--color-text-tertiary);
+  --md-icon-button-icon-size: 16px;
+  --md-icon-button-state-layer-shape: var(--radius-full);
 
-.input-clear-btn:hover {
-  color: var(--color-text-primary);
-  background: var(--md-sys-color-surface-container-high);
+  width: 28px;
+  height: 28px;
 }
 
 /* 下拉菜单 */
@@ -622,39 +632,29 @@ defineExpose({
 
 /* 下拉选项 */
 .dropdown-options {
-  display: flex;
-  flex-direction: column;
+  --md-list-container-color: transparent;
+
+  padding: var(--spacing-1) 0;
 }
 
 .dropdown-option {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-3);
-  padding: var(--spacing-3) var(--spacing-4);
-  border-bottom: 1px solid var(--color-border);
+  --md-list-item-container-shape: var(--radius-sm);
+  --md-list-item-label-text-font: var(--font-family-base);
+  --md-list-item-label-text-size: var(--text-sm);
+  --md-list-item-label-text-weight: var(--font-medium);
+  --md-list-item-one-line-container-height: 56px;
+  --md-list-item-hover-state-layer-color: var(--md-sys-color-on-surface);
+  --md-list-item-hover-state-layer-opacity: 0.08;
+  --md-list-item-focus-state-layer-color: var(--md-sys-color-on-surface);
+  --md-list-item-focus-state-layer-opacity: 0.12;
+
+  margin: 0 var(--spacing-1);
   cursor: pointer;
-  transition: background-color var(--md-sys-motion-duration-short2)
-    var(--md-sys-motion-easing-standard);
-}
-
-.dropdown-option:last-child {
-  border-bottom: none;
-}
-
-.dropdown-option:hover {
-  background-color: var(--md-sys-color-surface-container-high);
 }
 
 .dropdown-option--selected {
-  background-color: var(--md-sys-color-primary-container);
-}
-
-.dropdown-option--selected:hover {
-  background-color: color-mix(
-    in srgb,
-    var(--md-sys-color-primary-container),
-    var(--md-sys-color-primary) 10%
-  );
+  --md-list-item-container-color: var(--md-sys-color-primary-container);
+  --md-list-item-label-text-color: var(--md-sys-color-on-primary-container);
 }
 
 /* 选项头像 */
@@ -712,5 +712,10 @@ defineExpose({
 .option-check-icon {
   flex-shrink: 0;
   color: var(--md-sys-color-primary);
+}
+
+.option-check {
+  display: inline-flex;
+  align-items: center;
 }
 </style>
