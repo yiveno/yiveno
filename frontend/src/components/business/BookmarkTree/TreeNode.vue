@@ -1023,27 +1023,11 @@ defineExpose({
 
 /* 子节点 */
 .children {
-  position: relative;
-
   /* ✅ 性能优化：提示浏览器优化动画性能 */
   will-change: transform, opacity;
 
   /* ✅ 优化：使用 emphasized 缓动函数，更流畅的展开动画 */
   animation: slide-down var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized);
-}
-
-.children::before {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: calc(var(--indent-size, 24px) * 0.5 + var(--spacing-sm));
-  /* stylelint-disable-next-line declaration-property-value-disallowed-list */
-  width: 1.5px;
-  /* stylelint-disable-next-line declaration-property-value-disallowed-list */
-  border-radius: 1px;
-  background: var(--color-border);
-  opacity: 0.4;
-  content: '';
 }
 
 /* 尺寸变体 */
