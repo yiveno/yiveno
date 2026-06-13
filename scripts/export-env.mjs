@@ -42,8 +42,8 @@ const waitForBridge = async page => {
   await page.waitForFunction(
     () =>
       typeof window !== 'undefined' &&
-      typeof window.__AB_EXPORT_ENV__ === 'function' &&
-      typeof window.__AB_IMPORT_ENV__ === 'function',
+      typeof window.__OS_EXPORT_ENV__ === 'function' &&
+      typeof window.__OS_IMPORT_ENV__ === 'function',
     { timeout: 20000 }
   )
 }
@@ -70,10 +70,10 @@ async function main() {
   await waitForBridge(page)
 
   const snapshot = await page.evaluate(async () => {
-    if (typeof window.__AB_EXPORT_ENV__ !== 'function') {
+    if (typeof window.__OS_EXPORT_ENV__ !== 'function') {
       throw new Error('Env snapshot bridge missing')
     }
-    return await window.__AB_EXPORT_ENV__()
+    return await window.__OS_EXPORT_ENV__()
   })
 
   await fs.writeFile(filePath, JSON.stringify(snapshot, null, 2), 'utf-8')

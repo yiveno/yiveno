@@ -1618,7 +1618,7 @@ interface BookmarkRecord {
 
 ```typescript
 // 1. 数据库就绪状态（会话级）
-await chromeStorage.setSession('AB_DB_READY', true)
+await chromeStorage.setSession('os_db_ready', true)
 
 // 2. 同步状态（防止重复同步）
 await modernStorage.setSession('SYNC_STATE', { isSyncing: true })

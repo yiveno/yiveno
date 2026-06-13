@@ -30,7 +30,7 @@ export interface FavoriteBookmark {
  */
 class FavoriteAppService {
   /** chrome.storage.local 中存储收藏书签 ID 列表的键名 */
-  private readonly STORAGE_KEY = 'AB_FAVORITE_BOOKMARKS'
+  private readonly STORAGE_KEY = 'OS_FAVORITE_BOOKMARKS'
 
   /**
    * 从 chrome.storage.local 获取收藏书签 ID 列表

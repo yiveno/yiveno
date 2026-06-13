@@ -31,7 +31,7 @@ const waitForBridge = async page => {
   await page.waitForFunction(
     () =>
       typeof window !== 'undefined' &&
-      typeof window.__AB_IMPORT_ENV__ === 'function',
+      typeof window.__OS_IMPORT_ENV__ === 'function',
     { timeout: 20000 }
   )
 }
@@ -54,10 +54,10 @@ async function main() {
   await waitForBridge(page)
 
   const result = await page.evaluate(async payload => {
-    if (typeof window.__AB_IMPORT_ENV__ !== 'function') {
+    if (typeof window.__OS_IMPORT_ENV__ !== 'function') {
       throw new Error('Env snapshot bridge missing')
     }
-    return await window.__AB_IMPORT_ENV__(payload)
+    return await window.__OS_IMPORT_ENV__(payload)
   }, snapshot)
 
   console.log('✅ Environment snapshot imported from', absoluteFile)

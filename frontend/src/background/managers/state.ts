@@ -6,30 +6,28 @@
  * 2. 提供读取与部分更新的便捷方法
  * 3. 统一当前数据库架构版本，方便生命周期逻辑引用
  *
- * 🔴 Session Storage Migration:
- * - `dbReady` 已迁移到 chrome.storage.session（临时运行状态）
+ * Session Storage：`dbReady` 为会话级临时运行状态
  */
 
 import { logger } from '@/infrastructure/logging/logger'
 import { chromeStorage } from '@/infrastructure/storage/chrome-storage'
 
 /**
- * 本地存储键位常量
- * 使用常量而非字符串字面量，避免各处拼写不一致导致的状态偏差
+ * 本地存储键位常量（otterSage / OS 前缀）
  */
 export const STATE_KEYS = {
-  INITIALIZED: 'AB_INITIALIZED',
-  SCHEMA_VERSION: 'AB_SCHEMA_VERSION',
-  BOOKMARK_COUNT: 'AB_BOOKMARK_COUNT',
-  LAST_SYNCED_AT: 'AB_LAST_SYNCED_AT',
-  INSTALL_REASON: 'AB_INSTALL_REASON'
+  INITIALIZED: 'OS_INITIALIZED',
+  SCHEMA_VERSION: 'OS_SCHEMA_VERSION',
+  BOOKMARK_COUNT: 'OS_BOOKMARK_COUNT',
+  LAST_SYNCED_AT: 'OS_LAST_SYNCED_AT',
+  INSTALL_REASON: 'OS_INSTALL_REASON'
 } as const
 
 /**
  * Session Storage 键位常量
  */
 const SESSION_KEYS = {
-  DB_READY: 'ab_db_ready' // 🔴 迁移：数据库就绪状态（会话级别）
+  DB_READY: 'os_db_ready'
 } as const
 
 export type StateKey = (typeof STATE_KEYS)[keyof typeof STATE_KEYS]
@@ -62,11 +60,7 @@ const DEFAULT_STATE: ExtensionState = {
 }
 
 /**
- * 🔴 获取数据库就绪状态（Session Storage）
- *
- * 迁移说明：
- * - dbReady 是临时运行状态，会话结束后应重新检查
- * - 从 chrome.storage.local 迁移到 chrome.storage.session
+ * 获取数据库就绪状态（Session Storage）
  */
 export async function getDatabaseReady(): Promise<boolean> {
   try {
@@ -79,7 +73,7 @@ export async function getDatabaseReady(): Promise<boolean> {
 }
 
 /**
- * 🔴 设置数据库就绪状态（Session Storage）
+ * 设置数据库就绪状态（Session Storage）
  */
 export async function setDatabaseReady(ready: boolean): Promise<void> {
   try {
@@ -92,20 +86,15 @@ export async function setDatabaseReady(ready: boolean): Promise<void> {
 
 /**
  * 从 chrome.storage.local + session 读取扩展状态
- *
- * ⚠️ dbReady 已迁移到 session storage
  */
 export async function getExtensionState(): Promise<ExtensionState> {
   try {
-    // ✅ 直接使用 chrome.storage.local（更清晰）
     const raw = await chrome.storage.local.get(Object.values(STATE_KEYS))
-
-    // 🔴 dbReady 从 session storage 读取
     const dbReady = await getDatabaseReady()
 
     return {
       initialized: Boolean(raw[STATE_KEYS.INITIALIZED]),
-      dbReady, // 从 session storage
+      dbReady,
       schemaVersion: Number(raw[STATE_KEYS.SCHEMA_VERSION] ?? 0),
       bookmarkCount: Number(raw[STATE_KEYS.BOOKMARK_COUNT] ?? 0),
       lastSyncedAt: Number(raw[STATE_KEYS.LAST_SYNCED_AT] ?? 0),
@@ -122,9 +111,6 @@ export async function getExtensionState(): Promise<ExtensionState> {
 
 /**
  * 更新部分扩展状态字段
- * 仅会写入调用方显式传递的键，避免覆盖其他异步流程正在维护的字段
- *
- * ⚠️ dbReady 已迁移到 session storage，使用 setDatabaseReady()
  */
 export async function updateExtensionState(updates: Partial<ExtensionState>): Promise<void> {
   const payload: Partial<Record<StateKey, unknown>> = {}
@@ -133,7 +119,6 @@ export async function updateExtensionState(updates: Partial<ExtensionState>): Pr
     payload[STATE_KEYS.INITIALIZED] = updates.initialized
   }
 
-  // 🔴 dbReady 写入 session storage
   if (updates.dbReady !== undefined) {
     await setDatabaseReady(updates.dbReady)
   }
@@ -155,7 +140,6 @@ export async function updateExtensionState(updates: Partial<ExtensionState>): Pr
     return
   }
 
-  // ✅ 直接使用 chrome.storage.local（更清晰）
   await chrome.storage.local.set(payload)
   logger.debug('BackgroundState', '扩展状态已更新', payload)
 }

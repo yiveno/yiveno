@@ -2,12 +2,12 @@
 alwaysApply: true
 ---
 
-# AcuityBookmarks 项目规则
+# otterSage 项目规则
 
 用中文回复
 
 ---
-# AcuityBookmarks 项目规范
+# otterSage 项目规范
 **本文档为 AI IDE 行为准则，必须严格遵守**
 ---
 
@@ -55,7 +55,7 @@ bun run stylelint:force
 ```
 
 ## 📚 必读文档
-- **产品文档（最重要）**：`docs/product/AcuityBookmarks-产品文档-v3.0.md`（含 **§零 文档治理与 AI 协作**；列表与指针交互见 **§1.1.1**；实现约束见 **§4.1.2.1**）
+- **产品文档（最重要）**：`docs/product/otterSage-产品文档-v3.0.md`（含 **§零 文档治理与 AI 协作**；列表与指针交互见 **§1.1.1**；实现约束见 **§4.1.2.1**）
 - 架构变更必须同步更新产品文档
 
 ---
@@ -426,7 +426,7 @@ async function loadBookmarks() {
 - 工具类动画（`pop`、`shake` 等）用于明确反馈（成功/错误）
 - 这些必须与列表 hover 分离，不得复用
 
-**原因：** 见 `docs/product/AcuityBookmarks-产品文档-v3.0.md` §1.1.1、§4.1.2.1。
+**原因：** 见 `docs/product/otterSage-产品文档-v3.0.md` §1.1.1、§4.1.2.1。
 
 ## ⚡ 性能要求
 

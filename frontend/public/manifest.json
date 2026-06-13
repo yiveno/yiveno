@@ -58,7 +58,7 @@
     }
   ],
   "omnibox": {
-    "keyword": "ab"
+    "keyword": "os"
   },
   "side_panel": {
     "default_path": "side-panel.html"

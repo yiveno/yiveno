@@ -233,45 +233,45 @@ defineExpose({
     <div
       v-for="placement in placements"
       :key="placement"
-      :class="['ab-notification-container', `ab-notification-${placement}`]"
+      :class="['os-notification-container', `os-notification-${placement}`]"
     >
-      <transition-group name="ab-notification" tag="div">
+      <transition-group name="os-notification" tag="div">
         <div
           v-for="item in getNotificationsByPlacement(placement)"
           :key="item.key || item.id"
-          class="ab-notification"
-          :class="[`ab-notification-${item.type}`]"
+          class="os-notification"
+          :class="[`os-notification-${item.type}`]"
           @mouseenter="handleMouseEnter(item.id)"
           @mouseleave="handleMouseLeave(item.id)"
         >
           <!-- 进度条：使用纯 CSS 动画，零 JS 开销 -->
-          <div v-if="item.duration && item.duration > 0" class="ab-notification-progress-wrapper">
+          <div v-if="item.duration && item.duration > 0" class="os-notification-progress-wrapper">
             <div
               :key="item.progressKey"
-              class="ab-notification-progress-bar"
+              class="os-notification-progress-bar"
               :class="[
-                `ab-notification-progress-bar--${item.type}`,
-                { 'ab-notification-progress-bar--paused': item.paused }
+                `os-notification-progress-bar--${item.type}`,
+                { 'os-notification-progress-bar--paused': item.paused }
               ]"
               :style="getProgressStyle(item)"
             ></div>
           </div>
-          <div class="ab-notification-content">
-            <div v-if="item.icon !== false" class="ab-notification-icon">
+          <div class="os-notification-content">
+            <div v-if="item.icon !== false" class="os-notification-icon">
               <LucideIcon :name="getIconName(item.type)" :size="24" />
             </div>
-            <div class="ab-notification-message">
-              <div v-if="item.message" class="ab-notification-title">
+            <div class="os-notification-message">
+              <div v-if="item.message" class="os-notification-title">
                 {{ item.message }}
               </div>
-              <div v-if="item.description" class="ab-notification-description">
+              <div v-if="item.description" class="os-notification-description">
                 {{ item.description }}
               </div>
             </div>
             <Button
               v-if="item.closable !== false"
               variant="icon"
-              class="ab-notification-close"
+              class="os-notification-close"
               :icon-size="14"
               :aria-label="`关闭${item.message}通知`"
               @click="close(item.id)"
@@ -330,17 +330,17 @@ defineExpose({
   }
 }
 
-.ab-notification-container {
+.os-notification-container {
   position: fixed;
   z-index: 9999;
   pointer-events: none;
 }
 
-.ab-notification-container > div {
+.os-notification-container > div {
   pointer-events: none;
 }
 
-.ab-notification {
+.os-notification {
   position: relative;
   width: 384px;
   max-width: calc(100vw - 32px);
@@ -357,7 +357,7 @@ defineExpose({
 }
 
 /* 进度条容器 */
-.ab-notification-progress-wrapper {
+.os-notification-progress-wrapper {
   position: absolute;
   bottom: 0;
   left: 0;
@@ -368,7 +368,7 @@ defineExpose({
 }
 
 /* 进度条 */
-.ab-notification-progress-bar {
+.os-notification-progress-bar {
   width: 100%;
   height: 100%;
   transition: width 0.1s ease-out;
@@ -376,80 +376,80 @@ defineExpose({
 }
 
 /* 暂停状态 */
-.ab-notification-progress-bar--paused {
+.os-notification-progress-bar--paused {
   animation-play-state: paused;
 }
 
 /* 颜色 */
-.ab-notification-success .ab-notification-progress-bar {
+.os-notification-success .os-notification-progress-bar {
   background: var(--color-success);
 }
 
-.ab-notification-info .ab-notification-progress-bar {
+.os-notification-info .os-notification-progress-bar {
   background: var(--color-info);
 }
 
-.ab-notification-warning .ab-notification-progress-bar {
+.os-notification-warning .os-notification-progress-bar {
   background: var(--color-warning);
 }
 
-.ab-notification-error .ab-notification-progress-bar {
+.os-notification-error .os-notification-progress-bar {
   background: var(--color-error);
 }
 
-.ab-notification-topLeft,
-.ab-notification-topRight {
+.os-notification-topLeft,
+.os-notification-topRight {
   top: var(--spacing-6);
 }
 
-.ab-notification-bottomLeft,
-.ab-notification-bottomRight {
+.os-notification-bottomLeft,
+.os-notification-bottomRight {
   bottom: var(--spacing-6);
 }
 
-.ab-notification-topLeft,
-.ab-notification-bottomLeft {
+.os-notification-topLeft,
+.os-notification-bottomLeft {
   left: var(--spacing-6);
 }
 
-.ab-notification-topRight,
-.ab-notification-bottomRight {
+.os-notification-topRight,
+.os-notification-bottomRight {
   right: var(--spacing-6);
 }
 
-.ab-notification-content {
+.os-notification-content {
   display: flex;
   align-items: flex-start;
   gap: var(--spacing-3);
 }
 
-.ab-notification-icon {
+.os-notification-icon {
   flex-shrink: 0;
   line-height: 1;
 }
 
-.ab-notification-success .ab-notification-icon {
+.os-notification-success .os-notification-icon {
   color: var(--color-success);
 }
 
-.ab-notification-info .ab-notification-icon {
+.os-notification-info .os-notification-icon {
   color: var(--color-info);
 }
 
-.ab-notification-warning .ab-notification-icon {
+.os-notification-warning .os-notification-icon {
   color: var(--color-warning);
 }
 
-.ab-notification-error .ab-notification-icon {
+.os-notification-error .os-notification-icon {
   color: var(--color-error);
 }
 
-.ab-notification-message {
+.os-notification-message {
   flex: 1;
   min-width: 0;
 }
 
-.ab-notification-title {
+.os-notification-title {
   margin-bottom: var(--spacing-2);
   font-size: var(--text-base);
   font-weight: 600;
@@ -457,13 +457,13 @@ defineExpose({
   color: var(--color-text-primary);
 }
 
-.ab-notification-description {
+.os-notification-description {
   font-size: var(--text-sm);
   line-height: 22px;
   color: var(--color-text-secondary);
 }
 
-.ab-notification-close {
+.os-notification-close {
   flex-shrink: 0;
   padding: 0;
   border: none;
@@ -475,17 +475,17 @@ defineExpose({
   transition: color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
 }
 
-.ab-notification-close:hover {
+.os-notification-close:hover {
   color: var(--color-text-primary);
 }
 
 /* 动画 */
-.ab-notification-enter-active {
+.os-notification-enter-active {
   animation: notification-slide-in var(--md-sys-motion-duration-medium1)
     var(--md-sys-motion-easing-emphasized);
 }
 
-.ab-notification-leave-active {
+.os-notification-leave-active {
   animation: notification-slide-out var(--md-sys-motion-duration-medium1)
     var(--md-sys-motion-easing-emphasized);
 }

@@ -70,7 +70,7 @@ class NotificationManager implements NotificationInterface {
 
     // 创建容器
     this.container = document.createElement('div')
-    this.container.className = 'ab-notification-wrapper'
+    this.container.className = 'os-notification-wrapper'
     document.body.appendChild(this.container)
 
     // 创建 Vue 应用

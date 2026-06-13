@@ -13,7 +13,7 @@
  * 3. 将最终指令分流到直接打开书签或跳转整理页面
  *
  * 使用方式：
- * 在地址栏输入 "ab" 或扩展关键字，然后输入查询条件
+ * 在地址栏输入 "os" 或扩展关键字，然后输入查询条件
  */
 
 import { logger } from '@/infrastructure/logging/logger'

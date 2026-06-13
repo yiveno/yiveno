@@ -77,7 +77,7 @@ async function connectChrome(host) {
 
 async function saveConsole(page, tag) {
   const logs = await page.evaluate(() => {
-    return window.__AB_CONSOLE_BUFFER__ || []
+    return window.__OS_CONSOLE_BUFFER__ || []
   })
   await fs.writeFile(
     path.join(artifactsDir, 'console', `${tag}_console.json`),
@@ -87,13 +87,13 @@ async function saveConsole(page, tag) {
 }
 
 async function attachConsoleBuffer(page) {
-  await page.exposeFunction('__ab_push_log__', () => {})
+  await page.exposeFunction('__os_push_log__', () => {})
   await page.evaluateOnNewDocument(() => {
     // Simple console buffer injected before unknown script runs
-    ;(window).__AB_CONSOLE_BUFFER__ = []
+    ;(window).__OS_CONSOLE_BUFFER__ = []
     const orig = { log: console.log, warn: console.warn, error: console.error }
     const wrap = (level) => (...args) => {
-      try { (window).__AB_CONSOLE_BUFFER__.push({ level, args, ts: Date.now() }) } catch {}
+      try { (window).__OS_CONSOLE_BUFFER__.push({ level, args, ts: Date.now() }) } catch {}
       return orig[level](...args)
     }
     console.log = wrap('log')
@@ -145,7 +145,7 @@ async function run() {
   const page = await browser.newPage()
   await attachConsoleBuffer(page)
   const steps = []
-  globalThis.__AB_TAG__ = tag
+  globalThis.__OS_TAG__ = tag
 
   // 性能模式：应用网络/CPU限速 + 记录 trace
   let perfClient = null

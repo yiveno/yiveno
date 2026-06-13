@@ -4,6 +4,7 @@
  */
 import { ref, onMounted, onUnmounted } from 'vue'
 import type { ChromeExtensionMessage } from '@/types/chrome-messages'
+import { STATE_KEYS } from '@/background/managers/state'
 import { logger } from '@/infrastructure/logging/logger'
 
 export function useSyncProgress() {
@@ -62,8 +63,8 @@ export function useSyncProgress() {
 
       // 检查初始化状态
       if (chrome.storage?.local) {
-        chrome.storage.local.get(['AB_INITIALIZED'], result => {
-          if (result.AB_INITIALIZED) {
+        chrome.storage.local.get([STATE_KEYS.INITIALIZED], result => {
+          if (result[STATE_KEYS.INITIALIZED]) {
             completeSync()
           }
         })

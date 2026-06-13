@@ -47,7 +47,7 @@ export function migrateTraitMetadata(
       notes?: string
     }>
   | undefined {
-  if (!metadata || metadata.length === 0) return metadata
+  if (!metadata || metadata.length === 0) return undefined
 
   return metadata
     .filter(item => item.tag !== 'empty' && item.tag !== 'untagged')
@@ -55,7 +55,7 @@ export function migrateTraitMetadata(
       tag: (item.tag === '404' ? 'invalid' : item.tag) as 'duplicate' | 'invalid' | 'internal',
       detectedAt: item.detectedAt,
       source: item.source as 'worker' | 'user' | 'imported',
-      notes: item.notes
+      ...(item.notes !== undefined ? { notes: item.notes } : {})
     }))
 }
 

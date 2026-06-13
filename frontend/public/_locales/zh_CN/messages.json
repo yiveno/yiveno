@@ -2210,7 +2210,7 @@
     "message": "无缝集成"
   },
   "onboarding_omnibox_description": {
-    "message": "输入 \"ab\" + 空格，直接在地址栏搜索书签。无需打开插件面板，搜索、访问一气呵成。让书签管理融入你的日常工作流。"
+    "message": "输入 \"os\" + 空格，直接在地址栏搜索书签。无需打开插件面板，搜索、访问一气呵成。让书签管理融入你的日常工作流。"
   },
   "onboarding_privacy_title": {
     "message": "隐私至上，数据本地化"

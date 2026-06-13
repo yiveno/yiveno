@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { LucideIcon } from '@/components'
 import type { ChromeExtensionMessage } from '@/types/chrome-messages'
+import { STATE_KEYS } from '@/background/managers/state'
 
 // --- 类型定义 ---
 interface Step {
@@ -117,8 +118,8 @@ onMounted(() => {
   chrome.runtime.onMessage.addListener(messageListener)
 
   // 检查初始状态
-  chrome.storage.local.get(['AB_INITIALIZED'], result => {
-    if (result.AB_INITIALIZED) {
+  chrome.storage.local.get([STATE_KEYS.INITIALIZED], result => {
+    if (result[STATE_KEYS.INITIALIZED]) {
       completeSync()
     }
   })

@@ -15,7 +15,6 @@ import type {
   DatabaseStats,
   FaviconCacheRecord,
   GlobalStats,
-  SearchHistoryRecord,
   SearchOptions,
   SearchResult
 } from './types'
@@ -29,7 +28,6 @@ export type {
   DatabaseStats,
   FaviconCacheRecord,
   GlobalStats,
-  SearchHistoryRecord,
   SearchOptions,
   SearchResult
 }
@@ -37,6 +35,7 @@ export type {
 export { DB_CONFIG, INDEX_CONFIG } from './schema'
 import { DB_CONFIG } from './schema'
 import { TIMEOUT_CONFIG } from '@/config/constants'
+import type { z } from 'zod'
 import {
   BookmarkRecordArraySchema,
   BookmarkRecordSchema,
@@ -73,6 +72,8 @@ const cloneValue = <T>(value: T): T => {
  */
 export class IndexedDBManager {
   private readonly storeNames = Object.values(DB_CONFIG.STORES) as StoreName[]
+  /** v15 起已物理删除的废弃 object store */
+  private readonly removedStoreNames = ['searchHistory', 'faviconStats', 'ai_jobs'] as const
   /** 各数据表的主键配置 */
   private readonly storePrimaryKeyMap: Record<
     (typeof DB_CONFIG.STORES)[keyof typeof DB_CONFIG.STORES],
@@ -81,12 +82,9 @@ export class IndexedDBManager {
     [DB_CONFIG.STORES.BOOKMARKS]: { keyPath: 'id' },
     [DB_CONFIG.STORES.GLOBAL_STATS]: { keyPath: 'key' },
     [DB_CONFIG.STORES.SETTINGS]: { keyPath: 'key' },
-    [DB_CONFIG.STORES.SEARCH_HISTORY]: { keyPath: 'id', autoIncrement: true },
     [DB_CONFIG.STORES.FAVICON_CACHE]: { keyPath: 'domain' },
-    [DB_CONFIG.STORES.FAVICON_STATS]: { keyPath: 'key' },
     [DB_CONFIG.STORES.EMBEDDINGS]: { keyPath: 'bookmarkId' },
-    [DB_CONFIG.STORES.FOLDER_VECTORS]: { keyPath: 'folderId' }, // 新增：文件夹向量存储
-    [DB_CONFIG.STORES.AI_JOBS]: { keyPath: 'id' }
+    [DB_CONFIG.STORES.FOLDER_VECTORS]: { keyPath: 'folderId' }
   }
 
   /** 各数据表的索引配置 */
@@ -100,13 +98,15 @@ export class IndexedDBManager {
   > = {
     [DB_CONFIG.STORES.BOOKMARKS]: [
       { name: 'parentId', keyPath: 'parentId' },
+      { name: 'parentId_index', keyPath: ['parentId', 'index'] },
       { name: 'urlLower', keyPath: 'urlLower' },
       { name: 'domain', keyPath: 'domain' },
       { name: 'titleLower', keyPath: 'titleLower' },
       { name: 'keywords', keyPath: 'keywords', options: { multiEntry: true } },
       { name: 'tags', keyPath: 'tags', options: { multiEntry: true } },
       { name: 'isInvalid', keyPath: 'isInvalid' },
-      { name: 'isDuplicate', keyPath: 'isDuplicate' }
+      { name: 'isDuplicate', keyPath: 'isDuplicate' },
+      { name: 'lastVisited', keyPath: 'lastVisited' }
     ],
     [DB_CONFIG.STORES.GLOBAL_STATS]: [
       { name: 'key', keyPath: 'key' },
@@ -115,11 +115,6 @@ export class IndexedDBManager {
     [DB_CONFIG.STORES.SETTINGS]: [
       { name: 'updatedAt', keyPath: 'updatedAt' },
       { name: 'type', keyPath: 'type' }
-    ],
-    [DB_CONFIG.STORES.SEARCH_HISTORY]: [
-      { name: 'query', keyPath: 'query' },
-      { name: 'timestamp', keyPath: 'timestamp' },
-      { name: 'source', keyPath: 'source' }
     ],
     [DB_CONFIG.STORES.FAVICON_CACHE]: [
       { name: 'timestamp', keyPath: 'timestamp' },
@@ -130,10 +125,6 @@ export class IndexedDBManager {
       { name: 'quality', keyPath: 'quality' },
       { name: 'expiresAt', keyPath: 'expiresAt' }
     ],
-    [DB_CONFIG.STORES.FAVICON_STATS]: [
-      { name: 'key', keyPath: 'key' },
-      { name: 'updatedAt', keyPath: 'updatedAt' }
-    ],
     [DB_CONFIG.STORES.EMBEDDINGS]: [
       { name: 'bookmarkId', keyPath: 'bookmarkId' },
       { name: 'updatedAt', keyPath: 'updatedAt' }
@@ -142,12 +133,6 @@ export class IndexedDBManager {
       { name: 'folderId', keyPath: 'folderId' },
       { name: 'folderName', keyPath: 'folderName' },
       { name: 'bookmarkCount', keyPath: 'bookmarkCount' },
-      { name: 'updatedAt', keyPath: 'updatedAt' }
-    ],
-    [DB_CONFIG.STORES.AI_JOBS]: [
-      { name: 'status', keyPath: 'status' },
-      { name: 'type', keyPath: 'type' },
-      { name: 'createdAt', keyPath: 'createdAt' },
       { name: 'updatedAt', keyPath: 'updatedAt' }
     ]
   }
@@ -170,6 +155,167 @@ export class IndexedDBManager {
       request.onsuccess = () => resolve(request.result)
       request.onerror = () => reject(request.error ?? new Error('IndexedDB 请求失败'))
     })
+  }
+
+  /**
+   * 将校验后的记录转为 BookmarkRecord（补全默认值）
+   */
+  private toBookmarkRecord(record: z.infer<typeof BookmarkRecordSchema>): BookmarkRecord {
+    return {
+      ...record,
+      traitTags: record.traitTags ?? [],
+      traitMetadata: (record.traitMetadata ?? []) as TraitMetadata[]
+    } as BookmarkRecord
+  }
+
+  /**
+   * 合并 Chrome 同步数据与本地扩展字段（收藏、访问记录等）
+   */
+  private mergeLocalBookmarkFields(
+    incoming: BookmarkRecord,
+    existing: BookmarkRecord | undefined
+  ): BookmarkRecord {
+    return {
+      ...incoming,
+      traitTags: incoming.traitTags ?? [],
+      traitMetadata: (incoming.traitMetadata ?? []) as TraitMetadata[],
+      isFavorite: existing?.isFavorite ?? incoming.isFavorite,
+      favoriteOrder: existing?.favoriteOrder ?? incoming.favoriteOrder,
+      favoritedAt: existing?.favoritedAt ?? incoming.favoritedAt,
+      notes: existing?.notes ?? incoming.notes,
+      lastVisited: existing?.lastVisited ?? incoming.lastVisited,
+      visitCount: existing?.visitCount ?? incoming.visitCount
+    }
+  }
+
+  /**
+   * 按主键批量读取书签（仅加载指定 ID，避免全表扫描）
+   */
+  private async getBookmarksByIdsMap(ids: string[]): Promise<Map<string, BookmarkRecord>> {
+    const map = new Map<string, BookmarkRecord>()
+    if (ids.length === 0) return map
+
+    const uniqueIds = [...new Set(ids)]
+    const chunkSize = 500
+
+    for (let start = 0; start < uniqueIds.length; start += chunkSize) {
+      const chunk = uniqueIds.slice(start, start + chunkSize)
+
+      await this.runReadTransaction(DB_CONFIG.STORES.BOOKMARKS, async (_tx, store) => {
+        for (const id of chunk) {
+          const result = await this.wrapRequest(store.get(id))
+          if (!result) continue
+
+          const parsed = BookmarkRecordSchema.safeParse(result)
+          if (!parsed.success) continue
+
+          map.set(id, this.toBookmarkRecord(parsed.data))
+        }
+      })
+
+      if (start + chunkSize < uniqueIds.length) {
+        await this.yieldToEventLoop()
+      }
+    }
+
+    return map
+  }
+
+  /**
+   * 仅读取所有书签主键（用于快照 diff，避免加载完整记录）
+   */
+  private async getAllBookmarkIds(): Promise<string[]> {
+    return await this.runReadTransaction(DB_CONFIG.STORES.BOOKMARKS, async (_tx, store) => {
+      const ids: string[] = []
+
+      await new Promise<void>((resolve, reject) => {
+        const request = store.openKeyCursor()
+
+        request.onsuccess = () => {
+          const cursor = request.result
+          if (!cursor) {
+            resolve()
+            return
+          }
+
+          ids.push(String(cursor.key))
+          cursor.continue()
+        }
+
+        request.onerror = () => {
+          reject(request.error ?? new Error('IndexedDB 主键游标遍历失败'))
+        }
+      })
+
+      return ids
+    })
+  }
+
+  /**
+   * 通过游标读取书签（优先使用 parentId_index 复合索引，避免全表 getAll + 内存排序）
+   */
+  private async readBookmarksWithCursor(
+    store: IDBObjectStore,
+    options?: { limit?: number; offset?: number }
+  ): Promise<BookmarkRecord[]> {
+    const useCompoundIndex = store.indexNames.contains('parentId_index')
+    const offset = options?.offset ?? 0
+    const limit = options?.limit
+    const data: BookmarkRecord[] = []
+    let skipped = 0
+
+    await new Promise<void>((resolve, reject) => {
+      const request = useCompoundIndex
+        ? store.index('parentId_index').openCursor()
+        : store.openCursor()
+
+      request.onsuccess = () => {
+        const cursor = request.result
+        if (!cursor) {
+          resolve()
+          return
+        }
+
+        if (offset > 0 && skipped < offset) {
+          skipped++
+          cursor.continue()
+          return
+        }
+
+        if (limit !== undefined && limit > 0 && data.length >= limit) {
+          resolve()
+          return
+        }
+
+        const parsed = BookmarkRecordSchema.safeParse(cursor.value)
+        if (!parsed.success) {
+          reject(parsed.error)
+          return
+        }
+
+        data.push(this.toBookmarkRecord(parsed.data))
+        cursor.continue()
+      }
+
+      request.onerror = () => {
+        reject(request.error ?? new Error('IndexedDB 游标遍历失败'))
+      }
+    })
+
+    if (!useCompoundIndex) {
+      data.sort((a, b) => {
+        const parentA = a.parentId ?? '0'
+        const parentB = b.parentId ?? '0'
+        if (parentA !== parentB) {
+          return parentA.localeCompare(parentB)
+        }
+        const indexA = typeof a.index === 'number' ? a.index : 0
+        const indexB = typeof b.index === 'number' ? b.index : 0
+        return indexA - indexB
+      })
+    }
+
+    return data
   }
 
   /**
@@ -296,6 +442,8 @@ export class IndexedDBManager {
    * - 若 store 已存在，继续校验其索引配置，确保与最新 schema 对齐。
    */
   private createStores(db: IDBDatabase, tx: IDBTransaction): void {
+    this.removeLegacyStores(db)
+
     this.storeNames.forEach(storeName => {
       const primaryKeyOptions = this.storePrimaryKeyMap[storeName]
 
@@ -310,6 +458,18 @@ export class IndexedDBManager {
       const store = tx.objectStore(storeName)
       this.ensureIndexes(storeName, store)
     })
+  }
+
+  /**
+   * v15 迁移：删除从未接入业务的废弃 object store。
+   */
+  private removeLegacyStores(db: IDBDatabase): void {
+    for (const storeName of this.removedStoreNames) {
+      if (db.objectStoreNames.contains(storeName)) {
+        db.deleteObjectStore(storeName)
+        logger.info('IndexedDBManager', 'removeLegacyStores 已删除废弃表', { storeName })
+      }
+    }
   }
 
   /**
@@ -455,6 +615,8 @@ export class IndexedDBManager {
 
       if (options.delayBetweenBatches) {
         await new Promise(resolve => setTimeout(resolve, options.delayBetweenBatches))
+      } else {
+        await this.yieldToEventLoop()
       }
     }
   }
@@ -490,7 +652,6 @@ export class IndexedDBManager {
    *
    * @internal 预留方法，供未来性能优化使用
    */
-  // @ts-expect-error - 预留方法，供未来性能优化使用
   private async yieldToEventLoop(): Promise<void> {
     await new Promise<void>(resolve => {
       const idle = (
@@ -546,26 +707,13 @@ export class IndexedDBManager {
       throw parsed.error
     }
 
-    // ✅ 先获取所有现有书签，用于保留自定义字段（如收藏状态）
-    const existingBookmarks = await this.getAllBookmarks()
-    const existingMap = new Map(existingBookmarks.map(b => [b.id, b]))
+    const incomingIds = parsed.data.map(record => record.id)
+    const existingMap = await this.getBookmarksByIdsMap(incomingIds)
 
     await this.runBatchOperation(
-      parsed.data.map(record => {
-        const existing = existingMap.get(record.id)
-        return {
-          ...record,
-          traitTags: record.traitTags ?? [],
-          traitMetadata: (record.traitMetadata ?? []) as TraitMetadata[],
-          // ✅ 保留现有的自定义字段（收藏状态、特征检测结果等）
-          isFavorite: existing?.isFavorite ?? record.isFavorite,
-          favoriteOrder: existing?.favoriteOrder ?? record.favoriteOrder,
-          favoritedAt: existing?.favoritedAt ?? record.favoritedAt,
-          notes: existing?.notes ?? record.notes,
-          lastVisited: existing?.lastVisited ?? record.lastVisited,
-          visitCount: existing?.visitCount ?? record.visitCount
-        }
-      }) as BookmarkRecord[],
+      parsed.data.map(record =>
+        this.mergeLocalBookmarkFields(this.toBookmarkRecord(record), existingMap.get(record.id))
+      ),
       DB_CONFIG.STORES.BOOKMARKS,
       async (store, bookmark) => {
         await this.wrapRequest(store.put(bookmark))
@@ -589,28 +737,16 @@ export class IndexedDBManager {
       throw parsed.error
     }
 
-    const existingBookmarks = await this.getAllBookmarks()
-    const existingMap = new Map(existingBookmarks.map(b => [b.id, b]))
-    const snapshotIds = new Set(parsed.data.map(record => record.id))
-    const staleIds = existingBookmarks
-      .filter(record => !snapshotIds.has(record.id))
-      .map(record => record.id)
+    const incomingIds = parsed.data.map(record => record.id)
+    const existingMap = await this.getBookmarksByIdsMap(incomingIds)
+    const snapshotIds = new Set(incomingIds)
+    const existingIds = await this.getAllBookmarkIds()
+    const staleIds = existingIds.filter(id => !snapshotIds.has(id))
 
     await this.runBatchOperation(
-      parsed.data.map(record => {
-        const existing = existingMap.get(record.id)
-        return {
-          ...record,
-          traitTags: record.traitTags ?? [],
-          traitMetadata: (record.traitMetadata ?? []) as TraitMetadata[],
-          isFavorite: existing?.isFavorite ?? record.isFavorite,
-          favoriteOrder: existing?.favoriteOrder ?? record.favoriteOrder,
-          favoritedAt: existing?.favoritedAt ?? record.favoritedAt,
-          notes: existing?.notes ?? record.notes,
-          lastVisited: existing?.lastVisited ?? record.lastVisited,
-          visitCount: existing?.visitCount ?? record.visitCount
-        }
-      }) as BookmarkRecord[],
+      parsed.data.map(record =>
+        this.mergeLocalBookmarkFields(this.toBookmarkRecord(record), existingMap.get(record.id))
+      ),
       DB_CONFIG.STORES.BOOKMARKS,
       async (store, bookmark) => {
         await this.wrapRequest(store.put(bookmark))
@@ -816,12 +952,51 @@ export class IndexedDBManager {
    * @returns 按访问时间倒序排列的书签列表
    */
   async getRecentVisits(limit: number = 10): Promise<BookmarkRecord[]> {
-    const allBookmarks = await this.getAllBookmarks()
+    if (limit <= 0) return []
 
-    return allBookmarks
-      .filter(b => !b.isFolder && b.lastVisited) // 只要书签，且有访问记录
-      .sort((a, b) => (b.lastVisited || 0) - (a.lastVisited || 0)) // 按时间倒序
-      .slice(0, limit) // 取前 N 条
+    return await this.runReadTransaction(DB_CONFIG.STORES.BOOKMARKS, async (_tx, store) => {
+      if (!store.indexNames.contains('lastVisited')) {
+        const allBookmarks = await this.readBookmarksWithCursor(store)
+        return allBookmarks
+          .filter(b => !b.isFolder && b.lastVisited)
+          .sort((a, b) => (b.lastVisited || 0) - (a.lastVisited || 0))
+          .slice(0, limit)
+      }
+
+      const index = store.index('lastVisited')
+      const results: BookmarkRecord[] = []
+
+      await new Promise<void>((resolve, reject) => {
+        const request = index.openCursor(null, 'prev')
+
+        request.onsuccess = () => {
+          const cursor = request.result
+          if (!cursor || results.length >= limit) {
+            resolve()
+            return
+          }
+
+          const parsed = BookmarkRecordSchema.safeParse(cursor.value)
+          if (!parsed.success) {
+            reject(parsed.error)
+            return
+          }
+
+          const record = this.toBookmarkRecord(parsed.data)
+          if (!record.isFolder && record.lastVisited) {
+            results.push(record)
+          }
+
+          cursor.continue()
+        }
+
+        request.onerror = () => {
+          reject(request.error ?? new Error('IndexedDB 最近访问游标遍历失败'))
+        }
+      })
+
+      return results
+    })
   }
 
   async getAllBookmarks(limit?: number, offset?: number): Promise<BookmarkRecord[]> {
@@ -829,51 +1004,20 @@ export class IndexedDBManager {
       'read',
       DB_CONFIG.STORES.BOOKMARKS,
       async () => {
+        const cursorOptions =
+          limit !== undefined || offset !== undefined
+            ? {
+                ...(limit !== undefined ? { limit } : {}),
+                ...(offset !== undefined ? { offset } : {})
+              }
+            : undefined
+
         const result = await this.runReadTransaction(
           DB_CONFIG.STORES.BOOKMARKS,
-          async (_tx, store) => await this.wrapRequest(store.getAll())
+          async (_tx, store) => await this.readBookmarksWithCursor(store, cursorOptions)
         )
 
-        const parsed = BookmarkRecordArraySchema.safeParse(result)
-        if (!parsed.success) {
-          logger.error('IndexedDBManager', 'getAllBookmarks 校验失败', parsed.error)
-          throw parsed.error
-        }
-
-        // ✅ 严格按照 Chrome 原始顺序：先按 parentId 分组，再按 index 排序
-        // 这样保证树的构建顺序与 Chrome 完全一致
-        let data = parsed.data.map(
-          record =>
-            ({
-              ...record,
-              traitTags: record.traitTags ?? [],
-              traitMetadata: (record.traitMetadata ?? []) as TraitMetadata[]
-            }) as BookmarkRecord
-        )
-
-        // ✅ 按 parentId（字符串）+ index（数字）排序，严格复制 Chrome 的书签树顺序
-        data.sort((a, b) => {
-          const parentA = a.parentId ?? '0'
-          const parentB = b.parentId ?? '0'
-          // 先按 parentId 排序（同一父节点的子节点会聚集在一起）
-          if (parentA !== parentB) {
-            return parentA.localeCompare(parentB)
-          }
-          // 同一父节点下，按 index 排序（保持 Chrome 的顺序）
-          const indexA = typeof a.index === 'number' ? a.index : 0
-          const indexB = typeof b.index === 'number' ? b.index : 0
-          return indexA - indexB
-        })
-
-        // 应用分页
-        if (offset !== undefined && offset > 0) {
-          data = data.slice(offset)
-        }
-        if (limit !== undefined && limit > 0) {
-          data = data.slice(0, limit)
-        }
-
-        return data
+        return result
       },
       limit
     )
@@ -894,48 +1038,83 @@ export class IndexedDBManager {
   ): Promise<BookmarkRecord[]> {
     const allChildren = await this.runReadTransaction(
       DB_CONFIG.STORES.BOOKMARKS,
-      async (_tx, store) =>
-        await new Promise<BookmarkRecord[]>((resolve, reject) => {
-          const index = store.index('parentId')
-          const request = index.openCursor(IDBKeyRange.only(parentId))
-          const results: BookmarkRecord[] = []
+      async (_tx, store) => {
+        const useCompoundIndex = store.indexNames.contains('parentId_index')
 
-          request.onsuccess = () => {
-            const cursor = request.result
-            if (!cursor) {
-              resolve(results)
-              return
+        if (useCompoundIndex) {
+          return {
+            useCompoundIndex: true,
+            records: await new Promise<BookmarkRecord[]>((resolve, reject) => {
+              const index = store.index('parentId_index')
+              const range = IDBKeyRange.bound([parentId, 0], [parentId, Number.MAX_SAFE_INTEGER])
+              const request = index.openCursor(range)
+              const results: BookmarkRecord[] = []
+
+              request.onsuccess = () => {
+                const cursor = request.result
+                if (!cursor) {
+                  resolve(results)
+                  return
+                }
+
+                const parsed = BookmarkRecordSchema.safeParse(cursor.value)
+                if (!parsed.success) {
+                  reject(parsed.error)
+                  return
+                }
+
+                results.push(this.toBookmarkRecord(parsed.data))
+                cursor.continue()
+              }
+
+              request.onerror = () => {
+                reject(request.error ?? new Error('IndexedDB 游标遍历失败'))
+              }
+            })
+          }
+        }
+
+        return {
+          useCompoundIndex: false,
+          records: await new Promise<BookmarkRecord[]>((resolve, reject) => {
+            const index = store.index('parentId')
+            const request = index.openCursor(IDBKeyRange.only(parentId))
+            const results: BookmarkRecord[] = []
+
+            request.onsuccess = () => {
+              const cursor = request.result
+              if (!cursor) {
+                resolve(results)
+                return
+              }
+
+              const parsed = BookmarkRecordSchema.safeParse(cursor.value)
+              if (!parsed.success) {
+                reject(parsed.error)
+                return
+              }
+
+              results.push(this.toBookmarkRecord(parsed.data))
+              cursor.continue()
             }
 
-            const parsed = BookmarkRecordSchema.safeParse(cursor.value)
-            if (!parsed.success) {
-              reject(parsed.error)
-              return
+            request.onerror = () => {
+              reject(request.error ?? new Error('IndexedDB 游标遍历失败'))
             }
-
-            results.push({
-              ...parsed.data,
-              traitTags: parsed.data.traitTags ?? [],
-              traitMetadata: (parsed.data.traitMetadata ?? []) as TraitMetadata[]
-            } as BookmarkRecord)
-            cursor.continue()
-          }
-
-          request.onerror = () => {
-            reject(request.error ?? new Error('IndexedDB 游标遍历失败'))
-          }
-        })
+          })
+        }
+      }
     )
 
-    // ✅ 按 index 字段排序，与 Chrome 原生书签管理器保持一致
-    allChildren.sort((a, b) => {
-      const indexA = typeof a.index === 'number' ? a.index : 0
-      const indexB = typeof b.index === 'number' ? b.index : 0
-      return indexA - indexB
-    })
+    if (!allChildren.useCompoundIndex) {
+      allChildren.records.sort((a, b) => {
+        const indexA = typeof a.index === 'number' ? a.index : 0
+        const indexB = typeof b.index === 'number' ? b.index : 0
+        return indexA - indexB
+      })
+    }
 
-    // 应用分页
-    let data = allChildren
+    let data = allChildren.records
     const effectiveOffset = offset ?? 0
     if (effectiveOffset > 0) {
       data = data.slice(effectiveOffset)
@@ -1124,20 +1303,17 @@ export class IndexedDBManager {
   }
 
   async getDatabaseStats(): Promise<DatabaseStats> {
-    const [bookmarkCount, faviconCount, searchHistoryCount, settingsCount] = await Promise.all([
+    const [bookmarkCount, faviconCount, settingsCount] = await Promise.all([
       this.getStoreCount(DB_CONFIG.STORES.BOOKMARKS),
       this.getStoreCount(DB_CONFIG.STORES.FAVICON_CACHE),
-      this.getStoreCount(DB_CONFIG.STORES.SEARCH_HISTORY),
       this.getStoreCount(DB_CONFIG.STORES.SETTINGS)
     ])
 
-    const totalSize =
-      bookmarkCount * 1000 + faviconCount * 2000 + searchHistoryCount * 100 + settingsCount * 50
+    const totalSize = bookmarkCount * 1000 + faviconCount * 2000 + settingsCount * 50
 
     return {
       bookmarkCount,
       faviconCount,
-      searchHistoryCount,
       settingsCount,
       totalSize,
       indexSize: Math.round(totalSize * 0.1),

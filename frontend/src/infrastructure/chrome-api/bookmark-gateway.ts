@@ -15,7 +15,7 @@
  * - 智能推荐系统
  */
 import { logger } from '@/infrastructure/logging/logger'
-const AB_EVENTS = {
+const OS_EVENTS = {
   BOOKMARK_UPDATED: 'ottersage-bookmark-updated' as const,
   BOOKMARKS_DB_SYNCED: 'ottersage-db-synced' as const
 }
@@ -85,7 +85,7 @@ export class BookmarkAPIGateway {
       if (message.type === 'ottersage-db-synced') {
         // 合并与节流：150ms 内仅派发一次
         dispatchCoalescedEvent(
-          AB_EVENTS.BOOKMARKS_DB_SYNCED,
+          OS_EVENTS.BOOKMARKS_DB_SYNCED,
           { timestamp: message.timestamp || Date.now() },
           150
         )
@@ -132,7 +132,7 @@ export class BookmarkAPIGateway {
         timestamp: Date.now()
       }
       // 合并与节流：100ms 内仅派发一次同名事件
-      dispatchCoalescedEvent(AB_EVENTS.BOOKMARK_UPDATED, detail, 100)
+      dispatchCoalescedEvent(OS_EVENTS.BOOKMARK_UPDATED, detail, 100)
       logger.info('Component', '📡 [前端] 已合并派发 ${eventType} UI更新事件')
     } catch (error) {
       logger.warn('⚠️ [前端] 派发UI事件失败:', error)

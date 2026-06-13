@@ -2215,7 +2215,7 @@
     "message": "SEAMLESS INTEGRATION"
   },
   "onboarding_omnibox_description": {
-    "message": "Type \"ab\" + space to search bookmarks directly in the address bar. No need to open the extension panel, search and access in one go. Integrate bookmark management into your daily workflow."
+    "message": "Type \"os\" + space to search bookmarks directly in the address bar. No need to open the extension panel, search and access in one go. Integrate bookmark management into your daily workflow."
   },
   "onboarding_privacy_title": {
     "message": "Privacy First, Data Localized"

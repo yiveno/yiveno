@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { LucideIcon } from '@/components'
 import type { ChromeExtensionMessage } from '@/types/chrome-messages'
 import { t } from '@/utils/i18n-helpers'
+import { STATE_KEYS } from '@/background/managers/state'
 import { logger } from '@/infrastructure/logging/logger'
 
 interface Step {
@@ -114,8 +115,8 @@ onMounted(() => {
     chrome.runtime.onMessage.addListener(messageListener)
 
     if (chrome.storage?.local) {
-      chrome.storage.local.get(['AB_INITIALIZED'], result => {
-        if (result.AB_INITIALIZED) {
+      chrome.storage.local.get([STATE_KEYS.INITIALIZED], result => {
+        if (result[STATE_KEYS.INITIALIZED]) {
           completeSync()
         }
       })
@@ -228,7 +229,7 @@ onUnmounted(() => {
                   <LucideIcon name="search" size="sm" />
                 </div>
                 <div class="omnibox-input">
-                  <span class="omnibox-keyword">ab</span>
+                  <span class="omnibox-keyword">os</span>
                   <span class="omnibox-query">设计资源</span>
                 </div>
               </div>

@@ -52,19 +52,19 @@ export function registerMenusAndShortcuts(): void {
         try {
           // 扩展图标右键菜单
           chrome.contextMenus?.create?.({
-            id: 'ab-open-management',
+            id: 'os-open-management',
             title: '打开书签整理',
             contexts: ['action']
           })
           chrome.contextMenus?.create?.({
-            id: 'ab-open-settings',
+            id: 'os-open-settings',
             title: '打开设置',
             contexts: ['action']
           })
 
           // 页面右键菜单 - 添加书签
           chrome.contextMenus?.create?.({
-            id: 'ab-add-bookmark',
+            id: 'os-add-bookmark',
             title: '添加到书签...',
             contexts: ['page', 'link']
           })
@@ -101,17 +101,17 @@ export function registerMenusAndShortcuts(): void {
   chrome.contextMenus?.onClicked?.addListener(async (info, tab) => {
     logger.info('Menus', '📋 上下文菜单点击', { menuItemId: info.menuItemId })
 
-    if (info.menuItemId === 'ab-open-management') {
+    if (info.menuItemId === 'os-open-management') {
       logger.info('Menus', '➡️ 打开书签整理页面')
       openManagementPage()
       return
     }
-    if (info.menuItemId === 'ab-open-settings') {
+    if (info.menuItemId === 'os-open-settings') {
       logger.info('Menus', '➡️ 打开设置页面')
       openSettingsPage()
       return
     }
-    if (info.menuItemId === 'ab-add-bookmark') {
+    if (info.menuItemId === 'os-add-bookmark') {
       logger.info('Menus', '📌 添加书签（右键菜单）')
       await handleQuickAddBookmark(tab, info.linkUrl)
     }

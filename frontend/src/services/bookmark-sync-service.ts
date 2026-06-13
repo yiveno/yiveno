@@ -17,14 +17,7 @@ import type { ProgressCallback, SyncProgress, SyncErrorType } from '@/types/sync
 import { calculateEstimatedRemaining, ERROR_MESSAGES } from '@/types/sync-progress'
 import { TIMEOUT_CONFIG } from '@/config/constants'
 import { detectInvalidRootLayerNodes } from '@/core/bookmark/chrome-system-ids'
-
-/** 数据库就绪状态的 session storage key（与 background/state.ts 保持一致） */
-const DB_READY_SESSION_KEY = 'ab_db_ready'
-
-/** 设置数据库就绪状态（避免直接导入 background/state 造成循环依赖） */
-async function setDatabaseReady(ready: boolean): Promise<void> {
-  await chromeStorage.setSession(DB_READY_SESSION_KEY, ready)
-}
+import { STATE_KEYS, setDatabaseReady } from '@/background/managers/state'
 
 /**
  * 从 Chrome 书签树节点转换为 BookmarkRecord
@@ -742,10 +735,10 @@ export class BookmarkSyncService {
         // 本地快速标记，供读路径快速判断
         // ✅ 更新所有相关状态
         await chrome.storage.local.set({
-          AB_INITIALIZED: true, // 标记已完成初始化
-          AB_SCHEMA_VERSION: DB_CONFIG.VERSION,
-          AB_BOOKMARK_COUNT: allRecords.length, // 更新书签总数
-          AB_LAST_SYNCED_AT: this.lastSyncTime
+          [STATE_KEYS.INITIALIZED]: true,
+          [STATE_KEYS.SCHEMA_VERSION]: DB_CONFIG.VERSION,
+          [STATE_KEYS.BOOKMARK_COUNT]: allRecords.length,
+          [STATE_KEYS.LAST_SYNCED_AT]: this.lastSyncTime
         })
         // 🔴 数据库就绪状态写入 session storage
         await setDatabaseReady(true)
@@ -1018,7 +1011,7 @@ export class BookmarkSyncService {
   private async finalizeSync(): Promise<void> {
     this.lastSyncTime = Date.now()
     try {
-      await chrome.storage.local.set({ AB_LAST_SYNCED_AT: this.lastSyncTime })
+      await chrome.storage.local.set({ [STATE_KEYS.LAST_SYNCED_AT]: this.lastSyncTime })
     } catch {}
     try {
       chrome.runtime

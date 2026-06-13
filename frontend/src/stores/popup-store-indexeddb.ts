@@ -396,7 +396,6 @@ export const usePopupStoreIndexedDB = defineStore('popup-indexeddb', () => {
    */
   async function getDatabaseInfo(): Promise<{
     bookmarkCount: number
-    searchHistoryCount: number
     settingsCount: number
     estimatedSize: number
   }> {
@@ -404,7 +403,6 @@ export const usePopupStoreIndexedDB = defineStore('popup-indexeddb', () => {
     const res = await bookmarkAppService.getAllBookmarks()
     return {
       bookmarkCount: res.ok ? res.value?.filter(b => !!b.url).length || 0 : 0,
-      searchHistoryCount: 0, // 暂时设为0
       settingsCount: 0, // 暂时设为0
       estimatedSize: 0 // 暂时设为0，可以后续实现
     }

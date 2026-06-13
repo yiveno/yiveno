@@ -15,19 +15,16 @@ import type { BookmarkRecord } from './types/bookmark-record'
  */
 export const DB_CONFIG = {
   NAME: 'otterSageDB',
-  VERSION: 13, // 升级：清理 bookmarks 冗余字段与未使用索引
+  VERSION: 15, // 升级：移除未使用的 searchHistory / faviconStats / ai_jobs 表
 
   // 存储表名
   STORES: {
     BOOKMARKS: 'bookmarks',
     GLOBAL_STATS: 'globalStats',
     SETTINGS: 'settings',
-    SEARCH_HISTORY: 'searchHistory',
     FAVICON_CACHE: 'faviconCache',
-    FAVICON_STATS: 'faviconStats',
     EMBEDDINGS: 'embeddings',
-    FOLDER_VECTORS: 'folderVectors', // 新增：文件夹向量存储
-    AI_JOBS: 'ai_jobs'
+    FOLDER_VECTORS: 'folderVectors'
   } as const
 } as const
 
@@ -46,7 +43,9 @@ export const INDEX_CONFIG = {
     IS_INVALID: 'isInvalid',
     IS_DUPLICATE: 'isDuplicate',
     KEYWORDS: 'keywords',
-    TAGS: 'tags'
+    TAGS: 'tags',
+    LAST_VISITED: 'lastVisited',
+    PARENT_ID_INDEX: 'parentId_index'
   }
 } as const
 
@@ -88,24 +87,6 @@ export interface AppSettings {
   description?: string
   /** 更新时间 */
   updatedAt: number
-}
-
-/**
- * 筛选历史记录
- */
-export interface SearchHistoryRecord {
-  /** 主键 */
-  id?: number
-  /** 查询关键词 */
-  query: string
-  /** 结果数量 */
-  results: number
-  /** 执行时间 */
-  executionTime: number
-  /** 来源 */
-  source: 'popup' | 'management' | 'side-panel'
-  /** 时间戳 */
-  timestamp: number
 }
 
 /**
@@ -189,28 +170,6 @@ export interface FolderVectorRecord {
   model: string
   /** 创建/更新时间 */
   updatedAt: number
-}
-
-/**
- * AI 作业记录
- */
-export interface AIJobRecord {
-  /** 主键 */
-  id: string
-  /** 作业类型 */
-  type: 'embedding' | 'classification' | 'recommendation'
-  /** 作业状态 */
-  status: 'pending' | 'processing' | 'completed' | 'failed'
-  /** 作业输入 */
-  input: unknown
-  /** 作业输出 */
-  output?: unknown
-  /** 作业错误 */
-  error?: string
-  /** 创建时间 */
-  createdAt: number
-  /** 完成时间 */
-  completedAt?: number
 }
 
 // ==================== 筛选相关接口 ====================
@@ -327,8 +286,6 @@ export interface DatabaseStats {
   bookmarkCount: number
   /** 图标数量 */
   faviconCount: number
-  /** 筛选历史记录数量 */
-  searchHistoryCount: number
   /** 设置数量 */
   settingsCount: number
   /** 总大小 */

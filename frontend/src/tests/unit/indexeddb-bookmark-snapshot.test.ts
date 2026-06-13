@@ -91,3 +91,33 @@ describe('IndexedDBManager.replaceBookmarkSnapshot', () => {
     expect(keep?.notes).toBe('本地备注')
   })
 })
+
+describe('IndexedDBManager.getRecentVisits', () => {
+  beforeEach(async () => {
+    indexedDBManager.close()
+    await deleteTestDatabase()
+    await indexedDBManager.initialize()
+  })
+
+  it('应按 lastVisited 倒序返回最近访问的书签', async () => {
+    await indexedDBManager.insertBookmarks([
+      createBookmarkRecord({
+        id: 'old',
+        lastVisited: 1_000
+      }),
+      createBookmarkRecord({
+        id: 'new',
+        lastVisited: 3_000
+      }),
+      createBookmarkRecord({
+        id: 'folder',
+        isFolder: true,
+        lastVisited: 9_000
+      })
+    ])
+
+    const visits = await indexedDBManager.getRecentVisits(2)
+
+    expect(visits.map(v => v.id)).toEqual(['new', 'old'])
+  })
+})
