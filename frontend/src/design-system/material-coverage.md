@@ -10,13 +10,14 @@
 | Progress                 | 已封装 Material Web   | `components/base/Loading`、同步进度组件                      | 继续使用 `md-circular-progress` / `md-linear-progress`。                         |
 | List                     | 部分采用 Material Web | Popup、SidePanel、`BookmarkSearchInput`、`AsyncSearchSelect` | 普通列表优先 `md-list` / `md-list-item`；虚拟树保留自研。                        |
 | Menu                     | 部分采用 Material Web | `ThemeToggle`、`UserMenu`                                    | ContextMenu 可评估迁移到 `md-menu`，拖拽/右键定位需先验证。                      |
-| Tabs                     | 已采用 Material Web   | Settings / ShareDialog 等                                    | 继续统一使用 `md-tabs` / `md-primary-tab`。                                      |
-| Switch / Slider / Select | 已采用 Material Web   | Settings                                                     | 保持 Material Web，页面只覆盖必要 token。                                        |
+| Tabs                     | 已封装 Material Web   | `components/base/Tabs`                                       | 新增 `MdTabs` 封装，`v-model` + `@change`。`md-primary-tab` 保持裸用。          |
+| Switch                   | 已封装 Material Web   | `components/base/Switch`                                     | 新增 `MdSwitch` 封装，`v-model` + `disabled` + `@change`。                      |
+| Slider / Select          | 已采用 Material Web   | Settings                                                     | 保持 Material Web，页面只覆盖必要 token。                                        |
 | Chip                     | 部分采用 Material Web | `BookmarkSearchInput`、`AsyncSearchSelect`                   | 快捷筛选、已选标签优先映射到 chip 语义。                                         |
 | Card / Surface           | 混合                  | `components/composite/Card`                                  | 保留自研布局，明确 filled / outlined / elevated 与 M3 surface/elevation 的映射。 |
 | Tooltip                  | 自研                  | `components/base/Tooltip`                                    | 若 Material tooltip 能满足 rich content，再评估迁移；当前保留。                  |
 | BookmarkTree / 虚拟树    | 自研                  | `components/business/BookmarkTree`                           | 保留自研，重点对齐 focus、state layer、密度、可访问性。                          |
-| AsyncSearchSelect        | 迁移中                | `components/base/AsyncSearchSelect`                          | 使用 Material list / icon button，后续继续向 `MdInput` / chip 收敛。             |
+| AsyncSearchSelect        | 已完成                | `components/base/AsyncSearchSelect`                          | 多选使用 chip-in-input + Material list。                                         |
 
 ## 规则
 

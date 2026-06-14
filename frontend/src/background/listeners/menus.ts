@@ -225,10 +225,11 @@ async function handleAIAutoAddBookmark(bookmarkData: {
       throw new Error(result.error || '添加失败')
     }
 
-    await showBookmarkAddedNotification(result.bookmarkId, result.folderPath)
+    await showBookmarkAddedNotification(result.bookmarkId, result.folderPath, result.aiUsed)
     logger.info('Menus', '✅ AI 自动添加书签 - 完成', {
       folderId: result.folderId,
-      folderPath: result.folderPath
+      folderPath: result.folderPath,
+      aiUsed: result.aiUsed
     })
   } catch (error) {
     logger.error('Menus', '❌ AI 自动添加书签失败', error)

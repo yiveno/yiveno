@@ -632,6 +632,15 @@ const handlers: Record<string, OffscreenHandler> = {
       minScore?: number
     }
     return handleFolderRecommendations(data)
+  },
+
+  // 同步文件夹向量：在 Offscreen 里加载 ONNX 模型生成文件夹向量
+  // 避免在 Service Worker 中加载 WASM 导致失败
+  SYNC_FOLDER_VECTORS: async () => {
+    const { folderVectorService } = await import('@/application/folder/folder-vector-service')
+    await indexedDBManager.initialize()
+    await folderVectorService.syncFolderVectors()
+    return { success: true }
   }
 }
 

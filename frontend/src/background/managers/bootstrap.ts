@@ -10,12 +10,30 @@ import type { ExtensionState } from './state'
 import { CURRENT_SCHEMA_VERSION, getExtensionState, updateExtensionState } from './state'
 import { bookmarkSyncService } from '@/infrastructure/services/bookmark-sync-service'
 import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
-import { folderVectorService } from '@/application/folder/folder-vector-service'
 import { registerEmbeddingSyncTriggers } from '@/background/managers/embedding-sync'
+import { dispatchOffscreenRequest } from '@/infrastructure/offscreen/manager'
 import {
   registerRetrievalProfileSyncTriggers,
   runRetrievalProfileThenEmbedding
 } from '@/background/managers/retrieval-profile-sync'
+
+/**
+ * 通过 Offscreen Document 同步文件夹向量
+ *
+ * ONNX WASM 在 Service Worker 中加载不可靠，改到 Offscreen 中执行。
+ */
+async function syncFolderVectorsViaOffscreen(): Promise<void> {
+  try {
+    logger.info('Bootstrap', '开始同步文件夹向量（Offscreen）...')
+    await dispatchOffscreenRequest<{ success: boolean }>(
+      { type: 'SYNC_FOLDER_VECTORS' },
+      { timeout: 300_000 }
+    )
+    logger.info('Bootstrap', '文件夹向量同步完成')
+  } catch (error) {
+    logger.warn('Bootstrap', '文件夹向量同步失败（非致命，AI 功能可能受限）', error)
+  }
+}
 
 /**
  * 首次安装流程处理
@@ -53,15 +71,8 @@ async function handleFirstInstall(reason: string): Promise<void> {
     await bookmarkSyncService.syncAllBookmarks()
 
     // ✅ 同步文件夹向量（AI 功能需要）
-    try {
-      logger.info('Bootstrap', '开始同步文件夹向量...')
-      await folderVectorService.syncFolderVectors(progress => {
-        logger.debug('Bootstrap', `文件夹向量同步进度: ${progress.processed}/${progress.total}`)
-      })
-      logger.info('Bootstrap', '文件夹向量同步完成')
-    } catch (error) {
-      logger.warn('Bootstrap', '文件夹向量同步失败（非致命，AI 功能可能受限）', error)
-    }
+    // 通过 Offscreen Document 执行，避免 SW 中加载 ONNX WASM 失败
+    await syncFolderVectorsViaOffscreen()
 
     // ✅ 同步书签 embedding（语义搜索需要）
     // 异步执行，不阻塞主流程
@@ -111,15 +122,7 @@ async function handleSchemaUpgrade(state: ExtensionState): Promise<void> {
   }
 
   // ✅ 同步文件夹向量（AI 功能需要）
-  try {
-    logger.info('Bootstrap', '开始同步文件夹向量...')
-    await folderVectorService.syncFolderVectors(progress => {
-      logger.debug('Bootstrap', `文件夹向量同步进度: ${progress.processed}/${progress.total}`)
-    })
-    logger.info('Bootstrap', '文件夹向量同步完成')
-  } catch (error) {
-    logger.warn('Bootstrap', '文件夹向量同步失败（非致命，AI 功能可能受限）', error)
-  }
+  await syncFolderVectorsViaOffscreen()
 
   // ✅ 同步书签 embedding（语义搜索需要）
   void runRetrievalProfileThenEmbedding('schema-upgrade')
@@ -197,15 +200,7 @@ async function handleDataRecovery(): Promise<void> {
   await bookmarkSyncService.syncAllBookmarks()
 
   // ✅ 同步文件夹向量（AI 功能需要）
-  try {
-    logger.info('Bootstrap', '开始同步文件夹向量...')
-    await folderVectorService.syncFolderVectors(progress => {
-      logger.debug('Bootstrap', `文件夹向量同步进度: ${progress.processed}/${progress.total}`)
-    })
-    logger.info('Bootstrap', '文件夹向量同步完成')
-  } catch (error) {
-    logger.warn('Bootstrap', '文件夹向量同步失败（非致命，AI 功能可能受限）', error)
-  }
+  await syncFolderVectorsViaOffscreen()
 
   void runRetrievalProfileThenEmbedding('data-recovery')
 
@@ -241,9 +236,12 @@ async function handleRegularReload(reason: string): Promise<void> {
     } else {
       logger.info('Bootstrap', '检测到书签数据，开始异步同步 embedding')
       void runRetrievalProfileThenEmbedding('regular-reload')
+
+      // ✅ 同步文件夹向量（AI 自动归类需要）
+      void syncFolderVectorsViaOffscreen()
     }
   } catch (error) {
-    logger.warn('Bootstrap', '检查书签数据失败，跳过 embedding 同步', error)
+    logger.warn('Bootstrap', '检查书签数据失败，跳过 embedding / 文件夹向量同步', error)
   }
 }
 
@@ -309,15 +307,7 @@ export function registerLifecycleHandlers(): void {
       await bookmarkSyncService.syncAllBookmarks()
 
       // ✅ 同步文件夹向量（AI 功能需要）
-      try {
-        logger.info('Bootstrap', '开始同步文件夹向量...')
-        await folderVectorService.syncFolderVectors(progress => {
-          logger.debug('Bootstrap', `文件夹向量同步进度: ${progress.processed}/${progress.total}`)
-        })
-        logger.info('Bootstrap', '文件夹向量同步完成')
-      } catch (error) {
-        logger.warn('Bootstrap', '文件夹向量同步失败（非致命，AI 功能可能受限）', error)
-      }
+      await syncFolderVectorsViaOffscreen()
 
       // ⚠️ 收藏数据同步已移到页面打开时执行
       logger.debug('Bootstrap', '收藏数据同步将在页面打开时执行')

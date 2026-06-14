@@ -402,9 +402,7 @@ onUnmounted(() => {
 
 /* Material Design 3 Menu：紧凑尺寸（popup 等小视口） */
 md-menu {
-  --md-menu-container-color: var(--md-sys-color-surface-container);
   --md-menu-container-shape: var(--radius-md);
-  --md-menu-container-elevation: 2;
 
   /* 菜单列表上下内边距（默认各 8px） */
   --md-menu-top-space: 4px;
@@ -415,9 +413,6 @@ md-menu {
 }
 
 md-menu-item {
-  --md-menu-item-label-text-color: var(--md-sys-color-on-surface);
-  --md-menu-item-label-text-font: var(--font-family-base);
-  --md-menu-item-label-text-size: var(--text-sm);
   --md-menu-item-label-text-line-height: 1.125rem;
 
   /* 选中行背景（仅内部 .selected 行消费，未选中项不受影响） */

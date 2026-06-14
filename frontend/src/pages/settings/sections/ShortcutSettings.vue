@@ -69,7 +69,7 @@ onUnmounted(() => {
   <div class="shortcuts-container">
     <!-- 快捷键列表 - Material Web List -->
     <md-list v-if="shortcutItems.length > 0" class="shortcuts-list">
-      <md-list-item v-for="item in shortcutItems" :key="item.command">
+      <md-list-item v-for="item in shortcutItems" :key="item.command" class="list-item--compact">
         <div slot="headline">{{ item.label }}</div>
         <div slot="trailing-supporting-text" class="shortcut-keys">
           <kbd v-if="item.keys" class="shortcut-kbd">{{ item.keys }}</kbd>
@@ -165,6 +165,5 @@ md-list-item {
   --md-list-item-trailing-supporting-text-color: var(--md-sys-color-on-surface-variant);
   --md-list-item-label-text-size: var(--md-sys-typescale-body-large-size);
   --md-list-item-supporting-text-size: var(--md-sys-typescale-body-medium-size);
-  --md-list-item-one-line-container-height: 56px;
 }
 </style>

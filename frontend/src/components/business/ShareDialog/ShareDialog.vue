@@ -4,6 +4,8 @@ import { useDebounceFn, useEventListener } from '@vueuse/core'
 import type { ShareDialogProps, ShareDialogEmits } from './ShareDialog.d'
 import { Dialog, LucideIcon, Tooltip, Loading, Button } from '@/components'
 import { MdInput } from '@/components/base/Input'
+import { MdSwitch } from '@/components/base/Switch'
+import { MdTabs } from '@/components/base/Tabs'
 import AsyncSearchSelect from '@/components/base/AsyncSearchSelect/AsyncSearchSelect.vue'
 import type { SelectOption, AsyncSearchSelectInstance } from '@/components/base/AsyncSearchSelect'
 import { shareService } from '@/application/share/share-service'
@@ -621,16 +623,16 @@ onUnmounted(() => {
         <div class="share-options">
           <!-- 显示用户名开关 -->
           <div class="option-item">
-            <md-switch
-              class="option-switch"
-              :selected="state.showUsername"
+            <MdSwitch
+              class="switch--sm"
+              v-model="state.showUsername"
               @change="handleShowUsernameChange"
             />
             <label class="option-label" @click="state.showUsername = !state.showUsername">
               显示用户名
             </label>
             <Tooltip placement="top" :delay="300" offset="sm">
-              <Button variant="icon" class="option-tip" aria-label="显示用户名说明">
+              <Button variant="icon" class="option-tip icon-button--md" aria-label="显示用户名说明">
                 <LucideIcon name="info" :size="16" />
               </Button>
               <template #content>
@@ -647,16 +649,16 @@ onUnmounted(() => {
 
           <!-- 添加描述开关 -->
           <div class="option-item">
-            <md-switch
-              class="option-switch"
-              :selected="state.showDescription"
+            <MdSwitch
+              class="switch--sm"
+              v-model="state.showDescription"
               @change="handleShowDescriptionChange"
             />
             <label class="option-label" @click="state.showDescription = !state.showDescription">
               添加描述
             </label>
             <Tooltip placement="top" :delay="300" offset="sm">
-              <Button variant="icon" class="option-tip" aria-label="添加描述说明">
+              <Button variant="icon" class="option-tip icon-button--md" aria-label="添加描述说明">
                 <LucideIcon name="info" :size="16" />
               </Button>
               <template #content>
@@ -696,7 +698,7 @@ onUnmounted(() => {
         </div>
 
         <!-- 分享方式选择 -->
-        <md-tabs :active-tab-index="activeTabIndex" @change="handleTabChange">
+        <MdTabs v-model="activeTabIndex" class="tabs--full-width" @change="handleTabChange">
           <md-primary-tab aria-label="分享链接">
             <LucideIcon slot="icon" name="link" :size="18" />
             分享链接
@@ -709,7 +711,7 @@ onUnmounted(() => {
             <LucideIcon slot="icon" name="image" :size="18" />
             生成海报
           </md-primary-tab>
-        </md-tabs>
+        </MdTabs>
 
         <!-- 直接分享：用户筛选 -->
         <div v-if="state.shareType === 'direct'" class="user-filter-section">
@@ -724,7 +726,6 @@ onUnmounted(() => {
             ref="userFilterSelectRef"
             label="筛选用户"
             placeholder="输入用户名或邮箱"
-            :multiple="true"
             empty-text="未找到匹配的用户"
             @search="handleUserFilter"
             @change="handleUserSelectionChange"
@@ -792,7 +793,7 @@ onUnmounted(() => {
               aria-busy="true"
             >
               <Loading size="lg" text="正在生成海报..." />
-              <md-linear-progress indeterminate class="poster-progress" />
+              <md-linear-progress indeterminate class="linear-progress--sm poster-progress" />
             </div>
             <div v-else-if="state.error" class="preview-error" role="alert" aria-live="assertive">
               <LucideIcon name="alert-circle" :size="48" aria-hidden="true" />
@@ -1088,13 +1089,6 @@ onUnmounted(() => {
   gap: var(--spacing-2);
 }
 
-.option-switch {
-  --md-switch-track-width: 36px;
-  --md-switch-track-height: 20px;
-  --md-switch-handle-width: 16px;
-  --md-switch-handle-height: 16px;
-}
-
 .option-label {
   font-size: var(--text-sm);
   white-space: nowrap;
@@ -1104,7 +1098,6 @@ onUnmounted(() => {
 }
 
 .option-tip {
-  --md-icon-button-icon-size: 16px;
   --md-icon-button-state-layer-height: 28px;
   --md-icon-button-state-layer-width: 28px;
 
@@ -1140,30 +1133,6 @@ onUnmounted(() => {
   user-select: none;
 }
 
-/* Material Web Tabs 样式配置 */
-md-tabs {
-  width: 100%;
-}
-
-/* 移除默认焦点边框，使用 Material 的焦点样式 */
-md-primary-tab {
-  outline: none;
-}
-
-/* Material Design 焦点状态 */
-md-primary-tab:focus-visible {
-  border-radius: var(--radius-sm);
-  outline: 2px solid var(--md-sys-color-primary);
-  outline-offset: 2px;
-}
-
-/* 确保 Tab 图标正确显示 */
-md-primary-tab [slot='icon'] {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
 /* 用户筛选区域 */
 .user-filter-section {
   display: flex;
@@ -1195,10 +1164,6 @@ md-primary-tab [slot='icon'] {
 
 /* 线性进度条样式 */
 .poster-progress {
-  --md-linear-progress-track-height: 4px;
-  --md-linear-progress-track-shape: 2px;
-  --md-linear-progress-active-indicator-height: 4px;
-
   width: 100%;
   max-width: 300px;
   margin-top: var(--spacing-2);

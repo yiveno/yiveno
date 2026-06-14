@@ -372,6 +372,8 @@ function handleClearManagementFilters(): void {
         </div>
         <md-linear-progress
           :value="bookmarkManagementStore.applyProgress.percentage / 100"
+          class="linear-progress--md"
+          style="width: 100%"
         ></md-linear-progress>
         <div class="progress-tip">
           {{ t('management_estimated_time', estimatedRemainingTime) }}
@@ -477,7 +479,7 @@ function handleClearManagementFilters(): void {
               <Button
                 variant="icon"
                 :title="isLeftPanelCollapsed ? '展开左侧面板' : '收起左侧面板'"
-                class="panel-toggle-btn"
+                class="panel-toggle-btn icon-button--lg"
                 @click.stop="toggleLeftPanel"
               >
                 <LucideIcon
@@ -1207,8 +1209,6 @@ p.warning-text {
 }
 
 .panel-toggle-btn {
-  --md-icon-button-icon-size: 20px;
-
   position: relative;
   z-index: 1;
 }
@@ -1267,12 +1267,6 @@ p.warning-text {
 
 <style>
 /* Material 根节点 token + 管理页主栅格 */
-md-linear-progress {
-  --md-linear-progress-track-height: 8px;
-
-  width: 100%;
-}
-
 button,
 md-filled-tonal-button,
 button.md-button--icon {

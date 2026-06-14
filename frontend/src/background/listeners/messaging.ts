@@ -26,7 +26,7 @@ import { indexedDBManager } from '@/infrastructure/indexeddb/manager'
 import { showSystemNotification, clearSystemNotification } from './notification'
 import { autoAddBookmark } from '../managers/auto-add-bookmark'
 import { getFolderRecommendations } from '../managers/folder-recommendation'
-import { folderVectorService } from '@/application/folder/folder-vector-service'
+import { dispatchOffscreenRequest } from '@/infrastructure/offscreen/manager'
 import { favoriteAppService } from '@/application/bookmark/favorite-app-service'
 import { AUTH_STORAGE_KEY } from '@/config/auth-sync-env'
 import type { AuthSyncSessionPayload } from '@/config/auth-sync-session'
@@ -187,6 +187,16 @@ const MESSAGE_HANDLERS: Record<
   SYNC_BOOKMARKS: async (_message, sendResponse) => {
     try {
       await bookmarkSyncService.syncAllBookmarks()
+
+      // 同步完成后，异步触发文件夹向量同步
+      // 通过 Offscreen 执行 ONNX 加载，避免 SW 环境失败
+      dispatchOffscreenRequest<{ success: boolean }>(
+        { type: 'SYNC_FOLDER_VECTORS' },
+        { timeout: 300_000 }
+      ).catch(error => {
+        logger.warn('BackgroundMessaging', '文件夹向量同步失败（非致命）', error)
+      })
+
       sendResponse({ ok: true } as unknown)
     } catch (error) {
       logger.error('BackgroundMessaging', 'SYNC_BOOKMARKS 全量同步失败', error)
@@ -643,17 +653,22 @@ export async function getFolderPath(bookmarkId: string): Promise<string> {
  */
 export async function showBookmarkAddedNotification(
   bookmarkId: string,
-  folderPath: string
+  folderPath: string,
+  aiUsed?: boolean
 ): Promise<void> {
   try {
+    const message = aiUsed === false
+      ? `已添加到：${folderPath}（AI 分类尚未就绪）`
+      : `已添加到：${folderPath}`
+
     const notificationId = await chrome.notifications.create({
       type: 'basic',
       iconUrl: chrome.runtime.getURL('images/icon128.png'),
       title: '✅ 书签已添加',
-      message: `已添加到：${folderPath}`,
+      message,
       buttons: [{ title: '撤销' }, { title: '查看' }],
-      requireInteraction: true, // 强制用户交互，确保通知被看到
-      priority: 2 // 提高优先级
+      requireInteraction: true,
+      priority: 2
     })
 
     logger.info('BackgroundMessaging', '✅ 通知已创建', {
@@ -1025,11 +1040,12 @@ async function handleSyncFolderVectors(
   sendResponse: AsyncResponse
 ): Promise<void> {
   try {
-    logger.info('BackgroundMessaging', '🔄 开始同步文件夹向量')
+    logger.info('BackgroundMessaging', '🔄 开始同步文件夹向量（通过 Offscreen）')
 
-    await folderVectorService.syncFolderVectors(progress => {
-      logger.debug('BackgroundMessaging', '同步进度', progress)
-    })
+    await dispatchOffscreenRequest<{ success: boolean }>(
+      { type: 'SYNC_FOLDER_VECTORS' },
+      { timeout: 300_000 }
+    )
 
     logger.info('BackgroundMessaging', '✅ 文件夹向量同步完成')
 

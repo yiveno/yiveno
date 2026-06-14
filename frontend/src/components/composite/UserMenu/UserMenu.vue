@@ -275,9 +275,7 @@ async function handleLogout() {
 
 /* Material Design 3 Menu 样式 */
 md-menu {
-  --md-menu-container-color: var(--md-sys-color-surface-container);
   --md-menu-container-shape: var(--radius-lg);
-  --md-menu-container-elevation: 2;
 
   min-width: 220px;
 }
@@ -318,9 +316,6 @@ md-menu {
 }
 
 md-menu-item {
-  --md-menu-item-label-text-color: var(--md-sys-color-on-surface);
-  --md-menu-item-label-text-font: var(--font-family-base);
-  --md-menu-item-label-text-size: var(--text-sm);
   --md-menu-item-one-line-container-height: 48px;
 }
 

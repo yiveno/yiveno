@@ -258,14 +258,14 @@ watch(tab, v => {
         <div class="settings-tabs-container">
           <md-tabs
             ref="mdTabsRef"
-            class="settings-md-tabs"
+            class="tabs--full-width"
             :active-tab-index="tabsActiveIndex"
             @change="handleTabChange"
           >
             <md-primary-tab
               v-for="tabItem in tabsI18n"
               :key="tabItem.value"
-              class="settings-md-primary-tab"
+              class="primary-tab--flex-equal"
             >
               <!-- 原生元素承载 slot，保证投射进 md-primary-tab 的 icon 槽，避免 Vue 组件根节点无法插槽导致重叠与 ? 占位 -->
               <span slot="icon" class="settings-tab__icon-slot">
@@ -348,18 +348,6 @@ watch(tab, v => {
   background: var(--color-background);
 }
 
-.settings-md-tabs {
-  display: block;
-  width: 100%;
-  min-height: 56px;
-}
-
-/* 子节点在 Shadow 外：用 :deep 拉平各 Tab 的最小宽度与图标对齐，避免标签挤成一团 */
-.settings-tabs-container :deep(md-primary-tab.settings-md-primary-tab) {
-  flex: 1 1 0;
-  min-width: 4.5rem;
-  max-width: none;
-}
 
 .settings-tab__icon-slot {
   display: inline-flex;

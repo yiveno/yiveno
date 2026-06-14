@@ -81,10 +81,6 @@ const currentLanguageName = computed(() => {
   gap: var(--spacing-4);
 }
 
-md-switch {
-  flex-shrink: 0;
-}
-
 /* Field Description */
 .field-description {
   display: flex;

@@ -168,7 +168,7 @@ function handleClose() {
 
       <!-- 进度条 -->
       <div class="progress-bar-container">
-        <md-linear-progress :value="progress.percentage / 100" class="progress-bar" />
+        <md-linear-progress :value="progress.percentage / 100" class="linear-progress--lg progress-bar" />
         <div class="progress-percentage">{{ Math.round(progress.percentage) }}%</div>
       </div>
 
@@ -378,9 +378,6 @@ function handleClose() {
 
 .progress-bar {
   --md-linear-progress-track-color: var(--md-sys-color-surface-container-highest);
-  --md-linear-progress-track-height: 12px;
-  --md-linear-progress-track-shape: 6px;
-  --md-linear-progress-active-indicator-height: 12px;
 
   flex: 1;
 }

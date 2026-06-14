@@ -31,6 +31,7 @@ export type OffscreenTaskType =
   | 'GET_FOLDER_RECOMMENDATIONS'
   | 'GET_RECOMMENDED_BATCH_SIZE'
   | 'SYNC_BOOKMARK_EMBEDDINGS'
+  | 'SYNC_FOLDER_VECTORS'
 
 interface OffscreenRequest<TPayload = unknown> {
   type: OffscreenTaskType

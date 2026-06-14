@@ -140,7 +140,7 @@ const handleTrailingIconClick = (event: MouseEvent) => {
         v-else-if="trailingIcon"
         slot="trailing-icon"
         type="button"
-        class="md-input-trailing-btn"
+        class="md-input-trailing-btn icon-button--md"
         aria-label="切换显示"
         @click="handleTrailingIconClick"
       >
@@ -152,7 +152,7 @@ const handleTrailingIconClick = (event: MouseEvent) => {
           v-if="clearable && modelValue"
           slot="trailing-icon"
           type="button"
-          class="md-input-clear-btn"
+          class="md-input-clear-btn icon-button--md"
           :aria-label="'清除'"
           @click="clearInput"
         >
@@ -198,7 +198,7 @@ const handleTrailingIconClick = (event: MouseEvent) => {
         v-else-if="trailingIcon"
         slot="trailing-icon"
         type="button"
-        class="md-input-trailing-btn"
+        class="md-input-trailing-btn icon-button--md"
         aria-label="切换显示"
         @click="handleTrailingIconClick"
       >
@@ -210,7 +210,7 @@ const handleTrailingIconClick = (event: MouseEvent) => {
           v-if="clearable && modelValue"
           slot="trailing-icon"
           type="button"
-          class="md-input-clear-btn"
+          class="md-input-clear-btn icon-button--md"
           :aria-label="'清除'"
           @click="clearInput"
         >
@@ -315,7 +315,6 @@ md-filled-text-field {
 /* Loading & Clear 按钮 */
 .md-input-clear-btn,
 .md-input-trailing-btn {
-  --md-icon-button-icon-size: 16px;
   --md-icon-button-state-layer-shape: var(--radius-full);
 }
 

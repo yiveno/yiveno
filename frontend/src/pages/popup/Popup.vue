@@ -148,7 +148,7 @@ const actionCards = computed<ActionCardDef[]>(() => [
               v-for="item in statItems"
               :key="item.labelKey"
               type="text"
-              class="popup-stat-item"
+               class="popup-stat-item list-item--auto"
             >
               <div slot="headline" class="popup-stat-stack">
                 <span class="popup-stat-label">{{ t(item.labelKey) }}</span>
@@ -423,8 +423,6 @@ const actionCards = computed<ActionCardDef[]>(() => [
 }
 
 .popup-stat-item {
-  --md-list-item-one-line-container-height: auto;
-
   height: auto;
   min-height: 0;
 }

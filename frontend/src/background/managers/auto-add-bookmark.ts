@@ -9,6 +9,8 @@
 
 import { logger } from '@/infrastructure/logging/logger'
 import { getFolderRecommendations } from './folder-recommendation'
+import { folderVectorStore } from '@/infrastructure/folder-vector/folder-vector-store'
+import { dispatchOffscreenRequest } from '@/infrastructure/offscreen/manager'
 
 export interface AutoAddBookmarkData {
   title: string
@@ -22,6 +24,8 @@ export interface AutoAddBookmarkResult {
   folderId?: string
   folderPath?: string
   error?: string
+  /** AI 分类是否生效（false = 降级到默认书签栏） */
+  aiUsed?: boolean
 }
 
 async function getFolderPath(folderId: string): Promise<string> {
@@ -62,27 +66,47 @@ async function getBookmarksBarId(): Promise<string> {
 async function resolveFolderId(bookmarkData: AutoAddBookmarkData): Promise<{
   folderId: string
   folderPath: string
+  aiUsed: boolean
 }> {
-  const recommendations = await getFolderRecommendations(
+  let recommendations = await getFolderRecommendations(
     bookmarkData.title,
     bookmarkData.url,
     1,
     0.1 // 使用正常的阈值
   )
 
+  // 推荐为空时，检查是否为文件夹向量未就绪，尝试同步后重试一次
+  if (recommendations.length === 0) {
+    const folderVectorCount = await folderVectorStore.count()
+    if (folderVectorCount === 0) {
+      logger.info('AutoAddBookmark', '文件夹向量为空，通过 Offscreen 同步后重试')
+      await dispatchOffscreenRequest<{ success: boolean }>(
+        { type: 'SYNC_FOLDER_VECTORS' },
+        { timeout: 300_000 }
+      )
+      recommendations = await getFolderRecommendations(
+        bookmarkData.title,
+        bookmarkData.url,
+        1,
+        0.1
+      )
+    }
+  }
+
   if (recommendations.length > 0) {
     const topRecommendation = recommendations[0]
     if (topRecommendation) {
       return {
         folderId: topRecommendation.folderId,
-        folderPath: topRecommendation.folderPath
+        folderPath: topRecommendation.folderPath,
+        aiUsed: true
       }
     }
   }
 
   const folderId = await getBookmarksBarId()
   const folderPath = await getFolderPath(folderId)
-  return { folderId, folderPath }
+  return { folderId, folderPath, aiUsed: false }
 }
 
 export async function autoAddBookmark(
@@ -93,7 +117,7 @@ export async function autoAddBookmark(
       return { success: false, error: 'URL 不能为空' }
     }
 
-    const { folderId, folderPath } = await resolveFolderId(bookmarkData)
+    const { folderId, folderPath, aiUsed } = await resolveFolderId(bookmarkData)
 
     const bookmark = await chrome.bookmarks.create({
       parentId: folderId,
@@ -104,14 +128,16 @@ export async function autoAddBookmark(
     logger.info('AutoAddBookmark', '✅ 书签自动添加成功', {
       bookmarkId: bookmark.id,
       folderId,
-      folderPath
+      folderPath,
+      aiUsed
     })
 
     return {
       success: true,
       bookmarkId: bookmark.id,
       folderId,
-      folderPath
+      folderPath,
+      aiUsed
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error)

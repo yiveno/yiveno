@@ -732,7 +732,7 @@ defineExpose({
 
       <!-- AI标签 -->
       <md-chip-set v-if="Array.isArray(node.tags) && node.tags.length > 0" class="bookmark-tags">
-        <md-input-chip v-for="tag in node.tags" :key="tag" :label="tag"></md-input-chip>
+        <md-input-chip v-for="tag in node.tags" :key="tag" class="input-chip--tag" :label="tag"></md-input-chip>
       </md-chip-set>
 
       <!-- 书签URL (hover时显示) -->
@@ -929,13 +929,11 @@ defineExpose({
 /* 文件夹行内的 Checkbox hover 使用黄色系 */
 .folder-content:hover .select-checkbox {
   --md-checkbox-unselected-hover-state-layer-color: var(--color-folder-hover);
-  --md-checkbox-unselected-hover-state-layer-opacity: 0.08;
 }
 
 /* 书签行内的 Checkbox hover 使用蓝色系 */
 .bookmark-content:hover .select-checkbox {
   --md-checkbox-unselected-hover-state-layer-color: var(--color-bookmark-hover);
-  --md-checkbox-unselected-hover-state-layer-opacity: 0.08;
 }
 
 .bookmark-icon img {
@@ -1286,12 +1284,6 @@ md-chip-set.bookmark-tags {
   margin-top: var(--spacing-1);
 }
 
-md-input-chip {
-  --md-input-chip-container-height: 20px;
-  --md-input-chip-label-text-size: var(--text-xs);
-  --md-input-chip-label-text-color: var(--md-sys-color-on-surface-variant);
-  --md-input-chip-outline-color: var(--md-sys-color-outline);
-}
 
 /* stylelint-disable declaration-property-value-disallowed-list, color-no-hex -- 树节点组件使用特定尺寸和颜色 */
 </style>

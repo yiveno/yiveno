@@ -18,6 +18,8 @@ import { registerOmniboxHandlers } from './listeners/omnibox'
 import { registerBookmarkChangeListeners } from './listeners/bookmarks'
 import { initializeBookmarkTraitAutoSync } from '@/infrastructure/services/bookmark-trait-auto-sync'
 import { purgeCrossEnvironmentAuthStorage } from '@/config/auth-sync-env'
+import { dispatchOffscreenRequest } from '@/infrastructure/offscreen/manager'
+import { folderVectorStore } from '@/infrastructure/folder-vector/folder-vector-store'
 
 /**
  * 初始化 Service Worker
@@ -84,11 +86,41 @@ async function initializeServiceWorker() {
     // ==================== 完成 ====================
     logger.info('Background', '🎉 Service Worker 初始化完成')
     logger.info('Background', '📊 状态：核心功能已就绪，后台任务正在启动')
+
+    // ✅ 延迟触发文件夹向量同步
+    // SW 冷启动时 onInstalled/onStartup 不会触发，需要主动检查并同步
+    queueFolderVectorSync()
   } catch (error) {
     // 核心功能初始化失败，这是致命错误
     logger.error('Background', '❌ Service Worker 初始化失败（致命错误）', error)
     throw error
   }
+}
+
+/**
+ * 延迟触发文件夹向量同步
+ *
+ * SW 冷启动时等待 IndexedDB 就绪后，检查文件夹向量是否为空，
+ * 为空则触发同步。通过 Offscreen Document 执行 ONNX 加载。
+ */
+function queueFolderVectorSync(): void {
+  setTimeout(async () => {
+    try {
+      const count = await folderVectorStore.count()
+      if (count > 0) {
+        logger.debug('Background', '文件夹向量已存在，跳过同步')
+        return
+      }
+      logger.info('Background', '文件夹向量为空，后台触发同步')
+      await dispatchOffscreenRequest<{ success: boolean }>(
+        { type: 'SYNC_FOLDER_VECTORS' },
+        { timeout: 300_000 }
+      )
+      logger.info('Background', '✅ 文件夹向量同步完成')
+    } catch (error) {
+      logger.warn('Background', '文件夹向量同步失败（非致命）', error)
+    }
+  }, 3000)
 }
 
 // 启动初始化

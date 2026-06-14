@@ -81,6 +81,8 @@ md-checkbox {
   --md-checkbox-selected-icon-color: var(--md-sys-color-on-primary);
   --md-checkbox-unselected-outline-color: var(--md-sys-color-outline);
   --md-checkbox-unselected-hover-outline-color: var(--md-sys-color-on-surface);
+  --md-checkbox-unselected-hover-state-layer-opacity: 0.08;
+  --md-checkbox-unselected-focus-state-layer-opacity: 0.12;
 }
 
 /* Shadow 内 `md-focus-ring part="focus-ring"`：关闭外圈焦点动画，避免挡图标、与树行高亮重复 */
@@ -146,6 +148,21 @@ md-switch {
   --md-switch-track-height: 24px;
   --md-switch-handle-width: 20px;
   --md-switch-handle-height: 20px;
+
+  flex-shrink: 0;
+}
+
+md-switch[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 紧凑模式 */
+.switch--sm {
+  --md-switch-track-width: 36px;
+  --md-switch-track-height: 20px;
+  --md-switch-handle-width: 16px;
+  --md-switch-handle-height: 16px;
 }
 
 /* ============================================
@@ -216,6 +233,114 @@ md-outlined-button {
   --md-outlined-button-container-shape: var(--radius-md);
   --md-outlined-button-label-text-font: var(--font-family-base);
   --md-outlined-button-label-text-size: var(--md-sys-typescale-label-large-size);
+}
+
+/* ============================================
+ * Linear Progress 组件
+ * ============================================ */
+md-linear-progress {
+  --md-linear-progress-track-height: 4px;
+  --md-linear-progress-track-shape: 2px;
+  --md-linear-progress-active-indicator-height: 4px;
+  --md-linear-progress-track-color: var(--md-sys-color-surface-container-highest);
+  --md-linear-progress-active-indicator-color: var(--md-sys-color-primary);
+}
+
+.linear-progress--sm {
+  --md-linear-progress-track-height: 4px;
+  --md-linear-progress-track-shape: 2px;
+  --md-linear-progress-active-indicator-height: 4px;
+}
+
+.linear-progress--md {
+  --md-linear-progress-track-height: 8px;
+  --md-linear-progress-track-shape: 4px;
+  --md-linear-progress-active-indicator-height: 8px;
+}
+
+.linear-progress--lg {
+  --md-linear-progress-track-height: 12px;
+  --md-linear-progress-track-shape: 6px;
+  --md-linear-progress-active-indicator-height: 12px;
+}
+
+/* ============================================
+ * Icon Button 组件
+ * ============================================ */
+.icon-button--sm {
+  --md-icon-button-icon-size: 14px;
+}
+
+.icon-button--md {
+  --md-icon-button-icon-size: 16px;
+}
+
+.icon-button--lg {
+  --md-icon-button-icon-size: 20px;
+}
+
+/* ============================================
+ * Input Chip 组件
+ * ============================================ */
+.input-chip--tag {
+  --md-input-chip-container-height: 20px;
+  --md-input-chip-label-text-size: var(--text-xs);
+}
+
+/* ============================================
+ * List Item 组件
+ * ============================================ */
+.list-item--compact {
+  --md-list-item-one-line-container-height: 56px;
+  --md-list-item-two-line-container-height: 56px;
+}
+
+.list-item--auto {
+  --md-list-item-one-line-container-height: auto;
+  --md-list-item-two-line-container-height: auto;
+}
+
+/* ============================================
+ * Tabs / Primary Tab 组件
+ * ============================================ */
+md-primary-tab {
+  outline: none;
+}
+
+md-primary-tab:focus-visible {
+  border-radius: var(--radius-sm);
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+md-primary-tab [slot='icon'] {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.tabs--full-width {
+  width: 100%;
+}
+
+.primary-tab--flex-equal {
+  flex: 1 1 0;
+  min-width: 4.5rem;
+  max-width: none;
+}
+
+/* ============================================
+ * Menu / Menu Item 组件
+ * ============================================ */
+md-menu {
+  --md-menu-container-color: var(--md-sys-color-surface-container);
+  --md-menu-container-elevation: 2;
+}
+
+md-menu-item {
+  --md-menu-item-label-text-color: var(--md-sys-color-on-surface);
+  --md-menu-item-label-text-font: var(--font-family-base);
+  --md-menu-item-label-text-size: var(--text-sm);
 }
 
 /* ============================================

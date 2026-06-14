@@ -1356,6 +1356,7 @@ defineExpose({
                   v-for="(bookmark, index) in displayedTextResults"
                   :key="bookmark.id"
                   type="button"
+                  class="list-item--compact"
                   :class="{
                     'result-item--selected': selectedResultIndex === index
                   }"
@@ -1393,7 +1394,7 @@ defineExpose({
                   <Button
                     slot="end"
                     variant="icon"
-                    class="result-action-btn"
+                    class="result-action-btn icon-button--sm"
                     @click.stop="handleOpenInNewTab(bookmark)"
                   >
                     <LucideIcon name="external-link" :size="14" />
@@ -1416,6 +1417,7 @@ defineExpose({
                   v-for="(bookmark, index) in displayedSemanticResults"
                   :key="bookmark.id"
                   type="button"
+                  class="list-item--compact"
                   :class="{
                     'result-item--selected':
                       selectedResultIndex === semanticSectionStartIndex + index
@@ -1442,7 +1444,7 @@ defineExpose({
                   <Button
                     slot="end"
                     variant="icon"
-                    class="result-action-btn"
+                    class="result-action-btn icon-button--sm"
                     @click.stop="handleOpenInNewTab(bookmark)"
                   >
                     <LucideIcon name="external-link" :size="14" />
@@ -1694,7 +1696,6 @@ defineExpose({
   --md-list-item-label-text-weight: 500;
   --md-list-item-supporting-text-font: var(--font-family-base);
   --md-list-item-supporting-text-size: var(--md-sys-typescale-body-small-size);
-  --md-list-item-two-line-container-height: 56px;
   --md-list-item-hover-state-layer-color: var(--md-sys-color-on-surface);
   --md-list-item-hover-state-layer-opacity: 0.08;
   --md-list-item-focus-state-layer-color: var(--md-sys-color-on-surface);
@@ -1753,7 +1754,6 @@ defineExpose({
 .result-action-btn {
   --md-icon-button-icon-color: var(--color-text-tertiary);
   --md-icon-button-state-layer-shape: var(--radius-sm);
-  --md-icon-button-icon-size: 14px;
 
   opacity: 0;
   transition: opacity 0.2s ease;

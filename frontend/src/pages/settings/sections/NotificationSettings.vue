@@ -5,6 +5,7 @@ defineOptions({
   name: 'NotificationSettings'
 })
 import { LucideIcon, Tooltip } from '@/components'
+import { MdSwitch } from '@/components/base/Switch'
 import { settingsAppService } from '@/application/settings/settings-app-service'
 import { notificationService } from '@/application/notification/notification-service'
 import { message } from '@/application/message/message-service'
@@ -155,7 +156,7 @@ async function handleDurationChange(event: Event) {
         </Tooltip>
       </div>
       <div class="field">
-        <md-switch icons :selected="doNotDisturb" @change="handleDoNotDisturbToggle"></md-switch>
+        <MdSwitch v-model="doNotDisturb" @change="handleDoNotDisturbToggle"></MdSwitch>
       </div>
     </div>
 
@@ -178,12 +179,11 @@ async function handleDurationChange(event: Event) {
         </Tooltip>
       </div>
       <div class="field">
-        <md-switch
-          icons
-          :selected="mirror"
+        <MdSwitch
+          v-model="mirror"
           :disabled="doNotDisturb"
           @change="handleMirrorToggle"
-        ></md-switch>
+        ></MdSwitch>
       </div>
     </div>
 
@@ -289,16 +289,6 @@ md-slider {
   text-align: right;
   white-space: nowrap;
   color: var(--color-text-primary);
-}
-
-md-switch {
-  flex-shrink: 0;
-}
-
-/* 禁用状态样式 */
-md-switch:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .tooltip-content {

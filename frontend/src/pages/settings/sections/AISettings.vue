@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { LucideIcon, Tooltip, Card, Input, Dialog, Button } from '@/components'
+import { MdSwitch } from '@/components/base/Switch'
+import { MdTabs } from '@/components/base/Tabs'
 import { aiAppService } from '@/application/ai/ai-app-service'
 import type { UserLLMProvider, HostedQuotaInfo } from '@/application/ai/ai-app-service'
 import { message } from '@/application/message/message-service'
@@ -27,6 +29,10 @@ const isLoggedIn = computed(() => isAuthenticated.value)
 
 // Tab 状态
 const activeTab = ref<'apikey' | 'hosted'>('hosted')
+const activeTabIndex = computed({
+  get: () => activeTab.value === 'hosted' ? 0 : 1,
+  set: (val: number) => { activeTab.value = val === 0 ? 'hosted' : 'apikey' }
+})
 
 // Pro 托管 AI 配额
 const hostedQuota = ref<HostedQuotaInfo | null>(null)
@@ -213,10 +219,6 @@ function openEngineDialog(tab: 'apikey' | 'hosted') {
   showAIEngineDialog.value = true
 }
 
-/** 处理 Tab 切换 */
-function handleTabChange() {
-  // Tab 切换逻辑
-}
 
 function getSwitchSelected(event: Event): boolean {
   const target = event.target as HTMLElement & { selected?: boolean }
@@ -500,7 +502,7 @@ onMounted(async () => {
           </Tooltip>
         </label>
         <Tooltip v-if="!isPro" offset="md">
-          <md-switch icons :selected="aiAutoEnabled" :disabled="true"></md-switch>
+          <MdSwitch v-model="aiAutoEnabled" disabled></MdSwitch>
           <template #content>
             <div class="tooltip-content">
               AI 功能仅限 Pro 用户使用。<br />
@@ -508,7 +510,7 @@ onMounted(async () => {
             </div>
           </template>
         </Tooltip>
-        <md-switch v-else icons :selected="aiAutoEnabled" @change="handleAIAutoToggle"></md-switch>
+        <MdSwitch v-else v-model="aiAutoEnabled" @change="handleAIAutoToggle"></MdSwitch>
       </div>
 
       <!-- 语义检索 -->
@@ -527,7 +529,7 @@ onMounted(async () => {
           </Tooltip>
         </label>
         <Tooltip v-if="!isPro" offset="md">
-          <md-switch icons :selected="semanticSearchEnabled" :disabled="true"></md-switch>
+          <MdSwitch v-model="semanticSearchEnabled" disabled></MdSwitch>
           <template #content>
             <div class="tooltip-content">
               语义检索仅限 Pro 用户使用。<br />
@@ -536,17 +538,16 @@ onMounted(async () => {
           </template>
         </Tooltip>
         <Tooltip v-else-if="!isLoggedIn" offset="md">
-          <md-switch icons :selected="false" :disabled="true"></md-switch>
+          <MdSwitch :model-value="false" disabled></MdSwitch>
           <template #content>
             <div class="tooltip-content">需先登录 Pro 账户后使用语义检索。</div>
           </template>
         </Tooltip>
-        <md-switch
+        <MdSwitch
           v-else
-          icons
-          :selected="semanticSearchEnabled"
+          v-model="semanticSearchEnabled"
           @change="handleSemanticSearchToggle"
-        ></md-switch>
+        ></MdSwitch>
       </div>
 
       <!-- 一键整理 -->
@@ -565,7 +566,7 @@ onMounted(async () => {
           </Tooltip>
         </label>
         <Tooltip v-if="!isPro" offset="md">
-          <md-switch icons :selected="aiOneClickOrganizeEnabled" :disabled="true"></md-switch>
+          <MdSwitch v-model="aiOneClickOrganizeEnabled" disabled></MdSwitch>
           <template #content>
             <div class="tooltip-content">
               AI 功能仅限 Pro 用户使用。<br />
@@ -574,7 +575,7 @@ onMounted(async () => {
           </template>
         </Tooltip>
         <Tooltip v-else-if="!aiEngineReady" offset="md">
-          <md-switch icons :selected="false" :disabled="true"></md-switch>
+          <MdSwitch :model-value="false" disabled></MdSwitch>
           <template #content>
             <div class="tooltip-content">
               <template v-if="!isLoggedIn">需先登录后使用 Pro 托管 AI。</template>
@@ -591,12 +592,11 @@ onMounted(async () => {
             </div>
           </template>
         </Tooltip>
-        <md-switch
+        <MdSwitch
           v-else
-          icons
-          :selected="aiOneClickOrganizeEnabled"
+          v-model="aiOneClickOrganizeEnabled"
           @change="handleOneClickOrganizeToggle"
-        ></md-switch>
+        ></MdSwitch>
       </div>
     </div>
 
@@ -724,8 +724,8 @@ onMounted(async () => {
       </p>
 
       <div class="provider-tabs">
-        <md-tabs @change="handleTabChange">
-          <md-primary-tab :active="activeTab === 'hosted'" @click="activeTab = 'hosted'">
+        <MdTabs v-model="activeTabIndex">
+          <md-primary-tab>
             托管 AI
             <LucideIcon
               v-if="isPro && isLoggedIn"
@@ -734,7 +734,7 @@ onMounted(async () => {
               class="tab-status-icon tab-status-icon--success"
             />
           </md-primary-tab>
-          <md-primary-tab :active="activeTab === 'apikey'" @click="activeTab = 'apikey'">
+          <md-primary-tab>
             自定义 API Key
             <LucideIcon
               v-if="hasApiKeyConfigured"
@@ -743,7 +743,7 @@ onMounted(async () => {
               class="tab-status-icon tab-status-icon--success"
             />
           </md-primary-tab>
-        </md-tabs>
+        </MdTabs>
       </div>
 
       <div class="tab-content">
@@ -1038,7 +1038,7 @@ onMounted(async () => {
 .ai-engine-active__text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--spacing-0-5);
   min-width: 0;
 }
 
@@ -1197,7 +1197,7 @@ onMounted(async () => {
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
-  gap: 2px;
+  gap: var(--spacing-0-5);
   font-size: var(--md-sys-typescale-body-small-size);
   font-weight: var(--font-medium);
   color: var(--md-sys-color-primary);
@@ -1241,12 +1241,6 @@ onMounted(async () => {
 
 .tooltip-link:hover {
   text-decoration: underline;
-}
-
-/* Material Web Switch 样式 */
-md-switch {
-  --md-switch-selected-track-color: var(--md-sys-color-primary);
-  --md-switch-selected-handle-color: var(--md-sys-color-on-primary);
 }
 
 /* 表单布局 */
