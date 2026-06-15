@@ -7,7 +7,7 @@ import { logger } from '@/infrastructure/logging/logger'
 
 const loggerPrefix = 'OrganizeResponseParser'
 
-export const ORGANIZE_FALLBACK_FOLDER_PATH = '其他/未分类'
+export const ORGANIZE_FALLBACK_FOLDER_PATH = '未分类'
 const MAX_ORGANIZE_FOLDER_DEPTH = 3
 const MAX_ORGANIZE_FOLDER_NAME_LENGTH = 80
 
@@ -64,6 +64,35 @@ function extractRawBookmarkRefs(folder: Record<string, unknown>): unknown[] {
 }
 
 /**
+ * 提取嵌套对象中的 id 值
+ */
+function extractNestedId(raw: unknown): unknown {
+  if (raw && typeof raw === 'object' && 'id' in raw) {
+    return (raw as { id: unknown }).id
+  }
+  return raw
+}
+
+/**
+ * 规范化 ID 字符串（去除引号、括号、前缀）
+ */
+function normalizeIdString(raw: string): string {
+  const id = raw.trim().replace(/^[`'"]+|[`'"]+$/g, '')
+  
+  const bracketIdMatch = id.match(/^\[?id:\s*(.+?)\]?$/i)
+  if (bracketIdMatch?.[1]) {
+    return bracketIdMatch[1].trim()
+  }
+  
+  const idPrefixMatch = id.match(/^id:\s*(.+)$/i)
+  if (idPrefixMatch?.[1]) {
+    return idPrefixMatch[1].trim()
+  }
+  
+  return id
+}
+
+/**
  * 将 LLM 返回的单个引用解析为真实书签 ID
  */
 export function resolveOrganizeBookmarkId(
@@ -71,37 +100,33 @@ export function resolveOrganizeBookmarkId(
   validBookmarkIds: ReadonlySet<string>,
   idByListIndex?: ReadonlyMap<string, string>
 ): string | null {
+  // 处理数字类型
   if (typeof raw === 'number' && Number.isFinite(raw)) {
     raw = String(raw)
   }
 
-  if (raw && typeof raw === 'object' && 'id' in raw) {
-    return resolveOrganizeBookmarkId((raw as { id: unknown }).id, validBookmarkIds, idByListIndex)
+  // 递归处理嵌套对象
+  const extracted = extractNestedId(raw)
+  if (extracted !== raw) {
+    return resolveOrganizeBookmarkId(extracted, validBookmarkIds, idByListIndex)
   }
 
+  // 只处理字符串
   if (typeof raw !== 'string') {
     return null
   }
 
-  let id = raw.trim().replace(/^[`'"]+|[`'"]+$/g, '')
+  const id = normalizeIdString(raw)
   if (!id) {
     return null
   }
 
-  const bracketIdMatch = id.match(/^\[?id:\s*(.+?)\]?$/i)
-  if (bracketIdMatch?.[1]) {
-    id = bracketIdMatch[1].trim()
-  }
-
-  const idPrefixMatch = id.match(/^id:\s*(.+)$/i)
-  if (idPrefixMatch?.[1]) {
-    id = idPrefixMatch[1].trim()
-  }
-
+  // 直接匹配
   if (validBookmarkIds.has(id)) {
     return id
   }
 
+  // 通过索引映射
   if (idByListIndex?.has(id)) {
     const mapped = idByListIndex.get(id)
     if (mapped && validBookmarkIds.has(mapped)) {
@@ -229,6 +254,25 @@ export function parseOrganizeLlmResponse(
 }
 
 /**
+ * 合并单个文件夹的书签 ID
+ */
+function mergeFolderBookmarkIds(
+  existing: ParsedOrganizeFolder,
+  uniqueIds: string[]
+): ParsedOrganizeFolder {
+  const mergedIds = [...existing.bookmarkIds]
+  for (const bookmarkId of uniqueIds) {
+    if (!mergedIds.includes(bookmarkId)) {
+      mergedIds.push(bookmarkId)
+    }
+  }
+  return {
+    ...existing,
+    bookmarkIds: mergedIds
+  }
+}
+
+/**
  * 合并多批 LLM 整理结果
  */
 export function mergeOrganizeFolderBatches(
@@ -254,16 +298,7 @@ export function mergeOrganizeFolderBatches(
 
       const existing = pathMap.get(folder.path)
       if (existing) {
-        const mergedIds = [...existing.bookmarkIds]
-        for (const bookmarkId of uniqueIds) {
-          if (!mergedIds.includes(bookmarkId)) {
-            mergedIds.push(bookmarkId)
-          }
-        }
-        pathMap.set(folder.path, {
-          ...existing,
-          bookmarkIds: mergedIds
-        })
+        pathMap.set(folder.path, mergeFolderBookmarkIds(existing, uniqueIds))
       } else {
         pathMap.set(folder.path, { ...folder, bookmarkIds: uniqueIds })
       }
@@ -278,10 +313,10 @@ export function mergeOrganizeFolderBatches(
  */
 export function appendUnassignedBookmarksToFallback(
   folders: ParsedOrganizeFolder[],
-  allBookmarkIds: readonly string[]
+  _allBookmarkIds: readonly string[]
 ): ParsedOrganizeFolder[] {
   const assigned = new Set(folders.flatMap(folder => folder.bookmarkIds))
-  const unassigned = allBookmarkIds.filter(id => !assigned.has(id))
+  const unassigned = _allBookmarkIds.filter(id => !assigned.has(id))
 
   if (unassigned.length === 0) {
     return folders
@@ -349,8 +384,7 @@ export function createDeterministicChunkFallback(
  * 规范化 LLM 文件夹列表，确保路径合法且全部书签 ID 被覆盖。
  */
 export function sanitizeOrganizeFolders(
-  folders: ParsedOrganizeFolder[],
-  allBookmarkIds: readonly string[]
+  folders: ParsedOrganizeFolder[]
 ): ParsedOrganizeFolder[] {
   const normalized = folders
     .map(folder => {
@@ -368,5 +402,5 @@ export function sanitizeOrganizeFolders(
     .filter(folder => folder.path.length > 0)
 
   const merged = mergeOrganizeFolderBatches([normalized])
-  return appendUnassignedBookmarksToFallback(merged, allBookmarkIds)
+  return merged
 }

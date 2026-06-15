@@ -403,7 +403,8 @@ function safeSuggest(
 /**
  * 将查询结果转换为 Omnibox 建议格式
  *
- * 自动去重相同 URL 的书签
+ * 与 Popup / SidePanel 保持完全一致，不做 URL 去重。
+ * 同 URL 的书签使用 ottersage://open 协议确保 content 唯一（避免 Chrome 按 content 隐式去重）。
  *
  * @param results - 查询结果数组
  * @returns Omnibox 建议结果数组
@@ -412,8 +413,7 @@ function buildSuggestions(
   results: EnhancedSearchResult[],
   query: string
 ): chrome.omnibox.SuggestResult[] {
-  const uniqueByUrl = new Map<string, chrome.omnibox.SuggestResult>()
-  let deduped = 0
+  const suggestions: chrome.omnibox.SuggestResult[] = []
 
   for (const item of results) {
     const bookmark = item.bookmark
@@ -433,38 +433,23 @@ function buildSuggestions(
 
     const description = descriptionSegments.join('  ')
 
-    const meta = new URLSearchParams({
-      id,
-      title,
-      source: 'omnibox'
-    })
-
-    const content = url ? url : `ottersage://bookmark?${meta.toString()}`
-
-    const suggestion: chrome.omnibox.SuggestResult = {
-      content,
-      description
+    let content: string
+    if (url) {
+      const params = new URLSearchParams({ id, url })
+      content = `ottersage://open?${params.toString()}`
+    } else {
+      const params = new URLSearchParams({ id, title, source: 'omnibox' })
+      content = `ottersage://bookmark?${params.toString()}`
     }
 
-    const dedupeKey = url || id
-    if (!dedupeKey) continue
-    if (uniqueByUrl.has(dedupeKey)) {
-      deduped += 1
-      continue
-    }
-    uniqueByUrl.set(dedupeKey, suggestion)
+    suggestions.push({ content, description })
   }
 
-  logger.info(
-    'Omnibox',
-    `去重前数量: ${results.length}, 被去重: ${deduped}, 唯一项: ${uniqueByUrl.size}`
-  )
-
-  if (uniqueByUrl.size === 0) {
+  if (suggestions.length === 0) {
     logger.info('Omnibox', `ℹ️ 没有匹配书签: ${query}`)
   }
 
-  return Array.from(uniqueByUrl.values())
+  return suggestions
 }
 
 /**
@@ -497,10 +482,12 @@ function parseSuggestionContent(text: string): ParsedSuggestion {
         normalizedView = 'manage'
       } else if (rawView === 'error') {
         normalizedView = 'error'
+      } else if (rawView === 'open') {
+        normalizedView = 'open'
       }
       const params = new URLSearchParams(url.search.replace(/^\?/, ''))
       return {
-        url: null,
+        url: normalizedView === 'open' ? (params.get('url') ?? null) : null,
         id: params.get('id'),
         view: normalizedView
       }

@@ -26,6 +26,8 @@ export function useManagementOrganize(options: {
   const showOrganizeProgress = ref(false)
   const showOrganizeNotesDialog = ref(false)
   const organizeUserNotes = ref('')
+  const organizeRemoveDuplicates = ref(false)
+  const organizeRemoveInvalid = ref(false)
   const ORGANIZE_USER_NOTES_MAX_LENGTH = 500
 
   function handleAutoOrganize(): void {
@@ -41,13 +43,20 @@ export function useManagementOrganize(options: {
     if (isOrganizing.value) return
 
     const userNotes = organizeUserNotes.value.trim()
+    const removeDuplicates = organizeRemoveDuplicates.value
+    const removeInvalid = organizeRemoveInvalid.value
     showOrganizeNotesDialog.value = false
-    await runAutoOrganize(userNotes)
+    await runAutoOrganize(userNotes, removeDuplicates, removeInvalid)
   }
 
-  async function runAutoOrganize(userNotes?: string): Promise<void> {
+  async function runAutoOrganize(
+    userNotes?: string,
+    removeDuplicates?: boolean,
+    removeInvalid?: boolean
+  ): Promise<void> {
     if (isOrganizing.value) return
 
+    const organizingSnapshot = isOrganizing.value
     isOrganizing.value = true
     organizeProgress.value = createInitialOrganizeProgress()
     showOrganizeProgress.value = true
@@ -55,14 +64,20 @@ export function useManagementOrganize(options: {
     try {
       await bookmarkOrganizeService.ensureLlmReady()
       logger.info('Management', '开始一键整理书签', {
-        hasUserNotes: Boolean(userNotes)
+        hasUserNotes: Boolean(userNotes),
+        removeDuplicates: Boolean(removeDuplicates),
+        removeInvalid: Boolean(removeInvalid)
       })
 
       const result = await bookmarkOrganizeService.organizeBookmarks(
         progress => {
           organizeProgress.value = progress
         },
-        userNotes ? { userNotes } : undefined
+        {
+          ...(userNotes ? { userNotes } : {}),
+          ...(removeDuplicates ? { removeDuplicates: true } : {}),
+          ...(removeInvalid ? { removeInvalid: true } : {})
+        }
       )
 
       const proposalTree = bookmarkOrganizeService.buildValidatedProposalPreview(
@@ -79,10 +94,13 @@ export function useManagementOrganize(options: {
       logger.error('Management', '一键整理失败', error)
       message.error(t('management_organize_failed_retry'))
     } finally {
-      isOrganizing.value = false
+      if (organizingSnapshot !== undefined) {
+        isOrganizing.value = false
+      }
       showOrganizeProgress.value = false
     }
   }
+
 
   return {
     isOrganizing,
@@ -90,6 +108,8 @@ export function useManagementOrganize(options: {
     showOrganizeProgress,
     showOrganizeNotesDialog,
     organizeUserNotes,
+    organizeRemoveDuplicates,
+    organizeRemoveInvalid,
     ORGANIZE_USER_NOTES_MAX_LENGTH,
     handleAutoOrganize,
     closeOrganizeNotesDialog,

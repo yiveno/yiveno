@@ -1691,6 +1691,18 @@
   "management_organize_notes_start": {
     "message": "Start Organizing"
   },
+  "management_organize_remove_duplicates": {
+    "message": "Remove duplicate bookmarks"
+  },
+  "management_organize_remove_duplicates_tooltip": {
+    "message": "Keep only the first for same URL"
+  },
+  "management_organize_remove_invalid": {
+    "message": "Remove invalid bookmarks"
+  },
+  "management_organize_remove_invalid_tooltip": {
+    "message": "Unopenable links"
+  },
   "management_organize_preview_ready": {
     "message": "Organize plan is ready. Review on the right and click Apply to finish."
   },

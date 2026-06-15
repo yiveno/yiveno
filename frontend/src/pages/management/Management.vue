@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { AppHeader, Card, Dialog, LucideIcon, AnimatedNumber, Button } from '@/components'
+import { AppHeader, Card, Dialog, LucideIcon, AnimatedNumber, Button, Tooltip } from '@/components'
 import { Loading } from '@/components/base/Loading'
 import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'
 import BookmarkTree from '@/components/business/BookmarkTree/BookmarkTree.vue'
 import { MdInput } from '@/components/base/Input'
+import { MdSwitch } from '@/components/base/Switch'
 import { useManagementPage } from './composables/useManagementPage'
 import OrganizeProgressPanel from './components/OrganizeProgressPanel.vue'
 import ManagementSearchBar from './components/ManagementSearchBar.vue'
@@ -34,6 +35,8 @@ const {
   showOrganizeProgress,
   showOrganizeNotesDialog,
   organizeUserNotes,
+  organizeRemoveDuplicates,
+  organizeRemoveInvalid,
   ORGANIZE_USER_NOTES_MAX_LENGTH,
   proposalTreeChildren,
   leftTreeData,
@@ -107,6 +110,14 @@ const managementSearchBarRef = ref<InstanceType<typeof ManagementSearchBar> | nu
 function handleClearManagementFilters(): void {
   managementSearchBarRef.value?.clearTraitFiltersOnly()
 }
+
+function toggleRemoveDuplicates(): void {
+  organizeRemoveDuplicates.value = !organizeRemoveDuplicates.value
+}
+
+function toggleRemoveInvalid(): void {
+  organizeRemoveInvalid.value = !organizeRemoveInvalid.value
+}
 </script>
 
 <template>
@@ -137,7 +148,7 @@ function handleClearManagementFilters(): void {
           variant="outlined"
           size="md"
           type="textarea"
-          :rows="5"
+          :rows="4"
           :maxlength="ORGANIZE_USER_NOTES_MAX_LENGTH"
           :placeholder="t('management_organize_notes_placeholder')"
         />
@@ -149,6 +160,22 @@ function handleClearManagementFilters(): void {
           }"
         >
           {{ organizeUserNotes.length }}/{{ ORGANIZE_USER_NOTES_MAX_LENGTH }}
+        </div>
+        <div class="organize-options">
+          <div class="organize-option" @click="toggleRemoveDuplicates">
+            <span>{{ t('management_organize_remove_duplicates') }}</span>
+            <Tooltip :text="t('management_organize_remove_duplicates_tooltip')" placement="top" offset="sm">
+              <LucideIcon name="info" class="organize-option-icon" />
+            </Tooltip>
+            <MdSwitch :model-value="organizeRemoveDuplicates" />
+          </div>
+          <div class="organize-option" @click="toggleRemoveInvalid">
+            <span>{{ t('management_organize_remove_invalid') }}</span>
+            <Tooltip :text="t('management_organize_remove_invalid_tooltip')" placement="top" offset="sm">
+              <LucideIcon name="info" class="organize-option-icon" />
+            </Tooltip>
+            <MdSwitch :model-value="organizeRemoveInvalid" />
+          </div>
         </div>
       </div>
       <template #actions>
@@ -1262,6 +1289,29 @@ p.warning-text {
 
 .organize-notes-count--warning {
   color: var(--md-sys-color-error);
+}
+
+.organize-options {
+  display: flex;
+  flex-direction: row;
+  gap: var(--spacing-6);
+  margin-top: var(--spacing-2);
+}
+
+.organize-option {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  user-select: none;
+}
+
+.organize-option-icon {
+  width: 14px;
+  height: 14px;
+  color: var(--color-text-tertiary);
 }
 </style>
 

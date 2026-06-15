@@ -1661,6 +1661,18 @@
   "management_organize_notes_start": {
     "message": "开始整理"
   },
+  "management_organize_remove_duplicates": {
+    "message": "移除重复书签"
+  },
+  "management_organize_remove_duplicates_tooltip": {
+    "message": "相同 URL 只保留第一个"
+  },
+  "management_organize_remove_invalid": {
+    "message": "移除无效书签"
+  },
+  "management_organize_remove_invalid_tooltip": {
+    "message": "无法打开的链接"
+  },
   "management_organize_preview_ready": {
     "message": "整理方案已就绪，请在右侧预览并点击「应用」完成整理。"
   },

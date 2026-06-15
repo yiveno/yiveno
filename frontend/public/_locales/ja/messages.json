@@ -1679,6 +1679,18 @@
   "management_organize_notes_start": {
     "message": "整理を開始"
   },
+  "management_organize_remove_duplicates": {
+    "message": "重複ブックマークを削除"
+  },
+  "management_organize_remove_duplicates_tooltip": {
+    "message": "同じURLは最初のみ保持"
+  },
+  "management_organize_remove_invalid": {
+    "message": "無効なブックマークを削除"
+  },
+  "management_organize_remove_invalid_tooltip": {
+    "message": "開けないリンク"
+  },
   "management_expand_all": {
     "message": "すべてのフォルダを展開"
   },

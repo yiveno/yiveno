@@ -301,7 +301,7 @@ export class AIAppService {
     }
 
     let folders = mergeOrganizeFolderBatches(batches)
-    folders = sanitizeOrganizeFolders(folders, allBookmarkIds)
+    folders = sanitizeOrganizeFolders(folders)
 
     if (folders.length === 0) {
       folders = [createDeterministicChunkFallback(allBookmarkIds)]

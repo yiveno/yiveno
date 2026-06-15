@@ -1679,6 +1679,18 @@
   "management_organize_notes_start": {
     "message": "開始整理"
   },
+  "management_organize_remove_duplicates": {
+    "message": "移除重複書籤"
+  },
+  "management_organize_remove_duplicates_tooltip": {
+    "message": "相同 URL 只保留第一個"
+  },
+  "management_organize_remove_invalid": {
+    "message": "移除無效書籤"
+  },
+  "management_organize_remove_invalid_tooltip": {
+    "message": "無法開啟的連結"
+  },
   "management_expand_all": {
     "message": "全部展開"
   },

@@ -1679,6 +1679,18 @@
   "management_organize_notes_start": {
     "message": "Iniciar organización"
   },
+  "management_organize_remove_duplicates": {
+    "message": "Eliminar marcadores duplicados"
+  },
+  "management_organize_remove_duplicates_tooltip": {
+    "message": "Conservar el primero para la misma URL"
+  },
+  "management_organize_remove_invalid": {
+    "message": "Eliminar marcadores no válidos"
+  },
+  "management_organize_remove_invalid_tooltip": {
+    "message": "Enlaces inaccesibles"
+  },
   "management_expand_all": {
     "message": "Expandir Todo"
   },

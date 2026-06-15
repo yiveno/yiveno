@@ -66,14 +66,12 @@ describe('organize-response-parser', () => {
     expect(sanitizeOrganizeFolderPath('a/b/c/d/e')).toBe('a/b/c')
   })
 
-  it('sanitizeOrganizeFolders 覆盖全部书签 ID', () => {
-    const folders = sanitizeOrganizeFolders(
-      [{ name: '工具', path: '工具', bookmarkIds: ['42'] }],
-      ['42', '99']
-    )
-    const assigned = new Set(folders.flatMap(folder => folder.bookmarkIds))
-    expect(assigned.has('42')).toBe(true)
-    expect(assigned.has('99')).toBe(true)
+  it('sanitizeOrganizeFolders 只保留 LLM 返回的文件夹，不追加未分类', () => {
+    const folders = sanitizeOrganizeFolders([
+      { name: '工具', path: '工具', bookmarkIds: ['42'] }
+    ])
+    expect(folders).toHaveLength(1)
+    expect(folders[0].bookmarkIds).toEqual(['42'])
   })
 
   it('createDeterministicChunkFallback 为整批 ID 生成兜底文件夹', () => {

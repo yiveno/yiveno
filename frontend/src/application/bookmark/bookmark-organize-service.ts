@@ -72,6 +72,10 @@ export interface OrganizeBookmarkSnapshot {
 export interface OrganizeOptions {
   /** 用户补充说明，会一并传给 LLM */
   userNotes?: string
+  /** 移除重复书签（相同 URL 只保留第一个） */
+  removeDuplicates?: boolean
+  /** 移除无效书签（URL 不是有效 http/s 链接） */
+  removeInvalid?: boolean
 }
 
 export interface OrganizeResult {
@@ -87,6 +91,10 @@ export interface OrganizeResult {
   unclassifiedCount: number
   /** 使用的 AI 提供者 */
   aiProvider: string
+  /** 移除的重复书签数量 */
+  removedDuplicateCount: number
+  /** 移除的无效书签数量 */
+  removedInvalidCount: number
 }
 
 /**
@@ -112,8 +120,12 @@ export class BookmarkOrganizeService {
     options?: OrganizeOptions
   ): Promise<OrganizeResult> {
     const userNotes = options?.userNotes?.trim() || undefined
+    const removeDuplicates = options?.removeDuplicates ?? false
+    const removeInvalid = options?.removeInvalid ?? false
     logger.info(this.loggerPrefix, '开始一键整理书签', {
-      hasUserNotes: Boolean(userNotes)
+      hasUserNotes: Boolean(userNotes),
+      removeDuplicates,
+      removeInvalid
     })
 
     // 阶段 1: 获取书签数据
@@ -130,12 +142,50 @@ export class BookmarkOrganizeService {
     logger.info(this.loggerPrefix, `获取到 ${bookmarks.length} 个书签`)
 
     // 按书签 ID 逐条参与整理：全部叶子书签（含无 URL / 失效链接，URL 非必填）
-    const bookmarkItems = bookmarks.filter(b => !b.isFolder)
+    let bookmarkItems = bookmarks.filter(b => !b.isFolder)
     const noUrlCount = bookmarkItems.filter(b => !b.url?.trim()).length
     if (noUrlCount > 0) {
       logger.info(this.loggerPrefix, '含无 URL 书签，仍按 ID 参与整理', { noUrlCount })
     }
     logger.info(this.loggerPrefix, `参与整理的书签项: ${bookmarkItems.length}`)
+
+    // 可选过滤：移除无效书签（URL 不是有效 http/s 链接）
+    let removedInvalidCount = 0
+    if (removeInvalid) {
+      const beforeInvalid = bookmarkItems.length
+      bookmarkItems = bookmarkItems.filter(b => {
+        const url = b.url?.trim()
+        if (!url) return false
+        try {
+          const parsed = new URL(url)
+          return parsed.protocol === 'http:' || parsed.protocol === 'https:'
+        } catch {
+          return false
+        }
+      })
+      removedInvalidCount = beforeInvalid - bookmarkItems.length
+      if (removedInvalidCount > 0) {
+        logger.info(this.loggerPrefix, `移除无效书签 ${removedInvalidCount} 个`)
+      }
+    }
+    // 可选过滤：移除重复书签（相同 URL 只保留第一个）
+    let removedDuplicateCount = 0
+    if (removeDuplicates) {
+      const beforeDedup = bookmarkItems.length
+      const seenUrls = new Set<string>()
+      bookmarkItems = bookmarkItems.filter(b => {
+        const url = b.url?.trim()
+        if (!url) return true
+        const lower = url.toLowerCase()
+        if (seenUrls.has(lower)) return false
+        seenUrls.add(lower)
+        return true
+      })
+      removedDuplicateCount = beforeDedup - bookmarkItems.length
+      if (removedDuplicateCount > 0) {
+        logger.info(this.loggerPrefix, `移除重复书签 ${removedDuplicateCount} 个`)
+      }
+    }
 
     if (bookmarkItems.length === 0) {
       throw new OrganizeFailureError('no bookmarks to organize')
@@ -175,6 +225,8 @@ export class BookmarkOrganizeService {
     })
 
     // 准备发送给 AI 的数据
+    logger.info(this.loggerPrefix, `过滤后参与 AI 整理的书签数: ${bookmarkItems.length}`)
+
     const organizeSnapshots: OrganizeBookmarkSnapshot[] = bookmarkItems.map(bookmark => {
       const snapshot: OrganizeBookmarkSnapshot = {
         id: bookmark.id,
@@ -225,6 +277,9 @@ export class BookmarkOrganizeService {
       }
     })
 
+      
+    logger.info(this.loggerPrefix, 'AI 整理结果', { aiResult })
+
     this.emitProgress(progressCallback, 'ai_organize', 3, {
       stageProgress: 1,
       stageCurrent: totalAiBatches,
@@ -266,14 +321,18 @@ export class BookmarkOrganizeService {
       originalCount: bookmarkItems.length,
       organizedCount,
       unclassifiedCount,
-      aiProvider: aiResult.provider
+      aiProvider: aiResult.provider,
+      removedDuplicateCount,
+      removedInvalidCount
     }
 
     logger.info(this.loggerPrefix, '一键整理完成', {
       originalCount: result.originalCount,
       organizedCount: result.organizedCount,
       unclassifiedCount: result.unclassifiedCount,
-      folderCount: result.folders.length
+      folderCount: result.folders.length,
+      removedDuplicateCount: result.removedDuplicateCount,
+      removedInvalidCount: result.removedInvalidCount
     })
 
     return result

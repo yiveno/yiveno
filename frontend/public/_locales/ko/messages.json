@@ -1679,6 +1679,18 @@
   "management_organize_notes_start": {
     "message": "정리 시작"
   },
+  "management_organize_remove_duplicates": {
+    "message": "중복 북마크 제거"
+  },
+  "management_organize_remove_duplicates_tooltip": {
+    "message": "동일 URL은 첫 번째만 유지"
+  },
+  "management_organize_remove_invalid": {
+    "message": "유효하지 않은 북마크 제거"
+  },
+  "management_organize_remove_invalid_tooltip": {
+    "message": "열 수 없는 링크"
+  },
   "management_expand_all": {
     "message": "모두 펼치기"
   },

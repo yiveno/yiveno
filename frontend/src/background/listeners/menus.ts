@@ -103,12 +103,12 @@ export function registerMenusAndShortcuts(): void {
 
     if (info.menuItemId === 'os-open-management') {
       logger.info('Menus', '➡️ 打开书签整理页面')
-      openManagementPage()
+      void openManagementPage()
       return
     }
     if (info.menuItemId === 'os-open-settings') {
       logger.info('Menus', '➡️ 打开设置页面')
-      openSettingsPage()
+      void openSettingsPage()
       return
     }
     if (info.menuItemId === 'os-add-bookmark') {
@@ -122,10 +122,10 @@ export function registerMenusAndShortcuts(): void {
 
     switch (command) {
       case 'open-management':
-        openManagementPage()
+        void openManagementPage()
         break
       case 'open-settings':
-        openSettingsPage()
+        void openSettingsPage()
         break
       case 'quick-add-bookmark':
         {
@@ -225,7 +225,8 @@ async function handleAIAutoAddBookmark(bookmarkData: {
       throw new Error(result.error || '添加失败')
     }
 
-    await showBookmarkAddedNotification(result.bookmarkId, result.folderPath, result.aiUsed)
+    // 通知异步触发，不阻塞调用
+    void showBookmarkAddedNotification(result.bookmarkId, result.folderPath, result.aiUsed)
     logger.info('Menus', '✅ AI 自动添加书签 - 完成', {
       folderId: result.folderId,
       folderPath: result.folderPath,

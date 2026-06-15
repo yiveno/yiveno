@@ -3,7 +3,7 @@
  */
 
 import { ORGANIZE_FALLBACK_FOLDER_PATH } from '@/application/ai/organize-response-parser'
-import { pruneEmptiedLegacyBookmarksBarFolders } from '@/application/bookmark/proposal-tree-normalize'
+import { BOOKMARKS_BAR_ID, OTHER_BOOKMARKS_ID } from '@/core/bookmark/chrome-system-ids'
 import { isOrganizeBookmarkLeaf } from '@/core/bookmark/organize-bookmark-leaf'
 import {
   allocateTempFolderId,
@@ -15,7 +15,6 @@ import { logger } from '@/infrastructure/logging/logger'
 import type { BookmarkNode } from '@/types'
 import type { FolderStructure, OrganizeBookmarkSnapshot } from './bookmark-organize-service'
 
-const BOOKMARKS_BAR_ID = '1'
 const loggerPrefix = 'BookmarkOrganizeProposalBuilder'
 
 interface FlatBookmarkNode {
@@ -42,57 +41,6 @@ function cloneNode(node: BookmarkNode): BookmarkNode {
     cloned.children = node.children.map(child => cloneNode(child))
   }
   return cloned
-}
-
-/**
- * 将树展平为 id → 节点 映射，并清空 children 以便重建
- */
-function flattenToMap(roots: BookmarkNode[]): Map<string, FlatBookmarkNode> {
-  const map = new Map<string, FlatBookmarkNode>()
-
-  const walk = (nodes: BookmarkNode[], parentId: string) => {
-    nodes.forEach((node, index) => {
-      const entry: FlatBookmarkNode = {
-        node: { ...node, parentId, index, children: undefined },
-        parentId
-      }
-      map.set(String(node.id), entry)
-      if (node.children?.length) {
-        walk(node.children, String(node.id))
-      }
-    })
-  }
-
-  // 与 IndexedDB 一致：书签栏/其他书签的 parentId 为 '0'
-  walk(roots, '0')
-  return map
-}
-
-/**
- * 将 IndexedDB 快照补入 flat 映射，避免树未完全展开时找不到书签
- */
-function seedMissingBookmarksIntoMap(
-  map: Map<string, FlatBookmarkNode>,
-  bookmarkItems: OrganizeBookmarkSnapshot[]
-): void {
-  for (const item of bookmarkItems) {
-    const id = String(item.id)
-    if (map.has(id)) {
-      continue
-    }
-
-    const parentId = item.parentId ? String(item.parentId) : undefined
-    map.set(id, {
-      node: {
-        id,
-        title: item.title,
-        url: item.url,
-        parentId,
-        index: item.index
-      },
-      parentId
-    })
-  }
 }
 
 /**
@@ -347,7 +295,11 @@ function createFallbackFolderChain(
 }
 
 /**
- * 将 AI 整理结果合并进原始树，生成右侧提案树
+ * 将 AI 整理结果转换为提案树，完全替代原始树结构。
+ *
+ * 丢弃 `originalRoots`，仅从 AI 返回的文件夹和书签构建全新树：
+ * - AI 目录统一挂在书签栏（BOOKMARKS_BAR_ID）下
+ * - 未分类书签挂在其他书签（OTHER_BOOKMARKS_ID）下的兜底文件夹
  */
 export function buildProposalTreeFromOrganizeResult(
   originalRoots: BookmarkNode[],
@@ -358,12 +310,30 @@ export function buildProposalTreeFromOrganizeResult(
     return originalRoots.map(root => cloneNode(root))
   }
 
-  const clonedRoots = originalRoots.map(root => cloneNode(root))
-  const map = flattenToMap(clonedRoots)
-  seedMissingBookmarksIntoMap(map, bookmarkItems)
+  const map = new Map<string, FlatBookmarkNode>()
+
+  // 注册 Chrome 系统根节点（书签栏 + 其他书签）
+  addSystemRoot(map, BOOKMARKS_BAR_ID, '书签栏')
+  addSystemRoot(map, OTHER_BOOKMARKS_ID, '其他书签')
+
+  // 将所有叶子书签加入 map，parentId 暂设为 '0'（随后被 AI 目录或兜底目录接管）
+  for (const item of bookmarkItems) {
+    const id = String(item.id)
+    const node: BookmarkNode = {
+      id,
+      title: item.title,
+      url: item.url,
+      parentId: '0',
+      index: item.index
+    }
+    if (item.parentId) {
+      node.parentId = item.parentId
+    }
+    map.set(id, { node, parentId: '0' })
+  }
 
   applyFolderAssignments(map, folders, BOOKMARKS_BAR_ID)
-  repairUnassignedOrganizeBookmarks(map, bookmarkItems, BOOKMARKS_BAR_ID)
+  repairUnassignedOrganizeBookmarks(map, bookmarkItems, OTHER_BOOKMARKS_ID)
 
   const expectedBookmarkIds = new Set(
     folders.flatMap(folder => folder.bookmarkIds.map(id => String(id)))
@@ -389,5 +359,20 @@ export function buildProposalTreeFromOrganizeResult(
   }
 
   const rebuilt = rebuildTreeFromMap(map)
-  return pruneEmptiedLegacyBookmarksBarFolders(rebuilt, clonedRoots)
+  return rebuilt
+}
+
+/**
+ * 在 map 中注册 Chrome 系统根节点，供后续子节点挂载
+ */
+function addSystemRoot(
+  map: Map<string, FlatBookmarkNode>,
+  id: string,
+  title: string
+): void {
+  if (map.has(id)) return
+  map.set(id, {
+    node: { id, title, parentId: '0', index: 0, children: [] },
+    parentId: '0'
+  })
 }

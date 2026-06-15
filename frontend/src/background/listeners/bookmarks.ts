@@ -16,6 +16,8 @@
 import { logger } from '@/infrastructure/logging/logger'
 import { isBookmarkSyncBatchSuspended } from '@/core/bookmark/bookmark-sync-batch'
 import { bookmarkSyncService } from '@/infrastructure/services/bookmark-sync-service'
+import { scheduleRetrievalProfileSync } from '@/background/managers/retrieval-profile-sync'
+import { scheduleBookmarkEmbeddingSync } from '@/background/managers/embedding-sync'
 // ⚠️ 临时注释：scheduleTraitRebuildForIds 导致 background.js 导入 app-components
 // import { scheduleTraitRebuildForIds } from '@/infrastructure/services/bookmark-trait-service'
 
@@ -120,6 +122,13 @@ export function registerBookmarkChangeListeners(): void {
 
     // ✅ 创建操作使用增量同步
     await syncAndBroadcast('created', id, false)
+
+    // ✅ 新书签触发检索 profile 生成 + re-embed
+    // 仅处理 URL 书签（非文件夹），后台批处理会自动过滤
+    if (bookmark.url) {
+      scheduleRetrievalProfileSync('bookmark-created')
+      scheduleBookmarkEmbeddingSync('bookmark-created', 1500)
+    }
   })
 
   // 监听书签修改
@@ -154,6 +163,10 @@ export function registerBookmarkChangeListeners(): void {
     logger.info('BackgroundBookmarks', '📥 书签导入结束，开始同步...')
     // ✅ 导入操作涉及大量变更且无具体 ID，必须使用全量同步
     await syncAndBroadcast('created', 'import-batch', true)
+
+    // ✅ 导入的新书签统一触发检索 profile 生成
+    scheduleRetrievalProfileSync('bookmark-import')
+    scheduleBookmarkEmbeddingSync('bookmark-import', 1500)
   })
 
   logger.info('BackgroundBookmarks', '✅ 书签变化监听器已注册')

@@ -590,7 +590,10 @@ async function handleCreateBookmark(
 
     logger.info('BackgroundMessaging', `✅ 书签已创建: ${node.title || node.id}`)
 
-    // ✅ 显示系统通知（如果需要）
+    // ✅ 先发响应，确保调用方（如 SavePopup）立即收到成功状态
+    sendResponse({ success: true, bookmark: node, bookmarkId: node.id })
+
+    // ✅ 通知改为 fire-and-forget，不阻塞调用方
     if (showNotification) {
       try {
         // 获取文件夹路径
@@ -600,8 +603,6 @@ async function handleCreateBookmark(
         logger.warn('BackgroundMessaging', '显示通知失败，但不影响书签创建', error)
       }
     }
-
-    sendResponse({ success: true, bookmark: node, bookmarkId: node.id })
   } catch (error) {
     logger.error('BackgroundMessaging', '创建书签失败', error)
     sendResponse({

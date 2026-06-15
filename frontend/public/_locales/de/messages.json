@@ -1691,6 +1691,18 @@
   "management_organize_notes_start": {
     "message": "Organisation starten"
   },
+  "management_organize_remove_duplicates": {
+    "message": "Doppelte Lesezeichen entfernen"
+  },
+  "management_organize_remove_duplicates_tooltip": {
+    "message": "Erste URL behalten"
+  },
+  "management_organize_remove_invalid": {
+    "message": "Ungültige Lesezeichen entfernen"
+  },
+  "management_organize_remove_invalid_tooltip": {
+    "message": "Nicht öffnbare Links"
+  },
   "management_expand_all": {
     "message": "Alle erweitern"
   },
