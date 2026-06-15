@@ -23,6 +23,12 @@ export { default as SkeletonList } from './base/Skeleton/SkeletonList.vue'
 export { default as SkeletonTree } from './base/Skeleton/SkeletonTree.vue'
 export { default as Tooltip } from './base/Tooltip/Tooltip.vue'
 export { default as Button } from './base/Button/Button.vue'
+export { default as Checkbox } from './base/Checkbox/Checkbox.vue'
+export { default as LinearProgress } from './base/LinearProgress/LinearProgress.vue'
+export { default as List } from './base/List/List.vue'
+export { default as Menu } from './base/Menu/Menu.vue'
+export { default as Select } from './base/Select/Select.vue'
+export { default as Slider } from './base/Slider/Slider.vue'
 
 // ===== 复合组件 (从 composite/ 目录导出) =====
 // 通用复合组件：多个基础组件组合，但无业务逻辑
@@ -75,6 +81,17 @@ export type * from './base/Skeleton/SkeletonList.d'
 export type * from './base/Skeleton/SkeletonTree.d'
 export type * from './base/Tooltip/Tooltip.d'
 export type * from './base/Button/Button.d'
+export type * from './base/Checkbox/Checkbox.d'
+export type * from './base/LinearProgress/LinearProgress.d'
+export type * from './base/List/List.d'
+export type * from './base/Menu/Menu.d'
+export type {
+  SelectProps,
+  SelectEmits,
+  SelectVariant,
+  SelectOption as MdSelectOption
+} from './base/Select/Select.d'
+export type * from './base/Slider/Slider.d'
 
 // 复合组件类型
 export type * from './composite/AppHeader/AppHeader.d'

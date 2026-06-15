@@ -658,9 +658,8 @@ export async function showBookmarkAddedNotification(
   aiUsed?: boolean
 ): Promise<void> {
   try {
-    const message = aiUsed === false
-      ? `已添加到：${folderPath}（AI 分类尚未就绪）`
-      : `已添加到：${folderPath}`
+    const message =
+      aiUsed === false ? `已添加到：${folderPath}（AI 分类尚未就绪）` : `已添加到：${folderPath}`
 
     const notificationId = await chrome.notifications.create({
       type: 'basic',

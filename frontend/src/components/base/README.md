@@ -15,17 +15,22 @@
 
 ## 📦 组件列表
 
-### 表单类（7 个）
+### 表单类（12 个）
 
 | 组件          | 说明           | 文档                              |
 | ------------- | -------------- | --------------------------------- |
 | **Button**    | 按钮组件       | [查看文档](./Button/README.md)    |
 | **Input**     | 输入框组件     | [查看文档](./Input/README.md)     |
 | **Switch**    | 开关组件       | [查看文档](./Switch/README.md)    |
+| **Checkbox**  | 复选框组件     | [查看文档](./Checkbox/README.md)  |
+| **Select**    | 选择器组件     | [查看文档](./Select/README.md)    |
+| **Slider**    | 滑块组件       | [查看文档](./Slider/README.md)    |
 | **Dropdown**  | 下拉菜单       | [查看文档](./Dropdown/README.md)  |
 | **Accordion** | 手风琴折叠面板 | [查看文档](./Accordion/README.md) |
+| **Tabs**      | 标签页组件     | [查看文档](./Tabs/README.md)      |
+| **Chip**      | 芯片组件       | [查看文档](./Chip/README.md)      |
 | **List**      | 列表容器       | [查看文档](./List/README.md)      |
-| **ListItem**  | 列表项         | [查看文档](./ListItem/README.md)  |
+| **Menu**      | 菜单组件       | [查看文档](./Menu/README.md)      |
 
 ### 展示类（6 个）
 
@@ -37,13 +42,14 @@
 | **EmojiIcon**      | Emoji 图标 | [查看文档](./EmojiIcon/README.md)      |
 | **AnimatedNumber** | 数字动画   | [查看文档](./AnimatedNumber/README.md) |
 
-### 反馈类（3 个）
+### 反馈类（4 个）
 
-| 组件            | 说明     | 文档                                |
-| --------------- | -------- | ----------------------------------- |
-| **Spinner**     | 加载动画 | [查看文档](./Spinner/README.md)     |
-| **ProgressBar** | 进度条   | [查看文档](./ProgressBar/README.md) |
-| **Tooltip**     | 提示框   | [查看文档](./Tooltip/README.md)     |
+| 组件               | 说明     | 文档                                   |
+| ------------------ | -------- | -------------------------------------- |
+| **Spinner**        | 加载动画 | [查看文档](./Spinner/README.md)        |
+| **LinearProgress** | 线性进度 | [查看文档](./LinearProgress/README.md) |
+| **ProgressBar**    | 进度条   | [查看文档](./ProgressBar/README.md)    |
+| **Tooltip**        | 提示框   | [查看文档](./Tooltip/README.md)        |
 
 ### 布局类（5 个）
 
@@ -62,7 +68,7 @@
 | **Overlay**               | 遮罩层     | [查看文档](./Overlay/README.md)               |
 | **KeyboardShortcutsHelp** | 快捷键帮助 | [查看文档](./KeyboardShortcutsHelp/README.md) |
 
-**总计**: 23 个基础组件
+**总计**: 28 个基础组件
 
 ## 🎯 使用示例
 

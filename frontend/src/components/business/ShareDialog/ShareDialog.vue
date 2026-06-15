@@ -2,7 +2,7 @@
 import { reactive, watch, onUnmounted, ref, nextTick, computed, onMounted } from 'vue'
 import { useDebounceFn, useEventListener } from '@vueuse/core'
 import type { ShareDialogProps, ShareDialogEmits } from './ShareDialog.d'
-import { Dialog, LucideIcon, Tooltip, Loading, Button } from '@/components'
+import { Dialog, LucideIcon, Tooltip, Loading, Button, LinearProgress } from '@/components'
 import { MdInput } from '@/components/base/Input'
 import { MdSwitch } from '@/components/base/Switch'
 import { MdTabs } from '@/components/base/Tabs'
@@ -624,8 +624,8 @@ onUnmounted(() => {
           <!-- 显示用户名开关 -->
           <div class="option-item">
             <MdSwitch
-              class="switch--sm"
               v-model="state.showUsername"
+              class="switch--sm"
               @change="handleShowUsernameChange"
             />
             <label class="option-label" @click="state.showUsername = !state.showUsername">
@@ -650,8 +650,8 @@ onUnmounted(() => {
           <!-- 添加描述开关 -->
           <div class="option-item">
             <MdSwitch
-              class="switch--sm"
               v-model="state.showDescription"
+              class="switch--sm"
               @change="handleShowDescriptionChange"
             />
             <label class="option-label" @click="state.showDescription = !state.showDescription">
@@ -793,7 +793,7 @@ onUnmounted(() => {
               aria-busy="true"
             >
               <Loading size="lg" text="正在生成海报..." />
-              <md-linear-progress indeterminate class="linear-progress--sm poster-progress" />
+              <LinearProgress indeterminate size="sm" class="poster-progress" />
             </div>
             <div v-else-if="state.error" class="preview-error" role="alert" aria-live="assertive">
               <LucideIcon name="alert-circle" :size="48" aria-hidden="true" />

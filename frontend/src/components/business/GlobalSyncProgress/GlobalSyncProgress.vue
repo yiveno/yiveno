@@ -13,7 +13,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useGlobalSyncProgress } from '@/composables/useGlobalSyncProgress'
-import { Dialog, LucideIcon, Button } from '@/components'
+import { Dialog, LucideIcon, Button, LinearProgress } from '@/components'
 import type { SyncPhase } from '@/types/sync-progress'
 import { SYNC_PHASES, PHASE_TITLES, formatTime } from '@/types/sync-progress'
 import { formatNumber } from '@/utils/i18n-helpers'
@@ -168,7 +168,7 @@ function handleClose() {
 
       <!-- 进度条 -->
       <div class="progress-bar-container">
-        <md-linear-progress :value="progress.percentage / 100" class="linear-progress--lg progress-bar" />
+        <LinearProgress :value="progress.percentage / 100" size="lg" class="progress-bar" />
         <div class="progress-percentage">{{ Math.round(progress.percentage) }}%</div>
       </div>
 
@@ -377,8 +377,6 @@ function handleClose() {
 }
 
 .progress-bar {
-  --md-linear-progress-track-color: var(--md-sys-color-surface-container-highest);
-
   flex: 1;
 }
 

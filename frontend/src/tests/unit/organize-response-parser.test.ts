@@ -67,9 +67,7 @@ describe('organize-response-parser', () => {
   })
 
   it('sanitizeOrganizeFolders 只保留 LLM 返回的文件夹，不追加未分类', () => {
-    const folders = sanitizeOrganizeFolders([
-      { name: '工具', path: '工具', bookmarkIds: ['42'] }
-    ])
+    const folders = sanitizeOrganizeFolders([{ name: '工具', path: '工具', bookmarkIds: ['42'] }])
     expect(folders).toHaveLength(1)
     expect(folders[0].bookmarkIds).toEqual(['42'])
   })

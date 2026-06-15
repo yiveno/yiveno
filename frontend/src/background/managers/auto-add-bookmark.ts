@@ -84,12 +84,7 @@ async function resolveFolderId(bookmarkData: AutoAddBookmarkData): Promise<{
         { type: 'SYNC_FOLDER_VECTORS' },
         { timeout: 300_000 }
       )
-      recommendations = await getFolderRecommendations(
-        bookmarkData.title,
-        bookmarkData.url,
-        1,
-        0.1
-      )
+      recommendations = await getFolderRecommendations(bookmarkData.title, bookmarkData.url, 1, 0.1)
     }
   }
 

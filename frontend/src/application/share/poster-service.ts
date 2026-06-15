@@ -88,7 +88,7 @@ class PosterServiceImpl implements PosterService {
       canvas.height = height
 
       // 4. 获取配置
-      const config = this.getConfig(options.theme)
+      const config = await this.getConfig(options.theme)
 
       // 5. 使用 requestAnimationFrame 优化渲染
       await new Promise<void>(resolve => {
@@ -170,14 +170,10 @@ class PosterServiceImpl implements PosterService {
   /**
    * 获取主题配置
    */
-  private getConfig(theme: 'dark' | 'light'): PosterConfig {
+  private async getConfig(theme: 'dark' | 'light'): Promise<PosterConfig> {
     try {
-      // prettier-ignore
-      /* eslint-disable @typescript-eslint/no-var-requires */
-      const {
-        materialColors,
-      } = require("@ottersage/design-tokens/colors");
-      /* eslint-enable @typescript-eslint/no-var-requires */
+      const { materialColors } = await import('@ottersage/design-tokens/colors')
+
       if (theme === 'dark') {
         return {
           width: this.POSTER_WIDTH,
@@ -186,9 +182,6 @@ class PosterServiceImpl implements PosterService {
           bookmarkHeight: this.BOOKMARK_HEIGHT,
           qrSize: this.QR_SIZE,
           colors: {
-            // ✅ 使用 Material Design 3 颜色（暗色主题）
-            // 注意：Canvas 中无法直接使用 CSS 变量，需要从 design-tokens 包导入
-            // 通过导入 TypeScript 常量，确保与 design-tokens 包自动同步
             background: materialColors.surfaceDark.rgb,
             text: materialColors.onSurfaceDark.rgb,
             primary: materialColors.primaryDark.rgb,
@@ -203,9 +196,6 @@ class PosterServiceImpl implements PosterService {
           bookmarkHeight: this.BOOKMARK_HEIGHT,
           qrSize: this.QR_SIZE,
           colors: {
-            // ✅ 使用 Material Design 3 颜色（亮色主题）
-            // 注意：Canvas 中无法直接使用 CSS 变量，需要从 design-tokens 包导入
-            // 通过导入 TypeScript 常量，确保与 design-tokens 包自动同步
             background: materialColors.surface.rgb,
             text: materialColors.onSurface.rgb,
             primary: materialColors.primary.rgb,

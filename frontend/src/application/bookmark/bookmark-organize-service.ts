@@ -277,7 +277,6 @@ export class BookmarkOrganizeService {
       }
     })
 
-      
     logger.info(this.loggerPrefix, 'AI 整理结果', { aiResult })
 
     this.emitProgress(progressCallback, 'ai_organize', 3, {

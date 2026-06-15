@@ -169,7 +169,9 @@ export class ApiClient {
   private buildRequestOptions(options: RequestOptions): RequestInit {
     const {
       timeout: _timeout = this.config.timeout,
+
       retries: _retries = this.config.retries,
+
       retryDelay: _retryDelay = this.config.retryDelay,
       ...fetchOptions
     } = options

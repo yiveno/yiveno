@@ -133,6 +133,7 @@ export const useDialogStore = defineStore('dialog', () => {
       }
 
       // ✅ 只保存表单数据，不包含 isOpen
+
       const { isOpen, ...draftData } = editBookmarkDialog.value
       await chromeStorage.setSession(SESSION_KEYS.EDIT_BOOKMARK_DRAFT, draftData)
     } catch (error) {
@@ -153,6 +154,7 @@ export const useDialogStore = defineStore('dialog', () => {
       }
 
       // ✅ 只保存表单数据，不包含 isOpen
+
       const { isOpen, ...draftData } = editFolderDialog.value
       await chromeStorage.setSession(SESSION_KEYS.EDIT_FOLDER_DRAFT, draftData)
     } catch (error) {

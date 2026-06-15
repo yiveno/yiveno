@@ -365,11 +365,7 @@ export function buildProposalTreeFromOrganizeResult(
 /**
  * 在 map 中注册 Chrome 系统根节点，供后续子节点挂载
  */
-function addSystemRoot(
-  map: Map<string, FlatBookmarkNode>,
-  id: string,
-  title: string
-): void {
+function addSystemRoot(map: Map<string, FlatBookmarkNode>, id: string, title: string): void {
   if (map.has(id)) return
   map.set(id, {
     node: { id, title, parentId: '0', index: 0, children: [] },

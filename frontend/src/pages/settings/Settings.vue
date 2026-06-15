@@ -348,7 +348,6 @@ watch(tab, v => {
   background: var(--color-background);
 }
 
-
 .settings-tab__icon-slot {
   display: inline-flex;
   justify-content: center;

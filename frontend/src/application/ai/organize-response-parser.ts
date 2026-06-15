@@ -78,17 +78,17 @@ function extractNestedId(raw: unknown): unknown {
  */
 function normalizeIdString(raw: string): string {
   const id = raw.trim().replace(/^[`'"]+|[`'"]+$/g, '')
-  
+
   const bracketIdMatch = id.match(/^\[?id:\s*(.+?)\]?$/i)
   if (bracketIdMatch?.[1]) {
     return bracketIdMatch[1].trim()
   }
-  
+
   const idPrefixMatch = id.match(/^id:\s*(.+)$/i)
   if (idPrefixMatch?.[1]) {
     return idPrefixMatch[1].trim()
   }
-  
+
   return id
 }
 
@@ -383,9 +383,7 @@ export function createDeterministicChunkFallback(
 /**
  * 规范化 LLM 文件夹列表，确保路径合法且全部书签 ID 被覆盖。
  */
-export function sanitizeOrganizeFolders(
-  folders: ParsedOrganizeFolder[]
-): ParsedOrganizeFolder[] {
+export function sanitizeOrganizeFolders(folders: ParsedOrganizeFolder[]): ParsedOrganizeFolder[] {
   const normalized = folders
     .map(folder => {
       const path = sanitizeOrganizeFolderPath(folder.path || folder.name, folder.name)

@@ -332,16 +332,19 @@ export class FontService {
     const simplifiedIndicators = ['的', '了', '在', '是', '我', '有', '他', '这', '中', '来']
     const traditionalIndicators = ['的', '了', '在', '是', '我', '有', '他', '這', '中', '來']
 
-    let _simplifiedScore = 0
-    let _traditionalScore = 0
+    // TODO: 实现基于字频的简繁检测
+    // let simplifiedScore = 0
+    // let traditionalScore = 0
+    // for (const char of simplifiedIndicators) {
+    //   if (text.includes(char)) simplifiedScore++
+    // }
+    // for (const char of traditionalIndicators) {
+    //   if (text.includes(char)) traditionalScore++
+    // }
 
-    for (const char of simplifiedIndicators) {
-      if (text.includes(char)) _simplifiedScore++
-    }
-
-    for (const char of traditionalIndicators) {
-      if (text.includes(char)) _traditionalScore++
-    }
+    // 避免 unused variable 警告
+    void simplifiedIndicators
+    void traditionalIndicators
 
     // 检测繁体特有字符
     const traditionalOnlyChars = /[繁體字線條]/

@@ -148,7 +148,7 @@ const actionCards = computed<ActionCardDef[]>(() => [
               v-for="item in statItems"
               :key="item.labelKey"
               type="text"
-               class="popup-stat-item list-item--auto"
+              class="popup-stat-item list-item--auto"
             >
               <div slot="headline" class="popup-stat-stack">
                 <span class="popup-stat-label">{{ t(item.labelKey) }}</span>

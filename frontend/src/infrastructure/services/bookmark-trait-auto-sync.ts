@@ -82,6 +82,7 @@ class BookmarkTraitAutoSync {
    */
   private setupCustomEventListeners(): void {
     // 监听同步完成事件
+
     chrome.runtime.onMessage.addListener((message, _sender, _sendResponse) => {
       if (message.type === 'ottersage-db-synced') {
         const eventType = message.eventType as

@@ -86,11 +86,13 @@ class PageNotificationManager {
     try {
       // 动态导入 Vue 和 Notification 组件
       // ⚠️ 只导入 Notification 组件，避免导入整个 @/components（包含 Material Web Components）
-      // eslint-disable-next-line require-atomic-updates -- 模块加载是原子操作，不会有竞态条件
+
+      // eslint-disable-next-line require-atomic-updates -- 在 await 之前已检查，且只有一个调用点
       vueModule = await import('vue')
       const notificationModule =
         await import('@/components/composite/Notification/Notification.vue')
-      // eslint-disable-next-line require-atomic-updates -- 模块加载是原子操作，不会有竞态条件
+
+      // eslint-disable-next-line require-atomic-updates -- 在 await 之前已检查，且只有一个调用点
       NotificationComponent = notificationModule.default
       return true
     } catch (error) {
@@ -630,7 +632,7 @@ export class NotificationService {
     const clearDelay = opts.badge.clearDelay || NOTIFICATION_CONFIG.BADGE_AUTO_CLEAR_DELAY
     if (clearDelay > 0) {
       setTimeout(() => {
-        this.clearBadge()
+        void this.clearBadge()
       }, clearDelay)
     }
   }
@@ -651,7 +653,7 @@ export class NotificationService {
 
     if (shouldMirror && this.config.enableSystemNotifications) {
       this.queue.push(item)
-      this.runNext()
+      void this.runNext()
     }
   }
 
@@ -880,6 +882,7 @@ export class NotificationService {
    * @param _level - 通知级别（预留用于未来扩展）
    * @returns 默认图标URL
    */
+
   private getDefaultIcon(_level: NotificationLevel): string {
     try {
       if (_isExtensionRuntime && typeof chrome !== 'undefined' && chrome?.runtime?.getURL) {
@@ -1010,7 +1013,7 @@ export class NotificationService {
         const delay = Math.max(0, minInterval - elapsed)
 
         setTimeout(() => {
-          this.runNext()
+          void this.runNext()
         }, delay)
       }
     }

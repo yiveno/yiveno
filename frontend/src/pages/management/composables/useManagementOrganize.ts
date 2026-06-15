@@ -95,12 +95,12 @@ export function useManagementOrganize(options: {
       message.error(t('management_organize_failed_retry'))
     } finally {
       if (organizingSnapshot !== undefined) {
+        // eslint-disable-next-line require-atomic-updates -- isOrganizing 在 await 期间不会被其他代码修改
         isOrganizing.value = false
       }
       showOrganizeProgress.value = false
     }
   }
-
 
   return {
     isOrganizing,

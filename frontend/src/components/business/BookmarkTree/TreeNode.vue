@@ -12,6 +12,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, toRef } from 'vue'
 import { LucideIcon } from '@/components/base/LucideIcon'
+import { Checkbox } from '@/components'
 import type { BookmarkNode } from '@/types'
 import { logger } from '@/infrastructure/logging/logger'
 import { useLazyFavicon } from '@/composables/useLazyFavicon'
@@ -657,13 +658,14 @@ defineExpose({
       @contextmenu.prevent="openContextMenu"
     >
       <!-- 选择复选框 -->
-      <md-checkbox
+      <Checkbox
         v-if="config.showSelectionCheckbox && config.selectable === 'multiple' && !isRootFolder"
-        :checked="isSelected"
+        v-model="isSelected"
         :indeterminate="isIndeterminate"
+        variant="folder"
         class="select-checkbox"
         @change="toggleSelection"
-      ></md-checkbox>
+      />
 
       <!-- 文件夹图标 -->
       <div class="folder-icon">
@@ -701,13 +703,13 @@ defineExpose({
       @contextmenu.prevent="openContextMenu"
     >
       <!-- 书签选择复选框 -->
-      <md-checkbox
+      <Checkbox
         v-if="config.showSelectionCheckbox && config.selectable === 'multiple'"
-        :checked="isSelected"
-        :indeterminate="false"
+        v-model="isSelected"
+        variant="bookmark"
         class="select-checkbox"
         @change="toggleSelection"
-      ></md-checkbox>
+      />
       <!-- 书签图标/Favicon（带懒加载） -->
       <div class="bookmark-icon">
         <!-- 加载成功时显示favicon图片 -->
@@ -732,7 +734,12 @@ defineExpose({
 
       <!-- AI标签 -->
       <md-chip-set v-if="Array.isArray(node.tags) && node.tags.length > 0" class="bookmark-tags">
-        <md-input-chip v-for="tag in node.tags" :key="tag" class="input-chip--tag" :label="tag"></md-input-chip>
+        <md-input-chip
+          v-for="tag in node.tags"
+          :key="tag"
+          class="input-chip--tag"
+          :label="tag"
+        ></md-input-chip>
       </md-chip-set>
 
       <!-- 书签URL (hover时显示) -->
@@ -924,16 +931,6 @@ defineExpose({
 /* 选择复选框样式调整 */
 .select-checkbox {
   margin-right: var(--spacing-0-5);
-}
-
-/* 文件夹行内的 Checkbox hover 使用黄色系 */
-.folder-content:hover .select-checkbox {
-  --md-checkbox-unselected-hover-state-layer-color: var(--color-folder-hover);
-}
-
-/* 书签行内的 Checkbox hover 使用蓝色系 */
-.bookmark-content:hover .select-checkbox {
-  --md-checkbox-unselected-hover-state-layer-color: var(--color-bookmark-hover);
 }
 
 .bookmark-icon img {
@@ -1283,7 +1280,6 @@ md-chip-set.bookmark-tags {
   gap: var(--spacing-1);
   margin-top: var(--spacing-1);
 }
-
 
 /* stylelint-disable declaration-property-value-disallowed-list, color-no-hex -- 树节点组件使用特定尺寸和颜色 */
 </style>

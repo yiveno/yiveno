@@ -36,9 +36,5 @@ const switchAttrs = computed(() => ({
 </script>
 
 <template>
-  <md-switch
-    v-bind="switchAttrs"
-    @change="handleChange"
-    @input="handleInput"
-  />
+  <md-switch v-bind="switchAttrs" @change="handleChange" @input="handleInput" />
 </template>

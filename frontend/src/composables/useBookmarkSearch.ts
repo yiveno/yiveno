@@ -144,6 +144,104 @@ export function useBookmarkSearch(options: UseBookmarkSearchOptions = {}): UseBo
   })
 
   // ==================== Methods ====================
+
+  /**
+   * 构建 FilteredBookmarkNode 的路径字段
+   */
+  function buildPathFields(node: FilteredBookmarkNode, bookmark: BookmarkRecord): void {
+    node.path = bookmark.path || []
+    node.pathString = bookmark.pathString || ''
+    node.pathIds = bookmark.pathIds || []
+    node.ancestorIds = bookmark.ancestorIds || []
+    node.depth = bookmark.depth || 0
+  }
+
+  /**
+   * 构建 FilteredBookmarkNode 的搜索字段
+   */
+  function buildSearchFields(node: FilteredBookmarkNode, bookmark: BookmarkRecord): void {
+    node.titleLower = bookmark.titleLower || bookmark.title?.toLowerCase() || ''
+    node.urlLower = bookmark.urlLower || bookmark.url?.toLowerCase()
+    node.domain = bookmark.domain
+    node.keywords = bookmark.keywords || []
+  }
+
+  /**
+   * 构建 FilteredBookmarkNode 的文件夹字段
+   */
+  function buildFolderFields(node: FilteredBookmarkNode, bookmark: BookmarkRecord): void {
+    node.isFolder = !bookmark.url
+    node.childrenCount = bookmark.childrenCount || 0
+  }
+
+  /**
+   * 映射 IndexedDB 搜索结果为 FilteredBookmarkNode
+   */
+  function mapIndexedDBResultsToNodes(
+    searchResults: Array<{ bookmark: BookmarkRecord; score: number; matchedFields?: string[] }>
+  ): FilteredBookmarkNode[] {
+    return searchResults.map((r): FilteredBookmarkNode => {
+      const bookmark = r.bookmark
+      const node: FilteredBookmarkNode = {
+        id: bookmark.id,
+        title: bookmark.title || '无标题',
+        url: bookmark.url,
+        dateAdded: bookmark.dateAdded || 0,
+        dateGroupModified: bookmark.dateGroupModified,
+        parentId: bookmark.parentId,
+        index: bookmark.index || 0,
+        children: !bookmark.url ? [] : undefined,
+        filterScore: r.score,
+        matchedFields: r.matchedFields ?? []
+      } as FilteredBookmarkNode
+
+      buildPathFields(node, bookmark)
+      buildSearchFields(node, bookmark)
+      buildFolderFields(node, bookmark)
+
+      return node
+    })
+  }
+
+  /**
+   * 执行内存模式筛选
+   */
+  async function filterMemoryMode(trimmedQuery: string): Promise<void> {
+    const result = bookmarkMemorySearchService.search(
+      dataRef.value as BookmarkNode[],
+      trimmedQuery,
+      { limit, ...filterOptions }
+    )
+    results.value = result.nodes
+    totalResults.value = result.total
+    executionTime.value = result.executionTime
+    filterSource.value = 'memory'
+  }
+
+  /**
+   * 执行 IndexedDB 模式筛选
+   */
+  async function filterIndexedDBMode(trimmedQuery: string): Promise<void> {
+    const result = await bookmarkSearchService.searchWithMetadata(trimmedQuery, {
+      limit,
+      highlight: true,
+      filterFolders: filterOptions.filterFolders,
+      fuzzyThreshold: filterOptions.threshold
+    })
+
+    if (!result.ok) {
+      throw result.error
+    }
+
+    const response = result.value
+    const nodes = mapIndexedDBResultsToNodes(response.results)
+
+    results.value = nodes
+    totalResults.value = response.results.length
+    executionTime.value = Math.round(response.metadata.searchTime)
+    filterSource.value = 'indexeddb'
+  }
+
   /**
    * 执行筛选（支持双模式）
    */
@@ -178,74 +276,9 @@ export function useBookmarkSearch(options: UseBookmarkSearchOptions = {}): UseBo
 
     try {
       if (mode === 'memory') {
-        // 内存模式：仅用于未持久化的树形草稿（非 Chrome 书签主数据源）
-        const result = bookmarkMemorySearchService.search(
-          dataRef.value as BookmarkNode[],
-          trimmedQuery,
-          { limit, ...filterOptions }
-        )
-        results.value = result.nodes
-        totalResults.value = result.total
-        executionTime.value = result.executionTime
-        filterSource.value = 'memory'
+        await filterMemoryMode(trimmedQuery)
       } else {
-        const result = await bookmarkSearchService.searchWithMetadata(trimmedQuery, {
-          limit,
-          highlight: true,
-          filterFolders: filterOptions.filterFolders,
-          fuzzyThreshold: filterOptions.threshold
-        })
-
-        if (!result.ok) {
-          throw result.error
-        }
-
-        const response = result.value
-        const relevantResults = response.results
-
-        // 转换为 FilteredBookmarkNode（扁平列表）
-        const nodes: FilteredBookmarkNode[] = relevantResults.map(
-          // eslint-disable-next-line complexity
-          (r): FilteredBookmarkNode => {
-            const bookmark = r.bookmark
-            const node: FilteredBookmarkNode = {
-              id: bookmark.id,
-              title: bookmark.title || '无标题',
-              url: bookmark.url,
-              dateAdded: bookmark.dateAdded || 0,
-              dateGroupModified: bookmark.dateGroupModified,
-              parentId: bookmark.parentId,
-              index: bookmark.index || 0,
-              children: !bookmark.url ? [] : undefined,
-              filterScore: r.score,
-              matchedFields: r.matchedFields ?? []
-            } as FilteredBookmarkNode
-
-            // 路径相关字段
-            node.path = bookmark.path || []
-            node.pathString = bookmark.pathString || ''
-            node.pathIds = bookmark.pathIds || []
-            node.ancestorIds = bookmark.ancestorIds || []
-            node.depth = bookmark.depth || 0
-
-            // 搜索相关字段
-            node.titleLower = bookmark.titleLower || bookmark.title?.toLowerCase() || ''
-            node.urlLower = bookmark.urlLower || bookmark.url?.toLowerCase()
-            node.domain = bookmark.domain
-            node.keywords = bookmark.keywords || []
-
-            // 文件夹相关字段
-            node.isFolder = !bookmark.url
-            node.childrenCount = bookmark.childrenCount || 0
-
-            return node
-          }
-        )
-
-        results.value = nodes
-        totalResults.value = relevantResults.length
-        executionTime.value = Math.round(response.metadata.searchTime)
-        filterSource.value = 'indexeddb'
+        await filterIndexedDBMode(trimmedQuery)
       }
 
       logger.info('useBookmarkSearch', `筛选完成 (${filterSource.value}): "${trimmedQuery}"`, {
@@ -294,14 +327,14 @@ export function useBookmarkSearch(options: UseBookmarkSearchOptions = {}): UseBo
   // 自动筛选
   if (autoFilter) {
     watch(query, newQuery => {
-      filter(newQuery)
+      void filter(newQuery)
     })
   }
 
   // ==================== Initialization ====================
   // 如果有初始查询，执行筛选
   if (initialQuery && autoFilter) {
-    filter(initialQuery)
+    void filter(initialQuery)
   }
 
   // ==================== Return ====================

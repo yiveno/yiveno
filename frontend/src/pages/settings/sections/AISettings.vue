@@ -30,8 +30,10 @@ const isLoggedIn = computed(() => isAuthenticated.value)
 // Tab 状态
 const activeTab = ref<'apikey' | 'hosted'>('hosted')
 const activeTabIndex = computed({
-  get: () => activeTab.value === 'hosted' ? 0 : 1,
-  set: (val: number) => { activeTab.value = val === 0 ? 'hosted' : 'apikey' }
+  get: () => (activeTab.value === 'hosted' ? 0 : 1),
+  set: (val: number) => {
+    activeTab.value = val === 0 ? 'hosted' : 'apikey'
+  }
 })
 
 // Pro 托管 AI 配额
@@ -218,7 +220,6 @@ function openEngineDialog(tab: 'apikey' | 'hosted') {
   activeTab.value = tab
   showAIEngineDialog.value = true
 }
-
 
 function getSwitchSelected(event: Event): boolean {
   const target = event.target as HTMLElement & { selected?: boolean }

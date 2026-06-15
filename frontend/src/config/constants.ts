@@ -85,40 +85,16 @@ export const NOTIFICATION_CONFIG = {
    *
    * 提供语义化的徽章颜色，确保视觉一致性
    */
-  BADGE_COLORS: (() => {
-    // 动态导入 design-tokens 包的颜色（避免循环依赖）
-    // 这里使用立即执行函数，在运行时获取颜色值
-    const getColors = () => {
-      try {
-        // prettier-ignore
-        /* eslint-disable @typescript-eslint/no-var-requires */
-        const {
-          materialColors,
-          semanticColors,
-        } = require("@ottersage/design-tokens/colors");
-        /* eslint-enable @typescript-eslint/no-var-requires */
-        return {
-          /** 信息徽章：使用 MD3 Primary 色 */
-          info: materialColors.primary.rgb,
-          /** 成功徽章：使用语义 Success 色 */
-          success: semanticColors.success.rgb,
-          /** 警告徽章：使用语义 Warning 色 */
-          warning: semanticColors.warning.rgb,
-          /** 错误徽章：使用 MD3 Error 色 */
-          error: materialColors.error.rgb
-        }
-      } catch {
-        // 降级方案：如果导入失败，使用硬编码值
-        return {
-          info: 'rgb(68, 94, 145)',
-          success: 'rgb(87, 94, 113)',
-          warning: 'rgb(113, 85, 115)',
-          error: 'rgb(186, 26, 26)'
-        }
-      }
-    }
-    return getColors()
-  })() as {
+  BADGE_COLORS: {
+    /** 信息徽章：使用 MD3 Primary 色 */
+    info: 'rgb(68, 94, 145)',
+    /** 成功徽章：使用语义 Success 色 */
+    success: 'rgb(87, 94, 113)',
+    /** 警告徽章：使用语义 Warning 色 */
+    warning: 'rgb(113, 85, 115)',
+    /** 错误徽章：使用 MD3 Error 色 */
+    error: 'rgb(186, 26, 26)'
+  } as {
     info: string
     success: string
     warning: string

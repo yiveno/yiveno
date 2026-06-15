@@ -19,10 +19,7 @@ const handleChange = (event: Event) => {
 </script>
 
 <template>
-  <md-tabs
-    :active-tab-index="modelValue"
-    @change="handleChange"
-  >
+  <md-tabs :active-tab-index="modelValue" @change="handleChange">
     <slot />
   </md-tabs>
 </template>

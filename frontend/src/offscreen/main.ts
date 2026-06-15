@@ -168,9 +168,9 @@ async function ensureSearchWorker(): Promise<Worker> {
       }
     })
 
-    // eslint-disable-next-line require-atomic-updates -- Worker 初始化是原子操作，不会有竞态条件
+    // eslint-disable-next-line require-atomic-updates -- searchState 仅在本函数内修改，无并发风险
     searchState.worker = worker
-    // eslint-disable-next-line require-atomic-updates -- Worker 初始化是原子操作，不会有竞态条件
+    // eslint-disable-next-line require-atomic-updates -- searchState 仅在本函数内修改，无并发风险
     searchState.ready = true
     return worker
   } catch (error) {
@@ -179,7 +179,7 @@ async function ensureSearchWorker(): Promise<Worker> {
     searchState.ready = false
     throw error
   } finally {
-    // eslint-disable-next-line require-atomic-updates -- finally 块中的状态重置是安全的
+    // eslint-disable-next-line require-atomic-updates -- searchState 仅在本函数内修改，无并发风险
     searchState.initializing = false
   }
 }
@@ -686,7 +686,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     hasHandler: !!handler,
     availableHandlers: Object.keys(handlers)
   })
-  ;(async () => {
+  void (async () => {
     try {
       if (!handler) {
         const error = `Unsupported task: ${message.type}`
@@ -723,9 +723,10 @@ async function primeWorkerDocs(worker: Worker, docsFromPayload?: WorkerDoc[]) {
 
   const docs = docsFromPayload ?? (await collectDocsFromIDB())
   worker.postMessage({ type: 'init', docs })
-  // eslint-disable-next-line require-atomic-updates -- 文档索引初始化是原子操作，不会有竞态条件
+
+  // eslint-disable-next-line require-atomic-updates -- searchState 仅在本函数内修改，无并发风险
   searchState.docCount = docs.length
-  // eslint-disable-next-line require-atomic-updates -- 文档索引初始化是原子操作，不会有竞态条件
+  // eslint-disable-next-line require-atomic-updates -- searchState 仅在本函数内修改，无并发风险
   searchState.primed = docs.length > 0
   logger.info('OffscreenSearch', `索引文档数量: ${searchState.docCount}`)
 }

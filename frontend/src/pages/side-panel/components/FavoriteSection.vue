@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useBookmarkStore } from '@/stores/bookmark-tree-store'
 import { favoriteAppService } from '@/application/bookmark/favorite-app-service'
-import { LucideIcon, EmptyState, Button } from '@/components'
+import { LucideIcon, EmptyState, Button, List } from '@/components'
 import type { BookmarkNode } from '@/types'
 
 defineOptions({ name: 'FavoriteSection' })
@@ -59,7 +59,7 @@ async function handleRemove(bookmark: BookmarkNode) {
 <template>
   <section class="favorite-section">
     <EmptyState v-if="favorites.length === 0" icon="star" title="暂无收藏书签" ::icon-size="32" />
-    <md-list v-else class="list">
+    <List v-else divider="line" class="list">
       <md-list-item
         v-for="f in favorites"
         :key="f.id"
@@ -83,7 +83,7 @@ async function handleRemove(bookmark: BookmarkNode) {
           <LucideIcon name="star" :size="16" fill="currentColor" />
         </Button>
       </md-list-item>
-    </md-list>
+    </List>
   </section>
 </template>
 
@@ -97,14 +97,6 @@ async function handleRemove(bookmark: BookmarkNode) {
   max-height: 300px;
   border-radius: var(--radius-md);
   overflow: hidden auto;
-}
-
-.list :deep(md-list-item) {
-  border-bottom: 1px solid var(--color-border);
-}
-
-.list :deep(md-list-item:last-child) {
-  border-bottom: none;
 }
 
 .headline {

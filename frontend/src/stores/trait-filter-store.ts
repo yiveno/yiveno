@@ -206,7 +206,8 @@ export const useTraitFilterStore = defineStore('traitFilter', () => {
       result.records?.forEach(record => {
         newResults.set(record.id, (record.traitTags || []) as TraitTag[])
       })
-      // eslint-disable-next-line require-atomic-updates -- AbortController 运行时保护
+
+      // eslint-disable-next-line require-atomic-updates -- 已通过 abort 信号排除过期请求
       state.value.filterResults = newResults
 
       logger.debug('TraitFilterStore', '筛选完成', {

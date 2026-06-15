@@ -139,6 +139,7 @@ export class QueryWorkerAdapter {
       const batch = await indexedDBManager.getAllBookmarks(pageSize, offset)
       if (!batch.length) break
       offset += batch.length
+
       _totalLoaded += batch.length
 
       // 维护 byId 的渐进式缓存（避免一次性占用大内存）
@@ -165,16 +166,26 @@ export class QueryWorkerAdapter {
     this.inited = true
   }
 
+  /**
+   * 获取搜索路径描述
+   */
+  private getSearchPath(canUseOffscreen: boolean): string {
+    if (canUseOffscreen) return 'offscreen'
+    if (this.workerSupported) return 'worker'
+    return 'fallback'
+  }
+
   async search(query: string, limit = this.options.limit ?? 100): Promise<SearchResult[]> {
     if (!query.trim()) return []
 
     const searchStart = performance.now()
     const canUseOffscreen = this.isServiceWorkerContext && this.offscreenSupported
 
+    const searchPath = this.getSearchPath(canUseOffscreen)
     logger.info('QueryWorkerAdapter', '▶ 检索入口', {
       query,
       limit,
-      path: canUseOffscreen ? 'offscreen' : this.workerSupported ? 'worker' : 'fallback'
+      path: searchPath
     })
 
     if (canUseOffscreen) {

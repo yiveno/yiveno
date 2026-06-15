@@ -288,6 +288,7 @@ export class IndexedDBBookmarkRepository implements BookmarkRepository {
   /**
    * 筛选书签
    */
+
   async search(_options: SearchOptions): Promise<Result<SearchResult[], Error>> {
     const initResult = this.ensureInitialized()
     if (!initResult.ok) return initResult as Result<SearchResult[], Error>

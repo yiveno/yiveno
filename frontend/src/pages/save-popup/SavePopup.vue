@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, nextTick } from 'vue'
 import BookmarkTree from '@/components/business/BookmarkTree/BookmarkTree.vue'
-import { Input, Loading, Accordion, AccordionItem, Button } from '@/components'
+import { Input, Loading, Accordion, AccordionItem, Button, List } from '@/components'
 import { LucideIcon } from '@/components/base/LucideIcon'
 
 import { logger } from '@/infrastructure/logging/logger'
@@ -282,7 +282,7 @@ function handleCancel() {
           icon="alert-triangle"
         >
           <div class="duplicate-content">
-            <md-list class="duplicate-list">
+            <List divider="line" class="duplicate-list">
               <md-list-item
                 v-for="(bookmark, index) in duplicateCheck.existingBookmarks"
                 :key="index"
@@ -300,7 +300,7 @@ function handleCancel() {
                   {{ bookmark.folderPath || bookmark.pathString || '未知位置' }}
                 </div>
               </md-list-item>
-            </md-list>
+            </List>
           </div>
         </AccordionItem>
       </Accordion>

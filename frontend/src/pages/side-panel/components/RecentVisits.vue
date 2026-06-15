@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue'
-import { LucideIcon, EmptyState, Button } from '@/components'
+import { LucideIcon, EmptyState, Button, List } from '@/components'
 import { bookmarkAppService } from '@/application/bookmark/bookmark-app-service'
 import type { BookmarkRecord } from '@/infrastructure/indexeddb/types'
 import { logger } from '@/infrastructure/logging/logger'
@@ -71,7 +71,7 @@ defineExpose({ loadRecentVisits: load })
       title="暂无最近访问"
       ::icon-size="32"
     />
-    <md-list v-else class="list">
+    <List v-else divider="line" class="list">
       <md-list-item
         v-for="b in recentVisits"
         :key="b.id"
@@ -102,7 +102,7 @@ defineExpose({ loadRecentVisits: load })
           <LucideIcon name="x" :size="16" />
         </Button>
       </md-list-item>
-    </md-list>
+    </List>
   </div>
 </template>
 
@@ -114,14 +114,6 @@ defineExpose({ loadRecentVisits: load })
 .list {
   border-radius: var(--radius-md);
   overflow: hidden;
-}
-
-.item {
-  border-bottom: 1px solid var(--color-border);
-}
-
-.item:last-child {
-  border-bottom: none;
 }
 
 .item .rm-btn {

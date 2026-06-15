@@ -179,11 +179,7 @@ async function handleDurationChange(event: Event) {
         </Tooltip>
       </div>
       <div class="field">
-        <MdSwitch
-          v-model="mirror"
-          :disabled="doNotDisturb"
-          @change="handleMirrorToggle"
-        ></MdSwitch>
+        <MdSwitch v-model="mirror" :disabled="doNotDisturb" @change="handleMirrorToggle"></MdSwitch>
       </div>
     </div>
 

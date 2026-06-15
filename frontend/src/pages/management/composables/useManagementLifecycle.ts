@@ -1,4 +1,3 @@
-/* eslint-disable require-atomic-updates */
 import { nextTick, onMounted, onUnmounted, ref, watch, type Ref } from 'vue'
 import { message } from '@/application/message/message-service'
 import { notificationService } from '@/application/notification/notification-service'
@@ -216,9 +215,9 @@ export function useManagementLifecycle(options: UseManagementLifecycleOptions): 
     () => options.bookmarkManagementStore.hasUnsavedChanges,
     hasChanges => {
       if (hasChanges) {
-        notificationService.updateBadge('!', NOTIFICATION_CONFIG.BADGE_COLORS.warning)
+        void notificationService.updateBadge('!', NOTIFICATION_CONFIG.BADGE_COLORS.warning)
       } else {
-        notificationService.clearBadge()
+        void notificationService.clearBadge()
       }
     },
     { immediate: true }
@@ -230,6 +229,7 @@ export function useManagementLifecycle(options: UseManagementLifecycleOptions): 
       if (!newTree || !pendingTagSelection.value?.length) return
 
       await nextTick()
+      // eslint-disable-next-line require-atomic-updates -- pendingTagSelection 在 await 期间不会被其他代码修改
       pendingTagSelection.value = null
 
       const ids = options.traitFilterStore.filterResultIds

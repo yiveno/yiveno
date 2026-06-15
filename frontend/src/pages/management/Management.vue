@@ -1,5 +1,15 @@
 <script setup lang="ts">
-import { AppHeader, Card, Dialog, LucideIcon, AnimatedNumber, Button, Tooltip } from '@/components'
+import {
+  AppHeader,
+  Card,
+  Dialog,
+  LucideIcon,
+  AnimatedNumber,
+  Button,
+  Tooltip,
+  LinearProgress,
+  Checkbox
+} from '@/components'
 import { Loading } from '@/components/base/Loading'
 import GlobalSyncProgress from '@/components/business/GlobalSyncProgress/GlobalSyncProgress.vue'
 import BookmarkTree from '@/components/business/BookmarkTree/BookmarkTree.vue'
@@ -164,14 +174,22 @@ function toggleRemoveInvalid(): void {
         <div class="organize-options">
           <div class="organize-option" @click="toggleRemoveDuplicates">
             <span>{{ t('management_organize_remove_duplicates') }}</span>
-            <Tooltip :text="t('management_organize_remove_duplicates_tooltip')" placement="top" offset="sm">
+            <Tooltip
+              :text="t('management_organize_remove_duplicates_tooltip')"
+              placement="top"
+              offset="sm"
+            >
               <LucideIcon name="info" class="organize-option-icon" />
             </Tooltip>
             <MdSwitch :model-value="organizeRemoveDuplicates" />
           </div>
           <div class="organize-option" @click="toggleRemoveInvalid">
             <span>{{ t('management_organize_remove_invalid') }}</span>
-            <Tooltip :text="t('management_organize_remove_invalid_tooltip')" placement="top" offset="sm">
+            <Tooltip
+              :text="t('management_organize_remove_invalid_tooltip')"
+              placement="top"
+              offset="sm"
+            >
               <LucideIcon name="info" class="organize-option-icon" />
             </Tooltip>
             <MdSwitch :model-value="organizeRemoveInvalid" />
@@ -397,11 +415,11 @@ function toggleRemoveInvalid(): void {
             {{ bookmarkManagementStore.applyProgress.totalOperations }}
           </div>
         </div>
-        <md-linear-progress
+        <LinearProgress
           :value="bookmarkManagementStore.applyProgress.percentage / 100"
           class="linear-progress--md"
           style="width: 100%"
-        ></md-linear-progress>
+        />
         <div class="progress-tip">
           {{ t('management_estimated_time', estimatedRemainingTime) }}
         </div>
@@ -619,12 +637,12 @@ function toggleRemoveInvalid(): void {
                 <!-- 右侧面板内底部批量操作条（始终显示） -->
                 <div class="bulk-delete-in-panel">
                   <div class="selection-summary">
-                    <md-checkbox
-                      :checked="rightSelectAllState.checked"
+                    <Checkbox
+                      v-model="rightSelectAllState.checked"
                       :indeterminate="rightSelectAllState.indeterminate"
                       class="select-all-checkbox"
-                      @change="toggleRightSelectAll"
-                    ></md-checkbox>
+                      @update:model-value="toggleRightSelectAll"
+                    />
                     <!-- ✅ 全选时文案变化 -->
                     <span class="text">{{
                       rightSelectAllState.checked && !rightSelectAllState.indeterminate

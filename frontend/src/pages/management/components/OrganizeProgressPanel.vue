@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { LucideIcon } from '@/components'
+import { LucideIcon, LinearProgress } from '@/components'
 import {
   buildOrganizeStepViewModels,
   computeOrganizeOverallProgress,
@@ -71,7 +71,7 @@ function getStepDetail(step: (typeof steps.value)[number]): string {
         </span>
         <span class="organize-progress-panel__overall-percent">{{ overallPercent }}%</span>
       </div>
-      <md-linear-progress :value="overallPercent / 100" />
+      <LinearProgress :value="overallPercent / 100" />
     </div>
 
     <ol class="organize-progress-panel__steps">
@@ -107,7 +107,7 @@ function getStepDetail(step: (typeof steps.value)[number]): string {
             </div>
           </div>
         </div>
-        <md-linear-progress
+        <LinearProgress
           v-if="step.status === 'active' && step.stageUnit !== 'none'"
           class="organize-progress-step__bar"
           :indeterminate="step.stageProgress <= 0 && step.stageCurrent <= 0"

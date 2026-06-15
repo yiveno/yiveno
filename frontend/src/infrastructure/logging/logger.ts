@@ -18,42 +18,21 @@ export type { LogLevel, LoggerConfig, LogEntry }
 /**
  * 日志样式配置
  *
- * ✅ 使用 Material Design 3 颜色（从 design-tokens 包导入）
+ * ✅ 使用 Material Design 3 颜色（硬编码降级方案）
  * 注意：这些颜色用于浏览器控制台，无法使用 CSS 变量
- * 通过导入 TypeScript 常量，确保与 design-tokens 包自动同步
  */
-const getLevelToStyle = (): Record<LogLevel, string> => {
-  try {
-    // prettier-ignore
-    /* eslint-disable @typescript-eslint/no-var-requires */
-    const {
-      semanticColors,
-    } = require("@ottersage/design-tokens/colors");
-    /* eslint-enable @typescript-eslint/no-var-requires */
-    return {
-      // Info: 使用语义 Info 容器色
-      info: `background: ${semanticColors.infoContainer.rgb}; color: ${semanticColors.info.rgb}; padding: 2px 6px; border-radius: 3px;`,
-      // Warn: 使用语义 Warning 容器色
-      warn: `background: ${semanticColors.warningContainer.rgb}; color: ${semanticColors.warning.rgb}; padding: 2px 6px; border-radius: 3px;`,
-      // Error: 使用 MD3 Error 容器色（需要从 material-theme.css 获取）
-      error: `background: rgb(255, 235, 238); color: rgb(183, 28, 28); padding: 2px 6px; border-radius: 3px;`,
-      // Debug: 使用 MD3 Tertiary 容器色（需要从 material-theme.css 获取）
-      debug: `background: rgb(243, 229, 245); color: rgb(74, 20, 140); padding: 2px 6px; border-radius: 3px;`
-    }
-  } catch {
-    // 降级方案：如果导入失败，使用硬编码值
-    return {
-      info: 'background: rgb(216, 226, 255); color: rgb(68, 94, 145); padding: 2px 6px; border-radius: 3px;',
-      warn: 'background: rgb(252, 215, 251); color: rgb(113, 85, 115); padding: 2px 6px; border-radius: 3px;',
-      error:
-        'background: rgb(255, 235, 238); color: rgb(183, 28, 28); padding: 2px 6px; border-radius: 3px;',
-      debug:
-        'background: rgb(243, 229, 245); color: rgb(74, 20, 140); padding: 2px 6px; border-radius: 3px;'
-    }
-  }
+const levelToStyle: Record<LogLevel, string> = {
+  // Info: 使用语义 Info 容器色
+  info: 'background: rgb(216, 226, 255); color: rgb(68, 94, 145); padding: 2px 6px; border-radius: 3px;',
+  // Warn: 使用语义 Warning 容器色
+  warn: 'background: rgb(252, 215, 251); color: rgb(113, 85, 115); padding: 2px 6px; border-radius: 3px;',
+  // Error: 使用 MD3 Error 容器色
+  error:
+    'background: rgb(255, 235, 238); color: rgb(183, 28, 28); padding: 2px 6px; border-radius: 3px;',
+  // Debug: 使用 MD3 Tertiary 容器色
+  debug:
+    'background: rgb(243, 229, 245); color: rgb(74, 20, 140); padding: 2px 6px; border-radius: 3px;'
 }
-
-const levelToStyle = getLevelToStyle()
 
 /**
  * 日志级别权重
@@ -253,19 +232,19 @@ export class Logger {
   /**
    * 发送到远程日志服务
    */
-  private async logToRemote(entry: LogEntry): Promise<void> {
-    try {
-      await fetch(this.config.remoteEndpoint!, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(entry)
-      })
-    } catch (error) {
+  private logToRemote(entry: LogEntry): void {
+    if (!this.config.remoteEndpoint) return
+
+    void fetch(this.config.remoteEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(entry)
+    }).catch(error => {
       // 避免远程日志错误影响主流程
       console.error('Failed to send log to remote:', error)
-    }
+    })
   }
 
   /**
