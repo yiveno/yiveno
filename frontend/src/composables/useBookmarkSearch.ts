@@ -31,6 +31,7 @@
  */
 
 import { ref, computed, watch } from 'vue'
+import type { Ref } from 'vue'
 import { bookmarkMemorySearchService } from '@/application/query/bookmark-memory-search-service'
 import type {
   FilteredBookmarkNode,
@@ -38,6 +39,7 @@ import type {
 } from '@/application/query/bookmark-memory-search-service'
 import { bookmarkSearchService } from '@/application/query/bookmark-search-service'
 import type { BookmarkNode } from '@/types'
+import type { BookmarkRecord } from '@/infrastructure/indexeddb/manager'
 import { logger } from '@/infrastructure/logging/logger'
 
 /**
@@ -352,6 +354,3 @@ export function useBookmarkSearch(options: UseBookmarkSearchOptions = {}): UseBo
     refresh
   }
 }
-
-// 类型声明
-import type { Ref } from 'vue'

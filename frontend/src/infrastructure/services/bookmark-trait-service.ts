@@ -67,6 +67,10 @@ function updateGlobalQueueState(): void {
   } catch {}
 }
 
+function setQueueRunning(running: boolean): void {
+  queueState.running = running
+}
+
 /**
  * 请求一次全量特征重建
  */
@@ -176,8 +180,7 @@ async function flushTraitQueue(): Promise<void> {
   } catch (error) {
     logger.error('BookmarkTrait', '特征标签计算失败', error)
   } finally {
-    // eslint-disable-next-line require-atomic-updates -- queueState 只在当前函数中修改，无并发风险
-    queueState.running = false
+    setQueueRunning(false)
   }
 }
 

@@ -134,7 +134,12 @@ export const useDialogStore = defineStore('dialog', () => {
 
       // ✅ 只保存表单数据，不包含 isOpen
 
-      const { isOpen, ...draftData } = editBookmarkDialog.value
+      const draftData = {
+        bookmark: editBookmarkDialog.value.bookmark,
+        title: editBookmarkDialog.value.title,
+        url: editBookmarkDialog.value.url,
+        parentId: editBookmarkDialog.value.parentId
+      }
       await chromeStorage.setSession(SESSION_KEYS.EDIT_BOOKMARK_DRAFT, draftData)
     } catch (error) {
       logger.warn('DialogStore', '保存编辑书签草稿失败', error)
@@ -155,7 +160,10 @@ export const useDialogStore = defineStore('dialog', () => {
 
       // ✅ 只保存表单数据，不包含 isOpen
 
-      const { isOpen, ...draftData } = editFolderDialog.value
+      const draftData = {
+        folder: editFolderDialog.value.folder,
+        title: editFolderDialog.value.title
+      }
       await chromeStorage.setSession(SESSION_KEYS.EDIT_FOLDER_DRAFT, draftData)
     } catch (error) {
       logger.warn('DialogStore', '保存编辑文件夹草稿失败', error)

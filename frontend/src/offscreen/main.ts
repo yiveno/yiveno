@@ -23,6 +23,25 @@ const searchState: SearchState = {
   docCount: 0
 }
 
+function setSearchWorkerReady(worker: Worker): void {
+  searchState.worker = worker
+  searchState.ready = true
+}
+
+function resetSearchWorker(): void {
+  searchState.worker = undefined
+  searchState.ready = false
+}
+
+function setSearchInitializing(initializing: boolean): void {
+  searchState.initializing = initializing
+}
+
+function setSearchIndexState(docCount: number): void {
+  searchState.docCount = docCount
+  searchState.primed = docCount > 0
+}
+
 interface OffscreenFolderRecommendation {
   folderId: string
   folderName: string
@@ -168,19 +187,14 @@ async function ensureSearchWorker(): Promise<Worker> {
       }
     })
 
-    // eslint-disable-next-line require-atomic-updates -- searchState 仅在本函数内修改，无并发风险
-    searchState.worker = worker
-    // eslint-disable-next-line require-atomic-updates -- searchState 仅在本函数内修改，无并发风险
-    searchState.ready = true
+    setSearchWorkerReady(worker)
     return worker
   } catch (error) {
     logger.error('OffscreenSearch', '创建查询 Worker 失败', error)
-    searchState.worker = undefined
-    searchState.ready = false
+    resetSearchWorker()
     throw error
   } finally {
-    // eslint-disable-next-line require-atomic-updates -- searchState 仅在本函数内修改，无并发风险
-    searchState.initializing = false
+    setSearchInitializing(false)
   }
 }
 
@@ -724,10 +738,7 @@ async function primeWorkerDocs(worker: Worker, docsFromPayload?: WorkerDoc[]) {
   const docs = docsFromPayload ?? (await collectDocsFromIDB())
   worker.postMessage({ type: 'init', docs })
 
-  // eslint-disable-next-line require-atomic-updates -- searchState 仅在本函数内修改，无并发风险
-  searchState.docCount = docs.length
-  // eslint-disable-next-line require-atomic-updates -- searchState 仅在本函数内修改，无并发风险
-  searchState.primed = docs.length > 0
+  setSearchIndexState(docs.length)
   logger.info('OffscreenSearch', `索引文档数量: ${searchState.docCount}`)
 }
 

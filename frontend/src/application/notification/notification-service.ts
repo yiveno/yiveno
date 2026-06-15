@@ -20,6 +20,11 @@ import type * as Vue from 'vue'
 let vueModule: typeof Vue | null = null
 let NotificationComponent: unknown | null = null
 
+function cacheNotificationModules(vue: typeof Vue, component: unknown): void {
+  vueModule = vue
+  NotificationComponent = component
+}
+
 // 从统一类型定义导入
 import type {
   ToastLevel,
@@ -87,13 +92,12 @@ class PageNotificationManager {
       // 动态导入 Vue 和 Notification 组件
       // ⚠️ 只导入 Notification 组件，避免导入整个 @/components（包含 Material Web Components）
 
-      // eslint-disable-next-line require-atomic-updates -- 在 await 之前已检查，且只有一个调用点
-      vueModule = await import('vue')
-      const notificationModule =
-        await import('@/components/composite/Notification/Notification.vue')
+      const [vue, notificationModule] = await Promise.all([
+        import('vue'),
+        import('@/components/composite/Notification/Notification.vue')
+      ])
 
-      // eslint-disable-next-line require-atomic-updates -- 在 await 之前已检查，且只有一个调用点
-      NotificationComponent = notificationModule.default
+      cacheNotificationModules(vue, notificationModule.default)
       return true
     } catch (error) {
       logger.error('PageNotificationManager', 'Vue 或 Notification 组件加载失败', error)
@@ -730,7 +734,7 @@ export class NotificationService {
     return {
       ...this.buildTextOptions(opts),
       ...this.buildLevelOptions(level, timeoutMs),
-      ...this.buildIconOptions(opts, level),
+      ...this.buildIconOptions(opts),
       ...this.buildActionOptions(opts),
       ...this.buildMetaOptions(opts)
     }
@@ -763,12 +767,9 @@ export class NotificationService {
   /**
    * 构建图标选项
    */
-  private buildIconOptions(
-    opts?: NotificationOptions,
-    level: NotificationLevel = 'info'
-  ): Partial<Required<NotificationOptions>> {
+  private buildIconOptions(opts?: NotificationOptions): Partial<Required<NotificationOptions>> {
     return {
-      iconUrl: this.resolveIconUrl(opts?.iconUrl, level),
+      iconUrl: this.resolveIconUrl(opts?.iconUrl),
       icon: opts?.icon || '',
       imageUrl: opts?.imageUrl || ''
     }
@@ -854,11 +855,10 @@ export class NotificationService {
    * 将相对路径转换为扩展资源的完整URL
    *
    * @param iconUrl - 可选的图标URL
-   * @param level - 通知级别
    * @returns 完整的图标URL
    */
-  private resolveIconUrl(iconUrl?: string, level: NotificationLevel = 'info'): string {
-    const defaultIcon = this.getDefaultIcon(level)
+  private resolveIconUrl(iconUrl?: string): string {
+    const defaultIcon = this.getDefaultIcon()
     const raw = iconUrl || defaultIcon
 
     try {
@@ -879,11 +879,10 @@ export class NotificationService {
   /**
    * 获取默认图标URL
    *
-   * @param _level - 通知级别（预留用于未来扩展）
    * @returns 默认图标URL
    */
 
-  private getDefaultIcon(_level: NotificationLevel): string {
+  private getDefaultIcon(): string {
     try {
       if (_isExtensionRuntime && typeof chrome !== 'undefined' && chrome?.runtime?.getURL) {
         return chrome.runtime.getURL('images/icon128.png')

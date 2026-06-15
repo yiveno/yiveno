@@ -39,7 +39,8 @@ function post(msg: SearchWorkerEvent) {
  * 构建 FlexSearch 索引
  */
 
-function buildIndex(input: WorkerDoc[], _options?: WorkerInitOptions) {
+function buildIndex(input: WorkerDoc[], options?: WorkerInitOptions) {
+  void options
   // 创建 FlexSearch Document Index
   flexIndex = new Document<IndexedDoc>({
     id: 'id',

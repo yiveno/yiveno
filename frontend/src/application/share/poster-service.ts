@@ -298,7 +298,7 @@ class PosterServiceImpl implements PosterService {
       if (favicon) {
         try {
           ctx.drawImage(favicon, faviconX, faviconY, 20, 20)
-        } catch (_error) {
+        } catch {
           // Favicon 加载失败，绘制默认图标
           this.drawDefaultIcon(ctx, faviconX, faviconY, config)
         }
@@ -404,7 +404,7 @@ class PosterServiceImpl implements PosterService {
       // 缓存成功加载的 favicon
       this.addToFaviconCache(url, img)
       return img
-    } catch (_error) {
+    } catch {
       logger.debug('PosterService', 'Favicon 加载失败', { url })
       return null
     }

@@ -11,6 +11,10 @@ import { t } from '@/utils/i18n-helpers'
 
 type BookmarkTreeInstance = InstanceType<typeof BookmarkTree>
 
+function clearPendingTagSelection(pendingTagSelection: Ref<TraitTag[] | null>): void {
+  pendingTagSelection.value = null
+}
+
 interface BookmarkIndexLike {
   buildFromTree(nodes: BookmarkNode[]): void
   getSize(): number
@@ -229,8 +233,7 @@ export function useManagementLifecycle(options: UseManagementLifecycleOptions): 
       if (!newTree || !pendingTagSelection.value?.length) return
 
       await nextTick()
-      // eslint-disable-next-line require-atomic-updates -- pendingTagSelection 在 await 期间不会被其他代码修改
-      pendingTagSelection.value = null
+      clearPendingTagSelection(pendingTagSelection)
 
       const ids = options.traitFilterStore.filterResultIds
       if (!ids.length || !options.rightTreeRef.value) return

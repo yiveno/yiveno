@@ -30,6 +30,11 @@ export function useManagementOrganize(options: {
   const organizeRemoveInvalid = ref(false)
   const ORGANIZE_USER_NOTES_MAX_LENGTH = 500
 
+  function finishAutoOrganize(): void {
+    isOrganizing.value = false
+    showOrganizeProgress.value = false
+  }
+
   function handleAutoOrganize(): void {
     if (isOrganizing.value) return
     showOrganizeNotesDialog.value = true
@@ -56,7 +61,6 @@ export function useManagementOrganize(options: {
   ): Promise<void> {
     if (isOrganizing.value) return
 
-    const organizingSnapshot = isOrganizing.value
     isOrganizing.value = true
     organizeProgress.value = createInitialOrganizeProgress()
     showOrganizeProgress.value = true
@@ -94,11 +98,7 @@ export function useManagementOrganize(options: {
       logger.error('Management', '一键整理失败', error)
       message.error(t('management_organize_failed_retry'))
     } finally {
-      if (organizingSnapshot !== undefined) {
-        // eslint-disable-next-line require-atomic-updates -- isOrganizing 在 await 期间不会被其他代码修改
-        isOrganizing.value = false
-      }
-      showOrganizeProgress.value = false
+      finishAutoOrganize()
     }
   }
 

@@ -94,6 +94,10 @@ export const useTraitFilterStore = defineStore('traitFilter', () => {
     isDetecting: initialIsDetecting.value
   })
 
+  function setFilterResults(results: Map<string, TraitTag[]>): void {
+    state.value.filterResults = results
+  }
+
   // ✅ 使用 TraitDataStore 获取统计数据（单一数据源）
   const traitDataStore = useTraitDataStore()
 
@@ -207,8 +211,7 @@ export const useTraitFilterStore = defineStore('traitFilter', () => {
         newResults.set(record.id, (record.traitTags || []) as TraitTag[])
       })
 
-      // eslint-disable-next-line require-atomic-updates -- 已通过 abort 信号排除过期请求
-      state.value.filterResults = newResults
+      setFilterResults(newResults)
 
       logger.debug('TraitFilterStore', '筛选完成', {
         filters: state.value.activeFilters,
