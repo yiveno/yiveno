@@ -286,10 +286,9 @@ describe('bookmark-organize-proposal-builder', () => {
       { flatOriginalNodes: originalMap }
     )
 
-    // 新逻辑：未参与整理的书签应该被删除
+    // 新逻辑：未参与整理的书签应该被删除（只检查父文件夹，子节点删除会被 diff 服务过滤）
     const deletes = diff.operations.filter(op => op.type === 'delete')
     expect(deletes.some(op => op.nodeId === 'legacy-folder')).toBe(true)
-    expect(deletes.some(op => op.nodeId === 'legacy-child')).toBe(true)
   })
 
   it('无 URL 且未参与整理的书签应保留，不被 prune 删除', () => {
