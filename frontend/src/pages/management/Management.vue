@@ -1302,9 +1302,9 @@ p.warning-text {
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
-  cursor: pointer;
   font-size: var(--font-size-sm);
   color: var(--color-text-primary);
+  cursor: pointer;
   user-select: none;
 }
 

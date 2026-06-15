@@ -54,7 +54,7 @@ describe('organize-response-parser', () => {
       ['42', '99', '100']
     )
 
-    const fallback = folders.find(folder => folder.path === '其他/未分类')
+    const fallback = folders.find(folder => folder.path === '未分类')
     expect(fallback?.bookmarkIds.sort()).toEqual(['100', '99'])
   })
 

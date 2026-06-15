@@ -139,14 +139,14 @@ export function registerBookmarkChangeListeners(): void {
   })
 
   // 监听书签移动
-  chrome.bookmarks.onMoved.addListener(async (id, _moveInfo) => {
+  chrome.bookmarks.onMoved.addListener(async id => {
     logger.info('BackgroundBookmarks', '📁 书签已移动:', id)
     // ⚠️ 移动操作需要全量同步，因为会影响 pathIds、ancestorIds 等层级字段
     await syncAndBroadcast('moved', id, true)
   })
 
   // 监听书签删除
-  chrome.bookmarks.onRemoved.addListener(async (id, _removeInfo) => {
+  chrome.bookmarks.onRemoved.addListener(async id => {
     logger.info('BackgroundBookmarks', '🗑️ 书签已删除:', id)
 
     // ✅ 删除操作使用增量同步

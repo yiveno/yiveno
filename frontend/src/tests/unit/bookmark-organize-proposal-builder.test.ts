@@ -88,8 +88,9 @@ describe('bookmark-organize-proposal-builder', () => {
     const aiFolder = bar?.children?.[0]
     expect(aiFolder?.children?.[0]?.id).toBe('bm-1')
 
+    // 新逻辑：只保留参与整理的书签，other-bm 不在 bookmarkItems 中，不会出现在提案树
     const otherBookmarks = findNodeById(proposal, '2')
-    expect(otherBookmarks?.children?.[0]?.id).toBe('other-bm')
+    expect(otherBookmarks?.children).toEqual([])
   })
 
   it('同 URL 不同 ID 的书签按 ID 各自保留', () => {
@@ -212,7 +213,7 @@ describe('bookmark-organize-proposal-builder', () => {
     expect(deletes.some(op => op.nodeId === 'old-folder')).toBe(true)
   })
 
-  it('未参与整理的书签及其旧目录应保留在提案树中', () => {
+  it('新逻辑：只保留参与整理的书签', () => {
     const originalWithLegacyChildren: BookmarkNode[] = [
       {
         id: '1',
@@ -260,8 +261,9 @@ describe('bookmark-organize-proposal-builder', () => {
       ]
     )
 
-    expect(findNodeById(proposal, 'legacy-folder')).toBeDefined()
-    expect(findNodeById(proposal, 'legacy-child')).toBeDefined()
+    // 新逻辑：未参与整理的书签（legacy-folder、legacy-child）不会出现在提案树
+    expect(findNodeById(proposal, 'legacy-folder')).toBeUndefined()
+    expect(findNodeById(proposal, 'legacy-child')).toBeUndefined()
 
     const bar = findNodeById(proposal, '1')
     const organizedFolder = bar?.children?.find(child => child.title === '整理后')
