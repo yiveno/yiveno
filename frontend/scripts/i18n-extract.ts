@@ -63,7 +63,7 @@ async function scanDirectory(dir: string): Promise<string[]> {
         }
       }
     }
-  } catch (_error) {
+  } catch {
     console.error(`扫描目录失败: ${dir}`)
   }
 
@@ -101,7 +101,7 @@ async function extractTextsFromFile(filePath: string): Promise<ExtractedText[]> 
         })
       }
     })
-  } catch (_error) {
+  } catch {
     console.error(`读取文件失败: ${filePath}`)
   }
 

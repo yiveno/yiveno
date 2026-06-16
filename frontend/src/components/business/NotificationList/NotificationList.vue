@@ -65,7 +65,7 @@ async function handleNotificationClick(notification: InboxNotification): Promise
 
 // 组件挂载时加载通知
 onMounted(() => {
-  inboxNotification.fetchNotifications({ unreadOnly: false, limit: 20 })
+  void inboxNotification.fetchNotifications({ unreadOnly: false, limit: 20 })
 })
 </script>
 

@@ -106,6 +106,3 @@ export type * from './business/BookmarkTree/BookmarkTree.d'
 // TreeNode 类型不对外导出（内部组件）
 export type * from './business/BookmarkSearchInput/BookmarkSearchInput.d'
 export type * from './business/ShareDialog/ShareDialog.d'
-
-// ===== 性能优化工具 =====
-export * from '@/composables/useSimplePerformance'

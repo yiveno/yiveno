@@ -160,8 +160,3 @@ export const navigationService = {
   showChromeNotification,
   clearChromeNotification
 }
-
-/**
- * 导航服务类型
- */
-export type NavigationService = typeof navigationService

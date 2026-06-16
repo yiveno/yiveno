@@ -19,6 +19,8 @@ import {
   getCurrentActiveTab,
   openUrlInActiveTab,
   openUrlInNewTab,
+  openUrlInBackgroundTab,
+  openFolderBookmarks,
   openSystemUrl
 } from '../managers/navigation'
 import { getExtensionState } from '../managers/state'
@@ -150,16 +152,55 @@ const MESSAGE_HANDLERS: Record<
   OPEN_BOOKMARK_URL: async (message, sendResponse) => {
     try {
       const url = typeof message.data?.url === 'string' ? message.data.url : ''
-      const mode = message.data?.mode === 'new_tab' ? 'new_tab' : 'active'
+      const modeRaw = message.data?.mode
+      const mode =
+        modeRaw === 'new_tab' || modeRaw === 'background' || modeRaw === 'active'
+          ? modeRaw
+          : 'active'
       if (!url) {
         sendResponse({ success: false, error: '缺少 URL' } as unknown)
         return
       }
       if (mode === 'new_tab') {
         await openUrlInNewTab(url)
+      } else if (mode === 'background') {
+        await openUrlInBackgroundTab(url)
       } else {
         await openUrlInActiveTab(url)
       }
+      sendResponse({ success: true } as unknown)
+    } catch (error) {
+      sendResponse({
+        success: false,
+        error: error instanceof Error ? error.message : String(error)
+      } as unknown)
+    }
+  },
+  OPEN_FOLDER_BOOKMARKS: async (message, sendResponse) => {
+    try {
+      const urls = Array.isArray(message.data?.urls)
+        ? message.data.urls.filter((url): url is string => typeof url === 'string')
+        : []
+      const mode = message.data?.mode
+      const groupTitle =
+        typeof message.data?.groupTitle === 'string' ? message.data.groupTitle : undefined
+
+      if (
+        mode !== 'incognito' &&
+        mode !== 'tab-group' &&
+        mode !== 'current-window' &&
+        mode !== 'new-window'
+      ) {
+        sendResponse({ success: false, error: '无效的打开模式' } as unknown)
+        return
+      }
+
+      if (urls.length === 0) {
+        sendResponse({ success: false, error: '缺少 URL 列表' } as unknown)
+        return
+      }
+
+      await openFolderBookmarks(urls, mode, groupTitle)
       sendResponse({ success: true } as unknown)
     } catch (error) {
       sendResponse({

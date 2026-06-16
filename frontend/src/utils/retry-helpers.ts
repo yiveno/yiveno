@@ -110,32 +110,6 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
- * 创建一个带重试的函数包装器
- *
- * @param fn - 要包装的函数
- * @param options - 重试配置
- * @returns 包装后的函数
- *
- * @example
- * ```typescript
- * const fetchDataWithRetry = createRetryWrapper(
- *   fetchData,
- *   { maxRetries: 3, operationName: '获取数据' }
- * )
- *
- * const data = await fetchDataWithRetry()
- * ```
- */
-export function createRetryWrapper<TArgs extends unknown[], TReturn>(
-  fn: (...args: TArgs) => Promise<TReturn>,
-  options: RetryOptions = {}
-): (...args: TArgs) => Promise<TReturn> {
-  return (...args: TArgs) => {
-    return withRetry(() => fn(...args), options)
-  }
-}
-
-/**
  * 判断错误是否为网络错误
  *
  * @param error - 错误对象

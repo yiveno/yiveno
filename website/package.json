@@ -9,6 +9,12 @@
     "build:prod": "bun ../scripts/dev-env.mjs sync --profile=production --target=website --quiet && bun ../scripts/dev-env.mjs check --profile=production --target=website --quiet && astro build",
     "typecheck": "astro check",
     "typecheck:force": "astro check",
+    "lint": "bun run eslint",
+    "lint:check": "bun run eslint:check",
+    "eslint": "eslint src --no-cache --fix --max-warnings 0 --fix-type problem,suggestion,layout && echo '✅ ESLint: 所有问题已修复'",
+    "eslint:check": "eslint src --no-cache --max-warnings 0 && echo '✅ ESLint: 检查通过'",
+    "stylelint": "stylelint \"src/**/*.vue\" --no-cache --fix && echo '✅ Stylelint: 所有问题已修复'",
+    "stylelint:check": "stylelint \"src/**/*.vue\" --no-cache",
     "preview": "astro preview",
     "deploy": "bun run build && bunx wrangler pages deploy dist --project-name ottersage-website --branch main"
   },
@@ -16,8 +22,7 @@
     "@astrojs/vue": "^6.0.1",
     "@supabase/supabase-js": "^2.49.4",
     "astro": "^5.18.2",
-    "vue": "^3.5.35",
-    "zod": "^3.25.76"
+    "vue": "^3.5.35"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9"

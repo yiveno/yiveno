@@ -4,6 +4,7 @@
 
 import type { Env } from '../../types/env'
 import type { PaymentRecord, PaymentStatus } from '@ottersage/types'
+import { insertPaymentRecord } from '../../data-access/supabase'
 import type { GumroadWebhookPayload } from './webhook-parser'
 
 /** 支付上下文 */
@@ -48,8 +49,7 @@ export function buildPaymentRecord(
 export async function insertPaymentIfCharged(
   payload: GumroadWebhookPayload,
   ctx: PaymentContext,
-  env: Env,
-  supabase: any
+  env: Env
 ): Promise<void> {
   const chargeEvents = ['sale', 'charge', 'payment_success', 'payment_failed', 'refund']
   const currentState = payload.notification_type || payload.kind || ''
@@ -58,5 +58,5 @@ export async function insertPaymentIfCharged(
   }
 
   const paymentRecord = buildPaymentRecord(payload, ctx)
-  await supabase.insertPaymentRecord(env, paymentRecord)
+  await insertPaymentRecord(env, paymentRecord as PaymentRecord)
 }

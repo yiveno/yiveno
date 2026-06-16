@@ -8,7 +8,6 @@
  * - 使用 Chrome Storage 存储 session（与官网同步）
  */
 
-/* eslint-disable no-restricted-imports -- 这是 Supabase 客户端的封装层，必须直接导入 @supabase/supabase-js */
 import { createClient, type User, type Session, type AuthError } from '@supabase/supabase-js'
 import { logger } from '@/infrastructure/logging/logger'
 import { frontendEnv } from '@/config/env'

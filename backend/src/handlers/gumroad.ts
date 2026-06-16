@@ -12,6 +12,7 @@ import { parseWebhookPayload, extractCustomFields } from '../services/gumroad/we
 import { webhookVerifySeller } from '../services/gumroad/signature'
 import { buildSubscriptionRecord } from '../services/gumroad/subscription'
 import { insertPaymentIfCharged } from '../services/gumroad/payment'
+import { upsertSubscription } from '../data-access/supabase'
 import type { Subscription } from '@ottersage/types'
 import { error as logErrorMessage, info } from '../utils/logger'
 
@@ -102,16 +103,13 @@ export async function handleWebhook(
   }
 
   try {
-    const supabase = await import('../data-access/supabase')
-
     const subscriptionRecord = buildSubscriptionRecord(payload, userId, subscriptionId, tier)
-    await supabase.upsertSubscription(env, subscriptionRecord)
+    await upsertSubscription(env, subscriptionRecord)
 
     await insertPaymentIfCharged(
       payload,
       { userId, gumroadSubscriptionId: subscriptionId, notificationType },
-      env,
-      supabase
+      env
     )
 
     info('[Gumroad] Webhook 处理完成', { notificationType, subscriptionId })

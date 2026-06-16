@@ -9,8 +9,6 @@
  * ⚠️ Content Script 运行在网页环境，必须使用 localStorage 读取官网 session
  */
 
-/* eslint-disable no-restricted-syntax -- Content Script 必须使用 localStorage 读取官网的 Supabase session */
-
 import {
   AUTH_STORAGE_KEY,
   AUTH_SUPABASE_URL,

@@ -332,19 +332,3 @@ export class BookmarkIndex {
 export function createBookmarkIndex(): BookmarkIndex {
   return new BookmarkIndex()
 }
-
-/**
- * 单例索引（可选，用于全局共享）
- */
-let globalIndex: BookmarkIndex | null = null
-
-export function getGlobalIndex(): BookmarkIndex {
-  if (!globalIndex) {
-    globalIndex = new BookmarkIndex()
-  }
-  return globalIndex
-}
-
-export function resetGlobalIndex(): void {
-  globalIndex = null
-}

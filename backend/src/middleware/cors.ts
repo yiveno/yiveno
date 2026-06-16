@@ -51,13 +51,3 @@ export function getCorsHeaders(origin: string | null): Record<string, string> {
     'access-control-allow-headers': 'content-type,authorization'
   }
 }
-
-/**
- * 处理 OPTIONS 预检请求
- *
- * @param origin - 请求来源
- * @returns OPTIONS 响应
- */
-export function handleOptions(origin: string | null): Response {
-  return new Response(null, { headers: getCorsHeaders(origin) })
-}

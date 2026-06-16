@@ -686,6 +686,3 @@ export class QueryService {
 
 // 导出单例
 export const queryService = QueryService.getInstance()
-
-// 默认导出
-export default queryService

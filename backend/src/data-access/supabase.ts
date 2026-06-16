@@ -99,44 +99,6 @@ export async function getUserSubscription(env: Env, userId: string): Promise<Sub
 }
 
 /**
- * 获取用户订阅详情
- *
- * @param {Env} env - Cloudflare Worker 环境对象
- * @param {string} userId - 用户 ID
- * @returns {Promise<Subscription | null>} 订阅详情或 null
- */
-export async function getSubscriptionDetails(
-  env: Env,
-  userId: string
-): Promise<Subscription | null> {
-  if (!hasSupabase(env)) return null
-
-  const supabase = createSupabaseClient(env)
-  if (!supabase) return null
-
-  try {
-    const { data, error } = await supabase
-      .from('subscriptions')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('status', 'active')
-      .order('current_period_end', { ascending: false })
-      .limit(1)
-      .maybeSingle<Subscription>()
-
-    if (error) {
-      logErrorMessage('[Supabase] 查询订阅详情失败', { detail: toLogError(error) })
-      return null
-    }
-
-    return data
-  } catch (err) {
-    logErrorMessage('[Supabase] 查询订阅详情异常', { detail: toLogError(err) })
-    return null
-  }
-}
-
-/**
  * 插入或更新订阅记录
  *
  * @param {Env} env - Cloudflare Worker 环境对象
@@ -214,61 +176,6 @@ export async function upsertSubscription(
 }
 
 /**
- * 更新订阅取消状态
- *
- * @param {Env} env - Cloudflare Worker 环境对象
- * @param {string} subscriptionId - Gumroad 订阅 ID
- * @param {boolean} cancelAtPeriodEnd - 是否在周期结束时取消
- * @returns {Promise<Subscription>} 更新后的订阅记录
- */
-export async function updateSubscriptionCancelStatus(
-  env: Env,
-  subscriptionId: string,
-  cancelAtPeriodEnd: boolean
-): Promise<Subscription> {
-  if (!hasSupabase(env)) {
-    warn('[Supabase] 未配置，跳过更新订阅')
-    return { id: subscriptionId } as Subscription
-  }
-
-  const supabase = createSupabaseClient(env)
-  if (!supabase) return { id: subscriptionId } as Subscription
-
-  try {
-    const { data: existing } = await supabase
-      .from('subscriptions')
-      .select('id')
-      .eq('gumroad_subscription_id', subscriptionId)
-      .maybeSingle()
-
-    const targetId = existing?.id || subscriptionId
-
-    const { data, error } = await supabase
-      .from('subscriptions')
-      .update({
-        cancel_at_period_end: cancelAtPeriodEnd,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', targetId)
-      .select()
-      .single<Subscription>()
-
-    if (error) {
-      logErrorMessage('[Supabase] 更新订阅取消状态失败', { detail: toLogError(error) })
-      throw error
-    }
-
-    if (!data) {
-      throw new Error('Update operation failed to return a result.')
-    }
-    return data
-  } catch (err) {
-    logErrorMessage('[Supabase] 更新订阅取消状态异常', { detail: toLogError(err) })
-    throw err
-  }
-}
-
-/**
  * 插入支付记录
  *
  * @param {Env} env - Cloudflare Worker 环境对象
@@ -324,40 +231,5 @@ export async function insertPaymentRecord(
   } catch (err) {
     logErrorMessage('[Supabase] 插入支付记录异常', { detail: toLogError(err) })
     throw err
-  }
-}
-
-/**
- * 根据 Gumroad subscription_id 查找订阅记录
- *
- * @param {Env} env - Cloudflare Worker 环境对象
- * @param {string} gumroadSubscriptionId - Gumroad 订阅 ID
- * @returns {Promise<Subscription|null>} 订阅记录或 null
- */
-export async function getSubscriptionByGumroadId(
-  env: Env,
-  gumroadSubscriptionId: string
-): Promise<Subscription | null> {
-  if (!hasSupabase(env)) return null
-
-  const supabase = createSupabaseClient(env)
-  if (!supabase) return null
-
-  try {
-    const { data, error } = await supabase
-      .from('subscriptions')
-      .select('*')
-      .eq('gumroad_subscription_id', gumroadSubscriptionId)
-      .maybeSingle<Subscription>()
-
-    if (error) {
-      logErrorMessage('[Supabase] 查询订阅失败', { detail: toLogError(error) })
-      return null
-    }
-
-    return data
-  } catch (err) {
-    logErrorMessage('[Supabase] 查询订阅异常', { detail: toLogError(err) })
-    return null
   }
 }

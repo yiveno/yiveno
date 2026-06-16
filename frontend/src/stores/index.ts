@@ -2,7 +2,6 @@
 export { useBookmarkManagementStore } from './bookmark-management-store'
 export { useBookmarkStore } from './bookmark-tree-store'
 export { usePopupStoreIndexedDB } from './popup-store-indexeddb'
-export { useQueryStore } from './query-store'
 export { useDialogStore } from './dialog-store'
 export { useUIStore } from './ui-store'
 export { useTraitFilterStore } from './trait-filter-store'

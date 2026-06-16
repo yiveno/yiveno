@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Backend for otterSage - Cloudflare Worker",
   "type": "module",
-  "main": "cloudflare-worker.js",
+  "main": "src/index.ts",
   "scripts": {
     "dev": "bun ../scripts/dev-env.mjs sync --profile=development --target=backend --quiet && wrangler dev --local --port 8787",
     "build": "echo 'Backend: Cloudflare Worker 无需构建'",

@@ -54,7 +54,7 @@ export function initializeChromeMessageBridge() {
 
   logger.info('ChromeMessageBridge', '🔗 初始化 Chrome 消息桥接')
 
-  bridgeListener = (message: ChromeMessage, _sender, _sendResponse) => {
+  bridgeListener = (message: ChromeMessage) => {
     if (typeof chrome === 'undefined' || !chrome.runtime?.id) return false
     handleChromeMessage(message)
     return false
@@ -126,34 +126,6 @@ function handleChromeMessage(message: ChromeMessage) {
     default:
       // 未识别的消息类型
       logger.debug('ChromeMessageBridge', `未处理的消息类型: ${type}`)
-  }
-}
-
-/**
- * 发送消息到 Background Script
- *
- * @param message - 消息对象
- * @returns Promise<响应>
- *
- * @example
- * ```typescript
- * const response = await sendToBackground({
- *   type: 'CREATE_BOOKMARK',
- *   data: { title: '新书签' }
- * })
- * ```
- */
-export async function sendToBackground<T = unknown>(message: ChromeMessage): Promise<T> {
-  if (typeof chrome === 'undefined' || !chrome.runtime) {
-    throw new Error('Chrome runtime 不可用')
-  }
-
-  try {
-    const response = await chrome.runtime.sendMessage(message)
-    return response as T
-  } catch (error) {
-    logger.error('ChromeMessageBridge', '发送消息失败', error)
-    throw error
   }
 }
 

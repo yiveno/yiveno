@@ -39,7 +39,7 @@ import type {
 } from '@/application/query/bookmark-memory-search-service'
 import { bookmarkSearchService } from '@/application/query/bookmark-search-service'
 import type { BookmarkNode } from '@/types'
-import type { BookmarkRecord } from '@/infrastructure/indexeddb/manager'
+import type { BookmarkRecord } from '@/infrastructure/indexeddb/types/bookmark-record'
 import { logger } from '@/infrastructure/logging/logger'
 
 /**

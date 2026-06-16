@@ -114,34 +114,3 @@ export function onEvent<K extends keyof AppEvents>(
     eventBus.off(type, handler)
   }
 }
-
-/**
- * 一次性事件监听
- *
- * @example
- * ```typescript
- * onceEvent('sync:completed', (data) => {
- *   console.log('同步完成，耗时:', data.duration)
- * })
- * ```
- */
-export function onceEvent<K extends keyof AppEvents>(
-  type: K,
-  handler: (payload: AppEvents[K]) => void
-) {
-  const wrapper = (payload: AppEvents[K]) => {
-    handler(payload)
-    eventBus.off(type, wrapper)
-  }
-
-  eventBus.on(type, wrapper)
-}
-
-/**
- * 清除所有事件监听器
- *
- * ⚠️ 谨慎使用，通常只在应用卸载时调用
- */
-export function clearAllListeners() {
-  eventBus.all.clear()
-}

@@ -28,27 +28,6 @@ export const DB_CONFIG = {
   } as const
 } as const
 
-// ==================== 索引配置 ====================
-/**
- * 索引配置
- */
-/** bookmarks 表实际使用的索引名（与 manager.storeIndexConfigMap 保持一致） */
-export const INDEX_CONFIG = {
-  BOOKMARKS: {
-    PRIMARY_KEY: 'id',
-    PARENT_ID: 'parentId',
-    TITLE_LOWER: 'titleLower',
-    URL_LOWER: 'urlLower',
-    DOMAIN: 'domain',
-    IS_INVALID: 'isInvalid',
-    IS_DUPLICATE: 'isDuplicate',
-    KEYWORDS: 'keywords',
-    TAGS: 'tags',
-    LAST_VISITED: 'lastVisited',
-    PARENT_ID_INDEX: 'parentId_index'
-  }
-} as const
-
 // ==================== 核心数据接口 ====================
 
 /**
@@ -132,24 +111,6 @@ export interface FaviconCacheRecord {
 }
 
 /**
- * 嵌入向量记录
- */
-export interface EmbeddingRecord {
-  /** 主键，与书签 ID 一致 */
-  bookmarkId: string
-  /** 向量 */
-  vector: number[]
-  /** 模型 */
-  model: string
-  /** 书签标题（冗余，避免查询回表） */
-  title: string
-  /** 书签 URL */
-  url: string
-  /** 创建/更新时间 */
-  updatedAt: number
-}
-
-/**
  * 文件夹向量记录
  *
  * 用于智能书签分类推荐
@@ -170,90 +131,6 @@ export interface FolderVectorRecord {
   model: string
   /** 创建/更新时间 */
   updatedAt: number
-}
-
-// ==================== 筛选相关接口 ====================
-
-/**
- * 筛选选项
- */
-export interface SearchOptions {
-  /** 查询关键词 */
-  query: string
-  /** 限制结果数量 */
-  limit?: number
-  /** 偏移量 */
-  offset?: number
-  /** 包含文件夹 */
-  includeFolders?: boolean
-  /** 包含书签 */
-  includeBookmarks?: boolean
-  /** 域名 */
-  domains?: string[]
-  /** 标签 */
-  tags?: string[]
-  /** 日期范围 */
-  dateRange?: {
-    start: number
-    end: number
-  }
-  /** 排序字段 */
-  sortBy?: 'relevance' | 'date' | 'title' | 'visitCount'
-  /** 排序顺序 */
-  sortOrder?: 'asc' | 'desc'
-}
-
-/**
- * 筛选结果
- */
-export interface SearchResult {
-  /** 书签记录 */
-  record: BookmarkRecord
-  /** 匹配分数 */
-  score: number
-  /** 匹配字段 */
-  matchedFields: string[]
-  /** 路径字符串 */
-  pathString?: string
-  highlights: Array<{
-    field: string
-    /** 匹配内容 */
-    matches: string[]
-  }>
-}
-
-// ==================== 批量操作接口 ====================
-
-/**
- * 批量操作选项
- */
-export interface BatchOptions {
-  /** 批量大小 */
-  batchSize?: number
-  /** 延迟时间 */
-  delay?: number
-  /** 进度回调 */
-  onProgress?: (processed: number, total: number) => void
-  /** 错误回调 */
-  onError?: (error: Error, item: unknown) => void
-}
-
-/**
- * 批量操作结果
- */
-export interface BatchResult<T> {
-  /** 是否成功 */
-  success: boolean
-  /** 处理数量 */
-  processed: number
-  /** 成功数量 */
-  successful: number
-  /** 失败数量 */
-  failed: number
-  /** 错误列表 */
-  errors: Error[]
-  /** 结果列表 */
-  results: T[]
 }
 
 // ==================== 数据库健康检查接口 ====================

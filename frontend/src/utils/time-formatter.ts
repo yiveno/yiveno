@@ -49,24 +49,6 @@ export function formatRelativeTime(timestamp: number): string {
 }
 
 /**
- * 格式化具体时间
- * @param timestamp 时间戳（毫秒）
- * @returns 本地化的时间字符串
- * @example
- * formatTime(Date.now()) // "14:30:25" (zh-CN) 或 "2:30:25 PM" (en-US)
- */
-export function formatTime(timestamp: number): string {
-  const locale = getUserLocale()
-
-  return new Intl.DateTimeFormat(locale, {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: locale.startsWith('en-US') // 美国用12小时制
-  }).format(timestamp)
-}
-
-/**
  * 格式化日期时间（完整格式）
  * @param timestamp 时间戳（毫秒）
  * @param options 格式化选项

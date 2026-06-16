@@ -5,18 +5,6 @@
  */
 
 /**
- * 用户资料
- */
-export interface UserProfile {
-  id: string
-  email: string
-  nickname: string | null
-  avatar_url: string | null
-  created_at: string
-  updated_at: string
-}
-
-/**
  * 订阅状态
  */
 export type SubscriptionStatus = 'active' | 'cancelled' | 'expired' | 'past_due' | 'paused'
@@ -41,31 +29,6 @@ export interface Subscription {
   cancelled_at: string | null
   created_at: string
   updated_at: string
-}
-
-/**
- * 支付记录状态
- */
-export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded'
-
-/**
- * 支付记录
- */
-export interface PaymentRecord {
-  id: string
-  user_id: string
-  gumroad_subscription_id: string | null
-  /** Gumroad 订单/销售 ID */
-  gumroad_order_id: string
-  /** Gumroad 付款 ID */
-  gumroad_payment_id: string | null
-  amount: number // 金额（分）
-  currency: string
-  status: PaymentStatus
-  payment_method: string | null
-  event_type: string
-  metadata: Record<string, unknown> | null
-  created_at: string
 }
 
 /**

@@ -18,6 +18,10 @@ import { logger } from '@/infrastructure/logging/logger'
 import TreeNode from './TreeNode.vue'
 import VirtualFolderList from './VirtualFolderList.vue'
 import { message } from '@/application/message/message-service'
+import {
+  tabBrowserAppService,
+  type BookmarkUrlOpenMode
+} from '@/application/browser/tab-browser-app-service'
 import { t } from '@/utils/i18n-helpers'
 import { ContextMenuBuilder } from '@/core/bookmark/context-menu-config'
 import {
@@ -685,40 +689,29 @@ const openBookmark = async (node: BookmarkNode, event: MouseEvent) => {
   const isShift = event.shiftKey
 
   try {
-    // 快捷键优先级高于 defaultOpenMode
+    let mode: BookmarkUrlOpenMode
     if (isCtrlOrCmd) {
-      // Ctrl/Cmd + 点击：新标签页打开（前台）
-      await chrome.tabs.create({ url: node.url, active: true })
+      mode = 'new_tab'
     } else if (isShift) {
-      // Shift + 点击：新标签页打开（后台）
-      await chrome.tabs.create({ url: node.url, active: false })
+      mode = 'background'
     } else {
-      // 根据 defaultOpenMode 决定
       switch (props.defaultOpenMode) {
-        case 'current-tab': {
-          // 在当前标签页打开
-          const tabs = await chrome.tabs.query({
-            active: true,
-            lastFocusedWindow: true
-          })
-          if (tabs[0]?.id) {
-            await chrome.tabs.update(tabs[0].id, { url: node.url })
-          } else {
-            // 降级：创建新标签页
-            await chrome.tabs.create({ url: node.url, active: true })
-          }
+        case 'current-tab':
+          mode = 'active'
           break
-        }
         case 'new-tab-foreground':
-          // 新标签页打开（前台）
-          await chrome.tabs.create({ url: node.url, active: true })
+          mode = 'new_tab'
           break
         case 'new-tab-background':
         default:
-          // 新标签页打开（后台）
-          await chrome.tabs.create({ url: node.url, active: false })
+          mode = 'background'
           break
       }
+    }
+
+    const result = await tabBrowserAppService.openBookmarkUrl(node.url, mode)
+    if (!result.ok) {
+      logger.error('BookmarkTree', '打开书签失败', result.error)
     }
   } catch (error) {
     logger.error('BookmarkTree', '打开书签失败', error)
@@ -842,7 +835,6 @@ const getVisibleNodeIds = (): string[] => {
 /**
  * 处理键盘导航
  */
-// eslint-disable-next-line complexity -- 键盘导航需要处理多个按键，复杂度较高但逻辑清晰
 const handleKeyboardNavigation = (event: KeyboardEvent) => {
   const target = event.target as HTMLElement | null
   if (!target) {
@@ -932,7 +924,6 @@ const handleKeyboardNavigation = (event: KeyboardEvent) => {
         if (node) {
           if (!node.url) {
             // 是文件夹
-            // eslint-disable-next-line max-depth -- 键盘导航的嵌套逻辑由按键处理决定，无法简化
             if (expandedFolders.value.has(String(node.id))) {
               // 已展开，收起它
               event.preventDefault()
@@ -1115,7 +1106,6 @@ const handleTreeKeyDown = (event: KeyboardEvent) => {
 /**
  * 处理菜单项点击
  */
-// eslint-disable-next-line complexity -- switch 语句处理多种菜单操作，逻辑清晰
 const handleContextMenuItemClick = (item: MenuItemConfig) => {
   const node = contextMenuNode.value
   if (!node) {
@@ -1216,76 +1206,25 @@ const openAllBookmarksInFolder = async (
   })
 
   try {
-    switch (mode) {
-      case 'incognito': {
-        // 在无痕窗口中打开所有书签
-        // ✅ 使用 chrome.windows.create 的 url 数组参数一次性打开所有标签页
-        await chrome.windows.create({
-          incognito: true,
-          url: urls // 直接传入所有 URL 数组
-        })
+    const result = await tabBrowserAppService.openFolderBookmarks(urls, mode, node.title)
+    if (!result.ok) {
+      throw result.error
+    }
 
+    switch (mode) {
+      case 'incognito':
         message.success(`已在无痕窗口中打开 ${urls.length} 个书签`)
         break
-      }
-
-      case 'tab-group': {
-        // 在新标签页分组中打开
-        const currentWindow = await chrome.windows.getCurrent()
-        const tabs: chrome.tabs.Tab[] = []
-
-        // 创建所有标签页
-        for (const url of urls) {
-          const tab = await chrome.tabs.create({
-            windowId: currentWindow.id,
-            url,
-            active: false
-          })
-          tabs.push(tab)
-        }
-
-        // 创建标签页分组
-        const tabIds = tabs.map(tab => tab.id).filter((id): id is number => id !== undefined)
-        if (tabIds.length > 0) {
-          // @ts-expect-error - Chrome API 类型定义问题
-          const groupId = await chrome.tabs.group({ tabIds })
-          // @ts-expect-error - Chrome API 类型定义问题
-          await chrome.tabGroups.update(groupId, {
-            title: node.title || '书签文件夹',
-            collapsed: false
-          })
-        }
-
+      case 'tab-group':
         message.success(`已在标签页分组中打开 ${urls.length} 个书签`)
         break
-      }
-
-      case 'current-window': {
-        // 在当前窗口中打开
-        const currentWindow = await chrome.windows.getCurrent()
-
-        for (const url of urls) {
-          await chrome.tabs.create({
-            windowId: currentWindow.id,
-            url,
-            active: false
-          })
-        }
-
-        message.success(`已打开 ${urls.length} 个书签`)
-        break
-      }
-
-      case 'new-window': {
-        // 在新窗口中打开所有书签
-        // ✅ 使用 chrome.windows.create 的 url 数组参数一次性打开所有标签页
-        await chrome.windows.create({
-          url: urls // 直接传入所有 URL 数组
-        })
-
+      case 'new-window':
         message.success(`已在新窗口中打开 ${urls.length} 个书签`)
         break
-      }
+      case 'current-window':
+      default:
+        message.success(`已打开 ${urls.length} 个书签`)
+        break
     }
   } catch (error) {
     logger.error('BookmarkTree', '打开书签失败', error)

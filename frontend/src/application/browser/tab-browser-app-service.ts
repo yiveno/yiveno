@@ -7,6 +7,12 @@ import type { Result } from '@/core/common/result'
 import { ok, err } from '@/core/common/result'
 import { logger } from '@/infrastructure/logging/logger'
 
+/** 书签 URL 打开模式 */
+export type BookmarkUrlOpenMode = 'active' | 'new_tab' | 'background'
+
+/** 文件夹批量打开模式 */
+export type FolderBookmarkOpenMode = 'incognito' | 'tab-group' | 'current-window' | 'new-window'
+
 /** 当前活动标签页摘要 */
 export interface ActiveTabInfo {
   id: number | null
@@ -102,6 +108,28 @@ export class TabBrowserAppService {
   /** 在新标签页打开 URL */
   async openUrlInNewTab(url: string): Promise<Result<void>> {
     const result = await sendTabMessage('OPEN_BOOKMARK_URL', { url, mode: 'new_tab' })
+    return result.ok ? ok(undefined) : err(result.error)
+  }
+
+  /** 在后台新标签页打开 URL */
+  async openUrlInBackgroundTab(url: string): Promise<Result<void>> {
+    const result = await sendTabMessage('OPEN_BOOKMARK_URL', { url, mode: 'background' })
+    return result.ok ? ok(undefined) : err(result.error)
+  }
+
+  /** 按模式打开书签 URL */
+  async openBookmarkUrl(url: string, mode: BookmarkUrlOpenMode): Promise<Result<void>> {
+    const result = await sendTabMessage('OPEN_BOOKMARK_URL', { url, mode })
+    return result.ok ? ok(undefined) : err(result.error)
+  }
+
+  /** 批量打开文件夹内书签 */
+  async openFolderBookmarks(
+    urls: string[],
+    mode: FolderBookmarkOpenMode,
+    groupTitle?: string
+  ): Promise<Result<void>> {
+    const result = await sendTabMessage('OPEN_FOLDER_BOOKMARKS', { urls, mode, groupTitle })
     return result.ok ? ok(undefined) : err(result.error)
   }
 

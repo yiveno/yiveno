@@ -597,6 +597,3 @@ export function getPerformanceMonitor(): QueryPerformanceMonitor {
   }
   return performanceMonitorInstance
 }
-
-// 默认导出
-export default QueryPerformanceMonitor

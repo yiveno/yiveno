@@ -1,18 +1,17 @@
 <script setup lang="ts">
+import type { User } from '@supabase/supabase-js'
 import { ref, onMounted } from 'vue'
 import { getSupabase } from '../services/supabase'
-import { getUserSubscription } from '../services/subscription'
+import { getUserSubscription, type UserSubscription } from '../services/subscription'
 import { formatDate } from '../services/date'
 
-const user = ref<any>(null)
-const subscription = ref<any>(null)
+const user = ref<User | null>(null)
+const subscription = ref<UserSubscription | null>(null)
 const loading = ref(true)
 
 onMounted(async () => {
   const supabase = await getSupabase()
   const { data } = await supabase.auth.getSession()
-  console.log('[AccountPage] session:', data?.session)
-  console.log('[AccountPage] user:', data?.session?.user)
   if (data?.session?.user) {
     user.value = data.session.user
     const sub = await getUserSubscription(data.session.user.id)
@@ -29,7 +28,7 @@ async function handleSignOut() {
 </script>
 
 <template>
-  <div class="account-page" v-if="!loading">
+  <div v-if="!loading" class="account-page">
     <div v-if="user" class="card">
       <div class="user-header">
         <img
@@ -59,7 +58,7 @@ async function handleSignOut() {
           <dd>{{ formatDate(user.last_sign_in_at) }}</dd>
         </dl>
       </section>
-      <button @click="handleSignOut" class="btn">退出登录</button>
+      <button class="btn" @click="handleSignOut">退出登录</button>
     </div>
     <div v-else>
       <p>未登录。请先 <a href="/login">登录</a>。</p>
@@ -74,40 +73,48 @@ async function handleSignOut() {
   margin: 2rem auto;
   padding: 0 1rem;
 }
+
 .card {
   background: #fff;
   border: 1px solid #eee;
   border-radius: 12px;
   padding: 2rem;
 }
+
 .user-header {
   display: flex;
   align-items: center;
   gap: 1rem;
   margin-bottom: 1.5rem;
 }
+
 .avatar {
   width: 64px;
   height: 64px;
   border-radius: 50%;
 }
+
 .email {
   color: #666;
   font-size: 0.875rem;
 }
+
 section {
   margin: 1.5rem 0;
 }
+
 dl dt {
   font-weight: 600;
   margin-top: 0.5rem;
   color: #333;
 }
+
 dl dd {
-  margin: 0.25rem 0 0 0;
+  margin: 0.25rem 0 0;
   color: #666;
   font-size: 0.9rem;
 }
+
 .btn {
   padding: 0.5rem 1.5rem;
   border: 1px solid #ddd;
@@ -115,9 +122,11 @@ dl dd {
   background: #fff;
   cursor: pointer;
 }
+
 .btn:hover {
   background: #f5f5f5;
 }
+
 .loading {
   text-align: center;
   padding: 4rem;

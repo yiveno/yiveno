@@ -48,7 +48,7 @@ async function loadAllLocales(): Promise<Map<string, Record<string, { message: s
           const content = await readFile(messagesPath, 'utf-8')
           const messages = JSON.parse(content)
           locales.set(entry.name, messages)
-        } catch (_error) {
+        } catch {
           console.warn(`⚠️  无法读取 ${entry.name}/messages.json`)
         }
       }

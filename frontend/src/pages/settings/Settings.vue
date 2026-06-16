@@ -147,7 +147,9 @@ function readTabFromURL(): TabKey | null {
       const v = h.slice('#/tab/'.length)
       if (allowed.has(v as TabKey)) return v as TabKey
     }
-  } catch {}
+  } catch {
+    /* 忽略无效的 tab hash */
+  }
   return null
 }
 
@@ -164,7 +166,9 @@ function writeTabToURL(v: TabKey) {
       url.hash = ''
     }
     window.history.replaceState({}, '', url.toString())
-  } catch {}
+  } catch {
+    /* 忽略 URL 写入失败 */
+  }
 }
 
 function syncFromURL() {
@@ -179,7 +183,7 @@ let unsubscribeLogout: (() => void) | null = null
 const handleVisibilityChange = () => {
   if (!document.hidden) {
     logger.debug('Settings', 'Visibility', '页面变为可见，重新检查登录状态...')
-    checkLoginStatus()
+    void checkLoginStatus()
   }
 }
 

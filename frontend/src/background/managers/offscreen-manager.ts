@@ -7,9 +7,7 @@
 
 export {
   ensureOffscreenDocument,
-  dispatchOffscreenRequest,
-  disposeOffscreenDocument,
-  OffscreenManager
+  dispatchOffscreenRequest
 } from '@/infrastructure/offscreen/manager'
 
 export type {

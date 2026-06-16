@@ -21,16 +21,6 @@ export interface I18nConfig {
 }
 
 /**
- * 占位符替换选项
- */
-export interface SubstitutionOptions {
-  /** 是否启用占位符替换 */
-  enableSubstitution?: boolean
-  /** 自定义占位符格式 */
-  placeholderFormat?: string
-}
-
-/**
  * 国际化服务
  */
 export class I18nService {
@@ -215,18 +205,4 @@ export const i18nService = new I18nService()
  */
 export function t(key: string, substitutions?: string | string[]): string {
   return i18nService.t(key, substitutions)
-}
-
-/**
- * 获取 Vue 指令对象
- */
-export function getVueI18nDirective() {
-  return i18nService.getVueDirective()
-}
-
-/**
- * 获取当前语言
- */
-export function getCurrentLanguage(): string {
-  return i18nService.getCurrentLanguage()
 }

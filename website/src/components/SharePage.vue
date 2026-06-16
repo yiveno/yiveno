@@ -121,31 +121,38 @@ function favicon(url: string) {
   margin: 0 auto;
   padding: 2rem 1rem 4rem;
 }
+
 .loading,
 .error {
   text-align: center;
   padding: 4rem;
   color: #999;
 }
+
 .error {
   color: #e53e3e;
 }
+
 .header {
   margin-bottom: 1.5rem;
 }
+
 .header h1 {
   margin: 0 0 0.25rem;
   font-size: 1.5rem;
 }
+
 .meta {
   color: #888;
   font-size: 0.875rem;
   margin: 0 0 0.5rem;
 }
+
 .desc {
   color: #666;
   font-size: 0.9rem;
 }
+
 .toolbar {
   display: flex;
   align-items: center;
@@ -158,6 +165,7 @@ function favicon(url: string) {
   top: 0;
   z-index: 10;
 }
+
 .select-all {
   display: flex;
   align-items: center;
@@ -165,11 +173,13 @@ function favicon(url: string) {
   cursor: pointer;
   font-size: 0.9rem;
 }
+
 .count {
   flex: 1;
   font-size: 0.85rem;
   color: #888;
 }
+
 .btn-import {
   padding: 0.5rem 1.25rem;
   border: none;
@@ -179,10 +189,12 @@ function favicon(url: string) {
   font-size: 0.9rem;
   cursor: pointer;
 }
+
 .btn-import:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
 .result {
   padding: 0.75rem 1rem;
   border-radius: 6px;
@@ -191,15 +203,18 @@ function favicon(url: string) {
   color: #2e7d32;
   font-size: 0.9rem;
 }
+
 .result-warn {
   background: #fff3e0;
   color: #e65100;
 }
+
 .bookmark-list {
   list-style: none;
   padding: 0;
   margin: 0;
 }
+
 .bookmark-item {
   display: flex;
   align-items: flex-start;
@@ -211,26 +226,32 @@ function favicon(url: string) {
   margin-bottom: 4px;
   transition: all 0.15s;
 }
+
 .bookmark-item:hover {
   background: #f5f5f5;
 }
+
 .bookmark-item.selected {
   background: #e8f0fe;
   border-color: #1a73e8;
 }
+
 .bookmark-item input[type='checkbox'] {
   margin-top: 2px;
 }
+
 .favicon {
   width: 16px;
   height: 16px;
   margin-top: 3px;
   flex-shrink: 0;
 }
+
 .info {
   flex: 1;
   min-width: 0;
 }
+
 .title {
   color: #1a73e8;
   text-decoration: none;
@@ -238,9 +259,11 @@ function favicon(url: string) {
   font-size: 0.95rem;
   display: block;
 }
+
 .title:hover {
   text-decoration: underline;
 }
+
 .url {
   color: #888;
   font-size: 0.8rem;
@@ -249,8 +272,8 @@ function favicon(url: string) {
   white-space: nowrap;
   display: block;
 }
-.desc {
-  color: #666;
+
+.info .desc {
   font-size: 0.85rem;
   margin: 2px 0 0;
 }

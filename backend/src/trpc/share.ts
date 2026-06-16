@@ -6,6 +6,7 @@
 import { z } from 'zod'
 import { publicProcedure, router } from '../trpc'
 import { createClient } from '@supabase/supabase-js'
+import { info, error as logError, toLogError } from '../utils/logger'
 
 /**
  * 生成 8 位随机短链接代码
@@ -45,12 +46,12 @@ async function searchProfiles(
     users = result.data
     searchError = result.error
   } catch (err) {
-    console.error('❌ 查询异常:', err)
+    logError('❌ 查询异常', { error: toLogError(err) })
     searchError = err
   }
 
   if (!users || users.length === 0) {
-    console.log('🔄 尝试备用查询方法...')
+    info('🔄 尝试备用查询方法...')
     try {
       const nameResult = await supabase
         .from('profiles')
@@ -69,13 +70,13 @@ async function searchProfiles(
       const allUsers = [...nameUsers, ...emailUsers]
       users = Array.from(new Map(allUsers.map(u => [u.id, u])).values())
       searchError = nameResult.error || emailResult.error
-      console.log('✅ 备用查询结果:', {
+      info('✅ 备用查询结果', {
         nameMatches: nameUsers.length,
         emailMatches: emailUsers.length,
         totalUnique: users.length
       })
     } catch (err) {
-      console.error('❌ 备用查询异常:', err)
+      logError('❌ 备用查询异常', { error: toLogError(err) })
     }
   }
 
@@ -160,7 +161,7 @@ export const shareRouter = router({
         .select()
         .single()
 
-      console.log('[createLinkShare] 创建分享结果:', {
+      info('[createLinkShare] 创建分享结果', {
         success: !!share,
         error: shareError?.message,
         shareId: share?.id,
@@ -169,7 +170,7 @@ export const shareRouter = router({
       })
 
       if (shareError) {
-        console.error('[createLinkShare] 创建失败:', shareError)
+        logError('[createLinkShare] 创建失败', { error: toLogError(shareError) })
         throw new Error(`创建分享失败: ${shareError.message}`)
       }
 
@@ -334,7 +335,7 @@ export const shareRouter = router({
       )
 
       if (notificationError) {
-        console.error('发送通知失败:', notificationError)
+        logError('发送通知失败', { error: toLogError(notificationError) })
         // 不回滚，通知失败不影响分享创建
       }
 
@@ -361,7 +362,7 @@ export const shareRouter = router({
     .query(async ({ input, ctx }) => {
       const { shortCode } = input
 
-      console.log('[getShareByCode] 开始查询:', { shortCode })
+      info('[getShareByCode] 开始查询', { shortCode })
 
       // 创建 Supabase 客户端（匿名访问）
       const supabase = createClient(ctx.env.SUPABASE_URL || '', ctx.env.SUPABASE_ANON_KEY || '')
@@ -373,7 +374,7 @@ export const shareRouter = router({
         .eq('short_code', shortCode)
         .single()
 
-      console.log('[getShareByCode] 分享查询结果:', {
+      info('[getShareByCode] 分享查询结果', {
         found: !!share,
         error: shareError?.message,
         shareId: share?.id,
@@ -381,7 +382,7 @@ export const shareRouter = router({
       })
 
       if (shareError || !share) {
-        console.error('[getShareByCode] 查询失败:', shareError)
+        logError('[getShareByCode] 查询失败', { error: toLogError(shareError) })
         throw new Error('分享不存在或已过期')
       }
 
@@ -473,7 +474,7 @@ export const shareRouter = router({
       const { users, searchError } = await searchProfiles(supabase, query, user.id)
 
       // 🔍 详细调试日志
-      console.log('🔍 搜索用户详情:', {
+      info('🔍 搜索用户详情', {
         query,
         currentUserId: user.id,
         currentUserEmail: user.email,
@@ -485,7 +486,7 @@ export const shareRouter = router({
       })
 
       if (searchError) {
-        console.error('❌ 搜索用户错误:', searchError)
+        logError('❌ 搜索用户错误', { error: toLogError(searchError) })
         throw new Error(`搜索用户失败: ${searchError.message}`)
       }
 
@@ -810,7 +811,7 @@ export const shareRouter = router({
       })
 
       if (historyError) {
-        console.error('记录导入历史失败:', historyError)
+        logError('记录导入历史失败', { error: toLogError(historyError) })
       }
 
       // 更新直接分享状态（如果是直接分享）

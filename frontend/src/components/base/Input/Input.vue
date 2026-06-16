@@ -28,7 +28,6 @@ const props = withDefaults(defineProps<InputProps>(), {
 
 const emit = defineEmits<InputEmits>()
 
-// @ts-ignore template ref
 const isFocused = ref(false)
 
 /**

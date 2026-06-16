@@ -8,6 +8,7 @@ import { logger } from '@/infrastructure/logging/logger'
 import { onEvent } from '@/infrastructure/events/event-bus'
 import { globalStateManager } from '@/infrastructure/global-state/global-state-manager'
 import { inboxNotification } from '@/application/inbox-notification/inbox-notification-service'
+import { tabBrowserAppService } from '@/application/browser/tab-browser-app-service'
 import { useSupabaseAuth } from '@/composables/useSupabaseAuth'
 import { Button } from '@/components'
 
@@ -107,35 +108,12 @@ const sidePanelTooltip = '打开侧边栏'
 
 const handleOpenSidePanel = async () => {
   try {
-    if (!chrome?.sidePanel) {
-      logger.warn('AppHeader', '浏览器不支持侧边栏功能')
+    const result = await tabBrowserAppService.openSidePanel()
+    if (result.ok) {
+      logger.info('AppHeader', '✅ 侧边栏已打开')
       return
     }
-
-    const [currentTab] = await chrome.tabs.query({
-      active: true,
-      currentWindow: true
-    })
-
-    if (!currentTab?.id || !currentTab?.windowId) {
-      logger.error('AppHeader', '无法获取当前标签页信息')
-      return
-    }
-
-    await chrome.sidePanel.setOptions({
-      tabId: currentTab.id,
-      path: 'side-panel.html',
-      enabled: true
-    })
-
-    if (chrome.sidePanel.setPanelBehavior) {
-      await chrome.sidePanel.setPanelBehavior({
-        openPanelOnActionClick: false
-      })
-    }
-
-    await chrome.sidePanel.open({ windowId: currentTab.windowId })
-    logger.info('AppHeader', '✅ 侧边栏已打开')
+    logger.error('AppHeader', '❌ 打开侧边栏失败', result.error)
   } catch (error) {
     logger.error('AppHeader', '❌ 打开侧边栏失败', error)
   }

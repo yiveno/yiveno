@@ -26,9 +26,6 @@ export interface ProposalEditNodeData {
   parentId?: string | undefined
 }
 
-/** @deprecated 使用 ProposalEditNodeData */
-export type EditBookmarkData = ProposalEditNodeData
-
 /** 提案树拖拽移动结果 */
 export interface ProposalMoveResult {
   nodeId: string

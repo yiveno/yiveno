@@ -13,7 +13,7 @@ import '@/assets/smart-fonts.css'
 
 import { logger } from '@/infrastructure/logging/logger'
 import { preloadMaterialWebComponents } from '@/infrastructure/material/preload-material-web'
-import { installMessage } from '@/application/message/install'
+import { installMessage } from '@/presentation/bootstrap/install-message'
 
 logger.info('Settings', 'Init', '开始加载 Material Web Components...')
 

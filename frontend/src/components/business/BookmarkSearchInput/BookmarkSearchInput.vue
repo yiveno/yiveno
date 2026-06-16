@@ -26,6 +26,7 @@ import { useTraitFilterStore } from '@/stores/trait-filter-store'
 import { bookmarkTraitQueryService } from '@/application/bookmark/bookmark-trait-query-service'
 import type { TraitTag } from '@/infrastructure/indexeddb/types/bookmark-record'
 import { t } from '@/utils/i18n-helpers'
+import { tabBrowserAppService } from '@/application/browser/tab-browser-app-service'
 import { logger } from '@/infrastructure/logging/logger'
 import { faviconService } from '@/infrastructure/services/favicon-service'
 import type { FilteredBookmarkNode } from '@/core/filter/bookmark-filter'
@@ -1054,16 +1055,12 @@ const handleResultClick = (bookmark: BookmarkNode) => {
 
   // 根据 resultDisplay 模式决定默认行为
   if (props.resultDisplay === 'dropdown') {
-    // dropdown 模式：在当前标签页打开书签
     if (bookmark.url) {
-      // 安全检查：确保 chrome.tabs API 可用
-      if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.update) {
-        chrome.tabs.update({ url: bookmark.url }).catch(err => {
-          logger.error('BookmarkSearchInput', '打开书签失败', err)
-        })
-      } else {
-        logger.warn('BookmarkSearchInput', 'chrome.tabs API 不可用，无法打开书签')
-      }
+      void tabBrowserAppService.openUrlInActiveTab(bookmark.url).then(result => {
+        if (!result.ok) {
+          logger.error('BookmarkSearchInput', '打开书签失败', result.error)
+        }
+      })
     }
   }
 }
@@ -1075,14 +1072,11 @@ const handleOpenInNewTab = (bookmark: BookmarkNode) => {
   logger.info('BookmarkSearchInput', '在新标签页打开书签', { bookmark })
 
   if (bookmark.url) {
-    // 安全检查：确保 chrome.tabs API 可用
-    if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
-      chrome.tabs.create({ url: bookmark.url, active: false }).catch(err => {
-        logger.error('BookmarkSearchInput', '在新标签页打开书签失败', err)
-      })
-    } else {
-      logger.warn('BookmarkSearchInput', 'chrome.tabs API 不可用，无法打开书签')
-    }
+    void tabBrowserAppService.openUrlInBackgroundTab(bookmark.url).then(result => {
+      if (!result.ok) {
+        logger.error('BookmarkSearchInput', '在新标签页打开书签失败', result.error)
+      }
+    })
   }
 }
 

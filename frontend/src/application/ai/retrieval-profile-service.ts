@@ -29,13 +29,6 @@ export const RETRIEVAL_PROFILE_MAX_BATCHES_PER_RUN = 3
 /** 批间间隔（毫秒），避免占满 API */
 export const RETRIEVAL_PROFILE_BATCH_INTERVAL_MS = 1500
 
-export interface RetrievalProfileSyncProgress {
-  processed: number
-  totalPending: number
-  updated: number
-  batches: number
-}
-
 export interface RetrievalProfileSyncResult {
   updatedIds: string[]
   processed: number
@@ -361,9 +354,4 @@ export async function runRetrievalProfileSyncBatch(
       stoppedReason: 'error'
     }
   }
-}
-
-export const retrievalProfileService = {
-  selectBookmarksNeedingRetrievalProfile,
-  runRetrievalProfileSyncBatch
 }

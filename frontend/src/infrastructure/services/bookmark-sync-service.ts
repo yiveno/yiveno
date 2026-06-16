@@ -17,7 +17,7 @@ import type { ProgressCallback, SyncProgress, SyncErrorType } from '@/types/sync
 import { calculateEstimatedRemaining, ERROR_MESSAGES } from '@/types/sync-progress'
 import { TIMEOUT_CONFIG } from '@/config/constants'
 import { detectInvalidRootLayerNodes } from '@/core/bookmark/chrome-system-ids'
-import { STATE_KEYS, setDatabaseReady } from '@/background/managers/state'
+import { STATE_KEYS, setDatabaseReady } from '@/infrastructure/state/extension-state'
 
 /**
  * 从 Chrome 书签树节点转换为 BookmarkRecord

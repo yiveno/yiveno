@@ -39,4 +39,4 @@ export interface TooltipProps {
   offset?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
 }
 
-export interface TooltipEmits {}
+export type TooltipEmits = Record<string, never>

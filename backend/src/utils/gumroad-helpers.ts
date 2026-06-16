@@ -14,20 +14,3 @@ export function toIsoDate(value: unknown, fallback: string | null = null): strin
   if (Number.isNaN(date.getTime())) return fallback
   return date.toISOString()
 }
-
-/** ArrayBuffer → 十六进制字符串 */
-export function bufferToHex(buffer: ArrayBuffer): string {
-  return Array.from(new Uint8Array(buffer))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('')
-}
-
-/** 时间安全字符串比较 */
-export function timingSafeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false
-  let result = 0
-  for (let i = 0; i < a.length; i += 1) {
-    result |= a.charCodeAt(i) ^ b.charCodeAt(i)
-  }
-  return result === 0
-}

@@ -1,0 +1,26 @@
+name: Knip 死代码检查
+
+on:
+  schedule:
+    # 每周一 UTC 02:00（北京时间 10:00）；PR/push 已由 ci.yml quality-check 覆盖
+    - cron: '0 2 * * 1'
+  workflow_dispatch:
+
+jobs:
+  knip:
+    name: Knip 死代码/依赖检查（阻断）
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 检出代码仓库
+        uses: actions/checkout@v4
+
+      - name: 🔧 设置 Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: 📦 安装依赖
+        run: bun install --frozen-lockfile
+
+      - name: 🔍 运行 Knip（阻断模式）
+        run: bun run knip

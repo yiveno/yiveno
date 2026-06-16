@@ -28,7 +28,7 @@ const showForceCloseConfirm = ref(false)
 
 // 初始化全局订阅
 onMounted(() => {
-  initialize()
+  void initialize()
 })
 
 /**
@@ -93,7 +93,7 @@ function isPhaseCompleted(phase: SyncPhase): boolean {
  * 处理重试
  */
 function handleRetry() {
-  retry()
+  void retry()
 }
 
 /**

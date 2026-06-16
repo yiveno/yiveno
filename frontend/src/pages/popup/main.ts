@@ -12,7 +12,7 @@ import { logger } from '@/infrastructure/logging/logger'
 import { message } from '@/application/message/message-service'
 import { performanceMonitor } from '@/utils/performance-monitor'
 import { preloadMaterialWebComponents } from '@/infrastructure/material/preload-material-web'
-import { installMessage } from '@/application/message/install'
+import { installMessage } from '@/presentation/bootstrap/install-message'
 
 const app = createApp(Popup)
 const pinia = createPinia()

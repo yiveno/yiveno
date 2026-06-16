@@ -29,17 +29,6 @@ export interface AICompleteRequest {
 }
 
 /**
- * AI 文本补全响应
- */
-export interface AICompleteResponse {
-  /** 生成的文本 */
-  response?: string
-
-  /** 错误信息 */
-  error?: string
-}
-
-/**
  * Pro 托管 LLM 补全请求体
  */
 export interface AIHostedCompleteRequest {
@@ -49,15 +38,4 @@ export interface AIHostedCompleteRequest {
   maxTokens?: number
   /** 采样温度 */
   temperature?: number
-}
-
-/**
- * Pro 托管 LLM 配额响应
- */
-export interface AIHostedQuotaResponse {
-  model: string
-  used: number
-  limit: number
-  remaining: number
-  monthKey: string
 }

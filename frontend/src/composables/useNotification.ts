@@ -134,8 +134,3 @@ const globalNotification = new NotificationManager()
 export function useNotification(): NotificationInterface {
   return globalNotification
 }
-
-/**
- * 全局 notification 对象（类似 Ant Design 的用法）
- */
-export const notification = globalNotification

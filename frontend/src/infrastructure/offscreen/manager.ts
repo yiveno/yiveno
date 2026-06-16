@@ -267,21 +267,4 @@ export async function dispatchOffscreenRequest<TResult = unknown, TPayload = unk
   })
 }
 
-export async function disposeOffscreenDocument(): Promise<void> {
-  try {
-    if (chrome.offscreen?.closeDocument) {
-      await chrome.offscreen.closeDocument()
-      logger.info('OffscreenManager', '🧹 Offscreen Document 已关闭')
-    }
-  } catch (error) {
-    logger.warn('OffscreenManager', '关闭 Offscreen Document 失败', error)
-  }
-}
-
-export const OffscreenManager = {
-  ensureOffscreenDocument,
-  dispatchOffscreenRequest,
-  disposeOffscreenDocument
-}
-
 export type { OffscreenRequest, OffscreenResponse }

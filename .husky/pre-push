@@ -1,123 +1,104 @@
 #!/usr/bin/env sh
 
-echo "🚀 pre-push: 运行推送前检查（仅检查变更文件）..."
+echo "🚀 pre-push: 推送前构建 + Knip 验证（lint / typecheck 由 pre-commit + CI 负责）..."
 
-# 错误收集
 ERRORS=""
 
-# 获取本次推送涉及的文件（排除已删除，避免 lint 报 NoFilesFound）
-CHANGED_FILES=$(git diff --name-only --diff-filter=ACMR HEAD~1 HEAD)
+# 对比远端跟踪分支与待推送提交；无 upstream 时回退到最近一次提交
+if git rev-parse --verify @{u} >/dev/null 2>&1; then
+  CHANGED_FILES=$(git diff --name-only --diff-filter=ACMR @{u}..HEAD)
+else
+  CHANGED_FILES=$(git diff --name-only --diff-filter=ACMR HEAD~1 HEAD 2>/dev/null || git diff --name-only --diff-filter=ACMR HEAD)
+fi
+
 if [ -z "$CHANGED_FILES" ]; then
-    echo "ℹ️  没有变更文件，跳过检查"
-    exit 0
+  echo "ℹ️  没有变更文件，跳过检查"
+  exit 0
 fi
 
 echo "📋 变更文件:"
 echo "$CHANGED_FILES" | head -20
 echo ""
 
-# 检查是否涉及 TypeScript 文件
-TS_FILES=$(echo "$CHANGED_FILES" | grep -E '\.(ts|tsx)$' || true)
-if [ -n "$TS_FILES" ]; then
-    echo "🧪 TypeScript 类型检查（仅变更文件）..."
-    # 使用 turbo 的增量构建功能
-    if bun run typecheck:force > /dev/null 2>&1; then
-        echo "✅ 类型检查通过"
-    else
-        echo "❌ 类型检查失败"
-        TYPECHECK_ERROR=$(bun run typecheck:force 2>&1 || true)
-        ERRORS="${ERRORS}\n❌ TypeScript 类型检查失败:\n${TYPECHECK_ERROR}\n\n"
-    fi
+run_knip() {
+  label="$1"
+  shift
+  echo "🔍 Knip: ${label}..."
+  output=$(bun run knip -- "$@" 2>&1) || {
+    echo "❌ Knip 失败: ${label}"
+    ERRORS="${ERRORS}\n❌ Knip (${label}) 失败:\n${output}\n\n"
+    return 1
+  }
+  echo "✅ Knip 通过: ${label}"
+}
+
+# 仅在涉及 frontend 或共享包时做构建验证（CI 负责全量 typecheck / lint / test）
+FRONTEND_BUILD_TRIGGER=$(echo "$CHANGED_FILES" | grep -E '^frontend/|^packages/(design-tokens|types|auth-core)/|tsconfig|package\.json' || true)
+
+if [ -n "$FRONTEND_BUILD_TRIGGER" ]; then
+  echo "🏗️  frontend 构建验证..."
+  if bun run build:fe > /dev/null 2>&1; then
+    echo "✅ frontend 构建成功"
+  else
+    echo "❌ frontend 构建失败"
+    BUILD_ERROR=$(bun run build:fe 2>&1 || true)
+    ERRORS="${ERRORS}\n❌ frontend 构建失败:\n${BUILD_ERROR}\n\n"
+  fi
 else
-    echo "⏭️  无 TypeScript 文件变更，跳过类型检查"
+  echo "⏭️  无 frontend 构建相关变更，跳过构建验证"
 fi
 
-# 检查是否涉及 frontend 文件
-FRONTEND_FILES=$(echo "$CHANGED_FILES" | grep -E '^frontend/' || true)
-if [ -n "$FRONTEND_FILES" ]; then
-    # 2. 代码质量检查（仅变更文件）
-    echo "🔍 代码质量检查（仅变更文件）..."
-    ESLINT_FILES=$(echo "$CHANGED_FILES" | grep -E '^frontend/.*\.(ts|tsx|js|jsx)$' | sed 's|^frontend/||' | tr '\n' ' ')
-    if [ -z "$ESLINT_FILES" ]; then
-        echo "⏭️  无可 lint 的 frontend 脚本文件，跳过 ESLint"
-    elif (cd frontend && bunx eslint --no-cache --max-warnings 100 --no-warn-ignored $ESLINT_FILES > /dev/null 2>&1); then
-        echo "✅ ESLint 检查通过"
-    else
-        echo "❌ ESLint 检查失败"
-        LINT_ERROR=$((cd frontend && bunx eslint --no-cache --max-warnings 100 --no-warn-ignored $ESLINT_FILES) 2>&1 || true)
-        ERRORS="${ERRORS}\n❌ ESLint 检查失败:\n${LINT_ERROR}\n\n"
-    fi
+# 按变更目录跑分 workspace Knip（knip.json / 根依赖变更时跑全仓）
+KNIP_FULL_TRIGGER=$(echo "$CHANGED_FILES" | grep -E '^knip\.json$|^package\.json$|^scripts/knip-runner\.mjs$' || true)
+KNIP_FE_TRIGGER=$(echo "$CHANGED_FILES" | grep -E '^frontend/' || true)
+KNIP_BE_TRIGGER=$(echo "$CHANGED_FILES" | grep -E '^backend/' || true)
+KNIP_WEB_TRIGGER=$(echo "$CHANGED_FILES" | grep -E '^website/' || true)
+KNIP_PKG_TRIGGERS=$(echo "$CHANGED_FILES" | grep '^packages/' | cut -d/ -f1-2 | sort -u || true)
 
-    # 3. 样式检查（仅变更文件）
-    echo "💅 样式检查（仅变更文件）..."
-    STYLE_FILES=$(echo "$CHANGED_FILES" | grep -E '^frontend/.*\.(css|scss|vue)$' | sed 's|^frontend/||' | tr '\n' ' ')
-    if [ -n "$STYLE_FILES" ]; then
-        if (cd frontend && bunx stylelint --no-cache $STYLE_FILES > /dev/null 2>&1); then
-            echo "✅ Stylelint 检查通过"
-        else
-            echo "❌ Stylelint 检查失败"
-            STYLELINT_ERROR=$((cd frontend && bunx stylelint --no-cache $STYLE_FILES) 2>&1 || true)
-            ERRORS="${ERRORS}\n❌ Stylelint 检查失败:\n${STYLELINT_ERROR}\n\n"
-        fi
-    else
-        echo "⏭️  无样式文件变更，跳过样式检查"
-    fi
+if [ -n "$KNIP_FULL_TRIGGER" ]; then
+  run_knip "全仓" || true
 else
-    echo "⏭️  无 frontend 文件变更，跳过 ESLint 和样式检查"
+  if [ -n "$KNIP_FE_TRIGGER" ]; then
+    run_knip "frontend" --workspace frontend || true
+  fi
+  if [ -n "$KNIP_BE_TRIGGER" ]; then
+    run_knip "backend" --workspace backend || true
+  fi
+  if [ -n "$KNIP_WEB_TRIGGER" ]; then
+    run_knip "website" --workspace website || true
+  fi
+  if [ -n "$KNIP_PKG_TRIGGERS" ]; then
+    for pkg in $KNIP_PKG_TRIGGERS; do
+      run_knip "$pkg" --workspace "$pkg" || true
+    done
+  fi
+  if [ -z "$KNIP_FE_TRIGGER$KNIP_BE_TRIGGER$KNIP_WEB_TRIGGER$KNIP_PKG_TRIGGERS" ]; then
+    echo "⏭️  无 Knip 相关变更，跳过 Knip"
+  fi
 fi
 
-# 4. 生产构建测试（仅在涉及关键变更时）
-# 检查是否涉及构建配置或核心文件
-BUILD_RELATED_FILES=$(echo "$CHANGED_FILES" | grep -E '(vite\.config|tsconfig|package\.json|turbo\.json)' || true)
-if [ -n "$BUILD_RELATED_FILES" ] || [ -n "$FRONTEND_FILES" ]; then
-    echo "🏗️  生产构建测试..."
-    if bun run build > /dev/null 2>&1; then
-        echo "✅ 构建成功"
-    else
-        echo "❌ 构建失败"
-        BUILD_ERROR=$(bun run build 2>&1 || true)
-        ERRORS="${ERRORS}\n❌ 构建失败:\n${BUILD_ERROR}\n\n"
-    fi
-else
-    echo "⏭️  无构建相关文件变更，跳过构建测试"
-fi
-
-# 5. 单元测试（仅在涉及测试文件时）
-TEST_FILES=$(echo "$CHANGED_FILES" | grep -E '\.test\.(ts|tsx|js|jsx)$' || true)
-if [ -n "$TEST_FILES" ]; then
-    echo "🧪 运行单元测试..."
-    if (cd frontend && bun run test:run > /dev/null); then
-        echo "✅ 测试通过"
-    else
-        echo "❌ 测试失败"
-        TEST_ERROR=$((cd frontend && bun run test:run) 2>&1 || true)
-        ERRORS="${ERRORS}\n❌ 测试失败:\n${TEST_ERROR}\n\n"
-    fi
-else
-    echo "⏭️  无测试文件变更，跳过单元测试"
-fi
-
-# 如果有错误，显示详细信息并阻止推送
 if [ -n "$ERRORS" ]; then
-    echo ""
-    echo "🚨 =================================================="
-    echo "🚨 推送前检查失败！发现以下问题："
-    echo "🚨 =================================================="
-    echo ""
-    printf "%s" "$ERRORS"
-    echo "💡 请修复以上问题后再推送。"
-    echo ""
-    echo "🛠️  可用的修复命令："
-    echo "   cd frontend && bun run lint   # 自动修复 ESLint 问题"
-    echo "   cd frontend && bun run stylelint  # 自动修复样式问题"
-    echo "   bun run typecheck             # 运行类型检查"
-    echo "   bun run build                 # 运行完整构建"
-    echo ""
-    exit 1
+  echo ""
+  echo "🚨 =================================================="
+  echo "🚨 推送前检查失败！发现以下问题："
+  echo "🚨 =================================================="
+  echo ""
+  printf "%s" "$ERRORS"
+  echo "💡 请修复以上问题后再推送。"
+  echo ""
+  echo "🛠️  可用的修复命令："
+  echo "   bun run build:fe          # frontend 构建验证"
+  echo "   bun run knip              # 全仓 Knip"
+  echo "   bun run knip:fe           # 仅 frontend Knip"
+  echo "   bun run knip:be           # 仅 backend Knip"
+  echo "   bun run typecheck         # 类型检查（CI 也会跑）"
+  echo "   bun run lint:check        # 代码质量检查（CI 也会跑）"
+  echo ""
+  exit 1
 fi
 
 echo ""
 echo "🎉 =================================================="
-echo "🎉 所有推送前检查已通过，可以安全推送！"
+echo "🎉 推送前构建验证已通过，可以安全推送！"
 echo "🎉 =================================================="
 echo ""

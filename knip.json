@@ -1,75 +1,51 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "ignoreDependencies": ["puppeteer-core", "h3", "@material/web", "@tanstack/vue-query", "vue-tsc"],
+  "treatConfigHintsAsErrors": true,
+  "ignore": ["**/*.d.ts", "frontend/src/tests/**"],
+  "ignoreExportsUsedInFile": true,
+  "ignoreDependencies": ["puppeteer-core"],
   "ignoreBinaries": ["wait"],
   "tags": ["-lintignore"],
-  "vue": {
-    "entry": [
-      "src/**/*.vue",
-      "app.vue",
-      "components/**/*.vue",
-      "composables/**/*.vue",
-      "layouts/**/*.vue",
-      "pages/**/*.vue"
-    ],
-    "project": [
-      "src/**/*.vue",
-      "app.vue",
-      "components/**/*.vue",
-      "composables/**/*.vue",
-      "layouts/**/*.vue",
-      "pages/**/*.vue"
-    ]
+  "rules": {
+    "files": "error",
+    "dependencies": "error",
+    "devDependencies": "error",
+    "unlisted": "error",
+    "binaries": "error",
+    "duplicates": "error",
+    "exports": "error",
+    "types": "error",
+    "enumMembers": "error"
+  },
+  "ignoreIssues": {
+    "frontend/src/types/**": ["types", "exports"],
+    "frontend/src/stores/index.ts": ["types", "exports"]
   },
   "workspaces": {
+    ".": {
+      "entry": ["scripts/**/*.{js,mjs,ts}"],
+      "project": ["scripts/**/*.{js,mjs,ts}"]
+    },
     "frontend": {
       "entry": [
-        "src/pages/*/index.html",
+        "src/pages/*/main.ts",
         "src/background/main.ts",
         "src/offscreen/main.ts",
         "src/content/auth-sync.ts",
-        "vite.config.ts",
-        "vitest.config.ts",
-        "vitest.e2e.config.ts"
+        "vite/build-options.ts",
+        "scripts/**/*.{js,ts,cjs}"
       ],
-      "project": [
-        "src/**/*",
-        "src/**/*.vue",
-        "vite/**/*.ts",
-        "scripts/**/*.js",
-        "scripts/**/*.ts",
-        "test-puppeteer.js"
-      ]
+      "project": ["src/**/*.{ts,vue}", "vite/**/*.ts", "scripts/**/*.{js,ts,cjs}"]
     },
     "backend": {
-      "entry": ["src/**/*.ts"],
+      "entry": ["src/**/*.test.ts"],
       "project": ["src/**/*.ts"]
     },
     "website": {
-      "entry": [
-        "nuxt.config.ts",
-        "app.vue",
-        "components/**/*",
-        "composables/**/*",
-        "layouts/**/*",
-        "pages/**/*",
-        "server/**/*",
-        "utils/**/*"
-      ],
-      "project": [
-        "app.vue",
-        "components/**/*",
-        "composables/**/*",
-        "layouts/**/*",
-        "pages/**/*",
-        "pages/**/*.vue",
-        "server/**/*",
-        "utils/**/*",
-        "nuxt.config.ts"
-      ]
+      "entry": ["src/pages/**/*.astro", "src/**/*.vue"],
+      "project": ["src/**/*.{astro,vue,ts}"]
     },
     "packages/*": {
-      "entry": ["src/**/*.ts"],
       "project": ["src/**/*.ts"]
     }
   }

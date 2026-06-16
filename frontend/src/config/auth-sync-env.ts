@@ -33,19 +33,6 @@ export const AUTH_SYNC_ALLOWED_HOSTS: readonly string[] =
     : ['localhost:3000', 'localhost:3001']
 
 /**
- * manifest content_scripts.matches（与 AUTH_SYNC_ALLOWED_HOSTS 对应）
- */
-export const AUTH_SYNC_CONTENT_SCRIPT_MATCHES: readonly string[] =
-  AUTH_RUNTIME_ENV === 'prod'
-    ? ['https://ottersage.com/*', 'https://www.ottersage.com/*']
-    : [
-        'http://localhost:3000/*',
-        'https://localhost:3000/*',
-        'http://localhost:3001/*',
-        'https://localhost:3001/*'
-      ]
-
-/**
  * 当前 host 是否允许向本扩展同步认证
  */
 export function isAuthSyncHostAllowed(host: string): boolean {

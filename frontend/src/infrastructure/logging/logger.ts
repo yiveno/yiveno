@@ -322,34 +322,3 @@ export const logger = new Logger({
   enableConsole,
   enableRemote: false
 })
-
-/**
- * 创建新的日志器实例
- */
-export function createLogger(config: Partial<LoggerConfig> = {}): Logger {
-  return new Logger(config)
-}
-
-/**
- * 设置全局日志级别
- */
-export function setLogLevel(level: LogLevel): void {
-  logger.setConfig({ level })
-}
-
-/**
- * 启用/禁用控制台日志
- */
-export function setConsoleLogging(enabled: boolean): void {
-  logger.setConfig({ enableConsole: enabled })
-}
-
-/**
- * 启用/禁用远程日志
- */
-export function setRemoteLogging(enabled: boolean, endpoint?: string): void {
-  logger.setConfig({
-    enableRemote: enabled,
-    ...(endpoint !== undefined ? { remoteEndpoint: endpoint } : {})
-  })
-}

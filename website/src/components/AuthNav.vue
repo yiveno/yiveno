@@ -35,15 +35,18 @@ onMounted(async () => {
   align-items: center;
   gap: 0.5rem;
 }
+
 .nav-link {
   text-decoration: none;
   color: #555;
 }
+
 .user-info {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
+
 .avatar {
   width: 28px;
   height: 28px;

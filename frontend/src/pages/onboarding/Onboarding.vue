@@ -3,7 +3,7 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { LucideIcon } from '@/components'
 import type { ChromeExtensionMessage } from '@/types/chrome-messages'
 import { t } from '@/utils/i18n-helpers'
-import { STATE_KEYS } from '@/background/managers/state'
+import { STATE_KEYS } from '@/infrastructure/state/extension-state'
 import { logger } from '@/infrastructure/logging/logger'
 
 interface Step {

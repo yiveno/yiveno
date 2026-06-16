@@ -49,7 +49,7 @@ onMounted(async () => {
 
 // 监听 notificationDuration 变化，更新滑块
 watch(notificationDuration, () => {
-  nextTick(() => {
+  void nextTick(() => {
     updateSliderValue()
   })
 })
@@ -105,14 +105,12 @@ async function handleMirrorToggle(event: Event) {
 function handleDurationInput(event: Event) {
   const target = event.target as HTMLElement & { value: number }
   notificationDuration.value = target.value
-  console.log('Slider input:', target.value) // 调试日志
 }
 
 // 通知显示时长滑块改变（保存设置）
 async function handleDurationChange(event: Event) {
   const target = event.target as HTMLElement & { value: number }
   notificationDuration.value = target.value
-  console.log('Slider change:', target.value) // 调试日志
 
   try {
     // 保存到设置（转换为毫秒）

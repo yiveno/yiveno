@@ -48,7 +48,8 @@ function bookmarkIdMatches(
 }
 
 function cloneBookmarkLeaf(node: BookmarkNode): BookmarkNode {
-  const { children: _children, ...leaf } = node
+  const leaf = { ...node }
+  delete leaf.children
   return leaf
 }
 

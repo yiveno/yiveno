@@ -17,7 +17,7 @@ import {
 } from '@/infrastructure/events/chrome-message-bridge'
 import { initCrossPageSync } from '@/composables/useCrossPageSync'
 import { preloadMaterialWebComponents } from '@/infrastructure/material/preload-material-web'
-import { installMessage } from '@/application/message/install'
+import { installMessage } from '@/presentation/bootstrap/install-message'
 
 logger.debug('SidePanel', 'Init', '恢复完整的初始化逻辑')
 

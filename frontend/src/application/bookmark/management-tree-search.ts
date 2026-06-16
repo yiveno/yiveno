@@ -4,7 +4,7 @@
 
 import { bookmarkSearchService } from '@/application/query/bookmark-search-service'
 import { collectBookmarkIdsFromSearchResults } from '@/application/query/unified-search-pipeline'
-import { recalculateChildrenCount, filterBookmarkNodes } from '@/core/filter/bookmark-filter'
+import { recalculateChildrenCount } from '@/core/filter/bookmark-filter'
 import { applyTraitFiltersToTree } from '@/core/filter/trait-tree-filter'
 import { countBookmarkLeaves, pruneBookmarkTree } from '@/core/filter/tree-prune'
 import type { BookmarkNode } from '@/types'
@@ -26,43 +26,7 @@ export interface ManagementTreeSearchResult {
   isRightFiltered: boolean
 }
 
-export {
-  pickSemanticSupplementIds,
-  isRelevantSearchHit
-} from '@/application/query/search-result-filter'
-
-/**
- * 从树形筛选结果收集书签叶子 ID（严格文本，禁用模糊）
- */
-export function collectTextMatchIds(nodes: BookmarkNode[], query: string): Set<string> {
-  const filtered = filterBookmarkNodes(nodes, query, {
-    fuzzy: false,
-    filterFolders: false
-  })
-  return collectBookmarkLeafIds(filtered)
-}
-
-/**
- * 从树形筛选结果收集书签叶子 ID
- */
-export function collectBookmarkLeafIds(nodes: BookmarkNode[]): Set<string> {
-  const ids = new Set<string>()
-
-  const walk = (nodeList: BookmarkNode[]): void => {
-    for (const node of nodeList) {
-      if (node.url) {
-        ids.add(String(node.id))
-        continue
-      }
-      if (node.children?.length) {
-        walk(node.children)
-      }
-    }
-  }
-
-  walk(nodes)
-  return ids
-}
+export { pickSemanticSupplementIds } from '@/application/query/search-result-filter'
 
 function cloneTreeSnapshot(nodes: BookmarkNode[]): BookmarkNode[] {
   return nodes.map(node => {

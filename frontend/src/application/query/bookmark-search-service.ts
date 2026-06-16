@@ -268,5 +268,3 @@ export class BookmarkSearchService {
 }
 
 export const bookmarkSearchService = new BookmarkSearchService()
-
-export default bookmarkSearchService

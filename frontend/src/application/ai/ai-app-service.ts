@@ -29,7 +29,6 @@ import type { LLMProvider } from '@/types/infrastructure/llm'
 import { logger } from '@/infrastructure/logging/logger'
 
 export type { UserLLMProvider } from '@/infrastructure/llm/user-llm-client'
-export type UserLLMConfig = UserAPIKeyConfig
 export type { HostedQuotaInfo } from '@/infrastructure/llm/hosted-llm-client'
 
 /** 一键整理每批发送给 LLM 的书签数量 */

@@ -10,7 +10,6 @@ import {
   pickTopScoredWithinBand,
   SEMANTIC_CONFIDENCE_MIN_SCORE,
   SEMANTIC_DIRECT_MIN_GAP,
-  SEMANTIC_DIRECT_MIN_SCORE,
   SEMANTIC_SUPPLEMENT_MIN_GAP,
   SEMANTIC_SUPPLEMENT_SCORE_BAND,
   SEMANTIC_VECTOR_RECALL_MIN_SCORE
@@ -154,13 +153,13 @@ export function pickSemanticDirectIds(
   if (
     !passesSemanticConfidenceGate(
       semanticCandidates,
-      SEMANTIC_DIRECT_MIN_SCORE,
+      SEMANTIC_CONFIDENCE_MIN_SCORE,
       SEMANTIC_DIRECT_MIN_GAP
     )
   ) {
     logger.info(LOG_TAG, '语义直达淘汰：置信不足（分数或领先幅度）', {
       query,
-      minScore: SEMANTIC_DIRECT_MIN_SCORE,
+      minScore: SEMANTIC_CONFIDENCE_MIN_SCORE,
       minGap: SEMANTIC_DIRECT_MIN_GAP,
       topCandidate: semanticCandidates[0] ? formatCandidate(semanticCandidates[0]) : null,
       candidates: semanticCandidates.slice(0, 5).map(formatCandidate)
@@ -170,7 +169,7 @@ export function pickSemanticDirectIds(
 
   const picked = pickTopScoredWithinBand(
     semanticCandidates,
-    SEMANTIC_DIRECT_MIN_SCORE,
+    SEMANTIC_CONFIDENCE_MIN_SCORE,
     SEMANTIC_SUPPLEMENT_SCORE_BAND,
     SEMANTIC_DIRECT_MAX
   )
@@ -186,22 +185,6 @@ export function pickSemanticDirectIds(
   })
 
   return ids
-}
-
-/**
- * 判断单条检索结果是否与查询相关
- */
-export function isRelevantSearchHit(result: EnhancedSearchResult, query: string): boolean {
-  if (bookmarkMatchesQueryText(result.bookmark, query)) {
-    return true
-  }
-
-  const matchedFields = result.matchedFields ?? []
-  if (!matchedFields.includes('semantic')) {
-    return false
-  }
-
-  return result.score >= SEMANTIC_CONFIDENCE_MIN_SCORE
 }
 
 /**

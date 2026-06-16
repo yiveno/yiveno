@@ -12,6 +12,7 @@ import { shareService } from '@/application/share/share-service'
 import { posterService } from '@/application/share/poster-service'
 import { message } from '@/application/message/message-service'
 import { logger } from '@/infrastructure/logging/logger'
+import { tabBrowserAppService } from '@/application/browser/tab-browser-app-service'
 import { useSupabaseAuth } from '@/composables/useSupabaseAuth'
 import { trpc } from '@/infrastructure/services/trpc'
 import { websiteUrls } from '@/config/website'
@@ -403,9 +404,8 @@ const handleCreateLinkShare = async () => {
 
       // 在新标签页打开分享链接
       const shareUrl = result.data.shareUrl
-      if (typeof chrome !== 'undefined' && chrome?.tabs?.create) {
-        void chrome.tabs.create({ url: shareUrl })
-      } else {
+      const openResult = await tabBrowserAppService.openUrlInNewTab(shareUrl)
+      if (!openResult.ok) {
         window.open(shareUrl, '_blank', 'noopener,noreferrer')
       }
 

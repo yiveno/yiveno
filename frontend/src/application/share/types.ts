@@ -71,39 +71,13 @@ export interface PosterOptions {
 }
 
 /**
- * 导入选项
- */
-export interface ImportOptions {
-  /** 书签列表 */
-  bookmarks: Array<{ title: string; url: string }>
-  /** 目标文件夹 ID */
-  targetFolderId: string
-  /** 进度回调 */
-  onProgress?: (current: number, total: number) => void
-}
-
-/**
- * 导入结果
- */
-export interface ImportResult {
-  /** 成功数量 */
-  success: number
-  /** 失败数量 */
-  failed: number
-  /** 错误列表 */
-  errors: Array<{ bookmark: string; error: string }>
-}
-
-/**
  * 分享错误代码
  */
 export enum ShareErrorCode {
   DATA_TOO_LARGE = 'DATA_TOO_LARGE',
   INVALID_DATA = 'INVALID_DATA',
   CLIPBOARD_NOT_SUPPORTED = 'CLIPBOARD_NOT_SUPPORTED',
-  CANVAS_NOT_SUPPORTED = 'CANVAS_NOT_SUPPORTED',
-  EXTENSION_NOT_INSTALLED = 'EXTENSION_NOT_INSTALLED',
-  IMPORT_FAILED = 'IMPORT_FAILED'
+  CANVAS_NOT_SUPPORTED = 'CANVAS_NOT_SUPPORTED'
 }
 
 /**

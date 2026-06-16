@@ -1201,15 +1201,3 @@ export async function notify(message: string, opts?: NotificationOptions): Promi
     throw result.error
   }
 }
-
-export const notifySuccess = (message: string, title?: string) =>
-  notificationService.notifySuccess(message, title)
-
-export const notifyInfo = (message: string, title?: string) =>
-  notificationService.notifyInfo(message, title)
-
-export const notifyWarning = (message: string, title?: string) =>
-  notificationService.notifyWarning(message, title)
-
-export const notifyError = (message: string, title?: string) =>
-  notificationService.notifyError(message, title)

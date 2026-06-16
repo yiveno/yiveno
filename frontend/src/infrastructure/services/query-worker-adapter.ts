@@ -16,7 +16,7 @@ import { formatBookmarkSearchKeywordsText } from '@/core/bookmark/bookmark-searc
 import type { SearchWorkerAdapterOptions } from '@/types/application/service'
 import { logger } from '@/infrastructure/logging/logger'
 import { TIMEOUT_CONFIG } from '@/config/constants'
-import { dispatchOffscreenRequest } from '@/background/managers/offscreen-manager'
+import { dispatchOffscreenRequest } from '@/infrastructure/offscreen/manager'
 
 type WorkerHandle = Worker | null
 

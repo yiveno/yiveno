@@ -49,14 +49,10 @@ jobs:
         with:
           bun-version: ${{ env.BUN_VERSION }}
           
-      # 📦 使用Bun安装依赖
+      # 📦 使用Bun安装依赖（workspace 全量，供 typecheck / lint:check 使用）
       - name: 📦 使用Bun安装依赖包
         run: |
-          echo "📦 Installing frontend dependencies..."
-          cd frontend && bun install --frozen-lockfile
-          
-          echo "📦 Installing backend dependencies..."
-          cd ../backend && bun install --frozen-lockfile
+          bun install --frozen-lockfile
           
       # 🔐 安全审计
       - name: 🔐 安全审计检查 (Bun)
@@ -67,29 +63,33 @@ jobs:
           echo "🔍 Backend security audit..."
           cd ../backend && bun audit --audit-level moderate
           
-      # 📝 TypeScript检查（全项目）
-      - name: 📝 TypeScript类型检查（全项目）
+      # 📝 TypeScript（packages + backend + website；frontend 由 build-test 内 vue-tsc -b 负责）
+      - name: 📝 TypeScript 类型检查（非 frontend）
         run: |
-          echo "🧪 Running full project type check..."
-          bun run typecheck
+          echo "🧪 Running typecheck:ci (packages + backend + website)..."
+          bun run typecheck:ci
           
-      # 🧹 代码质量检查
-      - name: 🧹 ESLint 代码质量检查
+      # 🧹 代码质量检查（只读，不 format）
+      - name: 🧹 ESLint + Stylelint 代码质量检查
         run: |
-          echo "🧹 Running ESLint checks..."
-          bun run lint
-          
-      # 💅 样式检查
-      - name: 💅 Stylelint 样式检查
-        run: |
-          echo "💅 Running Stylelint checks..."
-          bun run stylelint
+          echo "🧹 Running lint:check (eslint + stylelint, check-only)..."
+          bun run lint:check
 
+      - name: 🔍 Knip 死代码/依赖检查
+        run: |
+          echo "🔍 Running knip (files, deps, exports, types)..."
+          bun run knip
+          
       - name: 🧪 前端自动化测试
         run: |
-          echo "🧪 Running frontend unit tests..."
           cd frontend
-          bun run test:run
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "🧪 PR 快测：unit tests only"
+            bun run test:unit
+          else
+            echo "🧪 push 全量：all tests"
+            bun run test:run
+          fi
 
       - name: 🧪 后端自动化测试
         run: |
@@ -114,17 +114,14 @@ jobs:
         with:
           bun-version: ${{ env.BUN_VERSION }}
           
-      - name: 📦 安装前端依赖包
-        run: |
-          cd frontend
-          bun install --frozen-lockfile
+      - name: 📦 安装依赖包
+        run: bun install --frozen-lockfile
           
-      # 🔨 Chrome扩展构建测试（完整构建）
+      # 🔨 Chrome扩展构建（含 vue-tsc -b，frontend 类型检查权威路径）
       - name: 🔨 构建Chrome扩展（生产模式）
         run: |
           cd frontend
-          echo "🔨 Building with Bun + Vite (production mode)..."
-          echo "⚠️  This will catch all TypeScript errors and build issues"
+          echo "🔨 Building with Bun + Vite (includes vue-tsc -b)..."
           bun run build
           
       # 🧪 验证构建产物

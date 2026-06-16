@@ -205,7 +205,7 @@ function getConfig(): MessageServiceConfig {
 /**
  * Message 服务
  */
-export const messageService = {
+export const message = {
   // 状态
   messages: computed(() => messages.value),
   config: computed(() => config),
@@ -365,8 +365,3 @@ export const messageService = {
    */
   getConfig
 }
-
-/**
- * 便捷导出（保持向后兼容）
- */
-export const message = messageService

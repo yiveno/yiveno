@@ -11,9 +11,6 @@ export const SEMANTIC_VECTOR_RECALL_MIN_SCORE = 0.68
 /** 语义补位/直达展示的最低绝对分（e5-small 合理关联通常 ≥ 0.74） */
 export const SEMANTIC_CONFIDENCE_MIN_SCORE = 0.74
 
-/** 无文本命中时语义直达最低分（与补位同级，靠分布检验过滤噪声） */
-export const SEMANTIC_DIRECT_MIN_SCORE = SEMANTIC_CONFIDENCE_MIN_SCORE
-
 /** 语义补位：Top1 相对 Top2 的最小领先幅度（大库） */
 export const SEMANTIC_SUPPLEMENT_MIN_GAP = 0.08
 

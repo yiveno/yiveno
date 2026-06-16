@@ -195,6 +195,74 @@ export async function openUrlInNewTab(url: string): Promise<void> {
 }
 
 /**
+ * 在后台新标签页打开 URL
+ */
+export async function openUrlInBackgroundTab(url: string): Promise<void> {
+  await chrome.tabs.create({ url, active: false })
+}
+
+/** 文件夹批量打开模式 */
+export type FolderBookmarkOpenMode = 'incognito' | 'tab-group' | 'current-window' | 'new-window'
+
+/**
+ * 批量打开文件夹内书签
+ */
+export async function openFolderBookmarks(
+  urls: string[],
+  mode: FolderBookmarkOpenMode,
+  groupTitle?: string
+): Promise<void> {
+  if (urls.length === 0) return
+
+  switch (mode) {
+    case 'incognito': {
+      await chrome.windows.create({ incognito: true, url: urls })
+      break
+    }
+    case 'new-window': {
+      await chrome.windows.create({ url: urls })
+      break
+    }
+    case 'current-window': {
+      const currentWindow = await chrome.windows.getCurrent()
+      for (const url of urls) {
+        await chrome.tabs.create({
+          windowId: currentWindow.id,
+          url,
+          active: false
+        })
+      }
+      break
+    }
+    case 'tab-group': {
+      const currentWindow = await chrome.windows.getCurrent()
+      const tabs: chrome.tabs.Tab[] = []
+
+      for (const url of urls) {
+        const tab = await chrome.tabs.create({
+          windowId: currentWindow.id,
+          url,
+          active: false
+        })
+        tabs.push(tab)
+      }
+
+      const tabIds = tabs.map(tab => tab.id).filter((id): id is number => id !== undefined)
+      if (tabIds.length > 0) {
+        const groupId = await chrome.tabs.group({
+          tabIds: tabIds as [number, ...number[]]
+        })
+        await chrome.tabGroups.update(groupId, {
+          title: groupTitle || '书签文件夹',
+          collapsed: false
+        })
+      }
+      break
+    }
+  }
+}
+
+/**
  * 打开浏览器系统页面（如 chrome://extensions/shortcuts）
  */
 export async function openSystemUrl(url: string): Promise<void> {

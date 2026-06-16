@@ -15,7 +15,7 @@ import '@/assets/smart-fonts.css'
 import { initializeSmartFonts, fontService } from '@/application/font/font-service'
 import { logger } from '@/infrastructure/logging/logger'
 import { preloadMaterialWebComponents } from '@/infrastructure/material/preload-material-web'
-import { installMessage } from '@/application/message/install'
+import { installMessage } from '@/presentation/bootstrap/install-message'
 
 const app = createApp(App)
 const pinia = createPinia()

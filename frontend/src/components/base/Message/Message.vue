@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { messageService } from '@/application/message/message-service'
+import { message } from '@/application/message/message-service'
 
 defineOptions({
   name: 'Message'
 })
 
-const messages = messageService.messages
-const config = messageService.config
+const messages = message.messages
+const config = message.config
 </script>
 
 <template>

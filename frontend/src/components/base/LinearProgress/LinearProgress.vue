@@ -15,7 +15,7 @@ const props = withDefaults(defineProps<LinearProgressProps>(), {
   roundPrecision: 0
 })
 
-const emit = defineEmits<LinearProgressEmits>()
+const _emit = defineEmits<LinearProgressEmits>()
 
 /**
  * 计算实际进度值（0-1）

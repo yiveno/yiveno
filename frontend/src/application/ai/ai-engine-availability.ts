@@ -3,7 +3,6 @@
  */
 
 import { userLLMClient } from '@/infrastructure/llm/user-llm-client'
-import { hostedLLMClient } from '@/infrastructure/llm/hosted-llm-client'
 
 export interface AiEngineUiReadyInput {
   /** 是否已配置用户自带 API Key */
@@ -32,11 +31,4 @@ export async function detectAiEngineUiReady(
 ): Promise<boolean> {
   const hasApiKey = await userLLMClient.isConfigured()
   return isAiEngineUiReady({ ...input, hasApiKey })
-}
-
-/**
- * 是否具备尝试调用托管 LLM 的前置条件（已登录）
- */
-export async function canAttemptHostedAi(): Promise<boolean> {
-  return hostedLLMClient.canAttemptHosted()
 }

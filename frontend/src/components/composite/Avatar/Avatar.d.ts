@@ -14,4 +14,4 @@ export interface AvatarProps {
   variant?: 'circle' | 'rounded' | 'square'
 } // 头像组件属性
 
-export interface AvatarEmits {} // 头像组件事件
+export type AvatarEmits = Record<string, never>

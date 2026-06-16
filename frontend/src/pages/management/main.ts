@@ -14,7 +14,7 @@ import { initializeChromeMessageBridge } from '@/infrastructure/events/chrome-me
 import { logger } from '@/infrastructure/logging/logger'
 import { performanceMonitor } from '@/utils/performance-monitor'
 import { preloadMaterialWebComponents } from '@/infrastructure/material/preload-material-web'
-import { installMessage } from '@/application/message/install'
+import { installMessage } from '@/presentation/bootstrap/install-message'
 
 // 懒加载字体服务、跨页面同步和收藏服务
 const loadFontService = () => import('@/application/font/font-service')

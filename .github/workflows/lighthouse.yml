@@ -3,8 +3,7 @@ name: Lighthouse CI
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
   lighthouse-frontend:
@@ -12,7 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,7 +33,7 @@ jobs:
           CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
           LHCI_BUILD_TOKEN: ${{ secrets.LHCI_SERVER_TOKEN_FRONTEND }}
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
-        run: bun run audit:frontend
+        run: bun run audit:fe
         continue-on-error: true
 
       - name: Upload Frontend Lighthouse artifacts
@@ -51,7 +49,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -84,59 +81,3 @@ jobs:
           name: lighthouse-website
           path: website/.lighthouseci/**
           retention-days: 7
-
-  lighthouse-comment:
-    name: Comment Lighthouse Results
-    runs-on: ubuntu-latest
-    needs: [lighthouse-frontend, lighthouse-website]
-    if: github.event_name == 'pull_request'
-    permissions:
-      pull-requests: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
-
-      - name: Download Frontend artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: lighthouse-frontend
-          path: frontend/.lighthouseci
-
-      - name: Download Website artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: lighthouse-website
-          path: website/.lighthouseci
-
-      - name: Generate combined summary
-        run: |
-          echo "<!-- LHCI-SUMMARY -->" > lhci-summary.md
-          echo "" >> lhci-summary.md
-          echo "# 🔍 Lighthouse CI 审计报告" >> lhci-summary.md
-          echo "" >> lhci-summary.md
-          echo "## 📱 Frontend (Chrome Extension)" >> lhci-summary.md
-          echo "" >> lhci-summary.md
-          cd frontend && bun ../scripts/lhci-summary.mjs >> ../lhci-summary.md || echo "Frontend 报告生成失败" >> ../lhci-summary.md
-          cd ..
-          echo "" >> lhci-summary.md
-          echo "---" >> lhci-summary.md
-          echo "" >> lhci-summary.md
-          echo "## 🌐 Website (官网)" >> lhci-summary.md
-          echo "" >> lhci-summary.md
-          cd website && bun ../scripts/lhci-summary-website.mjs >> ../lhci-summary.md || echo "Website 报告生成失败" >> ../lhci-summary.md
-
-      - name: Comment on PR
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        continue-on-error: true
-        run: |
-          existing_id=$(gh api repos/${{ github.repository }}/issues/$PR_NUMBER/comments --jq '.[] | select(.body | contains("<!-- LHCI-SUMMARY -->")) | .id' | head -n1)
-          if [ -n "$existing_id" ]; then
-            gh api repos/${{ github.repository }}/issues/comments/$existing_id -X PATCH -f body@lhci-summary.md
-          else
-            gh pr comment "$PR_NUMBER" --body-file lhci-summary.md
-          fi

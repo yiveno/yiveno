@@ -266,58 +266,6 @@ export class PerformanceMonitor {
 export const performanceMonitor = new PerformanceMonitor()
 
 /**
- * 性能监控装饰器
- *
- * 用于自动监控 IndexedDB 操作性能
- *
- * @param type - 操作类型
- * @param storeName - 对象存储名称
- * @returns 装饰器函数
- *
- * @example
- * ```typescript
- * class MyService {
- *   @monitorPerformance('read', 'bookmarks')
- *   async getBookmarks() {
- *     // ...
- *   }
- * }
- * ```
- */
-export function monitorPerformance(type: OperationType, storeName: string) {
-  return function (_target: unknown, _propertyKey: string, descriptor: PropertyDescriptor) {
-    const originalMethod = descriptor.value
-
-    descriptor.value = async function (...args: unknown[]) {
-      const startTime = performance.now()
-      let success = true
-      let error: string | undefined
-
-      try {
-        const result = await originalMethod.apply(this, args)
-        return result
-      } catch (e) {
-        success = false
-        error = e instanceof Error ? e.message : String(e)
-        throw e
-      } finally {
-        const duration = performance.now() - startTime
-        performanceMonitor.record({
-          type,
-          storeName,
-          duration,
-          success,
-          ...(error !== undefined ? { error } : {}),
-          timestamp: Date.now()
-        })
-      }
-    }
-
-    return descriptor
-  }
-}
-
-/**
  * 手动监控函数
  *
  * 用于监控任意异步操作的性能

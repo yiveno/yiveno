@@ -80,15 +80,8 @@ export function log(level: LogLevel, message: string, data?: LogData): void {
       console.warn(JSON.stringify(logEntry))
       break
     default:
-      console.log(JSON.stringify(logEntry))
+      console.warn(JSON.stringify(logEntry))
   }
-}
-
-/**
- * 记录 DEBUG 级别日志
- */
-export function debug(message: string, data?: LogData): void {
-  log(LogLevel.DEBUG, message, data)
 }
 
 /**
@@ -110,42 +103,6 @@ export function warn(message: string, data?: LogData): void {
  */
 export function error(message: string, data?: LogData): void {
   log(LogLevel.ERROR, message, data)
-}
-
-/**
- * 监控异步操作的性能
- *
- * @param name - 操作名称
- * @param operation - 要执行的操作
- * @returns 操作结果
- */
-export async function monitoredOperation<T>(name: string, operation: () => Promise<T>): Promise<T> {
-  const start = Date.now()
-
-  try {
-    const result = await operation()
-    const duration = Date.now() - start
-
-    info('操作成功', {
-      operation: name,
-      status: 'success',
-      duration
-    })
-
-    return result
-  } catch (err) {
-    const duration = Date.now() - start
-    const errorMessage = err instanceof Error ? err.message : String(err)
-
-    error('操作失败', {
-      operation: name,
-      status: 'error',
-      duration,
-      error: errorMessage
-    })
-
-    throw err
-  }
 }
 
 /**

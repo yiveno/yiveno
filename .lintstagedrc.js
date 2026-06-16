@@ -2,35 +2,104 @@
  * lint-staged 配置
  * 只检查暂存区的文件，大幅提升提交速度
  *
- * 工作原理：
- * 1. Git 暂存文件 → 2. lint-staged 只处理这些文件 → 3. 自动修复并重新暂存 → 4. 提交
+ * ESLint 必须在各 workspace 目录下运行，才能与 eslint.config.js 的 cwd 感知规则一致。
  */
 
+import path from 'node:path'
+
+const ESLINT_CMD = 'bunx eslint --no-cache --fix --max-warnings 0 --no-warn-ignored'
+const STYLELINT_CMD = 'bunx stylelint --no-cache --fix'
+const PRETTIER_CMD = 'bunx prettier --write'
+
+/** 转义 shell 路径参数 */
+function quotePath(filePath) {
+  return `"${filePath.replace(/"/g, '\\"')}"`
+}
+
+/** 将 lint-staged 传入的绝对/相对路径统一为仓库相对路径 */
+function toRepoRelative(file) {
+  return path.relative(process.cwd(), file).split(path.sep).join('/')
+}
+
+/** 将暂存文件按 workspace 分组，返回各组内的 workspace 相对路径 */
+function groupByWorkspace(filenames) {
+  const groups = {
+    frontend: [],
+    backend: [],
+    website: [],
+    root: []
+  }
+
+  for (const file of filenames) {
+    const repoPath = toRepoRelative(file)
+
+    if (repoPath.startsWith('frontend/')) {
+      groups.frontend.push(repoPath.slice('frontend/'.length))
+    } else if (repoPath.startsWith('backend/')) {
+      groups.backend.push(repoPath.slice('backend/'.length))
+    } else if (repoPath.startsWith('website/')) {
+      groups.website.push(repoPath.slice('website/'.length))
+    } else {
+      groups.root.push(repoPath)
+    }
+  }
+
+  return groups
+}
+
+/** 在对应 workspace 目录运行 ESLint */
+function eslintByWorkspace(filenames) {
+  const groups = groupByWorkspace(filenames)
+  const commands = []
+
+  if (groups.frontend.length > 0) {
+    commands.push(`cd frontend && ${ESLINT_CMD} ${groups.frontend.map(quotePath).join(' ')}`)
+  }
+  if (groups.backend.length > 0) {
+    commands.push(`cd backend && ${ESLINT_CMD} ${groups.backend.map(quotePath).join(' ')}`)
+  }
+  if (groups.website.length > 0) {
+    commands.push(`cd website && ${ESLINT_CMD} ${groups.website.map(quotePath).join(' ')}`)
+  }
+  if (groups.root.length > 0) {
+    commands.push(`${ESLINT_CMD} ${groups.root.map(quotePath).join(' ')}`)
+  }
+
+  return commands
+}
+
+/** 在对应 workspace 目录运行 Stylelint */
+function stylelintByWorkspace(filenames) {
+  const groups = groupByWorkspace(filenames)
+  const commands = []
+
+  if (groups.frontend.length > 0) {
+    commands.push(`cd frontend && ${STYLELINT_CMD} ${groups.frontend.map(quotePath).join(' ')}`)
+  }
+  if (groups.website.length > 0) {
+    commands.push(`cd website && ${STYLELINT_CMD} ${groups.website.map(quotePath).join(' ')}`)
+  }
+  if (groups.root.length > 0) {
+    commands.push(`${STYLELINT_CMD} ${groups.root.map(quotePath).join(' ')}`)
+  }
+
+  return commands
+}
+
+function prettierWrite(filenames) {
+  return `${PRETTIER_CMD} ${filenames.map(quotePath).join(' ')}`
+}
+
 export default {
-  // ============================================================================
-  // TypeScript / JavaScript 文件
-  // ============================================================================
-  '**/*.{ts,tsx,js,jsx}': [
-    'bunx eslint --no-cache --fix --max-warnings 100 --no-warn-ignored',
-    'bunx prettier --write'
+  '**/*.{ts,tsx,js,jsx}': filenames => [...eslintByWorkspace(filenames), prettierWrite(filenames)],
+
+  '**/*.vue': filenames => [
+    ...eslintByWorkspace(filenames),
+    ...stylelintByWorkspace(filenames),
+    prettierWrite(filenames)
   ],
 
-  // ============================================================================
-  // Vue 文件（需要 ESLint + Stylelint + Prettier）
-  // ============================================================================
-  '**/*.vue': [
-    'bunx eslint --no-cache --fix --max-warnings 100 --no-warn-ignored',
-    'bunx stylelint --no-cache --fix',
-    'bunx prettier --write'
-  ],
+  '**/*.{css,scss}': filenames => [...stylelintByWorkspace(filenames), prettierWrite(filenames)],
 
-  // ============================================================================
-  // CSS 文件
-  // ============================================================================
-  '**/*.{css,scss}': ['bunx stylelint --no-cache --fix', 'bunx prettier --write'],
-
-  // ============================================================================
-  // JSON / Markdown 文件（只格式化）
-  // ============================================================================
-  '**/*.{json,md}': ['bunx prettier --write']
+  '**/*.{json,md}': filenames => [prettierWrite(filenames)]
 }

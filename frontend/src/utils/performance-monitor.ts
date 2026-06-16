@@ -332,6 +332,3 @@ class PerformanceMonitor {
 
 /** 全局性能监控器实例 */
 export const performanceMonitor = new PerformanceMonitor()
-
-/** 默认导出 */
-export default performanceMonitor

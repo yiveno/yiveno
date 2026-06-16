@@ -184,7 +184,7 @@ function getStepDetail(step: (typeof steps.value)[number]): string {
   align-items: center;
   width: 20px;
   height: 20px;
-  margin-top: 2px;
+  margin-top: var(--spacing-0-5);
 }
 
 .organize-progress-step__icon--done {

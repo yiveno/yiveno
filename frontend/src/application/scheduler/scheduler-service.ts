@@ -489,8 +489,3 @@ export function scheduleUIUpdate(fn: () => void, options: ScheduleOptions = {}):
   const result = schedulerService.scheduleUIUpdate(fn, options)
   return result.ok ? result.value : null
 }
-
-export function scheduleMicrotask(fn: () => void): string | null {
-  const result = schedulerService.scheduleMicrotask(fn)
-  return result.ok ? result.value : null
-}

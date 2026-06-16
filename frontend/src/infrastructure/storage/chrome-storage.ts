@@ -28,18 +28,6 @@ export type StorageArea = 'session' | 'local' | 'sync'
 export type SerializableValue = unknown
 
 /**
- * 存储项配置
- */
-export interface StorageItemConfig<T = SerializableValue> {
-  /** 存储键 */
-  key: string
-  /** 默认值 */
-  defaultValue?: T
-  /** 是否启用日志 */
-  enableLogging?: boolean
-}
-
-/**
  * 批量存储项
  */
 export type BatchStorageItems = Record<string, SerializableValue>
@@ -344,9 +332,6 @@ export class ChromeStorageService {
  * 单例实例
  */
 export const chromeStorage = new ChromeStorageService()
-
-// 默认导出
-export default chromeStorage
 
 /**
  * 推荐使用场景：

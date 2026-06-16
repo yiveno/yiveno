@@ -9,7 +9,7 @@
 
 import type { BuildOptions } from 'vite'
 import { resolve } from 'path'
-import { OUT_DIR, ENABLE_SOURCEMAP, PROJECT_ROOT } from './constants'
+import { OUT_DIR, DEBUG_MODE, PROJECT_ROOT } from './constants'
 import { createBuildOptions, type RolldownBuildOptions } from './build-options'
 
 /**
@@ -71,7 +71,7 @@ export function createBuildConfig(): BuildOptions {
     chunkSizeWarningLimit: 1000,
 
     // SourceMap 配置：调试模式生成 sourcemap，生产模式不生成
-    sourcemap: ENABLE_SOURCEMAP,
+    sourcemap: DEBUG_MODE,
 
     // 资源处理优化 - 小资源内联以减少请求；字体仍按文件输出
     assetsInlineLimit: 4096,

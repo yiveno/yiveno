@@ -56,7 +56,7 @@ async function openChromeShortcutSettings(): Promise<void> {
 }
 
 onMounted(() => {
-  loadShortcuts()
+  void loadShortcuts()
   startAutoRefresh()
 })
 

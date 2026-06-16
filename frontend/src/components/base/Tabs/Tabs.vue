@@ -5,7 +5,7 @@ defineOptions({
   name: 'MdTabs'
 })
 
-const props = withDefaults(defineProps<TabsProps>(), {
+withDefaults(defineProps<TabsProps>(), {
   modelValue: 0
 })
 

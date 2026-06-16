@@ -32,7 +32,7 @@ export type {
   SearchResult
 }
 
-export { DB_CONFIG, INDEX_CONFIG } from './schema'
+export { DB_CONFIG } from './schema'
 import { DB_CONFIG } from './schema'
 import { TIMEOUT_CONFIG } from '@/config/constants'
 import type { z } from 'zod'

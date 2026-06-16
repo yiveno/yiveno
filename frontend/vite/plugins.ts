@@ -76,7 +76,7 @@ export function createCleanDistPlugin(): Plugin {
     closeBundle() {
       console.log('🧹 构建完成，运行清理脚本...')
       try {
-        execSync('bun scripts/clean-dist.cjs', {
+        execSync('bun run clean', {
           stdio: 'inherit',
           cwd: ROOT_DIR
         })
