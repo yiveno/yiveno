@@ -315,31 +315,33 @@ const handleRetry = () => {
 }
 
 // 复制图片
-const handleCopyImage = async () => {
+const handleCopyImage = () => {
   if (!state.posterPreview) return
 
-  try {
-    const response = await fetch(state.posterPreview)
-    const blob = await response.blob()
+  void (async () => {
+    try {
+      const response = await fetch(state.posterPreview)
+      const blob = await response.blob()
 
-    await navigator.clipboard.write([
-      new ClipboardItem({
-        [blob.type]: blob
-      })
-    ])
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          [blob.type]: blob
+        })
+      ])
 
-    const successText = '图片已复制到剪贴板'
-    message.success(successText)
-    // eslint-disable-next-line require-atomic-updates -- state.srMessage 在 await 期间不会被其他代码修改
-    state.srMessage = successText
-    logger.info('ShareDialog', '图片复制成功')
-  } catch (error) {
-    const errorText = '图片复制失败，请尝试下载'
-    logger.error('ShareDialog', '图片复制失败', error)
-    message.error(errorText)
-    // eslint-disable-next-line require-atomic-updates -- state.srMessage 在 await 期间不会被其他代码修改
-    state.srMessage = errorText
-  }
+      const successText = '图片已复制到剪贴板'
+      message.success(successText)
+      logger.info('ShareDialog', '图片复制成功')
+      return successText
+    } catch (error) {
+      const errorText = '图片复制失败，请尝试下载'
+      logger.error('ShareDialog', '图片复制失败', error)
+      message.error(errorText)
+      return errorText
+    }
+  })().then(srMessage => {
+    state.srMessage = srMessage
+  })
 }
 
 // 下载图片
@@ -364,7 +366,7 @@ const handleDownloadImage = () => {
 }
 
 // 创建链接分享
-const handleCreateLinkShare = async () => {
+const handleCreateLinkShare = () => {
   if (!session.value?.access_token) {
     message.error('未登录，无法创建分享')
     return
@@ -372,60 +374,67 @@ const handleCreateLinkShare = async () => {
 
   state.isSharing = true
 
-  try {
-    const result = await trpc.share.createLinkShare.mutate({
-      title: currentTitle.value,
-      description: state.description.trim() || undefined,
-      bookmarks: props.bookmarks.map(b => ({
-        title: b.title,
-        url: b.url || '',
-        description: typeof b.description === 'string' ? b.description : undefined
-      })),
-      showUsername: state.showUsername,
-      accessToken: session.value.access_token
-    })
+  void (async () => {
+    try {
+      const result = await trpc.share.createLinkShare.mutate({
+        title: currentTitle.value,
+        description: state.description.trim() || undefined,
+        bookmarks: props.bookmarks.map(b => ({
+          title: b.title,
+          url: b.url || '',
+          description: typeof b.description === 'string' ? b.description : undefined
+        })),
+        showUsername: state.showUsername,
+        accessToken: session.value.access_token
+      })
 
-    if (result.success) {
+      if (!result.success) {
+        return { srMessage: '', shouldComplete: false }
+      }
+
       try {
         await navigator.clipboard.writeText(result.data.shareUrl)
       } catch {
         // 忽略剪贴板错误，继续显示成功消息
       }
 
-      const successText = '分享链接已生成并复制到剪贴板'
-      message.success(successText)
-      // eslint-disable-next-line require-atomic-updates -- state.srMessage 在 await 期间不会被其他代码修改
-      state.srMessage = successText
+      const srMessage = '分享链接已生成并复制到剪贴板'
+      message.success(srMessage)
       logger.info('ShareDialog', '链接分享创建成功', {
         shareId: result.data.shareId,
         shortCode: result.data.shortCode,
         shareUrl: result.data.shareUrl
       })
 
-      // 在新标签页打开分享链接
       const shareUrl = result.data.shareUrl
       const openResult = await tabBrowserAppService.openUrlInNewTab(shareUrl)
       if (!openResult.ok) {
         window.open(shareUrl, '_blank', 'noopener,noreferrer')
       }
 
-      // 触发分享完成事件
-      emit('shareComplete')
+      return { srMessage, shouldComplete: true }
+    } catch (error) {
+      const srMessage = error instanceof Error ? error.message : '创建分享失败，请重试'
+      logger.error('ShareDialog', '创建链接分享失败', error)
+      message.error(srMessage)
+      return { srMessage, shouldComplete: false }
     }
-  } catch (error) {
-    const errorText = error instanceof Error ? error.message : '创建分享失败，请重试'
-    logger.error('ShareDialog', '创建链接分享失败', error)
-    message.error(errorText)
-    // eslint-disable-next-line require-atomic-updates -- state.srMessage 在 await 期间不会被其他代码修改
-    state.srMessage = errorText
-  } finally {
-    // eslint-disable-next-line require-atomic-updates -- state.isSharing 在 await 期间不会被其他代码修改
-    state.isSharing = false
-  }
+  })()
+    .then(({ srMessage, shouldComplete }) => {
+      if (srMessage) {
+        state.srMessage = srMessage
+      }
+      if (shouldComplete) {
+        emit('shareComplete')
+      }
+    })
+    .finally(() => {
+      state.isSharing = false
+    })
 }
 
 // 创建直接分享
-const handleCreateDirectShare = async () => {
+const handleCreateDirectShare = () => {
   if (!session.value?.access_token) {
     message.error('未登录，无法创建分享')
     return
@@ -438,47 +447,52 @@ const handleCreateDirectShare = async () => {
 
   state.isSharing = true
 
-  try {
-    const result = await trpc.share.createDirectShare.mutate({
-      title: currentTitle.value,
-      description: state.description.trim() || undefined,
-      bookmarks: props.bookmarks.map(b => ({
-        title: b.title,
-        url: b.url || '',
-        description: typeof b.description === 'string' ? b.description : undefined
-      })),
-      recipientIds: state.selectedUserIds,
-      message: state.message.trim() || undefined,
-      showUsername: state.showUsername,
-      accessToken: session.value.access_token
-    })
+  void (async () => {
+    try {
+      const result = await trpc.share.createDirectShare.mutate({
+        title: currentTitle.value,
+        description: state.description.trim() || undefined,
+        bookmarks: props.bookmarks.map(b => ({
+          title: b.title,
+          url: b.url || '',
+          description: typeof b.description === 'string' ? b.description : undefined
+        })),
+        recipientIds: state.selectedUserIds,
+        message: state.message.trim() || undefined,
+        showUsername: state.showUsername,
+        accessToken: session.value.access_token
+      })
 
-    if (result.success) {
-      const successMessage = `已成功发送给 ${result.data.recipientCount} 个用户`
-      message.success(successMessage)
-      // eslint-disable-next-line require-atomic-updates -- state.srMessage 在 await 期间不会被其他代码修改
-      state.srMessage = successMessage
+      if (!result.success) {
+        return { srMessage: '', shouldComplete: false }
+      }
+
+      const srMessage = `已成功发送给 ${result.data.recipientCount} 个用户`
+      message.success(srMessage)
       logger.info('ShareDialog', '直接分享创建成功', {
         shareId: result.data.shareId,
         recipientCount: result.data.recipientCount
       })
-
-      // 触发分享完成事件
-      emit('shareComplete')
-
-      // 关闭对话框
-      emit('update:show', false)
+      return { srMessage, shouldComplete: true }
+    } catch (error) {
+      const srMessage = error instanceof Error ? error.message : '发送分享失败，请重试'
+      logger.error('ShareDialog', '创建直接分享失败', error)
+      message.error(srMessage)
+      return { srMessage, shouldComplete: false }
     }
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : '发送分享失败，请重试'
-    logger.error('ShareDialog', '创建直接分享失败', error)
-    message.error(errorMessage)
-    // eslint-disable-next-line require-atomic-updates -- state.srMessage 在 await 期间不会被其他代码修改
-    state.srMessage = errorMessage
-  } finally {
-    // eslint-disable-next-line require-atomic-updates -- state.isSharing 在 await 期间不会被其他代码修改
-    state.isSharing = false
-  }
+  })()
+    .then(({ srMessage, shouldComplete }) => {
+      if (srMessage) {
+        state.srMessage = srMessage
+      }
+      if (shouldComplete) {
+        emit('shareComplete')
+        emit('update:show', false)
+      }
+    })
+    .finally(() => {
+      state.isSharing = false
+    })
 }
 
 // 键盘导航：ESC 键关闭弹窗

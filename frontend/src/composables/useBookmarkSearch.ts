@@ -30,8 +30,8 @@
  * ```
  */
 
-import { ref, computed, watch } from 'vue'
-import type { Ref } from 'vue'
+import { ref, computed, watch, toValue } from 'vue'
+import type { MaybeRef } from 'vue'
 import { bookmarkMemorySearchService } from '@/application/query/bookmark-memory-search-service'
 import type {
   FilteredBookmarkNode,
@@ -51,23 +51,23 @@ export interface UseBookmarkSearchOptions {
    * - indexeddb: 从 IndexedDB 筛选（异步）
    * - memory: 从内存数据筛选（同步）
    */
-  mode?: 'indexeddb' | 'memory'
+  mode?: MaybeRef<'indexeddb' | 'memory'>
 
   /**
    * 内存数据源
    * - mode='memory' 时使用
-   * - 可以是 Ref 或普通数组
+   * - 可以是 Ref、ComputedRef 或普通数组
    */
-  data?: Ref<BookmarkNode[]> | BookmarkNode[]
+  data?: MaybeRef<BookmarkNode[]>
 
   /** 筛选结果数量限制 */
-  limit?: number
+  limit?: MaybeRef<number>
 
   /** 是否自动筛选（当 query 变化时） */
   autoFilter?: boolean
 
   /** 初始筛选条件 */
-  initialQuery?: string
+  initialQuery?: MaybeRef<string>
 
   /** 筛选选项 */
   filterOptions?: Partial<BookmarkFilterOptions>
@@ -115,26 +115,31 @@ export interface UseBookmarkSearchReturn {
  * 书签筛选 Composable
  */
 export function useBookmarkSearch(options: UseBookmarkSearchOptions = {}): UseBookmarkSearchReturn {
-  const {
-    mode = 'indexeddb',
-    data,
-    limit = 100,
-    autoFilter = true,
-    initialQuery = '',
-    filterOptions = {}
-  } = options
+  const { autoFilter = true, filterOptions = {} } = options
 
-  // 将 data 转换为 Ref
-  const dataRef = ref(data)
+  const modeRef = computed(() => toValue(options.mode ?? 'indexeddb'))
+  const limitRef = computed(() => toValue(options.limit ?? 100))
+  const initialQueryRef = computed(() => toValue(options.initialQuery ?? ''))
+  const dataRef = computed((): BookmarkNode[] => toValue(options.data ?? []))
 
   // ==================== State ====================
-  const query = ref(initialQuery)
+  const query = ref(initialQueryRef.value)
   const results = ref<FilteredBookmarkNode[]>([])
   const isFiltering = ref(false)
   const error = ref<Error | null>(null)
   const totalResults = ref(0)
   const executionTime = ref(0)
-  const filterSource = ref<'indexeddb' | 'memory'>(mode)
+  const filterSource = ref<'indexeddb' | 'memory'>(modeRef.value)
+
+  watch(initialQueryRef, newQuery => {
+    if (newQuery !== query.value) {
+      query.value = newQuery
+    }
+  })
+
+  watch(modeRef, newMode => {
+    filterSource.value = newMode
+  })
 
   // ==================== Computed ====================
   /**
@@ -209,11 +214,10 @@ export function useBookmarkSearch(options: UseBookmarkSearchOptions = {}): UseBo
    * 执行内存模式筛选
    */
   async function filterMemoryMode(trimmedQuery: string): Promise<void> {
-    const result = bookmarkMemorySearchService.search(
-      dataRef.value as BookmarkNode[],
-      trimmedQuery,
-      { limit, ...filterOptions }
-    )
+    const result = bookmarkMemorySearchService.search(dataRef.value, trimmedQuery, {
+      limit: limitRef.value,
+      ...filterOptions
+    })
     results.value = result.nodes
     totalResults.value = result.total
     executionTime.value = result.executionTime
@@ -225,7 +229,7 @@ export function useBookmarkSearch(options: UseBookmarkSearchOptions = {}): UseBo
    */
   async function filterIndexedDBMode(trimmedQuery: string): Promise<void> {
     const result = await bookmarkSearchService.searchWithMetadata(trimmedQuery, {
-      limit,
+      limit: limitRef.value,
       highlight: true,
       filterFolders: filterOptions.filterFolders,
       fuzzyThreshold: filterOptions.threshold
@@ -260,7 +264,7 @@ export function useBookmarkSearch(options: UseBookmarkSearchOptions = {}): UseBo
     }
 
     // 验证：memory 模式下必须提供 data
-    if (mode === 'memory' && (!dataRef.value || dataRef.value.length === 0)) {
+    if (modeRef.value === 'memory' && dataRef.value.length === 0) {
       logger.warn('useBookmarkSearch', '内存模式下未提供数据源，跳过筛选')
       clear()
       return
@@ -271,13 +275,13 @@ export function useBookmarkSearch(options: UseBookmarkSearchOptions = {}): UseBo
 
     logger.info('useBookmarkSearch', '▶ UI 筛选入口', {
       query: trimmedQuery,
-      mode,
-      limit,
+      mode: modeRef.value,
+      limit: limitRef.value,
       filterOptions
     })
 
     try {
-      if (mode === 'memory') {
+      if (modeRef.value === 'memory') {
         await filterMemoryMode(trimmedQuery)
       } else {
         await filterIndexedDBMode(trimmedQuery)
@@ -286,7 +290,7 @@ export function useBookmarkSearch(options: UseBookmarkSearchOptions = {}): UseBo
       logger.info('useBookmarkSearch', `筛选完成 (${filterSource.value}): "${trimmedQuery}"`, {
         total: totalResults.value,
         executionTime: executionTime.value,
-        strategy: mode === 'indexeddb' ? 'via-bookmarkSearchService' : 'memory',
+        strategy: modeRef.value === 'indexeddb' ? 'via-bookmarkSearchService' : 'memory',
         topResults: results.value.slice(0, 5).map(n => ({
           id: n.id,
           title: n.title,
@@ -335,8 +339,8 @@ export function useBookmarkSearch(options: UseBookmarkSearchOptions = {}): UseBo
 
   // ==================== Initialization ====================
   // 如果有初始查询，执行筛选
-  if (initialQuery && autoFilter) {
-    void filter(initialQuery)
+  if (initialQueryRef.value && autoFilter) {
+    void filter(initialQueryRef.value)
   }
 
   // ==================== Return ====================

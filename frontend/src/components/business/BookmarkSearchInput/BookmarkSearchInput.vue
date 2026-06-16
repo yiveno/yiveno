@@ -679,13 +679,10 @@ const {
   filter,
   clear
 } = useBookmarkSearch({
-  // eslint-disable-next-line vue/no-ref-object-reactivity-loss
-  mode: mode.value,
+  mode,
   data: computed(() => data.value ?? []),
-  // eslint-disable-next-line vue/no-ref-object-reactivity-loss
-  limit: limit.value,
-  // eslint-disable-next-line vue/no-ref-object-reactivity-loss
-  initialQuery: initialQuery.value,
+  limit,
+  initialQuery,
   autoFilter: false // 手动控制搜索时机
 })
 

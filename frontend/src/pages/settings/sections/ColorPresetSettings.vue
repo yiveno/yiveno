@@ -52,18 +52,21 @@ onMounted(async () => {
 /**
  * 用户选择配色预设：写入 chrome.storage 并由全局状态广播 DOM 更新。
  */
-async function selectPreset(id: ColorPresetId) {
+function selectPreset(id: ColorPresetId) {
   if (id === currentPreset.value || busy.value) return
   busy.value = true
-  try {
-    await globalStateManager.setColorPreset(id)
-    currentPreset.value = globalStateManager.getColorPreset() // eslint-disable-line require-atomic-updates
-    logger.info('ColorPresetSettings', '配色预设已切换', { preset: id })
-  } catch (error) {
-    logger.error('ColorPresetSettings', '保存配色预设失败', error)
-  } finally {
-    busy.value = false // eslint-disable-line require-atomic-updates
-  }
+  void globalStateManager
+    .setColorPreset(id)
+    .then(() => {
+      currentPreset.value = globalStateManager.getColorPreset()
+      logger.info('ColorPresetSettings', '配色预设已切换', { preset: id })
+    })
+    .catch(error => {
+      logger.error('ColorPresetSettings', '保存配色预设失败', error)
+    })
+    .finally(() => {
+      busy.value = false
+    })
 }
 </script>
 

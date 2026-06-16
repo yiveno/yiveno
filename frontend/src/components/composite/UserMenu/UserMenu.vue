@@ -115,19 +115,20 @@ async function handleLogin() {
 }
 
 /** 退出登录 */
-async function handleLogout() {
+function handleLogout() {
   if (isLoggingOut.value) return
-  try {
-    isLoggingOut.value = true
-    await signOut()
-    emitEvent('auth:logged-out', {})
-    showMenu.value = false
-  } catch (error) {
-    logger.error('UserMenu', '退出登录失败', error)
-  } finally {
-    // eslint-disable-next-line require-atomic-updates -- isLoggingOut.value 在 await 期间不会被其他代码修改
-    isLoggingOut.value = false
-  }
+  isLoggingOut.value = true
+  void signOut()
+    .then(() => {
+      emitEvent('auth:logged-out', {})
+      showMenu.value = false
+    })
+    .catch(error => {
+      logger.error('UserMenu', '退出登录失败', error)
+    })
+    .finally(() => {
+      isLoggingOut.value = false
+    })
 }
 </script>
 
