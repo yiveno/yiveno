@@ -1,4 +1,4 @@
-# 🔧 otterSage Backend - Cloudflare Worker
+# 🔧 Yiveno Backend - Cloudflare Worker
 
 Cloudflare Workers 驱动的后端服务，简洁稳定、易于部署与维护。
 
@@ -99,7 +99,7 @@ Pro 用户默认使用的 LLM 代理，前端经 `hosted-llm-client.ts` 调用�
 **请求示例**：
 
 ```bash
-curl -X POST https://api.ottersage.com/api/ai/hosted/complete \
+curl -X POST https://api.yiveno.com/api/ai/hosted/complete \
   -H "Authorization: Bearer <supabase_access_token>" \
   -H "Content-Type: application/json" \
   -d '{"prompt":"整理这些书签","maxTokens":4000,"temperature":0.3}'
@@ -201,12 +201,12 @@ AUTH_MICROSOFT_CLIENT_SECRET=xxxxxxxxxxxxxxxxxxxx
 1. **Google Cloud Console**
 
 - 创建"OAuth 同意屏幕"和"凭据 > OAuth 客户端 ID（Web application）"
-- 授权重定向 URI：`https://ottersage.com/api/auth/callback`
+- 授权重定向 URI：`https://yiveno.com/api/auth/callback`
 
 2. **Microsoft Azure Portal**
 
 - 在 Azure Active Directory > 应用注册中创建新应用
-- 重定向 URI：`https://ottersage.com/api/auth/callback`
+- 重定向 URI：`https://yiveno.com/api/auth/callback`
 - API 权限：添加 `User.Read` 基本权限
 
 3. **Apple Developer**
@@ -432,9 +432,9 @@ CMD ["bun", "start"]
 
 ```bash
 # 创建systemd服务
-sudo cp ottersage.service /etc/systemd/system/
-sudo systemctl enable ottersage
-sudo systemctl start ottersage
+sudo cp yiveno.service /etc/systemd/system/
+sudo systemctl enable yiveno
+sudo systemctl start yiveno
 ```
 
 ## 📝 开发指南

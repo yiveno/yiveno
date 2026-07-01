@@ -27,8 +27,8 @@
   "host_permissions": [
     "https://localhost:8787/*",
     "https://127.0.0.1:8787/*",
-    "https://api.ottersage.com/*",
-    "https://ottersage.cqw547847.workers.dev/*",
+    "https://api.yiveno.com/*",
+    "https://yiveno.cqw547847.workers.dev/*",
     "https://*.supabase.co/*",
     "https://*.supabase.io/*",
     "https://*/*"
@@ -58,7 +58,7 @@
     }
   ],
   "omnibox": {
-    "keyword": "os"
+    "keyword": "yv"
   },
   "side_panel": {
     "default_path": "side-panel.html"
@@ -132,8 +132,8 @@
       "https://localhost:3000/*",
       "http://localhost:3001/*",
       "https://localhost:3001/*",
-      "https://ottersage.com/*",
-      "https://*.ottersage.com/*"
+      "https://yiveno.com/*",
+      "https://*.yiveno.com/*"
     ]
   }
 }

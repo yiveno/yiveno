@@ -94,7 +94,7 @@ describe('ai routes', () => {
       '/api/ai/complete?prompt=hello&stream=true',
       {
         headers: {
-          origin: 'https://ottersage.com'
+          origin: 'https://yiveno.com'
         }
       },
       {
@@ -107,7 +107,7 @@ describe('ai routes', () => {
 
     expect(response.status).toBe(200)
     expect(response.headers.get('content-type')).toContain('text/event-stream')
-    expect(response.headers.get('access-control-allow-origin')).toBe('https://ottersage.com')
+    expect(response.headers.get('access-control-allow-origin')).toBe('https://yiveno.com')
     expect(await response.text()).toBe('data: hello\n\n')
   })
 

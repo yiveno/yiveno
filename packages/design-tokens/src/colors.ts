@@ -1,5 +1,5 @@
 /**
- * otterSage 颜色系统
+ * Yiveno 颜色系统
  *
  * 核心设计理念：基于 Material Design 3
  * - 完全遵循 Material Design 3 规范
@@ -113,42 +113,42 @@ export const materialColors = {
 export const semanticColors = {
   /** 警告色（映射 tertiary） */
   warning: {
-    css: 'var(--ottersage-semantic-warning)',
+    css: 'var(--yiveno-semantic-warning)',
     rgb: 'rgb(113, 85, 115)',
     hex: '#715573'
   } as ColorValue,
 
   /** 警告容器色 */
   warningContainer: {
-    css: 'var(--ottersage-semantic-warning-container)',
+    css: 'var(--yiveno-semantic-warning-container)',
     rgb: 'rgb(252, 215, 251)',
     hex: '#fcd7fb'
   } as ColorValue,
 
   /** 成功色（映射 secondary） */
   success: {
-    css: 'var(--ottersage-semantic-success)',
+    css: 'var(--yiveno-semantic-success)',
     rgb: 'rgb(87, 94, 113)',
     hex: '#575e71'
   } as ColorValue,
 
   /** 成功容器色 */
   successContainer: {
-    css: 'var(--ottersage-semantic-success-container)',
+    css: 'var(--yiveno-semantic-success-container)',
     rgb: 'rgb(219, 226, 249)',
     hex: '#dbe2f9'
   } as ColorValue,
 
   /** 信息色（映射 primary） */
   info: {
-    css: 'var(--ottersage-semantic-info)',
+    css: 'var(--yiveno-semantic-info)',
     rgb: 'rgb(68, 94, 145)',
     hex: '#445e91'
   } as ColorValue,
 
   /** 信息容器色 */
   infoContainer: {
-    css: 'var(--ottersage-semantic-info-container)',
+    css: 'var(--yiveno-semantic-info-container)',
     rgb: 'rgb(216, 226, 255)',
     hex: '#d8e2ff'
   } as ColorValue
@@ -160,35 +160,35 @@ export const semanticColors = {
 export const accentColors = {
   /** 青色（primary + secondary 混色，亮色近似） */
   teal: {
-    css: 'var(--ottersage-accent-teal)',
+    css: 'var(--yiveno-accent-teal)',
     rgb: 'rgb(78, 94, 127)',
     hex: '#4e5e7f'
   } as ColorValue,
 
   /** 金色（error 少量 + primary-fixed-dim，亮色近似） */
   gold: {
-    css: 'var(--ottersage-accent-gold)',
+    css: 'var(--yiveno-accent-gold)',
     rgb: 'rgb(175, 177, 228)',
     hex: '#afb1e4'
   } as ColorValue,
 
   /** 琥珀色（亮色近似） */
   amber: {
-    css: 'var(--ottersage-accent-amber)',
+    css: 'var(--yiveno-accent-amber)',
     rgb: 'rgb(177, 150, 191)',
     hex: '#b196bf'
   } as ColorValue,
 
   /** 紫色（同 tertiary） */
   purple: {
-    css: 'var(--ottersage-accent-purple)',
+    css: 'var(--yiveno-accent-purple)',
     rgb: 'rgb(113, 85, 115)',
     hex: '#715573'
   } as ColorValue,
 
   /** AI 功能色（映射到紫色） */
   ai: {
-    css: 'var(--ottersage-accent-ai)',
+    css: 'var(--yiveno-accent-ai)',
     rgb: 'rgb(113, 85, 115)',
     hex: '#715573'
   } as ColorValue
@@ -201,52 +201,52 @@ export const accentColors = {
  */
 export const primaryScale = {
   50: {
-    css: 'var(--ottersage-primary-50)',
+    css: 'var(--yiveno-primary-50)',
     rgb: 'rgb(229, 232, 240)',
     hex: '#e5e8f0'
   } as ColorValue,
   100: {
-    css: 'var(--ottersage-primary-100)',
+    css: 'var(--yiveno-primary-100)',
     rgb: 'rgb(203, 210, 224)',
     hex: '#cbd2e0'
   } as ColorValue,
   200: {
-    css: 'var(--ottersage-primary-200)',
+    css: 'var(--yiveno-primary-200)',
     rgb: 'rgb(176, 187, 209)',
     hex: '#b0bbd1'
   } as ColorValue,
   300: {
-    css: 'var(--ottersage-primary-300)',
+    css: 'var(--yiveno-primary-300)',
     rgb: 'rgb(147, 162, 191)',
     hex: '#93a2bf'
   } as ColorValue,
   400: {
-    css: 'var(--ottersage-primary-400)',
+    css: 'var(--yiveno-primary-400)',
     rgb: 'rgb(115, 134, 173)',
     hex: '#7386ad'
   } as ColorValue,
   500: {
-    css: 'var(--ottersage-primary-500)',
+    css: 'var(--yiveno-primary-500)',
     rgb: 'rgb(68, 94, 145)',
     hex: '#445e91'
   } as ColorValue,
   600: {
-    css: 'var(--ottersage-primary-600)',
+    css: 'var(--yiveno-primary-600)',
     rgb: 'rgb(61, 85, 131)',
     hex: '#3d5583'
   } as ColorValue,
   700: {
-    css: 'var(--ottersage-primary-700)',
+    css: 'var(--yiveno-primary-700)',
     rgb: 'rgb(53, 73, 113)',
     hex: '#354971'
   } as ColorValue,
   800: {
-    css: 'var(--ottersage-primary-800)',
+    css: 'var(--yiveno-primary-800)',
     rgb: 'rgb(44, 61, 94)',
     hex: '#2c3d5e'
   } as ColorValue,
   900: {
-    css: 'var(--ottersage-primary-900)',
+    css: 'var(--yiveno-primary-900)',
     rgb: 'rgb(35, 49, 75)',
     hex: '#23314b'
   } as ColorValue

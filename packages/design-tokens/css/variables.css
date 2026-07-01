@@ -1,5 +1,5 @@
 /**
- * otterSage Design Tokens - CSS Variables
+ * Yiveno Design Tokens - CSS Variables
  * Material Design 3 变量系统
  * 
  * 使用顺序：
@@ -20,7 +20,7 @@
    * Material Design 主题色引用
    * 
    * ⚠️ 品牌色完全使用 Material Design 3 生成的颜色
-   * 不再定义自定义品牌色变量（如 --ottersage-brand-yellow）
+   * 不再定义自定义品牌色变量（如 --yiveno-brand-yellow）
    * 
    * 使用方式：
    * - 主色：var(--md-sys-color-primary)

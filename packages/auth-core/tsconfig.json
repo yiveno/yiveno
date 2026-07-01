@@ -5,7 +5,7 @@
     "rootDir": "./src",
     "baseUrl": ".",
     "paths": {
-      "@ottersage/types": ["../types/src/index.ts"]
+      "@yiveno/types": ["../types/src/index.ts"]
     }
   },
   "include": ["src/**/*"],

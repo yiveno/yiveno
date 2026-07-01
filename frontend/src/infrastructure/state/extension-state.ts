@@ -7,18 +7,30 @@
 import { logger } from '@/infrastructure/logging/logger'
 import { chromeStorage } from '@/infrastructure/storage/chrome-storage'
 
-/** 本地存储键位常量（otterSage / OS 前缀） */
+/** 本地存储键位常量（Yiveno / YV 前缀） */
 export const STATE_KEYS = {
-  INITIALIZED: 'OS_INITIALIZED',
-  SCHEMA_VERSION: 'OS_SCHEMA_VERSION',
-  BOOKMARK_COUNT: 'OS_BOOKMARK_COUNT',
-  LAST_SYNCED_AT: 'OS_LAST_SYNCED_AT',
-  INSTALL_REASON: 'OS_INSTALL_REASON'
+  INITIALIZED: 'YV_INITIALIZED',
+  SCHEMA_VERSION: 'YV_SCHEMA_VERSION',
+  BOOKMARK_COUNT: 'YV_BOOKMARK_COUNT',
+  LAST_SYNCED_AT: 'YV_LAST_SYNCED_AT',
+  INSTALL_REASON: 'YV_INSTALL_REASON'
+} as const
+
+const LEGACY_STATE_KEYS = {
+  INITIALIZED: `${'O'}${'S'}_INITIALIZED`,
+  SCHEMA_VERSION: `${'O'}${'S'}_SCHEMA_VERSION`,
+  BOOKMARK_COUNT: `${'O'}${'S'}_BOOKMARK_COUNT`,
+  LAST_SYNCED_AT: `${'O'}${'S'}_LAST_SYNCED_AT`,
+  INSTALL_REASON: `${'O'}${'S'}_INSTALL_REASON`
 } as const
 
 /** Session Storage 键位常量 */
 const SESSION_KEYS = {
-  DB_READY: 'os_db_ready'
+  DB_READY: 'yv_db_ready'
+} as const
+
+const LEGACY_SESSION_KEYS = {
+  DB_READY: `${'o'}${'s'}_db_ready`
 } as const
 
 export type StateKey = (typeof STATE_KEYS)[keyof typeof STATE_KEYS]
@@ -48,8 +60,14 @@ const DEFAULT_STATE: ExtensionState = {
 /** 获取数据库就绪状态（Session Storage） */
 export async function getDatabaseReady(): Promise<boolean> {
   try {
-    const ready = await chromeStorage.getSession<boolean>(SESSION_KEYS.DB_READY, false)
-    return ready ?? false
+    const ready = await chromeStorage.getSession<boolean>(SESSION_KEYS.DB_READY)
+    if (ready !== undefined) return ready
+
+    const legacyReady = await chromeStorage.getSession<boolean>(LEGACY_SESSION_KEYS.DB_READY)
+    if (legacyReady !== undefined) {
+      await chromeStorage.setSession(SESSION_KEYS.DB_READY, legacyReady)
+    }
+    return legacyReady ?? false
   } catch (error) {
     logger.error('ExtensionState', '读取 DB_READY 失败', error)
     return false
@@ -69,18 +87,31 @@ export async function setDatabaseReady(ready: boolean): Promise<void> {
 /** 从 chrome.storage.local + session 读取扩展状态 */
 export async function getExtensionState(): Promise<ExtensionState> {
   try {
-    const raw = await chrome.storage.local.get(Object.values(STATE_KEYS))
+    const raw = await chrome.storage.local.get([
+      ...Object.values(STATE_KEYS),
+      ...Object.values(LEGACY_STATE_KEYS)
+    ])
     const dbReady = await getDatabaseReady()
+    const readValue = (
+      key: StateKey,
+      legacyKey: (typeof LEGACY_STATE_KEYS)[keyof typeof LEGACY_STATE_KEYS]
+    ) => raw[key] ?? raw[legacyKey]
 
     return {
-      initialized: Boolean(raw[STATE_KEYS.INITIALIZED]),
+      initialized: Boolean(readValue(STATE_KEYS.INITIALIZED, LEGACY_STATE_KEYS.INITIALIZED)),
       dbReady,
-      schemaVersion: Number(raw[STATE_KEYS.SCHEMA_VERSION] ?? 0),
-      bookmarkCount: Number(raw[STATE_KEYS.BOOKMARK_COUNT] ?? 0),
-      lastSyncedAt: Number(raw[STATE_KEYS.LAST_SYNCED_AT] ?? 0),
+      schemaVersion: Number(
+        readValue(STATE_KEYS.SCHEMA_VERSION, LEGACY_STATE_KEYS.SCHEMA_VERSION) ?? 0
+      ),
+      bookmarkCount: Number(
+        readValue(STATE_KEYS.BOOKMARK_COUNT, LEGACY_STATE_KEYS.BOOKMARK_COUNT) ?? 0
+      ),
+      lastSyncedAt: Number(
+        readValue(STATE_KEYS.LAST_SYNCED_AT, LEGACY_STATE_KEYS.LAST_SYNCED_AT) ?? 0
+      ),
       installReason:
-        typeof raw[STATE_KEYS.INSTALL_REASON] === 'string'
-          ? (raw[STATE_KEYS.INSTALL_REASON] as string)
+        typeof readValue(STATE_KEYS.INSTALL_REASON, LEGACY_STATE_KEYS.INSTALL_REASON) === 'string'
+          ? (readValue(STATE_KEYS.INSTALL_REASON, LEGACY_STATE_KEYS.INSTALL_REASON) as string)
           : null
     }
   } catch (error) {

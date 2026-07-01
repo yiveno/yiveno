@@ -5,7 +5,7 @@
 LLM 模块提供统一的 AI 文本补全接口，支持：
 
 1. **用户自带 API Key**（OpenAI / Claude / Gemini / DeepSeek）— 最高优先级，直连第三方
-2. **Pro 托管 LLM**（DeepSeek V4 Flash）— Pro 用户默认，经 otterSage 后端代理
+2. **Pro 托管 LLM**（DeepSeek V4 Flash）— Pro 用户默认，经 Yiveno 后端代理
 
 ## 架构
 
@@ -24,7 +24,7 @@ LLMAdapter (适配器层)
 
 ## Provider 优先级
 
-1. **用户自带 API Key** — 配置后优先使用，数据不经 otterSage 服务器
+1. **用户自带 API Key** — 配置后优先使用，数据不经 Yiveno 服务器
 2. **Pro 托管 LLM** — 未配置 Key 时，Pro 登录用户自动使用（默认 DeepSeek V4 Flash，月配额 999 次）
 
 ## 降级策略

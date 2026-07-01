@@ -29,7 +29,7 @@ export const ALL_AUTH_STORAGE_KEYS = ['supabase.auth.token', 'supabase.auth.toke
  */
 export const AUTH_SYNC_ALLOWED_HOSTS: readonly string[] =
   AUTH_RUNTIME_ENV === 'prod'
-    ? ['ottersage.com', 'www.ottersage.com']
+    ? ['yiveno.com', 'www.yiveno.com']
     : ['localhost:3000', 'localhost:3001']
 
 /**
@@ -64,7 +64,7 @@ export function getWebsiteSupabaseSessionKey(projectRef: string): string {
 export async function purgeCrossEnvironmentAuthStorage(): Promise<void> {
   const keysToRemove: string[] = [
     ...ALL_AUTH_STORAGE_KEYS.filter(key => key !== AUTH_STORAGE_KEY),
-    'ottersage_subscription_cache'
+    'yiveno_subscription_cache'
   ]
   if (keysToRemove.length === 0) {
     return

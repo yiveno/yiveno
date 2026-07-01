@@ -10,9 +10,9 @@
 
 只维护以下 3 个源文件：
 
-- `/Users/cqw/Documents/github/otterSage/.env.shared.local`
-- `/Users/cqw/Documents/github/otterSage/.env.development.local`
-- `/Users/cqw/Documents/github/otterSage/.env.production.local`
+- `/Users/cqw/Documents/github/Yiveno/.env.shared.local`
+- `/Users/cqw/Documents/github/Yiveno/.env.development.local`
+- `/Users/cqw/Documents/github/Yiveno/.env.production.local`
 
 ### 1. `.env.shared.local`
 
@@ -64,21 +64,21 @@
 
 默认应指向正式域名：
 
-- `WEBSITE_URL=https://ottersage.com`
-- `VITE_API_BASE_URL=https://api.ottersage.com`
+- `WEBSITE_URL=https://yiveno.com`
+- `VITE_API_BASE_URL=https://api.yiveno.com`
 
 ## 生成文件
 
 以下文件为运行时产物，不手改：
 
-- `/Users/cqw/Documents/github/otterSage/.env.runtime/.env.development`
-- `/Users/cqw/Documents/github/otterSage/.env.runtime/.env.production`
-- `/Users/cqw/Documents/github/otterSage/backend/.dev.vars`
-- `/Users/cqw/Documents/github/otterSage/website/.env`
+- `/Users/cqw/Documents/github/Yiveno/.env.runtime/.env.development`
+- `/Users/cqw/Documents/github/Yiveno/.env.runtime/.env.production`
+- `/Users/cqw/Documents/github/Yiveno/backend/.dev.vars`
+- `/Users/cqw/Documents/github/Yiveno/website/.env`
 
 生成脚本：
 
-- `/Users/cqw/Documents/github/otterSage/scripts/dev-env.mjs`
+- `/Users/cqw/Documents/github/Yiveno/scripts/dev-env.mjs`
 
 ## 命令
 

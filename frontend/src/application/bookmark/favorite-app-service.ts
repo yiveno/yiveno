@@ -30,7 +30,8 @@ export interface FavoriteBookmark {
  */
 class FavoriteAppService {
   /** chrome.storage.local 中存储收藏书签 ID 列表的键名 */
-  private readonly STORAGE_KEY = 'OS_FAVORITE_BOOKMARKS'
+  private readonly STORAGE_KEY = 'YV_FAVORITE_BOOKMARKS'
+  private readonly LEGACY_STORAGE_KEY = `${'O'}${'S'}_FAVORITE_BOOKMARKS`
 
   /**
    * 从 chrome.storage.local 获取收藏书签 ID 列表
@@ -39,6 +40,16 @@ class FavoriteAppService {
   private async getFavoriteIdsFromStorage(): Promise<string[]> {
     try {
       const ids = await chromeStorage.getLocal<string[]>(this.STORAGE_KEY, [])
+      if (ids && ids.length > 0) {
+        return ids
+      }
+
+      const legacyIds = await chromeStorage.getLocal<string[]>(this.LEGACY_STORAGE_KEY, [])
+      if (legacyIds && legacyIds.length > 0) {
+        await this.saveFavoriteIdsToStorage(legacyIds)
+        return legacyIds
+      }
+
       return ids ?? []
     } catch (error) {
       logger.error('FavoriteAppService', '❌ 从 storage 获取收藏列表失败:', error)

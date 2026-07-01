@@ -10,7 +10,7 @@ const props = withDefaults(defineProps<AvatarProps>(), {
 
 const imageError = ref(false)
 
-const avatarClasses = computed(() => ['ottersage-avatar', `ottersage-avatar--${props.variant}`])
+const avatarClasses = computed(() => ['yiveno-avatar', `yiveno-avatar--${props.variant}`])
 
 const avatarStyle = computed(() => ({
   width: typeof props.size === 'number' ? `${props.size}px` : props.size,
@@ -42,14 +42,14 @@ const handleImageError = () => {
 
 <template>
   <div :class="avatarClasses">
-    <img v-if="src" :src="src" :alt="alt" class="ottersage-avatar-img" @error="handleImageError" />
+    <img v-if="src" :src="src" :alt="alt" class="yiveno-avatar-img" @error="handleImageError" />
     <LucideIcon v-else-if="icon" :name="icon" :size="iconSize" />
-    <span v-else class="ottersage-avatar-text">{{ initials }}</span>
+    <span v-else class="yiveno-avatar-text">{{ initials }}</span>
   </div>
 </template>
 
 <style scoped>
-.ottersage-avatar {
+.yiveno-avatar {
   position: relative;
   display: inline-flex;
   flex-shrink: 0;
@@ -64,25 +64,25 @@ const handleImageError = () => {
   overflow: hidden;
 }
 
-.ottersage-avatar--circle {
+.yiveno-avatar--circle {
   border-radius: 50%;
 }
 
-.ottersage-avatar--rounded {
+.yiveno-avatar--rounded {
   border-radius: var(--radius-md);
 }
 
-.ottersage-avatar--square {
+.yiveno-avatar--square {
   border-radius: 0;
 }
 
-.ottersage-avatar-img {
+.yiveno-avatar-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.ottersage-avatar-text {
+.yiveno-avatar-text {
   line-height: 1;
 }
 </style>

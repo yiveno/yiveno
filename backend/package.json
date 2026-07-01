@@ -1,7 +1,7 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "Backend for otterSage - Cloudflare Worker",
+  "description": "Backend for Yiveno - Cloudflare Worker",
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
@@ -27,7 +27,7 @@
     "clean": "rm -rf .wrangler node_modules/.cache"
   },
   "dependencies": {
-    "@ottersage/types": "workspace:*",
+    "@yiveno/types": "workspace:*",
     "@supabase/supabase-js": "^2.79.0",
     "@trpc/server": "^10.45.2",
     "hono": "^4.12.18",

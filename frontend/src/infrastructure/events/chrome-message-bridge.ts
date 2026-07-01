@@ -78,7 +78,7 @@ function handleChromeMessage(message: ChromeMessage) {
      * 数据同步完成消息
      * （从 Background Script 同步到 IndexedDB）
      */
-    case 'ottersage-db-synced': {
+    case 'yiveno-db-synced': {
       const { eventType, bookmarkId, timestamp } = message
 
       const isExternalChange = ['created', 'changed', 'moved', 'removed'].includes(
@@ -100,7 +100,7 @@ function handleChromeMessage(message: ChromeMessage) {
 
     /**
      * 书签更新通知
-     * 仅处理 changed 事件，其他事件通过 ottersage-db-synced 处理
+     * 仅处理 changed 事件，其他事件通过 yiveno-db-synced 处理
      */
     case 'BOOKMARK_UPDATED': {
       const { id, eventType, payload } = message

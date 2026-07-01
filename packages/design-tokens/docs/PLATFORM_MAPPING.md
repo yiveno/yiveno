@@ -1,6 +1,6 @@
 # 跨平台映射表
 
-本文档说明如何将 otterSage 设计 tokens 映射到不同平台的实现。
+本文档说明如何将 Yiveno 设计 tokens 映射到不同平台的实现。
 
 ---
 
@@ -23,15 +23,15 @@
 # 已自动配置 workspace:*
 
 # 外部项目
-npm install @ottersage/design-tokens
+npm install @yiveno/design-tokens
 # 或
-bun add @ottersage/design-tokens
+bun add @yiveno/design-tokens
 ```
 
 ### React Native
 
 ```bash
-npm install @ottersage/design-tokens
+npm install @yiveno/design-tokens
 ```
 
 ### Flutter
@@ -39,7 +39,7 @@ npm install @ottersage/design-tokens
 ```yaml
 # pubspec.yaml
 dependencies:
-  ottersage_bookmarks_design_tokens:
+  yiveno_bookmarks_design_tokens:
     path: ../packages/design-tokens
 ```
 
@@ -51,8 +51,8 @@ dependencies:
 
 ```typescript
 // 方式 1: CSS 变量（推荐）
-import '@ottersage/design-tokens/css/material-theme.css'
-import '@ottersage/design-tokens/css/variables.css'
+import '@yiveno/design-tokens/css/material-theme.css'
+import '@yiveno/design-tokens/css/variables.css'
 
 // 在 CSS 中使用
 .button {
@@ -63,7 +63,7 @@ import '@ottersage/design-tokens/css/variables.css'
 
 ```typescript
 // 方式 2: TypeScript tokens
-import { colors } from '@ottersage/design-tokens'
+import { colors } from '@yiveno/design-tokens'
 
 const buttonStyle = {
   backgroundColor: colors.brand.primary, // #3B82F6
@@ -74,7 +74,7 @@ const buttonStyle = {
 ### React Native
 
 ```typescript
-import { colors } from '@ottersage/design-tokens'
+import { colors } from '@yiveno/design-tokens'
 
 const styles = StyleSheet.create({
   button: {
@@ -87,13 +87,13 @@ const styles = StyleSheet.create({
 ### Flutter
 
 ```dart
-import 'package:ottersage_bookmarks_design_tokens/colors.dart';
+import 'package:yiveno_bookmarks_design_tokens/colors.dart';
 
 Container(
-  color: OtterSageColors.brandPrimary,  // Color(0xFF3B82F6)
+  color: YivenoColors.brandPrimary,  // Color(0xFF3B82F6)
   child: Text(
     'Button',
-    style: TextStyle(color: OtterSageColors.neutralWhite),  // Color(0xFFFFFFFF)
+    style: TextStyle(color: YivenoColors.neutralWhite),  // Color(0xFFFFFFFF)
   ),
 )
 ```
@@ -114,7 +114,7 @@ Container(
 
 ```typescript
 // TypeScript
-import { spacing } from '@ottersage/design-tokens'
+import { spacing } from '@yiveno/design-tokens'
 
 const cardStyle = {
   padding: spacing.base, // '1rem' (16px)
@@ -125,7 +125,7 @@ const cardStyle = {
 ### React Native
 
 ```typescript
-import { spacing } from '@ottersage/design-tokens'
+import { spacing } from '@yiveno/design-tokens'
 
 const styles = StyleSheet.create({
   card: {
@@ -138,11 +138,11 @@ const styles = StyleSheet.create({
 ### Flutter
 
 ```dart
-import 'package:ottersage_bookmarks_design_tokens/spacing.dart';
+import 'package:yiveno_bookmarks_design_tokens/spacing.dart';
 
 Container(
-  padding: EdgeInsets.all(OtterSageSpacing.base),  // 16.0
-  margin: EdgeInsets.only(bottom: OtterSageSpacing.lg),  // 24.0
+  padding: EdgeInsets.all(YivenoSpacing.base),  // 16.0
+  margin: EdgeInsets.only(bottom: YivenoSpacing.lg),  // 24.0
 )
 ```
 
@@ -163,7 +163,7 @@ Container(
 
 ```typescript
 // TypeScript
-import { fontSize, fontWeight, lineHeight } from '@ottersage/design-tokens'
+import { fontSize, fontWeight, lineHeight } from '@yiveno/design-tokens'
 
 const titleStyle = {
   fontSize: fontSize.xl, // '1.25rem' (20px)
@@ -175,7 +175,7 @@ const titleStyle = {
 ### React Native
 
 ```typescript
-import { fontSize, fontWeight, lineHeight } from '@ottersage/design-tokens'
+import { fontSize, fontWeight, lineHeight } from '@yiveno/design-tokens'
 
 const styles = StyleSheet.create({
   title: {
@@ -189,14 +189,14 @@ const styles = StyleSheet.create({
 ### Flutter
 
 ```dart
-import 'package:ottersage_bookmarks_design_tokens/typography.dart';
+import 'package:yiveno_bookmarks_design_tokens/typography.dart';
 
 Text(
   'Title',
   style: TextStyle(
-    fontSize: OtterSageFontSize.xl,              // 20.0
-    fontWeight: OtterSageFontWeight.semibold,    // FontWeight.w600
-    height: OtterSageLineHeight.tight,           // 1.25
+    fontSize: YivenoFontSize.xl,              // 20.0
+    fontWeight: YivenoFontWeight.semibold,    // FontWeight.w600
+    height: YivenoLineHeight.tight,           // 1.25
   ),
 )
 ```
@@ -216,7 +216,7 @@ Text(
 ### React Native
 
 ```typescript
-import { borderRadius } from '@ottersage/design-tokens'
+import { borderRadius } from '@yiveno/design-tokens'
 
 const styles = StyleSheet.create({
   card: {
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
 ```dart
 Container(
   decoration: BoxDecoration(
-    borderRadius: BorderRadius.circular(OtterSageBorderRadius.md),  // 8.0
+    borderRadius: BorderRadius.circular(YivenoBorderRadius.md),  // 8.0
   ),
 )
 ```
@@ -250,7 +250,7 @@ Container(
 ### React Native
 
 ```typescript
-import { shadows } from '@ottersage/design-tokens'
+import { shadows } from '@yiveno/design-tokens'
 
 // React Native 需要手动解析阴影
 const styles = StyleSheet.create({
@@ -290,13 +290,13 @@ Container(
 
 ```vue
 <template>
-  <button class="ottersage-button">
+  <button class="yiveno-button">
     <slot />
   </button>
 </template>
 
 <style scoped>
-.ottersage-button {
+.yiveno-button {
   background-color: var(--md-sys-color-primary);
   color: var(--md-sys-color-on-primary);
   padding: var(--spacing-md) var(--spacing-base);
@@ -311,7 +311,7 @@ Container(
 #### React Native
 
 ```typescript
-import { colors, spacing, fontSize, fontWeight, borderRadius } from '@ottersage/design-tokens'
+import { colors, spacing, fontSize, fontWeight, borderRadius } from '@yiveno/design-tokens'
 
 const Button = ({ children }) => (
   <TouchableOpacity style={styles.button}>
@@ -342,27 +342,27 @@ const styles = StyleSheet.create({
 #### Flutter
 
 ```dart
-import 'package:ottersage_bookmarks_design_tokens/tokens.dart';
+import 'package:yiveno_bookmarks_design_tokens/tokens.dart';
 
 ElevatedButton(
   onPressed: () {},
   style: ElevatedButton.styleFrom(
-    backgroundColor: OtterSageColors.brandPrimary,
-    foregroundColor: OtterSageColors.neutralWhite,
+    backgroundColor: YivenoColors.brandPrimary,
+    foregroundColor: YivenoColors.neutralWhite,
     padding: EdgeInsets.symmetric(
-      vertical: OtterSageSpacing.md,
-      horizontal: OtterSageSpacing.base,
+      vertical: YivenoSpacing.md,
+      horizontal: YivenoSpacing.base,
     ),
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(OtterSageBorderRadius.md),
+      borderRadius: BorderRadius.circular(YivenoBorderRadius.md),
     ),
     elevation: 2,
   ),
   child: Text(
     'Button',
     style: TextStyle(
-      fontSize: OtterSageFontSize.sm,
-      fontWeight: OtterSageFontWeight.medium,
+      fontSize: YivenoFontSize.sm,
+      fontWeight: YivenoFontWeight.medium,
     ),
   ),
 )
@@ -372,13 +372,13 @@ ElevatedButton(
 
 ## 📊 Token 映射对照表
 
-| Design Token           | Web/CSS                       | React Native                | Flutter                        |
-| ---------------------- | ----------------------------- | --------------------------- | ------------------------------ |
-| `colors.brand.primary` | `var(--md-sys-color-primary)` | `colors.brand.primary`      | `OtterSageColors.brandPrimary` |
-| `spacing.base`         | `var(--spacing-base)`         | `parseInt(spacing.base)`    | `OtterSageSpacing.base`        |
-| `fontSize.base`        | `var(--text-base)`            | `parseInt(fontSize.base)`   | `OtterSageFontSize.base`       |
-| `fontWeight.medium`    | `var(--font-medium)`          | `fontWeight.medium`         | `OtterSageFontWeight.medium`   |
-| `borderRadius.md`      | `var(--radius-md)`            | `parseInt(borderRadius.md)` | `OtterSageBorderRadius.md`     |
+| Design Token           | Web/CSS                       | React Native                | Flutter                     |
+| ---------------------- | ----------------------------- | --------------------------- | --------------------------- |
+| `colors.brand.primary` | `var(--md-sys-color-primary)` | `colors.brand.primary`      | `YivenoColors.brandPrimary` |
+| `spacing.base`         | `var(--spacing-base)`         | `parseInt(spacing.base)`    | `YivenoSpacing.base`        |
+| `fontSize.base`        | `var(--text-base)`            | `parseInt(fontSize.base)`   | `YivenoFontSize.base`       |
+| `fontWeight.medium`    | `var(--font-medium)`          | `fontWeight.medium`         | `YivenoFontWeight.medium`   |
+| `borderRadius.md`      | `var(--radius-md)`            | `parseInt(borderRadius.md)` | `YivenoBorderRadius.md`     |
 
 ---
 
@@ -387,7 +387,7 @@ ElevatedButton(
 ### TypeScript 类型支持
 
 ```typescript
-import type { Colors, Spacing, FontSize } from '@ottersage/design-tokens'
+import type { Colors, Spacing, FontSize } from '@yiveno/design-tokens'
 
 // 自动补全和类型检查
 const myColor: Colors['brand']['primary'] = colors.brand.primary

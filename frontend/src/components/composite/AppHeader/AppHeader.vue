@@ -195,7 +195,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <header :class="headerClasses" aria-label="otterSage">
+  <header :class="headerClasses" aria-label="Yiveno">
     <div v-if="showSidePanelToggle" class="app-header__col app-header__col--left">
       <Button
         variant="icon"
@@ -210,8 +210,8 @@ onMounted(async () => {
     </div>
 
     <div class="app-header__col app-header__col--center">
-      <img v-if="showLogo" :src="logoSrc" alt="otterSage Logo" class="app-header__logo" />
-      <span v-if="showName" class="app-header__name">otterSage</span>
+      <img v-if="showLogo" :src="logoSrc" alt="Yiveno Logo" class="app-header__logo" />
+      <span v-if="showName" class="app-header__name">Yiveno</span>
     </div>
 
     <div class="app-header__col app-header__col--right">

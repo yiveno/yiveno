@@ -1,5 +1,5 @@
 {
-  "name": "ottersage-website",
+  "name": "yiveno-website",
   "type": "module",
   "private": true,
   "scripts": {
@@ -16,7 +16,7 @@
     "stylelint": "stylelint \"src/**/*.vue\" --no-cache --fix && echo '✅ Stylelint: 所有问题已修复'",
     "stylelint:check": "stylelint \"src/**/*.vue\" --no-cache",
     "preview": "astro preview",
-    "deploy": "bun run build && bunx wrangler pages deploy dist --project-name ottersage-website --branch main"
+    "deploy": "bun run build && bunx wrangler pages deploy dist --project-name yiveno-website --branch main"
   },
   "dependencies": {
     "@astrojs/vue": "^6.0.1",

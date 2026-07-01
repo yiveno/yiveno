@@ -71,21 +71,21 @@ const progressAttrs = computed(() => {
  * 计算 class
  */
 const progressClasses = computed(() => [
-  'ottersage-linear-progress',
-  `ottersage-linear-progress--${props.size}`,
-  `ottersage-linear-progress--${props.variant}`,
+  'yiveno-linear-progress',
+  `yiveno-linear-progress--${props.size}`,
+  `yiveno-linear-progress--${props.variant}`,
   {
-    'ottersage-linear-progress--with-percentage': props.showPercentage
+    'yiveno-linear-progress--with-percentage': props.showPercentage
   }
 ])
 </script>
 
 <template>
-  <div class="ottersage-linear-progress-wrapper">
+  <div class="yiveno-linear-progress-wrapper">
     <md-linear-progress v-bind="progressAttrs" :class="progressClasses" />
 
     <!-- 百分比显示 -->
-    <div v-if="showPercentage && !indeterminate" class="ottersage-linear-progress-percentage">
+    <div v-if="showPercentage && !indeterminate" class="yiveno-linear-progress-percentage">
       <slot name="percentage" :value="percentageValue" :formatted="formattedPercentage">
         {{ formattedPercentage }}
       </slot>
@@ -108,7 +108,7 @@ const progressClasses = computed(() => [
 
 /* ========== Wrapper 样式 ========== */
 
-.ottersage-linear-progress-wrapper {
+.yiveno-linear-progress-wrapper {
   position: relative;
   display: flex;
   align-items: center;
@@ -116,7 +116,7 @@ const progressClasses = computed(() => [
   width: 100%;
 }
 
-.ottersage-linear-progress {
+.yiveno-linear-progress {
   --md-linear-progress-track-color: var(--md-sys-color-surface-container-highest);
 
   flex: 1;
@@ -124,47 +124,47 @@ const progressClasses = computed(() => [
 
 /* ========== 尺寸变体 ========== */
 
-.ottersage-linear-progress--xs {
+.yiveno-linear-progress--xs {
   --md-linear-progress-track-height: 2px;
   --md-linear-progress-active-indicator-height: 2px;
 }
 
-.ottersage-linear-progress--sm {
+.yiveno-linear-progress--sm {
   --md-linear-progress-track-height: 4px;
   --md-linear-progress-active-indicator-height: 4px;
 }
 
-.ottersage-linear-progress--md {
+.yiveno-linear-progress--md {
   --md-linear-progress-track-height: 6px;
   --md-linear-progress-active-indicator-height: 6px;
 }
 
-.ottersage-linear-progress--lg {
+.yiveno-linear-progress--lg {
   --md-linear-progress-track-height: 8px;
   --md-linear-progress-active-indicator-height: 8px;
 }
 
 /* ========== 颜色变体 ========== */
 
-.ottersage-linear-progress--primary {
+.yiveno-linear-progress--primary {
   --md-linear-progress-active-indicator-color: var(--md-sys-color-primary);
 }
 
-.ottersage-linear-progress--success {
+.yiveno-linear-progress--success {
   --md-linear-progress-active-indicator-color: var(--color-semantic-success);
 }
 
-.ottersage-linear-progress--warning {
+.yiveno-linear-progress--warning {
   --md-linear-progress-active-indicator-color: var(--color-semantic-warning);
 }
 
-.ottersage-linear-progress--error {
+.yiveno-linear-progress--error {
   --md-linear-progress-active-indicator-color: var(--md-sys-color-error);
 }
 
 /* ========== 百分比显示 ========== */
 
-.ottersage-linear-progress-percentage {
+.yiveno-linear-progress-percentage {
   flex-shrink: 0;
   min-width: 3rem;
   font-size: var(--text-sm);
@@ -174,7 +174,7 @@ const progressClasses = computed(() => [
 }
 
 /* 带百分比时的进度条样式调整 */
-.ottersage-linear-progress--with-percentage {
+.yiveno-linear-progress--with-percentage {
   flex: 1;
 }
 </style>

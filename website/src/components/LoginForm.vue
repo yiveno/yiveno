@@ -32,7 +32,7 @@ async function login(provider: 'google' | 'microsoft') {
 
 <template>
   <div class="login-form">
-    <h2>登录 otterSage</h2>
+    <h2>登录 Yiveno</h2>
     <p v-if="error" class="error">{{ error }}</p>
     <button :disabled="loading" class="btn" @click="login('google')">
       {{ loading ? '跳转中...' : '使用 Google 登录' }}

@@ -6,7 +6,7 @@
  * 同步进度消息
  */
 export interface SyncProgressMessage {
-  type: 'ottersage-sync-progress'
+  type: 'yiveno-sync-progress'
   data: {
     percentage: number
     message: string
@@ -18,7 +18,7 @@ export interface SyncProgressMessage {
  * 数据库就绪消息
  */
 export interface DBReadyMessage {
-  type: 'ottersage-db-ready'
+  type: 'yiveno-db-ready'
 }
 
 /**

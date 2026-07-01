@@ -1,17 +1,17 @@
 # 间距使用指南
 
-本文档说明如何在不同平台使用 otterSage 的间距系统。
+本文档说明如何在不同平台使用 Yiveno 的间距系统。
 
 ## 📏 间距系统概览
 
-otterSage 采用 **8px 网格系统**，确保设计的一致性和可预测性。
+Yiveno 采用 **8px 网格系统**，确保设计的一致性和可预测性。
 
 ## 📦 间距 Tokens
 
 ### 基础间距
 
 ```typescript
-import { spacing } from '@ottersage/design-tokens'
+import { spacing } from '@yiveno/design-tokens'
 
 spacing.none // 0px
 spacing.xs // 4px  - 极小间距
@@ -122,7 +122,7 @@ var(--spacing-3xl)   /* 64px */
 ### React Native
 
 ```typescript
-import { spacing } from '@ottersage/design-tokens'
+import { spacing } from '@yiveno/design-tokens'
 
 const styles = StyleSheet.create({
   card: {
@@ -139,15 +139,15 @@ const styles = StyleSheet.create({
 ### Flutter
 
 ```dart
-import 'package:ottersage_bookmarks_design_tokens/spacing.dart';
+import 'package:yiveno_bookmarks_design_tokens/spacing.dart';
 
 Container(
-  padding: EdgeInsets.all(OtterSageSpacing.base),  // 16
-  margin: EdgeInsets.only(bottom: OtterSageSpacing.lg),  // 24
+  padding: EdgeInsets.all(YivenoSpacing.base),  // 16
+  margin: EdgeInsets.only(bottom: YivenoSpacing.lg),  // 24
   child: Row(
     children: [
       Icon(Icons.star),
-      SizedBox(width: OtterSageSpacing.xs),  // 4
+      SizedBox(width: YivenoSpacing.xs),  // 4
       Text('Favorite'),
     ],
   ),

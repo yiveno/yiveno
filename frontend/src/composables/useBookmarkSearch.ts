@@ -31,7 +31,7 @@
  */
 
 import { ref, computed, watch, toValue } from 'vue'
-import type { MaybeRef } from 'vue'
+import type { MaybeRef, Ref } from 'vue'
 import { bookmarkMemorySearchService } from '@/application/query/bookmark-memory-search-service'
 import type {
   FilteredBookmarkNode,

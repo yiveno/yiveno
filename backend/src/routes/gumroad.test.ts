@@ -2,7 +2,7 @@ import { afterEach, describe, expect, jest, test } from 'bun:test'
 import { createApp } from '../app'
 import { signJWT } from '../utils/jwt'
 import type { Env } from '../types/env'
-import type { PaymentRecord, Subscription } from '@ottersage/types'
+import type { PaymentRecord, Subscription } from '@yiveno/types'
 import * as supabaseModule from '../data-access/supabase'
 
 const baseEnv = {

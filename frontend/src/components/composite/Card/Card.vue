@@ -1,5 +1,5 @@
 <!--
-  OtterSageCard - 卡片组件
+  YivenoCard - 卡片组件
   通用卡片布局组件，支持标题、内容、操作区域
   集成 Material Design 3 md-elevation 组件
 -->
@@ -120,19 +120,19 @@ const handleKeydown = (event: KeyboardEvent) => {
 }
 
 .card {
-  --ottersage-card-container-color: var(--md-sys-color-surface);
-  --ottersage-card-outline-color: var(--md-sys-color-outline-variant);
-  --ottersage-card-outline-width: 1px;
-  --ottersage-card-shape: var(--radius-lg);
+  --yiveno-card-container-color: var(--md-sys-color-surface);
+  --yiveno-card-outline-color: var(--md-sys-color-outline-variant);
+  --yiveno-card-outline-width: 1px;
+  --yiveno-card-shape: var(--radius-lg);
 
   position: relative;
 
   /* Base styles */
   display: flex;
   flex-direction: column;
-  border: var(--ottersage-card-outline-width) solid var(--ottersage-card-outline-color);
-  border-radius: var(--ottersage-card-shape);
-  background-color: var(--ottersage-card-container-color);
+  border: var(--yiveno-card-outline-width) solid var(--yiveno-card-outline-color);
+  border-radius: var(--yiveno-card-shape);
+  background-color: var(--yiveno-card-container-color);
   transition:
     border-color var(--motion-standard),
     opacity var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
@@ -148,8 +148,8 @@ const handleKeydown = (event: KeyboardEvent) => {
 
 /* === Variants === */
 .card--default {
-  --ottersage-card-container-color: var(--md-sys-color-surface-container-low);
-  --ottersage-card-outline-color: var(--md-sys-color-outline-variant);
+  --yiveno-card-container-color: var(--md-sys-color-surface-container-low);
+  --yiveno-card-outline-color: var(--md-sys-color-outline-variant);
 }
 
 .card--default .card__elevation {
@@ -157,9 +157,9 @@ const handleKeydown = (event: KeyboardEvent) => {
 }
 
 .card--outlined {
-  --ottersage-card-container-color: var(--md-sys-color-surface);
-  --ottersage-card-outline-color: var(--md-sys-color-outline);
-  --ottersage-card-outline-width: 1px;
+  --yiveno-card-container-color: var(--md-sys-color-surface);
+  --yiveno-card-outline-color: var(--md-sys-color-outline);
+  --yiveno-card-outline-width: 1px;
 }
 
 .card--outlined .card__elevation {
@@ -167,8 +167,8 @@ const handleKeydown = (event: KeyboardEvent) => {
 }
 
 .card--elevated {
-  --ottersage-card-container-color: var(--md-sys-color-surface-container-low);
-  --ottersage-card-outline-color: transparent;
+  --yiveno-card-container-color: var(--md-sys-color-surface-container-low);
+  --yiveno-card-outline-color: transparent;
 }
 
 .card--elevated .card__elevation {

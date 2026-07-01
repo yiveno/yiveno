@@ -488,4 +488,4 @@ function getBookmarkCountText(count: number): string {
 ---
 
 **最后更新**: 2025-01-02
-**维护者**: otterSage Team
+**维护者**: Yiveno Team

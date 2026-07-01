@@ -10,7 +10,7 @@
     /* Path Aliases */
     "paths": {
       "@/*": ["./src/*"],
-      "@ottersage/types": ["../packages/types/src/index.ts"]
+      "@yiveno/types": ["../packages/types/src/index.ts"]
     }
   },
   "include": ["src"]

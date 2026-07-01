@@ -154,7 +154,7 @@ async function flushTraitQueue(): Promise<void> {
       try {
         chrome.runtime.sendMessage(
           {
-            type: 'ottersage-trait-updated',
+            type: 'yiveno-trait-updated',
             timestamp: Date.now(),
             reason: reasons.join(','),
             affectedCount: needFullRebuild ? 'all' : pendingIds.length

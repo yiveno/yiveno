@@ -100,7 +100,7 @@ export function registerMessageHandlers(): void {
 
     // 只接受来自官网的消息
     const allowedOrigins = [
-      'https://ottersage.com',
+      'https://yiveno.com',
       'http://localhost:3000',
       'https://localhost:3000',
       'http://localhost:3001',
@@ -380,7 +380,7 @@ async function handleNotification(
   sendResponse: AsyncResponse
 ): Promise<void> {
   const data = message.data || {}
-  const title = (data.title as string) || 'otterSage'
+  const title = (data.title as string) || 'Yiveno'
   const content = (data.message as string) || ''
   const iconUrl = data.iconUrl as string | undefined
 
@@ -1676,7 +1676,7 @@ async function handleClearAuthSession(
       AUTH_STORAGE_KEY,
       'current_login_provider',
       'auth_last_activity',
-      'ottersage_subscription_cache',
+      'yiveno_subscription_cache',
       'USER_AI_CONFIG',
       'supabase_session'
     ])

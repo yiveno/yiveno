@@ -1,6 +1,6 @@
-# @ottersage/design-tokens
+# @yiveno/design-tokens
 
-otterSage 设计令牌包 - 基于 Material Design 3 的统一设计系统。
+Yiveno 设计令牌包 - 基于 Material Design 3 的统一设计系统。
 
 ## 📦 包含内容
 
@@ -16,7 +16,7 @@ otterSage 设计令牌包 - 基于 Material Design 3 的统一设计系统。
 
 ### Material Design 3 主题
 
-otterSage 完全采用 **Material Design 3** 设计系统：
+Yiveno 完全采用 **Material Design 3** 设计系统：
 
 - **种子色**: `#89EAD7` (薄荷绿)
 - **Primary**: `#83d5c5` (亮色) / `#016b5d` (暗色)
@@ -38,9 +38,9 @@ otterSage 完全采用 **Material Design 3** 设计系统：
 
 ```typescript
 // 在你的入口文件中
-import '@ottersage/design-tokens/css/material-theme.css'
-import '@ottersage/design-tokens/css/variables.css'
-import '@ottersage/design-tokens/css/semantic-colors.css'
+import '@yiveno/design-tokens/css/material-theme.css'
+import '@yiveno/design-tokens/css/variables.css'
+import '@yiveno/design-tokens/css/semantic-colors.css'
 
 // 然后在 CSS 中使用
 .button {
@@ -57,7 +57,7 @@ import '@ottersage/design-tokens/css/semantic-colors.css'
 
 ```typescript
 // 导入颜色常量（提供 CSS、RGB、Hex 三种格式）
-import { materialColors, semanticColors } from '@ottersage/design-tokens/colors'
+import { materialColors, semanticColors } from '@yiveno/design-tokens/colors'
 
 // Canvas 绘图示例
 const ctx = canvas.getContext('2d')
@@ -120,7 +120,7 @@ primaryScale[900] // 最深
 **辅助函数**：
 
 ```typescript
-import { getColor, getThemeColor } from '@ottersage/design-tokens/colors'
+import { getColor, getThemeColor } from '@yiveno/design-tokens/colors'
 
 // 获取特定格式的颜色
 const rgbColor = getColor(materialColors.primary, 'rgb')
@@ -157,9 +157,9 @@ const themeColor = getThemeColor(
 
 ```typescript
 // 在入口文件中导入 CSS
-import '@ottersage/design-tokens/css/material-theme.css'
-import '@ottersage/design-tokens/css/variables.css'
-import '@ottersage/design-tokens/css/semantic-colors.css'
+import '@yiveno/design-tokens/css/material-theme.css'
+import '@yiveno/design-tokens/css/variables.css'
+import '@yiveno/design-tokens/css/semantic-colors.css'
 
 // 在 CSS 中使用变量
 .button {
@@ -167,7 +167,7 @@ import '@ottersage/design-tokens/css/semantic-colors.css'
 }
 
 // 在无法使用 CSS 变量的场景（Badge API、Canvas 等）
-import { materialColors, semanticColors } from '@ottersage/design-tokens/colors'
+import { materialColors, semanticColors } from '@yiveno/design-tokens/colors'
 
 // Badge API
 chrome.action.setBadgeBackgroundColor({
@@ -183,7 +183,7 @@ ctx.fillStyle = materialColors.primary.rgb
 
 **v1.1.0 新特性**：所有颜色现在支持自动同步！
 
-只要修改 `@ottersage/design-tokens` 包中的颜色定义，所有使用这些颜色的地方都会自动同步，**包括无法使用 CSS 变量的场景**（Canvas、Badge API、Console 等）。
+只要修改 `@yiveno/design-tokens` 包中的颜色定义，所有使用这些颜色的地方都会自动同步，**包括无法使用 CSS 变量的场景**（Canvas、Badge API、Console 等）。
 
 **工作原理**：
 
@@ -194,7 +194,7 @@ ctx.fillStyle = materialColors.primary.rgb
 
 ```typescript
 // ✅ 自动同步：修改 design-tokens 包后，这里的颜色会自动更新
-import { materialColors } from '@ottersage/design-tokens/colors'
+import { materialColors } from '@yiveno/design-tokens/colors'
 
 const BADGE_COLORS = {
   info: materialColors.primary.rgb, // 自动同步
@@ -232,16 +232,16 @@ var(--md-sys-color-on-background)        /* 背景上的文本 */
 
 ```css
 /* 语义色 - 来自 semantic-colors.css */
-var(--ottersage-semantic-warning)           /* 警告色 */
-var(--ottersage-semantic-success)           /* 成功色 */
-var(--ottersage-semantic-info)              /* 信息色 */
+var(--yiveno-semantic-warning)           /* 警告色 */
+var(--yiveno-semantic-success)           /* 成功色 */
+var(--yiveno-semantic-info)              /* 信息色 */
 
 /* 强调色 - 来自 semantic-colors.css */
-var(--ottersage-accent-teal)                /* 青色 */
-var(--ottersage-accent-gold)                /* 金色 */
-var(--ottersage-accent-amber)               /* 琥珀色 */
-var(--ottersage-accent-purple)              /* 紫色 */
-var(--ottersage-accent-ai)                  /* AI 功能色 */
+var(--yiveno-accent-teal)                /* 青色 */
+var(--yiveno-accent-gold)                /* 金色 */
+var(--yiveno-accent-amber)               /* 琥珀色 */
+var(--yiveno-accent-purple)              /* 紫色 */
+var(--yiveno-accent-ai)                  /* AI 功能色 */
 ```
 
 ### 语义化颜色（TypeScript）
@@ -278,14 +278,14 @@ fontSize.lg // 18px
 ### 插件前端 (Chrome Extension)
 
 ```typescript
-import { materialTheme } from '@ottersage/design-tokens'
+import { materialTheme } from '@yiveno/design-tokens'
 // 自动映射到 Chrome Material Design
 ```
 
 ### 官网 (Nuxt)
 
 ```typescript
-import { colors, spacing } from '@ottersage/design-tokens'
+import { colors, spacing } from '@yiveno/design-tokens'
 // 直接使用设计令牌
 ```
 
@@ -345,7 +345,7 @@ import { colors, spacing } from '@ottersage/design-tokens'
 // frontend/package.json 或 website/package.json
 {
   "dependencies": {
-    "@ottersage/design-tokens": "workspace:*"
+    "@yiveno/design-tokens": "workspace:*"
   }
 }
 ```
@@ -358,9 +358,9 @@ cd packages/design-tokens
 npm publish --access public
 
 # 外部项目安装
-npm install @ottersage/design-tokens
+npm install @yiveno/design-tokens
 # 或
-bun add @ottersage/design-tokens
+bun add @yiveno/design-tokens
 ```
 
 ## 🤝 贡献指南

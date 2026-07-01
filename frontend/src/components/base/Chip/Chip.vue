@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import type { ChipProps } from './Chip.d'
 
 defineOptions({
-  name: 'OtterSageChip'
+  name: 'YivenoChip'
 })
 
 const props = withDefaults(defineProps<ChipProps>(), {
@@ -54,11 +54,11 @@ const chipAttrs = computed(() => {
 })
 
 const chipClasses = computed(() => [
-  'ottersage-chip',
-  `ottersage-chip--${props.type}`,
-  `ottersage-chip--${props.variant}`,
-  `ottersage-chip--${props.color}`,
-  `ottersage-chip--${props.size}`
+  'yiveno-chip',
+  `yiveno-chip--${props.type}`,
+  `yiveno-chip--${props.variant}`,
+  `yiveno-chip--${props.color}`,
+  `yiveno-chip--${props.size}`
 ])
 </script>
 
@@ -69,110 +69,110 @@ const chipClasses = computed(() => [
 </template>
 
 <style scoped>
-.ottersage-chip {
+.yiveno-chip {
   --md-assist-chip-container-shape: var(--radius-full);
   --md-assist-chip-label-text-font: var(--font-family-base);
   --md-assist-chip-label-text-weight: var(--font-weight-medium);
   --md-assist-chip-label-text-tracking: var(--typescale-label-md-tracking);
 }
 
-.ottersage-chip--sm {
+.yiveno-chip--sm {
   --md-assist-chip-label-text-size: var(--typescale-label-md-size);
   --md-assist-chip-label-text-line-height: var(--typescale-label-md-line);
 }
 
-.ottersage-chip--md {
+.yiveno-chip--md {
   --md-assist-chip-label-text-size: var(--typescale-label-lg-size);
   --md-assist-chip-label-text-line-height: var(--typescale-label-lg-line);
   --md-assist-chip-label-text-tracking: var(--typescale-label-lg-tracking);
 }
 
-.ottersage-chip--lg {
+.yiveno-chip--lg {
   --md-assist-chip-label-text-size: var(--typescale-title-sm-size);
   --md-assist-chip-label-text-line-height: var(--typescale-title-sm-line);
   --md-assist-chip-label-text-tracking: var(--typescale-title-sm-tracking);
 }
 
-.ottersage-chip--filled.ottersage-chip--primary {
+.yiveno-chip--filled.yiveno-chip--primary {
   --md-assist-chip-label-text-color: var(--color-primary-foreground);
   --md-assist-chip-container-color: var(--color-primary);
 }
 
-.ottersage-chip--filled.ottersage-chip--secondary {
+.yiveno-chip--filled.yiveno-chip--secondary {
   --md-assist-chip-label-text-color: var(--color-secondary-foreground);
   --md-assist-chip-container-color: var(--color-secondary);
 }
 
-.ottersage-chip--filled.ottersage-chip--success {
+.yiveno-chip--filled.yiveno-chip--success {
   --md-assist-chip-label-text-color: var(--color-success-container-foreground);
   --md-assist-chip-container-color: var(--color-success-container);
 }
 
-.ottersage-chip--filled.ottersage-chip--warning {
+.yiveno-chip--filled.yiveno-chip--warning {
   --md-assist-chip-label-text-color: var(--color-warning-container-foreground);
   --md-assist-chip-container-color: var(--color-warning-container);
 }
 
-.ottersage-chip--filled.ottersage-chip--error {
+.yiveno-chip--filled.yiveno-chip--error {
   --md-assist-chip-label-text-color: var(--color-error-container-foreground);
   --md-assist-chip-container-color: var(--color-error-container);
 }
 
-.ottersage-chip--filled.ottersage-chip--info {
+.yiveno-chip--filled.yiveno-chip--info {
   --md-assist-chip-label-text-color: var(--color-info-container-foreground);
   --md-assist-chip-container-color: var(--color-info-container);
 }
 
-.ottersage-chip--outlined.ottersage-chip--primary {
+.yiveno-chip--outlined.yiveno-chip--primary {
   --md-assist-chip-label-text-color: var(--color-primary);
 }
 
-.ottersage-chip--outlined.ottersage-chip--secondary {
+.yiveno-chip--outlined.yiveno-chip--secondary {
   --md-assist-chip-label-text-color: var(--color-secondary);
 }
 
-.ottersage-chip--outlined.ottersage-chip--success {
+.yiveno-chip--outlined.yiveno-chip--success {
   --md-assist-chip-label-text-color: var(--color-success);
 }
 
-.ottersage-chip--outlined.ottersage-chip--warning {
+.yiveno-chip--outlined.yiveno-chip--warning {
   --md-assist-chip-label-text-color: var(--color-warning);
 }
 
-.ottersage-chip--outlined.ottersage-chip--error {
+.yiveno-chip--outlined.yiveno-chip--error {
   --md-assist-chip-label-text-color: var(--color-error);
 }
 
-.ottersage-chip--outlined.ottersage-chip--info {
+.yiveno-chip--outlined.yiveno-chip--info {
   --md-assist-chip-label-text-color: var(--color-info);
 }
 
-.ottersage-chip--soft.ottersage-chip--primary {
+.yiveno-chip--soft.yiveno-chip--primary {
   --md-assist-chip-label-text-color: var(--color-primary);
   --md-assist-chip-container-color: var(--color-primary-alpha-10);
 }
 
-.ottersage-chip--soft.ottersage-chip--secondary {
+.yiveno-chip--soft.yiveno-chip--secondary {
   --md-assist-chip-label-text-color: var(--color-secondary);
   --md-assist-chip-container-color: var(--color-secondary-alpha-10);
 }
 
-.ottersage-chip--soft.ottersage-chip--success {
+.yiveno-chip--soft.yiveno-chip--success {
   --md-assist-chip-label-text-color: var(--color-success);
   --md-assist-chip-container-color: var(--color-success-alpha-10);
 }
 
-.ottersage-chip--soft.ottersage-chip--warning {
+.yiveno-chip--soft.yiveno-chip--warning {
   --md-assist-chip-label-text-color: var(--color-warning);
   --md-assist-chip-container-color: var(--color-warning-alpha-10);
 }
 
-.ottersage-chip--soft.ottersage-chip--error {
+.yiveno-chip--soft.yiveno-chip--error {
   --md-assist-chip-label-text-color: var(--color-error);
   --md-assist-chip-container-color: var(--color-error-alpha-10);
 }
 
-.ottersage-chip--soft.ottersage-chip--info {
+.yiveno-chip--soft.yiveno-chip--info {
   --md-assist-chip-label-text-color: var(--color-info);
   --md-assist-chip-container-color: var(--color-info-alpha-10);
 }

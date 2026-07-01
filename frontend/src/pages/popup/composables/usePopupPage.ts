@@ -155,7 +155,7 @@ export function usePopupPage() {
 
       uiStore.value = uiStoreModule.useUIStore()
       popupStore.value = popupStoreModule.usePopupStoreIndexedDB()
-      uiStore.value.setCurrentPage('popup', 'otterSagePopup')
+      uiStore.value.setCurrentPage('popup', 'YivenoPopup')
 
       try {
         await popupStore.value.initialize()

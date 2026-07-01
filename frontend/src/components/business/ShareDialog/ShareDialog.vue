@@ -316,11 +316,12 @@ const handleRetry = () => {
 
 // 复制图片
 const handleCopyImage = () => {
-  if (!state.posterPreview) return
+  const posterPreview = state.posterPreview
+  if (!posterPreview) return
 
   void (async () => {
     try {
-      const response = await fetch(state.posterPreview)
+      const response = await fetch(posterPreview)
       const blob = await response.blob()
 
       await navigator.clipboard.write([
@@ -367,7 +368,8 @@ const handleDownloadImage = () => {
 
 // 创建链接分享
 const handleCreateLinkShare = () => {
-  if (!session.value?.access_token) {
+  const accessToken = session.value?.access_token
+  if (!accessToken) {
     message.error('未登录，无法创建分享')
     return
   }
@@ -385,7 +387,7 @@ const handleCreateLinkShare = () => {
           description: typeof b.description === 'string' ? b.description : undefined
         })),
         showUsername: state.showUsername,
-        accessToken: session.value.access_token
+        accessToken
       })
 
       if (!result.success) {
@@ -435,7 +437,8 @@ const handleCreateLinkShare = () => {
 
 // 创建直接分享
 const handleCreateDirectShare = () => {
-  if (!session.value?.access_token) {
+  const accessToken = session.value?.access_token
+  if (!accessToken) {
     message.error('未登录，无法创建分享')
     return
   }
@@ -460,7 +463,7 @@ const handleCreateDirectShare = () => {
         recipientIds: state.selectedUserIds,
         message: state.message.trim() || undefined,
         showUsername: state.showUsername,
-        accessToken: session.value.access_token
+        accessToken
       })
 
       if (!result.success) {

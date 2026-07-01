@@ -13,7 +13,7 @@
  */
 
 import mitt from 'mitt'
-import type { ColorPresetId } from '@ottersage/design-tokens/color-presets'
+import type { ColorPresetId } from '@yiveno/design-tokens/color-presets'
 import type { BookmarkNode } from '@/types/domain/bookmark'
 
 /**

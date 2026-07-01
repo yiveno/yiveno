@@ -153,7 +153,7 @@ export class LLMAdapter {
 
     const quota = await hostedLLMClient.fetchQuota()
     if (quota) {
-      return `otterSage 托管 · ${quota.model}`
+      return `Yiveno 托管 · ${quota.model}`
     }
 
     return '未配置'

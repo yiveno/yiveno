@@ -156,7 +156,7 @@ export function useManagementLifecycle(options: UseManagementLifecycleOptions): 
       window.addEventListener('beforeunload', handleBeforeUnload)
 
       const g = window as unknown as Record<string, unknown>
-      g.OS_setFolderExpanded = (id: string, expanded?: boolean) => {
+      g.YV_setFolderExpanded = (id: string, expanded?: boolean) => {
         const comp = options.leftTreeRef.value
         if (!comp) return
         const sid = String(id)
@@ -170,12 +170,12 @@ export function useManagementLifecycle(options: UseManagementLifecycleOptions): 
           comp.collapseFolderById?.(sid)
         }
       }
-      g.OS_toggleFolder = (id: string) => {
+      g.YV_toggleFolder = (id: string) => {
         const comp = options.leftTreeRef.value
         if (!comp) return
         comp.toggleFolderById?.(String(id))
       }
-      g.OS_focusBookmark = (
+      g.YV_focusBookmark = (
         id: string,
         opts?: {
           collapseOthers?: boolean

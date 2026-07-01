@@ -184,7 +184,7 @@ frontend/src/components/
 ```vue
 <script setup lang="ts">
 // ✅ 使用 defineOptions 设置组件名
-defineOptions({ name: 'OtterSageButton' })
+defineOptions({ name: 'YivenoButton' })
 </script>
 ```
 

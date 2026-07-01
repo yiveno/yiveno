@@ -2,7 +2,7 @@
 
 **规格唯一正文**（产品、架构、数据流、交互与开发约定）：
 
-- [`product/otterSage-产品文档-v3.0.md`](./product/otterSage-产品文档-v3.0.md)
+- [`product/Yiveno-产品文档-v3.0.md`](./product/Yiveno-产品文档-v3.0.md)
 
 **运维 / 接入（非规格，与正文冲突时以正文为准）**：
 

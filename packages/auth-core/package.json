@@ -1,7 +1,7 @@
 {
-  "name": "@ottersage/auth-core",
+  "name": "@yiveno/auth-core",
   "version": "0.1.0",
-  "description": "Shared authentication core logic for otterSage",
+  "description": "Shared authentication core logic for Yiveno",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",

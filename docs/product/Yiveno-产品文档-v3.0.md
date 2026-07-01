@@ -1,4 +1,4 @@
-# otterSage - 完整产品文档 v3.0
+# Yiveno - 完整产品文档 v3.0
 
 > 📘 **文档目标**：为 AI 编程助手（Cursor / Kiro / Claude 等）提供完整项目上下文，确保生成代码符合本仓库架构与规范。
 >
@@ -37,7 +37,7 @@
 
 | 类型                                      | 路径                                               | 说明                                                                                               |
 | ----------------------------------------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| **产品 + 架构 + 交互 + 开发规范（正文）** | `docs/product/otterSage-产品文档-v3.0.md`          | **唯一**需要与「当前真实实现」持续对齐的规格文档；架构/数据流/UI 约定/质量门禁等**以本文件为准**。 |
+| **产品 + 架构 + 交互 + 开发规范（正文）** | `docs/product/Yiveno-产品文档-v3.0.md`             | **唯一**需要与「当前真实实现」持续对齐的规格文档；架构/数据流/UI 约定/质量门禁等**以本文件为准**。 |
 | IDE 规则                                  | `.cursor/rules/project.mdc`、`.kiro/steering/*.md` | **执行层**：行为约束、速查表；**不得**与产品正文冲突；若冲突**以本文件为准**并应立刻改 IDE 规则。  |
 | 运维/接入说明（非产品规格）               | 如 `docs/AUTH_GUIDE.md`                            | 操作步骤类可暂存；**与正文冲突时以正文为准**；结论性内容应迁回正文后删或缩为链接。                 |
 | 组件 / 模块 README                        | `frontend/src/**/README.md` 等                     | **局部说明**（用法、边界），不替代正文。                                                           |
@@ -82,9 +82,9 @@ frontend/src/
 
 ### 1.1 产品定位
 
-**otterSage** 是一款以 AI 语义检索为核心的 Chrome 书签扩展。
+**Yiveno** 是一款以 AI 语义检索为核心的 Chrome 书签扩展。
 
-**产品原点**：用户长年累月收藏了大量书签，收藏时不想花时间分类，用的时候又找不到。otterSage 解决的就是这个问题——**收藏零摩擦，检索靠语义**，让 AI 替用户记住每一条书签的内容，用户只需要输入脑海中模糊的关键词就能精准找到。
+**产品原点**：用户长年累月收藏了大量书签，收藏时不想花时间分类，用的时候又找不到。Yiveno 解决的就是这个问题——**收藏零摩擦，检索靠语义**，让 AI 替用户记住每一条书签的内容，用户只需要输入脑海中模糊的关键词就能精准找到。
 
 #### 核心设计哲学
 
@@ -116,7 +116,7 @@ frontend/src/
 
 **与 Material Design 3 的关系**：MD3 将 hover 列为标准 [Interaction states](https://m3.material.io/foundations/interaction/states) 之一，推荐通过 **state layer**（叠在组件表面上的半透明 on-container / on-surface 色层）与**容器属性**（底色、描边、阴影层级）区分状态；**不推荐**在**高密度列表行**上用位移、整行缩放充当 hover 主效果。
 
-**otterSage 约定（扩展 / 管理页 / 侧栏等书签列表与类列表 UI）**
+**Yiveno 约定（扩展 / 管理页 / 侧栏等书签列表与类列表 UI）**
 
 | 场景                                                           | 推荐                                                                                                      | 避免                                                                                                            |
 | -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
@@ -169,12 +169,12 @@ frontend/src/
 
 #### P3 - 支撑功能（必要但非重点）
 
-- **设置页面**：AI 功能开关等用户配置项；包含「语义检索」「AI 自动添加到合适目录」「一键整理」等开关；**Pro 用户默认启用 otterSage 托管 LLM**（DeepSeek V4 Flash，无需配置 API Key）；自定义 API Key 为可选项，配置后优先于托管 AI；向量嵌入（Embedding）仅在 **Pro 且开启语义检索** 时后台同步，**不再**提供独立「Embedding 设置」页
+- **设置页面**：AI 功能开关等用户配置项；包含「语义检索」「AI 自动添加到合适目录」「一键整理」等开关；**Pro 用户默认启用 Yiveno 托管 LLM**（DeepSeek V4 Flash，无需配置 API Key）；自定义 API Key 为可选项，配置后优先于托管 AI；向量嵌入（Embedding）仅在 **Pro 且开启语义检索** 时后台同步，**不再**提供独立「Embedding 设置」页
 - **数据统计**：Popup 页面展示书签总数、健康状态等基础指标
 
 ### 1.4 AI 能力架构策略
 
-作为个人开发者产品，otterSage 的 AI 能力遵循 **本地隐私优先、Embedding 为核心、LLM 按需增强** 的策略。
+作为个人开发者产品，Yiveno 的 AI 能力遵循 **本地隐私优先、Embedding 为核心、LLM 按需增强** 的策略。
 
 #### 第一层：本地检索（全员）与 Pro 语义检索
 
@@ -184,7 +184,7 @@ frontend/src/
 
 #### 第二层：Pro 托管 LLM（默认增强，开箱即用）
 
-- **Pro 用户默认**使用 otterSage 服务端托管的 **DeepSeek V4 Flash**，无需配置 API Key
+- **Pro 用户默认**使用 Yiveno 服务端托管的 **DeepSeek V4 Flash**，无需配置 API Key
 - 主要用于：一键整理、书签摘要、标签生成、文件夹描述等 **LLM 增强任务**（**不含**书签检索本身的 Embedding，检索向量为本地计算）
 - 调用经 `POST /api/ai/hosted/complete` 代理，**Supabase Access Token + Pro 订阅**鉴权
 - **月度配额由服务端控制**（默认 999 次/月，可通过 `AI_HOSTED_MONTHLY_QUOTA` 调整）
@@ -314,13 +314,13 @@ Pro 托管 LLM（DeepSeek V4 Flash）
 
 | 维度                             | 约定                                                                                                                                                                                                                                                                                |
 | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **用户登录 / 账户 / 定价等外链** | 统一使用 `frontend/src/config/website.ts` 中的 `websiteUrls` 与 `openWebsiteUrl()`（如 `UserMenu` 跳转登录页）；基地址由 `VITE_WEBSITE_URL` 覆盖，默认生产域为 `https://ottersage.com`。                                                                                            |
+| **用户登录 / 账户 / 定价等外链** | 统一使用 `frontend/src/config/website.ts` 中的 `websiteUrls` 与 `openWebsiteUrl()`（如 `UserMenu` 跳转登录页）；基地址由 `VITE_WEBSITE_URL` 覆盖，默认生产域为 `https://yiveno.com`。                                                                                               |
 | **官网与扩展的会话**             | 在官网匹配域上注入内容脚本 `auth-sync.js`（源码 `frontend/src/content/auth-sync.ts`）：监听官网 `localStorage` 中 Supabase session（`sb-*-auth-token`），通过 `chrome.runtime.sendMessage` 向 Background 发送 `SYNC_AUTH_SESSION` / `CLEAR_AUTH_SESSION`，由扩展侧持久化并驱动 UI。 |
 | **职责边界**                     | 登录与账户主流程在 **官网（Nuxt `website/`）**；扩展负责书签核心能力、展示登录态与跳转；避免在扩展内再维护一套完整账户注册页（与已删文档中的目标一致，实现路径已演进为 content script 同步而非独立 `auth.html` 页）。                                                               |
 
 ### 2.2 DDD 分层架构
 
-otterSage 严格遵循 **领域驱动设计（DDD）** 的分层架构：
+Yiveno 严格遵循 **领域驱动设计（DDD）** 的分层架构：
 
 ```
 frontend/src/
@@ -467,7 +467,7 @@ chrome.bookmarks.onCreated.addListener(async (id, bookmark) => {
 
   // 2. 广播消息到所有前端页面
   chrome.runtime.sendMessage({
-    type: 'ottersage-db-synced',
+    type: 'yiveno-db-synced',
     eventType: 'created',
     bookmarkId: id,
     timestamp: Date.now()
@@ -521,12 +521,12 @@ bun run format
 | **`packages/design-tokens/css/presets/*.css`**       | **六套配色**的亮/暗 `--md-sys-color-*`（由根目录 Builder 导出 + `build-material-color-presets.mjs` 生成）；运行时由 `data-color-preset` 选择。                                                           |
 | **`packages/design-tokens/css/material-theme.css`**  | 总入口：`@import` 各 `presets/*.css`，并含中等/高对比度与 `color-scheme` 段；**不**再内联整套标准亮/暗色（已拆至 presets）。                                                                             |
 | **`packages/design-tokens/css/semantic-colors.css`** | 业务语义色（success / warning / info、强调色、primary 阶梯、alpha）由 **`var(--md-sys-color-*)` 与 `color-mix`** 派生；换 M3 导出后一般**只需核对映射**，无需再堆 Hex。                                  |
-| **`frontend/src/design-system/tokens.css`**          | 扩展将 `--md-sys-*` / `--ottersage-*` 映射为项目对外的 **`--color-*`**（含阴影、遮罩、语义浅底等 P3 集中变量）。换肤后重点检查 **混色与阴影** 是否仍协调。                                               |
+| **`frontend/src/design-system/tokens.css`**          | 扩展将 `--md-sys-*` / `--yiveno-*` 映射为项目对外的 **`--color-*`**（含阴影、遮罩、语义浅底等 P3 集中变量）。换肤后重点检查 **混色与阴影** 是否仍协调。                                                  |
 | **`packages/design-tokens/src/colors.ts`**           | 供 **无法使用 CSS 变量** 的场景（如控制台样式字符串、Badge API）：`.css` 仍指向变量名；`.rgb` / `.hex` 为与 **默认 preset 亮侧** 一致的近似快照，换 `presets/default.css` 后应**同步校对** `colors.ts`。 |
 
 主题应用逻辑（不负责写死颜色，但换肤后需回归）：`frontend/src/composables/useThemeSync.ts`（同步 `data-theme` 与 `data-color-preset`）、`frontend/src/components/composite/ThemeToggle/ThemeToggle.vue`；**配色预设**在设置页「配色」标签 `frontend/src/pages/settings/sections/ColorPresetSettings.vue` 中选择，经 `frontend/src/infrastructure/global-state/global-state-manager.ts` 写入 `chrome.storage.local` / `sync` 的 `colorPreset` 键。View Transition 与主题相关选择器：`frontend/src/design-system/animations.css`。
 
-**官网（Nuxt）**：`website/nuxt.config.ts` 已引入 `@ottersage/design-tokens/css/material-theme.css`；`website/app.vue` 使用 `data-theme`。若官网要与扩展同一套色盘，需与上述 CSS **同源提交**，避免两处分叉。
+**官网（Nuxt）**：`website/nuxt.config.ts` 已引入 `@yiveno/design-tokens/css/material-theme.css`；`website/app.vue` 使用 `data-theme`。若官网要与扩展同一套色盘，需与上述 CSS **同源提交**，避免两处分叉。
 
 #### 2.5.2 换肤时要改 / 核对的文件清单
 
@@ -537,7 +537,7 @@ bun run format
    - **总入口**：`packages/design-tokens/css/material-theme.css` — `@import` 上述 preset，并保留中等/高对比度与 `color-scheme` 段。若仅替换「晴空」单套，可只更新 `Skyline` 源文件后重跑脚本。
 
 2. **强烈建议核对（派生与映射）**
-   - `packages/design-tokens/css/semantic-colors.css` — 确认 `--ottersage-*` 仍指向有效的 `--md-sys-color-*`。
+   - `packages/design-tokens/css/semantic-colors.css` — 确认 `--yiveno-*` 仍指向有效的 `--md-sys-color-*`。
    - `packages/design-tokens/src/colors.ts` — 更新 `materialColors` 及依赖新映射的 `semanticColors` / `accentColors` / `primaryScale` 的 **rgb/hex 快照**（若仅改 CSS 而不改 TS，非 CSS 场景可能仍显示旧色）。
 
 3. **按需核对（项目层）**
@@ -591,7 +591,7 @@ bun run stylelint:check
 
 **接入说明（后续开发）**：每套预设对应 Builder 导出的 **light + dark** 两套 `--md-sys-color-*` 赋值，经 `data-color-preset="<id>"` 与现有 `data-theme` 组合选择器挂到 `html`；默认套对应 `presets/default.css`（源目录 `Skyline`），更新流程见 §2.5.2。
 
-**文档路径（单一来源）**：`docs/product/otterSage-产品文档-v3.0.md` — 仓库内产品说明、架构与规范均以本文件为准，不另设平行「产品说明」文档。
+**文档路径（单一来源）**：`docs/product/Yiveno-产品文档-v3.0.md` — 仓库内产品说明、架构与规范均以本文件为准，不另设平行「产品说明」文档。
 
 ---
 
@@ -740,7 +740,7 @@ async function evaluateBookmarkTraits(bookmarkId: string) {
 
 - **TraitDataStore**: 单一数据源,管理所有特征统计
 - **智能缓存**: 5 分钟缓存,减少查询次数
-- **自动更新**: 监听 `ottersage-trait-updated` 消息自动刷新
+- **自动更新**: 监听 `yiveno-trait-updated` 消息自动刷新
 - **请求去重**: 防止并发重复请求
 - **自动重试**: 网络/数据库错误自动重试 3 次
 
@@ -991,10 +991,10 @@ const handleCreateLinkShare = async () => {
 }
 ```
 
-**短链接格式**：`https://ottersage.com/s/{shortCode}`
+**短链接格式**：`https://yiveno.com/s/{shortCode}`
 
 - `shortCode`：8 位随机字符串（a-zA-Z0-9）
-- 示例：`https://ottersage.com/s/abc12345`
+- 示例：`https://yiveno.com/s/abc12345`
 
 **统计数据**：
 
@@ -1076,8 +1076,8 @@ const handleCreateDirectShare = async () => {
 │                                     │
 │  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
 │                                     │
-│  由 otterSage 生成             │
-│  ottersage.com                │
+│  由 Yiveno 生成             │
+│  yiveno.com                │
 │                                     │
 └─────────────────────────────────────┘
 ```
@@ -1117,8 +1117,8 @@ async function generatePoster(options: PosterOptions): Promise<string> {
   // 4. 绘制品牌标识
   ctx.font = '14px sans-serif'
   ctx.fillStyle = '#83d5c5'
-  ctx.fillText('由 otterSage 生成', 40, canvas.height - 60)
-  ctx.fillText('ottersage.com', 40, canvas.height - 30)
+  ctx.fillText('由 Yiveno 生成', 40, canvas.height - 60)
+  ctx.fillText('yiveno.com', 40, canvas.height - 30)
 
   // 5. 返回 Data URL
   return canvas.toDataURL('image/png')
@@ -1160,7 +1160,7 @@ async function generatePoster(options: PosterOptions): Promise<string> {
 
 - 当有移动端 App/网页时，可以在海报上添加二维码
 - 用户扫码 → 跳转到移动端 → 显示书签列表 → 一键导入
-- 二维码指向短链接：`https://ottersage.com/s/{shortCode}`
+- 二维码指向短链接：`https://yiveno.com/s/{shortCode}`
 
 **分享统计增强**：
 
@@ -1373,7 +1373,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 chrome.bookmarks.onCreated.addListener(async (id, bookmark) => {
   await bookmarkSyncService.syncIncremental('created', id)
   chrome.runtime.sendMessage({
-    type: 'ottersage-db-synced',
+    type: 'yiveno-db-synced',
     eventType: 'created',
     bookmarkId: id
   })
@@ -1455,7 +1455,7 @@ unsubscribe()
 ```typescript
 export function initializeChromeMessageBridge() {
   chrome.runtime.onMessage.addListener(message => {
-    if (message.type === 'ottersage-db-synced') {
+    if (message.type === 'yiveno-db-synced') {
       // 将 Chrome 消息转换为 mitt 事件
       emitEvent('data:synced', {
         eventType: message.eventType,
@@ -1473,7 +1473,7 @@ export function initializeChromeMessageBridge() {
 
 ### 6.1 存储层级划分
 
-otterSage 使用 **四层存储架构**，每层有明确的职责：
+Yiveno 使用 **四层存储架构**，每层有明确的职责：
 
 | 存储类型                   | 生命周期                   | 容量限制           | 使用场景                                    | Chrome 版本要求 |
 | -------------------------- | -------------------------- | ------------------ | ------------------------------------------- | --------------- |
@@ -1486,7 +1486,7 @@ otterSage 使用 **四层存储架构**，每层有明确的职责：
 
 #### 6.2.1 数据库结构
 
-**数据库名称**：`otterSageDB`  
+**数据库名称**：`YivenoDB`  
 **版本号**：`11`
 
 **对象存储（Object Stores）**：
@@ -1618,7 +1618,7 @@ interface BookmarkRecord {
 
 ```typescript
 // 1. 数据库就绪状态（会话级）
-await chromeStorage.setSession('os_db_ready', true)
+await chromeStorage.setSession('yv_db_ready', true)
 
 // 2. 同步状态（防止重复同步）
 await modernStorage.setSession('SYNC_STATE', { isSyncing: true })
@@ -1650,7 +1650,7 @@ await modernStorage.setLocal('USER_PREFERENCES', {
 
 // 2. 扩展配置
 await modernStorage.setLocal('EXTENSION_CONFIG', {
-  apiEndpoint: 'https://api.ottersage.com',
+  apiEndpoint: 'https://api.yiveno.com',
   enableAI: true
 })
 
@@ -2091,7 +2091,7 @@ Worker 异步带来的"UI 流畅度"毫无价值
 | 已登录 Pro 且开启「语义检索」        | `hybrid`     | FlexSearch 文本命中优先；Embedding 仅补充未命中项（最多 3 条，不重复、不混合打分） |
 
 - **开关存储**：`chrome.storage.local` 键 `semanticSearchEnabled`（默认 `true`，Pro 可在设置页关闭）
-- **Pro 判定**：读取 `ottersage_subscription_cache` 中 `subscriptionStatus.tier === 'pro' && status === 'active'`
+- **Pro 判定**：读取 `yiveno_subscription_cache` 中 `subscriptionStatus.tier === 'pro' && status === 'active'`
 - **登录判定**：读取 `supabase.auth.token`（或 dev 对应键）中有效 `access_token`
 - **Embedding 同步**：仅 `hybrid` 模式触发 `SYNC_BOOKMARK_EMBEDDINGS`；Free 不同步向量
 - **Omnibox**：Service Worker 经 `bookmarkSearchService.searchWithMetadata` 检索；语义分支默认 **30s** 超时（含 Offscreen + 模型冷启动），超时降级为 FlexSearch 结果
@@ -2459,7 +2459,7 @@ bun run stylelint          # 样式检查
 
 ### Q6: Pro 托管 LLM 是如何工作的？
 
-**A**: Pro 用户默认使用 otterSage 服务端代理的 **DeepSeek V4 Flash**，无需配置 API Key。
+**A**: Pro 用户默认使用 Yiveno 服务端代理的 **DeepSeek V4 Flash**，无需配置 API Key。
 
 **工作流程**：
 
@@ -2481,13 +2481,13 @@ Pro 托管 LLM（DeepSeek V4 Flash）
 **隐私说明**：
 
 - 托管模式会发送**书签标题 + URL**到服务器
-- 配置自定义 API Key 后，数据直连第三方，不经 otterSage 服务器
+- 配置自定义 API Key 后，数据直连第三方，不经 Yiveno 服务器
 
 ---
 
 ## 结语
 
-这份文档涵盖了 otterSage 项目的所有关键信息，旨在帮助 AI 编程助手（Cursor/Copilot）：
+这份文档涵盖了 Yiveno 项目的所有关键信息，旨在帮助 AI 编程助手（Cursor/Copilot）：
 
 1. ✅ **理解架构**：DDD 分层、单向数据流、存储方案
 2. ✅ **遵循规范**：TypeScript、Vue、Pinia、命名规范
@@ -2504,10 +2504,10 @@ Pro 托管 LLM（DeepSeek V4 Flash）
 
 ---
 
-**文档维护者**：otterSage 开发团队  
+**文档维护者**：Yiveno 开发团队  
 **联系方式**：通过 GitHub Issues 反馈问题  
 **最后更新**：2026-04-24
 
 ---
 
-© 2025 otterSage. All Rights Reserved.
+© 2025 Yiveno. All Rights Reserved.

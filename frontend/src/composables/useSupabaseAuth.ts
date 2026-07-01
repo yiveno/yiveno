@@ -41,7 +41,7 @@ const STORAGE_KEYS = {
 const LOGIN_SCOPED_STORAGE_KEYS = [
   'current_login_provider',
   STORAGE_KEYS.LAST_ACTIVITY,
-  'ottersage_subscription_cache',
+  'yiveno_subscription_cache',
   'USER_AI_CONFIG',
   'supabase_session'
 ] as const

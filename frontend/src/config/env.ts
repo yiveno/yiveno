@@ -56,7 +56,7 @@ const rawEnv = parsed.success ? parsed.data : {}
 const runtimeEnv = rawEnv.VITE_RUNTIME_ENV ?? 'dev'
 
 /** dev 构建未注入 VITE_WEBSITE_URL 时默认本地官网，避免误跳生产站 */
-const defaultWebsiteUrl = runtimeEnv === 'prod' ? 'https://ottersage.com' : 'http://localhost:3001'
+const defaultWebsiteUrl = runtimeEnv === 'prod' ? 'https://yiveno.com' : 'http://localhost:3001'
 
 export const frontendEnv = {
   apiBaseUrl: rawEnv.VITE_API_BASE_URL,

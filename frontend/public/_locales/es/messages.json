@@ -1,12 +1,12 @@
 {
   "app_name": {
-    "message": "otterSage"
+    "message": "Yiveno"
   },
   "app_description": {
     "message": "Desbloquea el conocimiento en tus marcadores. Organización impulsada por IA, búsqueda consciente del contenido."
   },
   "welcome": {
-    "message": "¡Bienvenido a otterSage!"
+    "message": "¡Bienvenido a Yiveno!"
   },
   "search_placeholder": {
     "message": "Filtrar marcadores…"
@@ -1128,7 +1128,7 @@
     "message": "de"
   },
   "onboarding_welcome_title": {
-    "message": "Bienvenido a otterSage"
+    "message": "Bienvenido a Yiveno"
   },
   "onboarding_welcome_subtitle": {
     "message": "Gestor de marcadores con IA"
@@ -2197,7 +2197,7 @@
     "message": "INTEGRACIÓN PERFECTA"
   },
   "onboarding_omnibox_description": {
-    "message": "Escribe \"os\" + espacio para buscar marcadores directamente en la barra de direcciones. No necesitas abrir el panel de extensión, busca y accede de una vez. Integra la gestión de marcadores en tu flujo de trabajo diario."
+    "message": "Escribe \"yv\" + espacio para buscar marcadores directamente en la barra de direcciones. No necesitas abrir el panel de extensión, busca y accede de una vez. Integra la gestión de marcadores en tu flujo de trabajo diario."
   },
   "onboarding_privacy_title": {
     "message": "Privacidad Primero, Datos Localizados"
@@ -2215,7 +2215,7 @@
     "message": "TODO LISTO"
   },
   "onboarding_ready_description": {
-    "message": "Gracias por tomarte el tiempo para conocer las características de otterSage. Después de hacer clic en \"Comenzar\", esta página se cerrará automáticamente y podrás comenzar a disfrutar de la gestión inteligente de marcadores."
+    "message": "Gracias por tomarte el tiempo para conocer las características de Yiveno. Después de hacer clic en \"Comenzar\", esta página se cerrará automáticamente y podrás comenzar a disfrutar de la gestión inteligente de marcadores."
   },
   "onboarding_initializing": {
     "message": "Inicializando..."

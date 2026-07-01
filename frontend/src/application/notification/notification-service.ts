@@ -952,7 +952,7 @@ export class NotificationService {
       const response = await chrome.runtime.sendMessage({
         type: 'NOTIFICATION',
         data: {
-          title: notification.options.title || 'otterSage',
+          title: notification.options.title || 'Yiveno',
           message: notification.message,
           iconUrl: notification.options.iconUrl || ''
         }

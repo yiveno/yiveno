@@ -88,14 +88,14 @@ function nextStep() {
 }
 
 const messageListener = (message: ChromeExtensionMessage) => {
-  if (message.type === 'ottersage-sync-progress') {
+  if (message.type === 'yiveno-sync-progress') {
     progress.value = message.data.percentage
     progressMessage.value = message.data.message
 
     if (message.data.phase === 'completed') {
       completeSync()
     }
-  } else if (message.type === 'ottersage-db-ready') {
+  } else if (message.type === 'yiveno-db-ready') {
     completeSync()
   }
 }
@@ -151,8 +151,8 @@ onUnmounted(() => {
     <!-- Header -->
     <header class="onboarding-header">
       <div class="logo-container">
-        <img src="/logo.webp" alt="otterSage Logo" class="logo-icon" />
-        <span class="logo-text">otterSage</span>
+        <img src="/logo.webp" alt="Yiveno Logo" class="logo-icon" />
+        <span class="logo-text">Yiveno</span>
       </div>
     </header>
 
@@ -166,7 +166,7 @@ onUnmounted(() => {
             <div v-if="currentStep.visual === 'hero'" class="visual-hero">
               <div class="hero-glow"></div>
               <div class="hero-icon">
-                <img src="/logo.webp" alt="otterSage" class="hero-logo" />
+                <img src="/logo.webp" alt="Yiveno" class="hero-logo" />
               </div>
             </div>
 
@@ -229,7 +229,7 @@ onUnmounted(() => {
                   <LucideIcon name="search" size="sm" />
                 </div>
                 <div class="omnibox-input">
-                  <span class="omnibox-keyword">os</span>
+                  <span class="omnibox-keyword">yv</span>
                   <span class="omnibox-query">设计资源</span>
                 </div>
               </div>

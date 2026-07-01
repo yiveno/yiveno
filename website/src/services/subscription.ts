@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.PUBLIC_API_BASE_URL || 'https://api.ottersage.com'
+const API_BASE = import.meta.env.PUBLIC_API_BASE_URL || 'https://api.yiveno.com'
 
 export interface UserSubscription {
   plan_id: string

@@ -198,7 +198,7 @@ export const useTraitDataStore = defineStore('traitData', () => {
   function setupAutoRefreshListener(): void {
     chrome.runtime.onMessage.addListener(message => {
       if (typeof chrome === 'undefined' || !chrome.runtime?.id) return
-      if (message.type === 'ottersage-trait-updated') {
+      if (message.type === 'yiveno-trait-updated') {
         logger.info('TraitDataStore', '🏷️ 收到特征更新消息，自动刷新')
 
         // 强制刷新（忽略缓存）

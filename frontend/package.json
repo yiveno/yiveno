@@ -42,7 +42,7 @@
     "i18n:replace": "bun scripts/i18n-replace.ts"
   },
   "dependencies": {
-    "@ottersage/design-tokens": "workspace:*",
+    "@yiveno/design-tokens": "workspace:*",
     "@atlaskit/pragmatic-drag-and-drop": "^1.7.7",
     "@huggingface/transformers": "^4.2.0",
     "@material/web": "^2.4.1",

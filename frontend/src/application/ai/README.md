@@ -8,7 +8,7 @@
 
 1. **用户自带 API Key**（OpenAI / Claude / Gemini / DeepSeek）
    - 配置后优先使用
-   - 直连第三方，不经 otterSage 服务器
+   - 直连第三方，不经 Yiveno 服务器
 
 2. **Pro 托管 LLM**（DeepSeek V4 Flash）
    - Pro 用户默认，无需配置

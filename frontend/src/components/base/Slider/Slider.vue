@@ -63,26 +63,26 @@ const sliderAttrs = computed(() => ({
 </script>
 
 <template>
-  <div class="ottersage-slider-wrapper">
+  <div class="yiveno-slider-wrapper">
     <!-- 范围标签 -->
-    <span v-if="withRangeLabel" class="ottersage-slider-range-label">
+    <span v-if="withRangeLabel" class="yiveno-slider-range-label">
       {{ min }}
     </span>
 
     <md-slider
       v-bind="sliderAttrs"
-      class="ottersage-slider"
+      class="yiveno-slider"
       @input="handleInput"
       @change="handleChange"
     />
 
     <!-- 范围标签 -->
-    <span v-if="withRangeLabel" class="ottersage-slider-range-label">
+    <span v-if="withRangeLabel" class="yiveno-slider-range-label">
       {{ max }}
     </span>
 
     <!-- 当前值显示 -->
-    <div v-if="$slots.value" class="ottersage-slider-value">
+    <div v-if="$slots.value" class="yiveno-slider-value">
       <slot name="value" :value="modelValue" :formatted="formattedValue" />
     </div>
   </div>
@@ -101,25 +101,25 @@ const sliderAttrs = computed(() => ({
  * - 完全符合 Material Design 3 规范
  */
 
-.ottersage-slider-wrapper {
+.yiveno-slider-wrapper {
   display: flex;
   align-items: center;
   gap: var(--spacing-3);
   width: 100%;
 }
 
-.ottersage-slider {
+.yiveno-slider {
   flex: 1;
   min-width: 200px;
 }
 
-.ottersage-slider-range-label {
+.yiveno-slider-range-label {
   flex-shrink: 0;
   font-size: var(--text-sm);
   color: var(--color-text-secondary);
 }
 
-.ottersage-slider-value {
+.yiveno-slider-value {
   flex-shrink: 0;
   min-width: 4rem;
   font-size: var(--text-sm);

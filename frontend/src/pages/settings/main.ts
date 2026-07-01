@@ -4,9 +4,9 @@ import App from './Settings.vue'
 import ThemeToggle from '@/components/composite/ThemeToggle/ThemeToggle.vue'
 
 // ✅ 1. 先导入样式（确保 CSS 变量在 Material Web Components 加载前可用）
-import '@ottersage/design-tokens/css/material-theme.css'
-import '@ottersage/design-tokens/css/variables.css'
-import '@ottersage/design-tokens/css/semantic-colors.css'
+import '@yiveno/design-tokens/css/material-theme.css'
+import '@yiveno/design-tokens/css/variables.css'
+import '@yiveno/design-tokens/css/semantic-colors.css'
 import '@/assets/main.css'
 import '@/assets/fonts.css'
 import '@/assets/smart-fonts.css'

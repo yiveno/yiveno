@@ -196,7 +196,7 @@ function openNotification(notification: InboxNotification): void {
 
       // 开发环境：自动替换为本地地址
       if (import.meta.env.DEV) {
-        shareUrl = shareUrl.replace('https://ottersage.com', 'http://localhost:3001')
+        shareUrl = shareUrl.replace('https://yiveno.com', 'http://localhost:3001')
         logger.debug('InboxNotificationService', '开发环境：替换为本地地址', {
           original: notification.data.share_url,
           replaced: shareUrl

@@ -3,7 +3,7 @@
  */
 
 import type { Env } from '../../types/env'
-import type { PaymentRecord, PaymentStatus } from '@ottersage/types'
+import type { PaymentRecord, PaymentStatus } from '@yiveno/types'
 import { insertPaymentRecord } from '../../data-access/supabase'
 import type { GumroadWebhookPayload } from './webhook-parser'
 

@@ -5,7 +5,7 @@ description: Review Chrome Extension code for DDD architecture violations, Servi
 
 # Chrome Extension 架构守护
 
-> **目的**：确保严格遵守 otterSage 的 DDD 架构和 Chrome Extension 最佳实践
+> **目的**：确保严格遵守 Yiveno 的 DDD 架构和 Chrome Extension 最佳实践
 
 ## 🛡️ 架构铁律（必须严格遵守）
 
@@ -228,7 +228,7 @@ grep -r "document\." frontend/src/background/
 
 - [项目架构规范](../../.kiro/steering/project.md)
 - [AGENTS.md](../../AGENTS.md)
-- [产品文档](../../docs/product/otterSage-产品文档-v3.0.md)
+- [产品文档](../../docs/product/Yiveno-产品文档-v3.0.md)
 
 ---
 

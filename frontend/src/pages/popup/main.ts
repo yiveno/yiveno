@@ -2,9 +2,9 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import { VueQueryPlugin } from '@tanstack/vue-query'
 import Popup from './Popup.vue'
-import '@ottersage/design-tokens/css/material-theme.css'
-import '@ottersage/design-tokens/css/variables.css'
-import '@ottersage/design-tokens/css/semantic-colors.css'
+import '@yiveno/design-tokens/css/material-theme.css'
+import '@yiveno/design-tokens/css/variables.css'
+import '@yiveno/design-tokens/css/semantic-colors.css'
 import '@/assets/main.css'
 import '@/assets/fonts.css'
 import '@/assets/smart-fonts.css'
@@ -54,7 +54,7 @@ async function initializePopup(): Promise<void> {
     initCrossPageSync()
 
     const loadTime = performance.now() - startTime
-    logger.info('Popup', `🎉 otterSage Popup 启动完成 (${loadTime.toFixed(2)}ms)`)
+    logger.info('Popup', `🎉 Yiveno Popup 启动完成 (${loadTime.toFixed(2)}ms)`)
     logger.info('Popup', '🧠 智能多语言字体系统已激活')
 
     setTimeout(() => performanceMonitor.printReport(), 2000)

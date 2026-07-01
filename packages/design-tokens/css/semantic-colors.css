@@ -1,5 +1,5 @@
 /**
- * otterSage Design Tokens - Semantic Colors
+ * Yiveno Design Tokens - Semantic Colors
  *
  * 语义色与强调色：全部派生自 material-theme.css 的 M3 角色（--md-sys-color-*），
  * 换 Theme Builder 导出种子后自动联动，勿在此文件写死 Hex（P2）。
@@ -17,95 +17,87 @@
    * 语义色 (Semantic) — 映射到 M3 角色
    * ======================================== */
 
-  --ottersage-semantic-info: var(--md-sys-color-primary);
-  --ottersage-semantic-info-container: var(--md-sys-color-primary-container);
-  --ottersage-semantic-on-info: var(--md-sys-color-on-primary);
-  --ottersage-semantic-on-info-container: var(--md-sys-color-on-primary-container);
-
-  --ottersage-semantic-success: var(--md-sys-color-secondary);
-  --ottersage-semantic-success-container: var(--md-sys-color-secondary-container);
-  --ottersage-semantic-on-success: var(--md-sys-color-on-secondary);
-  --ottersage-semantic-on-success-container: var(--md-sys-color-on-secondary-container);
-
-  --ottersage-semantic-warning: var(--md-sys-color-tertiary);
-  --ottersage-semantic-warning-container: var(--md-sys-color-tertiary-container);
-  --ottersage-semantic-on-warning: var(--md-sys-color-on-tertiary);
-  --ottersage-semantic-on-warning-container: var(--md-sys-color-on-tertiary-container);
+  --yiveno-semantic-info: var(--md-sys-color-primary);
+  --yiveno-semantic-info-container: var(--md-sys-color-primary-container);
+  --yiveno-semantic-on-info: var(--md-sys-color-on-primary);
+  --yiveno-semantic-on-info-container: var(--md-sys-color-on-primary-container);
+  --yiveno-semantic-success: var(--md-sys-color-secondary);
+  --yiveno-semantic-success-container: var(--md-sys-color-secondary-container);
+  --yiveno-semantic-on-success: var(--md-sys-color-on-secondary);
+  --yiveno-semantic-on-success-container: var(--md-sys-color-on-secondary-container);
+  --yiveno-semantic-warning: var(--md-sys-color-tertiary);
+  --yiveno-semantic-warning-container: var(--md-sys-color-tertiary-container);
+  --yiveno-semantic-on-warning: var(--md-sys-color-on-tertiary);
+  --yiveno-semantic-on-warning-container: var(--md-sys-color-on-tertiary-container);
 
   /* ========================================
    * 强调色 (Accent) — color-mix 自 M3，无独立 Hex
    * ======================================== */
 
-  --ottersage-accent-teal: color-mix(
+  --yiveno-accent-teal: color-mix(
     in srgb,
     var(--md-sys-color-primary) 45%,
     var(--md-sys-color-secondary) 55%
   );
-  --ottersage-accent-teal-hover: color-mix(
+  --yiveno-accent-teal-hover: color-mix(
     in srgb,
-    var(--ottersage-accent-teal) 88%,
+    var(--yiveno-accent-teal) 88%,
     var(--md-sys-color-on-surface) 12%
   );
 
   /* 暖色高光：在蓝种子下用 error 少量掺入 primary-fixed-dim，避免脱离色板 */
-  --ottersage-accent-gold: color-mix(
+  --yiveno-accent-gold: color-mix(
     in srgb,
     var(--md-sys-color-error) 12%,
     var(--md-sys-color-primary-fixed-dim) 88%
   );
-  --ottersage-accent-gold-hover: color-mix(
+  --yiveno-accent-gold-hover: color-mix(
     in srgb,
-    var(--ottersage-accent-gold) 88%,
+    var(--yiveno-accent-gold) 88%,
     var(--md-sys-color-surface) 12%
   );
-
-  --ottersage-accent-amber: color-mix(
+  --yiveno-accent-amber: color-mix(
     in srgb,
     var(--md-sys-color-error) 28%,
     var(--md-sys-color-primary-fixed-dim) 72%
   );
-  --ottersage-accent-amber-container: color-mix(
+  --yiveno-accent-amber-container: color-mix(
     in srgb,
     var(--md-sys-color-primary-container) 55%,
     var(--md-sys-color-tertiary-container) 45%
   );
-
-  --ottersage-accent-purple: var(--md-sys-color-tertiary);
-  --ottersage-accent-purple-container: var(--md-sys-color-tertiary-container);
-  --ottersage-accent-ai: var(--ottersage-accent-purple);
-  --ottersage-accent-ai-container: var(--ottersage-accent-purple-container);
-  --ottersage-accent-on-ai: var(--md-sys-color-on-tertiary);
-  --ottersage-accent-on-ai-container: var(--md-sys-color-on-tertiary-container);
+  --yiveno-accent-purple: var(--md-sys-color-tertiary);
+  --yiveno-accent-purple-container: var(--md-sys-color-tertiary-container);
+  --yiveno-accent-ai: var(--yiveno-accent-purple);
+  --yiveno-accent-ai-container: var(--yiveno-accent-purple-container);
+  --yiveno-accent-on-ai: var(--md-sys-color-on-tertiary);
+  --yiveno-accent-on-ai-container: var(--md-sys-color-on-tertiary-container);
 
   /* ========================================
    * Primary 阶梯 — 由当前主题 primary 混色生成（非 Tailwind 固定板）
    * ======================================== */
 
-  --ottersage-primary-50: color-mix(in srgb, var(--md-sys-color-primary) 14%, white);
-  --ottersage-primary-100: color-mix(in srgb, var(--md-sys-color-primary) 28%, white);
-  --ottersage-primary-200: color-mix(in srgb, var(--md-sys-color-primary) 42%, white);
-  --ottersage-primary-300: color-mix(in srgb, var(--md-sys-color-primary) 58%, white);
-  --ottersage-primary-400: color-mix(in srgb, var(--md-sys-color-primary) 75%, white);
-  --ottersage-primary-500: var(--md-sys-color-primary);
-  --ottersage-primary-600: color-mix(in srgb, var(--md-sys-color-primary) 90%, black);
-  --ottersage-primary-700: color-mix(in srgb, var(--md-sys-color-primary) 78%, black);
-  --ottersage-primary-800: color-mix(in srgb, var(--md-sys-color-primary) 65%, black);
-  --ottersage-primary-900: color-mix(in srgb, var(--md-sys-color-primary) 52%, black);
+  --yiveno-primary-50: color-mix(in srgb, var(--md-sys-color-primary) 14%, white);
+  --yiveno-primary-100: color-mix(in srgb, var(--md-sys-color-primary) 28%, white);
+  --yiveno-primary-200: color-mix(in srgb, var(--md-sys-color-primary) 42%, white);
+  --yiveno-primary-300: color-mix(in srgb, var(--md-sys-color-primary) 58%, white);
+  --yiveno-primary-400: color-mix(in srgb, var(--md-sys-color-primary) 75%, white);
+  --yiveno-primary-500: var(--md-sys-color-primary);
+  --yiveno-primary-600: color-mix(in srgb, var(--md-sys-color-primary) 90%, black);
+  --yiveno-primary-700: color-mix(in srgb, var(--md-sys-color-primary) 78%, black);
+  --yiveno-primary-800: color-mix(in srgb, var(--md-sys-color-primary) 65%, black);
+  --yiveno-primary-900: color-mix(in srgb, var(--md-sys-color-primary) 52%, black);
 
   /* ========================================
    * Alpha — color-mix(in srgb, …, transparent)
    * ======================================== */
 
-  --ottersage-primary-alpha-10: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
-  --ottersage-primary-alpha-20: color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
-  --ottersage-secondary-alpha-10: color-mix(
-    in srgb,
-    var(--md-sys-color-secondary) 10%,
-    transparent
-  );
-  --ottersage-error-alpha-10: color-mix(in srgb, var(--md-sys-color-error) 10%, transparent);
-  --ottersage-warning-alpha-10: color-mix(in srgb, var(--md-sys-color-tertiary) 10%, transparent);
-  --ottersage-warning-alpha-20: color-mix(in srgb, var(--md-sys-color-tertiary) 20%, transparent);
-  --ottersage-success-alpha-10: color-mix(in srgb, var(--md-sys-color-secondary) 10%, transparent);
-  --ottersage-info-alpha-10: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
+  --yiveno-primary-alpha-10: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
+  --yiveno-primary-alpha-20: color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
+  --yiveno-secondary-alpha-10: color-mix(in srgb, var(--md-sys-color-secondary) 10%, transparent);
+  --yiveno-error-alpha-10: color-mix(in srgb, var(--md-sys-color-error) 10%, transparent);
+  --yiveno-warning-alpha-10: color-mix(in srgb, var(--md-sys-color-tertiary) 10%, transparent);
+  --yiveno-warning-alpha-20: color-mix(in srgb, var(--md-sys-color-tertiary) 20%, transparent);
+  --yiveno-success-alpha-10: color-mix(in srgb, var(--md-sys-color-secondary) 10%, transparent);
+  --yiveno-info-alpha-10: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
 }

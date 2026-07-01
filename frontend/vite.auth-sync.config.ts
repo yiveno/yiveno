@@ -21,7 +21,7 @@ export default defineConfig({
     emptyOutDir: false,
     lib: {
       entry: resolve(ROOT_DIR, 'src/content/auth-sync.ts'),
-      name: 'OtterSageAuthSync',
+      name: 'YivenoAuthSync',
       formats: ['iife'],
       fileName: () => 'auth-sync.bundle.js'
     },

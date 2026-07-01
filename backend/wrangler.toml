@@ -1,4 +1,4 @@
-name = "ottersage"
+name = "yiveno"
 main = "src/index.ts"
 compatibility_date = "2024-10-01"
 workers_dev = true
@@ -32,7 +32,7 @@ head_sampling_rate = 0
 [vars]
 SUPABASE_URL = "https://ugxgxytykxblctsyulsg.supabase.co"
 SUPABASE_ANON_KEY = "sb_publishable_2FY9uDfqNbLwUYXxgcu8lw_qQ8SEbXo"
-REDIRECT_URI_ALLOWLIST = "https://ottersage.com,http://localhost:3001,http://localhost:3002"
+REDIRECT_URI_ALLOWLIST = "https://yiveno.com,http://localhost:3001,http://localhost:3002"
 AI_HOSTED_MODEL = "deepseek-v4-flash"
 AI_HOSTED_MONTHLY_QUOTA = "999"
 DEEPSEEK_API_BASE = "https://api.deepseek.com"
@@ -47,5 +47,5 @@ binding = "AI"
 
 # Production 环境配置
 routes = [
-  { pattern = "api.ottersage.com", custom_domain = true }
+  { pattern = "api.yiveno.com", custom_domain = true }
 ]

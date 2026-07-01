@@ -35,7 +35,7 @@ function isExtensionContextInvalidatedError(error: unknown): boolean {
 }
 
 if (!isAuthSyncHostAllowed(currentHost)) {
-  // 非本环境官网（如 dev 扩展访问 ottersage.com），彻底不同步
+  // 非本环境官网（如 dev 扩展访问 yiveno.com），彻底不同步
 } else {
   const projectRef = getSupabaseProjectRef(AUTH_SUPABASE_URL)
   const websiteSessionKey = projectRef ? getWebsiteSupabaseSessionKey(projectRef) : null

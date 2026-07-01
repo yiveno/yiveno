@@ -211,7 +211,7 @@ function buildResultSummaryDescription(query: string, count: number): string {
  */
 function createErrorSuggestion(query: string): chrome.omnibox.SuggestResult {
   return {
-    content: `ottersage://error?query=${encodeURIComponent(query)}`,
+    content: `yiveno://error?query=${encodeURIComponent(query)}`,
     description: buildErrorDescription(query)
   }
 }
@@ -253,7 +253,7 @@ const DEBOUNCE_MS = 50
 /**
  * 默认提示文案：仅在输入框为空时展示，提醒用户可以使用 Omnibox 查询书签。
  */
-const DEFAULT_IDLE_DESCRIPTION = buildDescription('otterSage：输入关键字快速查找书签')
+const DEFAULT_IDLE_DESCRIPTION = buildDescription('Yiveno：输入关键字快速查找书签')
 
 /**
  * 当存在查询时使用的“空白”占位文案，避免重复显示默认提示。
@@ -404,7 +404,7 @@ function safeSuggest(
  * 将查询结果转换为 Omnibox 建议格式
  *
  * 与 Popup / SidePanel 保持完全一致，不做 URL 去重。
- * 同 URL 的书签使用 ottersage://open 协议确保 content 唯一（避免 Chrome 按 content 隐式去重）。
+ * 同 URL 的书签使用 yiveno://open 协议确保 content 唯一（避免 Chrome 按 content 隐式去重）。
  *
  * @param results - 查询结果数组
  * @returns Omnibox 建议结果数组
@@ -436,10 +436,10 @@ function buildSuggestions(
     let content: string
     if (url) {
       const params = new URLSearchParams({ id, url })
-      content = `ottersage://open?${params.toString()}`
+      content = `yiveno://open?${params.toString()}`
     } else {
       const params = new URLSearchParams({ id, title, source: 'omnibox' })
-      content = `ottersage://bookmark?${params.toString()}`
+      content = `yiveno://bookmark?${params.toString()}`
     }
 
     suggestions.push({ content, description })
@@ -475,7 +475,7 @@ interface ParsedSuggestion {
 function parseSuggestionContent(text: string): ParsedSuggestion {
   try {
     const url = new URL(text)
-    if (url.protocol === 'ottersage:') {
+    if (url.protocol === 'yiveno:') {
       const rawView = url.hostname
       let normalizedView: ParsedSuggestion['view'] = 'noop'
       if (rawView === 'manage') {

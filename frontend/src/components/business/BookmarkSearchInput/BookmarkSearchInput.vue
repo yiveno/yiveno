@@ -1206,7 +1206,7 @@ onUnmounted(() => {
  */
 if (typeof chrome !== 'undefined' && chrome.runtime) {
   chrome.runtime.onMessage.addListener(message => {
-    if (message.type === 'ottersage-db-synced') {
+    if (message.type === 'yiveno-db-synced') {
       // 使用 queueMicrotask 避免阻塞消息处理
       queueMicrotask(async () => {
         void updateTraitCounts()
@@ -1593,7 +1593,7 @@ defineExpose({
   box-shadow: 0 2px 6px var(--color-error-alpha-30);
 }
 
-.search-icon-button.has-query:hover :deep(.ottersage-icon) {
+.search-icon-button.has-query:hover :deep(.yiveno-icon) {
   color: var(--color-text-on-primary);
 }
 

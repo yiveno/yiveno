@@ -91,7 +91,7 @@ export async function ensureOffscreenDocument(
       .createDocument({
         url: OFFSCREEN_URL,
         reasons: ['DOM_SCRAPING'],
-        justification: `otterSage needs to perform ${reason} tasks in the background.`
+        justification: `Yiveno needs to perform ${reason} tasks in the background.`
       })
       .then(async () => {
         logger.info('OffscreenManager', `✅ Offscreen Document 已创建，原因: ${reason}`)

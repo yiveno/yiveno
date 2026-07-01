@@ -8,7 +8,7 @@ import { isSemanticSearchEnabled, SEMANTIC_SEARCH_STORAGE_KEY } from '@/core/ai/
 import type { SearchStrategy } from '@/types/domain/query'
 
 /** 订阅缓存键（与 useSubscription 一致） */
-export const SUBSCRIPTION_CACHE_KEY = 'ottersage_subscription_cache'
+export const SUBSCRIPTION_CACHE_KEY = 'yiveno_subscription_cache'
 
 /** 对外有效检索策略（与 SearchStrategy 一致） */
 export type EffectiveSearchStrategy = SearchStrategy

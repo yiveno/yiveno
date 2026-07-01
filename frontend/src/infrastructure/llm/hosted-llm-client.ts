@@ -1,7 +1,7 @@
 /**
  * Pro 托管 LLM 客户端
  *
- * 通过 otterSage 后端代理 DeepSeek，配额由服务端控制。
+ * 通过 Yiveno 后端代理 DeepSeek，配额由服务端控制。
  */
 
 import { API_CONFIG } from '@/config/constants'
@@ -39,7 +39,7 @@ function formatHostedFetchError(error: unknown): Error {
 
   if (error instanceof TypeError && isLocalApi) {
     return new Error(
-      `无法连接本地 API（${apiBase}）。请运行「cd backend && bun run dev」，或在 .env.development.local 设置 VITE_API_BASE_URL=https://api.ottersage.com 后执行 bun run env:sync:dev 并重建扩展`
+      `无法连接本地 API（${apiBase}）。请运行「cd backend && bun run dev」，或在 .env.development.local 设置 VITE_API_BASE_URL=https://api.yiveno.com 后执行 bun run env:sync:dev 并重建扩展`
     )
   }
 
@@ -122,7 +122,7 @@ export class HostedLLMClient {
   async complete(prompt: string, options?: LLMCompleteOptions): Promise<LLMCompleteResult> {
     const token = await getSupabaseAccessToken()
     if (!token) {
-      throw new Error('请先登录后使用 otterSage 托管 AI')
+      throw new Error('请先登录后使用 Yiveno 托管 AI')
     }
 
     let response: Response

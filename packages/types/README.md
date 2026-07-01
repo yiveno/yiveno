@@ -1,6 +1,6 @@
-# @ottersage/types
+# @yiveno/types
 
-共享 TypeScript 类型定义包，用于 otterSage 项目的类型共享。
+共享 TypeScript 类型定义包，用于 Yiveno 项目的类型共享。
 
 ## 包含的类型
 
@@ -18,11 +18,11 @@
 ## 使用方式
 
 ```typescript
-import type { Subscription, PaymentRecord } from '@ottersage/types'
+import type { Subscription, PaymentRecord } from '@yiveno/types'
 
 // 或者按需导入
-import type { Subscription } from '@ottersage/types/subscription'
-import type { PaymentRecord } from '@ottersage/types/payment'
+import type { Subscription } from '@yiveno/types/subscription'
+import type { PaymentRecord } from '@yiveno/types/payment'
 ```
 
 ## 维护指南

@@ -2,7 +2,7 @@
 inclusion: always
 ---
 
-# otterSage 项目规则
+# Yiveno 项目规则
 
 用中文回复
 
@@ -10,7 +10,7 @@ inclusion: always
 
 ---
 
-# otterSage 项目规范
+# Yiveno 项目规范
 
 ## **本文档为 AI IDE 行为准则，必须严格遵守**
 
@@ -209,7 +209,7 @@ bun run stylelint:force      # 样式规范
 
 ## 📚 必读文档
 
-- **产品文档（最重要）**：`docs/product/otterSage-产品文档-v3.0.md`（含 **§零 文档治理与 AI 协作**；列表 hover 见 §1.1.1；实现约束见 §4.1.2.1）
+- **产品文档（最重要）**：`docs/product/Yiveno-产品文档-v3.0.md`（含 **§零 文档治理与 AI 协作**；列表 hover 见 §1.1.1；实现约束见 §4.1.2.1）
 - 架构变更必须同步更新产品文档
 
 ---

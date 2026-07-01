@@ -162,7 +162,7 @@ const bookmarks = await indexedDBManager.getAllBookmarks()
 await indexedDBManager.saveBookmark(bookmark)
 
 // ❌ 禁止直接使用原生 API
-const db = indexedDB.open('otterSage', 9) // 错误！
+const db = indexedDB.open('Yiveno', 9) // 错误！
 ```
 
 **核心能力**：

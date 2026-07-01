@@ -2,9 +2,9 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import Management from './Management.vue'
 // ✅ 导入设计标准（必须在所有样式之前）
-import '@ottersage/design-tokens/css/material-theme.css'
-import '@ottersage/design-tokens/css/variables.css'
-import '@ottersage/design-tokens/css/semantic-colors.css'
+import '@yiveno/design-tokens/css/material-theme.css'
+import '@yiveno/design-tokens/css/variables.css'
+import '@yiveno/design-tokens/css/semantic-colors.css'
 import '@/assets/main.css' // Import shared styles
 import '@/assets/fonts.css' // Import font system
 import '@/assets/smart-fonts.css' // Import smart font system
@@ -76,7 +76,7 @@ async function initializeApp() {
     }, 1000)
 
     const loadTime = performance.now() - startTime
-    logger.info('Management', 'Init', `otterSage 管理页面启动完成 (${loadTime.toFixed(2)}ms)`)
+    logger.info('Management', 'Init', `Yiveno 管理页面启动完成 (${loadTime.toFixed(2)}ms)`)
     logger.info('Management', 'Font', '智能多语言字体系统已激活')
 
     // 打印性能报告（延迟执行，避免阻塞）

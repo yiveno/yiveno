@@ -103,19 +103,19 @@ export function generateCSSString(): string {
 export function generateMaterialCSSVars() {
   return {
     // Material Design 主题色
-    '--ottersage-brand-primary': colors.material.primary.css,
-    '--ottersage-brand-secondary': colors.material.secondary.css,
+    '--yiveno-brand-primary': colors.material.primary.css,
+    '--yiveno-brand-secondary': colors.material.secondary.css,
 
     // 语义化颜色
-    '--ottersage-semantic-success': colors.semantic.success.css,
-    '--ottersage-semantic-warning': colors.semantic.warning.css,
-    '--ottersage-semantic-info': colors.semantic.info.css,
+    '--yiveno-semantic-success': colors.semantic.success.css,
+    '--yiveno-semantic-warning': colors.semantic.warning.css,
+    '--yiveno-semantic-info': colors.semantic.info.css,
 
     // 强调色
-    '--ottersage-accent-gold': colors.accent.gold.css,
-    '--ottersage-accent-teal': colors.accent.teal.css,
-    '--ottersage-accent-amber': colors.accent.amber.css,
-    '--ottersage-accent-purple': colors.accent.purple.css
+    '--yiveno-accent-gold': colors.accent.gold.css,
+    '--yiveno-accent-teal': colors.accent.teal.css,
+    '--yiveno-accent-amber': colors.accent.amber.css,
+    '--yiveno-accent-purple': colors.accent.purple.css
   }
 }
 

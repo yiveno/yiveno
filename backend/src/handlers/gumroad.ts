@@ -13,7 +13,7 @@ import { webhookVerifySeller } from '../services/gumroad/signature'
 import { buildSubscriptionRecord } from '../services/gumroad/subscription'
 import { insertPaymentIfCharged } from '../services/gumroad/payment'
 import { upsertSubscription } from '../data-access/supabase'
-import type { Subscription } from '@ottersage/types'
+import type { Subscription } from '@yiveno/types'
 import { error as logErrorMessage, info } from '../utils/logger'
 
 interface SubscriptionDto {

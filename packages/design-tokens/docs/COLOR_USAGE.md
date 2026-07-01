@@ -1,10 +1,10 @@
 # 颜色使用指南
 
-本文档说明如何在不同平台使用 otterSage 的颜色系统。
+本文档说明如何在不同平台使用 Yiveno 的颜色系统。
 
 ## 📦 颜色系统概览
 
-otterSage 采用 **Material Design 3** 颜色系统，基于品牌色（蓝色 #3B82F6 和紫色 #C026D3）。
+Yiveno 采用 **Material Design 3** 颜色系统，基于品牌色（蓝色 #3B82F6 和紫色 #C026D3）。
 
 ## 🎨 颜色分类
 
@@ -13,7 +13,7 @@ otterSage 采用 **Material Design 3** 颜色系统，基于品牌色（蓝色 #
 **主色（Primary）- Logo 蓝色**
 
 ```typescript
-import { colors } from '@ottersage/design-tokens'
+import { colors } from '@yiveno/design-tokens'
 
 colors.brand.primary // #3B82F6
 colors.brand.primaryDark // #1E40AF
@@ -76,7 +76,7 @@ var(--md-sys-color-background)           /* 页面背景 */
 ### React Native
 
 ```typescript
-import { colors } from '@ottersage/design-tokens'
+import { colors } from '@yiveno/design-tokens'
 
 const styles = StyleSheet.create({
   button: {
@@ -89,13 +89,13 @@ const styles = StyleSheet.create({
 ### Flutter
 
 ```dart
-import 'package:ottersage_bookmarks_design_tokens/colors.dart';
+import 'package:yiveno_bookmarks_design_tokens/colors.dart';
 
 Container(
-  color: OtterSageColors.brandPrimary,
+  color: YivenoColors.brandPrimary,
   child: Text(
     'Hello',
-    style: TextStyle(color: OtterSageColors.neutralWhite),
+    style: TextStyle(color: YivenoColors.neutralWhite),
   ),
 )
 ```

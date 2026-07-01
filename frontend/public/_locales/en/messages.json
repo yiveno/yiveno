@@ -1,12 +1,12 @@
 {
   "app_name": {
-    "message": "otterSage"
+    "message": "Yiveno"
   },
   "app_description": {
     "message": "Unlock the knowledge in your bookmarks. AI-powered organization, content-aware search."
   },
   "welcome": {
-    "message": "Welcome to otterSage!"
+    "message": "Welcome to Yiveno!"
   },
   "search_placeholder": {
     "message": "Filter bookmarks…"
@@ -1140,7 +1140,7 @@
     "message": "of"
   },
   "onboarding_welcome_title": {
-    "message": "Welcome to otterSage"
+    "message": "Welcome to Yiveno"
   },
   "onboarding_welcome_subtitle": {
     "message": "AI-Powered Bookmark Manager"
@@ -2227,7 +2227,7 @@
     "message": "SEAMLESS INTEGRATION"
   },
   "onboarding_omnibox_description": {
-    "message": "Type \"os\" + space to search bookmarks directly in the address bar. No need to open the extension panel, search and access in one go. Integrate bookmark management into your daily workflow."
+    "message": "Type \"yv\" + space to search bookmarks directly in the address bar. No need to open the extension panel, search and access in one go. Integrate bookmark management into your daily workflow."
   },
   "onboarding_privacy_title": {
     "message": "Privacy First, Data Localized"
@@ -2245,7 +2245,7 @@
     "message": "ALL SET"
   },
   "onboarding_ready_description": {
-    "message": "Thank you for taking the time to learn about otterSage features. After clicking \"Get Started\", this page will automatically close and you can immediately start enjoying intelligent bookmark management."
+    "message": "Thank you for taking the time to learn about Yiveno features. After clicking \"Get Started\", this page will automatically close and you can immediately start enjoying intelligent bookmark management."
   },
   "onboarding_initializing": {
     "message": "Initializing..."

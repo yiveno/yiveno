@@ -25,11 +25,11 @@ const PROFILE_DEFAULTS = {
     VITE_RUNTIME_ENV: 'dev'
   },
   production: {
-    WEBSITE_URL: 'https://ottersage.com',
-    VITE_WEBSITE_URL: 'https://ottersage.com',
-    VITE_API_BASE_URL: 'https://api.ottersage.com',
-    VITE_CLOUDFLARE_WORKER_URL: 'https://api.ottersage.com',
-    PUBLIC_API_BASE_URL: 'https://api.ottersage.com',
+    WEBSITE_URL: 'https://yiveno.com',
+    VITE_WEBSITE_URL: 'https://yiveno.com',
+    VITE_API_BASE_URL: 'https://api.yiveno.com',
+    VITE_CLOUDFLARE_WORKER_URL: 'https://api.yiveno.com',
+    PUBLIC_API_BASE_URL: 'https://api.yiveno.com',
     VITE_GUMROAD_MANAGE_URL: 'https://app.gumroad.com/subscriptions',
     VITE_RUNTIME_ENV: 'prod'
   }

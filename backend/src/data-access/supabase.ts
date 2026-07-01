@@ -10,7 +10,7 @@
 import { createClient } from '@supabase/supabase-js'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Env } from '../types/env'
-import type { Subscription, PaymentRecord } from '@ottersage/types'
+import type { Subscription, PaymentRecord } from '@yiveno/types'
 import { warn, error as logErrorMessage, toLogError } from '../utils/logger'
 
 // Re-export types for use in other files

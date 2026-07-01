@@ -194,7 +194,7 @@ const activeEngineLabel = computed(() => {
   }
   if (isPro.value && isLoggedIn.value) {
     const model = hostedQuota.value?.model ?? 'DeepSeek V4 Flash'
-    return `otterSage 托管 · ${model}`
+    return `Yiveno 托管 · ${model}`
   }
   return '本地基础能力'
 })
@@ -344,7 +344,7 @@ async function verifySavedCloudConnection(): Promise<boolean> {
 async function saveConfig() {
   if (!apiKey.value.trim()) {
     await clearConfig(true)
-    message.success('未配置访问密钥，将使用 otterSage 托管 AI')
+    message.success('未配置访问密钥，将使用 Yiveno 托管 AI')
     return
   }
 
@@ -479,8 +479,7 @@ onMounted(async () => {
             <LucideIcon name="info" class="label-info-icon" />
             <template #content>
               <div class="tooltip-content">
-                选择要在哪些场景启用 AI。Pro 用户默认使用 otterSage 托管 AI，也可配置自己的 API
-                Key。
+                选择要在哪些场景启用 AI。Pro 用户默认使用 Yiveno 托管 AI，也可配置自己的 API Key。
               </div>
             </template>
           </Tooltip>
@@ -611,7 +610,7 @@ onMounted(async () => {
             <template #content>
               <div class="tooltip-content">
                 自动整理、智能归类等功能需要 AI 提供算力。<br />
-                Pro 用户默认使用 otterSage 托管 AI，也可配置自己的 API Key 替换默认服务。
+                Pro 用户默认使用 Yiveno 托管 AI，也可配置自己的 API Key 替换默认服务。
               </div>
             </template>
           </Tooltip>
@@ -651,7 +650,7 @@ onMounted(async () => {
             </div>
             <div class="source-card__meta">
               <div class="source-card__title-row">
-                <span class="source-card__title">otterSage 托管 AI</span>
+                <span class="source-card__title">Yiveno 托管 AI</span>
                 <span class="source-card__badge">Pro 默认</span>
               </div>
               <p class="source-card__desc">DeepSeek V4 Flash，开箱即用</p>
@@ -708,7 +707,7 @@ onMounted(async () => {
 
       <div class="ai-engine-priority">
         <LucideIcon name="info" :size="14" />
-        <span>使用优先级：自定义 API Key → otterSage 托管 AI → 本地基础能力</span>
+        <span>使用优先级：自定义 API Key → Yiveno 托管 AI → 本地基础能力</span>
       </div>
     </div>
 
@@ -721,7 +720,7 @@ onMounted(async () => {
       @update:show="showAIEngineDialog = $event"
     >
       <p class="dialog-intro">
-        Pro 用户默认使用 otterSage 托管 AI。配置 API Key 后，系统将优先使用你的自有服务。
+        Pro 用户默认使用 Yiveno 托管 AI。配置 API Key 后，系统将优先使用你的自有服务。
       </p>
 
       <div class="provider-tabs">
@@ -753,7 +752,7 @@ onMounted(async () => {
             <div class="status-card-content">
               <LucideIcon name="sparkles" :size="20" />
               <div class="status-content">
-                <h4>otterSage 托管 AI</h4>
+                <h4>Yiveno 托管 AI</h4>
                 <p>Pro 用户默认使用 DeepSeek V4 Flash，无需配置 API Key。</p>
               </div>
               <Button variant="text" :disabled="loadingHostedQuota" @click="loadHostedQuota(true)">
@@ -846,7 +845,7 @@ onMounted(async () => {
                   <template #content>
                     <div class="tooltip-content">
                       即服务商提供的 API Key。<br />
-                      仅保存在本设备，直连服务商，不经过 otterSage 服务器。
+                      仅保存在本设备，直连服务商，不经过 Yiveno 服务器。
                     </div>
                   </template>
                 </Tooltip>
@@ -908,8 +907,7 @@ onMounted(async () => {
           <div class="privacy-note">
             <LucideIcon name="shield" :size="14" />
             <span
-              >访问密钥与书签数据仅在您的设备和所选 AI 服务商之间传输，不经过 otterSage
-              服务器。</span
+              >访问密钥与书签数据仅在您的设备和所选 AI 服务商之间传输，不经过 Yiveno 服务器。</span
             >
           </div>
 

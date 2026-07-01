@@ -6,7 +6,7 @@ import type { Subscription, UserSubscriptionStatus } from '@/infrastructure/supa
 import type { GumroadBillingFrequency } from '@/infrastructure/gumroad/client'
 import { requestBookmarkEmbeddingSyncFromPage } from '@/application/embedding/request-embedding-sync'
 
-const CACHE_KEY = 'ottersage_subscription_cache'
+const CACHE_KEY = 'yiveno_subscription_cache'
 const CACHE_DURATION = 15 * 60 * 1000
 
 interface SubscriptionCache {

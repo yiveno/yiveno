@@ -378,7 +378,7 @@ const imported = JSON.parse(await file.text())
 
 ## 📚 相关文档
 
-- [产品文档](../../../docs/product/otterSage-产品文档-v3.0.md)（仓库内唯一产品正文）
+- [产品文档](../../../docs/product/Yiveno-产品文档-v3.0.md)（仓库内唯一产品正文）
 - [项目文档目录](../../../docs/)
 
 ---
@@ -402,4 +402,4 @@ const imported = JSON.parse(await file.text())
 ---
 
 **最后更新**: 2025-10-31
-**维护者**: otterSage Team
+**维护者**: Yiveno Team

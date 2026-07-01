@@ -2,8 +2,8 @@
 
 ## 项目
 
-- otterSage：Vue 3 + TypeScript Chrome 扩展，Backend 为 Cloudflare Workers，Website 为营销站。
-- 唯一产品/架构真相：`docs/product/otterSage-产品文档-v3.0.md`
+- Yiveno：Vue 3 + TypeScript Chrome 扩展，Backend 为 Cloudflare Workers，Website 为营销站。
+- 唯一产品/架构真相：`docs/product/Yiveno-产品文档-v3.0.md`
 - Cursor 规则：`.cursor/rules/project.mdc`，不得冲突。
 
 ## 架构硬规则

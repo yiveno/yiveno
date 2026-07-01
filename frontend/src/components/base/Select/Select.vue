@@ -64,7 +64,7 @@ const selectComponent = computed(() => {
   <component
     :is="selectComponent"
     v-bind="selectAttrs"
-    class="ottersage-select"
+    class="yiveno-select"
     @input="handleInput"
     @change="handleChange"
   >
@@ -96,7 +96,7 @@ const selectComponent = computed(() => {
  * - 完全符合 Material Design 3 规范
  */
 
-.ottersage-select {
+.yiveno-select {
   --md-outlined-select-text-field-container-shape: var(--radius-md);
   --md-filled-select-text-field-container-shape: var(--radius-md);
 

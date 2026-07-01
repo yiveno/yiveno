@@ -213,7 +213,7 @@ const errorMessage = computed(() => {
 ## 🎨 样式变量
 
 ```css
-.ottersage-input {
+.yiveno-input {
   /* 尺寸 */
   --input-sm-height: 32px;
   --input-md-height: 40px;

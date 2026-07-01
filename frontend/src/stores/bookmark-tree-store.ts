@@ -567,7 +567,7 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
             type?: string
             eventType?: string
           }
-          if (anyMessage.type === 'ottersage-db-synced') {
+          if (anyMessage.type === 'yiveno-db-synced') {
             const eventType = anyMessage.eventType as string
 
             // 批量删除或其他重大变更时，重新加载所有数据

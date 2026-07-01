@@ -172,7 +172,7 @@ class PosterServiceImpl implements PosterService {
    */
   private async getConfig(theme: 'dark' | 'light'): Promise<PosterConfig> {
     try {
-      const { materialColors } = await import('@ottersage/design-tokens/colors')
+      const { materialColors } = await import('@yiveno/design-tokens/colors')
 
       if (theme === 'dark') {
         return {
@@ -469,7 +469,7 @@ class PosterServiceImpl implements PosterService {
     ctx.font = '14px Inter, -apple-system, BlinkMacSystemFont, sans-serif'
     ctx.textBaseline = 'middle'
 
-    ctx.fillText('otterSage', this.PADDING, y)
+    ctx.fillText('Yiveno', this.PADDING, y)
 
     // 副标题
     ctx.fillStyle = config.colors.secondary

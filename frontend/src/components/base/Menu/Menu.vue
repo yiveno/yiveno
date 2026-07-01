@@ -40,7 +40,7 @@ const menuAttrs = computed(() => ({
 /**
  * 计算 class
  */
-const menuClasses = computed(() => ['ottersage-menu', `ottersage-menu--${props.size}`])
+const menuClasses = computed(() => ['yiveno-menu', `yiveno-menu--${props.size}`])
 
 /**
  * 事件处理
@@ -77,7 +77,7 @@ const handleClosing = () => emit('closing')
  * - 完全符合 Material Design 3 规范
  */
 
-.ottersage-menu {
+.yiveno-menu {
   --md-menu-container-shape: var(--radius-lg);
   --md-menu-container-color: var(--md-sys-color-surface-container);
 
@@ -87,7 +87,7 @@ const handleClosing = () => emit('closing')
 /* ========== 尺寸变体 ========== */
 
 /* 小尺寸：用于紧凑场景（popup、工具栏） */
-.ottersage-menu--sm {
+.yiveno-menu--sm {
   --md-menu-container-shape: var(--radius-md);
   --md-menu-top-space: 4px;
   --md-menu-bottom-space: 4px;
@@ -95,7 +95,7 @@ const handleClosing = () => emit('closing')
   min-width: 148px;
 }
 
-.ottersage-menu--sm :deep(md-menu-item) {
+.yiveno-menu--sm :deep(md-menu-item) {
   --md-menu-item-one-line-container-height: 34px;
   --md-menu-item-top-space: 4px;
   --md-menu-item-bottom-space: 4px;
@@ -105,28 +105,28 @@ const handleClosing = () => emit('closing')
 }
 
 /* 中等尺寸：标准场景 */
-.ottersage-menu--md {
+.yiveno-menu--md {
   --md-menu-top-space: 8px;
   --md-menu-bottom-space: 8px;
 
   min-width: 180px;
 }
 
-.ottersage-menu--md :deep(md-menu-item) {
+.yiveno-menu--md :deep(md-menu-item) {
   --md-menu-item-one-line-container-height: 40px;
   --md-menu-item-top-space: 6px;
   --md-menu-item-bottom-space: 6px;
 }
 
 /* 大尺寸：宽松场景 */
-.ottersage-menu--lg {
+.yiveno-menu--lg {
   --md-menu-top-space: 8px;
   --md-menu-bottom-space: 8px;
 
   min-width: 220px;
 }
 
-.ottersage-menu--lg :deep(md-menu-item) {
+.yiveno-menu--lg :deep(md-menu-item) {
   --md-menu-item-one-line-container-height: 48px;
   --md-menu-item-top-space: 8px;
   --md-menu-item-bottom-space: 8px;
@@ -134,27 +134,27 @@ const handleClosing = () => emit('closing')
 
 /* ========== 菜单项通用样式 ========== */
 
-.ottersage-menu :deep(md-menu-item) {
+.yiveno-menu :deep(md-menu-item) {
   margin: 0;
 }
 
 /* hover 状态 */
-.ottersage-menu :deep(md-menu-item:hover) {
+.yiveno-menu :deep(md-menu-item:hover) {
   --md-menu-item-container-color: var(--md-sys-color-surface-variant);
 }
 
 /* 选中状态 */
-.ottersage-menu :deep(md-menu-item.selected) {
+.yiveno-menu :deep(md-menu-item.selected) {
   --md-menu-item-selected-container-color: var(--md-sys-color-primary-container);
   --md-menu-item-label-text-color: var(--md-sys-color-on-primary-container);
 }
 
 /* 危险操作（红色） */
-.ottersage-menu :deep(md-menu-item.danger) {
+.yiveno-menu :deep(md-menu-item.danger) {
   --md-menu-item-label-text-color: var(--md-sys-color-error);
 }
 
-.ottersage-menu :deep(md-menu-item.danger:hover) {
+.yiveno-menu :deep(md-menu-item.danger:hover) {
   --md-menu-item-container-color: color-mix(in srgb, var(--md-sys-color-error) 12%, transparent);
 }
 </style>

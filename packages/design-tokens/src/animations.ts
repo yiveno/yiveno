@@ -1,5 +1,5 @@
 /**
- * otterSage 动画系统
+ * Yiveno 动画系统
  *
  * 基于 Material Design 3 动画规范
  * @see https://m3.material.io/styles/motion/overview

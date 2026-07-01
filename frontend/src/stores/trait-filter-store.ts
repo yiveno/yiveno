@@ -281,7 +281,7 @@ export const useTraitFilterStore = defineStore('traitFilter', () => {
   function setupAutoRefreshListener(): void {
     chrome.runtime.onMessage.addListener(message => {
       if (typeof chrome === 'undefined' || !chrome.runtime?.id) return
-      if (message.type === 'ottersage-trait-updated') {
+      if (message.type === 'yiveno-trait-updated') {
         logger.info('TraitFilterStore', '🏷️ 收到特征更新消息，重新应用筛选')
 
         // 如果有激活的筛选器，重新应用

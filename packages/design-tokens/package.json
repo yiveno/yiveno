@@ -1,7 +1,7 @@
 {
-  "name": "@ottersage/design-tokens",
+  "name": "@yiveno/design-tokens",
   "version": "1.1.1",
-  "description": "Shared design tokens for otterSage - Material Design 3 based design system with colors, spacing, typography, and more",
+  "description": "Shared design tokens for Yiveno - Material Design 3 based design system with colors, spacing, typography, and more",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
@@ -86,23 +86,23 @@
     "material-design-3",
     "css-variables",
     "typescript",
-    "ottersage",
+    "yiveno",
     "ui",
     "colors",
     "spacing",
     "typography"
   ],
-  "author": "otterSage Team",
+  "author": "Yiveno Team",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ottersage/ottersage.git",
+    "url": "https://github.com/yiveno/yiveno.git",
     "directory": "packages/design-tokens"
   },
   "bugs": {
-    "url": "https://github.com/ottersage/ottersage/issues"
+    "url": "https://github.com/yiveno/yiveno/issues"
   },
-  "homepage": "https://github.com/ottersage/ottersage/tree/main/packages/design-tokens#readme",
+  "homepage": "https://github.com/yiveno/yiveno/tree/main/packages/design-tokens#readme",
   "publishConfig": {
     "access": "public"
   },

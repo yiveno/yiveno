@@ -1,12 +1,12 @@
 {
   "app_name": {
-    "message": "OtterSage書籤"
+    "message": "Yiveno書籤"
   },
   "app_description": {
     "message": "解鎖書籤中的知識。AI 驅動的組織管理，內容感知搜尋。"
   },
   "welcome": {
-    "message": "歡迎使用OtterSage書籤！"
+    "message": "歡迎使用Yiveno書籤！"
   },
   "search_placeholder": {
     "message": "篩選書籤…"
@@ -1128,7 +1128,7 @@
     "message": "共"
   },
   "onboarding_welcome_title": {
-    "message": "歡迎使用 otterSage"
+    "message": "歡迎使用 Yiveno"
   },
   "onboarding_welcome_subtitle": {
     "message": "AI 驅動的書籤管理器"
@@ -2197,7 +2197,7 @@
     "message": "無縫整合"
   },
   "onboarding_omnibox_description": {
-    "message": "輸入 \"os\" + 空格，直接在網址列搜尋書籤。無需開啟外掛面板，搜尋、存取一氣呵成。讓書籤管理融入你的日常工作流程。"
+    "message": "輸入 \"yv\" + 空格，直接在網址列搜尋書籤。無需開啟外掛面板，搜尋、存取一氣呵成。讓書籤管理融入你的日常工作流程。"
   },
   "onboarding_privacy_title": {
     "message": "隱私至上，資料本地化"
@@ -2215,7 +2215,7 @@
     "message": "全部就緒"
   },
   "onboarding_ready_description": {
-    "message": "感謝你花時間了解 otterSage 的特色功能。點擊「開始使用」後，本頁面將自動關閉，你可以立即開始享受智慧書籤管理體驗。"
+    "message": "感謝你花時間了解 Yiveno 的特色功能。點擊「開始使用」後，本頁面將自動關閉，你可以立即開始享受智慧書籤管理體驗。"
   },
   "onboarding_initializing": {
     "message": "初始化中..."

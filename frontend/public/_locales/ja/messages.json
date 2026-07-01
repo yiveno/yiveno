@@ -1,12 +1,12 @@
 {
   "app_name": {
-    "message": "OtterSageブックマーク"
+    "message": "Yivenoブックマーク"
   },
   "app_description": {
     "message": "ブックマークの知識を解き放つ。AI駆動の整理、コンテンツ認識検索。"
   },
   "welcome": {
-    "message": "OtterSageブックマークへようこそ！"
+    "message": "Yivenoブックマークへようこそ！"
   },
   "search_placeholder": {
     "message": "ブックマークを絞り込む…"
@@ -1128,7 +1128,7 @@
     "message": "/"
   },
   "onboarding_welcome_title": {
-    "message": "otterSageへようこそ"
+    "message": "Yivenoへようこそ"
   },
   "onboarding_welcome_subtitle": {
     "message": "AI搭載ブックマークマネージャー"
@@ -2197,7 +2197,7 @@
     "message": "シームレス統合"
   },
   "onboarding_omnibox_description": {
-    "message": "\"os\" + スペースを入力して、アドレスバーで直接ブックマークを検索します。拡張機能パネルを開く必要はなく、検索とアクセスが一度に完了します。ブックマーク管理を日常のワークフローに統合します。"
+    "message": "\"yv\" + スペースを入力して、アドレスバーで直接ブックマークを検索します。拡張機能パネルを開く必要はなく、検索とアクセスが一度に完了します。ブックマーク管理を日常のワークフローに統合します。"
   },
   "onboarding_privacy_title": {
     "message": "プライバシー第一、データのローカル化"
@@ -2215,7 +2215,7 @@
     "message": "準備完了"
   },
   "onboarding_ready_description": {
-    "message": "otterSageの機能について学ぶ時間を取っていただきありがとうございます。「開始」をクリックすると、このページは自動的に閉じ、すぐにインテリジェントなブックマーク管理をお楽しみいただけます。"
+    "message": "Yivenoの機能について学ぶ時間を取っていただきありがとうございます。「開始」をクリックすると、このページは自動的に閉じ、すぐにインテリジェントなブックマーク管理をお楽しみいただけます。"
   },
   "onboarding_initializing": {
     "message": "初期化中..."

@@ -50,9 +50,9 @@ const checkboxAttrs = computed(() => ({
  * 计算 class
  */
 const checkboxClasses = computed(() => [
-  'ottersage-checkbox',
-  `ottersage-checkbox--${props.variant}`,
-  `ottersage-checkbox--${props.size}`
+  'yiveno-checkbox',
+  `yiveno-checkbox--${props.variant}`,
+  `yiveno-checkbox--${props.size}`
 ])
 </script>
 
@@ -78,25 +78,25 @@ const checkboxClasses = computed(() => [
  * - 完全符合 Material Design 3 规范
  */
 
-.ottersage-checkbox {
+.yiveno-checkbox {
   --md-checkbox-state-layer-size: 40px;
 }
 
 /* ========== 尺寸变体 ========== */
 
-.ottersage-checkbox--sm {
+.yiveno-checkbox--sm {
   --md-checkbox-container-size: 16px;
   --md-checkbox-state-layer-size: 32px;
   --md-checkbox-icon-size: 14px;
 }
 
-.ottersage-checkbox--md {
+.yiveno-checkbox--md {
   --md-checkbox-container-size: 18px;
   --md-checkbox-state-layer-size: 40px;
   --md-checkbox-icon-size: 16px;
 }
 
-.ottersage-checkbox--lg {
+.yiveno-checkbox--lg {
   --md-checkbox-container-size: 20px;
   --md-checkbox-state-layer-size: 48px;
   --md-checkbox-icon-size: 18px;
@@ -105,17 +105,17 @@ const checkboxClasses = computed(() => [
 /* ========== 颜色变体 ========== */
 
 /* 文件夹变体：hover 时使用黄色系 */
-.ottersage-checkbox--folder:hover {
+.yiveno-checkbox--folder:hover {
   --md-checkbox-unselected-hover-state-layer-color: var(--color-folder-hover);
 }
 
 /* 书签变体：hover 时使用蓝色系 */
-.ottersage-checkbox--bookmark:hover {
+.yiveno-checkbox--bookmark:hover {
   --md-checkbox-unselected-hover-state-layer-color: var(--color-bookmark-hover);
 }
 
 /* 默认变体：使用 Material Design 3 默认颜色 */
-.ottersage-checkbox--default {
+.yiveno-checkbox--default {
   /* 使用 MD3 默认颜色，无需额外配置 */
 }
 </style>

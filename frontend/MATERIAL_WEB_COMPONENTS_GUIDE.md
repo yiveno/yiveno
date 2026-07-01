@@ -1,6 +1,6 @@
 # Material Web Components 使用指南
 
-本指南说明如何在 otterSage 项目中使用 Material Web Components。
+本指南说明如何在 Yiveno 项目中使用 Material Web Components。
 
 ---
 
@@ -276,7 +276,7 @@ const progress = ref(0.5) // 0-1
 Material Web Components 自动使用 Design Tokens 中的 CSS Variables：
 
 ```css
-/* 已在 @ottersage/design-tokens 中定义 */
+/* 已在 @yiveno/design-tokens 中定义 */
 :root {
   --md-sys-color-primary: #83d5c5;
   --md-sys-color-on-primary: #003731;
@@ -399,9 +399,9 @@ const handleChange = (event: Event) => {
 - [Material Web Components 官方文档](https://github.com/material-components/material-web)
 - [Material Design 3 规范](https://m3.material.io/)
 - [Design Tokens 文档](../../packages/design-tokens/README.md)
-- [完整产品文档 v3.0](../../docs/product/otterSage-产品文档-v3.0.md)（仓库唯一规格正文）
+- [完整产品文档 v3.0](../../docs/product/Yiveno-产品文档-v3.0.md)（仓库唯一规格正文）
 
 ---
 
 **最后更新**: 2026-05-31  
-**维护者**: otterSage Team
+**维护者**: Yiveno Team

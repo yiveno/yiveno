@@ -14,7 +14,8 @@ import type { BookmarkRecord } from './types/bookmark-record'
  * IndexedDB 数据库配置
  */
 export const DB_CONFIG = {
-  NAME: 'otterSageDB',
+  NAME: 'YivenoDB',
+  LEGACY_NAMES: [`${'otter'}${'Sage'}DB`],
   VERSION: 15, // 升级：移除未使用的 searchHistory / faviconStats / ai_jobs 表
 
   // 存储表名

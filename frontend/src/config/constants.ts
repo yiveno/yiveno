@@ -27,7 +27,7 @@ export const NOTIFICATION_CONFIG = {
 function resolveApiBase(): string {
   return (
     frontendEnv.apiBaseUrl ||
-    (import.meta.env.DEV ? 'http://localhost:8787' : 'https://api.ottersage.com')
+    (import.meta.env.DEV ? 'http://localhost:8787' : 'https://api.yiveno.com')
   )
 }
 
@@ -50,7 +50,7 @@ function getApiBase(): string {
       '💡 提示：当前使用本地 Worker (localhost:8787)。托管 AI 需在 backend/.dev.vars 配置 DEEPSEEK_API_KEY（bun run env:sync:dev）'
     )
     console.debug(
-      '   或使用已部署 API：在 .env.development.local 设置 VITE_API_BASE_URL=https://api.ottersage.com'
+      '   或使用已部署 API：在 .env.development.local 设置 VITE_API_BASE_URL=https://api.yiveno.com'
     )
   }
 

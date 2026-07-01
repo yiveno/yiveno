@@ -262,23 +262,23 @@
  * ======================================== */
 
 /*
-<!-- Display - 用于营销页面、首屏大标题 -->
-<h1 class="md-typescale-display-large">Welcome to otterSage</h1>
+\3c !-- Display - 用于营销页面、首屏大标题 -->
+<h1 class="md-typescale-display-large">Welcome to Yiveno</h1>
 <h2 class="md-typescale-display-medium">Organize Your Web</h2>
 
-<!-- Headline - 用于页面标题、卡片标题 -->
+\3c !-- Headline - 用于页面标题、卡片标题 -->
 <h2 class="md-typescale-headline-large">Settings</h2>
 <h3 class="md-typescale-headline-medium">Appearance</h3>
 
-<!-- Title - 用于列表项标题、对话框标题 -->
+\3c !-- Title - 用于列表项标题、对话框标题 -->
 <div class="md-typescale-title-medium">Bookmark Title</div>
 <div class="md-typescale-title-small">Folder Name</div>
 
-<!-- Body - 用于段落、描述文本 -->
+\3c !-- Body - 用于段落、描述文本 -->
 <p class="md-typescale-body-large">This is a paragraph of text.</p>
 <p class="md-typescale-body-medium">This is a smaller paragraph.</p>
 
-<!-- Label - 用于按钮、表单标签 -->
+\3c !-- Label - 用于按钮、表单标签 -->
 <button class="md-typescale-label-large">Save</button>
 <label class="md-typescale-label-medium">Email</label>
 */

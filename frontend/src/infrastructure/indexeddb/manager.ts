@@ -141,6 +141,94 @@ export class IndexedDBManager {
   private initPromise: Promise<void> | null = null
 
   /**
+   * 浏览器是否已存在指定 IndexedDB。
+   *
+   * 更名后不能直接 open 旧库探测，否则不存在时会被浏览器创建一个空库。
+   * Chrome 支持 `indexedDB.databases()`，这里用它做非侵入式探测。
+   */
+  private async databaseExists(name: string): Promise<boolean> {
+    const idbFactory = indexedDB as IDBFactory & {
+      databases?: () => Promise<Array<{ name?: string }>>
+    }
+
+    if (typeof idbFactory.databases !== 'function') {
+      return false
+    }
+
+    const databases = await idbFactory.databases()
+    return databases.some(database => database.name === name)
+  }
+
+  /**
+   * 从旧品牌 IndexedDB 迁移数据到新库。
+   *
+   * 只在新库为空时复制旧库数据，避免覆盖用户在 YivenoDB 中产生的新数据。
+   */
+  private async migrateLegacyDatabaseIfNeeded(): Promise<void> {
+    const targetDb = this.db
+    if (!targetDb) return
+
+    const hasCurrentData = await this.runReadTransaction(
+      DB_CONFIG.STORES.BOOKMARKS,
+      async (_tx, store) => (await this.wrapRequest(store.count())) > 0
+    )
+    if (hasCurrentData) return
+
+    for (const legacyName of DB_CONFIG.LEGACY_NAMES) {
+      const exists = await this.databaseExists(legacyName)
+      if (!exists) continue
+
+      await this.copyLegacyDatabase(legacyName, targetDb)
+      logger.info('IndexedDBManager', '旧品牌 IndexedDB 数据已迁移', {
+        from: legacyName,
+        to: DB_CONFIG.NAME
+      })
+      return
+    }
+  }
+
+  /**
+   * 复制旧库中仍然有效的 object store。
+   */
+  private async copyLegacyDatabase(legacyName: string, targetDb: IDBDatabase): Promise<void> {
+    const legacyDb = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open(legacyName)
+      request.onerror = () => reject(request.error ?? new Error('打开旧 IndexedDB 失败'))
+      request.onsuccess = () => resolve(request.result)
+    })
+
+    try {
+      for (const storeName of this.storeNames) {
+        if (!legacyDb.objectStoreNames.contains(storeName)) continue
+        if (!targetDb.objectStoreNames.contains(storeName)) continue
+
+        const records = await new Promise<unknown[]>((resolve, reject) => {
+          const tx = legacyDb.transaction(storeName, 'readonly')
+          const store = tx.objectStore(storeName)
+          const request = store.getAll()
+          request.onerror = () => reject(request.error ?? new Error('读取旧 IndexedDB 数据失败'))
+          request.onsuccess = () => resolve(request.result)
+        })
+        if (records.length === 0) continue
+
+        await new Promise<void>((resolve, reject) => {
+          const tx = targetDb.transaction(storeName, 'readwrite')
+          const store = tx.objectStore(storeName)
+          tx.oncomplete = () => resolve()
+          tx.onerror = () => reject(tx.error ?? new Error('写入新 IndexedDB 数据失败'))
+          tx.onabort = () => reject(tx.error ?? new Error('写入新 IndexedDB 数据中止'))
+
+          for (const record of records) {
+            store.put(record)
+          }
+        })
+      }
+    } finally {
+      legacyDb.close()
+    }
+  }
+
+  /**
    * 将原生 IDBRequest 封装为 Promise。
    *
    * @description
@@ -348,6 +436,7 @@ export class IndexedDBManager {
     })()
 
     await this.initPromise
+    await this.migrateLegacyDatabaseIfNeeded()
     await this.autoEnsureGlobalStats()
   }
 

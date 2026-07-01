@@ -10,10 +10,10 @@
  * 安全策略：只允许特定域名访问 API
  */
 export const ALLOWED_ORIGINS = [
-  'https://ottersage.com',
-  'https://www.ottersage.com',
-  'https://app.ottersage.com',
-  'https://api.ottersage.com',
+  'https://yiveno.com',
+  'https://www.yiveno.com',
+  'https://app.yiveno.com',
+  'https://api.yiveno.com',
   // 开发环境
   'http://localhost:3001',
   'https://localhost:3001',

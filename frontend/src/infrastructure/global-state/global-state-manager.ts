@@ -9,7 +9,7 @@
  * - 支持实时状态监听和更新
  */
 
-import { normalizeColorPresetId, type ColorPresetId } from '@ottersage/design-tokens/color-presets'
+import { normalizeColorPresetId, type ColorPresetId } from '@yiveno/design-tokens/color-presets'
 
 import { emitEvent } from '../events/event-bus'
 import { logger } from '../logging/logger'

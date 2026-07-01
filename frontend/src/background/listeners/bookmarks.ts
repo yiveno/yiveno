@@ -65,7 +65,7 @@ async function syncAndBroadcast(
     try {
       chrome.runtime.sendMessage(
         {
-          type: 'ottersage-db-synced',
+          type: 'yiveno-db-synced',
           eventType: eventType,
           bookmarkId: bookmarkId,
           timestamp: Date.now()

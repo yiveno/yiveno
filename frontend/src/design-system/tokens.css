@@ -1,12 +1,12 @@
 /**
- * otterSage Design System - Design Tokens Mapping
+ * Yiveno Design System - Design Tokens Mapping
  * 
  * ⚠️ 本文件仅用于将 Material Design 3 变量映射到项目内部使用的简化变量名
  * ⚠️ 禁止在此文件中定义任何硬编码的颜色、间距、字号等值
  * 
  * Material Design 3 变量来源：
- * - @ottersage/design-tokens/css/material-theme.css
- * - @ottersage/design-tokens/css/variables.css
+ * - @yiveno/design-tokens/css/material-theme.css
+ * - @yiveno/design-tokens/css/variables.css
  * 
  * 这些文件必须在入口文件中先导入，然后才能使用本文件的映射。
  */
@@ -64,42 +64,42 @@
   --color-error-foreground: var(--color-on-error);
 
   /* ✅ Warning、Success、Info 颜色映射自 design-tokens 包 */
-  --color-warning: var(--ottersage-semantic-warning);
-  --color-warning-container: var(--ottersage-semantic-warning-container);
-  --color-on-warning: var(--ottersage-semantic-on-warning);
-  --color-on-warning-container: var(--ottersage-semantic-on-warning-container);
+  --color-warning: var(--yiveno-semantic-warning);
+  --color-warning-container: var(--yiveno-semantic-warning-container);
+  --color-on-warning: var(--yiveno-semantic-on-warning);
+  --color-on-warning-container: var(--yiveno-semantic-on-warning-container);
   --color-warning-foreground: var(--color-on-warning);
   --color-warning-container-foreground: var(--color-on-warning-container);
   --color-warning-emphasis: var(--color-on-warning-container);
   --color-warning-subtle: var(--color-warning-alpha-20);
-  --color-success: var(--ottersage-semantic-success);
-  --color-success-container: var(--ottersage-semantic-success-container);
-  --color-on-success: var(--ottersage-semantic-on-success);
-  --color-on-success-container: var(--ottersage-semantic-on-success-container);
+  --color-success: var(--yiveno-semantic-success);
+  --color-success-container: var(--yiveno-semantic-success-container);
+  --color-on-success: var(--yiveno-semantic-on-success);
+  --color-on-success-container: var(--yiveno-semantic-on-success-container);
   --color-success-foreground: var(--color-on-success);
   --color-success-container-foreground: var(--color-on-success-container);
-  --color-info: var(--ottersage-semantic-info);
-  --color-info-container: var(--ottersage-semantic-info-container);
-  --color-on-info: var(--ottersage-semantic-on-info);
-  --color-on-info-container: var(--ottersage-semantic-on-info-container);
+  --color-info: var(--yiveno-semantic-info);
+  --color-info-container: var(--yiveno-semantic-info-container);
+  --color-on-info: var(--yiveno-semantic-on-info);
+  --color-on-info-container: var(--yiveno-semantic-on-info-container);
   --color-info-foreground: var(--color-on-info);
   --color-info-container-foreground: var(--color-on-info-container);
 
   /* ✅ 这些颜色映射自 design-tokens 包 */
-  --color-accent-teal: var(--ottersage-accent-teal);
-  --color-accent-teal-hover: var(--ottersage-accent-teal-hover);
-  --color-accent-gold: var(--ottersage-accent-gold);
-  --color-accent-gold-hover: var(--ottersage-accent-gold-hover);
-  --color-accent-amber: var(--ottersage-accent-amber);
-  --color-accent-amber-container: var(--ottersage-accent-amber-container);
-  --color-accent-purple: var(--ottersage-accent-purple);
-  --color-accent-purple-container: var(--ottersage-accent-purple-container);
+  --color-accent-teal: var(--yiveno-accent-teal);
+  --color-accent-teal-hover: var(--yiveno-accent-teal-hover);
+  --color-accent-gold: var(--yiveno-accent-gold);
+  --color-accent-gold-hover: var(--yiveno-accent-gold-hover);
+  --color-accent-amber: var(--yiveno-accent-amber);
+  --color-accent-amber-container: var(--yiveno-accent-amber-container);
+  --color-accent-purple: var(--yiveno-accent-purple);
+  --color-accent-purple-container: var(--yiveno-accent-purple-container);
 
   /* AI 功能色（映射到强调色） */
-  --color-ai: var(--ottersage-accent-ai);
-  --color-ai-container: var(--ottersage-accent-ai-container);
-  --color-on-ai: var(--ottersage-accent-on-ai);
-  --color-on-ai-container: var(--ottersage-accent-on-ai-container);
+  --color-ai: var(--yiveno-accent-ai);
+  --color-ai-container: var(--yiveno-accent-ai-container);
+  --color-on-ai: var(--yiveno-accent-on-ai);
+  --color-on-ai-container: var(--yiveno-accent-on-ai-container);
 
   /* === 基础颜色 (Base Colors) === */
 
@@ -145,26 +145,26 @@
   /* === 扩展 Primary 色彩系列 === */
 
   /* ✅ 这些颜色映射自 design-tokens 包，用于渐变和特殊效果 */
-  --color-primary-50: var(--ottersage-primary-50);
-  --color-primary-100: var(--ottersage-primary-100);
-  --color-primary-200: var(--ottersage-primary-200);
-  --color-primary-300: var(--ottersage-primary-300);
-  --color-primary-400: var(--ottersage-primary-400);
-  --color-primary-500: var(--ottersage-primary-500);
-  --color-primary-600: var(--ottersage-primary-600);
-  --color-primary-700: var(--ottersage-primary-700);
-  --color-primary-800: var(--ottersage-primary-800);
-  --color-primary-900: var(--ottersage-primary-900);
+  --color-primary-50: var(--yiveno-primary-50);
+  --color-primary-100: var(--yiveno-primary-100);
+  --color-primary-200: var(--yiveno-primary-200);
+  --color-primary-300: var(--yiveno-primary-300);
+  --color-primary-400: var(--yiveno-primary-400);
+  --color-primary-500: var(--yiveno-primary-500);
+  --color-primary-600: var(--yiveno-primary-600);
+  --color-primary-700: var(--yiveno-primary-700);
+  --color-primary-800: var(--yiveno-primary-800);
+  --color-primary-900: var(--yiveno-primary-900);
 
   /* === Alpha 透明度色彩 === */
-  --color-primary-alpha-10: var(--ottersage-primary-alpha-10);
-  --color-primary-alpha-20: var(--ottersage-primary-alpha-20);
-  --color-secondary-alpha-10: var(--ottersage-secondary-alpha-10);
-  --color-error-alpha-10: var(--ottersage-error-alpha-10);
-  --color-warning-alpha-10: var(--ottersage-warning-alpha-10);
-  --color-warning-alpha-20: var(--ottersage-warning-alpha-20);
-  --color-success-alpha-10: var(--ottersage-success-alpha-10);
-  --color-info-alpha-10: var(--ottersage-info-alpha-10);
+  --color-primary-alpha-10: var(--yiveno-primary-alpha-10);
+  --color-primary-alpha-20: var(--yiveno-primary-alpha-20);
+  --color-secondary-alpha-10: var(--yiveno-secondary-alpha-10);
+  --color-error-alpha-10: var(--yiveno-error-alpha-10);
+  --color-warning-alpha-10: var(--yiveno-warning-alpha-10);
+  --color-warning-alpha-20: var(--yiveno-warning-alpha-20);
+  --color-success-alpha-10: var(--yiveno-success-alpha-10);
+  --color-info-alpha-10: var(--yiveno-info-alpha-10);
 
   /* === 阴影 / 遮罩 / 高光（P3：统一自 md-sys shadow、scrim，禁止组件内 rgb(0,0,0/…)）=== */
   --color-error-alpha-30: color-mix(in srgb, var(--md-sys-color-error) 30%, transparent);

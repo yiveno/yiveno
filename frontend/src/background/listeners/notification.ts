@@ -13,7 +13,7 @@ import { logger } from '@/infrastructure/logging/logger'
  * 通知选项
  */
 export interface SystemNotificationOptions {
-  /** 通知标题（默认：otterSage） */
+  /** 通知标题（默认：Yiveno） */
   title?: string | undefined
   /** 通知图标 URL */
   iconUrl?: string | undefined
@@ -49,7 +49,7 @@ export async function showSystemNotification(
   }
 
   const {
-    title = 'otterSage',
+    title = 'Yiveno',
     iconUrl = chrome.runtime.getURL?.('images/icon128.png') || 'images/icon128.png',
     requireInteraction = false,
     autoCloseMs = 0

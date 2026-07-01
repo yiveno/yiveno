@@ -1,8 +1,8 @@
 {
-  "name": "ottersage-root",
+  "name": "yiveno-root",
   "private": true,
   "version": "1.0.0",
-  "description": "otterSage monorepo (Bun workspaces)",
+  "description": "Yiveno monorepo (Bun workspaces)",
   "type": "module",
   "workspaces": [
     "frontend",

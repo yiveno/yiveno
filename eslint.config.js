@@ -1,5 +1,5 @@
 /**
- * 🎯 otterSage ESLint 配置（简化版）
+ * 🎯 Yiveno ESLint 配置（简化版）
  * 前后端统一配置，专为 Bun + Vue + TypeScript 优化
  */
 

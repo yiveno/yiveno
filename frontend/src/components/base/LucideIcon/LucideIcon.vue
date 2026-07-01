@@ -109,7 +109,7 @@ const progressStyle = computed(() => ({
   <md-circular-progress
     v-if="spin && iconComponent"
     indeterminate
-    class="ottersage-lucide-icon ottersage-lucide-icon--progress"
+    class="yiveno-lucide-icon yiveno-lucide-icon--progress"
     :style="progressStyle"
     v-bind="$attrs"
   />
@@ -119,15 +119,15 @@ const progressStyle = computed(() => ({
     :size="computedSize"
     :color="computedColor"
     :stroke-width="strokeWidth"
-    class="ottersage-lucide-icon"
+    class="yiveno-lucide-icon"
     :style="transformStyle"
     v-bind="$attrs"
   />
-  <span v-else class="ottersage-lucide-icon ottersage-lucide-icon--missing">?</span>
+  <span v-else class="yiveno-lucide-icon yiveno-lucide-icon--missing">?</span>
 </template>
 
 <style scoped>
-.ottersage-lucide-icon {
+.yiveno-lucide-icon {
   display: inline-flex;
   flex-shrink: 0;
   justify-content: center;
@@ -143,7 +143,7 @@ const progressStyle = computed(() => ({
   will-change: transform;
 }
 
-.ottersage-lucide-icon--missing {
+.yiveno-lucide-icon--missing {
   display: inline-flex;
   justify-content: center;
   align-items: center;
@@ -155,7 +155,7 @@ const progressStyle = computed(() => ({
   background: color-mix(in srgb, var(--md-sys-color-error) 10%, transparent);
 }
 
-.ottersage-lucide-icon--progress {
+.yiveno-lucide-icon--progress {
   display: inline-flex;
   flex-shrink: 0;
   vertical-align: middle;

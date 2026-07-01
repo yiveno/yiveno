@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-const SUPABASE_CLIENT_KEY = '__ottersage_supabase_client__'
+const SUPABASE_CLIENT_KEY = '__yiveno_supabase_client__'
 
 type WindowWithSupabase = Window & {
   [SUPABASE_CLIENT_KEY]?: SupabaseClient

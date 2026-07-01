@@ -1,5 +1,5 @@
 /**
- * @ottersage/types
+ * @yiveno/types
  *
  * 共享 TypeScript 类型定义
  */
