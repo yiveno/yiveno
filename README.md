@@ -35,7 +35,7 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/ChenQiWen/Yiveno.git
+git clone https://github.com/yiveno/yiveno.git
 cd Yiveno
 
 # 安装所有依赖 (使用Bun Workspaces)
@@ -460,8 +460,8 @@ chore: 升级依赖版本
 
 ## 📞 联系我们
 
-- **Issues**: [GitHub Issues](https://github.com/ChenQiWen/Yiveno/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/ChenQiWen/Yiveno/discussions)
+- **Issues**: [GitHub Issues](https://github.com/yiveno/yiveno/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/yiveno/yiveno/discussions)
 - **Email**: support@yiveno.com
 
 ---
