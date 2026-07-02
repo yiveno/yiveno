@@ -55,7 +55,7 @@ bun run stylelint:force
 ```
 
 ## 📚 必读文档
-- **产品文档（最重要）**：`docs/product/Yiveno-产品文档-v3.0.md`（含 **§零 文档治理与 AI 协作**；列表与指针交互见 **§1.1.1**；实现约束见 **§4.1.2.1**）
+- **产品文档（最重要）**：`docs/product/Yiveno-产品文档-v4.0.md`（v4 产品/架构唯一事实来源；历史 v3.0 仅作背景参考）
 - 架构变更必须同步更新产品文档
 
 ---
@@ -64,13 +64,13 @@ bun run stylelint:force
 
 ### 铁律 1：单向数据流（禁止违反）
 
-**数据流向图：**
+**当前阶段数据流向图：**
 ```
-Chrome Bookmarks API
+Chrome API / 用户选区
        ↓
 Background Script (唯一监听者)
        ↓
-IndexedDB (唯一数据源)
+IndexedDB (本地事实源)
        ↓
 Pinia Store (响应式状态)
        ↓
@@ -133,6 +133,8 @@ import { indexedDBManager } from '@/infrastructure/indexeddb/manager'     // ✅
 ```
 
 ### 铁律 3：IndexedDB 唯一入口
+
+当前阶段 IndexedDB 是本地事实源；长期云端架构见产品文档 v4.0。即使未来引入云端 Memory DB，本地 IndexedDB 操作仍必须统一经过 `indexedDBManager`。
 
 **必须使用：**
 ```typescript
@@ -426,7 +428,7 @@ async function loadBookmarks() {
 - 工具类动画（`pop`、`shake` 等）用于明确反馈（成功/错误）
 - 这些必须与列表 hover 分离，不得复用
 
-**原因：** 见 `docs/product/Yiveno-产品文档-v3.0.md` §1.1.1、§4.1.2.1。
+**原因：** 见 `docs/product/Yiveno-产品文档-v4.0.md` 的 UI 与交互约束；历史 v3.0 仅作背景参考。
 
 ## ⚡ 性能要求
 
@@ -473,7 +475,7 @@ bun run build:hot                # 热构建
 | # | 铁律 | 检查方法 | 违反后果 |
 |---|------|---------|---------|
 | 1 | **单向数据流** | 看到 `chrome.bookmarks.*` 检查文件路径 | 数据不一致、状态混乱 |
-| 2 | **IndexedDB 唯一数据源** | 所有读取都通过 `indexedDBManager` | UI 数据不准确 |
+| 2 | **IndexedDB 本地事实源** | 所有本地读取都通过 `indexedDBManager` | UI 数据不准确 |
 | 3 | **禁止前端直接访问 Chrome API** | 前端只能用 `chrome.runtime.sendMessage` | 破坏架构、难以维护 |
 | 4 | **Service Worker 兼容** | Background 中禁用 `window.*` / `localStorage` | 运行时报错 |
 | 5 | **UI 术语统一** | UI 文案中用"筛选"而非"搜索" | 产品定位混乱 |
