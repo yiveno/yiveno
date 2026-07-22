@@ -3,24 +3,19 @@ import type {
   BackgroundMessageResponse,
   GetLocalIdentityResponse
 } from '@/core/messaging/background-messages'
+import { isBackgroundScopedMessage } from '@/core/messaging/background-messages'
+import {
+  handleCaptureBookmark,
+  handleCaptureCurrentPage,
+  handleCaptureTextExcerpt,
+  handleListMemoryItems
+} from '@/background/handlers/memory-handler'
+import { handleRecallWithClue } from '@/background/handlers/recall-handler'
 import { logger } from '@/infrastructure/logging/logger'
 import {
   getCurrentOwnerId,
   getOrCreateLocalProfile
 } from '@/infrastructure/identity/local-profile-service'
-
-function isBackgroundMessage(value: unknown): value is BackgroundMessage {
-  if (typeof value !== 'object' || value === null) {
-    return false
-  }
-
-  return (
-    'scope' in value &&
-    value.scope === 'background' &&
-    'type' in value &&
-    typeof value.type === 'string'
-  )
-}
 
 async function handleGetLocalIdentity(): Promise<GetLocalIdentityResponse> {
   try {
@@ -35,6 +30,29 @@ async function handleGetLocalIdentity(): Promise<GetLocalIdentityResponse> {
   }
 }
 
+async function dispatchBackgroundMessage(
+  message: BackgroundMessage
+): Promise<BackgroundMessageResponse> {
+  switch (message.type) {
+    case 'PING':
+      return { ok: true }
+    case 'GET_LOCAL_IDENTITY':
+      return handleGetLocalIdentity()
+    case 'CAPTURE_BOOKMARK':
+      return handleCaptureBookmark(message.payload)
+    case 'CAPTURE_TEXT_EXCERPT':
+      return handleCaptureTextExcerpt(message.payload)
+    case 'CAPTURE_CURRENT_PAGE':
+      return handleCaptureCurrentPage(message.payload)
+    case 'LIST_MEMORY_ITEMS':
+      return handleListMemoryItems(message.payload)
+    case 'RECALL_WITH_CLUE':
+      return handleRecallWithClue(message.payload)
+    default:
+      return { ok: false, error: `未知消息类型: ${(message as { type: string }).type}` }
+  }
+}
+
 /**
  * 处理来自 Popup / Settings 的 Background 消息。
  * 异步 handler 需返回 true 以保持 sendResponse 通道。
@@ -43,19 +61,19 @@ export function handleBackgroundMessage(
   message: unknown,
   sendResponse: (response: BackgroundMessageResponse) => void
 ): boolean {
-  if (!isBackgroundMessage(message)) {
+  if (!isBackgroundScopedMessage(message)) {
     return false
   }
 
-  if (message.type === 'PING') {
-    sendResponse({ ok: true })
-    return true
-  }
+  void dispatchBackgroundMessage(message as BackgroundMessage)
+    .then(sendResponse)
+    .catch(error => {
+      logger.error('Background', '消息处理失败', error)
+      sendResponse({
+        ok: false,
+        error: error instanceof Error ? error.message : '消息处理失败'
+      })
+    })
 
-  if (message.type === 'GET_LOCAL_IDENTITY') {
-    void handleGetLocalIdentity().then(sendResponse)
-    return true
-  }
-
-  return false
+  return true
 }

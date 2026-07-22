@@ -1,7 +1,15 @@
 import type { LocalProfile } from '@/core/identity/local-profile'
+import { BACKGROUND_MESSAGE_SCOPE } from '@/core/messaging/constants'
+import type {
+  MemoryBackgroundMessage,
+  MemoryBackgroundResponse
+} from '@/core/messaging/memory-messages'
+import type {
+  RecallBackgroundMessage,
+  RecallBackgroundResponse
+} from '@/core/messaging/recall-messages'
 
-/** Background 消息统一 scope。 */
-export const BACKGROUND_MESSAGE_SCOPE = 'background' as const
+export { BACKGROUND_MESSAGE_SCOPE }
 
 /** 读取本地身份与当前 ownerId。 */
 export type GetLocalIdentityMessage = {
@@ -30,6 +38,28 @@ export type PingBackgroundResponse = {
   ok: true
 }
 
-export type BackgroundMessage = GetLocalIdentityMessage | PingBackgroundMessage
+export type BackgroundMessage =
+  | GetLocalIdentityMessage
+  | PingBackgroundMessage
+  | MemoryBackgroundMessage
+  | RecallBackgroundMessage
 
-export type BackgroundMessageResponse = GetLocalIdentityResponse | PingBackgroundResponse
+export type BackgroundMessageResponse =
+  | GetLocalIdentityResponse
+  | PingBackgroundResponse
+  | MemoryBackgroundResponse
+  | RecallBackgroundResponse
+
+/** 判断是否为 Background scope 消息。 */
+export function isBackgroundScopedMessage(
+  value: unknown
+): value is { scope: typeof BACKGROUND_MESSAGE_SCOPE; type: string } {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'scope' in value &&
+    value.scope === BACKGROUND_MESSAGE_SCOPE &&
+    'type' in value &&
+    typeof value.type === 'string'
+  )
+}

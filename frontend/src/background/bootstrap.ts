@@ -3,14 +3,17 @@ import {
   getCurrentOwnerId,
   getOrCreateLocalProfile
 } from '@/infrastructure/identity/local-profile-service'
+import { initializeMemoryDatabase } from '@/infrastructure/indexeddb/memory-db'
 
 /** Background 启动时初始化本地身份等基础设施。 */
 export async function bootstrapBackground(): Promise<void> {
-  const profile = await getOrCreateLocalProfile()
-  const ownerId = await getCurrentOwnerId()
+  const [profile, ownerId] = await Promise.all([getOrCreateLocalProfile(), getCurrentOwnerId()])
 
-  logger.info('Background', '本地身份已就绪', {
+  await initializeMemoryDatabase()
+
+  logger.info('Background', '本地身份与 Memory DB 已就绪', {
     localProfileId: profile.localProfileId,
-    ownerId
+    ownerId,
+    database: 'YivenoMemoryDB'
   })
 }
