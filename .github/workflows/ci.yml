@@ -85,7 +85,7 @@ jobs:
           cd frontend
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             echo "🧪 PR 快测：unit tests only"
-            bun run test:unit
+            bun run test:run
           else
             echo "🧪 push 全量：all tests"
             bun run test:run

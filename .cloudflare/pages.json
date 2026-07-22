@@ -1,7 +1,7 @@
 {
   "$schema": "https://developers.cloudflare.com/pages/platform/build-configuration/",
   "build": {
-    "command": "bun run build:website",
+    "command": "bun run build:prod",
     "cwd": "website",
     "destination_dir": "dist"
   },

@@ -106,13 +106,12 @@ AI 在编写代码后：
 
 ```bash
 # 自动修复大部分问题
-bun run lint:fix:enhanced
+bun run lint:check
 
 # 如果需要单独检查
 cd frontend
 bun run typecheck:force      # 类型检查
-bun run lint:check:force     # 代码规范
-bun run stylelint:force      # 样式规范
+bun run lint:check           # 代码规范 + Stylelint
 ```
 
 **原因**：
@@ -209,7 +208,7 @@ bun run stylelint:force      # 样式规范
 
 ## 📚 必读文档
 
-- **产品文档（最重要）**：`docs/product/Yiveno-产品文档-v3.0.md`（含 **§零 文档治理与 AI 协作**；列表 hover 见 §1.1.1；实现约束见 §4.1.2.1）
+- **产品文档（最重要）**：`docs/product/Yiveno-产品文档-v4.0.md`（v3.0 仅作历史参考；含 UI 交互约束与架构边界）
 - 架构变更必须同步更新产品文档
 
 ---
@@ -722,9 +721,9 @@ async function loadBookmarks() {
 
 ```bash
 bun run typecheck:force          # 类型检查（提交前必须）
-bun run lint:fix:enhanced        # 代码质量检查
+bun run lint:check               # 代码质量检查
 bun run format                   # 格式化
-bun run build:hot                # 热构建
+bun run watch:fe                 # 扩展 watch 构建
 ```
 
 ---
@@ -742,7 +741,7 @@ bun run watch
 
 1. ✅ **Frontend 热构建**：`frontend` 的 `build:watch`
 2. ✅ **Backend 开发服务器**：`backend` 的 `dev`（Wrangler dev，运行在 `https://localhost:8787`）
-3. ✅ **Website 开发服务器**：`website` 的 `dev`（Nuxt dev）
+3. ✅ **Website 开发服务器**：`website` 的 `dev`（Astro dev，端口 3001）
 
 **AI 行为准则：**
 
@@ -829,6 +828,6 @@ AI："让我检查一下问题。可能的原因：
 ```bash
 # 仅在用户要求时执行：
 bun run typecheck:force
-bun run lint:check:force
-bun run stylelint:force
+bun run lint:check
+bun run stylelint:check
 ```

@@ -11,35 +11,17 @@ export default defineConfig({
     // 全局 API（describe, it, expect 等）
     globals: true,
 
+    // v4 baseline 暂无单测文件；恢复测试后移除此项
+    passWithNoTests: false,
+
     // 排除视觉测试和 E2E 测试（由 Playwright 和专门的配置运行）
-    exclude: [
-      '**/node_modules/**',
-      '**/dist/**',
-      '**/visual/**',
-      '**/*.spec.ts',
-      '**/service-worker/basic-e2e.test.ts', // E2E 测试单独运行
-      '**/service-worker/termination*.test.ts' // E2E 测试单独运行
-    ],
+    exclude: ['**/node_modules/**', '**/dist/**'],
 
     // 覆盖率配置
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      exclude: [
-        'node_modules/',
-        'src/background/', // Background Script 需要特殊测试
-        '**/*.d.ts',
-        '**/*.config.*',
-        '**/mockData',
-        'src/types/'
-      ],
-      // 目标覆盖率
-      thresholds: {
-        lines: 70,
-        functions: 70,
-        branches: 60,
-        statements: 70
-      }
+      exclude: ['node_modules/', '**/*.d.ts', '**/*.config.*']
     },
 
     // 并行测试

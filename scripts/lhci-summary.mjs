@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+// v4：audit:fe 已下线（缺 frontend/lighthouserc.json）；恢复 Lighthouse 前本脚本仅供手动汇总 .lighthouseci 产物。
 // Generate an intuitive Markdown summary from LHCI results with thresholds and emojis
 // Reads latest JSON result files from .lighthouseci and prints markdown to stdout
 import { readdirSync, readFileSync } from 'node:fs'
@@ -70,7 +71,7 @@ for (const file of files) {
 }
 
 if (rows.length === 0) {
-  console.log('No Lighthouse JSON reports found in .lighthouseci. Run "bun run audit:lhci" or "bun run audit:lhci:collect" first.')
+  console.log('No Lighthouse JSON reports found in .lighthouseci. Run "bun run audit:fe" first.')
   process.exit(0)
 }
 

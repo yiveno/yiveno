@@ -134,7 +134,7 @@ const themeColor = getThemeColor(
 )
 ```
 
-### 3. 在 Vue/Nuxt 中使用
+### 3. 在 Vue / Astro 中使用
 
 ```vue
 <script setup>
@@ -282,7 +282,7 @@ import { materialTheme } from '@yiveno/design-tokens'
 // 自动映射到 Chrome Material Design
 ```
 
-### 官网 (Nuxt)
+### 官网 (Astro)
 
 ```typescript
 import { colors, spacing } from '@yiveno/design-tokens'

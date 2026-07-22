@@ -1,83 +1,17 @@
 name: Lighthouse CI
 
+# v4 baseline：frontend/website 的 lighthouserc.json 已随 v3 剥离删除。
+# 恢复审计配置前仅保留手动触发入口，避免 main push 空跑失败。
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 jobs:
-  lighthouse-frontend:
-    name: Lighthouse - Frontend (Extension)
+  lighthouse-disabled:
+    name: Lighthouse disabled (v4)
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
-        with:
-          bun-version: latest
-
-      - name: Setup Chrome
-        id: setup-chrome
-        uses: browser-actions/setup-chrome@v1
-
-      - name: Install dependencies
-        run: bun install
-
-      - name: Run Lighthouse CI - Frontend
-        timeout-minutes: 10
-        env:
-          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
-          LHCI_BUILD_TOKEN: ${{ secrets.LHCI_SERVER_TOKEN_FRONTEND }}
-          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
-        run: bun run audit:fe
-        continue-on-error: true
-
-      - name: Upload Frontend Lighthouse artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: lighthouse-frontend
-          path: frontend/.lighthouseci/**
-          retention-days: 7
-
-  lighthouse-website:
-    name: Lighthouse - Website
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
-        with:
-          bun-version: latest
-
-      - name: Setup Chrome
-        id: setup-chrome
-        uses: browser-actions/setup-chrome@v1
-
-      - name: Install dependencies
-        run: bun install
-
-      - name: Run Lighthouse CI - Website
-        timeout-minutes: 15
-        env:
-          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
-          LHCI_BUILD_TOKEN: ${{ secrets.LHCI_SERVER_TOKEN_WEBSITE }}
-          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
-        run: bun run audit:website
-        continue-on-error: true
-
-      - name: Upload Website Lighthouse artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: lighthouse-website
-          path: website/.lighthouseci/**
-          retention-days: 7
+      - name: Skip until lighthouserc restored
+        run: |
+          echo "Lighthouse CI 已下线：缺少 frontend/lighthouserc.json 与 website/lighthouserc.json。"
+          echo "恢复后请还原 audit:fe / audit:web 脚本并重新启用 push 触发。"
+          exit 0

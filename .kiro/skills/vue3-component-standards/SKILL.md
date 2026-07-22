@@ -394,8 +394,8 @@ export interface ButtonEmits {
 - [ ] 组件分类正确（base / composite / business）
 - [ ] 遵循架构约束（不直接调用 Chrome API / IndexedDB）
 - [ ] 运行 `bun run typecheck:force` 通过
-- [ ] 运行 `bun run lint:fix:enhanced` 通过
-- [ ] 运行 `bun run stylelint:force` 通过
+- [ ] 运行 `bun run lint:check` 通过
+- [ ] 运行 `bun run stylelint:check` 通过
 
 ---
 

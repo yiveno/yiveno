@@ -547,7 +547,7 @@ defineOptions({ name: 'ComponentName' }) // ❌ 顺序错误
 
 ```bash
 # 1. 自动修复 ESLint 错误
-bun run lint:fix:enhanced
+bun run lint:check
 
 # 2. 自动格式化代码
 bun run format
@@ -603,11 +603,11 @@ bun run format
 
 4. **提交代码**
    - AI 不主动运行检查命令
-   - 等待用户运行 `bun run lint:fix:enhanced`
+   - 等待用户运行 `bun run lint:check`
 
 ### 用户要求检查时：
 
-1. **运行检查**：`bun run typecheck:force && bun run lint:check:force`
+1. **运行检查**：`bun run typecheck:force && bun run lint:check`
 2. **发现错误**：立即修复
 3. **再次检查**：确认所有错误已修复
 
@@ -616,7 +616,7 @@ bun run format
 ```bash
 # 1. AI 写代码（目标：96% 正确）
 # 2. 用户运行自动修复（修复剩余 4%）
-bun run lint:fix:enhanced
+bun run lint:check
 # 3. 最终结果：100% 正确
 ```
 

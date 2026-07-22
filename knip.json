@@ -18,8 +18,6 @@
     "enumMembers": "error"
   },
   "ignoreIssues": {
-    "frontend/src/types/**": ["types", "exports"],
-    "frontend/src/stores/index.ts": ["types", "exports"],
     "backend/src/trpc-router.ts": ["types", "exports"]
   },
   "workspaces": {

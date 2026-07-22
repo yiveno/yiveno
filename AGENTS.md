@@ -3,7 +3,7 @@
 ## 项目
 
 - Yiveno：Vue 3 + TypeScript Chrome 扩展，Backend 为 Cloudflare Workers，Website 为营销站。
-- 唯一产品/架构真相：`docs/product/Yiveno-产品文档-v3.0.md`
+- 唯一产品/架构真相：`docs/product/Yiveno-产品文档-v4.0.md`（v3.0 仅作历史参考）
 - Cursor 规则：`.cursor/rules/project.mdc`，不得冲突。
 
 ## 架构硬规则
@@ -11,12 +11,12 @@
 - 数据流：Chrome API → Background Script → IndexedDB → Pinia Store → Vue Components。
 - IndexedDB 是书签数据唯一事实源；所有 IndexedDB 操作必须通过 `frontend/src/infrastructure/indexeddb/manager.ts` 的 `indexedDBManager`。
 - Background Script 是唯一 Chrome API 监听者；前端组件禁止直接调 `chrome.bookmarks.*` / `chrome.tabs.*`。
-- DDD 依赖方向：`presentation/ → application/ → core/ → infrastructure/`；禁止反向依赖，`presentation/` 不得直连 `infrastructure/`。
+- DDD 依赖方向：`presentation/ → application/ → core/ → infrastructure/`；禁止反向依赖，`presentation/` 不得直连 `infrastructure/`。v4 baseline 正在重建各层，目标结构见产品文档 v4.0。
 - Service Worker 环境无 `window` / `document` / `localStorage`；用 `setTimeout`、`fetch`、`chrome.storage.*`、`ReturnType<typeof setTimeout>`。
 
 ## 代码约定
 
-- UI/API/文档统一用 **Filter（筛选）**；UI 文案禁止出现 `Search`。
+- UI/API/文档统一用 **Filter（筛选）**；用户主动作使用 **Recall（找回）**；UI 文案禁止出现 `Search`。
 - TypeScript 禁止 `any` / `as any`；外部数据用 Zod 校验；JSDoc 用中文。
 - Vue 组件必须 `defineOptions({ name: 'ComponentName' })`。
 - Map 响应式更新用 Immer：`updateMap(nodes, draft => { ... })`。
@@ -44,11 +44,11 @@ pre-push **不跑** ESLint / typecheck / 全仓 test；`.vue` lint 由 pre-commi
 
 ### CI 检查矩阵
 
-| 场景                  | TypeScript                             | Lint         | Knip                | 前端测试                     | Lighthouse       |
-| --------------------- | -------------------------------------- | ------------ | ------------------- | ---------------------------- | ---------------- |
-| **PR**                | `typecheck:ci` + build 内 `vue-tsc -b` | `lint:check` | `knip`              | `test:unit` + backend `test` | 不跑             |
-| **push main/develop** | 同上                                   | 同上         | `knip`              | `test:run` + backend `test`  | 仅 **main push** |
-| **每周一**            | —                                      | —            | `knip.yml` 定时复检 | —                            | —                |
+| 场景                  | TypeScript                             | Lint         | Knip                | 前端测试                    | Lighthouse      |
+| --------------------- | -------------------------------------- | ------------ | ------------------- | --------------------------- | --------------- |
+| **PR**                | `typecheck:ci` + build 内 `vue-tsc -b` | `lint:check` | `knip`              | `test:run` + backend `test` | 不跑（v4 下线） |
+| **push main/develop** | 同上                                   | 同上         | `knip`              | `test:run` + backend `test` | 不跑（v4 下线） |
+| **每周一**            | —                                      | —            | `knip.yml` 定时复检 | —                           | —               |
 
 ### 本地命令
 

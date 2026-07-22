@@ -4,8 +4,8 @@
  * 与「外观」亮/暗（data-theme）正交；每套预设对应 Material Theme Builder 以 `seedHex`
  * 生成的一整族 M3 变量（含 light + dark）。
  *
- * **产品文档**：`docs/product/Yiveno-产品文档-v3.0.md` §2.5.5 与本文件保持同步；
- * 增删改预设时请先改此处，再更新文档表格。
+ * **产品文档**：配色约定见 `docs/product/Yiveno-产品文档-v4.0.md`；预设表以本文件为准，
+ * 增删改预设时请先改此处，再同步相关文档。
  *
  * **CSS 产物**：`packages/design-tokens/css/presets/<id>.css` 由根目录 Builder 导出文件夹经
  * `scripts/build-material-color-presets.mjs` 生成；文件夹名 `Skyline`→`default`，`Twilight`→`violet`，其余 id 同文件夹名（小写）。

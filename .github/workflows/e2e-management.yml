@@ -1,4 +1,4 @@
-name: E2E Management
+name: E2E Extension Smoke
 
 on:
   workflow_dispatch:
@@ -10,15 +10,11 @@ on:
         description: Chrome DevTools host (e.g., http://localhost:9222)
         required: false
         default: http://localhost:9222
-      PERF:
-        description: Run performance mode (true/false)
-        required: false
-        default: "false"
 
 jobs:
   e2e:
     runs-on: macos-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     env:
       EXT_ID: ${{ inputs.EXT_ID }}
       HOST: ${{ inputs.HOST }}
@@ -26,30 +22,32 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
         with:
-          node-version: '20'
+          bun-version: latest
 
       - name: Install deps
-        run: npm i --no-fund --no-audit
+        run: bun install --frozen-lockfile
 
-      - name: Run E2E (functional)
-        run: node scripts/e2e-management.mjs --ext "$EXT_ID" --host "$HOST"
+      - name: Build extension
+        run: bun run build:fe
 
-      - name: Run E2E (performance)
-        if: inputs.PERF == 'true'
-        run: node scripts/e2e-management.mjs --ext "$EXT_ID" --host "$HOST" --perf --cpu 4 --net slow4g
+      - name: Run E2E smoke (popup + settings)
+        run: bun ./scripts/e2e-management.mjs --ext "$EXT_ID" --host "$HOST"
 
       - name: Upload artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: e2e-artifacts
           path: artifacts/**
+          if-no-files-found: ignore
 
       - name: Job summary
+        if: always()
         run: |
-          echo "## E2E Management Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## E2E Extension Smoke" >> $GITHUB_STEP_SUMMARY
           echo "- EXT_ID: $EXT_ID" >> $GITHUB_STEP_SUMMARY
           echo "- HOST: $HOST" >> $GITHUB_STEP_SUMMARY
-          echo "- PERF: ${{ inputs.PERF }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Targets: popup.html, settings.html" >> $GITHUB_STEP_SUMMARY

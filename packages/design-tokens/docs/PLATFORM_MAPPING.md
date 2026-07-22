@@ -10,13 +10,13 @@
 - ✅ **Chrome Extension** (HTML/CSS)
 - ✅ **React Native** (iOS/Android)
 - ✅ **Flutter** (iOS/Android/Web)
-- ✅ **Nuxt/Vue** (SSR/SSG)
+- ✅ **Astro / Vue** (SSR/SSG)
 
 ---
 
 ## 📦 安装方式
 
-### Web / Chrome Extension / Nuxt
+### Web / Chrome Extension / Astro / Vue
 
 ```bash
 # 内部项目（Monorepo）

@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+// v4：audit:web 已下线（缺 website/lighthouserc.json）；恢复 Lighthouse 前本脚本仅供手动汇总 .lighthouseci 产物。
 // Generate Lighthouse summary for Website (includes SEO, PWA)
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -81,7 +82,7 @@ for (const file of files) {
 }
 
 if (rows.length === 0) {
-  console.log('No Lighthouse JSON reports found. Run "bun run audit:website" first.')
+  console.log('No Lighthouse JSON reports found. Run "bun run audit:web" first.')
   process.exit(0)
 }
 

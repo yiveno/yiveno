@@ -2,19 +2,9 @@
 import vue from '@vitejs/plugin-vue'
 import basicSsl from '@vitejs/plugin-basic-ssl'
 import type { Plugin } from 'vite'
+import { finalizeExtensionDistPlugin } from './finalize-dist'
 
-/** Vue 自定义元素配置。 */
-function createVuePlugin(): Plugin {
-  return vue({
-    template: {
-      compilerOptions: {
-        isCustomElement: tag => tag.startsWith('md-')
-      }
-    }
-  })
-}
-
-/** v4 基础设施阶段仅保留框架与本地 HTTPS 支持。 */
+/** v4 基础设施阶段：Vue + HTTPS + 扩展 dist 整理。 */
 export function createPlugins(): Plugin[] {
-  return [createVuePlugin(), basicSsl()]
+  return [vue(), basicSsl(), finalizeExtensionDistPlugin()]
 }

@@ -1,26 +1,25 @@
 # 📖 Yiveno
 
-> 🎯 智能书签管理 Chrome 扩展 - 高性能 Monorepo 项目
+> 🎯 个人信息寻回 Chrome 扩展 - 高性能 Monorepo 项目
 
 [![Bun](https://img.shields.io/badge/Bun-1.2.21-black?logo=bun)](https://bun.sh)
 [![Vue 3](https://img.shields.io/badge/Vue-3.5-42b883?logo=vue.js)](https://vuejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178c6?logo=typescript)](https://www.typescriptlang.org)
 [![Cloudflare](https://img.shields.io/badge/Cloudflare-Worker-f38020?logo=cloudflare)](https://workers.cloudflare.com)
 
-一款智能的Chrome书签管理扩展，基于Vue 3 + TypeScript + Cloudflare Worker构建，采用现代化Monorepo架构。
+一款个人信息寻回 Chrome 扩展，基于 Vue 3 + TypeScript + Cloudflare Worker 构建，采用现代化 Monorepo 架构。产品规格以 [`docs/product/Yiveno-产品文档-v4.0.md`](docs/product/Yiveno-产品文档-v4.0.md) 为准。
 
 ---
 
 ## ✨ 特性
 
-- 🚀 **高性能搜索** - 基于 FlexSearch 的关键词筛选 + Hybrid 语义检索（Pro）
-- 🎯 **智能推荐** - AI驱动的书签推荐系统
-- 💾 **离线优先** - IndexedDB本地存储，支持离线访问
-- 🎨 **现代化UI** - Vue 3 Composition API + 虚拟滚动优化
-- 🔄 **实时同步** - Chrome书签API实时同步
-- 🌐 **多语言支持** - 中文、英文、日文、韩文等
-- ⚡ **极速构建** - Bun + Vite驱动的开发体验
-- 🏗️ **分层架构** - DDD领域驱动设计 (Application/Core/Infrastructure)
+- 🧠 **模糊寻回（Recall）** - 凭一点印象找回曾经保存的内容
+- 🔍 **本地筛选（Filter）** - 从 IndexedDB 已有集合中快速过滤
+- 💾 **离线优先** - IndexedDB 本地存储，支持离线访问
+- 🎨 **现代化 UI** - Vue 3 Composition API
+- 🔄 **书签同步** - Chrome 书签 API 实时同步（内容来源之一）
+- ⚡ **极速构建** - Bun + Vite 驱动的开发体验
+- 🏗️ **分层架构** - DDD 领域驱动设计（v4 重建中）
 
 ---
 
@@ -49,8 +48,9 @@ bun install
 bun run watch
 
 # 或者单独启动
-bun run dev:backend           # 后端 (Cloudflare Worker - 端口8787)
-bun run dev:website           # 官网 (Nuxt - 端口3000)
+bun run dev:be              # 后端 (Cloudflare Worker - 端口 8787)
+bun run dev:web             # 官网 (Astro - 端口 3001)
+bun run dev:fe              # 扩展 Vite 开发服务器
 ```
 
 ### 环境变量
@@ -88,10 +88,14 @@ bun run env:check:prod
 ### 构建扩展
 
 ```bash
-# 生产构建 (优化模式)
-bun run build:all
+# 生产构建 (全 workspace)
+bun run build:prod
 
-# 构建产物位置: ./dist/
+# 仅构建扩展
+bun run build:fe:prod
+
+# 构建产物位置: ./dist/（扩展）
+# 官网产物: ./website/dist/
 ```
 
 ### 加载扩展到Chrome
@@ -106,64 +110,73 @@ bun run build:all
 ## 📂 项目结构
 
 ```
-Yiveno/                    # Monorepo根目录
-├── frontend/                       # 🎨 Frontend Workspace (Vue 3 Chrome Extension)
+Yiveno/                             # Monorepo 根目录
+├── frontend/                       # Chrome 扩展 (Vue 3 + Vite)
 │   ├── src/
-│   │   ├── application/           # 应用层 (App Services)
-│   │   ├── core/                  # 核心层 (Domain Logic)
-│   │   ├── infrastructure/        # 基础设施层 (APIs, Storage)
-│   │   ├── components/            # Vue 组件
-│   │   ├── stores/                # Pinia 状态管理
+│   │   ├── background/            # Service Worker 入口
+│   │   ├── core/                  # 领域模型
+│   │   ├── infrastructure/        # IndexedDB、事件总线、日志等
+│   │   ├── offscreen/             # Offscreen Document
+│   │   ├── pages/                 # popup / settings 页面
+│   │   └── styles/
+│   ├── public/                    # manifest、静态资源
+│   ├── vite/                      # 构建配置
+│   ├── scripts/                   # workspace 级脚本
+│   └── package.json
+│
+├── backend/                        # Cloudflare Worker API
+│   ├── src/
+│   │   ├── handlers/              # 请求处理器
+│   │   ├── routes/                # HTTP 路由
 │   │   ├── services/              # 业务服务
-│   │   └── types/                 # TypeScript 类型定义
-│   ├── public/                    # 静态资源 (icons, manifest.json)
-│   ├── scripts/                   # 构建脚本
-│   ├── package.json               # Frontend 依赖
-│   ├── vite.config.ts             # Vite 配置
-│   └── tsconfig*.json             # TypeScript 配置
+│   │   ├── middleware/          # 中间件
+│   │   └── data-access/           # Supabase 数据访问
+│   ├── wrangler.toml
+│   └── package.json
 │
-├── backend/                        # ⚡ Backend Workspace (Cloudflare Worker)
-│   ├── ai/                        # AI 功能模块
-│   ├── utils/                     # 工具函数
-│   ├── cloudflare-worker.js       # Worker 入口
-│   ├── wrangler.toml              # Cloudflare 配置
-│   └── package.json               # Backend 依赖
+├── website/                        # Astro 营销站
+│   ├── src/
+│   └── package.json
 │
-├── scripts/                        # 🛠️ 根目录脚本
-│   ├── e2e-management.mjs         # E2E 测试脚本
-│   ├── dev-setup.sh               # 开发环境设置
-│   └── ...
+├── packages/                       # 共享包
+│   ├── auth-core/                 # 认证核心逻辑
+│   ├── design-tokens/             # 设计令牌
+│   └── types/                     # 跨 workspace 类型 (@yiveno/types)
 │
-├── docs/                           # 📚 项目文档
-│   ├── product/                    # 产品文档（唯一正文见该目录下 v3.0）
-│   └── AUTH_GUIDE.md               # OAuth 接入说明
+├── scripts/                        # 跨 workspace 脚本
+│   ├── dev-env.mjs                # 环境变量同步/校验
+│   ├── e2e-management.mjs         # E2E 测试
+│   └── knip-runner.mjs            # Dead code 检测
 │
-├── .husky/                         # 🐕 Git Hooks
-├── .vscode/                        # VS Code 配置
-├── eslint.config.js                # 统一 ESLint 配置 (Flat Config)
-├── tsconfig.json                   # 根 TypeScript 配置 (Project References)
-├── package.json                    # 根依赖管理 + Workspaces定义
-├── bun.lock                        # 依赖锁文件 (Bun)
-└── README.md                       # 本文件
+├── docs/                           # 项目文档
+│   └── product/                   # 产品文档（v4.0 为唯一正文）
+│
+├── supabase/                       # 数据库迁移 (Supabase CLI)
+├── dist/                           # 扩展构建产物 (gitignore)
+├── eslint.config.js                # 统一 ESLint 配置
+├── tsconfig.base.json              # 共享 TypeScript 配置
+├── knip.json                       # Dead code 检测配置
+├── package.json                    # Workspaces 根配置
+└── bun.lock                        # 依赖锁文件
 ```
 
 ### 架构分层 (Frontend)
 
-基于 **DDD (Domain-Driven Design)** 的分层架构：
+目标架构基于 **DDD**，v4 baseline 正在重建各层，完整约定见 [产品文档 v4.0](docs/product/Yiveno-产品文档-v4.0.md)：
 
 ```
 ┌─────────────────────────────────────────┐
-│       Presentation Layer (UI)           │  ← Vue组件, Pinia Stores
+│       Presentation Layer (UI)           │  ← Vue 组件, Pinia Stores（重建中）
 ├─────────────────────────────────────────┤
-│       Application Layer                 │  ← App Services (业务编排)
+│       Application Layer                 │  ← App Services（重建中）
 ├─────────────────────────────────────────┤
 │       Core/Domain Layer                 │  ← 核心业务逻辑, 领域模型
 ├─────────────────────────────────────────┤
-│       Infrastructure Layer              │  ← Chrome APIs, HTTP, IndexedDB
+│       Infrastructure Layer              │  ← Chrome APIs, IndexedDB
 └─────────────────────────────────────────┘
 ```
 
-详见: [frontend/ARCHITECTURE.md](frontend/ARCHITECTURE.md)
+当前 baseline 已有 `core/`、`infrastructure/`、`pages/`；`presentation/` / `application/` 将随 v4 功能恢复逐步补齐。
 
 ---
 
@@ -171,24 +184,29 @@ Yiveno/                    # Monorepo根目录
 
 ### Frontend (Chrome Extension)
 
-| 类别           | 技术                  | 版本    | 说明                               |
-| -------------- | --------------------- | ------- | ---------------------------------- |
-| **框架**       | Vue 3                 | 3.5.18  | Composition API + `<script setup>` |
-| **语言**       | TypeScript            | 5.8.3   | 严格模式 + Project References      |
-| **状态管理**   | Pinia                 | 3.0.3   | Vue官方推荐                        |
-| **构建工具**   | Vite                  | 8.0.0   | 极速HMR + Rolldown打包（Rust）     |
-| **搜索引擎**   | FlexSearch            | 0.8.x   | 本地关键词筛选                     |
-| **虚拟滚动**   | @tanstack/vue-virtual | 3.13.12 | 大数据列表优化                     |
-| **Chrome API** | Manifest V3           | -       | 最新标准                           |
+| 类别           | 技术        | 版本   | 说明            |
+| -------------- | ----------- | ------ | --------------- |
+| **框架**       | Vue 3       | 3.5.18 | Composition API |
+| **语言**       | TypeScript  | 5.8.3  | 严格模式        |
+| **构建工具**   | Vite        | 8.0.x  | 扩展打包        |
+| **事件总线**   | mitt        | 3.0.x  | 跨层事件通信    |
+| **Chrome API** | Manifest V3 | -      | 最新标准        |
 
-### Backend (API Server)
+### Backend (Cloudflare Worker)
 
 | 类别       | 技术              | 版本   | 说明               |
 | ---------- | ----------------- | ------ | ------------------ |
 | **运行时** | Cloudflare Worker | -      | 全球边缘计算       |
-| **语言**   | JavaScript (ESM)  | ES2022 | Bun优化            |
-| **验证**   | Zod               | 3.22.4 | 类型安全的数据验证 |
-| **UUID**   | uuid              | 11.1.0 | 唯一标识符生成     |
+| **语言**   | TypeScript (ESM)  | 5.8.x  | Bun + Wrangler     |
+| **数据库** | Supabase          | 2.79.x | PostgreSQL + Auth  |
+| **验证**   | Zod               | 3.25.x | 类型安全的数据验证 |
+
+### Website (营销站)
+
+| 类别     | 技术  | 版本   | 说明         |
+| -------- | ----- | ------ | ------------ |
+| **框架** | Astro | 5.18.x | 静态站点生成 |
+| **UI**   | Vue 3 | 3.5.x  | 交互组件     |
 
 ### Monorepo工具链
 
@@ -209,34 +227,45 @@ Yiveno/                    # Monorepo根目录
 
 ```bash
 # 🚀 开发
-bun run watch                 # 启动所有服务 (插件前端构建 + 后端 + 官网)
-bun run dev:backend           # 仅启动后端 (Worker - https://localhost:8787)
-bun run dev:website           # 仅启动官网 (Nuxt - http://localhost:3000)
+bun run watch                 # 扩展 watch 构建 + 后端 + 官网
+bun run dev                   # 同上（并行启动三端）
+bun run dev:fe                # 仅扩展 Vite 开发服务器
+bun run dev:be                # 仅后端 (Worker - 端口 8787)
+bun run dev:web               # 仅官网 (Astro - 端口 3001)
 
 # 🏗️ 构建
-bun run build:frontend        # 构建前端 (类型检查 + 打包)
-bun run build:all             # 构建所有 workspace
+bun run build                 # 开发 profile 全量构建
+bun run build:prod            # 生产 profile 全量构建
+bun run build:fe              # 仅构建扩展 (development)
+bun run build:fe:prod         # 仅构建扩展 (production)
+bun run build:web:prod        # 仅构建官网 (production)
 
 # 🧪 类型检查
-bun run typecheck             # 所有项目的 TypeScript 类型检查
+bun run typecheck             # 全 workspace 类型检查
+bun run typecheck:force       # 强制重建 TS 缓存后检查
 
 # 🔍 代码质量
-bun run lint                  # 智能代码检查 (ESLint)
-bun run format                # 格式化所有代码 (Prettier)
-bun run stylelint             # 检查样式 (Stylelint)
-bun run stylelint:fix         # 自动修复样式问题
+bun run lint:check            # ESLint + Stylelint 只读检查
+bun run lint                  # 格式化 + ESLint + Stylelint 修复
+bun run knip                  # Dead code 检测
 
 # 🚀 部署
-bun run deploy:backend        # 部署后端到 Cloudflare
+bun run deploy:be             # 部署后端到 Cloudflare
+bun run deploy:web            # 构建官网
 
-# 📊 审计
-bun run audit:frontend        # Lighthouse CI 性能审计 (插件)
-bun run audit:website         # Lighthouse CI 性能审计 (官网)
-bun run e2e                   # E2E 测试
+# 📊 审计（v4 baseline 暂不可用）
+# audit:fe / audit:web 已下线，待 lighthouserc.json 恢复后启用
+
+# 🧪 E2E 冒烟（popup + settings，需 Chrome 远程调试 + 已加载 dist/）
+bun run e2e                   # CDP 打开 popup.html / settings.html
+
+# 🗄️ 数据库
+bun run db:start              # 启动本地 Supabase
+bun run db:reset              # 重置本地数据库
 
 # 🧹 清理
-bun run clean                 # 清理构建缓存
-bun run clean:deps            # 清理所有依赖 (重新安装)
+bun run clean                 # 清理各 workspace 缓存
+bun run clean:deps            # 清理所有依赖后重装
 ```
 
 ### Frontend独立命令
@@ -244,14 +273,14 @@ bun run clean:deps            # 清理所有依赖 (重新安装)
 ```bash
 cd frontend
 
-bun run dev                   # 启动开发服务器
-bun run build                 # 生产构建 (类型检查 + 打包 + 清理)
-bun run build:hot             # 热重载构建 (自动重新打包)
-bun run type-check            # TypeScript 类型检查
-bun run lint                  # ESLint 检查
-bun run lint:fix              # ESLint 自动修复
-bun run stylelint             # Stylelint 检查
-bun run stylelint:fix         # Stylelint 自动修复
+bun run dev                   # Vite 开发服务器
+bun run build                 # 开发 profile 构建
+bun run build:prod            # 生产 profile 构建
+bun run build:watch           # Watch 模式构建
+bun run typecheck             # TypeScript 类型检查
+bun run lint:check            # ESLint + Stylelint 只读检查
+bun run test                  # Vitest 单元测试
+bun run clean                 # 清理 dist/
 ```
 
 ### Backend独立命令
@@ -259,10 +288,11 @@ bun run stylelint:fix         # Stylelint 自动修复
 ```bash
 cd backend
 
-bun run dev                   # 启动 Wrangler 开发服务器
+bun run dev                   # Wrangler 本地开发
 bun run deploy                # 部署到 Cloudflare Worker
-bun run lint                  # ESLint 检查
-bun run lint:fix              # ESLint 自动修复
+bun run test                  # Bun 单元测试
+bun run db:start              # 启动本地 Supabase
+bun run db:reset              # 重置本地数据库
 ```
 
 ---
@@ -271,14 +301,18 @@ bun run lint:fix              # ESLint 自动修复
 
 ### 📦 产品文档（唯一正文）
 
-- [Yiveno 完整产品文档 v3.0](docs/product/Yiveno-产品文档-v3.0.md)
+- [Yiveno 产品文档 v4.0](docs/product/Yiveno-产品文档-v4.0.md)
+- [Yiveno 产品文档 v3.0（历史参考）](docs/product/Yiveno-产品文档-v3.0.md)
 - [`docs/` 目录说明](docs/README.md)
 - [环境变量方案](docs/ENVIRONMENT.md)
-- 架构与分层约定以 **产品文档** 为准；代码入口见 `frontend/src/` 各层目录。
+
+架构与分层约定以 **产品文档 v4.0** 为准；代码入口见各 workspace 的 `src/` 目录。
 
 ### 🏗️ 架构与工程
 
-- 以 [产品文档 v3.0 — 第二部分](docs/product/Yiveno-产品文档-v3.0.md#第二部分技术架构) 为准；仓库内若仍有独立架构 `.md` 与正文冲突，以正文为准。
+- 以 [产品文档 v4.0](docs/product/Yiveno-产品文档-v4.0.md) 为准；仓库内若仍有独立架构 `.md` 与正文冲突，以正文为准。
+- Cursor 规则：`.cursor/rules/project.mdc`
+- AI 协作：`AGENTS.md`
 
 ---
 
@@ -322,51 +356,33 @@ bun run lint:fix              # ESLint 自动修复
 
 ## 🧪 测试
 
-### E2E测试
+### E2E 冒烟（v4）
 
 ```bash
-# 管理页测试
-bun run e2e:management --ext $EXT_ID
-
-# 性能测试 (CPU节流 + 网络限速)
-bun run e2e:management:perf --ext $EXT_ID
-
-# 完整测试 (功能 + 性能)
-bun run e2e:management:all --ext $EXT_ID
+# 前置：Chrome 开启远程调试，加载 dist/ 后执行
+bun run e2e
 ```
 
-详见根目录 `package.json` 中的 `e2e` / `e2e:perf` 脚本及 `scripts/e2e-management.mjs`。
+打开 `popup.html` 与 `settings.html` 并截图到 `artifacts/`。详见 `scripts/e2e-management.mjs`。
+
+环境变量快照（v3 `management.html` 桥接）已下线；请用 `.env.*.local` + `bun run env:sync:dev`。
 
 ### Lighthouse CI
 
-```bash
-# 完整审计 (构建 + Lighthouse)
-bun run audit:lhci
-
-# 快速审计 (跳过类型检查)
-bun run audit:lhci:fast
-
-# 只收集数据
-bun run audit:lhci:collect
-
-# 只断言检查
-bun run audit:lhci:assert
-```
+v4 baseline 暂缺 `lighthouserc.json`，`audit:fe` / `audit:web` 与 main push Lighthouse workflow 已下线。
 
 ---
 
 ## 📊 性能优化
 
-### Frontend优化
+### Frontend 优化
 
-- ✅ **虚拟滚动** - `@tanstack/vue-virtual` 处理大量书签
-- ✅ **IndexedDB缓存** - 本地持久化存储，减少API调用
-- ✅ **智能字体加载** - 根据UI语言动态加载Google Fonts
-- ✅ **Tree Shaking** - Vite自动移除未使用代码
-- ✅ **代码分割** - 按页面异步加载 (popup, side-panel, management)
-- ✅ **CSS优化** - Stylelint自动排序属性，减小体积
+- ✅ **IndexedDB 缓存** - 本地持久化存储
+- ✅ **Tree Shaking** - Vite 自动移除未使用代码
+- ✅ **代码分割** - 按入口异步加载 (popup, settings, background)
+- ✅ **CSS 优化** - Stylelint 自动排序属性
 
-### Backend优化
+### Backend 优化
 
 - ✅ **边缘计算** - Cloudflare Worker全球部署，低延迟
 - ✅ **无服务器** - 按需执行，零冷启动
@@ -380,9 +396,9 @@ bun run audit:lhci:assert
 
 ```bash
 # 1. 生产构建
-bun run build:all
+bun run build:fe:prod
 
-# 2. 打包扩展 (手动或使用脚本)
+# 2. 打包扩展 (手动)
 cd dist
 zip -r ../yiveno-v1.0.0.zip .
 
@@ -412,10 +428,10 @@ bunx wrangler deployments list
 
 ### 提交PR前
 
-1. ✅ 确保所有测试通过: `bun run test`
+1. ✅ 确保测试通过: `bun run test:fe && bun run test:be`
 2. ✅ 确保代码检查通过: `bun run lint:check`
-3. ✅ 确保类型检查通过: `bun run typecheck`
-4. ✅ 确保构建成功: `bun run build:all`
+3. ✅ 确保类型检查通过: `bun run typecheck:force`
+4. ✅ 确保构建成功: `bun run build:prod`
 
 ### 提交消息规范
 
@@ -454,7 +470,6 @@ chore: 升级依赖版本
 - [Vite](https://vitejs.dev) - 下一代前端构建工具
 - [Bun](https://bun.sh) - 高性能JavaScript运行时
 - [Cloudflare Workers](https://workers.cloudflare.com) - 边缘计算平台
-- [FlexSearch](https://github.com/nextapps-de/flexsearch) - 高性能本地全文索引
 
 ---
 

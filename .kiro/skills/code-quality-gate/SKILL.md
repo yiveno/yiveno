@@ -14,7 +14,7 @@ description: Enforce code quality checks before commits. Use when modifying Type
 ```bash
 cd frontend
 bun run typecheck:force
-bun run lint:fix:enhanced
+bun run lint:check
 bun run format
 ```
 
@@ -106,7 +106,7 @@ grep -r "as any" frontend/src/
 
 ```bash
 # Stylelint 会自动检查硬编码数值
-bun run stylelint:force
+bun run stylelint:check
 ```
 
 ---
@@ -210,7 +210,7 @@ bun run typecheck:force
 ### 2. ESLint 代码规范检查
 
 ```bash
-bun run lint:fix:enhanced
+bun run lint:check
 ```
 
 **检查内容：**
@@ -231,7 +231,8 @@ bun run lint:fix:enhanced
 ### 3. Stylelint 样式检查
 
 ```bash
-bun run stylelint:force
+bun run stylelint:check   # 只读检查
+bun run stylelint         # 自动修复
 ```
 
 **检查内容：**
@@ -295,25 +296,25 @@ bun run format
 
 ### 问题 2：ESLint 错误
 
-**症状：** `bun run lint:fix:enhanced` 报错
+**症状：** `bun run lint:check` 报错
 
 **修复步骤：**
 
 1. 大部分错误会自动修复
 2. 手动修复无法自动修复的错误
-3. 重新运行 `bun run lint:fix:enhanced` 确认修复
+3. 重新运行 `bun run lint:check` 确认修复
 
 ---
 
 ### 问题 3：Stylelint 错误
 
-**症状：** `bun run stylelint:force` 报错
+**症状：** `bun run stylelint:check` 报错
 
 **修复步骤：**
 
 1. 查看错误信息，定位硬编码数值
 2. 替换为 CSS 变量（参考 design-tokens）
-3. 重新运行 `bun run stylelint:force` 确认修复
+3. 重新运行 `bun run stylelint:check` 确认修复
 
 ---
 

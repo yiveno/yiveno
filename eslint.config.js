@@ -361,8 +361,6 @@ export default [
       '**/*.md',
       'vite.config.ts',
       'vitest.config.ts',
-      'vitest.e2e.config.ts',
-      'playwright.config.ts',
       '**/.vue-global-types/**',
       '**/vite-env.d.ts',
       '**/.venv/**',
@@ -527,14 +525,14 @@ export default [
     }
   },
 
-  // DDD：非 background 层禁止导入 background
+  // DDD v4：非 background/offscreen 层禁止导入 background
   {
     files: eslintScopePaths(
       'frontend/src/infrastructure/**/*.ts',
       'frontend/src/core/**/*.ts',
+      'frontend/src/pages/**/*.{ts,vue}',
       'frontend/src/application/**/*.ts',
       'frontend/src/components/**/*.{ts,vue}',
-      'frontend/src/pages/**/*.{ts,vue}',
       'frontend/src/composables/**/*.ts',
       'frontend/src/stores/**/*.ts'
     ),
@@ -543,7 +541,7 @@ export default [
     }
   },
 
-  // DDD：core 不得依赖上层 UI / 应用 / store
+  // DDD：core 不得依赖 UI / 应用层（含 v4 目标层路径）
   {
     files: eslintScopePaths('frontend/src/core/**/*.ts'),
     rules: {
@@ -571,7 +569,7 @@ export default [
     }
   },
 
-  // DDD：application 不得依赖 UI 组件/页面
+  // DDD：application 不得依赖 UI 组件/页面（v4 恢复 application 层后生效）
   {
     files: eslintScopePaths('frontend/src/application/**/*.ts'),
     rules: {
@@ -590,11 +588,11 @@ export default [
     }
   },
 
-  // DDD：presentation 禁止直连 IndexedDB manager（须经 application / background）
+  // DDD：UI 层禁止直连 IndexedDB manager（须经 application / background）
   {
     files: eslintScopePaths(
-      'frontend/src/components/**/*.{ts,vue}',
       'frontend/src/pages/**/*.{ts,vue}',
+      'frontend/src/components/**/*.{ts,vue}',
       'frontend/src/composables/**/*.ts',
       'frontend/src/stores/**/*.ts'
     ),
@@ -612,7 +610,7 @@ export default [
                 '**/infrastructure/indexeddb/manager.ts'
               ],
               message:
-                'presentation / store 层禁止直连 indexedDBManager，请通过 application 层或 chrome.runtime.sendMessage。'
+                'UI / store 层禁止直连 indexedDBManager，请通过 application 层或 chrome.runtime.sendMessage。'
             }
           ]
         }
@@ -620,16 +618,10 @@ export default [
     }
   },
 
-  // 架构铁律：chrome.bookmarks.* 仅允许 background 与明确的 infrastructure adapter
+  // 架构铁律：chrome.bookmarks.* 仅允许 background / offscreen
   {
     files: isFrontendCwd ? ['src/**/*.{ts,tsx,vue,js}'] : ['frontend/src/**/*.{ts,tsx,vue,js}'],
-    ignores: eslintScopePaths(
-      'frontend/src/background/**',
-      'frontend/src/offscreen/**',
-      'frontend/src/infrastructure/services/bookmark-sync-service.ts',
-      'frontend/src/infrastructure/chrome-api/**',
-      'frontend/src/types/**'
-    ),
+    ignores: eslintScopePaths('frontend/src/background/**', 'frontend/src/offscreen/**'),
     rules: {
       'no-restricted-syntax': [
         'error',
@@ -640,47 +632,18 @@ export default [
     }
   },
 
-  // 架构铁律：presentation 层禁止直连 chrome.tabs.*
+  // 架构铁律：UI 层禁止直连 chrome.tabs.*
   {
-    files: eslintScopePaths(
-      'frontend/src/components/**/*.{ts,tsx,vue,js}',
-      'frontend/src/pages/**/*.{ts,tsx,vue,js}'
-    ),
+    files: eslintScopePaths('frontend/src/pages/**/*.{ts,tsx,vue,js}'),
     rules: {
       'no-restricted-syntax': ['error', ...chromeTabsCallSelectors]
     }
   },
 
-  // 非 adapter 的 frontend 层禁止直连 Supabase SDK
+  // frontend 禁止直连 Supabase SDK（后端 / 官网 adapter 除外）
   {
     files: isFrontendCwd ? ['src/**/*.{ts,tsx,vue,js}'] : ['frontend/src/**/*.{ts,tsx,vue,js}'],
-    ignores: eslintScopePaths('frontend/src/infrastructure/supabase/**'),
     rules: supabaseImportRestriction
-  },
-
-  {
-    files: ['scripts/enhance-autofix.js'],
-    languageOptions: {
-      ecmaVersion: 2022,
-      sourceType: 'module',
-      globals: {
-        ...commonGlobals,
-        __dirname: 'readonly',
-        __filename: 'readonly'
-      }
-    },
-    rules: {
-      'no-process-exit': 'warn',
-      'no-sync': 'warn',
-      'no-throw-literal': 'error',
-      'no-new-func': 'error',
-      'no-new-wrappers': 'error',
-      'no-new-object': 'error',
-      'no-new-symbol': 'error',
-      'no-new': 'error',
-      'no-console': ['error', { allow: ['warn', 'error'] }],
-      'no-unused-vars': 'error'
-    }
   },
 
   {

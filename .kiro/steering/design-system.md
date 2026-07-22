@@ -633,10 +633,10 @@ const buttonStyle = {
 bun run typecheck:force
 
 # 代码规范检查
-bun run lint:check:force
+bun run lint:check
 
 # 样式检查（会检查是否使用了魔法数字）
-bun run stylelint:force
+bun run stylelint:check
 ```
 
 ---
