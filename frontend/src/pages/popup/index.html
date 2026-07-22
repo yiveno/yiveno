@@ -1,20 +1,13 @@
 <!doctype html>
-<!--
-  弹出页（Popup）入口
-  - 仅作为 Vue 组件挂载容器；
-  - 样式从独立 CSS 文件引入，避免内联样式违反扩展 CSP；
-  - 主要职责：展示快捷操作、搜索入口，以及引导用户进入侧边栏/管理页。
--->
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <!-- 图标与样式均通过构建集成，无需内联脚本和样式，以满足 MV3 的 CSP 要求 -->
-    <title>Yiveno Popup</title>
-    <!-- Popup 专属样式 - 使用相对路径，Vite 会处理 -->
-    <link rel="stylesheet" href="./styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Yiveno</title>
   </head>
   <body>
     <div id="app"></div>
     <script type="module" src="./main.ts"></script>
   </body>
 </html>
+

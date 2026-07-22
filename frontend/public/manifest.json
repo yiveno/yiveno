@@ -1,38 +1,11 @@
 {
   "manifest_version": 3,
   "name": "__MSG_app_name__",
-  "version": "1.0.2",
+  "version": "4.0.0",
   "description": "__MSG_app_description__",
   "default_locale": "en",
   "minimum_chrome_version": "116",
-  "trial_tokens": [
-    "A0qQi+oW1ysJtWL7x6hzgFoucn+xD7Wtj8N8DnCR5P+ZVfSjGjzCqk97jvGeibouvByTv2YV34vI5wSbTI8TlgwAAACPeyJvcmlnaW4iOiJjaHJvbWUtZXh0ZW5zaW9uOi8vZ2RqY21wZW5tb2dkaWtobm5hZWJtZGRobWRnYmZjZ2wiLCJmZWF0dXJlIjoiQUlQcm9tcHRBUElNdWx0aW1vZGFsSW5wdXQiLCJleHBpcnkiOjE3ODE1NjgwMDAsImlzVGhpcmRQYXJ0eSI6dHJ1ZX0="
-  ],
-  "permissions": [
-    "bookmarks",
-    "storage",
-    "unlimitedStorage",
-    "activeTab",
-    "scripting",
-    "declarativeNetRequest",
-    "notifications",
-    "tabs",
-    "windows",
-    "alarms",
-    "offscreen",
-    "sidePanel",
-    "contextMenus",
-    "identity"
-  ],
-  "host_permissions": [
-    "https://localhost:8787/*",
-    "https://127.0.0.1:8787/*",
-    "https://api.yiveno.com/*",
-    "https://yiveno.cqw547847.workers.dev/*",
-    "https://*.supabase.co/*",
-    "https://*.supabase.io/*",
-    "https://*/*"
-  ],
+  "permissions": ["storage", "offscreen"],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
@@ -45,95 +18,9 @@
     "service_worker": "background.js",
     "type": "module"
   },
-  "content_scripts": [
-    {
-      "matches": [
-        "http://localhost:3000/*",
-        "https://localhost:3000/*",
-        "http://localhost:3001/*",
-        "https://localhost:3001/*"
-      ],
-      "js": ["auth-sync.bundle.js"],
-      "run_at": "document_start"
-    }
-  ],
-  "omnibox": {
-    "keyword": "yv"
-  },
-  "side_panel": {
-    "default_path": "side-panel.html"
-  },
-  "commands": {
-    "_execute_action": {
-      "suggested_key": {
-        "default": "Alt+A",
-        "mac": "Alt+A"
-      },
-      "description": "激活该扩展程序（按一次弹出，再按一次收起）"
-    },
-    "open-management": {
-      "suggested_key": {
-        "default": "Alt+B",
-        "mac": "Alt+B"
-      },
-      "description": "打开书签管理"
-    },
-    "open-settings": {
-      "suggested_key": {
-        "default": "Alt+S",
-        "mac": "Alt+S"
-      },
-      "description": "打开设置"
-    },
-    "quick-add-bookmark": {
-      "suggested_key": {
-        "default": "Alt+K",
-        "mac": "Alt+K"
-      },
-      "description": "快速添加当前页面为书签（AI 智能分类）"
-    }
-  },
   "icons": {
     "16": "images/icon16.png",
     "48": "images/icon48.png",
     "128": "images/icon128.png"
-  },
-  "content_security_policy": {
-    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
-  },
-
-  "web_accessible_resources": [
-    {
-      "resources": [
-        "management.html",
-        "side-panel.html",
-        "settings.html",
-        "offscreen.html",
-        "offscreen.js",
-        "onboarding.html",
-        "save-popup.html"
-      ],
-      "matches": ["<all_urls>"],
-      "use_dynamic_url": true
-    }
-  ],
-  "declarative_net_request": {
-    "rule_resources": [
-      {
-        "id": "rules_1",
-        "enabled": true,
-        "path": "rules_1.json"
-      }
-    ]
-  },
-  "externally_connectable": {
-    "matches": [
-      "http://localhost:3000/*",
-      "https://localhost:3000/*",
-      "http://localhost:3001/*",
-      "https://localhost:3001/*",
-      "https://yiveno.com/*",
-      "https://*.yiveno.com/*"
-    ]
   }
 }

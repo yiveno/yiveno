@@ -1,129 +1,24 @@
-/**
- * Chrome Service Worker 入口
- *
- * 初始化顺序（重要性从高到低）：
- * 1. 生命周期处理器（onInstalled, onStartup）
- * 2. 消息处理器（chrome.runtime.onMessage）
- * 3. 书签变化监听器（chrome.bookmarks.*）
- * 4. 菜单和快捷键（chrome.contextMenus, chrome.commands）
- * 5. Omnibox（chrome.omnibox）
- * 6. 后台任务（爬虫、特征检测）
- */
-
 import { logger } from '@/infrastructure/logging/logger'
-import { registerLifecycleHandlers } from './managers/bootstrap'
-import { registerMessageHandlers } from './listeners/messaging'
-import { registerMenusAndShortcuts } from './listeners/menus'
-import { registerOmniboxHandlers } from './listeners/omnibox'
-import { registerBookmarkChangeListeners } from './listeners/bookmarks'
-import { initializeBookmarkTraitAutoSync } from '@/infrastructure/services/bookmark-trait-auto-sync'
-import { purgeCrossEnvironmentAuthStorage } from '@/config/auth-sync-env'
-import { dispatchOffscreenRequest } from '@/infrastructure/offscreen/manager'
-import { folderVectorStore } from '@/infrastructure/folder-vector/folder-vector-store'
 
 /**
- * 初始化 Service Worker
+ * v4 Background 入口。
  *
- * 使用分阶段初始化，确保核心功能优先加载
+ * 当前只建立生命周期边界；Chrome API 监听器会随着 Capture、Recall 等领域模块
+ * 逐项注册，禁止在此恢复旧书签管理行为。
  */
-async function initializeServiceWorker() {
-  logger.info('Background', '🚀 开始初始化 Service Worker...')
+chrome.runtime.onInstalled.addListener(details => {
+  logger.info('Background', 'v4 基础设施已就绪', { reason: details.reason })
+})
 
-  try {
-    await purgeCrossEnvironmentAuthStorage()
-
-    // ==================== 阶段 1：核心功能（必须成功） ====================
-    logger.info('Background', '📍 阶段 1：注册核心功能...')
-
-    // 1.1 生命周期处理器（最高优先级）
-    registerLifecycleHandlers()
-    logger.debug('Background', '✅ 生命周期处理器已注册')
-
-    // 1.2 消息处理器（核心通信）
-    registerMessageHandlers()
-    logger.debug('Background', '✅ 消息处理器已注册')
-
-    // 1.3 书签变化监听器（核心功能）
-    registerBookmarkChangeListeners()
-    logger.debug('Background', '✅ 书签变化监听器已注册')
-
-    logger.info('Background', '✅ 阶段 1 完成：核心功能已就绪')
-
-    // ==================== 阶段 2：UI 功能（允许失败） ====================
-    logger.info('Background', '📍 阶段 2：注册 UI 功能...')
-
-    try {
-      // 2.1 菜单和快捷键
-      registerMenusAndShortcuts()
-      logger.debug('Background', '✅ 菜单和快捷键已注册')
-    } catch (error) {
-      logger.warn('Background', '⚠️ 菜单注册失败（非致命）', error)
-    }
-
-    try {
-      // 2.2 Omnibox
-      registerOmniboxHandlers()
-      logger.debug('Background', '✅ Omnibox 已注册')
-    } catch (error) {
-      logger.warn('Background', '⚠️ Omnibox 注册失败（非致命）', error)
-    }
-
-    logger.info('Background', '✅ 阶段 2 完成：UI 功能已就绪')
-
-    // ==================== 阶段 3：后台任务（延迟加载） ====================
-    logger.info('Background', '📍 阶段 3：初始化后台任务...')
-
-    // 3.1 书签特征自动同步（监听事件）
-    try {
-      initializeBookmarkTraitAutoSync()
-      logger.debug('Background', '✅ 书签特征自动同步已初始化')
-    } catch (error) {
-      logger.warn('Background', '⚠️ 书签特征自动同步初始化失败（非致命）', error)
-    }
-
-    logger.info('Background', '✅ 阶段 3 完成：后台任务已启动')
-
-    // ==================== 完成 ====================
-    logger.info('Background', '🎉 Service Worker 初始化完成')
-    logger.info('Background', '📊 状态：核心功能已就绪，后台任务正在启动')
-
-    // ✅ 延迟触发文件夹向量同步
-    // SW 冷启动时 onInstalled/onStartup 不会触发，需要主动检查并同步
-    queueFolderVectorSync()
-  } catch (error) {
-    // 核心功能初始化失败，这是致命错误
-    logger.error('Background', '❌ Service Worker 初始化失败（致命错误）', error)
-    throw error
+chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) => {
+  if (
+    typeof message === 'object' &&
+    message !== null &&
+    'scope' in message &&
+    message.scope === 'background' &&
+    'type' in message &&
+    message.type === 'PING'
+  ) {
+    sendResponse({ ok: true })
   }
-}
-
-/**
- * 延迟触发文件夹向量同步
- *
- * SW 冷启动时等待 IndexedDB 就绪后，检查文件夹向量是否为空，
- * 为空则触发同步。通过 Offscreen Document 执行 ONNX 加载。
- */
-function queueFolderVectorSync(): void {
-  setTimeout(async () => {
-    try {
-      const count = await folderVectorStore.count()
-      if (count > 0) {
-        logger.debug('Background', '文件夹向量已存在，跳过同步')
-        return
-      }
-      logger.info('Background', '文件夹向量为空，后台触发同步')
-      await dispatchOffscreenRequest<{ success: boolean }>(
-        { type: 'SYNC_FOLDER_VECTORS' },
-        { timeout: 300_000 }
-      )
-      logger.info('Background', '✅ 文件夹向量同步完成')
-    } catch (error) {
-      logger.warn('Background', '文件夹向量同步失败（非致命）', error)
-    }
-  }, 3000)
-}
-
-// 启动初始化
-initializeServiceWorker().catch(error => {
-  logger.error('Background', '💥 Service Worker 启动失败', error)
 })

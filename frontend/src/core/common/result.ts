@@ -1,17 +1,12 @@
-/**
- * Result 类型 - 统一错误处理模式
- */
+/** 应用层统一操作结果。 */
+export type Result<T, E extends Error = Error> = { ok: true; value: T } | { ok: false; error: E }
 
-export type Result<T, E = Error> =
-  | { ok: true; value: T; error?: never }
-  | { ok: false; error: E; value?: never }
-
-/** 创建成功结果 */
-export function ok<T, E = Error>(value: T): Result<T, E> {
+/** 创建成功结果。 */
+export function ok<T>(value: T): Result<T> {
   return { ok: true, value }
 }
 
-/** 创建错误结果 */
-export function err<E = Error>(error: E): Result<never, E> {
+/** 创建失败结果。 */
+export function err<E extends Error>(error: E): Result<never, E> {
   return { ok: false, error }
 }

@@ -221,6 +221,37 @@ Vue Components
 - 前端组件禁止直接调用 `chrome.bookmarks.*` / `chrome.tabs.*`。
 - `presentation/ → application/ → core/ → infrastructure/` 依赖方向不变。
 
+### 5.1.1 v4 瘦身壳活跃入口
+
+v4 初期只保留能验证「捕获 + 找回」的最小扩展入口：
+
+- `popup.html`：主找回入口。
+- `settings.html`：隐私、同步、AI、账户等配置入口。
+- `background.js`：Chrome API 监听、Omnibox、快捷键、右键菜单、同步队列。
+- `offscreen.html` / `offscreen.js`：保留本地 embedding 等 Service Worker 不适合执行的任务。
+
+### 5.1.2 v4 前端重建基线
+
+v4 不在旧书签管理架构上保留兼容层。`frontend/` 当前分支仅保留以下无业务属性的基础设施：
+
+- Chrome MV3 构建、Popup / Settings / Background / Offscreen 入口。
+- TypeScript、Vue、测试与本地开发配置。
+- `Result`、日志、事件总线、Zod 等通用工具。
+- `indexedDBManager` 的连接、升级和事务边界；不得预置 Bookmark 业务表或直接暴露原生 IndexedDB。
+- Offscreen 通信边界；尚未注册具体的 AI、embedding 或采集任务。
+
+旧管理页、侧边栏、引导页、旧保存弹窗、书签树、AI 自动整理、文件夹向量、Bookmark 特征检测及其前端业务代码均不保留在 v4 分支工作区；如需追溯，仅通过 Git 历史查看。它们不得重新进入 Vite build input、`manifest.json`、快捷键命令或 Background 启动任务。
+
+新的业务代码必须按以下顺序建立，不得跳过底层直接实现 UI：
+
+1. `MemoryItem`、来源引用、记忆线索与反馈的领域契约。
+2. IndexedDB schema、迁移、repository 与可重建派生索引。
+3. Capture Command 与 Background 写入链路。
+4. 统一 Recall / Filter 服务。
+5. Popup、Omnibox、Text Excerpt 等体验层。
+
+在第 1–3 步完成前，禁止恢复 Chrome Bookmark 同步、右键保存、embedding、LLM、云同步或任何自动后台任务。
+
 ### 5.2 长期目标架构
 
 当产品进入跨设备、订阅、服务端 AI 寻回阶段，架构目标调整为：

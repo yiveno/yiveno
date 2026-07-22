@@ -27,26 +27,9 @@ export default defineConfig(() => {
     optimizeDeps: {
       entries: [
         resolve(SRC_DIR, 'pages/popup/index.html'),
-        resolve(SRC_DIR, 'pages/management/index.html'),
-        resolve(SRC_DIR, 'pages/side-panel/index.html'),
-        resolve(SRC_DIR, 'pages/settings/index.html'),
-        resolve(SRC_DIR, 'pages/onboarding/index.html')
+        resolve(SRC_DIR, 'pages/settings/index.html')
       ],
-      include: [
-        'vue',
-        'pinia',
-        'flexsearch',
-        '@tanstack/vue-virtual',
-        '@vueuse/core',
-        'immer',
-        'mitt',
-        'zod',
-        '@material/web'
-      ],
-      exclude: [
-        '@huggingface/transformers',
-        'qrcode'
-      ],
+      include: ['vue', 'mitt'],
       force: false,
       holdUntilCrawlEnd: true
     },
