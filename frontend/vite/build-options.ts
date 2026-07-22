@@ -20,7 +20,7 @@ export function createBuildOptions() {
       assetFileNames: 'assets/[name]-[hash][extname]'
     },
     treeshake: {
-      propertyReadSideEffects: false
+      propertyReadSideEffects: false as const
     }
   }
 }

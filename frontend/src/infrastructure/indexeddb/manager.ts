@@ -45,8 +45,8 @@ export class IndexedDBManager {
     this.definition = definition
     this.database = await new Promise<IDBDatabase>((resolve, reject) => {
       const request = indexedDB.open(definition.name, definition.version)
-      request.onupgradeneeded = () => {
-        definition.upgrade(request.result, request.transaction!, request.oldVersion)
+      request.onupgradeneeded = (event: IDBVersionChangeEvent) => {
+        definition.upgrade(request.result, request.transaction!, event.oldVersion)
       }
       request.onsuccess = () => resolve(request.result)
       request.onerror = () => reject(request.error ?? new Error('IndexedDB 初始化失败'))

@@ -42,9 +42,6 @@ export default defineConfig({
       }
     },
 
-    // 设置文件（全局 mock）
-    setupFiles: ['./src/tests/setup.ts'],
-
     // 并行测试
     threads: true,
 
