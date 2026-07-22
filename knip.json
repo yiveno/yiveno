@@ -1,7 +1,7 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "treatConfigHintsAsErrors": true,
-  "ignore": ["**/*.d.ts", "frontend/src/tests/**"],
+  "ignore": ["**/*.d.ts"],
   "ignoreExportsUsedInFile": true,
   "ignoreDependencies": ["puppeteer-core"],
   "ignoreBinaries": ["wait"],
@@ -19,7 +19,8 @@
   },
   "ignoreIssues": {
     "frontend/src/types/**": ["types", "exports"],
-    "frontend/src/stores/index.ts": ["types", "exports"]
+    "frontend/src/stores/index.ts": ["types", "exports"],
+    "backend/src/trpc-router.ts": ["types", "exports"]
   },
   "workspaces": {
     ".": {
