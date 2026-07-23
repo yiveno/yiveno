@@ -1,4 +1,7 @@
 {
+  "name": "frontend",
+  "private": true,
+  "version": "4.0.0",
   "scripts": {
     "build": "bun ../scripts/dev-env.mjs sync --profile=development --target=frontend --quiet && NODE_ENV=development vue-tsc -b && NODE_ENV=development vite build --mode development",
     "build:prod": "bun ../scripts/dev-env.mjs sync --profile=production --target=frontend --quiet && bun ../scripts/dev-env.mjs check --profile=production --target=frontend --quiet && NODE_ENV=production vue-tsc -b && NODE_ENV=production vite build --mode production",
