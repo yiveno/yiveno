@@ -1,3 +1,4 @@
+import { optionalProp } from '@/core/common/optional-props'
 import { normalizeTextExcerptSelection } from '@/core/capture/text-excerpt-selection'
 import type { MemoryItem } from '@/core/memory/memory-item'
 import { memoryItemService } from '@/application/memory/memory-item-service'
@@ -29,8 +30,8 @@ export async function captureTextExcerptFromContextMenu(
       if (fromPage) {
         selection = normalizeTextExcerptSelection({
           selectedText: fromPage.selectedText || input.selectionText,
-          contextBefore: fromPage.contextBefore,
-          contextAfter: fromPage.contextAfter
+          ...optionalProp('contextBefore', fromPage.contextBefore),
+          ...optionalProp('contextAfter', fromPage.contextAfter)
         })
       }
     } catch {
@@ -47,8 +48,8 @@ export async function captureTextExcerptFromContextMenu(
       selectedText: selection.selectedText,
       sourceUrl: input.sourceUrl,
       pageTitle: input.pageTitle.trim() || input.sourceUrl,
-      contextBefore: selection.contextBefore,
-      contextAfter: selection.contextAfter
+      ...optionalProp('contextBefore', selection.contextBefore),
+      ...optionalProp('contextAfter', selection.contextAfter)
     },
     captureEntry: 'context_menu'
   })

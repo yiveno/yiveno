@@ -1,3 +1,4 @@
+import { optionalProp } from '@/core/common/optional-props'
 import { isSavablePageUrl } from '@/infrastructure/browser/active-tab-reader'
 
 /** Chrome 书签树中可导入的叶子节点。 */
@@ -17,13 +18,15 @@ export function toChromeBookmarkLeaf(
     return null
   }
 
+  const chromeCreatedAt =
+    typeof node.dateAdded === 'number' ? new Date(node.dateAdded).toISOString() : undefined
+
   return {
     chromeBookmarkId: node.id,
     title: node.title.trim() || node.url,
     url: node.url,
-    parentFolderId: node.parentId,
-    chromeCreatedAt:
-      typeof node.dateAdded === 'number' ? new Date(node.dateAdded).toISOString() : undefined
+    ...optionalProp('parentFolderId', node.parentId),
+    ...optionalProp('chromeCreatedAt', chromeCreatedAt)
   }
 }
 

@@ -35,8 +35,3 @@ export async function writeChromeStorageLocal<T extends Record<string, unknown>>
 ): Promise<void> {
   await chrome.storage.local.set({ [key]: value })
 }
-
-/** 删除 chrome.storage.local 中的键。 */
-export async function removeChromeStorageLocal(key: string): Promise<void> {
-  await chrome.storage.local.remove(key)
-}

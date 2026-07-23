@@ -1,3 +1,4 @@
+import { optionalProp } from '@/core/common/optional-props'
 import { captureTextExcerptFromContextMenu } from '@/application/capture/capture-text-excerpt-service'
 import { isSavablePageUrl } from '@/infrastructure/browser/active-tab-reader'
 import { logger } from '@/infrastructure/logging/logger'
@@ -99,7 +100,7 @@ export async function handleContextMenuClick(
     selectionText,
     sourceUrl,
     pageTitle: tab?.title ?? '未知页面',
-    tabId: tab?.id
+    ...optionalProp('tabId', tab?.id)
   })
 
   logger.info('ContextMenu', '选区已保存为 Text Excerpt', {
@@ -127,10 +128,5 @@ export function registerContextMenuListeners(): void {
 /** 测试用：重置监听器注册状态。 */
 export function resetContextMenuListenersForTests(): void {
   listenersRegistered = false
-  registerMenuInFlight = null
-}
-
-/** 测试用：重置菜单注册飞行状态。 */
-export function resetContextMenuRegistrationForTests(): void {
   registerMenuInFlight = null
 }

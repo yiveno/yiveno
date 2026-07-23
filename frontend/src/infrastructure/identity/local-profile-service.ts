@@ -38,8 +38,3 @@ export async function getCurrentOwnerId(): Promise<string> {
   const [profile, binding] = await Promise.all([getOrCreateLocalProfile(), getAccountBinding()])
   return resolveOwnerId(profile, binding)
 }
-
-/** 读取本地档案；不存在时不创建。 */
-export async function getLocalProfile(): Promise<LocalProfile | null> {
-  return readChromeStorageLocal(LOCAL_PROFILE_STORAGE_KEY, LocalProfileSchema)
-}

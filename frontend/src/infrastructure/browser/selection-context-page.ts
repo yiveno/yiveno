@@ -37,7 +37,7 @@ export function extractSelectionContextOnPage(): {
 
   return {
     selectedText,
-    contextBefore: contextBefore || undefined,
-    contextAfter: contextAfter || undefined
+    ...(contextBefore ? { contextBefore } : {}),
+    ...(contextAfter ? { contextAfter } : {})
   }
 }

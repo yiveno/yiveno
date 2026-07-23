@@ -37,11 +37,6 @@ export const MemoryItemSchema = z.discriminatedUnion('type', [
 
 export type MemoryItem = z.infer<typeof MemoryItemSchema>
 
-/** 校验外部/存储数据是否为合法 MemoryItem。 */
-export function parseMemoryItem(value: unknown): MemoryItem {
-  return MemoryItemSchema.parse(value)
-}
-
 /** 安全解析；失败时返回 null。 */
 export function safeParseMemoryItem(value: unknown): MemoryItem | null {
   const parsed = MemoryItemSchema.safeParse(value)

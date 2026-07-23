@@ -1,4 +1,4 @@
-import { RECALL_MIN_MATCH_SCORE, filterMemoryItemsByKeyword } from '@/core/recall/keyword-filter'
+import { RECALL_TOP_PICK_MIN_SCORE, filterMemoryItemsByKeyword } from '@/core/recall/keyword-filter'
 import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
 import type { MemoryItem } from '@/core/memory/memory-item'
 
@@ -13,8 +13,8 @@ export function buildRecallResult(clue: string, matches: RecallMatch[]): RecallR
     }
   }
 
-  const [best, ...rest] = matches
-  if (best.score < RECALL_MIN_MATCH_SCORE) {
+  const best = matches[0]
+  if (!best || best.score < RECALL_TOP_PICK_MIN_SCORE) {
     return {
       outcome: 'no_match',
       topPick: null,
@@ -26,7 +26,7 @@ export function buildRecallResult(clue: string, matches: RecallMatch[]): RecallR
   return {
     outcome: 'top_pick',
     topPick: best,
-    alsoPossible: rest.slice(0, 5),
+    alsoPossible: matches.slice(1, 6),
     clue
   }
 }

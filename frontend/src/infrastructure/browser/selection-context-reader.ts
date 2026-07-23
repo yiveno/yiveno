@@ -1,3 +1,4 @@
+import { optionalProp } from '@/core/common/optional-props'
 import { extractSelectionContextOnPage } from '@/infrastructure/browser/selection-context-page'
 
 export interface TabSelectionContext {
@@ -28,11 +29,14 @@ export async function readSelectionContextFromTab(
     return null
   }
 
+  const contextBefore =
+    'contextBefore' in result && result.contextBefore ? String(result.contextBefore) : undefined
+  const contextAfter =
+    'contextAfter' in result && result.contextAfter ? String(result.contextAfter) : undefined
+
   return {
     selectedText,
-    contextBefore:
-      'contextBefore' in result && result.contextBefore ? String(result.contextBefore) : undefined,
-    contextAfter:
-      'contextAfter' in result && result.contextAfter ? String(result.contextAfter) : undefined
+    ...optionalProp('contextBefore', contextBefore),
+    ...optionalProp('contextAfter', contextAfter)
   }
 }

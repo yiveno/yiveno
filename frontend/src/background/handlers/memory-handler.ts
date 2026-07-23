@@ -1,3 +1,4 @@
+import { optionalProp } from '@/core/common/optional-props'
 import { captureCurrentPage } from '@/application/capture/capture-current-page-service'
 import { memoryItemService } from '@/application/memory/memory-item-service'
 import type { MemoryBackgroundResponse } from '@/core/messaging/memory-messages'
@@ -77,8 +78,8 @@ export async function handleListMemoryItems(payload: unknown): Promise<MemoryBac
   try {
     const options = parseListMemoryItemsPayload(payload)
     const items = await memoryItemService.list({
-      type: options?.type,
-      limit: options?.limit
+      ...optionalProp('type', options?.type),
+      ...optionalProp('limit', options?.limit)
     })
     return { ok: true, items, total: items.length }
   } catch (error) {

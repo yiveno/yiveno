@@ -1,10 +1,6 @@
 import type { CaptureEntry } from '@/core/memory/capture-entry'
 import type { MemoryCluesInput } from '@/core/memory/clues'
-import {
-  type BookmarkMemoryItem,
-  type MemoryItem,
-  type TextExcerptMemoryItem
-} from '@/core/memory/memory-item'
+import { type BookmarkMemoryItem, type TextExcerptMemoryItem } from '@/core/memory/memory-item'
 import {
   BookmarkPayloadSchema,
   TextExcerptPayloadSchema,
@@ -44,7 +40,7 @@ function buildClues(
     keywords: base?.keywords ?? defaults.keywords ?? [],
     entities: base?.entities ?? defaults.entities ?? [],
     tags: base?.tags ?? defaults.tags ?? [],
-    openCount: base?.openCount ?? 0,
+    openCount: 0,
     title: base?.title ?? defaults.title,
     textExcerpt: base?.textExcerpt ?? defaults.textExcerpt,
     summary: base?.summary ?? defaults.summary,
@@ -114,8 +110,3 @@ export function createTextExcerptMemoryItem(input: TextExcerptBuildInput): TextE
 
 export type CreateBookmarkInput = Omit<BookmarkBuildInput, 'ownerId' | 'sourceLocalProfileId'>
 export type CreateTextExcerptInput = Omit<TextExcerptBuildInput, 'ownerId' | 'sourceLocalProfileId'>
-
-/** 判断 MemoryItem 是否处于软删除状态。 */
-export function isMemoryItemDeleted(item: MemoryItem): boolean {
-  return item.deletedAt != null
-}

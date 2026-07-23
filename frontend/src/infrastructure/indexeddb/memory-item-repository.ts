@@ -1,3 +1,4 @@
+import { optionalProp } from '@/core/common/optional-props'
 import type { SupportedMemoryItemType } from '@/core/memory/memory-item-type'
 import {
   createBookmarkMemoryItem,
@@ -219,7 +220,10 @@ export class MemoryItemRepository {
 
   /** 统计当前用户未删除的 MemoryItem 数量。 */
   async countActiveByOwner(type?: SupportedMemoryItemType): Promise<number> {
-    const items = await this.listByOwner({ type, limit: Number.MAX_SAFE_INTEGER })
+    const items = await this.listByOwner({
+      ...optionalProp('type', type),
+      limit: Number.MAX_SAFE_INTEGER
+    })
     return items.length
   }
 

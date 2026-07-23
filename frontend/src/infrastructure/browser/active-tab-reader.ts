@@ -1,3 +1,5 @@
+import { optionalProp } from '@/core/common/optional-props'
+
 /** 当前活动标签页的可保存页面信息。 */
 export interface ActivePageInfo {
   title: string
@@ -30,6 +32,6 @@ export async function readActivePageInfo(): Promise<ActivePageInfo | null> {
   return {
     title: tab.title,
     url: tab.url,
-    faviconUrl: tab.favIconUrl
+    ...optionalProp('faviconUrl', tab.favIconUrl)
   }
 }

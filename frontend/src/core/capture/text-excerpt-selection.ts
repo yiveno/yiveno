@@ -1,3 +1,5 @@
+import { optionalProp } from '@/core/common/optional-props'
+
 /** 选区上下文最大长度（字符）。 */
 export const TEXT_EXCERPT_CONTEXT_MAX_LENGTH = 80 as const
 
@@ -23,8 +25,8 @@ export function normalizeTextExcerptSelection(input: {
 
   return {
     selectedText: selectedText.slice(0, TEXT_EXCERPT_SELECTED_TEXT_MAX_LENGTH),
-    contextBefore: trimContextSnippet(input.contextBefore),
-    contextAfter: trimContextSnippet(input.contextAfter)
+    ...optionalProp('contextBefore', trimContextSnippet(input.contextBefore)),
+    ...optionalProp('contextAfter', trimContextSnippet(input.contextAfter))
   }
 }
 

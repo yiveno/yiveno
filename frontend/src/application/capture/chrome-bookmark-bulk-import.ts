@@ -105,7 +105,14 @@ export async function upsertChromeBookmarkLeaves(
 
 /** 读取 chrome.storage 中的导入状态。 */
 export async function readChromeBookmarkImportState(): Promise<ChromeBookmarkImportState | null> {
-  return readChromeStorageLocal(CHROME_BOOKMARK_IMPORT_STORAGE_KEY, ChromeBookmarkImportStateSchema)
+  const raw = await readChromeStorageLocal(
+    CHROME_BOOKMARK_IMPORT_STORAGE_KEY,
+    ChromeBookmarkImportStateSchema
+  )
+  if (!raw) {
+    return null
+  }
+  return ChromeBookmarkImportStateSchema.parse(raw)
 }
 
 /** 写入导入状态。 */
