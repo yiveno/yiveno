@@ -1,3 +1,6 @@
+import { ensureChromeBookmarksImported } from '@/application/capture/import-chrome-bookmarks-service'
+import { registerChromeBookmarkSyncListeners } from '@/background/listeners/chrome-bookmark-sync'
+import { registerContextMenuListeners } from '@/background/listeners/context-menu'
 import { logger } from '@/infrastructure/logging/logger'
 import {
   getCurrentOwnerId,
@@ -5,15 +8,53 @@ import {
 } from '@/infrastructure/identity/local-profile-service'
 import { initializeMemoryDatabase } from '@/infrastructure/indexeddb/memory-db'
 
-/** Background 启动时初始化本地身份等基础设施。 */
-export async function bootstrapBackground(): Promise<void> {
+/** 扩展 reload 后延迟启动书签导入，避免与 Chrome 扩展卸载/重装窗口重叠。 */
+const CHROME_BOOKMARK_IMPORT_START_DELAY_MS = 500
+
+let bootstrapPromise: Promise<void> | null = null
+
+/**
+ * Background 启动时初始化本地身份、Memory DB，并异步导入 Chrome 书签。
+ * 右键菜单项仅在 `chrome.runtime.onInstalled` 中注册，避免 reload 时重复调用 contextMenus API。
+ */
+async function bootstrapBackground(): Promise<void> {
   const [profile, ownerId] = await Promise.all([getOrCreateLocalProfile(), getCurrentOwnerId()])
 
   await initializeMemoryDatabase()
+
+  registerChromeBookmarkSyncListeners()
+  registerContextMenuListeners()
 
   logger.info('Background', '本地身份与 Memory DB 已就绪', {
     localProfileId: profile.localProfileId,
     ownerId,
     database: 'YivenoMemoryDB'
   })
+
+  scheduleChromeBookmarkImport()
+}
+
+function scheduleChromeBookmarkImport(): void {
+  setTimeout(() => {
+    void ensureChromeBookmarksImported().catch(error => {
+      logger.error('Background', 'Chrome 书签导入失败（下次启动将重试）', error)
+    })
+  }, CHROME_BOOKMARK_IMPORT_START_DELAY_MS)
+}
+
+/** 幂等启动 Background；并发调用合并为一次 bootstrap。 */
+export function ensureBackgroundBootstrapped(): Promise<void> {
+  if (!bootstrapPromise) {
+    bootstrapPromise = bootstrapBackground().catch(error => {
+      bootstrapPromise = null
+      throw error
+    })
+  }
+
+  return bootstrapPromise
+}
+
+/** 测试用：重置 bootstrap 状态。 */
+export function resetBackgroundBootstrapForTests(): void {
+  bootstrapPromise = null
 }

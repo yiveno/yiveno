@@ -1,4 +1,5 @@
 {
   "app_name": { "message": "Yiveno" },
-  "app_description": { "message": "Save what matters. Recall it later." }
+  "app_description": { "message": "Save what matters. Recall it later." },
+  "context_menu_save_selection": { "message": "Save to Yiveno" }
 }

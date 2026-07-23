@@ -5,7 +5,7 @@
   "description": "__MSG_app_description__",
   "default_locale": "en",
   "minimum_chrome_version": "116",
-  "permissions": ["storage", "offscreen", "activeTab"],
+  "permissions": ["storage", "offscreen", "activeTab", "bookmarks", "contextMenus", "scripting"],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {

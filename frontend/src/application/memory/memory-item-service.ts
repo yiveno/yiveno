@@ -19,6 +19,11 @@ export class MemoryItemService {
     return this.repository.createBookmark(input)
   }
 
+  /** 从 Chrome 书签 upsert Bookmark MemoryItem。 */
+  async upsertBookmarkFromChrome(input: CreateBookmarkInput): Promise<MemoryItem> {
+    return this.repository.upsertBookmarkFromChrome(input)
+  }
+
   /** 捕获选中文本为 Text Excerpt MemoryItem。 */
   async captureTextExcerpt(input: CreateTextExcerptInput): Promise<MemoryItem> {
     return this.repository.createTextExcerpt(input)
@@ -39,9 +44,19 @@ export class MemoryItemService {
     return this.repository.softDelete(id)
   }
 
+  /** 按 Chrome 书签 ID 软删除 Bookmark MemoryItem。 */
+  async softDeleteByChromeBookmarkId(chromeBookmarkId: string): Promise<MemoryItem | null> {
+    return this.repository.softDeleteByChromeBookmarkId(chromeBookmarkId)
+  }
+
   /** 统计未删除 MemoryItem 数量。 */
   async countActive(type?: SupportedMemoryItemType): Promise<number> {
     return this.repository.countActiveByOwner(type)
+  }
+
+  /** 批量写入 MemoryItem。 */
+  async putMany(items: MemoryItem[]): Promise<void> {
+    return this.repository.putMany(items)
   }
 }
 

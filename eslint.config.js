@@ -618,10 +618,14 @@ export default [
     }
   },
 
-  // 架构铁律：chrome.bookmarks.* 仅允许 background / offscreen
+  // 架构铁律：chrome.bookmarks.* 仅允许 background / offscreen / infrastructure browser adapter
   {
     files: isFrontendCwd ? ['src/**/*.{ts,tsx,vue,js}'] : ['frontend/src/**/*.{ts,tsx,vue,js}'],
-    ignores: eslintScopePaths('frontend/src/background/**', 'frontend/src/offscreen/**'),
+    ignores: eslintScopePaths(
+      'frontend/src/background/**',
+      'frontend/src/offscreen/**',
+      'frontend/src/infrastructure/browser/**'
+    ),
     rules: {
       'no-restricted-syntax': [
         'error',

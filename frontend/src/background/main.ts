@@ -1,5 +1,6 @@
-import { bootstrapBackground } from '@/background/bootstrap'
+import { ensureBackgroundBootstrapped } from '@/background/bootstrap'
 import { handleBackgroundMessage } from '@/background/handlers/message-handler'
+import { registerContextMenuItems } from '@/background/listeners/context-menu'
 import { logger } from '@/infrastructure/logging/logger'
 
 /**
@@ -9,13 +10,15 @@ import { logger } from '@/infrastructure/logging/logger'
  * 禁止在此恢复旧书签管理行为。
  */
 chrome.runtime.onInstalled.addListener(details => {
-  void bootstrapBackground().catch(error => {
-    logger.error('Background', '安装后初始化失败', error)
-  })
+  void ensureBackgroundBootstrapped()
+    .then(() => registerContextMenuItems())
+    .catch(error => {
+      logger.error('Background', '安装/更新后初始化失败', error)
+    })
   logger.info('Background', 'v4 扩展已安装/更新', { reason: details.reason })
 })
 
-void bootstrapBackground().catch(error => {
+void ensureBackgroundBootstrapped().catch(error => {
   logger.error('Background', '启动初始化失败', error)
 })
 

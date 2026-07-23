@@ -1,0 +1,216 @@
+import 'fake-indexeddb/auto'
+
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { ensureChromeBookmarksImported } from '@/application/capture/import-chrome-bookmarks-service'
+import * as bulkImport from '@/application/capture/chrome-bookmark-bulk-import'
+import { CHROME_BOOKMARK_IMPORT_STORAGE_KEY } from '@/core/memory/chrome-bookmark-import-state'
+import { LOCAL_PROFILE_STORAGE_KEY, type LocalProfile } from '@/core/identity/local-profile'
+import { memoryItemRepository } from '@/infrastructure/indexeddb/memory-item-repository'
+import { resetMemoryDatabaseInitializationForTests } from '@/infrastructure/indexeddb/memory-db'
+
+type StorageMap = Record<string, unknown>
+
+function createChromeMock(initial: StorageMap = {}) {
+  const store: StorageMap = { ...initial }
+
+  return {
+    storage: {
+      local: {
+        get: vi.fn(async (keys: string | string[] | Record<string, unknown>) => {
+          if (typeof keys === 'string') {
+            return { [keys]: store[keys] }
+          }
+          if (Array.isArray(keys)) {
+            return Object.fromEntries(keys.map(key => [key, store[key]]))
+          }
+          return { ...store, ...keys }
+        }),
+        set: vi.fn(async (items: StorageMap) => {
+          Object.assign(store, items)
+        }),
+        remove: vi.fn(async () => undefined)
+      }
+    },
+    bookmarks: {
+      getTree: vi.fn(async () => [
+        {
+          id: '0',
+          title: '',
+          children: [
+            {
+              id: '1',
+              title: '书签栏',
+              children: [
+                {
+                  id: '10',
+                  title: '留存分析',
+                  url: 'https://example.com/retention',
+                  parentId: '1',
+                  dateAdded: Date.parse('2026-01-01T00:00:00.000Z')
+                },
+                {
+                  id: '11',
+                  title: '忽略',
+                  url: 'chrome://settings',
+                  parentId: '1'
+                }
+              ]
+            }
+          ]
+        }
+      ])
+    },
+    tabs: {
+      query: vi.fn(async () => [])
+    }
+  }
+}
+
+const localProfile: LocalProfile = {
+  localProfileId: '11111111-1111-4111-8111-111111111111',
+  createdAt: '2026-07-22T05:00:00.000Z',
+  schemaVersion: 1
+}
+
+describe('import-chrome-bookmarks-service', () => {
+  beforeEach(async () => {
+    resetMemoryDatabaseInitializationForTests()
+    vi.stubGlobal(
+      'chrome',
+      createChromeMock({
+        [LOCAL_PROFILE_STORAGE_KEY]: localProfile
+      })
+    )
+
+    for (const database of await indexedDB.databases()) {
+      if (database.name) {
+        indexedDB.deleteDatabase(database.name)
+      }
+    }
+  })
+
+  it('首次导入把 Chrome 书签写入 IndexedDB', async () => {
+    const state = await ensureChromeBookmarksImported()
+    expect(state.status).toBe('completed')
+    expect(state.importedCount).toBe(1)
+
+    const items = await memoryItemRepository.listByOwner({ type: 'bookmark' })
+    expect(items).toHaveLength(1)
+    expect(items[0]?.type).toBe('bookmark')
+    if (items[0]?.type === 'bookmark') {
+      expect(items[0].payload.chromeBookmarkId).toBe('10')
+      expect(items[0].payload.title).toBe('留存分析')
+    }
+  })
+
+  it('已完成后再次调用跳过导入', async () => {
+    await ensureChromeBookmarksImported()
+    const getTree = chrome.bookmarks.getTree as ReturnType<typeof vi.fn>
+    getTree.mockClear()
+
+    const state = await ensureChromeBookmarksImported()
+    expect(state.status).toBe('completed')
+    expect(getTree).not.toHaveBeenCalled()
+  })
+
+  it('upsert 同一 chromeBookmarkId 不重复创建', async () => {
+    await ensureChromeBookmarksImported()
+
+    await memoryItemRepository.upsertBookmarkFromChrome({
+      payload: {
+        title: '留存分析（更新）',
+        url: 'https://example.com/retention',
+        chromeBookmarkId: '10'
+      },
+      captureEntry: 'sync'
+    })
+
+    const items = await memoryItemRepository.listByOwner({ type: 'bookmark' })
+    expect(items).toHaveLength(1)
+    if (items[0]?.type === 'bookmark') {
+      expect(items[0].payload.title).toBe('留存分析（更新）')
+    }
+  })
+
+  it('失败状态允许下次重试', async () => {
+    vi.stubGlobal(
+      'chrome',
+      createChromeMock({
+        [LOCAL_PROFILE_STORAGE_KEY]: localProfile,
+        [CHROME_BOOKMARK_IMPORT_STORAGE_KEY]: {
+          status: 'failed',
+          importedCount: 0,
+          startedAt: '2026-07-22T05:00:00.000Z',
+          error: '上次失败'
+        }
+      })
+    )
+
+    const state = await ensureChromeBookmarksImported()
+    expect(state.status).toBe('completed')
+    expect(state.importedCount).toBe(1)
+  })
+
+  it('续传时走 upsert 路径而非 bulk', async () => {
+    const bulkSpy = vi.spyOn(bulkImport, 'bulkPutChromeBookmarkLeaves')
+    const upsertSpy = vi.spyOn(bulkImport, 'upsertChromeBookmarkLeaves')
+
+    vi.stubGlobal('chrome', {
+      ...createChromeMock({
+        [LOCAL_PROFILE_STORAGE_KEY]: localProfile,
+        [CHROME_BOOKMARK_IMPORT_STORAGE_KEY]: {
+          status: 'failed',
+          importedCount: 1,
+          totalCount: 2,
+          startedAt: '2026-07-22T05:00:00.000Z',
+          error: '中断'
+        }
+      }),
+      bookmarks: {
+        getTree: vi.fn(async () => [
+          {
+            id: '0',
+            title: '',
+            children: [
+              {
+                id: '1',
+                title: '书签栏',
+                children: [
+                  {
+                    id: '10',
+                    title: '第一条',
+                    url: 'https://example.com/one',
+                    parentId: '1'
+                  },
+                  {
+                    id: '11',
+                    title: '第二条',
+                    url: 'https://example.com/two',
+                    parentId: '1'
+                  }
+                ]
+              }
+            ]
+          }
+        ])
+      }
+    })
+
+    await memoryItemRepository.createBookmark({
+      payload: {
+        title: '第一条',
+        url: 'https://example.com/one',
+        chromeBookmarkId: '10'
+      },
+      captureEntry: 'sync',
+      now: () => '2026-07-22T06:00:00.000Z'
+    })
+
+    const state = await ensureChromeBookmarksImported()
+    expect(state.status).toBe('completed')
+    expect(state.importedCount).toBe(2)
+    expect(bulkSpy).not.toHaveBeenCalled()
+    expect(upsertSpy).toHaveBeenCalled()
+  })
+})

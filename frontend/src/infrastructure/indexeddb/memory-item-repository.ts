@@ -11,6 +11,7 @@ import {
   getOrCreateLocalProfile
 } from '@/infrastructure/identity/local-profile-service'
 import {
+  MEMORY_ITEM_INDEX_BY_OWNER_CHROME_BOOKMARK,
   MEMORY_ITEM_INDEX_BY_OWNER_TYPE_UPDATED,
   MEMORY_ITEM_INDEX_BY_OWNER_UPDATED,
   MEMORY_ITEM_STORE
@@ -57,6 +58,86 @@ export class MemoryItemRepository {
         return null
       }
       return item
+    })
+  }
+
+  /** 按 Chrome 书签 ID 查找当前用户的 Bookmark MemoryItem。 */
+  async getByChromeBookmarkId(
+    chromeBookmarkId: string,
+    ownerId?: string
+  ): Promise<MemoryItem | null> {
+    await this.ensureReady()
+    const resolvedOwnerId = ownerId ?? (await getCurrentOwnerId())
+
+    return indexedDBManager.withTransaction(MEMORY_ITEM_STORE, 'readonly', async transaction => {
+      const index = transaction
+        .objectStore(MEMORY_ITEM_STORE)
+        .index(MEMORY_ITEM_INDEX_BY_OWNER_CHROME_BOOKMARK)
+      const raw = await requestToPromise(index.get([resolvedOwnerId, chromeBookmarkId]))
+      const item = safeParseMemoryItem(raw)
+      if (!item || item.ownerId !== resolvedOwnerId || item.deletedAt != null) {
+        return null
+      }
+      return item
+    })
+  }
+
+  /**
+   * 从 Chrome 书签 upsert Bookmark MemoryItem。
+   * 已存在则更新标题/URL；不存在则新建。
+   */
+  async upsertBookmarkFromChrome(input: CreateBookmarkInput): Promise<MemoryItem> {
+    const chromeBookmarkId = input.payload.chromeBookmarkId
+    if (!chromeBookmarkId) {
+      return this.createBookmark(input)
+    }
+
+    const existing = await this.getByChromeBookmarkId(chromeBookmarkId)
+    if (!existing || existing.type !== 'bookmark') {
+      return this.createBookmark({
+        ...input,
+        captureEntry: input.captureEntry ?? 'sync'
+      })
+    }
+
+    const [ownerId, profile] = await Promise.all([getCurrentOwnerId(), getOrCreateLocalProfile()])
+    const next = createBookmarkMemoryItem({
+      ...input,
+      ownerId,
+      sourceLocalProfileId: profile.localProfileId,
+      captureEntry: input.captureEntry ?? existing.clues.captureEntry ?? 'sync',
+      now: () => new Date().toISOString()
+    })
+
+    const merged: MemoryItem = {
+      ...next,
+      id: existing.id,
+      createdAt: existing.createdAt,
+      clues: {
+        ...next.clues,
+        openCount: existing.clues.openCount,
+        lastOpenedAt: existing.clues.lastOpenedAt,
+        tags: existing.clues.tags.length > 0 ? existing.clues.tags : next.clues.tags,
+        note: existing.clues.note ?? next.clues.note
+      }
+    }
+
+    await this.put(merged)
+    return merged
+  }
+
+  /** 批量写入 MemoryItem（同一事务）。 */
+  async putMany(items: MemoryItem[]): Promise<void> {
+    if (items.length === 0) {
+      return
+    }
+
+    await this.ensureReady()
+    await indexedDBManager.withTransaction(MEMORY_ITEM_STORE, 'readwrite', async transaction => {
+      const store = transaction.objectStore(MEMORY_ITEM_STORE)
+      for (const item of items) {
+        await requestToPromise(store.put(MemoryItemSchema.parse(item)))
+      }
     })
   }
 
@@ -125,6 +206,15 @@ export class MemoryItemRepository {
 
     await this.put(deleted)
     return deleted
+  }
+
+  /** 按 Chrome 书签 ID 软删除 Bookmark MemoryItem。 */
+  async softDeleteByChromeBookmarkId(chromeBookmarkId: string): Promise<MemoryItem | null> {
+    const existing = await this.getByChromeBookmarkId(chromeBookmarkId)
+    if (!existing) {
+      return null
+    }
+    return this.softDelete(existing.id)
   }
 
   /** 统计当前用户未删除的 MemoryItem 数量。 */

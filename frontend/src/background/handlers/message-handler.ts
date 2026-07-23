@@ -4,6 +4,7 @@ import type {
   GetLocalIdentityResponse
 } from '@/core/messaging/background-messages'
 import { isBackgroundScopedMessage } from '@/core/messaging/background-messages'
+import { handleGetChromeBookmarkImportStatus } from '@/background/handlers/import-handler'
 import {
   handleCaptureBookmark,
   handleCaptureCurrentPage,
@@ -48,6 +49,8 @@ async function dispatchBackgroundMessage(
       return handleListMemoryItems(message.payload)
     case 'RECALL_WITH_CLUE':
       return handleRecallWithClue(message.payload)
+    case 'GET_CHROME_BOOKMARK_IMPORT_STATUS':
+      return handleGetChromeBookmarkImportStatus()
     default:
       return { ok: false, error: `未知消息类型: ${(message as { type: string }).type}` }
   }

@@ -5,6 +5,10 @@ import type {
   GetLocalIdentityResponse
 } from '@/core/messaging/background-messages'
 import type {
+  ImportBackgroundResponse,
+  GetChromeBookmarkImportStatusMessage
+} from '@/core/messaging/import-messages'
+import type {
   CaptureBookmarkMessage,
   CaptureCurrentPageMessage,
   CaptureTextExcerptMessage,
@@ -90,4 +94,13 @@ export async function recallWithClue(
     payload
   }
   return sendBackgroundMessage<RecallBackgroundResponse>(message)
+}
+
+/** 查询 Chrome 书签导入进度。 */
+export async function fetchChromeBookmarkImportStatus(): Promise<ImportBackgroundResponse> {
+  const message: GetChromeBookmarkImportStatusMessage = {
+    scope: 'background',
+    type: 'GET_CHROME_BOOKMARK_IMPORT_STATUS'
+  }
+  return sendBackgroundMessage<ImportBackgroundResponse>(message)
 }

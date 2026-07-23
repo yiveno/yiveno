@@ -1,9 +1,15 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 
+import type { ChromeBookmarkImportState } from '@/core/memory/chrome-bookmark-import-state'
+import { getChromeBookmarkImportPercent } from '@/core/memory/chrome-bookmark-import-state'
 import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
 import { formatMatchedFields, getMemoryItemDisplay } from '@/core/recall/recall-result'
-import { captureCurrentPage, recallWithClue } from '@/infrastructure/messaging/background-client'
+import {
+  captureCurrentPage,
+  fetchChromeBookmarkImportStatus,
+  recallWithClue
+} from '@/infrastructure/messaging/background-client'
 
 defineOptions({ name: 'PopupPage' })
 
@@ -16,6 +22,72 @@ const captureState = ref<CaptureViewState>('idle')
 const recallResult = ref<RecallResult | null>(null)
 const errorMessage = ref('')
 const captureMessage = ref('')
+const importState = ref<ChromeBookmarkImportState | null>(null)
+
+let importPollTimer: ReturnType<typeof setInterval> | null = null
+
+const importProgressPercent = computed(() => {
+  if (!importState.value) {
+    return 0
+  }
+  return getChromeBookmarkImportPercent(importState.value)
+})
+
+const showImportProgress = computed(() => {
+  const status = importState.value?.status
+  return status === 'running' || status === 'failed'
+})
+
+const importProgressLabel = computed(() => {
+  const state = importState.value
+  if (!state) {
+    return ''
+  }
+  if (state.status === 'failed') {
+    return state.error ?? '书签导入失败，请重新加载扩展后重试'
+  }
+  if (state.totalCount && state.totalCount > 0) {
+    return `正在导入书签 ${state.importedCount} / ${state.totalCount}`
+  }
+  return '正在导入书签…'
+})
+
+async function refreshImportStatus() {
+  const response = await fetchChromeBookmarkImportStatus()
+  if (!response.ok) {
+    return
+  }
+  importState.value = response.state
+
+  if (response.state?.status === 'completed' || response.state?.status === 'failed') {
+    stopImportPolling()
+  }
+}
+
+function startImportPolling() {
+  if (importPollTimer) {
+    return
+  }
+  void refreshImportStatus()
+  importPollTimer = setInterval(() => {
+    void refreshImportStatus()
+  }, 500)
+}
+
+function stopImportPolling() {
+  if (importPollTimer) {
+    clearInterval(importPollTimer)
+    importPollTimer = null
+  }
+}
+
+onMounted(() => {
+  startImportPolling()
+})
+
+onUnmounted(() => {
+  stopImportPolling()
+})
 
 const topPickDisplay = computed(() => {
   const match = recallResult.value?.topPick
@@ -101,6 +173,26 @@ async function handleCaptureCurrentPage() {
       <p class="recall-eyebrow">Yiveno</p>
       <h1 class="recall-title">找到它！</h1>
       <p class="recall-subtitle">在你存过的东西里找，不用再去网上搜。</p>
+
+      <section
+        v-if="showImportProgress"
+        class="recall-import"
+        :class="{ 'recall-import--error': importState?.status === 'failed' }"
+        aria-live="polite"
+      >
+        <p class="recall-import-label">{{ importProgressLabel }}</p>
+        <div
+          v-if="importState?.status === 'running'"
+          class="recall-import-track"
+          role="progressbar"
+          :aria-valuenow="importProgressPercent"
+          aria-valuemin="0"
+          aria-valuemax="100"
+        >
+          <div class="recall-import-bar" :style="{ width: `${importProgressPercent}%` }" />
+        </div>
+      </section>
+
       <button
         class="recall-save-page"
         type="button"
@@ -230,6 +322,43 @@ async function handleCaptureCurrentPage() {
   font-size: 14px;
   line-height: 1.5;
   color: #52606d;
+}
+
+.recall-import {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid #dbe3ea;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.recall-import--error {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.recall-import-label {
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #64748b;
+}
+
+.recall-import--error .recall-import-label {
+  color: #b42318;
+}
+
+.recall-import-track {
+  overflow: hidden;
+  height: 6px;
+  border-radius: 999px;
+  background: #e2e8f0;
+}
+
+.recall-import-bar {
+  height: 100%;
+  border-radius: 999px;
+  background: #0891b2;
 }
 
 .recall-save-page {

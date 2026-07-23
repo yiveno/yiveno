@@ -1,30 +1,40 @@
 import {
   MEMORY_DATABASE_NAME,
   MEMORY_DATABASE_VERSION,
+  MEMORY_ITEM_INDEX_BY_OWNER_CHROME_BOOKMARK,
   MEMORY_ITEM_INDEX_BY_OWNER_TYPE_UPDATED,
   MEMORY_ITEM_INDEX_BY_OWNER_UPDATED,
   MEMORY_ITEM_STORE
 } from '@/infrastructure/indexeddb/constants'
 import type { IndexedDBDefinition } from '@/infrastructure/indexeddb/manager'
 
-/** 创建 memory_items 表与索引。 */
+/** 创建或升级 memory_items 表与索引。 */
 function upgradeMemoryDatabase(
   database: IDBDatabase,
-  _transaction: IDBTransaction,
+  transaction: IDBTransaction,
   oldVersion: number
 ): void {
-  if (oldVersion >= MEMORY_DATABASE_VERSION) {
-    return
+  let store: IDBObjectStore
+
+  if (oldVersion < 1) {
+    store = database.createObjectStore(MEMORY_ITEM_STORE, { keyPath: 'id' })
+    store.createIndex(MEMORY_ITEM_INDEX_BY_OWNER_UPDATED, ['ownerId', 'updatedAt'], {
+      unique: false
+    })
+    store.createIndex(MEMORY_ITEM_INDEX_BY_OWNER_TYPE_UPDATED, ['ownerId', 'type', 'updatedAt'], {
+      unique: false
+    })
+  } else {
+    store = transaction.objectStore(MEMORY_ITEM_STORE)
   }
 
-  const store = database.createObjectStore(MEMORY_ITEM_STORE, { keyPath: 'id' })
-
-  store.createIndex(MEMORY_ITEM_INDEX_BY_OWNER_UPDATED, ['ownerId', 'updatedAt'], {
-    unique: false
-  })
-  store.createIndex(MEMORY_ITEM_INDEX_BY_OWNER_TYPE_UPDATED, ['ownerId', 'type', 'updatedAt'], {
-    unique: false
-  })
+  if (oldVersion < 2 && !store.indexNames.contains(MEMORY_ITEM_INDEX_BY_OWNER_CHROME_BOOKMARK)) {
+    store.createIndex(
+      MEMORY_ITEM_INDEX_BY_OWNER_CHROME_BOOKMARK,
+      ['ownerId', 'payload.chromeBookmarkId'],
+      { unique: false }
+    )
+  }
 }
 
 /** IndexedDB schema 定义。 */
