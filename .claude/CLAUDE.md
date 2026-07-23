@@ -4,7 +4,7 @@ Claude Code guidance for the Yiveno monorepo. Prefer **`AGENTS.md`** and **`.cur
 
 ## Single source of truth
 
-- **Product + architecture (Chinese):** `docs/product/Yiveno-产品文档-v4.0.md` (v3.0 is historical reference only)
+- **Product + architecture (Chinese):** `docs/product/Yiveno-产品文档-v4.0.md` — read **§0 AI Quick Contract** first; Appendix A is non-normative
 - **Cursor / IDE enforcement:** `.cursor/rules/project.mdc`
 - **Human + AI ops:** `AGENTS.md`
 

@@ -208,7 +208,7 @@ bun run lint:check           # 代码规范 + Stylelint
 
 ## 📚 必读文档
 
-- **产品文档（最重要）**：`docs/product/Yiveno-产品文档-v4.0.md`（v3.0 仅作历史参考；含 UI 交互约束与架构边界）
+- **产品文档（最重要）**：`docs/product/Yiveno-产品文档-v4.0.md`（唯一规格；AI 先读 §0 Quick Contract；附录 A 非规范）
 - 架构变更必须同步更新产品文档
 
 ---

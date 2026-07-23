@@ -2,11 +2,7 @@
 
 **规格唯一正文**（产品、架构、数据流、交互与开发约定）：
 
-- [`product/Yiveno-产品文档-v4.0.md`](./product/Yiveno-产品文档-v4.0.md)
-
-**历史参考**（不得与 v4.0 冲突）：
-
-- [`product/Yiveno-产品文档-v3.0.md`](./product/Yiveno-产品文档-v3.0.md)
+- [`product/Yiveno-产品文档-v4.0.md`](./product/Yiveno-产品文档-v4.0.md) — AI 先读 **§0 Quick Contract**；附录 A 为背景非规范
 
 **运维 / 接入（非规格，与正文冲突时以正文为准）**：
 

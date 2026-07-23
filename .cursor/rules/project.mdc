@@ -55,8 +55,9 @@ bun run stylelint:force
 ```
 
 ## 📚 必读文档
-- **产品文档（最重要）**：`docs/product/Yiveno-产品文档-v4.0.md`（v4 产品/架构唯一事实来源；历史 v3.0 仅作背景参考）
+- **产品文档（最重要）**：`docs/product/Yiveno-产品文档-v4.0.md`（仓库唯一产品/架构规格；AI 先读 §0 Quick Contract；附录 A 勿当实现范围）
 - 架构变更必须同步更新产品文档
+- UI 交互硬约束以产品文档 **§0.2 / §3** 为准（禁止 Search 文案；禁止交互态几何变换）
 
 ---
 
@@ -72,13 +73,12 @@ Background Script (唯一监听者)
        ↓
 IndexedDB (本地事实源)
        ↓
-Pinia Store (响应式状态)
+（可选）Pinia / 组件状态 — 跨页共享时用 Pinia；Popup 可用组件内状态
        ↓
-Vue Components (UI 展示)
+Vue Components（pages/；增长后可收敛 presentation/）
        ↓
 用户操作 → chrome.runtime.sendMessage → Background Script
 ```
-
 **判断规则：**
 ```typescript
 // ❌ 错误：前端直接调用 Chrome API
@@ -109,15 +109,16 @@ async function createBookmark() {
 **分层依赖规则：**
 ```
 frontend/src/
-├── presentation/     (Vue组件、页面)
-│   ↓ 只能调用
+├── pages/ 或 presentation/  (Vue 页面/组件)
+│   ↓ 只能调用（UI 经 background-client 发消息，不直连 IndexedDB）
 ├── application/      (业务逻辑、服务)
-│   ↓ 只能调用  
+│   ↓ 只能调用 
 ├── core/             (领域模型、纯业务)
-│   ↓ 只能调用
-└── infrastructure/   (IndexedDB、Chrome API、HTTP)
+│   ↓ 可被 application 用于
+└── infrastructure/   (IndexedDB、Chrome API、HTTP、messaging client)
 ```
 
+说明：v4 当前 UI 在 `pages/`；引入跨页共享状态后再强调 Pinia。`presentation/` 为可选收敛目录名，与产品文档 §5.1 一致。
 **判断规则：**
 ```typescript
 // ❌ 错误：跨层访问
@@ -411,7 +412,7 @@ async function loadBookmarks() {
 
 **正确代码：**
 ```css
-/* ✅ 仅用表面反馈（与 MD3 state layer 一致，见产品文档 §1.1.1） */
+/* ✅ 仅用表面反馈（与 MD3 state layer 一致，见产品文档 §0.2 / §3） */
 .row:hover {
   background: var(--color-surface-hover);
 }
@@ -428,7 +429,7 @@ async function loadBookmarks() {
 - 工具类动画（`pop`、`shake` 等）用于明确反馈（成功/错误）
 - 这些必须与列表 hover 分离，不得复用
 
-**原因：** 见 `docs/product/Yiveno-产品文档-v4.0.md` 的 UI 与交互约束；历史 v3.0 仅作背景参考。
+**原因：** 见 `docs/product/Yiveno-产品文档-v4.0.md` §0.2 / §3 的 UI 与交互约束。
 
 ## ⚡ 性能要求
 
@@ -501,7 +502,7 @@ bun run build:hot                # 热构建
   - 是 → 改为"筛选"
   - 否 → 继续
 - [ ] 我是否在改**列表行 / 搜索建议 / 筛选标签**的 `:hover`？
-  - 是 → 仅用背景/边框/shadow/MD state layer，**禁止** `translateY`、行级 `scale`（见产品文档 §1.1.1）
+  - 是 → 仅用背景/边框/shadow/MD state layer，**禁止** `translateY`、行级 `scale`（见产品文档 §0.2 / §3）
   - 否 → 继续
 - [ ] 我是否在改**任何元素**的 `:hover` / `:focus` / `:active`？
   - 是 → 仅用表面属性（背景、`opacity`、`box-shadow`、`outline`、`text-decoration`、Material state layer），**禁止** `translateY` / `scale` / `rotate` 等偏移量变化

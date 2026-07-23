@@ -192,7 +192,7 @@ chrome.storage.local.get(null, items => {
 
 - [Supabase Auth 文档](https://supabase.com/docs/guides/auth)
 - [Chrome Extension OAuth](https://developer.chrome.com/docs/extensions/reference/identity/)
-- [Yiveno 产品文档 v4.0](../product/Yiveno-产品文档-v4.0.md)（唯一正文；v3.0 仅作历史参考）
+- [Yiveno 产品文档 v4.0](../product/Yiveno-产品文档-v4.0.md)（唯一产品规格正文）
 
 ## ❓ 常见问题
 

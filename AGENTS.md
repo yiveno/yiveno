@@ -3,15 +3,15 @@
 ## 项目
 
 - Yiveno：Vue 3 + TypeScript Chrome 扩展，Backend 为 Cloudflare Workers，Website 为营销站。
-- 唯一产品/架构真相：`docs/product/Yiveno-产品文档-v4.0.md`（v3.0 仅作历史参考）
+- 唯一产品/架构真相：`docs/product/Yiveno-产品文档-v4.0.md`（先读文首 **§0 AI Quick Contract**；附录 A 非规范）
 - Cursor 规则：`.cursor/rules/project.mdc`，不得冲突。
 
 ## 架构硬规则
 
-- 数据流：Chrome API → Background Script → IndexedDB → Pinia Store → Vue Components。
-- IndexedDB 是书签数据唯一事实源；所有 IndexedDB 操作必须通过 `frontend/src/infrastructure/indexeddb/manager.ts` 的 `indexedDBManager`。
+- 数据流：Chrome API → Background Script → IndexedDB →（可选 Pinia / 组件状态）→ Vue UI。详见产品文档 §5.1。
+- IndexedDB 是书签/Memory 数据本地事实源；所有 IndexedDB 操作必须通过 `frontend/src/infrastructure/indexeddb/manager.ts` 的 `indexedDBManager`。
 - Background Script 是唯一 Chrome API 监听者；前端组件禁止直接调 `chrome.bookmarks.*` / `chrome.tabs.*`。
-- DDD 依赖方向：`presentation/ → application/ → core/ → infrastructure/`；禁止反向依赖，`presentation/` 不得直连 `infrastructure/`。v4 baseline 正在重建各层，目标结构见产品文档 v4.0。
+- DDD 依赖方向：`pages|presentation → application → core`；`application` 可依赖 `infrastructure`；UI 经 `background-client` 发消息，不得直连 IndexedDB。细节见产品文档 v4.0。
 - Service Worker 环境无 `window` / `document` / `localStorage`；用 `setTimeout`、`fetch`、`chrome.storage.*`、`ReturnType<typeof setTimeout>`。
 
 ## 代码约定
@@ -28,7 +28,7 @@
 - 数据量 > 1000：IndexedDB。
 - 跨页面持久化：`chrome.storage.local`。
 - 会话临时状态：`chrome.storage.session`。
-- 页面高频 UI 状态：Pinia。
+- 跨页/会话外 UI 状态：Pinia（当前 Popup 可用组件内状态）。
 
 ## 验证策略
 

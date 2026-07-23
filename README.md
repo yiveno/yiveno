@@ -302,7 +302,6 @@ bun run db:reset              # 重置本地数据库
 ### 📦 产品文档（唯一正文）
 
 - [Yiveno 产品文档 v4.0](docs/product/Yiveno-产品文档-v4.0.md)
-- [Yiveno 产品文档 v3.0（历史参考）](docs/product/Yiveno-产品文档-v3.0.md)
 - [`docs/` 目录说明](docs/README.md)
 - [环境变量方案](docs/ENVIRONMENT.md)
 

@@ -1,413 +1,279 @@
 # Yiveno 产品文档 v4.0
 
-> 📘 **文档目标**：定义 Yiveno 从「AI 书签管理」转向「个人信息寻回系统」后的产品定位、功能优先级、架构边界与隐私原则。本文档是 v4 阶段产品与架构的唯一事实来源。
+> **唯一**产品/架构规格正文。主要读者：AI 编程工具与维护者。  
+> **Normative（必须遵守）**= §0–§7。**Non-normative（背景，勿当实现范围）**= 附录 A。  
+> 工程细则可旁挂 `.cursor/rules/project.mdc` / `AGENTS.md`；与本文冲突时以**本文 Normative**为准，并回写 rules。
 
-## 零、文档治理与 AI 协作
+---
 
-- 本文档替代 `docs/product/Yiveno-产品文档-v3.0.md` 成为产品/架构主文档。
-- 修改产品定位、数据流、核心对象、隐私边界时，必须同步检查 `.cursor/rules/project.mdc`。
-- 历史文档仅作背景参考，不得与本文档冲突。
-- UI/API/文档统一使用 **Filter（筛选）**；用户主动作使用 **Recall（找回）**。UI 文案禁止出现 `Search`。
+## 0. AI Quick Contract（先读完再改代码）
 
-## 一、产品定位
+### 0.1 产品一句话
 
-### 1.1 一句话定义
+Yiveno = **个人信息寻回系统**（Capture 低负担 + Recall 高确定性）。**不是**书签管理器 / 聊天机器人 / AI 自动整理工具。
 
-**Yiveno 是一个个人信息寻回系统，让用户把网上遇到的有价值内容轻松扔进去，并在未来只凭一点模糊印象找回来。**
+### 0.2 MUST
 
-Yiveno 不再是单纯的书签管理器。书签只是用户价值内容的一种来源。
+1. UI → 只经 `background-client` / `chrome.runtime.sendMessage`；shape：`{ scope: 'background', type, payload? }`。
+2. Chrome API（bookmarks/tabs/contextMenus/…）只在 `frontend/src/background/**`（及 SW 调用的 infrastructure browser 封装）。
+3. IndexedDB 只经 `indexedDBManager`（`frontend/src/infrastructure/indexeddb/manager.ts`）。
+4. 领域类型以 Zod 为准：`frontend/src/core/memory/*`；消息类型以 `frontend/src/core/messaging/*` 为准。**禁止发明新 message `type` 字符串**，先改 schema 再接线。
+5. 对外文案：**筛选 / 找回**；禁止 **搜索 / Search**。
+6. `:hover|:focus|:active` 禁止 `translate` / `scale` / `rotate`；只用背景 / opacity / shadow / outline / state layer（浮层入场与 pop/shake 例外见 §3）。
+7. 实现范围以 **§1 状态表**为准；未标「已上线」= 不得当成已有行为，也不得在 UI 暗示已可用。
+8. Free/当前：仅 **关键词 Filter**。**Hybrid / embedding / LLM 不是当前默认实现范围**（见 §5）。
 
-### 1.2 核心承诺
+### 0.3 MUST NOT
 
-> 看到有价值的内容，尽管一键扔给 Yiveno；以后只记得一点点，也能找回。
+- 恢复旧双面板书签树、侧边栏管理页、AI 智能重构/聚类主卖点、以「管理书签」为中心的 UI。
+- UI 直连 `indexedDB.open` / `chrome.bookmarks.*` / `chrome.tabs.*`。
+- 在 Service Worker 使用 `window` / `document` / `localStorage`。
+- 把附录 A（愿景/商业化/品牌）当成要立刻实现的功能列表。
+- 默认上传用户内容到云端或第三方 AI。
 
-### 1.3 产品信念
+### 0.4 当前唯一优先实现项（Phase A）
 
-- 用户真正需要的不是整理，而是未来能重新利用过去保存的内容。
-- 保存动作必须低负担，找回能力必须高确定性。
-- 对话不是主路径；只有在不确定性很高时才发起追问。
-- Yiveno 的价值不来自保存更多原始内容，而来自保存足够让用户未来找回的记忆线索。
-- AI 是寻回引擎，不是产品主体；用户来 Yiveno 是为了找答案，不是聊天。
+**Chrome Omnibox 找回**：与 Popup 共用同一 `recallService` / 同一 Filter 策略；完成后更新 §1 状态为「已上线」。
 
-### 1.4 目标用户
+同 Phase 其余项（快捷键、线索解释文案、Settings 进 manifest）**排在 Omnibox 之后**，除非用户显式指定。
 
-优先服务长期在网上积累信息、但经常「记得保存过，却找不到」的用户：
+### 0.5 权威路径速查
 
-- 产品经理、研究员、咨询师、创业者等知识工作者。
-- 开发者、设计师、内容创作者等高频资料收集者。
-- 学生、独立创作者等需要长期积累参考资料的人群。
+| 主题                         | 路径                                                         |
+| ---------------------------- | ------------------------------------------------------------ |
+| MemoryItem / clues / payload | `frontend/src/core/memory/`                                  |
+| Background 消息联合类型      | `frontend/src/core/messaging/background-messages.ts`         |
+| UI 发消息                    | `frontend/src/infrastructure/messaging/background-client.ts` |
+| SW 分发                      | `frontend/src/background/handlers/message-handler.ts`        |
+| Recall                       | `frontend/src/application/recall/recall-service.ts`          |
+| Popup                        | `frontend/src/pages/popup/Popup.vue`                         |
 
-### 1.5 北极星体验
+---
 
-用户输入一句模糊线索后，第一屏看到最可能的结果，并产生：
+## 1. 现状 vs 目标（Normative）
 
-> 对，就是这个。
+| 能力                        | 状态                    | 说明                                      |
+| --------------------------- | ----------------------- | ----------------------------------------- |
+| Popup 关键词找回            | 已上线                  | Top Pick + Also Possible；扫描上限约 2000 |
+| Popup 保存当前页            | 已上线                  | Bookmark MemoryItem                       |
+| 右键保存选区                | 已上线                  | Text Excerpt                              |
+| Chrome 书签导入 + 增量 sync | 已上线                  | 真实进度；Chrome bookmark 事件            |
+| LocalProfile / ownerId      | 已上线                  | 未登录可用                                |
+| Settings                    | 占位                    | 未进 manifest                             |
+| Offscreen                   | 占位                    | 预留 embedding                            |
+| Omnibox 找回                | **目标 · Phase A 首位** | 共享 Recall 服务                          |
+| 快捷键保存/找回             | 目标 · Phase A          |                                           |
+| 结果线索解释强化            | 目标 · Phase A          | 匹配字段展示                              |
+| Hybrid Filter               | 目标 · Phase B / Pro    | 非 Free                                   |
+| 反馈闭环 / 低置信追问       | 目标 · Phase B          |                                           |
+| 云同步 / 账号 UI            | 目标 · Phase C          | AccountBinding 已预留                     |
+| 分享                        | 目标 · Phase C          |                                           |
+| 轻管理                      | 目标 · Phase D          |                                           |
 
-### 1.6 MVP 要验证的问题
+---
 
-- 用户是否因为信任 Yiveno 而保存更多内容。
-- 用户是否在需要找资料时优先打开 Yiveno，而不是重新 Google。
-- 用户是否每周发生稳定的 Recall 行为。
-- 用户是否愿意为跨设备、语义寻回、反馈学习等能力持续付费。
+## 2. 领域契约（Normative）
 
-## 二、核心对象模型
+权威实现：`frontend/src/core/memory/*`。文档与 Zod 冲突 → **先改一方并立刻对齐另一方**。
 
-### 2.1 MemoryItem
+### 2.1 可写入类型（MVP）
 
-`MemoryItem` 是 v4 的核心领域对象，表示用户认为未来可能有价值、值得找回的内容。
+`bookmark` | `text_excerpt`  
+预留不可写：`image` | `video` | `note` | `file`
 
-```typescript
-type MemoryItemType = 'bookmark' | 'text_excerpt' | 'image' | 'video' | 'note' | 'file'
-```
+### 2.2 公共字段
 
-v4 初期只实现：
+`id`, `ownerId`, `sourceLocalProfileId`, `clues`, `createdAt`, `updatedAt`, `deletedAt?`
 
-```typescript
-type SupportedMemoryItemType = 'bookmark' | 'text_excerpt'
-```
+- `ownerId` = `accountId ?? localProfileId`
+- `CaptureEntry` = `popup` | `context_menu` | `omnibox` | `shortcut` | `sync` | `import`
 
-其它类型只做架构预留，不进入 MVP 范围。
+### 2.3 Payload（必填摘要）
 
-### 2.2 Bookmark 类型
+- **Bookmark**：`title`, `url`, `domain`；可选 favicon / chromeBookmarkId / parentFolderId / chromeCreatedAt
+- **TextExcerpt**：`selectedText`, `sourceUrl`, `pageTitle`, `domain`；可选 contextBefore/After
 
-Bookmark 是从 Chrome 书签系统同步来的 MemoryItem。
+### 2.4 Clues
 
-最低保存字段：
+写入尽量填 `title` / `textExcerpt` / `sourceUrl` / `domain` / `captureEntry`。  
+`embedding` 当前不生成。行为字段 `openCount` / `lastOpenedAt` 默认 0/null。
 
-- 标题、URL、域名、favicon。
-- Chrome 书签 ID、父级目录、创建时间。
-- 用户保存/同步时间。
-- 可选摘要、关键词、标签、embedding。
+### 2.5 身份
 
-### 2.3 Text Excerpt 类型
+`LocalProfile` + 可选 `AccountBinding`（`frontend/src/core/identity/`）。未登录不阻塞 Capture/Recall。
 
-Text Excerpt 是用户在网页上选中一段文本后主动保存的 MemoryItem。
+---
 
-最低保存字段：
+## 3. UI 与术语（Normative）
 
-- 用户选中的原文。
-- 来源 URL、页面标题、域名。
-- 保存时间、设备/浏览器环境。
-- 选区前后少量上下文。
-- 可选备注、摘要、embedding。
+- 文案：筛选 / 找回；禁止 Search / 搜索。
+- 交互态禁止几何变换（§0.2）；例外：浮层入场短动画；`pop`/`shake` 不可用于行 hover。
+- 空状态：无记忆时引导保存或等待导入，不空白报错。
+- 受限页（`chrome://` 等）保存失败 → 明确文案。
+- 无选区 → 不提供「保存选区」。
+- 重复 URL：MVP 允许并存。
 
-不做：
+---
 
-- 富文本高亮系统。
-- 完整网页快照。
-- 自动保存所有阅读内容。
-- 类 Readwise 的复杂复习系统。
+## 4. 消息协议（Normative）
 
-### 2.4 记忆线索
+- `scope` 必须为 `'background'`（`BACKGROUND_MESSAGE_SCOPE`）。
+- **已登记 type（禁止擅自增删拼写）：**
 
-每个 MemoryItem 都应尽量形成可寻回的线索：
+| type                                | 用途               |
+| ----------------------------------- | ------------------ |
+| `PING`                              | 探活               |
+| `GET_LOCAL_IDENTITY`                | 本地身份 + ownerId |
+| `CAPTURE_BOOKMARK`                  | 写入书签记忆       |
+| `CAPTURE_TEXT_EXCERPT`              | 写入摘录           |
+| `CAPTURE_CURRENT_PAGE`              | 保存当前页         |
+| `LIST_MEMORY_ITEMS`                 | 列表               |
+| `RECALL_WITH_CLUE`                  | 线索找回           |
+| `GET_CHROME_BOOKMARK_IMPORT_STATUS` | 导入进度           |
 
-- 内容线索：标题、正文片段、摘要、关键词、实体。
-- 语义线索：embedding、主题、意图、使用场景。
-- 行为线索：保存时间、打开次数、最近访问、用户确认/否定。
-- 上下文线索：来源 URL、域名、设备、保存入口。
-- 用户线索：备注、手动标签、集合归属。
+新增能力：先改 `frontend/src/core/messaging/*` + handler，再改 UI。
 
-## 三、核心功能优先级
+---
 
-### 3.1 P0：捕获与找回
+## 5. 功能优先级与验收（Normative）
 
-P0 是产品不可妥协的核心。
+### 5.1 能力分层
 
-- **Popup 找回框**：打开插件即可输入自然语言线索，返回最可能结果。
-- **Chrome Omnibox 找回**：地址栏触发 Yiveno，是最短原生找回路径，应与 Popup 共享同一检索策略。
-- **一键保存当前页**：快捷键/Popup 一键把当前网页作为 Bookmark MemoryItem 保存。
-- **右键保存选中文字**：用户选中文案后，通过右键菜单保存为 Text Excerpt。
-- **Hybrid Filter**：关键词 + 语义向量 + 元数据线索共同召回。
-- **Top Pick 结果**：优先给出最可能命中的一个结果，而不是默认展示长列表。
+| 层          | 召回                         | 阶段             |
+| ----------- | ---------------------------- | ---------------- |
+| Free / 当前 | 关键词 Filter                | 已上线           |
+| Pro         | Hybrid（关键词 + embedding） | Phase B          |
+| LLM 增强    | 摘要/解释/追问等             | Phase B+；可关闭 |
 
-### 3.2 P1：记忆索引与反馈闭环
+冲突时以本表为准：**Hybrid ≠ 当前 P0 默认工作**。
 
-- **MemoryItem 索引**：统一索引 bookmark 与 text_excerpt。
-- **语义表示**：为可支持的 MemoryItem 生成 embedding。
-- **结果解释**：展示为什么 Yiveno 认为它可能是目标内容。
-- **用户反馈**：记录点击、打开、确认、否定等反馈，用于后续排序。
-- **低置信追问**：仅当 Top 结果置信度不足或候选高度相似时，提出一个最能缩小范围的问题。
+### 5.2 已交付基线验收
 
-### 3.3 P2：分享与价值表达
+1. Popup 可开；空线索无误命中。
+2. 保存当前页后，标题/域名片段可 Top Pick 找回。
+3. 右键摘录后可用摘录词找回。
+4. 书签导入有真实进度或明确失败；导入项可找回。
+5. Chrome 侧书签变更后，再次 Recall 可见一致结果。
+6. 无 Search 文案；无行级位移/缩放 hover。
 
-分享不是社交平台，而是从个人价值库中主动选择一部分内容进行表达。
+### 5.3 Phase A（Omnibox）验收
 
-- 单个 MemoryItem 分享。
-- 轻量集合分享。
-- 只读公开链接。
-- 默认私有，必须由用户主动分享。
+1. Omnibox 触发后策略与 Popup 一致（同一 `recallService`）。
+2. 不引入第二套搜索/筛选实现。
+3. §1 状态更新为已上线。
 
-适用场景：
+### 5.4 后续优先级（摘要）
 
-- 快速传达一组参考资料。
-- 展示自己的研究路径、收藏品味、判断依据。
-- 与同事/朋友共享某个主题下的内容。
+- **P1 / Phase B**：索引、embedding、Hybrid、反馈、Need A Clue
+- **P2 / Phase C**：分享、云同步、账户 UI
+- **P3 / Phase D**：删除/标签/失效链接/统计等轻管理
 
-### 3.4 P3：轻管理与维护
+**禁止重做**：双面板重组、复杂拖拽整理、AI 聚类主卖点、大规模书签树编辑。
 
-管理能力退到后台，只保留能支撑捕获与找回的低复杂度能力。
+### 5.5 Settings IA（目标，占位中）
 
-- 删除、归档、恢复。
-- 标签、集合、基础批量操作。
-- 重复 URL 提示。
-- 失效链接提示。
-- 基础统计：MemoryItem 总数、最近保存、最近找回、命中反馈。
+隐私 | 同步 | AI | 账户。未上线前不得暗示能力可用。进 manifest 属 Phase A 后段。
 
-不再重押：
+### 5.6 扩展入口
 
-- 双面板书签重组。
-- 复杂拖拽整理。
-- AI 自动聚类作为主卖点。
-- 大规模书签树编辑。
+| 入口                        | 现状             |
+| --------------------------- | ---------------- |
+| `popup.html`                | 活跃             |
+| `background.js`             | 活跃             |
+| `settings.html` / offscreen | 占位             |
+| Omnibox / `commands`        | 未注册 → Phase A |
 
-## 四、找回体验设计
+---
 
-### 4.1 主路径
+## 6. 架构（Normative）
 
 ```text
-用户输入模糊线索
-  ↓
-解析线索
-  ↓
-多路召回
-  ↓
-排序与置信度决策
-  ↓
-Top Pick + 少量候选
-  ↓
-用户打开 / 确认 / 否定
-  ↓
-反馈写回
+Chrome API / 选区
+  → Background（唯一监听者）
+  → IndexedDB（indexedDBManager）
+  →（可选 Pinia；Popup 可用组件状态）
+  → Vue（pages/；可收敛 presentation/）
+  → sendMessage → Background
 ```
 
-### 4.2 决策原则
+- 依赖：`pages|presentation → application → core`；`application` → `infrastructure`。
+- UI 访问 Background：**仅** messaging client。
+- 导入 = 核心业务（真实进度）。embedding = 辅助（Offscreen/队列，不阻塞关键词 Recall）。
+- 目标规模指导：2 万 MemoryItem；MVP 可限扫 ~2000，全量索引 Phase B。
+- 长期：Cloud Memory DB 为云端事实源；本地 IndexedDB 变缓存——**不提前重写本地链路**。
+- **禁止回潮**：旧管理页/侧边栏/书签树编辑/AI 自动整理进 build 或 manifest。
 
-- 能命中就不要追问。
-- 必须追问时，只问一个高价值问题。
-- 结果卡片要展示记忆线索，而不只是标题和 URL。
-- 用户否定结果后，才进入补救式对话。
+新功能顺序：契约 → repository → Background 消息 → Recall/Filter → UI。
 
-### 4.3 结果形态
+---
 
-- **Top Pick**：最可能就是它。
-- **Also Possible**：3–5 个相近候选。
-- **Need A Clue**：置信度不足时追问一个关键线索。
-- **No Match**：无可用结果时提供恢复动作，如扩大时间范围、查看最近保存。
-
-## 五、技术架构原则
-
-### 5.1 当前阶段数据流
-
-v4 初期仍保持本地优先，降低成本与合规复杂度。
+## 7. 找回体验（Normative 要点）
 
 ```text
-Chrome API / 用户选区
-  ↓
-Background Script
-  ↓
-IndexedDB
-  ↓
-Pinia Store
-  ↓
-Vue Components
+线索 →（MVP 规范化）→ 关键词 Filter → 排序
+  → Top Pick + Also Possible → 打开
+  →（Phase B）反馈写回
 ```
 
-要求：
+| 形态          | MVP                |
+| ------------- | ------------------ |
+| Top Pick      | 已有（分数达阈值） |
+| Also Possible | 已有（约 ≤5）      |
+| Need A Clue   | Phase B            |
+| No Match      | 已有；恢复动作待补 |
 
-- Background Script 仍是唯一 Chrome API 监听者。
-- IndexedDB 仍是本地事实源。
-- 所有 IndexedDB 操作必须通过 `frontend/src/infrastructure/indexeddb/manager.ts` 的 `indexedDBManager`。
-- 前端组件禁止直接调用 `chrome.bookmarks.*` / `chrome.tabs.*`。
-- `presentation/ → application/ → core/ → infrastructure/` 依赖方向不变。
+原则：能命中不追问；追问最多一个；卡片要有线索不只标题 URL；否定后再补救对话。
 
-### 5.1.1 v4 瘦身壳活跃入口
+---
 
-v4 初期只保留能验证「捕获 + 找回」的最小扩展入口：
+## 8. 路线图（剩余工作 · Normative 排序）
 
-- `popup.html`：主找回入口。
-- `settings.html`：隐私、同步、AI、账户等配置入口。
-- `background.js`：Chrome API 监听、Omnibox、快捷键、右键菜单、同步队列。
-- `offscreen.html` / `offscreen.js`：保留本地 embedding 等 Service Worker 不适合执行的任务。
+| Phase | 内容                                                                                |
+| ----- | ----------------------------------------------------------------------------------- |
+| **A** | **① Omnibox** → 快捷键 → 线索解释/空状态文案 → Settings 最小可用+manifest → 更新 §1 |
+| B     | 索引、Offscreen embedding、Hybrid（Pro）、反馈、追问                                |
+| C     | Sync、账户 UI、隐私控制落地、分享                                                   |
+| D     | 轻管理与统计                                                                        |
 
-### 5.1.2 v4 前端重建基线
+---
 
-v4 不在旧书签管理架构上保留兼容层。`frontend/` 当前分支仅保留以下无业务属性的基础设施：
+## 附录 A · Non-normative（背景；勿当 sprint 范围）
 
-- Chrome MV3 构建、Popup / Settings / Background / Offscreen 入口。
-- TypeScript、Vue、测试与本地开发配置。
-- `Result`、日志、事件总线、Zod 等通用工具。
-- `indexedDBManager` 的连接、升级和事务边界；不得预置 Bookmark 业务表或直接暴露原生 IndexedDB。
-- Offscreen 通信边界；尚未注册具体的 AI、embedding 或采集任务。
+### A.1 定位与信念
 
-旧管理页、侧边栏、引导页、旧保存弹窗、书签树、AI 自动整理、文件夹向量、Bookmark 特征检测及其前端业务代码均不保留在 v4 分支工作区；如需追溯，仅通过 Git 历史查看。它们不得重新进入 Vite build input、`manifest.json`、快捷键命令或 Background 启动任务。
+承诺：看到有价值内容就扔进 Yiveno；只记得一点点也能找回。  
+信念：要的是未来能用，不是整理；对话非主路径；AI 是寻回引擎不是产品主体。
 
-新的业务代码必须按以下顺序建立，不得跳过底层直接实现 UI：
+目标用户：知识工作者、开发者/设计师、学生等「存过但找不到」人群。  
+北极星：模糊线索 → 第一屏「对，就是这个。」
 
-1. `MemoryItem`、来源引用、记忆线索与反馈的领域契约。
-2. IndexedDB schema、迁移、repository 与可重建派生索引。
-3. Capture Command 与 Background 写入链路。
-4. 统一 Recall / Filter 服务。
-5. Popup、Omnibox、Text Excerpt 等体验层。
+MVP 验证问题：是否更愿保存、是否优先打开 Yiveno、是否稳定 Recall、是否愿为语义/同步付费。
 
-在第 1–3 步完成前，禁止恢复 Chrome Bookmark 同步、右键保存、embedding、LLM、云同步或任何自动后台任务。
+### A.2 隐私原则（产品方向）
 
-### 5.2 长期目标架构
+默认：只处理主动保存 + 授权同步的书签；不默认浏览历史/全文快照/上传第三方。  
+逐步提供：本地/云端开关、删云端、导出、关 AI、模型说明。云端/语义上线前补隐私政策与同意流。
 
-当产品进入跨设备、订阅、服务端 AI 寻回阶段，架构目标调整为：
+### A.3 商业化方向（配额另定）
 
-```text
-Cloud Memory DB
-  ↑
-Sync Layer
-  ↑
-IndexedDB Local Cache / Offline Queue
-  ↑
-Chrome Extension UI
-```
+- Free：本地、关键词 Filter、基础捕获、书签导入。
+- Pro：语义 Hybrid、同步、更高配额、反馈排序、分享。
+- 更高级：云端深寻回、多模态、快照额度、团队。
 
-长期角色：
+### A.4 品牌
 
-- **Cloud Memory DB**：长期事实源。
-- **IndexedDB**：本地缓存、离线队列、快速读取投影。
-- **Vector Index**：可重建的派生索引。
-- **Object Storage**：只在付费归档能力需要时引入。
+禁：AI Bookmark Manager、管理你的书签、自动整理一切、永久保存看过的所有内容。  
+荐：找回曾保存的重要内容；只记得一点点也能找回；Save what matters. Recall it later.
 
-### 5.3 迁移原则
+### A.5 Text Excerpt 明确不做
 
-- 不因未来云端架构，提前重写现有本地链路。
-- 新模型命名应逐步向 MemoryItem 收敛，避免继续写死 Bookmark。
-- 云同步、服务端 embedding、对象存储必须作为显式功能上线，不默认开启。
-- 任何云端处理都必须能解释：收集什么、为什么、存在哪里、如何删除。
+富文本高亮、完整网页快照、自动保存全部阅读、类 Readwise 复习系统。
 
-## 六、AI 能力策略
+---
 
-### 6.1 当前阶段
+## 修订记录
 
-- Free / 未登录：关键词筛选，覆盖标题、URL、域名、文本片段。
-- Pro / 开启语义：本地 embedding + 关键词混合召回。
-- LLM：用于摘要、标签、结果解释、低置信线索解析等增强任务。
-
-### 6.2 不做 AI 研究
-
-Yiveno 不训练基础模型，不把竞争力建立在模型大小上。产品资源集中在：
-
-- 捕获时如何低负担形成高质量记忆线索。
-- 找回时如何融合语义、行为、时间、来源等信号。
-- 如何让用户第一次就找到真正想找的东西。
-
-### 6.3 反馈学习
-
-允许记录产品内反馈信号：
-
-- 结果点击。
-- 结果打开。
-- 结果忽略。
-- 用户确认「就是它」。
-- 用户否定「不是它」。
-
-这些反馈只用于提升用户自己的排序质量，不默认用于训练通用模型。
-
-## 七、隐私与合规边界
-
-### 7.1 默认边界
-
-- 默认只处理用户主动保存的内容。
-- 不默认记录完整浏览历史。
-- 不默认保存完整网页快照、原图、视频、附件。
-- 不默认把用户内容上传到云端或第三方 AI。
-
-### 7.2 用户控制
-
-必须逐步提供：
-
-- 本地模式 / 云端模式的清晰开关。
-- 删除全部云端数据。
-- 导出用户数据。
-- 关闭 AI 处理。
-- 第三方模型调用说明。
-
-### 7.3 数据最小化
-
-Yiveno 保存的是「找回所需的记忆表示」，不是完整互联网内容归档。
-
-优先保存：
-
-- URL、标题、选中文字、来源、时间、少量上下文。
-- 摘要、关键词、embedding、用户备注。
-
-谨慎保存：
-
-- 完整正文。
-- 页面截图。
-- 原图、视频、附件。
-- 自动行为历史。
-
-## 八、商业化方向
-
-### 8.1 免费层
-
-- 本地保存。
-- 基础关键词筛选。
-- 有限 MemoryItem 数量或基础能力限制。
-- 基础一键保存与选中文字保存。
-
-### 8.2 Pro 层
-
-- 语义找回。
-- 跨设备同步。
-- 更高 MemoryItem 数量。
-- 反馈学习与更强排序。
-- 结果解释与高级线索。
-- 分享集合能力。
-
-### 8.3 未来高级层
-
-- 云端深度寻回。
-- 多模态记忆表示。
-- 页面快照/归档额度。
-- 团队共享或主题知识包。
-
-## 九、品牌与文案
-
-### 9.1 禁止表达
-
-- AI Bookmark Manager。
-- 管理你的书签。
-- 自动整理一切。
-- 永久保存你看过的所有内容。
-
-### 9.2 推荐表达
-
-- 找回你曾经保存过的重要内容。
-- 只记得一点点，也能找回。
-- 把有价值的内容扔进 Yiveno，未来需要时再找回来。
-- 让过去积累，在未来继续有用。
-- Save what matters. Recall it later.
-
-## 十、阶段路线图
-
-### Phase 1：定位迁移
-
-- 产品文档从 Bookmark 转为 MemoryItem。
-- Popup/Omnibox 找回体验强化。
-- 一键保存当前页稳定。
-- 管理复杂度冻结。
-
-### Phase 2：Text Excerpt
-
-- 右键保存选中文字。
-- Text Excerpt 进入统一 MemoryItem 索引。
-- 结果卡片展示来源与上下文。
-
-### Phase 3：反馈排序
-
-- 记录点击、打开、确认、否定。
-- 建立基础排序权重。
-- 低置信追问机制。
-
-### Phase 4：云端预留
-
-- 设计 Sync Layer。
-- 明确隐私政策与用户控制。
-- 云端 Memory DB 作为可选能力灰度上线。
+| 日期       | 变更                                                                              |
+| ---------- | --------------------------------------------------------------------------------- |
+| 2026-07-23 | 确立唯一正文；现状矩阵、契约、验收、UI 约束、Hybrid 边界                          |
+| 2026-07-23 | AI 优先重排：Quick Contract、Normative/附录分离、消息 type 表、Phase A 单一优先项 |
