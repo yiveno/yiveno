@@ -9,11 +9,9 @@ export const PROJECT_ROOT = resolve(ROOT_DIR, '..')
 export const OUT_DIR = resolve(PROJECT_ROOT, 'dist')
 export const SRC_DIR = resolve(ROOT_DIR, 'src')
 
+/** 生产构建默认丢弃 console；KEEP_CONSOLE=true 可强制保留。 */
 export const SHOULD_DROP_CONSOLE =
-  process.env.NODE_ENV === 'production' &&
-  process.env.CRAWLER_DEBUG !== 'true' &&
-  process.env.FONT_DEBUG !== 'true' &&
-  process.env.KEEP_CONSOLE !== 'true'
+  process.env.NODE_ENV === 'production' && process.env.KEEP_CONSOLE !== 'true'
 
 export const DEBUG_MODE = !SHOULD_DROP_CONSOLE
 
@@ -23,7 +21,6 @@ export function logBuildConfig() {
     SHOULD_DROP_CONSOLE,
     ENABLE_SOURCEMAP: DEBUG_MODE,
     NODE_ENV: process.env.NODE_ENV,
-    CRAWLER_DEBUG: process.env.CRAWLER_DEBUG,
     KEEP_CONSOLE: process.env.KEEP_CONSOLE
   })
 }

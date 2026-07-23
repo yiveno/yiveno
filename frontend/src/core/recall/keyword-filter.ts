@@ -51,7 +51,7 @@ export function tokenizeRecallClue(clue: string): string[] {
   return [...tokens]
 }
 
-/** 收集 MemoryItem 的可检索字段。 */
+/** 收集 MemoryItem 的可匹配字段（关键词 Filter）。 */
 export function collectSearchableFields(item: MemoryItem): SearchableField[] {
   const fields: SearchableField[] = []
   const { clues } = item

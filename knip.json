@@ -30,10 +30,6 @@
         "src/pages/*/main.ts",
         "src/background/main.ts",
         "src/offscreen/main.ts",
-        "src/core/common/result.ts",
-        "src/infrastructure/events/event-bus.ts",
-        "src/infrastructure/indexeddb/manager.ts",
-        "src/infrastructure/offscreen/manager.ts",
         "vite/build-options.ts",
         "scripts/**/*.{js,ts,cjs}"
       ],

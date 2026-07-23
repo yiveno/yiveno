@@ -6,8 +6,8 @@ dist/
 .DS_Store
 artifacts/
 .lighthouseci/
-.cursor/
-# 但保留 Cursor 项目规则（团队共享）
+# Cursor 本地状态忽略；项目规则需入库共享
+.cursor/*
 !.cursor/rules/
 !.cursor/rules/**
 
@@ -104,10 +104,10 @@ reports/
 .pnp.*
 .zero-installs
 
-# 策略更新：只使用 bun.lockb
-# bun.lockb 必须提交到版本控制
-# 不要添加 bun.lockb, *.lockb 到 .gitignore!
-bun.lock
+# Bun 文本锁文件（现代 Bun 默认）；必须提交到版本控制
+# 旧二进制 bun.lockb 若残留可忽略，勿再依赖
+bun.lockb
+**/bun.lockb
 
 # 系统和运行时文件
 .env.local

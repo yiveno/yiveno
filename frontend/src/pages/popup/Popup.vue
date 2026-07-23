@@ -349,10 +349,10 @@ async function handleCaptureCurrentPage() {
 }
 
 .recall-import-track {
-  overflow: hidden;
   height: 6px;
   border-radius: 999px;
   background: #e2e8f0;
+  overflow: hidden;
 }
 
 .recall-import-bar {

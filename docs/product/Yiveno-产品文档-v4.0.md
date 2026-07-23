@@ -176,12 +176,12 @@ Yiveno = **个人信息寻回系统**（Capture 低负担 + Recall 高确定性�
 
 ### 5.6 扩展入口
 
-| 入口                        | 现状             |
-| --------------------------- | ---------------- |
-| `popup.html`                | 活跃             |
-| `background.js`             | 活跃             |
-| `settings.html` / offscreen | 占位             |
-| Omnibox / `commands`        | 未注册 → Phase A |
+| 入口                             | 现状             |
+| -------------------------------- | ---------------- | --------------------------------------------------- |
+| `popup.html`                     | 活跃             |
+| `background.js`                  | 活跃             |
+| `settings.html` / offscreen 源码 | 占位             | Offscreen 未注册 permission；embedding 接入前不启用 |
+| Omnibox / `commands`             | 未注册 → Phase A |
 
 ---
 

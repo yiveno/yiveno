@@ -14,6 +14,8 @@ export default defineConfig(() => {
 
   return {
     base: './',
+    // 仅由 clean-dist 拷贝白名单资产，避免 public/models 等历史残留进入 dist
+    publicDir: false as const,
     envDir: resolve(PROJECT_ROOT, '.env.runtime'),
     plugins: createPlugins(),
     resolve: {
@@ -29,7 +31,7 @@ export default defineConfig(() => {
         resolve(SRC_DIR, 'pages/popup/index.html'),
         resolve(SRC_DIR, 'pages/settings/index.html')
       ],
-      include: ['vue', 'mitt'],
+      include: ['vue'],
       force: false,
       holdUntilCrawlEnd: true
     },

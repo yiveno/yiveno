@@ -3,7 +3,7 @@
  *
  * - popup.html / settings.html 放到 dist 根目录
  * - 修正 HTML 内 ../../../ 资源引用为 ./
- * - 复制 manifest、icons、locales、offscreen.html
+ * - 仅复制扩展运行所需的 public 白名单资产（不含 models / 营销 logo）
  */
 const fs = require('fs')
 const path = require('path')
@@ -15,6 +15,12 @@ const publicDir = path.join(frontendDir, 'public')
 function copyIfPresent(source, destination) {
   if (fs.existsSync(source)) {
     fs.cpSync(source, destination, { recursive: true })
+  }
+}
+
+function removeIfPresent(target) {
+  if (fs.existsSync(target)) {
+    fs.rmSync(target, { recursive: true, force: true })
   }
 }
 
@@ -37,6 +43,22 @@ function flattenPageHtml(page) {
   fs.writeFileSync(destination, html, 'utf8')
 }
 
+/** 清除 Vite/历史构建可能残留的非扩展资产。 */
+function purgeNonExtensionAssets() {
+  for (const name of [
+    'models',
+    'logo.png',
+    'logo.webp',
+    'logo-dark.png',
+    'logo-dark.webp',
+    'favicon.ico',
+    'favicon-16x16.png',
+    'favicon-32x32.png'
+  ]) {
+    removeIfPresent(path.join(distDir, name))
+  }
+}
+
 function finalizeExtensionDist() {
   if (!fs.existsSync(distDir)) {
     console.warn('[clean-dist] dist/ 不存在，跳过')
@@ -50,6 +72,7 @@ function finalizeExtensionDist() {
 
   flattenPageHtml('popup')
   flattenPageHtml('settings')
+  purgeNonExtensionAssets()
 
   const nestedSrcDir = path.join(distDir, 'src')
   if (fs.existsSync(nestedSrcDir)) {

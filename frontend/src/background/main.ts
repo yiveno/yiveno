@@ -4,10 +4,11 @@ import { registerContextMenuItems } from '@/background/listeners/context-menu'
 import { logger } from '@/infrastructure/logging/logger'
 
 /**
- * v4 Background 入口。
+ * Background Service Worker 入口。
  *
- * Chrome API 监听器随着 Capture、Recall 等领域模块逐项注册；
- * 禁止在此恢复旧书签管理行为。
+ * 启动时 bootstrap 本地身份 / Memory DB / 书签导入与 sync；
+ * 在此注册 runtime 消息与 onInstalled（含右键菜单）。
+ * 禁止恢复旧书签管理器行为。
  */
 chrome.runtime.onInstalled.addListener(details => {
   void ensureBackgroundBootstrapped()

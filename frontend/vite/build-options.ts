@@ -1,4 +1,4 @@
-/** v4 最小扩展构建入口。 */
+/** 扩展多入口（popup / settings / background / offscreen）。 */
 import { resolve } from 'path'
 import { SRC_DIR } from './constants'
 

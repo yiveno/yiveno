@@ -421,7 +421,7 @@ GET /api/health
 ```dockerfile
 FROM oven/bun:alpine
 WORKDIR /app
-COPY package.json bun.lockb ./
+COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 COPY . .
 EXPOSE 3000

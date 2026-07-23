@@ -1,6 +1,5 @@
 import type { CreateBookmarkInput, CreateTextExcerptInput } from '@/core/memory/create-memory-item'
 import type { MemoryItem } from '@/core/memory/memory-item'
-import type { SupportedMemoryItemType } from '@/core/memory/memory-item-type'
 import {
   memoryItemRepository,
   type ListMemoryItemsOptions,
@@ -29,34 +28,14 @@ export class MemoryItemService {
     return this.repository.createTextExcerpt(input)
   }
 
-  /** 按 ID 读取 MemoryItem。 */
-  async getById(id: string): Promise<MemoryItem | null> {
-    return this.repository.getById(id)
-  }
-
   /** 列出当前用户的 MemoryItem。 */
   async list(options: ListMemoryItemsOptions = {}): Promise<MemoryItem[]> {
     return this.repository.listByOwner(options)
   }
 
-  /** 软删除 MemoryItem。 */
-  async softDelete(id: string): Promise<MemoryItem | null> {
-    return this.repository.softDelete(id)
-  }
-
   /** 按 Chrome 书签 ID 软删除 Bookmark MemoryItem。 */
   async softDeleteByChromeBookmarkId(chromeBookmarkId: string): Promise<MemoryItem | null> {
     return this.repository.softDeleteByChromeBookmarkId(chromeBookmarkId)
-  }
-
-  /** 统计未删除 MemoryItem 数量。 */
-  async countActive(type?: SupportedMemoryItemType): Promise<number> {
-    return this.repository.countActiveByOwner(type)
-  }
-
-  /** 批量写入 MemoryItem。 */
-  async putMany(items: MemoryItem[]): Promise<void> {
-    return this.repository.putMany(items)
   }
 }
 

@@ -4,7 +4,7 @@ import basicSsl from '@vitejs/plugin-basic-ssl'
 import type { Plugin } from 'vite'
 import { finalizeExtensionDistPlugin } from './finalize-dist'
 
-/** v4 基础设施阶段：Vue + HTTPS + 扩展 dist 整理。 */
+/** Vue + 本地 HTTPS + 构建后整理扩展 dist 布局。 */
 export function createPlugins(): Plugin[] {
   return [vue(), basicSsl(), finalizeExtensionDistPlugin()]
 }

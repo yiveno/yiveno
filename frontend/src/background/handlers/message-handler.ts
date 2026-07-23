@@ -57,7 +57,7 @@ async function dispatchBackgroundMessage(
 }
 
 /**
- * 处理来自 Popup / Settings 的 Background 消息。
+ * 处理 scope=background 的扩展消息（当前主要为 Popup；Settings 占位未进 manifest）。
  * 异步 handler 需返回 true 以保持 sendResponse 通道。
  */
 export function handleBackgroundMessage(

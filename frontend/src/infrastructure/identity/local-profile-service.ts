@@ -15,7 +15,7 @@ import {
 
 /**
  * 读取或创建本 Chrome Profile 内的本地档案。
- * 仅在 Background / Offscreen 等可访问 chrome.storage 的上下文调用。
+ * 仅在可访问 chrome.storage 的上下文调用（当前为 Background）。
  */
 export async function getOrCreateLocalProfile(): Promise<LocalProfile> {
   const existing = await readChromeStorageLocal(LOCAL_PROFILE_STORAGE_KEY, LocalProfileSchema)

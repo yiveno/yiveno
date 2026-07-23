@@ -9,4 +9,4 @@
 - [`AUTH_GUIDE.md`](./AUTH_GUIDE.md) — OAuth 使用说明
 - [`ENVIRONMENT.md`](./ENVIRONMENT.md) — 环境变量分层、同步与校验规则
 
-`frontend/docs/` **仅长期保留** `i18n-implementation-guide.md`、`i18n-workflow.md`、`time-i18n-checklist.md`（v4 baseline 占位，待 i18n 方案定稿后重写）。
+`frontend/docs/` 已清空；i18n 方案定稿前不在此目录维护占位文档。

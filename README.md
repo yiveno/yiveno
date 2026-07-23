@@ -184,13 +184,13 @@ Yiveno/                             # Monorepo 根目录
 
 ### Frontend (Chrome Extension)
 
-| 类别           | 技术        | 版本   | 说明            |
-| -------------- | ----------- | ------ | --------------- |
-| **框架**       | Vue 3       | 3.5.18 | Composition API |
-| **语言**       | TypeScript  | 5.8.3  | 严格模式        |
-| **构建工具**   | Vite        | 8.0.x  | 扩展打包        |
-| **事件总线**   | mitt        | 3.0.x  | 跨层事件通信    |
-| **Chrome API** | Manifest V3 | -      | 最新标准        |
+| 类别           | 技术        | 版本   | 说明             |
+| -------------- | ----------- | ------ | ---------------- |
+| **框架**       | Vue 3       | 3.5.18 | Composition API  |
+| **语言**       | TypeScript  | 5.8.3  | 严格模式         |
+| **构建工具**   | Vite        | 8.0.x  | 扩展打包         |
+| **校验**       | Zod         | 3.25.x | 领域/消息 schema |
+| **Chrome API** | Manifest V3 | -      | 最新标准         |
 
 ### Backend (Cloudflare Worker)
 

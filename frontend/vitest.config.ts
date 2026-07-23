@@ -5,16 +5,16 @@ import { resolve } from 'path'
 export default defineConfig({
   plugins: [vue()],
   test: {
-    // 使用 happy-dom 模拟浏览器环境（比 jsdom 快 2-3 倍）
+    // 使用 happy-dom 模拟浏览器环境（比 jsdom 快）
     environment: 'happy-dom',
 
     // 全局 API（describe, it, expect 等）
     globals: true,
 
-    // v4 baseline 暂无单测文件；恢复测试后移除此项
+    // 无测试文件时失败，避免空跑被当成通过
     passWithNoTests: false,
 
-    // 排除视觉测试和 E2E 测试（由 Playwright 和专门的配置运行）
+    // 本配置只跑 src 旁挂单测；不含浏览器 E2E
     exclude: ['**/node_modules/**', '**/dist/**'],
 
     // 覆盖率配置

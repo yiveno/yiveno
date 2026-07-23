@@ -159,11 +159,8 @@ Yiveno 采用 **Material Design 3** 设计系统，基于薄荷绿色系（种�
 ```json
 {
   "@yiveno/design-tokens": "workspace:*",
-  "@vueuse/core": "^14.0.0",
-  "immer": "^10.2.0",
-  "mitt": "^3.0.1",
-  "pinia": "^3.0.3",
-  "vue": "^3.5.18"
+  "vue": "^3.5.18",
+  "zod": "^3.25.76"
 }
 ```
 

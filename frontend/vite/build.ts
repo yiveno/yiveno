@@ -1,9 +1,9 @@
-/** v4 基础设施构建配置。 */
+/** Chrome 扩展 Vite 构建选项。 */
 import type { BuildOptions } from 'vite'
 import { OUT_DIR, DEBUG_MODE } from './constants'
 import { createBuildOptions } from './build-options'
 
-/** 创建不含任何业务插件的扩展构建配置。 */
+/** 创建扩展打包构建配置（popup / settings / background / offscreen）。 */
 export function createBuildConfig(): BuildOptions {
   return {
     outDir: OUT_DIR,

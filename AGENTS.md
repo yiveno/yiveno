@@ -19,9 +19,9 @@
 - UI/API/文档统一用 **Filter（筛选）**；用户主动作使用 **Recall（找回）**；UI 文案禁止出现 `Search`。
 - TypeScript 禁止 `any` / `as any`；外部数据用 Zod 校验；JSDoc 用中文。
 - Vue 组件必须 `defineOptions({ name: 'ComponentName' })`。
-- Map 响应式更新用 Immer：`updateMap(nodes, draft => { ... })`。
-- 事件用 mitt：`emitEvent(...)`。
-- VueUse 优先：`useEventListener` / `useDebounceFn` / `useTimeoutFn`。
+- 需要跨层事件时再引入事件总线（当前无 mitt / emitEvent）。
+- Map 响应式更新：若引入 Map 状态，优先不可变更新模式（当前 Popup 用组件内状态即可）。
+- VueUse 优先：`useEventListener` / `useDebounceFn` / `useTimeoutFn`（引入依赖后再用）。
 
 ## 存储决策
 

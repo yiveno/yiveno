@@ -1,8 +1,8 @@
 /**
  * IndexedDB 唯一访问入口。
  *
- * v4 暂不预设任何业务表；MemoryItem 模块落地时必须通过此管理器注册 schema
- * 并执行所有事务，避免领域代码直接调用原生 IndexedDB API。
+ * Memory DB schema 经 `memory-db` 注册；所有本地持久化事务必须经此管理器，
+ * 禁止领域/UI 直接调用原生 IndexedDB API。
  */
 export interface IndexedDBDefinition {
   name: string
