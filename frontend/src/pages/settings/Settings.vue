@@ -12,6 +12,7 @@ import {
   openChromeShortcutsPage,
   updateUserSettings
 } from '@/infrastructure/messaging/background-client'
+import { t } from '@/infrastructure/i18n/t'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
 import { asMdSwitchElement } from '@/infrastructure/ui/register-material-web'
 
@@ -55,7 +56,7 @@ async function loadCommands() {
     commandsState.value = 'ready'
   } catch (error) {
     commandsState.value = 'error'
-    commandsError.value = error instanceof Error ? error.message : '读取快捷键失败'
+    commandsError.value = error instanceof Error ? error.message : t('settings_error_load_commands')
   }
 }
 
@@ -69,7 +70,8 @@ async function handleOpenShortcutsPage() {
       openShortcutsError.value = response.error
     }
   } catch (error) {
-    openShortcutsError.value = error instanceof Error ? error.message : '打开快捷键设置失败'
+    openShortcutsError.value =
+      error instanceof Error ? error.message : t('settings_error_open_shortcuts')
   } finally {
     openingShortcuts.value = false
   }
@@ -91,7 +93,7 @@ async function loadUserSettings() {
     settingsState.value = 'ready'
   } catch (error) {
     settingsState.value = 'error'
-    settingsError.value = error instanceof Error ? error.message : '读取设置失败'
+    settingsError.value = error instanceof Error ? error.message : t('settings_error_load')
   }
 }
 
@@ -116,7 +118,7 @@ async function handleSelectionToolbarToggle(event: Event) {
     selectionToolbarEnabled.value = response.settings.selectionToolbarEnabled
   } catch (error) {
     switchEl.selected = !nextValue
-    settingsError.value = error instanceof Error ? error.message : '更新设置失败'
+    settingsError.value = error instanceof Error ? error.message : t('settings_error_update')
   } finally {
     savingSelectionToolbar.value = false
   }
@@ -132,28 +134,34 @@ onMounted(() => {
   <main class="settings-shell">
     <header class="settings-header">
       <AppPageHeader current="settings" class="settings-header-top" />
-      <h1 class="settings-title">设置</h1>
-      <p class="settings-subtitle">管理找回相关偏好。未上线能力不会假装可用。</p>
+      <h1 class="settings-title">{{ t('settings_title') }}</h1>
+      <p class="settings-subtitle">{{ t('settings_subtitle') }}</p>
     </header>
 
     <section class="settings-section" aria-labelledby="settings-capture-heading">
       <div class="settings-section-head">
-        <h2 id="settings-capture-heading" class="settings-section-title">保存</h2>
-        <p class="settings-section-copy">控制划词后的轻量保存浮层；关闭后仍可用右键保存选区。</p>
+        <h2 id="settings-capture-heading" class="settings-section-title">
+          {{ t('settings_section_capture') }}
+        </h2>
+        <p class="settings-section-copy">{{ t('settings_section_capture_copy') }}</p>
       </div>
 
-      <p v-if="settingsState === 'loading'" class="settings-status" role="status">正在读取设置…</p>
+      <p v-if="settingsState === 'loading'" class="settings-status" role="status">
+        {{ t('settings_loading') }}
+      </p>
       <p v-else-if="settingsState === 'error'" class="settings-error" role="alert">
         {{ settingsError }}
       </p>
 
       <div v-else class="settings-toggle">
         <div class="settings-toggle-copy">
-          <span class="settings-toggle-title">划词显示保存菜单</span>
-          <span class="settings-toggle-hint">选中文字后出现「保存到 Yiveno」</span>
+          <span class="settings-toggle-title">{{ t('settings_toggle_selection_toolbar') }}</span>
+          <span class="settings-toggle-hint">{{
+            t('settings_toggle_selection_toolbar_hint')
+          }}</span>
         </div>
         <md-switch
-          aria-label="划词显示保存菜单"
+          :aria-label="t('settings_toggle_selection_toolbar')"
           :selected="selectionToolbarEnabled"
           :disabled="savingSelectionToolbar"
           @change="handleSelectionToolbarToggle"
@@ -166,14 +174,14 @@ onMounted(() => {
 
     <section class="settings-section" aria-labelledby="settings-shortcuts-heading">
       <div class="settings-section-head">
-        <h2 id="settings-shortcuts-heading" class="settings-section-title">快捷键</h2>
-        <p class="settings-section-copy">
-          扩展无法在本页直接改键；可查看当前绑定，并前往 Chrome 原生快捷键页修改。
-        </p>
+        <h2 id="settings-shortcuts-heading" class="settings-section-title">
+          {{ t('settings_section_shortcuts') }}
+        </h2>
+        <p class="settings-section-copy">{{ t('settings_section_shortcuts_copy') }}</p>
       </div>
 
       <p v-if="commandsState === 'loading'" class="settings-status" role="status">
-        正在读取快捷键…
+        {{ t('settings_commands_loading') }}
       </p>
       <p v-else-if="commandsState === 'error'" class="settings-error" role="alert">
         {{ commandsError }}
@@ -200,14 +208,14 @@ onMounted(() => {
           :disabled="openingShortcuts"
           @click="handleOpenShortcutsPage"
         >
-          {{ openingShortcuts ? '正在打开…' : '在 Chrome 中更改快捷键' }}
+          {{ openingShortcuts ? t('settings_opening_shortcuts') : t('settings_open_shortcuts') }}
         </md-filled-button>
         <md-outlined-button
           type="button"
           :disabled="commandsState === 'loading'"
           @click="loadCommands"
         >
-          刷新
+          {{ t('settings_refresh') }}
         </md-outlined-button>
       </div>
       <p v-if="openShortcutsError" class="settings-error" role="alert">{{ openShortcutsError }}</p>
@@ -217,12 +225,14 @@ onMounted(() => {
       class="settings-section settings-section--muted"
       aria-labelledby="settings-later-heading"
     >
-      <h2 id="settings-later-heading" class="settings-section-title">后续分区</h2>
+      <h2 id="settings-later-heading" class="settings-section-title">
+        {{ t('settings_section_later') }}
+      </h2>
       <ul class="settings-upcoming-list">
-        <li>隐私 — 未上线</li>
-        <li>同步 — 未上线</li>
-        <li>AI — 未上线</li>
-        <li>账户 — 未上线</li>
+        <li>{{ t('settings_upcoming_privacy') }}</li>
+        <li>{{ t('settings_upcoming_sync') }}</li>
+        <li>{{ t('settings_upcoming_ai') }}</li>
+        <li>{{ t('settings_upcoming_account') }}</li>
       </ul>
     </section>
   </main>

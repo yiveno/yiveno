@@ -8,5 +8,89 @@
   "omnibox_no_match": { "message": "No matching memory in Yiveno" },
   "command_open_recall": {
     "message": "Open Yiveno Recall"
-  }
+  },
+  "nav_aria_label": { "message": "Page navigation" },
+  "nav_library": { "message": "Library" },
+  "nav_settings": { "message": "Settings" },
+  "error_open_library": { "message": "Could not open the library" },
+  "error_open_settings": { "message": "Could not open Settings" },
+  "page_title_popup": { "message": "Yiveno" },
+  "page_title_settings": { "message": "Yiveno Settings" },
+  "page_title_library": { "message": "Yiveno Library" },
+  "page_title_detail": { "message": "Yiveno Excerpt" },
+  "selection_toolbar_saving": { "message": "Saving…" },
+  "selection_toolbar_saved": { "message": "Saved" },
+  "selection_toolbar_failed": { "message": "Save failed" },
+  "selection_toolbar_selection_gone": { "message": "Selection is gone" },
+  "popup_title": { "message": "Find it!" },
+  "popup_subtitle": {
+    "message": "Look through what you saved—no need to dig across the web again."
+  },
+  "popup_import_failed_fallback": {
+    "message": "Bookmark import failed. Reload the extension and try again."
+  },
+  "popup_import_progress": {
+    "message": "Importing bookmarks $imported$ / $total$",
+    "placeholders": {
+      "imported": { "content": "$1", "example": "3" },
+      "total": { "content": "$2", "example": "120" }
+    }
+  },
+  "popup_import_progress_indeterminate": { "message": "Importing bookmarks…" },
+  "popup_import_progress_aria": { "message": "Bookmark import progress" },
+  "popup_clue_label": { "message": "Any clue you still remember" },
+  "popup_clue_placeholder": {
+    "message": "e.g. last week’s piece on retention, an analysis of a product…"
+  },
+  "popup_submit": { "message": "Start recall" },
+  "popup_submitting": { "message": "Recalling…" },
+  "popup_open_settings": { "message": "Open Settings" },
+  "popup_filtering_status": { "message": "Filtering your library…" },
+  "popup_shorten_retry": { "message": "Shorten and retry" },
+  "popup_shorten_retry_with_clue": {
+    "message": "Shorten and retry ($clue$)",
+    "placeholders": {
+      "clue": { "content": "$1", "example": "retention" }
+    }
+  },
+  "popup_section_top_pick": { "message": "Most likely" },
+  "popup_section_also_possible": { "message": "Also possible" },
+  "popup_affirmation": {
+    "message": "Is this it? Open the card to check."
+  },
+  "popup_recall_failed": { "message": "Recall failed. Try again later." },
+  "settings_title": { "message": "Settings" },
+  "settings_subtitle": {
+    "message": "Manage recall preferences. Capabilities that are not live will not pretend to be."
+  },
+  "settings_section_capture": { "message": "Capture" },
+  "settings_section_capture_copy": {
+    "message": "Control the lightweight save chip after you select text. You can still save via the context menu when this is off."
+  },
+  "settings_loading": { "message": "Loading settings…" },
+  "settings_toggle_selection_toolbar": {
+    "message": "Show save menu on selection"
+  },
+  "settings_toggle_selection_toolbar_hint": {
+    "message": "Shows “Save to Yiveno” after you select text"
+  },
+  "settings_section_shortcuts": { "message": "Shortcuts" },
+  "settings_section_shortcuts_copy": {
+    "message": "This page cannot change keys directly. Review current bindings, then edit them in Chrome’s shortcuts page."
+  },
+  "settings_commands_loading": { "message": "Loading shortcuts…" },
+  "settings_open_shortcuts": { "message": "Change shortcuts in Chrome" },
+  "settings_opening_shortcuts": { "message": "Opening…" },
+  "settings_refresh": { "message": "Refresh" },
+  "settings_section_later": { "message": "Coming later" },
+  "settings_upcoming_privacy": { "message": "Privacy — not available yet" },
+  "settings_upcoming_sync": { "message": "Sync — not available yet" },
+  "settings_upcoming_ai": { "message": "AI — not available yet" },
+  "settings_upcoming_account": { "message": "Account — not available yet" },
+  "settings_error_load_commands": { "message": "Could not load shortcuts" },
+  "settings_error_open_shortcuts": {
+    "message": "Could not open the shortcuts page"
+  },
+  "settings_error_load": { "message": "Could not load settings" },
+  "settings_error_update": { "message": "Could not update settings" }
 }

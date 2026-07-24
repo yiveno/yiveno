@@ -17,6 +17,7 @@ import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
 import { getMemoryItemDisplay } from '@/core/recall/recall-result'
 import { getMemoryItemOpenHref } from '@/core/recall/memory-open-href'
 import { openExtensionOptionsPage } from '@/infrastructure/browser/options-page'
+import { t } from '@/infrastructure/i18n/t'
 import {
   fetchChromeBookmarkImportStatus,
   listMemoryItems,
@@ -57,12 +58,12 @@ const importProgressLabel = computed(() => {
     return ''
   }
   if (state.status === 'failed') {
-    return state.error ?? '书签导入失败，请重新加载扩展后重试'
+    return state.error ?? t('popup_import_failed_fallback')
   }
   if (state.totalCount && state.totalCount > 0) {
-    return `正在导入书签 ${state.importedCount} / ${state.totalCount}`
+    return t('popup_import_progress', [String(state.importedCount), String(state.totalCount)])
   }
-  return '正在导入书签…'
+  return t('popup_import_progress_indeterminate')
 })
 
 const idleEmptyCopy = computed(() =>
@@ -70,6 +71,13 @@ const idleEmptyCopy = computed(() =>
 )
 
 const shortenedClue = computed(() => shortenClueForRetry(clue.value))
+
+const shortenRetryLabel = computed(() => {
+  if (!shortenedClue.value) {
+    return t('popup_shorten_retry')
+  }
+  return t('popup_shorten_retry_with_clue', shortenedClue.value)
+})
 
 const noMatchCopy = computed(() =>
   getPopupNoMatchCopy({
@@ -191,7 +199,7 @@ async function handleRecallSubmit() {
     void probeMemoryLibrary()
   } catch (error) {
     viewState.value = 'error'
-    errorMessage.value = error instanceof Error ? error.message : '找回失败，请稍后再试'
+    errorMessage.value = error instanceof Error ? error.message : t('popup_recall_failed')
   }
 }
 
@@ -213,7 +221,7 @@ async function handleOpenSettings() {
   try {
     await openExtensionOptionsPage()
   } catch {
-    handleNavigateError('无法打开设置页')
+    handleNavigateError(t('error_open_settings'))
   }
 }
 </script>
@@ -222,8 +230,8 @@ async function handleOpenSettings() {
   <main class="recall-shell">
     <header class="recall-header">
       <AppPageHeader class="recall-header-top" @navigate-error="handleNavigateError" />
-      <h1 class="recall-title">找到它！</h1>
-      <p class="recall-subtitle">在你存过的东西里找，不用再去网上搜。</p>
+      <h1 class="recall-title">{{ t('popup_title') }}</h1>
+      <p class="recall-subtitle">{{ t('popup_subtitle') }}</p>
 
       <section
         v-if="showImportProgress"
@@ -235,22 +243,22 @@ async function handleOpenSettings() {
         <md-linear-progress
           v-if="importState?.status === 'running'"
           :value="importProgressPercent / 100"
-          aria-label="书签导入进度"
+          :aria-label="t('popup_import_progress_aria')"
         />
       </section>
     </header>
 
     <form class="recall-form" @submit.prevent="handleRecallSubmit">
-      <label class="recall-label" for="recall-clue">还记得的任意一点线索</label>
+      <label class="recall-label" for="recall-clue">{{ t('popup_clue_label') }}</label>
       <textarea
         id="recall-clue"
         v-model="clue"
         class="recall-input"
         rows="3"
-        placeholder="例如：上周那篇讲留存的、某个产品的分析…"
+        :placeholder="t('popup_clue_placeholder')"
       />
       <md-filled-button type="submit" :disabled="!clue.trim() || viewState === 'loading'">
-        {{ viewState === 'loading' ? '正在找回…' : '开始找回' }}
+        {{ viewState === 'loading' ? t('popup_submitting') : t('popup_submit') }}
       </md-filled-button>
     </form>
 
@@ -258,12 +266,14 @@ async function handleOpenSettings() {
       <p class="recall-empty-title">{{ idleEmptyCopy.title }}</p>
       <p class="recall-empty-copy">{{ idleEmptyCopy.body }}</p>
       <div class="recall-empty-actions">
-        <md-text-button type="button" @click="handleOpenSettings">打开设置</md-text-button>
+        <md-text-button type="button" @click="handleOpenSettings">
+          {{ t('popup_open_settings') }}
+        </md-text-button>
       </div>
     </section>
 
     <p v-else-if="viewState === 'loading'" class="recall-status" role="status">
-      正在你的记忆库里筛选…
+      {{ t('popup_filtering_status') }}
     </p>
 
     <p v-else-if="viewState === 'error'" class="recall-error" role="alert">
@@ -275,8 +285,7 @@ async function handleOpenSettings() {
       <p class="recall-empty-copy">{{ noMatchCopy.body }}</p>
       <div v-if="noMatchCopy.showShortenRetry" class="recall-empty-actions">
         <md-outlined-button type="button" @click="handleShortenRetry">
-          缩短后再试
-          <template v-if="shortenedClue">（{{ shortenedClue }}）</template>
+          {{ shortenRetryLabel }}
         </md-outlined-button>
       </div>
     </section>
@@ -287,7 +296,7 @@ async function handleOpenSettings() {
       aria-live="polite"
     >
       <div class="recall-top-pick">
-        <p class="recall-section-label">最可能的结果</p>
+        <p class="recall-section-label">{{ t('popup_section_top_pick') }}</p>
         <p v-if="clueEcho" class="recall-clue-echo">{{ clueEcho }}</p>
         <a
           class="recall-card recall-card--top"
@@ -303,11 +312,11 @@ async function handleOpenSettings() {
           <h2 v-else class="recall-card-title">{{ topPickDisplay.title }}</h2>
           <p class="recall-card-subtitle">{{ topPickDisplay.subtitle }}</p>
         </a>
-        <p class="recall-affirmation">对，就是这个？点卡片打开看看。</p>
+        <p class="recall-affirmation">{{ t('popup_affirmation') }}</p>
       </div>
 
       <div v-if="alsoPossibleCards.length > 0" class="recall-also">
-        <p class="recall-section-label">也可能是这些</p>
+        <p class="recall-section-label">{{ t('popup_section_also_possible') }}</p>
         <ul class="recall-also-list">
           <li v-for="item in alsoPossibleCards" :key="item.id">
             <a class="recall-card" :href="item.url" target="_blank" rel="noopener noreferrer">

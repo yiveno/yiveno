@@ -9,6 +9,7 @@ import {
   parseUserSettings,
   USER_SETTINGS_STORAGE_KEY
 } from '@/core/settings/user-settings'
+import { t } from '@/infrastructure/i18n/t'
 
 const TOOLBAR_HOST_ID = 'yiveno-selection-toolbar-host'
 const SHOW_DELAY_MS = 120
@@ -129,7 +130,7 @@ function ensureToolbarHost(): void {
   buttonElement = document.createElement('button')
   buttonElement.type = 'button'
   buttonElement.className = 'save-button'
-  buttonElement.textContent = '保存到 Yiveno'
+  buttonElement.textContent = t('context_menu_save_selection')
   buttonElement.addEventListener('mousedown', event => {
     event.preventDefault()
     event.stopPropagation()
@@ -155,21 +156,21 @@ function setButtonState(state: ToolbarButtonState, label?: string): void {
   buttonElement.classList.remove('save-button--saved', 'save-button--error')
 
   if (state === 'saving') {
-    buttonElement.textContent = '正在保存…'
+    buttonElement.textContent = t('selection_toolbar_saving')
     return
   }
   if (state === 'saved') {
     buttonElement.classList.add('save-button--saved')
-    buttonElement.textContent = label ?? '已保存'
+    buttonElement.textContent = label ?? t('selection_toolbar_saved')
     return
   }
   if (state === 'error') {
     buttonElement.classList.add('save-button--error')
-    buttonElement.textContent = label ?? '保存失败'
+    buttonElement.textContent = label ?? t('selection_toolbar_failed')
     return
   }
 
-  buttonElement.textContent = label ?? '保存到 Yiveno'
+  buttonElement.textContent = label ?? t('context_menu_save_selection')
 }
 
 function hideToolbar(): void {
@@ -210,7 +211,7 @@ async function handleSaveClick(): Promise<void> {
   const context = extractSelectionContextOnPage()
   const selectedText = context?.selectedText ?? getSelectedText()
   if (!selectedText) {
-    setButtonState('error', '选区已失效')
+    setButtonState('error', t('selection_toolbar_selection_gone'))
     scheduleHideToolbar(1600)
     return
   }
@@ -232,7 +233,7 @@ async function handleSaveClick(): Promise<void> {
     })
 
     if (!response?.ok) {
-      setButtonState('error', response?.error ?? '保存失败')
+      setButtonState('error', response?.error ?? t('selection_toolbar_failed'))
       scheduleHideToolbar(1800)
       return
     }
@@ -240,7 +241,7 @@ async function handleSaveClick(): Promise<void> {
     setButtonState('saved')
     scheduleHideToolbar(1200)
   } catch {
-    setButtonState('error', '保存失败')
+    setButtonState('error', t('selection_toolbar_failed'))
     scheduleHideToolbar(1800)
   }
 }

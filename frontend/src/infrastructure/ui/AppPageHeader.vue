@@ -3,6 +3,7 @@ import { computed } from 'vue'
 
 import { openExtensionLibraryPage } from '@/infrastructure/browser/library-page'
 import { openExtensionOptionsPage } from '@/infrastructure/browser/options-page'
+import { t } from '@/infrastructure/i18n/t'
 
 defineOptions({ name: 'AppPageHeader' })
 
@@ -28,7 +29,7 @@ function handleOpenLibrary() {
   try {
     openExtensionLibraryPage()
   } catch {
-    emit('navigateError', '无法打开记忆库')
+    emit('navigateError', t('error_open_library'))
   }
 }
 
@@ -36,20 +37,24 @@ async function handleOpenSettings() {
   try {
     await openExtensionOptionsPage()
   } catch {
-    emit('navigateError', '无法打开设置页')
+    emit('navigateError', t('error_open_settings'))
   }
 }
 </script>
 
 <template>
   <div class="app-page-header">
-    <p class="app-page-header__brand">Yiveno</p>
-    <nav v-if="showLibrary || showSettings" class="app-page-header__nav" aria-label="页面导航">
+    <p class="app-page-header__brand">{{ t('app_name') }}</p>
+    <nav
+      v-if="showLibrary || showSettings"
+      class="app-page-header__nav"
+      :aria-label="t('nav_aria_label')"
+    >
       <md-text-button v-if="showLibrary" type="button" @click="handleOpenLibrary">
-        记忆库
+        {{ t('nav_library') }}
       </md-text-button>
       <md-text-button v-if="showSettings" type="button" @click="handleOpenSettings">
-        设置
+        {{ t('nav_settings') }}
       </md-text-button>
     </nav>
   </div>
