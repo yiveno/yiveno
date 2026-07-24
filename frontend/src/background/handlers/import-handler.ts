@@ -1,3 +1,10 @@
+import {
+  countBookmarkLibraryLeaves,
+  mapChromeBookmarkTreeToLibraryForest,
+  type ChromeBookmarkTreeInput
+} from '@/core/memory/bookmark-library-tree'
+import type { GetBookmarkLibraryTreeResponse } from '@/core/messaging/import-messages'
+import { memoryItemService } from '@/application/memory/memory-item-service'
 import { getChromeBookmarkImportStatus } from '@/application/capture/import-chrome-bookmarks-service'
 import type { ChromeBookmarkImportStatusResponse } from '@/core/messaging/import-messages'
 import { logger } from '@/infrastructure/logging/logger'
@@ -12,6 +19,53 @@ export async function handleGetChromeBookmarkImportStatus(): Promise<ChromeBookm
     return {
       ok: false,
       error: error instanceof Error ? error.message : '读取书签导入状态失败'
+    }
+  }
+}
+
+function toChromeTreeInput(node: chrome.bookmarks.BookmarkTreeNode): ChromeBookmarkTreeInput {
+  return {
+    id: node.id,
+    ...(node.title !== undefined ? { title: node.title } : {}),
+    ...(node.url !== undefined ? { url: node.url } : {}),
+    ...(node.children ? { children: node.children.map(child => toChromeTreeInput(child)) } : {})
+  }
+}
+
+/** 读取 Chrome 书签目录树并与 Memory 书签对齐（只读）。 */
+export async function handleGetBookmarkLibraryTree(): Promise<GetBookmarkLibraryTreeResponse> {
+  try {
+    const [chromeTree, memoryBookmarks] = await Promise.all([
+      chrome.bookmarks.getTree(),
+      memoryItemService.list({ type: 'bookmark', limit: 500 })
+    ])
+
+    const memoryIdByChromeBookmarkId = new Map<string, string>()
+    for (const item of memoryBookmarks) {
+      if (item.type !== 'bookmark') {
+        continue
+      }
+      const chromeId = item.payload.chromeBookmarkId
+      if (chromeId) {
+        memoryIdByChromeBookmarkId.set(chromeId, item.id)
+      }
+    }
+
+    const roots = mapChromeBookmarkTreeToLibraryForest(
+      chromeTree.map(node => toChromeTreeInput(node)),
+      memoryIdByChromeBookmarkId
+    )
+
+    return {
+      ok: true,
+      roots,
+      bookmarkCount: countBookmarkLibraryLeaves(roots)
+    }
+  } catch (error) {
+    logger.error('Background', '读取书签目录树失败', error)
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : '读取书签目录树失败'
     }
   }
 }

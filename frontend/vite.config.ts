@@ -29,7 +29,9 @@ export default defineConfig(() => {
     optimizeDeps: {
       entries: [
         resolve(SRC_DIR, 'pages/popup/index.html'),
-        resolve(SRC_DIR, 'pages/settings/index.html')
+        resolve(SRC_DIR, 'pages/settings/index.html'),
+        resolve(SRC_DIR, 'pages/detail/index.html'),
+        resolve(SRC_DIR, 'pages/library/index.html')
       ],
       include: ['vue'],
       force: false,

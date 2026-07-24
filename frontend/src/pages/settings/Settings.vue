@@ -12,6 +12,7 @@ import {
   openChromeShortcutsPage,
   updateUserSettings
 } from '@/infrastructure/messaging/background-client'
+import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
 import { asMdSwitchElement } from '@/infrastructure/ui/register-material-web'
 
 defineOptions({ name: 'SettingsPage' })
@@ -130,7 +131,7 @@ onMounted(() => {
 <template>
   <main class="settings-shell">
     <header class="settings-header">
-      <p class="settings-eyebrow">Yiveno</p>
+      <AppPageHeader current="settings" class="settings-header-top" />
       <h1 class="settings-title">设置</h1>
       <p class="settings-subtitle">管理找回相关偏好。未上线能力不会假装可用。</p>
     </header>
@@ -239,12 +240,8 @@ onMounted(() => {
   margin-bottom: 28px;
 }
 
-.settings-eyebrow {
-  margin: 0 0 4px;
-  font-size: 12px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--md-sys-color-on-surface-variant);
+.settings-header-top {
+  margin-bottom: 4px;
 }
 
 .settings-title {

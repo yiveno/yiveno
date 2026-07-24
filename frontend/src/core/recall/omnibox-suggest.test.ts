@@ -21,6 +21,9 @@ const baseContext = {
   now: () => '2026-07-22T06:00:00.000Z'
 }
 
+const detailPageUrl = 'chrome-extension://abcdefghijklmnopqrstuvwxyzabcdef/detail.html'
+const suggestOptions = { detailPageUrl }
+
 describe('omnibox-suggest', () => {
   it('escapeOmniboxXml 转义预定义实体', () => {
     expect(escapeOmniboxXml(`A & B <C> "D" 'E'`)).toBe(
@@ -60,7 +63,7 @@ describe('omnibox-suggest', () => {
       matchedFields: ['title', 'domain', 'url']
     }
 
-    const suggest = recallMatchToOmniboxSuggest(match)
+    const suggest = recallMatchToOmniboxSuggest(match, suggestOptions)
     expect(suggest?.content).toBe('https://example.com/retention')
     expect(suggest?.description).toBe(
       '<dim>Y·书签</dim> <match>留存分析</match> <dim>·</dim> <url>example.com</url> <dim>· 标题</dim>'
@@ -68,7 +71,7 @@ describe('omnibox-suggest', () => {
     expect(suggest?.description).not.toContain('匹配：')
   })
 
-  it('摘录建议带 Y·摘录 前缀与正文预览', () => {
+  it('摘录建议 content 指向详情页', () => {
     const match: RecallMatch = {
       item: createTextExcerptMemoryItem({
         ...baseContext,
@@ -82,11 +85,15 @@ describe('omnibox-suggest', () => {
       matchedFields: ['textExcerpt']
     }
 
-    const suggest = recallMatchToOmniboxSuggest(match)
-    expect(suggest?.content).toBe('https://notes.example.com/post')
+    const suggest = recallMatchToOmniboxSuggest(match, suggestOptions)
+    expect(suggest?.content).toContain('/detail.html?id=')
+    expect(suggest?.content).toContain(match.item.id)
     expect(suggest?.description).toContain('<dim>Y·摘录</dim>')
-    expect(suggest?.description).toContain('<match>增长笔记</match>')
-    expect(suggest?.description).toContain('「关键留存指标说明，用于衡量次日与七日回访。」')
+    expect(suggest?.description).toContain(
+      '<match>关键留存指标说明，用于衡量次日与七日回访。</match>'
+    )
+    expect(suggest?.description).toContain('增长笔记 · notes.example.com')
+    expect(suggest?.description).not.toContain('「')
   })
 
   it('recallResultToOmniboxSuggests 输出 Top Pick + Also Possible', () => {
@@ -114,7 +121,7 @@ describe('omnibox-suggest', () => {
       clue: '留存'
     }
 
-    const suggests = recallResultToOmniboxSuggests(result)
+    const suggests = recallResultToOmniboxSuggests(result, suggestOptions)
     expect(suggests).toHaveLength(2)
     expect(suggests[0]?.content).toBe('https://example.com/retention')
     expect(suggests[0]?.description).toContain('Y·书签')
@@ -134,7 +141,7 @@ describe('omnibox-suggest', () => {
       clue: '同一'
     }
 
-    expect(recallResultToOmniboxSuggests(result)).toHaveLength(1)
+    expect(recallResultToOmniboxSuggests(result, suggestOptions)).toHaveLength(1)
   })
 
   it('无 URL 的命中被跳过', () => {
@@ -144,6 +151,6 @@ describe('omnibox-suggest', () => {
     })
     item.payload.url = '   '
     const match: RecallMatch = { item, score: 40, matchedFields: ['title'] }
-    expect(recallMatchToOmniboxSuggest(match)).toBeNull()
+    expect(recallMatchToOmniboxSuggest(match, suggestOptions)).toBeNull()
   })
 })

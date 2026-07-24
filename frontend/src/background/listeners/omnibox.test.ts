@@ -42,6 +42,9 @@ describe('omnibox listeners', () => {
           return ''
         })
       },
+      runtime: {
+        getURL: vi.fn((path: string) => `chrome-extension://testid/${path}`)
+      },
       omnibox: {
         setDefaultSuggestion,
         onInputChanged: { addListener: onInputChangedAddListener },

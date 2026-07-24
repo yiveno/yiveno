@@ -46,7 +46,7 @@
     "build:web:prod": "cd website && bun run build:prod",
     "build:prod": "bun run env:sync:prod && bun run env:check:prod && cd packages/design-tokens && bun run typecheck && cd ../.. && bun run build:fe:prod && bun run build:be && bun run build:web:prod",
     "build:color-presets": "bun scripts/build-material-color-presets.mjs",
-    "watch": "bun run env:sync:dev && concurrently --names fe,be,web --prefix-colors cyan,green,yellow \"bun run watch:fe\" \"bun run dev:be\" \"bun run dev:web\"",
+    "watch": "bun run env:sync:dev && bunx concurrently --names fe,be,web --prefix-colors cyan,green,yellow \"bun run watch:fe\" \"bun run dev:be\" \"bun run dev:web\"",
     "watch:fe": "cd frontend && bun run build:watch",
     "typecheck": "cd packages/design-tokens && bun run typecheck && cd ../.. && cd packages/auth-core && bun run typecheck && cd ../.. && bun run typecheck:fe && bun run typecheck:be && bun run typecheck:web",
     "typecheck:fe": "cd frontend && bun run typecheck",

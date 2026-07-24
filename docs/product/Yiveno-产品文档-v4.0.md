@@ -22,6 +22,7 @@ Yiveno = **个人信息寻回系统**（Capture 低负担 + Recall 高确定性�
 6. `:hover|:focus|:active` 禁止 `translate` / `scale` / `rotate`；只用背景 / opacity / shadow / outline / state layer（浮层入场与 pop/shake 例外见 §3）。
 7. 实现范围以 **§1 状态表**为准；未标「已上线」= 不得当成已有行为，也不得在 UI 暗示已可用。
 8. Free/当前：仅 **关键词 Filter**。**Hybrid / embedding / LLM 不是当前默认实现范围**（见 §5）。
+9. UI 图标：**Material Symbols Outlined**；按需内联于 `frontend/src/infrastructure/ui/icons/`，经 `MaterialSymbolIcon` / `md-icon-button` 使用。禁止另引 Lucide/Font Awesome 等第二套图标体系；禁止依赖 Google Fonts CDN（扩展离线）。
 
 ### 0.3 MUST NOT
 
@@ -33,9 +34,11 @@ Yiveno = **个人信息寻回系统**（Capture 低负担 + Recall 高确定性�
 
 ### 0.4 当前优先实现项（Phase A）
 
-**Phase A 文案项已完成**（线索解释 / 空状态分层）。Omnibox、快捷键找回、Settings、划词浮层已上线。
+**记忆库轻浏览已上线**（`library.html`；左侧类型 Tab，默认书签）。摘录可软删；摘录详情、线索解释 / 空状态、Omnibox、快捷键、Settings、划词浮层已上线。
 
-**下一项：按用户指定推进**（常见候选：摘录详情落地页）。未指定前不擅自开 Phase B。
+**说明：** 页内左侧类型切换 ≠ 旧「侧边栏管理页」/书签树；禁止整理中心化回潮。
+
+**下一项：按用户指定推进。** 未指定前不擅自开 Phase B。
 
 **入口能力差异（Normative）：** 共用同一 `recallService` / Filter；壳不同——Omnibox 为单次命中、无会话；快捷键找回打开 Popup（可会话壳）；Popup 预留多轮补充与反馈（Phase B），不得做成开放聊天。书签 Capture：**仅** Chrome 原生加书签 + 导入/增量 sync，不提供「保存当前页」快捷键或 Popup 按钮。快捷键改绑：Settings → Chrome 原生 `chrome://extensions/shortcuts`（扩展无法自行改键）。
 
@@ -53,30 +56,36 @@ Yiveno = **个人信息寻回系统**（Capture 低负担 + Recall 高确定性�
 | Command ID 契约              | `frontend/src/core/commands/command-ids.ts`                  |
 | Settings                     | `frontend/src/pages/settings/Settings.vue`                   |
 | Popup                        | `frontend/src/pages/popup/Popup.vue`                         |
+| 摘录详情                     | `frontend/src/pages/detail/Detail.vue`                       |
+| 记忆库                       | `frontend/src/pages/library/Library.vue`                     |
+| UI 图标（Material Symbols）  | `frontend/src/infrastructure/ui/icons/`                      |
 
 ---
 
 ## 1. 现状 vs 目标（Normative）
 
-| 能力                        | 状态                 | 说明                                                                   |
-| --------------------------- | -------------------- | ---------------------------------------------------------------------- |
-| Popup 关键词找回            | 已上线               | Top Pick + Also Possible；扫描上限约 2000                              |
-| 右键保存选区                | 已上线               | Text Excerpt；非书签的主动 Capture                                     |
-| 划词保存浮层                | 已上线               | Content Script；Settings 可关；默认开；成功/失败临时 badge             |
-| Chrome 书签导入 + 增量 sync | 已上线               | 书签唯一写入主路径；原生加书签 → onCreated 同步                        |
-| LocalProfile / ownerId      | 已上线               | 未登录可用                                                             |
-| Settings                    | 已上线（最小）       | `options_ui`；快捷键查看+跳转原生改键页；隐私/同步/AI/账户仅标注未上线 |
-| Offscreen                   | 占位                 | 预留 embedding                                                         |
-| Omnibox 找回                | 已上线               | 关键词 `yi`；共用 `recallService`；单次无会话                          |
-| 快捷键找回                  | 已上线               | `_execute_action`（默认 `Alt+Shift+Y`）开 Popup                        |
-| 手动「保存当前页」          | 不做                 | 与 Chrome 原生书签重复；已移除 UI/快捷键/消息                          |
-| 结果线索解释强化            | 已上线               | 主因「因字段含「token」」+ 次要字段；Top Pick 线索回显                 |
-| Popup 空状态分层            | 已上线               | 空库 / 有库 idle 与 no_match 分文案；有库可「缩短后再试」              |
-| Hybrid Filter               | 目标 · Phase B / Pro | 非 Free                                                                |
-| 反馈闭环 / 低置信追问       | 目标 · Phase B       |                                                                        |
-| 云同步 / 账号 UI            | 目标 · Phase C       | AccountBinding 已预留                                                  |
-| 分享                        | 目标 · Phase C       |                                                                        |
-| 轻管理                      | 目标 · Phase D       |                                                                        |
+| 能力                             | 状态                 | 说明                                                                            |
+| -------------------------------- | -------------------- | ------------------------------------------------------------------------------- |
+| Popup 关键词找回                 | 已上线               | Top Pick + Also Possible；扫描上限约 2000                                       |
+| 右键保存选区                     | 已上线               | Text Excerpt；非书签的主动 Capture                                              |
+| 划词保存浮层                     | 已上线               | Content Script；Settings 可关；默认开；成功/失败临时 badge                      |
+| Chrome 书签导入 + 增量 sync      | 已上线               | 书签唯一写入主路径；原生加书签 → onCreated 同步                                 |
+| LocalProfile / ownerId           | 已上线               | 未登录可用                                                                      |
+| Settings                         | 已上线（最小）       | `options_ui`；快捷键查看+跳转原生改键页；隐私/同步/AI/账户仅标注未上线          |
+| Offscreen                        | 占位                 | 预留 embedding                                                                  |
+| Omnibox 找回                     | 已上线               | 关键词 `yi`；共用 `recallService`；单次无会话                                   |
+| 快捷键找回                       | 已上线               | `_execute_action`（默认 `Alt+Shift+Y`）开 Popup                                 |
+| 手动「保存当前页」               | 不做                 | 与 Chrome 原生书签重复；已移除 UI/快捷键/消息                                   |
+| 结果线索解释强化                 | 已上线               | 主因「因字段含「token」」+ 次要字段；Top Pick 线索回显                          |
+| Popup 空状态分层                 | 已上线               | 空库 / 有库 idle 与 no_match 分文案；有库可「缩短后再试」                       |
+| 摘录详情落地页                   | 已上线               | `detail.html?id=`；摘录打开详情；书签仍直开 URL；`GET_MEMORY_ITEM`              |
+| 记忆库轻浏览                     | 已上线               | `library.html`；书签=Chrome 目录只读树；摘录=时间列表；Tab 经 `?type=` 刷新保留 |
+| 摘录删除                         | 已上线               | 软删 `deletedAt`；记忆库列表 / 详情页；`DELETE_MEMORY_ITEM`；书签不经此删       |
+| Hybrid Filter                    | 目标 · Phase B / Pro | 非 Free                                                                         |
+| 反馈闭环 / 低置信追问            | 目标 · Phase B       |                                                                                 |
+| 云同步 / 账号 UI                 | 目标 · Phase C       | AccountBinding 已预留                                                           |
+| 分享                             | 目标 · Phase C       |                                                                                 |
+| 轻管理余项（标签/失效链接/统计） | 目标 · Phase D       | 摘录删除已提前上线；书签仍只经 Chrome 同步软删                                  |
 
 ---
 
@@ -100,6 +109,7 @@ Yiveno = **个人信息寻回系统**（Capture 低负担 + Recall 高确定性�
 
 - **Bookmark**：`title`, `url`, `domain`；可选 favicon / chromeBookmarkId / parentFolderId / chromeCreatedAt
 - **TextExcerpt**：`selectedText`, `sourceUrl`, `pageTitle`, `domain`；可选 contextBefore/After
+  - **展示（Normative）**：无强制标题；`selectedText` 为主内容；`pageTitle` / `domain` 仅作出处。用户自拟备注标题属后续能力，未上线前不得用页名冒充标题。
 
 ### 2.4 Clues
 
@@ -128,19 +138,22 @@ Yiveno = **个人信息寻回系统**（Capture 低负担 + Recall 高确定性�
 - `scope` 必须为 `'background'`（`BACKGROUND_MESSAGE_SCOPE`）。
 - **已登记 type（禁止擅自增删拼写）：**
 
-| type                                | 用途                      |
-| ----------------------------------- | ------------------------- |
-| `PING`                              | 探活                      |
-| `GET_LOCAL_IDENTITY`                | 本地身份 + ownerId        |
-| `CAPTURE_BOOKMARK`                  | 写入书签记忆（sync/内部） |
-| `CAPTURE_TEXT_EXCERPT`              | 写入摘录                  |
-| `LIST_MEMORY_ITEMS`                 | 列表                      |
-| `RECALL_WITH_CLUE`                  | 线索找回                  |
-| `GET_CHROME_BOOKMARK_IMPORT_STATUS` | 导入进度                  |
-| `GET_EXTENSION_COMMANDS`            | 读取命令与快捷键绑定      |
-| `OPEN_CHROME_SHORTCUTS_PAGE`        | 打开 Chrome 快捷键设置页  |
-| `GET_USER_SETTINGS`                 | 读取用户设置              |
-| `UPDATE_USER_SETTINGS`              | 更新用户设置              |
+| type                                | 用途                          |
+| ----------------------------------- | ----------------------------- |
+| `PING`                              | 探活                          |
+| `GET_LOCAL_IDENTITY`                | 本地身份 + ownerId            |
+| `CAPTURE_BOOKMARK`                  | 写入书签记忆（sync/内部）     |
+| `CAPTURE_TEXT_EXCERPT`              | 写入摘录                      |
+| `LIST_MEMORY_ITEMS`                 | 列表                          |
+| `GET_MEMORY_ITEM`                   | 按 id 读取单条 MemoryItem     |
+| `DELETE_MEMORY_ITEM`                | 软删 MemoryItem（当前仅摘录） |
+| `RECALL_WITH_CLUE`                  | 线索找回                      |
+| `GET_CHROME_BOOKMARK_IMPORT_STATUS` | 导入进度                      |
+| `GET_BOOKMARK_LIBRARY_TREE`         | 记忆库书签目录树（只读）      |
+| `GET_EXTENSION_COMMANDS`            | 读取命令与快捷键绑定          |
+| `OPEN_CHROME_SHORTCUTS_PAGE`        | 打开 Chrome 快捷键设置页      |
+| `GET_USER_SETTINGS`                 | 读取用户设置                  |
+| `UPDATE_USER_SETTINGS`              | 更新用户设置                  |
 
 新增能力：先改 `frontend/src/core/messaging/*` + handler，再改 UI。
 
@@ -180,10 +193,10 @@ Yiveno = **个人信息寻回系统**（Capture 低负担 + Recall 高确定性�
 
 ### 5.4 后续优先级（摘要）
 
-- **P0 / Phase A**：线索解释/空状态 **已完成**；下一项用户指定
+- **P0 / Phase A**：线索解释/空状态、摘录详情、记忆库轻浏览 **已完成**；下一项用户指定
 - **P1 / Phase B**：索引、embedding、Hybrid、反馈、Need A Clue
 - **P2 / Phase C**：分享、云同步、账户 UI；Settings 隐私/同步/AI/账户分区落地
-- **P3 / Phase D**：删除/标签/失效链接/统计等轻管理
+- **P3 / Phase D**：标签/失效链接/统计等轻管理余项（摘录删除已提前上线）
 
 **禁止重做**：双面板重组、复杂拖拽整理、AI 聚类主卖点、大规模书签树编辑。
 
@@ -255,12 +268,12 @@ Chrome API / 选区
 
 ## 8. 路线图（剩余工作 · Normative 排序）
 
-| Phase | 内容                                                       |
-| ----- | ---------------------------------------------------------- |
-| **A** | 线索解释/空状态文案 **已完成**；其余按用户指定（如详情页） |
-| B     | 索引、Offscreen embedding、Hybrid（Pro）、反馈、追问       |
-| C     | Sync、账户 UI、隐私控制落地、分享                          |
-| D     | 轻管理与统计                                               |
+| Phase | 内容                                                               |
+| ----- | ------------------------------------------------------------------ |
+| **A** | 线索解释/空状态、摘录详情、记忆库轻浏览 **已完成**；其余按用户指定 |
+| B     | 索引、Offscreen embedding、Hybrid（Pro）、反馈、追问               |
+| C     | Sync、账户 UI、隐私控制落地、分享                                  |
+| D     | 轻管理余项（标签/失效链接/统计；摘录删除已提前）                   |
 
 ---
 
@@ -302,6 +315,12 @@ MVP 验证问题：是否更愿保存、是否优先打开 Yiveno、是否稳定
 
 | 日期       | 变更                                                                              |
 | ---------- | --------------------------------------------------------------------------------- |
+| 2026-07-24 | 摘录展示：无强制标题；正文为主、页名/域名仅出处（记忆库/Popup/Omnibox/详情）      |
+| 2026-07-24 | UI 图标选型：Material Symbols Outlined 按需内联；记忆库删除改为 hover 显图标按钮  |
+| 2026-07-24 | 摘录软删上线：`DELETE_MEMORY_ITEM`；记忆库列表 / 详情；书签不经此路径删除         |
+| 2026-07-24 | 记忆库书签 Tab：完整映射 Chrome 目录只读树；`GET_BOOKMARK_LIBRARY_TREE`           |
+| 2026-07-24 | 记忆库轻浏览上线：`library.html` 左侧类型 Tab（默认书签）；Popup/Settings 入口    |
+| 2026-07-24 | 摘录详情落地页上线：`detail.html?id=` + `GET_MEMORY_ITEM`；Popup/Omnibox 分流     |
 | 2026-07-24 | Phase A：线索解释强化 + Popup 空状态分层（空库/有库 + 缩短再试）                  |
 | 2026-07-24 | 摘录保存成功/失败：工具栏临时 badge（✓ / !）；划词与右键共用                      |
 | 2026-07-24 | 划词保存浮层上线；Settings 开关默认开启；`captureEntry=selection_toolbar`         |

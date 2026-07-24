@@ -2,10 +2,9 @@
 import vue from '@vitejs/plugin-vue'
 import basicSsl from '@vitejs/plugin-basic-ssl'
 import type { Plugin } from 'vite'
-import { contentScriptsIifePlugin } from './content-scripts-iife'
-import { finalizeExtensionDistPlugin } from './finalize-dist'
+import { extensionPostBuildPlugin } from './extension-post-build'
 
-/** Vue + 本地 HTTPS + content script IIFE + 整理扩展 dist。 */
+/** Vue + 本地 HTTPS + 扩展收尾（content IIFE + 平铺 dist，watch 互斥）。 */
 export function createPlugins(): Plugin[] {
   return [
     vue({
@@ -16,7 +15,6 @@ export function createPlugins(): Plugin[] {
       }
     }),
     basicSsl(),
-    contentScriptsIifePlugin(),
-    finalizeExtensionDistPlugin()
+    extensionPostBuildPlugin()
   ]
 }

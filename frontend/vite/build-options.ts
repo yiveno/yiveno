@@ -8,6 +8,8 @@ export function createBuildInput() {
   return {
     popup: resolve(SRC_DIR, 'pages/popup/index.html'),
     settings: resolve(SRC_DIR, 'pages/settings/index.html'),
+    detail: resolve(SRC_DIR, 'pages/detail/index.html'),
+    library: resolve(SRC_DIR, 'pages/library/index.html'),
     background: resolve(SRC_DIR, 'background/main.ts'),
     offscreen: resolve(SRC_DIR, 'offscreen/main.ts')
   }

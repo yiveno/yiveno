@@ -1,3 +1,4 @@
+import type { BookmarkLibraryTreeNode } from '@/core/memory/bookmark-library-tree'
 import type { ChromeBookmarkImportState } from '@/core/memory/chrome-bookmark-import-state'
 import type { BackgroundMessageScope } from '@/core/messaging/constants'
 
@@ -21,6 +22,31 @@ export type ChromeBookmarkImportStatusResponse =
   | ChromeBookmarkImportStatusSuccessResponse
   | ChromeBookmarkImportStatusErrorResponse
 
-export type ImportBackgroundMessage = GetChromeBookmarkImportStatusMessage
+/** 读取记忆库用的 Chrome 书签目录树（只读）。 */
+export type GetBookmarkLibraryTreeMessage = {
+  scope: BackgroundMessageScope
+  type: 'GET_BOOKMARK_LIBRARY_TREE'
+}
 
-export type ImportBackgroundResponse = ChromeBookmarkImportStatusResponse
+export type GetBookmarkLibraryTreeSuccessResponse = {
+  ok: true
+  roots: BookmarkLibraryTreeNode[]
+  bookmarkCount: number
+}
+
+export type GetBookmarkLibraryTreeErrorResponse = {
+  ok: false
+  error: string
+}
+
+export type GetBookmarkLibraryTreeResponse =
+  | GetBookmarkLibraryTreeSuccessResponse
+  | GetBookmarkLibraryTreeErrorResponse
+
+export type ImportBackgroundMessage =
+  | GetChromeBookmarkImportStatusMessage
+  | GetBookmarkLibraryTreeMessage
+
+export type ImportBackgroundResponse =
+  | ChromeBookmarkImportStatusResponse
+  | GetBookmarkLibraryTreeResponse

@@ -46,8 +46,12 @@ export class MemoryItemRepository {
     return item
   }
 
-  /** 按 ID 读取；ownerId 不匹配时返回 null。 */
-  async getById(id: string, ownerId?: string): Promise<MemoryItem | null> {
+  /** 按 ID 读取；ownerId 不匹配或已软删时返回 null（除非 includeDeleted）。 */
+  async getById(
+    id: string,
+    ownerId?: string,
+    options: { includeDeleted?: boolean } = {}
+  ): Promise<MemoryItem | null> {
     await this.ensureReady()
     const resolvedOwnerId = ownerId ?? (await getCurrentOwnerId())
 
@@ -56,6 +60,9 @@ export class MemoryItemRepository {
       const raw = await requestToPromise(store.get(id))
       const item = safeParseMemoryItem(raw)
       if (!item || item.ownerId !== resolvedOwnerId) {
+        return null
+      }
+      if (!options.includeDeleted && item.deletedAt != null) {
         return null
       }
       return item
@@ -194,9 +201,12 @@ export class MemoryItemRepository {
   /** 软删除 MemoryItem。 */
   async softDelete(id: string): Promise<MemoryItem | null> {
     const ownerId = await getCurrentOwnerId()
-    const existing = await this.getById(id, ownerId)
+    const existing = await this.getById(id, ownerId, { includeDeleted: true })
     if (!existing) {
       return null
+    }
+    if (existing.deletedAt != null) {
+      return existing
     }
 
     const deleted: MemoryItem = {

@@ -40,6 +40,17 @@ function flattenPageHtml(page) {
     .replace(/src="\/([^"]+)"/g, 'src="./$1"')
     .replace(/href="\/([^"]+)"/g, 'href="./$1"')
 
+  const missingCss = [...html.matchAll(/href="(\.\/assets\/[^"]+\.css)"/g)]
+    .map(match => match[1])
+    .filter(href => !fs.existsSync(path.join(distDir, href.slice(2))))
+
+  if (missingCss.length > 0) {
+    console.warn(
+      `[clean-dist] 跳过平铺 ${page}.html：缺少 ${missingCss.join(', ')}（保留上一版，避免坏链）`
+    )
+    return
+  }
+
   fs.writeFileSync(destination, html, 'utf8')
 }
 
@@ -72,6 +83,8 @@ function finalizeExtensionDist() {
 
   flattenPageHtml('popup')
   flattenPageHtml('settings')
+  flattenPageHtml('detail')
+  flattenPageHtml('library')
   purgeNonExtensionAssets()
 
   const nestedSrcDir = path.join(distDir, 'src')
@@ -79,7 +92,9 @@ function finalizeExtensionDist() {
     fs.rmSync(nestedSrcDir, { recursive: true, force: true })
   }
 
-  console.log('[clean-dist] 扩展产物已就绪：popup.html / settings.html / manifest.json')
+  console.log(
+    '[clean-dist] 扩展产物已就绪：popup.html / settings.html / detail.html / library.html / manifest.json'
+  )
 }
 
 module.exports = { finalizeExtensionDist }

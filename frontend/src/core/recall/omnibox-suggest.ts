@@ -1,4 +1,5 @@
 import { getRecallMatchFieldShortLabel } from '@/core/recall/explain-recall-match'
+import { getMemoryItemOpenHref } from '@/core/recall/memory-open-href'
 import {
   getMemoryItemDisplay,
   type RecallMatch,
@@ -9,6 +10,11 @@ import {
 export interface OmniboxSuggestItem {
   content: string
   description: string
+}
+
+/** 生成 Omnibox 建议时需要的扩展详情页地址。 */
+export interface OmniboxSuggestOptions {
+  detailPageUrl: string
 }
 
 /** Omnibox 摘录预览最大字符数。 */
@@ -49,31 +55,41 @@ export function formatOmniboxPrimaryMatch(matchedFields: string[]): string | nul
 
 /**
  * 将单条命中转为 Omnibox 建议。
- * 格式：Y·书签|摘录  标题  ·  域名  〔摘录预览或命中字段〕
+ * 书签：Y·书签 标题 · 域名 · 命中字段
+ * 摘录：Y·摘录 正文 · 出处（无单独标题）
+ * content：书签为 http(s)；摘录为 detail.html?id=
  */
-export function recallMatchToOmniboxSuggest(match: RecallMatch): OmniboxSuggestItem | null {
+export function recallMatchToOmniboxSuggest(
+  match: RecallMatch,
+  options: OmniboxSuggestOptions
+): OmniboxSuggestItem | null {
   const display = getMemoryItemDisplay(match.item)
-  const url = display.url.trim()
-  if (!url) {
+  const openHref = getMemoryItemOpenHref(match.item, options).trim()
+  if (!openHref) {
+    return null
+  }
+  if (match.item.type === 'bookmark' && !tryParseHttpUrl(openHref)) {
     return null
   }
 
   const typePrefix = escapeOmniboxXml(getOmniboxTypePrefix(match.item.type))
-  const title = escapeOmniboxXml(truncateOmniboxText(display.title || display.subtitle || url, 48))
-  const domain = display.subtitle.trim()
+  const primaryText =
+    match.item.type === 'text_excerpt'
+      ? display.excerpt || display.subtitle || display.url || openHref
+      : display.title || display.subtitle || display.url || openHref
+  const primaryMax = match.item.type === 'text_excerpt' ? EXCERPT_PREVIEW_MAX : 48
+  const primary = escapeOmniboxXml(truncateOmniboxText(primaryText, primaryMax))
+  const provenance = display.subtitle.trim()
     ? escapeOmniboxXml(truncateOmniboxText(display.subtitle, 28))
     : ''
 
-  const parts: string[] = [`<dim>${typePrefix}</dim>`, `<match>${title}</match>`]
+  const parts: string[] = [`<dim>${typePrefix}</dim>`, `<match>${primary}</match>`]
 
-  if (domain) {
-    parts.push('<dim>·</dim>', `<url>${domain}</url>`)
+  if (provenance) {
+    parts.push('<dim>·</dim>', `<url>${provenance}</url>`)
   }
 
-  if (match.item.type === 'text_excerpt' && display.excerpt?.trim()) {
-    const quote = escapeOmniboxXml(truncateOmniboxText(display.excerpt, EXCERPT_PREVIEW_MAX))
-    parts.push(`<dim>「${quote}」</dim>`)
-  } else {
+  if (match.item.type !== 'text_excerpt') {
     const primaryMatch = formatOmniboxPrimaryMatch(match.matchedFields)
     if (primaryMatch) {
       parts.push(`<dim>· ${escapeOmniboxXml(primaryMatch)}</dim>`)
@@ -81,7 +97,7 @@ export function recallMatchToOmniboxSuggest(match: RecallMatch): OmniboxSuggestI
   }
 
   return {
-    content: url,
+    content: openHref,
     description: parts.join(' ')
   }
 }
@@ -90,7 +106,10 @@ export function recallMatchToOmniboxSuggest(match: RecallMatch): OmniboxSuggestI
  * 将 Recall 结果映射为 Omnibox 建议列表。
  * Top Pick + Also Possible；content 必须与用户输入不同才会显示。
  */
-export function recallResultToOmniboxSuggests(result: RecallResult): OmniboxSuggestItem[] {
+export function recallResultToOmniboxSuggests(
+  result: RecallResult,
+  options: OmniboxSuggestOptions
+): OmniboxSuggestItem[] {
   const matches: RecallMatch[] = []
   if (result.topPick) {
     matches.push(result.topPick)
@@ -101,7 +120,7 @@ export function recallResultToOmniboxSuggests(result: RecallResult): OmniboxSugg
   const suggests: OmniboxSuggestItem[] = []
 
   for (const match of matches) {
-    const suggest = recallMatchToOmniboxSuggest(match)
+    const suggest = recallMatchToOmniboxSuggest(match, options)
     if (!suggest || seenUrls.has(suggest.content)) {
       continue
     }

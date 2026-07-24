@@ -1,0 +1,336 @@
+<script setup lang="ts">
+import { computed, onMounted, ref } from 'vue'
+
+import type { MemoryItem, TextExcerptMemoryItem } from '@/core/memory/memory-item'
+import { deleteMemoryItem, getMemoryItem } from '@/infrastructure/messaging/background-client'
+import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
+import MaterialSymbolIcon from '@/infrastructure/ui/icons/MaterialSymbolIcon.vue'
+
+defineOptions({ name: 'DetailPage' })
+
+type DetailViewState =
+  | 'loading'
+  | 'ready'
+  | 'not_found'
+  | 'wrong_type'
+  | 'error'
+  | 'missing_id'
+  | 'deleted'
+
+const viewState = ref<DetailViewState>('loading')
+const errorMessage = ref('')
+const item = ref<MemoryItem | null>(null)
+const deleting = ref(false)
+const libraryHref = chrome.runtime.getURL('library.html')
+
+const excerpt = computed((): TextExcerptMemoryItem | null => {
+  const current = item.value
+  return current?.type === 'text_excerpt' ? current : null
+})
+
+const createdAtLabel = computed(() => {
+  const raw = excerpt.value?.createdAt
+  if (!raw) {
+    return ''
+  }
+  const date = new Date(raw)
+  if (Number.isNaN(date.getTime())) {
+    return raw
+  }
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+})
+
+function readMemoryIdFromLocation(): string | null {
+  const id = new URLSearchParams(window.location.search).get('id')?.trim()
+  return id && id.length > 0 ? id : null
+}
+
+async function loadDetail() {
+  const id = readMemoryIdFromLocation()
+  if (!id) {
+    viewState.value = 'missing_id'
+    return
+  }
+
+  viewState.value = 'loading'
+  errorMessage.value = ''
+  item.value = null
+
+  try {
+    const response = await getMemoryItem({ id })
+    if (!response.ok) {
+      viewState.value = response.error.includes('未找到') ? 'not_found' : 'error'
+      errorMessage.value = response.error
+      return
+    }
+
+    if (!('item' in response)) {
+      viewState.value = 'error'
+      errorMessage.value = '响应格式异常'
+      return
+    }
+
+    item.value = response.item
+    viewState.value = response.item.type === 'text_excerpt' ? 'ready' : 'wrong_type'
+  } catch (error) {
+    viewState.value = 'error'
+    errorMessage.value = error instanceof Error ? error.message : '读取失败'
+  }
+}
+
+async function handleDelete() {
+  const current = excerpt.value
+  if (!current || deleting.value) {
+    return
+  }
+  if (!window.confirm('确定删除这条摘录？删除后将无法再找回。')) {
+    return
+  }
+
+  deleting.value = true
+  errorMessage.value = ''
+  try {
+    const response = await deleteMemoryItem({ id: current.id })
+    if (!response.ok) {
+      errorMessage.value = response.error
+      return
+    }
+    item.value = null
+    viewState.value = 'deleted'
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : '删除失败'
+  } finally {
+    deleting.value = false
+  }
+}
+
+onMounted(() => {
+  void loadDetail()
+})
+</script>
+
+<template>
+  <main class="detail-shell">
+    <header class="detail-header">
+      <AppPageHeader class="detail-header-top" />
+      <h1 class="detail-title">摘录详情</h1>
+      <p class="detail-subtitle">找回时先看当时存下的文字，再决定要不要回原页。</p>
+    </header>
+
+    <p v-if="viewState === 'loading'" class="detail-status" role="status">正在读取…</p>
+
+    <section v-else-if="viewState === 'missing_id'" class="detail-empty" role="alert">
+      <p class="detail-empty-title">缺少记忆编号</p>
+      <p class="detail-empty-copy">请从找回结果重新打开这条摘录。</p>
+    </section>
+
+    <section v-else-if="viewState === 'not_found'" class="detail-empty" role="alert">
+      <p class="detail-empty-title">找不到这条记忆</p>
+      <p class="detail-empty-copy">{{ errorMessage || '可能已删除，或来自其他配置文件。' }}</p>
+    </section>
+
+    <section v-else-if="viewState === 'deleted'" class="detail-empty" role="status">
+      <p class="detail-empty-title">已删除</p>
+      <p class="detail-empty-copy">这条摘录已从记忆库移除，找回时不会再出现。</p>
+      <md-outlined-button :href="libraryHref">打开记忆库</md-outlined-button>
+    </section>
+
+    <section v-else-if="viewState === 'error'" class="detail-empty" role="alert">
+      <p class="detail-empty-title">读取失败</p>
+      <p class="detail-empty-copy">{{ errorMessage }}</p>
+      <md-outlined-button type="button" @click="loadDetail">重试</md-outlined-button>
+    </section>
+
+    <section v-else-if="viewState === 'wrong_type' && item" class="detail-empty">
+      <p class="detail-empty-title">这是书签，不是摘录</p>
+      <p class="detail-empty-copy">书签会直接打开原网页。你可以点下方链接前往。</p>
+      <a
+        v-if="item.type === 'bookmark'"
+        class="detail-source-link"
+        :href="item.payload.url"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        打开书签
+      </a>
+    </section>
+
+    <article v-else-if="viewState === 'ready' && excerpt" class="detail-article">
+      <div class="detail-meta">
+        <span class="detail-type">文字片段</span>
+        <span v-if="excerpt.payload.pageTitle.trim()" class="detail-page">{{
+          excerpt.payload.pageTitle
+        }}</span>
+        <span class="detail-domain">{{ excerpt.payload.domain }}</span>
+        <span v-if="createdAtLabel" class="detail-time">{{ createdAtLabel }}</span>
+      </div>
+
+      <p v-if="excerpt.payload.contextBefore" class="detail-context">
+        …{{ excerpt.payload.contextBefore }}
+      </p>
+      <blockquote class="detail-excerpt">{{ excerpt.payload.selectedText }}</blockquote>
+      <p v-if="excerpt.payload.contextAfter" class="detail-context">
+        {{ excerpt.payload.contextAfter }}…
+      </p>
+
+      <p v-if="errorMessage" class="detail-inline-error" role="alert">{{ errorMessage }}</p>
+
+      <div class="detail-actions">
+        <md-filled-button
+          :href="excerpt.payload.sourceUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          打开原文
+        </md-filled-button>
+        <md-text-button
+          type="button"
+          class="detail-delete"
+          :disabled="deleting"
+          @click="handleDelete"
+        >
+          <MaterialSymbolIcon name="delete" size="18px" slot="icon" />
+          {{ deleting ? '删除中…' : '删除摘录' }}
+        </md-text-button>
+      </div>
+    </article>
+  </main>
+</template>
+
+<style scoped>
+.detail-shell {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 28px 24px 40px;
+  color: var(--md-sys-color-on-background);
+}
+
+.detail-header {
+  margin-bottom: 24px;
+}
+
+.detail-header-top {
+  margin-bottom: 4px;
+}
+
+.detail-title {
+  margin: 0 0 8px;
+  font-size: 28px;
+  line-height: 1.2;
+}
+
+.detail-subtitle {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.detail-status {
+  margin: 0;
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.detail-empty {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border: 1px dashed var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.detail-empty-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.detail-empty-copy {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.detail-article {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  background: var(--md-sys-color-surface-container-lowest);
+}
+
+.detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  font-size: 12px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.detail-type {
+  font-weight: 600;
+  color: var(--md-sys-color-primary);
+}
+
+.detail-page {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detail-context {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.detail-excerpt {
+  margin: 0;
+  padding: 16px 18px;
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  font-size: 16px;
+  line-height: 1.65;
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface);
+}
+
+.detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.detail-inline-error {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--md-sys-color-error);
+}
+
+.detail-delete {
+  --md-text-button-label-text-color: var(--md-sys-color-error);
+  --md-text-button-hover-label-text-color: var(--md-sys-color-error);
+  --md-text-button-pressed-label-text-color: var(--md-sys-color-error);
+  --md-text-button-focus-label-text-color: var(--md-sys-color-error);
+}
+
+.detail-source-link {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--md-sys-color-primary);
+  text-decoration: none;
+}
+</style>

@@ -33,6 +33,16 @@ export class MemoryItemService {
     return this.repository.listByOwner(options)
   }
 
+  /** 按 id 读取当前用户的 MemoryItem。 */
+  async getById(id: string): Promise<MemoryItem | null> {
+    return this.repository.getById(id)
+  }
+
+  /** 软删除 MemoryItem。 */
+  async softDelete(id: string): Promise<MemoryItem | null> {
+    return this.repository.softDelete(id)
+  }
+
   /** 按 Chrome 书签 ID 软删除 Bookmark MemoryItem。 */
   async softDeleteByChromeBookmarkId(chromeBookmarkId: string): Promise<MemoryItem | null> {
     return this.repository.softDeleteByChromeBookmarkId(chromeBookmarkId)

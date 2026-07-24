@@ -9,10 +9,13 @@ import type {
 } from '@/core/messaging/commands-messages'
 import type {
   ImportBackgroundResponse,
-  GetChromeBookmarkImportStatusMessage
+  GetChromeBookmarkImportStatusMessage,
+  GetBookmarkLibraryTreeMessage
 } from '@/core/messaging/import-messages'
 import type {
   ListMemoryItemsMessage,
+  GetMemoryItemMessage,
+  DeleteMemoryItemMessage,
   MemoryBackgroundResponse
 } from '@/core/messaging/memory-messages'
 import type {
@@ -55,11 +58,44 @@ export async function listMemoryItems(
   return sendBackgroundMessage<MemoryBackgroundResponse>(message)
 }
 
+/** 按 id 读取 MemoryItem。 */
+export async function getMemoryItem(
+  payload: GetMemoryItemMessage['payload']
+): Promise<MemoryBackgroundResponse> {
+  const message: GetMemoryItemMessage = {
+    scope: 'background',
+    type: 'GET_MEMORY_ITEM',
+    payload
+  }
+  return sendBackgroundMessage<MemoryBackgroundResponse>(message)
+}
+
+/** 软删 MemoryItem（当前仅摘录）。 */
+export async function deleteMemoryItem(
+  payload: DeleteMemoryItemMessage['payload']
+): Promise<MemoryBackgroundResponse> {
+  const message: DeleteMemoryItemMessage = {
+    scope: 'background',
+    type: 'DELETE_MEMORY_ITEM',
+    payload
+  }
+  return sendBackgroundMessage<MemoryBackgroundResponse>(message)
+}
+
 /** 查询 Chrome 书签导入进度。 */
 export async function fetchChromeBookmarkImportStatus(): Promise<ImportBackgroundResponse> {
   const message: GetChromeBookmarkImportStatusMessage = {
     scope: 'background',
     type: 'GET_CHROME_BOOKMARK_IMPORT_STATUS'
+  }
+  return sendBackgroundMessage<ImportBackgroundResponse>(message)
+}
+
+/** 读取记忆库书签目录树（Chrome 结构 + Memory 对齐）。 */
+export async function fetchBookmarkLibraryTree(): Promise<ImportBackgroundResponse> {
+  const message: GetBookmarkLibraryTreeMessage = {
+    scope: 'background',
+    type: 'GET_BOOKMARK_LIBRARY_TREE'
   }
   return sendBackgroundMessage<ImportBackgroundResponse>(message)
 }

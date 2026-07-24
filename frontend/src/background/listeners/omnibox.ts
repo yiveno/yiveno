@@ -1,10 +1,6 @@
 import { recallService } from '@/application/recall/recall-service'
-import {
-  escapeOmniboxXml,
-  recallResultToOmniboxSuggests,
-  tryParseHttpUrl
-} from '@/core/recall/omnibox-suggest'
-import { getMemoryItemDisplay } from '@/core/recall/recall-result'
+import { getMemoryItemOpenHref, tryParseNavigableUrl } from '@/core/recall/memory-open-href'
+import { escapeOmniboxXml, recallResultToOmniboxSuggests } from '@/core/recall/omnibox-suggest'
 import { logger } from '@/infrastructure/logging/logger'
 
 let listenersRegistered = false
@@ -14,6 +10,10 @@ let inputChangedRequestId = 0
 async function ensureReady(): Promise<void> {
   const { ensureBackgroundBootstrapped } = await import('@/background/bootstrap')
   await ensureBackgroundBootstrapped()
+}
+
+function getDetailPageUrl(): string {
+  return chrome.runtime.getURL('detail.html')
 }
 
 function getDefaultSuggestionDescription(): string {
@@ -65,7 +65,9 @@ async function handleOmniboxInputChanged(
     return
   }
 
-  const suggests = recallResultToOmniboxSuggests(result)
+  const suggests = recallResultToOmniboxSuggests(result, {
+    detailPageUrl: getDetailPageUrl()
+  })
   if (suggests.length === 0) {
     chrome.omnibox.setDefaultSuggestion({ description: getNoMatchSuggestionDescription() })
     suggest([])
@@ -77,14 +79,14 @@ async function handleOmniboxInputChanged(
 }
 
 /**
- * 确认输入：选中建议时 text 为 URL；直接回车时 text 为线索，再跑一轮 Recall 打开 Top Pick。
+ * 确认输入：选中建议时 text 为打开地址；直接回车时 text 为线索，再跑一轮 Recall 打开 Top Pick。
  * Omnibox 永不开启追问会话。
  */
 async function handleOmniboxInputEntered(
   text: string,
   disposition: chrome.omnibox.OnInputEnteredDisposition
 ): Promise<void> {
-  const directUrl = tryParseHttpUrl(text)
+  const directUrl = tryParseNavigableUrl(text)
   if (directUrl) {
     await openUrlByDisposition(directUrl, disposition)
     return
@@ -97,8 +99,10 @@ async function handleOmniboxInputEntered(
 
   await ensureReady()
   const result = await recallService.recallWithClue(clue)
-  const topUrl = result.topPick ? getMemoryItemDisplay(result.topPick.item).url : ''
-  const url = tryParseHttpUrl(topUrl)
+  const topHref = result.topPick
+    ? getMemoryItemOpenHref(result.topPick.item, { detailPageUrl: getDetailPageUrl() })
+    : ''
+  const url = tryParseNavigableUrl(topHref)
 
   if (!url) {
     logger.info('Omnibox', '回车无 Top Pick，忽略导航', { clue })

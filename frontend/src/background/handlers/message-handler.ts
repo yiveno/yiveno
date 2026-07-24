@@ -8,10 +8,15 @@ import {
   handleGetExtensionCommands,
   handleOpenChromeShortcutsPage
 } from '@/background/handlers/commands-handler'
-import { handleGetChromeBookmarkImportStatus } from '@/background/handlers/import-handler'
+import {
+  handleGetBookmarkLibraryTree,
+  handleGetChromeBookmarkImportStatus
+} from '@/background/handlers/import-handler'
 import {
   handleCaptureBookmark,
   handleCaptureTextExcerpt,
+  handleDeleteMemoryItem,
+  handleGetMemoryItem,
   handleListMemoryItems
 } from '@/background/handlers/memory-handler'
 import { handleRecallWithClue } from '@/background/handlers/recall-handler'
@@ -52,10 +57,16 @@ async function dispatchBackgroundMessage(
       return handleCaptureTextExcerpt(message.payload)
     case 'LIST_MEMORY_ITEMS':
       return handleListMemoryItems(message.payload)
+    case 'GET_MEMORY_ITEM':
+      return handleGetMemoryItem(message.payload)
+    case 'DELETE_MEMORY_ITEM':
+      return handleDeleteMemoryItem(message.payload)
     case 'RECALL_WITH_CLUE':
       return handleRecallWithClue(message.payload)
     case 'GET_CHROME_BOOKMARK_IMPORT_STATUS':
       return handleGetChromeBookmarkImportStatus()
+    case 'GET_BOOKMARK_LIBRARY_TREE':
+      return handleGetBookmarkLibraryTree()
     case 'GET_EXTENSION_COMMANDS':
       return handleGetExtensionCommands()
     case 'OPEN_CHROME_SHORTCUTS_PAGE':

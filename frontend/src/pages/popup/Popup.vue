@@ -15,12 +15,14 @@ import {
 } from '@/core/recall/popup-empty-copy'
 import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
 import { getMemoryItemDisplay } from '@/core/recall/recall-result'
+import { getMemoryItemOpenHref } from '@/core/recall/memory-open-href'
 import { openExtensionOptionsPage } from '@/infrastructure/browser/options-page'
 import {
   fetchChromeBookmarkImportStatus,
   listMemoryItems,
   recallWithClue
 } from '@/infrastructure/messaging/background-client'
+import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
 
 defineOptions({ name: 'PopupPage' })
 
@@ -103,7 +105,9 @@ function toMatchCard(match: RecallMatch, resultClue: string) {
     id: match.item.id,
     title: display.title,
     subtitle: display.subtitle,
-    url: display.url,
+    url: getMemoryItemOpenHref(match.item, {
+      detailPageUrl: chrome.runtime.getURL('detail.html')
+    }),
     excerpt: display.excerpt,
     typeLabel: display.typeLabel,
     reason: explanation.reasonLine
@@ -200,12 +204,16 @@ function handleShortenRetry() {
   void handleRecallSubmit()
 }
 
+function handleNavigateError(message: string) {
+  errorMessage.value = message
+  viewState.value = 'error'
+}
+
 async function handleOpenSettings() {
   try {
     await openExtensionOptionsPage()
   } catch {
-    errorMessage.value = '无法打开设置页'
-    viewState.value = 'error'
+    handleNavigateError('无法打开设置页')
   }
 }
 </script>
@@ -213,10 +221,7 @@ async function handleOpenSettings() {
 <template>
   <main class="recall-shell">
     <header class="recall-header">
-      <div class="recall-header-top">
-        <p class="recall-eyebrow">Yiveno</p>
-        <md-text-button type="button" @click="handleOpenSettings">设置</md-text-button>
-      </div>
+      <AppPageHeader class="recall-header-top" @navigate-error="handleNavigateError" />
       <h1 class="recall-title">找到它！</h1>
       <p class="recall-subtitle">在你存过的东西里找，不用再去网上搜。</p>
 
@@ -294,11 +299,9 @@ async function handleOpenSettings() {
             <span class="recall-type">{{ topPickDisplay.typeLabel }}</span>
             <span class="recall-reason">{{ topPickDisplay.reason }}</span>
           </div>
-          <h2 class="recall-card-title">{{ topPickDisplay.title }}</h2>
+          <p v-if="topPickDisplay.excerpt" class="recall-card-body">{{ topPickDisplay.excerpt }}</p>
+          <h2 v-else class="recall-card-title">{{ topPickDisplay.title }}</h2>
           <p class="recall-card-subtitle">{{ topPickDisplay.subtitle }}</p>
-          <p v-if="topPickDisplay.excerpt" class="recall-card-excerpt">
-            {{ topPickDisplay.excerpt }}
-          </p>
         </a>
         <p class="recall-affirmation">对，就是这个？点卡片打开看看。</p>
       </div>
@@ -312,7 +315,10 @@ async function handleOpenSettings() {
                 <span class="recall-type">{{ item.typeLabel }}</span>
                 <span class="recall-reason">{{ item.reason }}</span>
               </div>
-              <h3 class="recall-card-title recall-card-title--compact">{{ item.title }}</h3>
+              <p v-if="item.excerpt" class="recall-card-body recall-card-body--compact">
+                {{ item.excerpt }}
+              </p>
+              <h3 v-else class="recall-card-title recall-card-title--compact">{{ item.title }}</h3>
               <p class="recall-card-subtitle">{{ item.subtitle }}</p>
             </a>
           </li>
@@ -335,19 +341,7 @@ async function handleOpenSettings() {
 }
 
 .recall-header-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
   margin-bottom: 4px;
-}
-
-.recall-eyebrow {
-  margin: 0;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--md-sys-color-on-surface-variant);
 }
 
 .recall-title {
@@ -546,17 +540,26 @@ async function handleOpenSettings() {
   font-size: 14px;
 }
 
+.recall-card-body {
+  margin: 0 0 4px;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--md-sys-color-on-surface);
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.recall-card-body--compact {
+  font-size: 13px;
+  -webkit-line-clamp: 2;
+}
+
 .recall-card-subtitle {
   margin: 0;
   font-size: 12px;
   color: var(--md-sys-color-on-surface-variant);
-}
-
-.recall-card-excerpt {
-  margin: 8px 0 0;
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--md-sys-color-on-surface);
 }
 
 .recall-also-list {

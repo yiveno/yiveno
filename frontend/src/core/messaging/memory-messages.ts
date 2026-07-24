@@ -28,6 +28,14 @@ const listMemoryItemsPayloadSchema = z
   })
   .optional()
 
+const getMemoryItemPayloadSchema = z.object({
+  id: z.string().uuid()
+})
+
+const deleteMemoryItemPayloadSchema = z.object({
+  id: z.string().uuid()
+})
+
 /** 捕获 Bookmark MemoryItem。 */
 export type CaptureBookmarkMessage = {
   scope: BackgroundMessageScope
@@ -49,10 +57,26 @@ export type ListMemoryItemsMessage = {
   payload?: z.infer<typeof listMemoryItemsPayloadSchema>
 }
 
+/** 按 id 读取单条 MemoryItem。 */
+export type GetMemoryItemMessage = {
+  scope: BackgroundMessageScope
+  type: 'GET_MEMORY_ITEM'
+  payload: z.infer<typeof getMemoryItemPayloadSchema>
+}
+
+/** 软删 MemoryItem（当前仅允许 text_excerpt）。 */
+export type DeleteMemoryItemMessage = {
+  scope: BackgroundMessageScope
+  type: 'DELETE_MEMORY_ITEM'
+  payload: z.infer<typeof deleteMemoryItemPayloadSchema>
+}
+
 export type MemoryBackgroundMessage =
   | CaptureBookmarkMessage
   | CaptureTextExcerptMessage
   | ListMemoryItemsMessage
+  | GetMemoryItemMessage
+  | DeleteMemoryItemMessage
 
 export type MemoryItemSuccessResponse = {
   ok: true
@@ -85,4 +109,12 @@ export function parseCaptureTextExcerptPayload(value: unknown) {
 
 export function parseListMemoryItemsPayload(value: unknown) {
   return listMemoryItemsPayloadSchema.parse(value)
+}
+
+export function parseGetMemoryItemPayload(value: unknown) {
+  return getMemoryItemPayloadSchema.parse(value)
+}
+
+export function parseDeleteMemoryItemPayload(value: unknown) {
+  return deleteMemoryItemPayloadSchema.parse(value)
 }

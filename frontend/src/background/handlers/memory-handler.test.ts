@@ -3,7 +3,13 @@ import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { LOCAL_PROFILE_STORAGE_KEY, type LocalProfile } from '@/core/identity/local-profile'
-import { handleCaptureBookmark, handleListMemoryItems } from '@/background/handlers/memory-handler'
+import {
+  handleCaptureBookmark,
+  handleCaptureTextExcerpt,
+  handleDeleteMemoryItem,
+  handleGetMemoryItem,
+  handleListMemoryItems
+} from '@/background/handlers/memory-handler'
 import { resetMemoryDatabaseInitializationForTests } from '@/infrastructure/indexeddb/memory-db'
 
 type StorageMap = Record<string, unknown>
@@ -37,6 +43,10 @@ function createChromeStorageMock(initial: StorageMap = {}) {
           favIconUrl: 'https://example.com/favicon.ico'
         }
       ])
+    },
+    action: {
+      setBadgeText: vi.fn(async () => undefined),
+      setBadgeBackgroundColor: vi.fn(async () => undefined)
     }
   }
 }
@@ -98,5 +108,52 @@ describe('memory-handler', () => {
   it('handleCaptureBookmark 拒绝非法 payload', async () => {
     const response = await handleCaptureBookmark({ title: '', url: 'not-a-url' })
     expect(response.ok).toBe(false)
+  })
+
+  it('handleDeleteMemoryItem 可软删摘录', async () => {
+    const captured = await handleCaptureTextExcerpt({
+      selectedText: '可删除的摘录',
+      sourceUrl: 'https://example.com/note',
+      pageTitle: 'Note'
+    })
+    expect(captured.ok).toBe(true)
+    if (!captured.ok || !('item' in captured)) {
+      return
+    }
+
+    const deleted = await handleDeleteMemoryItem({ id: captured.item.id })
+    expect(deleted.ok).toBe(true)
+    if (!deleted.ok || !('item' in deleted)) {
+      return
+    }
+    expect(deleted.item.deletedAt).toBeTruthy()
+
+    const listed = await handleListMemoryItems({ type: 'text_excerpt', limit: 10 })
+    expect(listed.ok).toBe(true)
+    if (!listed.ok || !('items' in listed)) {
+      return
+    }
+    expect(listed.items).toHaveLength(0)
+
+    const fetched = await handleGetMemoryItem({ id: captured.item.id })
+    expect(fetched.ok).toBe(false)
+  })
+
+  it('handleDeleteMemoryItem 拒绝删除书签', async () => {
+    const captured = await handleCaptureBookmark({
+      title: 'Keep in Chrome',
+      url: 'https://bookmark.example.com'
+    })
+    expect(captured.ok).toBe(true)
+    if (!captured.ok || !('item' in captured)) {
+      return
+    }
+
+    const deleted = await handleDeleteMemoryItem({ id: captured.item.id })
+    expect(deleted.ok).toBe(false)
+    if (deleted.ok) {
+      return
+    }
+    expect(deleted.error).toContain('Chrome')
   })
 })
