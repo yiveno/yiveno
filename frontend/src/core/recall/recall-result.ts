@@ -1,4 +1,5 @@
 import type { MemoryItem } from '@/core/memory/memory-item'
+import { explainRecallMatch, getRecallMatchFieldLabel } from '@/core/recall/explain-recall-match'
 
 /** 单次召回命中项。 */
 export interface RecallMatch {
@@ -47,22 +48,18 @@ export function getMemoryItemDisplay(item: MemoryItem): MemoryItemDisplay {
   }
 }
 
-/** 生成命中解释文案。 */
-export function formatMatchedFields(matchedFields: string[]): string {
-  const labels: Record<string, string> = {
-    title: '标题',
-    textExcerpt: '正文片段',
-    summary: '摘要',
-    domain: '域名',
-    url: '链接',
-    keywords: '关键词',
-    tags: '标签',
-    note: '备注'
+/**
+ * 生成命中解释文案（兼容旧调用）。
+ * 仅有字段列表、无线索时退化为字段名列表。
+ */
+export function formatMatchedFields(matchedFields: string[], clue = ''): string {
+  if (!clue.trim()) {
+    const unique = [...new Set(matchedFields.map(field => getRecallMatchFieldLabel(field)))]
+    if (unique.length === 0) {
+      return '内容相关'
+    }
+    return `匹配：${unique.join('、')}`
   }
 
-  const unique = [...new Set(matchedFields.map(field => labels[field] ?? field))]
-  if (unique.length === 0) {
-    return '内容相关'
-  }
-  return `匹配：${unique.join('、')}`
+  return explainRecallMatch({ clue, matchedFields }).reasonLine
 }

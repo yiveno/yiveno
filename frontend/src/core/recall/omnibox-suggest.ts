@@ -1,3 +1,4 @@
+import { getRecallMatchFieldShortLabel } from '@/core/recall/explain-recall-match'
 import {
   getMemoryItemDisplay,
   type RecallMatch,
@@ -12,17 +13,6 @@ export interface OmniboxSuggestItem {
 
 /** Omnibox 摘录预览最大字符数。 */
 const EXCERPT_PREVIEW_MAX = 40
-
-const MATCH_FIELD_SHORT_LABELS: Record<string, string> = {
-  title: '标题',
-  textExcerpt: '正文',
-  summary: '摘要',
-  domain: '域名',
-  url: '链接',
-  keywords: '关键词',
-  tags: '标签',
-  note: '备注'
-}
 
 /** 转义 Omnibox description 中的 XML 预定义实体。 */
 export function escapeOmniboxXml(text: string): string {
@@ -54,7 +44,7 @@ export function formatOmniboxPrimaryMatch(matchedFields: string[]): string | nul
   if (!primary) {
     return null
   }
-  return MATCH_FIELD_SHORT_LABELS[primary] ?? primary
+  return getRecallMatchFieldShortLabel(primary)
 }
 
 /**

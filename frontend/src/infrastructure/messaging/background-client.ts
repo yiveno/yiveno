@@ -12,6 +12,10 @@ import type {
   GetChromeBookmarkImportStatusMessage
 } from '@/core/messaging/import-messages'
 import type {
+  ListMemoryItemsMessage,
+  MemoryBackgroundResponse
+} from '@/core/messaging/memory-messages'
+import type {
   RecallBackgroundResponse,
   RecallWithClueMessage
 } from '@/core/messaging/recall-messages'
@@ -37,6 +41,18 @@ export async function recallWithClue(
     payload
   }
   return sendBackgroundMessage<RecallBackgroundResponse>(message)
+}
+
+/** 列出 MemoryItem（探活可用 limit: 1）。 */
+export async function listMemoryItems(
+  payload?: ListMemoryItemsMessage['payload']
+): Promise<MemoryBackgroundResponse> {
+  const message: ListMemoryItemsMessage = {
+    scope: 'background',
+    type: 'LIST_MEMORY_ITEMS',
+    ...(payload === undefined ? {} : { payload })
+  }
+  return sendBackgroundMessage<MemoryBackgroundResponse>(message)
 }
 
 /** 查询 Chrome 书签导入进度。 */

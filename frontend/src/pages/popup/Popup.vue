@@ -3,13 +3,24 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 import type { ChromeBookmarkImportState } from '@/core/memory/chrome-bookmark-import-state'
 import { getChromeBookmarkImportPercent } from '@/core/memory/chrome-bookmark-import-state'
+import {
+  explainRecallMatch,
+  formatRecallClueEcho,
+  shortenClueForRetry
+} from '@/core/recall/explain-recall-match'
+import {
+  getPopupIdleEmptyCopy,
+  getPopupNoMatchCopy,
+  type PopupLibraryState
+} from '@/core/recall/popup-empty-copy'
 import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
-import { formatMatchedFields, getMemoryItemDisplay } from '@/core/recall/recall-result'
+import { getMemoryItemDisplay } from '@/core/recall/recall-result'
+import { openExtensionOptionsPage } from '@/infrastructure/browser/options-page'
 import {
   fetchChromeBookmarkImportStatus,
+  listMemoryItems,
   recallWithClue
 } from '@/infrastructure/messaging/background-client'
-import { openExtensionOptionsPage } from '@/infrastructure/browser/options-page'
 
 defineOptions({ name: 'PopupPage' })
 
@@ -20,6 +31,7 @@ const viewState = ref<RecallViewState>('idle')
 const recallResult = ref<RecallResult | null>(null)
 const errorMessage = ref('')
 const importState = ref<ChromeBookmarkImportState | null>(null)
+const libraryState = ref<PopupLibraryState>('unknown')
 
 let importPollTimer: ReturnType<typeof setInterval> | null = null
 
@@ -35,6 +47,8 @@ const showImportProgress = computed(() => {
   return status === 'running' || status === 'failed'
 })
 
+const isImporting = computed(() => importState.value?.status === 'running')
+
 const importProgressLabel = computed(() => {
   const state = importState.value
   if (!state) {
@@ -49,6 +63,66 @@ const importProgressLabel = computed(() => {
   return '正在导入书签…'
 })
 
+const idleEmptyCopy = computed(() =>
+  viewState.value === 'idle' ? getPopupIdleEmptyCopy(libraryState.value, isImporting.value) : null
+)
+
+const shortenedClue = computed(() => shortenClueForRetry(clue.value))
+
+const noMatchCopy = computed(() =>
+  getPopupNoMatchCopy({
+    library: libraryState.value,
+    clue: clue.value,
+    canShorten: shortenedClue.value !== null
+  })
+)
+
+const clueEcho = computed(() => {
+  const resultClue = recallResult.value?.clue ?? clue.value
+  return formatRecallClueEcho(resultClue)
+})
+
+const topPickDisplay = computed(() => {
+  const match = recallResult.value?.topPick
+  return match ? toMatchCard(match, recallResult.value?.clue ?? clue.value) : null
+})
+
+const alsoPossibleCards = computed(() => {
+  const resultClue = recallResult.value?.clue ?? clue.value
+  return (recallResult.value?.alsoPossible ?? []).map(match => toMatchCard(match, resultClue))
+})
+
+function toMatchCard(match: RecallMatch, resultClue: string) {
+  const display = getMemoryItemDisplay(match.item)
+  const explanation = explainRecallMatch({
+    clue: resultClue,
+    matchedFields: match.matchedFields,
+    item: match.item
+  })
+  return {
+    id: match.item.id,
+    title: display.title,
+    subtitle: display.subtitle,
+    url: display.url,
+    excerpt: display.excerpt,
+    typeLabel: display.typeLabel,
+    reason: explanation.reasonLine
+  }
+}
+
+async function probeMemoryLibrary() {
+  try {
+    const response = await listMemoryItems({ limit: 1 })
+    if (!response.ok || !('total' in response)) {
+      libraryState.value = 'unknown'
+      return
+    }
+    libraryState.value = response.total > 0 ? 'ready' : 'empty'
+  } catch {
+    libraryState.value = 'unknown'
+  }
+}
+
 async function refreshImportStatus() {
   const response = await fetchChromeBookmarkImportStatus()
   if (!response.ok) {
@@ -58,6 +132,9 @@ async function refreshImportStatus() {
 
   if (response.state?.status === 'completed' || response.state?.status === 'failed') {
     stopImportPolling()
+    if (response.state.status === 'completed') {
+      void probeMemoryLibrary()
+    }
   }
 }
 
@@ -79,34 +156,13 @@ function stopImportPolling() {
 }
 
 onMounted(() => {
+  void probeMemoryLibrary()
   startImportPolling()
 })
 
 onUnmounted(() => {
   stopImportPolling()
 })
-
-const topPickDisplay = computed(() => {
-  const match = recallResult.value?.topPick
-  return match ? toMatchCard(match) : null
-})
-
-const alsoPossibleCards = computed(() => {
-  return (recallResult.value?.alsoPossible ?? []).map(toMatchCard)
-})
-
-function toMatchCard(match: RecallMatch) {
-  const display = getMemoryItemDisplay(match.item)
-  return {
-    id: match.item.id,
-    title: display.title,
-    subtitle: display.subtitle,
-    url: display.url,
-    excerpt: display.excerpt,
-    typeLabel: display.typeLabel,
-    reason: formatMatchedFields(match.matchedFields)
-  }
-}
 
 async function handleRecallSubmit() {
   const trimmed = clue.value.trim()
@@ -128,10 +184,20 @@ async function handleRecallSubmit() {
 
     recallResult.value = response.result
     viewState.value = response.result.outcome === 'no_match' ? 'no_match' : 'result'
+    void probeMemoryLibrary()
   } catch (error) {
     viewState.value = 'error'
     errorMessage.value = error instanceof Error ? error.message : '找回失败，请稍后再试'
   }
+}
+
+function handleShortenRetry() {
+  const next = shortenedClue.value
+  if (!next) {
+    return
+  }
+  clue.value = next
+  void handleRecallSubmit()
 }
 
 async function handleOpenSettings() {
@@ -183,17 +249,31 @@ async function handleOpenSettings() {
       </md-filled-button>
     </form>
 
-    <p v-if="viewState === 'loading'" class="recall-status" role="status">正在你的记忆库里筛选…</p>
+    <section v-if="viewState === 'idle' && idleEmptyCopy" class="recall-empty" aria-live="polite">
+      <p class="recall-empty-title">{{ idleEmptyCopy.title }}</p>
+      <p class="recall-empty-copy">{{ idleEmptyCopy.body }}</p>
+      <div class="recall-empty-actions">
+        <md-text-button type="button" @click="handleOpenSettings">打开设置</md-text-button>
+      </div>
+    </section>
+
+    <p v-else-if="viewState === 'loading'" class="recall-status" role="status">
+      正在你的记忆库里筛选…
+    </p>
 
     <p v-else-if="viewState === 'error'" class="recall-error" role="alert">
       {{ errorMessage }}
     </p>
 
     <section v-else-if="viewState === 'no_match'" class="recall-empty" aria-live="polite">
-      <p class="recall-empty-title">还没找到匹配的</p>
-      <p class="recall-empty-copy">
-        试试更短的关键词；也可右键保存选区，或先用 Chrome 加书签后等待同步。
-      </p>
+      <p class="recall-empty-title">{{ noMatchCopy.title }}</p>
+      <p class="recall-empty-copy">{{ noMatchCopy.body }}</p>
+      <div v-if="noMatchCopy.showShortenRetry" class="recall-empty-actions">
+        <md-outlined-button type="button" @click="handleShortenRetry">
+          缩短后再试
+          <template v-if="shortenedClue">（{{ shortenedClue }}）</template>
+        </md-outlined-button>
+      </div>
     </section>
 
     <section
@@ -203,6 +283,7 @@ async function handleOpenSettings() {
     >
       <div class="recall-top-pick">
         <p class="recall-section-label">最可能的结果</p>
+        <p v-if="clueEcho" class="recall-clue-echo">{{ clueEcho }}</p>
         <a
           class="recall-card recall-card--top"
           :href="topPickDisplay.url"
@@ -369,6 +450,13 @@ async function handleOpenSettings() {
   color: var(--md-sys-color-on-surface-variant);
 }
 
+.recall-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
 .recall-results {
   display: grid;
   gap: 16px;
@@ -381,6 +469,13 @@ async function handleOpenSettings() {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.02em;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.recall-clue-echo {
+  margin: -4px 0 8px;
+  font-size: 12px;
+  line-height: 1.4;
   color: var(--md-sys-color-on-surface-variant);
 }
 

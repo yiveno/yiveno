@@ -33,9 +33,9 @@ Yiveno = **个人信息寻回系统**（Capture 低负担 + Recall 高确定性�
 
 ### 0.4 当前优先实现项（Phase A）
 
-**下一项：线索解释 / 空状态文案**。Omnibox、快捷键找回、Settings（含快捷键入口）已上线。
+**Phase A 文案项已完成**（线索解释 / 空状态分层）。Omnibox、快捷键找回、Settings、划词浮层已上线。
 
-同 Phase 其余项按用户指定推进。
+**下一项：按用户指定推进**（常见候选：摘录详情落地页）。未指定前不擅自开 Phase B。
 
 **入口能力差异（Normative）：** 共用同一 `recallService` / Filter；壳不同——Omnibox 为单次命中、无会话；快捷键找回打开 Popup（可会话壳）；Popup 预留多轮补充与反馈（Phase B），不得做成开放聊天。书签 Capture：**仅** Chrome 原生加书签 + 导入/增量 sync，不提供「保存当前页」快捷键或 Popup 按钮。快捷键改绑：Settings → Chrome 原生 `chrome://extensions/shortcuts`（扩展无法自行改键）。
 
@@ -70,7 +70,8 @@ Yiveno = **个人信息寻回系统**（Capture 低负担 + Recall 高确定性�
 | Omnibox 找回                | 已上线               | 关键词 `yi`；共用 `recallService`；单次无会话                          |
 | 快捷键找回                  | 已上线               | `_execute_action`（默认 `Alt+Shift+Y`）开 Popup                        |
 | 手动「保存当前页」          | 不做                 | 与 Chrome 原生书签重复；已移除 UI/快捷键/消息                          |
-| 结果线索解释强化            | 目标 · Phase A       | 匹配字段展示                                                           |
+| 结果线索解释强化            | 已上线               | 主因「因字段含「token」」+ 次要字段；Top Pick 线索回显                 |
+| Popup 空状态分层            | 已上线               | 空库 / 有库 idle 与 no_match 分文案；有库可「缩短后再试」              |
 | Hybrid Filter               | 目标 · Phase B / Pro | 非 Free                                                                |
 | 反馈闭环 / 低置信追问       | 目标 · Phase B       |                                                                        |
 | 云同步 / 账号 UI            | 目标 · Phase C       | AccountBinding 已预留                                                  |
@@ -179,7 +180,7 @@ Yiveno = **个人信息寻回系统**（Capture 低负担 + Recall 高确定性�
 
 ### 5.4 后续优先级（摘要）
 
-- **P0 / Phase A 余项**：线索解释/空状态
+- **P0 / Phase A**：线索解释/空状态 **已完成**；下一项用户指定
 - **P1 / Phase B**：索引、embedding、Hybrid、反馈、Need A Clue
 - **P2 / Phase C**：分享、云同步、账户 UI；Settings 隐私/同步/AI/账户分区落地
 - **P3 / Phase D**：删除/标签/失效链接/统计等轻管理
@@ -241,12 +242,12 @@ Chrome API / 选区
   →（Phase B）反馈写回
 ```
 
-| 形态          | MVP                |
-| ------------- | ------------------ |
-| Top Pick      | 已有（分数达阈值） |
-| Also Possible | 已有（约 ≤5）      |
-| Need A Clue   | Phase B            |
-| No Match      | 已有；恢复动作待补 |
+| 形态          | MVP                                    |
+| ------------- | -------------------------------------- |
+| Top Pick      | 已有（分数达阈值）                     |
+| Also Possible | 已有（约 ≤5）                          |
+| Need A Clue   | Phase B                                |
+| No Match      | 已有；空库引导 Capture；有库可缩短再试 |
 
 原则：能命中不追问；追问最多一个；卡片要有线索不只标题 URL；否定后再补救对话。
 
@@ -254,12 +255,12 @@ Chrome API / 选区
 
 ## 8. 路线图（剩余工作 · Normative 排序）
 
-| Phase | 内容                                                 |
-| ----- | ---------------------------------------------------- |
-| **A** | **① 线索解释/空状态文案** → 更新 §1                  |
-| B     | 索引、Offscreen embedding、Hybrid（Pro）、反馈、追问 |
-| C     | Sync、账户 UI、隐私控制落地、分享                    |
-| D     | 轻管理与统计                                         |
+| Phase | 内容                                                       |
+| ----- | ---------------------------------------------------------- |
+| **A** | 线索解释/空状态文案 **已完成**；其余按用户指定（如详情页） |
+| B     | 索引、Offscreen embedding、Hybrid（Pro）、反馈、追问       |
+| C     | Sync、账户 UI、隐私控制落地、分享                          |
+| D     | 轻管理与统计                                               |
 
 ---
 
@@ -301,6 +302,7 @@ MVP 验证问题：是否更愿保存、是否优先打开 Yiveno、是否稳定
 
 | 日期       | 变更                                                                              |
 | ---------- | --------------------------------------------------------------------------------- |
+| 2026-07-24 | Phase A：线索解释强化 + Popup 空状态分层（空库/有库 + 缩短再试）                  |
 | 2026-07-24 | 摘录保存成功/失败：工具栏临时 badge（✓ / !）；划词与右键共用                      |
 | 2026-07-24 | 划词保存浮层上线；Settings 开关默认开启；`captureEntry=selection_toolbar`         |
 | 2026-07-24 | Settings 最小可用进 manifest：快捷键查看+跳转原生改键；Popup 入口                 |
