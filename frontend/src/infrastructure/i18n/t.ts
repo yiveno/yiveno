@@ -1,5 +1,5 @@
 import { logger } from '@/infrastructure/logging/logger'
-import type { MessageKey, TranslateFn } from '@/infrastructure/i18n/message-keys'
+import type { TranslateFn } from '@/infrastructure/i18n/message-keys'
 
 export type { MessageKey, TranslateFn } from '@/infrastructure/i18n/message-keys'
 export { MESSAGE_KEYS } from '@/infrastructure/i18n/message-keys'
