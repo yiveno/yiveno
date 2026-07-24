@@ -1,6 +1,7 @@
 import { recallService } from '@/application/recall/recall-service'
 import { getMemoryItemOpenHref, tryParseNavigableUrl } from '@/core/recall/memory-open-href'
 import { escapeOmniboxXml, recallResultToOmniboxSuggests } from '@/core/recall/omnibox-suggest'
+import { t } from '@/infrastructure/i18n/t'
 import { logger } from '@/infrastructure/logging/logger'
 
 let listenersRegistered = false
@@ -17,13 +18,11 @@ function getDetailPageUrl(): string {
 }
 
 function getDefaultSuggestionDescription(): string {
-  const text = chrome.i18n.getMessage('omnibox_default_suggestion') || '找回书签与摘录…'
-  return escapeOmniboxXml(text)
+  return escapeOmniboxXml(t('omnibox_default_suggestion'))
 }
 
 function getNoMatchSuggestionDescription(): string {
-  const text = chrome.i18n.getMessage('omnibox_no_match') || 'Yiveno 中未找到匹配'
-  return escapeOmniboxXml(text)
+  return escapeOmniboxXml(t('omnibox_no_match'))
 }
 
 /** 按 disposition 打开 URL（Omnibox 单次命中，无会话）。 */

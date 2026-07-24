@@ -18,11 +18,12 @@ Yiveno = **个人信息寻回系统**（Capture 低负担 + Recall 高确定性�
 2. Chrome API（bookmarks/tabs/contextMenus/…）只在 `frontend/src/background/**`（及 SW 调用的 infrastructure browser 封装）。
 3. IndexedDB 只经 `indexedDBManager`（`frontend/src/infrastructure/indexeddb/manager.ts`）。
 4. 领域类型以 Zod 为准：`frontend/src/core/memory/*`；消息类型以 `frontend/src/core/messaging/*` 为准。**禁止发明新 message `type` 字符串**，先改 schema 再接线。
-5. 对外文案：**筛选 / 找回**；禁止 **搜索 / Search**。
-6. `:hover|:focus|:active` 禁止 `translate` / `scale` / `rotate`；只用背景 / opacity / shadow / outline / state layer（浮层入场与 pop/shake 例外见 §3）。
-7. 实现范围以 **§1 状态表**为准；未标「已上线」= 不得当成已有行为，也不得在 UI 暗示已可用。
-8. Free/当前：仅 **关键词 Filter**。**Hybrid / embedding / LLM 不是当前默认实现范围**（见 §5）。
-9. UI 图标：**Material Symbols Outlined**；按需内联于 `frontend/src/infrastructure/ui/icons/`，经 `MaterialSymbolIcon` / `md-icon-button` 使用。禁止另引 Lucide/Font Awesome 等第二套图标体系；禁止依赖 Google Fonts CDN（扩展离线）。
+5. 对外文案：**筛选 / 找回**；禁止 **搜索 / Search**（各 locale 译文均遵守）。
+6. 扩展用户可见文案：仅经 **`chrome.i18n` + `_locales/{en,zh_CN}/messages.json`** 与 `t()`（`frontend/src/infrastructure/i18n/`）。**禁止**在代码中写死 UI 自然语言，也禁止 `getMessage(...) || '兜底文案'`。`core` 不直接调 `chrome.i18n`（注入 `t` 或返回 message key）。官网 `website/` 不走本方案。
+7. `:hover|:focus|:active` 禁止 `translate` / `scale` / `rotate`；只用背景 / opacity / shadow / outline / state layer（浮层入场与 pop/shake 例外见 §3）。
+8. 实现范围以 **§1 状态表**为准；未标「已上线」= 不得当成已有行为，也不得在 UI 暗示已可用。
+9. Free/当前：仅 **关键词 Filter**。**Hybrid / embedding / LLM 不是当前默认实现范围**（见 §5）。
+10. UI 图标：**Material Symbols Outlined**；按需内联于 `frontend/src/infrastructure/ui/icons/`，经 `MaterialSymbolIcon` / `md-icon-button` 使用。禁止另引 Lucide/Font Awesome 等第二套图标体系；禁止依赖 Google Fonts CDN（扩展离线）。
 
 ### 0.3 MUST NOT
 
@@ -59,6 +60,7 @@ Yiveno = **个人信息寻回系统**（Capture 低负担 + Recall 高确定性�
 | 摘录详情                     | `frontend/src/pages/detail/Detail.vue`                       |
 | 记忆库                       | `frontend/src/pages/library/Library.vue`                     |
 | UI 图标（Material Symbols）  | `frontend/src/infrastructure/ui/icons/`                      |
+| 扩展 i18n（`t` / locales）   | `frontend/src/infrastructure/i18n/` + `public/_locales/`     |
 
 ---
 
@@ -156,6 +158,8 @@ Yiveno = **个人信息寻回系统**（Capture 低负担 + Recall 高确定性�
 | `UPDATE_USER_SETTINGS`              | 更新用户设置                  |
 
 新增能力：先改 `frontend/src/core/messaging/*` + handler，再改 UI。
+
+**失败响应（演进契约）：** 面向用户的失败须带稳定 **`errorCode`**（英文枚举常量）；UI 经 `t()` 按 code 渲染文案。**禁止**用本地化 `error` 字符串做控制流分支（例如 `error.includes('未找到')`）。完整枚举与 schema 在 i18n 落地 Phase（handler 错误码化）一并改 `core/messaging/*`；此前可暂以 `error: string` 过渡，但新代码不得新增「靠文案判分支」。
 
 ---
 
@@ -315,6 +319,7 @@ MVP 验证问题：是否更愿保存、是否优先打开 Yiveno、是否稳定
 
 | 日期       | 变更                                                                              |
 | ---------- | --------------------------------------------------------------------------------- |
+| 2026-07-24 | 扩展 i18n 契约：`chrome.i18n` + `en`/`zh_CN`；`t()`；失败响应演进为 `errorCode`   |
 | 2026-07-24 | 摘录展示：无强制标题；正文为主、页名/域名仅出处（记忆库/Popup/Omnibox/详情）      |
 | 2026-07-24 | UI 图标选型：Material Symbols Outlined 按需内联；记忆库删除改为 hover 显图标按钮  |
 | 2026-07-24 | 摘录软删上线：`DELETE_MEMORY_ITEM`；记忆库列表 / 详情；书签不经此路径删除         |

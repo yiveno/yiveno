@@ -1,3 +1,4 @@
+import { t } from '@/infrastructure/i18n/t'
 import { optionalProp } from '@/core/common/optional-props'
 import { captureTextExcerptFromContextMenu } from '@/application/capture/capture-text-excerpt-service'
 import { flashActionBadge } from '@/infrastructure/browser/action-badge'
@@ -8,7 +9,7 @@ import { logger } from '@/infrastructure/logging/logger'
 export const CONTEXT_MENU_SAVE_SELECTION_ID = 'yiveno-save-selection' as const
 
 function getContextMenuTitle(): string {
-  return chrome.i18n.getMessage('context_menu_save_selection') || '保存到 Yiveno'
+  return t('context_menu_save_selection')
 }
 
 let listenersRegistered = false

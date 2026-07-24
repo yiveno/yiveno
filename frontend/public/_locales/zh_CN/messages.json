@@ -1,0 +1,12 @@
+{
+  "app_name": { "message": "Yiveno" },
+  "app_description": { "message": "把重要的存下来，日后用线索找回。" },
+  "context_menu_save_selection": { "message": "保存到 Yiveno" },
+  "omnibox_default_suggestion": {
+    "message": "找回书签与摘录…"
+  },
+  "omnibox_no_match": { "message": "Yiveno 中未找到匹配" },
+  "command_open_recall": {
+    "message": "打开 Yiveno 找回"
+  }
+}

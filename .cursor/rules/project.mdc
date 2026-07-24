@@ -106,6 +106,8 @@ Background **无** `window` / `document` / `localStorage`。用全局 `setTimeou
 
 - 对外：**筛选（Filter）** / **找回（Recall）**；UI **禁止**「搜索」/ `Search`。
 - 对内注释可用 search/filter。
+- 扩展用户文案：仅 `chrome.i18n` + `_locales/{en,zh_CN}/messages.json`，经 `t()`（`frontend/src/infrastructure/i18n/`）。禁止写死 UI 自然语言与 `getMessage(...) || '兜底'`。`core` 不直接调 `chrome.i18n`（注入 `t` 或返回 key）。官网不走本方案。
+- 面向用户的失败：演进为稳定 `errorCode` + UI `t()`；禁止用本地化 error 字符串做分支。
 - `:hover` / `:focus` / `:active`：**禁止** `translate` / `scale` / `rotate`；只用背景 / opacity / shadow / outline / state layer（浮层入场与 pop/shake 例外见产品文档 §3）。
 
 ---
@@ -130,6 +132,7 @@ Background **无** `window` / `document` / `localStorage`。用全局 `setTimeou
 | Commands | `frontend/src/core/commands/command-ids.ts` + `background/listeners/commands.ts` |
 | Settings | `frontend/src/pages/settings/Settings.vue` |
 | Popup | `frontend/src/pages/popup/Popup.vue` |
+| 扩展 i18n | `frontend/src/infrastructure/i18n/` + `public/_locales/` |
 
 ---
 
@@ -138,7 +141,7 @@ Background **无** `window` / `document` / `localStorage`。用全局 `setTimeou
 - [ ] 分层是否正确？Chrome API 是否只在 background / browser 封装？
 - [ ] IndexedDB 是否只经 `indexedDBManager`？
 - [ ] 新消息 type 是否已先改 messaging schema？
-- [ ] UI 文案是否无「搜索」？交互态是否无几何变换？
+- [ ] UI 文案是否无「搜索」且经 `t()` / `_locales`？交互态是否无几何变换？
 - [ ] SW 代码是否避开 `window` / `document` / `localStorage`？
 - [ ] 是否在做未上线能力并暗示可用？
 

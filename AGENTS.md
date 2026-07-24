@@ -16,7 +16,8 @@
 
 ## 代码约定
 
-- UI/API/文档统一用 **Filter（筛选）**；用户主动作使用 **Recall（找回）**；UI 文案禁止出现 `Search`。
+- UI/API/文档统一用 **Filter（筛选）**；用户主动作使用 **Recall（找回）**；UI 文案禁止出现 `Search` /「搜索」。
+- 扩展用户文案：仅 `_locales/{en,zh_CN}` + `frontend/src/infrastructure/i18n` 的 `t()`；禁止写死 UI 文案与 `|| '兜底'`。`core` 注入 `t` 或返回 message key。官网另选方案，不共用 messages 文件。
 - TypeScript 禁止 `any` / `as any`；外部数据用 Zod 校验；JSDoc 用中文。
 - Vue 组件必须 `defineOptions({ name: 'ComponentName' })`。
 - 需要跨层事件时再引入事件总线（当前无 mitt / emitEvent）。

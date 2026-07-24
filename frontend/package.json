@@ -16,6 +16,7 @@
     "format": "bunx prettier --write \"src/**/*.{ts,vue,css}\" \"vite/**/*.ts\" \"*.json\"",
     "test": "vitest",
     "test:run": "vitest run",
+    "i18n:check": "bun scripts/check-i18n-keys.mjs",
     "clean": "bun scripts/clean-dist.cjs"
   },
   "dependencies": {

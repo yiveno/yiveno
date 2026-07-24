@@ -62,6 +62,10 @@ function createChromeMock(initial: StorageMap = {}) {
     i18n: {
       getMessage: vi.fn(() => '保存到 Yiveno')
     },
+    action: {
+      setBadgeBackgroundColor: vi.fn(async () => undefined),
+      setBadgeText: vi.fn(async () => undefined)
+    },
     scripting: {
       executeScript: vi.fn(async () => [
         {
