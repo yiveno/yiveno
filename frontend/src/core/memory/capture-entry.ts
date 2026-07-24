@@ -4,6 +4,7 @@ import { z } from 'zod'
 export const CaptureEntrySchema = z.enum([
   'popup',
   'context_menu',
+  'selection_toolbar',
   'omnibox',
   'shortcut',
   'sync',

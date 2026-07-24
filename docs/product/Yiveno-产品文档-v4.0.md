@@ -62,6 +62,7 @@ Yiveno = **个人信息寻回系统**（Capture 低负担 + Recall 高确定性�
 | --------------------------- | -------------------- | ---------------------------------------------------------------------- |
 | Popup 关键词找回            | 已上线               | Top Pick + Also Possible；扫描上限约 2000                              |
 | 右键保存选区                | 已上线               | Text Excerpt；非书签的主动 Capture                                     |
+| 划词保存浮层                | 已上线               | Content Script；Settings 可关；默认开；成功/失败临时 badge             |
 | Chrome 书签导入 + 增量 sync | 已上线               | 书签唯一写入主路径；原生加书签 → onCreated 同步                        |
 | LocalProfile / ownerId      | 已上线               | 未登录可用                                                             |
 | Settings                    | 已上线（最小）       | `options_ui`；快捷键查看+跳转原生改键页；隐私/同步/AI/账户仅标注未上线 |
@@ -92,7 +93,7 @@ Yiveno = **个人信息寻回系统**（Capture 低负担 + Recall 高确定性�
 `id`, `ownerId`, `sourceLocalProfileId`, `clues`, `createdAt`, `updatedAt`, `deletedAt?`
 
 - `ownerId` = `accountId ?? localProfileId`
-- `CaptureEntry` = `popup` | `context_menu` | `omnibox` | `shortcut` | `sync` | `import`
+- `CaptureEntry` = `popup` | `context_menu` | `selection_toolbar` | `omnibox` | `shortcut` | `sync` | `import`
 
 ### 2.3 Payload（必填摘要）
 
@@ -137,6 +138,8 @@ Yiveno = **个人信息寻回系统**（Capture 低负担 + Recall 高确定性�
 | `GET_CHROME_BOOKMARK_IMPORT_STATUS` | 导入进度                  |
 | `GET_EXTENSION_COMMANDS`            | 读取命令与快捷键绑定      |
 | `OPEN_CHROME_SHORTCUTS_PAGE`        | 打开 Chrome 快捷键设置页  |
+| `GET_USER_SETTINGS`                 | 读取用户设置              |
+| `UPDATE_USER_SETTINGS`              | 更新用户设置              |
 
 新增能力：先改 `frontend/src/core/messaging/*` + handler，再改 UI。
 
@@ -187,6 +190,7 @@ Yiveno = **个人信息寻回系统**（Capture 低负担 + Recall 高确定性�
 
 | 分区   | 状态   | 说明                                               |
 | ------ | ------ | -------------------------------------------------- |
+| 保存   | 已上线 | 划词浮层开关（默认开）                             |
 | 快捷键 | 已上线 | 展示绑定；改键跳转 `chrome://extensions/shortcuts` |
 | 隐私   | 未上线 | 仅占位文案，不暗示可用                             |
 | 同步   | 未上线 | 同上                                               |
@@ -200,6 +204,7 @@ Yiveno = **个人信息寻回系统**（Capture 低负担 + Recall 高确定性�
 | `popup.html`    | 活跃；可打开 Settings                                 |
 | `background.js` | 活跃                                                  |
 | `settings.html` | 已进 `options_ui`（`open_in_tab: true`）              |
+| content script  | 已注册；`content-selection-toolbar.js`（http/https）  |
 | offscreen 源码  | 占位；未注册 permission；embedding 接入前不启用       |
 | Omnibox         | 已注册；keyword `yi`                                  |
 | `commands`      | 已注册；找回 `Alt+Shift+Y`（`_execute_action`，可改） |
@@ -296,6 +301,8 @@ MVP 验证问题：是否更愿保存、是否优先打开 Yiveno、是否稳定
 
 | 日期       | 变更                                                                              |
 | ---------- | --------------------------------------------------------------------------------- |
+| 2026-07-24 | 摘录保存成功/失败：工具栏临时 badge（✓ / !）；划词与右键共用                      |
+| 2026-07-24 | 划词保存浮层上线；Settings 开关默认开启；`captureEntry=selection_toolbar`         |
 | 2026-07-24 | Settings 最小可用进 manifest：快捷键查看+跳转原生改键；Popup 入口                 |
 | 2026-07-24 | 移除「保存当前页」；书签仅 Chrome 原生+sync；快捷键只保留找回开 Popup             |
 | 2026-07-24 | 快捷键已上线：命令契约+registry；找回 Alt+Shift+Y 开 Popup                        |

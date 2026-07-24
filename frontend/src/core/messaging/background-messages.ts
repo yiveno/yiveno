@@ -16,6 +16,10 @@ import type {
   RecallBackgroundMessage,
   RecallBackgroundResponse
 } from '@/core/messaging/recall-messages'
+import type {
+  SettingsBackgroundMessage,
+  SettingsBackgroundResponse
+} from '@/core/messaging/settings-messages'
 
 export { BACKGROUND_MESSAGE_SCOPE }
 
@@ -53,6 +57,7 @@ export type BackgroundMessage =
   | RecallBackgroundMessage
   | ImportBackgroundMessage
   | CommandsBackgroundMessage
+  | SettingsBackgroundMessage
 
 export type BackgroundMessageResponse =
   | GetLocalIdentityResponse
@@ -61,6 +66,7 @@ export type BackgroundMessageResponse =
   | RecallBackgroundResponse
   | ImportBackgroundResponse
   | CommandsBackgroundResponse
+  | SettingsBackgroundResponse
 
 /** 判断是否为 Background scope 消息。 */
 export function isBackgroundScopedMessage(

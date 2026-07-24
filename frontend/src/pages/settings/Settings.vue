@@ -8,18 +8,26 @@ import {
 import type { ExtensionCommandInfo } from '@/core/messaging/commands-messages'
 import {
   fetchExtensionCommands,
-  openChromeShortcutsPage
+  fetchUserSettings,
+  openChromeShortcutsPage,
+  updateUserSettings
 } from '@/infrastructure/messaging/background-client'
+import { asMdSwitchElement } from '@/infrastructure/ui/register-material-web'
 
 defineOptions({ name: 'SettingsPage' })
 
-type CommandsLoadState = 'loading' | 'ready' | 'error'
+type LoadState = 'loading' | 'ready' | 'error'
 
 const commands = ref<ExtensionCommandInfo[]>([])
-const commandsState = ref<CommandsLoadState>('loading')
+const commandsState = ref<LoadState>('loading')
 const commandsError = ref('')
 const openingShortcuts = ref(false)
 const openShortcutsError = ref('')
+
+const selectionToolbarEnabled = ref(true)
+const settingsState = ref<LoadState>('loading')
+const settingsError = ref('')
+const savingSelectionToolbar = ref(false)
 
 const commandRows = computed(() =>
   commands.value.map(command => ({
@@ -66,8 +74,56 @@ async function handleOpenShortcutsPage() {
   }
 }
 
+async function loadUserSettings() {
+  settingsState.value = 'loading'
+  settingsError.value = ''
+
+  try {
+    const response = await fetchUserSettings()
+    if (!response.ok) {
+      settingsState.value = 'error'
+      settingsError.value = response.error
+      return
+    }
+
+    selectionToolbarEnabled.value = response.settings.selectionToolbarEnabled
+    settingsState.value = 'ready'
+  } catch (error) {
+    settingsState.value = 'error'
+    settingsError.value = error instanceof Error ? error.message : '读取设置失败'
+  }
+}
+
+async function handleSelectionToolbarToggle(event: Event) {
+  const switchEl = asMdSwitchElement(event.target)
+  if (!switchEl) {
+    return
+  }
+
+  const nextValue = switchEl.selected
+  savingSelectionToolbar.value = true
+  settingsError.value = ''
+
+  try {
+    const response = await updateUserSettings({ selectionToolbarEnabled: nextValue })
+    if (!response.ok) {
+      switchEl.selected = !nextValue
+      settingsError.value = response.error
+      return
+    }
+
+    selectionToolbarEnabled.value = response.settings.selectionToolbarEnabled
+  } catch (error) {
+    switchEl.selected = !nextValue
+    settingsError.value = error instanceof Error ? error.message : '更新设置失败'
+  } finally {
+    savingSelectionToolbar.value = false
+  }
+}
+
 onMounted(() => {
   void loadCommands()
+  void loadUserSettings()
 })
 </script>
 
@@ -78,6 +134,34 @@ onMounted(() => {
       <h1 class="settings-title">设置</h1>
       <p class="settings-subtitle">管理找回相关偏好。未上线能力不会假装可用。</p>
     </header>
+
+    <section class="settings-section" aria-labelledby="settings-capture-heading">
+      <div class="settings-section-head">
+        <h2 id="settings-capture-heading" class="settings-section-title">保存</h2>
+        <p class="settings-section-copy">控制划词后的轻量保存浮层；关闭后仍可用右键保存选区。</p>
+      </div>
+
+      <p v-if="settingsState === 'loading'" class="settings-status" role="status">正在读取设置…</p>
+      <p v-else-if="settingsState === 'error'" class="settings-error" role="alert">
+        {{ settingsError }}
+      </p>
+
+      <div v-else class="settings-toggle">
+        <div class="settings-toggle-copy">
+          <span class="settings-toggle-title">划词显示保存菜单</span>
+          <span class="settings-toggle-hint">选中文字后出现「保存到 Yiveno」</span>
+        </div>
+        <md-switch
+          aria-label="划词显示保存菜单"
+          :selected="selectionToolbarEnabled"
+          :disabled="savingSelectionToolbar"
+          @change="handleSelectionToolbarToggle"
+        />
+      </div>
+      <p v-if="settingsState === 'ready' && settingsError" class="settings-error" role="alert">
+        {{ settingsError }}
+      </p>
+    </section>
 
     <section class="settings-section" aria-labelledby="settings-shortcuts-heading">
       <div class="settings-section-head">
@@ -110,22 +194,20 @@ onMounted(() => {
       </ul>
 
       <div class="settings-actions">
-        <button
-          class="settings-primary"
+        <md-filled-button
           type="button"
           :disabled="openingShortcuts"
           @click="handleOpenShortcutsPage"
         >
           {{ openingShortcuts ? '正在打开…' : '在 Chrome 中更改快捷键' }}
-        </button>
-        <button
-          class="settings-secondary"
+        </md-filled-button>
+        <md-outlined-button
           type="button"
           :disabled="commandsState === 'loading'"
           @click="loadCommands"
         >
           刷新
-        </button>
+        </md-outlined-button>
       </div>
       <p v-if="openShortcutsError" class="settings-error" role="alert">{{ openShortcutsError }}</p>
     </section>
@@ -150,7 +232,7 @@ onMounted(() => {
   max-width: 720px;
   margin: 0 auto;
   padding: 28px 24px 40px;
-  color: #17202a;
+  color: var(--md-sys-color-on-background);
 }
 
 .settings-header {
@@ -162,7 +244,7 @@ onMounted(() => {
   font-size: 12px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #64748b;
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .settings-title {
@@ -175,19 +257,19 @@ onMounted(() => {
   margin: 0;
   font-size: 14px;
   line-height: 1.5;
-  color: #52606d;
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .settings-section {
   margin-bottom: 24px;
   padding: 18px;
-  border: 1px solid #dbe3ea;
-  border-radius: 14px;
-  background: #fff;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  background: var(--md-sys-color-surface-container-lowest);
 }
 
 .settings-section--muted {
-  background: #f8fafc;
+  background: var(--md-sys-color-surface-container-low);
 }
 
 .settings-section-head {
@@ -204,20 +286,47 @@ onMounted(() => {
   margin: 0;
   font-size: 13px;
   line-height: 1.5;
-  color: #64748b;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.settings-toggle {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.settings-toggle-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.settings-toggle-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.settings-toggle-hint {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .settings-status {
   margin: 0 0 12px;
   font-size: 13px;
-  color: #64748b;
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .settings-error {
   margin: 12px 0 0;
   font-size: 13px;
   line-height: 1.4;
-  color: #b42318;
+  color: var(--md-sys-color-error);
 }
 
 .settings-command-list {
@@ -234,9 +343,9 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 12px 14px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #f8fafc;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  background: var(--md-sys-color-surface-container-low);
 }
 
 .settings-command-meta {
@@ -252,7 +361,7 @@ onMounted(() => {
 .settings-command-name {
   margin: 0;
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--md-sys-color-outline);
   word-break: break-all;
 }
 
@@ -260,58 +369,24 @@ onMounted(() => {
   flex-shrink: 0;
   margin: 0;
   padding: 6px 10px;
-  border-radius: 8px;
+  border-radius: var(--md-sys-shape-corner-small, 8px);
   font-size: 13px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  color: #0e7490;
-  background: #e0f2fe;
+  color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-primary-container);
 }
 
 .settings-command-shortcut--unbound {
-  color: #b45309;
-  background: #fff7ed;
+  color: var(--md-sys-color-tertiary);
+  background: var(--md-sys-color-tertiary-container);
 }
 
 .settings-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-}
-
-.settings-primary,
-.settings-secondary {
-  padding: 10px 14px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.settings-primary {
-  border: none;
-  color: #fff;
-  background: #0891b2;
-}
-
-.settings-primary:disabled,
-.settings-secondary:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.settings-primary:not(:disabled):hover {
-  background: #0e7490;
-}
-
-.settings-secondary {
-  border: 1px solid #cbd5e1;
-  color: #334155;
-  background: #fff;
-}
-
-.settings-secondary:not(:disabled):hover {
-  background: #eef2f6;
+  align-items: center;
 }
 
 .settings-upcoming-list {
@@ -319,6 +394,6 @@ onMounted(() => {
   padding-left: 18px;
   font-size: 13px;
   line-height: 1.7;
-  color: #64748b;
+  color: var(--md-sys-color-on-surface-variant);
 }
 </style>

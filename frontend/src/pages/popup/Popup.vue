@@ -149,7 +149,7 @@ async function handleOpenSettings() {
     <header class="recall-header">
       <div class="recall-header-top">
         <p class="recall-eyebrow">Yiveno</p>
-        <button class="recall-settings" type="button" @click="handleOpenSettings">设置</button>
+        <md-text-button type="button" @click="handleOpenSettings">设置</md-text-button>
       </div>
       <h1 class="recall-title">找到它！</h1>
       <p class="recall-subtitle">在你存过的东西里找，不用再去网上搜。</p>
@@ -161,16 +161,11 @@ async function handleOpenSettings() {
         aria-live="polite"
       >
         <p class="recall-import-label">{{ importProgressLabel }}</p>
-        <div
+        <md-linear-progress
           v-if="importState?.status === 'running'"
-          class="recall-import-track"
-          role="progressbar"
-          :aria-valuenow="importProgressPercent"
-          aria-valuemin="0"
-          aria-valuemax="100"
-        >
-          <div class="recall-import-bar" :style="{ width: `${importProgressPercent}%` }" />
-        </div>
+          :value="importProgressPercent / 100"
+          aria-label="书签导入进度"
+        />
       </section>
     </header>
 
@@ -183,13 +178,9 @@ async function handleOpenSettings() {
         rows="3"
         placeholder="例如：上周那篇讲留存的、某个产品的分析…"
       />
-      <button
-        class="recall-submit"
-        type="submit"
-        :disabled="!clue.trim() || viewState === 'loading'"
-      >
+      <md-filled-button type="submit" :disabled="!clue.trim() || viewState === 'loading'">
         {{ viewState === 'loading' ? '正在找回…' : '开始找回' }}
-      </button>
+      </md-filled-button>
     </form>
 
     <p v-if="viewState === 'loading'" class="recall-status" role="status">正在你的记忆库里筛选…</p>
@@ -254,8 +245,8 @@ async function handleOpenSettings() {
 .recall-shell {
   width: 360px;
   padding: 20px;
-  color: var(--recall-fg, #17202a);
-  background: var(--recall-bg, #f8fafc);
+  color: var(--md-sys-color-on-background);
+  background: var(--md-sys-color-background);
 }
 
 .recall-header {
@@ -275,22 +266,7 @@ async function handleOpenSettings() {
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #64748b;
-}
-
-.recall-settings {
-  padding: 4px 8px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #0e7490;
-  background: #fff;
-  cursor: pointer;
-}
-
-.recall-settings:hover {
-  background: #eef2f6;
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .recall-title {
@@ -303,44 +279,31 @@ async function handleOpenSettings() {
   margin: 0 0 12px;
   font-size: 14px;
   line-height: 1.5;
-  color: #52606d;
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .recall-import {
   margin-bottom: 12px;
   padding: 10px 12px;
-  border: 1px solid #dbe3ea;
-  border-radius: 10px;
-  background: #fff;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium, 10px);
+  background: var(--md-sys-color-surface-container-lowest);
 }
 
 .recall-import--error {
-  border-color: #fecaca;
-  background: #fef2f2;
+  border-color: var(--md-sys-color-error-container);
+  background: var(--md-sys-color-error-container);
 }
 
 .recall-import-label {
   margin: 0 0 8px;
   font-size: 12px;
   line-height: 1.4;
-  color: #64748b;
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .recall-import--error .recall-import-label {
-  color: #b42318;
-}
-
-.recall-import-track {
-  height: 6px;
-  border-radius: 999px;
-  background: #e2e8f0;
-  overflow: hidden;
-}
-
-.recall-import-bar {
-  height: 100%;
-  border-radius: 999px;
-  background: #0891b2;
+  color: var(--md-sys-color-on-error-container);
 }
 
 .recall-form {
@@ -356,61 +319,41 @@ async function handleOpenSettings() {
 .recall-input {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-medium, 10px);
   font-family: inherit;
   font-size: inherit;
   line-height: 1.5;
   color: inherit;
-  background: #fff;
+  background: var(--md-sys-color-surface-container-lowest);
   resize: vertical;
 }
 
 .recall-input:focus {
-  border-color: #0891b2;
-  outline: 2px solid rgb(8 145 178 / 20%);
-}
-
-.recall-submit {
-  padding: 10px 14px;
-  border: none;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #fff;
-  background: #0891b2;
-  cursor: pointer;
-}
-
-.recall-submit:disabled {
-  background: #94a3b8;
-  cursor: not-allowed;
-}
-
-.recall-submit:not(:disabled):hover {
-  background: #0e7490;
+  border-color: var(--md-sys-color-primary);
+  outline: 2px solid color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
 }
 
 .recall-status {
   margin: 14px 0 0;
   font-size: 13px;
   line-height: 1.4;
-  color: #64748b;
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .recall-error {
   margin: 14px 0 0;
   font-size: 13px;
   line-height: 1.4;
-  color: #b42318;
+  color: var(--md-sys-color-error);
 }
 
 .recall-empty {
   margin-top: 16px;
   padding: 14px;
-  border: 1px dashed #cbd5e1;
-  border-radius: 12px;
-  background: #fff;
+  border: 1px dashed var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  background: var(--md-sys-color-surface-container-lowest);
 }
 
 .recall-empty-title {
@@ -423,7 +366,7 @@ async function handleOpenSettings() {
   margin: 0;
   font-size: 13px;
   line-height: 1.5;
-  color: #64748b;
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .recall-results {
@@ -438,7 +381,7 @@ async function handleOpenSettings() {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  color: #64748b;
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .recall-top-pick {
@@ -450,30 +393,34 @@ async function handleOpenSettings() {
   margin: 0;
   font-size: 12px;
   line-height: 1.4;
-  color: #0f766e;
+  color: var(--md-sys-color-tertiary);
 }
 
 .recall-card {
   display: block;
   padding: 12px;
-  border: 1px solid #dbe3ea;
-  border-radius: 12px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
   text-decoration: none;
   color: inherit;
-  background: #fff;
+  background: var(--md-sys-color-surface-container-lowest);
 }
 
 .recall-card--top {
-  border-color: #99d5df;
-  background: #f0fbfd;
+  border-color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-primary-container);
 }
 
 .recall-card:hover {
-  background: #eef2f6;
+  background: var(--md-sys-color-surface-container-high);
 }
 
 .recall-card--top:hover {
-  background: #e6f7fa;
+  background: color-mix(
+    in srgb,
+    var(--md-sys-color-primary-container) 88%,
+    var(--md-sys-color-primary) 12%
+  );
 }
 
 .recall-card-meta {
@@ -486,12 +433,12 @@ async function handleOpenSettings() {
 .recall-type {
   font-size: 11px;
   font-weight: 600;
-  color: #0e7490;
+  color: var(--md-sys-color-primary);
 }
 
 .recall-reason {
   font-size: 11px;
-  color: #64748b;
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .recall-card-title {
@@ -507,14 +454,14 @@ async function handleOpenSettings() {
 .recall-card-subtitle {
   margin: 0;
   font-size: 12px;
-  color: #64748b;
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .recall-card-excerpt {
   margin: 8px 0 0;
   font-size: 12px;
   line-height: 1.5;
-  color: #334155;
+  color: var(--md-sys-color-on-surface);
 }
 
 .recall-also-list {

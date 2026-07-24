@@ -15,6 +15,10 @@ import {
   handleListMemoryItems
 } from '@/background/handlers/memory-handler'
 import { handleRecallWithClue } from '@/background/handlers/recall-handler'
+import {
+  handleGetUserSettings,
+  handleUpdateUserSettings
+} from '@/background/handlers/settings-handler'
 import { logger } from '@/infrastructure/logging/logger'
 import {
   getCurrentOwnerId,
@@ -56,6 +60,10 @@ async function dispatchBackgroundMessage(
       return handleGetExtensionCommands()
     case 'OPEN_CHROME_SHORTCUTS_PAGE':
       return handleOpenChromeShortcutsPage()
+    case 'GET_USER_SETTINGS':
+      return handleGetUserSettings()
+    case 'UPDATE_USER_SETTINGS':
+      return handleUpdateUserSettings(message.payload)
     default:
       return { ok: false, error: `未知消息类型: ${(message as { type: string }).type}` }
   }

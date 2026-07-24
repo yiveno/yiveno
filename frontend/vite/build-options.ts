@@ -1,4 +1,6 @@
-/** 扩展多入口（popup / settings / background / offscreen）。 */
+/** 扩展多入口（popup / settings / background / offscreen）。
+ * content script 由 content-scripts-iife 插件单独打成 IIFE，不放在此列表。
+ */
 import { resolve } from 'path'
 import { SRC_DIR } from './constants'
 

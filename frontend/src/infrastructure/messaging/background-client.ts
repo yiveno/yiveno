@@ -15,6 +15,10 @@ import type {
   RecallBackgroundResponse,
   RecallWithClueMessage
 } from '@/core/messaging/recall-messages'
+import type {
+  SettingsBackgroundResponse,
+  UpdateUserSettingsMessage
+} from '@/core/messaging/settings-messages'
 
 /** 向 Background 发送消息并返回响应。 */
 export async function sendBackgroundMessage<TResponse extends BackgroundMessageResponse>(
@@ -60,4 +64,23 @@ export async function openChromeShortcutsPage(): Promise<CommandsBackgroundRespo
     type: 'OPEN_CHROME_SHORTCUTS_PAGE'
   }
   return sendBackgroundMessage<CommandsBackgroundResponse>(message)
+}
+
+/** 读取用户设置。 */
+export async function fetchUserSettings(): Promise<SettingsBackgroundResponse> {
+  return sendBackgroundMessage<SettingsBackgroundResponse>({
+    scope: 'background',
+    type: 'GET_USER_SETTINGS'
+  })
+}
+
+/** 更新用户设置。 */
+export async function updateUserSettings(
+  payload: UpdateUserSettingsMessage['payload']
+): Promise<SettingsBackgroundResponse> {
+  return sendBackgroundMessage<SettingsBackgroundResponse>({
+    scope: 'background',
+    type: 'UPDATE_USER_SETTINGS',
+    payload
+  })
 }

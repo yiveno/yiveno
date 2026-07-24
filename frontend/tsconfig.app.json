@@ -28,6 +28,9 @@
       "@yiveno/types": ["../packages/types/src/index.ts"]
     }
   },
+  "vueCompilerOptions": {
+    "isCustomElement": "tag => tag.startsWith('md-')"
+  },
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"],
   "exclude": [
     // 依赖和构建产物

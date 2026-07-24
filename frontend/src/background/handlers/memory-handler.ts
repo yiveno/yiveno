@@ -6,6 +6,7 @@ import {
   parseCaptureTextExcerptPayload,
   parseListMemoryItemsPayload
 } from '@/core/messaging/memory-messages'
+import { flashActionBadge } from '@/infrastructure/browser/action-badge'
 import { logger } from '@/infrastructure/logging/logger'
 
 function toErrorResponse(error: unknown): MemoryBackgroundResponse {
@@ -50,9 +51,11 @@ export async function handleCaptureTextExcerpt(
       },
       captureEntry: input.captureEntry ?? 'context_menu'
     })
+    void flashActionBadge('success')
     return { ok: true, item }
   } catch (error) {
     logger.error('Background', '捕获 Text Excerpt 失败', error)
+    void flashActionBadge('error')
     return toErrorResponse(error)
   }
 }

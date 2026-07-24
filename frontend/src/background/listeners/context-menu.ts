@@ -1,5 +1,6 @@
 import { optionalProp } from '@/core/common/optional-props'
 import { captureTextExcerptFromContextMenu } from '@/application/capture/capture-text-excerpt-service'
+import { flashActionBadge } from '@/infrastructure/browser/action-badge'
 import { isSavablePageUrl } from '@/infrastructure/browser/active-tab-reader'
 import { logger } from '@/infrastructure/logging/logger'
 
@@ -103,6 +104,7 @@ export async function handleContextMenuClick(
     ...optionalProp('tabId', tab?.id)
   })
 
+  void flashActionBadge('success')
   logger.info('ContextMenu', '选区已保存为 Text Excerpt', {
     memoryItemId: item.id,
     sourceUrl
@@ -119,6 +121,7 @@ export function registerContextMenuListeners(): void {
   chrome.contextMenus.onClicked.addListener((info, tab) => {
     void handleContextMenuClick(info, tab).catch(error => {
       logger.error('ContextMenu', '保存选区失败', error)
+      void flashActionBadge('error')
     })
   })
 
