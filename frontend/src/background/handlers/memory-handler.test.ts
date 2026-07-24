@@ -3,11 +3,7 @@ import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { LOCAL_PROFILE_STORAGE_KEY, type LocalProfile } from '@/core/identity/local-profile'
-import {
-  handleCaptureBookmark,
-  handleCaptureCurrentPage,
-  handleListMemoryItems
-} from '@/background/handlers/memory-handler'
+import { handleCaptureBookmark, handleListMemoryItems } from '@/background/handlers/memory-handler'
 import { resetMemoryDatabaseInitializationForTests } from '@/infrastructure/indexeddb/memory-db'
 
 type StorageMap = Record<string, unknown>
@@ -102,19 +98,5 @@ describe('memory-handler', () => {
   it('handleCaptureBookmark 拒绝非法 payload', async () => {
     const response = await handleCaptureBookmark({ title: '', url: 'not-a-url' })
     expect(response.ok).toBe(false)
-  })
-
-  it('handleCaptureCurrentPage 读取活动标签并保存', async () => {
-    const response = await handleCaptureCurrentPage({ captureEntry: 'popup' })
-    expect(response.ok).toBe(true)
-    if (!response.ok) {
-      return
-    }
-
-    expect(response.item.type).toBe('bookmark')
-    expect(response.item.payload).toMatchObject({
-      title: 'Example Page',
-      url: 'https://example.com/article'
-    })
   })
 })

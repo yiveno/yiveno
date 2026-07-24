@@ -1,5 +1,12 @@
 {
   "app_name": { "message": "Yiveno" },
   "app_description": { "message": "Save what matters. Recall it later." },
-  "context_menu_save_selection": { "message": "Save to Yiveno" }
+  "context_menu_save_selection": { "message": "Save to Yiveno" },
+  "omnibox_default_suggestion": {
+    "message": "Recall bookmarks and excerpts…"
+  },
+  "omnibox_no_match": { "message": "No matching memory in Yiveno" },
+  "command_open_recall": {
+    "message": "Open Yiveno Recall"
+  }
 }

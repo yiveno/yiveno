@@ -1,6 +1,10 @@
 import type { LocalProfile } from '@/core/identity/local-profile'
 import { BACKGROUND_MESSAGE_SCOPE } from '@/core/messaging/constants'
 import type {
+  CommandsBackgroundMessage,
+  CommandsBackgroundResponse
+} from '@/core/messaging/commands-messages'
+import type {
   ImportBackgroundMessage,
   ImportBackgroundResponse
 } from '@/core/messaging/import-messages'
@@ -48,6 +52,7 @@ export type BackgroundMessage =
   | MemoryBackgroundMessage
   | RecallBackgroundMessage
   | ImportBackgroundMessage
+  | CommandsBackgroundMessage
 
 export type BackgroundMessageResponse =
   | GetLocalIdentityResponse
@@ -55,6 +60,7 @@ export type BackgroundMessageResponse =
   | MemoryBackgroundResponse
   | RecallBackgroundResponse
   | ImportBackgroundResponse
+  | CommandsBackgroundResponse
 
 /** 判断是否为 Background scope 消息。 */
 export function isBackgroundScopedMessage(

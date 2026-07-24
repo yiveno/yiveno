@@ -3,13 +3,14 @@ import type {
   BackgroundMessageResponse
 } from '@/core/messaging/background-messages'
 import type {
+  CommandsBackgroundResponse,
+  GetExtensionCommandsMessage,
+  OpenChromeShortcutsPageMessage
+} from '@/core/messaging/commands-messages'
+import type {
   ImportBackgroundResponse,
   GetChromeBookmarkImportStatusMessage
 } from '@/core/messaging/import-messages'
-import type {
-  CaptureCurrentPageMessage,
-  MemoryBackgroundResponse
-} from '@/core/messaging/memory-messages'
 import type {
   RecallBackgroundResponse,
   RecallWithClueMessage
@@ -20,18 +21,6 @@ export async function sendBackgroundMessage<TResponse extends BackgroundMessageR
   message: BackgroundMessage
 ): Promise<TResponse> {
   return (await chrome.runtime.sendMessage(message)) as TResponse
-}
-
-/** 捕获当前活动页为 Bookmark MemoryItem。 */
-export async function captureCurrentPage(
-  payload?: CaptureCurrentPageMessage['payload']
-): Promise<MemoryBackgroundResponse> {
-  const message: CaptureCurrentPageMessage = {
-    scope: 'background',
-    type: 'CAPTURE_CURRENT_PAGE',
-    payload
-  }
-  return sendBackgroundMessage<MemoryBackgroundResponse>(message)
 }
 
 /** 根据线索执行 Recall。 */
@@ -53,4 +42,22 @@ export async function fetchChromeBookmarkImportStatus(): Promise<ImportBackgroun
     type: 'GET_CHROME_BOOKMARK_IMPORT_STATUS'
   }
   return sendBackgroundMessage<ImportBackgroundResponse>(message)
+}
+
+/** 读取扩展命令与当前快捷键。 */
+export async function fetchExtensionCommands(): Promise<CommandsBackgroundResponse> {
+  const message: GetExtensionCommandsMessage = {
+    scope: 'background',
+    type: 'GET_EXTENSION_COMMANDS'
+  }
+  return sendBackgroundMessage<CommandsBackgroundResponse>(message)
+}
+
+/** 打开 Chrome 原生快捷键设置页。 */
+export async function openChromeShortcutsPage(): Promise<CommandsBackgroundResponse> {
+  const message: OpenChromeShortcutsPageMessage = {
+    scope: 'background',
+    type: 'OPEN_CHROME_SHORTCUTS_PAGE'
+  }
+  return sendBackgroundMessage<CommandsBackgroundResponse>(message)
 }

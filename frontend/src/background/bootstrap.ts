@@ -1,6 +1,8 @@
 import { ensureChromeBookmarksImported } from '@/application/capture/import-chrome-bookmarks-service'
 import { registerChromeBookmarkSyncListeners } from '@/background/listeners/chrome-bookmark-sync'
+import { registerCommandListeners } from '@/background/listeners/commands'
 import { registerContextMenuListeners } from '@/background/listeners/context-menu'
+import { registerOmniboxListeners } from '@/background/listeners/omnibox'
 import { logger } from '@/infrastructure/logging/logger'
 import {
   getCurrentOwnerId,
@@ -24,6 +26,8 @@ async function bootstrapBackground(): Promise<void> {
 
   registerChromeBookmarkSyncListeners()
   registerContextMenuListeners()
+  registerOmniboxListeners()
+  registerCommandListeners()
 
   logger.info('Background', '本地身份与 Memory DB 已就绪', {
     localProfileId: profile.localProfileId,

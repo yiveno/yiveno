@@ -42,19 +42,6 @@ export type CaptureTextExcerptMessage = {
   payload: z.infer<typeof captureTextExcerptPayloadSchema>
 }
 
-const captureCurrentPagePayloadSchema = z
-  .object({
-    captureEntry: CaptureEntrySchema.optional()
-  })
-  .optional()
-
-/** 捕获当前活动页为 Bookmark MemoryItem。 */
-export type CaptureCurrentPageMessage = {
-  scope: BackgroundMessageScope
-  type: 'CAPTURE_CURRENT_PAGE'
-  payload?: z.infer<typeof captureCurrentPagePayloadSchema>
-}
-
 /** 列出当前用户的 MemoryItem。 */
 export type ListMemoryItemsMessage = {
   scope: BackgroundMessageScope
@@ -65,7 +52,6 @@ export type ListMemoryItemsMessage = {
 export type MemoryBackgroundMessage =
   | CaptureBookmarkMessage
   | CaptureTextExcerptMessage
-  | CaptureCurrentPageMessage
   | ListMemoryItemsMessage
 
 export type MemoryItemSuccessResponse = {
@@ -99,8 +85,4 @@ export function parseCaptureTextExcerptPayload(value: unknown) {
 
 export function parseListMemoryItemsPayload(value: unknown) {
   return listMemoryItemsPayloadSchema.parse(value)
-}
-
-export function parseCaptureCurrentPagePayload(value: unknown) {
-  return captureCurrentPagePayloadSchema.parse(value)
 }

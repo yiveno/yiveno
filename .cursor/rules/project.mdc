@@ -39,7 +39,7 @@ alwaysApply: true
 
 Yiveno = **个人信息寻回**（Capture + Recall）。**不是**书签管理器 / AI 整理工具。
 
-- 当前优先：产品文档 §0.4 **Omnibox 找回**（共用 `recallService`）。
+- 当前优先：产品文档 §0.4 **线索解释 / 空状态**（Settings 最小可用已上线）。
 - Free：仅关键词 Filter；Hybrid / embedding / LLM ≠ 当前默认范围。
 - 未标「已上线」的能力：不得实现成可用，也不得在 UI 暗示已可用。
 
@@ -126,6 +126,9 @@ Background **无** `window` / `document` / `localStorage`。用全局 `setTimeou
 | UI → SW | `frontend/src/infrastructure/messaging/background-client.ts` |
 | SW 分发 | `frontend/src/background/handlers/message-handler.ts` |
 | Recall | `frontend/src/application/recall/recall-service.ts` |
+| Omnibox | `frontend/src/background/listeners/omnibox.ts` |
+| Commands | `frontend/src/core/commands/command-ids.ts` + `background/listeners/commands.ts` |
+| Settings | `frontend/src/pages/settings/Settings.vue` |
 | Popup | `frontend/src/pages/popup/Popup.vue` |
 
 ---

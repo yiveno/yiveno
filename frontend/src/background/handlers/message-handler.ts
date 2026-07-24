@@ -4,10 +4,13 @@ import type {
   GetLocalIdentityResponse
 } from '@/core/messaging/background-messages'
 import { isBackgroundScopedMessage } from '@/core/messaging/background-messages'
+import {
+  handleGetExtensionCommands,
+  handleOpenChromeShortcutsPage
+} from '@/background/handlers/commands-handler'
 import { handleGetChromeBookmarkImportStatus } from '@/background/handlers/import-handler'
 import {
   handleCaptureBookmark,
-  handleCaptureCurrentPage,
   handleCaptureTextExcerpt,
   handleListMemoryItems
 } from '@/background/handlers/memory-handler'
@@ -43,21 +46,23 @@ async function dispatchBackgroundMessage(
       return handleCaptureBookmark(message.payload)
     case 'CAPTURE_TEXT_EXCERPT':
       return handleCaptureTextExcerpt(message.payload)
-    case 'CAPTURE_CURRENT_PAGE':
-      return handleCaptureCurrentPage(message.payload)
     case 'LIST_MEMORY_ITEMS':
       return handleListMemoryItems(message.payload)
     case 'RECALL_WITH_CLUE':
       return handleRecallWithClue(message.payload)
     case 'GET_CHROME_BOOKMARK_IMPORT_STATUS':
       return handleGetChromeBookmarkImportStatus()
+    case 'GET_EXTENSION_COMMANDS':
+      return handleGetExtensionCommands()
+    case 'OPEN_CHROME_SHORTCUTS_PAGE':
+      return handleOpenChromeShortcutsPage()
     default:
       return { ok: false, error: `未知消息类型: ${(message as { type: string }).type}` }
   }
 }
 
 /**
- * 处理 scope=background 的扩展消息（当前主要为 Popup；Settings 占位未进 manifest）。
+ * 处理 scope=background 的扩展消息（Popup / Settings）。
  * 异步 handler 需返回 true 以保持 sendResponse 通道。
  */
 export function handleBackgroundMessage(

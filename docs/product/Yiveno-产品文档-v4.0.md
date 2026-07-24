@@ -31,11 +31,13 @@ Yiveno = **个人信息寻回系统**（Capture 低负担 + Recall 高确定性�
 - 把附录 A（愿景/商业化/品牌）当成要立刻实现的功能列表。
 - 默认上传用户内容到云端或第三方 AI。
 
-### 0.4 当前唯一优先实现项（Phase A）
+### 0.4 当前优先实现项（Phase A）
 
-**Chrome Omnibox 找回**：与 Popup 共用同一 `recallService` / 同一 Filter 策略；完成后更新 §1 状态为「已上线」。
+**下一项：线索解释 / 空状态文案**。Omnibox、快捷键找回、Settings（含快捷键入口）已上线。
 
-同 Phase 其余项（快捷键、线索解释文案、Settings 进 manifest）**排在 Omnibox 之后**，除非用户显式指定。
+同 Phase 其余项按用户指定推进。
+
+**入口能力差异（Normative）：** 共用同一 `recallService` / Filter；壳不同——Omnibox 为单次命中、无会话；快捷键找回打开 Popup（可会话壳）；Popup 预留多轮补充与反馈（Phase B），不得做成开放聊天。书签 Capture：**仅** Chrome 原生加书签 + 导入/增量 sync，不提供「保存当前页」快捷键或 Popup 按钮。快捷键改绑：Settings → Chrome 原生 `chrome://extensions/shortcuts`（扩展无法自行改键）。
 
 ### 0.5 权威路径速查
 
@@ -46,29 +48,33 @@ Yiveno = **个人信息寻回系统**（Capture 低负担 + Recall 高确定性�
 | UI 发消息                    | `frontend/src/infrastructure/messaging/background-client.ts` |
 | SW 分发                      | `frontend/src/background/handlers/message-handler.ts`        |
 | Recall                       | `frontend/src/application/recall/recall-service.ts`          |
+| Omnibox                      | `frontend/src/background/listeners/omnibox.ts`               |
+| Commands（快捷键）           | `frontend/src/background/listeners/commands.ts`              |
+| Command ID 契约              | `frontend/src/core/commands/command-ids.ts`                  |
+| Settings                     | `frontend/src/pages/settings/Settings.vue`                   |
 | Popup                        | `frontend/src/pages/popup/Popup.vue`                         |
 
 ---
 
 ## 1. 现状 vs 目标（Normative）
 
-| 能力                        | 状态                    | 说明                                      |
-| --------------------------- | ----------------------- | ----------------------------------------- |
-| Popup 关键词找回            | 已上线                  | Top Pick + Also Possible；扫描上限约 2000 |
-| Popup 保存当前页            | 已上线                  | Bookmark MemoryItem                       |
-| 右键保存选区                | 已上线                  | Text Excerpt                              |
-| Chrome 书签导入 + 增量 sync | 已上线                  | 真实进度；Chrome bookmark 事件            |
-| LocalProfile / ownerId      | 已上线                  | 未登录可用                                |
-| Settings                    | 占位                    | 未进 manifest                             |
-| Offscreen                   | 占位                    | 预留 embedding                            |
-| Omnibox 找回                | **目标 · Phase A 首位** | 共享 Recall 服务                          |
-| 快捷键保存/找回             | 目标 · Phase A          |                                           |
-| 结果线索解释强化            | 目标 · Phase A          | 匹配字段展示                              |
-| Hybrid Filter               | 目标 · Phase B / Pro    | 非 Free                                   |
-| 反馈闭环 / 低置信追问       | 目标 · Phase B          |                                           |
-| 云同步 / 账号 UI            | 目标 · Phase C          | AccountBinding 已预留                     |
-| 分享                        | 目标 · Phase C          |                                           |
-| 轻管理                      | 目标 · Phase D          |                                           |
+| 能力                        | 状态                 | 说明                                                                   |
+| --------------------------- | -------------------- | ---------------------------------------------------------------------- |
+| Popup 关键词找回            | 已上线               | Top Pick + Also Possible；扫描上限约 2000                              |
+| 右键保存选区                | 已上线               | Text Excerpt；非书签的主动 Capture                                     |
+| Chrome 书签导入 + 增量 sync | 已上线               | 书签唯一写入主路径；原生加书签 → onCreated 同步                        |
+| LocalProfile / ownerId      | 已上线               | 未登录可用                                                             |
+| Settings                    | 已上线（最小）       | `options_ui`；快捷键查看+跳转原生改键页；隐私/同步/AI/账户仅标注未上线 |
+| Offscreen                   | 占位                 | 预留 embedding                                                         |
+| Omnibox 找回                | 已上线               | 关键词 `yi`；共用 `recallService`；单次无会话                          |
+| 快捷键找回                  | 已上线               | `_execute_action`（默认 `Alt+Shift+Y`）开 Popup                        |
+| 手动「保存当前页」          | 不做                 | 与 Chrome 原生书签重复；已移除 UI/快捷键/消息                          |
+| 结果线索解释强化            | 目标 · Phase A       | 匹配字段展示                                                           |
+| Hybrid Filter               | 目标 · Phase B / Pro | 非 Free                                                                |
+| 反馈闭环 / 低置信追问       | 目标 · Phase B       |                                                                        |
+| 云同步 / 账号 UI            | 目标 · Phase C       | AccountBinding 已预留                                                  |
+| 分享                        | 目标 · Phase C       |                                                                        |
+| 轻管理                      | 目标 · Phase D       |                                                                        |
 
 ---
 
@@ -120,16 +126,17 @@ Yiveno = **个人信息寻回系统**（Capture 低负担 + Recall 高确定性�
 - `scope` 必须为 `'background'`（`BACKGROUND_MESSAGE_SCOPE`）。
 - **已登记 type（禁止擅自增删拼写）：**
 
-| type                                | 用途               |
-| ----------------------------------- | ------------------ |
-| `PING`                              | 探活               |
-| `GET_LOCAL_IDENTITY`                | 本地身份 + ownerId |
-| `CAPTURE_BOOKMARK`                  | 写入书签记忆       |
-| `CAPTURE_TEXT_EXCERPT`              | 写入摘录           |
-| `CAPTURE_CURRENT_PAGE`              | 保存当前页         |
-| `LIST_MEMORY_ITEMS`                 | 列表               |
-| `RECALL_WITH_CLUE`                  | 线索找回           |
-| `GET_CHROME_BOOKMARK_IMPORT_STATUS` | 导入进度           |
+| type                                | 用途                      |
+| ----------------------------------- | ------------------------- |
+| `PING`                              | 探活                      |
+| `GET_LOCAL_IDENTITY`                | 本地身份 + ownerId        |
+| `CAPTURE_BOOKMARK`                  | 写入书签记忆（sync/内部） |
+| `CAPTURE_TEXT_EXCERPT`              | 写入摘录                  |
+| `LIST_MEMORY_ITEMS`                 | 列表                      |
+| `RECALL_WITH_CLUE`                  | 线索找回                  |
+| `GET_CHROME_BOOKMARK_IMPORT_STATUS` | 导入进度                  |
+| `GET_EXTENSION_COMMANDS`            | 读取命令与快捷键绑定      |
+| `OPEN_CHROME_SHORTCUTS_PAGE`        | 打开 Chrome 快捷键设置页  |
 
 新增能力：先改 `frontend/src/core/messaging/*` + handler，再改 UI。
 
@@ -150,38 +157,52 @@ Yiveno = **个人信息寻回系统**（Capture 低负担 + Recall 高确定性�
 ### 5.2 已交付基线验收
 
 1. Popup 可开；空线索无误命中。
-2. 保存当前页后，标题/域名片段可 Top Pick 找回。
+2. Chrome 加书签或导入完成后，标题/域名片段可 Top Pick 找回。
 3. 右键摘录后可用摘录词找回。
 4. 书签导入有真实进度或明确失败；导入项可找回。
 5. Chrome 侧书签变更后，再次 Recall 可见一致结果。
 6. 无 Search 文案；无行级位移/缩放 hover。
+7. 无「保存当前页」用户入口（Popup / 快捷键 / 消息）。
 
-### 5.3 Phase A（Omnibox）验收
+### 5.3 Phase A（Omnibox / 快捷键）验收
 
 1. Omnibox 触发后策略与 Popup 一致（同一 `recallService`）。
 2. 不引入第二套搜索/筛选实现。
-3. §1 状态更新为已上线。
+3. Omnibox / 快捷键 §1 状态已更新为已上线。
+4. Omnibox 入口为单次命中：建议列表 → 打开 URL；无追问/会话。
+5. 快捷键找回：`_execute_action` 打开 Popup；不经 `onCommand` 自建第二套找回。
+6. 不提供「保存当前页」快捷键/消息；书签靠 Chrome 原生 + 导入/增量 sync。
+7. 新自定义命令须先改 `core/commands/command-ids.ts` + manifest，再注册 handler。
 
 ### 5.4 后续优先级（摘要）
 
+- **P0 / Phase A 余项**：线索解释/空状态
 - **P1 / Phase B**：索引、embedding、Hybrid、反馈、Need A Clue
-- **P2 / Phase C**：分享、云同步、账户 UI
+- **P2 / Phase C**：分享、云同步、账户 UI；Settings 隐私/同步/AI/账户分区落地
 - **P3 / Phase D**：删除/标签/失效链接/统计等轻管理
 
 **禁止重做**：双面板重组、复杂拖拽整理、AI 聚类主卖点、大规模书签树编辑。
 
-### 5.5 Settings IA（目标，占位中）
+### 5.5 Settings IA（最小已上线）
 
-隐私 | 同步 | AI | 账户。未上线前不得暗示能力可用。进 manifest 属 Phase A 后段。
+| 分区   | 状态   | 说明                                               |
+| ------ | ------ | -------------------------------------------------- |
+| 快捷键 | 已上线 | 展示绑定；改键跳转 `chrome://extensions/shortcuts` |
+| 隐私   | 未上线 | 仅占位文案，不暗示可用                             |
+| 同步   | 未上线 | 同上                                               |
+| AI     | 未上线 | 同上                                               |
+| 账户   | 未上线 | 同上                                               |
 
 ### 5.6 扩展入口
 
-| 入口                             | 现状             |
-| -------------------------------- | ---------------- | --------------------------------------------------- |
-| `popup.html`                     | 活跃             |
-| `background.js`                  | 活跃             |
-| `settings.html` / offscreen 源码 | 占位             | Offscreen 未注册 permission；embedding 接入前不启用 |
-| Omnibox / `commands`             | 未注册 → Phase A |
+| 入口            | 现状                                                  |
+| --------------- | ----------------------------------------------------- |
+| `popup.html`    | 活跃；可打开 Settings                                 |
+| `background.js` | 活跃                                                  |
+| `settings.html` | 已进 `options_ui`（`open_in_tab: true`）              |
+| offscreen 源码  | 占位；未注册 permission；embedding 接入前不启用       |
+| Omnibox         | 已注册；keyword `yi`                                  |
+| `commands`      | 已注册；找回 `Alt+Shift+Y`（`_execute_action`，可改） |
 
 ---
 
@@ -228,12 +249,12 @@ Chrome API / 选区
 
 ## 8. 路线图（剩余工作 · Normative 排序）
 
-| Phase | 内容                                                                                |
-| ----- | ----------------------------------------------------------------------------------- |
-| **A** | **① Omnibox** → 快捷键 → 线索解释/空状态文案 → Settings 最小可用+manifest → 更新 §1 |
-| B     | 索引、Offscreen embedding、Hybrid（Pro）、反馈、追问                                |
-| C     | Sync、账户 UI、隐私控制落地、分享                                                   |
-| D     | 轻管理与统计                                                                        |
+| Phase | 内容                                                 |
+| ----- | ---------------------------------------------------- |
+| **A** | **① 线索解释/空状态文案** → 更新 §1                  |
+| B     | 索引、Offscreen embedding、Hybrid（Pro）、反馈、追问 |
+| C     | Sync、账户 UI、隐私控制落地、分享                    |
+| D     | 轻管理与统计                                         |
 
 ---
 
@@ -275,5 +296,10 @@ MVP 验证问题：是否更愿保存、是否优先打开 Yiveno、是否稳定
 
 | 日期       | 变更                                                                              |
 | ---------- | --------------------------------------------------------------------------------- |
+| 2026-07-24 | Settings 最小可用进 manifest：快捷键查看+跳转原生改键；Popup 入口                 |
+| 2026-07-24 | 移除「保存当前页」；书签仅 Chrome 原生+sync；快捷键只保留找回开 Popup             |
+| 2026-07-24 | 快捷键已上线：命令契约+registry；找回 Alt+Shift+Y 开 Popup                        |
+| 2026-07-24 | Popup 移除「保存当前页」UI；保存改快捷键入口；Omnibox keyword `yi`                |
+| 2026-07-24 | Omnibox 已上线（keyword `yi`）；§0.4 入口能力差异；Phase A 下一项改为快捷键       |
 | 2026-07-23 | 确立唯一正文；现状矩阵、契约、验收、UI 约束、Hybrid 边界                          |
 | 2026-07-23 | AI 优先重排：Quick Contract、Normative/附录分离、消息 type 表、Phase A 单一优先项 |

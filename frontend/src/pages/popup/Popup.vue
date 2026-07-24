@@ -6,22 +6,19 @@ import { getChromeBookmarkImportPercent } from '@/core/memory/chrome-bookmark-im
 import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
 import { formatMatchedFields, getMemoryItemDisplay } from '@/core/recall/recall-result'
 import {
-  captureCurrentPage,
   fetchChromeBookmarkImportStatus,
   recallWithClue
 } from '@/infrastructure/messaging/background-client'
+import { openExtensionOptionsPage } from '@/infrastructure/browser/options-page'
 
 defineOptions({ name: 'PopupPage' })
 
 type RecallViewState = 'idle' | 'loading' | 'result' | 'no_match' | 'error'
-type CaptureViewState = 'idle' | 'saving' | 'saved' | 'error'
 
 const clue = ref('')
 const viewState = ref<RecallViewState>('idle')
-const captureState = ref<CaptureViewState>('idle')
 const recallResult = ref<RecallResult | null>(null)
 const errorMessage = ref('')
-const captureMessage = ref('')
 const importState = ref<ChromeBookmarkImportState | null>(null)
 
 let importPollTimer: ReturnType<typeof setInterval> | null = null
@@ -137,32 +134,12 @@ async function handleRecallSubmit() {
   }
 }
 
-async function handleCaptureCurrentPage() {
-  captureState.value = 'saving'
-  captureMessage.value = ''
-
+async function handleOpenSettings() {
   try {
-    const response = await captureCurrentPage({ captureEntry: 'popup' })
-    if (!response.ok) {
-      captureState.value = 'error'
-      captureMessage.value = response.error
-      return
-    }
-    if (!('item' in response)) {
-      captureState.value = 'error'
-      captureMessage.value = '保存失败，请稍后再试'
-      return
-    }
-
-    captureState.value = 'saved'
-    const title =
-      response.item.type === 'bookmark'
-        ? response.item.payload.title
-        : response.item.payload.pageTitle
-    captureMessage.value = `已保存：${title}`
-  } catch (error) {
-    captureState.value = 'error'
-    captureMessage.value = error instanceof Error ? error.message : '保存失败，请稍后再试'
+    await openExtensionOptionsPage()
+  } catch {
+    errorMessage.value = '无法打开设置页'
+    viewState.value = 'error'
   }
 }
 </script>
@@ -170,7 +147,10 @@ async function handleCaptureCurrentPage() {
 <template>
   <main class="recall-shell">
     <header class="recall-header">
-      <p class="recall-eyebrow">Yiveno</p>
+      <div class="recall-header-top">
+        <p class="recall-eyebrow">Yiveno</p>
+        <button class="recall-settings" type="button" @click="handleOpenSettings">设置</button>
+      </div>
       <h1 class="recall-title">找到它！</h1>
       <p class="recall-subtitle">在你存过的东西里找，不用再去网上搜。</p>
 
@@ -192,29 +172,6 @@ async function handleCaptureCurrentPage() {
           <div class="recall-import-bar" :style="{ width: `${importProgressPercent}%` }" />
         </div>
       </section>
-
-      <button
-        class="recall-save-page"
-        type="button"
-        :disabled="captureState === 'saving'"
-        @click="handleCaptureCurrentPage"
-      >
-        {{ captureState === 'saving' ? '正在保存…' : '保存当前页' }}
-      </button>
-      <p
-        v-if="captureState === 'saved'"
-        class="recall-save-feedback recall-save-feedback--success"
-        role="status"
-      >
-        {{ captureMessage }}
-      </p>
-      <p
-        v-else-if="captureState === 'error'"
-        class="recall-save-feedback recall-save-feedback--error"
-        role="alert"
-      >
-        {{ captureMessage }}
-      </p>
     </header>
 
     <form class="recall-form" @submit.prevent="handleRecallSubmit">
@@ -243,7 +200,9 @@ async function handleCaptureCurrentPage() {
 
     <section v-else-if="viewState === 'no_match'" class="recall-empty" aria-live="polite">
       <p class="recall-empty-title">还没找到匹配的</p>
-      <p class="recall-empty-copy">试试更短的关键词，或先保存一些内容再来找。</p>
+      <p class="recall-empty-copy">
+        试试更短的关键词；也可右键保存选区，或先用 Chrome 加书签后等待同步。
+      </p>
     </section>
 
     <section
@@ -303,12 +262,35 @@ async function handleCaptureCurrentPage() {
   margin-bottom: 16px;
 }
 
+.recall-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
 .recall-eyebrow {
-  margin: 0 0 4px;
+  margin: 0;
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: #64748b;
+}
+
+.recall-settings {
+  padding: 4px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0e7490;
+  background: #fff;
+  cursor: pointer;
+}
+
+.recall-settings:hover {
+  background: #eef2f6;
 }
 
 .recall-title {
@@ -359,41 +341,6 @@ async function handleCaptureCurrentPage() {
   height: 100%;
   border-radius: 999px;
   background: #0891b2;
-}
-
-.recall-save-page {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #0e7490;
-  background: #fff;
-  cursor: pointer;
-}
-
-.recall-save-page:disabled {
-  color: #94a3b8;
-  cursor: not-allowed;
-}
-
-.recall-save-page:not(:disabled):hover {
-  background: #eef2f6;
-}
-
-.recall-save-feedback {
-  margin: 8px 0 0;
-  font-size: 12px;
-  line-height: 1.4;
-}
-
-.recall-save-feedback--success {
-  color: #0f766e;
-}
-
-.recall-save-feedback--error {
-  color: #b42318;
 }
 
 .recall-form {

@@ -6,8 +6,25 @@
   "default_locale": "en",
   "minimum_chrome_version": "116",
   "permissions": ["storage", "activeTab", "bookmarks", "contextMenus", "scripting"],
+  "omnibox": {
+    "keyword": "yi"
+  },
+  "options_ui": {
+    "page": "settings.html",
+    "open_in_tab": true
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Alt+Shift+Y",
+        "mac": "Alt+Shift+Y"
+      },
+      "description": "__MSG_command_open_recall__"
+    }
+  },
   "action": {
     "default_popup": "popup.html",
+    "default_title": "__MSG_app_name__",
     "default_icon": {
       "16": "images/icon16.png",
       "48": "images/icon48.png",
