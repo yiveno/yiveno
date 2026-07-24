@@ -3,12 +3,14 @@ import type {
   BackgroundMessageResponse
 } from '@/core/messaging/background-messages'
 import type {
-  CommandsBackgroundResponse,
   GetExtensionCommandsMessage,
-  OpenChromeShortcutsPageMessage
+  GetExtensionCommandsResponse,
+  OpenChromeShortcutsPageMessage,
+  OpenChromeShortcutsPageResponse
 } from '@/core/messaging/commands-messages'
 import type {
-  ImportBackgroundResponse,
+  ChromeBookmarkImportStatusResponse,
+  GetBookmarkLibraryTreeResponse,
   GetChromeBookmarkImportStatusMessage,
   GetBookmarkLibraryTreeMessage
 } from '@/core/messaging/import-messages'
@@ -83,39 +85,39 @@ export async function deleteMemoryItem(
 }
 
 /** 查询 Chrome 书签导入进度。 */
-export async function fetchChromeBookmarkImportStatus(): Promise<ImportBackgroundResponse> {
+export async function fetchChromeBookmarkImportStatus(): Promise<ChromeBookmarkImportStatusResponse> {
   const message: GetChromeBookmarkImportStatusMessage = {
     scope: 'background',
     type: 'GET_CHROME_BOOKMARK_IMPORT_STATUS'
   }
-  return sendBackgroundMessage<ImportBackgroundResponse>(message)
+  return sendBackgroundMessage<ChromeBookmarkImportStatusResponse>(message)
 }
 
 /** 读取记忆库书签目录树（Chrome 结构 + Memory 对齐）。 */
-export async function fetchBookmarkLibraryTree(): Promise<ImportBackgroundResponse> {
+export async function fetchBookmarkLibraryTree(): Promise<GetBookmarkLibraryTreeResponse> {
   const message: GetBookmarkLibraryTreeMessage = {
     scope: 'background',
     type: 'GET_BOOKMARK_LIBRARY_TREE'
   }
-  return sendBackgroundMessage<ImportBackgroundResponse>(message)
+  return sendBackgroundMessage<GetBookmarkLibraryTreeResponse>(message)
 }
 
 /** 读取扩展命令与当前快捷键。 */
-export async function fetchExtensionCommands(): Promise<CommandsBackgroundResponse> {
+export async function fetchExtensionCommands(): Promise<GetExtensionCommandsResponse> {
   const message: GetExtensionCommandsMessage = {
     scope: 'background',
     type: 'GET_EXTENSION_COMMANDS'
   }
-  return sendBackgroundMessage<CommandsBackgroundResponse>(message)
+  return sendBackgroundMessage<GetExtensionCommandsResponse>(message)
 }
 
 /** 打开 Chrome 原生快捷键设置页。 */
-export async function openChromeShortcutsPage(): Promise<CommandsBackgroundResponse> {
+export async function openChromeShortcutsPage(): Promise<OpenChromeShortcutsPageResponse> {
   const message: OpenChromeShortcutsPageMessage = {
     scope: 'background',
     type: 'OPEN_CHROME_SHORTCUTS_PAGE'
   }
-  return sendBackgroundMessage<CommandsBackgroundResponse>(message)
+  return sendBackgroundMessage<OpenChromeShortcutsPageResponse>(message)
 }
 
 /** 读取用户设置。 */

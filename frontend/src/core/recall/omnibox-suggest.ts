@@ -23,11 +23,11 @@ const EXCERPT_PREVIEW_MAX = 40
 /** 转义 Omnibox description 中的 XML 预定义实体。 */
 export function escapeOmniboxXml(text: string): string {
   return text
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&apos;')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;')
 }
 
 /** 压缩空白并截断，供 Omnibox 单行展示。 */

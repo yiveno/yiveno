@@ -1,5 +1,4 @@
 import type { MemoryItem } from '@/core/memory/memory-item'
-import { getMemoryItemDisplay } from '@/core/recall/recall-result'
 
 /**
  * 计算命中项应打开的地址。
@@ -18,15 +17,6 @@ export function getMemoryItemOpenHref(
   const url = new URL(options.detailPageUrl)
   url.searchParams.set('id', item.id)
   return url.href
-}
-
-/** 展示用摘要 + 打开地址。 */
-export function getMemoryItemOpenDisplay(item: MemoryItem, options: { detailPageUrl: string }) {
-  const display = getMemoryItemDisplay(item)
-  return {
-    ...display,
-    openHref: getMemoryItemOpenHref(item, options)
-  }
 }
 
 /** 是否为可导航的 http(s) 或扩展详情页 URL。 */

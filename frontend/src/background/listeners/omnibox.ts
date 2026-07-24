@@ -29,7 +29,7 @@ function getNoMatchSuggestionDescription(): string {
 /** 按 disposition 打开 URL（Omnibox 单次命中，无会话）。 */
 async function openUrlByDisposition(
   url: string,
-  disposition: chrome.omnibox.OnInputEnteredDisposition
+  disposition: 'currentTab' | 'newBackgroundTab' | 'newForegroundTab'
 ): Promise<void> {
   switch (disposition) {
     case 'currentTab':
@@ -84,7 +84,7 @@ async function handleOmniboxInputChanged(
  */
 async function handleOmniboxInputEntered(
   text: string,
-  disposition: chrome.omnibox.OnInputEnteredDisposition
+  disposition: 'currentTab' | 'newBackgroundTab' | 'newForegroundTab'
 ): Promise<void> {
   const directUrl = tryParseNavigableUrl(text)
   if (directUrl) {
@@ -129,7 +129,10 @@ export function registerOmniboxListeners(): void {
   })
 
   chrome.omnibox.onInputEntered.addListener((text, disposition) => {
-    void handleOmniboxInputEntered(text, disposition).catch(error => {
+    void handleOmniboxInputEntered(
+      text,
+      disposition as 'currentTab' | 'newBackgroundTab' | 'newForegroundTab'
+    ).catch(error => {
       logger.error('Omnibox', '确认输入处理失败', error)
     })
   })

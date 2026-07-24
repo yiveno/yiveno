@@ -2,8 +2,7 @@ import type {
   GetUserSettingsResponse,
   UpdateUserSettingsResponse
 } from '@/core/messaging/settings-messages'
-import type { UserSettings } from '@/core/settings/user-settings'
-import { UserSettingsSchema } from '@/core/settings/user-settings'
+import { UserSettingsSchema, type UserSettings } from '@/core/settings/user-settings'
 import {
   getUserSettings,
   updateUserSettings
@@ -29,7 +28,11 @@ export async function handleUpdateUserSettings(
   payload: unknown
 ): Promise<UpdateUserSettingsResponse> {
   try {
-    const patch = UserSettingsSchema.partial().parse(payload)
+    const parsed = UserSettingsSchema.partial().parse(payload)
+    const patch: Partial<UserSettings> = {}
+    if (typeof parsed.selectionToolbarEnabled === 'boolean') {
+      patch.selectionToolbarEnabled = parsed.selectionToolbarEnabled
+    }
     const settings = await updateUserSettings(patch)
     return { ok: true, settings }
   } catch (error) {
