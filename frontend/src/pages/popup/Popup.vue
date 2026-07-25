@@ -17,7 +17,7 @@ import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
 import { getMemoryItemDisplay } from '@/core/recall/recall-result'
 import { getMemoryItemOpenHref } from '@/core/recall/memory-open-href'
 import { openExtensionOptionsPage } from '@/infrastructure/browser/options-page'
-import { t, translate } from '@/infrastructure/i18n/t'
+import { t } from '@/infrastructure/i18n/t'
 import {
   fetchChromeBookmarkImportStatus,
   listMemoryItems,
@@ -68,7 +68,7 @@ const importProgressLabel = computed(() => {
 
 const idleEmptyCopy = computed(() =>
   viewState.value === 'idle'
-    ? getPopupIdleEmptyCopy(libraryState.value, isImporting.value, translate)
+    ? getPopupIdleEmptyCopy(libraryState.value, isImporting.value, t)
     : null
 )
 
@@ -88,13 +88,13 @@ const noMatchCopy = computed(() =>
       clue: clue.value,
       canShorten: shortenedClue.value !== null
     },
-    translate
+    t
   )
 )
 
 const clueEcho = computed(() => {
   const resultClue = recallResult.value?.clue ?? clue.value
-  return formatRecallClueEcho(resultClue, translate)
+  return formatRecallClueEcho(resultClue, t)
 })
 
 const topPickDisplay = computed(() => {
@@ -108,14 +108,14 @@ const alsoPossibleCards = computed(() => {
 })
 
 function toMatchCard(match: RecallMatch, resultClue: string) {
-  const display = getMemoryItemDisplay(match.item, translate)
+  const display = getMemoryItemDisplay(match.item, t)
   const explanation = explainRecallMatch(
     {
       clue: resultClue,
       matchedFields: match.matchedFields,
       item: match.item
     },
-    translate
+    t
   )
   return {
     id: match.item.id,
