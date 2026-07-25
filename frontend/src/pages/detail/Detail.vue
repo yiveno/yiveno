@@ -142,15 +142,23 @@ onMounted(() => {
     <section v-else-if="viewState === 'deleted'" class="detail-empty" role="status">
       <p class="detail-empty-title">{{ t('detail_deleted_title') }}</p>
       <p class="detail-empty-copy">{{ t('detail_deleted_body') }}</p>
-      <md-outlined-button :href="libraryHref">{{ t('detail_open_library') }}</md-outlined-button>
+      <md-outlined-button :href="libraryHref" :title="t('detail_open_library')">
+        <MaterialSymbolIcon name="library_books" size="18px" slot="icon" />
+        {{ t('detail_open_library') }}
+      </md-outlined-button>
     </section>
 
     <section v-else-if="viewState === 'error'" class="detail-empty" role="alert">
       <p class="detail-empty-title">{{ t('detail_error_title') }}</p>
       <p class="detail-empty-copy">{{ errorMessage }}</p>
-      <md-outlined-button type="button" @click="loadDetail">{{
-        t('detail_retry')
-      }}</md-outlined-button>
+      <md-icon-button
+        type="button"
+        :title="t('detail_retry')"
+        :aria-label="t('detail_retry')"
+        @click="loadDetail"
+      >
+        <MaterialSymbolIcon name="refresh" size="22px" />
+      </md-icon-button>
     </section>
 
     <section v-else-if="viewState === 'wrong_type' && item" class="detail-empty">
@@ -162,7 +170,9 @@ onMounted(() => {
         :href="item.payload.url"
         target="_blank"
         rel="noopener noreferrer"
+        :title="t('detail_open_bookmark')"
       >
+        <MaterialSymbolIcon name="open_in_new" size="16px" />
         {{ t('detail_open_bookmark') }}
       </a>
     </section>
@@ -192,18 +202,21 @@ onMounted(() => {
           :href="excerpt.payload.sourceUrl"
           target="_blank"
           rel="noopener noreferrer"
+          :title="t('detail_open_source')"
         >
+          <MaterialSymbolIcon name="open_in_new" size="18px" slot="icon" />
           {{ t('detail_open_source') }}
         </md-filled-button>
-        <md-text-button
+        <md-icon-button
           type="button"
           class="detail-delete"
+          :title="deleting ? t('detail_deleting') : t('detail_delete')"
+          :aria-label="deleting ? t('detail_deleting') : t('detail_delete')"
           :disabled="deleting"
           @click="handleDelete"
         >
-          <MaterialSymbolIcon name="delete" size="18px" slot="icon" />
-          {{ deleting ? t('detail_deleting') : t('detail_delete') }}
-        </md-text-button>
+          <MaterialSymbolIcon name="delete" size="20px" />
+        </md-icon-button>
       </div>
     </article>
   </main>
@@ -327,13 +340,16 @@ onMounted(() => {
 }
 
 .detail-delete {
-  --md-text-button-label-text-color: var(--md-sys-color-error);
-  --md-text-button-hover-label-text-color: var(--md-sys-color-error);
-  --md-text-button-pressed-label-text-color: var(--md-sys-color-error);
-  --md-text-button-focus-label-text-color: var(--md-sys-color-error);
+  --md-icon-button-icon-color: var(--md-sys-color-error);
+  --md-icon-button-hover-icon-color: var(--md-sys-color-error);
+  --md-icon-button-pressed-icon-color: var(--md-sys-color-error);
+  --md-icon-button-focus-icon-color: var(--md-sys-color-error);
 }
 
 .detail-source-link {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
   font-size: 14px;
   font-weight: 600;
   color: var(--md-sys-color-primary);

@@ -24,6 +24,7 @@ Yiveno = **个人信息寻回系统**（Capture 低负担 + Recall 高确定性�
 8. 实现范围以 **§1 状态表**为准；未标「已上线」= 不得当成已有行为，也不得在 UI 暗示已可用。
 9. Free/当前：仅 **关键词 Filter**。**Hybrid / embedding / LLM 不是当前默认实现范围**（见 §5）。
 10. UI 图标：**Material Symbols Outlined**；按需内联于 `frontend/src/infrastructure/ui/icons/`，经 `MaterialSymbolIcon` / `md-icon-button` 使用。禁止另引 Lucide/Font Awesome 等第二套图标体系；禁止依赖 Google Fonts CDN（扩展离线）。
+11. **图标优先于文案**：工具操作、导航、重复出现的动作尽量用通识图标代替可见文字；hover（及键盘聚焦）用 `title`（及 `aria-label`）展示完整文案，文案仍经 `t()`。不适用于主按钮 CTA、说明性正文、空状态、表单标签等必须读字的场景。
 
 ### 0.3 MUST NOT
 
@@ -127,6 +128,7 @@ Yiveno = **个人信息寻回系统**（Capture 低负担 + Recall 高确定性�
 ## 3. UI 与术语（Normative）
 
 - 文案：筛选 / 找回；禁止 Search / 搜索。
+- **图标优先：** 工具栏/导航/行内动作等可通识表达的控件优先图标；须具备通识性（删除、设置、打开库等用常见 Material Symbol）。可见标签可省略时，**hover / focus 用 `title` 显示完整文案**，并同步 `aria-label`（同源 `t()`）。禁止晦涩自定义隐喻图标。
 - 交互态禁止几何变换（§0.2）；例外：浮层入场短动画；`pop`/`shake` 不可用于行 hover。
 - 空状态：无记忆时引导保存或等待导入，不空白报错。
 - 受限页（`chrome://` 等）保存失败 → 明确文案。
@@ -339,6 +341,8 @@ MVP 验证问题：是否更愿保存、是否优先打开 Yiveno、是否稳定
 
 | 日期       | 变更                                                                              |
 | ---------- | --------------------------------------------------------------------------------- |
+| 2026-07-25 | 保存成功工具栏角标 +1；Chrome 原生新书签同步成功亦闪角标                          |
+| 2026-07-25 | UI：图标优先于文案；通识 Material Symbol + hover `title`/`aria-label`（经 `t()`） |
 | 2026-07-25 | i18n Phase 5：清残留 UI 硬编码；CI `i18n:check`；catch 不再展示 `error.message`   |
 | 2026-07-25 | i18n Phase 4：Settings/Recall/Import/Commands/Identity 失败响应落地 `errorCode`   |
 | 2026-07-24 | i18n Phase 2：Library/Detail 文案；Memory 失败响应落地 `errorCode`                |
@@ -350,7 +354,7 @@ MVP 验证问题：是否更愿保存、是否优先打开 Yiveno、是否稳定
 | 2026-07-24 | 记忆库轻浏览上线：`library.html` 左侧类型 Tab（默认书签）；Popup/Settings 入口    |
 | 2026-07-24 | 摘录详情落地页上线：`detail.html?id=` + `GET_MEMORY_ITEM`；Popup/Omnibox 分流     |
 | 2026-07-24 | Phase A：线索解释强化 + Popup 空状态分层（空库/有库 + 缩短再试）                  |
-| 2026-07-24 | 摘录保存成功/失败：工具栏临时 badge（✓ / !）；划词与右键共用                      |
+| 2026-07-24 | 摘录保存成功/失败：工具栏临时 badge（+1 / !）；划词与右键共用                     |
 | 2026-07-24 | 划词保存浮层上线；Settings 开关默认开启；`captureEntry=selection_toolbar`         |
 | 2026-07-24 | Settings 最小可用进 manifest：快捷键查看+跳转原生改键；Popup 入口                 |
 | 2026-07-24 | 移除「保存当前页」；书签仅 Chrome 原生+sync；快捷键只保留找回开 Popup             |

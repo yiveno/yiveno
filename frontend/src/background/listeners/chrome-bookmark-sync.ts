@@ -3,6 +3,7 @@ import {
   handleChromeBookmarkCreated,
   handleChromeBookmarkRemoved
 } from '@/application/capture/chrome-bookmark-sync-service'
+import { flashActionBadge } from '@/infrastructure/browser/action-badge'
 import { logger } from '@/infrastructure/logging/logger'
 
 let listenersRegistered = false
@@ -15,9 +16,16 @@ export function registerChromeBookmarkSyncListeners(): void {
   listenersRegistered = true
 
   chrome.bookmarks.onCreated.addListener((id, bookmark) => {
-    void handleChromeBookmarkCreated(bookmark).catch(error => {
-      logger.error('ChromeBookmarkSync', 'onCreated 同步失败', { id, error })
-    })
+    void handleChromeBookmarkCreated(bookmark)
+      .then(result => {
+        if (result.captured) {
+          void flashActionBadge('success')
+        }
+      })
+      .catch(error => {
+        logger.error('ChromeBookmarkSync', 'onCreated 同步失败', { id, error })
+        void flashActionBadge('error')
+      })
   })
 
   chrome.bookmarks.onChanged.addListener((id, changeInfo) => {

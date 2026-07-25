@@ -25,6 +25,7 @@ import {
   recallWithClue
 } from '@/infrastructure/messaging/background-client'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
+import MaterialSymbolIcon from '@/infrastructure/ui/icons/MaterialSymbolIcon.vue'
 
 defineOptions({ name: 'PopupPage' })
 
@@ -275,9 +276,14 @@ async function handleOpenSettings() {
       <p class="recall-empty-title">{{ idleEmptyCopy.title }}</p>
       <p class="recall-empty-copy">{{ idleEmptyCopy.body }}</p>
       <div class="recall-empty-actions">
-        <md-text-button type="button" @click="handleOpenSettings">
-          {{ t('popup_open_settings') }}
-        </md-text-button>
+        <md-icon-button
+          type="button"
+          :title="t('popup_open_settings')"
+          :aria-label="t('popup_open_settings')"
+          @click="handleOpenSettings"
+        >
+          <MaterialSymbolIcon name="settings" size="22px" />
+        </md-icon-button>
       </div>
     </section>
 

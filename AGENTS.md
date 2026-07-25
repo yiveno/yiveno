@@ -17,6 +17,7 @@
 ## 代码约定
 
 - UI/API/文档统一用 **Filter（筛选）**；用户主动作使用 **Recall（找回）**；UI 文案禁止出现 `Search` /「搜索」。
+- **图标优先于文案**：工具操作/导航尽量用通识 Material Symbols；省略可见文字时 `title` + `aria-label` 显示完整文案（经 `t()`）。主 CTA、说明、空状态、表单标签除外。
 - 扩展用户文案：仅 `_locales/{en,zh_CN}` + `frontend/src/infrastructure/i18n` 的 `t()`；禁止写死 UI 文案与 `|| '兜底'`。`core` 注入 `t` 或返回 message key。官网另选方案，不共用 messages 文件。
 - TypeScript 禁止 `any` / `as any`；外部数据用 Zod 校验；**注释与 JSDoc 必须中文**（标识符、API 专有名词可保留英文）。
 - Vue 组件必须 `defineOptions({ name: 'ComponentName' })`。

@@ -24,11 +24,11 @@ describe('action-badge', () => {
     vi.unstubAllGlobals()
   })
 
-  it('flashActionBadge 成功时设置绿色 ✓ 并按时清除', async () => {
+  it('flashActionBadge 成功时设置绿色 +1 并按时清除', async () => {
     await flashActionBadge('success')
 
     expect(chrome.action.setBadgeBackgroundColor).toHaveBeenCalledWith({ color: '#0f766e' })
-    expect(chrome.action.setBadgeText).toHaveBeenCalledWith({ text: '✓' })
+    expect(chrome.action.setBadgeText).toHaveBeenCalledWith({ text: '+1' })
 
     await vi.advanceTimersByTimeAsync(1600)
     expect(chrome.action.setBadgeText).toHaveBeenLastCalledWith({ text: '' })

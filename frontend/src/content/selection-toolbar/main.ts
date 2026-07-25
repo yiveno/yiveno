@@ -24,6 +24,33 @@ let hostElement: HTMLElement | null = null
 let shadowRoot: ShadowRoot | null = null
 let buttonElement: HTMLButtonElement | null = null
 let buttonState: ToolbarButtonState = 'idle'
+/** 扩展热重载后旧 content script 仍存活时置 true，停止一切 Chrome API / DOM 交互 */
+let tornDown = false
+let listenersRegistered = false
+
+/**
+ * 扩展重载后 `chrome.runtime.id` 会变为 undefined；
+ * 继续调用 i18n / storage / sendMessage 会抛 Extension context invalidated。
+ */
+function isExtensionContextValid(): boolean {
+  try {
+    return Boolean(chrome.runtime?.id)
+  } catch {
+    return false
+  }
+}
+
+/** 上下文已失效时静默拆卸，避免控制台刷屏。 */
+function ensureLiveContext(): boolean {
+  if (tornDown) {
+    return false
+  }
+  if (isExtensionContextValid()) {
+    return true
+  }
+  teardown()
+  return false
+}
 
 function isSavablePageUrl(url: string): boolean {
   try {
@@ -66,12 +93,21 @@ function getSelectedText(): string {
 }
 
 async function refreshToolbarEnabledFromStorage(): Promise<void> {
+  if (!ensureLiveContext()) {
+    return
+  }
   const result = await chrome.storage.local.get(USER_SETTINGS_STORAGE_KEY)
+  if (!ensureLiveContext()) {
+    return
+  }
   const settings = parseUserSettings(result[USER_SETTINGS_STORAGE_KEY])
   toolbarEnabled = settings.selectionToolbarEnabled
 }
 
 function ensureToolbarHost(): void {
+  if (!ensureLiveContext()) {
+    return
+  }
   if (hostElement?.isConnected) {
     return
   }
@@ -149,7 +185,7 @@ function ensureToolbarHost(): void {
 
 function setButtonState(state: ToolbarButtonState, label?: string): void {
   buttonState = state
-  if (!buttonElement) {
+  if (!buttonElement || !ensureLiveContext()) {
     return
   }
 
@@ -180,10 +216,17 @@ function hideToolbar(): void {
   if (hostElement) {
     hostElement.style.display = 'none'
   }
-  setButtonState('idle')
+  if (!tornDown && isExtensionContextValid()) {
+    setButtonState('idle')
+  } else {
+    buttonState = 'idle'
+  }
 }
 
 function showToolbarAt(rect: DOMRect): void {
+  if (!ensureLiveContext()) {
+    return
+  }
   ensureToolbarHost()
   if (!hostElement) {
     return
@@ -205,7 +248,7 @@ function scheduleHideToolbar(delayMs = 0): void {
 }
 
 async function handleSaveClick(): Promise<void> {
-  if (buttonState === 'saving') {
+  if (!ensureLiveContext() || buttonState === 'saving') {
     return
   }
 
@@ -220,6 +263,9 @@ async function handleSaveClick(): Promise<void> {
   setButtonState('saving')
 
   try {
+    if (!ensureLiveContext()) {
+      return
+    }
     const response = await chrome.runtime.sendMessage({
       scope: BACKGROUND_MESSAGE_SCOPE,
       type: 'CAPTURE_TEXT_EXCERPT',
@@ -232,6 +278,10 @@ async function handleSaveClick(): Promise<void> {
         captureEntry: 'selection_toolbar'
       }
     })
+
+    if (!ensureLiveContext()) {
+      return
+    }
 
     if (!response?.ok) {
       const message =
@@ -246,12 +296,19 @@ async function handleSaveClick(): Promise<void> {
     setButtonState('saved')
     scheduleHideToolbar(1200)
   } catch {
+    // sendMessage / t 在上下文失效时都会抛；优先静默拆卸
+    if (!ensureLiveContext()) {
+      return
+    }
     setButtonState('error', t('selection_toolbar_failed'))
     scheduleHideToolbar(1800)
   }
 }
 
 function evaluateSelectionAndMaybeShow(): void {
+  if (!ensureLiveContext()) {
+    return
+  }
   clearShowTimer()
 
   const selectedText = getSelectedText()
@@ -268,6 +325,9 @@ function evaluateSelectionAndMaybeShow(): void {
 
   showTimer = setTimeout(() => {
     showTimer = null
+    if (!ensureLiveContext()) {
+      return
+    }
     const rect = getSelectionRect()
     const latestText = getSelectedText()
     if (!rect || !latestText) {
@@ -283,6 +343,9 @@ function isEventInsideToolbar(event: Event): boolean {
 }
 
 function handleMouseUp(event: MouseEvent): void {
+  if (!ensureLiveContext()) {
+    return
+  }
   if (event.button !== 0) {
     return
   }
@@ -293,6 +356,9 @@ function handleMouseUp(event: MouseEvent): void {
 }
 
 function handleDocumentMouseDown(event: MouseEvent): void {
+  if (!ensureLiveContext()) {
+    return
+  }
   if (isEventInsideToolbar(event)) {
     return
   }
@@ -300,42 +366,100 @@ function handleDocumentMouseDown(event: MouseEvent): void {
 }
 
 function handleKeyDown(event: KeyboardEvent): void {
+  if (!ensureLiveContext()) {
+    return
+  }
   if (event.key === 'Escape') {
     hideToolbar()
   }
 }
 
 function handleScroll(): void {
+  if (!ensureLiveContext()) {
+    return
+  }
   hideToolbar()
 }
 
+function handleSelectionChange(): void {
+  if (!ensureLiveContext()) {
+    return
+  }
+  if (!getSelectedText()) {
+    hideToolbar()
+  }
+}
+
+function handleStorageChanged(
+  changes: { [key: string]: chrome.storage.StorageChange },
+  areaName: string
+): void {
+  if (!ensureLiveContext()) {
+    return
+  }
+  if (areaName !== 'local' || !(USER_SETTINGS_STORAGE_KEY in changes)) {
+    return
+  }
+  const next = parseUserSettings(changes[USER_SETTINGS_STORAGE_KEY]?.newValue)
+  toolbarEnabled = next.selectionToolbarEnabled
+  if (!toolbarEnabled) {
+    hideToolbar()
+  }
+}
+
+function teardown(): void {
+  if (tornDown) {
+    return
+  }
+  tornDown = true
+  clearShowTimer()
+  clearHideTimer()
+
+  if (listenersRegistered) {
+    document.removeEventListener('mouseup', handleMouseUp, true)
+    document.removeEventListener('mousedown', handleDocumentMouseDown, true)
+    document.removeEventListener('keydown', handleKeyDown, true)
+    window.removeEventListener('scroll', handleScroll, true)
+    document.removeEventListener('selectionchange', handleSelectionChange)
+    try {
+      chrome.storage.onChanged.removeListener(handleStorageChanged)
+    } catch {
+      // 上下文已失效时 removeListener 也可能抛错，忽略即可
+    }
+    listenersRegistered = false
+  }
+
+  hostElement?.remove()
+  hostElement = null
+  shadowRoot = null
+  buttonElement = null
+  buttonState = 'idle'
+}
+
 function registerListeners(): void {
+  if (tornDown || listenersRegistered || !isExtensionContextValid()) {
+    return
+  }
+
   document.addEventListener('mouseup', handleMouseUp, true)
   document.addEventListener('mousedown', handleDocumentMouseDown, true)
   document.addEventListener('keydown', handleKeyDown, true)
   window.addEventListener('scroll', handleScroll, true)
-  document.addEventListener('selectionchange', () => {
-    if (!getSelectedText()) {
-      hideToolbar()
-    }
-  })
-
-  chrome.storage.onChanged.addListener((changes, areaName) => {
-    if (areaName !== 'local' || !(USER_SETTINGS_STORAGE_KEY in changes)) {
-      return
-    }
-    const next = parseUserSettings(changes[USER_SETTINGS_STORAGE_KEY]?.newValue)
-    toolbarEnabled = next.selectionToolbarEnabled
-    if (!toolbarEnabled) {
-      hideToolbar()
-    }
-  })
+  document.addEventListener('selectionchange', handleSelectionChange)
+  chrome.storage.onChanged.addListener(handleStorageChanged)
+  listenersRegistered = true
 }
 
 void refreshToolbarEnabledFromStorage()
   .catch(() => {
+    if (!isExtensionContextValid()) {
+      teardown()
+      return
+    }
     toolbarEnabled = DEFAULT_USER_SETTINGS.selectionToolbarEnabled
   })
   .finally(() => {
-    registerListeners()
+    if (!tornDown && isExtensionContextValid()) {
+      registerListeners()
+    }
   })

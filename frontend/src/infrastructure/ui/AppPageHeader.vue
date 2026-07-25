@@ -4,6 +4,7 @@ import { computed } from 'vue'
 import { openExtensionLibraryPage } from '@/infrastructure/browser/library-page'
 import { openExtensionOptionsPage } from '@/infrastructure/browser/options-page'
 import { t } from '@/infrastructure/i18n/t'
+import MaterialSymbolIcon from '@/infrastructure/ui/icons/MaterialSymbolIcon.vue'
 
 defineOptions({ name: 'AppPageHeader' })
 
@@ -50,12 +51,24 @@ async function handleOpenSettings() {
       class="app-page-header__nav"
       :aria-label="t('nav_aria_label')"
     >
-      <md-text-button v-if="showLibrary" type="button" @click="handleOpenLibrary">
-        {{ t('nav_library') }}
-      </md-text-button>
-      <md-text-button v-if="showSettings" type="button" @click="handleOpenSettings">
-        {{ t('nav_settings') }}
-      </md-text-button>
+      <md-icon-button
+        v-if="showLibrary"
+        type="button"
+        :title="t('nav_library')"
+        :aria-label="t('nav_library')"
+        @click="handleOpenLibrary"
+      >
+        <MaterialSymbolIcon name="library_books" size="22px" />
+      </md-icon-button>
+      <md-icon-button
+        v-if="showSettings"
+        type="button"
+        :title="t('nav_settings')"
+        :aria-label="t('nav_settings')"
+        @click="handleOpenSettings"
+      >
+        <MaterialSymbolIcon name="settings" size="22px" />
+      </md-icon-button>
     </nav>
   </div>
 </template>
@@ -80,7 +93,7 @@ async function handleOpenSettings() {
 .app-page-header__nav {
   display: flex;
   flex-wrap: wrap;
-  gap: 2px;
+  gap: 0;
   align-items: center;
 }
 </style>

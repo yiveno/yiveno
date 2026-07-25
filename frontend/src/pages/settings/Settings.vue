@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 import {
   formatExtensionCommandShortcut,
@@ -15,6 +15,7 @@ import {
 import { tCommandsError, tSettingsError } from '@/infrastructure/i18n/background-error'
 import { t } from '@/infrastructure/i18n/t'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
+import MaterialSymbolIcon from '@/infrastructure/ui/icons/MaterialSymbolIcon.vue'
 import { asMdSwitchElement } from '@/infrastructure/ui/register-material-web'
 
 defineOptions({ name: 'SettingsPage' })
@@ -26,6 +27,8 @@ const commandsState = ref<LoadState>('loading')
 const commandsError = ref('')
 const openingShortcuts = ref(false)
 const openShortcutsError = ref('')
+/** 已打开原生快捷键页，待用户返回后静默刷新绑定。 */
+const awaitingShortcutsReturn = ref(false)
 
 const selectionToolbarEnabled = ref(true)
 const settingsState = ref<LoadState>('loading')
@@ -41,8 +44,11 @@ const commandRows = computed(() =>
   }))
 )
 
-async function loadCommands() {
-  commandsState.value = 'loading'
+async function loadCommands(options?: { quiet?: boolean }) {
+  const quiet = options?.quiet === true
+  if (!quiet) {
+    commandsState.value = 'loading'
+  }
   commandsError.value = ''
 
   try {
@@ -55,10 +61,19 @@ async function loadCommands() {
 
     commands.value = response.commands
     commandsState.value = 'ready'
-  } catch (error) {
+  } catch {
     commandsState.value = 'error'
     commandsError.value = t('settings_error_load_commands')
   }
+}
+
+/** 从 Chrome 快捷键页回到本页时刷新绑定展示。 */
+function refreshCommandsIfReturnedFromShortcuts() {
+  if (document.visibilityState !== 'visible' || !awaitingShortcutsReturn.value) {
+    return
+  }
+  awaitingShortcutsReturn.value = false
+  void loadCommands({ quiet: true })
 }
 
 async function handleOpenShortcutsPage() {
@@ -69,7 +84,9 @@ async function handleOpenShortcutsPage() {
     const response = await openChromeShortcutsPage()
     if (!response.ok) {
       openShortcutsError.value = tCommandsError(response.errorCode)
+      return
     }
+    awaitingShortcutsReturn.value = true
   } catch {
     openShortcutsError.value = t('settings_error_open_shortcuts')
   } finally {
@@ -127,6 +144,11 @@ async function handleSelectionToolbarToggle(event: Event) {
 onMounted(() => {
   void loadCommands()
   void loadUserSettings()
+  document.addEventListener('visibilitychange', refreshCommandsIfReturnedFromShortcuts)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('visibilitychange', refreshCommandsIfReturnedFromShortcuts)
 })
 </script>
 
@@ -206,17 +228,12 @@ onMounted(() => {
         <md-filled-button
           type="button"
           :disabled="openingShortcuts"
+          :title="openingShortcuts ? t('settings_opening_shortcuts') : t('settings_open_shortcuts')"
           @click="handleOpenShortcutsPage"
         >
+          <MaterialSymbolIcon name="open_in_new" size="18px" slot="icon" />
           {{ openingShortcuts ? t('settings_opening_shortcuts') : t('settings_open_shortcuts') }}
         </md-filled-button>
-        <md-outlined-button
-          type="button"
-          :disabled="commandsState === 'loading'"
-          @click="loadCommands"
-        >
-          {{ t('settings_refresh') }}
-        </md-outlined-button>
       </div>
       <p v-if="openShortcutsError" class="settings-error" role="alert">{{ openShortcutsError }}</p>
     </section>

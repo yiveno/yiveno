@@ -52,7 +52,6 @@ export const MESSAGE_KEYS = [
   'settings_commands_loading',
   'settings_open_shortcuts',
   'settings_opening_shortcuts',
-  'settings_refresh',
   'settings_section_later',
   'settings_upcoming_privacy',
   'settings_upcoming_sync',

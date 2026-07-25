@@ -16,7 +16,8 @@ const DEFAULT_DURATION_MS: Record<ActionBadgeResult, number> = {
 }
 
 const BADGE_TEXT: Record<ActionBadgeResult, string> = {
-  success: '✓',
+  /** 成功用 +1：表达「又收进一件」，而非勾选完成。角标仅支持短文本，非图片/SVG。 */
+  success: '+1',
   error: '!'
 }
 

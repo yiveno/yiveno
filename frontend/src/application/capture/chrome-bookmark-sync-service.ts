@@ -39,17 +39,18 @@ function leafToUpsertInput(leaf: ChromeBookmarkLeaf) {
   }
 }
 
-/** 将 Chrome 书签节点同步到 IndexedDB（upsert 或软删）。 */
+/** 将 Chrome 书签节点同步到 IndexedDB（upsert 或软删）。返回是否写入可找回书签。 */
 export async function syncChromeBookmarkNode(
   node: chrome.bookmarks.BookmarkTreeNode
-): Promise<void> {
+): Promise<{ captured: boolean }> {
   const leaf = toChromeBookmarkLeaf(node)
   if (!leaf) {
     await memoryItemService.softDeleteByChromeBookmarkId(node.id)
-    return
+    return { captured: false }
   }
 
   await memoryItemService.upsertBookmarkFromChrome(leafToUpsertInput(leaf))
+  return { captured: true }
 }
 
 /** Chrome 书签被删除时同步软删 MemoryItem。 */
@@ -57,16 +58,19 @@ export async function syncChromeBookmarkRemoved(chromeBookmarkId: string): Promi
   await memoryItemService.softDeleteByChromeBookmarkId(chromeBookmarkId)
 }
 
-/** 处理 Chrome bookmarks.onCreated。 */
+/**
+ * 处理 Chrome bookmarks.onCreated。
+ * @returns captured 为 true 时表示已写入 http(s) 书签记忆（可闪 +1 角标）。
+ */
 export async function handleChromeBookmarkCreated(
   node: chrome.bookmarks.BookmarkTreeNode
-): Promise<void> {
+): Promise<{ captured: boolean }> {
   if (!(await isChromeBookmarkIncrementalSyncEnabled())) {
     enqueueUpsert(node.id)
-    return
+    return { captured: false }
   }
 
-  await syncChromeBookmarkNode(node)
+  return syncChromeBookmarkNode(node)
 }
 
 /** 处理 Chrome bookmarks.onChanged。 */

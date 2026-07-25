@@ -100,18 +100,28 @@ describe('chrome-bookmark-sync-service', () => {
   })
 
   it('handleChromeBookmarkCreated upsert 新书签', async () => {
-    await handleChromeBookmarkCreated({
+    const result = await handleChromeBookmarkCreated({
       id: '10',
       title: '留存分析',
       url: 'https://example.com/retention',
       parentId: '1'
     })
 
+    expect(result.captured).toBe(true)
     const items = await memoryItemRepository.listByOwner({ type: 'bookmark' })
     expect(items).toHaveLength(1)
     if (items[0]?.type === 'bookmark') {
       expect(items[0].payload.chromeBookmarkId).toBe('10')
     }
+  })
+
+  it('handleChromeBookmarkCreated 对文件夹不标记 captured', async () => {
+    const result = await handleChromeBookmarkCreated({
+      id: 'folder-1',
+      title: '工作',
+      parentId: '1'
+    })
+    expect(result.captured).toBe(false)
   })
 
   it('handleChromeBookmarkChanged 更新已有书签', async () => {

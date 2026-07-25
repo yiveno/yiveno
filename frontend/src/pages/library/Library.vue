@@ -213,7 +213,14 @@ watch(
 
         <div v-else-if="loadState === 'error'" class="library-error-block" role="alert">
           <p class="library-error">{{ errorMessage }}</p>
-          <md-text-button type="button" @click="loadPanel">{{ t('library_retry') }}</md-text-button>
+          <md-icon-button
+            type="button"
+            :title="t('library_retry')"
+            :aria-label="t('library_retry')"
+            @click="loadPanel"
+          >
+            <MaterialSymbolIcon name="refresh" size="22px" />
+          </md-icon-button>
         </div>
 
         <template v-else-if="showingBookmarkTree">
@@ -243,6 +250,7 @@ watch(
               <md-icon-button
                 type="button"
                 class="library-item-delete"
+                :title="t('library_delete_excerpt_aria')"
                 :aria-label="t('library_delete_excerpt_aria')"
                 :disabled="deletingId === row.id"
                 @click="handleDeleteExcerpt(row.id)"
