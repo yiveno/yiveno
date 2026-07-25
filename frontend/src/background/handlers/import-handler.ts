@@ -7,6 +7,7 @@ import type { GetBookmarkLibraryTreeResponse } from '@/core/messaging/import-mes
 import { memoryItemService } from '@/application/memory/memory-item-service'
 import { getChromeBookmarkImportStatus } from '@/application/capture/import-chrome-bookmarks-service'
 import type { ChromeBookmarkImportStatusResponse } from '@/core/messaging/import-messages'
+import { t } from '@/infrastructure/i18n/t'
 import { logger } from '@/infrastructure/logging/logger'
 
 /** 返回 Chrome 书签导入进度。 */
@@ -54,7 +55,8 @@ export async function handleGetBookmarkLibraryTree(): Promise<GetBookmarkLibrary
 
     const roots = mapChromeBookmarkTreeToLibraryForest(
       chromeTree.map(node => toChromeTreeInput(node)),
-      memoryIdByChromeBookmarkId
+      memoryIdByChromeBookmarkId,
+      { unnamedFolderTitle: t('library_folder_unnamed') }
     )
 
     return {

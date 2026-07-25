@@ -126,9 +126,9 @@ async function loadPanel() {
       return
     }
     await loadExcerptList()
-  } catch (error) {
+  } catch {
     loadState.value = 'error'
-    errorMessage.value = error instanceof Error ? error.message : t('library_load_failed')
+    errorMessage.value = t('library_load_failed')
     items.value = []
     bookmarkRoots.value = []
   }
@@ -166,8 +166,8 @@ async function handleDeleteExcerpt(id: string) {
       return
     }
     items.value = items.value.filter(item => item.id !== id)
-  } catch (error) {
-    window.alert(error instanceof Error ? error.message : t('library_delete_failed'))
+  } catch {
+    window.alert(t('library_delete_failed'))
   } finally {
     deletingId.value = null
   }

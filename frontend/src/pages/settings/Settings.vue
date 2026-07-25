@@ -57,7 +57,7 @@ async function loadCommands() {
     commandsState.value = 'ready'
   } catch (error) {
     commandsState.value = 'error'
-    commandsError.value = error instanceof Error ? error.message : t('settings_error_load_commands')
+    commandsError.value = t('settings_error_load_commands')
   }
 }
 
@@ -70,9 +70,8 @@ async function handleOpenShortcutsPage() {
     if (!response.ok) {
       openShortcutsError.value = tCommandsError(response.errorCode)
     }
-  } catch (error) {
-    openShortcutsError.value =
-      error instanceof Error ? error.message : t('settings_error_open_shortcuts')
+  } catch {
+    openShortcutsError.value = t('settings_error_open_shortcuts')
   } finally {
     openingShortcuts.value = false
   }
@@ -92,9 +91,9 @@ async function loadUserSettings() {
 
     selectionToolbarEnabled.value = response.settings.selectionToolbarEnabled
     settingsState.value = 'ready'
-  } catch (error) {
+  } catch {
     settingsState.value = 'error'
-    settingsError.value = error instanceof Error ? error.message : t('settings_error_load')
+    settingsError.value = t('settings_error_load')
   }
 }
 
@@ -117,9 +116,9 @@ async function handleSelectionToolbarToggle(event: Event) {
     }
 
     selectionToolbarEnabled.value = response.settings.selectionToolbarEnabled
-  } catch (error) {
+  } catch {
     switchEl.selected = !nextValue
-    settingsError.value = error instanceof Error ? error.message : t('settings_error_update')
+    settingsError.value = t('settings_error_update')
   } finally {
     savingSelectionToolbar.value = false
   }

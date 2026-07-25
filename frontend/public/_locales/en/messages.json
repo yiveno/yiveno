@@ -243,6 +243,9 @@
   "library_bookmark_unsynced": {
     "message": "Not synced"
   },
+  "library_folder_unnamed": {
+    "message": "Unnamed folder"
+  },
   "detail_title": {
     "message": "Excerpt detail"
   },

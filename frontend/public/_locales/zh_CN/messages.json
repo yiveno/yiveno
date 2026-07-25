@@ -243,6 +243,9 @@
   "library_bookmark_unsynced": {
     "message": "未同步"
   },
+  "library_folder_unnamed": {
+    "message": "未命名文件夹"
+  },
   "detail_title": {
     "message": "摘录详情"
   },

@@ -50,6 +50,7 @@
     "watch:fe": "cd frontend && bun run build:watch",
     "typecheck": "cd packages/design-tokens && bun run typecheck && cd ../.. && cd packages/auth-core && bun run typecheck && cd ../.. && bun run typecheck:fe && bun run typecheck:be && bun run typecheck:web",
     "typecheck:fe": "cd frontend && bun run typecheck",
+    "i18n:check": "cd frontend && bun run i18n:check",
     "typecheck:be": "cd backend && bun run typecheck",
     "typecheck:web": "cd website && bun run typecheck",
     "typecheck:ci": "cd packages/design-tokens && bun run typecheck && cd ../auth-core && bun run typecheck && cd ../.. && bun run typecheck:be && bun run typecheck:web",

@@ -150,6 +150,7 @@ Background **无** `window` / `document` / `localStorage`。用全局 `setTimeou
 ```bash
 bun run typecheck              # 快
 bun run typecheck:force        # 全量子项目强制
+bun run i18n:check             # en / zh_CN / MESSAGE_KEYS 对称
 cd frontend && bun run lint:check
 cd frontend && bun run test:run
 bun run knip:fe                # frontend 未使用代码（勿给死文件加假 entry）

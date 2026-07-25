@@ -75,6 +75,11 @@ jobs:
           echo "🧹 Running lint:check (eslint + stylelint, check-only)..."
           bun run lint:check
 
+      - name: 🌐 扩展 i18n key 对称检查
+        run: |
+          echo "🌐 Running frontend i18n:check (en / zh_CN / MESSAGE_KEYS)..."
+          bun run i18n:check
+
       - name: 🔍 Knip 死代码/依赖检查
         run: |
           echo "🔍 Running knip (files, deps, exports, types)..."

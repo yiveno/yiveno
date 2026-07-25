@@ -79,6 +79,7 @@ export const MESSAGE_KEYS = [
   'library_delete_failed',
   'library_delete_excerpt_aria',
   'library_bookmark_unsynced',
+  'library_folder_unnamed',
   'detail_title',
   'detail_subtitle',
   'detail_loading',

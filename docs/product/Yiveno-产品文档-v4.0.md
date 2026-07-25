@@ -339,6 +339,7 @@ MVP 验证问题：是否更愿保存、是否优先打开 Yiveno、是否稳定
 
 | 日期       | 变更                                                                              |
 | ---------- | --------------------------------------------------------------------------------- |
+| 2026-07-25 | i18n Phase 5：清残留 UI 硬编码；CI `i18n:check`；catch 不再展示 `error.message`   |
 | 2026-07-25 | i18n Phase 4：Settings/Recall/Import/Commands/Identity 失败响应落地 `errorCode`   |
 | 2026-07-24 | i18n Phase 2：Library/Detail 文案；Memory 失败响应落地 `errorCode`                |
 | 2026-07-24 | 扩展 i18n 契约：`chrome.i18n` + `en`/`zh_CN`；`t()`；失败响应演进为 `errorCode`   |

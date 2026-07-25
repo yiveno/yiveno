@@ -42,15 +42,21 @@ function isHttpUrl(url: string): boolean {
  * - 仅保留 http(s) 书签叶子
  * - 文件夹保留完整层级（含空文件夹）
  * - 根节点若无标题且仅有子级，展开为多根
+ * - 无标题文件夹文案由调用方注入（core 不写死 locale）
  */
+export interface MapChromeBookmarkTreeOptions {
+  unnamedFolderTitle: string
+}
+
 export function mapChromeBookmarkTreeToLibraryForest(
   roots: ChromeBookmarkTreeInput[],
-  memoryIdByChromeBookmarkId: ReadonlyMap<string, string>
+  memoryIdByChromeBookmarkId: ReadonlyMap<string, string>,
+  options: MapChromeBookmarkTreeOptions
 ): BookmarkLibraryTreeNode[] {
   const mapped: BookmarkLibraryTreeNode[] = []
 
   for (const root of roots) {
-    const node = mapChromeNode(root, memoryIdByChromeBookmarkId)
+    const node = mapChromeNode(root, memoryIdByChromeBookmarkId, options)
     if (!node) {
       continue
     }
@@ -66,7 +72,8 @@ export function mapChromeBookmarkTreeToLibraryForest(
 
 function mapChromeNode(
   node: ChromeBookmarkTreeInput,
-  memoryIdByChromeBookmarkId: ReadonlyMap<string, string>
+  memoryIdByChromeBookmarkId: ReadonlyMap<string, string>,
+  options: MapChromeBookmarkTreeOptions
 ): BookmarkLibraryTreeNode | null {
   const url = node.url?.trim()
   if (url) {
@@ -85,7 +92,7 @@ function mapChromeNode(
 
   const children: BookmarkLibraryTreeNode[] = []
   for (const child of node.children ?? []) {
-    const mapped = mapChromeNode(child, memoryIdByChromeBookmarkId)
+    const mapped = mapChromeNode(child, memoryIdByChromeBookmarkId, options)
     if (mapped) {
       children.push(mapped)
     }
@@ -94,7 +101,7 @@ function mapChromeNode(
   return {
     kind: 'folder',
     chromeId: node.id,
-    title: node.title?.trim() || '未命名文件夹',
+    title: node.title?.trim() || options.unnamedFolderTitle,
     children
   }
 }

@@ -208,7 +208,7 @@ async function handleRecallSubmit() {
     void probeMemoryLibrary()
   } catch (error) {
     viewState.value = 'error'
-    errorMessage.value = error instanceof Error ? error.message : t('popup_recall_failed')
+    errorMessage.value = t('popup_recall_failed')
   }
 }
 

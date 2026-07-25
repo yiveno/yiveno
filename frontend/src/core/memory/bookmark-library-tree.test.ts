@@ -36,7 +36,8 @@ describe('bookmark-library-tree', () => {
           ]
         }
       ],
-      new Map([['100', memoryId]])
+      new Map([['100', memoryId]]),
+      { unnamedFolderTitle: 'Unnamed folder' }
     )
 
     expect(forest).toHaveLength(2)
@@ -57,5 +58,48 @@ describe('bookmark-library-tree', () => {
       memoryItemId: memoryId
     })
     expect(countBookmarkLibraryLeaves(forest)).toBe(1)
+  })
+
+  it('无标题文件夹使用调用方注入文案', () => {
+    const forest = mapChromeBookmarkTreeToLibraryForest(
+      [
+        {
+          id: '0',
+          title: 'Root',
+          children: [
+            {
+              id: '1',
+              title: '  ',
+              children: [{ id: '10', title: 'A', url: 'https://example.com/a' }]
+            }
+          ]
+        }
+      ],
+      new Map(),
+      { unnamedFolderTitle: 'Unnamed folder' }
+    )
+
+    expect(forest).toEqual([
+      {
+        kind: 'folder',
+        chromeId: '0',
+        title: 'Root',
+        children: [
+          {
+            kind: 'folder',
+            chromeId: '1',
+            title: 'Unnamed folder',
+            children: [
+              {
+                kind: 'bookmark',
+                chromeId: '10',
+                title: 'A',
+                url: 'https://example.com/a'
+              }
+            ]
+          }
+        ]
+      }
+    ])
   })
 })

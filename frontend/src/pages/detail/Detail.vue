@@ -80,9 +80,9 @@ async function loadDetail() {
 
     item.value = response.item
     viewState.value = response.item.type === 'text_excerpt' ? 'ready' : 'wrong_type'
-  } catch (error) {
+  } catch {
     viewState.value = 'error'
-    errorMessage.value = error instanceof Error ? error.message : t('detail_load_failed')
+    errorMessage.value = t('detail_load_failed')
   }
 }
 
@@ -105,8 +105,8 @@ async function handleDelete() {
     }
     item.value = null
     viewState.value = 'deleted'
-  } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : t('detail_delete_failed')
+  } catch {
+    errorMessage.value = t('detail_delete_failed')
   } finally {
     deleting.value = false
   }

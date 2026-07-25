@@ -39,22 +39,22 @@
 | -------------- | ------------ | ---------------------------------------------------------- | --------------------------------------------------------------------------------------- |
 | **pre-commit** | `git commit` | 暂存区快修：ESLint fix + Stylelint + Prettier（含 `.vue`） | `lint-staged`（`max-warnings 0`）                                                       |
 | **pre-push**   | `git push`   | 轻量构建 + 分 workspace Knip                               | `build:fe`（frontend/共享包相关变更）；`knip:fe` / `knip:be` / `knip:web`（按变更目录） |
-| **CI**         | PR / push    | 权威只读门禁：typecheck、lint、test、build                 | 见下表                                                                                  |
+| **CI**         | PR / push    | 权威只读门禁：typecheck、lint、i18n、test、build           | 见下表                                                                                  |
 
 pre-push **不跑** ESLint / typecheck / 全仓 test；`.vue` lint 由 pre-commit 与 CI 覆盖。`knip.json` / 根 `package.json` 变更时 pre-push 跑全仓 `knip`。
 
 ### CI 检查矩阵
 
-| 场景                  | TypeScript                             | Lint         | Knip                | 前端测试                    | Lighthouse      |
-| --------------------- | -------------------------------------- | ------------ | ------------------- | --------------------------- | --------------- |
-| **PR**                | `typecheck:ci` + build 内 `vue-tsc -b` | `lint:check` | `knip`              | `test:run` + backend `test` | 不跑（v4 下线） |
-| **push main/develop** | 同上                                   | 同上         | `knip`              | `test:run` + backend `test` | 不跑（v4 下线） |
-| **每周一**            | —                                      | —            | `knip.yml` 定时复检 | —                           | —               |
+| 场景                  | TypeScript                             | Lint         | i18n         | Knip                | 前端测试                    | Lighthouse      |
+| --------------------- | -------------------------------------- | ------------ | ------------ | ------------------- | --------------------------- | --------------- |
+| **PR**                | `typecheck:ci` + build 内 `vue-tsc -b` | `lint:check` | `i18n:check` | `knip`              | `test:run` + backend `test` | 不跑（v4 下线） |
+| **push main/develop** | 同上                                   | 同上         | `i18n:check` | `knip`              | `test:run` + backend `test` | 不跑（v4 下线） |
+| **每周一**            | —                                      | —            | —            | `knip.yml` 定时复检 | —                           | —               |
 
 ### 本地命令
 
-- 日常：`bun run typecheck`（快）、`bun run lint:check`、目标单测
-- 合并前 / 发布前：`bun run typecheck:force`、`bun run lint:check`、`bun run test:run`、`bun run knip`
+- 日常：`bun run typecheck`（快）、`bun run lint:check`、`bun run i18n:check`、目标单测
+- 合并前 / 发布前：`bun run typecheck:force`、`bun run lint:check`、`bun run i18n:check`、`bun run test:run`、`bun run knip`
 - Knip 分 workspace：`knip:fe` / `knip:be` / `knip:web`；仅结构项：`knip:fast`；全量报告：`knip:report`
 - Knip 版本锁定在根 `devDependencies`；`scripts/knip-runner.mjs` 在 `.cache/knip-runner` 隔离安装（规避 monorepo `zod@3` 与 knip 的 `zod/mini` 冲突）
 

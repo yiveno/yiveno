@@ -102,7 +102,7 @@ export async function handleContextMenuClick(
   const item = await captureTextExcerptFromContextMenu({
     selectionText,
     sourceUrl,
-    pageTitle: tab?.title ?? '未知页面',
+    pageTitle: tab?.title ?? '',
     ...optionalProp('tabId', tab?.id)
   })
 
