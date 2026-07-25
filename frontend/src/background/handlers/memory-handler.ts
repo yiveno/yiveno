@@ -1,7 +1,9 @@
+import { isCodedError } from '@/core/common/coded-error'
 import { optionalProp } from '@/core/common/optional-props'
 import { memoryItemService } from '@/application/memory/memory-item-service'
 import type { MemoryBackgroundResponse, MemoryErrorCode } from '@/core/messaging/memory-messages'
 import {
+  MemoryErrorCodeSchema,
   parseCaptureBookmarkPayload,
   parseCaptureTextExcerptPayload,
   parseDeleteMemoryItemPayload,
@@ -9,16 +11,28 @@ import {
   parseListMemoryItemsPayload
 } from '@/core/messaging/memory-messages'
 import { flashActionBadge } from '@/infrastructure/browser/action-badge'
+import { isSavablePageUrl } from '@/infrastructure/browser/active-tab-reader'
 import { logger } from '@/infrastructure/logging/logger'
 
+function resolveMemoryErrorCode(error: unknown, fallback: MemoryErrorCode): MemoryErrorCode {
+  if (isCodedError(error)) {
+    const parsed = MemoryErrorCodeSchema.safeParse(error.errorCode)
+    if (parsed.success) {
+      return parsed.data
+    }
+  }
+  return fallback
+}
+
 function toErrorResponse(errorCode: MemoryErrorCode, error?: unknown): MemoryBackgroundResponse {
+  const code = error !== undefined ? resolveMemoryErrorCode(error, errorCode) : errorCode
   if (error instanceof Error) {
-    return { ok: false, errorCode, error: error.message }
+    return { ok: false, errorCode: code, error: error.message }
   }
   if (typeof error === 'string' && error.length > 0) {
-    return { ok: false, errorCode, error }
+    return { ok: false, errorCode: code, error }
   }
-  return { ok: false, errorCode }
+  return { ok: false, errorCode: code }
 }
 
 /** 捕获 Bookmark MemoryItem。 */
@@ -46,6 +60,9 @@ export async function handleCaptureTextExcerpt(
 ): Promise<MemoryBackgroundResponse> {
   try {
     const input = parseCaptureTextExcerptPayload(payload)
+    if (!isSavablePageUrl(input.sourceUrl)) {
+      return toErrorResponse('CAPTURE_UNSAVABLE_PAGE')
+    }
     const item = await memoryItemService.captureTextExcerpt({
       payload: {
         selectedText: input.selectedText,

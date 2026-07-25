@@ -18,7 +18,8 @@ export async function handleGetChromeBookmarkImportStatus(): Promise<ChromeBookm
     logger.error('Background', '读取书签导入状态失败', error)
     return {
       ok: false,
-      error: error instanceof Error ? error.message : '读取书签导入状态失败'
+      errorCode: 'IMPORT_STATUS_READ_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
     }
   }
 }
@@ -65,7 +66,8 @@ export async function handleGetBookmarkLibraryTree(): Promise<GetBookmarkLibrary
     logger.error('Background', '读取书签目录树失败', error)
     return {
       ok: false,
-      error: error instanceof Error ? error.message : '读取书签目录树失败'
+      errorCode: 'LIBRARY_TREE_READ_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
     }
   }
 }

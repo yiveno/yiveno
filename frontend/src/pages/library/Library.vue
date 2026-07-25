@@ -13,6 +13,7 @@ import {
 } from '@/core/memory/library-tabs'
 import { getMemoryItemOpenHref } from '@/core/recall/memory-open-href'
 import { getMemoryItemDisplay } from '@/core/recall/recall-result'
+import { tImportError } from '@/infrastructure/i18n/background-error'
 import { getUILanguage, t } from '@/infrastructure/i18n/t'
 import { tMemoryError } from '@/infrastructure/i18n/memory-error'
 import {
@@ -82,7 +83,9 @@ async function loadBookmarkTree() {
   const response = await fetchBookmarkLibraryTree()
   if (!response.ok || !('roots' in response)) {
     loadState.value = 'error'
-    errorMessage.value = response.ok ? t('library_invalid_response') : response.error
+    errorMessage.value = response.ok
+      ? t('library_invalid_response')
+      : tImportError(response.errorCode)
     bookmarkRoots.value = []
     return
   }

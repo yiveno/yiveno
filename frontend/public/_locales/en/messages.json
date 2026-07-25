@@ -321,6 +321,15 @@
   "error_memory_operation_failed": {
     "message": "Memory operation failed"
   },
+  "error_capture_unsavable_page": {
+    "message": "Can't save a selection from this page. Try on a regular webpage."
+  },
+  "error_capture_empty_selection": {
+    "message": "Selection is empty. Select text again, then save."
+  },
+  "error_import_status_read_failed": {
+    "message": "Could not read bookmark import status"
+  },
   "action_retry": {
     "message": "Retry"
   },

@@ -21,7 +21,8 @@ export async function handleGetExtensionCommands(): Promise<GetExtensionCommands
     logger.error('Commands', '读取快捷键失败', error)
     return {
       ok: false,
-      error: error instanceof Error ? error.message : '读取快捷键失败'
+      errorCode: 'COMMANDS_READ_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
     }
   }
 }
@@ -35,7 +36,8 @@ export async function handleOpenChromeShortcutsPage(): Promise<OpenChromeShortcu
     logger.error('Commands', '打开快捷键设置页失败', error)
     return {
       ok: false,
-      error: error instanceof Error ? error.message : '打开快捷键设置页失败'
+      errorCode: 'SHORTCUTS_PAGE_OPEN_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
     }
   }
 }

@@ -2,6 +2,14 @@ import { z } from 'zod'
 
 import type { BackgroundMessageScope } from '@/core/messaging/constants'
 
+/** Commands 面向 UI 的稳定错误码。 */
+export const CommandsErrorCodeSchema = z.enum([
+  'COMMANDS_READ_FAILED',
+  'SHORTCUTS_PAGE_OPEN_FAILED'
+])
+
+export type CommandsErrorCode = z.infer<typeof CommandsErrorCodeSchema>
+
 /** 单条扩展命令及其当前快捷键（供设置页展示）。 */
 export const ExtensionCommandInfoSchema = z.object({
   name: z.string().min(1),
@@ -24,7 +32,8 @@ export type GetExtensionCommandsResponse =
     }
   | {
       ok: false
-      error: string
+      errorCode: CommandsErrorCode
+      error?: string
     }
 
 /**
@@ -42,7 +51,8 @@ export type OpenChromeShortcutsPageResponse =
     }
   | {
       ok: false
-      error: string
+      errorCode: CommandsErrorCode
+      error?: string
     }
 
 export type CommandsBackgroundMessage = GetExtensionCommandsMessage | OpenChromeShortcutsPageMessage

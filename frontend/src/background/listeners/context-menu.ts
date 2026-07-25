@@ -1,3 +1,4 @@
+import { CodedError } from '@/core/common/coded-error'
 import { t } from '@/infrastructure/i18n/t'
 import { optionalProp } from '@/core/common/optional-props'
 import { captureTextExcerptFromContextMenu } from '@/application/capture/capture-text-excerpt-service'
@@ -91,11 +92,11 @@ export async function handleContextMenuClick(
   const selectionText = info.selectionText?.trim()
   const sourceUrl = info.pageUrl ?? tab?.url
   if (!selectionText || !sourceUrl) {
-    throw new Error('无法读取选区或页面地址')
+    throw new CodedError('CAPTURE_EMPTY_SELECTION')
   }
 
   if (!isSavablePageUrl(sourceUrl)) {
-    throw new Error('无法保存此页面的选区')
+    throw new CodedError('CAPTURE_UNSAVABLE_PAGE')
   }
 
   const item = await captureTextExcerptFromContextMenu({

@@ -17,6 +17,7 @@ import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
 import { getMemoryItemDisplay } from '@/core/recall/recall-result'
 import { getMemoryItemOpenHref } from '@/core/recall/memory-open-href'
 import { openExtensionOptionsPage } from '@/infrastructure/browser/options-page'
+import { tImportStateError, tRecallError } from '@/infrastructure/i18n/background-error'
 import { t } from '@/infrastructure/i18n/t'
 import {
   fetchChromeBookmarkImportStatus,
@@ -58,7 +59,7 @@ const importProgressLabel = computed(() => {
     return ''
   }
   if (state.status === 'failed') {
-    return state.error ?? t('popup_import_failed_fallback')
+    return state.errorCode ? tImportStateError(state.errorCode) : t('popup_import_failed_fallback')
   }
   if (state.totalCount && state.totalCount > 0) {
     return t('popup_import_progress', [String(state.importedCount), String(state.totalCount)])
@@ -198,7 +199,7 @@ async function handleRecallSubmit() {
     const response = await recallWithClue({ clue: trimmed })
     if (!response.ok) {
       viewState.value = 'error'
-      errorMessage.value = response.error
+      errorMessage.value = tRecallError(response.errorCode)
       return
     }
 

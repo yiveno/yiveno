@@ -1,3 +1,4 @@
+import { CodedError } from '@/core/common/coded-error'
 import { optionalProp } from '@/core/common/optional-props'
 import { normalizeTextExcerptSelection } from '@/core/capture/text-excerpt-selection'
 import type { CaptureEntry } from '@/core/memory/capture-entry'
@@ -21,7 +22,7 @@ export async function captureTextExcerptFromPage(
   input: CaptureTextExcerptFromPageInput
 ): Promise<MemoryItem> {
   if (!isSavablePageUrl(input.sourceUrl)) {
-    throw new Error('无法保存此页面的选区，请在普通网页上重试')
+    throw new CodedError('CAPTURE_UNSAVABLE_PAGE')
   }
 
   let selection = normalizeTextExcerptSelection({
@@ -50,7 +51,7 @@ export async function captureTextExcerptFromPage(
   }
 
   if (!selection) {
-    throw new Error('选区为空，请重新选中文字后再保存')
+    throw new CodedError('CAPTURE_EMPTY_SELECTION')
   }
 
   return memoryItemService.captureTextExcerpt({

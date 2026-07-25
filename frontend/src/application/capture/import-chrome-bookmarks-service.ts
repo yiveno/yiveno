@@ -121,7 +121,8 @@ async function runChromeBookmarkImport(
       importedCount,
       totalCount,
       startedAt,
-      error: error instanceof Error ? error.message : '书签导入失败'
+      errorCode: 'BOOKMARK_IMPORT_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
     }
     await writeChromeBookmarkImportState(failed)
     logger.error('ChromeBookmarkImport', '书签导入失败', error)

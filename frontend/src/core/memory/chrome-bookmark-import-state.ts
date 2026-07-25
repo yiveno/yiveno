@@ -3,6 +3,11 @@ import { z } from 'zod'
 /** 书签导入状态存储键。 */
 export const CHROME_BOOKMARK_IMPORT_STORAGE_KEY = 'yiveno:chrome_bookmark_import' as const
 
+/** 书签导入失败面向 UI 的稳定错误码。 */
+export const ChromeBookmarkImportErrorCodeSchema = z.enum(['BOOKMARK_IMPORT_FAILED'])
+
+export type ChromeBookmarkImportErrorCode = z.infer<typeof ChromeBookmarkImportErrorCodeSchema>
+
 export const ChromeBookmarkImportStateSchema = z.object({
   status: z.enum(['pending', 'running', 'completed', 'failed']),
   importedCount: z.number().int().nonnegative().default(0),
@@ -10,6 +15,9 @@ export const ChromeBookmarkImportStateSchema = z.object({
   totalCount: z.number().int().nonnegative().optional(),
   startedAt: z.string().datetime().optional(),
   completedAt: z.string().datetime().optional(),
+  /** 失败时的稳定错误码；UI 经 t() 渲染。 */
+  errorCode: ChromeBookmarkImportErrorCodeSchema.optional(),
+  /** 调试用；UI 不得作为主文案。 */
   error: z.string().optional()
 })
 

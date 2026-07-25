@@ -1,5 +1,11 @@
 import type { UserSettings } from '@/core/settings/user-settings'
 import type { BackgroundMessageScope } from '@/core/messaging/constants'
+import { z } from 'zod'
+
+/** Settings 面向 UI 的稳定错误码。 */
+export const SettingsErrorCodeSchema = z.enum(['SETTINGS_READ_FAILED', 'SETTINGS_UPDATE_FAILED'])
+
+export type SettingsErrorCode = z.infer<typeof SettingsErrorCodeSchema>
 
 /** 读取用户设置。 */
 export type GetUserSettingsMessage = {
@@ -14,7 +20,8 @@ export type GetUserSettingsResponse =
     }
   | {
       ok: false
-      error: string
+      errorCode: SettingsErrorCode
+      error?: string
     }
 
 /** 更新用户设置（局部 patch）。 */
@@ -31,7 +38,8 @@ export type UpdateUserSettingsResponse =
     }
   | {
       ok: false
-      error: string
+      errorCode: SettingsErrorCode
+      error?: string
     }
 
 export type SettingsBackgroundMessage = GetUserSettingsMessage | UpdateUserSettingsMessage

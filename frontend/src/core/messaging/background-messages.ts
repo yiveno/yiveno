@@ -1,3 +1,5 @@
+import { z } from 'zod'
+
 import type { LocalProfile } from '@/core/identity/local-profile'
 import { BACKGROUND_MESSAGE_SCOPE } from '@/core/messaging/constants'
 import type {
@@ -23,6 +25,16 @@ import type {
 
 export { BACKGROUND_MESSAGE_SCOPE }
 
+/** 本地身份读取失败。 */
+export const IdentityErrorCodeSchema = z.enum(['IDENTITY_READ_FAILED'])
+
+export type IdentityErrorCode = z.infer<typeof IdentityErrorCodeSchema>
+
+/** 消息分发层失败（未知 type / 未捕获异常）。 */
+export const DispatchErrorCodeSchema = z.enum(['UNKNOWN_MESSAGE_TYPE', 'MESSAGE_DISPATCH_FAILED'])
+
+export type DispatchErrorCode = z.infer<typeof DispatchErrorCodeSchema>
+
 /** 读取本地身份与当前 ownerId。 */
 export type GetLocalIdentityMessage = {
   scope: typeof BACKGROUND_MESSAGE_SCOPE
@@ -37,7 +49,8 @@ export type GetLocalIdentityResponse =
     }
   | {
       ok: false
-      error: string
+      errorCode: IdentityErrorCode
+      error?: string
     }
 
 /** Background 存活探测。 */
@@ -48,6 +61,13 @@ export type PingBackgroundMessage = {
 
 export type PingBackgroundResponse = {
   ok: true
+}
+
+/** 消息分发失败响应（不对应单一业务 type）。 */
+export type BackgroundDispatchErrorResponse = {
+  ok: false
+  errorCode: DispatchErrorCode
+  error?: string
 }
 
 export type BackgroundMessage =
@@ -67,6 +87,7 @@ export type BackgroundMessageResponse =
   | ImportBackgroundResponse
   | CommandsBackgroundResponse
   | SettingsBackgroundResponse
+  | BackgroundDispatchErrorResponse
 
 /** 判断是否为 Background scope 消息。 */
 export function isBackgroundScopedMessage(

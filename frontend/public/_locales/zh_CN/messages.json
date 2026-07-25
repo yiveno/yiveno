@@ -321,6 +321,15 @@
   "error_memory_operation_failed": {
     "message": "记忆操作失败"
   },
+  "error_capture_unsavable_page": {
+    "message": "无法保存此页面的选区，请在普通网页上重试"
+  },
+  "error_capture_empty_selection": {
+    "message": "选区为空，请重新选中文字后再保存"
+  },
+  "error_import_status_read_failed": {
+    "message": "无法读取书签导入状态"
+  },
   "action_retry": {
     "message": "重试"
   },

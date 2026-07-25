@@ -13,7 +13,8 @@ export async function handleRecallWithClue(payload: unknown): Promise<RecallBack
     logger.error('Background', 'Recall 失败', error)
     return {
       ok: false,
-      error: error instanceof Error ? error.message : 'Recall 失败'
+      errorCode: 'RECALL_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
     }
   }
 }

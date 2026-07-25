@@ -38,7 +38,8 @@ async function handleGetLocalIdentity(): Promise<GetLocalIdentityResponse> {
     logger.error('Background', '读取本地身份失败', error)
     return {
       ok: false,
-      error: error instanceof Error ? error.message : '读取本地身份失败'
+      errorCode: 'IDENTITY_READ_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
     }
   }
 }
@@ -76,7 +77,11 @@ async function dispatchBackgroundMessage(
     case 'UPDATE_USER_SETTINGS':
       return handleUpdateUserSettings(message.payload)
     default:
-      return { ok: false, error: `未知消息类型: ${(message as { type: string }).type}` }
+      return {
+        ok: false,
+        errorCode: 'UNKNOWN_MESSAGE_TYPE',
+        error: `未知消息类型: ${(message as { type: string }).type}`
+      }
   }
 }
 
@@ -98,7 +103,8 @@ export function handleBackgroundMessage(
       logger.error('Background', '消息处理失败', error)
       sendResponse({
         ok: false,
-        error: error instanceof Error ? error.message : '消息处理失败'
+        errorCode: 'MESSAGE_DISPATCH_FAILED',
+        ...(error instanceof Error ? { error: error.message } : {})
       })
     })
 

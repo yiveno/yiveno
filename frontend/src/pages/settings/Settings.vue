@@ -12,6 +12,7 @@ import {
   openChromeShortcutsPage,
   updateUserSettings
 } from '@/infrastructure/messaging/background-client'
+import { tCommandsError, tSettingsError } from '@/infrastructure/i18n/background-error'
 import { t } from '@/infrastructure/i18n/t'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
 import { asMdSwitchElement } from '@/infrastructure/ui/register-material-web'
@@ -48,7 +49,7 @@ async function loadCommands() {
     const response = await fetchExtensionCommands()
     if (!response.ok) {
       commandsState.value = 'error'
-      commandsError.value = response.error
+      commandsError.value = tCommandsError(response.errorCode)
       return
     }
 
@@ -67,7 +68,7 @@ async function handleOpenShortcutsPage() {
   try {
     const response = await openChromeShortcutsPage()
     if (!response.ok) {
-      openShortcutsError.value = response.error
+      openShortcutsError.value = tCommandsError(response.errorCode)
     }
   } catch (error) {
     openShortcutsError.value =
@@ -85,7 +86,7 @@ async function loadUserSettings() {
     const response = await fetchUserSettings()
     if (!response.ok) {
       settingsState.value = 'error'
-      settingsError.value = response.error
+      settingsError.value = tSettingsError(response.errorCode)
       return
     }
 
@@ -111,7 +112,7 @@ async function handleSelectionToolbarToggle(event: Event) {
     const response = await updateUserSettings({ selectionToolbarEnabled: nextValue })
     if (!response.ok) {
       switchEl.selected = !nextValue
-      settingsError.value = response.error
+      settingsError.value = tSettingsError(response.errorCode)
       return
     }
 

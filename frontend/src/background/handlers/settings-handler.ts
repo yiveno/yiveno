@@ -9,6 +9,10 @@ import {
 } from '@/infrastructure/settings/user-settings-service'
 import { logger } from '@/infrastructure/logging/logger'
 
+function toErrorPayload(error: unknown): string | undefined {
+  return error instanceof Error ? error.message : undefined
+}
+
 /** 读取用户设置。 */
 export async function handleGetUserSettings(): Promise<GetUserSettingsResponse> {
   try {
@@ -16,9 +20,11 @@ export async function handleGetUserSettings(): Promise<GetUserSettingsResponse> 
     return { ok: true, settings }
   } catch (error) {
     logger.error('Settings', '读取用户设置失败', error)
+    const debug = toErrorPayload(error)
     return {
       ok: false,
-      error: error instanceof Error ? error.message : '读取设置失败'
+      errorCode: 'SETTINGS_READ_FAILED',
+      ...(debug ? { error: debug } : {})
     }
   }
 }
@@ -37,9 +43,11 @@ export async function handleUpdateUserSettings(
     return { ok: true, settings }
   } catch (error) {
     logger.error('Settings', '更新用户设置失败', error)
+    const debug = toErrorPayload(error)
     return {
       ok: false,
-      error: error instanceof Error ? error.message : '更新设置失败'
+      errorCode: 'SETTINGS_UPDATE_FAILED',
+      ...(debug ? { error: debug } : {})
     }
   }
 }

@@ -40,7 +40,9 @@ const deleteMemoryItemPayloadSchema = z.object({
 export const MemoryErrorCodeSchema = z.enum([
   'MEMORY_NOT_FOUND',
   'MEMORY_DELETE_BOOKMARK_FORBIDDEN',
-  'MEMORY_OPERATION_FAILED'
+  'MEMORY_OPERATION_FAILED',
+  'CAPTURE_UNSAVABLE_PAGE',
+  'CAPTURE_EMPTY_SELECTION'
 ])
 
 export type MemoryErrorCode = z.infer<typeof MemoryErrorCodeSchema>
