@@ -1,7 +1,8 @@
 /**
  * 召回命中解释：根据线索 token 与匹配字段生成可读原因。
- * 纯函数，无 Chrome / DOM 依赖。
+ * 纯函数；文案经注入的 translate，无 Chrome / DOM 依赖。
  */
+import type { TranslateFn } from '@/core/i18n/translate'
 import {
   collectSearchableFields,
   normalizeRecallText,
@@ -9,28 +10,26 @@ import {
 } from '@/core/recall/keyword-filter'
 import type { MemoryItem } from '@/core/memory/memory-item'
 
-/** Popup / 长文案用字段标签。 */
-export const RECALL_MATCH_FIELD_LABELS: Record<string, string> = {
-  title: '标题',
-  textExcerpt: '正文片段',
-  summary: '摘要',
-  domain: '域名',
-  url: '链接',
-  keywords: '关键词',
-  tags: '标签',
-  note: '备注'
+const FIELD_LABEL_KEYS: Record<string, string> = {
+  title: 'explain_field_title',
+  textExcerpt: 'explain_field_text_excerpt',
+  summary: 'explain_field_summary',
+  domain: 'explain_field_domain',
+  url: 'explain_field_url',
+  keywords: 'explain_field_keywords',
+  tags: 'explain_field_tags',
+  note: 'explain_field_note'
 }
 
-/** Omnibox 等窄空间短标签。 */
-export const RECALL_MATCH_FIELD_SHORT_LABELS: Record<string, string> = {
-  title: '标题',
-  textExcerpt: '正文',
-  summary: '摘要',
-  domain: '域名',
-  url: '链接',
-  keywords: '关键词',
-  tags: '标签',
-  note: '备注'
+const FIELD_SHORT_LABEL_KEYS: Record<string, string> = {
+  title: 'explain_field_short_title',
+  textExcerpt: 'explain_field_short_text_excerpt',
+  summary: 'explain_field_short_summary',
+  domain: 'explain_field_short_domain',
+  url: 'explain_field_short_url',
+  keywords: 'explain_field_short_keywords',
+  tags: 'explain_field_short_tags',
+  note: 'explain_field_short_note'
 }
 
 /** 与 keyword-filter 一致的字段权重，用于选择主因字段。 */
@@ -49,22 +48,24 @@ const TOKEN_QUOTE_MAX = 12
 const CLUE_ECHO_MAX = 24
 
 export interface RecallMatchExplanation {
-  /** 主因，如「因标题含「留存」」。 */
+  /** 主因。 */
   primary: string
-  /** 次要字段说明，如「还匹配：域名」；无则为 null。 */
+  /** 次要字段说明；无则为 null。 */
   secondary: string | null
   /** 卡片灰字单行（主因；有次要时拼接）。 */
   reasonLine: string
 }
 
-/** 字段键 → 中文标签（长）。 */
-export function getRecallMatchFieldLabel(field: string): string {
-  return RECALL_MATCH_FIELD_LABELS[field] ?? field
+/** 字段键 → 本地化长标签。 */
+export function getRecallMatchFieldLabel(field: string, translate: TranslateFn): string {
+  const key = FIELD_LABEL_KEYS[field]
+  return key ? translate(key) : field
 }
 
-/** 字段键 → 中文短标签。 */
-export function getRecallMatchFieldShortLabel(field: string): string {
-  return RECALL_MATCH_FIELD_SHORT_LABELS[field] ?? field
+/** 字段键 → 本地化短标签。 */
+export function getRecallMatchFieldShortLabel(field: string, translate: TranslateFn): string {
+  const key = FIELD_SHORT_LABEL_KEYS[field]
+  return key ? translate(key) : field
 }
 
 /** 按权重选主因字段（matchedFields 顺序为辅）。 */
@@ -129,23 +130,27 @@ export function findMatchedClueToken(input: {
 }
 
 /** 生成命中解释。 */
-export function explainRecallMatch(input: {
-  clue: string
-  matchedFields: string[]
-  item?: MemoryItem
-}): RecallMatchExplanation {
+export function explainRecallMatch(
+  input: {
+    clue: string
+    matchedFields: string[]
+    item?: MemoryItem
+  },
+  translate: TranslateFn
+): RecallMatchExplanation {
   const uniqueFields = [...new Set(input.matchedFields)]
   const primaryField = pickPrimaryMatchedField(uniqueFields)
 
   if (!primaryField) {
+    const related = translate('explain_content_related')
     return {
-      primary: '内容相关',
+      primary: related,
       secondary: null,
-      reasonLine: '内容相关'
+      reasonLine: related
     }
   }
 
-  const fieldLabel = getRecallMatchFieldLabel(primaryField)
+  const fieldLabel = getRecallMatchFieldLabel(primaryField, translate)
   const token = findMatchedClueToken({
     clue: input.clue,
     primaryField,
@@ -153,29 +158,37 @@ export function explainRecallMatch(input: {
   })
 
   const primary = token
-    ? `因${fieldLabel}含「${truncateRecallExplainText(token, TOKEN_QUOTE_MAX)}」`
-    : `因${fieldLabel}相关`
+    ? translate('explain_reason_field_contains', [
+        fieldLabel,
+        truncateRecallExplainText(token, TOKEN_QUOTE_MAX)
+      ])
+    : translate('explain_reason_field_related', fieldLabel)
 
   const secondaryFields = uniqueFields.filter(field => field !== primaryField)
   const secondary =
     secondaryFields.length > 0
-      ? `还匹配：${secondaryFields.map(getRecallMatchFieldLabel).join('、')}`
+      ? translate(
+          'explain_secondary_also',
+          secondaryFields
+            .map(field => getRecallMatchFieldLabel(field, translate))
+            .join(translate('explain_list_separator'))
+        )
       : null
 
   return {
     primary,
     secondary,
-    reasonLine: secondary ? `${primary}；${secondary}` : primary
+    reasonLine: secondary ? `${primary}${translate('explain_reason_joiner')}${secondary}` : primary
   }
 }
 
 /** 结果卡线索回显。 */
-export function formatRecallClueEcho(clue: string): string {
+export function formatRecallClueEcho(clue: string, translate: TranslateFn): string {
   const trimmed = clue.trim()
   if (!trimmed) {
     return ''
   }
-  return `根据线索「${truncateRecallExplainText(trimmed, CLUE_ECHO_MAX)}」`
+  return translate('explain_clue_echo', truncateRecallExplainText(trimmed, CLUE_ECHO_MAX))
 }
 
 /**

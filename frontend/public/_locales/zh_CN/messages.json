@@ -323,5 +323,159 @@
   },
   "action_retry": {
     "message": "重试"
+  },
+  "popup_empty_no_memory_title": {
+    "message": "还没有可找回的记忆"
+  },
+  "popup_empty_no_memory_body_importing": {
+    "message": "正在导入书签，完成后即可用标题或域名片段找回。也可先划词保存一段文字。"
+  },
+  "popup_empty_no_memory_body": {
+    "message": "用 Chrome 加书签并等待同步，或在网页划词后点「保存到 Yiveno」。"
+  },
+  "popup_empty_library_empty_title": {
+    "message": "记忆库还是空的"
+  },
+  "popup_empty_library_empty_body": {
+    "message": "先存一点再找回：Chrome 加书签等待同步，或划词保存选区。换词暂时帮不上忙。"
+  },
+  "popup_no_match_title_with_clue": {
+    "message": "没找到和「$clue$」相关的",
+    "placeholders": {
+      "clue": {
+        "content": "$1",
+        "example": "留存"
+      }
+    }
+  },
+  "popup_no_match_title": {
+    "message": "还没找到匹配的"
+  },
+  "popup_no_match_body": {
+    "message": "试试更短的词，或用域名、标题里还记得的片段。也可划词保存后再找回。"
+  },
+  "explain_field_title": {
+    "message": "标题"
+  },
+  "explain_field_text_excerpt": {
+    "message": "正文片段"
+  },
+  "explain_field_summary": {
+    "message": "摘要"
+  },
+  "explain_field_domain": {
+    "message": "域名"
+  },
+  "explain_field_url": {
+    "message": "链接"
+  },
+  "explain_field_keywords": {
+    "message": "关键词"
+  },
+  "explain_field_tags": {
+    "message": "标签"
+  },
+  "explain_field_note": {
+    "message": "备注"
+  },
+  "explain_field_short_title": {
+    "message": "标题"
+  },
+  "explain_field_short_text_excerpt": {
+    "message": "正文"
+  },
+  "explain_field_short_summary": {
+    "message": "摘要"
+  },
+  "explain_field_short_domain": {
+    "message": "域名"
+  },
+  "explain_field_short_url": {
+    "message": "链接"
+  },
+  "explain_field_short_keywords": {
+    "message": "关键词"
+  },
+  "explain_field_short_tags": {
+    "message": "标签"
+  },
+  "explain_field_short_note": {
+    "message": "备注"
+  },
+  "explain_content_related": {
+    "message": "内容相关"
+  },
+  "explain_reason_field_contains": {
+    "message": "因$field$含「$token$」",
+    "placeholders": {
+      "field": {
+        "content": "$1",
+        "example": "标题"
+      },
+      "token": {
+        "content": "$2",
+        "example": "留存"
+      }
+    }
+  },
+  "explain_reason_field_related": {
+    "message": "因$field$相关",
+    "placeholders": {
+      "field": {
+        "content": "$1",
+        "example": "标题"
+      }
+    }
+  },
+  "explain_secondary_also": {
+    "message": "还匹配：$fields$",
+    "placeholders": {
+      "fields": {
+        "content": "$1",
+        "example": "域名"
+      }
+    }
+  },
+  "explain_reason_joiner": {
+    "message": "；"
+  },
+  "explain_list_separator": {
+    "message": "、"
+  },
+  "explain_clue_echo": {
+    "message": "根据线索「$clue$」",
+    "placeholders": {
+      "clue": {
+        "content": "$1",
+        "example": "留存"
+      }
+    }
+  },
+  "explain_matched_prefix": {
+    "message": "匹配：$fields$",
+    "placeholders": {
+      "fields": {
+        "content": "$1",
+        "example": "标题"
+      }
+    }
+  },
+  "type_label_bookmark": {
+    "message": "书签"
+  },
+  "type_label_excerpt": {
+    "message": "文字片段"
+  },
+  "omnibox_type_bookmark": {
+    "message": "Y·书签"
+  },
+  "omnibox_type_excerpt": {
+    "message": "Y·摘录"
+  },
+  "command_title_open_recall_popup": {
+    "message": "打开找回（Popup）"
+  },
+  "command_shortcut_unset": {
+    "message": "未设置"
   }
 }

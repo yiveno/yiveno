@@ -323,5 +323,159 @@
   },
   "action_retry": {
     "message": "Retry"
+  },
+  "popup_empty_no_memory_title": {
+    "message": "Nothing to recall yet"
+  },
+  "popup_empty_no_memory_body_importing": {
+    "message": "Importing bookmarks—then you can recall by title or domain. Or save a text selection first."
+  },
+  "popup_empty_no_memory_body": {
+    "message": "Add bookmarks in Chrome and wait for sync, or select text on a page and tap “Save to Yiveno”."
+  },
+  "popup_empty_library_empty_title": {
+    "message": "Your library is still empty"
+  },
+  "popup_empty_library_empty_body": {
+    "message": "Save something first: add a Chrome bookmark and wait for sync, or save a selection. Changing the clue won’t help yet."
+  },
+  "popup_no_match_title_with_clue": {
+    "message": "Nothing related to “$clue$”",
+    "placeholders": {
+      "clue": {
+        "content": "$1",
+        "example": "retention"
+      }
+    }
+  },
+  "popup_no_match_title": {
+    "message": "No match yet"
+  },
+  "popup_no_match_body": {
+    "message": "Try a shorter clue, or a fragment from the domain or title. You can also save a selection and recall it later."
+  },
+  "explain_field_title": {
+    "message": "title"
+  },
+  "explain_field_text_excerpt": {
+    "message": "excerpt"
+  },
+  "explain_field_summary": {
+    "message": "summary"
+  },
+  "explain_field_domain": {
+    "message": "domain"
+  },
+  "explain_field_url": {
+    "message": "URL"
+  },
+  "explain_field_keywords": {
+    "message": "keywords"
+  },
+  "explain_field_tags": {
+    "message": "tags"
+  },
+  "explain_field_note": {
+    "message": "note"
+  },
+  "explain_field_short_title": {
+    "message": "title"
+  },
+  "explain_field_short_text_excerpt": {
+    "message": "body"
+  },
+  "explain_field_short_summary": {
+    "message": "summary"
+  },
+  "explain_field_short_domain": {
+    "message": "domain"
+  },
+  "explain_field_short_url": {
+    "message": "URL"
+  },
+  "explain_field_short_keywords": {
+    "message": "keywords"
+  },
+  "explain_field_short_tags": {
+    "message": "tags"
+  },
+  "explain_field_short_note": {
+    "message": "note"
+  },
+  "explain_content_related": {
+    "message": "Related to your clue"
+  },
+  "explain_reason_field_contains": {
+    "message": "Matched $field$ containing “$token$”",
+    "placeholders": {
+      "field": {
+        "content": "$1",
+        "example": "title"
+      },
+      "token": {
+        "content": "$2",
+        "example": "retention"
+      }
+    }
+  },
+  "explain_reason_field_related": {
+    "message": "Matched $field$",
+    "placeholders": {
+      "field": {
+        "content": "$1",
+        "example": "title"
+      }
+    }
+  },
+  "explain_secondary_also": {
+    "message": "Also: $fields$",
+    "placeholders": {
+      "fields": {
+        "content": "$1",
+        "example": "domain"
+      }
+    }
+  },
+  "explain_reason_joiner": {
+    "message": "; "
+  },
+  "explain_list_separator": {
+    "message": ", "
+  },
+  "explain_clue_echo": {
+    "message": "From clue “$clue$”",
+    "placeholders": {
+      "clue": {
+        "content": "$1",
+        "example": "retention"
+      }
+    }
+  },
+  "explain_matched_prefix": {
+    "message": "Matched: $fields$",
+    "placeholders": {
+      "fields": {
+        "content": "$1",
+        "example": "title"
+      }
+    }
+  },
+  "type_label_bookmark": {
+    "message": "Bookmark"
+  },
+  "type_label_excerpt": {
+    "message": "Text excerpt"
+  },
+  "omnibox_type_bookmark": {
+    "message": "Y·Bookmark"
+  },
+  "omnibox_type_excerpt": {
+    "message": "Y·Excerpt"
+  },
+  "command_title_open_recall_popup": {
+    "message": "Open Recall (Popup)"
+  },
+  "command_shortcut_unset": {
+    "message": "Not set"
   }
 }

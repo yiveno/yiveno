@@ -1,6 +1,7 @@
 /**
- * Popup 空状态 / 恢复文案选择（纯函数）。
+ * Popup 空状态 / 恢复文案选择（纯函数；文案经注入的 translate）。
  */
+import type { TranslateFn } from '@/core/i18n/translate'
 
 export type PopupLibraryState = 'unknown' | 'empty' | 'ready'
 
@@ -13,42 +14,48 @@ export interface PopupEmptyCopy {
 /** idle 区引导（有库时不展示额外空态块）。 */
 export function getPopupIdleEmptyCopy(
   library: PopupLibraryState,
-  importing: boolean
+  importing: boolean,
+  translate: TranslateFn
 ): PopupEmptyCopy | null {
   if (library !== 'empty') {
     return null
   }
 
   return {
-    title: '还没有可找回的记忆',
+    title: translate('popup_empty_no_memory_title'),
     body: importing
-      ? '正在导入书签，完成后即可用标题或域名片段找回。也可先划词保存一段文字。'
-      : '用 Chrome 加书签并等待同步，或在网页划词后点「保存到 Yiveno」。',
+      ? translate('popup_empty_no_memory_body_importing')
+      : translate('popup_empty_no_memory_body'),
     showShortenRetry: false
   }
 }
 
 /** no_match 区文案。 */
-export function getPopupNoMatchCopy(input: {
-  library: PopupLibraryState
-  clue: string
-  canShorten: boolean
-}): PopupEmptyCopy {
+export function getPopupNoMatchCopy(
+  input: {
+    library: PopupLibraryState
+    clue: string
+    canShorten: boolean
+  },
+  translate: TranslateFn
+): PopupEmptyCopy {
   const clueLabel = input.clue.trim()
 
   if (input.library === 'empty') {
     return {
-      title: '记忆库还是空的',
-      body: '先存一点再找回：Chrome 加书签等待同步，或划词保存选区。换词暂时帮不上忙。',
+      title: translate('popup_empty_library_empty_title'),
+      body: translate('popup_empty_library_empty_body'),
       showShortenRetry: false
     }
   }
 
+  const truncated = clueLabel.length > 16 ? `${clueLabel.slice(0, 16)}…` : clueLabel
+
   return {
     title: clueLabel
-      ? `没找到和「${clueLabel.slice(0, 16)}${clueLabel.length > 16 ? '…' : ''}」相关的`
-      : '还没找到匹配的',
-    body: '试试更短的词，或用域名、标题里还记得的片段。也可划词保存后再找回。',
+      ? translate('popup_no_match_title_with_clue', truncated)
+      : translate('popup_no_match_title'),
+    body: translate('popup_no_match_body'),
     showShortenRetry: input.canShorten
   }
 }

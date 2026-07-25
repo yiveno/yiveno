@@ -34,8 +34,8 @@ const savingSelectionToolbar = ref(false)
 const commandRows = computed(() =>
   commands.value.map(command => ({
     name: command.name,
-    title: getExtensionCommandDisplayTitle(command),
-    shortcutLabel: formatExtensionCommandShortcut(command.shortcut),
+    title: getExtensionCommandDisplayTitle(command, t),
+    shortcutLabel: formatExtensionCommandShortcut(command.shortcut, t),
     unbound: command.shortcut.trim().length === 0
   }))
 )

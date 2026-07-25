@@ -1,3 +1,4 @@
+import type { TranslateFn } from '@/core/i18n/translate'
 import type { MemoryItem } from '@/core/memory/memory-item'
 import { explainRecallMatch, getRecallMatchFieldLabel } from '@/core/recall/explain-recall-match'
 
@@ -48,13 +49,13 @@ export function formatExcerptProvenance(pageTitle: string, domain: string): stri
 }
 
 /** 提取 MemoryItem 的展示字段（纯函数）。 */
-export function getMemoryItemDisplay(item: MemoryItem): MemoryItemDisplay {
+export function getMemoryItemDisplay(item: MemoryItem, translate: TranslateFn): MemoryItemDisplay {
   if (item.type === 'bookmark') {
     return {
       title: item.payload.title,
       subtitle: item.payload.domain,
       url: item.payload.url,
-      typeLabel: '书签'
+      typeLabel: translate('type_label_bookmark')
     }
   }
 
@@ -63,7 +64,7 @@ export function getMemoryItemDisplay(item: MemoryItem): MemoryItemDisplay {
     subtitle: formatExcerptProvenance(item.payload.pageTitle, item.payload.domain),
     url: item.payload.sourceUrl,
     excerpt: item.payload.selectedText,
-    typeLabel: '文字片段'
+    typeLabel: translate('type_label_excerpt')
   }
 }
 
@@ -71,14 +72,20 @@ export function getMemoryItemDisplay(item: MemoryItem): MemoryItemDisplay {
  * 生成命中解释文案（兼容旧调用）。
  * 仅有字段列表、无线索时退化为字段名列表。
  */
-export function formatMatchedFields(matchedFields: string[], clue = ''): string {
+export function formatMatchedFields(
+  matchedFields: string[],
+  translate: TranslateFn,
+  clue = ''
+): string {
   if (!clue.trim()) {
-    const unique = [...new Set(matchedFields.map(field => getRecallMatchFieldLabel(field)))]
+    const unique = [
+      ...new Set(matchedFields.map(field => getRecallMatchFieldLabel(field, translate)))
+    ]
     if (unique.length === 0) {
-      return '内容相关'
+      return translate('explain_content_related')
     }
-    return `匹配：${unique.join('、')}`
+    return translate('explain_matched_prefix', unique.join(translate('explain_list_separator')))
   }
 
-  return explainRecallMatch({ clue, matchedFields }).reasonLine
+  return explainRecallMatch({ clue, matchedFields }, translate).reasonLine
 }

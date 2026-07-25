@@ -4,6 +4,7 @@ import {
   createBookmarkMemoryItem,
   createTextExcerptMemoryItem
 } from '@/core/memory/create-memory-item'
+import { testTranslateZh } from '@/core/i18n/test-translate-zh'
 import {
   formatExcerptProvenance,
   formatMatchedFields,
@@ -18,12 +19,12 @@ const baseContext = {
 
 describe('formatMatchedFields', () => {
   it('无线索时退化为字段名列表', () => {
-    expect(formatMatchedFields(['title', 'domain'])).toBe('匹配：标题、域名')
-    expect(formatMatchedFields([])).toBe('内容相关')
+    expect(formatMatchedFields(['title', 'domain'], testTranslateZh)).toBe('匹配：标题、域名')
+    expect(formatMatchedFields([], testTranslateZh)).toBe('内容相关')
   })
 
   it('有线索时委托 explainRecallMatch', () => {
-    expect(formatMatchedFields(['title'], '留存')).toContain('因标题')
+    expect(formatMatchedFields(['title'], testTranslateZh, '留存')).toContain('因标题')
   })
 })
 
@@ -33,7 +34,7 @@ describe('getMemoryItemDisplay', () => {
       ...baseContext,
       payload: { title: '留存分析', url: 'https://example.com/retention' }
     })
-    expect(getMemoryItemDisplay(item)).toMatchObject({
+    expect(getMemoryItemDisplay(item, testTranslateZh)).toMatchObject({
       title: '留存分析',
       subtitle: 'example.com',
       typeLabel: '书签'
@@ -49,7 +50,7 @@ describe('getMemoryItemDisplay', () => {
         pageTitle: '增长笔记'
       }
     })
-    expect(getMemoryItemDisplay(item)).toEqual({
+    expect(getMemoryItemDisplay(item, testTranslateZh)).toEqual({
       title: '',
       subtitle: '增长笔记 · notes.example.com',
       url: 'https://notes.example.com/post',

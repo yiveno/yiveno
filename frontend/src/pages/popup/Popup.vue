@@ -67,7 +67,9 @@ const importProgressLabel = computed(() => {
 })
 
 const idleEmptyCopy = computed(() =>
-  viewState.value === 'idle' ? getPopupIdleEmptyCopy(libraryState.value, isImporting.value) : null
+  viewState.value === 'idle'
+    ? getPopupIdleEmptyCopy(libraryState.value, isImporting.value, t)
+    : null
 )
 
 const shortenedClue = computed(() => shortenClueForRetry(clue.value))
@@ -80,16 +82,19 @@ const shortenRetryLabel = computed(() => {
 })
 
 const noMatchCopy = computed(() =>
-  getPopupNoMatchCopy({
-    library: libraryState.value,
-    clue: clue.value,
-    canShorten: shortenedClue.value !== null
-  })
+  getPopupNoMatchCopy(
+    {
+      library: libraryState.value,
+      clue: clue.value,
+      canShorten: shortenedClue.value !== null
+    },
+    t
+  )
 )
 
 const clueEcho = computed(() => {
   const resultClue = recallResult.value?.clue ?? clue.value
-  return formatRecallClueEcho(resultClue)
+  return formatRecallClueEcho(resultClue, t)
 })
 
 const topPickDisplay = computed(() => {
@@ -103,12 +108,15 @@ const alsoPossibleCards = computed(() => {
 })
 
 function toMatchCard(match: RecallMatch, resultClue: string) {
-  const display = getMemoryItemDisplay(match.item)
-  const explanation = explainRecallMatch({
-    clue: resultClue,
-    matchedFields: match.matchedFields,
-    item: match.item
-  })
+  const display = getMemoryItemDisplay(match.item, t)
+  const explanation = explainRecallMatch(
+    {
+      clue: resultClue,
+      matchedFields: match.matchedFields,
+      item: match.item
+    },
+    t
+  )
   return {
     id: match.item.id,
     title: display.title,

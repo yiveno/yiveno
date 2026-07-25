@@ -52,7 +52,7 @@ const showingBookmarkTree = computed(() => activeType.value === 'bookmark')
 const listRows = computed(() => {
   const detailPageUrl = chrome.runtime.getURL('detail.html')
   return items.value.map(item => {
-    const display = getMemoryItemDisplay(item)
+    const display = getMemoryItemDisplay(item, t)
     return {
       id: item.id,
       typeLabel: display.typeLabel,

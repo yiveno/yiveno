@@ -1,3 +1,5 @@
+import type { TranslateFn } from '@/core/i18n/translate'
+
 /** Chrome 扩展快捷键设置页。 */
 export const CHROME_EXTENSION_SHORTCUTS_URL = 'chrome://extensions/shortcuts' as const
 
@@ -20,12 +22,15 @@ export function normalizeExtensionCommand(command: {
 }
 
 /** 设置页展示用标题（优先产品文案，其次 Chrome description）。 */
-export function getExtensionCommandDisplayTitle(command: {
-  name: string
-  description: string
-}): string {
+export function getExtensionCommandDisplayTitle(
+  command: {
+    name: string
+    description: string
+  },
+  translate: TranslateFn
+): string {
   if (command.name === '_execute_action') {
-    return '打开找回（Popup）'
+    return translate('command_title_open_recall_popup')
   }
   if (command.description && command.description !== command.name) {
     return command.description
@@ -34,7 +39,7 @@ export function getExtensionCommandDisplayTitle(command: {
 }
 
 /** 快捷键展示；未绑定时给出明确文案。 */
-export function formatExtensionCommandShortcut(shortcut: string): string {
+export function formatExtensionCommandShortcut(shortcut: string, translate: TranslateFn): string {
   const trimmed = shortcut.trim()
-  return trimmed.length > 0 ? trimmed : '未设置'
+  return trimmed.length > 0 ? trimmed : translate('command_shortcut_unset')
 }

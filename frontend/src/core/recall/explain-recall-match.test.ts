@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { createBookmarkMemoryItem } from '@/core/memory/create-memory-item'
+import { testTranslateZh } from '@/core/i18n/test-translate-zh'
 import {
   explainRecallMatch,
   findMatchedClueToken,
@@ -29,11 +30,14 @@ describe('explain-recall-match', () => {
       payload: { title: '留存分析报告', url: 'https://example.com/retention' }
     })
 
-    const explanation = explainRecallMatch({
-      clue: '留存',
-      matchedFields: ['title', 'domain'],
-      item
-    })
+    const explanation = explainRecallMatch(
+      {
+        clue: '留存',
+        matchedFields: ['title', 'domain'],
+        item
+      },
+      testTranslateZh
+    )
 
     expect(explanation.primary).toBe('因标题含「留存」')
     expect(explanation.secondary).toBe('还匹配：域名')
@@ -41,7 +45,7 @@ describe('explain-recall-match', () => {
   })
 
   it('无匹配字段时回退内容相关', () => {
-    expect(explainRecallMatch({ clue: '留存', matchedFields: [] })).toEqual({
+    expect(explainRecallMatch({ clue: '留存', matchedFields: [] }, testTranslateZh)).toEqual({
       primary: '内容相关',
       secondary: null,
       reasonLine: '内容相关'
@@ -64,8 +68,8 @@ describe('explain-recall-match', () => {
   })
 
   it('formatRecallClueEcho 截断线索', () => {
-    expect(formatRecallClueEcho('留存')).toBe('根据线索「留存」')
-    expect(formatRecallClueEcho('a'.repeat(30)).length).toBeLessThan(40)
+    expect(formatRecallClueEcho('留存', testTranslateZh)).toBe('根据线索「留存」')
+    expect(formatRecallClueEcho('a'.repeat(30), testTranslateZh).length).toBeLessThan(40)
   })
 
   it('shortenClueForRetry 缩短线索', () => {
@@ -76,6 +80,6 @@ describe('explain-recall-match', () => {
 
   it('truncate 与短标签', () => {
     expect(truncateRecallExplainText('a b  c', 10)).toBe('a b c')
-    expect(getRecallMatchFieldShortLabel('textExcerpt')).toBe('正文')
+    expect(getRecallMatchFieldShortLabel('textExcerpt', testTranslateZh)).toBe('正文')
   })
 })

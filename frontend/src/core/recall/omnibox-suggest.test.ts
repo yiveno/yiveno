@@ -4,6 +4,7 @@ import {
   createBookmarkMemoryItem,
   createTextExcerptMemoryItem
 } from '@/core/memory/create-memory-item'
+import { testTranslateZh } from '@/core/i18n/test-translate-zh'
 import {
   escapeOmniboxXml,
   formatOmniboxPrimaryMatch,
@@ -22,7 +23,7 @@ const baseContext = {
 }
 
 const detailPageUrl = 'chrome-extension://abcdefghijklmnopqrstuvwxyzabcdef/detail.html'
-const suggestOptions = { detailPageUrl }
+const suggestOptions = { detailPageUrl, translate: testTranslateZh }
 
 describe('omnibox-suggest', () => {
   it('escapeOmniboxXml 转义预定义实体', () => {
@@ -43,14 +44,14 @@ describe('omnibox-suggest', () => {
   })
 
   it('类型前缀区分书签与摘录', () => {
-    expect(getOmniboxTypePrefix('bookmark')).toBe('Y·书签')
-    expect(getOmniboxTypePrefix('text_excerpt')).toBe('Y·摘录')
+    expect(getOmniboxTypePrefix('bookmark', testTranslateZh)).toBe('Y·书签')
+    expect(getOmniboxTypePrefix('text_excerpt', testTranslateZh)).toBe('Y·摘录')
   })
 
   it('formatOmniboxPrimaryMatch 只取首字段短标签', () => {
-    expect(formatOmniboxPrimaryMatch(['title', 'domain', 'url'])).toBe('标题')
-    expect(formatOmniboxPrimaryMatch(['textExcerpt'])).toBe('正文')
-    expect(formatOmniboxPrimaryMatch([])).toBeNull()
+    expect(formatOmniboxPrimaryMatch(['title', 'domain', 'url'], testTranslateZh)).toBe('标题')
+    expect(formatOmniboxPrimaryMatch(['textExcerpt'], testTranslateZh)).toBe('正文')
+    expect(formatOmniboxPrimaryMatch([], testTranslateZh)).toBeNull()
   })
 
   it('书签建议带 Y·书签 前缀与短命中', () => {

@@ -1,3 +1,4 @@
+import type { TranslateFn } from '@/core/i18n/translate'
 import { getRecallMatchFieldShortLabel } from '@/core/recall/explain-recall-match'
 import { getMemoryItemOpenHref } from '@/core/recall/memory-open-href'
 import {
@@ -12,9 +13,10 @@ export interface OmniboxSuggestItem {
   description: string
 }
 
-/** 生成 Omnibox 建议时需要的扩展详情页地址。 */
+/** 生成 Omnibox 建议时需要的扩展详情页地址与翻译。 */
 export interface OmniboxSuggestOptions {
   detailPageUrl: string
+  translate: TranslateFn
 }
 
 /** Omnibox 摘录预览最大字符数。 */
@@ -39,31 +41,38 @@ export function truncateOmniboxText(text: string, maxLength: number): string {
   return `${compact.slice(0, Math.max(1, maxLength - 1))}…`
 }
 
-/** Omnibox 类型前缀：与 Chrome 历史/搜索建议区分，并标识 Memory 类型。 */
-export function getOmniboxTypePrefix(itemType: RecallMatch['item']['type']): string {
-  return itemType === 'bookmark' ? 'Y·书签' : 'Y·摘录'
+/** Omnibox 类型前缀：与 Chrome 历史建议区分，并标识 Memory 类型。 */
+export function getOmniboxTypePrefix(
+  itemType: RecallMatch['item']['type'],
+  translate: TranslateFn
+): string {
+  return itemType === 'bookmark'
+    ? translate('omnibox_type_bookmark')
+    : translate('omnibox_type_excerpt')
 }
 
-/** 取首个命中字段的短标签（避免「匹配：标题、域名、链接」长串）。 */
-export function formatOmniboxPrimaryMatch(matchedFields: string[]): string | null {
+/** 取首个命中字段的短标签。 */
+export function formatOmniboxPrimaryMatch(
+  matchedFields: string[],
+  translate: TranslateFn
+): string | null {
   const primary = matchedFields[0]
   if (!primary) {
     return null
   }
-  return getRecallMatchFieldShortLabel(primary)
+  return getRecallMatchFieldShortLabel(primary, translate)
 }
 
 /**
  * 将单条命中转为 Omnibox 建议。
- * 书签：Y·书签 标题 · 域名 · 命中字段
- * 摘录：Y·摘录 正文 · 出处（无单独标题）
  * content：书签为 http(s)；摘录为 detail.html?id=
  */
 export function recallMatchToOmniboxSuggest(
   match: RecallMatch,
   options: OmniboxSuggestOptions
 ): OmniboxSuggestItem | null {
-  const display = getMemoryItemDisplay(match.item)
+  const { translate } = options
+  const display = getMemoryItemDisplay(match.item, translate)
   const openHref = getMemoryItemOpenHref(match.item, options).trim()
   if (!openHref) {
     return null
@@ -72,7 +81,7 @@ export function recallMatchToOmniboxSuggest(
     return null
   }
 
-  const typePrefix = escapeOmniboxXml(getOmniboxTypePrefix(match.item.type))
+  const typePrefix = escapeOmniboxXml(getOmniboxTypePrefix(match.item.type, translate))
   const primaryText =
     match.item.type === 'text_excerpt'
       ? display.excerpt || display.subtitle || display.url || openHref
@@ -90,7 +99,7 @@ export function recallMatchToOmniboxSuggest(
   }
 
   if (match.item.type !== 'text_excerpt') {
-    const primaryMatch = formatOmniboxPrimaryMatch(match.matchedFields)
+    const primaryMatch = formatOmniboxPrimaryMatch(match.matchedFields, translate)
     if (primaryMatch) {
       parts.push(`<dim>· ${escapeOmniboxXml(primaryMatch)}</dim>`)
     }
