@@ -18,7 +18,7 @@
 
 - UI/API/文档统一用 **Filter（筛选）**；用户主动作使用 **Recall（找回）**；UI 文案禁止出现 `Search` /「搜索」。
 - 扩展用户文案：仅 `_locales/{en,zh_CN}` + `frontend/src/infrastructure/i18n` 的 `t()`；禁止写死 UI 文案与 `|| '兜底'`。`core` 注入 `t` 或返回 message key。官网另选方案，不共用 messages 文件。
-- TypeScript 禁止 `any` / `as any`；外部数据用 Zod 校验；JSDoc 用中文。
+- TypeScript 禁止 `any` / `as any`；外部数据用 Zod 校验；**注释与 JSDoc 必须中文**（标识符、API 专有名词可保留英文）。
 - Vue 组件必须 `defineOptions({ name: 'ComponentName' })`。
 - 需要跨层事件时再引入事件总线（当前无 mitt / emitEvent）。
 - Map 响应式更新：若引入 Map 状态，优先不可变更新模式（当前 Popup 用组件内状态即可）。
@@ -84,3 +84,5 @@ pre-push **不跑** ESLint / typecheck / 全仓 test；`.vue` lint 由 pre-commi
 
 - 全部中文。
 - 精简、工程化、少 token；避免客套和重复。
+- **git commit message 必须中文**（可用 `feat:` / `fix:` 等 Conventional 前缀，说明正文用中文）。
+- **代码注释 / JSDoc 必须中文**（专有名词可保留英文）。

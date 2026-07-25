@@ -20,6 +20,8 @@ alwaysApply: true
 ❌ 禁止：主动写总结文档、CHANGELOG、Spec（除非用户明确要求）
 ✅ bug / 小需求：直接改代码，不写 Spec
 ✅ 允许：改代码 + 对话内简述改动
+✅ 用户要求 commit 时：message **必须中文**（可用 Conventional 前缀如 `feat:` / `fix:`，说明正文用中文）
+✅ 代码注释 / JSDoc：**必须中文**（标识符、API 专有名词可保留英文）
 ```
 
 ### 验证（与 AGENTS.md 一致）
@@ -114,7 +116,7 @@ Background **无** `window` / `document` / `localStorage`。用全局 `setTimeou
 
 ## 代码约定
 
-- TS：禁止 `any` / `as any`；外部数据 Zod 校验；JSDoc 中文。
+- TS：禁止 `any` / `as any`；外部数据 Zod 校验；**注释与 JSDoc 必须中文**（专有名词可保留英文）。
 - Vue：`defineOptions({ name: 'ComponentName' })`。
 - 依赖：当前 frontend 核心为 Vue + Zod；**不要**为约定空挂 mitt / Immer / VueUse / Pinia（需要时再引入）。
 - 锁文件：跟踪根目录 **`bun.lock`**（勿再忽略）；忽略旧 `bun.lockb`。

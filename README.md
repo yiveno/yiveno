@@ -434,13 +434,13 @@ bunx wrangler deployments list
 
 ### 提交消息规范
 
-使用 [Conventional Commits](https://www.conventionalcommits.org/) 格式：
+使用 [Conventional Commits](https://www.conventionalcommits.org/) 格式；**说明正文必须中文**（类型前缀可用英文）：
 
 ```
 feat: 添加书签导出功能
-fix: 修复搜索结果排序问题
-docs: 更新README文档
-style: 优化管理页UI样式
+fix: 修复筛选结果排序问题
+docs: 更新 README 文档
+style: 优化管理页 UI 样式
 refactor: 重构书签服务层
 perf: 优化虚拟滚动性能
 test: 添加书签树单元测试
