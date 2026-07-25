@@ -13,6 +13,8 @@ import {
 } from '@/core/memory/library-tabs'
 import { getMemoryItemOpenHref } from '@/core/recall/memory-open-href'
 import { getMemoryItemDisplay } from '@/core/recall/recall-result'
+import { getUILanguage, t } from '@/infrastructure/i18n/t'
+import { tMemoryError } from '@/infrastructure/i18n/memory-error'
 import {
   deleteMemoryItem,
   fetchBookmarkLibraryTree,
@@ -35,7 +37,16 @@ const items = ref<MemoryItem[]>([])
 const bookmarkRoots = ref<BookmarkLibraryTreeNode[]>([])
 const deletingId = ref<string | null>(null)
 
-const activeTab = computed(() => resolveLibraryTypeTab(activeType.value))
+const activeTabDef = computed(() => resolveLibraryTypeTab(activeType.value))
+const activeTab = computed(() => {
+  const def = activeTabDef.value
+  return {
+    type: def.type,
+    label: t(def.labelKey),
+    emptyTitle: t(def.emptyTitleKey),
+    emptyBody: t(def.emptyBodyKey)
+  }
+})
 const showingBookmarkTree = computed(() => activeType.value === 'bookmark')
 
 const listRows = computed(() => {
@@ -59,7 +70,7 @@ function formatUpdatedAt(iso: string): string {
   if (Number.isNaN(date.getTime())) {
     return ''
   }
-  return date.toLocaleString('zh-CN', {
+  return date.toLocaleString(getUILanguage(), {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
@@ -71,7 +82,7 @@ async function loadBookmarkTree() {
   const response = await fetchBookmarkLibraryTree()
   if (!response.ok || !('roots' in response)) {
     loadState.value = 'error'
-    errorMessage.value = response.ok ? '响应格式异常' : response.error
+    errorMessage.value = response.ok ? t('library_invalid_response') : response.error
     bookmarkRoots.value = []
     return
   }
@@ -85,9 +96,15 @@ async function loadExcerptList() {
     type: 'text_excerpt',
     limit: LIBRARY_LIST_LIMIT
   })
-  if (!response.ok || !('items' in response)) {
+  if (!response.ok) {
     loadState.value = 'error'
-    errorMessage.value = response.ok ? '响应格式异常' : response.error
+    errorMessage.value = tMemoryError(response.errorCode)
+    items.value = []
+    return
+  }
+  if (!('items' in response)) {
+    loadState.value = 'error'
+    errorMessage.value = t('library_invalid_response')
     items.value = []
     return
   }
@@ -108,7 +125,7 @@ async function loadPanel() {
     await loadExcerptList()
   } catch (error) {
     loadState.value = 'error'
-    errorMessage.value = error instanceof Error ? error.message : '读取记忆库失败'
+    errorMessage.value = error instanceof Error ? error.message : t('library_load_failed')
     items.value = []
     bookmarkRoots.value = []
   }
@@ -134,7 +151,7 @@ async function handleDeleteExcerpt(id: string) {
   if (deletingId.value) {
     return
   }
-  if (!window.confirm('确定删除这条摘录？删除后将无法再找回。')) {
+  if (!window.confirm(t('library_delete_confirm'))) {
     return
   }
 
@@ -142,12 +159,12 @@ async function handleDeleteExcerpt(id: string) {
   try {
     const response = await deleteMemoryItem({ id })
     if (!response.ok) {
-      window.alert(response.error)
+      window.alert(tMemoryError(response.errorCode))
       return
     }
     items.value = items.value.filter(item => item.id !== id)
   } catch (error) {
-    window.alert(error instanceof Error ? error.message : '删除失败')
+    window.alert(error instanceof Error ? error.message : t('library_delete_failed'))
   } finally {
     deletingId.value = null
   }
@@ -167,12 +184,12 @@ watch(
   <main class="library-shell">
     <header class="library-header">
       <AppPageHeader current="library" class="library-header-top" />
-      <h1 class="library-title">记忆库</h1>
-      <p class="library-subtitle">书签按 Chrome 目录只读预览；摘录可浏览与删除。找回仍用线索。</p>
+      <h1 class="library-title">{{ t('library_title') }}</h1>
+      <p class="library-subtitle">{{ t('library_subtitle') }}</p>
     </header>
 
     <div class="library-layout">
-      <nav class="library-tabs" aria-label="内容类型">
+      <nav class="library-tabs" :aria-label="t('library_tabs_aria')">
         <button
           v-for="tab in LIBRARY_TYPE_TABS"
           :key="tab.type"
@@ -182,16 +199,18 @@ watch(
           :aria-current="activeType === tab.type ? 'page' : undefined"
           @click="selectType(tab.type)"
         >
-          {{ tab.label }}
+          {{ t(tab.labelKey) }}
         </button>
       </nav>
 
       <section class="library-panel" :aria-label="activeTab.label">
-        <p v-if="loadState === 'loading'" class="library-status" role="status">正在读取…</p>
+        <p v-if="loadState === 'loading'" class="library-status" role="status">
+          {{ t('library_loading') }}
+        </p>
 
         <div v-else-if="loadState === 'error'" class="library-error-block" role="alert">
           <p class="library-error">{{ errorMessage }}</p>
-          <md-text-button type="button" @click="loadPanel">重试</md-text-button>
+          <md-text-button type="button" @click="loadPanel">{{ t('library_retry') }}</md-text-button>
         </div>
 
         <template v-else-if="showingBookmarkTree">
@@ -221,7 +240,7 @@ watch(
               <md-icon-button
                 type="button"
                 class="library-item-delete"
-                aria-label="删除摘录"
+                :aria-label="t('library_delete_excerpt_aria')"
                 :disabled="deletingId === row.id"
                 @click="handleDeleteExcerpt(row.id)"
               >

@@ -10,6 +10,7 @@ import {
   USER_SETTINGS_STORAGE_KEY
 } from '@/core/settings/user-settings'
 import { t } from '@/infrastructure/i18n/t'
+import { tMemoryError } from '@/infrastructure/i18n/memory-error'
 
 const TOOLBAR_HOST_ID = 'yiveno-selection-toolbar-host'
 const SHOW_DELAY_MS = 120
@@ -233,7 +234,11 @@ async function handleSaveClick(): Promise<void> {
     })
 
     if (!response?.ok) {
-      setButtonState('error', response?.error ?? t('selection_toolbar_failed'))
+      const message =
+        response && 'errorCode' in response && response.errorCode
+          ? tMemoryError(response.errorCode)
+          : t('selection_toolbar_failed')
+      setButtonState('error', message)
       scheduleHideToolbar(1800)
       return
     }

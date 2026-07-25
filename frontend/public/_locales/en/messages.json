@@ -1,28 +1,64 @@
 {
-  "app_name": { "message": "Yiveno" },
-  "app_description": { "message": "Save what matters. Recall it later." },
-  "context_menu_save_selection": { "message": "Save to Yiveno" },
+  "app_name": {
+    "message": "Yiveno"
+  },
+  "app_description": {
+    "message": "Save what matters. Recall it later."
+  },
+  "context_menu_save_selection": {
+    "message": "Save to Yiveno"
+  },
   "omnibox_default_suggestion": {
     "message": "Recall bookmarks and excerpts…"
   },
-  "omnibox_no_match": { "message": "No matching memory in Yiveno" },
+  "omnibox_no_match": {
+    "message": "No matching memory in Yiveno"
+  },
   "command_open_recall": {
     "message": "Open Yiveno Recall"
   },
-  "nav_aria_label": { "message": "Page navigation" },
-  "nav_library": { "message": "Library" },
-  "nav_settings": { "message": "Settings" },
-  "error_open_library": { "message": "Could not open the library" },
-  "error_open_settings": { "message": "Could not open Settings" },
-  "page_title_popup": { "message": "Yiveno" },
-  "page_title_settings": { "message": "Yiveno Settings" },
-  "page_title_library": { "message": "Yiveno Library" },
-  "page_title_detail": { "message": "Yiveno Excerpt" },
-  "selection_toolbar_saving": { "message": "Saving…" },
-  "selection_toolbar_saved": { "message": "Saved" },
-  "selection_toolbar_failed": { "message": "Save failed" },
-  "selection_toolbar_selection_gone": { "message": "Selection is gone" },
-  "popup_title": { "message": "Find it!" },
+  "nav_aria_label": {
+    "message": "Page navigation"
+  },
+  "nav_library": {
+    "message": "Library"
+  },
+  "nav_settings": {
+    "message": "Settings"
+  },
+  "error_open_library": {
+    "message": "Could not open the library"
+  },
+  "error_open_settings": {
+    "message": "Could not open Settings"
+  },
+  "page_title_popup": {
+    "message": "Yiveno"
+  },
+  "page_title_settings": {
+    "message": "Yiveno Settings"
+  },
+  "page_title_library": {
+    "message": "Yiveno Library"
+  },
+  "page_title_detail": {
+    "message": "Yiveno Excerpt"
+  },
+  "selection_toolbar_saving": {
+    "message": "Saving…"
+  },
+  "selection_toolbar_saved": {
+    "message": "Saved"
+  },
+  "selection_toolbar_failed": {
+    "message": "Save failed"
+  },
+  "selection_toolbar_selection_gone": {
+    "message": "Selection is gone"
+  },
+  "popup_title": {
+    "message": "Find it!"
+  },
   "popup_subtitle": {
     "message": "Look through what you saved—no need to dig across the web again."
   },
@@ -32,65 +68,260 @@
   "popup_import_progress": {
     "message": "Importing bookmarks $imported$ / $total$",
     "placeholders": {
-      "imported": { "content": "$1", "example": "3" },
-      "total": { "content": "$2", "example": "120" }
+      "imported": {
+        "content": "$1",
+        "example": "3"
+      },
+      "total": {
+        "content": "$2",
+        "example": "120"
+      }
     }
   },
-  "popup_import_progress_indeterminate": { "message": "Importing bookmarks…" },
-  "popup_import_progress_aria": { "message": "Bookmark import progress" },
-  "popup_clue_label": { "message": "Any clue you still remember" },
+  "popup_import_progress_indeterminate": {
+    "message": "Importing bookmarks…"
+  },
+  "popup_import_progress_aria": {
+    "message": "Bookmark import progress"
+  },
+  "popup_clue_label": {
+    "message": "Any clue you still remember"
+  },
   "popup_clue_placeholder": {
     "message": "e.g. last week’s piece on retention, an analysis of a product…"
   },
-  "popup_submit": { "message": "Start recall" },
-  "popup_submitting": { "message": "Recalling…" },
-  "popup_open_settings": { "message": "Open Settings" },
-  "popup_filtering_status": { "message": "Filtering your library…" },
-  "popup_shorten_retry": { "message": "Shorten and retry" },
+  "popup_submit": {
+    "message": "Start recall"
+  },
+  "popup_submitting": {
+    "message": "Recalling…"
+  },
+  "popup_open_settings": {
+    "message": "Open Settings"
+  },
+  "popup_filtering_status": {
+    "message": "Filtering your library…"
+  },
+  "popup_shorten_retry": {
+    "message": "Shorten and retry"
+  },
   "popup_shorten_retry_with_clue": {
     "message": "Shorten and retry ($clue$)",
     "placeholders": {
-      "clue": { "content": "$1", "example": "retention" }
+      "clue": {
+        "content": "$1",
+        "example": "retention"
+      }
     }
   },
-  "popup_section_top_pick": { "message": "Most likely" },
-  "popup_section_also_possible": { "message": "Also possible" },
+  "popup_section_top_pick": {
+    "message": "Most likely"
+  },
+  "popup_section_also_possible": {
+    "message": "Also possible"
+  },
   "popup_affirmation": {
     "message": "Is this it? Open the card to check."
   },
-  "popup_recall_failed": { "message": "Recall failed. Try again later." },
-  "settings_title": { "message": "Settings" },
+  "popup_recall_failed": {
+    "message": "Recall failed. Try again later."
+  },
+  "settings_title": {
+    "message": "Settings"
+  },
   "settings_subtitle": {
     "message": "Manage recall preferences. Capabilities that are not live will not pretend to be."
   },
-  "settings_section_capture": { "message": "Capture" },
+  "settings_section_capture": {
+    "message": "Capture"
+  },
   "settings_section_capture_copy": {
     "message": "Control the lightweight save chip after you select text. You can still save via the context menu when this is off."
   },
-  "settings_loading": { "message": "Loading settings…" },
+  "settings_loading": {
+    "message": "Loading settings…"
+  },
   "settings_toggle_selection_toolbar": {
     "message": "Show save menu on selection"
   },
   "settings_toggle_selection_toolbar_hint": {
     "message": "Shows “Save to Yiveno” after you select text"
   },
-  "settings_section_shortcuts": { "message": "Shortcuts" },
+  "settings_section_shortcuts": {
+    "message": "Shortcuts"
+  },
   "settings_section_shortcuts_copy": {
     "message": "This page cannot change keys directly. Review current bindings, then edit them in Chrome’s shortcuts page."
   },
-  "settings_commands_loading": { "message": "Loading shortcuts…" },
-  "settings_open_shortcuts": { "message": "Change shortcuts in Chrome" },
-  "settings_opening_shortcuts": { "message": "Opening…" },
-  "settings_refresh": { "message": "Refresh" },
-  "settings_section_later": { "message": "Coming later" },
-  "settings_upcoming_privacy": { "message": "Privacy — not available yet" },
-  "settings_upcoming_sync": { "message": "Sync — not available yet" },
-  "settings_upcoming_ai": { "message": "AI — not available yet" },
-  "settings_upcoming_account": { "message": "Account — not available yet" },
-  "settings_error_load_commands": { "message": "Could not load shortcuts" },
+  "settings_commands_loading": {
+    "message": "Loading shortcuts…"
+  },
+  "settings_open_shortcuts": {
+    "message": "Change shortcuts in Chrome"
+  },
+  "settings_opening_shortcuts": {
+    "message": "Opening…"
+  },
+  "settings_refresh": {
+    "message": "Refresh"
+  },
+  "settings_section_later": {
+    "message": "Coming later"
+  },
+  "settings_upcoming_privacy": {
+    "message": "Privacy — not available yet"
+  },
+  "settings_upcoming_sync": {
+    "message": "Sync — not available yet"
+  },
+  "settings_upcoming_ai": {
+    "message": "AI — not available yet"
+  },
+  "settings_upcoming_account": {
+    "message": "Account — not available yet"
+  },
+  "settings_error_load_commands": {
+    "message": "Could not load shortcuts"
+  },
   "settings_error_open_shortcuts": {
     "message": "Could not open the shortcuts page"
   },
-  "settings_error_load": { "message": "Could not load settings" },
-  "settings_error_update": { "message": "Could not update settings" }
+  "settings_error_load": {
+    "message": "Could not load settings"
+  },
+  "settings_error_update": {
+    "message": "Could not update settings"
+  },
+  "library_title": {
+    "message": "Library"
+  },
+  "library_subtitle": {
+    "message": "Bookmarks mirror Chrome folders read-only; excerpts can be browsed and deleted. Recall still uses clues."
+  },
+  "library_tabs_aria": {
+    "message": "Content type"
+  },
+  "library_tab_bookmarks": {
+    "message": "Bookmarks"
+  },
+  "library_tab_excerpts": {
+    "message": "Excerpts"
+  },
+  "library_empty_bookmarks_title": {
+    "message": "No bookmarks yet"
+  },
+  "library_empty_bookmarks_body": {
+    "message": "Bookmarks you add in Chrome show up in this tree; once synced to Yiveno they can be recalled."
+  },
+  "library_empty_excerpts_title": {
+    "message": "No text excerpts yet"
+  },
+  "library_empty_excerpts_body": {
+    "message": "Select text on a page to save, or use “Save to Yiveno” in the context menu."
+  },
+  "library_loading": {
+    "message": "Loading…"
+  },
+  "library_retry": {
+    "message": "Retry"
+  },
+  "library_load_failed": {
+    "message": "Could not load the library"
+  },
+  "library_invalid_response": {
+    "message": "Unexpected response format"
+  },
+  "library_delete_confirm": {
+    "message": "Delete this excerpt? You will not be able to recall it afterward."
+  },
+  "library_delete_failed": {
+    "message": "Could not delete"
+  },
+  "library_delete_excerpt_aria": {
+    "message": "Delete excerpt"
+  },
+  "library_bookmark_unsynced": {
+    "message": "Not synced"
+  },
+  "detail_title": {
+    "message": "Excerpt detail"
+  },
+  "detail_subtitle": {
+    "message": "When recalling, read what you saved first, then decide whether to open the original page."
+  },
+  "detail_loading": {
+    "message": "Loading…"
+  },
+  "detail_missing_id_title": {
+    "message": "Missing memory id"
+  },
+  "detail_missing_id_body": {
+    "message": "Open this excerpt again from a recall result."
+  },
+  "detail_not_found_title": {
+    "message": "Memory not found"
+  },
+  "detail_not_found_body": {
+    "message": "It may have been deleted, or it belongs to another profile."
+  },
+  "detail_deleted_title": {
+    "message": "Deleted"
+  },
+  "detail_deleted_body": {
+    "message": "This excerpt was removed from your library and will not appear in recall."
+  },
+  "detail_open_library": {
+    "message": "Open library"
+  },
+  "detail_error_title": {
+    "message": "Could not load"
+  },
+  "detail_retry": {
+    "message": "Retry"
+  },
+  "detail_wrong_type_title": {
+    "message": "This is a bookmark, not an excerpt"
+  },
+  "detail_wrong_type_body": {
+    "message": "Bookmarks open the original page. Use the link below to go there."
+  },
+  "detail_open_bookmark": {
+    "message": "Open bookmark"
+  },
+  "detail_type_excerpt": {
+    "message": "Text excerpt"
+  },
+  "detail_open_source": {
+    "message": "Open original"
+  },
+  "detail_delete": {
+    "message": "Delete excerpt"
+  },
+  "detail_deleting": {
+    "message": "Deleting…"
+  },
+  "detail_delete_confirm": {
+    "message": "Delete this excerpt? You will not be able to recall it afterward."
+  },
+  "detail_delete_failed": {
+    "message": "Could not delete"
+  },
+  "detail_load_failed": {
+    "message": "Could not load"
+  },
+  "detail_invalid_response": {
+    "message": "Unexpected response format"
+  },
+  "error_memory_not_found": {
+    "message": "This memory was not found. It may have been deleted."
+  },
+  "error_memory_delete_bookmark_forbidden": {
+    "message": "Delete bookmarks in Chrome; Yiveno will sync automatically."
+  },
+  "error_memory_operation_failed": {
+    "message": "Memory operation failed"
+  },
+  "action_retry": {
+    "message": "Retry"
+  }
 }

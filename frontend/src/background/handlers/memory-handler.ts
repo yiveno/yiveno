@@ -1,6 +1,6 @@
 import { optionalProp } from '@/core/common/optional-props'
 import { memoryItemService } from '@/application/memory/memory-item-service'
-import type { MemoryBackgroundResponse } from '@/core/messaging/memory-messages'
+import type { MemoryBackgroundResponse, MemoryErrorCode } from '@/core/messaging/memory-messages'
 import {
   parseCaptureBookmarkPayload,
   parseCaptureTextExcerptPayload,
@@ -11,11 +11,14 @@ import {
 import { flashActionBadge } from '@/infrastructure/browser/action-badge'
 import { logger } from '@/infrastructure/logging/logger'
 
-function toErrorResponse(error: unknown): MemoryBackgroundResponse {
+function toErrorResponse(errorCode: MemoryErrorCode, error?: unknown): MemoryBackgroundResponse {
   if (error instanceof Error) {
-    return { ok: false, error: error.message }
+    return { ok: false, errorCode, error: error.message }
   }
-  return { ok: false, error: 'MemoryItem 操作失败' }
+  if (typeof error === 'string' && error.length > 0) {
+    return { ok: false, errorCode, error }
+  }
+  return { ok: false, errorCode }
 }
 
 /** 捕获 Bookmark MemoryItem。 */
@@ -33,7 +36,7 @@ export async function handleCaptureBookmark(payload: unknown): Promise<MemoryBac
     return { ok: true, item }
   } catch (error) {
     logger.error('Background', '捕获 Bookmark 失败', error)
-    return toErrorResponse(error)
+    return toErrorResponse('MEMORY_OPERATION_FAILED', error)
   }
 }
 
@@ -58,7 +61,7 @@ export async function handleCaptureTextExcerpt(
   } catch (error) {
     logger.error('Background', '捕获 Text Excerpt 失败', error)
     void flashActionBadge('error')
-    return toErrorResponse(error)
+    return toErrorResponse('MEMORY_OPERATION_FAILED', error)
   }
 }
 
@@ -73,7 +76,7 @@ export async function handleListMemoryItems(payload: unknown): Promise<MemoryBac
     return { ok: true, items, total: items.length }
   } catch (error) {
     logger.error('Background', '列出 MemoryItem 失败', error)
-    return toErrorResponse(error)
+    return toErrorResponse('MEMORY_OPERATION_FAILED', error)
   }
 }
 
@@ -83,12 +86,12 @@ export async function handleGetMemoryItem(payload: unknown): Promise<MemoryBackg
     const input = parseGetMemoryItemPayload(payload)
     const item = await memoryItemService.getById(input.id)
     if (!item) {
-      return { ok: false, error: '未找到该记忆，可能已删除' }
+      return toErrorResponse('MEMORY_NOT_FOUND')
     }
     return { ok: true, item }
   } catch (error) {
     logger.error('Background', '读取 MemoryItem 失败', error)
-    return toErrorResponse(error)
+    return toErrorResponse('MEMORY_OPERATION_FAILED', error)
   }
 }
 
@@ -98,19 +101,19 @@ export async function handleDeleteMemoryItem(payload: unknown): Promise<MemoryBa
     const input = parseDeleteMemoryItemPayload(payload)
     const existing = await memoryItemService.getById(input.id)
     if (!existing) {
-      return { ok: false, error: '未找到该记忆，可能已删除' }
+      return toErrorResponse('MEMORY_NOT_FOUND')
     }
     if (existing.type !== 'text_excerpt') {
-      return { ok: false, error: '书签请在 Chrome 书签中删除，Yiveno 会自动同步' }
+      return toErrorResponse('MEMORY_DELETE_BOOKMARK_FORBIDDEN')
     }
 
     const item = await memoryItemService.softDelete(input.id)
     if (!item) {
-      return { ok: false, error: '未找到该记忆，可能已删除' }
+      return toErrorResponse('MEMORY_NOT_FOUND')
     }
     return { ok: true, item }
   } catch (error) {
     logger.error('Background', '删除 MemoryItem 失败', error)
-    return toErrorResponse(error)
+    return toErrorResponse('MEMORY_OPERATION_FAILED', error)
   }
 }

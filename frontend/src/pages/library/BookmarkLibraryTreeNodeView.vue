@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue'
 
 import type { BookmarkLibraryTreeNode } from '@/core/memory/bookmark-library-tree'
+import { t } from '@/infrastructure/i18n/t'
 import MaterialSymbolIcon from '@/infrastructure/ui/icons/MaterialSymbolIcon.vue'
 
 defineOptions({ name: 'BookmarkLibraryTreeNodeView' })
@@ -75,7 +76,9 @@ function hostnameOf(url: string): string {
         <span class="tree-bookmark-title">{{ node.title }}</span>
       </span>
       <span class="tree-bookmark-meta">
-        <span v-if="!node.memoryItemId" class="tree-bookmark-flag">未同步</span>
+        <span v-if="!node.memoryItemId" class="tree-bookmark-flag">{{
+          t('library_bookmark_unsynced')
+        }}</span>
         <span class="tree-bookmark-host" :title="node.url">{{ hostnameOf(node.url) }}</span>
       </span>
     </a>

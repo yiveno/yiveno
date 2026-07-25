@@ -2,6 +2,8 @@
 import { computed, onMounted, ref } from 'vue'
 
 import type { MemoryItem, TextExcerptMemoryItem } from '@/core/memory/memory-item'
+import { getUILanguage, t } from '@/infrastructure/i18n/t'
+import { tMemoryError } from '@/infrastructure/i18n/memory-error'
 import { deleteMemoryItem, getMemoryItem } from '@/infrastructure/messaging/background-client'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
 import MaterialSymbolIcon from '@/infrastructure/ui/icons/MaterialSymbolIcon.vue'
@@ -37,7 +39,7 @@ const createdAtLabel = computed(() => {
   if (Number.isNaN(date.getTime())) {
     return raw
   }
-  return date.toLocaleString('zh-CN', {
+  return date.toLocaleString(getUILanguage(), {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -65,14 +67,14 @@ async function loadDetail() {
   try {
     const response = await getMemoryItem({ id })
     if (!response.ok) {
-      viewState.value = response.error.includes('未找到') ? 'not_found' : 'error'
-      errorMessage.value = response.error
+      viewState.value = response.errorCode === 'MEMORY_NOT_FOUND' ? 'not_found' : 'error'
+      errorMessage.value = tMemoryError(response.errorCode)
       return
     }
 
     if (!('item' in response)) {
       viewState.value = 'error'
-      errorMessage.value = '响应格式异常'
+      errorMessage.value = t('detail_invalid_response')
       return
     }
 
@@ -80,7 +82,7 @@ async function loadDetail() {
     viewState.value = response.item.type === 'text_excerpt' ? 'ready' : 'wrong_type'
   } catch (error) {
     viewState.value = 'error'
-    errorMessage.value = error instanceof Error ? error.message : '读取失败'
+    errorMessage.value = error instanceof Error ? error.message : t('detail_load_failed')
   }
 }
 
@@ -89,7 +91,7 @@ async function handleDelete() {
   if (!current || deleting.value) {
     return
   }
-  if (!window.confirm('确定删除这条摘录？删除后将无法再找回。')) {
+  if (!window.confirm(t('detail_delete_confirm'))) {
     return
   }
 
@@ -98,13 +100,13 @@ async function handleDelete() {
   try {
     const response = await deleteMemoryItem({ id: current.id })
     if (!response.ok) {
-      errorMessage.value = response.error
+      errorMessage.value = tMemoryError(response.errorCode)
       return
     }
     item.value = null
     viewState.value = 'deleted'
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : '删除失败'
+    errorMessage.value = error instanceof Error ? error.message : t('detail_delete_failed')
   } finally {
     deleting.value = false
   }
@@ -119,37 +121,41 @@ onMounted(() => {
   <main class="detail-shell">
     <header class="detail-header">
       <AppPageHeader class="detail-header-top" />
-      <h1 class="detail-title">摘录详情</h1>
-      <p class="detail-subtitle">找回时先看当时存下的文字，再决定要不要回原页。</p>
+      <h1 class="detail-title">{{ t('detail_title') }}</h1>
+      <p class="detail-subtitle">{{ t('detail_subtitle') }}</p>
     </header>
 
-    <p v-if="viewState === 'loading'" class="detail-status" role="status">正在读取…</p>
+    <p v-if="viewState === 'loading'" class="detail-status" role="status">
+      {{ t('detail_loading') }}
+    </p>
 
     <section v-else-if="viewState === 'missing_id'" class="detail-empty" role="alert">
-      <p class="detail-empty-title">缺少记忆编号</p>
-      <p class="detail-empty-copy">请从找回结果重新打开这条摘录。</p>
+      <p class="detail-empty-title">{{ t('detail_missing_id_title') }}</p>
+      <p class="detail-empty-copy">{{ t('detail_missing_id_body') }}</p>
     </section>
 
     <section v-else-if="viewState === 'not_found'" class="detail-empty" role="alert">
-      <p class="detail-empty-title">找不到这条记忆</p>
-      <p class="detail-empty-copy">{{ errorMessage || '可能已删除，或来自其他配置文件。' }}</p>
+      <p class="detail-empty-title">{{ t('detail_not_found_title') }}</p>
+      <p class="detail-empty-copy">{{ errorMessage || t('detail_not_found_body') }}</p>
     </section>
 
     <section v-else-if="viewState === 'deleted'" class="detail-empty" role="status">
-      <p class="detail-empty-title">已删除</p>
-      <p class="detail-empty-copy">这条摘录已从记忆库移除，找回时不会再出现。</p>
-      <md-outlined-button :href="libraryHref">打开记忆库</md-outlined-button>
+      <p class="detail-empty-title">{{ t('detail_deleted_title') }}</p>
+      <p class="detail-empty-copy">{{ t('detail_deleted_body') }}</p>
+      <md-outlined-button :href="libraryHref">{{ t('detail_open_library') }}</md-outlined-button>
     </section>
 
     <section v-else-if="viewState === 'error'" class="detail-empty" role="alert">
-      <p class="detail-empty-title">读取失败</p>
+      <p class="detail-empty-title">{{ t('detail_error_title') }}</p>
       <p class="detail-empty-copy">{{ errorMessage }}</p>
-      <md-outlined-button type="button" @click="loadDetail">重试</md-outlined-button>
+      <md-outlined-button type="button" @click="loadDetail">{{
+        t('detail_retry')
+      }}</md-outlined-button>
     </section>
 
     <section v-else-if="viewState === 'wrong_type' && item" class="detail-empty">
-      <p class="detail-empty-title">这是书签，不是摘录</p>
-      <p class="detail-empty-copy">书签会直接打开原网页。你可以点下方链接前往。</p>
+      <p class="detail-empty-title">{{ t('detail_wrong_type_title') }}</p>
+      <p class="detail-empty-copy">{{ t('detail_wrong_type_body') }}</p>
       <a
         v-if="item.type === 'bookmark'"
         class="detail-source-link"
@@ -157,13 +163,13 @@ onMounted(() => {
         target="_blank"
         rel="noopener noreferrer"
       >
-        打开书签
+        {{ t('detail_open_bookmark') }}
       </a>
     </section>
 
     <article v-else-if="viewState === 'ready' && excerpt" class="detail-article">
       <div class="detail-meta">
-        <span class="detail-type">文字片段</span>
+        <span class="detail-type">{{ t('detail_type_excerpt') }}</span>
         <span v-if="excerpt.payload.pageTitle.trim()" class="detail-page">{{
           excerpt.payload.pageTitle
         }}</span>
@@ -187,7 +193,7 @@ onMounted(() => {
           target="_blank"
           rel="noopener noreferrer"
         >
-          打开原文
+          {{ t('detail_open_source') }}
         </md-filled-button>
         <md-text-button
           type="button"
@@ -196,7 +202,7 @@ onMounted(() => {
           @click="handleDelete"
         >
           <MaterialSymbolIcon name="delete" size="18px" slot="icon" />
-          {{ deleting ? '删除中…' : '删除摘录' }}
+          {{ deleting ? t('detail_deleting') : t('detail_delete') }}
         </md-text-button>
       </div>
     </article>

@@ -36,6 +36,15 @@ const deleteMemoryItemPayloadSchema = z.object({
   id: z.string().uuid()
 })
 
+/** Memory 操作面向 UI 的稳定错误码。 */
+export const MemoryErrorCodeSchema = z.enum([
+  'MEMORY_NOT_FOUND',
+  'MEMORY_DELETE_BOOKMARK_FORBIDDEN',
+  'MEMORY_OPERATION_FAILED'
+])
+
+export type MemoryErrorCode = z.infer<typeof MemoryErrorCodeSchema>
+
 /** 捕获 Bookmark MemoryItem。 */
 export type CaptureBookmarkMessage = {
   scope: BackgroundMessageScope
@@ -91,7 +100,9 @@ export type MemoryItemListSuccessResponse = {
 
 export type MemoryItemErrorResponse = {
   ok: false
-  error: string
+  errorCode: MemoryErrorCode
+  /** 调试用；UI 不得用于控制流或主文案。 */
+  error?: string
 }
 
 export type MemoryBackgroundResponse =

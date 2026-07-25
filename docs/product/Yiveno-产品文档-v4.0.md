@@ -159,7 +159,17 @@ Yiveno = **个人信息寻回系统**（Capture 低负担 + Recall 高确定性�
 
 新增能力：先改 `frontend/src/core/messaging/*` + handler，再改 UI。
 
-**失败响应（演进契约）：** 面向用户的失败须带稳定 **`errorCode`**（英文枚举常量）；UI 经 `t()` 按 code 渲染文案。**禁止**用本地化 `error` 字符串做控制流分支（例如 `error.includes('未找到')`）。完整枚举与 schema 在 i18n 落地 Phase（handler 错误码化）一并改 `core/messaging/*`；此前可暂以 `error: string` 过渡，但新代码不得新增「靠文案判分支」。
+**失败响应（演进契约）：** 面向用户的失败须带稳定 **`errorCode`**（英文枚举常量）；UI 经 `t()` 按 code 渲染文案。**禁止**用本地化 `error` 字符串做控制流分支（例如 `error.includes('未找到')`）。可选字段 `error` 仅供调试，不得作为 UI 主文案或分支依据。
+
+**Memory 消息 `errorCode`（已落地）：**
+
+| code                               | 含义                 |
+| ---------------------------------- | -------------------- |
+| `MEMORY_NOT_FOUND`                 | 记忆不存在或已删     |
+| `MEMORY_DELETE_BOOKMARK_FORBIDDEN` | 书签不可经扩展软删   |
+| `MEMORY_OPERATION_FAILED`          | 其它 Memory 操作失败 |
+
+schema：`frontend/src/core/messaging/memory-messages.ts`。
 
 ---
 
@@ -319,6 +329,7 @@ MVP 验证问题：是否更愿保存、是否优先打开 Yiveno、是否稳定
 
 | 日期       | 变更                                                                              |
 | ---------- | --------------------------------------------------------------------------------- |
+| 2026-07-24 | i18n Phase 2：Library/Detail 文案；Memory 失败响应落地 `errorCode`                |
 | 2026-07-24 | 扩展 i18n 契约：`chrome.i18n` + `en`/`zh_CN`；`t()`；失败响应演进为 `errorCode`   |
 | 2026-07-24 | 摘录展示：无强制标题；正文为主、页名/域名仅出处（记忆库/Popup/Omnibox/详情）      |
 | 2026-07-24 | UI 图标选型：Material Symbols Outlined 按需内联；记忆库删除改为 hover 显图标按钮  |

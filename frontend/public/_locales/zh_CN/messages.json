@@ -1,28 +1,64 @@
 {
-  "app_name": { "message": "Yiveno" },
-  "app_description": { "message": "把重要的存下来，日后用线索找回。" },
-  "context_menu_save_selection": { "message": "保存到 Yiveno" },
+  "app_name": {
+    "message": "Yiveno"
+  },
+  "app_description": {
+    "message": "把重要的存下来，日后用线索找回。"
+  },
+  "context_menu_save_selection": {
+    "message": "保存到 Yiveno"
+  },
   "omnibox_default_suggestion": {
     "message": "找回书签与摘录…"
   },
-  "omnibox_no_match": { "message": "Yiveno 中未找到匹配" },
+  "omnibox_no_match": {
+    "message": "Yiveno 中未找到匹配"
+  },
   "command_open_recall": {
     "message": "打开 Yiveno 找回"
   },
-  "nav_aria_label": { "message": "页面导航" },
-  "nav_library": { "message": "记忆库" },
-  "nav_settings": { "message": "设置" },
-  "error_open_library": { "message": "无法打开记忆库" },
-  "error_open_settings": { "message": "无法打开设置页" },
-  "page_title_popup": { "message": "Yiveno" },
-  "page_title_settings": { "message": "Yiveno 设置" },
-  "page_title_library": { "message": "Yiveno 记忆库" },
-  "page_title_detail": { "message": "Yiveno 摘录" },
-  "selection_toolbar_saving": { "message": "正在保存…" },
-  "selection_toolbar_saved": { "message": "已保存" },
-  "selection_toolbar_failed": { "message": "保存失败" },
-  "selection_toolbar_selection_gone": { "message": "选区已失效" },
-  "popup_title": { "message": "找到它！" },
+  "nav_aria_label": {
+    "message": "页面导航"
+  },
+  "nav_library": {
+    "message": "记忆库"
+  },
+  "nav_settings": {
+    "message": "设置"
+  },
+  "error_open_library": {
+    "message": "无法打开记忆库"
+  },
+  "error_open_settings": {
+    "message": "无法打开设置页"
+  },
+  "page_title_popup": {
+    "message": "Yiveno"
+  },
+  "page_title_settings": {
+    "message": "Yiveno 设置"
+  },
+  "page_title_library": {
+    "message": "Yiveno 记忆库"
+  },
+  "page_title_detail": {
+    "message": "Yiveno 摘录"
+  },
+  "selection_toolbar_saving": {
+    "message": "正在保存…"
+  },
+  "selection_toolbar_saved": {
+    "message": "已保存"
+  },
+  "selection_toolbar_failed": {
+    "message": "保存失败"
+  },
+  "selection_toolbar_selection_gone": {
+    "message": "选区已失效"
+  },
+  "popup_title": {
+    "message": "找到它！"
+  },
   "popup_subtitle": {
     "message": "在你存过的东西里找，不用再去网上搜。"
   },
@@ -32,63 +68,260 @@
   "popup_import_progress": {
     "message": "正在导入书签 $imported$ / $total$",
     "placeholders": {
-      "imported": { "content": "$1", "example": "3" },
-      "total": { "content": "$2", "example": "120" }
+      "imported": {
+        "content": "$1",
+        "example": "3"
+      },
+      "total": {
+        "content": "$2",
+        "example": "120"
+      }
     }
   },
-  "popup_import_progress_indeterminate": { "message": "正在导入书签…" },
-  "popup_import_progress_aria": { "message": "书签导入进度" },
-  "popup_clue_label": { "message": "还记得的任意一点线索" },
+  "popup_import_progress_indeterminate": {
+    "message": "正在导入书签…"
+  },
+  "popup_import_progress_aria": {
+    "message": "书签导入进度"
+  },
+  "popup_clue_label": {
+    "message": "还记得的任意一点线索"
+  },
   "popup_clue_placeholder": {
     "message": "例如：上周那篇讲留存的、某个产品的分析…"
   },
-  "popup_submit": { "message": "开始找回" },
-  "popup_submitting": { "message": "正在找回…" },
-  "popup_open_settings": { "message": "打开设置" },
-  "popup_filtering_status": { "message": "正在你的记忆库里筛选…" },
-  "popup_shorten_retry": { "message": "缩短后再试" },
+  "popup_submit": {
+    "message": "开始找回"
+  },
+  "popup_submitting": {
+    "message": "正在找回…"
+  },
+  "popup_open_settings": {
+    "message": "打开设置"
+  },
+  "popup_filtering_status": {
+    "message": "正在你的记忆库里筛选…"
+  },
+  "popup_shorten_retry": {
+    "message": "缩短后再试"
+  },
   "popup_shorten_retry_with_clue": {
     "message": "缩短后再试（$clue$）",
     "placeholders": {
-      "clue": { "content": "$1", "example": "留存" }
+      "clue": {
+        "content": "$1",
+        "example": "留存"
+      }
     }
   },
-  "popup_section_top_pick": { "message": "最可能的结果" },
-  "popup_section_also_possible": { "message": "也可能是这些" },
+  "popup_section_top_pick": {
+    "message": "最可能的结果"
+  },
+  "popup_section_also_possible": {
+    "message": "也可能是这些"
+  },
   "popup_affirmation": {
     "message": "对，就是这个？点卡片打开看看。"
   },
-  "popup_recall_failed": { "message": "找回失败，请稍后再试" },
-  "settings_title": { "message": "设置" },
+  "popup_recall_failed": {
+    "message": "找回失败，请稍后再试"
+  },
+  "settings_title": {
+    "message": "设置"
+  },
   "settings_subtitle": {
     "message": "管理找回相关偏好。未上线能力不会假装可用。"
   },
-  "settings_section_capture": { "message": "保存" },
+  "settings_section_capture": {
+    "message": "保存"
+  },
   "settings_section_capture_copy": {
     "message": "控制划词后的轻量保存浮层；关闭后仍可用右键保存选区。"
   },
-  "settings_loading": { "message": "正在读取设置…" },
+  "settings_loading": {
+    "message": "正在读取设置…"
+  },
   "settings_toggle_selection_toolbar": {
     "message": "划词显示保存菜单"
   },
   "settings_toggle_selection_toolbar_hint": {
     "message": "选中文字后出现「保存到 Yiveno」"
   },
-  "settings_section_shortcuts": { "message": "快捷键" },
+  "settings_section_shortcuts": {
+    "message": "快捷键"
+  },
   "settings_section_shortcuts_copy": {
     "message": "扩展无法在本页直接改键；可查看当前绑定，并前往 Chrome 原生快捷键页修改。"
   },
-  "settings_commands_loading": { "message": "正在读取快捷键…" },
-  "settings_open_shortcuts": { "message": "在 Chrome 中更改快捷键" },
-  "settings_opening_shortcuts": { "message": "正在打开…" },
-  "settings_refresh": { "message": "刷新" },
-  "settings_section_later": { "message": "后续分区" },
-  "settings_upcoming_privacy": { "message": "隐私 — 未上线" },
-  "settings_upcoming_sync": { "message": "同步 — 未上线" },
-  "settings_upcoming_ai": { "message": "AI — 未上线" },
-  "settings_upcoming_account": { "message": "账户 — 未上线" },
-  "settings_error_load_commands": { "message": "读取快捷键失败" },
-  "settings_error_open_shortcuts": { "message": "打开快捷键设置失败" },
-  "settings_error_load": { "message": "读取设置失败" },
-  "settings_error_update": { "message": "更新设置失败" }
+  "settings_commands_loading": {
+    "message": "正在读取快捷键…"
+  },
+  "settings_open_shortcuts": {
+    "message": "在 Chrome 中更改快捷键"
+  },
+  "settings_opening_shortcuts": {
+    "message": "正在打开…"
+  },
+  "settings_refresh": {
+    "message": "刷新"
+  },
+  "settings_section_later": {
+    "message": "后续分区"
+  },
+  "settings_upcoming_privacy": {
+    "message": "隐私 — 未上线"
+  },
+  "settings_upcoming_sync": {
+    "message": "同步 — 未上线"
+  },
+  "settings_upcoming_ai": {
+    "message": "AI — 未上线"
+  },
+  "settings_upcoming_account": {
+    "message": "账户 — 未上线"
+  },
+  "settings_error_load_commands": {
+    "message": "读取快捷键失败"
+  },
+  "settings_error_open_shortcuts": {
+    "message": "打开快捷键设置失败"
+  },
+  "settings_error_load": {
+    "message": "读取设置失败"
+  },
+  "settings_error_update": {
+    "message": "更新设置失败"
+  },
+  "library_title": {
+    "message": "记忆库"
+  },
+  "library_subtitle": {
+    "message": "书签按 Chrome 目录只读预览；摘录可浏览与删除。找回仍用线索。"
+  },
+  "library_tabs_aria": {
+    "message": "内容类型"
+  },
+  "library_tab_bookmarks": {
+    "message": "书签"
+  },
+  "library_tab_excerpts": {
+    "message": "摘录"
+  },
+  "library_empty_bookmarks_title": {
+    "message": "还没有书签"
+  },
+  "library_empty_bookmarks_body": {
+    "message": "用 Chrome 加书签后会出现在目录树中；同步到 Yiveno 后可用于找回。"
+  },
+  "library_empty_excerpts_title": {
+    "message": "还没有文字摘录"
+  },
+  "library_empty_excerpts_body": {
+    "message": "在网页划词保存，或右键「保存到 Yiveno」后，会出现在这里。"
+  },
+  "library_loading": {
+    "message": "正在读取…"
+  },
+  "library_retry": {
+    "message": "重试"
+  },
+  "library_load_failed": {
+    "message": "读取记忆库失败"
+  },
+  "library_invalid_response": {
+    "message": "响应格式异常"
+  },
+  "library_delete_confirm": {
+    "message": "确定删除这条摘录？删除后将无法再找回。"
+  },
+  "library_delete_failed": {
+    "message": "删除失败"
+  },
+  "library_delete_excerpt_aria": {
+    "message": "删除摘录"
+  },
+  "library_bookmark_unsynced": {
+    "message": "未同步"
+  },
+  "detail_title": {
+    "message": "摘录详情"
+  },
+  "detail_subtitle": {
+    "message": "找回时先看当时存下的文字，再决定要不要回原页。"
+  },
+  "detail_loading": {
+    "message": "正在读取…"
+  },
+  "detail_missing_id_title": {
+    "message": "缺少记忆编号"
+  },
+  "detail_missing_id_body": {
+    "message": "请从找回结果重新打开这条摘录。"
+  },
+  "detail_not_found_title": {
+    "message": "找不到这条记忆"
+  },
+  "detail_not_found_body": {
+    "message": "可能已删除，或来自其他配置文件。"
+  },
+  "detail_deleted_title": {
+    "message": "已删除"
+  },
+  "detail_deleted_body": {
+    "message": "这条摘录已从记忆库移除，找回时不会再出现。"
+  },
+  "detail_open_library": {
+    "message": "打开记忆库"
+  },
+  "detail_error_title": {
+    "message": "读取失败"
+  },
+  "detail_retry": {
+    "message": "重试"
+  },
+  "detail_wrong_type_title": {
+    "message": "这是书签，不是摘录"
+  },
+  "detail_wrong_type_body": {
+    "message": "书签会直接打开原网页。你可以点下方链接前往。"
+  },
+  "detail_open_bookmark": {
+    "message": "打开书签"
+  },
+  "detail_type_excerpt": {
+    "message": "文字片段"
+  },
+  "detail_open_source": {
+    "message": "打开原文"
+  },
+  "detail_delete": {
+    "message": "删除摘录"
+  },
+  "detail_deleting": {
+    "message": "删除中…"
+  },
+  "detail_delete_confirm": {
+    "message": "确定删除这条摘录？删除后将无法再找回。"
+  },
+  "detail_delete_failed": {
+    "message": "删除失败"
+  },
+  "detail_load_failed": {
+    "message": "读取失败"
+  },
+  "detail_invalid_response": {
+    "message": "响应格式异常"
+  },
+  "error_memory_not_found": {
+    "message": "未找到该记忆，可能已删除"
+  },
+  "error_memory_delete_bookmark_forbidden": {
+    "message": "书签请在 Chrome 书签中删除，Yiveno 会自动同步"
+  },
+  "error_memory_operation_failed": {
+    "message": "记忆操作失败"
+  },
+  "action_retry": {
+    "message": "重试"
+  }
 }

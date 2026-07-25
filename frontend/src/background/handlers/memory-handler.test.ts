@@ -154,6 +154,6 @@ describe('memory-handler', () => {
     if (deleted.ok) {
       return
     }
-    expect(deleted.error).toContain('Chrome')
+    expect(deleted.errorCode).toBe('MEMORY_DELETE_BOOKMARK_FORBIDDEN')
   })
 })
