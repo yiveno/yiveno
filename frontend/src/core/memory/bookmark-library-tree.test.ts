@@ -60,6 +60,47 @@ describe('bookmark-library-tree', () => {
     expect(countBookmarkLibraryLeaves(forest)).toBe(1)
   })
 
+  it('chromeId 未命中时按归一化 URL 回退对齐', () => {
+    const memoryId = '22222222-2222-4222-8222-222222222222'
+    const forest = mapChromeBookmarkTreeToLibraryForest(
+      [
+        {
+          id: '0',
+          title: 'Root',
+          children: [
+            {
+              id: '10',
+              title: 'Docs',
+              url: 'https://example.com/docs#section'
+            }
+          ]
+        }
+      ],
+      new Map(),
+      {
+        unnamedFolderTitle: 'Unnamed folder',
+        memoryIdByUrl: new Map([['https://example.com/docs', memoryId]])
+      }
+    )
+
+    expect(forest).toEqual([
+      {
+        kind: 'folder',
+        chromeId: '0',
+        title: 'Root',
+        children: [
+          {
+            kind: 'bookmark',
+            chromeId: '10',
+            title: 'Docs',
+            url: 'https://example.com/docs#section',
+            memoryItemId: memoryId
+          }
+        ]
+      }
+    ])
+  })
+
   it('无标题文件夹使用调用方注入文案', () => {
     const forest = mapChromeBookmarkTreeToLibraryForest(
       [

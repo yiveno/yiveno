@@ -56,12 +56,6 @@
   "selection_toolbar_selection_gone": {
     "message": "Selection is gone"
   },
-  "popup_title": {
-    "message": "Find it!"
-  },
-  "popup_subtitle": {
-    "message": "Look through what you saved—no need to dig across the web again."
-  },
   "popup_import_failed_fallback": {
     "message": "Bookmark import failed. Reload the extension and try again."
   },
@@ -84,8 +78,8 @@
   "popup_import_progress_aria": {
     "message": "Bookmark import progress"
   },
-  "popup_clue_label": {
-    "message": "Any clue you still remember"
+  "popup_clue_input_aria": {
+    "message": "Clue"
   },
   "popup_clue_placeholder": {
     "message": "e.g. last week’s piece on retention, an analysis of a product…"
@@ -119,9 +113,6 @@
   },
   "popup_section_also_possible": {
     "message": "Also possible"
-  },
-  "popup_affirmation": {
-    "message": "Is this it? Open the card to check."
   },
   "popup_recall_failed": {
     "message": "Recall failed. Try again later."
@@ -369,6 +360,12 @@
   "explain_field_text_excerpt": {
     "message": "excerpt"
   },
+  "explain_field_excerpt_context": {
+    "message": "surrounding text"
+  },
+  "explain_field_page_title": {
+    "message": "source page"
+  },
   "explain_field_summary": {
     "message": "summary"
   },
@@ -392,6 +389,12 @@
   },
   "explain_field_short_text_excerpt": {
     "message": "body"
+  },
+  "explain_field_short_excerpt_context": {
+    "message": "context"
+  },
+  "explain_field_short_page_title": {
+    "message": "page"
   },
   "explain_field_short_summary": {
     "message": "summary"

@@ -4,7 +4,11 @@ import {
   createBookmarkMemoryItem,
   createTextExcerptMemoryItem
 } from '@/core/memory/create-memory-item'
-import { getMemoryItemOpenHref, tryParseNavigableUrl } from '@/core/recall/memory-open-href'
+import {
+  getMemoryItemOpenHref,
+  tryParseMemoryItemIdFromOpenHref,
+  tryParseNavigableUrl
+} from '@/core/recall/memory-open-href'
 
 const baseContext = {
   ownerId: '11111111-1111-4111-8111-111111111111',
@@ -43,5 +47,12 @@ describe('memory-open-href', () => {
       tryParseNavigableUrl(`${detailPageUrl}?id=11111111-1111-4111-8111-111111111111`)
     ).toContain('detail.html')
     expect(tryParseNavigableUrl('javascript:alert(1)')).toBeNull()
+  })
+
+  it('tryParseMemoryItemIdFromOpenHref 仅解析详情页 id', () => {
+    expect(
+      tryParseMemoryItemIdFromOpenHref(`${detailPageUrl}?id=11111111-1111-4111-8111-111111111111`)
+    ).toBe('11111111-1111-4111-8111-111111111111')
+    expect(tryParseMemoryItemIdFromOpenHref('https://example.com/a')).toBeNull()
   })
 })

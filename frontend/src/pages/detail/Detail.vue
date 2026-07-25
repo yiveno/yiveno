@@ -4,7 +4,11 @@ import { computed, onMounted, ref } from 'vue'
 import type { MemoryItem, TextExcerptMemoryItem } from '@/core/memory/memory-item'
 import { getUILanguage, t } from '@/infrastructure/i18n/t'
 import { tMemoryError } from '@/infrastructure/i18n/memory-error'
-import { deleteMemoryItem, getMemoryItem } from '@/infrastructure/messaging/background-client'
+import {
+  deleteMemoryItem,
+  getMemoryItem,
+  recordMemoryOpen
+} from '@/infrastructure/messaging/background-client'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
 import MaterialSymbolIcon from '@/infrastructure/ui/icons/MaterialSymbolIcon.vue'
 
@@ -79,7 +83,14 @@ async function loadDetail() {
     }
 
     item.value = response.item
-    viewState.value = response.item.type === 'text_excerpt' ? 'ready' : 'wrong_type'
+    if (response.item.type === 'text_excerpt') {
+      viewState.value = 'ready'
+      void recordMemoryOpen({ id: response.item.id }).catch(() => {
+        // 忽略：打开记录失败不影响详情展示
+      })
+    } else {
+      viewState.value = 'wrong_type'
+    }
   } catch {
     viewState.value = 'error'
     errorMessage.value = t('detail_load_failed')

@@ -40,7 +40,7 @@ function buildClues(
     keywords: base?.keywords ?? defaults.keywords ?? [],
     entities: base?.entities ?? defaults.entities ?? [],
     tags: base?.tags ?? defaults.tags ?? [],
-    openCount: 0,
+    openCount: base?.openCount ?? defaults.openCount ?? 0,
     title: base?.title ?? defaults.title,
     textExcerpt: base?.textExcerpt ?? defaults.textExcerpt,
     summary: base?.summary ?? defaults.summary,

@@ -56,12 +56,6 @@
   "selection_toolbar_selection_gone": {
     "message": "选区已失效"
   },
-  "popup_title": {
-    "message": "找到它！"
-  },
-  "popup_subtitle": {
-    "message": "在你存过的东西里找，不用再去网上搜。"
-  },
   "popup_import_failed_fallback": {
     "message": "书签导入失败，请重新加载扩展后重试"
   },
@@ -84,8 +78,8 @@
   "popup_import_progress_aria": {
     "message": "书签导入进度"
   },
-  "popup_clue_label": {
-    "message": "还记得的任意一点线索"
+  "popup_clue_input_aria": {
+    "message": "线索"
   },
   "popup_clue_placeholder": {
     "message": "例如：上周那篇讲留存的、某个产品的分析…"
@@ -119,9 +113,6 @@
   },
   "popup_section_also_possible": {
     "message": "也可能是这些"
-  },
-  "popup_affirmation": {
-    "message": "对，就是这个？点卡片打开看看。"
   },
   "popup_recall_failed": {
     "message": "找回失败，请稍后再试"
@@ -369,6 +360,12 @@
   "explain_field_text_excerpt": {
     "message": "正文片段"
   },
+  "explain_field_excerpt_context": {
+    "message": "上下文"
+  },
+  "explain_field_page_title": {
+    "message": "出处页名"
+  },
   "explain_field_summary": {
     "message": "摘要"
   },
@@ -392,6 +389,12 @@
   },
   "explain_field_short_text_excerpt": {
     "message": "正文"
+  },
+  "explain_field_short_excerpt_context": {
+    "message": "上下文"
+  },
+  "explain_field_short_page_title": {
+    "message": "页名"
   },
   "explain_field_short_summary": {
     "message": "摘要"

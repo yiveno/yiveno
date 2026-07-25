@@ -6,6 +6,8 @@ defineOptions({ name: 'BookmarkLibraryTree' })
 
 defineProps<{
   roots: BookmarkLibraryTreeNode[]
+  /** 全量导入完成后才展示「未同步」 */
+  showUnsyncedFlags?: boolean
 }>()
 </script>
 
@@ -16,6 +18,7 @@ defineProps<{
       :key="`${node.kind}-${node.chromeId}`"
       :node="node"
       :depth="0"
+      :show-unsynced-flags="showUnsyncedFlags"
     />
   </ul>
 </template>

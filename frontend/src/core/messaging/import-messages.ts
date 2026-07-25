@@ -43,6 +43,8 @@ export type GetBookmarkLibraryTreeSuccessResponse = {
   ok: true
   roots: BookmarkLibraryTreeNode[]
   bookmarkCount: number
+  /** 全量导入已完成时才应展示「未同步」标记。 */
+  syncReady: boolean
 }
 
 export type GetBookmarkLibraryTreeErrorResponse = {

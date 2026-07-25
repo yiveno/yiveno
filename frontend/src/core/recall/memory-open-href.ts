@@ -44,3 +44,26 @@ export function tryParseNavigableUrl(text: string): string | null {
 
   return null
 }
+
+/**
+ * 从打开地址解析 MemoryItem id。
+ * 仅详情页 `detail.html?id=` 可解析；书签直链无 id。
+ */
+export function tryParseMemoryItemIdFromOpenHref(text: string): string | null {
+  const navigable = tryParseNavigableUrl(text)
+  if (!navigable) {
+    return null
+  }
+
+  try {
+    const url = new URL(navigable)
+    if (url.protocol === 'chrome-extension:' && url.pathname.endsWith('/detail.html')) {
+      const id = url.searchParams.get('id')?.trim()
+      return id && id.length > 0 ? id : null
+    }
+  } catch {
+    return null
+  }
+
+  return null
+}

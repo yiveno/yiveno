@@ -36,6 +36,7 @@ const loadState = ref<LoadState>('loading')
 const errorMessage = ref('')
 const items = ref<MemoryItem[]>([])
 const bookmarkRoots = ref<BookmarkLibraryTreeNode[]>([])
+const bookmarkSyncReady = ref(false)
 const deletingId = ref<string | null>(null)
 
 const activeTabDef = computed(() => resolveLibraryTypeTab(activeType.value))
@@ -87,10 +88,12 @@ async function loadBookmarkTree() {
       ? t('library_invalid_response')
       : tImportError(response.errorCode)
     bookmarkRoots.value = []
+    bookmarkSyncReady.value = false
     return
   }
 
   bookmarkRoots.value = response.roots
+  bookmarkSyncReady.value = response.syncReady
   loadState.value = 'ready'
 }
 
@@ -228,7 +231,11 @@ watch(
             <p class="library-empty-title">{{ activeTab.emptyTitle }}</p>
             <p class="library-empty-copy">{{ activeTab.emptyBody }}</p>
           </div>
-          <BookmarkLibraryTree v-else :roots="bookmarkRoots" />
+          <BookmarkLibraryTree
+            v-else
+            :roots="bookmarkRoots"
+            :show-unsynced-flags="bookmarkSyncReady"
+          />
         </template>
 
         <template v-else>

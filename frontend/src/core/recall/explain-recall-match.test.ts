@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
-import { createBookmarkMemoryItem } from '@/core/memory/create-memory-item'
+import {
+  createBookmarkMemoryItem,
+  createTextExcerptMemoryItem
+} from '@/core/memory/create-memory-item'
 import { testTranslateZh } from '@/core/i18n/test-translate-zh'
 import {
   explainRecallMatch,
@@ -44,6 +47,29 @@ describe('explain-recall-match', () => {
     expect(explanation.reasonLine).toBe('因标题含「留存」；还匹配：域名')
   })
 
+  it('摘录命中出处页名时解释为页名而非标题', () => {
+    const item = createTextExcerptMemoryItem({
+      ...baseContext,
+      payload: {
+        selectedText: '先后仍须次第',
+        sourceUrl: 'https://www.gushiwen.cn/x',
+        pageTitle: '古文岛-原古诗文网'
+      }
+    })
+
+    const explanation = explainRecallMatch(
+      {
+        clue: '古诗',
+        matchedFields: ['pageTitle'],
+        item
+      },
+      testTranslateZh
+    )
+
+    expect(explanation.primary).toBe('因出处页名含「古诗」')
+    expect(explanation.primary).not.toContain('标题')
+  })
+
   it('无匹配字段时回退内容相关', () => {
     expect(explainRecallMatch({ clue: '留存', matchedFields: [] }, testTranslateZh)).toEqual({
       primary: '内容相关',
@@ -64,7 +90,7 @@ describe('explain-recall-match', () => {
         primaryField: 'title',
         item
       })
-    ).toBe('产品')
+    ).toBe('产品留存')
   })
 
   it('formatRecallClueEcho 截断线索', () => {

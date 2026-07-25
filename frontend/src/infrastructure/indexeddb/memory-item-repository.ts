@@ -1,4 +1,5 @@
 import { optionalProp } from '@/core/common/optional-props'
+import { normalizeBookmarkSyncUrl } from '@/core/memory/bookmark-library-tree'
 import type { SupportedMemoryItemType } from '@/core/memory/memory-item-type'
 import {
   createBookmarkMemoryItem,
@@ -24,6 +25,12 @@ export interface ListMemoryItemsOptions {
   type?: SupportedMemoryItemType
   limit?: number
   includeDeleted?: boolean
+}
+
+/** 书签树对齐：Chrome 书签 id / URL → MemoryItem.id */
+export interface BookmarkSyncAlignment {
+  byChromeBookmarkId: Map<string, string>
+  byUrl: Map<string, string>
 }
 
 export class MemoryItemRepository {
@@ -198,6 +205,36 @@ export class MemoryItemRepository {
     })
   }
 
+  /**
+   * 构建书签同步对齐表（全量，不受列表 UI limit 限制）。
+   * 供记忆库目录树标记是否已写入 Memory。
+   */
+  async listBookmarkSyncAlignment(): Promise<BookmarkSyncAlignment> {
+    const items = await this.listByOwner({
+      type: 'bookmark',
+      limit: Number.MAX_SAFE_INTEGER
+    })
+
+    const byChromeBookmarkId = new Map<string, string>()
+    const byUrl = new Map<string, string>()
+
+    for (const item of items) {
+      if (item.type !== 'bookmark') {
+        continue
+      }
+      const chromeId = item.payload.chromeBookmarkId?.trim()
+      if (chromeId) {
+        byChromeBookmarkId.set(chromeId, item.id)
+      }
+      const urlKey = normalizeBookmarkSyncUrl(item.payload.url)
+      if (urlKey && !byUrl.has(urlKey)) {
+        byUrl.set(urlKey, item.id)
+      }
+    }
+
+    return { byChromeBookmarkId, byUrl }
+  }
+
   /** 软删除 MemoryItem。 */
   async softDelete(id: string): Promise<MemoryItem | null> {
     const ownerId = await getCurrentOwnerId()
@@ -217,6 +254,30 @@ export class MemoryItemRepository {
 
     await this.put(deleted)
     return deleted
+  }
+
+  /**
+   * 记录用户打开 MemoryItem。
+   * 只更新 openCount / lastOpenedAt，不改 updatedAt（打开 ≠ 内容变更）。
+   */
+  async recordOpen(id: string, openedAt = new Date().toISOString()): Promise<MemoryItem | null> {
+    const ownerId = await getCurrentOwnerId()
+    const existing = await this.getById(id, ownerId)
+    if (!existing) {
+      return null
+    }
+
+    const next: MemoryItem = {
+      ...existing,
+      clues: {
+        ...existing.clues,
+        openCount: existing.clues.openCount + 1,
+        lastOpenedAt: openedAt
+      }
+    }
+
+    await this.put(next)
+    return next
   }
 
   /** 按 Chrome 书签 ID 软删除 Bookmark MemoryItem。 */

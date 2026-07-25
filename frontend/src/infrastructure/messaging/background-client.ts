@@ -18,6 +18,7 @@ import type {
   ListMemoryItemsMessage,
   GetMemoryItemMessage,
   DeleteMemoryItemMessage,
+  RecordMemoryOpenMessage,
   MemoryBackgroundResponse
 } from '@/core/messaging/memory-messages'
 import type {
@@ -79,6 +80,18 @@ export async function deleteMemoryItem(
   const message: DeleteMemoryItemMessage = {
     scope: 'background',
     type: 'DELETE_MEMORY_ITEM',
+    payload
+  }
+  return sendBackgroundMessage<MemoryBackgroundResponse>(message)
+}
+
+/** 记录 MemoryItem 打开（openCount / lastOpenedAt）。 */
+export async function recordMemoryOpen(
+  payload: RecordMemoryOpenMessage['payload']
+): Promise<MemoryBackgroundResponse> {
+  const message: RecordMemoryOpenMessage = {
+    scope: 'background',
+    type: 'RECORD_MEMORY_OPEN',
     payload
   }
   return sendBackgroundMessage<MemoryBackgroundResponse>(message)

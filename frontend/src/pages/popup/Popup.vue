@@ -3,11 +3,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 import type { ChromeBookmarkImportState } from '@/core/memory/chrome-bookmark-import-state'
 import { getChromeBookmarkImportPercent } from '@/core/memory/chrome-bookmark-import-state'
-import {
-  explainRecallMatch,
-  formatRecallClueEcho,
-  shortenClueForRetry
-} from '@/core/recall/explain-recall-match'
+import { shortenClueForRetry } from '@/core/recall/explain-recall-match'
 import {
   getPopupIdleEmptyCopy,
   getPopupNoMatchCopy,
@@ -15,6 +11,7 @@ import {
 } from '@/core/recall/popup-empty-copy'
 import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
 import { getMemoryItemDisplay } from '@/core/recall/recall-result'
+import { buildRecallCardHighlightParts } from '@/core/recall/highlight-recall-text'
 import { getMemoryItemOpenHref } from '@/core/recall/memory-open-href'
 import { openExtensionOptionsPage } from '@/infrastructure/browser/options-page'
 import { tImportStateError, tRecallError } from '@/infrastructure/i18n/background-error'
@@ -22,10 +19,12 @@ import { t } from '@/infrastructure/i18n/t'
 import {
   fetchChromeBookmarkImportStatus,
   listMemoryItems,
-  recallWithClue
+  recallWithClue,
+  recordMemoryOpen
 } from '@/infrastructure/messaging/background-client'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
 import MaterialSymbolIcon from '@/infrastructure/ui/icons/MaterialSymbolIcon.vue'
+import RecallHighlightText from '@/pages/popup/RecallHighlightText.vue'
 
 defineOptions({ name: 'PopupPage' })
 
@@ -94,11 +93,6 @@ const noMatchCopy = computed(() =>
   )
 )
 
-const clueEcho = computed(() => {
-  const resultClue = recallResult.value?.clue ?? clue.value
-  return formatRecallClueEcho(resultClue, t)
-})
-
 const topPickDisplay = computed(() => {
   const match = recallResult.value?.topPick
   return match ? toMatchCard(match, recallResult.value?.clue ?? clue.value) : null
@@ -111,14 +105,14 @@ const alsoPossibleCards = computed(() => {
 
 function toMatchCard(match: RecallMatch, resultClue: string) {
   const display = getMemoryItemDisplay(match.item, t)
-  const explanation = explainRecallMatch(
-    {
-      clue: resultClue,
-      matchedFields: match.matchedFields,
-      item: match.item
-    },
-    t
-  )
+  const highlights = buildRecallCardHighlightParts({
+    clue: resultClue,
+    matchedFields: match.matchedFields,
+    item: match.item,
+    title: display.title,
+    subtitle: display.subtitle,
+    ...(display.excerpt === undefined ? {} : { excerpt: display.excerpt })
+  })
   return {
     id: match.item.id,
     title: display.title,
@@ -128,8 +122,20 @@ function toMatchCard(match: RecallMatch, resultClue: string) {
     }),
     excerpt: display.excerpt,
     typeLabel: display.typeLabel,
-    reason: explanation.reasonLine
+    titleParts: highlights.titleParts,
+    subtitleParts: highlights.subtitleParts,
+    excerptParts: highlights.excerptParts
   }
+}
+
+/** 打开结果时写行为信号；摘录进详情页由 Detail 记，避免双计。 */
+function handleRecallResultOpen(memoryItemId: string, openUrl: string): void {
+  if (openUrl.includes('/detail.html')) {
+    return
+  }
+  void recordMemoryOpen({ id: memoryItemId }).catch(() => {
+    // 忽略：打开记录失败不影响用户跳转
+  })
 }
 
 async function probeMemoryLibrary() {
@@ -240,8 +246,6 @@ async function handleOpenSettings() {
   <main class="recall-shell">
     <header class="recall-header">
       <AppPageHeader class="recall-header-top" @navigate-error="handleNavigateError" />
-      <h1 class="recall-title">{{ t('popup_title') }}</h1>
-      <p class="recall-subtitle">{{ t('popup_subtitle') }}</p>
 
       <section
         v-if="showImportProgress"
@@ -259,12 +263,12 @@ async function handleOpenSettings() {
     </header>
 
     <form class="recall-form" @submit.prevent="handleRecallSubmit">
-      <label class="recall-label" for="recall-clue">{{ t('popup_clue_label') }}</label>
       <textarea
         id="recall-clue"
         v-model="clue"
         class="recall-input"
         rows="3"
+        :aria-label="t('popup_clue_input_aria')"
         :placeholder="t('popup_clue_placeholder')"
       />
       <md-filled-button type="submit" :disabled="!clue.trim() || viewState === 'loading'">
@@ -312,38 +316,51 @@ async function handleOpenSettings() {
     >
       <div class="recall-top-pick">
         <p class="recall-section-label">{{ t('popup_section_top_pick') }}</p>
-        <p v-if="clueEcho" class="recall-clue-echo">{{ clueEcho }}</p>
         <a
           class="recall-card recall-card--top"
           :href="topPickDisplay.url"
           target="_blank"
           rel="noopener noreferrer"
+          @click="handleRecallResultOpen(topPickDisplay.id, topPickDisplay.url)"
         >
           <div class="recall-card-meta">
             <span class="recall-type">{{ topPickDisplay.typeLabel }}</span>
-            <span class="recall-reason">{{ topPickDisplay.reason }}</span>
           </div>
-          <p v-if="topPickDisplay.excerpt" class="recall-card-body">{{ topPickDisplay.excerpt }}</p>
-          <h2 v-else class="recall-card-title">{{ topPickDisplay.title }}</h2>
-          <p class="recall-card-subtitle">{{ topPickDisplay.subtitle }}</p>
+          <p v-if="topPickDisplay.excerpt" class="recall-card-body">
+            <RecallHighlightText :parts="topPickDisplay.excerptParts" />
+          </p>
+          <h2 v-else class="recall-card-title">
+            <RecallHighlightText :parts="topPickDisplay.titleParts" />
+          </h2>
+          <p class="recall-card-subtitle">
+            <RecallHighlightText :parts="topPickDisplay.subtitleParts" />
+          </p>
         </a>
-        <p class="recall-affirmation">{{ t('popup_affirmation') }}</p>
       </div>
 
       <div v-if="alsoPossibleCards.length > 0" class="recall-also">
         <p class="recall-section-label">{{ t('popup_section_also_possible') }}</p>
         <ul class="recall-also-list">
           <li v-for="item in alsoPossibleCards" :key="item.id">
-            <a class="recall-card" :href="item.url" target="_blank" rel="noopener noreferrer">
+            <a
+              class="recall-card"
+              :href="item.url"
+              target="_blank"
+              rel="noopener noreferrer"
+              @click="handleRecallResultOpen(item.id, item.url)"
+            >
               <div class="recall-card-meta">
                 <span class="recall-type">{{ item.typeLabel }}</span>
-                <span class="recall-reason">{{ item.reason }}</span>
               </div>
               <p v-if="item.excerpt" class="recall-card-body recall-card-body--compact">
-                {{ item.excerpt }}
+                <RecallHighlightText :parts="item.excerptParts" />
               </p>
-              <h3 v-else class="recall-card-title recall-card-title--compact">{{ item.title }}</h3>
-              <p class="recall-card-subtitle">{{ item.subtitle }}</p>
+              <h3 v-else class="recall-card-title recall-card-title--compact">
+                <RecallHighlightText :parts="item.titleParts" />
+              </h3>
+              <p class="recall-card-subtitle">
+                <RecallHighlightText :parts="item.subtitleParts" />
+              </p>
             </a>
           </li>
         </ul>
@@ -366,19 +383,6 @@ async function handleOpenSettings() {
 
 .recall-header-top {
   margin-bottom: 4px;
-}
-
-.recall-title {
-  margin: 0 0 8px;
-  font-size: 24px;
-  line-height: 1.2;
-}
-
-.recall-subtitle {
-  margin: 0 0 12px;
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--md-sys-color-on-surface-variant);
 }
 
 .recall-import {
@@ -408,11 +412,6 @@ async function handleOpenSettings() {
 .recall-form {
   display: grid;
   gap: 10px;
-}
-
-.recall-label {
-  font-size: 13px;
-  font-weight: 600;
 }
 
 .recall-input {
@@ -490,23 +489,9 @@ async function handleOpenSettings() {
   color: var(--md-sys-color-on-surface-variant);
 }
 
-.recall-clue-echo {
-  margin: -4px 0 8px;
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--md-sys-color-on-surface-variant);
-}
-
 .recall-top-pick {
   display: grid;
   gap: 8px;
-}
-
-.recall-affirmation {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--md-sys-color-tertiary);
 }
 
 .recall-card {
@@ -547,11 +532,6 @@ async function handleOpenSettings() {
   font-size: 11px;
   font-weight: 600;
   color: var(--md-sys-color-primary);
-}
-
-.recall-reason {
-  font-size: 11px;
-  color: var(--md-sys-color-on-surface-variant);
 }
 
 .recall-card-title {

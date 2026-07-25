@@ -22,9 +22,7 @@ export const MemoryCluesSchema = z.object({
 export type MemoryClues = z.infer<typeof MemoryCluesSchema>
 
 /** 创建 MemoryItem 时可部分提供的线索字段。 */
-export type MemoryCluesInput = Partial<
-  Omit<MemoryClues, 'openCount' | 'keywords' | 'entities' | 'tags'>
-> & {
+export type MemoryCluesInput = Partial<Omit<MemoryClues, 'keywords' | 'entities' | 'tags'>> & {
   keywords?: string[]
   entities?: string[]
   tags?: string[]

@@ -8,7 +8,8 @@ import {
   parseCaptureTextExcerptPayload,
   parseDeleteMemoryItemPayload,
   parseGetMemoryItemPayload,
-  parseListMemoryItemsPayload
+  parseListMemoryItemsPayload,
+  parseRecordMemoryOpenPayload
 } from '@/core/messaging/memory-messages'
 import { flashActionBadge } from '@/infrastructure/browser/action-badge'
 import { isSavablePageUrl } from '@/infrastructure/browser/active-tab-reader'
@@ -131,6 +132,21 @@ export async function handleDeleteMemoryItem(payload: unknown): Promise<MemoryBa
     return { ok: true, item }
   } catch (error) {
     logger.error('Background', '删除 MemoryItem 失败', error)
+    return toErrorResponse('MEMORY_OPERATION_FAILED', error)
+  }
+}
+
+/** 记录 MemoryItem 打开（行为信号）。 */
+export async function handleRecordMemoryOpen(payload: unknown): Promise<MemoryBackgroundResponse> {
+  try {
+    const input = parseRecordMemoryOpenPayload(payload)
+    const item = await memoryItemService.recordOpen(input.id)
+    if (!item) {
+      return toErrorResponse('MEMORY_NOT_FOUND')
+    }
+    return { ok: true, item }
+  } catch (error) {
+    logger.error('Background', '记录 Memory 打开失败', error)
     return toErrorResponse('MEMORY_OPERATION_FAILED', error)
   }
 }

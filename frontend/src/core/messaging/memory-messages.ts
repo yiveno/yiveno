@@ -36,6 +36,10 @@ const deleteMemoryItemPayloadSchema = z.object({
   id: z.string().uuid()
 })
 
+const recordMemoryOpenPayloadSchema = z.object({
+  id: z.string().uuid()
+})
+
 /** Memory 操作面向 UI 的稳定错误码。 */
 export const MemoryErrorCodeSchema = z.enum([
   'MEMORY_NOT_FOUND',
@@ -82,12 +86,20 @@ export type DeleteMemoryItemMessage = {
   payload: z.infer<typeof deleteMemoryItemPayloadSchema>
 }
 
+/** 记录用户打开某条 Memory（写 openCount / lastOpenedAt）。 */
+export type RecordMemoryOpenMessage = {
+  scope: BackgroundMessageScope
+  type: 'RECORD_MEMORY_OPEN'
+  payload: z.infer<typeof recordMemoryOpenPayloadSchema>
+}
+
 export type MemoryBackgroundMessage =
   | CaptureBookmarkMessage
   | CaptureTextExcerptMessage
   | ListMemoryItemsMessage
   | GetMemoryItemMessage
   | DeleteMemoryItemMessage
+  | RecordMemoryOpenMessage
 
 export type MemoryItemSuccessResponse = {
   ok: true
@@ -130,4 +142,8 @@ export function parseGetMemoryItemPayload(value: unknown) {
 
 export function parseDeleteMemoryItemPayload(value: unknown) {
   return deleteMemoryItemPayloadSchema.parse(value)
+}
+
+export function parseRecordMemoryOpenPayload(value: unknown) {
+  return recordMemoryOpenPayloadSchema.parse(value)
 }

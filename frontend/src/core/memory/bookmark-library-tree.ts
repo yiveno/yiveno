@@ -38,14 +38,31 @@ function isHttpUrl(url: string): boolean {
 }
 
 /**
+ * 归一化书签 URL，供 chromeId 缺失时用 URL 对齐 Memory。
+ * 去掉 hash；语言无关。
+ */
+export function normalizeBookmarkSyncUrl(url: string): string {
+  try {
+    const parsed = new URL(url)
+    parsed.hash = ''
+    return parsed.href
+  } catch {
+    return url.trim()
+  }
+}
+
+/**
  * 将 Chrome 书签树映射为只读浏览树。
  * - 仅保留 http(s) 书签叶子
  * - 文件夹保留完整层级（含空文件夹）
  * - 根节点若无标题且仅有子级，展开为多根
  * - 无标题文件夹文案由调用方注入（core 不写死 locale）
+ * - memoryItemId：优先 chromeBookmarkId，其次 URL
  */
 export interface MapChromeBookmarkTreeOptions {
   unnamedFolderTitle: string
+  /** URL → MemoryItem.id；chromeId 未命中时回退 */
+  memoryIdByUrl?: ReadonlyMap<string, string>
 }
 
 export function mapChromeBookmarkTreeToLibraryForest(
@@ -70,6 +87,19 @@ export function mapChromeBookmarkTreeToLibraryForest(
   return mapped
 }
 
+function resolveMemoryItemId(
+  chromeId: string,
+  url: string,
+  memoryIdByChromeBookmarkId: ReadonlyMap<string, string>,
+  memoryIdByUrl: ReadonlyMap<string, string> | undefined
+): string | undefined {
+  const byId = memoryIdByChromeBookmarkId.get(chromeId)
+  if (byId) {
+    return byId
+  }
+  return memoryIdByUrl?.get(normalizeBookmarkSyncUrl(url))
+}
+
 function mapChromeNode(
   node: ChromeBookmarkTreeInput,
   memoryIdByChromeBookmarkId: ReadonlyMap<string, string>,
@@ -80,7 +110,12 @@ function mapChromeNode(
     if (!isHttpUrl(url)) {
       return null
     }
-    const memoryItemId = memoryIdByChromeBookmarkId.get(node.id)
+    const memoryItemId = resolveMemoryItemId(
+      node.id,
+      url,
+      memoryIdByChromeBookmarkId,
+      options.memoryIdByUrl
+    )
     return {
       kind: 'bookmark',
       chromeId: node.id,

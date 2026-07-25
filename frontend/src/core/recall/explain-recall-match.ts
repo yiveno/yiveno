@@ -13,6 +13,8 @@ import type { MemoryItem } from '@/core/memory/memory-item'
 const FIELD_LABEL_KEYS: Record<string, string> = {
   title: 'explain_field_title',
   textExcerpt: 'explain_field_text_excerpt',
+  excerptContext: 'explain_field_excerpt_context',
+  pageTitle: 'explain_field_page_title',
   summary: 'explain_field_summary',
   domain: 'explain_field_domain',
   url: 'explain_field_url',
@@ -24,6 +26,8 @@ const FIELD_LABEL_KEYS: Record<string, string> = {
 const FIELD_SHORT_LABEL_KEYS: Record<string, string> = {
   title: 'explain_field_short_title',
   textExcerpt: 'explain_field_short_text_excerpt',
+  excerptContext: 'explain_field_short_excerpt_context',
+  pageTitle: 'explain_field_short_page_title',
   summary: 'explain_field_short_summary',
   domain: 'explain_field_short_domain',
   url: 'explain_field_short_url',
@@ -36,6 +40,8 @@ const FIELD_SHORT_LABEL_KEYS: Record<string, string> = {
 const FIELD_PRIORITY: Record<string, number> = {
   title: 24,
   textExcerpt: 18,
+  excerptContext: 8,
+  pageTitle: 20,
   summary: 16,
   domain: 14,
   url: 10,

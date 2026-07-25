@@ -35,10 +35,11 @@ export function buildRecallResult(clue: string, matches: RecallMatch[]): RecallR
 export function recallByKeyword(
   items: MemoryItem[],
   clue: string,
-  options: { candidateLimit?: number } = {}
+  options: { candidateLimit?: number; nowMs?: number } = {}
 ): RecallResult {
   const matches = filterMemoryItemsByKeyword(items, clue, {
-    limit: (options.candidateLimit ?? 6) + 5
+    limit: (options.candidateLimit ?? 6) + 5,
+    ...(options.nowMs === undefined ? {} : { nowMs: options.nowMs })
   })
 
   const trimmed = matches.slice(0, options.candidateLimit ?? 6)

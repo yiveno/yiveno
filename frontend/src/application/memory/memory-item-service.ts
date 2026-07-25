@@ -43,6 +43,16 @@ export class MemoryItemService {
     return this.repository.softDelete(id)
   }
 
+  /** 书签树对齐表（chromeId / URL → Memory id）。 */
+  async listBookmarkSyncAlignment() {
+    return this.repository.listBookmarkSyncAlignment()
+  }
+
+  /** 记录打开：递增 openCount，更新 lastOpenedAt（不改 updatedAt）。 */
+  async recordOpen(id: string): Promise<MemoryItem | null> {
+    return this.repository.recordOpen(id)
+  }
+
   /** 按 Chrome 书签 ID 软删除 Bookmark MemoryItem。 */
   async softDeleteByChromeBookmarkId(chromeBookmarkId: string): Promise<MemoryItem | null> {
     return this.repository.softDeleteByChromeBookmarkId(chromeBookmarkId)

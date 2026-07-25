@@ -11,9 +11,12 @@ const props = withDefaults(
   defineProps<{
     node: BookmarkLibraryTreeNode
     depth?: number
+    /** 全量导入完成后才展示「未同步」 */
+    showUnsyncedFlags?: boolean
   }>(),
   {
-    depth: 0
+    depth: 0,
+    showUnsyncedFlags: false
   }
 )
 
@@ -63,6 +66,7 @@ function hostnameOf(url: string): string {
           :key="`${child.kind}-${child.chromeId}`"
           :node="child"
           :depth="depth + 1"
+          :show-unsynced-flags="showUnsyncedFlags"
         />
       </ul>
     </template>
@@ -76,7 +80,7 @@ function hostnameOf(url: string): string {
         <span class="tree-bookmark-title">{{ node.title }}</span>
       </span>
       <span class="tree-bookmark-meta">
-        <span v-if="!node.memoryItemId" class="tree-bookmark-flag">{{
+        <span v-if="showUnsyncedFlags && !node.memoryItemId" class="tree-bookmark-flag">{{
           t('library_bookmark_unsynced')
         }}</span>
         <span class="tree-bookmark-host" :title="node.url">{{ hostnameOf(node.url) }}</span>

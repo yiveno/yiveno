@@ -37,32 +37,26 @@ function toChromeTreeInput(node: chrome.bookmarks.BookmarkTreeNode): ChromeBookm
 /** 读取 Chrome 书签目录树并与 Memory 书签对齐（只读）。 */
 export async function handleGetBookmarkLibraryTree(): Promise<GetBookmarkLibraryTreeResponse> {
   try {
-    const [chromeTree, memoryBookmarks] = await Promise.all([
+    const [chromeTree, alignment, importState] = await Promise.all([
       chrome.bookmarks.getTree(),
-      memoryItemService.list({ type: 'bookmark', limit: 500 })
+      memoryItemService.listBookmarkSyncAlignment(),
+      getChromeBookmarkImportStatus()
     ])
-
-    const memoryIdByChromeBookmarkId = new Map<string, string>()
-    for (const item of memoryBookmarks) {
-      if (item.type !== 'bookmark') {
-        continue
-      }
-      const chromeId = item.payload.chromeBookmarkId
-      if (chromeId) {
-        memoryIdByChromeBookmarkId.set(chromeId, item.id)
-      }
-    }
 
     const roots = mapChromeBookmarkTreeToLibraryForest(
       chromeTree.map(node => toChromeTreeInput(node)),
-      memoryIdByChromeBookmarkId,
-      { unnamedFolderTitle: t('library_folder_unnamed') }
+      alignment.byChromeBookmarkId,
+      {
+        unnamedFolderTitle: t('library_folder_unnamed'),
+        memoryIdByUrl: alignment.byUrl
+      }
     )
 
     return {
       ok: true,
       roots,
-      bookmarkCount: countBookmarkLibraryLeaves(roots)
+      bookmarkCount: countBookmarkLibraryLeaves(roots),
+      syncReady: importState?.status === 'completed'
     }
   } catch (error) {
     logger.error('Background', '读取书签目录树失败', error)

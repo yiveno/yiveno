@@ -1,4 +1,5 @@
 import { recallService } from '@/application/recall/recall-service'
+import { memoryItemService } from '@/application/memory/memory-item-service'
 import { getMemoryItemOpenHref, tryParseNavigableUrl } from '@/core/recall/memory-open-href'
 import { escapeOmniboxXml, recallResultToOmniboxSuggests } from '@/core/recall/omnibox-suggest'
 import { t } from '@/infrastructure/i18n/t'
@@ -40,6 +41,18 @@ async function openUrlByDisposition(
     case 'newForegroundTab':
     default:
       await chrome.tabs.create({ url })
+  }
+}
+
+/** 尽力记录打开；失败不影响导航。 */
+async function recordOpenBestEffort(memoryItemId: string | null | undefined): Promise<void> {
+  if (!memoryItemId) {
+    return
+  }
+  try {
+    await memoryItemService.recordOpen(memoryItemId)
+  } catch (error) {
+    logger.error('Omnibox', '记录 Memory 打开失败', error)
   }
 }
 
@@ -88,6 +101,7 @@ async function handleOmniboxInputEntered(
 ): Promise<void> {
   const directUrl = tryParseNavigableUrl(text)
   if (directUrl) {
+    // 摘录详情页由 Detail 记录打开；书签直链暂无 id，此处不写
     await openUrlByDisposition(directUrl, disposition)
     return
   }
@@ -99,8 +113,9 @@ async function handleOmniboxInputEntered(
 
   await ensureReady()
   const result = await recallService.recallWithClue(clue)
-  const topHref = result.topPick
-    ? getMemoryItemOpenHref(result.topPick.item, { detailPageUrl: getDetailPageUrl() })
+  const topPick = result.topPick
+  const topHref = topPick
+    ? getMemoryItemOpenHref(topPick.item, { detailPageUrl: getDetailPageUrl() })
     : ''
   const url = tryParseNavigableUrl(topHref)
 
@@ -109,6 +124,10 @@ async function handleOmniboxInputEntered(
     return
   }
 
+  // 书签在此记；摘录进详情由 Detail 记
+  if (topPick?.item.type === 'bookmark') {
+    await recordOpenBestEffort(topPick.item.id)
+  }
   await openUrlByDisposition(url, disposition)
 }
 
