@@ -148,6 +148,3 @@ export const MESSAGE_KEYS = [
 
 /** Chrome `_locales` message key。 */
 export type MessageKey = (typeof MESSAGE_KEYS)[number]
-
-/** 可注入 core 的翻译函数（避免 core 依赖 chrome）。 */
-export type TranslateFn = (key: MessageKey, substitutions?: string | string[]) => string

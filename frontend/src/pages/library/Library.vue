@@ -13,7 +13,7 @@ import {
 } from '@/core/memory/library-tabs'
 import { getMemoryItemOpenHref } from '@/core/recall/memory-open-href'
 import { getMemoryItemDisplay } from '@/core/recall/recall-result'
-import { getUILanguage, t } from '@/infrastructure/i18n/t'
+import { getUILanguage, t, translate } from '@/infrastructure/i18n/t'
 import { tMemoryError } from '@/infrastructure/i18n/memory-error'
 import {
   deleteMemoryItem,
@@ -52,7 +52,7 @@ const showingBookmarkTree = computed(() => activeType.value === 'bookmark')
 const listRows = computed(() => {
   const detailPageUrl = chrome.runtime.getURL('detail.html')
   return items.value.map(item => {
-    const display = getMemoryItemDisplay(item, t)
+    const display = getMemoryItemDisplay(item, translate)
     return {
       id: item.id,
       typeLabel: display.typeLabel,

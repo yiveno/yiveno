@@ -1,7 +1,7 @@
 import { recallService } from '@/application/recall/recall-service'
 import { getMemoryItemOpenHref, tryParseNavigableUrl } from '@/core/recall/memory-open-href'
 import { escapeOmniboxXml, recallResultToOmniboxSuggests } from '@/core/recall/omnibox-suggest'
-import { t } from '@/infrastructure/i18n/t'
+import { t, translate } from '@/infrastructure/i18n/t'
 import { logger } from '@/infrastructure/logging/logger'
 
 let listenersRegistered = false
@@ -66,7 +66,7 @@ async function handleOmniboxInputChanged(
 
   const suggests = recallResultToOmniboxSuggests(result, {
     detailPageUrl: getDetailPageUrl(),
-    translate: t
+    translate
   })
   if (suggests.length === 0) {
     chrome.omnibox.setDefaultSuggestion({ description: getNoMatchSuggestionDescription() })

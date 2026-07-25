@@ -12,7 +12,7 @@ import {
   openChromeShortcutsPage,
   updateUserSettings
 } from '@/infrastructure/messaging/background-client'
-import { t } from '@/infrastructure/i18n/t'
+import { t, translate } from '@/infrastructure/i18n/t'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
 import { asMdSwitchElement } from '@/infrastructure/ui/register-material-web'
 
@@ -34,8 +34,8 @@ const savingSelectionToolbar = ref(false)
 const commandRows = computed(() =>
   commands.value.map(command => ({
     name: command.name,
-    title: getExtensionCommandDisplayTitle(command, t),
-    shortcutLabel: formatExtensionCommandShortcut(command.shortcut, t),
+    title: getExtensionCommandDisplayTitle(command, translate),
+    shortcutLabel: formatExtensionCommandShortcut(command.shortcut, translate),
     unbound: command.shortcut.trim().length === 0
   }))
 )
