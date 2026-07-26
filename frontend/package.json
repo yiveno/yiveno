@@ -6,7 +6,7 @@
     "build": "bun ../scripts/dev-env.mjs sync --profile=development --target=frontend --quiet && NODE_ENV=development vue-tsc -b && NODE_ENV=development vite build --mode development",
     "build:prod": "bun ../scripts/dev-env.mjs sync --profile=production --target=frontend --quiet && bun ../scripts/dev-env.mjs check --profile=production --target=frontend --quiet && NODE_ENV=production vue-tsc -b && NODE_ENV=production vite build --mode production",
     "dev": "vite --host 0.0.0.0",
-    "build:watch": "vite build --watch --mode development",
+    "build:watch": "bun ../scripts/dev-env.mjs sync --profile=development --target=frontend --quiet && NODE_ENV=development vite build --watch --mode development",
     "typecheck": "vue-tsc --noEmit",
     "typecheck:force": "vue-tsc --build --force --noEmit",
     "lint": "bun run format && bun run eslint && bun run stylelint",

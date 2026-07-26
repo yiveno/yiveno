@@ -1,0 +1,43 @@
+---
+description: 禁止静默丢弃工作区改动；实验还原不得用 git restore/checkout
+alwaysApply: true
+---
+
+# Git 工作区安全（硬规则）
+
+## 禁止（除非用户明确要求丢弃改动）
+
+- `git checkout -- <path>` / `git checkout <path>`
+- `git restore [--worktree|--staged] <path>`
+- `git reset --hard` / `git clean -fd`
+- 任何会**整文件恢复成 HEAD/index**、清空未提交 WIP 的命令
+
+用户未说「丢弃 / 还原 / 不要这些改动」时，**不得**用上述命令「清理实验痕迹」。
+
+## 允许的实验还原
+
+```bash
+# ✅ 先备份再改；还原用备份，不用 git
+cp path/to/file /tmp/yiveno-bak-file
+# …实验…
+cp /tmp/yiveno-bak-file path/to/file
+```
+
+- 只追加测试字节时：精确删回（如去掉末尾一行），**禁止** `git checkout` 整文件。
+- 需要隔离实验：改 `/tmp` 副本，或先 `git stash push -m "wip-agent"`（且事后 `stash pop`），**不要** restore。
+
+## 动手前自检
+
+对已跟踪文件做破坏性操作前必须先看：
+
+```bash
+git status -- path
+git diff -- path
+```
+
+若有未提交改动 → **停手**，改用 `/tmp` 备份方案，或询问用户是否可丢弃。
+
+## 与现有约定的关系
+
+- 仍遵守：未经用户要求不 commit / 不 push；不改 git config。
+- 本规则优先于「为省事用 git 还原文件」的任何捷径。

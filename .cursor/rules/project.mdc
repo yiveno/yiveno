@@ -17,6 +17,7 @@ alwaysApply: true
 
 ```
 ❌ 禁止：擅自 git commit / push
+❌ 禁止：用 git checkout/restore/reset --hard 静默丢弃工作区 WIP（详见 git-workdir-safety.mdc）
 ❌ 禁止：主动写总结文档、CHANGELOG、Spec（除非用户明确要求）
 ✅ bug / 小需求：直接改代码，不写 Spec
 ✅ 允许：改代码 + 对话内简述改动

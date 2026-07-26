@@ -22,7 +22,6 @@ export type DispatchSelectionToolbarResult =
   | { status: 'ok' }
   | { status: 'ignored' }
   | { status: 'command_failed' }
-  | { status: 'unsavable_page' }
   | { status: 'no_receiver' }
 
 function delay(ms: number): Promise<void> {

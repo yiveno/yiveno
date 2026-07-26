@@ -3,6 +3,7 @@ import { registerChromeBookmarkSyncListeners } from '@/background/listeners/chro
 import { registerCommandListeners } from '@/background/listeners/commands'
 import { registerContextMenuListeners } from '@/background/listeners/context-menu'
 import { registerOmniboxListeners } from '@/background/listeners/omnibox'
+import { registerSelectionToolbarKeepaliveListener } from '@/background/listeners/selection-toolbar-keepalive'
 import { logger } from '@/infrastructure/logging/logger'
 import {
   getCurrentOwnerId,
@@ -28,6 +29,7 @@ async function bootstrapBackground(): Promise<void> {
   registerContextMenuListeners()
   registerOmniboxListeners()
   registerCommandListeners()
+  registerSelectionToolbarKeepaliveListener()
 
   logger.info('Background', '本地身份与 Memory DB 已就绪', {
     localProfileId: profile.localProfileId,

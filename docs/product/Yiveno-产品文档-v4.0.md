@@ -42,6 +42,8 @@ Yiveno = **个人信息寻回系统**（Capture 低负担 + Recall 高确定性�
 
 **下一项：按用户指定推进。** 未指定前不擅自开 Phase B。
 
+**独立 `note` 类型（预留）：** 有边界需求（无出处闪念），但属辅助，**当前不接入**。优先吃透书签 + 摘录 + `clues.note` 附注的 Capture / Recall 闭环；未验证「无处可挂」的规模流失前，不得做成可用入口，也不得在 UI 暗示已有独立笔记库。若将来做，须极瘦（纯文本、无文件夹/富文本/双向链）。
+
 **入口能力差异（Normative）：** 共用同一 `recallService` / Filter；壳不同——Omnibox 为单次命中、无会话；快捷键找回打开 Popup（可会话壳）；Popup 预留多轮补充与反馈（Phase B），不得做成开放聊天。书签 Capture：**仅** Chrome 原生加书签 + 导入/增量 sync，不提供「保存当前页」快捷键或 Popup 按钮。快捷键改绑：Settings → Chrome 原生 `chrome://extensions/shortcuts`（扩展无法自行改键）。
 
 ### 0.5 权威路径速查
@@ -106,7 +108,8 @@ Yiveno = **个人信息寻回系统**（Capture 低负担 + Recall 高确定性�
 ### 2.1 可写入类型（MVP）
 
 `bookmark` | `text_excerpt`  
-预留不可写：`image` | `video` | `note` | `file`
+预留不可写：`image` | `video` | `note` | `file`  
+（`note`：有边界需求但不做当前范围；见 §0.4。勿与 `clues.note` 附注混淆。）
 
 ### 2.2 公共字段
 
@@ -354,6 +357,7 @@ MVP 验证问题：是否更愿保存、是否优先打开 Yiveno、是否稳定
 
 | 日期       | 变更                                                                                 |
 | ---------- | ------------------------------------------------------------------------------------ |
+| 2026-07-26 | 独立 `note` 类型：有边界需求、当前不接入；优先书签/摘录/`clues.note` 核心闭环        |
 | 2026-07-25 | Popup：打开聚焦线索框；移除提交按钮；停输防抖自动找回；↑↓/Enter 键盘打开结果         |
 | 2026-07-25 | 快捷键：划词保存 `Alt+Shift+E`、备注 `Alt+Shift+N`；设置让出 suggested_key 槽位      |
 | 2026-07-25 | 快捷键：记忆库 `Alt+Shift+L`、设置 `Alt+Shift+S`（`open_library` / `open_settings`） |

@@ -10,6 +10,8 @@ const CONTENT_SCRIPT_ENTRIES = [
   }
 ] as const
 
+export { CONTENT_SCRIPT_ENTRIES }
+
 function toIifeGlobalName(entryName: string): string {
   return entryName
     .split(/[^a-zA-Z0-9]+/)
@@ -23,6 +25,8 @@ function toIifeGlobalName(entryName: string): string {
  * 由 extension-post-build 在主包 closeBundle 内串行调用，避免与 watch 下一轮竞态。
  */
 export async function buildContentScriptIifes(): Promise<void> {
+  const isWatchBuild = process.argv.includes('--watch')
+
   for (const script of CONTENT_SCRIPT_ENTRIES) {
     await viteBuild({
       configFile: false,
@@ -42,7 +46,8 @@ export async function buildContentScriptIifes(): Promise<void> {
         emptyOutDir: false,
         sourcemap: DEBUG_MODE,
         target: ['chrome116', 'es2022'],
-        minify: 'terser',
+        // watch 不 minify：与主包一致，加快迭代
+        minify: isWatchBuild ? false : 'terser',
         lib: {
           entry: script.entry,
           name: toIifeGlobalName(script.name),

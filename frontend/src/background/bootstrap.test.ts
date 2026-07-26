@@ -8,7 +8,8 @@ const {
   registerChromeBookmarkSyncListenersMock,
   registerContextMenuListenersMock,
   registerOmniboxListenersMock,
-  registerCommandListenersMock
+  registerCommandListenersMock,
+  registerSelectionToolbarKeepaliveListenerMock
 } = vi.hoisted(() => ({
   ensureChromeBookmarksImportedMock: vi.fn(async () => ({ status: 'completed' as const })),
   getCurrentOwnerIdMock: vi.fn(async () => 'owner-1'),
@@ -21,7 +22,8 @@ const {
   registerChromeBookmarkSyncListenersMock: vi.fn(),
   registerContextMenuListenersMock: vi.fn(),
   registerOmniboxListenersMock: vi.fn(),
-  registerCommandListenersMock: vi.fn()
+  registerCommandListenersMock: vi.fn(),
+  registerSelectionToolbarKeepaliveListenerMock: vi.fn()
 }))
 
 vi.mock('@/application/capture/import-chrome-bookmarks-service', () => ({
@@ -42,6 +44,10 @@ vi.mock('@/background/listeners/omnibox', () => ({
 
 vi.mock('@/background/listeners/commands', () => ({
   registerCommandListeners: registerCommandListenersMock
+}))
+
+vi.mock('@/background/listeners/selection-toolbar-keepalive', () => ({
+  registerSelectionToolbarKeepaliveListener: registerSelectionToolbarKeepaliveListenerMock
 }))
 
 vi.mock('@/infrastructure/identity/local-profile-service', () => ({
@@ -73,6 +79,7 @@ describe('ensureBackgroundBootstrapped', () => {
     expect(registerContextMenuListenersMock).toHaveBeenCalledTimes(1)
     expect(registerOmniboxListenersMock).toHaveBeenCalledTimes(1)
     expect(registerCommandListenersMock).toHaveBeenCalledTimes(1)
+    expect(registerSelectionToolbarKeepaliveListenerMock).toHaveBeenCalledTimes(1)
   })
 
   it('延迟启动 Chrome 书签导入', async () => {

@@ -1,6 +1,7 @@
 import { BACKGROUND_MESSAGE_SCOPE } from '@/core/messaging/constants'
 import {
   parseContentSelectionCommandMessage,
+  SELECTION_TOOLBAR_KEEPALIVE_PORT,
   SELECTION_TOOLBAR_PAGE_API_KEY,
   type ContentSelectionCommandResponse,
   type SelectionToolbarCommandType,
@@ -50,8 +51,6 @@ let notePanel: HTMLElement | null = null
 let saveButton: HTMLButtonElement | null = null
 let noteButton: HTMLButtonElement | null = null
 let noteInput: HTMLTextAreaElement | null = null
-let noteCancelButton: HTMLButtonElement | null = null
-let noteConfirmButton: HTMLButtonElement | null = null
 let statusButton: HTMLButtonElement | null = null
 let uiMode: ToolbarUiMode = 'actions'
 let buttonState: ToolbarButtonState = 'idle'
@@ -263,15 +262,7 @@ function ensureToolbarHost(): void {
   const saveLabel = safeT('context_menu_save_selection')
   const noteLabel = safeT('selection_toolbar_add_note')
   const notePlaceholder = safeT('selection_toolbar_note_placeholder')
-  const cancelLabel = safeT('selection_toolbar_note_cancel')
-  const confirmLabel = safeT('selection_toolbar_note_save')
-  if (
-    saveLabel === null ||
-    noteLabel === null ||
-    notePlaceholder === null ||
-    cancelLabel === null ||
-    confirmLabel === null
-  ) {
+  if (saveLabel === null || noteLabel === null || notePlaceholder === null) {
     return
   }
 
@@ -333,7 +324,7 @@ function ensureToolbarHost(): void {
     }
     .action-button:disabled,
     .status-button:disabled,
-    .note-confirm:disabled {
+    .note-input:disabled {
       cursor: wait;
       opacity: 0.75;
     }
@@ -359,8 +350,7 @@ function ensureToolbarHost(): void {
       box-shadow: 0 4px 16px rgb(15 23 42 / 12%);
     }
     .note-panel.is-open {
-      display: grid;
-      gap: 8px;
+      display: block;
     }
     .note-input {
       box-sizing: border-box;
@@ -378,34 +368,6 @@ function ensureToolbarHost(): void {
     .note-input:focus {
       outline: 2px solid rgb(8 145 178 / 35%);
       outline-offset: 1px;
-    }
-    .note-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 6px;
-    }
-    .note-cancel,
-    .note-confirm {
-      margin: 0;
-      padding: 5px 10px;
-      border: none;
-      border-radius: 999px;
-      font: 600 12px/1.2 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      cursor: pointer;
-    }
-    .note-cancel {
-      color: #0e7490;
-      background: transparent;
-    }
-    .note-cancel:hover:not(:disabled) {
-      background: rgb(8 145 178 / 12%);
-    }
-    .note-confirm {
-      color: #fff;
-      background: #0e7490;
-    }
-    .note-confirm:hover:not(:disabled) {
-      background: #0f766e;
     }
     .is-hidden {
       display: none !important;
@@ -453,6 +415,7 @@ function ensureToolbarHost(): void {
   noteInput.rows = 2
   noteInput.maxLength = NOTE_MAX_LENGTH
   noteInput.placeholder = notePlaceholder
+  noteInput.setAttribute('aria-label', notePlaceholder)
   noteInput.addEventListener('mousedown', event => {
     // 聚焦输入时保留页内选区，避免浮层一开选区就丢
     event.stopPropagation()
@@ -462,36 +425,31 @@ function ensureToolbarHost(): void {
     if (event.key === 'Escape') {
       event.preventDefault()
       closeNotePanel()
+      return
+    }
+    // Enter 保存；Shift+Enter 换行；IME 合成中不触发
+    if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
+      event.preventDefault()
+      void handleSaveClick({ withNote: true })
     }
   })
-
-  const noteActions = document.createElement('div')
-  noteActions.className = 'note-actions'
-
-  noteCancelButton = document.createElement('button')
-  noteCancelButton.type = 'button'
-  noteCancelButton.className = 'note-cancel'
-  noteCancelButton.textContent = cancelLabel
-  noteCancelButton.addEventListener('mousedown', preserveSelectionOnMouseDown)
-  noteCancelButton.addEventListener('click', event => {
-    event.preventDefault()
-    event.stopPropagation()
-    closeNotePanel()
+  noteInput.addEventListener('blur', () => {
+    // 延迟一拍：让 Enter 保存先进入 saving，避免失焦误取消
+    window.setTimeout(() => {
+      if (tornDown || !ensureLiveContext()) {
+        return
+      }
+      if (uiMode !== 'note') {
+        return
+      }
+      if (buttonState === 'saving' || buttonState === 'saved' || buttonState === 'error') {
+        return
+      }
+      closeNotePanel()
+    }, 0)
   })
 
-  noteConfirmButton = document.createElement('button')
-  noteConfirmButton.type = 'button'
-  noteConfirmButton.className = 'note-confirm'
-  noteConfirmButton.textContent = confirmLabel
-  noteConfirmButton.addEventListener('mousedown', preserveSelectionOnMouseDown)
-  noteConfirmButton.addEventListener('click', event => {
-    event.preventDefault()
-    event.stopPropagation()
-    void handleSaveClick({ withNote: true })
-  })
-
-  noteActions.append(noteCancelButton, noteConfirmButton)
-  notePanel.append(noteInput, noteActions)
+  notePanel.append(noteInput)
 
   shell.append(actionsRow, notePanel)
   shadowRoot.append(style, shell)
@@ -506,12 +464,6 @@ function setBusy(busy: boolean): void {
   }
   if (noteButton) {
     noteButton.disabled = busy
-  }
-  if (noteConfirmButton) {
-    noteConfirmButton.disabled = busy
-  }
-  if (noteCancelButton) {
-    noteCancelButton.disabled = busy
   }
   if (noteInput) {
     noteInput.disabled = busy
@@ -838,29 +790,12 @@ function handleRuntimeMessage(
   return true
 }
 
-type PageApiGlobal = typeof globalThis & {
-  [SELECTION_TOOLBAR_PAGE_API_KEY]?: SelectionToolbarPageApi
-}
-
-function installPageApi(): void {
-  const target = globalThis as PageApiGlobal
-  target[SELECTION_TOOLBAR_PAGE_API_KEY] = {
-    runCommand: (type: SelectionToolbarCommandType) =>
-      type === 'SELECTION_SAVE' ? handleShortcutSave() : handleShortcutOpenNote()
-  }
-}
-
-function uninstallPageApi(): void {
-  try {
-    const target = globalThis as PageApiGlobal
-    delete target[SELECTION_TOOLBAR_PAGE_API_KEY]
-  } catch {
-    // ignore
-  }
-}
-
 function evaluateSelectionAndMaybeShow(): void {
   if (!ensureLiveContext()) {
+    return
+  }
+  // 保存反馈期间勿因选区变化重建/拆掉浮层
+  if (isStatusFeedbackLocked()) {
     return
   }
   clearShowTimer()
@@ -880,6 +815,9 @@ function evaluateSelectionAndMaybeShow(): void {
   showTimer = setTimeout(() => {
     showTimer = null
     runGuarded(() => {
+      if (isStatusFeedbackLocked()) {
+        return
+      }
       const rect = getSelectionRect()
       const latestText = getSelectedText()
       if (!rect || !latestText) {
@@ -893,6 +831,11 @@ function evaluateSelectionAndMaybeShow(): void {
 
 function isEventInsideToolbar(event: Event): boolean {
   return hostElement !== null && event.composedPath().includes(hostElement)
+}
+
+/** 保存中 / 结果提示期间锁定浮层，避免滚动、点页、Esc 拆掉反馈。 */
+function isStatusFeedbackLocked(): boolean {
+  return buttonState === 'saving' || buttonState === 'saved' || buttonState === 'error'
 }
 
 function handleMouseUp(event: MouseEvent): void {
@@ -912,24 +855,34 @@ function handleDocumentMouseDown(event: MouseEvent): void {
     if (isEventInsideToolbar(event)) {
       return
     }
+    if (isStatusFeedbackLocked()) {
+      return
+    }
     hideToolbar()
   })
 }
 
 function handleKeyDown(event: KeyboardEvent): void {
   runGuarded(() => {
-    if (event.key === 'Escape') {
-      if (uiMode === 'note' && buttonState !== 'saving') {
-        closeNotePanel()
-        return
-      }
-      hideToolbar()
+    if (event.key !== 'Escape') {
+      return
     }
+    if (isStatusFeedbackLocked()) {
+      return
+    }
+    if (uiMode === 'note') {
+      closeNotePanel()
+      return
+    }
+    hideToolbar()
   })
 }
 
 function handleScroll(): void {
   runGuarded(() => {
+    if (isStatusFeedbackLocked()) {
+      return
+    }
     hideToolbar()
   })
 }
@@ -940,8 +893,7 @@ function handleSelectionChange(): void {
     if (uiMode === 'note') {
       return
     }
-    // 保存中 / 成功 / 失败提示期间：清选区不应拆掉状态反馈
-    if (buttonState === 'saving' || buttonState === 'saved' || buttonState === 'error') {
+    if (isStatusFeedbackLocked()) {
       return
     }
     if (!getSelectedText()) {
@@ -971,7 +923,7 @@ function connectKeepalivePort(): void {
     return
   }
   try {
-    keepalivePort = chrome.runtime.connect({ name: 'yiveno-selection-toolbar' })
+    keepalivePort = chrome.runtime.connect({ name: SELECTION_TOOLBAR_KEEPALIVE_PORT })
     keepalivePort.onDisconnect.addListener(() => {
       keepalivePort = null
       // 扩展被重载/禁用：runtime.id 消失 → 拆卸旧脚本
@@ -1033,6 +985,32 @@ function clearBootFlagIfOwned(): void {
   }
 }
 
+type PageApiGlobal = typeof globalThis & {
+  [SELECTION_TOOLBAR_PAGE_API_KEY]?: SelectionToolbarPageApi & { ownerRuntimeId?: string }
+}
+
+function installPageApi(): void {
+  const target = globalThis as PageApiGlobal
+  target[SELECTION_TOOLBAR_PAGE_API_KEY] = {
+    ownerRuntimeId: bootRuntimeId,
+    runCommand: (type: SelectionToolbarCommandType) =>
+      type === 'SELECTION_SAVE' ? handleShortcutSave() : handleShortcutOpenNote()
+  }
+}
+
+function uninstallPageApi(): void {
+  try {
+    const target = globalThis as PageApiGlobal
+    const current = target[SELECTION_TOOLBAR_PAGE_API_KEY]
+    // 仅卸本实例挂上的 API，避免扩展 Reload 后旧 teardown 删掉新实例 API
+    if (current?.ownerRuntimeId === bootRuntimeId) {
+      delete target[SELECTION_TOOLBAR_PAGE_API_KEY]
+    }
+  } catch {
+    // ignore
+  }
+}
+
 /** 是否应由本实例完成挂载（同 runtime 已挂载则跳过）。 */
 function shouldBootThisInstance(): boolean {
   if (!bootRuntimeId) {
@@ -1085,8 +1063,6 @@ function teardown(): void {
   saveButton = null
   noteButton = null
   noteInput = null
-  noteCancelButton = null
-  noteConfirmButton = null
   statusButton = null
   uiMode = 'actions'
   buttonState = 'idle'

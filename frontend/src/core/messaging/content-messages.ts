@@ -11,6 +11,9 @@ export type ContentMessageScope = typeof CONTENT_MESSAGE_SCOPE
  */
 export const SELECTION_TOOLBAR_PAGE_API_KEY = '__yivenoSelectionToolbarApi' as const
 
+/** Content Script ↔ SW keepalive port 名（扩展重载时靠 disconnect 拆旧实例）。 */
+export const SELECTION_TOOLBAR_KEEPALIVE_PORT = 'yiveno-selection-toolbar' as const
+
 export type SelectionToolbarCommandType = 'SELECTION_SAVE' | 'SELECTION_OPEN_NOTE'
 
 const contentSelectionCommandSchema = z.object({
