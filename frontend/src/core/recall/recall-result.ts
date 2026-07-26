@@ -35,6 +35,8 @@ export interface MemoryItemDisplay {
   url: string
   /** 摘录正文（主内容）；书签无。 */
   excerpt?: string
+  /** 用户自拟备注；无则省略。 */
+  note?: string
   typeLabel: string
 }
 
@@ -55,6 +57,7 @@ export function getMemoryItemDisplay(item: MemoryItem, translate: TranslateFn): 
       title: item.payload.title,
       subtitle: item.payload.domain,
       url: item.payload.url,
+      ...(item.clues.note?.trim() ? { note: item.clues.note.trim() } : {}),
       typeLabel: translate('type_label_bookmark')
     }
   }
@@ -64,6 +67,7 @@ export function getMemoryItemDisplay(item: MemoryItem, translate: TranslateFn): 
     subtitle: formatExcerptProvenance(item.payload.pageTitle, item.payload.domain),
     url: item.payload.sourceUrl,
     excerpt: item.payload.selectedText,
+    ...(item.clues.note?.trim() ? { note: item.clues.note.trim() } : {}),
     typeLabel: translate('type_label_excerpt')
   }
 }

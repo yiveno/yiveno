@@ -47,7 +47,7 @@ const FIELD_PRIORITY: Record<string, number> = {
   url: 10,
   keywords: 12,
   tags: 12,
-  note: 10
+  note: 26
 }
 
 const TOKEN_QUOTE_MAX = 12

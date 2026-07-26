@@ -206,6 +206,15 @@ onMounted(() => {
         {{ excerpt.payload.contextAfter }}…
       </p>
 
+      <section
+        v-if="excerpt.clues.note?.trim()"
+        class="detail-note"
+        :aria-label="t('detail_note_label')"
+      >
+        <h2 class="detail-note-label">{{ t('detail_note_label') }}</h2>
+        <p class="detail-note-body">{{ excerpt.clues.note }}</p>
+      </section>
+
       <p v-if="errorMessage" class="detail-inline-error" role="alert">{{ errorMessage }}</p>
 
       <div class="detail-actions">
@@ -334,6 +343,29 @@ onMounted(() => {
   line-height: 1.65;
   background: var(--md-sys-color-surface-container);
   color: var(--md-sys-color-on-surface);
+}
+
+.detail-note {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.detail-note-label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.detail-note-body {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--md-sys-color-on-surface);
+  white-space: pre-wrap;
 }
 
 .detail-actions {

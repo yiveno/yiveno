@@ -9,7 +9,8 @@ import {
   parseDeleteMemoryItemPayload,
   parseGetMemoryItemPayload,
   parseListMemoryItemsPayload,
-  parseRecordMemoryOpenPayload
+  parseRecordMemoryOpenPayload,
+  parseUpdateMemoryNotePayload
 } from '@/core/messaging/memory-messages'
 import { flashActionBadge } from '@/infrastructure/browser/action-badge'
 import { isSavablePageUrl } from '@/infrastructure/browser/active-tab-reader'
@@ -72,6 +73,7 @@ export async function handleCaptureTextExcerpt(
         contextBefore: input.contextBefore,
         contextAfter: input.contextAfter
       },
+      ...optionalProp('clues', input.note ? { note: input.note } : undefined),
       captureEntry: input.captureEntry ?? 'context_menu'
     })
     void flashActionBadge('success')
@@ -132,6 +134,21 @@ export async function handleDeleteMemoryItem(payload: unknown): Promise<MemoryBa
     return { ok: true, item }
   } catch (error) {
     logger.error('Background', '删除 MemoryItem 失败', error)
+    return toErrorResponse('MEMORY_OPERATION_FAILED', error)
+  }
+}
+
+/** 更新 clues.note（书签/摘录事后补注）。 */
+export async function handleUpdateMemoryNote(payload: unknown): Promise<MemoryBackgroundResponse> {
+  try {
+    const input = parseUpdateMemoryNotePayload(payload)
+    const item = await memoryItemService.updateNote(input.id, input.note)
+    if (!item) {
+      return toErrorResponse('MEMORY_NOT_FOUND')
+    }
+    return { ok: true, item }
+  } catch (error) {
+    logger.error('Background', '更新 Memory 备注失败', error)
     return toErrorResponse('MEMORY_OPERATION_FAILED', error)
   }
 }

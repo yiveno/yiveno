@@ -17,6 +17,18 @@
   "command_open_recall": {
     "message": "Open Yiveno Recall"
   },
+  "command_open_library": {
+    "message": "Open Yiveno Library"
+  },
+  "command_open_settings": {
+    "message": "Open Yiveno Settings"
+  },
+  "command_save_selection": {
+    "message": "Save selected text to Yiveno"
+  },
+  "command_save_selection_with_note": {
+    "message": "Save selected text with a note"
+  },
   "nav_aria_label": {
     "message": "Page navigation"
   },
@@ -55,6 +67,18 @@
   },
   "selection_toolbar_selection_gone": {
     "message": "Selection is gone"
+  },
+  "selection_toolbar_add_note": {
+    "message": "Add note"
+  },
+  "selection_toolbar_note_placeholder": {
+    "message": "Add a note to find it later…"
+  },
+  "selection_toolbar_note_cancel": {
+    "message": "Cancel"
+  },
+  "selection_toolbar_note_save": {
+    "message": "Save"
   },
   "popup_import_failed_fallback": {
     "message": "Bookmark import failed. Reload the extension and try again."
@@ -234,6 +258,18 @@
   "library_folder_unnamed": {
     "message": "Unnamed folder"
   },
+  "library_add_note_aria": {
+    "message": "Add note"
+  },
+  "library_edit_note_aria": {
+    "message": "Edit note"
+  },
+  "library_note_dialog_title": {
+    "message": "Bookmark note"
+  },
+  "library_note_save_failed": {
+    "message": "Could not save note"
+  },
   "detail_title": {
     "message": "Excerpt detail"
   },
@@ -302,6 +338,9 @@
   },
   "detail_invalid_response": {
     "message": "Unexpected response format"
+  },
+  "detail_note_label": {
+    "message": "Note"
   },
   "error_memory_not_found": {
     "message": "This memory was not found. It may have been deleted."
@@ -486,6 +525,18 @@
   },
   "command_title_open_recall_popup": {
     "message": "Open Recall (Popup)"
+  },
+  "command_title_open_library": {
+    "message": "Open Library"
+  },
+  "command_title_open_settings": {
+    "message": "Open Settings"
+  },
+  "command_title_save_selection": {
+    "message": "Save selection"
+  },
+  "command_title_save_selection_with_note": {
+    "message": "Save selection with note"
   },
   "command_shortcut_unset": {
     "message": "Not set"

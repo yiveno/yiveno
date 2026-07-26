@@ -19,7 +19,8 @@ import { tMemoryError } from '@/infrastructure/i18n/memory-error'
 import {
   deleteMemoryItem,
   fetchBookmarkLibraryTree,
-  listMemoryItems
+  listMemoryItems,
+  updateMemoryNote
 } from '@/infrastructure/messaging/background-client'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
 import MaterialSymbolIcon from '@/infrastructure/ui/icons/MaterialSymbolIcon.vue'
@@ -38,6 +39,14 @@ const items = ref<MemoryItem[]>([])
 const bookmarkRoots = ref<BookmarkLibraryTreeNode[]>([])
 const bookmarkSyncReady = ref(false)
 const deletingId = ref<string | null>(null)
+
+const NOTE_MAX_LENGTH = 500
+const noteEditorOpen = ref(false)
+const noteEditorSaving = ref(false)
+const noteEditorError = ref('')
+const noteEditorMemoryId = ref<string | null>(null)
+const noteEditorTitle = ref('')
+const noteEditorDraft = ref('')
 
 const activeTabDef = computed(() => resolveLibraryTypeTab(activeType.value))
 const activeTab = computed(() => {
@@ -61,6 +70,7 @@ const listRows = computed(() => {
       title: display.title,
       subtitle: display.subtitle,
       excerpt: display.excerpt,
+      note: item.clues.note?.trim() || null,
       href: getMemoryItemOpenHref(item, { detailPageUrl }),
       updatedAt: item.updatedAt
     }
@@ -176,6 +186,80 @@ async function handleDeleteExcerpt(id: string) {
   }
 }
 
+function openBookmarkNoteEditor(payload: { memoryItemId: string; title: string; note: string }) {
+  noteEditorMemoryId.value = payload.memoryItemId
+  noteEditorTitle.value = payload.title
+  noteEditorDraft.value = payload.note
+  noteEditorError.value = ''
+  noteEditorOpen.value = true
+}
+
+function closeBookmarkNoteEditor() {
+  if (noteEditorSaving.value) {
+    return
+  }
+  noteEditorOpen.value = false
+  noteEditorMemoryId.value = null
+  noteEditorTitle.value = ''
+  noteEditorDraft.value = ''
+  noteEditorError.value = ''
+}
+
+function patchBookmarkNoteInTree(
+  nodes: BookmarkLibraryTreeNode[],
+  memoryItemId: string,
+  note: string | null
+): BookmarkLibraryTreeNode[] {
+  return nodes.map(node => {
+    if (node.kind === 'folder') {
+      return {
+        ...node,
+        children: patchBookmarkNoteInTree(node.children, memoryItemId, note)
+      }
+    }
+    if (node.memoryItemId !== memoryItemId) {
+      return node
+    }
+    const next = { ...node }
+    if (note) {
+      next.note = note
+    } else {
+      delete next.note
+    }
+    return next
+  })
+}
+
+async function saveBookmarkNote() {
+  const id = noteEditorMemoryId.value
+  if (!id || noteEditorSaving.value) {
+    return
+  }
+
+  noteEditorSaving.value = true
+  noteEditorError.value = ''
+  try {
+    const note = noteEditorDraft.value.trim().slice(0, NOTE_MAX_LENGTH)
+    const response = await updateMemoryNote({ id, note })
+    if (!response.ok || !('item' in response)) {
+      noteEditorError.value = response.ok
+        ? t('library_note_save_failed')
+        : tMemoryError(response.errorCode)
+      return
+    }
+    const savedNote = response.item.clues.note?.trim() || null
+    bookmarkRoots.value = patchBookmarkNoteInTree(bookmarkRoots.value, id, savedNote)
+    noteEditorOpen.value = false
+    noteEditorMemoryId.value = null
+    noteEditorTitle.value = ''
+    noteEditorDraft.value = ''
+  } catch {
+    noteEditorError.value = t('library_note_save_failed')
+  } finally {
+    noteEditorSaving.value = false
+  }
+}
+
 watch(
   activeType,
   type => {
@@ -235,6 +319,7 @@ watch(
             v-else
             :roots="bookmarkRoots"
             :show-unsynced-flags="bookmarkSyncReady"
+            @edit-note="openBookmarkNoteEditor"
           />
         </template>
 
@@ -250,6 +335,10 @@ watch(
                 <div class="library-row-main">
                   <p v-if="row.excerpt" class="library-row-body">{{ row.excerpt }}</p>
                   <p v-else-if="row.title" class="library-row-title">{{ row.title }}</p>
+                  <p v-if="row.note" class="library-row-note">
+                    <span class="library-row-note-label">{{ t('detail_note_label') }}</span>
+                    {{ row.note }}
+                  </p>
                   <p class="library-row-subtitle">{{ row.subtitle }}</p>
                 </div>
                 <p class="library-row-time">{{ formatUpdatedAt(row.updatedAt) }}</p>
@@ -268,6 +357,42 @@ watch(
           </ul>
         </template>
       </section>
+    </div>
+
+    <div
+      v-if="noteEditorOpen"
+      class="library-note-dialog"
+      role="dialog"
+      aria-modal="true"
+      :aria-label="t('library_note_dialog_title')"
+    >
+      <div class="library-note-dialog-card">
+        <h2 class="library-note-dialog-title">{{ t('library_note_dialog_title') }}</h2>
+        <p class="library-note-dialog-target">{{ noteEditorTitle }}</p>
+        <textarea
+          v-model="noteEditorDraft"
+          class="library-note-dialog-input"
+          rows="4"
+          :maxlength="NOTE_MAX_LENGTH"
+          :placeholder="t('selection_toolbar_note_placeholder')"
+          :disabled="noteEditorSaving"
+        />
+        <p v-if="noteEditorError" class="library-note-dialog-error" role="alert">
+          {{ noteEditorError }}
+        </p>
+        <div class="library-note-dialog-actions">
+          <md-outlined-button
+            type="button"
+            :disabled="noteEditorSaving"
+            @click="closeBookmarkNoteEditor"
+          >
+            {{ t('selection_toolbar_note_cancel') }}
+          </md-outlined-button>
+          <md-filled-button type="button" :disabled="noteEditorSaving" @click="saveBookmarkNote">
+            {{ t('selection_toolbar_note_save') }}
+          </md-filled-button>
+        </div>
+      </div>
     </div>
   </main>
 </template>
@@ -464,6 +589,23 @@ watch(
   overflow: hidden;
 }
 
+.library-row-note {
+  margin: 0 0 6px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--md-sys-color-on-surface);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.library-row-note-label {
+  margin-right: 6px;
+  font-weight: 600;
+  color: var(--md-sys-color-primary);
+}
+
 .library-row-subtitle {
   margin: 0;
   font-size: 12px;
@@ -475,6 +617,75 @@ watch(
   margin: 0;
   font-size: 12px;
   color: var(--md-sys-color-outline);
+}
+
+.library-note-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(15 23 42 / 36%);
+}
+
+.library-note-dialog-card {
+  display: grid;
+  gap: 12px;
+  width: min(420px, 100%);
+  padding: 18px;
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  background: var(--md-sys-color-surface-container-lowest);
+  box-shadow: 0 12px 40px rgb(15 23 42 / 18%);
+}
+
+.library-note-dialog-title {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.library-note-dialog-target {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--md-sys-color-on-surface-variant);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.library-note-dialog-input {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-small, 8px);
+  resize: vertical;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--md-sys-color-on-surface);
+  background: var(--md-sys-color-surface);
+}
+
+.library-note-dialog-input:focus {
+  outline: 2px solid color-mix(in srgb, var(--md-sys-color-primary) 35%, transparent);
+  outline-offset: 1px;
+}
+
+.library-note-dialog-error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--md-sys-color-error);
+}
+
+.library-note-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 @media (max-width: 640px) {

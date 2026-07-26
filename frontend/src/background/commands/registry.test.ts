@@ -7,8 +7,12 @@ import {
 } from '@/background/commands/registry'
 
 describe('command-ids', () => {
-  it('当前无自定义命令；保留命令不在白名单', () => {
+  it('白名单含记忆库/设置/划词保存；保留命令不在白名单', () => {
     expect(isExtensionCommandId('_execute_action')).toBe(false)
+    expect(isExtensionCommandId('open_library')).toBe(true)
+    expect(isExtensionCommandId('open_settings')).toBe(true)
+    expect(isExtensionCommandId('save_selection')).toBe(true)
+    expect(isExtensionCommandId('save_selection_with_note')).toBe(true)
     expect(isExtensionCommandId('yiveno-capture-current-page')).toBe(false)
   })
 })

@@ -32,6 +32,18 @@ export function getExtensionCommandDisplayTitle(
   if (command.name === '_execute_action') {
     return translate('command_title_open_recall_popup')
   }
+  if (command.name === 'open_library') {
+    return translate('command_title_open_library')
+  }
+  if (command.name === 'open_settings') {
+    return translate('command_title_open_settings')
+  }
+  if (command.name === 'save_selection') {
+    return translate('command_title_save_selection')
+  }
+  if (command.name === 'save_selection_with_note') {
+    return translate('command_title_save_selection_with_note')
+  }
   if (command.description && command.description !== command.name) {
     return command.description
   }

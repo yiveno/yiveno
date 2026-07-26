@@ -6,14 +6,17 @@ export interface SelectionToolbarAnchor {
 }
 
 /** 根据选区矩形计算浮层位置（viewport 坐标，供 fixed 定位）。 */
-export function computeSelectionToolbarAnchor(rect: {
-  top: number
-  left: number
-  width: number
-  height: number
-}): SelectionToolbarAnchor {
+export function computeSelectionToolbarAnchor(
+  rect: {
+    top: number
+    left: number
+    width: number
+    height: number
+  },
+  options: { estimatedHeight?: number } = {}
+): SelectionToolbarAnchor {
   const toolbarOffset = 8
-  const estimatedToolbarHeight = 36
+  const estimatedToolbarHeight = options.estimatedHeight ?? 36
   const topAbove = rect.top - estimatedToolbarHeight - toolbarOffset
   const top = topAbove >= 8 ? topAbove : rect.top + rect.height + toolbarOffset
 

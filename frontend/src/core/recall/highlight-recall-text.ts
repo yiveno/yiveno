@@ -8,7 +8,7 @@ export interface RecallHighlightPart {
 }
 
 /** 卡片上可高亮的展示面。 */
-export type RecallHighlightSurface = 'title' | 'excerpt' | 'subtitle'
+export type RecallHighlightSurface = 'title' | 'excerpt' | 'subtitle' | 'note'
 
 /**
  * 主因字段 → 卡片展示面（与 Popup 展示结构对齐）。
@@ -27,6 +27,8 @@ export function resolveRecallHighlightSurface(
       return itemType === 'bookmark' ? 'title' : null
     case 'textExcerpt':
       return itemType === 'text_excerpt' ? 'excerpt' : null
+    case 'note':
+      return 'note'
     case 'pageTitle':
     case 'domain':
     case 'url':
@@ -87,10 +89,12 @@ export function buildRecallCardHighlightParts(input: {
   title: string
   subtitle: string
   excerpt?: string
+  note?: string
 }): {
   titleParts: RecallHighlightPart[]
   subtitleParts: RecallHighlightPart[]
   excerptParts: RecallHighlightPart[]
+  noteParts: RecallHighlightPart[]
   surface: RecallHighlightSurface | null
 } {
   const primaryField = pickPrimaryMatchedField(input.matchedFields)
@@ -114,6 +118,8 @@ export function buildRecallCardHighlightParts(input: {
       surface === 'excerpt'
         ? splitTextByHighlight(input.excerpt ?? '', token)
         : plain(input.excerpt ?? ''),
+    noteParts:
+      surface === 'note' ? splitTextByHighlight(input.note ?? '', token) : plain(input.note ?? ''),
     surface
   }
 }

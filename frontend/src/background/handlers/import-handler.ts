@@ -48,7 +48,8 @@ export async function handleGetBookmarkLibraryTree(): Promise<GetBookmarkLibrary
       alignment.byChromeBookmarkId,
       {
         unnamedFolderTitle: t('library_folder_unnamed'),
-        memoryIdByUrl: alignment.byUrl
+        memoryIdByUrl: alignment.byUrl,
+        noteByMemoryId: alignment.noteByMemoryId
       }
     )
 

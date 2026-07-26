@@ -43,7 +43,12 @@ export class MemoryItemService {
     return this.repository.softDelete(id)
   }
 
-  /** 书签树对齐表（chromeId / URL → Memory id）。 */
+  /** 更新 clues.note（书签/摘录事后补注）。 */
+  async updateNote(id: string, note: string): Promise<MemoryItem | null> {
+    return this.repository.updateNote(id, note)
+  }
+
+  /** 书签树对齐表（chromeId / URL → Memory id；含备注）。 */
   async listBookmarkSyncAlignment() {
     return this.repository.listBookmarkSyncAlignment()
   }

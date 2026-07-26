@@ -31,6 +31,8 @@ export interface ListMemoryItemsOptions {
 export interface BookmarkSyncAlignment {
   byChromeBookmarkId: Map<string, string>
   byUrl: Map<string, string>
+  /** MemoryItem.id → 非空备注 */
+  noteByMemoryId: Map<string, string>
 }
 
 export class MemoryItemRepository {
@@ -217,6 +219,7 @@ export class MemoryItemRepository {
 
     const byChromeBookmarkId = new Map<string, string>()
     const byUrl = new Map<string, string>()
+    const noteByMemoryId = new Map<string, string>()
 
     for (const item of items) {
       if (item.type !== 'bookmark') {
@@ -230,9 +233,42 @@ export class MemoryItemRepository {
       if (urlKey && !byUrl.has(urlKey)) {
         byUrl.set(urlKey, item.id)
       }
+      const note = item.clues.note?.trim()
+      if (note) {
+        noteByMemoryId.set(item.id, note)
+      }
     }
 
-    return { byChromeBookmarkId, byUrl }
+    return { byChromeBookmarkId, byUrl, noteByMemoryId }
+  }
+
+  /**
+   * 更新 clues.note（书签/摘录事后补注）。
+   * 空字符串清除备注；会更新 updatedAt。
+   */
+  async updateNote(id: string, note: string): Promise<MemoryItem | null> {
+    const ownerId = await getCurrentOwnerId()
+    const existing = await this.getById(id, ownerId)
+    if (!existing) {
+      return null
+    }
+
+    const trimmed = note.trim()
+    const nextClues = { ...existing.clues }
+    if (trimmed) {
+      nextClues.note = trimmed
+    } else {
+      delete nextClues.note
+    }
+
+    const updated: MemoryItem = {
+      ...existing,
+      clues: nextClues,
+      updatedAt: new Date().toISOString()
+    }
+
+    await this.put(updated)
+    return updated
   }
 
   /** 软删除 MemoryItem。 */

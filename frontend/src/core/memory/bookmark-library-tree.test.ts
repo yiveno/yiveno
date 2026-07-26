@@ -37,7 +37,10 @@ describe('bookmark-library-tree', () => {
         }
       ],
       new Map([['100', memoryId]]),
-      { unnamedFolderTitle: 'Unnamed folder' }
+      {
+        unnamedFolderTitle: 'Unnamed folder',
+        noteByMemoryId: new Map([[memoryId, '给老板看的方案']])
+      }
     )
 
     expect(forest).toHaveLength(2)
@@ -55,7 +58,8 @@ describe('bookmark-library-tree', () => {
       chromeId: '100',
       title: '留存分析',
       url: 'https://example.com/retention',
-      memoryItemId: memoryId
+      memoryItemId: memoryId,
+      note: '给老板看的方案'
     })
     expect(countBookmarkLibraryLeaves(forest)).toBe(1)
   })

@@ -18,6 +18,7 @@ import type {
   ListMemoryItemsMessage,
   GetMemoryItemMessage,
   DeleteMemoryItemMessage,
+  UpdateMemoryNoteMessage,
   RecordMemoryOpenMessage,
   MemoryBackgroundResponse
 } from '@/core/messaging/memory-messages'
@@ -80,6 +81,18 @@ export async function deleteMemoryItem(
   const message: DeleteMemoryItemMessage = {
     scope: 'background',
     type: 'DELETE_MEMORY_ITEM',
+    payload
+  }
+  return sendBackgroundMessage<MemoryBackgroundResponse>(message)
+}
+
+/** 更新 MemoryItem 备注（书签/摘录）。 */
+export async function updateMemoryNote(
+  payload: UpdateMemoryNoteMessage['payload']
+): Promise<MemoryBackgroundResponse> {
+  const message: UpdateMemoryNoteMessage = {
+    scope: 'background',
+    type: 'UPDATE_MEMORY_NOTE',
     payload
   }
   return sendBackgroundMessage<MemoryBackgroundResponse>(message)

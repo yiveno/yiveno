@@ -18,7 +18,8 @@ import {
   handleDeleteMemoryItem,
   handleGetMemoryItem,
   handleListMemoryItems,
-  handleRecordMemoryOpen
+  handleRecordMemoryOpen,
+  handleUpdateMemoryNote
 } from '@/background/handlers/memory-handler'
 import { handleRecallWithClue } from '@/background/handlers/recall-handler'
 import {
@@ -63,6 +64,8 @@ async function dispatchBackgroundMessage(
       return handleGetMemoryItem(message.payload)
     case 'DELETE_MEMORY_ITEM':
       return handleDeleteMemoryItem(message.payload)
+    case 'UPDATE_MEMORY_NOTE':
+      return handleUpdateMemoryNote(message.payload)
     case 'RECORD_MEMORY_OPEN':
       return handleRecordMemoryOpen(message.payload)
     case 'RECALL_WITH_CLUE':

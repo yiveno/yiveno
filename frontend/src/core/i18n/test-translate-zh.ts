@@ -45,6 +45,10 @@ const ZH: Record<string, string> = {
   omnibox_type_bookmark: 'Y·书签',
   omnibox_type_excerpt: 'Y·摘录',
   command_title_open_recall_popup: '打开找回（Popup）',
+  command_title_open_library: '打开记忆库',
+  command_title_open_settings: '打开设置',
+  command_title_save_selection: '保存选中文字',
+  command_title_save_selection_with_note: '保存选中文字并备注',
   command_shortcut_unset: '未设置'
 }
 

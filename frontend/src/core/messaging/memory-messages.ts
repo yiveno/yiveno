@@ -18,6 +18,8 @@ const captureTextExcerptPayloadSchema = z.object({
   pageTitle: z.string(),
   contextBefore: z.string().optional(),
   contextAfter: z.string().optional(),
+  /** 用户附注（写入 clues.note；非独立 note 类型）。 */
+  note: z.string().trim().max(500).optional(),
   captureEntry: CaptureEntrySchema.optional()
 })
 
@@ -34,6 +36,12 @@ const getMemoryItemPayloadSchema = z.object({
 
 const deleteMemoryItemPayloadSchema = z.object({
   id: z.string().uuid()
+})
+
+const updateMemoryNotePayloadSchema = z.object({
+  id: z.string().uuid(),
+  /** 空字符串表示清除备注。 */
+  note: z.string().trim().max(500)
 })
 
 const recordMemoryOpenPayloadSchema = z.object({
@@ -86,6 +94,13 @@ export type DeleteMemoryItemMessage = {
   payload: z.infer<typeof deleteMemoryItemPayloadSchema>
 }
 
+/** 更新 MemoryItem 的 clues.note（书签/摘录事后补注）。 */
+export type UpdateMemoryNoteMessage = {
+  scope: BackgroundMessageScope
+  type: 'UPDATE_MEMORY_NOTE'
+  payload: z.infer<typeof updateMemoryNotePayloadSchema>
+}
+
 /** 记录用户打开某条 Memory（写 openCount / lastOpenedAt）。 */
 export type RecordMemoryOpenMessage = {
   scope: BackgroundMessageScope
@@ -99,6 +114,7 @@ export type MemoryBackgroundMessage =
   | ListMemoryItemsMessage
   | GetMemoryItemMessage
   | DeleteMemoryItemMessage
+  | UpdateMemoryNoteMessage
   | RecordMemoryOpenMessage
 
 export type MemoryItemSuccessResponse = {
@@ -142,6 +158,10 @@ export function parseGetMemoryItemPayload(value: unknown) {
 
 export function parseDeleteMemoryItemPayload(value: unknown) {
   return deleteMemoryItemPayloadSchema.parse(value)
+}
+
+export function parseUpdateMemoryNotePayload(value: unknown) {
+  return updateMemoryNotePayloadSchema.parse(value)
 }
 
 export function parseRecordMemoryOpenPayload(value: unknown) {

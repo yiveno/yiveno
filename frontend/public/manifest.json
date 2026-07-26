@@ -20,6 +20,30 @@
         "mac": "Alt+Shift+Y"
       },
       "description": "__MSG_command_open_recall__"
+    },
+    "open_library": {
+      "suggested_key": {
+        "default": "Alt+Shift+L",
+        "mac": "Alt+Shift+L"
+      },
+      "description": "__MSG_command_open_library__"
+    },
+    "open_settings": {
+      "description": "__MSG_command_open_settings__"
+    },
+    "save_selection": {
+      "suggested_key": {
+        "default": "Alt+Shift+E",
+        "mac": "Alt+Shift+E"
+      },
+      "description": "__MSG_command_save_selection__"
+    },
+    "save_selection_with_note": {
+      "suggested_key": {
+        "default": "Alt+Shift+N",
+        "mac": "Alt+Shift+N"
+      },
+      "description": "__MSG_command_save_selection_with_note__"
     }
   },
   "action": {

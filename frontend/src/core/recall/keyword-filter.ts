@@ -19,7 +19,8 @@ const FIELD_WEIGHTS: Record<string, number> = {
   url: 10,
   keywords: 12,
   tags: 12,
-  note: 10
+  /** 用户自拟备注：寻回意图强信号，权重大于标题。 */
+  note: 26
 }
 
 /** 中文/无空格脚本 ngram 命中相对字段权重的系数。 */
@@ -45,7 +46,7 @@ export const RECALL_BEHAVIOR_BOOST_CAP = 12
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
-const PRIMARY_CONTENT_FIELDS = new Set(['title', 'textExcerpt'])
+const PRIMARY_CONTENT_FIELDS = new Set(['title', 'textExcerpt', 'note'])
 
 interface SearchableField {
   field: string
@@ -141,13 +142,36 @@ export function hasFuzzySubstring(haystack: string, needle: string, maxDistance 
 }
 
 /**
+ * 线索 token 是否可检索。
+ * ASCII 单字母/数字过噪（如 `a`）丢弃；汉字等非 ASCII 单字保留（「红」应能命中「红井」）。
+ */
+export function isUsableRecallToken(token: string): boolean {
+  const chars = Array.from(token)
+  if (chars.length === 0) {
+    return false
+  }
+  if (chars.length >= 2) {
+    return true
+  }
+  const ch = chars[0]!
+  return ch.charCodeAt(0) > 0x7f
+}
+
+/**
  * 从无空格的连续文字段提取 token（脚本无关策略）：
- * - 整段作为 term（限长）
+ * - 整段作为 term（限长；含单字）
  * - 仅首尾 2-gram，避免中间切字噪声（不依赖语种词表）
  */
 function pushUnspacedScriptTokens(segment: string, sink: Map<string, TokenKind>): void {
   const chars = Array.from(segment)
-  if (chars.length < 2) {
+  if (chars.length === 0) {
+    return
+  }
+
+  if (chars.length === 1) {
+    if (isUsableRecallToken(segment)) {
+      sink.set(segment, sink.get(segment) === 'ngram' ? 'ngram' : 'term')
+    }
     return
   }
 
@@ -173,7 +197,7 @@ function pushUnspacedScriptTokens(segment: string, sink: Map<string, TokenKind>)
  * 将线索拆分为可匹配 token（不维护语种停用词表）。
  * - 保留整句 / 空白与标点分词
  * - 抽出拉丁数字词
- * - 无空格连续非 ASCII 段：整段 + 首尾 2-gram
+ * - 无空格连续非 ASCII 段：整段（含单字）+ 首尾 2-gram
  */
 export function tokenizeRecallClueDetailed(clue: string): RecallToken[] {
   const normalized = normalizeRecallText(clue)
@@ -184,16 +208,16 @@ export function tokenizeRecallClueDetailed(clue: string): RecallToken[] {
   const byToken = new Map<string, TokenKind>()
   const compactClue = compactRecallText(clue)
 
-  if (normalized.length >= 2) {
+  if (isUsableRecallToken(normalized)) {
     byToken.set(normalized, 'phrase')
-    if (compactClue !== normalized && compactClue.length >= 2) {
+    if (compactClue !== normalized && isUsableRecallToken(compactClue)) {
       byToken.set(compactClue, 'phrase')
     }
   }
 
   for (const part of normalized.split(/[\s,，、；;|/]+/)) {
     const token = part.trim()
-    if (token.length < 2) {
+    if (!isUsableRecallToken(token)) {
       continue
     }
     byToken.set(token, byToken.get(token) === 'phrase' ? 'phrase' : 'term')
@@ -206,7 +230,7 @@ export function tokenizeRecallClueDetailed(clue: string): RecallToken[] {
     }
   }
 
-  for (const match of compactClue.match(/[^\s\x00-\x7f]{2,24}/g) ?? []) {
+  for (const match of compactClue.match(/[^\s\x00-\x7f]{1,24}/g) ?? []) {
     pushUnspacedScriptTokens(match, byToken)
   }
 
@@ -354,6 +378,7 @@ export function computePrimaryMatchQualityBoost(
       }
       const tokenCompact = compactRecallText(token)
       const tokenLen = recallCodePointLength(tokenCompact)
+      // 单字可命中，但贴合度加成仍要求 ≥2 码点，避免「的/了」类单字虚抬 Top Pick
       if (tokenLen < 2 || !fieldCompact.includes(tokenCompact)) {
         continue
       }

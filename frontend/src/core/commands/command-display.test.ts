@@ -23,7 +23,7 @@ describe('command-display', () => {
     })
   })
 
-  it('getExtensionCommandDisplayTitle 对找回命令使用产品文案', () => {
+  it('getExtensionCommandDisplayTitle 对找回/记忆库/设置/划词使用产品文案', () => {
     expect(
       getExtensionCommandDisplayTitle(
         {
@@ -33,6 +33,42 @@ describe('command-display', () => {
         testTranslateZh
       )
     ).toBe('打开找回（Popup）')
+    expect(
+      getExtensionCommandDisplayTitle(
+        {
+          name: 'open_library',
+          description: 'Open Yiveno Library'
+        },
+        testTranslateZh
+      )
+    ).toBe('打开记忆库')
+    expect(
+      getExtensionCommandDisplayTitle(
+        {
+          name: 'open_settings',
+          description: 'Open Yiveno Settings'
+        },
+        testTranslateZh
+      )
+    ).toBe('打开设置')
+    expect(
+      getExtensionCommandDisplayTitle(
+        {
+          name: 'save_selection',
+          description: 'Save selected text to Yiveno'
+        },
+        testTranslateZh
+      )
+    ).toBe('保存选中文字')
+    expect(
+      getExtensionCommandDisplayTitle(
+        {
+          name: 'save_selection_with_note',
+          description: 'Save selected text with a note'
+        },
+        testTranslateZh
+      )
+    ).toBe('保存选中文字并备注')
   })
 
   it('formatExtensionCommandShortcut 处理未设置', () => {

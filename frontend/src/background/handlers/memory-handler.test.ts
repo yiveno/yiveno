@@ -8,7 +8,8 @@ import {
   handleCaptureTextExcerpt,
   handleDeleteMemoryItem,
   handleGetMemoryItem,
-  handleListMemoryItems
+  handleListMemoryItems,
+  handleUpdateMemoryNote
 } from '@/background/handlers/memory-handler'
 import { resetMemoryDatabaseInitializationForTests } from '@/infrastructure/indexeddb/memory-db'
 
@@ -108,6 +109,52 @@ describe('memory-handler', () => {
   it('handleCaptureBookmark 拒绝非法 payload', async () => {
     const response = await handleCaptureBookmark({ title: '', url: 'not-a-url' })
     expect(response.ok).toBe(false)
+  })
+
+  it('handleCaptureTextExcerpt 可写入 clues.note', async () => {
+    const response = await handleCaptureTextExcerpt({
+      selectedText: '岷峨路远万重云',
+      sourceUrl: 'https://www.gushiwen.cn/shiwenv_demo.aspx',
+      pageTitle: '不如归去',
+      note: '想再读一遍'
+    })
+    expect(response.ok).toBe(true)
+    if (!response.ok || !('item' in response)) {
+      return
+    }
+    expect(response.item.type).toBe('text_excerpt')
+    expect(response.item.clues.note).toBe('想再读一遍')
+  })
+
+  it('handleUpdateMemoryNote 可为书签事后补注', async () => {
+    const captured = await handleCaptureBookmark({
+      title: '留存分析',
+      url: 'https://example.com/retention'
+    })
+    expect(captured.ok).toBe(true)
+    if (!captured.ok || !('item' in captured)) {
+      return
+    }
+
+    const updated = await handleUpdateMemoryNote({
+      id: captured.item.id,
+      note: '给老板看的方案'
+    })
+    expect(updated.ok).toBe(true)
+    if (!updated.ok || !('item' in updated)) {
+      return
+    }
+    expect(updated.item.clues.note).toBe('给老板看的方案')
+
+    const cleared = await handleUpdateMemoryNote({
+      id: captured.item.id,
+      note: ''
+    })
+    expect(cleared.ok).toBe(true)
+    if (!cleared.ok || !('item' in cleared)) {
+      return
+    }
+    expect(cleared.item.clues.note).toBeUndefined()
   })
 
   it('handleDeleteMemoryItem 可软删摘录', async () => {

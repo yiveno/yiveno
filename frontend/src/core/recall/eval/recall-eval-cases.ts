@@ -183,7 +183,7 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
     clueClass: 'negative',
     gate: 'must',
     expectation: { kind: 'no_match' },
-    note: '过短线索（<2）语言无关地不召回；不维护语种停用词表'
+    note: 'ASCII 单字母过噪不召回；汉字单字允许（见 tokenize / keyword-filter）'
   },
 
   // —— stretch：仍需同义/语义层 ——

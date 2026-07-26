@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import type { ChromeBookmarkImportState } from '@/core/memory/chrome-bookmark-import-state'
 import { getChromeBookmarkImportPercent } from '@/core/memory/chrome-bookmark-import-state'
@@ -13,6 +13,12 @@ import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
 import { getMemoryItemDisplay } from '@/core/recall/recall-result'
 import { buildRecallCardHighlightParts } from '@/core/recall/highlight-recall-text'
 import { getMemoryItemOpenHref } from '@/core/recall/memory-open-href'
+import {
+  clampListSelectionIndex,
+  listDeltaFromNavigateDirection,
+  moveListSelectionIndex
+} from '@/core/ui/list-selection'
+import { interpretKeyboardCommand } from '@/core/ui/keyboard-command'
 import { openExtensionOptionsPage } from '@/infrastructure/browser/options-page'
 import { tImportStateError, tRecallError } from '@/infrastructure/i18n/background-error'
 import { t } from '@/infrastructure/i18n/t'
@@ -30,7 +36,11 @@ defineOptions({ name: 'PopupPage' })
 
 type RecallViewState = 'idle' | 'loading' | 'result' | 'no_match' | 'error'
 
+/** 停输后触发找回的防抖间隔（毫秒）。 */
+const RECALL_DEBOUNCE_MS = 400
+
 const clue = ref('')
+const clueInputRef = ref<HTMLTextAreaElement | null>(null)
 const viewState = ref<RecallViewState>('idle')
 const recallResult = ref<RecallResult | null>(null)
 const errorMessage = ref('')
@@ -38,6 +48,9 @@ const importState = ref<ChromeBookmarkImportState | null>(null)
 const libraryState = ref<PopupLibraryState>('unknown')
 
 let importPollTimer: ReturnType<typeof setInterval> | null = null
+let recallDebounceTimer: ReturnType<typeof setTimeout> | null = null
+/** 递增以丢弃过期找回响应，避免慢请求覆盖新线索结果。 */
+let recallRequestId = 0
 
 const importProgressPercent = computed(() => {
   if (!importState.value) {
@@ -103,6 +116,25 @@ const alsoPossibleCards = computed(() => {
   return (recallResult.value?.alsoPossible ?? []).map(match => toMatchCard(match, resultClue))
 })
 
+/** Top Pick + Also Possible 扁平列表，供键盘上下切换。 */
+const navigableResultCards = computed(() => {
+  const top = topPickDisplay.value
+  if (!top) {
+    return []
+  }
+  return [top, ...alsoPossibleCards.value]
+})
+
+const keyboardSelectedIndex = ref(-1)
+
+watch(
+  navigableResultCards,
+  cards => {
+    keyboardSelectedIndex.value = cards.length > 0 ? 0 : -1
+  },
+  { flush: 'sync' }
+)
+
 function toMatchCard(match: RecallMatch, resultClue: string) {
   const display = getMemoryItemDisplay(match.item, t)
   const highlights = buildRecallCardHighlightParts({
@@ -111,7 +143,8 @@ function toMatchCard(match: RecallMatch, resultClue: string) {
     item: match.item,
     title: display.title,
     subtitle: display.subtitle,
-    ...(display.excerpt === undefined ? {} : { excerpt: display.excerpt })
+    ...(display.excerpt === undefined ? {} : { excerpt: display.excerpt }),
+    ...(display.note === undefined ? {} : { note: display.note })
   })
   return {
     id: match.item.id,
@@ -121,10 +154,12 @@ function toMatchCard(match: RecallMatch, resultClue: string) {
       detailPageUrl: chrome.runtime.getURL('detail.html')
     }),
     excerpt: display.excerpt,
+    note: display.note,
     typeLabel: display.typeLabel,
     titleParts: highlights.titleParts,
     subtitleParts: highlights.subtitleParts,
-    excerptParts: highlights.excerptParts
+    excerptParts: highlights.excerptParts,
+    noteParts: highlights.noteParts
   }
 }
 
@@ -136,6 +171,60 @@ function handleRecallResultOpen(memoryItemId: string, openUrl: string): void {
   void recordMemoryOpen({ id: memoryItemId }).catch(() => {
     // 忽略：打开记录失败不影响用户跳转
   })
+}
+
+function isKeyboardSelected(index: number): boolean {
+  return keyboardSelectedIndex.value === index
+}
+
+function selectResultByIndex(index: number): void {
+  keyboardSelectedIndex.value = clampListSelectionIndex(index, navigableResultCards.value.length)
+}
+
+/** 回车打开当前键盘选中项（与点击卡片同路径）。 */
+function activateKeyboardSelectedResult(): void {
+  const item = navigableResultCards.value[keyboardSelectedIndex.value]
+  if (!item) {
+    return
+  }
+  handleRecallResultOpen(item.id, item.url)
+  window.open(item.url, '_blank', 'noopener,noreferrer')
+}
+
+/**
+ * 线索框内方向键切换结果、回车打开；有结果时拦截默认换行/光标移动。
+ */
+function handleClueKeydown(event: KeyboardEvent): void {
+  if (viewState.value !== 'result' || navigableResultCards.value.length === 0) {
+    return
+  }
+
+  const command = interpretKeyboardCommand(event)
+  if (command.type === 'none') {
+    return
+  }
+
+  if (command.type === 'navigate') {
+    const delta = listDeltaFromNavigateDirection(command.direction)
+    if (delta === null) {
+      return
+    }
+    event.preventDefault()
+    keyboardSelectedIndex.value = moveListSelectionIndex({
+      currentIndex: keyboardSelectedIndex.value,
+      itemCount: navigableResultCards.value.length,
+      delta
+    })
+    void nextTick(() => {
+      document
+        .getElementById(`recall-result-${keyboardSelectedIndex.value}`)
+        ?.scrollIntoView({ block: 'nearest' })
+    })
+    return
+  }
+
+  event.preventDefault()
+  activateKeyboardSelectedResult()
 }
 
 async function probeMemoryLibrary() {
@@ -183,27 +272,50 @@ function stopImportPolling() {
   }
 }
 
-onMounted(() => {
-  void probeMemoryLibrary()
-  startImportPolling()
-})
+function clearRecallDebounce(): void {
+  if (recallDebounceTimer !== null) {
+    clearTimeout(recallDebounceTimer)
+    recallDebounceTimer = null
+  }
+}
 
-onUnmounted(() => {
-  stopImportPolling()
-})
-
-async function handleRecallSubmit() {
+/** 线索变化：空则回 idle；非空则防抖后找回。 */
+function scheduleRecallFromClue(): void {
+  clearRecallDebounce()
   const trimmed = clue.value.trim()
   if (!trimmed) {
+    recallRequestId += 1
+    viewState.value = 'idle'
+    recallResult.value = null
+    errorMessage.value = ''
     return
   }
 
+  recallDebounceTimer = setTimeout(() => {
+    recallDebounceTimer = null
+    void runRecall(trimmed)
+  }, RECALL_DEBOUNCE_MS)
+}
+
+async function runRecall(trimmedClue: string): Promise<void> {
+  const trimmed = trimmedClue.trim()
+  if (!trimmed) {
+    viewState.value = 'idle'
+    recallResult.value = null
+    errorMessage.value = ''
+    return
+  }
+
+  const requestId = ++recallRequestId
   viewState.value = 'loading'
   errorMessage.value = ''
   recallResult.value = null
 
   try {
     const response = await recallWithClue({ clue: trimmed })
+    if (requestId !== recallRequestId) {
+      return
+    }
     if (!response.ok) {
       viewState.value = 'error'
       errorMessage.value = tRecallError(response.errorCode)
@@ -213,7 +325,10 @@ async function handleRecallSubmit() {
     recallResult.value = response.result
     viewState.value = response.result.outcome === 'no_match' ? 'no_match' : 'result'
     void probeMemoryLibrary()
-  } catch (error) {
+  } catch {
+    if (requestId !== recallRequestId) {
+      return
+    }
     viewState.value = 'error'
     errorMessage.value = t('popup_recall_failed')
   }
@@ -225,7 +340,8 @@ function handleShortenRetry() {
     return
   }
   clue.value = next
-  void handleRecallSubmit()
+  clearRecallDebounce()
+  void runRecall(next)
 }
 
 function handleNavigateError(message: string) {
@@ -240,6 +356,24 @@ async function handleOpenSettings() {
     handleNavigateError(t('error_open_settings'))
   }
 }
+
+watch(clue, () => {
+  scheduleRecallFromClue()
+})
+
+onMounted(() => {
+  void nextTick(() => {
+    clueInputRef.value?.focus()
+  })
+  void probeMemoryLibrary()
+  startImportPolling()
+})
+
+onUnmounted(() => {
+  clearRecallDebounce()
+  recallRequestId += 1
+  stopImportPolling()
+})
 </script>
 
 <template>
@@ -262,19 +396,24 @@ async function handleOpenSettings() {
       </section>
     </header>
 
-    <form class="recall-form" @submit.prevent="handleRecallSubmit">
+    <div class="recall-form">
       <textarea
         id="recall-clue"
+        ref="clueInputRef"
         v-model="clue"
         class="recall-input"
         rows="3"
         :aria-label="t('popup_clue_input_aria')"
         :placeholder="t('popup_clue_placeholder')"
+        :aria-controls="viewState === 'result' ? 'recall-results' : undefined"
+        :aria-activedescendant="
+          viewState === 'result' && keyboardSelectedIndex >= 0
+            ? `recall-result-${keyboardSelectedIndex}`
+            : undefined
+        "
+        @keydown="handleClueKeydown"
       />
-      <md-filled-button type="submit" :disabled="!clue.trim() || viewState === 'loading'">
-        {{ viewState === 'loading' ? t('popup_submitting') : t('popup_submit') }}
-      </md-filled-button>
-    </form>
+    </div>
 
     <section v-if="viewState === 'idle' && idleEmptyCopy" class="recall-empty" aria-live="polite">
       <p class="recall-empty-title">{{ idleEmptyCopy.title }}</p>
@@ -311,16 +450,20 @@ async function handleOpenSettings() {
 
     <section
       v-else-if="viewState === 'result' && topPickDisplay"
+      id="recall-results"
       class="recall-results"
       aria-live="polite"
     >
       <div class="recall-top-pick">
         <p class="recall-section-label">{{ t('popup_section_top_pick') }}</p>
         <a
+          id="recall-result-0"
           class="recall-card recall-card--top"
+          :class="{ 'is-keyboard-selected': isKeyboardSelected(0) }"
           :href="topPickDisplay.url"
           target="_blank"
           rel="noopener noreferrer"
+          @mouseenter="selectResultByIndex(0)"
           @click="handleRecallResultOpen(topPickDisplay.id, topPickDisplay.url)"
         >
           <div class="recall-card-meta">
@@ -332,6 +475,10 @@ async function handleOpenSettings() {
           <h2 v-else class="recall-card-title">
             <RecallHighlightText :parts="topPickDisplay.titleParts" />
           </h2>
+          <p v-if="topPickDisplay.note" class="recall-card-note">
+            <span class="recall-card-note-label">{{ t('detail_note_label') }}</span>
+            <RecallHighlightText :parts="topPickDisplay.noteParts" />
+          </p>
           <p class="recall-card-subtitle">
             <RecallHighlightText :parts="topPickDisplay.subtitleParts" />
           </p>
@@ -341,12 +488,15 @@ async function handleOpenSettings() {
       <div v-if="alsoPossibleCards.length > 0" class="recall-also">
         <p class="recall-section-label">{{ t('popup_section_also_possible') }}</p>
         <ul class="recall-also-list">
-          <li v-for="item in alsoPossibleCards" :key="item.id">
+          <li v-for="(item, alsoIndex) in alsoPossibleCards" :key="item.id">
             <a
+              :id="`recall-result-${alsoIndex + 1}`"
               class="recall-card"
+              :class="{ 'is-keyboard-selected': isKeyboardSelected(alsoIndex + 1) }"
               :href="item.url"
               target="_blank"
               rel="noopener noreferrer"
+              @mouseenter="selectResultByIndex(alsoIndex + 1)"
               @click="handleRecallResultOpen(item.id, item.url)"
             >
               <div class="recall-card-meta">
@@ -358,6 +508,10 @@ async function handleOpenSettings() {
               <h3 v-else class="recall-card-title recall-card-title--compact">
                 <RecallHighlightText :parts="item.titleParts" />
               </h3>
+              <p v-if="item.note" class="recall-card-note recall-card-note--compact">
+                <span class="recall-card-note-label">{{ t('detail_note_label') }}</span>
+                <RecallHighlightText :parts="item.noteParts" />
+              </p>
               <p class="recall-card-subtitle">
                 <RecallHighlightText :parts="item.subtitleParts" />
               </p>
@@ -411,7 +565,6 @@ async function handleOpenSettings() {
 
 .recall-form {
   display: grid;
-  gap: 10px;
 }
 
 .recall-input {
@@ -513,6 +666,16 @@ async function handleOpenSettings() {
   background: var(--md-sys-color-surface-container-high);
 }
 
+.recall-card.is-keyboard-selected:not(.recall-card--top) {
+  border-color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-primary-container);
+}
+
+.recall-card--top.is-keyboard-selected {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 1px;
+}
+
 .recall-card--top:hover {
   background: color-mix(
     in srgb,
@@ -558,6 +721,28 @@ async function handleOpenSettings() {
 .recall-card-body--compact {
   font-size: 13px;
   -webkit-line-clamp: 2;
+}
+
+.recall-card-note {
+  margin: 0 0 4px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--md-sys-color-on-surface);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.recall-card-note--compact {
+  font-size: 12px;
+  -webkit-line-clamp: 1;
+}
+
+.recall-card-note-label {
+  margin-right: 4px;
+  font-weight: 600;
+  color: var(--md-sys-color-primary);
 }
 
 .recall-card-subtitle {

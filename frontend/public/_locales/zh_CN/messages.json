@@ -17,6 +17,18 @@
   "command_open_recall": {
     "message": "打开 Yiveno 找回"
   },
+  "command_open_library": {
+    "message": "打开 Yiveno 记忆库"
+  },
+  "command_open_settings": {
+    "message": "打开 Yiveno 设置"
+  },
+  "command_save_selection": {
+    "message": "保存选中文字到 Yiveno"
+  },
+  "command_save_selection_with_note": {
+    "message": "保存选中文字并添加备注"
+  },
   "nav_aria_label": {
     "message": "页面导航"
   },
@@ -55,6 +67,18 @@
   },
   "selection_toolbar_selection_gone": {
     "message": "选区已失效"
+  },
+  "selection_toolbar_add_note": {
+    "message": "添加备注"
+  },
+  "selection_toolbar_note_placeholder": {
+    "message": "写下备注，方便日后找回…"
+  },
+  "selection_toolbar_note_cancel": {
+    "message": "取消"
+  },
+  "selection_toolbar_note_save": {
+    "message": "保存"
   },
   "popup_import_failed_fallback": {
     "message": "书签导入失败，请重新加载扩展后重试"
@@ -234,6 +258,18 @@
   "library_folder_unnamed": {
     "message": "未命名文件夹"
   },
+  "library_add_note_aria": {
+    "message": "添加备注"
+  },
+  "library_edit_note_aria": {
+    "message": "编辑备注"
+  },
+  "library_note_dialog_title": {
+    "message": "书签备注"
+  },
+  "library_note_save_failed": {
+    "message": "备注保存失败"
+  },
   "detail_title": {
     "message": "摘录详情"
   },
@@ -302,6 +338,9 @@
   },
   "detail_invalid_response": {
     "message": "响应格式异常"
+  },
+  "detail_note_label": {
+    "message": "备注"
   },
   "error_memory_not_found": {
     "message": "未找到该记忆，可能已删除"
@@ -486,6 +525,18 @@
   },
   "command_title_open_recall_popup": {
     "message": "打开找回（Popup）"
+  },
+  "command_title_open_library": {
+    "message": "打开记忆库"
+  },
+  "command_title_open_settings": {
+    "message": "打开设置"
+  },
+  "command_title_save_selection": {
+    "message": "保存选中文字"
+  },
+  "command_title_save_selection_with_note": {
+    "message": "保存选中文字并备注"
   },
   "command_shortcut_unset": {
     "message": "未设置"

@@ -20,6 +20,16 @@ const props = withDefaults(
   }
 )
 
+const emit = defineEmits<{
+  editNote: [
+    payload: {
+      memoryItemId: string
+      title: string
+      note: string
+    }
+  ]
+}>()
+
 /** 顶层文件夹默认展开。 */
 const expanded = ref(props.node.kind === 'folder' && props.depth < 1)
 
@@ -46,6 +56,19 @@ function hostnameOf(url: string): string {
     return ''
   }
 }
+
+function handleEditNote(event: Event) {
+  event.preventDefault()
+  event.stopPropagation()
+  if (props.node.kind !== 'bookmark' || !props.node.memoryItemId) {
+    return
+  }
+  emit('editNote', {
+    memoryItemId: props.node.memoryItemId,
+    title: props.node.title,
+    note: props.node.note ?? ''
+  })
+}
 </script>
 
 <template>
@@ -67,25 +90,44 @@ function hostnameOf(url: string): string {
           :node="child"
           :depth="depth + 1"
           :show-unsynced-flags="showUnsyncedFlags"
+          @edit-note="emit('editNote', $event)"
         />
       </ul>
     </template>
 
-    <a v-else class="tree-bookmark" :href="node.url" target="_blank" rel="noopener noreferrer">
-      <span class="tree-bookmark-leading">
-        <span class="tree-chevron tree-chevron--spacer" aria-hidden="true"></span>
-        <span class="tree-icon tree-icon--bookmark" aria-hidden="true">
-          <MaterialSymbolIcon name="bookmark" size="20px" />
+    <div v-else class="tree-bookmark-row">
+      <a class="tree-bookmark" :href="node.url" target="_blank" rel="noopener noreferrer">
+        <span class="tree-bookmark-leading">
+          <span class="tree-chevron tree-chevron--spacer" aria-hidden="true"></span>
+          <span class="tree-icon tree-icon--bookmark" aria-hidden="true">
+            <MaterialSymbolIcon name="bookmark" size="20px" />
+          </span>
+          <span class="tree-bookmark-copy">
+            <span class="tree-bookmark-title">{{ node.title }}</span>
+            <span v-if="node.note" class="tree-bookmark-note">
+              <span class="tree-bookmark-note-label">{{ t('detail_note_label') }}</span>
+              {{ node.note }}
+            </span>
+          </span>
         </span>
-        <span class="tree-bookmark-title">{{ node.title }}</span>
-      </span>
-      <span class="tree-bookmark-meta">
-        <span v-if="showUnsyncedFlags && !node.memoryItemId" class="tree-bookmark-flag">{{
-          t('library_bookmark_unsynced')
-        }}</span>
-        <span class="tree-bookmark-host" :title="node.url">{{ hostnameOf(node.url) }}</span>
-      </span>
-    </a>
+        <span class="tree-bookmark-meta">
+          <span v-if="showUnsyncedFlags && !node.memoryItemId" class="tree-bookmark-flag">{{
+            t('library_bookmark_unsynced')
+          }}</span>
+          <span class="tree-bookmark-host" :title="node.url">{{ hostnameOf(node.url) }}</span>
+        </span>
+      </a>
+      <md-icon-button
+        v-if="node.memoryItemId"
+        type="button"
+        class="tree-bookmark-note-btn"
+        :title="node.note ? t('library_edit_note_aria') : t('library_add_note_aria')"
+        :aria-label="node.note ? t('library_edit_note_aria') : t('library_add_note_aria')"
+        @click="handleEditNote"
+      >
+        <MaterialSymbolIcon name="edit_note" size="20px" />
+      </md-icon-button>
+    </div>
   </li>
 </template>
 
@@ -112,25 +154,50 @@ function hostnameOf(url: string): string {
   cursor: pointer;
 }
 
+.tree-bookmark-row {
+  display: flex;
+  gap: 2px;
+  align-items: flex-start;
+}
+
 .tree-bookmark {
+  flex: 1;
+  min-width: 0;
   justify-content: space-between;
   text-decoration: none;
   color: inherit;
   cursor: pointer;
 }
 
-.tree-folder:hover,
-.tree-bookmark:hover {
-  background: color-mix(in srgb, var(--md-sys-color-on-surface) 6%, transparent);
+.tree-bookmark:hover,
+.tree-folder:hover {
+  background: var(--md-sys-color-surface-container-high);
+}
+
+.tree-bookmark-note-btn {
+  flex-shrink: 0;
+  margin-top: 2px;
+  opacity: 0;
+}
+
+.tree-bookmark-row:hover .tree-bookmark-note-btn,
+.tree-bookmark-row:focus-within .tree-bookmark-note-btn {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .tree-bookmark-note-btn {
+    opacity: 1;
+  }
 }
 
 .tree-chevron {
   display: inline-flex;
   flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
   width: 18px;
   height: 18px;
+  align-items: center;
+  justify-content: center;
   color: var(--md-sys-color-on-surface-variant);
 }
 
@@ -141,48 +208,51 @@ function hostnameOf(url: string): string {
 .tree-icon {
   display: inline-flex;
   flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-}
-
-.tree-icon--folder {
   color: var(--md-sys-color-primary);
 }
 
-.tree-icon--bookmark {
-  color: var(--md-sys-color-on-surface-variant);
+.tree-icon--folder {
+  color: var(--md-sys-color-tertiary);
 }
 
-.tree-folder-title {
-  flex: 1;
+.tree-folder-title,
+.tree-bookmark-title {
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 14px;
-  font-weight: 600;
   line-height: 1.35;
-}
-
-.tree-children {
-  margin: 0 0 0 12px;
-  padding: 2px 0 2px 10px;
-  list-style: none;
 }
 
 .tree-bookmark-leading {
   display: flex;
   gap: 6px;
-  align-items: center;
+  align-items: flex-start;
+  min-width: 0;
+  flex: 1;
+}
+
+.tree-bookmark-copy {
+  display: grid;
+  gap: 2px;
   min-width: 0;
 }
 
-.tree-bookmark-title {
-  min-width: 0;
-  font-size: 14px;
-  line-height: 1.4;
+.tree-bookmark-note {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--md-sys-color-on-surface);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+}
+
+.tree-bookmark-note-label {
+  margin-right: 4px;
+  font-weight: 600;
+  color: var(--md-sys-color-primary);
 }
 
 .tree-bookmark-meta {
@@ -191,37 +261,26 @@ function hostnameOf(url: string): string {
   gap: 8px;
   align-items: center;
   margin-left: 8px;
+}
+
+.tree-bookmark-host {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 12px;
   color: var(--md-sys-color-on-surface-variant);
 }
 
 .tree-bookmark-flag {
+  font-size: 11px;
+  font-weight: 600;
   color: var(--md-sys-color-tertiary);
 }
 
-.tree-bookmark-host {
-  max-width: 160px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  opacity: 0;
-  transition: opacity 120ms cubic-bezier(0.2, 0, 0, 1);
-}
-
-.tree-bookmark:hover .tree-bookmark-host,
-.tree-bookmark:focus-visible .tree-bookmark-host {
-  opacity: 1;
-}
-
-@media (hover: none) {
-  .tree-bookmark-host {
-    opacity: 1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .tree-bookmark-host {
-    transition: none;
-  }
+.tree-children {
+  margin: 0;
+  padding: 0 0 0 12px;
+  list-style: none;
 }
 </style>

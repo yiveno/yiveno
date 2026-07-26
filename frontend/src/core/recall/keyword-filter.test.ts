@@ -27,9 +27,23 @@ describe('keyword-filter', () => {
     expect(tokenizeRecallClue('发版前要跑哪些检查')).toEqual(
       expect.arrayContaining(['检查', '发版'])
     )
-    // 过短线索：语言无关，不足 2 码点则无 token
+    // ASCII 单字母过噪丢弃；汉字单字可检索
     expect(tokenizeRecallClue('a')).toEqual([])
-    expect(tokenizeRecallClue('字')).toEqual([])
+    expect(tokenizeRecallClue('字')).toEqual(expect.arrayContaining(['字']))
+  })
+
+  it('汉字单字可命中标题子串（红 → 红井）', () => {
+    const bookmark = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: {
+        title: '网页红井-联机对战平台',
+        url: 'https://ra2web.com/'
+      }
+    })
+
+    const result = recallByKeyword([bookmark], '红')
+    expect(result.topPick?.item.id).toBe(bookmark.id)
+    expect(tokenizeRecallClue('红')).toEqual(expect.arrayContaining(['红']))
   })
 
   it('compactRecallText 去掉空白以便跨空格命中', () => {
@@ -234,5 +248,29 @@ describe('keyword-filter', () => {
     const result = recallByKeyword([excerpt], '古诗')
     expect(result.outcome).toBe('top_pick')
     expect(result.topPick?.item.id).toBe(excerpt.id)
+  })
+
+  it('用户备注命中权重大于正文，可作强线索找回', () => {
+    const byBody = createTextExcerptMemoryItem({
+      ...baseContext,
+      payload: {
+        selectedText: '红白相间的句子',
+        sourceUrl: 'https://example.com/body',
+        pageTitle: '诗句'
+      }
+    })
+    const byNote = createTextExcerptMemoryItem({
+      ...baseContext,
+      payload: {
+        selectedText: '岷峨路远万重云',
+        sourceUrl: 'https://example.com/note',
+        pageTitle: '不如归去'
+      },
+      clues: { note: '红白印象' }
+    })
+
+    const ranked = filterMemoryItemsByKeyword([byBody, byNote], '红白')
+    expect(ranked[0]?.item.id).toBe(byNote.id)
+    expect(ranked[0]?.matchedFields).toContain('note')
   })
 })

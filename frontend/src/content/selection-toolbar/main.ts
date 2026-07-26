@@ -1,4 +1,12 @@
 import { BACKGROUND_MESSAGE_SCOPE } from '@/core/messaging/constants'
+import {
+  parseContentSelectionCommandMessage,
+  SELECTION_TOOLBAR_PAGE_API_KEY,
+  type ContentSelectionCommandResponse,
+  type SelectionToolbarCommandType,
+  type SelectionToolbarPageApi
+} from '@/core/messaging/content-messages'
+import type { CaptureEntry } from '@/core/memory/capture-entry'
 import { extractSelectionContextOnPage } from '@/infrastructure/browser/selection-context-page'
 import {
   computeSelectionToolbarAnchor,
@@ -11,22 +19,48 @@ import {
 } from '@/core/settings/user-settings'
 import { t } from '@/infrastructure/i18n/t'
 import { tMemoryError } from '@/infrastructure/i18n/memory-error'
+import type { MessageKey } from '@/infrastructure/i18n/message-keys'
+import {
+  getMaterialSymbolPath,
+  type MaterialSymbolName
+} from '@/infrastructure/ui/icons/material-symbol'
 
 const TOOLBAR_HOST_ID = 'yiveno-selection-toolbar-host'
 const SHOW_DELAY_MS = 120
+const NOTE_MAX_LENGTH = 500
 
+type ToolbarUiMode = 'actions' | 'note'
 type ToolbarButtonState = 'idle' | 'saving' | 'saved' | 'error'
+
+/** 打开浮层/备注时快照的选区；textarea 聚焦后页内选区会丢，保存必须用这份。 */
+interface PendingSelectionCapture {
+  selectedText: string
+  contextBefore?: string
+  contextAfter?: string
+  anchorRect: { top: number; left: number; width: number; height: number }
+}
 
 let toolbarEnabled = DEFAULT_USER_SETTINGS.selectionToolbarEnabled
 let showTimer: ReturnType<typeof setTimeout> | null = null
 let hideTimer: ReturnType<typeof setTimeout> | null = null
 let hostElement: HTMLElement | null = null
 let shadowRoot: ShadowRoot | null = null
-let buttonElement: HTMLButtonElement | null = null
+let actionsRow: HTMLElement | null = null
+let notePanel: HTMLElement | null = null
+let saveButton: HTMLButtonElement | null = null
+let noteButton: HTMLButtonElement | null = null
+let noteInput: HTMLTextAreaElement | null = null
+let noteCancelButton: HTMLButtonElement | null = null
+let noteConfirmButton: HTMLButtonElement | null = null
+let statusButton: HTMLButtonElement | null = null
+let uiMode: ToolbarUiMode = 'actions'
 let buttonState: ToolbarButtonState = 'idle'
+let pendingCapture: PendingSelectionCapture | null = null
 /** 扩展热重载后旧 content script 仍存活时置 true，停止一切 Chrome API / DOM 交互 */
 let tornDown = false
 let listenersRegistered = false
+/** 用于在扩展重载时立刻收到 onDisconnect，早于用户交互拆卸 */
+let keepalivePort: chrome.runtime.Port | null = null
 
 /**
  * 扩展重载后 `chrome.runtime.id` 会变为 undefined；
@@ -40,6 +74,13 @@ function isExtensionContextValid(): boolean {
   }
 }
 
+function isContextInvalidatedError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false
+  }
+  return error.message.includes('Extension context invalidated')
+}
+
 /** 上下文已失效时静默拆卸，避免控制台刷屏。 */
 function ensureLiveContext(): boolean {
   if (tornDown) {
@@ -50,6 +91,43 @@ function ensureLiveContext(): boolean {
   }
   teardown()
   return false
+}
+
+/**
+ * 安全读文案：上下文失效时拆卸并返回 null，禁止把 i18n 异常抛到页面控制台。
+ */
+function safeT(key: MessageKey): string | null {
+  if (!ensureLiveContext()) {
+    return null
+  }
+  try {
+    return t(key)
+  } catch (error) {
+    if (isContextInvalidatedError(error) || !isExtensionContextValid()) {
+      teardown()
+      return null
+    }
+    throw error
+  }
+}
+
+/** 事件 / 定时器入口：吞掉上下文失效，其余错误仍抛出。 */
+function runGuarded(action: () => void): void {
+  if (tornDown) {
+    return
+  }
+  try {
+    if (!ensureLiveContext()) {
+      return
+    }
+    action()
+  } catch (error) {
+    if (isContextInvalidatedError(error) || !isExtensionContextValid()) {
+      teardown()
+      return
+    }
+    throw error
+  }
 }
 
 function isSavablePageUrl(url: string): boolean {
@@ -92,16 +170,83 @@ function getSelectedText(): string {
   return window.getSelection()?.toString().trim() ?? ''
 }
 
+/** 在选区仍有效时写入快照；已有快照且当前选区为空则保留旧快照。 */
+function capturePendingSelection(): void {
+  const context = extractSelectionContextOnPage()
+  const selectedText = context?.selectedText ?? getSelectedText()
+  if (!selectedText) {
+    return
+  }
+
+  const rect = getSelectionRect()
+  const anchorRect = rect
+    ? { top: rect.top, left: rect.left, width: rect.width, height: rect.height }
+    : (pendingCapture?.anchorRect ?? { top: 80, left: 80, width: 40, height: 20 })
+
+  pendingCapture = {
+    selectedText,
+    anchorRect,
+    ...(context?.contextBefore ? { contextBefore: context.contextBefore } : {}),
+    ...(context?.contextAfter ? { contextAfter: context.contextAfter } : {})
+  }
+}
+
+function clearPendingCapture(): void {
+  pendingCapture = null
+}
+
+/** 优先用快照；页内选区仍在时再刷新一次。 */
+function resolveCaptureForSave(): PendingSelectionCapture | null {
+  capturePendingSelection()
+  return pendingCapture
+}
+
 async function refreshToolbarEnabledFromStorage(): Promise<void> {
   if (!ensureLiveContext()) {
     return
   }
-  const result = await chrome.storage.local.get(USER_SETTINGS_STORAGE_KEY)
-  if (!ensureLiveContext()) {
-    return
+  try {
+    const result = await chrome.storage.local.get(USER_SETTINGS_STORAGE_KEY)
+    if (!ensureLiveContext()) {
+      return
+    }
+    const settings = parseUserSettings(result[USER_SETTINGS_STORAGE_KEY])
+    toolbarEnabled = settings.selectionToolbarEnabled
+  } catch (error) {
+    if (isContextInvalidatedError(error) || !isExtensionContextValid()) {
+      teardown()
+      return
+    }
+    throw error
   }
-  const settings = parseUserSettings(result[USER_SETTINGS_STORAGE_KEY])
-  toolbarEnabled = settings.selectionToolbarEnabled
+}
+
+function preserveSelectionOnMouseDown(event: MouseEvent): void {
+  event.preventDefault()
+  event.stopPropagation()
+}
+
+/** 划词浮层图标按钮：可见图标 + title/aria-label 完整文案。 */
+function createIconActionButton(icon: MaterialSymbolName, label: string): HTMLButtonElement {
+  const button = document.createElement('button')
+  button.type = 'button'
+  button.className = 'action-button action-button--icon'
+  button.title = label
+  button.setAttribute('aria-label', label)
+
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+  svg.setAttribute('viewBox', '0 0 24 24')
+  svg.setAttribute('width', '18')
+  svg.setAttribute('height', '18')
+  svg.setAttribute('aria-hidden', 'true')
+  svg.classList.add('action-icon')
+
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+  path.setAttribute('d', getMaterialSymbolPath(icon))
+  path.setAttribute('fill', 'currentColor')
+  svg.appendChild(path)
+  button.appendChild(svg)
+  return button
 }
 
 function ensureToolbarHost(): void {
@@ -109,6 +254,24 @@ function ensureToolbarHost(): void {
     return
   }
   if (hostElement?.isConnected) {
+    return
+  }
+
+  // 扩展热重载后旧 host 可能残留；先清再挂，避免只剩旧版单按钮
+  document.getElementById(TOOLBAR_HOST_ID)?.remove()
+
+  const saveLabel = safeT('context_menu_save_selection')
+  const noteLabel = safeT('selection_toolbar_add_note')
+  const notePlaceholder = safeT('selection_toolbar_note_placeholder')
+  const cancelLabel = safeT('selection_toolbar_note_cancel')
+  const confirmLabel = safeT('selection_toolbar_note_save')
+  if (
+    saveLabel === null ||
+    noteLabel === null ||
+    notePlaceholder === null ||
+    cancelLabel === null ||
+    confirmLabel === null
+  ) {
     return
   }
 
@@ -124,9 +287,14 @@ function ensureToolbarHost(): void {
 
   const style = document.createElement('style')
   style.textContent = `
-    .toolbar {
+    .shell {
       pointer-events: auto;
       transform: translateX(-50%);
+      display: grid;
+      gap: 6px;
+      max-width: min(320px, calc(100vw - 16px));
+    }
+    .toolbar {
       display: inline-flex;
       align-items: center;
       padding: 2px;
@@ -135,7 +303,8 @@ function ensureToolbarHost(): void {
       background: #f0fbfd;
       box-shadow: 0 4px 16px rgb(15 23 42 / 12%);
     }
-    .save-button {
+    .action-button,
+    .status-button {
       margin: 0;
       padding: 6px 12px;
       border: none;
@@ -146,68 +315,313 @@ function ensureToolbarHost(): void {
       cursor: pointer;
       white-space: nowrap;
     }
-    .save-button:hover:not(:disabled) {
+    .action-button--icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      padding: 0;
+    }
+    .action-icon {
+      display: block;
+      flex-shrink: 0;
+    }
+    .action-button:hover:not(:disabled),
+    .status-button:hover:not(:disabled) {
       background: rgb(8 145 178 / 12%);
     }
-    .save-button:disabled {
+    .action-button:disabled,
+    .status-button:disabled,
+    .note-confirm:disabled {
       cursor: wait;
       opacity: 0.75;
     }
-    .save-button--saved {
+    .divider {
+      width: 1px;
+      align-self: stretch;
+      margin: 4px 0;
+      background: #99d5df;
+    }
+    .status-button--saved {
       color: #0f766e;
     }
-    .save-button--error {
+    .status-button--error {
       color: #b42318;
+    }
+    .note-panel {
+      display: none;
+      min-width: 220px;
+      padding: 8px;
+      border: 1px solid #99d5df;
+      border-radius: 14px;
+      background: #f0fbfd;
+      box-shadow: 0 4px 16px rgb(15 23 42 / 12%);
+    }
+    .note-panel.is-open {
+      display: grid;
+      gap: 8px;
+    }
+    .note-input {
+      box-sizing: border-box;
+      width: 100%;
+      min-height: 56px;
+      margin: 0;
+      padding: 8px 10px;
+      border: 1px solid #99d5df;
+      border-radius: 10px;
+      resize: vertical;
+      font: 13px/1.4 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: #0f172a;
+      background: #fff;
+    }
+    .note-input:focus {
+      outline: 2px solid rgb(8 145 178 / 35%);
+      outline-offset: 1px;
+    }
+    .note-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+    .note-cancel,
+    .note-confirm {
+      margin: 0;
+      padding: 5px 10px;
+      border: none;
+      border-radius: 999px;
+      font: 600 12px/1.2 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      cursor: pointer;
+    }
+    .note-cancel {
+      color: #0e7490;
+      background: transparent;
+    }
+    .note-cancel:hover:not(:disabled) {
+      background: rgb(8 145 178 / 12%);
+    }
+    .note-confirm {
+      color: #fff;
+      background: #0e7490;
+    }
+    .note-confirm:hover:not(:disabled) {
+      background: #0f766e;
+    }
+    .is-hidden {
+      display: none !important;
     }
   `
 
-  const toolbar = document.createElement('div')
-  toolbar.className = 'toolbar'
+  const shell = document.createElement('div')
+  shell.className = 'shell'
 
-  buttonElement = document.createElement('button')
-  buttonElement.type = 'button'
-  buttonElement.className = 'save-button'
-  buttonElement.textContent = t('context_menu_save_selection')
-  buttonElement.addEventListener('mousedown', event => {
-    event.preventDefault()
-    event.stopPropagation()
-  })
-  buttonElement.addEventListener('click', event => {
+  actionsRow = document.createElement('div')
+  actionsRow.className = 'toolbar'
+
+  saveButton = createIconActionButton('bookmark_add', saveLabel)
+  saveButton.addEventListener('mousedown', preserveSelectionOnMouseDown)
+  saveButton.addEventListener('click', event => {
     event.preventDefault()
     event.stopPropagation()
     void handleSaveClick()
   })
 
-  toolbar.appendChild(buttonElement)
-  shadowRoot.append(style, toolbar)
+  const divider = document.createElement('span')
+  divider.className = 'divider'
+  divider.setAttribute('aria-hidden', 'true')
+
+  noteButton = createIconActionButton('edit_note', noteLabel)
+  noteButton.addEventListener('mousedown', preserveSelectionOnMouseDown)
+  noteButton.addEventListener('click', event => {
+    event.preventDefault()
+    event.stopPropagation()
+    openNotePanel()
+  })
+
+  statusButton = document.createElement('button')
+  statusButton.type = 'button'
+  statusButton.className = 'status-button is-hidden'
+  statusButton.disabled = true
+
+  actionsRow.append(saveButton, divider, noteButton, statusButton)
+
+  notePanel = document.createElement('div')
+  notePanel.className = 'note-panel'
+
+  noteInput = document.createElement('textarea')
+  noteInput.className = 'note-input'
+  noteInput.rows = 2
+  noteInput.maxLength = NOTE_MAX_LENGTH
+  noteInput.placeholder = notePlaceholder
+  noteInput.addEventListener('mousedown', event => {
+    // 聚焦输入时保留页内选区，避免浮层一开选区就丢
+    event.stopPropagation()
+  })
+  noteInput.addEventListener('keydown', event => {
+    event.stopPropagation()
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      closeNotePanel()
+    }
+  })
+
+  const noteActions = document.createElement('div')
+  noteActions.className = 'note-actions'
+
+  noteCancelButton = document.createElement('button')
+  noteCancelButton.type = 'button'
+  noteCancelButton.className = 'note-cancel'
+  noteCancelButton.textContent = cancelLabel
+  noteCancelButton.addEventListener('mousedown', preserveSelectionOnMouseDown)
+  noteCancelButton.addEventListener('click', event => {
+    event.preventDefault()
+    event.stopPropagation()
+    closeNotePanel()
+  })
+
+  noteConfirmButton = document.createElement('button')
+  noteConfirmButton.type = 'button'
+  noteConfirmButton.className = 'note-confirm'
+  noteConfirmButton.textContent = confirmLabel
+  noteConfirmButton.addEventListener('mousedown', preserveSelectionOnMouseDown)
+  noteConfirmButton.addEventListener('click', event => {
+    event.preventDefault()
+    event.stopPropagation()
+    void handleSaveClick({ withNote: true })
+  })
+
+  noteActions.append(noteCancelButton, noteConfirmButton)
+  notePanel.append(noteInput, noteActions)
+
+  shell.append(actionsRow, notePanel)
+  shadowRoot.append(style, shell)
   document.documentElement.appendChild(hostElement)
+  uiMode = 'actions'
+  buttonState = 'idle'
 }
 
-function setButtonState(state: ToolbarButtonState, label?: string): void {
+function setBusy(busy: boolean): void {
+  if (saveButton) {
+    saveButton.disabled = busy
+  }
+  if (noteButton) {
+    noteButton.disabled = busy
+  }
+  if (noteConfirmButton) {
+    noteConfirmButton.disabled = busy
+  }
+  if (noteCancelButton) {
+    noteCancelButton.disabled = busy
+  }
+  if (noteInput) {
+    noteInput.disabled = busy
+  }
+}
+
+function showStatus(state: 'saving' | 'saved' | 'error', label: string): void {
   buttonState = state
-  if (!buttonElement || !ensureLiveContext()) {
+  if (!statusButton || !actionsRow || !saveButton || !noteButton) {
     return
   }
 
-  buttonElement.disabled = state === 'saving'
-  buttonElement.classList.remove('save-button--saved', 'save-button--error')
-
-  if (state === 'saving') {
-    buttonElement.textContent = t('selection_toolbar_saving')
-    return
+  setBusy(state === 'saving')
+  saveButton.classList.add('is-hidden')
+  noteButton.classList.add('is-hidden')
+  const divider = actionsRow.querySelector('.divider')
+  if (divider instanceof HTMLElement) {
+    divider.classList.add('is-hidden')
   }
+
+  statusButton.classList.remove('is-hidden', 'status-button--saved', 'status-button--error')
   if (state === 'saved') {
-    buttonElement.classList.add('save-button--saved')
-    buttonElement.textContent = label ?? t('selection_toolbar_saved')
-    return
+    statusButton.classList.add('status-button--saved')
   }
   if (state === 'error') {
-    buttonElement.classList.add('save-button--error')
-    buttonElement.textContent = label ?? t('selection_toolbar_failed')
+    statusButton.classList.add('status-button--error')
+  }
+  statusButton.textContent = label
+}
+
+function resetActionsView(): void {
+  buttonState = 'idle'
+  uiMode = 'actions'
+  setBusy(false)
+
+  if (saveButton) {
+    saveButton.classList.remove('is-hidden')
+  }
+  if (noteButton) {
+    noteButton.classList.remove('is-hidden')
+  }
+  if (actionsRow) {
+    const divider = actionsRow.querySelector('.divider')
+    if (divider instanceof HTMLElement) {
+      divider.classList.remove('is-hidden')
+    }
+  }
+  if (statusButton) {
+    statusButton.classList.add('is-hidden')
+    statusButton.classList.remove('status-button--saved', 'status-button--error')
+    statusButton.textContent = ''
+  }
+  if (notePanel) {
+    notePanel.classList.remove('is-open')
+  }
+  if (noteInput) {
+    noteInput.value = ''
+  }
+}
+
+function openNotePanel(): void {
+  if (!ensureLiveContext() || buttonState === 'saving') {
+    return
+  }
+  ensureToolbarHost()
+  if (!notePanel || !noteInput) {
     return
   }
 
-  buttonElement.textContent = label ?? t('context_menu_save_selection')
+  // 必须在 textarea.focus() 之前快照：聚焦会清掉页内选区
+  capturePendingSelection()
+  if (!pendingCapture?.selectedText) {
+    const gone = safeT('selection_toolbar_selection_gone')
+    if (gone !== null) {
+      showStatus('error', gone)
+      scheduleHideToolbar(1600)
+    }
+    return
+  }
+
+  uiMode = 'note'
+  notePanel.classList.add('is-open')
+  const liveRect = getSelectionRect()
+  const anchor = liveRect ?? pendingCapture.anchorRect
+  positionToolbar(anchor, 120)
+  noteInput.focus()
+}
+
+function closeNotePanel(): void {
+  if (buttonState === 'saving') {
+    return
+  }
+  resetActionsView()
+  const rect = getSelectionRect() ?? pendingCapture?.anchorRect
+  if (rect && hostElement) {
+    positionToolbar(rect, 36)
+  }
+}
+
+function positionToolbar(
+  rect: { top: number; left: number; width: number; height: number },
+  estimatedHeight: number
+): void {
+  if (!hostElement) {
+    return
+  }
+  const anchor = computeSelectionToolbarAnchor(rect, { estimatedHeight })
+  hostElement.style.display = 'block'
+  hostElement.style.top = `${anchor.top}px`
+  hostElement.style.left = `${anchor.left}px`
 }
 
 function hideToolbar(): void {
@@ -216,11 +630,8 @@ function hideToolbar(): void {
   if (hostElement) {
     hostElement.style.display = 'none'
   }
-  if (!tornDown && isExtensionContextValid()) {
-    setButtonState('idle')
-  } else {
-    buttonState = 'idle'
-  }
+  resetActionsView()
+  clearPendingCapture()
 }
 
 function showToolbarAt(rect: DOMRect): void {
@@ -232,40 +643,66 @@ function showToolbarAt(rect: DOMRect): void {
     return
   }
 
-  const anchor = computeSelectionToolbarAnchor(rect)
-  hostElement.style.display = 'block'
-  hostElement.style.top = `${anchor.top}px`
-  hostElement.style.left = `${anchor.left}px`
-  setButtonState('idle')
+  resetActionsView()
+  capturePendingSelection()
+  positionToolbar(rect, 36)
 }
 
 function scheduleHideToolbar(delayMs = 0): void {
   clearHideTimer()
   hideTimer = setTimeout(() => {
     hideTimer = null
-    hideToolbar()
+    runGuarded(() => {
+      hideToolbar()
+    })
   }, delayMs)
 }
 
-async function handleSaveClick(): Promise<void> {
+async function handleSaveClick(
+  options: {
+    withNote?: boolean
+    captureEntry?: CaptureEntry
+  } = {}
+): Promise<boolean> {
   if (!ensureLiveContext() || buttonState === 'saving') {
-    return
+    return false
   }
-
-  const context = extractSelectionContextOnPage()
-  const selectedText = context?.selectedText ?? getSelectedText()
-  if (!selectedText) {
-    setButtonState('error', t('selection_toolbar_selection_gone'))
-    scheduleHideToolbar(1600)
-    return
-  }
-
-  setButtonState('saving')
 
   try {
-    if (!ensureLiveContext()) {
-      return
+    const capture = resolveCaptureForSave()
+    const selectedText = capture?.selectedText ?? ''
+    if (!selectedText) {
+      const gone = safeT('selection_toolbar_selection_gone')
+      if (gone === null) {
+        return false
+      }
+      if (notePanel) {
+        notePanel.classList.remove('is-open')
+      }
+      showStatus('error', gone)
+      scheduleHideToolbar(1600)
+      return false
     }
+
+    let note: string | undefined
+    if (options.withNote) {
+      const raw = noteInput?.value.trim() ?? ''
+      if (!raw) {
+        noteInput?.focus()
+        return false
+      }
+      note = raw.slice(0, NOTE_MAX_LENGTH)
+    }
+
+    const saving = safeT('selection_toolbar_saving')
+    if (saving === null) {
+      return false
+    }
+    if (notePanel) {
+      notePanel.classList.remove('is-open')
+    }
+    showStatus('saving', saving)
+
     const response = await chrome.runtime.sendMessage({
       scope: BACKGROUND_MESSAGE_SCOPE,
       type: 'CAPTURE_TEXT_EXCERPT',
@@ -273,35 +710,152 @@ async function handleSaveClick(): Promise<void> {
         selectedText,
         sourceUrl: window.location.href,
         pageTitle: document.title,
-        contextBefore: context?.contextBefore,
-        contextAfter: context?.contextAfter,
-        captureEntry: 'selection_toolbar'
+        ...(capture?.contextBefore ? { contextBefore: capture.contextBefore } : {}),
+        ...(capture?.contextAfter ? { contextAfter: capture.contextAfter } : {}),
+        ...(note === undefined ? {} : { note }),
+        captureEntry: options.captureEntry ?? 'selection_toolbar'
       }
     })
 
     if (!ensureLiveContext()) {
-      return
+      return false
     }
 
     if (!response?.ok) {
-      const message =
-        response && 'errorCode' in response && response.errorCode
-          ? tMemoryError(response.errorCode)
-          : t('selection_toolbar_failed')
-      setButtonState('error', message)
+      let message = safeT('selection_toolbar_failed')
+      if (message === null) {
+        return false
+      }
+      if (response && 'errorCode' in response && response.errorCode) {
+        try {
+          message = tMemoryError(response.errorCode)
+        } catch (error) {
+          if (isContextInvalidatedError(error) || !isExtensionContextValid()) {
+            teardown()
+            return false
+          }
+          throw error
+        }
+      }
+      showStatus('error', message)
       scheduleHideToolbar(1800)
-      return
+      return false
     }
 
-    setButtonState('saved')
-    scheduleHideToolbar(1200)
-  } catch {
-    // sendMessage / t 在上下文失效时都会抛；优先静默拆卸
-    if (!ensureLiveContext()) {
-      return
+    const saved = safeT('selection_toolbar_saved')
+    if (saved === null) {
+      return false
     }
-    setButtonState('error', t('selection_toolbar_failed'))
+    // 先切到 saved 态再清选区，避免 selectionchange 在 idle 时立刻 hideToolbar
+    showStatus('saved', saved)
+    clearPageSelection()
+    clearPendingCapture()
+    scheduleHideToolbar(1200)
+    return true
+  } catch (error) {
+    if (isContextInvalidatedError(error) || !isExtensionContextValid()) {
+      teardown()
+      return false
+    }
+    const failed = safeT('selection_toolbar_failed')
+    if (failed === null) {
+      return false
+    }
+    showStatus('error', failed)
     scheduleHideToolbar(1800)
+    return false
+  }
+}
+
+/** 保存成功后清掉页内选区高亮（与浮层收起一起给「已收进」反馈）。 */
+function clearPageSelection(): void {
+  try {
+    window.getSelection()?.removeAllRanges()
+  } catch {
+    // 部分页面 Selection API 可能抛错，忽略
+  }
+}
+
+/** 快捷键：保存当前选区（无备注）。无选区则静默忽略。 */
+async function handleShortcutSave(): Promise<ContentSelectionCommandResponse> {
+  if (!ensureLiveContext()) {
+    return { ok: false, errorCode: 'SELECTION_COMMAND_FAILED' }
+  }
+  if (!isSavablePageUrl(window.location.href)) {
+    return { ok: false, errorCode: 'CAPTURE_UNSAVABLE_PAGE' }
+  }
+
+  clearPendingCapture()
+  capturePendingSelection()
+  if (!pendingCapture?.selectedText) {
+    return { ok: true, skipped: true }
+  }
+
+  ensureToolbarHost()
+  positionToolbar(pendingCapture.anchorRect, 36)
+  const saved = await handleSaveClick({ captureEntry: 'shortcut' })
+  return saved ? { ok: true } : { ok: false, errorCode: 'SELECTION_COMMAND_FAILED' }
+}
+
+/** 快捷键：打开备注面板（先快照选区）。无选区则静默忽略。 */
+async function handleShortcutOpenNote(): Promise<ContentSelectionCommandResponse> {
+  if (!ensureLiveContext()) {
+    return { ok: false, errorCode: 'SELECTION_COMMAND_FAILED' }
+  }
+  if (!isSavablePageUrl(window.location.href)) {
+    return { ok: false, errorCode: 'CAPTURE_UNSAVABLE_PAGE' }
+  }
+
+  clearPendingCapture()
+  capturePendingSelection()
+  if (!pendingCapture?.selectedText) {
+    return { ok: true, skipped: true }
+  }
+
+  openNotePanel()
+  return { ok: true }
+}
+
+function handleRuntimeMessage(
+  message: unknown,
+  _sender: chrome.runtime.MessageSender,
+  sendResponse: (response: ContentSelectionCommandResponse) => void
+): boolean {
+  const command = parseContentSelectionCommandMessage(message)
+  if (!command) {
+    return false
+  }
+
+  const run = command.type === 'SELECTION_SAVE' ? handleShortcutSave() : handleShortcutOpenNote()
+
+  void run
+    .then(response => {
+      sendResponse(response)
+    })
+    .catch(() => {
+      sendResponse({ ok: false, errorCode: 'SELECTION_COMMAND_FAILED' })
+    })
+  return true
+}
+
+type PageApiGlobal = typeof globalThis & {
+  [SELECTION_TOOLBAR_PAGE_API_KEY]?: SelectionToolbarPageApi
+}
+
+function installPageApi(): void {
+  const target = globalThis as PageApiGlobal
+  target[SELECTION_TOOLBAR_PAGE_API_KEY] = {
+    runCommand: (type: SelectionToolbarCommandType) =>
+      type === 'SELECTION_SAVE' ? handleShortcutSave() : handleShortcutOpenNote()
+  }
+}
+
+function uninstallPageApi(): void {
+  try {
+    const target = globalThis as PageApiGlobal
+    delete target[SELECTION_TOOLBAR_PAGE_API_KEY]
+  } catch {
+    // ignore
   }
 }
 
@@ -325,16 +879,15 @@ function evaluateSelectionAndMaybeShow(): void {
 
   showTimer = setTimeout(() => {
     showTimer = null
-    if (!ensureLiveContext()) {
-      return
-    }
-    const rect = getSelectionRect()
-    const latestText = getSelectedText()
-    if (!rect || !latestText) {
-      hideToolbar()
-      return
-    }
-    showToolbarAt(rect)
+    runGuarded(() => {
+      const rect = getSelectionRect()
+      const latestText = getSelectedText()
+      if (!rect || !latestText) {
+        hideToolbar()
+        return
+      }
+      showToolbarAt(rect)
+    })
   }, SHOW_DELAY_MS)
 }
 
@@ -343,68 +896,149 @@ function isEventInsideToolbar(event: Event): boolean {
 }
 
 function handleMouseUp(event: MouseEvent): void {
-  if (!ensureLiveContext()) {
-    return
-  }
-  if (event.button !== 0) {
-    return
-  }
-  if (isEventInsideToolbar(event)) {
-    return
-  }
-  evaluateSelectionAndMaybeShow()
+  runGuarded(() => {
+    if (event.button !== 0) {
+      return
+    }
+    if (isEventInsideToolbar(event)) {
+      return
+    }
+    evaluateSelectionAndMaybeShow()
+  })
 }
 
 function handleDocumentMouseDown(event: MouseEvent): void {
-  if (!ensureLiveContext()) {
-    return
-  }
-  if (isEventInsideToolbar(event)) {
-    return
-  }
-  hideToolbar()
+  runGuarded(() => {
+    if (isEventInsideToolbar(event)) {
+      return
+    }
+    hideToolbar()
+  })
 }
 
 function handleKeyDown(event: KeyboardEvent): void {
-  if (!ensureLiveContext()) {
-    return
-  }
-  if (event.key === 'Escape') {
-    hideToolbar()
-  }
+  runGuarded(() => {
+    if (event.key === 'Escape') {
+      if (uiMode === 'note' && buttonState !== 'saving') {
+        closeNotePanel()
+        return
+      }
+      hideToolbar()
+    }
+  })
 }
 
 function handleScroll(): void {
-  if (!ensureLiveContext()) {
-    return
-  }
-  hideToolbar()
+  runGuarded(() => {
+    hideToolbar()
+  })
 }
 
 function handleSelectionChange(): void {
-  if (!ensureLiveContext()) {
-    return
-  }
-  if (!getSelectedText()) {
-    hideToolbar()
-  }
+  runGuarded(() => {
+    // 备注输入聚焦时 selectionchange 可能抖动；有打开的备注面板时不因空选区立刻关掉
+    if (uiMode === 'note') {
+      return
+    }
+    // 保存中 / 成功 / 失败提示期间：清选区不应拆掉状态反馈
+    if (buttonState === 'saving' || buttonState === 'saved' || buttonState === 'error') {
+      return
+    }
+    if (!getSelectedText()) {
+      hideToolbar()
+    }
+  })
 }
 
 function handleStorageChanged(
   changes: { [key: string]: chrome.storage.StorageChange },
   areaName: string
 ): void {
-  if (!ensureLiveContext()) {
+  runGuarded(() => {
+    if (areaName !== 'local' || !(USER_SETTINGS_STORAGE_KEY in changes)) {
+      return
+    }
+    const next = parseUserSettings(changes[USER_SETTINGS_STORAGE_KEY]?.newValue)
+    toolbarEnabled = next.selectionToolbarEnabled
+    if (!toolbarEnabled) {
+      hideToolbar()
+    }
+  })
+}
+
+function connectKeepalivePort(): void {
+  if (tornDown || keepalivePort || !isExtensionContextValid()) {
     return
   }
-  if (areaName !== 'local' || !(USER_SETTINGS_STORAGE_KEY in changes)) {
-    return
+  try {
+    keepalivePort = chrome.runtime.connect({ name: 'yiveno-selection-toolbar' })
+    keepalivePort.onDisconnect.addListener(() => {
+      keepalivePort = null
+      // 扩展被重载/禁用：runtime.id 消失 → 拆卸旧脚本
+      // SW 休眠也会 disconnect，此时 id 仍在 → 重建 port，勿拆卸
+      if (!isExtensionContextValid()) {
+        teardown()
+        return
+      }
+      connectKeepalivePort()
+    })
+  } catch {
+    if (!isExtensionContextValid()) {
+      teardown()
+    }
   }
-  const next = parseUserSettings(changes[USER_SETTINGS_STORAGE_KEY]?.newValue)
-  toolbarEnabled = next.selectionToolbarEnabled
-  if (!toolbarEnabled) {
-    hideToolbar()
+}
+
+/**
+ * 同页防重复挂载。值存当前 `chrome.runtime.id`：扩展 Reload 后 id 变化，
+ * 旧实例留下的布尔/旧 id 不会挡住新注入（否则备注快捷键会「注入后仍无接收端」）。
+ */
+const BOOT_FLAG = '__yivenoSelectionToolbarBootId' as const
+
+type BootFlagWindow = Window & { [BOOT_FLAG]?: string }
+
+/** 本 IIFE 启动时的 runtime id；teardown 只清自己写下的标记。 */
+const bootRuntimeId = (() => {
+  try {
+    return chrome.runtime?.id ?? ''
+  } catch {
+    return ''
   }
+})()
+
+function readBootFlag(): string | undefined {
+  try {
+    return (window as BootFlagWindow)[BOOT_FLAG]
+  } catch {
+    return undefined
+  }
+}
+
+function writeBootFlag(runtimeId: string): void {
+  try {
+    ;(window as BootFlagWindow)[BOOT_FLAG] = runtimeId
+  } catch {
+    // 跨域 / 冻结页面上写 window 可能失败，忽略
+  }
+}
+
+function clearBootFlagIfOwned(): void {
+  try {
+    const target = window as BootFlagWindow
+    if (!bootRuntimeId || target[BOOT_FLAG] === bootRuntimeId) {
+      delete target[BOOT_FLAG]
+    }
+  } catch {
+    // ignore
+  }
+}
+
+/** 是否应由本实例完成挂载（同 runtime 已挂载则跳过）。 */
+function shouldBootThisInstance(): boolean {
+  if (!bootRuntimeId) {
+    return false
+  }
+  return readBootFlag() !== bootRuntimeId
 }
 
 function teardown(): void {
@@ -412,8 +1046,17 @@ function teardown(): void {
     return
   }
   tornDown = true
+  clearBootFlagIfOwned()
+  uninstallPageApi()
   clearShowTimer()
   clearHideTimer()
+
+  try {
+    keepalivePort?.disconnect()
+  } catch {
+    // 上下文已失效时 disconnect 可能抛错
+  }
+  keepalivePort = null
 
   if (listenersRegistered) {
     document.removeEventListener('mouseup', handleMouseUp, true)
@@ -421,6 +1064,11 @@ function teardown(): void {
     document.removeEventListener('keydown', handleKeyDown, true)
     window.removeEventListener('scroll', handleScroll, true)
     document.removeEventListener('selectionchange', handleSelectionChange)
+    try {
+      chrome.runtime.onMessage.removeListener(handleRuntimeMessage)
+    } catch {
+      // 上下文已失效时 removeListener 也可能抛错，忽略即可
+    }
     try {
       chrome.storage.onChanged.removeListener(handleStorageChanged)
     } catch {
@@ -432,8 +1080,17 @@ function teardown(): void {
   hostElement?.remove()
   hostElement = null
   shadowRoot = null
-  buttonElement = null
+  actionsRow = null
+  notePanel = null
+  saveButton = null
+  noteButton = null
+  noteInput = null
+  noteCancelButton = null
+  noteConfirmButton = null
+  statusButton = null
+  uiMode = 'actions'
   buttonState = 'idle'
+  clearPendingCapture()
 }
 
 function registerListeners(): void {
@@ -446,20 +1103,29 @@ function registerListeners(): void {
   document.addEventListener('keydown', handleKeyDown, true)
   window.addEventListener('scroll', handleScroll, true)
   document.addEventListener('selectionchange', handleSelectionChange)
-  chrome.storage.onChanged.addListener(handleStorageChanged)
+  try {
+    chrome.runtime.onMessage.addListener(handleRuntimeMessage)
+    chrome.storage.onChanged.addListener(handleStorageChanged)
+  } catch {
+    teardown()
+    return
+  }
   listenersRegistered = true
+  connectKeepalivePort()
 }
 
-void refreshToolbarEnabledFromStorage()
-  .catch(() => {
+if (shouldBootThisInstance()) {
+  writeBootFlag(bootRuntimeId)
+  // 接管旧实例时清掉残留 host，避免双浮层
+  document.getElementById(TOOLBAR_HOST_ID)?.remove()
+  // 同步挂监听 + 页内 API：快捷键经 executeScript 调用，与点击按钮同一套 UI
+  installPageApi()
+  registerListeners()
+  void refreshToolbarEnabledFromStorage().catch(() => {
     if (!isExtensionContextValid()) {
       teardown()
       return
     }
     toolbarEnabled = DEFAULT_USER_SETTINGS.selectionToolbarEnabled
   })
-  .finally(() => {
-    if (!tornDown && isExtensionContextValid()) {
-      registerListeners()
-    }
-  })
+}

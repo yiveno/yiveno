@@ -9,6 +9,16 @@ defineProps<{
   /** 全量导入完成后才展示「未同步」 */
   showUnsyncedFlags?: boolean
 }>()
+
+defineEmits<{
+  editNote: [
+    payload: {
+      memoryItemId: string
+      title: string
+      note: string
+    }
+  ]
+}>()
 </script>
 
 <template>
@@ -19,6 +29,7 @@ defineProps<{
       :node="node"
       :depth="0"
       :show-unsynced-flags="showUnsyncedFlags"
+      @edit-note="$emit('editNote', $event)"
     />
   </ul>
 </template>

@@ -17,6 +17,8 @@ export interface BookmarkLibraryLeafNode {
   title: string
   url: string
   memoryItemId?: string
+  /** Yiveno 本地备注（不同步 Chrome） */
+  note?: string
 }
 
 export interface BookmarkLibraryFolderNode {
@@ -63,6 +65,8 @@ export interface MapChromeBookmarkTreeOptions {
   unnamedFolderTitle: string
   /** URL → MemoryItem.id；chromeId 未命中时回退 */
   memoryIdByUrl?: ReadonlyMap<string, string>
+  /** MemoryItem.id → 备注 */
+  noteByMemoryId?: ReadonlyMap<string, string>
 }
 
 export function mapChromeBookmarkTreeToLibraryForest(
@@ -116,12 +120,14 @@ function mapChromeNode(
       memoryIdByChromeBookmarkId,
       options.memoryIdByUrl
     )
+    const note = memoryItemId ? options.noteByMemoryId?.get(memoryItemId)?.trim() : undefined
     return {
       kind: 'bookmark',
       chromeId: node.id,
       title: node.title?.trim() || url,
       url,
-      ...(memoryItemId ? { memoryItemId } : {})
+      ...(memoryItemId ? { memoryItemId } : {}),
+      ...(note ? { note } : {})
     }
   }
 
