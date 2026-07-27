@@ -1,0 +1,117 @@
+import { describe, expect, it } from 'vitest'
+
+import { createBookmarkMemoryItem } from '@/core/memory/create-memory-item'
+import { buildRecallResult, recallByKeyword } from '@/core/recall/build-recall-result'
+import {
+  getRecallDuplicateKey,
+  serializeRecallDuplicateKey
+} from '@/core/recall/collapse-recall-duplicates'
+import type { RecallMatch } from '@/core/recall/recall-result'
+
+const baseContext = {
+  ownerId: '11111111-1111-4111-8111-111111111111',
+  sourceLocalProfileId: '22222222-2222-4222-8222-222222222222',
+  now: () => '2026-07-22T06:00:00.000Z'
+}
+
+describe('build-recall-result Top/Also 互斥', () => {
+  it('buildRecallResult：top 与 also 下标不相交', () => {
+    const matches: RecallMatch[] = [0, 1, 2].map(i => {
+      const item = createBookmarkMemoryItem({
+        ...baseContext,
+        payload: { title: `项${i}`, url: `https://site-${i}.example/${i}` }
+      })
+      return { item, score: 40 - i, matchedFields: ['title'] }
+    })
+    const result = buildRecallResult('项', matches)
+    expect(result.topPick?.item.id).toBe(matches[0]?.item.id)
+    expect(result.alsoPossible.map(m => m.item.id)).toEqual([
+      matches[1]?.item.id,
+      matches[2]?.item.id
+    ])
+    expect(result.alsoPossible.some(m => m.item.id === result.topPick?.item.id)).toBe(false)
+  })
+
+  it('stacks N=同 URL 重复数（含写法差异），不是全部含 AI 的命中', () => {
+    const items = [
+      createBookmarkMemoryItem({
+        ...baseContext,
+        payload: { title: 'AI工具集官网 1', url: 'https://ai-bot.cn/' }
+      }),
+      createBookmarkMemoryItem({
+        ...baseContext,
+        payload: { title: 'AI工具集官网 2', url: 'https://ai-bot.cn' }
+      }),
+      createBookmarkMemoryItem({
+        ...baseContext,
+        payload: { title: 'AI工具集官网 3', url: 'https://www.ai-bot.cn/' }
+      }),
+      createBookmarkMemoryItem({
+        ...baseContext,
+        payload: { title: 'AI工具集官网 4', url: 'https://ai-bot.cn/' }
+      }),
+      ...Array.from({ length: 6 }, (_, i) =>
+        createBookmarkMemoryItem({
+          ...baseContext,
+          payload: {
+            title: `AI 其它 ${i}`,
+            url: `https://other-${i}.example/ai`
+          }
+        })
+      )
+    ]
+
+    const result = recallByKeyword(items, 'AI')
+    expect(result.outcome).toBe('top_pick')
+    expect(result.topPick?.item.payload).toMatchObject({ domain: 'ai-bot.cn' })
+    expect(result.topPick?.duplicateGroup?.totalCount).toBe(4)
+    expect(result.topPick?.duplicateGroup?.siblings).toHaveLength(3)
+
+    const topKey = result.topPick
+      ? serializeRecallDuplicateKey(getRecallDuplicateKey(result.topPick.item))
+      : null
+    for (const also of result.alsoPossible) {
+      expect(serializeRecallDuplicateKey(getRecallDuplicateKey(also.item))).not.toBe(topKey)
+      if (also.item.type === 'bookmark') {
+        expect(also.item.payload.domain).not.toBe('ai-bot.cn')
+        expect(also.item.payload.domain).not.toBe('www.ai-bot.cn')
+      }
+    }
+  })
+
+  it('同站其它 path 不并入 stacks N，也不进 Also', () => {
+    const items = [
+      createBookmarkMemoryItem({
+        ...baseContext,
+        payload: { title: 'AI工具集官网', url: 'https://ai-bot.cn/' }
+      }),
+      createBookmarkMemoryItem({
+        ...baseContext,
+        payload: { title: 'AI工具集官网 副本', url: 'https://ai-bot.cn/' }
+      }),
+      createBookmarkMemoryItem({
+        ...baseContext,
+        payload: { title: 'AI工具集官网 深页', url: 'https://ai-bot.cn/tools' }
+      }),
+      createBookmarkMemoryItem({
+        ...baseContext,
+        payload: { title: 'AI 其它站点 A', url: 'https://tools.example/a' }
+      }),
+      createBookmarkMemoryItem({
+        ...baseContext,
+        payload: { title: 'AI 其它站点 B', url: 'https://third.example/ai' }
+      })
+    ]
+
+    const result = recallByKeyword(items, 'AI')
+    expect(result.outcome).toBe('top_pick')
+    expect(result.topPick?.duplicateGroup?.totalCount).toBe(2)
+    expect(result.alsoPossible).toHaveLength(2)
+    for (const also of result.alsoPossible) {
+      expect(also.item.type).toBe('bookmark')
+      if (also.item.type === 'bookmark') {
+        expect(also.item.payload.domain).not.toBe('ai-bot.cn')
+      }
+    }
+  })
+})

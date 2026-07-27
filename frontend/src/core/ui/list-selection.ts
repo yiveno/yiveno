@@ -17,8 +17,8 @@ export function listDeltaFromNavigateDirection(
 
 /**
  * 计算移动后的选中下标。
- * - 当前无选中（<0）时：向下 → 0，向上 → 末项
- * - 越界时循环
+ * - 当前无选中（越界）时：向下 → 0，向上 → 末项
+ * - 已在合法下标：步进后钳制在 [0, itemCount)，不循环
  * - itemCount 为 0 时返回 -1
  */
 export function moveListSelectionIndex(input: {
@@ -36,7 +36,7 @@ export function moveListSelectionIndex(input: {
     return delta > 0 ? 0 : itemCount - 1
   }
 
-  return (current + delta + itemCount) % itemCount
+  return clampListSelectionIndex(current + delta, itemCount)
 }
 
 /** 将下标钳到合法范围；无项时为 -1。 */

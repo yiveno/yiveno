@@ -138,6 +138,36 @@
   "popup_section_also_possible": {
     "message": "Also possible"
   },
+  "popup_duplicate_group_bookmark": {
+    "message": "$1 identical bookmarks",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "popup_duplicate_group_excerpt": {
+    "message": "$1 identical excerpts",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "popup_duplicate_expand": {
+    "message": "Show duplicates"
+  },
+  "popup_duplicate_collapse": {
+    "message": "Hide duplicates"
+  },
+  "omnibox_duplicate_count": {
+    "message": "$1 similar",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
   "popup_recall_failed": {
     "message": "Recall failed. Try again later."
   },

@@ -7,6 +7,16 @@ export interface RecallMatch {
   item: MemoryItem
   score: number
   matchedFields: string[]
+  /** 同键折叠组；仅 totalCount≥2 时出现。 */
+  duplicateGroup?: RecallDuplicateGroup
+}
+
+/** Recall 结果中同键重复组（代表项外挂）。 */
+export interface RecallDuplicateGroup {
+  /** 含代表，≥2。 */
+  totalCount: number
+  /** 组内除代表外的成员（已按代表规则排序）。 */
+  siblings: RecallMatch[]
 }
 
 /** Recall 结果形态。 */

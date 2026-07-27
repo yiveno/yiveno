@@ -14,12 +14,13 @@ describe('list-selection', () => {
     expect(listDeltaFromNavigateDirection('right')).toBeNull()
   })
 
-  it('moveListSelectionIndex 循环并处理无选中', () => {
+  it('moveListSelectionIndex 边界钳制并处理无选中', () => {
     expect(moveListSelectionIndex({ currentIndex: -1, itemCount: 3, delta: 1 })).toBe(0)
     expect(moveListSelectionIndex({ currentIndex: -1, itemCount: 3, delta: -1 })).toBe(2)
-    expect(moveListSelectionIndex({ currentIndex: 0, itemCount: 3, delta: -1 })).toBe(2)
-    expect(moveListSelectionIndex({ currentIndex: 2, itemCount: 3, delta: 1 })).toBe(0)
+    expect(moveListSelectionIndex({ currentIndex: 0, itemCount: 3, delta: -1 })).toBe(0)
+    expect(moveListSelectionIndex({ currentIndex: 2, itemCount: 3, delta: 1 })).toBe(2)
     expect(moveListSelectionIndex({ currentIndex: 1, itemCount: 3, delta: 1 })).toBe(2)
+    expect(moveListSelectionIndex({ currentIndex: 1, itemCount: 3, delta: -1 })).toBe(0)
     expect(moveListSelectionIndex({ currentIndex: 0, itemCount: 0, delta: 1 })).toBe(-1)
   })
 

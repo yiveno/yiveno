@@ -44,6 +44,7 @@ const ZH: Record<string, string> = {
   type_label_excerpt: '文字片段',
   omnibox_type_bookmark: 'Y·书签',
   omnibox_type_excerpt: 'Y·摘录',
+  omnibox_duplicate_count: '共 $1 条',
   command_title_open_recall_popup: '打开找回（Popup）',
   command_title_open_library: '打开记忆库',
   command_title_open_settings: '打开设置',

@@ -138,6 +138,36 @@
   "popup_section_also_possible": {
     "message": "也可能是这些"
   },
+  "popup_duplicate_group_bookmark": {
+    "message": "共 $1 条相同书签",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "popup_duplicate_group_excerpt": {
+    "message": "共 $1 条相同摘录",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "popup_duplicate_expand": {
+    "message": "展开重复项"
+  },
+  "popup_duplicate_collapse": {
+    "message": "收起重复项"
+  },
+  "omnibox_duplicate_count": {
+    "message": "共 $1 条",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
   "popup_recall_failed": {
     "message": "找回失败，请稍后再试"
   },

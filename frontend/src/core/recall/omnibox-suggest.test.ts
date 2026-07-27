@@ -145,6 +145,29 @@ describe('omnibox-suggest', () => {
     expect(recallResultToOmniboxSuggests(result, suggestOptions)).toHaveLength(1)
   })
 
+  it('折叠组在 description 中带共 N 条', () => {
+    const item = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: { title: '重复书签', url: 'https://example.com/dup' }
+    })
+    const sibling = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: { title: '重复书签副本', url: 'https://example.com/dup' }
+    })
+    const match: RecallMatch = {
+      item,
+      score: 40,
+      matchedFields: ['title'],
+      duplicateGroup: {
+        totalCount: 3,
+        siblings: [{ item: sibling, score: 30, matchedFields: ['title'] }]
+      }
+    }
+
+    const suggest = recallMatchToOmniboxSuggest(match, suggestOptions)
+    expect(suggest?.description).toContain('共 3 条')
+  })
+
   it('无 URL 的命中被跳过', () => {
     const item = createBookmarkMemoryItem({
       ...baseContext,

@@ -79,6 +79,8 @@ async function handleOpenSettings() {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .app-page-header__brand {

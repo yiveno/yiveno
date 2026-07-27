@@ -1,6 +1,9 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
 import {
   getMaterialSymbolPath,
+  getMaterialSymbolViewBox,
   type MaterialSymbolName
 } from '@/infrastructure/ui/icons/material-symbol'
 
@@ -17,14 +20,15 @@ const props = withDefaults(
   }
 )
 
-const pathD = getMaterialSymbolPath(props.name)
+const pathD = computed(() => getMaterialSymbolPath(props.name))
+const viewBox = computed(() => getMaterialSymbolViewBox(props.name))
 </script>
 
 <template>
   <svg
     class="material-symbol-icon"
     xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
+    :viewBox="viewBox"
     :width="size"
     :height="size"
     aria-hidden="true"

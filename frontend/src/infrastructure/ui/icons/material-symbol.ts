@@ -16,12 +16,18 @@ export const MATERIAL_SYMBOL_NAMES = [
   'library_books',
   'open_in_new',
   'refresh',
-  'settings'
+  'settings',
+  'stacks'
 ] as const
 
 export type MaterialSymbolName = (typeof MATERIAL_SYMBOL_NAMES)[number]
 
-/** viewBox 统一 0 0 24 24；fill 由 CSS currentColor 控制。 */
+/** 默认 24×24；部分 Symbols 使用 960 网格。 */
+const MATERIAL_SYMBOL_VIEW_BOX: Partial<Record<MaterialSymbolName, string>> = {
+  stacks: '0 -960 960 960'
+}
+
+/** viewBox 统一默认 0 0 24 24；fill 由 CSS currentColor 控制。 */
 const MATERIAL_SYMBOL_PATHS: Record<MaterialSymbolName, string> = {
   // Material Icons Outlined · bookmark
   bookmark: 'M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2zm0 15-5-2.18L7 18V5h10v13z',
@@ -54,10 +60,18 @@ const MATERIAL_SYMBOL_PATHS: Record<MaterialSymbolName, string> = {
     'M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z',
   // Material Icons · settings
   settings:
-    'M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94L14.4 2.81c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41L9.25 5.35C8.66 5.59 8.12 5.92 7.63 6.29L5.24 5.33c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.63-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z'
+    'M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94L14.4 2.81c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41L9.25 5.35C8.66 5.59 8.12 5.92 7.63 6.29L5.24 5.33c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.63-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z',
+  // Material Symbols Outlined · stacks（960 网格）
+  stacks:
+    'M480-400 40-640l440-240 440 240-440 240Zm0 160L63-467l84-46 333 182 333-182 84 46-417 227Zm0 160L63-307l84-46 333 182 333-182 84 46L480-80Zm0-411 273-149-273-149-273 149 273 149Zm0-149Z'
 }
 
 /** 读取已登记 Material Symbol 的 path `d`。 */
 export function getMaterialSymbolPath(name: MaterialSymbolName): string {
   return MATERIAL_SYMBOL_PATHS[name]
+}
+
+/** SVG viewBox；未特殊登记时为 24×24。 */
+export function getMaterialSymbolViewBox(name: MaterialSymbolName): string {
+  return MATERIAL_SYMBOL_VIEW_BOX[name] ?? '0 0 24 24'
 }

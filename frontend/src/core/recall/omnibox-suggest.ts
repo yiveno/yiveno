@@ -105,6 +105,13 @@ export function recallMatchToOmniboxSuggest(
     }
   }
 
+  const duplicateCount = match.duplicateGroup?.totalCount
+  if (duplicateCount !== undefined && duplicateCount >= 2) {
+    parts.push(
+      `<dim>· ${escapeOmniboxXml(translate('omnibox_duplicate_count', String(duplicateCount)))}</dim>`
+    )
+  }
+
   return {
     content: openHref,
     description: parts.join(' ')
