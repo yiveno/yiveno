@@ -1,30 +1,25 @@
-import { memoryItemService } from '@/application/memory/memory-item-service'
-import { recallByKeyword } from '@/core/recall/build-recall-result'
+/**
+ * Recall 应用服务（UI/消息入口）。
+ *
+ * 将实际 Recall 逻辑下沉为 RecallBackend，使未来接入 Hybrid/embedding/索引时
+ * 只需要新增后端与索引实现，而不是在 UI/handler/core 主链路里到处分支。
+ */
+import { KeywordRecallBackend } from '@/application/recall/backends/keyword-recall-backend'
+import type { RecallBackend } from '@/application/recall/recall-backend'
 import type { RecallResult } from '@/core/recall/recall-result'
 
-/** Recall 读取的最大 MemoryItem 数量（Phase B：抬高扫描上限，仍为全表关键词 Filter）。 */
-const RECALL_SCAN_LIMIT = 10000
+function createRecallBackend(): RecallBackend {
+  // 当前主链路：KeywordRecallBackend（保持与旧逻辑一致）
+  return new KeywordRecallBackend()
+}
 
-/**
- * Recall 应用服务。
- * MVP 阶段使用关键词 Filter；语义召回后续接入。
- */
 export class RecallService {
+  constructor(private readonly backend: RecallBackend) {}
+
   /** 根据模糊线索在本机 MemoryItem 中找回最可能结果。 */
   async recallWithClue(clue: string): Promise<RecallResult> {
-    const normalizedClue = clue.trim()
-    if (!normalizedClue) {
-      return {
-        outcome: 'no_match',
-        topPick: null,
-        alsoPossible: [],
-        clue: ''
-      }
-    }
-
-    const items = await memoryItemService.list({ limit: RECALL_SCAN_LIMIT })
-    return recallByKeyword(items, normalizedClue, { candidateLimit: 6 })
+    return this.backend.recallWithClue(clue)
   }
 }
 
-export const recallService = new RecallService()
+export const recallService = new RecallService(createRecallBackend())

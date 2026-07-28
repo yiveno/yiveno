@@ -119,4 +119,39 @@ describe('memory-item-repository', () => {
     await memoryItemRepository.softDelete(first.id)
     expect(await memoryItemRepository.countActiveByOwner('bookmark')).toBe(1)
   })
+
+  it('recordDismiss 递增 dismissCount 且不改 updatedAt', async () => {
+    const created = await memoryItemRepository.createBookmark({
+      payload: { title: '可否定项', url: 'https://dismiss.example.com/item' },
+      now: () => '2026-07-22T06:00:00.000Z'
+    })
+
+    const dismissedAt = '2026-07-25T12:00:00.000Z'
+    const updated = await memoryItemRepository.recordDismiss([created.id], dismissedAt)
+    expect(updated).toBe(1)
+
+    const fetched = await memoryItemRepository.getById(created.id)
+    expect(fetched?.clues.dismissCount).toBe(1)
+    expect(fetched?.clues.lastDismissedAt).toBe(dismissedAt)
+    expect(fetched?.updatedAt).toBe(created.updatedAt)
+
+    await memoryItemRepository.recordDismiss([created.id], '2026-07-26T12:00:00.000Z')
+    const again = await memoryItemRepository.getById(created.id)
+    expect(again?.clues.dismissCount).toBe(2)
+    expect(again?.updatedAt).toBe(created.updatedAt)
+  })
+
+  it('recordDismiss 忽略不存在 id 并去重', async () => {
+    const created = await memoryItemRepository.createBookmark({
+      payload: { title: '唯一项', url: 'https://unique.example.com' },
+      now: () => '2026-07-22T06:00:00.000Z'
+    })
+
+    const updated = await memoryItemRepository.recordDismiss([
+      created.id,
+      created.id,
+      '00000000-0000-4000-8000-000000000099'
+    ])
+    expect(updated).toBe(1)
+  })
 })

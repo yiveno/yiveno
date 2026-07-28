@@ -237,6 +237,21 @@ export function buildRecallEvalCorpus(): MemoryItem[] {
       }),
       RECALL_EVAL_IDS.excerptMatchPrefixTightEn,
       '2026-07-07T08:00:00.000Z'
+    ),
+    withStableIdentity(
+      createTextExcerptMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          selectedText: '本文讨论了多个增长指标与 cohort 分析方法。',
+          sourceUrl: 'https://notes.example.com/type-b-retention',
+          pageTitle: '增长笔记'
+        },
+        clues: { note: '留存会上要给老板看的' },
+        now: () => '2026-07-06T08:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.typeBRetentionNote,
+      '2026-07-06T08:00:00.000Z'
     )
   ]
 }

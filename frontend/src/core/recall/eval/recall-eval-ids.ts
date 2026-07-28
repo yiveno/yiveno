@@ -22,7 +22,9 @@ export const RECALL_EVAL_IDS = {
   /** 英文：夹心匹配 */
   excerptMatchEmbeddedEn: '11111111-1111-4111-8111-111111111114',
   /** 英文：起首+更短密 */
-  excerptMatchPrefixTightEn: '11111111-1111-4111-8111-111111111115'
+  excerptMatchPrefixTightEn: '11111111-1111-4111-8111-111111111115',
+  /** Type B：正文泛化，靠 clues.note 找回 */
+  typeBRetentionNote: '11111111-1111-4111-8111-111111111116'
 } as const
 
 export type RecallEvalItemId = (typeof RECALL_EVAL_IDS)[keyof typeof RECALL_EVAL_IDS]

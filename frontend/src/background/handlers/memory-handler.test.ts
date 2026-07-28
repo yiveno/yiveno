@@ -9,6 +9,7 @@ import {
   handleDeleteMemoryItem,
   handleGetMemoryItem,
   handleListMemoryItems,
+  handleRecordRecallDismiss,
   handleUpdateMemoryNote
 } from '@/background/handlers/memory-handler'
 import { resetMemoryDatabaseInitializationForTests } from '@/infrastructure/indexeddb/memory-db'
@@ -202,5 +203,31 @@ describe('memory-handler', () => {
       return
     }
     expect(deleted.errorCode).toBe('MEMORY_DELETE_BOOKMARK_FORBIDDEN')
+  })
+
+  it('handleRecordRecallDismiss 写回 dismissCount', async () => {
+    const captured = await handleCaptureBookmark({
+      title: '可否定书签',
+      url: 'https://dismiss-handler.example.com'
+    })
+    expect(captured.ok).toBe(true)
+    if (!captured.ok || !('item' in captured)) {
+      return
+    }
+
+    const response = await handleRecordRecallDismiss({ ids: [captured.item.id] })
+    expect(response.ok).toBe(true)
+    if (!response.ok || !('updated' in response)) {
+      return
+    }
+    expect(response.updated).toBe(1)
+
+    const fetched = await handleGetMemoryItem({ id: captured.item.id })
+    expect(fetched.ok).toBe(true)
+    if (!fetched.ok || !('item' in fetched)) {
+      return
+    }
+    expect(fetched.item.clues.dismissCount).toBe(1)
+    expect(fetched.item.clues.lastDismissedAt).toBeTruthy()
   })
 })

@@ -1,4 +1,4 @@
-import { recallByKeyword } from '@/core/recall/build-recall-result'
+import { recallByKeyword, RECALL_RESULT_SLOT_LIMIT } from '@/core/recall/build-recall-result'
 import type { RecallEvalCase } from '@/core/recall/eval/recall-eval-cases'
 import { buildRecallEvalCorpus } from '@/core/recall/eval/recall-eval-corpus'
 import { RECALL_EVAL_NOW_MS } from '@/core/recall/eval/recall-eval-now'
@@ -47,6 +47,20 @@ export function judgeRecallEvalCase(
       detail: passed
         ? '正确 no_match'
         : `期望 no_match，实际 outcome=${result.outcome} topPick=${result.topPick?.item.id ?? 'null'}`
+    }
+  }
+
+  if (expectation.kind === 'need_a_clue') {
+    const ids = candidateIds(result, RECALL_RESULT_SLOT_LIMIT)
+    const passed =
+      result.outcome === 'need_a_clue' &&
+      result.topPick === null &&
+      ids.includes(expectation.expectedId)
+    return {
+      passed,
+      detail: passed
+        ? 'need_a_clue 且弱候选含期望项'
+        : `期望 need_a_clue 含 ${expectation.expectedId}，实际 outcome=${result.outcome} topPick=${result.topPick?.item.id ?? 'null'} candidates=[${ids.join(', ') || '空'}]`
     }
   }
 

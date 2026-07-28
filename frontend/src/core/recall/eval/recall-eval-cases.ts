@@ -7,11 +7,13 @@ export type RecallEvalClueClass = 'concrete' | 'semi_fuzzy' | 'vague' | 'negativ
  * 期望形态。
  * - top1：Top Pick 必须是 expectedId
  * - in_topk：期望项须出现在候选前 k（含 Top Pick）
+ * - need_a_clue：弱命中追问；无 Top Pick，expectedId 须在 alsoPossible
  * - no_match：应无 Top Pick
  */
 export type RecallEvalExpectation =
   | { kind: 'top1'; expectedId: RecallEvalItemId }
   | { kind: 'in_topk'; expectedId: RecallEvalItemId; k?: number }
+  | { kind: 'need_a_clue'; expectedId: RecallEvalItemId }
   | { kind: 'no_match' }
 
 /**
@@ -168,6 +170,22 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
     gate: 'must',
     expectation: { kind: 'in_topk', expectedId: RECALL_EVAL_IDS.deployChecklistExcerpt, k: 3 },
     note: '同义改写：靠中文 bigram「检查」等拉回清单摘录'
+  },
+  {
+    id: 'need-a-clue-weak-title-fragment',
+    clue: '框架对比',
+    clueClass: 'vague',
+    gate: 'must',
+    expectation: { kind: 'need_a_clue', expectedId: RECALL_EVAL_IDS.retentionFramework },
+    note: '词面弱命中未达 Top Pick 阈值；应 need_a_clue 并展示弱候选'
+  },
+  {
+    id: 'semi-fuzzy-type-b-note',
+    clue: '老板看的留存',
+    clueClass: 'semi_fuzzy',
+    gate: 'must',
+    expectation: { kind: 'top1', expectedId: RECALL_EVAL_IDS.typeBRetentionNote },
+    note: 'Type B：正文泛化，靠个人备注 clues.note 找回'
   },
   {
     id: 'concrete-typo-yiveno-doc',

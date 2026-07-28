@@ -4,7 +4,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { LOCAL_PROFILE_STORAGE_KEY, type LocalProfile } from '@/core/identity/local-profile'
 import { handleRecallWithClue } from '@/background/handlers/recall-handler'
-import { handleCaptureBookmark } from '@/background/handlers/memory-handler'
+import {
+  handleCaptureBookmark,
+  handleRecordMemoryOpen,
+  handleRecordRecallDismiss
+} from '@/background/handlers/memory-handler'
 import { resetMemoryDatabaseInitializationForTests } from '@/infrastructure/indexeddb/memory-db'
 
 type StorageMap = Record<string, unknown>
@@ -82,5 +86,43 @@ describe('recall-handler', () => {
     }
 
     expect(response.result.outcome).toBe('no_match')
+  })
+
+  it('否定反馈后同线索应改选竞争者', async () => {
+    const preferred = await handleCaptureBookmark({
+      title: 'Yiveno 设计原则',
+      url: 'https://docs.yiveno.com/design'
+    })
+    const alternative = await handleCaptureBookmark({
+      title: 'Yiveno 产品文档',
+      url: 'https://docs.yiveno.com/product'
+    })
+    expect(preferred.ok && alternative.ok).toBe(true)
+    if (!preferred.ok || !('item' in preferred) || !alternative.ok || !('item' in alternative)) {
+      return
+    }
+
+    const opened = await handleRecordMemoryOpen({ id: preferred.item.id })
+    expect(opened.ok).toBe(true)
+
+    const before = await handleRecallWithClue({ clue: 'Yiveno' })
+    expect(before.ok).toBe(true)
+    if (!before.ok) {
+      return
+    }
+    expect(before.result.topPick?.item.id).toBe(preferred.item.id)
+
+    for (let i = 0; i < 3; i += 1) {
+      const dismissed = await handleRecordRecallDismiss({ ids: [preferred.item.id] })
+      expect(dismissed.ok).toBe(true)
+    }
+
+    const after = await handleRecallWithClue({ clue: 'Yiveno' })
+    expect(after.ok).toBe(true)
+    if (!after.ok) {
+      return
+    }
+    expect(after.result.topPick?.item.id).toBe(alternative.item.id)
+    expect(after.result.topPick?.item.id).not.toBe(preferred.item.id)
   })
 })
