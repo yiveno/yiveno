@@ -28,7 +28,7 @@ const emit = defineEmits<{
 const latestDismissibleAssistantId = computed(() => {
   for (let i = props.turns.length - 1; i >= 0; i -= 1) {
     const turn = props.turns[i]
-    if (turn.role === 'assistant' && turn.allowDismiss) {
+    if (turn && turn.role === 'assistant' && turn.allowDismiss) {
       return turn.id
     }
   }
