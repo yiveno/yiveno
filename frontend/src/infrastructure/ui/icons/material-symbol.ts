@@ -5,6 +5,7 @@
  */
 
 export const MATERIAL_SYMBOL_NAMES = [
+  'arrow_upward',
   'bookmark',
   'bookmark_add',
   'chevron_right',
@@ -29,6 +30,8 @@ const MATERIAL_SYMBOL_VIEW_BOX: Partial<Record<MaterialSymbolName, string>> = {
 
 /** viewBox 统一默认 0 0 24 24；fill 由 CSS currentColor 控制。 */
 const MATERIAL_SYMBOL_PATHS: Record<MaterialSymbolName, string> = {
+  // Material Icons · arrow_upward
+  arrow_upward: 'M4 12l1.41 1.41L11 7.83V20h2V7.83l5.59 5.58L20 12l-8-8-8 8z',
   // Material Icons Outlined · bookmark
   bookmark: 'M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2zm0 15-5-2.18L7 18V5h10v13z',
   // Material Icons Outlined · bookmark_add（书签内加号）

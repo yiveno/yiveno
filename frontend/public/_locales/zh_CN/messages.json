@@ -114,6 +114,12 @@
   "popup_import_progress_aria": {
     "message": "书签导入进度"
   },
+  "popup_welcome_title": {
+    "message": "我们先从哪里开始呢？"
+  },
+  "popup_welcome_body": {
+    "message": "告诉我你记得什么，我会先给出最可能的答案；如果不够确定，我们再一起缩小范围。"
+  },
   "popup_clue_input_aria": {
     "message": "线索"
   },
@@ -161,6 +167,30 @@
   },
   "popup_dismiss_candidates": {
     "message": "这些都不对"
+  },
+  "popup_reply_confident": {
+    "message": "我觉得你要找的就是这个。"
+  },
+  "popup_reply_uncertain": {
+    "message": "我还不能完全确定，最接近的是这些。"
+  },
+  "popup_reply_miss": {
+    "message": "我还没对上。你可以再补一句你记得的内容。"
+  },
+  "popup_reply_after_dismiss": {
+    "message": "好，我们换个方向继续找。你可以补一句网站名、原文，或者你自己写过的话。"
+  },
+  "popup_suggest_site": {
+    "message": "我记得网站名是："
+  },
+  "popup_suggest_quote": {
+    "message": "我记得里面有一句："
+  },
+  "popup_suggest_note": {
+    "message": "我自己好像写过："
+  },
+  "popup_suggest_type": {
+    "message": "我记得它更像是："
   },
   "popup_duplicate_group_bookmark": {
     "message": "共 $1 条相同书签",

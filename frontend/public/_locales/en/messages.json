@@ -114,6 +114,12 @@
   "popup_import_progress_aria": {
     "message": "Bookmark import progress"
   },
+  "popup_welcome_title": {
+    "message": "Where should we start?"
+  },
+  "popup_welcome_body": {
+    "message": "Tell me what you remember. I’ll start with the most likely answer, and if I’m not sure, we’ll narrow it down together."
+  },
   "popup_clue_input_aria": {
     "message": "Clue"
   },
@@ -161,6 +167,30 @@
   },
   "popup_dismiss_candidates": {
     "message": "None of these"
+  },
+  "popup_reply_confident": {
+    "message": "I think this is the one you're looking for."
+  },
+  "popup_reply_uncertain": {
+    "message": "I'm not fully sure yet. These are the closest matches."
+  },
+  "popup_reply_miss": {
+    "message": "I haven't matched it yet. Add one more detail you remember."
+  },
+  "popup_reply_after_dismiss": {
+    "message": "Okay, let's try a different angle. Add the site, a quote, or something you wrote."
+  },
+  "popup_suggest_site": {
+    "message": "I remember the site was:"
+  },
+  "popup_suggest_quote": {
+    "message": "I remember a line like:"
+  },
+  "popup_suggest_note": {
+    "message": "I think I wrote:"
+  },
+  "popup_suggest_type": {
+    "message": "It felt more like:"
   },
   "popup_duplicate_group_bookmark": {
     "message": "$1 identical bookmarks",
