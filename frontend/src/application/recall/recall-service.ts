@@ -4,13 +4,24 @@
  * 将实际 Recall 逻辑下沉为 RecallBackend，使未来接入 Hybrid/embedding/索引时
  * 只需要新增后端与索引实现，而不是在 UI/handler/core 主链路里到处分支。
  */
+import { HybridRecallBackend } from '@/application/recall/backends/hybrid-recall-backend'
 import { KeywordRecallBackend } from '@/application/recall/backends/keyword-recall-backend'
 import type { RecallBackend } from '@/application/recall/recall-backend'
 import type { RecallResult } from '@/core/recall/recall-result'
 
+type RecallBackendMode = 'keyword' | 'hybrid'
+
+const RECALL_BACKEND_MODE: RecallBackendMode = 'keyword'
+
 function createRecallBackend(): RecallBackend {
-  // 当前主链路：KeywordRecallBackend（保持与旧逻辑一致）
-  return new KeywordRecallBackend()
+  switch (RECALL_BACKEND_MODE) {
+    case 'hybrid':
+      return new HybridRecallBackend()
+    case 'keyword':
+    default:
+      // 当前主链路：KeywordRecallBackend（保持与旧逻辑一致）
+      return new KeywordRecallBackend()
+  }
 }
 
 export class RecallService {
