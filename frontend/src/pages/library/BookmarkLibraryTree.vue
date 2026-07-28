@@ -18,6 +18,13 @@ defineEmits<{
       note: string
     }
   ]
+  openBookmark: [
+    payload: {
+      url: string
+      navigate: boolean
+      memoryItemId?: string
+    }
+  ]
 }>()
 </script>
 
@@ -30,6 +37,7 @@ defineEmits<{
       :depth="0"
       :show-unsynced-flags="showUnsyncedFlags"
       @edit-note="$emit('editNote', $event)"
+      @open-bookmark="$emit('openBookmark', $event)"
     />
   </ul>
 </template>

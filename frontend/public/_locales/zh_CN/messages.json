@@ -60,7 +60,19 @@
     "message": "正在保存…"
   },
   "selection_toolbar_saved": {
-    "message": "已保存"
+    "message": "已存进 Yiveno"
+  },
+  "selection_toolbar_saved_hint": {
+    "message": "打开扩展，用「$1」试试找回",
+    "placeholders": {
+      "clue": {
+        "content": "$1",
+        "example": "hydration"
+      }
+    }
+  },
+  "selection_toolbar_saved_hint_generic": {
+    "message": "打开扩展，用还记得的词就能找回"
   },
   "selection_toolbar_failed": {
     "message": "保存失败"
@@ -137,6 +149,18 @@
   },
   "popup_section_also_possible": {
     "message": "也可能是这些"
+  },
+  "popup_section_possible_matches": {
+    "message": "可能相关"
+  },
+  "popup_need_a_clue_title": {
+    "message": "再补一点线索"
+  },
+  "popup_need_a_clue_body": {
+    "message": "这些可能有关，但还不够确定。请在上方补词，或点「这些都不对」。"
+  },
+  "popup_dismiss_candidates": {
+    "message": "这些都不对"
   },
   "popup_duplicate_group_bookmark": {
     "message": "共 $1 条相同书签",
@@ -259,7 +283,7 @@
     "message": "还没有文字摘录"
   },
   "library_empty_excerpts_body": {
-    "message": "在网页划词保存，或右键「保存到 Yiveno」后，会出现在这里。"
+    "message": "在网页划词保存，或右键「保存到 Yiveno」。这是找回时最有用的个人痕迹。"
   },
   "library_loading": {
     "message": "正在读取…"
@@ -397,16 +421,16 @@
     "message": "还没有可找回的记忆"
   },
   "popup_empty_no_memory_body_importing": {
-    "message": "正在导入书签，完成后即可用标题或域名片段找回。也可先划词保存一段文字。"
+    "message": "正在导入书签。想更快体验找回，可先在网页划词保存一段文字。"
   },
   "popup_empty_no_memory_body": {
-    "message": "用 Chrome 加书签并等待同步，或在网页划词后点「保存到 Yiveno」。"
+    "message": "先在网页划词保存你想留住的句子；也可用 Chrome 加书签并等待同步。"
   },
   "popup_empty_library_empty_title": {
     "message": "记忆库还是空的"
   },
   "popup_empty_library_empty_body": {
-    "message": "先存一点再找回：Chrome 加书签等待同步，或划词保存选区。换词暂时帮不上忙。"
+    "message": "先划词存一点个人痕迹再找回。换词暂时帮不上忙；书签同步是配角。"
   },
   "popup_no_match_title_with_clue": {
     "message": "没找到和「$clue$」相关的",
@@ -421,7 +445,7 @@
     "message": "还没找到匹配的"
   },
   "popup_no_match_body": {
-    "message": "试试更短的词，或用域名、标题里还记得的片段。也可划词保存后再找回。"
+    "message": "试试更短的词，或备注、正文里还记得的片段。也可再划词存一点后再找回。"
   },
   "explain_field_title": {
     "message": "标题"

@@ -60,7 +60,19 @@
     "message": "Saving…"
   },
   "selection_toolbar_saved": {
-    "message": "Saved"
+    "message": "Saved to Yiveno"
+  },
+  "selection_toolbar_saved_hint": {
+    "message": "Open the extension and try recalling with “$1”",
+    "placeholders": {
+      "clue": {
+        "content": "$1",
+        "example": "hydration"
+      }
+    }
+  },
+  "selection_toolbar_saved_hint_generic": {
+    "message": "Open the extension and recall with any word you remember"
   },
   "selection_toolbar_failed": {
     "message": "Save failed"
@@ -137,6 +149,18 @@
   },
   "popup_section_also_possible": {
     "message": "Also possible"
+  },
+  "popup_section_possible_matches": {
+    "message": "Possible matches"
+  },
+  "popup_need_a_clue_title": {
+    "message": "Add one more clue"
+  },
+  "popup_need_a_clue_body": {
+    "message": "These might be related, but none is strong enough yet. Refine the clue above, or say none of these."
+  },
+  "popup_dismiss_candidates": {
+    "message": "None of these"
   },
   "popup_duplicate_group_bookmark": {
     "message": "$1 identical bookmarks",
@@ -259,7 +283,7 @@
     "message": "No text excerpts yet"
   },
   "library_empty_excerpts_body": {
-    "message": "Select text on a page to save, or use “Save to Yiveno” in the context menu."
+    "message": "Select text on a page to save, or use “Save to Yiveno”. These personal traces are what recall works best on."
   },
   "library_loading": {
     "message": "Loading…"
@@ -397,16 +421,16 @@
     "message": "Nothing to recall yet"
   },
   "popup_empty_no_memory_body_importing": {
-    "message": "Importing bookmarks—then you can recall by title or domain. Or save a text selection first."
+    "message": "Importing bookmarks. For a quicker first recall, save a text selection on a page."
   },
   "popup_empty_no_memory_body": {
-    "message": "Add bookmarks in Chrome and wait for sync, or select text on a page and tap “Save to Yiveno”."
+    "message": "First save a sentence you care about with the selection toolbar; Chrome bookmarks can sync as a backup."
   },
   "popup_empty_library_empty_title": {
     "message": "Your library is still empty"
   },
   "popup_empty_library_empty_body": {
-    "message": "Save something first: add a Chrome bookmark and wait for sync, or save a selection. Changing the clue won’t help yet."
+    "message": "Save a personal trace first—select text on a page. Changing the clue won’t help yet; bookmarks are secondary."
   },
   "popup_no_match_title_with_clue": {
     "message": "Nothing related to “$clue$”",
@@ -421,7 +445,7 @@
     "message": "No match yet"
   },
   "popup_no_match_body": {
-    "message": "Try a shorter clue, or a fragment from the domain or title. You can also save a selection and recall it later."
+    "message": "Try a shorter clue, or a fragment from a note or the excerpt itself. You can also save another selection and recall later."
   },
   "explain_field_title": {
     "message": "title"

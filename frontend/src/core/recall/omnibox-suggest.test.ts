@@ -65,7 +65,8 @@ describe('omnibox-suggest', () => {
     }
 
     const suggest = recallMatchToOmniboxSuggest(match, suggestOptions)
-    expect(suggest?.content).toBe('https://example.com/retention')
+    expect(suggest?.content).toContain('/omnibox-open.html?id=')
+    expect(suggest?.content).toContain(match.item.id)
     expect(suggest?.description).toBe(
       '<dim>Y·书签</dim> <match>留存分析</match> <dim>·</dim> <url>example.com</url> <dim>· 标题</dim>'
     )
@@ -124,9 +125,11 @@ describe('omnibox-suggest', () => {
 
     const suggests = recallResultToOmniboxSuggests(result, suggestOptions)
     expect(suggests).toHaveLength(2)
-    expect(suggests[0]?.content).toBe('https://example.com/retention')
+    expect(suggests[0]?.content).toContain('/omnibox-open.html?id=')
+    expect(suggests[0]?.content).toContain(result.topPick!.item.id)
     expect(suggests[0]?.description).toContain('Y·书签')
-    expect(suggests[1]?.content).toBe('https://example.com/guide')
+    expect(suggests[1]?.content).toContain('/omnibox-open.html?id=')
+    expect(suggests[1]?.content).toContain(result.alsoPossible[0]!.item.id)
   })
 
   it('相同 URL 去重', () => {

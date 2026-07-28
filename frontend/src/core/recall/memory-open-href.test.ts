@@ -6,8 +6,10 @@ import {
 } from '@/core/memory/create-memory-item'
 import {
   getMemoryItemOpenHref,
+  getOmniboxSuggestContent,
   tryParseMemoryItemIdFromOpenHref,
-  tryParseNavigableUrl
+  tryParseNavigableUrl,
+  tryParseOmniboxOpenMemoryId
 } from '@/core/recall/memory-open-href'
 
 const baseContext = {
@@ -49,10 +51,33 @@ describe('memory-open-href', () => {
     expect(tryParseNavigableUrl('javascript:alert(1)')).toBeNull()
   })
 
-  it('tryParseMemoryItemIdFromOpenHref 仅解析详情页 id', () => {
+  it('tryParseMemoryItemIdFromOpenHref 解析详情页与 Omnibox 占位 id', () => {
     expect(
       tryParseMemoryItemIdFromOpenHref(`${detailPageUrl}?id=11111111-1111-4111-8111-111111111111`)
     ).toBe('11111111-1111-4111-8111-111111111111')
     expect(tryParseMemoryItemIdFromOpenHref('https://example.com/a')).toBeNull()
+
+    const bookmark = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: { title: '留存', url: 'https://example.com/retention' }
+    })
+    const omniboxContent = getOmniboxSuggestContent(bookmark, { detailPageUrl })
+    expect(omniboxContent).toContain('/omnibox-open.html?id=')
+    expect(tryParseOmniboxOpenMemoryId(omniboxContent)).toBe(bookmark.id)
+    expect(tryParseMemoryItemIdFromOpenHref(omniboxContent)).toBe(bookmark.id)
+  })
+
+  it('摘录 Omnibox content 仍为详情页', () => {
+    const item = createTextExcerptMemoryItem({
+      ...baseContext,
+      payload: {
+        selectedText: '关键段落',
+        sourceUrl: 'https://notes.example.com/post',
+        pageTitle: '笔记'
+      }
+    })
+    expect(getOmniboxSuggestContent(item, { detailPageUrl })).toBe(
+      getMemoryItemOpenHref(item, { detailPageUrl })
+    )
   })
 })

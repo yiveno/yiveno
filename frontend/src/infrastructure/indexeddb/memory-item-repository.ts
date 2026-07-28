@@ -134,6 +134,8 @@ export class MemoryItemRepository {
         ...next.clues,
         openCount: existing.clues.openCount,
         lastOpenedAt: existing.clues.lastOpenedAt,
+        dismissCount: existing.clues.dismissCount,
+        lastDismissedAt: existing.clues.lastDismissedAt,
         tags: existing.clues.tags.length > 0 ? existing.clues.tags : next.clues.tags,
         note: existing.clues.note ?? next.clues.note
       }
@@ -314,6 +316,37 @@ export class MemoryItemRepository {
 
     await this.put(next)
     return next
+  }
+
+  /**
+   * 批量记录否定反馈（「都不是这些」）。
+   * 只更新 dismissCount / lastDismissedAt，不改 updatedAt。
+   */
+  async recordDismiss(ids: string[], dismissedAt = new Date().toISOString()): Promise<number> {
+    const uniqueIds = [...new Set(ids.map(id => id.trim()).filter(Boolean))]
+    if (uniqueIds.length === 0) {
+      return 0
+    }
+
+    const ownerId = await getCurrentOwnerId()
+    let updated = 0
+    for (const id of uniqueIds) {
+      const existing = await this.getById(id, ownerId)
+      if (!existing) {
+        continue
+      }
+      const next: MemoryItem = {
+        ...existing,
+        clues: {
+          ...existing.clues,
+          dismissCount: (existing.clues.dismissCount ?? 0) + 1,
+          lastDismissedAt: dismissedAt
+        }
+      }
+      await this.put(next)
+      updated += 1
+    }
+    return updated
   }
 
   /** 按 Chrome 书签 ID 软删除 Bookmark MemoryItem。 */

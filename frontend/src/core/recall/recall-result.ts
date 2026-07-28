@@ -20,7 +20,7 @@ export interface RecallDuplicateGroup {
 }
 
 /** Recall 结果形态。 */
-export type RecallOutcome = 'top_pick' | 'no_match'
+export type RecallOutcome = 'top_pick' | 'need_a_clue' | 'no_match'
 
 /** 关键词 Filter 召回结果。 */
 export interface RecallResult {

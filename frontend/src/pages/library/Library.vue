@@ -20,6 +20,7 @@ import {
   deleteMemoryItem,
   fetchBookmarkLibraryTree,
   listMemoryItems,
+  recordMemoryOpen,
   updateMemoryNote
 } from '@/infrastructure/messaging/background-client'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
@@ -194,6 +195,22 @@ function openBookmarkNoteEditor(payload: { memoryItemId: string; title: string; 
   noteEditorOpen.value = true
 }
 
+/** 记忆库打开书签：有 id 则写回行为；navigate 时再开链接。 */
+function handleOpenBookmark(payload: {
+  url: string
+  navigate: boolean
+  memoryItemId?: string
+}): void {
+  if (payload.memoryItemId) {
+    void recordMemoryOpen({ id: payload.memoryItemId }).catch(() => {
+      // 忽略：打开记录失败不影响导航
+    })
+  }
+  if (payload.navigate) {
+    window.open(payload.url, '_blank', 'noopener,noreferrer')
+  }
+}
+
 function closeBookmarkNoteEditor() {
   if (noteEditorSaving.value) {
     return
@@ -320,6 +337,7 @@ watch(
             :roots="bookmarkRoots"
             :show-unsynced-flags="bookmarkSyncReady"
             @edit-note="openBookmarkNoteEditor"
+            @open-bookmark="handleOpenBookmark"
           />
         </template>
 

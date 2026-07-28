@@ -8,6 +8,7 @@ import { recallByKeyword } from '@/core/recall/build-recall-result'
 import {
   compactRecallText,
   computeBehaviorBoost,
+  computeDismissPenalty,
   filterMemoryItemsByKeyword,
   scoreMemoryItem,
   tokenizeRecallClue
@@ -91,6 +92,31 @@ describe('keyword-filter', () => {
     expect(scoreMemoryItem(hot, '完全无关', { nowMs }).score).toBe(0)
   })
 
+  it('否定反馈 dismissCount 降权；多次封顶', () => {
+    const clean = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: { title: 'Yiveno 产品文档', url: 'https://docs.yiveno.com/clean' }
+    })
+    const dismissed = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: { title: 'Yiveno 产品文档', url: 'https://docs.yiveno.com/dismissed' },
+      clues: { dismissCount: 3 }
+    })
+    const heavilyDismissed = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: { title: 'Yiveno 产品文档', url: 'https://docs.yiveno.com/heavy' },
+      clues: { dismissCount: 99 }
+    })
+
+    expect(computeDismissPenalty(clean)).toBe(0)
+    expect(computeDismissPenalty(dismissed)).toBeGreaterThan(0)
+    expect(computeDismissPenalty(heavilyDismissed)).toBe(10)
+
+    const cleanScore = scoreMemoryItem(clean, 'Yiveno').score
+    const dismissedScore = scoreMemoryItem(dismissed, 'Yiveno').score
+    expect(dismissedScore).toBeLessThan(cleanScore)
+  })
+
   it('scoreMemoryItem 命中标题时分数更高', () => {
     const bookmark = createBookmarkMemoryItem({
       ...baseContext,
@@ -141,11 +167,11 @@ describe('keyword-filter', () => {
     const items = [
       createBookmarkMemoryItem({
         ...baseContext,
-        payload: { title: 'Yiveno 产品文档', url: 'https://yiveno.com/docs' }
+        payload: { title: 'Yiveno 产品文档', url: 'https://docs.yiveno.example/docs' }
       }),
       createBookmarkMemoryItem({
         ...baseContext,
-        payload: { title: 'Yiveno 设计原则', url: 'https://yiveno.com/design' }
+        payload: { title: 'Yiveno 设计原则', url: 'https://design.other.example/design' }
       })
     ]
 

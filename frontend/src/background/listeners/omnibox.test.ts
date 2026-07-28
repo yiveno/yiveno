@@ -1,12 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { recallWithClueMock } = vi.hoisted(() => ({
-  recallWithClueMock: vi.fn()
+const { recallWithClueMock, recordOpenMock, getByIdMock } = vi.hoisted(() => ({
+  recallWithClueMock: vi.fn(),
+  recordOpenMock: vi.fn(async () => undefined),
+  getByIdMock: vi.fn()
 }))
 
 vi.mock('@/application/recall/recall-service', () => ({
   recallService: {
     recallWithClue: recallWithClueMock
+  }
+}))
+
+vi.mock('@/application/memory/memory-item-service', () => ({
+  memoryItemService: {
+    recordOpen: recordOpenMock,
+    getById: getByIdMock
   }
 }))
 
@@ -19,6 +28,19 @@ import {
   resetOmniboxListenersForTests
 } from '@/background/listeners/omnibox'
 
+const BOOKMARK_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+
+const bookmarkItem = {
+  id: BOOKMARK_ID,
+  type: 'bookmark' as const,
+  payload: {
+    title: '留存分析',
+    url: 'https://example.com/retention',
+    domain: 'example.com'
+  },
+  clues: {}
+}
+
 describe('omnibox listeners', () => {
   const setDefaultSuggestion = vi.fn()
   const onInputChangedAddListener = vi.fn()
@@ -29,6 +51,7 @@ describe('omnibox listeners', () => {
   beforeEach(() => {
     resetOmniboxListenersForTests()
     vi.clearAllMocks()
+    getByIdMock.mockResolvedValue(bookmarkItem)
 
     vi.stubGlobal('chrome', {
       i18n: {
@@ -38,6 +61,15 @@ describe('omnibox listeners', () => {
           }
           if (key === 'omnibox_no_match') {
             return '未找到匹配的记忆'
+          }
+          if (key === 'omnibox_type_bookmark') {
+            return 'Y·书签'
+          }
+          if (key === 'type_label_bookmark') {
+            return '书签'
+          }
+          if (key === 'explain_field_short_title') {
+            return '标题'
           }
           return ''
         })
@@ -70,15 +102,7 @@ describe('omnibox listeners', () => {
     recallWithClueMock.mockResolvedValue({
       outcome: 'top_pick',
       topPick: {
-        item: {
-          type: 'bookmark',
-          payload: {
-            title: '留存分析',
-            url: 'https://example.com/retention',
-            domain: 'example.com'
-          },
-          clues: {}
-        },
+        item: bookmarkItem,
         score: 40,
         matchedFields: ['title']
       },
@@ -100,10 +124,28 @@ describe('omnibox listeners', () => {
     })
 
     expect(recallWithClueMock).toHaveBeenCalledWith('留存')
-    expect(suggest.mock.calls[0]?.[0]?.[0]?.content).toBe('https://example.com/retention')
+    expect(suggest.mock.calls[0]?.[0]?.[0]?.content).toBe(
+      `chrome-extension://testid/omnibox-open.html?id=${BOOKMARK_ID}`
+    )
   })
 
-  it('选中建议按 disposition 打开 URL', async () => {
+  it('选中书签占位建议时写回并打开真实 URL', async () => {
+    registerOmniboxListeners()
+    const onEntered = onInputEnteredAddListener.mock.calls[0]?.[0] as (
+      text: string,
+      disposition: chrome.omnibox.OnInputEnteredDisposition
+    ) => void
+
+    onEntered(`chrome-extension://testid/omnibox-open.html?id=${BOOKMARK_ID}`, 'currentTab')
+
+    await vi.waitFor(() => {
+      expect(tabsUpdate).toHaveBeenCalledWith({ url: 'https://example.com/retention' })
+    })
+    expect(recordOpenMock).toHaveBeenCalledWith(BOOKMARK_ID)
+    expect(getByIdMock).toHaveBeenCalledWith(BOOKMARK_ID)
+  })
+
+  it('选中 http 直链建议仍按 disposition 打开', async () => {
     registerOmniboxListeners()
     const onEntered = onInputEnteredAddListener.mock.calls[0]?.[0] as (
       text: string,
@@ -115,20 +157,14 @@ describe('omnibox listeners', () => {
     await vi.waitFor(() => {
       expect(tabsUpdate).toHaveBeenCalledWith({ url: 'https://example.com/retention' })
     })
+    expect(recordOpenMock).not.toHaveBeenCalled()
   })
 
   it('直接回车对线索再 Recall 并打开 Top Pick', async () => {
     recallWithClueMock.mockResolvedValue({
       outcome: 'top_pick',
       topPick: {
-        item: {
-          type: 'bookmark',
-          payload: {
-            title: '留存分析',
-            url: 'https://example.com/retention',
-            domain: 'example.com'
-          }
-        },
+        item: bookmarkItem,
         score: 40,
         matchedFields: ['title']
       },
@@ -148,5 +184,6 @@ describe('omnibox listeners', () => {
       expect(tabsCreate).toHaveBeenCalledWith({ url: 'https://example.com/retention' })
     })
     expect(recallWithClueMock).toHaveBeenCalledWith('留存')
+    expect(recordOpenMock).toHaveBeenCalledWith(BOOKMARK_ID)
   })
 })

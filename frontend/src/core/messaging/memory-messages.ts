@@ -48,6 +48,10 @@ const recordMemoryOpenPayloadSchema = z.object({
   id: z.string().uuid()
 })
 
+const recordRecallDismissPayloadSchema = z.object({
+  ids: z.array(z.string().uuid()).min(1).max(20)
+})
+
 /** Memory 操作面向 UI 的稳定错误码。 */
 export const MemoryErrorCodeSchema = z.enum([
   'MEMORY_NOT_FOUND',
@@ -108,6 +112,13 @@ export type RecordMemoryOpenMessage = {
   payload: z.infer<typeof recordMemoryOpenPayloadSchema>
 }
 
+/** 记录否定反馈（Need A Clue / 结果「都不是这些」）。 */
+export type RecordRecallDismissMessage = {
+  scope: BackgroundMessageScope
+  type: 'RECORD_RECALL_DISMISS'
+  payload: z.infer<typeof recordRecallDismissPayloadSchema>
+}
+
 export type MemoryBackgroundMessage =
   | CaptureBookmarkMessage
   | CaptureTextExcerptMessage
@@ -116,6 +127,7 @@ export type MemoryBackgroundMessage =
   | DeleteMemoryItemMessage
   | UpdateMemoryNoteMessage
   | RecordMemoryOpenMessage
+  | RecordRecallDismissMessage
 
 export type MemoryItemSuccessResponse = {
   ok: true
@@ -128,6 +140,11 @@ export type MemoryItemListSuccessResponse = {
   total: number
 }
 
+export type MemoryDismissSuccessResponse = {
+  ok: true
+  updated: number
+}
+
 export type MemoryItemErrorResponse = {
   ok: false
   errorCode: MemoryErrorCode
@@ -138,6 +155,7 @@ export type MemoryItemErrorResponse = {
 export type MemoryBackgroundResponse =
   | MemoryItemSuccessResponse
   | MemoryItemListSuccessResponse
+  | MemoryDismissSuccessResponse
   | MemoryItemErrorResponse
 
 export function parseCaptureBookmarkPayload(value: unknown) {
@@ -166,4 +184,8 @@ export function parseUpdateMemoryNotePayload(value: unknown) {
 
 export function parseRecordMemoryOpenPayload(value: unknown) {
   return recordMemoryOpenPayloadSchema.parse(value)
+}
+
+export function parseRecordRecallDismissPayload(value: unknown) {
+  return recordRecallDismissPayloadSchema.parse(value)
 }

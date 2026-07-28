@@ -22,15 +22,20 @@ import {
   fetchChromeBookmarkImportStatus,
   listMemoryItems,
   recallWithClue,
-  recordMemoryOpen
+  recordMemoryOpen,
+  recordRecallDismiss
 } from '@/infrastructure/messaging/background-client'
+import {
+  consumePopupRecallPrefill,
+  markFirstRecallOpenDone
+} from '@/infrastructure/storage/first-recall-onboarding-storage'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
 import MaterialSymbolIcon from '@/infrastructure/ui/icons/MaterialSymbolIcon.vue'
 import RecallResultCard, { type PopupRecallCardModel } from '@/pages/popup/RecallResultCard.vue'
 
 defineOptions({ name: 'PopupPage' })
 
-type RecallViewState = 'idle' | 'loading' | 'result' | 'no_match' | 'error'
+type RecallViewState = 'idle' | 'loading' | 'result' | 'need_a_clue' | 'no_match' | 'error'
 
 /** 停输后触发找回的防抖间隔（毫秒）。 */
 const RECALL_DEBOUNCE_MS = 400
@@ -52,11 +57,11 @@ let recallDebounceTimer: ReturnType<typeof setTimeout> | null = null
 /** 递增以丢弃过期找回响应，避免慢请求覆盖新线索结果。 */
 let recallRequestId = 0
 
-/** 是否展示结果列表（含刷新中的旧结果）。 */
+/** 是否展示结果列表（含刷新中的旧结果；Need A Clue 仅有弱候选）。 */
 const showRecallResults = computed(
   () =>
-    Boolean(recallResult.value?.topPick) &&
-    (viewState.value === 'result' || isRecallRefreshing.value)
+    Boolean(recallResult.value?.topPick || (recallResult.value?.alsoPossible?.length ?? 0) > 0) &&
+    (viewState.value === 'result' || viewState.value === 'need_a_clue' || isRecallRefreshing.value)
 )
 
 const importProgressPercent = computed(() => {
@@ -126,10 +131,11 @@ const alsoPossibleCards = computed(() => {
 /** Top Pick + Also Possible 扁平列表，供键盘上下切换。 */
 const navigableResultCards = computed(() => {
   const top = topPickDisplay.value
-  if (!top) {
-    return []
+  if (top) {
+    return [top, ...alsoPossibleCards.value]
   }
-  return [top, ...alsoPossibleCards.value]
+  // Need A Clue：无 Top，仅弱候选可键盘浏览
+  return alsoPossibleCards.value
 })
 
 const keyboardSelectedIndex = ref(-1)
@@ -210,8 +216,26 @@ function handleCardOpen(payload: { id: string; url: string }): void {
   handleRecallResultOpen(payload.id, payload.url)
 }
 
+/** 「都不是这些」：写否定反馈，清空结果，请用户再补线索（最多一轮追问）。 */
+async function handleDismissCandidates(): Promise<void> {
+  const ids = navigableResultCards.value.map(card => card.id)
+  if (ids.length > 0) {
+    void recordRecallDismiss({ ids }).catch(() => {
+      // 忽略：反馈失败不阻塞继续补线索
+    })
+  }
+  recallResult.value = null
+  viewState.value = 'idle'
+  errorMessage.value = ''
+  await nextTick()
+  clueInputRef.value?.focus()
+}
+
 /** 打开结果时写行为信号；摘录进详情页由 Detail 记，避免双计。 */
 function handleRecallResultOpen(memoryItemId: string, openUrl: string): void {
+  void markFirstRecallOpenDone().catch(() => {
+    // 忽略：引导标记失败不影响打开
+  })
   if (openUrl.includes('/detail.html')) {
     return
   }
@@ -393,13 +417,22 @@ async function runRecall(trimmedClue: string): Promise<void> {
     }
 
     recallResult.value = response.result
-    viewState.value = response.result.outcome === 'no_match' ? 'no_match' : 'result'
+    if (response.result.outcome === 'no_match') {
+      viewState.value = 'no_match'
+    } else if (response.result.outcome === 'need_a_clue') {
+      viewState.value = 'need_a_clue'
+    } else {
+      viewState.value = 'result'
+    }
     void probeMemoryLibrary()
     void nextTick(() => {
       if (alsoScrollRef.value) {
         alsoScrollRef.value.scrollTop = 0
       }
       scrollSelectedResultIntoView()
+      if (response.result.outcome === 'need_a_clue') {
+        clueInputRef.value?.focus()
+      }
     })
   } catch {
     if (requestId !== recallRequestId) {
@@ -443,6 +476,16 @@ onMounted(() => {
   void nextTick(() => {
     clueInputRef.value?.focus()
   })
+  void (async () => {
+    try {
+      const prefill = await consumePopupRecallPrefill()
+      if (prefill) {
+        clue.value = prefill
+      }
+    } catch {
+      // 忽略：无预填不阻塞 Popup
+    }
+  })()
   void probeMemoryLibrary()
   startImportPolling()
 })
@@ -535,12 +578,20 @@ onUnmounted(() => {
       </section>
 
       <section
-        v-else-if="showRecallResults && topPickDisplay"
+        v-else-if="showRecallResults"
         id="recall-results"
         class="recall-results"
         aria-live="polite"
       >
-        <div class="recall-top-pick">
+        <div
+          v-if="viewState === 'need_a_clue' || (!topPickDisplay && alsoPossibleCards.length > 0)"
+          class="recall-need-clue"
+        >
+          <p class="recall-need-clue-title">{{ t('popup_need_a_clue_title') }}</p>
+          <p class="recall-need-clue-copy">{{ t('popup_need_a_clue_body') }}</p>
+        </div>
+
+        <div v-if="topPickDisplay" class="recall-top-pick">
           <p class="recall-section-label">{{ t('popup_section_top_pick') }}</p>
           <RecallResultCard
             :card="topPickDisplay"
@@ -557,13 +608,19 @@ onUnmounted(() => {
         </div>
 
         <div v-if="alsoPossibleCards.length > 0" class="recall-also">
-          <p class="recall-section-label">{{ t('popup_section_also_possible') }}</p>
+          <p class="recall-section-label">
+            {{
+              topPickDisplay
+                ? t('popup_section_also_possible')
+                : t('popup_section_possible_matches')
+            }}
+          </p>
           <ul ref="alsoScrollRef" class="recall-also-list">
             <li v-for="(item, alsoIndex) in alsoPossibleCards" :key="item.id">
               <RecallResultCard
                 :card="item"
-                :result-dom-id="`recall-result-${alsoIndex + 1}`"
-                :keyboard-selected="isKeyboardSelected(alsoIndex + 1)"
+                :result-dom-id="`recall-result-${topPickDisplay ? alsoIndex + 1 : alsoIndex}`"
+                :keyboard-selected="isKeyboardSelected(topPickDisplay ? alsoIndex + 1 : alsoIndex)"
                 compact
                 :expanded="isDuplicateGroupExpanded(item.id)"
                 :expand-label="t('popup_duplicate_expand')"
@@ -574,6 +631,12 @@ onUnmounted(() => {
               />
             </li>
           </ul>
+        </div>
+
+        <div v-if="navigableResultCards.length > 0" class="recall-feedback-actions">
+          <md-text-button type="button" @click="handleDismissCandidates">
+            {{ t('popup_dismiss_candidates') }}
+          </md-text-button>
         </div>
       </section>
     </div>
@@ -740,6 +803,25 @@ onUnmounted(() => {
   max-width: 100%;
 }
 
+.recall-need-clue {
+  display: grid;
+  gap: 4px;
+}
+
+.recall-need-clue-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+.recall-need-clue-copy {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
 .recall-section-label {
   margin: 0 0 8px;
   font-size: 12px;
@@ -747,6 +829,12 @@ onUnmounted(() => {
   text-transform: uppercase;
   letter-spacing: 0.02em;
   color: var(--md-sys-color-on-surface-variant);
+}
+
+.recall-feedback-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 2px;
 }
 
 .recall-top-pick {

@@ -1,6 +1,10 @@
 import { recallService } from '@/application/recall/recall-service'
 import { memoryItemService } from '@/application/memory/memory-item-service'
-import { getMemoryItemOpenHref, tryParseNavigableUrl } from '@/core/recall/memory-open-href'
+import {
+  getMemoryItemOpenHref,
+  tryParseNavigableUrl,
+  tryParseOmniboxOpenMemoryId
+} from '@/core/recall/memory-open-href'
 import { escapeOmniboxXml, recallResultToOmniboxSuggests } from '@/core/recall/omnibox-suggest'
 import { t } from '@/infrastructure/i18n/t'
 import { logger } from '@/infrastructure/logging/logger'
@@ -99,9 +103,27 @@ async function handleOmniboxInputEntered(
   text: string,
   disposition: 'currentTab' | 'newBackgroundTab' | 'newForegroundTab'
 ): Promise<void> {
+  await ensureReady()
+  const detailPageUrl = getDetailPageUrl()
+
+  // 书签建议：omnibox-open.html?id= → 写回后打开真实 URL（不落占位页）
+  const omniboxOpenId = tryParseOmniboxOpenMemoryId(text)
+  if (omniboxOpenId) {
+    await recordOpenBestEffort(omniboxOpenId)
+    const item = await memoryItemService.getById(omniboxOpenId)
+    const href = item ? getMemoryItemOpenHref(item, { detailPageUrl }).trim() : ''
+    const url = tryParseNavigableUrl(href)
+    if (!url) {
+      logger.info('Omnibox', '占位建议无法解析目标', { omniboxOpenId })
+      return
+    }
+    await openUrlByDisposition(url, disposition)
+    return
+  }
+
   const directUrl = tryParseNavigableUrl(text)
   if (directUrl) {
-    // 摘录详情页由 Detail 记录打开；书签直链暂无 id，此处不写
+    // 摘录详情页由 Detail 记录打开；遗留书签直链无 id，此处不写
     await openUrlByDisposition(directUrl, disposition)
     return
   }
@@ -111,12 +133,9 @@ async function handleOmniboxInputEntered(
     return
   }
 
-  await ensureReady()
   const result = await recallService.recallWithClue(clue)
   const topPick = result.topPick
-  const topHref = topPick
-    ? getMemoryItemOpenHref(topPick.item, { detailPageUrl: getDetailPageUrl() })
-    : ''
+  const topHref = topPick ? getMemoryItemOpenHref(topPick.item, { detailPageUrl }) : ''
   const url = tryParseNavigableUrl(topHref)
 
   if (!url) {

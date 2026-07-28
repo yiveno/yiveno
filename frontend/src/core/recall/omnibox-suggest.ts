@@ -1,6 +1,6 @@
 import type { TranslateFn } from '@/core/i18n/translate'
 import { getRecallMatchFieldShortLabel } from '@/core/recall/explain-recall-match'
-import { getMemoryItemOpenHref } from '@/core/recall/memory-open-href'
+import { getMemoryItemOpenHref, getOmniboxSuggestContent } from '@/core/recall/memory-open-href'
 import {
   getMemoryItemDisplay,
   type RecallMatch,
@@ -65,7 +65,7 @@ export function formatOmniboxPrimaryMatch(
 
 /**
  * 将单条命中转为 Omnibox 建议。
- * content：书签为 http(s)；摘录为 detail.html?id=
+ * content：摘录为 detail.html?id=；书签为 omnibox-open.html?id=（便于写回打开）。
  */
 export function recallMatchToOmniboxSuggest(
   match: RecallMatch,
@@ -78,6 +78,11 @@ export function recallMatchToOmniboxSuggest(
     return null
   }
   if (match.item.type === 'bookmark' && !tryParseHttpUrl(openHref)) {
+    return null
+  }
+
+  const content = getOmniboxSuggestContent(match.item, options).trim()
+  if (!content) {
     return null
   }
 
@@ -113,7 +118,7 @@ export function recallMatchToOmniboxSuggest(
   }
 
   return {
-    content: openHref,
+    content,
     description: parts.join(' ')
   }
 }
@@ -132,15 +137,15 @@ export function recallResultToOmniboxSuggests(
   }
   matches.push(...result.alsoPossible)
 
-  const seenUrls = new Set<string>()
+  const seenContents = new Set<string>()
   const suggests: OmniboxSuggestItem[] = []
 
   for (const match of matches) {
     const suggest = recallMatchToOmniboxSuggest(match, options)
-    if (!suggest || seenUrls.has(suggest.content)) {
+    if (!suggest || seenContents.has(suggest.content)) {
       continue
     }
-    seenUrls.add(suggest.content)
+    seenContents.add(suggest.content)
     suggests.push(suggest)
   }
 

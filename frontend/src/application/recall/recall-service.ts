@@ -2,8 +2,8 @@ import { memoryItemService } from '@/application/memory/memory-item-service'
 import { recallByKeyword } from '@/core/recall/build-recall-result'
 import type { RecallResult } from '@/core/recall/recall-result'
 
-/** Recall 读取的最大 MemoryItem 数量（MVP 本地关键词 Filter）。 */
-const RECALL_SCAN_LIMIT = 2000
+/** Recall 读取的最大 MemoryItem 数量（Phase B：抬高扫描上限，仍为全表关键词 Filter）。 */
+const RECALL_SCAN_LIMIT = 10000
 
 /**
  * Recall 应用服务。

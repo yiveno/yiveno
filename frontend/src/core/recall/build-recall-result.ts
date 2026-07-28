@@ -30,11 +30,21 @@ export function buildRecallResult(clue: string, collapsedGroups: RecallMatch[]):
   }
 
   const best = collapsedGroups[0]
-  if (!best || best.score < RECALL_TOP_PICK_MIN_SCORE) {
+  if (!best) {
     return {
       outcome: 'no_match',
       topPick: null,
       alsoPossible: [],
+      clue
+    }
+  }
+
+  // 有词面命中但未达 Top Pick：Need A Clue（展示弱候选，请用户再补线索）
+  if (best.score < RECALL_TOP_PICK_MIN_SCORE) {
+    return {
+      outcome: 'need_a_clue',
+      topPick: null,
+      alsoPossible: collapsedGroups.slice(0, RECALL_RESULT_SLOT_LIMIT),
       clue
     }
   }

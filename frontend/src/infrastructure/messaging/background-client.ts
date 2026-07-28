@@ -20,6 +20,7 @@ import type {
   DeleteMemoryItemMessage,
   UpdateMemoryNoteMessage,
   RecordMemoryOpenMessage,
+  RecordRecallDismissMessage,
   MemoryBackgroundResponse
 } from '@/core/messaging/memory-messages'
 import type {
@@ -105,6 +106,18 @@ export async function recordMemoryOpen(
   const message: RecordMemoryOpenMessage = {
     scope: 'background',
     type: 'RECORD_MEMORY_OPEN',
+    payload
+  }
+  return sendBackgroundMessage<MemoryBackgroundResponse>(message)
+}
+
+/** 记录否定反馈（dismissCount）。 */
+export async function recordRecallDismiss(
+  payload: RecordRecallDismissMessage['payload']
+): Promise<MemoryBackgroundResponse> {
+  const message: RecordRecallDismissMessage = {
+    scope: 'background',
+    type: 'RECORD_RECALL_DISMISS',
     payload
   }
   return sendBackgroundMessage<MemoryBackgroundResponse>(message)

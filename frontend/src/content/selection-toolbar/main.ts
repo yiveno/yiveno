@@ -8,6 +8,8 @@ import {
   type SelectionToolbarPageApi
 } from '@/core/messaging/content-messages'
 import type { CaptureEntry } from '@/core/memory/capture-entry'
+import { buildCaptureSavedPreview, buildRecallPrefillClue } from '@/core/recall/build-prefill-clue'
+import { shouldShowFirstRecallHint } from '@/core/recall/first-recall-onboarding'
 import { extractSelectionContextOnPage } from '@/infrastructure/browser/selection-context-page'
 import {
   computeSelectionToolbarAnchor,
@@ -22,6 +24,11 @@ import { t } from '@/infrastructure/i18n/t'
 import { tMemoryError } from '@/infrastructure/i18n/memory-error'
 import type { MessageKey } from '@/infrastructure/i18n/message-keys'
 import {
+  bumpExcerptCaptureCount,
+  readFirstRecallOpenDone,
+  writePopupRecallPrefill
+} from '@/infrastructure/storage/first-recall-onboarding-storage'
+import {
   getMaterialSymbolPath,
   type MaterialSymbolName
 } from '@/infrastructure/ui/icons/material-symbol'
@@ -29,6 +36,8 @@ import {
 const TOOLBAR_HOST_ID = 'yiveno-selection-toolbar-host'
 const SHOW_DELAY_MS = 120
 const NOTE_MAX_LENGTH = 500
+/** 存成抓住感展示时长（含预览 / 引导）。 */
+const SAVED_FEEDBACK_HIDE_MS = 2400
 
 type ToolbarUiMode = 'actions' | 'note'
 type ToolbarButtonState = 'idle' | 'saving' | 'saved' | 'error'
@@ -48,6 +57,10 @@ let hostElement: HTMLElement | null = null
 let shadowRoot: ShadowRoot | null = null
 let actionsRow: HTMLElement | null = null
 let notePanel: HTMLElement | null = null
+/** 存成后的抓住感面板（预览 + 可选找回引导）。 */
+let savedFeedbackPanel: HTMLElement | null = null
+let savedPreviewEl: HTMLElement | null = null
+let savedHintEl: HTMLElement | null = null
 let saveButton: HTMLButtonElement | null = null
 let noteButton: HTMLButtonElement | null = null
 let noteInput: HTMLTextAreaElement | null = null
@@ -95,12 +108,12 @@ function ensureLiveContext(): boolean {
 /**
  * 安全读文案：上下文失效时拆卸并返回 null，禁止把 i18n 异常抛到页面控制台。
  */
-function safeT(key: MessageKey): string | null {
+function safeT(key: MessageKey, substitutions?: string | string[]): string | null {
   if (!ensureLiveContext()) {
     return null
   }
   try {
-    return t(key)
+    return substitutions === undefined ? t(key) : t(key, substitutions)
   } catch (error) {
     if (isContextInvalidatedError(error) || !isExtensionContextValid()) {
       teardown()
@@ -340,6 +353,37 @@ function ensureToolbarHost(): void {
     .status-button--error {
       color: #b42318;
     }
+    .saved-feedback {
+      display: none;
+      min-width: 200px;
+      max-width: min(300px, calc(100vw - 16px));
+      padding: 8px 10px;
+      border: 1px solid #99d5df;
+      border-radius: 14px;
+      background: #f0fbfd;
+      box-shadow: 0 4px 16px rgb(15 23 42 / 12%);
+    }
+    .saved-feedback.is-open {
+      display: grid;
+      gap: 4px;
+    }
+    .saved-preview {
+      margin: 0;
+      font: 500 12px/1.35 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+        sans-serif;
+      color: #164e63;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      word-break: break-word;
+    }
+    .saved-hint {
+      margin: 0;
+      font: 500 11px/1.35 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+        sans-serif;
+      color: #0e7490;
+    }
     .note-panel {
       display: none;
       min-width: 220px;
@@ -373,9 +417,6 @@ function ensureToolbarHost(): void {
       display: none !important;
     }
   `
-
-  const shell = document.createElement('div')
-  shell.className = 'shell'
 
   actionsRow = document.createElement('div')
   actionsRow.className = 'toolbar'
@@ -451,7 +492,18 @@ function ensureToolbarHost(): void {
 
   notePanel.append(noteInput)
 
-  shell.append(actionsRow, notePanel)
+  savedFeedbackPanel = document.createElement('div')
+  savedFeedbackPanel.className = 'saved-feedback'
+  savedPreviewEl = document.createElement('p')
+  savedPreviewEl.className = 'saved-preview'
+  savedHintEl = document.createElement('p')
+  savedHintEl.className = 'saved-hint'
+  savedHintEl.classList.add('is-hidden')
+  savedFeedbackPanel.append(savedPreviewEl, savedHintEl)
+
+  const shell = document.createElement('div')
+  shell.className = 'shell'
+  shell.append(actionsRow, notePanel, savedFeedbackPanel)
   shadowRoot.append(style, shell)
   document.documentElement.appendChild(hostElement)
   uiMode = 'actions'
@@ -490,14 +542,45 @@ function showStatus(state: 'saving' | 'saved' | 'error', label: string): void {
   }
   if (state === 'error') {
     statusButton.classList.add('status-button--error')
+    hideSavedFeedback()
   }
   statusButton.textContent = label
+}
+
+/** 展示存成抓住感：预览正文 + 可选找回引导。 */
+function showSavedFeedback(input: { preview: string; hint: string | null }): void {
+  if (!savedFeedbackPanel || !savedPreviewEl || !savedHintEl) {
+    return
+  }
+  savedPreviewEl.textContent = input.preview
+  if (input.hint) {
+    savedHintEl.textContent = input.hint
+    savedHintEl.classList.remove('is-hidden')
+  } else {
+    savedHintEl.textContent = ''
+    savedHintEl.classList.add('is-hidden')
+  }
+  savedFeedbackPanel.classList.add('is-open')
+}
+
+function hideSavedFeedback(): void {
+  if (savedFeedbackPanel) {
+    savedFeedbackPanel.classList.remove('is-open')
+  }
+  if (savedPreviewEl) {
+    savedPreviewEl.textContent = ''
+  }
+  if (savedHintEl) {
+    savedHintEl.textContent = ''
+    savedHintEl.classList.add('is-hidden')
+  }
 }
 
 function resetActionsView(): void {
   buttonState = 'idle'
   uiMode = 'actions'
   setBusy(false)
+  hideSavedFeedback()
 
   if (saveButton) {
     saveButton.classList.remove('is-hidden')
@@ -700,9 +783,34 @@ async function handleSaveClick(
     }
     // 先切到 saved 态再清选区，避免 selectionchange 在 idle 时立刻 hideToolbar
     showStatus('saved', saved)
+
+    const preview = buildCaptureSavedPreview(selectedText)
+    const prefill = buildRecallPrefillClue(selectedText)
+    let hint: string | null = null
+    try {
+      if (prefill) {
+        await writePopupRecallPrefill(prefill)
+      }
+      const captureCount = await bumpExcerptCaptureCount()
+      const firstDone = await readFirstRecallOpenDone()
+      if (
+        shouldShowFirstRecallHint({
+          excerptCaptureCount: captureCount,
+          firstRecallOpenDone: firstDone
+        })
+      ) {
+        hint = prefill
+          ? safeT('selection_toolbar_saved_hint', prefill)
+          : safeT('selection_toolbar_saved_hint_generic')
+      }
+    } catch {
+      // storage 失败不影响抓住感主文案
+    }
+    showSavedFeedback({ preview, hint })
+
     clearPageSelection()
     clearPendingCapture()
-    scheduleHideToolbar(1200)
+    scheduleHideToolbar(SAVED_FEEDBACK_HIDE_MS)
     return true
   } catch (error) {
     if (isContextInvalidatedError(error) || !isExtensionContextValid()) {
@@ -1060,6 +1168,9 @@ function teardown(): void {
   shadowRoot = null
   actionsRow = null
   notePanel = null
+  savedFeedbackPanel = null
+  savedPreviewEl = null
+  savedHintEl = null
   saveButton = null
   noteButton = null
   noteInput = null

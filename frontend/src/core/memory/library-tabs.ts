@@ -8,29 +8,29 @@ export interface LibraryTypeTabDef {
   emptyBodyKey: 'library_empty_bookmarks_body' | 'library_empty_excerpts_body'
 }
 
-/** 默认选中书签。 */
-export const DEFAULT_LIBRARY_TYPE: SupportedMemoryItemType = 'bookmark'
+/** 默认选中摘录（核心资产主角；书签为配角）。 */
+export const DEFAULT_LIBRARY_TYPE: SupportedMemoryItemType = 'text_excerpt'
 
 /** URL 查询参数：记忆库类型 Tab（刷新后恢复）。 */
 export const LIBRARY_TYPE_QUERY_KEY = 'type'
 
-/** 记忆库类型 Tab 定义（顺序即侧栏顺序）。 */
+/** 记忆库类型 Tab 定义（顺序即侧栏顺序：摘录优先）。 */
 export const LIBRARY_TYPE_TABS: readonly LibraryTypeTabDef[] = [
-  {
-    type: 'bookmark',
-    labelKey: 'library_tab_bookmarks',
-    emptyTitleKey: 'library_empty_bookmarks_title',
-    emptyBodyKey: 'library_empty_bookmarks_body'
-  },
   {
     type: 'text_excerpt',
     labelKey: 'library_tab_excerpts',
     emptyTitleKey: 'library_empty_excerpts_title',
     emptyBodyKey: 'library_empty_excerpts_body'
+  },
+  {
+    type: 'bookmark',
+    labelKey: 'library_tab_bookmarks',
+    emptyTitleKey: 'library_empty_bookmarks_title',
+    emptyBodyKey: 'library_empty_bookmarks_body'
   }
 ] as const
 
-/** 解析 Tab 定义；非法值回退默认书签。 */
+/** 解析 Tab 定义；非法值回退默认摘录。 */
 export function resolveLibraryTypeTab(type: string | null | undefined): LibraryTypeTabDef {
   const found = LIBRARY_TYPE_TABS.find(tab => tab.type === type)
   return found ?? LIBRARY_TYPE_TABS[0]!
@@ -45,7 +45,7 @@ export function parseLibraryTypeFromLocationSearch(search: string): SupportedMem
 
 /**
  * 将类型 Tab 写入 search 字符串。
- * 默认书签时去掉 type，避免多余 `?type=bookmark`。
+ * 默认摘录时去掉 type，避免多余 `?type=text_excerpt`。
  */
 export function buildLibraryTypeLocationSearch(
   type: SupportedMemoryItemType,

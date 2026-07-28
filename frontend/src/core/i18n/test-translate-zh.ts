@@ -4,14 +4,13 @@ import type { TranslateFn } from '@/core/i18n/translate'
 const ZH: Record<string, string> = {
   popup_empty_no_memory_title: '还没有可找回的记忆',
   popup_empty_no_memory_body_importing:
-    '正在导入书签，完成后即可用标题或域名片段找回。也可先划词保存一段文字。',
-  popup_empty_no_memory_body: '用 Chrome 加书签并等待同步，或在网页划词后点「保存到 Yiveno」。',
+    '正在导入书签。想更快体验找回，可先在网页划词保存一段文字。',
+  popup_empty_no_memory_body: '先在网页划词保存你想留住的句子；也可用 Chrome 加书签并等待同步。',
   popup_empty_library_empty_title: '记忆库还是空的',
-  popup_empty_library_empty_body:
-    '先存一点再找回：Chrome 加书签等待同步，或划词保存选区。换词暂时帮不上忙。',
+  popup_empty_library_empty_body: '先划词存一点个人痕迹再找回。换词暂时帮不上忙；书签同步是配角。',
   popup_no_match_title_with_clue: '没找到和「$1」相关的',
   popup_no_match_title: '还没找到匹配的',
-  popup_no_match_body: '试试更短的词，或用域名、标题里还记得的片段。也可划词保存后再找回。',
+  popup_no_match_body: '试试更短的词，或备注、正文里还记得的片段。也可再划词存一点后再找回。',
   explain_field_title: '标题',
   explain_field_text_excerpt: '正文片段',
   explain_field_excerpt_context: '上下文',

@@ -10,6 +10,7 @@ import {
   parseGetMemoryItemPayload,
   parseListMemoryItemsPayload,
   parseRecordMemoryOpenPayload,
+  parseRecordRecallDismissPayload,
   parseUpdateMemoryNotePayload
 } from '@/core/messaging/memory-messages'
 import { flashActionBadge } from '@/infrastructure/browser/action-badge'
@@ -164,6 +165,20 @@ export async function handleRecordMemoryOpen(payload: unknown): Promise<MemoryBa
     return { ok: true, item }
   } catch (error) {
     logger.error('Background', '记录 Memory 打开失败', error)
+    return toErrorResponse('MEMORY_OPERATION_FAILED', error)
+  }
+}
+
+/** 记录否定反馈（dismissCount）。 */
+export async function handleRecordRecallDismiss(
+  payload: unknown
+): Promise<MemoryBackgroundResponse> {
+  try {
+    const input = parseRecordRecallDismissPayload(payload)
+    const updated = await memoryItemService.recordDismiss(input.ids)
+    return { ok: true, updated }
+  } catch (error) {
+    logger.error('Background', '记录 Recall 否定反馈失败', error)
     return toErrorResponse('MEMORY_OPERATION_FAILED', error)
   }
 }

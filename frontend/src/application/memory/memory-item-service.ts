@@ -58,6 +58,11 @@ export class MemoryItemService {
     return this.repository.recordOpen(id)
   }
 
+  /** 否定反馈：递增 dismissCount（不改 updatedAt）。 */
+  async recordDismiss(ids: string[]): Promise<number> {
+    return this.repository.recordDismiss(ids)
+  }
+
   /** 按 Chrome 书签 ID 软删除 Bookmark MemoryItem。 */
   async softDeleteByChromeBookmarkId(chromeBookmarkId: string): Promise<MemoryItem | null> {
     return this.repository.softDeleteByChromeBookmarkId(chromeBookmarkId)

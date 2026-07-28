@@ -19,6 +19,7 @@ import {
   handleGetMemoryItem,
   handleListMemoryItems,
   handleRecordMemoryOpen,
+  handleRecordRecallDismiss,
   handleUpdateMemoryNote
 } from '@/background/handlers/memory-handler'
 import { handleRecallWithClue } from '@/background/handlers/recall-handler'
@@ -68,6 +69,8 @@ async function dispatchBackgroundMessage(
       return handleUpdateMemoryNote(message.payload)
     case 'RECORD_MEMORY_OPEN':
       return handleRecordMemoryOpen(message.payload)
+    case 'RECORD_RECALL_DISMISS':
+      return handleRecordRecallDismiss(message.payload)
     case 'RECALL_WITH_CLUE':
       return handleRecallWithClue(message.payload)
     case 'GET_CHROME_BOOKMARK_IMPORT_STATUS':

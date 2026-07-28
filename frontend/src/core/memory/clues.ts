@@ -15,6 +15,9 @@ export const MemoryCluesSchema = z.object({
   captureEntry: CaptureEntrySchema.optional(),
   openCount: z.number().int().nonnegative().default(0),
   lastOpenedAt: z.string().datetime().nullable().optional(),
+  /** 用户否定「都不是这些」次数；参与排序降权。 */
+  dismissCount: z.number().int().nonnegative().default(0),
+  lastDismissedAt: z.string().datetime().nullable().optional(),
   tags: z.array(z.string()).default([]),
   note: z.string().optional()
 })

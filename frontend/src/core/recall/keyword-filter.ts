@@ -44,6 +44,9 @@ const PRIMARY_MATCH_QUALITY_CAP = 30
 /** 行为信号（打开次数/近因）对关键词分的最大加成，避免压过强词面命中。 */
 export const RECALL_BEHAVIOR_BOOST_CAP = 12
 
+/** 否定反馈（dismiss）对分数的最大扣减。 */
+export const RECALL_DISMISS_PENALTY_CAP = 10
+
 const DAY_MS = 24 * 60 * 60 * 1000
 
 const PRIMARY_CONTENT_FIELDS = new Set(['title', 'textExcerpt', 'note'])
@@ -344,6 +347,18 @@ export function computeBehaviorBoost(item: MemoryItem, options: RecallScoreOptio
   return Math.min(RECALL_BEHAVIOR_BOOST_CAP, openBoost + recencyBoost)
 }
 
+/**
+ * 否定降权：用户点过「都不是这些」后压低该项。
+ * log2 压缩，封顶 RECALL_DISMISS_PENALTY_CAP。
+ */
+export function computeDismissPenalty(item: MemoryItem): number {
+  const dismissCount = item.clues.dismissCount ?? 0
+  if (dismissCount <= 0) {
+    return 0
+  }
+  return Math.min(RECALL_DISMISS_PENALTY_CAP, Math.floor(Math.log2(dismissCount + 1) * 4))
+}
+
 /** 码点长度（不按语种分词；emoji / 组合字符比 `string.length` 更稳）。 */
 export function recallCodePointLength(text: string): number {
   return Array.from(text).length
@@ -492,6 +507,10 @@ export function scoreMemoryItem(
 
   if (score > 0) {
     score += computeBehaviorBoost(item, options)
+    score -= computeDismissPenalty(item)
+    if (score < 0) {
+      score = 0
+    }
   }
 
   return {

@@ -49,6 +49,8 @@ function buildClues(
     domain: base?.domain ?? defaults.domain,
     captureEntry: base?.captureEntry ?? captureEntry ?? defaults.captureEntry,
     lastOpenedAt: base?.lastOpenedAt ?? defaults.lastOpenedAt,
+    dismissCount: base?.dismissCount ?? defaults.dismissCount ?? 0,
+    lastDismissedAt: base?.lastDismissedAt ?? defaults.lastDismissedAt,
     note: base?.note ?? defaults.note
   }
 }

@@ -6,6 +6,7 @@ import {
   getRecallDuplicateKey,
   serializeRecallDuplicateKey
 } from '@/core/recall/collapse-recall-duplicates'
+import { RECALL_TOP_PICK_MIN_SCORE } from '@/core/recall/keyword-filter'
 import type { RecallMatch } from '@/core/recall/recall-result'
 
 const baseContext = {
@@ -30,6 +31,27 @@ describe('build-recall-result Top/Also 互斥', () => {
       matches[2]?.item.id
     ])
     expect(result.alsoPossible.some(m => m.item.id === result.topPick?.item.id)).toBe(false)
+  })
+
+  it('分数未达 Top Pick 阈值时为 need_a_clue，无 topPick、弱候选进 alsoPossible', () => {
+    const matches: RecallMatch[] = [0, 1].map(i => {
+      const item = createBookmarkMemoryItem({
+        ...baseContext,
+        payload: { title: `弱命中${i}`, url: `https://weak-${i}.example/${i}` }
+      })
+      return {
+        item,
+        score: RECALL_TOP_PICK_MIN_SCORE - 1 - i,
+        matchedFields: ['title'] as const
+      }
+    })
+    const result = buildRecallResult('弱', matches)
+    expect(result.outcome).toBe('need_a_clue')
+    expect(result.topPick).toBeNull()
+    expect(result.alsoPossible.map(m => m.item.id)).toEqual([
+      matches[0]?.item.id,
+      matches[1]?.item.id
+    ])
   })
 
   it('stacks N=同 URL 重复数（含写法差异），不是全部含 AI 的命中', () => {

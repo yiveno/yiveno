@@ -28,6 +28,14 @@ const emit = defineEmits<{
       note: string
     }
   ]
+  /** 打开书签：navigate=true 时由父级 window.open；否则仅写回。 */
+  openBookmark: [
+    payload: {
+      url: string
+      navigate: boolean
+      memoryItemId?: string
+    }
+  ]
 }>()
 
 /** 顶层文件夹默认展开。 */
@@ -69,6 +77,26 @@ function handleEditNote(event: Event) {
     note: props.node.note ?? ''
   })
 }
+
+function handleOpenBookmark(event: MouseEvent) {
+  if (props.node.kind !== 'bookmark') {
+    return
+  }
+  const memoryItemId = props.node.memoryItemId
+  // 中键 / 修饰键：浏览器自己开链；仍通知父级写回（若有 id）
+  if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+    if (memoryItemId) {
+      emit('openBookmark', { url: props.node.url, memoryItemId, navigate: false })
+    }
+    return
+  }
+  event.preventDefault()
+  emit('openBookmark', {
+    url: props.node.url,
+    navigate: true,
+    ...(memoryItemId ? { memoryItemId } : {})
+  })
+}
 </script>
 
 <template>
@@ -91,12 +119,19 @@ function handleEditNote(event: Event) {
           :depth="depth + 1"
           :show-unsynced-flags="showUnsyncedFlags"
           @edit-note="emit('editNote', $event)"
+          @open-bookmark="emit('openBookmark', $event)"
         />
       </ul>
     </template>
 
     <div v-else class="tree-bookmark-row">
-      <a class="tree-bookmark" :href="node.url" target="_blank" rel="noopener noreferrer">
+      <a
+        class="tree-bookmark"
+        :href="node.url"
+        target="_blank"
+        rel="noopener noreferrer"
+        @click="handleOpenBookmark"
+      >
         <span class="tree-bookmark-leading">
           <span class="tree-chevron tree-chevron--spacer" aria-hidden="true"></span>
           <span class="tree-icon tree-icon--bookmark" aria-hidden="true">

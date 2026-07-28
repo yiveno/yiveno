@@ -3,7 +3,7 @@
 ## 项目
 
 - Yiveno：Vue 3 + TypeScript Chrome 扩展，Backend 为 Cloudflare Workers，Website 为营销站。
-- 唯一产品/架构真相：`docs/product/Yiveno-产品文档-v4.0.md`（先读文首 **§0 AI Quick Contract**；附录 A 非规范）
+- 唯一产品/架构真相：`docs/product/Yiveno-产品文档-v4.0.md`（先读 **§0.1 核心路线** + **§0.1.1 资产/边界/隐患** + §0 其余；附录 A 非规范）
 - Cursor 规则：`.cursor/rules/project.mdc`，不得冲突。
 
 ## 架构硬规则
