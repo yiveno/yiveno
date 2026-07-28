@@ -190,14 +190,16 @@ function toMatchCard(
     url: getMemoryItemOpenHref(match.item, {
       detailPageUrl: chrome.runtime.getURL('detail.html')
     }),
-    excerpt: display.excerpt,
-    note: display.note,
     typeLabel: display.typeLabel,
     titleParts: highlights.titleParts,
     subtitleParts: highlights.subtitleParts,
     excerptParts: highlights.excerptParts,
     noteParts: highlights.noteParts,
-    ...(duplicateTotalCount !== undefined && duplicateTotalCount >= 2
+    ...(display.excerpt === undefined ? {} : { excerpt: display.excerpt }),
+    ...(display.note === undefined ? {} : { note: display.note }),
+    ...(duplicateTotalCount !== undefined &&
+    duplicateTotalCount >= 2 &&
+    duplicateLabel !== undefined
       ? { duplicateTotalCount, duplicateLabel }
       : {}),
     ...(siblings && siblings.length > 0 ? { siblings } : {})

@@ -65,23 +65,22 @@ export function getBookmarkDuplicateDomain(item: MemoryItem): string | null {
 
 /** 取折叠键；无法建键时退化为 singleton。 */
 export function getRecallDuplicateKey(item: MemoryItem): RecallDuplicateKey {
-  if (item.type === 'bookmark') {
-    const url = item.payload.url.trim()
-    if (!url) {
-      return { kind: 'singleton', id: item.id }
+  switch (item.type) {
+    case 'bookmark': {
+      const url = item.payload.url.trim()
+      if (!url) {
+        return { kind: 'singleton', id: item.id }
+      }
+      return { kind: 'bookmark', url: canonicalizeBookmarkDuplicateUrl(url) }
     }
-    return { kind: 'bookmark', url: canonicalizeBookmarkDuplicateUrl(url) }
-  }
-
-  if (item.type === 'text_excerpt') {
-    const text = item.payload.selectedText.trim()
-    if (!text) {
-      return { kind: 'singleton', id: item.id }
+    case 'text_excerpt': {
+      const text = item.payload.selectedText.trim()
+      if (!text) {
+        return { kind: 'singleton', id: item.id }
+      }
+      return { kind: 'excerpt', text }
     }
-    return { kind: 'excerpt', text }
   }
-
-  return { kind: 'singleton', id: item.id }
 }
 
 /** 折叠键稳定序列化（Map / Set 用）。 */
