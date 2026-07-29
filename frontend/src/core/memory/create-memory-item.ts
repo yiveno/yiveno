@@ -1,6 +1,10 @@
 import type { CaptureEntry } from '@/core/memory/capture-entry'
 import type { MemoryCluesInput } from '@/core/memory/clues'
-import { enrichMemoryClues, mergeUniqueStrings } from '@/core/memory/enrich-memory-clues'
+import {
+  enrichMemoryClues,
+  mergeUniqueStrings,
+  type EnrichMemoryCluesInput
+} from '@/core/memory/enrich-memory-clues'
 import { type BookmarkMemoryItem, type TextExcerptMemoryItem } from '@/core/memory/memory-item'
 import {
   BookmarkPayloadSchema,
@@ -67,10 +71,25 @@ function withEnrichment(
     domain?: string
   }
 ): MemoryCluesInput | undefined {
-  const enrichment = enrichMemoryClues({
-    ...enrichmentSource,
-    note: base?.note ?? enrichmentSource.note
-  })
+  const enrichmentInput: EnrichMemoryCluesInput = {}
+  if (enrichmentSource.title !== undefined) {
+    enrichmentInput.title = enrichmentSource.title
+  }
+  if (enrichmentSource.text !== undefined) {
+    enrichmentInput.text = enrichmentSource.text
+  }
+  if (enrichmentSource.url !== undefined) {
+    enrichmentInput.url = enrichmentSource.url
+  }
+  if (enrichmentSource.domain !== undefined) {
+    enrichmentInput.domain = enrichmentSource.domain
+  }
+  const note = base?.note ?? enrichmentSource.note
+  if (note !== undefined) {
+    enrichmentInput.note = note
+  }
+
+  const enrichment = enrichMemoryClues(enrichmentInput)
   const tags = mergeUniqueStrings(base?.tags, enrichment.tags)
   const keywords = mergeUniqueStrings(base?.keywords, enrichment.keywords)
   const entities = mergeUniqueStrings(base?.entities, enrichment.entities)
@@ -96,7 +115,7 @@ export function createBookmarkMemoryItem(input: BookmarkBuildInput): BookmarkMem
     title: payload.title,
     url: payload.url,
     domain: payload.domain,
-    note: input.clues?.note
+    ...(input.clues?.note !== undefined ? { note: input.clues.note } : {})
   })
 
   return {
@@ -130,7 +149,7 @@ export function createTextExcerptMemoryItem(input: TextExcerptBuildInput): TextE
     text: payload.selectedText,
     url: payload.sourceUrl,
     domain: payload.domain,
-    note: input.clues?.note
+    ...(input.clues?.note !== undefined ? { note: input.clues.note } : {})
   })
 
   return {

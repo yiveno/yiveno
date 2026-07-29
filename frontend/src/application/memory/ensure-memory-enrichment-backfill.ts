@@ -8,7 +8,8 @@ import type { MemoryItem } from '@/core/memory/memory-item'
 import {
   MEMORY_ENRICHMENT_BACKFILL_STORAGE_KEY,
   MEMORY_ENRICHMENT_BACKFILL_VERSION,
-  MemoryEnrichmentBackfillStateSchema
+  MemoryEnrichmentBackfillStateSchema,
+  type MemoryEnrichmentBackfillState
 } from '@/core/memory/memory-enrichment-backfill'
 import { logger } from '@/infrastructure/logging/logger'
 import {
@@ -64,9 +65,10 @@ export async function ensureMemoryEnrichmentBackfilled(
     await repository.putMany(changed)
   }
 
-  await writeChromeStorageLocal(MEMORY_ENRICHMENT_BACKFILL_STORAGE_KEY, {
+  const nextState: MemoryEnrichmentBackfillState = {
     version: MEMORY_ENRICHMENT_BACKFILL_VERSION
-  })
+  }
+  await writeChromeStorageLocal(MEMORY_ENRICHMENT_BACKFILL_STORAGE_KEY, nextState)
 
   logger.info('MemoryEnrichmentBackfill', '存量 enrichment 回填完成', {
     scanned: items.length,
