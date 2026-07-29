@@ -7,6 +7,7 @@ import {
   type CreateBookmarkInput,
   type CreateTextExcerptInput
 } from '@/core/memory/create-memory-item'
+import { mergeUniqueStrings } from '@/core/memory/enrich-memory-clues'
 import { MemoryItemSchema, safeParseMemoryItem, type MemoryItem } from '@/core/memory/memory-item'
 import {
   getCurrentOwnerId,
@@ -136,7 +137,9 @@ export class MemoryItemRepository {
         lastOpenedAt: existing.clues.lastOpenedAt,
         dismissCount: existing.clues.dismissCount,
         lastDismissedAt: existing.clues.lastDismissedAt,
-        tags: existing.clues.tags.length > 0 ? existing.clues.tags : next.clues.tags,
+        tags: mergeUniqueStrings(existing.clues.tags, next.clues.tags),
+        keywords: mergeUniqueStrings(existing.clues.keywords, next.clues.keywords),
+        entities: mergeUniqueStrings(existing.clues.entities, next.clues.entities),
         note: existing.clues.note ?? next.clues.note
       }
     }

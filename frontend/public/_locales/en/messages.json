@@ -192,6 +192,60 @@
   "popup_suggest_type": {
     "message": "It felt more like:"
   },
+  "popup_followup_uncertain_generic": {
+    "message": "I’m not fully sure. These are the closest. Can you add another clue?"
+  },
+  "popup_followup_uncertain_content": {
+    "message": "These are the closest. Do you remember a word from the title or text?"
+  },
+  "popup_followup_uncertain_time": {
+    "message": "These are the closest. About when did you save it? Yesterday, last week?"
+  },
+  "popup_followup_uncertain_type": {
+    "message": "These are the closest. Was it an article, poem, code, or a song?"
+  },
+  "popup_followup_uncertain_note": {
+    "message": "These are the closest. Did you leave a note on it?"
+  },
+  "popup_followup_miss_generic": {
+    "message": "I couldn’t match that. Can you add another detail you remember?"
+  },
+  "popup_followup_miss_content": {
+    "message": "I couldn’t match that. Do you remember a word from the title or text?"
+  },
+  "popup_followup_miss_time": {
+    "message": "I couldn’t match that. About when did you save it? Yesterday, last week?"
+  },
+  "popup_followup_miss_type": {
+    "message": "I couldn’t match that. Was it an article, poem, code, or a song?"
+  },
+  "popup_followup_miss_note": {
+    "message": "I couldn’t match that. Did you leave a note on it?"
+  },
+  "popup_followup_chip_yesterday": {
+    "message": "yesterday"
+  },
+  "popup_followup_chip_day_before": {
+    "message": "day before yesterday"
+  },
+  "popup_followup_chip_last_week": {
+    "message": "last week"
+  },
+  "popup_followup_chip_recent": {
+    "message": "recently"
+  },
+  "popup_followup_chip_article": {
+    "message": "article"
+  },
+  "popup_followup_chip_poem": {
+    "message": "poem"
+  },
+  "popup_followup_chip_code": {
+    "message": "code"
+  },
+  "popup_followup_chip_song": {
+    "message": "song"
+  },
   "popup_duplicate_group_bookmark": {
     "message": "$1 identical bookmarks",
     "placeholders": {

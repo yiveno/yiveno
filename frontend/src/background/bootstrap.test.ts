@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const {
   ensureChromeBookmarksImportedMock,
+  ensureMemoryEnrichmentBackfilledMock,
   getCurrentOwnerIdMock,
   getOrCreateLocalProfileMock,
   initializeMemoryDatabaseMock,
@@ -12,6 +13,12 @@ const {
   registerSelectionToolbarKeepaliveListenerMock
 } = vi.hoisted(() => ({
   ensureChromeBookmarksImportedMock: vi.fn(async () => ({ status: 'completed' as const })),
+  ensureMemoryEnrichmentBackfilledMock: vi.fn(async () => ({
+    status: 'skipped' as const,
+    scanned: 0,
+    updated: 0,
+    version: 1
+  })),
   getCurrentOwnerIdMock: vi.fn(async () => 'owner-1'),
   getOrCreateLocalProfileMock: vi.fn(async () => ({
     localProfileId: 'profile-1',
@@ -28,6 +35,10 @@ const {
 
 vi.mock('@/application/capture/import-chrome-bookmarks-service', () => ({
   ensureChromeBookmarksImported: ensureChromeBookmarksImportedMock
+}))
+
+vi.mock('@/application/memory/ensure-memory-enrichment-backfill', () => ({
+  ensureMemoryEnrichmentBackfilled: ensureMemoryEnrichmentBackfilledMock
 }))
 
 vi.mock('@/background/listeners/chrome-bookmark-sync', () => ({
@@ -90,5 +101,15 @@ describe('ensureBackgroundBootstrapped', () => {
     await vi.advanceTimersByTimeAsync(500)
 
     expect(ensureChromeBookmarksImportedMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('延迟启动存量 enrichment 回填', async () => {
+    await ensureBackgroundBootstrapped()
+
+    expect(ensureMemoryEnrichmentBackfilledMock).not.toHaveBeenCalled()
+
+    await vi.advanceTimersByTimeAsync(1500)
+
+    expect(ensureMemoryEnrichmentBackfilledMock).toHaveBeenCalledTimes(1)
   })
 })

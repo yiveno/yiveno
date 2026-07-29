@@ -38,6 +38,8 @@ import type {
   AssistantTurn,
   RecallSuggestion
 } from '@/pages/popup/recall-conversation-types'
+import { buildRecallFollowUpPlan } from '@/core/recall/build-recall-follow-up'
+import { parseRecallClue } from '@/core/recall/parse-recall-clue'
 
 defineOptions({ name: 'PopupPage' })
 
@@ -73,7 +75,8 @@ function buildRecallSuggestions(): RecallSuggestion[] {
     {
       id: 'note',
       label: t('popup_suggest_note'),
-      value: t('popup_suggest_note')
+      // 用稳定值让解析不依赖当前 locale 的 UI 文案
+      value: 'my note'
     },
     {
       id: 'type',
@@ -81,6 +84,26 @@ function buildRecallSuggestions(): RecallSuggestion[] {
       value: t('popup_suggest_type')
     }
   ]
+}
+
+/** 按缺槽位生成追问文案与芯片；无结构信号时回退通用建议。 */
+function buildFollowUpForClue(
+  clueText: string,
+  outcome: 'need_a_clue' | 'no_match'
+): { text: string; suggestions: RecallSuggestion[] } {
+  const parsed = parseRecallClue(clueText)
+  const plan = buildRecallFollowUpPlan(parsed, outcome)
+  return {
+    text: t(plan.replyKey),
+    suggestions: plan.suggestions.map(item => {
+      const label = t(item.labelKey)
+      return {
+        id: item.id,
+        label,
+        value: item.value ?? label
+      }
+    })
+  }
 }
 
 let importPollTimer: ReturnType<typeof setInterval> | null = null
@@ -353,25 +376,27 @@ async function runRecall(trimmedClue: string): Promise<void> {
         })
       )
     } else if (response.result.outcome === 'need_a_clue') {
+      const followUp = buildFollowUpForClue(response.result.clue, 'need_a_clue')
       conversationTurns.value.push(
         createAssistantTurn({
           id: nextTurnId(),
           tone: 'uncertain',
-          text: t('popup_reply_uncertain'),
+          text: followUp.text,
           candidateCards: response.result.alsoPossible.map(match =>
             toMatchCard(match, response.result.clue)
           ),
-          suggestions: buildRecallSuggestions(),
+          suggestions: followUp.suggestions,
           allowDismiss: response.result.alsoPossible.length > 0
         })
       )
     } else {
+      const followUp = buildFollowUpForClue(response.result.clue, 'no_match')
       conversationTurns.value.push(
         createAssistantTurn({
           id: nextTurnId(),
           tone: 'miss',
-          text: t('popup_reply_miss'),
-          suggestions: buildRecallSuggestions()
+          text: followUp.text,
+          suggestions: followUp.suggestions
         })
       )
     }
@@ -439,7 +464,9 @@ async function handleSendTurn(): Promise<void> {
 }
 
 function handleUseSuggestion(value: string): void {
-  clue.value = value
+  const base = lastSentClue.value.trim()
+  // 多轮补充：芯片追加到上一轮线索，而不是整段替换
+  clue.value = base ? `${base} ${value}` : value
   void nextTick(() => {
     clueInputRef.value?.focus()
   })

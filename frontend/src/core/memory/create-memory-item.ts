@@ -1,5 +1,6 @@
 import type { CaptureEntry } from '@/core/memory/capture-entry'
 import type { MemoryCluesInput } from '@/core/memory/clues'
+import { enrichMemoryClues, mergeUniqueStrings } from '@/core/memory/enrich-memory-clues'
 import { type BookmarkMemoryItem, type TextExcerptMemoryItem } from '@/core/memory/memory-item'
 import {
   BookmarkPayloadSchema,
@@ -55,11 +56,48 @@ function buildClues(
   }
 }
 
+/** 将规则 enrichment 并入调用方 clues（调用方优先）。 */
+function withEnrichment(
+  base: MemoryCluesInput | undefined,
+  enrichmentSource: {
+    title?: string
+    text?: string
+    note?: string
+    url?: string
+    domain?: string
+  }
+): MemoryCluesInput | undefined {
+  const enrichment = enrichMemoryClues({
+    ...enrichmentSource,
+    note: base?.note ?? enrichmentSource.note
+  })
+  const tags = mergeUniqueStrings(base?.tags, enrichment.tags)
+  const keywords = mergeUniqueStrings(base?.keywords, enrichment.keywords)
+  const entities = mergeUniqueStrings(base?.entities, enrichment.entities)
+
+  if (!base && tags.length === 0 && keywords.length === 0 && entities.length === 0) {
+    return undefined
+  }
+
+  return {
+    ...base,
+    tags,
+    keywords,
+    entities
+  }
+}
+
 /** 创建 Bookmark MemoryItem（纯函数，不含持久化）。 */
 export function createBookmarkMemoryItem(input: BookmarkBuildInput): BookmarkMemoryItem {
   const now = resolveNow(input.now)
   const domain = input.payload.domain ?? extractDomainFromUrl(input.payload.url)
   const payload = BookmarkPayloadSchema.parse({ ...input.payload, domain })
+  const clues = withEnrichment(input.clues, {
+    title: payload.title,
+    url: payload.url,
+    domain: payload.domain,
+    note: input.clues?.note
+  })
 
   return {
     id: crypto.randomUUID(),
@@ -68,7 +106,7 @@ export function createBookmarkMemoryItem(input: BookmarkBuildInput): BookmarkMem
     type: 'bookmark',
     payload,
     clues: buildClues(
-      input.clues,
+      clues,
       {
         title: payload.title,
         sourceUrl: payload.url,
@@ -87,6 +125,13 @@ export function createTextExcerptMemoryItem(input: TextExcerptBuildInput): TextE
   const now = resolveNow(input.now)
   const domain = input.payload.domain ?? extractDomainFromUrl(input.payload.sourceUrl)
   const payload = TextExcerptPayloadSchema.parse({ ...input.payload, domain })
+  const clues = withEnrichment(input.clues, {
+    title: payload.pageTitle,
+    text: payload.selectedText,
+    url: payload.sourceUrl,
+    domain: payload.domain,
+    note: input.clues?.note
+  })
 
   return {
     id: crypto.randomUUID(),
@@ -95,7 +140,7 @@ export function createTextExcerptMemoryItem(input: TextExcerptBuildInput): TextE
     type: 'text_excerpt',
     payload,
     clues: buildClues(
-      input.clues,
+      clues,
       {
         title: payload.pageTitle,
         textExcerpt: payload.selectedText,

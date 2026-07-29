@@ -1,4 +1,5 @@
 import { ensureChromeBookmarksImported } from '@/application/capture/import-chrome-bookmarks-service'
+import { ensureMemoryEnrichmentBackfilled } from '@/application/memory/ensure-memory-enrichment-backfill'
 import { registerChromeBookmarkSyncListeners } from '@/background/listeners/chrome-bookmark-sync'
 import { registerCommandListeners } from '@/background/listeners/commands'
 import { registerContextMenuListeners } from '@/background/listeners/context-menu'
@@ -13,6 +14,9 @@ import { initializeMemoryDatabase } from '@/infrastructure/indexeddb/memory-db'
 
 /** 扩展 reload 后延迟启动书签导入，避免与 Chrome 扩展卸载/重装窗口重叠。 */
 const CHROME_BOOKMARK_IMPORT_START_DELAY_MS = 500
+
+/** enrichment 回填略晚于书签导入启动，降低启动尖峰。 */
+const MEMORY_ENRICHMENT_BACKFILL_START_DELAY_MS = 1500
 
 let bootstrapPromise: Promise<void> | null = null
 
@@ -38,6 +42,7 @@ async function bootstrapBackground(): Promise<void> {
   })
 
   scheduleChromeBookmarkImport()
+  scheduleMemoryEnrichmentBackfill()
 }
 
 function scheduleChromeBookmarkImport(): void {
@@ -46,6 +51,14 @@ function scheduleChromeBookmarkImport(): void {
       logger.error('Background', 'Chrome 书签导入失败（下次启动将重试）', error)
     })
   }, CHROME_BOOKMARK_IMPORT_START_DELAY_MS)
+}
+
+function scheduleMemoryEnrichmentBackfill(): void {
+  setTimeout(() => {
+    void ensureMemoryEnrichmentBackfilled().catch(error => {
+      logger.error('Background', '存量 enrichment 回填失败（下次启动将重试）', error)
+    })
+  }, MEMORY_ENRICHMENT_BACKFILL_START_DELAY_MS)
 }
 
 /** 幂等启动 Background；并发调用合并为一次 bootstrap。 */

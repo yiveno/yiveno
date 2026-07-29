@@ -1,0 +1,404 @@
+/**
+ * Capture-time 规则 enrichment：从标题/正文/域名推断 tags / keywords / entities。
+ * 无 LLM；与 parse-recall-clue 对象类型 slug 对齐。
+ * 实体输出 English canonical（别名仅用于识别），见产品文档 §0.1.1「市场语言与 Recall Language Strategy」。
+ */
+
+import type { MemoryItem } from '@/core/memory/memory-item'
+import { normalizeRecallText } from '@/core/recall/keyword-filter'
+import {
+  RECALL_OBJECT_TYPE_CANONICAL_SURFACES,
+  RECALL_OBJECT_TYPE_LEXICON
+} from '@/core/recall/parse-recall-clue-lexicon'
+import type { RecallObjectType } from '@/core/recall/parse-recall-clue-types'
+
+/** enrichment 产物（写入 clues 扩展位）。 */
+export type MemoryClueEnrichment = {
+  tags: string[]
+  keywords: string[]
+  entities: string[]
+}
+
+export type EnrichMemoryCluesInput = {
+  title?: string
+  text?: string
+  note?: string
+  url?: string
+  domain?: string
+}
+
+/** 高频站域名 → 对象类型 + 用途关键词（host 小写，可无 www）。 */
+export type DomainEnrichmentRule = {
+  /** 精确 host，或以 `.` 开头的后缀匹配（如 `.github.com` 不采用；用 endsWith）。 */
+  hosts: string[]
+  objectType: RecallObjectType
+  keywords: string[]
+}
+
+/**
+ * P0 高频站映射。host 比较前会去 www. 并小写。
+ */
+export const MEMORY_DOMAIN_ENRICHMENT_RULES: DomainEnrichmentRule[] = [
+  {
+    hosts: [
+      'music.163.com',
+      'y.qq.com',
+      'open.spotify.com',
+      'music.apple.com',
+      'soundcloud.com',
+      'youtube.com',
+      'youtu.be',
+      'kugou.com',
+      'kuwo.cn'
+    ],
+    objectType: 'song',
+    keywords: ['music', 'listen', 'audio', 'song', 'playlist', 'track']
+  },
+  {
+    hosts: [
+      'github.com',
+      'gitlab.com',
+      'bitbucket.org',
+      'gitee.com',
+      'stackoverflow.com',
+      'npmjs.com',
+      'crates.io'
+    ],
+    objectType: 'code',
+    keywords: ['code', 'repo', 'snippet', 'development', 'programming', 'repository']
+  },
+  {
+    hosts: [
+      'zhihu.com',
+      'juejin.cn',
+      'zhuanlan.zhihu.com',
+      'mp.weixin.qq.com',
+      'medium.com',
+      'substack.com',
+      'reddit.com',
+      'sspai.com',
+      'infoq.cn'
+    ],
+    objectType: 'article',
+    keywords: ['article', 'reading', 'story', 'tutorial', 'write-up']
+  },
+  {
+    hosts: [
+      'developer.mozilla.org',
+      'docs.github.com',
+      'developers.cloudflare.com',
+      'readthedocs.io'
+    ],
+    objectType: 'article',
+    keywords: ['docs', 'tutorial', 'guide', 'reference']
+  }
+]
+
+/**
+ * 按对象类型补充 recall 导向关键词（与 parser 口语槽位对齐）。
+ * 域名规则未覆盖时，文本识别出类型也会写入。
+ */
+export const MEMORY_OBJECT_TYPE_RECALL_KEYWORDS: Partial<Record<RecallObjectType, string[]>> = {
+  song: ['song', 'music', 'listen', 'audio', 'playlist', 'track'],
+  article: ['article', 'reading', 'story', 'tutorial', 'guide', 'write-up', 'docs'],
+  code: ['code', 'repo', 'snippet', 'development', 'programming', 'repository'],
+  poem: ['poem', 'poetry'],
+  command: ['command', 'terminal', 'cli'],
+  quote: ['quote', 'excerpt', 'highlight', 'passage'],
+  password: ['password', 'login', 'credentials']
+}
+
+/** 正文/标题命中特定词面时追加 recall 关键词（English canonical）。 */
+export type TextRecallKeywordRule = {
+  surfaces: string[]
+  keywords: string[]
+}
+
+export const MEMORY_TEXT_RECALL_KEYWORD_RULES: TextRecallKeywordRule[] = [
+  { surfaces: ['tutorial', 'how-to', 'how to'], keywords: ['tutorial', 'guide'] },
+  { surfaces: ['readme'], keywords: ['readme', 'docs'] },
+  { surfaces: ['playlist'], keywords: ['playlist', 'listen'] },
+  { surfaces: ['authentication', 'authorize'], keywords: ['auth', 'authentication'] },
+  { surfaces: ['deployment', 'deploy'], keywords: ['deploy', 'deployment'] }
+]
+
+/** P0 实体词典（人名/作品/专有名词）；输出统一写入 English canonical。 */
+export type MemoryEntityLexiconEntry = {
+  canonical: string
+  aliases: string[]
+}
+
+export const MEMORY_ENTITY_LEXICON: MemoryEntityLexiconEntry[] = [
+  { canonical: 'Li Bai', aliases: ['李白'] },
+  { canonical: 'Du Fu', aliases: ['杜甫'] },
+  { canonical: 'Su Shi', aliases: ['苏轼'] },
+  { canonical: 'Wang Wei', aliases: ['王维'] },
+  { canonical: 'Bai Juyi', aliases: ['白居易'] },
+
+  // 技术名词：canonical 自身即可视为最佳匹配
+  { canonical: 'React', aliases: [] },
+  { canonical: 'Vue', aliases: [] },
+  { canonical: 'TypeScript', aliases: [] },
+  { canonical: 'Cloudflare', aliases: [] },
+  { canonical: 'Workers', aliases: [] },
+  { canonical: 'IndexedDB', aliases: [] },
+  { canonical: 'Manifest V3', aliases: [] },
+  { canonical: 'RAG', aliases: [] }
+]
+
+/** 合并去重（保序）。 */
+export function mergeUniqueStrings(...lists: Array<string[] | undefined>): string[] {
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const list of lists) {
+    for (const raw of list ?? []) {
+      const value = raw.trim()
+      if (!value) {
+        continue
+      }
+      const key = value.toLowerCase()
+      if (seen.has(key)) {
+        continue
+      }
+      seen.add(key)
+      out.push(value)
+    }
+  }
+  return out
+}
+
+function normalizeHost(domainOrUrl: string | undefined): string | null {
+  if (!domainOrUrl?.trim()) {
+    return null
+  }
+  let host = domainOrUrl.trim().toLowerCase()
+  try {
+    if (host.includes('://')) {
+      host = new URL(host).hostname.toLowerCase()
+    }
+  } catch {
+    // 非 URL 时按域名片段处理
+  }
+  host = host.replace(/^www\./, '')
+  return host || null
+}
+
+function matchDomainRule(host: string): DomainEnrichmentRule | null {
+  for (const rule of MEMORY_DOMAIN_ENRICHMENT_RULES) {
+    for (const candidate of rule.hosts) {
+      if (host === candidate || host.endsWith(`.${candidate}`)) {
+        return rule
+      }
+    }
+  }
+  return null
+}
+
+function detectObjectTypesFromText(blob: string): RecallObjectType[] {
+  const normalized = normalizeRecallText(blob)
+  if (!normalized) {
+    return []
+  }
+
+  const ordered = [...RECALL_OBJECT_TYPE_LEXICON].sort(
+    (left, right) => right.surface.length - left.surface.length
+  )
+  const occupied = new Array<boolean>(normalized.length).fill(false)
+  const types: RecallObjectType[] = []
+
+  for (const entry of ordered) {
+    // 过泛的「页面/网页」不从正文自动打标，避免几乎全库都是 page
+    if (entry.value === 'page') {
+      continue
+    }
+    const needle = normalizeRecallText(entry.surface)
+    if (needle.length < 1) {
+      continue
+    }
+    let from = 0
+    while (from < normalized.length) {
+      const index = normalized.indexOf(needle, from)
+      if (index < 0) {
+        break
+      }
+      const end = index + needle.length
+      if (!occupied.slice(index, end).some(Boolean)) {
+        for (let i = index; i < end; i += 1) {
+          occupied[i] = true
+        }
+        if (!types.includes(entry.value)) {
+          types.push(entry.value)
+        }
+        break
+      }
+      from = index + 1
+    }
+  }
+
+  return types
+}
+
+function detectEntities(blob: string): string[] {
+  const normalized = normalizeRecallText(blob)
+  if (!normalized) {
+    return []
+  }
+  const hits: string[] = []
+  const ordered = [...MEMORY_ENTITY_LEXICON].sort((left, right) => {
+    const leftMax = Math.max(left.canonical.length, ...left.aliases.map(a => a.length))
+    const rightMax = Math.max(right.canonical.length, ...right.aliases.map(a => a.length))
+    return rightMax - leftMax
+  })
+
+  for (const entry of ordered) {
+    const surfaces = [entry.canonical, ...entry.aliases]
+    for (const surface of surfaces) {
+      const needle = normalizeRecallText(surface)
+      if (needle && normalized.includes(needle)) {
+        hits.push(entry.canonical)
+        break
+      }
+    }
+  }
+
+  return hits
+}
+
+/** 从正文词面推断 recall 导向关键词。 */
+function detectRecallKeywordsFromText(blob: string): string[] {
+  const normalized = normalizeRecallText(blob)
+  if (!normalized) {
+    return []
+  }
+
+  const hits: string[] = []
+  for (const rule of MEMORY_TEXT_RECALL_KEYWORD_RULES) {
+    for (const surface of rule.surfaces) {
+      const needle = normalizeRecallText(surface)
+      if (needle && normalized.includes(needle)) {
+        hits.push(...rule.keywords)
+        break
+      }
+    }
+  }
+  return hits
+}
+
+function appendRecallKeywordsForTypes(keywords: string[], objectTypes: RecallObjectType[]): void {
+  for (const type of objectTypes) {
+    const recallKeywords = MEMORY_OBJECT_TYPE_RECALL_KEYWORDS[type]
+    if (recallKeywords) {
+      keywords.push(...recallKeywords)
+    }
+    const surface = RECALL_OBJECT_TYPE_CANONICAL_SURFACES[type]
+    if (surface) {
+      keywords.push(surface)
+    }
+  }
+}
+
+/**
+ * 根据原始字段推断 enrichment。
+ * 调用方负责与已有 clues 合并。
+ */
+export function enrichMemoryClues(input: EnrichMemoryCluesInput): MemoryClueEnrichment {
+  const host = normalizeHost(input.domain) ?? normalizeHost(input.url)
+  const textBlob = [input.title, input.text, input.note].filter(Boolean).join('\n')
+
+  const tags: string[] = []
+  const keywords: string[] = []
+  const objectTypes: RecallObjectType[] = []
+
+  if (host) {
+    const rule = matchDomainRule(host)
+    if (rule) {
+      objectTypes.push(rule.objectType)
+      tags.push(rule.objectType)
+      keywords.push(...rule.keywords)
+    }
+  }
+
+  const textTypes = detectObjectTypesFromText(textBlob)
+  tags.push(...textTypes)
+  objectTypes.push(...textTypes)
+
+  appendRecallKeywordsForTypes(keywords, [...new Set(objectTypes)])
+
+  keywords.push(...detectRecallKeywordsFromText(textBlob))
+
+  const entities = detectEntities(textBlob)
+  keywords.push(...entities)
+
+  return {
+    tags: mergeUniqueStrings(tags),
+    keywords: mergeUniqueStrings(keywords),
+    entities: mergeUniqueStrings(entities)
+  }
+}
+
+/** 从 MemoryItem 抽出 enrichment 输入字段。 */
+export function enrichInputFromMemoryItem(item: MemoryItem): EnrichMemoryCluesInput {
+  if (item.type === 'bookmark') {
+    return {
+      title: item.payload.title,
+      url: item.payload.url,
+      domain: item.payload.domain,
+      ...(item.clues.note?.trim() ? { note: item.clues.note } : {})
+    }
+  }
+
+  return {
+    title: item.payload.pageTitle,
+    text: item.payload.selectedText,
+    url: item.payload.sourceUrl,
+    domain: item.payload.domain,
+    ...(item.clues.note?.trim() ? { note: item.clues.note } : {})
+  }
+}
+
+function sameStringListIgnoreCase(left: string[], right: string[]): boolean {
+  if (left.length !== right.length) {
+    return false
+  }
+  const normalize = (list: string[]): string[] =>
+    list.map(entry => entry.trim().toLowerCase()).sort()
+  const a = normalize(left)
+  const b = normalize(right)
+  return a.every((value, index) => value === b[index])
+}
+
+/**
+ * 将规则 enrichment 合并进已有 MemoryItem（不改 createdAt/updatedAt）。
+ * 无新增字段时 changed=false。
+ */
+export function mergeEnrichmentIntoMemoryItem(item: MemoryItem): {
+  item: MemoryItem
+  changed: boolean
+} {
+  const enrichment = enrichMemoryClues(enrichInputFromMemoryItem(item))
+  const tags = mergeUniqueStrings(item.clues.tags, enrichment.tags)
+  const keywords = mergeUniqueStrings(item.clues.keywords, enrichment.keywords)
+  const entities = mergeUniqueStrings(item.clues.entities, enrichment.entities)
+
+  const changed =
+    !sameStringListIgnoreCase(tags, item.clues.tags) ||
+    !sameStringListIgnoreCase(keywords, item.clues.keywords) ||
+    !sameStringListIgnoreCase(entities, item.clues.entities)
+
+  if (!changed) {
+    return { item, changed: false }
+  }
+
+  return {
+    changed: true,
+    item: {
+      ...item,
+      clues: {
+        ...item.clues,
+        tags,
+        keywords,
+        entities
+      }
+    }
+  }
+}

@@ -192,6 +192,60 @@
   "popup_suggest_type": {
     "message": "我记得它更像是："
   },
+  "popup_followup_uncertain_generic": {
+    "message": "我还不能完全确定，最接近的是这些。你可以再补一句线索。"
+  },
+  "popup_followup_uncertain_content": {
+    "message": "这些最接近。还记得标题或正文里的某个词吗？"
+  },
+  "popup_followup_uncertain_time": {
+    "message": "这些最接近。大概是哪天存的？比如昨天、上周。"
+  },
+  "popup_followup_uncertain_type": {
+    "message": "这些最接近。你记得是文章、诗、代码，还是歌？"
+  },
+  "popup_followup_uncertain_note": {
+    "message": "这些最接近。你有没有给它写过备注？"
+  },
+  "popup_followup_miss_generic": {
+    "message": "我还没对上。你可以再补一句你记得的内容。"
+  },
+  "popup_followup_miss_content": {
+    "message": "我还没对上。还记得标题或正文里的某个词吗？"
+  },
+  "popup_followup_miss_time": {
+    "message": "我还没对上。大概是哪天存的？比如昨天、上周。"
+  },
+  "popup_followup_miss_type": {
+    "message": "我还没对上。你记得是文章、诗、代码，还是歌？"
+  },
+  "popup_followup_miss_note": {
+    "message": "我还没对上。你有没有给它写过备注？"
+  },
+  "popup_followup_chip_yesterday": {
+    "message": "昨天"
+  },
+  "popup_followup_chip_day_before": {
+    "message": "前天"
+  },
+  "popup_followup_chip_last_week": {
+    "message": "上周"
+  },
+  "popup_followup_chip_recent": {
+    "message": "最近"
+  },
+  "popup_followup_chip_article": {
+    "message": "文章"
+  },
+  "popup_followup_chip_poem": {
+    "message": "诗"
+  },
+  "popup_followup_chip_code": {
+    "message": "代码"
+  },
+  "popup_followup_chip_song": {
+    "message": "歌"
+  },
   "popup_duplicate_group_bookmark": {
     "message": "共 $1 条相同书签",
     "placeholders": {
