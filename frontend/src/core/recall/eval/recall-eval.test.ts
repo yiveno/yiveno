@@ -13,7 +13,7 @@ describe('recall-eval', () => {
     expect(ids).toEqual(expect.arrayContaining(Object.values(RECALL_EVAL_IDS)))
   })
 
-  it('must 门禁用例全部通过（关键词 Filter 基线）', () => {
+  it('must 门禁用例全部通过（口语解析 + 关键词 Filter 主路径）', () => {
     const report = runRecallEval(RECALL_EVAL_CASES)
 
     if (report.must.failed.length > 0) {

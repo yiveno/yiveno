@@ -34,6 +34,8 @@
 
 ## 验证策略
 
+权威归属与合入门禁见产品文档 **§1.1**（已上线 → 单测 / eval / E2E / 手动；Recall/Capture 变更须先有 `must` case 或 §5 手动步骤）。E2E 仅薄冒烟，不上全量可视化 / 大 Playwright。
+
 ### 质量门禁三层职责
 
 | 层级           | 触发时机     | 职责                                                       | 命令                                                                                    |
@@ -63,6 +65,7 @@ pre-push **不跑** ESLint / typecheck / 全仓 test；`.vue` lint 由 pre-commi
 
 - 默认只跑与本次改动直接相关的最小验证。
 - 禁止每次改动后自动跑全仓 `typecheck:force` / `lint` / `format`，除非用户明确要求或大范围改动。
+- Recall / Capture 用户可感变更：合入前补 `recall-eval` **must** 或产品文档 §5 可复现手动步骤（§1.1）。
 
 ## Token / 工具输出预算
 

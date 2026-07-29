@@ -18,7 +18,7 @@ export type RecallEvalExpectation =
 
 /**
  * 门禁级别。
- * - must：CI 必须通过（当前 Filter 基线能力）
+ * - must：CI 必须通过（对齐线上口语解析 + Filter 主路径）
  * - stretch：已知难点；汇报但不挡门禁，供后续优化对齐
  */
 export type RecallEvalGate = 'must' | 'stretch'

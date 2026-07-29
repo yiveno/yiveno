@@ -1,8 +1,9 @@
-import { recallByKeyword, RECALL_RESULT_SLOT_LIMIT } from '@/core/recall/build-recall-result'
+import { RECALL_RESULT_SLOT_LIMIT } from '@/core/recall/build-recall-result'
 import type { RecallEvalCase } from '@/core/recall/eval/recall-eval-cases'
 import { buildRecallEvalCorpus } from '@/core/recall/eval/recall-eval-corpus'
 import { RECALL_EVAL_NOW_MS } from '@/core/recall/eval/recall-eval-now'
 import type { MemoryItem } from '@/core/memory/memory-item'
+import { recallByKeywordWithParsedClue } from '@/core/recall/orchestrate-keyword-recall'
 import type { RecallResult } from '@/core/recall/recall-result'
 
 /** 单条用例结果。 */
@@ -87,7 +88,7 @@ export function judgeRecallEvalCase(
 }
 
 /**
- * 对线索集跑一轮关键词 Recall eval。
+ * 对线索集跑一轮 Recall eval（对齐线上主路径：口语解析 + 关键词 Filter）。
  * @param cases 用例；默认由调用方传入 RECALL_EVAL_CASES
  * @param corpus 记忆库；默认 buildRecallEvalCorpus()
  */
@@ -96,7 +97,9 @@ export function runRecallEval(
   corpus: MemoryItem[] = buildRecallEvalCorpus()
 ): RecallEvalReport {
   const caseResults: RecallEvalCaseResult[] = cases.map(evalCase => {
-    const result = recallByKeyword(corpus, evalCase.clue, { nowMs: RECALL_EVAL_NOW_MS })
+    const result = recallByKeywordWithParsedClue(corpus, evalCase.clue, {
+      nowMs: RECALL_EVAL_NOW_MS
+    })
     const judged = judgeRecallEvalCase(evalCase, result)
     return {
       caseId: evalCase.id,

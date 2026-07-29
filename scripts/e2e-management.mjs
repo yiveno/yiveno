@@ -1,6 +1,8 @@
 #!/usr/bin/env bun
 /**
- * v4 E2E 冒烟：通过 CDP 打开扩展 popup / settings。
+ * v4 E2E 薄冒烟（CDP + 已加载的 dist/ 扩展）：
+ * 1) 打开 popup / settings
+ * 2) Popup：写入一条固定摘录 → 发线索 → 断言出现结果卡
  *
  * 前置：
  * 1) Chrome 开启远程调试并加载本仓库 `dist/`
@@ -11,7 +13,7 @@
  *   bun scripts/e2e-management.mjs --ext <EXT_ID> --host http://127.0.0.1:9222
  *   bun scripts/e2e-management.mjs --ext <EXT_ID> --perf
  *
- * 注：`--perf` 仅记录打开耗时；v3 management 页用例已随 baseline 移除。
+ * 边界：不上全量可视化回归 / 大型 Playwright 套件（见产品文档 §1.1）。
  */
 import fs from 'node:fs/promises'
 import path from 'node:path'
@@ -62,6 +64,12 @@ async function ensureDirs() {
   await fs.mkdir(path.join(artifactsDir, 'logs'), { recursive: true })
 }
 
+async function screenshot(page, tag, label) {
+  const shot = path.join(artifactsDir, 'screenshots', `${tag}_${label}.png`)
+  await page.screenshot({ path: shot, fullPage: true })
+  return shot
+}
+
 async function openPage(browser, pageUrl, label, tag) {
   const page = await browser.newPage()
   const t0 = Date.now()
@@ -72,8 +80,7 @@ async function openPage(browser, pageUrl, label, tag) {
     if (!bodyText) {
       throw new Error(`${label} 页面正文为空`)
     }
-    const shot = path.join(artifactsDir, 'screenshots', `${tag}_${label}.png`)
-    await page.screenshot({ path: shot, fullPage: true })
+    const shot = await screenshot(page, tag, label)
     return {
       name: `open_${label}`,
       status: 'passed',
@@ -82,9 +89,9 @@ async function openPage(browser, pageUrl, label, tag) {
       screenshot: shot
     }
   } catch (error) {
-    const shot = path.join(artifactsDir, 'screenshots', `${tag}_${label}_error.png`)
+    let shot = ''
     try {
-      await page.screenshot({ path: shot })
+      shot = await screenshot(page, tag, `${label}_error`)
     } catch {
       // ignore
     }
@@ -92,6 +99,84 @@ async function openPage(browser, pageUrl, label, tag) {
       name: `open_${label}`,
       status: 'failed',
       durationMs: Date.now() - t0,
+      error: String(error),
+      screenshot: shot
+    }
+  } finally {
+    await page.close().catch(() => {})
+  }
+}
+
+/**
+ * 薄冒烟主路径：seed 摘录 → 输入唯一线索 → 发送 → 出现 .recall-card。
+ */
+async function smokePopupRecallCard(browser, ext, tag) {
+  const page = await browser.newPage()
+  const t0 = Date.now()
+  const token = `yiveno-e2e-smoke-${Date.now()}`
+  try {
+    await page.goto(`chrome-extension://${ext}/popup.html`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 20000
+    })
+    await page.waitForSelector('textarea.recall-input', { timeout: 10000 })
+
+    const capture = await page.evaluate(async selectedText => {
+      return await chrome.runtime.sendMessage({
+        scope: 'background',
+        type: 'CAPTURE_TEXT_EXCERPT',
+        payload: {
+          selectedText,
+          sourceUrl: 'https://example.com/yiveno-e2e-smoke',
+          pageTitle: 'Yiveno E2E Smoke',
+          captureEntry: 'popup'
+        }
+      })
+    }, token)
+
+    if (!capture || capture.ok !== true) {
+      throw new Error(`seed CAPTURE_TEXT_EXCERPT 失败: ${JSON.stringify(capture)}`)
+    }
+
+    await page.focus('textarea.recall-input')
+    await page.evaluate(() => {
+      const el = document.querySelector('textarea.recall-input')
+      if (!(el instanceof HTMLTextAreaElement)) {
+        return
+      }
+      el.value = ''
+      el.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    await page.type('textarea.recall-input', token, { delay: 2 })
+
+    await page.waitForFunction(() => {
+      const btn = document.querySelector('.recall-send-button')
+      return btn instanceof HTMLButtonElement && !btn.disabled
+    }, { timeout: 5000 })
+
+    await page.click('.recall-send-button')
+    await page.waitForSelector('.recall-card', { timeout: 15000 })
+
+    const shot = await screenshot(page, tag, 'popup_recall_card')
+    return {
+      name: 'popup_recall_card',
+      status: 'passed',
+      durationMs: Date.now() - t0,
+      token,
+      screenshot: shot
+    }
+  } catch (error) {
+    let shot = ''
+    try {
+      shot = await screenshot(page, tag, 'popup_recall_card_error')
+    } catch {
+      // ignore
+    }
+    return {
+      name: 'popup_recall_card',
+      status: 'failed',
+      durationMs: Date.now() - t0,
+      token,
       error: String(error),
       screenshot: shot
     }
@@ -111,12 +196,9 @@ async function run() {
   })
 
   const steps = []
-  steps.push(
-    await openPage(browser, `chrome-extension://${ext}/popup.html`, 'popup', tag)
-  )
-  steps.push(
-    await openPage(browser, `chrome-extension://${ext}/settings.html`, 'settings', tag)
-  )
+  steps.push(await openPage(browser, `chrome-extension://${ext}/popup.html`, 'popup', tag))
+  steps.push(await openPage(browser, `chrome-extension://${ext}/settings.html`, 'settings', tag))
+  steps.push(await smokePopupRecallCard(browser, ext, tag))
 
   const failed = steps.filter(s => s.status === 'failed')
   const summary = {

@@ -115,10 +115,10 @@
     "message": "Bookmark import progress"
   },
   "popup_welcome_title": {
-    "message": "Where should we start?"
+    "message": "What do you want to recall?"
   },
   "popup_welcome_body": {
-    "message": "Tell me what you remember. I’ll start with the most likely answer, and if I’m not sure, we’ll narrow it down together."
+    "message": "Just say a few words you remember—a site, a quote, or a note."
   },
   "popup_clue_input_aria": {
     "message": "Clue"
@@ -131,9 +131,6 @@
   },
   "popup_submitting": {
     "message": "Recalling…"
-  },
-  "popup_open_settings": {
-    "message": "Open Settings"
   },
   "popup_filtering_status": {
     "message": "Filtering your library…"

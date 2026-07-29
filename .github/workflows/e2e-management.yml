@@ -33,7 +33,7 @@ jobs:
       - name: Build extension
         run: bun run build:fe
 
-      - name: Run E2E smoke (popup + settings)
+      - name: Run E2E smoke (popup + settings + recall card)
         run: bun ./scripts/e2e-management.mjs --ext "$EXT_ID" --host "$HOST"
 
       - name: Upload artifacts
@@ -50,4 +50,4 @@ jobs:
           echo "## E2E Extension Smoke" >> $GITHUB_STEP_SUMMARY
           echo "- EXT_ID: $EXT_ID" >> $GITHUB_STEP_SUMMARY
           echo "- HOST: $HOST" >> $GITHUB_STEP_SUMMARY
-          echo "- Targets: popup.html, settings.html" >> $GITHUB_STEP_SUMMARY
+          echo "- Targets: popup.html, settings.html, popup recall→result card" >> $GITHUB_STEP_SUMMARY

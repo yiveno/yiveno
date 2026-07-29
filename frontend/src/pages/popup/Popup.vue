@@ -13,7 +13,6 @@ import type { RecallMatch } from '@/core/recall/recall-result'
 import { getMemoryItemDisplay } from '@/core/recall/recall-result'
 import { buildRecallCardHighlightParts } from '@/core/recall/highlight-recall-text'
 import { getMemoryItemOpenHref } from '@/core/recall/memory-open-href'
-import { openExtensionOptionsPage } from '@/infrastructure/browser/options-page'
 import { tImportStateError, tRecallError } from '@/infrastructure/i18n/background-error'
 import { t } from '@/infrastructure/i18n/t'
 import {
@@ -28,7 +27,6 @@ import {
   markFirstRecallOpenDone
 } from '@/infrastructure/storage/first-recall-onboarding-storage'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
-import MaterialSymbolIcon from '@/infrastructure/ui/icons/MaterialSymbolIcon.vue'
 import { type PopupRecallCardModel } from '@/pages/popup/RecallResultCard.vue'
 import RecallConversation from '@/pages/popup/components/RecallConversation.vue'
 import RecallComposer from '@/pages/popup/components/RecallComposer.vue'
@@ -434,14 +432,6 @@ function handleNavigateError(message: string) {
   errorMessage.value = message
 }
 
-async function handleOpenSettings() {
-  try {
-    await openExtensionOptionsPage()
-  } catch {
-    handleNavigateError(t('error_open_settings'))
-  }
-}
-
 async function handleSendTurn(): Promise<void> {
   const trimmed = clue.value.trim()
   if (!trimmed || isRecallRefreshing.value) {
@@ -525,16 +515,6 @@ onUnmounted(() => {
         <p class="recall-empty-copy">
           {{ idleEmptyCopy?.body ?? t('popup_welcome_body') }}
         </p>
-        <div class="recall-empty-actions">
-          <md-icon-button
-            type="button"
-            :title="t('popup_open_settings')"
-            :aria-label="t('popup_open_settings')"
-            @click="handleOpenSettings"
-          >
-            <MaterialSymbolIcon name="settings" size="22px" />
-          </md-icon-button>
-        </div>
       </section>
 
       <RecallConversation
@@ -702,17 +682,11 @@ onUnmounted(() => {
 
 .recall-empty-copy {
   margin: 0;
-  max-width: 22ch;
+  max-width: 24ch;
   font-size: 14px;
   line-height: 1.5;
   color: var(--md-sys-color-on-surface-variant);
   text-wrap: pretty;
-}
-
-.recall-empty-actions {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
 }
 
 .recall-results {

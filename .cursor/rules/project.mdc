@@ -31,6 +31,7 @@ alwaysApply: true
 - **禁止**：每次小改都自动跑全仓 `typecheck:force` / 全仓 lint / format。
 - **大范围改动或用户要求时**：`bun run typecheck:force`；frontend 用 `cd frontend && bun run lint:check`（根目录无 `lint:check:force` / `stylelint:force`）。
 - 有错误 → 修到通过再报完成；不确定 → 说明并等待指示。
+- Recall / Capture 用户可感变更：合入前补 `recall-eval` **must** 或产品文档 §5 手动步骤（§1.1）；E2E 仅薄冒烟，不上大 Playwright。
 
 ### 工具预算
 

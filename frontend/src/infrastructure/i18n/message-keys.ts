@@ -42,7 +42,6 @@ export const MESSAGE_KEYS = [
   'popup_clue_placeholder',
   'popup_submit',
   'popup_submitting',
-  'popup_open_settings',
   'popup_filtering_status',
   'popup_shorten_retry',
   'popup_shorten_retry_with_clue',

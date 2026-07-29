@@ -115,10 +115,10 @@
     "message": "书签导入进度"
   },
   "popup_welcome_title": {
-    "message": "我们先从哪里开始呢？"
+    "message": "想找回什么？"
   },
   "popup_welcome_body": {
-    "message": "告诉我你记得什么，我会先给出最可能的答案；如果不够确定，我们再一起缩小范围。"
+    "message": "随便说几个你记得的词——网站、句子或备注都行。"
   },
   "popup_clue_input_aria": {
     "message": "线索"
@@ -131,9 +131,6 @@
   },
   "popup_submitting": {
     "message": "正在找回…"
-  },
-  "popup_open_settings": {
-    "message": "打开设置"
   },
   "popup_filtering_status": {
     "message": "正在你的记忆库里筛选…"
