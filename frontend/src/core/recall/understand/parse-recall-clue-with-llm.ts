@@ -48,8 +48,12 @@ export async function parseRecallClueWithLlm(
   })
 
   const rawJson = parseJsonObjectFromLlmText(text)
+  const jsonKeys =
+    rawJson !== null && typeof rawJson === 'object' && !Array.isArray(rawJson)
+      ? Object.keys(rawJson as Record<string, unknown>)
+      : []
   trace('info', 'LLM 解析：已抽取 JSON', {
-    keys: Object.keys(rawJson)
+    keys: jsonKeys
   })
 
   const proposal = LlmParsedClueProposalSchema.parse(rawJson)

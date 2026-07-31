@@ -39,7 +39,7 @@ async function handleGetLocalIdentity(): Promise<GetLocalIdentityResponse> {
   try {
     const [profile, ownerId] = await Promise.all([getOrCreateLocalProfile(), getCurrentOwnerId()])
     flowOk('Identity', '读取本地身份', startedAt, {
-      profileId: profile.id,
+      localProfileId: profile.localProfileId,
       ownerId
     })
     return { ok: true, profile, ownerId }

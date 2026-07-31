@@ -43,28 +43,6 @@ export function flowFail(
   })
 }
 
-/**
- * 包裹会抛错的异步业务函数：自动打开始/完成/失败。
- * 适合 application service；handler 若返回 `{ ok:false }` 勿用本函数吞掉语义。
- */
-export async function runLogged<T>(
-  scope: string,
-  action: string,
-  startData: Record<string, unknown> | undefined,
-  fn: () => Promise<T>,
-  summarizeOk?: (result: T) => Record<string, unknown>
-): Promise<T> {
-  const startedAt = flowStart(scope, action, startData)
-  try {
-    const result = await fn()
-    flowOk(scope, action, startedAt, summarizeOk?.(result))
-    return result
-  } catch (error) {
-    flowFail(scope, action, startedAt, error)
-    throw error
-  }
-}
-
 /** 截断长文本，避免控制台刷屏。 */
 export function previewText(value: string, max = 80): string {
   const trimmed = value.trim()
