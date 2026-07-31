@@ -46,4 +46,12 @@ export interface Env {
   AI_HOSTED_MODEL?: string
   /** Pro 托管 LLM：每月调用次数上限 */
   AI_HOSTED_MONTHLY_QUOTA?: string
+
+  /**
+   * M1 线索理解代理开关；设为 "false" 关闭。
+   * 未设置则在配置了 DEEPSEEK_API_KEY 时可用。
+   */
+  AI_CLUE_PROXY_ENABLED?: string
+  /** 线索理解按 IP 日调用上限（默认 200） */
+  AI_CLUE_DAILY_LIMIT?: string
 }

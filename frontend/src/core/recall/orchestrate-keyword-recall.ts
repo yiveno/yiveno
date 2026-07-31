@@ -45,6 +45,8 @@ const OFTEN_OPENED_MIN_COUNT = 3
 export interface OrchestrateKeywordRecallOptions {
   candidateLimit?: number
   nowMs?: number
+  /** 预解析结果；提供则跳过内部 parseRecallClue（供理解层注入）。 */
+  parsed?: ParsedRecallClue
 }
 
 /** 对象类型 → 词典词面（用于条目文本弱匹配与无 contentTerms 时的回退检索）。 */
@@ -192,7 +194,7 @@ export function recallByKeywordWithParsedClue(
   }
 
   const nowMs = options.nowMs ?? Date.now()
-  const parsed = parseRecallClue(raw, { nowMs })
+  const parsed = options.parsed ?? parseRecallClue(raw, { nowMs })
   const searchClue = buildSearchClueFromParsed(parsed)
   const slotLimit = options.candidateLimit ?? RECALL_RESULT_SLOT_LIMIT
 

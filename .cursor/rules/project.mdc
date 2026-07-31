@@ -49,6 +49,8 @@ alwaysApply: true
 - 业务简单；**立身之本只有体验**。无爽点 = 无护城河。**前期发育、后期变强**。
 - 禁止：书签自动归夹当爽点、用查阅书签当主 demo、独立笔记主路径、过早 LLM 主卖点。
 - Free：仅关键词 Filter；Hybrid / embedding / LLM ≠ 当前默认范围。未标「已上线」不得暗示可用（§0.4）。
+- **LLM 边界**（产品文档 §0.1.1 / §0.3 / M1）：概率生成不保证真实性 → 只做 NLU/意图/NLG（及候选上重排解释）；**禁止**直接查插改删数据平面。允许「结构化提议 → Zod/门禁 → 确定性代码执行」；事实源始终是 IndexedDB MemoryItem。
+- **M1：** 口语 → 精确检索约束；门禁后可 LLM；Filter 仍关键词。默认经 Cloudflare `/api/ai/clue/complete`（Secret 在 Worker）；可选 `yiveno.dev.clueLlm` 直连调试。
 
 ---
 

@@ -3,9 +3,13 @@
   // 作用：整合应用代码和构建工具的TypeScript配置
   // 说明：使用Project References分离应用代码和构建工具配置
   // 注意：vue-tsc -b 需要此文件（build mode）
+  // paths：供工具解析 `@/`（scripts 经 Vite SSR 入口加载）
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
   "files": [],
-  "references": [
-    { "path": "./tsconfig.app.json" }, // Vue应用源代码 (src/**)
-    { "path": "./tsconfig.node.json" } // Vite构建配置 (vite.config.ts)
-  ]
+  "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }]
 }

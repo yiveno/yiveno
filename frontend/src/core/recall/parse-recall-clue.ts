@@ -246,7 +246,8 @@ function countSignalCategories(input: {
   ].filter(Boolean).length
 }
 
-function resolveConfidence(input: {
+/** 按信号类别数计算置信度（规则与 LLM 后处理共用）。 */
+export function resolveRecallClueConfidence(input: {
   hasTime: boolean
   hasObject: boolean
   hasBehavior: boolean
@@ -316,7 +317,7 @@ export function parseRecallClue(
   const parsed: ParsedRecallClue = {
     raw,
     contentTerms,
-    confidence: resolveConfidence({
+    confidence: resolveRecallClueConfidence({
       hasTime,
       hasObject,
       hasBehavior,

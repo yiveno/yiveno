@@ -10,6 +10,7 @@
 
 - 数据流：Chrome API → Background Script → IndexedDB →（可选 Pinia / 组件状态）→ Vue UI。详见产品文档 §5.1。
 - IndexedDB 是书签/Memory 数据本地事实源；所有 IndexedDB 操作必须通过 `frontend/src/infrastructure/indexeddb/manager.ts` 的 `indexedDBManager`。
+- **LLM 不碰数据平面执行**：只做理解/意图/表述（及候选重排）；读写作「提议 → 校验 → 确定性代码」。详见产品文档 §0.1.1「LLM 与数据平面边界」与 §0.3。
 - Background Script 是唯一 Chrome API 监听者；前端组件禁止直接调 `chrome.bookmarks.*` / `chrome.tabs.*`。
 - DDD 依赖方向：`pages|presentation → application → core`；`application` 可依赖 `infrastructure`；UI 经 `background-client` 发消息，不得直连 IndexedDB。细节见产品文档 v4.0。
 - Service Worker 环境无 `window` / `document` / `localStorage`；用 `setTimeout`、`fetch`、`chrome.storage.*`、`ReturnType<typeof setTimeout>`。

@@ -10,6 +10,8 @@ export interface DeepSeekCompleteOptions {
   temperature?: number
   /** 关闭 V4 思考模式；结构化输出默认关闭，避免 content 为空 */
   disableThinking?: boolean
+  /** Chat messages；若提供则优先于 prompt */
+  messages?: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>
 }
 
 export interface DeepSeekCompleteResult {
@@ -55,6 +57,11 @@ export async function completeWithDeepSeek(
   const temperature = options?.temperature ?? 0.6
   const disableThinking = options?.disableThinking !== false
 
+  const messages =
+    options?.messages && options.messages.length > 0
+      ? options.messages
+      : [{ role: 'user' as const, content: prompt }]
+
   const response = await fetch(`${baseUrl}/v1/chat/completions`, {
     method: 'POST',
     headers: {
@@ -63,7 +70,7 @@ export async function completeWithDeepSeek(
     },
     body: JSON.stringify({
       model,
-      messages: [{ role: 'user', content: prompt }],
+      messages,
       max_tokens: maxTokens,
       temperature,
       thinking: { type: disableThinking ? 'disabled' : 'enabled' }

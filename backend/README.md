@@ -91,10 +91,11 @@ Pro 用户默认使用的 LLM 代理，前端经 `hosted-llm-client.ts` 调用�
 
 **端点**：
 
-| 方法 | 路径                      | 鉴权                        | 说明                     |
-| ---- | ------------------------- | --------------------------- | ------------------------ |
-| POST | `/api/ai/hosted/complete` | Supabase Bearer Token + Pro | 文本补全，成功后递增配额 |
-| GET  | `/api/ai/hosted/quota`    | Supabase Bearer Token + Pro | 查询当月用量             |
+| 方法 | 路径                      | 鉴权                        | 说明                                   |
+| ---- | ------------------------- | --------------------------- | -------------------------------------- |
+| POST | `/api/ai/clue/complete`   | 无（M1 按 IP 日配额）       | Recall 线索理解代理（DeepSeek Secret） |
+| POST | `/api/ai/hosted/complete` | Supabase Bearer Token + Pro | 文本补全，成功后递增配额               |
+| GET  | `/api/ai/hosted/quota`    | Supabase Bearer Token + Pro | 查询当月用量                           |
 
 **请求示例**：
 

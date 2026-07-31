@@ -5,6 +5,7 @@
 import { Hono } from 'hono'
 import type { Env } from '../types/env'
 import { handleAIComplete } from '../handlers/ai'
+import { handleClueComplete } from '../handlers/ai-clue'
 import { handleHostedComplete, handleHostedQuota } from '../handlers/ai-hosted'
 import { supabaseAuth } from '../middleware/supabase-auth'
 
@@ -29,6 +30,16 @@ aiRouter.get('/complete', async c => {
 
 aiRouter.post('/complete', async c => {
   return handleAIComplete(c.req.raw, c.env)
+})
+
+/**
+ * POST /api/ai/clue/complete
+ *
+ * Recall 线索理解代理（DeepSeek Secret 在 Worker；按 IP 日配额）。
+ * M1：扩展可无用户登录调用；后续可收紧为 Pro hosted。
+ */
+aiRouter.post('/clue/complete', async c => {
+  return handleClueComplete(c.req.raw, c.env)
 })
 
 /**

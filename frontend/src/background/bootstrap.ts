@@ -1,5 +1,6 @@
 import { ensureChromeBookmarksImported } from '@/application/capture/import-chrome-bookmarks-service'
 import { ensureMemoryEnrichmentBackfilled } from '@/application/memory/ensure-memory-enrichment-backfill'
+import { refreshClueLlmCompleterFromDevConfig } from '@/application/recall/refresh-clue-llm-completer'
 import { registerChromeBookmarkSyncListeners } from '@/background/listeners/chrome-bookmark-sync'
 import { registerCommandListeners } from '@/background/listeners/commands'
 import { registerContextMenuListeners } from '@/background/listeners/context-menu'
@@ -34,6 +35,10 @@ async function bootstrapBackground(): Promise<void> {
   registerOmniboxListeners()
   registerCommandListeners()
   registerSelectionToolbarKeepaliveListener()
+
+  await refreshClueLlmCompleterFromDevConfig().catch(error => {
+    logger.warn('Background', '线索 LLM 开发配置加载失败，将仅用规则理解', error)
+  })
 
   logger.info('Background', '本地身份与 Memory DB 已就绪', {
     localProfileId: profile.localProfileId,
