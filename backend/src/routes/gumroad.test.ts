@@ -31,6 +31,13 @@ afterEach(() => {
 })
 
 describe('gumroad routes', () => {
+  test('GET /api/gumroad/subscription rejects missing JWT', async () => {
+    const app = createApp()
+    const response = await app.request('/api/gumroad/subscription', {}, baseEnv)
+
+    expect(response.status).toBe(401)
+  })
+
   test('GET /api/gumroad/subscription rejects missing user_id', async () => {
     const app = createApp()
     const response = await app.request(
@@ -47,14 +54,13 @@ describe('gumroad routes', () => {
     expect(data.error).toBe('Missing user_id parameter')
   })
 
-  test('POST /api/gumroad/webhook rejects invalid signature', async () => {
+  test('POST /api/gumroad/webhook accepts request without JWT and rejects invalid seller', async () => {
     const app = createApp()
     const response = await app.request(
       '/api/gumroad/webhook',
       {
         method: 'POST',
         headers: {
-          ...(await createAuthHeaders()),
           'content-type': 'application/x-www-form-urlencoded'
         },
         body: 'seller_id=wrong-seller&subscription_id=sub_123&custom_fields[user_id]=user_123'
@@ -78,7 +84,6 @@ describe('gumroad routes', () => {
       {
         method: 'POST',
         headers: {
-          ...(await createAuthHeaders()),
           'content-type': 'application/x-www-form-urlencoded'
         },
         body: 'seller_id=test-seller&notification_type=sale'
@@ -109,7 +114,6 @@ describe('gumroad routes', () => {
       {
         method: 'POST',
         headers: {
-          ...(await createAuthHeaders()),
           'content-type': 'application/x-www-form-urlencoded'
         },
         body: [
@@ -161,7 +165,6 @@ describe('gumroad routes', () => {
       {
         method: 'POST',
         headers: {
-          ...(await createAuthHeaders()),
           'content-type': 'application/x-www-form-urlencoded'
         },
         body: [
@@ -200,7 +203,6 @@ describe('gumroad routes', () => {
       {
         method: 'POST',
         headers: {
-          ...(await createAuthHeaders()),
           'content-type': 'application/x-www-form-urlencoded'
         },
         body: [
@@ -239,7 +241,6 @@ describe('gumroad routes', () => {
       {
         method: 'POST',
         headers: {
-          ...(await createAuthHeaders()),
           'content-type': 'application/x-www-form-urlencoded'
         },
         body: [
@@ -280,7 +281,6 @@ describe('gumroad routes', () => {
       {
         method: 'POST',
         headers: {
-          ...(await createAuthHeaders()),
           'content-type': 'application/x-www-form-urlencoded'
         },
         body: [
@@ -323,7 +323,6 @@ describe('gumroad routes', () => {
       {
         method: 'POST',
         headers: {
-          ...(await createAuthHeaders()),
           'content-type': 'application/x-www-form-urlencoded'
         },
         body: [

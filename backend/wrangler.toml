@@ -1,4 +1,4 @@
-name = "yiveno"
+name = "yiveno-production"
 main = "src/index.ts"
 compatibility_date = "2024-10-01"
 workers_dev = true
@@ -23,12 +23,8 @@ enabled = false
 persist = false
 head_sampling_rate = 0
 
-# 注意：Custom Domain 不支持路径/通配符，且本地开发无需 routes。
-# 为避免 wrangler dev 校验失败，将自定义域名路由仅放在 production 环境里。
-
-# 共享配置（所有环境）
-# 注意：以下变量将由 Cloudflare Secrets 自动替换。
-# 在本地开发时，`wrangler dev` 会从 .dev.vars 文件中读取这些值。
+# 本地 `wrangler dev` / 默认部署用。生产见 [env.production]
+# （vars / kv 对 env 不继承，production 必须各自声明一份）
 [vars]
 SUPABASE_URL = "https://ugxgxytykxblctsyulsg.supabase.co"
 SUPABASE_ANON_KEY = "sb_publishable_2FY9uDfqNbLwUYXxgcu8lw_qQ8SEbXo"
@@ -42,10 +38,21 @@ binding = "AI_USAGE_KV"
 id = "7e3a0b3f52654b7194ed21015f1779c5"
 preview_id = "1bc22ced5a424d55ad14ca9f748ba900"
 
-[ai]
-binding = "AI"
+# Custom Domain 仅挂 production（`bun run deploy` → wrangler deploy --env production）。
+# 顶层不声明 routes，避免默认/其它 env 误继承抢占域名。
+[env.production]
+workers_dev = true
+routes = [{ pattern = "api.yiveno.com", custom_domain = true }]
 
-# Production 环境配置
-routes = [
-  { pattern = "api.yiveno.com", custom_domain = true }
-]
+[env.production.vars]
+SUPABASE_URL = "https://ugxgxytykxblctsyulsg.supabase.co"
+SUPABASE_ANON_KEY = "sb_publishable_2FY9uDfqNbLwUYXxgcu8lw_qQ8SEbXo"
+REDIRECT_URI_ALLOWLIST = "https://yiveno.com,http://localhost:3001,http://localhost:3002"
+AI_HOSTED_MODEL = "deepseek-v4-flash"
+AI_HOSTED_MONTHLY_QUOTA = "999"
+DEEPSEEK_API_BASE = "https://api.deepseek.com"
+
+[[env.production.kv_namespaces]]
+binding = "AI_USAGE_KV"
+id = "7e3a0b3f52654b7194ed21015f1779c5"
+preview_id = "1bc22ced5a424d55ad14ca9f748ba900"

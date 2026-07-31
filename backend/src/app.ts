@@ -6,6 +6,7 @@
 
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
+import { HTTPException } from 'hono/http-exception'
 import type { Env } from './types/env'
 import { ALLOWED_ORIGINS } from './middleware/cors'
 import { logRequest, logResponse, logError } from './utils/logger'
@@ -17,8 +18,8 @@ import { adminRouter } from './routes/admin'
 import { authRouter } from './routes/auth'
 import { aiRouter } from './routes/ai'
 import { gumroadRouter } from './routes/gumroad'
-import { trpcRouter } from './routes/trpc'
 import { websiteRouter } from './routes/website'
+
 /** 创建 Hono 应用实例 */
 export function createApp() {
   const app = new Hono<{ Bindings: Env }>()
@@ -73,15 +74,18 @@ export function createApp() {
   app.route('/api/auth', authRouter)
   app.route('/api/ai', aiRouter)
 
-  app.use('/api/gumroad/*', jwtAuth())
+  // Gumroad：仅 subscription 要 JWT；webhook 由路由内 seller 签名校验
   app.route('/api/gumroad', gumroadRouter)
 
-  app.route('/trpc', trpcRouter)
   app.route('/api/website', websiteRouter)
+
   // ===== 错误处理 =====
   app.notFound(c => c.json({ error: 'Not Found' }, 404))
 
   app.onError((err, c) => {
+    if (err instanceof HTTPException) {
+      return err.getResponse()
+    }
     logError(err, { path: c.req.path, method: c.req.method })
     return c.json({ error: 'Internal Server Error' }, 500)
   })

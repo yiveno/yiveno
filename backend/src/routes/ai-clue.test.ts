@@ -24,9 +24,6 @@ function createBaseEnv(overrides: Record<string, unknown> = {}): Env {
     AI_HOSTED_MODEL: 'deepseek-v4-flash',
     AI_HOSTED_MONTHLY_QUOTA: '999',
     AI_USAGE_KV: createKvMock() as Env['AI_USAGE_KV'],
-    AI: {
-      run: async () => ({ answer: 'ok' })
-    },
     ...overrides
   } as unknown as Env
 }
@@ -50,35 +47,52 @@ describe('POST /api/ai/clue/complete', () => {
   })
 
   test('代理 DeepSeek messages 成功', async () => {
-    mock.module('../services/ai/deepseek-client', () => ({
-      completeWithDeepSeek: async () => ({
-        text: '{"contentTerms":["movie"],"confidence":"medium"}',
-        model: 'deepseek-v4-flash',
-        tokensUsed: 12
-      })
-    }))
-
-    const { handleClueComplete } = await import('../handlers/ai-clue')
-    const response = await handleClueComplete(
-      new Request('http://localhost/api/ai/clue/complete', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          messages: [
-            { role: 'system', content: 'return json' },
-            { role: 'user', content: 'The movie I watched yesterday' }
-          ],
-          maxTokens: 400,
-          temperature: 0
-        })
-      }),
-      createBaseEnv()
+    const fetchMock = mock(
+      async () =>
+        new Response(
+          JSON.stringify({
+            choices: [
+              {
+                message: {
+                  content: '{"contentTerms":["movie"],"confidence":"medium"}'
+                },
+                finish_reason: 'stop'
+              }
+            ],
+            usage: { total_tokens: 12 }
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } }
+        )
     )
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = fetchMock as unknown as typeof fetch
 
-    expect(response.status).toBe(200)
-    const json = (await response.json()) as { text: string; provider: string }
-    expect(json.provider).toBe('clue')
-    expect(json.text).toContain('movie')
+    try {
+      const { handleClueComplete } = await import('../handlers/ai-clue')
+      const response = await handleClueComplete(
+        new Request('http://localhost/api/ai/clue/complete', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            messages: [
+              { role: 'system', content: 'return json' },
+              { role: 'user', content: 'The movie I watched yesterday' }
+            ],
+            maxTokens: 400,
+            temperature: 0
+          })
+        }),
+        createBaseEnv()
+      )
+
+      expect(response.status).toBe(200)
+      const json = (await response.json()) as { text: string; provider: string }
+      expect(json.provider).toBe('clue')
+      expect(json.text).toContain('movie')
+      expect(fetchMock).toHaveBeenCalled()
+    } finally {
+      globalThis.fetch = originalFetch
+    }
   })
 
   test('路由已挂载', async () => {

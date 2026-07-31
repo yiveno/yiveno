@@ -59,9 +59,12 @@ backend/.dev.vars
 .kiro/settings/
 
 # AI 工具本地配置（个人偏好，不入库）
+.agents/
+.claude/settings.json
 .claude/settings.local.json
 .impeccable/config.local.json
 .impeccable/hook.cache.json
+.impeccable/live/
 
 # Python相关
 .venv/
@@ -125,7 +128,8 @@ $RECYCLE.BIN/
 # 但保留 Supabase 迁移文件（数据库版本控制）
 !supabase/migrations/*.sql
 
-# Astro 构建缓存
+# Astro 构建缓存（含误在仓库根生成的 .astro/）
+.astro/
 website/.astro/
 
 # 本地 embedding 模型缓存（v4 下载链已移除；保留规则以防残留目录）

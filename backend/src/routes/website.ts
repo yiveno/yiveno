@@ -1,3 +1,9 @@
+/**
+ * 官网只读 API（Pages → Worker）
+ *
+ * 登录不经本路由：官网 Supabase Auth 直连。
+ */
+
 import { Hono } from 'hono'
 import { z } from 'zod'
 import type { Env } from '../types/env'

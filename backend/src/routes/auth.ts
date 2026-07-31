@@ -1,5 +1,8 @@
 /**
  * 认证路由
+ *
+ * Phase C / Pro 预留：当前扩展与官网未接线。
+ * 官网登录走 Supabase Auth 直连，不经过本路由。
  */
 
 import { Hono } from 'hono'

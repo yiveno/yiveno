@@ -1,10 +1,12 @@
 /**
  * AI 路由
+ *
+ * - `/clue/complete`：v4 M1 扩展主路径（当前在用）
+ * - `/hosted/*`：Phase C / Pro 托管 LLM 预留，当前扩展未接线
  */
 
 import { Hono } from 'hono'
 import type { Env } from '../types/env'
-import { handleAIComplete } from '../handlers/ai'
 import { handleClueComplete } from '../handlers/ai-clue'
 import { handleHostedComplete, handleHostedQuota } from '../handlers/ai-hosted'
 import { supabaseAuth } from '../middleware/supabase-auth'
@@ -20,19 +22,6 @@ interface AiRouteEnv {
 export const aiRouter = new Hono<AiRouteEnv>()
 
 /**
- * GET/POST /api/ai/complete
- *
- * 旧版 Workers AI 文本补全（保留兼容，无鉴权）
- */
-aiRouter.get('/complete', async c => {
-  return handleAIComplete(c.req.raw, c.env)
-})
-
-aiRouter.post('/complete', async c => {
-  return handleAIComplete(c.req.raw, c.env)
-})
-
-/**
  * POST /api/ai/clue/complete
  *
  * Recall 线索理解代理（DeepSeek Secret 在 Worker；按 IP 日配额）。
@@ -45,7 +34,7 @@ aiRouter.post('/clue/complete', async c => {
 /**
  * GET /api/ai/hosted/quota
  *
- * Pro 托管 LLM 配额查询
+ * Pro 托管 LLM 配额查询（Phase C 预留，当前无客户端）
  */
 aiRouter.get('/hosted/quota', supabaseAuth(), async c => {
   const userId = c.get('supabaseUserId')
@@ -55,7 +44,7 @@ aiRouter.get('/hosted/quota', supabaseAuth(), async c => {
 /**
  * POST /api/ai/hosted/complete
  *
- * Pro 托管 LLM 文本补全
+ * Pro 托管 LLM 文本补全（Phase C 预留，当前无客户端）
  */
 aiRouter.post('/hosted/complete', supabaseAuth(), async c => {
   const userId = c.get('supabaseUserId')

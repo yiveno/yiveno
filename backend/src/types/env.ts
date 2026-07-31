@@ -2,11 +2,10 @@
  * Cloudflare Worker 环境变量类型定义
  */
 
-import type { Ai, KVNamespace } from '@cloudflare/workers-types'
+import type { KVNamespace } from '@cloudflare/workers-types'
 
 export interface Env {
   // Bindings
-  AI: Ai
   AI_USAGE_KV?: KVNamespace
 
   // Secrets & Vars from wrangler.toml

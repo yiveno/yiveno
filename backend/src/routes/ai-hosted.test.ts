@@ -25,9 +25,6 @@ function createBaseEnv(overrides: Record<string, unknown> = {}): Env {
     AI_HOSTED_MODEL: 'deepseek-v4-flash',
     AI_HOSTED_MONTHLY_QUOTA: '999',
     AI_USAGE_KV: createKvMock() as Env['AI_USAGE_KV'],
-    AI: {
-      run: async () => ({ answer: 'ok' })
-    },
     ...overrides
   } as unknown as Env
 }
@@ -67,7 +64,7 @@ describe('hosted ai routes', () => {
 
   test('handleHostedComplete returns quota_exceeded when limit reached', async () => {
     const { handleHostedComplete } = await importHostedHandlersAsPro()
-    const monthKey = `ai_usage:${TEST_USER_ID}:2026-06`
+    const monthKey = `ai_usage:${TEST_USER_ID}:${new Date().toISOString().slice(0, 7)}`
 
     const response = await handleHostedComplete(
       new Request('http://localhost/api/ai/hosted/complete', {
@@ -90,7 +87,7 @@ describe('hosted ai routes', () => {
 
   test('handleHostedComplete proxies DeepSeek and increments quota', async () => {
     const { handleHostedComplete } = await importHostedHandlersAsPro()
-    const monthKey = `ai_usage:${TEST_USER_ID}:2026-06`
+    const monthKey = `ai_usage:${TEST_USER_ID}:${new Date().toISOString().slice(0, 7)}`
     const kv = createKvMock()
 
     const fetchMock = mock(
