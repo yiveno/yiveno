@@ -1,4 +1,4 @@
-name = "yiveno-production"
+name = "yiveno"
 main = "src/index.ts"
 compatibility_date = "2024-10-01"
 workers_dev = true
@@ -24,7 +24,8 @@ persist = false
 head_sampling_rate = 0
 
 # 本地 `wrangler dev` / 默认部署用。生产见 [env.production]
-# （vars / kv 对 env 不继承，production 必须各自声明一份）
+# name 必须是 yiveno：`--env production` → 脚本名 yiveno-production。
+# 若写成 yiveno-production 再加 --env production，会变成 yiveno-production-production。
 [vars]
 SUPABASE_URL = "https://ugxgxytykxblctsyulsg.supabase.co"
 SUPABASE_ANON_KEY = "sb_publishable_2FY9uDfqNbLwUYXxgcu8lw_qQ8SEbXo"
