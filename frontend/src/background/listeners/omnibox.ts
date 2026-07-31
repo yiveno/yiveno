@@ -75,11 +75,22 @@ async function handleOmniboxInputChanged(
   }
 
   await ensureReady()
+  logger.info('Omnibox', 'inputChanged：开始 Recall', {
+    requestId,
+    clueLength: clue.length
+  })
   const result = await recallService.recallWithClue(clue)
 
   if (requestId !== inputChangedRequestId) {
+    logger.info('Omnibox', 'inputChanged：结果已过期，丢弃', { requestId })
     return
   }
+
+  logger.info('Omnibox', 'inputChanged：Recall 完成', {
+    requestId,
+    outcome: result.outcome,
+    alsoPossibleCount: result.alsoPossible.length
+  })
 
   const suggests = recallResultToOmniboxSuggests(result, {
     detailPageUrl: getDetailPageUrl(),

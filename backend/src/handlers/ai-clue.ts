@@ -7,6 +7,7 @@ import type { Env } from '../types/env'
 import { resolveHostedModel } from '../config/ai-hosted'
 import { completeWithDeepSeek } from '../services/ai/deepseek-client'
 import { okJson, errorJson } from '../utils/response'
+import { info as logInfo, logError } from '../utils/logger'
 
 const DEFAULT_DAILY_LIMIT = 200
 
@@ -59,13 +60,17 @@ async function consumeClueDailyQuota(
  */
 export async function handleClueComplete(request: Request, env: Env): Promise<Response> {
   const origin = request.headers.get('origin')
+  const startedAt = Date.now()
+  const ip = clientIp(request)
 
   if (!env.DEEPSEEK_API_KEY?.trim()) {
+    logInfo('clue_complete_rejected', { reason: 'deepseek_not_configured', ip })
     return errorJson({ error: 'deepseek_not_configured' }, 503, origin)
   }
 
   // 显式关闭：AI_CLUE_PROXY_ENABLED=false
   if (env.AI_CLUE_PROXY_ENABLED?.trim() === 'false') {
+    logInfo('clue_complete_rejected', { reason: 'clue_proxy_disabled', ip })
     return errorJson({ error: 'clue_proxy_disabled' }, 403, origin)
   }
 
@@ -77,11 +82,25 @@ export async function handleClueComplete(request: Request, env: Env): Promise<Re
   const hasMessages = Array.isArray(body.messages) && body.messages.length > 0
   const prompt = body.prompt?.trim() ?? ''
   if (!hasMessages && !prompt) {
+    logInfo('clue_complete_rejected', { reason: 'missing_prompt_or_messages', ip })
     return errorJson({ error: 'missing_prompt_or_messages' }, 400, origin)
   }
 
-  const quota = await consumeClueDailyQuota(env, clientIp(request))
+  logInfo('clue_complete_start', {
+    ip,
+    hasMessages,
+    messageCount: hasMessages ? body.messages!.length : 0,
+    promptLength: prompt.length,
+    maxTokens: body.maxTokens ?? 400
+  })
+
+  const quota = await consumeClueDailyQuota(env, ip)
   if (!quota.allowed) {
+    logInfo('clue_complete_quota_exceeded', {
+      ip,
+      used: quota.used,
+      limit: quota.limit
+    })
     return errorJson(
       {
         error: 'quota_exceeded',
@@ -101,6 +120,16 @@ export async function handleClueComplete(request: Request, env: Env): Promise<Re
       ...(hasMessages ? { messages: body.messages } : {})
     })
 
+    logInfo('clue_complete_ok', {
+      ip,
+      durationMs: Date.now() - startedAt,
+      model: result.model || resolveHostedModel(env),
+      tokensUsed: result.tokensUsed,
+      textLength: result.text.length,
+      quotaUsed: quota.used,
+      quotaLimit: quota.limit
+    })
+
     return okJson(
       {
         text: result.text,
@@ -117,6 +146,12 @@ export async function handleClueComplete(request: Request, env: Env): Promise<Re
     )
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
+    logError(err, {
+      path: '/api/ai/clue/complete',
+      ip,
+      durationMs: Date.now() - startedAt,
+      detail: message
+    })
     return errorJson({ error: message }, 500, origin)
   }
 }

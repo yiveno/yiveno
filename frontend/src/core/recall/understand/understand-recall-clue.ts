@@ -6,6 +6,7 @@
 import { buildSearchClueFromParsed } from '@/core/recall/orchestrate-keyword-recall'
 import { parseRecallClue } from '@/core/recall/parse-recall-clue'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
+import { type ClueFlowTrace, noopClueFlowTrace } from '@/core/recall/understand/clue-flow-trace'
 import {
   parseRecallClueWithLlm,
   type LlmChatCompleter
@@ -32,6 +33,19 @@ export interface UnderstandRecallClueOptions {
   complete?: LlmChatCompleter
   /** 强制模式（单测 / 调试）。 */
   forceMode?: ClueUnderstandingMode
+  /** 流水线追踪（由 application 注入 logger）。 */
+  trace?: ClueFlowTrace
+}
+
+function summarizeParsed(parsed: ParsedRecallClue): Record<string, unknown> {
+  return {
+    contentTerms: parsed.contentTerms,
+    timeLabel: parsed.timeRange?.label ?? null,
+    objectTypes: parsed.objectTypes ?? null,
+    behaviorHints: parsed.behaviorHints ?? null,
+    noteHint: parsed.noteHint ?? false,
+    confidence: parsed.confidence
+  }
 }
 
 /** 将线索理解成精确检索约束。 */
@@ -41,36 +55,70 @@ export async function understandRecallClue(
 ): Promise<UnderstandRecallClueResult> {
   const raw = clue.trim()
   const nowMs = options.nowMs ?? Date.now()
+  const trace = options.trace ?? noopClueFlowTrace
   const mode = options.forceMode ?? selectClueUnderstandingMode(raw)
+  const hasCompleter = Boolean(options.complete)
+
+  trace('info', '理解层：开始', {
+    clue: raw,
+    clueLength: raw.length,
+    mode,
+    forceMode: options.forceMode ?? null,
+    hasLlmCompleter: hasCompleter
+  })
 
   if (mode === 'lexical' || !options.complete) {
+    const reason = mode === 'lexical' ? 'mode_lexical' : 'no_llm_completer'
     const parsed = parseRecallClue(raw, { nowMs })
+    const searchClue = buildSearchClueFromParsed(parsed)
+    trace('info', '理解层：走规则', {
+      reason,
+      source: 'rules',
+      searchClue,
+      ...summarizeParsed(parsed)
+    })
     return {
       mode,
       source: 'rules',
       parsed,
-      searchClue: buildSearchClueFromParsed(parsed)
+      searchClue
     }
   }
 
+  trace('info', '理解层：尝试 LLM', { mode })
   try {
     const parsed = await parseRecallClueWithLlm(raw, {
       nowMs,
-      complete: options.complete
+      complete: options.complete,
+      trace
+    })
+    const searchClue = buildSearchClueFromParsed(parsed)
+    trace('info', '理解层：LLM 成功', {
+      source: 'llm',
+      searchClue,
+      ...summarizeParsed(parsed)
     })
     return {
       mode,
       source: 'llm',
       parsed,
-      searchClue: buildSearchClueFromParsed(parsed)
+      searchClue
     }
-  } catch {
+  } catch (error) {
     const parsed = parseRecallClue(raw, { nowMs })
+    const searchClue = buildSearchClueFromParsed(parsed)
+    trace('warn', '理解层：LLM 失败，降级规则', {
+      source: 'rules_fallback',
+      error: error instanceof Error ? error.message : String(error),
+      errorName: error instanceof Error ? error.name : typeof error,
+      searchClue,
+      ...summarizeParsed(parsed)
+    })
     return {
       mode,
       source: 'rules_fallback',
       parsed,
-      searchClue: buildSearchClueFromParsed(parsed)
+      searchClue
     }
   }
 }

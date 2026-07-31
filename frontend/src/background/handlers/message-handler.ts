@@ -27,6 +27,7 @@ import {
   handleGetUserSettings,
   handleUpdateUserSettings
 } from '@/background/handlers/settings-handler'
+import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import { logger } from '@/infrastructure/logging/logger'
 import {
   getCurrentOwnerId,
@@ -34,11 +35,16 @@ import {
 } from '@/infrastructure/identity/local-profile-service'
 
 async function handleGetLocalIdentity(): Promise<GetLocalIdentityResponse> {
+  const startedAt = flowStart('Identity', '读取本地身份')
   try {
     const [profile, ownerId] = await Promise.all([getOrCreateLocalProfile(), getCurrentOwnerId()])
+    flowOk('Identity', '读取本地身份', startedAt, {
+      profileId: profile.id,
+      ownerId
+    })
     return { ok: true, profile, ownerId }
   } catch (error) {
-    logger.error('Background', '读取本地身份失败', error)
+    flowFail('Identity', '读取本地身份', startedAt, error)
     return {
       ok: false,
       errorCode: 'IDENTITY_READ_FAILED',
@@ -86,6 +92,9 @@ async function dispatchBackgroundMessage(
     case 'UPDATE_USER_SETTINGS':
       return handleUpdateUserSettings(message.payload)
     default:
+      logger.warn('Msg', '未知消息类型', {
+        type: (message as { type: string }).type
+      })
       return {
         ok: false,
         errorCode: 'UNKNOWN_MESSAGE_TYPE',
@@ -106,10 +115,21 @@ export function handleBackgroundMessage(
     return false
   }
 
-  void dispatchBackgroundMessage(message as BackgroundMessage)
-    .then(sendResponse)
+  const typed = message as BackgroundMessage
+  const startedAt = flowStart('Msg', 'background 消息', { type: typed.type })
+
+  void dispatchBackgroundMessage(typed)
+    .then(response => {
+      const ok = 'ok' in response ? response.ok : undefined
+      flowOk('Msg', 'background 消息', startedAt, {
+        type: typed.type,
+        ok,
+        ...(!ok && 'errorCode' in response ? { errorCode: response.errorCode } : {})
+      })
+      sendResponse(response)
+    })
     .catch(error => {
-      logger.error('Background', '消息处理失败', error)
+      flowFail('Msg', 'background 消息', startedAt, error, { type: typed.type })
       sendResponse({
         ok: false,
         errorCode: 'MESSAGE_DISPATCH_FAILED',

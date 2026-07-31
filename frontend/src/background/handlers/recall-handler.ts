@@ -5,12 +5,27 @@ import { logger } from '@/infrastructure/logging/logger'
 
 /** 根据线索执行 Recall。 */
 export async function handleRecallWithClue(payload: unknown): Promise<RecallBackgroundResponse> {
+  const startedAt = Date.now()
   try {
     const input = parseRecallWithCluePayload(payload)
+    logger.info('Recall', '收到 RECALL_WITH_CLUE', {
+      clue: input.clue,
+      clueLength: input.clue.trim().length
+    })
+
     const result = await recallService.recallWithClue(input.clue)
+    logger.info('Recall', 'RECALL_WITH_CLUE 完成', {
+      durationMs: Date.now() - startedAt,
+      outcome: result.outcome,
+      topPickId: result.topPick?.item.id ?? null,
+      alsoPossibleCount: result.alsoPossible.length
+    })
     return { ok: true, result }
   } catch (error) {
-    logger.error('Background', 'Recall 失败', error)
+    logger.error('Recall', 'RECALL_WITH_CLUE 失败', {
+      durationMs: Date.now() - startedAt,
+      error
+    })
     return {
       ok: false,
       errorCode: 'RECALL_FAILED',

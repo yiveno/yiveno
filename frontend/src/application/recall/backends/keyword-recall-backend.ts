@@ -1,9 +1,9 @@
 import { memoryItemService } from '@/application/memory/memory-item-service'
+import { createRecallFlowTrace } from '@/application/recall/create-recall-flow-trace'
 import { getClueLlmCompleter } from '@/application/recall/clue-llm-completer-registry'
 import { recallByKeywordWithParsedClue } from '@/core/recall/orchestrate-keyword-recall'
 import type { RecallResult } from '@/core/recall/recall-result'
 import { understandRecallClue } from '@/core/recall/understand/understand-recall-clue'
-import { logger } from '@/infrastructure/logging/logger'
 
 import type { RecallBackend } from '@/application/recall/recall-backend'
 
@@ -15,8 +15,12 @@ export const RECALL_SCAN_LIMIT = 10000
 
 export class KeywordRecallBackend implements RecallBackend {
   async recallWithClue(clue: string): Promise<RecallResult> {
+    const trace = createRecallFlowTrace()
+    const pipelineStartedAt = Date.now()
     const normalizedClue = clue.trim()
+
     if (!normalizedClue) {
+      trace('info', 'Recall：空线索，直接 no_match')
       return {
         outcome: 'no_match',
         topPick: null,
@@ -25,26 +29,41 @@ export class KeywordRecallBackend implements RecallBackend {
       }
     }
 
-    const complete = getClueLlmCompleter() ?? undefined
-    const understood = await understandRecallClue(normalizedClue, {
-      ...(complete ? { complete } : {})
+    trace('info', 'Recall：流水线开始', {
+      clue: normalizedClue,
+      scanLimit: RECALL_SCAN_LIMIT
     })
 
-    logger.info('RecallUnderstand', '线索理解结果', {
-      mode: understood.mode,
-      source: understood.source,
-      searchClue: understood.searchClue,
-      timeLabel: understood.parsed.timeRange?.label,
-      objectTypes: understood.parsed.objectTypes,
-      contentTerms: understood.parsed.contentTerms,
-      confidence: understood.parsed.confidence,
+    const complete = getClueLlmCompleter() ?? undefined
+    trace('info', 'Recall：completer 状态', {
       hasLlmCompleter: Boolean(complete)
     })
 
+    const understood = await understandRecallClue(normalizedClue, {
+      ...(complete ? { complete } : {}),
+      trace
+    })
+
+    trace('info', 'Recall：加载 MemoryItem', { limit: RECALL_SCAN_LIMIT })
     const items = await memoryItemService.list({ limit: RECALL_SCAN_LIMIT })
-    return recallByKeywordWithParsedClue(items, normalizedClue, {
+    trace('info', 'Recall：MemoryItem 已加载', { itemCount: items.length })
+
+    const result = recallByKeywordWithParsedClue(items, normalizedClue, {
       candidateLimit: 6,
       parsed: understood.parsed
     })
+
+    trace('info', 'Recall：流水线结束', {
+      durationMs: Date.now() - pipelineStartedAt,
+      understandSource: understood.source,
+      understandMode: understood.mode,
+      searchClue: understood.searchClue,
+      outcome: result.outcome,
+      topPickId: result.topPick?.item.id ?? null,
+      topPickScore: result.topPick?.score ?? null,
+      alsoPossibleCount: result.alsoPossible.length
+    })
+
+    return result
   }
 }

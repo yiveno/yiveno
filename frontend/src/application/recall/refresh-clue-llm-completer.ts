@@ -31,7 +31,11 @@ export async function refreshClueLlmCompleterFromDevConfig(): Promise<void> {
   }
 
   setClueLlmCompleter(createClueUnderstandApiCompleter())
+  const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8787'
   logger.info('ClueLlm', '已启用 Cloudflare 线索理解代理（/api/ai/clue/complete）', {
-    apiBase: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8787'
+    apiBase,
+    endpoint: `${String(apiBase).replace(/\/$/, '')}/api/ai/clue/complete`,
+    buildMode: import.meta.env.MODE,
+    isDev: import.meta.env.DEV
   })
 }

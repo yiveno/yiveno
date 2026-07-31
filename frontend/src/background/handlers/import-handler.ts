@@ -8,15 +8,21 @@ import { memoryItemService } from '@/application/memory/memory-item-service'
 import { getChromeBookmarkImportStatus } from '@/application/capture/import-chrome-bookmarks-service'
 import type { ChromeBookmarkImportStatusResponse } from '@/core/messaging/import-messages'
 import { t } from '@/infrastructure/i18n/t'
-import { logger } from '@/infrastructure/logging/logger'
+import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 
 /** 返回 Chrome 书签导入进度。 */
 export async function handleGetChromeBookmarkImportStatus(): Promise<ChromeBookmarkImportStatusResponse> {
+  const startedAt = flowStart('Import', '读取书签导入状态')
   try {
     const state = await getChromeBookmarkImportStatus()
+    flowOk('Import', '读取书签导入状态', startedAt, {
+      status: state?.status ?? null,
+      importedCount: state?.importedCount ?? null,
+      totalCount: state?.totalCount ?? null
+    })
     return { ok: true, state }
   } catch (error) {
-    logger.error('Background', '读取书签导入状态失败', error)
+    flowFail('Import', '读取书签导入状态', startedAt, error)
     return {
       ok: false,
       errorCode: 'IMPORT_STATUS_READ_FAILED',
@@ -36,6 +42,7 @@ function toChromeTreeInput(node: chrome.bookmarks.BookmarkTreeNode): ChromeBookm
 
 /** 读取 Chrome 书签目录树并与 Memory 书签对齐（只读）。 */
 export async function handleGetBookmarkLibraryTree(): Promise<GetBookmarkLibraryTreeResponse> {
+  const startedAt = flowStart('Import', '读取书签目录树')
   try {
     const [chromeTree, alignment, importState] = await Promise.all([
       chrome.bookmarks.getTree(),
@@ -53,14 +60,19 @@ export async function handleGetBookmarkLibraryTree(): Promise<GetBookmarkLibrary
       }
     )
 
+    const bookmarkCount = countBookmarkLibraryLeaves(roots)
+    flowOk('Import', '读取书签目录树', startedAt, {
+      bookmarkCount,
+      syncReady: importState?.status === 'completed'
+    })
     return {
       ok: true,
       roots,
-      bookmarkCount: countBookmarkLibraryLeaves(roots),
+      bookmarkCount,
       syncReady: importState?.status === 'completed'
     }
   } catch (error) {
-    logger.error('Background', '读取书签目录树失败', error)
+    flowFail('Import', '读取书签目录树', startedAt, error)
     return {
       ok: false,
       errorCode: 'LIBRARY_TREE_READ_FAILED',

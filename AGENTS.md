@@ -21,6 +21,7 @@
 - **图标优先于文案**：工具操作/导航尽量用通识 Material Symbols；省略可见文字时 `title` + `aria-label` 显示完整文案（经 `t()`）。主 CTA、说明、空状态、表单标签除外。
 - 扩展用户文案：仅 `_locales/{en,zh_CN}` + `frontend/src/infrastructure/i18n` 的 `t()`；禁止写死 UI 文案与 `|| '兜底'`。`core` 注入 `t` 或返回 message key。官网另选方案，不共用 messages 文件。
 - TypeScript 禁止 `any` / `as any`；外部数据用 Zod 校验；**注释与 JSDoc 必须中文**（标识符、API 专有名词可保留英文）。
+- **业务可观测性（硬约定）**：新增或改动业务路径时，必须有**清晰中文注释（意图/边界）** + **关键步骤日志**（开始 / 分支决策 / 成功或失败原因；失败不可静默吞掉）。扩展侧优先用 `frontend/src/infrastructure/logging/flow-log.ts`（`flowStart` / `flowOk` / `flowFail` / `runLogged`），scope 稳定可过滤（如 `Msg` / `Capture` / `Recall` / `RecallFlow` / `ClueLlm`）；core 可通过注入 `trace`，禁止 core 直连 Chrome。长文本只打 preview，避免刷屏。细则：`docs/engineering/业务日志与注释约定.md`。
 - Vue 组件必须 `defineOptions({ name: 'ComponentName' })`。
 - 需要跨层事件时再引入事件总线（当前无 mitt / emitEvent）。
 - Map 响应式更新：若引入 Map 状态，优先不可变更新模式（当前 Popup 用组件内状态即可）。

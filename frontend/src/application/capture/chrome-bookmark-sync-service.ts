@@ -67,36 +67,52 @@ export async function handleChromeBookmarkCreated(
 ): Promise<{ captured: boolean }> {
   if (!(await isChromeBookmarkIncrementalSyncEnabled())) {
     enqueueUpsert(node.id)
+    logger.info('ChromeBookmarkSync', 'created 已入队（导入未完成）', {
+      chromeBookmarkId: node.id
+    })
     return { captured: false }
   }
 
-  return syncChromeBookmarkNode(node)
+  const result = await syncChromeBookmarkNode(node)
+  logger.info('ChromeBookmarkSync', 'created 已处理', {
+    chromeBookmarkId: node.id,
+    captured: result.captured
+  })
+  return result
 }
 
 /** 处理 Chrome bookmarks.onChanged。 */
 export async function handleChromeBookmarkChanged(chromeBookmarkId: string): Promise<void> {
   if (!(await isChromeBookmarkIncrementalSyncEnabled())) {
     enqueueUpsert(chromeBookmarkId)
+    logger.info('ChromeBookmarkSync', 'changed 已入队（导入未完成）', { chromeBookmarkId })
     return
   }
 
   const node = await readChromeBookmarkById(chromeBookmarkId)
   if (!node) {
     await syncChromeBookmarkRemoved(chromeBookmarkId)
+    logger.info('ChromeBookmarkSync', 'changed → 节点消失，已软删', { chromeBookmarkId })
     return
   }
 
-  await syncChromeBookmarkNode(node)
+  const result = await syncChromeBookmarkNode(node)
+  logger.info('ChromeBookmarkSync', 'changed 已处理', {
+    chromeBookmarkId,
+    captured: result.captured
+  })
 }
 
 /** 处理 Chrome bookmarks.onRemoved。 */
 export async function handleChromeBookmarkRemoved(chromeBookmarkId: string): Promise<void> {
   if (!(await isChromeBookmarkIncrementalSyncEnabled())) {
     enqueueRemove(chromeBookmarkId)
+    logger.info('ChromeBookmarkSync', 'removed 已入队（导入未完成）', { chromeBookmarkId })
     return
   }
 
   await syncChromeBookmarkRemoved(chromeBookmarkId)
+  logger.info('ChromeBookmarkSync', 'removed 已软删', { chromeBookmarkId })
 }
 
 /**
@@ -105,6 +121,12 @@ export async function handleChromeBookmarkRemoved(chromeBookmarkId: string): Pro
  */
 export async function flushPendingChromeBookmarkSync(): Promise<void> {
   const removeIds = [...pendingRemoveIds]
+  const upsertIds = [...pendingUpsertIds]
+  logger.info('ChromeBookmarkSync', '冲刷 pending 开始', {
+    removeCount: removeIds.length,
+    upsertCount: upsertIds.length
+  })
+
   pendingRemoveIds.clear()
 
   for (const chromeBookmarkId of removeIds) {
@@ -115,7 +137,6 @@ export async function flushPendingChromeBookmarkSync(): Promise<void> {
     }
   }
 
-  const upsertIds = [...pendingUpsertIds]
   pendingUpsertIds.clear()
 
   for (const chromeBookmarkId of upsertIds) {
@@ -134,6 +155,8 @@ export async function flushPendingChromeBookmarkSync(): Promise<void> {
       logger.error('ChromeBookmarkSync', '冲刷 upsert 事件失败', { chromeBookmarkId, error })
     }
   }
+
+  logger.info('ChromeBookmarkSync', '冲刷 pending 完成')
 }
 
 /** 测试用：重置 pending 队列。 */

@@ -51,6 +51,12 @@ async function runChromeBookmarkImport(
   let importedCount = startOffset
   let totalCount = existing?.totalCount
 
+  logger.info('ChromeBookmarkImport', '书签 bulk 导入开始', {
+    startOffset,
+    resume: Boolean(existing && existing.status !== 'completed'),
+    previousStatus: existing?.status ?? null
+  })
+
   await writeChromeBookmarkImportState({
     status: 'running',
     importedCount: startOffset,
