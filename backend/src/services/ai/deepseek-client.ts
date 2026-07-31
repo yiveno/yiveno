@@ -2,7 +2,11 @@
  * DeepSeek API 客户端（服务端托管）
  */
 
-import { DEEPSEEK_DEFAULT_BASE_URL, resolveHostedModel } from '../../config/ai-hosted'
+import {
+  DEEPSEEK_DEFAULT_BASE_URL,
+  resolveHostedModel,
+  clampCompletionMaxTokens
+} from '../../config/ai-hosted'
 import type { Env } from '../../types/env'
 
 export interface DeepSeekCompleteOptions {
@@ -53,7 +57,7 @@ export async function completeWithDeepSeek(
 
   const baseUrl = (env.DEEPSEEK_API_BASE?.trim() || DEEPSEEK_DEFAULT_BASE_URL).replace(/\/$/, '')
   const model = resolveHostedModel(env)
-  const maxTokens = options?.maxTokens ?? 256
+  const maxTokens = clampCompletionMaxTokens(options?.maxTokens, 256)
   const temperature = options?.temperature ?? 0.6
   const disableThinking = options?.disableThinking !== false
 

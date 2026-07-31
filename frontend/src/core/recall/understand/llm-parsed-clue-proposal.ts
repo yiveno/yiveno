@@ -6,15 +6,24 @@ import {
   RecallObjectTypeSchema
 } from '@/core/recall/parse-recall-clue-types'
 
-/** 与词典 canonical 一致的时间标签（LLM 只许输出这些）。 */
+/**
+ * 与词典 canonical 一致的时间标签（LLM 只许输出这些）。
+ * - today：今天
+ * - yesterday：昨天
+ * - day_before_yesterday：前天
+ * - last_week：上周
+ * - recent：最近
+ * - a_while_ago：前一阵
+ * - long_ago：很久以前
+ */
 export const RecallRelativeTimeLabelSchema = z.enum([
-  'today',
-  'yesterday',
-  'day_before_yesterday',
-  'last_week',
-  'recent',
-  'a_while_ago',
-  'long_ago'
+  'today', // 今天
+  'yesterday', // 昨天
+  'day_before_yesterday', // 前天
+  'last_week', // 上周
+  'recent', // 最近
+  'a_while_ago', // 前一阵
+  'long_ago' // 很久以前
 ])
 
 /**

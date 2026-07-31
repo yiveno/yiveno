@@ -1,7 +1,15 @@
 /**
- * 支付状态类型
+ * 支付状态。
+ * - pending：待支付
+ * - paid：已支付
+ * - failed：失败
+ * - refunded：已退款
  */
-export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded'
+export type PaymentStatus =
+  | 'pending' // 待支付
+  | 'paid' // 已支付
+  | 'failed' // 失败
+  | 'refunded' // 已退款
 
 /**
  * 支付记录接口

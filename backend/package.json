@@ -9,6 +9,7 @@
     "build": "echo 'Backend: Cloudflare Worker 无需构建'",
     "typecheck": "tsc --noEmit --skipLibCheck",
     "typecheck:force": "tsc --noEmit --skipLibCheck",
+    "types:gen": "wrangler types --strict-vars=false",
     "lint": "bun run format && bun run eslint",
     "lint:check": "bun run eslint:check",
     "format": "bunx prettier --write \"**/*.{js,ts,json}\"",
@@ -37,7 +38,6 @@
     "bun": ">=1.0.0"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20240403.0",
     "@types/bun": "^1.3.14",
     "@types/node": "^24.3.0",
     "supabase": "^1.187.3"

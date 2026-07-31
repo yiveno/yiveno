@@ -1,26 +1,54 @@
 import { z } from 'zod'
 
-/** P0 可识别的对象类型（与 enrichment tags 对齐用英文 slug）。 */
+/**
+ * P0 可识别的对象类型（与 enrichment tags 对齐用英文 slug）。
+ * - poem：诗
+ * - article：文章
+ * - song：歌曲
+ * - code：代码
+ * - command：命令
+ * - page：页面
+ * - password：密码
+ * - quote：引文
+ */
 export const RecallObjectTypeSchema = z.enum([
-  'poem',
-  'article',
-  'song',
-  'code',
-  'command',
-  'page',
-  'password',
-  'quote'
+  'poem', // 诗
+  'article', // 文章
+  'song', // 歌曲
+  'code', // 代码
+  'command', // 命令
+  'page', // 页面
+  'password', // 密码
+  'quote' // 引文
 ])
 
 export type RecallObjectType = z.infer<typeof RecallObjectTypeSchema>
 
-/** P0 弱行为提示（无精确阅读进度时仅作加权/追问信号）。 */
-export const RecallBehaviorHintSchema = z.enum(['half_read', 'often_opened', 'recently_saved'])
+/**
+ * P0 弱行为提示（无精确阅读进度时仅作加权/追问信号）。
+ * - half_read：看了一半 / 未读完
+ * - often_opened：常打开 / 反复听
+ * - recently_saved：刚保存
+ */
+export const RecallBehaviorHintSchema = z.enum([
+  'half_read', // 未读完
+  'often_opened', // 常打开
+  'recently_saved' // 刚保存
+])
 
 export type RecallBehaviorHint = z.infer<typeof RecallBehaviorHintSchema>
 
-/** 解析置信度：供编排层决定直给 / 候选 / 追问。 */
-export const RecallClueConfidenceSchema = z.enum(['high', 'medium', 'low'])
+/**
+ * 解析置信度：供编排层决定直给 / 候选 / 追问。
+ * - high：多槽位齐全
+ * - medium：部分约束
+ * - low：仅弱信号
+ */
+export const RecallClueConfidenceSchema = z.enum([
+  'high', // 高
+  'medium', // 中
+  'low' // 低
+])
 
 export type RecallClueConfidence = z.infer<typeof RecallClueConfidenceSchema>
 

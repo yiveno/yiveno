@@ -19,8 +19,16 @@ export interface RecallDuplicateGroup {
   siblings: RecallMatch[]
 }
 
-/** Recall 结果形态。 */
-export type RecallOutcome = 'top_pick' | 'need_a_clue' | 'no_match'
+/**
+ * Recall 结果形态。
+ * - top_pick：高置信直给
+ * - need_a_clue：弱命中，需追问/补线索
+ * - no_match：无可用命中
+ */
+export type RecallOutcome =
+  | 'top_pick' // 高置信 Top Pick
+  | 'need_a_clue' // 弱命中，需补线索
+  | 'no_match' // 无命中
 
 /** 关键词 Filter 召回结果。 */
 export interface RecallResult {

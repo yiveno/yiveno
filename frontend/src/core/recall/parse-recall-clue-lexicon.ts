@@ -14,15 +14,24 @@ export type RecallLexiconEntry<T extends string> = {
   value: T
 }
 
-/** 相对时间标签（解析后再换成具体 ISO 窗）。 */
+/**
+ * 相对时间标签（解析后再换成具体 ISO 窗）。
+ * - today：今天
+ * - yesterday：昨天
+ * - day_before_yesterday：前天
+ * - last_week：上周
+ * - recent：最近
+ * - a_while_ago：前一阵
+ * - long_ago：很久以前
+ */
 export type RecallRelativeTimeLabel =
-  | 'today'
-  | 'yesterday'
-  | 'day_before_yesterday'
-  | 'last_week'
-  | 'recent'
-  | 'a_while_ago'
-  | 'long_ago'
+  | 'today' // 今天
+  | 'yesterday' // 昨天
+  | 'day_before_yesterday' // 前天
+  | 'last_week' // 上周
+  | 'recent' // 最近
+  | 'a_while_ago' // 前一阵
+  | 'long_ago' // 很久以前
 
 /** 各对象类型的 canonical 英文词面。 */
 export const RECALL_OBJECT_TYPE_CANONICAL_SURFACES: Record<RecallObjectType, string> = {

@@ -33,23 +33,34 @@ export async function getHostedQuotaSnapshot(
 }
 
 /**
- * 在配额允许时递增一次调用计数
+ * 在配额允许时递增一次调用计数。
+ * 未绑定 AI_USAGE_KV 时拒绝（避免无上限调用）。
  */
 export async function consumeHostedQuota(
   env: Env,
   userId: string
 ): Promise<
   | { allowed: true; snapshot: HostedQuotaSnapshot }
-  | { allowed: false; snapshot: HostedQuotaSnapshot }
+  | {
+      allowed: false
+      snapshot: HostedQuotaSnapshot
+      reason?: 'quota_exceeded' | 'kv_not_configured'
+    }
 > {
-  const snapshot = await getHostedQuotaSnapshot(env, userId)
-
   if (!env.AI_USAGE_KV) {
-    return { allowed: true, snapshot }
+    const limit = resolveHostedMonthlyQuota(env)
+    const monthKey = buildMonthlyUsageKey(userId)
+    return {
+      allowed: false,
+      reason: 'kv_not_configured',
+      snapshot: { used: 0, limit, remaining: 0, monthKey }
+    }
   }
 
+  const snapshot = await getHostedQuotaSnapshot(env, userId)
+
   if (snapshot.used >= snapshot.limit) {
-    return { allowed: false, snapshot }
+    return { allowed: false, reason: 'quota_exceeded', snapshot }
   }
 
   const nextUsed = snapshot.used + 1

@@ -26,12 +26,17 @@ import type {
 export { BACKGROUND_MESSAGE_SCOPE }
 
 /** 本地身份读取失败。 */
-export const IdentityErrorCodeSchema = z.enum(['IDENTITY_READ_FAILED'])
+export const IdentityErrorCodeSchema = z.enum([
+  'IDENTITY_READ_FAILED' // 读取本地身份失败
+])
 
 export type IdentityErrorCode = z.infer<typeof IdentityErrorCodeSchema>
 
 /** 消息分发层失败（未知 type / 未捕获异常）。 */
-export const DispatchErrorCodeSchema = z.enum(['UNKNOWN_MESSAGE_TYPE', 'MESSAGE_DISPATCH_FAILED'])
+export const DispatchErrorCodeSchema = z.enum([
+  'UNKNOWN_MESSAGE_TYPE', // 未知消息 type
+  'MESSAGE_DISPATCH_FAILED' // 分发未捕获异常
+])
 
 export type DispatchErrorCode = z.infer<typeof DispatchErrorCodeSchema>
 

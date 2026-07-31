@@ -293,7 +293,7 @@ describe('auth routes', () => {
     expect(response.status).toBe(500)
 
     const data = (await response.json()) as { error: string }
-    expect(data.error).toContain('token exchange failed 500')
+    expect(data.error).toBe('auth_callback_failed')
   })
 
   test('GET /api/auth/callback falls back to email when provider sub is empty', async () => {

@@ -7,7 +7,12 @@ import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 import type { RecallOutcome } from '@/core/recall/recall-result'
 
 /** 可追问的线索槽位。 */
-export type RecallFollowUpSlot = 'time' | 'objectType' | 'content' | 'note'
+/** 追问优先补的槽位。 */
+export type RecallFollowUpSlot =
+  | 'time' // 时间
+  | 'objectType' // 对象类型
+  | 'content' // 内容词
+  | 'note' // 备注
 
 /** 追问芯片（label/value 同源 i18n key，或固定中文值键）。 */
 export type RecallFollowUpSuggestionSpec = {

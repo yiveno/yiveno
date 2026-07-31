@@ -39,8 +39,17 @@ const NOTE_MAX_LENGTH = 500
 /** 存成抓住感展示时长（含预览 / 引导）。 */
 const SAVED_FEEDBACK_HIDE_MS = 2400
 
-type ToolbarUiMode = 'actions' | 'note'
-type ToolbarButtonState = 'idle' | 'saving' | 'saved' | 'error'
+/** 划词浮层 UI 模式。 */
+type ToolbarUiMode =
+  | 'actions' // 操作按钮
+  | 'note' // 备注输入
+
+/** 划词浮层主按钮状态。 */
+type ToolbarButtonState =
+  | 'idle' // 空闲
+  | 'saving' // 保存中
+  | 'saved' // 已保存
+  | 'error' // 失败
 
 /** 打开浮层/备注时快照的选区；textarea 聚焦后页内选区会丢，保存必须用这份。 */
 interface PendingSelectionCapture {

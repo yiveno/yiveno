@@ -1,9 +1,9 @@
 {
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
-    /* Cloudflare Workers environment */
+    /* Cloudflare Workers：运行时类型由 wrangler types 生成 */
     "lib": ["ES2022", "WebWorker"],
-    "types": ["@cloudflare/workers-types", "@types/node", "@types/bun"],
+    "types": ["@types/node", "@types/bun"],
     "allowImportingTsExtensions": true,
     "noEmit": true,
 
@@ -13,5 +13,5 @@
       "@yiveno/types": ["../packages/types/src/index.ts"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "worker-configuration.d.ts"]
 }

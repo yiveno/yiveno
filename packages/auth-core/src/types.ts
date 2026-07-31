@@ -5,9 +5,13 @@
 import type { User, Session } from '@supabase/supabase-js'
 
 /**
- * OAuth 提供商
+ * OAuth 提供商。
+ * - google：Google
+ * - microsoft：Microsoft
  */
-export type OAuthProvider = 'google' | 'microsoft'
+export type OAuthProvider =
+  | 'google' // Google
+  | 'microsoft' // Microsoft
 
 /**
  * 认证响应

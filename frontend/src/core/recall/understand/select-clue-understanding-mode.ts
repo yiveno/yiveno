@@ -1,9 +1,17 @@
 /**
- * 线索理解门禁：决定走词面快路径还是语义深理解（LLM）。
+ * 线索理解门禁（Gate B）：决定走词面快路径还是语义深理解（LLM）。
  * 调度本身确定性，不交给模型自选路径。
+ * 不负责噪音过滤；「是否处理」见 selectClueProcessingDisposition（Gate A）。
  */
 
-export type ClueUnderstandingMode = 'lexical' | 'semantic'
+/**
+ * 理解门禁模式（Gate B）。
+ * - lexical：词面快路径（规则）
+ * - semantic：语义深理解（可升 LLM）
+ */
+export type ClueUnderstandingMode =
+  | 'lexical' // 词面：规则解析
+  | 'semantic' // 语义：优先 LLM
 
 function isUrlLike(raw: string): boolean {
   const trimmed = raw.trim()

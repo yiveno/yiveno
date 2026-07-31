@@ -46,6 +46,21 @@ describe('POST /api/ai/clue/complete', () => {
     expect(response.status).toBe(503)
   })
 
+  test('缺少 AI_USAGE_KV → 503', async () => {
+    const { handleClueComplete } = await import('../handlers/ai-clue')
+    const response = await handleClueComplete(
+      new Request('http://localhost/api/ai/clue/complete', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ prompt: 'hello' })
+      }),
+      createBaseEnv({ AI_USAGE_KV: undefined })
+    )
+    expect(response.status).toBe(503)
+    const json = (await response.json()) as { error: string }
+    expect(json.error).toBe('kv_not_configured')
+  })
+
   test('代理 DeepSeek messages 成功', async () => {
     const fetchMock = mock(
       async () =>

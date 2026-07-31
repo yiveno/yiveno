@@ -1,6 +1,7 @@
 import { ensureBackgroundBootstrapped } from '@/background/bootstrap'
 import { handleBackgroundMessage } from '@/background/handlers/message-handler'
 import { registerContextMenuItems } from '@/background/listeners/context-menu'
+import { exposeClueGatewayDebug } from '@/infrastructure/debug/expose-clue-gateway-debug'
 import { logger } from '@/infrastructure/logging/logger'
 
 /**
@@ -10,6 +11,8 @@ import { logger } from '@/infrastructure/logging/logger'
  * 在此注册 runtime 消息与 onInstalled（含右键菜单）。
  * 禁止恢复旧书签管理器行为。
  */
+exposeClueGatewayDebug()
+
 chrome.runtime.onInstalled.addListener(details => {
   void ensureBackgroundBootstrapped()
     .then(() => registerContextMenuItems())

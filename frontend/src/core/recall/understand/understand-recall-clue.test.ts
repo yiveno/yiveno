@@ -11,6 +11,7 @@ describe('understandRecallClue', () => {
       return '{}'
     }
     const result = await understandRecallClue('Cloudflare Workers', { complete })
+    expect(result.disposition).toBe('proceed')
     expect(result.mode).toBe('lexical')
     expect(result.source).toBe('rules')
     expect(called).toBe(0)
@@ -30,6 +31,7 @@ describe('understandRecallClue', () => {
       "I recently came across a news article about a legal case. I've forgotten the details.",
       { complete }
     )
+    expect(result.disposition).toBe('proceed')
     expect(result.mode).toBe('semantic')
     expect(result.source).toBe('llm')
     expect(result.parsed.objectTypes).toEqual(['article'])
@@ -41,7 +43,25 @@ describe('understandRecallClue', () => {
 
   it('semantic 无 completer → 规则', async () => {
     const result = await understandRecallClue('The movie that I watched yesterday')
+    expect(result.disposition).toBe('proceed')
     expect(result.mode).toBe('semantic')
     expect(result.source).toBe('rules')
+  })
+
+  it('网关拒绝噪音：不调 LLM，空 searchClue', async () => {
+    let called = 0
+    const complete: LlmChatCompleter = async () => {
+      called += 1
+      return '{}'
+    }
+    const result = await understandRecallClue('alsjdlkasjdweq;lkaskdl;aksd;lasd;hasjldhaksd', {
+      complete
+    })
+    expect(result.disposition).toBe('reject_noise')
+    expect(result.rejectReason).toBe('keyboard_mash')
+    expect(result.source).toBe('rejected_noise')
+    expect(result.searchClue).toBe('')
+    expect(result.parsed.contentTerms).toEqual([])
+    expect(called).toBe(0)
   })
 })

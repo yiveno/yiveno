@@ -125,7 +125,7 @@ Background **无** `window` / `document` / `localStorage`。用全局 `setTimeou
 
 ## 代码约定
 
-- TS：禁止 `any` / `as any`；外部数据 Zod 校验；**注释与 JSDoc 必须中文**（专有名词可保留英文）。
+- TS：禁止 `any` / `as any`；外部数据 Zod 校验；**注释与 JSDoc 必须中文**（专有名词可保留英文）。**字符串联合 / `z.enum` 每个成员须行尾或 JSDoc 中文释义**（见 `docs/engineering/业务日志与注释约定.md`）。
 - **业务可观测性**：新增/改动业务路径必须有中文注释 + 关键步骤 log（开始/分支/成功失败）；失败禁止静默。扩展优先 `infrastructure/logging/flow-log.ts`；Recall 理解层用注入 `trace`。scope 稳定可过滤，长文本用 preview。详见 `docs/engineering/业务日志与注释约定.md`。
 - Vue：`defineOptions({ name: 'ComponentName' })`。
 - 依赖：当前 frontend 核心为 Vue + Zod；**不要**为约定空挂 mitt / Immer / VueUse / Pinia（需要时再引入）。

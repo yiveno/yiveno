@@ -1,11 +1,12 @@
 name = "yiveno"
 main = "src/index.ts"
-compatibility_date = "2024-10-01"
+compatibility_date = "2026-07-31"
+compatibility_flags = ["nodejs_compat"]
 workers_dev = true
 
 # ===================== 可观测性配置 =====================
 # 用于监控 Worker 的运行状况、性能和错误
-# 注意：日志和追踪是互斥的，只能启用其中一个
+# logs 与 traces 可同时开启（各自采样率独立配置）
 [observability]
 enabled = true
 head_sampling_rate = 1  # 采样率：1 = 100%（开发阶段），生产环境可降低到 0.1
@@ -17,7 +18,7 @@ head_sampling_rate = 1
 persist = true           # 持久化存储日志
 invocation_logs = true   # 记录每次调用的详细信息
 
-# 追踪配置（已禁用，因为与日志互斥）
+# 追踪：可与 logs 并存；生产可按需开启并降低采样
 [observability.traces]
 enabled = false
 persist = false

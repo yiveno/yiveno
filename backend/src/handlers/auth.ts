@@ -11,6 +11,7 @@ import { signJWT } from '../utils/jwt'
 import { getProviderConfig } from '../services/auth/provider-config'
 import { exchangeCodeForToken, fetchUserInfoWithAccessToken } from '../services/auth/oauth-client'
 import { validateStartParams, validateCallbackRequest } from '../services/auth/validation'
+import { logError } from '../utils/logger'
 
 export { getProviderConfig } from '../services/auth/provider-config'
 
@@ -27,7 +28,8 @@ export function handleAuthStart(request: Request, env: Env, origin: string | nul
     if (validation) return validation
 
     const cfg = getProviderConfig(provider, env)!
-    const state = url.searchParams.get('state') || Math.random().toString(36).slice(2)
+    // OAuth state 必须用 CSPRNG，禁止 Math.random（可预测）
+    const state = url.searchParams.get('state') || crypto.randomUUID()
     const authUrl = new URL(cfg.authUrl)
     authUrl.searchParams.set('response_type', 'code')
     authUrl.searchParams.set('client_id', cfg.clientId)
@@ -46,7 +48,8 @@ export function handleAuthStart(request: Request, env: Env, origin: string | nul
     return okJson({ success: true, provider, authUrl: authUrl.toString(), state }, origin)
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
-    return errorJson({ error: msg }, 500, origin)
+    logError(err, { path: '/api/auth/start', detail: msg })
+    return errorJson({ error: 'auth_start_failed' }, 500, origin)
   }
 }
 
@@ -70,7 +73,11 @@ export async function handleAuthCallback(
     const accessToken = await exchangeCodeForToken(cfg, code, redirectUri, codeVerifier)
     const { email, sub } = await fetchUserInfoWithAccessToken(provider, cfg, accessToken)
 
-    const userId = `${provider}:${sub || email || Math.random().toString(36).slice(2)}`
+    const subject = sub || email
+    if (!subject) {
+      return errorJson({ error: 'missing_user_identity' }, 502, origin)
+    }
+    const userId = `${provider}:${subject}`
     const tier = 'free'
     const secret = env.JWT_SECRET || env.SECRET
     if (!secret) {
@@ -92,7 +99,9 @@ export async function handleAuthCallback(
     )
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
-    return errorJson({ error: msg }, 500, origin)
+    // 对外稳定错误码，上游细节只打日志
+    logError(err, { path: '/api/auth/callback', detail: msg })
+    return errorJson({ error: 'auth_callback_failed' }, 500, origin)
   }
 }
 
@@ -118,6 +127,7 @@ export function handleAuthProviders(_request: Request, env: Env, origin: string 
     )
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
-    return errorJson({ error: msg }, 500, origin)
+    logError(err, { path: '/api/auth/providers', detail: msg })
+    return errorJson({ error: 'auth_providers_failed' }, 500, origin)
   }
 }

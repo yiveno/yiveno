@@ -1,5 +1,6 @@
 /**
  * 理解层：任意线索 → ParsedRecallClue（交给 Filter 的精确约束）。
+ * 流程：网关（是否处理）→ 门禁（lexical/semantic）→ 规则 / LLM。
  * LLM 只产出结构；失败降级规则。不碰数据平面。
  */
 
@@ -12,14 +13,33 @@ import {
   type LlmChatCompleter
 } from '@/core/recall/understand/parse-recall-clue-with-llm'
 import {
+  selectClueProcessingDisposition,
+  type ClueProcessingDisposition,
+  type ClueProcessingRejectReason
+} from '@/core/recall/understand/select-clue-processing-disposition'
+import {
   selectClueUnderstandingMode,
   type ClueUnderstandingMode
 } from '@/core/recall/understand/select-clue-understanding-mode'
 
-/** 实际用来产出结构的引擎。 */
-export type ClueUnderstandingSource = 'rules' | 'llm' | 'rules_fallback'
+/**
+ * 实际用来产出结构的引擎。
+ * - rules：规则 parser
+ * - llm：LLM 成功
+ * - rules_fallback：LLM 失败后降级规则
+ * - rejected_noise：网关拒绝，未理解
+ */
+export type ClueUnderstandingSource =
+  | 'rules' // 规则
+  | 'llm' // LLM
+  | 'rules_fallback' // LLM 失败降级规则
+  | 'rejected_noise' // 网关拒绝噪音
 
 export interface UnderstandRecallClueResult {
+  /** 网关结论：reject 时下游应跳过扫库。 */
+  disposition: ClueProcessingDisposition
+  /** reject 时非 null。 */
+  rejectReason: ClueProcessingRejectReason | null
   mode: ClueUnderstandingMode
   source: ClueUnderstandingSource
   parsed: ParsedRecallClue
@@ -35,6 +55,8 @@ export interface UnderstandRecallClueOptions {
   forceMode?: ClueUnderstandingMode
   /** 流水线追踪（由 application 注入 logger）。 */
   trace?: ClueFlowTrace
+  /** 单测：跳过网关，强制 proceed。 */
+  skipNoiseGateway?: boolean
 }
 
 function summarizeParsed(parsed: ParsedRecallClue): Record<string, unknown> {
@@ -48,6 +70,14 @@ function summarizeParsed(parsed: ParsedRecallClue): Record<string, unknown> {
   }
 }
 
+function emptyRejectedParsed(raw: string): ParsedRecallClue {
+  return {
+    raw,
+    contentTerms: [],
+    confidence: 'low'
+  }
+}
+
 /** 将线索理解成精确检索约束。 */
 export async function understandRecallClue(
   clue: string,
@@ -56,12 +86,35 @@ export async function understandRecallClue(
   const raw = clue.trim()
   const nowMs = options.nowMs ?? Date.now()
   const trace = options.trace ?? noopClueFlowTrace
+
+  const decision = options.skipNoiseGateway
+    ? ({ disposition: 'proceed', rejectReason: null } as const)
+    : selectClueProcessingDisposition(raw)
+
+  if (decision.disposition === 'reject_noise') {
+    trace('info', '理解层：网关拒绝噪音', {
+      disposition: 'reject_noise',
+      rejectReason: decision.rejectReason,
+      clue: raw,
+      clueLength: raw.length
+    })
+    return {
+      disposition: 'reject_noise',
+      rejectReason: decision.rejectReason,
+      mode: 'lexical',
+      source: 'rejected_noise',
+      parsed: emptyRejectedParsed(raw),
+      searchClue: ''
+    }
+  }
+
   const mode = options.forceMode ?? selectClueUnderstandingMode(raw)
   const hasCompleter = Boolean(options.complete)
 
   trace('info', '理解层：开始', {
     clue: raw,
     clueLength: raw.length,
+    disposition: 'proceed',
     mode,
     forceMode: options.forceMode ?? null,
     hasLlmCompleter: hasCompleter
@@ -78,6 +131,8 @@ export async function understandRecallClue(
       ...summarizeParsed(parsed)
     })
     return {
+      disposition: 'proceed',
+      rejectReason: null,
       mode,
       source: 'rules',
       parsed,
@@ -99,6 +154,8 @@ export async function understandRecallClue(
       ...summarizeParsed(parsed)
     })
     return {
+      disposition: 'proceed',
+      rejectReason: null,
       mode,
       source: 'llm',
       parsed,
@@ -115,6 +172,8 @@ export async function understandRecallClue(
       ...summarizeParsed(parsed)
     })
     return {
+      disposition: 'proceed',
+      rejectReason: null,
       mode,
       source: 'rules_fallback',
       parsed,

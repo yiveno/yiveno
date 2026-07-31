@@ -8,7 +8,12 @@ export interface RecallHighlightPart {
 }
 
 /** 卡片上可高亮的展示面。 */
-export type RecallHighlightSurface = 'title' | 'excerpt' | 'subtitle' | 'note'
+/** 高亮作用的展示面。 */
+export type RecallHighlightSurface =
+  | 'title' // 标题
+  | 'excerpt' // 摘录正文
+  | 'subtitle' // 副信息 / 出处
+  | 'note' // 用户备注
 
 /**
  * 主因字段 → 卡片展示面（与 Popup 展示结构对齐）。

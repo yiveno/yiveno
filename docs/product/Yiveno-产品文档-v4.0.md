@@ -479,11 +479,15 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 
 ```text
 线索
+  → 网关（确定性·cheap）：是否处理（reject_noise | proceed）
+       reject → 空态 / no_match，不调 LLM、不扫全库
   → 门禁（确定性）：lexical 短词面/URL vs semantic 口语长句
   → lexical：规则 parseRecallClue
   → semantic：LLM → Zod 提议 → 锚定映射 → ParsedRecallClue（失败降级规则）
   → buildSearchClueFromParsed → 现有 keyword Filter + 软加权
 ```
+
+- **网关 vs 门禁：** 网关只答「要不要花资源」（硬噪音：空/纯符号/数字糊/砸键盘）；门禁只答「怎么理解」。灰区一律 proceed，禁止用 LLM 判噪音。
 
 - **不做本里程碑内：** embedding、全库喂模型、模型写库、开放闲聊。
 - **开发启用 LLM：** 默认经 Cloudflare `POST /api/ai/clue/complete`（Worker Secret `DEEPSEEK_API_KEY`）；本地需 `bun run env:sync:dev` + `wrangler dev`。可选 `chrome.storage.local` `yiveno.dev.clueLlm` 直连调试。正式 Pro 托管另接 `/api/ai/hosted/*`。
@@ -989,7 +993,7 @@ Chrome API / 选区
 | 2026-07-29 | §7.1 多源线索与权重：收集要宽、采信要窄；Chrome 环境为弱上下文；按模块渐进（产品内→选区→芯片→重排）        |
 | 2026-07-29 | §0.1.1 知识库习惯重置：文件夹型 KB 双重隐性成本；人创造/机器索引分工                                       |
 | 2026-07-31 | M1：线索 LLM 改经 Cloudflare `POST /api/ai/clue/complete`（Worker 持 DEEPSEEK Secret；扩展不持 key）       |
-| 2026-07-31 | 里程碑 M1：NL→精确检索约束；门禁+LLM 理解接入 KeywordRecallBackend（dev key；失败降级规则）                |
+| 2026-07-31 | M1：理解层前增加「是否处理」网关（reject_noise｜proceed）；与 lexical/semantic 门禁拆开；硬噪音不扫库      |
 | 2026-07-31 | §0.1.1 / §0.3：钉死 LLM 与数据平面边界（NLU·NLG 可；禁止直接写库；提议→Zod→确定性执行）                    |
 | 2026-07-29 | 新增 [`Yiveno-市场调研-v1.md`](./Yiveno-市场调研-v1.md)；附录 A.6；暂停扩大功能直至 §11 验证门槛           |
 | 2026-07-29 | P0：enrichment recall keywords（类型补充词 + 正文词面规则）；回填版本 v2                                   |

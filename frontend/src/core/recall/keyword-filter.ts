@@ -56,7 +56,11 @@ interface SearchableField {
   text: string
 }
 
-type TokenKind = 'phrase' | 'term' | 'ngram'
+/** Filter 分词种类。 */
+type TokenKind =
+  | 'phrase' // 短语
+  | 'term' // 单词
+  | 'ngram' // n-gram 片段
 
 interface RecallToken {
   token: string

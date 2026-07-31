@@ -14,16 +14,20 @@ import { info } from '../utils/logger'
 
 export const gumroadRouter = new Hono<{ Bindings: Env }>()
 
-/** GET /api/gumroad/subscription — 获取用户订阅信息（需要 JWT） */
+/** GET /api/gumroad/subscription — 获取当前 JWT 用户订阅（禁止信任 query user_id） */
 gumroadRouter.get('/subscription', jwtAuth(), c => {
   const jwtPayload = c.get('jwtPayload') as JWTPayload | undefined
-  if (jwtPayload) {
-    info('User', {
-      sub: jwtPayload.sub,
-      email: jwtPayload.email
-    })
+  const userId = jwtPayload?.sub?.trim() ?? ''
+  if (!userId) {
+    return c.json({ error: 'missing_subject' }, 401)
   }
-  return handleGetSubscription(c.req.raw, c.env, c.req.header('origin') ?? null)
+
+  info('[Gumroad] 查询订阅', {
+    sub: userId,
+    email: jwtPayload?.email
+  })
+
+  return handleGetSubscription(c.req.raw, c.env, c.req.header('origin') ?? null, userId)
 })
 
 /** POST /api/gumroad/webhook — Gumroad 回调（无 JWT；seller_id 校验） */

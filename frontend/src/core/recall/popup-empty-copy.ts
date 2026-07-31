@@ -3,7 +3,11 @@
  */
 import type { TranslateFn } from '@/core/i18n/translate'
 
-export type PopupLibraryState = 'unknown' | 'empty' | 'ready'
+/** Popup 侧记忆库是否已有可检内容。 */
+export type PopupLibraryState =
+  | 'unknown' // 尚未判定
+  | 'empty' // 空库
+  | 'ready' // 有条目可找回
 
 export interface PopupEmptyCopy {
   title: string

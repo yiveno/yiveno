@@ -38,20 +38,26 @@ describe('gumroad routes', () => {
     expect(response.status).toBe(401)
   })
 
-  test('GET /api/gumroad/subscription rejects missing user_id', async () => {
+  test('GET /api/gumroad/subscription uses JWT sub and ignores query user_id', async () => {
+    const getSpy = jest.spyOn(supabaseModule, 'getUserSubscription').mockResolvedValue(null)
     const app = createApp()
     const response = await app.request(
-      '/api/gumroad/subscription',
+      '/api/gumroad/subscription?user_id=attacker-other-user',
       {
         headers: await createAuthHeaders()
       },
       baseEnv
     )
 
-    expect(response.status).toBe(400)
+    expect(response.status).toBe(200)
+    expect(getSpy).toHaveBeenCalledWith(expect.anything(), 'google:test-user')
 
-    const data = (await response.json()) as { error: string }
-    expect(data.error).toBe('Missing user_id parameter')
+    const data = (await response.json()) as {
+      success: boolean
+      data: { hasSubscription: boolean }
+    }
+    expect(data.success).toBe(true)
+    expect(data.data.hasSubscription).toBe(false)
   })
 
   test('POST /api/gumroad/webhook accepts request without JWT and rejects invalid seller', async () => {
@@ -75,6 +81,28 @@ describe('gumroad routes', () => {
 
     const data = (await response.json()) as { error: string }
     expect(data.error).toBe('Invalid seller_id')
+  })
+
+  test('POST /api/gumroad/webhook rejects when GUMROAD_SELLER_ID is missing', async () => {
+    const app = createApp()
+    const response = await app.request(
+      '/api/gumroad/webhook',
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/x-www-form-urlencoded'
+        },
+        body: 'seller_id=any&subscription_id=sub_123&custom_fields[user_id]=user_123'
+      },
+      {
+        ...baseEnv,
+        GUMROAD_SELLER_ID: ''
+      } as Env
+    )
+
+    expect(response.status).toBe(503)
+    const data = (await response.json()) as { error: string }
+    expect(data.error).toBe('seller_id_not_configured')
   })
 
   test('POST /api/gumroad/webhook rejects payload without subscription_id or user_id', async () => {

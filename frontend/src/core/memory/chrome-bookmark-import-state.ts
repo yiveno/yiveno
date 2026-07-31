@@ -4,12 +4,19 @@ import { z } from 'zod'
 export const CHROME_BOOKMARK_IMPORT_STORAGE_KEY = 'yiveno:chrome_bookmark_import' as const
 
 /** 书签导入失败面向 UI 的稳定错误码。 */
-export const ChromeBookmarkImportErrorCodeSchema = z.enum(['BOOKMARK_IMPORT_FAILED'])
+export const ChromeBookmarkImportErrorCodeSchema = z.enum([
+  'BOOKMARK_IMPORT_FAILED' // 书签导入失败
+])
 
 export type ChromeBookmarkImportErrorCode = z.infer<typeof ChromeBookmarkImportErrorCodeSchema>
 
 export const ChromeBookmarkImportStateSchema = z.object({
-  status: z.enum(['pending', 'running', 'completed', 'failed']),
+  status: z.enum([
+    'pending', // 待开始
+    'running', // 进行中
+    'completed', // 已完成
+    'failed' // 失败
+  ]),
   importedCount: z.number().int().nonnegative().default(0),
   /** Chrome 书签树中待导入的 http(s) 叶子总数。 */
   totalCount: z.number().int().nonnegative().optional(),

@@ -92,4 +92,29 @@ describe('completeWithDeepSeek', () => {
       globalThis.fetch = originalFetch
     }
   })
+
+  test('maxTokens 超过硬上限时钳制到 AI_MAX_COMPLETION_TOKENS', async () => {
+    const fetchMock = mock(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body)) as { max_tokens?: number }
+      expect(body.max_tokens).toBe(1024)
+
+      return new Response(
+        JSON.stringify({
+          choices: [{ message: { content: 'ok' }, finish_reason: 'stop' }]
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } }
+      )
+    })
+
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    try {
+      const { completeWithDeepSeek } = await import('./deepseek-client')
+      await completeWithDeepSeek(createEnv(), 'hello', { maxTokens: 99999 })
+      expect(fetchMock).toHaveBeenCalled()
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
 })

@@ -8,7 +8,9 @@ const recallWithCluePayloadSchema = z.object({
 })
 
 /** Recall 面向 UI 的稳定错误码。 */
-export const RecallErrorCodeSchema = z.enum(['RECALL_FAILED'])
+export const RecallErrorCodeSchema = z.enum([
+  'RECALL_FAILED' // 找回流水线失败
+])
 
 export type RecallErrorCode = z.infer<typeof RecallErrorCodeSchema>
 

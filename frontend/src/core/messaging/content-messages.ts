@@ -14,11 +14,21 @@ export const SELECTION_TOOLBAR_PAGE_API_KEY = '__yivenoSelectionToolbarApi' as c
 /** Content Script ↔ SW keepalive port 名（扩展重载时靠 disconnect 拆旧实例）。 */
 export const SELECTION_TOOLBAR_KEEPALIVE_PORT = 'yiveno-selection-toolbar' as const
 
-export type SelectionToolbarCommandType = 'SELECTION_SAVE' | 'SELECTION_OPEN_NOTE'
+/**
+ * 划词浮层命令 type。
+ * - SELECTION_SAVE：保存选区
+ * - SELECTION_OPEN_NOTE：打开备注面板
+ */
+export type SelectionToolbarCommandType =
+  | 'SELECTION_SAVE' // 保存选区
+  | 'SELECTION_OPEN_NOTE' // 打开备注
 
 const contentSelectionCommandSchema = z.object({
   scope: z.literal(CONTENT_MESSAGE_SCOPE),
-  type: z.enum(['SELECTION_SAVE', 'SELECTION_OPEN_NOTE'])
+  type: z.enum([
+    'SELECTION_SAVE', // 保存选区
+    'SELECTION_OPEN_NOTE' // 打开备注
+  ])
 })
 
 /** SW → 划词浮层：快捷键触发保存 / 打开备注面板。 */
@@ -32,7 +42,10 @@ export type ContentSelectionCommandSuccessResponse = {
 
 export type ContentSelectionCommandErrorResponse = {
   ok: false
-  errorCode: 'CAPTURE_EMPTY_SELECTION' | 'CAPTURE_UNSAVABLE_PAGE' | 'SELECTION_COMMAND_FAILED'
+  errorCode:
+    | 'CAPTURE_EMPTY_SELECTION' // 无有效选区
+    | 'CAPTURE_UNSAVABLE_PAGE' // 当前页不可存
+    | 'SELECTION_COMMAND_FAILED' // 划词命令执行失败
 }
 
 export type ContentSelectionCommandResponse =

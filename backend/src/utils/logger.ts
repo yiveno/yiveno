@@ -8,9 +8,13 @@
  * 日志级别
  */
 export enum LogLevel {
+  /** 调试 */
   DEBUG = 'DEBUG',
+  /** 信息 */
   INFO = 'INFO',
+  /** 警告 */
   WARN = 'WARN',
+  /** 错误 */
   ERROR = 'ERROR'
 }
 

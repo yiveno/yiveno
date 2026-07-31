@@ -3,7 +3,10 @@
  * 仅 Background / Service Worker 调用。
  */
 
-export type ActionBadgeResult = 'success' | 'error'
+/** action 角标闪烁结果。 */
+export type ActionBadgeResult =
+  | 'success' // 成功
+  | 'error' // 失败
 
 export interface FlashActionBadgeOptions {
   /** 展示时长（毫秒）。 */

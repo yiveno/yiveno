@@ -54,11 +54,11 @@ const recordRecallDismissPayloadSchema = z.object({
 
 /** Memory 操作面向 UI 的稳定错误码。 */
 export const MemoryErrorCodeSchema = z.enum([
-  'MEMORY_NOT_FOUND',
-  'MEMORY_DELETE_BOOKMARK_FORBIDDEN',
-  'MEMORY_OPERATION_FAILED',
-  'CAPTURE_UNSAVABLE_PAGE',
-  'CAPTURE_EMPTY_SELECTION'
+  'MEMORY_NOT_FOUND', // 条目不存在
+  'MEMORY_DELETE_BOOKMARK_FORBIDDEN', // 禁止删书签类 Memory（应走 Chrome 书签）
+  'MEMORY_OPERATION_FAILED', // 通用 Memory 操作失败
+  'CAPTURE_UNSAVABLE_PAGE', // 当前页不可存
+  'CAPTURE_EMPTY_SELECTION' // 无有效选区
 ])
 
 export type MemoryErrorCode = z.infer<typeof MemoryErrorCodeSchema>

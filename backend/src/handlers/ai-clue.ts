@@ -36,19 +36,22 @@ function utcDayKey(date = new Date()): string {
 async function consumeClueDailyQuota(
   env: Env,
   ip: string
-): Promise<{ allowed: boolean; used: number; limit: number }> {
+): Promise<
+  | { allowed: true; used: number; limit: number }
+  | { allowed: false; used: number; limit: number; reason: 'quota_exceeded' | 'kv_not_configured' }
+> {
   const limit = Number.parseInt(env.AI_CLUE_DAILY_LIMIT ?? '', 10)
   const dailyLimit = Number.isFinite(limit) && limit > 0 ? limit : DEFAULT_DAILY_LIMIT
   const kv = env.AI_USAGE_KV
   if (!kv) {
-    return { allowed: true, used: 0, limit: dailyLimit }
+    return { allowed: false, used: 0, limit: dailyLimit, reason: 'kv_not_configured' }
   }
 
   const key = `clue_ai:${ip}:${utcDayKey()}`
   const raw = await kv.get(key)
   const used = raw ? Number.parseInt(raw, 10) || 0 : 0
   if (used >= dailyLimit) {
-    return { allowed: false, used, limit: dailyLimit }
+    return { allowed: false, used, limit: dailyLimit, reason: 'quota_exceeded' }
   }
 
   await kv.put(key, String(used + 1), { expirationTtl: 60 * 60 * 48 })
@@ -96,6 +99,10 @@ export async function handleClueComplete(request: Request, env: Env): Promise<Re
 
   const quota = await consumeClueDailyQuota(env, ip)
   if (!quota.allowed) {
+    if (quota.reason === 'kv_not_configured') {
+      logInfo('clue_complete_rejected', { reason: 'kv_not_configured', ip })
+      return errorJson({ error: 'kv_not_configured' }, 503, origin)
+    }
     logInfo('clue_complete_quota_exceeded', {
       ip,
       used: quota.used,
@@ -152,6 +159,7 @@ export async function handleClueComplete(request: Request, env: Env): Promise<Re
       durationMs: Date.now() - startedAt,
       detail: message
     })
-    return errorJson({ error: message }, 500, origin)
+    // 对外稳定错误码，不回传上游原文
+    return errorJson({ error: 'clue_complete_failed' }, 500, origin)
   }
 }

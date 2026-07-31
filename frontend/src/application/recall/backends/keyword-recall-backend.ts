@@ -8,7 +8,8 @@ import { understandRecallClue } from '@/core/recall/understand/understand-recall
 import type { RecallBackend } from '@/application/recall/recall-backend'
 
 /**
- * 当前主链路后端：理解层（门禁 + 规则/LLM）→ 关键词 Filter + 约束软加权。
+ * 当前主链路后端：理解层（网关 + 门禁 + 规则/LLM）→ 关键词 Filter + 约束软加权。
+ * 网关拒绝噪音时直接空态，不扫库、不调 LLM。
  * 无 LLM completer 时 semantic 降级规则；不改变 Filter 内核。
  */
 export const RECALL_SCAN_LIMIT = 10000
@@ -44,6 +45,20 @@ export class KeywordRecallBackend implements RecallBackend {
       trace
     })
 
+    if (understood.disposition === 'reject_noise') {
+      trace('info', 'Recall：网关拒绝噪音，跳过扫库', {
+        disposition: understood.disposition,
+        rejectReason: understood.rejectReason,
+        durationMs: Date.now() - pipelineStartedAt
+      })
+      return {
+        outcome: 'no_match',
+        topPick: null,
+        alsoPossible: [],
+        clue: normalizedClue
+      }
+    }
+
     trace('info', 'Recall：加载 MemoryItem', { limit: RECALL_SCAN_LIMIT })
     const items = await memoryItemService.list({ limit: RECALL_SCAN_LIMIT })
     trace('info', 'Recall：MemoryItem 已加载', { itemCount: items.length })
@@ -55,6 +70,7 @@ export class KeywordRecallBackend implements RecallBackend {
 
     trace('info', 'Recall：流水线结束', {
       durationMs: Date.now() - pipelineStartedAt,
+      disposition: understood.disposition,
       understandSource: understood.source,
       understandMode: understood.mode,
       searchClue: understood.searchClue,

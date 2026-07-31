@@ -4,8 +4,8 @@ import type { BackgroundMessageScope } from '@/core/messaging/constants'
 
 /** Commands 面向 UI 的稳定错误码。 */
 export const CommandsErrorCodeSchema = z.enum([
-  'COMMANDS_READ_FAILED',
-  'SHORTCUTS_PAGE_OPEN_FAILED'
+  'COMMANDS_READ_FAILED', // 读取扩展命令失败
+  'SHORTCUTS_PAGE_OPEN_FAILED' // 打开快捷键设置页失败
 ])
 
 export type CommandsErrorCode = z.infer<typeof CommandsErrorCodeSchema>

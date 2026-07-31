@@ -10,7 +10,9 @@ import type {
  * - must：当前规则 parser 必须通过（回归基线）
  * - stretch：理想理解金标；规则可失败，供后续 LLM 对比（不挡 CI）
  */
-export type ParseGoldGate = 'must' | 'stretch'
+export type ParseGoldGate =
+  | 'must' // 必过：挡门禁
+  | 'stretch' // 拉伸：仅汇报
 
 /**
  * 理想槽位（人工金标）。

@@ -35,24 +35,26 @@ function toSubscriptionDto(subscription: Subscription | null): SubscriptionDto |
   }
 }
 
-/** GET /api/gumroad/subscription?user_id=xxx */
+/**
+ * GET /api/gumroad/subscription
+ *
+ * userId 必须来自已校验 JWT 的 `sub`，禁止信任 query，避免 IDOR。
+ */
 export async function handleGetSubscription(
   request: Request,
   env: Env,
-  origin: string | null
+  origin: string | null,
+  userId: string
 ): Promise<Response> {
   if (request.method !== 'GET') {
     return errorJson({ error: 'Method not allowed' }, 405, origin)
   }
 
+  if (!userId.trim()) {
+    return errorJson({ error: 'missing_subject' }, 401, origin)
+  }
+
   try {
-    const url = new URL(request.url)
-    const userId = url.searchParams.get('user_id')
-
-    if (!userId) {
-      return errorJson({ error: 'Missing user_id parameter' }, 400, origin)
-    }
-
     const supabase = await import('../data-access/supabase')
     const subscription = await supabase.getUserSubscription(env, userId)
 

@@ -6,8 +6,8 @@ import type { BackgroundMessageScope } from '@/core/messaging/constants'
 
 /** Import / 书签树面向 UI 的稳定错误码。 */
 export const ImportErrorCodeSchema = z.enum([
-  'IMPORT_STATUS_READ_FAILED',
-  'LIBRARY_TREE_READ_FAILED'
+  'IMPORT_STATUS_READ_FAILED', // 读取导入状态失败
+  'LIBRARY_TREE_READ_FAILED' // 读取书签树失败
 ])
 
 export type ImportErrorCode = z.infer<typeof ImportErrorCodeSchema>

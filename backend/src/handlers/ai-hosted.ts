@@ -9,6 +9,7 @@ import { resolveHostedModel } from '../config/ai-hosted'
 import { completeWithDeepSeek } from '../services/ai/deepseek-client'
 import { consumeHostedQuota, getHostedQuotaSnapshot } from '../services/ai/usage-quota'
 import { isActiveProUser } from '../services/ai/require-pro-user'
+import { logError } from '../utils/logger'
 
 /**
  * 获取 Pro 托管 LLM 配额信息
@@ -23,6 +24,10 @@ export async function handleHostedQuota(
   const isPro = await isActiveProUser(env, userId)
   if (!isPro) {
     return errorJson({ error: 'pro_required' }, 403, origin)
+  }
+
+  if (!env.AI_USAGE_KV) {
+    return errorJson({ error: 'kv_not_configured' }, 503, origin)
   }
 
   const snapshot = await getHostedQuotaSnapshot(env, userId)
@@ -56,6 +61,9 @@ export async function handleHostedComplete(
 
   const quotaResult = await consumeHostedQuota(env, userId)
   if (!quotaResult.allowed) {
+    if (quotaResult.reason === 'kv_not_configured') {
+      return errorJson({ error: 'kv_not_configured' }, 503, origin)
+    }
     return errorJson(
       {
         error: 'quota_exceeded',
@@ -102,6 +110,7 @@ export async function handleHostedComplete(
     )
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
-    return errorJson({ error: message }, 500, origin)
+    logError(err, { path: '/api/ai/hosted/complete', userId, detail: message })
+    return errorJson({ error: 'hosted_complete_failed' }, 500, origin)
   }
 }

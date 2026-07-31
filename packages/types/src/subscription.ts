@@ -1,12 +1,28 @@
 /**
- * 订阅状态类型
+ * 订阅状态。
+ * - active：有效
+ * - past_due：逾期
+ * - cancelled：已取消
+ * - expired：已过期
+ * - paused：已暂停
  */
-export type SubscriptionStatus = 'active' | 'past_due' | 'cancelled' | 'expired' | 'paused'
+export type SubscriptionStatus =
+  | 'active' // 有效
+  | 'past_due' // 逾期
+  | 'cancelled' // 已取消
+  | 'expired' // 已过期
+  | 'paused' // 已暂停
 
 /**
- * 订阅层级类型
+ * 订阅层级。
+ * - free：免费
+ * - pro：Pro
+ * - premium：Premium
  */
-export type SubscriptionTier = 'free' | 'pro' | 'premium'
+export type SubscriptionTier =
+  | 'free' // 免费
+  | 'pro' // Pro
+  | 'premium' // Premium
 
 /**
  * 订阅记录接口

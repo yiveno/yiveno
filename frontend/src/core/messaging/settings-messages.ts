@@ -3,7 +3,10 @@ import type { BackgroundMessageScope } from '@/core/messaging/constants'
 import { z } from 'zod'
 
 /** Settings 面向 UI 的稳定错误码。 */
-export const SettingsErrorCodeSchema = z.enum(['SETTINGS_READ_FAILED', 'SETTINGS_UPDATE_FAILED'])
+export const SettingsErrorCodeSchema = z.enum([
+  'SETTINGS_READ_FAILED', // 读取设置失败
+  'SETTINGS_UPDATE_FAILED' // 更新设置失败
+])
 
 export type SettingsErrorCode = z.infer<typeof SettingsErrorCodeSchema>
 

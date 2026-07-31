@@ -13,6 +13,18 @@ export const AI_HOSTED_DEFAULT_MONTHLY_QUOTA = 999
 /** DeepSeek API 默认 Base URL */
 export const DEEPSEEK_DEFAULT_BASE_URL = 'https://api.deepseek.com'
 
+/** 客户端可请求的 completion max_tokens 硬上限（防刷费用） */
+export const AI_MAX_COMPLETION_TOKENS = 1024
+
+/**
+ * 将客户端 maxTokens 钳制到合法区间。
+ */
+export function clampCompletionMaxTokens(requested: number | undefined, fallback: number): number {
+  const raw = requested ?? fallback
+  if (!Number.isFinite(raw)) return fallback
+  return Math.min(AI_MAX_COMPLETION_TOKENS, Math.max(1, Math.floor(raw)))
+}
+
 /**
  * 解析托管 LLM 每月配额上限
  */

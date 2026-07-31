@@ -9,7 +9,10 @@ import { KeywordRecallBackend } from '@/application/recall/backends/keyword-reca
 import type { RecallBackend } from '@/application/recall/recall-backend'
 import type { RecallResult } from '@/core/recall/recall-result'
 
-type RecallBackendMode = 'keyword' | 'hybrid'
+/** Recall 后端模式（当前默认 keyword）。 */
+type RecallBackendMode =
+  | 'keyword' // 关键词 Filter
+  | 'hybrid' // 混合（未默认启用）
 
 const RECALL_BACKEND_MODE: RecallBackendMode = 'keyword'
 

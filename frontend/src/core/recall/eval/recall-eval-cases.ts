@@ -1,7 +1,11 @@
 import { RECALL_EVAL_IDS, type RecallEvalItemId } from '@/core/recall/eval/recall-eval-ids'
 
 /** 线索画像档位：具体 / 半模糊 / 很糊 / 负例。 */
-export type RecallEvalClueClass = 'concrete' | 'semi_fuzzy' | 'vague' | 'negative'
+export type RecallEvalClueClass =
+  | 'concrete' // 具体
+  | 'semi_fuzzy' // 半模糊
+  | 'vague' // 很糊
+  | 'negative' // 负例（应无命中）
 
 /**
  * 期望形态。
@@ -11,17 +15,19 @@ export type RecallEvalClueClass = 'concrete' | 'semi_fuzzy' | 'vague' | 'negativ
  * - no_match：应无 Top Pick
  */
 export type RecallEvalExpectation =
-  | { kind: 'top1'; expectedId: RecallEvalItemId }
-  | { kind: 'in_topk'; expectedId: RecallEvalItemId; k?: number }
-  | { kind: 'need_a_clue'; expectedId: RecallEvalItemId }
-  | { kind: 'no_match' }
+  | { kind: 'top1'; expectedId: RecallEvalItemId } // Top Pick 命中
+  | { kind: 'in_topk'; expectedId: RecallEvalItemId; k?: number } // 前 k 含期望项
+  | { kind: 'need_a_clue'; expectedId: RecallEvalItemId } // 弱命中追问
+  | { kind: 'no_match' } // 无命中
 
 /**
  * 门禁级别。
  * - must：CI 必须通过（对齐线上口语解析 + Filter 主路径）
  * - stretch：已知难点；汇报但不挡门禁，供后续优化对齐
  */
-export type RecallEvalGate = 'must' | 'stretch'
+export type RecallEvalGate =
+  | 'must' // 必过：挡门禁
+  | 'stretch' // 拉伸：仅汇报
 
 export interface RecallEvalCase {
   id: string
