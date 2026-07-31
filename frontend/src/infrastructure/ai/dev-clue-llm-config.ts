@@ -5,10 +5,7 @@
 
 import { z } from 'zod'
 
-import {
-  readChromeStorageLocal,
-  writeChromeStorageLocal
-} from '@/infrastructure/storage/chrome-storage-local'
+import { readChromeStorageLocal } from '@/infrastructure/storage/chrome-storage-local'
 
 const DEV_LLM_CONFIG_KEY = 'yiveno.dev.clueLlm'
 
@@ -33,9 +30,4 @@ export async function readDevClueLlmConfig(): Promise<DevClueLlmConfig | null> {
     return null
   }
   return parsed
-}
-
-/** 写入开发用配置（调试脚本 / 扩展控制台）。 */
-export async function writeDevClueLlmConfig(config: DevClueLlmConfig): Promise<void> {
-  await writeChromeStorageLocal(DEV_LLM_CONFIG_KEY, DevClueLlmConfigSchema.parse(config))
 }
