@@ -32,6 +32,7 @@
     "env:sync:prod": "bun ./scripts/dev-env.mjs sync --profile=production",
     "env:check": "bun run env:check:dev",
     "env:check:dev": "bun ./scripts/dev-env.mjs check --profile=development",
+    "env:check:prod": "bun ./scripts/dev-env.mjs check --profile=production",
     "clean:deps": "rm -rf node_modules frontend/node_modules backend/node_modules website/node_modules packages/*/node_modules bun.lockb frontend/bun.lock backend/bun.lock 2>/dev/null || true && echo '🧹 清理完成'",
     "reinstall": "bun run clean:deps && bun install && echo '✅ 依赖已清理并重新安装'",
     "dev": "bun run env:sync:dev && (bun run dev:fe & bun run dev:be & bun run dev:web & wait)",

@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-echo "🚀 pre-push: 推送前构建 + Knip 验证（lint / typecheck 由 pre-commit + CI 负责）..."
+echo "🚀 pre-push: 按变更做轻量验证（ESLint 由 pre-commit；全量门禁由 CI）..."
 
 ERRORS=""
 
@@ -32,7 +32,7 @@ run_knip() {
   echo "✅ Knip 通过: ${label}"
 }
 
-# 仅在涉及 frontend 或共享包时做构建验证（CI 负责全量 typecheck / lint / test）
+# frontend / 共享包：构建（内含 vue-tsc -b）
 FRONTEND_BUILD_TRIGGER=$(echo "$CHANGED_FILES" | grep -E '^frontend/|^packages/(design-tokens|types|auth-core)/|tsconfig|package\.json' || true)
 
 if [ -n "$FRONTEND_BUILD_TRIGGER" ]; then
@@ -46,6 +46,31 @@ if [ -n "$FRONTEND_BUILD_TRIGGER" ]; then
   fi
 else
   echo "⏭️  无 frontend 构建相关变更，跳过构建验证"
+fi
+
+# backend：类型检查 + 单测（对标 FE 的 push 前保障）
+BACKEND_TRIGGER=$(echo "$CHANGED_FILES" | grep -E '^backend/' || true)
+
+if [ -n "$BACKEND_TRIGGER" ]; then
+  echo "🧪 backend typecheck..."
+  if bun run typecheck:be > /dev/null 2>&1; then
+    echo "✅ backend typecheck 通过"
+  else
+    echo "❌ backend typecheck 失败"
+    TC_ERROR=$(bun run typecheck:be 2>&1 || true)
+    ERRORS="${ERRORS}\n❌ backend typecheck 失败:\n${TC_ERROR}\n\n"
+  fi
+
+  echo "🧪 backend test..."
+  if (cd backend && bun test > /dev/null 2>&1); then
+    echo "✅ backend test 通过"
+  else
+    echo "❌ backend test 失败"
+    TEST_ERROR=$(cd backend && bun test 2>&1 || true)
+    ERRORS="${ERRORS}\n❌ backend test 失败:\n${TEST_ERROR}\n\n"
+  fi
+else
+  echo "⏭️  无 backend 变更，跳过 typecheck / test"
 fi
 
 # 按变更目录跑分 workspace Knip（knip.json / 根依赖变更时跑全仓）
@@ -88,6 +113,8 @@ if [ -n "$ERRORS" ]; then
   echo ""
   echo "🛠️  可用的修复命令："
   echo "   bun run build:fe          # frontend 构建验证"
+  echo "   bun run typecheck:be      # backend 类型检查"
+  echo "   cd backend && bun test    # backend 单测"
   echo "   bun run knip              # 全仓 Knip"
   echo "   bun run knip:fe           # 仅 frontend Knip"
   echo "   bun run knip:be           # 仅 backend Knip"

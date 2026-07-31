@@ -40,13 +40,13 @@
 
 ### 质量门禁三层职责
 
-| 层级           | 触发时机     | 职责                                                       | 命令                                                                                    |
-| -------------- | ------------ | ---------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| **pre-commit** | `git commit` | 暂存区快修：ESLint fix + Stylelint + Prettier（含 `.vue`） | `lint-staged`（`max-warnings 0`）                                                       |
-| **pre-push**   | `git push`   | 轻量构建 + 分 workspace Knip                               | `build:fe`（frontend/共享包相关变更）；`knip:fe` / `knip:be` / `knip:web`（按变更目录） |
-| **CI**         | PR / push    | 权威只读门禁：typecheck、lint、i18n、test、build           | 见下表                                                                                  |
+| 层级           | 触发时机     | 职责                                                       | 命令                                                                                                                    |
+| -------------- | ------------ | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| **pre-commit** | `git commit` | 暂存区快修：ESLint fix + Stylelint + Prettier（含 `.vue`） | `lint-staged`（`max-warnings 0`；忽略 `backend/worker-configuration.d.ts`）                                             |
+| **pre-push**   | `git push`   | 按变更：FE 构建 / BE typecheck+test / 分 workspace Knip    | `build:fe`（frontend/共享包）；`typecheck:be` + `bun test`（backend）；`knip:fe` / `knip:be` / `knip:web`（按变更目录） |
+| **CI**         | PR / push    | 权威只读门禁：typecheck、lint、i18n、test、build           | 见下表                                                                                                                  |
 
-pre-push **不跑** ESLint / typecheck / 全仓 test；`.vue` lint 由 pre-commit 与 CI 覆盖。`knip.json` / 根 `package.json` 变更时 pre-push 跑全仓 `knip`。
+pre-push **不跑** ESLint、全仓 typecheck、全仓 frontend test；`.vue` lint 由 pre-commit 与 CI 覆盖。`knip.json` / 根 `package.json` 变更时 pre-push 跑全仓 `knip`。
 
 ### CI 检查矩阵
 

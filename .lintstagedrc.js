@@ -11,6 +11,11 @@ const ESLINT_CMD = 'bunx eslint --no-cache --fix --max-warnings 0 --no-warn-igno
 const STYLELINT_CMD = 'bunx stylelint --no-cache --fix'
 const PRETTIER_CMD = 'bunx prettier --write'
 
+/** wrangler types 生成物：不进 ESLint / Prettier（体积大且会被下次 types:gen 覆盖） */
+function isGeneratedWorkerTypes(repoPath) {
+  return repoPath === 'backend/worker-configuration.d.ts'
+}
+
 /** 转义 shell 路径参数 */
 function quotePath(filePath) {
   return `"${filePath.replace(/"/g, '\\"')}"`
@@ -32,6 +37,7 @@ function groupByWorkspace(filenames) {
 
   for (const file of filenames) {
     const repoPath = toRepoRelative(file)
+    if (isGeneratedWorkerTypes(repoPath)) continue
 
     if (repoPath.startsWith('frontend/')) {
       groups.frontend.push(repoPath.slice('frontend/'.length))
@@ -87,19 +93,24 @@ function stylelintByWorkspace(filenames) {
 }
 
 function prettierWrite(filenames) {
-  return `${PRETTIER_CMD} ${filenames.map(quotePath).join(' ')}`
+  const files = filenames.filter(file => !isGeneratedWorkerTypes(toRepoRelative(file)))
+  if (files.length === 0) return []
+  return [`${PRETTIER_CMD} ${files.map(quotePath).join(' ')}`]
 }
 
 export default {
-  '**/*.{ts,tsx,js,jsx}': filenames => [...eslintByWorkspace(filenames), prettierWrite(filenames)],
+  '**/*.{ts,tsx,js,jsx}': filenames => [
+    ...eslintByWorkspace(filenames),
+    ...prettierWrite(filenames)
+  ],
 
   '**/*.vue': filenames => [
     ...eslintByWorkspace(filenames),
     ...stylelintByWorkspace(filenames),
-    prettierWrite(filenames)
+    ...prettierWrite(filenames)
   ],
 
-  '**/*.{css,scss}': filenames => [...stylelintByWorkspace(filenames), prettierWrite(filenames)],
+  '**/*.{css,scss}': filenames => [...stylelintByWorkspace(filenames), ...prettierWrite(filenames)],
 
-  '**/*.{json,md}': filenames => [prettierWrite(filenames)]
+  '**/*.{json,md}': filenames => prettierWrite(filenames)
 }
