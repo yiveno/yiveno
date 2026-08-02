@@ -2,6 +2,10 @@ import 'fake-indexeddb/auto'
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+vi.mock('@/application/memory/schedule-async-memory-llm-enrichment', () => ({
+  scheduleAsyncMemoryLlmEnrichment: vi.fn()
+}))
+
 import { captureTextExcerptFromContextMenu } from '@/application/capture/capture-text-excerpt-service'
 import { LOCAL_PROFILE_STORAGE_KEY, type LocalProfile } from '@/core/identity/local-profile'
 import { memoryItemRepository } from '@/infrastructure/indexeddb/memory-item-repository'

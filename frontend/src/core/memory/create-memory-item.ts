@@ -1,10 +1,7 @@
 import type { CaptureEntry } from '@/core/memory/capture-entry'
 import type { MemoryCluesInput } from '@/core/memory/clues'
-import {
-  enrichMemoryClues,
-  mergeUniqueStrings,
-  type EnrichMemoryCluesInput
-} from '@/core/memory/enrich-memory-clues'
+import { enrichMemoryClues, type EnrichMemoryCluesInput } from '@/core/memory/enrich-memory-clues'
+import { mergeMemoryClueEnrichment } from '@/core/memory/merge-memory-clue-enrichment'
 import { type BookmarkMemoryItem, type TextExcerptMemoryItem } from '@/core/memory/memory-item'
 import {
   BookmarkPayloadSchema,
@@ -90,9 +87,18 @@ function withEnrichment(
   }
 
   const enrichment = enrichMemoryClues(enrichmentInput)
-  const tags = mergeUniqueStrings(base?.tags, enrichment.tags)
-  const keywords = mergeUniqueStrings(base?.keywords, enrichment.keywords)
-  const entities = mergeUniqueStrings(base?.entities, enrichment.entities)
+  const merged = mergeMemoryClueEnrichment({
+    existing: {
+      tags: base?.tags,
+      keywords: base?.keywords,
+      entities: base?.entities,
+      ...(base?.summary !== undefined ? { summary: base.summary } : {})
+    },
+    rule: enrichment
+  })
+  const tags = merged.tags
+  const keywords = merged.keywords
+  const entities = merged.entities
 
   if (!base && tags.length === 0 && keywords.length === 0 && entities.length === 0) {
     return undefined
@@ -102,7 +108,8 @@ function withEnrichment(
     ...base,
     tags,
     keywords,
-    entities
+    entities,
+    ...(merged.summary !== undefined ? { summary: merged.summary } : {})
   }
 }
 

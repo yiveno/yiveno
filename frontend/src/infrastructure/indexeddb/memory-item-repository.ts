@@ -388,6 +388,14 @@ export class MemoryItemRepository {
     })
   }
 
+  /**
+   * 写回 enrichment 合并后的整条 MemoryItem（由调用方保留 updatedAt）。
+   * 仅供异步 LLM / 规则回填使用，勿用于用户编辑路径。
+   */
+  async putEnrichmentClues(item: MemoryItem): Promise<void> {
+    await this.put(item)
+  }
+
   private async put(item: MemoryItem): Promise<void> {
     await this.ensureReady()
     const validated = MemoryItemSchema.parse(item)

@@ -2,12 +2,14 @@
  * AI 路由
  *
  * - `/clue/complete`：v4 M1 扩展主路径（当前在用）
+ * - `/enrichment/complete`：Capture enrichment 结构化提议（扩展 merge 后写库）
  * - `/hosted/*`：Phase C / Pro 托管 LLM 预留，当前扩展未接线
  */
 
 import { Hono } from 'hono'
 import type { Env } from '../types/env'
 import { handleClueComplete } from '../handlers/ai-clue'
+import { handleEnrichmentComplete } from '../handlers/ai-enrichment'
 import { handleHostedComplete, handleHostedQuota } from '../handlers/ai-hosted'
 import { supabaseAuth } from '../middleware/supabase-auth'
 
@@ -29,6 +31,15 @@ export const aiRouter = new Hono<AiRouteEnv>()
  */
 aiRouter.post('/clue/complete', async c => {
   return handleClueComplete(c.req.raw, c.env)
+})
+
+/**
+ * POST /api/ai/enrichment/complete
+ *
+ * Capture enrichment 结构化提议（返回 proposal；扩展 Zod/merge 后写 IndexedDB）。
+ */
+aiRouter.post('/enrichment/complete', async c => {
+  return handleEnrichmentComplete(c.req.raw, c.env)
 })
 
 /**

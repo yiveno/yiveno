@@ -24,6 +24,10 @@ export type Env = Cloudflare.Env & {
   AI_CLUE_PROXY_ENABLED?: string
   /** 线索理解按 IP 日调用上限 */
   AI_CLUE_DAILY_LIMIT?: string
+  /** Capture enrichment 代理开关；"false" 关闭 */
+  AI_ENRICHMENT_PROXY_ENABLED?: string
+  /** enrichment 提议按 IP 日调用上限（默认 80） */
+  AI_ENRICHMENT_DAILY_LIMIT?: string
   /**
    * 聊天补全 Provider：deepseek（默认）。未知值 → 503 ai_provider_unsupported。
    * 换厂商时加 adapter + 改此变量，业务 handler 不改。

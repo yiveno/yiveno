@@ -2,6 +2,10 @@ import 'fake-indexeddb/auto'
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+vi.mock('@/application/memory/schedule-async-memory-llm-enrichment', () => ({
+  scheduleAsyncMemoryLlmEnrichment: vi.fn()
+}))
+
 import {
   flushPendingChromeBookmarkSync,
   handleChromeBookmarkChanged,

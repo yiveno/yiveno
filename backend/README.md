@@ -4,12 +4,13 @@ v4 后端：扩展线索理解代理 + 官网只读 API。本地事实源在扩�
 
 ## 真实调用面
 
-| 方法 | 路径                            | 调用方      | 说明                                             |
-| ---- | ------------------------------- | ----------- | ------------------------------------------------ |
-| GET  | `/health`、`/api/health`        | 运维        | 健康检查                                         |
-| POST | `/api/ai/clue/complete`         | Chrome 扩展 | M1 线索理解（AI Gateway → DeepSeek + IP 日配额） |
-| GET  | `/api/website/share/:shortCode` | 官网        | 分享详情                                         |
-| GET  | `/api/website/subscription`     | 官网        | 订阅只读查询                                     |
+| 方法 | 路径                            | 调用方      | 说明                                                       |
+| ---- | ------------------------------- | ----------- | ---------------------------------------------------------- |
+| GET  | `/health`、`/api/health`        | 运维        | 健康检查                                                   |
+| POST | `/api/ai/clue/complete`         | Chrome 扩展 | M1 线索理解（AI Gateway → DeepSeek + IP 日配额）           |
+| POST | `/api/ai/enrichment/complete`   | Chrome 扩展 | Capture enrichment 结构化提议（扩展 merge 后写 IndexedDB） |
+| GET  | `/api/website/share/:shortCode` | 官网        | 分享详情                                                   |
+| GET  | `/api/website/subscription`     | 官网        | 订阅只读查询                                               |
 
 生产域名：`https://api.yiveno.com`（Worker Custom Domain → `yiveno-production`）。
 
@@ -53,7 +54,7 @@ curl -X POST http://localhost:8787/api/ai/clue/complete \
 
 ### 可插拔 Provider（AiChatProvider）
 
-`/api/ai/clue/complete` 与 `/api/ai/hosted/complete` 经 `resolveAiChatProvider(env)` 调用上游：
+`/api/ai/clue/complete`、`/api/ai/enrichment/complete` 与 `/api/ai/hosted/complete` 经 `resolveAiChatProvider(env)` 调用上游：
 
 - 默认 `AI_PROVIDER=deepseek`（或未设置）→ `deepseekAiChatProvider`
 - 换厂商：新增 adapter 实现 `AiChatProvider`，在 `resolveAiChatProvider` 注册，再改 env

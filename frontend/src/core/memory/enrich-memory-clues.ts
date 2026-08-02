@@ -379,6 +379,7 @@ function sameStringListIgnoreCase(left: string[], right: string[]): boolean {
 /**
  * 将规则 enrichment 合并进已有 MemoryItem（不改 createdAt/updatedAt）。
  * 无新增字段时 changed=false。
+ * LLM 提议请用 mergeMemoryClueEnrichment 后再写回。
  */
 export function mergeEnrichmentIntoMemoryItem(item: MemoryItem): {
   item: MemoryItem

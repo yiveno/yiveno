@@ -465,6 +465,7 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 - 编排：约束软加权 + 现有 keyword-filter + 置信度决策 — **`recallByKeywordWithParsedClue` 已接入 KeywordRecallBackend**；**模板化追问已接入 Popup**（`buildRecallFollowUpPlan`，按缺槽位）
 - Query：时间词、对象类型词、备注指向、弱行为词 → 结构化约束；内容实体先当关键词 — **`parseRecallClue` 已落地**（词典以真实英语口语为主，见「市场语言策略」典型语料）
 - Enrichment：域名 / 类型 / 实体 + **recall 导向英文 keywords**（如 `listen` `tutorial` `repo`）；写回 `tags` / `keywords` / `entities`
+- **LLM enrichment 插座（已接线·稀疏异步）**：提议 Zod（`MemoryEnrichmentProposal`）+ merge（`mergeMemoryClueEnrichment`：existing → rule → proposal；`summary` 仅空槽；永不写 `note`/`embedding`）+ Worker `POST /api/ai/enrichment/complete`；Capture 经 `memoryItemService` **新建**落库后 `scheduleAsyncMemoryLlmEnrichment`（串行队列；已有 summary / 信号过短跳过；bulk `putMany`/repository 续传不经 service 故不烧配额）；失败降级保留规则层；**不改 `updatedAt`**
 
 **P0 明确不做：**
 
@@ -991,66 +992,68 @@ Chrome API / 选区
 
 ## 修订记录
 
-| 日期       | 变更                                                                                                       |
-| ---------- | ---------------------------------------------------------------------------------------------------------- |
-| 2026-08-02 | Capture enrichment v3：`video` 对象类型；YouTube/Bilibili≠song；主题/实体规则（WWII·城市经济）；回填 v3    |
-| 2026-08-01 | M1：Gate B 中文短口语/相对时间升 semantic；lexical no_match 有条件升一次 LLM 再 Filter                     |
-| 2026-07-29 | §1.1 已上线验证归属 + 合入门禁（must/验收先于合入）；E2E 薄冒烟边界（禁大 Playwright）                     |
-| 2026-07-29 | §7.1 多源线索与权重：收集要宽、采信要窄；Chrome 环境为弱上下文；按模块渐进（产品内→选区→芯片→重排）        |
-| 2026-07-29 | §0.1.1 知识库习惯重置：文件夹型 KB 双重隐性成本；人创造/机器索引分工                                       |
-| 2026-07-31 | M1：线索 LLM 改经 Cloudflare `POST /api/ai/clue/complete`（Worker 持 DEEPSEEK Secret；扩展不持 key）       |
-| 2026-07-31 | M1：理解层前增加「是否处理」网关（reject_noise｜proceed）；与 lexical/semantic 门禁拆开；硬噪音不扫库      |
-| 2026-07-31 | §0.1.1 / §0.3：钉死 LLM 与数据平面边界（NLU·NLG 可；禁止直接写库；提议→Zod→确定性执行）                    |
-| 2026-07-29 | 新增 [`Yiveno-市场调研-v1.md`](./Yiveno-市场调研-v1.md)；附录 A.6；暂停扩大功能直至 §11 验证门槛           |
-| 2026-07-29 | P0：enrichment recall keywords（类型补充词 + 正文词面规则）；回填版本 v2                                   |
-| 2026-07-29 | §0.1.1 典型英语 P0 语料表 + enrichment recall keywords 验收口径；口语词典对齐真实表达                      |
-| 2026-07-29 | §0.1.1 市场语言与 Recall Language Strategy：T1 英语优先、canonical/UI/parser 三层分离、芯片 value 稳定英文 |
-| 2026-07-29 | P0：存量 enrichment 回填（bootstrap 延迟执行，storage 版本幂等）                                           |
-| 2026-07-29 | P0：模板化追问（缺槽位 reply + 芯片）；建议追加到上一轮线索                                                |
-| 2026-07-29 | P0：Capture enrichment（域名/类型词/实体 → tags·keywords·entities）；upsert 合并扩展位                     |
-| 2026-07-28 | P0：`parseRecallClue` + `recallByKeywordWithParsedClue` 接入主链路（规则解析/软加权，无 LLM）              |
-| 2026-07-28 | §0.1.1 记忆硬盘≠小助手；LLM/embedding 分工；P0 有锚点场景收窄；禁全库喂 LLM / 零锚点助手 demo              |
-| 2026-07-28 | §0.1.1 记忆库书签树：Chrome 结构 + Yiveno 私人备注层；非整理器、非纯浏览壳                                 |
-| 2026-07-28 | §0.1.1 肆无忌惮存：旧书签惩罚乱存；整齐目录贬值；Capture+Recall 成对习惯                                   |
-| 2026-07-28 | §0.1.1 兴趣鸿沟：用户自带兴趣筛选；随便存/随时找得着 = 超轻负担 + 踏实感 = 立身之本                        |
-| 2026-07-28 | 定位升级：「记忆硬盘」心智（扔进就记着 / 想找就找它要）；§0.1.1 补用户心智表                               |
-| 2026-07-28 | 写入口语记忆需求 / 对象理解与记忆索引 / 当前 AI 能力边界；明确“记忆可问”路线                               |
-| 2026-07-28 | 记忆库默认 Tab=摘录；空状态文案对齐摘录主角（§0.1.1）                                                      |
-| 2026-07-28 | P0：Omnibox/库打开写回；摘录存成抓住感+预填线索；首次找回引导                                              |
-| 2026-07-28 | §0.1.1 定位精细化：核心资产/Google·Notion 边界/需求 A·B·C/隐患清单；MUST NOT 对齐                          |
-| 2026-07-28 | §0.1 写入核心路线（寻回、体验立身、前期发育后期变强）；A.1 对齐勿另起故事                                  |
-| 2026-07-26 | Recall 折叠：书签按规范化 URL 计 N；Also 同域名互斥；勿按域名吞并 stacks                                   |
-| 2026-07-26 | Recall 折叠：书签按规范化域名；stacks N=同站命中数；Also 与 Top 同键互斥                                   |
-| 2026-07-26 | 重复组代表：完全相同时以 `createdAt` 最晚为唯一时间决胜                                                    |
-| 2026-07-26 | Recall 集合：放弃扑克叠；改用 `stacks` 图标 + N 展开同组                                                   |
-| 2026-07-26 | Recall 集合卡：右侧扑克叠；主卡打开代表；「更多」hover 扇开 / 点击展开                                     |
-| 2026-07-26 | Recall 重复折叠：书签域名 / 摘录正文；结果层集合卡；库内仍允许并存（键规则已修订）                         |
-| 2026-07-26 | 独立 `note` 类型：有边界需求、当前不接入；优先书签/摘录/`clues.note` 核心闭环                              |
-| 2026-07-25 | Popup：打开聚焦线索框；移除提交按钮；停输防抖自动找回；↑↓/Enter 键盘打开结果                               |
-| 2026-07-25 | 快捷键：划词保存 `Alt+Shift+E`、备注 `Alt+Shift+N`；设置让出 suggested_key 槽位                            |
-| 2026-07-25 | 快捷键：记忆库 `Alt+Shift+L`、设置 `Alt+Shift+S`（`open_library` / `open_settings`）                       |
-| 2026-07-25 | 书签事后备注：`UPDATE_MEMORY_NOTE`；树展示/编辑；sync upsert 保留 note                                     |
-| 2026-07-25 | 备注：列表/Popup 展示于正文与出处之间；Filter 权重 26 + 主文加成（强线索）                                 |
-| 2026-07-25 | 划词浮层增加「添加备注」；`CAPTURE_TEXT_EXCERPT.note` → `clues.note`；详情可展示                           |
-| 2026-07-25 | 保存成功工具栏角标 +1；Chrome 原生新书签同步成功亦闪角标                                                   |
-| 2026-07-25 | UI：图标优先于文案；通识 Material Symbol + hover `title`/`aria-label`（经 `t()`）                          |
-| 2026-07-25 | i18n Phase 5：清残留 UI 硬编码；CI `i18n:check`；catch 不再展示 `error.message`                            |
-| 2026-07-25 | i18n Phase 4：Settings/Recall/Import/Commands/Identity 失败响应落地 `errorCode`                            |
-| 2026-07-24 | i18n Phase 2：Library/Detail 文案；Memory 失败响应落地 `errorCode`                                         |
-| 2026-07-24 | 扩展 i18n 契约：`chrome.i18n` + `en`/`zh_CN`；`t()`；失败响应演进为 `errorCode`                            |
-| 2026-07-24 | 摘录展示：无强制标题；正文为主、页名/域名仅出处（记忆库/Popup/Omnibox/详情）                               |
-| 2026-07-24 | UI 图标选型：Material Symbols Outlined 按需内联；记忆库删除改为 hover 显图标按钮                           |
-| 2026-07-24 | 摘录软删上线：`DELETE_MEMORY_ITEM`；记忆库列表 / 详情；书签不经此路径删除                                  |
-| 2026-07-24 | 记忆库书签 Tab：完整映射 Chrome 目录只读树；`GET_BOOKMARK_LIBRARY_TREE`                                    |
-| 2026-07-24 | 记忆库轻浏览上线：`library.html` 左侧类型 Tab（默认书签）；Popup/Settings 入口                             |
-| 2026-07-24 | 摘录详情落地页上线：`detail.html?id=` + `GET_MEMORY_ITEM`；Popup/Omnibox 分流                              |
-| 2026-07-24 | Phase A：线索解释强化 + Popup 空状态分层（空库/有库 + 缩短再试）                                           |
-| 2026-07-24 | 摘录保存成功/失败：工具栏临时 badge（+1 / !）；划词与右键共用                                              |
-| 2026-07-24 | 划词保存浮层上线；Settings 开关默认开启；`captureEntry=selection_toolbar`                                  |
-| 2026-07-24 | Settings 最小可用进 manifest：快捷键查看+跳转原生改键；Popup 入口                                          |
-| 2026-07-24 | 移除「保存当前页」；书签仅 Chrome 原生+sync；快捷键只保留找回开 Popup                                      |
-| 2026-07-24 | 快捷键已上线：命令契约+registry；找回 Alt+Shift+Y 开 Popup                                                 |
-| 2026-07-24 | Popup 移除「保存当前页」UI；保存改快捷键入口；Omnibox keyword `yi`                                         |
-| 2026-07-24 | Omnibox 已上线（keyword `yi`）；§0.4 入口能力差异；Phase A 下一项改为快捷键                                |
-| 2026-07-23 | 确立唯一正文；现状矩阵、契约、验收、UI 约束、Hybrid 边界                                                   |
-| 2026-07-23 | AI 优先重排：Quick Contract、Normative/附录分离、消息 type 表、Phase A 单一优先项                          |
+| 日期       | 变更                                                                                                               |
+| ---------- | ------------------------------------------------------------------------------------------------------------------ |
+| 2026-08-03 | Capture 新建后异步稀疏 LLM enrichment（`scheduleAsyncMemoryLlmEnrichment`；bulk 不烧配额；失败降级规则）           |
+| 2026-08-03 | LLM enrichment 插座：`MemoryEnrichmentProposal` + `mergeMemoryClueEnrichment` + `POST /api/ai/enrichment/complete` |
+| 2026-08-02 | Capture enrichment v3：`video` 对象类型；YouTube/Bilibili≠song；主题/实体规则（WWII·城市经济）；回填 v3            |
+| 2026-08-01 | M1：Gate B 中文短口语/相对时间升 semantic；lexical no_match 有条件升一次 LLM 再 Filter                             |
+| 2026-07-29 | §1.1 已上线验证归属 + 合入门禁（must/验收先于合入）；E2E 薄冒烟边界（禁大 Playwright）                             |
+| 2026-07-29 | §7.1 多源线索与权重：收集要宽、采信要窄；Chrome 环境为弱上下文；按模块渐进（产品内→选区→芯片→重排）                |
+| 2026-07-29 | §0.1.1 知识库习惯重置：文件夹型 KB 双重隐性成本；人创造/机器索引分工                                               |
+| 2026-07-31 | M1：线索 LLM 改经 Cloudflare `POST /api/ai/clue/complete`（Worker 持 DEEPSEEK Secret；扩展不持 key）               |
+| 2026-07-31 | M1：理解层前增加「是否处理」网关（reject_noise｜proceed）；与 lexical/semantic 门禁拆开；硬噪音不扫库              |
+| 2026-07-31 | §0.1.1 / §0.3：钉死 LLM 与数据平面边界（NLU·NLG 可；禁止直接写库；提议→Zod→确定性执行）                            |
+| 2026-07-29 | 新增 [`Yiveno-市场调研-v1.md`](./Yiveno-市场调研-v1.md)；附录 A.6；暂停扩大功能直至 §11 验证门槛                   |
+| 2026-07-29 | P0：enrichment recall keywords（类型补充词 + 正文词面规则）；回填版本 v2                                           |
+| 2026-07-29 | §0.1.1 典型英语 P0 语料表 + enrichment recall keywords 验收口径；口语词典对齐真实表达                              |
+| 2026-07-29 | §0.1.1 市场语言与 Recall Language Strategy：T1 英语优先、canonical/UI/parser 三层分离、芯片 value 稳定英文         |
+| 2026-07-29 | P0：存量 enrichment 回填（bootstrap 延迟执行，storage 版本幂等）                                                   |
+| 2026-07-29 | P0：模板化追问（缺槽位 reply + 芯片）；建议追加到上一轮线索                                                        |
+| 2026-07-29 | P0：Capture enrichment（域名/类型词/实体 → tags·keywords·entities）；upsert 合并扩展位                             |
+| 2026-07-28 | P0：`parseRecallClue` + `recallByKeywordWithParsedClue` 接入主链路（规则解析/软加权，无 LLM）                      |
+| 2026-07-28 | §0.1.1 记忆硬盘≠小助手；LLM/embedding 分工；P0 有锚点场景收窄；禁全库喂 LLM / 零锚点助手 demo                      |
+| 2026-07-28 | §0.1.1 记忆库书签树：Chrome 结构 + Yiveno 私人备注层；非整理器、非纯浏览壳                                         |
+| 2026-07-28 | §0.1.1 肆无忌惮存：旧书签惩罚乱存；整齐目录贬值；Capture+Recall 成对习惯                                           |
+| 2026-07-28 | §0.1.1 兴趣鸿沟：用户自带兴趣筛选；随便存/随时找得着 = 超轻负担 + 踏实感 = 立身之本                                |
+| 2026-07-28 | 定位升级：「记忆硬盘」心智（扔进就记着 / 想找就找它要）；§0.1.1 补用户心智表                                       |
+| 2026-07-28 | 写入口语记忆需求 / 对象理解与记忆索引 / 当前 AI 能力边界；明确“记忆可问”路线                                       |
+| 2026-07-28 | 记忆库默认 Tab=摘录；空状态文案对齐摘录主角（§0.1.1）                                                              |
+| 2026-07-28 | P0：Omnibox/库打开写回；摘录存成抓住感+预填线索；首次找回引导                                                      |
+| 2026-07-28 | §0.1.1 定位精细化：核心资产/Google·Notion 边界/需求 A·B·C/隐患清单；MUST NOT 对齐                                  |
+| 2026-07-28 | §0.1 写入核心路线（寻回、体验立身、前期发育后期变强）；A.1 对齐勿另起故事                                          |
+| 2026-07-26 | Recall 折叠：书签按规范化 URL 计 N；Also 同域名互斥；勿按域名吞并 stacks                                           |
+| 2026-07-26 | Recall 折叠：书签按规范化域名；stacks N=同站命中数；Also 与 Top 同键互斥                                           |
+| 2026-07-26 | 重复组代表：完全相同时以 `createdAt` 最晚为唯一时间决胜                                                            |
+| 2026-07-26 | Recall 集合：放弃扑克叠；改用 `stacks` 图标 + N 展开同组                                                           |
+| 2026-07-26 | Recall 集合卡：右侧扑克叠；主卡打开代表；「更多」hover 扇开 / 点击展开                                             |
+| 2026-07-26 | Recall 重复折叠：书签域名 / 摘录正文；结果层集合卡；库内仍允许并存（键规则已修订）                                 |
+| 2026-07-26 | 独立 `note` 类型：有边界需求、当前不接入；优先书签/摘录/`clues.note` 核心闭环                                      |
+| 2026-07-25 | Popup：打开聚焦线索框；移除提交按钮；停输防抖自动找回；↑↓/Enter 键盘打开结果                                       |
+| 2026-07-25 | 快捷键：划词保存 `Alt+Shift+E`、备注 `Alt+Shift+N`；设置让出 suggested_key 槽位                                    |
+| 2026-07-25 | 快捷键：记忆库 `Alt+Shift+L`、设置 `Alt+Shift+S`（`open_library` / `open_settings`）                               |
+| 2026-07-25 | 书签事后备注：`UPDATE_MEMORY_NOTE`；树展示/编辑；sync upsert 保留 note                                             |
+| 2026-07-25 | 备注：列表/Popup 展示于正文与出处之间；Filter 权重 26 + 主文加成（强线索）                                         |
+| 2026-07-25 | 划词浮层增加「添加备注」；`CAPTURE_TEXT_EXCERPT.note` → `clues.note`；详情可展示                                   |
+| 2026-07-25 | 保存成功工具栏角标 +1；Chrome 原生新书签同步成功亦闪角标                                                           |
+| 2026-07-25 | UI：图标优先于文案；通识 Material Symbol + hover `title`/`aria-label`（经 `t()`）                                  |
+| 2026-07-25 | i18n Phase 5：清残留 UI 硬编码；CI `i18n:check`；catch 不再展示 `error.message`                                    |
+| 2026-07-25 | i18n Phase 4：Settings/Recall/Import/Commands/Identity 失败响应落地 `errorCode`                                    |
+| 2026-07-24 | i18n Phase 2：Library/Detail 文案；Memory 失败响应落地 `errorCode`                                                 |
+| 2026-07-24 | 扩展 i18n 契约：`chrome.i18n` + `en`/`zh_CN`；`t()`；失败响应演进为 `errorCode`                                    |
+| 2026-07-24 | 摘录展示：无强制标题；正文为主、页名/域名仅出处（记忆库/Popup/Omnibox/详情）                                       |
+| 2026-07-24 | UI 图标选型：Material Symbols Outlined 按需内联；记忆库删除改为 hover 显图标按钮                                   |
+| 2026-07-24 | 摘录软删上线：`DELETE_MEMORY_ITEM`；记忆库列表 / 详情；书签不经此路径删除                                          |
+| 2026-07-24 | 记忆库书签 Tab：完整映射 Chrome 目录只读树；`GET_BOOKMARK_LIBRARY_TREE`                                            |
+| 2026-07-24 | 记忆库轻浏览上线：`library.html` 左侧类型 Tab（默认书签）；Popup/Settings 入口                                     |
+| 2026-07-24 | 摘录详情落地页上线：`detail.html?id=` + `GET_MEMORY_ITEM`；Popup/Omnibox 分流                                      |
+| 2026-07-24 | Phase A：线索解释强化 + Popup 空状态分层（空库/有库 + 缩短再试）                                                   |
+| 2026-07-24 | 摘录保存成功/失败：工具栏临时 badge（+1 / !）；划词与右键共用                                                      |
+| 2026-07-24 | 划词保存浮层上线；Settings 开关默认开启；`captureEntry=selection_toolbar`                                          |
+| 2026-07-24 | Settings 最小可用进 manifest：快捷键查看+跳转原生改键；Popup 入口                                                  |
+| 2026-07-24 | 移除「保存当前页」；书签仅 Chrome 原生+sync；快捷键只保留找回开 Popup                                              |
+| 2026-07-24 | 快捷键已上线：命令契约+registry；找回 Alt+Shift+Y 开 Popup                                                         |
+| 2026-07-24 | Popup 移除「保存当前页」UI；保存改快捷键入口；Omnibox keyword `yi`                                                 |
+| 2026-07-24 | Omnibox 已上线（keyword `yi`）；§0.4 入口能力差异；Phase A 下一项改为快捷键                                        |
+| 2026-07-23 | 确立唯一正文；现状矩阵、契约、验收、UI 约束、Hybrid 边界                                                           |
+| 2026-07-23 | AI 优先重排：Quick Contract、Normative/附录分离、消息 type 表、Phase A 单一优先项                                  |
