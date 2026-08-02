@@ -19,12 +19,12 @@ import { logger } from '@/infrastructure/logging/logger'
 
 export type BuildMergedMemoryEnrichmentInput = {
   source: EnrichMemoryCluesInput
-  existing?: ExistingMemoryClueFields
+  existing?: ExistingMemoryClueFields | undefined
   /**
    * 是否请求 Worker LLM 提议。
    * 默认 false（规则-only）；开启后失败降级为规则合并。
    */
-  requestLlmProposal?: boolean
+  requestLlmProposal?: boolean | undefined
 }
 
 export type BuildMergedMemoryEnrichmentResult = {

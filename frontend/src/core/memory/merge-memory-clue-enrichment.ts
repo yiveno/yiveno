@@ -9,19 +9,19 @@ import type { MemoryEnrichmentProposal } from '@/core/memory/memory-enrichment-p
 
 /** 合并时可读的已有线索（不含 note；note 永不由 enrichment 改写）。 */
 export type ExistingMemoryClueFields = {
-  tags?: string[]
-  keywords?: string[]
-  entities?: string[]
+  tags?: string[] | undefined
+  keywords?: string[] | undefined
+  entities?: string[] | undefined
   /** 已有摘要；非空则保留，LLM 不得覆盖 */
-  summary?: string
+  summary?: string | undefined
 }
 
 export type MergeMemoryClueEnrichmentInput = {
-  existing?: ExistingMemoryClueFields
+  existing?: ExistingMemoryClueFields | undefined
   /** 规则层产物（enrichMemoryClues） */
   rule: MemoryClueEnrichment
   /** 已 Zod 校验的 LLM 提议；缺省 = 仅规则 */
-  proposal?: MemoryEnrichmentProposal | null
+  proposal?: MemoryEnrichmentProposal | null | undefined
 }
 
 /** 合并结果：可直接写入 clues 对应字段。 */
@@ -33,7 +33,7 @@ export type MergedMemoryClueEnrichment = {
    * 仅当 existing.summary 为空且 proposal.summary 有值时给出；
    * undefined 表示调用方勿改 summary。
    */
-  summary?: string
+  summary?: string | undefined
 }
 
 /**
@@ -86,10 +86,10 @@ export function mergeMemoryClueEnrichment(
  */
 export function applyMergedEnrichmentToClues<
   T extends {
-    tags?: string[]
-    keywords?: string[]
-    entities?: string[]
-    summary?: string
+    tags?: string[] | undefined
+    keywords?: string[] | undefined
+    entities?: string[] | undefined
+    summary?: string | undefined
   }
 >(clues: T, merged: MergedMemoryClueEnrichment): T {
   return {
