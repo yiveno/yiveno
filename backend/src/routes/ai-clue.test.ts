@@ -33,7 +33,7 @@ describe('POST /api/ai/clue/complete', () => {
     mock.restore()
   })
 
-  test('缺少 DEEPSEEK_API_KEY → 503', async () => {
+  test('缺少 Provider Secret → 503 ai_provider_not_configured', async () => {
     const { handleClueComplete } = await import('../handlers/ai-clue')
     const response = await handleClueComplete(
       new Request('http://localhost/api/ai/clue/complete', {
@@ -44,6 +44,23 @@ describe('POST /api/ai/clue/complete', () => {
       createBaseEnv({ DEEPSEEK_API_KEY: '' })
     )
     expect(response.status).toBe(503)
+    const payload = (await response.json()) as { error?: string }
+    expect(payload.error).toBe('ai_provider_not_configured')
+  })
+
+  test('未知 AI_PROVIDER → 503 ai_provider_unsupported', async () => {
+    const { handleClueComplete } = await import('../handlers/ai-clue')
+    const response = await handleClueComplete(
+      new Request('http://localhost/api/ai/clue/complete', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ prompt: 'hello' })
+      }),
+      createBaseEnv({ AI_PROVIDER: 'not-a-real-provider' })
+    )
+    expect(response.status).toBe(503)
+    const payload = (await response.json()) as { error?: string }
+    expect(payload.error).toBe('ai_provider_unsupported')
   })
 
   test('缺少 AI_USAGE_KV → 503', async () => {

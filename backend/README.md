@@ -51,6 +51,14 @@ curl -X POST http://localhost:8787/api/ai/clue/complete \
 
 需要 Worker Secret：`DEEPSEEK_API_KEY`（本地在 `.dev.vars`，由 `env:sync` 从 `.env.shared.local` 写入）。
 
+### 可插拔 Provider（AiChatProvider）
+
+`/api/ai/clue/complete` 与 `/api/ai/hosted/complete` 经 `resolveAiChatProvider(env)` 调用上游：
+
+- 默认 `AI_PROVIDER=deepseek`（或未设置）→ `deepseekAiChatProvider`
+- 换厂商：新增 adapter 实现 `AiChatProvider`，在 `resolveAiChatProvider` 注册，再改 env
+- 未配置对应 Secret → `503 ai_provider_not_configured`；未知 provider → `503 ai_provider_unsupported`
+
 ### AI Gateway（DeepSeek 观测中间层）
 
 线索 / 托管补全默认经 Cloudflare AI Gateway 转发 DeepSeek：

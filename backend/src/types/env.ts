@@ -25,6 +25,11 @@ export type Env = Cloudflare.Env & {
   /** 线索理解按 IP 日调用上限 */
   AI_CLUE_DAILY_LIMIT?: string
   /**
+   * 聊天补全 Provider：deepseek（默认）。未知值 → 503 ai_provider_unsupported。
+   * 换厂商时加 adapter + 改此变量，业务 handler 不改。
+   */
+  AI_PROVIDER?: string
+  /**
    * AI Gateway Authenticated Gateway 的 Run token。
    * 写入请求头 `cf-aig-authorization`；未配置且 Gateway 开鉴权时会 401（客户端将回退直连）。
    */

@@ -1,11 +1,11 @@
 /**
- * Recall 线索理解：扩展侧调用的 DeepSeek 代理（key 仅在 Worker Secret）。
- * M1 暂不强制 Pro；按 IP 日配额防刷。正式商业化可改为 hosted + Pro。
+ * Recall 线索理解：扩展侧调用的聊天补全代理（key 仅在 Worker Secret）。
+ * 上游厂商由 AiChatProvider + AI_PROVIDER 选择；M1 暂不强制 Pro；按 IP 日配额防刷。
  */
 
 import type { Env } from '../types/env'
 import { isDeepSeekAiGatewayEnabled, resolveHostedModel } from '../config/ai-hosted'
-import { completeWithDeepSeek } from '../services/ai/deepseek-client'
+import { isAiChatProviderConfigured, resolveAiChatProvider } from '../services/ai/ai-chat-provider'
 import { okJson, errorJson } from '../utils/response'
 import { info as logInfo, logError } from '../utils/logger'
 
@@ -66,9 +66,22 @@ export async function handleClueComplete(request: Request, env: Env): Promise<Re
   const startedAt = Date.now()
   const ip = clientIp(request)
 
-  if (!env.DEEPSEEK_API_KEY?.trim()) {
-    logInfo('clue_complete_rejected', { reason: 'deepseek_not_configured', ip })
-    return errorJson({ error: 'deepseek_not_configured' }, 503, origin)
+  let providerId = 'unknown'
+  try {
+    providerId = resolveAiChatProvider(env).id
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    logInfo('clue_complete_rejected', { reason: 'ai_provider_unsupported', ip, detail: message })
+    return errorJson({ error: 'ai_provider_unsupported' }, 503, origin)
+  }
+
+  if (!isAiChatProviderConfigured(env)) {
+    logInfo('clue_complete_rejected', {
+      reason: 'ai_provider_not_configured',
+      ip,
+      providerId
+    })
+    return errorJson({ error: 'ai_provider_not_configured' }, 503, origin)
   }
 
   // 显式关闭：AI_CLUE_PROXY_ENABLED=false
@@ -92,6 +105,7 @@ export async function handleClueComplete(request: Request, env: Env): Promise<Re
   const viaAiGateway = isDeepSeekAiGatewayEnabled(env)
   logInfo('clue_complete_start', {
     ip,
+    providerId,
     hasMessages,
     messageCount: hasMessages ? body.messages!.length : 0,
     promptLength: prompt.length,
@@ -122,7 +136,9 @@ export async function handleClueComplete(request: Request, env: Env): Promise<Re
   }
 
   try {
-    const result = await completeWithDeepSeek(env, prompt || ' ', {
+    const provider = resolveAiChatProvider(env)
+    const result = await provider.complete(env, {
+      prompt: prompt || ' ',
       maxTokens: body.maxTokens ?? 400,
       temperature: body.temperature ?? 0,
       disableThinking: true,
@@ -132,6 +148,7 @@ export async function handleClueComplete(request: Request, env: Env): Promise<Re
     logInfo('clue_complete_ok', {
       ip,
       durationMs: Date.now() - startedAt,
+      providerId: result.providerId,
       model: result.model || resolveHostedModel(env),
       tokensUsed: result.tokensUsed,
       textLength: result.text.length,
@@ -144,6 +161,7 @@ export async function handleClueComplete(request: Request, env: Env): Promise<Re
       {
         text: result.text,
         provider: 'clue',
+        providerId: result.providerId,
         model: result.model || resolveHostedModel(env),
         tokensUsed: result.tokensUsed,
         quota: {
@@ -160,9 +178,9 @@ export async function handleClueComplete(request: Request, env: Env): Promise<Re
       path: '/api/ai/clue/complete',
       ip,
       durationMs: Date.now() - startedAt,
+      providerId,
       detail: message
     })
-    // 对外稳定错误码，不回传上游原文
     return errorJson({ error: 'clue_complete_failed' }, 500, origin)
   }
 }

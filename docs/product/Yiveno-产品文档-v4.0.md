@@ -494,7 +494,7 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 - **miss 升级：** 不是「无命中就调模型」；仅 lexical 规则路径无命中 + 口语/时间信号（或 ≥3 英文词）时升一次；URL / 短英文专名不升。
 
 - **不做本里程碑内：** embedding、全库喂模型、模型写库、开放闲聊。
-- **开发启用 LLM：** 默认经 Cloudflare `POST /api/ai/clue/complete`（Worker Secret `DEEPSEEK_API_KEY`；可选经 **AI Gateway** 转发 DeepSeek，见 `AI_GATEWAY_*` vars）；本地需 `bun run env:sync:dev` + `wrangler dev`。可选 `chrome.storage.local` `yiveno.dev.clueLlm` 直连调试。正式 Pro 托管另接 `/api/ai/hosted/*`。
+- **开发启用 LLM：** 默认经 Cloudflare `POST /api/ai/clue/complete`（Worker 经 `AiChatProvider` / `AI_PROVIDER` 选上游，默认 DeepSeek；Secret `DEEPSEEK_API_KEY`；可选经 **AI Gateway** 转发，见 `AI_GATEWAY_*` vars）；本地需 `bun run env:sync:dev` + `wrangler dev`。可选 `chrome.storage.local` `yiveno.dev.clueLlm` 直连调试。正式 Pro 托管另接 `/api/ai/hosted/*`。
 - **验收：** 理解金标 `parse-gold`；人话 → 精确 `contentTerms` 单测；Recall 用户可感变更补 `recall-eval` must 或 §5 手动步骤。
 
 #### 隐患清单与规避（决策自检）

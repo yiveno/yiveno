@@ -6,7 +6,7 @@ import type { Env } from '../types/env'
 import type { AIHostedCompleteRequest } from '../types/ai'
 import { okJson, errorJson } from '../utils/response'
 import { resolveHostedModel } from '../config/ai-hosted'
-import { completeWithDeepSeek } from '../services/ai/deepseek-client'
+import { isAiChatProviderConfigured, resolveAiChatProvider } from '../services/ai/ai-chat-provider'
 import { consumeHostedQuota, getHostedQuotaSnapshot } from '../services/ai/usage-quota'
 import { isActiveProUser } from '../services/ai/require-pro-user'
 import { logError } from '../utils/logger'
@@ -59,6 +59,10 @@ export async function handleHostedComplete(
     return errorJson({ error: 'pro_required' }, 403, origin)
   }
 
+  if (!isAiChatProviderConfigured(env)) {
+    return errorJson({ error: 'ai_provider_not_configured' }, 503, origin)
+  }
+
   const quotaResult = await consumeHostedQuota(env, userId)
   if (!quotaResult.allowed) {
     if (quotaResult.reason === 'kv_not_configured') {
@@ -87,17 +91,18 @@ export async function handleHostedComplete(
   }
 
   try {
-    const deepSeekOptions = {
+    const provider = resolveAiChatProvider(env)
+    const result = await provider.complete(env, {
+      prompt,
       ...(body.maxTokens !== undefined ? { maxTokens: body.maxTokens } : {}),
       ...(body.temperature !== undefined ? { temperature: body.temperature } : {})
-    }
-
-    const result = await completeWithDeepSeek(env, prompt, deepSeekOptions)
+    })
 
     return okJson(
       {
         text: result.text,
         provider: 'hosted',
+        providerId: result.providerId,
         model: result.model,
         tokensUsed: result.tokensUsed,
         quota: {

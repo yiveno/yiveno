@@ -33,6 +33,8 @@ SUPABASE_ANON_KEY = "sb_publishable_2FY9uDfqNbLwUYXxgcu8lw_qQ8SEbXo"
 REDIRECT_URI_ALLOWLIST = "https://yiveno.com,http://localhost:3001,http://localhost:3002"
 AI_HOSTED_MODEL = "deepseek-v4-flash"
 AI_HOSTED_MONTHLY_QUOTA = "999"
+# 聊天补全 Provider（默认 deepseek；换厂商时改此值并实现对应 adapter）
+AI_PROVIDER = "deepseek"
 # 未配 AI Gateway 时的直连回退；配置了 AI_GATEWAY_* 后实际走 Gateway
 DEEPSEEK_API_BASE = "https://api.deepseek.com"
 # Cloudflare AI Gateway（Dashboard → AI → AI Gateway 创建名为 yiveno 的 gateway）
@@ -56,6 +58,7 @@ SUPABASE_ANON_KEY = "sb_publishable_2FY9uDfqNbLwUYXxgcu8lw_qQ8SEbXo"
 REDIRECT_URI_ALLOWLIST = "https://yiveno.com,http://localhost:3001,http://localhost:3002"
 AI_HOSTED_MODEL = "deepseek-v4-flash"
 AI_HOSTED_MONTHLY_QUOTA = "999"
+AI_PROVIDER = "deepseek"
 DEEPSEEK_API_BASE = "https://api.deepseek.com"
 AI_GATEWAY_ACCOUNT_ID = "231a6a08dec7fe0133fbaac8c5e55b2a"
 AI_GATEWAY_ID = "yiveno"

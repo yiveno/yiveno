@@ -103,11 +103,13 @@ bun run env:check:prod
   - 本地开发读取 `backend/.dev.vars`
   - Cloudflare 线上环境变量在 Worker Dashboard / Wrangler 环境中维护
   - **AI Gateway（非 Secret，写在 `backend/wrangler.toml` `[vars]`）**
+    - `AI_PROVIDER`（可选）：聊天补全实现，默认 `deepseek`；换厂商时加 Worker adapter + 改此变量
     - `AI_GATEWAY_ACCOUNT_ID`：Cloudflare Account ID
     - `AI_GATEWAY_ID`：Gateway 名称（当前 `yiveno`）；Dashboard 需先创建同名 Gateway
     - 二者都非空时，DeepSeek 经 `gateway.ai.cloudflare.com` 转发；否则直连 `DEEPSEEK_API_BASE`
     - Secret 仍是 `DEEPSEEK_API_KEY`（经 `env:sync` 写入 `.dev.vars`）
     - 若 Gateway 开启 Authenticated Gateway：另需 Secret `AI_GATEWAY_TOKEN`（`cf-aig-authorization`）；未配时 Worker 遇 401 会回退直连 DeepSeek
+    - Handler 经 `resolveAiChatProvider(env)` 调用上游，业务不直连 DeepSeek 客户端
 - `website`
   - 读取 `website/.env`
 
