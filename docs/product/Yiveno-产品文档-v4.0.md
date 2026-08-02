@@ -249,7 +249,7 @@ Yiveno 的高频真实请求，**不是**标题 / URL / 精确词查询，而是
 - **时间感**：前天 / 前段时间 / 昨天 / 最近
 - **行为感**：循环了好几遍 / 看了一半 / 打开过很多次
 - **主观感受**：很嗨 / 很震撼 / 很实用 / 很绝
-- **对象类型**：歌 / 文章 / 诗 / 页面 / 代码 / 命令
+- **对象类型**：歌 / 文章 / 诗 / 页面 / 代码 / 命令 / 视频
 - **对象归属**：李白 / 杜甫 / 某产品 / 某网站 / 我写过的话
 
 **产品判断：** 用户发起 Recall 时，更多是在复述**记忆对象**，而不是复述**原始文本**。  
@@ -374,7 +374,7 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 
 优先理解的线索类别：
 
-1. **内容线索**：诗 / 歌 / 文章 / 代码 / 命令 / 引用 / 密码等对象类型；作者 / 主题 / 实体
+1. **内容线索**：诗 / 歌 / 文章 / 代码 / 命令 / 视频 / 引用 / 密码等对象类型；作者 / 主题 / 实体
 2. **行为线索**：保存过 / 打开过几次 / 反复打开 / 看了一半 / 快速关闭
 3. **时间线索**：前天 / 上周 / 前段时间 / 最近 / 很久以前
 4. **主观感受**：很嗨 / 很实用 / 很震撼 / 很长 / 看不太懂
@@ -414,7 +414,7 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 
 **Canonical 规则（Normative · 实现约束）：**
 
-1. **对象类型**：内部 slug 与主检索词面用英文（`poem` / `article` / `song` / `code` …），不用「诗 / 文章 / 歌」等本地化词当 canonical。
+1. **对象类型**：内部 slug 与主检索词面用英文（`poem` / `article` / `song` / `code` / `video` …），不用「诗 / 文章 / 歌 / 视频」等本地化词当 canonical。
 2. **时间 / 行为 / 备注指向**：parser 词典以英文 surface 为主（`yesterday` / `last week` / `half read` / `my note` …）；其它语言至多作 **alias**，且不得决定 schema 字段名。
 3. **实体 enrichment**：命中任何别名（如正文中的 `李白`）后，**写入库的 canonical 统一为英文**（如 `Li Bai`）；alias 只用于识别，不用于持久化分裂。
 4. **追问芯片**：`label` 本地化展示；**点击填入 composer 的 `value` 用稳定英文**（或稳定 canonical token），保证跨 locale 下 parser 行为一致。
@@ -441,9 +441,11 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 **Capture enrichment 应能承接的 recall 关键词（English canonical 示例）：**
 
 - song 站 / 音乐内容 → `music` `listen` `song` `playlist` `track`
+- **视频站（YouTube / Bilibili 等）** → `video`（**不得**再标成 `song`）+ `youtube` `watch` `clip`
 - 文章 / 教程 / 文档 → `article` `reading` `tutorial` `guide` `docs` `story`
 - 代码 / 仓库 → `code` `repo` `snippet` `development` `programming`
 - 正文含 `tutorial` / `readme` / `auth` / `deploy` 等 → 写入对应 recall 别名关键词
+- **主题 / 实体（规则词典）**：标题命中别名后写入 English canonical（如 `希特勒`→实体 `Hitler` + 主题词 `wwii`；`长春`+经济信号→实体 `Changchun` + `economy` `city`）；只服务库内可问，不做开放推荐
 
 **改词典/ enrichment / 追问前的自检三问：**
 
@@ -459,7 +461,7 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 
 **P0 做（有记忆锚点）：**
 
-- 数据：规则 enrichment（高频站/标题类型）+ 用户备注 + **recall 导向英文 keywords**；写回 `tags` / `keywords` / `entities` — **新建已接入**；**存量经 `ensureMemoryEnrichmentBackfilled` 启动回填（版本幂等，当前 v2）**
+- 数据：规则 enrichment（高频站/标题类型/主题·实体）+ 用户备注 + **recall 导向英文 keywords**；写回 `tags` / `keywords` / `entities` — **新建已接入**；**存量经 `ensureMemoryEnrichmentBackfilled` 启动回填（版本幂等，当前 v3）**
 - 编排：约束软加权 + 现有 keyword-filter + 置信度决策 — **`recallByKeywordWithParsedClue` 已接入 KeywordRecallBackend**；**模板化追问已接入 Popup**（`buildRecallFollowUpPlan`，按缺槽位）
 - Query：时间词、对象类型词、备注指向、弱行为词 → 结构化约束；内容实体先当关键词 — **`parseRecallClue` 已落地**（词典以真实英语口语为主，见「市场语言策略」典型语料）
 - Enrichment：域名 / 类型 / 实体 + **recall 导向英文 keywords**（如 `listen` `tutorial` `repo`）；写回 `tags` / `keywords` / `entities`
@@ -991,6 +993,7 @@ Chrome API / 选区
 
 | 日期       | 变更                                                                                                       |
 | ---------- | ---------------------------------------------------------------------------------------------------------- |
+| 2026-08-02 | Capture enrichment v3：`video` 对象类型；YouTube/Bilibili≠song；主题/实体规则（WWII·城市经济）；回填 v3    |
 | 2026-08-01 | M1：Gate B 中文短口语/相对时间升 semantic；lexical no_match 有条件升一次 LLM 再 Filter                     |
 | 2026-07-29 | §1.1 已上线验证归属 + 合入门禁（must/验收先于合入）；E2E 薄冒烟边界（禁大 Playwright）                     |
 | 2026-07-29 | §7.1 多源线索与权重：收集要宽、采信要窄；Chrome 环境为弱上下文；按模块渐进（产品内→选区→芯片→重排）        |

@@ -38,6 +38,7 @@ export const RECALL_OBJECT_TYPE_CANONICAL_SURFACES: Record<RecallObjectType, str
   poem: 'poem',
   article: 'article',
   song: 'song',
+  video: 'video',
   code: 'code',
   command: 'command',
   page: 'page',
@@ -90,6 +91,13 @@ export const RECALL_OBJECT_TYPE_LEXICON: RecallLexiconEntry<RecallObjectType>[] 
   { surface: 'songs', value: 'song' },
   { surface: 'song', value: 'song' },
   { surface: 'music', value: 'song' },
+
+  // video（与 song 分立：YouTube 等站不得再标成 song）
+  { surface: 'youtube video', value: 'video' },
+  { surface: 'videos', value: 'video' },
+  { surface: 'video', value: 'video' },
+  { surface: 'youtube', value: 'video' },
+  { surface: 'clip', value: 'video' },
 
   // code
   { surface: 'source code', value: 'code' },
@@ -198,10 +206,12 @@ export const RECALL_CLUE_FILLER_SURFACES: string[] = [
   'an article',
   'a page',
   'a quote',
+  'a video',
   'the song',
   'the article',
   'the page',
   'the quote',
+  'the video',
   'that one',
   'the one',
   'that',
@@ -219,7 +229,9 @@ export const RECALL_CLUE_FILLER_SURFACES: string[] = [
   'help me find',
   'show me',
 
-  // 介词 / 代词
+  // 介词 / 代词 / 弱关系词
+  'related to',
+  'related',
   'about',
   'put',
   'few',

@@ -5,6 +5,7 @@ import { z } from 'zod'
  * - poem：诗
  * - article：文章
  * - song：歌曲
+ * - video：视频
  * - code：代码
  * - command：命令
  * - page：页面
@@ -15,6 +16,7 @@ export const RecallObjectTypeSchema = z.enum([
   'poem', // 诗
   'article', // 文章
   'song', // 歌曲
+  'video', // 视频
   'code', // 代码
   'command', // 命令
   'page', // 页面

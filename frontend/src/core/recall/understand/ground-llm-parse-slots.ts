@@ -15,7 +15,10 @@ const LLM_OBJECT_TYPE_ALIASES: Array<{ surface: string; value: RecallObjectType 
   { surface: 'verse', value: 'poem' },
   { surface: 'verses', value: 'poem' },
   { surface: 'write-up', value: 'article' },
-  { surface: 'writeup', value: 'article' }
+  { surface: 'writeup', value: 'article' },
+  { surface: 'youtube', value: 'video' },
+  { surface: 'clip', value: 'video' },
+  { surface: '视频', value: 'video' }
 ]
 
 /** 行为别名：规则词典未收录、但 stretch 金标需要的说法。 */

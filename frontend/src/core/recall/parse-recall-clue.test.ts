@@ -207,4 +207,18 @@ describe('parseRecallClue', () => {
     expect(parsed.objectTypes).toEqual(['poem'])
     expect(parsed.contentTerms).toEqual(expect.arrayContaining(['li', 'bai']))
   })
+
+  it('wwii related video → video + wwii', () => {
+    const parsed = parseRecallClue('wwii related video', { nowMs: NOW_MS })
+    expect(parsed.objectTypes).toEqual(['video'])
+    expect(parsed.contentTerms).toEqual(['wwii'])
+    expect(parsed.confidence).toBe('medium')
+  })
+
+  it('二战相关的视频 → video + 二战（locale alias）', () => {
+    const parsed = parseRecallClue('二战相关的视频', { nowMs: NOW_MS })
+    expect(parsed.objectTypes).toEqual(['video'])
+    expect(parsed.contentTerms).toEqual(['二战'])
+    expect(parsed.confidence).toBe('medium')
+  })
 })

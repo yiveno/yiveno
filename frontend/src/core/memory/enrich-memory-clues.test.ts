@@ -35,14 +35,41 @@ describe('enrichMemoryClues', () => {
     })
   })
 
-  it('YouTube -> song + listen keywords', () => {
+  it('YouTube -> video（不再标 song）+ watch keywords', () => {
     const result = enrichMemoryClues({
       title: 'Lo-fi beats',
       url: 'https://www.youtube.com/watch?v=abc',
       domain: 'youtube.com'
     })
-    expect(result.tags).toContain('song')
-    expect(result.keywords).toEqual(expect.arrayContaining(['listen', 'playlist', 'track']))
+    expect(result.tags).toContain('video')
+    expect(result.tags).not.toContain('song')
+    expect(result.keywords).toEqual(expect.arrayContaining(['video', 'youtube', 'watch', 'clip']))
+  })
+
+  it('希特勒 YouTube 书签 → video + WWII 主题 + Hitler 实体', () => {
+    const result = enrichMemoryClues({
+      title: '希特勒死亡80年後 為何仍給世界帶來陰影？－ BBC News 中文',
+      url: 'https://www.youtube.com/watch?v=hitler',
+      domain: 'youtube.com'
+    })
+    expect(result.tags).toEqual(['video'])
+    expect(result.entities).toEqual(expect.arrayContaining(['Hitler', 'BBC']))
+    expect(result.keywords).toEqual(
+      expect.arrayContaining(['video', 'wwii', 'world war ii', 'Hitler', 'BBC'])
+    )
+  })
+
+  it('长春经济 YouTube 书签 → video + Changchun + economy 主题', () => {
+    const result = enrichMemoryClues({
+      title: '长春会成为第一座破产省会吗？九百万人口省会，正在失去增长能力｜尉遲大官人',
+      url: 'https://www.youtube.com/watch?v=_weXNUQ5NS4',
+      domain: 'www.youtube.com'
+    })
+    expect(result.tags).toContain('video')
+    expect(result.entities).toContain('Changchun')
+    expect(result.keywords).toEqual(
+      expect.arrayContaining(['video', 'economy', 'city', 'growth', 'Changchun'])
+    )
   })
 
   it('GitHub -> code + repo keywords', () => {

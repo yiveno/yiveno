@@ -33,6 +33,11 @@ describe('buildSearchClueFromParsed', () => {
     expect(parsed.contentTerms).toEqual([])
     expect(buildSearchClueFromParsed(parsed)).toBe('article')
   })
+
+  it('主题 alias 扩展：二战 → wwii canonical', () => {
+    const parsed = parseRecallClue('二战相关的视频', { nowMs: NOW_MS })
+    expect(buildSearchClueFromParsed(parsed)).toBe('二战 wwii world war ii')
+  })
 })
 
 describe('memoryItemInTimeRange / objectType', () => {
@@ -206,5 +211,44 @@ describe('recallByKeywordWithParsedClue', () => {
       parsed
     )
     expect(boosted.score).toBe(20 + RECALL_ORCHESTRATION_OBJECT_TYPE_BOOST)
+  })
+
+  it('enrichment 后：wwii related video 可找回希特勒 YouTube 书签', () => {
+    const item = createBookmarkMemoryItem({
+      ownerId: OWNER,
+      sourceLocalProfileId: PROFILE,
+      payload: {
+        title: '希特勒死亡80年後 為何仍給世界帶來陰影？－ BBC News 中文',
+        url: 'https://www.youtube.com/watch?v=hitler80'
+      }
+    })
+    expect(item.clues.tags).toContain('video')
+    expect(item.clues.keywords).toEqual(expect.arrayContaining(['wwii', 'video']))
+
+    const english = recallByKeywordWithParsedClue([item], 'wwii related video', {
+      nowMs: NOW_MS
+    })
+    expect(english.outcome).not.toBe('no_match')
+    expect(english.topPick?.item.id ?? english.alsoPossible[0]?.item.id).toBe(item.id)
+
+    const chinese = recallByKeywordWithParsedClue([item], '二战相关的视频', { nowMs: NOW_MS })
+    expect(chinese.outcome).not.toBe('no_match')
+    expect(chinese.topPick?.item.id ?? chinese.alsoPossible[0]?.item.id).toBe(item.id)
+  })
+
+  it('enrichment 后：city economy video 可找回长春书签', () => {
+    const item = createBookmarkMemoryItem({
+      ownerId: OWNER,
+      sourceLocalProfileId: PROFILE,
+      payload: {
+        title: '长春会成为第一座破产省会吗？九百万人口省会，正在失去增长能力｜尉遲大官人',
+        url: 'https://www.youtube.com/watch?v=_weXNUQ5NS4'
+      }
+    })
+    const result = recallByKeywordWithParsedClue([item], 'changchun economy video', {
+      nowMs: NOW_MS
+    })
+    expect(result.outcome).not.toBe('no_match')
+    expect(result.topPick?.item.id ?? result.alsoPossible[0]?.item.id).toBe(item.id)
   })
 })

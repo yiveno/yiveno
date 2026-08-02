@@ -14,6 +14,10 @@ import {
   type RecallRelativeTimeLabel
 } from '@/core/recall/parse-recall-clue-lexicon'
 import {
+  RECALL_CLUE_LOCALE_FILLER_SURFACES,
+  RECALL_OBJECT_TYPE_LOCALE_ALIASES
+} from '@/core/recall/parse-recall-clue-locale-aliases'
+import {
   ParsedRecallClueSchema,
   type ParsedRecallClue,
   type RecallBehaviorHint,
@@ -176,7 +180,9 @@ function canMaskAt(text: string, index: number, needle: string): boolean {
 
 function maskFillerSurfaces(text: string): string {
   let masked = text
-  const fillers = [...RECALL_CLUE_FILLER_SURFACES].sort((a, b) => b.length - a.length)
+  const fillers = [...RECALL_CLUE_FILLER_SURFACES, ...RECALL_CLUE_LOCALE_FILLER_SURFACES].sort(
+    (a, b) => b.length - a.length
+  )
   for (const filler of fillers) {
     const needle = normalizeRecallText(filler)
     if (!needle) {
@@ -288,7 +294,11 @@ export function parseRecallClue(
   // 各类词典共用占用表，按 surface 长度优先，避免交叉重叠误吞
   const occupied = new Array<boolean>(normalized.length).fill(false)
   const timeHits = collectLexiconHits(normalized, RECALL_TIME_LEXICON, occupied)
-  const objectHits = collectLexiconHits(normalized, RECALL_OBJECT_TYPE_LEXICON, occupied)
+  const objectHits = collectLexiconHits(
+    normalized,
+    [...RECALL_OBJECT_TYPE_LEXICON, ...RECALL_OBJECT_TYPE_LOCALE_ALIASES],
+    occupied
+  )
   const behaviorHits = collectLexiconHits(normalized, RECALL_BEHAVIOR_LEXICON, occupied)
   const noteHits = collectLexiconHits(normalized, RECALL_NOTE_HINT_LEXICON, occupied)
 

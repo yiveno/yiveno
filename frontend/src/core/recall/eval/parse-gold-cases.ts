@@ -399,6 +399,18 @@ export const PARSE_GOLD_CASES: ParseGoldCase[] = [
     note: '无类型词；理想应剥虚词只留实体'
   },
   {
+    id: 'must-wwii-related-video',
+    clue: 'wwii related video',
+    gate: 'must',
+    expect: {
+      objectTypes: ['video'],
+      contentTermsMustInclude: ['wwii'],
+      contentTermsMustExclude: ['related', 'video'],
+      confidence: 'medium'
+    },
+    note: '视频类型与 WWII 主题词；related 为 filler'
+  },
+  {
     id: 'stretch-password-staging-stored',
     clue: 'password I just stored for staging',
     gate: 'stretch',

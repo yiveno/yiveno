@@ -5,11 +5,13 @@
  */
 
 import type { MemoryItem } from '@/core/memory/memory-item'
+import { detectTopicsFromText } from '@/core/memory/memory-topic-lexicon'
 import { normalizeRecallText } from '@/core/recall/keyword-filter'
 import {
   RECALL_OBJECT_TYPE_CANONICAL_SURFACES,
   RECALL_OBJECT_TYPE_LEXICON
 } from '@/core/recall/parse-recall-clue-lexicon'
+import { RECALL_OBJECT_TYPE_LOCALE_ALIASES } from '@/core/recall/parse-recall-clue-locale-aliases'
 import type { RecallObjectType } from '@/core/recall/parse-recall-clue-types'
 
 /** enrichment 产物（写入 clues 扩展位）。 */
@@ -46,13 +48,16 @@ export const MEMORY_DOMAIN_ENRICHMENT_RULES: DomainEnrichmentRule[] = [
       'open.spotify.com',
       'music.apple.com',
       'soundcloud.com',
-      'youtube.com',
-      'youtu.be',
       'kugou.com',
       'kuwo.cn'
     ],
     objectType: 'song',
     keywords: ['music', 'listen', 'audio', 'song', 'playlist', 'track']
+  },
+  {
+    hosts: ['youtube.com', 'youtu.be', 'bilibili.com', 'b23.tv', 'vimeo.com'],
+    objectType: 'video',
+    keywords: ['video', 'youtube', 'watch', 'clip']
   },
   {
     hosts: [
@@ -100,6 +105,7 @@ export const MEMORY_DOMAIN_ENRICHMENT_RULES: DomainEnrichmentRule[] = [
  */
 export const MEMORY_OBJECT_TYPE_RECALL_KEYWORDS: Partial<Record<RecallObjectType, string[]>> = {
   song: ['song', 'music', 'listen', 'audio', 'playlist', 'track'],
+  video: ['video', 'youtube', 'watch', 'clip'],
   article: ['article', 'reading', 'story', 'tutorial', 'guide', 'write-up', 'docs'],
   code: ['code', 'repo', 'snippet', 'development', 'programming', 'repository'],
   poem: ['poem', 'poetry'],
@@ -200,7 +206,7 @@ function detectObjectTypesFromText(blob: string): RecallObjectType[] {
     return []
   }
 
-  const ordered = [...RECALL_OBJECT_TYPE_LEXICON].sort(
+  const ordered = [...RECALL_OBJECT_TYPE_LEXICON, ...RECALL_OBJECT_TYPE_LOCALE_ALIASES].sort(
     (left, right) => right.surface.length - left.surface.length
   )
   const occupied = new Array<boolean>(normalized.length).fill(false)
@@ -326,7 +332,10 @@ export function enrichMemoryClues(input: EnrichMemoryCluesInput): MemoryClueEnri
 
   keywords.push(...detectRecallKeywordsFromText(textBlob))
 
-  const entities = detectEntities(textBlob)
+  const topic = detectTopicsFromText(textBlob)
+  keywords.push(...topic.keywords)
+
+  const entities = mergeUniqueStrings(detectEntities(textBlob), topic.entities)
   keywords.push(...entities)
 
   return {

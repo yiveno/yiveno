@@ -16,6 +16,7 @@ import {
   filterMemoryItemsByKeyword,
   normalizeRecallText
 } from '@/core/recall/keyword-filter'
+import { expandRecallContentTerms } from '@/core/memory/memory-topic-lexicon'
 import { parseRecallClue } from '@/core/recall/parse-recall-clue'
 import {
   RECALL_OBJECT_TYPE_CANONICAL_SURFACES,
@@ -63,7 +64,7 @@ const OBJECT_TYPE_SURFACES = (() => {
 /** 由解析结果决定交给 keyword-filter 的检索串。 */
 export function buildSearchClueFromParsed(parsed: ParsedRecallClue): string {
   if (parsed.contentTerms.length > 0) {
-    return parsed.contentTerms.join(' ')
+    return expandRecallContentTerms(parsed.contentTerms).join(' ')
   }
 
   if (parsed.objectTypes && parsed.objectTypes.length > 0) {
