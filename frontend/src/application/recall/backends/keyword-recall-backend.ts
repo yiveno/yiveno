@@ -83,8 +83,9 @@ export class KeywordRecallBackend implements RecallBackend {
         searchClue: understood.searchClue,
         contentTerms: understood.parsed.contentTerms
       })
+      // 条件展开：exactOptionalPropertyTypes 禁止 complete: undefined
       understood = await understandRecallClue(normalizedClue, {
-        complete,
+        ...(complete ? { complete } : {}),
         forceMode: 'semantic',
         trace
       })
