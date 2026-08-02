@@ -1,369 +1,92 @@
-# ===============================================
-# 🚀 Yiveno 纯Bun CI/CD管道
-# ===============================================
-# 
-# 🎯 完全基于Bun的现代化工作流：
-#   ✅ 纯Bun运行时环境
-#   ✅ 针对Chrome扩展优化
-#   ✅ Serverless部署支持
-# 
-# 📋 核心特性：
-#   - 单一运行时：仅使用Bun
-#   - 高性能构建：充分利用Bun的速度优势
-#   - 现代化部署：Chrome Web Store + Cloudflare Worker
-# ===============================================
+# Yiveno CI（对齐 AGENTS.md 质量门禁矩阵）
+# PR / push main：typecheck:ci + lint + i18n + knip + FE/BE test + FE build
+# 不在此跑：bun audit、Lighthouse、全仓 typecheck:force、E2E（本地 CDP 冒烟）
 
-name: 🔥 Bun CI/CD（纯 Bun + Cloudflare）
+name: CI
 
-# 🚀 触发条件：代码推送和拉取请求
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
     branches: [main]
 
-# 🔒 权限配置：允许创建releases和访问仓库内容
 permissions:
-  contents: write        # 允许创建releases和推送tags
-  packages: write        # 允许发布packages (可选)
-  deployments: write     # 允许部署状态更新 (可选)
+  contents: read
 
-# 🌍 纯Bun环境配置
 env:
-  BUN_VERSION: "latest"  # 只需要Bun版本
+  BUN_VERSION: latest
 
 jobs:
-  # ===============================
-  # 🔍 代码质量检查
-  # ===============================
   quality-check:
-    name: 🔍 代码质量与安全检查 (纯Bun)
+    name: Quality (typecheck / lint / i18n / knip / test)
     runs-on: ubuntu-latest
-    
     steps:
-      - name: 📥 检出代码仓库
+      - name: Checkout
         uses: actions/checkout@v4
-        
-      - name: 🔧 设置Bun运行时环境 (纯Bun)
+
+      - name: Setup Bun
         uses: oven-sh/setup-bun@v1
         with:
           bun-version: ${{ env.BUN_VERSION }}
-          
-      # 📦 使用Bun安装依赖（workspace 全量，供 typecheck / lint:check 使用）
-      - name: 📦 使用Bun安装依赖包
-        run: |
-          bun install --frozen-lockfile
-          
-      # 🔐 安全审计
-      - name: 🔐 安全审计检查 (Bun)
-        run: |
-          echo "🔍 Frontend security audit..."
-          cd frontend && bun audit --audit-level moderate
-          
-          echo "🔍 Backend security audit..."
-          cd ../backend && bun audit --audit-level moderate
-          
-      # 📝 TypeScript（packages + backend + website；frontend 由 build-test 内 vue-tsc -b 负责）
-      - name: 📝 TypeScript 类型检查（非 frontend）
-        run: |
-          echo "🧪 Running typecheck:ci (packages + backend + website)..."
-          bun run typecheck:ci
-          
-      # 🧹 代码质量检查（只读，不 format）
-      - name: 🧹 ESLint + Stylelint 代码质量检查
-        run: |
-          echo "🧹 Running lint:check (eslint + stylelint, check-only)..."
-          bun run lint:check
 
-      - name: 🌐 扩展 i18n key 对称检查
-        run: |
-          echo "🌐 Running frontend i18n:check (en / zh_CN / MESSAGE_KEYS)..."
-          bun run i18n:check
+      - name: Install
+        run: bun install --frozen-lockfile
 
-      - name: 🔍 Knip 死代码/依赖检查
-        run: |
-          echo "🔍 Running knip (files, deps, exports, types)..."
-          bun run knip
-          
-      - name: 🧪 前端自动化测试
-        run: |
-          cd frontend
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "🧪 PR 快测：unit tests only"
-            bun run test:run
-          else
-            echo "🧪 push 全量：all tests"
-            bun run test:run
-          fi
+      # packages + backend + website；frontend 类型由 build-test 内 vue-tsc -b 覆盖
+      - name: Typecheck (ci)
+        run: bun run typecheck:ci
 
-      - name: 🧪 后端自动化测试
-        run: |
-          echo "🧪 Running backend route tests..."
-          cd backend
-          bun run test
+      - name: Lint (eslint + stylelint)
+        run: bun run lint:check
 
-  # ===============================
-  # 🔨 构建验证
-  # ===============================
+      - name: i18n key check
+        run: bun run i18n:check
+
+      - name: Knip
+        run: bun run knip
+
+      - name: Frontend tests
+        run: cd frontend && bun run test:run
+
+      - name: Backend tests
+        run: cd backend && bun run test
+
   build-test:
-    name: 🔨 构建测试 (Chrome扩展)
+    name: Frontend build
     runs-on: ubuntu-latest
     needs: quality-check
-    
     steps:
-      - name: 📥 检出代码仓库
+      - name: Checkout
         uses: actions/checkout@v4
-        
-      - name: 🔧 设置Bun运行时环境
+
+      - name: Setup Bun
         uses: oven-sh/setup-bun@v1
         with:
           bun-version: ${{ env.BUN_VERSION }}
-          
-      - name: 📦 安装依赖包
+
+      - name: Install
         run: bun install --frozen-lockfile
-          
-      # 🔨 Chrome扩展构建（含 vue-tsc -b，frontend 类型检查权威路径）
-      - name: 🔨 构建Chrome扩展（生产模式）
+
+      # CI 用 development build（含 vue-tsc -b）；发版用本地/手动 build:fe:prod
+      - name: Build extension
+        run: cd frontend && bun run build
+
+      - name: Verify dist
         run: |
           cd frontend
-          echo "🔨 Building with Bun + Vite (includes vue-tsc -b)..."
-          bun run build
-          
-      # 🧪 验证构建产物
-      - name: 🧪 验证构建产物完整性
-        run: |
-          cd frontend
-          echo "🧪 Verifying build output..."
-          
-          # 检查 dist 目录是否存在
-          if [ ! -d "dist" ]; then
-            echo "❌ dist directory not found!"
+          test -d dist || { echo "dist missing"; exit 1; }
+          test -f dist/manifest.json || { echo "manifest.json missing"; exit 1; }
+          test -f dist/background.js || { echo "background.js missing"; exit 1; }
+          TOTAL_SIZE_KB=$(du -sk dist | cut -f1)
+          echo "dist size: ${TOTAL_SIZE_KB}KB"
+          if [ "$TOTAL_SIZE_KB" -gt 20480 ]; then
+            echo "exceeds Chrome Web Store 20MB limit"
             exit 1
           fi
-          
-          echo "✅ Build output directory exists"
-          
-      # 📊 构建产物分析
-      - name: 📊 构建产物分析
-        run: |
-          echo "📊 Extension build analysis:"
-          cd frontend/dist
-          
-          # 总大小检查
-          TOTAL_SIZE_KB=$(du -sk . | cut -f1)
-          TOTAL_SIZE_MB=$((TOTAL_SIZE_KB / 1024))
-          echo "📦 Total size: ${TOTAL_SIZE_KB}KB (~${TOTAL_SIZE_MB}MB)"
-          
-          # Chrome Store限制检查
-          if [ $TOTAL_SIZE_KB -gt 20480 ]; then
-            echo "❌ Extension exceeds Chrome Store 20MB limit!"
-            exit 1
-          else
-            echo "✅ Extension size within Chrome Store limits"
-          fi
-          
-          # 文件结构验证
-          echo "📋 Checking required files..."
-          test -f manifest.json || { echo "❌ manifest.json missing"; exit 1; }
-          test -f background.js || { echo "❌ background.js missing"; exit 1; }
-          echo "✅ Extension structure is valid"
-          
-      - name: 📤 上传构建产物
+
+      - name: Upload dist artifact
         uses: actions/upload-artifact@v4
         with:
           name: chrome-extension-${{ github.sha }}
           path: frontend/dist/
           retention-days: 7
-
-  # ===============================
-  # ⚡ 后端服务测试（Cloudflare Worker）
-  # ===============================
-  backend-test:
-    name: ⚡ 后端服务测试（Cloudflare Worker）
-    runs-on: ubuntu-latest
-    needs: quality-check
-    
-    steps:
-      - name: 📥 检出代码仓库
-        uses: actions/checkout@v4
-        
-      - name: 🔧 设置Bun运行时环境
-        uses: oven-sh/setup-bun@v1
-        with:
-          bun-version: ${{ env.BUN_VERSION }}
-          
-      - name: 📦 安装后端依赖包
-        run: |
-          cd backend
-          bun install --frozen-lockfile
-      
-      - name: 🧪 运行 Cloudflare Worker 本地健康检查
-        run: |
-          cd backend
-          echo "🧪 Running wrangler dev (background) for health check..."
-          nohup bunx wrangler dev --port 8787 >/tmp/wrangler.log 2>&1 &
-          WRANGLER_PID=$!
-          sleep 3
-          echo "🔎 Checking /api/health ..."
-          if curl -fsS -k https://localhost:8787/api/health; then
-            echo "✅ Worker health check passed"
-          else
-            echo "❌ Worker health check failed" && tail -n 200 /tmp/wrangler.log && exit 1
-          fi
-          kill $WRANGLER_PID || true
-
-  # ===============================
-  # 🚀 部署 (仅 main 分支)
-  # ===============================
-  deploy:
-    name: 🚀 部署（Chrome 扩展）
-    needs: [build-test, backend-test]
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    
-    steps:
-      - name: 📥 检出代码仓库
-        uses: actions/checkout@v4
-        
-      - name: 🔧 为构建设置Bun环境
-        uses: oven-sh/setup-bun@v1
-        with:
-          bun-version: ${{ env.BUN_VERSION }}
-          
-      - name: 📦 安装生产构建依赖包
-        run: |
-          cd frontend && bun install --frozen-lockfile
-          cd ../backend && bun install --frozen-lockfile
-          
-      # 🔨 生产构建
-      - name: 🔨 生产环境构建（完整验证）
-        run: |
-          cd frontend
-          echo "🔨 Running production build with full validation..."
-          NODE_ENV=production bun run build
-          
-      # 📦 创建扩展包
-      - name: 📦 创建扩展安装包
-        run: |
-          cd frontend/dist
-          ZIP_NAME="yiveno-v${{ github.run_number }}.zip"
-          # 将压缩包输出到仓库根目录，便于后续步骤引用
-          zip -r "../../${ZIP_NAME}" . -x "*.DS_Store" "*.gitkeep"
-          echo "EXTENSION_ZIP=${ZIP_NAME}" >> $GITHUB_ENV
-
-      # 🔎 检查发布所需的 Secrets 是否已配置
-      - name: 🔎 检查 Chrome Web Store Secrets
-        id: check_cws_secrets
-        shell: bash
-        env:
-          CWS_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
-          CWS_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
-          CWS_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
-          CWS_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
-        run: |
-          MISSING=0
-          for key in CWS_CLIENT_ID CWS_CLIENT_SECRET CWS_REFRESH_TOKEN CWS_EXTENSION_ID; do
-            if [ -z "${!key}" ]; then
-              # 输出原始 secret 名称，便于识别
-              echo "❌ Missing secret: ${key/CWS_/CHROME_}"
-              MISSING=1
-            else
-              echo "✅ Found secret: ${key/CWS_/CHROME_}"
-            fi
-          done
-          if [ $MISSING -eq 0 ]; then
-            echo "has_secrets=true" >> $GITHUB_OUTPUT
-          else
-            echo "has_secrets=false" >> $GITHUB_OUTPUT
-          fi
-          
-      # 🏪 Chrome Web Store部署
-      - name: 🏪 部署到Chrome应用商店
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.check_cws_secrets.outputs.has_secrets == 'true' }}
-        continue-on-error: true
-        uses: mobilefirstllc/cws-publish@latest
-        with:
-          action: 'publish'
-          client_id: ${{ secrets.CHROME_CLIENT_ID || '' }}
-          client_secret: ${{ secrets.CHROME_CLIENT_SECRET || '' }}
-          refresh_token: ${{ secrets.CHROME_REFRESH_TOKEN || '' }}
-          extension_id: ${{ secrets.CHROME_EXTENSION_ID || '' }}
-          zip_file: "${{ env.EXTENSION_ZIP || './yiveno.zip' }}"
-          
-      # ⚠️ 已移除 Vercel 部署：后端统一在 Cloudflare Worker
-      # 📝 创建GitHub Release (仅在主分支推送时)
-      - name: 📝 创建 GitHub 发布版本
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: softprops/action-gh-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ github.run_number }}
-          name: 🚀 Yiveno v${{ github.run_number }}
-          files: |
-            ${{ env.EXTENSION_ZIP || 'yiveno.zip' }}
-          body: |
-            ## 🚀 Yiveno Release (Pure Bun Build)
-            
-            ### 🔧 Build Information
-            - **Runtime**: Pure Bun ${{ env.BUN_VERSION }}
-            - **Frontend**: Vue 3 + TypeScript + Vite
-            - **Backend**: Cloudflare Worker（Bun runtime）
-            - **Build**: ${{ github.sha }}
-            
-            ### 📦 Deployment Status
-            - ✅ Chrome Extension: Built and packaged
-            - ✅ Backend API: Cloudflare Worker
-            
-            ### 📋 Recent Changes
-            ${{ github.event.head_commit.message }}
-            
-            ### 🚀 Installation
-            1. Download the extension ZIP file
-            2. Extract to local directory
-            3. Open chrome://extensions/
-            4. Enable Developer Mode
-            5. Click "Load unpacked" and select extracted folder
-            
-          draft: false
-          prerelease: false
-
-  # ===============================
-  # 📢 状态通知
-  # ===============================
-  notify:
-    name: 📢 构建状态汇总
-    needs: [quality-check, build-test, backend-test, deploy]
-    runs-on: ubuntu-latest
-    if: always()
-    
-    steps:
-      - name: 📊 构建状态汇总报告
-        run: |
-          echo "📊 Pure Bun CI/CD Summary"
-          echo "========================"
-          echo "Runtime: Bun ${{ env.BUN_VERSION }}"
-          echo "Commit: ${{ github.sha }}"
-          echo "Branch: ${{ github.ref }}"
-          echo ""
-          echo "Build Status:"
-          echo "- Quality Check: ${{ needs.quality-check.result }}"
-          echo "- Chrome Extension Build: ${{ needs.build-test.result }}"
-          echo "- Backend Test: ${{ needs.backend-test.result }}"
-          
-          if [ "${{ needs.deploy.result }}" != "skipped" ]; then
-            echo "- Deployment: ${{ needs.deploy.result }}"
-          else
-            echo "- Deployment: Skipped (not main branch)"
-          fi
-          
-          if [ "${{ needs.quality-check.result }}" == "success" ] && \
-             [ "${{ needs.build-test.result }}" == "success" ] && \
-             [ "${{ needs.backend-test.result }}" == "success" ]; then
-            echo ""
-            echo "✅ All checks passed! Pure Bun workflow successful! 🎉"
-          else
-            echo ""
-            echo "❌ Some checks failed. Please review the logs."
-            exit 1
-          fi

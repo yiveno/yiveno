@@ -50,11 +50,11 @@ pre-push **不跑** ESLint、全仓 typecheck、全仓 frontend test；`.vue` li
 
 ### CI 检查矩阵
 
-| 场景                  | TypeScript                             | Lint         | i18n         | Knip                | 前端测试                    | Lighthouse      |
-| --------------------- | -------------------------------------- | ------------ | ------------ | ------------------- | --------------------------- | --------------- |
-| **PR**                | `typecheck:ci` + build 内 `vue-tsc -b` | `lint:check` | `i18n:check` | `knip`              | `test:run` + backend `test` | 不跑（v4 下线） |
-| **push main/develop** | 同上                                   | 同上         | `i18n:check` | `knip`              | `test:run` + backend `test` | 不跑（v4 下线） |
-| **每周一**            | —                                      | —            | —            | `knip.yml` 定时复检 | —                           | —               |
+| 场景          | TypeScript                             | Lint         | i18n         | Knip                | 前端测试                    | Lighthouse      |
+| ------------- | -------------------------------------- | ------------ | ------------ | ------------------- | --------------------------- | --------------- |
+| **PR**        | `typecheck:ci` + build 内 `vue-tsc -b` | `lint:check` | `i18n:check` | `knip`              | `test:run` + backend `test` | 不跑（v4 下线） |
+| **push main** | 同上                                   | 同上         | `i18n:check` | `knip`              | `test:run` + backend `test` | 不跑（v4 下线） |
+| **每周一**    | —                                      | —            | —            | `knip.yml` 定时复检 | —                           | —               |
 
 ### 本地命令
 
