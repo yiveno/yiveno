@@ -48,6 +48,25 @@ describe('understandRecallClue', () => {
     expect(result.source).toBe('rules')
   })
 
+  it('中文短口语 → semantic 并调用 LLM', async () => {
+    let called = 0
+    const complete: LlmChatCompleter = async () => {
+      called += 1
+      return JSON.stringify({
+        timeLabel: 'day_before_yesterday',
+        objectTypes: null,
+        contentTerms: ['movie'],
+        confidence: 'medium'
+      })
+    }
+    const result = await understandRecallClue('前天的电影', { complete })
+    expect(result.disposition).toBe('proceed')
+    expect(result.mode).toBe('semantic')
+    expect(result.source).toBe('llm')
+    expect(called).toBe(1)
+    expect(result.parsed.timeRange?.label).toBe('day_before_yesterday')
+  })
+
   it('网关拒绝噪音：不调 LLM，空 searchClue', async () => {
     let called = 0
     const complete: LlmChatCompleter = async () => {

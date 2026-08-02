@@ -82,6 +82,8 @@ let tornDown = false
 let listenersRegistered = false
 /** 用于在扩展重载时立刻收到 onDisconnect，早于用户交互拆卸 */
 let keepalivePort: chrome.runtime.Port | null = null
+/** 页面是否正因历史导航停在 bfcache（port 已被 Chrome 主动断开）。 */
+let pageFrozenInBfCache = false
 
 /**
  * 扩展重载后 `chrome.runtime.id` 会变为 undefined；
@@ -1035,18 +1037,32 @@ function handleStorageChanged(
   })
 }
 
+/**
+ * 划词 content ↔ SW keepalive。
+ * Chrome 123+：页面进入 bfcache 时会主动关 port，并设置 runtime.lastError；
+ * 须读取 lastError 避免控制台 Unchecked runtime.lastError，且勿在冻结态立刻重连——
+ * 等 pageshow(persisted) 再 connect（见官方 bfcache-extension-messaging-changes）。
+ */
 function connectKeepalivePort(): void {
-  if (tornDown || keepalivePort || !isExtensionContextValid()) {
+  if (tornDown || keepalivePort || pageFrozenInBfCache || !isExtensionContextValid()) {
     return
   }
   try {
     keepalivePort = chrome.runtime.connect({ name: SELECTION_TOOLBAR_KEEPALIVE_PORT })
     keepalivePort.onDisconnect.addListener(() => {
+      // 必须同步读取，否则 Chrome 打出 Unchecked runtime.lastError
+      const disconnectMessage = chrome.runtime.lastError?.message ?? ''
+      const closedByBfCache =
+        pageFrozenInBfCache || disconnectMessage.includes('back/forward cache')
       keepalivePort = null
       // 扩展被重载/禁用：runtime.id 消失 → 拆卸旧脚本
-      // SW 休眠也会 disconnect，此时 id 仍在 → 重建 port，勿拆卸
       if (!isExtensionContextValid()) {
         teardown()
+        return
+      }
+      // bfcache 冻结中：等 pageshow 再连；SW 休眠 disconnect 则立即重建
+      if (closedByBfCache) {
+        pageFrozenInBfCache = true
         return
       }
       connectKeepalivePort()
@@ -1056,6 +1072,26 @@ function connectKeepalivePort(): void {
       teardown()
     }
   }
+}
+
+function handlePageHide(event: PageTransitionEvent): void {
+  if (event.persisted) {
+    pageFrozenInBfCache = true
+  }
+}
+
+function handlePageShow(event: PageTransitionEvent): void {
+  if (!event.persisted) {
+    return
+  }
+  // 从 bfcache 恢复：官方要求重新建立 message port
+  pageFrozenInBfCache = false
+  runGuarded(() => {
+    if (tornDown || keepalivePort || !isExtensionContextValid()) {
+      return
+    }
+    connectKeepalivePort()
+  })
 }
 
 /**
@@ -1152,6 +1188,7 @@ function teardown(): void {
     // 上下文已失效时 disconnect 可能抛错
   }
   keepalivePort = null
+  pageFrozenInBfCache = false
 
   if (listenersRegistered) {
     document.removeEventListener('mouseup', handleMouseUp, true)
@@ -1159,6 +1196,8 @@ function teardown(): void {
     document.removeEventListener('keydown', handleKeyDown, true)
     window.removeEventListener('scroll', handleScroll, true)
     document.removeEventListener('selectionchange', handleSelectionChange)
+    window.removeEventListener('pagehide', handlePageHide)
+    window.removeEventListener('pageshow', handlePageShow)
     try {
       chrome.runtime.onMessage.removeListener(handleRuntimeMessage)
     } catch {
@@ -1199,6 +1238,8 @@ function registerListeners(): void {
   document.addEventListener('keydown', handleKeyDown, true)
   window.addEventListener('scroll', handleScroll, true)
   document.addEventListener('selectionchange', handleSelectionChange)
+  window.addEventListener('pagehide', handlePageHide)
+  window.addEventListener('pageshow', handlePageShow)
   try {
     chrome.runtime.onMessage.addListener(handleRuntimeMessage)
     chrome.storage.onChanged.addListener(handleStorageChanged)

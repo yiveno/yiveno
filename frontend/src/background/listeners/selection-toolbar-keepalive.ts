@@ -6,6 +6,7 @@ let listenersRegistered = false
  * 承接划词 content script 的 keepalive port。
  * 若不监听 onConnect，port 会立刻 disconnect，导致页内无限重连。
  * 扩展 Reload 时 SW 销毁 → content 侧 onDisconnect → 拆旧实例。
+ * 页面进 bfcache 时 Chrome 也会 disconnect 并设置 lastError，须读取以免控制台刷错。
  */
 export function registerSelectionToolbarKeepaliveListener(): void {
   if (listenersRegistered) {
@@ -19,7 +20,8 @@ export function registerSelectionToolbarKeepaliveListener(): void {
     }
     // 仅保持连接；业务消息仍走 tabs/runtime messaging 与页内 API
     port.onDisconnect.addListener(() => {
-      // no-op：由 content script 决定重连或 teardown
+      // 消费 bfcache / SW 销毁等导致的 lastError，避免 Unchecked runtime.lastError
+      void chrome.runtime.lastError
     })
   })
 }

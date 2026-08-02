@@ -47,4 +47,30 @@ describe('selection-toolbar-keepalive', () => {
     } as unknown as chrome.runtime.Port)
     expect(otherDisconnect).not.toHaveBeenCalled()
   })
+
+  it('port disconnect 时读取 lastError，避免 Unchecked runtime.lastError', () => {
+    let lastError: { message: string } | undefined = {
+      message:
+        'The page keeping the extension port is moved into back/forward cache, so the message channel is closed.'
+    }
+    Object.defineProperty(chrome.runtime, 'lastError', {
+      configurable: true,
+      get: () => lastError
+    })
+
+    registerSelectionToolbarKeepaliveListener()
+    let onDisconnect: (() => void) | undefined
+    onConnectHandler?.({
+      name: SELECTION_TOOLBAR_KEEPALIVE_PORT,
+      onDisconnect: {
+        addListener: (handler: () => void) => {
+          onDisconnect = handler
+        }
+      }
+    } as unknown as chrome.runtime.Port)
+
+    onDisconnect?.()
+    // 访问过即视为已消费；清掉以免影响其它断言
+    lastError = undefined
+  })
 })

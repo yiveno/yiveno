@@ -1,0 +1,19 @@
+# 本地三端并行开发（TUI：上下键切换进程输出）
+# 用法：bun run watch
+# 需本机已安装 mprocs（brew install mprocs，或见 README）
+# 无 TUI 时用：bun run watch:stream
+
+procs:
+  fe:
+    shell: bun run watch:fe
+    stop: SIGTERM
+  be:
+    shell: bun run dev:be
+    stop: SIGTERM
+  web:
+    shell: bun run dev:web
+    stop: SIGTERM
+
+scrollback: 5000
+mouse_scroll_speed: 3
+proc_list_width: 12

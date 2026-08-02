@@ -44,13 +44,21 @@ bun install
 ### 开发模式
 
 ```bash
-# 启动所有服务 (插件前端构建 + 后端 + 官网) - 推荐
-bun run watch
+# 启动所有服务 (插件前端构建 + 后端 + 官网)
+bun run watch                 # mprocs TUI：上下键切换 fe/be/web（需本机安装 mprocs）
+bun run watch:stream          # concurrently 混流日志（无 TUI 时用）
 
 # 或者单独启动
 bun run dev:be              # 后端 (Cloudflare Worker - 端口 8787)
 bun run dev:web             # 官网 (Astro - 端口 3001)
 bun run dev:fe              # 扩展 Vite 开发服务器
+```
+
+本机安装 mprocs（任选其一）：
+
+```bash
+brew install mprocs
+# 或：https://github.com/pvolok/mprocs/releases （darwin-aarch64 等）
 ```
 
 ### 环境变量
@@ -227,7 +235,8 @@ Yiveno/                             # Monorepo 根目录
 
 ```bash
 # 🚀 开发
-bun run watch                 # 扩展 watch 构建 + 后端 + 官网
+bun run watch                 # 扩展 watch + 后端 + 官网（mprocs 分栏）
+bun run watch:stream          # 同上，concurrently 混流
 bun run dev                   # 同上（并行启动三端）
 bun run dev:fe                # 仅扩展 Vite 开发服务器
 bun run dev:be                # 仅后端 (Worker - 端口 8787)

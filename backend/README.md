@@ -4,12 +4,12 @@ v4 后端：扩展线索理解代理 + 官网只读 API。本地事实源在扩�
 
 ## 真实调用面
 
-| 方法 | 路径                            | 调用方      | 说明                                       |
-| ---- | ------------------------------- | ----------- | ------------------------------------------ |
-| GET  | `/health`、`/api/health`        | 运维        | 健康检查                                   |
-| POST | `/api/ai/clue/complete`         | Chrome 扩展 | M1 线索理解（DeepSeek Secret + IP 日配额） |
-| GET  | `/api/website/share/:shortCode` | 官网        | 分享详情                                   |
-| GET  | `/api/website/subscription`     | 官网        | 订阅只读查询                               |
+| 方法 | 路径                            | 调用方      | 说明                                             |
+| ---- | ------------------------------- | ----------- | ------------------------------------------------ |
+| GET  | `/health`、`/api/health`        | 运维        | 健康检查                                         |
+| POST | `/api/ai/clue/complete`         | Chrome 扩展 | M1 线索理解（AI Gateway → DeepSeek + IP 日配额） |
+| GET  | `/api/website/share/:shortCode` | 官网        | 分享详情                                         |
+| GET  | `/api/website/subscription`     | 官网        | 订阅只读查询                                     |
 
 生产域名：`https://api.yiveno.com`（Worker Custom Domain → `yiveno-production`）。
 
@@ -51,10 +51,30 @@ curl -X POST http://localhost:8787/api/ai/clue/complete \
 
 需要 Worker Secret：`DEEPSEEK_API_KEY`（本地在 `.dev.vars`，由 `env:sync` 从 `.env.shared.local` 写入）。
 
+### AI Gateway（DeepSeek 观测中间层）
+
+线索 / 托管补全默认经 Cloudflare AI Gateway 转发 DeepSeek：
+
+```text
+Worker → gateway.ai.cloudflare.com/v1/{account}/{gateway}/deepseek → DeepSeek
+```
+
+1. 打开 [AI Gateway](https://dash.cloudflare.com/?to=/:account/ai/ai-gateway)，创建名为 **`yiveno`** 的 Gateway（与 `wrangler.toml` 里 `AI_GATEWAY_ID` 一致）。
+2. Account ID 已写入 `AI_GATEWAY_ACCOUNT_ID`（当前账户）。
+3. **鉴权（二选一）**
+   - **推荐本地/早期：** Gateway Settings 里关闭 **Authenticated Gateway**（否则未带 CF token 会 401）。
+   - **或：** 开启鉴权后，在 Settings 创建 Run token，写入 Secret / `.dev.vars` 的 `AI_GATEWAY_TOKEN`（请求头 `cf-aig-authorization`）。`DEEPSEEK_API_KEY` 仍走 `Authorization`。
+4. 部署或 `wrangler dev` 后，在 Gateway **Logs / Analytics** 查看请求。
+5. 若暂时要直连 DeepSeek：清空 `AI_GATEWAY_ID`（或两个 Gateway 变量），回退 `DEEPSEEK_API_BASE`。
+6. 未配 `AI_GATEWAY_TOKEN` 且 Gateway 返回 401 时，Worker **会回退直连 DeepSeek**（线索理解不整段挂死；观测层暂失效）。
+
+Gateway 核心功能免费；DeepSeek token 费用仍按 DeepSeek 账单。
+
 ## 配置要点
 
 - [`wrangler.toml`](./wrangler.toml)：`[env.production]` 含 `api.yiveno.com` custom domain、KV `AI_USAGE_KV`、vars
 - Secrets：`DEEPSEEK_API_KEY`（及后续 JWT / OAuth / Gumroad 等）
+- Vars：`AI_GATEWAY_ACCOUNT_ID` / `AI_GATEWAY_ID`（见上节）；`AI_HOSTED_MODEL` / `DEEPSEEK_API_BASE` 等
 - 环境变量规范见仓库 [`docs/ENVIRONMENT.md`](../docs/ENVIRONMENT.md)
 
 ## 已移除（勿再文档化）

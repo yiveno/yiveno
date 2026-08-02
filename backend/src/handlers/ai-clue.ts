@@ -4,7 +4,7 @@
  */
 
 import type { Env } from '../types/env'
-import { resolveHostedModel } from '../config/ai-hosted'
+import { isDeepSeekAiGatewayEnabled, resolveHostedModel } from '../config/ai-hosted'
 import { completeWithDeepSeek } from '../services/ai/deepseek-client'
 import { okJson, errorJson } from '../utils/response'
 import { info as logInfo, logError } from '../utils/logger'
@@ -89,12 +89,14 @@ export async function handleClueComplete(request: Request, env: Env): Promise<Re
     return errorJson({ error: 'missing_prompt_or_messages' }, 400, origin)
   }
 
+  const viaAiGateway = isDeepSeekAiGatewayEnabled(env)
   logInfo('clue_complete_start', {
     ip,
     hasMessages,
     messageCount: hasMessages ? body.messages!.length : 0,
     promptLength: prompt.length,
-    maxTokens: body.maxTokens ?? 400
+    maxTokens: body.maxTokens ?? 400,
+    viaAiGateway
   })
 
   const quota = await consumeClueDailyQuota(env, ip)
@@ -134,7 +136,8 @@ export async function handleClueComplete(request: Request, env: Env): Promise<Re
       tokensUsed: result.tokensUsed,
       textLength: result.text.length,
       quotaUsed: quota.used,
-      quotaLimit: quota.limit
+      quotaLimit: quota.limit,
+      viaAiGateway
     })
 
     return okJson(

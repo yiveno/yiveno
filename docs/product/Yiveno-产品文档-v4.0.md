@@ -481,16 +481,18 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 线索
   → 网关（确定性·cheap）：是否处理（reject_noise | proceed）
        reject → 空态 / no_match，不调 LLM、不扫全库
-  → 门禁（确定性）：lexical 短词面/URL vs semantic 口语长句
+  → 门禁（确定性）：lexical 短词面/URL/英文专名 vs semantic 口语/疑问/相对时间意图（含中文短句信号；中文不进规则 canonical 词典）
   → lexical：规则 parseRecallClue
   → semantic：LLM → Zod 提议 → 锚定映射 → ParsedRecallClue（失败降级规则）
   → buildSearchClueFromParsed → 现有 keyword Filter + 软加权
+  →（可选）lexical 且 Filter no_match、线索仍像口语、且有 completer：升一次 semantic 再理解 / 再 Filter
 ```
 
 - **网关 vs 门禁：** 网关只答「要不要花资源」（硬噪音：空/纯符号/数字糊/砸键盘）；门禁只答「怎么理解」。灰区一律 proceed，禁止用 LLM 判噪音。
+- **miss 升级：** 不是「无命中就调模型」；仅 lexical 规则路径无命中 + 口语/时间信号（或 ≥3 英文词）时升一次；URL / 短英文专名不升。
 
 - **不做本里程碑内：** embedding、全库喂模型、模型写库、开放闲聊。
-- **开发启用 LLM：** 默认经 Cloudflare `POST /api/ai/clue/complete`（Worker Secret `DEEPSEEK_API_KEY`）；本地需 `bun run env:sync:dev` + `wrangler dev`。可选 `chrome.storage.local` `yiveno.dev.clueLlm` 直连调试。正式 Pro 托管另接 `/api/ai/hosted/*`。
+- **开发启用 LLM：** 默认经 Cloudflare `POST /api/ai/clue/complete`（Worker Secret `DEEPSEEK_API_KEY`；可选经 **AI Gateway** 转发 DeepSeek，见 `AI_GATEWAY_*` vars）；本地需 `bun run env:sync:dev` + `wrangler dev`。可选 `chrome.storage.local` `yiveno.dev.clueLlm` 直连调试。正式 Pro 托管另接 `/api/ai/hosted/*`。
 - **验收：** 理解金标 `parse-gold`；人话 → 精确 `contentTerms` 单测；Recall 用户可感变更补 `recall-eval` must 或 §5 手动步骤。
 
 #### 隐患清单与规避（决策自检）
@@ -989,6 +991,7 @@ Chrome API / 选区
 
 | 日期       | 变更                                                                                                       |
 | ---------- | ---------------------------------------------------------------------------------------------------------- |
+| 2026-08-01 | M1：Gate B 中文短口语/相对时间升 semantic；lexical no_match 有条件升一次 LLM 再 Filter                     |
 | 2026-07-29 | §1.1 已上线验证归属 + 合入门禁（must/验收先于合入）；E2E 薄冒烟边界（禁大 Playwright）                     |
 | 2026-07-29 | §7.1 多源线索与权重：收集要宽、采信要窄；Chrome 环境为弱上下文；按模块渐进（产品内→选区→芯片→重排）        |
 | 2026-07-29 | §0.1.1 知识库习惯重置：文件夹型 KB 双重隐性成本；人创造/机器索引分工                                       |

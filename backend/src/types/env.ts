@@ -24,4 +24,9 @@ export type Env = Cloudflare.Env & {
   AI_CLUE_PROXY_ENABLED?: string
   /** 线索理解按 IP 日调用上限 */
   AI_CLUE_DAILY_LIMIT?: string
+  /**
+   * AI Gateway Authenticated Gateway 的 Run token。
+   * 写入请求头 `cf-aig-authorization`；未配置且 Gateway 开鉴权时会 401（客户端将回退直连）。
+   */
+  AI_GATEWAY_TOKEN?: string
 }
