@@ -11,6 +11,5 @@ export const ExternalAuthSessionHandoffSchema = z.object({
   payload: AuthSessionSchema
 })
 
-export type ExternalAuthSessionHandoff = z.infer<typeof ExternalAuthSessionHandoffSchema>
-
-export type ExternalAuthHandoffResponse = { ok: true } | { ok: false; error?: string }
+/** 扩展处理 handoff 后的响应（ok / 错误码）。 */
+export type ExternalAuthHandoffResponse = { ok: true } | { ok: false; error: string }

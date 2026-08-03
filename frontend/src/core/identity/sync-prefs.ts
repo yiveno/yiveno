@@ -5,7 +5,8 @@ import { z } from 'zod'
  * 默认 enabled=false：登录 ≠ 自动上传。
  */
 export const SyncPrefsSchema = z.object({
-  enabled: z.boolean().default(false),
+  /** 是否开启云同步；缺省由 createDefaultSyncPrefs 补 false（登录 ≠ 自动上传） */
+  enabled: z.boolean(),
   lastPulledAt: z.string().datetime().optional(),
   lastPushedAt: z.string().datetime().optional()
 })

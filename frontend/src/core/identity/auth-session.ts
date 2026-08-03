@@ -17,11 +17,3 @@ export type AuthSession = z.infer<typeof AuthSessionSchema>
 
 /** chrome.storage.local 键名。 */
 export const AUTH_SESSION_STORAGE_KEY = 'yiveno:auth_session' as const
-
-/** OAuth 提供方（扩展登录）。 */
-export const AuthOAuthProviderSchema = z.enum([
-  'google', // Google
-  'microsoft' // Microsoft（Supabase 侧为 azure）
-])
-
-export type AuthOAuthProvider = z.infer<typeof AuthOAuthProviderSchema>

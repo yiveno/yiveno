@@ -2,7 +2,10 @@
  * 接收官网回传的 Supabase session，写入本地 binding（不同步记忆）。
  */
 
-import { ExternalAuthSessionHandoffSchema } from '@/core/identity/external-auth-handoff'
+import {
+  ExternalAuthSessionHandoffSchema,
+  type ExternalAuthHandoffResponse
+} from '@/core/identity/external-auth-handoff'
 import { setAuthSession } from '@/infrastructure/identity/auth-session-service'
 import { setAccountBinding } from '@/infrastructure/identity/local-profile-service'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
@@ -32,15 +35,9 @@ function isAllowedExternalSender(url: string | undefined): boolean {
  * 应用官网 handoff 的 session。
  * 成功后 Settings 可通过 GET_AUTH_STATE 看到已登录。
  */
-export async function applyExternalAuthSessionHandoff(message: unknown): Promise<
-  | {
-      ok: true
-    }
-  | {
-      ok: false
-      error: string
-    }
-> {
+export async function applyExternalAuthSessionHandoff(
+  message: unknown
+): Promise<ExternalAuthHandoffResponse> {
   const startedAt = flowStart('Auth', '官网 session handoff')
   const parsed = ExternalAuthSessionHandoffSchema.safeParse(message)
   if (!parsed.success) {

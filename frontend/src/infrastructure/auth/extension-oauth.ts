@@ -1,11 +1,9 @@
-import type { AuthOAuthProvider } from '@/core/identity/auth-session'
 import type { AuthSession } from '@/core/identity/auth-session'
 import {
   extractAvatarUrlFromUserMetadata,
   extractDisplayNameFromUserMetadata
 } from '@/core/identity/auth-user-profile'
 import { createExtensionSupabaseClient } from '@/infrastructure/auth/supabase-client'
-import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 
 type SupabaseAuthSessionLike = {
   access_token: string
@@ -42,19 +40,9 @@ export function mapSupabaseSessionToAuthSession(
   }
 }
 
-/** Supabase OAuth provider 映射（microsoft → azure）。 */
-function toSupabaseProvider(provider: AuthOAuthProvider): 'google' | 'azure' {
-  return provider === 'microsoft' ? 'azure' : 'google'
-}
-
-/** 扩展 OAuth 回调地址（chrome.identity）。 */
-export function getExtensionOAuthRedirectUrl(): string {
-  return `https://${chrome.runtime.id}.chromiumapp.org/`
-}
-
 /**
- * 从 launchWebAuthFlow 返回的 URL 解析 access/refresh token。
- * Supabase 通常放在 hash；兼容 query。
+ * 从 OAuth 回调 URL 解析 access/refresh token。
+ * Supabase 通常放在 hash；兼容 query（单测与遗留回调兼容）。
  */
 export function parseOAuthRedirectTokens(redirectUrl: string): {
   accessToken: string
@@ -69,74 +57,6 @@ export function parseOAuthRedirectTokens(redirectUrl: string): {
     return null
   }
   return { accessToken, refreshToken }
-}
-
-/**
- * 通过 chrome.identity + Supabase OAuth 登录。
- * 成功后返回可持久化的 AuthSession（调用方负责写入 storage / AccountBinding）。
- */
-export async function signInWithOAuthProvider(provider: AuthOAuthProvider): Promise<AuthSession> {
-  const startedAt = flowStart('Auth', 'OAuth 登录开始', { provider })
-  const supabase = createExtensionSupabaseClient()
-  if (!supabase) {
-    flowFail('Auth', 'OAuth 登录开始', startedAt, new Error('supabase_not_configured'))
-    throw new Error('supabase_not_configured')
-  }
-
-  const redirectUrl = getExtensionOAuthRedirectUrl()
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: toSupabaseProvider(provider),
-    options: {
-      redirectTo: redirectUrl,
-      skipBrowserRedirect: true
-    }
-  })
-
-  if (error || !data.url) {
-    flowFail('Auth', 'OAuth 登录开始', startedAt, error ?? new Error('oauth_url_missing'))
-    throw new Error(error?.message ?? 'oauth_url_missing')
-  }
-
-  const responseUrl = await chrome.identity.launchWebAuthFlow({
-    url: data.url,
-    interactive: true
-  })
-
-  if (!responseUrl) {
-    const err = new Error('oauth_cancelled')
-    flowFail('Auth', 'OAuth 登录开始', startedAt, err)
-    throw err
-  }
-
-  const tokens = parseOAuthRedirectTokens(responseUrl)
-  if (!tokens) {
-    const err = new Error('oauth_tokens_missing')
-    flowFail('Auth', 'OAuth 登录开始', startedAt, err)
-    throw err
-  }
-
-  const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-    access_token: tokens.accessToken,
-    refresh_token: tokens.refreshToken
-  })
-
-  if (sessionError || !sessionData.session?.user?.id) {
-    flowFail(
-      'Auth',
-      'OAuth 登录开始',
-      startedAt,
-      sessionError ?? new Error('oauth_session_invalid')
-    )
-    throw new Error(sessionError?.message ?? 'oauth_session_invalid')
-  }
-
-  const authSession = mapSupabaseSessionToAuthSession(sessionData.session)
-
-  flowOk('Auth', 'OAuth 登录开始', startedAt, {
-    userId: authSession.userId,
-    provider
-  })
-  return authSession
 }
 
 /**

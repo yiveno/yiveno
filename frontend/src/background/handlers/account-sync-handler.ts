@@ -28,16 +28,12 @@ import {
 import { getSyncPrefs, patchSyncPrefs } from '@/infrastructure/identity/sync-prefs-service'
 import { memoryItemRepository } from '@/infrastructure/indexeddb/memory-item-repository'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
+import { getWebsiteBaseUrl, openWebsiteLoginPage } from '@/infrastructure/browser/website-page'
 import {
   fetchRemoteSyncStatus,
   pullRemoteMemoryItems,
   replaceRemoteWithLocalItems
 } from '@/infrastructure/messaging/memory-sync-api-client'
-
-function getWebsiteBaseUrl(): string {
-  const fromEnv = import.meta.env.VITE_WEBSITE_URL?.trim()
-  return fromEnv ? fromEnv.replace(/\/$/, '') : 'https://yiveno.com'
-}
 
 /** access token 提前刷新余量（秒），避免边界过期。 */
 const ACCESS_TOKEN_REFRESH_SKEW_SEC = 60
@@ -100,7 +96,7 @@ export async function handleAuthSignIn(): Promise<AuthSignInResponse> {
     loginUrl.searchParams.set('connect_extension', '1')
     loginUrl.searchParams.set('extension_id', chrome.runtime.id)
 
-    await chrome.tabs.create({ url: loginUrl.toString() })
+    await openWebsiteLoginPage(loginUrl.toString())
     flowOk('Auth', 'AUTH_SIGN_IN（打开官网）', startedAt, {
       website: getWebsiteBaseUrl()
     })
