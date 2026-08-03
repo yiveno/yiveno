@@ -1,6 +1,7 @@
 import {
   MEMORY_DATABASE_NAME,
   MEMORY_DATABASE_VERSION,
+  MEMORY_ITEM_INDEX_BY_OWNER,
   MEMORY_ITEM_INDEX_BY_OWNER_CHROME_BOOKMARK,
   MEMORY_ITEM_INDEX_BY_OWNER_TYPE_UPDATED,
   MEMORY_ITEM_INDEX_BY_OWNER_UPDATED,
@@ -34,6 +35,10 @@ function upgradeMemoryDatabase(
       ['ownerId', 'payload.chromeBookmarkId'],
       { unique: false }
     )
+  }
+
+  if (oldVersion < 3 && !store.indexNames.contains(MEMORY_ITEM_INDEX_BY_OWNER)) {
+    store.createIndex(MEMORY_ITEM_INDEX_BY_OWNER, 'ownerId', { unique: false })
   }
 }
 

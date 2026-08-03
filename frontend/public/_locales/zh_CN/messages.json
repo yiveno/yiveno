@@ -38,11 +38,20 @@
   "nav_settings": {
     "message": "设置"
   },
+  "nav_account": {
+    "message": "账户"
+  },
+  "nav_sign_in": {
+    "message": "登录"
+  },
   "error_open_library": {
     "message": "无法打开记忆库"
   },
   "error_open_settings": {
     "message": "无法打开设置页"
+  },
+  "error_open_account": {
+    "message": "无法打开账户页"
   },
   "page_title_popup": {
     "message": "Yiveno"
@@ -318,14 +327,113 @@
   "settings_upcoming_privacy": {
     "message": "隐私 — 未上线"
   },
-  "settings_upcoming_sync": {
-    "message": "同步 — 未上线"
-  },
   "settings_upcoming_ai": {
     "message": "AI — 未上线"
   },
-  "settings_upcoming_account": {
-    "message": "账户 — 未上线"
+  "settings_section_account": {
+    "message": "账户"
+  },
+  "settings_section_account_copy": {
+    "message": "在 Yiveno 官网登录。扩展只同步登录态；开启同步前不会上传记忆。"
+  },
+  "settings_account_signed_out": {
+    "message": "未登录"
+  },
+  "settings_account_signed_in": {
+    "message": "已登录：$EMAIL$",
+    "placeholders": {
+      "EMAIL": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_account_sign_in_website": {
+    "message": "前往官网登录"
+  },
+  "settings_account_waiting_website": {
+    "message": "请在打开的网页完成登录，然后回到本页。"
+  },
+  "settings_account_sign_out": {
+    "message": "退出登录"
+  },
+  "settings_account_signing_in": {
+    "message": "正在打开…"
+  },
+  "settings_account_signing_out": {
+    "message": "正在退出…"
+  },
+  "settings_section_sync": {
+    "message": "同步"
+  },
+  "settings_section_sync_copy": {
+    "message": "云同步默认关闭。仅在需要备份或换设备时开启。"
+  },
+  "settings_sync_toggle": {
+    "message": "将记忆同步到云端"
+  },
+  "settings_sync_toggle_hint": {
+    "message": "请先点顶部账户图标登录。在官网退出后，本机记忆仍保留。"
+  },
+  "settings_sync_local_count": {
+    "message": "本机：$COUNT$",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_sync_remote_count": {
+    "message": "云端：$COUNT$",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_sync_conflict_title": {
+    "message": "两边都有记忆"
+  },
+  "settings_sync_conflict_copy": {
+    "message": "请选择保留哪一侧；另一侧将被替换（替换云端前会先备份）。"
+  },
+  "settings_sync_use_local": {
+    "message": "保留本机"
+  },
+  "settings_sync_use_remote": {
+    "message": "保留云端"
+  },
+  "settings_sync_working": {
+    "message": "处理中…"
+  },
+  "settings_sync_sign_in_required": {
+    "message": "请先登录后再管理同步。"
+  },
+  "settings_error_auth_not_configured": {
+    "message": "当前构建未配置登录"
+  },
+  "settings_error_auth_sign_in": {
+    "message": "登录失败"
+  },
+  "settings_error_auth_sign_out": {
+    "message": "退出登录失败"
+  },
+  "settings_error_auth_state": {
+    "message": "读取账户状态失败"
+  },
+  "settings_error_sync_not_authenticated": {
+    "message": "同步需要先登录"
+  },
+  "settings_error_sync_status": {
+    "message": "读取同步状态失败"
+  },
+  "settings_error_sync_prefs": {
+    "message": "更新同步设置失败"
+  },
+  "settings_error_sync_replace_local": {
+    "message": "用本机覆盖云端失败"
+  },
+  "settings_error_sync_replace_remote": {
+    "message": "用云端覆盖本机失败"
   },
   "settings_error_load_commands": {
     "message": "读取快捷键失败"

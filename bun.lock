@@ -45,6 +45,7 @@
       "version": "4.0.0",
       "dependencies": {
         "@material/web": "^2.5.0",
+        "@supabase/supabase-js": "^2.79.0",
         "@yiveno/design-tokens": "workspace:*",
         "vue": "^3.5.18",
         "zod": "^3.25.76",

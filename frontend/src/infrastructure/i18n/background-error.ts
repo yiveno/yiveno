@@ -1,3 +1,4 @@
+import type { AccountSyncErrorCode } from '@/core/messaging/account-sync-messages'
 import type { CommandsErrorCode } from '@/core/messaging/commands-messages'
 import type { ImportErrorCode } from '@/core/messaging/import-messages'
 import type { ChromeBookmarkImportErrorCode } from '@/core/memory/chrome-bookmark-import-state'
@@ -9,6 +10,18 @@ import { t } from '@/infrastructure/i18n/t'
 const SETTINGS_ERROR_MESSAGE_KEYS: Record<SettingsErrorCode, MessageKey> = {
   SETTINGS_READ_FAILED: 'settings_error_load',
   SETTINGS_UPDATE_FAILED: 'settings_error_update'
+}
+
+const ACCOUNT_SYNC_ERROR_MESSAGE_KEYS: Record<AccountSyncErrorCode, MessageKey> = {
+  AUTH_NOT_CONFIGURED: 'settings_error_auth_not_configured',
+  AUTH_SIGN_IN_FAILED: 'settings_error_auth_sign_in',
+  AUTH_SIGN_OUT_FAILED: 'settings_error_auth_sign_out',
+  AUTH_STATE_READ_FAILED: 'settings_error_auth_state',
+  SYNC_NOT_AUTHENTICATED: 'settings_error_sync_not_authenticated',
+  SYNC_STATUS_FAILED: 'settings_error_sync_status',
+  SYNC_PREFS_UPDATE_FAILED: 'settings_error_sync_prefs',
+  SYNC_REPLACE_LOCAL_FAILED: 'settings_error_sync_replace_local',
+  SYNC_REPLACE_REMOTE_FAILED: 'settings_error_sync_replace_remote'
 }
 
 const RECALL_ERROR_MESSAGE_KEYS: Record<RecallErrorCode, MessageKey> = {
@@ -32,6 +45,11 @@ const IMPORT_STATE_ERROR_MESSAGE_KEYS: Record<ChromeBookmarkImportErrorCode, Mes
 /** Settings errorCode → 用户文案。 */
 export function tSettingsError(errorCode: SettingsErrorCode): string {
   return t(SETTINGS_ERROR_MESSAGE_KEYS[errorCode])
+}
+
+/** 账户 / 同步 errorCode → 用户文案。 */
+export function tAccountSyncError(errorCode: AccountSyncErrorCode): string {
+  return t(ACCOUNT_SYNC_ERROR_MESSAGE_KEYS[errorCode])
 }
 
 /** Recall errorCode → 用户文案。 */

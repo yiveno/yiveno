@@ -14,6 +14,7 @@ import {
   getOrCreateLocalProfile
 } from '@/infrastructure/identity/local-profile-service'
 import {
+  MEMORY_ITEM_INDEX_BY_OWNER,
   MEMORY_ITEM_INDEX_BY_OWNER_CHROME_BOOKMARK,
   MEMORY_ITEM_INDEX_BY_OWNER_TYPE_UPDATED,
   MEMORY_ITEM_INDEX_BY_OWNER_UPDATED,
@@ -368,6 +369,104 @@ export class MemoryItemRepository {
       limit: Number.MAX_SAFE_INTEGER
     })
     return items.length
+  }
+
+  /**
+   * 列出指定 owner 下全部条目（含软删可选）。
+   * 同步前 remap 时需按旧 localProfileId 扫描，故允许显式传入 ownerId。
+   */
+  async listAllByOwnerId(
+    ownerId: string,
+    options: { includeDeleted?: boolean } = {}
+  ): Promise<MemoryItem[]> {
+    await this.ensureReady()
+    const includeDeleted = options.includeDeleted ?? false
+
+    return indexedDBManager.withTransaction(MEMORY_ITEM_STORE, 'readonly', async transaction => {
+      const store = transaction.objectStore(MEMORY_ITEM_STORE)
+      const index = store.index(MEMORY_ITEM_INDEX_BY_OWNER)
+      const range = IDBKeyRange.only(ownerId)
+      const items: MemoryItem[] = []
+
+      await new Promise<void>((resolve, reject) => {
+        const request = index.openCursor(range)
+        request.onsuccess = () => {
+          const cursor = request.result
+          if (!cursor) {
+            resolve()
+            return
+          }
+          const item = safeParseMemoryItem(cursor.value)
+          if (item && (includeDeleted || item.deletedAt == null)) {
+            items.push(item)
+          }
+          cursor.continue()
+        }
+        request.onerror = () => reject(request.error ?? new Error('IndexedDB 游标读取失败'))
+      })
+
+      return items
+    })
+  }
+
+  /**
+   * 将 fromOwnerId 下全部条目的 ownerId 改为 toOwnerId（保留 sourceLocalProfileId）。
+   * 用于登录后「本机覆盖云端」前的归属迁移。
+   */
+  async remapOwnerId(fromOwnerId: string, toOwnerId: string): Promise<number> {
+    if (fromOwnerId === toOwnerId) {
+      return 0
+    }
+
+    const items = await this.listAllByOwnerId(fromOwnerId, { includeDeleted: true })
+    if (items.length === 0) {
+      return 0
+    }
+
+    const remapped = items.map(item => ({
+      ...item,
+      ownerId: toOwnerId
+    }))
+    await this.putMany(remapped)
+    return remapped.length
+  }
+
+  /**
+   * 用云端拉取结果覆盖本机指定 owner 的库：删除该 owner 下旧行后 putMany。
+   * 调用方应保证 items 的 ownerId 已是目标账号。
+   */
+  async replaceOwnerItems(ownerId: string, items: MemoryItem[]): Promise<number> {
+    await this.ensureReady()
+
+    await indexedDBManager.withTransaction(MEMORY_ITEM_STORE, 'readwrite', async transaction => {
+      const store = transaction.objectStore(MEMORY_ITEM_STORE)
+      const index = store.index(MEMORY_ITEM_INDEX_BY_OWNER)
+      const range = IDBKeyRange.only(ownerId)
+
+      await new Promise<void>((resolve, reject) => {
+        const request = index.openCursor(range)
+        request.onsuccess = () => {
+          const cursor = request.result
+          if (!cursor) {
+            resolve()
+            return
+          }
+          void requestToPromise(cursor.delete())
+            .then(() => cursor.continue())
+            .catch(reject)
+        }
+        request.onerror = () => reject(request.error ?? new Error('IndexedDB 删除游标失败'))
+      })
+
+      for (const item of items) {
+        if (item.ownerId !== ownerId) {
+          continue
+        }
+        await requestToPromise(store.put(MemoryItemSchema.parse(item)))
+      }
+    })
+
+    return items.filter(item => item.ownerId === ownerId).length
   }
 
   private async buildBookmarkItem(input: CreateBookmarkInput): Promise<MemoryItem> {

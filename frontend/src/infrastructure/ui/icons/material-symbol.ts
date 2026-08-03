@@ -5,6 +5,7 @@
  */
 
 export const MATERIAL_SYMBOL_NAMES = [
+  'account_circle',
   'arrow_upward',
   'bookmark',
   'bookmark_add',
@@ -30,6 +31,9 @@ const MATERIAL_SYMBOL_VIEW_BOX: Partial<Record<MaterialSymbolName, string>> = {
 
 /** viewBox 统一默认 0 0 24 24；fill 由 CSS currentColor 控制。 */
 const MATERIAL_SYMBOL_PATHS: Record<MaterialSymbolName, string> = {
+  // Material Icons Outlined · account_circle（未登录账户入口）
+  account_circle:
+    'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z',
   // Material Icons · arrow_upward
   arrow_upward: 'M4 12l1.41 1.41L11 7.83V20h2V7.83l5.59 5.58L20 12l-8-8-8 8z',
   // Material Icons Outlined · bookmark

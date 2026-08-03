@@ -1,6 +1,7 @@
 import { ensureBackgroundBootstrapped } from '@/background/bootstrap'
 import { handleBackgroundMessage } from '@/background/handlers/message-handler'
 import { registerContextMenuItems } from '@/background/listeners/context-menu'
+import { registerExternalAuthHandoffListener } from '@/background/listeners/external-auth-handoff'
 import { exposeClueGatewayDebug } from '@/infrastructure/debug/expose-clue-gateway-debug'
 import { logger } from '@/infrastructure/logging/logger'
 
@@ -12,6 +13,7 @@ import { logger } from '@/infrastructure/logging/logger'
  * 禁止恢复旧书签管理器行为。
  */
 exposeClueGatewayDebug()
+registerExternalAuthHandoffListener()
 
 chrome.runtime.onInstalled.addListener(details => {
   void ensureBackgroundBootstrapped()

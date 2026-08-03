@@ -29,6 +29,17 @@ function waitForTransaction(transaction: IDBTransaction): Promise<void> {
 export class IndexedDBManager {
   private database: IDBDatabase | null = null
   private definition: IndexedDBDefinition | null = null
+  private connectionLostHandler: (() => void) | null = null
+
+  /** 当前是否持有可用连接。 */
+  isOpen(): boolean {
+    return this.database != null
+  }
+
+  /** versionchange / 异常关闭时回调（用于重置上层 initializePromise）。 */
+  setConnectionLostHandler(handler: (() => void) | null): void {
+    this.connectionLostHandler = handler
+  }
 
   /** 初始化数据库；同一运行时只能使用一个 schema 定义。 */
   async initialize(definition: IndexedDBDefinition): Promise<void> {
@@ -48,7 +59,19 @@ export class IndexedDBManager {
       request.onupgradeneeded = (event: IDBVersionChangeEvent) => {
         definition.upgrade(request.result, request.transaction!, event.oldVersion)
       }
-      request.onsuccess = () => resolve(request.result)
+      request.onsuccess = () => {
+        const database = request.result
+        // 其它上下文升版本/删库时必须关掉本连接，否则 upgrade 卡死；扩展 Reload 时尤其关键
+        database.onversionchange = () => {
+          database.close()
+          if (this.database === database) {
+            this.database = null
+            this.definition = null
+            this.connectionLostHandler?.()
+          }
+        }
+        resolve(database)
+      }
       request.onerror = () => reject(request.error ?? new Error('IndexedDB 初始化失败'))
     })
   }
@@ -75,6 +98,7 @@ export class IndexedDBManager {
     this.database?.close()
     this.database = null
     this.definition = null
+    this.connectionLostHandler = null
   }
 }
 

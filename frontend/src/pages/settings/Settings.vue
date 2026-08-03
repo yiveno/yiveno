@@ -7,12 +7,21 @@ import {
 } from '@/core/commands/command-display'
 import type { ExtensionCommandInfo } from '@/core/messaging/commands-messages'
 import {
+  fetchAuthState,
   fetchExtensionCommands,
+  fetchSyncStatus,
   fetchUserSettings,
   openChromeShortcutsPage,
+  setSyncEnabled,
+  syncReplaceWithLocal,
+  syncReplaceWithRemote,
   updateUserSettings
 } from '@/infrastructure/messaging/background-client'
-import { tCommandsError, tSettingsError } from '@/infrastructure/i18n/background-error'
+import {
+  tAccountSyncError,
+  tCommandsError,
+  tSettingsError
+} from '@/infrastructure/i18n/background-error'
 import { t } from '@/infrastructure/i18n/t'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
 import MaterialSymbolIcon from '@/infrastructure/ui/icons/MaterialSymbolIcon.vue'
@@ -35,6 +44,16 @@ const settingsState = ref<LoadState>('loading')
 const settingsError = ref('')
 const savingSelectionToolbar = ref(false)
 
+const signedIn = ref(false)
+
+const syncEnabled = ref(false)
+const syncLocalCount = ref(0)
+const syncRemoteCount = ref(0)
+const needsConflictChoice = ref(false)
+const savingSync = ref(false)
+const syncWorking = ref(false)
+const syncError = ref('')
+
 const commandRows = computed(() =>
   commands.value.map(command => ({
     name: command.name,
@@ -43,7 +62,6 @@ const commandRows = computed(() =>
     unbound: command.shortcut.trim().length === 0
   }))
 )
-
 async function loadCommands(options?: { quiet?: boolean }) {
   const quiet = options?.quiet === true
   if (!quiet) {
@@ -141,14 +159,130 @@ async function handleSelectionToolbarToggle(event: Event) {
   }
 }
 
+async function refreshSyncStatus() {
+  syncError.value = ''
+  const response = await fetchSyncStatus()
+  if (!response.ok) {
+    syncError.value = tAccountSyncError(response.errorCode)
+    return
+  }
+  syncEnabled.value = response.syncEnabled
+  syncLocalCount.value = response.localCount
+  syncRemoteCount.value = response.remoteCount
+  needsConflictChoice.value = response.needsConflictChoice
+}
+
+async function loadSyncContext() {
+  syncError.value = ''
+
+  try {
+    const response = await fetchAuthState()
+    if (!response.ok) {
+      syncError.value = tAccountSyncError(response.errorCode)
+      return
+    }
+
+    signedIn.value = response.signedIn
+    syncEnabled.value = response.syncPrefs.enabled
+
+    if (response.signedIn) {
+      await refreshSyncStatus()
+    } else {
+      syncLocalCount.value = 0
+      syncRemoteCount.value = 0
+      needsConflictChoice.value = false
+    }
+  } catch {
+    syncError.value = t('settings_error_auth_state')
+  }
+}
+
+/** 从其它标签（如官网登录）返回时刷新同步相关登录态。 */
+function refreshSyncContextOnVisible() {
+  if (document.visibilityState !== 'visible') {
+    return
+  }
+  void loadSyncContext()
+}
+
+async function handleSyncToggle(event: Event) {
+  const switchEl = asMdSwitchElement(event.target)
+  if (!switchEl) {
+    return
+  }
+  if (!signedIn.value) {
+    switchEl.selected = false
+    syncError.value = t('settings_sync_sign_in_required')
+    return
+  }
+
+  const nextValue = switchEl.selected
+  savingSync.value = true
+  syncError.value = ''
+  try {
+    const response = await setSyncEnabled(nextValue)
+    if (!response.ok) {
+      switchEl.selected = !nextValue
+      syncError.value = tAccountSyncError(response.errorCode)
+      return
+    }
+    syncEnabled.value = response.syncPrefs.enabled
+    syncLocalCount.value = response.localCount
+    syncRemoteCount.value = response.remoteCount
+    needsConflictChoice.value = response.needsConflictChoice
+  } catch {
+    switchEl.selected = !nextValue
+    syncError.value = t('settings_error_sync_prefs')
+  } finally {
+    savingSync.value = false
+  }
+}
+
+async function handleReplaceWithLocal() {
+  syncWorking.value = true
+  syncError.value = ''
+  try {
+    const response = await syncReplaceWithLocal()
+    if (!response.ok) {
+      syncError.value = tAccountSyncError(response.errorCode)
+      return
+    }
+    await refreshSyncStatus()
+  } catch {
+    syncError.value = t('settings_error_sync_replace_local')
+  } finally {
+    syncWorking.value = false
+  }
+}
+
+async function handleReplaceWithRemote() {
+  syncWorking.value = true
+  syncError.value = ''
+  try {
+    const response = await syncReplaceWithRemote()
+    if (!response.ok) {
+      syncError.value = tAccountSyncError(response.errorCode)
+      return
+    }
+    await refreshSyncStatus()
+  } catch {
+    syncError.value = t('settings_error_sync_replace_remote')
+  } finally {
+    syncWorking.value = false
+  }
+}
+
 onMounted(() => {
   void loadCommands()
   void loadUserSettings()
+  void loadSyncContext()
   document.addEventListener('visibilitychange', refreshCommandsIfReturnedFromShortcuts)
+  document.addEventListener('visibilitychange', refreshSyncContextOnVisible)
 })
 
 onUnmounted(() => {
   document.removeEventListener('visibilitychange', refreshCommandsIfReturnedFromShortcuts)
+  document.removeEventListener('visibilitychange', refreshSyncContextOnVisible)
 })
 </script>
 
@@ -238,6 +372,53 @@ onUnmounted(() => {
       <p v-if="openShortcutsError" class="settings-error" role="alert">{{ openShortcutsError }}</p>
     </section>
 
+    <section class="settings-section" aria-labelledby="settings-sync-heading">
+      <div class="settings-section-head">
+        <h2 id="settings-sync-heading" class="settings-section-title">
+          {{ t('settings_section_sync') }}
+        </h2>
+        <p class="settings-section-copy">{{ t('settings_section_sync_copy') }}</p>
+      </div>
+
+      <div class="settings-toggle">
+        <div class="settings-toggle-copy">
+          <span class="settings-toggle-title">{{ t('settings_sync_toggle') }}</span>
+          <span class="settings-toggle-hint">{{ t('settings_sync_toggle_hint') }}</span>
+        </div>
+        <md-switch
+          :aria-label="t('settings_sync_toggle')"
+          :selected="syncEnabled"
+          :disabled="savingSync || syncWorking || !signedIn"
+          @change="handleSyncToggle"
+        />
+      </div>
+
+      <p v-if="signedIn" class="settings-sync-counts">
+        {{ t('settings_sync_local_count', [String(syncLocalCount)]) }}
+        ·
+        {{ t('settings_sync_remote_count', [String(syncRemoteCount)]) }}
+      </p>
+      <p v-else class="settings-status">{{ t('settings_sync_sign_in_required') }}</p>
+
+      <div v-if="needsConflictChoice" class="settings-sync-conflict">
+        <p class="settings-toggle-title">{{ t('settings_sync_conflict_title') }}</p>
+        <p class="settings-section-copy">{{ t('settings_sync_conflict_copy') }}</p>
+        <div class="settings-actions">
+          <md-filled-button type="button" :disabled="syncWorking" @click="handleReplaceWithLocal">
+            {{ syncWorking ? t('settings_sync_working') : t('settings_sync_use_local') }}
+          </md-filled-button>
+          <md-outlined-button
+            type="button"
+            :disabled="syncWorking"
+            @click="handleReplaceWithRemote"
+          >
+            {{ syncWorking ? t('settings_sync_working') : t('settings_sync_use_remote') }}
+          </md-outlined-button>
+        </div>
+      </div>
+      <p v-if="syncError" class="settings-error" role="alert">{{ syncError }}</p>
+    </section>
+
     <section
       class="settings-section settings-section--muted"
       aria-labelledby="settings-later-heading"
@@ -247,9 +428,7 @@ onUnmounted(() => {
       </h2>
       <ul class="settings-upcoming-list">
         <li>{{ t('settings_upcoming_privacy') }}</li>
-        <li>{{ t('settings_upcoming_sync') }}</li>
         <li>{{ t('settings_upcoming_ai') }}</li>
-        <li>{{ t('settings_upcoming_account') }}</li>
       </ul>
     </section>
   </main>
@@ -411,6 +590,20 @@ onUnmounted(() => {
   flex-wrap: wrap;
   gap: 10px;
   align-items: center;
+}
+
+.settings-sync-counts {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.settings-sync-conflict {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  background: var(--md-sys-color-surface-container-low);
 }
 
 .settings-upcoming-list {

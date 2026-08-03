@@ -38,11 +38,20 @@
   "nav_settings": {
     "message": "Settings"
   },
+  "nav_account": {
+    "message": "Account"
+  },
+  "nav_sign_in": {
+    "message": "Sign in"
+  },
   "error_open_library": {
     "message": "Could not open the library"
   },
   "error_open_settings": {
     "message": "Could not open Settings"
+  },
+  "error_open_account": {
+    "message": "Could not open the account page"
   },
   "page_title_popup": {
     "message": "Yiveno"
@@ -318,14 +327,113 @@
   "settings_upcoming_privacy": {
     "message": "Privacy — not available yet"
   },
-  "settings_upcoming_sync": {
-    "message": "Sync — not available yet"
-  },
   "settings_upcoming_ai": {
     "message": "AI — not available yet"
   },
-  "settings_upcoming_account": {
-    "message": "Account — not available yet"
+  "settings_section_account": {
+    "message": "Account"
+  },
+  "settings_section_account_copy": {
+    "message": "Sign in on the Yiveno website. The extension only syncs your login — it does not upload memories until you turn sync on."
+  },
+  "settings_account_signed_out": {
+    "message": "Not signed in"
+  },
+  "settings_account_signed_in": {
+    "message": "Signed in as $EMAIL$",
+    "placeholders": {
+      "EMAIL": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_account_sign_in_website": {
+    "message": "Sign in on website"
+  },
+  "settings_account_waiting_website": {
+    "message": "Finish signing in in the browser tab, then return here."
+  },
+  "settings_account_sign_out": {
+    "message": "Sign out"
+  },
+  "settings_account_signing_in": {
+    "message": "Opening…"
+  },
+  "settings_account_signing_out": {
+    "message": "Signing out…"
+  },
+  "settings_section_sync": {
+    "message": "Sync"
+  },
+  "settings_section_sync_copy": {
+    "message": "Cloud sync is off by default. Turn it on only when you want to back up or use another device."
+  },
+  "settings_sync_toggle": {
+    "message": "Sync memories to the cloud"
+  },
+  "settings_sync_toggle_hint": {
+    "message": "Sign in from the account icon in the header first. Local memories stay on this device if you sign out on the website."
+  },
+  "settings_sync_local_count": {
+    "message": "On this device: $COUNT$",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_sync_remote_count": {
+    "message": "In the cloud: $COUNT$",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_sync_conflict_title": {
+    "message": "Both sides have memories"
+  },
+  "settings_sync_conflict_copy": {
+    "message": "Choose which side to keep. The other side will be replaced (cloud gets a backup first)."
+  },
+  "settings_sync_use_local": {
+    "message": "Keep this device"
+  },
+  "settings_sync_use_remote": {
+    "message": "Keep the cloud"
+  },
+  "settings_sync_working": {
+    "message": "Working…"
+  },
+  "settings_sync_sign_in_required": {
+    "message": "Sign in first to manage sync."
+  },
+  "settings_error_auth_not_configured": {
+    "message": "Sign-in is not configured in this build"
+  },
+  "settings_error_auth_sign_in": {
+    "message": "Could not sign in"
+  },
+  "settings_error_auth_sign_out": {
+    "message": "Could not sign out"
+  },
+  "settings_error_auth_state": {
+    "message": "Could not load account status"
+  },
+  "settings_error_sync_not_authenticated": {
+    "message": "Sign in required for sync"
+  },
+  "settings_error_sync_status": {
+    "message": "Could not load sync status"
+  },
+  "settings_error_sync_prefs": {
+    "message": "Could not update sync settings"
+  },
+  "settings_error_sync_replace_local": {
+    "message": "Could not replace cloud with this device"
+  },
+  "settings_error_sync_replace_remote": {
+    "message": "Could not replace this device with the cloud"
   },
   "settings_error_load_commands": {
     "message": "Could not load shortcuts"

@@ -1042,7 +1042,12 @@ function handleStorageChanged(
  * Chrome 123+：页面进入 bfcache 时会主动关 port，并设置 runtime.lastError；
  * 须读取 lastError 避免控制台 Unchecked runtime.lastError，且勿在冻结态立刻重连——
  * 等 pageshow(persisted) 再 connect（见官方 bfcache-extension-messaging-changes）。
+ *
+ * 扩展 Reload 时：SW 销毁 → 全页 port disconnect。若同步立刻 reconnect，
+ * 会在旧脚本失效窗口内形成 connect 风暴，已知可触发 Chrome 主进程 SIGSEGV。
  */
+const KEEPALIVE_RECONNECT_DELAY_MS = 750
+
 function connectKeepalivePort(): void {
   if (tornDown || keepalivePort || pageFrozenInBfCache || !isExtensionContextValid()) {
     return
@@ -1060,12 +1065,20 @@ function connectKeepalivePort(): void {
         teardown()
         return
       }
-      // bfcache 冻结中：等 pageshow 再连；SW 休眠 disconnect 则立即重建
+      // bfcache 冻结中：等 pageshow 再连；SW 休眠 disconnect 则延迟重建
       if (closedByBfCache) {
         pageFrozenInBfCache = true
         return
       }
-      connectKeepalivePort()
+      window.setTimeout(() => {
+        if (tornDown || keepalivePort || pageFrozenInBfCache || !isExtensionContextValid()) {
+          if (!isExtensionContextValid()) {
+            teardown()
+          }
+          return
+        }
+        connectKeepalivePort()
+      }, KEEPALIVE_RECONNECT_DELAY_MS)
     })
   } catch {
     if (!isExtensionContextValid()) {

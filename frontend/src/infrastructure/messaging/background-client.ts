@@ -3,6 +3,15 @@ import type {
   BackgroundMessageResponse
 } from '@/core/messaging/background-messages'
 import type {
+  AuthSignInResponse,
+  AuthSignOutResponse,
+  GetAuthStateResponse,
+  GetSyncStatusResponse,
+  SetSyncEnabledResponse,
+  SyncReplaceWithLocalResponse,
+  SyncReplaceWithRemoteResponse
+} from '@/core/messaging/account-sync-messages'
+import type {
   GetExtensionCommandsMessage,
   GetExtensionCommandsResponse,
   OpenChromeShortcutsPageMessage,
@@ -175,5 +184,62 @@ export async function updateUserSettings(
     scope: 'background',
     type: 'UPDATE_USER_SETTINGS',
     payload
+  })
+}
+
+/** 读取登录态与同步偏好。 */
+export async function fetchAuthState(): Promise<GetAuthStateResponse> {
+  return sendBackgroundMessage<GetAuthStateResponse>({
+    scope: 'background',
+    type: 'GET_AUTH_STATE'
+  })
+}
+
+/** OAuth 登录（打开官网登录页；session 由官网回传）。 */
+export async function authSignIn(): Promise<AuthSignInResponse> {
+  return sendBackgroundMessage<AuthSignInResponse>({
+    scope: 'background',
+    type: 'AUTH_SIGN_IN'
+  })
+}
+
+/** 登出（保留本地 Memory）。 */
+export async function authSignOut(): Promise<AuthSignOutResponse> {
+  return sendBackgroundMessage<AuthSignOutResponse>({
+    scope: 'background',
+    type: 'AUTH_SIGN_OUT'
+  })
+}
+
+/** 读取本机/云端同步状态。 */
+export async function fetchSyncStatus(): Promise<GetSyncStatusResponse> {
+  return sendBackgroundMessage<GetSyncStatusResponse>({
+    scope: 'background',
+    type: 'GET_SYNC_STATUS'
+  })
+}
+
+/** 开关云同步。 */
+export async function setSyncEnabled(enabled: boolean): Promise<SetSyncEnabledResponse> {
+  return sendBackgroundMessage<SetSyncEnabledResponse>({
+    scope: 'background',
+    type: 'SET_SYNC_ENABLED',
+    payload: { enabled }
+  })
+}
+
+/** 冲突策略 A：本机覆盖云端。 */
+export async function syncReplaceWithLocal(): Promise<SyncReplaceWithLocalResponse> {
+  return sendBackgroundMessage<SyncReplaceWithLocalResponse>({
+    scope: 'background',
+    type: 'SYNC_REPLACE_WITH_LOCAL'
+  })
+}
+
+/** 冲突策略 B：云端覆盖本机。 */
+export async function syncReplaceWithRemote(): Promise<SyncReplaceWithRemoteResponse> {
+  return sendBackgroundMessage<SyncReplaceWithRemoteResponse>({
+    scope: 'background',
+    type: 'SYNC_REPLACE_WITH_REMOTE'
   })
 }

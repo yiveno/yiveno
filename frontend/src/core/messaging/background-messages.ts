@@ -1,5 +1,9 @@
 import { z } from 'zod'
 
+import type {
+  AccountSyncBackgroundMessage,
+  AccountSyncBackgroundResponse
+} from '@/core/messaging/account-sync-messages'
 import type { LocalProfile } from '@/core/identity/local-profile'
 import { BACKGROUND_MESSAGE_SCOPE } from '@/core/messaging/constants'
 import type {
@@ -83,6 +87,7 @@ export type BackgroundMessage =
   | ImportBackgroundMessage
   | CommandsBackgroundMessage
   | SettingsBackgroundMessage
+  | AccountSyncBackgroundMessage
 
 export type BackgroundMessageResponse =
   | GetLocalIdentityResponse
@@ -92,6 +97,7 @@ export type BackgroundMessageResponse =
   | ImportBackgroundResponse
   | CommandsBackgroundResponse
   | SettingsBackgroundResponse
+  | AccountSyncBackgroundResponse
   | BackgroundDispatchErrorResponse
 
 /** 判断是否为 Background scope 消息。 */

@@ -5,6 +5,15 @@ import type {
 } from '@/core/messaging/background-messages'
 import { isBackgroundScopedMessage } from '@/core/messaging/background-messages'
 import {
+  handleAuthSignIn,
+  handleAuthSignOut,
+  handleGetAuthState,
+  handleGetSyncStatus,
+  handleSetSyncEnabled,
+  handleSyncReplaceWithLocal,
+  handleSyncReplaceWithRemote
+} from '@/background/handlers/account-sync-handler'
+import {
   handleGetExtensionCommands,
   handleOpenChromeShortcutsPage
 } from '@/background/handlers/commands-handler'
@@ -61,6 +70,20 @@ async function dispatchBackgroundMessage(
       return { ok: true }
     case 'GET_LOCAL_IDENTITY':
       return handleGetLocalIdentity()
+    case 'AUTH_SIGN_IN':
+      return handleAuthSignIn()
+    case 'AUTH_SIGN_OUT':
+      return handleAuthSignOut()
+    case 'GET_AUTH_STATE':
+      return handleGetAuthState()
+    case 'GET_SYNC_STATUS':
+      return handleGetSyncStatus()
+    case 'SET_SYNC_ENABLED':
+      return handleSetSyncEnabled(message.payload.enabled)
+    case 'SYNC_REPLACE_WITH_LOCAL':
+      return handleSyncReplaceWithLocal()
+    case 'SYNC_REPLACE_WITH_REMOTE':
+      return handleSyncReplaceWithRemote()
     case 'CAPTURE_BOOKMARK':
       return handleCaptureBookmark(message.payload)
     case 'CAPTURE_TEXT_EXCERPT':

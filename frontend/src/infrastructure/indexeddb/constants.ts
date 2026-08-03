@@ -1,10 +1,13 @@
 /** Yiveno Memory DB 常量。 */
 export const MEMORY_DATABASE_NAME = 'YivenoMemoryDB' as const
 
-/** v2：增加 ownerId + chromeBookmarkId 索引，支持书签导入去重。 */
-export const MEMORY_DATABASE_VERSION = 2 as const
+/** v3：增加单字段 ownerId 索引，便于按归属全量扫描 / remap。 */
+export const MEMORY_DATABASE_VERSION = 3 as const
 
 export const MEMORY_ITEM_STORE = 'memory_items' as const
+
+/** 仅 ownerId，按归属枚举（登录后 remap / 同步计数）。 */
+export const MEMORY_ITEM_INDEX_BY_OWNER = 'by_owner' as const
 
 /** ownerId + updatedAt，按时间倒序列出。 */
 export const MEMORY_ITEM_INDEX_BY_OWNER_UPDATED = 'by_owner_updated' as const

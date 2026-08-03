@@ -5,7 +5,22 @@
   "description": "__MSG_app_description__",
   "default_locale": "en",
   "minimum_chrome_version": "116",
-  "permissions": ["storage", "activeTab", "bookmarks", "contextMenus", "scripting"],
+  "permissions": ["storage", "activeTab", "bookmarks", "contextMenus", "scripting", "tabs"],
+  "host_permissions": [
+    "https://*.supabase.co/*",
+    "http://localhost:8787/*",
+    "https://api.yiveno.com/*"
+  ],
+  "externally_connectable": {
+    "matches": [
+      "https://yiveno.com/*",
+      "https://www.yiveno.com/*",
+      "http://localhost:3001/*",
+      "https://localhost:3001/*",
+      "http://localhost:3002/*",
+      "https://localhost:3002/*"
+    ]
+  },
   "omnibox": {
     "keyword": "yi"
   },

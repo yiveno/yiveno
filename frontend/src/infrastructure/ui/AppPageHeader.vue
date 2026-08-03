@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 
+import { AUTH_SESSION_STORAGE_KEY } from '@/core/identity/auth-session'
 import { openExtensionLibraryPage } from '@/infrastructure/browser/library-page'
 import { openExtensionOptionsPage } from '@/infrastructure/browser/options-page'
+import { openWebsiteAccountPage } from '@/infrastructure/browser/website-page'
 import { t } from '@/infrastructure/i18n/t'
+import { authSignIn, fetchAuthState } from '@/infrastructure/messaging/background-client'
 import MaterialSymbolIcon from '@/infrastructure/ui/icons/MaterialSymbolIcon.vue'
 
 defineOptions({ name: 'AppPageHeader' })
@@ -23,8 +26,51 @@ const emit = defineEmits<{
   navigateError: [message: string]
 }>()
 
+const signedIn = ref(false)
+const avatarUrl = ref('')
+const accountLabel = ref('')
+const accountBusy = ref(false)
+/** 头像图加载失败时回退图标，避免裂图。 */
+const avatarBroken = ref(false)
+
 const showLibrary = computed(() => props.current !== 'library')
 const showSettings = computed(() => props.current !== 'settings')
+
+const showAvatarImage = computed(
+  () => signedIn.value && Boolean(avatarUrl.value) && !avatarBroken.value
+)
+
+const accountTitle = computed(() => {
+  if (!signedIn.value) {
+    return t('nav_sign_in')
+  }
+  if (accountLabel.value) {
+    return `${t('nav_account')} · ${accountLabel.value}`
+  }
+  return t('nav_account')
+})
+
+async function refreshAuthChip() {
+  try {
+    const response = await fetchAuthState()
+    if (!response.ok) {
+      signedIn.value = false
+      avatarUrl.value = ''
+      accountLabel.value = ''
+      avatarBroken.value = false
+      return
+    }
+    signedIn.value = response.signedIn
+    avatarUrl.value = response.avatarUrl?.trim() ?? ''
+    accountLabel.value = response.displayName?.trim() || response.email?.trim() || ''
+    avatarBroken.value = false
+  } catch {
+    signedIn.value = false
+    avatarUrl.value = ''
+    accountLabel.value = ''
+    avatarBroken.value = false
+  }
+}
 
 function handleOpenLibrary() {
   try {
@@ -41,16 +87,74 @@ async function handleOpenSettings() {
     emit('navigateError', t('error_open_settings'))
   }
 }
+
+async function handleOpenAccount() {
+  if (accountBusy.value) {
+    return
+  }
+  accountBusy.value = true
+  try {
+    if (signedIn.value) {
+      await openWebsiteAccountPage()
+      return
+    }
+    const response = await authSignIn()
+    if (!response.ok) {
+      emit('navigateError', t('settings_error_auth_sign_in'))
+    }
+  } catch {
+    emit(
+      'navigateError',
+      signedIn.value ? t('error_open_account') : t('settings_error_auth_sign_in')
+    )
+  } finally {
+    accountBusy.value = false
+  }
+}
+
+function handleStorageChanged(
+  changes: Record<string, chrome.storage.StorageChange>,
+  areaName: string
+) {
+  if (areaName !== 'local' || !(AUTH_SESSION_STORAGE_KEY in changes)) {
+    return
+  }
+  void refreshAuthChip()
+}
+
+onMounted(() => {
+  void refreshAuthChip()
+  chrome.storage.onChanged.addListener(handleStorageChanged)
+})
+
+onUnmounted(() => {
+  chrome.storage.onChanged.removeListener(handleStorageChanged)
+})
 </script>
 
 <template>
   <div class="app-page-header">
     <p class="app-page-header__brand">{{ t('app_name') }}</p>
-    <nav
-      v-if="showLibrary || showSettings"
-      class="app-page-header__nav"
-      :aria-label="t('nav_aria_label')"
-    >
+    <nav class="app-page-header__nav" :aria-label="t('nav_aria_label')">
+      <md-icon-button
+        type="button"
+        :title="accountTitle"
+        :aria-label="accountTitle"
+        :disabled="accountBusy"
+        @click="handleOpenAccount"
+      >
+        <img
+          v-if="showAvatarImage"
+          class="app-page-header__avatar"
+          :src="avatarUrl"
+          alt=""
+          width="22"
+          height="22"
+          referrerpolicy="no-referrer"
+          @error="avatarBroken = true"
+        />
+        <MaterialSymbolIcon v-else name="account_circle" size="22px" />
+      </md-icon-button>
       <md-icon-button
         v-if="showLibrary"
         type="button"
@@ -97,5 +201,13 @@ async function handleOpenSettings() {
   flex-wrap: wrap;
   gap: 0;
   align-items: center;
+}
+
+.app-page-header__avatar {
+  display: block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 </style>

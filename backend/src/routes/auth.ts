@@ -1,8 +1,8 @@
 /**
- * 认证路由
+ * 认证路由（自建 OAuth → 自定义 JWT）
  *
- * Phase C / Pro 预留：当前扩展与官网未接线。
- * 官网登录走 Supabase Auth 直连，不经过本路由。
+ * 扩展 Phase C 主路径：Supabase Auth（chrome.identity），不经过本路由。
+ * 官网登录走 Supabase Auth 直连。本路由保留作非 Supabase 场景，勿与 accountId UUID 混用。
  */
 
 import { Hono } from 'hono'

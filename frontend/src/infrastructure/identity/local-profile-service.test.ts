@@ -8,7 +8,9 @@ import {
 import {
   getAccountBinding,
   getCurrentOwnerId,
-  getOrCreateLocalProfile
+  getOrCreateLocalProfile,
+  setAccountBinding,
+  clearAccountBinding
 } from '@/infrastructure/identity/local-profile-service'
 
 type StorageMap = Record<string, unknown>
@@ -84,5 +86,19 @@ describe('local-profile-service', () => {
     await expect(getAccountBinding()).resolves.toMatchObject({
       accountId: '22222222-2222-4222-8222-222222222222'
     })
+  })
+
+  it('setAccountBinding / clearAccountBinding 可写可清', async () => {
+    await getOrCreateLocalProfile()
+    await setAccountBinding({
+      accountId: '33333333-3333-4333-8333-333333333333',
+      boundAt: '2026-08-03T12:00:00.000Z'
+    })
+    await expect(getCurrentOwnerId()).resolves.toBe('33333333-3333-4333-8333-333333333333')
+
+    await clearAccountBinding()
+    const profile = await getOrCreateLocalProfile()
+    await expect(getAccountBinding()).resolves.toBeNull()
+    await expect(getCurrentOwnerId()).resolves.toBe(profile.localProfileId)
   })
 })

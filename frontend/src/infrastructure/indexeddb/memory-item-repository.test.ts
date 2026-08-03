@@ -154,4 +154,24 @@ describe('memory-item-repository', () => {
     ])
     expect(updated).toBe(1)
   })
+
+  it('remapOwnerId 迁移归属并保留 sourceLocalProfileId', async () => {
+    const created = await memoryItemRepository.createBookmark({
+      payload: { title: 'Remap', url: 'https://remap.example.com' },
+      now: () => '2026-08-03T06:00:00.000Z'
+    })
+    expect(created.ownerId).toBe(localProfile.localProfileId)
+
+    const accountId = '22222222-2222-4222-8222-222222222222'
+    const remapped = await memoryItemRepository.remapOwnerId(localProfile.localProfileId, accountId)
+    expect(remapped).toBe(1)
+
+    const underOld = await memoryItemRepository.listAllByOwnerId(localProfile.localProfileId)
+    expect(underOld).toHaveLength(0)
+
+    const underNew = await memoryItemRepository.listAllByOwnerId(accountId)
+    expect(underNew).toHaveLength(1)
+    expect(underNew[0]?.id).toBe(created.id)
+    expect(underNew[0]?.sourceLocalProfileId).toBe(localProfile.localProfileId)
+  })
 })

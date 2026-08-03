@@ -10,6 +10,7 @@ import {
 } from '@/core/identity/local-profile'
 import {
   readChromeStorageLocal,
+  removeChromeStorageLocal,
   writeChromeStorageLocal
 } from '@/infrastructure/storage/chrome-storage-local'
 
@@ -31,6 +32,20 @@ export async function getOrCreateLocalProfile(): Promise<LocalProfile> {
 /** 读取账号绑定；未登录时返回 null。 */
 export async function getAccountBinding(): Promise<AccountBinding | null> {
   return readChromeStorageLocal(ACCOUNT_BINDING_STORAGE_KEY, AccountBindingSchema)
+}
+
+/**
+ * 写入账号绑定（登录成功后）。
+ * 不触发云同步；同步由 sync_prefs 与用户显式操作控制。
+ */
+export async function setAccountBinding(binding: AccountBinding): Promise<void> {
+  const parsed = AccountBindingSchema.parse(binding)
+  await writeChromeStorageLocal(ACCOUNT_BINDING_STORAGE_KEY, parsed)
+}
+
+/** 清除账号绑定（登出）；默认不删除本地 Memory。 */
+export async function clearAccountBinding(): Promise<void> {
+  await removeChromeStorageLocal(ACCOUNT_BINDING_STORAGE_KEY)
 }
 
 /** 返回当前 MemoryItem 应使用的 ownerId。 */

@@ -591,34 +591,34 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 
 ## 1. 现状 vs 目标（Normative）
 
-| 能力                             | 状态                 | 说明                                                                                   |
-| -------------------------------- | -------------------- | -------------------------------------------------------------------------------------- |
-| Popup 对话式找回                 | 目标 · 当前主方向    | 统一为对话式 Recall：高置信给单一主答案，低置信给排序候选，并自然承接多轮补充线索      |
-| 右键保存选区                     | 已上线               | Text Excerpt；非书签的主动 Capture                                                     |
-| 划词保存浮层                     | 已上线               | Content Script；可直存或「添加备注」后写入 `clues.note`；Settings 可关；默认开         |
-| 书签/摘录事后备注                | 已上线               | `UPDATE_MEMORY_NOTE`；书签树编辑；仅本地 `clues.note`，不同步 Chrome                   |
-| Chrome 书签导入 + 增量 sync      | 已上线               | 书签唯一写入主路径；原生加书签 → onCreated 同步；upsert 保留 note                      |
-| LocalProfile / ownerId           | 已上线               | 未登录可用                                                                             |
-| Settings                         | 已上线（最小）       | `options_ui`；快捷键查看+跳转原生改键页；隐私/同步/AI/账户仅标注未上线                 |
-| Offscreen                        | 占位                 | 预留 embedding                                                                         |
-| Omnibox 找回                     | 已上线               | 关键词 `yi`；共用 `recallService`；单次无会话                                          |
-| 快捷键找回                       | 已上线               | `_execute_action`（默认 `Alt+Shift+Y`）开 Popup                                        |
-| 快捷键打开记忆库                 | 已上线               | `open_library`（默认 `Alt+Shift+L`）                                                   |
-| 快捷键打开设置                   | 已上线               | `open_settings`（无默认建议键；Chrome 最多 4 个 suggested_key，可自绑）                |
-| 快捷键保存选中文字               | 已上线               | `save_selection`（默认 `Alt+Shift+E`）→ 划词脚本直存；`captureEntry=shortcut`          |
-| 快捷键选中文字并备注             | 已上线               | `save_selection_with_note`（默认 `Alt+Shift+N`）→ 打开划词备注面板                     |
-| 手动「保存当前页」               | 不做                 | 与 Chrome 原生书签重复；已移除 UI/快捷键/消息                                          |
-| 结果线索解释强化                 | 已上线               | 主因「因字段含「token」」+ 次要字段；Top Pick 线索回显                                 |
-| Popup 空状态分层                 | 已上线               | 空库 / 有库 idle 与 no_match 分文案；有库可「缩短后再试」                              |
-| 摘录详情落地页                   | 已上线               | `detail.html?id=`；摘录打开详情；书签仍直开 URL；`GET_MEMORY_ITEM`                     |
-| 记忆库轻浏览                     | 已上线               | `library.html`；**默认摘录**；书签=Chrome 目录只读树；摘录=时间列表；`?type=` 刷新保留 |
-| 摘录删除                         | 已上线               | 软删 `deletedAt`；记忆库列表 / 详情页；`DELETE_MEMORY_ITEM`；书签不经此删              |
-| Need A Clue / 否定反馈           | 已上线（过渡）       | 现为最小切片；后续并入对话式 Recall 主流程，不再以“一次追问”心智对外表达               |
-| 多源线索与权重（§7.1）           | 目标 · 按模块渐进    | 收集要宽、采信要窄；环境为弱上下文；产品内→选区→芯片→重排；未上线不得暗示可用          |
-| Hybrid Filter                    | 目标 · Phase B / Pro | 非 Free；倒排/embedding 仍未开                                                         |
-| 云同步 / 账号 UI                 | 目标 · Phase C       | AccountBinding 已预留                                                                  |
-| 分享                             | 目标 · Phase C       |                                                                                        |
-| 轻管理余项（标签/失效链接/统计） | 目标 · Phase D       | 摘录删除已提前上线；书签仍只经 Chrome 同步软删                                         |
+| 能力                             | 状态                    | 说明                                                                                   |
+| -------------------------------- | ----------------------- | -------------------------------------------------------------------------------------- |
+| Popup 对话式找回                 | 目标 · 当前主方向       | 统一为对话式 Recall：高置信给单一主答案，低置信给排序候选，并自然承接多轮补充线索      |
+| 右键保存选区                     | 已上线                  | Text Excerpt；非书签的主动 Capture                                                     |
+| 划词保存浮层                     | 已上线                  | Content Script；可直存或「添加备注」后写入 `clues.note`；Settings 可关；默认开         |
+| 书签/摘录事后备注                | 已上线                  | `UPDATE_MEMORY_NOTE`；书签树编辑；仅本地 `clues.note`，不同步 Chrome                   |
+| Chrome 书签导入 + 增量 sync      | 已上线                  | 书签唯一写入主路径；原生加书签 → onCreated 同步；upsert 保留 note                      |
+| LocalProfile / ownerId           | 已上线                  | 未登录可用；登录后 `ownerId=accountId`                                                 |
+| Settings                         | 已上线（最小+账户同步） | `options_ui`；快捷键；账户登录 + 云同步开关（默认关）；隐私/AI 仍占位                  |
+| Offscreen                        | 占位                    | 预留 embedding                                                                         |
+| Omnibox 找回                     | 已上线                  | 关键词 `yi`；共用 `recallService`；单次无会话                                          |
+| 快捷键找回                       | 已上线                  | `_execute_action`（默认 `Alt+Shift+Y`）开 Popup                                        |
+| 快捷键打开记忆库                 | 已上线                  | `open_library`（默认 `Alt+Shift+L`）                                                   |
+| 快捷键打开设置                   | 已上线                  | `open_settings`（无默认建议键；Chrome 最多 4 个 suggested_key，可自绑）                |
+| 快捷键保存选中文字               | 已上线                  | `save_selection`（默认 `Alt+Shift+E`）→ 划词脚本直存；`captureEntry=shortcut`          |
+| 快捷键选中文字并备注             | 已上线                  | `save_selection_with_note`（默认 `Alt+Shift+N`）→ 打开划词备注面板                     |
+| 手动「保存当前页」               | 不做                    | 与 Chrome 原生书签重复；已移除 UI/快捷键/消息                                          |
+| 结果线索解释强化                 | 已上线                  | 主因「因字段含「token」」+ 次要字段；Top Pick 线索回显                                 |
+| Popup 空状态分层                 | 已上线                  | 空库 / 有库 idle 与 no_match 分文案；有库可「缩短后再试」                              |
+| 摘录详情落地页                   | 已上线                  | `detail.html?id=`；摘录打开详情；书签仍直开 URL；`GET_MEMORY_ITEM`                     |
+| 记忆库轻浏览                     | 已上线                  | `library.html`；**默认摘录**；书签=Chrome 目录只读树；摘录=时间列表；`?type=` 刷新保留 |
+| 摘录删除                         | 已上线                  | 软删 `deletedAt`；记忆库列表 / 详情页；`DELETE_MEMORY_ITEM`；书签不经此删              |
+| Need A Clue / 否定反馈           | 已上线（过渡）          | 现为最小切片；后续并入对话式 Recall 主流程，不再以“一次追问”心智对外表达               |
+| 多源线索与权重（§7.1）           | 目标 · 按模块渐进       | 收集要宽、采信要窄；环境为弱上下文；产品内→选区→芯片→重排；未上线不得暗示可用          |
+| Hybrid Filter                    | 目标 · Phase B / Pro    | 非 Free；倒排/embedding 仍未开                                                         |
+| 云同步 / 账号 UI                 | 已上线（Phase C 切片）  | Supabase `memory_items`；Worker `/api/memory/sync/*`；冲突仅整侧 A/B；登录≠自动上传    |
+| 分享                             | 目标 · Phase C          |                                                                                        |
+| 轻管理余项（标签/失效链接/统计） | 目标 · Phase D          | 摘录删除已提前上线；书签仍只经 Chrome 同步软删                                         |
 
 ### 1.1 「已上线」验证归属（Normative）
 
@@ -811,21 +811,21 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 - **P0 / Phase A**：线索解释/空状态、摘录详情、记忆库轻浏览 **已完成**；下一项用户指定
 - **P1 / Phase B**：索引、embedding、Hybrid、反馈、Need A Clue
-- **P2 / Phase C**：分享、云同步、账户 UI；Settings 隐私/同步/AI/账户分区落地
+- **P2 / Phase C**：账户 UI + 云同步铺路 **已完成切片**（登录≠同步、整侧 A/B）；分享与隐私全文同意流仍待；增量定时 sync 后续
 - **P3 / Phase D**：标签/失效链接/统计等轻管理余项（摘录删除已提前上线）
 
 **禁止重做**：双面板重组、复杂拖拽整理、AI 聚类主卖点、大规模书签树编辑。
 
 ### 5.5 Settings IA（最小已上线）
 
-| 分区   | 状态   | 说明                                               |
-| ------ | ------ | -------------------------------------------------- |
-| 保存   | 已上线 | 划词浮层开关（默认开）                             |
-| 快捷键 | 已上线 | 展示绑定；改键跳转 `chrome://extensions/shortcuts` |
-| 隐私   | 未上线 | 仅占位文案，不暗示可用                             |
-| 同步   | 未上线 | 同上                                               |
-| AI     | 未上线 | 同上                                               |
-| 账户   | 未上线 | 同上                                               |
+| 分区   | 状态   | 说明                                                    |
+| ------ | ------ | ------------------------------------------------------- |
+| 保存   | 已上线 | 划词浮层开关（默认开）                                  |
+| 快捷键 | 已上线 | 展示绑定；改键跳转 `chrome://extensions/shortcuts`      |
+| 账户   | 已上线 | 顶栏头像入口：官网登录 / 账户页；设置页不再提供登录退出 |
+| 同步   | 已上线 | 默认关；开同步后空侧自动对齐，两边都有则选 A/B          |
+| 隐私   | 未上线 | 仅占位文案，不暗示可用                                  |
+| AI     | 未上线 | 同上                                                    |
 
 ### 5.6 扩展入口
 
@@ -856,7 +856,8 @@ Chrome API / 选区
 - UI 访问 Background：**仅** messaging client。
 - 导入 = 核心业务（真实进度）。embedding = 辅助（Offscreen/队列，不阻塞关键词 Recall）。
 - 目标规模指导：2 万 MemoryItem；当前全量扫描上限约 10000；倒排/向量索引仍属 Phase B 余项。
-- 长期：Cloud Memory DB 为云端事实源；本地 IndexedDB 变缓存——**不提前重写本地链路**。
+- 长期：Cloud Memory DB（当前实现为 **Supabase `memory_items`**）为云端事实源；本地 IndexedDB 变缓存——**不提前重写本地日常读写链路**。
+- Phase C 切片：扩展经 Supabase Auth 登录写入 `AccountBinding`；同步默认关；经 Worker `/api/memory/sync/*` push/pull/replace；冲突仅整侧覆盖（本机为准 / 云端为准）。
 - **禁止回潮**：旧管理页/侧边栏/书签树编辑/AI 自动整理进 build 或 manifest。
 
 新功能顺序：契约 → repository → Background 消息 → Recall/Filter → UI。
@@ -926,7 +927,7 @@ Chrome API / 选区
 | ----- | ----------------------------------------------------------------------------------------------------- |
 | **A** | 线索解释/空状态、摘录详情、记忆库轻浏览 **已完成**；其余按用户指定                                    |
 | B     | Hybrid/embedding/倒排索引；Need A Clue + 否定反馈 **最小切片已上线**；**§7.1 多源线索加权按模块渐进** |
-| C     | Sync、账户 UI、隐私控制落地、分享                                                                     |
+| C     | 账户 UI + 云同步铺路 **切片已上线**（登录≠同步、整侧 A/B）；隐私控制落地、分享、增量定时 sync 仍待    |
 | D     | 轻管理余项（标签/失效链接/统计；摘录删除已提前）                                                      |
 
 ---
@@ -994,6 +995,8 @@ Chrome API / 选区
 
 | 日期       | 变更                                                                                                               |
 | ---------- | ------------------------------------------------------------------------------------------------------------------ |
+| 2026-08-03 | 账户登录改官网主路径：扩展打开官网登录，session 经 external handoff 回传；扩展不做 OAuth 弹窗                      |
+| 2026-08-03 | Phase C 切片：账户登录（Supabase Auth）+ `memory_items` 云库 + Worker sync；登录≠同步；冲突仅 A/B                  |
 | 2026-08-03 | Capture 新建后异步稀疏 LLM enrichment（`scheduleAsyncMemoryLlmEnrichment`；bulk 不烧配额；失败降级规则）           |
 | 2026-08-03 | LLM enrichment 插座：`MemoryEnrichmentProposal` + `mergeMemoryClueEnrichment` + `POST /api/ai/enrichment/complete` |
 | 2026-08-02 | Capture enrichment v3：`video` 对象类型；YouTube/Bilibili≠song；主题/实体规则（WWII·城市经济）；回填 v3            |
