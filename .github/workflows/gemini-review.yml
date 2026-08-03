@@ -19,7 +19,8 @@ defaults:
 jobs:
   review:
     runs-on: 'ubuntu-latest'
-    timeout-minutes: 7
+    # code-review 扩展 + MCP 较慢；7 分钟易被取消（operation was canceled）
+    timeout-minutes: 20
     permissions:
       contents: 'read'
       id-token: 'write'
