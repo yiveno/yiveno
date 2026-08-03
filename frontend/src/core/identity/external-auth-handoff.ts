@@ -28,7 +28,5 @@ export const ExternalAuthHandoffMessageSchema = z.union([
   ExternalAuthSignOutHandoffSchema
 ])
 
-export type ExternalAuthHandoffMessage = z.infer<typeof ExternalAuthHandoffMessageSchema>
-
 /** 扩展处理 handoff 后的响应（ok / 错误码）。 */
 export type ExternalAuthHandoffResponse = { ok: true } | { ok: false; error: string }
