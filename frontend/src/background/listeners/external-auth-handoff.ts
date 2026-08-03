@@ -1,13 +1,18 @@
 /**
- * 接收官网回传的 Supabase session，写入本地 binding（不同步记忆）。
+ * 接收官网回传的登录 / 退出，写入或清理本地 binding（退出默认保留 Memory）。
  */
 
 import {
-  ExternalAuthSessionHandoffSchema,
+  ExternalAuthHandoffMessageSchema,
   type ExternalAuthHandoffResponse
 } from '@/core/identity/external-auth-handoff'
-import { setAuthSession } from '@/infrastructure/identity/auth-session-service'
-import { setAccountBinding } from '@/infrastructure/identity/local-profile-service'
+import { setAuthSession, clearAuthSession } from '@/infrastructure/identity/auth-session-service'
+import {
+  setAccountBinding,
+  clearAccountBinding
+} from '@/infrastructure/identity/local-profile-service'
+import { patchSyncPrefs } from '@/infrastructure/identity/sync-prefs-service'
+import { clearAuthValidationTimestamp } from '@/infrastructure/auth/auth-session-revalidate'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import { logger } from '@/infrastructure/logging/logger'
 
@@ -32,15 +37,15 @@ function isAllowedExternalSender(url: string | undefined): boolean {
 }
 
 /**
- * 应用官网 handoff 的 session。
- * 成功后 Settings 可通过 GET_AUTH_STATE 看到已登录。
+ * 应用官网登录 handoff 的 session。
+ * 成功后 Settings / 顶栏可通过 GET_AUTH_STATE 看到已登录。
  */
 export async function applyExternalAuthSessionHandoff(
   message: unknown
 ): Promise<ExternalAuthHandoffResponse> {
   const startedAt = flowStart('Auth', '官网 session handoff')
-  const parsed = ExternalAuthSessionHandoffSchema.safeParse(message)
-  if (!parsed.success) {
+  const parsed = ExternalAuthHandoffMessageSchema.safeParse(message)
+  if (!parsed.success || parsed.data.type !== 'YIVENO_AUTH_SESSION_HANDOFF') {
     flowFail('Auth', '官网 session handoff', startedAt, new Error('invalid_handoff_payload'))
     return { ok: false, error: 'invalid_handoff_payload' }
   }
@@ -52,6 +57,7 @@ export async function applyExternalAuthSessionHandoff(
       accountId: session.userId,
       boundAt: new Date().toISOString()
     })
+    await clearAuthValidationTimestamp()
     flowOk('Auth', '官网 session handoff', startedAt, { userId: session.userId })
     return { ok: true }
   } catch (error) {
@@ -61,6 +67,51 @@ export async function applyExternalAuthSessionHandoff(
       error: error instanceof Error ? error.message : 'handoff_failed'
     }
   }
+}
+
+/**
+ * 官网已退出：扩展清 session/binding，关同步开关，保留本地 Memory（等同 keep_local）。
+ */
+export async function applyExternalAuthSignOutHandoff(
+  message: unknown
+): Promise<ExternalAuthHandoffResponse> {
+  const startedAt = flowStart('Auth', '官网 sign-out handoff')
+  const parsed = ExternalAuthHandoffMessageSchema.safeParse(message)
+  if (!parsed.success || parsed.data.type !== 'YIVENO_AUTH_SIGN_OUT_HANDOFF') {
+    flowFail('Auth', '官网 sign-out handoff', startedAt, new Error('invalid_sign_out_handoff'))
+    return { ok: false, error: 'invalid_sign_out_handoff' }
+  }
+
+  try {
+    await clearAuthSession()
+    await clearAccountBinding()
+    await patchSyncPrefs({ enabled: false })
+    await clearAuthValidationTimestamp()
+    flowOk('Auth', '官网 sign-out handoff', startedAt, {
+      reason: parsed.data.payload?.reason ?? 'website_sign_out'
+    })
+    return { ok: true }
+  } catch (error) {
+    flowFail('Auth', '官网 sign-out handoff', startedAt, error)
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : 'sign_out_handoff_failed'
+    }
+  }
+}
+
+/** 按 type 分发官网 external 消息。 */
+export async function applyExternalAuthHandoff(
+  message: unknown
+): Promise<ExternalAuthHandoffResponse> {
+  const parsed = ExternalAuthHandoffMessageSchema.safeParse(message)
+  if (!parsed.success) {
+    return { ok: false, error: 'invalid_handoff_payload' }
+  }
+  if (parsed.data.type === 'YIVENO_AUTH_SIGN_OUT_HANDOFF') {
+    return applyExternalAuthSignOutHandoff(message)
+  }
+  return applyExternalAuthSessionHandoff(message)
 }
 
 /** 注册 chrome.runtime.onMessageExternal。 */
@@ -74,7 +125,7 @@ export function registerExternalAuthHandoffListener(): void {
       return false
     }
 
-    void applyExternalAuthSessionHandoff(message).then(sendResponse)
+    void applyExternalAuthHandoff(message).then(sendResponse)
     return true
   })
 }

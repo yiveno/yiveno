@@ -73,7 +73,7 @@ async function dispatchBackgroundMessage(
     case 'AUTH_SIGN_IN':
       return handleAuthSignIn()
     case 'AUTH_SIGN_OUT':
-      return handleAuthSignOut()
+      return handleAuthSignOut(message.payload.mode)
     case 'GET_AUTH_STATE':
       return handleGetAuthState()
     case 'GET_SYNC_STATUS':

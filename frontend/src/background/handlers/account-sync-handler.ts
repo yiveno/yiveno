@@ -5,6 +5,7 @@
 
 import type {
   AuthSignInResponse,
+  AuthSignOutMode,
   AuthSignOutResponse,
   GetAuthStateResponse,
   GetSyncStatusResponse,
@@ -14,6 +15,10 @@ import type {
 } from '@/core/messaging/account-sync-messages'
 import { MemoryItemSchema, type MemoryItem } from '@/core/memory/memory-item'
 import { refreshAuthSession } from '@/infrastructure/auth/extension-oauth'
+import {
+  clearAuthValidationTimestamp,
+  revalidateAuthSession
+} from '@/infrastructure/auth/auth-session-revalidate'
 import {
   clearAuthSession,
   getAuthSession,
@@ -28,7 +33,12 @@ import {
 import { getSyncPrefs, patchSyncPrefs } from '@/infrastructure/identity/sync-prefs-service'
 import { memoryItemRepository } from '@/infrastructure/indexeddb/memory-item-repository'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
-import { getWebsiteBaseUrl, openWebsiteLoginPage } from '@/infrastructure/browser/website-page'
+import { logger } from '@/infrastructure/logging/logger'
+import {
+  getWebsiteBaseUrl,
+  openWebsiteLoginPage,
+  openWebsiteLogoutFromExtension
+} from '@/infrastructure/browser/website-page'
 import {
   fetchRemoteSyncStatus,
   pullRemoteMemoryItems,
@@ -111,15 +121,83 @@ export async function handleAuthSignIn(): Promise<AuthSignInResponse> {
   }
 }
 
-/** AUTH_SIGN_OUT — 不断开本地 Memory。 */
-export async function handleAuthSignOut(): Promise<AuthSignOutResponse> {
-  const startedAt = flowStart('Auth', 'AUTH_SIGN_OUT')
+/**
+ * 结束登录态：清 session / binding，并关闭同步开关。
+ * 不修改 IndexedDB（由调用方按 mode 先行处理）。
+ */
+async function finishSignOutSession(): Promise<void> {
+  await clearAuthSession()
+  await clearAccountBinding()
+  await patchSyncPrefs({ enabled: false })
+  await clearAuthValidationTimestamp()
+  // 对称清官网 session；失败不回滚扩展已退出
   try {
-    await clearAuthSession()
-    await clearAccountBinding()
-    await patchSyncPrefs({ enabled: false })
-    flowOk('Auth', 'AUTH_SIGN_OUT', startedAt)
-    return { ok: true }
+    await openWebsiteLogoutFromExtension()
+  } catch (error) {
+    logger.warn('Auth', '扩展退出后打开官网 /logout 失败', error)
+  }
+}
+
+/**
+ * AUTH_SIGN_OUT — 按 mode 决定是否清理本机当前账号 Memory。
+ * - keep_local：仅退登录，保留 accountId 桶（默认）
+ * - clear_local：删除本机当前 accountId 桶后退出（不动 localProfileId）
+ * - sync_then_clear_local：remap 后若有数据则覆盖云端，再清账号桶并退出；本机无数据则不写空云端
+ */
+export async function handleAuthSignOut(mode: AuthSignOutMode): Promise<AuthSignOutResponse> {
+  const startedAt = flowStart('Auth', 'AUTH_SIGN_OUT', { mode })
+  try {
+    const binding = await getAccountBinding()
+    if (!binding) {
+      await finishSignOutSession()
+      flowOk('Auth', 'AUTH_SIGN_OUT', startedAt, { mode, clearedCount: 0, signedIn: false })
+      return { ok: true, mode, clearedCount: 0, syncedCount: 0 }
+    }
+
+    let clearedCount = 0
+    let syncedCount = 0
+
+    if (mode === 'sync_then_clear_local') {
+      const profile = await getOrCreateLocalProfile()
+      await memoryItemRepository.remapOwnerId(profile.localProfileId, binding.accountId)
+      const items = await memoryItemRepository.listAllByOwnerId(binding.accountId, {
+        includeDeleted: true
+      })
+      if (items.length > 0) {
+        const token = await requireAccessToken()
+        if (!token) {
+          flowFail('Auth', 'AUTH_SIGN_OUT', startedAt, new Error('SYNC_NOT_AUTHENTICATED'))
+          return { ok: false, errorCode: 'SYNC_NOT_AUTHENTICATED' }
+        }
+        try {
+          const result = await replaceRemoteWithLocalItems(token.accessToken, items)
+          syncedCount = result.written
+          await patchSyncPrefs({
+            enabled: true,
+            lastPushedAt: new Date().toISOString()
+          })
+        } catch (error) {
+          flowFail('Auth', 'AUTH_SIGN_OUT', startedAt, error)
+          return {
+            ok: false,
+            errorCode: 'SYNC_REPLACE_LOCAL_FAILED',
+            ...(error instanceof Error ? { error: error.message } : {})
+          }
+        }
+      }
+      clearedCount = items.length
+      await memoryItemRepository.replaceOwnerItems(binding.accountId, [])
+    } else if (mode === 'clear_local') {
+      const items = await memoryItemRepository.listAllByOwnerId(binding.accountId, {
+        includeDeleted: true
+      })
+      clearedCount = items.length
+      await memoryItemRepository.replaceOwnerItems(binding.accountId, [])
+    }
+
+    await finishSignOutSession()
+    flowOk('Auth', 'AUTH_SIGN_OUT', startedAt, { mode, clearedCount, syncedCount })
+    return { ok: true, mode, clearedCount, syncedCount }
   } catch (error) {
     flowFail('Auth', 'AUTH_SIGN_OUT', startedAt, error)
     return {
@@ -130,25 +208,56 @@ export async function handleAuthSignOut(): Promise<AuthSignOutResponse> {
   }
 }
 
-/** GET_AUTH_STATE — 只读本地 session，不做网络 getUser（避免 reload/打开 Popup 时与 storage 监听形成尖峰）。 */
+/**
+ * GET_AUTH_STATE — 读本地 session；节流后用 refresh 探测是否仍有效（官网退出兜底）。
+ * 失效则按 keep_local 清登录态（保留 Memory）。
+ */
 export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
   const startedAt = flowStart('Auth', 'GET_AUTH_STATE')
   try {
-    const [binding, session, syncPrefs] = await Promise.all([
-      getAccountBinding(),
-      getAuthSession(),
-      getSyncPrefs()
-    ])
+    const [binding, syncPrefs] = await Promise.all([getAccountBinding(), getSyncPrefs()])
+    let session = await getAuthSession()
+
+    if (binding && session) {
+      const revalidated = await revalidateAuthSession(session)
+      if (revalidated.status === 'valid') {
+        if (
+          revalidated.session.accessToken !== session.accessToken ||
+          revalidated.session.refreshToken !== session.refreshToken ||
+          revalidated.session.avatarUrl !== session.avatarUrl
+        ) {
+          await setAuthSession(revalidated.session)
+        }
+        session = revalidated.session
+      } else if (revalidated.status === 'invalid') {
+        await clearAuthSession()
+        await clearAccountBinding()
+        await patchSyncPrefs({ enabled: false })
+        session = null
+        flowOk('Auth', 'GET_AUTH_STATE', startedAt, {
+          signedIn: false,
+          reason: 'revalidate_invalid'
+        })
+        return {
+          ok: true,
+          signedIn: false,
+          binding: null,
+          syncPrefs: await getSyncPrefs()
+        }
+      }
+    }
+
+    const stillBound = await getAccountBinding()
     flowOk('Auth', 'GET_AUTH_STATE', startedAt, {
-      signedIn: Boolean(binding),
+      signedIn: Boolean(stillBound && session),
       syncEnabled: syncPrefs.enabled,
       hasAvatar: Boolean(session?.avatarUrl)
     })
     return {
       ok: true,
-      signedIn: Boolean(binding && session),
-      binding,
-      syncPrefs,
+      signedIn: Boolean(stillBound && session),
+      binding: stillBound,
+      syncPrefs: stillBound ? syncPrefs : await getSyncPrefs(),
       ...(session?.email ? { email: session.email } : {}),
       ...(session?.avatarUrl ? { avatarUrl: session.avatarUrl } : {}),
       ...(session?.displayName ? { displayName: session.displayName } : {})
@@ -173,15 +282,18 @@ export async function handleGetSyncStatus(): Promise<GetSyncStatusResponse> {
       getOrCreateLocalProfile()
     ])
 
-    const localOwnerCandidates = binding
-      ? [binding.accountId, profile.localProfileId]
-      : [profile.localProfileId]
-
-    let localCount = 0
-    for (const ownerId of new Set(localOwnerCandidates)) {
-      const items = await memoryItemRepository.listAllByOwnerId(ownerId)
-      localCount += items.length
-    }
+    const accountOwnerCount = binding
+      ? (await memoryItemRepository.listAllByOwnerId(binding.accountId)).length
+      : 0
+    const localProfileOwnerCount = (
+      await memoryItemRepository.listAllByOwnerId(profile.localProfileId)
+    ).length
+    const localCount =
+      binding && binding.accountId !== profile.localProfileId
+        ? accountOwnerCount + localProfileOwnerCount
+        : binding
+          ? accountOwnerCount
+          : localProfileOwnerCount
 
     if (!binding) {
       flowOk('MemorySync', 'GET_SYNC_STATUS', startedAt, {
@@ -193,6 +305,8 @@ export async function handleGetSyncStatus(): Promise<GetSyncStatusResponse> {
         signedIn: false,
         syncEnabled: syncPrefs.enabled,
         localCount,
+        accountOwnerCount: 0,
+        localProfileOwnerCount,
         remoteCount: 0,
         latestRemoteUpdatedAt: null,
         needsConflictChoice: false
@@ -218,6 +332,8 @@ export async function handleGetSyncStatus(): Promise<GetSyncStatusResponse> {
       signedIn: true,
       syncEnabled: syncPrefs.enabled,
       localCount,
+      accountOwnerCount,
+      localProfileOwnerCount,
       remoteCount: remote.remoteCount,
       latestRemoteUpdatedAt: remote.latestUpdatedAt,
       needsConflictChoice

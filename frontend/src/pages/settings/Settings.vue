@@ -7,6 +7,7 @@ import {
 } from '@/core/commands/command-display'
 import type { ExtensionCommandInfo } from '@/core/messaging/commands-messages'
 import {
+  authSignOut,
   fetchAuthState,
   fetchExtensionCommands,
   fetchSyncStatus,
@@ -17,6 +18,7 @@ import {
   syncReplaceWithRemote,
   updateUserSettings
 } from '@/infrastructure/messaging/background-client'
+import type { AuthSignOutMode } from '@/core/messaging/account-sync-messages'
 import {
   tAccountSyncError,
   tCommandsError,
@@ -45,14 +47,45 @@ const settingsError = ref('')
 const savingSelectionToolbar = ref(false)
 
 const signedIn = ref(false)
+const accountEmail = ref('')
 
 const syncEnabled = ref(false)
 const syncLocalCount = ref(0)
+const syncAccountOwnerCount = ref(0)
+const syncLocalProfileOwnerCount = ref(0)
 const syncRemoteCount = ref(0)
 const needsConflictChoice = ref(false)
 const savingSync = ref(false)
 const syncWorking = ref(false)
 const syncError = ref('')
+
+const signOutDialogOpen = ref(false)
+const signingOut = ref(false)
+const signOutError = ref('')
+/** 最近一次成功 push / pull（用于判断是否已有云端备份）。 */
+const syncLastPushedAt = ref<string | undefined>(undefined)
+const syncLastPulledAt = ref<string | undefined>(undefined)
+
+/** 退出相关：本机当前账号桶 + 未 remap 的本地档。 */
+const signOutLocalCount = computed(
+  () => syncAccountOwnerCount.value + syncLocalProfileOwnerCount.value
+)
+
+/**
+ * 是否认为本地已有云端备份（启发式，无逐条 dirty 位）。
+ * 云端条数 > 0 且曾成功 push 或 pull。
+ */
+const hasCloudBackupForSignOut = computed(
+  () => syncRemoteCount.value > 0 && Boolean(syncLastPushedAt.value || syncLastPulledAt.value)
+)
+
+/** 规则 3：本地有数且尚无可靠云端备份 → 需要「先同步再清」。 */
+const showSignOutSyncThenClear = computed(
+  () => signOutLocalCount.value > 0 && !hasCloudBackupForSignOut.value
+)
+
+/** 规则 2/3：本地有数才显示「清除本机」。 */
+const showSignOutClearLocal = computed(() => signOutLocalCount.value > 0)
 
 const commandRows = computed(() =>
   commands.value.map(command => ({
@@ -168,6 +201,8 @@ async function refreshSyncStatus() {
   }
   syncEnabled.value = response.syncEnabled
   syncLocalCount.value = response.localCount
+  syncAccountOwnerCount.value = response.accountOwnerCount
+  syncLocalProfileOwnerCount.value = response.localProfileOwnerCount
   syncRemoteCount.value = response.remoteCount
   needsConflictChoice.value = response.needsConflictChoice
 }
@@ -183,14 +218,21 @@ async function loadSyncContext() {
     }
 
     signedIn.value = response.signedIn
+    accountEmail.value = response.email?.trim() ?? ''
     syncEnabled.value = response.syncPrefs.enabled
+    syncLastPushedAt.value = response.syncPrefs.lastPushedAt
+    syncLastPulledAt.value = response.syncPrefs.lastPulledAt
 
     if (response.signedIn) {
       await refreshSyncStatus()
     } else {
       syncLocalCount.value = 0
+      syncAccountOwnerCount.value = 0
+      syncLocalProfileOwnerCount.value = 0
       syncRemoteCount.value = 0
       needsConflictChoice.value = false
+      syncLastPushedAt.value = undefined
+      syncLastPulledAt.value = undefined
     }
   } catch {
     syncError.value = t('settings_error_auth_state')
@@ -269,6 +311,66 @@ async function handleReplaceWithRemote() {
     syncError.value = t('settings_error_sync_replace_remote')
   } finally {
     syncWorking.value = false
+  }
+}
+
+async function openSignOutDialog() {
+  signOutError.value = ''
+  if (!signedIn.value) {
+    return
+  }
+  await loadSyncContext()
+  // 规则 1：本机当前账号与本地档皆空 → 不弹窗，直接仅退出（并清官网态）
+  if (signOutLocalCount.value === 0) {
+    await confirmSignOut('keep_local')
+    return
+  }
+  signOutDialogOpen.value = true
+}
+
+function closeSignOutDialog() {
+  if (signingOut.value) {
+    return
+  }
+  signOutDialogOpen.value = false
+  signOutError.value = ''
+}
+
+async function confirmSignOut(mode: AuthSignOutMode) {
+  if (signingOut.value) {
+    return
+  }
+  if (mode === 'sync_then_clear_local' && !showSignOutSyncThenClear.value) {
+    signOutError.value = t('settings_sign_out_sync_then_clear_disabled')
+    return
+  }
+  if (mode === 'clear_local' && !showSignOutClearLocal.value) {
+    return
+  }
+
+  signingOut.value = true
+  signOutError.value = ''
+  try {
+    const response = await authSignOut(mode)
+    if (!response.ok) {
+      signOutError.value = tAccountSyncError(response.errorCode)
+      return
+    }
+    signOutDialogOpen.value = false
+    signedIn.value = false
+    accountEmail.value = ''
+    syncEnabled.value = false
+    syncLocalCount.value = 0
+    syncAccountOwnerCount.value = 0
+    syncLocalProfileOwnerCount.value = 0
+    syncRemoteCount.value = 0
+    needsConflictChoice.value = false
+    syncLastPushedAt.value = undefined
+    syncLastPulledAt.value = undefined
+  } catch {
+    signOutError.value = t('settings_error_auth_sign_out')
+  } finally {
+    signingOut.value = false
   }
 }
 
@@ -400,6 +502,17 @@ onUnmounted(() => {
       </p>
       <p v-else class="settings-status">{{ t('settings_sync_sign_in_required') }}</p>
 
+      <div v-if="signedIn" class="settings-actions">
+        <md-outlined-button
+          type="button"
+          :disabled="signingOut || syncWorking || savingSync"
+          :title="t('settings_account_sign_out')"
+          @click="openSignOutDialog"
+        >
+          {{ signingOut ? t('settings_account_signing_out') : t('settings_account_sign_out') }}
+        </md-outlined-button>
+      </div>
+
       <div v-if="needsConflictChoice" class="settings-sync-conflict">
         <p class="settings-toggle-title">{{ t('settings_sync_conflict_title') }}</p>
         <p class="settings-section-copy">{{ t('settings_sync_conflict_copy') }}</p>
@@ -418,6 +531,80 @@ onUnmounted(() => {
       </div>
       <p v-if="syncError" class="settings-error" role="alert">{{ syncError }}</p>
     </section>
+
+    <div
+      v-if="signOutDialogOpen"
+      class="settings-sign-out-backdrop"
+      role="presentation"
+      @click.self="closeSignOutDialog"
+    >
+      <div
+        class="settings-sign-out-dialog"
+        role="dialog"
+        aria-modal="true"
+        :aria-label="t('settings_sign_out_dialog_title')"
+      >
+        <h2 class="settings-sign-out-dialog__title">{{ t('settings_sign_out_dialog_title') }}</h2>
+        <p v-if="accountEmail" class="settings-section-copy">{{ accountEmail }}</p>
+        <p class="settings-section-copy">{{ t('settings_sign_out_dialog_copy') }}</p>
+        <p class="settings-sync-counts">
+          {{
+            t('settings_sign_out_dialog_counts', [
+              String(syncAccountOwnerCount),
+              String(syncLocalProfileOwnerCount),
+              String(syncRemoteCount)
+            ])
+          }}
+        </p>
+
+        <div class="settings-sign-out-options">
+          <md-filled-button
+            type="button"
+            :disabled="signingOut"
+            :title="t('settings_sign_out_keep_local_hint')"
+            @click="confirmSignOut('keep_local')"
+          >
+            {{ t('settings_sign_out_keep_local') }}
+          </md-filled-button>
+          <p class="settings-sign-out-option-hint">{{ t('settings_sign_out_keep_local_hint') }}</p>
+
+          <template v-if="showSignOutClearLocal">
+            <md-outlined-button
+              type="button"
+              :disabled="signingOut"
+              :title="t('settings_sign_out_clear_local_hint')"
+              @click="confirmSignOut('clear_local')"
+            >
+              {{ t('settings_sign_out_clear_local') }}
+            </md-outlined-button>
+            <p class="settings-sign-out-option-hint">
+              {{ t('settings_sign_out_clear_local_hint') }}
+            </p>
+          </template>
+
+          <template v-if="showSignOutSyncThenClear">
+            <md-outlined-button
+              type="button"
+              :disabled="signingOut"
+              :title="t('settings_sign_out_sync_then_clear_hint')"
+              @click="confirmSignOut('sync_then_clear_local')"
+            >
+              {{ t('settings_sign_out_sync_then_clear') }}
+            </md-outlined-button>
+            <p class="settings-sign-out-option-hint">
+              {{ t('settings_sign_out_sync_then_clear_hint') }}
+            </p>
+          </template>
+        </div>
+
+        <div class="settings-actions">
+          <md-text-button type="button" :disabled="signingOut" @click="closeSignOutDialog">
+            {{ t('settings_sign_out_cancel') }}
+          </md-text-button>
+        </div>
+        <p v-if="signOutError" class="settings-error" role="alert">{{ signOutError }}</p>
+      </div>
+    </div>
 
     <section
       class="settings-section settings-section--muted"
@@ -611,6 +798,47 @@ onUnmounted(() => {
   padding-left: 18px;
   font-size: 13px;
   line-height: 1.7;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.settings-sign-out-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: color-mix(in srgb, var(--md-sys-color-scrim, #000) 42%, transparent);
+}
+
+.settings-sign-out-dialog {
+  width: min(100%, 420px);
+  max-height: min(90vh, 640px);
+  overflow: auto;
+  padding: 20px 18px 16px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  background: var(--md-sys-color-surface-container-lowest);
+  box-shadow: var(--md-sys-elevation-level3, 0 8px 24px rgb(0 0 0 / 18%));
+}
+
+.settings-sign-out-dialog__title {
+  margin: 0 0 10px;
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.settings-sign-out-options {
+  display: grid;
+  gap: 6px;
+  margin: 16px 0 12px;
+}
+
+.settings-sign-out-option-hint {
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 1.4;
   color: var(--md-sys-color-on-surface-variant);
 }
 </style>

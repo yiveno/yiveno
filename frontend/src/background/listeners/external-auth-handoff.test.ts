@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { applyExternalAuthSessionHandoff } from '@/background/listeners/external-auth-handoff'
+import {
+  applyExternalAuthHandoff,
+  applyExternalAuthSessionHandoff
+} from '@/background/listeners/external-auth-handoff'
 import { AUTH_SESSION_STORAGE_KEY } from '@/core/identity/auth-session'
 import { ACCOUNT_BINDING_STORAGE_KEY } from '@/core/identity/local-profile'
 
@@ -27,15 +30,20 @@ function createChromeStorageMock(initial: StorageMap = {}) {
       }
     })
   }
-  return { storage: { local }, store }
+  const session = {
+    get: vi.fn(async () => ({})),
+    set: vi.fn(async () => undefined),
+    remove: vi.fn(async () => undefined)
+  }
+  return { storage: { local, session }, store }
 }
 
-describe('applyExternalAuthSessionHandoff', () => {
+describe('external auth handoff', () => {
   beforeEach(() => {
     vi.stubGlobal('chrome', createChromeStorageMock())
   })
 
-  it('合法 handoff 写入 session 与 AccountBinding', async () => {
+  it('合法 session handoff 写入 session 与 AccountBinding', async () => {
     const result = await applyExternalAuthSessionHandoff({
       type: 'YIVENO_AUTH_SESSION_HANDOFF',
       payload: {
@@ -59,8 +67,17 @@ describe('applyExternalAuthSessionHandoff', () => {
     })
   })
 
+  it('sign-out handoff 清登录态', async () => {
+    const result = await applyExternalAuthHandoff({
+      type: 'YIVENO_AUTH_SIGN_OUT_HANDOFF',
+      payload: { reason: 'website_sign_out' }
+    })
+    expect(result).toEqual({ ok: true })
+    expect(chrome.storage.local.remove).toHaveBeenCalled()
+  })
+
   it('非法 payload 返回失败', async () => {
-    const result = await applyExternalAuthSessionHandoff({ type: 'NOPE' })
+    const result = await applyExternalAuthHandoff({ type: 'NOPE' })
     expect(result.ok).toBe(false)
   })
 })

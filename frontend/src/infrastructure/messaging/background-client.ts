@@ -4,6 +4,8 @@ import type {
 } from '@/core/messaging/background-messages'
 import type {
   AuthSignInResponse,
+  AuthSignOutMode,
+  AuthSignOutResponse,
   GetAuthStateResponse,
   GetSyncStatusResponse,
   SetSyncEnabledResponse,
@@ -199,6 +201,15 @@ export async function authSignIn(): Promise<AuthSignInResponse> {
   return sendBackgroundMessage<AuthSignInResponse>({
     scope: 'background',
     type: 'AUTH_SIGN_IN'
+  })
+}
+
+/** 退出登录（须指定对本机该账号 Memory 的处理策略）。 */
+export async function authSignOut(mode: AuthSignOutMode): Promise<AuthSignOutResponse> {
+  return sendBackgroundMessage<AuthSignOutResponse>({
+    scope: 'background',
+    type: 'AUTH_SIGN_OUT',
+    payload: { mode }
   })
 }
 

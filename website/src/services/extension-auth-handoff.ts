@@ -1,10 +1,14 @@
 /**
- * 官网 → Chrome 扩展登录会话回传。
+ * 官网 → Chrome 扩展登录 / 退出会话回传。
  * 依赖扩展 manifest externally_connectable；页面通过 chrome.runtime.sendMessage(extensionId, …)。
  */
 
+/** 本次从扩展打开登录时的临时 connect（OAuth 跳转用 sessionStorage）。 */
 const STORAGE_EXTENSION_ID = 'yiveno_connect_extension_id'
 const STORAGE_CONNECT_FLAG = 'yiveno_connect_extension'
+
+/** 上次成功连接的扩展 id（localStorage，供账户页退出回传）。 */
+const STORAGE_LAST_EXTENSION_ID = 'yiveno_last_extension_id'
 
 export interface ExtensionHandoffSession {
   accessToken: string
@@ -70,6 +74,20 @@ export function getPendingExtensionId(): string | null {
   return sessionStorage.getItem(STORAGE_EXTENSION_ID)
 }
 
+/** 记住成功 handoff 的扩展 id，供日后官网退出回传。 */
+export function rememberConnectedExtensionId(extensionId: string): void {
+  const trimmed = extensionId.trim()
+  if (!trimmed) {
+    return
+  }
+  localStorage.setItem(STORAGE_LAST_EXTENSION_ID, trimmed)
+}
+
+/** 读取上次连接的扩展 id（退出 handoff 用）。 */
+export function getLastConnectedExtensionId(): string | null {
+  return localStorage.getItem(STORAGE_LAST_EXTENSION_ID)
+}
+
 type ChromeRuntimeMessenger = {
   sendMessage: (
     extensionId: string,
@@ -84,28 +102,10 @@ function getChromeRuntime(): ChromeRuntimeMessenger | null {
   return chromeApi?.runtime ?? null
 }
 
-/**
- * 将当前 Supabase session 回传扩展。
- * @returns true 表示扩展确认 ok
- */
-export function handoffSessionToExtension(session: ExtensionHandoffSession): Promise<boolean> {
-  const extensionId = getPendingExtensionId()
+function sendToExtension(extensionId: string, message: unknown): Promise<boolean> {
   const runtime = getChromeRuntime()
-  if (!extensionId || !runtime?.sendMessage) {
+  if (!runtime?.sendMessage) {
     return Promise.resolve(false)
-  }
-
-  const message = {
-    type: 'YIVENO_AUTH_SESSION_HANDOFF',
-    payload: {
-      accessToken: session.accessToken,
-      refreshToken: session.refreshToken,
-      userId: session.userId,
-      ...(session.email ? { email: session.email } : {}),
-      ...(session.expiresAt != null ? { expiresAt: session.expiresAt } : {}),
-      ...(session.avatarUrl ? { avatarUrl: session.avatarUrl } : {}),
-      ...(session.displayName ? { displayName: session.displayName } : {})
-    }
   }
 
   return new Promise(resolve => {
@@ -122,14 +122,59 @@ export function handoffSessionToExtension(session: ExtensionHandoffSession): Pro
           response !== null &&
           'ok' in response &&
           (response as { ok: unknown }).ok === true
-        if (ok) {
-          clearExtensionConnectParams()
-        }
         resolve(ok)
       })
     } catch (error) {
       console.warn('[ExtensionHandoff] sendMessage failed', error)
       resolve(false)
     }
+  })
+}
+
+/**
+ * 将当前 Supabase session 回传扩展。
+ * @returns true 表示扩展确认 ok
+ */
+export function handoffSessionToExtension(session: ExtensionHandoffSession): Promise<boolean> {
+  const extensionId = getPendingExtensionId()
+  if (!extensionId) {
+    return Promise.resolve(false)
+  }
+
+  const message = {
+    type: 'YIVENO_AUTH_SESSION_HANDOFF',
+    payload: {
+      accessToken: session.accessToken,
+      refreshToken: session.refreshToken,
+      userId: session.userId,
+      ...(session.email ? { email: session.email } : {}),
+      ...(session.expiresAt != null ? { expiresAt: session.expiresAt } : {}),
+      ...(session.avatarUrl ? { avatarUrl: session.avatarUrl } : {}),
+      ...(session.displayName ? { displayName: session.displayName } : {})
+    }
+  }
+
+  return sendToExtension(extensionId, message).then(ok => {
+    if (ok) {
+      rememberConnectedExtensionId(extensionId)
+      clearExtensionConnectParams()
+    }
+    return ok
+  })
+}
+
+/**
+ * 官网退出后通知扩展清登录态（保留 Memory）。
+ * 无上次 extension_id 或扩展未装时返回 false（不阻塞官网退出）。
+ */
+export function handoffSignOutToExtension(): Promise<boolean> {
+  const extensionId = getLastConnectedExtensionId() ?? getPendingExtensionId()
+  if (!extensionId) {
+    return Promise.resolve(false)
+  }
+
+  return sendToExtension(extensionId, {
+    type: 'YIVENO_AUTH_SIGN_OUT_HANDOFF',
+    payload: { reason: 'website_sign_out' }
   })
 }

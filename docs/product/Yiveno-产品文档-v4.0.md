@@ -818,14 +818,14 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 ### 5.5 Settings IA（最小已上线）
 
-| 分区   | 状态   | 说明                                                    |
-| ------ | ------ | ------------------------------------------------------- |
-| 保存   | 已上线 | 划词浮层开关（默认开）                                  |
-| 快捷键 | 已上线 | 展示绑定；改键跳转 `chrome://extensions/shortcuts`      |
-| 账户   | 已上线 | 顶栏头像入口：官网登录 / 账户页；设置页不再提供登录退出 |
-| 同步   | 已上线 | 默认关；开同步后空侧自动对齐，两边都有则选 A/B          |
-| 隐私   | 未上线 | 仅占位文案，不暗示可用                                  |
-| AI     | 未上线 | 同上                                                    |
+| 分区   | 状态   | 说明                                                          |
+| ------ | ------ | ------------------------------------------------------------- |
+| 保存   | 已上线 | 划词浮层开关（默认开）                                        |
+| 快捷键 | 已上线 | 展示绑定；改键跳转 `chrome://extensions/shortcuts`            |
+| 账户   | 已上线 | 顶栏头像：官网登录 / 账户页；**退出在设置页**（三选一，见下） |
+| 同步   | 已上线 | 默认关；开同步后空侧自动对齐，两边都有则选 A/B                |
+| 隐私   | 未上线 | 仅占位文案，不暗示可用                                        |
+| AI     | 未上线 | 同上                                                          |
 
 ### 5.6 扩展入口
 
@@ -858,6 +858,17 @@ Chrome API / 选区
 - 目标规模指导：2 万 MemoryItem；当前全量扫描上限约 10000；倒排/向量索引仍属 Phase B 余项。
 - 长期：Cloud Memory DB（当前实现为 **Supabase `memory_items`**）为云端事实源；本地 IndexedDB 变缓存——**不提前重写本地日常读写链路**。
 - Phase C 切片：扩展经 Supabase Auth 登录写入 `AccountBinding`；同步默认关；经 Worker `/api/memory/sync/*` push/pull/replace；冲突仅整侧覆盖（本机为准 / 云端为准）。
+- **登录态对齐（Normative）**：
+  - 登录：官网 → `YIVENO_AUTH_SESSION_HANDOFF` → 扩展（并记住 `extension_id`）。
+  - 官网退出：`YIVENO_AUTH_SIGN_OUT_HANDOFF` → 扩展按 **keep_local** 清 session/binding（保留 Memory）；无 extension_id 时不阻塞官网退出。
+  - 扩展打开时：`GET_AUTH_STATE` **节流 refresh** 探测 refresh_token；失效则同等 keep_local 退登（兜底官网已退但未回传）。
+  - 扩展设置页退出（任一 mode）：结束后导航/打开官网 `/logout?from_extension=1` 清网站 Supabase session。
+- **退出登录（Normative）**：设置页按本机数据状态分流（均清扩展登录态并打开官网 `/logout`）。
+  - **本机无当前账号/本地档数据**：不弹窗，直接仅退出。
+  - **本机有数据且已有云端备份**（`remoteCount>0` 且曾 `lastPushedAt`/`lastPulledAt`）：弹窗两按钮——仅退出 / 清除本机该账号桶再退出。
+  - **本机有数据且无可靠云端备份**：弹窗三按钮——另含「先同步再清」。
+  - 启发式缺口：同步成功后本机又新增、尚未再 push 时，可能仍走两按钮（无逐条 dirty 位）；清库前请依赖文案确认。
+  - 官网账户页「退出」结束网站会话并 `SIGN_OUT_HANDOFF`（keep_local）；页内轻提示：扩展本机记忆仍保留，清除请到扩展设置。
 - **禁止回潮**：旧管理页/侧边栏/书签树编辑/AI 自动整理进 build 或 manifest。
 
 新功能顺序：契约 → repository → Background 消息 → Recall/Filter → UI。
@@ -995,6 +1006,9 @@ Chrome API / 选区
 
 | 日期       | 变更                                                                                                               |
 | ---------- | ------------------------------------------------------------------------------------------------------------------ |
+| 2026-08-04 | 扩展退出后打开官网 `/logout?from_extension=1` 对称清网站 session                                                   |
+| 2026-08-04 | 登录态 A+B：官网退出 `SIGN_OUT_HANDOFF`；扩展 `GET_AUTH_STATE` 节流 refresh 失效则 keep_local 退登                 |
+| 2026-08-04 | 退出登录三选一：仅退出 / 清本机账号桶 / 先覆盖云端再清；设置页对话框；官网退出不清理扩展 Memory                    |
 | 2026-08-03 | 账户登录改官网主路径：扩展打开官网登录，session 经 external handoff 回传；扩展不做 OAuth 弹窗                      |
 | 2026-08-03 | Phase C 切片：账户登录（Supabase Auth）+ `memory_items` 云库 + Worker sync；登录≠同步；冲突仅 A/B                  |
 | 2026-08-03 | Capture 新建后异步稀疏 LLM enrichment（`scheduleAsyncMemoryLlmEnrichment`；bulk 不烧配额；失败降级规则）           |

@@ -362,6 +362,50 @@
   "settings_account_signing_out": {
     "message": "Signing out…"
   },
+  "settings_sign_out_dialog_title": {
+    "message": "Sign out"
+  },
+  "settings_sign_out_dialog_copy": {
+    "message": "By default, this account’s memories stay on this device after sign-out; Recall won’t show them while signed out. Confirm cloud backup before clearing the device copy."
+  },
+  "settings_sign_out_dialog_counts": {
+    "message": "This account on device: $ACCOUNT$. Unmerged local profile: $LOCAL$. Cloud: $REMOTE$.",
+    "placeholders": {
+      "ACCOUNT": {
+        "content": "$1"
+      },
+      "LOCAL": {
+        "content": "$2"
+      },
+      "REMOTE": {
+        "content": "$3"
+      }
+    }
+  },
+  "settings_sign_out_keep_local": {
+    "message": "Sign out only"
+  },
+  "settings_sign_out_keep_local_hint": {
+    "message": "Keep this account’s data on this device (recommended)"
+  },
+  "settings_sign_out_clear_local": {
+    "message": "Sign out and clear this account on device"
+  },
+  "settings_sign_out_clear_local_hint": {
+    "message": "Cannot recover if never synced; does not delete pre-login local profile data"
+  },
+  "settings_sign_out_sync_then_clear": {
+    "message": "Sync to cloud, then sign out and clear device"
+  },
+  "settings_sign_out_sync_then_clear_hint": {
+    "message": "Replace cloud with this device (including local profile), then clear device; stays signed in if sync fails"
+  },
+  "settings_sign_out_sync_then_clear_disabled": {
+    "message": "No account/local-profile data on device to upload"
+  },
+  "settings_sign_out_cancel": {
+    "message": "Cancel"
+  },
   "settings_section_sync": {
     "message": "Sync"
   },

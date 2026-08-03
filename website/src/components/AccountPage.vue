@@ -4,25 +4,45 @@ import { ref, onMounted } from 'vue'
 import { getSupabase } from '../services/supabase'
 import { getUserSubscription, type UserSubscription } from '../services/subscription'
 import { formatDate } from '../services/date'
+import {
+  handoffSignOutToExtension,
+  rememberConnectedExtensionId
+} from '../services/extension-auth-handoff'
 
 const user = ref<User | null>(null)
 const subscription = ref<UserSubscription | null>(null)
 const loading = ref(true)
 
 onMounted(async () => {
+  // 扩展打开账户页会带 extension_id，记住以便退出回传
+  const params = new URLSearchParams(window.location.search)
+  const extensionId = params.get('extension_id')?.trim()
+  if (extensionId) {
+    rememberConnectedExtensionId(extensionId)
+  }
+
   const supabase = await getSupabase()
   const { data } = await supabase.auth.getSession()
-  if (data?.session?.user) {
-    user.value = data.session.user
-    const sub = await getUserSubscription(data.session.user.id)
-    if (sub) subscription.value = sub
+  if (!data?.session?.user) {
+    // 未登录访问账户页：直接进登录，不展示「请先登录」中间态
+    window.location.replace('/login')
+    return
   }
+  user.value = data.session.user
+  const sub = await getUserSubscription(data.session.user.id)
+  if (sub) subscription.value = sub
   loading.value = false
 })
 
 async function handleSignOut() {
   const supabase = await getSupabase()
   await supabase.auth.signOut()
+  // 通知扩展清登录态（keep_local）；失败不阻塞官网退出
+  try {
+    await handoffSignOutToExtension()
+  } catch (error) {
+    console.warn('[AccountPage] extension sign-out handoff failed', error)
+  }
   window.location.href = '/'
 }
 </script>
@@ -59,9 +79,7 @@ async function handleSignOut() {
         </dl>
       </section>
       <button class="btn" @click="handleSignOut">退出登录</button>
-    </div>
-    <div v-else>
-      <p>未登录。请先 <a href="/login">登录</a>。</p>
+      <p class="sign-out-hint">扩展本机记忆仍保留；若要清除请到扩展设置。</p>
     </div>
   </div>
   <div v-else class="loading">加载中...</div>
@@ -125,6 +143,13 @@ dl dd {
 
 .btn:hover {
   background: #f5f5f5;
+}
+
+.sign-out-hint {
+  margin: 0.75rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #666;
 }
 
 .loading {

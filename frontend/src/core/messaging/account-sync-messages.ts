@@ -19,6 +19,18 @@ export const AccountSyncErrorCodeSchema = z.enum([
 
 export type AccountSyncErrorCode = z.infer<typeof AccountSyncErrorCodeSchema>
 
+/**
+ * 退出登录对本机 Memory 的处理策略。
+ * 默认 keep_local：不清库；clear / sync_then_clear 须经设置页确认框。
+ */
+export const AuthSignOutModeSchema = z.enum([
+  'keep_local', // 仅退出，保留本机当前账号 Memory
+  'clear_local', // 退出并删除本机当前 accountId 桶（不动 localProfileId）
+  'sync_then_clear_local' // 先将本机（含 remap）覆盖云端，再清本机账号桶并退出
+])
+
+export type AuthSignOutMode = z.infer<typeof AuthSignOutModeSchema>
+
 export type AuthSignInMessage = {
   scope: BackgroundMessageScope
   type: 'AUTH_SIGN_IN'
@@ -39,10 +51,20 @@ export type AuthSignInResponse =
 export type AuthSignOutMessage = {
   scope: BackgroundMessageScope
   type: 'AUTH_SIGN_OUT'
+  payload: {
+    mode: AuthSignOutMode
+  }
 }
 
 export type AuthSignOutResponse =
-  | { ok: true }
+  | {
+      ok: true
+      mode: AuthSignOutMode
+      /** 本机被删除的当前账号条目数（keep_local 为 0） */
+      clearedCount: number
+      /** sync_then_clear 时写入云端的条数；其它模式为 0 */
+      syncedCount: number
+    }
   | {
       ok: false
       errorCode: AccountSyncErrorCode
@@ -81,6 +103,10 @@ export type GetSyncStatusResponse =
       signedIn: boolean
       syncEnabled: boolean
       localCount: number
+      /** 当前账号 ownerId 下未软删条数（退出对话框用） */
+      accountOwnerCount: number
+      /** 本机 localProfileId 下未软删条数（退出对话框用） */
+      localProfileOwnerCount: number
       remoteCount: number
       latestRemoteUpdatedAt: string | null
       /** 两边都有未删数据，需用户选 A/B */

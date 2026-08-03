@@ -362,6 +362,50 @@
   "settings_account_signing_out": {
     "message": "正在退出…"
   },
+  "settings_sign_out_dialog_title": {
+    "message": "退出登录"
+  },
+  "settings_sign_out_dialog_copy": {
+    "message": "退出后默认仍保留本机该账号记忆；未登录时 Recall 看不到它们。清除本机前请确认是否已上云。"
+  },
+  "settings_sign_out_dialog_counts": {
+    "message": "本机该账号 $ACCOUNT$ 条；未归并的本地档 $LOCAL$ 条；云端 $REMOTE$ 条。",
+    "placeholders": {
+      "ACCOUNT": {
+        "content": "$1"
+      },
+      "LOCAL": {
+        "content": "$2"
+      },
+      "REMOTE": {
+        "content": "$3"
+      }
+    }
+  },
+  "settings_sign_out_keep_local": {
+    "message": "仅退出"
+  },
+  "settings_sign_out_keep_local_hint": {
+    "message": "保留本机该账号数据（推荐）"
+  },
+  "settings_sign_out_clear_local": {
+    "message": "退出并清除本机该账号数据"
+  },
+  "settings_sign_out_clear_local_hint": {
+    "message": "未上云则无法找回；不删除登录前的本地档"
+  },
+  "settings_sign_out_sync_then_clear": {
+    "message": "先同步到云端，再退出并清除本机"
+  },
+  "settings_sign_out_sync_then_clear_hint": {
+    "message": "将本机（含本地档）覆盖云端后清本机；失败则不退出"
+  },
+  "settings_sign_out_sync_then_clear_disabled": {
+    "message": "本机没有可上传的该账号/本地档数据"
+  },
+  "settings_sign_out_cancel": {
+    "message": "取消"
+  },
   "settings_section_sync": {
     "message": "同步"
   },
