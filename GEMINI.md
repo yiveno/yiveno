@@ -20,3 +20,5 @@ Chrome 扩展：**个人信息寻回**（Capture 低负担 + Recall 高置信）
 ## 协作约定
 
 - 注释 / commit message 用中文；质量门禁以 `ci.yml` 为准，本助手不替代 typecheck/lint/test。
+
+<!-- smoke: gemini-review 冒烟，测完可删 -->
