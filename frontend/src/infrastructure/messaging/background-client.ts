@@ -13,9 +13,7 @@ import type {
   RefreshAuthProfileResponse,
   RestoreLatestSyncBackupResponse,
   RunIncrementalMemorySyncResponse,
-  SetSyncEnabledResponse,
-  SyncReplaceWithLocalResponse,
-  SyncReplaceWithRemoteResponse
+  SetSyncEnabledResponse
 } from '@/core/messaging/account-sync-messages'
 import type {
   GetExtensionCommandsMessage,
@@ -248,22 +246,6 @@ export async function runIncrementalMemorySync(): Promise<RunIncrementalMemorySy
   return sendBackgroundMessage<RunIncrementalMemorySyncResponse>({
     scope: 'background',
     type: 'RUN_INCREMENTAL_MEMORY_SYNC'
-  })
-}
-
-/** 冲突策略 A：本机覆盖云端。 */
-export async function syncReplaceWithLocal(): Promise<SyncReplaceWithLocalResponse> {
-  return sendBackgroundMessage<SyncReplaceWithLocalResponse>({
-    scope: 'background',
-    type: 'SYNC_REPLACE_WITH_LOCAL'
-  })
-}
-
-/** 冲突策略 B：云端覆盖本机。 */
-export async function syncReplaceWithRemote(): Promise<SyncReplaceWithRemoteResponse> {
-  return sendBackgroundMessage<SyncReplaceWithRemoteResponse>({
-    scope: 'background',
-    type: 'SYNC_REPLACE_WITH_REMOTE'
   })
 }
 
