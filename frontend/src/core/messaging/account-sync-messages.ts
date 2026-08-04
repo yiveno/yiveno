@@ -21,6 +21,10 @@ export const AccountSyncErrorCodeSchema = z.enum([
   'SYNC_MERGE_FAILED', // 本机与云端并集合并失败
   'SYNC_RESTORE_BACKUP_FAILED', // 从云端备份恢复失败
   'SYNC_INCREMENTAL_FAILED', // 增量/定时同步失败
+  'PRIVACY_NOTICE_REQUIRED', // 开同步前须确认隐私说明
+  'PRIVACY_ACK_FAILED', // 确认隐私说明失败
+  'CLOUD_DELETE_FAILED', // 删除云端记忆失败
+  'ACCOUNT_DELETE_FAILED', // 删除账号失败
   'ORPHAN_EXPORT_FAILED', // 导出孤儿桶失败
   'ORPHAN_CLEAR_FAILED' // 清除孤儿桶失败
 ])
@@ -146,6 +150,8 @@ export type GetSyncStatusResponse =
       lastPulledAt?: string
       /** 上次成功增量 push 水位 */
       lastPushedAt?: string
+      /** 是否已确认当前隐私说明版本（开同步门禁） */
+      privacyNoticeAcked: boolean
     }
   | {
       ok: false
@@ -285,6 +291,64 @@ export type RestoreLatestSyncBackupResponse =
       error?: string
     }
 
+/** 确认当前版本隐私说明（开同步门禁）。 */
+export type AckPrivacyNoticeMessage = {
+  scope: BackgroundMessageScope
+  type: 'ACK_PRIVACY_NOTICE'
+}
+
+export type AckPrivacyNoticeResponse =
+  | {
+      ok: true
+      privacyNoticeAcked: true
+      noticeAckedAt: string
+    }
+  | {
+      ok: false
+      errorCode: AccountSyncErrorCode
+      error?: string
+    }
+
+/** 删除云端全部 Memory（默认不动本机）。 */
+export type DeleteCloudMemoryMessage = {
+  scope: BackgroundMessageScope
+  type: 'DELETE_CLOUD_MEMORY'
+}
+
+export type DeleteCloudMemoryResponse =
+  | {
+      ok: true
+      deletedItems: number
+      deletedBackups: number
+    }
+  | {
+      ok: false
+      errorCode: AccountSyncErrorCode
+      error?: string
+    }
+
+/**
+ * 删除账号：云端 Memory + Auth 注销 + 本机当前 accountId 桶 + 退登。
+ * 不动 localProfileId 身份。
+ */
+export type DeleteAccountMessage = {
+  scope: BackgroundMessageScope
+  type: 'DELETE_ACCOUNT'
+}
+
+export type DeleteAccountResponse =
+  | {
+      ok: true
+      deletedItems: number
+      deletedBackups: number
+      clearedLocalCount: number
+    }
+  | {
+      ok: false
+      errorCode: AccountSyncErrorCode
+      error?: string
+    }
+
 export type AccountSyncBackgroundMessage =
   | AuthSignInMessage
   | AuthSignOutMessage
@@ -298,6 +362,9 @@ export type AccountSyncBackgroundMessage =
   | ExportOrphanOwnersMessage
   | ClearOrphanOwnersMessage
   | RestoreLatestSyncBackupMessage
+  | AckPrivacyNoticeMessage
+  | DeleteCloudMemoryMessage
+  | DeleteAccountMessage
 
 export type AccountSyncBackgroundResponse =
   | AuthSignInResponse
@@ -312,3 +379,6 @@ export type AccountSyncBackgroundResponse =
   | ExportOrphanOwnersResponse
   | ClearOrphanOwnersResponse
   | RestoreLatestSyncBackupResponse
+  | AckPrivacyNoticeResponse
+  | DeleteCloudMemoryResponse
+  | DeleteAccountResponse

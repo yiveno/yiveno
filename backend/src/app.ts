@@ -18,6 +18,7 @@ import { adminRouter } from './routes/admin'
 import { authRouter } from './routes/auth'
 import { aiRouter } from './routes/ai'
 import { gumroadRouter } from './routes/gumroad'
+import { accountRouter } from './routes/account'
 import { memorySyncRouter } from './routes/memory-sync'
 import { websiteRouter } from './routes/website'
 
@@ -77,6 +78,9 @@ export function createApp() {
 
   // Phase C：Cloud Memory 同步（Supabase Auth Bearer）
   app.route('/api/memory/sync', memorySyncRouter)
+
+  // 账户：删除账号等（Supabase Auth Bearer）
+  app.route('/api/account', accountRouter)
 
   // Gumroad：仅 subscription 要 JWT；webhook 由路由内 seller 签名校验
   app.route('/api/gumroad', gumroadRouter)

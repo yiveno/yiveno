@@ -17,11 +17,14 @@ import type {
   AuthSignOutMode,
   AuthSignOutResponse,
   ClearOrphanOwnersResponse,
+  DeleteAccountResponse,
+  DeleteCloudMemoryResponse,
   ExportOrphanOwnersResponse,
   GetAuthStateResponse,
   GetSyncStatusResponse,
   RefreshAuthProfileResponse,
   RestoreLatestSyncBackupResponse,
+  AckPrivacyNoticeResponse,
   RunIncrementalMemorySyncResponse,
   SetSyncEnabledResponse,
   SyncReplaceWithLocalResponse,
@@ -45,6 +48,12 @@ import {
   setAccountBinding
 } from '@/infrastructure/identity/local-profile-service'
 import { getSyncPrefs, patchSyncPrefs } from '@/infrastructure/identity/sync-prefs-service'
+import {
+  ackCurrentPrivacyNotice,
+  clearPrivacyPrefs,
+  getPrivacyPrefs
+} from '@/infrastructure/identity/privacy-prefs-service'
+import { hasAckedCurrentPrivacyNotice } from '@/core/identity/privacy-prefs'
 import { memoryItemRepository } from '@/infrastructure/indexeddb/memory-item-repository'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import { logger } from '@/infrastructure/logging/logger'
@@ -54,6 +63,8 @@ import {
   openWebsiteLogoutFromExtension
 } from '@/infrastructure/browser/website-page'
 import {
+  deleteRemoteAccount,
+  deleteRemoteCloudMemory,
   fetchRemoteSyncStatus,
   pullRemoteMemoryItems,
   pushRemoteMemoryItems,
@@ -362,12 +373,14 @@ export async function handleRefreshAuthProfile(): Promise<RefreshAuthProfileResp
 export async function handleGetSyncStatus(): Promise<GetSyncStatusResponse> {
   const startedAt = flowStart('MemorySync', 'GET_SYNC_STATUS')
   try {
-    const [binding, syncPrefs, profile, orphans] = await Promise.all([
+    const [binding, syncPrefs, profile, orphans, privacyPrefs] = await Promise.all([
       getAccountBinding(),
       getSyncPrefs(),
       getOrCreateLocalProfile(),
-      summarizeOrphanOwnerBuckets()
+      summarizeOrphanOwnerBuckets(),
+      getPrivacyPrefs()
     ])
+    const privacyNoticeAcked = hasAckedCurrentPrivacyNotice(privacyPrefs)
 
     const accountOwnerCount = binding
       ? (await memoryItemRepository.listAllByOwnerId(binding.accountId)).length
@@ -400,6 +413,7 @@ export async function handleGetSyncStatus(): Promise<GetSyncStatusResponse> {
         needsConflictChoice: false,
         orphanBucketCount: orphans.orphanBucketCount,
         orphanActiveCount: orphans.orphanActiveCount,
+        privacyNoticeAcked,
         ...(syncPrefs.lastPulledAt ? { lastPulledAt: syncPrefs.lastPulledAt } : {}),
         ...(syncPrefs.lastPushedAt ? { lastPushedAt: syncPrefs.lastPushedAt } : {})
       }
@@ -418,7 +432,8 @@ export async function handleGetSyncStatus(): Promise<GetSyncStatusResponse> {
       localCount,
       remoteCount: remote.remoteCount,
       needsConflictChoice,
-      orphanBucketCount: orphans.orphanBucketCount
+      orphanBucketCount: orphans.orphanBucketCount,
+      privacyNoticeAcked
     })
 
     return {
@@ -433,6 +448,7 @@ export async function handleGetSyncStatus(): Promise<GetSyncStatusResponse> {
       needsConflictChoice,
       orphanBucketCount: orphans.orphanBucketCount,
       orphanActiveCount: orphans.orphanActiveCount,
+      privacyNoticeAcked,
       ...(syncPrefs.lastPulledAt ? { lastPulledAt: syncPrefs.lastPulledAt } : {}),
       ...(syncPrefs.lastPushedAt ? { lastPushedAt: syncPrefs.lastPushedAt } : {})
     }
@@ -453,6 +469,15 @@ export async function handleSetSyncEnabled(enabled: boolean): Promise<SetSyncEna
     const binding = await getAccountBinding()
     if (!binding) {
       return { ok: false, errorCode: 'SYNC_NOT_AUTHENTICATED' }
+    }
+
+    // 开同步前必须已确认当前隐私说明版本
+    if (enabled) {
+      const privacyPrefs = await getPrivacyPrefs()
+      if (!hasAckedCurrentPrivacyNotice(privacyPrefs)) {
+        flowFail('MemorySync', 'SET_SYNC_ENABLED', startedAt, new Error('PRIVACY_NOTICE_REQUIRED'))
+        return { ok: false, errorCode: 'PRIVACY_NOTICE_REQUIRED' }
+      }
     }
 
     const syncPrefs = await patchSyncPrefs({ enabled })
@@ -929,6 +954,101 @@ export async function handleClearOrphanOwners(): Promise<ClearOrphanOwnersRespon
     return {
       ok: false,
       errorCode: 'ORPHAN_CLEAR_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
+    }
+  }
+}
+
+/** ACK_PRIVACY_NOTICE — 确认当前版本隐私说明 */
+export async function handleAckPrivacyNotice(): Promise<AckPrivacyNoticeResponse> {
+  const startedAt = flowStart('Privacy', 'ACK_PRIVACY_NOTICE')
+  try {
+    const prefs = await ackCurrentPrivacyNotice()
+    flowOk('Privacy', 'ACK_PRIVACY_NOTICE', startedAt, {
+      noticeAckedAt: prefs.noticeAckedAt,
+      noticeAckedVersion: prefs.noticeAckedVersion
+    })
+    return {
+      ok: true,
+      privacyNoticeAcked: true,
+      noticeAckedAt: prefs.noticeAckedAt!
+    }
+  } catch (error) {
+    flowFail('Privacy', 'ACK_PRIVACY_NOTICE', startedAt, error)
+    return {
+      ok: false,
+      errorCode: 'PRIVACY_ACK_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
+    }
+  }
+}
+
+/**
+ * DELETE_CLOUD_MEMORY — 删除云端 Memory + backups；关同步；不动本机 IDB。
+ */
+export async function handleDeleteCloudMemory(): Promise<DeleteCloudMemoryResponse> {
+  const startedAt = flowStart('Privacy', 'DELETE_CLOUD_MEMORY')
+  try {
+    const token = await requireAccessToken()
+    if (!token) {
+      return { ok: false, errorCode: 'SYNC_NOT_AUTHENTICATED' }
+    }
+
+    const result = await deleteRemoteCloudMemory(token.accessToken)
+    await patchSyncPrefs({ enabled: false })
+    await ensureMemoryCloudSyncAlarm(false)
+
+    flowOk('Privacy', 'DELETE_CLOUD_MEMORY', startedAt, result)
+    return { ok: true, ...result }
+  } catch (error) {
+    flowFail('Privacy', 'DELETE_CLOUD_MEMORY', startedAt, error)
+    return {
+      ok: false,
+      errorCode: 'CLOUD_DELETE_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
+    }
+  }
+}
+
+/**
+ * DELETE_ACCOUNT — 注销 Auth + 清云端 Memory；清本机 accountId 桶；退登。
+ * 不动 localProfileId；订阅/支付由服务端按政策保留。
+ */
+export async function handleDeleteAccount(): Promise<DeleteAccountResponse> {
+  const startedAt = flowStart('Privacy', 'DELETE_ACCOUNT')
+  try {
+    const binding = await getAccountBinding()
+    const token = await requireAccessToken()
+    if (!binding || !token) {
+      return { ok: false, errorCode: 'SYNC_NOT_AUTHENTICATED' }
+    }
+
+    const remote = await deleteRemoteAccount(token.accessToken)
+
+    const items = await memoryItemRepository.listAllByOwnerId(binding.accountId, {
+      includeDeleted: true
+    })
+    const clearedLocalCount = items.length
+    await memoryItemRepository.replaceOwnerItems(binding.accountId, [])
+
+    await clearPrivacyPrefs()
+    await finishSignOutSession()
+
+    flowOk('Privacy', 'DELETE_ACCOUNT', startedAt, {
+      ...remote,
+      clearedLocalCount
+    })
+    return {
+      ok: true,
+      deletedItems: remote.deletedItems,
+      deletedBackups: remote.deletedBackups,
+      clearedLocalCount
+    }
+  } catch (error) {
+    flowFail('Privacy', 'DELETE_ACCOUNT', startedAt, error)
+    return {
+      ok: false,
+      errorCode: 'ACCOUNT_DELETE_FAILED',
       ...(error instanceof Error ? { error: error.message } : {})
     }
   }

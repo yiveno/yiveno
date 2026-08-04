@@ -11,6 +11,7 @@ import {
   pullMemoryItems,
   replaceMemoryItems,
   restoreMemoryItemsFromLatestBackup,
+  deleteAllCloudMemoryForOwner,
   upsertMemoryItems
 } from '../data-access/memory-items'
 import { supabaseAuth } from '../middleware/supabase-auth'
@@ -198,5 +199,21 @@ memorySyncRouter.post('/restore-latest-backup', async c => {
     }
     logErrorMessage('[MemorySync] restore backup 异常', { detail: msg, userId })
     return c.json({ error: msg === 'supabase_not_configured' ? msg : 'memory_restore_failed' }, 500)
+  }
+})
+
+/**
+ * POST /api/memory/sync/delete-all
+ * 删除该账号云端 Memory 与 sync 备份（隐私 P0；不可恢复）。
+ */
+memorySyncRouter.post('/delete-all', async c => {
+  const userId = c.get('supabaseUserId')
+  try {
+    const result = await deleteAllCloudMemoryForOwner(c.env, userId)
+    return c.json({ success: true, data: result })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    logErrorMessage('[MemorySync] delete-all 异常', { detail: msg, userId })
+    return c.json({ error: msg === 'supabase_not_configured' ? msg : 'memory_delete_failed' }, 500)
   }
 })

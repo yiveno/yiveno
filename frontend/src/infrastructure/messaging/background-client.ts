@@ -7,11 +7,14 @@ import type {
   AuthSignOutMode,
   AuthSignOutResponse,
   ClearOrphanOwnersResponse,
+  DeleteAccountResponse,
+  DeleteCloudMemoryResponse,
   ExportOrphanOwnersResponse,
   GetAuthStateResponse,
   GetSyncStatusResponse,
   RefreshAuthProfileResponse,
   RestoreLatestSyncBackupResponse,
+  AckPrivacyNoticeResponse,
   RunIncrementalMemorySyncResponse,
   SetSyncEnabledResponse
 } from '@/core/messaging/account-sync-messages'
@@ -270,5 +273,29 @@ export async function restoreLatestSyncBackup(): Promise<RestoreLatestSyncBackup
   return sendBackgroundMessage<RestoreLatestSyncBackupResponse>({
     scope: 'background',
     type: 'RESTORE_LATEST_SYNC_BACKUP'
+  })
+}
+
+/** 确认当前版本隐私说明。 */
+export async function ackPrivacyNotice(): Promise<AckPrivacyNoticeResponse> {
+  return sendBackgroundMessage<AckPrivacyNoticeResponse>({
+    scope: 'background',
+    type: 'ACK_PRIVACY_NOTICE'
+  })
+}
+
+/** 删除云端全部记忆（默认不动本机）。 */
+export async function deleteCloudMemory(): Promise<DeleteCloudMemoryResponse> {
+  return sendBackgroundMessage<DeleteCloudMemoryResponse>({
+    scope: 'background',
+    type: 'DELETE_CLOUD_MEMORY'
+  })
+}
+
+/** 删除账号（云端 + Auth + 本机当前账号桶 + 退登）。 */
+export async function deleteAccount(): Promise<DeleteAccountResponse> {
+  return sendBackgroundMessage<DeleteAccountResponse>({
+    scope: 'background',
+    type: 'DELETE_ACCOUNT'
   })
 }

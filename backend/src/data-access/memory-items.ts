@@ -394,3 +394,69 @@ export async function restoreMemoryItemsFromLatestBackup(
     safetyBackupId: safety.backupId
   }
 }
+
+/**
+ * 删除该账号云端全部 Memory 与 sync 备份（隐私 P0）。
+ * 不可恢复（备份一并删除）；本机 IndexedDB 由扩展侧决定是否保留。
+ */
+export async function deleteAllCloudMemoryForOwner(
+  env: Env,
+  ownerId: string
+): Promise<{ deletedItems: number; deletedBackups: number }> {
+  const supabase = requireClient(env)
+
+  const { count: itemCount, error: countError } = await supabase
+    .from('memory_items')
+    .select('id', { count: 'exact', head: true })
+    .eq('owner_id', ownerId)
+
+  if (countError) {
+    logErrorMessage('[MemorySync] 删云端前计数失败', {
+      detail: countError.message,
+      ownerId
+    })
+    throw new Error('memory_delete_failed')
+  }
+
+  const { count: backupCount, error: backupCountError } = await supabase
+    .from('memory_sync_backups')
+    .select('id', { count: 'exact', head: true })
+    .eq('owner_id', ownerId)
+
+  if (backupCountError) {
+    logErrorMessage('[MemorySync] 删备份前计数失败', {
+      detail: backupCountError.message,
+      ownerId
+    })
+    throw new Error('memory_delete_failed')
+  }
+
+  const { error: deleteItemsError } = await supabase
+    .from('memory_items')
+    .delete()
+    .eq('owner_id', ownerId)
+  if (deleteItemsError) {
+    logErrorMessage('[MemorySync] 删云端条目失败', {
+      detail: deleteItemsError.message,
+      ownerId
+    })
+    throw new Error('memory_delete_failed')
+  }
+
+  const { error: deleteBackupsError } = await supabase
+    .from('memory_sync_backups')
+    .delete()
+    .eq('owner_id', ownerId)
+  if (deleteBackupsError) {
+    logErrorMessage('[MemorySync] 删云端备份失败', {
+      detail: deleteBackupsError.message,
+      ownerId
+    })
+    throw new Error('memory_delete_failed')
+  }
+
+  const deletedItems = itemCount ?? 0
+  const deletedBackups = backupCount ?? 0
+  info('[MemorySync] 已删除云端记忆', { ownerId, deletedItems, deletedBackups })
+  return { deletedItems, deletedBackups }
+}

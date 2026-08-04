@@ -7,7 +7,10 @@ import { isBackgroundScopedMessage } from '@/core/messaging/background-messages'
 import {
   handleAuthSignIn,
   handleAuthSignOut,
+  handleAckPrivacyNotice,
   handleClearOrphanOwners,
+  handleDeleteCloudMemory,
+  handleDeleteAccount,
   handleExportOrphanOwners,
   handleGetAuthState,
   handleGetSyncStatus,
@@ -99,6 +102,12 @@ async function dispatchBackgroundMessage(
       return handleClearOrphanOwners()
     case 'RESTORE_LATEST_SYNC_BACKUP':
       return handleRestoreLatestSyncBackup()
+    case 'ACK_PRIVACY_NOTICE':
+      return handleAckPrivacyNotice()
+    case 'DELETE_CLOUD_MEMORY':
+      return handleDeleteCloudMemory()
+    case 'DELETE_ACCOUNT':
+      return handleDeleteAccount()
     case 'CAPTURE_BOOKMARK':
       return handleCaptureBookmark(message.payload)
     case 'CAPTURE_TEXT_EXCERPT':

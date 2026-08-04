@@ -312,6 +312,97 @@
   "settings_placeholder_privacy": {
     "message": "Privacy options are not available yet. This page will not pretend they are."
   },
+  "settings_privacy_intro": {
+    "message": "Yiveno keeps memories on this device by default. Cloud sync and AI are optional—you can review this notice, confirm before syncing, or delete the cloud copy."
+  },
+  "settings_privacy_bullet_local": {
+    "message": "On this device: excerpts, bookmark traces, and notes in IndexedDB. Uninstalling the extension removes the local library."
+  },
+  "settings_privacy_bullet_cloud": {
+    "message": "Cloud (optional): uploaded only after you turn on sync. Turning sync off does not automatically delete cloud data."
+  },
+  "settings_privacy_bullet_account": {
+    "message": "Account: sign-in for identity and optional sync (email/avatar come from the identity provider)."
+  },
+  "settings_privacy_bullet_ai": {
+    "message": "AI: clue understanding may call a model via Cloudflare Workers; your full library is not sent by default."
+  },
+  "settings_privacy_bullet_not_collected": {
+    "message": "Not collected: browsing history, always-on clipboard reads, or full pages you did not capture."
+  },
+  "settings_privacy_ack": {
+    "message": "I understand this notice"
+  },
+  "settings_privacy_ack_done": {
+    "message": "Your confirmation was saved. You can turn on cloud sync."
+  },
+  "settings_privacy_ack_status_done": {
+    "message": "Current notice version: confirmed"
+  },
+  "settings_privacy_ack_status_needed": {
+    "message": "Current notice version: not confirmed yet (required before turning sync on)"
+  },
+  "settings_privacy_sync_confirm": {
+    "message": "Turning on cloud sync aligns this device with the cloud (and may upload). Confirm you have read the privacy notice in Settings. Continue?"
+  },
+  "settings_privacy_open_sync": {
+    "message": "Open Account & Sync"
+  },
+  "settings_privacy_delete_cloud": {
+    "message": "Delete cloud memories"
+  },
+  "settings_privacy_delete_cloud_hint": {
+    "message": "Permanently deletes this account’s cloud memories and sync backups. Local data stays by default, and sync is turned off."
+  },
+  "settings_privacy_delete_cloud_confirm": {
+    "message": "This permanently deletes cloud memories and backups (not recoverable from backup). Local data stays by default. Continue?"
+  },
+  "settings_privacy_delete_cloud_done": {
+    "message": "Deleted $COUNT$ cloud item(s) and turned sync off",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_privacy_delete_cloud_sign_in": {
+    "message": "Sign in to delete cloud memories or your account."
+  },
+  "settings_privacy_delete_account": {
+    "message": "Delete account"
+  },
+  "settings_privacy_delete_account_hint": {
+    "message": "Permanently closes this account: deletes cloud memories and backups, removes the login identity, and clears this account’s local memories. The anonymous local profile remains. This cannot be undone."
+  },
+  "settings_privacy_delete_account_confirm": {
+    "message": "This permanently deletes your account (cloud memories, login identity, and this account’s local memories). It cannot be undone. To sign out only, use Account & Sync. Continue?"
+  },
+  "settings_privacy_delete_account_done": {
+    "message": "Account deleted ($CLOUD$ cloud item(s); cleared $LOCAL$ local item(s))",
+    "placeholders": {
+      "CLOUD": {
+        "content": "$1"
+      },
+      "LOCAL": {
+        "content": "$2"
+      }
+    }
+  },
+  "settings_privacy_working": {
+    "message": "Working…"
+  },
+  "settings_error_privacy_notice_required": {
+    "message": "Confirm the privacy notice before turning on cloud sync"
+  },
+  "settings_error_privacy_ack": {
+    "message": "Could not save the privacy notice confirmation"
+  },
+  "settings_error_cloud_delete": {
+    "message": "Could not delete cloud memories"
+  },
+  "settings_error_account_delete": {
+    "message": "Could not delete account"
+  },
   "settings_placeholder_ai": {
     "message": "AI options are not available yet. This page will not pretend they are."
   },
@@ -379,6 +470,9 @@
   },
   "settings_account_sign_out": {
     "message": "Sign out"
+  },
+  "settings_account_open_delete_account": {
+    "message": "Delete account…"
   },
   "settings_account_signing_in": {
     "message": "Opening…"

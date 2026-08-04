@@ -160,6 +160,77 @@ export async function replaceRemoteWithLocalItems(
   }
 }
 
+export async function deleteRemoteCloudMemory(
+  accessToken: string
+): Promise<{ deletedItems: number; deletedBackups: number }> {
+  const startedAt = flowStart('MemorySync', 'delete-all 云端')
+  try {
+    const data = await memorySyncFetch<{ deletedItems: number; deletedBackups: number }>(
+      '/delete-all',
+      accessToken,
+      {
+        method: 'POST',
+        body: '{}'
+      }
+    )
+    flowOk('MemorySync', 'delete-all 云端', startedAt, data)
+    return data
+  } catch (error) {
+    flowFail('MemorySync', 'delete-all 云端', startedAt, error)
+    throw error
+  }
+}
+
+/**
+ * 删除账号：Worker 清云端 Memory 并注销 Auth。
+ * 响应 shape 与 memory sync 一致（success + data）。
+ */
+export async function deleteRemoteAccount(
+  accessToken: string
+): Promise<{ deletedItems: number; deletedBackups: number }> {
+  const startedAt = flowStart('Account', 'delete 账号')
+  try {
+    const url = `${getApiBaseUrl()}/api/account/delete`
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${accessToken}`
+      },
+      body: '{}'
+    })
+
+    const body: unknown = await response.json().catch(() => null)
+    if (!response.ok) {
+      const errorCode =
+        typeof body === 'object' &&
+        body !== null &&
+        'error' in body &&
+        typeof (body as { error: unknown }).error === 'string'
+          ? (body as { error: string }).error
+          : `http_${response.status}`
+      throw new Error(errorCode)
+    }
+
+    if (
+      typeof body !== 'object' ||
+      body === null ||
+      !('success' in body) ||
+      (body as { success: unknown }).success !== true ||
+      !('data' in body)
+    ) {
+      throw new Error('invalid_account_delete_response')
+    }
+
+    const data = (body as ApiSuccess<{ deletedItems: number; deletedBackups: number }>).data
+    flowOk('Account', 'delete 账号', startedAt, data)
+    return data
+  } catch (error) {
+    flowFail('Account', 'delete 账号', startedAt, error)
+    throw error
+  }
+}
+
 /** 用该账号最近一次 replace 前备份恢复云端。 */
 export async function restoreRemoteFromLatestBackup(
   accessToken: string

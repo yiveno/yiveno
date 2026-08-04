@@ -312,6 +312,97 @@
   "settings_placeholder_privacy": {
     "message": "隐私相关选项尚未上线，这里不会假装可配置。"
   },
+  "settings_privacy_intro": {
+    "message": "Yiveno 默认把记忆放在本机。上云与 AI 为可选能力；你可以随时查看说明、确认后再开同步，或删除云端副本。"
+  },
+  "settings_privacy_bullet_local": {
+    "message": "本机：IndexedDB 中的摘录、书签痕迹与备注；卸载扩展后本机库会丢失。"
+  },
+  "settings_privacy_bullet_cloud": {
+    "message": "云端（可选）：仅在开启「将记忆同步到云端」后上传；关同步不会自动删云端。"
+  },
+  "settings_privacy_bullet_account": {
+    "message": "账号：登录用于身份与可选同步（邮箱、头像等由登录提供方提供）。"
+  },
+  "settings_privacy_bullet_ai": {
+    "message": "AI：线索理解可经 Cloudflare Worker 调用模型；不会默认把全库喂给模型。"
+  },
+  "settings_privacy_bullet_not_collected": {
+    "message": "不收集：浏览历史、剪贴板常驻读取、未主动保存的页面全文。"
+  },
+  "settings_privacy_ack": {
+    "message": "我已了解上述说明"
+  },
+  "settings_privacy_ack_done": {
+    "message": "已记录你的确认，可以开启云同步。"
+  },
+  "settings_privacy_ack_status_done": {
+    "message": "当前说明版本：已确认"
+  },
+  "settings_privacy_ack_status_needed": {
+    "message": "当前说明版本：尚未确认（开启云同步前需要确认）"
+  },
+  "settings_privacy_sync_confirm": {
+    "message": "开启云同步会把本机记忆与云端对齐（可增量上传）。请确认你已阅读设置中的隐私说明。继续？"
+  },
+  "settings_privacy_open_sync": {
+    "message": "前往账户与同步"
+  },
+  "settings_privacy_delete_cloud": {
+    "message": "删除云端记忆"
+  },
+  "settings_privacy_delete_cloud_hint": {
+    "message": "永久删除该账号在云端的记忆与同步备份；默认保留本机数据，并关闭云同步。"
+  },
+  "settings_privacy_delete_cloud_confirm": {
+    "message": "将永久删除云端记忆与备份，且无法从备份恢复。本机数据默认保留。继续？"
+  },
+  "settings_privacy_delete_cloud_done": {
+    "message": "已删除云端 $COUNT$ 条记忆，并已关闭同步",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_privacy_delete_cloud_sign_in": {
+    "message": "登录后可删除云端记忆或账号。"
+  },
+  "settings_privacy_delete_account": {
+    "message": "删除账号"
+  },
+  "settings_privacy_delete_account_hint": {
+    "message": "永久注销该账号：删除云端记忆与备份、注销登录身份，并清除本机该账号记忆。本地匿名身份保留。不可恢复。"
+  },
+  "settings_privacy_delete_account_confirm": {
+    "message": "将永久删除账号（云端记忆、登录身份、本机该账号记忆），且无法恢复。仅退出请用「账户与同步」。继续？"
+  },
+  "settings_privacy_delete_account_done": {
+    "message": "账号已删除（云端 $CLOUD$ 条，本机清除 $LOCAL$ 条）",
+    "placeholders": {
+      "CLOUD": {
+        "content": "$1"
+      },
+      "LOCAL": {
+        "content": "$2"
+      }
+    }
+  },
+  "settings_privacy_working": {
+    "message": "处理中…"
+  },
+  "settings_error_privacy_notice_required": {
+    "message": "请先确认隐私说明再开启云同步"
+  },
+  "settings_error_privacy_ack": {
+    "message": "确认隐私说明失败"
+  },
+  "settings_error_cloud_delete": {
+    "message": "删除云端记忆失败"
+  },
+  "settings_error_account_delete": {
+    "message": "删除账号失败"
+  },
   "settings_placeholder_ai": {
     "message": "AI 相关选项尚未上线，这里不会假装可配置。"
   },
@@ -379,6 +470,9 @@
   },
   "settings_account_sign_out": {
     "message": "退出登录"
+  },
+  "settings_account_open_delete_account": {
+    "message": "删除账号…"
   },
   "settings_account_signing_in": {
     "message": "正在打开…"

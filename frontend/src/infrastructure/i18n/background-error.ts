@@ -27,6 +27,10 @@ const ACCOUNT_SYNC_ERROR_MESSAGE_KEYS: Record<AccountSyncErrorCode, MessageKey> 
   SYNC_MERGE_FAILED: 'settings_error_sync_merge',
   SYNC_RESTORE_BACKUP_FAILED: 'settings_error_sync_restore_backup',
   SYNC_INCREMENTAL_FAILED: 'settings_error_sync_incremental',
+  PRIVACY_NOTICE_REQUIRED: 'settings_error_privacy_notice_required',
+  PRIVACY_ACK_FAILED: 'settings_error_privacy_ack',
+  CLOUD_DELETE_FAILED: 'settings_error_cloud_delete',
+  ACCOUNT_DELETE_FAILED: 'settings_error_account_delete',
   ORPHAN_EXPORT_FAILED: 'settings_error_orphan_export',
   ORPHAN_CLEAR_FAILED: 'settings_error_orphan_clear'
 }

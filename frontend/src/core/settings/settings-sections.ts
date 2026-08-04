@@ -3,7 +3,7 @@ export type SettingsSectionId =
   | 'capture' // 保存：划词浮层开关
   | 'shortcuts' // 快捷键：展示绑定；改键跳转 Chrome 原生页
   | 'account_sync' // 账户与同步：同步 / 冲突 / 孤儿桶 / 退出
-  | 'privacy' // 隐私：未上线占位
+  | 'privacy' // 隐私：数据说明 / 开同步确认 / 删云端
   | 'ai' // AI：未上线占位
 
 /** 设置分区文案 key（由 UI `t()` 解析；core 不依赖 chrome）。 */
