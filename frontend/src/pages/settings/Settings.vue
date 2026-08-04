@@ -62,9 +62,6 @@ const syncError = ref('')
 const signOutDialogOpen = ref(false)
 const signingOut = ref(false)
 const signOutError = ref('')
-/** 最近一次成功 push / pull（用于判断是否已有云端备份）。 */
-const syncLastPushedAt = ref<string | undefined>(undefined)
-const syncLastPulledAt = ref<string | undefined>(undefined)
 
 /** 退出相关：本机当前账号桶 + 未 remap 的本地档。 */
 const signOutLocalCount = computed(
@@ -72,20 +69,10 @@ const signOutLocalCount = computed(
 )
 
 /**
- * 是否认为本地已有云端备份（启发式，无逐条 dirty 位）。
- * 云端条数 > 0 且曾成功 push 或 pull。
+ * 方案 B：本机有数即弹窗并始终三按钮（含先同步再清），避免启发式误判。
+ * 本机无数则不弹窗、直接仅退出。
  */
-const hasCloudBackupForSignOut = computed(
-  () => syncRemoteCount.value > 0 && Boolean(syncLastPushedAt.value || syncLastPulledAt.value)
-)
-
-/** 规则 3：本地有数且尚无可靠云端备份 → 需要「先同步再清」。 */
-const showSignOutSyncThenClear = computed(
-  () => signOutLocalCount.value > 0 && !hasCloudBackupForSignOut.value
-)
-
-/** 规则 2/3：本地有数才显示「清除本机」。 */
-const showSignOutClearLocal = computed(() => signOutLocalCount.value > 0)
+const showSignOutDataActions = computed(() => signOutLocalCount.value > 0)
 
 const commandRows = computed(() =>
   commands.value.map(command => ({
@@ -220,8 +207,6 @@ async function loadSyncContext() {
     signedIn.value = response.signedIn
     accountEmail.value = response.email?.trim() ?? ''
     syncEnabled.value = response.syncPrefs.enabled
-    syncLastPushedAt.value = response.syncPrefs.lastPushedAt
-    syncLastPulledAt.value = response.syncPrefs.lastPulledAt
 
     if (response.signedIn) {
       await refreshSyncStatus()
@@ -231,8 +216,6 @@ async function loadSyncContext() {
       syncLocalProfileOwnerCount.value = 0
       syncRemoteCount.value = 0
       needsConflictChoice.value = false
-      syncLastPushedAt.value = undefined
-      syncLastPulledAt.value = undefined
     }
   } catch {
     syncError.value = t('settings_error_auth_state')
@@ -340,11 +323,11 @@ async function confirmSignOut(mode: AuthSignOutMode) {
   if (signingOut.value) {
     return
   }
-  if (mode === 'sync_then_clear_local' && !showSignOutSyncThenClear.value) {
+  if (mode === 'sync_then_clear_local' && !showSignOutDataActions.value) {
     signOutError.value = t('settings_sign_out_sync_then_clear_disabled')
     return
   }
-  if (mode === 'clear_local' && !showSignOutClearLocal.value) {
+  if (mode === 'clear_local' && !showSignOutDataActions.value) {
     return
   }
 
@@ -365,8 +348,6 @@ async function confirmSignOut(mode: AuthSignOutMode) {
     syncLocalProfileOwnerCount.value = 0
     syncRemoteCount.value = 0
     needsConflictChoice.value = false
-    syncLastPushedAt.value = undefined
-    syncLastPulledAt.value = undefined
   } catch {
     signOutError.value = t('settings_error_auth_sign_out')
   } finally {
@@ -568,7 +549,7 @@ onUnmounted(() => {
           </md-filled-button>
           <p class="settings-sign-out-option-hint">{{ t('settings_sign_out_keep_local_hint') }}</p>
 
-          <template v-if="showSignOutClearLocal">
+          <template v-if="showSignOutDataActions">
             <md-outlined-button
               type="button"
               :disabled="signingOut"
@@ -580,9 +561,7 @@ onUnmounted(() => {
             <p class="settings-sign-out-option-hint">
               {{ t('settings_sign_out_clear_local_hint') }}
             </p>
-          </template>
 
-          <template v-if="showSignOutSyncThenClear">
             <md-outlined-button
               type="button"
               :disabled="signingOut"
