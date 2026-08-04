@@ -1,10 +1,12 @@
 /**
  * 扩展侧 Auth 存活校验（节流）：用 refresh 探测 refresh_token 是否仍有效。
  * 官网 signOut 后 refresh 通常失效；仅靠未过期 access 会误判仍登录。
+ *
+ * 重要：网络/5xx 等瞬时失败不得清登录态（否则会出现「官网仍登录、扩展被踢成未登录」）。
  */
 
 import type { AuthSession } from '@/core/identity/auth-session'
-import { refreshAuthSession } from '@/infrastructure/auth/extension-oauth'
+import { refreshAuthSessionDetailed } from '@/infrastructure/auth/extension-oauth'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 
 /** chrome.storage.session：上次成功/完成校验的时间戳（ms）。 */
@@ -18,7 +20,7 @@ export async function clearAuthValidationTimestamp(): Promise<void> {
   await chrome.storage.session.remove(AUTH_LAST_VALIDATED_AT_KEY)
 }
 
-/** 标记刚刚完成一次校验。 */
+/** 标记刚刚完成一次成功校验。 */
 export async function markAuthValidatedNow(): Promise<void> {
   await chrome.storage.session.set({ [AUTH_LAST_VALIDATED_AT_KEY]: Date.now() })
 }
@@ -36,11 +38,14 @@ export async function shouldRevalidateAuthSession(): Promise<boolean> {
 export type AuthRevalidateResult =
   | { status: 'skipped' } // 节流跳过
   | { status: 'valid'; session: AuthSession } // refresh 成功
-  | { status: 'invalid' } // refresh 失败，应清本地登录态
+  | { status: 'invalid'; reason: string } // refresh 明确作废，应清本地登录态
+  | { status: 'uncertain'; reason: string } // 瞬时失败，保留本地登录态并下次再试
 
 /**
- * 节流后尝试 refresh；成功则返回新 session，失败则 invalid。
- * 调用方负责写入 storage 或执行 keep_local 退登。
+ * 节流后尝试 refresh。
+ * - valid：写回新 session
+ * - invalid：调用方 keep_local 退登
+ * - uncertain：调用方保留原 session，且不标记已校验（便于尽快重试）
  */
 export async function revalidateAuthSession(
   session: AuthSession,
@@ -51,19 +56,30 @@ export async function revalidateAuthSession(
   }
 
   const startedAt = flowStart('Auth', 'revalidate session')
-  const refreshed = await refreshAuthSession(session.refreshToken, {
+  const refreshed = await refreshAuthSessionDetailed(session.refreshToken, {
     ...(session.email ? { email: session.email } : {}),
     ...(session.avatarUrl ? { avatarUrl: session.avatarUrl } : {}),
     ...(session.displayName ? { displayName: session.displayName } : {})
   })
 
-  await markAuthValidatedNow()
-
-  if (!refreshed) {
-    flowFail('Auth', 'revalidate session', startedAt, new Error('refresh_invalid'))
-    return { status: 'invalid' }
+  if (refreshed.status === 'ok') {
+    await markAuthValidatedNow()
+    flowOk('Auth', 'revalidate session', startedAt, { userId: refreshed.session.userId })
+    return { status: 'valid', session: refreshed.session }
   }
 
-  flowOk('Auth', 'revalidate session', startedAt, { userId: refreshed.userId })
-  return { status: 'valid', session: refreshed }
+  if (refreshed.status === 'invalid') {
+    // 明确作废才标记，避免反复打无效 refresh；调用方会清 session
+    await markAuthValidatedNow()
+    flowFail('Auth', 'revalidate session', startedAt, new Error(refreshed.reason), {
+      outcome: 'invalid'
+    })
+    return { status: 'invalid', reason: refreshed.reason }
+  }
+
+  // transient：不 mark，下次打开 Popup 可再试
+  flowFail('Auth', 'revalidate session', startedAt, new Error(refreshed.reason), {
+    outcome: 'uncertain'
+  })
+  return { status: 'uncertain', reason: refreshed.reason }
 }

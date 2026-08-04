@@ -28,7 +28,18 @@ export async function getSupabase(): Promise<SupabaseClient> {
         throw new Error('PUBLIC_SUPABASE_ANON_KEY 未配置')
       }
 
-      const client = mod.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+      /**
+       * 官网是纯客户端 OAuth：沿用 JS 默认 implicit（回调 #access_token=）。
+       * detectSessionInUrl 关闭，由 AuthCallback 显式处理，避免与手动解析竞态/误抛。
+       */
+      const client = mod.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: {
+          flowType: 'implicit',
+          detectSessionInUrl: false,
+          persistSession: true,
+          autoRefreshToken: true
+        }
+      })
 
       if (typeof window !== 'undefined') {
         ;(window as WindowWithSupabase)[SUPABASE_CLIENT_KEY] = client

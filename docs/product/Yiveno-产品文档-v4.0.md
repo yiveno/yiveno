@@ -579,6 +579,7 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 | Commands（快捷键）           | `frontend/src/background/listeners/commands.ts`              |
 | Command ID 契约              | `frontend/src/core/commands/command-ids.ts`                  |
 | Settings                     | `frontend/src/pages/settings/Settings.vue`                   |
+| Settings 分区（`?section=`） | `frontend/src/core/settings/settings-sections.ts`            |
 | Popup                        | `frontend/src/pages/popup/Popup.vue`                         |
 | 通用键盘意图（↑↓←→/Enter）   | `frontend/src/core/ui/keyboard-command.ts`                   |
 | 线性列表选中下标             | `frontend/src/core/ui/list-selection.ts`                     |
@@ -591,34 +592,34 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 
 ## 1. 现状 vs 目标（Normative）
 
-| 能力                             | 状态                    | 说明                                                                                   |
-| -------------------------------- | ----------------------- | -------------------------------------------------------------------------------------- |
-| Popup 对话式找回                 | 目标 · 当前主方向       | 统一为对话式 Recall：高置信给单一主答案，低置信给排序候选，并自然承接多轮补充线索      |
-| 右键保存选区                     | 已上线                  | Text Excerpt；非书签的主动 Capture                                                     |
-| 划词保存浮层                     | 已上线                  | Content Script；可直存或「添加备注」后写入 `clues.note`；Settings 可关；默认开         |
-| 书签/摘录事后备注                | 已上线                  | `UPDATE_MEMORY_NOTE`；书签树编辑；仅本地 `clues.note`，不同步 Chrome                   |
-| Chrome 书签导入 + 增量 sync      | 已上线                  | 书签唯一写入主路径；原生加书签 → onCreated 同步；upsert 保留 note                      |
-| LocalProfile / ownerId           | 已上线                  | 未登录可用；登录后 `ownerId=accountId`                                                 |
-| Settings                         | 已上线（最小+账户同步） | `options_ui`；快捷键；账户登录 + 云同步开关（默认关）；隐私/AI 仍占位                  |
-| Offscreen                        | 占位                    | 预留 embedding                                                                         |
-| Omnibox 找回                     | 已上线                  | 关键词 `yi`；共用 `recallService`；单次无会话                                          |
-| 快捷键找回                       | 已上线                  | `_execute_action`（默认 `Alt+Shift+Y`）开 Popup                                        |
-| 快捷键打开记忆库                 | 已上线                  | `open_library`（默认 `Alt+Shift+L`）                                                   |
-| 快捷键打开设置                   | 已上线                  | `open_settings`（无默认建议键；Chrome 最多 4 个 suggested_key，可自绑）                |
-| 快捷键保存选中文字               | 已上线                  | `save_selection`（默认 `Alt+Shift+E`）→ 划词脚本直存；`captureEntry=shortcut`          |
-| 快捷键选中文字并备注             | 已上线                  | `save_selection_with_note`（默认 `Alt+Shift+N`）→ 打开划词备注面板                     |
-| 手动「保存当前页」               | 不做                    | 与 Chrome 原生书签重复；已移除 UI/快捷键/消息                                          |
-| 结果线索解释强化                 | 已上线                  | 主因「因字段含「token」」+ 次要字段；Top Pick 线索回显                                 |
-| Popup 空状态分层                 | 已上线                  | 空库 / 有库 idle 与 no_match 分文案；有库可「缩短后再试」                              |
-| 摘录详情落地页                   | 已上线                  | `detail.html?id=`；摘录打开详情；书签仍直开 URL；`GET_MEMORY_ITEM`                     |
-| 记忆库轻浏览                     | 已上线                  | `library.html`；**默认摘录**；书签=Chrome 目录只读树；摘录=时间列表；`?type=` 刷新保留 |
-| 摘录删除                         | 已上线                  | 软删 `deletedAt`；记忆库列表 / 详情页；`DELETE_MEMORY_ITEM`；书签不经此删              |
-| Need A Clue / 否定反馈           | 已上线（过渡）          | 现为最小切片；后续并入对话式 Recall 主流程，不再以“一次追问”心智对外表达               |
-| 多源线索与权重（§7.1）           | 目标 · 按模块渐进       | 收集要宽、采信要窄；环境为弱上下文；产品内→选区→芯片→重排；未上线不得暗示可用          |
-| Hybrid Filter                    | 目标 · Phase B / Pro    | 非 Free；倒排/embedding 仍未开                                                         |
-| 云同步 / 账号 UI                 | 已上线（Phase C 切片）  | Supabase `memory_items`；Worker `/api/memory/sync/*`；冲突仅整侧 A/B；登录≠自动上传    |
-| 分享                             | 目标 · Phase C          |                                                                                        |
-| 轻管理余项（标签/失效链接/统计） | 目标 · Phase D          | 摘录删除已提前上线；书签仍只经 Chrome 同步软删                                         |
+| 能力                             | 状态                    | 说明                                                                                              |
+| -------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------- |
+| Popup 对话式找回                 | 目标 · 当前主方向       | 统一为对话式 Recall：高置信给单一主答案，低置信给排序候选，并自然承接多轮补充线索                 |
+| 右键保存选区                     | 已上线                  | Text Excerpt；非书签的主动 Capture                                                                |
+| 划词保存浮层                     | 已上线                  | Content Script；可直存或「添加备注」后写入 `clues.note`；Settings 可关；默认开                    |
+| 书签/摘录事后备注                | 已上线                  | `UPDATE_MEMORY_NOTE`；书签树编辑；仅本地 `clues.note`，不同步 Chrome                              |
+| Chrome 书签导入 + 增量 sync      | 已上线                  | 书签唯一写入主路径；原生加书签 → onCreated 同步；upsert 保留 note                                 |
+| LocalProfile / ownerId           | 已上线                  | 未登录可用；登录后 `ownerId=accountId`                                                            |
+| Settings                         | 已上线（最小+账户同步） | `options_ui`；左侧分区导航（与记忆库同构）+ `?section=`；快捷键；账户/云同步；隐私/AI 占位        |
+| Offscreen                        | 占位                    | 预留 embedding                                                                                    |
+| Omnibox 找回                     | 已上线                  | 关键词 `yi`；共用 `recallService`；单次无会话                                                     |
+| 快捷键找回                       | 已上线                  | `_execute_action`（默认 `Alt+Shift+Y`）开 Popup                                                   |
+| 快捷键打开记忆库                 | 已上线                  | `open_library`（默认 `Alt+Shift+L`）                                                              |
+| 快捷键打开设置                   | 已上线                  | `open_settings`（无默认建议键；Chrome 最多 4 个 suggested_key，可自绑）                           |
+| 快捷键保存选中文字               | 已上线                  | `save_selection`（默认 `Alt+Shift+E`）→ 划词脚本直存；`captureEntry=shortcut`                     |
+| 快捷键选中文字并备注             | 已上线                  | `save_selection_with_note`（默认 `Alt+Shift+N`）→ 打开划词备注面板                                |
+| 手动「保存当前页」               | 不做                    | 与 Chrome 原生书签重复；已移除 UI/快捷键/消息                                                     |
+| 结果线索解释强化                 | 已上线                  | 主因「因字段含「token」」+ 次要字段；Top Pick 线索回显                                            |
+| Popup 空状态分层                 | 已上线                  | 空库 / 有库 idle 与 no_match 分文案；有库可「缩短后再试」                                         |
+| 摘录详情落地页                   | 已上线                  | `detail.html?id=`；摘录打开详情；书签仍直开 URL；`GET_MEMORY_ITEM`                                |
+| 记忆库轻浏览                     | 已上线                  | `library.html`；**默认摘录**；书签=Chrome 目录只读树；摘录=时间列表；`?type=` 刷新保留            |
+| 摘录删除                         | 已上线                  | 软删 `deletedAt`；记忆库列表 / 详情页；`DELETE_MEMORY_ITEM`；书签不经此删                         |
+| Need A Clue / 否定反馈           | 已上线（过渡）          | 现为最小切片；后续并入对话式 Recall 主流程，不再以“一次追问”心智对外表达                          |
+| 多源线索与权重（§7.1）           | 目标 · 按模块渐进       | 收集要宽、采信要窄；环境为弱上下文；产品内→选区→芯片→重排；未上线不得暗示可用                     |
+| Hybrid Filter                    | 目标 · Phase B / Pro    | 非 Free；倒排/embedding 仍未开                                                                    |
+| 云同步 / 账号 UI                 | 已上线（Phase C 切片）  | Supabase `memory_items`；Worker `/api/memory/sync/*`；开同步并集 + **15 分钟增量**；登录≠自动上传 |
+| 分享                             | 目标 · Phase C          |                                                                                                   |
+| 轻管理余项（标签/失效链接/统计） | 目标 · Phase D          | 摘录删除已提前上线；书签仍只经 Chrome 同步软删                                                    |
 
 ### 1.1 「已上线」验证归属（Normative）
 
@@ -811,21 +812,22 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 - **P0 / Phase A**：线索解释/空状态、摘录详情、记忆库轻浏览 **已完成**；下一项用户指定
 - **P1 / Phase B**：索引、embedding、Hybrid、反馈、Need A Clue
-- **P2 / Phase C**：账户 UI + 云同步铺路 **已完成切片**（登录≠同步、整侧 A/B）；分享与隐私全文同意流仍待；增量定时 sync 后续
+- **P2 / Phase C**：账户 UI + 云同步铺路 **已完成切片**（登录≠同步、开同步并集对齐、增量定时 sync）；分享与隐私全文同意流仍待
 - **P3 / Phase D**：标签/失效链接/统计等轻管理余项（摘录删除已提前上线）
 
 **禁止重做**：双面板重组、复杂拖拽整理、AI 聚类主卖点、大规模书签树编辑。
 
 ### 5.5 Settings IA（最小已上线）
 
-| 分区   | 状态   | 说明                                                                   |
-| ------ | ------ | ---------------------------------------------------------------------- |
-| 保存   | 已上线 | 划词浮层开关（默认开）                                                 |
-| 快捷键 | 已上线 | 展示绑定；改键跳转 `chrome://extensions/shortcuts`                     |
-| 账户   | 已上线 | 顶栏头像：官网登录 / 账户页；**退出在设置页**（三选一，见下）          |
-| 同步   | 已上线 | 默认关；开同步后空侧自动对齐，两边都有则选 A/B；**空本机禁止盖非空云** |
-| 隐私   | 未上线 | 仅占位文案，不暗示可用                                                 |
-| AI     | 未上线 | 同上                                                                   |
+**布局（Normative）：** 与记忆库同构——**左侧竖导航 + 右侧单面板切换**；窄屏降级为顶部横排 chips。深链 `settings.html?section=<id>`（默认 `capture` 不写 query；旧 `usage` 映射到 `capture`）。
+
+| 分区（侧栏） | `section` id   | 状态   | 说明                                                                                                                                 |
+| ------------ | -------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| 保存         | `capture`      | 已上线 | 划词浮层开关（默认开）                                                                                                               |
+| 快捷键       | `shortcuts`    | 已上线 | 展示绑定；改键跳转 `chrome://extensions/shortcuts`                                                                                   |
+| 账户与同步   | `account_sync` | 已上线 | 顶栏头像登录；本区含同步开关（开则并集对齐）、禁止缩量盖云、最近备份恢复、孤儿桶、**退出三选一**；默认同步关；**空本机禁止盖非空云** |
+| 隐私         | `privacy`      | 未上线 | 仅占位文案，不暗示可用                                                                                                               |
+| AI           | `ai`           | 未上线 | 同上                                                                                                                                 |
 
 ### 5.6 扩展入口
 
@@ -857,12 +859,21 @@ Chrome API / 选区
 - 导入 = 核心业务（真实进度）。embedding = 辅助（Offscreen/队列，不阻塞关键词 Recall）。
 - 目标规模指导：2 万 MemoryItem；当前全量扫描上限约 10000；倒排/向量索引仍属 Phase B 余项。
 - 长期：Cloud Memory DB（当前实现为 **Supabase `memory_items`**）为云端事实源；本地 IndexedDB 变缓存——**不提前重写本地日常读写链路**。
-- Phase C 切片：扩展经 Supabase Auth 登录写入 `AccountBinding`；同步默认关；经 Worker `/api/memory/sync/*` push/pull/replace；冲突仅整侧覆盖（本机为准 / 云端为准）。
-- **空本机不得盖云（Normative）**：`SYNC_REPLACE_WITH_LOCAL` / Worker `POST /replace` 在本机条目数为 0 且云端有数时必须拒绝（`SYNC_REPLACE_LOCAL_EMPTY` / `empty_local_replace_denied`）；退出「先同步再清」在本机无数据时跳过写云。开同步时仅「本机有、云空」才自动本机盖云，「本空、云有」自动拉云。
+- Phase C 切片：扩展经 Supabase Auth 登录写入 `AccountBinding`；同步默认关；经 Worker `/api/memory/sync/*` push/pull/replace。
+- **开同步对齐（Normative）**：
+  - 本机有、云空 → 本机盖云（整侧 replace）。
+  - 本空、云有 → 云盖本机。
+  - **两边都有 → 按 `id` 并集**写入本机与云端，使两侧一致；同 `id` 取 `updatedAt` 较新胜，相等保留云端。盖云前仍走云侧 backup。孤儿桶不参与。
+  - **增量 / 定时 sync（Normative）**：同步开启后挂 `chrome.alarms`（约每 15 分钟）；路径为 `pull(since=lastPulledAt)` → LWW 写入本机 → `push` 水位后变更（**不**整侧 replace）。设置页可「立即同步」。关闭同步或退出登录清除闹钟。
+  - **禁止缩量盖云（Normative）**：`POST /replace` 在入站条数 < 云端现有条数时默认 409（`destructive_shrink_denied`），除非显式 `allowDestructiveShrink`（仅退出「先同步再清」等刻意路径）。合并时若 status 有数但 pull/解析为空或丢条，必须中止且不得写云。
+  - **误盖自救**：设置页可 `RESTORE_LATEST_SYNC_BACKUP` / `POST /restore-latest-backup`，在该账号备份中取 **条数最多** 的快照恢复云端并拉回本机（避免误盖后再 replace 一次时「最新=已缩量」救不回）。
+  - 不再向用户展示「保留本机 / 保留云端」整侧二选一（退出「先同步再清」仍可整侧盖云）。
+- **空本机不得盖云（Normative）**：`SYNC_REPLACE_WITH_LOCAL` / Worker `POST /replace` 在本机条目数为 0 且云端有数时必须拒绝（`SYNC_REPLACE_LOCAL_EMPTY` / `empty_local_replace_denied`）；退出「先同步再清」在本机无数据时跳过写云。
 - **登录态对齐（Normative）**：
-  - 登录：官网 → `YIVENO_AUTH_SESSION_HANDOFF` → 扩展（并记住 `extension_id`）。
+  - 登录：官网 → `YIVENO_AUTH_SESSION_HANDOFF` → 扩展（并记住 `extension_id`）；handoff 写入 `avatarUrl` / `displayName`（`avatar_url`|`picture`）。
   - 官网退出：`YIVENO_AUTH_SIGN_OUT_HANDOFF` → 扩展按 **keep_local** 清 session/binding（保留 Memory）；无 extension_id 时不阻塞官网退出。
-  - 扩展打开时：`GET_AUTH_STATE` **节流 refresh** 探测 refresh_token；失效则同等 keep_local 退登（兜底官网已退但未回传）。
+  - 扩展打开时：`GET_AUTH_STATE` **节流 refresh** 探测 refresh_token；**仅明确作废**（如 `invalid_grant`）才 keep_local 退登；网络/5xx 等瞬时失败保留本地登录态并下次再试（避免官网仍登录、扩展被误踢）。
+  - **头像资料（Normative）**：handoff / refresh 保留 `avatarUrl`；顶栏已登录但本地无头像时自动 `REFRESH_AUTH_PROFILE`（`getUser`）补拉，**不向用户暴露手动刷新入口**。
   - 扩展设置页退出（任一 mode）：结束后导航/打开官网 `/logout?from_extension=1` 清网站 Supabase session。
 - **登录后本地档归并（Normative）**：官网 handoff 成功或已登录时读 `GET_AUTH_STATE`，将 `localProfileId` 桶 Memory **remap** 到当前 `accountId`（仅本机、不上云）。解决「登录后旧本地数据 Recall 隐身」；幂等。
 - **多 owner 孤儿桶（Normative）**：保留集 = `localProfileId` ∪ 当前 `AccountBinding.accountId`（未登录则仅本地档）。保留集外的 `ownerId` 为换号残留：Recall/同步不计、不静默删除。设置页展示桶数/条数；可 **导出 JSON** 备份后 **显式清除**（`EXPORT_ORPHAN_OWNERS` / `CLEAR_ORPHAN_OWNERS`）。退出登录只动当前账号桶，不自动清孤儿。
@@ -939,7 +950,7 @@ Chrome API / 选区
 | ----- | ----------------------------------------------------------------------------------------------------- |
 | **A** | 线索解释/空状态、摘录详情、记忆库轻浏览 **已完成**；其余按用户指定                                    |
 | B     | Hybrid/embedding/倒排索引；Need A Clue + 否定反馈 **最小切片已上线**；**§7.1 多源线索加权按模块渐进** |
-| C     | 账户 UI + 云同步铺路 **切片已上线**（登录≠同步、整侧 A/B）；隐私控制落地、分享、增量定时 sync 仍待    |
+| C     | 账户 UI + 云同步铺路 **切片已上线**（登录≠同步、开同步并集、增量定时）；隐私控制落地、分享仍待        |
 | D     | 轻管理余项（标签/失效链接/统计；摘录删除已提前）                                                      |
 
 ---
@@ -1007,6 +1018,13 @@ Chrome API / 选区
 
 | 日期       | 变更                                                                                                               |
 | ---------- | ------------------------------------------------------------------------------------------------------------------ |
+| 2026-08-04 | 增量/定时 sync：`chrome.alarms`≈15min + `pull(since)`/`push` 水位；设置「立即同步」；不走定时 replace              |
+| 2026-08-04 | 同步防呆：禁止缩量 replace（409）+ 合并 pull 空/丢条中止；设置页可从最近 backup 恢复云端并拉回本机                 |
+| 2026-08-04 | 根因修复：`rowToMemoryItem` 归一化 Supabase timestamptz（偏移/非 3 位小数），避免 pull 静默丢光导致 454→5          |
+| 2026-08-04 | Auth revalidate：瞬时 refresh 失败不踢登录；仅 invalid_grant 等明确作废才 keep_local 退登                          |
+| 2026-08-04 | 开同步：两边都有时按 id 并集（`updatedAt` LWW）写回两侧；移除整侧 A/B 冲突 UI                                      |
+| 2026-08-04 | 头像收口：缺图时 Header 自动 `REFRESH_AUTH_PROFILE`；不设用户手动刷新按钮；官网兼容 picture                        |
+| 2026-08-04 | Settings：左侧分区导航（保存 / 快捷键 / 账户与同步 / 隐私 / AI）+ `?section=`；与记忆库同构                        |
 | 2026-08-04 | 多 owner 孤儿桶：设置页盘点 + 导出 JSON + 显式清除；退出不静默清历史账号                                           |
 | 2026-08-04 | 空本机不得盖非空云：扩展 `SYNC_REPLACE_LOCAL_EMPTY` + Worker `empty_local_replace_denied`（409）                   |
 | 2026-08-04 | 登录后归并 localProfile→accountId（仅本机 remap，解决 Recall 隐身）                                                |

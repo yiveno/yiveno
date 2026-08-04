@@ -6,7 +6,11 @@ import { openExtensionLibraryPage } from '@/infrastructure/browser/library-page'
 import { openExtensionOptionsPage } from '@/infrastructure/browser/options-page'
 import { openWebsiteAccountPage } from '@/infrastructure/browser/website-page'
 import { t } from '@/infrastructure/i18n/t'
-import { authSignIn, fetchAuthState } from '@/infrastructure/messaging/background-client'
+import {
+  authSignIn,
+  fetchAuthState,
+  refreshAuthProfile
+} from '@/infrastructure/messaging/background-client'
 import MaterialSymbolIcon from '@/infrastructure/ui/icons/MaterialSymbolIcon.vue'
 
 defineOptions({ name: 'AppPageHeader' })
@@ -64,6 +68,17 @@ async function refreshAuthChip() {
     avatarUrl.value = response.avatarUrl?.trim() ?? ''
     accountLabel.value = response.displayName?.trim() || response.email?.trim() || ''
     avatarBroken.value = false
+
+    // 已登录但本地无头像：补拉一次 getUser（旧 session / refresh 冲掉后的自愈）
+    if (response.signedIn && !avatarUrl.value) {
+      const refreshed = await refreshAuthProfile()
+      if (refreshed.ok && refreshed.avatarUrl?.trim()) {
+        avatarUrl.value = refreshed.avatarUrl.trim()
+        accountLabel.value =
+          refreshed.displayName?.trim() || refreshed.email?.trim() || accountLabel.value
+        avatarBroken.value = false
+      }
+    }
   } catch {
     signedIn.value = false
     avatarUrl.value = ''

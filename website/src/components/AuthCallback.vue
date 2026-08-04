@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { Session } from '@supabase/supabase-js'
 import { onMounted, ref } from 'vue'
 import { getSupabase } from '../services/supabase'
 import {
@@ -10,62 +11,119 @@ import {
 
 const status = ref('正在登录…')
 
+/** 跳回登录页，并带上可诊断的短错误码（避免超长 URL） */
+function redirectLoginError(code: string, detail?: string | null): void {
+  const params = new URLSearchParams()
+  params.set('error', code)
+  if (detail) {
+    // 截断，防止 error_description 过长
+    params.set('detail', detail.slice(0, 180))
+  }
+  window.location.href = `/login?${params.toString()}`
+}
+
+/**
+ * 登录成功后的统一收尾：可选回传扩展，再跳转账户页。
+ */
+async function finishWithSession(session: Session): Promise<void> {
+  if (getPendingExtensionId()) {
+    status.value = '正在连接扩展…'
+    const profile = extractProfileFromUserMetadata(
+      session.user.user_metadata as Record<string, unknown> | undefined
+    )
+    const ok = await handoffSessionToExtension({
+      accessToken: session.access_token,
+      refreshToken: session.refresh_token,
+      userId: session.user.id,
+      ...(session.user.email ? { email: session.user.email } : {}),
+      ...(session.expires_at != null ? { expiresAt: session.expires_at } : {}),
+      ...profile
+    })
+    if (ok) {
+      window.location.href = '/account?extension_connected=1'
+      return
+    }
+    status.value = '登录成功，但扩展未连接。请确认扩展已安装后从扩展设置重新登录。'
+    window.setTimeout(() => {
+      window.location.href = '/account?extension_connected=0'
+    }, 2000)
+    return
+  }
+
+  window.location.href = '/account'
+}
+
 onMounted(async () => {
   try {
     // OAuth 前在 /login 写入的 sessionStorage；此处再尝试从 query 捕获（防御）
     captureExtensionConnectParamsFromUrl()
 
-    const hash = window.location.hash
-    if (!hash || !hash.includes('access_token=')) {
-      window.location.href = '/login?error=no_token'
+    const url = new URL(window.location.href)
+
+    // GoTrue / 上游 OAuth 错误（出现在 query，须在建 client 前读，避免被吞）
+    const oauthError = url.searchParams.get('error')
+    if (oauthError) {
+      const description = url.searchParams.get('error_description')
+      console.error('[AuthCallback] OAuth 回调错误', {
+        error: oauthError,
+        description
+      })
+      redirectLoginError('oauth_error', description || oauthError)
       return
     }
-
-    const params = new URLSearchParams(hash.replace('#', ''))
-    const accessToken = params.get('access_token') || ''
-    const refreshToken = params.get('refresh_token') || ''
 
     const supabase = await getSupabase()
-    const { data, error } = await supabase.auth.setSession({
-      access_token: accessToken,
-      refresh_token: refreshToken
-    })
 
-    if (error || !data.session?.user?.id) {
-      console.error('[AuthCallback] setSession error:', error)
-      window.location.href = '/login?error=session_error'
-      return
-    }
-
-    if (getPendingExtensionId()) {
-      status.value = '正在连接扩展…'
-      const session = data.session
-      const profile = extractProfileFromUserMetadata(
-        session.user.user_metadata as Record<string, unknown> | undefined
-      )
-      const ok = await handoffSessionToExtension({
-        accessToken: session.access_token,
-        refreshToken: session.refresh_token,
-        userId: session.user.id,
-        ...(session.user.email ? { email: session.user.email } : {}),
-        ...(session.expires_at != null ? { expiresAt: session.expires_at } : {}),
-        ...profile
+    // 主路径（implicit）：#access_token=
+    const hash = window.location.hash
+    if (hash.includes('access_token=')) {
+      console.info('[AuthCallback] 使用 hash access_token 设置 session')
+      const params = new URLSearchParams(hash.replace(/^#/, ''))
+      const accessToken = params.get('access_token') || ''
+      const refreshToken = params.get('refresh_token') || ''
+      const { data, error } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken
       })
-      if (ok) {
-        window.location.href = '/account?extension_connected=1'
+      if (error || !data.session?.user?.id) {
+        console.error('[AuthCallback] setSession 失败:', error)
+        redirectLoginError('session_error', error?.message)
         return
       }
-      status.value = '登录成功，但扩展未连接。请确认扩展已安装后从扩展设置重新登录。'
-      window.setTimeout(() => {
-        window.location.href = '/account?extension_connected=0'
-      }, 2000)
+      await finishWithSession(data.session)
       return
     }
 
-    window.location.href = '/account'
+    // 兼容 PKCE：?code=
+    const code = url.searchParams.get('code')
+    if (code) {
+      console.info('[AuthCallback] 使用 PKCE code 换取 session')
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+      if (error || !data.session?.user?.id) {
+        console.error('[AuthCallback] exchangeCodeForSession 失败:', error)
+        redirectLoginError('session_error', error?.message)
+        return
+      }
+      await finishWithSession(data.session)
+      return
+    }
+
+    const { data: existing } = await supabase.auth.getSession()
+    if (existing.session?.user?.id) {
+      console.info('[AuthCallback] 复用已有 session')
+      await finishWithSession(existing.session)
+      return
+    }
+
+    console.error('[AuthCallback] 回调 URL 无 code / access_token，且无已有 session', {
+      search: url.search,
+      hash: url.hash ? '[present]' : ''
+    })
+    redirectLoginError('no_token')
   } catch (e) {
     console.error('[AuthCallback]', e)
-    window.location.href = '/login?error=auth_error'
+    const message = e instanceof Error ? e.message : String(e)
+    redirectLoginError('auth_error', message)
   }
 })
 </script>

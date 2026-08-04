@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { refreshAuthSessionMock } = vi.hoisted(() => ({
-  refreshAuthSessionMock: vi.fn()
+const { refreshAuthSessionDetailedMock } = vi.hoisted(() => ({
+  refreshAuthSessionDetailedMock: vi.fn()
 }))
 
 vi.mock('@/infrastructure/auth/extension-oauth', () => ({
-  refreshAuthSession: refreshAuthSessionMock
+  refreshAuthSessionDetailed: refreshAuthSessionDetailedMock
 }))
 
 vi.mock('@/infrastructure/logging/flow-log', () => ({
@@ -43,11 +43,14 @@ describe('auth-session-revalidate', () => {
     await expect(shouldRevalidateAuthSession()).resolves.toBe(true)
   })
 
-  it('refresh 成功返回 valid', async () => {
-    refreshAuthSessionMock.mockResolvedValue({
-      accessToken: 'at2',
-      refreshToken: 'rt2',
-      userId: '22222222-2222-4222-8222-222222222222'
+  it('refresh 成功返回 valid 并标记校验时间', async () => {
+    refreshAuthSessionDetailedMock.mockResolvedValue({
+      status: 'ok',
+      session: {
+        accessToken: 'at2',
+        refreshToken: 'rt2',
+        userId: '22222222-2222-4222-8222-222222222222'
+      }
     })
     const result = await revalidateAuthSession(
       {
@@ -63,8 +66,11 @@ describe('auth-session-revalidate', () => {
     )
   })
 
-  it('refresh 失败返回 invalid', async () => {
-    refreshAuthSessionMock.mockResolvedValue(null)
+  it('refresh 明确作废返回 invalid', async () => {
+    refreshAuthSessionDetailedMock.mockResolvedValue({
+      status: 'invalid',
+      reason: 'invalid_grant'
+    })
     const result = await revalidateAuthSession(
       {
         accessToken: 'at',
@@ -73,7 +79,24 @@ describe('auth-session-revalidate', () => {
       },
       { force: true }
     )
-    expect(result).toEqual({ status: 'invalid' })
+    expect(result).toEqual({ status: 'invalid', reason: 'invalid_grant' })
+  })
+
+  it('网络瞬时失败返回 uncertain 且不标记校验时间', async () => {
+    refreshAuthSessionDetailedMock.mockResolvedValue({
+      status: 'transient',
+      reason: 'Failed to fetch'
+    })
+    const result = await revalidateAuthSession(
+      {
+        accessToken: 'at',
+        refreshToken: 'rt',
+        userId: '22222222-2222-4222-8222-222222222222'
+      },
+      { force: true }
+    )
+    expect(result).toEqual({ status: 'uncertain', reason: 'Failed to fetch' })
+    expect(chrome.storage.session.set).not.toHaveBeenCalled()
   })
 
   it('节流窗口内 skipped', async () => {
@@ -84,6 +107,6 @@ describe('auth-session-revalidate', () => {
       userId: '22222222-2222-4222-8222-222222222222'
     })
     expect(result).toEqual({ status: 'skipped' })
-    expect(refreshAuthSessionMock).not.toHaveBeenCalled()
+    expect(refreshAuthSessionDetailedMock).not.toHaveBeenCalled()
   })
 })

@@ -77,13 +77,20 @@ export async function fetchRemoteSyncStatus(accessToken: string): Promise<SyncSt
   }
 }
 
-/** 全量拉取。 */
-export async function pullRemoteMemoryItems(accessToken: string): Promise<MemoryItem[]> {
-  const startedAt = flowStart('MemorySync', 'pull 云端')
+/** 拉取云端（可带 since 做增量）。 */
+export async function pullRemoteMemoryItems(
+  accessToken: string,
+  options: { since?: string } = {}
+): Promise<MemoryItem[]> {
+  const startedAt = flowStart('MemorySync', 'pull 云端', {
+    since: options.since ?? null
+  })
   try {
     const data = await memorySyncFetch<{ items: MemoryItem[] }>('/pull', accessToken, {
       method: 'POST',
-      body: '{}'
+      body: JSON.stringify({
+        ...(options.since ? { since: options.since } : {})
+      })
     })
     flowOk('MemorySync', 'pull 云端', startedAt, { count: data.items.length })
     return data.items
@@ -93,13 +100,45 @@ export async function pullRemoteMemoryItems(accessToken: string): Promise<Memory
   }
 }
 
+/** 批量 upsert 到云端（增量上云，非整侧 replace）；自动按 2000 批切开。 */
+export async function pushRemoteMemoryItems(
+  accessToken: string,
+  items: MemoryItem[]
+): Promise<{ written: number }> {
+  const startedAt = flowStart('MemorySync', 'push 云端', { count: items.length })
+  try {
+    if (items.length === 0) {
+      flowOk('MemorySync', 'push 云端', startedAt, { written: 0 })
+      return { written: 0 }
+    }
+
+    const batchSize = 2000
+    let written = 0
+    for (let i = 0; i < items.length; i += batchSize) {
+      const slice = items.slice(i, i + batchSize)
+      const data = await memorySyncFetch<{ written: number }>('/push', accessToken, {
+        method: 'POST',
+        body: JSON.stringify({ items: slice })
+      })
+      written += data.written
+    }
+    flowOk('MemorySync', 'push 云端', startedAt, { written })
+    return { written }
+  } catch (error) {
+    flowFail('MemorySync', 'push 云端', startedAt, error)
+    throw error
+  }
+}
+
 /** 用本机全集替换云端。 */
 export async function replaceRemoteWithLocalItems(
   accessToken: string,
-  items: MemoryItem[]
+  items: MemoryItem[],
+  options: { allowDestructiveShrink?: boolean } = {}
 ): Promise<{ backupId: string; written: number }> {
   const startedAt = flowStart('MemorySync', 'replace 云端（本机为准）', {
-    count: items.length
+    count: items.length,
+    allowDestructiveShrink: options.allowDestructiveShrink === true
   })
   try {
     const data = await memorySyncFetch<{ backupId: string; written: number }>(
@@ -107,13 +146,38 @@ export async function replaceRemoteWithLocalItems(
       accessToken,
       {
         method: 'POST',
-        body: JSON.stringify({ items })
+        body: JSON.stringify({
+          items,
+          ...(options.allowDestructiveShrink === true ? { allowDestructiveShrink: true } : {})
+        })
       }
     )
     flowOk('MemorySync', 'replace 云端（本机为准）', startedAt, data)
     return data
   } catch (error) {
     flowFail('MemorySync', 'replace 云端（本机为准）', startedAt, error)
+    throw error
+  }
+}
+
+/** 用该账号最近一次 replace 前备份恢复云端。 */
+export async function restoreRemoteFromLatestBackup(
+  accessToken: string
+): Promise<{ backupId: string; restored: number; safetyBackupId: string }> {
+  const startedAt = flowStart('MemorySync', 'restore 最近备份')
+  try {
+    const data = await memorySyncFetch<{
+      backupId: string
+      restored: number
+      safetyBackupId: string
+    }>('/restore-latest-backup', accessToken, {
+      method: 'POST',
+      body: '{}'
+    })
+    flowOk('MemorySync', 'restore 最近备份', startedAt, data)
+    return data
+  } catch (error) {
+    flowFail('MemorySync', 'restore 最近备份', startedAt, error)
     throw error
   }
 }

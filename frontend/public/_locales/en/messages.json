@@ -291,6 +291,30 @@
   "settings_subtitle": {
     "message": "Manage recall preferences. Capabilities that are not live will not pretend to be."
   },
+  "settings_tabs_aria": {
+    "message": "Settings sections"
+  },
+  "settings_tab_capture": {
+    "message": "Capture"
+  },
+  "settings_tab_shortcuts": {
+    "message": "Shortcuts"
+  },
+  "settings_tab_account_sync": {
+    "message": "Account & sync"
+  },
+  "settings_tab_privacy": {
+    "message": "Privacy"
+  },
+  "settings_tab_ai": {
+    "message": "AI"
+  },
+  "settings_placeholder_privacy": {
+    "message": "Privacy options are not available yet. This page will not pretend they are."
+  },
+  "settings_placeholder_ai": {
+    "message": "AI options are not available yet. This page will not pretend they are."
+  },
   "settings_section_capture": {
     "message": "Capture"
   },
@@ -410,13 +434,41 @@
     "message": "Sync"
   },
   "settings_section_sync_copy": {
-    "message": "Cloud sync is off by default. Turn it on only when you want to back up or use another device."
+    "message": "Cloud sync is off by default. Turning it on first merges this device and the cloud (same id keeps the newer), then syncs about every 15 minutes. You can also sync now."
   },
   "settings_sync_toggle": {
     "message": "Sync memories to the cloud"
   },
   "settings_sync_toggle_hint": {
     "message": "Sign in from the account icon in the header first. Local memories stay on this device if you sign out on the website."
+  },
+  "settings_sync_now": {
+    "message": "Sync now"
+  },
+  "settings_sync_now_working": {
+    "message": "Syncing…"
+  },
+  "settings_sync_now_done": {
+    "message": "Synced: pulled $PULLED$ · pushed $PUSHED$",
+    "placeholders": {
+      "PULLED": {
+        "content": "$1"
+      },
+      "PUSHED": {
+        "content": "$2"
+      }
+    }
+  },
+  "settings_sync_last_pulled": {
+    "message": "Last sync watermark: $TIME$",
+    "placeholders": {
+      "TIME": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_error_sync_incremental": {
+    "message": "Incremental sync failed"
   },
   "settings_sync_local_count": {
     "message": "On this device: $COUNT$",
@@ -433,18 +485,6 @@
         "content": "$1"
       }
     }
-  },
-  "settings_sync_conflict_title": {
-    "message": "Both sides have memories"
-  },
-  "settings_sync_conflict_copy": {
-    "message": "Choose which side to keep. The other side will be replaced (cloud gets a backup first)."
-  },
-  "settings_sync_use_local": {
-    "message": "Keep this device"
-  },
-  "settings_sync_use_remote": {
-    "message": "Keep the cloud"
   },
   "settings_sync_working": {
     "message": "Working…"
@@ -464,6 +504,9 @@
   "settings_error_auth_state": {
     "message": "Could not load account status"
   },
+  "settings_error_auth_profile_refresh": {
+    "message": "Could not refresh profile photo"
+  },
   "settings_error_sync_not_authenticated": {
     "message": "Sign in required for sync"
   },
@@ -481,6 +524,29 @@
   },
   "settings_error_sync_replace_remote": {
     "message": "Could not replace this device with the cloud"
+  },
+  "settings_error_sync_merge": {
+    "message": "Could not merge memories between this device and the cloud"
+  },
+  "settings_error_sync_restore_backup": {
+    "message": "Could not restore the latest cloud backup"
+  },
+  "settings_sync_restore_backup": {
+    "message": "Restore from cloud backup"
+  },
+  "settings_sync_restore_backup_hint": {
+    "message": "If cloud count dropped after turning sync on, restore the largest pre-overwrite backup, then pull it to this device."
+  },
+  "settings_sync_restore_backup_confirm": {
+    "message": "Overwrite the cloud with the largest sync backup, then pull it to this device. Continue?"
+  },
+  "settings_sync_restore_backup_done": {
+    "message": "Restored $COUNT$ item(s) to the cloud and this device",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1"
+      }
+    }
   },
   "settings_error_orphan_export": {
     "message": "Could not export leftover account data"

@@ -4,6 +4,7 @@ import { refreshClueLlmCompleterFromDevConfig } from '@/application/recall/refre
 import { registerChromeBookmarkSyncListeners } from '@/background/listeners/chrome-bookmark-sync'
 import { registerCommandListeners } from '@/background/listeners/commands'
 import { registerContextMenuListeners } from '@/background/listeners/context-menu'
+import { registerMemoryCloudSyncAlarmListener } from '@/background/listeners/memory-cloud-sync-alarm'
 import { registerOmniboxListeners } from '@/background/listeners/omnibox'
 import { registerSelectionToolbarKeepaliveListener } from '@/background/listeners/selection-toolbar-keepalive'
 import { logger } from '@/infrastructure/logging/logger'
@@ -35,6 +36,7 @@ async function bootstrapBackground(): Promise<void> {
   registerOmniboxListeners()
   registerCommandListeners()
   registerSelectionToolbarKeepaliveListener()
+  registerMemoryCloudSyncAlarmListener()
 
   await refreshClueLlmCompleterFromDevConfig().catch(error => {
     logger.warn('Background', '线索 LLM 开发配置加载失败，将仅用规则理解', error)

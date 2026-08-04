@@ -10,6 +10,7 @@ import {
   getMemorySyncStatus,
   pullMemoryItems,
   replaceMemoryItems,
+  restoreMemoryItemsFromLatestBackup,
   upsertMemoryItems
 } from '../data-access/memory-items'
 import { supabaseAuth } from '../middleware/supabase-auth'
@@ -39,7 +40,9 @@ const PushBodySchema = z.object({
 })
 
 const ReplaceBodySchema = z.object({
-  items: z.array(MemoryItemSchema).max(MEMORY_SYNC_PULL_MAX)
+  items: z.array(MemoryItemSchema).max(MEMORY_SYNC_PULL_MAX),
+  /** 允许写入条数少于云端现有（仅显式危险路径） */
+  allowDestructiveShrink: z.boolean().optional()
 })
 
 /** 拒绝非本人 ownerId 的条目。 */
@@ -66,12 +69,35 @@ memorySyncRouter.get('/status', async c => {
   }
 })
 
-/** POST /api/memory/sync/pull — MVP 全量拉取 */
+/** POST /api/memory/sync/pull — MVP 全量或按 updated_at 增量拉取 */
 memorySyncRouter.post('/pull', async c => {
   const userId = c.get('supabaseUserId')
+  let body: unknown = {}
   try {
-    const items = await pullMemoryItems(c.env, userId, MEMORY_SYNC_PULL_MAX)
-    info('[MemorySync] pull', { userId, count: items.length })
+    const raw = await c.req.json()
+    body = raw
+  } catch {
+    body = {}
+  }
+
+  const PullBodySchema = z.object({
+    /** 仅拉取 updated_at 严格大于该 ISO 时间的条目（含软删翻新） */
+    since: z.string().datetime().optional()
+  })
+  const parsed = PullBodySchema.safeParse(body ?? {})
+  if (!parsed.success) {
+    return c.json({ error: 'invalid_payload', issues: parsed.error.issues }, 400)
+  }
+
+  try {
+    const items = await pullMemoryItems(c.env, userId, MEMORY_SYNC_PULL_MAX, {
+      ...(parsed.data.since ? { since: parsed.data.since } : {})
+    })
+    info('[MemorySync] pull', {
+      userId,
+      count: items.length,
+      since: parsed.data.since ?? null
+    })
     return c.json({ success: true, data: { items } })
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
@@ -134,12 +160,14 @@ memorySyncRouter.post('/replace', async c => {
   }
 
   try {
-    const result = await replaceMemoryItems(c.env, userId, items)
+    const result = await replaceMemoryItems(c.env, userId, items, {
+      ...(parsed.data.allowDestructiveShrink === true ? { allowDestructiveShrink: true } : {})
+    })
     return c.json({ success: true, data: result })
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
-    if (msg === 'empty_local_replace_denied') {
-      return c.json({ error: 'empty_local_replace_denied' }, 409)
+    if (msg === 'empty_local_replace_denied' || msg === 'destructive_shrink_denied') {
+      return c.json({ error: msg }, 409)
     }
     logErrorMessage('[MemorySync] replace 异常', { detail: msg, userId })
     const code =
@@ -147,5 +175,28 @@ memorySyncRouter.post('/replace', async c => {
         ? msg
         : 'memory_replace_failed'
     return c.json({ error: code }, 500)
+  }
+})
+
+/**
+ * POST /api/memory/sync/restore-latest-backup
+ * 用该账号最近一次 replace 前备份覆盖云端（误盖云自救）。
+ */
+memorySyncRouter.post('/restore-latest-backup', async c => {
+  const userId = c.get('supabaseUserId')
+  try {
+    const result = await restoreMemoryItemsFromLatestBackup(c.env, userId)
+    return c.json({ success: true, data: result })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    if (
+      msg === 'memory_backup_not_found' ||
+      msg === 'memory_backup_unreadable' ||
+      msg === 'memory_backup_read_failed'
+    ) {
+      return c.json({ error: msg }, 404)
+    }
+    logErrorMessage('[MemorySync] restore backup 异常', { detail: msg, userId })
+    return c.json({ error: msg === 'supabase_not_configured' ? msg : 'memory_restore_failed' }, 500)
   }
 })

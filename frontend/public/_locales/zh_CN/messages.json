@@ -291,6 +291,30 @@
   "settings_subtitle": {
     "message": "管理找回相关偏好。未上线能力不会假装可用。"
   },
+  "settings_tabs_aria": {
+    "message": "设置分区"
+  },
+  "settings_tab_capture": {
+    "message": "保存"
+  },
+  "settings_tab_shortcuts": {
+    "message": "快捷键"
+  },
+  "settings_tab_account_sync": {
+    "message": "账户与同步"
+  },
+  "settings_tab_privacy": {
+    "message": "隐私"
+  },
+  "settings_tab_ai": {
+    "message": "AI"
+  },
+  "settings_placeholder_privacy": {
+    "message": "隐私相关选项尚未上线，这里不会假装可配置。"
+  },
+  "settings_placeholder_ai": {
+    "message": "AI 相关选项尚未上线，这里不会假装可配置。"
+  },
   "settings_section_capture": {
     "message": "保存"
   },
@@ -410,13 +434,41 @@
     "message": "同步"
   },
   "settings_section_sync_copy": {
-    "message": "云同步默认关闭。仅在需要备份或换设备时开启。"
+    "message": "云同步默认关闭。开启时先把本机与云端按条目合并成一致副本（同 id 取较新），之后约每 15 分钟增量同步；也可手动立即同步。"
   },
   "settings_sync_toggle": {
     "message": "将记忆同步到云端"
   },
   "settings_sync_toggle_hint": {
     "message": "请先点顶部账户图标登录。在官网退出后，本机记忆仍保留。"
+  },
+  "settings_sync_now": {
+    "message": "立即同步"
+  },
+  "settings_sync_now_working": {
+    "message": "同步中…"
+  },
+  "settings_sync_now_done": {
+    "message": "已同步：拉回 $PULLED$ · 上云 $PUSHED$",
+    "placeholders": {
+      "PULLED": {
+        "content": "$1"
+      },
+      "PUSHED": {
+        "content": "$2"
+      }
+    }
+  },
+  "settings_sync_last_pulled": {
+    "message": "上次同步水位：$TIME$",
+    "placeholders": {
+      "TIME": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_error_sync_incremental": {
+    "message": "增量同步失败"
   },
   "settings_sync_local_count": {
     "message": "本机：$COUNT$",
@@ -433,18 +485,6 @@
         "content": "$1"
       }
     }
-  },
-  "settings_sync_conflict_title": {
-    "message": "两边都有记忆"
-  },
-  "settings_sync_conflict_copy": {
-    "message": "请选择保留哪一侧；另一侧将被替换（替换云端前会先备份）。"
-  },
-  "settings_sync_use_local": {
-    "message": "保留本机"
-  },
-  "settings_sync_use_remote": {
-    "message": "保留云端"
   },
   "settings_sync_working": {
     "message": "处理中…"
@@ -464,6 +504,9 @@
   "settings_error_auth_state": {
     "message": "读取账户状态失败"
   },
+  "settings_error_auth_profile_refresh": {
+    "message": "刷新头像与资料失败"
+  },
   "settings_error_sync_not_authenticated": {
     "message": "同步需要先登录"
   },
@@ -481,6 +524,29 @@
   },
   "settings_error_sync_replace_remote": {
     "message": "用云端覆盖本机失败"
+  },
+  "settings_error_sync_merge": {
+    "message": "合并本机与云端记忆失败"
+  },
+  "settings_error_sync_restore_backup": {
+    "message": "从云端备份恢复失败"
+  },
+  "settings_sync_restore_backup": {
+    "message": "从云端备份恢复"
+  },
+  "settings_sync_restore_backup_hint": {
+    "message": "若开同步后云端条数异常变少，可用条数最多的那次覆盖前备份救回，并拉回本机。"
+  },
+  "settings_sync_restore_backup_confirm": {
+    "message": "将用云端条数最多的同步备份覆盖当前云端库，再拉回本机。继续？"
+  },
+  "settings_sync_restore_backup_done": {
+    "message": "已恢复 $COUNT$ 条到云端并拉回本机",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1"
+      }
+    }
   },
   "settings_error_orphan_export": {
     "message": "导出历史账号残留失败"

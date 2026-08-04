@@ -11,6 +11,9 @@ import {
   handleExportOrphanOwners,
   handleGetAuthState,
   handleGetSyncStatus,
+  handleRefreshAuthProfile,
+  handleRestoreLatestSyncBackup,
+  handleIncrementalMemorySync,
   handleSetSyncEnabled,
   handleSyncReplaceWithLocal,
   handleSyncReplaceWithRemote
@@ -78,10 +81,14 @@ async function dispatchBackgroundMessage(
       return handleAuthSignOut(message.payload.mode)
     case 'GET_AUTH_STATE':
       return handleGetAuthState()
+    case 'REFRESH_AUTH_PROFILE':
+      return handleRefreshAuthProfile()
     case 'GET_SYNC_STATUS':
       return handleGetSyncStatus()
     case 'SET_SYNC_ENABLED':
       return handleSetSyncEnabled(message.payload.enabled)
+    case 'RUN_INCREMENTAL_MEMORY_SYNC':
+      return handleIncrementalMemorySync()
     case 'SYNC_REPLACE_WITH_LOCAL':
       return handleSyncReplaceWithLocal()
     case 'SYNC_REPLACE_WITH_REMOTE':
@@ -90,6 +97,8 @@ async function dispatchBackgroundMessage(
       return handleExportOrphanOwners()
     case 'CLEAR_ORPHAN_OWNERS':
       return handleClearOrphanOwners()
+    case 'RESTORE_LATEST_SYNC_BACKUP':
+      return handleRestoreLatestSyncBackup()
     case 'CAPTURE_BOOKMARK':
       return handleCaptureBookmark(message.payload)
     case 'CAPTURE_TEXT_EXCERPT':

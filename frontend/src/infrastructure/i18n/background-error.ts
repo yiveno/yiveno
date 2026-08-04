@@ -17,12 +17,16 @@ const ACCOUNT_SYNC_ERROR_MESSAGE_KEYS: Record<AccountSyncErrorCode, MessageKey> 
   AUTH_SIGN_IN_FAILED: 'settings_error_auth_sign_in',
   AUTH_SIGN_OUT_FAILED: 'settings_error_auth_sign_out',
   AUTH_STATE_READ_FAILED: 'settings_error_auth_state',
+  AUTH_PROFILE_REFRESH_FAILED: 'settings_error_auth_profile_refresh',
   SYNC_NOT_AUTHENTICATED: 'settings_error_sync_not_authenticated',
   SYNC_STATUS_FAILED: 'settings_error_sync_status',
   SYNC_PREFS_UPDATE_FAILED: 'settings_error_sync_prefs',
   SYNC_REPLACE_LOCAL_FAILED: 'settings_error_sync_replace_local',
   SYNC_REPLACE_LOCAL_EMPTY: 'settings_error_sync_replace_local_empty',
   SYNC_REPLACE_REMOTE_FAILED: 'settings_error_sync_replace_remote',
+  SYNC_MERGE_FAILED: 'settings_error_sync_merge',
+  SYNC_RESTORE_BACKUP_FAILED: 'settings_error_sync_restore_backup',
+  SYNC_INCREMENTAL_FAILED: 'settings_error_sync_incremental',
   ORPHAN_EXPORT_FAILED: 'settings_error_orphan_export',
   ORPHAN_CLEAR_FAILED: 'settings_error_orphan_clear'
 }

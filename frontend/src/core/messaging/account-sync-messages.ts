@@ -11,12 +11,16 @@ export const AccountSyncErrorCodeSchema = z.enum([
   'AUTH_SIGN_IN_FAILED', // 登录失败
   'AUTH_SIGN_OUT_FAILED', // 登出失败
   'AUTH_STATE_READ_FAILED', // 读取登录态失败
+  'AUTH_PROFILE_REFRESH_FAILED', // 刷新头像/资料失败
   'SYNC_NOT_AUTHENTICATED', // 未登录无法同步
   'SYNC_STATUS_FAILED', // 同步状态失败
   'SYNC_PREFS_UPDATE_FAILED', // 更新同步偏好失败
   'SYNC_REPLACE_LOCAL_FAILED', // 本机覆盖云端失败
   'SYNC_REPLACE_LOCAL_EMPTY', // 本机空库禁止盖云
   'SYNC_REPLACE_REMOTE_FAILED', // 云端覆盖本机失败
+  'SYNC_MERGE_FAILED', // 本机与云端并集合并失败
+  'SYNC_RESTORE_BACKUP_FAILED', // 从云端备份恢复失败
+  'SYNC_INCREMENTAL_FAILED', // 增量/定时同步失败
   'ORPHAN_EXPORT_FAILED', // 导出孤儿桶失败
   'ORPHAN_CLEAR_FAILED' // 清除孤儿桶失败
 ])
@@ -96,6 +100,25 @@ export type GetAuthStateResponse =
       error?: string
     }
 
+/** 从 Supabase getUser 刷新本机 session 的头像 / 展示名（非热路径）。 */
+export type RefreshAuthProfileMessage = {
+  scope: BackgroundMessageScope
+  type: 'REFRESH_AUTH_PROFILE'
+}
+
+export type RefreshAuthProfileResponse =
+  | {
+      ok: true
+      email?: string
+      avatarUrl?: string
+      displayName?: string
+    }
+  | {
+      ok: false
+      errorCode: AccountSyncErrorCode
+      error?: string
+    }
+
 export type GetSyncStatusMessage = {
   scope: BackgroundMessageScope
   type: 'GET_SYNC_STATUS'
@@ -113,12 +136,16 @@ export type GetSyncStatusResponse =
       localProfileOwnerCount: number
       remoteCount: number
       latestRemoteUpdatedAt: string | null
-      /** 两边都有未删数据，需用户选 A/B */
+      /** @deprecated 开同步已改为自动并集；恒为 false，保留字段兼容旧客户端 */
       needsConflictChoice: boolean
       /** 保留集外的历史账号桶个数 */
       orphanBucketCount: number
       /** 孤儿桶未软删条数之和 */
       orphanActiveCount: number
+      /** 上次成功增量 pull 水位 */
+      lastPulledAt?: string
+      /** 上次成功增量 push 水位 */
+      lastPushedAt?: string
     }
   | {
       ok: false
@@ -138,10 +165,31 @@ export type SetSyncEnabledResponse =
   | {
       ok: true
       syncPrefs: SyncPrefs
-      /** 开启后若两边都有数据，UI 应展示冲突选择 */
+      /** @deprecated 开同步已改为自动并集；恒为 false */
       needsConflictChoice: boolean
       localCount: number
       remoteCount: number
+    }
+  | {
+      ok: false
+      errorCode: AccountSyncErrorCode
+      error?: string
+    }
+
+/** 手动触发一次增量云同步（定时闹钟同路径）。 */
+export type RunIncrementalMemorySyncMessage = {
+  scope: BackgroundMessageScope
+  type: 'RUN_INCREMENTAL_MEMORY_SYNC'
+}
+
+export type RunIncrementalMemorySyncResponse =
+  | {
+      ok: true
+      pulled: number
+      pushed: number
+      mergedLocal: number
+      lastPulledAt: string
+      lastPushedAt: string
     }
   | {
       ok: false
@@ -218,24 +266,49 @@ export type ClearOrphanOwnersResponse =
       error?: string
     }
 
+/** 用最近一次云端 replace 备份恢复，并拉回本机。 */
+export type RestoreLatestSyncBackupMessage = {
+  scope: BackgroundMessageScope
+  type: 'RESTORE_LATEST_SYNC_BACKUP'
+}
+
+export type RestoreLatestSyncBackupResponse =
+  | {
+      ok: true
+      backupId: string
+      restored: number
+      localWritten: number
+    }
+  | {
+      ok: false
+      errorCode: AccountSyncErrorCode
+      error?: string
+    }
+
 export type AccountSyncBackgroundMessage =
   | AuthSignInMessage
   | AuthSignOutMessage
   | GetAuthStateMessage
+  | RefreshAuthProfileMessage
   | GetSyncStatusMessage
   | SetSyncEnabledMessage
+  | RunIncrementalMemorySyncMessage
   | SyncReplaceWithLocalMessage
   | SyncReplaceWithRemoteMessage
   | ExportOrphanOwnersMessage
   | ClearOrphanOwnersMessage
+  | RestoreLatestSyncBackupMessage
 
 export type AccountSyncBackgroundResponse =
   | AuthSignInResponse
   | AuthSignOutResponse
   | GetAuthStateResponse
+  | RefreshAuthProfileResponse
   | GetSyncStatusResponse
   | SetSyncEnabledResponse
+  | RunIncrementalMemorySyncResponse
   | SyncReplaceWithLocalResponse
   | SyncReplaceWithRemoteResponse
   | ExportOrphanOwnersResponse
   | ClearOrphanOwnersResponse
+  | RestoreLatestSyncBackupResponse

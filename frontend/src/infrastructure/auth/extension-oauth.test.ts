@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  classifyAuthRefreshFailure,
   mapSupabaseSessionToAuthSession,
   parseOAuthRedirectTokens
 } from '@/infrastructure/auth/extension-oauth'
@@ -62,5 +63,22 @@ describe('mapSupabaseSessionToAuthSession', () => {
     expect(mapped.avatarUrl).toBe('https://example.com/kept.png')
     expect(mapped.displayName).toBe('Kept')
     expect(mapped.email).toBe('u@example.com')
+  })
+})
+
+describe('classifyAuthRefreshFailure', () => {
+  it('invalid_grant → invalid', () => {
+    expect(classifyAuthRefreshFailure({ message: 'invalid_grant' })).toBe('invalid')
+  })
+
+  it('AuthRetryableFetchError / 5xx → transient', () => {
+    expect(classifyAuthRefreshFailure({ name: 'AuthRetryableFetchError', status: 0 })).toBe(
+      'transient'
+    )
+    expect(classifyAuthRefreshFailure({ status: 503, message: 'unavailable' })).toBe('transient')
+  })
+
+  it('未知错误默认 transient，避免误踢', () => {
+    expect(classifyAuthRefreshFailure({ message: 'weird' })).toBe('transient')
   })
 })

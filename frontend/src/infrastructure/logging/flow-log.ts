@@ -38,9 +38,32 @@ export function flowFail(
 ): void {
   logger.error(scope, `${action}：失败`, {
     durationMs: durationMs(startedAt),
-    error,
+    error: formatFlowError(error),
     ...data
   })
+}
+
+/** 把 Error / 未知值收成可 JSON 预览的结构，避免控制台只见 [object Object]。 */
+function formatFlowError(error: unknown): Record<string, unknown> | string {
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message
+    }
+  }
+  if (typeof error === 'string') {
+    return error
+  }
+  if (error && typeof error === 'object') {
+    const record = error as Record<string, unknown>
+    return {
+      ...(typeof record.name === 'string' ? { name: record.name } : {}),
+      ...(typeof record.message === 'string' ? { message: record.message } : {}),
+      ...(typeof record.code === 'string' ? { code: record.code } : {}),
+      ...(typeof record.status === 'number' ? { status: record.status } : {})
+    }
+  }
+  return String(error)
 }
 
 /** 截断长文本，避免控制台刷屏。 */

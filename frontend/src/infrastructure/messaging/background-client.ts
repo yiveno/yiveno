@@ -10,6 +10,9 @@ import type {
   ExportOrphanOwnersResponse,
   GetAuthStateResponse,
   GetSyncStatusResponse,
+  RefreshAuthProfileResponse,
+  RestoreLatestSyncBackupResponse,
+  RunIncrementalMemorySyncResponse,
   SetSyncEnabledResponse,
   SyncReplaceWithLocalResponse,
   SyncReplaceWithRemoteResponse
@@ -198,6 +201,14 @@ export async function fetchAuthState(): Promise<GetAuthStateResponse> {
   })
 }
 
+/** 从 Supabase 刷新头像 / 展示名到本机 session。 */
+export async function refreshAuthProfile(): Promise<RefreshAuthProfileResponse> {
+  return sendBackgroundMessage<RefreshAuthProfileResponse>({
+    scope: 'background',
+    type: 'REFRESH_AUTH_PROFILE'
+  })
+}
+
 /** OAuth 登录（打开官网登录页；session 由官网回传）。 */
 export async function authSignIn(): Promise<AuthSignInResponse> {
   return sendBackgroundMessage<AuthSignInResponse>({
@@ -232,6 +243,14 @@ export async function setSyncEnabled(enabled: boolean): Promise<SetSyncEnabledRe
   })
 }
 
+/** 立即跑一轮增量云同步（与定时闹钟同路径）。 */
+export async function runIncrementalMemorySync(): Promise<RunIncrementalMemorySyncResponse> {
+  return sendBackgroundMessage<RunIncrementalMemorySyncResponse>({
+    scope: 'background',
+    type: 'RUN_INCREMENTAL_MEMORY_SYNC'
+  })
+}
+
 /** 冲突策略 A：本机覆盖云端。 */
 export async function syncReplaceWithLocal(): Promise<SyncReplaceWithLocalResponse> {
   return sendBackgroundMessage<SyncReplaceWithLocalResponse>({
@@ -261,5 +280,13 @@ export async function clearOrphanOwners(): Promise<ClearOrphanOwnersResponse> {
   return sendBackgroundMessage<ClearOrphanOwnersResponse>({
     scope: 'background',
     type: 'CLEAR_ORPHAN_OWNERS'
+  })
+}
+
+/** 从云端最近一次 replace 备份恢复，并拉回本机。 */
+export async function restoreLatestSyncBackup(): Promise<RestoreLatestSyncBackupResponse> {
+  return sendBackgroundMessage<RestoreLatestSyncBackupResponse>({
+    scope: 'background',
+    type: 'RESTORE_LATEST_SYNC_BACKUP'
   })
 }

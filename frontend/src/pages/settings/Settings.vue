@@ -1,11 +1,19 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import {
   formatExtensionCommandShortcut,
   getExtensionCommandDisplayTitle
 } from '@/core/commands/command-display'
 import type { ExtensionCommandInfo } from '@/core/messaging/commands-messages'
+import type { AuthSignOutMode } from '@/core/messaging/account-sync-messages'
+import {
+  buildSettingsSectionLocationSearch,
+  parseSettingsSectionFromLocationSearch,
+  resolveSettingsSectionTab,
+  SETTINGS_SECTION_TABS,
+  type SettingsSectionId
+} from '@/core/settings/settings-sections'
 import {
   authSignOut,
   clearOrphanOwners,
@@ -15,12 +23,11 @@ import {
   fetchSyncStatus,
   fetchUserSettings,
   openChromeShortcutsPage,
+  restoreLatestSyncBackup,
   setSyncEnabled,
-  syncReplaceWithLocal,
-  syncReplaceWithRemote,
+  runIncrementalMemorySync,
   updateUserSettings
 } from '@/infrastructure/messaging/background-client'
-import type { AuthSignOutMode } from '@/core/messaging/account-sync-messages'
 import {
   tAccountSyncError,
   tCommandsError,
@@ -34,6 +41,11 @@ import { asMdSwitchElement } from '@/infrastructure/ui/register-material-web'
 defineOptions({ name: 'SettingsPage' })
 
 type LoadState = 'loading' | 'ready' | 'error'
+
+/** 启动时从 URL 解析当前分区。 */
+const activeSection = ref<SettingsSectionId>(
+  parseSettingsSectionFromLocationSearch(window.location.search)
+)
 
 const commands = ref<ExtensionCommandInfo[]>([])
 const commandsState = ref<LoadState>('loading')
@@ -50,20 +62,24 @@ const savingSelectionToolbar = ref(false)
 
 const signedIn = ref(false)
 const accountEmail = ref('')
+const accountDisplayName = ref('')
 
 const syncEnabled = ref(false)
 const syncLocalCount = ref(0)
 const syncAccountOwnerCount = ref(0)
 const syncLocalProfileOwnerCount = ref(0)
 const syncRemoteCount = ref(0)
-const needsConflictChoice = ref(false)
 const orphanBucketCount = ref(0)
 const orphanActiveCount = ref(0)
 const orphanWorking = ref(false)
 const orphanMessage = ref('')
 const savingSync = ref(false)
-const syncWorking = ref(false)
+const runningIncrementalSync = ref(false)
+const restoringSyncBackup = ref(false)
 const syncError = ref('')
+const syncRestoreMessage = ref('')
+const syncLastPulledAt = ref<string | null>(null)
+const syncMessage = ref('')
 
 const signOutDialogOpen = ref(false)
 const signingOut = ref(false)
@@ -90,6 +106,36 @@ const commandRows = computed(() =>
     unbound: command.shortcut.trim().length === 0
   }))
 )
+
+const activeSectionTab = computed(() => resolveSettingsSectionTab(activeSection.value))
+const activeSectionLabel = computed(() => t(activeSectionTab.value.labelKey))
+
+/** 切换左侧分区。 */
+function selectSection(section: SettingsSectionId) {
+  if (activeSection.value === section) {
+    return
+  }
+  activeSection.value = section
+}
+
+/** 将当前分区同步到 `?section=`（默认 usage 不写 query）。 */
+function syncActiveSectionToUrl(section: SettingsSectionId) {
+  const nextSearch = buildSettingsSectionLocationSearch(section, window.location.search)
+  const nextUrl = `${window.location.pathname}${nextSearch}${window.location.hash}`
+  const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`
+  if (nextUrl !== currentUrl) {
+    window.history.replaceState(null, '', nextUrl)
+  }
+}
+
+watch(
+  activeSection,
+  section => {
+    syncActiveSectionToUrl(section)
+  },
+  { immediate: true }
+)
+
 async function loadCommands(options?: { quiet?: boolean }) {
   const quiet = options?.quiet === true
   if (!quiet) {
@@ -199,9 +245,9 @@ async function refreshSyncStatus() {
   syncAccountOwnerCount.value = response.accountOwnerCount
   syncLocalProfileOwnerCount.value = response.localProfileOwnerCount
   syncRemoteCount.value = response.remoteCount
-  needsConflictChoice.value = response.needsConflictChoice
   orphanBucketCount.value = response.orphanBucketCount
   orphanActiveCount.value = response.orphanActiveCount
+  syncLastPulledAt.value = response.lastPulledAt ?? null
 }
 
 async function loadSyncContext() {
@@ -217,13 +263,11 @@ async function loadSyncContext() {
 
     signedIn.value = response.signedIn
     accountEmail.value = response.email?.trim() ?? ''
+    accountDisplayName.value = response.displayName?.trim() ?? ''
     syncEnabled.value = response.syncPrefs.enabled
 
     // 未登录也要盘点孤儿桶（换号退出后残留仍可见）
     await refreshSyncStatus()
-    if (!response.signedIn) {
-      needsConflictChoice.value = false
-    }
   } catch {
     syncError.value = t('settings_error_auth_state')
   }
@@ -318,6 +362,8 @@ async function handleSyncToggle(event: Event) {
   const nextValue = switchEl.selected
   savingSync.value = true
   syncError.value = ''
+  syncRestoreMessage.value = ''
+  syncMessage.value = ''
   try {
     const response = await setSyncEnabled(nextValue)
     if (!response.ok) {
@@ -326,9 +372,7 @@ async function handleSyncToggle(event: Event) {
       return
     }
     syncEnabled.value = response.syncPrefs.enabled
-    syncLocalCount.value = response.localCount
-    syncRemoteCount.value = response.remoteCount
-    needsConflictChoice.value = response.needsConflictChoice
+    await refreshSyncStatus()
   } catch {
     switchEl.selected = !nextValue
     syncError.value = t('settings_error_sync_prefs')
@@ -337,37 +381,60 @@ async function handleSyncToggle(event: Event) {
   }
 }
 
-async function handleReplaceWithLocal() {
-  syncWorking.value = true
+/** 立即跑一轮增量同步（不整侧 replace）。 */
+async function handleRunIncrementalSync() {
+  if (!signedIn.value || !syncEnabled.value || runningIncrementalSync.value) {
+    return
+  }
+  runningIncrementalSync.value = true
   syncError.value = ''
+  syncMessage.value = ''
   try {
-    const response = await syncReplaceWithLocal()
+    const response = await runIncrementalMemorySync()
     if (!response.ok) {
-      syncError.value = tAccountSyncError(response.errorCode)
+      syncError.value = response.error
+        ? `${tAccountSyncError(response.errorCode)}（${response.error}）`
+        : tAccountSyncError(response.errorCode)
       return
     }
+    syncMessage.value = t('settings_sync_now_done', [
+      String(response.pulled),
+      String(response.pushed)
+    ])
     await refreshSyncStatus()
   } catch {
-    syncError.value = t('settings_error_sync_replace_local')
+    syncError.value = t('settings_error_sync_incremental')
   } finally {
-    syncWorking.value = false
+    runningIncrementalSync.value = false
   }
 }
 
-async function handleReplaceWithRemote() {
-  syncWorking.value = true
+/** 用云端最近一次 replace 前备份救回，并拉回本机。 */
+async function handleRestoreLatestSyncBackup() {
+  if (!signedIn.value || restoringSyncBackup.value) {
+    return
+  }
+  if (!window.confirm(t('settings_sync_restore_backup_confirm'))) {
+    return
+  }
+
+  restoringSyncBackup.value = true
   syncError.value = ''
+  syncRestoreMessage.value = ''
   try {
-    const response = await syncReplaceWithRemote()
+    const response = await restoreLatestSyncBackup()
     if (!response.ok) {
-      syncError.value = tAccountSyncError(response.errorCode)
+      syncError.value = response.error
+        ? `${tAccountSyncError(response.errorCode)}（${response.error}）`
+        : tAccountSyncError(response.errorCode)
       return
     }
+    syncRestoreMessage.value = t('settings_sync_restore_backup_done', [String(response.restored)])
     await refreshSyncStatus()
   } catch {
-    syncError.value = t('settings_error_sync_replace_remote')
+    syncError.value = t('settings_error_sync_restore_backup')
   } finally {
-    syncWorking.value = false
+    restoringSyncBackup.value = false
   }
 }
 
@@ -421,7 +488,6 @@ async function confirmSignOut(mode: AuthSignOutMode) {
     syncAccountOwnerCount.value = 0
     syncLocalProfileOwnerCount.value = 0
     syncRemoteCount.value = 0
-    needsConflictChoice.value = false
   } catch {
     signOutError.value = t('settings_error_auth_sign_out')
   } finally {
@@ -451,167 +517,255 @@ onUnmounted(() => {
       <p class="settings-subtitle">{{ t('settings_subtitle') }}</p>
     </header>
 
-    <section class="settings-section" aria-labelledby="settings-capture-heading">
-      <div class="settings-section-head">
-        <h2 id="settings-capture-heading" class="settings-section-title">
-          {{ t('settings_section_capture') }}
-        </h2>
-        <p class="settings-section-copy">{{ t('settings_section_capture_copy') }}</p>
-      </div>
+    <div class="settings-layout">
+      <nav class="settings-tabs" :aria-label="t('settings_tabs_aria')">
+        <button
+          v-for="tab in SETTINGS_SECTION_TABS"
+          :key="tab.id"
+          type="button"
+          class="settings-tab"
+          :class="{ 'settings-tab--active': activeSection === tab.id }"
+          :aria-current="activeSection === tab.id ? 'page' : undefined"
+          @click="selectSection(tab.id)"
+        >
+          {{ t(tab.labelKey) }}
+        </button>
+      </nav>
 
-      <p v-if="settingsState === 'loading'" class="settings-status" role="status">
-        {{ t('settings_loading') }}
-      </p>
-      <p v-else-if="settingsState === 'error'" class="settings-error" role="alert">
-        {{ settingsError }}
-      </p>
+      <section class="settings-panel" :aria-label="activeSectionLabel">
+        <template v-if="activeSection === 'capture'">
+          <div class="settings-block" aria-labelledby="settings-capture-heading">
+            <div class="settings-section-head">
+              <h2 id="settings-capture-heading" class="settings-section-title">
+                {{ t('settings_section_capture') }}
+              </h2>
+              <p class="settings-section-copy">{{ t('settings_section_capture_copy') }}</p>
+            </div>
 
-      <div v-else class="settings-toggle">
-        <div class="settings-toggle-copy">
-          <span class="settings-toggle-title">{{ t('settings_toggle_selection_toolbar') }}</span>
-          <span class="settings-toggle-hint">{{
-            t('settings_toggle_selection_toolbar_hint')
-          }}</span>
-        </div>
-        <md-switch
-          :aria-label="t('settings_toggle_selection_toolbar')"
-          :selected="selectionToolbarEnabled"
-          :disabled="savingSelectionToolbar"
-          @change="handleSelectionToolbarToggle"
-        />
-      </div>
-      <p v-if="settingsState === 'ready' && settingsError" class="settings-error" role="alert">
-        {{ settingsError }}
-      </p>
-    </section>
+            <p v-if="settingsState === 'loading'" class="settings-status" role="status">
+              {{ t('settings_loading') }}
+            </p>
+            <p v-else-if="settingsState === 'error'" class="settings-error" role="alert">
+              {{ settingsError }}
+            </p>
 
-    <section class="settings-section" aria-labelledby="settings-shortcuts-heading">
-      <div class="settings-section-head">
-        <h2 id="settings-shortcuts-heading" class="settings-section-title">
-          {{ t('settings_section_shortcuts') }}
-        </h2>
-        <p class="settings-section-copy">{{ t('settings_section_shortcuts_copy') }}</p>
-      </div>
-
-      <p v-if="commandsState === 'loading'" class="settings-status" role="status">
-        {{ t('settings_commands_loading') }}
-      </p>
-      <p v-else-if="commandsState === 'error'" class="settings-error" role="alert">
-        {{ commandsError }}
-      </p>
-
-      <ul v-else class="settings-command-list">
-        <li v-for="row in commandRows" :key="row.name" class="settings-command-row">
-          <div class="settings-command-meta">
-            <p class="settings-command-title">{{ row.title }}</p>
-            <p class="settings-command-name">{{ row.name }}</p>
+            <div v-else class="settings-toggle">
+              <div class="settings-toggle-copy">
+                <span class="settings-toggle-title">{{
+                  t('settings_toggle_selection_toolbar')
+                }}</span>
+                <span class="settings-toggle-hint">{{
+                  t('settings_toggle_selection_toolbar_hint')
+                }}</span>
+              </div>
+              <md-switch
+                :aria-label="t('settings_toggle_selection_toolbar')"
+                :selected="selectionToolbarEnabled"
+                :disabled="savingSelectionToolbar"
+                @change="handleSelectionToolbarToggle"
+              />
+            </div>
+            <p
+              v-if="settingsState === 'ready' && settingsError"
+              class="settings-error"
+              role="alert"
+            >
+              {{ settingsError }}
+            </p>
           </div>
-          <p
-            class="settings-command-shortcut"
-            :class="{ 'settings-command-shortcut--unbound': row.unbound }"
-          >
-            {{ row.shortcutLabel }}
-          </p>
-        </li>
-      </ul>
+        </template>
 
-      <div class="settings-actions">
-        <md-filled-button
-          type="button"
-          :disabled="openingShortcuts"
-          :title="openingShortcuts ? t('settings_opening_shortcuts') : t('settings_open_shortcuts')"
-          @click="handleOpenShortcutsPage"
-        >
-          <MaterialSymbolIcon name="open_in_new" size="18px" slot="icon" />
-          {{ openingShortcuts ? t('settings_opening_shortcuts') : t('settings_open_shortcuts') }}
-        </md-filled-button>
-      </div>
-      <p v-if="openShortcutsError" class="settings-error" role="alert">{{ openShortcutsError }}</p>
-    </section>
+        <template v-else-if="activeSection === 'shortcuts'">
+          <div class="settings-block" aria-labelledby="settings-shortcuts-heading">
+            <div class="settings-section-head">
+              <h2 id="settings-shortcuts-heading" class="settings-section-title">
+                {{ t('settings_section_shortcuts') }}
+              </h2>
+              <p class="settings-section-copy">{{ t('settings_section_shortcuts_copy') }}</p>
+            </div>
 
-    <section class="settings-section" aria-labelledby="settings-sync-heading">
-      <div class="settings-section-head">
-        <h2 id="settings-sync-heading" class="settings-section-title">
-          {{ t('settings_section_sync') }}
-        </h2>
-        <p class="settings-section-copy">{{ t('settings_section_sync_copy') }}</p>
-      </div>
+            <p v-if="commandsState === 'loading'" class="settings-status" role="status">
+              {{ t('settings_commands_loading') }}
+            </p>
+            <p v-else-if="commandsState === 'error'" class="settings-error" role="alert">
+              {{ commandsError }}
+            </p>
 
-      <div class="settings-toggle">
-        <div class="settings-toggle-copy">
-          <span class="settings-toggle-title">{{ t('settings_sync_toggle') }}</span>
-          <span class="settings-toggle-hint">{{ t('settings_sync_toggle_hint') }}</span>
-        </div>
-        <md-switch
-          :aria-label="t('settings_sync_toggle')"
-          :selected="syncEnabled"
-          :disabled="savingSync || syncWorking || !signedIn"
-          @change="handleSyncToggle"
-        />
-      </div>
+            <ul v-else class="settings-command-list">
+              <li v-for="row in commandRows" :key="row.name" class="settings-command-row">
+                <div class="settings-command-meta">
+                  <p class="settings-command-title">{{ row.title }}</p>
+                </div>
+                <p
+                  class="settings-command-shortcut"
+                  :class="{ 'settings-command-shortcut--unbound': row.unbound }"
+                >
+                  {{ row.shortcutLabel }}
+                </p>
+              </li>
+            </ul>
 
-      <p v-if="signedIn" class="settings-sync-counts">
-        {{ t('settings_sync_local_count', [String(syncLocalCount)]) }}
-        ·
-        {{ t('settings_sync_remote_count', [String(syncRemoteCount)]) }}
-      </p>
-      <p v-else class="settings-status">{{ t('settings_sync_sign_in_required') }}</p>
+            <div class="settings-actions">
+              <md-filled-button
+                type="button"
+                :disabled="openingShortcuts"
+                :title="
+                  openingShortcuts ? t('settings_opening_shortcuts') : t('settings_open_shortcuts')
+                "
+                @click="handleOpenShortcutsPage"
+              >
+                <MaterialSymbolIcon name="open_in_new" size="18px" slot="icon" />
+                {{
+                  openingShortcuts ? t('settings_opening_shortcuts') : t('settings_open_shortcuts')
+                }}
+              </md-filled-button>
+            </div>
+            <p v-if="openShortcutsError" class="settings-error" role="alert">
+              {{ openShortcutsError }}
+            </p>
+          </div>
+        </template>
 
-      <div v-if="hasOrphanOwners" class="settings-orphan">
-        <p class="settings-toggle-title">{{ t('settings_orphan_title') }}</p>
-        <p class="settings-section-copy">
-          {{ t('settings_orphan_copy', [String(orphanBucketCount), String(orphanActiveCount)]) }}
-        </p>
-        <div class="settings-actions">
-          <md-outlined-button
-            type="button"
-            :disabled="orphanWorking || syncWorking || signingOut"
-            :title="t('settings_orphan_export')"
-            @click="handleExportOrphans"
-          >
-            {{ orphanWorking ? t('settings_orphan_working') : t('settings_orphan_export') }}
-          </md-outlined-button>
-          <md-outlined-button
-            type="button"
-            :disabled="orphanWorking || syncWorking || signingOut"
-            :title="t('settings_orphan_clear')"
-            @click="handleClearOrphans"
-          >
-            {{ orphanWorking ? t('settings_orphan_working') : t('settings_orphan_clear') }}
-          </md-outlined-button>
-        </div>
-        <p v-if="orphanMessage" class="settings-status" role="status">{{ orphanMessage }}</p>
-      </div>
+        <template v-else-if="activeSection === 'account_sync'">
+          <div class="settings-block" aria-labelledby="settings-sync-heading">
+            <div class="settings-section-head">
+              <h2 id="settings-sync-heading" class="settings-section-title">
+                {{ t('settings_section_sync') }}
+              </h2>
+              <p class="settings-section-copy">{{ t('settings_section_sync_copy') }}</p>
+            </div>
 
-      <div v-if="signedIn" class="settings-actions">
-        <md-outlined-button
-          type="button"
-          :disabled="signingOut || syncWorking || savingSync || orphanWorking"
-          :title="t('settings_account_sign_out')"
-          @click="openSignOutDialog"
-        >
-          {{ signingOut ? t('settings_account_signing_out') : t('settings_account_sign_out') }}
-        </md-outlined-button>
-      </div>
+            <div class="settings-toggle">
+              <div class="settings-toggle-copy">
+                <span class="settings-toggle-title">{{ t('settings_sync_toggle') }}</span>
+                <span class="settings-toggle-hint">{{ t('settings_sync_toggle_hint') }}</span>
+              </div>
+              <md-switch
+                :aria-label="t('settings_sync_toggle')"
+                :selected="syncEnabled"
+                :disabled="savingSync || !signedIn"
+                @change="handleSyncToggle"
+              />
+            </div>
 
-      <div v-if="needsConflictChoice" class="settings-sync-conflict">
-        <p class="settings-toggle-title">{{ t('settings_sync_conflict_title') }}</p>
-        <p class="settings-section-copy">{{ t('settings_sync_conflict_copy') }}</p>
-        <div class="settings-actions">
-          <md-filled-button type="button" :disabled="syncWorking" @click="handleReplaceWithLocal">
-            {{ syncWorking ? t('settings_sync_working') : t('settings_sync_use_local') }}
-          </md-filled-button>
-          <md-outlined-button
-            type="button"
-            :disabled="syncWorking"
-            @click="handleReplaceWithRemote"
-          >
-            {{ syncWorking ? t('settings_sync_working') : t('settings_sync_use_remote') }}
-          </md-outlined-button>
-        </div>
-      </div>
-      <p v-if="syncError" class="settings-error" role="alert">{{ syncError }}</p>
-    </section>
+            <p v-if="signedIn" class="settings-sync-counts">
+              {{ t('settings_sync_local_count', [String(syncLocalCount)]) }}
+              ·
+              {{ t('settings_sync_remote_count', [String(syncRemoteCount)]) }}
+            </p>
+            <p v-if="signedIn && syncEnabled && syncLastPulledAt" class="settings-status">
+              {{ t('settings_sync_last_pulled', [syncLastPulledAt]) }}
+            </p>
+            <p v-else-if="!signedIn" class="settings-status">
+              {{ t('settings_sync_sign_in_required') }}
+            </p>
+
+            <div v-if="signedIn && syncEnabled" class="settings-actions settings-actions--spaced">
+              <md-outlined-button
+                type="button"
+                :disabled="runningIncrementalSync || savingSync || signingOut || orphanWorking"
+                :title="t('settings_sync_now')"
+                @click="handleRunIncrementalSync"
+              >
+                {{
+                  runningIncrementalSync ? t('settings_sync_now_working') : t('settings_sync_now')
+                }}
+              </md-outlined-button>
+            </div>
+            <p v-if="syncMessage" class="settings-status" role="status">{{ syncMessage }}</p>
+
+            <p v-if="signedIn && (accountDisplayName || accountEmail)" class="settings-status">
+              {{ accountDisplayName || accountEmail }}
+              <template v-if="accountDisplayName && accountEmail"> · {{ accountEmail }}</template>
+            </p>
+
+            <div v-if="signedIn" class="settings-sync-restore">
+              <p class="settings-section-copy">{{ t('settings_sync_restore_backup_hint') }}</p>
+              <div class="settings-actions">
+                <md-outlined-button
+                  type="button"
+                  :disabled="
+                    restoringSyncBackup ||
+                    savingSync ||
+                    signingOut ||
+                    orphanWorking ||
+                    runningIncrementalSync
+                  "
+                  :title="t('settings_sync_restore_backup')"
+                  @click="handleRestoreLatestSyncBackup"
+                >
+                  {{
+                    restoringSyncBackup
+                      ? t('settings_orphan_working')
+                      : t('settings_sync_restore_backup')
+                  }}
+                </md-outlined-button>
+              </div>
+              <p v-if="syncRestoreMessage" class="settings-status" role="status">
+                {{ syncRestoreMessage }}
+              </p>
+            </div>
+
+            <div v-if="hasOrphanOwners" class="settings-orphan">
+              <p class="settings-toggle-title">{{ t('settings_orphan_title') }}</p>
+              <p class="settings-section-copy">
+                {{
+                  t('settings_orphan_copy', [String(orphanBucketCount), String(orphanActiveCount)])
+                }}
+              </p>
+              <div class="settings-actions">
+                <md-outlined-button
+                  type="button"
+                  :disabled="orphanWorking || signingOut || savingSync"
+                  :title="t('settings_orphan_export')"
+                  @click="handleExportOrphans"
+                >
+                  {{ orphanWorking ? t('settings_orphan_working') : t('settings_orphan_export') }}
+                </md-outlined-button>
+                <md-outlined-button
+                  type="button"
+                  :disabled="orphanWorking || signingOut || savingSync"
+                  :title="t('settings_orphan_clear')"
+                  @click="handleClearOrphans"
+                >
+                  {{ orphanWorking ? t('settings_orphan_working') : t('settings_orphan_clear') }}
+                </md-outlined-button>
+              </div>
+              <p v-if="orphanMessage" class="settings-status" role="status">{{ orphanMessage }}</p>
+            </div>
+
+            <div v-if="signedIn" class="settings-actions settings-actions--spaced">
+              <md-outlined-button
+                type="button"
+                :disabled="signingOut || savingSync || orphanWorking"
+                :title="t('settings_account_sign_out')"
+                @click="openSignOutDialog"
+              >
+                {{
+                  signingOut ? t('settings_account_signing_out') : t('settings_account_sign_out')
+                }}
+              </md-outlined-button>
+            </div>
+
+            <p v-if="syncError" class="settings-error" role="alert">{{ syncError }}</p>
+          </div>
+        </template>
+
+        <template v-else-if="activeSection === 'privacy'">
+          <div class="settings-block settings-block--placeholder">
+            <h2 class="settings-section-title">{{ t('settings_tab_privacy') }}</h2>
+            <p class="settings-section-copy">{{ t('settings_placeholder_privacy') }}</p>
+          </div>
+        </template>
+
+        <template v-else>
+          <div class="settings-block settings-block--placeholder">
+            <h2 class="settings-section-title">{{ t('settings_tab_ai') }}</h2>
+            <p class="settings-section-copy">{{ t('settings_placeholder_ai') }}</p>
+          </div>
+        </template>
+      </section>
+    </div>
 
     <div
       v-if="signOutDialogOpen"
@@ -684,32 +838,25 @@ onUnmounted(() => {
         <p v-if="signOutError" class="settings-error" role="alert">{{ signOutError }}</p>
       </div>
     </div>
-
-    <section
-      class="settings-section settings-section--muted"
-      aria-labelledby="settings-later-heading"
-    >
-      <h2 id="settings-later-heading" class="settings-section-title">
-        {{ t('settings_section_later') }}
-      </h2>
-      <ul class="settings-upcoming-list">
-        <li>{{ t('settings_upcoming_privacy') }}</li>
-        <li>{{ t('settings_upcoming_ai') }}</li>
-      </ul>
-    </section>
   </main>
 </template>
 
 <style scoped>
 .settings-shell {
-  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  height: 100%;
+  max-width: 960px;
   margin: 0 auto;
-  padding: 28px 24px 40px;
+  padding: 28px 24px 24px;
+  overflow: hidden;
   color: var(--md-sys-color-on-background);
 }
 
 .settings-header {
-  margin-bottom: 28px;
+  flex-shrink: 0;
+  margin-bottom: 24px;
 }
 
 .settings-header-top {
@@ -729,16 +876,67 @@ onUnmounted(() => {
   color: var(--md-sys-color-on-surface-variant);
 }
 
-.settings-section {
-  margin-bottom: 24px;
+.settings-layout {
+  display: grid;
+  flex: 1;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 20px;
+  align-items: stretch;
+  min-height: 0;
+}
+
+.settings-tabs {
+  display: grid;
+  gap: 6px;
+  align-self: start;
+  padding: 8px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.settings-tab {
+  margin: 0;
+  padding: 10px 12px;
+  border: none;
+  border-radius: var(--md-sys-shape-corner-small, 8px);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  color: var(--md-sys-color-on-surface-variant);
+  background: transparent;
+  cursor: pointer;
+}
+
+.settings-tab:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 6%, transparent);
+}
+
+.settings-tab--active {
+  color: var(--md-sys-color-on-secondary-container);
+  background: var(--md-sys-color-secondary-container);
+}
+
+.settings-panel {
+  min-width: 0;
+  min-height: 0;
   padding: 18px;
+  overflow-x: hidden;
+  overflow-y: auto;
   border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: var(--md-sys-shape-corner-medium, 12px);
   background: var(--md-sys-color-surface-container-lowest);
 }
 
-.settings-section--muted {
-  background: var(--md-sys-color-surface-container-low);
+.settings-block + .settings-block {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.settings-block--placeholder .settings-section-title {
+  margin-bottom: 8px;
 }
 
 .settings-section-head {
@@ -822,16 +1020,9 @@ onUnmounted(() => {
 }
 
 .settings-command-title {
-  margin: 0 0 2px;
+  margin: 0;
   font-size: 14px;
   font-weight: 600;
-}
-
-.settings-command-name {
-  margin: 0;
-  font-size: 12px;
-  color: var(--md-sys-color-outline);
-  word-break: break-all;
 }
 
 .settings-command-shortcut {
@@ -858,18 +1049,18 @@ onUnmounted(() => {
   align-items: center;
 }
 
+.settings-actions--spaced {
+  margin-top: 14px;
+}
+
 .settings-sync-counts {
   margin: 12px 0 0;
   font-size: 13px;
   color: var(--md-sys-color-on-surface-variant);
 }
 
-.settings-sync-conflict {
+.settings-sync-restore {
   margin-top: 14px;
-  padding: 12px 14px;
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--md-sys-shape-corner-medium, 12px);
-  background: var(--md-sys-color-surface-container-low);
 }
 
 .settings-orphan {
@@ -878,14 +1069,6 @@ onUnmounted(() => {
   border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: var(--md-sys-shape-corner-medium, 12px);
   background: var(--md-sys-color-surface-container-low);
-}
-
-.settings-upcoming-list {
-  margin: 0;
-  padding-left: 18px;
-  font-size: 13px;
-  line-height: 1.7;
-  color: var(--md-sys-color-on-surface-variant);
 }
 
 .settings-sign-out-backdrop {
@@ -927,5 +1110,31 @@ onUnmounted(() => {
   font-size: 12px;
   line-height: 1.4;
   color: var(--md-sys-color-on-surface-variant);
+}
+
+@media (max-width: 640px) {
+  .settings-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .settings-tabs {
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+  }
+
+  .settings-tab {
+    text-align: center;
+  }
+}
+</style>
+
+<style>
+/* 本页独立入口：锁死视口，避免整页滚动条；仅右侧面板滚动 */
+html,
+body,
+#app {
+  height: 100%;
+  overflow: hidden;
 }
 </style>

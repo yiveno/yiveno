@@ -1,17 +1,21 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { getSession } from '../services/auth'
+import { extractProfileFromUserMetadata } from '../services/extension-auth-handoff'
 
-const user = ref<{ email?: string; avatar_url?: string; name?: string } | null>(null)
+const user = ref<{ email?: string; avatarUrl?: string; name?: string } | null>(null)
 const loading = ref(true)
 
 onMounted(async () => {
   const session = await getSession()
   if (session?.user) {
+    const profile = extractProfileFromUserMetadata(
+      session.user.user_metadata as Record<string, unknown> | undefined
+    )
     user.value = {
       email: session.user.email,
-      avatar_url: session.user.user_metadata?.avatar_url,
-      name: session.user.user_metadata?.name || session.user.email
+      ...(profile.avatarUrl ? { avatarUrl: profile.avatarUrl } : {}),
+      name: profile.displayName || session.user.email
     }
   }
   loading.value = false
@@ -23,7 +27,7 @@ onMounted(async () => {
     <a v-if="loading" href="/login" class="nav-link">登录</a>
     <a v-else-if="!user" href="/login" class="nav-link">登录</a>
     <a v-else href="/account" class="nav-link user-info">
-      <img v-if="user.avatar_url" :src="user.avatar_url" alt="" class="avatar" />
+      <img v-if="user.avatarUrl" :src="user.avatarUrl" alt="" class="avatar" />
       <span>{{ user.name }}</span>
     </a>
   </div>

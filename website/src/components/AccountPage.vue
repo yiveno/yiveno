@@ -6,10 +6,13 @@ import { getUserSubscription, type UserSubscription } from '../services/subscrip
 import { formatDate } from '../services/date'
 import {
   handoffSignOutToExtension,
-  rememberConnectedExtensionId
+  rememberConnectedExtensionId,
+  extractProfileFromUserMetadata
 } from '../services/extension-auth-handoff'
 
 const user = ref<User | null>(null)
+const profileAvatarUrl = ref('')
+const profileDisplayName = ref('')
 const subscription = ref<UserSubscription | null>(null)
 const loading = ref(true)
 
@@ -29,6 +32,11 @@ onMounted(async () => {
     return
   }
   user.value = data.session.user
+  const profile = extractProfileFromUserMetadata(
+    data.session.user.user_metadata as Record<string, unknown> | undefined
+  )
+  profileAvatarUrl.value = profile.avatarUrl ?? ''
+  profileDisplayName.value = profile.displayName ?? data.session.user.email ?? ''
   const sub = await getUserSubscription(data.session.user.id)
   if (sub) subscription.value = sub
   loading.value = false
@@ -51,13 +59,9 @@ async function handleSignOut() {
   <div v-if="!loading" class="account-page">
     <div v-if="user" class="card">
       <div class="user-header">
-        <img
-          v-if="user.user_metadata?.avatar_url"
-          :src="user.user_metadata.avatar_url"
-          class="avatar"
-        />
+        <img v-if="profileAvatarUrl" :src="profileAvatarUrl" class="avatar" alt="" />
         <div>
-          <h2>{{ user.user_metadata?.name || user.email }}</h2>
+          <h2>{{ profileDisplayName || user.email }}</h2>
           <p class="email">{{ user.email }}</p>
         </div>
       </div>
