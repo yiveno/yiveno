@@ -818,14 +818,14 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 ### 5.5 Settings IA（最小已上线）
 
-| 分区   | 状态   | 说明                                                          |
-| ------ | ------ | ------------------------------------------------------------- |
-| 保存   | 已上线 | 划词浮层开关（默认开）                                        |
-| 快捷键 | 已上线 | 展示绑定；改键跳转 `chrome://extensions/shortcuts`            |
-| 账户   | 已上线 | 顶栏头像：官网登录 / 账户页；**退出在设置页**（三选一，见下） |
-| 同步   | 已上线 | 默认关；开同步后空侧自动对齐，两边都有则选 A/B                |
-| 隐私   | 未上线 | 仅占位文案，不暗示可用                                        |
-| AI     | 未上线 | 同上                                                          |
+| 分区   | 状态   | 说明                                                                   |
+| ------ | ------ | ---------------------------------------------------------------------- |
+| 保存   | 已上线 | 划词浮层开关（默认开）                                                 |
+| 快捷键 | 已上线 | 展示绑定；改键跳转 `chrome://extensions/shortcuts`                     |
+| 账户   | 已上线 | 顶栏头像：官网登录 / 账户页；**退出在设置页**（三选一，见下）          |
+| 同步   | 已上线 | 默认关；开同步后空侧自动对齐，两边都有则选 A/B；**空本机禁止盖非空云** |
+| 隐私   | 未上线 | 仅占位文案，不暗示可用                                                 |
+| AI     | 未上线 | 同上                                                                   |
 
 ### 5.6 扩展入口
 
@@ -858,12 +858,14 @@ Chrome API / 选区
 - 目标规模指导：2 万 MemoryItem；当前全量扫描上限约 10000；倒排/向量索引仍属 Phase B 余项。
 - 长期：Cloud Memory DB（当前实现为 **Supabase `memory_items`**）为云端事实源；本地 IndexedDB 变缓存——**不提前重写本地日常读写链路**。
 - Phase C 切片：扩展经 Supabase Auth 登录写入 `AccountBinding`；同步默认关；经 Worker `/api/memory/sync/*` push/pull/replace；冲突仅整侧覆盖（本机为准 / 云端为准）。
+- **空本机不得盖云（Normative）**：`SYNC_REPLACE_WITH_LOCAL` / Worker `POST /replace` 在本机条目数为 0 且云端有数时必须拒绝（`SYNC_REPLACE_LOCAL_EMPTY` / `empty_local_replace_denied`）；退出「先同步再清」在本机无数据时跳过写云。开同步时仅「本机有、云空」才自动本机盖云，「本空、云有」自动拉云。
 - **登录态对齐（Normative）**：
   - 登录：官网 → `YIVENO_AUTH_SESSION_HANDOFF` → 扩展（并记住 `extension_id`）。
   - 官网退出：`YIVENO_AUTH_SIGN_OUT_HANDOFF` → 扩展按 **keep_local** 清 session/binding（保留 Memory）；无 extension_id 时不阻塞官网退出。
   - 扩展打开时：`GET_AUTH_STATE` **节流 refresh** 探测 refresh_token；失效则同等 keep_local 退登（兜底官网已退但未回传）。
   - 扩展设置页退出（任一 mode）：结束后导航/打开官网 `/logout?from_extension=1` 清网站 Supabase session。
-- **登录后本地档归并（Normative）**：官网 handoff 成功或已登录时读 `GET_AUTH_STATE`，将 `localProfileId` 桶 Memory **remap** 到当前 `accountId`（仅本机、不上云）。解决「登录后旧本地数据 Recall 隐身」；幂等。历史其它账号桶仍属孤儿策略（未在此清）。
+- **登录后本地档归并（Normative）**：官网 handoff 成功或已登录时读 `GET_AUTH_STATE`，将 `localProfileId` 桶 Memory **remap** 到当前 `accountId`（仅本机、不上云）。解决「登录后旧本地数据 Recall 隐身」；幂等。
+- **多 owner 孤儿桶（Normative）**：保留集 = `localProfileId` ∪ 当前 `AccountBinding.accountId`（未登录则仅本地档）。保留集外的 `ownerId` 为换号残留：Recall/同步不计、不静默删除。设置页展示桶数/条数；可 **导出 JSON** 备份后 **显式清除**（`EXPORT_ORPHAN_OWNERS` / `CLEAR_ORPHAN_OWNERS`）。退出登录只动当前账号桶，不自动清孤儿。
 - **退出登录（Normative）**：设置页按本机数据状态分流（均清扩展登录态并打开官网 `/logout`）。
   - **本机无当前账号/本地档数据**：不弹窗，直接仅退出。
   - **本机有数据**：弹窗固定三按钮——仅退出 / 清除本机该账号桶再退出 / 先同步到云端再清本机（方案 B，不做「已同步」启发式，避免同步后又 Capture 误判）。
@@ -1005,6 +1007,8 @@ Chrome API / 选区
 
 | 日期       | 变更                                                                                                               |
 | ---------- | ------------------------------------------------------------------------------------------------------------------ |
+| 2026-08-04 | 多 owner 孤儿桶：设置页盘点 + 导出 JSON + 显式清除；退出不静默清历史账号                                           |
+| 2026-08-04 | 空本机不得盖非空云：扩展 `SYNC_REPLACE_LOCAL_EMPTY` + Worker `empty_local_replace_denied`（409）                   |
 | 2026-08-04 | 登录后归并 localProfile→accountId（仅本机 remap，解决 Recall 隐身）                                                |
 | 2026-08-04 | 退出弹窗方案 B：本机有数固定三按钮；无数直接退出；不做已同步启发式                                                 |
 | 2026-08-04 | 扩展退出后打开官网 `/logout?from_extension=1` 对称清网站 session                                                   |

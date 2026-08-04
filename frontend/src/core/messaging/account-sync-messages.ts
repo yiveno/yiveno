@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 import type { AccountBinding } from '@/core/identity/local-profile'
 import type { SyncPrefs } from '@/core/identity/sync-prefs'
+import type { MemoryItem } from '@/core/memory/memory-item'
 import type { BackgroundMessageScope } from '@/core/messaging/constants'
 
 /** 账户 / 同步面向 UI 的稳定错误码。 */
@@ -14,7 +15,10 @@ export const AccountSyncErrorCodeSchema = z.enum([
   'SYNC_STATUS_FAILED', // 同步状态失败
   'SYNC_PREFS_UPDATE_FAILED', // 更新同步偏好失败
   'SYNC_REPLACE_LOCAL_FAILED', // 本机覆盖云端失败
-  'SYNC_REPLACE_REMOTE_FAILED' // 云端覆盖本机失败
+  'SYNC_REPLACE_LOCAL_EMPTY', // 本机空库禁止盖云
+  'SYNC_REPLACE_REMOTE_FAILED', // 云端覆盖本机失败
+  'ORPHAN_EXPORT_FAILED', // 导出孤儿桶失败
+  'ORPHAN_CLEAR_FAILED' // 清除孤儿桶失败
 ])
 
 export type AccountSyncErrorCode = z.infer<typeof AccountSyncErrorCodeSchema>
@@ -111,6 +115,10 @@ export type GetSyncStatusResponse =
       latestRemoteUpdatedAt: string | null
       /** 两边都有未删数据，需用户选 A/B */
       needsConflictChoice: boolean
+      /** 保留集外的历史账号桶个数 */
+      orphanBucketCount: number
+      /** 孤儿桶未软删条数之和 */
+      orphanActiveCount: number
     }
   | {
       ok: false
@@ -174,6 +182,42 @@ export type SyncReplaceWithRemoteResponse =
       error?: string
     }
 
+/** 导出本机孤儿 owner 桶（换号残留），供设置页下载 JSON。 */
+export type ExportOrphanOwnersMessage = {
+  scope: BackgroundMessageScope
+  type: 'EXPORT_ORPHAN_OWNERS'
+}
+
+export type ExportOrphanOwnersResponse =
+  | {
+      ok: true
+      orphanBucketCount: number
+      items: MemoryItem[]
+    }
+  | {
+      ok: false
+      errorCode: AccountSyncErrorCode
+      error?: string
+    }
+
+/** 硬删本机孤儿 owner 桶（不动当前账号与 localProfile）。 */
+export type ClearOrphanOwnersMessage = {
+  scope: BackgroundMessageScope
+  type: 'CLEAR_ORPHAN_OWNERS'
+}
+
+export type ClearOrphanOwnersResponse =
+  | {
+      ok: true
+      clearedBuckets: number
+      clearedItems: number
+    }
+  | {
+      ok: false
+      errorCode: AccountSyncErrorCode
+      error?: string
+    }
+
 export type AccountSyncBackgroundMessage =
   | AuthSignInMessage
   | AuthSignOutMessage
@@ -182,6 +226,8 @@ export type AccountSyncBackgroundMessage =
   | SetSyncEnabledMessage
   | SyncReplaceWithLocalMessage
   | SyncReplaceWithRemoteMessage
+  | ExportOrphanOwnersMessage
+  | ClearOrphanOwnersMessage
 
 export type AccountSyncBackgroundResponse =
   | AuthSignInResponse
@@ -191,3 +237,5 @@ export type AccountSyncBackgroundResponse =
   | SetSyncEnabledResponse
   | SyncReplaceWithLocalResponse
   | SyncReplaceWithRemoteResponse
+  | ExportOrphanOwnersResponse
+  | ClearOrphanOwnersResponse

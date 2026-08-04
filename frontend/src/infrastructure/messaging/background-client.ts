@@ -6,6 +6,8 @@ import type {
   AuthSignInResponse,
   AuthSignOutMode,
   AuthSignOutResponse,
+  ClearOrphanOwnersResponse,
+  ExportOrphanOwnersResponse,
   GetAuthStateResponse,
   GetSyncStatusResponse,
   SetSyncEnabledResponse,
@@ -243,5 +245,21 @@ export async function syncReplaceWithRemote(): Promise<SyncReplaceWithRemoteResp
   return sendBackgroundMessage<SyncReplaceWithRemoteResponse>({
     scope: 'background',
     type: 'SYNC_REPLACE_WITH_REMOTE'
+  })
+}
+
+/** 导出本机换号残留（孤儿 owner）桶。 */
+export async function exportOrphanOwners(): Promise<ExportOrphanOwnersResponse> {
+  return sendBackgroundMessage<ExportOrphanOwnersResponse>({
+    scope: 'background',
+    type: 'EXPORT_ORPHAN_OWNERS'
+  })
+}
+
+/** 清除本机换号残留（孤儿 owner）桶。 */
+export async function clearOrphanOwners(): Promise<ClearOrphanOwnersResponse> {
+  return sendBackgroundMessage<ClearOrphanOwnersResponse>({
+    scope: 'background',
+    type: 'CLEAR_ORPHAN_OWNERS'
   })
 }

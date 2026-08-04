@@ -372,6 +372,55 @@ export class MemoryItemRepository {
   }
 
   /**
+   * 扫描全库，按 ownerId 汇总条数（含软删计入 total；active 为未软删）。
+   * 供孤儿桶盘点：保留集外的 owner 即历史换号残留。
+   */
+  async listOwnerBucketSummaries(): Promise<
+    Array<{
+      ownerId: string
+      /** 未软删条数 */
+      activeCount: number
+      /** 含软删总条数 */
+      totalCount: number
+    }>
+  > {
+    await this.ensureReady()
+
+    return indexedDBManager.withTransaction(MEMORY_ITEM_STORE, 'readonly', async transaction => {
+      const store = transaction.objectStore(MEMORY_ITEM_STORE)
+      const tallies = new Map<string, { activeCount: number; totalCount: number }>()
+
+      await new Promise<void>((resolve, reject) => {
+        const request = store.openCursor()
+        request.onsuccess = () => {
+          const cursor = request.result
+          if (!cursor) {
+            resolve()
+            return
+          }
+          const item = safeParseMemoryItem(cursor.value)
+          if (item) {
+            const prev = tallies.get(item.ownerId) ?? { activeCount: 0, totalCount: 0 }
+            prev.totalCount += 1
+            if (item.deletedAt == null) {
+              prev.activeCount += 1
+            }
+            tallies.set(item.ownerId, prev)
+          }
+          cursor.continue()
+        }
+        request.onerror = () => reject(request.error ?? new Error('IndexedDB 游标读取失败'))
+      })
+
+      return [...tallies.entries()].map(([ownerId, counts]) => ({
+        ownerId,
+        activeCount: counts.activeCount,
+        totalCount: counts.totalCount
+      }))
+    })
+  }
+
+  /**
    * 列出指定 owner 下全部条目（含软删可选）。
    * 同步前 remap 时需按旧 localProfileId 扫描，故允许显式传入 ownerId。
    */

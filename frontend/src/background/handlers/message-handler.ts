@@ -7,6 +7,8 @@ import { isBackgroundScopedMessage } from '@/core/messaging/background-messages'
 import {
   handleAuthSignIn,
   handleAuthSignOut,
+  handleClearOrphanOwners,
+  handleExportOrphanOwners,
   handleGetAuthState,
   handleGetSyncStatus,
   handleSetSyncEnabled,
@@ -84,6 +86,10 @@ async function dispatchBackgroundMessage(
       return handleSyncReplaceWithLocal()
     case 'SYNC_REPLACE_WITH_REMOTE':
       return handleSyncReplaceWithRemote()
+    case 'EXPORT_ORPHAN_OWNERS':
+      return handleExportOrphanOwners()
+    case 'CLEAR_ORPHAN_OWNERS':
+      return handleClearOrphanOwners()
     case 'CAPTURE_BOOKMARK':
       return handleCaptureBookmark(message.payload)
     case 'CAPTURE_TEXT_EXCERPT':

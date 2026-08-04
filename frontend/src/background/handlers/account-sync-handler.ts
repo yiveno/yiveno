@@ -4,10 +4,17 @@
  */
 
 import { absorbLocalProfileIntoAccount } from '@/application/identity/absorb-local-profile-into-account'
+import {
+  clearOrphanOwnerBuckets,
+  exportOrphanOwnerBuckets,
+  summarizeOrphanOwnerBuckets
+} from '@/application/identity/orphan-owner-buckets'
 import type {
   AuthSignInResponse,
   AuthSignOutMode,
   AuthSignOutResponse,
+  ClearOrphanOwnersResponse,
+  ExportOrphanOwnersResponse,
   GetAuthStateResponse,
   GetSyncStatusResponse,
   SetSyncEnabledResponse,
@@ -282,10 +289,11 @@ export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
 export async function handleGetSyncStatus(): Promise<GetSyncStatusResponse> {
   const startedAt = flowStart('MemorySync', 'GET_SYNC_STATUS')
   try {
-    const [binding, syncPrefs, profile] = await Promise.all([
+    const [binding, syncPrefs, profile, orphans] = await Promise.all([
       getAccountBinding(),
       getSyncPrefs(),
-      getOrCreateLocalProfile()
+      getOrCreateLocalProfile(),
+      summarizeOrphanOwnerBuckets()
     ])
 
     const accountOwnerCount = binding
@@ -304,7 +312,8 @@ export async function handleGetSyncStatus(): Promise<GetSyncStatusResponse> {
     if (!binding) {
       flowOk('MemorySync', 'GET_SYNC_STATUS', startedAt, {
         signedIn: false,
-        localCount
+        localCount,
+        orphanBucketCount: orphans.orphanBucketCount
       })
       return {
         ok: true,
@@ -315,7 +324,9 @@ export async function handleGetSyncStatus(): Promise<GetSyncStatusResponse> {
         localProfileOwnerCount,
         remoteCount: 0,
         latestRemoteUpdatedAt: null,
-        needsConflictChoice: false
+        needsConflictChoice: false,
+        orphanBucketCount: orphans.orphanBucketCount,
+        orphanActiveCount: orphans.orphanActiveCount
       }
     }
 
@@ -330,7 +341,8 @@ export async function handleGetSyncStatus(): Promise<GetSyncStatusResponse> {
     flowOk('MemorySync', 'GET_SYNC_STATUS', startedAt, {
       localCount,
       remoteCount: remote.remoteCount,
-      needsConflictChoice
+      needsConflictChoice,
+      orphanBucketCount: orphans.orphanBucketCount
     })
 
     return {
@@ -342,7 +354,9 @@ export async function handleGetSyncStatus(): Promise<GetSyncStatusResponse> {
       localProfileOwnerCount,
       remoteCount: remote.remoteCount,
       latestRemoteUpdatedAt: remote.latestUpdatedAt,
-      needsConflictChoice
+      needsConflictChoice,
+      orphanBucketCount: orphans.orphanBucketCount,
+      orphanActiveCount: orphans.orphanActiveCount
     }
   } catch (error) {
     flowFail('MemorySync', 'GET_SYNC_STATUS', startedAt, error)
@@ -429,7 +443,7 @@ export async function handleSetSyncEnabled(enabled: boolean): Promise<SetSyncEna
   }
 }
 
-/** SYNC_REPLACE_WITH_LOCAL — 策略 A */
+/** SYNC_REPLACE_WITH_LOCAL — 策略 A（本机空库且云端有数时拒绝，防误清空云） */
 export async function handleSyncReplaceWithLocal(): Promise<SyncReplaceWithLocalResponse> {
   const startedAt = flowStart('MemorySync', 'SYNC_REPLACE_WITH_LOCAL')
   try {
@@ -446,6 +460,27 @@ export async function handleSyncReplaceWithLocal(): Promise<SyncReplaceWithLocal
     const items = await memoryItemRepository.listAllByOwnerId(binding.accountId, {
       includeDeleted: true
     })
+
+    // 本机无任何条目（含软删）时：云端有数 → 拒；两边皆空 → 跳过写云（无备份）
+    if (items.length === 0) {
+      const remote = await fetchRemoteSyncStatus(token.accessToken)
+      if (remote.remoteCount > 0) {
+        flowFail(
+          'MemorySync',
+          'SYNC_REPLACE_WITH_LOCAL',
+          startedAt,
+          new Error('SYNC_REPLACE_LOCAL_EMPTY')
+        )
+        return { ok: false, errorCode: 'SYNC_REPLACE_LOCAL_EMPTY' }
+      }
+      await patchSyncPrefs({ enabled: true })
+      flowOk('MemorySync', 'SYNC_REPLACE_WITH_LOCAL', startedAt, {
+        written: 0,
+        skippedEmptyBoth: true
+      })
+      return { ok: true, written: 0, backupId: '' }
+    }
+
     const result = await replaceRemoteWithLocalItems(token.accessToken, items)
     await patchSyncPrefs({
       enabled: true,
@@ -456,9 +491,10 @@ export async function handleSyncReplaceWithLocal(): Promise<SyncReplaceWithLocal
     return { ok: true, written: result.written, backupId: result.backupId }
   } catch (error) {
     flowFail('MemorySync', 'SYNC_REPLACE_WITH_LOCAL', startedAt, error)
+    const remoteDenied = error instanceof Error && error.message === 'empty_local_replace_denied'
     return {
       ok: false,
-      errorCode: 'SYNC_REPLACE_LOCAL_FAILED',
+      errorCode: remoteDenied ? 'SYNC_REPLACE_LOCAL_EMPTY' : 'SYNC_REPLACE_LOCAL_FAILED',
       ...(error instanceof Error ? { error: error.message } : {})
     }
   }
@@ -498,6 +534,48 @@ export async function handleSyncReplaceWithRemote(): Promise<SyncReplaceWithRemo
     return {
       ok: false,
       errorCode: 'SYNC_REPLACE_REMOTE_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
+    }
+  }
+}
+
+/** EXPORT_ORPHAN_OWNERS — 导出换号残留桶（含软删） */
+export async function handleExportOrphanOwners(): Promise<ExportOrphanOwnersResponse> {
+  const startedAt = flowStart('Identity', 'EXPORT_ORPHAN_OWNERS')
+  try {
+    const items = await exportOrphanOwnerBuckets()
+    const orphanBucketCount = new Set(items.map(item => item.ownerId)).size
+    flowOk('Identity', 'EXPORT_ORPHAN_OWNERS', startedAt, {
+      orphanBucketCount,
+      itemCount: items.length
+    })
+    return {
+      ok: true,
+      orphanBucketCount,
+      items
+    }
+  } catch (error) {
+    flowFail('Identity', 'EXPORT_ORPHAN_OWNERS', startedAt, error)
+    return {
+      ok: false,
+      errorCode: 'ORPHAN_EXPORT_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
+    }
+  }
+}
+
+/** CLEAR_ORPHAN_OWNERS — 硬删换号残留桶 */
+export async function handleClearOrphanOwners(): Promise<ClearOrphanOwnersResponse> {
+  const startedAt = flowStart('Identity', 'CLEAR_ORPHAN_OWNERS')
+  try {
+    const result = await clearOrphanOwnerBuckets()
+    flowOk('Identity', 'CLEAR_ORPHAN_OWNERS', startedAt, result)
+    return { ok: true, ...result }
+  } catch (error) {
+    flowFail('Identity', 'CLEAR_ORPHAN_OWNERS', startedAt, error)
+    return {
+      ok: false,
+      errorCode: 'ORPHAN_CLEAR_FAILED',
       ...(error instanceof Error ? { error: error.message } : {})
     }
   }

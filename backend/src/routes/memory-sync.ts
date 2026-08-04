@@ -138,6 +138,9 @@ memorySyncRouter.post('/replace', async c => {
     return c.json({ success: true, data: result })
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
+    if (msg === 'empty_local_replace_denied') {
+      return c.json({ error: 'empty_local_replace_denied' }, 409)
+    }
     logErrorMessage('[MemorySync] replace 异常', { detail: msg, userId })
     const code =
       msg === 'supabase_not_configured' || msg === 'memory_backup_failed'

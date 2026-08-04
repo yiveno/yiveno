@@ -8,6 +8,8 @@ import {
 import type { ExtensionCommandInfo } from '@/core/messaging/commands-messages'
 import {
   authSignOut,
+  clearOrphanOwners,
+  exportOrphanOwners,
   fetchAuthState,
   fetchExtensionCommands,
   fetchSyncStatus,
@@ -55,6 +57,10 @@ const syncAccountOwnerCount = ref(0)
 const syncLocalProfileOwnerCount = ref(0)
 const syncRemoteCount = ref(0)
 const needsConflictChoice = ref(false)
+const orphanBucketCount = ref(0)
+const orphanActiveCount = ref(0)
+const orphanWorking = ref(false)
+const orphanMessage = ref('')
 const savingSync = ref(false)
 const syncWorking = ref(false)
 const syncError = ref('')
@@ -67,6 +73,8 @@ const signOutError = ref('')
 const signOutLocalCount = computed(
   () => syncAccountOwnerCount.value + syncLocalProfileOwnerCount.value
 )
+
+const hasOrphanOwners = computed(() => orphanBucketCount.value > 0)
 
 /**
  * 方案 B：本机有数即弹窗并始终三按钮（含先同步再清），避免启发式误判。
@@ -192,10 +200,13 @@ async function refreshSyncStatus() {
   syncLocalProfileOwnerCount.value = response.localProfileOwnerCount
   syncRemoteCount.value = response.remoteCount
   needsConflictChoice.value = response.needsConflictChoice
+  orphanBucketCount.value = response.orphanBucketCount
+  orphanActiveCount.value = response.orphanActiveCount
 }
 
 async function loadSyncContext() {
   syncError.value = ''
+  orphanMessage.value = ''
 
   try {
     const response = await fetchAuthState()
@@ -208,17 +219,80 @@ async function loadSyncContext() {
     accountEmail.value = response.email?.trim() ?? ''
     syncEnabled.value = response.syncPrefs.enabled
 
-    if (response.signedIn) {
-      await refreshSyncStatus()
-    } else {
-      syncLocalCount.value = 0
-      syncAccountOwnerCount.value = 0
-      syncLocalProfileOwnerCount.value = 0
-      syncRemoteCount.value = 0
+    // 未登录也要盘点孤儿桶（换号退出后残留仍可见）
+    await refreshSyncStatus()
+    if (!response.signedIn) {
       needsConflictChoice.value = false
     }
   } catch {
     syncError.value = t('settings_error_auth_state')
+  }
+}
+
+/** 下载孤儿桶 JSON 备份。 */
+function downloadOrphanExportJson(items: unknown[]): void {
+  const blob = new Blob(
+    [JSON.stringify({ exportedAt: new Date().toISOString(), items }, null, 2)],
+    {
+      type: 'application/json'
+    }
+  )
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = `yiveno-orphan-owners-${new Date().toISOString().slice(0, 10)}.json`
+  anchor.click()
+  URL.revokeObjectURL(url)
+}
+
+async function handleExportOrphans() {
+  orphanWorking.value = true
+  orphanMessage.value = ''
+  syncError.value = ''
+  try {
+    const response = await exportOrphanOwners()
+    if (!response.ok) {
+      syncError.value = tAccountSyncError(response.errorCode)
+      return
+    }
+    downloadOrphanExportJson(response.items)
+    orphanMessage.value = t('settings_orphan_exported', [String(response.items.length)])
+  } catch {
+    syncError.value = t('settings_error_orphan_export')
+  } finally {
+    orphanWorking.value = false
+  }
+}
+
+async function handleClearOrphans() {
+  const confirmed = window.confirm(
+    t('settings_orphan_clear_confirm', [
+      String(orphanBucketCount.value),
+      String(orphanActiveCount.value)
+    ])
+  )
+  if (!confirmed) {
+    return
+  }
+
+  orphanWorking.value = true
+  orphanMessage.value = ''
+  syncError.value = ''
+  try {
+    const response = await clearOrphanOwners()
+    if (!response.ok) {
+      syncError.value = tAccountSyncError(response.errorCode)
+      return
+    }
+    orphanMessage.value = t('settings_orphan_cleared', [
+      String(response.clearedBuckets),
+      String(response.clearedItems)
+    ])
+    await refreshSyncStatus()
+  } catch {
+    syncError.value = t('settings_error_orphan_clear')
+  } finally {
+    orphanWorking.value = false
   }
 }
 
@@ -483,10 +557,36 @@ onUnmounted(() => {
       </p>
       <p v-else class="settings-status">{{ t('settings_sync_sign_in_required') }}</p>
 
+      <div v-if="hasOrphanOwners" class="settings-orphan">
+        <p class="settings-toggle-title">{{ t('settings_orphan_title') }}</p>
+        <p class="settings-section-copy">
+          {{ t('settings_orphan_copy', [String(orphanBucketCount), String(orphanActiveCount)]) }}
+        </p>
+        <div class="settings-actions">
+          <md-outlined-button
+            type="button"
+            :disabled="orphanWorking || syncWorking || signingOut"
+            :title="t('settings_orphan_export')"
+            @click="handleExportOrphans"
+          >
+            {{ orphanWorking ? t('settings_orphan_working') : t('settings_orphan_export') }}
+          </md-outlined-button>
+          <md-outlined-button
+            type="button"
+            :disabled="orphanWorking || syncWorking || signingOut"
+            :title="t('settings_orphan_clear')"
+            @click="handleClearOrphans"
+          >
+            {{ orphanWorking ? t('settings_orphan_working') : t('settings_orphan_clear') }}
+          </md-outlined-button>
+        </div>
+        <p v-if="orphanMessage" class="settings-status" role="status">{{ orphanMessage }}</p>
+      </div>
+
       <div v-if="signedIn" class="settings-actions">
         <md-outlined-button
           type="button"
-          :disabled="signingOut || syncWorking || savingSync"
+          :disabled="signingOut || syncWorking || savingSync || orphanWorking"
           :title="t('settings_account_sign_out')"
           @click="openSignOutDialog"
         >
@@ -765,6 +865,14 @@ onUnmounted(() => {
 }
 
 .settings-sync-conflict {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.settings-orphan {
   margin-top: 14px;
   padding: 12px 14px;
   border: 1px solid var(--md-sys-color-outline-variant);

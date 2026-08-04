@@ -21,7 +21,10 @@ const ACCOUNT_SYNC_ERROR_MESSAGE_KEYS: Record<AccountSyncErrorCode, MessageKey> 
   SYNC_STATUS_FAILED: 'settings_error_sync_status',
   SYNC_PREFS_UPDATE_FAILED: 'settings_error_sync_prefs',
   SYNC_REPLACE_LOCAL_FAILED: 'settings_error_sync_replace_local',
-  SYNC_REPLACE_REMOTE_FAILED: 'settings_error_sync_replace_remote'
+  SYNC_REPLACE_LOCAL_EMPTY: 'settings_error_sync_replace_local_empty',
+  SYNC_REPLACE_REMOTE_FAILED: 'settings_error_sync_replace_remote',
+  ORPHAN_EXPORT_FAILED: 'settings_error_orphan_export',
+  ORPHAN_CLEAR_FAILED: 'settings_error_orphan_clear'
 }
 
 const RECALL_ERROR_MESSAGE_KEYS: Record<RecallErrorCode, MessageKey> = {

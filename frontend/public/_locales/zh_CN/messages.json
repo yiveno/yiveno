@@ -476,8 +476,70 @@
   "settings_error_sync_replace_local": {
     "message": "用本机覆盖云端失败"
   },
+  "settings_error_sync_replace_local_empty": {
+    "message": "本机没有记忆，不能用空库覆盖云端"
+  },
   "settings_error_sync_replace_remote": {
     "message": "用云端覆盖本机失败"
+  },
+  "settings_error_orphan_export": {
+    "message": "导出历史账号残留失败"
+  },
+  "settings_error_orphan_clear": {
+    "message": "清除历史账号残留失败"
+  },
+  "settings_orphan_title": {
+    "message": "本机还有其它账号的残留"
+  },
+  "settings_orphan_copy": {
+    "message": "$BUCKETS$ 个历史账号桶，约 $ITEMS$ 条记忆。当前账号看不到它们；可先导出备份，再清除。",
+    "placeholders": {
+      "BUCKETS": {
+        "content": "$1"
+      },
+      "ITEMS": {
+        "content": "$2"
+      }
+    }
+  },
+  "settings_orphan_export": {
+    "message": "导出残留"
+  },
+  "settings_orphan_clear": {
+    "message": "清除残留"
+  },
+  "settings_orphan_clear_confirm": {
+    "message": "将永久删除本机 $BUCKETS$ 个历史账号桶（约 $ITEMS$ 条）。未上云的数据无法找回。当前账号与本地档不受影响。",
+    "placeholders": {
+      "BUCKETS": {
+        "content": "$1"
+      },
+      "ITEMS": {
+        "content": "$2"
+      }
+    }
+  },
+  "settings_orphan_working": {
+    "message": "处理中…"
+  },
+  "settings_orphan_cleared": {
+    "message": "已清除 $BUCKETS$ 个桶（$ITEMS$ 条）",
+    "placeholders": {
+      "BUCKETS": {
+        "content": "$1"
+      },
+      "ITEMS": {
+        "content": "$2"
+      }
+    }
+  },
+  "settings_orphan_exported": {
+    "message": "已导出 $COUNT$ 条",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1"
+      }
+    }
   },
   "settings_error_load_commands": {
     "message": "读取快捷键失败"

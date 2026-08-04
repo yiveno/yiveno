@@ -476,8 +476,70 @@
   "settings_error_sync_replace_local": {
     "message": "Could not replace cloud with this device"
   },
+  "settings_error_sync_replace_local_empty": {
+    "message": "This device has no memories; cannot overwrite the cloud with an empty library"
+  },
   "settings_error_sync_replace_remote": {
     "message": "Could not replace this device with the cloud"
+  },
+  "settings_error_orphan_export": {
+    "message": "Could not export leftover account data"
+  },
+  "settings_error_orphan_clear": {
+    "message": "Could not clear leftover account data"
+  },
+  "settings_orphan_title": {
+    "message": "Leftover data from other accounts"
+  },
+  "settings_orphan_copy": {
+    "message": "$BUCKETS$ leftover account bucket(s), about $ITEMS$ memories. They are hidden from the current account. Export a backup first, then clear.",
+    "placeholders": {
+      "BUCKETS": {
+        "content": "$1"
+      },
+      "ITEMS": {
+        "content": "$2"
+      }
+    }
+  },
+  "settings_orphan_export": {
+    "message": "Export leftovers"
+  },
+  "settings_orphan_clear": {
+    "message": "Clear leftovers"
+  },
+  "settings_orphan_clear_confirm": {
+    "message": "Permanently delete $BUCKETS$ leftover account bucket(s) (~$ITEMS$ items) on this device. Data never synced to the cloud cannot be recovered. Your current account and local profile are unchanged.",
+    "placeholders": {
+      "BUCKETS": {
+        "content": "$1"
+      },
+      "ITEMS": {
+        "content": "$2"
+      }
+    }
+  },
+  "settings_orphan_working": {
+    "message": "Working…"
+  },
+  "settings_orphan_cleared": {
+    "message": "Cleared $BUCKETS$ bucket(s) ($ITEMS$ items)",
+    "placeholders": {
+      "BUCKETS": {
+        "content": "$1"
+      },
+      "ITEMS": {
+        "content": "$2"
+      }
+    }
+  },
+  "settings_orphan_exported": {
+    "message": "Exported $COUNT$ item(s)",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1"
+      }
+    }
   },
   "settings_error_load_commands": {
     "message": "Could not load shortcuts"

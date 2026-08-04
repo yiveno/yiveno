@@ -180,6 +180,12 @@ export async function replaceMemoryItems(
   }
 
   const snapshot = existing ?? []
+  // 服务端防呆：空本机不得整侧替换非空云端（扩展侧亦有门禁；双层）
+  if (items.length === 0 && snapshot.length > 0) {
+    info('[MemorySync] replace 拒绝空本机盖云', { ownerId, remoteCount: snapshot.length })
+    throw new Error('empty_local_replace_denied')
+  }
+
   const { data: backup, error: backupError } = await supabase
     .from('memory_sync_backups')
     .insert({
