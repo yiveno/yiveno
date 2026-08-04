@@ -863,6 +863,7 @@ Chrome API / 选区
   - 官网退出：`YIVENO_AUTH_SIGN_OUT_HANDOFF` → 扩展按 **keep_local** 清 session/binding（保留 Memory）；无 extension_id 时不阻塞官网退出。
   - 扩展打开时：`GET_AUTH_STATE` **节流 refresh** 探测 refresh_token；失效则同等 keep_local 退登（兜底官网已退但未回传）。
   - 扩展设置页退出（任一 mode）：结束后导航/打开官网 `/logout?from_extension=1` 清网站 Supabase session。
+- **登录后本地档归并（Normative）**：官网 handoff 成功或已登录时读 `GET_AUTH_STATE`，将 `localProfileId` 桶 Memory **remap** 到当前 `accountId`（仅本机、不上云）。解决「登录后旧本地数据 Recall 隐身」；幂等。历史其它账号桶仍属孤儿策略（未在此清）。
 - **退出登录（Normative）**：设置页按本机数据状态分流（均清扩展登录态并打开官网 `/logout`）。
   - **本机无当前账号/本地档数据**：不弹窗，直接仅退出。
   - **本机有数据**：弹窗固定三按钮——仅退出 / 清除本机该账号桶再退出 / 先同步到云端再清本机（方案 B，不做「已同步」启发式，避免同步后又 Capture 误判）。
@@ -1004,6 +1005,7 @@ Chrome API / 选区
 
 | 日期       | 变更                                                                                                               |
 | ---------- | ------------------------------------------------------------------------------------------------------------------ |
+| 2026-08-04 | 登录后归并 localProfile→accountId（仅本机 remap，解决 Recall 隐身）                                                |
 | 2026-08-04 | 退出弹窗方案 B：本机有数固定三按钮；无数直接退出；不做已同步启发式                                                 |
 | 2026-08-04 | 扩展退出后打开官网 `/logout?from_extension=1` 对称清网站 session                                                   |
 | 2026-08-04 | 登录态 A+B：官网退出 `SIGN_OUT_HANDOFF`；扩展 `GET_AUTH_STATE` 节流 refresh 失效则 keep_local 退登                 |

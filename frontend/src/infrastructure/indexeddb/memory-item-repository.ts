@@ -411,7 +411,7 @@ export class MemoryItemRepository {
 
   /**
    * 将 fromOwnerId 下全部条目的 ownerId 改为 toOwnerId（保留 sourceLocalProfileId）。
-   * 用于登录后「本机覆盖云端」前的归属迁移。
+   * 用于：登录后归并未登录本地档；以及「本机覆盖云端」前的归属迁移。
    */
   async remapOwnerId(fromOwnerId: string, toOwnerId: string): Promise<number> {
     if (fromOwnerId === toOwnerId) {

@@ -3,6 +3,7 @@
  * 登录主路径：打开官网 → external handoff 写入 session（扩展不做 OAuth）。
  */
 
+import { absorbLocalProfileIntoAccount } from '@/application/identity/absorb-local-profile-into-account'
 import type {
   AuthSignInResponse,
   AuthSignOutMode,
@@ -248,6 +249,11 @@ export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
     }
 
     const stillBound = await getAccountBinding()
+    // 已登录会话兜底：历史登录若未归并，打开 Popup/设置时补一次（幂等）
+    if (stillBound && session) {
+      await absorbLocalProfileIntoAccount(stillBound.accountId)
+    }
+
     flowOk('Auth', 'GET_AUTH_STATE', startedAt, {
       signedIn: Boolean(stillBound && session),
       syncEnabled: syncPrefs.enabled,

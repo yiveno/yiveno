@@ -2,6 +2,7 @@
  * 接收官网回传的登录 / 退出，写入或清理本地 binding（退出默认保留 Memory）。
  */
 
+import { absorbLocalProfileIntoAccount } from '@/application/identity/absorb-local-profile-into-account'
 import {
   ExternalAuthHandoffMessageSchema,
   type ExternalAuthHandoffResponse
@@ -58,7 +59,12 @@ export async function applyExternalAuthSessionHandoff(
       boundAt: new Date().toISOString()
     })
     await clearAuthValidationTimestamp()
-    flowOk('Auth', '官网 session handoff', startedAt, { userId: session.userId })
+    // 登录后立刻归并未登录期间的本地档，避免 Recall 只看见 accountId 桶而「隐身」
+    const remapped = await absorbLocalProfileIntoAccount(session.userId)
+    flowOk('Auth', '官网 session handoff', startedAt, {
+      userId: session.userId,
+      remappedLocalProfileItems: remapped
+    })
     return { ok: true }
   } catch (error) {
     flowFail('Auth', '官网 session handoff', startedAt, error)

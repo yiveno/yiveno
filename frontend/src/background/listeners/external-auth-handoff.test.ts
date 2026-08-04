@@ -1,9 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+vi.mock('@/application/identity/absorb-local-profile-into-account', () => ({
+  absorbLocalProfileIntoAccount: vi.fn(async () => 0)
+}))
+
 import {
   applyExternalAuthHandoff,
   applyExternalAuthSessionHandoff
 } from '@/background/listeners/external-auth-handoff'
+import { absorbLocalProfileIntoAccount } from '@/application/identity/absorb-local-profile-into-account'
 import { AUTH_SESSION_STORAGE_KEY } from '@/core/identity/auth-session'
 import { ACCOUNT_BINDING_STORAGE_KEY } from '@/core/identity/local-profile'
 
@@ -65,6 +70,9 @@ describe('external auth handoff', () => {
     expect(flattened[ACCOUNT_BINDING_STORAGE_KEY]).toMatchObject({
       accountId: '22222222-2222-4222-8222-222222222222'
     })
+    expect(absorbLocalProfileIntoAccount).toHaveBeenCalledWith(
+      '22222222-2222-4222-8222-222222222222'
+    )
   })
 
   it('sign-out handoff 清登录态', async () => {
