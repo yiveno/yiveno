@@ -348,6 +348,9 @@
   "settings_privacy_open_sync": {
     "message": "前往账户与同步"
   },
+  "settings_privacy_open_policy": {
+    "message": "阅读完整隐私政策"
+  },
   "settings_privacy_delete_cloud": {
     "message": "删除云端记忆"
   },

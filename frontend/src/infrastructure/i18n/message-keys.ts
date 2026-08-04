@@ -107,6 +107,7 @@ export const MESSAGE_KEYS = [
   'settings_privacy_ack_status_needed',
   'settings_privacy_sync_confirm',
   'settings_privacy_open_sync',
+  'settings_privacy_open_policy',
   'settings_privacy_delete_cloud',
   'settings_privacy_delete_cloud_hint',
   'settings_privacy_delete_cloud_confirm',

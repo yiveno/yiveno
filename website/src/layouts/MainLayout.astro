@@ -1,14 +1,26 @@
 ---
 import Nav from '../components/Nav.astro'
+
+interface Props {
+  /** 页面标题（写入 document title） */
+  title?: string
+  /** meta description */
+  description?: string
+}
+
+const {
+  title = 'Yiveno',
+  description = 'Yiveno helps you capture and recall personal browsing traces—excerpts and notes—not another bookmark manager.'
+} = Astro.props
 ---
 
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Yiveno - AI 驱动的智能书签管理</title>
-    <meta name="description" content="Yiveno 是一款 AI 驱动的 Chrome 书签管理扩展，帮你智能组织、搜索和管理书签。" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   </head>
   <body>
@@ -17,7 +29,10 @@ import Nav from '../components/Nav.astro'
       <slot />
     </main>
     <footer style="text-align:center;padding:2rem;color:#666;font-size:0.875rem;">
-      <p>© 2026 Yiveno. All rights reserved.</p>
+      <p>
+        <a href="/privacy" style="color:#555;margin-right:1rem;">Privacy</a>
+        <span>© 2026 Yiveno. All rights reserved.</span>
+      </p>
     </footer>
   </body>
 </html>

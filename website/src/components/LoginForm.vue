@@ -133,6 +133,11 @@ async function login(provider: 'google' | 'microsoft') {
     <button :disabled="loading || connectingExtension" class="btn" @click="login('microsoft')">
       {{ loading ? '跳转中...' : signedInEmail ? '换 Microsoft 账号' : '使用 Microsoft 登录' }}
     </button>
+    <p class="legal">
+      <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+      ·
+      <a href="/privacy#zh" target="_blank" rel="noopener noreferrer">隐私政策</a>
+    </p>
   </div>
 </template>
 
@@ -188,5 +193,15 @@ async function login(provider: 'google' | 'microsoft') {
 .ok {
   color: #2f855a;
   font-size: 0.875rem;
+}
+
+.legal {
+  margin-top: 1.25rem;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.legal a {
+  color: #555;
 }
 </style>

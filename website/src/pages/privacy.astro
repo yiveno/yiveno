@@ -1,0 +1,271 @@
+---
+/**
+ * 官网隐私政策（与当前产品实现对齐；非律师意见书）。
+ * 生效日与正文重大变更时同步改产品文档与 Settings 摘要外链。
+ */
+import MainLayout from '../layouts/MainLayout.astro'
+
+const effectiveDate = '2026-08-05'
+const contactEmail = 'privacy@yiveno.com'
+---
+
+<MainLayout
+  title="Privacy Policy · Yiveno"
+  description="How Yiveno handles personal data for the Chrome extension and website: local-first memory, optional cloud sync, account, and AI."
+>
+  <article class="policy">
+    <header class="policy__header">
+      <h1>Privacy Policy</h1>
+      <p class="policy__meta">Effective date: {effectiveDate}</p>
+      <p class="policy__langs">
+        <a href="#en">English</a>
+        ·
+        <a href="#zh">中文</a>
+      </p>
+    </header>
+
+    <section id="en" class="policy__section" lang="en">
+      <h2>1. Who we are</h2>
+      <p>
+        This Privacy Policy describes how <strong>Yiveno</strong> (“we”, “us”) handles information when you use
+        the Yiveno Chrome extension, the website at yiveno.com, and related backend services (Cloudflare Workers).
+        Yiveno is a <strong>personal information recall</strong> product: Capture with low friction, Recall with high
+        confidence. It is not a bookmark manager, note-taking app, chat bot, or “AI organizer” as a primary promise.
+      </p>
+
+      <h2>2. What we collect</h2>
+      <h3>2.1 On your device (default)</h3>
+      <p>
+        By default, memories you Capture (for example text excerpts, related page metadata you choose to save, and your
+        notes) are stored in the extension’s local IndexedDB on your browser profile. Uninstalling the extension
+        typically removes this local store.
+      </p>
+      <h3>2.2 Account (optional sign-in)</h3>
+      <p>
+        If you sign in via the website (for example Google or Microsoft through our auth provider), we process account
+        identifiers such as user id, email, and profile fields the provider shares (for example display name or avatar
+        URL). <strong>Signing in does not by itself upload your memories.</strong>
+      </p>
+      <h3>2.3 Cloud memory (opt-in sync)</h3>
+      <p>
+        Only after you explicitly enable cloud sync in the extension do we store Memory items and sync backups in our
+        cloud database (currently Supabase), scoped to your account. Turning sync off does <strong>not</strong>
+        automatically delete cloud copies; you can delete cloud memories or delete your account from Settings → Privacy.
+      </p>
+      <h3>2.4 AI / language features</h3>
+      <p>
+        Some features (for example clue understanding) may send limited prompts through our Cloudflare Worker to a model
+        provider. We do not use the model as the system of record for create/read/update/delete of your Memory store.
+        We do not default to sending your entire library to a model.
+      </p>
+      <h3>2.5 What we do not collect by default</h3>
+      <ul>
+        <li>Your full browsing History</li>
+        <li>Always-on clipboard reading</li>
+        <li>Full webpage content you did not actively Capture</li>
+        <li>Uploading memories to the cloud without enabling sync</li>
+      </ul>
+
+      <h2>3. How we use information</h2>
+      <ul>
+        <li>Provide Capture and Recall on your device</li>
+        <li>Authenticate you and optional cloud sync when you enable it</li>
+        <li>Operate, secure, and debug the service (including Worker logs with limited previews where needed)</li>
+        <li>Process subscriptions or payments if you purchase paid plans (billing records may be retained as required by law)</li>
+      </ul>
+
+      <h2>4. Processors and subprocessors</h2>
+      <p>Depending on features you use, data may be processed by:</p>
+      <ul>
+        <li><strong>Supabase</strong> — authentication and (when sync is on) cloud Memory storage</li>
+        <li><strong>Cloudflare</strong> — Workers API, hosting, and related infrastructure</li>
+        <li><strong>Google / Microsoft</strong> — if you choose their OAuth sign-in</li>
+        <li><strong>Model providers</strong> — only when an AI feature you use is routed through our Worker</li>
+        <li><strong>Payment providers</strong> (for example Gumroad) — if you purchase a subscription</li>
+      </ul>
+
+      <h2>5. Retention and deletion</h2>
+      <ul>
+        <li><strong>Local memories</strong> remain until you delete them, clear the account bucket, or remove the extension.</li>
+        <li><strong>Cloud memories</strong> remain while your account exists and sync data has not been deleted; you can delete all cloud memories without deleting the account.</li>
+        <li><strong>Delete account</strong> (Settings → Privacy) removes cloud Memory and backups, closes the auth user, clears this account’s local Memory bucket on that device, and signs you out. Billing records may be retained in anonymized or legally required form and are not a recoverable login.</li>
+      </ul>
+
+      <h2>6. Your choices</h2>
+      <ul>
+        <li>Use Yiveno without signing in (local profile)</li>
+        <li>Sign in without enabling cloud sync</li>
+        <li>Enable or disable cloud sync</li>
+        <li>Delete cloud memories or delete your account from the extension Settings → Privacy</li>
+        <li>Review a short privacy notice in Settings before enabling sync</li>
+      </ul>
+
+      <h2>7. Children</h2>
+      <p>
+        Yiveno is not directed to children under 13 (or the minimum age required in your jurisdiction). Do not use the
+        service if you are under that age.
+      </p>
+
+      <h2>8. International users</h2>
+      <p>
+        We may process data in regions where our providers operate (including the United States and other locations).
+        If you enable cloud sync or sign in, you understand your account and synced data may be stored outside your
+        country of residence.
+      </p>
+
+      <h2>9. Changes</h2>
+      <p>
+        We may update this Policy as the product changes. We will update the effective date on this page. Material
+        changes to the in-extension sync notice may require you to re-confirm before turning sync on again.
+      </p>
+
+      <h2>10. Contact</h2>
+      <p>
+        Privacy questions: <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
+      </p>
+      <p class="policy__note">
+        This page reflects how Yiveno works today. It is not legal advice. Features not marked available in the product
+        are not claimed here as shipped.
+      </p>
+    </section>
+
+    <hr class="policy__divider" />
+
+    <section id="zh" class="policy__section" lang="zh-CN">
+      <h2>隐私政策（中文）</h2>
+      <p class="policy__meta">生效日期：{effectiveDate}</p>
+
+      <h3>1. 我们是谁</h3>
+      <p>
+        本政策说明 <strong>Yiveno</strong> 在 Chrome 扩展、官网（yiveno.com）及相关后端（Cloudflare Workers）中如何处理信息。
+        Yiveno 的定位是<strong>个人信息寻回</strong>（低负担 Capture + 高置信 Recall），不是书签管理器、笔记创作工具、聊天机器人或「AI 整理工具」主卖点。
+      </p>
+
+      <h3>2. 我们收集什么</h3>
+      <p>
+        <strong>本机（默认）：</strong>你主动保存的记忆（如摘录、相关元数据、备注）默认存放在扩展本机 IndexedDB。卸载扩展通常会丢失本机库。
+      </p>
+      <p>
+        <strong>账号（可选登录）：</strong>经官网登录（如 Google / Microsoft）时，我们处理用户 id、邮箱及登录方提供的资料字段（如显示名、头像 URL）。
+        <strong>登录本身不会自动上传记忆。</strong>
+      </p>
+      <p>
+        <strong>云端记忆（需开启同步）：</strong>仅在你于扩展中显式开启云同步后，才会把 Memory 与同步备份存到云端数据库（当前为 Supabase），并归属你的账号。
+        关闭同步<strong>不会</strong>自动删除云端副本；可在设置 → 隐私删除云端记忆或删除账号。
+      </p>
+      <p>
+        <strong>AI：</strong>部分能力（如线索理解）可能经 Worker 向模型服务发送有限提示。模型<strong>不是</strong>记忆库增删改查的事实源；我们不会默认把全库喂给模型。
+      </p>
+      <p><strong>默认不收集：</strong>浏览历史、常驻读取剪贴板、未主动 Capture 的页面全文、未开同步时的云端上传。</p>
+
+      <h3>3. 如何使用</h3>
+      <ul>
+        <li>在本机提供 Capture / Recall</li>
+        <li>在你开启时提供身份认证与可选云同步</li>
+        <li>运维、安全与排障（必要时含有限预览的日志）</li>
+        <li>若你购买付费计划，处理订阅/支付（账务记录可依法保留）</li>
+      </ul>
+
+      <h3>4. 处理方</h3>
+      <ul>
+        <li><strong>Supabase</strong> — 认证；开启同步后的云端 Memory</li>
+        <li><strong>Cloudflare</strong> — Worker API 与相关基础设施</li>
+        <li><strong>Google / Microsoft</strong> — 若你选择其 OAuth 登录</li>
+        <li><strong>模型服务商</strong> — 仅当你使用经 Worker 路由的 AI 能力时</li>
+        <li><strong>支付服务商</strong>（如 Gumroad）— 若你购买订阅</li>
+      </ul>
+
+      <h3>5. 保留与删除</h3>
+      <ul>
+        <li>本机记忆：直到你删除、清除该账号桶或卸载扩展</li>
+        <li>云端记忆：在账号存在且未删除前保留；可只删云端、不删账号</li>
+        <li>删除账号（设置 → 隐私）：删除云端 Memory/备份、注销登录身份、清除本机该账号记忆桶并退出。订阅/支付记录可依法保留，不可再作为可恢复登录</li>
+      </ul>
+
+      <h3>6. 你的选择</h3>
+      <ul>
+        <li>可不登录使用（本地档）</li>
+        <li>可登录但不开启云同步</li>
+        <li>可开关云同步</li>
+        <li>可在扩展设置 → 隐私删除云端记忆或删除账号</li>
+        <li>开启同步前须确认扩展内隐私说明摘要</li>
+      </ul>
+
+      <h3>7. 联系</h3>
+      <p>
+        隐私相关：<a href={`mailto:${contactEmail}`}>{contactEmail}</a>
+      </p>
+      <p class="policy__note">
+        本文对齐当前产品实现，不构成法律意见；未在产品中标为已上线的能力，不以本政策暗示可用。
+      </p>
+    </section>
+  </article>
+</MainLayout>
+
+<style>
+  .policy {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+    line-height: 1.65;
+    color: #222;
+  }
+
+  .policy__header {
+    margin-bottom: 2rem;
+  }
+
+  .policy__header h1 {
+    margin: 0 0 0.5rem;
+    font-size: 2rem;
+    line-height: 1.2;
+  }
+
+  .policy__meta {
+    margin: 0;
+    color: #666;
+    font-size: 0.9rem;
+  }
+
+  .policy__langs {
+    margin: 0.75rem 0 0;
+    font-size: 0.9rem;
+  }
+
+  .policy__langs a {
+    color: #333;
+  }
+
+  .policy__section h2,
+  .policy__section h3 {
+    margin-top: 1.75rem;
+    margin-bottom: 0.5rem;
+    font-size: 1.15rem;
+  }
+
+  .policy__section p,
+  .policy__section ul {
+    margin: 0.5rem 0 0;
+    color: #333;
+  }
+
+  .policy__section ul {
+    padding-left: 1.25rem;
+  }
+
+  .policy__section li {
+    margin: 0.25rem 0;
+  }
+
+  .policy__divider {
+    margin: 3rem 0;
+    border: none;
+    border-top: 1px solid #e5e5e5;
+  }
+
+  .policy__note {
+    margin-top: 1.25rem;
+    font-size: 0.875rem;
+    color: #666;
+  }
+</style>

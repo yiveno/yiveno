@@ -37,6 +37,7 @@ import {
   tSettingsError
 } from '@/infrastructure/i18n/background-error'
 import { t } from '@/infrastructure/i18n/t'
+import { getWebsiteBaseUrl } from '@/infrastructure/browser/website-page'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
 import MaterialSymbolIcon from '@/infrastructure/ui/icons/MaterialSymbolIcon.vue'
 import { asMdSwitchElement } from '@/infrastructure/ui/register-material-web'
@@ -87,6 +88,9 @@ const privacyNoticeAcked = ref(false)
 const privacyWorking = ref(false)
 const privacyError = ref('')
 const privacyMessage = ref('')
+
+/** 官网隐私政策全文 URL（Options 页可直开外链）。 */
+const privacyPolicyUrl = `${getWebsiteBaseUrl()}/privacy`
 
 const signOutDialogOpen = ref(false)
 const signingOut = ref(false)
@@ -910,6 +914,15 @@ onUnmounted(() => {
               >
                 {{ t('settings_privacy_open_sync') }}
               </md-outlined-button>
+              <a
+                class="settings-privacy-policy-link"
+                :href="privacyPolicyUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                :title="t('settings_privacy_open_policy')"
+              >
+                {{ t('settings_privacy_open_policy') }}
+              </a>
             </div>
 
             <div v-if="signedIn" class="settings-privacy-danger">
@@ -1279,6 +1292,24 @@ onUnmounted(() => {
 
 .settings-privacy-danger__title-spaced {
   margin-top: 16px;
+}
+
+.settings-privacy-policy-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 12px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--md-sys-color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.settings-privacy-policy-link:hover,
+.settings-privacy-policy-link:focus-visible {
+  color: var(--md-sys-color-on-primary-container);
+  outline: none;
 }
 
 .settings-orphan {

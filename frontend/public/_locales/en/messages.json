@@ -348,6 +348,9 @@
   "settings_privacy_open_sync": {
     "message": "Open Account & Sync"
   },
+  "settings_privacy_open_policy": {
+    "message": "Read full privacy policy"
+  },
   "settings_privacy_delete_cloud": {
     "message": "Delete cloud memories"
   },
