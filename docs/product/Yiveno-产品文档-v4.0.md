@@ -495,7 +495,7 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 - **miss 升级：** 不是「无命中就调模型」；仅 lexical 规则路径无命中 + 口语/时间信号（或 ≥3 英文词）时升一次；URL / 短英文专名不升。
 
 - **不做本里程碑内：** embedding、全库喂模型、模型写库、开放闲聊。
-- **开发启用 LLM：** 默认经 Cloudflare `POST /api/ai/clue/complete`（Worker 经 `AiChatProvider` / `AI_PROVIDER` 选上游，默认 DeepSeek；Secret `DEEPSEEK_API_KEY`；可选经 **AI Gateway** 转发，见 `AI_GATEWAY_*` vars）；本地需 `bun run env:sync:dev` + `wrangler dev`。可选 `chrome.storage.local` `yiveno.dev.clueLlm` 直连调试。正式 Pro 托管另接 `/api/ai/hosted/*`。
+- **开发启用 LLM：** 开发构建无 Pro 时仍可走 Cloudflare `POST /api/ai/clue/complete`（IP 日配额；Worker 经 `AiChatProvider` / `AI_PROVIDER` 选上游，默认 DeepSeek；Secret `DEEPSEEK_API_KEY`；可选 **AI Gateway**）。可选 `chrome.storage.local` `yiveno.dev.clueLlm` 直连调试。**正式 Pro：** 扩展经 `POST /api/ai/hosted/complete`（Bearer + 月配额）；Free 生产构建降级规则理解。
 - **验收：** 理解金标 `parse-gold`；人话 → 精确 `contentTerms` 单测；Recall 用户可感变更补 `recall-eval` must 或 §5 手动步骤。
 
 #### 隐患清单与规避（决策自检）
@@ -592,35 +592,35 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 
 ## 1. 现状 vs 目标（Normative）
 
-| 能力                             | 状态                    | 说明                                                                                              |
-| -------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------- |
-| Popup 对话式找回                 | 已上线（语义闭环切片）  | core 槽位 merge + 芯片即发 + dismiss 保留 + 缩短回滚；见 §7.0                                     |
-| 右键保存选区                     | 已上线                  | Text Excerpt；非书签的主动 Capture                                                                |
-| 划词保存浮层                     | 已上线                  | Content Script；可直存或「添加备注」后写入 `clues.note`；Settings 可关；默认开                    |
-| 书签/摘录事后备注                | 已上线                  | `UPDATE_MEMORY_NOTE`；书签树编辑；仅本地 `clues.note`，不同步 Chrome                              |
-| Chrome 书签导入 + 增量 sync      | 已上线                  | 书签唯一写入主路径；原生加书签 → onCreated 同步；upsert 保留 note                                 |
-| LocalProfile / ownerId           | 已上线                  | 未登录可用；登录后 `ownerId=accountId`                                                            |
-| Settings                         | 已上线（最小+账户同步） | `options_ui`；左侧分区导航（与记忆库同构）+ `?section=`；快捷键；账户/云同步；隐私/AI 占位        |
-| Offscreen                        | 占位                    | 预留本地 embedding；当前 Pro 走 Worker AI，未启用 Offscreen                                       |
-| Omnibox 找回                     | 已上线                  | 关键词 `yi`；共用 `recallService`；单次无会话                                                     |
-| 快捷键找回                       | 已上线                  | `_execute_action`（默认 `Alt+Shift+Y`）开 Popup                                                   |
-| 快捷键打开记忆库                 | 已上线                  | `open_library`（默认 `Alt+Shift+L`）                                                              |
-| 快捷键打开设置                   | 已上线                  | `open_settings`（无默认建议键；Chrome 最多 4 个 suggested_key，可自绑）                           |
-| 快捷键保存选中文字               | 已上线                  | `save_selection`（默认 `Alt+Shift+E`）→ 划词脚本直存；`captureEntry=shortcut`                     |
-| 快捷键选中文字并备注             | 已上线                  | `save_selection_with_note`（默认 `Alt+Shift+N`）→ 打开划词备注面板                                |
-| 手动「保存当前页」               | 不做                    | 与 Chrome 原生书签重复；已移除 UI/快捷键/消息                                                     |
-| 结果线索解释强化                 | 已上线                  | 主因「因字段含「token」」+ 次要字段；Top Pick 线索回显                                            |
-| Popup 空状态分层                 | 已上线                  | 空库 / 有库 idle 与 no_match 分文案；有库可「缩短后再试」                                         |
-| 摘录详情落地页                   | 已上线                  | `detail.html?id=`；摘录打开详情；书签仍直开 URL；`GET_MEMORY_ITEM`                                |
-| 记忆库轻浏览                     | 已上线                  | `library.html`；**默认摘录**；书签=Chrome 目录只读树；摘录=时间列表；`?type=` 刷新保留            |
-| 摘录删除                         | 已上线                  | 软删 `deletedAt`；记忆库列表 / 详情页；`DELETE_MEMORY_ITEM`；书签不经此删                         |
-| Need A Clue / 否定反馈           | 已上线（并入对话）      | 低置信 outcome + dismiss；会话内 dismissedIds 硬排除；追问模板基于合并后 parsed                   |
-| 多源线索与权重（§7.1）           | 已上线（首批）          | 同域软重排；`recently_saved`/`half_read`/`often_opened` 软加权；追问芯片（刚存/刚打开/当前站）    |
-| Hybrid Filter                    | 已上线（Pro）           | `isProActiveFromSnapshot` → Hybrid（RRF）；Free 关键词；向量本机、云同步剥离 embedding            |
-| Gumroad Pro / 订阅快照           | 已上线                  | `GET /api/account/subscription`；Settings 升级/管理；Worker embed Pro 门禁                        |
-| 云同步 / 账号 UI                 | 已上线（Phase C 切片）  | Supabase `memory_items`；Worker `/api/memory/sync/*`；开同步并集 + **15 分钟增量**；登录≠自动上传 |
-| 分享                             | 目标 · Phase C          |                                                                                                   |
-| 轻管理余项（标签/失效链接/统计） | 目标 · Phase D          | 摘录删除已提前上线；书签仍只经 Chrome 同步软删                                                    |
+| 能力                             | 状态                    | 说明                                                                                                                  |
+| -------------------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Popup 对话式找回                 | 已上线（语义闭环切片）  | core 槽位 merge + 芯片即发 + dismiss 保留 + 缩短回滚；见 §7.0                                                         |
+| 右键保存选区                     | 已上线                  | Text Excerpt；非书签的主动 Capture                                                                                    |
+| 划词保存浮层                     | 已上线                  | Content Script；可直存或「添加备注」后写入 `clues.note`；Settings 可关；默认开                                        |
+| 书签/摘录事后备注                | 已上线                  | `UPDATE_MEMORY_NOTE`；书签树编辑；仅本地 `clues.note`，不同步 Chrome                                                  |
+| Chrome 书签导入 + 增量 sync      | 已上线                  | 书签唯一写入主路径；原生加书签 → onCreated 同步；upsert 保留 note                                                     |
+| LocalProfile / ownerId           | 已上线                  | 未登录可用；登录后 `ownerId=accountId`                                                                                |
+| Settings                         | 已上线（最小+账户同步） | `options_ui`；左侧分区导航（与记忆库同构）+ `?section=`；快捷键；账户/云同步；隐私/AI 占位                            |
+| Offscreen                        | 占位                    | 预留本地 embedding；当前 Pro 走 Worker AI，未启用 Offscreen                                                           |
+| Omnibox 找回                     | 已上线                  | 关键词 `yi`；共用 `recallService`；单次无会话                                                                         |
+| 快捷键找回                       | 已上线                  | `_execute_action`（默认 `Alt+Shift+Y`）开 Popup                                                                       |
+| 快捷键打开记忆库                 | 已上线                  | `open_library`（默认 `Alt+Shift+L`）                                                                                  |
+| 快捷键打开设置                   | 已上线                  | `open_settings`（无默认建议键；Chrome 最多 4 个 suggested_key，可自绑）                                               |
+| 快捷键保存选中文字               | 已上线                  | `save_selection`（默认 `Alt+Shift+E`）→ 划词脚本直存；`captureEntry=shortcut`                                         |
+| 快捷键选中文字并备注             | 已上线                  | `save_selection_with_note`（默认 `Alt+Shift+N`）→ 打开划词备注面板                                                    |
+| 手动「保存当前页」               | 不做                    | 与 Chrome 原生书签重复；已移除 UI/快捷键/消息                                                                         |
+| 结果线索解释强化                 | 已上线                  | 主因「因字段含「token」」+ 次要字段；Top Pick 线索回显                                                                |
+| Popup 空状态分层                 | 已上线                  | 空库 / 有库 idle 与 no_match 分文案；有库可「缩短后再试」                                                             |
+| 摘录详情落地页                   | 已上线                  | `detail.html?id=`；摘录打开详情；书签仍直开 URL；`GET_MEMORY_ITEM`                                                    |
+| 记忆库轻浏览                     | 已上线                  | `library.html`；**默认摘录**；书签=Chrome 目录只读树；摘录=时间列表；`?type=` 刷新保留                                |
+| 摘录删除                         | 已上线                  | 软删 `deletedAt`；记忆库列表 / 详情页；`DELETE_MEMORY_ITEM`；书签不经此删                                             |
+| Need A Clue / 否定反馈           | 已上线（并入对话）      | 低置信 outcome + dismiss；会话内 dismissedIds 硬排除；追问模板基于合并后 parsed                                       |
+| 多源线索与权重（§7.1）           | 已上线（首批）          | 同域软重排；`recently_saved`/`half_read`/`often_opened` 软加权；追问芯片（刚存/刚打开/当前站）                        |
+| Hybrid Filter                    | 已上线（Pro）           | `isProActiveFromSnapshot` → Hybrid（RRF）；Free 关键词；向量本机、云同步剥离 embedding                                |
+| Gumroad Pro / 订阅快照           | 已上线                  | Free+**仅 Pro**（`premium` 预留不售）；`GET /api/account/subscription`；Settings/官网升级；embed+sync+hosted LLM 门禁 |
+| 云同步 / 账号 UI                 | 已上线（Phase C + Pro） | Supabase `memory_items`；Worker `/api/memory/sync/*` **需有效 Pro**；开同步并集 + **15 分钟增量**；登录≠自动上传      |
+| 分享                             | 目标 · Phase C          |                                                                                                                       |
+| 轻管理余项（标签/失效链接/统计） | 目标 · Phase D          | 摘录删除已提前上线；书签仍只经 Chrome 同步软删                                                                        |
 
 ### 1.1 「已上线」验证归属（Normative）
 
@@ -649,6 +649,7 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 | 关键词 Recall 主路径（Filter + 口语解析） | ✓    | ✓    | ✓   | ✓    | eval=`must` 门禁；E2E=Popup 固定线索→结果卡            |
 | Popup 对话式壳（多轮 UI）                 | ✓    | ✓    | 薄  | ✓    | merge 单测 + eval must 多轮；E2E 薄；芯片/dismiss 手测 |
 | 多轮槽位 merge（§7.0）                    | ✓    | ✓    | —   | ✓    | `merge-recall-dialog-turn`；eval `dialog-*` must       |
+| Gumroad Pro / 同步·托管门禁               | ✓    | —    | —   | ✓    | webhook/account/sync Pro 拒绝；§5.7 手动付费全流程     |
 
 **合入门禁（Normative）：**
 
@@ -780,13 +781,13 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 ### 5.1 能力分层
 
-| 层          | 召回                         | 阶段                                 |
-| ----------- | ---------------------------- | ------------------------------------ |
-| Free / 当前 | 关键词 Filter                | 已上线                               |
-| Pro         | Hybrid（关键词 + embedding） | 已上线（Gumroad Pro；向量本机）      |
-| LLM 增强    | 摘要/解释/追问等             | Phase B+；可关闭；仅服务 Recall 对话 |
+| 层    | 召回 / 权益                                                                 | 阶段                                    |
+| ----- | --------------------------------------------------------------------------- | --------------------------------------- |
+| Free  | 关键词 Filter；本机 Capture/导出；可登录；**无** Hybrid / 云同步 / 托管 LLM | 已上线                                  |
+| Pro   | Hybrid（关键词 + embedding）；云同步；托管口语 LLM（月配额）；向量本机      | 已上线（Gumroad；`tier=pro`）           |
+| Tier+ | 更深云寻回 / 多模态 / 团队等（对外名待定）                                  | **预留不售**（schema `premium` 仅占位） |
 
-冲突时以本表为准：**Free 默认仍仅为关键词**；Hybrid 仅有效 Pro 快照启用。
+冲突时以本表为准：**Free 默认仍仅为关键词**；Hybrid / 云同步 / 正式托管 LLM 仅有效 Pro 快照启用。对外只讲 Free 与 Pro。
 
 ### 5.2 已交付基线验收
 
@@ -823,13 +824,13 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 **布局（Normative）：** 与记忆库同构——**左侧竖导航 + 右侧单面板切换**；窄屏降级为顶部横排 chips。深链 `settings.html?section=<id>`（默认 `capture` 不写 query；旧 `usage` 映射到 `capture`）。
 
-| 分区（侧栏） | `section` id   | 状态            | 说明                                                                                                                                 |
-| ------------ | -------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| 保存         | `capture`      | 已上线          | 划词浮层开关（默认开）；**Chrome 书签灌库**开关（默认开；关后停 bulk/增量，不删已有）                                                |
-| 快捷键       | `shortcuts`    | 已上线          | 展示绑定；改键跳转 `chrome://extensions/shortcuts`                                                                                   |
-| 账户与同步   | `account_sync` | 已上线          | 顶栏头像登录；本区含同步开关（开则并集对齐）、禁止缩量盖云、最近备份恢复、孤儿桶、**退出三选一**；默认同步关；**空本机禁止盖非空云** |
-| 隐私         | `privacy`      | 已上线（P0+P1） | 数据说明；开同步确认；删云端；删账号；**整库导出**；链到 `/privacy` 与 `/terms`                                                      |
-| AI           | `ai`           | 已上线          | **关 AI**；模型路径说明（线索理解 + enrichment；不碰数据平面）                                                                       |
+| 分区（侧栏） | `section` id   | 状态            | 说明                                                                                                |
+| ------------ | -------------- | --------------- | --------------------------------------------------------------------------------------------------- |
+| 保存         | `capture`      | 已上线          | 划词浮层开关（默认开）；**Chrome 书签灌库**开关（默认开；关后停 bulk/增量，不删已有）               |
+| 快捷键       | `shortcuts`    | 已上线          | 展示绑定；改键跳转 `chrome://extensions/shortcuts`                                                  |
+| 账户与同步   | `account_sync` | 已上线          | 顶栏头像登录；**同步 = Pro+登录+开关**；订阅升级/刷新；禁止缩量盖云；孤儿桶；退出三选一；默认同步关 |
+| 隐私         | `privacy`      | 已上线（P0+P1） | 数据说明；开同步确认；删云端；删账号；**整库导出**；链到 `/privacy` 与 `/terms`                     |
+| AI           | `ai`           | 已上线          | **关 AI**；模型路径说明（线索理解 + enrichment；不碰数据平面）                                      |
 
 ### 5.6 扩展入口
 
@@ -842,6 +843,17 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 | offscreen 源码  | 占位；未注册 permission；embedding 接入前不启用                                                                              |
 | Omnibox         | 已注册；keyword `yi`                                                                                                         |
 | `commands`      | 已注册；找回 `Alt+Shift+Y`；记忆库 `Alt+Shift+L`；划词保存 `Alt+Shift+E`；划词备注 `Alt+Shift+N`；设置无默认建议键（均可改） |
+
+### 5.7 Gumroad Pro 订阅全流程验收（手动 · Normative）
+
+结账价以 Gumroad 为准；展示锚点 $5.99/月 · $59/年。上线前另见 §A.3.1 / `docs/ENVIRONMENT.md` 检查清单。
+
+1. 环境：`GUMROAD_SELLER_ID`、`VITE_GUMROAD_PRODUCT_URL` 已配；`env:sync` 后官网有 `PUBLIC_GUMROAD_*`。
+2. 扩展登录 → Settings「账户与同步」→ 非 Pro 时同步开关不可开；可见升级 CTA。
+3. 点升级 → Gumroad 付款（测试款亦可）→ webhook 写入 `subscriptions`（`tier=pro`）。
+4. 回扩展：点「刷新方案」或重新聚焦 Settings → 显示 Pro → Hybrid 可用、同步可开、托管线索理解可用。
+5. 官网 `/pricing` 权益与锚点价正确；`/account` 可升级/管理/刷新（Bearer 订阅查询）。
+6. 取消或过期后：刷新 → Free；同步被关；Worker `POST /api/memory/sync/pull` 返回 `pro_required`。
 
 ---
 
@@ -862,11 +874,12 @@ Chrome API / 选区
 - 目标规模指导：2 万 MemoryItem；当前全量扫描上限约 10000；倒排/向量索引仍属 Phase B 余项。
 - 长期：Cloud Memory DB（当前实现为 **Supabase `memory_items`**）为云端事实源；本地 IndexedDB 变缓存——**不提前重写本地日常读写链路**。
 - Phase C 切片：扩展经 Supabase Auth 登录写入 `AccountBinding`；同步默认关；经 Worker `/api/memory/sync/*` push/pull/replace。
+- **同步 = Pro + 登录 + 开关（Normative）**：三者同时满足才可开启或维持云同步。Worker `/api/memory/sync/*`（除只读 `status` 外的写/拉路径）须 `isActiveProUser`；扩展开同步前查本机 Pro 快照；订阅失效时关闭同步并清定时闹钟。登录 ≠ 自动上传；Free 可登录但不可开同步。
 - **开同步对齐（Normative）**：
   - 本机有、云空 → 本机盖云（整侧 replace）。
   - 本空、云有 → 云盖本机。
   - **两边都有 → 按 `id` 并集**写入本机与云端，使两侧一致；同 `id` 取 `updatedAt` 较新胜，相等保留云端。盖云前仍走云侧 backup。孤儿桶不参与。
-  - **增量 / 定时 sync（Normative）**：同步开启后挂 `chrome.alarms`（约每 15 分钟）；路径为 `pull(since=lastPulledAt)` → LWW 写入本机 → `push` 水位后变更（**不**整侧 replace）。设置页可「立即同步」。关闭同步或退出登录清除闹钟。
+  - **增量 / 定时 sync（Normative）**：同步开启后挂 `chrome.alarms`（约每 15 分钟）；路径为 `pull(since=lastPulledAt)` → LWW 写入本机 → `push` 水位后变更（**不**整侧 replace）。设置页可「立即同步」。关闭同步、退出登录或 Pro 失效清除闹钟。
   - **禁止缩量盖云（Normative）**：`POST /replace` 在入站条数 < 云端现有条数时默认 409（`destructive_shrink_denied`），除非显式 `allowDestructiveShrink`（仅退出「先同步再清」等刻意路径）。合并时若 status 有数但 pull/解析为空或丢条，必须中止且不得写云。
   - **误盖自救**：设置页可 `RESTORE_LATEST_SYNC_BACKUP` / `POST /restore-latest-backup`，在该账号备份中取 **条数最多** 的快照恢复云端并拉回本机（避免误盖后再 replace 一次时「最新=已缩量」救不回）。
   - 不再向用户展示「保留本机 / 保留云端」整侧二选一（退出「先同步再清」仍可整侧盖云）。
@@ -1049,9 +1062,24 @@ Chrome API / 选区
 
 ### A.3 商业化方向（配额另定）
 
-- Free：本地、关键词 Filter、基础捕获、书签导入。
-- Pro：语义 Hybrid、同步、更高配额、反馈排序、分享。
-- 更高级：云端深寻回、多模态、快照额度、团队。
+**已拍板（与 §5.1 对齐）：** Freemium；对外 **Free + 仅 Pro**。路线图：Free → Pro → Power User → Team；**Power User / Team / schema `premium` 预留不售、不上定价页**。
+
+**价格：** 结账权威在 **Gumroad**（改价只改 Gumroad）。官网/文档可写展示锚点 **$5.99/月 · $59/年**，并声明以 checkout 为准；Yiveno **不**维护计费价、不调用 Gumroad 拉价 API。
+
+卖点主因 = 更好找回（Hybrid）；配角 = 跨设备云同步；托管口语 LLM 为 Pro 内加速器（月配额），不作 AI 助手叙事。
+
+- Free：本地、关键词 Filter、基础捕获、书签导入、可登录；无 Hybrid / 云同步 / 正式托管 LLM。
+- Pro（在售）：语义 Hybrid、云同步、托管口语 LLM（月配额）、更高 embedding/enrichment 配额；反馈排序渐进。
+- Power User / Team（路线图）：更高配额、云端深寻回、多模态、团队等——**有硬权益前不上架**。
+- 官网：`/pricing` 权益对照 + 展示锚点价 + 账户页升级/管理 CTA；升级链接须带 `custom_fields[user_id]`。
+
+### A.3.1 Gumroad 上线检查清单（Normative · 真机演示前）
+
+1. Gumroad 建单一 Pro 产品（月/年变体或周期选择）；展示锚点与 checkout 尽量一致。
+2. Ping/Webhook → 生产 `POST https://api.yiveno.com/api/gumroad/webhook`（及 staging 若有）。
+3. 环境：`GUMROAD_SELLER_ID`、`VITE_GUMROAD_PRODUCT_URL`（同步后 website 得 `PUBLIC_GUMROAD_*`）；`bun run env:sync:prod && bun run env:check:prod`。
+4. 升级 URL 须能带 `custom_fields[user_id]` + `custom_fields[tier]=pro`（扩展/官网已生成）。
+5. 手测：付款 → webhook 写 `subscriptions` → 扩展刷新 → Hybrid/同步/hosted 生效；过期后收回。
 
 ### A.4 品牌
 
@@ -1076,6 +1104,8 @@ Chrome API / 选区
 
 | 日期       | 变更                                                                                                                                       |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-08-06 | 订阅全流程收口：展示锚点 $5.99/月·$59/年；Gumroad 为结账权威；A.3.1 上线清单；Power User/Team 仅路线图                                     |
+| 2026-08-06 | 付费方案拍板：Free+仅 Pro；同步/托管 LLM 进 Pro；官网定价与账户升级；website 订阅鉴权；`premium` 预留不售                                  |
 | 2026-08-05 | §7.0 对话式 Recall 语义闭环切片上线：槽位 merge、芯片即发、dismiss 保留、缩短回滚、eval/handler 覆盖                                       |
 | 2026-08-05 | §7.0 对话式 Recall 语义闭环：core 槽位 merge；芯片即发；dismiss 保留 accumulated + dismissedIds 硬排除                                     |
 | 2026-08-05 | 隐私 P1：整库导出；Settings 关 AI + 模型说明；官网 `/terms`                                                                                |

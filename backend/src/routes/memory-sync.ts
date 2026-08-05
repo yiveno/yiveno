@@ -1,6 +1,7 @@
 /**
  * Memory 云同步路由（Phase C 铺路）。
  * 鉴权：Supabase access token；数据面经 service role。
+ * 写/拉路径另需有效 Pro；status / delete-all（隐私删云）仅需登录。
  */
 
 import { Hono } from 'hono'
@@ -21,6 +22,7 @@ import {
   MemoryItemSchema,
   type MemoryItem
 } from '../schemas/memory-item'
+import { denyUnlessActivePro } from '../services/memory/require-pro-for-sync'
 import type { Env } from '../types/env'
 import { error as logErrorMessage, info } from '../utils/logger'
 
@@ -35,6 +37,21 @@ type SyncVars = {
 export const memorySyncRouter = new Hono<SyncVars>()
 
 memorySyncRouter.use('*', supabaseAuth())
+
+/** pull / push / replace / restore 须有效 Pro。 */
+async function requireProForSync(c: {
+  env: Env
+  get: (key: 'supabaseUserId') => string
+  json: (body: unknown, status?: number) => Response
+}): Promise<Response | null> {
+  const userId = c.get('supabaseUserId')
+  const denied = await denyUnlessActivePro(c.env, userId)
+  if (denied) {
+    info('[MemorySync] 拒绝非 Pro', { userId })
+    return c.json(denied, 403)
+  }
+  return null
+}
 
 const PushBodySchema = z.object({
   items: z.array(MemoryItemSchema).max(MEMORY_SYNC_BATCH_MAX)
@@ -72,6 +89,9 @@ memorySyncRouter.get('/status', async c => {
 
 /** POST /api/memory/sync/pull — MVP 全量或按 updated_at 增量拉取 */
 memorySyncRouter.post('/pull', async c => {
+  const denied = await requireProForSync(c)
+  if (denied) return denied
+
   const userId = c.get('supabaseUserId')
   let body: unknown = {}
   try {
@@ -109,6 +129,9 @@ memorySyncRouter.post('/pull', async c => {
 
 /** POST /api/memory/sync/push — 批量 upsert */
 memorySyncRouter.post('/push', async c => {
+  const denied = await requireProForSync(c)
+  if (denied) return denied
+
   const userId = c.get('supabaseUserId')
   let body: unknown
   try {
@@ -142,6 +165,9 @@ memorySyncRouter.post('/push', async c => {
  * 备份后用请求体全集替换云端（支撑本机覆盖云端）。
  */
 memorySyncRouter.post('/replace', async c => {
+  const denied = await requireProForSync(c)
+  if (denied) return denied
+
   const userId = c.get('supabaseUserId')
   let body: unknown
   try {
@@ -184,6 +210,9 @@ memorySyncRouter.post('/replace', async c => {
  * 用该账号最近一次 replace 前备份覆盖云端（误盖云自救）。
  */
 memorySyncRouter.post('/restore-latest-backup', async c => {
+  const denied = await requireProForSync(c)
+  if (denied) return denied
+
   const userId = c.get('supabaseUserId')
   try {
     const result = await restoreMemoryItemsFromLatestBackup(c.env, userId)

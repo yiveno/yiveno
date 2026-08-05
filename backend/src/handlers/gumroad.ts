@@ -95,13 +95,23 @@ export async function handleWebhook(
   const subscriptionId = payload.subscription_id || payload.sale_id || null
   const { userId, tier } = extractCustomFields(payload)
 
+  // Gumroad「Send test ping」往往无 custom_fields / subscription；回 200 以便连通性校验通过。
+  // 真实升级链接会带 custom_fields[user_id]；缺字段则跳过写库，不重试刷屏。
   if (!subscriptionId || !userId) {
-    logErrorMessage('[Gumroad] Webhook 缺少 subscription_id 或 user_id', {
+    info('[Gumroad] Webhook 缺 subscription_id 或 user_id，已 ACK 并跳过写库', {
       notificationType,
       hasSubscriptionId: Boolean(subscriptionId),
-      hasUserId: Boolean(userId)
+      hasUserId: Boolean(userId),
+      hasSellerId: Boolean(payload.seller_id)
     })
-    return errorJson({ error: 'Missing subscription_id or user_id' }, 400, origin)
+    return okJson(
+      {
+        success: true,
+        skipped: true,
+        reason: 'missing_subscription_or_user_id'
+      },
+      origin
+    )
   }
 
   try {

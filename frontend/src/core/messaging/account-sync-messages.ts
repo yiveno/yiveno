@@ -14,6 +14,7 @@ export const AccountSyncErrorCodeSchema = z.enum([
   'AUTH_STATE_READ_FAILED', // 读取登录态失败
   'AUTH_PROFILE_REFRESH_FAILED', // 刷新头像/资料失败
   'SYNC_NOT_AUTHENTICATED', // 未登录无法同步
+  'SYNC_PRO_REQUIRED', // 云同步需有效 Pro
   'SYNC_STATUS_FAILED', // 同步状态失败
   'SYNC_PREFS_UPDATE_FAILED', // 更新同步偏好失败
   'SYNC_REPLACE_LOCAL_FAILED', // 本机覆盖云端失败

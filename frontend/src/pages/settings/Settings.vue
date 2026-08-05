@@ -528,7 +528,8 @@ function refreshSyncContextOnVisible() {
   if (document.visibilityState !== 'visible') {
     return
   }
-  void loadSyncContext()
+  // 从 Gumroad 返回时强制刷新订阅快照
+  void loadSyncContext().then(() => loadSubscriptionStatus(true))
 }
 
 async function handleSyncToggle(event: Event) {
@@ -539,6 +540,11 @@ async function handleSyncToggle(event: Event) {
   if (!signedIn.value) {
     switchEl.selected = false
     syncError.value = t('settings_sync_sign_in_required')
+    return
+  }
+  if (switchEl.selected && !subscriptionIsPro.value) {
+    switchEl.selected = false
+    syncError.value = t('settings_error_sync_pro_required')
     return
   }
 
@@ -967,10 +973,13 @@ onUnmounted(() => {
               <md-switch
                 :aria-label="t('settings_sync_toggle')"
                 :selected="syncEnabled"
-                :disabled="savingSync || !signedIn"
+                :disabled="savingSync || !signedIn || !subscriptionIsPro"
                 @change="handleSyncToggle"
               />
             </div>
+            <p v-if="signedIn && !subscriptionIsPro" class="settings-status" role="status">
+              {{ t('settings_sync_pro_required_hint') }}
+            </p>
 
             <p v-if="signedIn" class="settings-sync-counts">
               {{ t('settings_sync_local_count', [String(syncLocalCount)]) }}
@@ -1053,6 +1062,13 @@ onUnmounted(() => {
                     }}
                   </md-outlined-button>
                 </div>
+                <p
+                  v-if="!subscriptionIsPro && subscriptionUpgradeUrl"
+                  class="settings-status"
+                  role="status"
+                >
+                  {{ t('settings_subscription_paid_refresh_hint') }}
+                </p>
               </template>
               <p v-if="subscriptionError" class="settings-error" role="alert">
                 {{ subscriptionError }}

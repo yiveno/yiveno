@@ -105,8 +105,10 @@ describe('gumroad routes', () => {
     expect(data.error).toBe('seller_id_not_configured')
   })
 
-  test('POST /api/gumroad/webhook rejects payload without subscription_id or user_id', async () => {
+  test('POST /api/gumroad/webhook ACKs test ping without subscription_id or user_id', async () => {
     const app = createApp()
+    const upsertSpy = jest.spyOn(supabaseModule, 'upsertSubscription')
+
     const response = await app.request(
       '/api/gumroad/webhook',
       {
@@ -122,10 +124,13 @@ describe('gumroad routes', () => {
       } as Env
     )
 
-    expect(response.status).toBe(400)
+    expect(response.status).toBe(200)
+    expect(upsertSpy).not.toHaveBeenCalled()
 
-    const data = (await response.json()) as { error: string }
-    expect(data.error).toBe('Missing subscription_id or user_id')
+    const data = (await response.json()) as { success: boolean; skipped?: boolean; reason?: string }
+    expect(data.success).toBe(true)
+    expect(data.skipped).toBe(true)
+    expect(data.reason).toBe('missing_subscription_or_user_id')
   })
 
   test('POST /api/gumroad/webhook persists subscription and payment on success', async () => {

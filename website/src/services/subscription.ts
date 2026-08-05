@@ -9,9 +9,16 @@ export interface UserSubscription {
   cancelAtPeriodEnd?: boolean
 }
 
-export async function getUserSubscription(userId: string): Promise<UserSubscription | null> {
+/**
+ * 查询当前登录用户订阅（须传 Supabase access token；禁止信任裸 userId）。
+ */
+export async function getUserSubscription(accessToken: string): Promise<UserSubscription | null> {
   try {
-    const res = await fetch(`${API_BASE}/api/website/subscription?userId=${userId}`)
+    const res = await fetch(`${API_BASE}/api/website/subscription`, {
+      headers: {
+        authorization: `Bearer ${accessToken}`
+      }
+    })
     if (!res.ok) return null
     const data = (await res.json()) as UserSubscription
     if (!data || typeof data.tier !== 'string') return null

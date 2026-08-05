@@ -154,4 +154,44 @@ describe('hosted ai routes', () => {
     expect(data.model).toBe('deepseek-v4-flash')
     expect(data.limit).toBe(999)
   })
+
+  test('handleHostedComplete accepts messages without prompt', async () => {
+    const { handleHostedComplete } = await importHostedHandlersAsPro()
+    const originalFetch = globalThis.fetch
+    const fetchMock = mock(
+      async () =>
+        new Response(
+          JSON.stringify({
+            choices: [{ message: { content: '{"intent":"recall"}' } }],
+            usage: { total_tokens: 10 }
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } }
+        )
+    )
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    try {
+      const response = await handleHostedComplete(
+        new Request('http://localhost/api/ai/hosted/complete', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            messages: [
+              { role: 'system', content: 'sys' },
+              { role: 'user', content: 'find that note' }
+            ]
+          })
+        }),
+        createBaseEnv(),
+        TEST_USER_ID
+      )
+
+      expect(response.status).toBe(200)
+      const data = (await response.json()) as { text: string; provider: string }
+      expect(data.provider).toBe('hosted')
+      expect(data.text).toContain('intent')
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
 })

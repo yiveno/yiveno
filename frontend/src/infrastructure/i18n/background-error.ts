@@ -19,6 +19,7 @@ const ACCOUNT_SYNC_ERROR_MESSAGE_KEYS: Record<AccountSyncErrorCode, MessageKey> 
   AUTH_STATE_READ_FAILED: 'settings_error_auth_state',
   AUTH_PROFILE_REFRESH_FAILED: 'settings_error_auth_profile_refresh',
   SYNC_NOT_AUTHENTICATED: 'settings_error_sync_not_authenticated',
+  SYNC_PRO_REQUIRED: 'settings_error_sync_pro_required',
   SYNC_STATUS_FAILED: 'settings_error_sync_status',
   SYNC_PREFS_UPDATE_FAILED: 'settings_error_sync_prefs',
   SYNC_REPLACE_LOCAL_FAILED: 'settings_error_sync_replace_local',

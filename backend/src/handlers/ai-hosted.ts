@@ -85,17 +85,24 @@ export async function handleHostedComplete(
     body = (await request.json().catch(() => ({}))) as AIHostedCompleteRequest
   }
 
+  const messages = body.messages?.filter(
+    m =>
+      m.content.trim().length > 0 &&
+      (m.role === 'system' || m.role === 'user' || m.role === 'assistant')
+  )
   const prompt = body.prompt?.trim()
-  if (!prompt) {
+  if ((!messages || messages.length === 0) && !prompt) {
     return errorJson({ error: 'missing_prompt' }, 400, origin)
   }
 
   try {
     const provider = resolveAiChatProvider(env)
     const result = await provider.complete(env, {
-      prompt,
+      ...(messages && messages.length > 0 ? { messages } : {}),
+      ...(prompt ? { prompt } : {}),
       ...(body.maxTokens !== undefined ? { maxTokens: body.maxTokens } : {}),
-      ...(body.temperature !== undefined ? { temperature: body.temperature } : {})
+      ...(body.temperature !== undefined ? { temperature: body.temperature } : {}),
+      disableThinking: true
     })
 
     return okJson(

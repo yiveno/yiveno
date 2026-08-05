@@ -4,23 +4,27 @@ v4 后端：扩展线索理解代理 + 官网只读 API。本地事实源在扩�
 
 ## 真实调用面
 
-| 方法 | 路径                          | 调用方      | 说明                                                       |
-| ---- | ----------------------------- | ----------- | ---------------------------------------------------------- |
-| GET  | `/health`、`/api/health`      | 运维        | 健康检查                                                   |
-| POST | `/api/ai/clue/complete`       | Chrome 扩展 | M1 线索理解（AI Gateway → DeepSeek + IP 日配额）           |
-| POST | `/api/ai/enrichment/complete` | Chrome 扩展 | Capture enrichment 结构化提议（扩展 merge 后写 IndexedDB） |
-| GET  | `/api/website/subscription`   | 官网        | 订阅只读查询                                               |
+| 方法 | 路径                          | 调用方       | 说明                                                       |
+| ---- | ----------------------------- | ------------ | ---------------------------------------------------------- |
+| GET  | `/health`、`/api/health`      | 运维         | 健康检查                                                   |
+| GET  | `/api/account/subscription`   | Chrome 扩展  | Supabase Bearer；Pro 快照                                  |
+| POST | `/api/ai/clue/complete`       | 扩展（开发） | 线索理解 IP 日配额；正式 Pro 走 hosted                     |
+| POST | `/api/ai/enrichment/complete` | Chrome 扩展  | Capture enrichment 结构化提议（扩展 merge 后写 IndexedDB） |
+| POST | `/api/ai/embed`               | Chrome 扩展  | Pro embedding（bge-m3）                                    |
+| POST | `/api/ai/hosted/*`            | Chrome 扩展  | Pro 托管口语 LLM（Bearer + 月配额）                        |
+| GET  | `/api/website/subscription`   | 官网         | Bearer；仅查当前用户                                       |
+| \*   | `/api/memory/sync/*`          | Chrome 扩展  | 登录 + **Pro**（status/delete-all 除外）                   |
+| POST | `/api/gumroad/webhook`        | Gumroad      | seller_id 校验 → upsert 订阅                               |
 
 生产域名：`https://api.yiveno.com`（Worker Custom Domain → `yiveno-production`）。
 
-### Phase C / Pro 预留（当前无客户端）
+### 其它路由
 
-| 前缀               | 说明                                            |
-| ------------------ | ----------------------------------------------- |
-| `/api/ai/hosted/*` | Pro 托管 LLM（Supabase Bearer + Pro）           |
-| `/api/auth/*`      | 旧 OAuth 辅助；官网登录走 Supabase 直连         |
-| `/api/gumroad/*`   | 订阅查询（JWT）+ webhook（seller 校验，无 JWT） |
-| `/api/admin/*`     | 环境变量自检（JWT）                             |
+| 前缀                        | 说明                                                  |
+| --------------------------- | ----------------------------------------------------- |
+| `/api/auth/*`               | 旧 OAuth 辅助；官网登录走 Supabase 直连               |
+| `/api/gumroad/subscription` | 历史 JWT 查询；主路径请用 `/api/account/subscription` |
+| `/api/admin/*`              | 环境变量自检（JWT）                                   |
 
 ## 本地开发
 

@@ -17,12 +17,12 @@ export type SubscriptionStatus =
  * 订阅层级。
  * - free：免费
  * - pro：Pro
- * - premium：Premium
+ * - premium：Premium（**预留不售**；对外不展示）
  */
 export type SubscriptionTier =
   | 'free' // 免费
   | 'pro' // Pro
-  | 'premium' // Premium
+  | 'premium' // Premium（预留不售）
 
 /**
  * 订阅记录接口

@@ -4,12 +4,12 @@ import { z } from 'zod'
  * 订阅层级（与云端 subscriptions.tier 对齐）。
  * - free：免费
  * - pro：Pro
- * - premium：Premium（预留）
+ * - premium：Premium（预留不售；对外不展示）
  */
 export const SubscriptionTierSchema = z.enum([
   'free', // 免费
   'pro', // Pro
-  'premium' // Premium
+  'premium' // Premium（预留不售）
 ])
 
 /**

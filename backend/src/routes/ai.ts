@@ -1,9 +1,9 @@
 /**
  * AI 路由
  *
- * - `/clue/complete`：v4 M1 扩展主路径（当前在用）
+ * - `/clue/complete`：开发/未登录降级路径（IP 日配额；正式 Pro 走 hosted）
  * - `/enrichment/complete`：Capture enrichment 结构化提议（扩展 merge 后写库）
- * - `/hosted/*`：Phase C / Pro 托管 LLM 预留，当前扩展未接线
+ * - `/hosted/*`：Pro 托管口语 LLM（Bearer + 月配额；扩展已接线）
  */
 
 import { Hono } from 'hono'
@@ -27,8 +27,7 @@ export const aiRouter = new Hono<AiRouteEnv>()
 /**
  * POST /api/ai/clue/complete
  *
- * Recall 线索理解代理（DeepSeek Secret 在 Worker；按 IP 日配额）。
- * M1：扩展可无用户登录调用；后续可收紧为 Pro hosted。
+ * 开发用线索理解代理（按 IP 日配额）。正式 Pro 路径见 `/hosted/complete`。
  */
 aiRouter.post('/clue/complete', async c => {
   return handleClueComplete(c.req.raw, c.env)
@@ -56,7 +55,7 @@ aiRouter.post('/embed', supabaseAuth(), async c => {
 /**
  * GET /api/ai/hosted/quota
  *
- * Pro 托管 LLM 配额查询（Phase C 预留，当前无客户端）
+ * Pro 托管 LLM 配额查询
  */
 aiRouter.get('/hosted/quota', supabaseAuth(), async c => {
   const userId = c.get('supabaseUserId')
@@ -66,7 +65,7 @@ aiRouter.get('/hosted/quota', supabaseAuth(), async c => {
 /**
  * POST /api/ai/hosted/complete
  *
- * Pro 托管 LLM 文本补全（Phase C 预留，当前无客户端）
+ * Pro 托管 LLM 文本补全（支持 prompt 或 messages）
  */
 aiRouter.post('/hosted/complete', supabaseAuth(), async c => {
   const userId = c.get('supabaseUserId')

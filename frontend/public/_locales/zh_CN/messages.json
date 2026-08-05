@@ -654,6 +654,9 @@
   "settings_error_sync_not_authenticated": {
     "message": "同步需要先登录"
   },
+  "settings_error_sync_pro_required": {
+    "message": "云同步需要有效的 Pro 订阅"
+  },
   "settings_error_sync_status": {
     "message": "读取同步状态失败"
   },
@@ -730,11 +733,17 @@
   "settings_subscription_refreshing": {
     "message": "刷新中…"
   },
+  "settings_subscription_paid_refresh_hint": {
+    "message": "已在 Gumroad 付款？回到此处点「刷新方案」即可解锁 Pro。"
+  },
   "settings_subscription_sign_in_hint": {
     "message": "登录后可查看 Pro 状态，并解锁 Hybrid 找回。"
   },
   "settings_subscription_hybrid_hint": {
-    "message": "Pro 解锁语义 Hybrid 找回（关键词 + embedding）。Free 仍仅关键词 Filter。"
+    "message": "Pro 解锁 Hybrid 找回、云同步与托管口语理解（月配额）。Free 仅本机关键词 Filter。"
+  },
+  "settings_sync_pro_required_hint": {
+    "message": "云同步为 Pro 能力。升级后可在多设备间对齐记忆。"
   },
   "settings_ai_embedding_hint": {
     "message": "Pro 且开启 AI 时，会把记忆中的短文本发到 Yiveno Worker 生成 embedding。向量仅存本机；本版本云同步不上传向量。"

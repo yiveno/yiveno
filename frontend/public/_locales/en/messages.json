@@ -654,6 +654,9 @@
   "settings_error_sync_not_authenticated": {
     "message": "Sign in required for sync"
   },
+  "settings_error_sync_pro_required": {
+    "message": "Cloud sync requires an active Pro subscription"
+  },
   "settings_error_sync_status": {
     "message": "Could not load sync status"
   },
@@ -730,11 +733,17 @@
   "settings_subscription_refreshing": {
     "message": "Refreshing…"
   },
+  "settings_subscription_paid_refresh_hint": {
+    "message": "Already paid on Gumroad? Return here and tap Refresh plan to unlock Pro."
+  },
   "settings_subscription_sign_in_hint": {
     "message": "Sign in to check Pro status and unlock Hybrid recall."
   },
   "settings_subscription_hybrid_hint": {
-    "message": "Pro unlocks semantic Hybrid recall (keyword + embedding). Free stays on keyword Filter."
+    "message": "Pro unlocks Hybrid recall, cloud sync, and hosted clue understanding (monthly quota). Free stays on keyword Filter on this device."
+  },
+  "settings_sync_pro_required_hint": {
+    "message": "Cloud sync is a Pro feature. Upgrade to keep memories aligned across devices."
   },
   "settings_ai_embedding_hint": {
     "message": "When Pro and AI are on, short text from your memories is sent to the Yiveno Worker to build embeddings. Embeddings stay on this device; cloud sync does not upload vectors in this release."

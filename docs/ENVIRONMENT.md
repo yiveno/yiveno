@@ -135,10 +135,23 @@ bun run env:check:prod
 
 ## 当前 Gumroad 规则
 
+- **结账价权威在 Gumroad**；Yiveno 不拉价 API、不在代码里当计费源。官网展示锚点可写 $5.99/月 · $59/年，改价优先改 Gumroad，再视需要改展示文案。
 - 前端购买入口只依赖 `VITE_GUMROAD_PRODUCT_URL`
-- 月付/年付通过 Gumroad URL 参数区分，不再维护 `PLAN_ID`
+- 官网购买入口映射为 `PUBLIC_GUMROAD_PRODUCT_URL`（同源自 `VITE_GUMROAD_PRODUCT_URL`）
+- 管理页：`VITE_GUMROAD_MANAGE_URL` / `PUBLIC_GUMROAD_MANAGE_URL`（默认 Gumroad subscriptions）
+- 月付/年付在 Gumroad 产品侧配置；扩展只拼 `custom_fields[user_id]` + `tier=pro`
 - 后端 webhook 校验依赖 `GUMROAD_SELLER_ID`
 - 不再依赖 `GUMROAD_WEBHOOK_SECRET`
+- 对外档位：Free + **仅 Pro**（Power User / Team / `premium` 预留不售）
+- 云同步 / 托管 LLM / Hybrid 均需有效 Pro
+
+### Gumroad 上线检查清单
+
+1. [ ] Pro 产品已建（月/年）；Ping → `https://api.yiveno.com/api/gumroad/webhook`
+2. [ ] `.env.*.local` 已设 `GUMROAD_SELLER_ID`、`VITE_GUMROAD_PRODUCT_URL`（及可选 `VITE_GUMROAD_MANAGE_URL`）
+3. [ ] `bun run env:sync:prod && bun run env:check:prod`（website 出现 `PUBLIC_GUMROAD_*`）
+4. [ ] 测试购买：webhook 写库 → 扩展 Settings 刷新 → `isPro` → Hybrid/同步可用
+5. [ ] 取消或过期后权益收回
 
 ## 禁止事项
 

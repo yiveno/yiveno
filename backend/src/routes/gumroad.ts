@@ -1,8 +1,8 @@
 /**
  * Gumroad 支付路由
  *
- * Phase C / Pro 预留：当前扩展与官网未接线。
- * webhook 必须对 Gumroad 公开（仅 seller_id 校验）；subscription 需 JWT。
+ * webhook 必须对 Gumroad 公开（仅 seller_id 校验）。
+ * GET /subscription 为历史 JWT 查询（扩展/官网主路径已改用 `/api/account/subscription`）。
  */
 
 import { Hono } from 'hono'
@@ -14,7 +14,7 @@ import { info } from '../utils/logger'
 
 export const gumroadRouter = new Hono<{ Bindings: Env }>()
 
-/** GET /api/gumroad/subscription — 获取当前 JWT 用户订阅（禁止信任 query user_id） */
+/** GET /api/gumroad/subscription — 历史 JWT 查询（主路径请用 GET /api/account/subscription） */
 gumroadRouter.get('/subscription', jwtAuth(), c => {
   const jwtPayload = c.get('jwtPayload') as JWTPayload | undefined
   const userId = jwtPayload?.sub?.trim() ?? ''

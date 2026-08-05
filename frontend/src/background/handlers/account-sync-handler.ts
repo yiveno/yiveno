@@ -486,8 +486,14 @@ export async function handleSetSyncEnabled(enabled: boolean): Promise<SetSyncEna
       return { ok: false, errorCode: 'SYNC_NOT_AUTHENTICATED' }
     }
 
-    // 开同步前必须已确认当前隐私说明版本
+    // 开同步须有效 Pro（Normative：同步 = Pro + 登录 + 开关）
     if (enabled) {
+      const { isProActiveFromSnapshot } =
+        await import('@/infrastructure/identity/subscription-service')
+      if (!(await isProActiveFromSnapshot())) {
+        flowFail('MemorySync', 'SET_SYNC_ENABLED', startedAt, new Error('SYNC_PRO_REQUIRED'))
+        return { ok: false, errorCode: 'SYNC_PRO_REQUIRED' }
+      }
       const privacyPrefs = await getPrivacyPrefs()
       if (!hasAckedCurrentPrivacyNotice(privacyPrefs)) {
         flowFail('MemorySync', 'SET_SYNC_ENABLED', startedAt, new Error('PRIVACY_NOTICE_REQUIRED'))
