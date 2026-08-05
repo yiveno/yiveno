@@ -38,4 +38,10 @@ export type Env = Cloudflare.Env & {
    * 写入请求头 `cf-aig-authorization`；未配置且 Gateway 开鉴权时会 401（客户端将回退直连）。
    */
   AI_GATEWAY_TOKEN?: string
+  /** 定时清理总开关；"false" 关闭。 */
+  CLEANUP_SCHEDULED_ENABLED?: string
+  /** 每个 owner 保留的 memory_sync_backups 条数。 */
+  CLEANUP_MEMORY_SYNC_BACKUPS_KEEP?: string
+  /** subscriptions / payment_records 软删保留天数。 */
+  CLEANUP_SOFT_DELETE_RETENTION_DAYS?: string
 }

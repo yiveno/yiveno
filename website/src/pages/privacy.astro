@@ -88,6 +88,10 @@ const contactEmail = 'privacy@yiveno.com'
       <ul>
         <li><strong>Local memories</strong> remain until you delete them, clear the account bucket, or remove the extension.</li>
         <li><strong>Cloud memories</strong> remain while your account exists and sync data has not been deleted; you can delete all cloud memories without deleting the account.</li>
+        <li>
+          To manage storage redundancy, we may periodically prune certain cloud-related data, such as sync backups and soft-deleted billing records.
+          For example, sync backups keep only the most recent snapshots (currently up to 5 per account), and soft-deleted subscription/payment history is removed after 180 days.
+        </li>
         <li><strong>Delete account</strong> (Settings → Privacy) removes cloud Memory and backups, closes the auth user, clears this account’s local Memory bucket on that device, and signs you out. Billing records may be retained in anonymized or legally required form and are not a recoverable login.</li>
       </ul>
 
@@ -179,6 +183,10 @@ const contactEmail = 'privacy@yiveno.com'
       <ul>
         <li>本机记忆：直到你删除、清除该账号桶或卸载扩展</li>
         <li>云端记忆：在账号存在且未删除前保留；可只删云端、不删账号</li>
+        <li>
+          为控制存储冗余，我们可能会对部分云端相关数据做周期性裁剪，例如同步备份与已软删的账务记录。
+          例如：同步备份会仅保留最近若干条快照（当前为每账号最多 5 条），并会在 180 天后清理已软删的订阅/支付历史。
+        </li>
         <li>删除账号（设置 → 隐私）：删除云端 Memory/备份、注销登录身份、清除本机该账号记忆桶并退出。订阅/支付记录可依法保留，不可再作为可恢复登录</li>
       </ul>
 

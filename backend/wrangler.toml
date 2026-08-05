@@ -4,6 +4,10 @@ compatibility_date = "2026-07-31"
 compatibility_flags = ["nodejs_compat"]
 workers_dev = true
 
+[triggers]
+# 每天北京时间 03:17（UTC 19:17）执行一次业务数据清理
+crons = ["17 19 * * *"]
+
 # ===================== 可观测性配置 =====================
 # 用于监控 Worker 的运行状况、性能和错误
 # logs 与 traces 可同时开启（各自采样率独立配置）
@@ -40,6 +44,9 @@ DEEPSEEK_API_BASE = "https://api.deepseek.com"
 # Cloudflare AI Gateway（Dashboard → AI → AI Gateway 创建名为 yiveno 的 gateway）
 AI_GATEWAY_ACCOUNT_ID = "231a6a08dec7fe0133fbaac8c5e55b2a"
 AI_GATEWAY_ID = "yiveno"
+CLEANUP_SCHEDULED_ENABLED = "true"
+CLEANUP_MEMORY_SYNC_BACKUPS_KEEP = "5"
+CLEANUP_SOFT_DELETE_RETENTION_DAYS = "180"
 
 [[kv_namespaces]]
 binding = "AI_USAGE_KV"
@@ -62,6 +69,9 @@ AI_PROVIDER = "deepseek"
 DEEPSEEK_API_BASE = "https://api.deepseek.com"
 AI_GATEWAY_ACCOUNT_ID = "231a6a08dec7fe0133fbaac8c5e55b2a"
 AI_GATEWAY_ID = "yiveno"
+CLEANUP_SCHEDULED_ENABLED = "true"
+CLEANUP_MEMORY_SYNC_BACKUPS_KEEP = "5"
+CLEANUP_SOFT_DELETE_RETENTION_DAYS = "180"
 
 [[env.production.kv_namespaces]]
 binding = "AI_USAGE_KV"

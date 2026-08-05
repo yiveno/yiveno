@@ -4,13 +4,12 @@ v4 后端：扩展线索理解代理 + 官网只读 API。本地事实源在扩�
 
 ## 真实调用面
 
-| 方法 | 路径                            | 调用方      | 说明                                                       |
-| ---- | ------------------------------- | ----------- | ---------------------------------------------------------- |
-| GET  | `/health`、`/api/health`        | 运维        | 健康检查                                                   |
-| POST | `/api/ai/clue/complete`         | Chrome 扩展 | M1 线索理解（AI Gateway → DeepSeek + IP 日配额）           |
-| POST | `/api/ai/enrichment/complete`   | Chrome 扩展 | Capture enrichment 结构化提议（扩展 merge 后写 IndexedDB） |
-| GET  | `/api/website/share/:shortCode` | 官网        | 分享详情                                                   |
-| GET  | `/api/website/subscription`     | 官网        | 订阅只读查询                                               |
+| 方法 | 路径                          | 调用方      | 说明                                                       |
+| ---- | ----------------------------- | ----------- | ---------------------------------------------------------- |
+| GET  | `/health`、`/api/health`      | 运维        | 健康检查                                                   |
+| POST | `/api/ai/clue/complete`       | Chrome 扩展 | M1 线索理解（AI Gateway → DeepSeek + IP 日配额）           |
+| POST | `/api/ai/enrichment/complete` | Chrome 扩展 | Capture enrichment 结构化提议（扩展 merge 后写 IndexedDB） |
+| GET  | `/api/website/subscription`   | 官网        | 订阅只读查询                                               |
 
 生产域名：`https://api.yiveno.com`（Worker Custom Domain → `yiveno-production`）。
 

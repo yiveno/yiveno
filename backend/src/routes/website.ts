@@ -5,96 +5,11 @@
  */
 
 import { Hono } from 'hono'
-import { z } from 'zod'
 import type { Env } from '../types/env'
 import { createSupabaseClient } from '../data-access/supabase'
 import { error as logErrorMessage, toLogError } from '../utils/logger'
 
 export const websiteRouter = new Hono<{ Bindings: Env }>()
-
-function supabaseHeaders(env: Env): Record<string, string> {
-  const key = env.SUPABASE_ANON_KEY ?? ''
-  return { apikey: key, Authorization: `Bearer ${key}` }
-}
-
-const ShareRecordSchema = z.object({
-  id: z.string(),
-  short_code: z.string(),
-  title: z.string().nullable(),
-  description: z.string().nullable(),
-  bookmark_count: z.number().nullable(),
-  show_username: z.boolean().nullable(),
-  created_at: z.string().nullable()
-})
-
-const SharedBookmarkSchema = z.object({
-  title: z.string(),
-  url: z.string(),
-  description: z.string().nullable(),
-  position: z.number().nullable()
-})
-
-const ShareRecordArraySchema = z.array(ShareRecordSchema)
-const SharedBookmarkArraySchema = z.array(SharedBookmarkSchema)
-
-/** GET /api/website/share/:shortCode — 分享详情（含书签列表） */
-websiteRouter.get('/share/:shortCode', async c => {
-  try {
-    const shortCode = c.req.param('shortCode')
-    const baseUrl = c.env.SUPABASE_URL ?? 'https://ugxgxytykxblctsyulsg.supabase.co'
-    const headers = supabaseHeaders(c.env)
-
-    // 查询分享记录
-    const shareRes = await fetch(
-      `${baseUrl}/rest/v1/shares?short_code=eq.${encodeURIComponent(shortCode)}&select=*`,
-      { headers }
-    )
-    if (!shareRes.ok) {
-      const body = await shareRes.text()
-      return c.json({ error: '查询失败', detail: body.substring(0, 200) }, 500)
-    }
-    const shareResult = ShareRecordArraySchema.safeParse(await shareRes.json())
-    if (!shareResult.success) {
-      logErrorMessage('[website/share] 分享数据格式错误', { detail: shareResult.error.message })
-      return c.json({ error: '分享数据格式错误' }, 500)
-    }
-    const share = shareResult.data.at(0)
-    if (!share) {
-      return c.json({ error: '分享不存在或已过期' }, 404)
-    }
-
-    // 查询书签列表
-    const bmRes = await fetch(
-      `${baseUrl}/rest/v1/shared_bookmarks?share_id=eq.${share.id}&select=title,url,description,position&order=position.asc`,
-      { headers }
-    )
-    if (!bmRes.ok) {
-      const body = await bmRes.text()
-      logErrorMessage('[website/share] 书签查询失败', { detail: body.substring(0, 200) })
-      return c.json({ error: '查询书签失败', detail: body.substring(0, 200) }, 500)
-    }
-
-    const bookmarkResult = SharedBookmarkArraySchema.safeParse(await bmRes.json())
-    if (!bookmarkResult.success) {
-      logErrorMessage('[website/share] 书签数据格式错误', { detail: bookmarkResult.error.message })
-      return c.json({ error: '书签数据格式错误' }, 500)
-    }
-    const bookmarks = bookmarkResult.data
-
-    return c.json({
-      short_code: share.short_code,
-      title: share.title ?? '',
-      description: share.description ?? '',
-      bookmark_count: share.bookmark_count ?? bookmarks.length,
-      show_username: share.show_username,
-      created_at: share.created_at,
-      bookmarks
-    })
-  } catch (err) {
-    logErrorMessage('[website/share] error', { detail: toLogError(err) })
-    return c.json({ error: 'Internal Server Error' }, 500)
-  }
-})
 
 /** GET /api/website/subscription?userId=xxx — 查询用户订阅状态 */
 websiteRouter.get('/subscription', async c => {
