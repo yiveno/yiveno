@@ -3,7 +3,12 @@ import type { RecallEvalCase } from '@/core/recall/eval/recall-eval-cases'
 import { buildRecallEvalCorpus } from '@/core/recall/eval/recall-eval-corpus'
 import { RECALL_EVAL_NOW_MS } from '@/core/recall/eval/recall-eval-now'
 import type { MemoryItem } from '@/core/memory/memory-item'
+import {
+  excludeDismissedMemoryItems,
+  mergeDialogUtterances
+} from '@/core/recall/merge-recall-dialog-turn'
 import { recallByKeywordWithParsedClue } from '@/core/recall/orchestrate-keyword-recall'
+import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 import type { RecallResult } from '@/core/recall/recall-result'
 
 /** 单条用例结果。 */
@@ -87,8 +92,33 @@ export function judgeRecallEvalCase(
   }
 }
 
+/** 多轮：逐轮规则 parse 后槽位 merge，得到最终 ParsedRecallClue。 */
+export function parseDialogTurnsToMerged(
+  turns: readonly string[],
+  nowMs: number
+): { currentClue: string; merged: ParsedRecallClue; effectiveRaw: string } {
+  if (turns.length === 0) {
+    return {
+      currentClue: '',
+      merged: {
+        raw: '',
+        contentTerms: [],
+        confidence: 'low'
+      },
+      effectiveRaw: ''
+    }
+  }
+
+  const { merged, effectiveRaw } = mergeDialogUtterances(turns, { nowMs })
+  return {
+    currentClue: turns[turns.length - 1]!.trim(),
+    merged: merged!,
+    effectiveRaw
+  }
+}
+
 /**
- * 对线索集跑一轮 Recall eval（对齐线上主路径：口语解析 + 关键词 Filter）。
+ * 对线索集跑一轮 Recall eval（对齐线上主路径：口语解析 + 可选多轮 merge + 关键词 Filter）。
  * @param cases 用例；默认由调用方传入 RECALL_EVAL_CASES
  * @param corpus 记忆库；默认 buildRecallEvalCorpus()
  */
@@ -97,9 +127,22 @@ export function runRecallEval(
   corpus: MemoryItem[] = buildRecallEvalCorpus()
 ): RecallEvalReport {
   const caseResults: RecallEvalCaseResult[] = cases.map(evalCase => {
-    const result = recallByKeywordWithParsedClue(corpus, evalCase.clue, {
-      nowMs: RECALL_EVAL_NOW_MS
-    })
+    const turns =
+      evalCase.dialogTurns && evalCase.dialogTurns.length > 0
+        ? evalCase.dialogTurns
+        : [evalCase.clue]
+    const { currentClue, merged, effectiveRaw } = parseDialogTurnsToMerged(
+      turns,
+      RECALL_EVAL_NOW_MS
+    )
+    const items = excludeDismissedMemoryItems(corpus, evalCase.dismissedIds)
+    const result = attachEvalMeta(
+      recallByKeywordWithParsedClue(items, currentClue, {
+        nowMs: RECALL_EVAL_NOW_MS,
+        parsed: merged
+      }),
+      { parsed: merged, effectiveClue: effectiveRaw, clue: currentClue }
+    )
     const judged = judgeRecallEvalCase(evalCase, result)
     return {
       caseId: evalCase.id,
@@ -126,5 +169,17 @@ export function runRecallEval(
       failed: stretchCases.filter(item => !item.passed)
     },
     cases: caseResults
+  }
+}
+
+function attachEvalMeta(
+  result: RecallResult,
+  meta: { parsed: ParsedRecallClue; effectiveClue: string; clue: string }
+): RecallResult {
+  return {
+    ...result,
+    clue: meta.clue,
+    parsed: meta.parsed,
+    effectiveClue: meta.effectiveClue
   }
 }

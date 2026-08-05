@@ -125,4 +125,69 @@ describe('recall-handler', () => {
     expect(after.result.topPick?.item.id).toBe(alternative.item.id)
     expect(after.result.topPick?.item.id).not.toBe(preferred.item.id)
   })
+
+  it('多轮 context：短补充 yesterday 承接 prior 内容词', async () => {
+    await handleCaptureBookmark({
+      title: 'Li Bai poem notes',
+      url: 'https://example.com/li-bai'
+    })
+
+    const first = await handleRecallWithClue({ clue: 'poem about Li Bai' })
+    expect(first.ok).toBe(true)
+    if (!first.ok) {
+      return
+    }
+    expect(first.result.parsed).toBeTruthy()
+
+    const second = await handleRecallWithClue({
+      clue: 'yesterday',
+      context: {
+        priorUserUtterances: ['poem about Li Bai'],
+        ...(first.result.parsed ? { accumulated: first.result.parsed } : {})
+      }
+    })
+    expect(second.ok).toBe(true)
+    if (!second.ok) {
+      return
+    }
+
+    expect(second.result.effectiveClue).toContain('poem about Li Bai')
+    expect(second.result.parsed?.objectTypes).toContain('poem')
+    expect(second.result.parsed?.timeRange?.label).toBe('yesterday')
+    expect(second.result.outcome).toBe('top_pick')
+    expect(second.result.topPick?.item.payload).toMatchObject({
+      title: 'Li Bai poem notes'
+    })
+  })
+
+  it('context.dismissedIds 硬排除候选', async () => {
+    const preferred = await handleCaptureBookmark({
+      title: 'Yiveno Alpha Doc',
+      url: 'https://docs.yiveno.com/alpha'
+    })
+    const alternative = await handleCaptureBookmark({
+      title: 'Yiveno Beta Doc',
+      url: 'https://docs.yiveno.com/beta'
+    })
+    expect(preferred.ok && alternative.ok).toBe(true)
+    if (!preferred.ok || !('item' in preferred) || !alternative.ok || !('item' in alternative)) {
+      return
+    }
+
+    const withDismiss = await handleRecallWithClue({
+      clue: 'Yiveno',
+      context: { dismissedIds: [preferred.item.id] }
+    })
+    expect(withDismiss.ok).toBe(true)
+    if (!withDismiss.ok) {
+      return
+    }
+
+    const ids = [
+      withDismiss.result.topPick?.item.id,
+      ...withDismiss.result.alsoPossible.map(m => m.item.id)
+    ].filter(Boolean)
+    expect(ids).not.toContain(preferred.item.id)
+    expect(ids).toContain(alternative.item.id)
+  })
 })

@@ -555,11 +555,11 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 
 ### 0.4 当前优先实现项（Phase A）
 
-**记忆库轻浏览已上线**（`library.html`；左侧类型 Tab，**默认摘录**）。摘录可软删；摘录详情、线索解释 / 空状态、Omnibox、快捷键、Settings、划词浮层已上线。
+**记忆库轻浏览已上线**（`library.html`；左侧类型 Tab，**默认摘录**）。摘录可软删；摘录详情、线索解释 / 空状态、Omnibox、快捷键、Settings、划词浮层已上线。对话式 Recall 语义闭环切片已上线（§7.0）。
 
 **说明：** 页内左侧类型切换 ≠ 旧「侧边栏管理页」/书签树；禁止整理中心化回潮。
 
-**下一项：里程碑 M1**——理解层把门禁 +（可选）LLM 接到 KeywordRecallBackend，保证交给 Filter 的是精确约束；Hybrid / embedding / 倒排索引仍未开。
+**下一项：用户指定**——Hybrid / embedding / 倒排索引 / §7.1 多源线索仍未开。M1 理解层主体已接入 KeywordRecallBackend。
 
 **类型优先级（与 §0.1.1 一致）：** 主动 Capture 与体验打磨优先 **摘录 + `clues.note`**；书签继续导入/sync 但为配角；记忆库默认 Tab = 摘录。  
 **独立 `note` 类型（预留）：** 有边界需求（无出处闪念），但属辅助，**当前不接入**。未验证「无处可挂」的规模流失前，不得做成可用入口，也不得在 UI 暗示已有独立笔记库。若将来做，须极瘦（纯文本、无文件夹/富文本/双向链）。
@@ -594,7 +594,7 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 
 | 能力                             | 状态                    | 说明                                                                                              |
 | -------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------- |
-| Popup 对话式找回                 | 目标 · 当前主方向       | 统一为对话式 Recall：高置信给单一主答案，低置信给排序候选，并自然承接多轮补充线索                 |
+| Popup 对话式找回                 | 已上线（语义闭环切片）  | core 槽位 merge + 芯片即发 + dismiss 保留 + 缩短回滚；见 §7.0                                     |
 | 右键保存选区                     | 已上线                  | Text Excerpt；非书签的主动 Capture                                                                |
 | 划词保存浮层                     | 已上线                  | Content Script；可直存或「添加备注」后写入 `clues.note`；Settings 可关；默认开                    |
 | 书签/摘录事后备注                | 已上线                  | `UPDATE_MEMORY_NOTE`；书签树编辑；仅本地 `clues.note`，不同步 Chrome                              |
@@ -614,7 +614,7 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 | 摘录详情落地页                   | 已上线                  | `detail.html?id=`；摘录打开详情；书签仍直开 URL；`GET_MEMORY_ITEM`                                |
 | 记忆库轻浏览                     | 已上线                  | `library.html`；**默认摘录**；书签=Chrome 目录只读树；摘录=时间列表；`?type=` 刷新保留            |
 | 摘录删除                         | 已上线                  | 软删 `deletedAt`；记忆库列表 / 详情页；`DELETE_MEMORY_ITEM`；书签不经此删                         |
-| Need A Clue / 否定反馈           | 已上线（过渡）          | 现为最小切片；后续并入对话式 Recall 主流程，不再以“一次追问”心智对外表达                          |
+| Need A Clue / 否定反馈           | 已上线（并入对话）      | 低置信 outcome + dismiss；会话内 dismissedIds 硬排除；追问模板基于合并后 parsed                   |
 | 多源线索与权重（§7.1）           | 目标 · 按模块渐进       | 收集要宽、采信要窄；环境为弱上下文；产品内→选区→芯片→重排；未上线不得暗示可用                     |
 | Hybrid Filter                    | 目标 · Phase B / Pro    | 非 Free；倒排/embedding 仍未开                                                                    |
 | 云同步 / 账号 UI                 | 已上线（Phase C 切片）  | Supabase `memory_items`；Worker `/api/memory/sync/*`；开同步并集 + **15 分钟增量**；登录≠自动上传 |
@@ -625,28 +625,29 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 
 口径：**单测** = Vitest（含 handler/application/core）；**eval** = `frontend/src/core/recall/eval` 的 `must`/`stretch`；**E2E** = `scripts/e2e-management.mjs` 薄冒烟；**手动** = 真机/扩展清单（发版或改到才验）。一项可多列并存。`缺口` = 尚无自动归属、仅靠偶然手测。
 
-| 能力                                      | 单测 | eval | E2E | 手动 | 备注                                          |
-| ----------------------------------------- | ---- | ---- | --- | ---- | --------------------------------------------- |
-| 右键保存选区                              | ✓    | —    | —   | ✓    | `context-menu` / capture 服务；真机右键需手动 |
-| 划词保存浮层                              | ✓    | —    | —   | ✓    | `selection-toolbar-*`；页面浮层需手动         |
-| 书签/摘录事后备注                         | ✓    | ✓    | —   | ✓    | eval：`semi-fuzzy-type-b-note`；树编辑手测    |
-| Chrome 书签导入 + 增量 sync               | ✓    | —    | —   | ✓    | import/sync 服务单测；真机 sync 手测          |
-| LocalProfile / ownerId                    | ✓    | —    | —   | —    | `local-profile*`                              |
-| Settings（最小）                          | ✓    | —    | ✓   | ✓    | E2E：打开 `settings.html`                     |
-| Omnibox 找回                              | ✓    | —    | —   | ✓    | 共用 `recallService`；壳与建议列表手测        |
-| 快捷键找回（开 Popup）                    | ✓    | —    | —   | ✓    | commands registry；真机按键手测               |
-| 快捷键打开记忆库                          | ✓    | —    | —   | ✓    | 同上                                          |
-| 快捷键打开设置                            | ✓    | —    | —   | ✓    | 同上                                          |
-| 快捷键保存选中文字                        | ✓    | —    | —   | ✓    | selection 命令封装单测；真机手测              |
-| 快捷键选中文字并备注                      | ✓    | —    | —   | ✓    | 同上                                          |
-| 结果线索解释强化                          | ✓    | —    | —   | ✓    | `explain-recall-match*`；卡面手测             |
-| Popup 空状态分层                          | ✓    | —    | —   | ✓    | `popup-empty-copy*`                           |
-| 摘录详情落地页                            | ✓    | —    | —   | ✓    | `GET_MEMORY_ITEM` / open-href；页手测         |
-| 记忆库轻浏览                              | ✓    | —    | —   | ✓    | library tree/tabs；页手测                     |
-| 摘录删除                                  | ✓    | —    | —   | ✓    | delete handler；库/详情手测                   |
-| Need A Clue / 否定反馈                    | ✓    | ✓    | —   | ✓    | eval：`need-a-clue-*`；dismiss 单测；对话手测 |
-| 关键词 Recall 主路径（Filter + 口语解析） | ✓    | ✓    | ✓   | ✓    | eval=`must` 门禁；E2E=Popup 固定线索→结果卡   |
-| Popup 对话式壳（多轮 UI）                 | —    | —    | 薄  | ✓    | E2E 只断言有结果卡；多轮/芯片靠手测           |
+| 能力                                      | 单测 | eval | E2E | 手动 | 备注                                                   |
+| ----------------------------------------- | ---- | ---- | --- | ---- | ------------------------------------------------------ |
+| 右键保存选区                              | ✓    | —    | —   | ✓    | `context-menu` / capture 服务；真机右键需手动          |
+| 划词保存浮层                              | ✓    | —    | —   | ✓    | `selection-toolbar-*`；页面浮层需手动                  |
+| 书签/摘录事后备注                         | ✓    | ✓    | —   | ✓    | eval：`semi-fuzzy-type-b-note`；树编辑手测             |
+| Chrome 书签导入 + 增量 sync               | ✓    | —    | —   | ✓    | import/sync 服务单测；真机 sync 手测                   |
+| LocalProfile / ownerId                    | ✓    | —    | —   | —    | `local-profile*`                                       |
+| Settings（最小）                          | ✓    | —    | ✓   | ✓    | E2E：打开 `settings.html`                              |
+| Omnibox 找回                              | ✓    | —    | —   | ✓    | 共用 `recallService`；壳与建议列表手测                 |
+| 快捷键找回（开 Popup）                    | ✓    | —    | —   | ✓    | commands registry；真机按键手测                        |
+| 快捷键打开记忆库                          | ✓    | —    | —   | ✓    | 同上                                                   |
+| 快捷键打开设置                            | ✓    | —    | —   | ✓    | 同上                                                   |
+| 快捷键保存选中文字                        | ✓    | —    | —   | ✓    | selection 命令封装单测；真机手测                       |
+| 快捷键选中文字并备注                      | ✓    | —    | —   | ✓    | 同上                                                   |
+| 结果线索解释强化                          | ✓    | —    | —   | ✓    | `explain-recall-match*`；卡面手测                      |
+| Popup 空状态分层                          | ✓    | —    | —   | ✓    | `popup-empty-copy*`                                    |
+| 摘录详情落地页                            | ✓    | —    | —   | ✓    | `GET_MEMORY_ITEM` / open-href；页手测                  |
+| 记忆库轻浏览                              | ✓    | —    | —   | ✓    | library tree/tabs；页手测                              |
+| 摘录删除                                  | ✓    | —    | —   | ✓    | delete handler；库/详情手测                            |
+| Need A Clue / 否定反馈                    | ✓    | ✓    | —   | ✓    | eval：`need-a-clue-*`；dismiss 单测；对话手测          |
+| 关键词 Recall 主路径（Filter + 口语解析） | ✓    | ✓    | ✓   | ✓    | eval=`must` 门禁；E2E=Popup 固定线索→结果卡            |
+| Popup 对话式壳（多轮 UI）                 | ✓    | ✓    | 薄  | ✓    | merge 单测 + eval must 多轮；E2E 薄；芯片/dismiss 手测 |
+| 多轮槽位 merge（§7.0）                    | ✓    | ✓    | —   | ✓    | `merge-recall-dialog-turn`；eval `dialog-*` must       |
 
 **合入门禁（Normative）：**
 
@@ -925,6 +926,50 @@ Chrome API / 选区
 - 用户输入首先被视为**记忆线索表达**，而不只是关键词；Recall 应尽量消费时间、行为、主观感受、对象类型等线索。
 - **回答的是「库里最可能是哪一条」**，不是「你现在该听什么 / 看什么」；行为加权服务寻回置信度，不服务助手推荐人格。
 
+### 7.0 对话式多轮语义闭环（Normative · 已上线切片）
+
+**目标：** Popup 内补充线索像回消息——下一句默认 refine 上一轮约束，而不是孤立新查询。
+
+**入口差异：**
+
+| 入口    | 会话                                                               |
+| ------- | ------------------------------------------------------------------ |
+| Popup   | 有会话：`accumulated` + `dismissedIds`；`RECALL_WITH_CLUE.context` |
+| Omnibox | **无会话**；不传 context（与单句路径一致）                         |
+
+**合并权威（core 槽位 merge，非 UI 拼串）：**
+
+| 槽位                    | 本轮有信号时                                      | 本轮无信号时 |
+| ----------------------- | ------------------------------------------------- | ------------ |
+| `contentTerms`          | 与 accumulated **并集去重**（先 prior 后本轮）    | 保留 prior   |
+| `timeRange`             | **覆盖**                                          | 保留 prior   |
+| `objectTypes`           | **覆盖**                                          | 保留 prior   |
+| `behaviorHints`         | **并集**                                          | 保留 prior   |
+| `noteHint`              | **OR**                                            | 保留 prior   |
+| `confidence`            | 按合并后槽位重算（`resolveRecallClueConfidence`） | —            |
+| `raw` / `effectiveClue` | prior 用户句 + 本轮，空格拼接                     | —            |
+
+**交互（已拍板）：**
+
+1. 追问芯片：**点击即发送**一轮（本轮 `clue` = chip 稳定英文 value）。
+2. 「都不是这些」：写 `RECORD_RECALL_DISMISS` + 会话 `dismissedIds` 并集；**保留** `accumulated`；本会话 Filter **硬排除** dismissedIds。
+3. **缩短再试**：只替换最近一句——`rollbackLastDialogUtterance` 丢掉 prior 末轮并重算 accumulated，再发缩短版。
+4. 会话态：Popup 组件内持有；关闭 Popup 即丢弃（P0 不持久化）。
+5. 追问模板：基于**合并后** `parsed`（`buildRecallFollowUpPlan`）；禁止 Popup 再对单句规则 parse 当权威。
+
+**流水线：**
+
+```text
+本轮 clue + context（priorUserUtterances / accumulated / dismissedIds）
+  → 网关对本轮（硬噪音仍拒）
+  → understand(本轮) → ParsedRecallClue_current
+  → merge(accumulated, current) → ParsedRecallClue_merged
+  → 排除 dismissedIds → keyword Filter + 软加权
+  → 返回 outcome + parsed(merged) + effectiveClue
+```
+
+**本切片不做：** LLM 追问 NLG、§7.1 环境芯片、Hybrid/embedding、开放闲聊。
+
 ### 7.1 多源线索与权重（Normative · 按模块渐进）
 
 **方向保留：** Recall 可从多个通道收集辅助证据（用户口语、产品内行为、可选 Chrome 环境），以提高命中置信度。**准确率不随线索数量自动上升**——取决于是否能估权、提纯有价值信息、过滤噪声。目标是「多通道收集 → 显式估权 → 只让高置信进入决策」，不是「环境信息越多越好」。
@@ -1030,6 +1075,8 @@ Chrome API / 选区
 
 | 日期       | 变更                                                                                                               |
 | ---------- | ------------------------------------------------------------------------------------------------------------------ |
+| 2026-08-05 | §7.0 对话式 Recall 语义闭环切片上线：槽位 merge、芯片即发、dismiss 保留、缩短回滚、eval/handler 覆盖               |
+| 2026-08-05 | §7.0 对话式 Recall 语义闭环：core 槽位 merge；芯片即发；dismiss 保留 accumulated + dismissedIds 硬排除             |
 | 2026-08-05 | 隐私 P1：整库导出；Settings 关 AI + 模型说明；官网 `/terms`                                                        |
 | 2026-08-05 | 官网 `/privacy` 隐私政策（英/中）；Settings / 登录 / 页脚外链                                                      |
 | 2026-08-05 | 隐私：删除账号（Worker 注销 Auth + 清云端 Memory；扩展清本机账号桶并退登）                                         |

@@ -1,10 +1,24 @@
 import { z } from 'zod'
 
+import { ParsedRecallClueSchema } from '@/core/recall/parse-recall-clue-types'
 import type { RecallResult } from '@/core/recall/recall-result'
 import type { BackgroundMessageScope } from '@/core/messaging/constants'
 
+/** Popup 多轮会话上下文（Omnibox 不传）。 */
+export const recallDialogContextSchema = z.object({
+  /** 本轮之前已发送的用户原文（有序；最多 5）。 */
+  priorUserUtterances: z.array(z.string().max(2000)).max(5).optional(),
+  /** 上一轮合并后的 ParsedRecallClue 快照。 */
+  accumulated: ParsedRecallClueSchema.optional(),
+  /** 本会话已否定的 MemoryItem id（硬排除）。 */
+  dismissedIds: z.array(z.string().uuid()).max(50).optional()
+})
+
+export type RecallDialogContext = z.infer<typeof recallDialogContextSchema>
+
 const recallWithCluePayloadSchema = z.object({
-  clue: z.string().min(1).max(2000)
+  clue: z.string().min(1).max(2000),
+  context: recallDialogContextSchema.optional()
 })
 
 /** Recall 面向 UI 的稳定错误码。 */

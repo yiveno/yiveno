@@ -1,6 +1,6 @@
 import type { RecallResult } from '@/core/recall/recall-result'
 
-import type { RecallBackend } from '@/application/recall/recall-backend'
+import type { RecallBackend, RecallWithClueOptions } from '@/application/recall/recall-backend'
 
 /**
  * Hybrid/embedding/索引检索后端骨架（当前未启用）。
@@ -9,7 +9,7 @@ import type { RecallBackend } from '@/application/recall/recall-backend'
  * 并在 RecallService 的后端工厂里切换，不影响 UI / handlers / core。
  */
 export class HybridRecallBackend implements RecallBackend {
-  async recallWithClue(_clue: string): Promise<RecallResult> {
+  async recallWithClue(_clue: string, _options?: RecallWithClueOptions): Promise<RecallResult> {
     // 当前 Phase：Hybrid 未启用。保持显式失败，避免“悄悄回退 keyword”掩盖未上线能力。
     throw new Error('HYBRID_RECALL_NOT_ENABLED')
   }

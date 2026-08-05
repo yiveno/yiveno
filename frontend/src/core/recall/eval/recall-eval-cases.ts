@@ -31,8 +31,15 @@ export type RecallEvalGate =
 
 export interface RecallEvalCase {
   id: string
-  /** 模拟用户输入的线索 */
+  /** 模拟用户输入的线索（单轮；多轮时等于 dialogTurns 最后一句） */
   clue: string
+  /**
+   * 多轮对话：按顺序补充；最后一句为本轮。
+   * 缺省则单轮 `clue`。有值时以 dialogTurns 为准（clue 应等于末轮，便于报告）。
+   */
+  dialogTurns?: string[]
+  /** 本会话硬排除的 MemoryItem id（模拟 dismiss）。 */
+  dismissedIds?: RecallEvalItemId[]
   clueClass: RecallEvalClueClass
   gate: RecallEvalGate
   expectation: RecallEvalExpectation
@@ -208,6 +215,26 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
     gate: 'must',
     expectation: { kind: 'no_match' },
     note: 'ASCII 单字母过噪不召回；汉字单字允许（见 tokenize / keyword-filter）'
+  },
+
+  // —— must：多轮语义闭环（§7.0）——
+  {
+    id: 'dialog-refine-time-after-type-b-note',
+    clue: 'yesterday',
+    dialogTurns: ['老板看的留存', 'yesterday'],
+    clueClass: 'semi_fuzzy',
+    gate: 'must',
+    expectation: { kind: 'top1', expectedId: RECALL_EVAL_IDS.typeBRetentionNote },
+    note: 'T1 备注锚点 + T2 只补 yesterday；槽位 merge 后仍应 Top1 命中备注项'
+  },
+  {
+    id: 'dialog-dismiss-excludes-top',
+    clue: 'Yiveno',
+    dismissedIds: [RECALL_EVAL_IDS.yivenoProductDoc],
+    clueClass: 'concrete',
+    gate: 'must',
+    expectation: { kind: 'in_topk', expectedId: RECALL_EVAL_IDS.yivenoDesignPrinciples, k: 3 },
+    note: '会话 dismissedIds 硬排除产品文档后，设计原则书签应进入候选'
   },
 
   // —— stretch：仍需同义/语义层 ——

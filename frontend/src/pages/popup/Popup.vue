@@ -37,6 +37,9 @@ import type {
   RecallSuggestion
 } from '@/pages/popup/recall-conversation-types'
 import { buildRecallFollowUpPlan } from '@/core/recall/build-recall-follow-up'
+import type { RecallDialogState } from '@/core/recall/merge-recall-dialog-turn'
+import { rollbackLastDialogUtterance } from '@/core/recall/merge-recall-dialog-turn'
+import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 import { parseRecallClue } from '@/core/recall/parse-recall-clue'
 
 defineOptions({ name: 'PopupPage' })
@@ -49,6 +52,13 @@ const errorMessage = ref('')
 const importState = ref<ChromeBookmarkImportState | null>(null)
 const libraryState = ref<PopupLibraryState>('unknown')
 const lastSentClue = ref('')
+
+/** Popup 会话：槽位 accumulated + 本会话否定 id（关闭即丢）。 */
+const dialogState = ref<RecallDialogState>({
+  priorUserUtterances: [],
+  accumulated: null,
+  dismissedIds: []
+})
 
 const conversationTurns = ref<ConversationTurn[]>([])
 let turnSeq = 0
@@ -63,34 +73,34 @@ function buildRecallSuggestions(): RecallSuggestion[] {
     {
       id: 'site',
       label: t('popup_suggest_site'),
-      value: t('popup_suggest_site')
+      // 稳定英文，避免 locale 文案进 parser
+      value: 'site'
     },
     {
       id: 'quote',
       label: t('popup_suggest_quote'),
-      value: t('popup_suggest_quote')
+      value: 'quote'
     },
     {
       id: 'note',
       label: t('popup_suggest_note'),
-      // 用稳定值让解析不依赖当前 locale 的 UI 文案
       value: 'my note'
     },
     {
       id: 'type',
       label: t('popup_suggest_type'),
-      value: t('popup_suggest_type')
+      value: 'article'
     }
   ]
 }
 
-/** 按缺槽位生成追问文案与芯片；无结构信号时回退通用建议。 */
-function buildFollowUpForClue(
-  clueText: string,
+/** 按合并后 parsed 生成追问；缺 parsed 时降级规则解析本轮（不应成为主路径）。 */
+function buildFollowUpFromParsed(
+  parsed: ParsedRecallClue | undefined,
+  fallbackClue: string,
   outcome: 'need_a_clue' | 'no_match'
 ): { text: string; suggestions: RecallSuggestion[] } {
-  const parsed = parseRecallClue(clueText)
-  const plan = buildRecallFollowUpPlan(parsed, outcome)
+  const plan = buildRecallFollowUpPlan(parsed ?? parseRecallClue(fallbackClue), outcome)
   return {
     text: t(plan.replyKey),
     suggestions: plan.suggestions.map(item => {
@@ -225,7 +235,7 @@ function handleCardOpen(payload: { id: string; url: string }): void {
   handleRecallResultOpen(payload.id, payload.url)
 }
 
-/** 「都不是这些」：写否定反馈，清空结果，请用户再补线索（最多一轮追问）。 */
+/** 「都不是这些」：写否定反馈，保留 accumulated，会话 dismissedIds 并集后再请补线索。 */
 async function handleDismissCandidates(): Promise<void> {
   const lastAssistant = [...conversationTurns.value]
     .reverse()
@@ -240,6 +250,10 @@ async function handleDismissCandidates(): Promise<void> {
     : (lastAssistant.candidateCards?.map(c => c.id) ?? [])
 
   if (ids.length > 0) {
+    dialogState.value = {
+      ...dialogState.value,
+      dismissedIds: [...new Set([...dialogState.value.dismissedIds, ...ids])]
+    }
     void recordRecallDismiss({ ids }).catch(() => {
       // 忽略：反馈失败不阻塞继续补线索
     })
@@ -343,8 +357,23 @@ async function runRecall(trimmedClue: string): Promise<void> {
   errorMessage.value = ''
   isRecallRefreshing.value = true
 
+  const priorUserUtterances = [...dialogState.value.priorUserUtterances]
+  const accumulated = dialogState.value.accumulated
+  const dismissedIds = [...dialogState.value.dismissedIds]
+
   try {
-    const response = await recallWithClue({ clue: trimmed })
+    const response = await recallWithClue({
+      clue: trimmed,
+      ...(priorUserUtterances.length > 0 || accumulated || dismissedIds.length > 0
+        ? {
+            context: {
+              ...(priorUserUtterances.length > 0 ? { priorUserUtterances } : {}),
+              ...(accumulated ? { accumulated } : {}),
+              ...(dismissedIds.length > 0 ? { dismissedIds } : {})
+            }
+          }
+        : {})
+    })
     if (requestId !== recallRequestId) {
       return
     }
@@ -361,6 +390,17 @@ async function runRecall(trimmedClue: string): Promise<void> {
       return
     }
 
+    // 成功且有合并 parsed 时推进会话（噪音拒绝无 parsed，不污染 prior）
+    if (response.result.parsed) {
+      dialogState.value = {
+        priorUserUtterances: [...priorUserUtterances, trimmed].slice(-5),
+        accumulated: response.result.parsed,
+        dismissedIds
+      }
+    }
+
+    const highlightClue = response.result.effectiveClue ?? response.result.clue
+
     if (response.result.outcome === 'top_pick') {
       conversationTurns.value.push(
         createAssistantTurn({
@@ -368,27 +408,27 @@ async function runRecall(trimmedClue: string): Promise<void> {
           tone: 'confident',
           text: t('popup_reply_confident'),
           primaryCard: response.result.topPick
-            ? toMatchCard(response.result.topPick, response.result.clue)
+            ? toMatchCard(response.result.topPick, highlightClue)
             : null,
           allowDismiss: response.result.topPick !== null
         })
       )
     } else if (response.result.outcome === 'need_a_clue') {
-      const followUp = buildFollowUpForClue(response.result.clue, 'need_a_clue')
+      const followUp = buildFollowUpFromParsed(response.result.parsed, highlightClue, 'need_a_clue')
       conversationTurns.value.push(
         createAssistantTurn({
           id: nextTurnId(),
           tone: 'uncertain',
           text: followUp.text,
           candidateCards: response.result.alsoPossible.map(match =>
-            toMatchCard(match, response.result.clue)
+            toMatchCard(match, highlightClue)
           ),
           suggestions: followUp.suggestions,
           allowDismiss: response.result.alsoPossible.length > 0
         })
       )
     } else {
-      const followUp = buildFollowUpForClue(response.result.clue, 'no_match')
+      const followUp = buildFollowUpFromParsed(response.result.parsed, highlightClue, 'no_match')
       conversationTurns.value.push(
         createAssistantTurn({
           id: nextTurnId(),
@@ -419,21 +459,22 @@ async function runRecall(trimmedClue: string): Promise<void> {
   }
 }
 
+/** 缩短再试：只替换最近一句，回滚 prior 末轮后再发缩短版。 */
 function handleShortenRetry() {
   const next = shortenedClue.value
-  if (!next) {
+  if (!next || isRecallRefreshing.value) {
     return
   }
-  clue.value = next
-  void handleSendTurn()
+  dialogState.value = rollbackLastDialogUtterance(dialogState.value)
+  void handleSendTurn(next)
 }
 
 function handleNavigateError(message: string) {
   errorMessage.value = message
 }
 
-async function handleSendTurn(): Promise<void> {
-  const trimmed = clue.value.trim()
+async function handleSendTurn(overrideClue?: string): Promise<void> {
+  const trimmed = (overrideClue ?? clue.value).trim()
   if (!trimmed || isRecallRefreshing.value) {
     return
   }
@@ -453,13 +494,12 @@ async function handleSendTurn(): Promise<void> {
   await runRecall(trimmed)
 }
 
+/** 追问芯片：点击即发送一轮（稳定英文 value / 当前 locale label）。 */
 function handleUseSuggestion(value: string): void {
-  const base = lastSentClue.value.trim()
-  // 多轮补充：芯片追加到上一轮线索，而不是整段替换
-  clue.value = base ? `${base} ${value}` : value
-  void nextTick(() => {
-    clueInputRef.value?.focus()
-  })
+  if (!value.trim() || isRecallRefreshing.value) {
+    return
+  }
+  void handleSendTurn(value)
 }
 
 onMounted(() => {

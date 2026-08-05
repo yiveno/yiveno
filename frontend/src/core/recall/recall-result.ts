@@ -1,6 +1,7 @@
 import type { TranslateFn } from '@/core/i18n/translate'
 import type { MemoryItem } from '@/core/memory/memory-item'
 import { explainRecallMatch, getRecallMatchFieldLabel } from '@/core/recall/explain-recall-match'
+import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 
 /** 单次召回命中项。 */
 export interface RecallMatch {
@@ -35,7 +36,12 @@ export interface RecallResult {
   outcome: RecallOutcome
   topPick: RecallMatch | null
   alsoPossible: RecallMatch[]
+  /** 本轮用户输入（对话气泡展示）。 */
   clue: string
+  /** 合并后（或单轮）解析结果；供追问模板；噪音拒绝时可能缺省。 */
+  parsed?: ParsedRecallClue
+  /** 合并后的有效原文（高亮 / 调试）；单轮时约等于 clue。 */
+  effectiveClue?: string
 }
 
 /** UI 展示用的 MemoryItem 摘要。 */

@@ -8,17 +8,22 @@ export async function handleRecallWithClue(payload: unknown): Promise<RecallBack
   const startedAt = Date.now()
   try {
     const input = parseRecallWithCluePayload(payload)
+    const context = input.context
     logger.info('Recall', '收到 RECALL_WITH_CLUE', {
       clue: input.clue,
-      clueLength: input.clue.trim().length
+      clueLength: input.clue.trim().length,
+      priorCount: context?.priorUserUtterances?.length ?? 0,
+      hasAccumulated: Boolean(context?.accumulated),
+      dismissedCount: context?.dismissedIds?.length ?? 0
     })
 
-    const result = await recallService.recallWithClue(input.clue)
+    const result = await recallService.recallWithClue(input.clue, context ? { context } : undefined)
     logger.info('Recall', 'RECALL_WITH_CLUE 完成', {
       durationMs: Date.now() - startedAt,
       outcome: result.outcome,
       topPickId: result.topPick?.item.id ?? null,
-      alsoPossibleCount: result.alsoPossible.length
+      alsoPossibleCount: result.alsoPossible.length,
+      effectiveClue: result.effectiveClue ?? null
     })
     return { ok: true, result }
   } catch (error) {

@@ -1,27 +1,47 @@
 /**
- * 当前主链路后端：理解层（网关 + 门禁 + 规则/LLM）→ 关键词 Filter + 约束软加权。
+ * 当前主链路后端：理解层（网关 + 门禁 + 规则/LLM）→ 多轮槽位 merge → 关键词 Filter。
  * 网关拒绝噪音时直接空态，不扫库、不调 LLM。
  * 无 LLM completer 时 semantic 降级规则；不改变 Filter 内核。
- * lexical 无命中且线索像口语时：有条件升一次 semantic 再理解 / 再 Filter（仍不碰数据平面）。
+ * lexical 无命中且线索像口语时：有条件升一次 semantic 再理解 / 再 merge / 再 Filter。
  */
 
 import { memoryItemService } from '@/application/memory/memory-item-service'
 import { createRecallFlowTrace } from '@/application/recall/create-recall-flow-trace'
 import { getClueLlmCompleter } from '@/application/recall/clue-llm-completer-registry'
+import type { RecallBackend, RecallWithClueOptions } from '@/application/recall/recall-backend'
+import {
+  excludeDismissedMemoryItems,
+  mergeRecallDialogTurn
+} from '@/core/recall/merge-recall-dialog-turn'
 import { recallByKeywordWithParsedClue } from '@/core/recall/orchestrate-keyword-recall'
+import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 import type { RecallResult } from '@/core/recall/recall-result'
 import { shouldEscalateLexicalNoMatch } from '@/core/recall/understand/select-clue-understanding-mode'
 import { understandRecallClue } from '@/core/recall/understand/understand-recall-clue'
 
-import type { RecallBackend } from '@/application/recall/recall-backend'
-
 export const RECALL_SCAN_LIMIT = 10000
 
+function attachDialogMeta(
+  result: RecallResult,
+  meta: { parsed: ParsedRecallClue; effectiveClue: string; clue: string }
+): RecallResult {
+  return {
+    ...result,
+    clue: meta.clue,
+    parsed: meta.parsed,
+    effectiveClue: meta.effectiveClue
+  }
+}
+
 export class KeywordRecallBackend implements RecallBackend {
-  async recallWithClue(clue: string): Promise<RecallResult> {
+  async recallWithClue(clue: string, options?: RecallWithClueOptions): Promise<RecallResult> {
     const trace = createRecallFlowTrace()
     const pipelineStartedAt = Date.now()
     const normalizedClue = clue.trim()
+    const context = options?.context
+    const priorUserUtterances = context?.priorUserUtterances ?? []
+    const accumulated = context?.accumulated ?? null
+    const dismissedIds = context?.dismissedIds ?? []
 
     if (!normalizedClue) {
       trace('info', 'Recall：空线索，直接 no_match')
@@ -35,7 +55,10 @@ export class KeywordRecallBackend implements RecallBackend {
 
     trace('info', 'Recall：流水线开始', {
       clue: normalizedClue,
-      scanLimit: RECALL_SCAN_LIMIT
+      scanLimit: RECALL_SCAN_LIMIT,
+      priorCount: priorUserUtterances.length,
+      hasAccumulated: Boolean(accumulated),
+      dismissedCount: dismissedIds.length
     })
 
     const complete = getClueLlmCompleter() ?? undefined
@@ -62,13 +85,33 @@ export class KeywordRecallBackend implements RecallBackend {
       }
     }
 
+    let merge = mergeRecallDialogTurn({
+      accumulated,
+      currentParsed: understood.parsed,
+      priorUserUtterances,
+      currentUtterance: normalizedClue
+    })
+
+    trace('info', 'Recall：槽位 merge', {
+      mergeMode: merge.mergeMode,
+      effectiveClue: merge.effectiveRaw,
+      contentTerms: merge.merged.contentTerms,
+      timeLabel: merge.merged.timeRange?.label ?? null,
+      objectTypes: merge.merged.objectTypes ?? null,
+      noteHint: merge.merged.noteHint ?? false
+    })
+
     trace('info', 'Recall：加载 MemoryItem', { limit: RECALL_SCAN_LIMIT })
-    const items = await memoryItemService.list({ limit: RECALL_SCAN_LIMIT })
-    trace('info', 'Recall：MemoryItem 已加载', { itemCount: items.length })
+    const listed = await memoryItemService.list({ limit: RECALL_SCAN_LIMIT })
+    const items = excludeDismissedMemoryItems(listed, dismissedIds)
+    trace('info', 'Recall：MemoryItem 已加载', {
+      itemCount: listed.length,
+      afterDismissExclude: items.length
+    })
 
     let result = recallByKeywordWithParsedClue(items, normalizedClue, {
       candidateLimit: 6,
-      parsed: understood.parsed
+      parsed: merge.merged
     })
 
     const canEscalate =
@@ -83,39 +126,51 @@ export class KeywordRecallBackend implements RecallBackend {
         searchClue: understood.searchClue,
         contentTerms: understood.parsed.contentTerms
       })
-      // 条件展开：exactOptionalPropertyTypes 禁止 complete: undefined
       understood = await understandRecallClue(normalizedClue, {
         ...(complete ? { complete } : {}),
         forceMode: 'semantic',
         trace
       })
       if (understood.disposition === 'proceed') {
+        merge = mergeRecallDialogTurn({
+          accumulated,
+          currentParsed: understood.parsed,
+          priorUserUtterances,
+          currentUtterance: normalizedClue
+        })
         result = recallByKeywordWithParsedClue(items, normalizedClue, {
           candidateLimit: 6,
-          parsed: understood.parsed
+          parsed: merge.merged
         })
         trace('info', 'Recall：升 semantic 后重搜', {
           understandSource: understood.source,
-          searchClue: understood.searchClue,
+          effectiveClue: merge.effectiveRaw,
           outcome: result.outcome,
           topPickId: result.topPick?.item.id ?? null
         })
       }
     }
 
+    const withMeta = attachDialogMeta(result, {
+      clue: normalizedClue,
+      parsed: merge.merged,
+      effectiveClue: merge.effectiveRaw
+    })
+
     trace('info', 'Recall：流水线结束', {
       durationMs: Date.now() - pipelineStartedAt,
       disposition: understood.disposition,
       understandSource: understood.source,
       understandMode: understood.mode,
-      searchClue: understood.searchClue,
+      mergeMode: merge.mergeMode,
+      effectiveClue: merge.effectiveRaw,
       escalatedFromLexicalMiss: canEscalate,
-      outcome: result.outcome,
-      topPickId: result.topPick?.item.id ?? null,
-      topPickScore: result.topPick?.score ?? null,
-      alsoPossibleCount: result.alsoPossible.length
+      outcome: withMeta.outcome,
+      topPickId: withMeta.topPick?.item.id ?? null,
+      topPickScore: withMeta.topPick?.score ?? null,
+      alsoPossibleCount: withMeta.alsoPossible.length
     })
 
-    return result
+    return withMeta
   }
 }
