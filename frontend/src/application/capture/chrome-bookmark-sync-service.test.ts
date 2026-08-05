@@ -202,4 +202,30 @@ describe('chrome-bookmark-sync-service', () => {
     const items = await memoryItemRepository.listByOwner({ type: 'bookmark' })
     expect(items).toHaveLength(1)
   })
+
+  it('关闭书签灌库时跳过 created（不入队）', async () => {
+    const { USER_SETTINGS_STORAGE_KEY } = await import('@/core/settings/user-settings')
+    vi.stubGlobal(
+      'chrome',
+      createChromeMock({
+        [LOCAL_PROFILE_STORAGE_KEY]: localProfile,
+        [CHROME_BOOKMARK_IMPORT_STORAGE_KEY]: completedImportState,
+        [USER_SETTINGS_STORAGE_KEY]: {
+          selectionToolbarEnabled: true,
+          aiFeaturesEnabled: true,
+          chromeBookmarkIngestEnabled: false
+        }
+      })
+    )
+
+    const result = await handleChromeBookmarkCreated({
+      id: '10',
+      title: '留存分析',
+      url: 'https://example.com/retention',
+      parentId: '1'
+    })
+
+    expect(result.captured).toBe(false)
+    expect(await memoryItemRepository.listByOwner({ type: 'bookmark' })).toHaveLength(0)
+  })
 })

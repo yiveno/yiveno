@@ -1,5 +1,6 @@
 import { isCodedError } from '@/core/common/coded-error'
 import { optionalProp } from '@/core/common/optional-props'
+import { isChromeBookmarkIngestEnabled } from '@/application/capture/chrome-bookmark-sync-service'
 import { memoryItemService } from '@/application/memory/memory-item-service'
 import type { MemoryBackgroundResponse, MemoryErrorCode } from '@/core/messaging/memory-messages'
 import {
@@ -42,6 +43,13 @@ function toErrorResponse(errorCode: MemoryErrorCode, error?: unknown): MemoryBac
 export async function handleCaptureBookmark(payload: unknown): Promise<MemoryBackgroundResponse> {
   const startedAt = flowStart('Capture', '捕获书签')
   try {
+    if (!(await isChromeBookmarkIngestEnabled())) {
+      flowOk('Capture', '捕获书签', startedAt, {
+        ok: false,
+        errorCode: 'BOOKMARK_INGEST_DISABLED'
+      })
+      return toErrorResponse('BOOKMARK_INGEST_DISABLED')
+    }
     const input = parseCaptureBookmarkPayload(payload)
     const item = await memoryItemService.captureBookmark({
       payload: {

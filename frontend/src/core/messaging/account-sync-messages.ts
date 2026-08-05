@@ -25,6 +25,7 @@ export const AccountSyncErrorCodeSchema = z.enum([
   'PRIVACY_ACK_FAILED', // 确认隐私说明失败
   'CLOUD_DELETE_FAILED', // 删除云端记忆失败
   'ACCOUNT_DELETE_FAILED', // 删除账号失败
+  'LOCAL_EXPORT_FAILED', // 导出本机记忆失败
   'ORPHAN_EXPORT_FAILED', // 导出孤儿桶失败
   'ORPHAN_CLEAR_FAILED' // 清除孤儿桶失败
 ])
@@ -349,6 +350,24 @@ export type DeleteAccountResponse =
       error?: string
     }
 
+/** 导出当前 owner 本机全部 Memory（含软删），供设置页下载 JSON。 */
+export type ExportLocalMemoryMessage = {
+  scope: BackgroundMessageScope
+  type: 'EXPORT_LOCAL_MEMORY'
+}
+
+export type ExportLocalMemoryResponse =
+  | {
+      ok: true
+      ownerId: string
+      items: MemoryItem[]
+    }
+  | {
+      ok: false
+      errorCode: AccountSyncErrorCode
+      error?: string
+    }
+
 export type AccountSyncBackgroundMessage =
   | AuthSignInMessage
   | AuthSignOutMessage
@@ -365,6 +384,7 @@ export type AccountSyncBackgroundMessage =
   | AckPrivacyNoticeMessage
   | DeleteCloudMemoryMessage
   | DeleteAccountMessage
+  | ExportLocalMemoryMessage
 
 export type AccountSyncBackgroundResponse =
   | AuthSignInResponse
@@ -382,3 +402,4 @@ export type AccountSyncBackgroundResponse =
   | AckPrivacyNoticeResponse
   | DeleteCloudMemoryResponse
   | DeleteAccountResponse
+  | ExportLocalMemoryResponse

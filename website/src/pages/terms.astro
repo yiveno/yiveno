@@ -1,0 +1,227 @@
+---
+/**
+ * 官网服务条款（与当前产品实现对齐；非律师意见书）。
+ */
+import MainLayout from '../layouts/MainLayout.astro'
+
+const effectiveDate = '2026-08-05'
+const contactEmail = 'privacy@yiveno.com'
+---
+
+<MainLayout
+  title="Terms of Service · Yiveno"
+  description="Terms of Service for the Yiveno Chrome extension and website."
+>
+  <article class="policy">
+    <header class="policy__header">
+      <h1>Terms of Service</h1>
+      <p class="policy__meta">Effective date: {effectiveDate}</p>
+      <p class="policy__langs">
+        <a href="#en">English</a>
+        ·
+        <a href="#zh">中文</a>
+      </p>
+    </header>
+
+    <section id="en" class="policy__section" lang="en">
+      <h2>1. Agreement</h2>
+      <p>
+        By using Yiveno (the Chrome extension, website, and related services), you agree to these Terms and our
+        <a href="/privacy">Privacy Policy</a>. If you do not agree, do not use the service.
+      </p>
+
+      <h2>2. The service</h2>
+      <p>
+        Yiveno helps you <strong>capture and recall personal browsing traces</strong> (excerpts, notes, and related
+        metadata you choose to save). It is not sold as a bookmark manager, note editor, chat bot, or general “AI
+        life assistant.” Features marked unavailable in the product are not promised.
+      </p>
+
+      <h2>3. Accounts</h2>
+      <p>
+        You may use local-only features without signing in. If you sign in, you must keep your credentials secure and
+        provide accurate account information. Signing in does not by itself upload memories; cloud sync is opt-in in
+        the extension. You may delete your account from Settings → Privacy as described in the product.
+      </p>
+
+      <h2>4. Your content</h2>
+      <p>
+        You retain rights to content you Capture. You grant us a limited license to host and process that content only
+        as needed to provide the features you enable (including optional cloud sync and AI assistance routed through
+        our Worker). You must not use Yiveno to store or transmit unlawful material.
+      </p>
+
+      <h2>5. Acceptable use</h2>
+      <ul>
+        <li>Do not abuse, disrupt, or reverse-engineer the service beyond permitted interoperability</li>
+        <li>Do not attempt unauthorized access to others’ accounts or data</li>
+        <li>Do not use the service in ways that violate applicable law</li>
+      </ul>
+
+      <h2>6. Paid plans</h2>
+      <p>
+        If you purchase a subscription, billing is handled by our payment provider. Fees, renewal, and cancellation
+        follow the checkout terms shown at purchase. We may retain billing records as required by law after account
+        deletion.
+      </p>
+
+      <h2>7. Disclaimers</h2>
+      <p>
+        The service is provided “as is.” Recall results and AI-assisted understanding are probabilistic aids; they do
+        not guarantee correctness. We do not warrant uninterrupted or error-free operation.
+      </p>
+
+      <h2>8. Limitation of liability</h2>
+      <p>
+        To the maximum extent permitted by law, Yiveno and its operators are not liable for indirect, incidental, or
+        consequential damages, or for loss of data beyond what the product’s local/cloud controls allow you to export
+        or delete. Some jurisdictions do not allow certain limitations; those limits apply only to the extent allowed.
+      </p>
+
+      <h2>9. Changes</h2>
+      <p>
+        We may update these Terms. We will change the effective date on this page. Continued use after changes means
+        you accept the updated Terms.
+      </p>
+
+      <h2>10. Contact</h2>
+      <p>
+        Questions: <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
+      </p>
+      <p class="policy__note">
+        This page is not legal advice. It reflects how Yiveno is offered today.
+      </p>
+    </section>
+
+    <hr class="policy__divider" />
+
+    <section id="zh" class="policy__section" lang="zh-CN">
+      <h2>服务条款（中文）</h2>
+      <p class="policy__meta">生效日期：{effectiveDate}</p>
+
+      <h3>1. 协议</h3>
+      <p>
+        使用 Yiveno（Chrome 扩展、官网及相关服务）即表示你同意本条款及
+        <a href="/privacy#zh">隐私政策</a>。不同意请勿使用。
+      </p>
+
+      <h3>2. 服务内容</h3>
+      <p>
+        Yiveno 帮助你<strong>捕获并找回个人浏览痕迹</strong>（你主动保存的摘录、备注及相关元数据）。不以书签管理器、笔记编辑器、聊天机器人或「AI 生活助手」为主卖点。产品中未标为已上线的能力不作承诺。
+      </p>
+
+      <h3>3. 账号</h3>
+      <p>
+        可不登录使用本机功能。登录后请妥善保管凭证。登录本身不会自动上传记忆；云同步须在扩展中显式开启。可在设置 → 隐私按产品说明删除账号。
+      </p>
+
+      <h3>4. 你的内容</h3>
+      <p>
+        你保留 Capture 内容的权利；你授予我们仅为提供你已开启功能（含可选云同步与经 Worker 的 AI 辅助）所需的有限处理许可。不得用于存储或传输违法内容。
+      </p>
+
+      <h3>5. 合理使用</h3>
+      <ul>
+        <li>不得滥用、破坏服务，或以超出互操作需要的方式逆向</li>
+        <li>不得未授权访问他人账号或数据</li>
+        <li>不得以违法方式使用本服务</li>
+      </ul>
+
+      <h3>6. 付费</h3>
+      <p>
+        若购买订阅，账单由支付服务商处理；费用、续订与取消以结账页展示为准。删除账号后，账务记录可依法保留。
+      </p>
+
+      <h3>7. 免责声明</h3>
+      <p>
+        服务按「现状」提供。找回结果与 AI 辅助理解为概率性辅助，不保证正确。不保证不中断或无错误。
+      </p>
+
+      <h3>8. 责任限制</h3>
+      <p>
+        在法律允许的最大范围内，Yiveno 及其运营方不对间接、附带或后果性损害承担责任；数据损失以产品提供的导出/删除能力为限。部分司法辖区不允许某些限制，则以允许的范围为准。
+      </p>
+
+      <h3>9. 变更</h3>
+      <p>我们可能更新本条款并修改本页生效日。继续使用视为接受更新后的条款。</p>
+
+      <h3>10. 联系</h3>
+      <p>
+        联系：<a href={`mailto:${contactEmail}`}>{contactEmail}</a>
+      </p>
+      <p class="policy__note">本文不构成法律意见，描述的是当前产品提供方式。</p>
+    </section>
+  </article>
+</MainLayout>
+
+<style>
+  .policy {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+    line-height: 1.65;
+    color: #222;
+  }
+
+  .policy__header {
+    margin-bottom: 2rem;
+  }
+
+  .policy__header h1 {
+    margin: 0 0 0.5rem;
+    font-size: 2rem;
+    line-height: 1.2;
+  }
+
+  .policy__meta {
+    margin: 0;
+    color: #666;
+    font-size: 0.9rem;
+  }
+
+  .policy__langs {
+    margin: 0.75rem 0 0;
+    font-size: 0.9rem;
+  }
+
+  .policy__langs a {
+    color: #333;
+  }
+
+  .policy__section h2,
+  .policy__section h3 {
+    margin-top: 1.75rem;
+    margin-bottom: 0.5rem;
+    font-size: 1.15rem;
+  }
+
+  .policy__section p,
+  .policy__section ul {
+    margin: 0.5rem 0 0;
+    color: #333;
+  }
+
+  .policy__section ul {
+    padding-left: 1.25rem;
+  }
+
+  .policy__section li {
+    margin: 0.25rem 0;
+  }
+
+  .policy__section a {
+    color: #333;
+  }
+
+  .policy__divider {
+    margin: 3rem 0;
+    border: none;
+    border-top: 1px solid #e5e5e5;
+  }
+
+  .policy__note {
+    margin-top: 1.25rem;
+    font-size: 0.875rem;
+    color: #666;
+  }
+</style>

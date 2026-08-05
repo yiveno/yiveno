@@ -19,6 +19,7 @@ import type {
   ClearOrphanOwnersResponse,
   DeleteAccountResponse,
   DeleteCloudMemoryResponse,
+  ExportLocalMemoryResponse,
   ExportOrphanOwnersResponse,
   GetAuthStateResponse,
   GetSyncStatusResponse,
@@ -1049,6 +1050,32 @@ export async function handleDeleteAccount(): Promise<DeleteAccountResponse> {
     return {
       ok: false,
       errorCode: 'ACCOUNT_DELETE_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
+    }
+  }
+}
+
+/**
+ * EXPORT_LOCAL_MEMORY — 导出当前 owner 本机全部 Memory（含软删）。
+ */
+export async function handleExportLocalMemory(): Promise<ExportLocalMemoryResponse> {
+  const startedAt = flowStart('Privacy', 'EXPORT_LOCAL_MEMORY')
+  try {
+    const ownerId =
+      (await getAccountBinding())?.accountId ?? (await getOrCreateLocalProfile()).localProfileId
+    const items = await memoryItemRepository.listAllByOwnerId(ownerId, {
+      includeDeleted: true
+    })
+    flowOk('Privacy', 'EXPORT_LOCAL_MEMORY', startedAt, {
+      ownerId,
+      itemCount: items.length
+    })
+    return { ok: true, ownerId, items }
+  } catch (error) {
+    flowFail('Privacy', 'EXPORT_LOCAL_MEMORY', startedAt, error)
+    return {
+      ok: false,
+      errorCode: 'LOCAL_EXPORT_FAILED',
       ...(error instanceof Error ? { error: error.message } : {})
     }
   }

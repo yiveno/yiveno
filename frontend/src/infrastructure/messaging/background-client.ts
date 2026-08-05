@@ -9,6 +9,7 @@ import type {
   ClearOrphanOwnersResponse,
   DeleteAccountResponse,
   DeleteCloudMemoryResponse,
+  ExportLocalMemoryResponse,
   ExportOrphanOwnersResponse,
   GetAuthStateResponse,
   GetSyncStatusResponse,
@@ -297,5 +298,13 @@ export async function deleteAccount(): Promise<DeleteAccountResponse> {
   return sendBackgroundMessage<DeleteAccountResponse>({
     scope: 'background',
     type: 'DELETE_ACCOUNT'
+  })
+}
+
+/** 导出当前 owner 本机全部记忆（含软删）。 */
+export async function exportLocalMemory(): Promise<ExportLocalMemoryResponse> {
+  return sendBackgroundMessage<ExportLocalMemoryResponse>({
+    scope: 'background',
+    type: 'EXPORT_LOCAL_MEMORY'
   })
 }

@@ -7,7 +7,8 @@ const MEMORY_ERROR_MESSAGE_KEYS: Record<MemoryErrorCode, MessageKey> = {
   MEMORY_DELETE_BOOKMARK_FORBIDDEN: 'error_memory_delete_bookmark_forbidden',
   MEMORY_OPERATION_FAILED: 'error_memory_operation_failed',
   CAPTURE_UNSAVABLE_PAGE: 'error_capture_unsavable_page',
-  CAPTURE_EMPTY_SELECTION: 'error_capture_empty_selection'
+  CAPTURE_EMPTY_SELECTION: 'error_capture_empty_selection',
+  BOOKMARK_INGEST_DISABLED: 'error_bookmark_ingest_disabled'
 }
 
 /** 将 Memory errorCode 转为用户可见文案。 */

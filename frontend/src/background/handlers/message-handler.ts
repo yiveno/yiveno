@@ -11,6 +11,7 @@ import {
   handleClearOrphanOwners,
   handleDeleteCloudMemory,
   handleDeleteAccount,
+  handleExportLocalMemory,
   handleExportOrphanOwners,
   handleGetAuthState,
   handleGetSyncStatus,
@@ -108,6 +109,8 @@ async function dispatchBackgroundMessage(
       return handleDeleteCloudMemory()
     case 'DELETE_ACCOUNT':
       return handleDeleteAccount()
+    case 'EXPORT_LOCAL_MEMORY':
+      return handleExportLocalMemory()
     case 'CAPTURE_BOOKMARK':
       return handleCaptureBookmark(message.payload)
     case 'CAPTURE_TEXT_EXCERPT':

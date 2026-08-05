@@ -13,7 +13,15 @@ vi.mock('@/application/memory/build-merged-memory-enrichment', () => ({
   buildMergedMemoryEnrichment: vi.fn()
 }))
 
+vi.mock('@/infrastructure/settings/user-settings-service', () => ({
+  getUserSettings: vi.fn(async () => ({
+    selectionToolbarEnabled: true,
+    aiFeaturesEnabled: true
+  }))
+}))
+
 import { buildMergedMemoryEnrichment } from '@/application/memory/build-merged-memory-enrichment'
+import { getUserSettings } from '@/infrastructure/settings/user-settings-service'
 
 function createRepoMock(item: MemoryItem | null) {
   const putEnrichmentClues = vi.fn(async () => undefined)
@@ -28,6 +36,27 @@ describe('runAsyncMemoryLlmEnrichment', () => {
   afterEach(() => {
     resetAsyncMemoryLlmEnrichmentQueueForTests()
     vi.mocked(buildMergedMemoryEnrichment).mockReset()
+    vi.mocked(getUserSettings).mockResolvedValue({
+      selectionToolbarEnabled: true,
+      aiFeaturesEnabled: true
+    })
+  })
+
+  it('用户关闭 AI 时跳过', async () => {
+    vi.mocked(getUserSettings).mockResolvedValue({
+      selectionToolbarEnabled: true,
+      aiFeaturesEnabled: false
+    })
+    const item = createBookmarkMemoryItem({
+      ownerId: 'o',
+      sourceLocalProfileId: 'p',
+      payload: { title: 't', url: 'https://example.com/a' },
+      clues: {}
+    })
+    const { repo, putEnrichmentClues } = createRepoMock(item)
+    await expect(runAsyncMemoryLlmEnrichment(item.id, repo)).resolves.toBe('skipped')
+    expect(putEnrichmentClues).not.toHaveBeenCalled()
+    expect(buildMergedMemoryEnrichment).not.toHaveBeenCalled()
   })
 
   it('门禁跳过时不请求 LLM', async () => {

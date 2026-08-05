@@ -5,13 +5,23 @@ import {
   toChromeBookmarkLeaf,
   type ChromeBookmarkLeaf
 } from '@/infrastructure/browser/chrome-bookmark-reader'
+import { getUserSettings } from '@/infrastructure/settings/user-settings-service'
 import { logger } from '@/infrastructure/logging/logger'
 
 const pendingUpsertIds = new Set<string>()
 const pendingRemoveIds = new Set<string>()
 
-/** 增量同步是否已启用（全量导入完成后）。 */
+/** 用户是否允许书签灌库（Settings）。 */
+export async function isChromeBookmarkIngestEnabled(): Promise<boolean> {
+  const settings = await getUserSettings()
+  return settings.chromeBookmarkIngestEnabled
+}
+
+/** 增量同步是否已启用（灌库开 + 全量导入完成）。 */
 export async function isChromeBookmarkIncrementalSyncEnabled(): Promise<boolean> {
+  if (!(await isChromeBookmarkIngestEnabled())) {
+    return false
+  }
   const state = await readChromeBookmarkImportState()
   return state?.status === 'completed'
 }
@@ -65,6 +75,13 @@ export async function syncChromeBookmarkRemoved(chromeBookmarkId: string): Promi
 export async function handleChromeBookmarkCreated(
   node: chrome.bookmarks.BookmarkTreeNode
 ): Promise<{ captured: boolean }> {
+  if (!(await isChromeBookmarkIngestEnabled())) {
+    logger.info('ChromeBookmarkSync', 'created 已跳过（用户关闭书签灌库）', {
+      chromeBookmarkId: node.id
+    })
+    return { captured: false }
+  }
+
   if (!(await isChromeBookmarkIncrementalSyncEnabled())) {
     enqueueUpsert(node.id)
     logger.info('ChromeBookmarkSync', 'created 已入队（导入未完成）', {
@@ -83,6 +100,11 @@ export async function handleChromeBookmarkCreated(
 
 /** 处理 Chrome bookmarks.onChanged。 */
 export async function handleChromeBookmarkChanged(chromeBookmarkId: string): Promise<void> {
+  if (!(await isChromeBookmarkIngestEnabled())) {
+    logger.info('ChromeBookmarkSync', 'changed 已跳过（用户关闭书签灌库）', { chromeBookmarkId })
+    return
+  }
+
   if (!(await isChromeBookmarkIncrementalSyncEnabled())) {
     enqueueUpsert(chromeBookmarkId)
     logger.info('ChromeBookmarkSync', 'changed 已入队（导入未完成）', { chromeBookmarkId })
@@ -105,6 +127,11 @@ export async function handleChromeBookmarkChanged(chromeBookmarkId: string): Pro
 
 /** 处理 Chrome bookmarks.onRemoved。 */
 export async function handleChromeBookmarkRemoved(chromeBookmarkId: string): Promise<void> {
+  if (!(await isChromeBookmarkIngestEnabled())) {
+    logger.info('ChromeBookmarkSync', 'removed 已跳过（用户关闭书签灌库）', { chromeBookmarkId })
+    return
+  }
+
   if (!(await isChromeBookmarkIncrementalSyncEnabled())) {
     enqueueRemove(chromeBookmarkId)
     logger.info('ChromeBookmarkSync', 'removed 已入队（导入未完成）', { chromeBookmarkId })

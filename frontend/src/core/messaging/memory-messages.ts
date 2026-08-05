@@ -58,7 +58,8 @@ export const MemoryErrorCodeSchema = z.enum([
   'MEMORY_DELETE_BOOKMARK_FORBIDDEN', // 禁止删书签类 Memory（应走 Chrome 书签）
   'MEMORY_OPERATION_FAILED', // 通用 Memory 操作失败
   'CAPTURE_UNSAVABLE_PAGE', // 当前页不可存
-  'CAPTURE_EMPTY_SELECTION' // 无有效选区
+  'CAPTURE_EMPTY_SELECTION', // 无有效选区
+  'BOOKMARK_INGEST_DISABLED' // 用户关闭了书签灌库
 ])
 
 export type MemoryErrorCode = z.infer<typeof MemoryErrorCodeSchema>

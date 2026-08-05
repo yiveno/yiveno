@@ -136,7 +136,11 @@ async function login(provider: 'google' | 'microsoft') {
     <p class="legal">
       <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
       ·
+      <a href="/terms" target="_blank" rel="noopener noreferrer">Terms</a>
+      ·
       <a href="/privacy#zh" target="_blank" rel="noopener noreferrer">隐私政策</a>
+      ·
+      <a href="/terms#zh" target="_blank" rel="noopener noreferrer">服务条款</a>
     </p>
   </div>
 </template>

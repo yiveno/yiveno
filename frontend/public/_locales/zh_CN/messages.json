@@ -351,6 +351,23 @@
   "settings_privacy_open_policy": {
     "message": "阅读完整隐私政策"
   },
+  "settings_privacy_open_terms": {
+    "message": "阅读服务条款"
+  },
+  "settings_privacy_export": {
+    "message": "导出本机记忆"
+  },
+  "settings_privacy_export_hint": {
+    "message": "下载当前身份下的全部本机记忆（含已软删条目）为 JSON。不含换号孤儿桶；孤儿请到「账户与同步」导出。"
+  },
+  "settings_privacy_export_done": {
+    "message": "已导出 $COUNT$ 条本机记忆",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1"
+      }
+    }
+  },
   "settings_privacy_delete_cloud": {
     "message": "删除云端记忆"
   },
@@ -406,14 +423,38 @@
   "settings_error_account_delete": {
     "message": "删除账号失败"
   },
+  "settings_error_local_export": {
+    "message": "导出本机记忆失败"
+  },
   "settings_placeholder_ai": {
     "message": "AI 相关选项尚未上线，这里不会假装可配置。"
+  },
+  "settings_ai_intro": {
+    "message": "AI 只辅助理解线索与补全结构化字段；记忆事实源始终是本机 IndexedDB。默认开启，可随时关闭。"
+  },
+  "settings_ai_toggle": {
+    "message": "启用 AI 辅助"
+  },
+  "settings_ai_toggle_hint": {
+    "message": "关闭后：口语线索理解降级为规则；不再向模型发送 Capture enrichment 请求。"
+  },
+  "settings_ai_model_note": {
+    "message": "当前模型路径说明："
+  },
+  "settings_ai_bullet_clue": {
+    "message": "线索理解：经 Cloudflare Worker 调用模型（扩展不持有 API Key）；失败时自动降级规则解析。"
+  },
+  "settings_ai_bullet_enrichment": {
+    "message": "Capture enrichment：异步稀疏请求；提议经校验后写回 tags/keywords/entities；不改用户备注。"
+  },
+  "settings_ai_bullet_boundary": {
+    "message": "边界：不会默认把全库喂给模型；模型不得直接查插改删记忆库。"
   },
   "settings_section_capture": {
     "message": "保存"
   },
   "settings_section_capture_copy": {
-    "message": "控制划词后的轻量保存浮层；关闭后仍可用右键保存选区。"
+    "message": "控制划词浮层与 Chrome 书签是否灌入本机记忆。"
   },
   "settings_loading": {
     "message": "正在读取设置…"
@@ -423,6 +464,12 @@
   },
   "settings_toggle_selection_toolbar_hint": {
     "message": "选中文字后出现「保存到 Yiveno」"
+  },
+  "settings_toggle_chrome_bookmark_ingest": {
+    "message": "将 Chrome 书签写入记忆"
+  },
+  "settings_toggle_chrome_bookmark_ingest_hint": {
+    "message": "关闭后停止导入与增量同步；已写入的书签记忆不会删除"
   },
   "settings_section_shortcuts": {
     "message": "快捷键"
@@ -868,6 +915,9 @@
   },
   "error_capture_empty_selection": {
     "message": "选区为空，请重新选中文字后再保存"
+  },
+  "error_bookmark_ingest_disabled": {
+    "message": "已关闭「将 Chrome 书签写入记忆」；可在设置 → 保存中重新开启"
   },
   "error_import_status_read_failed": {
     "message": "无法读取书签导入状态"

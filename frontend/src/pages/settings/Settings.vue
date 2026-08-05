@@ -20,6 +20,7 @@ import {
   clearOrphanOwners,
   deleteAccount,
   deleteCloudMemory,
+  exportLocalMemory,
   exportOrphanOwners,
   fetchAuthState,
   fetchExtensionCommands,
@@ -60,9 +61,13 @@ const openShortcutsError = ref('')
 const awaitingShortcutsReturn = ref(false)
 
 const selectionToolbarEnabled = ref(true)
+const chromeBookmarkIngestEnabled = ref(true)
+const aiFeaturesEnabled = ref(true)
 const settingsState = ref<LoadState>('loading')
 const settingsError = ref('')
 const savingSelectionToolbar = ref(false)
+const savingChromeBookmarkIngest = ref(false)
+const savingAiFeatures = ref(false)
 
 const signedIn = ref(false)
 const accountEmail = ref('')
@@ -88,9 +93,11 @@ const privacyNoticeAcked = ref(false)
 const privacyWorking = ref(false)
 const privacyError = ref('')
 const privacyMessage = ref('')
+const exportWorking = ref(false)
 
-/** 官网隐私政策全文 URL（Options 页可直开外链）。 */
+/** 官网隐私政策 / 服务条款全文 URL。 */
 const privacyPolicyUrl = `${getWebsiteBaseUrl()}/privacy`
+const termsOfServiceUrl = `${getWebsiteBaseUrl()}/terms`
 
 const signOutDialogOpen = ref(false)
 const signingOut = ref(false)
@@ -210,6 +217,8 @@ async function loadUserSettings() {
     }
 
     selectionToolbarEnabled.value = response.settings.selectionToolbarEnabled
+    chromeBookmarkIngestEnabled.value = response.settings.chromeBookmarkIngestEnabled
+    aiFeaturesEnabled.value = response.settings.aiFeaturesEnabled
     settingsState.value = 'ready'
   } catch {
     settingsState.value = 'error'
@@ -241,6 +250,62 @@ async function handleSelectionToolbarToggle(event: Event) {
     settingsError.value = t('settings_error_update')
   } finally {
     savingSelectionToolbar.value = false
+  }
+}
+
+/** Chrome 书签灌库开关（bulk + 增量）。 */
+async function handleChromeBookmarkIngestToggle(event: Event) {
+  const switchEl = asMdSwitchElement(event.target)
+  if (!switchEl) {
+    return
+  }
+
+  const nextValue = switchEl.selected
+  savingChromeBookmarkIngest.value = true
+  settingsError.value = ''
+
+  try {
+    const response = await updateUserSettings({ chromeBookmarkIngestEnabled: nextValue })
+    if (!response.ok) {
+      switchEl.selected = !nextValue
+      settingsError.value = tSettingsError(response.errorCode)
+      return
+    }
+
+    chromeBookmarkIngestEnabled.value = response.settings.chromeBookmarkIngestEnabled
+  } catch {
+    switchEl.selected = !nextValue
+    settingsError.value = t('settings_error_update')
+  } finally {
+    savingChromeBookmarkIngest.value = false
+  }
+}
+
+/** AI 功能开关（线索理解 + Capture enrichment）。 */
+async function handleAiFeaturesToggle(event: Event) {
+  const switchEl = asMdSwitchElement(event.target)
+  if (!switchEl) {
+    return
+  }
+
+  const nextValue = switchEl.selected
+  savingAiFeatures.value = true
+  settingsError.value = ''
+
+  try {
+    const response = await updateUserSettings({ aiFeaturesEnabled: nextValue })
+    if (!response.ok) {
+      switchEl.selected = !nextValue
+      settingsError.value = tSettingsError(response.errorCode)
+      return
+    }
+
+    aiFeaturesEnabled.value = response.settings.aiFeaturesEnabled
+  } catch {
+    switchEl.selected = !nextValue
+    settingsError.value = t('settings_error_update')
+  } finally {
+    savingAiFeatures.value = false
   }
 }
 
@@ -297,6 +362,30 @@ function downloadOrphanExportJson(items: unknown[]): void {
   const anchor = document.createElement('a')
   anchor.href = url
   anchor.download = `yiveno-orphan-owners-${new Date().toISOString().slice(0, 10)}.json`
+  anchor.click()
+  URL.revokeObjectURL(url)
+}
+
+/** 下载当前 owner 本机记忆 JSON。 */
+function downloadLocalMemoryExportJson(ownerId: string, items: unknown[]): void {
+  const blob = new Blob(
+    [
+      JSON.stringify(
+        {
+          exportedAt: new Date().toISOString(),
+          ownerId,
+          items
+        },
+        null,
+        2
+      )
+    ],
+    { type: 'application/json' }
+  )
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = `yiveno-memory-export-${new Date().toISOString().slice(0, 10)}.json`
   anchor.click()
   URL.revokeObjectURL(url)
 }
@@ -493,6 +582,29 @@ async function handleDeleteAccount() {
   }
 }
 
+/** 导出当前 owner 本机记忆。 */
+async function handleExportLocalMemory() {
+  if (exportWorking.value || privacyWorking.value) {
+    return
+  }
+  exportWorking.value = true
+  privacyError.value = ''
+  privacyMessage.value = ''
+  try {
+    const response = await exportLocalMemory()
+    if (!response.ok) {
+      privacyError.value = tAccountSyncError(response.errorCode)
+      return
+    }
+    downloadLocalMemoryExportJson(response.ownerId, response.items)
+    privacyMessage.value = t('settings_privacy_export_done', [String(response.items.length)])
+  } catch {
+    privacyError.value = t('settings_error_local_export')
+  } finally {
+    exportWorking.value = false
+  }
+}
+
 /** 立即跑一轮增量同步（不整侧 replace）。 */
 async function handleRunIncrementalSync() {
   if (!signedIn.value || !syncEnabled.value || runningIncrementalSync.value) {
@@ -661,22 +773,40 @@ onUnmounted(() => {
               {{ settingsError }}
             </p>
 
-            <div v-else class="settings-toggle">
-              <div class="settings-toggle-copy">
-                <span class="settings-toggle-title">{{
-                  t('settings_toggle_selection_toolbar')
-                }}</span>
-                <span class="settings-toggle-hint">{{
-                  t('settings_toggle_selection_toolbar_hint')
-                }}</span>
+            <template v-else>
+              <div class="settings-toggle">
+                <div class="settings-toggle-copy">
+                  <span class="settings-toggle-title">{{
+                    t('settings_toggle_selection_toolbar')
+                  }}</span>
+                  <span class="settings-toggle-hint">{{
+                    t('settings_toggle_selection_toolbar_hint')
+                  }}</span>
+                </div>
+                <md-switch
+                  :aria-label="t('settings_toggle_selection_toolbar')"
+                  :selected="selectionToolbarEnabled"
+                  :disabled="savingSelectionToolbar"
+                  @change="handleSelectionToolbarToggle"
+                />
               </div>
-              <md-switch
-                :aria-label="t('settings_toggle_selection_toolbar')"
-                :selected="selectionToolbarEnabled"
-                :disabled="savingSelectionToolbar"
-                @change="handleSelectionToolbarToggle"
-              />
-            </div>
+              <div class="settings-toggle">
+                <div class="settings-toggle-copy">
+                  <span class="settings-toggle-title">{{
+                    t('settings_toggle_chrome_bookmark_ingest')
+                  }}</span>
+                  <span class="settings-toggle-hint">{{
+                    t('settings_toggle_chrome_bookmark_ingest_hint')
+                  }}</span>
+                </div>
+                <md-switch
+                  :aria-label="t('settings_toggle_chrome_bookmark_ingest')"
+                  :selected="chromeBookmarkIngestEnabled"
+                  :disabled="savingChromeBookmarkIngest"
+                  @change="handleChromeBookmarkIngestToggle"
+                />
+              </div>
+            </template>
             <p
               v-if="settingsState === 'ready' && settingsError"
               class="settings-error"
@@ -923,6 +1053,30 @@ onUnmounted(() => {
               >
                 {{ t('settings_privacy_open_policy') }}
               </a>
+              <a
+                class="settings-privacy-policy-link"
+                :href="termsOfServiceUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                :title="t('settings_privacy_open_terms')"
+              >
+                {{ t('settings_privacy_open_terms') }}
+              </a>
+            </div>
+
+            <div class="settings-privacy-danger">
+              <p class="settings-toggle-title">{{ t('settings_privacy_export') }}</p>
+              <p class="settings-section-copy">{{ t('settings_privacy_export_hint') }}</p>
+              <div class="settings-actions">
+                <md-outlined-button
+                  type="button"
+                  :disabled="exportWorking || privacyWorking || signingOut"
+                  :title="t('settings_privacy_export')"
+                  @click="handleExportLocalMemory"
+                >
+                  {{ exportWorking ? t('settings_privacy_working') : t('settings_privacy_export') }}
+                </md-outlined-button>
+              </div>
             </div>
 
             <div v-if="signedIn" class="settings-privacy-danger">
@@ -970,9 +1124,43 @@ onUnmounted(() => {
         </template>
 
         <template v-else>
-          <div class="settings-block settings-block--placeholder">
-            <h2 class="settings-section-title">{{ t('settings_tab_ai') }}</h2>
-            <p class="settings-section-copy">{{ t('settings_placeholder_ai') }}</p>
+          <div class="settings-block" aria-labelledby="settings-ai-heading">
+            <div class="settings-section-head">
+              <h2 id="settings-ai-heading" class="settings-section-title">
+                {{ t('settings_tab_ai') }}
+              </h2>
+              <p class="settings-section-copy">{{ t('settings_ai_intro') }}</p>
+            </div>
+
+            <div class="settings-toggle">
+              <div class="settings-toggle-copy">
+                <span class="settings-toggle-title">{{ t('settings_ai_toggle') }}</span>
+                <span class="settings-toggle-hint">{{ t('settings_ai_toggle_hint') }}</span>
+              </div>
+              <md-switch
+                :selected="aiFeaturesEnabled"
+                :disabled="savingAiFeatures || settingsState !== 'ready'"
+                :title="t('settings_ai_toggle')"
+                @change="handleAiFeaturesToggle"
+              />
+            </div>
+
+            <p class="settings-section-copy">{{ t('settings_ai_model_note') }}</p>
+            <ul class="settings-privacy-list">
+              <li>{{ t('settings_ai_bullet_clue') }}</li>
+              <li>{{ t('settings_ai_bullet_enrichment') }}</li>
+              <li>{{ t('settings_ai_bullet_boundary') }}</li>
+            </ul>
+            <a
+              class="settings-privacy-policy-link"
+              :href="privacyPolicyUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              :title="t('settings_privacy_open_policy')"
+            >
+              {{ t('settings_privacy_open_policy') }}
+            </a>
+            <p v-if="settingsError" class="settings-error" role="alert">{{ settingsError }}</p>
           </div>
         </template>
       </section>

@@ -12,6 +12,7 @@ import {
   memoryItemRepository,
   type MemoryItemRepository
 } from '@/infrastructure/indexeddb/memory-item-repository'
+import { getUserSettings } from '@/infrastructure/settings/user-settings-service'
 import { logger } from '@/infrastructure/logging/logger'
 
 /** 任务间距，降低 SW / Worker 尖峰。 */
@@ -44,6 +45,12 @@ export async function runAsyncMemoryLlmEnrichment(
   itemId: string,
   repository: MemoryItemRepository = memoryItemRepository
 ): Promise<'written' | 'skipped' | 'unchanged' | 'failed'> {
+  const settings = await getUserSettings()
+  if (!settings.aiFeaturesEnabled) {
+    logger.info('MemoryEnrichment', '异步 LLM 跳过：用户已关闭 AI 功能', { itemId })
+    return 'skipped'
+  }
+
   const item = await repository.getById(itemId)
   if (!item) {
     logger.info('MemoryEnrichment', '异步 LLM 跳过：条目不存在', { itemId })

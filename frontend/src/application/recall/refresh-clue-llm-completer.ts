@@ -2,16 +2,25 @@
  * 注册线索理解 LLM completer。
  * 默认走 Cloudflare（Worker 持有 DEEPSEEK_API_KEY）；
  * 若配置了 yiveno.dev.clueLlm 则优先生开直连（仅本地调试）。
+ * 用户关闭 AI 功能时清空 completer（理解层降级规则）。
  */
 
 import { setClueLlmCompleter } from '@/application/recall/clue-llm-completer-registry'
 import { createClueUnderstandApiCompleter } from '@/infrastructure/ai/clue-understand-api-client'
 import { readDevClueLlmConfig } from '@/infrastructure/ai/dev-clue-llm-config'
+import { getUserSettings } from '@/infrastructure/settings/user-settings-service'
 import { logger } from '@/infrastructure/logging/logger'
 import { createOpenAiCompatibleCompleter } from '@/core/recall/understand/parse-recall-clue-with-llm'
 
-/** 启动时挂载线索 LLM。 */
+/** 启动时 / AI 开关变更时挂载线索 LLM。 */
 export async function refreshClueLlmCompleterFromDevConfig(): Promise<void> {
+  const settings = await getUserSettings()
+  if (!settings.aiFeaturesEnabled) {
+    setClueLlmCompleter(null)
+    logger.info('ClueLlm', '用户已关闭 AI 功能，线索理解降级为规则')
+    return
+  }
+
   const config = await readDevClueLlmConfig()
   if (config) {
     setClueLlmCompleter(

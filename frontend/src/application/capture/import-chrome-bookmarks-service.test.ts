@@ -213,4 +213,25 @@ describe('import-chrome-bookmarks-service', () => {
     expect(bulkSpy).not.toHaveBeenCalled()
     expect(upsertSpy).toHaveBeenCalled()
   })
+
+  it('用户关闭书签灌库时跳过 bulk 导入', async () => {
+    const { USER_SETTINGS_STORAGE_KEY } = await import('@/core/settings/user-settings')
+    vi.stubGlobal(
+      'chrome',
+      createChromeMock({
+        [LOCAL_PROFILE_STORAGE_KEY]: localProfile,
+        [USER_SETTINGS_STORAGE_KEY]: {
+          selectionToolbarEnabled: true,
+          aiFeaturesEnabled: true,
+          chromeBookmarkIngestEnabled: false
+        }
+      })
+    )
+
+    const state = await ensureChromeBookmarksImported()
+    expect(state.status).toBe('pending')
+    expect(state.importedCount).toBe(0)
+    expect(await memoryItemRepository.listByOwner({ type: 'bookmark' })).toHaveLength(0)
+    expect(chrome.bookmarks.getTree).not.toHaveBeenCalled()
+  })
 })

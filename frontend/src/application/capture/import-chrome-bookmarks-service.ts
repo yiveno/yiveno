@@ -7,6 +7,7 @@ import {
 } from '@/application/capture/chrome-bookmark-bulk-import'
 import { flushPendingChromeBookmarkSync } from '@/application/capture/chrome-bookmark-sync-service'
 import { readChromeBookmarkLeaves } from '@/infrastructure/browser/chrome-bookmark-reader'
+import { getUserSettings } from '@/infrastructure/settings/user-settings-service'
 import { logger } from '@/infrastructure/logging/logger'
 
 function yieldToEventLoop(): Promise<void> {
@@ -27,6 +28,23 @@ export async function getChromeBookmarkImportStatus(): Promise<ChromeBookmarkImp
  * 首次 bulk putMany；续传 upsert 防重复；完成后跳过。
  */
 export async function ensureChromeBookmarksImported(): Promise<ChromeBookmarkImportState> {
+  const settings = await getUserSettings()
+  if (!settings.chromeBookmarkIngestEnabled) {
+    const existing = await readChromeBookmarkImportState()
+    logger.info('ChromeBookmarkImport', '用户已关闭书签灌库，跳过 bulk 导入', {
+      previousStatus: existing?.status ?? null
+    })
+    if (existing) {
+      return existing
+    }
+    const skipped: ChromeBookmarkImportState = {
+      status: 'pending',
+      importedCount: 0,
+      startedAt: new Date().toISOString()
+    }
+    return skipped
+  }
+
   const existing = await readChromeBookmarkImportState()
   if (existing?.status === 'completed') {
     return existing

@@ -351,6 +351,23 @@
   "settings_privacy_open_policy": {
     "message": "Read full privacy policy"
   },
+  "settings_privacy_open_terms": {
+    "message": "Read terms of service"
+  },
+  "settings_privacy_export": {
+    "message": "Export local memories"
+  },
+  "settings_privacy_export_hint": {
+    "message": "Download all memories for the current identity (including soft-deleted items) as JSON. Orphan owner buckets are exported separately under Account & Sync."
+  },
+  "settings_privacy_export_done": {
+    "message": "Exported $COUNT$ local item(s)",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1"
+      }
+    }
+  },
   "settings_privacy_delete_cloud": {
     "message": "Delete cloud memories"
   },
@@ -406,14 +423,38 @@
   "settings_error_account_delete": {
     "message": "Could not delete account"
   },
+  "settings_error_local_export": {
+    "message": "Could not export local memories"
+  },
   "settings_placeholder_ai": {
     "message": "AI options are not available yet. This page will not pretend they are."
+  },
+  "settings_ai_intro": {
+    "message": "AI only helps understand clues and enrich structured fields. IndexedDB MemoryItems remain the source of truth. On by default; you can turn it off anytime."
+  },
+  "settings_ai_toggle": {
+    "message": "Enable AI assistance"
+  },
+  "settings_ai_toggle_hint": {
+    "message": "When off: clue understanding falls back to rules; Capture enrichment no longer calls a model."
+  },
+  "settings_ai_model_note": {
+    "message": "Current model path:"
+  },
+  "settings_ai_bullet_clue": {
+    "message": "Clue understanding: model calls go through a Cloudflare Worker (the extension does not hold an API key); failures fall back to rules."
+  },
+  "settings_ai_bullet_enrichment": {
+    "message": "Capture enrichment: sparse async requests; proposals are validated before writing tags/keywords/entities; never overwrites your note."
+  },
+  "settings_ai_bullet_boundary": {
+    "message": "Boundary: we do not send your entire library to a model by default; models must not directly create/read/update/delete the memory store."
   },
   "settings_section_capture": {
     "message": "Capture"
   },
   "settings_section_capture_copy": {
-    "message": "Control the lightweight save chip after you select text. You can still save via the context menu when this is off."
+    "message": "Control the selection save chip and whether Chrome bookmarks are written into local memory."
   },
   "settings_loading": {
     "message": "Loading settings…"
@@ -423,6 +464,12 @@
   },
   "settings_toggle_selection_toolbar_hint": {
     "message": "Shows “Save to Yiveno” after you select text"
+  },
+  "settings_toggle_chrome_bookmark_ingest": {
+    "message": "Write Chrome bookmarks to memory"
+  },
+  "settings_toggle_chrome_bookmark_ingest_hint": {
+    "message": "When off, stops import and live sync; existing bookmark memories are kept"
   },
   "settings_section_shortcuts": {
     "message": "Shortcuts"
@@ -868,6 +915,9 @@
   },
   "error_capture_empty_selection": {
     "message": "Selection is empty. Select text again, then save."
+  },
+  "error_bookmark_ingest_disabled": {
+    "message": "“Write Chrome bookmarks to memory” is off. Turn it on in Settings → Capture."
   },
   "error_import_status_read_failed": {
     "message": "Could not read bookmark import status"
