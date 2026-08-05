@@ -24,12 +24,6 @@ export function cosineSimilarity(left: number[], right: number[]): number {
   return dot / (Math.sqrt(leftNorm) * Math.sqrt(rightNorm))
 }
 
-export interface RankedId {
-  id: string
-  /** 列表中的 0-based 名次（0 = 第一） */
-  rank: number
-}
-
 /**
  * Reciprocal Rank Fusion：score(id) = Σ 1/(k + rank + 1)
  * @param lists 多路已排序 id 列表（每路按相关性从高到低）

@@ -163,8 +163,3 @@ export async function enqueueMissingMemoryEmbeddings(
   })
   return { enqueued: missing.length, scanned: items.length }
 }
-
-/** 测试用：重置串行队列。 */
-export function resetAsyncMemoryEmbeddingQueueForTests(): void {
-  queue = Promise.resolve()
-}

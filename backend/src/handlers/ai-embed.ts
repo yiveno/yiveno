@@ -9,8 +9,6 @@ import { okJson, errorJson } from '../utils/response'
 import { info as logInfo, logError } from '../utils/logger'
 
 export const EMBEDDING_MODEL = '@cf/baai/bge-m3'
-/** bge-m3 输出维度（Workers AI 文档）。 */
-export const EMBEDDING_DIM = 1024
 const MAX_BATCH = 8
 /** 约 512 token 量级的字符截断（粗估）。 */
 const MAX_CHARS_PER_TEXT = 2000

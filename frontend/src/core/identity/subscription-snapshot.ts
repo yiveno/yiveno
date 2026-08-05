@@ -58,8 +58,3 @@ export function createFreeSubscriptionSnapshot(
     fetchedAt: nowIso
   }
 }
-
-export function parseSubscriptionSnapshot(value: unknown): SubscriptionSnapshot | null {
-  const parsed = SubscriptionSnapshotSchema.safeParse(value)
-  return parsed.success ? parsed.data : null
-}
