@@ -1,16 +1,301 @@
-import type { RecallResult } from '@/core/recall/recall-result'
-
-import type { RecallBackend, RecallWithClueOptions } from '@/application/recall/recall-backend'
-
 /**
- * Hybrid/embedding/索引检索后端骨架（当前未启用）。
- *
- * 设计目的：未来接入 Hybrid 时，只新增后端与候选来源/索引实现，
- * 并在 RecallService 的后端工厂里切换，不影响 UI / handlers / core。
+ * Hybrid Recall：关键词候选 + embedding 近邻，经 RRF 融合。
+ * 仅 Pro 路径由 RecallService 选用；无向量 / 网络失败时降级关键词。
  */
+
+import { memoryItemService } from '@/application/memory/memory-item-service'
+import { createRecallFlowTrace } from '@/application/recall/create-recall-flow-trace'
+import { getClueLlmCompleter } from '@/application/recall/clue-llm-completer-registry'
+import type { RecallBackend, RecallWithClueOptions } from '@/application/recall/recall-backend'
+import { applyCurrentTabDomainBoost } from '@/application/recall/apply-current-tab-domain-boost'
+import { RECALL_SCAN_LIMIT } from '@/application/recall/backends/keyword-recall-backend'
+import { buildQueryEmbeddingText } from '@/core/recall/build-query-embedding-text'
+import {
+  buildRecallResult,
+  RECALL_COLLAPSE_BACKFILL_EXTRA
+} from '@/core/recall/build-recall-result'
+import { collapseRecallMatches } from '@/core/recall/collapse-recall-duplicates'
+import { cosineSimilarity, sortIdsByRrf } from '@/core/recall/hybrid-fusion'
+import { filterMemoryItemsByKeyword } from '@/core/recall/keyword-filter'
+import {
+  excludeDismissedMemoryItems,
+  mergeRecallDialogTurn
+} from '@/core/recall/merge-recall-dialog-turn'
+import {
+  applyParsedClueScoreBoosts,
+  buildSearchClueFromParsed,
+  recallByKeywordWithParsedClue
+} from '@/core/recall/orchestrate-keyword-recall'
+import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
+import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
+import { shouldEscalateLexicalNoMatch } from '@/core/recall/understand/select-clue-understanding-mode'
+import { understandRecallClue } from '@/core/recall/understand/understand-recall-clue'
+import { requestWorkerEmbeddings } from '@/infrastructure/ai/embed-api-client'
+import { getAuthSession } from '@/infrastructure/identity/auth-session-service'
+
+/** Hybrid 关键词召回池（再与向量融合）。 */
+const HYBRID_KEYWORD_POOL = 100
+
+function attachDialogMeta(
+  result: RecallResult,
+  meta: { parsed: ParsedRecallClue; effectiveClue: string; clue: string }
+): RecallResult {
+  return {
+    ...result,
+    clue: meta.clue,
+    parsed: meta.parsed,
+    effectiveClue: meta.effectiveClue
+  }
+}
+
+function finalizeKeywordResult(
+  displayClue: string,
+  items: Awaited<ReturnType<typeof memoryItemService.list>>,
+  parsed: ParsedRecallClue,
+  currentTabDomain: string | undefined
+): RecallResult {
+  const base = recallByKeywordWithParsedClue(items, displayClue, {
+    candidateLimit: 6,
+    parsed
+  })
+  const matches = applyCurrentTabDomainBoost(
+    [...(base.topPick ? [base.topPick] : []), ...base.alsoPossible],
+    currentTabDomain
+  )
+  matches.sort((a, b) => {
+    if (b.score !== a.score) {
+      return b.score - a.score
+    }
+    return b.item.updatedAt.localeCompare(a.item.updatedAt)
+  })
+  return buildRecallResult(displayClue, matches)
+}
+
+async function fuseHybridMatches(input: {
+  displayClue: string
+  items: Awaited<ReturnType<typeof memoryItemService.list>>
+  searchClue: string
+  parsed: ParsedRecallClue
+  queryText: string
+  currentTabDomain?: string
+  trace: ReturnType<typeof createRecallFlowTrace>
+}): Promise<RecallResult | null> {
+  const session = await getAuthSession()
+  if (!session?.accessToken) {
+    input.trace('info', 'Hybrid：无登录态，跳过向量融合')
+    return null
+  }
+
+  const keywordMatches = filterMemoryItemsByKeyword(input.items, input.searchClue, {
+    limit: HYBRID_KEYWORD_POOL
+  }).map(match => applyParsedClueScoreBoosts(match, input.parsed))
+
+  const embedded = keywordMatches.filter(
+    match => Array.isArray(match.item.clues.embedding) && match.item.clues.embedding.length > 0
+  )
+  if (embedded.length === 0) {
+    input.trace('info', 'Hybrid：候选无 embedding，跳过融合')
+    return null
+  }
+
+  let queryVector: number[]
+  try {
+    const embed = await requestWorkerEmbeddings(session.accessToken, [input.queryText])
+    const vector = embed.embeddings[0]
+    if (!vector?.length) {
+      return null
+    }
+    queryVector = vector
+  } catch (error) {
+    input.trace('info', 'Hybrid：query embed 失败，降级关键词', {
+      error: error instanceof Error ? error.message : String(error)
+    })
+    return null
+  }
+
+  const keywordOrder = keywordMatches.map(match => match.item.id)
+  const semanticOrder = [...embedded]
+    .map(match => ({
+      id: match.item.id,
+      sim: cosineSimilarity(queryVector, match.item.clues.embedding ?? [])
+    }))
+    .sort((a, b) => b.sim - a.sim)
+    .map(entry => entry.id)
+
+  const fusedIds = sortIdsByRrf([keywordOrder, semanticOrder])
+  const byId = new Map(keywordMatches.map(match => [match.item.id, match]))
+
+  const fusedMatches: RecallMatch[] = []
+  fusedIds.forEach((id, index) => {
+    const base = byId.get(id)
+    if (!base) {
+      return
+    }
+    const rrfBoost = Math.max(0, 40 - index)
+    fusedMatches.push({
+      ...base,
+      score: base.score + rrfBoost,
+      matchedFields: base.matchedFields.includes('hybridRrf')
+        ? base.matchedFields
+        : [...base.matchedFields, 'hybridRrf']
+    })
+  })
+
+  const boosted = applyCurrentTabDomainBoost(
+    fusedMatches.map(match => applyParsedClueScoreBoosts(match, input.parsed)),
+    input.currentTabDomain
+  )
+
+  boosted.sort((left, right) => {
+    if (right.score !== left.score) {
+      return right.score - left.score
+    }
+    return right.item.updatedAt.localeCompare(left.item.updatedAt)
+  })
+
+  const collapsed = collapseRecallMatches(boosted, {
+    limit: 6 + RECALL_COLLAPSE_BACKFILL_EXTRA
+  })
+  input.trace('info', 'Hybrid：RRF 融合完成', {
+    keywordCount: keywordMatches.length,
+    embeddedCount: embedded.length,
+    fusedCount: collapsed.length
+  })
+  return buildRecallResult(input.displayClue, collapsed)
+}
+
 export class HybridRecallBackend implements RecallBackend {
-  async recallWithClue(_clue: string, _options?: RecallWithClueOptions): Promise<RecallResult> {
-    // 当前 Phase：Hybrid 未启用。保持显式失败，避免“悄悄回退 keyword”掩盖未上线能力。
-    throw new Error('HYBRID_RECALL_NOT_ENABLED')
+  async recallWithClue(clue: string, options?: RecallWithClueOptions): Promise<RecallResult> {
+    const trace = createRecallFlowTrace()
+    const pipelineStartedAt = Date.now()
+    const normalizedClue = clue.trim()
+    const context = options?.context
+    const priorUserUtterances = context?.priorUserUtterances ?? []
+    const accumulated = context?.accumulated ?? null
+    const dismissedIds = context?.dismissedIds ?? []
+    const currentTabDomain = context?.currentTabDomain
+
+    if (!normalizedClue) {
+      return {
+        outcome: 'no_match',
+        topPick: null,
+        alsoPossible: [],
+        clue: ''
+      }
+    }
+
+    trace('info', 'Hybrid Recall：流水线开始', {
+      clue: normalizedClue,
+      priorCount: priorUserUtterances.length,
+      dismissedCount: dismissedIds.length,
+      currentTabDomain: currentTabDomain ?? null
+    })
+
+    const complete = getClueLlmCompleter() ?? undefined
+    let understood = await understandRecallClue(normalizedClue, {
+      ...(complete ? { complete } : {}),
+      trace
+    })
+
+    if (understood.disposition === 'reject_noise') {
+      return {
+        outcome: 'no_match',
+        topPick: null,
+        alsoPossible: [],
+        clue: normalizedClue
+      }
+    }
+
+    let merge = mergeRecallDialogTurn({
+      accumulated,
+      currentParsed: understood.parsed,
+      priorUserUtterances,
+      currentUtterance: normalizedClue
+    })
+
+    const listed = await memoryItemService.list({ limit: RECALL_SCAN_LIMIT })
+    const items = excludeDismissedMemoryItems(listed, dismissedIds)
+
+    const queryText = buildQueryEmbeddingText({
+      effectiveClue: merge.effectiveRaw,
+      parsed: merge.merged,
+      rawClue: normalizedClue
+    })
+
+    let usedHybrid = false
+    let result =
+      (await fuseHybridMatches({
+        displayClue: normalizedClue,
+        items,
+        searchClue: buildSearchClueFromParsed(merge.merged),
+        parsed: merge.merged,
+        queryText,
+        ...(currentTabDomain !== undefined ? { currentTabDomain } : {}),
+        trace
+      })) ?? null
+
+    if (result) {
+      usedHybrid = true
+    } else {
+      result = finalizeKeywordResult(normalizedClue, items, merge.merged, currentTabDomain)
+    }
+
+    const canEscalate =
+      result.outcome === 'no_match' &&
+      understood.mode === 'lexical' &&
+      understood.source === 'rules' &&
+      Boolean(complete) &&
+      shouldEscalateLexicalNoMatch(normalizedClue)
+
+    if (canEscalate) {
+      understood = await understandRecallClue(normalizedClue, {
+        ...(complete ? { complete } : {}),
+        forceMode: 'semantic',
+        trace
+      })
+      if (understood.disposition === 'proceed') {
+        merge = mergeRecallDialogTurn({
+          accumulated,
+          currentParsed: understood.parsed,
+          priorUserUtterances,
+          currentUtterance: normalizedClue
+        })
+        const escalated = await fuseHybridMatches({
+          displayClue: normalizedClue,
+          items,
+          searchClue: buildSearchClueFromParsed(merge.merged),
+          parsed: merge.merged,
+          queryText: buildQueryEmbeddingText({
+            effectiveClue: merge.effectiveRaw,
+            parsed: merge.merged,
+            rawClue: normalizedClue
+          }),
+          ...(currentTabDomain !== undefined ? { currentTabDomain } : {}),
+          trace
+        })
+        if (escalated) {
+          result = escalated
+          usedHybrid = true
+        } else {
+          result = finalizeKeywordResult(normalizedClue, items, merge.merged, currentTabDomain)
+          usedHybrid = false
+        }
+      }
+    }
+
+    const withMeta = attachDialogMeta(result, {
+      clue: normalizedClue,
+      parsed: merge.merged,
+      effectiveClue: merge.effectiveRaw
+    })
+
+    trace('info', 'Hybrid Recall：流水线结束', {
+      durationMs: Date.now() - pipelineStartedAt,
+      usedHybrid,
+      outcome: withMeta.outcome,
+      topPickId: withMeta.topPick?.item.id ?? null
+    })
+
+    return withMeta
   }
 }

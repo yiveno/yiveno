@@ -6,6 +6,10 @@ vi.mock('@/application/memory/schedule-async-memory-llm-enrichment', () => ({
   scheduleAsyncMemoryLlmEnrichment: vi.fn()
 }))
 
+vi.mock('@/application/memory/schedule-async-memory-embedding', () => ({
+  scheduleAsyncMemoryEmbedding: vi.fn()
+}))
+
 import {
   flushPendingChromeBookmarkSync,
   handleChromeBookmarkChanged,

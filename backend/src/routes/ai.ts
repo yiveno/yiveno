@@ -9,6 +9,7 @@
 import { Hono } from 'hono'
 import type { Env } from '../types/env'
 import { handleClueComplete } from '../handlers/ai-clue'
+import { handleEmbed } from '../handlers/ai-embed'
 import { handleEnrichmentComplete } from '../handlers/ai-enrichment'
 import { handleHostedComplete, handleHostedQuota } from '../handlers/ai-hosted'
 import { supabaseAuth } from '../middleware/supabase-auth'
@@ -40,6 +41,16 @@ aiRouter.post('/clue/complete', async c => {
  */
 aiRouter.post('/enrichment/complete', async c => {
   return handleEnrichmentComplete(c.req.raw, c.env)
+})
+
+/**
+ * POST /api/ai/embed
+ *
+ * Pro 专用：Workers AI bge-m3 向量；扩展异步写本机 clues.embedding。
+ */
+aiRouter.post('/embed', supabaseAuth(), async c => {
+  const userId = c.get('supabaseUserId')
+  return handleEmbed(c.req.raw, c.env, userId)
 })
 
 /**

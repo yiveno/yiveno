@@ -68,7 +68,19 @@ async function handleSignOut() {
       <section>
         <h3>订阅计划</h3>
         <p>
-          当前计划：<strong>{{ subscription ? subscription.plan_id : '免费版' }}</strong>
+          当前计划：<strong>{{
+            subscription?.tier === 'pro'
+              ? 'Pro'
+              : subscription?.tier === 'premium'
+                ? 'Premium'
+                : '免费版'
+          }}</strong>
+        </p>
+        <p v-if="subscription?.status && subscription.tier !== 'free'">
+          状态：{{ subscription.status }}
+          <template v-if="subscription.currentPeriodEnd">
+            · 到期 {{ formatDate(subscription.currentPeriodEnd) }}
+          </template>
         </p>
       </section>
       <section>

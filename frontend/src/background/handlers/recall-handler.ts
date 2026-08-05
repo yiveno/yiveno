@@ -1,20 +1,51 @@
 import { recallService } from '@/application/recall/recall-service'
-import type { RecallBackgroundResponse } from '@/core/messaging/recall-messages'
+import type {
+  RecallBackgroundResponse,
+  RecallDialogContext
+} from '@/core/messaging/recall-messages'
 import { parseRecallWithCluePayload } from '@/core/messaging/recall-messages'
+import { extractDomainFromUrl } from '@/core/memory/payload'
 import { logger } from '@/infrastructure/logging/logger'
+
+/** §7.1：从当前活动标签读域名（弱上下文；失败则省略）。 */
+async function resolveCurrentTabDomain(): Promise<string | undefined> {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+    const url = tab?.url?.trim()
+    if (!url) {
+      return undefined
+    }
+    const domain = extractDomainFromUrl(url)
+    return domain || undefined
+  } catch (error) {
+    logger.info('Recall', '读取当前标签域名失败（忽略）', {
+      error: error instanceof Error ? error.message : String(error)
+    })
+    return undefined
+  }
+}
 
 /** 根据线索执行 Recall。 */
 export async function handleRecallWithClue(payload: unknown): Promise<RecallBackgroundResponse> {
   const startedAt = Date.now()
   try {
     const input = parseRecallWithCluePayload(payload)
-    const context = input.context
+    const tabDomain = input.context?.currentTabDomain ?? (await resolveCurrentTabDomain())
+    const context: RecallDialogContext | undefined =
+      input.context || tabDomain
+        ? {
+            ...(input.context ?? {}),
+            ...(tabDomain ? { currentTabDomain: tabDomain } : {})
+          }
+        : undefined
+
     logger.info('Recall', '收到 RECALL_WITH_CLUE', {
       clue: input.clue,
       clueLength: input.clue.trim().length,
       priorCount: context?.priorUserUtterances?.length ?? 0,
       hasAccumulated: Boolean(context?.accumulated),
-      dismissedCount: context?.dismissedIds?.length ?? 0
+      dismissedCount: context?.dismissedIds?.length ?? 0,
+      currentTabDomain: context?.currentTabDomain ?? null
     })
 
     const result = await recallService.recallWithClue(input.clue, context ? { context } : undefined)

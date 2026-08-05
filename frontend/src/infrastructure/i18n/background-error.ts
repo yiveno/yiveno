@@ -33,7 +33,8 @@ const ACCOUNT_SYNC_ERROR_MESSAGE_KEYS: Record<AccountSyncErrorCode, MessageKey> 
   ACCOUNT_DELETE_FAILED: 'settings_error_account_delete',
   LOCAL_EXPORT_FAILED: 'settings_error_local_export',
   ORPHAN_EXPORT_FAILED: 'settings_error_orphan_export',
-  ORPHAN_CLEAR_FAILED: 'settings_error_orphan_clear'
+  ORPHAN_CLEAR_FAILED: 'settings_error_orphan_clear',
+  SUBSCRIPTION_STATUS_FAILED: 'settings_error_subscription_status'
 }
 
 const RECALL_ERROR_MESSAGE_KEYS: Record<RecallErrorCode, MessageKey> = {

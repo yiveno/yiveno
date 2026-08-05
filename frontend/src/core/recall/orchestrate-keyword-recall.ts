@@ -41,7 +41,14 @@ export const RECALL_ORCHESTRATION_NOTE_HINT_BOOST = 6
 /** often_opened 且 openCount 较高时的软加成。 */
 export const RECALL_ORCHESTRATION_OFTEN_OPENED_BOOST = 4
 
+/** recently_saved：近 7 天内创建的软加成。 */
+export const RECALL_ORCHESTRATION_RECENTLY_SAVED_BOOST = 5
+
+/** half_read：摘录类或低 openCount 书签的软加成。 */
+export const RECALL_ORCHESTRATION_HALF_READ_BOOST = 3
+
 const OFTEN_OPENED_MIN_COUNT = 3
+const RECENTLY_SAVED_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
 
 export interface OrchestrateKeywordRecallOptions {
   candidateLimit?: number
@@ -163,6 +170,21 @@ export function applyParsedClueScoreBoosts(
     (match.item.clues.openCount ?? 0) >= OFTEN_OPENED_MIN_COUNT
   ) {
     boost += RECALL_ORCHESTRATION_OFTEN_OPENED_BOOST
+  }
+
+  if (parsed.behaviorHints?.includes('recently_saved')) {
+    const createdMs = parseIsoMs(match.item.createdAt)
+    const nowMs = Date.now()
+    if (createdMs !== null && nowMs - createdMs <= RECENTLY_SAVED_WINDOW_MS) {
+      boost += RECALL_ORCHESTRATION_RECENTLY_SAVED_BOOST
+    }
+  }
+
+  if (parsed.behaviorHints?.includes('half_read')) {
+    const openCount = match.item.clues.openCount ?? 0
+    if (match.item.type === 'text_excerpt' || openCount <= 1) {
+      boost += RECALL_ORCHESTRATION_HALF_READ_BOOST
+    }
   }
 
   if (boost === 0) {

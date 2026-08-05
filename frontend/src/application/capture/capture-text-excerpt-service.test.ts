@@ -6,6 +6,10 @@ vi.mock('@/application/memory/schedule-async-memory-llm-enrichment', () => ({
   scheduleAsyncMemoryLlmEnrichment: vi.fn()
 }))
 
+vi.mock('@/application/memory/schedule-async-memory-embedding', () => ({
+  scheduleAsyncMemoryEmbedding: vi.fn()
+}))
+
 import { captureTextExcerptFromContextMenu } from '@/application/capture/capture-text-excerpt-service'
 import { LOCAL_PROFILE_STORAGE_KEY, type LocalProfile } from '@/core/identity/local-profile'
 import { memoryItemRepository } from '@/infrastructure/indexeddb/memory-item-repository'

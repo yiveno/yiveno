@@ -22,8 +22,10 @@ import type {
   ExportLocalMemoryResponse,
   ExportOrphanOwnersResponse,
   GetAuthStateResponse,
+  GetSubscriptionStatusResponse,
   GetSyncStatusResponse,
   RefreshAuthProfileResponse,
+  RefreshSubscriptionResponse,
   RestoreLatestSyncBackupResponse,
   AckPrivacyNoticeResponse,
   RunIncrementalMemorySyncResponse,
@@ -49,6 +51,12 @@ import {
   setAccountBinding
 } from '@/infrastructure/identity/local-profile-service'
 import { getSyncPrefs, patchSyncPrefs } from '@/infrastructure/identity/sync-prefs-service'
+import { buildGumroadUpgradeUrl, getGumroadManageUrl } from '@/infrastructure/identity/gumroad-urls'
+import {
+  clearSubscriptionSnapshot,
+  getSubscriptionSnapshot,
+  refreshSubscriptionSnapshot
+} from '@/infrastructure/identity/subscription-service'
 import {
   ackCurrentPrivacyNotice,
   clearPrivacyPrefs,
@@ -170,6 +178,7 @@ export async function handleAuthSignIn(): Promise<AuthSignInResponse> {
 async function finishSignOutSession(): Promise<void> {
   await clearAuthSession()
   await clearAccountBinding()
+  await clearSubscriptionSnapshot()
   await patchSyncPrefs({ enabled: false })
   await ensureMemoryCloudSyncAlarm(false)
   await clearAuthValidationTimestamp()
@@ -277,6 +286,7 @@ export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
       } else if (revalidated.status === 'invalid') {
         await clearAuthSession()
         await clearAccountBinding()
+        await clearSubscriptionSnapshot()
         await patchSyncPrefs({ enabled: false })
         await ensureMemoryCloudSyncAlarm(false)
         session = null
@@ -299,6 +309,10 @@ export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
     // 已登录会话兜底：历史登录若未归并，打开 Popup/设置时补一次（幂等）
     if (stillBound && session) {
       await absorbLocalProfileIntoAccount(stillBound.accountId)
+      // 登录态有效时后台刷新订阅（失败不阻塞 GET_AUTH_STATE）
+      void refreshSubscriptionSnapshot().catch(() => undefined)
+    } else if (!stillBound || !session) {
+      await clearSubscriptionSnapshot()
     }
 
     flowOk('Auth', 'GET_AUTH_STATE', startedAt, {
@@ -1079,4 +1093,57 @@ export async function handleExportLocalMemory(): Promise<ExportLocalMemoryRespon
       ...(error instanceof Error ? { error: error.message } : {})
     }
   }
+}
+
+function buildSubscriptionUrls(accountId: string | null): {
+  upgradeUrl: string | null
+  manageUrl: string | null
+} {
+  return {
+    upgradeUrl: accountId ? buildGumroadUpgradeUrl(accountId) : null,
+    manageUrl: getGumroadManageUrl()
+  }
+}
+
+/**
+ * GET_SUBSCRIPTION_STATUS — 读本机订阅快照；无缓存或 refresh 时拉 Worker。
+ */
+export async function handleGetSubscriptionStatus(payload?: {
+  refresh?: boolean
+}): Promise<GetSubscriptionStatusResponse> {
+  const startedAt = flowStart('Subscription', 'GET_SUBSCRIPTION_STATUS', {
+    refresh: Boolean(payload?.refresh)
+  })
+  try {
+    const binding = await getAccountBinding()
+    let snapshot = await getSubscriptionSnapshot()
+    if (!snapshot || payload?.refresh) {
+      snapshot = await refreshSubscriptionSnapshot({ force: Boolean(payload?.refresh) })
+    }
+    const urls = buildSubscriptionUrls(binding?.accountId ?? null)
+    flowOk('Subscription', 'GET_SUBSCRIPTION_STATUS', startedAt, {
+      isPro: snapshot.isPro,
+      tier: snapshot.tier
+    })
+    return {
+      ok: true,
+      snapshot,
+      upgradeUrl: urls.upgradeUrl,
+      manageUrl: urls.manageUrl
+    }
+  } catch (error) {
+    flowFail('Subscription', 'GET_SUBSCRIPTION_STATUS', startedAt, error)
+    return {
+      ok: false,
+      errorCode: 'SUBSCRIPTION_STATUS_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
+    }
+  }
+}
+
+/**
+ * REFRESH_SUBSCRIPTION — 强制从 Worker 刷新订阅快照。
+ */
+export async function handleRefreshSubscription(): Promise<RefreshSubscriptionResponse> {
+  return handleGetSubscriptionStatus({ refresh: true })
 }

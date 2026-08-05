@@ -59,7 +59,8 @@ export const MemoryErrorCodeSchema = z.enum([
   'MEMORY_OPERATION_FAILED', // 通用 Memory 操作失败
   'CAPTURE_UNSAVABLE_PAGE', // 当前页不可存
   'CAPTURE_EMPTY_SELECTION', // 无有效选区
-  'BOOKMARK_INGEST_DISABLED' // 用户关闭了书签灌库
+  'BOOKMARK_INGEST_DISABLED', // 用户关闭了书签灌库
+  'EMBEDDING_BACKFILL_PRO_REQUIRED' // 回填 embedding 需 Pro
 ])
 
 export type MemoryErrorCode = z.infer<typeof MemoryErrorCodeSchema>
@@ -120,6 +121,12 @@ export type RecordRecallDismissMessage = {
   payload: z.infer<typeof recordRecallDismissPayloadSchema>
 }
 
+/** Pro：回填本机缺失的 embedding（限量入队）。 */
+export type BackfillMemoryEmbeddingsMessage = {
+  scope: BackgroundMessageScope
+  type: 'BACKFILL_MEMORY_EMBEDDINGS'
+}
+
 export type MemoryBackgroundMessage =
   | CaptureBookmarkMessage
   | CaptureTextExcerptMessage
@@ -129,6 +136,7 @@ export type MemoryBackgroundMessage =
   | UpdateMemoryNoteMessage
   | RecordMemoryOpenMessage
   | RecordRecallDismissMessage
+  | BackfillMemoryEmbeddingsMessage
 
 export type MemoryItemSuccessResponse = {
   ok: true
@@ -146,6 +154,12 @@ export type MemoryDismissSuccessResponse = {
   updated: number
 }
 
+export type MemoryEmbeddingBackfillSuccessResponse = {
+  ok: true
+  enqueued: number
+  scanned: number
+}
+
 export type MemoryItemErrorResponse = {
   ok: false
   errorCode: MemoryErrorCode
@@ -157,6 +171,7 @@ export type MemoryBackgroundResponse =
   | MemoryItemSuccessResponse
   | MemoryItemListSuccessResponse
   | MemoryDismissSuccessResponse
+  | MemoryEmbeddingBackfillSuccessResponse
   | MemoryItemErrorResponse
 
 export function parseCaptureBookmarkPayload(value: unknown) {

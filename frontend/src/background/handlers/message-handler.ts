@@ -14,8 +14,10 @@ import {
   handleExportLocalMemory,
   handleExportOrphanOwners,
   handleGetAuthState,
+  handleGetSubscriptionStatus,
   handleGetSyncStatus,
   handleRefreshAuthProfile,
+  handleRefreshSubscription,
   handleRestoreLatestSyncBackup,
   handleIncrementalMemorySync,
   handleSetSyncEnabled,
@@ -36,6 +38,7 @@ import {
   handleDeleteMemoryItem,
   handleGetMemoryItem,
   handleListMemoryItems,
+  handleBackfillMemoryEmbeddings,
   handleRecordMemoryOpen,
   handleRecordRecallDismiss,
   handleUpdateMemoryNote
@@ -85,6 +88,10 @@ async function dispatchBackgroundMessage(
       return handleAuthSignOut(message.payload.mode)
     case 'GET_AUTH_STATE':
       return handleGetAuthState()
+    case 'GET_SUBSCRIPTION_STATUS':
+      return handleGetSubscriptionStatus(message.payload)
+    case 'REFRESH_SUBSCRIPTION':
+      return handleRefreshSubscription()
     case 'REFRESH_AUTH_PROFILE':
       return handleRefreshAuthProfile()
     case 'GET_SYNC_STATUS':
@@ -127,6 +134,8 @@ async function dispatchBackgroundMessage(
       return handleRecordMemoryOpen(message.payload)
     case 'RECORD_RECALL_DISMISS':
       return handleRecordRecallDismiss(message.payload)
+    case 'BACKFILL_MEMORY_EMBEDDINGS':
+      return handleBackfillMemoryEmbeddings()
     case 'RECALL_WITH_CLUE':
       return handleRecallWithClue(message.payload)
     case 'GET_CHROME_BOOKMARK_IMPORT_STATUS':

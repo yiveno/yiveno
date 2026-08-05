@@ -161,6 +161,8 @@ export const RECALL_BEHAVIOR_LEXICON: RecallLexiconEntry<RecallBehaviorHint>[] =
   { surface: 'kept playing', value: 'often_opened' },
   { surface: 'played a lot', value: 'often_opened' },
   { surface: 'on repeat', value: 'often_opened' },
+  { surface: 'opened recently', value: 'often_opened' },
+  { surface: 'just opened', value: 'often_opened' },
 
   // recently_saved
   { surface: 'just bookmarked', value: 'recently_saved' },

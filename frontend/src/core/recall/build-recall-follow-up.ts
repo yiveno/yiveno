@@ -104,6 +104,16 @@ function suggestionsForSlot(slot: RecallFollowUpSlot | null): RecallFollowUpSugg
       ]
     case 'content':
       return [
+        {
+          id: 'content-recently-saved',
+          labelKey: 'popup_followup_chip_recently_saved',
+          value: 'just saved'
+        },
+        {
+          id: 'content-recently-opened',
+          labelKey: 'popup_followup_chip_recently_opened',
+          value: 'opened recently'
+        },
         { id: 'content-site', labelKey: 'popup_suggest_site' },
         { id: 'content-quote', labelKey: 'popup_suggest_quote' }
       ]
@@ -111,6 +121,16 @@ function suggestionsForSlot(slot: RecallFollowUpSlot | null): RecallFollowUpSugg
       return [{ id: 'note', labelKey: 'popup_suggest_note', value: 'my note' }]
     default:
       return [
+        {
+          id: 'recently-saved',
+          labelKey: 'popup_followup_chip_recently_saved',
+          value: 'just saved'
+        },
+        {
+          id: 'current-site',
+          labelKey: 'popup_followup_chip_current_site',
+          value: 'from this site'
+        },
         { id: 'site', labelKey: 'popup_suggest_site' },
         { id: 'quote', labelKey: 'popup_suggest_quote' },
         { id: 'note', labelKey: 'popup_suggest_note' },

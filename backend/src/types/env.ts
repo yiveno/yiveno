@@ -28,6 +28,8 @@ export type Env = Cloudflare.Env & {
   AI_ENRICHMENT_PROXY_ENABLED?: string
   /** enrichment 提议按 IP 日调用上限（默认 80） */
   AI_ENRICHMENT_DAILY_LIMIT?: string
+  /** embedding 按用户日调用上限（默认 500）；types:gen 前可写在此 */
+  AI_EMBED_DAILY_LIMIT?: string
   /**
    * 聊天补全 Provider：deepseek（默认）。未知值 → 503 ai_provider_unsupported。
    * 换厂商时加 adapter + 改此变量，业务 handler 不改。
@@ -44,4 +46,9 @@ export type Env = Cloudflare.Env & {
   CLEANUP_MEMORY_SYNC_BACKUPS_KEEP?: string
   /** subscriptions / payment_records 软删保留天数。 */
   CLEANUP_SOFT_DELETE_RETENTION_DAYS?: string
+  /**
+   * Workers AI binding（wrangler `[ai]`）。
+   * 跑 `bun run types:gen` 后也会出现在 Cloudflare.Env；此处作兜底。
+   */
+  AI?: Ai
 }

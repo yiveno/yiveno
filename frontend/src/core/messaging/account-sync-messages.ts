@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import type { AccountBinding } from '@/core/identity/local-profile'
+import type { SubscriptionSnapshot } from '@/core/identity/subscription-snapshot'
 import type { SyncPrefs } from '@/core/identity/sync-prefs'
 import type { MemoryItem } from '@/core/memory/memory-item'
 import type { BackgroundMessageScope } from '@/core/messaging/constants'
@@ -27,7 +28,8 @@ export const AccountSyncErrorCodeSchema = z.enum([
   'ACCOUNT_DELETE_FAILED', // 删除账号失败
   'LOCAL_EXPORT_FAILED', // 导出本机记忆失败
   'ORPHAN_EXPORT_FAILED', // 导出孤儿桶失败
-  'ORPHAN_CLEAR_FAILED' // 清除孤儿桶失败
+  'ORPHAN_CLEAR_FAILED', // 清除孤儿桶失败
+  'SUBSCRIPTION_STATUS_FAILED' // 拉取订阅状态失败
 ])
 
 export type AccountSyncErrorCode = z.infer<typeof AccountSyncErrorCodeSchema>
@@ -368,6 +370,39 @@ export type ExportLocalMemoryResponse =
       error?: string
     }
 
+/** 读取本机订阅快照（可顺带刷新）。 */
+export type GetSubscriptionStatusMessage = {
+  scope: BackgroundMessageScope
+  type: 'GET_SUBSCRIPTION_STATUS'
+  payload?: {
+    /** true 时强制打 Worker；默认先读缓存，无缓存再拉。 */
+    refresh?: boolean
+  }
+}
+
+export type GetSubscriptionStatusResponse =
+  | {
+      ok: true
+      snapshot: SubscriptionSnapshot
+      /** Gumroad 购买 URL（含 user_id）；未登录或无配置时 null */
+      upgradeUrl: string | null
+      /** Gumroad 管理订阅 URL */
+      manageUrl: string | null
+    }
+  | {
+      ok: false
+      errorCode: AccountSyncErrorCode
+      error?: string
+    }
+
+/** 强制从 Worker 刷新订阅快照。 */
+export type RefreshSubscriptionMessage = {
+  scope: BackgroundMessageScope
+  type: 'REFRESH_SUBSCRIPTION'
+}
+
+export type RefreshSubscriptionResponse = GetSubscriptionStatusResponse
+
 export type AccountSyncBackgroundMessage =
   | AuthSignInMessage
   | AuthSignOutMessage
@@ -385,6 +420,8 @@ export type AccountSyncBackgroundMessage =
   | DeleteCloudMemoryMessage
   | DeleteAccountMessage
   | ExportLocalMemoryMessage
+  | GetSubscriptionStatusMessage
+  | RefreshSubscriptionMessage
 
 export type AccountSyncBackgroundResponse =
   | AuthSignInResponse
@@ -403,3 +440,5 @@ export type AccountSyncBackgroundResponse =
   | DeleteCloudMemoryResponse
   | DeleteAccountResponse
   | ExportLocalMemoryResponse
+  | GetSubscriptionStatusResponse
+  | RefreshSubscriptionResponse

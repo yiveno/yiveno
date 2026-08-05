@@ -12,8 +12,10 @@ import type {
   ExportLocalMemoryResponse,
   ExportOrphanOwnersResponse,
   GetAuthStateResponse,
+  GetSubscriptionStatusResponse,
   GetSyncStatusResponse,
   RefreshAuthProfileResponse,
+  RefreshSubscriptionResponse,
   RestoreLatestSyncBackupResponse,
   AckPrivacyNoticeResponse,
   RunIncrementalMemorySyncResponse,
@@ -138,6 +140,14 @@ export async function recordRecallDismiss(
     payload
   }
   return sendBackgroundMessage<MemoryBackgroundResponse>(message)
+}
+
+/** Pro：回填本机缺失 embedding。 */
+export async function backfillMemoryEmbeddings(): Promise<MemoryBackgroundResponse> {
+  return sendBackgroundMessage<MemoryBackgroundResponse>({
+    scope: 'background',
+    type: 'BACKFILL_MEMORY_EMBEDDINGS'
+  })
 }
 
 /** 查询 Chrome 书签导入进度。 */
@@ -306,5 +316,24 @@ export async function exportLocalMemory(): Promise<ExportLocalMemoryResponse> {
   return sendBackgroundMessage<ExportLocalMemoryResponse>({
     scope: 'background',
     type: 'EXPORT_LOCAL_MEMORY'
+  })
+}
+
+/** 读取本机订阅快照（可选强制刷新）。 */
+export async function fetchSubscriptionStatus(options?: {
+  refresh?: boolean
+}): Promise<GetSubscriptionStatusResponse> {
+  return sendBackgroundMessage<GetSubscriptionStatusResponse>({
+    scope: 'background',
+    type: 'GET_SUBSCRIPTION_STATUS',
+    ...(options?.refresh ? { payload: { refresh: true } } : {})
+  })
+}
+
+/** 强制从 Worker 刷新订阅。 */
+export async function refreshSubscription(): Promise<RefreshSubscriptionResponse> {
+  return sendBackgroundMessage<RefreshSubscriptionResponse>({
+    scope: 'background',
+    type: 'REFRESH_SUBSCRIPTION'
   })
 }

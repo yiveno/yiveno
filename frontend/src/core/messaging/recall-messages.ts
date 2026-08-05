@@ -11,7 +11,9 @@ export const recallDialogContextSchema = z.object({
   /** 上一轮合并后的 ParsedRecallClue 快照。 */
   accumulated: ParsedRecallClueSchema.optional(),
   /** 本会话已否定的 MemoryItem id（硬排除）。 */
-  dismissedIds: z.array(z.string().uuid()).max(50).optional()
+  dismissedIds: z.array(z.string().uuid()).max(50).optional(),
+  /** 当前标签页域名（§7.1 同域软重排；不含路径）。 */
+  currentTabDomain: z.string().max(253).optional()
 })
 
 export type RecallDialogContext = z.infer<typeof recallDialogContextSchema>

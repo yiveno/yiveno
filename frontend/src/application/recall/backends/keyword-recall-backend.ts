@@ -6,9 +6,11 @@
  */
 
 import { memoryItemService } from '@/application/memory/memory-item-service'
+import { applyCurrentTabDomainBoost } from '@/application/recall/apply-current-tab-domain-boost'
 import { createRecallFlowTrace } from '@/application/recall/create-recall-flow-trace'
 import { getClueLlmCompleter } from '@/application/recall/clue-llm-completer-registry'
 import type { RecallBackend, RecallWithClueOptions } from '@/application/recall/recall-backend'
+import { buildRecallResult } from '@/core/recall/build-recall-result'
 import {
   excludeDismissedMemoryItems,
   mergeRecallDialogTurn
@@ -33,6 +35,27 @@ function attachDialogMeta(
   }
 }
 
+function withDomainBoost(
+  result: RecallResult,
+  displayClue: string,
+  currentTabDomain: string | undefined
+): RecallResult {
+  const matches = applyCurrentTabDomainBoost(
+    [...(result.topPick ? [result.topPick] : []), ...result.alsoPossible],
+    currentTabDomain
+  )
+  if (matches.length === 0) {
+    return result
+  }
+  matches.sort((a, b) => {
+    if (b.score !== a.score) {
+      return b.score - a.score
+    }
+    return b.item.updatedAt.localeCompare(a.item.updatedAt)
+  })
+  return buildRecallResult(displayClue, matches)
+}
+
 export class KeywordRecallBackend implements RecallBackend {
   async recallWithClue(clue: string, options?: RecallWithClueOptions): Promise<RecallResult> {
     const trace = createRecallFlowTrace()
@@ -42,6 +65,7 @@ export class KeywordRecallBackend implements RecallBackend {
     const priorUserUtterances = context?.priorUserUtterances ?? []
     const accumulated = context?.accumulated ?? null
     const dismissedIds = context?.dismissedIds ?? []
+    const currentTabDomain = context?.currentTabDomain
 
     if (!normalizedClue) {
       trace('info', 'Recall：空线索，直接 no_match')
@@ -58,7 +82,8 @@ export class KeywordRecallBackend implements RecallBackend {
       scanLimit: RECALL_SCAN_LIMIT,
       priorCount: priorUserUtterances.length,
       hasAccumulated: Boolean(accumulated),
-      dismissedCount: dismissedIds.length
+      dismissedCount: dismissedIds.length,
+      currentTabDomain: currentTabDomain ?? null
     })
 
     const complete = getClueLlmCompleter() ?? undefined
@@ -109,10 +134,14 @@ export class KeywordRecallBackend implements RecallBackend {
       afterDismissExclude: items.length
     })
 
-    let result = recallByKeywordWithParsedClue(items, normalizedClue, {
-      candidateLimit: 6,
-      parsed: merge.merged
-    })
+    let result = withDomainBoost(
+      recallByKeywordWithParsedClue(items, normalizedClue, {
+        candidateLimit: 6,
+        parsed: merge.merged
+      }),
+      normalizedClue,
+      currentTabDomain
+    )
 
     const canEscalate =
       result.outcome === 'no_match' &&
@@ -138,10 +167,14 @@ export class KeywordRecallBackend implements RecallBackend {
           priorUserUtterances,
           currentUtterance: normalizedClue
         })
-        result = recallByKeywordWithParsedClue(items, normalizedClue, {
-          candidateLimit: 6,
-          parsed: merge.merged
-        })
+        result = withDomainBoost(
+          recallByKeywordWithParsedClue(items, normalizedClue, {
+            candidateLimit: 6,
+            parsed: merge.merged
+          }),
+          normalizedClue,
+          currentTabDomain
+        )
         trace('info', 'Recall：升 semantic 后重搜', {
           understandSource: understood.source,
           effectiveClue: merge.effectiveRaw,

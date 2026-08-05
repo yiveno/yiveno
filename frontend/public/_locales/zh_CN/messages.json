@@ -698,6 +698,79 @@
   "settings_error_orphan_clear": {
     "message": "清除历史账号残留失败"
   },
+  "settings_error_subscription_status": {
+    "message": "无法读取订阅状态"
+  },
+  "settings_subscription_title": {
+    "message": "方案"
+  },
+  "settings_subscription_tier_free": {
+    "message": "免费"
+  },
+  "settings_subscription_tier_pro": {
+    "message": "Pro"
+  },
+  "settings_subscription_period_end": {
+    "message": "续费/到期 $DATE$",
+    "placeholders": {
+      "DATE": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_subscription_upgrade": {
+    "message": "升级 Pro"
+  },
+  "settings_subscription_manage": {
+    "message": "管理订阅"
+  },
+  "settings_subscription_refresh": {
+    "message": "刷新方案"
+  },
+  "settings_subscription_refreshing": {
+    "message": "刷新中…"
+  },
+  "settings_subscription_sign_in_hint": {
+    "message": "登录后可查看 Pro 状态，并解锁 Hybrid 找回。"
+  },
+  "settings_subscription_hybrid_hint": {
+    "message": "Pro 解锁语义 Hybrid 找回（关键词 + embedding）。Free 仍仅关键词 Filter。"
+  },
+  "settings_ai_embedding_hint": {
+    "message": "Pro 且开启 AI 时，会把记忆中的短文本发到 Yiveno Worker 生成 embedding。向量仅存本机；本版本云同步不上传向量。"
+  },
+  "settings_embedding_backfill": {
+    "message": "重建语义索引"
+  },
+  "settings_embedding_backfill_working": {
+    "message": "索引中…"
+  },
+  "settings_embedding_backfill_done": {
+    "message": "已索引 $COUNT$ 条",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_embedding_backfill_pro_only": {
+    "message": "重建语义索引需要有效 Pro 订阅。"
+  },
+  "popup_followup_chip_recently_opened": {
+    "message": "刚打开过的"
+  },
+  "popup_followup_chip_recently_saved": {
+    "message": "刚存的"
+  },
+  "popup_followup_chip_selection_prefill": {
+    "message": "用刚选中的文字"
+  },
+  "popup_followup_chip_current_site": {
+    "message": "跟当前站有关"
+  },
+  "pro_required_for_hybrid": {
+    "message": "Hybrid 找回需要 Pro"
+  },
   "settings_orphan_title": {
     "message": "本机还有其它账号的残留"
   },

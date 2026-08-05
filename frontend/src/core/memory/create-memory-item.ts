@@ -47,6 +47,8 @@ function buildClues(
     textExcerpt: base?.textExcerpt ?? defaults.textExcerpt,
     summary: base?.summary ?? defaults.summary,
     embedding: base?.embedding ?? defaults.embedding,
+    embeddingModel: base?.embeddingModel ?? defaults.embeddingModel,
+    embeddingDim: base?.embeddingDim ?? defaults.embeddingDim,
     sourceUrl: base?.sourceUrl ?? defaults.sourceUrl,
     domain: base?.domain ?? defaults.domain,
     captureEntry: base?.captureEntry ?? captureEntry ?? defaults.captureEntry,

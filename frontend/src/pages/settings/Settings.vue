@@ -24,9 +24,12 @@ import {
   exportOrphanOwners,
   fetchAuthState,
   fetchExtensionCommands,
+  fetchSubscriptionStatus,
   fetchSyncStatus,
   fetchUserSettings,
   openChromeShortcutsPage,
+  backfillMemoryEmbeddings,
+  refreshSubscription,
   restoreLatestSyncBackup,
   setSyncEnabled,
   runIncrementalMemorySync,
@@ -37,6 +40,7 @@ import {
   tCommandsError,
   tSettingsError
 } from '@/infrastructure/i18n/background-error'
+import { tMemoryError } from '@/infrastructure/i18n/memory-error'
 import { t } from '@/infrastructure/i18n/t'
 import { getWebsiteBaseUrl } from '@/infrastructure/browser/website-page'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
@@ -68,10 +72,19 @@ const settingsError = ref('')
 const savingSelectionToolbar = ref(false)
 const savingChromeBookmarkIngest = ref(false)
 const savingAiFeatures = ref(false)
+const embeddingBackfillWorking = ref(false)
+const embeddingBackfillMessage = ref('')
 
 const signedIn = ref(false)
 const accountEmail = ref('')
 const accountDisplayName = ref('')
+const subscriptionIsPro = ref(false)
+const subscriptionTierLabel = ref('')
+const subscriptionPeriodEnd = ref<string | null>(null)
+const subscriptionUpgradeUrl = ref<string | null>(null)
+const subscriptionManageUrl = ref<string | null>(null)
+const subscriptionError = ref('')
+const refreshingSubscription = ref(false)
 
 const syncEnabled = ref(false)
 const syncLocalCount = ref(0)
@@ -309,6 +322,31 @@ async function handleAiFeaturesToggle(event: Event) {
   }
 }
 
+/** Pro：将缺 embedding 的本机记忆入队回填。 */
+async function handleEmbeddingBackfill() {
+  embeddingBackfillWorking.value = true
+  embeddingBackfillMessage.value = ''
+  settingsError.value = ''
+  try {
+    const response = await backfillMemoryEmbeddings()
+    if (!response.ok) {
+      settingsError.value = tMemoryError(response.errorCode)
+      return
+    }
+    if (!('enqueued' in response)) {
+      settingsError.value = t('settings_error_update')
+      return
+    }
+    embeddingBackfillMessage.value = t('settings_embedding_backfill_done', [
+      String(response.enqueued)
+    ])
+  } catch {
+    settingsError.value = t('settings_error_update')
+  } finally {
+    embeddingBackfillWorking.value = false
+  }
+}
+
 async function refreshSyncStatus() {
   syncError.value = ''
   const response = await fetchSyncStatus()
@@ -345,9 +383,51 @@ async function loadSyncContext() {
 
     // 未登录也要盘点孤儿桶（换号退出后残留仍可见）
     await refreshSyncStatus()
+    await loadSubscriptionStatus()
   } catch {
     syncError.value = t('settings_error_auth_state')
   }
+}
+
+/** 加载订阅快照（Pro / Free + Gumroad 链接）。 */
+async function loadSubscriptionStatus(forceRefresh = false): Promise<void> {
+  subscriptionError.value = ''
+  try {
+    const response = await fetchSubscriptionStatus(forceRefresh ? { refresh: true } : undefined)
+    if (!response.ok) {
+      subscriptionError.value = tAccountSyncError(response.errorCode)
+      return
+    }
+    subscriptionIsPro.value = response.snapshot.isPro
+    subscriptionTierLabel.value = response.snapshot.isPro
+      ? t('settings_subscription_tier_pro')
+      : t('settings_subscription_tier_free')
+    subscriptionPeriodEnd.value = response.snapshot.currentPeriodEnd
+    subscriptionUpgradeUrl.value = response.upgradeUrl
+    subscriptionManageUrl.value = response.manageUrl
+  } catch {
+    subscriptionError.value = t('settings_error_subscription_status')
+  }
+}
+
+async function handleRefreshSubscription(): Promise<void> {
+  if (refreshingSubscription.value) {
+    return
+  }
+  refreshingSubscription.value = true
+  try {
+    await refreshSubscription()
+    await loadSubscriptionStatus()
+  } finally {
+    refreshingSubscription.value = false
+  }
+}
+
+function openExternalUrl(url: string | null): void {
+  if (!url) {
+    return
+  }
+  void chrome.tabs.create({ url })
 }
 
 /** 下载孤儿桶 JSON 备份。 */
@@ -921,6 +1001,62 @@ onUnmounted(() => {
               <template v-if="accountDisplayName && accountEmail"> · {{ accountEmail }}</template>
             </p>
 
+            <div class="settings-subscription" aria-labelledby="settings-subscription-heading">
+              <p id="settings-subscription-heading" class="settings-toggle-title">
+                {{ t('settings_subscription_title') }}
+              </p>
+              <p class="settings-section-copy">{{ t('settings_subscription_hybrid_hint') }}</p>
+              <p v-if="!signedIn" class="settings-status">
+                {{ t('settings_subscription_sign_in_hint') }}
+              </p>
+              <template v-else>
+                <p class="settings-status">
+                  <strong>{{ subscriptionTierLabel }}</strong>
+                  <template v-if="subscriptionPeriodEnd">
+                    ·
+                    {{
+                      t('settings_subscription_period_end', [
+                        new Date(subscriptionPeriodEnd).toLocaleDateString()
+                      ])
+                    }}
+                  </template>
+                </p>
+                <div class="settings-actions settings-actions--spaced">
+                  <md-outlined-button
+                    v-if="!subscriptionIsPro && subscriptionUpgradeUrl"
+                    type="button"
+                    :title="t('settings_subscription_upgrade')"
+                    @click="openExternalUrl(subscriptionUpgradeUrl)"
+                  >
+                    {{ t('settings_subscription_upgrade') }}
+                  </md-outlined-button>
+                  <md-outlined-button
+                    v-if="subscriptionIsPro && subscriptionManageUrl"
+                    type="button"
+                    :title="t('settings_subscription_manage')"
+                    @click="openExternalUrl(subscriptionManageUrl)"
+                  >
+                    {{ t('settings_subscription_manage') }}
+                  </md-outlined-button>
+                  <md-outlined-button
+                    type="button"
+                    :disabled="refreshingSubscription"
+                    :title="t('settings_subscription_refresh')"
+                    @click="handleRefreshSubscription"
+                  >
+                    {{
+                      refreshingSubscription
+                        ? t('settings_subscription_refreshing')
+                        : t('settings_subscription_refresh')
+                    }}
+                  </md-outlined-button>
+                </div>
+              </template>
+              <p v-if="subscriptionError" class="settings-error" role="alert">
+                {{ subscriptionError }}
+              </p>
+            </div>
+
             <div v-if="signedIn" class="settings-sync-restore">
               <p class="settings-section-copy">{{ t('settings_sync_restore_backup_hint') }}</p>
               <div class="settings-actions">
@@ -1151,6 +1287,29 @@ onUnmounted(() => {
               <li>{{ t('settings_ai_bullet_enrichment') }}</li>
               <li>{{ t('settings_ai_bullet_boundary') }}</li>
             </ul>
+            <p class="settings-section-copy">{{ t('settings_ai_embedding_hint') }}</p>
+            <div class="settings-actions">
+              <md-outlined-button
+                type="button"
+                :disabled="
+                  embeddingBackfillWorking ||
+                  !subscriptionIsPro ||
+                  !aiFeaturesEnabled ||
+                  settingsState !== 'ready'
+                "
+                :title="t('settings_embedding_backfill')"
+                @click="handleEmbeddingBackfill"
+              >
+                {{
+                  embeddingBackfillWorking
+                    ? t('settings_embedding_backfill_working')
+                    : t('settings_embedding_backfill')
+                }}
+              </md-outlined-button>
+            </div>
+            <p v-if="embeddingBackfillMessage" class="settings-section-copy" role="status">
+              {{ embeddingBackfillMessage }}
+            </p>
             <a
               class="settings-privacy-policy-link"
               :href="privacyPolicyUrl"

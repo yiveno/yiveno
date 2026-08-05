@@ -1,39 +1,34 @@
 /**
  * Recall 应用服务（UI/消息入口）。
  *
- * 将实际 Recall 逻辑下沉为 RecallBackend，使未来接入 Hybrid/embedding/索引时
- * 只需要新增后端与索引实现，而不是在 UI/handler/core 主链路里到处分支。
+ * Pro + 有效订阅 → Hybrid；否则关键词。每次调用按本地快照选型。
  */
 import { HybridRecallBackend } from '@/application/recall/backends/hybrid-recall-backend'
 import { KeywordRecallBackend } from '@/application/recall/backends/keyword-recall-backend'
 import type { RecallBackend, RecallWithClueOptions } from '@/application/recall/recall-backend'
 import type { RecallResult } from '@/core/recall/recall-result'
+import { isProActiveFromSnapshot } from '@/infrastructure/identity/subscription-service'
+import { flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 
-/** Recall 后端模式（当前默认 keyword）。 */
-type RecallBackendMode =
-  | 'keyword' // 关键词 Filter
-  | 'hybrid' // 混合（未默认启用）
+const keywordBackend = new KeywordRecallBackend()
+const hybridBackend = new HybridRecallBackend()
 
-const RECALL_BACKEND_MODE: RecallBackendMode = 'keyword'
-
-function createRecallBackend(): RecallBackend {
-  switch (RECALL_BACKEND_MODE) {
-    case 'hybrid':
-      return new HybridRecallBackend()
-    case 'keyword':
-    default:
-      // 当前主链路：KeywordRecallBackend（保持与旧逻辑一致）
-      return new KeywordRecallBackend()
+async function resolveRecallBackend(): Promise<RecallBackend> {
+  if (await isProActiveFromSnapshot()) {
+    return hybridBackend
   }
+  return keywordBackend
 }
 
 export class RecallService {
-  constructor(private readonly backend: RecallBackend) {}
-
   /** 根据模糊线索在本机 MemoryItem 中找回最可能结果（可选多轮 context）。 */
   async recallWithClue(clue: string, options?: RecallWithClueOptions): Promise<RecallResult> {
-    return this.backend.recallWithClue(clue, options)
+    const startedAt = flowStart('Recall', '选型后端')
+    const backend = await resolveRecallBackend()
+    const mode = backend === hybridBackend ? 'hybrid' : 'keyword'
+    flowOk('Recall', '选型后端', startedAt, { mode })
+    return backend.recallWithClue(clue, options)
   }
 }
 
-export const recallService = new RecallService(createRecallBackend())
+export const recallService = new RecallService()

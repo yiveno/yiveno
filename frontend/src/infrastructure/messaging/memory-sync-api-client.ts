@@ -10,6 +10,23 @@ function getApiBaseUrl(): string {
   return fromEnv ? fromEnv.replace(/\/$/, '') : 'http://localhost:8787'
 }
 
+/**
+ * v1：embedding 仅本机；上云前剥离，避免大向量同步与跨端模型不一致。
+ * pull 回来的条目若无向量，由本机 Pro 异步回填。
+ */
+export function stripLocalOnlyClueFieldsForCloud(item: MemoryItem): MemoryItem {
+  const {
+    embedding: _embedding,
+    embeddingModel: _model,
+    embeddingDim: _dim,
+    ...restClues
+  } = item.clues
+  return {
+    ...item,
+    clues: restClues
+  }
+}
+
 interface SyncStatusData {
   remoteCount: number
   latestUpdatedAt: string | null
@@ -115,7 +132,7 @@ export async function pushRemoteMemoryItems(
     const batchSize = 2000
     let written = 0
     for (let i = 0; i < items.length; i += batchSize) {
-      const slice = items.slice(i, i + batchSize)
+      const slice = items.slice(i, i + batchSize).map(stripLocalOnlyClueFieldsForCloud)
       const data = await memorySyncFetch<{ written: number }>('/push', accessToken, {
         method: 'POST',
         body: JSON.stringify({ items: slice })
@@ -141,13 +158,14 @@ export async function replaceRemoteWithLocalItems(
     allowDestructiveShrink: options.allowDestructiveShrink === true
   })
   try {
+    const cloudItems = items.map(stripLocalOnlyClueFieldsForCloud)
     const data = await memorySyncFetch<{ backupId: string; written: number }>(
       '/replace',
       accessToken,
       {
         method: 'POST',
         body: JSON.stringify({
-          items,
+          items: cloudItems,
           ...(options.allowDestructiveShrink === true ? { allowDestructiveShrink: true } : {})
         })
       }

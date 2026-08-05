@@ -698,6 +698,79 @@
   "settings_error_orphan_clear": {
     "message": "Could not clear leftover account data"
   },
+  "settings_error_subscription_status": {
+    "message": "Couldn’t load subscription status"
+  },
+  "settings_subscription_title": {
+    "message": "Plan"
+  },
+  "settings_subscription_tier_free": {
+    "message": "Free"
+  },
+  "settings_subscription_tier_pro": {
+    "message": "Pro"
+  },
+  "settings_subscription_period_end": {
+    "message": "Renews / ends $DATE$",
+    "placeholders": {
+      "DATE": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_subscription_upgrade": {
+    "message": "Upgrade to Pro"
+  },
+  "settings_subscription_manage": {
+    "message": "Manage subscription"
+  },
+  "settings_subscription_refresh": {
+    "message": "Refresh plan"
+  },
+  "settings_subscription_refreshing": {
+    "message": "Refreshing…"
+  },
+  "settings_subscription_sign_in_hint": {
+    "message": "Sign in to check Pro status and unlock Hybrid recall."
+  },
+  "settings_subscription_hybrid_hint": {
+    "message": "Pro unlocks semantic Hybrid recall (keyword + embedding). Free stays on keyword Filter."
+  },
+  "settings_ai_embedding_hint": {
+    "message": "When Pro and AI are on, short text from your memories is sent to the Yiveno Worker to build embeddings. Embeddings stay on this device; cloud sync does not upload vectors in this release."
+  },
+  "settings_embedding_backfill": {
+    "message": "Rebuild semantic index"
+  },
+  "settings_embedding_backfill_working": {
+    "message": "Indexing…"
+  },
+  "settings_embedding_backfill_done": {
+    "message": "Indexed $COUNT$ items",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_embedding_backfill_pro_only": {
+    "message": "Semantic index rebuild requires an active Pro plan."
+  },
+  "popup_followup_chip_recently_opened": {
+    "message": "Recently opened"
+  },
+  "popup_followup_chip_recently_saved": {
+    "message": "Recently saved"
+  },
+  "popup_followup_chip_selection_prefill": {
+    "message": "Use selected text"
+  },
+  "popup_followup_chip_current_site": {
+    "message": "This site"
+  },
+  "pro_required_for_hybrid": {
+    "message": "Hybrid recall needs Pro"
+  },
   "settings_orphan_title": {
     "message": "Leftover data from other accounts"
   },

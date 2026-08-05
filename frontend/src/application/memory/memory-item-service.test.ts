@@ -4,6 +4,10 @@ vi.mock('@/application/memory/schedule-async-memory-llm-enrichment', () => ({
   scheduleAsyncMemoryLlmEnrichment: vi.fn()
 }))
 
+vi.mock('@/application/memory/schedule-async-memory-embedding', () => ({
+  scheduleAsyncMemoryEmbedding: vi.fn()
+}))
+
 vi.mock('@/infrastructure/indexeddb/memory-item-repository', () => ({
   memoryItemRepository: {
     createBookmark: vi.fn(),

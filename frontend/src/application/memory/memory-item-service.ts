@@ -3,6 +3,7 @@
  * Background 通过此层访问持久化，UI 通过 sendMessage 间接调用。
  */
 
+import { scheduleAsyncMemoryEmbedding } from '@/application/memory/schedule-async-memory-embedding'
 import { scheduleAsyncMemoryLlmEnrichment } from '@/application/memory/schedule-async-memory-llm-enrichment'
 import type { CreateBookmarkInput, CreateTextExcerptInput } from '@/core/memory/create-memory-item'
 import type { MemoryItem } from '@/core/memory/memory-item'
@@ -15,16 +16,17 @@ import {
 export class MemoryItemService {
   constructor(private readonly repository: MemoryItemRepository = memoryItemRepository) {}
 
-  /** 捕获当前页为 Bookmark MemoryItem；落库后异步稀疏 LLM enrichment。 */
+  /** 捕获当前页为 Bookmark MemoryItem；落库后异步稀疏 LLM enrichment + Pro embedding。 */
   async captureBookmark(input: CreateBookmarkInput): Promise<MemoryItem> {
     const item = await this.repository.createBookmark(input)
     scheduleAsyncMemoryLlmEnrichment(item.id)
+    scheduleAsyncMemoryEmbedding(item.id)
     return item
   }
 
   /**
    * 从 Chrome 书签 upsert Bookmark MemoryItem。
-   * 仅新建时调度异步 LLM（更新标题/URL 不重复烧配额；bulk 走 repository 不经此层）。
+   * 仅新建时调度异步 LLM / embedding（更新标题/URL 不重复烧配额；bulk 走 repository 不经此层）。
    */
   async upsertBookmarkFromChrome(input: CreateBookmarkInput): Promise<MemoryItem> {
     const chromeBookmarkId = input.payload.chromeBookmarkId?.trim()
@@ -34,14 +36,16 @@ export class MemoryItemService {
     const item = await this.repository.upsertBookmarkFromChrome(input)
     if (!existed) {
       scheduleAsyncMemoryLlmEnrichment(item.id)
+      scheduleAsyncMemoryEmbedding(item.id)
     }
     return item
   }
 
-  /** 捕获选中文本为 Text Excerpt MemoryItem；落库后异步稀疏 LLM enrichment。 */
+  /** 捕获选中文本为 Text Excerpt MemoryItem；落库后异步稀疏 LLM enrichment + Pro embedding。 */
   async captureTextExcerpt(input: CreateTextExcerptInput): Promise<MemoryItem> {
     const item = await this.repository.createTextExcerpt(input)
     scheduleAsyncMemoryLlmEnrichment(item.id)
+    scheduleAsyncMemoryEmbedding(item.id)
     return item
   }
 

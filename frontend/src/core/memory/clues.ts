@@ -10,6 +10,10 @@ export const MemoryCluesSchema = z.object({
   keywords: z.array(z.string()).default([]),
   entities: z.array(z.string()).default([]),
   embedding: z.array(z.number()).optional(),
+  /** 生成 embedding 所用模型 id（如 @cf/baai/bge-m3） */
+  embeddingModel: z.string().optional(),
+  /** embedding 维度 */
+  embeddingDim: z.number().int().positive().optional(),
   sourceUrl: z.string().url().optional(),
   domain: z.string().optional(),
   captureEntry: CaptureEntrySchema.optional(),

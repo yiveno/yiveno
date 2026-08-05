@@ -22,6 +22,8 @@ const MemoryCluesSchema = z.object({
   keywords: z.array(z.string()).default([]),
   entities: z.array(z.string()).default([]),
   embedding: z.array(z.number()).optional(),
+  embeddingModel: z.string().optional(),
+  embeddingDim: z.number().int().positive().optional(),
   sourceUrl: z.string().url().optional(),
   domain: z.string().optional(),
   captureEntry: CaptureEntrySchema.optional(),
