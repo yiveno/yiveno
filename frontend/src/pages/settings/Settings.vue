@@ -419,6 +419,8 @@ async function handleRefreshSubscription(): Promise<void> {
     await refreshSubscription()
     await loadSubscriptionStatus()
   } finally {
+    // busy 复位与 await 无数据竞争
+    // eslint-disable-next-line require-atomic-updates -- finally 仅复位 loading 标志
     refreshingSubscription.value = false
   }
 }
@@ -427,7 +429,7 @@ function openExternalUrl(url: string | null): void {
   if (!url) {
     return
   }
-  void chrome.tabs.create({ url })
+  window.open(url, '_blank', 'noopener,noreferrer')
 }
 
 /** 下载孤儿桶 JSON 备份。 */
@@ -936,7 +938,7 @@ onUnmounted(() => {
                 "
                 @click="handleOpenShortcutsPage"
               >
-                <MaterialSymbolIcon name="open_in_new" size="18px" slot="icon" />
+                <MaterialSymbolIcon slot="icon" name="open_in_new" size="18px" />
                 {{
                   openingShortcuts ? t('settings_opening_shortcuts') : t('settings_open_shortcuts')
                 }}
