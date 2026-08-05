@@ -15,15 +15,13 @@ function getApiBaseUrl(): string {
  * pull 回来的条目若无向量，由本机 Pro 异步回填。
  */
 export function stripLocalOnlyClueFieldsForCloud(item: MemoryItem): MemoryItem {
-  const {
-    embedding: _embedding,
-    embeddingModel: _model,
-    embeddingDim: _dim,
-    ...restClues
-  } = item.clues
+  const clues = { ...item.clues }
+  delete clues.embedding
+  delete clues.embeddingModel
+  delete clues.embeddingDim
   return {
     ...item,
-    clues: restClues
+    clues
   }
 }
 
