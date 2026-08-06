@@ -32,6 +32,8 @@
 - `AUTH_MICROSOFT_TOKEN_URL`
 - `AUTH_MICROSOFT_USERINFO_URL`
 - `GUMROAD_SELLER_ID`
+- `GUMROAD_WEBHOOK_TOKEN`（Ping URL `?token=`；与 seller_id 双校验）
+- `GUMROAD_ACCESS_TOKEN`（Gumroad API：Refresh/Cron 对账；生产必配）
 - `VITE_GUMROAD_PRODUCT_URL`
 - `VITE_GUMROAD_MANAGE_URL`
 - `REDIRECT_URI_ALLOWLIST`
@@ -136,22 +138,24 @@ bun run env:check:prod
 ## 当前 Gumroad 规则
 
 - **结账价权威在 Gumroad**；Yiveno 不拉价 API、不在代码里当计费源。官网展示锚点可写 $5.99/月 · $59/年，改价优先改 Gumroad，再视需要改展示文案。
+- **权益投影**在 Supabase `subscriptions`（非第二账本）；对账与门禁见产品文档 **§A.3.2**（TTL 24h / grace 48h / Gumroad 非 alive 立刻降级）。
 - 前端购买入口只依赖 `VITE_GUMROAD_PRODUCT_URL`
 - 官网购买入口映射为 `PUBLIC_GUMROAD_PRODUCT_URL`（同源自 `VITE_GUMROAD_PRODUCT_URL`）
-- 管理页：`VITE_GUMROAD_MANAGE_URL` / `PUBLIC_GUMROAD_MANAGE_URL`（默认 Gumroad subscriptions）
+- 管理页：`VITE_GUMROAD_MANAGE_URL` / `PUBLIC_GUMROAD_MANAGE_URL`（默认买家 Library：`https://gumroad.com/library`；单笔「Manage membership」以收据邮件链接为准。`/subscriptions` 已 404，勿再用）
 - 月付/年付在 Gumroad 产品侧配置；扩展只拼 `custom_fields[user_id]` + `tier=pro`
-- 后端 webhook 校验依赖 `GUMROAD_SELLER_ID`
-- 不再依赖 `GUMROAD_WEBHOOK_SECRET`
+- 后端 webhook：`GUMROAD_SELLER_ID` + `GUMROAD_WEBHOOK_TOKEN`（Ping URL 查询参数 `token`）
+- 对账 API：`GUMROAD_ACCESS_TOKEN`（**不是** Settings → Applications「已授权应用」页）。应在 Settings → **Advanced** 页**滚到 Ping 下方**找「Create application / Applications」表单；建应用后点 **Generate access token**。也可试直达：`https://gumroad.com/oauth/applications`。官方：[Create an application for the API](https://gumroad.com/help/article/280-create-application-api)。若 UI 无入口，暂可空着（门禁退化为投影+硬门槛；生产仍应配齐）
 - 对外档位：Free + **仅 Pro**（Power User / Team / `premium` 预留不售）
-- 云同步 / 托管 LLM / Hybrid 均需有效 Pro
+- 云同步 / 托管 LLM / Hybrid 均需有效 Pro（服务端门禁，不只看扩展本地 snapshot）
+- **禁止**生产手工授 Pro；开发假数据须 `test-` 前缀（门禁会拒绝）或短 `period_end`
 
 ### Gumroad 上线检查清单
 
-1. [ ] Pro 产品已建（月/年）；Ping → `https://api.yiveno.com/api/gumroad/webhook`
-2. [ ] `.env.*.local` 已设 `GUMROAD_SELLER_ID`、`VITE_GUMROAD_PRODUCT_URL`（及可选 `VITE_GUMROAD_MANAGE_URL`）
-3. [ ] `bun run env:sync:prod && bun run env:check:prod`（website 出现 `PUBLIC_GUMROAD_*`）
-4. [ ] 测试购买：webhook 写库 → 扩展 Settings 刷新 → `isPro` → Hybrid/同步可用
-5. [ ] 取消或过期后权益收回
+1. [ ] Pro 产品已建（月/年）；Ping → `https://api.yiveno.com/api/gumroad/webhook?token=…`
+2. [ ] `.env.*.local` 已设 `GUMROAD_SELLER_ID`、`GUMROAD_WEBHOOK_TOKEN`、`GUMROAD_ACCESS_TOKEN`、`VITE_GUMROAD_PRODUCT_URL`（及可选 `VITE_GUMROAD_MANAGE_URL`）
+3. [ ] `bun run env:sync:prod && bun run env:check:prod`（website 出现 `PUBLIC_GUMROAD_*`）；Worker Secrets 含上述 Gumroad 三项
+4. [ ] 测试购买：webhook 写库（`verified`）→ 扩展 Settings 刷新（对账）→ `isPro` → Hybrid/同步可用
+5. [ ] Gumroad ended → 刷新或 Cron 后立刻收回；库内 `test-` 行不得为 Pro
 
 ## 禁止事项
 

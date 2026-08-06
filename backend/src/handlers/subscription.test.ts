@@ -9,7 +9,10 @@ const baseSub: Subscription = {
   tier: 'pro',
   current_period_start: '2026-08-01T00:00:00.000Z',
   current_period_end: '2026-09-01T00:00:00.000Z',
-  cancel_at_period_end: false
+  cancel_at_period_end: false,
+  verification_status: 'verified',
+  last_verified_at: new Date().toISOString(),
+  gumroad_subscription_id: 'sub_abc12345'
 }
 
 describe('toSubscriptionStatusPayload', () => {
@@ -38,9 +41,16 @@ describe('handleGetSubscriptionStatus', () => {
     jest.restoreAllMocks()
   })
 
-  test('聚合 getUserSubscription + isActiveProUser', async () => {
+  test('默认强制对账后聚合门禁', async () => {
+    const reconcile = await import('../services/gumroad/reconcile')
     const supabase = await import('../data-access/supabase')
     const requirePro = await import('../services/ai/require-pro-user')
+    jest.spyOn(reconcile, 'reconcileUserSubscription').mockResolvedValue({
+      isPro: true,
+      apiFailed: false,
+      subscription: baseSub,
+      reason: 'alive'
+    })
     jest.spyOn(supabase, 'getUserSubscription').mockResolvedValue(baseSub)
     jest.spyOn(requirePro, 'isActiveProUser').mockResolvedValue(true)
 

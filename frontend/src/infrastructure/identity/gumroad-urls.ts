@@ -9,7 +9,8 @@ export function getGumroadProductUrl(): string | null {
 
 export function getGumroadManageUrl(): string | null {
   const raw = import.meta.env.VITE_GUMROAD_MANAGE_URL?.trim()
-  return raw ? raw : null
+  // 未配置时落到买家 Library（Gumroad 当前公开入口；/subscriptions 已 404）
+  return raw ? raw : 'https://gumroad.com/library'
 }
 
 /**

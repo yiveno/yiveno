@@ -21,7 +21,7 @@ const PROFILE_DEFAULTS = {
     VITE_API_BASE_URL: 'http://localhost:8787',
     VITE_CLOUDFLARE_WORKER_URL: 'http://localhost:8787',
     PUBLIC_API_BASE_URL: 'http://localhost:8787',
-    VITE_GUMROAD_MANAGE_URL: 'https://app.gumroad.com/subscriptions',
+    VITE_GUMROAD_MANAGE_URL: 'https://gumroad.com/library',
     VITE_RUNTIME_ENV: 'dev'
   },
   production: {
@@ -30,7 +30,7 @@ const PROFILE_DEFAULTS = {
     VITE_API_BASE_URL: 'https://api.yiveno.com',
     VITE_CLOUDFLARE_WORKER_URL: 'https://api.yiveno.com',
     PUBLIC_API_BASE_URL: 'https://api.yiveno.com',
-    VITE_GUMROAD_MANAGE_URL: 'https://app.gumroad.com/subscriptions',
+    VITE_GUMROAD_MANAGE_URL: 'https://gumroad.com/library',
     VITE_RUNTIME_ENV: 'prod'
   }
 }
@@ -47,6 +47,8 @@ const SHARED_OPTIONAL_KEYS = [
   'AUTH_MICROSOFT_TOKEN_URL',
   'AUTH_MICROSOFT_USERINFO_URL',
   'GUMROAD_SELLER_ID',
+  'GUMROAD_WEBHOOK_TOKEN',
+  'GUMROAD_ACCESS_TOKEN',
   'VITE_GUMROAD_PRODUCT_URL',
   'VITE_GUMROAD_MANAGE_URL',
   'REDIRECT_URI_ALLOWLIST',
@@ -81,6 +83,8 @@ const BACKEND_KEYS = [
   'AUTH_MICROSOFT_TOKEN_URL',
   'AUTH_MICROSOFT_USERINFO_URL',
   'GUMROAD_SELLER_ID',
+  'GUMROAD_WEBHOOK_TOKEN',
+  'GUMROAD_ACCESS_TOKEN',
   'REDIRECT_URI_ALLOWLIST',
   'DEEPSEEK_API_KEY'
 ]
@@ -114,6 +118,8 @@ const LEGACY_SHARED_FALLBACK_KEYS = [
   'AUTH_MICROSOFT_TOKEN_URL',
   'AUTH_MICROSOFT_USERINFO_URL',
   'GUMROAD_SELLER_ID',
+  'GUMROAD_WEBHOOK_TOKEN',
+  'GUMROAD_ACCESS_TOKEN',
   'VITE_GUMROAD_PRODUCT_URL',
   'VITE_GUMROAD_MANAGE_URL',
   'REDIRECT_URI_ALLOWLIST'
@@ -346,7 +352,12 @@ function getMissing(env) {
       'AUTH_MICROSOFT_CLIENT_ID',
       'AUTH_MICROSOFT_CLIENT_SECRET'
     ].filter(key => !env[key]),
-    gumroad: ['VITE_GUMROAD_PRODUCT_URL', 'GUMROAD_SELLER_ID'].filter(key => !env[key])
+    gumroad: [
+      'VITE_GUMROAD_PRODUCT_URL',
+      'GUMROAD_SELLER_ID',
+      'GUMROAD_WEBHOOK_TOKEN',
+      'GUMROAD_ACCESS_TOKEN'
+    ].filter(key => !env[key])
   }
 }
 

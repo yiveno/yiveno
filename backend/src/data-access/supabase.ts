@@ -134,7 +134,11 @@ export async function upsertSubscription(
       current_period_start: subscription.current_period_start,
       current_period_end: subscription.current_period_end,
       cancel_at_period_end: subscription.cancel_at_period_end || false,
-      cancelled_at: subscription.cancelled_at || null
+      cancelled_at: subscription.cancelled_at || null,
+      source: subscription.source ?? 'gumroad_webhook',
+      last_verified_at: subscription.last_verified_at ?? null,
+      verification_status: subscription.verification_status ?? 'unverified',
+      gumroad_subscriber_status: subscription.gumroad_subscriber_status ?? null
     }
 
     let result: Subscription | null = null
@@ -231,5 +235,115 @@ export async function insertPaymentRecord(
   } catch (err) {
     logErrorMessage('[Supabase] 插入支付记录异常', { detail: toLogError(err) })
     throw err
+  }
+}
+
+export type GumroadEventInsert = {
+  idempotency_key: string
+  notification_type?: string | null
+  gumroad_subscription_id?: string | null
+  gumroad_order_id?: string | null
+  user_id?: string | null
+  result: 'applied' | 'skipped' | 'rejected' | 'error'
+  skip_reason?: string | null
+  payload_hash?: string | null
+}
+
+/**
+ * 写入 Gumroad 入站事件账（幂等：冲突则忽略）
+ */
+export async function insertGumroadEvent(env: Env, event: GumroadEventInsert): Promise<boolean> {
+  if (!hasSupabase(env)) return false
+  const supabase = createSupabaseClient(env)
+  if (!supabase) return false
+
+  try {
+    const { error } = await supabase.from('gumroad_events').insert({
+      idempotency_key: event.idempotency_key,
+      notification_type: event.notification_type ?? null,
+      gumroad_subscription_id: event.gumroad_subscription_id ?? null,
+      gumroad_order_id: event.gumroad_order_id ?? null,
+      user_id: event.user_id ?? null,
+      result: event.result,
+      skip_reason: event.skip_reason ?? null,
+      payload_hash: event.payload_hash ?? null
+    })
+
+    if (error) {
+      // 23505 unique_violation → 重复事件，视为已处理
+      if ((error as { code?: string }).code === '23505') {
+        return false
+      }
+      logErrorMessage('[Supabase] 写入 gumroad_events 失败', { detail: toLogError(error) })
+      return false
+    }
+    return true
+  } catch (err) {
+    logErrorMessage('[Supabase] 写入 gumroad_events 异常', { detail: toLogError(err) })
+    return false
+  }
+}
+
+/**
+ * 取用户最新一条订阅行（不限 status；供对账）
+ */
+export async function getLatestUserSubscriptionRow(
+  env: Env,
+  userId: string
+): Promise<Subscription | null> {
+  if (!hasSupabase(env)) return null
+  const supabase = createSupabaseClient(env)
+  if (!supabase) return null
+
+  try {
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle<Subscription>()
+
+    if (error) {
+      logErrorMessage('[Supabase] 查询最新订阅行失败', { detail: toLogError(error) })
+      return null
+    }
+    return data
+  } catch (err) {
+    logErrorMessage('[Supabase] 查询最新订阅行异常', { detail: toLogError(err) })
+    return null
+  }
+}
+
+/**
+ * 列出需对账的 active 订阅（last_verified_at 为空或早于阈值）
+ */
+export async function listSubscriptionsNeedingVerify(
+  env: Env,
+  olderThanIso: string,
+  limit = 50
+): Promise<Subscription[]> {
+  if (!hasSupabase(env)) return []
+  const supabase = createSupabaseClient(env)
+  if (!supabase) return []
+
+  try {
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('status', 'active')
+      .gt('current_period_end', new Date().toISOString())
+      .or(`last_verified_at.is.null,last_verified_at.lt."${olderThanIso}"`)
+      .order('last_verified_at', { ascending: true, nullsFirst: true })
+      .limit(limit)
+
+    if (error) {
+      logErrorMessage('[Supabase] 列出待对账订阅失败', { detail: toLogError(error) })
+      return []
+    }
+    return (data || []) as Subscription[]
+  } catch (err) {
+    logErrorMessage('[Supabase] 列出待对账订阅异常', { detail: toLogError(err) })
+    return []
   }
 }

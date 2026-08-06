@@ -24,6 +24,8 @@ function timingSafeEqualString(left: string, right: string): boolean {
 /**
  * 验证 Gumroad Ping seller_id。
  * 未配置期望 seller_id 时拒绝请求（禁止跳过校验）。
+ * payload 完全无 seller_id 时返回 null（由 handler 决定是否 ACK 跳过，便于 Test ping）。
+ * seller_id 有值但不匹配 → 401。
  */
 export async function webhookVerifySeller(
   expectedSellerId: string,
@@ -34,10 +36,15 @@ export async function webhookVerifySeller(
     return errorJson({ error: 'seller_id_not_configured' }, 503)
   }
 
-  const sellerId = payload.seller_id || ''
+  const sellerId = (payload.seller_id || '').trim()
+  if (!sellerId) {
+    // Test ping / 空探测：无 seller_id，交给 handler 做无写库 ACK
+    return null
+  }
+
   if (!timingSafeEqualString(sellerId, expectedSellerId)) {
     logErrorMessage('[Gumroad] seller_id 校验失败', {
-      hasSellerId: Boolean(sellerId)
+      hasSellerId: true
     })
     return errorJson({ error: 'Invalid seller_id' }, 401)
   }

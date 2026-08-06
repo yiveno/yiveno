@@ -46,6 +46,12 @@ export type Env = Cloudflare.Env & {
   CLEANUP_MEMORY_SYNC_BACKUPS_KEEP?: string
   /** subscriptions / payment_records 软删保留天数。 */
   CLEANUP_SOFT_DELETE_RETENTION_DAYS?: string
+  /** Gumroad Ping URL token（?token=）；生产必配 */
+  GUMROAD_WEBHOOK_TOKEN?: string
+  /** Gumroad API access_token；Refresh/Cron 对账；生产必配 */
+  GUMROAD_ACCESS_TOKEN?: string
+  /** 订阅定时对账开关；"false" 关闭 */
+  SUBSCRIPTION_RECONCILE_SCHEDULED_ENABLED?: string
   /**
    * Workers AI binding（wrangler `[ai]`）。
    * 跑 `bun run types:gen` 后也会出现在 Cloudflare.Env；此处作兜底。

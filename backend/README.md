@@ -7,14 +7,14 @@ v4 后端：扩展线索理解代理 + 官网只读 API。本地事实源在扩�
 | 方法 | 路径                          | 调用方       | 说明                                                       |
 | ---- | ----------------------------- | ------------ | ---------------------------------------------------------- |
 | GET  | `/health`、`/api/health`      | 运维         | 健康检查                                                   |
-| GET  | `/api/account/subscription`   | Chrome 扩展  | Supabase Bearer；Pro 快照                                  |
+| GET  | `/api/account/subscription`   | Chrome 扩展  | Supabase Bearer；**强制对账**后返回 Pro 快照               |
 | POST | `/api/ai/clue/complete`       | 扩展（开发） | 线索理解 IP 日配额；正式 Pro 走 hosted                     |
 | POST | `/api/ai/enrichment/complete` | Chrome 扩展  | Capture enrichment 结构化提议（扩展 merge 后写 IndexedDB） |
-| POST | `/api/ai/embed`               | Chrome 扩展  | Pro embedding（bge-m3）                                    |
-| POST | `/api/ai/hosted/*`            | Chrome 扩展  | Pro 托管口语 LLM（Bearer + 月配额）                        |
-| GET  | `/api/website/subscription`   | 官网         | Bearer；仅查当前用户                                       |
+| POST | `/api/ai/embed`               | Chrome 扩展  | Pro embedding（bge-m3）；门禁含 24h 对账新鲜度             |
+| POST | `/api/ai/hosted/*`            | Chrome 扩展  | Pro 托管口语 LLM（Bearer + 月配额 + 对账门禁）             |
+| GET  | `/api/website/subscription`   | 官网         | Bearer；强制对账；仅查当前用户                             |
 | \*   | `/api/memory/sync/*`          | Chrome 扩展  | 登录 + **Pro**（status/delete-all 除外）                   |
-| POST | `/api/gumroad/webhook`        | Gumroad      | seller_id 校验 → upsert 订阅                               |
+| POST | `/api/gumroad/webhook`        | Gumroad      | `seller_id` + `?token=` → 硬门槛 upsert + `gumroad_events` |
 
 生产域名：`https://api.yiveno.com`（Worker Custom Domain → `yiveno-production`）。
 
@@ -54,6 +54,14 @@ curl -X POST http://localhost:8787/api/ai/clue/complete \
 ```
 
 需要 Worker Secret：`DEEPSEEK_API_KEY`（本地在 `.dev.vars`，由 `env:sync` 从 `.env.shared.local` 写入）。
+
+### Gumroad 订阅投影（§A.3.2）
+
+- **计费真相**：Gumroad；**权益投影**：`subscriptions`（含 `source` / `last_verified_at` / `verification_status`）
+- **Webhook**：`POST /api/gumroad/webhook?token=<GUMROAD_WEBHOOK_TOKEN>`，另校验 `GUMROAD_SELLER_ID`；假 ID / 缺 `user_id` / 缺订单证据不授 Pro；入站写入 `gumroad_events`
+- **Refresh**：`GET /api/account/subscription` 与官网 subscription **强制对账**（`GUMROAD_ACCESS_TOKEN` → Subscribers API）；Gumroad 非 `alive` **立刻降级**
+- **门禁**：同步 / hosted / embed 要求 24h 内 `verified`；API 故障 grace 48h；Cron `7 * * * *` 扫过期 active
+- 环境与清单：`docs/ENVIRONMENT.md`；规范：产品文档 §A.3.2
 
 ### 可插拔 Provider（AiChatProvider）
 

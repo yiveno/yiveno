@@ -9,7 +9,7 @@ export function getGumroadProductUrl(): string | null {
 
 export function getGumroadManageUrl(): string {
   const raw = import.meta.env.PUBLIC_GUMROAD_MANAGE_URL?.trim()
-  return raw || 'https://app.gumroad.com/subscriptions'
+  return raw || 'https://gumroad.com/library'
 }
 
 /**

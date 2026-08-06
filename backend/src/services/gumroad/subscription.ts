@@ -17,8 +17,10 @@ export function buildSubscriptionRecord(
   const cancelled = toBoolean(payload.cancelled)
   const endedAt = toIsoDate(payload.ended_at)
   const { currentPeriodStart, currentPeriodEnd } = computePeriodDates(payload, endedAt)
-  const cancelAtPeriodEnd = cancelled && !endedAt
   const status = computeSubscriptionStatus(endedAt, payload)
+  // ended → 立刻收回：cancel_at_period_end 仅用于仍 active 的「期末取消」意图
+  const cancelAtPeriodEnd = status === 'active' && cancelled && !endedAt
+  const nowIso = new Date().toISOString()
 
   return {
     user_id: userId,
@@ -28,9 +30,15 @@ export function buildSubscriptionRecord(
     status,
     tier,
     current_period_start: currentPeriodStart,
-    current_period_end: currentPeriodEnd,
+    // ended 时 period_end 压到结束时刻，避免 active 过滤误放行
+    current_period_end: status === 'expired' ? endedAt || nowIso : currentPeriodEnd,
     cancel_at_period_end: cancelAtPeriodEnd,
-    cancelled_at: endedAt
+    cancelled_at: endedAt || (status === 'expired' ? nowIso : null),
+    source: 'gumroad_webhook',
+    last_verified_at: nowIso,
+    verification_status: 'verified',
+    gumroad_subscriber_status:
+      status === 'expired' ? 'ended' : status === 'past_due' ? 'failed' : 'alive'
   }
 }
 
@@ -51,7 +59,10 @@ export function computePeriodDates(
   return { currentPeriodStart, currentPeriodEnd }
 }
 
-/** 根据结束状态和失败标记计算订阅状态 */
+/**
+ * 根据结束状态和失败标记计算订阅状态。
+ * ended_at 存在 → 立刻 expired（§A.3.2）。
+ */
 export function computeSubscriptionStatus(
   endedAt: string | null,
   payload: GumroadWebhookPayload
