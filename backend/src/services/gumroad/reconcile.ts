@@ -5,7 +5,6 @@
 import type { Subscription } from '@yiveno/types'
 import {
   getLatestUserSubscriptionRow,
-  getUserSubscription,
   listSubscriptionsNeedingVerify,
   upsertSubscription
 } from '../../data-access/supabase'
@@ -36,9 +35,9 @@ function expireNowPatch(
   const nowIso = new Date().toISOString()
   return {
     user_id: row.user_id,
-    gumroad_subscription_id: row.gumroad_subscription_id,
-    gumroad_order_id: row.gumroad_order_id,
-    gumroad_variant_id: row.gumroad_variant_id,
+    gumroad_subscription_id: row.gumroad_subscription_id ?? null,
+    gumroad_order_id: row.gumroad_order_id ?? null,
+    gumroad_variant_id: row.gumroad_variant_id ?? null,
     status: 'expired',
     tier: row.tier === 'pro' || row.tier === 'premium' ? row.tier : 'pro',
     current_period_start: row.current_period_start,
@@ -61,9 +60,9 @@ function activateAlivePatch(row: Subscription, gumroadStatus: string): Partial<S
 
   return {
     user_id: row.user_id,
-    gumroad_subscription_id: row.gumroad_subscription_id,
-    gumroad_order_id: row.gumroad_order_id,
-    gumroad_variant_id: row.gumroad_variant_id,
+    gumroad_subscription_id: row.gumroad_subscription_id ?? null,
+    gumroad_order_id: row.gumroad_order_id ?? null,
+    gumroad_variant_id: row.gumroad_variant_id ?? null,
     status: 'active',
     tier: 'pro',
     current_period_start: row.current_period_start || nowIso,
@@ -194,20 +193,4 @@ export async function reconcileStaleActiveSubscriptions(env: Env): Promise<{
     errors
   })
   return { scanned: rows.length, degraded, errors }
-}
-
-/**
- * 对账后读取「当前有效」订阅（active + period_end）
- */
-export async function getActiveSubscriptionAfterReconcile(
-  env: Env,
-  userId: string,
-  forceReconcile: boolean
-): Promise<{ subscription: Subscription | null; reconcile: ReconcileOutcome | null }> {
-  if (forceReconcile) {
-    const reconcile = await reconcileUserSubscription(env, userId)
-    const subscription = await getUserSubscription(env, userId)
-    return { subscription, reconcile }
-  }
-  return { subscription: await getUserSubscription(env, userId), reconcile: null }
 }
