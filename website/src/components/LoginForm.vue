@@ -5,7 +5,8 @@ import {
   captureExtensionConnectParamsFromUrl,
   extractProfileFromUserMetadata,
   getPendingExtensionId,
-  handoffSessionToExtension
+  handoffSessionToExtension,
+  resolveExtensionHandoffTargetId
 } from '../services/extension-auth-handoff'
 
 const loading = ref(false)
@@ -17,7 +18,7 @@ const fromExtension = ref(false)
 const signedInEmail = ref('')
 
 async function tryHandoffCurrentSession(): Promise<boolean> {
-  if (!getPendingExtensionId()) {
+  if (!resolveExtensionHandoffTargetId()) {
     return false
   }
   connectingExtension.value = true
@@ -63,7 +64,7 @@ function applyLoginErrorFromUrl(): void {
 }
 
 /**
- * 已登录：来自扩展则回传；否则停在登录页展示当前账号，可进账户或换号。
+ * 已登录：有扩展目标则回传；否则停在登录页展示当前账号，可进账户或换号。
  */
 onMounted(async () => {
   captureExtensionConnectParamsFromUrl()
@@ -74,14 +75,16 @@ onMounted(async () => {
     if (!session) {
       return
     }
-    if (getPendingExtensionId()) {
+    if (resolveExtensionHandoffTargetId()) {
       const ok = await tryHandoffCurrentSession()
       if (ok) {
         window.location.replace('/account?extension_connected=1')
         return
       }
-      error.value = '已登录，但未能连接到扩展。请确认已安装并启用 Yiveno 扩展后重试。'
-      return
+      if (getPendingExtensionId()) {
+        error.value = '已登录，但未能连接到扩展。请确认已安装并启用 Yiveno 扩展后重试。'
+        return
+      }
     }
     signedInEmail.value = session.user.email || session.user.id
   } catch (e: unknown) {

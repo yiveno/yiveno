@@ -74,6 +74,25 @@ export function getPendingExtensionId(): string | null {
   return sessionStorage.getItem(STORAGE_EXTENSION_ID)
 }
 
+/**
+ * 写入本次/持久扩展目标，供账户页补推 session（不仅退出用）。
+ * 来自 URL `extension_id` 或扩展打开的登录页。
+ */
+export function primeExtensionHandoffTarget(extensionId: string): void {
+  const trimmed = extensionId.trim()
+  if (!trimmed) {
+    return
+  }
+  sessionStorage.setItem(STORAGE_CONNECT_FLAG, '1')
+  sessionStorage.setItem(STORAGE_EXTENSION_ID, trimmed)
+  rememberConnectedExtensionId(trimmed)
+}
+
+/** 解析 handoff 目标：优先本次 connect，其次上次成功连接。 */
+export function resolveExtensionHandoffTargetId(): string | null {
+  return getPendingExtensionId() ?? getLastConnectedExtensionId()
+}
+
 /** 记住成功 handoff 的扩展 id，供日后官网退出回传。 */
 export function rememberConnectedExtensionId(extensionId: string): void {
   const trimmed = extensionId.trim()
@@ -133,10 +152,11 @@ function sendToExtension(extensionId: string, message: unknown): Promise<boolean
 
 /**
  * 将当前 Supabase session 回传扩展。
+ * 目标 id：本次 connect pending → 上次成功连接的扩展。
  * @returns true 表示扩展确认 ok
  */
 export function handoffSessionToExtension(session: ExtensionHandoffSession): Promise<boolean> {
-  const extensionId = getPendingExtensionId()
+  const extensionId = resolveExtensionHandoffTargetId()
   if (!extensionId) {
     return Promise.resolve(false)
   }

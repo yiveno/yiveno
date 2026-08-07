@@ -13,7 +13,10 @@ import {
   clearAccountBinding
 } from '@/infrastructure/identity/local-profile-service'
 import { patchSyncPrefs } from '@/infrastructure/identity/sync-prefs-service'
-import { clearAuthValidationTimestamp } from '@/infrastructure/auth/auth-session-revalidate'
+import {
+  markAuthValidatedNow,
+  clearAuthValidationTimestamp
+} from '@/infrastructure/auth/auth-session-revalidate'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import { logger } from '@/infrastructure/logging/logger'
 
@@ -58,7 +61,8 @@ export async function applyExternalAuthSessionHandoff(
       accountId: session.userId,
       boundAt: new Date().toISOString()
     })
-    await clearAuthValidationTimestamp()
+    // 刚写入的 token 视为有效，避免立刻 refresh 与官网抢 refresh_token 被踢成未登录
+    await markAuthValidatedNow()
     // 登录后立刻归并未登录期间的本地档，避免 Recall 只看见 accountId 桶而「隐身」
     const remapped = await absorbLocalProfileIntoAccount(session.userId)
     flowOk('Auth', '官网 session handoff', startedAt, {

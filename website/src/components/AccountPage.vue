@@ -5,9 +5,12 @@ import { getSupabase } from '../services/supabase'
 import { getUserSubscription, type UserSubscription } from '../services/subscription'
 import { formatDate } from '../services/date'
 import {
+  captureExtensionConnectParamsFromUrl,
+  extractProfileFromUserMetadata,
+  handoffSessionToExtension,
   handoffSignOutToExtension,
-  rememberConnectedExtensionId,
-  extractProfileFromUserMetadata
+  primeExtensionHandoffTarget,
+  resolveExtensionHandoffTargetId
 } from '../services/extension-auth-handoff'
 import { buildGumroadUpgradeUrl, getGumroadManageUrl } from '../services/gumroad-urls'
 
@@ -19,6 +22,7 @@ const profileDisplayName = ref('')
 const subscription = ref<UserSubscription | null>(null)
 const accessToken = ref<string | null>(null)
 const loading = ref(true)
+const extensionSyncStatus = ref<'idle' | 'syncing' | 'ok' | 'skipped' | 'failed'>('idle')
 
 const isPro = computed(
   () => subscription.value?.tier === 'pro' && subscription.value?.status === 'active'
@@ -43,11 +47,47 @@ function refreshSubscriptionOnVisible(): void {
   void loadSubscription()
 }
 
+/** 官网已登录时补推 session 到扩展（账户页 / URL 带 extension_id / 上次连接过）。 */
+async function syncSessionToExtension(session: {
+  access_token: string
+  refresh_token: string
+  user: User
+  expires_at?: number
+}): Promise<void> {
+  if (!resolveExtensionHandoffTargetId()) {
+    extensionSyncStatus.value = 'skipped'
+    return
+  }
+  if (!session.refresh_token) {
+    extensionSyncStatus.value = 'failed'
+    return
+  }
+  extensionSyncStatus.value = 'syncing'
+  const profile = extractProfileFromUserMetadata(
+    session.user.user_metadata as Record<string, unknown> | undefined
+  )
+  try {
+    const ok = await handoffSessionToExtension({
+      accessToken: session.access_token,
+      refreshToken: session.refresh_token,
+      userId: session.user.id,
+      ...(session.user.email ? { email: session.user.email } : {}),
+      ...(session.expires_at != null ? { expiresAt: session.expires_at } : {}),
+      ...profile
+    })
+    extensionSyncStatus.value = ok ? 'ok' : 'failed'
+  } catch (error) {
+    console.warn('[AccountPage] extension session handoff failed', error)
+    extensionSyncStatus.value = 'failed'
+  }
+}
+
 onMounted(async () => {
+  captureExtensionConnectParamsFromUrl()
   const params = new URLSearchParams(window.location.search)
   const extensionId = params.get('extension_id')?.trim()
   if (extensionId) {
-    rememberConnectedExtensionId(extensionId)
+    primeExtensionHandoffTarget(extensionId)
   }
 
   const supabase = await getSupabase()
@@ -66,6 +106,7 @@ onMounted(async () => {
   await loadSubscription()
   loading.value = false
   document.addEventListener('visibilitychange', refreshSubscriptionOnVisible)
+  void syncSessionToExtension(data.session)
 })
 
 onUnmounted(() => {
@@ -142,6 +183,15 @@ async function handleSignOut() {
       <button class="btn" @click="handleSignOut">Sign out</button>
       <p class="sign-out-hint">
         Extension memories stay on your device. Clear them from extension Settings if needed.
+      </p>
+      <p v-if="extensionSyncStatus === 'ok'" class="sign-out-hint extension-sync-ok">
+        Extension login synced.
+      </p>
+      <p v-else-if="extensionSyncStatus === 'failed'" class="sign-out-hint extension-sync-fail">
+        Could not sync login to the extension. Open Yiveno extension → account icon → Sign in once.
+      </p>
+      <p v-else-if="extensionSyncStatus === 'skipped'" class="sign-out-hint">
+        To sync login to the extension, open it and tap the account icon (Sign in).
       </p>
     </div>
   </div>
@@ -242,6 +292,14 @@ dd {
   margin-top: 0.75rem;
   color: #777;
   font-size: 0.85rem;
+}
+
+.extension-sync-ok {
+  color: #2a7a3a;
+}
+
+.extension-sync-fail {
+  color: #a33;
 }
 
 .loading {

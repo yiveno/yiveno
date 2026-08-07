@@ -5,8 +5,8 @@ import { getSupabase } from '../services/supabase'
 import {
   captureExtensionConnectParamsFromUrl,
   extractProfileFromUserMetadata,
-  getPendingExtensionId,
-  handoffSessionToExtension
+  handoffSessionToExtension,
+  resolveExtensionHandoffTargetId
 } from '../services/extension-auth-handoff'
 
 const status = ref('正在登录…')
@@ -26,7 +26,7 @@ function redirectLoginError(code: string, detail?: string | null): void {
  * 登录成功后的统一收尾：可选回传扩展，再跳转账户页。
  */
 async function finishWithSession(session: Session): Promise<void> {
-  if (getPendingExtensionId()) {
+  if (resolveExtensionHandoffTargetId()) {
     status.value = '正在连接扩展…'
     const profile = extractProfileFromUserMetadata(
       session.user.user_metadata as Record<string, unknown> | undefined
