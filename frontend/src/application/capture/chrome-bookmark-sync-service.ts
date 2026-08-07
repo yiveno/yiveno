@@ -1,15 +1,30 @@
 import { readChromeBookmarkImportState } from '@/application/capture/chrome-bookmark-bulk-import'
 import { memoryItemService } from '@/application/memory/memory-item-service'
 import {
+  CHROME_BOOKMARK_SYNC_PENDING_STORAGE_KEY,
+  ChromeBookmarkSyncPendingSchema,
+  type ChromeBookmarkSyncPending
+} from '@/core/memory/chrome-bookmark-sync-pending'
+import {
   readChromeBookmarkById,
+  readChromeBookmarkLeaves,
   toChromeBookmarkLeaf,
   type ChromeBookmarkLeaf
 } from '@/infrastructure/browser/chrome-bookmark-reader'
 import { getUserSettings } from '@/infrastructure/settings/user-settings-service'
 import { logger } from '@/infrastructure/logging/logger'
+import {
+  readChromeStorageSession,
+  removeChromeStorageSession,
+  writeChromeStorageSession
+} from '@/infrastructure/storage/chrome-storage-session'
 
 const pendingUpsertIds = new Set<string>()
 const pendingRemoveIds = new Set<string>()
+
+/** 是否已从 session 灌入过 pending（避免覆盖未 hydrate 的持久队列）。 */
+let pendingHydrated = false
+let pendingHydratePromise: Promise<void> | null = null
 
 /** 用户是否允许书签灌库（Settings）。 */
 export async function isChromeBookmarkIngestEnabled(): Promise<boolean> {
@@ -26,14 +41,68 @@ export async function isChromeBookmarkIncrementalSyncEnabled(): Promise<boolean>
   return state?.status === 'completed'
 }
 
-function enqueueUpsert(chromeBookmarkId: string): void {
-  pendingRemoveIds.delete(chromeBookmarkId)
-  pendingUpsertIds.add(chromeBookmarkId)
+function snapshotPending(): ChromeBookmarkSyncPending {
+  return {
+    upsertIds: [...pendingUpsertIds],
+    removeIds: [...pendingRemoveIds]
+  }
 }
 
-function enqueueRemove(chromeBookmarkId: string): void {
+async function persistPendingQueue(): Promise<void> {
+  const snapshot = snapshotPending()
+  if (snapshot.upsertIds.length === 0 && snapshot.removeIds.length === 0) {
+    await removeChromeStorageSession(CHROME_BOOKMARK_SYNC_PENDING_STORAGE_KEY)
+    return
+  }
+  await writeChromeStorageSession(CHROME_BOOKMARK_SYNC_PENDING_STORAGE_KEY, snapshot)
+}
+
+async function ensurePendingHydrated(): Promise<void> {
+  if (pendingHydrated) {
+    return
+  }
+  if (!pendingHydratePromise) {
+    pendingHydratePromise = (async () => {
+      const stored = await readChromeStorageSession(
+        CHROME_BOOKMARK_SYNC_PENDING_STORAGE_KEY,
+        ChromeBookmarkSyncPendingSchema
+      )
+      if (stored) {
+        for (const id of stored.upsertIds) {
+          pendingRemoveIds.delete(id)
+          pendingUpsertIds.add(id)
+        }
+        for (const id of stored.removeIds) {
+          pendingUpsertIds.delete(id)
+          pendingRemoveIds.add(id)
+        }
+        logger.info('ChromeBookmarkSync', '已从 session 恢复 pending', {
+          upsertCount: stored.upsertIds.length,
+          removeCount: stored.removeIds.length
+        })
+      }
+      pendingHydrated = true
+    })().catch(error => {
+      pendingHydratePromise = null
+      logger.error('ChromeBookmarkSync', '恢复 pending 失败', error)
+      throw error
+    })
+  }
+  await pendingHydratePromise
+}
+
+async function enqueueUpsert(chromeBookmarkId: string): Promise<void> {
+  await ensurePendingHydrated()
+  pendingRemoveIds.delete(chromeBookmarkId)
+  pendingUpsertIds.add(chromeBookmarkId)
+  await persistPendingQueue()
+}
+
+async function enqueueRemove(chromeBookmarkId: string): Promise<void> {
+  await ensurePendingHydrated()
   pendingUpsertIds.delete(chromeBookmarkId)
   pendingRemoveIds.add(chromeBookmarkId)
+  await persistPendingQueue()
 }
 
 function leafToUpsertInput(leaf: ChromeBookmarkLeaf) {
@@ -83,7 +152,7 @@ export async function handleChromeBookmarkCreated(
   }
 
   if (!(await isChromeBookmarkIncrementalSyncEnabled())) {
-    enqueueUpsert(node.id)
+    await enqueueUpsert(node.id)
     logger.info('ChromeBookmarkSync', 'created 已入队（导入未完成）', {
       chromeBookmarkId: node.id
     })
@@ -106,7 +175,7 @@ export async function handleChromeBookmarkChanged(chromeBookmarkId: string): Pro
   }
 
   if (!(await isChromeBookmarkIncrementalSyncEnabled())) {
-    enqueueUpsert(chromeBookmarkId)
+    await enqueueUpsert(chromeBookmarkId)
     logger.info('ChromeBookmarkSync', 'changed 已入队（导入未完成）', { chromeBookmarkId })
     return
   }
@@ -133,7 +202,7 @@ export async function handleChromeBookmarkRemoved(chromeBookmarkId: string): Pro
   }
 
   if (!(await isChromeBookmarkIncrementalSyncEnabled())) {
-    enqueueRemove(chromeBookmarkId)
+    await enqueueRemove(chromeBookmarkId)
     logger.info('ChromeBookmarkSync', 'removed 已入队（导入未完成）', { chromeBookmarkId })
     return
   }
@@ -143,10 +212,11 @@ export async function handleChromeBookmarkRemoved(chromeBookmarkId: string): Pro
 }
 
 /**
- * 全量导入完成后冲刷导入期间积压的增量事件。
- * 仅 Background 调用。
+ * 冲刷积压的增量事件（内存 + session）。
+ * 全量导入完成、启动补洞前调用。
  */
 export async function flushPendingChromeBookmarkSync(): Promise<void> {
+  await ensurePendingHydrated()
   const removeIds = [...pendingRemoveIds]
   const upsertIds = [...pendingUpsertIds]
   logger.info('ChromeBookmarkSync', '冲刷 pending 开始', {
@@ -155,6 +225,8 @@ export async function flushPendingChromeBookmarkSync(): Promise<void> {
   })
 
   pendingRemoveIds.clear()
+  pendingUpsertIds.clear()
+  await persistPendingQueue()
 
   for (const chromeBookmarkId of removeIds) {
     try {
@@ -163,8 +235,6 @@ export async function flushPendingChromeBookmarkSync(): Promise<void> {
       logger.error('ChromeBookmarkSync', '冲刷删除事件失败', { chromeBookmarkId, error })
     }
   }
-
-  pendingUpsertIds.clear()
 
   for (const chromeBookmarkId of upsertIds) {
     if (removeIds.includes(chromeBookmarkId)) {
@@ -186,8 +256,67 @@ export async function flushPendingChromeBookmarkSync(): Promise<void> {
   logger.info('ChromeBookmarkSync', '冲刷 pending 完成')
 }
 
-/** 测试用：重置 pending 队列。 */
+/**
+ * 按 chromeBookmarkId 对齐：Chrome 有、Memory 无的叶子补 upsert。
+ * 用于堵住 SW 丢事件 / pending 丢失后的永久缺口；不主动软删孤儿 Memory。
+ */
+export async function reconcileChromeBookmarksWithMemory(): Promise<{
+  upserted: number
+  skipped: boolean
+}> {
+  if (!(await isChromeBookmarkIngestEnabled())) {
+    logger.info('ChromeBookmarkSync', 'reconcile 已跳过（用户关闭书签灌库）')
+    return { upserted: 0, skipped: true }
+  }
+
+  const importState = await readChromeBookmarkImportState()
+  if (importState?.status !== 'completed') {
+    logger.info('ChromeBookmarkSync', 'reconcile 已跳过（导入未完成）', {
+      importStatus: importState?.status ?? null
+    })
+    return { upserted: 0, skipped: true }
+  }
+
+  logger.info('ChromeBookmarkSync', 'reconcile 开始')
+  const leaves = await readChromeBookmarkLeaves()
+  const alignment = await memoryItemService.listBookmarkSyncAlignment()
+  let upserted = 0
+
+  for (const leaf of leaves) {
+    if (alignment.byChromeBookmarkId.has(leaf.chromeBookmarkId)) {
+      continue
+    }
+    try {
+      await memoryItemService.upsertBookmarkFromChrome(leafToUpsertInput(leaf))
+      upserted += 1
+    } catch (error) {
+      logger.error('ChromeBookmarkSync', 'reconcile upsert 失败', {
+        chromeBookmarkId: leaf.chromeBookmarkId,
+        error
+      })
+    }
+  }
+
+  logger.info('ChromeBookmarkSync', 'reconcile 完成', {
+    leafCount: leaves.length,
+    upserted
+  })
+  return { upserted, skipped: false }
+}
+
+/**
+ * 导入完成或启动时：先 flush pending，再 reconcile 补洞。
+ * 仅 Background 调用。
+ */
+export async function finalizeChromeBookmarkSyncAfterImport(): Promise<void> {
+  await flushPendingChromeBookmarkSync()
+  await reconcileChromeBookmarksWithMemory()
+}
+
+/** 测试用：重置 pending 队列与 hydrate 状态。 */
 export function resetPendingChromeBookmarkSyncForTests(): void {
   pendingUpsertIds.clear()
   pendingRemoveIds.clear()
+  pendingHydrated = false
+  pendingHydratePromise = null
 }

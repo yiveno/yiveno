@@ -4,12 +4,14 @@ const {
   getUserSettingsMock,
   updateUserSettingsMock,
   ensureChromeBookmarksImportedMock,
-  refreshClueLlmCompleterFromDevConfigMock
+  refreshClueLlmCompleterFromDevConfigMock,
+  syncChromeBookmarkSyncListenersWithIngestSettingMock
 } = vi.hoisted(() => ({
   getUserSettingsMock: vi.fn(),
   updateUserSettingsMock: vi.fn(),
   ensureChromeBookmarksImportedMock: vi.fn(async () => undefined),
-  refreshClueLlmCompleterFromDevConfigMock: vi.fn(async () => undefined)
+  refreshClueLlmCompleterFromDevConfigMock: vi.fn(async () => undefined),
+  syncChromeBookmarkSyncListenersWithIngestSettingMock: vi.fn(async () => undefined)
 }))
 
 vi.mock('@/infrastructure/settings/user-settings-service', () => ({
@@ -23,6 +25,11 @@ vi.mock('@/application/recall/refresh-clue-llm-completer', () => ({
 
 vi.mock('@/application/capture/import-chrome-bookmarks-service', () => ({
   ensureChromeBookmarksImported: ensureChromeBookmarksImportedMock
+}))
+
+vi.mock('@/background/listeners/chrome-bookmark-sync', () => ({
+  syncChromeBookmarkSyncListenersWithIngestSetting:
+    syncChromeBookmarkSyncListenersWithIngestSettingMock
 }))
 
 import {
@@ -64,9 +71,10 @@ describe('settings-handler', () => {
     })
     expect(updateUserSettingsMock).toHaveBeenCalledWith({ selectionToolbarEnabled: false })
     expect(ensureChromeBookmarksImportedMock).not.toHaveBeenCalled()
+    expect(syncChromeBookmarkSyncListenersWithIngestSettingMock).not.toHaveBeenCalled()
   })
 
-  it('重新开启书签灌库时触发 ensureChromeBookmarksImported', async () => {
+  it('重新开启书签灌库时挂监听并 ensure 导入', async () => {
     updateUserSettingsMock.mockResolvedValue({
       ...fullSettings,
       chromeBookmarkIngestEnabled: true
@@ -75,6 +83,19 @@ describe('settings-handler', () => {
     const response = await handleUpdateUserSettings({ chromeBookmarkIngestEnabled: true })
     expect(response.ok).toBe(true)
     expect(updateUserSettingsMock).toHaveBeenCalledWith({ chromeBookmarkIngestEnabled: true })
+    expect(syncChromeBookmarkSyncListenersWithIngestSettingMock).toHaveBeenCalledWith(true)
     expect(ensureChromeBookmarksImportedMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('关闭书签灌库时卸载监听且不触发导入', async () => {
+    updateUserSettingsMock.mockResolvedValue({
+      ...fullSettings,
+      chromeBookmarkIngestEnabled: false
+    })
+
+    const response = await handleUpdateUserSettings({ chromeBookmarkIngestEnabled: false })
+    expect(response.ok).toBe(true)
+    expect(syncChromeBookmarkSyncListenersWithIngestSettingMock).toHaveBeenCalledWith(false)
+    expect(ensureChromeBookmarksImportedMock).not.toHaveBeenCalled()
   })
 })

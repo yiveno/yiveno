@@ -303,6 +303,9 @@
   "settings_tab_account_sync": {
     "message": "Account & sync"
   },
+  "settings_tab_data": {
+    "message": "Data"
+  },
   "settings_tab_privacy": {
     "message": "Privacy"
   },
@@ -312,8 +315,39 @@
   "settings_placeholder_privacy": {
     "message": "Privacy options are not available yet. This page will not pretend they are."
   },
+  "settings_data_intro": {
+    "message": "Export or clear local memory, or delete the cloud copy and account. These actions only affect Yiveno memory and never change your Chrome bookmarks."
+  },
+  "settings_data_clear_local": {
+    "message": "Clear local memory"
+  },
+  "settings_data_clear_local_hint": {
+    "message": "Permanently delete all local memories for the current identity (excerpts and bookmark traces). Chrome bookmarks are not changed. Bookmark ingest will be turned off. If cloud sync is on, it will be turned off too (delete the cloud copy separately if needed)."
+  },
+  "settings_data_clear_local_confirm": {
+    "message": "This permanently clears Yiveno local memory and will not change Chrome bookmarks. Bookmark ingest will turn off; if sync is on it will turn off too. Export first if you need a backup. Continue?"
+  },
+  "settings_data_clear_local_done": {
+    "message": "Cleared $COUNT$ local memories (Chrome bookmarks unchanged)",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_data_clear_local_done_sync_off": {
+    "message": "Cleared $COUNT$ local memories; sync and bookmark ingest are off (Chrome bookmarks unchanged)",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_error_local_clear": {
+    "message": "Failed to clear local memory"
+  },
   "settings_privacy_intro": {
-    "message": "Yiveno keeps memories on this device by default. Cloud sync and AI are optional—you can review this notice, confirm before syncing, or delete the cloud copy."
+    "message": "Learn how Yiveno handles on-device memory, optional cloud sync, and AI. You will confirm this notice again when enabling cloud sync."
   },
   "settings_privacy_bullet_local": {
     "message": "On this device: excerpts, bookmark traces, and notes in IndexedDB. Uninstalling the extension removes the local library."
@@ -469,7 +503,7 @@
     "message": "Write Chrome bookmarks to memory"
   },
   "settings_toggle_chrome_bookmark_ingest_hint": {
-    "message": "When off, stops import and live sync; existing bookmark memories are kept"
+    "message": "When off, listeners are removed: no import or live updates; existing bookmark memories are kept"
   },
   "settings_section_shortcuts": {
     "message": "Shortcuts"
@@ -885,7 +919,7 @@
     "message": "Delete excerpt"
   },
   "library_bookmark_unsynced": {
-    "message": "Not synced"
+    "message": "Not in memory"
   },
   "library_folder_unnamed": {
     "message": "Unnamed folder"

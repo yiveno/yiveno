@@ -15,9 +15,11 @@ import {
   handleChromeBookmarkChanged,
   handleChromeBookmarkCreated,
   handleChromeBookmarkRemoved,
+  reconcileChromeBookmarksWithMemory,
   resetPendingChromeBookmarkSyncForTests
 } from '@/application/capture/chrome-bookmark-sync-service'
 import { CHROME_BOOKMARK_IMPORT_STORAGE_KEY } from '@/core/memory/chrome-bookmark-import-state'
+import { CHROME_BOOKMARK_SYNC_PENDING_STORAGE_KEY } from '@/core/memory/chrome-bookmark-sync-pending'
 import { LOCAL_PROFILE_STORAGE_KEY, type LocalProfile } from '@/core/identity/local-profile'
 import { memoryItemRepository } from '@/infrastructure/indexeddb/memory-item-repository'
 import { resetMemoryDatabaseInitializationForTests } from '@/infrastructure/indexeddb/memory-db'
@@ -26,6 +28,7 @@ type StorageMap = Record<string, unknown>
 
 function createChromeMock(initial: StorageMap = {}) {
   const store: StorageMap = { ...initial }
+  const sessionStore: StorageMap = {}
   const bookmarks = new Map<string, chrome.bookmarks.BookmarkTreeNode>([
     [
       '10',
@@ -53,7 +56,32 @@ function createChromeMock(initial: StorageMap = {}) {
         set: vi.fn(async (items: StorageMap) => {
           Object.assign(store, items)
         }),
-        remove: vi.fn(async () => undefined)
+        remove: vi.fn(async (keys: string | string[]) => {
+          const list = Array.isArray(keys) ? keys : [keys]
+          for (const key of list) {
+            delete store[key]
+          }
+        })
+      },
+      session: {
+        get: vi.fn(async (keys: string | string[] | Record<string, unknown>) => {
+          if (typeof keys === 'string') {
+            return { [keys]: sessionStore[keys] }
+          }
+          if (Array.isArray(keys)) {
+            return Object.fromEntries(keys.map(key => [key, sessionStore[key]]))
+          }
+          return { ...sessionStore, ...keys }
+        }),
+        set: vi.fn(async (items: StorageMap) => {
+          Object.assign(sessionStore, items)
+        }),
+        remove: vi.fn(async (keys: string | string[]) => {
+          const list = Array.isArray(keys) ? keys : [keys]
+          for (const key of list) {
+            delete sessionStore[key]
+          }
+        })
       }
     },
     bookmarks: {
@@ -63,14 +91,27 @@ function createChromeMock(initial: StorageMap = {}) {
           .map(itemId => bookmarks.get(itemId))
           .filter(Boolean) as chrome.bookmarks.BookmarkTreeNode[]
       }),
-      getTree: vi.fn(async () => []),
+      getTree: vi.fn(async () => [
+        {
+          id: '0',
+          title: '',
+          children: [
+            {
+              id: '1',
+              title: '书签栏',
+              children: [...bookmarks.values()]
+            }
+          ]
+        }
+      ]),
       onCreated: { addListener: vi.fn() },
       onChanged: { addListener: vi.fn() },
       onRemoved: { addListener: vi.fn() },
       onMoved: { addListener: vi.fn() }
     },
     __bookmarks: bookmarks,
-    __store: store
+    __store: store,
+    __sessionStore: sessionStore
   }
 }
 
@@ -231,5 +272,68 @@ describe('chrome-bookmark-sync-service', () => {
 
     expect(result.captured).toBe(false)
     expect(await memoryItemRepository.listByOwner({ type: 'bookmark' })).toHaveLength(0)
+  })
+
+  it('导入未完成时 pending 写入 session，模拟 SW 重启后 flush 仍可恢复', async () => {
+    const chromeMock = createChromeMock({
+      [LOCAL_PROFILE_STORAGE_KEY]: localProfile,
+      [CHROME_BOOKMARK_IMPORT_STORAGE_KEY]: {
+        status: 'running',
+        importedCount: 0,
+        totalCount: 1,
+        startedAt: '2026-07-22T05:00:00.000Z'
+      }
+    })
+    vi.stubGlobal('chrome', chromeMock)
+
+    await handleChromeBookmarkCreated({
+      id: '10',
+      title: '留存分析',
+      url: 'https://example.com/retention',
+      parentId: '1'
+    })
+
+    expect(chromeMock.__sessionStore[CHROME_BOOKMARK_SYNC_PENDING_STORAGE_KEY]).toEqual({
+      upsertIds: ['10'],
+      removeIds: []
+    })
+
+    // 模拟 SW 重启：清空内存 pending，保留 session
+    resetPendingChromeBookmarkSyncForTests()
+    chromeMock.__store[CHROME_BOOKMARK_IMPORT_STORAGE_KEY] = completedImportState
+
+    await flushPendingChromeBookmarkSync()
+
+    const items = await memoryItemRepository.listByOwner({ type: 'bookmark' })
+    expect(items).toHaveLength(1)
+    expect(chromeMock.__sessionStore[CHROME_BOOKMARK_SYNC_PENDING_STORAGE_KEY]).toBeUndefined()
+  })
+
+  it('reconcile 补写 Chrome 有、Memory 无的书签', async () => {
+    const chromeMock = createChromeMock({
+      [LOCAL_PROFILE_STORAGE_KEY]: localProfile,
+      [CHROME_BOOKMARK_IMPORT_STORAGE_KEY]: completedImportState
+    })
+    chromeMock.__bookmarks.set('20', {
+      id: '20',
+      title: '采源视频',
+      url: 'https://www.youtube.com/watch?v=dQAmmIdSRSY',
+      parentId: '1'
+    })
+    vi.stubGlobal('chrome', chromeMock)
+
+    expect(await memoryItemRepository.listByOwner({ type: 'bookmark' })).toHaveLength(0)
+
+    const result = await reconcileChromeBookmarksWithMemory()
+    expect(result.skipped).toBe(false)
+    expect(result.upserted).toBe(2)
+
+    const items = await memoryItemRepository.listByOwner({ type: 'bookmark' })
+    expect(items).toHaveLength(2)
+    const chromeIds = items
+      .filter(item => item.type === 'bookmark')
+      .map(item => (item.type === 'bookmark' ? item.payload.chromeBookmarkId : undefined))
+      .sort()
+    expect(chromeIds).toEqual(['10', '20'])
   })
 })

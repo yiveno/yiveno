@@ -5,7 +5,7 @@ import {
   upsertChromeBookmarkLeaves,
   writeChromeBookmarkImportState
 } from '@/application/capture/chrome-bookmark-bulk-import'
-import { flushPendingChromeBookmarkSync } from '@/application/capture/chrome-bookmark-sync-service'
+import { finalizeChromeBookmarkSyncAfterImport } from '@/application/capture/chrome-bookmark-sync-service'
 import { readChromeBookmarkLeaves } from '@/infrastructure/browser/chrome-bookmark-reader'
 import { getUserSettings } from '@/infrastructure/settings/user-settings-service'
 import { logger } from '@/infrastructure/logging/logger'
@@ -47,6 +47,8 @@ export async function ensureChromeBookmarksImported(): Promise<ChromeBookmarkImp
 
   const existing = await readChromeBookmarkImportState()
   if (existing?.status === 'completed') {
+    // 已完成后仍 flush + reconcile，堵住 SW 丢事件 / pending 丢失造成的永久缺口
+    await finalizeChromeBookmarkSyncAfterImport()
     return existing
   }
 
@@ -102,6 +104,11 @@ async function runChromeBookmarkImport(
         completedAt: new Date().toISOString()
       }
       await writeChromeBookmarkImportState(completed)
+      await finalizeChromeBookmarkSyncAfterImport()
+      logger.info('ChromeBookmarkImport', '书签 bulk 导入已完成（空续传早退）', {
+        importedCount: totalCount,
+        totalCount
+      })
       return completed
     }
 
@@ -131,7 +138,7 @@ async function runChromeBookmarkImport(
     }
     await writeChromeBookmarkImportState(completed)
 
-    await flushPendingChromeBookmarkSync()
+    await finalizeChromeBookmarkSyncAfterImport()
 
     logger.info('ChromeBookmarkImport', '书签 bulk 导入完成', {
       importedCount,

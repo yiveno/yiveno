@@ -30,6 +30,7 @@ export const AccountSyncErrorCodeSchema = z.enum([
   'LOCAL_EXPORT_FAILED', // 导出本机记忆失败
   'ORPHAN_EXPORT_FAILED', // 导出孤儿桶失败
   'ORPHAN_CLEAR_FAILED', // 清除孤儿桶失败
+  'LOCAL_CLEAR_FAILED', // 清除本机记忆失败
   'SUBSCRIPTION_STATUS_FAILED' // 拉取订阅状态失败
 ])
 
@@ -371,6 +372,31 @@ export type ExportLocalMemoryResponse =
       error?: string
     }
 
+/**
+ * 清除当前 owner 本机全部 Memory（硬清 IndexedDB 行）。
+ * 不得改写 Chrome 原生书签；成功后关书签灌库；若同步开着则关同步。
+ */
+export type ClearLocalMemoryMessage = {
+  scope: BackgroundMessageScope
+  type: 'CLEAR_LOCAL_MEMORY'
+}
+
+export type ClearLocalMemoryResponse =
+  | {
+      ok: true
+      ownerId: string
+      clearedCount: number
+      /** 是否因此关闭了书签灌库 */
+      bookmarkIngestDisabled: true
+      /** 是否因此关闭了云同步 */
+      syncDisabled: boolean
+    }
+  | {
+      ok: false
+      errorCode: AccountSyncErrorCode
+      error?: string
+    }
+
 /** 读取本机订阅快照（可顺带刷新）。 */
 export type GetSubscriptionStatusMessage = {
   scope: BackgroundMessageScope
@@ -413,6 +439,7 @@ export type AccountSyncBackgroundMessage =
   | DeleteCloudMemoryMessage
   | DeleteAccountMessage
   | ExportLocalMemoryMessage
+  | ClearLocalMemoryMessage
   | GetSubscriptionStatusMessage
 
 export type AccountSyncBackgroundResponse =
@@ -432,4 +459,5 @@ export type AccountSyncBackgroundResponse =
   | DeleteCloudMemoryResponse
   | DeleteAccountResponse
   | ExportLocalMemoryResponse
+  | ClearLocalMemoryResponse
   | GetSubscriptionStatusResponse

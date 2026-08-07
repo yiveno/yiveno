@@ -33,6 +33,7 @@ const ACCOUNT_SYNC_ERROR_MESSAGE_KEYS: Record<AccountSyncErrorCode, MessageKey> 
   CLOUD_DELETE_FAILED: 'settings_error_cloud_delete',
   ACCOUNT_DELETE_FAILED: 'settings_error_account_delete',
   LOCAL_EXPORT_FAILED: 'settings_error_local_export',
+  LOCAL_CLEAR_FAILED: 'settings_error_local_clear',
   ORPHAN_EXPORT_FAILED: 'settings_error_orphan_export',
   ORPHAN_CLEAR_FAILED: 'settings_error_orphan_clear',
   SUBSCRIPTION_STATUS_FAILED: 'settings_error_subscription_status'

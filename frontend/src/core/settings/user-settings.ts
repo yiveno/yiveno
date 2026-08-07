@@ -14,7 +14,7 @@ export const UserSettingsSchema = z.object({
   aiFeaturesEnabled: z.boolean().default(true),
   /**
    * 是否把 Chrome 书签灌入本机 Memory（首次 bulk + 原生增删改增量）。
-   * 关闭后停止新写入与增量同步，不删除已灌入条目。
+   * 关闭后卸载 bookmarks.* 监听、停止新写入与增量同步，不删除已灌入条目。
    */
   chromeBookmarkIngestEnabled: z.boolean().default(true)
 })

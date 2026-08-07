@@ -5,6 +5,7 @@ import type {
 import { UserSettingsSchema, type UserSettings } from '@/core/settings/user-settings'
 import { ensureChromeBookmarksImported } from '@/application/capture/import-chrome-bookmarks-service'
 import { refreshClueLlmCompleterFromDevConfig } from '@/application/recall/refresh-clue-llm-completer'
+import { syncChromeBookmarkSyncListenersWithIngestSetting } from '@/background/listeners/chrome-bookmark-sync'
 import {
   getUserSettings,
   updateUserSettings
@@ -60,11 +61,16 @@ export async function handleUpdateUserSettings(
       // AI 开关变更后立刻重挂 / 清空线索 LLM completer
       await refreshClueLlmCompleterFromDevConfig()
     }
-    if (patch.chromeBookmarkIngestEnabled === true) {
-      // 重新开启灌库：补跑 / 续跑 bulk（已 completed 则立即返回）
-      void ensureChromeBookmarksImported().catch(error => {
-        logger.warn('Settings', '重新开启书签灌库后导入失败', error)
-      })
+    if (typeof patch.chromeBookmarkIngestEnabled === 'boolean') {
+      // 关：立刻卸 bookmarks.* 监听；开：挂监听并补跑导入/reconcile
+      await syncChromeBookmarkSyncListenersWithIngestSetting(patch.chromeBookmarkIngestEnabled)
+      if (patch.chromeBookmarkIngestEnabled) {
+        void ensureChromeBookmarksImported().catch(error => {
+          logger.warn('Settings', '重新开启书签灌库后导入/对齐失败', error)
+        })
+      } else {
+        logger.info('Settings', '已关闭书签灌库，书签增量监听已卸载')
+      }
     }
     flowOk('Settings', '更新用户设置', startedAt, {
       patchKeys: Object.keys(patch),

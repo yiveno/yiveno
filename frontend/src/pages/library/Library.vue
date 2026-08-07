@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import type { BookmarkLibraryTreeNode } from '@/core/memory/bookmark-library-tree'
 import type { MemoryItem } from '@/core/memory/memory-item'
@@ -11,6 +11,7 @@ import {
   parseLibraryTypeFromLocationSearch,
   resolveLibraryTypeTab
 } from '@/core/memory/library-tabs'
+import { parseChromeBookmarkTreeChangedMessage } from '@/core/messaging/ui-messages'
 import { getMemoryItemOpenHref } from '@/core/recall/memory-open-href'
 import { getMemoryItemDisplay } from '@/core/recall/recall-result'
 import { tImportError } from '@/infrastructure/i18n/background-error'
@@ -31,6 +32,9 @@ defineOptions({ name: 'LibraryPage' })
 
 type LoadState = 'loading' | 'ready' | 'error'
 
+/** 书签树静默刷新防抖（Chrome 批量改动时避免连打 getTree）。 */
+const BOOKMARK_TREE_REFRESH_DEBOUNCE_MS = 300
+
 const activeType = ref<SupportedMemoryItemType>(
   parseLibraryTypeFromLocationSearch(window.location.search)
 )
@@ -40,6 +44,9 @@ const items = ref<MemoryItem[]>([])
 const bookmarkRoots = ref<BookmarkLibraryTreeNode[]>([])
 const bookmarkSyncReady = ref(false)
 const deletingId = ref<string | null>(null)
+let bookmarkTreeRefreshTimer: ReturnType<typeof setTimeout> | null = null
+let bookmarkTreeRefreshInFlight = false
+let bookmarkTreeRefreshQueued = false
 
 const NOTE_MAX_LENGTH = 500
 const noteEditorOpen = ref(false)
@@ -91,21 +98,83 @@ function formatUpdatedAt(iso: string): string {
   })
 }
 
-async function loadBookmarkTree() {
+/**
+ * 拉取书签树。
+ * @param options.silent 为 true 时不切到 loading（SW 推送 / 页签回前台刷新）。
+ */
+async function loadBookmarkTree(options: { silent?: boolean } = {}) {
+  if (!options.silent) {
+    loadState.value = 'loading'
+  }
   const response = await fetchBookmarkLibraryTree()
   if (!response.ok || !('roots' in response)) {
-    loadState.value = 'error'
-    errorMessage.value = response.ok
-      ? t('library_invalid_response')
-      : tImportError(response.errorCode)
-    bookmarkRoots.value = []
-    bookmarkSyncReady.value = false
+    if (!options.silent || loadState.value !== 'ready') {
+      loadState.value = 'error'
+      errorMessage.value = response.ok
+        ? t('library_invalid_response')
+        : tImportError(response.errorCode)
+    }
+    if (!options.silent) {
+      bookmarkRoots.value = []
+      bookmarkSyncReady.value = false
+    }
     return
   }
 
   bookmarkRoots.value = response.roots
   bookmarkSyncReady.value = response.syncReady
   loadState.value = 'ready'
+  errorMessage.value = ''
+}
+
+/** 防抖重拉书签树（仅当前在书签 Tab 时）。 */
+function scheduleBookmarkTreeRefresh(): void {
+  if (!showingBookmarkTree.value) {
+    return
+  }
+  if (bookmarkTreeRefreshTimer !== null) {
+    clearTimeout(bookmarkTreeRefreshTimer)
+  }
+  bookmarkTreeRefreshTimer = setTimeout(() => {
+    bookmarkTreeRefreshTimer = null
+    void runSilentBookmarkTreeRefresh()
+  }, BOOKMARK_TREE_REFRESH_DEBOUNCE_MS)
+}
+
+async function runSilentBookmarkTreeRefresh(): Promise<void> {
+  if (!showingBookmarkTree.value) {
+    return
+  }
+  if (bookmarkTreeRefreshInFlight) {
+    bookmarkTreeRefreshQueued = true
+    return
+  }
+  bookmarkTreeRefreshInFlight = true
+  try {
+    await loadBookmarkTree({ silent: true })
+  } catch {
+    // 静默刷新失败保留旧树，避免打断浏览
+  } finally {
+    bookmarkTreeRefreshInFlight = false
+    if (bookmarkTreeRefreshQueued) {
+      bookmarkTreeRefreshQueued = false
+      scheduleBookmarkTreeRefresh()
+    }
+  }
+}
+
+function handleUiPushMessage(message: unknown): void {
+  if (!parseChromeBookmarkTreeChangedMessage(message)) {
+    return
+  }
+  scheduleBookmarkTreeRefresh()
+}
+
+function handleDocumentVisibilityChange(): void {
+  if (document.visibilityState !== 'visible') {
+    return
+  }
+  scheduleBookmarkTreeRefresh()
 }
 
 async function loadExcerptList() {
@@ -285,6 +354,20 @@ watch(
   },
   { immediate: true }
 )
+
+onMounted(() => {
+  chrome.runtime.onMessage.addListener(handleUiPushMessage)
+  document.addEventListener('visibilitychange', handleDocumentVisibilityChange)
+})
+
+onUnmounted(() => {
+  chrome.runtime.onMessage.removeListener(handleUiPushMessage)
+  document.removeEventListener('visibilitychange', handleDocumentVisibilityChange)
+  if (bookmarkTreeRefreshTimer !== null) {
+    clearTimeout(bookmarkTreeRefreshTimer)
+    bookmarkTreeRefreshTimer = null
+  }
+})
 </script>
 
 <template>

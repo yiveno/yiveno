@@ -815,7 +815,7 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 - **P0 / Phase A**：线索解释/空状态、摘录详情、记忆库轻浏览 **已完成**；下一项用户指定
 - **P1 / Phase B**：Hybrid/embedding（Pro）+ §7.1 首批 **已接线**；倒排索引 / 选区预填仍待
-- **P2 / Phase C**：账户 UI + 云同步铺路 **已完成切片**；隐私 P0（说明 + 开同步确认 + 删云端 + 删账号 + **官网 `/privacy`**）**已上线**；隐私 P1（**整库导出 / 关 AI / ToS**）**已上线**；**书签灌库开关**已上线；分享仍待
+- **P2 / Phase C**：账户 UI + 云同步铺路 **已完成切片**；隐私 P0（说明 + 开同步确认 + **官网 `/privacy`**）**已上线**；隐私 P1（**关 AI / ToS**）**已上线**；**数据**分区（整库导出 / 清除本机 / 删云端 / 删账号）**已上线**；**书签灌库开关**已上线；分享仍待
 - **P3 / Phase D**：标签/失效链接/统计等轻管理余项（摘录删除已提前上线）
 
 **禁止重做**：双面板重组、复杂拖拽整理、AI 聚类主卖点、大规模书签树编辑。
@@ -824,13 +824,16 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 **布局（Normative）：** 与记忆库同构——**左侧竖导航 + 右侧单面板切换**；窄屏降级为顶部横排 chips。深链 `settings.html?section=<id>`（默认 `capture` 不写 query；旧 `usage` 映射到 `capture`）。
 
-| 分区（侧栏） | `section` id   | 状态            | 说明                                                                                                           |
-| ------------ | -------------- | --------------- | -------------------------------------------------------------------------------------------------------------- |
-| 保存         | `capture`      | 已上线          | 划词浮层开关（默认开）；**Chrome 书签灌库**开关（默认开；关后停 bulk/增量，不删已有）                          |
-| 快捷键       | `shortcuts`    | 已上线          | 展示绑定；改键跳转 `chrome://extensions/shortcuts`                                                             |
-| 账户与同步   | `account_sync` | 已上线          | 顶栏头像登录；**同步 = Pro+登录+开关**；订阅升级（回焦自动对账）；禁止缩量盖云；孤儿桶；退出三选一；默认同步关 |
-| 隐私         | `privacy`      | 已上线（P0+P1） | 数据说明；开同步确认；删云端；删账号；**整库导出**；链到 `/privacy` 与 `/terms`                                |
-| AI           | `ai`           | 已上线          | **关 AI**；模型路径说明（线索理解 + enrichment；不碰数据平面）                                                 |
+| 分区（侧栏） | `section` id   | 状态            | 说明                                                                                                                   |
+| ------------ | -------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| 保存         | `capture`      | 已上线          | 划词浮层开关（默认开）；**Chrome 书签灌库**开关（默认开；关后卸监听/停 bulk，不删已有）                                |
+| 快捷键       | `shortcuts`    | 已上线          | 展示绑定；改键跳转 `chrome://extensions/shortcuts`                                                                     |
+| 账户与同步   | `account_sync` | 已上线          | 顶栏头像登录；**同步 = Pro+登录+开关**；订阅升级（回焦自动对账）；禁止缩量盖云；孤儿桶；退出三选一；默认同步关         |
+| 数据         | `data`         | 已上线          | **本机导出**；**清除本机记忆**（不动 Chrome 原生书签；并关书签灌库；若同步开着则关同步）；**删云端记忆**；**删除账号** |
+| 隐私         | `privacy`      | 已上线（P0+P1） | 数据说明摘要；开同步前确认；链到 `/privacy` 与 `/terms`（操作型入口在「数据」）                                        |
+| AI           | `ai`           | 已上线          | **关 AI**；模型路径说明（线索理解 + enrichment；不碰数据平面）                                                         |
+
+**数据 vs 隐私（Normative）：** 「隐私」= 政策、同意与说明；「数据」= 用户处置本机/云端 Memory 的操作。清除本机记忆**永远不得**调用 `chrome.bookmarks` 删除或改写用户原生书签。
 
 ### 5.6 扩展入口
 
@@ -900,13 +903,15 @@ Chrome API / 选区
 - **隐私 P0（Normative）**：
   - Settings「隐私」展示数据说明摘要（本机 Memory / 可选云同步 / 账号 Auth / AI 经 Worker；不收集 History、未 Capture 全文、默认不上云）。
   - **开同步前**须确认当前隐私说明版本（`privacyNoticeVersion` ack）；未确认不得开启同步。关同步 ≠ 自动删云端。
-  - **删除云端记忆**：登录后可一键删除该账号云端 `memory_items` 与 `memory_sync_backups`；默认**不**清本机 IndexedDB；成功后关闭云同步并清定时闹钟。二次确认。
-  - **删除账号**（与「仅退出」/「仅删云端」分开）：登录后强确认 → Worker 删云端 Memory/backups 并用 service role **注销 Supabase Auth 用户** → 扩展清本机当前 `accountId` 桶（**不动** `localProfileId` 身份；该桶若仍有未归并数据则保留）→ 清 session/binding/同步/隐私 ack → 打开官网 `/logout`。订阅/支付行可按法律保留、不再可登录关联（不暗示可恢复账号）。
   - **官网隐私政策（Normative）**：`https://yiveno.com/privacy`（及同源部署的 `/privacy`）提供与当前实现对齐的英/中正文；官网页脚与登录页、扩展 Settings「隐私」须外链至此。正文重大变更时更新日期；扩展内同步确认文案重大变更时递增 `privacyNoticeVersion`。本页**不是**律师意见书；未上线能力不得写入为已提供。
-  - **整库导出（Normative）**：Settings「隐私」可导出当前 owner 本机全部 Memory（含软删）为 JSON（`EXPORT_LOCAL_MEMORY`）；不含孤儿桶（孤儿仍走账户与同步导出）。
   - **关 AI + 模型说明（Normative）**：Settings「AI」提供 `aiFeaturesEnabled`（默认开）；关闭后线索 LLM completer 清空、Capture LLM enrichment 跳过；页内说明 Worker 路径与数据平面边界。
   - **服务条款（Normative）**：官网 `/terms`（英/中）；页脚 / 登录 / Settings 可外链。
-  - **书签灌库开关（Normative）**：Settings「保存」提供 `chromeBookmarkIngestEnabled`（默认开）；关闭后跳过 Chrome 书签 bulk 导入与 `bookmarks.on*` 增量写入，并拒绝 `CAPTURE_BOOKMARK`；**不删除**已灌入的书签 Memory；重新开启后补跑 / 续跑 bulk。
+  - **书签灌库开关（Normative）**：Settings「保存」提供 `chromeBookmarkIngestEnabled`（默认开）；关闭后**卸载** `bookmarks.on*` 监听、跳过 bulk 导入与增量写入，并拒绝 `CAPTURE_BOOKMARK`；**不删除**已灌入的书签 Memory；重新开启后重新挂监听并补跑 / 续跑 bulk（含 reconcile 补洞）。
+- **数据处置（Normative · Settings「数据」）**：
+  - **整库导出**：导出当前 owner 本机全部 Memory（含软删）为 JSON（`EXPORT_LOCAL_MEMORY`）；不含孤儿桶（孤儿仍走账户与同步导出）。
+  - **清除本机记忆**（`CLEAR_LOCAL_MEMORY`）：硬清当前 owner 本机 IndexedDB Memory；**不得**改写/删除 Chrome 原生书签；成功后关闭书签灌库并卸载监听；若云同步开着则关闭同步并提示云端副本需另行删除。二次确认。
+  - **删除云端记忆**：登录后可一键删除该账号云端 `memory_items` 与 `memory_sync_backups`；默认**不**清本机 IndexedDB；成功后关闭云同步并清定时闹钟。二次确认。
+  - **删除账号**（与「仅退出」/「仅删云端」分开）：登录后强确认 → Worker 删云端 Memory/backups 并用 service role **注销 Supabase Auth 用户** → 扩展清本机当前 `accountId` 桶（**不动** `localProfileId` 身份；该桶若仍有未归并数据则保留）→ 清 session/binding/同步/隐私 ack → 打开官网 `/logout`。订阅/支付行可按法律保留、不再可登录关联（不暗示可恢复账号）。
 - **禁止回潮**：旧管理页/侧边栏/书签树编辑/AI 自动整理进 build 或 manifest。
 
 新功能顺序：契约 → repository → Background 消息 → Recall/Filter → UI。
@@ -1059,7 +1064,7 @@ Chrome API / 选区
 默认：只处理主动保存 + 授权同步的书签；不默认浏览历史/全文快照/上传第三方。  
 逐步提供：本地/云端开关、删云端、导出、关 AI、模型说明。云端/语义上线前补隐私政策与同意流。
 
-**P0+P1 已落地切片：** Settings 隐私摘要 + 开同步确认 + 删云端 + 删账号 + 官网 `/privacy` + **整库导出** + **关 AI / 模型说明** + 官网 `/terms` + **书签灌库开关**（Settings「保存」）。
+**P0+P1 已落地切片：** Settings 隐私摘要 + 开同步确认 + 官网 `/privacy` + **数据**分区（整库导出 / 清除本机记忆 / 删云端 / 删账号）+ **关 AI / 模型说明** + 官网 `/terms` + **书签灌库开关**（Settings「保存」）。
 
 ### A.3 商业化方向（配额另定）
 
@@ -1144,6 +1149,7 @@ Chrome API / 选区
 
 | 日期       | 变更                                                                                                                                       |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-08-07 | Settings 新增「数据」分区：导出/清除本机/删云端/删账号迁入；隐私瘦身为说明+确认+外链；`CLEAR_LOCAL_MEMORY`（不动 Chrome 原生书签）         |
 | 2026-08-06 | §A.3.2 订阅投影与对账：Gumroad 计费权威；24h TTL / 48h grace；ended 立刻降级；webhook token + events + Refresh/Cron 对账                   |
 | 2026-08-06 | 订阅全流程收口：展示锚点 $5.99/月·$59/年；Gumroad 为结账权威；A.3.1 上线清单；Power User/Team 仅路线图                                     |
 | 2026-08-06 | 付费方案拍板：Free+仅 Pro；同步/托管 LLM 进 Pro；官网定价与账户升级；website 订阅鉴权；`premium` 预留不售                                  |

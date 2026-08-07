@@ -303,6 +303,9 @@
   "settings_tab_account_sync": {
     "message": "账户与同步"
   },
+  "settings_tab_data": {
+    "message": "数据"
+  },
   "settings_tab_privacy": {
     "message": "隐私"
   },
@@ -312,8 +315,39 @@
   "settings_placeholder_privacy": {
     "message": "隐私相关选项尚未上线，这里不会假装可配置。"
   },
+  "settings_data_intro": {
+    "message": "导出、清除本机记忆，或删除云端副本与账号。这些操作只动 Yiveno 记忆，永远不会改写 Chrome 原生书签。"
+  },
+  "settings_data_clear_local": {
+    "message": "清除本机记忆"
+  },
+  "settings_data_clear_local_hint": {
+    "message": "删除当前身份下本机全部记忆（摘录与书签痕迹）。不会改动 Chrome 原生书签；完成后会关闭书签灌库。若云同步开着会一并关闭（云端副本需另行删除）。"
+  },
+  "settings_data_clear_local_confirm": {
+    "message": "将永久清除本机 Yiveno 记忆，且不会改动 Chrome 原生书签。将关闭书签灌库；若同步开着也会关闭同步。建议先导出。继续？"
+  },
+  "settings_data_clear_local_done": {
+    "message": "已清除本机 $COUNT$ 条记忆（未改 Chrome 书签）",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_data_clear_local_done_sync_off": {
+    "message": "已清除本机 $COUNT$ 条记忆，并已关闭同步与书签灌库（未改 Chrome 书签）",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_error_local_clear": {
+    "message": "清除本机记忆失败"
+  },
   "settings_privacy_intro": {
-    "message": "Yiveno 默认把记忆放在本机。上云与 AI 为可选能力；你可以随时查看说明、确认后再开同步，或删除云端副本。"
+    "message": "了解 Yiveno 如何处理本机记忆、可选云同步与 AI。开启云同步时会再次确认本说明。"
   },
   "settings_privacy_bullet_local": {
     "message": "本机：IndexedDB 中的摘录、书签痕迹与备注；卸载扩展后本机库会丢失。"
@@ -469,7 +503,7 @@
     "message": "将 Chrome 书签写入记忆"
   },
   "settings_toggle_chrome_bookmark_ingest_hint": {
-    "message": "关闭后停止导入与增量同步；已写入的书签记忆不会删除"
+    "message": "关闭后卸载监听：不导入、不处理新增/变更；已写入的书签记忆不会删除"
   },
   "settings_section_shortcuts": {
     "message": "快捷键"
@@ -885,7 +919,7 @@
     "message": "删除摘录"
   },
   "library_bookmark_unsynced": {
-    "message": "未同步"
+    "message": "未写入记忆"
   },
   "library_folder_unnamed": {
     "message": "未命名文件夹"

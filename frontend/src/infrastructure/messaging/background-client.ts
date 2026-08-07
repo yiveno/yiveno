@@ -6,6 +6,7 @@ import type {
   AuthSignInResponse,
   AuthSignOutMode,
   AuthSignOutResponse,
+  ClearLocalMemoryResponse,
   ClearOrphanOwnersResponse,
   DeleteAccountResponse,
   DeleteCloudMemoryResponse,
@@ -315,6 +316,14 @@ export async function exportLocalMemory(): Promise<ExportLocalMemoryResponse> {
   return sendBackgroundMessage<ExportLocalMemoryResponse>({
     scope: 'background',
     type: 'EXPORT_LOCAL_MEMORY'
+  })
+}
+
+/** 清除当前 owner 本机全部记忆（不动 Chrome 原生书签）。 */
+export async function clearLocalMemory(): Promise<ClearLocalMemoryResponse> {
+  return sendBackgroundMessage<ClearLocalMemoryResponse>({
+    scope: 'background',
+    type: 'CLEAR_LOCAL_MEMORY'
   })
 }
 

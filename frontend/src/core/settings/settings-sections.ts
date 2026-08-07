@@ -1,10 +1,11 @@
 /** 设置页左侧分区 id（与 `?section=` 一致）。 */
 export type SettingsSectionId =
-  | 'capture' // 保存：划词浮层开关
+  | 'capture' // 保存：划词浮层 / 书签灌库
   | 'shortcuts' // 快捷键：展示绑定；改键跳转 Chrome 原生页
   | 'account_sync' // 账户与同步：同步 / 冲突 / 孤儿桶 / 退出
-  | 'privacy' // 隐私：数据说明 / 开同步确认 / 删云端
-  | 'ai' // AI：未上线占位
+  | 'data' // 数据：导出 / 清除本机 / 删云端 / 删账号
+  | 'privacy' // 隐私：说明 / 开同步确认 / 政策外链
+  | 'ai' // AI：开关与模型说明
 
 /** 设置分区文案 key（由 UI `t()` 解析；core 不依赖 chrome）。 */
 export interface SettingsSectionTabDef {
@@ -13,6 +14,7 @@ export interface SettingsSectionTabDef {
     | 'settings_tab_capture'
     | 'settings_tab_shortcuts'
     | 'settings_tab_account_sync'
+    | 'settings_tab_data'
     | 'settings_tab_privacy'
     | 'settings_tab_ai'
 }
@@ -28,6 +30,7 @@ export const SETTINGS_SECTION_TABS: readonly SettingsSectionTabDef[] = [
   { id: 'capture', labelKey: 'settings_tab_capture' },
   { id: 'shortcuts', labelKey: 'settings_tab_shortcuts' },
   { id: 'account_sync', labelKey: 'settings_tab_account_sync' },
+  { id: 'data', labelKey: 'settings_tab_data' },
   { id: 'privacy', labelKey: 'settings_tab_privacy' },
   { id: 'ai', labelKey: 'settings_tab_ai' }
 ] as const

@@ -17,6 +17,7 @@ import {
 import {
   ackPrivacyNotice,
   authSignOut,
+  clearLocalMemory,
   clearOrphanOwners,
   deleteAccount,
   deleteCloudMemory,
@@ -101,9 +102,9 @@ const syncRestoreMessage = ref('')
 const syncLastPulledAt = ref<string | null>(null)
 const syncMessage = ref('')
 const privacyNoticeAcked = ref(false)
-const privacyWorking = ref(false)
-const privacyError = ref('')
-const privacyMessage = ref('')
+const dataWorking = ref(false)
+const dataError = ref('')
+const dataMessage = ref('')
 const exportWorking = ref(false)
 
 /** 官网隐私政策 / 服务条款全文 URL。 */
@@ -567,76 +568,53 @@ async function handleSyncToggle(event: Event) {
   }
 }
 
-/** 隐私页确认说明。 */
-async function handleAckPrivacyNotice() {
-  if (privacyWorking.value) {
-    return
-  }
-  privacyWorking.value = true
-  privacyError.value = ''
-  privacyMessage.value = ''
-  try {
-    const response = await ackPrivacyNotice()
-    if (!response.ok) {
-      privacyError.value = tAccountSyncError(response.errorCode)
-      return
-    }
-    privacyNoticeAcked.value = true
-    privacyMessage.value = t('settings_privacy_ack_done')
-  } catch {
-    privacyError.value = t('settings_error_privacy_ack')
-  } finally {
-    privacyWorking.value = false
-  }
-}
-
 /** 删除云端记忆（不动本机）。 */
 async function handleDeleteCloudMemory() {
-  if (!signedIn.value || privacyWorking.value) {
+  if (!signedIn.value || dataWorking.value) {
     return
   }
   if (!window.confirm(t('settings_privacy_delete_cloud_confirm'))) {
     return
   }
 
-  privacyWorking.value = true
-  privacyError.value = ''
-  privacyMessage.value = ''
+  dataWorking.value = true
+  dataError.value = ''
+  dataMessage.value = ''
   try {
     const response = await deleteCloudMemory()
     if (!response.ok) {
-      privacyError.value = tAccountSyncError(response.errorCode)
+      dataError.value = tAccountSyncError(response.errorCode)
       return
     }
-    privacyMessage.value = t('settings_privacy_delete_cloud_done', [String(response.deletedItems)])
+    dataMessage.value = t('settings_privacy_delete_cloud_done', [String(response.deletedItems)])
     syncEnabled.value = false
     await refreshSyncStatus()
   } catch {
-    privacyError.value = t('settings_error_cloud_delete')
+    dataError.value = t('settings_error_cloud_delete')
   } finally {
-    privacyWorking.value = false
+    dataWorking.value = false
   }
 }
 
 /** 删除账号：云 + Auth + 本机账号桶 + 退登。 */
 async function handleDeleteAccount() {
-  if (!signedIn.value || privacyWorking.value || signingOut.value) {
+  if (!signedIn.value || dataWorking.value || signingOut.value) {
     return
   }
   if (!window.confirm(t('settings_privacy_delete_account_confirm'))) {
     return
   }
 
-  privacyWorking.value = true
-  privacyError.value = ''
-  privacyMessage.value = ''
+  dataWorking.value = true
+  dataError.value = ''
+  dataMessage.value = ''
   try {
     const response = await deleteAccount()
     if (!response.ok) {
-      privacyError.value = tAccountSyncError(response.errorCode)
+      dataError.value = tAccountSyncError(response.errorCode)
       return
     }
-    privacyMessage.value = t('settings_privacy_delete_account_done', [
+    dataMessage.value = t('settings_privacy_delete_account_done', [
       String(response.deletedItems),
       String(response.clearedLocalCount)
     ])
@@ -647,32 +625,67 @@ async function handleDeleteAccount() {
     privacyNoticeAcked.value = false
     await refreshSyncStatus()
   } catch {
-    privacyError.value = t('settings_error_account_delete')
+    dataError.value = t('settings_error_account_delete')
   } finally {
-    privacyWorking.value = false
+    dataWorking.value = false
   }
 }
 
 /** 导出当前 owner 本机记忆。 */
 async function handleExportLocalMemory() {
-  if (exportWorking.value || privacyWorking.value) {
+  if (exportWorking.value || dataWorking.value) {
     return
   }
   exportWorking.value = true
-  privacyError.value = ''
-  privacyMessage.value = ''
+  dataError.value = ''
+  dataMessage.value = ''
   try {
     const response = await exportLocalMemory()
     if (!response.ok) {
-      privacyError.value = tAccountSyncError(response.errorCode)
+      dataError.value = tAccountSyncError(response.errorCode)
       return
     }
     downloadLocalMemoryExportJson(response.ownerId, response.items)
-    privacyMessage.value = t('settings_privacy_export_done', [String(response.items.length)])
+    dataMessage.value = t('settings_privacy_export_done', [String(response.items.length)])
   } catch {
-    privacyError.value = t('settings_error_local_export')
+    dataError.value = t('settings_error_local_export')
   } finally {
     exportWorking.value = false
+  }
+}
+
+/** 清除本机记忆（不动 Chrome 原生书签）。 */
+async function handleClearLocalMemory() {
+  if (dataWorking.value || exportWorking.value || signingOut.value) {
+    return
+  }
+  if (!window.confirm(t('settings_data_clear_local_confirm'))) {
+    return
+  }
+
+  dataWorking.value = true
+  dataError.value = ''
+  dataMessage.value = ''
+  try {
+    const response = await clearLocalMemory()
+    if (!response.ok) {
+      dataError.value = tAccountSyncError(response.errorCode)
+      return
+    }
+    chromeBookmarkIngestEnabled.value = false
+    if (response.syncDisabled) {
+      syncEnabled.value = false
+      dataMessage.value = t('settings_data_clear_local_done_sync_off', [
+        String(response.clearedCount)
+      ])
+    } else {
+      dataMessage.value = t('settings_data_clear_local_done', [String(response.clearedCount)])
+    }
+    await refreshSyncStatus()
+  } catch {
+    dataError.value = t('settings_error_local_clear')
+  } finally {
+    dataWorking.value = false
   }
 }
 
@@ -1107,15 +1120,96 @@ onUnmounted(() => {
               </md-outlined-button>
               <md-text-button
                 type="button"
-                :disabled="signingOut || savingSync || orphanWorking || privacyWorking"
+                :disabled="signingOut || savingSync || orphanWorking || dataWorking"
                 :title="t('settings_account_open_delete_account')"
-                @click="selectSection('privacy')"
+                @click="selectSection('data')"
               >
                 {{ t('settings_account_open_delete_account') }}
               </md-text-button>
             </div>
 
             <p v-if="syncError" class="settings-error" role="alert">{{ syncError }}</p>
+          </div>
+        </template>
+
+        <template v-else-if="activeSection === 'data'">
+          <div class="settings-block" aria-labelledby="settings-data-heading">
+            <div class="settings-section-head">
+              <h2 id="settings-data-heading" class="settings-section-title">
+                {{ t('settings_tab_data') }}
+              </h2>
+              <p class="settings-section-copy">{{ t('settings_data_intro') }}</p>
+            </div>
+
+            <div class="settings-privacy-danger">
+              <p class="settings-toggle-title">{{ t('settings_privacy_export') }}</p>
+              <p class="settings-section-copy">{{ t('settings_privacy_export_hint') }}</p>
+              <div class="settings-actions">
+                <md-outlined-button
+                  type="button"
+                  :disabled="exportWorking || dataWorking || signingOut"
+                  :title="t('settings_privacy_export')"
+                  @click="handleExportLocalMemory"
+                >
+                  {{ exportWorking ? t('settings_privacy_working') : t('settings_privacy_export') }}
+                </md-outlined-button>
+              </div>
+            </div>
+
+            <div class="settings-privacy-danger">
+              <p class="settings-toggle-title">{{ t('settings_data_clear_local') }}</p>
+              <p class="settings-section-copy">{{ t('settings_data_clear_local_hint') }}</p>
+              <div class="settings-actions">
+                <md-outlined-button
+                  type="button"
+                  :disabled="dataWorking || exportWorking || signingOut"
+                  :title="t('settings_data_clear_local')"
+                  @click="handleClearLocalMemory"
+                >
+                  {{ dataWorking ? t('settings_privacy_working') : t('settings_data_clear_local') }}
+                </md-outlined-button>
+              </div>
+            </div>
+
+            <div v-if="signedIn" class="settings-privacy-danger">
+              <p class="settings-toggle-title">{{ t('settings_privacy_delete_cloud') }}</p>
+              <p class="settings-section-copy">{{ t('settings_privacy_delete_cloud_hint') }}</p>
+              <div class="settings-actions">
+                <md-outlined-button
+                  type="button"
+                  :disabled="dataWorking || signingOut || savingSync"
+                  :title="t('settings_privacy_delete_cloud')"
+                  @click="handleDeleteCloudMemory"
+                >
+                  {{
+                    dataWorking ? t('settings_privacy_working') : t('settings_privacy_delete_cloud')
+                  }}
+                </md-outlined-button>
+              </div>
+
+              <p class="settings-toggle-title settings-privacy-danger__title-spaced">
+                {{ t('settings_privacy_delete_account') }}
+              </p>
+              <p class="settings-section-copy">{{ t('settings_privacy_delete_account_hint') }}</p>
+              <div class="settings-actions">
+                <md-outlined-button
+                  type="button"
+                  :disabled="dataWorking || signingOut || savingSync"
+                  :title="t('settings_privacy_delete_account')"
+                  @click="handleDeleteAccount"
+                >
+                  {{
+                    dataWorking
+                      ? t('settings_privacy_working')
+                      : t('settings_privacy_delete_account')
+                  }}
+                </md-outlined-button>
+              </div>
+            </div>
+            <p v-else class="settings-status">{{ t('settings_privacy_delete_cloud_sign_in') }}</p>
+
+            <p v-if="dataMessage" class="settings-status" role="status">{{ dataMessage }}</p>
+            <p v-if="dataError" class="settings-error" role="alert">{{ dataError }}</p>
           </div>
         </template>
 
@@ -1136,32 +1230,7 @@ onUnmounted(() => {
               <li>{{ t('settings_privacy_bullet_not_collected') }}</li>
             </ul>
 
-            <p class="settings-status">
-              {{
-                privacyNoticeAcked
-                  ? t('settings_privacy_ack_status_done')
-                  : t('settings_privacy_ack_status_needed')
-              }}
-            </p>
-
             <div class="settings-actions">
-              <md-outlined-button
-                v-if="!privacyNoticeAcked"
-                type="button"
-                :disabled="privacyWorking"
-                :title="t('settings_privacy_ack')"
-                @click="handleAckPrivacyNotice"
-              >
-                {{ privacyWorking ? t('settings_privacy_working') : t('settings_privacy_ack') }}
-              </md-outlined-button>
-              <md-outlined-button
-                type="button"
-                :disabled="privacyWorking"
-                :title="t('settings_privacy_open_sync')"
-                @click="selectSection('account_sync')"
-              >
-                {{ t('settings_privacy_open_sync') }}
-              </md-outlined-button>
               <a
                 class="settings-privacy-policy-link"
                 :href="privacyPolicyUrl"
@@ -1181,67 +1250,10 @@ onUnmounted(() => {
                 {{ t('settings_privacy_open_terms') }}
               </a>
             </div>
-
-            <div class="settings-privacy-danger">
-              <p class="settings-toggle-title">{{ t('settings_privacy_export') }}</p>
-              <p class="settings-section-copy">{{ t('settings_privacy_export_hint') }}</p>
-              <div class="settings-actions">
-                <md-outlined-button
-                  type="button"
-                  :disabled="exportWorking || privacyWorking || signingOut"
-                  :title="t('settings_privacy_export')"
-                  @click="handleExportLocalMemory"
-                >
-                  {{ exportWorking ? t('settings_privacy_working') : t('settings_privacy_export') }}
-                </md-outlined-button>
-              </div>
-            </div>
-
-            <div v-if="signedIn" class="settings-privacy-danger">
-              <p class="settings-toggle-title">{{ t('settings_privacy_delete_cloud') }}</p>
-              <p class="settings-section-copy">{{ t('settings_privacy_delete_cloud_hint') }}</p>
-              <div class="settings-actions">
-                <md-outlined-button
-                  type="button"
-                  :disabled="privacyWorking || signingOut || savingSync"
-                  :title="t('settings_privacy_delete_cloud')"
-                  @click="handleDeleteCloudMemory"
-                >
-                  {{
-                    privacyWorking
-                      ? t('settings_privacy_working')
-                      : t('settings_privacy_delete_cloud')
-                  }}
-                </md-outlined-button>
-              </div>
-
-              <p class="settings-toggle-title settings-privacy-danger__title-spaced">
-                {{ t('settings_privacy_delete_account') }}
-              </p>
-              <p class="settings-section-copy">{{ t('settings_privacy_delete_account_hint') }}</p>
-              <div class="settings-actions">
-                <md-outlined-button
-                  type="button"
-                  :disabled="privacyWorking || signingOut || savingSync"
-                  :title="t('settings_privacy_delete_account')"
-                  @click="handleDeleteAccount"
-                >
-                  {{
-                    privacyWorking
-                      ? t('settings_privacy_working')
-                      : t('settings_privacy_delete_account')
-                  }}
-                </md-outlined-button>
-              </div>
-            </div>
-            <p v-else class="settings-status">{{ t('settings_privacy_delete_cloud_sign_in') }}</p>
-
-            <p v-if="privacyMessage" class="settings-status" role="status">{{ privacyMessage }}</p>
-            <p v-if="privacyError" class="settings-error" role="alert">{{ privacyError }}</p>
           </div>
         </template>
 
-        <template v-else>
+        <template v-else-if="activeSection === 'ai'">
           <div class="settings-block" aria-labelledby="settings-ai-heading">
             <div class="settings-section-head">
               <h2 id="settings-ai-heading" class="settings-section-title">

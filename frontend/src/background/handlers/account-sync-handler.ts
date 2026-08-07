@@ -16,6 +16,7 @@ import type {
   AuthSignInResponse,
   AuthSignOutMode,
   AuthSignOutResponse,
+  ClearLocalMemoryResponse,
   ClearOrphanOwnersResponse,
   DeleteAccountResponse,
   DeleteCloudMemoryResponse,
@@ -1095,6 +1096,63 @@ export async function handleExportLocalMemory(): Promise<ExportLocalMemoryRespon
     return {
       ok: false,
       errorCode: 'LOCAL_EXPORT_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
+    }
+  }
+}
+
+/**
+ * CLEAR_LOCAL_MEMORY — 硬清当前 owner 本机 Memory。
+ * 不动 Chrome 原生书签；关书签灌库；若同步开着则关同步（云端副本需用户另删）。
+ */
+export async function handleClearLocalMemory(): Promise<ClearLocalMemoryResponse> {
+  const startedAt = flowStart('Data', 'CLEAR_LOCAL_MEMORY')
+  try {
+    const ownerId =
+      (await getAccountBinding())?.accountId ?? (await getOrCreateLocalProfile()).localProfileId
+    const existing = await memoryItemRepository.listAllByOwnerId(ownerId, {
+      includeDeleted: true
+    })
+    const clearedCount = existing.length
+
+    await memoryItemRepository.replaceOwnerItems(ownerId, [])
+
+    const { updateUserSettings } = await import('@/infrastructure/settings/user-settings-service')
+    await updateUserSettings({ chromeBookmarkIngestEnabled: false })
+    const { syncChromeBookmarkSyncListenersWithIngestSetting } =
+      await import('@/background/listeners/chrome-bookmark-sync')
+    await syncChromeBookmarkSyncListenersWithIngestSetting(false)
+
+    const syncPrefs = await getSyncPrefs()
+    let syncDisabled = false
+    if (syncPrefs.enabled) {
+      await patchSyncPrefs({ enabled: false })
+      await ensureMemoryCloudSyncAlarm(false)
+      syncDisabled = true
+    }
+
+    flowOk('Data', 'CLEAR_LOCAL_MEMORY', startedAt, {
+      ownerId,
+      clearedCount,
+      syncDisabled
+    })
+    logger.info('Data', '已清除本机记忆（未改 Chrome 原生书签）', {
+      ownerId,
+      clearedCount,
+      syncDisabled
+    })
+    return {
+      ok: true,
+      ownerId,
+      clearedCount,
+      bookmarkIngestDisabled: true,
+      syncDisabled
+    }
+  } catch (error) {
+    flowFail('Data', 'CLEAR_LOCAL_MEMORY', startedAt, error)
+    return {
+      ok: false,
+      errorCode: 'LOCAL_CLEAR_FAILED',
       ...(error instanceof Error ? { error: error.message } : {})
     }
   }

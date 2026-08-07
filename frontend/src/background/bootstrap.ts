@@ -1,7 +1,7 @@
 import { ensureChromeBookmarksImported } from '@/application/capture/import-chrome-bookmarks-service'
 import { ensureMemoryEnrichmentBackfilled } from '@/application/memory/ensure-memory-enrichment-backfill'
 import { refreshClueLlmCompleterFromDevConfig } from '@/application/recall/refresh-clue-llm-completer'
-import { registerChromeBookmarkSyncListeners } from '@/background/listeners/chrome-bookmark-sync'
+import { syncChromeBookmarkSyncListenersWithIngestSetting } from '@/background/listeners/chrome-bookmark-sync'
 import { registerCommandListeners } from '@/background/listeners/commands'
 import { registerContextMenuListeners } from '@/background/listeners/context-menu'
 import { registerMemoryCloudSyncAlarmListener } from '@/background/listeners/memory-cloud-sync-alarm'
@@ -31,7 +31,8 @@ async function bootstrapBackground(): Promise<void> {
 
   await initializeMemoryDatabase()
 
-  registerChromeBookmarkSyncListeners()
+  // 按灌库开关挂/卸书签监听（关则完全不听 Chrome bookmarks.*）
+  await syncChromeBookmarkSyncListenersWithIngestSetting()
   registerContextMenuListeners()
   registerOmniboxListeners()
   registerCommandListeners()

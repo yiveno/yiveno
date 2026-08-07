@@ -8,6 +8,7 @@ import {
   handleAuthSignIn,
   handleAuthSignOut,
   handleAckPrivacyNotice,
+  handleClearLocalMemory,
   handleClearOrphanOwners,
   handleDeleteCloudMemory,
   handleDeleteAccount,
@@ -115,6 +116,8 @@ async function dispatchBackgroundMessage(
       return handleDeleteAccount()
     case 'EXPORT_LOCAL_MEMORY':
       return handleExportLocalMemory()
+    case 'CLEAR_LOCAL_MEMORY':
+      return handleClearLocalMemory()
     case 'CAPTURE_BOOKMARK':
       return handleCaptureBookmark(message.payload)
     case 'CAPTURE_TEXT_EXCERPT':
