@@ -396,14 +396,6 @@ export type GetSubscriptionStatusResponse =
       error?: string
     }
 
-/** 强制从 Worker 刷新订阅快照。 */
-export type RefreshSubscriptionMessage = {
-  scope: BackgroundMessageScope
-  type: 'REFRESH_SUBSCRIPTION'
-}
-
-export type RefreshSubscriptionResponse = GetSubscriptionStatusResponse
-
 export type AccountSyncBackgroundMessage =
   | AuthSignInMessage
   | AuthSignOutMessage
@@ -422,7 +414,6 @@ export type AccountSyncBackgroundMessage =
   | DeleteAccountMessage
   | ExportLocalMemoryMessage
   | GetSubscriptionStatusMessage
-  | RefreshSubscriptionMessage
 
 export type AccountSyncBackgroundResponse =
   | AuthSignInResponse
@@ -442,4 +433,3 @@ export type AccountSyncBackgroundResponse =
   | DeleteAccountResponse
   | ExportLocalMemoryResponse
   | GetSubscriptionStatusResponse
-  | RefreshSubscriptionResponse

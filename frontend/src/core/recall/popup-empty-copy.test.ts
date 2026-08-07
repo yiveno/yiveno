@@ -6,9 +6,9 @@ import { getPopupIdleEmptyCopy, getPopupNoMatchCopy } from '@/core/recall/popup-
 describe('popup-empty-copy', () => {
   it('空库 idle 给出 Capture 引导', () => {
     const copy = getPopupIdleEmptyCopy('empty', false, testTranslateZh)
-    expect(copy?.title).toBe('还没有可找回的记忆')
+    expect(copy?.title).toBe('你想找什么？')
     expect(copy?.showShortenRetry).toBe(false)
-    expect(copy?.body).toContain('书签')
+    expect(copy?.body).toContain('划')
   })
 
   it('有库 idle 不展示空态块', () => {
@@ -24,9 +24,9 @@ describe('popup-empty-copy', () => {
       },
       testTranslateZh
     )
-    expect(copy.title).toBe('记忆库还是空的')
+    expect(copy.title).toBe('还没有保存的内容')
     expect(copy.showShortenRetry).toBe(false)
-    expect(copy.body).toContain('换词暂时帮不上忙')
+    expect(copy.body).toContain('线索')
   })
 
   it('有库 no_match 可缩短再试', () => {

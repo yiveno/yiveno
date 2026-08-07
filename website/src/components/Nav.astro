@@ -2,13 +2,63 @@
 import AuthNav from './AuthNav.vue'
 ---
 
-<nav style="display:flex;align-items:center;gap:1rem;padding:1rem 2rem;border-bottom:1px solid #eee;">
-  <a href="/" style="font-weight:bold;font-size:1.25rem;text-decoration:none;color:inherit;">Yiveno</a>
-  <div style="flex:1" />
-  <a href="/features" style="text-decoration:none;color:#555;">功能</a>
-  <a href="/pricing" style="text-decoration:none;color:#555;">定价</a>
-  <a href="/about" style="text-decoration:none;color:#555;">关于</a>
-  <a href="/privacy" style="text-decoration:none;color:#555;">隐私</a>
-  <a href="/contact" style="text-decoration:none;color:#555;">联系</a>
+<nav class="site-nav">
+  <a href="/" class="site-nav__brand" aria-label="Yiveno">
+    <img
+      class="site-nav__logo"
+      src="/images/logo-mark.svg"
+      alt=""
+      width="28"
+      height="28"
+      decoding="async"
+    />
+    <span class="site-nav__name">Yiveno</span>
+  </a>
+  <div class="site-nav__spacer" />
+  <a href="/features" class="site-nav__link">功能</a>
+  <a href="/pricing" class="site-nav__link">定价</a>
+  <a href="/about" class="site-nav__link">关于</a>
+  <a href="/privacy" class="site-nav__link">隐私</a>
+  <a href="/contact" class="site-nav__link">联系</a>
   <AuthNav client:load />
 </nav>
+
+<style>
+  .site-nav {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 2rem;
+    border-bottom: 1px solid #eee;
+  }
+
+  .site-nav__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    font-size: 1.25rem;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .site-nav__logo {
+    display: block;
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+  }
+
+  .site-nav__name {
+    line-height: 1;
+  }
+
+  .site-nav__spacer {
+    flex: 1;
+  }
+
+  .site-nav__link {
+    text-decoration: none;
+    color: #555;
+  }
+</style>

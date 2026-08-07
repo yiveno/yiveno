@@ -3,11 +3,54 @@ import MainLayout from '../layouts/MainLayout.astro'
 ---
 
 <MainLayout>
-  <section style="text-align:center;padding:4rem 2rem;max-width:800px;margin:0 auto;">
-    <h1 style="font-size:3rem;margin-bottom:1rem;">Yiveno</h1>
-    <p style="font-size:1.25rem;color:#555;margin-bottom:2rem;">AI 驱动的智能书签管理</p>
-    <p style="color:#777;line-height:1.8;">
-      智能组织、内容感知搜索、AI 推荐 — 让书签管理变得更简单。
+  <section class="hero">
+    <img
+      class="hero__logo"
+      src="/images/logo-mark.svg"
+      alt="Yiveno"
+      width="96"
+      height="96"
+      decoding="async"
+    />
+    <h1 class="hero__title">Yiveno</h1>
+    <p class="hero__tagline">A personal memory that understands you.</p>
+    <p class="hero__body">
+      Capture browsing traces with low friction. Recall what you saved with high confidence—excerpts and notes, not
+      another bookmark manager.
     </p>
   </section>
 </MainLayout>
+
+<style>
+  .hero {
+    text-align: center;
+    padding: 4rem 2rem;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .hero__logo {
+    display: block;
+    width: 96px;
+    height: 96px;
+    margin: 0 auto 1.25rem;
+    object-fit: contain;
+  }
+
+  .hero__title {
+    font-size: 3rem;
+    margin: 0 0 0.75rem;
+  }
+
+  .hero__tagline {
+    font-size: 1.25rem;
+    color: #555;
+    margin: 0 0 1.25rem;
+  }
+
+  .hero__body {
+    color: #777;
+    line-height: 1.8;
+    margin: 0;
+  }
+</style>

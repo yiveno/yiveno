@@ -15,7 +15,6 @@ import type {
   GetSubscriptionStatusResponse,
   GetSyncStatusResponse,
   RefreshAuthProfileResponse,
-  RefreshSubscriptionResponse,
   RestoreLatestSyncBackupResponse,
   AckPrivacyNoticeResponse,
   RunIncrementalMemorySyncResponse,
@@ -327,13 +326,5 @@ export async function fetchSubscriptionStatus(options?: {
     scope: 'background',
     type: 'GET_SUBSCRIPTION_STATUS',
     ...(options?.refresh ? { payload: { refresh: true } } : {})
-  })
-}
-
-/** 强制从 Worker 刷新订阅。 */
-export async function refreshSubscription(): Promise<RefreshSubscriptionResponse> {
-  return sendBackgroundMessage<RefreshSubscriptionResponse>({
-    scope: 'background',
-    type: 'REFRESH_SUBSCRIPTION'
   })
 }

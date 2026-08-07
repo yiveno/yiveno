@@ -115,6 +115,14 @@ async function login(provider: 'google' | 'microsoft') {
 
 <template>
   <div class="login-form">
+    <img
+      class="login-form__logo"
+      src="/images/logo-mark.svg"
+      alt=""
+      width="56"
+      height="56"
+      decoding="async"
+    />
     <h2>登录 Yiveno</h2>
     <p v-if="fromExtension" class="hint">登录后将同步到 Chrome 扩展（不会自动上传记忆）。</p>
     <p v-if="connectingExtension" class="hint">正在连接扩展…</p>
@@ -150,6 +158,14 @@ async function login(provider: 'google' | 'microsoft') {
   max-width: 360px;
   margin: 4rem auto;
   text-align: center;
+}
+
+.login-form__logo {
+  display: block;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 1rem;
+  object-fit: contain;
 }
 
 .btn {

@@ -2,12 +2,13 @@ import type { TranslateFn } from '@/core/i18n/translate'
 
 /** 单测用固定中文表（与 zh_CN messages 对齐的子集）。 */
 const ZH: Record<string, string> = {
-  popup_empty_no_memory_title: '还没有可找回的记忆',
+  popup_empty_no_memory_title: '你想找什么？',
   popup_empty_no_memory_body_importing:
-    '正在导入书签。想更快体验找回，可先在网页划词保存一段文字。',
-  popup_empty_no_memory_body: '先在网页划词保存你想留住的句子；也可用 Chrome 加书签并等待同步。',
-  popup_empty_library_empty_title: '记忆库还是空的',
-  popup_empty_library_empty_body: '先划词存一点个人痕迹再找回。换词暂时帮不上忙；书签同步是配角。',
+    '书签正在导入。你也可以先划一句想留住的——这是最快感受到 Yiveno 的方式。',
+  popup_empty_no_memory_body: '在网页划一句你想留住的。准备好之后，哪怕只记得一点，也可以回来找。',
+  popup_empty_library_empty_title: '还没有保存的内容',
+  popup_empty_library_empty_body:
+    '先留下一点属于你的痕迹——一句摘录、一条备注、一个你在意的页面。再随便给点线索试试。',
   popup_no_match_title_with_clue: '没找到和「$1」相关的',
   popup_no_match_title: '还没找到匹配的',
   popup_no_match_body: '试试更短的词，或备注、正文里还记得的片段。也可再划词存一点后再找回。',

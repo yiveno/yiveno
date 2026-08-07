@@ -824,13 +824,13 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 **布局（Normative）：** 与记忆库同构——**左侧竖导航 + 右侧单面板切换**；窄屏降级为顶部横排 chips。深链 `settings.html?section=<id>`（默认 `capture` 不写 query；旧 `usage` 映射到 `capture`）。
 
-| 分区（侧栏） | `section` id   | 状态            | 说明                                                                                                |
-| ------------ | -------------- | --------------- | --------------------------------------------------------------------------------------------------- |
-| 保存         | `capture`      | 已上线          | 划词浮层开关（默认开）；**Chrome 书签灌库**开关（默认开；关后停 bulk/增量，不删已有）               |
-| 快捷键       | `shortcuts`    | 已上线          | 展示绑定；改键跳转 `chrome://extensions/shortcuts`                                                  |
-| 账户与同步   | `account_sync` | 已上线          | 顶栏头像登录；**同步 = Pro+登录+开关**；订阅升级/刷新；禁止缩量盖云；孤儿桶；退出三选一；默认同步关 |
-| 隐私         | `privacy`      | 已上线（P0+P1） | 数据说明；开同步确认；删云端；删账号；**整库导出**；链到 `/privacy` 与 `/terms`                     |
-| AI           | `ai`           | 已上线          | **关 AI**；模型路径说明（线索理解 + enrichment；不碰数据平面）                                      |
+| 分区（侧栏） | `section` id   | 状态            | 说明                                                                                                           |
+| ------------ | -------------- | --------------- | -------------------------------------------------------------------------------------------------------------- |
+| 保存         | `capture`      | 已上线          | 划词浮层开关（默认开）；**Chrome 书签灌库**开关（默认开；关后停 bulk/增量，不删已有）                          |
+| 快捷键       | `shortcuts`    | 已上线          | 展示绑定；改键跳转 `chrome://extensions/shortcuts`                                                             |
+| 账户与同步   | `account_sync` | 已上线          | 顶栏头像登录；**同步 = Pro+登录+开关**；订阅升级（回焦自动对账）；禁止缩量盖云；孤儿桶；退出三选一；默认同步关 |
+| 隐私         | `privacy`      | 已上线（P0+P1） | 数据说明；开同步确认；删云端；删账号；**整库导出**；链到 `/privacy` 与 `/terms`                                |
+| AI           | `ai`           | 已上线          | **关 AI**；模型路径说明（线索理解 + enrichment；不碰数据平面）                                                 |
 
 ### 5.6 扩展入口
 
@@ -851,8 +851,8 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 1. 环境：`GUMROAD_SELLER_ID`、`GUMROAD_WEBHOOK_TOKEN`、`GUMROAD_ACCESS_TOKEN`、`VITE_GUMROAD_PRODUCT_URL` 已配；Ping URL 带 `?token=`；`env:sync` 后官网有 `PUBLIC_GUMROAD_*`。
 2. 扩展登录 → Settings「账户与同步」→ 非 Pro 时同步开关不可开；可见升级 CTA。
 3. 点升级 → Gumroad 付款 → webhook 写入 `subscriptions`（`tier=pro`、`verification_status=verified`）且 `gumroad_events` 有成功行。
-4. 回扩展：点「刷新方案」或重新聚焦 Settings（强制对账）→ 显示 Pro → Hybrid 可用、同步可开、托管线索理解可用。
-5. 官网 `/pricing` 权益与锚点价正确；`/account` 可升级/管理/刷新（Bearer；刷新须对账）。
+4. 回扩展：从 Gumroad 返回并重新聚焦 Settings（自动对账刷新）→ 显示 Pro → Hybrid 可用、同步可开、托管线索理解可用。
+5. 官网 `/pricing` 权益与锚点价正确；`/account` 可升级/管理（Bearer；进页与回焦自动对账）。
 6. Gumroad ended / 非 alive：Refresh 或下一小时 Cron → **立刻** Free；同步被关；Worker sync 返回 `pro_required`。
 7. 库内 `test-` / 无订单证据的假 Pro：门禁与账户页均不得为 Pro。
 
@@ -1080,7 +1080,7 @@ Chrome API / 选区
 2. Ping/Webhook → 生产 `POST https://api.yiveno.com/api/gumroad/webhook?token=<GUMROAD_WEBHOOK_TOKEN>`（及 staging 若有）。
 3. 环境：`GUMROAD_SELLER_ID`、`GUMROAD_WEBHOOK_TOKEN`、`GUMROAD_ACCESS_TOKEN`、`VITE_GUMROAD_PRODUCT_URL`（同步后 website 得 `PUBLIC_GUMROAD_*`）；`bun run env:sync:prod && bun run env:check:prod`。
 4. 升级 URL 须能带 `custom_fields[user_id]` + `custom_fields[tier]=pro`（扩展/官网已生成）。
-5. 手测：付款 → webhook 写 `subscriptions`（`verification_status=verified`）→ 扩展刷新（强制对账）→ Hybrid/同步/hosted 生效。
+5. 手测：付款 → webhook 写 `subscriptions`（`verification_status=verified`）→ 回扩展/账户页自动对账 → Hybrid/同步/hosted 生效。
 6. 手测：Gumroad 侧 ended / 非 `alive` → 立刻降级 Free；假/`test-` 订阅 ID 不得授 Pro。
 7. 手测：缺 `custom_fields[user_id]` 的付款 → **不开 Pro**，但 `gumroad_events` 可观测（孤立付款告警）。
 
@@ -1117,7 +1117,7 @@ Chrome API / 选区
 | 查无 subscriber                             | 降级 + `mismatch`                               |
 | API 失败                                    | 见上 grace；超时后降级                          |
 
-**实时性：** Webhook 为开通/收回主路径（秒级）；账户/扩展 **Refresh 强制对账**；Worker Cron 小时级扫过期 `last_verified_at` 的 active 行兜底。
+**实时性：** Webhook 为开通/收回主路径（秒级）；进页 / 回焦时服务端强制对账（无用户手动刷新按钮）；Worker Cron 小时级扫过期 `last_verified_at` 的 active 行兜底。
 
 **运维：** 禁止生产 `admin_grant` 无审计长期 Pro；开发自测须短 `period_end` + 可识别 source。细节与 env 见 `docs/ENVIRONMENT.md`。
 

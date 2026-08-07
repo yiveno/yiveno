@@ -44,6 +44,9 @@ const showAvatarImage = computed(
   () => signedIn.value && Boolean(avatarUrl.value) && !avatarBroken.value
 )
 
+/** 扩展包内 logo mark（构建后位于 dist/images/）。 */
+const brandLogoUrl = chrome.runtime.getURL('images/logo-mark.svg')
+
 const accountTitle = computed(() => {
   if (!signedIn.value) {
     return t('nav_sign_in')
@@ -149,7 +152,17 @@ onUnmounted(() => {
 
 <template>
   <div class="app-page-header">
-    <p class="app-page-header__brand">{{ t('app_name') }}</p>
+    <div class="app-page-header__brand-row">
+      <img
+        class="app-page-header__logo"
+        :src="brandLogoUrl"
+        alt=""
+        width="20"
+        height="20"
+        decoding="async"
+      />
+      <p class="app-page-header__brand">{{ t('app_name') }}</p>
+    </div>
     <nav class="app-page-header__nav" :aria-label="t('nav_aria_label')">
       <md-icon-button
         type="button"
@@ -200,6 +213,21 @@ onUnmounted(() => {
   gap: 12px;
   min-width: 0;
   max-width: 100%;
+}
+
+.app-page-header__brand-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.app-page-header__logo {
+  display: block;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
 }
 
 .app-page-header__brand {

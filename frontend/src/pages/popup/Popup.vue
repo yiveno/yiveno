@@ -625,6 +625,11 @@ onUnmounted(() => {
   margin-bottom: 2px;
 }
 
+.recall-header-top:deep(.app-page-header__logo) {
+  width: 24px;
+  height: 24px;
+}
+
 .recall-header-top:deep(.app-page-header__brand) {
   font-size: 17px;
   font-weight: 600;

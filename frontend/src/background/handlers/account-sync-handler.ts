@@ -25,7 +25,6 @@ import type {
   GetSubscriptionStatusResponse,
   GetSyncStatusResponse,
   RefreshAuthProfileResponse,
-  RefreshSubscriptionResponse,
   RestoreLatestSyncBackupResponse,
   AckPrivacyNoticeResponse,
   RunIncrementalMemorySyncResponse,
@@ -1145,11 +1144,4 @@ export async function handleGetSubscriptionStatus(payload?: {
       ...(error instanceof Error ? { error: error.message } : {})
     }
   }
-}
-
-/**
- * REFRESH_SUBSCRIPTION — 强制从 Worker 刷新订阅快照。
- */
-export async function handleRefreshSubscription(): Promise<RefreshSubscriptionResponse> {
-  return handleGetSubscriptionStatus({ refresh: true })
 }

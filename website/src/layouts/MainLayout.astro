@@ -12,6 +12,9 @@ const {
   title = 'Yiveno',
   description = 'Yiveno helps you capture and recall personal browsing traces—excerpts and notes—not another bookmark manager.'
 } = Astro.props
+
+const canonicalOrigin = 'https://yiveno.com'
+const ogImage = `${canonicalOrigin}/og-image.png`
 ---
 
 <!doctype html>
@@ -22,6 +25,17 @@ const {
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#1E2640" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
   </head>
   <body>
     <Nav />

@@ -33,7 +33,7 @@
     "message": "Page navigation"
   },
   "nav_library": {
-    "message": "Library"
+    "message": "Memory"
   },
   "nav_settings": {
     "message": "Settings"
@@ -727,15 +727,6 @@
   "settings_subscription_manage": {
     "message": "Manage subscription"
   },
-  "settings_subscription_refresh": {
-    "message": "Refresh plan"
-  },
-  "settings_subscription_refreshing": {
-    "message": "Refreshing…"
-  },
-  "settings_subscription_paid_refresh_hint": {
-    "message": "Already paid on Gumroad? Return here and tap Refresh plan to unlock Pro."
-  },
   "settings_subscription_sign_in_hint": {
     "message": "Sign in to check Pro status and unlock Hybrid recall."
   },
@@ -846,7 +837,7 @@
     "message": "Could not update settings"
   },
   "library_title": {
-    "message": "Library"
+    "message": "Memory"
   },
   "library_subtitle": {
     "message": "Bookmarks mirror Chrome folders read-only; excerpts can be browsed and deleted. Recall still uses clues."
@@ -1008,19 +999,19 @@
     "message": "Retry"
   },
   "popup_empty_no_memory_title": {
-    "message": "Nothing to recall yet"
+    "message": "What are you trying to find?"
   },
   "popup_empty_no_memory_body_importing": {
-    "message": "Importing bookmarks. For a quicker first recall, save a text selection on a page."
+    "message": "Your bookmarks are on the way. You can also highlight a line you care about—that’s the quickest way to feel what Yiveno does."
   },
   "popup_empty_no_memory_body": {
-    "message": "First save a sentence you care about with the selection toolbar; Chrome bookmarks can sync as a backup."
+    "message": "Highlight something you want to keep on a page. When you're ready, even a vague clue is enough."
   },
   "popup_empty_library_empty_title": {
-    "message": "Your library is still empty"
+    "message": "Nothing saved yet"
   },
   "popup_empty_library_empty_body": {
-    "message": "Save a personal trace first—select text on a page. Changing the clue won’t help yet; bookmarks are secondary."
+    "message": "Save something that’s yours—a quote, a note, a page you care about. Then try again with any clue you remember."
   },
   "popup_no_match_title_with_clue": {
     "message": "Nothing related to “$clue$”",

@@ -17,7 +17,6 @@ import {
   handleGetSubscriptionStatus,
   handleGetSyncStatus,
   handleRefreshAuthProfile,
-  handleRefreshSubscription,
   handleRestoreLatestSyncBackup,
   handleIncrementalMemorySync,
   handleSetSyncEnabled,
@@ -90,8 +89,6 @@ async function dispatchBackgroundMessage(
       return handleGetAuthState()
     case 'GET_SUBSCRIPTION_STATUS':
       return handleGetSubscriptionStatus(message.payload)
-    case 'REFRESH_SUBSCRIPTION':
-      return handleRefreshSubscription()
     case 'REFRESH_AUTH_PROFILE':
       return handleRefreshAuthProfile()
     case 'GET_SYNC_STATUS':

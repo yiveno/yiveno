@@ -154,7 +154,7 @@ bun run env:check:prod
 1. [ ] Pro 产品已建（月/年）；Ping → `https://api.yiveno.com/api/gumroad/webhook?token=…`
 2. [ ] `.env.*.local` 已设 `GUMROAD_SELLER_ID`、`GUMROAD_WEBHOOK_TOKEN`、`GUMROAD_ACCESS_TOKEN`、`VITE_GUMROAD_PRODUCT_URL`（及可选 `VITE_GUMROAD_MANAGE_URL`）
 3. [ ] `bun run env:sync:prod && bun run env:check:prod`（website 出现 `PUBLIC_GUMROAD_*`）；Worker Secrets 含上述 Gumroad 三项
-4. [ ] 测试购买：webhook 写库（`verified`）→ 扩展 Settings 刷新（对账）→ `isPro` → Hybrid/同步可用
+4. [ ] 测试购买：webhook 写库（`verified`）→ 回扩展 Settings / 官网账户页自动对账 → `isPro` → Hybrid/同步可用
 5. [ ] Gumroad ended → 刷新或 Cron 后立刻收回；库内 `test-` 行不得为 Pro
 
 ## 禁止事项

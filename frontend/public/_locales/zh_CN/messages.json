@@ -124,7 +124,7 @@
     "message": "书签导入进度"
   },
   "popup_welcome_title": {
-    "message": "想找回什么？"
+    "message": "你想找什么？"
   },
   "popup_welcome_body": {
     "message": "随便说几个你记得的词——网站、句子或备注都行。"
@@ -727,15 +727,6 @@
   "settings_subscription_manage": {
     "message": "管理订阅"
   },
-  "settings_subscription_refresh": {
-    "message": "刷新方案"
-  },
-  "settings_subscription_refreshing": {
-    "message": "刷新中…"
-  },
-  "settings_subscription_paid_refresh_hint": {
-    "message": "已在 Gumroad 付款？回到此处点「刷新方案」即可解锁 Pro。"
-  },
   "settings_subscription_sign_in_hint": {
     "message": "登录后可查看 Pro 状态，并解锁 Hybrid 找回。"
   },
@@ -1008,19 +999,19 @@
     "message": "重试"
   },
   "popup_empty_no_memory_title": {
-    "message": "还没有可找回的记忆"
+    "message": "你想找什么？"
   },
   "popup_empty_no_memory_body_importing": {
-    "message": "正在导入书签。想更快体验找回，可先在网页划词保存一段文字。"
+    "message": "书签正在导入。你也可以先划一句想留住的——这是最快感受到 Yiveno 的方式。"
   },
   "popup_empty_no_memory_body": {
-    "message": "先在网页划词保存你想留住的句子；也可用 Chrome 加书签并等待同步。"
+    "message": "在网页划一句你想留住的。准备好之后，哪怕只记得一点，也可以回来找。"
   },
   "popup_empty_library_empty_title": {
-    "message": "记忆库还是空的"
+    "message": "还没有保存的内容"
   },
   "popup_empty_library_empty_body": {
-    "message": "先划词存一点个人痕迹再找回。换词暂时帮不上忙；书签同步是配角。"
+    "message": "先留下一点属于你的痕迹——一句摘录、一条备注、一个你在意的页面。再随便给点线索试试。"
   },
   "popup_no_match_title_with_clue": {
     "message": "没找到和「$clue$」相关的",

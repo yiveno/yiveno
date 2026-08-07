@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { User } from '@supabase/supabase-js'
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, computed } from 'vue'
 import { getSupabase } from '../services/supabase'
 import { getUserSubscription, type UserSubscription } from '../services/subscription'
 import { formatDate } from '../services/date'
@@ -31,8 +31,19 @@ const upgradeUrl = computed(() => {
 
 const manageUrl = getGumroadManageUrl()
 
+/** 从 Worker 拉订阅（含对账）；进页 / 从 Gumroad 返回时自动调用。 */
+async function loadSubscription(): Promise<void> {
+  if (!accessToken.value) return
+  const sub = await getUserSubscription(accessToken.value)
+  subscription.value = sub
+}
+
+function refreshSubscriptionOnVisible(): void {
+  if (document.visibilityState !== 'visible') return
+  void loadSubscription()
+}
+
 onMounted(async () => {
-  // 扩展打开账户页会带 extension_id，记住以便退出回传
   const params = new URLSearchParams(window.location.search)
   const extensionId = params.get('extension_id')?.trim()
   if (extensionId) {
@@ -42,7 +53,6 @@ onMounted(async () => {
   const supabase = await getSupabase()
   const { data } = await supabase.auth.getSession()
   if (!data?.session?.user) {
-    // 未登录访问账户页：直接进登录，不展示「请先登录」中间态
     window.location.replace('/login')
     return
   }
@@ -53,21 +63,18 @@ onMounted(async () => {
   )
   profileAvatarUrl.value = profile.avatarUrl ?? ''
   profileDisplayName.value = profile.displayName ?? data.session.user.email ?? ''
-  const sub = await getUserSubscription(data.session.access_token)
-  if (sub) subscription.value = sub
+  await loadSubscription()
   loading.value = false
+  document.addEventListener('visibilitychange', refreshSubscriptionOnVisible)
 })
 
-async function handleRefreshSubscription() {
-  if (!accessToken.value) return
-  const sub = await getUserSubscription(accessToken.value)
-  subscription.value = sub
-}
+onUnmounted(() => {
+  document.removeEventListener('visibilitychange', refreshSubscriptionOnVisible)
+})
 
 async function handleSignOut() {
   const supabase = await getSupabase()
   await supabase.auth.signOut()
-  // 通知扩展清登录态（keep_local）；失败不阻塞官网退出
   try {
     await handoffSignOutToExtension()
   } catch (error) {
@@ -116,9 +123,6 @@ async function handleSignOut() {
           <a v-if="isPro" class="btn" :href="manageUrl" target="_blank" rel="noopener noreferrer">
             Manage subscription
           </a>
-          <button type="button" class="btn btn-ghost" @click="handleRefreshSubscription">
-            Refresh status
-          </button>
         </div>
         <p v-if="!isPro && !upgradeUrl" class="hint">
           Upgrade link is not configured (missing PUBLIC_GUMROAD_PRODUCT_URL).
@@ -232,10 +236,6 @@ dd {
   background: #111;
   color: #fff;
   border-color: #111;
-}
-
-.btn-ghost {
-  background: transparent;
 }
 
 .sign-out-hint {

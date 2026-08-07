@@ -29,7 +29,6 @@ import {
   fetchUserSettings,
   openChromeShortcutsPage,
   backfillMemoryEmbeddings,
-  refreshSubscription,
   restoreLatestSyncBackup,
   setSyncEnabled,
   runIncrementalMemorySync,
@@ -84,7 +83,6 @@ const subscriptionPeriodEnd = ref<string | null>(null)
 const subscriptionUpgradeUrl = ref<string | null>(null)
 const subscriptionManageUrl = ref<string | null>(null)
 const subscriptionError = ref('')
-const refreshingSubscription = ref(false)
 
 const syncEnabled = ref(false)
 const syncLocalCount = ref(0)
@@ -407,21 +405,6 @@ async function loadSubscriptionStatus(forceRefresh = false): Promise<void> {
     subscriptionManageUrl.value = response.manageUrl
   } catch {
     subscriptionError.value = t('settings_error_subscription_status')
-  }
-}
-
-async function handleRefreshSubscription(): Promise<void> {
-  if (refreshingSubscription.value) {
-    return
-  }
-  refreshingSubscription.value = true
-  try {
-    await refreshSubscription()
-    await loadSubscriptionStatus()
-  } finally {
-    // busy 复位与 await 无数据竞争
-    // eslint-disable-next-line require-atomic-updates -- finally 仅复位 loading 标志
-    refreshingSubscription.value = false
   }
 }
 
@@ -1049,26 +1032,7 @@ onUnmounted(() => {
                   >
                     {{ t('settings_subscription_manage') }}
                   </md-outlined-button>
-                  <md-outlined-button
-                    type="button"
-                    :disabled="refreshingSubscription"
-                    :title="t('settings_subscription_refresh')"
-                    @click="handleRefreshSubscription"
-                  >
-                    {{
-                      refreshingSubscription
-                        ? t('settings_subscription_refreshing')
-                        : t('settings_subscription_refresh')
-                    }}
-                  </md-outlined-button>
                 </div>
-                <p
-                  v-if="!subscriptionIsPro && subscriptionUpgradeUrl"
-                  class="settings-status"
-                  role="status"
-                >
-                  {{ t('settings_subscription_paid_refresh_hint') }}
-                </p>
               </template>
               <p v-if="subscriptionError" class="settings-error" role="alert">
                 {{ subscriptionError }}
