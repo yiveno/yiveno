@@ -8,7 +8,7 @@ import { createRecallFlowTrace } from '@/application/recall/create-recall-flow-t
 import { getClueLlmCompleter } from '@/application/recall/clue-llm-completer-registry'
 import type { RecallBackend, RecallWithClueOptions } from '@/application/recall/recall-backend'
 import { applyCurrentTabDomainBoost } from '@/application/recall/apply-current-tab-domain-boost'
-import { RECALL_SCAN_LIMIT } from '@/application/recall/backends/keyword-recall-backend'
+import { RECALL_SCAN_LIMIT } from '@/application/recall/backends/recall-scan-limit'
 import { buildQueryEmbeddingText } from '@/core/recall/build-query-embedding-text'
 import {
   buildRecallResult,

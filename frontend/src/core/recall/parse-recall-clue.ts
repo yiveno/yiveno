@@ -1,6 +1,6 @@
 /**
  * 将用户口语线索解析为结构化约束（P0 · 纯规则，无 LLM / embedding）。
- * 当前仅提供解析能力，不接入 KeywordRecallBackend。
+ * 当前仅提供解析能力，不接入召回后端。
  */
 
 import { normalizeRecallText } from '@/core/recall/keyword-filter'

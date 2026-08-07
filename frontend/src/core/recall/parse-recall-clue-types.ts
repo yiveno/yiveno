@@ -66,7 +66,7 @@ export type RecallTimeRange = z.infer<typeof RecallTimeRangeSchema>
 
 /**
  * 口语线索解析结果（P0）。
- * 由 orchestrate-keyword-recall / KeywordRecallBackend 消费。
+ * 由 orchestrate-keyword-recall / HybridRecallBackend 消费。
  */
 export const ParsedRecallClueSchema = z.object({
   raw: z.string(),
