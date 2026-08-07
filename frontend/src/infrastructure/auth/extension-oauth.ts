@@ -126,7 +126,7 @@ export async function refreshAuthSessionDetailed(
   refreshToken: string,
   previous?: Pick<AuthSession, 'avatarUrl' | 'displayName' | 'email'> | null
 ): Promise<RefreshAuthSessionResult> {
-  const supabase = createExtensionSupabaseClient()
+  const supabase = await createExtensionSupabaseClient()
   if (!supabase) {
     return { status: 'transient', reason: 'supabase_not_configured' }
   }
@@ -173,7 +173,7 @@ export async function refreshAuthSession(
  * @returns 更新后的 session；失败返回 null
  */
 export async function refreshAuthProfileFields(session: AuthSession): Promise<AuthSession | null> {
-  const supabase = createExtensionSupabaseClient(session.accessToken)
+  const supabase = await createExtensionSupabaseClient(session.accessToken)
   if (!supabase) {
     return null
   }

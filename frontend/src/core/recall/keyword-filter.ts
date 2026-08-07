@@ -311,11 +311,16 @@ function fieldWeight(field: string): number {
   return FIELD_WEIGHTS[field] ?? 8
 }
 
-function exactTokenHit(fieldText: string, compactField: string, token: string): boolean {
+function exactTokenHit(
+  fieldText: string,
+  compactField: string,
+  token: string,
+  /** 预计算的 compact，避免同一 token 对每字段重复 compactRecallText。 */
+  compactToken: string
+): boolean {
   if (fieldText.includes(token) || compactField.includes(token)) {
     return true
   }
-  const compactToken = compactRecallText(token)
   return compactToken.length >= 2 && compactField.includes(compactToken)
 }
 
@@ -376,12 +381,19 @@ export function recallCodePointLength(text: string): number {
  * 不依赖某一语种的词法/词典。
  */
 export function computePrimaryMatchQualityBoost(
-  tokens: Array<{ token: string; kind: TokenKind }>,
+  tokens: Array<{ token: string; kind: TokenKind; compactToken?: string }>,
   primaryCompacts: string[]
 ): number {
   if (primaryCompacts.length === 0) {
     return 0
   }
+
+  // 每个 token 只 compact 一次（外层字段循环会反复用到）
+  const prepared = tokens
+    .filter(entry => entry.kind !== 'ngram')
+    .map(entry => ({
+      compactToken: entry.compactToken ?? compactRecallText(entry.token)
+    }))
 
   let best = 0
 
@@ -391,11 +403,7 @@ export function computePrimaryMatchQualityBoost(
       continue
     }
 
-    for (const { token, kind } of tokens) {
-      if (kind === 'ngram') {
-        continue
-      }
-      const tokenCompact = compactRecallText(token)
+    for (const { compactToken: tokenCompact } of prepared) {
       const tokenLen = recallCodePointLength(tokenCompact)
       // 单字可命中，但贴合度加成仍要求 ≥2 码点，避免「的/了」类单字虚抬 Top Pick
       if (tokenLen < 2 || !fieldCompact.includes(tokenCompact)) {
@@ -419,23 +427,31 @@ export function computePrimaryMatchQualityBoost(
   return Math.min(PRIMARY_MATCH_QUALITY_CAP, best)
 }
 
+interface PreparedRecallToken extends RecallToken {
+  /** 预计算 compact，供字段循环与模糊命中复用。 */
+  compactToken: string
+}
+
 /**
- * 对单个 MemoryItem 计算关键词分数。
- * 先精确/ngram 命中；仅当已有精确分时，再补短 token 的编辑距离模糊，降低乱召回。
- * 词面分 > 0 时再叠加主文贴合度与行为加权。
+ * 对单个 MemoryItem 用已拆好的 token 打分（列表 Filter 时只 tokenize 一次）。
+ * 语义与 {@link scoreMemoryItem} 相同。
  */
-export function scoreMemoryItem(
+function scoreMemoryItemWithTokens(
   item: MemoryItem,
-  clue: string,
+  tokens: RecallToken[],
   options: RecallScoreOptions = {}
 ): RecallMatch {
-  const tokens = tokenizeRecallClueDetailed(clue)
   const matchedFields = new Set<string>()
   let score = 0
 
   if (tokens.length === 0) {
     return { item, score: 0, matchedFields: [] }
   }
+
+  const preparedTokens: PreparedRecallToken[] = tokens.map(entry => ({
+    ...entry,
+    compactToken: compactRecallText(entry.token)
+  }))
 
   const fields = collectSearchableFields(item).map(entry => ({
     field: entry.field,
@@ -445,15 +461,16 @@ export function scoreMemoryItem(
   }))
 
   let exactScore = 0
-  const fuzzyCandidates: RecallToken[] = []
+  const fuzzyCandidates: PreparedRecallToken[] = []
   const ngramHitFields = new Set<string>()
   let primaryContentHit = false
 
-  for (const { token, kind } of tokens) {
+  for (const prepared of preparedTokens) {
+    const { token, kind, compactToken } = prepared
     let tokenHit = false
 
     for (const field of fields) {
-      if (!exactTokenHit(field.text, field.compact, token)) {
+      if (!exactTokenHit(field.text, field.compact, token, compactToken)) {
         continue
       }
 
@@ -466,7 +483,7 @@ export function scoreMemoryItem(
       }
 
       let gain = field.weight * scoreFactorForKind(kind)
-      if (kind !== 'ngram' && token.length >= 4 && field.compact === compactRecallText(token)) {
+      if (kind !== 'ngram' && token.length >= 4 && field.compact === compactToken) {
         gain += field.weight
       }
       // 更长 term 略加权，抑制纯 bigram 刷分
@@ -478,7 +495,7 @@ export function scoreMemoryItem(
     }
 
     if (!tokenHit && kind !== 'ngram' && token.length >= 2 && token.length <= 8) {
-      fuzzyCandidates.push({ token, kind })
+      fuzzyCandidates.push(prepared)
     }
   }
 
@@ -491,16 +508,16 @@ export function scoreMemoryItem(
     const primaryCompacts = fields
       .filter(field => PRIMARY_CONTENT_FIELDS.has(field.field))
       .map(field => field.compact)
-    exactScore += computePrimaryMatchQualityBoost(tokens, primaryCompacts)
+    exactScore += computePrimaryMatchQualityBoost(preparedTokens, primaryCompacts)
   }
 
   score = exactScore
 
   // 已有实体命中时，才允许错别字类模糊补分
   if (exactScore > 0) {
-    for (const { token } of fuzzyCandidates) {
+    for (const { compactToken } of fuzzyCandidates) {
       for (const field of fields) {
-        if (!hasFuzzySubstring(field.compact, compactRecallText(token), 1)) {
+        if (!hasFuzzySubstring(field.compact, compactToken, 1)) {
           continue
         }
         matchedFields.add(field.field)
@@ -524,6 +541,19 @@ export function scoreMemoryItem(
   }
 }
 
+/**
+ * 对单个 MemoryItem 计算关键词分数。
+ * 先精确/ngram 命中；仅当已有精确分时，再补短 token 的编辑距离模糊，降低乱召回。
+ * 词面分 > 0 时再叠加主文贴合度与行为加权。
+ */
+export function scoreMemoryItem(
+  item: MemoryItem,
+  clue: string,
+  options: RecallScoreOptions = {}
+): RecallMatch {
+  return scoreMemoryItemWithTokens(item, tokenizeRecallClueDetailed(clue), options)
+}
+
 function hasPrimaryContentMatch(matchedFields: string[]): boolean {
   return matchedFields.includes('title') || matchedFields.includes('textExcerpt')
 }
@@ -539,9 +569,11 @@ export function filterMemoryItemsByKeyword(
   const scoreOptions: RecallScoreOptions = {
     ...(options.nowMs === undefined ? {} : { nowMs: options.nowMs })
   }
+  // 整表只分词一次，避免 N 次重复 tokenize
+  const tokens = tokenizeRecallClueDetailed(clue)
 
   return items
-    .map(item => scoreMemoryItem(item, clue, scoreOptions))
+    .map(item => scoreMemoryItemWithTokens(item, tokens, scoreOptions))
     .filter(match => match.score >= minScore)
     .sort((left, right) => {
       if (right.score !== left.score) {
