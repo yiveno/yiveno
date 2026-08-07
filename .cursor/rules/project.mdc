@@ -160,7 +160,7 @@ Background **无** `window` / `document` / `localStorage`。用全局 `setTimeou
 ## 常用命令（真实存在）
 
 ```bash
-bun run typecheck              # 快
+bun run typecheck              # 快（workspaces 并行，含 packages/*）
 bun run typecheck:force        # 全量子项目强制
 bun run i18n:check             # en / zh_CN / MESSAGE_KEYS 对称
 cd frontend && bun run lint:check

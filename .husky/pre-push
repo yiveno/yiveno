@@ -37,12 +37,14 @@ FRONTEND_BUILD_TRIGGER=$(echo "$CHANGED_FILES" | grep -E '^frontend/|^packages/(
 
 if [ -n "$FRONTEND_BUILD_TRIGGER" ]; then
   echo "🏗️  frontend 构建验证..."
-  if bun run build:fe > /dev/null 2>&1; then
+  # 只跑一次：失败时复用同一份输出，避免静默失败后再全量重跑
+  BUILD_OUTPUT=$(bun run build:fe 2>&1)
+  BUILD_STATUS=$?
+  if [ "$BUILD_STATUS" -eq 0 ]; then
     echo "✅ frontend 构建成功"
   else
     echo "❌ frontend 构建失败"
-    BUILD_ERROR=$(bun run build:fe 2>&1 || true)
-    ERRORS="${ERRORS}\n❌ frontend 构建失败:\n${BUILD_ERROR}\n\n"
+    ERRORS="${ERRORS}\n❌ frontend 构建失败:\n${BUILD_OUTPUT}\n\n"
   fi
 else
   echo "⏭️  无 frontend 构建相关变更，跳过构建验证"
@@ -53,21 +55,23 @@ BACKEND_TRIGGER=$(echo "$CHANGED_FILES" | grep -E '^backend/' || true)
 
 if [ -n "$BACKEND_TRIGGER" ]; then
   echo "🧪 backend typecheck..."
-  if bun run typecheck:be > /dev/null 2>&1; then
+  TC_OUTPUT=$(bun run typecheck:be 2>&1)
+  TC_STATUS=$?
+  if [ "$TC_STATUS" -eq 0 ]; then
     echo "✅ backend typecheck 通过"
   else
     echo "❌ backend typecheck 失败"
-    TC_ERROR=$(bun run typecheck:be 2>&1 || true)
-    ERRORS="${ERRORS}\n❌ backend typecheck 失败:\n${TC_ERROR}\n\n"
+    ERRORS="${ERRORS}\n❌ backend typecheck 失败:\n${TC_OUTPUT}\n\n"
   fi
 
   echo "🧪 backend test..."
-  if (cd backend && bun test > /dev/null 2>&1); then
+  TEST_OUTPUT=$(cd backend && bun test 2>&1)
+  TEST_STATUS=$?
+  if [ "$TEST_STATUS" -eq 0 ]; then
     echo "✅ backend test 通过"
   else
     echo "❌ backend test 失败"
-    TEST_ERROR=$(cd backend && bun test 2>&1 || true)
-    ERRORS="${ERRORS}\n❌ backend test 失败:\n${TEST_ERROR}\n\n"
+    ERRORS="${ERRORS}\n❌ backend test 失败:\n${TEST_OUTPUT}\n\n"
   fi
 else
   echo "⏭️  无 backend 变更，跳过 typecheck / test"

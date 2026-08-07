@@ -46,12 +46,14 @@ bun install
 ```bash
 # 启动所有服务 (插件前端构建 + 后端 + 官网)
 bun run watch                 # mprocs TUI：上下键切换 fe/be/web（需本机安装 mprocs）
+bun run dev                   # 同 watch
 bun run watch:stream          # concurrently 混流日志（无 TUI 时用）
 
 # 或者单独启动
 bun run dev:be              # 后端 (Cloudflare Worker - 端口 8787)
 bun run dev:web             # 官网 (Astro - 端口 3001)
-bun run dev:fe              # 扩展 Vite 开发服务器
+bun run watch:fe            # 扩展 vite build --watch（改完后 chrome://extensions 刷新）
+bun run dev:fe              # 扩展 Vite 开发服务器（页面级调试；MV3 仍以 dist watch 为准）
 ```
 
 本机安装 mprocs（任选其一）：
@@ -60,6 +62,8 @@ bun run dev:fe              # 扩展 Vite 开发服务器
 brew install mprocs
 # 或：https://github.com/pvolok/mprocs/releases （darwin-aarch64 等）
 ```
+
+> **扩展热更新**：`watch:fe` / `watch` 的 fe 进程是 `vite build --watch`，不是浏览器 HMR。每次日志出现「dist 已更新」后，到 `chrome://extensions` 点本扩展的刷新按钮再验。
 
 ### 环境变量
 
@@ -236,12 +240,12 @@ Yiveno/                             # Monorepo 根目录
 ```bash
 # 🚀 开发
 bun run watch                 # 扩展 watch + 后端 + 官网（mprocs 分栏）
+bun run dev                   # 同 watch
 bun run watch:stream          # 同上，concurrently 混流
-bun run dev                   # 同上（并行启动三端）
+bun run watch:fe              # 仅扩展 build --watch（重建后 chrome://extensions 刷新）
 bun run dev:fe                # 仅扩展 Vite 开发服务器
 bun run dev:be                # 仅后端 (Worker - 端口 8787)
 bun run dev:web               # 仅官网 (Astro - 端口 3001)
-
 # 🏗️ 构建
 bun run build                 # 开发 profile 全量构建
 bun run build:prod            # 生产 profile 全量构建
@@ -262,12 +266,8 @@ bun run knip                  # Dead code 检测
 bun run deploy:be             # 部署后端到 Cloudflare
 bun run deploy:web            # 构建官网
 
-# 📊 审计（v4 baseline 暂不可用）
-# audit:fe / audit:web 已下线，待 lighthouserc.json 恢复后启用
-
 # 🧪 E2E 冒烟（popup + settings，需 Chrome 远程调试 + 已加载 dist/）
 bun run e2e                   # CDP 薄冒烟：popup/settings + 固定线索→结果卡
-
 # 🗄️ 数据库
 bun run db:start              # 启动本地 Supabase
 bun run db:reset              # 重置本地数据库
@@ -377,7 +377,7 @@ bun run e2e
 
 ### Lighthouse CI
 
-v4 baseline 暂缺 `lighthouserc.json`，`audit:fe` / `audit:web` 与 main push Lighthouse workflow 已下线。
+v4 baseline 暂缺 `lighthouserc.json`；Lighthouse workflow 与相关汇总脚本已移除。恢复审计前需补配置再接线。
 
 ---
 

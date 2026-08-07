@@ -77,7 +77,7 @@ onMounted(async () => {
     // 主路径（implicit）：#access_token=
     const hash = window.location.hash
     if (hash.includes('access_token=')) {
-      console.info('[AuthCallback] 使用 hash access_token 设置 session')
+      console.warn('[AuthCallback] 使用 hash access_token 设置 session')
       const params = new URLSearchParams(hash.replace(/^#/, ''))
       const accessToken = params.get('access_token') || ''
       const refreshToken = params.get('refresh_token') || ''
@@ -97,7 +97,7 @@ onMounted(async () => {
     // 兼容 PKCE：?code=
     const code = url.searchParams.get('code')
     if (code) {
-      console.info('[AuthCallback] 使用 PKCE code 换取 session')
+      console.warn('[AuthCallback] 使用 PKCE code 换取 session')
       const { data, error } = await supabase.auth.exchangeCodeForSession(code)
       if (error || !data.session?.user?.id) {
         console.error('[AuthCallback] exchangeCodeForSession 失败:', error)
@@ -110,7 +110,7 @@ onMounted(async () => {
 
     const { data: existing } = await supabase.auth.getSession()
     if (existing.session?.user?.id) {
-      console.info('[AuthCallback] 复用已有 session')
+      console.warn('[AuthCallback] 复用已有 session')
       await finishWithSession(existing.session)
       return
     }

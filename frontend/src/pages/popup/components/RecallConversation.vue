@@ -199,17 +199,17 @@ function handleToggleExpand(cardId: string): void {
   margin: 0;
   font-size: 12px;
   font-weight: 600;
-  color: var(--md-sys-color-on-surface-variant);
   letter-spacing: 0.01em;
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .assistant-turn-copy {
+  max-width: 30ch;
   margin: 0;
   font-size: 14px;
   line-height: 1.5;
-  color: var(--md-sys-color-on-surface);
   white-space: pre-wrap;
-  max-width: 30ch;
+  color: var(--md-sys-color-on-surface);
   text-wrap: pretty;
 }
 

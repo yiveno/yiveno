@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, mock, test } from 'bun:test'
 
 import type { Env } from '../types/env'
-import { extractEmbeddingsFromAiResponse, handleEmbed } from './ai-embed'
+import { extractEmbeddingsFromAiResponse } from './ai-embed'
 
 function createKvMock(initial: Record<string, string> = {}) {
   const store = new Map(Object.entries(initial))

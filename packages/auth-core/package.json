@@ -9,7 +9,8 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "typecheck:force": "tsc --noEmit"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.79.0"

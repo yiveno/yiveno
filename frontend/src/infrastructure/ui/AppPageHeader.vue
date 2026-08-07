@@ -208,8 +208,8 @@ onUnmounted(() => {
 <style scoped>
 .app-page-header {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   gap: 12px;
   min-width: 0;
   max-width: 100%;
@@ -234,16 +234,16 @@ onUnmounted(() => {
   margin: 0;
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.04em;
   text-transform: uppercase;
+  letter-spacing: 0.04em;
   color: var(--md-sys-color-on-surface-variant);
 }
 
 .app-page-header__nav {
   display: flex;
   flex-wrap: wrap;
-  gap: 0;
   align-items: center;
+  gap: 0;
 }
 
 .app-page-header__avatar {

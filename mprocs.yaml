@@ -1,7 +1,8 @@
 # 本地三端并行开发（TUI：上下键切换进程输出）
-# 用法：bun run watch
+# 用法：bun run watch（`bun run dev` 同义）
 # 需本机已安装 mprocs（brew install mprocs，或见 README）
 # 无 TUI 时用：bun run watch:stream
+# fe 为 vite build --watch：每次重建后到 chrome://extensions 刷新扩展（日志会提示）
 
 procs:
   fe:

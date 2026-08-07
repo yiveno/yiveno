@@ -110,6 +110,7 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "typecheck:force": "tsc --noEmit"
   }
 }

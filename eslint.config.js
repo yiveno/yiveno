@@ -220,7 +220,7 @@ const typescriptCommonRules = {
   '@typescript-eslint/consistent-type-imports': 'warn',
   '@typescript-eslint/no-floating-promises': 'warn',
   'no-async-promise-executor': 'error',
-  'require-atomic-updates': 'error',
+  'require-atomic-updates': 'off', // Vue ref 跨 await 赋值易误报；真实竞态靠代码审查 / 测试
   'no-shadow': 'off',
   '@typescript-eslint/no-shadow': 'error',
   ...unusedImportsConfig
@@ -372,7 +372,10 @@ export default [
       '**/*.bash',
       '**/*.py',
       scopePath('frontend/test-puppeteer.js'),
-      '**/test-puppeteer.js'
+      '**/test-puppeteer.js',
+      // wrangler types 生成物：体积大且会被 types:gen 覆盖（与 lint-staged 一致）
+      scopePath('backend/worker-configuration.d.ts'),
+      '**/worker-configuration.d.ts'
     ]
   },
 
@@ -748,6 +751,18 @@ export default [
   {
     files: websiteVueFiles,
     languageOptions: createVueLanguageOptions(websiteRoot)
+  },
+
+  // 破坏性操作当前用 window.confirm/alert；自定义对话框落地前放行
+  {
+    files: [
+      '**/pages/settings/Settings.vue',
+      '**/pages/detail/Detail.vue',
+      '**/pages/library/Library.vue'
+    ],
+    rules: {
+      'no-alert': 'off'
+    }
   },
 
   prettierConfig

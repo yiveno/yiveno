@@ -5,9 +5,6 @@ import MaterialSymbolIcon from '@/infrastructure/ui/icons/MaterialSymbolIcon.vue
 
 defineOptions({ name: 'RecallComposer' })
 
-const model = defineModel<string>({ required: true })
-const inputRef = ref<HTMLTextAreaElement | null>(null)
-
 const props = defineProps<{
   ariaLabel: string
   placeholder: string
@@ -17,6 +14,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   send: []
 }>()
+const model = defineModel<string>({ required: true })
+const inputRef = ref<HTMLTextAreaElement | null>(null)
 
 function handleKeydown(event: KeyboardEvent): void {
   // Enter 发送；Shift+Enter 换行
@@ -76,7 +75,7 @@ defineExpose({ focus })
   border-radius: 24px;
   background: var(--md-sys-color-surface-container-lowest);
   box-shadow:
-    0 1px 2px color-mix(in srgb, var(--md-sys-color-shadow, black) 10%, transparent),
+    0 1px 2px color-mix(in srgb, var(--md-sys-color-shadow, #000) 10%, transparent),
     0 0 0 1px color-mix(in srgb, var(--md-sys-color-outline-variant) 20%, transparent);
 }
 
@@ -87,14 +86,14 @@ defineExpose({ focus })
     var(--md-sys-color-outline-variant)
   );
   box-shadow:
-    0 1px 2px color-mix(in srgb, var(--md-sys-color-shadow, black) 10%, transparent),
+    0 1px 2px color-mix(in srgb, var(--md-sys-color-shadow, #000) 10%, transparent),
     0 0 0 3px color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
 }
 
 .recall-input {
   flex: 1 1 auto;
-  width: auto;
   box-sizing: border-box;
+  width: auto;
   min-height: 44px;
   max-height: 120px;
   padding: 5px 0;
@@ -134,10 +133,6 @@ defineExpose({ focus })
     opacity 140ms ease-out;
 }
 
-.recall-send-button:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--md-sys-color-primary) 88%, black 12%);
-}
-
 .recall-send-button:disabled {
   color: var(--md-sys-color-on-surface-variant);
   background: var(--md-sys-color-surface-container-high);
@@ -147,5 +142,9 @@ defineExpose({ focus })
 .recall-send-button:focus-visible {
   outline: 2px solid var(--md-sys-color-primary);
   outline-offset: 2px;
+}
+
+.recall-send-button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--md-sys-color-primary) 88%, #000 12%);
 }
 </style>

@@ -38,16 +38,17 @@ const emit = defineEmits<{
   ]
 }>()
 
-/** 顶层文件夹默认展开。 */
-const expanded = ref(props.node.kind === 'folder' && props.depth < 1)
+/** 顶层文件夹默认展开（勿在 setup 根读取 props 字段进 ref 初值，以免失去响应性）。 */
+const expanded = ref(false)
 
 watch(
-  () => props.node,
-  () => {
-    if (props.node.kind === 'folder') {
-      expanded.value = props.depth < 1
+  () => ({ kind: props.node.kind, depth: props.depth }),
+  ({ kind, depth }) => {
+    if (kind === 'folder') {
+      expanded.value = depth < 1
     }
-  }
+  },
+  { immediate: true }
 )
 
 function toggleFolder() {
@@ -168,37 +169,37 @@ function handleOpenBookmark(event: MouseEvent) {
 
 <style scoped>
 .tree-item {
-  list-style: none;
   margin: 0;
+  list-style: none;
 }
 
 .tree-folder,
 .tree-bookmark {
   display: flex;
-  gap: 6px;
   align-items: center;
+  gap: 6px;
   width: 100%;
   margin: 0;
   padding: 7px 10px;
   border: none;
   border-radius: var(--md-sys-shape-corner-small, 8px);
-  font: inherit;
   text-align: left;
   color: var(--md-sys-color-on-surface);
   background: transparent;
   cursor: pointer;
+  font: inherit;
 }
 
 .tree-bookmark-row {
   display: flex;
-  gap: 2px;
   align-items: flex-start;
+  gap: 2px;
 }
 
 .tree-bookmark {
   flex: 1;
-  min-width: 0;
   justify-content: space-between;
+  min-width: 0;
   text-decoration: none;
   color: inherit;
   cursor: pointer;
@@ -229,10 +230,10 @@ function handleOpenBookmark(event: MouseEvent) {
 .tree-chevron {
   display: inline-flex;
   flex-shrink: 0;
+  justify-content: center;
+  align-items: center;
   width: 18px;
   height: 18px;
-  align-items: center;
-  justify-content: center;
   color: var(--md-sys-color-on-surface-variant);
 }
 
@@ -253,19 +254,19 @@ function handleOpenBookmark(event: MouseEvent) {
 .tree-folder-title,
 .tree-bookmark-title {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   font-size: 14px;
   line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tree-bookmark-leading {
   display: flex;
-  gap: 6px;
-  align-items: flex-start;
-  min-width: 0;
   flex: 1;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
 }
 
 .tree-bookmark-copy {
@@ -275,13 +276,13 @@ function handleOpenBookmark(event: MouseEvent) {
 }
 
 .tree-bookmark-note {
+  display: -webkit-box;
   font-size: 12px;
   line-height: 1.35;
   color: var(--md-sys-color-on-surface);
-  display: -webkit-box;
+  overflow: hidden;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
 .tree-bookmark-note-label {
@@ -293,18 +294,18 @@ function handleOpenBookmark(event: MouseEvent) {
 .tree-bookmark-meta {
   display: flex;
   flex-shrink: 0;
-  gap: 8px;
   align-items: center;
+  gap: 8px;
   margin-left: 8px;
 }
 
 .tree-bookmark-host {
   max-width: 140px;
+  font-size: 12px;
+  white-space: nowrap;
+  color: var(--md-sys-color-on-surface-variant);
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 12px;
-  color: var(--md-sys-color-on-surface-variant);
 }
 
 .tree-bookmark-flag {

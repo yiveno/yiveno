@@ -58,11 +58,11 @@ pre-push **不跑** ESLint、全仓 typecheck、全仓 frontend test；`.vue` li
 
 ### 本地命令
 
-- 日常：`bun run typecheck`（快）、`bun run lint:check`、`bun run i18n:check`、目标单测
-- 三端并行：`bun run watch`（mprocs 分栏）或 `bun run watch:stream`（混流）
+- 日常：`bun run typecheck`（快，含 `packages/*`）、`bun run lint:check`、`bun run i18n:check`、目标单测
+- 三端并行：`bun run watch` / `bun run dev`（mprocs）或 `bun run watch:stream`（混流）；扩展重建后需 `chrome://extensions` 刷新
 - 合并前 / 发布前：`bun run typecheck:force`、`bun run lint:check`、`bun run i18n:check`、`bun run test:run`、`bun run knip`
 - Knip 分 workspace：`knip:fe` / `knip:be` / `knip:web`；仅结构项：`knip:fast`；全量报告：`knip:report`
-- Knip 版本锁定在根 `devDependencies`；`scripts/knip-runner.mjs` 在 `.cache/knip-runner` 隔离安装（规避 monorepo `zod@3` 与 knip 的 `zod/mini` 冲突）
+- Knip 版本写在根 `package.json` → `yiveno.knip`；`scripts/knip-runner.mjs` 在 `.cache/knip-runner` 隔离安装（规避 monorepo `zod@3` 与 knip `zod/mini`）。根目录勿直接 `bunx knip`；待 `bunx knip -D .` 不再报 `./mini` 后再打回根依赖。
 
 ### AI 默认策略
 

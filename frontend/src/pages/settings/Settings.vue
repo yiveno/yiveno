@@ -1386,12 +1386,12 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  height: 100%;
   max-width: 960px;
+  height: 100%;
   margin: 0 auto;
   padding: 28px 24px 24px;
-  overflow: hidden;
   color: var(--md-sys-color-on-background);
+  overflow: hidden;
 }
 
 .settings-header {
@@ -1419,16 +1419,16 @@ onUnmounted(() => {
 .settings-layout {
   display: grid;
   flex: 1;
-  grid-template-columns: 160px minmax(0, 1fr);
-  gap: 20px;
   align-items: stretch;
+  gap: 20px;
+  grid-template-columns: 160px minmax(0, 1fr);
   min-height: 0;
 }
 
 .settings-tabs {
   display: grid;
-  gap: 6px;
   align-self: start;
+  gap: 6px;
   padding: 8px;
   border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: var(--md-sys-shape-corner-medium, 12px);
@@ -1462,21 +1462,16 @@ onUnmounted(() => {
   min-width: 0;
   min-height: 0;
   padding: 18px;
-  overflow-x: hidden;
-  overflow-y: auto;
   border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: var(--md-sys-shape-corner-medium, 12px);
   background: var(--md-sys-color-surface-container-lowest);
+  overflow: hidden auto;
 }
 
 .settings-block + .settings-block {
   margin-top: 28px;
   padding-top: 24px;
   border-top: 1px solid var(--md-sys-color-outline-variant);
-}
-
-.settings-block--placeholder .settings-section-title {
-  margin-bottom: 8px;
 }
 
 .settings-section-head {
@@ -1489,6 +1484,10 @@ onUnmounted(() => {
   line-height: 1.3;
 }
 
+.settings-block--placeholder .settings-section-title {
+  margin-bottom: 8px;
+}
+
 .settings-section-copy {
   margin: 0;
   font-size: 13px;
@@ -1498,9 +1497,9 @@ onUnmounted(() => {
 
 .settings-toggle {
   display: flex;
-  gap: 12px;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
+  gap: 12px;
   padding: 12px 14px;
   border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: var(--md-sys-shape-corner-medium, 12px);
@@ -1546,9 +1545,9 @@ onUnmounted(() => {
 
 .settings-command-row {
   display: flex;
-  gap: 16px;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
+  gap: 16px;
   padding: 12px 14px;
   border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: var(--md-sys-shape-corner-medium, 12px);
@@ -1585,8 +1584,8 @@ onUnmounted(() => {
 .settings-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
   align-items: center;
+  gap: 10px;
 }
 
 .settings-actions--spaced {
@@ -1630,15 +1629,15 @@ onUnmounted(() => {
   padding: 0 12px;
   font-size: 14px;
   line-height: 1.4;
-  color: var(--md-sys-color-primary);
   text-decoration: underline;
+  color: var(--md-sys-color-primary);
   text-underline-offset: 2px;
 }
 
 .settings-privacy-policy-link:hover,
 .settings-privacy-policy-link:focus-visible {
-  color: var(--md-sys-color-on-primary-container);
   outline: none;
+  color: var(--md-sys-color-on-primary-container);
 }
 
 .settings-orphan {
@@ -1654,8 +1653,8 @@ onUnmounted(() => {
   inset: 0;
   z-index: 40;
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   padding: 24px;
   background: color-mix(in srgb, var(--md-sys-color-scrim, #000) 42%, transparent);
 }
@@ -1663,11 +1662,11 @@ onUnmounted(() => {
 .settings-sign-out-dialog {
   width: min(100%, 420px);
   max-height: min(90vh, 640px);
-  overflow: auto;
   padding: 20px 18px 16px;
   border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: var(--md-sys-shape-corner-medium, 12px);
   background: var(--md-sys-color-surface-container-lowest);
+  overflow: auto;
   box-shadow: var(--md-sys-elevation-level3, 0 8px 24px rgb(0 0 0 / 18%));
 }
 
@@ -1690,15 +1689,15 @@ onUnmounted(() => {
   color: var(--md-sys-color-on-surface-variant);
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .settings-layout {
     grid-template-columns: 1fr;
     grid-template-rows: auto minmax(0, 1fr);
   }
 
   .settings-tabs {
-    grid-auto-flow: column;
     grid-auto-columns: 1fr;
+    grid-auto-flow: column;
   }
 
   .settings-tab {

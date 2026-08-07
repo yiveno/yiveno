@@ -101,10 +101,10 @@ async function login(provider: 'google' | 'microsoft') {
     captureExtensionConnectParamsFromUrl()
     fromExtension.value = Boolean(getPendingExtensionId())
     // 换账号：先清本地会话，再走 OAuth 账号选择器
-    if (signedInEmail.value || (await getSession())) {
+    if (await getSession()) {
       await signOut()
-      signedInEmail.value = ''
     }
+    signedInEmail.value = ''
     await signInWithOAuth(provider)
   } catch (e: unknown) {
     error.value = (e instanceof Error ? e.message : String(e)) || '登录失败'

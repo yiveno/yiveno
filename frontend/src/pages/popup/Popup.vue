@@ -602,17 +602,17 @@ onUnmounted(() => {
 }
 
 .recall-shell {
-  box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
   width: 100%;
-  max-width: 100%;
   min-width: 0;
+  max-width: 100%;
   max-height: 560px;
   padding: 16px 20px 12px;
-  overflow: hidden;
   color: var(--md-sys-color-on-background);
   background: var(--md-sys-color-background);
+  overflow: hidden;
 }
 
 .recall-header {
@@ -633,8 +633,8 @@ onUnmounted(() => {
 .recall-header-top:deep(.app-page-header__brand) {
   font-size: 17px;
   font-weight: 600;
-  letter-spacing: -0.01em;
   text-transform: none;
+  letter-spacing: -0.01em;
   color: var(--md-sys-color-on-background);
 }
 
@@ -647,8 +647,8 @@ onUnmounted(() => {
 }
 
 .recall-import {
-  margin-bottom: 0;
   margin-top: 8px;
+  margin-bottom: 0;
   padding: 10px 12px;
   border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: var(--md-sys-shape-corner-medium, 10px);
@@ -680,13 +680,12 @@ onUnmounted(() => {
 }
 
 .recall-body {
+  display: flex;
+  flex-direction: column;
   flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  display: flex;
-  flex-direction: column;
+  overflow: hidden auto;
 }
 
 .recall-body--empty {
@@ -719,15 +718,15 @@ onUnmounted(() => {
 .recall-empty-title {
   margin: 0;
   font-size: 28px;
-  line-height: 1.2;
   font-weight: 700;
+  line-height: 1.2;
   letter-spacing: -0.02em;
   text-wrap: balance;
 }
 
 .recall-empty-copy {
-  margin: 0;
   max-width: 24ch;
+  margin: 0;
   font-size: 14px;
   line-height: 1.5;
   color: var(--md-sys-color-on-surface-variant);
@@ -739,8 +738,8 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 14px;
   min-width: 0;
-  min-height: 0;
   max-width: 100%;
+  min-height: 0;
 }
 
 .recall-need-clue {
@@ -778,17 +777,17 @@ onUnmounted(() => {
 }
 
 .recall-top-pick {
-  flex-shrink: 0;
   display: grid;
+  flex-shrink: 0;
   gap: 8px;
   min-width: 0;
 }
 
 /* Also 区块：标题固定，仅列表滚动 */
 .recall-also {
-  flex: 0 1 auto;
   display: flex;
   flex-direction: column;
+  flex: 0 1 auto;
   min-width: 0;
   min-height: 0;
 }
@@ -805,8 +804,7 @@ onUnmounted(() => {
   min-height: 0;
   margin: 0;
   padding: 0 0 4px;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden auto;
   overscroll-behavior: contain;
   list-style: none;
 }

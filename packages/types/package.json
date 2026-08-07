@@ -11,7 +11,8 @@
     "./payment": "./src/payment.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "typecheck:force": "tsc --noEmit"
   },
   "devDependencies": {
     "typescript": "~5.8.3"

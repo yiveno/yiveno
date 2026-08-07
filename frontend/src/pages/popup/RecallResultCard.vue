@@ -245,7 +245,6 @@ function handleMoreClick(event: MouseEvent): void {
   font-size: 16px;
   line-height: 1.35;
   overflow-wrap: anywhere;
-  word-break: break-word;
 }
 
 .recall-card-title--compact {
@@ -255,12 +254,11 @@ function handleMoreClick(event: MouseEvent): void {
 .recall-card-body {
   display: -webkit-box;
   margin: 0 0 4px;
-  overflow: hidden;
   font-size: 15px;
   line-height: 1.45;
   color: var(--md-sys-color-on-surface);
+  overflow: hidden;
   overflow-wrap: anywhere;
-  word-break: break-word;
   -webkit-line-clamp: 4;
   line-clamp: 4;
   -webkit-box-orient: vertical;
@@ -275,10 +273,10 @@ function handleMoreClick(event: MouseEvent): void {
 .recall-card-note {
   display: -webkit-box;
   margin: 0 0 4px;
-  overflow: hidden;
   font-size: 13px;
   line-height: 1.4;
   color: var(--md-sys-color-on-surface);
+  overflow: hidden;
   -webkit-line-clamp: 2;
   line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -301,7 +299,6 @@ function handleMoreClick(event: MouseEvent): void {
   font-size: 12px;
   color: var(--md-sys-color-on-surface-variant);
   overflow-wrap: anywhere;
-  word-break: break-word;
 }
 
 .recall-duplicate-more {
@@ -351,13 +348,13 @@ function handleMoreClick(event: MouseEvent): void {
 .recall-duplicate-siblings {
   display: grid;
   gap: 6px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+
   /* 约 5 条 sibling；超出内部滚动，避免撑破 Popup */
   max-height: calc(5 * 5.25rem + 4 * 6px);
-  overflow-x: hidden;
-  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  overflow: hidden auto;
+  list-style: none;
   overscroll-behavior: contain;
 }
 </style>

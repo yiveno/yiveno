@@ -2,9 +2,9 @@
  * Material Web + Yiveno design tokens 入口。
  * 组件样式由 @material/web 提供；页面只用 token 变量做布局与语义色。
  */
-@import '@yiveno/design-tokens/css/material-theme.css';
-@import '@yiveno/design-tokens/css/variables.css';
-@import '@yiveno/design-tokens/css/semantic-colors.css';
+@import url('@yiveno/design-tokens/css/material-theme.css');
+@import url('@yiveno/design-tokens/css/variables.css');
+@import url('@yiveno/design-tokens/css/semantic-colors.css');
 
 * {
   box-sizing: border-box;
@@ -74,6 +74,6 @@ body {
 .action-row {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--md-sys-spacing-sm, 8px);
   align-items: center;
+  gap: var(--md-sys-spacing-sm, 8px);
 }

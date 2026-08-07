@@ -151,6 +151,12 @@ export function extensionPostBuildPlugin(): Plugin {
           contentScriptsDirty = false
         }
         finalizeExtensionDist()
+        // MV3 无真 HMR：watch 重建后需在 chrome://extensions 点刷新（或重新加载 unpacked）
+        if (isWatchBuild) {
+          console.log(
+            '[extension-post-build] dist 已更新 → chrome://extensions 刷新本扩展后验证（MV3 无热替换）'
+          )
+        }
       } finally {
         releaseBuildGate?.()
         releaseBuildGate = null

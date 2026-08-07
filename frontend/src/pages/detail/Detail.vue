@@ -154,7 +154,7 @@ onMounted(() => {
       <p class="detail-empty-title">{{ t('detail_deleted_title') }}</p>
       <p class="detail-empty-copy">{{ t('detail_deleted_body') }}</p>
       <md-outlined-button :href="libraryHref" :title="t('detail_open_library')">
-        <MaterialSymbolIcon name="library_books" size="18px" slot="icon" />
+        <MaterialSymbolIcon slot="icon" name="library_books" size="18px" />
         {{ t('detail_open_library') }}
       </md-outlined-button>
     </section>
@@ -224,7 +224,7 @@ onMounted(() => {
           rel="noopener noreferrer"
           :title="t('detail_open_source')"
         >
-          <MaterialSymbolIcon name="open_in_new" size="18px" slot="icon" />
+          <MaterialSymbolIcon slot="icon" name="open_in_new" size="18px" />
           {{ t('detail_open_source') }}
         </md-filled-button>
         <md-icon-button
@@ -323,9 +323,9 @@ onMounted(() => {
 
 .detail-page {
   max-width: 100%;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .detail-context {
@@ -341,8 +341,8 @@ onMounted(() => {
   border-radius: var(--md-sys-shape-corner-medium, 12px);
   font-size: 16px;
   line-height: 1.65;
-  background: var(--md-sys-color-surface-container);
   color: var(--md-sys-color-on-surface);
+  background: var(--md-sys-color-surface-container);
 }
 
 .detail-note {
@@ -364,8 +364,8 @@ onMounted(() => {
   margin: 0;
   font-size: 14px;
   line-height: 1.55;
-  color: var(--md-sys-color-on-surface);
   white-space: pre-wrap;
+  color: var(--md-sys-color-on-surface);
 }
 
 .detail-actions {
@@ -391,11 +391,11 @@ onMounted(() => {
 
 .detail-source-link {
   display: inline-flex;
-  gap: 6px;
   align-items: center;
+  gap: 6px;
   font-size: 14px;
   font-weight: 600;
-  color: var(--md-sys-color-primary);
   text-decoration: none;
+  color: var(--md-sys-color-primary);
 }
 </style>

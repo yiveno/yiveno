@@ -446,9 +446,9 @@ watch(
 
 .library-layout {
   display: grid;
-  grid-template-columns: 140px minmax(0, 1fr);
-  gap: 20px;
   align-items: start;
+  gap: 20px;
+  grid-template-columns: 140px minmax(0, 1fr);
 }
 
 .library-tabs {
@@ -572,9 +572,9 @@ watch(
 
 .library-row {
   display: flex;
-  gap: 16px;
-  align-items: flex-start;
   justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
   padding: 12px 40px 12px 14px;
   border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: var(--md-sys-shape-corner-medium, 12px);
@@ -600,22 +600,22 @@ watch(
 }
 
 .library-row-body {
-  font-weight: 500;
   display: -webkit-box;
+  font-weight: 500;
+  overflow: hidden;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
 .library-row-note {
+  display: -webkit-box;
   margin: 0 0 6px;
   font-size: 13px;
   line-height: 1.45;
   color: var(--md-sys-color-on-surface);
-  display: -webkit-box;
+  overflow: hidden;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
 .library-row-note-label {
@@ -667,10 +667,10 @@ watch(
   margin: 0;
   font-size: 13px;
   line-height: 1.4;
+  white-space: nowrap;
   color: var(--md-sys-color-on-surface-variant);
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .library-note-dialog-input {
@@ -706,14 +706,14 @@ watch(
   gap: 8px;
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .library-layout {
     grid-template-columns: 1fr;
   }
 
   .library-tabs {
-    grid-auto-flow: column;
     grid-auto-columns: 1fr;
+    grid-auto-flow: column;
   }
 
   .library-tab {
