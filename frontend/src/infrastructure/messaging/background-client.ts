@@ -48,8 +48,9 @@ import type {
 } from '@/core/messaging/recall-messages'
 import type {
   GetAiHostedQuotaResponse,
-  SettingsBackgroundResponse,
-  UpdateUserSettingsMessage
+  GetUserSettingsResponse,
+  UpdateUserSettingsMessage,
+  UpdateUserSettingsResponse
 } from '@/core/messaging/settings-messages'
 
 /** 向 Background 发送消息并返回响应。 */
@@ -188,8 +189,8 @@ export async function openChromeShortcutsPage(): Promise<OpenChromeShortcutsPage
 }
 
 /** 读取用户设置。 */
-export async function fetchUserSettings(): Promise<SettingsBackgroundResponse> {
-  return sendBackgroundMessage<SettingsBackgroundResponse>({
+export async function fetchUserSettings(): Promise<GetUserSettingsResponse> {
+  return sendBackgroundMessage<GetUserSettingsResponse>({
     scope: 'background',
     type: 'GET_USER_SETTINGS'
   })
@@ -206,8 +207,8 @@ export async function fetchAiHostedQuota(): Promise<GetAiHostedQuotaResponse> {
 /** 更新用户设置。 */
 export async function updateUserSettings(
   payload: UpdateUserSettingsMessage['payload']
-): Promise<SettingsBackgroundResponse> {
-  return sendBackgroundMessage<SettingsBackgroundResponse>({
+): Promise<UpdateUserSettingsResponse> {
+  return sendBackgroundMessage<UpdateUserSettingsResponse>({
     scope: 'background',
     type: 'UPDATE_USER_SETTINGS',
     payload
