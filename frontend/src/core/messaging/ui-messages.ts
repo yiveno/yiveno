@@ -14,6 +14,7 @@ export type ChromeBookmarkTreeChangedMessage = {
   type: 'CHROME_BOOKMARK_TREE_CHANGED' // Chrome 书签树变更
 }
 
+/** SW → UI 推送联合（后续可并入更多热更新消息）。 */
 export type UiPushMessage = ChromeBookmarkTreeChangedMessage
 
 const chromeBookmarkTreeChangedSchema = z.object({
@@ -22,9 +23,7 @@ const chromeBookmarkTreeChangedSchema = z.object({
 })
 
 /** 解析 SW → UI 书签树变更通知；非法则返回 null。 */
-export function parseChromeBookmarkTreeChangedMessage(
-  value: unknown
-): ChromeBookmarkTreeChangedMessage | null {
+export function parseChromeBookmarkTreeChangedMessage(value: unknown): UiPushMessage | null {
   const parsed = chromeBookmarkTreeChangedSchema.safeParse(value)
   return parsed.success ? parsed.data : null
 }

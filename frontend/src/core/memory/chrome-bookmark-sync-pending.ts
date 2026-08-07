@@ -13,8 +13,3 @@ export const ChromeBookmarkSyncPendingSchema = z.object({
 })
 
 export type ChromeBookmarkSyncPending = z.infer<typeof ChromeBookmarkSyncPendingSchema>
-
-export const EMPTY_CHROME_BOOKMARK_SYNC_PENDING: ChromeBookmarkSyncPending = {
-  upsertIds: [],
-  removeIds: []
-}
