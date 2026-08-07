@@ -476,7 +476,7 @@
     "message": "当前模型路径说明："
   },
   "settings_ai_bullet_clue": {
-    "message": "线索理解：经 Cloudflare Worker 调用模型（扩展不持有 API Key）；失败时自动降级规则解析。"
+    "message": "线索理解：登录后经 Cloudflare Worker 调用模型（扩展不持有 API Key）；配额用尽或失败时自动降级规则解析。未登录仅规则。"
   },
   "settings_ai_bullet_enrichment": {
     "message": "Capture enrichment：异步稀疏请求；提议经校验后写回 tags/keywords/entities；不改用户备注。"
@@ -762,16 +762,16 @@
     "message": "管理订阅"
   },
   "settings_subscription_sign_in_hint": {
-    "message": "登录后可查看 Pro 状态，并解锁 Hybrid 找回。"
+    "message": "登录后可查看 Pro 状态；云同步与更大托管 LLM 配额需 Pro。"
   },
   "settings_subscription_hybrid_hint": {
-    "message": "Pro 解锁 Hybrid 找回、云同步与托管口语理解（月配额）。Free 仅本机关键词 Filter。"
+    "message": "本机找回质量 Free/Pro 同档（关键词 + Hybrid）。Pro 主要解锁云同步，并提供更大托管口语理解配额。"
   },
   "settings_sync_pro_required_hint": {
     "message": "云同步为 Pro 能力。升级后可在多设备间对齐记忆。"
   },
   "settings_ai_embedding_hint": {
-    "message": "Pro 且开启 AI 时，会把记忆中的短文本发到 Yiveno Worker 生成 embedding。向量仅存本机；本版本云同步不上传向量。"
+    "message": "登录且开启 AI 时，会把记忆中的短文本发到 Yiveno Worker 生成 embedding。向量仅存本机；本版本云同步不上传向量。Free/Pro 日配额不同。"
   },
   "settings_embedding_backfill": {
     "message": "重建语义索引"
@@ -787,8 +787,37 @@
       }
     }
   },
-  "settings_embedding_backfill_pro_only": {
-    "message": "重建语义索引需要有效 Pro 订阅。"
+  "settings_embedding_backfill_auth_required": {
+    "message": "重建语义索引需要先登录。"
+  },
+  "settings_ai_quota_loading": {
+    "message": "正在读取托管口语配额…"
+  },
+  "settings_ai_quota_sign_in": {
+    "message": "登录后可使用托管口语理解，并在此查看月/日配额。"
+  },
+  "settings_ai_quota_failed": {
+    "message": "无法读取托管口语配额。"
+  },
+  "settings_ai_quota_summary": {
+    "message": "托管口语理解 · $TIER$：本月 $USED$ / $LIMIT$，今日 $DAILY_USED$ / $DAILY_LIMIT$。用尽后降级规则，找回仍可用。",
+    "placeholders": {
+      "TIER": {
+        "content": "$1"
+      },
+      "USED": {
+        "content": "$2"
+      },
+      "LIMIT": {
+        "content": "$3"
+      },
+      "DAILY_USED": {
+        "content": "$4"
+      },
+      "DAILY_LIMIT": {
+        "content": "$5"
+      }
+    }
   },
   "popup_followup_chip_recently_opened": {
     "message": "刚打开过的"
@@ -803,7 +832,7 @@
     "message": "跟当前站有关"
   },
   "pro_required_for_hybrid": {
-    "message": "Hybrid 找回需要 Pro"
+    "message": "云同步与更大托管 LLM 配额需要 Pro；本机 Hybrid 找回 Free 可用。"
   },
   "settings_orphan_title": {
     "message": "本机还有其它账号的残留"

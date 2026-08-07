@@ -476,7 +476,7 @@
     "message": "Current model path:"
   },
   "settings_ai_bullet_clue": {
-    "message": "Clue understanding: model calls go through a Cloudflare Worker (the extension does not hold an API key); failures fall back to rules."
+    "message": "Clue understanding: when signed in, model calls go through a Cloudflare Worker (no API key in the extension); quota exhaustion or failures fall back to rules. Signed-out uses rules only."
   },
   "settings_ai_bullet_enrichment": {
     "message": "Capture enrichment: sparse async requests; proposals are validated before writing tags/keywords/entities; never overwrites your note."
@@ -762,16 +762,16 @@
     "message": "Manage subscription"
   },
   "settings_subscription_sign_in_hint": {
-    "message": "Sign in to check Pro status and unlock Hybrid recall."
+    "message": "Sign in to check Pro status. Cloud sync and a larger hosted LLM quota require Pro."
   },
   "settings_subscription_hybrid_hint": {
-    "message": "Pro unlocks Hybrid recall, cloud sync, and hosted clue understanding (monthly quota). Free stays on keyword Filter on this device."
+    "message": "Local recall quality is the same on Free and Pro (keyword + Hybrid). Pro mainly unlocks cloud sync and a larger hosted clue-understanding quota."
   },
   "settings_sync_pro_required_hint": {
     "message": "Cloud sync is a Pro feature. Upgrade to keep memories aligned across devices."
   },
   "settings_ai_embedding_hint": {
-    "message": "When Pro and AI are on, short text from your memories is sent to the Yiveno Worker to build embeddings. Embeddings stay on this device; cloud sync does not upload vectors in this release."
+    "message": "When signed in with AI on, short text from your memories is sent to the Yiveno Worker to build embeddings. Embeddings stay on this device; cloud sync does not upload vectors in this release. Free and Pro have different daily caps."
   },
   "settings_embedding_backfill": {
     "message": "Rebuild semantic index"
@@ -787,8 +787,37 @@
       }
     }
   },
-  "settings_embedding_backfill_pro_only": {
-    "message": "Semantic index rebuild requires an active Pro plan."
+  "settings_embedding_backfill_auth_required": {
+    "message": "Sign in to rebuild the semantic index."
+  },
+  "settings_ai_quota_loading": {
+    "message": "Loading hosted clue quota…"
+  },
+  "settings_ai_quota_sign_in": {
+    "message": "Sign in to use hosted clue understanding and see monthly/daily quota here."
+  },
+  "settings_ai_quota_failed": {
+    "message": "Could not load hosted clue quota."
+  },
+  "settings_ai_quota_summary": {
+    "message": "Hosted clue understanding · $TIER$: $USED$ / $LIMIT$ this month, $DAILY_USED$ / $DAILY_LIMIT$ today. When exhausted, understanding falls back to rules; recall still works.",
+    "placeholders": {
+      "TIER": {
+        "content": "$1"
+      },
+      "USED": {
+        "content": "$2"
+      },
+      "LIMIT": {
+        "content": "$3"
+      },
+      "DAILY_USED": {
+        "content": "$4"
+      },
+      "DAILY_LIMIT": {
+        "content": "$5"
+      }
+    }
   },
   "popup_followup_chip_recently_opened": {
     "message": "Recently opened"
@@ -803,7 +832,7 @@
     "message": "This site"
   },
   "pro_required_for_hybrid": {
-    "message": "Hybrid recall needs Pro"
+    "message": "Cloud sync and a larger hosted LLM quota require Pro; Hybrid recall on this device is available on Free."
   },
   "settings_orphan_title": {
     "message": "Leftover data from other accounts"

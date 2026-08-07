@@ -1,6 +1,6 @@
 /**
  * Hybrid Recall：关键词候选 + embedding 近邻，经 RRF 融合。
- * 仅 Pro 路径由 RecallService 选用；无向量 / 网络失败时降级关键词。
+ * 默认后端（Free/Pro 同档）；无向量 / 失败时降级关键词。
  */
 
 import { memoryItemService } from '@/application/memory/memory-item-service'

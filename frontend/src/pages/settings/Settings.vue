@@ -30,6 +30,7 @@ import {
   fetchUserSettings,
   openChromeShortcutsPage,
   backfillMemoryEmbeddings,
+  fetchAiHostedQuota,
   restoreLatestSyncBackup,
   setSyncEnabled,
   runIncrementalMemorySync,
@@ -74,6 +75,9 @@ const savingChromeBookmarkIngest = ref(false)
 const savingAiFeatures = ref(false)
 const embeddingBackfillWorking = ref(false)
 const embeddingBackfillMessage = ref('')
+const hostedQuotaLoading = ref(false)
+const hostedQuotaText = ref('')
+const hostedQuotaError = ref('')
 
 const signedIn = ref(false)
 const accountEmail = ref('')
@@ -162,6 +166,9 @@ watch(
   activeSection,
   section => {
     syncActiveSectionToUrl(section)
+    if (section === 'ai') {
+      void loadHostedQuota()
+    }
   },
   { immediate: true }
 )
@@ -321,7 +328,7 @@ async function handleAiFeaturesToggle(event: Event) {
   }
 }
 
-/** Pro：将缺 embedding 的本机记忆入队回填。 */
+/** 将缺 embedding 的本机记忆入队回填（须登录）。 */
 async function handleEmbeddingBackfill() {
   embeddingBackfillWorking.value = true
   embeddingBackfillMessage.value = ''
@@ -343,6 +350,37 @@ async function handleEmbeddingBackfill() {
     settingsError.value = t('settings_error_update')
   } finally {
     embeddingBackfillWorking.value = false
+  }
+}
+
+/** 刷新托管 Clue LLM 配额展示。 */
+async function loadHostedQuota(): Promise<void> {
+  hostedQuotaError.value = ''
+  hostedQuotaText.value = ''
+  if (!signedIn.value) {
+    hostedQuotaText.value = t('settings_ai_quota_sign_in')
+    return
+  }
+  hostedQuotaLoading.value = true
+  try {
+    const response = await fetchAiHostedQuota()
+    if (!response.ok) {
+      hostedQuotaError.value = tSettingsError(response.errorCode)
+      return
+    }
+    hostedQuotaText.value = t('settings_ai_quota_summary', [
+      response.quota.tier === 'pro'
+        ? t('settings_subscription_tier_pro')
+        : t('settings_subscription_tier_free'),
+      String(response.quota.used),
+      String(response.quota.limit),
+      String(response.quota.dailyUsed),
+      String(response.quota.dailyLimit)
+    ])
+  } catch {
+    hostedQuotaError.value = t('settings_ai_quota_failed')
+  } finally {
+    hostedQuotaLoading.value = false
   }
 }
 
@@ -383,6 +421,9 @@ async function loadSyncContext() {
     // 未登录也要盘点孤儿桶（换号退出后残留仍可见）
     await refreshSyncStatus()
     await loadSubscriptionStatus()
+    if (activeSection.value === 'ai') {
+      await loadHostedQuota()
+    }
   } catch {
     syncError.value = t('settings_error_auth_state')
   }
@@ -1281,13 +1322,22 @@ onUnmounted(() => {
               <li>{{ t('settings_ai_bullet_enrichment') }}</li>
               <li>{{ t('settings_ai_bullet_boundary') }}</li>
             </ul>
+            <p v-if="hostedQuotaLoading" class="settings-section-copy" role="status">
+              {{ t('settings_ai_quota_loading') }}
+            </p>
+            <p v-else-if="hostedQuotaText" class="settings-section-copy" role="status">
+              {{ hostedQuotaText }}
+            </p>
+            <p v-if="hostedQuotaError" class="settings-error" role="alert">
+              {{ hostedQuotaError }}
+            </p>
             <p class="settings-section-copy">{{ t('settings_ai_embedding_hint') }}</p>
             <div class="settings-actions">
               <md-outlined-button
                 type="button"
                 :disabled="
                   embeddingBackfillWorking ||
-                  !subscriptionIsPro ||
+                  !signedIn ||
                   !aiFeaturesEnabled ||
                   settingsState !== 'ready'
                 "
@@ -1301,6 +1351,9 @@ onUnmounted(() => {
                 }}
               </md-outlined-button>
             </div>
+            <p v-if="!signedIn" class="settings-status" role="status">
+              {{ t('settings_embedding_backfill_auth_required') }}
+            </p>
             <p v-if="embeddingBackfillMessage" class="settings-section-copy" role="status">
               {{ embeddingBackfillMessage }}
             </p>

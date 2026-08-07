@@ -9,7 +9,7 @@ const MEMORY_ERROR_MESSAGE_KEYS: Record<MemoryErrorCode, MessageKey> = {
   CAPTURE_UNSAVABLE_PAGE: 'error_capture_unsavable_page',
   CAPTURE_EMPTY_SELECTION: 'error_capture_empty_selection',
   BOOKMARK_INGEST_DISABLED: 'error_bookmark_ingest_disabled',
-  EMBEDDING_BACKFILL_PRO_REQUIRED: 'settings_embedding_backfill_pro_only'
+  EMBEDDING_BACKFILL_AUTH_REQUIRED: 'settings_embedding_backfill_auth_required'
 }
 
 /** 将 Memory errorCode 转为用户可见文案。 */

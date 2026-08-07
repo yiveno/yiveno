@@ -1,6 +1,6 @@
 /**
- * Pro 专用：Workers AI embedding（bge-m3）。
- * 鉴权：Supabase Bearer + isActiveProUser；按用户日配额防刷。
+ * 登录可用：Workers AI embedding（bge-m3）。
+ * 鉴权：Supabase Bearer；按用户日配额防刷（Free/Pro 分档）。
  */
 
 import type { Env } from '../types/env'
@@ -12,7 +12,10 @@ export const EMBEDDING_MODEL = '@cf/baai/bge-m3'
 const MAX_BATCH = 8
 /** 约 512 token 量级的字符截断（粗估）。 */
 const MAX_CHARS_PER_TEXT = 2000
-const DEFAULT_DAILY_LIMIT = 500
+/** 登录 Free 默认日调用上限 */
+const DEFAULT_FREE_DAILY_LIMIT = 100
+/** Pro 默认日调用上限 */
+const DEFAULT_PRO_DAILY_LIMIT = 500
 
 export interface EmbedRequestBody {
   texts?: unknown
@@ -41,13 +44,16 @@ function normalizeTexts(raw: unknown): string[] | null {
 
 async function consumeEmbedDailyQuota(
   env: Env,
-  userId: string
+  userId: string,
+  isPro: boolean
 ): Promise<
   | { allowed: true; used: number; limit: number }
   | { allowed: false; used: number; limit: number; reason: 'quota_exceeded' | 'kv_not_configured' }
 > {
-  const limit = Number.parseInt(env.AI_EMBED_DAILY_LIMIT ?? '', 10)
-  const dailyLimit = Number.isFinite(limit) && limit > 0 ? limit : DEFAULT_DAILY_LIMIT
+  const envKey = isPro ? env.AI_EMBED_DAILY_LIMIT : env.AI_EMBED_FREE_DAILY_LIMIT
+  const fallback = isPro ? DEFAULT_PRO_DAILY_LIMIT : DEFAULT_FREE_DAILY_LIMIT
+  const parsed = Number.parseInt(envKey ?? '', 10)
+  const dailyLimit = Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
   const kv = env.AI_USAGE_KV
   if (!kv) {
     return { allowed: false, used: 0, limit: dailyLimit, reason: 'kv_not_configured' }
@@ -99,17 +105,13 @@ export async function handleEmbed(request: Request, env: Env, userId: string): P
   const origin = request.headers.get('origin')
   const startedAt = Date.now()
 
-  if (!(await isActiveProUser(env, userId))) {
-    logInfo('embed_rejected', { reason: 'pro_required', userId })
-    return errorJson({ error: 'pro_required' }, 403, origin)
-  }
-
   if (!env.AI) {
     logInfo('embed_rejected', { reason: 'ai_binding_missing', userId })
     return errorJson({ error: 'ai_binding_missing' }, 503, origin)
   }
 
-  const quota = await consumeEmbedDailyQuota(env, userId)
+  const isPro = await isActiveProUser(env, userId)
+  const quota = await consumeEmbedDailyQuota(env, userId, isPro)
   if (!quota.allowed) {
     logInfo('embed_rejected', {
       reason: quota.reason,

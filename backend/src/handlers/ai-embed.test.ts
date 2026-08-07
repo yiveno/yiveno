@@ -64,7 +64,7 @@ describe('handleEmbed', () => {
     mock.restore()
   })
 
-  test('非 Pro → 403 pro_required', async () => {
+  test('登录 Free → 200 embeddings（日配额分档）', async () => {
     mock.module('../services/ai/require-pro-user', () => ({
       isActiveProUser: async () => false
     }))
@@ -78,9 +78,13 @@ describe('handleEmbed', () => {
       createEnv(),
       'user-1'
     )
-    expect(response.status).toBe(403)
-    const json = (await response.json()) as { error: string }
-    expect(json.error).toBe('pro_required')
+    expect(response.status).toBe(200)
+    const json = (await response.json()) as {
+      success: boolean
+      data: { embeddings: number[][] }
+    }
+    expect(json.success).toBe(true)
+    expect(json.data.embeddings).toHaveLength(1)
   })
 
   test('Pro + AI → 200 embeddings', async () => {

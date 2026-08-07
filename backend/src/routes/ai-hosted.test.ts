@@ -23,7 +23,6 @@ function createBaseEnv(overrides: Record<string, unknown> = {}): Env {
     WEBSITE_URL: 'https://example.com',
     DEEPSEEK_API_KEY: 'deepseek-test-key',
     AI_HOSTED_MODEL: 'deepseek-v4-flash',
-    AI_HOSTED_MONTHLY_QUOTA: '999',
     AI_USAGE_KV: createKvMock() as Env['AI_USAGE_KV'],
     ...overrides
   } as unknown as Env
@@ -60,6 +59,29 @@ describe('hosted ai routes', () => {
     expect(response.status).toBe(400)
     const data = (await response.json()) as { error: string }
     expect(data.error).toBe('missing_prompt')
+  })
+
+  test('handleHostedComplete returns daily_cap_exceeded when day limit reached', async () => {
+    const { handleHostedComplete } = await importHostedHandlersAsPro()
+    const dayKey = `ai_usage_day:${TEST_USER_ID}:${new Date().toISOString().slice(0, 10)}`
+
+    const response = await handleHostedComplete(
+      new Request('http://localhost/api/ai/hosted/complete', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ prompt: '整理书签' })
+      }),
+      createBaseEnv({
+        AI_HOSTED_DAILY_CAP: '1',
+        AI_USAGE_KV: createKvMock({ [dayKey]: '1' }) as unknown as Env['AI_USAGE_KV']
+      }),
+      TEST_USER_ID
+    )
+
+    expect(response.status).toBe(429)
+    const data = (await response.json()) as { error: string; dailyLimit: number }
+    expect(data.error).toBe('daily_cap_exceeded')
+    expect(data.dailyLimit).toBe(1)
   })
 
   test('handleHostedComplete returns quota_exceeded when limit reached', async () => {
@@ -152,7 +174,26 @@ describe('hosted ai routes', () => {
     expect(response.status).toBe(200)
     const data = (await response.json()) as { model: string; limit: number }
     expect(data.model).toBe('deepseek-v4-flash')
-    expect(data.limit).toBe(999)
+    expect(data.limit).toBe(2000)
+  })
+
+  test('handleHostedQuota returns free tier limit when not pro', async () => {
+    mock.module('../services/ai/require-pro-user', () => ({
+      isActiveProUser: async () => false
+    }))
+    const { handleHostedQuota } = await import('../handlers/ai-hosted')
+
+    const response = await handleHostedQuota(
+      new Request('http://localhost/api/ai/hosted/quota'),
+      createBaseEnv(),
+      TEST_USER_ID
+    )
+
+    expect(response.status).toBe(200)
+    const data = (await response.json()) as { tier: string; limit: number; dailyLimit: number }
+    expect(data.tier).toBe('free')
+    expect(data.limit).toBe(60)
+    expect(data.dailyLimit).toBe(10)
   })
 
   test('handleHostedComplete accepts messages without prompt', async () => {

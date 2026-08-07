@@ -1,5 +1,5 @@
 /**
- * Pro 托管线索理解：经 `/api/ai/hosted/complete`（Bearer + 月配额）。
+ * 托管线索理解：经 `/api/ai/hosted/complete`（Bearer；Free/Pro 月+日配额）。
  */
 
 import type { LlmChatCompleter } from '@/core/recall/understand/parse-recall-clue-with-llm'
@@ -27,7 +27,7 @@ function resolveApiBaseUrl(): string {
 }
 
 /**
- * 创建打 Pro 托管补全的 completer。
+ * 创建打托管补全的 completer（登录 Free/Pro；配额用尽抛错，上层降级规则）。
  * accessTokenProvider 每次请求取最新 Bearer（避免过期）。
  */
 export function createHostedClueUnderstandApiCompleter(

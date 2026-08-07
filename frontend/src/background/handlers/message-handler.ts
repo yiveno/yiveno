@@ -45,6 +45,7 @@ import {
 } from '@/background/handlers/memory-handler'
 import { handleRecallWithClue } from '@/background/handlers/recall-handler'
 import {
+  handleGetAiHostedQuota,
   handleGetUserSettings,
   handleUpdateUserSettings
 } from '@/background/handlers/settings-handler'
@@ -150,6 +151,8 @@ async function dispatchBackgroundMessage(
       return handleGetUserSettings()
     case 'UPDATE_USER_SETTINGS':
       return handleUpdateUserSettings(message.payload)
+    case 'GET_AI_HOSTED_QUOTA':
+      return handleGetAiHostedQuota()
     default:
       logger.warn('Msg', '未知消息类型', {
         type: (message as { type: string }).type

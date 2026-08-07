@@ -9,7 +9,9 @@ import { t } from '@/infrastructure/i18n/t'
 
 const SETTINGS_ERROR_MESSAGE_KEYS: Record<SettingsErrorCode, MessageKey> = {
   SETTINGS_READ_FAILED: 'settings_error_load',
-  SETTINGS_UPDATE_FAILED: 'settings_error_update'
+  SETTINGS_UPDATE_FAILED: 'settings_error_update',
+  AI_HOSTED_QUOTA_AUTH_REQUIRED: 'settings_ai_quota_sign_in',
+  AI_HOSTED_QUOTA_FAILED: 'settings_ai_quota_failed'
 }
 
 const ACCOUNT_SYNC_ERROR_MESSAGE_KEYS: Record<AccountSyncErrorCode, MessageKey> = {

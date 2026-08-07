@@ -60,7 +60,7 @@ export const MemoryErrorCodeSchema = z.enum([
   'CAPTURE_UNSAVABLE_PAGE', // 当前页不可存
   'CAPTURE_EMPTY_SELECTION', // 无有效选区
   'BOOKMARK_INGEST_DISABLED', // 用户关闭了书签灌库
-  'EMBEDDING_BACKFILL_PRO_REQUIRED' // 回填 embedding 需 Pro
+  'EMBEDDING_BACKFILL_AUTH_REQUIRED' // 回填 embedding 须登录
 ])
 
 export type MemoryErrorCode = z.infer<typeof MemoryErrorCodeSchema>

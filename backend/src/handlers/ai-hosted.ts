@@ -1,5 +1,5 @@
 /**
- * Pro 托管 LLM 接口处理器
+ * 托管 LLM 接口处理器（登录可用；Free/Pro 配额分档）。
  */
 
 import type { Env } from '../types/env'
@@ -12,7 +12,7 @@ import { isActiveProUser } from '../services/ai/require-pro-user'
 import { logError } from '../utils/logger'
 
 /**
- * 获取 Pro 托管 LLM 配额信息
+ * 获取托管 LLM 配额信息（须登录；不要求 Pro）。
  */
 export async function handleHostedQuota(
   request: Request,
@@ -21,23 +21,23 @@ export async function handleHostedQuota(
 ): Promise<Response> {
   const origin = request.headers.get('origin')
 
-  const isPro = await isActiveProUser(env, userId)
-  if (!isPro) {
-    return errorJson({ error: 'pro_required' }, 403, origin)
-  }
-
   if (!env.AI_USAGE_KV) {
     return errorJson({ error: 'kv_not_configured' }, 503, origin)
   }
 
-  const snapshot = await getHostedQuotaSnapshot(env, userId)
+  const isPro = await isActiveProUser(env, userId)
+  const snapshot = await getHostedQuotaSnapshot(env, userId, isPro)
 
   return okJson(
     {
       model: resolveHostedModel(env),
+      tier: snapshot.tier,
       used: snapshot.used,
       limit: snapshot.limit,
       remaining: snapshot.remaining,
+      dailyUsed: snapshot.dailyUsed,
+      dailyLimit: snapshot.dailyLimit,
+      dailyRemaining: snapshot.dailyRemaining,
       monthKey: snapshot.monthKey
     },
     origin
@@ -45,7 +45,7 @@ export async function handleHostedQuota(
 }
 
 /**
- * 处理 Pro 托管 LLM 文本补全
+ * 处理托管 LLM 文本补全（须登录；Free/Pro 配额分档）。
  */
 export async function handleHostedComplete(
   request: Request,
@@ -54,26 +54,26 @@ export async function handleHostedComplete(
 ): Promise<Response> {
   const origin = request.headers.get('origin')
 
-  const isPro = await isActiveProUser(env, userId)
-  if (!isPro) {
-    return errorJson({ error: 'pro_required' }, 403, origin)
-  }
-
   if (!isAiChatProviderConfigured(env)) {
     return errorJson({ error: 'ai_provider_not_configured' }, 503, origin)
   }
 
-  const quotaResult = await consumeHostedQuota(env, userId)
+  const isPro = await isActiveProUser(env, userId)
+  const quotaResult = await consumeHostedQuota(env, userId, isPro)
   if (!quotaResult.allowed) {
     if (quotaResult.reason === 'kv_not_configured') {
       return errorJson({ error: 'kv_not_configured' }, 503, origin)
     }
     return errorJson(
       {
-        error: 'quota_exceeded',
+        error: quotaResult.reason ?? 'quota_exceeded',
+        tier: quotaResult.snapshot.tier,
         used: quotaResult.snapshot.used,
         limit: quotaResult.snapshot.limit,
-        remaining: quotaResult.snapshot.remaining
+        remaining: quotaResult.snapshot.remaining,
+        dailyUsed: quotaResult.snapshot.dailyUsed,
+        dailyLimit: quotaResult.snapshot.dailyLimit,
+        dailyRemaining: quotaResult.snapshot.dailyRemaining
       },
       429,
       origin
@@ -113,9 +113,13 @@ export async function handleHostedComplete(
         model: result.model,
         tokensUsed: result.tokensUsed,
         quota: {
+          tier: quotaResult.snapshot.tier,
           used: quotaResult.snapshot.used,
           limit: quotaResult.snapshot.limit,
-          remaining: quotaResult.snapshot.remaining
+          remaining: quotaResult.snapshot.remaining,
+          dailyUsed: quotaResult.snapshot.dailyUsed,
+          dailyLimit: quotaResult.snapshot.dailyLimit,
+          dailyRemaining: quotaResult.snapshot.dailyRemaining
         }
       },
       origin

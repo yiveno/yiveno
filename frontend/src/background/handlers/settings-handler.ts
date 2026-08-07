@@ -1,4 +1,5 @@
 import type {
+  GetAiHostedQuotaResponse,
   GetUserSettingsResponse,
   UpdateUserSettingsResponse
 } from '@/core/messaging/settings-messages'
@@ -6,6 +7,8 @@ import { UserSettingsSchema, type UserSettings } from '@/core/settings/user-sett
 import { ensureChromeBookmarksImported } from '@/application/capture/import-chrome-bookmarks-service'
 import { refreshClueLlmCompleterFromDevConfig } from '@/application/recall/refresh-clue-llm-completer'
 import { syncChromeBookmarkSyncListenersWithIngestSetting } from '@/background/listeners/chrome-bookmark-sync'
+import { fetchHostedQuota } from '@/infrastructure/ai/hosted-quota-api-client'
+import { getAuthSession } from '@/infrastructure/identity/auth-session-service'
 import {
   getUserSettings,
   updateUserSettings
@@ -85,6 +88,34 @@ export async function handleUpdateUserSettings(
     return {
       ok: false,
       errorCode: 'SETTINGS_UPDATE_FAILED',
+      ...(debug ? { error: debug } : {})
+    }
+  }
+}
+
+/** 读取托管 Clue LLM 月/日配额（须登录）。 */
+export async function handleGetAiHostedQuota(): Promise<GetAiHostedQuotaResponse> {
+  const startedAt = flowStart('Settings', '读取托管配额')
+  try {
+    const session = await getAuthSession()
+    const accessToken = session?.accessToken
+    if (!accessToken) {
+      flowOk('Settings', '读取托管配额', startedAt, { reason: 'not_signed_in' })
+      return { ok: false, errorCode: 'AI_HOSTED_QUOTA_AUTH_REQUIRED' }
+    }
+    const quota = await fetchHostedQuota(accessToken)
+    flowOk('Settings', '读取托管配额', startedAt, {
+      tier: quota.tier,
+      used: quota.used,
+      limit: quota.limit
+    })
+    return { ok: true, quota }
+  } catch (error) {
+    flowFail('Settings', '读取托管配额', startedAt, error)
+    const debug = toErrorPayload(error)
+    return {
+      ok: false,
+      errorCode: 'AI_HOSTED_QUOTA_FAILED',
       ...(debug ? { error: debug } : {})
     }
   }

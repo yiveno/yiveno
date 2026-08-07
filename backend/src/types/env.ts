@@ -28,8 +28,16 @@ export type Env = Cloudflare.Env & {
   AI_ENRICHMENT_PROXY_ENABLED?: string
   /** enrichment 提议按 IP 日调用上限（默认 80） */
   AI_ENRICHMENT_DAILY_LIMIT?: string
-  /** embedding 按用户日调用上限（默认 500）；types:gen 前可写在此 */
+  /** embedding 按用户日调用上限（Pro，默认 500） */
   AI_EMBED_DAILY_LIMIT?: string
+  /** embedding Free 日上限（默认 100） */
+  AI_EMBED_FREE_DAILY_LIMIT?: string
+  /** 托管 LLM Free 月配额覆盖 */
+  AI_HOSTED_FREE_MONTHLY_QUOTA?: string
+  /** 托管 LLM Free 日盖 */
+  AI_HOSTED_FREE_DAILY_CAP?: string
+  /** 托管 LLM Pro 日盖 */
+  AI_HOSTED_DAILY_CAP?: string
   /**
    * 聊天补全 Provider：deepseek（默认）。未知值 → 503 ai_provider_unsupported。
    * 换厂商时加 adapter + 改此变量，业务 handler 不改。

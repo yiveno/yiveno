@@ -242,15 +242,14 @@ export async function handleRecordRecallDismiss(
   }
 }
 
-/** Pro：将缺失 embedding 的本机条目入队回填。 */
+/** 将缺失 embedding 的本机条目入队回填（须登录；Worker 日配额分档）。 */
 export async function handleBackfillMemoryEmbeddings(): Promise<MemoryBackgroundResponse> {
   const startedAt = flowStart('Memory', '回填 embedding')
   try {
-    const { isProActiveFromSnapshot } =
-      await import('@/infrastructure/identity/subscription-service')
-    if (!(await isProActiveFromSnapshot())) {
-      flowOk('Memory', '回填 embedding', startedAt, { reason: 'pro_required' })
-      return toErrorResponse('EMBEDDING_BACKFILL_PRO_REQUIRED')
+    const { getAuthSession } = await import('@/infrastructure/identity/auth-session-service')
+    if (!(await getAuthSession())?.accessToken) {
+      flowOk('Memory', '回填 embedding', startedAt, { reason: 'not_signed_in' })
+      return toErrorResponse('EMBEDDING_BACKFILL_AUTH_REQUIRED')
     }
     const { enqueueMissingMemoryEmbeddings } =
       await import('@/application/memory/schedule-async-memory-embedding')

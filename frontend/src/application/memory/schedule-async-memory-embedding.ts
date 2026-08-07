@@ -1,6 +1,7 @@
 /**
- * Capture 成功后异步生成 embedding（Pro + AI 开）：Worker bge-m3 → 写本机 clues.embedding。
+ * Capture 成功后异步生成 embedding（登录 + AI 开）：Worker bge-m3 → 写本机 clues.embedding。
  * 不阻塞 Capture；串行队列；失败静默降级（关键词 Recall 仍可用）。
+ * Free/Pro 均可（Worker 日配额分档）；未登录跳过。
  */
 
 import { buildEmbeddingTextFromMemoryItem } from '@/core/memory/build-embedding-text'
@@ -10,14 +11,12 @@ import {
   WORKER_EMBEDDING_MODEL
 } from '@/infrastructure/ai/embed-api-client'
 import { getAuthSession } from '@/infrastructure/identity/auth-session-service'
-import { isProActiveFromSnapshot } from '@/infrastructure/identity/subscription-service'
 import {
   memoryItemRepository,
   type MemoryItemRepository
 } from '@/infrastructure/indexeddb/memory-item-repository'
 import { logger } from '@/infrastructure/logging/logger'
 import { getUserSettings } from '@/infrastructure/settings/user-settings-service'
-
 /** 任务间距，降低 SW / Worker 尖峰。 */
 const EMBEDDING_JOB_GAP_MS = 500
 
@@ -48,11 +47,6 @@ export async function runAsyncMemoryEmbedding(
   itemId: string,
   repository: MemoryItemRepository = memoryItemRepository
 ): Promise<'written' | 'skipped' | 'failed'> {
-  if (!(await isProActiveFromSnapshot())) {
-    logger.info('MemoryEmbed', '异步 embed 跳过：非 Pro', { itemId })
-    return 'skipped'
-  }
-
   const settings = await getUserSettings()
   if (!settings.aiFeaturesEnabled) {
     logger.info('MemoryEmbed', '异步 embed 跳过：用户已关闭 AI', { itemId })
@@ -141,14 +135,15 @@ export function scheduleAsyncMemoryEmbedding(itemId: string): void {
 }
 
 /**
- * Pro 回填：扫描缺 embedding 的条目并入队（限量）。
+ * 回填：扫描缺 embedding 的条目并入队（限量；须登录，由 Worker 日配额约束）。
  * @returns 入队条数
  */
 export async function enqueueMissingMemoryEmbeddings(
   repository: MemoryItemRepository = memoryItemRepository,
   limit = EMBEDDING_BACKFILL_BATCH_LIMIT
 ): Promise<{ enqueued: number; scanned: number }> {
-  if (!(await isProActiveFromSnapshot())) {
+  const session = await getAuthSession()
+  if (!session?.accessToken) {
     return { enqueued: 0, scanned: 0 }
   }
 

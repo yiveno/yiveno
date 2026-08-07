@@ -1,5 +1,5 @@
 /**
- * Worker embedding API 客户端（仅 Background；需 Pro + Bearer）。
+ * Worker embedding API 客户端（仅 Background；须登录 Bearer；Worker 日配额分档）。
  */
 
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
@@ -46,7 +46,7 @@ function isEmbedApiEnvelope(body: unknown): body is EmbedApiEnvelope {
 }
 
 /**
- * POST /api/ai/embed — 批量向量；需登录 + Pro。
+ * POST /api/ai/embed — 批量向量；须登录（Free/Pro 日配额分档）。
  */
 export async function requestWorkerEmbeddings(
   accessToken: string,

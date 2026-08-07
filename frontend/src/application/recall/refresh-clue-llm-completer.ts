@@ -1,7 +1,7 @@
 /**
  * 注册线索理解 LLM completer。
- * 优先级：关 AI → 空；开发直连 → 直连；Pro+登录 → hosted；
- * 开发构建非 Pro → clue IP 配额代理；正式 Free → 规则。
+ * 优先级：关 AI → 空；开发直连 → 直连；已登录 → hosted（Free/Pro 配额分档）；
+ * 开发构建未登录 → clue IP 配额代理；正式未登录 → 规则。
  */
 
 import { setClueLlmCompleter } from '@/application/recall/clue-llm-completer-registry'
@@ -9,7 +9,6 @@ import { createClueUnderstandApiCompleter } from '@/infrastructure/ai/clue-under
 import { createHostedClueUnderstandApiCompleter } from '@/infrastructure/ai/hosted-clue-understand-api-client'
 import { readDevClueLlmConfig } from '@/infrastructure/ai/dev-clue-llm-config'
 import { getAuthSession } from '@/infrastructure/identity/auth-session-service'
-import { isProActiveFromSnapshot } from '@/infrastructure/identity/subscription-service'
 import { getUserSettings } from '@/infrastructure/settings/user-settings-service'
 import { logger } from '@/infrastructure/logging/logger'
 import { createOpenAiCompatibleCompleter } from '@/core/recall/understand/parse-recall-clue-with-llm'
@@ -41,34 +40,32 @@ export async function refreshClueLlmCompleterFromDevConfig(): Promise<void> {
     return
   }
 
-  if (await isProActiveFromSnapshot()) {
-    const session = await getAuthSession()
-    if (session?.accessToken) {
-      setClueLlmCompleter(
-        createHostedClueUnderstandApiCompleter(async () => {
-          const latest = await getAuthSession()
-          return latest?.accessToken ?? null
-        })
-      )
-      const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8787'
-      logger.info('ClueLlm', '已启用 Pro 托管线索理解（/api/ai/hosted/complete）', {
-        apiBase,
-        endpoint: `${String(apiBase).replace(/\/$/, '')}/api/ai/hosted/complete`
+  const session = await getAuthSession()
+  if (session?.accessToken) {
+    setClueLlmCompleter(
+      createHostedClueUnderstandApiCompleter(async () => {
+        const latest = await getAuthSession()
+        return latest?.accessToken ?? null
       })
-      return
-    }
+    )
+    const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8787'
+    logger.info('ClueLlm', '已启用托管线索理解（/api/ai/hosted/complete，登录 Free/Pro 配额）', {
+      apiBase,
+      endpoint: `${String(apiBase).replace(/\/$/, '')}/api/ai/hosted/complete`
+    })
+    return
   }
 
-  // 开发构建：无 Pro 时仍可用 IP 配额 clue 代理（正式 Free = 规则）
+  // 开发构建：未登录仍可用 IP 配额 clue 代理
   if (import.meta.env.DEV) {
     setClueLlmCompleter(createClueUnderstandApiCompleter())
     const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8787'
-    logger.info('ClueLlm', '开发模式：非 Pro 走 /api/ai/clue/complete（IP 日配额）', {
+    logger.info('ClueLlm', '开发模式：未登录走 /api/ai/clue/complete（IP 日配额）', {
       apiBase
     })
     return
   }
 
   setClueLlmCompleter(null)
-  logger.info('ClueLlm', '非 Pro 或未登录，线索理解降级为规则（正式路径需 Pro 托管）')
+  logger.info('ClueLlm', '未登录，线索理解降级为规则（正式托管须登录）')
 }

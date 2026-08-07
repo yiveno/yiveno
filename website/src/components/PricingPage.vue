@@ -35,8 +35,9 @@ onMounted(async () => {
     <header class="hero">
       <h1>Pricing</h1>
       <p class="lede">
-        Your memory hard drive: save lightly, recall with confidence. Free keeps the habit loop on
-        this device; Pro keeps finding things when the library gets thick—and across devices.
+        Your memory hard drive: save lightly, recall with confidence. Free and Pro share the same
+        on-device recall quality; Pro keeps your library across devices and gives a larger hosted
+        clue-understanding quota.
       </p>
     </header>
 
@@ -46,9 +47,9 @@ onMounted(async () => {
         <p class="price">$0</p>
         <ul>
           <li>Capture excerpts &amp; bookmarks</li>
-          <li>Keyword Filter recall</li>
+          <li>On-device Hybrid recall (keyword + embedding)</li>
           <li>Local library, notes, export</li>
-          <li>Sign in (sync stays off)</li>
+          <li>Sign in: small hosted clue LLM quota (no cloud sync)</li>
         </ul>
       </section>
 
@@ -60,10 +61,10 @@ onMounted(async () => {
           app billing code.
         </p>
         <ul>
-          <li>Hybrid recall (keyword + embedding)</li>
+          <li>Same on-device recall quality as Free</li>
           <li>Cloud sync across devices</li>
-          <li>Hosted clue understanding (monthly quota)</li>
-          <li>On-device vectors; sync does not upload embeddings</li>
+          <li>Larger hosted clue understanding quota</li>
+          <li>Higher embedding daily cap; sync does not upload embeddings</li>
         </ul>
 
         <div v-if="!loading" class="cta">

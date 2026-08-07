@@ -47,6 +47,7 @@ import type {
   RecallWithClueMessage
 } from '@/core/messaging/recall-messages'
 import type {
+  GetAiHostedQuotaResponse,
   SettingsBackgroundResponse,
   UpdateUserSettingsMessage
 } from '@/core/messaging/settings-messages'
@@ -142,7 +143,7 @@ export async function recordRecallDismiss(
   return sendBackgroundMessage<MemoryBackgroundResponse>(message)
 }
 
-/** Pro：回填本机缺失 embedding。 */
+/** 回填本机缺失 embedding（须登录；Worker 日配额分档）。 */
 export async function backfillMemoryEmbeddings(): Promise<MemoryBackgroundResponse> {
   return sendBackgroundMessage<MemoryBackgroundResponse>({
     scope: 'background',
@@ -191,6 +192,14 @@ export async function fetchUserSettings(): Promise<SettingsBackgroundResponse> {
   return sendBackgroundMessage<SettingsBackgroundResponse>({
     scope: 'background',
     type: 'GET_USER_SETTINGS'
+  })
+}
+
+/** 读取托管 Clue LLM 配额（须登录）。 */
+export async function fetchAiHostedQuota(): Promise<GetAiHostedQuotaResponse> {
+  return sendBackgroundMessage<GetAiHostedQuotaResponse>({
+    scope: 'background',
+    type: 'GET_AI_HOSTED_QUOTA'
   })
 }
 
