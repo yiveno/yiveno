@@ -4,7 +4,7 @@
   "ignore": ["**/*.d.ts"],
   "ignoreExportsUsedInFile": true,
   "ignoreDependencies": ["puppeteer-core"],
-  "ignoreBinaries": ["wait", "run", "mprocs"],
+  "ignoreBinaries": ["run", "mprocs"],
   "tags": ["-lintignore"],
   "rules": {
     "files": "error",
