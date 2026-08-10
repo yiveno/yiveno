@@ -1,11 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { refreshAuthSessionDetailedMock } = vi.hoisted(() => ({
-  refreshAuthSessionDetailedMock: vi.fn()
+const { refreshAuthSessionDetailedMock, getAuthSessionMock } = vi.hoisted(() => ({
+  refreshAuthSessionDetailedMock: vi.fn(),
+  getAuthSessionMock: vi.fn()
 }))
 
 vi.mock('@/infrastructure/auth/extension-oauth', () => ({
   refreshAuthSessionDetailed: refreshAuthSessionDetailedMock
+}))
+
+vi.mock('@/infrastructure/identity/auth-session-service', () => ({
+  getAuthSession: getAuthSessionMock
 }))
 
 vi.mock('@/infrastructure/logging/flow-log', () => ({
@@ -20,9 +25,16 @@ import {
   shouldRevalidateAuthSession
 } from '@/infrastructure/auth/auth-session-revalidate'
 
+const baseSession = {
+  accessToken: 'at',
+  refreshToken: 'rt',
+  userId: '22222222-2222-4222-8222-222222222222'
+}
+
 describe('auth-session-revalidate', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    getAuthSessionMock.mockResolvedValue(null)
     const sessionStore: Record<string, unknown> = {}
     vi.stubGlobal('chrome', {
       storage: {
@@ -52,14 +64,7 @@ describe('auth-session-revalidate', () => {
         userId: '22222222-2222-4222-8222-222222222222'
       }
     })
-    const result = await revalidateAuthSession(
-      {
-        accessToken: 'at',
-        refreshToken: 'rt',
-        userId: '22222222-2222-4222-8222-222222222222'
-      },
-      { force: true }
-    )
+    const result = await revalidateAuthSession(baseSession, { force: true })
     expect(result.status).toBe('valid')
     expect(chrome.storage.session.set).toHaveBeenCalledWith(
       expect.objectContaining({ [AUTH_LAST_VALIDATED_AT_KEY]: expect.any(Number) })
@@ -71,14 +76,7 @@ describe('auth-session-revalidate', () => {
       status: 'invalid',
       reason: 'invalid_grant'
     })
-    const result = await revalidateAuthSession(
-      {
-        accessToken: 'at',
-        refreshToken: 'rt',
-        userId: '22222222-2222-4222-8222-222222222222'
-      },
-      { force: true }
-    )
+    const result = await revalidateAuthSession(baseSession, { force: true })
     expect(result).toEqual({ status: 'invalid', reason: 'invalid_grant' })
   })
 
@@ -87,25 +85,55 @@ describe('auth-session-revalidate', () => {
       status: 'transient',
       reason: 'Failed to fetch'
     })
-    const result = await revalidateAuthSession(
-      {
-        accessToken: 'at',
-        refreshToken: 'rt',
-        userId: '22222222-2222-4222-8222-222222222222'
-      },
-      { force: true }
-    )
+    const result = await revalidateAuthSession(baseSession, { force: true })
     expect(result).toEqual({ status: 'uncertain', reason: 'Failed to fetch' })
     expect(chrome.storage.session.set).not.toHaveBeenCalled()
   })
 
+  it('Already Used 且存储已轮换 → 采信新 session（valid）', async () => {
+    refreshAuthSessionDetailedMock.mockResolvedValue({
+      status: 'transient',
+      reason: 'Invalid Refresh Token: Already Used'
+    })
+    getAuthSessionMock.mockResolvedValue({
+      accessToken: 'at-new',
+      refreshToken: 'rt-new',
+      userId: baseSession.userId
+    })
+    const result = await revalidateAuthSession(baseSession, { force: true })
+    expect(result).toEqual({
+      status: 'valid',
+      session: {
+        accessToken: 'at-new',
+        refreshToken: 'rt-new',
+        userId: baseSession.userId
+      }
+    })
+  })
+
+  it('同 refreshToken 并发只打一次 refresh（single-flight）', async () => {
+    let resolveRefresh!: (value: unknown) => void
+    refreshAuthSessionDetailedMock.mockReturnValue(
+      new Promise(resolve => {
+        resolveRefresh = resolve
+      })
+    )
+    const p1 = revalidateAuthSession(baseSession, { force: true })
+    const p2 = revalidateAuthSession(baseSession, { force: true })
+    expect(refreshAuthSessionDetailedMock).toHaveBeenCalledTimes(1)
+    resolveRefresh({
+      status: 'ok',
+      session: { ...baseSession, accessToken: 'at2', refreshToken: 'rt2' }
+    })
+    const [r1, r2] = await Promise.all([p1, p2])
+    expect(r1.status).toBe('valid')
+    expect(r2.status).toBe('valid')
+    expect(refreshAuthSessionDetailedMock).toHaveBeenCalledTimes(1)
+  })
+
   it('节流窗口内 skipped', async () => {
     await chrome.storage.session.set({ [AUTH_LAST_VALIDATED_AT_KEY]: Date.now() })
-    const result = await revalidateAuthSession({
-      accessToken: 'at',
-      refreshToken: 'rt',
-      userId: '22222222-2222-4222-8222-222222222222'
-    })
+    const result = await revalidateAuthSession(baseSession)
     expect(result).toEqual({ status: 'skipped' })
     expect(refreshAuthSessionDetailedMock).not.toHaveBeenCalled()
   })

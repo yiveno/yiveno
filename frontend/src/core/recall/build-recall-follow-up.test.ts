@@ -54,4 +54,31 @@ describe('listMissingRecallSlots / pickPrimaryFollowUpSlot', () => {
     )
     expect(buildRecallFollowUpPlan(parsed, 'no_match').replyKey).toBe('popup_followup_miss_content')
   })
+
+  it('已有 objectTypes 时不再追问类型（电影危机回归）', () => {
+    const parsed = parseRecallClue('the movie I watched yesterday', { nowMs: NOW_MS })
+    expect(parsed.objectTypes).toEqual(['video'])
+    const plan = buildRecallFollowUpPlan(parsed, 'no_match')
+    expect(plan.primarySlot).not.toBe('objectType')
+    expect(plan.replyKey).not.toMatch(/_type$/)
+    expect(plan.suggestions.map(item => item.id).join(',')).not.toContain('type-article')
+  })
+
+  it('约束下库空：事实文案 + 仅换时间芯片', () => {
+    const parsed = parseRecallClue('the movie I watched yesterday', { nowMs: NOW_MS })
+    const plan = buildRecallFollowUpPlan(parsed, 'no_match', {
+      emptyKind: 'constrained_none',
+      hasRelatedGuess: true
+    })
+    expect(plan.replyKey).toBe('popup_followup_miss_constrained_empty_with_guess')
+    expect(plan.primarySlot).toBe('time')
+    expect(plan.suggestions.every(item => item.id.startsWith('time-'))).toBe(true)
+  })
+
+  it('电影 locale alias → video', () => {
+    const parsed = parseRecallClue('昨天看过的电影', { nowMs: NOW_MS })
+    expect(parsed.objectTypes).toEqual(['video'])
+    const plan = buildRecallFollowUpPlan(parsed, 'no_match')
+    expect(plan.primarySlot).not.toBe('objectType')
+  })
 })

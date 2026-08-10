@@ -92,8 +92,12 @@ export const RECALL_OBJECT_TYPE_LEXICON: RecallLexiconEntry<RecallObjectType>[] 
   { surface: 'song', value: 'song' },
   { surface: 'music', value: 'song' },
 
-  // video（与 song 分立：YouTube 等站不得再标成 song）
+  // video（与 song 分立：YouTube 等站不得再标成 song；movie/film 口语归 video）
   { surface: 'youtube video', value: 'video' },
+  { surface: 'movies', value: 'video' },
+  { surface: 'movie', value: 'video' },
+  { surface: 'films', value: 'video' },
+  { surface: 'film', value: 'video' },
   { surface: 'videos', value: 'video' },
   { surface: 'video', value: 'video' },
   { surface: 'youtube', value: 'video' },
@@ -225,11 +229,25 @@ export const RECALL_CLUE_FILLER_SURFACES: string[] = [
   'save',
   'store',
   'stored',
+  'watched',
+  'watching',
+  'watch',
+  'viewed',
+  'view',
+  'saw',
   'read',
   'find',
   'find me',
   'help me find',
   'show me',
+
+  // 定冠 + 复数类型（与 lexicon 对齐，避免残留进 contentTerms）
+  'the videos',
+  'videos',
+  'the movies',
+  'movies',
+  'films',
+  'the films',
 
   // 介词 / 代词 / 弱关系词
   'related to',

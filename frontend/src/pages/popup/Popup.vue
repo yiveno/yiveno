@@ -9,7 +9,7 @@ import {
   getPopupNoMatchCopy,
   type PopupLibraryState
 } from '@/core/recall/popup-empty-copy'
-import type { RecallMatch } from '@/core/recall/recall-result'
+import type { RecallEmptyKind, RecallMatch } from '@/core/recall/recall-result'
 import { getMemoryItemDisplay } from '@/core/recall/recall-result'
 import { buildRecallCardHighlightParts } from '@/core/recall/highlight-recall-text'
 import { getMemoryItemOpenHref } from '@/core/recall/memory-open-href'
@@ -98,9 +98,13 @@ function buildRecallSuggestions(): RecallSuggestion[] {
 function buildFollowUpFromParsed(
   parsed: ParsedRecallClue | undefined,
   fallbackClue: string,
-  outcome: 'need_a_clue' | 'no_match'
+  outcome: 'need_a_clue' | 'no_match',
+  options: { emptyKind?: RecallEmptyKind; hasRelatedGuess?: boolean } = {}
 ): { text: string; suggestions: RecallSuggestion[] } {
-  const plan = buildRecallFollowUpPlan(parsed ?? parseRecallClue(fallbackClue), outcome)
+  const plan = buildRecallFollowUpPlan(parsed ?? parseRecallClue(fallbackClue), outcome, {
+    ...(options.emptyKind !== undefined ? { emptyKind: options.emptyKind } : {}),
+    ...(options.hasRelatedGuess !== undefined ? { hasRelatedGuess: options.hasRelatedGuess } : {})
+  })
   return {
     text: t(plan.replyKey),
     suggestions: plan.suggestions.map(item => {
@@ -414,7 +418,10 @@ async function runRecall(trimmedClue: string): Promise<void> {
         })
       )
     } else if (response.result.outcome === 'need_a_clue') {
-      const followUp = buildFollowUpFromParsed(response.result.parsed, highlightClue, 'need_a_clue')
+      const llmFollowUp = response.result.assistantFollowUp
+      const followUp = llmFollowUp
+        ? { text: llmFollowUp.text, suggestions: llmFollowUp.suggestions }
+        : buildFollowUpFromParsed(response.result.parsed, highlightClue, 'need_a_clue')
       conversationTurns.value.push(
         createAssistantTurn({
           id: nextTurnId(),
@@ -428,13 +435,26 @@ async function runRecall(trimmedClue: string): Promise<void> {
         })
       )
     } else {
-      const followUp = buildFollowUpFromParsed(response.result.parsed, highlightClue, 'no_match')
+      const relatedGuess = response.result.relatedGuess ?? null
+      const llmFollowUp = response.result.assistantFollowUp
+      const followUp = llmFollowUp
+        ? { text: llmFollowUp.text, suggestions: llmFollowUp.suggestions }
+        : buildFollowUpFromParsed(response.result.parsed, highlightClue, 'no_match', {
+            emptyKind: response.result.emptyKind,
+            hasRelatedGuess: relatedGuess !== null
+          })
       conversationTurns.value.push(
         createAssistantTurn({
           id: nextTurnId(),
           tone: 'miss',
           text: followUp.text,
-          suggestions: followUp.suggestions
+          suggestions: followUp.suggestions,
+          ...(relatedGuess
+            ? {
+                relatedGuessCard: toMatchCard(relatedGuess, highlightClue),
+                relatedGuessLabel: t('popup_related_guess_label')
+              }
+            : {})
         })
       )
     }

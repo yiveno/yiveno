@@ -31,6 +31,15 @@ export type RecallOutcome =
   | 'need_a_clue' // 弱命中，需补线索
   | 'no_match' // 无命中
 
+/**
+ * no_match 细分（产品文档 §7.0）。
+ * - constrained_none：时间+类型等强约束下库内无痕迹（事实空）
+ * - unconstrained：约束不足或无法判定约束空
+ */
+export type RecallEmptyKind =
+  | 'constrained_none' // 强约束下库空
+  | 'unconstrained' // 模糊空 / 仍需线索
+
 /** 关键词 Filter 召回结果。 */
 export interface RecallResult {
   outcome: RecallOutcome
@@ -42,6 +51,26 @@ export interface RecallResult {
   parsed?: ParsedRecallClue
   /** 合并后的有效原文（高亮 / 调试）；单轮时约等于 clue。 */
   effectiveClue?: string
+  /** 仅 outcome=no_match 时有意义。 */
+  emptyKind?: RecallEmptyKind
+  /**
+   * 疑似记错时的最近同类真实条目；非 Top Pick。
+   * 仅 emptyKind=constrained_none 且库内确有同类时出现。
+   */
+  relatedGuess?: RecallMatch | null
+  /**
+   * LLM 追问 NLG（已门禁）；缺省时 UI 降级规则模板。
+   * source 恒为 llm（规则路径不写本字段）。
+   */
+  assistantFollowUp?: {
+    source: 'llm' // 模型生成（经 Zod/门禁）
+    text: string
+    suggestions: Array<{
+      id: string
+      label: string
+      value: string
+    }>
+  }
 }
 
 /** UI 展示用的 MemoryItem 摘要。 */

@@ -1,7 +1,7 @@
 /**
  * 理解层：任意线索 → ParsedRecallClue（交给 Filter 的精确约束）。
- * 流程：网关（是否处理）→ 门禁（lexical/semantic）→ 规则 / LLM。
- * LLM 只产出结构；失败降级规则。不碰数据平面。
+ * 有 LLM completer：默认一次 LLM 听懂（纯 URL 等例外走规则）；失败降级规则。
+ * 不碰数据平面。见产品 §0.1.0。
  */
 
 import { buildSearchClueFromParsed } from '@/core/recall/orchestrate-keyword-recall'
@@ -49,7 +49,7 @@ export interface UnderstandRecallClueResult {
 
 export interface UnderstandRecallClueOptions {
   nowMs?: number
-  /** 注入 LLM 补全；缺省则 semantic 也只能走规则。 */
+  /** 注入 LLM 补全；缺省则只能走规则。 */
   complete?: LlmChatCompleter
   /** 强制模式（单测 / 调试）。 */
   forceMode?: ClueUnderstandingMode
@@ -86,6 +86,7 @@ export async function understandRecallClue(
   const raw = clue.trim()
   const nowMs = options.nowMs ?? Date.now()
   const trace = options.trace ?? noopClueFlowTrace
+  const hasCompleter = Boolean(options.complete)
 
   const decision = options.skipNoiseGateway
     ? ({ disposition: 'proceed', rejectReason: null } as const)
@@ -108,8 +109,8 @@ export async function understandRecallClue(
     }
   }
 
-  const mode = options.forceMode ?? selectClueUnderstandingMode(raw)
-  const hasCompleter = Boolean(options.complete)
+  const mode =
+    options.forceMode ?? selectClueUnderstandingMode(raw, { hasLlmCompleter: hasCompleter })
 
   trace('info', '理解层：开始', {
     clue: raw,
@@ -120,8 +121,9 @@ export async function understandRecallClue(
     hasLlmCompleter: hasCompleter
   })
 
-  if (mode === 'lexical' || !options.complete) {
-    const reason = mode === 'lexical' ? 'mode_lexical' : 'no_llm_completer'
+  // 无 completer，或强制/判定为 lexical（如纯 URL）→ 规则
+  if (!options.complete || mode === 'lexical') {
+    const reason = !options.complete ? 'no_llm_completer' : 'mode_lexical'
     const parsed = parseRecallClue(raw, { nowMs })
     const searchClue = buildSearchClueFromParsed(parsed)
     trace('info', '理解层：走规则', {
@@ -140,7 +142,7 @@ export async function understandRecallClue(
     }
   }
 
-  trace('info', '理解层：尝试 LLM', { mode })
+  trace('info', '理解层：尝试 LLM（默认主路径）', { mode })
   try {
     const parsed = await parseRecallClueWithLlm(raw, {
       nowMs,

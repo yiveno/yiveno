@@ -221,4 +221,18 @@ describe('parseRecallClue', () => {
     expect(parsed.contentTerms).toEqual(['二战'])
     expect(parsed.confidence).toBe('medium')
   })
+
+  it('movie / 电影 → video', () => {
+    expect(parseRecallClue('the movie I watched yesterday', { nowMs: NOW_MS }).objectTypes).toEqual(
+      ['video']
+    )
+    expect(parseRecallClue('昨天看过的电影', { nowMs: NOW_MS }).objectTypes).toEqual(['video'])
+  })
+
+  it('watched / videos 作 filler，检索回退 objectType', () => {
+    const parsed = parseRecallClue('The video I watched yesterday', { nowMs: NOW_MS })
+    expect(parsed.timeRange?.label).toBe('yesterday')
+    expect(parsed.objectTypes).toEqual(['video'])
+    expect(parsed.contentTerms).toEqual([])
+  })
 })

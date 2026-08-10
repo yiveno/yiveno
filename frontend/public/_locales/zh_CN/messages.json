@@ -208,7 +208,7 @@
     "message": "这些最接近。大概是哪天存的？比如昨天、上周。"
   },
   "popup_followup_uncertain_type": {
-    "message": "这些最接近。你记得是文章、诗、代码，还是歌？"
+    "message": "这些最接近。还记得更像哪一类？比如文章、视频、歌。"
   },
   "popup_followup_uncertain_note": {
     "message": "这些最接近。你有没有给它写过备注？"
@@ -223,10 +223,19 @@
     "message": "我还没对上。大概是哪天存的？比如昨天、上周。"
   },
   "popup_followup_miss_type": {
-    "message": "我还没对上。你记得是文章、诗、代码，还是歌？"
+    "message": "我还没对上。还记得更像哪一类？比如文章、视频、歌。"
   },
   "popup_followup_miss_note": {
     "message": "我还没对上。你有没有给它写过备注？"
+  },
+  "popup_followup_miss_constrained_empty": {
+    "message": "记忆库里没有符合这个时间与类型的痕迹。若日期可能记错了，可以换个时间再试。"
+  },
+  "popup_followup_miss_constrained_empty_with_guess": {
+    "message": "记忆库里没有符合这个时间与类型的痕迹。若你记错了时间，下面是最近一次同类痕迹——仅作猜测，不是答案。"
+  },
+  "popup_related_guess_label": {
+    "message": "猜测（不是答案）"
   },
   "popup_followup_chip_yesterday": {
     "message": "昨天"
@@ -251,6 +260,9 @@
   },
   "popup_followup_chip_song": {
     "message": "歌"
+  },
+  "popup_followup_chip_video": {
+    "message": "视频"
   },
   "popup_duplicate_group_bookmark": {
     "message": "共 $1 条相同书签",

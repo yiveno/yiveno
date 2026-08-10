@@ -36,6 +36,23 @@ Yiveno 卖的就是这份 **超轻心智负担 + 永久踏实感**：扔进来�
 一句话（给实现与文案用）：Yiveno = **扔进就记着 + 想找就找得着**（工程分解：**Capture 低负担 + Recall 高置信**）。北极星：模糊线索 → 第一屏「对，就是这个。」  
 **资产与隐患细则见 §0.1.1**（摘录/个人痕迹为主角；书签配角；勿与 Google/Notion 硬碰）。
 
+### 0.1.0 为何选 Yiveno（Normative · 唯一理由 · 纠偏硬句）
+
+> **2026-08 纠偏：** 技术曾严重跑偏——用规则词典 / 软加权 / 特例补丁假装「懂用户」。以下为不可妥协口径；实现冲突时删旁路，不扩特例。
+
+**用户选择 Yiveno 只有一个理由：** 它能**像人一样听懂我随便说的话**——我不必规范化整理、不必记精确标题/路径；只需把想要的东西**加一点线索**，Yiveno 就能找回。  
+市场上已有更成熟强大的知识库 / 书签 / 笔记产品；若做不到「听懂 → 找回」，Yiveno **没有存在理由**。
+
+| 角色                             | Normative                                                                          |
+| -------------------------------- | ---------------------------------------------------------------------------------- |
+| **核心**                         | **LLM 听懂口语** → Zod/门禁 → **可执行约束** → 确定性 Filter / Hybrid **硬执行**   |
+| **资产层**                       | Capture / IndexedDB MemoryItem（及同步）——让「懂」有东西可找                       |
+| **规则词典 / 模板追问 / 软加权** | **仅降级与排序辅佐**；禁止当作「懂用户」的主路径；**禁止**按个案例子无限扩 surface |
+
+**验收一句：** 用户用自然语言加一点线索，系统是否稳定听懂并找回（或诚实说库里没有）。做不到 → 其它能力都是空谈。
+
+**实现纪律：** 有托管 LLM completer 时，理解层默认走 LLM（噪音网关与纯 URL 等廉价例外除外）；规则 `parseRecallClue` 只在无 completer / LLM 失败时使用。不得用 Gate「词面优先」把口语挡在模型外。
+
 ### 0.1.1 定位精细化：核心资产、边界与隐患（Normative）
 
 > 近期产品讨论的收束。决策冲突时：§0.1 定「是什么」；**本节定「靠什么资产活、什么坑必须躲」。** 改方向先改本节再改代码。
@@ -314,41 +331,44 @@ Yiveno 的高频真实请求，**不是**标题 / URL / 精确词查询，而是
 
 #### 技术主线（服务定位，勿颠倒）
 
-「越来越懂用户」≠ 先接 LLM 投喂习惯；**更 ≠ 把全库喂给 LLM 当搜索引擎。**
+「越来越懂用户」= **听懂口语线索并找回**；**≠** 先堆整理功能；**更 ≠** 把全库喂给 LLM 当搜索引擎。
 
 ```text
-匹配 → 排序 → 打开/反馈写回 → 再排序
-  →（后）索引 / embedding / Hybrid
-  →（更后）可关闭的 LLM 增强（可服务找回对话；非开放式闲聊）
+口语线索
+  → 理解层（有 LLM：默认 LLM→Zod；无/失败：规则降级）
+  → 确定性 Filter / 硬约束 /（可选）embedding Hybrid
+  → 真实 MemoryItem（必须带 id）
+  →（可选）LLM 追问 / 解释——不得无 id 编造答案
 ```
 
-行为字段（如 `openCount` / `lastOpenedAt`）与反馈闭环是懂用户的地基；模型是语义补洞插件。
+行为字段（如 `openCount` / `lastOpenedAt`）与反馈闭环加强排序；**听懂本身靠 LLM 理解主链**，规则不得冒充。
 
-**LLM / embedding 的正确分工（Normative · 背景共识，非当前默认实现）：**
+**LLM / embedding 的正确分工（Normative）：**
 
 ```text
 用户口语
-  → 理解层（规则优先；后期可 LLM）：拆成结构化检索约束
-  → 检索层（关键词 Filter / 过滤 / 排序；后期 + embedding）
+  → 理解层（默认 LLM；规则仅降级）：拆成结构化检索约束
+  → 检索层（关键词 Filter + 硬约束；+ embedding）
   → 真实 MemoryItem 候选（必须带 id）
   →（可选）LLM：解释 / 追问 / 在候选中重排——不得无 id 编造答案
 ```
 
-- **LLM**：把随意口语变成**可执行约束**（时间窗、对象类型、用途意图、内容词、偏好信号等）；不是「全量数据当 prompt」。
-- **Embedding**：语义近邻召回（说法不同但意思近）；补关键词缝，不单独承担对象理解。
-- **Enrichment（规则 / 备注 / 后期 LLM）**：在 Capture 后把「标题+链接」补成可问对象（类型、意图别名、实体）；检索层消费这些字段。LLM 若参与 enrichment，只产出**待校验的结构化字段提议**；写回仍走下方数据平面。
-- **「喜欢」类词**：理解层只识别「用户在要偏好内容」；「哪几条算喜欢」靠 `openCount` / 近因 / 备注等信号，不能只靠拆词。
-- **禁止捷径**：不得默认「全库喂 LLM」当终极方案——窗口、成本、幻觉、隐私、确定性都会炸；业界可行形态是 **先捞候选再（可选）喂模型**。
+- **LLM（核心）：** 把随意口语变成**可执行约束**；这是用户选 Yiveno 的唯一可扩展理由（见 §0.1.0）。
+- **规则 parser：** 无模型 / 失败 / 关 AI 时的降级；**禁止**按个例无限扩词典当主面。
+- **Embedding：** 语义近邻补缝；不单独承担对象理解。
+- **Enrichment：** Capture 后补可问字段；LLM enrichment 只出待校验提议。
+- **「喜欢」类词：** 理解层识别偏好意图；具体条目靠行为信号，不能只靠拆词。
+- **禁止捷径：** 不得全库喂 LLM；不得用规则特例堆砌假装听懂。
 
 **LLM 与数据平面边界（Normative · 架构铁律）：**
 
 > LLM 本质是下一 token 概率模型：返回「最像上下文」的文本，**不保证真实性 / 正确性**。因此它是**强理解器与表述器**，不是可扩展的记忆硬盘，也**不得充当数据平面的事务权威**。
 
-| 平面                              | 谁做                                                                   | 允许                                                | 禁止                                                |
-| --------------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------- |
-| **理解 / 意图（NLU）**            | 规则优先；后期可 LLM                                                   | 口语 → 经 Zod（或等价）校验的结构化约束 / tool 提议 | 把未校验自由文本当查询或写库参数                    |
-| **表述（NLG）**                   | 后期可 LLM                                                             | 解释、追问、候选人话摘要——**必须引用已有真实 id**   | 无 id 编造「找到了某条」；开放闲聊                  |
-| **数据平面（查 / 插 / 改 / 删）** | 确定性 application / repository / `indexedDBManager`（及未来云端仓储） | Filter、embedding 近邻、排序、事务写回              | LLM **直接**调仓储、拼 SQL/IDB 请求、或绕过校验写库 |
+| 平面                              | 谁做                                                                   | 允许                                                | 禁止                                                 |
+| --------------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------- | ---------------------------------------------------- |
+| **理解 / 意图（NLU）**            | **默认 LLM**；无 completer / 失败则规则降级                            | 口语 → 经 Zod（或等价）校验的结构化约束 / tool 提议 | 把未校验自由文本当查询或写库参数；用规则词典冒充听懂 |
+| **表述（NLG）**                   | LLM（失败降级模板）                                                    | 解释、追问——**必须引用已有真实 id**                 | 无 id 编造「找到了某条」；开放闲聊                   |
+| **数据平面（查 / 插 / 改 / 删）** | 确定性 application / repository / `indexedDBManager`（及未来云端仓储） | Filter、embedding 近邻、排序、事务写回              | LLM **直接**调仓储、拼 SQL/IDB 请求、或绕过校验写库  |
 
 允许的唯一接线形态：
 
@@ -462,7 +482,7 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 **P0 做（有记忆锚点）：**
 
 - 数据：规则 enrichment（高频站/标题类型/主题·实体）+ 用户备注 + **recall 导向英文 keywords**；写回 `tags` / `keywords` / `entities` — **新建已接入**；**存量经 `ensureMemoryEnrichmentBackfilled` 启动回填（版本幂等，当前 v3）**
-- 编排：约束软加权 + 现有 keyword-filter + 置信度决策 — **`recallByKeywordWithParsedClue` 已接入 KeywordRecallBackend**；**模板化追问已接入 Popup**（`buildRecallFollowUpPlan`，按缺槽位）
+- 编排：约束软加权 + **`timeRange` 硬过滤** + keyword-filter + 置信度决策 — **`recallByKeywordWithParsedClue` 已接入 Hybrid 降级路径**；**追问：LLM NLG 主路径（`assistantFollowUp`）+ 规则降级（`buildRecallFollowUpPlan`）**
 - Query：时间词、对象类型词、备注指向、弱行为词 → 结构化约束；内容实体先当关键词 — **`parseRecallClue` 已落地**（词典以真实英语口语为主，见「市场语言策略」典型语料）
 - Enrichment：域名 / 类型 / 实体 + **recall 导向英文 keywords**（如 `listen` `tutorial` `repo`）；写回 `tags` / `keywords` / `entities`
 - **LLM enrichment 插座（已接线·稀疏异步）**：提议 Zod（`MemoryEnrichmentProposal`）+ merge（`mergeMemoryClueEnrichment`：existing → rule → proposal；`summary` 仅空槽；永不写 `note`/`embedding`）+ Worker `POST /api/ai/enrichment/complete`；Capture 经 `memoryItemService` **新建**落库后 `scheduleAsyncMemoryLlmEnrichment`（串行队列；已有 summary / 信号过短跳过；bulk `putMany`/repository 续传不经 service 故不烧配额）；失败降级保留规则层；**不改 `updatedAt`**
@@ -471,32 +491,31 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 
 - `好无聊想看点东西` / `放几首我喜欢的歌` 等零锚点助手句（禁主 demo）
 - 全库喂 LLM、开放式闲聊、生活推荐叙事
-- embedding / 向量库（P1）；**自然追问生成仍属后续**（M1 只做 NL→精确约束，不做 LLM 追问文案）
+- embedding / 向量库（P1）
 - 「看了一半」的精确阅读进度（无追踪数据时只作弱提示或追问）
 
-**渐进顺序：** 规则理解打穿有锚点场景 → **M1：门禁 + LLM 将口语变为精确检索约束（Filter 仍关键词）** → embedding 补语义缝 → LLM 追问增强；模型始终是插件，事实源始终是 IndexedDB MemoryItem。
+**渐进顺序：** **M1：有 LLM 则默认理解口语 → 精确检索约束（硬执行）**；规则仅降级 → embedding 补语义缝 → LLM 追问 NLG；模型是听懂引擎，事实源始终是 IndexedDB MemoryItem。
 
-#### 里程碑 M1 · NL → 精确检索约束（Normative · 进行中）
+#### 里程碑 M1 · NL → 精确检索约束（Normative · 主链）
 
-**目标：** Popup 无论输入什么，交给筛选算法的始终是**精确关键字 / 结构化约束**（`ParsedRecallClue`），而不是整句口语。
+**目标：** Popup 无论输入什么，交给筛选算法的始终是**精确关键字 / 结构化约束**（`ParsedRecallClue`），而不是整句口语。**有托管 completer 时默认 LLM 理解**（见 §0.1.0）。
 
 ```text
 线索
   → 网关（确定性·cheap）：是否处理（reject_noise | proceed）
        reject → 空态 / no_match，不调 LLM、不扫全库
-  → 门禁（确定性）：lexical 短词面/URL/英文专名 vs semantic 口语/疑问/相对时间意图（含中文短句信号；中文不进规则 canonical 词典）
-  → lexical：规则 parseRecallClue
-  → semantic：LLM → Zod 提议 → 锚定映射 → ParsedRecallClue（失败降级规则）
-  → buildSearchClueFromParsed → 现有 keyword Filter + 软加权
-  →（可选）lexical 且 Filter no_match、线索仍像口语、且有 completer：升一次 semantic 再理解 / 再 Filter
+  → 有 completer：默认 LLM → Zod → 锚定映射 → ParsedRecallClue（失败降级规则）
+       例外：纯 URL 等可走规则（省配额）
+  → 无 completer：规则 parseRecallClue
+  → buildSearchClueFromParsed → keyword Filter；**有 timeRange 则硬过滤**；类型等可软排
+  → Hybrid（有向量则 RRF）
 ```
 
-- **网关 vs 门禁：** 网关只答「要不要花资源」（硬噪音：空/纯符号/数字糊/砸键盘）；门禁只答「怎么理解」。灰区一律 proceed，禁止用 LLM 判噪音。
-- **miss 升级：** 不是「无命中就调模型」；仅 lexical 规则路径无命中 + 口语/时间信号（或 ≥3 英文词）时升一次；URL / 短英文专名不升。
-
-- **不做本里程碑内：** embedding、全库喂模型、模型写库、开放闲聊。
-- **开发启用 LLM：** 开发构建无 Pro 时仍可走 Cloudflare `POST /api/ai/clue/complete`（IP 日配额；Worker 经 `AiChatProvider` / `AI_PROVIDER` 选上游，默认 DeepSeek；Secret `DEEPSEEK_API_KEY`；可选 **AI Gateway**）。可选 `chrome.storage.local` `yiveno.dev.clueLlm` 直连调试。**正式 Pro：** 扩展经 `POST /api/ai/hosted/complete`（Bearer + 月配额）；Free 生产构建降级规则理解。
-- **验收：** 理解金标 `parse-gold`；人话 → 精确 `contentTerms` 单测；Recall 用户可感变更补 `recall-eval` must 或 §5 手动步骤。
+- **网关：** 只答「要不要花资源」（硬噪音）；禁止用 LLM 判噪音。
+- **已删除：** 「词面优先 Gate B 挡口语」与「lexical miss 后再升一次 LLM」双扫——有模型则一次听懂。
+- **不做本里程碑内：** 全库喂模型、模型写库、开放闲聊。
+- **开发 / 正式 LLM：** Cloudflare `POST /api/ai/hosted/complete`（登录 Free/Pro 月+日配额）或开发 `clue/complete` / `yiveno.dev.clueLlm`；关 AI 或未登录 → 规则降级。
+- **验收：** 「听懂」must eval + parse-gold；Recall 用户可感变更补 `recall-eval` must 或 §5 手动步骤。
 
 #### 隐患清单与规避（决策自检）
 
@@ -987,6 +1006,20 @@ Chrome API / 选区
 4. 会话态：Popup 组件内持有；关闭 Popup 即丢弃（P0 不持久化）。
 5. 追问模板：基于**合并后** `parsed`（`buildRecallFollowUpPlan`）；禁止 Popup 再对单句规则 parse 当权威。
 
+**空结果与追问原则（Normative · 三条）：**
+
+1. **库内事实优先。** 在清晰约束下（至少 `timeRange` + `objectTypes`）扫库为零，是合法答案：软性诚实说明「记忆库里没有符合该约束的痕迹」，**不得**暗示检索系统坏了，也不得改口成「你当时没看过」。文案只谈 Capture / Memory，不谈用户现实生活。
+2. **追问必须有方向（信息增益）。** 禁止固定顺序的全局类型问卷（「文章、诗、代码、还是歌？」这类死模板）。已解析出的槽位**不得再问**（尤其已有 `objectTypes` 时禁再问类型）。优先 LLM 生成下一句追问（Zod/门禁；计入托管配额；失败降级）。规则降级时只用**域内**小芯片（如改时间），不得回退到全局类型菜单。
+3. **疑似记错时：可荐最近同类，但必须硬标为猜测。** 仅当库中确有真实 `MemoryItem` 可荐；**禁止编造**。UI 与 Top Pick 分离（不得冒充主答案）；文案明示「猜测 / 不是答案」。
+
+**结果三分（实现与产品共用）：**
+
+| 形态                                                        | 条件（摘要）            | UI 态度                                            |
+| ----------------------------------------------------------- | ----------------------- | -------------------------------------------------- |
+| 命中（`top_pick` / 弱命中 `need_a_clue`）                   | 有可用候选              | 直给或补线索                                       |
+| **约束下库空**（`no_match` + `emptyKind=constrained_none`） | 强约束 + 窗内无同类痕迹 | 事实空态 + 可选「换时间」芯片 + 可选最近同类猜测卡 |
+| 仍需线索（`need_a_clue` 或模糊 `no_match`）                 | 约束不足或仅弱命中      | 有方向追问；禁全局类型问卷                         |
+
 **流水线：**
 
 ```text
@@ -994,11 +1027,15 @@ Chrome API / 选区
   → 网关对本轮（硬噪音仍拒）
   → understand(本轮) → ParsedRecallClue_current
   → merge(accumulated, current) → ParsedRecallClue_merged
-  → 排除 dismissedIds → keyword Filter + 软加权
-  → 返回 outcome + parsed(merged) + effectiveClue
+  → 排除 dismissedIds → keyword Filter + 软加权；有 timeRange 则硬过滤
+  → 若 no_match：判定 emptyKind；可选 relatedGuess（真实条目）
+  → need_a_clue / no_match：LLM 追问 NLG（Zod/门禁；计入托管 clue 配额）→ 失败则规则芯片
+  → 返回 outcome + parsed(merged) + effectiveClue（+ emptyKind / relatedGuess / assistantFollowUp）
 ```
 
-**本切片不做：** LLM 追问 NLG、开放闲聊。§7.1 环境芯片 / Hybrid 已另见 Phase B 接线说明。
+**LLM 追问（Normative · 已接线）：** 主路径由模型生成下一句回复与芯片；`chip.value` 须为稳定英文以便跨语言 parse；计入 `POST /api/ai/hosted/complete` 同桶；冲突禁令（已有槽再问、编造库内事实、全局类型问卷）不过门则整段降级规则。未登录 / 关 AI / 配额尽 → 规则降级。
+
+**本切片不做：** 开放闲聊。§7.1 环境芯片 / Hybrid 已另见 Phase B 接线说明。
 
 ### 7.1 多源线索与权重（Normative · 按模块渐进）
 
@@ -1165,6 +1202,7 @@ Chrome API / 选区
 
 | 日期       | 变更                                                                                                                                                                   |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-08-10 | §0.1.0 纠偏：听懂=唯一理由；LLM 理解默认主链；规则仅降级；删词面 Gate 挡口语与 miss 双扫                                                                               |
 | 2026-08-07 | 「数据」分区 + `CLEAR_LOCAL_MEMORY`；LLM 配额 Normative（Free 60/月·日盖 10，Pro 2000/月·日盖 120）；召回质量不分档；Hybrid/hosted/embed 解 Pro 硬门禁（同步仍须 Pro） |
 | 2026-08-06 | §A.3.2 订阅投影与对账：Gumroad 计费权威；24h TTL / 48h grace；ended 立刻降级；webhook token + events + Refresh/Cron 对账                                               |
 | 2026-08-06 | 订阅全流程收口：展示锚点 $5.99/月·$59/年；Gumroad 为结账权威；A.3.1 上线清单；Power User/Team 仅路线图                                                                 |

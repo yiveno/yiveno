@@ -29,9 +29,6 @@ import type {
 } from '@/core/recall/parse-recall-clue-types'
 import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
 
-/** 时间窗内（按 createdAt）软加成。 */
-export const RECALL_ORCHESTRATION_TIME_BOOST = 10
-
 /** 对象类型命中软加成。 */
 export const RECALL_ORCHESTRATION_OBJECT_TYPE_BOOST = 8
 
@@ -96,16 +93,35 @@ function parseIsoMs(value: string | undefined | null): number | null {
 
 /** createdAt 是否落在时间窗内。 */
 export function memoryItemInTimeRange(item: MemoryItem, timeRange: RecallTimeRange): boolean {
-  const createdMs = parseIsoMs(item.createdAt)
-  if (createdMs === null) {
-    return false
-  }
   const fromMs = Date.parse(timeRange.from)
   const toMs = Date.parse(timeRange.to)
   if (Number.isNaN(fromMs) || Number.isNaN(toMs)) {
     return false
   }
-  return createdMs >= fromMs && createdMs <= toMs
+
+  const candidates = [item.createdAt, item.clues.lastOpenedAt]
+  for (const value of candidates) {
+    const ms = parseIsoMs(value)
+    if (ms !== null && ms >= fromMs && ms <= toMs) {
+      return true
+    }
+  }
+  return false
+}
+
+/**
+ * 有 timeRange 时硬排除窗外命中（产品：时间约束须生效，不能只靠软加权）。
+ * 无 timeRange 时原样返回。
+ */
+export function filterMatchesByParsedTimeRange(
+  matches: RecallMatch[],
+  parsed: ParsedRecallClue
+): RecallMatch[] {
+  if (!parsed.timeRange) {
+    return matches
+  }
+  const range = parsed.timeRange
+  return matches.filter(match => memoryItemInTimeRange(match.item, range))
 }
 
 function collectItemMatchBlob(item: MemoryItem): string {
@@ -142,7 +158,7 @@ export function memoryItemMatchesObjectType(
   return surfaces.some(surface => surface.length > 0 && blob.includes(compactRecallText(surface)))
 }
 
-/** 在已有词面分上叠加结构化软加权（无词面命中不加）。 */
+/** 在已有词面分上叠加结构化软加权（无词面命中不加）。时间已硬过滤，不再软加成。 */
 export function applyParsedClueScoreBoosts(
   match: RecallMatch,
   parsed: ParsedRecallClue
@@ -152,10 +168,6 @@ export function applyParsedClueScoreBoosts(
   }
 
   let boost = 0
-
-  if (parsed.timeRange && memoryItemInTimeRange(match.item, parsed.timeRange)) {
-    boost += RECALL_ORCHESTRATION_TIME_BOOST
-  }
 
   if (parsed.objectTypes?.some(type => memoryItemMatchesObjectType(match.item, type))) {
     boost += RECALL_ORCHESTRATION_OBJECT_TYPE_BOOST
@@ -221,10 +233,13 @@ export function recallByKeywordWithParsedClue(
   const searchClue = buildSearchClueFromParsed(parsed)
   const slotLimit = options.candidateLimit ?? RECALL_RESULT_SLOT_LIMIT
 
-  const matches = filterMemoryItemsByKeyword(items, searchClue, {
-    limit: RECALL_MATCH_FETCH_LIMIT,
-    nowMs
-  }).map(match => applyParsedClueScoreBoosts(match, parsed))
+  const matches = filterMatchesByParsedTimeRange(
+    filterMemoryItemsByKeyword(items, searchClue, {
+      limit: RECALL_MATCH_FETCH_LIMIT,
+      nowMs
+    }).map(match => applyParsedClueScoreBoosts(match, parsed)),
+    parsed
+  )
 
   matches.sort((left, right) => {
     if (right.score !== left.score) {

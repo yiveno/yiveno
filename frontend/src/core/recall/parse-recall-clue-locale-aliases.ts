@@ -11,6 +11,7 @@ import type { RecallObjectType } from '@/core/recall/parse-recall-clue-types'
 export const RECALL_OBJECT_TYPE_LOCALE_ALIASES: RecallLexiconEntry<RecallObjectType>[] = [
   { surface: '视频', value: 'video' },
   { surface: '影片', value: 'video' },
+  { surface: '电影', value: 'video' },
   { surface: '录像', value: 'video' }
 ]
 

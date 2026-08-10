@@ -4,17 +4,35 @@ import { understandRecallClue } from '@/core/recall/understand/understand-recall
 import type { LlmChatCompleter } from '@/core/recall/understand/parse-recall-clue-with-llm'
 
 describe('understandRecallClue', () => {
-  it('lexical 不调 LLM', async () => {
+  it('纯 URL + completer → 仍走规则（省配额）', async () => {
     let called = 0
     const complete: LlmChatCompleter = async () => {
       called += 1
       return '{}'
     }
-    const result = await understandRecallClue('Cloudflare Workers', { complete })
+    const result = await understandRecallClue('https://example.com/a', { complete })
     expect(result.disposition).toBe('proceed')
     expect(result.mode).toBe('lexical')
     expect(result.source).toBe('rules')
     expect(called).toBe(0)
+  })
+
+  it('有 completer：短专名也走 LLM（默认听懂主路径）', async () => {
+    let called = 0
+    const complete: LlmChatCompleter = async () => {
+      called += 1
+      return JSON.stringify({
+        timeLabel: null,
+        objectTypes: null,
+        contentTerms: ['cloudflare', 'workers'],
+        confidence: 'high'
+      })
+    }
+    const result = await understandRecallClue('Cloudflare Workers', { complete })
+    expect(result.disposition).toBe('proceed')
+    expect(result.mode).toBe('semantic')
+    expect(result.source).toBe('llm')
+    expect(called).toBe(1)
     expect(result.searchClue.toLowerCase()).toContain('cloudflare')
   })
 
@@ -41,7 +59,7 @@ describe('understandRecallClue', () => {
     )
   })
 
-  it('semantic 无 completer → 规则', async () => {
+  it('无 completer → 规则（口语也降级）', async () => {
     const result = await understandRecallClue('The movie that I watched yesterday')
     expect(result.disposition).toBe('proceed')
     expect(result.mode).toBe('semantic')

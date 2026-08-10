@@ -71,6 +71,13 @@ describe('classifyAuthRefreshFailure', () => {
     expect(classifyAuthRefreshFailure({ message: 'invalid_grant' })).toBe('invalid')
   })
 
+  it('Already Used → transient（并发轮换，不得误踢）', () => {
+    expect(classifyAuthRefreshFailure({ message: 'Invalid Refresh Token: Already Used' })).toBe(
+      'transient'
+    )
+    expect(classifyAuthRefreshFailure({ message: 'refresh_token_already_used' })).toBe('transient')
+  })
+
   it('AuthRetryableFetchError / 5xx → transient', () => {
     expect(classifyAuthRefreshFailure({ name: 'AuthRetryableFetchError', status: 0 })).toBe(
       'transient'
@@ -80,5 +87,12 @@ describe('classifyAuthRefreshFailure', () => {
 
   it('未知错误默认 transient，避免误踢', () => {
     expect(classifyAuthRefreshFailure({ message: 'weird' })).toBe('transient')
+  })
+
+  it('window / ReferenceError → transient（SW 无 DOM）', () => {
+    expect(classifyAuthRefreshFailure(new ReferenceError('window is not defined'))).toBe(
+      'transient'
+    )
+    expect(classifyAuthRefreshFailure({ message: 'document is not defined' })).toBe('transient')
   })
 })

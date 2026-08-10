@@ -21,14 +21,17 @@ import {
   excludeDismissedMemoryItems,
   mergeRecallDialogTurn
 } from '@/core/recall/merge-recall-dialog-turn'
+import { enrichEmptyRecallResult } from '@/core/recall/enrich-empty-recall-result'
 import {
   applyParsedClueScoreBoosts,
   buildSearchClueFromParsed,
+  filterMatchesByParsedTimeRange,
   recallByKeywordWithParsedClue
 } from '@/core/recall/orchestrate-keyword-recall'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
-import { shouldEscalateLexicalNoMatch } from '@/core/recall/understand/select-clue-understanding-mode'
+import { getMemoryItemDisplay } from '@/core/recall/recall-result'
+import { completeRecallFollowUpWithLlm } from '@/core/recall/understand/complete-recall-follow-up'
 import { understandRecallClue } from '@/core/recall/understand/understand-recall-clue'
 import { requestWorkerEmbeddings } from '@/infrastructure/ai/embed-api-client'
 import { getAuthSession } from '@/infrastructure/identity/auth-session-service'
@@ -71,6 +74,59 @@ function finalizeKeywordResult(
   return buildRecallResult(displayClue, matches)
 }
 
+/**
+ * need_a_clue / no_match 时尝试 LLM 追问；失败静默降级（不写 assistantFollowUp）。
+ * 计入与理解层同一 hosted/clue completer 配额桶。
+ */
+async function attachLlmFollowUpIfNeeded(
+  result: RecallResult,
+  input: {
+    complete: NonNullable<ReturnType<typeof getClueLlmCompleter>>
+    clue: string
+    parsed: ParsedRecallClue
+    trace: ReturnType<typeof createRecallFlowTrace>
+  }
+): Promise<RecallResult> {
+  if (result.outcome !== 'need_a_clue' && result.outcome !== 'no_match') {
+    return result
+  }
+
+  const weakCandidateTitles =
+    result.outcome === 'need_a_clue'
+      ? result.alsoPossible.slice(0, 3).map(match => {
+          const display = getMemoryItemDisplay(match.item, () => '')
+          return display.title || display.excerpt || display.subtitle || match.item.id
+        })
+      : undefined
+
+  try {
+    const followUp = await completeRecallFollowUpWithLlm({
+      clue: input.clue,
+      parsed: input.parsed,
+      outcome: result.outcome,
+      ...(result.emptyKind !== undefined ? { emptyKind: result.emptyKind } : {}),
+      hasRelatedGuess: Boolean(result.relatedGuess),
+      ...(weakCandidateTitles !== undefined ? { weakCandidateTitles } : {}),
+      complete: input.complete,
+      trace: input.trace
+    })
+    return {
+      ...result,
+      assistantFollowUp: {
+        source: 'llm',
+        text: followUp.text,
+        suggestions: followUp.suggestions
+      }
+    }
+  } catch (error) {
+    input.trace('warn', 'LLM 追问：失败，降级规则模板', {
+      outcome: result.outcome,
+      error: error instanceof Error ? error.message : String(error)
+    })
+    return result
+  }
+}
+
 async function fuseHybridMatches(input: {
   displayClue: string
   items: Awaited<ReturnType<typeof memoryItemService.list>>
@@ -86,9 +142,17 @@ async function fuseHybridMatches(input: {
     return null
   }
 
-  const keywordMatches = filterMemoryItemsByKeyword(input.items, input.searchClue, {
-    limit: HYBRID_KEYWORD_POOL
-  }).map(match => applyParsedClueScoreBoosts(match, input.parsed))
+  const keywordMatches = filterMatchesByParsedTimeRange(
+    filterMemoryItemsByKeyword(input.items, input.searchClue, {
+      limit: HYBRID_KEYWORD_POOL
+    }).map(match => applyParsedClueScoreBoosts(match, input.parsed)),
+    input.parsed
+  )
+
+  if (keywordMatches.length === 0) {
+    input.trace('info', 'Hybrid：时间硬过滤后无候选，跳过融合')
+    return null
+  }
 
   const embedded = keywordMatches.filter(
     match => Array.isArray(match.item.clues.embedding) && match.item.clues.embedding.length > 0
@@ -192,7 +256,7 @@ export class HybridRecallBackend implements RecallBackend {
     })
 
     const complete = getClueLlmCompleter() ?? undefined
-    let understood = await understandRecallClue(normalizedClue, {
+    const understood = await understandRecallClue(normalizedClue, {
       ...(complete ? { complete } : {}),
       trace
     })
@@ -206,7 +270,7 @@ export class HybridRecallBackend implements RecallBackend {
       }
     }
 
-    let merge = mergeRecallDialogTurn({
+    const merge = mergeRecallDialogTurn({
       accumulated,
       currentParsed: understood.parsed,
       priorUserUtterances,
@@ -240,62 +304,33 @@ export class HybridRecallBackend implements RecallBackend {
       result = finalizeKeywordResult(normalizedClue, items, merge.merged, currentTabDomain)
     }
 
-    const canEscalate =
-      result.outcome === 'no_match' &&
-      understood.mode === 'lexical' &&
-      understood.source === 'rules' &&
-      Boolean(complete) &&
-      shouldEscalateLexicalNoMatch(normalizedClue)
-
-    if (canEscalate) {
-      understood = await understandRecallClue(normalizedClue, {
-        ...(complete ? { complete } : {}),
-        forceMode: 'semantic',
-        trace
-      })
-      if (understood.disposition === 'proceed') {
-        merge = mergeRecallDialogTurn({
-          accumulated,
-          currentParsed: understood.parsed,
-          priorUserUtterances,
-          currentUtterance: normalizedClue
-        })
-        const escalated = await fuseHybridMatches({
-          displayClue: normalizedClue,
-          items,
-          searchClue: buildSearchClueFromParsed(merge.merged),
-          parsed: merge.merged,
-          queryText: buildQueryEmbeddingText({
-            effectiveClue: merge.effectiveRaw,
-            parsed: merge.merged,
-            rawClue: normalizedClue
-          }),
-          ...(currentTabDomain !== undefined ? { currentTabDomain } : {}),
-          trace
-        })
-        if (escalated) {
-          result = escalated
-          usedHybrid = true
-        } else {
-          result = finalizeKeywordResult(normalizedClue, items, merge.merged, currentTabDomain)
-          usedHybrid = false
-        }
-      }
-    }
-
     const withMeta = attachDialogMeta(result, {
       clue: normalizedClue,
       parsed: merge.merged,
       effectiveClue: merge.effectiveRaw
     })
+    const enriched = enrichEmptyRecallResult(withMeta, items, merge.merged)
+    const withFollowUp = complete
+      ? await attachLlmFollowUpIfNeeded(enriched, {
+          complete,
+          clue: normalizedClue,
+          parsed: merge.merged,
+          trace
+        })
+      : enriched
 
     trace('info', 'Hybrid Recall：流水线结束', {
       durationMs: Date.now() - pipelineStartedAt,
       usedHybrid,
-      outcome: withMeta.outcome,
-      topPickId: withMeta.topPick?.item.id ?? null
+      understandSource: understood.source,
+      understandMode: understood.mode,
+      outcome: withFollowUp.outcome,
+      emptyKind: withFollowUp.emptyKind ?? null,
+      relatedGuessId: withFollowUp.relatedGuess?.item.id ?? null,
+      followUpSource: withFollowUp.assistantFollowUp?.source ?? 'rules',
+      topPickId: withFollowUp.topPick?.item.id ?? null
     })
 
-    return withMeta
+    return withFollowUp
   }
 }

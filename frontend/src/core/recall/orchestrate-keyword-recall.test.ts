@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 
 import {
   RECALL_ORCHESTRATION_OBJECT_TYPE_BOOST,
-  RECALL_ORCHESTRATION_TIME_BOOST,
   applyParsedClueScoreBoosts,
   buildSearchClueFromParsed,
   memoryItemInTimeRange,
@@ -41,7 +40,7 @@ describe('buildSearchClueFromParsed', () => {
 })
 
 describe('memoryItemInTimeRange / objectType', () => {
-  it('按 createdAt 判断时间窗', () => {
+  it('按 createdAt / lastOpenedAt 判断时间窗', () => {
     const parsed = parseRecallClue('yesterday poem', { nowMs: NOW_MS })
     const inRange = createTextExcerptMemoryItem({
       ownerId: OWNER,
@@ -88,7 +87,7 @@ describe('memoryItemInTimeRange / objectType', () => {
 })
 
 describe('applyParsedClueScoreBoosts', () => {
-  it('时间窗内条目获得时间加成', () => {
+  it('时间窗内条目不再靠时间软加成（已硬过滤）；类型仍可加成', () => {
     const parsed = parseRecallClue('yesterday Li Bai poem', { nowMs: NOW_MS })
     const item = createTextExcerptMemoryItem({
       ownerId: OWNER,
@@ -104,10 +103,7 @@ describe('applyParsedClueScoreBoosts', () => {
       { item, score: 20, matchedFields: ['textExcerpt'] },
       parsed
     )
-    // 同时命中 time + objectType
-    expect(boosted.score).toBe(
-      20 + RECALL_ORCHESTRATION_TIME_BOOST + RECALL_ORCHESTRATION_OBJECT_TYPE_BOOST
-    )
+    expect(boosted.score).toBe(20 + RECALL_ORCHESTRATION_OBJECT_TYPE_BOOST)
   })
 
   it('零分不加结构化加成', () => {
@@ -181,12 +177,14 @@ describe('recallByKeywordWithParsedClue', () => {
     const withNote = createBookmarkMemoryItem({
       ownerId: OWNER,
       sourceLocalProfileId: PROFILE,
+      now: () => '2026-07-27T10:00:00.000Z',
       payload: { title: 'deploy guide', url: 'https://docs.example/deploy' },
       clues: { note: 'my note: deploy is great' }
     })
     const withoutNote = createBookmarkMemoryItem({
       ownerId: OWNER,
       sourceLocalProfileId: PROFILE,
+      now: () => '2026-07-27T09:00:00.000Z',
       payload: { title: 'deploy mirror', url: 'https://mirror.example/deploy' }
     })
 
@@ -211,6 +209,60 @@ describe('recallByKeywordWithParsedClue', () => {
       parsed
     )
     expect(boosted.score).toBe(20 + RECALL_ORCHESTRATION_OBJECT_TYPE_BOOST)
+  })
+
+  it('有 timeRange 时窗外同类不得成为 Top Pick（时间硬过滤）', () => {
+    const outOfRange = createBookmarkMemoryItem({
+      ownerId: OWNER,
+      sourceLocalProfileId: PROFILE,
+      now: () => '2026-06-01T09:00:00.000Z',
+      payload: {
+        title: 'Some youtube video',
+        url: 'https://www.youtube.com/watch?v=REwnP79bbXo'
+      },
+      clues: { tags: ['video'] }
+    })
+
+    const yesterdayClue = 'The video I watched yesterday'
+    expect(parseRecallClue(yesterdayClue, { nowMs: NOW_MS }).timeRange?.label).toBe('yesterday')
+    const yesterday = recallByKeywordWithParsedClue([outOfRange], yesterdayClue, {
+      nowMs: NOW_MS
+    })
+    expect(yesterday.outcome).toBe('no_match')
+    expect(yesterday.topPick).toBeNull()
+
+    const todayClue = 'The videos I watched today'
+    expect(parseRecallClue(todayClue, { nowMs: NOW_MS }).timeRange?.label).toBe('today')
+    const today = recallByKeywordWithParsedClue([outOfRange], todayClue, {
+      nowMs: NOW_MS
+    })
+    expect(today.outcome).toBe('no_match')
+
+    const noTime = recallByKeywordWithParsedClue([outOfRange], 'videos', { nowMs: NOW_MS })
+    expect(parseRecallClue('videos', { nowMs: NOW_MS }).timeRange).toBeUndefined()
+    expect(noTime.outcome).not.toBe('no_match')
+    expect(noTime.topPick?.item.id ?? noTime.alsoPossible[0]?.item.id).toBe(outOfRange.id)
+  })
+
+  it('lastOpenedAt 落在时间窗内也算命中（watched）', () => {
+    const item = createBookmarkMemoryItem({
+      ownerId: OWNER,
+      sourceLocalProfileId: PROFILE,
+      now: () => '2026-06-01T09:00:00.000Z',
+      payload: {
+        title: 'Opened yesterday video',
+        url: 'https://www.youtube.com/watch?v=opened'
+      },
+      clues: {
+        tags: ['video'],
+        lastOpenedAt: '2026-07-27T15:00:00.000Z'
+      }
+    })
+    const result = recallByKeywordWithParsedClue([item], 'The video I watched yesterday', {
+      nowMs: NOW_MS
+    })
+    expect(result.outcome).not.toBe('no_match')
+    expect(result.topPick?.item.id ?? result.alsoPossible[0]?.item.id).toBe(item.id)
   })
 
   it('enrichment 后：wwii related video 可找回希特勒 YouTube 书签', () => {

@@ -29,7 +29,9 @@ type ClueGatewayDebugHost = {
 export function checkClueGateway(clue: string): ClueGatewayDebugResult {
   const decision = selectClueProcessingDisposition(clue)
   const understandingMode =
-    decision.disposition === 'proceed' ? selectClueUnderstandingMode(clue) : null
+    decision.disposition === 'proceed'
+      ? selectClueUnderstandingMode(clue, { hasLlmCompleter: true })
+      : null
   const result: ClueGatewayDebugResult = {
     clue,
     disposition: decision.disposition,

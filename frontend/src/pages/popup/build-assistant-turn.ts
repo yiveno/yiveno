@@ -10,6 +10,8 @@ export function createAssistantTurn(input: {
   tone: AssistantTurn['tone']
   text: string
   primaryCard?: PopupRecallCardModel | null
+  relatedGuessCard?: PopupRecallCardModel | null
+  relatedGuessLabel?: string
   candidateCards?: PopupRecallCardModel[]
   suggestions?: RecallSuggestion[]
   allowDismiss?: boolean
@@ -20,6 +22,10 @@ export function createAssistantTurn(input: {
     tone: input.tone,
     text: input.text,
     ...(input.primaryCard === undefined ? {} : { primaryCard: input.primaryCard }),
+    ...(input.relatedGuessCard === undefined ? {} : { relatedGuessCard: input.relatedGuessCard }),
+    ...(input.relatedGuessLabel === undefined
+      ? {}
+      : { relatedGuessLabel: input.relatedGuessLabel }),
     ...(input.candidateCards === undefined ? {} : { candidateCards: input.candidateCards }),
     ...(input.suggestions === undefined ? {} : { suggestions: input.suggestions }),
     allowDismiss: input.allowDismiss ?? false

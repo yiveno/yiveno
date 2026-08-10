@@ -18,7 +18,13 @@ const LLM_OBJECT_TYPE_ALIASES: Array<{ surface: string; value: RecallObjectType 
   { surface: 'writeup', value: 'article' },
   { surface: 'youtube', value: 'video' },
   { surface: 'clip', value: 'video' },
-  { surface: '视频', value: 'video' }
+  { surface: 'movie', value: 'video' },
+  { surface: 'movies', value: 'video' },
+  { surface: 'film', value: 'video' },
+  { surface: 'films', value: 'video' },
+  { surface: '视频', value: 'video' },
+  { surface: '影片', value: 'video' },
+  { surface: '电影', value: 'video' }
 ]
 
 /** 行为别名：规则词典未收录、但 stretch 金标需要的说法。 */
@@ -175,7 +181,22 @@ export function stripGroundedSurfacesFromTerms(
   }
 
   // 常见虚词（与规则 filler 对齐的一小撮），防 from/at/the 残留
-  for (const filler of ['from', 'at', 'the', 'a', 'an', 'about', 'that', 'this', 'with']) {
+  for (const filler of [
+    'from',
+    'at',
+    'the',
+    'a',
+    'an',
+    'about',
+    'that',
+    'this',
+    'with',
+    'watched',
+    'watching',
+    'watch',
+    'viewed',
+    'saved'
+  ]) {
     blocklist.add(filler)
   }
 

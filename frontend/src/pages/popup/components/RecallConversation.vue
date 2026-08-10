@@ -93,6 +93,22 @@ function handleToggleExpand(cardId: string): void {
             />
           </div>
 
+          <div v-if="turn.relatedGuessCard" class="assistant-turn-related-guess">
+            <p class="assistant-turn-related-guess-label">{{ turn.relatedGuessLabel }}</p>
+            <RecallResultCard
+              :card="turn.relatedGuessCard"
+              result-dom-id="conversation-related-guess-card"
+              :keyboard-selected="false"
+              compact
+              :expanded="expandedDuplicateGroupId === turn.relatedGuessCard.id"
+              :expand-label="expandLabel"
+              :collapse-label="collapseLabel"
+              :note-field-label="noteFieldLabel"
+              @open="handleOpen"
+              @toggle-expand="() => handleToggleExpand(turn.relatedGuessCard!.id)"
+            />
+          </div>
+
           <ul
             v-if="turn.candidateCards && turn.candidateCards.length > 0"
             class="assistant-turn-candidates"
@@ -211,6 +227,20 @@ function handleToggleExpand(cardId: string): void {
   white-space: pre-wrap;
   color: var(--md-sys-color-on-surface);
   text-wrap: pretty;
+}
+
+.assistant-turn-related-guess {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.assistant-turn-related-guess-label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .assistant-turn-copy--error {

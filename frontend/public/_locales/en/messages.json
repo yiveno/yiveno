@@ -208,7 +208,7 @@
     "message": "These are the closest. About when did you save it? Yesterday, last week?"
   },
   "popup_followup_uncertain_type": {
-    "message": "These are the closest. Was it an article, poem, code, or a song?"
+    "message": "These are the closest. What kind of thing was it — article, video, song?"
   },
   "popup_followup_uncertain_note": {
     "message": "These are the closest. Did you leave a note on it?"
@@ -223,10 +223,19 @@
     "message": "I couldn’t match that. About when did you save it? Yesterday, last week?"
   },
   "popup_followup_miss_type": {
-    "message": "I couldn’t match that. Was it an article, poem, code, or a song?"
+    "message": "I couldn’t match that. What kind of thing was it — article, video, song?"
   },
   "popup_followup_miss_note": {
     "message": "I couldn’t match that. Did you leave a note on it?"
+  },
+  "popup_followup_miss_constrained_empty": {
+    "message": "Nothing in your library matches that time and type. If the day might be wrong, try another time."
+  },
+  "popup_followup_miss_constrained_empty_with_guess": {
+    "message": "Nothing in your library matches that time and type. If you might have the day wrong, here’s your most recent similar save — a guess, not the answer."
+  },
+  "popup_related_guess_label": {
+    "message": "Guess (not the answer)"
   },
   "popup_followup_chip_yesterday": {
     "message": "yesterday"
@@ -251,6 +260,9 @@
   },
   "popup_followup_chip_song": {
     "message": "song"
+  },
+  "popup_followup_chip_video": {
+    "message": "video"
   },
   "popup_duplicate_group_bookmark": {
     "message": "$1 identical bookmarks",

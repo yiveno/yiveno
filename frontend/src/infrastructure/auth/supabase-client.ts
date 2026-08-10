@@ -1,4 +1,8 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
+/**
+ * 扩展侧 Supabase 公开配置（仅 url + anon key）。
+ * Auth 热路径（refresh / getUser）走裸 fetch，不加载 @supabase/supabase-js，
+ * 避免 Service Worker 中 GoTrue 初始化碰 `window`。
+ */
 
 /** 读取扩展构建期注入的 Supabase 公开配置。 */
 export function getSupabasePublicConfig(): { url: string; anonKey: string } | null {
@@ -8,38 +12,4 @@ export function getSupabasePublicConfig(): { url: string; anonKey: string } | nu
     return null
   }
   return { url, anonKey }
-}
-
-/**
- * 创建无持久化的 Supabase 客户端（Service Worker 安全）。
- * 会话由扩展自行写入 chrome.storage.local。
- *
- * 动态 import：避免 `@supabase/supabase-js` 静态打进 background 冷启动包；
- * 仅登录 / 刷新会话 / 拉资料时加载。
- */
-export async function createExtensionSupabaseClient(
-  accessToken?: string
-): Promise<SupabaseClient | null> {
-  const config = getSupabasePublicConfig()
-  if (!config) {
-    return null
-  }
-
-  const { createClient } = await import('@supabase/supabase-js')
-  return createClient(config.url, config.anonKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-      detectSessionInUrl: false
-    },
-    ...(accessToken
-      ? {
-          global: {
-            headers: {
-              Authorization: `Bearer ${accessToken}`
-            }
-          }
-        }
-      : {})
-  })
 }
