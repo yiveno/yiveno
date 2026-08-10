@@ -14,6 +14,7 @@ import {
   getOrCreateLocalProfile
 } from '@/infrastructure/identity/local-profile-service'
 import {
+  KEYWORD_INDEX_PUT_MANY_INCREMENTAL_MAX,
   MEMORY_ITEM_INDEX_BY_OWNER,
   MEMORY_ITEM_INDEX_BY_OWNER_CHROME_BOOKMARK,
   MEMORY_ITEM_INDEX_BY_OWNER_TYPE_UPDATED,
@@ -161,17 +162,57 @@ export class MemoryItemRepository {
     }
 
     await this.ensureReady()
+
+    const validated = items.map(item => MemoryItemSchema.parse(item))
+    const previousById = new Map<string, MemoryItem>()
+    for (const item of validated) {
+      const previous = await this.getById(item.id, item.ownerId, { includeDeleted: true })
+      if (previous) {
+        previousById.set(item.id, previous)
+      }
+    }
+
     await indexedDBManager.withTransaction(MEMORY_ITEM_STORE, 'readwrite', async transaction => {
       const store = transaction.objectStore(MEMORY_ITEM_STORE)
-      for (const item of items) {
-        await requestToPromise(store.put(MemoryItemSchema.parse(item)))
+      for (const item of validated) {
+        await requestToPromise(store.put(item))
       }
     })
 
-    // bulk 后标脏；下次 Recall 全量 rebuild 倒排
-    const ownerIds = new Set(items.map(item => item.ownerId))
-    for (const ownerId of ownerIds) {
-      await keywordIndexRepository.markDirty(ownerId)
+    const byOwner = new Map<string, typeof validated>()
+    for (const item of validated) {
+      const list = byOwner.get(item.ownerId) ?? []
+      list.push(item)
+      byOwner.set(item.ownerId, list)
+    }
+
+    for (const [ownerId, ownerItems] of byOwner) {
+      if (ownerItems.length > KEYWORD_INDEX_PUT_MANY_INCREMENTAL_MAX) {
+        await keywordIndexRepository.markDirty(ownerId)
+        continue
+      }
+
+      const diffs = ownerItems.map(item => {
+        const previous = previousById.get(item.id)
+        return {
+          itemId: item.id,
+          previousTokens: previous ? extractDocumentIndexTokens(previous) : [],
+          nextTokens: extractDocumentIndexTokens(item)
+        }
+      })
+
+      const hasChange = diffs.some(diff => !sameTokenSet(diff.previousTokens, diff.nextTokens))
+      if (!hasChange) {
+        continue
+      }
+
+      const applied = await keywordIndexRepository.applyItemTokenDiffs({
+        ownerId,
+        diffs
+      })
+      if (!applied.applied) {
+        await keywordIndexRepository.markDirty(ownerId)
+      }
     }
   }
 

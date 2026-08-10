@@ -105,6 +105,49 @@ export function unionPostingItemIds(lists: readonly (readonly string[])[]): stri
   return out
 }
 
+/**
+ * 倒排候选在 cap 内选取：按「命中 token 稀有度」加权，避免常见字/词先塞满而挤掉稀有命中。
+ * 分值 = Σ(1 / postingLen)；同分按 id 字典序稳定截断。
+ * 未超 cap 时返回全量并集（顺序不保证与 unionPostingItemIds 一致）。
+ */
+export function selectPostingCandidateIds(
+  lists: readonly (readonly string[])[],
+  cap: number
+): string[] {
+  if (cap <= 0) {
+    return []
+  }
+
+  const scores = new Map<string, number>()
+  for (const list of lists) {
+    if (list.length === 0) {
+      continue
+    }
+    const rarity = 1 / list.length
+    for (const id of list) {
+      scores.set(id, (scores.get(id) ?? 0) + rarity)
+    }
+  }
+
+  if (scores.size === 0) {
+    return []
+  }
+  if (scores.size <= cap) {
+    return [...scores.keys()]
+  }
+
+  return [...scores.entries()]
+    .sort((left, right) => {
+      const scoreDelta = right[1] - left[1]
+      if (scoreDelta !== 0) {
+        return scoreDelta
+      }
+      return left[0].localeCompare(right[0])
+    })
+    .slice(0, cap)
+    .map(([id]) => id)
+}
+
 /** 比较两组 token 是否相同（忽略顺序）。 */
 export function sameTokenSet(left: readonly string[], right: readonly string[]): boolean {
   if (left.length !== right.length) {

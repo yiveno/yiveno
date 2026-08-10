@@ -30,5 +30,10 @@ export const MEMORY_ITEM_INDEX_BY_OWNER_CHROME_BOOKMARK = 'by_owner_chrome_bookm
 /** 每批 bulk 写入条数（单事务 putMany）。 */
 export const MEMORY_ITEM_BULK_IMPORT_BATCH_SIZE = 2000 as const
 
-/** posting 查询并集后的候选 id 上限（再 getById）。 */
+/** posting 查询并集后的候选 id 上限（再 getById）；截断时按 token 稀有度优先，见 selectPostingCandidateIds。 */
 export const KEYWORD_INDEX_CANDIDATE_ID_CAP = 2000 as const
+
+/**
+ * putMany 走批内增量的最大条数；更大则标 dirty 等 Recall rebuild，避免超长事务。
+ */
+export const KEYWORD_INDEX_PUT_MANY_INCREMENTAL_MAX = 500 as const

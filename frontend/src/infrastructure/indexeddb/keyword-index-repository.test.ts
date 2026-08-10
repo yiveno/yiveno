@@ -142,6 +142,95 @@ describe('keyword-index-repository', () => {
     expect(applied.applied).toBe(false)
   })
 
+  it('健康索引下 applyItemTokenDiffs 批量增量可查多条新词', async () => {
+    const first = await memoryItemRepository.createTextExcerpt({
+      payload: {
+        selectedText: '批次甲只有西瓜',
+        sourceUrl: 'https://example.com/batch-a',
+        pageTitle: 'BA',
+        domain: 'example.com'
+      },
+      captureEntry: 'context_menu'
+    })
+    const second = await memoryItemRepository.createTextExcerpt({
+      payload: {
+        selectedText: '批次乙只有葡萄',
+        sourceUrl: 'https://example.com/batch-b',
+        pageTitle: 'BB',
+        domain: 'example.com'
+      },
+      captureEntry: 'context_menu'
+    })
+    await keywordIndexRepository.rebuildForOwner(first.ownerId)
+
+    const nextFirst = {
+      ...first,
+      payload: { ...first.payload, selectedText: '批次甲改成芒果' },
+      clues: { ...first.clues, textExcerpt: '批次甲改成芒果' }
+    }
+    const nextSecond = {
+      ...second,
+      payload: { ...second.payload, selectedText: '批次乙改成荔枝' },
+      clues: { ...second.clues, textExcerpt: '批次乙改成荔枝' }
+    }
+
+    const applied = await keywordIndexRepository.applyItemTokenDiffs({
+      ownerId: first.ownerId,
+      diffs: [
+        {
+          itemId: first.id,
+          previousTokens: extractDocumentIndexTokens(first),
+          nextTokens: extractDocumentIndexTokens(nextFirst)
+        },
+        {
+          itemId: second.id,
+          previousTokens: extractDocumentIndexTokens(second),
+          nextTokens: extractDocumentIndexTokens(nextSecond)
+        }
+      ]
+    })
+    expect(applied.applied).toBe(true)
+
+    const mango = await keywordIndexRepository.lookupCandidateIds('芒果', first.ownerId)
+    expect(mango?.ids).toContain(first.id)
+    const lychee = await keywordIndexRepository.lookupCandidateIds('荔枝', first.ownerId)
+    expect(lychee?.ids).toContain(second.id)
+    const watermelon = await keywordIndexRepository.lookupCandidateIds('西瓜', first.ownerId)
+    expect(watermelon?.ids.includes(first.id) ?? false).toBe(false)
+  })
+
+  it('健康索引下 putMany 批内增量保持健康且可查新词', async () => {
+    const created = await memoryItemRepository.createTextExcerpt({
+      payload: {
+        selectedText: '批量前只有柠檬',
+        sourceUrl: 'https://example.com/put-many',
+        pageTitle: 'PM',
+        domain: 'example.com'
+      },
+      captureEntry: 'context_menu'
+    })
+    await keywordIndexRepository.rebuildForOwner(created.ownerId)
+
+    const updated = {
+      ...created,
+      payload: {
+        ...created.payload,
+        selectedText: '批量后换成橙子'
+      },
+      clues: {
+        ...created.clues,
+        textExcerpt: '批量后换成橙子'
+      }
+    }
+    await memoryItemRepository.putMany([updated])
+
+    expect(await keywordIndexRepository.isHealthy(created.ownerId)).toBe(true)
+    const orange = await keywordIndexRepository.lookupCandidateIds('橙子', created.ownerId)
+    expect(orange?.ids).toContain(created.id)
+    const lemon = await keywordIndexRepository.lookupCandidateIds('柠檬', created.ownerId)
+    expect(lemon?.ids.includes(created.id) ?? false).toBe(false)
+  })
+
   it('DB 名仍为 YivenoMemoryDB', () => {
     expect(MEMORY_DATABASE_NAME).toBe('YivenoMemoryDB')
   })

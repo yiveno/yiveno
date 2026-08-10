@@ -110,7 +110,7 @@
 
 **工程说明：** [`docs/engineering/关键词倒排索引-Phase1.md`](../engineering/关键词倒排索引-Phase1.md)
 
-**后续可选：** 候选 cap 调优；`putMany` 批内增量（当前仍 dirty+rebuild）。
+**后续可选：** >500 `putMany` 仍 dirty+rebuild；真正 IDF / 字段级 posting 仍非本 Phase。
 
 ### R∞ · 框架远景（不排期）
 
@@ -152,3 +152,5 @@ R0 文案与 must eval 收束
 | 2026-08-11 | R3 切片：G3 弱锚点召回降权；倒排/外部源仍待               |
 | 2026-08-11 | R3：倒排 Phase 1 预过滤落地；外部源仍待                   |
 | 2026-08-11 | 倒排：单条 put 健康索引下增量维护 posting                 |
+| 2026-08-11 | 倒排：putMany ≤500 健康索引批内增量 posting               |
+| 2026-08-11 | 倒排：候选 cap 按 posting 稀有度加权截断                  |

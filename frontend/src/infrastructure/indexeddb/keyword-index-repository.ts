@@ -6,7 +6,7 @@
 import {
   extractDocumentIndexTokens,
   pickPostingLookupTokens,
-  unionPostingItemIds,
+  selectPostingCandidateIds,
   diffTokenSets
 } from '@/core/recall/extract-document-index-tokens'
 import { safeParseMemoryItem, type MemoryItem } from '@/core/memory/memory-item'
@@ -97,15 +97,66 @@ export class KeywordIndexRepository {
     previousTokens: readonly string[]
     nextTokens: readonly string[]
   }): Promise<{ applied: boolean }> {
-    const { ownerId, itemId, previousTokens, nextTokens } = input
+    return this.applyItemTokenDiffs({
+      ownerId: input.ownerId,
+      diffs: [
+        {
+          itemId: input.itemId,
+          previousTokens: input.previousTokens,
+          nextTokens: input.nextTokens
+        }
+      ]
+    })
+  }
+
+  /**
+   * 同一 owner 下多条 token diff 批量增量写入（单事务）。
+   * 索引不健康时返回 applied=false。
+   */
+  async applyItemTokenDiffs(input: {
+    ownerId: string
+    diffs: readonly {
+      itemId: string
+      previousTokens: readonly string[]
+      nextTokens: readonly string[]
+    }[]
+  }): Promise<{ applied: boolean }> {
+    const { ownerId, diffs } = input
+    if (diffs.length === 0) {
+      return { applied: true }
+    }
     if (!(await this.isHealthy(ownerId))) {
       return { applied: false }
     }
 
-    const { added, removed } = diffTokenSets(previousTokens, nextTokens)
-    if (added.length === 0 && removed.length === 0) {
+    const removals = new Map<string, Set<string>>()
+    const additions = new Map<string, Set<string>>()
+    let itemCountDelta = 0
+
+    for (const diff of diffs) {
+      const { added, removed } = diffTokenSets(diff.previousTokens, diff.nextTokens)
+      for (const token of removed) {
+        const set = removals.get(token) ?? new Set<string>()
+        set.add(diff.itemId)
+        removals.set(token, set)
+      }
+      for (const token of added) {
+        const set = additions.get(token) ?? new Set<string>()
+        set.add(diff.itemId)
+        additions.set(token, set)
+      }
+      if (diff.previousTokens.length === 0 && diff.nextTokens.length > 0) {
+        itemCountDelta += 1
+      } else if (diff.previousTokens.length > 0 && diff.nextTokens.length === 0) {
+        itemCountDelta -= 1
+      }
+    }
+
+    if (removals.size === 0 && additions.size === 0) {
       return { applied: true }
     }
+
+    const touchedTokens = new Set<string>([...removals.keys(), ...additions.keys()])
 
     await this.ensureReady()
     await indexedDBManager.withTransaction(
@@ -114,71 +165,51 @@ export class KeywordIndexRepository {
       async transaction => {
         const postingStore = transaction.objectStore(KEYWORD_POSTING_STORE)
 
-        for (const token of removed) {
+        for (const token of touchedTokens) {
           const key = buildKeywordPostingId(ownerId, token)
           const existing = parsePosting(await requestToPromise(postingStore.get(key)))
-          if (!existing) {
-            continue
-          }
-          const itemIds = existing.itemIds.filter(id => id !== itemId)
-          if (itemIds.length === 0) {
-            await requestToPromise(postingStore.delete(key))
-          } else {
-            await requestToPromise(
-              postingStore.put(
-                KeywordPostingRecordSchema.parse({
-                  ...existing,
-                  itemIds
-                })
-              )
-            )
-          }
-        }
+          let itemIds = existing ? [...existing.itemIds] : []
 
-        for (const token of added) {
-          const key = buildKeywordPostingId(ownerId, token)
-          const existing = parsePosting(await requestToPromise(postingStore.get(key)))
-          if (!existing) {
-            await requestToPromise(
-              postingStore.put(
-                KeywordPostingRecordSchema.parse({
-                  id: key,
-                  ownerId,
-                  token,
-                  itemIds: [itemId]
-                })
-              )
-            )
+          const toRemove = removals.get(token)
+          if (toRemove) {
+            itemIds = itemIds.filter(id => !toRemove.has(id))
+          }
+          const toAdd = additions.get(token)
+          if (toAdd) {
+            for (const id of toAdd) {
+              if (!itemIds.includes(id)) {
+                itemIds.push(id)
+              }
+            }
+          }
+
+          if (itemIds.length === 0) {
+            if (existing) {
+              await requestToPromise(postingStore.delete(key))
+            }
             continue
           }
-          if (existing.itemIds.includes(itemId)) {
-            continue
-          }
+
           await requestToPromise(
             postingStore.put(
               KeywordPostingRecordSchema.parse({
-                ...existing,
-                itemIds: [...existing.itemIds, itemId]
+                id: key,
+                ownerId,
+                token,
+                itemIds
               })
             )
           )
         }
 
-        // 新建条目：itemCount +1；软删清空 token：itemCount -1（粗略，仅当 prev 空↔next 非空）
         const metaStore = transaction.objectStore(KEYWORD_INDEX_META_STORE)
         const meta = parseMeta(await requestToPromise(metaStore.get(ownerId)))
         if (meta) {
-          let itemCount = meta.itemCount
-          if (previousTokens.length === 0 && nextTokens.length > 0) {
-            itemCount += 1
-          } else if (previousTokens.length > 0 && nextTokens.length === 0) {
-            itemCount = Math.max(0, itemCount - 1)
-          }
           await requestToPromise(
             metaStore.put(
               KeywordIndexMetaSchema.parse({
                 ...meta,
-                itemCount,
+                itemCount: Math.max(0, meta.itemCount + itemCountDelta),
                 dirty: false
               })
             )
@@ -373,7 +404,7 @@ export class KeywordIndexRepository {
       }
     )
 
-    const ids = unionPostingItemIds(lists).slice(0, KEYWORD_INDEX_CANDIDATE_ID_CAP)
+    const ids = selectPostingCandidateIds(lists, KEYWORD_INDEX_CANDIDATE_ID_CAP)
     return { ids, rebuilt }
   }
 }

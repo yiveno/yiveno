@@ -9,6 +9,7 @@ import {
   pickPostingLookupTokens,
   sameTokenSet,
   unionPostingItemIds,
+  selectPostingCandidateIds,
   diffTokenSets
 } from '@/core/recall/extract-document-index-tokens'
 
@@ -50,6 +51,20 @@ describe('extract-document-index-tokens', () => {
 
   it('unionPostingItemIds 保序去重', () => {
     expect(unionPostingItemIds([['a', 'b'], ['b', 'c'], ['a']])).toEqual(['a', 'b', 'c'])
+  })
+
+  it('selectPostingCandidateIds 超 cap 时优先稀有 posting 命中', () => {
+    const common = Array.from({ length: 20 }, (_, index) => `common-${index}`)
+    const rare = ['rare-hit', 'rare-other']
+    // 若按 common 先 FIFO 截断，rare-hit 会被挤掉；稀有度加权应保留
+    const selected = selectPostingCandidateIds([common, rare], 5)
+    expect(selected).toContain('rare-hit')
+    expect(selected).toContain('rare-other')
+    expect(selected.length).toBe(5)
+  })
+
+  it('selectPostingCandidateIds 未超 cap 返回全量', () => {
+    expect(selectPostingCandidateIds([['a'], ['b', 'a']], 10).sort()).toEqual(['a', 'b'])
   })
 
   it('sameTokenSet 忽略顺序', () => {
