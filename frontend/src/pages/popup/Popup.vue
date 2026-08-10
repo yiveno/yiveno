@@ -440,7 +440,9 @@ async function runRecall(trimmedClue: string): Promise<void> {
       const followUp = llmFollowUp
         ? { text: llmFollowUp.text, suggestions: llmFollowUp.suggestions }
         : buildFollowUpFromParsed(response.result.parsed, highlightClue, 'no_match', {
-            emptyKind: response.result.emptyKind,
+            ...(response.result.emptyKind !== undefined
+              ? { emptyKind: response.result.emptyKind }
+              : {}),
             hasRelatedGuess: relatedGuess !== null
           })
       conversationTurns.value.push(
