@@ -56,7 +56,7 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
     clueClass: 'concrete',
     gate: 'must',
     expectation: { kind: 'top1', expectedId: RECALL_EVAL_IDS.githubRepo },
-    note: '域名+路径片段应直接定位仓库书签'
+    note: 'R0/A：域名+路径片段应直接定位仓库书签'
   },
   {
     id: 'concrete-title-retention',
@@ -158,14 +158,22 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
     note: '摘录内术语'
   },
 
-  // —— must：负例 ——
+  // —— must：负例 / R0 命题 ——
   {
     id: 'negative-unrelated',
     clue: '完全无关的量子物理',
     clueClass: 'negative',
     gate: 'must',
     expectation: { kind: 'no_match' },
-    note: '库中无相关项时应 no_match'
+    note: 'R0：库中无相关项时应诚实 no_match（禁编造命中）'
+  },
+  {
+    id: 'r0-zero-anchor-assistant-command',
+    clue: '放几首我喜欢的歌吧',
+    clueClass: 'negative',
+    gate: 'must',
+    expectation: { kind: 'no_match' },
+    note: 'R0/C：零锚点助手发令；库无歌类痕迹 → 诚实 no_match，不得当推荐命中'
   },
   {
     id: 'negative-too-generic-noise',
@@ -190,7 +198,7 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
     clueClass: 'vague',
     gate: 'must',
     expectation: { kind: 'need_a_clue', expectedId: RECALL_EVAL_IDS.retentionFramework },
-    note: '词面弱命中未达 Top Pick 阈值；应 need_a_clue 并展示弱候选'
+    note: 'R0/B：词面弱命中未达 Top Pick 阈值；应 need_a_clue 并展示弱候选'
   },
   {
     id: 'semi-fuzzy-type-b-note',
@@ -225,7 +233,7 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
     clueClass: 'semi_fuzzy',
     gate: 'must',
     expectation: { kind: 'top1', expectedId: RECALL_EVAL_IDS.typeBRetentionNote },
-    note: 'T1 备注锚点 + T2 只补 yesterday；槽位 merge 后仍应 Top1 命中备注项'
+    note: 'R0/B：T1 备注锚点 + T2 只补 yesterday；槽位 merge 后仍应 Top1 命中备注项'
   },
   {
     id: 'dialog-dismiss-excludes-top',

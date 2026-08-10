@@ -26,6 +26,33 @@ describe('recall-eval', () => {
     expect(report.must.passed).toBe(report.must.total)
   })
 
+  it('R0：空库任意口语须诚实 no_match 且无 topPick', () => {
+    const report = runRecallEval(
+      [
+        {
+          id: 'r0-empty-library-favorite-song',
+          clue: '我以前最喜欢听的歌',
+          clueClass: 'negative',
+          gate: 'must',
+          expectation: { kind: 'no_match' },
+          note: '空库找不到是正确行为；随机甩一条才是致命'
+        }
+      ],
+      []
+    )
+    expect(report.must.failed).toEqual([])
+    expect(report.cases[0]?.result.topPick).toBeNull()
+    expect(report.cases[0]?.result.alsoPossible).toEqual([])
+  })
+
+  it('R0 must 档位覆盖：A 命中 / B 追问 / 诚实空', () => {
+    const byId = new Map(RECALL_EVAL_CASES.map(item => [item.id, item]))
+    expect(byId.get('concrete-domain-github')?.expectation.kind).toBe('top1')
+    expect(byId.get('need-a-clue-weak-title-fragment')?.expectation.kind).toBe('need_a_clue')
+    expect(byId.get('r0-zero-anchor-assistant-command')?.expectation.kind).toBe('no_match')
+    expect(byId.get('dialog-refine-time-after-type-b-note')?.dialogTurns?.length).toBe(2)
+  })
+
   it('stretch 用例可汇报进度（不挡门禁）', () => {
     const report = runRecallEval(RECALL_EVAL_CASES)
     // 仅确保 runner 覆盖 stretch；通过率随优化上升，此处不强制 100%

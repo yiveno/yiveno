@@ -23,6 +23,17 @@ const TYPE_CHIP_VALUES = new Set([
 const TYPE_QUESTIONNAIRE_REPLY =
   /(文章[、,，]?诗|article,\s*poem|poem,\s*code|代码[、,，]?还是歌|was it an article|article, poem, code|文章、诗、代码)/i
 
+/**
+ * 偏好建档 / 助理人设（产品文档 §0.1.1 空结果契约）→ 整段拒收，降级规则模板。
+ * 只拦明显违禁；合法「补时间/补词/去划存」不得误伤。
+ */
+const PREFERENCE_PROFILE_REPLY =
+  /(还不了解你|告诉我你喜欢|喜欢什么类型.{0,12}记住|我会记住你的|跟我聊聊你的喜好|get to know you|don'?t know you (well )?enough|tell me what you (like|prefer)|i'?ll remember (your )?prefer|build (a )?profile)/i
+
+/** no_match 时禁止假装已找到具体条目。 */
+const FAKE_FIND_ON_MISS =
+  /(我(已经)?找到了|就是这一[条个首]|here('s| is) what I found|I found (it|your))/i
+
 /** chip.value 须偏英文稳定串，避免把本地化句子当 clue 再发。 */
 const STABLE_VALUE = /^[a-z0-9][a-z0-9 '\-]{0,79}$/i
 
@@ -57,6 +68,14 @@ export function mapLlmFollowUpProposal(
     context.parsed.objectTypes && context.parsed.objectTypes.length > 0
   )
   if (hasObjectTypes && TYPE_QUESTIONNAIRE_REPLY.test(reply)) {
+    return null
+  }
+
+  if (PREFERENCE_PROFILE_REPLY.test(reply)) {
+    return null
+  }
+
+  if (context.outcome === 'no_match' && FAKE_FIND_ON_MISS.test(reply)) {
     return null
   }
 

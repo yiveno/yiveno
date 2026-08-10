@@ -247,11 +247,12 @@ export function buildRecallEvalCorpus(): MemoryItem[] {
           sourceUrl: 'https://notes.example.com/type-b-retention',
           pageTitle: '增长笔记'
         },
+        // 对齐 RECALL_EVAL_NOW（2026-07-25）的「昨天」，供多轮补时间 must 用例硬过滤命中
         clues: { note: '留存会上要给老板看的' },
-        now: () => '2026-07-06T08:00:00.000Z'
+        now: () => '2026-07-24T10:00:00.000Z'
       }),
       RECALL_EVAL_IDS.typeBRetentionNote,
-      '2026-07-06T08:00:00.000Z'
+      '2026-07-24T10:00:00.000Z'
     )
   ]
 }

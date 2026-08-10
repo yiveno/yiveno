@@ -2,16 +2,20 @@ import type { TranslateFn } from '@/core/i18n/translate'
 
 /** 单测用固定中文表（与 zh_CN messages 对齐的子集）。 */
 const ZH: Record<string, string> = {
-  popup_empty_no_memory_title: '你想找什么？',
+  popup_empty_no_memory_title: '先留下一点痕迹',
   popup_empty_no_memory_body_importing:
-    '书签正在导入。你也可以先划一句想留住的——这是最快感受到 Yiveno 的方式。',
-  popup_empty_no_memory_body: '在网页划一句你想留住的。准备好之后，哪怕只记得一点，也可以回来找。',
+    '书签正在导入。你也可以先划一句想留住的——有了痕迹，再用自己的话找回。',
+  popup_empty_no_memory_body:
+    '在网页划一句想留住的（或右键保存选区）。有了痕迹之后，再用你自己的话回来找。',
   popup_empty_library_empty_title: '还没有保存的内容',
   popup_empty_library_empty_body:
-    '先留下一点属于你的痕迹——一句摘录、一条备注、一个你在意的页面。再随便给点线索试试。',
+    '记忆库里还没有能对上的痕迹。先留下一句摘录或备注，再用你自己的话回来找。',
   popup_no_match_title_with_clue: '没找到和「$1」相关的',
   popup_no_match_title: '还没找到匹配的',
-  popup_no_match_body: '试试更短的词，或备注、正文里还记得的片段。也可再划词存一点后再找回。',
+  popup_no_match_body:
+    '库里还没有对上这条线索的痕迹。试试更短的词、备注里的片段；也可以再划存一点后再找。',
+  popup_welcome_title: '你想找什么？',
+  popup_welcome_body: '用你记得的一点线索，找回自己存过的——网站、摘录或备注都行。',
   explain_field_title: '标题',
   explain_field_text_excerpt: '正文片段',
   explain_field_excerpt_context: '上下文',

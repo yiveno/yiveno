@@ -1,4 +1,5 @@
 import type { MemoryItem } from '@/core/memory/memory-item'
+import { isShellBookmarkTitle, weakAnchorScorePenalty } from '@/core/memory/corpus-quality-gate'
 import type { RecallMatch } from '@/core/recall/recall-result'
 
 /** 纳入候选的最低分数。 */
@@ -284,8 +285,15 @@ export function collectSearchableFields(item: MemoryItem): SearchableField[] {
   }
 
   if (item.type === 'bookmark') {
-    push('title', clues.title)
-    push('title', item.payload.title)
+    // 空壳标题（= URL/域名回显）不再当高权 title 字段，只保留 url/domain，避免假装「有标题」
+    const bookmarkTitle = (clues.title ?? item.payload.title).trim()
+    if (
+      bookmarkTitle &&
+      !isShellBookmarkTitle(bookmarkTitle, item.payload.url, item.payload.domain)
+    ) {
+      push('title', clues.title)
+      push('title', item.payload.title)
+    }
     push('url', item.payload.url)
     push('domain', item.payload.domain)
   } else {
@@ -529,6 +537,8 @@ function scoreMemoryItemWithTokens(
   if (score > 0) {
     score += computeBehaviorBoost(item, options)
     score -= computeDismissPenalty(item)
+    // 弱锚点（空壳书签等）降权：避免「只有 URL 回显标题」假装高置信可找回
+    score -= weakAnchorScorePenalty(item)
     if (score < 0) {
       score = 0
     }

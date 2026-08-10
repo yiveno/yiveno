@@ -127,7 +127,7 @@
     "message": "你想找什么？"
   },
   "popup_welcome_body": {
-    "message": "随便说几个你记得的词——网站、句子或备注都行。"
+    "message": "用你记得的一点线索，找回自己存过的——网站、摘录或备注都行。"
   },
   "popup_clue_input_aria": {
     "message": "线索"
@@ -214,19 +214,19 @@
     "message": "这些最接近。你有没有给它写过备注？"
   },
   "popup_followup_miss_generic": {
-    "message": "我还没对上。你可以再补一句你记得的内容。"
+    "message": "还没对上库里的痕迹。再补一句你记得的内容，或先划存一点再找。"
   },
   "popup_followup_miss_content": {
-    "message": "我还没对上。还记得标题或正文里的某个词吗？"
+    "message": "还没对上库里的痕迹。还记得标题或正文里的某个词吗？"
   },
   "popup_followup_miss_time": {
-    "message": "我还没对上。大概是哪天存的？比如昨天、上周。"
+    "message": "还没对上库里的痕迹。大概是哪天存的？比如昨天、上周。"
   },
   "popup_followup_miss_type": {
-    "message": "我还没对上。还记得更像哪一类？比如文章、视频、歌。"
+    "message": "还没对上库里的痕迹。还记得更像哪一类？比如文章、视频、歌。"
   },
   "popup_followup_miss_note": {
-    "message": "我还没对上。你有没有给它写过备注？"
+    "message": "还没对上库里的痕迹。你有没有给它写过备注？"
   },
   "popup_followup_miss_constrained_empty": {
     "message": "记忆库里没有符合这个时间与类型的痕迹。若日期可能记错了，可以换个时间再试。"
@@ -1074,19 +1074,19 @@
     "message": "重试"
   },
   "popup_empty_no_memory_title": {
-    "message": "你想找什么？"
+    "message": "先留下一点痕迹"
   },
   "popup_empty_no_memory_body_importing": {
-    "message": "书签正在导入。你也可以先划一句想留住的——这是最快感受到 Yiveno 的方式。"
+    "message": "书签正在导入。你也可以先划一句想留住的——有了痕迹，再用自己的话找回。"
   },
   "popup_empty_no_memory_body": {
-    "message": "在网页划一句你想留住的。准备好之后，哪怕只记得一点，也可以回来找。"
+    "message": "在网页划一句想留住的（或右键保存选区）。有了痕迹之后，再用你自己的话回来找。"
   },
   "popup_empty_library_empty_title": {
     "message": "还没有保存的内容"
   },
   "popup_empty_library_empty_body": {
-    "message": "先留下一点属于你的痕迹——一句摘录、一条备注、一个你在意的页面。再随便给点线索试试。"
+    "message": "记忆库里还没有能对上的痕迹。先留下一句摘录或备注，再用你自己的话回来找。"
   },
   "popup_no_match_title_with_clue": {
     "message": "没找到和「$clue$」相关的",
@@ -1101,7 +1101,7 @@
     "message": "还没找到匹配的"
   },
   "popup_no_match_body": {
-    "message": "试试更短的词，或备注、正文里还记得的片段。也可再划词存一点后再找回。"
+    "message": "库里还没有对上这条线索的痕迹。试试更短的词、备注里的片段；也可以再划存一点后再找。"
   },
   "explain_field_title": {
     "message": "标题"

@@ -127,7 +127,7 @@
     "message": "What do you want to recall?"
   },
   "popup_welcome_body": {
-    "message": "Just say a few words you remember—a site, a quote, or a note."
+    "message": "Use a clue you remember to find what you saved—a site, an excerpt, or a note."
   },
   "popup_clue_input_aria": {
     "message": "Clue"
@@ -214,19 +214,19 @@
     "message": "These are the closest. Did you leave a note on it?"
   },
   "popup_followup_miss_generic": {
-    "message": "I couldn’t match that. Can you add another detail you remember?"
+    "message": "Nothing in your library matched. Add another detail you remember—or save a trace first, then try again."
   },
   "popup_followup_miss_content": {
-    "message": "I couldn’t match that. Do you remember a word from the title or text?"
+    "message": "Nothing in your library matched. Do you remember a word from the title or text?"
   },
   "popup_followup_miss_time": {
-    "message": "I couldn’t match that. About when did you save it? Yesterday, last week?"
+    "message": "Nothing in your library matched. About when did you save it? Yesterday, last week?"
   },
   "popup_followup_miss_type": {
-    "message": "I couldn’t match that. What kind of thing was it — article, video, song?"
+    "message": "Nothing in your library matched. What kind of thing was it — article, video, song?"
   },
   "popup_followup_miss_note": {
-    "message": "I couldn’t match that. Did you leave a note on it?"
+    "message": "Nothing in your library matched. Did you leave a note on it?"
   },
   "popup_followup_miss_constrained_empty": {
     "message": "Nothing in your library matches that time and type. If the day might be wrong, try another time."
@@ -1074,19 +1074,19 @@
     "message": "Retry"
   },
   "popup_empty_no_memory_title": {
-    "message": "What are you trying to find?"
+    "message": "Save a trace first"
   },
   "popup_empty_no_memory_body_importing": {
-    "message": "Your bookmarks are on the way. You can also highlight a line you care about—that’s the quickest way to feel what Yiveno does."
+    "message": "Your bookmarks are importing. You can also highlight a line to keep—once it’s saved, recall it in your own words."
   },
   "popup_empty_no_memory_body": {
-    "message": "Highlight something you want to keep on a page. When you're ready, even a vague clue is enough."
+    "message": "Highlight a line on a page (or right-click Save selection). Once something’s yours, come back and recall it in your own words."
   },
   "popup_empty_library_empty_title": {
     "message": "Nothing saved yet"
   },
   "popup_empty_library_empty_body": {
-    "message": "Save something that’s yours—a quote, a note, a page you care about. Then try again with any clue you remember."
+    "message": "Nothing in your library matches yet. Save an excerpt or a short note, then come back with any clue in your own words."
   },
   "popup_no_match_title_with_clue": {
     "message": "Nothing related to “$clue$”",
@@ -1101,7 +1101,7 @@
     "message": "No match yet"
   },
   "popup_no_match_body": {
-    "message": "Try a shorter clue, or a fragment from a note or the excerpt itself. You can also save another selection and recall later."
+    "message": "No saved trace matched that clue. Try a shorter word or a fragment from a note—or save another selection and recall later."
   },
   "explain_field_title": {
     "message": "title"

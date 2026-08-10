@@ -75,4 +75,30 @@ describe('mapLlmFollowUpProposal', () => {
     )
     expect(mapped?.suggestions).toEqual([])
   })
+
+  it('拒收偏好建档 / 助理人设话术', () => {
+    const parsed = parseRecallClue('我以前最喜欢听的歌', { nowMs: NOW_MS })
+    expect(
+      mapLlmFollowUpProposal(
+        {
+          reply: '不好意思，我还不了解你。你可以告诉我喜欢什么类型，我会记住的。',
+          chips: []
+        },
+        { parsed, outcome: 'no_match' }
+      )
+    ).toBeNull()
+  })
+
+  it('no_match 时拒收假装已找到', () => {
+    const parsed = parseRecallClue('quantum physics notes', { nowMs: NOW_MS })
+    expect(
+      mapLlmFollowUpProposal(
+        {
+          reply: '我已经找到了，就是这一首。',
+          chips: []
+        },
+        { parsed, outcome: 'no_match' }
+      )
+    ).toBeNull()
+  })
 })
