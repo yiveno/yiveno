@@ -21,7 +21,12 @@ import {
   MEMORY_ITEM_STORE
 } from '@/infrastructure/indexeddb/constants'
 import { initializeMemoryDatabase } from '@/infrastructure/indexeddb/memory-db'
+import { keywordIndexRepository } from '@/infrastructure/indexeddb/keyword-index-repository'
 import { indexedDBManager, requestToPromise } from '@/infrastructure/indexeddb/manager'
+import {
+  extractDocumentIndexTokens,
+  sameTokenSet
+} from '@/core/recall/extract-document-index-tokens'
 
 export interface ListMemoryItemsOptions {
   type?: SupportedMemoryItemType
@@ -161,6 +166,44 @@ export class MemoryItemRepository {
       for (const item of items) {
         await requestToPromise(store.put(MemoryItemSchema.parse(item)))
       }
+    })
+
+    // bulk 后标脏；下次 Recall 全量 rebuild 倒排
+    const ownerIds = new Set(items.map(item => item.ownerId))
+    for (const ownerId of ownerIds) {
+      await keywordIndexRepository.markDirty(ownerId)
+    }
+  }
+
+  /** 按 id 批量读取（保持 ids 顺序；缺省/软删跳过）。 */
+  async getManyByIds(
+    ids: readonly string[],
+    ownerId?: string,
+    options: { includeDeleted?: boolean } = {}
+  ): Promise<MemoryItem[]> {
+    if (ids.length === 0) {
+      return []
+    }
+
+    await this.ensureReady()
+    const resolvedOwnerId = ownerId ?? (await getCurrentOwnerId())
+    const includeDeleted = options.includeDeleted ?? false
+
+    return indexedDBManager.withTransaction(MEMORY_ITEM_STORE, 'readonly', async transaction => {
+      const store = transaction.objectStore(MEMORY_ITEM_STORE)
+      const items: MemoryItem[] = []
+      for (const id of ids) {
+        const raw = await requestToPromise(store.get(id))
+        const item = safeParseMemoryItem(raw)
+        if (!item || item.ownerId !== resolvedOwnerId) {
+          continue
+        }
+        if (!includeDeleted && item.deletedAt != null) {
+          continue
+        }
+        items.push(item)
+      }
+      return items
     })
   }
 
@@ -477,6 +520,8 @@ export class MemoryItemRepository {
       ownerId: toOwnerId
     }))
     await this.putMany(remapped)
+    // 旧 owner 的 posting 失效；目标 owner 已由 putMany 标 dirty
+    await keywordIndexRepository.clearOwnerIndex(fromOwnerId)
     return remapped.length
   }
 
@@ -515,6 +560,8 @@ export class MemoryItemRepository {
       }
     })
 
+    await keywordIndexRepository.clearOwnerIndex(ownerId)
+
     return items.filter(item => item.ownerId === ownerId).length
   }
 
@@ -548,10 +595,27 @@ export class MemoryItemRepository {
     await this.ensureReady()
     const validated = MemoryItemSchema.parse(item)
 
+    const previous = await this.getById(validated.id, validated.ownerId, { includeDeleted: true })
+    const previousTokens = previous ? extractDocumentIndexTokens(previous) : []
+    const nextTokens = extractDocumentIndexTokens(validated)
+    const tokensChanged = !sameTokenSet(previousTokens, nextTokens)
+
     await indexedDBManager.withTransaction(MEMORY_ITEM_STORE, 'readwrite', async transaction => {
       const store = transaction.objectStore(MEMORY_ITEM_STORE)
       await requestToPromise(store.put(validated))
     })
+
+    if (tokensChanged) {
+      const applied = await keywordIndexRepository.applyItemTokenDiff({
+        ownerId: validated.ownerId,
+        itemId: validated.id,
+        previousTokens,
+        nextTokens
+      })
+      if (!applied.applied) {
+        await keywordIndexRepository.markDirty(validated.ownerId)
+      }
+    }
   }
 }
 

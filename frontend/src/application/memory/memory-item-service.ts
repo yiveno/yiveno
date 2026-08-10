@@ -5,8 +5,12 @@
 
 import { scheduleAsyncMemoryEmbedding } from '@/application/memory/schedule-async-memory-embedding'
 import { scheduleAsyncMemoryLlmEnrichment } from '@/application/memory/schedule-async-memory-llm-enrichment'
+import { RECALL_SCAN_LIMIT } from '@/application/recall/backends/recall-scan-limit'
 import type { CreateBookmarkInput, CreateTextExcerptInput } from '@/core/memory/create-memory-item'
 import type { MemoryItem } from '@/core/memory/memory-item'
+import { buildSearchClueFromParsed } from '@/core/recall/orchestrate-keyword-recall'
+import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
+import { keywordIndexRepository } from '@/infrastructure/indexeddb/keyword-index-repository'
 import {
   memoryItemRepository,
   type ListMemoryItemsOptions,
@@ -52,6 +56,31 @@ export class MemoryItemService {
   /** 列出当前用户的 MemoryItem。 */
   async list(options: ListMemoryItemsOptions = {}): Promise<MemoryItem[]> {
     return this.repository.listByOwner(options)
+  }
+
+  /**
+   * Recall 候选加载：优先关键词倒排预过滤；失败 / 无查询 token 则 fallback 全表扫描。
+   */
+  async listForKeywordRecall(input: {
+    rawClue: string
+    parsed: ParsedRecallClue
+    limit?: number
+  }): Promise<{ items: MemoryItem[]; source: 'inverted' | 'scan' }> {
+    const limit = input.limit ?? RECALL_SCAN_LIMIT
+    const searchClue = buildSearchClueFromParsed(input.parsed) || input.rawClue
+
+    try {
+      const lookup = await keywordIndexRepository.lookupCandidateIds(searchClue)
+      if (lookup != null) {
+        const items = await this.repository.getManyByIds(lookup.ids)
+        return { items: items.slice(0, limit), source: 'inverted' }
+      }
+    } catch {
+      // 倒排异常时降级全表扫，不阻断找回
+    }
+
+    const items = await this.repository.listByOwner({ limit })
+    return { items, source: 'scan' }
   }
 
   /** 按 id 读取当前用户的 MemoryItem。 */

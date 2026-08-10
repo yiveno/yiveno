@@ -277,13 +277,23 @@ export class HybridRecallBackend implements RecallBackend {
       currentUtterance: normalizedClue
     })
 
-    const listed = await memoryItemService.list({ limit: RECALL_SCAN_LIMIT })
+    const listedResult = await memoryItemService.listForKeywordRecall({
+      rawClue: normalizedClue,
+      parsed: merge.merged,
+      limit: RECALL_SCAN_LIMIT
+    })
+    const listed = listedResult.items
     const items = excludeDismissedMemoryItems(listed, dismissedIds)
 
     const queryText = buildQueryEmbeddingText({
       effectiveClue: merge.effectiveRaw,
       parsed: merge.merged,
       rawClue: normalizedClue
+    })
+
+    trace('info', 'Hybrid Recall：候选已加载', {
+      candidateSource: listedResult.source,
+      candidateCount: items.length
     })
 
     let usedHybrid = false

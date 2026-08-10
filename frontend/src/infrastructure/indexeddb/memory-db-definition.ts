@@ -1,4 +1,6 @@
 import {
+  KEYWORD_INDEX_META_STORE,
+  KEYWORD_POSTING_STORE,
   MEMORY_DATABASE_NAME,
   MEMORY_DATABASE_VERSION,
   MEMORY_ITEM_INDEX_BY_OWNER,
@@ -9,7 +11,7 @@ import {
 } from '@/infrastructure/indexeddb/constants'
 import type { IndexedDBDefinition } from '@/infrastructure/indexeddb/manager'
 
-/** 创建或升级 memory_items 表与索引。 */
+/** 创建或升级 memory_items 表与索引；v4 增加倒排 store。 */
 function upgradeMemoryDatabase(
   database: IDBDatabase,
   transaction: IDBTransaction,
@@ -39,6 +41,15 @@ function upgradeMemoryDatabase(
 
   if (oldVersion < 3 && !store.indexNames.contains(MEMORY_ITEM_INDEX_BY_OWNER)) {
     store.createIndex(MEMORY_ITEM_INDEX_BY_OWNER, 'ownerId', { unique: false })
+  }
+
+  if (oldVersion < 4) {
+    if (!database.objectStoreNames.contains(KEYWORD_POSTING_STORE)) {
+      database.createObjectStore(KEYWORD_POSTING_STORE, { keyPath: 'id' })
+    }
+    if (!database.objectStoreNames.contains(KEYWORD_INDEX_META_STORE)) {
+      database.createObjectStore(KEYWORD_INDEX_META_STORE, { keyPath: 'ownerId' })
+    }
   }
 }
 

@@ -9,6 +9,7 @@
 **运维 / 工程（非规格，与正文冲突时以正文为准）**：
 
 - [`engineering/语料适配器契约.md`](./engineering/语料适配器契约.md) — Corpus Adapter 边界、差距清单、第三方准入 checklist（R2）
+- [`engineering/关键词倒排索引-Phase1.md`](./engineering/关键词倒排索引-Phase1.md) — 倒排预过滤设计（R3）
 - [`engineering/业务日志与注释约定.md`](./engineering/业务日志与注释约定.md) — 中文注释与 flow log
 - [`AUTH_GUIDE.md`](./AUTH_GUIDE.md) — OAuth 使用说明
 - [`ENVIRONMENT.md`](./ENVIRONMENT.md) — 环境变量分层、同步与校验规则

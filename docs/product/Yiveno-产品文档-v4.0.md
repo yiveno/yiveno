@@ -641,7 +641,7 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 **说明：** 页内左侧类型切换 ≠ 旧「侧边栏管理页」/书签树；禁止整理中心化回潮。
 
 **下一项：按 [`Yiveno-改版计划-v1.md`](./Yiveno-改版计划-v1.md) 推进（命题验收 → 空结果/冷启动 → 语料适配器契约 → 检索硬化）。**  
-倒排索引仍未开。**Hybrid / embedding 与 §7.1 首批（同域软重排 / behaviorHints 加权 / 追问芯片）已接线**（召回质量不分 Free/Pro；云同步仍须 Pro）。
+倒排索引 **Phase 1 已接线**（候选预过滤 + dirty/rebuild + 失败 fallback 全表扫；见 `docs/engineering/关键词倒排索引-Phase1.md`）。**Hybrid / embedding 与 §7.1 首批（同域软重排 / behaviorHints 加权 / 追问芯片）已接线**（召回质量不分 Free/Pro；云同步仍须 Pro）。
 
 **类型优先级（与 §0.1.1 一致）：** 主动 Capture 与体验打磨优先 **摘录 + `clues.note`**；书签继续导入/sync 但为配角；记忆库默认 Tab = 摘录。**语料适配器插头**保持可扩展；第三方连接器未经验收门槛前不上主路径。  
 **独立 `note` 类型（预留）：** 有边界需求（无出处闪念），但属辅助，**当前不接入**。未验证「无处可挂」的规模流失前，不得做成可用入口，也不得在 UI 暗示已有独立笔记库。若将来做，须极瘦（纯文本、无文件夹/富文本/双向链）。
@@ -654,6 +654,7 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 | ---------------------------- | ------------------------------------------------------------------------------- |
 | MemoryItem / clues / payload | `frontend/src/core/memory/`                                                     |
 | 语料适配器契约（R2）         | `docs/engineering/语料适配器契约.md` + `core/memory/corpus-adapter-contract.ts` |
+| 关键词倒排 Phase 1           | `docs/engineering/关键词倒排索引-Phase1.md` + `keyword-index-repository.ts`     |
 | Background 消息联合类型      | `frontend/src/core/messaging/background-messages.ts`                            |
 | UI 发消息                    | `frontend/src/infrastructure/messaging/background-client.ts`                    |
 | SW 分发                      | `frontend/src/background/handlers/message-handler.ts`                           |
@@ -700,6 +701,7 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 | Need A Clue / 否定反馈           | 已上线（并入对话）      | 低置信 outcome + dismiss；会话内 dismissedIds 硬排除；追问模板基于合并后 parsed                                                                      |
 | 多源线索与权重（§7.1）           | 已上线（首批）          | 同域软重排；`recently_saved`/`half_read`/`often_opened` 软加权；追问芯片（刚存/刚打开/当前站）                                                       |
 | Hybrid Filter                    | 已上线                  | 本机 Hybrid（RRF）；**不分 Free/Pro**；无向量时降级关键词；云同步剥离 embedding                                                                      |
+| 关键词倒排 Phase 1               | 已上线                  | IDB v4 posting 预过滤；dirty/rebuild；失败 fallback `list(10000)`；打分仍 keyword-filter                                                             |
 | Gumroad Pro / 订阅快照           | 已上线                  | Free+**仅 Pro**；投影+对账（§A.3.2）；`GET /api/account/subscription`；Settings/官网升级；**sync + hosted 大配额**门禁；embed 登录即可（日配额分档） |
 | 云同步 / 账号 UI                 | 已上线（Phase C + Pro） | Supabase `memory_items`；Worker `/api/memory/sync/*` **需有效 Pro**；开同步并集 + **15 分钟增量**；登录≠自动上传                                     |
 | 分享                             | 目标 · Phase C          |                                                                                                                                                      |
@@ -731,6 +733,7 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 | 摘录删除                                  | ✓    | —    | —   | ✓    | delete handler；库/详情手测                            |
 | Need A Clue / 否定反馈                    | ✓    | ✓    | —   | ✓    | eval：`need-a-clue-*`；dismiss 单测；对话手测          |
 | 关键词 Recall 主路径（Filter + 口语解析） | ✓    | ✓    | ✓   | ✓    | eval=`must` 门禁；E2E=Popup 固定线索→结果卡            |
+| 关键词倒排 Phase 1                        | ✓    | ✓    | —   | ✓    | `keyword-index-repository*`；extract-tokens；真机大库  |
 | Popup 对话式壳（多轮 UI）                 | ✓    | ✓    | 薄  | ✓    | merge 单测 + eval must 多轮；E2E 薄；芯片/dismiss 手测 |
 | 多轮槽位 merge（§7.0）                    | ✓    | ✓    | —   | ✓    | `merge-recall-dialog-turn`；eval `dialog-*` must       |
 | Gumroad Pro / 同步·托管门禁               | ✓    | —    | —   | ✓    | webhook/account/sync Pro 拒绝；§5.7 手动付费全流程     |
@@ -937,7 +940,7 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 - **P0 / Phase A**：线索解释/空状态、摘录详情、记忆库轻浏览 **已完成**；冷启动手工门禁见 **§5.8**
 - **改版 R 波次**：见 [`Yiveno-改版计划-v1.md`](./Yiveno-改版计划-v1.md)（R0 命题先验 → R1 冷启动 → R2 适配器 → R3 检索硬化）
-- **P1 / Phase B**：Hybrid/embedding（召回不分档）+ §7.1 首批 **已接线**；倒排索引 / 选区预填仍待
+- **P1 / Phase B**：Hybrid/embedding（召回不分档）+ §7.1 首批 **已接线**；**倒排 Phase 1（候选预过滤）已接线**；选区预填仍待
 - **P2 / Phase C**：账户 UI + 云同步铺路 **已完成切片**；隐私 P0（说明 + 开同步确认 + **官网 `/privacy`**）**已上线**；隐私 P1（**关 AI / ToS**）**已上线**；**数据**分区（整库导出 / 清除本机 / 删云端 / 删账号）**已上线**；**书签灌库开关**已上线；分享仍待
 - **P3 / Phase D**：标签/失效链接/统计等轻管理余项（摘录删除已提前上线）
 
@@ -998,7 +1001,7 @@ Chrome API / 选区
 - 依赖：`pages|presentation → application → core`；`application` → `infrastructure`。
 - UI 访问 Background：**仅** messaging client。
 - 导入 = 核心业务（真实进度）。embedding = 辅助（Offscreen/队列，不阻塞关键词 Recall）。
-- 目标规模指导：2 万 MemoryItem；当前全量扫描上限约 10000；倒排/向量索引仍属 Phase B 余项。
+- 目标规模指导：2 万 MemoryItem；当前全量扫描上限约 10000；**倒排 Phase 1 作候选预过滤**（不健康则 fallback 扫描）；向量索引仍可继续加厚。
 - 长期：Cloud Memory DB（当前实现为 **Supabase `memory_items`**）为云端事实源；本地 IndexedDB 变缓存——**不提前重写本地日常读写链路**。
 - Phase C 切片：扩展经 Supabase Auth 登录写入 `AccountBinding`；同步默认关；经 Worker `/api/memory/sync/*` push/pull/replace。
 - **同步 = Pro + 登录 + 开关（Normative）**：三者同时满足才可开启或维持云同步。Worker `/api/memory/sync/*`（除只读 `status` 外的写/拉路径）须 `isActiveProUser`；扩展开同步前查本机 Pro 快照；订阅失效时关闭同步并清定时闹钟。登录 ≠ 自动上传；Free 可登录但不可开同步。
@@ -1167,13 +1170,13 @@ Chrome API / 选区
 | Phase  | 内容                                                                                                                            |
 | ------ | ------------------------------------------------------------------------------------------------------------------------------- |
 | **A**  | 线索解释/空状态、摘录详情、记忆库轻浏览 **已完成**；其余并入改版计划 R 波次                                                     |
-| B      | Hybrid/embedding（召回不分档）+ §7.1 首批 **已接线**；Need A Clue **已上线**；倒排索引 / 选区预填仍待                           |
+| B      | Hybrid/embedding（召回不分档）+ §7.1 首批 **已接线**；Need A Clue **已上线**；**倒排 Phase 1 已接线**；选区预填仍待             |
 | C      | 账户 UI + 云同步 + 增量定时 + **隐私 P0/P1**（删账号、`/privacy`、整库导出、关 AI、`/terms`）+ **书签灌库开关**已上线；分享仍待 |
 | D      | 轻管理余项（标签/失效链接/统计；摘录删除已提前）                                                                                |
 | **R0** | **命题先验**：口语↔内容 must eval / 金标收束；空结果诚实语义对齐 §0.1.1（禁偏好建档闲聊）                                       |
 | **R1** | **冷启动不破题**：第一天可用路径（导入/划存 → 一次成功找回）；空结果只导向 Capture/追问                                         |
 | **R2** | **语料适配器契约**：统一 Memory 映射边界文档化；摘录/书签作为参考实现收齐；第三方连接器排队但不提前堆砌                         |
-| **R3** | **检索硬化**：弱锚点门禁（G3）**已接线**；倒排索引等规模项仍待；外部语料适配器有条件（过准入清单）                              |
+| **R3** | **检索硬化**：弱锚点门禁（G3）**已接线**；**倒排 Phase 1（预过滤）已接线**；外部语料适配器有条件（过准入清单）                  |
 | **R∞** | **框架远景（Non-normative）**：个性化检索运行时有限开放——仅当 R0–R2 命题不可动摇后（附录 A.7）                                  |
 
 ---
@@ -1324,7 +1327,8 @@ Chrome API / 选区
 
 | 日期       | 变更                                                                                                                                                                   |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-08-11 | R3 切片：弱锚点质量评估 + 关键词降权（空壳书签去高权 title）；倒排仍待                                                                                                 |
+| 2026-08-11 | 倒排 Phase 1：IDB v4 posting 预过滤 + dirty/rebuild + Hybrid fallback 全表扫；弱锚点之后的检索硬化                                                                     |
+| 2026-08-11 | R3 切片：弱锚点质量评估 + 关键词降权（空壳书签去高权 title）                                                                                                           |
 | 2026-08-11 | R2：语料适配器工程契约 + 差距 G1–G7 + 准入清单；类型旁挂 `corpus-adapter-contract`                                                                                     |
 | 2026-08-11 | R1：§5.8 冷启动手工验收；空库 idle「先留下痕迹」；欢迎/miss 文案收束找东西；改版计划 R1 落地                                                                           |
 | 2026-08-11 | 收束产品对话共识：对外印象「那个找东西的」；命题先验；空结果契约；可达档位 A/B/C；语料适配器 Normative；§8 R0–R∞；附录 A.7 框架远景；改版计划 v1                       |
