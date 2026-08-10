@@ -26,5 +26,4 @@ export const LlmFollowUpProposalSchema = z.object({
   chips: z.array(LlmFollowUpChipProposalSchema).max(5).default([])
 })
 
-export type LlmFollowUpChipProposal = z.infer<typeof LlmFollowUpChipProposalSchema>
 export type LlmFollowUpProposal = z.infer<typeof LlmFollowUpProposalSchema>
