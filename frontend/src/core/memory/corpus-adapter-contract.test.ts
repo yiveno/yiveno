@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   BuiltinCorpusSourceSchema,
+  CorpusAdapterStageSchema,
   CorpusQualityGateDecisionSchema,
   THIRD_PARTY_CORPUS_ADMISSION_CHECKS
 } from '@/core/memory/corpus-adapter-contract'
@@ -13,6 +14,10 @@ describe('corpus-adapter-contract', () => {
 
   it('质量门禁三态齐全', () => {
     expect(CorpusQualityGateDecisionSchema.options).toEqual(['accept', 'weak', 'reject'])
+  })
+
+  it('管道阶段口径齐全', () => {
+    expect(CorpusAdapterStageSchema.options).toEqual(['auth', 'fetch', 'map', 'gate', 'write'])
   })
 
   it('第三方准入清单覆盖命题/门禁/主链/边界', () => {

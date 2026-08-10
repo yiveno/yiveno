@@ -19,12 +19,10 @@ export const BuiltinCorpusSourceSchema = z.enum([
   'bookmark' // 书签适配器
 ])
 
-export type BuiltinCorpusSource = z.infer<typeof BuiltinCorpusSourceSchema>
-
 /**
  * 质量门禁结果（映射后、写库前）。
  * - accept：可进召回池
- * - weak：可写但须降权 / 引导补锚点（实现待 G3）
+ * - weak：可写但须降权 / 引导补锚点
  * - reject：拒写
  */
 export const CorpusQualityGateDecisionSchema = z.enum([
@@ -33,7 +31,7 @@ export const CorpusQualityGateDecisionSchema = z.enum([
   'reject' // 拒绝
 ])
 
-export type CorpusQualityGateDecision = z.infer<typeof CorpusQualityGateDecisionSchema>
+type CorpusQualityGateDecision = z.infer<typeof CorpusQualityGateDecisionSchema>
 
 /** 门禁输出：决策 + 稳定机器原因（日志 / 将来 errorCode）。 */
 export type CorpusQualityGateResult = {
@@ -59,8 +57,6 @@ export const THIRD_PARTY_CORPUS_ADMISSION_CHECKS = [
   'acceptance_must_or_manual' // 验收：must 或 §5 步骤
 ] as const
 
-export type ThirdPartyCorpusAdmissionCheck = (typeof THIRD_PARTY_CORPUS_ADMISSION_CHECKS)[number]
-
 /**
  * 适配器管道阶段（文档与日志共用口径；非运行时状态机）。
  * - auth：认证
@@ -76,5 +72,3 @@ export const CorpusAdapterStageSchema = z.enum([
   'gate', // 门禁
   'write' // 写库
 ])
-
-export type CorpusAdapterStage = z.infer<typeof CorpusAdapterStageSchema>
