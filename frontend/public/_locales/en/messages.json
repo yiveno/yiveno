@@ -160,7 +160,7 @@
     "message": "Most likely"
   },
   "popup_section_also_possible": {
-    "message": "Also possible"
+    "message": "Maybe these"
   },
   "popup_section_possible_matches": {
     "message": "Possible matches"
@@ -175,13 +175,13 @@
     "message": "None of these"
   },
   "popup_reply_confident": {
-    "message": "I think this is the one you're looking for."
+    "message": "This is the most likely match."
   },
   "popup_reply_uncertain": {
-    "message": "I'm not fully sure yet. These are the closest matches."
+    "message": "These might be related, but none is strong enough yet. Add a word that distinguishes them, or say none of these."
   },
   "popup_reply_miss": {
-    "message": "I haven't matched it yet. Add one more detail you remember."
+    "message": "Nothing in your library matches this clue. Misremembering or never saving it is a valid answer. Save a trace first if you want to find it later."
   },
   "popup_reply_after_dismiss": {
     "message": "Okay, let's try a different angle. Add the site, a quote, or something you wrote."
@@ -198,36 +198,6 @@
   "popup_suggest_type": {
     "message": "It felt more like:"
   },
-  "popup_followup_uncertain_generic": {
-    "message": "I’m not fully sure. These are the closest. Can you add another clue?"
-  },
-  "popup_followup_uncertain_content": {
-    "message": "These are the closest. Do you remember a word from the title or text?"
-  },
-  "popup_followup_uncertain_time": {
-    "message": "These are the closest. About when did you save it? Yesterday, last week?"
-  },
-  "popup_followup_uncertain_type": {
-    "message": "These are the closest. What kind of thing was it — article, video, song?"
-  },
-  "popup_followup_uncertain_note": {
-    "message": "These are the closest. Did you leave a note on it?"
-  },
-  "popup_followup_miss_generic": {
-    "message": "Nothing in your library matched. Add another detail you remember—or save a trace first, then try again."
-  },
-  "popup_followup_miss_content": {
-    "message": "Nothing in your library matched. Do you remember a word from the title or text?"
-  },
-  "popup_followup_miss_time": {
-    "message": "Nothing in your library matched. About when did you save it? Yesterday, last week?"
-  },
-  "popup_followup_miss_type": {
-    "message": "Nothing in your library matched. What kind of thing was it — article, video, song?"
-  },
-  "popup_followup_miss_note": {
-    "message": "Nothing in your library matched. Did you leave a note on it?"
-  },
   "popup_followup_miss_constrained_empty": {
     "message": "Nothing in your library matches that time and type. If the day might be wrong, try another time."
   },
@@ -236,33 +206,6 @@
   },
   "popup_related_guess_label": {
     "message": "Guess (not the answer)"
-  },
-  "popup_followup_chip_yesterday": {
-    "message": "yesterday"
-  },
-  "popup_followup_chip_day_before": {
-    "message": "day before yesterday"
-  },
-  "popup_followup_chip_last_week": {
-    "message": "last week"
-  },
-  "popup_followup_chip_recent": {
-    "message": "recently"
-  },
-  "popup_followup_chip_article": {
-    "message": "article"
-  },
-  "popup_followup_chip_poem": {
-    "message": "poem"
-  },
-  "popup_followup_chip_code": {
-    "message": "code"
-  },
-  "popup_followup_chip_song": {
-    "message": "song"
-  },
-  "popup_followup_chip_video": {
-    "message": "video"
   },
   "popup_duplicate_group_bookmark": {
     "message": "$1 identical bookmarks",
@@ -830,18 +773,6 @@
         "content": "$5"
       }
     }
-  },
-  "popup_followup_chip_recently_opened": {
-    "message": "Recently opened"
-  },
-  "popup_followup_chip_recently_saved": {
-    "message": "Recently saved"
-  },
-  "popup_followup_chip_selection_prefill": {
-    "message": "Use selected text"
-  },
-  "popup_followup_chip_current_site": {
-    "message": "This site"
   },
   "pro_required_for_hybrid": {
     "message": "Cloud sync and a larger hosted LLM quota require Pro; Hybrid recall on this device is available on Free."

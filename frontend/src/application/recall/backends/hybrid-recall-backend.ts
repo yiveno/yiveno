@@ -75,8 +75,8 @@ function finalizeKeywordResult(
 }
 
 /**
- * need_a_clue / no_match 时尝试 LLM 追问；失败静默降级（不写 assistantFollowUp）。
- * 计入与理解层同一 hosted/clue completer 配额桶。
+ * need_a_clue 时尝试 LLM 追问（仅用于在已有候选内收窄）；失败静默降级。
+ * no_match 不追问。计入与理解层同一 hosted/clue completer 配额桶。
  */
 async function attachLlmFollowUpIfNeeded(
   result: RecallResult,
@@ -87,26 +87,21 @@ async function attachLlmFollowUpIfNeeded(
     trace: ReturnType<typeof createRecallFlowTrace>
   }
 ): Promise<RecallResult> {
-  if (result.outcome !== 'need_a_clue' && result.outcome !== 'no_match') {
+  if (result.outcome !== 'need_a_clue' || result.alsoPossible.length === 0) {
     return result
   }
 
-  const weakCandidateTitles =
-    result.outcome === 'need_a_clue'
-      ? result.alsoPossible.slice(0, 3).map(match => {
-          const display = getMemoryItemDisplay(match.item, () => '')
-          return display.title || display.excerpt || display.subtitle || match.item.id
-        })
-      : undefined
+  const weakCandidateTitles = result.alsoPossible.slice(0, 3).map(match => {
+    const display = getMemoryItemDisplay(match.item, () => '')
+    return display.title || display.excerpt || display.subtitle || match.item.id
+  })
 
   try {
     const followUp = await completeRecallFollowUpWithLlm({
       clue: input.clue,
       parsed: input.parsed,
-      outcome: result.outcome,
-      ...(result.emptyKind !== undefined ? { emptyKind: result.emptyKind } : {}),
-      hasRelatedGuess: Boolean(result.relatedGuess),
-      ...(weakCandidateTitles !== undefined ? { weakCandidateTitles } : {}),
+      outcome: 'need_a_clue',
+      weakCandidateTitles,
       complete: input.complete,
       trace: input.trace
     })
@@ -119,7 +114,7 @@ async function attachLlmFollowUpIfNeeded(
       }
     }
   } catch (error) {
-    input.trace('warn', 'LLM 追问：失败，降级规则模板', {
+    input.trace('warn', 'LLM 追问：失败，降级静态文案', {
       outcome: result.outcome,
       error: error instanceof Error ? error.message : String(error)
     })

@@ -9,7 +9,7 @@ import {
   getPopupNoMatchCopy,
   type PopupLibraryState
 } from '@/core/recall/popup-empty-copy'
-import type { RecallEmptyKind, RecallMatch } from '@/core/recall/recall-result'
+import type { RecallMatch } from '@/core/recall/recall-result'
 import { getMemoryItemDisplay } from '@/core/recall/recall-result'
 import { buildRecallCardHighlightParts } from '@/core/recall/highlight-recall-text'
 import { getMemoryItemOpenHref } from '@/core/recall/memory-open-href'
@@ -36,11 +36,8 @@ import type {
   AssistantTurn,
   RecallSuggestion
 } from '@/pages/popup/recall-conversation-types'
-import { buildRecallFollowUpPlan } from '@/core/recall/build-recall-follow-up'
 import type { RecallDialogState } from '@/core/recall/merge-recall-dialog-turn'
 import { rollbackLastDialogUtterance } from '@/core/recall/merge-recall-dialog-turn'
-import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
-import { parseRecallClue } from '@/core/recall/parse-recall-clue'
 
 defineOptions({ name: 'PopupPage' })
 
@@ -94,28 +91,23 @@ function buildRecallSuggestions(): RecallSuggestion[] {
   ]
 }
 
-/** 按合并后 parsed 生成追问；缺 parsed 时降级规则解析本轮（不应成为主路径）。 */
-function buildFollowUpFromParsed(
-  parsed: ParsedRecallClue | undefined,
-  fallbackClue: string,
-  outcome: 'need_a_clue' | 'no_match',
-  options: { emptyKind?: RecallEmptyKind; hasRelatedGuess?: boolean } = {}
-): { text: string; suggestions: RecallSuggestion[] } {
-  const plan = buildRecallFollowUpPlan(parsed ?? parseRecallClue(fallbackClue), outcome, {
-    ...(options.emptyKind !== undefined ? { emptyKind: options.emptyKind } : {}),
-    ...(options.hasRelatedGuess !== undefined ? { hasRelatedGuess: options.hasRelatedGuess } : {})
-  })
-  return {
-    text: t(plan.replyKey),
-    suggestions: plan.suggestions.map(item => {
-      const label = t(item.labelKey)
-      return {
-        id: item.id,
-        label,
-        value: item.value ?? label
-      }
-    })
+/** 无候选 miss：诚实终局文案（无问卷芯片）。 */
+function resolveMissAssistantText(input: {
+  emptyKind?: string
+  hasRelatedGuess: boolean
+  library: PopupLibraryState
+  clue: string
+}): string {
+  if (input.emptyKind === 'constrained_none') {
+    return input.hasRelatedGuess
+      ? t('popup_followup_miss_constrained_empty_with_guess')
+      : t('popup_followup_miss_constrained_empty')
   }
+  if (input.library === 'empty') {
+    const copy = getPopupNoMatchCopy({ library: 'empty', clue: input.clue, canShorten: false }, t)
+    return `${copy.title} ${copy.body}`
+  }
+  return t('popup_reply_miss')
 }
 
 let importPollTimer: ReturnType<typeof setInterval> | null = null
@@ -406,6 +398,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
     const highlightClue = response.result.effectiveClue ?? response.result.clue
 
     if (response.result.outcome === 'top_pick') {
+      const alsoCards = response.result.alsoPossible.map(match => toMatchCard(match, highlightClue))
       conversationTurns.value.push(
         createAssistantTurn({
           id: nextTurnId(),
@@ -414,43 +407,45 @@ async function runRecall(trimmedClue: string): Promise<void> {
           primaryCard: response.result.topPick
             ? toMatchCard(response.result.topPick, highlightClue)
             : null,
-          allowDismiss: response.result.topPick !== null
+          ...(alsoCards.length > 0
+            ? {
+                candidateCards: alsoCards,
+                candidateSectionLabel: t('popup_section_also_possible')
+              }
+            : {}),
+          allowDismiss: response.result.topPick !== null || alsoCards.length > 0
         })
       )
     } else if (response.result.outcome === 'need_a_clue') {
       const llmFollowUp = response.result.assistantFollowUp
-      const followUp = llmFollowUp
-        ? { text: llmFollowUp.text, suggestions: llmFollowUp.suggestions }
-        : buildFollowUpFromParsed(response.result.parsed, highlightClue, 'need_a_clue')
+      const candidateCards = response.result.alsoPossible.map(match =>
+        toMatchCard(match, highlightClue)
+      )
       conversationTurns.value.push(
         createAssistantTurn({
           id: nextTurnId(),
           tone: 'uncertain',
-          text: followUp.text,
-          candidateCards: response.result.alsoPossible.map(match =>
-            toMatchCard(match, highlightClue)
-          ),
-          suggestions: followUp.suggestions,
-          allowDismiss: response.result.alsoPossible.length > 0
+          text: llmFollowUp?.text ?? t('popup_reply_uncertain'),
+          candidateCards,
+          candidateSectionLabel: t('popup_section_also_possible'),
+          ...(llmFollowUp?.suggestions?.length ? { suggestions: llmFollowUp.suggestions } : {}),
+          allowDismiss: candidateCards.length > 0
         })
       )
     } else {
       const relatedGuess = response.result.relatedGuess ?? null
-      const llmFollowUp = response.result.assistantFollowUp
-      const followUp = llmFollowUp
-        ? { text: llmFollowUp.text, suggestions: llmFollowUp.suggestions }
-        : buildFollowUpFromParsed(response.result.parsed, highlightClue, 'no_match', {
-            ...(response.result.emptyKind !== undefined
-              ? { emptyKind: response.result.emptyKind }
-              : {}),
-            hasRelatedGuess: relatedGuess !== null
-          })
       conversationTurns.value.push(
         createAssistantTurn({
           id: nextTurnId(),
           tone: 'miss',
-          text: followUp.text,
-          suggestions: followUp.suggestions,
+          text: resolveMissAssistantText({
+            ...(response.result.emptyKind !== undefined
+              ? { emptyKind: response.result.emptyKind }
+              : {}),
+            hasRelatedGuess: relatedGuess !== null,
+            library: libraryState.value,
+            clue: highlightClue
+          }),
           ...(relatedGuess
             ? {
                 relatedGuessCard: toMatchCard(relatedGuess, highlightClue),

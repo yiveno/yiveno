@@ -160,7 +160,7 @@
     "message": "最可能的结果"
   },
   "popup_section_also_possible": {
-    "message": "也可能是这些"
+    "message": "可能是这些"
   },
   "popup_section_possible_matches": {
     "message": "可能相关"
@@ -175,13 +175,13 @@
     "message": "这些都不对"
   },
   "popup_reply_confident": {
-    "message": "我觉得你要找的就是这个。"
+    "message": "最可能是这条。"
   },
   "popup_reply_uncertain": {
-    "message": "我还不能完全确定，最接近的是这些。"
+    "message": "这些可能有关，但还不够确定。补一句能区分它们的词，或点「这些都不对」。"
   },
   "popup_reply_miss": {
-    "message": "我还没对上。你可以再补一句你记得的内容。"
+    "message": "库里没有对得上的痕迹。记错或还没存过，也是正常结果。需要的话可以先划存一句再找。"
   },
   "popup_reply_after_dismiss": {
     "message": "好，我们换个方向继续找。你可以补一句网站名、原文，或者你自己写过的话。"
@@ -198,36 +198,6 @@
   "popup_suggest_type": {
     "message": "我记得它更像是："
   },
-  "popup_followup_uncertain_generic": {
-    "message": "我还不能完全确定，最接近的是这些。你可以再补一句线索。"
-  },
-  "popup_followup_uncertain_content": {
-    "message": "这些最接近。还记得标题或正文里的某个词吗？"
-  },
-  "popup_followup_uncertain_time": {
-    "message": "这些最接近。大概是哪天存的？比如昨天、上周。"
-  },
-  "popup_followup_uncertain_type": {
-    "message": "这些最接近。还记得更像哪一类？比如文章、视频、歌。"
-  },
-  "popup_followup_uncertain_note": {
-    "message": "这些最接近。你有没有给它写过备注？"
-  },
-  "popup_followup_miss_generic": {
-    "message": "还没对上库里的痕迹。再补一句你记得的内容，或先划存一点再找。"
-  },
-  "popup_followup_miss_content": {
-    "message": "还没对上库里的痕迹。还记得标题或正文里的某个词吗？"
-  },
-  "popup_followup_miss_time": {
-    "message": "还没对上库里的痕迹。大概是哪天存的？比如昨天、上周。"
-  },
-  "popup_followup_miss_type": {
-    "message": "还没对上库里的痕迹。还记得更像哪一类？比如文章、视频、歌。"
-  },
-  "popup_followup_miss_note": {
-    "message": "还没对上库里的痕迹。你有没有给它写过备注？"
-  },
   "popup_followup_miss_constrained_empty": {
     "message": "记忆库里没有符合这个时间与类型的痕迹。若日期可能记错了，可以换个时间再试。"
   },
@@ -236,33 +206,6 @@
   },
   "popup_related_guess_label": {
     "message": "猜测（不是答案）"
-  },
-  "popup_followup_chip_yesterday": {
-    "message": "昨天"
-  },
-  "popup_followup_chip_day_before": {
-    "message": "前天"
-  },
-  "popup_followup_chip_last_week": {
-    "message": "上周"
-  },
-  "popup_followup_chip_recent": {
-    "message": "最近"
-  },
-  "popup_followup_chip_article": {
-    "message": "文章"
-  },
-  "popup_followup_chip_poem": {
-    "message": "诗"
-  },
-  "popup_followup_chip_code": {
-    "message": "代码"
-  },
-  "popup_followup_chip_song": {
-    "message": "歌"
-  },
-  "popup_followup_chip_video": {
-    "message": "视频"
   },
   "popup_duplicate_group_bookmark": {
     "message": "共 $1 条相同书签",
@@ -830,18 +773,6 @@
         "content": "$5"
       }
     }
-  },
-  "popup_followup_chip_recently_opened": {
-    "message": "刚打开过的"
-  },
-  "popup_followup_chip_recently_saved": {
-    "message": "刚存的"
-  },
-  "popup_followup_chip_selection_prefill": {
-    "message": "用刚选中的文字"
-  },
-  "popup_followup_chip_current_site": {
-    "message": "跟当前站有关"
   },
   "pro_required_for_hybrid": {
     "message": "云同步与更大托管 LLM 配额需要 Pro；本机 Hybrid 找回 Free 可用。"

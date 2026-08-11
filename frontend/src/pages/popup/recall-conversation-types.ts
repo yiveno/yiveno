@@ -22,7 +22,10 @@ export type AssistantTurn = {
   relatedGuessCard?: PopupRecallCardModel | null
   /** 猜测卡上方硬标签文案 */
   relatedGuessLabel?: string
+  /** 次要相关 / 弱候选列表 */
   candidateCards?: PopupRecallCardModel[]
+  /** 候选区标题（如「可能是这些」） */
+  candidateSectionLabel?: string
   suggestions?: RecallSuggestion[]
   allowDismiss: boolean
 }

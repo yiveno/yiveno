@@ -109,25 +109,30 @@ function handleToggleExpand(cardId: string): void {
             />
           </div>
 
-          <ul
+          <div
             v-if="turn.candidateCards && turn.candidateCards.length > 0"
-            class="assistant-turn-candidates"
+            class="assistant-turn-candidates-block"
           >
-            <li v-for="(item, index) in turn.candidateCards" :key="item.id">
-              <RecallResultCard
-                :card="item"
-                :result-dom-id="`conversation-candidate-${turn.id}-${index}`"
-                :keyboard-selected="false"
-                compact
-                :expanded="expandedDuplicateGroupId === item.id"
-                :expand-label="expandLabel"
-                :collapse-label="collapseLabel"
-                :note-field-label="noteFieldLabel"
-                @open="handleOpen"
-                @toggle-expand="() => handleToggleExpand(item.id)"
-              />
-            </li>
-          </ul>
+            <p v-if="turn.candidateSectionLabel" class="assistant-turn-candidates-label">
+              {{ turn.candidateSectionLabel }}
+            </p>
+            <ul class="assistant-turn-candidates">
+              <li v-for="(item, index) in turn.candidateCards" :key="item.id">
+                <RecallResultCard
+                  :card="item"
+                  :result-dom-id="`conversation-candidate-${turn.id}-${index}`"
+                  :keyboard-selected="false"
+                  compact
+                  :expanded="expandedDuplicateGroupId === item.id"
+                  :expand-label="expandLabel"
+                  :collapse-label="collapseLabel"
+                  :note-field-label="noteFieldLabel"
+                  @open="handleOpen"
+                  @toggle-expand="() => handleToggleExpand(item.id)"
+                />
+              </li>
+            </ul>
+          </div>
 
           <div
             v-if="turn.allowDismiss && latestDismissibleAssistantId === turn.id"
@@ -236,6 +241,20 @@ function handleToggleExpand(cardId: string): void {
 }
 
 .assistant-turn-related-guess-label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.assistant-turn-candidates-block {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.assistant-turn-candidates-label {
   margin: 0;
   font-size: 12px;
   font-weight: 600;

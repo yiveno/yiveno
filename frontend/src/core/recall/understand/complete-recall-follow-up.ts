@@ -1,10 +1,9 @@
 /**
  * LLM 追问 NLG：prompt → completer → JSON → Zod → 门禁映射。
- * 失败抛错由上层捕获后降级规则模板；不碰数据平面。
+ * 仅 need_a_clue；失败抛错由上层捕获后降级静态文案；不碰数据平面。
  */
 
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
-import type { RecallEmptyKind, RecallOutcome } from '@/core/recall/recall-result'
 import {
   buildLlmFollowUpMessages,
   type BuildLlmFollowUpPromptInput
@@ -22,9 +21,7 @@ import type { LlmChatCompleter } from '@/core/recall/understand/parse-recall-clu
 export type CompleteRecallFollowUpInput = {
   clue: string
   parsed: ParsedRecallClue
-  outcome: Extract<RecallOutcome, 'need_a_clue' | 'no_match'>
-  emptyKind?: RecallEmptyKind
-  hasRelatedGuess?: boolean
+  outcome: 'need_a_clue'
   weakCandidateTitles?: string[]
   complete: LlmChatCompleter
   trace?: ClueFlowTrace
@@ -40,9 +37,6 @@ export async function completeRecallFollowUpWithLlm(
   const promptInput: BuildLlmFollowUpPromptInput = {
     clue: input.clue,
     parsed: input.parsed,
-    outcome: input.outcome,
-    ...(input.emptyKind !== undefined ? { emptyKind: input.emptyKind } : {}),
-    ...(input.hasRelatedGuess !== undefined ? { hasRelatedGuess: input.hasRelatedGuess } : {}),
     ...(input.weakCandidateTitles !== undefined
       ? { weakCandidateTitles: input.weakCandidateTitles }
       : {})
@@ -50,35 +44,28 @@ export async function completeRecallFollowUpWithLlm(
   const messages = buildLlmFollowUpMessages(promptInput)
 
   trace('info', 'LLM 追问：已构造 messages', {
-    outcome: input.outcome,
-    emptyKind: input.emptyKind ?? null,
-    messageCount: messages.length
+    outcome: 'need_a_clue',
+    weakCandidateCount: input.weakCandidateTitles?.length ?? 0
   })
 
-  const startedAt = Date.now()
-  const text = await input.complete(messages)
+  const rawText = await input.complete(messages)
   trace('info', 'LLM 追问：completer 返回', {
-    durationMs: Date.now() - startedAt,
-    textLength: text.length,
-    textPreview: text.length > 200 ? `${text.slice(0, 200)}…` : text
+    preview: rawText.slice(0, 120)
   })
 
-  const rawJson = parseJsonObjectFromLlmText(text)
+  const rawJson = parseJsonObjectFromLlmText(rawText)
   const proposal = LlmFollowUpProposalSchema.parse(rawJson)
   trace('info', 'LLM 追问：Zod 提议通过', {
-    replyChars: proposal.reply.length,
     chipCount: proposal.chips.length
   })
 
   const mapped = mapLlmFollowUpProposal(proposal, {
     parsed: input.parsed,
-    outcome: input.outcome,
-    ...(input.emptyKind !== undefined ? { emptyKind: input.emptyKind } : {})
+    outcome: 'need_a_clue'
   })
   if (!mapped) {
     trace('warn', 'LLM 追问：门禁拒收提议', {
-      outcome: input.outcome,
-      emptyKind: input.emptyKind ?? null
+      replyPreview: proposal.reply.slice(0, 80)
     })
     throw new Error('follow_up_gate_rejected')
   }

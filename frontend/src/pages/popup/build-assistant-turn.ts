@@ -13,6 +13,7 @@ export function createAssistantTurn(input: {
   relatedGuessCard?: PopupRecallCardModel | null
   relatedGuessLabel?: string
   candidateCards?: PopupRecallCardModel[]
+  candidateSectionLabel?: string
   suggestions?: RecallSuggestion[]
   allowDismiss?: boolean
 }): ConversationTurn {
@@ -27,6 +28,9 @@ export function createAssistantTurn(input: {
       ? {}
       : { relatedGuessLabel: input.relatedGuessLabel }),
     ...(input.candidateCards === undefined ? {} : { candidateCards: input.candidateCards }),
+    ...(input.candidateSectionLabel === undefined
+      ? {}
+      : { candidateSectionLabel: input.candidateSectionLabel }),
     ...(input.suggestions === undefined ? {} : { suggestions: input.suggestions }),
     allowDismiss: input.allowDismiss ?? false
   }
