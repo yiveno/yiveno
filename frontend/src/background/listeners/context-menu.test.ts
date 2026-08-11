@@ -60,7 +60,7 @@ function createChromeMock(initial: StorageMap = {}) {
       onClicked: { addListener: vi.fn() }
     },
     i18n: {
-      getMessage: vi.fn(() => '保存到 Yiveno')
+      getMessage: vi.fn(() => 'Save to Yiveno')
     },
     action: {
       setBadgeBackgroundColor: vi.fn(async () => undefined),
@@ -70,9 +70,9 @@ function createChromeMock(initial: StorageMap = {}) {
       executeScript: vi.fn(async () => [
         {
           result: {
-            selectedText: '留存分析',
-            contextBefore: '关于',
-            contextAfter: '的方法'
+            selectedText: 'retention analysis',
+            contextBefore: 'about',
+            contextAfter: 'methods'
           }
         }
       ])
@@ -114,7 +114,7 @@ describe('context-menu listener', () => {
     expect(chrome.contextMenus.create).toHaveBeenCalledWith(
       {
         id: CONTEXT_MENU_SAVE_SELECTION_ID,
-        title: '保存到 Yiveno',
+        title: 'Save to Yiveno',
         contexts: ['selection']
       },
       expect.any(Function)
@@ -141,17 +141,17 @@ describe('context-menu listener', () => {
     await handleContextMenuClick(
       {
         menuItemId: CONTEXT_MENU_SAVE_SELECTION_ID,
-        selectionText: '留存分析',
+        selectionText: 'retention analysis',
         pageUrl: 'https://example.com/post'
       },
-      { id: 1, title: '增长笔记', url: 'https://example.com/post' }
+      { id: 1, title: 'Growth notes', url: 'https://example.com/post' }
     )
 
     const items = await memoryItemRepository.listByOwner({ type: 'text_excerpt' })
     expect(items).toHaveLength(1)
     if (items[0]?.type === 'text_excerpt') {
-      expect(items[0].payload.selectedText).toBe('留存分析')
-      expect(items[0].payload.pageTitle).toBe('增长笔记')
+      expect(items[0].payload.selectedText).toBe('retention analysis')
+      expect(items[0].payload.pageTitle).toBe('Growth notes')
     }
   })
 

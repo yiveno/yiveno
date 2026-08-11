@@ -62,18 +62,18 @@ function createChromeMock(initial: StorageMap = {}) {
           children: [
             {
               id: '1',
-              title: '书签栏',
+              title: 'Bookmarks bar',
               children: [
                 {
                   id: '10',
-                  title: '留存分析',
+                  title: 'Retention analysis',
                   url: 'https://example.com/retention',
                   parentId: '1',
                   dateAdded: Date.parse('2026-01-01T00:00:00.000Z')
                 },
                 {
                   id: '11',
-                  title: '忽略',
+                  title: 'Ignore',
                   url: 'chrome://settings',
                   parentId: '1'
                 }
@@ -124,7 +124,7 @@ describe('import-chrome-bookmarks-service', () => {
     expect(items[0]?.type).toBe('bookmark')
     if (items[0]?.type === 'bookmark') {
       expect(items[0].payload.chromeBookmarkId).toBe('10')
-      expect(items[0].payload.title).toBe('留存分析')
+      expect(items[0].payload.title).toBe('Retention analysis')
     }
   })
 
@@ -151,7 +151,7 @@ describe('import-chrome-bookmarks-service', () => {
 
     await memoryItemRepository.upsertBookmarkFromChrome({
       payload: {
-        title: '留存分析（更新）',
+        title: 'Retention analysis (updated)',
         url: 'https://example.com/retention',
         chromeBookmarkId: '10'
       },
@@ -161,7 +161,7 @@ describe('import-chrome-bookmarks-service', () => {
     const items = await memoryItemRepository.listByOwner({ type: 'bookmark' })
     expect(items).toHaveLength(1)
     if (items[0]?.type === 'bookmark') {
-      expect(items[0].payload.title).toBe('留存分析（更新）')
+      expect(items[0].payload.title).toBe('Retention analysis (updated)')
     }
   })
 
@@ -174,7 +174,7 @@ describe('import-chrome-bookmarks-service', () => {
           status: 'failed',
           importedCount: 0,
           startedAt: '2026-07-22T05:00:00.000Z',
-          error: '上次失败'
+          error: 'previous failure'
         }
       })
     )
@@ -197,7 +197,7 @@ describe('import-chrome-bookmarks-service', () => {
             importedCount: 1,
             totalCount: 2,
             startedAt: '2026-07-22T05:00:00.000Z',
-            error: '中断'
+            error: 'interrupted'
           }
         }),
         bookmarks: {
@@ -208,17 +208,17 @@ describe('import-chrome-bookmarks-service', () => {
               children: [
                 {
                   id: '1',
-                  title: '书签栏',
+                  title: 'Bookmarks bar',
                   children: [
                     {
                       id: '10',
-                      title: '第一条',
+                      title: 'First entry',
                       url: 'https://example.com/one',
                       parentId: '1'
                     },
                     {
                       id: '11',
-                      title: '第二条',
+                      title: 'Second entry',
                       url: 'https://example.com/two',
                       parentId: '1'
                     }
@@ -233,7 +233,7 @@ describe('import-chrome-bookmarks-service', () => {
 
       await memoryItemRepository.createBookmark({
         payload: {
-          title: '第一条',
+          title: 'First entry',
           url: 'https://example.com/one',
           chromeBookmarkId: '10'
         },

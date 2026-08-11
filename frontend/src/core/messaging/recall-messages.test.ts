@@ -5,7 +5,7 @@ import { parseRecallClue } from '@/core/recall/parse-recall-clue'
 
 describe('parseRecallWithCluePayload', () => {
   it('接受单句 clue', () => {
-    expect(parseRecallWithCluePayload({ clue: '留存' })).toEqual({ clue: '留存' })
+    expect(parseRecallWithCluePayload({ clue: 'retention' })).toEqual({ clue: 'retention' })
   })
 
   it('接受多轮 context', () => {

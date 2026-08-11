@@ -35,9 +35,9 @@ describe('create-memory-item', () => {
     const item = createTextExcerptMemoryItem({
       ...baseContext,
       payload: {
-        selectedText: '关键段落',
+        selectedText: 'Key paragraph',
         sourceUrl: 'https://docs.example.com/page',
-        pageTitle: '文档页'
+        pageTitle: 'Docs page'
       },
       captureEntry: 'context_menu'
     })
@@ -45,7 +45,7 @@ describe('create-memory-item', () => {
     expect(MemoryItemSchema.parse(item)).toEqual(item)
     expect(item.type).toBe('text_excerpt')
     expect(item.payload.domain).toBe('docs.example.com')
-    expect(item.clues.textExcerpt).toBe('关键段落')
-    expect(item.clues.title).toBe('文档页')
+    expect(item.clues.textExcerpt).toBe('Key paragraph')
+    expect(item.clues.title).toBe('Docs page')
   })
 })

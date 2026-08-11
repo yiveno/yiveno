@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { testTranslateZh } from '@/core/i18n/test-translate-zh'
+import { testTranslateEn } from '@/core/i18n/test-translate-en'
 import {
   formatExtensionCommandShortcut,
   getExtensionCommandDisplayTitle,
@@ -23,56 +23,56 @@ describe('command-display', () => {
     })
   })
 
-  it('getExtensionCommandDisplayTitle 对找回/记忆库/设置/划词使用产品文案', () => {
+  it('getExtensionCommandDisplayTitle uses product-facing copy', () => {
     expect(
       getExtensionCommandDisplayTitle(
         {
           name: '_execute_action',
           description: 'Open Yiveno Recall'
         },
-        testTranslateZh
+        testTranslateEn
       )
-    ).toBe('打开找回（Popup）')
+    ).toBe('Open Recall (Popup)')
     expect(
       getExtensionCommandDisplayTitle(
         {
           name: 'open_library',
           description: 'Open Yiveno Library'
         },
-        testTranslateZh
+        testTranslateEn
       )
-    ).toBe('打开记忆库')
+    ).toBe('Open Library')
     expect(
       getExtensionCommandDisplayTitle(
         {
           name: 'open_settings',
           description: 'Open Yiveno Settings'
         },
-        testTranslateZh
+        testTranslateEn
       )
-    ).toBe('打开设置')
+    ).toBe('Open Settings')
     expect(
       getExtensionCommandDisplayTitle(
         {
           name: 'save_selection',
           description: 'Save selected text to Yiveno'
         },
-        testTranslateZh
+        testTranslateEn
       )
-    ).toBe('保存选中文字')
+    ).toBe('Save Selected Text')
     expect(
       getExtensionCommandDisplayTitle(
         {
           name: 'save_selection_with_note',
           description: 'Save selected text with a note'
         },
-        testTranslateZh
+        testTranslateEn
       )
-    ).toBe('保存选中文字并备注')
+    ).toBe('Save Selected Text With Note')
   })
 
   it('formatExtensionCommandShortcut 处理未设置', () => {
-    expect(formatExtensionCommandShortcut('Alt+Shift+Y', testTranslateZh)).toBe('Alt+Shift+Y')
-    expect(formatExtensionCommandShortcut('', testTranslateZh)).toBe('未设置')
+    expect(formatExtensionCommandShortcut('Alt+Shift+Y', testTranslateEn)).toBe('Alt+Shift+Y')
+    expect(formatExtensionCommandShortcut('', testTranslateEn)).toBe('Not set')
   })
 })

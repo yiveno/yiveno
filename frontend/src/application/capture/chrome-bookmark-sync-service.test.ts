@@ -34,7 +34,7 @@ function createChromeMock(initial: StorageMap = {}) {
       '10',
       {
         id: '10',
-        title: '留存分析',
+        title: 'Retention analysis',
         url: 'https://example.com/retention',
         parentId: '1'
       }
@@ -98,7 +98,7 @@ function createChromeMock(initial: StorageMap = {}) {
           children: [
             {
               id: '1',
-              title: '书签栏',
+              title: 'Bookmarks bar',
               children: [...bookmarks.values()]
             }
           ]
@@ -151,7 +151,7 @@ describe('chrome-bookmark-sync-service', () => {
   it('handleChromeBookmarkCreated upsert 新书签', async () => {
     const result = await handleChromeBookmarkCreated({
       id: '10',
-      title: '留存分析',
+      title: 'Retention analysis',
       url: 'https://example.com/retention',
       parentId: '1'
     })
@@ -167,7 +167,7 @@ describe('chrome-bookmark-sync-service', () => {
   it('handleChromeBookmarkCreated 对文件夹不标记 captured', async () => {
     const result = await handleChromeBookmarkCreated({
       id: 'folder-1',
-      title: '工作',
+      title: 'Work',
       parentId: '1'
     })
     expect(result.captured).toBe(false)
@@ -176,7 +176,7 @@ describe('chrome-bookmark-sync-service', () => {
   it('handleChromeBookmarkChanged 更新已有书签', async () => {
     await handleChromeBookmarkCreated({
       id: '10',
-      title: '旧标题',
+      title: 'Old title',
       url: 'https://example.com/retention',
       parentId: '1'
     })
@@ -184,7 +184,7 @@ describe('chrome-bookmark-sync-service', () => {
     const chromeMock = chrome as ReturnType<typeof createChromeMock>
     chromeMock.__bookmarks.set('10', {
       id: '10',
-      title: '新标题',
+      title: 'New title',
       url: 'https://example.com/retention',
       parentId: '1'
     })
@@ -194,14 +194,14 @@ describe('chrome-bookmark-sync-service', () => {
     const items = await memoryItemRepository.listByOwner({ type: 'bookmark' })
     expect(items).toHaveLength(1)
     if (items[0]?.type === 'bookmark') {
-      expect(items[0].payload.title).toBe('新标题')
+      expect(items[0].payload.title).toBe('New title')
     }
   })
 
   it('handleChromeBookmarkRemoved 软删除 MemoryItem', async () => {
     await handleChromeBookmarkCreated({
       id: '10',
-      title: '留存分析',
+      title: 'Retention analysis',
       url: 'https://example.com/retention',
       parentId: '1'
     })
@@ -233,7 +233,7 @@ describe('chrome-bookmark-sync-service', () => {
 
     await handleChromeBookmarkCreated({
       id: '10',
-      title: '留存分析',
+      title: 'Retention analysis',
       url: 'https://example.com/retention',
       parentId: '1'
     })
@@ -265,7 +265,7 @@ describe('chrome-bookmark-sync-service', () => {
 
     const result = await handleChromeBookmarkCreated({
       id: '10',
-      title: '留存分析',
+      title: 'Retention analysis',
       url: 'https://example.com/retention',
       parentId: '1'
     })
@@ -288,7 +288,7 @@ describe('chrome-bookmark-sync-service', () => {
 
     await handleChromeBookmarkCreated({
       id: '10',
-      title: '留存分析',
+      title: 'Retention analysis',
       url: 'https://example.com/retention',
       parentId: '1'
     })
@@ -316,7 +316,7 @@ describe('chrome-bookmark-sync-service', () => {
     })
     chromeMock.__bookmarks.set('20', {
       id: '20',
-      title: '采源视频',
+      title: 'Source video roundup',
       url: 'https://www.youtube.com/watch?v=dQAmmIdSRSY',
       parentId: '1'
     })

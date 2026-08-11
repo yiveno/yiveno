@@ -33,9 +33,9 @@ describe('buildSearchClueFromParsed', () => {
     expect(buildSearchClueFromParsed(parsed)).toBe('article')
   })
 
-  it('主题 alias 扩展：二战 → wwii canonical', () => {
-    const parsed = parseRecallClue('二战相关的视频', { nowMs: NOW_MS })
-    expect(buildSearchClueFromParsed(parsed)).toBe('二战 wwii world war ii')
+  it('topic alias expansion keeps wwii canonical surfaces', () => {
+    const parsed = parseRecallClue('wwii related video', { nowMs: NOW_MS })
+    expect(buildSearchClueFromParsed(parsed)).toBe('wwii world war ii')
   })
 })
 
@@ -265,12 +265,12 @@ describe('recallByKeywordWithParsedClue', () => {
     expect(result.topPick?.item.id ?? result.alsoPossible[0]?.item.id).toBe(item.id)
   })
 
-  it('enrichment 后：wwii related video 可找回希特勒 YouTube 书签', () => {
+  it('enrichment keeps wwii related video recallable', () => {
     const item = createBookmarkMemoryItem({
       ownerId: OWNER,
       sourceLocalProfileId: PROFILE,
       payload: {
-        title: '希特勒死亡80年後 為何仍給世界帶來陰影？－ BBC News 中文',
+        title: 'Why Hitler still casts a shadow after 80 years - BBC News',
         url: 'https://www.youtube.com/watch?v=hitler80'
       }
     })
@@ -282,18 +282,14 @@ describe('recallByKeywordWithParsedClue', () => {
     })
     expect(english.outcome).not.toBe('no_match')
     expect(english.topPick?.item.id ?? english.alsoPossible[0]?.item.id).toBe(item.id)
-
-    const chinese = recallByKeywordWithParsedClue([item], '二战相关的视频', { nowMs: NOW_MS })
-    expect(chinese.outcome).not.toBe('no_match')
-    expect(chinese.topPick?.item.id ?? chinese.alsoPossible[0]?.item.id).toBe(item.id)
   })
 
-  it('enrichment 后：city economy video 可找回长春书签', () => {
+  it('enrichment keeps city economy video recallable', () => {
     const item = createBookmarkMemoryItem({
       ownerId: OWNER,
       sourceLocalProfileId: PROFILE,
       payload: {
-        title: '长春会成为第一座破产省会吗？九百万人口省会，正在失去增长能力｜尉遲大官人',
+        title: 'Will Changchun become a bankrupt capital city as growth slows?',
         url: 'https://www.youtube.com/watch?v=_weXNUQ5NS4'
       }
     })

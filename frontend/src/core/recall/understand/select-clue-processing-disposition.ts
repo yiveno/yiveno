@@ -125,11 +125,6 @@ function isKeyboardMash(raw: string): boolean {
   if (NATURAL_LANGUAGE_SIGNAL.test(raw) || raw.includes('?')) {
     return false
   }
-  // 含汉字：短中文线索放行（本层不做中文砸键检测）
-  if (/\p{Script=Han}/u.test(raw)) {
-    return false
-  }
-
   const letters = lettersOnly(raw).toLowerCase()
   if (letters.length < 6) {
     return false

@@ -63,7 +63,7 @@ describe('runAsyncMemoryLlmEnrichment', () => {
     const item = createBookmarkMemoryItem({
       ownerId: 'o',
       sourceLocalProfileId: 'p',
-      payload: { title: '希特勒纪录片 BBC', url: 'https://youtube.com/watch?v=1' },
+      payload: { title: 'Hitler documentary BBC', url: 'https://youtube.com/watch?v=1' },
       clues: { summary: 'kept' }
     })
     const { repo, putEnrichmentClues } = createRepoMock(item)
@@ -77,7 +77,7 @@ describe('runAsyncMemoryLlmEnrichment', () => {
       ownerId: 'o',
       sourceLocalProfileId: 'p',
       payload: {
-        title: '希特勒死亡80年後－ BBC',
+        title: 'Why Hitler still matters - BBC',
         url: 'https://www.youtube.com/watch?v=hitler'
       }
     })

@@ -4,20 +4,29 @@ import { getUILanguage, t } from '@/infrastructure/i18n/t'
 
 describe('i18n t()', () => {
   const getMessage = vi.fn()
-  const getUILanguageMock = vi.fn(() => 'zh-CN')
+  const getUILanguageMock = vi.fn(() => 'en-US')
+  const originalChrome = globalThis.chrome
 
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.stubGlobal('chrome', {
-      i18n: {
-        getMessage,
-        getUILanguage: getUILanguageMock
+    Object.defineProperty(globalThis, 'chrome', {
+      configurable: true,
+      writable: true,
+      value: {
+        i18n: {
+          getMessage,
+          getUILanguage: getUILanguageMock
+        }
       }
     })
   })
 
   afterEach(() => {
-    vi.unstubAllGlobals()
+    Object.defineProperty(globalThis, 'chrome', {
+      configurable: true,
+      writable: true,
+      value: originalChrome
+    })
   })
 
   it('返回 getMessage 文案', () => {
@@ -38,7 +47,7 @@ describe('i18n t()', () => {
   })
 
   it('getUILanguage 转发 chrome.i18n', () => {
-    expect(getUILanguage()).toBe('zh-CN')
+    expect(getUILanguage()).toBe('en-US')
     expect(getUILanguageMock).toHaveBeenCalled()
   })
 })

@@ -114,22 +114,22 @@ describe('memory-handler', () => {
 
   it('handleCaptureTextExcerpt 可写入 clues.note', async () => {
     const response = await handleCaptureTextExcerpt({
-      selectedText: '岷峨路远万重云',
+      selectedText: 'Clouds stack over distant mountains',
       sourceUrl: 'https://www.gushiwen.cn/shiwenv_demo.aspx',
-      pageTitle: '不如归去',
-      note: '想再读一遍'
+      pageTitle: 'A quiet line',
+      note: 'want to revisit this'
     })
     expect(response.ok).toBe(true)
     if (!response.ok || !('item' in response)) {
       return
     }
     expect(response.item.type).toBe('text_excerpt')
-    expect(response.item.clues.note).toBe('想再读一遍')
+    expect(response.item.clues.note).toBe('want to revisit this')
   })
 
   it('handleUpdateMemoryNote 可为书签事后补注', async () => {
     const captured = await handleCaptureBookmark({
-      title: '留存分析',
+      title: 'Retention analysis',
       url: 'https://example.com/retention'
     })
     expect(captured.ok).toBe(true)
@@ -139,13 +139,13 @@ describe('memory-handler', () => {
 
     const updated = await handleUpdateMemoryNote({
       id: captured.item.id,
-      note: '给老板看的方案'
+      note: 'plan for the leadership review'
     })
     expect(updated.ok).toBe(true)
     if (!updated.ok || !('item' in updated)) {
       return
     }
-    expect(updated.item.clues.note).toBe('给老板看的方案')
+    expect(updated.item.clues.note).toBe('plan for the leadership review')
 
     const cleared = await handleUpdateMemoryNote({
       id: captured.item.id,
@@ -160,7 +160,7 @@ describe('memory-handler', () => {
 
   it('handleDeleteMemoryItem 可软删摘录', async () => {
     const captured = await handleCaptureTextExcerpt({
-      selectedText: '可删除的摘录',
+      selectedText: 'deletable excerpt',
       sourceUrl: 'https://example.com/note',
       pageTitle: 'Note'
     })
@@ -207,7 +207,7 @@ describe('memory-handler', () => {
 
   it('handleRecordRecallDismiss 写回 dismissCount', async () => {
     const captured = await handleCaptureBookmark({
-      title: '可否定书签',
+      title: 'dismissible bookmark',
       url: 'https://dismiss-handler.example.com'
     })
     expect(captured.ok).toBe(true)

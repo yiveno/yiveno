@@ -1,65 +1,66 @@
 import { describe, expect, it } from 'vitest'
 
-import { testTranslateZh } from '@/core/i18n/test-translate-zh'
+import { testTranslateEn } from '@/core/i18n/test-translate-en'
 import { getPopupIdleEmptyCopy, getPopupNoMatchCopy } from '@/core/recall/popup-empty-copy'
 
-/** 冷启动文案不得出现的助理 / 跑题措辞。 */
-const FORBIDDEN = /了解你|喜欢什么类型|我会记住|全能|助手|帮你决定|随便聊聊/
+/** Cold-start copy must not drift into assistant-style profiling. */
+const FORBIDDEN =
+  /get to know you|what you like|i['’]ll remember|assistant|decide for you|chat casually/i
 
 describe('popup-empty-copy', () => {
-  it('空库 idle：先存痕迹，再找回', () => {
-    const copy = getPopupIdleEmptyCopy('empty', false, testTranslateZh)
-    expect(copy?.title).toBe('先留下一点痕迹')
+  it('empty library idle: save a trace first', () => {
+    const copy = getPopupIdleEmptyCopy('empty', false, testTranslateEn)
+    expect(copy?.title).toBe('Save a first trace')
     expect(copy?.showShortenRetry).toBe(false)
-    expect(copy?.body).toMatch(/划|选区/)
-    expect(copy?.body).toMatch(/找/)
+    expect(copy?.body).toMatch(/highlight|save selection/i)
+    expect(copy?.body).toMatch(/recall/i)
     expect(copy?.body).not.toMatch(FORBIDDEN)
   })
 
-  it('空库导入中 idle：可并行划存', () => {
-    const copy = getPopupIdleEmptyCopy('empty', true, testTranslateZh)
-    expect(copy?.title).toBe('先留下一点痕迹')
-    expect(copy?.body).toMatch(/导入/)
+  it('empty library while importing: saving is still encouraged', () => {
+    const copy = getPopupIdleEmptyCopy('empty', true, testTranslateEn)
+    expect(copy?.title).toBe('Save a first trace')
+    expect(copy?.body).toMatch(/importing/i)
     expect(copy?.body).not.toMatch(FORBIDDEN)
   })
 
-  it('有库 idle 不展示空态块（欢迎文案由 Popup 回落 welcome keys）', () => {
-    expect(getPopupIdleEmptyCopy('ready', false, testTranslateZh)).toBeNull()
+  it('ready library idle does not show the empty-state block', () => {
+    expect(getPopupIdleEmptyCopy('ready', false, testTranslateEn)).toBeNull()
   })
 
-  it('空库 no_match：诚实无痕迹 + Capture，非换词为主', () => {
+  it('empty library no_match: honest miss plus capture guidance', () => {
     const copy = getPopupNoMatchCopy(
       {
         library: 'empty',
-        clue: '我以前最喜欢听的歌',
+        clue: 'the song I used to love',
         canShorten: true
       },
-      testTranslateZh
+      testTranslateEn
     )
-    expect(copy.title).toBe('还没有保存的内容')
+    expect(copy.title).toBe('Nothing saved yet')
     expect(copy.showShortenRetry).toBe(false)
-    expect(copy.body).toMatch(/痕迹|摘录|备注/)
+    expect(copy.body).toMatch(/trace|excerpt|note/i)
     expect(copy.body).not.toMatch(FORBIDDEN)
   })
 
-  it('有库 no_match：导向补线索或划存，非助理人设', () => {
+  it('ready library no_match: points to a clearer clue or capture', () => {
     const copy = getPopupNoMatchCopy(
       {
         library: 'ready',
-        clue: '留存分析很长的线索',
+        clue: 'a very long clue about retention analysis',
         canShorten: true
       },
-      testTranslateZh
+      testTranslateEn
     )
-    expect(copy.title).toContain('没找到')
+    expect(copy.title).toContain('No match')
     expect(copy.showShortenRetry).toBe(true)
-    expect(copy.body).toMatch(/痕迹|划存|备注/)
+    expect(copy.body).toMatch(/trace|save/i)
     expect(copy.body).not.toMatch(FORBIDDEN)
   })
 
-  it('R1 冷启动文案矩阵：欢迎语仍是找东西，不是助理', () => {
-    expect(testTranslateZh('popup_welcome_title')).toBe('你想找什么？')
-    expect(testTranslateZh('popup_welcome_body')).toMatch(/存过|找回/)
-    expect(testTranslateZh('popup_welcome_body')).not.toMatch(FORBIDDEN)
+  it('R1 welcome copy stays focused on recall, not assistance', () => {
+    expect(testTranslateEn('popup_welcome_title')).toBe('What are you trying to find?')
+    expect(testTranslateEn('popup_welcome_body')).toMatch(/saved|find/i)
+    expect(testTranslateEn('popup_welcome_body')).not.toMatch(FORBIDDEN)
   })
 })

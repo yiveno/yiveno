@@ -43,7 +43,7 @@ describe('ensureMemoryEnrichmentBackfilled', () => {
       sourceLocalProfileId: '22222222-2222-4222-8222-222222222222',
       now: () => '2026-07-22T06:00:00.000Z',
       payload: {
-        title: '网易云音乐',
+        title: 'NetEase Cloud Music',
         url: 'https://music.163.com/'
       }
     })

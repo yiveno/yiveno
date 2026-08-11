@@ -4,7 +4,7 @@ import {
   createBookmarkMemoryItem,
   createTextExcerptMemoryItem
 } from '@/core/memory/create-memory-item'
-import { testTranslateZh } from '@/core/i18n/test-translate-zh'
+import { testTranslateEn } from '@/core/i18n/test-translate-en'
 import {
   escapeOmniboxXml,
   formatOmniboxPrimaryMatch,
@@ -23,7 +23,7 @@ const baseContext = {
 }
 
 const detailPageUrl = 'chrome-extension://abcdefghijklmnopqrstuvwxyzabcdef/detail.html'
-const suggestOptions = { detailPageUrl, translate: testTranslateZh }
+const suggestOptions = { detailPageUrl, translate: testTranslateEn }
 
 describe('omnibox-suggest', () => {
   it('escapeOmniboxXml 转义预定义实体', () => {
@@ -40,25 +40,25 @@ describe('omnibox-suggest', () => {
   it('tryParseHttpUrl 仅接受 http(s)', () => {
     expect(tryParseHttpUrl('https://example.com/a')).toBe('https://example.com/a')
     expect(tryParseHttpUrl('javascript:alert(1)')).toBeNull()
-    expect(tryParseHttpUrl('留存分析')).toBeNull()
+    expect(tryParseHttpUrl('retention-analysis')).toBeNull()
   })
 
   it('类型前缀区分书签与摘录', () => {
-    expect(getOmniboxTypePrefix('bookmark', testTranslateZh)).toBe('Y·书签')
-    expect(getOmniboxTypePrefix('text_excerpt', testTranslateZh)).toBe('Y·摘录')
+    expect(getOmniboxTypePrefix('bookmark', testTranslateEn)).toBe('Y·Bookmark')
+    expect(getOmniboxTypePrefix('text_excerpt', testTranslateEn)).toBe('Y·Excerpt')
   })
 
   it('formatOmniboxPrimaryMatch 只取首字段短标签', () => {
-    expect(formatOmniboxPrimaryMatch(['title', 'domain', 'url'], testTranslateZh)).toBe('标题')
-    expect(formatOmniboxPrimaryMatch(['textExcerpt'], testTranslateZh)).toBe('正文')
-    expect(formatOmniboxPrimaryMatch([], testTranslateZh)).toBeNull()
+    expect(formatOmniboxPrimaryMatch(['title', 'domain', 'url'], testTranslateEn)).toBe('title')
+    expect(formatOmniboxPrimaryMatch(['textExcerpt'], testTranslateEn)).toBe('excerpt')
+    expect(formatOmniboxPrimaryMatch([], testTranslateEn)).toBeNull()
   })
 
   it('书签建议带 Y·书签 前缀与短命中', () => {
     const match: RecallMatch = {
       item: createBookmarkMemoryItem({
         ...baseContext,
-        payload: { title: '留存分析', url: 'https://example.com/retention' }
+        payload: { title: 'Retention analysis', url: 'https://example.com/retention' }
       }),
       score: 40,
       matchedFields: ['title', 'domain', 'url']
@@ -68,7 +68,7 @@ describe('omnibox-suggest', () => {
     expect(suggest?.content).toContain('/omnibox-open.html?id=')
     expect(suggest?.content).toContain(match.item.id)
     expect(suggest?.description).toBe(
-      '<dim>Y·书签</dim> <match>留存分析</match> <dim>·</dim> <url>example.com</url> <dim>· 标题</dim>'
+      '<dim>Y·Bookmark</dim> <match>Retention analysis</match> <dim>·</dim> <url>example.com</url> <dim>· title</dim>'
     )
     expect(suggest?.description).not.toContain('匹配：')
   })
@@ -78,9 +78,9 @@ describe('omnibox-suggest', () => {
       item: createTextExcerptMemoryItem({
         ...baseContext,
         payload: {
-          selectedText: '关键留存指标说明，用于衡量次日与七日回访。',
+          selectedText: 'Key retention metrics overview for day-one and day-seven return visits.',
           sourceUrl: 'https://notes.example.com/post',
-          pageTitle: '增长笔记'
+          pageTitle: 'Growth notes'
         }
       }),
       score: 36,
@@ -90,11 +90,9 @@ describe('omnibox-suggest', () => {
     const suggest = recallMatchToOmniboxSuggest(match, suggestOptions)
     expect(suggest?.content).toContain('/detail.html?id=')
     expect(suggest?.content).toContain(match.item.id)
-    expect(suggest?.description).toContain('<dim>Y·摘录</dim>')
-    expect(suggest?.description).toContain(
-      '<match>关键留存指标说明，用于衡量次日与七日回访。</match>'
-    )
-    expect(suggest?.description).toContain('增长笔记 · notes.example.com')
+    expect(suggest?.description).toContain('<dim>Y·Excerpt</dim>')
+    expect(suggest?.description).toContain('<match>Key retention metrics overview')
+    expect(suggest?.description).toContain('Growth notes · notes.exampl')
     expect(suggest?.description).not.toContain('「')
   })
 
@@ -102,7 +100,7 @@ describe('omnibox-suggest', () => {
     const top: RecallMatch = {
       item: createBookmarkMemoryItem({
         ...baseContext,
-        payload: { title: '留存分析', url: 'https://example.com/retention' }
+        payload: { title: 'Retention analysis', url: 'https://example.com/retention' }
       }),
       score: 40,
       matchedFields: ['title']
@@ -110,7 +108,7 @@ describe('omnibox-suggest', () => {
     const also: RecallMatch = {
       item: createBookmarkMemoryItem({
         ...baseContext,
-        payload: { title: '留存手册', url: 'https://example.com/guide' }
+        payload: { title: 'Retention handbook', url: 'https://example.com/guide' }
       }),
       score: 20,
       matchedFields: ['title']
@@ -120,14 +118,14 @@ describe('omnibox-suggest', () => {
       outcome: 'top_pick',
       topPick: top,
       alsoPossible: [also],
-      clue: '留存'
+      clue: 'retention'
     }
 
     const suggests = recallResultToOmniboxSuggests(result, suggestOptions)
     expect(suggests).toHaveLength(2)
     expect(suggests[0]?.content).toContain('/omnibox-open.html?id=')
     expect(suggests[0]?.content).toContain(result.topPick!.item.id)
-    expect(suggests[0]?.description).toContain('Y·书签')
+    expect(suggests[0]?.description).toContain('Y·Bookmark')
     expect(suggests[1]?.content).toContain('/omnibox-open.html?id=')
     expect(suggests[1]?.content).toContain(result.alsoPossible[0]!.item.id)
   })
@@ -135,14 +133,14 @@ describe('omnibox-suggest', () => {
   it('相同 URL 去重', () => {
     const item = createBookmarkMemoryItem({
       ...baseContext,
-      payload: { title: '同一页', url: 'https://example.com/same' }
+      payload: { title: 'Same page', url: 'https://example.com/same' }
     })
     const match: RecallMatch = { item, score: 40, matchedFields: ['title'] }
     const result: RecallResult = {
       outcome: 'top_pick',
       topPick: match,
       alsoPossible: [{ ...match, score: 10 }],
-      clue: '同一'
+      clue: 'same'
     }
 
     expect(recallResultToOmniboxSuggests(result, suggestOptions)).toHaveLength(1)
@@ -151,11 +149,11 @@ describe('omnibox-suggest', () => {
   it('折叠组在 description 中带共 N 条', () => {
     const item = createBookmarkMemoryItem({
       ...baseContext,
-      payload: { title: '重复书签', url: 'https://example.com/dup' }
+      payload: { title: 'Duplicate bookmark', url: 'https://example.com/dup' }
     })
     const sibling = createBookmarkMemoryItem({
       ...baseContext,
-      payload: { title: '重复书签副本', url: 'https://example.com/dup' }
+      payload: { title: 'Duplicate bookmark copy', url: 'https://example.com/dup' }
     })
     const match: RecallMatch = {
       item,
@@ -168,13 +166,13 @@ describe('omnibox-suggest', () => {
     }
 
     const suggest = recallMatchToOmniboxSuggest(match, suggestOptions)
-    expect(suggest?.description).toContain('共 3 条')
+    expect(suggest?.description).toContain('3 total')
   })
 
   it('无 URL 的命中被跳过', () => {
     const item = createBookmarkMemoryItem({
       ...baseContext,
-      payload: { title: '空链', url: 'https://example.com/x' }
+      payload: { title: 'Empty link', url: 'https://example.com/x' }
     })
     item.payload.url = '   '
     const match: RecallMatch = { item, score: 40, matchedFields: ['title'] }

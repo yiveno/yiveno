@@ -22,15 +22,17 @@ describe('extract-document-index-tokens', () => {
       ownerId,
       sourceLocalProfileId,
       payload: {
-        selectedText: '留存分析框架里的空状态分层',
+        selectedText: 'empty-state tiers inside the retention analysis framework',
         sourceUrl: 'https://example.com/retention',
-        pageTitle: '周记',
+        pageTitle: 'Weekly notes',
         domain: 'example.com'
       }
     })
     const docTokens = new Set(extractDocumentIndexTokens(item))
-    expect(docTokens.has('留存') || [...docTokens].some(t => t.includes('留存'))).toBe(true)
-    const queryTokens = pickPostingLookupTokens('空状态分层')
+    expect(docTokens.has('retention') || [...docTokens].some(t => t.includes('retention'))).toBe(
+      true
+    )
+    const queryTokens = pickPostingLookupTokens('empty-state tiers')
     expect(queryTokens.length).toBeGreaterThan(0)
     expect(queryTokens.some(token => docTokens.has(token))).toBe(true)
   })

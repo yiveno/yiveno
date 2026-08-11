@@ -34,7 +34,7 @@ const bookmarkItem = {
   id: BOOKMARK_ID,
   type: 'bookmark' as const,
   payload: {
-    title: '留存分析',
+    title: 'Retention analysis',
     url: 'https://example.com/retention',
     domain: 'example.com'
   },
@@ -57,19 +57,19 @@ describe('omnibox listeners', () => {
       i18n: {
         getMessage: vi.fn((key: string) => {
           if (key === 'omnibox_default_suggestion') {
-            return '在 Yiveno 中找回…'
+            return 'Recall with Yiveno...'
           }
           if (key === 'omnibox_no_match') {
-            return '未找到匹配的记忆'
+            return 'No matching memory found'
           }
           if (key === 'omnibox_type_bookmark') {
-            return 'Y·书签'
+            return 'Y·Bookmark'
           }
           if (key === 'type_label_bookmark') {
-            return '书签'
+            return 'Bookmark'
           }
           if (key === 'explain_field_short_title') {
-            return '标题'
+            return 'title'
           }
           return ''
         })
@@ -107,7 +107,7 @@ describe('omnibox listeners', () => {
         matchedFields: ['title']
       },
       alsoPossible: [],
-      clue: '留存'
+      clue: 'retention'
     })
 
     registerOmniboxListeners()
@@ -117,13 +117,13 @@ describe('omnibox listeners', () => {
     ) => void
 
     const suggest = vi.fn()
-    onChanged('留存', suggest)
+    onChanged('retention', suggest)
 
     await vi.waitFor(() => {
       expect(suggest).toHaveBeenCalled()
     })
 
-    expect(recallWithClueMock).toHaveBeenCalledWith('留存')
+    expect(recallWithClueMock).toHaveBeenCalledWith('retention')
     expect(suggest.mock.calls[0]?.[0]?.[0]?.content).toBe(
       `chrome-extension://testid/omnibox-open.html?id=${BOOKMARK_ID}`
     )
@@ -169,7 +169,7 @@ describe('omnibox listeners', () => {
         matchedFields: ['title']
       },
       alsoPossible: [],
-      clue: '留存'
+      clue: 'retention'
     })
 
     registerOmniboxListeners()
@@ -178,12 +178,12 @@ describe('omnibox listeners', () => {
       disposition: chrome.omnibox.OnInputEnteredDisposition
     ) => void
 
-    onEntered('留存', 'newForegroundTab')
+    onEntered('retention', 'newForegroundTab')
 
     await vi.waitFor(() => {
       expect(tabsCreate).toHaveBeenCalledWith({ url: 'https://example.com/retention' })
     })
-    expect(recallWithClueMock).toHaveBeenCalledWith('留存')
+    expect(recallWithClueMock).toHaveBeenCalledWith('retention')
     expect(recordOpenMock).toHaveBeenCalledWith(BOOKMARK_ID)
   })
 })

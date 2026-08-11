@@ -42,9 +42,9 @@ function createChromeMock(initial: StorageMap = {}) {
       executeScript: vi.fn(async () => [
         {
           result: {
-            selectedText: '关键段落',
-            contextBefore: '前文',
-            contextAfter: '后文'
+            selectedText: 'key paragraph',
+            contextBefore: 'before text',
+            contextAfter: 'after text'
           }
         }
       ])
@@ -77,17 +77,17 @@ describe('capture-text-excerpt-service', () => {
 
   it('captureTextExcerptFromContextMenu 写入 Text Excerpt', async () => {
     const item = await captureTextExcerptFromContextMenu({
-      selectionText: '关键段落',
+      selectionText: 'key paragraph',
       sourceUrl: 'https://example.com/article',
-      pageTitle: '文章页',
+      pageTitle: 'Article page',
       tabId: 1
     })
 
     expect(item.type).toBe('text_excerpt')
     if (item.type === 'text_excerpt') {
-      expect(item.payload.selectedText).toBe('关键段落')
-      expect(item.payload.contextBefore).toBe('前文')
-      expect(item.payload.contextAfter).toBe('后文')
+      expect(item.payload.selectedText).toBe('key paragraph')
+      expect(item.payload.contextBefore).toBe('before text')
+      expect(item.payload.contextAfter).toBe('after text')
       expect(item.clues.captureEntry).toBe('context_menu')
     }
   })
@@ -99,6 +99,6 @@ describe('capture-text-excerpt-service', () => {
         sourceUrl: 'chrome://extensions',
         pageTitle: 'Extensions'
       })
-    ).rejects.toThrow('无法保存此页面的选区')
+    ).rejects.toThrow('Cannot save a selection from this page')
   })
 })

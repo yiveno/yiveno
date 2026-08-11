@@ -11,7 +11,6 @@ import {
   RECALL_OBJECT_TYPE_CANONICAL_SURFACES,
   RECALL_OBJECT_TYPE_LEXICON
 } from '@/core/recall/parse-recall-clue-lexicon'
-import { RECALL_OBJECT_TYPE_LOCALE_ALIASES } from '@/core/recall/parse-recall-clue-locale-aliases'
 import type { RecallObjectType } from '@/core/recall/parse-recall-clue-types'
 
 /** enrichment 产物（写入 clues 扩展位）。 */
@@ -135,11 +134,11 @@ export type MemoryEntityLexiconEntry = {
 }
 
 export const MEMORY_ENTITY_LEXICON: MemoryEntityLexiconEntry[] = [
-  { canonical: 'Li Bai', aliases: ['李白'] },
-  { canonical: 'Du Fu', aliases: ['杜甫'] },
-  { canonical: 'Su Shi', aliases: ['苏轼'] },
-  { canonical: 'Wang Wei', aliases: ['王维'] },
-  { canonical: 'Bai Juyi', aliases: ['白居易'] },
+  { canonical: 'Li Bai', aliases: [] },
+  { canonical: 'Du Fu', aliases: [] },
+  { canonical: 'Su Shi', aliases: [] },
+  { canonical: 'Wang Wei', aliases: [] },
+  { canonical: 'Bai Juyi', aliases: [] },
 
   // 技术名词：canonical 自身即可视为最佳匹配
   { canonical: 'React', aliases: [] },
@@ -206,7 +205,7 @@ function detectObjectTypesFromText(blob: string): RecallObjectType[] {
     return []
   }
 
-  const ordered = [...RECALL_OBJECT_TYPE_LEXICON, ...RECALL_OBJECT_TYPE_LOCALE_ALIASES].sort(
+  const ordered = [...RECALL_OBJECT_TYPE_LEXICON].sort(
     (left, right) => right.surface.length - left.surface.length
   )
   const occupied = new Array<boolean>(normalized.length).fill(false)

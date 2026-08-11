@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * 校验 en / zh_CN messages.json key 对称，且与 MESSAGE_KEYS 一致。
+ * Validate en messages.json keys against MESSAGE_KEYS.
  */
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
@@ -8,7 +8,6 @@ import { fileURLToPath } from 'node:url'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const enPath = join(root, 'public/_locales/en/messages.json')
-const zhPath = join(root, 'public/_locales/zh_CN/messages.json')
 const keysTsPath = join(root, 'src/infrastructure/i18n/message-keys.ts')
 
 function loadMessageKeys(path) {
@@ -34,19 +33,9 @@ function diff(a, b) {
 }
 
 const en = loadMessageKeys(enPath)
-const zh = loadMessageKeys(zhPath)
 const declared = loadDeclaredKeys(keysTsPath)
 
 const errors = []
-
-const onlyEn = diff(en, zh)
-const onlyZh = diff(zh, en)
-if (onlyEn.length > 0) {
-  errors.push(`仅 en 有: ${onlyEn.join(', ')}`)
-}
-if (onlyZh.length > 0) {
-  errors.push(`仅 zh_CN 有: ${onlyZh.join(', ')}`)
-}
 
 const onlyDeclared = diff(declared, en)
 const onlyLocale = diff(en, declared)
@@ -65,4 +54,4 @@ if (errors.length > 0) {
   process.exit(1)
 }
 
-console.log(`✅ i18n key 对称（en / zh_CN / MESSAGE_KEYS，共 ${en.size} keys）`)
+console.log(`✅ i18n keys aligned (en / MESSAGE_KEYS, ${en.size} keys)`)

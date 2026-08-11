@@ -1,6 +1,6 @@
 /**
  * Capture / Recall 共用主题词典：标题别名 → English canonical keywords（+ 可选实体）。
- * 写入 IndexedDB 的仍是英文；其它语言 surface 仅用于识别与查询扩展。
+ * 写入 IndexedDB 的仍是英文；运行时只保留英文 surface。
  * 不做开放推荐，只服务库内可问。
  */
 
@@ -10,7 +10,7 @@ import { normalizeRecallText } from '@/core/recall/keyword-filter'
 export type MemoryTopicLexiconEntry = {
   /** 调试 / 日志用稳定 id */
   id: string
-  /** 标题/备注/线索中的识别词面（可含中文 alias） */
+  /** 标题/备注/线索中的识别词面 */
   surfaces: string[]
   /** 写入 clues.keywords 的 English canonical */
   keywords: string[]
@@ -31,11 +31,6 @@ export const MEMORY_TOPIC_LEXICON: MemoryTopicLexiconEntry[] = [
       'second world war',
       'wwii',
       'ww2',
-      '希特勒',
-      '纳粹',
-      '闪击波兰',
-      '诺曼底',
-      '二战',
       'hitler',
       'nazi',
       'nazism'
@@ -45,15 +40,7 @@ export const MEMORY_TOPIC_LEXICON: MemoryTopicLexiconEntry[] = [
   },
   {
     id: 'city-economy',
-    surfaces: [
-      '破产省会',
-      '失去增长',
-      '增长能力',
-      '省会破产',
-      '城市经济',
-      'economic growth',
-      'bankrupt capital'
-    ],
+    surfaces: ['economic growth', 'bankrupt capital', 'city economy'],
     keywords: ['economy', 'city', 'growth']
   }
 ]
@@ -65,8 +52,8 @@ export type MemoryTopicEntityEntry = {
 }
 
 export const MEMORY_TOPIC_ENTITY_LEXICON: MemoryTopicEntityEntry[] = [
-  { canonical: 'Hitler', aliases: ['希特勒', 'hitler'] },
-  { canonical: 'Changchun', aliases: ['长春', 'changchun'] },
+  { canonical: 'Hitler', aliases: ['hitler'] },
+  { canonical: 'Changchun', aliases: ['changchun'] },
   { canonical: 'BBC', aliases: ['bbc news', 'bbc'] }
 ]
 
@@ -120,7 +107,7 @@ export function detectTopicsFromText(blob: string): {
 
 /**
  * 查询侧：把 contentTerms / 原始片段里的主题 alias 扩成 English canonical 检索词。
- * 保序去重；原词保留，便于标题里仍有中文时直中。
+ * 保序去重；原词保留，便于保留用户原始英文线索。
  */
 export function expandRecallContentTerms(terms: string[]): string[] {
   if (terms.length === 0) {

@@ -8,15 +8,15 @@ import {
 describe('text-excerpt-selection', () => {
   it('normalizeTextExcerptSelection 去除空白并保留上下文', () => {
     const result = normalizeTextExcerptSelection({
-      selectedText: '  关键段落  ',
-      contextBefore: ' 前文… ',
-      contextAfter: ' 后文… '
+      selectedText: '  Key paragraph  ',
+      contextBefore: ' Before… ',
+      contextAfter: ' After… '
     })
 
     expect(result).toEqual({
-      selectedText: '关键段落',
-      contextBefore: '前文…',
-      contextAfter: '后文…'
+      selectedText: 'Key paragraph',
+      contextBefore: 'Before…',
+      contextAfter: 'After…'
     })
   })
 

@@ -22,7 +22,11 @@ describe('corpus-quality-gate', () => {
     ).toBe(true)
     expect(isShellBookmarkTitle('example.com', 'https://example.com/x', 'example.com')).toBe(true)
     expect(
-      isShellBookmarkTitle('产品留存分析框架', 'https://growth.example.com/x', 'growth.example.com')
+      isShellBookmarkTitle(
+        'Retention analysis framework',
+        'https://growth.example.com/x',
+        'growth.example.com'
+      )
     ).toBe(false)
   })
 
@@ -31,9 +35,9 @@ describe('corpus-quality-gate', () => {
       ownerId,
       sourceLocalProfileId,
       payload: {
-        selectedText: '这是一段足够长的摘录正文用于找回',
+        selectedText: 'This is a long enough excerpt body for recall.',
         sourceUrl: 'https://example.com/a',
-        pageTitle: '页',
+        pageTitle: 'Page',
         domain: 'example.com'
       }
     })
@@ -46,9 +50,9 @@ describe('corpus-quality-gate', () => {
       ownerId,
       sourceLocalProfileId,
       payload: {
-        selectedText: '短',
+        selectedText: 'Short',
         sourceUrl: 'https://example.com/b',
-        pageTitle: '页',
+        pageTitle: 'Page',
         domain: 'example.com'
       }
     })
@@ -64,7 +68,7 @@ describe('corpus-quality-gate', () => {
         url: 'https://shell.example.com/',
         domain: 'shell.example.com'
       },
-      clues: { note: '给老板看的那页' }
+      clues: { note: 'the page for the leadership review' }
     })
     expect(assessCorpusAnchorQuality(noted).decision).toBe('accept')
 

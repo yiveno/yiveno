@@ -87,10 +87,10 @@ export const NOISE_GATEWAY_HAND_CASES: NoiseGatewayCase[] = [
   },
   {
     id: 'proceed-han-short',
-    clue: '李白诗',
+    clue: 'Li Bai poem',
     gate: 'must',
     expect: { disposition: 'proceed' },
-    note: '短中文：本层不拦汉字'
+    note: '短专名短语：本层不应误拦'
   },
 
   // —— must proceed：口语 ——

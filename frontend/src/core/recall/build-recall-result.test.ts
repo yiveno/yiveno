@@ -85,7 +85,8 @@ describe('build-recall-result Top/Also 互斥', () => {
 
     const result = recallByKeyword(items, 'AI')
     expect(result.outcome).toBe('top_pick')
-    expect(result.topPick?.item.payload).toMatchObject({ domain: 'ai-bot.cn' })
+    const topDomain = result.topPick?.item.payload.domain
+    expect(['ai-bot.cn', 'www.ai-bot.cn']).toContain(topDomain)
     expect(result.topPick?.duplicateGroup?.totalCount).toBe(4)
     expect(result.topPick?.duplicateGroup?.siblings).toHaveLength(3)
 

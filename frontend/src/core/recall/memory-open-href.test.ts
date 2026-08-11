@@ -24,7 +24,7 @@ describe('memory-open-href', () => {
   it('书签返回原 URL', () => {
     const item = createBookmarkMemoryItem({
       ...baseContext,
-      payload: { title: '留存', url: 'https://example.com/retention' }
+      payload: { title: 'Retention', url: 'https://example.com/retention' }
     })
     expect(getMemoryItemOpenHref(item, { detailPageUrl })).toBe('https://example.com/retention')
   })
@@ -33,9 +33,9 @@ describe('memory-open-href', () => {
     const item = createTextExcerptMemoryItem({
       ...baseContext,
       payload: {
-        selectedText: '关键段落',
+        selectedText: 'Key paragraph',
         sourceUrl: 'https://notes.example.com/post',
-        pageTitle: '笔记'
+        pageTitle: 'Notes'
       }
     })
     const href = getMemoryItemOpenHref(item, { detailPageUrl })
@@ -59,7 +59,7 @@ describe('memory-open-href', () => {
 
     const bookmark = createBookmarkMemoryItem({
       ...baseContext,
-      payload: { title: '留存', url: 'https://example.com/retention' }
+      payload: { title: 'Retention', url: 'https://example.com/retention' }
     })
     const omniboxContent = getOmniboxSuggestContent(bookmark, { detailPageUrl })
     expect(omniboxContent).toContain('/omnibox-open.html?id=')
@@ -71,9 +71,9 @@ describe('memory-open-href', () => {
     const item = createTextExcerptMemoryItem({
       ...baseContext,
       payload: {
-        selectedText: '关键段落',
+        selectedText: 'Key paragraph',
         sourceUrl: 'https://notes.example.com/post',
-        pageTitle: '笔记'
+        pageTitle: 'Notes'
       }
     })
     expect(getOmniboxSuggestContent(item, { detailPageUrl })).toBe(

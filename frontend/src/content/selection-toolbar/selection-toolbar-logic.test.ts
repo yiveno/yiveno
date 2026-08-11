@@ -24,7 +24,7 @@ describe('selection-toolbar-logic', () => {
     expect(
       shouldShowSelectionToolbar({
         enabled: true,
-        selectedText: '留存',
+        selectedText: 'retention',
         isSavablePage: true
       })
     ).toBe(true)
@@ -32,7 +32,7 @@ describe('selection-toolbar-logic', () => {
     expect(
       shouldShowSelectionToolbar({
         enabled: false,
-        selectedText: '留存',
+        selectedText: 'retention',
         isSavablePage: true
       })
     ).toBe(false)

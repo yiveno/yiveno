@@ -26,13 +26,9 @@ function isUrlLike(raw: string): boolean {
   return /^[\w.-]+\.[a-z]{2,}([/:?#].*)?$/i.test(trimmed)
 }
 
-function countHanChars(raw: string): number {
-  return (raw.match(/\p{Script=Han}/gu) ?? []).length
-}
-
-/** 无 LLM 时的降级启发式：明显口语 / 时间仍标 semantic（便于日志；实际仍走规则）。 */
+/** 无 LLM 时的降级启发式：明显英语口语 / 时间仍标 semantic（便于日志；实际仍走规则）。 */
 const ORAL_OR_TIME_INTENT_SIGNAL =
-  /昨天|前天|今天|上周|最近|前一阵|很久以前|找一下|帮我找|那篇|那个|哪篇|哪个|day before yesterday|yesterday|last week|a while ago|long ago|the other day|recently|\btoday\b/i
+  /day before yesterday|yesterday|last week|a while ago|long ago|the other day|recently|\btoday\b/i
 
 const ENGLISH_NATURAL_LANGUAGE_SIGNAL =
   /\b(i|i'm|i've|i'd|could you|can you|please|forgot|forgotten|remember|looking for|came across|the one|that i|help me|about a|recently)\b/i
@@ -63,15 +59,13 @@ export function selectClueUnderstandingMode(
   if (
     ENGLISH_NATURAL_LANGUAGE_SIGNAL.test(raw) ||
     ORAL_OR_TIME_INTENT_SIGNAL.test(raw) ||
-    raw.includes('?') ||
-    raw.includes('？') ||
-    countHanChars(raw) >= 4
+    raw.includes('?')
   ) {
     return 'semantic'
   }
 
   const words = raw.split(/\s+/).filter(Boolean)
-  if (countHanChars(raw) === 0 && words.length <= 2 && raw.length <= 48) {
+  if (words.length <= 2 && raw.length <= 48) {
     return 'lexical'
   }
   if (words.length >= 5) {

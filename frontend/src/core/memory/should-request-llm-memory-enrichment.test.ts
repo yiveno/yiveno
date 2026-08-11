@@ -14,7 +14,7 @@ describe('shouldRequestLlmMemoryEnrichment', () => {
     const item = createBookmarkMemoryItem({
       ownerId: 'o',
       sourceLocalProfileId: 'p',
-      payload: { title: '希特勒纪录片', url: 'https://youtube.com/watch?v=1' },
+      payload: { title: 'Hitler documentary', url: 'https://youtube.com/watch?v=1' },
       clues: { summary: 'already enriched' }
     })
     expect(evaluateLlmMemoryEnrichmentGate(item)).toEqual({
@@ -38,7 +38,7 @@ describe('shouldRequestLlmMemoryEnrichment', () => {
       ownerId: 'o',
       sourceLocalProfileId: 'p',
       payload: {
-        selectedText: '长春会成为第一座破产省会吗',
+        selectedText: 'Will Changchun become a bankrupt capital city?',
         sourceUrl: 'https://example.com/a',
         pageTitle: 'page'
       }

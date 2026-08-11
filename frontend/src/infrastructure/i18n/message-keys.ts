@@ -1,6 +1,6 @@
 /**
- * 与 `public/_locales/{en,zh_CN}/messages.json` 同步。
- * 新增文案：先改两份 messages.json，再追加本数组。
+ * 与 `public/_locales/en/messages.json` 同步。
+ * 新增文案：先改 messages.json，再追加本数组。
  */
 export const MESSAGE_KEYS = [
   'app_name',

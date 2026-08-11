@@ -66,7 +66,7 @@ describe('understandRecallClue', () => {
     expect(result.source).toBe('rules')
   })
 
-  it('中文短口语 → semantic 并调用 LLM', async () => {
+  it('short oral clue still goes semantic and calls LLM', async () => {
     let called = 0
     const complete: LlmChatCompleter = async () => {
       called += 1
@@ -77,7 +77,9 @@ describe('understandRecallClue', () => {
         confidence: 'medium'
       })
     }
-    const result = await understandRecallClue('前天的电影', { complete })
+    const result = await understandRecallClue('the movie from day before yesterday', {
+      complete
+    })
     expect(result.disposition).toBe('proceed')
     expect(result.mode).toBe('semantic')
     expect(result.source).toBe('llm')

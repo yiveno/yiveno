@@ -3,31 +3,31 @@ import { describe, expect, it } from 'vitest'
 import { detectTopicsFromText, expandRecallContentTerms } from '@/core/memory/memory-topic-lexicon'
 
 describe('detectTopicsFromText', () => {
-  it('希特勒标题 → wwii keywords + Hitler 实体', () => {
-    const result = detectTopicsFromText('希特勒死亡80年後 － BBC News 中文')
+  it('Hitler title -> wwii keywords + Hitler entity', () => {
+    const result = detectTopicsFromText('Hitler still casts a shadow on Europe - BBC News')
     expect(result.keywords).toEqual(expect.arrayContaining(['wwii', 'world war ii']))
     expect(result.entities).toEqual(expect.arrayContaining(['Hitler', 'BBC']))
   })
 
-  it('仅「二战」→ wwii，不挂 Hitler 实体', () => {
-    const result = detectTopicsFromText('二战纪录片剪辑')
+  it('wwii topic does not force Hitler entity', () => {
+    const result = detectTopicsFromText('wwii documentary clips')
     expect(result.keywords).toEqual(expect.arrayContaining(['wwii']))
     expect(result.entities).not.toContain('Hitler')
   })
 
-  it('长春 + 失去增长 → economy + Changchun', () => {
-    const result = detectTopicsFromText('长春会成为第一座破产省会吗？正在失去增长能力')
+  it('Changchun + economic growth -> economy + Changchun', () => {
+    const result = detectTopicsFromText('Is Changchun losing economic growth momentum?')
     expect(result.keywords).toEqual(expect.arrayContaining(['economy', 'city', 'growth']))
     expect(result.entities).toContain('Changchun')
   })
 })
 
 describe('expandRecallContentTerms', () => {
-  it('二战扩成 English canonical，并保留原词', () => {
-    expect(expandRecallContentTerms(['二战'])).toEqual(['二战', 'wwii', 'world war ii'])
+  it('wwii expands to canonical forms while keeping original term', () => {
+    expect(expandRecallContentTerms(['wwii'])).toEqual(['wwii', 'world war ii'])
   })
 
-  it('wwii 扩成 world war ii', () => {
-    expect(expandRecallContentTerms(['wwii'])).toEqual(['wwii', 'world war ii'])
+  it('changchun expands to canonical entity', () => {
+    expect(expandRecallContentTerms(['changchun'])).toEqual(['changchun'])
   })
 })

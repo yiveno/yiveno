@@ -11,7 +11,7 @@ describe('buildMergedMemoryEnrichment', () => {
   it('默认仅规则路径', async () => {
     const result = await buildMergedMemoryEnrichment({
       source: {
-        title: '希特勒死亡80年後－ BBC',
+        title: 'Why Hitler still matters - BBC',
         url: 'https://www.youtube.com/watch?v=x',
         domain: 'youtube.com'
       }
@@ -46,7 +46,7 @@ describe('buildMergedMemoryEnrichment', () => {
 
     const result = await buildMergedMemoryEnrichment({
       source: {
-        title: '希特勒死亡80年後',
+        title: 'Why Hitler still matters',
         url: 'https://www.youtube.com/watch?v=x',
         domain: 'youtube.com'
       },

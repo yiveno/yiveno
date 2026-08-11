@@ -84,7 +84,7 @@ describe('chrome-bookmark-sync listener', () => {
 
     createdHandler('10', {
       id: '10',
-      title: '留存',
+      title: 'Retention',
       url: 'https://example.com'
     })
     await Promise.resolve()
@@ -112,7 +112,7 @@ describe('chrome-bookmark-sync listener', () => {
     const changedHandler = (chrome.bookmarks.onChanged.addListener as ReturnType<typeof vi.fn>).mock
       .calls[0]?.[0] as (id: string, changeInfo: { title?: string }) => void
 
-    changedHandler('folder-1', { title: '娱乐1' })
+    changedHandler('folder-1', { title: 'Leisure 1' })
     await Promise.resolve()
     await Promise.resolve()
 

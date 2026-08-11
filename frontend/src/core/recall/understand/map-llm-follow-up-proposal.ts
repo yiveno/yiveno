@@ -27,7 +27,7 @@ const TYPE_QUESTIONNAIRE_REPLY =
  * 偏好建档 / 助理人设（产品文档 §0.1.1 空结果契约）→ 整段拒收。
  */
 const PREFERENCE_PROFILE_REPLY =
-  /(还不了解你|告诉我你喜欢|喜欢什么类型.{0,12}记住|我会记住你的|跟我聊聊你的喜好|get to know you|don'?t know you (well )?enough|tell me what you (like|prefer)|i'?ll remember (your )?prefer|build (a )?profile)/i
+  /(还不了解你|告诉我你喜欢|喜欢什么类型.{0,12}记住|我会记住你的|跟我聊聊你的喜好|get to know you|don'?t know you (well )?enough|tell me what you (?:\\w+\\s){0,4}(like|prefer)|tell me what you (?:usually\\s)?(like|prefer)|i'?ll remember (?:your )?(?:prefer|it)|i'?ll remember (your )?prefer|build (a )?profile)/i
 
 /** chip.value 须偏英文稳定串，避免把本地化句子当 clue 再发。 */
 const STABLE_VALUE = /^[a-z0-9][a-z0-9 '\-]{0,79}$/i

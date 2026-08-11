@@ -16,21 +16,25 @@ describe('bookmark-library-tree', () => {
           children: [
             {
               id: '1',
-              title: '书签栏',
+              title: 'Bookmarks bar',
               children: [
                 {
                   id: '10',
-                  title: '工作',
+                  title: 'Work',
                   children: [
-                    { id: '100', title: '留存分析', url: 'https://example.com/retention' },
-                    { id: '101', title: '内部', url: 'chrome://settings' }
+                    {
+                      id: '100',
+                      title: 'Retention analysis',
+                      url: 'https://example.com/retention'
+                    },
+                    { id: '101', title: 'Internal', url: 'chrome://settings' }
                   ]
                 }
               ]
             },
             {
               id: '2',
-              title: '其他书签',
+              title: 'Other bookmarks',
               children: []
             }
           ]
@@ -39,16 +43,16 @@ describe('bookmark-library-tree', () => {
       new Map([['100', memoryId]]),
       {
         unnamedFolderTitle: 'Unnamed folder',
-        noteByMemoryId: new Map([[memoryId, '给老板看的方案']])
+        noteByMemoryId: new Map([[memoryId, 'plan for the leadership review']])
       }
     )
 
     expect(forest).toHaveLength(2)
-    expect(forest[0]).toMatchObject({ kind: 'folder', title: '书签栏' })
-    expect(forest[1]).toMatchObject({ kind: 'folder', title: '其他书签', children: [] })
+    expect(forest[0]).toMatchObject({ kind: 'folder', title: 'Bookmarks bar' })
+    expect(forest[1]).toMatchObject({ kind: 'folder', title: 'Other bookmarks', children: [] })
 
     const work = forest[0]?.kind === 'folder' ? forest[0].children[0] : null
-    expect(work).toMatchObject({ kind: 'folder', title: '工作' })
+    expect(work).toMatchObject({ kind: 'folder', title: 'Work' })
     if (work?.kind !== 'folder') {
       throw new Error('expected folder')
     }
@@ -56,10 +60,10 @@ describe('bookmark-library-tree', () => {
     expect(work.children[0]).toEqual({
       kind: 'bookmark',
       chromeId: '100',
-      title: '留存分析',
+      title: 'Retention analysis',
       url: 'https://example.com/retention',
       memoryItemId: memoryId,
-      note: '给老板看的方案'
+      note: 'plan for the leadership review'
     })
     expect(countBookmarkLibraryLeaves(forest)).toBe(1)
   })

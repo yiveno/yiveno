@@ -17,7 +17,7 @@ export function buildLlmParseClueMessages(clue: string): Array<{
         '- contentTerms: array of single lowercase tokens (split multi-word entities: ["li","bai"] not ["li bai"]). Exclude fillers (the, a, about, saved, read, that, trying, remember, thing, looked, from, at, …) and words already captured as time/type/behavior/note',
         '- confidence: high|medium|low (hint only; server recomputes from slots)',
         'Rules:',
-        '- Map near-synonyms to canonical types (verse/poetry→poem, writeup/docs/blog→article, snippet/repo→code, music/track→song, youtube/clip/movie/film/电影→video).',
+        '- Map near-synonyms to canonical types (verse/poetry→poem, writeup/docs/blog→article, snippet/repo→code, music/track→song, youtube/clip/movie/film→video).',
         '- Only set objectTypes when the clue clearly names or implies that kind of object; do NOT invent types for bare product names (e.g. \"Cloudflare Workers\" → no objectTypes).',
         '- half_read covers unfinished reading even without the word \"reading\".',
         '- recently_saved covers just saved/stored/bookmarked.',

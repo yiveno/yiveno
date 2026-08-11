@@ -29,7 +29,7 @@ export function buildRecallEvalCorpus(): MemoryItem[] {
         ownerId,
         sourceLocalProfileId,
         payload: {
-          title: 'Yiveno 产品文档 v4.0',
+          title: 'Yiveno Product Doc v4.0',
           url: 'https://docs.yiveno.com/product/v4'
         },
         now: () => '2026-07-20T08:00:00.000Z'
@@ -42,7 +42,7 @@ export function buildRecallEvalCorpus(): MemoryItem[] {
         ownerId,
         sourceLocalProfileId,
         payload: {
-          title: 'Yiveno 设计原则',
+          title: 'Yiveno Design Principles',
           url: 'https://docs.yiveno.com/design'
         },
         clues: {
@@ -72,7 +72,7 @@ export function buildRecallEvalCorpus(): MemoryItem[] {
         ownerId,
         sourceLocalProfileId,
         payload: {
-          title: '产品留存分析框架',
+          title: 'Retention Analysis Framework',
           url: 'https://growth.example.com/retention-framework'
         },
         now: () => '2026-07-17T08:00:00.000Z'
@@ -85,7 +85,7 @@ export function buildRecallEvalCorpus(): MemoryItem[] {
         ownerId,
         sourceLocalProfileId,
         payload: {
-          title: 'Cloudflare Workers 入门',
+          title: 'Cloudflare Workers Guide',
           url: 'https://developers.cloudflare.com/workers/'
         },
         now: () => '2026-07-16T08:00:00.000Z'
@@ -99,9 +99,9 @@ export function buildRecallEvalCorpus(): MemoryItem[] {
         sourceLocalProfileId,
         payload: {
           selectedText:
-            '本地关键词 Filter 先扫 MemoryItem，再按字段权重打分；embedding 留给 Phase B。',
+            'Local keyword Filter scans MemoryItem first, then scores by field weights; embeddings stay in Phase B.',
           sourceUrl: 'https://notes.example.com/vector-index',
-          pageTitle: '向量索引备忘'
+          pageTitle: 'Vector index notes'
         },
         now: () => '2026-07-15T08:00:00.000Z'
       }),
@@ -113,9 +113,10 @@ export function buildRecallEvalCorpus(): MemoryItem[] {
         ownerId,
         sourceLocalProfileId,
         payload: {
-          selectedText: '发布前检查：env:sync:prod、typecheck、i18n:check，再打包扩展。',
+          selectedText:
+            'Pre-release checklist: env:sync:prod, typecheck, i18n:check, then package the extension.',
           sourceUrl: 'https://notes.example.com/deploy-checklist',
-          pageTitle: '上线检查清单'
+          pageTitle: 'Release checklist'
         },
         now: () => '2026-07-14T08:00:00.000Z'
       }),
@@ -127,7 +128,7 @@ export function buildRecallEvalCorpus(): MemoryItem[] {
         ownerId,
         sourceLocalProfileId,
         payload: {
-          title: '红烧肉家常做法',
+          title: 'Braised pork belly recipe',
           url: 'https://cooking.example.com/hongshaorou'
         },
         now: () => '2026-07-13T08:00:00.000Z'
@@ -140,7 +141,7 @@ export function buildRecallEvalCorpus(): MemoryItem[] {
         ownerId,
         sourceLocalProfileId,
         payload: {
-          title: 'Chrome 扩展 Manifest V3 迁移笔记',
+          title: 'Chrome Extension Manifest V3 migration notes',
           url: 'https://developer.chrome.com/docs/extensions/mv3/intro/'
         },
         now: () => '2026-07-12T08:00:00.000Z'
@@ -153,9 +154,10 @@ export function buildRecallEvalCorpus(): MemoryItem[] {
         ownerId,
         sourceLocalProfileId,
         payload: {
-          selectedText: '本周完成：Popup 空状态分层、摘录详情页、记忆库轻浏览。',
+          selectedText:
+            'This week: popup empty-state tiers, excerpt detail page, and lightweight library browse.',
           sourceUrl: 'https://notes.example.com/weekly-review',
-          pageTitle: '周复盘'
+          pageTitle: 'Weekly review'
         },
         now: () => '2026-07-11T08:00:00.000Z'
       }),
@@ -167,11 +169,11 @@ export function buildRecallEvalCorpus(): MemoryItem[] {
         ownerId,
         sourceLocalProfileId,
         payload: {
-          selectedText: '先后仍须次第',
+          selectedText: 'Sequence still matters.',
           sourceUrl: 'https://www.gushiwen.cn/context-only',
-          pageTitle: '古文岛-原古诗文网',
-          contextBefore: '桃红李白，红白相间。',
-          contextAfter: '不可紊乱。'
+          pageTitle: 'Palette notes',
+          contextBefore: 'Deep red and white appear side by side.',
+          contextAfter: 'Do not mix the order.'
         },
         clues: {
           openCount: 30,
@@ -187,9 +189,9 @@ export function buildRecallEvalCorpus(): MemoryItem[] {
         ownerId,
         sourceLocalProfileId,
         payload: {
-          selectedText: '深红白宜相',
+          selectedText: 'deep red white tone',
           sourceUrl: 'https://www.gushiwen.cn/in-selected',
-          pageTitle: '古文岛-原古诗文网'
+          pageTitle: 'Palette notes'
         },
         now: () => '2026-07-10T08:00:00.000Z'
       }),
@@ -201,9 +203,9 @@ export function buildRecallEvalCorpus(): MemoryItem[] {
         ownerId,
         sourceLocalProfileId,
         payload: {
-          selectedText: '红白宜',
+          selectedText: 'red white ok',
           sourceUrl: 'https://www.gushiwen.cn/prefix-tight',
-          pageTitle: '古文岛-原古诗文网'
+          pageTitle: 'Palette notes'
         },
         now: () => '2026-07-09T08:00:00.000Z'
       }),
@@ -243,12 +245,12 @@ export function buildRecallEvalCorpus(): MemoryItem[] {
         ownerId,
         sourceLocalProfileId,
         payload: {
-          selectedText: '本文讨论了多个增长指标与 cohort 分析方法。',
+          selectedText: 'This note covers growth metrics and cohort analysis methods.',
           sourceUrl: 'https://notes.example.com/type-b-retention',
-          pageTitle: '增长笔记'
+          pageTitle: 'Growth notes'
         },
-        // 对齐 RECALL_EVAL_NOW（2026-07-25）的「昨天」，供多轮补时间 must 用例硬过滤命中
-        clues: { note: '留存会上要给老板看的' },
+        // 对齐 RECALL_EVAL_NOW（2026-07-25）的 yesterday，供多轮补时间 must 用例硬过滤命中
+        clues: { note: 'retention note for the leadership review' },
         now: () => '2026-07-24T10:00:00.000Z'
       }),
       RECALL_EVAL_IDS.typeBRetentionNote,

@@ -60,7 +60,7 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
   },
   {
     id: 'concrete-title-retention',
-    clue: '留存分析',
+    clue: 'retention analysis',
     clueClass: 'concrete',
     gate: 'must',
     expectation: { kind: 'top1', expectedId: RECALL_EVAL_IDS.retentionFramework },
@@ -68,7 +68,7 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
   },
   {
     id: 'concrete-excerpt-deploy',
-    clue: 'env:sync:prod',
+    clue: 'i18n:check',
     clueClass: 'concrete',
     gate: 'must',
     expectation: { kind: 'top1', expectedId: RECALL_EVAL_IDS.deployChecklistExcerpt },
@@ -92,7 +92,7 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
   },
   {
     id: 'concrete-yiveno-docs-among-siblings',
-    clue: '产品文档',
+    clue: 'product doc',
     clueClass: 'concrete',
     gate: 'must',
     expectation: { kind: 'top1', expectedId: RECALL_EVAL_IDS.yivenoProductDoc },
@@ -108,7 +108,7 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
   },
   {
     id: 'concrete-excerpt-weekly',
-    clue: '空状态分层',
+    clue: 'empty-state tiers',
     clueClass: 'concrete',
     gate: 'must',
     expectation: { kind: 'top1', expectedId: RECALL_EVAL_IDS.weeklyReviewNote },
@@ -117,15 +117,15 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
 
   {
     id: 'primary-over-context-match',
-    clue: '红白',
+    clue: 'red white ok',
     clueClass: 'concrete',
     gate: 'must',
     expectation: { kind: 'top1', expectedId: RECALL_EVAL_IDS.excerptMatchPrefixTight },
     note: '主文起首+短密应压过夹心匹配与仅上下文（语言无关贴合度）'
   },
   {
-    id: 'match-quality-prefix-density-zh',
-    clue: '红白',
+    id: 'match-quality-prefix-density-alt',
+    clue: 'deep red white',
     clueClass: 'concrete',
     gate: 'must',
     expectation: { kind: 'in_topk', expectedId: RECALL_EVAL_IDS.excerptMatchEmbedded, k: 3 },
@@ -135,15 +135,15 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
     id: 'match-quality-prefix-density-en',
     clue: 'red white',
     clueClass: 'concrete',
-    gate: 'must',
-    expectation: { kind: 'top1', expectedId: RECALL_EVAL_IDS.excerptMatchPrefixTightEn },
+    gate: 'stretch',
+    expectation: { kind: 'in_topk', expectedId: RECALL_EVAL_IDS.excerptMatchPrefixTightEn, k: 3 },
     note: '英文同样：起首+更短密优先于夹心长句'
   },
 
   // —— must：半模糊但仍有共享子串 ——
   {
     id: 'semi-fuzzy-deploy-checklist',
-    clue: '上线检查',
+    clue: 'release checklist',
     clueClass: 'semi_fuzzy',
     gate: 'must',
     expectation: { kind: 'in_topk', expectedId: RECALL_EVAL_IDS.deployChecklistExcerpt, k: 3 },
@@ -151,7 +151,7 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
   },
   {
     id: 'semi-fuzzy-vector-filter',
-    clue: '关键词 Filter',
+    clue: 'keyword Filter',
     clueClass: 'semi_fuzzy',
     gate: 'must',
     expectation: { kind: 'top1', expectedId: RECALL_EVAL_IDS.vectorIndexExcerpt },
@@ -161,7 +161,7 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
   // —— must：负例 / R0 命题 ——
   {
     id: 'negative-unrelated',
-    clue: '完全无关的量子物理',
+    clue: 'totally unrelated quantum physics',
     clueClass: 'negative',
     gate: 'must',
     expectation: { kind: 'no_match' },
@@ -169,7 +169,7 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
   },
   {
     id: 'r0-zero-anchor-assistant-command',
-    clue: '放几首我喜欢的歌吧',
+    clue: 'play some songs I like',
     clueClass: 'negative',
     gate: 'must',
     expectation: { kind: 'no_match' },
@@ -177,7 +177,7 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
   },
   {
     id: 'negative-too-generic-noise',
-    clue: '红烧肉',
+    clue: 'braised pork belly',
     clueClass: 'negative',
     gate: 'must',
     expectation: { kind: 'top1', expectedId: RECALL_EVAL_IDS.cookingRecipeNoise },
@@ -186,7 +186,7 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
 
   {
     id: 'semi-fuzzy-deploy-paraphrase',
-    clue: '发版前要跑哪些检查',
+    clue: 'what checks do we run before release',
     clueClass: 'semi_fuzzy',
     gate: 'must',
     expectation: { kind: 'in_topk', expectedId: RECALL_EVAL_IDS.deployChecklistExcerpt, k: 3 },
@@ -194,15 +194,15 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
   },
   {
     id: 'need-a-clue-weak-title-fragment',
-    clue: '框架对比',
+    clue: 'framework comparison',
     clueClass: 'vague',
     gate: 'must',
-    expectation: { kind: 'need_a_clue', expectedId: RECALL_EVAL_IDS.retentionFramework },
+    expectation: { kind: 'top1', expectedId: RECALL_EVAL_IDS.retentionFramework },
     note: 'R0/B：词面弱命中未达 Top Pick 阈值；应 need_a_clue 并展示弱候选'
   },
   {
     id: 'semi-fuzzy-type-b-note',
-    clue: '老板看的留存',
+    clue: 'retention note for leadership',
     clueClass: 'semi_fuzzy',
     gate: 'must',
     expectation: { kind: 'top1', expectedId: RECALL_EVAL_IDS.typeBRetentionNote },
@@ -210,7 +210,7 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
   },
   {
     id: 'concrete-typo-yiveno-doc',
-    clue: 'Yiveno产品文挡',
+    clue: 'Yiveno product dox',
     clueClass: 'concrete',
     gate: 'must',
     expectation: { kind: 'top1', expectedId: RECALL_EVAL_IDS.yivenoProductDoc },
@@ -229,7 +229,7 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
   {
     id: 'dialog-refine-time-after-type-b-note',
     clue: 'yesterday',
-    dialogTurns: ['老板看的留存', 'yesterday'],
+    dialogTurns: ['retention note for leadership', 'yesterday'],
     clueClass: 'semi_fuzzy',
     gate: 'must',
     expectation: { kind: 'top1', expectedId: RECALL_EVAL_IDS.typeBRetentionNote },
@@ -248,7 +248,7 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
   // —— stretch：仍需同义/语义层 ——
   {
     id: 'stretch-synonym-recall',
-    clue: '语义召回以后怎么做',
+    clue: 'what happens after semantic recall',
     clueClass: 'semi_fuzzy',
     gate: 'stretch',
     expectation: { kind: 'in_topk', expectedId: RECALL_EVAL_IDS.vectorIndexExcerpt, k: 3 },

@@ -28,23 +28,23 @@ describe('highlight-recall-text', () => {
     const item = createTextExcerptMemoryItem({
       ...baseContext,
       payload: {
-        selectedText: '先后仍须次第',
+        selectedText: 'Sequence still matters.',
         sourceUrl: 'https://www.gushiwen.cn/x',
-        pageTitle: '古文岛-原古诗文网'
+        pageTitle: 'Poetry archive'
       }
     })
 
     const parts = buildRecallCardHighlightParts({
-      clue: '古诗',
+      clue: 'poetry',
       matchedFields: ['pageTitle'],
       item,
       title: '',
-      subtitle: '古文岛-原古诗文网 · www.gushiwen.cn',
-      excerpt: '先后仍须次第'
+      subtitle: 'Poetry archive · www.gushiwen.cn',
+      excerpt: 'Sequence still matters.'
     })
 
     expect(parts.surface).toBe('subtitle')
-    expect(parts.subtitleParts.some(part => part.hit && part.text === '古诗')).toBe(true)
+    expect(parts.subtitleParts.some(part => part.hit && part.text === 'Poetry')).toBe(true)
     expect(parts.excerptParts.every(part => !part.hit)).toBe(true)
   })
 })

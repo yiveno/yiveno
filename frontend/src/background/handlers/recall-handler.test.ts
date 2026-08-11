@@ -62,11 +62,11 @@ describe('recall-handler', () => {
 
   it('handleRecallWithClue 返回 Top Pick', async () => {
     await handleCaptureBookmark({
-      title: '留存分析方法论',
+      title: 'Retention analysis guide',
       url: 'https://example.com/retention'
     })
 
-    const response = await handleRecallWithClue({ clue: '留存' })
+    const response = await handleRecallWithClue({ clue: 'retention' })
     expect(response.ok).toBe(true)
     if (!response.ok) {
       return
@@ -74,12 +74,12 @@ describe('recall-handler', () => {
 
     expect(response.result.outcome).toBe('top_pick')
     expect(response.result.topPick?.item.payload).toMatchObject({
-      title: '留存分析方法论'
+      title: 'Retention analysis guide'
     })
   })
 
   it('handleRecallWithClue 无数据时 no_match', async () => {
-    const response = await handleRecallWithClue({ clue: '不存在的内容' })
+    const response = await handleRecallWithClue({ clue: 'missing content' })
     expect(response.ok).toBe(true)
     if (!response.ok) {
       return
@@ -90,11 +90,11 @@ describe('recall-handler', () => {
 
   it('否定反馈后同线索应改选竞争者', async () => {
     const preferred = await handleCaptureBookmark({
-      title: 'Yiveno 设计原则',
+      title: 'Yiveno Design Principles',
       url: 'https://docs.yiveno.com/design'
     })
     const alternative = await handleCaptureBookmark({
-      title: 'Yiveno 产品文档',
+      title: 'Yiveno Product Doc',
       url: 'https://docs.yiveno.com/product'
     })
     expect(preferred.ok && alternative.ok).toBe(true)

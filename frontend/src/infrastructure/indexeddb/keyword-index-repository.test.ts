@@ -60,7 +60,7 @@ describe('keyword-index-repository', () => {
   it('rebuild 后可按线索查出摘录 id', async () => {
     const item = await memoryItemRepository.createTextExcerpt({
       payload: {
-        selectedText: 'env:sync:prod 上线检查清单',
+        selectedText: 'env:sync:prod release checklist',
         sourceUrl: 'https://docs.example.com/deploy',
         pageTitle: 'Deploy',
         domain: 'docs.example.com'
@@ -84,7 +84,7 @@ describe('keyword-index-repository', () => {
   it('健康索引下 applyItemTokenDiff 增量可查新词、旧词可消失', async () => {
     const created = await memoryItemRepository.createTextExcerpt({
       payload: {
-        selectedText: '第一版正文只有苹果味道',
+        selectedText: 'first draft mentions only apple',
         sourceUrl: 'https://example.com/a',
         pageTitle: 'A',
         domain: 'example.com'
@@ -97,11 +97,11 @@ describe('keyword-index-repository', () => {
       ...created,
       payload: {
         ...created.payload,
-        selectedText: '第二版正文换成香蕉味道'
+        selectedText: 'second draft switches to banana'
       },
       clues: {
         ...created.clues,
-        textExcerpt: '第二版正文换成香蕉味道'
+        textExcerpt: 'second draft switches to banana'
       }
     }
 
@@ -114,10 +114,10 @@ describe('keyword-index-repository', () => {
     expect(applied.applied).toBe(true)
     expect(await keywordIndexRepository.isHealthy(created.ownerId)).toBe(true)
 
-    const banana = await keywordIndexRepository.lookupCandidateIds('香蕉', created.ownerId)
+    const banana = await keywordIndexRepository.lookupCandidateIds('banana', created.ownerId)
     expect(banana?.ids).toContain(created.id)
 
-    const apple = await keywordIndexRepository.lookupCandidateIds('苹果', created.ownerId)
+    const apple = await keywordIndexRepository.lookupCandidateIds('apple', created.ownerId)
     // 苹果若仍在其它字段（无）则不应含该 id；允许 posting 空列表导致 ids 不含
     expect(apple?.ids.includes(created.id) ?? false).toBe(false)
   })
@@ -125,7 +125,7 @@ describe('keyword-index-repository', () => {
   it('索引不健康时 applyItemTokenDiff 返回 applied=false', async () => {
     const created = await memoryItemRepository.createTextExcerpt({
       payload: {
-        selectedText: '未重建的条目',
+        selectedText: 'item before rebuild',
         sourceUrl: 'https://example.com/b',
         pageTitle: 'B',
         domain: 'example.com'
@@ -145,7 +145,7 @@ describe('keyword-index-repository', () => {
   it('健康索引下 applyItemTokenDiffs 批量增量可查多条新词', async () => {
     const first = await memoryItemRepository.createTextExcerpt({
       payload: {
-        selectedText: '批次甲只有西瓜',
+        selectedText: 'batch alpha only has watermelon',
         sourceUrl: 'https://example.com/batch-a',
         pageTitle: 'BA',
         domain: 'example.com'
@@ -154,7 +154,7 @@ describe('keyword-index-repository', () => {
     })
     const second = await memoryItemRepository.createTextExcerpt({
       payload: {
-        selectedText: '批次乙只有葡萄',
+        selectedText: 'batch beta only has grape',
         sourceUrl: 'https://example.com/batch-b',
         pageTitle: 'BB',
         domain: 'example.com'
@@ -165,13 +165,13 @@ describe('keyword-index-repository', () => {
 
     const nextFirst = {
       ...first,
-      payload: { ...first.payload, selectedText: '批次甲改成芒果' },
-      clues: { ...first.clues, textExcerpt: '批次甲改成芒果' }
+      payload: { ...first.payload, selectedText: 'batch alpha switches to mango' },
+      clues: { ...first.clues, textExcerpt: 'batch alpha switches to mango' }
     }
     const nextSecond = {
       ...second,
-      payload: { ...second.payload, selectedText: '批次乙改成荔枝' },
-      clues: { ...second.clues, textExcerpt: '批次乙改成荔枝' }
+      payload: { ...second.payload, selectedText: 'batch beta switches to lychee' },
+      clues: { ...second.clues, textExcerpt: 'batch beta switches to lychee' }
     }
 
     const applied = await keywordIndexRepository.applyItemTokenDiffs({
@@ -191,18 +191,18 @@ describe('keyword-index-repository', () => {
     })
     expect(applied.applied).toBe(true)
 
-    const mango = await keywordIndexRepository.lookupCandidateIds('芒果', first.ownerId)
+    const mango = await keywordIndexRepository.lookupCandidateIds('mango', first.ownerId)
     expect(mango?.ids).toContain(first.id)
-    const lychee = await keywordIndexRepository.lookupCandidateIds('荔枝', first.ownerId)
+    const lychee = await keywordIndexRepository.lookupCandidateIds('lychee', first.ownerId)
     expect(lychee?.ids).toContain(second.id)
-    const watermelon = await keywordIndexRepository.lookupCandidateIds('西瓜', first.ownerId)
+    const watermelon = await keywordIndexRepository.lookupCandidateIds('watermelon', first.ownerId)
     expect(watermelon?.ids.includes(first.id) ?? false).toBe(false)
   })
 
   it('健康索引下 putMany 批内增量保持健康且可查新词', async () => {
     const created = await memoryItemRepository.createTextExcerpt({
       payload: {
-        selectedText: '批量前只有柠檬',
+        selectedText: 'before putMany only lemon',
         sourceUrl: 'https://example.com/put-many',
         pageTitle: 'PM',
         domain: 'example.com'
@@ -215,19 +215,19 @@ describe('keyword-index-repository', () => {
       ...created,
       payload: {
         ...created.payload,
-        selectedText: '批量后换成橙子'
+        selectedText: 'after putMany switches to orange'
       },
       clues: {
         ...created.clues,
-        textExcerpt: '批量后换成橙子'
+        textExcerpt: 'after putMany switches to orange'
       }
     }
     await memoryItemRepository.putMany([updated])
 
     expect(await keywordIndexRepository.isHealthy(created.ownerId)).toBe(true)
-    const orange = await keywordIndexRepository.lookupCandidateIds('橙子', created.ownerId)
+    const orange = await keywordIndexRepository.lookupCandidateIds('orange', created.ownerId)
     expect(orange?.ids).toContain(created.id)
-    const lemon = await keywordIndexRepository.lookupCandidateIds('柠檬', created.ownerId)
+    const lemon = await keywordIndexRepository.lookupCandidateIds('lemon', created.ownerId)
     expect(lemon?.ids.includes(created.id) ?? false).toBe(false)
   })
 

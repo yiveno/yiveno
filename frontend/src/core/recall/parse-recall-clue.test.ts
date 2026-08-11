@@ -28,9 +28,8 @@ describe('resolveRelativeTimeRange', () => {
 })
 
 describe('extractContentTerms', () => {
-  it('抽出连续汉字与拉丁词', () => {
-    // 这里允许中文 token，仅验证抽词能力
-    expect(extractContentTerms('  Li Bai RAG 文档 ')).toEqual(['li', 'bai', 'rag', '文档'])
+  it('extracts mixed Latin tokens and path-like fragments', () => {
+    expect(extractContentTerms('  Li Bai RAG docs/api ')).toEqual(['li', 'bai', 'rag', 'docs/api'])
   })
 })
 
@@ -215,18 +214,20 @@ describe('parseRecallClue', () => {
     expect(parsed.confidence).toBe('medium')
   })
 
-  it('二战相关的视频 → video + 二战（locale alias）', () => {
-    const parsed = parseRecallClue('二战相关的视频', { nowMs: NOW_MS })
+  it('wwii related video → video + wwii', () => {
+    const parsed = parseRecallClue('wwii related video', { nowMs: NOW_MS })
     expect(parsed.objectTypes).toEqual(['video'])
-    expect(parsed.contentTerms).toEqual(['二战'])
+    expect(parsed.contentTerms).toEqual(['wwii'])
     expect(parsed.confidence).toBe('medium')
   })
 
-  it('movie / 电影 → video', () => {
+  it('movie synonyms map to video', () => {
     expect(parseRecallClue('the movie I watched yesterday', { nowMs: NOW_MS }).objectTypes).toEqual(
       ['video']
     )
-    expect(parseRecallClue('昨天看过的电影', { nowMs: NOW_MS }).objectTypes).toEqual(['video'])
+    expect(parseRecallClue('the film I watched yesterday', { nowMs: NOW_MS }).objectTypes).toEqual([
+      'video'
+    ])
   })
 
   it('watched / videos 作 filler，检索回退 objectType', () => {

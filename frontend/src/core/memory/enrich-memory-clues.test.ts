@@ -24,7 +24,7 @@ describe('enrichMemoryClues', () => {
   it('music domain -> song + recall-oriented English keywords', () => {
     expect(
       enrichMemoryClues({
-        title: '网易云音乐',
+        title: 'NetEase Cloud Music',
         url: 'https://music.163.com/#/song?id=1',
         domain: 'music.163.com'
       })
@@ -46,9 +46,9 @@ describe('enrichMemoryClues', () => {
     expect(result.keywords).toEqual(expect.arrayContaining(['video', 'youtube', 'watch', 'clip']))
   })
 
-  it('希特勒 YouTube 书签 → video + WWII 主题 + Hitler 实体', () => {
+  it('Hitler YouTube bookmark -> video + WWII topic + Hitler entity', () => {
     const result = enrichMemoryClues({
-      title: '希特勒死亡80年後 為何仍給世界帶來陰影？－ BBC News 中文',
+      title: 'Why Hitler still casts a shadow after 80 years - BBC News',
       url: 'https://www.youtube.com/watch?v=hitler',
       domain: 'youtube.com'
     })
@@ -59,9 +59,9 @@ describe('enrichMemoryClues', () => {
     )
   })
 
-  it('长春经济 YouTube 书签 → video + Changchun + economy 主题', () => {
+  it('Changchun economy YouTube bookmark -> video + Changchun + economy topic', () => {
     const result = enrichMemoryClues({
-      title: '长春会成为第一座破产省会吗？九百万人口省会，正在失去增长能力｜尉遲大官人',
+      title: 'Will Changchun become a bankrupt capital city as growth slows?',
       url: 'https://www.youtube.com/watch?v=_weXNUQ5NS4',
       domain: 'www.youtube.com'
     })
@@ -123,12 +123,11 @@ describe('enrichMemoryClues', () => {
     expect(result.keywords).toEqual(expect.arrayContaining(['poem', 'Li Bai']))
   })
 
-  it('body contains 李白 → entities canonical to Li Bai', () => {
+  it('body contains Li Bai -> entities stay canonical', () => {
     const result = enrichMemoryClues({
-      title: '唐诗',
-      text: '床前明月光。李白写的诗。'
+      title: 'Tang poetry',
+      text: 'Moonlight by the bed. A poem written by Li Bai.'
     })
-    // object type 可能因正文语言不同而未识别，但实体应 canonical 化
     expect(result.entities).toContain('Li Bai')
     expect(result.keywords).toContain('Li Bai')
   })
@@ -142,9 +141,9 @@ describe('enrichMemoryClues', () => {
     expect(result.tags).toContain('code')
   })
 
-  it('不因「网页」二字滥打 page', () => {
+  it('generic page wording does not over-tag as page', () => {
     const result = enrichMemoryClues({
-      title: '某个普通网页标题'
+      title: 'A generic web page title'
     })
     expect(result.tags).not.toContain('page')
   })
@@ -157,11 +156,11 @@ describe('create-memory-item enrichment', () => {
     now: () => '2026-07-22T06:00:00.000Z'
   }
 
-  it('创建书签时自动写入 tags/keywords', () => {
+  it('creating bookmark auto-fills tags/keywords', () => {
     const item = createBookmarkMemoryItem({
       ...baseContext,
       payload: {
-        title: '网易云音乐',
+        title: 'NetEase Cloud Music',
         url: 'https://music.163.com/'
       }
     })
@@ -169,7 +168,7 @@ describe('create-memory-item enrichment', () => {
     expect(item.clues.keywords).toEqual(expect.arrayContaining(['music', 'song', 'listen']))
   })
 
-  it('创建摘录时识别实体与类型', () => {
+  it('creating excerpt detects entity and type', () => {
     const item = createTextExcerptMemoryItem({
       ...baseContext,
       payload: {
@@ -182,11 +181,11 @@ describe('create-memory-item enrichment', () => {
     expect(item.clues.entities).toContain('Li Bai')
   })
 
-  it('调用方传入的 tags 与 enrichment 合并', () => {
+  it('caller-provided tags merge with enrichment tags', () => {
     const item = createBookmarkMemoryItem({
       ...baseContext,
       payload: {
-        title: '自定义',
+        title: 'Custom bookmark',
         url: 'https://music.163.com/x'
       },
       clues: { tags: ['favorite'] }
@@ -202,11 +201,11 @@ describe('mergeEnrichmentIntoMemoryItem', () => {
     now: () => '2026-07-22T06:00:00.000Z'
   }
 
-  it('存量无 tags 时回填 song，且不改 updatedAt', () => {
+  it('legacy item without tags backfills song without touching updatedAt', () => {
     const item = createBookmarkMemoryItem({
       ...baseContext,
       payload: {
-        title: '网易云音乐',
+        title: 'NetEase Cloud Music',
         url: 'https://music.163.com/'
       }
     })
@@ -226,11 +225,11 @@ describe('mergeEnrichmentIntoMemoryItem', () => {
     expect(merged.item.updatedAt).toBe(legacy.updatedAt)
   })
 
-  it('已 enrichment 过则 changed=false', () => {
+  it('already enriched item keeps changed=false', () => {
     const item = createBookmarkMemoryItem({
       ...baseContext,
       payload: {
-        title: '网易云音乐',
+        title: 'NetEase Cloud Music',
         url: 'https://music.163.com/'
       }
     })

@@ -52,7 +52,7 @@ describe('MemoryItemService LLM enrichment 调度', () => {
       ownerId: 'o',
       sourceLocalProfileId: 'p',
       payload: {
-        title: '新书签标题足够长',
+        title: 'A long enough new bookmark title',
         url: 'https://example.com/n',
         chromeBookmarkId: 'cb-1'
       }
@@ -65,7 +65,7 @@ describe('MemoryItemService LLM enrichment 调度', () => {
       ownerId: 'o',
       sourceLocalProfileId: 'p',
       payload: {
-        title: '新书签标题足够长',
+        title: 'A long enough new bookmark title',
         url: 'https://example.com/n',
         chromeBookmarkId: 'cb-1'
       }
@@ -78,7 +78,7 @@ describe('MemoryItemService LLM enrichment 调度', () => {
       ownerId: 'o',
       sourceLocalProfileId: 'p',
       payload: {
-        title: '改标题',
+        title: 'Updated title',
         url: 'https://example.com/n',
         chromeBookmarkId: 'cb-1'
       }
