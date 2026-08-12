@@ -24,8 +24,8 @@ onMounted(async () => {
 
 <template>
   <div class="auth-nav">
-    <a v-if="loading" href="/login" class="nav-link">登录</a>
-    <a v-else-if="!user" href="/login" class="nav-link">登录</a>
+    <a v-if="loading" href="/login" class="nav-link">Sign in</a>
+    <a v-else-if="!user" href="/login" class="nav-link">Sign in</a>
     <a v-else href="/account" class="nav-link user-info">
       <img v-if="user.avatarUrl" :src="user.avatarUrl" alt="" class="avatar" />
       <span>{{ user.name }}</span>

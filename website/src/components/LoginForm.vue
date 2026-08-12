@@ -54,13 +54,13 @@ function applyLoginErrorFromUrl(): void {
   }
   const detail = params.get('detail')
   const labels: Record<string, string> = {
-    no_token: '登录回调未带回凭证',
-    session_error: '登录会话写入失败',
-    auth_error: '登录处理异常',
-    oauth_error: 'OAuth 提供商或 Supabase 拒绝了登录'
+    no_token: 'Sign-in callback did not return credentials',
+    session_error: 'Could not save your sign-in session',
+    auth_error: 'Sign-in failed unexpectedly',
+    oauth_error: 'OAuth provider or Supabase rejected sign-in'
   }
   const label = labels[code] || code
-  error.value = detail ? `${label}：${detail}` : label
+  error.value = detail ? `${label}: ${detail}` : label
 }
 
 /**
@@ -82,13 +82,14 @@ onMounted(async () => {
         return
       }
       if (getPendingExtensionId()) {
-        error.value = '已登录，但未能连接到扩展。请确认已安装并启用 Yiveno 扩展后重试。'
+        error.value =
+          'You are signed in, but we could not reach the extension. Install and enable Yiveno, then try again.'
         return
       }
     }
     signedInEmail.value = session.user.email || session.user.id
   } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : '检查登录状态失败'
+    const message = e instanceof Error ? e.message : 'Could not check sign-in status'
     error.value = message
   }
 })
@@ -110,7 +111,7 @@ async function login(provider: 'google' | 'microsoft') {
     signedInEmail.value = ''
     await signInWithOAuth(provider)
   } catch (e: unknown) {
-    error.value = (e instanceof Error ? e.message : String(e)) || '登录失败'
+    error.value = (e instanceof Error ? e.message : String(e)) || 'Sign-in failed'
     loading.value = false
   }
 }
@@ -126,32 +127,39 @@ async function login(provider: 'google' | 'microsoft') {
       height="56"
       decoding="async"
     />
-    <h2>登录 Yiveno</h2>
-    <p v-if="fromExtension" class="hint">登录后将同步到 Chrome 扩展（不会自动上传记忆）。</p>
-    <p v-if="connectingExtension" class="hint">正在连接扩展…</p>
-    <p v-if="extensionConnected" class="ok">扩展已连接</p>
+    <h2>Sign in to Yiveno</h2>
+    <p v-if="fromExtension" class="hint">
+      After sign-in, your session syncs to the Chrome extension. Memories are not uploaded
+      automatically.
+    </p>
+    <p v-if="connectingExtension" class="hint">Connecting to the extension…</p>
+    <p v-if="extensionConnected" class="ok">Extension connected</p>
     <template v-if="signedInEmail">
-      <p class="hint">当前已登录：{{ signedInEmail }}</p>
+      <p class="hint">Signed in as {{ signedInEmail }}</p>
       <button :disabled="loading || connectingExtension" class="btn btn-primary" @click="goAccount">
-        进入账户
+        Go to account
       </button>
-      <p class="hint">或使用下方按钮切换其他账号</p>
+      <p class="hint">Or use the buttons below to switch accounts</p>
     </template>
     <p v-if="error" class="error">{{ error }}</p>
     <button :disabled="loading || connectingExtension" class="btn" @click="login('google')">
-      {{ loading ? '跳转中...' : signedInEmail ? '换 Google 账号' : '使用 Google 登录' }}
+      {{
+        loading ? 'Redirecting…' : signedInEmail ? 'Switch Google account' : 'Continue with Google'
+      }}
     </button>
     <button :disabled="loading || connectingExtension" class="btn" @click="login('microsoft')">
-      {{ loading ? '跳转中...' : signedInEmail ? '换 Microsoft 账号' : '使用 Microsoft 登录' }}
+      {{
+        loading
+          ? 'Redirecting…'
+          : signedInEmail
+            ? 'Switch Microsoft account'
+            : 'Continue with Microsoft'
+      }}
     </button>
     <p class="legal">
       <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
       ·
-      <a href="/terms" target="_blank" rel="noopener noreferrer">Terms</a>
-      ·
-      <a href="/privacy#zh" target="_blank" rel="noopener noreferrer">隐私政策</a>
-      ·
-      <a href="/terms#zh" target="_blank" rel="noopener noreferrer">服务条款</a>
+      <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a>
     </p>
   </div>
 </template>

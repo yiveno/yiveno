@@ -81,6 +81,18 @@ function finalizeExtensionDist() {
   copyIfPresent(path.join(publicDir, '_locales'), path.join(distDir, '_locales'))
   copyIfPresent(path.join(publicDir, 'offscreen.html'), path.join(distDir, 'offscreen.html'))
 
+  /** 仅保留 en；空目录或非 en locale 会导致 Chrome 在对应 UI 语言下加载失败。 */
+  const localesDir = path.join(distDir, '_locales')
+  if (fs.existsSync(localesDir)) {
+    for (const entry of fs.readdirSync(localesDir, { withFileTypes: true })) {
+      if (!entry.isDirectory() || entry.name === 'en') {
+        continue
+      }
+      fs.rmSync(path.join(localesDir, entry.name), { recursive: true, force: true })
+      console.warn(`[clean-dist] 已移除非 en locale 目录: _locales/${entry.name}`)
+    }
+  }
+
   flattenPageHtml('popup')
   flattenPageHtml('settings')
   flattenPageHtml('detail')

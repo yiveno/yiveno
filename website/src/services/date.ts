@@ -1,9 +1,9 @@
 export function formatDate(dateStr: string | undefined): string {
-  if (!dateStr) return '未知'
+  if (!dateStr) return 'Unknown'
   try {
     const d = new Date(dateStr)
-    return d.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })
+    return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
   } catch {
-    return '未知'
+    return 'Unknown'
   }
 }

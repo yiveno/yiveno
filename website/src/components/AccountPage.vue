@@ -148,8 +148,8 @@ async function handleSignOut() {
           </template>
         </p>
         <p class="hint">
-          Pro unlocks Hybrid recall, cloud sync, and hosted clue understanding. Free keeps keyword
-          Filter on this device.
+          Free and Pro share the same on-device recall quality (keyword + Hybrid). Pro adds cloud
+          sync across devices and a larger hosted clue-understanding quota.
         </p>
         <div class="actions">
           <a

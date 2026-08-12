@@ -9,7 +9,7 @@ import {
   resolveExtensionHandoffTargetId
 } from '../services/extension-auth-handoff'
 
-const status = ref('正在登录…')
+const status = ref('Signing in…')
 
 /** 跳回登录页，并带上可诊断的短错误码（避免超长 URL） */
 function redirectLoginError(code: string, detail?: string | null): void {
@@ -27,7 +27,7 @@ function redirectLoginError(code: string, detail?: string | null): void {
  */
 async function finishWithSession(session: Session): Promise<void> {
   if (resolveExtensionHandoffTargetId()) {
-    status.value = '正在连接扩展…'
+    status.value = 'Connecting to the extension…'
     const profile = extractProfileFromUserMetadata(
       session.user.user_metadata as Record<string, unknown> | undefined
     )
@@ -43,7 +43,8 @@ async function finishWithSession(session: Session): Promise<void> {
       window.location.href = '/account?extension_connected=1'
       return
     }
-    status.value = '登录成功，但扩展未连接。请确认扩展已安装后从扩展设置重新登录。'
+    status.value =
+      'Signed in, but the extension did not connect. Open Yiveno extension → Settings → Sign in again.'
     window.setTimeout(() => {
       window.location.href = '/account?extension_connected=0'
     }, 2000)

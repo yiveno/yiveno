@@ -4,7 +4,7 @@ import { getSupabase } from '../services/supabase'
 
 defineOptions({ name: 'LogoutPage' })
 
-const status = ref('正在退出…')
+const status = ref('Signing out…')
 
 onMounted(async () => {
   try {
@@ -16,7 +16,7 @@ onMounted(async () => {
   // 扩展触发的后台退出：尽量关页；否则回首页（已登出）
   const fromExtension = new URLSearchParams(window.location.search).get('from_extension') === '1'
   if (fromExtension) {
-    status.value = '已退出'
+    status.value = 'Signed out'
     window.setTimeout(() => {
       window.close()
       window.location.replace('/')
