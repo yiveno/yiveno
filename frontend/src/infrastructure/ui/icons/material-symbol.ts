@@ -9,6 +9,8 @@ export const MATERIAL_SYMBOL_NAMES = [
   'arrow_upward',
   'bookmark',
   'bookmark_add',
+  'celebration',
+  'check_circle',
   'chevron_right',
   'delete',
   'edit_note',
@@ -16,6 +18,8 @@ export const MATERIAL_SYMBOL_NAMES = [
   'folder',
   'folder_open',
   'library_books',
+  'looks_one',
+  'looks_two',
   'open_in_new',
   'refresh',
   'settings',
@@ -41,6 +45,12 @@ const MATERIAL_SYMBOL_PATHS: Record<MaterialSymbolName, string> = {
   // Material Icons Outlined · bookmark_add（书签内加号）
   bookmark_add:
     'M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2zm0 15-5-2.18L7 18V5h10v13zm-8-8.5h2V7h2v2.5h2V12h-2v2.5h-2V12H9V9.5z',
+  // Material Icons Outlined · celebration（引导完成）
+  celebration:
+    'm2 22 14-5-9-9-5 14zm10.35-5.82L5.3 18.7l2.52-7.05 4.53 4.53zm2.18-3.65 5.59-5.59a1.25 1.25 0 0 1 1.77 0l.59.59 1.06-1.06-.59-.59a2.758 2.758 0 0 0-3.89 0l-5.59 5.59 1.06 1.06zm-4.47-5.65-.59.59 1.06 1.06.59-.59a2.758 2.758 0 0 0 0-3.89l-.59-.59-1.06 1.07.59.59c.48.48.48 1.28 0 1.76zm7 5-1.59 1.59 1.06 1.06 1.59-1.59a1.25 1.25 0 0 1 1.77 0l1.61 1.61 1.06-1.06-1.61-1.61a2.758 2.758 0 0 0-3.89 0zm-2-6-3.59 3.59 1.06 1.06 3.59-3.59a2.758 2.758 0 0 0 0-3.89l-1.59-1.59-1.06 1.06 1.59 1.59c.48.49.48 1.29 0 1.77z',
+  // Material Icons Outlined · check_circle（步骤完成）
+  check_circle:
+    'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm4.59-12.42L10 14.17l-2.59-2.58L6 13l4 4 8-8z',
   // Material Icons · chevron_right
   chevron_right: 'M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z',
   // Material Icons / Symbols Outlined · delete
@@ -59,6 +69,12 @@ const MATERIAL_SYMBOL_PATHS: Record<MaterialSymbolName, string> = {
   // Material Icons · library_books
   library_books:
     'M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12zM10 9h8v2h-8zm0 3h8v2h-8zm0-6h8v2h-8z',
+  // Material Icons Outlined · looks_one（步骤 1）
+  looks_one:
+    'M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-7-2h2V7h-4v2h2z',
+  // Material Icons Outlined · looks_two（步骤 2）
+  looks_two:
+    'M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-4-4h-4v-2h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H9v2h4v2h-2a2 2 0 0 0-2 2v4h6v-2z',
   // Material Icons · open_in_new
   open_in_new:
     'M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z',
