@@ -51,7 +51,6 @@ import {
   setAccountBinding
 } from '@/infrastructure/identity/local-profile-service'
 import { getSyncPrefs, patchSyncPrefs } from '@/infrastructure/identity/sync-prefs-service'
-import { getWebsiteBaseUrl } from '@/infrastructure/browser/website-page'
 import {
   clearSubscriptionSnapshot,
   getSubscriptionSnapshot,
