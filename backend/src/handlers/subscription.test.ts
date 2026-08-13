@@ -12,7 +12,7 @@ const baseSub: Subscription = {
   cancel_at_period_end: false,
   verification_status: 'verified',
   last_verified_at: new Date().toISOString(),
-  gumroad_subscription_id: 'sub_abc12345'
+  provider_subscription_id: 'sub_01h1vjes1y163hjs1s211srxny'
 }
 
 describe('toSubscriptionStatusPayload', () => {
@@ -42,7 +42,7 @@ describe('handleGetSubscriptionStatus', () => {
   })
 
   test('默认强制对账后聚合门禁', async () => {
-    const reconcile = await import('../services/gumroad/reconcile')
+    const reconcile = await import('../services/billing/reconcile')
     const supabase = await import('../data-access/supabase')
     const requirePro = await import('../services/ai/require-pro-user')
     jest.spyOn(reconcile, 'reconcileUserSubscription').mockResolvedValue({

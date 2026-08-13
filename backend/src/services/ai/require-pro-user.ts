@@ -5,13 +5,9 @@
 import { getUserSubscription } from '../../data-access/supabase'
 import type { Env } from '../../types/env'
 import { warn } from '../../utils/logger'
-import { decideEntitlementFreshness } from '../gumroad/entitlement-policy'
-import { reconcileUserSubscription } from '../gumroad/reconcile'
-import { isFakeGumroadSubscriptionId } from '../gumroad/subscription-id'
-
-type EnvWithGumroad = Env & {
-  GUMROAD_ACCESS_TOKEN?: string
-}
+import { decideEntitlementFreshness } from '../billing/entitlement-policy'
+import { reconcileUserSubscription } from '../billing/reconcile'
+import { isFakeProviderSubscriptionId } from '../billing/subscription-id'
 
 /**
  * 判断用户是否为有效 Pro 订阅（同步 / hosted LLM / embed 门禁）。
@@ -26,13 +22,13 @@ export async function isActiveProUser(env: Env, userId: string): Promise<boolean
     return false
   }
 
-  if (isFakeGumroadSubscriptionId(subscription.gumroad_subscription_id)) {
+  if (isFakeProviderSubscriptionId(subscription.provider_subscription_id)) {
     return false
   }
 
-  const accessToken = (env as EnvWithGumroad).GUMROAD_ACCESS_TOKEN
-  if (!(accessToken || '').trim()) {
-    warn('[ProGate] 未配置 GUMROAD_ACCESS_TOKEN，仅用投影门禁（生产须配置）')
+  const accessToken = (env.PADDLE_API_KEY || '').trim()
+  if (!accessToken) {
+    warn('[ProGate] 未配置 PADDLE_API_KEY，仅用投影门禁（生产须配置）')
     return true
   }
 

@@ -1,4 +1,4 @@
-import { reconcileStaleActiveSubscriptions } from '../services/gumroad/reconcile'
+import { reconcileStaleActiveSubscriptions } from '../services/billing/reconcile'
 import type { Env } from '../types/env'
 import { error as logErrorMessage, info } from '../utils/logger'
 
@@ -11,7 +11,7 @@ export async function handleScheduledSubscriptionReconcile(
     (env as Env & { SUBSCRIPTION_RECONCILE_SCHEDULED_ENABLED?: string })
       .SUBSCRIPTION_RECONCILE_SCHEDULED_ENABLED !== 'false'
   if (!enabled) {
-    info('[GumroadReconcile] 定时对账已关闭', {
+    info('[BillingReconcile] 定时对账已关闭', {
       cron: controller.cron,
       scheduledTime: new Date(controller.scheduledTime).toISOString()
     })
@@ -20,12 +20,12 @@ export async function handleScheduledSubscriptionReconcile(
 
   try {
     const result = await reconcileStaleActiveSubscriptions(env)
-    info('[GumroadReconcile] 定时对账完成', {
+    info('[BillingReconcile] 定时对账完成', {
       cron: controller.cron,
       ...result
     })
   } catch (error) {
-    logErrorMessage('[GumroadReconcile] 定时对账失败', {
+    logErrorMessage('[BillingReconcile] 定时对账失败', {
       cron: controller.cron,
       scheduledTime: new Date(controller.scheduledTime).toISOString(),
       detail: error instanceof Error ? error.message : String(error)

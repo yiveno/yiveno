@@ -1,0 +1,74 @@
+---
+/**
+ * Paddle Default payment link 落地页。
+ * 须含 Paddle.js；带 `_ptxn` 时自动打开对应 transaction checkout。
+ */
+import MainLayout from '../layouts/MainLayout.astro'
+
+const clientToken = (import.meta.env.PUBLIC_PADDLE_CLIENT_TOKEN || '').trim()
+const paddleEnvRaw = import.meta.env.PUBLIC_PADDLE_ENV
+if (paddleEnvRaw !== 'sandbox' && paddleEnvRaw !== 'production') {
+  throw new Error(
+    '[Billing] PUBLIC_PADDLE_ENV must be set to "sandbox" or "production" (never silently defaulted)'
+  )
+}
+const paddleEnv = paddleEnvRaw
+const websiteBase = (import.meta.env.PUBLIC_WEBSITE_URL || '').replace(/\/$/, '')
+const successUrl = `${websiteBase || 'http://localhost:3001'}/welcome`
+---
+
+<MainLayout
+  title="Checkout · Yiveno"
+  description="Complete your Yiveno checkout."
+>
+  <article class="checkout">
+    <h1>Checkout</h1>
+    {
+      clientToken ? (
+        <p>Opening Paddle checkout…</p>
+      ) : (
+        <p>Checkout is not configured. Please contact support.</p>
+      )
+    }
+    <p>
+      <a href="/pricing">Back to pricing</a>
+    </p>
+  </article>
+  {
+    clientToken && (
+      <script is:inline src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+    )
+  }
+  {
+    clientToken && (
+      <script is:inline define:vars={{ clientToken, paddleEnv, successUrl }}>
+        const paddle = window.Paddle
+        if (!paddle) {
+          console.error('[Yiveno] Paddle.js failed to load')
+        } else {
+          if (paddleEnv === 'sandbox') {
+            paddle.Environment.set('sandbox')
+          }
+          paddle.Initialize({
+            token: clientToken,
+            checkout: {
+              settings: {
+                displayMode: 'overlay',
+                variant: 'one-page',
+                successUrl
+              }
+            }
+          })
+        }
+      </script>
+    )
+  }
+</MainLayout>
+
+<style>
+  .checkout {
+    max-width: 40rem;
+    margin: 0 auto;
+    padding: 3rem 1.25rem;
+  }
+</style>

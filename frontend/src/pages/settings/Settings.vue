@@ -429,7 +429,7 @@ async function loadSyncContext() {
   }
 }
 
-/** 加载订阅快照（Pro / Free + Gumroad 链接）。 */
+/** 加载订阅快照（Pro / Free + 升级/管理链接）。 */
 async function loadSubscriptionStatus(forceRefresh = false): Promise<void> {
   subscriptionError.value = ''
   try {
@@ -553,7 +553,7 @@ function refreshSyncContextOnVisible() {
   if (document.visibilityState !== 'visible') {
     return
   }
-  // 从 Gumroad 返回时强制刷新订阅快照
+  // 从官网定价/Paddle 返回时强制刷新订阅快照
   void loadSyncContext().then(() => loadSubscriptionStatus(true))
 }
 

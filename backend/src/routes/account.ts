@@ -15,6 +15,7 @@ type AccountVars = {
   Variables: {
     supabaseUserId: string
     supabaseAccessToken: string
+    supabaseUserEmail: string | null
   }
 }
 

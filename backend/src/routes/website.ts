@@ -16,6 +16,7 @@ type WebsiteVars = {
   Variables: {
     supabaseUserId: string
     supabaseAccessToken: string
+    supabaseUserEmail: string | null
   }
 }
 

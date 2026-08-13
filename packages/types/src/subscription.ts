@@ -26,20 +26,20 @@ export type SubscriptionTier =
 
 /**
  * 投影写入来源（产品文档 §A.3.2）。
- * - gumroad_webhook：Gumroad Ping 入站
- * - gumroad_verify：Refresh / Cron 调 Gumroad API 对账
+ * - paddle_webhook：Paddle Notification 入站
+ * - paddle_verify：Refresh / Cron 调 Paddle API 对账
  * - admin_grant：人工授（生产禁止无审计长期 Pro）
  */
 export type SubscriptionSource =
-  | 'gumroad_webhook' // Gumroad Ping
-  | 'gumroad_verify' // API 对账
+  | 'paddle_webhook' // Paddle webhook
+  | 'paddle_verify' // API 对账
   | 'admin_grant' // 人工授
 
 /**
- * 与 Gumroad 对账状态。
- * - verified：已与 Gumroad 对齐
+ * 与 Paddle 对账状态。
+ * - verified：已与 Paddle 对齐
  * - unverified：尚未对账
- * - mismatch：Gumroad 查无或不一致
+ * - mismatch：Paddle 查无或不一致
  * - stale：超过新鲜度阈值待对账
  */
 export type SubscriptionVerificationStatus =
@@ -49,7 +49,7 @@ export type SubscriptionVerificationStatus =
   | 'stale' // 过期待对账
 
 /**
- * 订阅记录接口（Supabase 投影；计费真相在 Gumroad）
+ * 订阅记录接口（Supabase 投影；计费真相在 Paddle）
  */
 export interface Subscription {
   /** 订阅 ID (Supabase UUID) */
@@ -58,14 +58,17 @@ export interface Subscription {
   /** 用户 ID (Supabase UUID) */
   user_id: string
 
-  /** Gumroad 订阅 ID */
-  gumroad_subscription_id?: string | null
+  /** Paddle subscription ID（`sub_…`） */
+  provider_subscription_id?: string | null
 
-  /** Gumroad 订单 ID */
-  gumroad_order_id?: string | null
+  /** 最近一笔 Paddle transaction ID（`txn_…`） */
+  provider_transaction_id?: string | null
 
-  /** Gumroad 变体 ID (plan_id) */
-  gumroad_variant_id?: string | null
+  /** Paddle price ID（`pri_…`） */
+  provider_price_id?: string | null
+
+  /** Paddle customer ID（`ctm_…`） */
+  provider_customer_id?: string | null
 
   /** 订阅状态 */
   status: SubscriptionStatus
@@ -88,14 +91,14 @@ export interface Subscription {
   /** 投影来源 */
   source?: SubscriptionSource | null
 
-  /** 最近一次成功对上 Gumroad 的时间 */
+  /** 最近一次成功对上 Paddle 的时间 */
   last_verified_at?: string | null
 
   /** 对账状态 */
   verification_status?: SubscriptionVerificationStatus | null
 
-  /** Gumroad subscriber.status 缓存（如 alive） */
-  gumroad_subscriber_status?: string | null
+  /** Paddle subscription.status 缓存（如 active） */
+  provider_status?: string | null
 
   /** 创建时间 (ISO 8601) */
   created_at?: string

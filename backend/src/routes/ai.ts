@@ -19,6 +19,7 @@ interface AiRouteEnv {
   Variables: {
     supabaseUserId: string
     supabaseAccessToken: string
+    supabaseUserEmail: string | null
   }
 }
 

@@ -13,6 +13,7 @@ interface SupabaseAuthEnv {
   Variables: {
     supabaseUserId: string
     supabaseAccessToken: string
+    supabaseUserEmail: string | null
   }
 }
 
@@ -60,6 +61,7 @@ export function supabaseAuth(): MiddlewareHandler<SupabaseAuthEnv> {
 
     c.set('supabaseUserId', user.id)
     c.set('supabaseAccessToken', token)
+    c.set('supabaseUserEmail', user.email ?? null)
     return await next()
   }
 }

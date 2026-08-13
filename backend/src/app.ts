@@ -17,7 +17,8 @@ import { healthRouter } from './routes/health'
 import { adminRouter } from './routes/admin'
 import { authRouter } from './routes/auth'
 import { aiRouter } from './routes/ai'
-import { gumroadRouter } from './routes/gumroad'
+import { billingRouter } from './routes/billing'
+import { paddleWebhookRouter } from './routes/webhooks-paddle'
 import { accountRouter } from './routes/account'
 import { memorySyncRouter } from './routes/memory-sync'
 import { websiteRouter } from './routes/website'
@@ -82,8 +83,8 @@ export function createApp() {
   // 账户：删除账号等（Supabase Auth Bearer）
   app.route('/api/account', accountRouter)
 
-  // Gumroad：仅 subscription 要 JWT；webhook 由路由内 seller 签名校验
-  app.route('/api/gumroad', gumroadRouter)
+  app.route('/api/billing', billingRouter)
+  app.route('/api/webhooks/paddle', paddleWebhookRouter)
 
   app.route('/api/website', websiteRouter)
 

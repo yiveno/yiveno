@@ -15,7 +15,6 @@ import { jwtAuth } from './middleware/jwt'
 
 // 在路由中使用
 app.use('/api/admin/*', jwtAuth())
-app.use('/api/gumroad/*', jwtAuth())
 ```
 
 **JWT Payload 类型：**

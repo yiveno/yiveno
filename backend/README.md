@@ -4,27 +4,29 @@ v4 后端：扩展线索理解代理 + 官网只读 API。本地事实源在扩�
 
 ## 真实调用面
 
-| 方法 | 路径                          | 调用方       | 说明                                                       |
-| ---- | ----------------------------- | ------------ | ---------------------------------------------------------- |
-| GET  | `/health`、`/api/health`      | 运维         | 健康检查                                                   |
-| GET  | `/api/account/subscription`   | Chrome 扩展  | Supabase Bearer；**强制对账**后返回 Pro 快照               |
-| POST | `/api/ai/clue/complete`       | 扩展（开发） | 线索理解 IP 日配额；正式 Pro 走 hosted                     |
-| POST | `/api/ai/enrichment/complete` | Chrome 扩展  | Capture enrichment 结构化提议（扩展 merge 后写 IndexedDB） |
-| POST | `/api/ai/embed`               | Chrome 扩展  | Pro embedding（bge-m3）；门禁含 24h 对账新鲜度             |
-| POST | `/api/ai/hosted/*`            | Chrome 扩展  | Pro 托管口语 LLM（Bearer + 月配额 + 对账门禁）             |
-| GET  | `/api/website/subscription`   | 官网         | Bearer；强制对账；仅查当前用户                             |
-| \*   | `/api/memory/sync/*`          | Chrome 扩展  | 登录 + **Pro**（status/delete-all 除外）                   |
-| POST | `/api/gumroad/webhook`        | Gumroad      | `seller_id` + `?token=` → 硬门槛 upsert + `gumroad_events` |
+| 方法 | 路径                            | 调用方       | 说明                                                       |
+| ---- | ------------------------------- | ------------ | ---------------------------------------------------------- |
+| GET  | `/health`、`/api/health`        | 运维         | 健康检查                                                   |
+| GET  | `/api/account/subscription`     | Chrome 扩展  | Supabase Bearer；**强制对账**后返回 Pro 快照               |
+| POST | `/api/ai/clue/complete`         | 扩展（开发） | 线索理解 IP 日配额；正式 Pro 走 hosted                     |
+| POST | `/api/ai/enrichment/complete`   | Chrome 扩展  | Capture enrichment 结构化提议（扩展 merge 后写 IndexedDB） |
+| POST | `/api/ai/embed`                 | Chrome 扩展  | Pro embedding（bge-m3）；门禁含 24h 对账新鲜度             |
+| POST | `/api/ai/hosted/*`              | Chrome 扩展  | Pro 托管口语 LLM（Bearer + 月配额 + 对账门禁）             |
+| GET  | `/api/website/subscription`     | 官网         | Bearer；强制对账；仅查当前用户                             |
+| \*   | `/api/memory/sync/*`            | Chrome 扩展  | 登录 + **Pro**（status/delete-all 除外）                   |
+| POST | `/api/webhooks/paddle`          | Paddle       | `Paddle-Signature` → 硬门槛 upsert + `billing_events`      |
+| GET  | `/api/billing/plans`            | 官网         | 公开套餐目录（无 Price ID）                                |
+| POST | `/api/billing/checkout-session` | 官网         | Bearer；`{ plan }` → Paddle checkout URL                   |
+| POST | `/api/billing/portal-session`   | 官网         | Bearer；Paddle Customer Portal URL                         |
 
 生产域名：`https://api.yiveno.com`（Worker Custom Domain → `yiveno-production`）。
 
 ### 其它路由
 
-| 前缀                        | 说明                                                  |
-| --------------------------- | ----------------------------------------------------- |
-| `/api/auth/*`               | 旧 OAuth 辅助；官网登录走 Supabase 直连               |
-| `/api/gumroad/subscription` | 历史 JWT 查询；主路径请用 `/api/account/subscription` |
-| `/api/admin/*`              | 环境变量自检（JWT）                                   |
+| 前缀           | 说明                                    |
+| -------------- | --------------------------------------- |
+| `/api/auth/*`  | 旧 OAuth 辅助；官网登录走 Supabase 直连 |
+| `/api/admin/*` | 环境变量自检（JWT）                     |
 
 ## 本地开发
 
@@ -55,13 +57,13 @@ curl -X POST http://localhost:8787/api/ai/clue/complete \
 
 需要 Worker Secret：`DEEPSEEK_API_KEY`（本地在 `.dev.vars`，由 `env:sync` 从 `.env.shared.local` 写入）。
 
-### Gumroad 订阅投影（§A.3.2）
+### Paddle 订阅投影（§A.3.2）
 
-- **计费真相**：Gumroad；**权益投影**：`subscriptions`（含 `source` / `last_verified_at` / `verification_status`）
-- **Webhook**：`POST /api/gumroad/webhook?token=<GUMROAD_WEBHOOK_TOKEN>`，另校验 `GUMROAD_SELLER_ID`；假 ID / 缺 `user_id` / 缺订单证据不授 Pro；入站写入 `gumroad_events`
-- **Refresh**：`GET /api/account/subscription` 与官网 subscription **强制对账**（`GUMROAD_ACCESS_TOKEN` → Subscribers API）；Gumroad 非 `alive` **立刻降级**
-- **门禁**：同步 / hosted / embed 要求 24h 内 `verified`；API 故障 grace 48h；Cron `7 * * * *` 扫过期 active
-- 环境与清单：`docs/ENVIRONMENT.md`；规范：产品文档 §A.3.2
+- **计费真相**：Paddle；**权益投影**：`subscriptions`（含 `source` / `last_verified_at` / `verification_status`）
+- **Webhook**：`POST /api/webhooks/paddle`，校验 `Paddle-Signature`；假 ID / 缺 `custom_data.yiveno_user_id` 不授 Pro；入站写入 `billing_events`
+- **Refresh**：`GET /api/account/subscription` 与官网 subscription **强制对账**（`PADDLE_API_KEY` → Subscriptions API）；Paddle 非 `active`/`trialing` **立刻降级**（含 `past_due`）
+- **门禁**：云同步要求 24h 内 `verified`；API 故障 grace 48h；Cron `7 * * * *` 扫过期 active
+- 环境与清单：`docs/ENVIRONMENT.md`；规范：产品文档 §A.3.2；运维笔记：`docs/billing.md`
 
 ### 可插拔 Provider（AiChatProvider）
 
@@ -93,7 +95,7 @@ Gateway 核心功能免费；DeepSeek token 费用仍按 DeepSeek 账单。
 ## 配置要点
 
 - [`wrangler.toml`](./wrangler.toml)：`[env.production]` 含 `api.yiveno.com` custom domain、KV `AI_USAGE_KV`、vars
-- Secrets：`DEEPSEEK_API_KEY`（及后续 JWT / OAuth / Gumroad 等）
+- Secrets：`DEEPSEEK_API_KEY`、`PADDLE_API_KEY`、`PADDLE_WEBHOOK_SECRET`、Paddle Price ID（及 JWT / OAuth）
 - Vars：`AI_GATEWAY_ACCOUNT_ID` / `AI_GATEWAY_ID`（见上节）；`AI_HOSTED_MODEL` / `DEEPSEEK_API_BASE` 等
 - 环境变量规范见仓库 [`docs/ENVIRONMENT.md`](../docs/ENVIRONMENT.md)
 

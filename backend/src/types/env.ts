@@ -54,10 +54,18 @@ export type Env = Cloudflare.Env & {
   CLEANUP_MEMORY_SYNC_BACKUPS_KEEP?: string
   /** subscriptions / payment_records 软删保留天数。 */
   CLEANUP_SOFT_DELETE_RETENTION_DAYS?: string
-  /** Gumroad Ping URL token（?token=）；生产必配 */
-  GUMROAD_WEBHOOK_TOKEN?: string
-  /** Gumroad API access_token；Refresh/Cron 对账；生产必配 */
-  GUMROAD_ACCESS_TOKEN?: string
+  /** Paddle Billing API key；checkout / 对账；生产必配 */
+  PADDLE_API_KEY?: string
+  /** Paddle notification destination secret */
+  PADDLE_WEBHOOK_SECRET?: string
+  /** sandbox | production */
+  PADDLE_ENV?: string
+  PADDLE_PRICE_ID_PRO_MONTHLY?: string
+  PADDLE_PRICE_ID_PRO_ANNUAL?: string
+  PADDLE_PRICE_ID_FOUNDING_MONTHLY?: string
+  PADDLE_PRICE_ID_FOUNDING_ANNUAL?: string
+  /** "true" 时开放 Founding 套餐 */
+  BILLING_FOUNDING_ENABLED?: string
   /** 订阅定时对账开关；"false" 关闭 */
   SUBSCRIPTION_RECONCILE_SCHEDULED_ENABLED?: string
   /**

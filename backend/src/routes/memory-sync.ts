@@ -31,6 +31,7 @@ type SyncVars = {
   Variables: {
     supabaseUserId: string
     supabaseAccessToken: string
+    supabaseUserEmail: string | null
   }
 }
 

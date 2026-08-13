@@ -5,7 +5,7 @@
 /** 敏感门禁对账新鲜度：24h */
 export const ENTITLEMENT_VERIFY_TTL_MS = 24 * 60 * 60 * 1000
 
-/** Gumroad API 故障宽限：48h（仅维持已 verified，不新授） */
+/** Paddle API 故障宽限：48h（仅维持已 verified，不新授） */
 export const ENTITLEMENT_VERIFY_GRACE_MS = 48 * 60 * 60 * 1000
 
 export type FreshnessDecision =
@@ -16,7 +16,7 @@ export type FreshnessDecision =
 
 /**
  * 根据 last_verified_at / verification_status 决定门禁动作。
- * @param apiFailed 本次对账是否因 Gumroad API 失败
+ * @param apiFailed 本次对账是否因 Paddle API 失败
  */
 export function decideEntitlementFreshness(input: {
   verificationStatus: string | null | undefined

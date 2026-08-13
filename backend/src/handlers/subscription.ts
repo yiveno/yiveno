@@ -1,11 +1,11 @@
 /**
  * GET /api/subscription — 扩展用 Supabase Bearer 查询当前用户是否 Pro。
- * 默认强制与 Gumroad 对账（§A.3.2 Refresh）。
+ * 默认强制与 Paddle 对账（§A.3.2 Refresh）。
  */
 
 import { getUserSubscription } from '../data-access/supabase'
 import { isActiveProUser } from '../services/ai/require-pro-user'
-import { reconcileUserSubscription } from '../services/gumroad/reconcile'
+import { reconcileUserSubscription } from '../services/billing/reconcile'
 import type { Env } from '../types/env'
 import { error as logErrorMessage, info } from '../utils/logger'
 import type { Subscription } from '@yiveno/types'

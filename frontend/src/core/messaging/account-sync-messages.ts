@@ -411,9 +411,9 @@ export type GetSubscriptionStatusResponse =
   | {
       ok: true
       snapshot: SubscriptionSnapshot
-      /** Gumroad 购买 URL（含 user_id）；未登录或无配置时 null */
+      /** 官网定价页；未登录时 null */
       upgradeUrl: string | null
-      /** Gumroad 管理订阅 URL */
+      /** 官网账户页（管理订阅） */
       manageUrl: string | null
     }
   | {

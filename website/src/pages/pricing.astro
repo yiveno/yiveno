@@ -1,11 +1,20 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro'
 import PricingPage from '../components/PricingPage.vue'
+import { resolveVisitorCountry } from '../utils/request-country'
+
+const countryCode = resolveVisitorCountry(Astro.request.headers)
 ---
 
 <MainLayout
   title="Pricing · Yiveno"
   description="Yiveno Free vs Pro: same on-device Hybrid recall; Pro adds cloud sync and a larger hosted clue-understanding quota."
 >
-  <PricingPage client:load />
+  {
+    countryCode ? (
+      <PricingPage client:load countryCode={countryCode} />
+    ) : (
+      <PricingPage client:load />
+    )
+  }
 </MainLayout>

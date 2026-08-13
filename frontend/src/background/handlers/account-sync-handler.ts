@@ -51,7 +51,7 @@ import {
   setAccountBinding
 } from '@/infrastructure/identity/local-profile-service'
 import { getSyncPrefs, patchSyncPrefs } from '@/infrastructure/identity/sync-prefs-service'
-import { buildGumroadUpgradeUrl, getGumroadManageUrl } from '@/infrastructure/identity/gumroad-urls'
+import { getWebsiteBaseUrl } from '@/infrastructure/browser/website-page'
 import {
   clearSubscriptionSnapshot,
   getSubscriptionSnapshot,
@@ -1163,8 +1163,8 @@ function buildSubscriptionUrls(accountId: string | null): {
   manageUrl: string | null
 } {
   return {
-    upgradeUrl: accountId ? buildGumroadUpgradeUrl(accountId) : null,
-    manageUrl: getGumroadManageUrl()
+    upgradeUrl: accountId ? `${getWebsiteBaseUrl()}/pricing` : null,
+    manageUrl: `${getWebsiteBaseUrl()}/account`
   }
 }
 

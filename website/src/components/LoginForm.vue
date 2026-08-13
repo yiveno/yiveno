@@ -2,6 +2,11 @@
 import { onMounted, ref } from 'vue'
 import { getSession, signInWithOAuth, signOut } from '../services/auth'
 import {
+  buildPostAuthHref,
+  captureAuthReturnFromUrl,
+  peekAuthReturn
+} from '../services/auth-return'
+import {
   captureExtensionConnectParamsFromUrl,
   extractProfileFromUserMetadata,
   getPendingExtensionId,
@@ -14,6 +19,8 @@ const error = ref('')
 const connectingExtension = ref(false)
 const extensionConnected = ref(false)
 const fromExtension = ref(false)
+/** 来自定价页 Subscribe：登录后回跳续付 */
+const fromSubscribe = ref(false)
 /** 已有本地会话时展示，便于换账号而不是被直接踢进 /account */
 const signedInEmail = ref('')
 
@@ -64,28 +71,39 @@ function applyLoginErrorFromUrl(): void {
 }
 
 /**
- * 已登录：有扩展目标则回传；否则停在登录页展示当前账号，可进账户或换号。
+ * 已登录：仅「本次从扩展打开」才强制进账户；
+ * 有 next（续付）优先回跳；否则停在登录页展示账号。
  */
 onMounted(async () => {
   captureExtensionConnectParamsFromUrl()
+  captureAuthReturnFromUrl()
   fromExtension.value = Boolean(getPendingExtensionId())
+  fromSubscribe.value = peekAuthReturn().intent === 'subscribe'
   applyLoginErrorFromUrl()
   try {
     const session = await getSession()
     if (!session) {
       return
     }
-    if (resolveExtensionHandoffTargetId()) {
+    // 仅 sessionStorage 的 connect_extension，不用 lastConnected（否则会抢走续付回跳）
+    if (getPendingExtensionId()) {
       const ok = await tryHandoffCurrentSession()
       if (ok) {
         window.location.replace('/account?extension_connected=1')
         return
       }
-      if (getPendingExtensionId()) {
-        error.value =
-          'You are signed in, but we could not reach the extension. Install and enable Yiveno, then try again.'
-        return
+      error.value =
+        'You are signed in, but we could not reach the extension. Install and enable Yiveno, then try again.'
+      return
+    }
+    const pending = peekAuthReturn()
+    if (pending.next) {
+      if (resolveExtensionHandoffTargetId()) {
+        void tryHandoffCurrentSession()
       }
+      console.warn('[LoginForm] 已登录，回跳续意图', pending)
+      window.location.replace(buildPostAuthHref('/account'))
+      return
     }
     signedInEmail.value = session.user.email || session.user.id
   } catch (e: unknown) {
@@ -95,7 +113,7 @@ onMounted(async () => {
 })
 
 function goAccount(): void {
-  window.location.href = '/account'
+  window.location.href = buildPostAuthHref('/account')
 }
 
 async function login(provider: 'google' | 'microsoft') {
@@ -103,7 +121,9 @@ async function login(provider: 'google' | 'microsoft') {
   error.value = ''
   try {
     captureExtensionConnectParamsFromUrl()
+    captureAuthReturnFromUrl()
     fromExtension.value = Boolean(getPendingExtensionId())
+    fromSubscribe.value = peekAuthReturn().intent === 'subscribe'
     // 换账号：先清本地会话，再走 OAuth 账号选择器
     if (await getSession()) {
       await signOut()
@@ -128,7 +148,11 @@ async function login(provider: 'google' | 'microsoft') {
       decoding="async"
     />
     <h2>Sign in to Yiveno</h2>
-    <p v-if="fromExtension" class="hint">
+    <p v-if="fromSubscribe" class="hint">
+      Sign in to continue checkout. After Google or Microsoft, we’ll bring you back to pricing and
+      open payment.
+    </p>
+    <p v-else-if="fromExtension" class="hint">
       After sign-in, your session syncs to the Chrome extension. Memories are not uploaded
       automatically.
     </p>

@@ -12,7 +12,7 @@ import {
   primeExtensionHandoffTarget,
   resolveExtensionHandoffTargetId
 } from '../services/extension-auth-handoff'
-import { buildGumroadUpgradeUrl, getGumroadManageUrl } from '../services/gumroad-urls'
+import { createCheckoutSession, createPortalSession } from '../services/billing'
 
 defineOptions({ name: 'AccountPage' })
 
@@ -28,14 +28,10 @@ const isPro = computed(
   () => subscription.value?.tier === 'pro' && subscription.value?.status === 'active'
 )
 
-const upgradeUrl = computed(() => {
-  const id = user.value?.id
-  return id ? buildGumroadUpgradeUrl(id) : null
-})
+const checkoutBusy = ref(false)
+const checkoutError = ref('')
 
-const manageUrl = getGumroadManageUrl()
-
-/** 从 Worker 拉订阅（含对账）；进页 / 从 Gumroad 返回时自动调用。 */
+/** 从 Worker 拉订阅（含对账）；进页 / 从 checkout 返回时自动调用。 */
 async function loadSubscription(): Promise<void> {
   if (!accessToken.value) return
   const sub = await getUserSubscription(accessToken.value)
@@ -45,6 +41,25 @@ async function loadSubscription(): Promise<void> {
 function refreshSubscriptionOnVisible(): void {
   if (document.visibilityState !== 'visible') return
   void loadSubscription()
+}
+
+async function startMonthlyCheckout(): Promise<void> {
+  if (!accessToken.value) return
+  checkoutError.value = ''
+  checkoutBusy.value = true
+  const url = await createCheckoutSession(accessToken.value, 'pro_monthly')
+  checkoutBusy.value = false
+  if (!url) {
+    checkoutError.value = 'Could not start checkout. Try again.'
+    return
+  }
+  window.location.assign(url)
+}
+
+async function openPortal(): Promise<void> {
+  if (!accessToken.value) return
+  const url = await createPortalSession(accessToken.value)
+  if (url) window.location.assign(url)
 }
 
 /** 官网已登录时补推 session 到扩展（账户页 / URL 带 extension_id / 上次连接过）。 */
@@ -152,22 +167,25 @@ async function handleSignOut() {
           sync across devices and a larger hosted clue-understanding quota.
         </p>
         <div class="actions">
-          <a
-            v-if="!isPro && upgradeUrl"
+          <button
+            v-if="!isPro"
             class="btn btn-primary"
-            :href="upgradeUrl"
-            target="_blank"
-            rel="noopener noreferrer"
+            type="button"
+            :disabled="checkoutBusy"
+            @click="startMonthlyCheckout"
           >
-            Upgrade to Pro
-          </a>
-          <a v-if="isPro" class="btn" :href="manageUrl" target="_blank" rel="noopener noreferrer">
+            {{ checkoutBusy ? 'Opening…' : 'Upgrade to Pro' }}
+          </button>
+          <button v-if="isPro" class="btn" type="button" @click="openPortal">
             Manage subscription
-          </a>
+          </button>
         </div>
-        <p v-if="!isPro && !upgradeUrl" class="hint">
-          Upgrade link is not configured (missing PUBLIC_GUMROAD_PRODUCT_URL).
+        <p class="hint">
+          Need a refund or other help?
+          <a href="/support">Support</a>
+          — cancellations are in Manage subscription; refunds go through Paddle.
         </p>
+        <p v-if="checkoutError" class="hint">{{ checkoutError }}</p>
       </section>
       <section>
         <h3>Account</h3>
@@ -246,6 +264,10 @@ h3 {
   line-height: 1.5;
 }
 
+.hint a {
+  color: #1e2640;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;
@@ -280,6 +302,11 @@ dd {
   text-decoration: none;
   cursor: pointer;
   font: inherit;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .btn-primary {

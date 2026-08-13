@@ -696,7 +696,7 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 | 多源线索与权重（§7.1）           | 已上线（首批）          | 同域软重排；`recently_saved`/`half_read`/`often_opened` 软加权；追问芯片（刚存/刚打开/当前站）                                                       |
 | Hybrid Filter                    | 已上线                  | 本机 Hybrid（RRF）；**不分 Free/Pro**；无向量时降级关键词；云同步剥离 embedding                                                                      |
 | 关键词倒排 Phase 1               | 已上线                  | IDB v4 posting 预过滤；dirty/rebuild；失败 fallback `list(10000)`；打分仍 keyword-filter                                                             |
-| Gumroad Pro / 订阅快照           | 已上线                  | Free+**仅 Pro**；投影+对账（§A.3.2）；`GET /api/account/subscription`；Settings/官网升级；**sync + hosted 大配额**门禁；embed 登录即可（日配额分档） |
+| Paddle Pro / 订阅快照            | 已上线                  | Free+**仅 Pro**；投影+对账（§A.3.2）；`GET /api/account/subscription`；Settings/官网升级；**sync + hosted 大配额**门禁；embed 登录即可（日配额分档） |
 | 云同步 / 账号 UI                 | 已上线（Phase C + Pro） | Supabase `memory_items`；Worker `/api/memory/sync/*` **需有效 Pro**；开同步并集 + **15 分钟增量**；登录≠自动上传                                     |
 | 分享                             | 目标 · Phase C          |                                                                                                                                                      |
 | 轻管理余项（标签/失效链接/统计） | 目标 · Phase D          | 摘录删除已提前上线；书签仍只经 Chrome 同步软删                                                                                                       |
@@ -730,7 +730,7 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 | 关键词倒排 Phase 1                        | ✓    | ✓    | —   | ✓    | `keyword-index-repository*`；extract-tokens；真机大库  |
 | Popup 对话式壳（多轮 UI）                 | ✓    | ✓    | 薄  | ✓    | merge 单测 + eval must 多轮；E2E 薄；芯片/dismiss 手测 |
 | 多轮槽位 merge（§7.0）                    | ✓    | ✓    | —   | ✓    | `merge-recall-dialog-turn`；eval `dialog-*` must       |
-| Gumroad Pro / 同步·托管门禁               | ✓    | —    | —   | ✓    | webhook/account/sync Pro 拒绝；§5.7 手动付费全流程     |
+| Paddle Pro / 同步·托管门禁                | ✓    | —    | —   | ✓    | webhook/account/sync Pro 拒绝；§5.7 手动付费全流程     |
 
 **合入门禁（Normative）：**
 
@@ -865,7 +865,7 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 | 层    | 召回 / 权益                                                                                       | 阶段                                    |
 | ----- | ------------------------------------------------------------------------------------------------- | --------------------------------------- |
 | Free  | 本机召回不限（关键词 + Hybrid）；登录后托管口语 LLM **小月配额**；本机 Capture/导出；**无**云同步 | 已上线                                  |
-| Pro   | 同档本机召回质量；托管口语 LLM **大月配额**；云同步；更高 embedding 日配额                        | 已上线（Gumroad；`tier=pro`）           |
+| Pro   | 同档本机召回质量；托管口语 LLM **大月配额**；云同步；更高 embedding 日配额                        | 已上线（Paddle；`tier=pro`）            |
 | Tier+ | 更深云寻回 / 多模态 / 团队等（对外名待定）                                                        | **预留不售**（schema `premium` 仅占位） |
 
 冲突时以本表为准：**召回质量不分 Free/Pro**；云同步与 LLM 配额分档。对外只讲 Free 与 Pro。
@@ -969,17 +969,17 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 | Omnibox         | 已注册；keyword `yi`                                                                                                         |
 | `commands`      | 已注册；找回 `Alt+Shift+Y`；记忆库 `Alt+Shift+L`；划词保存 `Alt+Shift+E`；划词备注 `Alt+Shift+N`；设置无默认建议键（均可改） |
 
-### 5.7 Gumroad Pro 订阅全流程验收（手动 · Normative）
+### 5.7 Paddle Pro 订阅全流程验收（手动 · Normative）
 
-结账价以 Gumroad 为准；展示锚点 $5.99/月 · $59/年。投影与对账见 **§A.3.2**；上线前另见 §A.3.1 / `docs/ENVIRONMENT.md`。
+结账价以 Paddle 为准；展示锚点 **$7.99/月 · $59.99/年**（Founding 为实验价，见 `docs/pricing.md`）。投影与对账见 **§A.3.2**；上线前另见 §A.3.1 / `docs/ENVIRONMENT.md`。
 
-1. 环境：`GUMROAD_SELLER_ID`、`GUMROAD_WEBHOOK_TOKEN`、`GUMROAD_ACCESS_TOKEN`、`VITE_GUMROAD_PRODUCT_URL` 已配；Ping URL 带 `?token=`；`env:sync` 后官网有 `PUBLIC_GUMROAD_*`。
+1. 环境：`PADDLE_API_KEY`、`PADDLE_WEBHOOK_SECRET`、`PADDLE_PRICE_ID_PRO_MONTHLY`、`PADDLE_PRICE_ID_PRO_ANNUAL` 已配；Webhook → `POST https://api.yiveno.com/api/webhooks/paddle`；`env:sync` 后官网有 `PUBLIC_PADDLE_CLIENT_TOKEN`。
 2. 扩展登录 → Settings「账户与同步」→ 非 Pro 时同步开关不可开；可见升级 CTA。
-3. 点升级 → Gumroad 付款 → webhook 写入 `subscriptions`（`tier=pro`、`verification_status=verified`）且 `gumroad_events` 有成功行。
-4. 回扩展：从 Gumroad 返回并重新聚焦 Settings（自动对账刷新）→ 显示 Pro → 同步可开、托管线索理解升至 Pro 配额。
+3. 点升级 → Paddle 付款 → webhook 写入 `subscriptions`（`tier=pro`、`verification_status=verified`）且 `billing_events` 有成功行。
+4. 回扩展：从 Paddle 返回并重新聚焦 Settings（自动对账刷新）→ 显示 Pro → 同步可开、托管线索理解升至 Pro 配额。
 5. 官网 `/pricing` 权益与锚点价正确；`/account` 可升级/管理（Bearer；进页与回焦自动对账）。
-6. Gumroad ended / 非 alive：Refresh 或下一小时 Cron → **立刻** Free；同步被关；Worker sync 返回 `pro_required`。
-7. 库内 `test-` / 无订单证据的假 Pro：门禁与账户页均不得为 Pro。
+6. Paddle `canceled` / 非 `active`（及全额退当前周期）：Refresh 或下一小时 Cron → **立刻** Free；同步被关；Worker sync 返回 `pro_required`。
+7. 库内非 `sub_` 形态的假订阅 ID：门禁与账户页均不得为 Pro。
 
 ---
 
@@ -1220,40 +1220,40 @@ Chrome API / 选区
 
 **已拍板（与 §5.1 对齐）：** Freemium；对外 **Free + 仅 Pro**。路线图：Free → Pro → Power User → Team；**Power User / Team / schema `premium` 预留不售、不上定价页**。
 
-**价格：** 结账权威在 **Gumroad**（改价只改 Gumroad）。官网/文档可写展示锚点 **$5.99/月 · $59/年**，并声明以 checkout 为准；Yiveno **不**维护计费价、不调用 Gumroad 拉价 API。
+**价格：** 结账权威在 **Paddle**（改价改 Paddle Price + `services/billing/plans.ts` 展示锚点）。标准价 **$7.99/月 · $59.99/年**；Founding 为实验价，不得写成标准价。Yiveno **不**把金额写进多处业务逻辑；客户端只传 plan id。
 
 卖点主因 = **云同步 / 换机恢复**；配角 = 更大托管口语 LLM 配额。**不作**「更好找回才给 Pro」——本机召回质量 Free/Pro 同档。托管口语 LLM 为加速器（配额见 §5.1 表），不作 AI 助手叙事。
 
 - Free：本机完整召回（关键词 + Hybrid）、基础捕获、书签导入、可登录；登录后小额托管 LLM；无云同步。
 - Pro（在售）：同档召回 + 云同步 + 大额托管口语 LLM + 更高 embedding 日配额。
 - Power User / Team（路线图）：更高配额、云端深寻回、多模态、团队等——**有硬权益前不上架**。
-- 官网：`/pricing` 权益对照 + 展示锚点价 + 账户页升级/管理 CTA；升级链接须带 `custom_fields[user_id]`。
+- 官网：`/pricing` 权益对照 + 展示锚点价 + 账户页升级/管理 CTA；checkout 由 Worker 写入 `custom_data.yiveno_user_id`。
 
-### A.3.1 Gumroad 上线检查清单（Normative · 真机演示前）
+### A.3.1 Paddle 上线检查清单（Normative · 真机演示前）
 
-1. Gumroad 建单一 Pro 产品（月/年变体或周期选择）；展示锚点与 checkout 尽量一致。
-2. Ping/Webhook → 生产 `POST https://api.yiveno.com/api/gumroad/webhook?token=<GUMROAD_WEBHOOK_TOKEN>`（及 staging 若有）。
-3. 环境：`GUMROAD_SELLER_ID`、`GUMROAD_WEBHOOK_TOKEN`、`GUMROAD_ACCESS_TOKEN`、`VITE_GUMROAD_PRODUCT_URL`（同步后 website 得 `PUBLIC_GUMROAD_*`）；`bun run env:sync:prod && bun run env:check:prod`。
-4. 升级 URL 须能带 `custom_fields[user_id]` + `custom_fields[tier]=pro`（扩展/官网已生成）。
+1. Paddle Billing 建 Pro Monthly / Annual Price；展示锚点与 checkout 尽量一致。
+2. Webhook → 生产 `POST https://api.yiveno.com/api/webhooks/paddle`（及 staging 若有）；须校验 `Paddle-Signature`。
+3. 环境：`PADDLE_API_KEY`、`PADDLE_WEBHOOK_SECRET`、`PADDLE_PRICE_ID_PRO_MONTHLY`、`PADDLE_PRICE_ID_PRO_ANNUAL`、`VITE_PADDLE_CLIENT_TOKEN`（官网映射为 `PUBLIC_PADDLE_CLIENT_TOKEN`，用于 `/checkout`）；`bun run env:sync:prod && bun run env:check:prod`。
+4. Default payment link 指向已审批的 `https://yiveno.com/checkout`（含 Paddle.js）。
 5. 手测：付款 → webhook 写 `subscriptions`（`verification_status=verified`）→ 回扩展/账户页自动对账 → 同步/hosted Pro 配额生效。
-6. 手测：Gumroad 侧 ended / 非 `alive` → 立刻降级 Free；假/`test-` 订阅 ID 不得授 Pro。
-7. 手测：缺 `custom_fields[user_id]` 的付款 → **不开 Pro**，但 `gumroad_events` 可观测（孤立付款告警）。
+6. 手测：Paddle `canceled` / 非 `active` → 立刻降级 Free；非 `sub_` 订阅 ID 不得授 Pro。
+7. 手测：缺 `custom_data.yiveno_user_id` 的付款 → **不开 Pro**，但 `billing_events` 可观测（孤立付款告警）。
 
 ### A.3.2 订阅投影与对账（Normative · 计费准确性）
 
 **权威分层：**
 
-| 问题                           | 权威                                                     |
-| ------------------------------ | -------------------------------------------------------- |
-| 是否付款 / 续费 / 取消 / 退款  | **Gumroad**                                              |
-| 结账价                         | **Gumroad**（Yiveno 不拉价 API）                         |
-| 该 Yiveno `user_id` 能否用 Pro | **Supabase `subscriptions` 投影**（须可被 Gumroad 证明） |
+| 问题                           | 权威                                                    |
+| ------------------------------ | ------------------------------------------------------- |
+| 是否付款 / 续费 / 取消 / 退款  | **Paddle**                                              |
+| 结账价                         | **Paddle**（Yiveno 只维护 plan → Price ID 映射）        |
+| 该 Yiveno `user_id` 能否用 Pro | **Supabase `subscriptions` 投影**（须可被 Paddle 证明） |
 
-**禁止：** 生产手工插入/改写 `active+pro`；`test-` 或非真实形态的 `gumroad_subscription_id` 授权益；把扩展本地 snapshot 当服务端授权依据。
+**禁止：** 生产手工插入/改写 `active+pro`；非 `sub_` 形态的 `provider_subscription_id` 授权益；把扩展本地 snapshot 当服务端授权依据；客户端自授 Pro。
 
-**投影字段（可维护性）：** `source`（`gumroad_webhook` / `gumroad_verify` / `admin_grant`）、`last_verified_at`、`verification_status`（`verified` / `unverified` / `mismatch` / `stale`）、`gumroad_subscriber_status`。入站另有 `gumroad_events` 幂等事件账。
+**投影字段（可维护性）：** `source`（`paddle_webhook` / `paddle_verify` / `admin_grant`）、`last_verified_at`、`verification_status`（`verified` / `unverified` / `mismatch` / `stale`）、`provider_status`。入站另有 `billing_events` 幂等事件账（`provider` + `provider_event_id`）。
 
-**授 Pro 硬门槛（webhook 写 `active`）：** `seller_id` 匹配 +（若配置）`GUMROAD_WEBHOOK_TOKEN` + 合法 `custom_fields[user_id]`（UUID）+ 真实 `subscription_id`/`sale_id`（拒绝 `test-`）+ 有 `order_id` 或 `sale_id` 作为订单证据。Webhook 成功写入即标记 `verified` + `last_verified_at=now`。
+**授 Pro 硬门槛（webhook 写 `active`）：** `Paddle-Signature` 有效 + 合法 `custom_data.yiveno_user_id`（UUID）+ 真实 Paddle `sub_` 订阅 ID。Webhook 成功写入即标记 `verified` + `last_verified_at=now`。
 
 **敏感门禁：**
 
@@ -1266,17 +1266,17 @@ Chrome API / 选区
 1. `tier=pro` 且 `status=active` 且 `current_period_end > now`
 2. 非 `mismatch`、非假订阅 ID
 3. **新鲜度 TTL = 24h**：`last_verified_at` 在 24h 内且 `verified` → 放行；否则触发对账
-4. **Gumroad 故障 grace = 48h**：对账 API 失败时，仅当此前已 `verified` 且 `last_verified_at` 在 48h 内才维持 Pro；否则拒绝（不新授、不长期 fail-open）
-5. 未配置 `GUMROAD_ACCESS_TOKEN` 时：仅投影门禁（1）（2），并打运维告警日志；**生产必须配置**
+4. **Paddle 故障 grace = 48h**：对账 API 失败时，仅当此前已 `verified` 且 `last_verified_at` 在 48h 内才维持 Pro；否则拒绝（不新授、不长期 fail-open）
+5. 未配置 `PADDLE_API_KEY` 时：仅投影门禁（1）（2），并打运维告警日志；**生产必须配置**
 
-**对账冲突（Gumroad 为准）：**
+**对账冲突（Paddle 为准）：**
 
-| Gumroad subscriber                          | 投影动作                                        |
-| ------------------------------------------- | ----------------------------------------------- |
-| `alive`                                     | 对齐为 Pro / active，`verified`                 |
-| 非 `alive`（ended / cancelled / failed 等） | **立刻降级** `expired`（不等本地 `period_end`） |
-| 查无 subscriber                             | 降级 + `mismatch`                               |
-| API 失败                                    | 见上 grace；超时后降级                          |
+| Paddle subscription                | 投影动作                            |
+| ---------------------------------- | ----------------------------------- |
+| `trialing` / `active`              | 对齐为 Pro / active，`verified`     |
+| `canceled` / `paused` / `past_due` | **立刻降级**（`past_due` 亦非 Pro） |
+| 查无 subscription                  | 降级 + `mismatch`                   |
+| API 失败                           | 见上 grace；超时后降级              |
 
 **实时性：** Webhook 为开通/收回主路径（秒级）；进页 / 回焦时服务端强制对账（无用户手动刷新按钮）；Worker Cron 小时级扫过期 `last_verified_at` 的 active 行兜底。
 
@@ -1324,6 +1324,7 @@ Chrome API / 选区
 
 | 日期       | 变更                                                                                                                                                                   |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-08-14 | 计费迁 Paddle：Gumroad 运行时移除；标准价 $7.99/月·$59.99/年；投影/对账/isPro 保留（§A.3.2）                                                                           |
 | 2026-08-11 | §7 / §0.1.1：废除缺槽规则问卷；no_match 诚实终局；追问仅候选收窄；top_pick 主次分列（可能是这些）                                                                      |
 | 2026-08-11 | 倒排 Phase 1：IDB v4 posting 预过滤 + dirty/rebuild + Hybrid fallback 全表扫；弱锚点之后的检索硬化                                                                     |
 | 2026-08-11 | R3 切片：弱锚点质量评估 + 关键词降权（空壳书签去高权 title）                                                                                                           |

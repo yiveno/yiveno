@@ -121,24 +121,25 @@ export async function upsertSubscription(
     const { data: existing } = await supabase
       .from('subscriptions')
       .select('id')
-      .eq('gumroad_subscription_id', subscription.gumroad_subscription_id!)
+      .eq('provider_subscription_id', subscription.provider_subscription_id!)
       .maybeSingle()
 
     const subscriptionData = {
       user_id: subscription.user_id,
-      gumroad_subscription_id: subscription.gumroad_subscription_id,
-      gumroad_order_id: subscription.gumroad_order_id || null,
-      gumroad_variant_id: subscription.gumroad_variant_id || null,
+      provider_subscription_id: subscription.provider_subscription_id,
+      provider_transaction_id: subscription.provider_transaction_id || null,
+      provider_price_id: subscription.provider_price_id || null,
+      provider_customer_id: subscription.provider_customer_id || null,
       status: subscription.status,
       tier: subscription.tier,
       current_period_start: subscription.current_period_start,
       current_period_end: subscription.current_period_end,
       cancel_at_period_end: subscription.cancel_at_period_end || false,
       cancelled_at: subscription.cancelled_at || null,
-      source: subscription.source ?? 'gumroad_webhook',
+      source: subscription.source ?? 'paddle_webhook',
       last_verified_at: subscription.last_verified_at ?? null,
       verification_status: subscription.verification_status ?? 'unverified',
-      gumroad_subscriber_status: subscription.gumroad_subscriber_status ?? null
+      provider_status: subscription.provider_status ?? null
     }
 
     let result: Subscription | null = null
@@ -201,9 +202,9 @@ export async function insertPaymentRecord(
   try {
     const paymentData: Omit<PaymentRecord, 'id'> & { id?: string } = {
       user_id: payment.user_id,
-      gumroad_subscription_id: payment.gumroad_subscription_id || null,
-      gumroad_order_id: payment.gumroad_order_id,
-      gumroad_payment_id: payment.gumroad_payment_id || null,
+      provider_subscription_id: payment.provider_subscription_id || null,
+      provider_transaction_id: payment.provider_transaction_id,
+      provider_payment_id: payment.provider_payment_id || null,
       amount: payment.amount,
       currency: payment.currency || 'USD',
       status: payment.status,
@@ -224,6 +225,9 @@ export async function insertPaymentRecord(
       .single<PaymentRecord>()
 
     if (error) {
+      if ((error as { code?: string }).code === '23505') {
+        return payment
+      }
       logErrorMessage('[Supabase] 插入支付记录失败', { detail: toLogError(error) })
       throw error
     }
@@ -238,31 +242,31 @@ export async function insertPaymentRecord(
   }
 }
 
-export type GumroadEventInsert = {
-  idempotency_key: string
-  notification_type?: string | null
-  gumroad_subscription_id?: string | null
-  gumroad_order_id?: string | null
+export type BillingEventInsert = {
+  provider?: 'paddle'
+  provider_event_id: string
+  event_type?: string | null
+  occurred_at?: string | null
   user_id?: string | null
-  result: 'applied' | 'skipped' | 'rejected' | 'error'
+  result: 'applied' | 'ignored' | 'rejected' | 'error'
   skip_reason?: string | null
   payload_hash?: string | null
 }
 
 /**
- * 写入 Gumroad 入站事件账（幂等：冲突则忽略）
+ * 写入计费入站事件账。true=首次写入；false=重复或失败。
  */
-export async function insertGumroadEvent(env: Env, event: GumroadEventInsert): Promise<boolean> {
+export async function insertBillingEvent(env: Env, event: BillingEventInsert): Promise<boolean> {
   if (!hasSupabase(env)) return false
   const supabase = createSupabaseClient(env)
   if (!supabase) return false
 
   try {
-    const { error } = await supabase.from('gumroad_events').insert({
-      idempotency_key: event.idempotency_key,
-      notification_type: event.notification_type ?? null,
-      gumroad_subscription_id: event.gumroad_subscription_id ?? null,
-      gumroad_order_id: event.gumroad_order_id ?? null,
+    const { error } = await supabase.from('billing_events').insert({
+      provider: event.provider ?? 'paddle',
+      provider_event_id: event.provider_event_id,
+      event_type: event.event_type ?? null,
+      occurred_at: event.occurred_at ?? null,
       user_id: event.user_id ?? null,
       result: event.result,
       skip_reason: event.skip_reason ?? null,
@@ -270,17 +274,55 @@ export async function insertGumroadEvent(env: Env, event: GumroadEventInsert): P
     })
 
     if (error) {
-      // 23505 unique_violation → 重复事件，视为已处理
       if ((error as { code?: string }).code === '23505') {
         return false
       }
-      logErrorMessage('[Supabase] 写入 gumroad_events 失败', { detail: toLogError(error) })
+      logErrorMessage('[Supabase] 写入 billing_events 失败', { detail: toLogError(error) })
       return false
     }
     return true
   } catch (err) {
-    logErrorMessage('[Supabase] 写入 gumroad_events 异常', { detail: toLogError(err) })
+    logErrorMessage('[Supabase] 写入 billing_events 异常', { detail: toLogError(err) })
     return false
+  }
+}
+
+/** 处理失败时删除占位，便于 Provider 重试 */
+export async function deleteBillingEvent(env: Env, providerEventId: string): Promise<void> {
+  if (!hasSupabase(env)) return
+  const supabase = createSupabaseClient(env)
+  if (!supabase) return
+  const { error } = await supabase
+    .from('billing_events')
+    .delete()
+    .eq('provider', 'paddle')
+    .eq('provider_event_id', providerEventId)
+  if (error) {
+    logErrorMessage('[Supabase] 删除 billing_events 失败', { detail: toLogError(error) })
+  }
+}
+
+export async function getSubscriptionByProviderId(
+  env: Env,
+  providerSubscriptionId: string
+): Promise<Subscription | null> {
+  if (!hasSupabase(env)) return null
+  const supabase = createSupabaseClient(env)
+  if (!supabase) return null
+  try {
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('provider_subscription_id', providerSubscriptionId)
+      .maybeSingle<Subscription>()
+    if (error) {
+      logErrorMessage('[Supabase] 按 provider id 查订阅失败', { detail: toLogError(error) })
+      return null
+    }
+    return data
+  } catch (err) {
+    logErrorMessage('[Supabase] 按 provider id 查订阅异常', { detail: toLogError(err) })
+    return null
   }
 }
 
