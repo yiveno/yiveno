@@ -14,22 +14,6 @@ export type BillingPlanId =
   | 'founding_monthly' // Founding 月付
   | 'founding_annual' // Founding 年付
 
-export type BillingPlan = {
-  id: BillingPlanId
-  displayUsd: string
-  /** month：按月 · year：按年 */
-  interval: 'month' | 'year'
-  /** standard：标准价 · founding：早期实验价 */
-  kind: 'standard' | 'founding'
-}
-
-export async function fetchBillingPlans(): Promise<BillingPlan[]> {
-  const res = await fetch(`${API_BASE}/api/billing/plans`)
-  if (!res.ok) return []
-  const body = (await res.json()) as { success?: boolean; data?: { plans?: BillingPlan[] } }
-  return body.data?.plans ?? []
-}
-
 export async function createCheckoutSession(
   accessToken: string,
   plan: BillingPlanId
