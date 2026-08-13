@@ -9,6 +9,7 @@ import { z } from 'zod'
  * - shortcut：快捷键
  * - sync：Chrome 书签同步
  * - import：书签导入
+ * - getting_started：安装引导演示页
  */
 export const CaptureEntrySchema = z.enum([
   'popup', // Popup
@@ -17,7 +18,8 @@ export const CaptureEntrySchema = z.enum([
   'omnibox', // 地址栏 Omnibox
   'shortcut', // 快捷键
   'sync', // Chrome 书签同步
-  'import' // 书签导入
+  'import', // 书签导入
+  'getting_started' // 安装引导演示页
 ])
 
 export type CaptureEntry = z.infer<typeof CaptureEntrySchema>

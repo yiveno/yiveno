@@ -895,6 +895,8 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 > 目标：第一天可用且可信；空库找不到是正确，乱猜才是 bug。与 §0.1.1 空结果契约一致。  
 > 预计耗时：≤ 10 分钟。失败任一步 → 不得宣称冷启动通过。
 
+**安装引导（Normative · 已上线）：** 首次 `install` 自动打开 `getting-started.html`；演示「Save this line → Popup 用自己的话找回」。未完成引导且 `excerptCaptureCount === 0` 时 Popup 展示 Capture-first 空态（即使书签已导入）。跳过或首次打开找回结果后结束引导。
+
 #### A. 空库诚实（不得编造）
 
 1. 使用空记忆库配置档（或 Settings → 数据 → 清除本机记忆；**确认不删 Chrome 原生书签**）。

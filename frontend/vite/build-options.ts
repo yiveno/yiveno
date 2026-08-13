@@ -10,6 +10,7 @@ export function createBuildInput() {
     settings: resolve(SRC_DIR, 'pages/settings/index.html'),
     detail: resolve(SRC_DIR, 'pages/detail/index.html'),
     library: resolve(SRC_DIR, 'pages/library/index.html'),
+    getting_started: resolve(SRC_DIR, 'pages/getting-started/index.html'),
     background: resolve(SRC_DIR, 'background/main.ts'),
     offscreen: resolve(SRC_DIR, 'offscreen/main.ts')
   }

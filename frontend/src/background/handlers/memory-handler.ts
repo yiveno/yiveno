@@ -17,6 +17,8 @@ import {
 import { flashActionBadge } from '@/infrastructure/browser/action-badge'
 import { isSavablePageUrl } from '@/infrastructure/browser/active-tab-reader'
 import { flowFail, flowOk, flowStart, previewText } from '@/infrastructure/logging/flow-log'
+import { logger } from '@/infrastructure/logging/logger'
+import { bumpExcerptCaptureCount } from '@/infrastructure/storage/first-recall-onboarding-storage'
 
 function resolveMemoryErrorCode(error: unknown, fallback: MemoryErrorCode): MemoryErrorCode {
   if (isCodedError(error)) {
@@ -97,6 +99,9 @@ export async function handleCaptureTextExcerpt(
       captureEntry: input.captureEntry ?? 'context_menu'
     })
     void flashActionBadge('success')
+    void bumpExcerptCaptureCount().catch(error => {
+      logger.warn('Capture', '摘录计数更新失败', error)
+    })
     flowOk('Capture', '捕获摘录', startedAt, {
       id: item.id,
       entry: input.captureEntry ?? 'context_menu',

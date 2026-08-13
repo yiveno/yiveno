@@ -3,6 +3,8 @@
  * session：预填线索；local：摘录次数与是否已完成首次打开结果。
  */
 
+import { markInstallOnboardingDone } from '@/infrastructure/storage/install-onboarding-storage'
+
 export const POPUP_RECALL_PREFILL_SESSION_KEY = 'yiveno.popupRecallPrefill'
 export const EXCERPT_CAPTURE_COUNT_LOCAL_KEY = 'yiveno.excerptCaptureCount'
 export const FIRST_RECALL_OPEN_DONE_LOCAL_KEY = 'yiveno.firstRecallOpenDone'
@@ -45,7 +47,8 @@ export async function readFirstRecallOpenDone(): Promise<boolean> {
   return result[FIRST_RECALL_OPEN_DONE_LOCAL_KEY] === true
 }
 
-/** 标记已完成首次找回打开。 */
+/** 标记已完成首次找回打开（同时结束安装引导）。 */
 export async function markFirstRecallOpenDone(): Promise<void> {
   await chrome.storage.local.set({ [FIRST_RECALL_OPEN_DONE_LOCAL_KEY]: true })
+  await markInstallOnboardingDone()
 }

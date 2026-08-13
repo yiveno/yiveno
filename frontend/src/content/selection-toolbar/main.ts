@@ -11,8 +11,10 @@ import type { CaptureEntry } from '@/core/memory/capture-entry'
 import { buildCaptureSavedPreview, buildRecallPrefillClue } from '@/core/recall/build-prefill-clue'
 import { shouldShowFirstRecallHint } from '@/core/recall/first-recall-onboarding'
 import { extractSelectionContextOnPage } from '@/infrastructure/browser/selection-context-page'
+import { isSavablePageUrl } from '@/infrastructure/browser/active-tab-reader'
 import {
   computeSelectionToolbarAnchor,
+  resolveSelectionAnchorRect,
   shouldShowSelectionToolbar
 } from '@/content/selection-toolbar/selection-toolbar-logic'
 import {
@@ -24,7 +26,7 @@ import { t } from '@/infrastructure/i18n/t'
 import { tMemoryError } from '@/infrastructure/i18n/memory-error'
 import type { MessageKey } from '@/infrastructure/i18n/message-keys'
 import {
-  bumpExcerptCaptureCount,
+  readExcerptCaptureCount,
   readFirstRecallOpenDone,
   writePopupRecallPrefill
 } from '@/infrastructure/storage/first-recall-onboarding-storage'
@@ -36,8 +38,10 @@ import {
 const TOOLBAR_HOST_ID = 'yiveno-selection-toolbar-host'
 const SHOW_DELAY_MS = 120
 const NOTE_MAX_LENGTH = 500
-/** 存成抓住感展示时长（含预览 / 引导）。 */
+/** 存成抓住感展示时长（无找回 CTA）。 */
 const SAVED_FEEDBACK_HIDE_MS = 2400
+/** 存成后展示「Try recalling」按钮的停留时长。 */
+const SAVED_RECALL_CTA_HIDE_MS = 12000
 
 /** 划词浮层 UI 模式。 */
 type ToolbarUiMode =
@@ -70,6 +74,7 @@ let notePanel: HTMLElement | null = null
 let savedFeedbackPanel: HTMLElement | null = null
 let savedPreviewEl: HTMLElement | null = null
 let savedHintEl: HTMLElement | null = null
+let savedRecallButton: HTMLButtonElement | null = null
 let saveButton: HTMLButtonElement | null = null
 let noteButton: HTMLButtonElement | null = null
 let noteInput: HTMLTextAreaElement | null = null
@@ -153,15 +158,6 @@ function runGuarded(action: () => void): void {
   }
 }
 
-function isSavablePageUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url)
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:'
-  } catch {
-    return false
-  }
-}
-
 function clearShowTimer(): void {
   if (showTimer !== null) {
     clearTimeout(showTimer)
@@ -182,11 +178,11 @@ function getSelectionRect(): DOMRect | null {
     return null
   }
   const range = selection.getRangeAt(0)
-  const rect = range.getBoundingClientRect()
-  if (rect.width === 0 && rect.height === 0) {
+  const resolved = resolveSelectionAnchorRect(range)
+  if (!resolved) {
     return null
   }
-  return rect
+  return new DOMRect(resolved.left, resolved.top, resolved.width, resolved.height)
 }
 
 function getSelectedText(): string {
@@ -360,6 +356,8 @@ function ensureToolbarHost(): void {
     }
     .status-button--saved {
       color: #0f766e;
+      cursor: default;
+      opacity: 1;
     }
     .status-button--error {
       color: #b42318;
@@ -394,6 +392,25 @@ function ensureToolbarHost(): void {
       font: 500 11px/1.35 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
         sans-serif;
       color: #0e7490;
+    }
+    .saved-recall-button {
+      justify-self: start;
+      margin-top: 2px;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 999px;
+      font: 600 12px/1.2 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+        sans-serif;
+      color: #fff;
+      background: #0891b2;
+      cursor: pointer;
+    }
+    .saved-recall-button:hover {
+      background: #0e7490;
+    }
+    .saved-recall-button:disabled {
+      cursor: wait;
+      opacity: 0.75;
     }
     .note-panel {
       display: none;
@@ -510,7 +527,15 @@ function ensureToolbarHost(): void {
   savedHintEl = document.createElement('p')
   savedHintEl.className = 'saved-hint'
   savedHintEl.classList.add('is-hidden')
-  savedFeedbackPanel.append(savedPreviewEl, savedHintEl)
+  savedRecallButton = document.createElement('button')
+  savedRecallButton.type = 'button'
+  savedRecallButton.className = 'saved-recall-button is-hidden'
+  savedRecallButton.addEventListener('click', event => {
+    event.preventDefault()
+    event.stopPropagation()
+    void handleOpenRecallClick()
+  })
+  savedFeedbackPanel.append(savedPreviewEl, savedHintEl, savedRecallButton)
 
   const shell = document.createElement('div')
   shell.className = 'shell'
@@ -556,10 +581,21 @@ function showStatus(state: 'saving' | 'saved' | 'error', label: string): void {
     hideSavedFeedback()
   }
   statusButton.textContent = label
+  // saved/error 仅作状态展示，勿用 disabled 置灰（易误解为不可保存）
+  statusButton.disabled = state === 'saving'
+  statusButton.setAttribute(
+    'aria-disabled',
+    state === 'saved' || state === 'error' ? 'true' : 'false'
+  )
 }
 
-/** 展示存成抓住感：预览正文 + 可选找回引导。 */
-function showSavedFeedback(input: { preview: string; hint: string | null }): void {
+/** 展示存成抓住感：预览正文 + 可选找回引导与一键打开 Popup。 */
+function showSavedFeedback(input: {
+  preview: string
+  hint: string | null
+  showRecallAction: boolean
+  recallAriaLabel: string | null
+}): void {
   if (!savedFeedbackPanel || !savedPreviewEl || !savedHintEl) {
     return
   }
@@ -571,7 +607,70 @@ function showSavedFeedback(input: { preview: string; hint: string | null }): voi
     savedHintEl.textContent = ''
     savedHintEl.classList.add('is-hidden')
   }
+
+  if (savedRecallButton) {
+    if (input.showRecallAction) {
+      const label = safeT('selection_toolbar_try_recall')
+      if (label !== null) {
+        savedRecallButton.textContent = label
+        savedRecallButton.disabled = false
+        savedRecallButton.setAttribute('aria-label', input.recallAriaLabel?.trim() || label)
+        savedRecallButton.classList.remove('is-hidden')
+      }
+    } else {
+      savedRecallButton.disabled = false
+      savedRecallButton.classList.add('is-hidden')
+    }
+  }
+
   savedFeedbackPanel.classList.add('is-open')
+}
+
+async function handleOpenRecallClick(): Promise<void> {
+  if (!ensureLiveContext() || !savedRecallButton) {
+    return
+  }
+
+  clearHideTimer()
+  savedRecallButton.disabled = true
+
+  try {
+    const response = await chrome.runtime.sendMessage({
+      scope: BACKGROUND_MESSAGE_SCOPE,
+      type: 'OPEN_RECALL_POPUP'
+    })
+
+    if (!ensureLiveContext()) {
+      return
+    }
+
+    if (response?.ok) {
+      hideToolbar()
+      return
+    }
+
+    const failed = safeT('selection_toolbar_open_recall_failed')
+    if (failed !== null && savedHintEl) {
+      savedHintEl.textContent = failed
+      savedHintEl.classList.remove('is-hidden')
+    }
+    savedRecallButton.disabled = false
+    scheduleHideToolbar(3200)
+  } catch (error) {
+    if (isContextInvalidatedError(error) || !isExtensionContextValid()) {
+      teardown()
+      return
+    }
+    const failed = safeT('selection_toolbar_open_recall_failed')
+    if (failed !== null && savedHintEl) {
+      savedHintEl.textContent = failed
+      savedHintEl.classList.remove('is-hidden')
+    }
+    if (savedRecallButton) {
+      savedRecallButton.disabled = false
+    }
+    scheduleHideToolbar(3200)
+  }
 }
 
 function hideSavedFeedback(): void {
@@ -584,6 +683,10 @@ function hideSavedFeedback(): void {
   if (savedHintEl) {
     savedHintEl.textContent = ''
     savedHintEl.classList.add('is-hidden')
+  }
+  if (savedRecallButton) {
+    savedRecallButton.disabled = false
+    savedRecallButton.classList.add('is-hidden')
   }
 }
 
@@ -798,11 +901,13 @@ async function handleSaveClick(
     const preview = buildCaptureSavedPreview(selectedText)
     const prefill = buildRecallPrefillClue(selectedText)
     let hint: string | null = null
+    let showRecallAction = false
+    let recallAriaLabel: string | null = null
     try {
       if (prefill) {
         await writePopupRecallPrefill(prefill)
       }
-      const captureCount = await bumpExcerptCaptureCount()
+      const captureCount = await readExcerptCaptureCount()
       const firstDone = await readFirstRecallOpenDone()
       if (
         shouldShowFirstRecallHint({
@@ -810,18 +915,23 @@ async function handleSaveClick(
           firstRecallOpenDone: firstDone
         })
       ) {
-        hint = prefill
-          ? safeT('selection_toolbar_saved_hint', prefill)
-          : safeT('selection_toolbar_saved_hint_generic')
+        showRecallAction = true
+        if (prefill) {
+          hint = safeT('selection_toolbar_saved_hint', prefill)
+          recallAriaLabel = safeT('selection_toolbar_try_recall_aria', prefill)
+        } else {
+          hint = safeT('selection_toolbar_saved_hint_generic')
+          recallAriaLabel = safeT('selection_toolbar_try_recall_aria_generic')
+        }
       }
     } catch {
       // storage 失败不影响抓住感主文案
     }
-    showSavedFeedback({ preview, hint })
+    showSavedFeedback({ preview, hint, showRecallAction, recallAriaLabel })
 
     clearPageSelection()
     clearPendingCapture()
-    scheduleHideToolbar(SAVED_FEEDBACK_HIDE_MS)
+    scheduleHideToolbar(showRecallAction ? SAVED_RECALL_CTA_HIDE_MS : SAVED_FEEDBACK_HIDE_MS)
     return true
   } catch (error) {
     if (isContextInvalidatedError(error) || !isExtensionContextValid()) {
@@ -931,19 +1041,35 @@ function evaluateSelectionAndMaybeShow(): void {
     return
   }
 
+  // 同步快照：delay 期间部分页面会清选区（中文站点更常见），仍要能弹出浮层
+  capturePendingSelection()
+
   showTimer = setTimeout(() => {
     showTimer = null
     runGuarded(() => {
       if (isStatusFeedbackLocked()) {
         return
       }
-      const rect = getSelectionRect()
       const latestText = getSelectedText()
-      if (!rect || !latestText) {
+      const rect = getSelectionRect()
+      const snapshot = pendingCapture
+      const text = latestText || snapshot?.selectedText || ''
+      const anchorRect = rect
+        ? { top: rect.top, left: rect.left, width: rect.width, height: rect.height }
+        : snapshot?.anchorRect
+
+      if (!text || !anchorRect) {
         hideToolbar()
         return
       }
-      showToolbarAt(rect)
+
+      if (!latestText && snapshot?.selectedText) {
+        pendingCapture = snapshot
+      }
+
+      showToolbarAt(
+        new DOMRect(anchorRect.left, anchorRect.top, anchorRect.width, anchorRect.height)
+      )
     })
   }, SHOW_DELAY_MS)
 }

@@ -6,7 +6,7 @@ const {
   getCurrentOwnerIdMock,
   getOrCreateLocalProfileMock,
   initializeMemoryDatabaseMock,
-  registerChromeBookmarkSyncListenersMock,
+  syncChromeBookmarkSyncListenersWithIngestSettingMock,
   registerContextMenuListenersMock,
   registerOmniboxListenersMock,
   registerCommandListenersMock,
@@ -26,7 +26,7 @@ const {
     schemaVersion: 1
   })),
   initializeMemoryDatabaseMock: vi.fn(async () => undefined),
-  registerChromeBookmarkSyncListenersMock: vi.fn(),
+  syncChromeBookmarkSyncListenersWithIngestSettingMock: vi.fn(async () => undefined),
   registerContextMenuListenersMock: vi.fn(),
   registerOmniboxListenersMock: vi.fn(),
   registerCommandListenersMock: vi.fn(),
@@ -42,7 +42,8 @@ vi.mock('@/application/memory/ensure-memory-enrichment-backfill', () => ({
 }))
 
 vi.mock('@/background/listeners/chrome-bookmark-sync', () => ({
-  registerChromeBookmarkSyncListeners: registerChromeBookmarkSyncListenersMock
+  syncChromeBookmarkSyncListenersWithIngestSetting:
+    syncChromeBookmarkSyncListenersWithIngestSettingMock
 }))
 
 vi.mock('@/background/listeners/context-menu', () => ({
@@ -86,7 +87,7 @@ describe('ensureBackgroundBootstrapped', () => {
     await Promise.all([ensureBackgroundBootstrapped(), ensureBackgroundBootstrapped()])
 
     expect(initializeMemoryDatabaseMock).toHaveBeenCalledTimes(1)
-    expect(registerChromeBookmarkSyncListenersMock).toHaveBeenCalledTimes(1)
+    expect(syncChromeBookmarkSyncListenersWithIngestSettingMock).toHaveBeenCalledTimes(1)
     expect(registerContextMenuListenersMock).toHaveBeenCalledTimes(1)
     expect(registerOmniboxListenersMock).toHaveBeenCalledTimes(1)
     expect(registerCommandListenersMock).toHaveBeenCalledTimes(1)

@@ -1,3 +1,4 @@
+import { openGettingStartedOnInstall } from '@/application/onboarding/open-getting-started-on-install'
 import { ensureBackgroundBootstrapped } from '@/background/bootstrap'
 import { handleBackgroundMessage } from '@/background/handlers/message-handler'
 import { syncChromeBookmarkSyncListenersWithIngestSetting } from '@/background/listeners/chrome-bookmark-sync'
@@ -22,7 +23,10 @@ void syncChromeBookmarkSyncListenersWithIngestSetting().catch(error => {
 
 chrome.runtime.onInstalled.addListener(details => {
   void ensureBackgroundBootstrapped()
-    .then(() => registerContextMenuItems())
+    .then(async () => {
+      await registerContextMenuItems()
+      await openGettingStartedOnInstall(details.reason)
+    })
     .catch(error => {
       logger.error('Background', '安装/更新后初始化失败', error)
     })

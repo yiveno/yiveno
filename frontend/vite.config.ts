@@ -31,7 +31,8 @@ export default defineConfig(() => {
         resolve(SRC_DIR, 'pages/popup/index.html'),
         resolve(SRC_DIR, 'pages/settings/index.html'),
         resolve(SRC_DIR, 'pages/detail/index.html'),
-        resolve(SRC_DIR, 'pages/library/index.html')
+        resolve(SRC_DIR, 'pages/library/index.html'),
+        resolve(SRC_DIR, 'pages/getting-started/index.html')
       ],
       include: ['vue'],
       force: false,

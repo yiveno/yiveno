@@ -2,7 +2,10 @@ import {
   SELECTION_TOOLBAR_PAGE_API_KEY,
   type SelectionToolbarCommandType
 } from '@/core/messaging/content-messages'
-import { isSavablePageUrl } from '@/infrastructure/browser/active-tab-reader'
+import {
+  isGettingStartedPageUrl,
+  isSavablePageUrl
+} from '@/infrastructure/browser/active-tab-reader'
 import { flashActionBadge } from '@/infrastructure/browser/action-badge'
 import {
   invokeSelectionToolbarPageApi,
@@ -51,9 +54,17 @@ async function runCommandViaPageApi(
   }
 }
 
-/** 向可保存页注入划词脚本（扩展重载后旧标签常见未注入）。 */
+/** 向可保存页注入划词脚本（扩展自有页已打入页面 bundle，不可 executeScript 注入）。 */
 export async function ensureSelectionToolbarContentScript(tabId: number): Promise<boolean> {
   try {
+    const tab = await chrome.tabs.get(tabId)
+    const url = tab.url
+    if (url && isGettingStartedPageUrl(url)) {
+      return false
+    }
+    if (url?.startsWith('chrome-extension:')) {
+      return false
+    }
     await chrome.scripting.executeScript({
       target: { tabId },
       files: [SELECTION_TOOLBAR_CONTENT_SCRIPT_FILE]

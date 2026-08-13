@@ -26,7 +26,8 @@ import {
 } from '@/background/handlers/account-sync-handler'
 import {
   handleGetExtensionCommands,
-  handleOpenChromeShortcutsPage
+  handleOpenChromeShortcutsPage,
+  handleOpenRecallPopup
 } from '@/background/handlers/commands-handler'
 import {
   handleGetBookmarkLibraryTree,
@@ -147,6 +148,8 @@ async function dispatchBackgroundMessage(
       return handleGetExtensionCommands()
     case 'OPEN_CHROME_SHORTCUTS_PAGE':
       return handleOpenChromeShortcutsPage()
+    case 'OPEN_RECALL_POPUP':
+      return handleOpenRecallPopup()
     case 'GET_USER_SETTINGS':
       return handleGetUserSettings()
     case 'UPDATE_USER_SETTINGS':

@@ -25,7 +25,9 @@ import type {
   GetExtensionCommandsMessage,
   GetExtensionCommandsResponse,
   OpenChromeShortcutsPageMessage,
-  OpenChromeShortcutsPageResponse
+  OpenChromeShortcutsPageResponse,
+  OpenRecallPopupMessage,
+  OpenRecallPopupResponse
 } from '@/core/messaging/commands-messages'
 import type {
   ChromeBookmarkImportStatusResponse,
@@ -40,6 +42,7 @@ import type {
   UpdateMemoryNoteMessage,
   RecordMemoryOpenMessage,
   RecordRecallDismissMessage,
+  CaptureTextExcerptMessage,
   MemoryBackgroundResponse
 } from '@/core/messaging/memory-messages'
 import type {
@@ -80,6 +83,18 @@ export async function listMemoryItems(
     scope: 'background',
     type: 'LIST_MEMORY_ITEMS',
     ...(payload === undefined ? {} : { payload })
+  }
+  return sendBackgroundMessage<MemoryBackgroundResponse>(message)
+}
+
+/** 捕获页面选区摘录（Getting Started / 扩展页等）。 */
+export async function captureTextExcerpt(
+  payload: CaptureTextExcerptMessage['payload']
+): Promise<MemoryBackgroundResponse> {
+  const message: CaptureTextExcerptMessage = {
+    scope: 'background',
+    type: 'CAPTURE_TEXT_EXCERPT',
+    payload
   }
   return sendBackgroundMessage<MemoryBackgroundResponse>(message)
 }
@@ -186,6 +201,15 @@ export async function openChromeShortcutsPage(): Promise<OpenChromeShortcutsPage
     type: 'OPEN_CHROME_SHORTCUTS_PAGE'
   }
   return sendBackgroundMessage<OpenChromeShortcutsPageResponse>(message)
+}
+
+/** 在用户手势链上打开 Recall Popup（预填线索须已写入 session）。 */
+export async function openRecallPopup(): Promise<OpenRecallPopupResponse> {
+  const message: OpenRecallPopupMessage = {
+    scope: 'background',
+    type: 'OPEN_RECALL_POPUP'
+  }
+  return sendBackgroundMessage<OpenRecallPopupResponse>(message)
 }
 
 /** 读取用户设置。 */

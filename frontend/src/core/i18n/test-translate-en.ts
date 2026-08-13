@@ -7,6 +7,11 @@ const EN: Record<string, string> = {
     "Bookmarks are importing. You can still save a sentence you'd want to find again.",
   popup_empty_no_memory_body:
     'Highlight a sentence you want to keep (or use Save selection). Then come back and recall it in your own words.',
+  popup_capture_first_title: 'Save a line first',
+  popup_capture_first_body:
+    'Highlight a sentence on any page—or save the demo line on Getting Started—then recall it in your own words.',
+  popup_capture_first_body_importing:
+    'Your bookmarks are importing. Save one excerpt first—it is the fastest way to see how recall works.',
   popup_empty_library_empty_title: 'Nothing saved yet',
   popup_empty_library_empty_body:
     "There isn't a matching trace in your library yet. Save an excerpt or note first, then come back in your own words.",

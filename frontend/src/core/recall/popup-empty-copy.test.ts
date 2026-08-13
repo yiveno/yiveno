@@ -28,6 +28,18 @@ describe('popup-empty-copy', () => {
     expect(getPopupIdleEmptyCopy('ready', false, testTranslateEn)).toBeNull()
   })
 
+  it('capture-first idle shows even when library is ready', () => {
+    const copy = getPopupIdleEmptyCopy('ready', false, testTranslateEn, { captureFirst: true })
+    expect(copy?.title).toBe('Save a line first')
+    expect(copy?.body).toMatch(/getting started|highlight/i)
+    expect(copy?.body).not.toMatch(FORBIDDEN)
+  })
+
+  it('capture-first idle while importing uses importing body', () => {
+    const copy = getPopupIdleEmptyCopy('ready', true, testTranslateEn, { captureFirst: true })
+    expect(copy?.body).toMatch(/importing/i)
+  })
+
   it('empty library no_match: honest miss plus capture guidance', () => {
     const copy = getPopupNoMatchCopy(
       {

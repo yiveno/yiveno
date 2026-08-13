@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   computeSelectionToolbarAnchor,
+  resolveSelectionAnchorRect,
   shouldShowSelectionToolbar
 } from '@/content/selection-toolbar/selection-toolbar-logic'
 
@@ -44,5 +45,36 @@ describe('selection-toolbar-logic', () => {
         isSavablePage: true
       })
     ).toBe(false)
+
+    expect(
+      shouldShowSelectionToolbar({
+        enabled: true,
+        selectedText: '不用记标题，只要描述你记得的东西',
+        isSavablePage: true
+      })
+    ).toBe(true)
+  })
+
+  it('resolveSelectionAnchorRect 在 bounding rect 为 0 时合并 clientRects', () => {
+    const merged = resolveSelectionAnchorRect({
+      getBoundingClientRect: () => new DOMRect(10, 20, 0, 0),
+      getClientRects: () => [new DOMRect(10, 20, 16, 18), new DOMRect(10, 38, 16, 18)]
+    })
+
+    expect(merged).toEqual({
+      top: 20,
+      left: 10,
+      width: 16,
+      height: 36
+    })
+  })
+
+  it('resolveSelectionAnchorRect 在无有效矩形时返回 null', () => {
+    expect(
+      resolveSelectionAnchorRect({
+        getBoundingClientRect: () => new DOMRect(0, 0, 0, 0),
+        getClientRects: () => []
+      })
+    ).toBeNull()
   })
 })

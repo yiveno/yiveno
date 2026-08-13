@@ -4,6 +4,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import type { ChromeBookmarkImportState } from '@/core/memory/chrome-bookmark-import-state'
 import { getChromeBookmarkImportPercent } from '@/core/memory/chrome-bookmark-import-state'
 import { shortenClueForRetry } from '@/core/recall/explain-recall-match'
+import { shouldShowCaptureFirstPopup } from '@/core/capture/install-onboarding'
 import {
   getPopupIdleEmptyCopy,
   getPopupNoMatchCopy,
@@ -14,6 +15,7 @@ import { getMemoryItemDisplay } from '@/core/recall/recall-result'
 import { buildRecallCardHighlightParts } from '@/core/recall/highlight-recall-text'
 import { getMemoryItemOpenHref } from '@/core/recall/memory-open-href'
 import { tImportStateError, tRecallError } from '@/infrastructure/i18n/background-error'
+import { openGettingStartedPage } from '@/infrastructure/browser/getting-started-page'
 import { t } from '@/infrastructure/i18n/t'
 import {
   fetchChromeBookmarkImportStatus,
@@ -24,8 +26,13 @@ import {
 } from '@/infrastructure/messaging/background-client'
 import {
   consumePopupRecallPrefill,
-  markFirstRecallOpenDone
+  markFirstRecallOpenDone,
+  readExcerptCaptureCount
 } from '@/infrastructure/storage/first-recall-onboarding-storage'
+import {
+  markInstallOnboardingDone,
+  readInstallOnboardingDone
+} from '@/infrastructure/storage/install-onboarding-storage'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
 import { type PopupRecallCardModel } from '@/pages/popup/RecallResultCard.vue'
 import RecallConversation from '@/pages/popup/components/RecallConversation.vue'
@@ -48,6 +55,9 @@ const isRecallRefreshing = ref(false)
 const errorMessage = ref('')
 const importState = ref<ChromeBookmarkImportState | null>(null)
 const libraryState = ref<PopupLibraryState>('unknown')
+const excerptCaptureCount = ref(0)
+const installOnboardingDone = ref(true)
+const skipOnboardingBusy = ref(false)
 const lastSentClue = ref('')
 
 /** Popup 会话：槽位 accumulated + 本会话否定 id（关闭即丢）。 */
@@ -142,8 +152,17 @@ const importProgressLabel = computed(() => {
   return t('popup_import_progress_indeterminate')
 })
 
+const captureFirstMode = computed(() =>
+  shouldShowCaptureFirstPopup({
+    excerptCaptureCount: excerptCaptureCount.value,
+    installOnboardingDone: installOnboardingDone.value
+  })
+)
+
 const idleEmptyCopy = computed(() =>
-  getPopupIdleEmptyCopy(libraryState.value, isImporting.value, t)
+  getPopupIdleEmptyCopy(libraryState.value, isImporting.value, t, {
+    captureFirst: captureFirstMode.value
+  })
 )
 
 const shortenedClue = computed(() => shortenClueForRetry(lastSentClue.value))
@@ -294,6 +313,36 @@ function handleRecallResultOpen(memoryItemId: string, openUrl: string): void {
   void recordMemoryOpen({ id: memoryItemId }).catch(() => {
     // 忽略：打开记录失败不影响用户跳转
   })
+}
+
+async function loadOnboardingState(): Promise<void> {
+  try {
+    const [captureCount, onboardingDone] = await Promise.all([
+      readExcerptCaptureCount(),
+      readInstallOnboardingDone()
+    ])
+    excerptCaptureCount.value = captureCount
+    installOnboardingDone.value = onboardingDone
+  } catch {
+    // 忽略：默认不展示 Capture-first，避免阻塞 Popup
+  }
+}
+
+async function handleSkipOnboarding(): Promise<void> {
+  if (skipOnboardingBusy.value) {
+    return
+  }
+  skipOnboardingBusy.value = true
+  try {
+    await markInstallOnboardingDone()
+    installOnboardingDone.value = true
+  } finally {
+    skipOnboardingBusy.value = false
+  }
+}
+
+function handleOpenGettingStarted(): void {
+  openGettingStartedPage()
 }
 
 async function probeMemoryLibrary() {
@@ -523,6 +572,7 @@ onMounted(() => {
   void nextTick(() => {
     clueInputRef.value?.focus()
   })
+  void loadOnboardingState()
   void (async () => {
     try {
       const prefill = await consumePopupRecallPrefill()
@@ -572,6 +622,18 @@ onUnmounted(() => {
         <p class="recall-empty-copy">
           {{ idleEmptyCopy?.body ?? t('popup_welcome_body') }}
         </p>
+        <div v-if="captureFirstMode" class="recall-empty-actions">
+          <md-filled-tonal-button type="button" @click="handleOpenGettingStarted">
+            {{ t('popup_open_getting_started') }}
+          </md-filled-tonal-button>
+          <md-text-button
+            type="button"
+            :disabled="skipOnboardingBusy"
+            @click="handleSkipOnboarding"
+          >
+            {{ t('popup_skip_onboarding') }}
+          </md-text-button>
+        </div>
       </section>
 
       <RecallConversation
@@ -748,6 +810,14 @@ onUnmounted(() => {
   line-height: 1.5;
   color: var(--md-sys-color-on-surface-variant);
   text-wrap: pretty;
+}
+
+.recall-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  justify-content: center;
+  margin-top: 4px;
 }
 
 .recall-results {

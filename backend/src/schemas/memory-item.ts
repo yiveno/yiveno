@@ -12,7 +12,8 @@ const CaptureEntrySchema = z.enum([
   'omnibox', // 地址栏
   'shortcut', // 快捷键
   'sync', // Chrome 书签同步
-  'import' // 书签导入
+  'import', // 书签导入
+  'getting_started' // 安装引导演示页
 ])
 
 const MemoryCluesSchema = z.object({

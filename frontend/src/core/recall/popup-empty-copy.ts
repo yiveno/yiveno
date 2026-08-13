@@ -15,12 +15,23 @@ export interface PopupEmptyCopy {
   showShortenRetry: boolean
 }
 
-/** idle 区引导（有库时不展示额外空态块）。 */
+/** idle 区引导（有库时不展示额外空态块，除非仍在安装引导 Capture-first 阶段）。 */
 export function getPopupIdleEmptyCopy(
   library: PopupLibraryState,
   importing: boolean,
-  translate: TranslateFn
+  translate: TranslateFn,
+  options: { captureFirst?: boolean } = {}
 ): PopupEmptyCopy | null {
+  if (options.captureFirst) {
+    return {
+      title: translate('popup_capture_first_title'),
+      body: importing
+        ? translate('popup_capture_first_body_importing')
+        : translate('popup_capture_first_body'),
+      showShortenRetry: false
+    }
+  }
+
   if (library !== 'empty') {
     return null
   }

@@ -97,6 +97,7 @@ function finalizeExtensionDist() {
   flattenPageHtml('settings')
   flattenPageHtml('detail')
   flattenPageHtml('library')
+  flattenPageHtml('getting-started')
   purgeNonExtensionAssets()
 
   const nestedSrcDir = path.join(distDir, 'src')
@@ -105,7 +106,7 @@ function finalizeExtensionDist() {
   }
 
   console.log(
-    '[clean-dist] 扩展产物已就绪：popup.html / settings.html / detail.html / library.html / manifest.json'
+    '[clean-dist] 扩展产物已就绪：popup.html / settings.html / detail.html / library.html / getting-started.html / manifest.json'
   )
 }
 

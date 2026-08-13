@@ -65,6 +65,9 @@
   "page_title_detail": {
     "message": "Yiveno Excerpt"
   },
+  "page_title_getting_started": {
+    "message": "Getting Started · Yiveno"
+  },
   "selection_toolbar_saving": {
     "message": "Saving…"
   },
@@ -72,7 +75,7 @@
     "message": "Saved to Yiveno"
   },
   "selection_toolbar_saved_hint": {
-    "message": "Open the extension and try recalling with “$1”",
+    "message": "Try recalling: “$1”",
     "placeholders": {
       "clue": {
         "content": "$1",
@@ -81,7 +84,25 @@
     }
   },
   "selection_toolbar_saved_hint_generic": {
-    "message": "Open the extension and recall with any word you remember"
+    "message": "Try recalling with any word you remember"
+  },
+  "selection_toolbar_try_recall": {
+    "message": "Try recalling"
+  },
+  "selection_toolbar_try_recall_aria": {
+    "message": "Try recalling with “$1”",
+    "placeholders": {
+      "clue": {
+        "content": "$1",
+        "example": "hydration"
+      }
+    }
+  },
+  "selection_toolbar_try_recall_aria_generic": {
+    "message": "Try recalling with any word you remember"
+  },
+  "selection_toolbar_open_recall_failed": {
+    "message": "Could not open recall. Click the Yiveno icon."
   },
   "selection_toolbar_failed": {
     "message": "Save failed"
@@ -133,7 +154,7 @@
     "message": "Clue"
   },
   "popup_clue_placeholder": {
-    "message": "e.g. last week’s piece on retention, an analysis of a product…"
+    "message": "e.g. that article about AI agents and memory from last week"
   },
   "popup_submit": {
     "message": "Start recall"
@@ -1018,6 +1039,87 @@
   },
   "popup_empty_library_empty_body": {
     "message": "Nothing in your library matches yet. Save an excerpt or a short note, then come back with any clue in your own words."
+  },
+  "popup_capture_first_title": {
+    "message": "Save a line first"
+  },
+  "popup_capture_first_body": {
+    "message": "Highlight a sentence on any page—or save the demo line on Getting Started—then recall it in your own words."
+  },
+  "popup_capture_first_body_importing": {
+    "message": "Your bookmarks are importing. Save one excerpt first—it is the fastest way to see how recall works."
+  },
+  "popup_open_getting_started": {
+    "message": "Open Getting Started"
+  },
+  "popup_skip_onboarding": {
+    "message": "Skip for now"
+  },
+  "getting_started_hero_title": {
+    "message": "Remember this. Find it later."
+  },
+  "getting_started_hero_body": {
+    "message": "Save one line, then describe it in your own words—no exact title needed."
+  },
+  "getting_started_steps_aria": {
+    "message": "Getting started steps"
+  },
+  "getting_started_step_capture_title": {
+    "message": "1. Save a trace"
+  },
+  "getting_started_step_capture_body": {
+    "message": "Highlight the demo line below, then tap Save in the floating menu—not the button at the bottom."
+  },
+  "getting_started_step_recall_title": {
+    "message": "2. Recall it"
+  },
+  "getting_started_step_recall_body": {
+    "message": "Open Yiveno and describe what you saved without copying the exact words."
+  },
+  "getting_started_demo_aria": {
+    "message": "Demo excerpt"
+  },
+  "getting_started_demo_context_before": {
+    "message": "When you browse,"
+  },
+  "getting_started_demo_line": {
+    "message": "you do not need the exact title—just describe what you remember."
+  },
+  "getting_started_demo_context_after": {
+    "message": "That is how Yiveno works."
+  },
+  "getting_started_save_demo": {
+    "message": "Save this line"
+  },
+  "getting_started_save_demo_fallback": {
+    "message": "Save without selecting (fallback)"
+  },
+  "getting_started_demo_save_hint": {
+    "message": "Highlight the line, then tap Save in the menu that appears above your selection."
+  },
+  "getting_started_capture_done_hint": {
+    "message": "Saved. Continue with step 2 below."
+  },
+  "getting_started_saving": {
+    "message": "Saving…"
+  },
+  "getting_started_saved": {
+    "message": "Saved to Yiveno"
+  },
+  "getting_started_save_failed": {
+    "message": "Save failed. Try again."
+  },
+  "getting_started_recall_hint": {
+    "message": "Try recalling: “that line about remembering without the exact title”"
+  },
+  "getting_started_recall_done_title": {
+    "message": "You are set"
+  },
+  "getting_started_recall_done_body": {
+    "message": "You saved a trace and recalled it in your own words. On any page, highlight text to capture; open Yiveno when something comes back to mind."
+  },
+  "getting_started_skip": {
+    "message": "Skip for now"
   },
   "popup_no_match_title_with_clue": {
     "message": "Nothing related to “$clue$”",

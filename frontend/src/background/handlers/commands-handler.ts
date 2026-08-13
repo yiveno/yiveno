@@ -4,8 +4,10 @@ import {
 } from '@/core/commands/command-display'
 import type {
   GetExtensionCommandsResponse,
-  OpenChromeShortcutsPageResponse
+  OpenChromeShortcutsPageResponse,
+  OpenRecallPopupResponse
 } from '@/core/messaging/commands-messages'
+import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import { logger } from '@/infrastructure/logging/logger'
 
 /** 读取扩展命令与当前快捷键。 */
@@ -37,6 +39,24 @@ export async function handleOpenChromeShortcutsPage(): Promise<OpenChromeShortcu
     return {
       ok: false,
       errorCode: 'SHORTCUTS_PAGE_OPEN_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
+    }
+  }
+}
+
+/** 在用户手势链上打开 Recall Popup。 */
+export async function handleOpenRecallPopup(): Promise<OpenRecallPopupResponse> {
+  const startedAt = flowStart('Recall', '打开 Popup')
+  try {
+    await chrome.action.openPopup()
+    flowOk('Recall', '打开 Popup', startedAt, { ok: true })
+    return { ok: true }
+  } catch (error) {
+    flowFail('Recall', '打开 Popup', startedAt, error)
+    logger.warn('Commands', '打开 Recall Popup 失败', error)
+    return {
+      ok: false,
+      errorCode: 'RECALL_POPUP_OPEN_FAILED',
       ...(error instanceof Error ? { error: error.message } : {})
     }
   }

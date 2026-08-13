@@ -11,7 +11,8 @@ describe('dispatchSelectionToolbarCommand', () => {
     vi.useFakeTimers()
     vi.stubGlobal('chrome', {
       tabs: {
-        query: vi.fn(async () => [{ id: 7, url: 'https://example.com', title: 'Example' }])
+        query: vi.fn(async () => [{ id: 7, url: 'https://example.com', title: 'Example' }]),
+        get: vi.fn(async () => ({ id: 7, url: 'https://example.com', title: 'Example' }))
       },
       scripting: {
         executeScript: vi.fn()
