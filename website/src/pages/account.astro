@@ -3,6 +3,10 @@ import MainLayout from '../layouts/MainLayout.astro'
 import AccountPage from '../components/AccountPage.vue'
 ---
 
-<MainLayout>
+<MainLayout
+  noindex
+  title="Account · Yiveno"
+  description="Manage your Yiveno account."
+>
   <AccountPage client:load />
 </MainLayout>

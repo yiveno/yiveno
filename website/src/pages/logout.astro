@@ -3,6 +3,10 @@ import MainLayout from '../layouts/MainLayout.astro'
 import LogoutPage from '../components/LogoutPage.vue'
 ---
 
-<MainLayout>
+<MainLayout
+  noindex
+  title="Sign out · Yiveno"
+  description="Sign out of Yiveno."
+>
   <LogoutPage client:load />
 </MainLayout>

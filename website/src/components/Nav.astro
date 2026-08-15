@@ -1,64 +1,115 @@
 ---
 import AuthNav from './AuthNav.vue'
+import YMark from './home/YMark.astro'
+
+interface Props {
+  /** waitlist 首页：只保留 Support，不暴露 Pricing / Sign in；标用 Make YMark */
+  waitlist?: boolean
+}
+
+const { waitlist = false } = Astro.props
 ---
 
-<nav class="site-nav" aria-label="Primary">
+<nav class="site-nav" class:list={[{ 'site-nav--waitlist': waitlist }]} aria-label="Primary">
   <a href="/" class="site-nav__brand">
-    <img
-      class="site-nav__logo"
-      src="/images/logo-mark.svg"
-      alt=""
-      width="28"
-      height="28"
-      decoding="async"
-    />
+    {
+      waitlist ? (
+        <span class="site-nav__ymark site-nav__ymark--dark">
+          <YMark size={22} onDark />
+        </span>
+      ) : (
+        <img
+          class="site-nav__logo"
+          src="/images/logo-mark.svg"
+          alt=""
+          width="22"
+          height="22"
+          decoding="async"
+        />
+      )
+    }
+    {
+      waitlist && (
+        <span class="site-nav__ymark site-nav__ymark--light" aria-hidden="true">
+          <YMark size={22} />
+        </span>
+      )
+    }
     <span class="site-nav__name">Yiveno</span>
   </a>
   <div class="site-nav__spacer"></div>
-  <a href="/pricing" class="site-nav__link">Pricing</a>
+  {
+    !waitlist && (
+      <a href="/pricing" class="site-nav__link">
+        Pricing
+      </a>
+    )
+  }
   <a href="/support" class="site-nav__link">Support</a>
-  <AuthNav client:load />
+  {!waitlist && <AuthNav client:load />}
 </nav>
 
 <style>
   .site-nav {
-    position: sticky;
-    top: 0;
+    position: fixed;
+    inset: 0 0 auto;
     z-index: var(--z-nav);
     display: flex;
     align-items: center;
-    gap: 1rem;
-    padding: 0.9rem 1.5rem;
+    gap: clamp(1rem, 2.8vw, 2.1rem);
+    height: 60px;
+    padding: 0 var(--pad-x);
     background: var(--nav-bg);
     color: var(--nav-fg);
     border-bottom: 1px solid var(--nav-line);
+    transition: color 0.3s ease;
+  }
+
+  /* Make：Nav 始终透明，仅改文字色 */
+  .site-nav--waitlist {
+    background: transparent;
+    border-bottom-color: transparent;
+    backdrop-filter: none;
   }
 
   .site-nav__brand {
     display: inline-flex;
     align-items: center;
-    gap: 0.55rem;
-    font-weight: 700;
-    font-size: 1.05rem;
-    letter-spacing: -0.02em;
+    gap: 9px;
     text-decoration: none;
     color: inherit;
+    position: relative;
   }
 
   .site-nav__logo {
     display: block;
-    width: 28px;
-    height: 28px;
+    width: 22px;
+    height: 22px;
     object-fit: contain;
+    opacity: 0.85;
   }
 
-  :global(body[data-chrome='home']) .site-nav__logo {
-    filter: brightness(0) invert(1);
-    opacity: 0.9;
+  .site-nav__ymark {
+    display: none;
+    line-height: 0;
+  }
+
+  :global(body[data-chrome='home'][data-nav-over-hero='true']) .site-nav__ymark--dark {
+    display: block;
+  }
+
+  :global(body[data-chrome='home'][data-nav-over-hero='false']) .site-nav__ymark--light {
+    display: block;
   }
 
   .site-nav__name {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 17px;
+    letter-spacing: -0.025em;
     line-height: 1;
+    color: var(--nav-brand, inherit);
+    transition: color 0.3s;
   }
 
   .site-nav__spacer {
@@ -68,7 +119,10 @@ import AuthNav from './AuthNav.vue'
   .site-nav__link {
     text-decoration: none;
     color: var(--nav-muted);
-    font-size: 0.95rem;
+    font-size: 13.5px;
+    font-weight: 400;
+    letter-spacing: 0.005em;
+    transition: color 0.18s ease;
   }
 
   .site-nav__link:hover,
@@ -82,8 +136,8 @@ import AuthNav from './AuthNav.vue'
     outline-offset: 3px;
   }
 
-  :global(body[data-chrome='home']) .site-nav__link:focus-visible,
-  :global(body[data-chrome='home']) .site-nav__brand:focus-visible {
+  :global(body[data-chrome='home'][data-nav-over-hero='true']) .site-nav__link:focus-visible,
+  :global(body[data-chrome='home'][data-nav-over-hero='true']) .site-nav__brand:focus-visible {
     outline-color: var(--sage-on);
   }
 </style>

@@ -3,6 +3,10 @@ import MainLayout from '../../layouts/MainLayout.astro'
 import AuthCallback from '../../components/AuthCallback.vue'
 ---
 
-<MainLayout>
+<MainLayout
+  noindex
+  title="Signing in · Yiveno"
+  description="Completing Yiveno sign-in."
+>
   <AuthCallback client:load />
 </MainLayout>

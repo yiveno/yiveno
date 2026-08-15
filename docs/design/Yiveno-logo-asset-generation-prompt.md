@@ -1,5 +1,6 @@
 # Yiveno Logo 物料生成 Prompt（喂给 AI / 设计工具）
 
+> **色彩权威：** 服从 [`Yiveno-设计标准-v1.md`](./Yiveno-设计标准-v1.md) Brand Core（Ink `#192420` / Paper `#f0f3ee` / Sage `#4b6054`）。旧蓝紫实验色已废止。  
 > **用法：** 将下方「--- PROMPT START ---」到「--- PROMPT END ---」整段复制给 AI（或 Figma/Export 自动化），并在同一条消息中 **附上你的 SVG 源文件**（`logo-mark.svg` 及可选的 `logo-full.svg`）。  
 > **产物目标：** 可直接替换本仓库 `frontend/public/images/` 与 `website/public/` 中的对应文件。
 
@@ -14,8 +15,12 @@
 - **Yiveno**：Chrome 扩展 + 官网。核心是 **Capture（划词存摘录）→ Recall（用模糊线索找回）**。
 - **不是**：书签管理器、笔记 App、AI 聊天产品。
 - **对外一句**：帮助用户 capture & recall 个人浏览痕迹（excerpts / notes）。
-- **官网 theme-color**：`#1E2640`（深海军蓝，可用于 OG / 商店宣传图背景）。
-- **设计令牌参考色**（若 SVG 未指定背景，宣传图可选用）：Primary `#3B82F6`、Secondary `#C026D3`、渐变 `linear-gradient(135deg, #3B82F6 0%, #8B5CF6 50%, #C026D3 100%)`。
+- **品牌色（Normative，见 `docs/design/Yiveno-设计标准-v1.md`）**：
+  - Ink `#192420`（theme-color / OG / 商店深底）
+  - Paper `#f0f3ee`（浅底）
+  - Sage `#4b6054`（强调）
+  - Sage On `#d8ede2`（深底/强调色上的浅前景）
+- **禁止**再用实验色：navy `#1E2640`、蓝 `#3B82F6`、紫 `#C026D3` 及蓝紫渐变作为品牌默认。
 
 ---
 

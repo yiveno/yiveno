@@ -1,30 +1,60 @@
 /**
- * 官网共用壳：略偏橄榄绿的近白纸面 + 深墨门面 + 炭黑字。
- * 暖意给签名绿与文字，不把整页浸成羊皮纸。
+ * 官网共用壳 = Yiveno 色系试验场（Brand Core + 产品角色起步层）。
+ * 权威：docs/design/Yiveno-设计标准-v1.md
  */
 :root {
-  --font-display: 'Archivo', ui-sans-serif, system-ui, sans-serif;
-  --font-sans: 'Atkinson Hyperlegible', ui-sans-serif, system-ui, sans-serif;
-  --paper: oklch(0.975 0.008 155);
-  --paper-2: oklch(0.955 0.012 155);
-  --ink: oklch(0.27 0.028 155);
-  --ink-2: oklch(0.32 0.03 155);
-  --charcoal: oklch(0.28 0.018 90);
-  --muted: oklch(0.42 0.02 155);
-  --line: oklch(0.88 0.015 155);
-  --sage: oklch(0.36 0.048 155);
-  --sage-hover: oklch(0.32 0.05 155);
-  --sage-on: oklch(0.98 0.006 155);
-  --hero-fg: oklch(0.96 0.01 155);
-  --hero-muted: oklch(0.82 0.02 155);
-  --danger: oklch(0.45 0.12 25);
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Work Sans', system-ui, sans-serif;
+  --font-body: var(--font-sans);
+
+  /* ── Brand Core（锁定） ── */
+  --ink: #192420;
+  --ink-mid: #1e2c26;
+  --paper: #f0f3ee;
+  --paper-2: #e8ece5;
+  --paper-dim: #e8ece5;
+  --charcoal: #222c24;
+  --muted: #586860;
+  --line: #ced8cb;
+  --border: #ced8cb;
+  --sage: #4b6054;
+  --sage-dark: #3a4e44;
+  --sage-hover: #3a4e44;
+  --sage-muted: #82998c;
+  --sage-faint: #c6d6ca;
+  --sage-on: #d8ede2;
+  --hero-fg: #dce8de;
+  --hero-muted: rgba(176, 202, 184, 0.6);
+  --danger: #a05a3c;
+
+  /* ── Product Roles（试验场：语义别名，外推前先在此验证） ── */
+  --surface: var(--paper);
+  --surface-2: var(--paper-dim);
+  --surface-ink: var(--ink);
+  --on-surface: var(--charcoal);
+  --on-surface-muted: var(--muted);
+  --on-ink: var(--hero-fg);
+  --on-ink-muted: var(--hero-muted);
+  --accent: var(--sage);
+  --accent-hover: var(--sage-dark);
+  --on-accent: var(--sage-on);
+  --focus-ring: color-mix(in srgb, var(--sage) 45%, transparent);
+  --disabled-opacity: 0.55;
+
   --radius: 10px;
+  --radius-sm: 8px;
+  --radius-lg: 12px;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --nav-bg: var(--paper);
-  --nav-fg: var(--charcoal);
-  --nav-muted: var(--muted);
-  --nav-line: var(--line);
-  --z-nav: 20;
+  --max: 1120px;
+  --pad-x: clamp(28px, 6.5vw, 104px);
+  --sec-y: clamp(88px, 11vw, 128px);
+
+  --nav-bg: var(--surface);
+  --nav-fg: var(--on-surface);
+  --nav-brand: var(--on-surface);
+  --nav-muted: var(--on-surface-muted);
+  --nav-line: var(--border);
+  --z-nav: 60;
 }
 
 *,
@@ -41,6 +71,14 @@ html {
   html {
     scroll-behavior: auto;
   }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 html,
@@ -51,10 +89,11 @@ body {
 
 body {
   font-family: var(--font-sans);
-  background: var(--paper);
-  color: var(--charcoal);
+  background: var(--surface);
+  color: var(--on-surface);
   line-height: 1.5;
   text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
 h1,
@@ -62,15 +101,40 @@ h2,
 h3,
 .site-nav__name {
   font-family: var(--font-display);
+  font-weight: 400;
+}
+
+::selection {
+  background: var(--sage);
+  color: var(--paper);
+}
+
+/* 首页：纸面底；Nav 悬于 Hero 时仅改文字色（与 Make 一致：始终透明） */
+body[data-chrome='home'] {
+  --nav-bg: transparent;
+  --nav-brand: rgba(220, 234, 224, 0.95);
+  --nav-fg: rgba(200, 218, 206, 0.9);
+  --nav-muted: rgba(200, 218, 206, 0.4);
+  --nav-line: transparent;
+  background: var(--paper);
+  color: var(--charcoal);
+}
+
+body[data-chrome='home'][data-nav-over-hero='false'] {
+  --nav-bg: transparent;
+  --nav-brand: var(--charcoal);
+  --nav-fg: rgba(34, 44, 36, 0.9);
+  --nav-muted: rgba(34, 44, 36, 0.45);
+  --nav-line: transparent;
 }
 
 body[data-chrome='home'] {
-  --nav-bg: var(--ink);
-  --nav-fg: var(--hero-fg);
-  --nav-muted: var(--hero-muted);
-  --nav-line: oklch(0.38 0.03 155);
-  background: var(--ink);
-  color: var(--hero-fg);
+  scrollbar-width: none;
+}
+
+body[data-chrome='home']::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 
 a {
@@ -86,7 +150,7 @@ img {
   position: absolute;
   left: 0.75rem;
   top: 0.75rem;
-  z-index: 40;
+  z-index: 80;
   padding: 0.4rem 0.7rem;
   background: var(--sage);
   color: var(--sage-on);
@@ -100,30 +164,77 @@ img {
 }
 
 .site-footer {
-  padding: 2rem 1.5rem 2.5rem;
-  text-align: center;
-  font-size: 0.875rem;
-  color: var(--nav-muted);
-  border-top: 1px solid var(--nav-line);
-  background: var(--nav-bg);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 26px var(--pad-x);
+  font-size: 0.8125rem;
+  color: var(--sage-muted);
+  border-top: 1px solid var(--border);
+  background: var(--paper-dim);
 }
 
-.site-footer p {
+.site-footer__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--sage-muted);
+}
+
+.site-footer__logo,
+.site-footer__ymark {
+  width: 16px;
+  height: 16px;
+  display: block;
+  line-height: 0;
+}
+
+.site-footer__logo {
+  opacity: 0.75;
+}
+
+.site-footer__name {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: -0.02em;
+  color: var(--sage-muted);
+}
+
+.site-footer__meta {
+  font-size: 11.5px;
+  font-weight: 300;
+  opacity: 0.7;
+}
+
+.site-footer__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 22px;
   margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .site-footer a {
-  color: var(--nav-fg);
+  color: var(--sage-muted);
   text-decoration: none;
-  margin-right: 1rem;
+  font-size: 12px;
+  font-weight: 300;
+  letter-spacing: 0.01em;
+  transition: color 0.15s;
 }
 
 .site-footer a:hover,
 .site-footer a:focus-visible {
-  text-decoration: underline;
+  color: var(--sage);
+  text-decoration: none;
 }
 
 .site-footer a:focus-visible {
-  outline: 2px solid var(--sage-on);
+  outline: 2px solid var(--sage);
   outline-offset: 3px;
 }

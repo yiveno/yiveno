@@ -1,240 +1,519 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro'
 import WaitlistForm from '../components/WaitlistForm.vue'
+import RecallPopup from '../components/home/RecallPopup.astro'
+import ClosestStrip from '../components/home/ClosestStrip.astro'
+import YMark from '../components/home/YMark.astro'
+import '../styles/home.css'
+
+const contentTypes = [
+  { label: 'articles', size: 18, op: 0.85 },
+  { label: 'passages you highlighted', size: 14, op: 0.7 },
+  { label: 'videos', size: 15, op: 0.65 },
+  { label: 'repositories', size: 13, op: 0.5 },
+  { label: 'research', size: 16, op: 0.75 },
+  { label: 'your own notes', size: 15, op: 0.7 },
+  { label: 'tutorials', size: 14, op: 0.6 },
+  { label: 'products', size: 15, op: 0.65 },
+  { label: 'design inspiration', size: 12, op: 0.45 },
+  { label: 'threads', size: 16, op: 0.7 },
+  { label: 'books', size: 17, op: 0.8 },
+  { label: 'travel guides', size: 13, op: 0.5 },
+  { label: 'papers', size: 14, op: 0.55 },
+  { label: 'podcasts', size: 15, op: 0.6 },
+  { label: 'places', size: 13, op: 0.5 },
+  { label: 'references', size: 16, op: 0.7 },
+  { label: 'anything worth keeping', size: 12, op: 0.4 }
+]
+
+const recallExamples = [
+  {
+    query: 'that article about why batteries degrade faster in winter',
+    result: 'Why lithium-ion batteries lose capacity in the cold',
+    meta: 'Saved 8 months ago'
+  },
+  {
+    query: 'the GitHub repo I saved for building an AI agent',
+    result: 'Minimal agent architecture — a walkthrough from scratch',
+    meta: 'Saved 3 months ago'
+  },
+  {
+    query: 'that video explaining how transformers actually work',
+    result: 'The illustrated transformer — a visual deep dive',
+    meta: 'Saved last year'
+  },
+  {
+    query: 'the product I wanted to try for recording meetings',
+    result: 'Grain — meeting recordings with automatic highlights',
+    meta: 'Saved 5 months ago'
+  },
+  {
+    query: 'that travel guide I saved for Japan',
+    result: 'Two weeks in Japan — practical notes from a first visit',
+    meta: 'Saved last spring'
+  }
+]
+
+const trustPoints = [
+  'Your saved things stay yours — private by default, visible to no one else.',
+  'You can delete what you saved, completely and at any time.',
+  "We don't sell your collection or share it with third parties.",
+  "We don't use your saved content to train public models."
+]
+
+const proofSteps = [
+  {
+    n: '01',
+    label: 'Capture',
+    head: 'You save something interesting.',
+    body: 'One click. Add a note if you want. No decisions required.',
+    focus: false
+  },
+  {
+    n: '02',
+    label: 'Forget',
+    head: 'Time passes.',
+    body: 'Weeks. Months. The exact title fades.',
+    focus: false
+  },
+  {
+    n: '03',
+    label: 'Recall',
+    head: 'You describe what you remember.',
+    body: 'Not the title — the idea, the feeling, the context. Pick from the closest matches.',
+    focus: true
+  }
+]
+
+const freeFeatures = [
+  'Capture & recall on your machine',
+  'Natural-language closest matches',
+  'Chrome extension',
+  'Available at launch'
+]
+
+const proFeatures = [
+  'Sync across devices',
+  'Higher cloud & LLM allowance',
+  'Everything in Free',
+  'Details confirmed at launch'
+]
 ---
 
 <MainLayout
   chrome="home"
+  jsonLd
   title="Yiveno — Find what you saved"
-  description="Find the stuff you saved. You don’t need the title. Say what you remember — Yiveno brings back the closest matches, and you pick."
+  description="Find the stuff you saved. You don't need the title. Say what you remember — Yiveno brings back the closest matches, and you pick."
 >
-  <section class="hero">
-    <div class="hero__copy">
-      <h1 class="hero__title">Find what you saved.</h1>
-      <p class="hero__sub">
-        You don’t need the title. Say what you remember. Yiveno brings back the closest matches —
-        you pick.
-      </p>
-      <WaitlistForm client:load />
+  <!-- Hero -->
+  <section id="hero" class="hero">
+    <div class="hero__glow" aria-hidden="true"></div>
+    <div class="hero__layout">
+      <div class="hero__copy">
+        <h1 class="hero__title">Find what<br />you saved.</h1>
+        <p class="hero__sub">
+          You don't need the title. Say what you remember. Yiveno brings back the closest matches —
+          you pick.
+        </p>
+        <WaitlistForm client:load tone="dark" />
+      </div>
+      <div class="hero__proof">
+        <RecallPopup />
+      </div>
     </div>
   </section>
 
-  <section class="demo-band" aria-labelledby="demo-heading">
-    <div class="demo-band__inner">
-      <h2 id="demo-heading" class="demo-band__title">Saved it. Forgot the exact words.</h2>
-      <p class="demo-band__lede">
-        Later, ask in plain language. Yiveno puts its best guess on top, with a few nearby — so you
-        can choose.
-      </p>
+  <!-- Demo -->
+  <section class="home-sec home-sec--paper" aria-labelledby="demo-heading">
+    <div class="home-wrap demo-layout">
+      <div class="demo-text reveal">
+        <h2 id="demo-heading">
+          Saved it. <em class="home-kicker-em">Forgot the exact words.</em>
+        </h2>
+        <p>
+          Later, ask in plain language. Yiveno puts its best guess on top, with a few nearby — so
+          you can choose.
+        </p>
+      </div>
+      <div class="demo-panel reveal d1">
+        <ClosestStrip />
+      </div>
+    </div>
+  </section>
 
-      <figure class="demo">
-        <figcaption class="demo__caption">Example</figcaption>
-        <div class="demo__composer">
-          <p class="demo__prompt">What do you remember?</p>
-          <p class="demo__query">that quiet novel with the lighthouse</p>
+  <!-- Problem -->
+  <section class="home-sec home-sec--dim problem">
+    <div class="home-wrap home-col">
+      <div class="reveal">
+        <h2>
+          You remember the feeling.<br />
+          <em class="home-kicker-em">Not where you saved it.</em>
+        </h2>
+      </div>
+      <div class="reveal d1">
+        <p>
+          Every day, people save hundreds of things. Articles. Tabs. Ideas. Research. Inspiration.
+          Things worth keeping.
+        </p>
+        <p>
+          But saving creates a pile. Folders only work if you remember how you organized them. Tags
+          only help if you chose the right ones. Titles only surface things if you remember the
+          exact word.
+        </p>
+        <p>
+          Most things disappear — not because you lost them, but because you can't find the way
+          back.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Capture -->
+  <section class="home-sec home-sec--paper">
+    <div class="home-wrap capture-layout">
+      <div class="capture-copy reveal">
+        <h2>Save anything worth remembering.</h2>
+        <p>
+          A page. A passage. A thread. Add a personal note if you want — the kind of context only
+          you would write. No folders. No tags. No titles required.
+        </p>
+        <p class="capture-copy__tag">Save first. Organize later — or never.</p>
+      </div>
+      <div class="capture-visual reveal d1">
+        <div class="capture-mock" aria-hidden="true">
+          <div class="capture-mock__bar">
+            <div class="capture-mock__dots"><span></span><span></span><span></span></div>
+            <div class="capture-mock__url"></div>
+            <div class="capture-mock__ext">
+              <YMark size={12} />
+            </div>
+          </div>
+          <div class="capture-mock__page">
+            <div class="capture-mock__line"></div>
+            <div class="capture-mock__highlight">
+              <span></span><span></span><span></span>
+            </div>
+            <div class="capture-mock__line capture-mock__line--dim"></div>
+            <div class="capture-toast">
+              <div class="capture-toast__head">
+                <div class="capture-toast__icon">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                    <path
+                      d="M2 6L4.5 8.5L10 3"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+                  </svg>
+                </div>
+                Saved to Yiveno
+              </div>
+              <p class="capture-toast__quote">
+                "The sea doesn't keep track of the things it's swallowed."
+              </p>
+              <p class="capture-toast__note">
+                <span class="capture-toast__note-label">Note:</span>
+                <span>remind me of this for the intro</span>
+              </p>
+            </div>
+          </div>
         </div>
-        <p class="demo__status">A few that might be it</p>
-        <ol class="demo__list">
-          <li class="demo__item demo__item--closest">
-            <p class="demo__kicker">Closest</p>
-            <p class="demo__name">The Lighthouse — notes I meant to finish</p>
-            <p class="demo__meta">Saved last winter</p>
-          </li>
-          <li class="demo__item">
-            <p class="demo__name">Sea stories I keep coming back to</p>
-            <p class="demo__meta">A handful of pages from the same season</p>
-          </li>
-          <li class="demo__item">
-            <p class="demo__name">Weekend reading I never started</p>
-            <p class="demo__meta">Saved on a Sunday night</p>
-          </li>
-        </ol>
-      </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- Organize -->
+  <section class="home-sec home-sec--ink org">
+    <div class="home-wrap">
+      <div class="reveal">
+        <h2>You don't have to<br />organize everything.</h2>
+      </div>
+      <div class="org-layout">
+        <div class="reveal">
+          <p class="org-label">Before</p>
+          <ul class="org-list">
+            <li>Save the link.</li>
+            <li>Choose a folder.</li>
+            <li>Add some tags.</li>
+            <li>Write a title to remember it by.</li>
+            <li>Hope you find it later.</li>
+            <li>Try to recall the exact title.</li>
+            <li>Give up.</li>
+          </ul>
+        </div>
+        <div class="org-divider" aria-hidden="true"></div>
+        <div class="reveal d1">
+          <p class="org-label org-label--on">With Yiveno</p>
+          <ul class="org-steps">
+            <li>Save.</li>
+            <li>Forget.</li>
+            <li>Recall.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Content types -->
+  <section class="home-sec home-sec--paper types">
+    <div class="home-wrap">
+      <div class="reveal">
+        <h2>Different things. <em class="home-kicker-em">One personal memory.</em></h2>
+        <p class="types__lede">
+          Pages, passages, notes — whatever shape your saved things take. Yiveno keeps them
+          together.
+        </p>
+      </div>
+      <div class="types__mosaic reveal d2">
+        {
+          contentTypes.map(({ label, size, op }) => (
+            <span style={`font-size:${size}px;opacity:${op};font-style:${size > 15 ? 'italic' : 'normal'}`}>
+              {label}
+            </span>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Natural language examples -->
+  <section class="home-sec home-sec--dim examples">
+    <div class="home-wrap">
+      <div class="examples__intro reveal">
+        <h2>
+          Remember the idea.<br />
+          <em class="home-kicker-em">That's enough.</em>
+        </h2>
+        <p>
+          You recall the way you remember — in plain, imprecise, everyday language. Yiveno works
+          with that.
+        </p>
+      </div>
+      <ul class="examples__list">
+        {
+          recallExamples.map((ex, i) => (
+            <li class:list={['examples__row', 'reveal', `d${Math.min(i, 4)}`]}>
+              <p class="examples__q">"{ex.query}"</p>
+              <div>
+                <p class="examples__a-title">{ex.result}</p>
+                <p class="examples__a-meta">{ex.meta}</p>
+              </div>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <!-- Compounds -->
+  <section class="home-sec home-sec--ink">
+    <div class="home-wrap compounds">
+      <div class="reveal">
+        <h2>
+          The more you keep,<br />
+          <em class="home-kicker-em">the easier it is to find.</em>
+        </h2>
+      </div>
+      <p class="reveal d1">
+        Your collection becomes a personal memory. The richer it gets, the more naturally
+        plain-language clues line up with what you chose to keep.
+      </p>
+    </div>
+  </section>
+
+  <!-- Product proof -->
+  <section class="home-sec home-sec--paper">
+    <div class="home-wrap">
+      <div class="proof__intro reveal">
+        <h2>
+          Capture. Forget. Recall.<br />
+          <em class="home-kicker-em">Rediscover.</em>
+        </h2>
+      </div>
+      <div class="proof-grid">
+        {
+          proofSteps.map((s, i) => (
+            <div class:list={['proof-step', 'reveal', `d${i}`, { 'proof-step--focus': s.focus }]}>
+              <p class="proof-step__label">
+                <span>{s.n}</span>
+                <span>{s.label}</span>
+              </p>
+              <h3>{s.head}</h3>
+              <p>{s.body}</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Privacy -->
+  <section class="home-sec home-sec--dim">
+    <div class="home-wrap privacy-layout">
+      <div class="reveal">
+        <h2>
+          Your memories<br />are yours.
+        </h2>
+      </div>
+      <ul class="privacy-list reveal d1">
+        {trustPoints.map((p) => <li>{p}</li>)}
+      </ul>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section id="pricing" class="home-sec home-sec--paper">
+    <div class="home-wrap">
+      <div class="pricing__intro reveal">
+        <h2>Simple. Honest.</h2>
+        <p>
+          Local finding quality is not paywalled. Pro is for sync, higher quotas, and extras.
+          Pricing confirmed at launch.
+        </p>
+      </div>
+      <div class="pricing-grid">
+        <article class="price-card reveal">
+          <p class="price-card__tier">Free</p>
+          <div class="price-card__price">
+            <span class="price-card__amount">€0</span>
+            <span class="price-card__period">free forever</span>
+          </div>
+          <p class="price-card__desc">Capture and recall on your machine.</p>
+          <ul class="price-card__features">
+            {
+              freeFeatures.map((f) => (
+                <li>
+                  <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+                    <path
+                      d="M2 6.5L5 9.5L11 3.5"
+                      stroke="currentColor"
+                      stroke-width="1.4"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                  {f}
+                </li>
+              ))
+            }
+          </ul>
+          <a class="price-card__cta" href="#notify">Get launch access</a>
+        </article>
+        <article class="price-card price-card--pro reveal d1">
+          <p class="price-card__tier">Pro</p>
+          <div class="price-card__price">
+            <span class="price-card__amount">€8</span>
+            <span class="price-card__period">/ month</span>
+          </div>
+          <p class="price-card__desc">For a richer, growing collection.</p>
+          <ul class="price-card__features">
+            {
+              proFeatures.map((f) => (
+                <li>
+                  <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+                    <path
+                      d="M2 6.5L5 9.5L11 3.5"
+                      stroke="currentColor"
+                      stroke-width="1.4"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                  {f}
+                </li>
+              ))
+            }
+          </ul>
+          <a class="price-card__cta" href="#notify">Get launch access</a>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- GEO：可引用的品类边界（is / isn't） -->
+  <section class="home-sec home-sec--dim geo" aria-labelledby="geo-heading">
+    <div class="home-wrap geo__layout">
+      <div class="reveal">
+        <h2 id="geo-heading">
+          Yiveno is the thing<br />
+          <em class="home-kicker-em">that finds what you saved.</em>
+        </h2>
+        <p class="geo__lede">
+          Capture pages and passages with almost no ceremony. Later, ask in plain language. Yiveno
+          shows the closest matches from what you kept — a short neighborhood, not a single oracle
+          answer — and you pick.
+        </p>
+      </div>
+      <div class="geo__cols">
+        <div class="reveal d1">
+          <p class="geo__label">What it is</p>
+          <ul class="geo__list">
+            <li>The finder for your own saved things</li>
+            <li>Capture first; folders and tags optional forever</li>
+            <li>Recall by saying what you remember</li>
+            <li>Closest matches on top — you decide</li>
+          </ul>
+        </div>
+        <div class="reveal d2">
+          <p class="geo__label">What it isn't</p>
+          <ul class="geo__list geo__list--not">
+            <li>Not a bookmark manager</li>
+            <li>Not a notes app or organizer</li>
+            <li>Not a chatbot or personal assistant</li>
+            <li>Not “AI that always picks the one right link”</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section id="notify" class="home-sec home-sec--ink final">
+    <div class="final__inner">
+      <div class="reveal">
+        <h2>
+          Save it now.<br />
+          <em class="home-kicker-em">Find it when you need it.</em>
+        </h2>
+        <p class="final__lede">Your saved things shouldn't disappear into a folder.</p>
+      </div>
+      <div class="reveal d1">
+        <WaitlistForm client:load tone="dark" centered />
+      </div>
     </div>
   </section>
 </MainLayout>
 
-<style>
-  .hero {
-    padding: clamp(2.5rem, 8vw, 6.5rem) clamp(1.25rem, 4vw, 3rem) clamp(3rem, 7vw, 5.5rem);
-    background: var(--ink);
-    color: var(--hero-fg);
+<script>
+  // Nav：随 Hero 进出切换深/浅色
+  const hero = document.getElementById('hero')
+  if (hero) {
+    const navObs = new IntersectionObserver(
+      ([entry]) => {
+        document.body.dataset.navOverHero = entry?.isIntersecting ? 'true' : 'false'
+      },
+      { rootMargin: '-60px 0px 0px 0px', threshold: 0 }
+    )
+    navObs.observe(hero)
   }
 
-  .hero__copy {
-    max-width: 40rem;
+  // Scroll reveal
+  const nodes = document.querySelectorAll('.reveal')
+  if (nodes.length && 'IntersectionObserver' in window) {
+    const revealObs = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('in', 'is-in')
+            revealObs.unobserve(entry.target)
+          }
+        }
+      },
+      { threshold: 0.1 }
+    )
+    nodes.forEach((el) => revealObs.observe(el))
+  } else {
+    nodes.forEach((el) => el.classList.add('in', 'is-in'))
   }
-
-  .hero__title {
-    margin: 0;
-    font-size: clamp(2.35rem, 1.2rem + 4.2vw, 4.4rem);
-    font-weight: 700;
-    letter-spacing: -0.035em;
-    line-height: 1.05;
-    text-wrap: balance;
-  }
-
-  .hero__sub {
-    margin: 1.15rem 0 1.75rem;
-    max-width: 34rem;
-    font-size: clamp(1.05rem, 0.95rem + 0.4vw, 1.25rem);
-    line-height: 1.45;
-    color: var(--hero-muted);
-    text-wrap: pretty;
-  }
-
-  .demo-band {
-    background: var(--paper);
-    color: var(--charcoal);
-    padding: clamp(2.75rem, 6vw, 5rem) clamp(1.25rem, 4vw, 3rem) clamp(3.5rem, 8vw, 6rem);
-  }
-
-  .demo-band__inner {
-    max-width: 40rem;
-    margin: 0 auto;
-  }
-
-  .demo-band__title {
-    margin: 0;
-    font-size: clamp(1.55rem, 1.1rem + 1.6vw, 2.15rem);
-    letter-spacing: -0.03em;
-    line-height: 1.15;
-    text-wrap: balance;
-  }
-
-  .demo-band__lede {
-    margin: 0.85rem 0 1.75rem;
-    color: var(--muted);
-    font-size: 1.05rem;
-    line-height: 1.5;
-    text-wrap: pretty;
-  }
-
-  .demo {
-    margin: 0;
-    padding: 1.15rem 1.15rem 1.25rem;
-    background: var(--paper-2);
-    border: 1px solid var(--line);
-    border-radius: 12px;
-  }
-
-  .demo__caption {
-    margin: 0 0 0.85rem;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--muted);
-  }
-
-  .demo__composer {
-    padding: 0.85rem 1rem 1rem;
-    background: var(--paper);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-  }
-
-  .demo__prompt {
-    margin: 0 0 0.35rem;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--muted);
-  }
-
-  .demo__query {
-    margin: 0;
-    font-size: 1.05rem;
-    letter-spacing: -0.02em;
-  }
-
-  .demo__status {
-    margin: 1.1rem 0 0.65rem;
-    font-size: 0.9rem;
-    color: var(--muted);
-  }
-
-  .demo__list {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 0.45rem;
-  }
-
-  .demo__item {
-    margin: 0;
-    padding: 0.75rem 0.9rem;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    background: var(--paper);
-    animation: demo-in 0.55s var(--ease-out) both;
-  }
-
-  .demo__item:nth-child(1) {
-    animation-delay: 0.08s;
-  }
-
-  .demo__item:nth-child(2) {
-    animation-delay: 0.18s;
-  }
-
-  .demo__item:nth-child(3) {
-    animation-delay: 0.28s;
-  }
-
-  .demo__item--closest {
-    background: color-mix(in oklch, var(--sage) 9%, var(--paper));
-    border-color: color-mix(in oklch, var(--sage) 28%, var(--line));
-  }
-
-  .demo__kicker {
-    margin: 0 0 0.2rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--sage);
-  }
-
-  .demo__name,
-  .demo__meta {
-    margin: 0;
-  }
-
-  .demo__name {
-    font-weight: 600;
-    letter-spacing: -0.02em;
-  }
-
-  .demo__meta {
-    margin-top: 0.15rem;
-    font-size: 0.88rem;
-    color: var(--muted);
-  }
-
-  @keyframes demo-in {
-    from {
-      opacity: 0;
-      translate: 0 0.45rem;
-    }
-    to {
-      opacity: 1;
-      translate: 0 0;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .demo__item {
-      animation: none;
-    }
-  }
-
-  @media (min-width: 960px) {
-    .hero {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr);
-      padding-left: clamp(2rem, 8vw, 7rem);
-    }
-
-    .demo-band__inner {
-      max-width: 42rem;
-    }
-  }
-</style>
+</script>

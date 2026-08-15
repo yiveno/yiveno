@@ -3,6 +3,10 @@ import MainLayout from '../layouts/MainLayout.astro'
 import LoginForm from '../components/LoginForm.vue'
 ---
 
-<MainLayout title="Sign in · Yiveno">
+<MainLayout
+  noindex
+  title="Sign in · Yiveno"
+  description="Sign in to Yiveno for account and billing."
+>
   <LoginForm client:load />
 </MainLayout>

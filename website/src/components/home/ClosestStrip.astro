@@ -1,0 +1,34 @@
+---
+/**
+ * Demo 段：轻量 Closest 条，避免与 Hero 全量 popup 重复。
+ */
+const top = {
+  title: 'The Lighthouse — notes I meant to finish',
+  meta: 'Saved last winter',
+  note: 'My note: quiet ending on the pier'
+}
+const rest = [
+  { title: 'Sea stories I keep coming back to', meta: 'A handful of pages from the same season' },
+  { title: 'Weekend reading I never started', meta: 'Saved on a Sunday night' }
+]
+---
+
+<div class="closest-strip">
+  <p class="closest-strip__query">"that quiet novel with the lighthouse"</p>
+  <div class="closest-strip__closest">
+    <p class="closest-strip__badge">Closest</p>
+    <p class="closest-strip__title">{top.title}</p>
+    <p class="closest-strip__meta">{top.meta}</p>
+    <p class="closest-strip__note">{top.note}</p>
+  </div>
+  <ul class="closest-strip__nearby">
+    {
+      rest.map((r) => (
+        <li class="closest-strip__row">
+          <span class="closest-strip__row-title">{r.title}</span>
+          <span class="closest-strip__row-meta">{r.meta}</span>
+        </li>
+      ))
+    }
+  </ul>
+</div>

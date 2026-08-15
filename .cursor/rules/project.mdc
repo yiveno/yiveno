@@ -8,8 +8,8 @@ alwaysApply: true
 用中文回复。精简、工程化。
 
 **权威优先级（冲突时）：**  
-`docs/product/Yiveno-产品文档-v4.0.md`（Normative §0–§7）> 本文件 ≈ `AGENTS.md` > 其它 steering。  
-改架构/消息协议/UI 硬约束 → **先改产品文档再改代码与本文件**。附录 A 非实现范围。
+`docs/product/Yiveno-产品文档-v4.0.md`（Normative §0–§7）> **视觉/品牌** `docs/design/Yiveno-设计标准-v1.md`（≈ 根目录 `DESIGN.md`）> 本文件 ≈ `AGENTS.md` > 其它 steering。  
+改架构/消息协议/UI 硬约束 → **先改产品文档再改代码与本文件**；改品牌色/字体/物料气质 → **先改设计标准再改官网 CSS / MD token / logo**。附录 A 非实现范围。
 
 ---
 
@@ -139,6 +139,7 @@ Background **无** `window` / `document` / `localStorage`。用全局 `setTimeou
 
 | 主题 | 路径 |
 |------|------|
+| 视觉/品牌标准 | `docs/design/Yiveno-设计标准-v1.md` + 根目录 `DESIGN.md` |
 | Memory / clues | `frontend/src/core/memory/` |
 | 消息联合类型 | `frontend/src/core/messaging/background-messages.ts` |
 | UI → SW | `frontend/src/infrastructure/messaging/background-client.ts` |

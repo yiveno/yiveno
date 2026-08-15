@@ -1,0 +1,40 @@
+---
+/**
+ * Make 设计稿中的抽象 Y 标（与 Figma Make App.tsx YMark 一致）。
+ * 用于营销页 Nav / 产品 mock / Footer，保证与设计稿字形一致。
+ */
+interface Props {
+  size?: number
+  /** 深色底上用浅绿描边 */
+  onDark?: boolean
+  class?: string
+}
+
+const { size = 22, onDark = false, class: className } = Astro.props
+const stroke = onDark ? 'rgba(205,220,210,0.65)' : 'var(--sage)'
+---
+
+<svg
+  class={className}
+  width={size}
+  height={size}
+  viewBox="0 0 22 22"
+  fill="none"
+  aria-hidden="true"
+>
+  <circle cx="11" cy="11" r="10" stroke={stroke} stroke-opacity="0.3" stroke-width="1"></circle>
+  <path
+    d="M7.2 6L11 11.4L14.8 6"
+    stroke={stroke}
+    stroke-width="1.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"></path>
+  <line
+    x1="11"
+    y1="11.4"
+    x2="11"
+    y2="16.2"
+    stroke={stroke}
+    stroke-width="1.5"
+    stroke-linecap="round"></line>
+</svg>
