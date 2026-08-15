@@ -1,56 +1,240 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro'
+import WaitlistForm from '../components/WaitlistForm.vue'
 ---
 
-<MainLayout>
+<MainLayout
+  chrome="home"
+  title="Yiveno — Find what you saved"
+  description="Find the stuff you saved. You don’t need the title. Say what you remember — Yiveno brings back the closest matches, and you pick."
+>
   <section class="hero">
-    <img
-      class="hero__logo"
-      src="/images/logo-mark.svg"
-      alt="Yiveno"
-      width="96"
-      height="96"
-      decoding="async"
-    />
-    <h1 class="hero__title">Yiveno</h1>
-    <p class="hero__tagline">A personal memory that understands you.</p>
-    <p class="hero__body">
-      Capture browsing traces with low friction. Recall what you saved with high confidence—excerpts and notes, not
-      another bookmark manager.
-    </p>
+    <div class="hero__copy">
+      <h1 class="hero__title">Find what you saved.</h1>
+      <p class="hero__sub">
+        You don’t need the title. Say what you remember. Yiveno brings back the closest matches —
+        you pick.
+      </p>
+      <WaitlistForm client:load />
+    </div>
+  </section>
+
+  <section class="demo-band" aria-labelledby="demo-heading">
+    <div class="demo-band__inner">
+      <h2 id="demo-heading" class="demo-band__title">Saved it. Forgot the exact words.</h2>
+      <p class="demo-band__lede">
+        Later, ask in plain language. Yiveno puts its best guess on top, with a few nearby — so you
+        can choose.
+      </p>
+
+      <figure class="demo">
+        <figcaption class="demo__caption">Example</figcaption>
+        <div class="demo__composer">
+          <p class="demo__prompt">What do you remember?</p>
+          <p class="demo__query">that quiet novel with the lighthouse</p>
+        </div>
+        <p class="demo__status">A few that might be it</p>
+        <ol class="demo__list">
+          <li class="demo__item demo__item--closest">
+            <p class="demo__kicker">Closest</p>
+            <p class="demo__name">The Lighthouse — notes I meant to finish</p>
+            <p class="demo__meta">Saved last winter</p>
+          </li>
+          <li class="demo__item">
+            <p class="demo__name">Sea stories I keep coming back to</p>
+            <p class="demo__meta">A handful of pages from the same season</p>
+          </li>
+          <li class="demo__item">
+            <p class="demo__name">Weekend reading I never started</p>
+            <p class="demo__meta">Saved on a Sunday night</p>
+          </li>
+        </ol>
+      </figure>
+    </div>
   </section>
 </MainLayout>
 
 <style>
   .hero {
-    text-align: center;
-    padding: 4rem 2rem;
-    max-width: 800px;
-    margin: 0 auto;
+    padding: clamp(2.5rem, 8vw, 6.5rem) clamp(1.25rem, 4vw, 3rem) clamp(3rem, 7vw, 5.5rem);
+    background: var(--ink);
+    color: var(--hero-fg);
   }
 
-  .hero__logo {
-    display: block;
-    width: 96px;
-    height: 96px;
-    margin: 0 auto 1.25rem;
-    object-fit: contain;
+  .hero__copy {
+    max-width: 40rem;
   }
 
   .hero__title {
-    font-size: 3rem;
-    margin: 0 0 0.75rem;
-  }
-
-  .hero__tagline {
-    font-size: 1.25rem;
-    color: #555;
-    margin: 0 0 1.25rem;
-  }
-
-  .hero__body {
-    color: #777;
-    line-height: 1.8;
     margin: 0;
+    font-size: clamp(2.35rem, 1.2rem + 4.2vw, 4.4rem);
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    line-height: 1.05;
+    text-wrap: balance;
+  }
+
+  .hero__sub {
+    margin: 1.15rem 0 1.75rem;
+    max-width: 34rem;
+    font-size: clamp(1.05rem, 0.95rem + 0.4vw, 1.25rem);
+    line-height: 1.45;
+    color: var(--hero-muted);
+    text-wrap: pretty;
+  }
+
+  .demo-band {
+    background: var(--paper);
+    color: var(--charcoal);
+    padding: clamp(2.75rem, 6vw, 5rem) clamp(1.25rem, 4vw, 3rem) clamp(3.5rem, 8vw, 6rem);
+  }
+
+  .demo-band__inner {
+    max-width: 40rem;
+    margin: 0 auto;
+  }
+
+  .demo-band__title {
+    margin: 0;
+    font-size: clamp(1.55rem, 1.1rem + 1.6vw, 2.15rem);
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    text-wrap: balance;
+  }
+
+  .demo-band__lede {
+    margin: 0.85rem 0 1.75rem;
+    color: var(--muted);
+    font-size: 1.05rem;
+    line-height: 1.5;
+    text-wrap: pretty;
+  }
+
+  .demo {
+    margin: 0;
+    padding: 1.15rem 1.15rem 1.25rem;
+    background: var(--paper-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+  }
+
+  .demo__caption {
+    margin: 0 0 0.85rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  .demo__composer {
+    padding: 0.85rem 1rem 1rem;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+  }
+
+  .demo__prompt {
+    margin: 0 0 0.35rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  .demo__query {
+    margin: 0;
+    font-size: 1.05rem;
+    letter-spacing: -0.02em;
+  }
+
+  .demo__status {
+    margin: 1.1rem 0 0.65rem;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+
+  .demo__list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+
+  .demo__item {
+    margin: 0;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--paper);
+    animation: demo-in 0.55s var(--ease-out) both;
+  }
+
+  .demo__item:nth-child(1) {
+    animation-delay: 0.08s;
+  }
+
+  .demo__item:nth-child(2) {
+    animation-delay: 0.18s;
+  }
+
+  .demo__item:nth-child(3) {
+    animation-delay: 0.28s;
+  }
+
+  .demo__item--closest {
+    background: color-mix(in oklch, var(--sage) 9%, var(--paper));
+    border-color: color-mix(in oklch, var(--sage) 28%, var(--line));
+  }
+
+  .demo__kicker {
+    margin: 0 0 0.2rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--sage);
+  }
+
+  .demo__name,
+  .demo__meta {
+    margin: 0;
+  }
+
+  .demo__name {
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  .demo__meta {
+    margin-top: 0.15rem;
+    font-size: 0.88rem;
+    color: var(--muted);
+  }
+
+  @keyframes demo-in {
+    from {
+      opacity: 0;
+      translate: 0 0.45rem;
+    }
+    to {
+      opacity: 1;
+      translate: 0 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .demo__item {
+      animation: none;
+    }
+  }
+
+  @media (min-width: 960px) {
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      padding-left: clamp(2rem, 8vw, 7rem);
+    }
+
+    .demo-band__inner {
+      max-width: 42rem;
+    }
   }
 </style>

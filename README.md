@@ -1,13 +1,13 @@
 # 📖 Yiveno
 
-> 🎯 个人信息寻回 Chrome 扩展 - 高性能 Monorepo 项目
+> 🎯 那个找东西的 · Chrome 扩展 Monorepo（Capture + Recall 邻域）
 
 [![Bun](https://img.shields.io/badge/Bun-1.2.21-black?logo=bun)](https://bun.sh)
 [![Vue 3](https://img.shields.io/badge/Vue-3.5-42b883?logo=vue.js)](https://vuejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178c6?logo=typescript)](https://www.typescriptlang.org)
 [![Cloudflare](https://img.shields.io/badge/Cloudflare-Worker-f38020?logo=cloudflare)](https://workers.cloudflare.com)
 
-一款个人信息寻回 Chrome 扩展，基于 Vue 3 + TypeScript + Cloudflare Worker 构建，采用现代化 Monorepo 架构。产品规格以 [`docs/product/Yiveno-产品文档-v4.0.md`](docs/product/Yiveno-产品文档-v4.0.md) 为准。
+Yiveno：**那个找东西的**（Capture 低负担 + Recall 高置信邻域；Top1=建议）。基于 Vue 3 + TypeScript + Cloudflare Worker 的 Monorepo。产品规格以 [`docs/product/Yiveno-产品文档-v4.0.md`](docs/product/Yiveno-产品文档-v4.0.md) 为准。
 
 ---
 

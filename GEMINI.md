@@ -1,13 +1,14 @@
 # Yiveno — Gemini CLI 项目上下文
 
-Chrome 扩展：**个人信息寻回**（Capture 低负担 + Recall 高置信）。不是书签管理器 / 笔记工具 / 聊天机器人。
+Chrome 扩展：**那个找东西的**（Capture 低负担 + Recall 高置信邻域；Top1=建议非神谕）。不是书签管理器 / 笔记工具 / 聊天机器人 / AI 宣传壳。
 
 ## 审查时优先关注
 
 - 单向数据流：Chrome API → Background → IndexedDB → UI；UI 经 `background-client`，禁止直连 IndexedDB / `chrome.bookmarks|tabs`。
 - 新 message `type` 必须先改 `frontend/src/core/messaging/*`。
 - UI 文案：禁止「搜索」/ `Search`；用 **筛选（Filter）** / **找回（Recall）**；文案经 `t()` + `_locales`。
-- LLM 不直接查插改删数据平面；事实源是 IndexedDB MemoryItem。
+- 找回承诺：邻域集合非神谕；禁止「永远押中那一条」/ 置信百分比神谕话术。
+- LLM 不直接查插改删数据平面；事实源是 IndexedDB MemoryItem；AI 是能力核心不作宣传招牌。
 - Free：关键词 Filter；勿暗示未上线 Hybrid/embedding 可用。
 
 ## 仓库结构

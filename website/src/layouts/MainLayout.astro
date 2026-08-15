@@ -1,16 +1,20 @@
 ---
 import Nav from '../components/Nav.astro'
+import '../styles/site.css'
 
 interface Props {
   /** 页面标题（写入 document title） */
   title?: string
   /** meta description */
   description?: string
+  /** home：深墨门面；默认浅纸面 */
+  chrome?: 'default' | 'home'
 }
 
 const {
   title = 'Yiveno',
-  description = 'Yiveno helps you capture and recall personal browsing traces—excerpts and notes—not another bookmark manager.'
+  description = 'Find the stuff you saved. Say what you remember — Yiveno brings back the closest matches.',
+  chrome = 'default'
 } = Astro.props
 
 const canonicalOrigin = 'https://yiveno.com'
@@ -28,7 +32,7 @@ const ogImage = `${canonicalOrigin}/og-image.png`
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <meta name="theme-color" content="#1E2640" />
+    <meta name="theme-color" content="#1C2A24" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
@@ -37,19 +41,39 @@ const ogImage = `${canonicalOrigin}/og-image.png`
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap"
+    />
   </head>
-  <body>
+  <body data-chrome={chrome}>
+    <a class="skip-link" href="#main">Skip to content</a>
     <Nav />
-    <main>
+    <main id="main">
       <slot />
     </main>
-    <footer style="text-align:center;padding:2rem;color:#666;font-size:0.875rem;">
+    <footer class="site-footer">
       <p>
-        <a href="/support" style="color:#555;margin-right:1rem;">Support</a>
-        <a href="/privacy" style="color:#555;margin-right:1rem;">Privacy</a>
-        <a href="/terms" style="color:#555;margin-right:1rem;">Terms</a>
-        <span>© 2026 Yiveno. All rights reserved.</span>
+        <a href="/support">Support</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <span>© 2026 Yiveno</span>
       </p>
     </footer>
   </body>
 </html>
+
+<style is:global>
+  html {
+    font-family: 'Atkinson Hyperlegible', ui-sans-serif, system-ui, sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  .site-nav__name {
+    font-family: 'Archivo', ui-sans-serif, system-ui, sans-serif;
+  }
+</style>

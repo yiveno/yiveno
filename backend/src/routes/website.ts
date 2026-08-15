@@ -1,13 +1,14 @@
 /**
- * 官网只读 API（Pages → Worker）
+ * 官网 API（Pages → Worker）
  *
  * 登录不经本路由：官网 Supabase Auth 直连。
- * 订阅查询须 Bearer，且只能查当前用户；默认强制对账（§A.3.2）。
+ * 预约名单 POST 公开；订阅查询须 Bearer，且只能查当前用户。
  */
 
 import { Hono } from 'hono'
 import type { Env } from '../types/env'
 import { getSubscriptionStatusOrThrow } from '../handlers/subscription'
+import { handleWebsiteWaitlist } from '../handlers/website-waitlist'
 import { supabaseAuth } from '../middleware/supabase-auth'
 import { error as logErrorMessage, toLogError } from '../utils/logger'
 
@@ -26,6 +27,9 @@ export const websiteRouter = new Hono<WebsiteVars>()
 export function normalizeWebsiteSubscriptionTier(tier: string | null | undefined): 'free' | 'pro' {
   return tier === 'pro' ? 'pro' : 'free'
 }
+
+/** POST /api/website/waitlist — 官网预约邮箱（无需登录） */
+websiteRouter.post('/waitlist', c => handleWebsiteWaitlist(c.req.raw, c.env))
 
 /** GET /api/website/subscription — 当前登录用户订阅状态（强制对账） */
 websiteRouter.get('/subscription', supabaseAuth(), async c => {

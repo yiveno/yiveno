@@ -166,9 +166,9 @@ watch(
     <header class="hero">
       <h1>Pricing</h1>
       <p class="lede">
-        Your memory hard drive: save lightly, recall with confidence. Free and Pro share the same
-        on-device recall quality; Pro keeps your library across devices and gives a larger hosted
-        clue-understanding quota.
+        Find what you saved: capture lightly, get a short list of closest matches — you pick. Free
+        and Pro share the same on-device recall quality; Pro keeps your library across devices and
+        gives a larger hosted clue-understanding quota.
       </p>
 
       <div class="billing-toggle" role="group" aria-label="Pro billing period">

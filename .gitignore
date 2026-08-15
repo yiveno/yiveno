@@ -70,6 +70,15 @@ backend/.dev.vars
 .impeccable/hook.cache.json
 .impeccable/live/
 
+# Impeccable 技能包：各宿主本地 `npx impeccable` 安装，内容几乎相同，禁止入库
+# （.cursor/skills、.agents 已由上面规则覆盖；.kiro 仅忽略 impeccable，保留项目自有 skills）
+.claude/skills/
+.github/skills/
+.github/agents/
+.github/hooks/
+.kiro/skills/impeccable/
+.codex/hooks.json
+
 # Python相关
 .venv/
 venv/
@@ -139,3 +148,6 @@ website/.astro/
 # 本地 embedding 模型缓存（v4 下载链已移除；保留规则以防残留目录）
 frontend/public/models/Xenova/
 frontend/public/models/**/.model-ready.json
+tmp/yiveno-make-preview-1.png
+tmp/yiveno-make-preview-2.png
+.impeccable/critique/2026-08-15T09-40-56Z__figma-make-ns77vwebld8gofjrrd2euk.md

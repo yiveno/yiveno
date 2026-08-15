@@ -42,7 +42,18 @@ onMounted(async () => {
 
 .nav-link {
   text-decoration: none;
-  color: #555;
+  color: var(--nav-muted, #555);
+  font-size: 0.95rem;
+}
+
+.nav-link:hover,
+.nav-link:focus-visible {
+  color: var(--nav-fg, inherit);
+}
+
+.nav-link:focus-visible {
+  outline: 2px solid var(--sage, #3d5348);
+  outline-offset: 3px;
 }
 
 .user-info {

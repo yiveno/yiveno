@@ -5,7 +5,7 @@
  */
 import MainLayout from '../layouts/MainLayout.astro'
 
-const effectiveDate = '2026-08-05'
+const effectiveDate = '2026-08-15'
 const contactEmail = 'privacy@yiveno.com'
 ---
 
@@ -24,8 +24,9 @@ const contactEmail = 'privacy@yiveno.com'
       <p>
         This Privacy Policy describes how <strong>Yiveno</strong> (“we”, “us”) handles information when you use
         the Yiveno Chrome extension, the website at yiveno.com, and related backend services (Cloudflare Workers).
-        Yiveno is a <strong>personal information recall</strong> product: Capture with low friction, Recall with high
-        confidence. It is not a bookmark manager, note-taking app, chat bot, or “AI organizer” as a primary promise.
+        Yiveno helps you <strong>find what you saved</strong>: Capture with low friction, then Recall into a short list
+        of closest matches — you choose. It is not a bookmark manager, note-taking app, chat bot, or “AI organizer” as a
+        primary promise.
       </p>
 
       <h2>2. What we collect</h2>
@@ -53,7 +54,12 @@ const contactEmail = 'privacy@yiveno.com'
         provider. We do not use the model as the system of record for create/read/update/delete of your Memory store.
         We do not default to sending your entire library to a model.
       </p>
-      <h3>2.5 What we do not collect by default</h3>
+      <h3>2.5 Waitlist (optional)</h3>
+      <p>
+        If you leave an email on yiveno.com to be notified when the extension is ready to install, we store that
+        email so we can send that notice. We do not add waitlist addresses to a marketing list.
+      </p>
+      <h3>2.6 What we do not collect by default</h3>
       <ul>
         <li>Your full browsing History</li>
         <li>Always-on clipboard reading</li>
@@ -67,12 +73,13 @@ const contactEmail = 'privacy@yiveno.com'
         <li>Authenticate you and optional cloud sync when you enable it</li>
         <li>Operate, secure, and debug the service (including Worker logs with limited previews where needed)</li>
         <li>Process subscriptions or payments if you purchase paid plans (billing records may be retained as required by law)</li>
+        <li>Email you if you joined the install waitlist, when a spot is available</li>
       </ul>
 
       <h2>4. Processors and subprocessors</h2>
       <p>Depending on features you use, data may be processed by:</p>
       <ul>
-        <li><strong>Supabase</strong> — authentication and (when sync is on) cloud Memory storage</li>
+        <li><strong>Supabase</strong> — authentication, (when sync is on) cloud Memory storage, and waitlist emails if you join</li>
         <li><strong>Cloudflare</strong> — Workers API, hosting, and related infrastructure</li>
         <li><strong>Google / Microsoft</strong> — if you choose their OAuth sign-in</li>
         <li><strong>Model providers</strong> — only when an AI feature you use is routed through our Worker</li>
@@ -87,6 +94,7 @@ const contactEmail = 'privacy@yiveno.com'
           To manage storage redundancy, we may periodically prune certain cloud-related data, such as sync backups and soft-deleted billing records.
           For example, sync backups keep only the most recent snapshots (currently up to 5 per account), and soft-deleted subscription/payment history is removed after 180 days.
         </li>
+        <li><strong>Waitlist emails</strong> are kept until we have notified you, you ask us to remove the address, or we no longer need the list.</li>
         <li><strong>Delete account</strong> (Settings → Privacy) removes cloud Memory and backups, closes the auth user, clears this account’s local Memory bucket on that device, and signs you out. Billing records may be retained in anonymized or legally required form and are not a recoverable login.</li>
       </ul>
 

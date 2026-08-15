@@ -22,12 +22,12 @@ export interface RecallDuplicateGroup {
 
 /**
  * Recall 结果形态。
- * - top_pick：高置信直给
+ * - top_pick：高置信头名作**建议**（须配邻域，非神谕唯一答案）
  * - need_a_clue：弱命中，需追问/补线索
  * - no_match：无可用命中
  */
 export type RecallOutcome =
-  | 'top_pick' // 高置信 Top Pick
+  | 'top_pick' // 高置信建议（Top Pick）
   | 'need_a_clue' // 弱命中，需补线索
   | 'no_match' // 无命中
 

@@ -1,0 +1,129 @@
+/**
+ * 官网共用壳：略偏橄榄绿的近白纸面 + 深墨门面 + 炭黑字。
+ * 暖意给签名绿与文字，不把整页浸成羊皮纸。
+ */
+:root {
+  --font-display: 'Archivo', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Atkinson Hyperlegible', ui-sans-serif, system-ui, sans-serif;
+  --paper: oklch(0.975 0.008 155);
+  --paper-2: oklch(0.955 0.012 155);
+  --ink: oklch(0.27 0.028 155);
+  --ink-2: oklch(0.32 0.03 155);
+  --charcoal: oklch(0.28 0.018 90);
+  --muted: oklch(0.42 0.02 155);
+  --line: oklch(0.88 0.015 155);
+  --sage: oklch(0.36 0.048 155);
+  --sage-hover: oklch(0.32 0.05 155);
+  --sage-on: oklch(0.98 0.006 155);
+  --hero-fg: oklch(0.96 0.01 155);
+  --hero-muted: oklch(0.82 0.02 155);
+  --danger: oklch(0.45 0.12 25);
+  --radius: 10px;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --nav-bg: var(--paper);
+  --nav-fg: var(--charcoal);
+  --nav-muted: var(--muted);
+  --nav-line: var(--line);
+  --z-nav: 20;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--paper);
+  color: var(--charcoal);
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+.site-nav__name {
+  font-family: var(--font-display);
+}
+
+body[data-chrome='home'] {
+  --nav-bg: var(--ink);
+  --nav-fg: var(--hero-fg);
+  --nav-muted: var(--hero-muted);
+  --nav-line: oklch(0.38 0.03 155);
+  background: var(--ink);
+  color: var(--hero-fg);
+}
+
+a {
+  color: inherit;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+.skip-link {
+  position: absolute;
+  left: 0.75rem;
+  top: 0.75rem;
+  z-index: 40;
+  padding: 0.4rem 0.7rem;
+  background: var(--sage);
+  color: var(--sage-on);
+  border-radius: 6px;
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: none;
+}
+
+.site-footer {
+  padding: 2rem 1.5rem 2.5rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--nav-muted);
+  border-top: 1px solid var(--nav-line);
+  background: var(--nav-bg);
+}
+
+.site-footer p {
+  margin: 0;
+}
+
+.site-footer a {
+  color: var(--nav-fg);
+  text-decoration: none;
+  margin-right: 1rem;
+}
+
+.site-footer a:hover,
+.site-footer a:focus-visible {
+  text-decoration: underline;
+}
+
+.site-footer a:focus-visible {
+  outline: 2px solid var(--sage-on);
+  outline-offset: 3px;
+}

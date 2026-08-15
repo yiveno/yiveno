@@ -3,8 +3,9 @@
 ## 项目
 
 - Yiveno：Vue 3 + TypeScript Chrome 扩展，Backend 为 Cloudflare Workers，Website 为营销站。
-- 唯一产品/架构真相：`docs/product/Yiveno-产品文档-v4.0.md`（先读 **§0.1 核心路线** + **§0.1.1 资产/边界/隐患** + §0 其余；附录 A 非规范）
+- 唯一产品/架构真相：`docs/product/Yiveno-产品文档-v4.0.md`（先读 **§0.1 核心路线** + **§0.1.1 资产/边界/隐患**（含「邻域非神谕」）+ §0 其余；附录 A 非规范）
 - Cursor 规则：`.cursor/rules/project.mdc`，不得冲突。
+- 对外心智：「那个找东西的」/ 仓库；找回 = 高置信**邻域**，Top1=建议；AI 能力核心不作宣传招牌。
 
 ## 架构硬规则
 
