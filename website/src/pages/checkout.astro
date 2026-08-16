@@ -4,6 +4,8 @@
  * 须含 Paddle.js；带 `_ptxn` 时自动打开对应 transaction checkout。
  */
 import MainLayout from '../layouts/MainLayout.astro'
+import AppNav from '../components/AppNav.astro'
+import '../styles/pages.css'
 
 const clientToken = (import.meta.env.PUBLIC_PADDLE_CLIENT_TOKEN || '').trim()
 const paddleEnvRaw = import.meta.env.PUBLIC_PADDLE_ENV
@@ -17,11 +19,8 @@ const websiteBase = (import.meta.env.PUBLIC_WEBSITE_URL || '').replace(/\/$/, ''
 const successUrl = `${websiteBase || 'http://localhost:3001'}/welcome`
 ---
 
-<MainLayout
-  noindex
-  title="Checkout · Yiveno"
-  description="Complete your Yiveno checkout."
->
+<MainLayout noindex title="Checkout · Yiveno" description="Complete your Yiveno checkout.">
+  <AppNav slot="nav" />
   <article class="page page--narrow">
     <h1 class="page__title">Checkout</h1>
     {

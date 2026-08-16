@@ -1,12 +1,11 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro'
+import AppNav from '../components/AppNav.astro'
 import LogoutPage from '../components/LogoutPage.vue'
+import '../styles/pages.css'
 ---
 
-<MainLayout
-  noindex
-  title="Sign out · Yiveno"
-  description="Sign out of Yiveno."
->
+<MainLayout noindex title="Sign out · Yiveno" description="Sign out of Yiveno.">
+  <AppNav slot="nav" />
   <LogoutPage client:load />
 </MainLayout>

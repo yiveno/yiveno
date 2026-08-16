@@ -1,12 +1,11 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro'
+import AppNav from '../components/AppNav.astro'
 import AccountPage from '../components/AccountPage.vue'
+import '../styles/pages.css'
 ---
 
-<MainLayout
-  noindex
-  title="Account · Yiveno"
-  description="Manage your Yiveno account."
->
+<MainLayout noindex title="Account · Yiveno" description="Manage your Yiveno account.">
+  <AppNav slot="nav" />
   <AccountPage client:load />
 </MainLayout>

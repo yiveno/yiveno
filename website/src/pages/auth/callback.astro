@@ -1,12 +1,11 @@
 ---
 import MainLayout from '../../layouts/MainLayout.astro'
+import AppNav from '../../components/AppNav.astro'
 import AuthCallback from '../../components/AuthCallback.vue'
+import '../../styles/pages.css'
 ---
 
-<MainLayout
-  noindex
-  title="Signing in · Yiveno"
-  description="Completing Yiveno sign-in."
->
+<MainLayout noindex title="Signing in · Yiveno" description="Completing Yiveno sign-in.">
+  <AppNav slot="nav" />
   <AuthCallback client:load />
 </MainLayout>

@@ -1,7 +1,11 @@
 ---
-import Nav from '../components/Nav.astro'
-import '../styles/site.css'
-import '../styles/pages.css'
+import YMark from '../components/home/YMark.astro'
+import MarketingNav from '../components/MarketingNav.astro'
+import fontsCriticalCssRaw from '../../public/fonts/fonts-critical.css?raw'
+import siteCriticalCssRaw from '../styles/site-critical.css?raw'
+import siteDeferredHref from '../styles/site-deferred.css?url'
+import homeCriticalCssRaw from '../styles/home-critical.css?raw'
+import { minifyCss } from '../lib/minify-css'
 
 interface Props {
   /** 页面标题（写入 document title） */
@@ -30,7 +34,12 @@ const pathname = Astro.url.pathname.replace(/\/$/, '') || '/'
 const canonicalUrl = `${canonicalOrigin}${pathname === '/' ? '/' : pathname}`
 const ogImage = `${canonicalOrigin}/og-image.png`
 
-/** GEO：可引用的产品实体定义（与产品文档 §0.1 对外心智对齐） */
+/** 仅内联首屏所需 CSS；site/home deferred 异步加载（可长缓存） */
+const fontsCriticalCss = minifyCss(fontsCriticalCssRaw)
+const siteCriticalCss = minifyCss(siteCriticalCssRaw)
+const homeCriticalCss = chrome === 'home' ? minifyCss(homeCriticalCssRaw) : ''
+
+/** GEO：可引用的产品实体定义（与产品文档 §0.1 对外心智对齐；预约阶段无在售 Offer） */
 const softwareJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'SoftwareApplication',
@@ -39,12 +48,13 @@ const softwareJsonLd = {
   operatingSystem: 'Chrome',
   url: canonicalOrigin,
   description:
-    'Yiveno is the thing that finds what you saved. Say what you remember — it brings back the closest matches from your own captures, and you pick. Not a bookmark manager, note organizer, or chatbot.',
+    'Find what you saved from what you remember. Closest matches from your captures — you pick. In active development; join the waitlist for first access.',
   offers: {
     '@type': 'Offer',
+    availability: 'https://schema.org/PreOrder',
     price: '0',
     priceCurrency: 'EUR',
-    description: 'Free tier at launch; Pro for sync and higher quotas (details confirmed at launch).'
+    description: 'Waitlist for early access; Free/Pro details at launch.'
   }
 }
 ---
@@ -84,29 +94,55 @@ const softwareJsonLd = {
         <script type="application/ld+json" set:html={JSON.stringify(softwareJsonLd)} />
       )
     }
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400;1,9..144,500&family=Work+Sans:wght@300;400;500;600&display=swap"
+      rel="preload"
+      href="/fonts/fraunces-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
     />
+    <link
+      rel="preload"
+      href="/fonts/worksans-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <style set:html={fontsCriticalCss} />
+    <style set:html={siteCriticalCss} />
+    {homeCriticalCss && <style set:html={homeCriticalCss} />}
+    <link
+      rel="preload"
+      href={siteDeferredHref}
+      as="style"
+      onload="this.onload=null;this.rel='stylesheet'"
+    />
+    <noscript>
+      <link rel="stylesheet" href={siteDeferredHref} />
+    </noscript>
+    <link
+      rel="preload"
+      href="/fonts/fonts-rest.css"
+      as="style"
+      onload="this.onload=null;this.rel='stylesheet'"
+    />
+    <noscript>
+      <link rel="stylesheet" href="/fonts/fonts-rest.css" />
+    </noscript>
+    <slot name="head" />
   </head>
   <body data-chrome={chrome} data-nav-over-hero={waitlistNav ? 'true' : undefined}>
     <a class="skip-link" href="#main">Skip to content</a>
-    <Nav waitlist={waitlistNav} />
+    {/* 默认营销 Nav；账号域页面用 slot="nav" 注入 AppNav，避免首页打进 AuthNav CSS */}
+    <slot name="nav">
+      <MarketingNav waitlist={waitlistNav} />
+    </slot>
     <main id="main">
       <slot />
     </main>
     <footer class="site-footer">
       <a class="site-footer__brand" href="/">
-        <img
-          class="site-footer__logo"
-          src="/images/logo-mark.svg"
-          alt=""
-          width="16"
-          height="16"
-          decoding="async"
-        />
+        <YMark class="site-footer__logo" size={16} />
         <span class="site-footer__name">Yiveno</span>
         <span class="site-footer__meta">· © 2026</span>
       </a>

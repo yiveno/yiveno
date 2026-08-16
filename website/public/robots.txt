@@ -1,13 +1,14 @@
-# Yiveno marketing site — waitlist phase
+# Yiveno marketing site — waitlist / pre-launch
 User-agent: *
 Allow: /
 
-# Auth / billing surfaces — not for discovery
+# Auth / billing / pre-launch commerce — not for discovery
 Disallow: /login
 Disallow: /logout
 Disallow: /account
 Disallow: /checkout
 Disallow: /welcome
+Disallow: /pricing
 Disallow: /auth/
 
 Sitemap: https://yiveno.com/sitemap.xml

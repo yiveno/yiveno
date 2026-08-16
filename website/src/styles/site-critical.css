@@ -1,0 +1,245 @@
+/**
+ * 官网首屏关键壳：Brand tokens + reset + Nav。
+ * Footer 见 site-deferred.css（异步）。
+ * 权威：docs/design/Yiveno-设计标准-v1.md
+ */
+:root {
+  --font-display: 'Fraunces', 'Fraunces Fallback', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Work Sans', 'Work Sans Fallback', system-ui, sans-serif;
+  --font-body: var(--font-sans);
+
+  /* ── Brand Core（锁定） ── */
+  --ink: #192420;
+  --ink-mid: #1e2c26;
+  --paper: #f0f3ee;
+  --paper-2: #e8ece5;
+  --paper-dim: #e8ece5;
+  --charcoal: #222c24;
+  --muted: #586860;
+  --line: #ced8cb;
+  --border: #ced8cb;
+  --sage: #4b6054;
+  --sage-dark: #3a4e44;
+  --sage-hover: #3a4e44;
+  --sage-muted: #82998c;
+  --sage-faint: #c6d6ca;
+  --sage-on: #d8ede2;
+  --hero-fg: #dce8de;
+  --hero-muted: rgba(176, 202, 184, 0.6);
+  --danger: #a05a3c;
+
+  /* ── Product Roles（试验场：语义别名，外推前先在此验证） ── */
+  --surface: var(--paper);
+  --surface-2: var(--paper-dim);
+  --surface-ink: var(--ink);
+  --on-surface: var(--charcoal);
+  --on-surface-muted: var(--muted);
+  --on-ink: var(--hero-fg);
+  --on-ink-muted: var(--hero-muted);
+  --accent: var(--sage);
+  --accent-hover: var(--sage-dark);
+  --on-accent: var(--sage-on);
+  --focus-ring: color-mix(in srgb, var(--sage) 45%, transparent);
+  --disabled-opacity: 0.55;
+
+  --radius: 10px;
+  --radius-sm: 8px;
+  --radius-lg: 12px;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --max: 1120px;
+  --pad-x: clamp(28px, 6.5vw, 104px);
+  --sec-y: clamp(88px, 11vw, 128px);
+
+  --nav-bg: var(--surface);
+  --nav-fg: var(--on-surface);
+  --nav-brand: var(--on-surface);
+  --nav-muted: var(--on-surface-muted);
+  --nav-line: var(--border);
+  --z-nav: 60;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  margin: 0;
+  height: 100%;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+body {
+  margin: 0;
+  min-height: 100%;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-sans);
+  background: var(--surface);
+  color: var(--on-surface);
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 短页：主区吃掉余高，footer 贴视口底 */
+#main {
+  flex: 1 0 auto;
+}
+
+/* 占位防 async footer 样式到达时撑高 → CLS（短页 footer 在视口内） */
+.site-footer {
+  flex-shrink: 0;
+  min-height: 72px;
+}
+
+h1,
+h2,
+h3,
+.site-nav__name {
+  font-family: var(--font-display);
+  font-weight: 400;
+}
+
+::selection {
+  background: var(--sage);
+  color: var(--paper);
+}
+
+/* 首页：纸面底；Nav 悬于 Hero 时仅改文字色 */
+body[data-chrome='home'] {
+  --nav-bg: transparent;
+  --nav-brand: rgba(220, 234, 224, 0.95);
+  --nav-fg: rgba(200, 218, 206, 0.9);
+  --nav-muted: rgba(200, 218, 206, 0.4);
+  --nav-line: transparent;
+  background: var(--paper);
+  color: var(--charcoal);
+}
+
+body[data-chrome='home'][data-nav-over-hero='false'] {
+  --nav-bg: transparent;
+  --nav-brand: var(--charcoal);
+  --nav-fg: rgba(34, 44, 36, 0.9);
+  --nav-muted: rgba(34, 44, 36, 0.45);
+  --nav-line: transparent;
+}
+
+a {
+  color: inherit;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+.skip-link {
+  position: absolute;
+  left: 0.75rem;
+  top: 0.75rem;
+  z-index: 80;
+  padding: 0.4rem 0.7rem;
+  background: var(--sage);
+  color: var(--sage-on);
+  border-radius: 6px;
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: none;
+}
+
+/* ── Nav ── */
+.site-nav {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: var(--z-nav);
+  display: flex;
+  align-items: center;
+  gap: clamp(1rem, 2.8vw, 2.1rem);
+  height: 60px;
+  padding: 0 var(--pad-x);
+  background: var(--nav-bg);
+  color: var(--nav-fg);
+  border-bottom: 1px solid var(--nav-line);
+  transition: color 0.3s ease;
+}
+
+.site-nav--waitlist {
+  background: transparent;
+  border-bottom-color: transparent;
+  backdrop-filter: none;
+}
+
+.site-nav__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  text-decoration: none;
+  color: var(--nav-brand, inherit);
+}
+
+.site-nav__logo {
+  display: block;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.site-nav__name {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 17px;
+  letter-spacing: -0.025em;
+  line-height: 1;
+  color: var(--nav-brand, inherit);
+  transition: color 0.3s;
+}
+
+.site-nav__spacer {
+  flex: 1;
+}
+
+.site-nav__link {
+  text-decoration: none;
+  color: var(--nav-muted);
+  font-size: 13.5px;
+  font-weight: 400;
+  letter-spacing: 0.005em;
+  transition: color 0.18s ease;
+}
+
+.site-nav__link:hover,
+.site-nav__link:focus-visible {
+  color: var(--nav-fg);
+}
+
+.site-nav__link:focus-visible,
+.site-nav__brand:focus-visible {
+  outline: 2px solid var(--sage);
+  outline-offset: 3px;
+}
+
+body[data-chrome='home'][data-nav-over-hero='true'] .site-nav__link:focus-visible,
+body[data-chrome='home'][data-nav-over-hero='true'] .site-nav__brand:focus-visible {
+  outline-color: var(--sage-on);
+}

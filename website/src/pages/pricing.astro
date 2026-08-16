@@ -1,7 +1,9 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro'
+import AppNav from '../components/AppNav.astro'
 import PricingPage from '../components/PricingPage.vue'
 import { resolveVisitorCountry } from '../utils/request-country'
+import '../styles/pages.css'
 
 const countryCode = resolveVisitorCountry(Astro.request.headers)
 ---
@@ -10,11 +12,12 @@ const countryCode = resolveVisitorCountry(Astro.request.headers)
   title="Pricing · Yiveno"
   description="Yiveno Free vs Pro: same on-device recall quality; Pro adds cloud sync and a larger hosted clue-understanding quota."
 >
+  <AppNav slot="nav" />
   {
     countryCode ? (
-      <PricingPage client:load countryCode={countryCode} />
+      <PricingPage client:visible countryCode={countryCode} />
     ) : (
-      <PricingPage client:load />
+      <PricingPage client:visible />
     )
   }
 </MainLayout>

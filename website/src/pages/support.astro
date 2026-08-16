@@ -1,54 +1,46 @@
 ---
 /**
- * 极简 Support / Contact：产品问题走邮箱；计费取消走 Portal；退款走 Paddle Buyer Support。
+ * 预约阶段 Support：产品未公开发售；邮箱为主，不引导计费/账号自助。
  * 不做工单系统。
  */
 import MainLayout from '../layouts/MainLayout.astro'
+import '../styles/pages.css'
 
 const supportEmail = 'support@yiveno.com'
 const privacyEmail = 'privacy@yiveno.com'
-const paddleBuyerSupport = 'https://paddle.net'
 ---
 
 <MainLayout
   title="Support · Yiveno"
-  description="Get help with Yiveno: product support, billing, cancellation, and refunds."
+  description="Yiveno is in active development. Questions about the waitlist or the product — email us."
 >
   <article class="page">
     <header>
       <h1 class="page__title">Support</h1>
       <p class="page__lede">
         Yiveno is the Chrome extension that finds what you saved — closest matches from your own
-        captures, you pick. Tell us what you need below. Billing cancellations and card updates are
-        self-serve; refunds go through Paddle; product issues reach us by email.
+        captures, you pick. The product isn't publicly available yet; we're building it and taking
+        waitlist signups. Questions below go to email.
       </p>
     </header>
 
     <section class="page__section">
-      <h2>Billing &amp; subscription</h2>
-      <ul>
-        <li>
-          <strong>Cancel, change payment method, or view invoices</strong> — sign in and open
-          <a href="/account">Account</a> → <em>Manage subscription</em> (Paddle Customer Portal).
-        </li>
-        <li>
-          <strong>Request a refund</strong> — Paddle is the merchant of record. Use
-          <a href={paddleBuyerSupport} target="_blank" rel="noopener noreferrer">Paddle Buyer Support</a>
-          or the receipt email from your purchase. Canceling a subscription stops future renewals; it
-          does not automatically refund the current period.
-        </li>
-      </ul>
+      <h2>Waitlist</h2>
+      <p>
+        Joined the list on the homepage and need to change or remove your email? Write
+        <a href={`mailto:${supportEmail}?subject=Yiveno%20waitlist`}>{supportEmail}</a>
+        with the subject "Waitlist".
+      </p>
     </section>
 
     <section class="page__section">
-      <h2>Product &amp; account</h2>
+      <h2>Product</h2>
       <p>
-        Extension, sync, sign-in, or other product questions:
+        Questions about what Yiveno is (or isn't), privacy, or the roadmap:
         <a href={`mailto:${supportEmail}?subject=Yiveno%20support`}>{supportEmail}</a>
       </p>
       <p class="page__hint">
-        Include your account email and a short description. We do not run a ticket portal yet — email
-        is enough.
+        We don't run a ticket portal — email is enough. Include context so we can reply once.
       </p>
     </section>
 
@@ -59,16 +51,6 @@ const paddleBuyerSupport = 'https://paddle.net'
         <a href={`mailto:${privacyEmail}`}>{privacyEmail}</a>
         ·
         <a href="/privacy">Privacy Policy</a>
-      </p>
-    </section>
-
-    <section class="page__section">
-      <h2>Complaints</h2>
-      <p>
-        If something went wrong and you want it escalated, email
-        <a href={`mailto:${supportEmail}?subject=Yiveno%20complaint`}>{supportEmail}</a>
-        with the subject line "Complaint", your account email, and what happened. For payment disputes
-        you may also contact Paddle directly.
       </p>
     </section>
   </article>

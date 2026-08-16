@@ -1,0 +1,24 @@
+---
+/**
+ * 账号域 Nav：含 AuthNav（Vue + Supabase session）。
+ */
+import AuthNav from './AuthNav.vue'
+import YMark from './home/YMark.astro'
+
+interface Props {
+  waitlist?: boolean
+}
+
+const { waitlist = false } = Astro.props
+---
+
+<nav class="site-nav" class:list={[{ 'site-nav--waitlist': waitlist }]} aria-label="Primary">
+  <a href="/" class="site-nav__brand">
+    <YMark class="site-nav__logo" size={22} />
+    <span class="site-nav__name">Yiveno</span>
+  </a>
+  <div class="site-nav__spacer"></div>
+  {/* Pricing：上线前先隐藏入口；路由仍保留 */}
+  <a href="/support" class="site-nav__link">Support</a>
+  <AuthNav client:idle />
+</nav>

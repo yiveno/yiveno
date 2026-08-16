@@ -1,10 +1,10 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro'
-import WaitlistForm from '../components/WaitlistForm.vue'
+import WaitlistForm from '../components/WaitlistForm.astro'
 import RecallPopup from '../components/home/RecallPopup.astro'
 import ClosestStrip from '../components/home/ClosestStrip.astro'
 import YMark from '../components/home/YMark.astro'
-import '../styles/home.css'
+import homeDeferredHref from '../styles/home-deferred.css?url'
 
 const contentTypes = [
   { label: 'articles', size: 18, op: 0.85 },
@@ -91,8 +91,19 @@ const proofSteps = [
   chrome="home"
   jsonLd
   title="Yiveno — Find what you saved"
-  description="Find the stuff you saved. You don't need the title. Say what you remember — Yiveno brings back the closest matches, and you pick."
+  description="Yiveno finds what you saved from what you remember. In active development — join the waitlist to be notified first when it's ready to try."
 >
+  <Fragment slot="head">
+    <link
+      rel="preload"
+      href={homeDeferredHref}
+      as="style"
+      onload="this.onload=null;this.rel='stylesheet'"
+    />
+    <noscript>
+      <link rel="stylesheet" href={homeDeferredHref} />
+    </noscript>
+  </Fragment>
   <!-- Hero -->
   <section id="hero" class="hero">
     <div class="hero__glow" aria-hidden="true"></div>
@@ -100,10 +111,10 @@ const proofSteps = [
       <div class="hero__copy">
         <h1 class="hero__title">Find what<br />you saved.</h1>
         <p class="hero__sub">
-          You don't need the title. Say what you remember. Yiveno brings back the closest matches —
-          you pick.
+          You don't need the title. Say what you remember — closest matches, you pick. We're
+          building it; the waitlist gets first access.
         </p>
-        <WaitlistForm client:load tone="dark" />
+        <WaitlistForm tone="dark" />
       </div>
       <div class="hero__proof">
         <RecallPopup />
@@ -391,13 +402,15 @@ const proofSteps = [
     <div class="final__inner">
       <div class="reveal">
         <h2>
-          Save it now.<br />
-          <em class="home-kicker-em">Find it when you need it.</em>
+          Be first<br />
+          <em class="home-kicker-em">when it's ready.</em>
         </h2>
-        <p class="final__lede">Your saved things shouldn't disappear into a folder.</p>
+        <p class="final__lede">
+          Positioning is set. We're building the Chrome extension — waitlist gets the first invite.
+        </p>
       </div>
       <div class="reveal d1">
-        <WaitlistForm client:load tone="dark" centered />
+        <WaitlistForm tone="dark" centered />
       </div>
     </div>
   </section>
@@ -434,4 +447,81 @@ const proofSteps = [
   } else {
     nodes.forEach((el) => el.classList.add('in', 'is-in'))
   }
+
+  // Waitlist：原生表单，无 Vue
+  function isValidEmail(value) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) && value.length <= 254
+  }
+
+  function bindWaitlist(root) {
+    const form = root.querySelector('[data-waitlist-form]')
+    const emailInput = root.querySelector('[data-waitlist-email]')
+    const companyInput = root.querySelector('[data-waitlist-company]')
+    const submitBtn = root.querySelector('[data-waitlist-submit]')
+    const errEl = root.querySelector('[data-waitlist-err]')
+    const okEl = root.querySelector('[data-waitlist-ok]')
+    const formWrap = root.querySelector('[data-waitlist-form-wrap]')
+    const apiBase = (root.dataset.apiBase || 'https://api.yiveno.com').replace(/\/$/, '')
+    if (!form || !emailInput || !submitBtn || !errEl || !okEl || !formWrap) return
+
+    const clearError = () => {
+      errEl.hidden = true
+      errEl.textContent = ''
+      emailInput.classList.remove('waitlist__input--error')
+    }
+
+    emailInput.addEventListener('input', clearError)
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault()
+      clearError()
+      const trimmed = emailInput.value.trim()
+      if (!isValidEmail(trimmed)) {
+        errEl.hidden = false
+        errEl.textContent = 'Enter a valid email so we can reach you.'
+        emailInput.classList.add('waitlist__input--error')
+        return
+      }
+
+      submitBtn.disabled = true
+      submitBtn.textContent = '···'
+      emailInput.disabled = true
+      try {
+        const response = await fetch(`${apiBase}/api/website/waitlist`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            email: trimmed,
+            company: companyInput?.value ?? ''
+          })
+        })
+        if (response.status === 429) {
+          errEl.hidden = false
+          errEl.textContent = 'Too many tries from here. Please try again tomorrow.'
+          emailInput.classList.add('waitlist__input--error')
+          return
+        }
+        if (!response.ok) {
+          errEl.hidden = false
+          errEl.textContent = 'Something went wrong. Try again.'
+          emailInput.classList.add('waitlist__input--error')
+          return
+        }
+        formWrap.hidden = true
+        okEl.hidden = false
+      } catch {
+        errEl.hidden = false
+        errEl.textContent = 'Something went wrong. Try again.'
+        emailInput.classList.add('waitlist__input--error')
+      } finally {
+        if (okEl.hidden) {
+          submitBtn.disabled = false
+          submitBtn.textContent = 'Notify me'
+          emailInput.disabled = false
+        }
+      }
+    })
+  }
+
+  document.querySelectorAll('[data-waitlist]').forEach(bindWaitlist)
 </script>

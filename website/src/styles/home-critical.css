@@ -1,0 +1,465 @@
+/* 首页首屏关键样式（reveal 在 home-deferred） */
+/* ── Hero ── */
+.hero {
+  position: relative;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  padding: 80px var(--pad-x);
+  background: var(--ink);
+  color: var(--hero-fg);
+  overflow: hidden;
+}
+
+.hero__glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 65% 45% at 30% 120%,
+    rgba(55, 75, 65, 0.22) 0%,
+    transparent 65%
+  );
+}
+
+.hero__layout {
+  position: relative;
+  width: 100%;
+  max-width: var(--max);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(48px, 6vw, 80px);
+  align-items: center;
+}
+
+.hero__title {
+  margin: 0 0 clamp(18px, 2.5vh, 26px);
+  font-size: clamp(52px, 7.5vw, 88px);
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: -0.038em;
+  color: #dce8de;
+}
+
+.hero__sub {
+  margin: 0 0 clamp(32px, 4.5vh, 48px);
+  max-width: 440px;
+  font-size: clamp(15px, 1.7vw, 18px);
+  font-weight: 300;
+  line-height: 1.7;
+  color: var(--hero-muted);
+}
+
+.hero__proof {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ── Recall popup mock ── */
+.recall-popup {
+  width: 100%;
+  max-width: 480px;
+  background: #f5f8f3;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow:
+    0 1px 2px rgba(25, 36, 32, 0.07),
+    0 4px 16px rgba(25, 36, 32, 0.08),
+    0 16px 48px rgba(25, 36, 32, 0.06);
+  color: var(--charcoal);
+}
+
+.recall-popup__chrome {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 13px;
+  background: #eaede8;
+  border-bottom: 1px solid var(--border);
+  user-select: none;
+}
+
+.recall-popup__dots {
+  display: flex;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.recall-popup__dots span {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(34, 44, 36, 0.14);
+}
+
+.recall-popup__brand {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 12.5px;
+  letter-spacing: -0.015em;
+  color: #334038;
+}
+
+.recall-popup__brand img {
+  width: 17px;
+  height: 17px;
+  opacity: 0.85;
+}
+
+.recall-popup__body {
+  padding: 14px 14px 10px;
+}
+
+.recall-popup__prompt {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sage-muted);
+}
+
+.recall-popup__query {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px 10px 14px;
+  background: #fff;
+  border: 1.5px solid #c4cfbf;
+  border-radius: 8px;
+}
+
+.recall-popup__query-text {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-style: italic;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+  color: #3e5244;
+  line-height: 1.3;
+}
+
+.recall-popup__cursor {
+  display: inline-block;
+  width: 1.5px;
+  height: 0.85em;
+  margin-left: 1px;
+  vertical-align: text-bottom;
+  background: var(--sage-muted);
+  animation: home-blink 1.15s ease-in-out infinite;
+}
+
+@keyframes home-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  48%,
+  52% {
+    opacity: 0;
+  }
+}
+
+.recall-popup__return {
+  flex-shrink: 0;
+  color: var(--sage);
+  opacity: 0.35;
+}
+
+.recall-popup__rule {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 14px 9px;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  color: var(--sage-muted);
+  white-space: nowrap;
+}
+
+.recall-popup__rule::before,
+.recall-popup__rule::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.recall-popup__list {
+  margin: 0;
+  padding: 0 9px 11px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.recall-popup__item {
+  margin: 0;
+  padding: 9px 13px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  animation: home-result-in 0.38s ease both;
+}
+
+.recall-popup__item:nth-child(1) {
+  animation-delay: 120ms;
+}
+
+.recall-popup__item:nth-child(2) {
+  animation-delay: 200ms;
+}
+
+.recall-popup__item:nth-child(3) {
+  animation-delay: 280ms;
+}
+
+.recall-popup__item--closest {
+  padding: 13px;
+  border-color: #bfcfc3;
+  background: #e2ece5;
+}
+
+.recall-popup__badge {
+  display: inline-flex;
+  margin: 0 0 7px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--sage);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #c5dece;
+}
+
+.recall-popup__title {
+  margin: 0 0 4px;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: 13px;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  color: #4a5c4e;
+}
+
+.recall-popup__item--closest .recall-popup__title {
+  font-weight: 400;
+  font-size: 14.5px;
+  color: var(--ink);
+}
+
+.recall-popup__meta {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 300;
+  letter-spacing: 0.01em;
+  color: var(--sage-muted);
+}
+
+.recall-popup__item--closest .recall-popup__meta {
+  color: #5a7465;
+}
+
+.recall-popup__note {
+  margin: 6px 0 0;
+  padding-top: 6px;
+  border-top: 1px solid rgba(140, 185, 160, 0.22);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 300;
+  font-size: 11.5px;
+  color: #6a8a75;
+  letter-spacing: -0.005em;
+  line-height: 1.4;
+}
+
+.recall-popup__item:hover {
+  background: #edf1eb;
+}
+
+.recall-popup__item--closest:hover {
+  background: #d9e8dd;
+  border-color: #b2c9ba;
+}
+
+@keyframes home-result-in {
+  from {
+    transform: translateY(8px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* ── Waitlist（原 Vue scoped，迁入首页 CSS 以免拉 Vue） ── */
+.waitlist {
+  width: 100%;
+  max-width: 440px;
+}
+
+.waitlist__form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.waitlist__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.waitlist__input {
+  flex: 1 1 180px;
+  height: 50px;
+  padding: 0 18px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: var(--radius, 10px);
+  background: rgba(255, 255, 255, 0.07);
+  color: #dce8de;
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.waitlist__input::placeholder {
+  color: rgba(176, 202, 184, 0.45);
+  opacity: 1;
+}
+
+.waitlist__input:focus-visible {
+  border-color: rgba(130, 165, 145, 0.5);
+  box-shadow: 0 0 0 3px rgba(75, 96, 84, 0.18);
+}
+
+.waitlist__input--error {
+  border-color: rgba(188, 120, 90, 0.55);
+}
+
+.waitlist__input--error:focus-visible {
+  border-color: rgba(188, 120, 90, 0.55);
+  box-shadow: 0 0 0 3px rgba(188, 120, 90, 0.12);
+}
+
+.waitlist__submit {
+  flex: 0 0 auto;
+  height: 50px;
+  padding: 0 26px;
+  border: 0;
+  border-radius: var(--radius, 10px);
+  background: var(--sage);
+  color: var(--sage-on);
+  font: inherit;
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: 0.015em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 0.18s,
+    opacity 0.18s;
+}
+
+.waitlist__submit:hover,
+.waitlist__submit:focus-visible {
+  background: var(--sage-dark);
+}
+
+.waitlist__submit:focus-visible {
+  outline: 2px solid var(--sage-on);
+  outline-offset: 2px;
+}
+
+.waitlist__submit:disabled {
+  opacity: 0.7;
+  cursor: wait;
+  background: var(--sage-dark);
+}
+
+.waitlist__hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.waitlist__ok,
+.waitlist__err,
+.waitlist__note {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.waitlist__ok {
+  font-size: 15px;
+  font-weight: 300;
+  color: rgba(148, 188, 165, 0.82);
+}
+
+.waitlist__err {
+  margin-top: 8px;
+  font-size: 12.5px;
+  font-weight: 300;
+  color: rgba(210, 155, 120, 0.82);
+}
+
+.waitlist__note {
+  margin-top: 12px;
+  font-size: 11.5px;
+  font-weight: 300;
+  color: rgba(120, 152, 135, 0.52);
+  line-height: 1.6;
+}
+
+.waitlist__err:not([hidden]) + .waitlist__note {
+  margin-top: 6px;
+}
+
+.waitlist__note a {
+  color: rgba(120, 152, 135, 0.7);
+  text-decoration: underline;
+  text-decoration-color: rgba(120, 152, 135, 0.28);
+  text-underline-offset: 2px;
+}
+
+/* 首屏响应式必须在 critical，否则 deferred CSS 到达时会改 Hero 布局 → CLS */
+@media (max-width: 900px) {
+  .hero__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .hero__proof {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+  .waitlist__form {
+    flex-direction: column;
+  }
+
+  .waitlist__input,
+  .waitlist__submit {
+    width: 100%;
+    flex: none;
+  }
+
+  .hero {
+    padding-top: 72px;
+    padding-bottom: 48px;
+  }
+}
