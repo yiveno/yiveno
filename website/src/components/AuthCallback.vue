@@ -169,5 +169,5 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div style="text-align: center; padding: 4rem">{{ status }}</div>
+  <p class="ui-status">{{ status }}</p>
 </template>

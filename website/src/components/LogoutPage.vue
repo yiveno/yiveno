@@ -13,28 +13,20 @@ onMounted(async () => {
   } catch (error) {
     console.warn('[LogoutPage] signOut failed', error)
   }
-  // 扩展触发的后台退出：尽量关页；否则回首页（已登出）
+  // 扩展触发的后台退出：尽量关页；否则进登录页
   const fromExtension = new URLSearchParams(window.location.search).get('from_extension') === '1'
   if (fromExtension) {
     status.value = 'Signed out'
     window.setTimeout(() => {
       window.close()
-      window.location.replace('/')
+      window.location.replace('/login')
     }, 200)
     return
   }
-  window.location.replace('/')
+  window.location.replace('/login')
 })
 </script>
 
 <template>
-  <div class="logout-page">{{ status }}</div>
+  <p class="ui-status">{{ status }}</p>
 </template>
-
-<style scoped>
-.logout-page {
-  text-align: center;
-  padding: 4rem 1rem;
-  color: #666;
-}
-</style>

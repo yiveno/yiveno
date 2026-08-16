@@ -12,13 +12,13 @@ const contactEmail = 'privacy@yiveno.com'
   title="Terms of Service · Yiveno"
   description="Terms of Service for the Yiveno Chrome extension and website."
 >
-  <article class="policy">
-    <header class="policy__header">
-      <h1>Terms of Service</h1>
-      <p class="policy__meta">Effective date: {effectiveDate}</p>
+  <article class="page">
+    <header>
+      <h1 class="page__title">Terms of Service</h1>
+      <p class="page__meta">Effective date: {effectiveDate}</p>
     </header>
 
-    <section class="policy__section" lang="en">
+    <section class="page__prose" lang="en">
       <h2>1. Agreement</h2>
       <p>
         By using Yiveno (the Chrome extension, website, and related services), you agree to these Terms and our
@@ -85,66 +85,9 @@ const contactEmail = 'privacy@yiveno.com'
         (<a href="mailto:support@yiveno.com">support@yiveno.com</a>). Privacy:
         <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.
       </p>
-      <p class="policy__note">
+      <p class="page__note">
         This page is not legal advice. It reflects how Yiveno is offered today.
       </p>
     </section>
   </article>
 </MainLayout>
-
-<style>
-  .policy {
-    max-width: 720px;
-    margin: 0 auto;
-    padding: 2.5rem 1.5rem 4rem;
-    line-height: 1.65;
-    color: #222;
-  }
-
-  .policy__header {
-    margin-bottom: 2rem;
-  }
-
-  .policy__header h1 {
-    margin: 0 0 0.5rem;
-    font-size: 2rem;
-    line-height: 1.2;
-  }
-
-  .policy__meta {
-    margin: 0;
-    color: #666;
-    font-size: 0.9rem;
-  }
-
-  .policy__section h2,
-  .policy__section h3 {
-    margin-top: 1.75rem;
-    margin-bottom: 0.5rem;
-    font-size: 1.15rem;
-  }
-
-  .policy__section p,
-  .policy__section ul {
-    margin: 0.5rem 0 0;
-    color: #333;
-  }
-
-  .policy__section ul {
-    padding-left: 1.25rem;
-  }
-
-  .policy__section li {
-    margin: 0.25rem 0;
-  }
-
-  .policy__section a {
-    color: #333;
-  }
-
-  .policy__note {
-    margin-top: 1.25rem;
-    font-size: 0.875rem;
-    color: #666;
-  }
-</style>

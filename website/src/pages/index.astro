@@ -85,19 +85,6 @@ const proofSteps = [
   }
 ]
 
-const freeFeatures = [
-  'Capture & recall on your machine',
-  'Natural-language closest matches',
-  'Chrome extension',
-  'Available at launch'
-]
-
-const proFeatures = [
-  'Sync across devices',
-  'Higher cloud & LLM allowance',
-  'Everything in Free',
-  'Details confirmed at launch'
-]
 ---
 
 <MainLayout
@@ -359,75 +346,6 @@ const proFeatures = [
       <ul class="privacy-list reveal d1">
         {trustPoints.map((p) => <li>{p}</li>)}
       </ul>
-    </div>
-  </section>
-
-  <!-- Pricing -->
-  <section id="pricing" class="home-sec home-sec--paper">
-    <div class="home-wrap">
-      <div class="pricing__intro reveal">
-        <h2>Simple. Honest.</h2>
-        <p>
-          Local finding quality is not paywalled. Pro is for sync, higher quotas, and extras.
-          Pricing confirmed at launch.
-        </p>
-      </div>
-      <div class="pricing-grid">
-        <article class="price-card reveal">
-          <p class="price-card__tier">Free</p>
-          <div class="price-card__price">
-            <span class="price-card__amount">€0</span>
-            <span class="price-card__period">free forever</span>
-          </div>
-          <p class="price-card__desc">Capture and recall on your machine.</p>
-          <ul class="price-card__features">
-            {
-              freeFeatures.map((f) => (
-                <li>
-                  <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
-                    <path
-                      d="M2 6.5L5 9.5L11 3.5"
-                      stroke="currentColor"
-                      stroke-width="1.4"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                  </svg>
-                  {f}
-                </li>
-              ))
-            }
-          </ul>
-          <a class="price-card__cta" href="#notify">Get launch access</a>
-        </article>
-        <article class="price-card price-card--pro reveal d1">
-          <p class="price-card__tier">Pro</p>
-          <div class="price-card__price">
-            <span class="price-card__amount">€8</span>
-            <span class="price-card__period">/ month</span>
-          </div>
-          <p class="price-card__desc">For a richer, growing collection.</p>
-          <ul class="price-card__features">
-            {
-              proFeatures.map((f) => (
-                <li>
-                  <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
-                    <path
-                      d="M2 6.5L5 9.5L11 3.5"
-                      stroke="currentColor"
-                      stroke-width="1.4"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                  </svg>
-                  {f}
-                </li>
-              ))
-            }
-          </ul>
-          <a class="price-card__cta" href="#notify">Get launch access</a>
-        </article>
-      </div>
     </div>
   </section>
 

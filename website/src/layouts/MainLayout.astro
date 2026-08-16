@@ -1,14 +1,14 @@
 ---
 import Nav from '../components/Nav.astro'
-import YMark from '../components/home/YMark.astro'
 import '../styles/site.css'
+import '../styles/pages.css'
 
 interface Props {
   /** 页面标题（写入 document title） */
   title?: string
   /** meta description */
   description?: string
-  /** home：waitlist 门面；默认浅纸面内页 */
+  /** home：深色 Hero 上门面配色；链接与内页相同 */
   chrome?: 'default' | 'home'
   /** 账号/结账等非公开页：禁止索引 */
   noindex?: boolean
@@ -99,22 +99,14 @@ const softwareJsonLd = {
     </main>
     <footer class="site-footer">
       <a class="site-footer__brand" href="/">
-        {
-          waitlistNav ? (
-            <span class="site-footer__ymark">
-              <YMark size={16} />
-            </span>
-          ) : (
-            <img
-              class="site-footer__logo"
-              src="/images/logo-mark.svg"
-              alt=""
-              width="16"
-              height="16"
-              decoding="async"
-            />
-          )
-        }
+        <img
+          class="site-footer__logo"
+          src="/images/logo-mark.svg"
+          alt=""
+          width="16"
+          height="16"
+          decoding="async"
+        />
         <span class="site-footer__name">Yiveno</span>
         <span class="site-footer__meta">· © 2026</span>
       </a>

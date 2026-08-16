@@ -10,59 +10,16 @@ import MainLayout from '../layouts/MainLayout.astro'
   title="Welcome · Yiveno"
   description="Thanks for subscribing to Yiveno."
 >
-  <article class="welcome">
-    <h1>Welcome</h1>
-    <p>
+  <article class="page page--narrow">
+    <h1 class="page__title">Welcome</h1>
+    <p class="page__lede">
       Thanks for subscribing. Your Pro access usually activates within a few seconds after Paddle
       confirms payment — open the extension Settings or your
       <a href="/account">account</a> to refresh.
     </p>
-    <p class="actions">
-      <a class="btn" href="/account">Go to account</a>
-      <a class="btn btn-ghost" href="/pricing">Back to pricing</a>
+    <p class="page__actions">
+      <a class="ui-btn ui-btn--primary" href="/account">Go to account</a>
+      <a class="ui-btn ui-btn--ghost" href="/pricing">Back to pricing</a>
     </p>
   </article>
 </MainLayout>
-
-<style>
-  .welcome {
-    max-width: 36rem;
-    margin: 0 auto;
-    padding: 3rem 1.25rem 4rem;
-  }
-
-  h1 {
-    margin: 0 0 0.75rem;
-    font-size: 2rem;
-  }
-
-  p {
-    color: #444;
-    line-height: 1.6;
-  }
-
-  .actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-top: 1.5rem;
-  }
-
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.65rem 1.1rem;
-    border-radius: 8px;
-    border: 1px solid #111;
-    background: #111;
-    color: #fff;
-    text-decoration: none;
-  }
-
-  .btn-ghost {
-    background: #fff;
-    color: inherit;
-    border-color: #ddd;
-  }
-</style>

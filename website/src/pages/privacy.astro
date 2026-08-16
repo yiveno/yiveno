@@ -13,13 +13,13 @@ const contactEmail = 'privacy@yiveno.com'
   title="Privacy Policy · Yiveno"
   description="How Yiveno handles personal data for the Chrome extension and website: local-first memory, optional cloud sync, account, and AI."
 >
-  <article class="policy">
-    <header class="policy__header">
-      <h1>Privacy Policy</h1>
-      <p class="policy__meta">Effective date: {effectiveDate}</p>
+  <article class="page">
+    <header>
+      <h1 class="page__title">Privacy Policy</h1>
+      <p class="page__meta">Effective date: {effectiveDate}</p>
     </header>
 
-    <section class="policy__section" lang="en">
+    <section class="page__prose" lang="en">
       <h2>1. Who we are</h2>
       <p>
         This Privacy Policy describes how <strong>Yiveno</strong> (“we”, “us”) handles information when you use
@@ -131,63 +131,10 @@ const contactEmail = 'privacy@yiveno.com'
         Privacy questions: <a href={`mailto:${contactEmail}`}>{contactEmail}</a>. Product help and complaints:
         <a href="/support">Support</a>.
       </p>
-      <p class="policy__note">
+      <p class="page__note">
         This page reflects how Yiveno works today. It is not legal advice. Features not marked available in the product
         are not claimed here as shipped.
       </p>
     </section>
   </article>
 </MainLayout>
-
-<style>
-  .policy {
-    max-width: 720px;
-    margin: 0 auto;
-    padding: 2.5rem 1.5rem 4rem;
-    line-height: 1.65;
-    color: #222;
-  }
-
-  .policy__header {
-    margin-bottom: 2rem;
-  }
-
-  .policy__header h1 {
-    margin: 0 0 0.5rem;
-    font-size: 2rem;
-    line-height: 1.2;
-  }
-
-  .policy__meta {
-    margin: 0;
-    color: #666;
-    font-size: 0.9rem;
-  }
-
-  .policy__section h2,
-  .policy__section h3 {
-    margin-top: 1.75rem;
-    margin-bottom: 0.5rem;
-    font-size: 1.15rem;
-  }
-
-  .policy__section p,
-  .policy__section ul {
-    margin: 0.5rem 0 0;
-    color: #333;
-  }
-
-  .policy__section ul {
-    padding-left: 1.25rem;
-  }
-
-  .policy__section li {
-    margin: 0.25rem 0;
-  }
-
-  .policy__note {
-    margin-top: 1.25rem;
-    font-size: 0.875rem;
-    color: #666;
-  }
-</style>

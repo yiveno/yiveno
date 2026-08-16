@@ -136,22 +136,22 @@ async function handleSignOut() {
   } catch (error) {
     console.warn('[AccountPage] extension sign-out handoff failed', error)
   }
-  window.location.href = '/'
+  window.location.href = '/login'
 }
 </script>
 
 <template>
-  <div v-if="!loading" class="account-page">
+  <div v-if="!loading" class="account-page page">
     <div v-if="user" class="card">
       <div class="user-header">
         <img v-if="profileAvatarUrl" :src="profileAvatarUrl" class="avatar" alt="" />
         <div>
-          <h2>{{ profileDisplayName || user.email }}</h2>
+          <h1 class="account-title">{{ profileDisplayName || user.email }}</h1>
           <p class="email">{{ user.email }}</p>
         </div>
       </div>
       <section>
-        <h3>Subscription</h3>
+        <h2>Subscription</h2>
         <p>
           Plan:
           <strong>{{ isPro ? 'Pro' : 'Free' }}</strong>
@@ -163,32 +163,33 @@ async function handleSignOut() {
           </template>
         </p>
         <p class="hint">
-          Free and Pro share the same on-device recall quality (keyword + Hybrid). Pro adds cloud
-          sync across devices and a larger hosted clue-understanding quota.
+          Free and Pro share the same on-device recall quality. Pro adds cloud sync across devices
+          and a larger hosted clue-understanding quota.
         </p>
         <div class="actions">
           <button
             v-if="!isPro"
-            class="btn btn-primary"
+            class="ui-btn ui-btn--primary"
             type="button"
             :disabled="checkoutBusy"
             @click="startMonthlyCheckout"
           >
             {{ checkoutBusy ? 'Opening…' : 'Upgrade to Pro' }}
           </button>
-          <button v-if="isPro" class="btn" type="button" @click="openPortal">
+          <button v-if="isPro" class="ui-btn" type="button" @click="openPortal">
             Manage subscription
           </button>
+          <a class="ui-btn ui-btn--ghost" href="/pricing">View pricing</a>
         </div>
         <p class="hint">
           Need a refund or other help?
           <a href="/support">Support</a>
           — cancellations are in Manage subscription; refunds go through Paddle.
         </p>
-        <p v-if="checkoutError" class="hint">{{ checkoutError }}</p>
+        <p v-if="checkoutError" class="hint error">{{ checkoutError }}</p>
       </section>
       <section>
-        <h3>Account</h3>
+        <h2>Account</h2>
         <dl>
           <dt>Sign-in</dt>
           <dd>{{ user.app_metadata?.provider || 'Unknown' }}</dd>
@@ -198,7 +199,7 @@ async function handleSignOut() {
           <dd>{{ formatDate(user.last_sign_in_at) }}</dd>
         </dl>
       </section>
-      <button class="btn" @click="handleSignOut">Sign out</button>
+      <button class="ui-btn" @click="handleSignOut">Sign out</button>
       <p class="sign-out-hint">
         Extension memories stay on your device. Clear them from extension Settings if needed.
       </p>
@@ -213,21 +214,19 @@ async function handleSignOut() {
       </p>
     </div>
   </div>
-  <div v-else class="loading">Loading…</div>
+  <div v-else class="ui-status">Loading…</div>
 </template>
 
 <style scoped>
 .account-page {
   max-width: 600px;
-  margin: 2rem auto;
-  padding: 0 1rem;
 }
 
 .card {
-  background: #fff;
-  border: 1px solid #eee;
+  background: var(--paper);
+  border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 2rem;
+  padding: clamp(24px, 3vw, 36px);
 }
 
 .user-header {
@@ -244,28 +243,56 @@ async function handleSignOut() {
   object-fit: cover;
 }
 
+.account-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(22px, 3vw, 28px);
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
 .email {
-  color: #666;
+  color: var(--sage-muted);
   margin: 0.25rem 0 0;
+  font-size: 14px;
+  font-weight: 300;
 }
 
 section {
   margin-bottom: 1.5rem;
 }
 
-h3 {
+h2 {
   margin: 0 0 0.5rem;
-  font-size: 1rem;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 18px;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+
+section p {
+  margin: 0.35rem 0;
+  font-size: 14.5px;
+  font-weight: 300;
+  line-height: 1.55;
+  color: var(--muted);
 }
 
 .hint {
-  color: #666;
+  color: var(--sage-muted);
   font-size: 0.9rem;
   line-height: 1.5;
 }
 
 .hint a {
-  color: #1e2640;
+  color: var(--sage);
+}
+
+.hint.error {
+  color: var(--danger);
 }
 
 .actions {
@@ -280,58 +307,31 @@ dl {
   grid-template-columns: 8rem 1fr;
   gap: 0.5rem 1rem;
   margin: 0;
+  font-size: 14.5px;
+  font-weight: 300;
 }
 
 dt {
-  color: #666;
+  color: var(--sage-muted);
 }
 
 dd {
   margin: 0;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.6rem 1rem;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  background: #f7f7f7;
-  color: inherit;
-  text-decoration: none;
-  cursor: pointer;
-  font: inherit;
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-
-.btn-primary {
-  background: #111;
-  color: #fff;
-  border-color: #111;
+  color: var(--charcoal);
 }
 
 .sign-out-hint {
   margin-top: 0.75rem;
-  color: #777;
+  color: var(--sage-muted);
   font-size: 0.85rem;
+  font-weight: 300;
 }
 
 .extension-sync-ok {
-  color: #2a7a3a;
+  color: var(--sage);
 }
 
 .extension-sync-fail {
-  color: #a33;
-}
-
-.loading {
-  text-align: center;
-  padding: 3rem;
-  color: #666;
+  color: var(--danger);
 }
 </style>

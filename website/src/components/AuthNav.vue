@@ -43,7 +43,9 @@ onMounted(async () => {
 .nav-link {
   text-decoration: none;
   color: var(--nav-muted, #555);
-  font-size: 0.95rem;
+  font-size: 13.5px;
+  font-weight: 400;
+  letter-spacing: 0.005em;
 }
 
 .nav-link:hover,

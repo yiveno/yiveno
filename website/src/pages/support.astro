@@ -14,17 +14,17 @@ const paddleBuyerSupport = 'https://paddle.net'
   title="Support · Yiveno"
   description="Get help with Yiveno: product support, billing, cancellation, and refunds."
 >
-  <article class="support">
-    <header class="support__header">
-      <h1>Support</h1>
-      <p class="support__lede">
+  <article class="page">
+    <header>
+      <h1 class="page__title">Support</h1>
+      <p class="page__lede">
         Yiveno is the Chrome extension that finds what you saved — closest matches from your own
         captures, you pick. Tell us what you need below. Billing cancellations and card updates are
         self-serve; refunds go through Paddle; product issues reach us by email.
       </p>
     </header>
 
-    <section class="support__section">
+    <section class="page__section">
       <h2>Billing &amp; subscription</h2>
       <ul>
         <li>
@@ -34,25 +34,25 @@ const paddleBuyerSupport = 'https://paddle.net'
         <li>
           <strong>Request a refund</strong> — Paddle is the merchant of record. Use
           <a href={paddleBuyerSupport} target="_blank" rel="noopener noreferrer">Paddle Buyer Support</a>
-          or the receipt email from your purchase. Canceling a subscription stops future renewals; it does
-          not automatically refund the current period.
+          or the receipt email from your purchase. Canceling a subscription stops future renewals; it
+          does not automatically refund the current period.
         </li>
       </ul>
     </section>
 
-    <section class="support__section">
+    <section class="page__section">
       <h2>Product &amp; account</h2>
       <p>
         Extension, sync, sign-in, or other product questions:
         <a href={`mailto:${supportEmail}?subject=Yiveno%20support`}>{supportEmail}</a>
       </p>
-      <p class="support__hint">
-        Include your account email and a short description. We do not run a ticket portal yet—email is
-        enough.
+      <p class="page__hint">
+        Include your account email and a short description. We do not run a ticket portal yet — email
+        is enough.
       </p>
     </section>
 
-    <section class="support__section">
+    <section class="page__section">
       <h2>Privacy</h2>
       <p>
         Privacy questions:
@@ -62,72 +62,14 @@ const paddleBuyerSupport = 'https://paddle.net'
       </p>
     </section>
 
-    <section class="support__section">
+    <section class="page__section">
       <h2>Complaints</h2>
       <p>
         If something went wrong and you want it escalated, email
         <a href={`mailto:${supportEmail}?subject=Yiveno%20complaint`}>{supportEmail}</a>
-        with the subject line “Complaint”, your account email, and what happened. For payment disputes you
-        may also contact Paddle directly.
+        with the subject line "Complaint", your account email, and what happened. For payment disputes
+        you may also contact Paddle directly.
       </p>
     </section>
   </article>
 </MainLayout>
-
-<style>
-  .support {
-    max-width: 720px;
-    margin: 0 auto;
-    padding: 2.5rem 1.5rem 4rem;
-    line-height: 1.65;
-    color: #222;
-  }
-
-  .support__header {
-    margin-bottom: 2rem;
-  }
-
-  .support__header h1 {
-    margin: 0 0 0.75rem;
-    font-size: 2rem;
-    line-height: 1.2;
-  }
-
-  .support__lede {
-    margin: 0;
-    color: #444;
-    font-size: 1.05rem;
-  }
-
-  .support__section {
-    margin-top: 1.75rem;
-  }
-
-  .support__section h2 {
-    margin: 0 0 0.5rem;
-    font-size: 1.15rem;
-  }
-
-  .support__section p,
-  .support__section ul {
-    margin: 0.5rem 0 0;
-    color: #333;
-  }
-
-  .support__section ul {
-    padding-left: 1.25rem;
-  }
-
-  .support__section li {
-    margin: 0.4rem 0;
-  }
-
-  .support__hint {
-    font-size: 0.9rem;
-    color: #666;
-  }
-
-  .support a {
-    color: #1e2640;
-  }
-</style>

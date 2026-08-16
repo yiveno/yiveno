@@ -162,10 +162,10 @@ watch(
 </script>
 
 <template>
-  <div class="pricing-page">
-    <header class="hero">
-      <h1>Pricing</h1>
-      <p class="lede">
+  <div class="pricing-page page page--wide">
+    <header class="pricing-page__hero">
+      <h1 class="page__title">Pricing</h1>
+      <p class="page__lede">
         Find what you saved: capture lightly, get a short list of closest matches — you pick. Free
         and Pro share the same on-device recall quality; Pro keeps your library across devices and
         gives a larger hosted clue-understanding quota.
@@ -191,44 +191,50 @@ watch(
       </div>
     </header>
 
-    <p v-if="pricesError" class="banner error" role="alert">{{ pricesError }}</p>
-    <p v-if="checkoutError" class="banner error" role="alert">{{ checkoutError }}</p>
+    <p v-if="pricesError" class="ui-banner" role="alert">{{ pricesError }}</p>
+    <p v-if="checkoutError" class="ui-banner" role="alert">{{ checkoutError }}</p>
 
     <div class="plans">
       <section class="plan" aria-labelledby="plan-free">
-        <h2 id="plan-free">Free</h2>
-        <p class="price">$0</p>
-        <p class="desc">Full on-device recall. No cloud sync.</p>
-        <ul>
+        <p class="plan__tier" id="plan-free">Free</p>
+        <p class="plan__price">$0</p>
+        <p class="plan__desc">Full on-device recall. No cloud sync.</p>
+        <ul class="plan__features">
           <li>Capture excerpts &amp; bookmarks</li>
-          <li>On-device Hybrid recall (keyword + embedding)</li>
+          <li>On-device closest matches</li>
           <li>Local library, notes, export</li>
-          <li>Sign in: small hosted clue LLM quota</li>
+          <li>Sign in: small hosted clue quota</li>
         </ul>
-        <div class="cta">
-          <a class="btn" href="/login">Sign in</a>
+        <div class="plan__cta">
+          <a class="ui-btn ui-btn--block" href="/login">Sign in</a>
         </div>
       </section>
 
-      <section class="plan plan-highlight" aria-labelledby="plan-pro">
-        <h2 id="plan-pro">Pro</h2>
-        <p class="price">
+      <section class="plan plan--pro" aria-labelledby="plan-pro">
+        <p class="plan__tier" id="plan-pro">Pro</p>
+        <p class="plan__price">
           <span v-if="pricesLoading">…</span>
           <template v-else>
-            {{ proDisplayTotal() }}<span class="interval">{{ intervalLabel }}</span>
+            {{ proDisplayTotal() }}<span class="plan__interval">{{ intervalLabel }}</span>
           </template>
         </p>
-        <p class="desc">{{ proTier?.description }}</p>
-        <ul>
+        <p class="plan__desc">{{ proTier?.description }}</p>
+        <ul class="plan__features">
           <li v-for="feature in proTier?.features || []" :key="feature">{{ feature }}</li>
         </ul>
-        <div class="cta">
-          <button v-if="isPro" class="btn" type="button" :disabled="portalBusy" @click="openPortal">
+        <div class="plan__cta">
+          <button
+            v-if="isPro"
+            class="ui-btn ui-btn--block"
+            type="button"
+            :disabled="portalBusy"
+            @click="openPortal"
+          >
             {{ portalBusy ? 'Opening…' : 'Manage subscription' }}
           </button>
           <button
             v-else
-            class="btn btn-primary"
+            class="ui-btn ui-btn--primary ui-btn--block"
             type="button"
             :disabled="pricesLoading || checkoutBusy"
             @click="subscribePro"
@@ -239,7 +245,7 @@ watch(
       </section>
     </div>
 
-    <p class="footnote">
+    <p class="pricing-page__footnote">
       Roadmap only (not for sale): Power User, Team. Localized Pro totals come from Paddle Price
       Preview — we never reformat them. Checkout opens as a Paddle overlay.
     </p>
@@ -247,35 +253,23 @@ watch(
 </template>
 
 <style scoped>
-.pricing-page {
-  max-width: 880px;
-  margin: 0 auto;
-  padding: 3rem 1.25rem 4rem;
-}
-
-.hero {
+.pricing-page__hero {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: clamp(32px, 5vw, 48px);
 }
 
-h1 {
-  font-size: 2.25rem;
-  margin: 0 0 0.75rem;
-}
-
-.lede {
-  margin: 0 auto 1.5rem;
+.pricing-page__hero .page__lede {
+  margin-left: auto;
+  margin-right: auto;
   max-width: 36rem;
-  color: #444;
-  line-height: 1.6;
 }
 
 .billing-toggle {
   display: inline-flex;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border);
   border-radius: 10px;
   overflow: hidden;
-  background: #f7f7f7;
+  background: var(--paper-dim);
 }
 
 .toggle-btn {
@@ -284,113 +278,146 @@ h1 {
   background: transparent;
   padding: 0.55rem 1.1rem;
   font: inherit;
+  font-size: 13.5px;
   cursor: pointer;
-  color: #444;
+  color: var(--muted);
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 
 .toggle-btn.active {
-  background: #111;
-  color: #fff;
-}
-
-.banner {
-  text-align: center;
-  margin: 0 0 1rem;
-  font-size: 0.9rem;
-}
-
-.banner.error {
-  color: #a33;
+  background: var(--sage);
+  color: var(--sage-on);
 }
 
 .plans {
   display: grid;
-  gap: 1.25rem;
+  gap: clamp(16px, 2.5vw, 28px);
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 
 .plan {
-  border: 1px solid #e6e6e6;
-  border-radius: 12px;
-  padding: 1.5rem;
-  background: #fff;
   display: flex;
   flex-direction: column;
+  height: 100%;
+  padding: clamp(24px, 3vw, 36px);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--paper-dim);
+  text-align: left;
 }
 
-.plan-highlight {
-  border-color: #111;
+.plan--pro {
+  background: var(--sage);
+  border-color: var(--sage);
+  color: #dce8de;
 }
 
-h2 {
-  margin: 0 0 0.5rem;
-  font-size: 1.25rem;
+.plan__tier {
+  margin: 0 0 16px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sage-muted);
 }
 
-.price {
-  font-size: 1.75rem;
-  margin: 0 0 0.5rem;
-  font-weight: 600;
+.plan--pro .plan__tier {
+  color: rgba(196, 224, 210, 0.7);
 }
 
-.interval {
-  font-size: 0.95rem;
+.plan__price {
+  margin: 0 0 10px;
+  font-family: var(--font-display);
   font-weight: 400;
-  color: #666;
-  margin-left: 0.15rem;
+  font-size: clamp(30px, 3.5vw, 40px);
+  letter-spacing: -0.03em;
+  color: var(--ink);
 }
 
-.desc {
-  margin: 0 0 1rem;
-  color: #555;
-  line-height: 1.5;
-  font-size: 0.95rem;
+.plan--pro .plan__price {
+  color: #dce8de;
 }
 
-ul {
-  margin: 0;
-  padding-left: 1.1rem;
-  line-height: 1.7;
-  color: #333;
+.plan__interval {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--muted);
+  margin-left: 0.2rem;
+}
+
+.plan--pro .plan__interval {
+  color: rgba(196, 224, 210, 0.65);
+}
+
+.plan__desc {
+  margin: 0 0 28px;
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.plan--pro .plan__desc {
+  color: rgba(196, 224, 210, 0.75);
+}
+
+.plan__features {
+  margin: 0 0 28px;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   flex: 1;
 }
 
-.cta {
-  margin-top: 1.25rem;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: 0.7rem 1.1rem;
-  border-radius: 8px;
-  border: 1px solid #ddd;
-  background: #f7f7f7;
-  color: inherit;
-  cursor: pointer;
-  font: inherit;
-  text-decoration: none;
-  box-sizing: border-box;
-}
-
-.btn-primary {
-  background: #111;
-  color: #fff;
-  border-color: #111;
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-
-.footnote {
-  margin-top: 2rem;
-  text-align: center;
-  color: #777;
-  font-size: 0.9rem;
+.plan__features li {
+  font-size: 13.5px;
+  font-weight: 300;
   line-height: 1.5;
+  color: var(--muted);
+  padding-left: 0;
+}
+
+.plan--pro .plan__features li {
+  color: rgba(196, 224, 210, 0.85);
+}
+
+.plan__cta {
+  margin-top: auto;
+}
+
+.plan--pro :deep(.ui-btn:not(.ui-btn--primary)) {
+  border-color: rgba(220, 232, 222, 0.25);
+  background: rgba(220, 232, 222, 0.09);
+  color: rgba(220, 232, 222, 0.9);
+}
+
+.plan--pro :deep(.ui-btn:not(.ui-btn--primary):hover),
+.plan--pro :deep(.ui-btn:not(.ui-btn--primary):focus-visible) {
+  background: rgba(220, 232, 222, 0.15);
+}
+
+.plan--pro :deep(.ui-btn--primary) {
+  background: rgba(220, 232, 222, 0.14);
+  border-color: rgba(220, 232, 222, 0.3);
+  color: #dce8de;
+}
+
+.plan--pro :deep(.ui-btn--primary):hover,
+.plan--pro :deep(.ui-btn--primary):focus-visible {
+  background: rgba(220, 232, 222, 0.22);
+}
+
+.pricing-page__footnote {
+  margin-top: clamp(28px, 4vw, 40px);
+  text-align: center;
+  color: var(--sage-muted);
+  font-size: 13px;
+  font-weight: 300;
+  line-height: 1.55;
 }
 </style>

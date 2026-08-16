@@ -1,9 +1,11 @@
 ---
 import AuthNav from './AuthNav.vue'
-import YMark from './home/YMark.astro'
 
 interface Props {
-  /** waitlist 首页：只保留 Support，不暴露 Pricing / Sign in；标用 Make YMark */
+  /**
+   * 首页 waitlist 门面：透明条 + 随 Hero 深/浅色；
+   * 品牌标与链接与内页一致。
+   */
   waitlist?: boolean
 }
 
@@ -12,41 +14,20 @@ const { waitlist = false } = Astro.props
 
 <nav class="site-nav" class:list={[{ 'site-nav--waitlist': waitlist }]} aria-label="Primary">
   <a href="/" class="site-nav__brand">
-    {
-      waitlist ? (
-        <span class="site-nav__ymark site-nav__ymark--dark">
-          <YMark size={22} onDark />
-        </span>
-      ) : (
-        <img
-          class="site-nav__logo"
-          src="/images/logo-mark.svg"
-          alt=""
-          width="22"
-          height="22"
-          decoding="async"
-        />
-      )
-    }
-    {
-      waitlist && (
-        <span class="site-nav__ymark site-nav__ymark--light" aria-hidden="true">
-          <YMark size={22} />
-        </span>
-      )
-    }
+    <img
+      class="site-nav__logo"
+      src="/images/logo-mark.svg"
+      alt=""
+      width="22"
+      height="22"
+      decoding="async"
+    />
     <span class="site-nav__name">Yiveno</span>
   </a>
   <div class="site-nav__spacer"></div>
-  {
-    !waitlist && (
-      <a href="/pricing" class="site-nav__link">
-        Pricing
-      </a>
-    )
-  }
+  <a href="/pricing" class="site-nav__link">Pricing</a>
   <a href="/support" class="site-nav__link">Support</a>
-  {!waitlist && <AuthNav client:load />}
+  <AuthNav client:load />
 </nav>
 
 <style>
@@ -78,7 +59,6 @@ const { waitlist = false } = Astro.props
     gap: 9px;
     text-decoration: none;
     color: inherit;
-    position: relative;
   }
 
   .site-nav__logo {
@@ -86,20 +66,7 @@ const { waitlist = false } = Astro.props
     width: 22px;
     height: 22px;
     object-fit: contain;
-    opacity: 0.85;
-  }
-
-  .site-nav__ymark {
-    display: none;
-    line-height: 0;
-  }
-
-  :global(body[data-chrome='home'][data-nav-over-hero='true']) .site-nav__ymark--dark {
-    display: block;
-  }
-
-  :global(body[data-chrome='home'][data-nav-over-hero='false']) .site-nav__ymark--light {
-    display: block;
+    opacity: 0.9;
   }
 
   .site-nav__name {

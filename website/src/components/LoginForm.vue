@@ -14,6 +14,8 @@ import {
   resolveExtensionHandoffTargetId
 } from '../services/extension-auth-handoff'
 
+defineOptions({ name: 'LoginForm' })
+
 const loading = ref(false)
 const error = ref('')
 const connectingExtension = ref(false)
@@ -21,8 +23,8 @@ const extensionConnected = ref(false)
 const fromExtension = ref(false)
 /** 来自定价页 Subscribe：登录后回跳续付 */
 const fromSubscribe = ref(false)
-/** 已有本地会话时展示，便于换账号而不是被直接踢进 /account */
-const signedInEmail = ref('')
+/** 已登录且正在跳转账户页时，避免闪一下登录按钮 */
+const redirecting = ref(false)
 
 async function tryHandoffCurrentSession(): Promise<boolean> {
   if (!resolveExtensionHandoffTargetId()) {
@@ -71,8 +73,7 @@ function applyLoginErrorFromUrl(): void {
 }
 
 /**
- * 已登录：仅「本次从扩展打开」才强制进账户；
- * 有 next（续付）优先回跳；否则停在登录页展示账号。
+ * 已登录：扩展 handoff / 续付 next 优先；否则直接进账户页。
  */
 onMounted(async () => {
   captureExtensionConnectParamsFromUrl()
@@ -89,6 +90,7 @@ onMounted(async () => {
     if (getPendingExtensionId()) {
       const ok = await tryHandoffCurrentSession()
       if (ok) {
+        redirecting.value = true
         window.location.replace('/account?extension_connected=1')
         return
       }
@@ -102,19 +104,17 @@ onMounted(async () => {
         void tryHandoffCurrentSession()
       }
       console.warn('[LoginForm] 已登录，回跳续意图', pending)
+      redirecting.value = true
       window.location.replace(buildPostAuthHref('/account'))
       return
     }
-    signedInEmail.value = session.user.email || session.user.id
+    redirecting.value = true
+    window.location.replace(buildPostAuthHref('/account'))
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Could not check sign-in status'
     error.value = message
   }
 })
-
-function goAccount(): void {
-  window.location.href = buildPostAuthHref('/account')
-}
 
 async function login(provider: 'google' | 'microsoft') {
   loading.value = true
@@ -128,7 +128,6 @@ async function login(provider: 'google' | 'microsoft') {
     if (await getSession()) {
       await signOut()
     }
-    signedInEmail.value = ''
     await signInWithOAuth(provider)
   } catch (e: unknown) {
     error.value = (e instanceof Error ? e.message : String(e)) || 'Sign-in failed'
@@ -138,7 +137,7 @@ async function login(provider: 'google' | 'microsoft') {
 </script>
 
 <template>
-  <div class="login-form">
+  <div class="login-form page page--narrow page--center">
     <img
       class="login-form__logo"
       src="/images/logo-mark.svg"
@@ -147,52 +146,68 @@ async function login(provider: 'google' | 'microsoft') {
       height="56"
       decoding="async"
     />
-    <h2>Sign in to Yiveno</h2>
-    <p v-if="fromSubscribe" class="hint">
-      Sign in to continue checkout. After Google or Microsoft, we’ll bring you back to pricing and
-      open payment.
-    </p>
-    <p v-else-if="fromExtension" class="hint">
-      After sign-in, your session syncs to the Chrome extension. Memories are not uploaded
-      automatically.
-    </p>
-    <p v-if="connectingExtension" class="hint">Connecting to the extension…</p>
-    <p v-if="extensionConnected" class="ok">Extension connected</p>
-    <template v-if="signedInEmail">
-      <p class="hint">Signed in as {{ signedInEmail }}</p>
-      <button :disabled="loading || connectingExtension" class="btn btn-primary" @click="goAccount">
-        Go to account
+    <h1 class="page__title">Sign in to Yiveno</h1>
+    <p v-if="redirecting" class="hint">Taking you to your account…</p>
+    <template v-else>
+      <p v-if="fromSubscribe" class="hint">
+        Sign in to continue checkout. After Google or Microsoft, we'll bring you back to pricing and
+        open payment.
+      </p>
+      <p v-else-if="fromExtension" class="hint">
+        After sign-in, your session syncs to the Chrome extension. Memories are not uploaded
+        automatically.
+      </p>
+      <p v-if="connectingExtension" class="hint">Connecting to the extension…</p>
+      <p v-if="extensionConnected" class="ok">Extension connected</p>
+      <p v-if="error" class="error">{{ error }}</p>
+      <button
+        type="button"
+        :disabled="loading || connectingExtension"
+        class="ui-btn ui-btn--block login-form__oauth"
+        @click="login('google')"
+      >
+        <svg class="login-form__icon" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+          <path
+            fill="#4285F4"
+            d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615Z"
+          />
+          <path
+            fill="#34A853"
+            d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18Z"
+          />
+          <path
+            fill="#FBBC05"
+            d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332Z"
+          />
+          <path
+            fill="#EA4335"
+            d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58Z"
+          />
+        </svg>
+        <span>{{ loading ? 'Redirecting…' : 'Continue with Google' }}</span>
       </button>
-      <p class="hint">Or use the buttons below to switch accounts</p>
+      <button
+        type="button"
+        :disabled="loading || connectingExtension"
+        class="ui-btn ui-btn--block login-form__oauth"
+        @click="login('microsoft')"
+      >
+        <svg class="login-form__icon" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+          <path fill="#F25022" d="M0 0h8.5v8.5H0z" />
+          <path fill="#7FBA00" d="M9.5 0H18v8.5H9.5z" />
+          <path fill="#00A4EF" d="M0 9.5h8.5V18H0z" />
+          <path fill="#FFB900" d="M9.5 9.5H18V18H9.5z" />
+        </svg>
+        <span>{{ loading ? 'Redirecting…' : 'Continue with Microsoft' }}</span>
+      </button>
     </template>
-    <p v-if="error" class="error">{{ error }}</p>
-    <button :disabled="loading || connectingExtension" class="btn" @click="login('google')">
-      {{
-        loading ? 'Redirecting…' : signedInEmail ? 'Switch Google account' : 'Continue with Google'
-      }}
-    </button>
-    <button :disabled="loading || connectingExtension" class="btn" @click="login('microsoft')">
-      {{
-        loading
-          ? 'Redirecting…'
-          : signedInEmail
-            ? 'Switch Microsoft account'
-            : 'Continue with Microsoft'
-      }}
-    </button>
-    <p class="legal">
-      <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
-      ·
-      <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a>
-    </p>
   </div>
 </template>
 
 <style scoped>
-.login-form {
-  max-width: 360px;
-  margin: 4rem auto;
-  text-align: center;
+.login-form .page__title {
+  font-size: clamp(28px, 4vw, 36px);
+  margin-bottom: 12px;
 }
 
 .login-form__logo {
@@ -201,62 +216,38 @@ async function login(provider: 'google' | 'microsoft') {
   height: 56px;
   margin: 0 auto 1rem;
   object-fit: contain;
+  opacity: 0.9;
 }
 
-.btn {
-  display: block;
-  width: 100%;
-  padding: 0.75rem;
-  margin: 0.5rem 0;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  background: #fff;
-  cursor: pointer;
-  font-size: 1rem;
+.login-form .ui-btn {
+  margin: 0.5rem 0 0;
 }
 
-.btn:hover {
-  background: #f5f5f5;
+.login-form__oauth {
+  gap: 10px;
 }
 
-.btn-primary {
-  background: #111;
-  color: #fff;
-  border-color: #111;
-}
-
-.btn-primary:hover {
-  background: #333;
-  color: #fff;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-}
-
-.error {
-  color: #e53e3e;
-  font-size: 0.875rem;
+.login-form__icon {
+  flex-shrink: 0;
 }
 
 .hint {
-  color: #666;
+  color: var(--muted);
   font-size: 0.875rem;
-  line-height: 1.4;
+  font-weight: 300;
+  line-height: 1.5;
+  margin: 0 0 0.75rem;
+}
+
+.error {
+  color: var(--danger);
+  font-size: 0.875rem;
+  font-weight: 300;
 }
 
 .ok {
-  color: #2f855a;
+  color: var(--sage);
   font-size: 0.875rem;
-}
-
-.legal {
-  margin-top: 1.25rem;
-  font-size: 0.8rem;
-  color: #666;
-}
-
-.legal a {
-  color: #555;
+  font-weight: 300;
 }
 </style>

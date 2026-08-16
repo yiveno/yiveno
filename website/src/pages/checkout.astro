@@ -22,17 +22,17 @@ const successUrl = `${websiteBase || 'http://localhost:3001'}/welcome`
   title="Checkout · Yiveno"
   description="Complete your Yiveno checkout."
 >
-  <article class="checkout">
-    <h1>Checkout</h1>
+  <article class="page page--narrow">
+    <h1 class="page__title">Checkout</h1>
     {
       clientToken ? (
-        <p>Opening Paddle checkout…</p>
+        <p class="page__lede">Opening Paddle checkout…</p>
       ) : (
-        <p>Checkout is not configured. Please contact support.</p>
+        <p class="page__lede">Checkout is not configured. Please contact support.</p>
       )
     }
-    <p>
-      <a href="/pricing">Back to pricing</a>
+    <p class="page__actions">
+      <a class="ui-btn ui-btn--ghost" href="/pricing">Back to pricing</a>
     </p>
   </article>
   {
@@ -65,11 +65,3 @@ const successUrl = `${websiteBase || 'http://localhost:3001'}/welcome`
     )
   }
 </MainLayout>
-
-<style>
-  .checkout {
-    max-width: 40rem;
-    margin: 0 auto;
-    padding: 3rem 1.25rem;
-  }
-</style>
