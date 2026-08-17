@@ -1,106 +1,83 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { getPaidTiers, type Tier } from '../billing/tiers'
 import { buildLoginHref } from '../services/auth-return'
-import { getPaddle, previewFormattedTotals, resolveWelcomeUrl } from '../services/paddle'
-import { createPortalSession } from '../services/billing'
+import { createCheckoutSession, createPortalSession } from '../services/billing'
 import { getSupabase } from '../services/supabase'
-import { getUserSubscription } from '../services/subscription'
+import { getUserSubscription, isActiveProSnapshot } from '../services/subscription'
 
 defineOptions({ name: 'PricingPage' })
 
-const props = defineProps<{
-  /** 服务端解析的 ISO 国家码；缺省时不传给 Paddle */
-  countryCode?: string
-}>()
-
 type BillingCycle = 'month' | 'year'
 
-const proTier = ref<Tier | null>(null)
+const proTier = ref<Tier | null>(getPaidTiers()[0] ?? null)
 const cycle = ref<BillingCycle>('month')
-const pricesLoading = ref(true)
-const pricesError = ref('')
 const checkoutBusy = ref(false)
 const checkoutError = ref('')
 const portalBusy = ref(false)
-/** priceId → Paddle formattedTotals.total */
-const formattedByPriceId = ref<Map<string, string>>(new Map())
-const customerEmail = ref<string | null>(null)
 const customerUserId = ref<string | null>(null)
 const accessToken = ref<string | null>(null)
 const isPro = ref(false)
 
 const intervalLabel = computed(() => (cycle.value === 'month' ? '/mo' : '/yr'))
 
-function proPriceId(): string | null {
-  return proTier.value ? proTier.value.priceId[cycle.value] : null
-}
-
 function proDisplayTotal(): string {
-  const id = proPriceId()
-  if (!id) return '—'
-  return formattedByPriceId.value.get(id) || '—'
+  const usd = proTier.value?.displayUsd[cycle.value]
+  return usd ? `$${usd}` : '—'
 }
 
-async function loadPrices(): Promise<void> {
-  pricesError.value = ''
-  pricesLoading.value = true
-  try {
-    if (!proTier.value) {
-      proTier.value = getPaidTiers()[0] ?? null
-    }
-    const tier = proTier.value
-    if (!tier) {
-      throw new Error('Pro tier is not configured')
-    }
-    const map = await previewFormattedTotals({
-      priceIds: [tier.priceId.month, tier.priceId.year],
-      ...(props.countryCode ? { countryCode: props.countryCode } : {})
-    })
-    formattedByPriceId.value = map
-  } catch (err) {
-    const detail = err instanceof Error ? err.message : String(err)
-    console.error('[Pricing] PricePreview failed', detail)
-    pricesError.value = 'Could not load localized prices. Refresh and try again.'
-  } finally {
-    pricesLoading.value = false
-  }
+function currentPlanId(): 'pro_monthly' | 'pro_annual' | null {
+  return proTier.value ? proTier.value.planId[cycle.value] : null
+}
+
+/** 对账后刷新 isPro；失败时保持原值。 */
+async function refreshProFlag(): Promise<boolean> {
+  if (!accessToken.value) return false
+  const sub = await getUserSubscription(accessToken.value)
+  isPro.value = isActiveProSnapshot(sub)
+  return isPro.value
 }
 
 /**
- * 未登录不得开 overlay：否则缺 yiveno_user_id → 孤立付款。
- * 已登录则始终带 customData，供 webhook 授 Pro。
+ * 未登录不得开 checkout：否则缺 yiveno_user_id → 孤立付款。
+ * 已登录先对账：有效 Pro 改走 Portal，不再跳 Dodo checkout。
  */
 async function subscribePro(): Promise<void> {
-  if (!customerUserId.value) {
+  if (!customerUserId.value || !accessToken.value) {
     console.warn('[Pricing] Subscribe 需先登录，跳转 /login')
     window.location.assign(buildLoginHref('/pricing', 'subscribe'))
     return
   }
 
-  const tier = proTier.value
-  const priceId = proPriceId()
-  if (!tier || !priceId) return
+  const plan = currentPlanId()
+  if (!plan) return
 
   checkoutError.value = ''
   checkoutBusy.value = true
   try {
-    const paddle = await getPaddle()
-    console.warn('[Pricing] Checkout.open', { priceId, userId: customerUserId.value })
-    paddle.Checkout.open({
-      items: [{ priceId, quantity: 1 }],
-      ...(customerEmail.value ? { customer: { email: customerEmail.value } } : {}),
-      customData: { yiveno_user_id: customerUserId.value },
-      settings: {
-        displayMode: 'overlay',
-        variant: 'one-page',
-        successUrl: resolveWelcomeUrl()
-      }
-    })
+    const alreadyPro = await refreshProFlag()
+    if (alreadyPro) {
+      console.warn('[Pricing] 已是有效 Pro，跳过 checkout')
+      checkoutError.value = 'This account already has Pro. Manage it from your subscription.'
+      return
+    }
+
+    const result = await createCheckoutSession(accessToken.value, plan)
+    if (result.status === 'already_subscribed') {
+      isPro.value = true
+      console.warn('[Pricing] Worker 判定已是 Pro，拒绝新 checkout')
+      checkoutError.value = 'This account already has Pro. Manage it from your subscription.'
+      return
+    }
+    if (result.status !== 'ok') {
+      checkoutError.value = 'Could not start checkout. Try again.'
+      return
+    }
+    window.location.assign(result.checkoutUrl)
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err)
-    console.error('[Pricing] Checkout.open failed', detail)
-    checkoutError.value = 'Could not open checkout. Try again.'
+    console.error('[Pricing] checkout-session failed', detail)
+    checkoutError.value = 'Could not start checkout. Try again.'
   } finally {
     checkoutBusy.value = false
   }
@@ -139,26 +116,17 @@ onMounted(async () => {
   try {
     const supabase = await getSupabase()
     const { data } = await supabase.auth.getSession()
-    customerEmail.value = data.session?.user.email ?? null
     customerUserId.value = data.session?.user.id ?? null
     accessToken.value = data.session?.access_token ?? null
     if (data.session?.access_token) {
       const sub = await getUserSubscription(data.session.access_token)
-      isPro.value = sub?.tier === 'pro' && sub.status === 'active'
+      isPro.value = isActiveProSnapshot(sub)
     }
   } catch (err) {
     console.warn('[Pricing] session load skipped', err)
   }
-  await loadPrices()
   await resumeSubscribeIntentIfNeeded()
 })
-
-watch(
-  () => props.countryCode,
-  () => {
-    void loadPrices()
-  }
-)
 </script>
 
 <template>
@@ -191,7 +159,6 @@ watch(
       </div>
     </header>
 
-    <p v-if="pricesError" class="ui-banner" role="alert">{{ pricesError }}</p>
     <p v-if="checkoutError" class="ui-banner" role="alert">{{ checkoutError }}</p>
 
     <div class="plans">
@@ -213,10 +180,7 @@ watch(
       <section class="plan plan--pro" aria-labelledby="plan-pro">
         <p class="plan__tier" id="plan-pro">Pro</p>
         <p class="plan__price">
-          <span v-if="pricesLoading">…</span>
-          <template v-else>
-            {{ proDisplayTotal() }}<span class="plan__interval">{{ intervalLabel }}</span>
-          </template>
+          {{ proDisplayTotal() }}<span class="plan__interval">{{ intervalLabel }}</span>
         </p>
         <p class="plan__desc">{{ proTier?.description }}</p>
         <ul class="plan__features">
@@ -236,7 +200,7 @@ watch(
             v-else
             class="ui-btn ui-btn--primary ui-btn--block"
             type="button"
-            :disabled="pricesLoading || checkoutBusy"
+            :disabled="checkoutBusy"
             @click="subscribePro"
           >
             {{ checkoutBusy ? 'Opening…' : customerUserId ? 'Subscribe' : 'Sign in to subscribe' }}
@@ -246,8 +210,8 @@ watch(
     </div>
 
     <p class="pricing-page__footnote">
-      Roadmap only (not for sale): Power User, Team. Localized Pro totals come from Paddle Price
-      Preview — we never reformat them. Checkout opens as a Paddle overlay.
+      Roadmap only (not for sale): Power User, Team. Displayed totals are list prices before tax.
+      Checkout happens on Dodo hosted checkout after you sign in.
     </p>
   </div>
 </template>

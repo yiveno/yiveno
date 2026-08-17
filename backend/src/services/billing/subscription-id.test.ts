@@ -11,8 +11,8 @@ describe('isValidYivenoUserId', () => {
 })
 
 describe('isFakeProviderSubscriptionId', () => {
-  test('真实 Paddle sub_ + 26 位才通过', () => {
-    expect(isFakeProviderSubscriptionId('sub_01h1vjes1y163hjs1s211srxny')).toBe(false)
+  test('真实 Dodo sub_ 才通过', () => {
+    expect(isFakeProviderSubscriptionId('sub_Iuaq622bbmmfOGrVTqdXv')).toBe(false)
     expect(isFakeProviderSubscriptionId('sub_abc12345')).toBe(true)
     expect(isFakeProviderSubscriptionId('test-sub-1')).toBe(true)
     expect(isFakeProviderSubscriptionId('')).toBe(true)

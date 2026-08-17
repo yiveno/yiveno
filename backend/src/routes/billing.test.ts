@@ -16,7 +16,7 @@ function env(overrides: Record<string, unknown> = {}): Env {
 }
 
 describe('GET /api/billing/plans', () => {
-  test('公开目录不含 Price ID，默认无 Founding', async () => {
+  test('公开目录不含 Product ID，默认无 Founding', async () => {
     const app = createApp()
     const response = await app.request('/api/billing/plans', {}, env())
     expect(response.status).toBe(200)
@@ -26,7 +26,7 @@ describe('GET /api/billing/plans', () => {
     }
     expect(json.success).toBe(true)
     expect(json.data.plans.map(plan => plan.id)).toEqual(['pro_monthly', 'pro_annual'])
-    expect(JSON.stringify(json)).not.toContain('pri_')
+    expect(JSON.stringify(json)).not.toContain('pdt_')
     expect(json.data.plans[0]?.displayUsd).toBe('7.99')
     expect(json.data.plans[1]?.displayUsd).toBe('59.99')
   })

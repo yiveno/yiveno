@@ -136,7 +136,7 @@ export async function upsertSubscription(
       current_period_end: subscription.current_period_end,
       cancel_at_period_end: subscription.cancel_at_period_end || false,
       cancelled_at: subscription.cancelled_at || null,
-      source: subscription.source ?? 'paddle_webhook',
+      source: subscription.source ?? 'dodo_webhook',
       last_verified_at: subscription.last_verified_at ?? null,
       verification_status: subscription.verification_status ?? 'unverified',
       provider_status: subscription.provider_status ?? null
@@ -243,7 +243,7 @@ export async function insertPaymentRecord(
 }
 
 export type BillingEventInsert = {
-  provider?: 'paddle'
+  provider?: 'dodo'
   provider_event_id: string
   event_type?: string | null
   occurred_at?: string | null
@@ -263,7 +263,7 @@ export async function insertBillingEvent(env: Env, event: BillingEventInsert): P
 
   try {
     const { error } = await supabase.from('billing_events').insert({
-      provider: event.provider ?? 'paddle',
+      provider: event.provider ?? 'dodo',
       provider_event_id: event.provider_event_id,
       event_type: event.event_type ?? null,
       occurred_at: event.occurred_at ?? null,
@@ -295,7 +295,7 @@ export async function deleteBillingEvent(env: Env, providerEventId: string): Pro
   const { error } = await supabase
     .from('billing_events')
     .delete()
-    .eq('provider', 'paddle')
+    .eq('provider', 'dodo')
     .eq('provider_event_id', providerEventId)
   if (error) {
     logErrorMessage('[Supabase] 删除 billing_events 失败', { detail: toLogError(error) })

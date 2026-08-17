@@ -1,13 +1,13 @@
 import { describe, expect, test } from 'bun:test'
 
 import type { Env } from '../../types/env'
-import { listPublicPlans, parseBillingPlanId, resolvePaddlePriceId } from './plans'
+import { listPublicPlans, parseBillingPlanId, resolveDodoProductId } from './plans'
 
 function env(overrides: Partial<Env> = {}): Env {
   return {
     BILLING_FOUNDING_ENABLED: 'false',
-    PADDLE_PRICE_ID_PRO_MONTHLY: 'pri_monthly',
-    PADDLE_PRICE_ID_PRO_ANNUAL: 'pri_annual',
+    DODO_PRODUCT_ID_PRO_MONTHLY: 'pdt_monthly',
+    DODO_PRODUCT_ID_PRO_ANNUAL: 'pdt_annual',
     ...overrides
   } as Env
 }
@@ -31,11 +31,11 @@ describe('parseBillingPlanId', () => {
   })
 })
 
-describe('resolvePaddlePriceId', () => {
-  test('空 Price ID → null', () => {
+describe('resolveDodoProductId', () => {
+  test('空 Product ID → null', () => {
     expect(
-      resolvePaddlePriceId(env({ PADDLE_PRICE_ID_PRO_MONTHLY: '  ' }), 'pro_monthly')
+      resolveDodoProductId(env({ DODO_PRODUCT_ID_PRO_MONTHLY: '  ' }), 'pro_monthly')
     ).toBeNull()
-    expect(resolvePaddlePriceId(env(), 'pro_monthly')).toBe('pri_monthly')
+    expect(resolveDodoProductId(env(), 'pro_monthly')).toBe('pdt_monthly')
   })
 })

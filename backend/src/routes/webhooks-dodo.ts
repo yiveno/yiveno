@@ -1,20 +1,24 @@
 /**
- * POST /api/webhooks/paddle — 独立验签，不与其它 webhook 混用。
+ * POST /api/webhooks/dodo — 独立验签，不与其它 webhook 混用。
  */
 
 import { Hono } from 'hono'
-import { projectPaddleWebhook } from '../services/billing/projection'
-import { verifyPaddleWebhook } from '../services/billing/paddle-webhook'
+import { projectDodoWebhook } from '../services/billing/projection'
+import { verifyDodoWebhook } from '../services/billing/dodo-webhook'
 import type { Env } from '../types/env'
 import { error as logErrorMessage, info } from '../utils/logger'
 
-export const paddleWebhookRouter = new Hono<{ Bindings: Env }>()
+export const dodoWebhookRouter = new Hono<{ Bindings: Env }>()
 
-paddleWebhookRouter.post('/', async c => {
+dodoWebhookRouter.post('/', async c => {
   const rawBody = await c.req.text()
-  const verified = await verifyPaddleWebhook(
-    c.env.PADDLE_WEBHOOK_SECRET,
-    c.req.header('paddle-signature') ?? null,
+  const verified = await verifyDodoWebhook(
+    c.env.DODO_PAYMENTS_WEBHOOK_KEY,
+    {
+      id: c.req.header('webhook-id') ?? null,
+      timestamp: c.req.header('webhook-timestamp') ?? null,
+      signature: c.req.header('webhook-signature') ?? null
+    },
     rawBody
   )
 
@@ -24,7 +28,7 @@ paddleWebhookRouter.post('/', async c => {
   }
 
   try {
-    const result = await projectPaddleWebhook(c.env, verified.event, verified.rawBody)
+    const result = await projectDodoWebhook(c.env, verified.event, verified.rawBody)
     info('[Billing] webhook 处理完成', {
       eventId: verified.event.eventId,
       eventType: verified.event.eventType,

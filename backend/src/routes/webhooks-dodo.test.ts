@@ -2,8 +2,10 @@ import { afterEach, describe, expect, jest, test } from 'bun:test'
 
 import { createApp } from '../app'
 import type { Env } from '../types/env'
+import { signDodoWebhookForTest } from '../services/billing/dodo-webhook'
 
-const SECRET = 'pdl_ntfset_test_secret'
+const SECRET = 'whsec_dGVzdF9kb2RvX3dlYmhvb2tfc2VjcmV0'
+const EVENT_ID = 'evt_01route000000000000000001'
 
 function env(): Env {
   return {
@@ -12,38 +14,30 @@ function env(): Env {
     SUPABASE_ANON_KEY: 'anon-key',
     SUPABASE_SERVICE_ROLE_KEY: 'service-role-key',
     WEBSITE_URL: 'https://example.com',
-    PADDLE_WEBHOOK_SECRET: SECRET
+    DODO_PAYMENTS_WEBHOOK_KEY: SECRET
   } as Env
 }
 
-async function sign(rawBody: string, ts = Math.floor(Date.now() / 1000)): Promise<string> {
-  const key = await crypto.subtle.importKey(
-    'raw',
-    new TextEncoder().encode(SECRET),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign']
-  )
-  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`${ts}:${rawBody}`))
-  const hex = [...new Uint8Array(sig)].map(b => b.toString(16).padStart(2, '0')).join('')
-  return `ts=${ts};h1=${hex}`
-}
-
-describe('POST /api/webhooks/paddle', () => {
+describe('POST /api/webhooks/dodo', () => {
   afterEach(() => {
     jest.restoreAllMocks()
   })
 
   test('无效签名 → 401，不投影', async () => {
     const projection = await import('../services/billing/projection')
-    const project = jest.spyOn(projection, 'projectPaddleWebhook')
+    const project = jest.spyOn(projection, 'projectDodoWebhook')
     const app = createApp()
     const response = await app.request(
-      '/api/webhooks/paddle',
+      '/api/webhooks/dodo',
       {
         method: 'POST',
-        headers: { 'paddle-signature': 'ts=1;h1=deadbeef', 'content-type': 'application/json' },
-        body: '{"event_id":"x"}'
+        headers: {
+          'webhook-id': EVENT_ID,
+          'webhook-timestamp': '1',
+          'webhook-signature': 'v1,deadbeef',
+          'content-type': 'application/json'
+        },
+        body: '{"type":"subscription.active"}'
       },
       env()
     )
@@ -53,19 +47,22 @@ describe('POST /api/webhooks/paddle', () => {
 
   test('有效签名 → 200 + outcome', async () => {
     const projection = await import('../services/billing/projection')
-    jest.spyOn(projection, 'projectPaddleWebhook').mockResolvedValue({ outcome: 'applied' })
+    jest.spyOn(projection, 'projectDodoWebhook').mockResolvedValue({ outcome: 'applied' })
     const body = JSON.stringify({
-      event_id: 'evt_01route000000000000000001',
-      event_type: 'subscription.updated',
-      data: { id: 'sub_01h1vjes1y163hjs1s211srxny', status: 'active' }
+      type: 'subscription.active',
+      data: { subscription_id: 'sub_Iuaq622bbmmfOGrVTqdXv', status: 'active' }
     })
+    const ts = Math.floor(Date.now() / 1000)
+    const signature = await signDodoWebhookForTest(SECRET, EVENT_ID, ts, body)
     const app = createApp()
     const response = await app.request(
-      '/api/webhooks/paddle',
+      '/api/webhooks/dodo',
       {
         method: 'POST',
         headers: {
-          'paddle-signature': await sign(body),
+          'webhook-id': EVENT_ID,
+          'webhook-timestamp': String(ts),
+          'webhook-signature': signature,
           'content-type': 'application/json'
         },
         body

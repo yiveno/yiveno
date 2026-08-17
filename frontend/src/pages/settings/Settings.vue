@@ -553,7 +553,7 @@ function refreshSyncContextOnVisible() {
   if (document.visibilityState !== 'visible') {
     return
   }
-  // 从官网定价/Paddle 返回时强制刷新订阅快照
+  // 从官网定价返回时强制刷新订阅快照
   void loadSyncContext().then(() => loadSubscriptionStatus(true))
 }
 

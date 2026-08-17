@@ -31,14 +31,12 @@
 - `AUTH_MICROSOFT_AUTH_URL`
 - `AUTH_MICROSOFT_TOKEN_URL`
 - `AUTH_MICROSOFT_USERINFO_URL`
-- `PADDLE_API_KEY`（checkout / 对账；生产必配）
-- `PADDLE_WEBHOOK_SECRET`（Notification destination secret）
-- `PADDLE_ENV`（`sandbox` | `production`；也可只写 wrangler `[vars]`）
-- `PADDLE_PRICE_ID_PRO_MONTHLY` / `PADDLE_PRICE_ID_PRO_ANNUAL`
-- `PADDLE_PRICE_ID_FOUNDING_MONTHLY` / `PADDLE_PRICE_ID_FOUNDING_ANNUAL`（仅 Founding 打开时）
+- `DODO_PAYMENTS_API_KEY`（checkout / 对账；生产必配；test=`dodo_test_…`，live=`dodo_live_…`）
+- `DODO_PAYMENTS_WEBHOOK_KEY`（Standard Webhooks signing secret，`whsec_…`）
+- `DODO_PAYMENTS_ENVIRONMENT`（`test_mode` | `live_mode`；缺省按 test，生产必须 `live_mode`）
+- `DODO_PRODUCT_ID_PRO_MONTHLY` / `DODO_PRODUCT_ID_PRO_ANNUAL`
+- `DODO_PRODUCT_ID_FOUNDING_MONTHLY` / `DODO_PRODUCT_ID_FOUNDING_ANNUAL`（仅 Founding 打开时）
 - `BILLING_FOUNDING_ENABLED`（默认 `false`）
-- `VITE_PADDLE_CLIENT_TOKEN`（官网 Paddle.js；映射为 `PUBLIC_PADDLE_CLIENT_TOKEN`；sandbox 以 `test_` 开头）
-- `VITE_PADDLE_ENV`（映射为 `PUBLIC_PADDLE_ENV`；必须显式 `sandbox` / `production`，禁止静默默认）
 - `REDIRECT_URI_ALLOWLIST`
 
 ### 2. `.env.development.local`
@@ -138,25 +136,25 @@ bun run env:sync:prod
 bun run env:check:prod
 ```
 
-## 当前 Paddle 规则
+## 当前 Dodo 规则
 
-- **结账价权威在 Paddle Price**；Yiveno 只维护 plan id → Price ID 与展示锚点（`backend/src/services/billing/plans.ts`）。标准展示价 **$7.99/月 · $59.99/年**。详见 `docs/pricing.md`。
-- **权益投影**在 Supabase `subscriptions`（非第二账本）；对账与门禁见产品文档 **§A.3.2**（TTL 24h / grace 48h；Paddle 非 `active`/`trialing` 立刻降级；`past_due` 非 Pro）。
-- 扩展升级入口：官网 `/pricing`；管理入口：官网 `/account`（Paddle Customer Portal）。扩展**不**嵌 Paddle.js。
-- 官网：`POST /api/billing/checkout-session` `{ plan }` → Paddle checkout URL；`/checkout` 含 Paddle.js（Default payment link）。
-- Webhook：`POST /api/webhooks/paddle`，校验 `Paddle-Signature`（`PADDLE_WEBHOOK_SECRET`）。
-- 对账：`PADDLE_API_KEY` → `GET /subscriptions/{id}`；未配时门禁退化为投影+硬门槛（生产必须配齐）。
+- **结账价权威在 Dodo Product**；Yiveno 只维护 plan id → Product ID 与展示锚点（`backend/src/services/billing/plans.ts`）。标准展示价 **$7.99/月 · $59.99/年**。详见 `docs/pricing.md`。
+- **权益投影**在 Supabase `subscriptions`（非第二账本）；对账与门禁见产品文档 **§A.3.2**（TTL 24h / grace 48h；Dodo 非 `active` 立刻降级；`on_hold` 非 Pro）。
+- 扩展升级入口：官网 `/pricing`；管理入口：官网 `/account`（Dodo Customer Portal）。扩展**不**嵌 checkout SDK。
+- 官网：`POST /api/billing/checkout-session` `{ plan }` → Dodo hosted `checkout_url`（Worker 写入 `metadata.yiveno_user_id`）。
+- Webhook：`POST /api/webhooks/dodo`，校验 Standard Webhooks（`DODO_PAYMENTS_WEBHOOK_KEY`）。
+- 对账：`DODO_PAYMENTS_API_KEY` → `GET /subscriptions/{id}`；未配时门禁退化为投影+硬门槛（生产必须配齐）。
 - 对外档位：Free + **仅 Pro**（Power User / Team / `premium` 预留不售）
 - 云同步须有效 Pro（服务端门禁，不只看扩展本地 snapshot）
 - **禁止**生产手工授 Pro；开发假数据须 `test-` 前缀（门禁会拒绝）或短 `period_end`
 
-### Paddle 上线检查清单
+### Dodo 上线检查清单
 
-1. [ ] Paddle Billing 已建 Pro Monthly / Annual Price；Default payment link → `https://yiveno.com/checkout`
-2. [ ] Notification → `https://api.yiveno.com/api/webhooks/paddle`；`.env.*.local` 已设 `PADDLE_API_KEY`、`PADDLE_WEBHOOK_SECRET`、Price ID、`VITE_PADDLE_CLIENT_TOKEN`
-3. [ ] `bun run env:sync:prod && bun run env:check:prod`（website 出现 `PUBLIC_PADDLE_*`）；Worker Secrets 含 API key / webhook secret / Price ID
+1. [ ] Dodo 已建 Pro Monthly / Annual 订阅商品（test 与 live 各一套 `pdt_…`，不可混用）
+2. [ ] Webhook → `https://api.yiveno.com/api/webhooks/dodo`；`.env.*.local` 已设 `DODO_PAYMENTS_API_KEY`、`DODO_PAYMENTS_WEBHOOK_KEY`、`DODO_PAYMENTS_ENVIRONMENT`、Product ID
+3. [ ] `bun run env:sync:prod && bun run env:check:prod`；Worker Secrets 含 API key / webhook secret / Product ID
 4. [ ] 测试购买：webhook 写库（`verified`）→ 回扩展 Settings / 官网账户页自动对账 → `isPro` → 同步可用
-5. [ ] Paddle `canceled` / `past_due` / 全额退当前周期 → Refresh 或 Cron 后立刻收回；库内 `test-` 行不得为 Pro
+5. [ ] Dodo `cancelled`（立即）/ `on_hold` / 全额退当前周期 → Refresh 或 Cron 后立刻收回；库内 `test-` 行不得为 Pro
 
 ## 禁止事项
 

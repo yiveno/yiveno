@@ -1,6 +1,6 @@
 /**
  * GET /api/subscription — 扩展用 Supabase Bearer 查询当前用户是否 Pro。
- * 默认强制与 Paddle 对账（§A.3.2 Refresh）。
+ * 默认强制与 Dodo 对账（§A.3.2 Refresh）。
  */
 
 import { getUserSubscription } from '../data-access/supabase'

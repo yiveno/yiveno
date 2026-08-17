@@ -1,66 +1,22 @@
 ---
 /**
- * Paddle Default payment link 落地页。
- * 须含 Paddle.js；带 `_ptxn` 时自动打开对应 transaction checkout。
+ * Checkout 入口已迁到 /pricing（Worker 创建 Dodo hosted session）。
  */
 import MainLayout from '../layouts/MainLayout.astro'
 import AppNav from '../components/AppNav.astro'
 import '../styles/pages.css'
-
-const clientToken = (import.meta.env.PUBLIC_PADDLE_CLIENT_TOKEN || '').trim()
-const paddleEnvRaw = import.meta.env.PUBLIC_PADDLE_ENV
-if (paddleEnvRaw !== 'sandbox' && paddleEnvRaw !== 'production') {
-  throw new Error(
-    '[Billing] PUBLIC_PADDLE_ENV must be set to "sandbox" or "production" (never silently defaulted)'
-  )
-}
-const paddleEnv = paddleEnvRaw
-const websiteBase = (import.meta.env.PUBLIC_WEBSITE_URL || '').replace(/\/$/, '')
-const successUrl = `${websiteBase || 'http://localhost:3001'}/welcome`
 ---
 
-<MainLayout noindex title="Checkout · Yiveno" description="Complete your Yiveno checkout.">
+<MainLayout noindex title="Checkout · Yiveno" description="Start checkout from Yiveno pricing.">
   <AppNav slot="nav" />
   <article class="page page--narrow">
     <h1 class="page__title">Checkout</h1>
-    {
-      clientToken ? (
-        <p class="page__lede">Opening Paddle checkout…</p>
-      ) : (
-        <p class="page__lede">Checkout is not configured. Please contact support.</p>
-      )
-    }
+    <p class="page__lede">
+      Subscriptions start from the pricing page after you sign in. We never open checkout without
+      linking it to your Yiveno account.
+    </p>
     <p class="page__actions">
-      <a class="ui-btn ui-btn--ghost" href="/pricing">Back to pricing</a>
+      <a class="ui-btn ui-btn--primary" href="/pricing">Go to pricing</a>
     </p>
   </article>
-  {
-    clientToken && (
-      <script is:inline src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
-    )
-  }
-  {
-    clientToken && (
-      <script is:inline define:vars={{ clientToken, paddleEnv, successUrl }}>
-        const paddle = window.Paddle
-        if (!paddle) {
-          console.error('[Yiveno] Paddle.js failed to load')
-        } else {
-          if (paddleEnv === 'sandbox') {
-            paddle.Environment.set('sandbox')
-          }
-          paddle.Initialize({
-            token: clientToken,
-            checkout: {
-              settings: {
-                displayMode: 'overlay',
-                variant: 'one-page',
-                successUrl
-              }
-            }
-          })
-        }
-      </script>
-    )
-  }
 </MainLayout>

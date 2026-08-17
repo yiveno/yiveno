@@ -2,29 +2,27 @@ import { afterEach, describe, expect, jest, test } from 'bun:test'
 
 import type { Subscription } from '@yiveno/types'
 import type { Env } from '../../types/env'
-import type { PaddleWebhookEvent } from './paddle-webhook'
-import { projectPaddleWebhook } from './projection'
+import type { DodoWebhookEvent } from './dodo-webhook'
+import { projectDodoWebhook } from './projection'
 
 const USER_ID = '11111111-1111-4111-8111-111111111111'
-const SUB_ID = 'sub_01h1vjes1y163hjs1s211srxny'
+const SUB_ID = 'sub_Iuaq622bbmmfOGrVTqdXv'
 const env = {} as Env
 
 function subscriptionEvent(
-  overrides: Partial<PaddleWebhookEvent> & { data?: Record<string, unknown> } = {}
-): PaddleWebhookEvent {
+  overrides: Partial<DodoWebhookEvent> & { data?: Record<string, unknown> } = {}
+): DodoWebhookEvent {
   return {
     eventId: 'evt_01proj00000000000000000001',
-    eventType: 'subscription.created',
+    eventType: 'subscription.active',
     occurredAt: '2026-08-14T00:00:00.000Z',
     data: {
-      id: SUB_ID,
+      subscription_id: SUB_ID,
       status: 'active',
-      customer_id: 'ctm_01abc',
-      custom_data: { yiveno_user_id: USER_ID },
-      current_billing_period: {
-        starts_at: '2026-08-01T00:00:00.000Z',
-        ends_at: '2026-09-01T00:00:00.000Z'
-      },
+      customer_id: 'cus_TV52uJWWXt2yIoBBxpjaa',
+      metadata: { yiveno_user_id: USER_ID },
+      previous_billing_date: '2026-08-01T00:00:00.000Z',
+      next_billing_date: '2026-09-01T00:00:00.000Z',
       ...(overrides.data ?? {})
     },
     ...overrides
@@ -40,7 +38,7 @@ const existingRow: Subscription = {
   provider_subscription_id: SUB_ID
 }
 
-describe('projectPaddleWebhook', () => {
+describe('projectDodoWebhook', () => {
   afterEach(() => {
     jest.restoreAllMocks()
   })
@@ -50,7 +48,7 @@ describe('projectPaddleWebhook', () => {
     const insert = jest.spyOn(supabase, 'insertBillingEvent').mockResolvedValue(false)
     const upsert = jest.spyOn(supabase, 'upsertSubscription').mockResolvedValue(existingRow)
 
-    const result = await projectPaddleWebhook(env, subscriptionEvent(), '{}')
+    const result = await projectDodoWebhook(env, subscriptionEvent(), '{}')
     expect(result.outcome).toBe('duplicate')
     expect(insert).toHaveBeenCalled()
     expect(upsert).not.toHaveBeenCalled()
@@ -61,22 +59,24 @@ describe('projectPaddleWebhook', () => {
     jest.spyOn(supabase, 'insertBillingEvent').mockResolvedValue(true)
     const upsert = jest.spyOn(supabase, 'upsertSubscription').mockResolvedValue(existingRow)
 
-    const result = await projectPaddleWebhook(
+    const result = await projectDodoWebhook(
       env,
-      subscriptionEvent({ data: { id: SUB_ID, status: 'active', custom_data: {} } }),
+      subscriptionEvent({
+        data: { subscription_id: SUB_ID, status: 'active', metadata: {} }
+      }),
       '{}'
     )
     expect(result).toEqual({ outcome: 'rejected', reason: 'missing_user_id' })
     expect(upsert).not.toHaveBeenCalled()
   })
 
-  test('subscription.created 写入 active 投影', async () => {
+  test('subscription.active 写入 active 投影', async () => {
     const supabase = await import('../../data-access/supabase')
     jest.spyOn(supabase, 'insertBillingEvent').mockResolvedValue(true)
     jest.spyOn(supabase, 'getSubscriptionByProviderId').mockResolvedValue(null)
     const upsert = jest.spyOn(supabase, 'upsertSubscription').mockResolvedValue(existingRow)
 
-    const result = await projectPaddleWebhook(env, subscriptionEvent(), '{}')
+    const result = await projectDodoWebhook(env, subscriptionEvent(), '{}')
     expect(result.outcome).toBe('applied')
     expect(upsert).toHaveBeenCalled()
     const patch = upsert.mock.calls[0]?.[1]
@@ -91,15 +91,16 @@ describe('projectPaddleWebhook', () => {
     jest.spyOn(supabase, 'getSubscriptionByProviderId').mockResolvedValue(null)
     const upsert = jest.spyOn(supabase, 'upsertSubscription').mockResolvedValue(existingRow)
 
-    const result = await projectPaddleWebhook(
+    const result = await projectDodoWebhook(
       env,
       subscriptionEvent({
-        eventType: 'subscription.updated',
+        eventType: 'subscription.cancelled',
         data: {
-          id: SUB_ID,
-          status: 'active',
-          custom_data: { yiveno_user_id: USER_ID },
-          scheduled_change: { action: 'cancel', effective_at: '2026-09-01T00:00:00.000Z' }
+          subscription_id: SUB_ID,
+          status: 'cancelled',
+          metadata: { yiveno_user_id: USER_ID },
+          cancel_at_next_billing_date: true,
+          next_billing_date: '2026-09-01T00:00:00.000Z'
         }
       }),
       '{}'
@@ -121,21 +122,19 @@ describe('projectPaddleWebhook', () => {
       .spyOn(supabase, 'insertPaymentRecord')
       .mockImplementation(async (_env, payment) => payment)
 
-    const result = await projectPaddleWebhook(
+    const result = await projectDodoWebhook(
       env,
       {
         eventId: 'evt_refund_full',
-        eventType: 'adjustment.updated',
+        eventType: 'refund.succeeded',
         occurredAt: '2026-08-14T01:00:00.000Z',
         data: {
-          id: 'adj_01full',
-          action: 'refund',
-          status: 'approved',
-          type: 'full',
+          refund_id: 'ref_01full',
           subscription_id: SUB_ID,
-          transaction_id: 'txn_01abc',
-          currency_code: 'USD',
-          totals: { total: '799' }
+          payment_id: 'pay_01abc',
+          currency: 'USD',
+          total_amount: 799,
+          is_partial: false
         }
       },
       '{}'
@@ -152,19 +151,17 @@ describe('projectPaddleWebhook', () => {
     const upsert = jest.spyOn(supabase, 'upsertSubscription').mockResolvedValue(existingRow)
     jest.spyOn(supabase, 'insertPaymentRecord').mockImplementation(async (_env, payment) => payment)
 
-    const result = await projectPaddleWebhook(
+    const result = await projectDodoWebhook(
       env,
       {
         eventId: 'evt_refund_partial',
-        eventType: 'adjustment.updated',
+        eventType: 'refund.succeeded',
         occurredAt: '2026-08-14T01:00:00.000Z',
         data: {
-          id: 'adj_01part',
-          action: 'refund',
-          status: 'approved',
-          type: 'partial',
+          refund_id: 'ref_01part',
           subscription_id: SUB_ID,
-          transaction_id: 'txn_01abc'
+          payment_id: 'pay_01abc',
+          is_partial: true
         }
       },
       '{}'
@@ -180,7 +177,7 @@ describe('projectPaddleWebhook', () => {
     jest.spyOn(supabase, 'upsertSubscription').mockRejectedValue(new Error('db down'))
     const del = jest.spyOn(supabase, 'deleteBillingEvent').mockResolvedValue()
 
-    await expect(projectPaddleWebhook(env, subscriptionEvent(), '{}')).rejects.toThrow('db down')
+    await expect(projectDodoWebhook(env, subscriptionEvent(), '{}')).rejects.toThrow('db down')
     expect(del).toHaveBeenCalledWith(env, 'evt_01proj00000000000000000001')
   })
 })

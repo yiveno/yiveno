@@ -9,6 +9,11 @@ export interface UserSubscription {
   cancelAtPeriodEnd?: boolean
 }
 
+/** 官网快照是否为有效 Pro（含周期结束取消、期内仍 Pro）。 */
+export function isActiveProSnapshot(sub: UserSubscription | null | undefined): boolean {
+  return sub?.tier === 'pro' && sub.status === 'active'
+}
+
 /**
  * 查询当前登录用户订阅（须传 Supabase access token；禁止信任裸 userId）。
  */

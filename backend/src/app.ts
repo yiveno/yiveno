@@ -18,7 +18,7 @@ import { adminRouter } from './routes/admin'
 import { authRouter } from './routes/auth'
 import { aiRouter } from './routes/ai'
 import { billingRouter } from './routes/billing'
-import { paddleWebhookRouter } from './routes/webhooks-paddle'
+import { dodoWebhookRouter } from './routes/webhooks-dodo'
 import { accountRouter } from './routes/account'
 import { memorySyncRouter } from './routes/memory-sync'
 import { websiteRouter } from './routes/website'
@@ -84,7 +84,7 @@ export function createApp() {
   app.route('/api/account', accountRouter)
 
   app.route('/api/billing', billingRouter)
-  app.route('/api/webhooks/paddle', paddleWebhookRouter)
+  app.route('/api/webhooks/dodo', dodoWebhookRouter)
 
   app.route('/api/website', websiteRouter)
 

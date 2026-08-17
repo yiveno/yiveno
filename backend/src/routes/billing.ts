@@ -1,16 +1,17 @@
 /**
  * 计费路由：套餐目录、checkout、Customer Portal。
- * 不授 Pro；Pro 只来自已验签的 Paddle webhook / 对账。
+ * 不授 Pro；Pro 只来自已验签的 Dodo webhook / 对账。
  */
 
 import { Hono } from 'hono'
-import { createPaddleCheckout, createPaddlePortalSession } from '../services/billing/paddle-client'
+import { createDodoCheckout, createDodoPortalSession } from '../services/billing/dodo-client'
 import {
   listPublicPlans,
   parseBillingPlanId,
-  resolvePaddlePriceId
+  resolveDodoProductId
 } from '../services/billing/plans'
 import { getLatestUserSubscriptionRow } from '../data-access/supabase'
+import { getSubscriptionStatusOrThrow } from '../handlers/subscription'
 import { supabaseAuth } from '../middleware/supabase-auth'
 import type { Env } from '../types/env'
 import { error as logErrorMessage, info } from '../utils/logger'
@@ -26,7 +27,11 @@ type BillingVars = {
 
 export const billingRouter = new Hono<BillingVars>()
 
-/** GET /api/billing/plans — 公开目录（无 Price ID） */
+function websiteBase(env: Env): string {
+  return (env.WEBSITE_URL || '').replace(/\/$/, '') || 'https://yiveno.com'
+}
+
+/** GET /api/billing/plans — 公开目录（无 Product ID） */
 billingRouter.get('/plans', c => {
   return c.json({ success: true, data: { plans: listPublicPlans(c.env) } })
 })
@@ -51,17 +56,34 @@ billingRouter.post('/checkout-session', async c => {
     return c.json({ error: 'invalid_plan' }, 400)
   }
 
-  const priceId = resolvePaddlePriceId(c.env, plan)
-  if (!priceId) {
-    logErrorMessage('[Billing] 套餐未配置 Paddle Price ID', { plan })
+  const productId = resolveDodoProductId(c.env, plan)
+  if (!productId) {
+    logErrorMessage('[Billing] 套餐未配置 Dodo Product ID', { plan })
     return c.json({ error: 'plan_not_configured' }, 503)
   }
 
+  info('[Billing] checkout-session 开始', { userId, plan })
+  // 有效 Pro（含周期结束取消仍在期内）不得再开新单，改走 Customer Portal。
+  const entitlement = await getSubscriptionStatusOrThrow(c.env, userId, { reconcile: true })
+  if (entitlement.isPro) {
+    info('[Billing] 已是有效 Pro，拒绝新 checkout', {
+      userId,
+      status: entitlement.status,
+      cancelAtPeriodEnd: entitlement.cancelAtPeriodEnd
+    })
+    return c.json({ error: 'already_subscribed' }, 409)
+  }
+
   info('[Billing] 创建 checkout-session', { userId, plan })
-  const result = await createPaddleCheckout(c.env, { userId, priceId, email })
+  const result = await createDodoCheckout(c.env, {
+    userId,
+    productId,
+    email,
+    returnUrl: `${websiteBase(c.env)}/welcome`
+  })
   if (!result.ok) {
     return c.json(
-      { error: result.reason === 'not_configured' ? 'paddle_not_configured' : 'checkout_failed' },
+      { error: result.reason === 'not_configured' ? 'dodo_not_configured' : 'checkout_failed' },
       result.reason === 'not_configured' ? 503 : 502
     )
   }
@@ -78,10 +100,10 @@ billingRouter.post('/portal-session', async c => {
   }
 
   info('[Billing] 创建 portal-session', { userId })
-  const result = await createPaddlePortalSession(c.env, customerId)
+  const result = await createDodoPortalSession(c.env, customerId, `${websiteBase(c.env)}/account`)
   if (!result.ok) {
     return c.json(
-      { error: result.reason === 'not_configured' ? 'paddle_not_configured' : 'portal_failed' },
+      { error: result.reason === 'not_configured' ? 'dodo_not_configured' : 'portal_failed' },
       result.reason === 'not_configured' ? 503 : 502
     )
   }

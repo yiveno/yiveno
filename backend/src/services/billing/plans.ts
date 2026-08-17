@@ -1,6 +1,6 @@
 /**
  * Yiveno 计费套餐目录（展示锚点的唯一代码源）。
- * 结账权威在 Paddle Price；客户端只传 plan id。
+ * 结账权威在 Dodo Product；客户端只传 plan id。
  */
 
 import type { Env } from '../../types/env'
@@ -52,13 +52,13 @@ export function parseBillingPlanId(raw: unknown, env: Env): BillingPlanId | null
   return raw as BillingPlanId
 }
 
-/** 套餐 → Paddle Price ID（来自 Worker env）。 */
-export function resolvePaddlePriceId(env: Env, planId: BillingPlanId): string | null {
+/** 套餐 → Dodo Product ID（来自 Worker env）。 */
+export function resolveDodoProductId(env: Env, planId: BillingPlanId): string | null {
   const map: Record<BillingPlanId, string | undefined> = {
-    pro_monthly: env.PADDLE_PRICE_ID_PRO_MONTHLY,
-    pro_annual: env.PADDLE_PRICE_ID_PRO_ANNUAL,
-    founding_monthly: env.PADDLE_PRICE_ID_FOUNDING_MONTHLY,
-    founding_annual: env.PADDLE_PRICE_ID_FOUNDING_ANNUAL
+    pro_monthly: env.DODO_PRODUCT_ID_PRO_MONTHLY,
+    pro_annual: env.DODO_PRODUCT_ID_PRO_ANNUAL,
+    founding_monthly: env.DODO_PRODUCT_ID_FOUNDING_MONTHLY,
+    founding_annual: env.DODO_PRODUCT_ID_FOUNDING_ANNUAL
   }
   const value = (map[planId] || '').trim()
   return value || null

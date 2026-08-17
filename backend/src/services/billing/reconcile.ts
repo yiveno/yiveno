@@ -1,5 +1,5 @@
 /**
- * 将投影与 Paddle subscription 对齐（§A.3.2）
+ * 将投影与 Dodo subscription 对齐（§A.3.2）
  */
 
 import type { Subscription } from '@yiveno/types'
@@ -11,14 +11,18 @@ import {
 import type { Env } from '../../types/env'
 import { error as logErrorMessage, info, warn } from '../../utils/logger'
 import { ENTITLEMENT_VERIFY_TTL_MS } from './entitlement-policy'
-import { expireSubscriptionPatch, snapshotToSubscriptionRecord } from './normalize'
-import { fetchPaddleSubscription } from './paddle-client'
+import {
+  expireSubscriptionPatch,
+  isDodoAccessActive,
+  snapshotToSubscriptionRecord
+} from './normalize'
+import { fetchDodoSubscription } from './dodo-client'
 import { isFakeProviderSubscriptionId } from './subscription-id'
 
 export type ReconcileOutcome = {
   /** 对账后是否有效 Pro */
   isPro: boolean
-  /** Paddle API 是否失败（含未配置） */
+  /** Dodo API 是否失败（含未配置） */
   apiFailed: boolean
   subscription: Subscription | null
   reason: string
@@ -27,7 +31,7 @@ export type ReconcileOutcome = {
 async function applyFetchResult(
   env: Env,
   row: Subscription,
-  fetched: Awaited<ReturnType<typeof fetchPaddleSubscription>>
+  fetched: Awaited<ReturnType<typeof fetchDodoSubscription>>
 ): Promise<ReconcileOutcome> {
   if (fetched.ok === false) {
     if (fetched.reason === 'not_found') {
@@ -54,20 +58,25 @@ async function applyFetchResult(
     }
   }
 
-  const status = fetched.subscription.status
-  if (status !== 'active' && status !== 'trialing') {
-    const expired = await upsertSubscription(env, expireSubscriptionPatch(row, status, 'verified'))
+  const record = snapshotToSubscriptionRecord(fetched.subscription, row.user_id, 'dodo_verify')
+  if (!isDodoAccessActive(record.status ?? 'expired')) {
+    const expired = await upsertSubscription(
+      env,
+      expireSubscriptionPatch(row, fetched.subscription.status, 'verified')
+    )
     info('[BillingReconcile] 非 active，立刻降级', {
       userId: row.user_id,
-      paddleStatus: status
+      dodoStatus: fetched.subscription.status
     })
-    return { isPro: false, apiFailed: false, subscription: expired, reason: `ended:${status}` }
+    return {
+      isPro: false,
+      apiFailed: false,
+      subscription: expired,
+      reason: `ended:${fetched.subscription.status}`
+    }
   }
 
-  const activated = await upsertSubscription(
-    env,
-    snapshotToSubscriptionRecord(fetched.subscription, row.user_id, 'paddle_verify')
-  )
+  const activated = await upsertSubscription(env, record)
   info('[BillingReconcile] active，已对齐 Pro', { userId: row.user_id })
   return { isPro: true, apiFailed: false, subscription: activated, reason: 'active' }
 }
@@ -95,7 +104,7 @@ export async function reconcileUserSubscription(
     return { isPro: false, apiFailed: false, subscription: expired, reason: 'fake_id' }
   }
 
-  const fetched = await fetchPaddleSubscription(env, subId!)
+  const fetched = await fetchDodoSubscription(env, subId!)
   return applyFetchResult(env, row, fetched)
 }
 
@@ -122,7 +131,7 @@ export async function reconcileStaleActiveSubscriptions(env: Env): Promise<{
         degraded++
         continue
       }
-      const fetched = await fetchPaddleSubscription(env, row.provider_subscription_id!)
+      const fetched = await fetchDodoSubscription(env, row.provider_subscription_id!)
       const outcome = await applyFetchResult(env, row, fetched)
       if (!outcome.isPro && !outcome.apiFailed) {
         degraded++

@@ -54,16 +54,16 @@ export type Env = Cloudflare.Env & {
   CLEANUP_MEMORY_SYNC_BACKUPS_KEEP?: string
   /** subscriptions / payment_records 软删保留天数。 */
   CLEANUP_SOFT_DELETE_RETENTION_DAYS?: string
-  /** Paddle Billing API key；checkout / 对账；生产必配 */
-  PADDLE_API_KEY?: string
-  /** Paddle notification destination secret */
-  PADDLE_WEBHOOK_SECRET?: string
-  /** sandbox | production */
-  PADDLE_ENV?: string
-  PADDLE_PRICE_ID_PRO_MONTHLY?: string
-  PADDLE_PRICE_ID_PRO_ANNUAL?: string
-  PADDLE_PRICE_ID_FOUNDING_MONTHLY?: string
-  PADDLE_PRICE_ID_FOUNDING_ANNUAL?: string
+  /** Dodo Payments API key；checkout / 对账；生产必配 */
+  DODO_PAYMENTS_API_KEY?: string
+  /** Dodo Standard Webhooks signing secret（whsec_…） */
+  DODO_PAYMENTS_WEBHOOK_KEY?: string
+  /** test_mode | live_mode；缺省按 test_mode */
+  DODO_PAYMENTS_ENVIRONMENT?: string
+  DODO_PRODUCT_ID_PRO_MONTHLY?: string
+  DODO_PRODUCT_ID_PRO_ANNUAL?: string
+  DODO_PRODUCT_ID_FOUNDING_MONTHLY?: string
+  DODO_PRODUCT_ID_FOUNDING_ANNUAL?: string
   /** "true" 时开放 Founding 套餐 */
   BILLING_FOUNDING_ENABLED?: string
   /** 订阅定时对账开关；"false" 关闭 */

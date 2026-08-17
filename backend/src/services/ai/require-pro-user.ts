@@ -26,9 +26,9 @@ export async function isActiveProUser(env: Env, userId: string): Promise<boolean
     return false
   }
 
-  const accessToken = (env.PADDLE_API_KEY || '').trim()
+  const accessToken = (env.DODO_PAYMENTS_API_KEY || '').trim()
   if (!accessToken) {
-    warn('[ProGate] 未配置 PADDLE_API_KEY，仅用投影门禁（生产须配置）')
+    warn('[ProGate] 未配置 DODO_PAYMENTS_API_KEY，仅用投影门禁（生产须配置）')
     return true
   }
 

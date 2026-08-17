@@ -2,7 +2,11 @@
 import type { User } from '@supabase/supabase-js'
 import { onMounted, onUnmounted, ref, computed } from 'vue'
 import { getSupabase } from '../services/supabase'
-import { getUserSubscription, type UserSubscription } from '../services/subscription'
+import {
+  getUserSubscription,
+  isActiveProSnapshot,
+  type UserSubscription
+} from '../services/subscription'
 import { formatDate } from '../services/date'
 import {
   captureExtensionConnectParamsFromUrl,
@@ -24,9 +28,7 @@ const accessToken = ref<string | null>(null)
 const loading = ref(true)
 const extensionSyncStatus = ref<'idle' | 'syncing' | 'ok' | 'skipped' | 'failed'>('idle')
 
-const isPro = computed(
-  () => subscription.value?.tier === 'pro' && subscription.value?.status === 'active'
-)
+const isPro = computed(() => isActiveProSnapshot(subscription.value))
 
 const checkoutBusy = ref(false)
 const checkoutError = ref('')
@@ -47,13 +49,28 @@ async function startMonthlyCheckout(): Promise<void> {
   if (!accessToken.value) return
   checkoutError.value = ''
   checkoutBusy.value = true
-  const url = await createCheckoutSession(accessToken.value, 'pro_monthly')
-  checkoutBusy.value = false
-  if (!url) {
-    checkoutError.value = 'Could not start checkout. Try again.'
-    return
+  try {
+    await loadSubscription()
+    if (isPro.value) {
+      console.warn('[Account] 已是有效 Pro，跳过 checkout')
+      checkoutError.value = 'This account already has Pro. Manage it from your subscription.'
+      return
+    }
+    const result = await createCheckoutSession(accessToken.value, 'pro_monthly')
+    if (result.status === 'already_subscribed') {
+      await loadSubscription()
+      console.warn('[Account] Worker 判定已是 Pro，拒绝新 checkout')
+      checkoutError.value = 'This account already has Pro. Manage it from your subscription.'
+      return
+    }
+    if (result.status !== 'ok') {
+      checkoutError.value = 'Could not start checkout. Try again.'
+      return
+    }
+    window.location.assign(result.checkoutUrl)
+  } finally {
+    checkoutBusy.value = false
   }
-  window.location.assign(url)
 }
 
 async function openPortal(): Promise<void> {
@@ -184,7 +201,7 @@ async function handleSignOut() {
         <p class="hint">
           Need a refund or other help?
           <a href="/support">Support</a>
-          — cancellations are in Manage subscription; refunds go through Paddle.
+          — cancellations are in Manage subscription; refunds go through Dodo Payments.
         </p>
         <p v-if="checkoutError" class="hint error">{{ checkoutError }}</p>
       </section>
