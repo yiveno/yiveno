@@ -70,6 +70,7 @@ components:
 
 > **Normative companion (中文完整标准):** [`docs/design/Yiveno-设计标准-v1.md`](docs/design/Yiveno-设计标准-v1.md)  
 > **Product truth:** [`docs/product/Yiveno-产品文档-v4.0.md`](docs/product/Yiveno-产品文档-v4.0.md) §0  
+> **Brand assets:** [`docs/design/brand-assets/README.md`](docs/design/brand-assets/README.md)  
 > **Authority:** Website is the **brand core + color lab**. Complete product-role tokens on the site first, then migrate outward. Material Theme color pipelines are **deprecated** (Material Symbols icons may remain). Legacy `forest` / blue–purple experiments are not brand standard.
 
 ## Overview

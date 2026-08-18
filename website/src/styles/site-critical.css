@@ -53,7 +53,7 @@
   --nav-bg: var(--surface);
   --nav-fg: var(--on-surface);
   --nav-brand: var(--on-surface);
-  --nav-muted: var(--on-surface-muted);
+  --nav-muted: color-mix(in srgb, var(--on-surface) 68%, transparent);
   --nav-line: var(--border);
   --z-nav: 60;
 }
@@ -106,7 +106,7 @@ body {
 /* 占位防 async footer 样式到达时撑高 → CLS（短页 footer 在视口内） */
 .site-footer {
   flex-shrink: 0;
-  min-height: 72px;
+  min-height: 84px;
 }
 
 h1,
@@ -125,9 +125,9 @@ h3,
 /* 首页：纸面底；Nav 悬于 Hero 时仅改文字色 */
 body[data-chrome='home'] {
   --nav-bg: transparent;
-  --nav-brand: rgba(220, 234, 224, 0.95);
-  --nav-fg: rgba(200, 218, 206, 0.9);
-  --nav-muted: rgba(200, 218, 206, 0.4);
+  --nav-brand: rgba(236, 244, 238, 0.98);
+  --nav-fg: rgba(220, 234, 224, 0.96);
+  --nav-muted: rgba(210, 228, 216, 0.78);
   --nav-line: transparent;
   background: var(--paper);
   color: var(--charcoal);
@@ -136,8 +136,8 @@ body[data-chrome='home'] {
 body[data-chrome='home'][data-nav-over-hero='false'] {
   --nav-bg: transparent;
   --nav-brand: var(--charcoal);
-  --nav-fg: rgba(34, 44, 36, 0.9);
-  --nav-muted: rgba(34, 44, 36, 0.45);
+  --nav-fg: var(--charcoal);
+  --nav-muted: color-mix(in srgb, var(--charcoal) 62%, transparent);
   --nav-line: transparent;
 }
 
@@ -175,7 +175,7 @@ img {
   display: flex;
   align-items: center;
   gap: clamp(1rem, 2.8vw, 2.1rem);
-  height: 60px;
+  height: 68px;
   padding: 0 var(--pad-x);
   background: var(--nav-bg);
   color: var(--nav-fg);
@@ -192,23 +192,22 @@ img {
 .site-nav__brand {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
+  gap: 11px;
   text-decoration: none;
   color: var(--nav-brand, inherit);
 }
 
 .site-nav__logo {
   display: block;
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
   flex-shrink: 0;
-  opacity: 0.9;
 }
 
 .site-nav__name {
   font-family: var(--font-display);
   font-weight: 500;
-  font-size: 17px;
+  font-size: 19px;
   letter-spacing: -0.025em;
   line-height: 1;
   color: var(--nav-brand, inherit);
@@ -222,8 +221,8 @@ img {
 .site-nav__link {
   text-decoration: none;
   color: var(--nav-muted);
-  font-size: 13.5px;
-  font-weight: 400;
+  font-size: 15px;
+  font-weight: 500;
   letter-spacing: 0.005em;
   transition: color 0.18s ease;
 }

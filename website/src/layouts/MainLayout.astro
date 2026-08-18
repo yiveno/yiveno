@@ -32,7 +32,7 @@ const waitlistNav = chrome === 'home'
 const canonicalOrigin = 'https://yiveno.com'
 const pathname = Astro.url.pathname.replace(/\/$/, '') || '/'
 const canonicalUrl = `${canonicalOrigin}${pathname === '/' ? '/' : pathname}`
-const ogImage = `${canonicalOrigin}/og-image.png`
+const ogImage = `${canonicalOrigin}/og-image.jpg`
 
 /** 仅内联首屏所需 CSS；site/home deferred 异步加载（可长缓存） */
 const fontsCriticalCss = minifyCss(fontsCriticalCssRaw)
@@ -142,7 +142,7 @@ const softwareJsonLd = {
     </main>
     <footer class="site-footer">
       <a class="site-footer__brand" href="/">
-        <YMark class="site-footer__logo" size={16} />
+        <YMark class="site-footer__logo" size={22} />
         <span class="site-footer__name">Yiveno</span>
         <span class="site-footer__meta">· © 2026</span>
       </a>

@@ -1,39 +1,84 @@
 ---
 /**
- * Make 设计稿中的抽象 Y 标（与 Figma Make App.tsx YMark 一致）。
- * 默认 currentColor，随父级文字色变化（Nav / Footer 无需双份 SVG）。
+ * 官网品牌 mark。
+ * 浅底用 logo-mark.svg；深底用 logo-mark-on-dark.svg。
  */
 interface Props {
   size?: number
-  /** 固定描边色；缺省用 currentColor */
-  stroke?: string
   class?: string
+  /** 首页 Nav：随 body[data-nav-over-hero] 在深/浅 mark 间切换 */
+  adaptiveNav?: boolean
 }
 
-const { size = 22, stroke = 'currentColor', class: className } = Astro.props
+const { size = 22, class: className, adaptiveNav = false } = Astro.props
 ---
 
-<svg
-  class={className}
-  width={size}
-  height={size}
-  viewBox="0 0 22 22"
-  fill="none"
-  aria-hidden="true"
->
-  <circle cx="11" cy="11" r="10" stroke={stroke} stroke-opacity="0.3" stroke-width="1"></circle>
-  <path
-    d="M7.2 6L11 11.4L14.8 6"
-    stroke={stroke}
-    stroke-width="1.5"
-    stroke-linecap="round"
-    stroke-linejoin="round"></path>
-  <line
-    x1="11"
-    y1="11.4"
-    x2="11"
-    y2="16.2"
-    stroke={stroke}
-    stroke-width="1.5"
-    stroke-linecap="round"></line>
-</svg>
+{
+  adaptiveNav ? (
+    <span class:list={['y-mark', 'y-mark--adaptive-nav', className]} style={`width:${size}px;height:${size}px`}>
+      <img
+        class="y-mark__img y-mark__img--on-light-bg"
+        src="/images/logo-mark.svg"
+        alt=""
+        width={size}
+        height={size}
+        decoding="async"
+        aria-hidden="true"
+      />
+      <img
+        class="y-mark__img y-mark__img--on-dark-bg"
+        src="/images/logo-mark-on-dark.svg"
+        alt=""
+        width={size}
+        height={size}
+        decoding="async"
+        aria-hidden="true"
+      />
+    </span>
+  ) : (
+    <img
+      class={className}
+      src="/images/logo-mark.svg"
+      alt=""
+      width={size}
+      height={size}
+      decoding="async"
+      aria-hidden="true"
+    />
+  )
+}
+
+<style>
+  img,
+  .y-mark {
+    display: block;
+    object-fit: contain;
+  }
+
+  .y-mark--adaptive-nav {
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .y-mark__img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  /* 默认与浅底区：原 logo */
+  .y-mark__img--on-dark-bg {
+    display: none;
+  }
+
+  /* Hero 深底 Nav：浅色 logo */
+  :global(body[data-chrome='home'][data-nav-over-hero='true']) .y-mark--adaptive-nav .y-mark__img--on-light-bg {
+    display: none;
+  }
+
+  :global(body[data-chrome='home'][data-nav-over-hero='true']) .y-mark--adaptive-nav .y-mark__img--on-dark-bg {
+    display: block;
+  }
+</style>

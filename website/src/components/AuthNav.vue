@@ -43,8 +43,8 @@ onMounted(async () => {
 .nav-link {
   text-decoration: none;
   color: var(--nav-muted, #555);
-  font-size: 13.5px;
-  font-weight: 400;
+  font-size: 15px;
+  font-weight: 500;
   letter-spacing: 0.005em;
 }
 

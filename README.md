@@ -119,6 +119,22 @@ bun run build:fe:prod
 
 ---
 
+## 🎨 品牌资产入口
+
+后续找品牌规范、logo 母本、favicon、商店宣传图，优先看这 4 个入口：
+
+- 视觉规范：`docs/design/Yiveno-设计标准-v1.md`
+- 设计摘要：`DESIGN.md`
+- 项目内正式品牌资产目录：`docs/design/brand-assets/README.md`
+- 历史导出流程参考：`docs/design/Yiveno-logo-asset-generation-prompt.md`
+
+运行时使用中的资产位置：
+
+- 扩展：`frontend/public/images/`
+- 官网：`website/public/`
+
+---
+
 ## 📂 项目结构
 
 ```
@@ -161,7 +177,8 @@ Yiveno/                             # Monorepo 根目录
 │   └── knip-runner.mjs            # Dead code 检测
 │
 ├── docs/                           # 项目文档
-│   └── product/                   # 产品文档（v4.0 为唯一正文）
+│   ├── product/                   # 产品文档（v4.0 为唯一正文）
+│   └── design/                    # 设计规范与品牌资产索引
 │
 ├── supabase/                       # 数据库迁移 (Supabase CLI)
 ├── dist/                           # 扩展构建产物 (gitignore)

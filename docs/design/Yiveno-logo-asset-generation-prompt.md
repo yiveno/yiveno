@@ -1,6 +1,7 @@
 # Yiveno Logo 物料生成 Prompt（喂给 AI / 设计工具）
 
 > **色彩权威：** 服从 [`Yiveno-设计标准-v1.md`](./Yiveno-设计标准-v1.md) Brand Core（Ink `#192420` / Paper `#f0f3ee` / Sage `#4b6054`）。旧蓝紫实验色已废止。  
+> **当前正式素材入口：** 优先看 [`brand-assets/README.md`](./brand-assets/README.md)；项目内常驻品牌母本位于 `docs/design/brand-assets/`。  
 > **用法：** 将下方「--- PROMPT START ---」到「--- PROMPT END ---」整段复制给 AI（或 Figma/Export 自动化），并在同一条消息中 **附上你的 SVG 源文件**（`logo-mark.svg` 及可选的 `logo-full.svg`）。  
 > **产物目标：** 可直接替换本仓库 `frontend/public/images/` 与 `website/public/` 中的对应文件。
 
