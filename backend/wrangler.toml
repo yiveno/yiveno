@@ -58,6 +58,10 @@ preview_id = "1bc22ced5a424d55ad14ca9f748ba900"
 [ai]
 binding = "AI"
 
+# 产品欢迎信（§A.3）；不限制 destination，以便发给付款用户
+[[send_email]]
+name = "EMAIL"
+
 # Custom Domain 仅挂 production（`bun run deploy` → wrangler deploy --env production）。
 # 顶层不声明 routes，避免默认/其它 env 误继承抢占域名。
 [env.production]
@@ -87,3 +91,6 @@ preview_id = "1bc22ced5a424d55ad14ca9f748ba900"
 
 [env.production.ai]
 binding = "AI"
+
+[[env.production.send_email]]
+name = "EMAIL"

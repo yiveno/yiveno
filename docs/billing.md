@@ -11,6 +11,7 @@ Dodo → POST /api/webhooks/dodo（Standard Webhooks 验签）
     → billing_events 占位（幂等）
     → subscriptions / payment_records 投影
     → isPro / 云同步门禁
+    →（仅首次授 Pro / applied）异步产品欢迎信
 ```
 
 Refresh / 账户页 / Cron 用 `DODO_PAYMENTS_API_KEY` 拉 `GET /subscriptions/{id}` 对账。扩展不嵌 Dodo checkout：升级 → `/pricing`（Worker 创建 Checkout Session 后跳转 hosted 页），管理 → `/account` → Customer Portal。
@@ -34,6 +35,16 @@ Refresh / 账户页 / Cron 用 `DODO_PAYMENTS_API_KEY` 拉 `GET /subscriptions/{
 `refund.succeeded`（全额退款立刻收回；部分退款维持 Pro）
 
 未知 event：验签后记入事件账并 200，不崩。续费走 `subscription.renewed`。
+
+## 产品欢迎信（未上线）
+
+与 Dodo 付款收据分开。规范：产品文档 **§A.3**。须 **Workers Paid** + `yiveno.com` Email Sending；未开通前代码可留、不发信、不 5xx webhook。
+
+- **触发**：`subscription.active` 且投影 `applied`（已授 Pro）。`rejected` / `duplicate` / 乱序 / Dashboard 示例不发。
+- **通道**：Cloudflare Email Sending；Worker 绑定 `EMAIL`；发件 `hello@yiveno.com`。
+- **收件人**：payload `customer.email`，否则 Supabase Auth。
+- **幂等**：同一 `webhook-id` 不二次投影，故不重发。
+- **失败**：投影已 200 后 `waitUntil` 发送；发信失败只打日志，webhook 仍成功。
 
 ## 本地 / 生产
 

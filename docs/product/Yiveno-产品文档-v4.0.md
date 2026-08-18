@@ -1020,6 +1020,7 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 5. 官网 `/pricing` 权益与锚点价正确；`/account` 可升级/管理（Bearer；进页与回焦自动对账）。
 6. Dodo `cancelled`（立即）/ `on_hold` / 非 `active`（及全额退当前周期）：Refresh 或下一小时 Cron → **立刻** Free；同步被关；Worker sync 返回 `pro_required`。
 7. 库内非 `sub_` 形态的假订阅 ID：门禁与账户页均不得为 Pro。
+8. **产品欢迎信（未上线，不阻塞本条验收）：** 须 Workers Paid + Email Sending。开通后：首次授 Pro 成功，登录邮箱收到 Yiveno 英文欢迎信（`hello@yiveno.com`；说明已开通 Pro、去扩展开同步、`/account` 管理）。Dodo 收据是另一封，勿混。同一 `webhook-id` 重放不重发；Dashboard 示例 / 缺 `yiveno_user_id` 不发。
 
 ---
 
@@ -1274,6 +1275,8 @@ Chrome API / 选区
 - Power User / Team（路线图）：更高配额、云端深寻回、多模态、团队等——**有硬权益前不上架**。
 - 官网：`/pricing` 权益对照 + 展示锚点价 + 账户页升级/管理 CTA；checkout 由 Worker 写入 `metadata.yiveno_user_id`。
 
+**产品欢迎信（与 Dodo 收据分开 · Normative · 未上线）：** 付款收据 / 发票由 **Dodo MoR** 发。Yiveno 只发产品信：webhook **首次授 Pro 成功**（`subscription.active` 且投影 `applied`，非 `rejected` / `duplicate` / 乱序忽略）后，用 Cloudflare Email Sending（`yiveno.com`）从 `hello@yiveno.com` 发美式英语一封——已开通 Pro、打开扩展 Settings 开同步、在 `/account` 管理订阅。收件人优先 payload `customer.email`，否则 Auth 用户邮箱。幂等 = `billing_events` 的 `webhook-id`。发信在投影 **200 之后**异步进行；失败只打日志，**不得**让 webhook 5xx（避免 Dodo 重试连发）。Dashboard「发送示例」、缺 `yiveno_user_id`、续费 / 取消 / 退款：**不发**本信。**前置：** Workers Paid + `yiveno.com` Email Sending onboard；未开通前不发信、不阻塞授 Pro。
+
 ### A.3.1 Dodo 上线检查清单（Normative · 真机演示前）
 
 1. Dodo 建 Pro Monthly / Annual 订阅商品；展示锚点与 checkout 尽量一致。test / live 各一套 Product ID，不可混用。
@@ -1283,6 +1286,8 @@ Chrome API / 选区
 5. 手测：付款 → webhook 写 `subscriptions`（`verification_status=verified`）→ 回扩展/账户页自动对账 → 同步/hosted Pro 配额生效。
 6. 手测：Dodo `cancelled`（立即）/ `on_hold` / 非 `active` → 立刻降级 Free；非真实 `sub_` 订阅 ID 不得授 Pro。
 7. 手测：缺 `metadata.yiveno_user_id` 的付款 → **不开 Pro**，但 `billing_events` 可观测（孤立付款告警）。
+8. Cloudflare Email Sending 已 enable `yiveno.com`（SPF/DKIM）；Worker `send_email` 绑定 `EMAIL`；发件 `hello@yiveno.com`。**须 Workers Paid；上线前再做，不阻塞当前计费验收。**
+9. 手测：真机开通 Pro → 欢迎信送达；同一 webhook 重放不重发；发信故障时 webhook 仍 200、权益已写入。
 
 ### A.3.2 订阅投影与对账（Normative · 计费准确性）
 
@@ -1324,7 +1329,7 @@ Chrome API / 选区
 | 查无 subscription                                   | 降级 + `mismatch`                  |
 | API 失败                                            | 见上 grace；超时后降级             |
 
-**实时性：** Webhook 为开通/收回主路径（秒级）；进页 / 回焦时服务端强制对账（无用户手动刷新按钮）；Worker Cron 小时级扫过期 `last_verified_at` 的 active 行兜底。
+**实时性：** Webhook 为开通/收回主路径（秒级）；进页 / 回焦时服务端强制对账（无用户手动刷新按钮）；Worker Cron 小时级扫过期 `last_verified_at` 的 active 行兜底。产品欢迎信见 §A.3（未上线）；发信不得阻塞或失败投影。
 
 **运维：** 禁止生产 `admin_grant` 无审计长期 Pro；开发自测须短 `period_end` + 可识别 source。细节与 env 见 `docs/ENVIRONMENT.md`。
 
@@ -1370,6 +1375,7 @@ Chrome API / 选区
 
 | 日期       | 变更                                                                                                                                                                                                                       |
 | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-08-18 | §A.3 / §5.7：产品欢迎信约定（CF Email Sending；须 Workers Paid；未上线不阻塞授 Pro）                                                                                                                                       |
 | 2026-08-17 | 计费迁 Dodo Payments：Paddle 运行时移除；hosted checkout + Standard Webhooks；投影/对账/isPro 保留（§A.3.2）                                                                                                               |
 | 2026-08-15 | §0.1 / §0.1.1 / §7 / A.1 / A.4：定位纠偏——对外「那个找东西的」；找回承诺=邻域集合非神谕；Top1=建议；会话成功看邻域；AI 能力核心不作宣传招牌；仓库话术优先于知识库/记忆硬盘主 slogan；「记忆硬盘≠小助手」表对齐邻域成功标准 |
 | 2026-08-14 | 计费迁 Paddle：Gumroad 运行时移除；标准价 $7.99/月·$59.99/年；投影/对账/isPro 保留（§A.3.2）                                                                                                                               |

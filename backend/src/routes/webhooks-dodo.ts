@@ -5,10 +5,29 @@
 import { Hono } from 'hono'
 import { projectDodoWebhook } from '../services/billing/projection'
 import { verifyDodoWebhook } from '../services/billing/dodo-webhook'
+import {
+  sendProWelcomeEmail,
+  shouldSendProWelcomeEmail
+} from '../services/billing/pro-welcome-email'
 import type { Env } from '../types/env'
 import { error as logErrorMessage, info } from '../utils/logger'
 
 export const dodoWebhookRouter = new Hono<{ Bindings: Env }>()
+
+/**
+ * 发信挂到 waitUntil，避免 Worker 在响应后立刻冻结。
+ * 单测 `app.request` 无 ExecutionContext，Hono getter 会抛，此时只 fire-and-forget。
+ */
+function scheduleProWelcome(
+  c: { executionCtx: { waitUntil(promise: Promise<unknown>): void } },
+  task: Promise<unknown>
+): void {
+  try {
+    c.executionCtx.waitUntil(task)
+  } catch {
+    void task
+  }
+}
 
 dodoWebhookRouter.post('/', async c => {
   const rawBody = await c.req.text()
@@ -35,6 +54,10 @@ dodoWebhookRouter.post('/', async c => {
       outcome: result.outcome,
       reason: result.reason ?? null
     })
+    // 投影已成功；欢迎信失败不得把 webhook 打成 5xx（§A.3）
+    if (shouldSendProWelcomeEmail(verified.event.eventType, result)) {
+      scheduleProWelcome(c, sendProWelcomeEmail(c.env, verified.event))
+    }
     return c.json({ success: true, outcome: result.outcome })
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err)

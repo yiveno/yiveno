@@ -73,4 +73,9 @@ export type Env = Cloudflare.Env & {
    * 跑 `bun run types:gen` 后也会出现在 Cloudflare.Env；此处作兜底。
    */
   AI?: Ai
+  /**
+   * Cloudflare Email Sending（wrangler `[[send_email]]`）。
+   * 产品欢迎信用；本地单测 env 可能缺省。
+   */
+  EMAIL?: SendEmail
 }

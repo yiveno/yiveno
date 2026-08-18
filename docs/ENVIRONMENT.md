@@ -142,7 +142,7 @@ bun run env:check:prod
 - **权益投影**在 Supabase `subscriptions`（非第二账本）；对账与门禁见产品文档 **§A.3.2**（TTL 24h / grace 48h；Dodo 非 `active` 立刻降级；`on_hold` 非 Pro）。
 - 扩展升级入口：官网 `/pricing`；管理入口：官网 `/account`（Dodo Customer Portal）。扩展**不**嵌 checkout SDK。
 - 官网：`POST /api/billing/checkout-session` `{ plan }` → Dodo hosted `checkout_url`（Worker 写入 `metadata.yiveno_user_id`）。
-- Webhook：`POST /api/webhooks/dodo`，校验 Standard Webhooks（`DODO_PAYMENTS_WEBHOOK_KEY`）。
+- Webhook：`POST /api/webhooks/dodo`，校验 Standard Webhooks（`DODO_PAYMENTS_WEBHOOK_KEY`）。产品欢迎信已接线但 **未上线**（须 Workers Paid + Email Sending onboard `yiveno.com`；发件 `hello@yiveno.com`）。未开通时发信失败只打日志，不 5xx。
 - 对账：`DODO_PAYMENTS_API_KEY` → `GET /subscriptions/{id}`；未配时门禁退化为投影+硬门槛（生产必须配齐）。
 - 对外档位：Free + **仅 Pro**（Power User / Team / `premium` 预留不售）
 - 云同步须有效 Pro（服务端门禁，不只看扩展本地 snapshot）
@@ -155,6 +155,7 @@ bun run env:check:prod
 3. [ ] `bun run env:sync:prod && bun run env:check:prod`；Worker Secrets 含 API key / webhook secret / Product ID
 4. [ ] 测试购买：webhook 写库（`verified`）→ 回扩展 Settings / 官网账户页自动对账 → `isPro` → 同步可用
 5. [ ] Dodo `cancelled`（立即）/ `on_hold` / 全额退当前周期 → Refresh 或 Cron 后立刻收回；库内 `test-` 行不得为 Pro
+6. [ ] （上线前）Workers Paid + Email Sending enable `yiveno.com`；手测欢迎信（失败不得 5xx webhook）
 
 ## 禁止事项
 

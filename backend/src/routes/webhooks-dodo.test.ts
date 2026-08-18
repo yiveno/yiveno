@@ -74,4 +74,70 @@ describe('POST /api/webhooks/dodo', () => {
     expect(json.success).toBe(true)
     expect(json.outcome).toBe('applied')
   })
+
+  test('授 Pro applied → 调度欢迎信且仍 200', async () => {
+    const projection = await import('../services/billing/projection')
+    jest.spyOn(projection, 'projectDodoWebhook').mockResolvedValue({ outcome: 'applied' })
+    const welcome = await import('../services/billing/pro-welcome-email')
+    const send = jest.spyOn(welcome, 'sendProWelcomeEmail').mockResolvedValue({
+      sent: true,
+      messageId: 'msg_test'
+    })
+    const body = JSON.stringify({
+      type: 'subscription.active',
+      data: { subscription_id: 'sub_Iuaq622bbmmfOGrVTqdXv', status: 'active' }
+    })
+    const ts = Math.floor(Date.now() / 1000)
+    const signature = await signDodoWebhookForTest(SECRET, EVENT_ID, ts, body)
+    const app = createApp()
+    const response = await app.request(
+      '/api/webhooks/dodo',
+      {
+        method: 'POST',
+        headers: {
+          'webhook-id': EVENT_ID,
+          'webhook-timestamp': String(ts),
+          'webhook-signature': signature,
+          'content-type': 'application/json'
+        },
+        body
+      },
+      env()
+    )
+    expect(response.status).toBe(200)
+    expect(send).toHaveBeenCalled()
+  })
+
+  test('rejected 不发欢迎信', async () => {
+    const projection = await import('../services/billing/projection')
+    jest.spyOn(projection, 'projectDodoWebhook').mockResolvedValue({
+      outcome: 'rejected',
+      reason: 'missing_user_id'
+    })
+    const welcome = await import('../services/billing/pro-welcome-email')
+    const send = jest.spyOn(welcome, 'sendProWelcomeEmail')
+    const body = JSON.stringify({
+      type: 'subscription.active',
+      data: { subscription_id: 'sub_Iuaq622bbmmfOGrVTqdXv', status: 'active' }
+    })
+    const ts = Math.floor(Date.now() / 1000)
+    const signature = await signDodoWebhookForTest(SECRET, EVENT_ID, ts, body)
+    const app = createApp()
+    const response = await app.request(
+      '/api/webhooks/dodo',
+      {
+        method: 'POST',
+        headers: {
+          'webhook-id': EVENT_ID,
+          'webhook-timestamp': String(ts),
+          'webhook-signature': signature,
+          'content-type': 'application/json'
+        },
+        body
+      },
+      env()
+    )
+    expect(response.status).toBe(200)
+    expect(send).not.toHaveBeenCalled()
+  })
 })
