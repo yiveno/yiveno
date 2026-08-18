@@ -25,6 +25,7 @@
     "vue": "^3.5.35"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.9"
+    "@astrojs/check": "^0.9.9",
+    "esbuild": "^0.28.2"
   }
 }
