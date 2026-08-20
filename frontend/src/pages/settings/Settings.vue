@@ -1455,7 +1455,7 @@ onUnmounted(() => {
   height: 100%;
   margin: 0 auto;
   padding: 28px 24px 24px;
-  color: var(--md-sys-color-on-background);
+  color: var(--on-surface);
   overflow: hidden;
 }
 
@@ -1478,7 +1478,7 @@ onUnmounted(() => {
   margin: 0;
   font-size: 14px;
   line-height: 1.5;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .settings-layout {
@@ -1495,48 +1495,48 @@ onUnmounted(() => {
   align-self: start;
   gap: 6px;
   padding: 8px;
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--md-sys-shape-corner-medium, 12px);
-  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
 }
 
 .settings-tab {
   margin: 0;
   padding: 10px 12px;
   border: none;
-  border-radius: var(--md-sys-shape-corner-small, 8px);
+  border-radius: var(--radius-sm);
   font: inherit;
   font-size: 14px;
   font-weight: 600;
   text-align: left;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
   background: transparent;
   cursor: pointer;
 }
 
 .settings-tab:hover {
-  background: color-mix(in srgb, var(--md-sys-color-on-surface) 6%, transparent);
+  background: color-mix(in srgb, var(--on-surface) 6%, transparent);
 }
 
 .settings-tab--active {
-  color: var(--md-sys-color-on-secondary-container);
-  background: var(--md-sys-color-secondary-container);
+  color: var(--on-surface);
+  background: var(--surface-chrome);
 }
 
 .settings-panel {
   min-width: 0;
   min-height: 0;
   padding: 18px;
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--md-sys-shape-corner-medium, 12px);
-  background: var(--md-sys-color-surface-container-lowest);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-white);
   overflow: hidden auto;
 }
 
 .settings-block + .settings-block {
   margin-top: 28px;
   padding-top: 24px;
-  border-top: 1px solid var(--md-sys-color-outline-variant);
+  border-top: 1px solid var(--border);
 }
 
 .settings-section-head {
@@ -1557,7 +1557,7 @@ onUnmounted(() => {
   margin: 0;
   font-size: 13px;
   line-height: 1.5;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .settings-toggle {
@@ -1566,9 +1566,9 @@ onUnmounted(() => {
   align-items: center;
   gap: 12px;
   padding: 12px 14px;
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--md-sys-shape-corner-medium, 12px);
-  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
 }
 
 .settings-toggle-copy {
@@ -1584,20 +1584,20 @@ onUnmounted(() => {
 .settings-toggle-hint {
   font-size: 12px;
   line-height: 1.4;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .settings-status {
   margin: 0 0 12px;
   font-size: 13px;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .settings-error {
   margin: 12px 0 0;
   font-size: 13px;
   line-height: 1.4;
-  color: var(--md-sys-color-error);
+  color: var(--danger);
 }
 
 .settings-command-list {
@@ -1614,9 +1614,9 @@ onUnmounted(() => {
   align-items: center;
   gap: 16px;
   padding: 12px 14px;
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--md-sys-shape-corner-medium, 12px);
-  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
 }
 
 .settings-command-meta {
@@ -1633,17 +1633,17 @@ onUnmounted(() => {
   flex-shrink: 0;
   margin: 0;
   padding: 6px 10px;
-  border-radius: var(--md-sys-shape-corner-small, 8px);
+  border-radius: var(--radius-sm);
   font-size: 13px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  color: var(--md-sys-color-primary);
-  background: var(--md-sys-color-primary-container);
+  color: var(--accent);
+  background: var(--surface-accent-soft);
 }
 
 .settings-command-shortcut--unbound {
-  color: var(--md-sys-color-tertiary);
-  background: var(--md-sys-color-tertiary-container);
+  color: var(--sage-dark);
+  background: color-mix(in srgb, var(--sage) 18%, var(--paper));
 }
 
 .settings-actions {
@@ -1660,7 +1660,7 @@ onUnmounted(() => {
 .settings-sync-counts {
   margin: 12px 0 0;
   font-size: 13px;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .settings-sync-restore {
@@ -1672,15 +1672,15 @@ onUnmounted(() => {
   padding-left: 1.25rem;
   font-size: 13px;
   line-height: 1.55;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .settings-privacy-danger {
   margin-top: 18px;
   padding: 12px 14px;
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--md-sys-shape-corner-medium, 12px);
-  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
 }
 
 .settings-privacy-danger__title-spaced {
@@ -1695,22 +1695,22 @@ onUnmounted(() => {
   font-size: 14px;
   line-height: 1.4;
   text-decoration: underline;
-  color: var(--md-sys-color-primary);
+  color: var(--accent);
   text-underline-offset: 2px;
 }
 
 .settings-privacy-policy-link:hover,
 .settings-privacy-policy-link:focus-visible {
   outline: none;
-  color: var(--md-sys-color-on-primary-container);
+  color: var(--ink);
 }
 
 .settings-orphan {
   margin-top: 14px;
   padding: 12px 14px;
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--md-sys-shape-corner-medium, 12px);
-  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
 }
 
 .settings-sign-out-backdrop {
@@ -1721,16 +1721,16 @@ onUnmounted(() => {
   justify-content: center;
   align-items: center;
   padding: 24px;
-  background: color-mix(in srgb, var(--md-sys-color-scrim, #000) 42%, transparent);
+  background: color-mix(in srgb, var(--ink) 42%, transparent);
 }
 
 .settings-sign-out-dialog {
   width: min(100%, 420px);
   max-height: min(90vh, 640px);
   padding: 20px 18px 16px;
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--md-sys-shape-corner-medium, 12px);
-  background: var(--md-sys-color-surface-container-lowest);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-white);
   overflow: auto;
   box-shadow: var(--md-sys-elevation-level3, 0 8px 24px rgb(0 0 0 / 18%));
 }
@@ -1751,7 +1751,7 @@ onUnmounted(() => {
   margin: 0 0 10px;
   font-size: 12px;
   line-height: 1.4;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 @media (width <= 640px) {

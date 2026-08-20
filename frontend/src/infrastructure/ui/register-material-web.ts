@@ -1,5 +1,5 @@
 /**
- * 按需注册 Material Web 组件（MD3 token 驱动）。
+ * 按需注册 Material Web 组件（样式由 Brand Roles → md-sys 别名驱动）。
  * Popup / Settings 入口在 mount 前调用一次。
  */
 import { styles as typescaleStyles } from '@material/web/typography/md-typescale-styles.js'
@@ -25,11 +25,9 @@ export function registerMaterialWebComponents(): void {
   )
 
   const root = document.documentElement
+  // 扩展固定亮色 Brand；不再切换 MD 多预设色板
   if (!root.dataset.theme) {
     root.dataset.theme = 'light'
-  }
-  if (!root.dataset.colorPreset) {
-    root.dataset.colorPreset = 'default'
   }
 }
 

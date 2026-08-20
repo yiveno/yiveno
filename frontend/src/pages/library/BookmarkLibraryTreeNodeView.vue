@@ -182,9 +182,9 @@ function handleOpenBookmark(event: MouseEvent) {
   margin: 0;
   padding: 7px 10px;
   border: none;
-  border-radius: var(--md-sys-shape-corner-small, 8px);
+  border-radius: var(--radius-sm);
   text-align: left;
-  color: var(--md-sys-color-on-surface);
+  color: var(--on-surface);
   background: transparent;
   cursor: pointer;
   font: inherit;
@@ -207,7 +207,7 @@ function handleOpenBookmark(event: MouseEvent) {
 
 .tree-bookmark:hover,
 .tree-folder:hover {
-  background: var(--md-sys-color-surface-container-high);
+  background: var(--surface-chrome);
 }
 
 .tree-bookmark-note-btn {
@@ -234,7 +234,7 @@ function handleOpenBookmark(event: MouseEvent) {
   align-items: center;
   width: 18px;
   height: 18px;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .tree-chevron--spacer {
@@ -244,11 +244,11 @@ function handleOpenBookmark(event: MouseEvent) {
 .tree-icon {
   display: inline-flex;
   flex-shrink: 0;
-  color: var(--md-sys-color-primary);
+  color: var(--accent);
 }
 
 .tree-icon--folder {
-  color: var(--md-sys-color-tertiary);
+  color: var(--sage-dark);
 }
 
 .tree-folder-title,
@@ -279,7 +279,7 @@ function handleOpenBookmark(event: MouseEvent) {
   display: -webkit-box;
   font-size: 12px;
   line-height: 1.35;
-  color: var(--md-sys-color-on-surface);
+  color: var(--on-surface);
   overflow: hidden;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -288,7 +288,7 @@ function handleOpenBookmark(event: MouseEvent) {
 .tree-bookmark-note-label {
   margin-right: 4px;
   font-weight: 600;
-  color: var(--md-sys-color-primary);
+  color: var(--accent);
 }
 
 .tree-bookmark-meta {
@@ -303,7 +303,7 @@ function handleOpenBookmark(event: MouseEvent) {
   max-width: 140px;
   font-size: 12px;
   white-space: nowrap;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -311,7 +311,7 @@ function handleOpenBookmark(event: MouseEvent) {
 .tree-bookmark-flag {
   font-size: 11px;
   font-weight: 600;
-  color: var(--md-sys-color-tertiary);
+  color: var(--sage-dark);
 }
 
 .tree-children {

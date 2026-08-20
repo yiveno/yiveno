@@ -4,7 +4,7 @@
 
 - Yiveno：Vue 3 + TypeScript Chrome 扩展，Backend 为 Cloudflare Workers，Website 为营销站。
 - 唯一产品/架构真相：`docs/product/Yiveno-产品文档-v4.0.md`（先读 **§0.1 核心路线** + **§0.1.1 资产/边界/隐患**（含「邻域非神谕」）+ §0 其余；附录 A 非规范）
-- **视觉/品牌标准（Normative）：** `docs/design/Yiveno-设计标准-v1.md`（完整）；摘要 `DESIGN.md`。品牌核以官网为准（Ink/Paper/Sage）；**官网为色系试验场**，角色 token 先在官网补全再外推；Material 主题色板废弃（Symbols 图标可留）。
+- **视觉/品牌标准（Normative）：** `docs/design/Yiveno-设计标准-v1.md`（完整）；摘要 `DESIGN.md`。权威 `@yiveno/design-tokens/css/brand.css`（色 + Roles + space/radius）；Material Web 经 `md-sys-brand-alias.css`；MD 多预设已删除（Symbols 可留）。
 - Cursor 规则：`.cursor/rules/project.mdc`，不得冲突。
 - 对外心智：「那个找东西的」/ 仓库；找回 = 高置信**邻域**，Top1=建议；AI 能力核心不作宣传招牌。
 

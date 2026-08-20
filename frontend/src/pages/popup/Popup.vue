@@ -689,8 +689,8 @@ onUnmounted(() => {
   max-width: 100%;
   max-height: 560px;
   padding: 16px 20px 12px;
-  color: var(--md-sys-color-on-background);
-  background: var(--md-sys-color-background);
+  color: var(--on-surface);
+  background: var(--surface);
   overflow: hidden;
 }
 
@@ -714,7 +714,7 @@ onUnmounted(() => {
   font-weight: 600;
   text-transform: none;
   letter-spacing: -0.01em;
-  color: var(--md-sys-color-on-background);
+  color: var(--on-surface);
 }
 
 .recall-header-top:deep(.app-page-header__nav) {
@@ -722,40 +722,40 @@ onUnmounted(() => {
 }
 
 .recall-header-top:deep(md-icon-button) {
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .recall-import {
   margin-top: 8px;
   margin-bottom: 0;
   padding: 10px 12px;
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--md-sys-shape-corner-medium, 10px);
-  background: var(--md-sys-color-surface-container-lowest);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-white);
 }
 
 .recall-import--error {
-  border-color: var(--md-sys-color-error-container);
-  background: var(--md-sys-color-error-container);
+  border-color: color-mix(in srgb, var(--danger) 16%, var(--paper));
+  background: color-mix(in srgb, var(--danger) 16%, var(--paper));
 }
 
 .recall-import-label {
   margin: 0 0 8px;
   font-size: 12px;
   line-height: 1.4;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
   overflow-wrap: anywhere;
 }
 
 .recall-import--error .recall-import-label {
-  color: var(--md-sys-color-on-error-container);
+  color: var(--danger);
 }
 
 .recall-refresh-hint {
   margin: 6px 0 0;
   font-size: 12px;
   line-height: 1.3;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .recall-body {
@@ -775,14 +775,14 @@ onUnmounted(() => {
   margin: 8px 0 0;
   font-size: 13px;
   line-height: 1.4;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .recall-error {
   margin: 8px 0 0;
   font-size: 13px;
   line-height: 1.4;
-  color: var(--md-sys-color-error);
+  color: var(--danger);
 }
 
 .recall-empty {
@@ -808,7 +808,7 @@ onUnmounted(() => {
   margin: 0;
   font-size: 14px;
   line-height: 1.5;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
   text-wrap: pretty;
 }
 
@@ -838,14 +838,14 @@ onUnmounted(() => {
   margin: 0;
   font-size: 14px;
   font-weight: 600;
-  color: var(--md-sys-color-on-surface);
+  color: var(--on-surface);
 }
 
 .recall-need-clue-copy {
   margin: 0;
   font-size: 12px;
   line-height: 1.4;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .recall-section-label {
@@ -854,7 +854,7 @@ onUnmounted(() => {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .recall-feedback-actions {

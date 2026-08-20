@@ -176,28 +176,28 @@ function handleMoreClick(event: MouseEvent): void {
   position: relative;
   min-width: 0;
   max-width: 100%;
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--md-sys-shape-corner-medium, 12px);
-  background: var(--md-sys-color-surface-container-lowest);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-white);
 }
 
 .recall-card-shell--top {
-  border-color: var(--md-sys-color-primary);
+  border-color: var(--accent);
 }
 
 .recall-card-shell.is-keyboard-selected {
   /* 用内描边，避免 outline-offset 被 .recall-body overflow 裁切 */
-  border-color: var(--md-sys-color-primary);
-  box-shadow: inset 0 0 0 2px var(--md-sys-color-primary);
-  background: var(--md-sys-color-primary-container);
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 2px var(--accent);
+  background: var(--surface-accent-soft);
 }
 
 .recall-card-shell:hover {
-  background: var(--md-sys-color-surface-container-high);
+  background: var(--surface-chrome);
 }
 
 .recall-card-shell.is-keyboard-selected:hover {
-  background: var(--md-sys-color-primary-container);
+  background: var(--surface-accent-soft);
 }
 
 .recall-card {
@@ -217,13 +217,13 @@ function handleMoreClick(event: MouseEvent): void {
 
 .recall-card--sibling {
   padding: 10px;
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--md-sys-shape-corner-medium, 12px);
-  background: var(--md-sys-color-surface-container-lowest);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-white);
 }
 
 .recall-card--sibling:hover {
-  background: var(--md-sys-color-surface-container-high);
+  background: var(--surface-chrome);
 }
 
 .recall-card-meta {
@@ -237,7 +237,7 @@ function handleMoreClick(event: MouseEvent): void {
 .recall-type {
   font-size: 11px;
   font-weight: 600;
-  color: var(--md-sys-color-primary);
+  color: var(--accent);
 }
 
 .recall-card-title {
@@ -256,7 +256,7 @@ function handleMoreClick(event: MouseEvent): void {
   margin: 0 0 4px;
   font-size: 15px;
   line-height: 1.45;
-  color: var(--md-sys-color-on-surface);
+  color: var(--on-surface);
   overflow: hidden;
   overflow-wrap: anywhere;
   -webkit-line-clamp: 4;
@@ -275,7 +275,7 @@ function handleMoreClick(event: MouseEvent): void {
   margin: 0 0 4px;
   font-size: 13px;
   line-height: 1.4;
-  color: var(--md-sys-color-on-surface);
+  color: var(--on-surface);
   overflow: hidden;
   -webkit-line-clamp: 2;
   line-clamp: 2;
@@ -291,13 +291,13 @@ function handleMoreClick(event: MouseEvent): void {
 .recall-card-note-label {
   margin-right: 4px;
   font-weight: 600;
-  color: var(--md-sys-color-primary);
+  color: var(--accent);
 }
 
 .recall-card-subtitle {
   margin: 0;
   font-size: 12px;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
   overflow-wrap: anywhere;
 }
 
@@ -314,29 +314,25 @@ function handleMoreClick(event: MouseEvent): void {
   min-width: 1.75rem;
   margin: 0;
   padding: 4px 6px;
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--md-sys-shape-corner-small, 8px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   font-family: inherit;
-  color: var(--md-sys-color-on-secondary-container);
-  background: var(--md-sys-color-secondary-container);
+  color: var(--on-surface);
+  background: var(--surface-chrome);
   cursor: pointer;
 }
 
 .recall-duplicate-more:hover {
-  background: color-mix(
-    in srgb,
-    var(--md-sys-color-secondary-container) 80%,
-    var(--md-sys-color-secondary) 20%
-  );
+  background: color-mix(in srgb, var(--surface-chrome) 80%, var(--sage-muted) 20%);
 }
 
 .recall-duplicate-more:focus-visible {
-  outline: 2px solid var(--md-sys-color-primary);
+  outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
 
 .recall-card-group.is-expanded .recall-duplicate-more {
-  border-color: var(--md-sys-color-primary);
+  border-color: var(--accent);
 }
 
 .recall-duplicate-more-count {

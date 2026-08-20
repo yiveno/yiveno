@@ -1,55 +1,19 @@
 /**
- * 官网首屏关键壳：Brand tokens + reset + Nav。
- * Footer 见 site-deferred.css（异步）。
- * 权威：docs/design/Yiveno-设计标准-v1.md
+ * 官网首屏关键壳：字体 / 布局 / Nav + reset。
+ * Brand Core + Product Roles：@yiveno/design-tokens/css/brand.css
+ * （MainLayout 以 ?raw 拼接内联；本文件不再重复 hex。）
+ * 规范：docs/design/Yiveno-设计标准-v1.md · DESIGN.md
  */
 :root {
   --font-display: 'Fraunces', 'Fraunces Fallback', Georgia, 'Times New Roman', serif;
   --font-sans: 'Work Sans', 'Work Sans Fallback', system-ui, sans-serif;
   --font-body: var(--font-sans);
 
-  /* ── Brand Core（锁定） ── */
-  --ink: #192420;
-  --ink-mid: #1e2c26;
-  --paper: #f0f3ee;
-  --paper-2: #e8ece5;
-  --paper-dim: #e8ece5;
-  --charcoal: #222c24;
-  --muted: #586860;
-  --line: #ced8cb;
-  --border: #ced8cb;
-  --sage: #4b6054;
-  --sage-dark: #3a4e44;
-  --sage-hover: #3a4e44;
-  --sage-muted: #82998c;
-  --sage-faint: #c6d6ca;
-  --sage-on: #d8ede2;
-  --hero-fg: #dce8de;
-  --hero-muted: rgba(176, 202, 184, 0.6);
-  --danger: #a05a3c;
-
-  /* ── Product Roles（试验场：语义别名，外推前先在此验证） ── */
-  --surface: var(--paper);
-  --surface-2: var(--paper-dim);
-  --surface-ink: var(--ink);
-  --on-surface: var(--charcoal);
-  --on-surface-muted: var(--muted);
-  --on-ink: var(--hero-fg);
-  --on-ink-muted: var(--hero-muted);
-  --accent: var(--sage);
-  --accent-hover: var(--sage-dark);
-  --on-accent: var(--sage-on);
-  --focus-ring: color-mix(in srgb, var(--sage) 45%, transparent);
-  --disabled-opacity: 0.55;
-
-  --radius: 10px;
-  --radius-sm: 8px;
-  --radius-lg: 12px;
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --max: 1120px;
   --pad-x: clamp(28px, 6.5vw, 104px);
   --sec-y: clamp(88px, 11vw, 128px);
 
+  /* Nav 场景覆盖（不升为跨产品角色） */
   --nav-bg: var(--surface);
   --nav-fg: var(--on-surface);
   --nav-brand: var(--on-surface);
@@ -118,26 +82,26 @@ h3,
 }
 
 ::selection {
-  background: var(--sage);
-  color: var(--paper);
+  background: var(--accent);
+  color: var(--surface);
 }
 
 /* 首页：纸面底；Nav 悬于 Hero 时仅改文字色 */
 body[data-chrome='home'] {
   --nav-bg: transparent;
-  --nav-brand: rgba(236, 244, 238, 0.98);
-  --nav-fg: rgba(220, 234, 224, 0.96);
-  --nav-muted: rgba(210, 228, 216, 0.78);
+  --nav-brand: color-mix(in srgb, var(--on-ink) 98%, white);
+  --nav-fg: color-mix(in srgb, var(--on-ink) 96%, transparent);
+  --nav-muted: color-mix(in srgb, var(--on-ink) 78%, transparent);
   --nav-line: transparent;
-  background: var(--paper);
-  color: var(--charcoal);
+  background: var(--surface);
+  color: var(--on-surface);
 }
 
 body[data-chrome='home'][data-nav-over-hero='false'] {
   --nav-bg: transparent;
-  --nav-brand: var(--charcoal);
-  --nav-fg: var(--charcoal);
-  --nav-muted: color-mix(in srgb, var(--charcoal) 62%, transparent);
+  --nav-brand: var(--on-surface);
+  --nav-fg: var(--on-surface);
+  --nav-muted: color-mix(in srgb, var(--on-surface) 62%, transparent);
   --nav-line: transparent;
 }
 
@@ -156,8 +120,8 @@ img {
   top: 0.75rem;
   z-index: 80;
   padding: 0.4rem 0.7rem;
-  background: var(--sage);
-  color: var(--sage-on);
+  background: var(--accent);
+  color: var(--on-accent);
   border-radius: 6px;
   text-decoration: none;
   transform: translateY(-200%);
@@ -234,11 +198,11 @@ img {
 
 .site-nav__link:focus-visible,
 .site-nav__brand:focus-visible {
-  outline: 2px solid var(--sage);
+  outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
 
 body[data-chrome='home'][data-nav-over-hero='true'] .site-nav__link:focus-visible,
 body[data-chrome='home'][data-nav-over-hero='true'] .site-nav__brand:focus-visible {
-  outline-color: var(--sage-on);
+  outline-color: var(--on-accent);
 }

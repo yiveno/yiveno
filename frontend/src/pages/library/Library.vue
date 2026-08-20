@@ -503,7 +503,7 @@ onUnmounted(() => {
   max-width: 960px;
   margin: 0 auto;
   padding: 28px 24px 40px;
-  color: var(--md-sys-color-on-background);
+  color: var(--on-surface);
 }
 
 .library-header {
@@ -524,7 +524,7 @@ onUnmounted(() => {
   margin: 0;
   font-size: 14px;
   line-height: 1.5;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .library-layout {
@@ -538,40 +538,40 @@ onUnmounted(() => {
   display: grid;
   gap: 6px;
   padding: 8px;
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--md-sys-shape-corner-medium, 12px);
-  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
 }
 
 .library-tab {
   margin: 0;
   padding: 10px 12px;
   border: none;
-  border-radius: var(--md-sys-shape-corner-small, 8px);
+  border-radius: var(--radius-sm);
   font: inherit;
   font-size: 14px;
   font-weight: 600;
   text-align: left;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
   background: transparent;
   cursor: pointer;
 }
 
 .library-tab:hover {
-  background: color-mix(in srgb, var(--md-sys-color-on-surface) 6%, transparent);
+  background: color-mix(in srgb, var(--on-surface) 6%, transparent);
 }
 
 .library-tab--active {
-  color: var(--md-sys-color-on-secondary-container);
-  background: var(--md-sys-color-secondary-container);
+  color: var(--on-surface);
+  background: var(--surface-chrome);
 }
 
 .library-panel {
   min-height: 280px;
   padding: 16px;
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--md-sys-shape-corner-medium, 12px);
-  background: var(--md-sys-color-surface-container-lowest);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-white);
 }
 
 .library-status,
@@ -582,7 +582,7 @@ onUnmounted(() => {
 }
 
 .library-error {
-  color: var(--md-sys-color-error);
+  color: var(--danger);
 }
 
 .library-error-block {
@@ -607,7 +607,7 @@ onUnmounted(() => {
   margin: 0;
   font-size: 13px;
   line-height: 1.5;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .library-list {
@@ -627,7 +627,7 @@ onUnmounted(() => {
   top: 6px;
   right: 6px;
   z-index: 1;
-  color: var(--md-sys-color-error);
+  color: var(--danger);
   opacity: 0;
   pointer-events: none;
   transition: opacity 120ms cubic-bezier(0.2, 0, 0, 1);
@@ -659,15 +659,15 @@ onUnmounted(() => {
   align-items: flex-start;
   gap: 16px;
   padding: 12px 40px 12px 14px;
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   text-decoration: none;
   color: inherit;
-  background: var(--md-sys-color-surface);
+  background: var(--surface);
 }
 
 .library-row:hover {
-  background: var(--md-sys-color-surface-container-high);
+  background: var(--surface-chrome);
 }
 
 .library-row-main {
@@ -695,7 +695,7 @@ onUnmounted(() => {
   margin: 0 0 6px;
   font-size: 13px;
   line-height: 1.45;
-  color: var(--md-sys-color-on-surface);
+  color: var(--on-surface);
   overflow: hidden;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -704,20 +704,20 @@ onUnmounted(() => {
 .library-row-note-label {
   margin-right: 6px;
   font-weight: 600;
-  color: var(--md-sys-color-primary);
+  color: var(--accent);
 }
 
 .library-row-subtitle {
   margin: 0;
   font-size: 12px;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .library-row-time {
   flex-shrink: 0;
   margin: 0;
   font-size: 12px;
-  color: var(--md-sys-color-outline);
+  color: var(--border-strong);
 }
 
 .library-note-dialog {
@@ -735,8 +735,8 @@ onUnmounted(() => {
   gap: 12px;
   width: min(420px, 100%);
   padding: 18px;
-  border-radius: var(--md-sys-shape-corner-medium, 12px);
-  background: var(--md-sys-color-surface-container-lowest);
+  border-radius: var(--radius-lg);
+  background: var(--surface-white);
   box-shadow: 0 12px 40px rgb(15 23 42 / 18%);
 }
 
@@ -751,7 +751,7 @@ onUnmounted(() => {
   font-size: 13px;
   line-height: 1.4;
   white-space: nowrap;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -761,25 +761,25 @@ onUnmounted(() => {
   width: 100%;
   margin: 0;
   padding: 10px 12px;
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--md-sys-shape-corner-small, 8px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   resize: vertical;
   font: inherit;
   font-size: 14px;
   line-height: 1.45;
-  color: var(--md-sys-color-on-surface);
-  background: var(--md-sys-color-surface);
+  color: var(--on-surface);
+  background: var(--surface);
 }
 
 .library-note-dialog-input:focus {
-  outline: 2px solid color-mix(in srgb, var(--md-sys-color-primary) 35%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--accent) 35%, transparent);
   outline-offset: 1px;
 }
 
 .library-note-dialog-error {
   margin: 0;
   font-size: 13px;
-  color: var(--md-sys-color-error);
+  color: var(--danger);
 }
 
 .library-note-dialog-actions {

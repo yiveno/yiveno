@@ -15,8 +15,29 @@ colors:
   sage-faint: '#c6d6ca'
   sage-on: '#d8ede2'
   hero-fg: '#dce8de'
-  hero-muted: 'rgba(176, 202, 184, 0.6)'
+  hero-muted: 'color-mix(in srgb, sage-on 55%, transparent)'
   danger: '#a05a3c'
+roles:
+  surface: '{colors.paper}'
+  surface-2: '{colors.paper-dim}'
+  surface-ink: '{colors.ink}'
+  surface-raised: 'color-mix(paper 72%, white)'
+  surface-white: '#ffffff'
+  surface-chrome: 'color-mix(paper, paper-dim)'
+  surface-accent-soft: 'color-mix(sage 14%, paper)'
+  on-surface: '{colors.charcoal}'
+  on-surface-muted: '{colors.muted}'
+  on-ink: '{colors.hero-fg}'
+  on-ink-muted: '{colors.hero-muted}'
+  accent: '{colors.sage}'
+  accent-hover: '{colors.sage-dark}'
+  on-accent: '{colors.sage-on}'
+  border: '{colors.border}'
+  border-strong: 'color-mix(border 62%, charcoal)'
+  danger: '{colors.danger}'
+  focus-ring: 'color-mix(accent 45%, transparent)'
+  danger-ring: 'color-mix(danger 45%, transparent)'
+  disabled-opacity: '0.55'
 typography:
   display:
     fontFamily: 'Fraunces, Georgia, Times New Roman, serif'
@@ -31,47 +52,53 @@ typography:
     fontFamily: 'Work Sans, system-ui, sans-serif'
     fontWeight: 300
     lineHeight: 1.7
-rounded:
-  sm: '8px'
-  md: '10px'
-  lg: '12px'
 spacing:
+  2xs: '4px'
   xs: '8px'
   sm: '12px'
   md: '16px'
   lg: '24px'
-  xl: '48px'
+  xl: '32px'
+  2xl: '48px'
+  3xl: '64px'
   section-y: 'clamp(88px, 11vw, 128px)'
   page-x: 'clamp(28px, 6.5vw, 104px)'
+rounded:
+  xs: '4px'
+  sm: '8px'
+  md: '10px'
+  lg: '12px'
+  xl: '16px'
+  full: '9999px'
 components:
   button-primary:
-    backgroundColor: '{colors.sage}'
-    textColor: '{colors.sage-on}'
+    backgroundColor: '{roles.accent}'
+    textColor: '{roles.on-accent}'
     rounded: '{rounded.md}'
     padding: '0 26px'
     height: '50px'
   button-primary-hover:
-    backgroundColor: '{colors.sage-dark}'
-    textColor: '{colors.sage-on}'
+    backgroundColor: '{roles.accent-hover}'
+    textColor: '{roles.on-accent}'
   button-secondary:
     backgroundColor: 'transparent'
-    textColor: '{colors.sage}'
+    textColor: '{roles.accent}'
     rounded: '{rounded.sm}'
     height: '44px'
   surface-ink:
-    backgroundColor: '{colors.ink}'
-    textColor: '{colors.hero-fg}'
+    backgroundColor: '{roles.surface-ink}'
+    textColor: '{roles.on-ink}'
   surface-paper:
-    backgroundColor: '{colors.paper}'
-    textColor: '{colors.charcoal}'
+    backgroundColor: '{roles.surface}'
+    textColor: '{roles.on-surface}'
 ---
 
 # Yiveno Design System
 
-> **Normative companion (中文完整标准):** [`docs/design/Yiveno-设计标准-v1.md`](docs/design/Yiveno-设计标准-v1.md)  
+> **Normative companion (中文完整标准):** [`docs/design/Yiveno-设计标准-v1.md`](docs/design/Yiveno-设计标准-v1.md) **v1.5**  
 > **Product truth:** [`docs/product/Yiveno-产品文档-v4.0.md`](docs/product/Yiveno-产品文档-v4.0.md) §0  
 > **Brand assets:** [`docs/design/brand-assets/README.md`](docs/design/brand-assets/README.md)  
-> **Authority:** Website is the **brand core + color lab**. Complete product-role tokens on the site first, then migrate outward. Material Theme color pipelines are **deprecated** (Material Symbols icons may remain). Legacy `forest` / blue–purple experiments are not brand standard.
+> **Authority:** [`packages/design-tokens/css/brand.css`](packages/design-tokens/css/brand.css) — colors, roles, `--space-*`, `--radius-*`. Material Web via [`md-sys-brand-alias.css`](packages/design-tokens/css/md-sys-brand-alias.css).
 
 ## Overview
 
@@ -86,7 +113,7 @@ Visual world locked from the marketing site:
 
 Positioning must never read as: AI tool, bookmark manager, knowledge base, Notion clone, ChatGPT shell, or purple SaaS.
 
-## Colors
+## Colors (Brand Core)
 
 | Token       | Hex / value | Role                                        |
 | ----------- | ----------- | ------------------------------------------- |
@@ -101,12 +128,35 @@ Positioning must never read as: AI tool, bookmark manager, knowledge base, Notio
 | `border`    | `#ced8cb`   | Hairlines                                   |
 | `danger`    | `#a05a3c`   | Errors (quiet, not alarmist)                |
 
+## Product Roles (v1 frozen)
+
+Canonical CSS names in `site-critical.css`. Prefer roles over raw Brand Core in product/marketing UI.
+
+| Role                    | Maps to / derives from               |
+| ----------------------- | ------------------------------------ |
+| `--surface`             | paper                                |
+| `--surface-2`           | paper-dim                            |
+| `--surface-ink`         | ink                                  |
+| `--surface-raised`      | color-mix(paper 72%, white)          |
+| `--surface-white`       | `#ffffff`                            |
+| `--surface-chrome`      | color-mix(paper, paper-dim)          |
+| `--surface-accent-soft` | color-mix(sage 14%, paper)           |
+| `--on-surface`          | charcoal                             |
+| `--on-surface-muted`    | muted                                |
+| `--on-ink` / muted      | hero-fg / hero-muted                 |
+| `--accent` / hover / on | sage / sage-dark / sage-on           |
+| `--border` / strong     | border / color-mix(border, charcoal) |
+| `--danger` / rings      | danger + focus/danger rings          |
+| `--shadow-ink-sm/md`    | ink-tinted elevation                 |
+
 **Rules**
 
 - Brand recognition = ink + paper + sage. Do not introduce a second primary hue.
 - Forbidden as brand accents: bright purple, electric blue, neon, rainbow gradients, high-saturation coral/pink as “AI energy.”
-- **Do not** regenerate Material Theme palettes as the source of truth. Grow semantic roles (`surface`, `accent`, `on-*`, …) on the **website** first, then port to the extension.
-- Marketing and the living lab use brand + role tokens in `website/src/styles/site.css`.
+- **Do not** regenerate Material Theme palettes as the source of truth.
+- Authority path: `packages/design-tokens/css/brand.css` (color + space + radius).
+- Extension product CSS: Roles / `--space-*` / `--radius-*`. Material Web: `md-sys-brand-alias.css`.
+- MD multi-presets: removed.
 
 ## Typography
 
@@ -132,7 +182,7 @@ Positioning must never read as: AI tool, bookmark manager, knowledge base, Notio
 ## Elevation & Depth
 
 - Prefer tonal surfaces and 1px borders over stacked shadows.
-- Shadows, if any: soft, low opacity, ink-tinted — never neon glow or glassmorphism stacks.
+- Shadows, if any: soft, low opacity, ink-tinted (`--shadow-ink-*`) — never neon glow or glassmorphism stacks.
 - Depth communicates hierarchy of **Closest vs nearby**, not “premium AI.”
 
 ## Shapes
@@ -143,8 +193,8 @@ Positioning must never read as: AI tool, bookmark manager, knowledge base, Notio
 
 ## Components
 
-- **Primary button:** sage fill, sage-on text, ~50px tall on marketing CTAs.
-- **Secondary:** outline sage / quiet fill — never compete with primary waitlist CTA.
+- **Primary button:** accent fill, on-accent text, ~50px tall on marketing CTAs.
+- **Secondary:** outline accent / quiet fill — never compete with primary waitlist CTA.
 - **Recall proof:** clue field + ranked list; Closest visually dominant; personal note/excerpt when showing product truth.
 - **Forms:** visible invalid/error/success; calm copy; no spinner circus.
 - Icons: prefer familiar Material Symbols in product; marketing mockups must not use magnifying-glass as the main “search” metaphor.
@@ -155,7 +205,7 @@ Positioning must never read as: AI tool, bookmark manager, knowledge base, Notio
 
 - Lead with find / remember / closest matches / pick.
 - Keep waitlist-phase honesty (no fake Sign in / live Pricing nav when coming soon).
-- Derive product roles on the website lab; migrate extension off `--md-sys-color-*` only after roles stabilize.
+- Derive product roles on the website; extension already aliases `--md-sys-color-*` to Brand Roles.
 - Keep motion sparse: reveal, result stagger, cursor blink; honor `prefers-reduced-motion`.
 
 **Don't**

@@ -71,23 +71,19 @@ defineExpose({ focus })
   width: 100%;
   min-width: 0;
   padding: 9px 10px 9px 14px;
-  border: 1px solid var(--md-sys-color-outline-variant);
+  border: 1px solid var(--border);
   border-radius: 24px;
-  background: var(--md-sys-color-surface-container-lowest);
+  background: var(--surface-white);
   box-shadow:
-    0 1px 2px color-mix(in srgb, var(--md-sys-color-shadow, #000) 10%, transparent),
-    0 0 0 1px color-mix(in srgb, var(--md-sys-color-outline-variant) 20%, transparent);
+    0 1px 2px color-mix(in srgb, var(--ink) 10%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--border) 20%, transparent);
 }
 
 .recall-composer-shell:focus-within {
-  border-color: color-mix(
-    in srgb,
-    var(--md-sys-color-primary) 40%,
-    var(--md-sys-color-outline-variant)
-  );
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
   box-shadow:
-    0 1px 2px color-mix(in srgb, var(--md-sys-color-shadow, #000) 10%, transparent),
-    0 0 0 3px color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
+    0 1px 2px color-mix(in srgb, var(--ink) 10%, transparent),
+    0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 .recall-input {
@@ -112,7 +108,7 @@ defineExpose({ focus })
 }
 
 .recall-input::placeholder {
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .recall-send-button {
@@ -125,8 +121,8 @@ defineExpose({ focus })
   padding: 0;
   border: 0;
   border-radius: 999px;
-  color: var(--md-sys-color-on-primary);
-  background: var(--md-sys-color-primary);
+  color: var(--on-accent);
+  background: var(--accent);
   cursor: pointer;
   transition:
     background-color 140ms ease-out,
@@ -134,17 +130,17 @@ defineExpose({ focus })
 }
 
 .recall-send-button:disabled {
-  color: var(--md-sys-color-on-surface-variant);
-  background: var(--md-sys-color-surface-container-high);
+  color: var(--on-surface-muted);
+  background: var(--surface-chrome);
   cursor: default;
 }
 
 .recall-send-button:focus-visible {
-  outline: 2px solid var(--md-sys-color-primary);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
 .recall-send-button:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--md-sys-color-primary) 88%, #000 12%);
+  background: color-mix(in srgb, var(--accent) 88%, var(--ink) 12%);
 }
 </style>

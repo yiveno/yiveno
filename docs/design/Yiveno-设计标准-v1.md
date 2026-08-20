@@ -1,13 +1,13 @@
-# Yiveno 设计标准 v1.1
+# Yiveno 设计标准 v1.5
 
-| 项                        | 内容                                                                            |
-| ------------------------- | ------------------------------------------------------------------------------- |
-| 状态                      | **Normative（规范）**                                                           |
-| 生效                      | 2026-08-15（v1.1：2026-08-16）                                                  |
-| 品牌色权威源 / 色系试验场 | 官网（`website/src/styles/site.css`）                                           |
-| 机器可读摘要              | 仓库根目录 [`DESIGN.md`](../../DESIGN.md)                                       |
-| 产品定位权威              | [`docs/product/Yiveno-产品文档-v4.0.md`](../product/Yiveno-产品文档-v4.0.md) §0 |
-| 冲突时                    | **产品文档 §0 > 本标准 > 旧 Material 实验色 / 历史 logo 备注色**                |
+| 项                      | 内容                                                                                                                           |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| 状态                    | **Normative（规范）**                                                                                                          |
+| 生效                    | 2026-08-15（v1.5：2026-08-20）                                                                                                 |
+| 品牌色 / Roles 权威实现 | [`packages/design-tokens/css/brand.css`](../../packages/design-tokens/css/brand.css)（官网已接入；`site-critical.css` 仅壳层） |
+| 机器可读摘要            | 仓库根目录 [`DESIGN.md`](../../DESIGN.md)                                                                                      |
+| 产品定位权威            | [`docs/product/Yiveno-产品文档-v4.0.md`](../product/Yiveno-产品文档-v4.0.md) §0                                                |
+| 冲突时                  | **产品文档 §0 > 本标准 > 旧 Material 实验色 / 历史 logo 备注色**                                                               |
 
 ---
 
@@ -26,7 +26,7 @@
 ### 0.1 权威声明（必须遵守）
 
 1. **官网色彩基调 = Yiveno 品牌核。** Ink / Paper / Sage 已敲定，日常优化不得换皮。
-2. **官网 = 色系试验场（living lab）。** 在开发/打磨官网的同时，**逐渐补全**自研产品角色 token；稳定后再外推到扩展与其它物料。
+2. **Brand Core + Product Roles 权威在 `@yiveno/design-tokens/css/brand.css`。** Roles **v1 已冻结**。官网与扩展均已接入（扩展经 `md-sys-brand-alias.css` 兼容 `--md-sys-*`）。增补角色须先在官网验证再写入 §3.3 与 `brand.css`。
 3. **历史上的 Material `forest` 等多预设、Theme Builder 色板、蓝紫实验色 = 实验稿，决定废弃，不作标准。** 不要求再「换种子重导 MD」。
 4. **其他产品面跟进官网沉淀后的 token**，而不是反过来改官网迁就旧 `--md-sys-*`。
 5. **Material Symbols（图标字形）可保留**——与「MD 主题色体系」不是同一件事。
@@ -72,23 +72,23 @@ Yiveno = **扔进就记着 + 想找就找得着**（Capture 低负担 + Recall �
 
 ### 2.1 主色板（Normative）
 
-| Token          | Hex                     | 角色              | 典型用途                                |
-| -------------- | ----------------------- | ----------------- | --------------------------------------- |
-| **Ink**        | `#192420`               | 品牌深色          | Hero、深色段、深底 Logo/OG、theme-color |
-| **Ink Mid**    | `#1e2c26`               | 深色变体          | 深底分层、次级深面                      |
-| **Paper**      | `#f0f3ee`               | 品牌浅底          | 默认页面底、内容区                      |
-| **Paper Dim**  | `#e8ece5`               | 浅底交替          | 间隔段、页脚、次级纸面                  |
-| **Sage**       | `#4b6054`               | 品牌强调 / 主操作 | 主按钮、Closest 徽章、关键强调          |
-| **Sage Dark**  | `#3a4e44`               | 强调悬停/按下     | Primary hover                           |
-| **Sage On**    | `#d8ede2`               | 强调色上的前景    | 主按钮文字/图标                         |
-| **Charcoal**   | `#222c24`               | 浅底主文字        | 正文                                    |
-| **Muted**      | `#586860`               | 次级文字          | 说明、meta                              |
-| **Border**     | `#ced8cb`               | 分割线            | hairline、卡片描边                      |
-| **Sage Muted** | `#82998c`               | 弱强调            | 标签、次要图标                          |
-| **Sage Faint** | `#c6d6ca`               | 极弱强调          | 引用条、淡分割                          |
-| **Hero FG**    | `#dce8de`               | 深底主文字        | Hero 标题                               |
-| **Hero Muted** | `rgba(176,202,184,0.6)` | 深底次文字        | Hero 副文案                             |
-| **Danger**     | `#a05a3c`               | 错误              | 表单错误（克制，非警报红）              |
+| Token          | Hex                                   | 角色              | 典型用途                                  |
+| -------------- | ------------------------------------- | ----------------- | ----------------------------------------- |
+| **Ink**        | `#192420`                             | 品牌深色          | Hero、深色段、深底 Logo/OG、theme-color   |
+| **Ink Mid**    | `#1e2c26`                             | 深色变体          | 深底分层、次级深面                        |
+| **Paper**      | `#f0f3ee`                             | 品牌浅底          | 默认页面底、内容区                        |
+| **Paper Dim**  | `#e8ece5`                             | 浅底交替          | 间隔段、页脚、次级纸面                    |
+| **Sage**       | `#4b6054`                             | 品牌强调 / 主操作 | 主按钮、Closest 徽章、关键强调            |
+| **Sage Dark**  | `#3a4e44`                             | 强调悬停/按下     | Primary hover                             |
+| **Sage On**    | `#d8ede2`                             | 强调色上的前景    | 主按钮文字/图标                           |
+| **Charcoal**   | `#222c24`                             | 浅底主文字        | 正文                                      |
+| **Muted**      | `#586860`                             | 次级文字          | 说明、meta                                |
+| **Border**     | `#ced8cb`                             | 分割线            | hairline、卡片描边                        |
+| **Sage Muted** | `#82998c`                             | 弱强调            | 标签、次要图标                            |
+| **Sage Faint** | `#c6d6ca`                             | 极弱强调          | 引用条、淡分割                            |
+| **Hero FG**    | `#dce8de`                             | 深底主文字        | Hero 标题                                 |
+| **Hero Muted** | `color-mix(sage-on 55%, transparent)` | 深底次文字        | Hero 副文案（实现见 `site-critical.css`） |
+| **Danger**     | `#a05a3c`                             | 错误              | 表单错误（克制，非警报红）                |
 
 ### 2.2 使用比例（经验法则）
 
@@ -119,50 +119,67 @@ Yiveno = **扔进就记着 + 想找就找得着**（Capture 低负担 + Recall �
 
 ---
 
-## 3. 色系演进策略：官网试验场 → 外推
+## 3. 色系演进：官网冻结 → 外推
 
 Yiveno 追求**长期维护与品牌特色**，不以 Material 的「标准快速上线」为色板路径。
 
-### 3.1 两层模型（目标态）
+### 3.1 两层模型
 
-| 层                | 内容                                           | 谁先完善                           |
-| ----------------- | ---------------------------------------------- | ---------------------------------- |
-| **Brand Core**    | §2 锁定核色                                    | ✅ 已由官网定稿                    |
-| **Product Roles** | 语义角色（surface / accent / on-\* / danger…） | 🔄 **在官网 CSS 中逐步补全、试用** |
+| 层                | 内容                    | 状态                                             |
+| ----------------- | ----------------------- | ------------------------------------------------ |
+| **Brand Core**    | §2 锁定核色             | ✅ 已定稿                                        |
+| **Product Roles** | 语义角色 + space/radius | ✅ **v1 冻结**；官网 + 扩展业务 CSS；MW 经 alias |
 
-### 3.2 官网作为试验场（Normative 流程）
+### 3.2 外推流程（Normative）
 
-1. **先在 `website/src/styles/site.css`（及首页样式）补角色、试对比、试组件态。**
-2. 角色在官网上用稳了 → 写入本标准 §3.3 与 `DESIGN.md`。
-3. 再 **逐步迁移**：`packages/design-tokens` / 扩展 `--md-sys-*` → 自研变量（可先做兼容别名，再删旧名）。
-4. Logo / OG / 邮件跟 Brand Core；等角色层稳定后再决定物料是否引用角色名。
+1. **权威实现：** [`packages/design-tokens/css/brand.css`](../../packages/design-tokens/css/brand.css)（TS：`src/brand.ts`）。
+2. 增补角色：先在官网组件验证 → 写入本标准 §3.3、`DESIGN.md`、`brand.css` → 再外推。
+3. **已完成：** Brand 进包；官网/扩展业务 CSS 写 Roles + `--space-*` / `--radius-*`；Material Web 经 alias；语义色直连 Roles；MD 多预设已删除。
+4. **维护：** 增补 token 先写 `brand.css` + §3.3，再外推。
+5. Logo / OG / 邮件跟 Brand Core。
 
-**原则：** 试验在官网；扩展不抢跑第二套色。未在官网验证的角色，不急着铺进 Popup。
+**原则：** 外推面不得另立第二套主色；未写入 §3.3 的角色不急着铺进 Popup。
 
-### 3.3 产品角色起步表（在官网完善；可增补）
+### 3.3 产品角色冻结表（v1 · 可外推）
 
-| 角色 token（建议名） | 语义          | 初值指向   |
-| -------------------- | ------------- | ---------- |
-| `--surface`          | 默认浅表面    | Paper      |
-| `--surface-2`        | 次级浅表面    | Paper Dim  |
-| `--surface-ink`      | 深门面        | Ink        |
-| `--on-surface`       | 浅底主文字    | Charcoal   |
-| `--on-surface-muted` | 浅底次文字    | Muted      |
-| `--on-ink`           | 深底主文字    | Hero FG    |
-| `--on-ink-muted`     | 深底次文字    | Hero Muted |
-| `--accent`           | 主操作 / 强调 | Sage       |
-| `--accent-hover`     | 强调悬停      | Sage Dark  |
-| `--on-accent`        | 强调上前景    | Sage On    |
-| `--border`           | 分割线        | Border     |
-| `--danger`           | 错误          | Danger     |
+| 角色 token                    | 语义                 | 初值 / 派生                                   |
+| ----------------------------- | -------------------- | --------------------------------------------- |
+| `--surface`                   | 默认浅表面           | Paper                                         |
+| `--surface-2`                 | 次级浅表面           | Paper Dim                                     |
+| `--surface-ink`               | 深门面               | Ink                                           |
+| `--surface-raised`            | 浅抬升面（卡/toast） | `color-mix(paper 72%, white)`                 |
+| `--surface-white`             | mock 控件底          | `#ffffff`                                     |
+| `--surface-chrome`            | mock 窗框条          | `color-mix(paper, paper-dim)`                 |
+| `--surface-accent-soft`       | Closest / 强调浅底   | `color-mix(sage 14%, paper)`                  |
+| `--on-surface`                | 浅底主文字           | Charcoal                                      |
+| `--on-surface-muted`          | 浅底次文字           | Muted                                         |
+| `--on-ink`                    | 深底主文字           | Hero FG                                       |
+| `--on-ink-muted`              | 深底次文字           | Hero Muted                                    |
+| `--accent`                    | 主操作 / 强调        | Sage                                          |
+| `--accent-hover`              | 强调悬停             | Sage Dark                                     |
+| `--on-accent`                 | 强调上前景           | Sage On                                       |
+| `--border`                    | 分割线               | Border                                        |
+| `--border-strong`             | 控件描边             | `color-mix(border 62%, charcoal)`             |
+| `--danger`                    | 错误                 | Danger                                        |
+| `--focus-ring`                | 焦点环               | `color-mix(accent 45%, transparent)`          |
+| `--danger-ring`               | 错误焦点环           | `color-mix(danger 45%, transparent)`          |
+| `--shadow-ink-sm`             | 小抬升阴影（Ink 相） | 多层 `color-mix(ink …)`                       |
+| `--shadow-ink-md`             | 中抬升阴影           | 多层 `color-mix(ink …)`                       |
+| `--disabled-opacity`          | 禁用透明度           | `0.55`                                        |
+| `--space-2xs` … `--space-3xl` | 间距阶梯             | 4 / 8 / 12 / 16 / 24 / 32 / 48 / 64 px        |
+| `--radius-xs` … `--radius-xl` | 圆角                 | 4 / 8 / 10 / 12 / 16 px（另 `--radius-full`） |
 
-亮色为默认。若官网后续需要「深底工具条」等，用 `surface-ink` 局部切换，**不必**先上整套 Material dark scheme。扩展暗色可在外推阶段再定。
+**场景覆盖（不升为跨产品角色）：** `--nav-*` 仅官网 Nav 深/浅切换。
+
+**Core 兼容别名（实现层）：** `--paper-2` → `--paper-dim`；`--line` → `--border`；`--sage-hover` → `--sage-dark`。
+
+亮色为默认。深门面用 `surface-ink` 局部切换，**不必**先上整套 Material dark scheme。扩展暗色可在外推阶段再定。
 
 ### 3.4 明确不做什么
 
 - 不维护 forest/ocean/violet 等多品牌预设
 - 不把 Theme Builder 当长期色板源
-- 不为了「和 MD 一样全」而一次发明 40+ 角色——**按官网真实组件需要增量添加**
+- 不为了「和 MD 一样全」而一次发明 40+ 角色——**按真实组件需要增量添加，并回写 §3.3**
 
 ---
 
@@ -241,7 +258,7 @@ Yiveno 追求**长期维护与品牌特色**，不以 Material 的「标准快�
 
 ### 6.2 Chrome 扩展（Operate）
 
-- 色相跟 Brand Core；角色名在官网试验场稳定后再迁移替换 `--md-sys-*`
+- 色相跟 Brand Core；业务样式写 Roles；Material Web 经 `md-sys-brand-alias.css`
 - 密度高于官网；图标优先（Material Symbols）+ `title`/`aria-label`
 - 术语：Filter / Recall，禁止 Search
 - Closest / 邻域列表的视觉层级必须可读
@@ -307,9 +324,10 @@ Yiveno 追求**长期维护与品牌特色**，不以 Material 的「标准快�
 
 ### 9.3 产品 UI token
 
-- [ ] 新角色先在官网验证，再外推
-- [ ] 未再引入 Material Theme 作为色板权威
-- [ ] 扩展迁移前有兼容计划（别名或渐进替换 `--md-sys-*`）
+- [x] Roles v1 已在官网冻结（§3.3），并迁入 `@yiveno/design-tokens/css/brand.css`
+- [x] 扩展业务 CSS 写 Roles；Material Web 经 `md-sys-brand-alias.css`
+- [x] MD 多预设已删除；间距/形状自研；`semantic-colors.css` 直连 Roles
+- [ ] 新角色仍先在官网验证，再写入 §3.3 / `brand.css` 再外推
 
 ### 9.4 营销 / 证明
 
@@ -326,26 +344,35 @@ Yiveno 追求**长期维护与品牌特色**，不以 Material 的「标准快�
 
 ## 10. 版本与变更
 
-| 版本 | 日期       | 说明                                                         |
-| ---- | ---------- | ------------------------------------------------------------ |
-| v1.0 | 2026-08-15 | 以官网敲定 Brand Core；宣告旧 MD 实验色非标准                |
-| v1.1 | 2026-08-16 | 废弃 MD 色板路径；官网为色系试验场，角色层在官网补全后再外推 |
+| 版本   | 日期       | 说明                                                                        |
+| ------ | ---------- | --------------------------------------------------------------------------- |
+| v1.0   | 2026-08-15 | 以官网敲定 Brand Core；宣告旧 MD 实验色非标准                               |
+| v1.1   | 2026-08-16 | 废弃 MD 色板路径；官网为色系试验场，角色层在官网补全后再外推                |
+| v1.2   | 2026-08-20 | Roles v1 冻结可外推；权威实现先落官网 `site-critical.css`；消散落业务 hex   |
+| v1.2.1 | 2026-08-20 | Brand Core + Roles 迁入 `@yiveno/design-tokens/css/brand.css`；官网消费该包 |
+| v1.3   | 2026-08-20 | 扩展接入 `md-sys-brand-alias`；停用 material-theme 多预设运行时             |
+| v1.4   | 2026-08-20 | 扩展业务 CSS 改写 Roles；删除 MD presets / material-theme.css               |
+| v1.5   | 2026-08-20 | `--space-*` / `--radius-*` 进 brand；semantic 直连 Roles；variables 瘦身    |
 
 **变更规则：**
 
 - 改 Brand Core hex = **品牌变更**，须显式评审，并同步：`DESIGN.md`、官网 CSS、Logo/OG 指引；外推面随后跟进。
-- 仅增补产品角色别名 / 透明度 = 可在官网试验后写入 §3.3，再升补丁说明。
+- 增补产品角色别名 / 阴影 / 透明度 = 先在官网验证，再写入 §3.3，升补丁说明。
 - 与产品文档冲突时，先改产品文档再改本标准。
 
 ---
 
 ## 11. 相关文件
 
-| 文件                                                 | 角色                                  |
-| ---------------------------------------------------- | ------------------------------------- |
-| [`DESIGN.md`](../../DESIGN.md)                       | Agent / 工具可读摘要 + YAML tokens    |
-| `website/src/styles/site.css`                        | **色系试验场 + Brand Core 实现**      |
-| `packages/design-tokens/`                            | 历史 MD 包；待官网角色稳定后迁移/收缩 |
-| `docs/design/Yiveno-logo-asset-generation-prompt.md` | Logo 导出流程（色值须服从本标准）     |
-| `PRODUCT.md`                                         | 产品性格（Impeccable）                |
-| 产品文档 v4.0 §0                                     | 产品与术语 Normative                  |
+| 文件                                                 | 角色                                                |
+| ---------------------------------------------------- | --------------------------------------------------- |
+| [`DESIGN.md`](../../DESIGN.md)                       | Agent / 工具可读摘要 + YAML tokens                  |
+| `packages/design-tokens/css/brand.css`               | **Brand Core + Product Roles 权威实现（:root）**    |
+| `packages/design-tokens/css/md-sys-brand-alias.css`  | 扩展：Material Web 用的 `--md-sys-color-*` → Roles  |
+| `packages/design-tokens/src/brand.ts`                | Brand Core hex（TS）                                |
+| `website/src/styles/site-critical.css`               | 官网壳：字体 / 布局 / Nav（消费 brand，无重复 hex） |
+| `website/src/styles/site.css`                        | 兼容入口（brand + critical + deferred）             |
+| `frontend/src/styles/material-ui.css`                | 扩展入口：brand + alias + variables                 |
+| `docs/design/Yiveno-logo-asset-generation-prompt.md` | Logo 导出流程（色值须服从本标准）                   |
+| `PRODUCT.md`                                         | 产品性格（Impeccable）                              |
+| 产品文档 v4.0 §0                                     | 产品与术语 Normative                                |

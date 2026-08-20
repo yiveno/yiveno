@@ -1,112 +1,21 @@
 /**
- * Yiveno Design Tokens - CSS Variables
- * Material Design 3 变量系统
- * 
- * 使用顺序：
- * 1. material-theme.css - Material Design 3 主题（薄荷绿 #89EAD7）
- * 2. material-typography.css - Material Design 3 字体系统（Type Scale）
- * 3. variables.css - 扩展变量定义（当前文件）
- * 
- * 不再使用：
- * - brand-override.css 已废弃，不覆盖 Material Design 颜色
+ * 扩展配套：Material Typography / Motion + 轻量全局。
+ * 间距/形状权威在 brand.css；本文件不再重复定义 md-sys-spacing/shape。
+ * 加载：brand.css → md-sys-brand-alias.css → 本文件 → semantic-colors.css
  */
-
-/* ⚠️ 重要：Material Design 3 Typography / Motion 必须先导入 */
 @import url('./material-typography.css');
 @import url('./material-motion.css');
 
-:root {
-  /* ========================================
-   * Material Design 主题色引用
-   * 
-   * ⚠️ 品牌色完全使用 Material Design 3 生成的颜色
-   * 不再定义自定义品牌色变量（如 --yiveno-brand-yellow）
-   * 
-   * 使用方式：
-   * - 主色：var(--md-sys-color-primary)
-   * - 次要色：var(--md-sys-color-secondary)
-   * - 渐变：基于 Material Design 主题色组合
-   * ======================================== */
-
-  /* ========================================
-   * Material Design 扩展变量
-   * ======================================== */
-
-  /* Spacing Tokens (Material Design 3) */
-  --md-sys-spacing-xs: 4px;
-  --md-sys-spacing-sm: 8px;
-  --md-sys-spacing-md: 16px;
-  --md-sys-spacing-lg: 24px;
-  --md-sys-spacing-xl: 32px;
-  --md-sys-spacing-2xl: 48px;
-  --md-sys-spacing-3xl: 64px;
-
-  /* Shape Tokens (Material Design 3) */
-  --md-sys-shape-corner-none: 0px;
-  --md-sys-shape-corner-extra-small: 4px;
-  --md-sys-shape-corner-small: 8px;
-  --md-sys-shape-corner-medium: 12px;
-  --md-sys-shape-corner-large: 16px;
-  --md-sys-shape-corner-extra-large: 28px;
-  --md-sys-shape-corner-full: 9999px;
-
-  /* Elevation Tokens (Material Design 3) */
-  --md-sys-elevation-0: none;
-  --md-sys-elevation-1: 0 1px 2px 0 rgb(0 0 0 / 30%), 0 1px 3px 1px rgb(0 0 0 / 15%);
-  --md-sys-elevation-2: 0 1px 2px 0 rgb(0 0 0 / 30%), 0 2px 6px 2px rgb(0 0 0 / 15%);
-  --md-sys-elevation-3: 0 4px 8px 3px rgb(0 0 0 / 15%), 0 1px 3px 0 rgb(0 0 0 / 30%);
-  --md-sys-elevation-4: 0 6px 10px 4px rgb(0 0 0 / 15%), 0 2px 3px 0 rgb(0 0 0 / 30%);
-  --md-sys-elevation-5: 0 8px 12px 6px rgb(0 0 0 / 15%), 0 4px 4px 0 rgb(0 0 0 / 30%);
-
-  /* 深度背景（深空主题） */
-  --color-bg-depth: #02040a;
-  --color-bg-default: var(--md-sys-color-background, #030617);
-  --color-bg-surface: var(--md-sys-color-surface, #0f172a);
-
-  /* 文本色别名 */
-  --color-text-primary: var(--md-sys-color-on-background, #f8fafc);
-  --color-text-secondary: #94a3b8;
-  --color-text-subtle: #64748b;
-
-  /* 边框色 */
-  --color-border-default: rgb(148 163 184 / 10%);
-  --color-border-hover: rgb(148 163 184 / 20%);
-  --color-border-active: color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent);
-}
-
-/* ========================================
- * 基础样式重置
- * ======================================== */
-
-/* ⚠️ 通配符选择器会穿透 Shadow DOM，影响 Material Web Components */
-
-/* 已移除通配符选择器，改用具体的元素选择器 */
-
-/* 如果需要全局重置，请在 base.css 的 @layer reset 中添加 */
-
 html {
-  font-family:
-    Inter,
-    MiSans,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    Arial,
-    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  background-color: var(--md-sys-color-background);
-  color: var(--md-sys-color-on-background);
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
-/* 选中文本样式 */
 ::selection {
-  background-color: color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent);
-  color: var(--md-sys-color-on-primary-container);
+  background-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  color: var(--on-accent);
 }

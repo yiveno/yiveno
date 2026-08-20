@@ -1,6 +1,7 @@
 /**
- * 兼容入口 = critical + deferred。
- * 运行时由 MainLayout 内联 critical，并异步加载 deferred。
+ * 兼容入口 = brand + critical + deferred。
+ * 运行时由 MainLayout 内联 brand+critical，并异步加载 deferred。
  */
+@import '@yiveno/design-tokens/css/brand.css';
 @import './site-critical.css';
 @import './site-deferred.css';

@@ -247,7 +247,7 @@ onMounted(() => {
   max-width: 720px;
   margin: 0 auto;
   padding: 28px 24px 40px;
-  color: var(--md-sys-color-on-background);
+  color: var(--on-surface);
 }
 
 .detail-header {
@@ -268,22 +268,22 @@ onMounted(() => {
   margin: 0;
   font-size: 14px;
   line-height: 1.5;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .detail-status {
   margin: 0;
   font-size: 14px;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .detail-empty {
   display: grid;
   gap: 10px;
   padding: 18px;
-  border: 1px dashed var(--md-sys-color-outline);
-  border-radius: var(--md-sys-shape-corner-medium, 12px);
-  background: var(--md-sys-color-surface-container-low);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
 }
 
 .detail-empty-title {
@@ -296,16 +296,16 @@ onMounted(() => {
   margin: 0;
   font-size: 14px;
   line-height: 1.5;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .detail-article {
   display: grid;
   gap: 14px;
   padding: 18px;
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--md-sys-shape-corner-medium, 12px);
-  background: var(--md-sys-color-surface-container-lowest);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-white);
 }
 
 .detail-meta {
@@ -313,12 +313,12 @@ onMounted(() => {
   flex-wrap: wrap;
   gap: 8px 12px;
   font-size: 12px;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .detail-type {
   font-weight: 600;
-  color: var(--md-sys-color-primary);
+  color: var(--accent);
 }
 
 .detail-page {
@@ -332,32 +332,32 @@ onMounted(() => {
   margin: 0;
   font-size: 13px;
   line-height: 1.6;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .detail-excerpt {
   margin: 0;
   padding: 16px 18px;
-  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  border-radius: var(--radius-lg);
   font-size: 16px;
   line-height: 1.65;
-  color: var(--md-sys-color-on-surface);
-  background: var(--md-sys-color-surface-container);
+  color: var(--on-surface);
+  background: var(--surface-2);
 }
 
 .detail-note {
   display: grid;
   gap: 6px;
   padding: 12px 14px;
-  border-radius: var(--md-sys-shape-corner-medium, 12px);
-  background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
 }
 
 .detail-note-label {
   margin: 0;
   font-size: 12px;
   font-weight: 600;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .detail-note-body {
@@ -365,7 +365,7 @@ onMounted(() => {
   font-size: 14px;
   line-height: 1.55;
   white-space: pre-wrap;
-  color: var(--md-sys-color-on-surface);
+  color: var(--on-surface);
 }
 
 .detail-actions {
@@ -379,14 +379,14 @@ onMounted(() => {
   margin: 0;
   font-size: 13px;
   line-height: 1.4;
-  color: var(--md-sys-color-error);
+  color: var(--danger);
 }
 
 .detail-delete {
-  --md-icon-button-icon-color: var(--md-sys-color-error);
-  --md-icon-button-hover-icon-color: var(--md-sys-color-error);
-  --md-icon-button-pressed-icon-color: var(--md-sys-color-error);
-  --md-icon-button-focus-icon-color: var(--md-sys-color-error);
+  --md-icon-button-icon-color: var(--danger);
+  --md-icon-button-hover-icon-color: var(--danger);
+  --md-icon-button-pressed-icon-color: var(--danger);
+  --md-icon-button-focus-icon-color: var(--danger);
 }
 
 .detail-source-link {
@@ -396,6 +396,6 @@ onMounted(() => {
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
-  color: var(--md-sys-color-primary);
+  color: var(--accent);
 }
 </style>

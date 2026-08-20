@@ -239,8 +239,8 @@ onUnmounted(() => {
   max-width: 720px;
   margin: 0 auto;
   padding: 24px 24px 40px;
-  color: var(--md-sys-color-on-background);
-  background: var(--md-sys-color-background);
+  color: var(--on-surface);
+  background: var(--surface);
 }
 
 .getting-started__header {
@@ -266,7 +266,7 @@ onUnmounted(() => {
   max-width: 42ch;
   font-size: 16px;
   line-height: 1.55;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .getting-started__steps {
@@ -279,22 +279,18 @@ onUnmounted(() => {
 
 .getting-started__step {
   padding: 14px 16px;
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--md-sys-shape-corner-medium, 12px);
-  background: var(--md-sys-color-surface-container-lowest);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-white);
 }
 
 .getting-started__step--active {
-  border-color: var(--md-sys-color-primary);
-  background: var(--md-sys-color-surface-container-low);
+  border-color: var(--accent);
+  background: var(--surface-raised);
 }
 
 .getting-started__step--done {
-  border-color: color-mix(
-    in srgb,
-    var(--md-sys-color-primary) 35%,
-    var(--md-sys-color-outline-variant)
-  );
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
 }
 
 .getting-started__step-head {
@@ -305,7 +301,7 @@ onUnmounted(() => {
 }
 
 .getting-started__step-icon {
-  color: var(--md-sys-color-primary);
+  color: var(--accent);
 }
 
 .getting-started__step-title {
@@ -319,15 +315,15 @@ onUnmounted(() => {
   margin: 0;
   font-size: 14px;
   line-height: 1.5;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .getting-started__recall-hint {
   margin-top: 10px;
   padding: 10px 12px;
-  border-radius: var(--md-sys-shape-corner-small, 8px);
-  background: var(--md-sys-color-surface-container-high);
-  color: var(--md-sys-color-on-surface);
+  border-radius: var(--radius-sm);
+  background: var(--surface-chrome);
+  color: var(--on-surface);
 }
 
 .getting-started__recall-actions {
@@ -340,16 +336,16 @@ onUnmounted(() => {
 .getting-started__recall-error {
   margin: 0;
   font-size: 13px;
-  color: var(--md-sys-color-error);
+  color: var(--danger);
 }
 
 .getting-started__demo {
   display: grid;
   gap: 16px;
   padding: 18px 18px 20px;
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--md-sys-shape-corner-large, 16px);
-  background: var(--md-sys-color-surface-container-lowest);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--surface-white);
 }
 
 .getting-started__demo-text {
@@ -362,7 +358,7 @@ onUnmounted(() => {
 .getting-started__demo-mark {
   padding: 0 2px;
   border-radius: 4px;
-  background: color-mix(in srgb, var(--md-sys-color-primary) 18%, transparent);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
   color: inherit;
 }
 
@@ -377,18 +373,18 @@ onUnmounted(() => {
   margin: 0;
   font-size: 14px;
   line-height: 1.5;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .getting-started__demo-done {
-  color: var(--md-sys-color-primary);
+  color: var(--accent);
   font-weight: 600;
 }
 
 .getting-started__error {
   margin: 0;
   font-size: 13px;
-  color: var(--md-sys-color-error);
+  color: var(--danger);
 }
 
 .getting-started__success {
@@ -396,10 +392,9 @@ onUnmounted(() => {
   gap: 12px;
   align-items: flex-start;
   padding: 16px 18px;
-  border: 1px solid
-    color-mix(in srgb, var(--md-sys-color-primary) 35%, var(--md-sys-color-outline-variant));
-  border-radius: var(--md-sys-shape-corner-large, 16px);
-  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  border-radius: var(--radius-xl);
+  background: var(--surface-raised);
 }
 
 .getting-started__success-title {
@@ -412,7 +407,7 @@ onUnmounted(() => {
   margin: 0;
   font-size: 14px;
   line-height: 1.5;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .getting-started__footer {

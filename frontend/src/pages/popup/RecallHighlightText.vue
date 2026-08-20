@@ -20,7 +20,7 @@ defineProps<{
   padding: 0 1px;
   border-radius: 2px;
   font-weight: 650;
-  color: var(--md-sys-color-primary);
-  background: color-mix(in srgb, var(--md-sys-color-primary) 18%, transparent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
 }
 </style>

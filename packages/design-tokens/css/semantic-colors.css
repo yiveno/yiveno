@@ -1,103 +1,43 @@
 /**
- * Yiveno Design Tokens - Semantic Colors
+ * 语义色 — 直连 Brand Roles（禁止第二套主色 / 紫「AI」强调）。
  *
- * 语义色与强调色：全部派生自 material-theme.css 的 M3 角色（--md-sys-color-*），
- * 换 Theme Builder 导出种子后自动联动，勿在此文件写死 Hex（P2）。
- *
- * 角色映射（业务语义 → M3）：
- * - Info：primary / primary-container（说明、与品牌主色一致）
- * - Success：secondary / secondary-container（正向、沉稳）
- * - Warning：tertiary / tertiary-container（需关注；与种子 tertiary 协调）
- *
- * 加载顺序：material-theme.css → variables.css → semantic-colors.css（当前文件）
+ * Info ≈ Accent(Sage)；Success ≈ Sage Muted；Warning ≈ Sage Dark；Error ≈ Danger。
+ * 加载：brand.css →（可选 alias）→ variables.css → 本文件
  */
-
 :root {
-  /* ========================================
-   * 语义色 (Semantic) — 映射到 M3 角色
-   * ======================================== */
+  --yiveno-semantic-info: var(--accent);
+  --yiveno-semantic-info-container: var(--surface-accent-soft);
+  --yiveno-semantic-on-info: var(--on-accent);
+  --yiveno-semantic-on-info-container: var(--ink);
+  --yiveno-semantic-success: var(--sage-muted);
+  --yiveno-semantic-success-container: var(--surface-chrome);
+  --yiveno-semantic-on-success: var(--on-accent);
+  --yiveno-semantic-on-success-container: var(--on-surface);
+  --yiveno-semantic-warning: var(--sage-dark);
+  --yiveno-semantic-warning-container: color-mix(in srgb, var(--sage) 18%, var(--paper));
+  --yiveno-semantic-on-warning: var(--on-accent);
+  --yiveno-semantic-on-warning-container: var(--ink);
+  --yiveno-semantic-error: var(--danger);
+  --yiveno-semantic-error-container: color-mix(in srgb, var(--danger) 16%, var(--paper));
+  --yiveno-semantic-on-error: var(--surface-white);
+  --yiveno-semantic-on-error-container: var(--danger);
 
-  --yiveno-semantic-info: var(--md-sys-color-primary);
-  --yiveno-semantic-info-container: var(--md-sys-color-primary-container);
-  --yiveno-semantic-on-info: var(--md-sys-color-on-primary);
-  --yiveno-semantic-on-info-container: var(--md-sys-color-on-primary-container);
-  --yiveno-semantic-success: var(--md-sys-color-secondary);
-  --yiveno-semantic-success-container: var(--md-sys-color-secondary-container);
-  --yiveno-semantic-on-success: var(--md-sys-color-on-secondary);
-  --yiveno-semantic-on-success-container: var(--md-sys-color-on-secondary-container);
-  --yiveno-semantic-warning: var(--md-sys-color-tertiary);
-  --yiveno-semantic-warning-container: var(--md-sys-color-tertiary-container);
-  --yiveno-semantic-on-warning: var(--md-sys-color-on-tertiary);
-  --yiveno-semantic-on-warning-container: var(--md-sys-color-on-tertiary-container);
-
-  /* ========================================
-   * 强调色 (Accent) — color-mix 自 M3，无独立 Hex
-   * ======================================== */
-
-  --yiveno-accent-teal: color-mix(
-    in srgb,
-    var(--md-sys-color-primary) 45%,
-    var(--md-sys-color-secondary) 55%
-  );
-  --yiveno-accent-teal-hover: color-mix(
-    in srgb,
-    var(--yiveno-accent-teal) 88%,
-    var(--md-sys-color-on-surface) 12%
-  );
-
-  /* 暖色高光：在蓝种子下用 error 少量掺入 primary-fixed-dim，避免脱离色板 */
-  --yiveno-accent-gold: color-mix(
-    in srgb,
-    var(--md-sys-color-error) 12%,
-    var(--md-sys-color-primary-fixed-dim) 88%
-  );
-  --yiveno-accent-gold-hover: color-mix(
-    in srgb,
-    var(--yiveno-accent-gold) 88%,
-    var(--md-sys-color-surface) 12%
-  );
-  --yiveno-accent-amber: color-mix(
-    in srgb,
-    var(--md-sys-color-error) 28%,
-    var(--md-sys-color-primary-fixed-dim) 72%
-  );
-  --yiveno-accent-amber-container: color-mix(
-    in srgb,
-    var(--md-sys-color-primary-container) 55%,
-    var(--md-sys-color-tertiary-container) 45%
-  );
-  --yiveno-accent-purple: var(--md-sys-color-tertiary);
-  --yiveno-accent-purple-container: var(--md-sys-color-tertiary-container);
-  --yiveno-accent-ai: var(--yiveno-accent-purple);
-  --yiveno-accent-ai-container: var(--yiveno-accent-purple-container);
-  --yiveno-accent-on-ai: var(--md-sys-color-on-tertiary);
-  --yiveno-accent-on-ai-container: var(--md-sys-color-on-tertiary-container);
-
-  /* ========================================
-   * Primary 阶梯 — 由当前主题 primary 混色生成（非 Tailwind 固定板）
-   * ======================================== */
-
-  --yiveno-primary-50: color-mix(in srgb, var(--md-sys-color-primary) 14%, white);
-  --yiveno-primary-100: color-mix(in srgb, var(--md-sys-color-primary) 28%, white);
-  --yiveno-primary-200: color-mix(in srgb, var(--md-sys-color-primary) 42%, white);
-  --yiveno-primary-300: color-mix(in srgb, var(--md-sys-color-primary) 58%, white);
-  --yiveno-primary-400: color-mix(in srgb, var(--md-sys-color-primary) 75%, white);
-  --yiveno-primary-500: var(--md-sys-color-primary);
-  --yiveno-primary-600: color-mix(in srgb, var(--md-sys-color-primary) 90%, black);
-  --yiveno-primary-700: color-mix(in srgb, var(--md-sys-color-primary) 78%, black);
-  --yiveno-primary-800: color-mix(in srgb, var(--md-sys-color-primary) 65%, black);
-  --yiveno-primary-900: color-mix(in srgb, var(--md-sys-color-primary) 52%, black);
-
-  /* ========================================
-   * Alpha — color-mix(in srgb, …, transparent)
-   * ======================================== */
-
-  --yiveno-primary-alpha-10: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
-  --yiveno-primary-alpha-20: color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
-  --yiveno-secondary-alpha-10: color-mix(in srgb, var(--md-sys-color-secondary) 10%, transparent);
-  --yiveno-error-alpha-10: color-mix(in srgb, var(--md-sys-color-error) 10%, transparent);
-  --yiveno-warning-alpha-10: color-mix(in srgb, var(--md-sys-color-tertiary) 10%, transparent);
-  --yiveno-warning-alpha-20: color-mix(in srgb, var(--md-sys-color-tertiary) 20%, transparent);
-  --yiveno-success-alpha-10: color-mix(in srgb, var(--md-sys-color-secondary) 10%, transparent);
-  --yiveno-info-alpha-10: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
+  /* Accent 阶梯（Sage，非 Tailwind 固定板） */
+  --yiveno-primary-50: color-mix(in srgb, var(--accent) 14%, white);
+  --yiveno-primary-100: color-mix(in srgb, var(--accent) 28%, white);
+  --yiveno-primary-200: color-mix(in srgb, var(--accent) 42%, white);
+  --yiveno-primary-300: color-mix(in srgb, var(--accent) 58%, white);
+  --yiveno-primary-400: color-mix(in srgb, var(--accent) 75%, white);
+  --yiveno-primary-500: var(--accent);
+  --yiveno-primary-600: var(--accent-hover);
+  --yiveno-primary-700: color-mix(in srgb, var(--accent) 78%, var(--ink));
+  --yiveno-primary-800: color-mix(in srgb, var(--accent) 65%, var(--ink));
+  --yiveno-primary-900: color-mix(in srgb, var(--accent) 52%, var(--ink));
+  --yiveno-primary-alpha-10: color-mix(in srgb, var(--accent) 10%, transparent);
+  --yiveno-primary-alpha-20: color-mix(in srgb, var(--accent) 20%, transparent);
+  --yiveno-error-alpha-10: color-mix(in srgb, var(--danger) 10%, transparent);
+  --yiveno-info-alpha-10: color-mix(in srgb, var(--accent) 10%, transparent);
+  --yiveno-success-alpha-10: color-mix(in srgb, var(--sage-muted) 10%, transparent);
+  --yiveno-warning-alpha-10: color-mix(in srgb, var(--sage-dark) 10%, transparent);
+  --yiveno-warning-alpha-20: color-mix(in srgb, var(--sage-dark) 20%, transparent);
 }

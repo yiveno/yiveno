@@ -1,7 +1,7 @@
 {
   "name": "@yiveno/design-tokens",
-  "version": "1.1.1",
-  "description": "Shared design tokens for Yiveno - Material Design 3 based design system with colors, spacing, typography, and more",
+  "version": "1.4.0",
+  "description": "Yiveno design tokens — Brand Core, Product Roles, spacing/radius. MD multi-presets removed.",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
@@ -11,6 +11,12 @@
       "import": "./src/index.ts",
       "require": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./brand": {
+      "types": "./src/brand.ts",
+      "import": "./src/brand.ts",
+      "require": "./src/brand.ts",
+      "default": "./src/brand.ts"
     },
     "./colors": {
       "types": "./src/colors.ts",
@@ -54,10 +60,15 @@
       "require": "./src/css-vars.ts",
       "default": "./src/css-vars.ts"
     },
-    "./css/material-theme.css": {
-      "import": "./css/material-theme.css",
-      "require": "./css/material-theme.css",
-      "default": "./css/material-theme.css"
+    "./css/brand.css": {
+      "import": "./css/brand.css",
+      "require": "./css/brand.css",
+      "default": "./css/brand.css"
+    },
+    "./css/md-sys-brand-alias.css": {
+      "import": "./css/md-sys-brand-alias.css",
+      "require": "./css/md-sys-brand-alias.css",
+      "default": "./css/md-sys-brand-alias.css"
     },
     "./css/variables.css": {
       "import": "./css/variables.css",
@@ -82,15 +93,12 @@
     "design-tokens",
     "design-system",
     "theme",
-    "material-design",
-    "material-design-3",
+    "brand",
     "css-variables",
     "typescript",
     "yiveno",
     "ui",
-    "colors",
-    "spacing",
-    "typography"
+    "colors"
   ],
   "author": "Yiveno Team",
   "license": "MIT",

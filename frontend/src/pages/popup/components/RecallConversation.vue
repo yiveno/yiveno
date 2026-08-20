@@ -205,8 +205,8 @@ function handleToggleExpand(cardId: string): void {
 }
 
 .conversation-bubble--user {
-  color: var(--md-sys-color-on-surface);
-  background: var(--md-sys-color-surface-container-high);
+  color: var(--on-surface);
+  background: var(--surface-chrome);
 }
 
 .assistant-turn {
@@ -221,7 +221,7 @@ function handleToggleExpand(cardId: string): void {
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.01em;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .assistant-turn-copy {
@@ -230,7 +230,7 @@ function handleToggleExpand(cardId: string): void {
   font-size: 14px;
   line-height: 1.5;
   white-space: pre-wrap;
-  color: var(--md-sys-color-on-surface);
+  color: var(--on-surface);
   text-wrap: pretty;
 }
 
@@ -245,7 +245,7 @@ function handleToggleExpand(cardId: string): void {
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.01em;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .assistant-turn-candidates-block {
@@ -259,11 +259,11 @@ function handleToggleExpand(cardId: string): void {
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.01em;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .assistant-turn-copy--error {
-  color: var(--md-sys-color-error);
+  color: var(--danger);
 }
 
 .assistant-turn-primary,
@@ -290,27 +290,27 @@ function handleToggleExpand(cardId: string): void {
   align-items: center;
   min-height: 32px;
   padding: 0 12px;
-  border: 1px solid var(--md-sys-color-outline-variant);
+  border: 1px solid var(--border);
   border-radius: 999px;
   font: inherit;
   font-size: 13px;
   line-height: 1;
-  color: var(--md-sys-color-on-surface);
-  background: var(--md-sys-color-surface-container-lowest);
+  color: var(--on-surface);
+  background: var(--surface-white);
   cursor: pointer;
 }
 
 .assistant-turn-pill:hover {
-  background: var(--md-sys-color-surface-container-high);
+  background: var(--surface-chrome);
 }
 
 .assistant-turn-pill:focus-visible {
-  outline: 2px solid var(--md-sys-color-primary);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
 .assistant-turn-pill--secondary {
-  color: var(--md-sys-color-primary);
+  color: var(--accent);
 }
 
 .assistant-turn-candidates {

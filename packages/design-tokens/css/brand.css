@@ -1,0 +1,75 @@
+/**
+ * Yiveno Brand Core + Product Roles + Layout tokens（v1 冻结，可外推）
+ *
+ * 权威：docs/design/Yiveno-设计标准-v1.md §2–§3 · DESIGN.md
+ * 官网 / 扩展业务 CSS 消费本文件；Material Web 另经 md-sys-brand-alias.css。
+ */
+:root {
+  /* ── Brand Core（锁定；hex 仅此处声明一次） ── */
+  --ink: #192420;
+  --ink-mid: #1e2c26;
+  --paper: #f0f3ee;
+  --paper-dim: #e8ece5;
+  --charcoal: #222c24;
+  --muted: #586860;
+  --border: #ced8cb;
+  --sage: #4b6054;
+  --sage-dark: #3a4e44;
+  --sage-muted: #82998c;
+  --sage-faint: #c6d6ca;
+  --sage-on: #d8ede2;
+  --hero-fg: #dce8de;
+  --hero-muted: color-mix(in srgb, var(--sage-on) 55%, transparent);
+  --danger: #a05a3c;
+
+  /* Core 兼容别名（旧名 → 规范名） */
+  --paper-2: var(--paper-dim);
+  --line: var(--border);
+  --sage-hover: var(--sage-dark);
+
+  /* ── Product Roles（v1 冻结） ── */
+  --surface: var(--paper);
+  --surface-2: var(--paper-dim);
+  --surface-ink: var(--ink);
+  --surface-raised: color-mix(in srgb, var(--paper) 72%, white);
+  --surface-white: #fff;
+  --surface-chrome: color-mix(in srgb, var(--paper) 45%, var(--paper-dim));
+  --surface-accent-soft: color-mix(in srgb, var(--sage) 14%, var(--paper));
+  --on-surface: var(--charcoal);
+  --on-surface-muted: var(--muted);
+  --on-ink: var(--hero-fg);
+  --on-ink-muted: var(--hero-muted);
+  --accent: var(--sage);
+  --accent-hover: var(--sage-dark);
+  --on-accent: var(--sage-on);
+  --border-strong: color-mix(in srgb, var(--border) 62%, var(--charcoal));
+  --focus-ring: color-mix(in srgb, var(--accent) 45%, transparent);
+  --danger-ring: color-mix(in srgb, var(--danger) 45%, transparent);
+  --disabled-opacity: 0.55;
+  --shadow-ink-sm:
+    0 1px 2px color-mix(in srgb, var(--ink) 7%, transparent),
+    0 4px 16px color-mix(in srgb, var(--ink) 8%, transparent),
+    0 16px 48px color-mix(in srgb, var(--ink) 6%, transparent);
+  --shadow-ink-md:
+    0 2px 12px color-mix(in srgb, var(--ink) 8%, transparent),
+    0 8px 32px color-mix(in srgb, var(--ink) 5%, transparent);
+
+  /* ── Spacing（自研；对齐 DESIGN.md，扩展密度保留 2xs） ── */
+  --space-2xs: 4px;
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  /* ── Shape ── */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}

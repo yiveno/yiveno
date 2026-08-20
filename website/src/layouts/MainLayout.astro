@@ -2,6 +2,8 @@
 import YMark from '../components/home/YMark.astro'
 import MarketingNav from '../components/MarketingNav.astro'
 import fontsCriticalCssRaw from '../../public/fonts/fonts-critical.css?raw'
+/** Brand Core + Roles；?raw 不会解析 CSS @import，须与 site-critical 显式拼接 */
+import brandCssRaw from '@yiveno/design-tokens/css/brand.css?raw'
 import siteCriticalCssRaw from '../styles/site-critical.css?raw'
 import siteDeferredHref from '../styles/site-deferred.css?url'
 import homeCriticalCssRaw from '../styles/home-critical.css?raw'
@@ -36,7 +38,7 @@ const ogImage = `${canonicalOrigin}/og-image.jpg`
 
 /** 仅内联首屏所需 CSS；site/home deferred 异步加载（可长缓存） */
 const fontsCriticalCss = minifyCss(fontsCriticalCssRaw)
-const siteCriticalCss = minifyCss(siteCriticalCssRaw)
+const siteCriticalCss = minifyCss(`${brandCssRaw}\n${siteCriticalCssRaw}`)
 const homeCriticalCss = chrome === 'home' ? minifyCss(homeCriticalCssRaw) : ''
 
 /** GEO：可引用的产品实体定义（与产品文档 §0.1 对外心智对齐；预约阶段无在售 Offer） */
