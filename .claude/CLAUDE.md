@@ -50,7 +50,7 @@ bun run deploy:be
 frontend/     # Chrome extension (Vue 3 + Vite) → builds to ./dist/
 backend/      # Cloudflare Worker API
 website/      # Astro marketing site → builds to ./website/dist/
-packages/     # auth-core, design-tokens, types
+packages/     # design-tokens, types
 scripts/      # cross-workspace tooling (env, e2e, knip)
 docs/         # product + ops docs
 supabase/     # database migrations

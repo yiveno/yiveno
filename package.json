@@ -46,7 +46,6 @@
     "build:web": "bun run --cwd website build:dev",
     "build:web:prod": "bun run --cwd website build:prod",
     "build:prod": "bun run env:sync:prod && bun run env:check:prod && bun run --filter @yiveno/design-tokens typecheck && bunx concurrently --kill-others-on-fail -n fe,be,web -c cyan,green,yellow \"bun run build:fe:prod\" \"bun run build:be\" \"bun run build:web:prod\"",
-    "build:color-presets": "bun scripts/build-material-color-presets.mjs",
     "watch": "bun run env:sync:dev && mprocs",
     "watch:stream": "bun run env:sync:dev && bunx concurrently --names fe,be,web --prefix-colors cyan,green,yellow \"bun run watch:fe\" \"bun run dev:be\" \"bun run dev:web\"",
     "watch:fe": "bun run --cwd frontend build:watch",

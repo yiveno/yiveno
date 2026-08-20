@@ -4,7 +4,8 @@ inclusion: always
 
 # Yiveno 设计系统规则
 
-本文档定义了 Yiveno 项目的设计系统规范，用于指导 Figma 设计到代码的转换。
+> **Normative：** `docs/design/Yiveno-设计标准-v1.md` + `@yiveno/design-tokens/css/brand.css`。  
+> 本文部分示例可能过时；冲突时以设计标准与 `brand.css` 为准。
 
 ## 🚨 强制规则（必须严格遵守）
 
@@ -13,8 +14,9 @@ inclusion: always
 **该产品的任何终端项目必须引用 `@yiveno/design-tokens` 作为唯一设计标准。**
 
 ```typescript
-// ✅ 正确：在所有入口文件中导入
-import '@yiveno/design-tokens/css/material-theme.css'
+// ✅ 正确：品牌权威 + 扩展配套（见 packages/design-tokens/README.md）
+import '@yiveno/design-tokens/css/brand.css'
+import '@yiveno/design-tokens/css/md-sys-brand-alias.css' // 扩展 Material Web
 import '@yiveno/design-tokens/css/variables.css'
 import '@yiveno/design-tokens/css/semantic-colors.css'
 
@@ -47,22 +49,15 @@ import '@yiveno/design-tokens/css/semantic-colors.css'
 **所有入口文件必须按以下顺序导入样式：**
 
 ```typescript
-// 1. design-tokens 包（必须最先导入）
-import '@yiveno/design-tokens/css/material-theme.css'
+// 1. design-tokens 包（必须最先导入；权威见 packages/design-tokens/README.md）
+import '@yiveno/design-tokens/css/brand.css'
+import '@yiveno/design-tokens/css/md-sys-brand-alias.css' // 扩展 Material Web
 import '@yiveno/design-tokens/css/variables.css'
 import '@yiveno/design-tokens/css/semantic-colors.css'
 
 // 2. 项目样式
 import '@/assets/main.css'
 import '@/assets/fonts.css'
-```
-
-import '@yiveno/design-tokens/css/variables.css'
-
-// 2. 项目样式
-import '@/assets/main.css'
-import '@/assets/fonts.css'
-
 ```
 
 ### 4. Material Web 组件样式管理
@@ -88,7 +83,7 @@ import '@/assets/fonts.css'
 - 只有在需要组件特定样式时，才在组件中覆盖
 - 必须有明确的理由（如 Settings 页面需要更大的 Tabs）
 
-````
+```
 
 **示例：**
 
@@ -114,7 +109,7 @@ md-tabs {
   --md-primary-tab-active-label-text-color: var(--color-primary);
   /* ... 重复的配置 */
 }
-````
+```
 
 ### 5. 检查清单
 
@@ -175,15 +170,17 @@ Yiveno 采用 **Material Design 3** 设计系统，基于薄荷绿色系（种�
 ```
 packages/design-tokens/
 ├── src/
-│   ├── colors.ts          # 颜色定义
-│   ├── spacing.ts         # 间距定义
-│   ├── typography.ts      # 字体定义
+│   ├── brand.ts           # Brand Core hex（TS）
 │   └── index.ts
 ├── css/
-│   ├── material-theme.css # Material Design 3 主题
-│   └── variables.css      # CSS 变量定义
+│   ├── brand.css                 # Brand Core + Roles + space/radius（权威）
+│   ├── md-sys-brand-alias.css    # Material Web 别名（扩展）
+│   ├── variables.css             # typography/motion + 轻量全局
+│   └── semantic-colors.css
 └── package.json
 ```
+
+> **注意：** 下文若仍出现旧 MD3 / mint 色板示例，**以 `docs/design/Yiveno-设计标准-v1.md` 与 `css/brand.css` 为准**，勿再当作实现标准。
 
 ### 1. 颜色系统 (Colors)
 

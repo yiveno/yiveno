@@ -167,8 +167,7 @@ Yiveno/                             # Monorepo 根目录
 │   └── package.json
 │
 ├── packages/                       # 共享包
-│   ├── auth-core/                 # 认证核心逻辑
-│   ├── design-tokens/             # 设计令牌
+│   ├── design-tokens/             # 品牌/设计令牌 (@yiveno/design-tokens)
 │   └── types/                     # 跨 workspace 类型 (@yiveno/types)
 │
 ├── scripts/                        # 跨 workspace 脚本

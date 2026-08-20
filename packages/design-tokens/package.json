@@ -1,7 +1,7 @@
 {
   "name": "@yiveno/design-tokens",
-  "version": "1.4.0",
-  "description": "Yiveno design tokens — Brand Core, Product Roles, spacing/radius. MD multi-presets removed.",
+  "version": "1.5.0",
+  "description": "Yiveno design tokens — Brand Core, Product Roles, spacing/radius",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
@@ -17,48 +17,6 @@
       "import": "./src/brand.ts",
       "require": "./src/brand.ts",
       "default": "./src/brand.ts"
-    },
-    "./colors": {
-      "types": "./src/colors.ts",
-      "import": "./src/colors.ts",
-      "require": "./src/colors.ts",
-      "default": "./src/colors.ts"
-    },
-    "./color-presets": {
-      "types": "./src/color-presets.ts",
-      "import": "./src/color-presets.ts",
-      "require": "./src/color-presets.ts",
-      "default": "./src/color-presets.ts"
-    },
-    "./spacing": {
-      "types": "./src/spacing.ts",
-      "import": "./src/spacing.ts",
-      "require": "./src/spacing.ts",
-      "default": "./src/spacing.ts"
-    },
-    "./typography": {
-      "types": "./src/typography.ts",
-      "import": "./src/typography.ts",
-      "require": "./src/typography.ts",
-      "default": "./src/typography.ts"
-    },
-    "./animations": {
-      "types": "./src/animations.ts",
-      "import": "./src/animations.ts",
-      "require": "./src/animations.ts",
-      "default": "./src/animations.ts"
-    },
-    "./effects": {
-      "types": "./src/effects.ts",
-      "import": "./src/effects.ts",
-      "require": "./src/effects.ts",
-      "default": "./src/effects.ts"
-    },
-    "./css-vars": {
-      "types": "./src/css-vars.ts",
-      "import": "./src/css-vars.ts",
-      "require": "./src/css-vars.ts",
-      "default": "./src/css-vars.ts"
     },
     "./css/brand.css": {
       "import": "./css/brand.css",
@@ -84,10 +42,7 @@
   "files": [
     "src",
     "css",
-    "docs",
-    "examples",
-    "README.md",
-    "USAGE.md"
+    "README.md"
   ],
   "keywords": [
     "design-tokens",
@@ -96,9 +51,7 @@
     "brand",
     "css-variables",
     "typescript",
-    "yiveno",
-    "ui",
-    "colors"
+    "yiveno"
   ],
   "author": "Yiveno Team",
   "license": "MIT",
