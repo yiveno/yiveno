@@ -1,10 +1,11 @@
 /**
  * 按需注册 Material Web 组件（样式由 Brand Roles → md-sys 别名驱动）。
- * Popup / Settings 入口在 mount 前调用一次。
+ * Side Panel / Settings 等入口在 mount 前调用一次。
  */
 import { styles as typescaleStyles } from '@material/web/typography/md-typescale-styles.js'
 
 import '@material/web/button/filled-button.js'
+import '@material/web/button/filled-tonal-button.js'
 import '@material/web/button/outlined-button.js'
 import '@material/web/button/text-button.js'
 import '@material/web/iconbutton/icon-button.js'

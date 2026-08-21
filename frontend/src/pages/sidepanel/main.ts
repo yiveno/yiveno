@@ -1,9 +1,9 @@
 import { createApp } from 'vue'
-import PopupPage from './Popup.vue'
+import SidePanelPage from './SidePanel.vue'
 import { applyDocumentLocale } from '@/infrastructure/i18n/apply-document-locale'
 import { registerMaterialWebComponents } from '@/infrastructure/ui/register-material-web'
 import '@/styles/material-ui.css'
 
-applyDocumentLocale({ titleKey: 'page_title_popup' })
+applyDocumentLocale({ titleKey: 'page_title_sidepanel' })
 registerMaterialWebComponents()
-createApp(PopupPage).mount('#app')
+createApp(SidePanelPage).mount('#app')

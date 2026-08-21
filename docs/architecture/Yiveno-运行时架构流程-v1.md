@@ -592,7 +592,7 @@ Omnibox 是“单次命中”入口：输入变化只生成原生建议，不做
 - UI 消息客户端：
   - `frontend/src/infrastructure/messaging/background-client.ts`
 - UI 主入口：
-  - `frontend/src/pages/popup/Popup.vue`
+  - `frontend/src/pages/sidepanel/SidePanel.vue`
   - `frontend/src/pages/library/Library.vue`
   - `frontend/src/pages/detail/Detail.vue`
   - `frontend/src/content/selection-toolbar/main.ts`

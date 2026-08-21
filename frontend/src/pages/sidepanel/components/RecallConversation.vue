@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import type { ConversationTurn } from '@/pages/popup/recall-conversation-types'
-import RecallResultCard from '@/pages/popup/RecallResultCard.vue'
+import type { ConversationTurn } from '@/pages/sidepanel/recall-conversation-types'
+import RecallResultCard from '@/pages/sidepanel/RecallResultCard.vue'
 import { t } from '@/infrastructure/i18n/t'
 
 defineOptions({ name: 'RecallConversation' })

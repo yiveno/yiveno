@@ -26,8 +26,8 @@ import type {
   GetExtensionCommandsResponse,
   OpenChromeShortcutsPageMessage,
   OpenChromeShortcutsPageResponse,
-  OpenRecallPopupMessage,
-  OpenRecallPopupResponse
+  OpenRecallShellMessage,
+  OpenRecallShellResponse
 } from '@/core/messaging/commands-messages'
 import type {
   ChromeBookmarkImportStatusResponse,
@@ -203,13 +203,13 @@ export async function openChromeShortcutsPage(): Promise<OpenChromeShortcutsPage
   return sendBackgroundMessage<OpenChromeShortcutsPageResponse>(message)
 }
 
-/** 在用户手势链上打开 Recall Popup（预填线索须已写入 session）。 */
-export async function openRecallPopup(): Promise<OpenRecallPopupResponse> {
-  const message: OpenRecallPopupMessage = {
+/** 在用户手势链上打开 Recall Side Panel（预填线索须已写入 session）。 */
+export async function openRecallShell(): Promise<OpenRecallShellResponse> {
+  const message: OpenRecallShellMessage = {
     scope: 'background',
-    type: 'OPEN_RECALL_POPUP'
+    type: 'OPEN_RECALL_SHELL'
   }
-  return sendBackgroundMessage<OpenRecallPopupResponse>(message)
+  return sendBackgroundMessage<OpenRecallShellResponse>(message)
 }
 
 /** 读取用户设置。 */

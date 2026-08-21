@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const {
   ensureChromeBookmarksImportedMock,
   ensureMemoryEnrichmentBackfilledMock,
+  ensureSidePanelOpensOnActionClickMock,
   getCurrentOwnerIdMock,
   getOrCreateLocalProfileMock,
   initializeMemoryDatabaseMock,
@@ -19,6 +20,7 @@ const {
     updated: 0,
     version: 1
   })),
+  ensureSidePanelOpensOnActionClickMock: vi.fn(async () => undefined),
   getCurrentOwnerIdMock: vi.fn(async () => 'owner-1'),
   getOrCreateLocalProfileMock: vi.fn(async () => ({
     localProfileId: 'profile-1',
@@ -39,6 +41,10 @@ vi.mock('@/application/capture/import-chrome-bookmarks-service', () => ({
 
 vi.mock('@/application/memory/ensure-memory-enrichment-backfill', () => ({
   ensureMemoryEnrichmentBackfilled: ensureMemoryEnrichmentBackfilledMock
+}))
+
+vi.mock('@/infrastructure/browser/side-panel', () => ({
+  ensureSidePanelOpensOnActionClick: ensureSidePanelOpensOnActionClickMock
 }))
 
 vi.mock('@/background/listeners/chrome-bookmark-sync', () => ({
@@ -86,6 +92,7 @@ describe('ensureBackgroundBootstrapped', () => {
   it('并发调用只 bootstrap 一次', async () => {
     await Promise.all([ensureBackgroundBootstrapped(), ensureBackgroundBootstrapped()])
 
+    expect(ensureSidePanelOpensOnActionClickMock).toHaveBeenCalledTimes(1)
     expect(initializeMemoryDatabaseMock).toHaveBeenCalledTimes(1)
     expect(syncChromeBookmarkSyncListenersWithIngestSettingMock).toHaveBeenCalledTimes(1)
     expect(registerContextMenuListenersMock).toHaveBeenCalledTimes(1)

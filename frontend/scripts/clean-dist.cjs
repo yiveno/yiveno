@@ -1,7 +1,7 @@
 /**
  * 将 Vite 产物整理为 Chrome 扩展可加载的 dist/ 布局。
  *
- * - popup.html / settings.html 放到 dist 根目录
+ * - sidepanel.html / settings.html 等到 dist 根目录
  * - 修正 HTML 内 ../../../ 资源引用为 ./
  * - 仅复制扩展运行所需的 public 白名单资产（不含 models / 营销 logo）
  */
@@ -93,7 +93,7 @@ function finalizeExtensionDist() {
     }
   }
 
-  flattenPageHtml('popup')
+  flattenPageHtml('sidepanel')
   flattenPageHtml('settings')
   flattenPageHtml('detail')
   flattenPageHtml('library')
@@ -105,8 +105,12 @@ function finalizeExtensionDist() {
     fs.rmSync(nestedSrcDir, { recursive: true, force: true })
   }
 
+  // 移除历史 popup 产物，避免误加载
+  removeIfPresent(path.join(distDir, 'popup.html'))
+  removeIfPresent(path.join(distDir, 'popup.js'))
+
   console.log(
-    '[clean-dist] 扩展产物已就绪：popup.html / settings.html / detail.html / library.html / getting-started.html / manifest.json'
+    '[clean-dist] 扩展产物已就绪：sidepanel.html / settings.html / detail.html / library.html / getting-started.html / manifest.json'
   )
 }
 

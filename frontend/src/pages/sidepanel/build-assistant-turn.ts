@@ -2,17 +2,17 @@ import type {
   ConversationTurn,
   AssistantTurn,
   RecallSuggestion
-} from '@/pages/popup/recall-conversation-types'
-import type { PopupRecallCardModel } from '@/pages/popup/RecallResultCard.vue'
+} from '@/pages/sidepanel/recall-conversation-types'
+import type { RecallCardModel } from '@/pages/sidepanel/RecallResultCard.vue'
 
 export function createAssistantTurn(input: {
   id: string
   tone: AssistantTurn['tone']
   text: string
-  primaryCard?: PopupRecallCardModel | null
-  relatedGuessCard?: PopupRecallCardModel | null
+  primaryCard?: RecallCardModel | null
+  relatedGuessCard?: RecallCardModel | null
   relatedGuessLabel?: string
-  candidateCards?: PopupRecallCardModel[]
+  candidateCards?: RecallCardModel[]
   candidateSectionLabel?: string
   suggestions?: RecallSuggestion[]
   allowDismiss?: boolean

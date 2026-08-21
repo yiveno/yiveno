@@ -117,6 +117,31 @@
 
 **交互收束（2026-08-11）：** 废除缺槽规则问卷；`no_match` 诚实终局；追问仅 `need_a_clue`；`top_pick` 展示主 +「可能是这些」。
 
+### R-shell · Recall 主壳 → Side Panel
+
+**状态：** **已落地（2026-08-21）** — Normative + 实现（Side Panel 主壳、无 `default_popup`、`OPEN_RECALL_SHELL`）。
+
+**目标：** 对话式找回主战场迁到 Chrome Side Panel；Action Popup 退役（不适持续交互）。
+
+**已拍板：**
+
+1. 点工具栏图标与 `_execute_action`（`Alt+Shift+Y`）一律开 Side Panel；去掉 `default_popup`。
+2. P0：关闭 Side Panel 即丢会话（不持久化）。
+3. Omnibox P0 仍单次无会话。
+4. 新目录 `frontend/src/pages/sidepanel/`；废 Popup 作主壳。
+
+| 交付                                                            | 验收 |
+| --------------------------------------------------------------- | ---- |
+| 产品文档 §0.4 / §7.0 / §5 入口与主壳表述                        | ✓    |
+| Manifest `sidePanel` + 无 `default_popup` + `setPanelBehavior`  | ✓    |
+| Recall UI 迁入 Side Panel（对等原 Popup 对话切片）              | ✓    |
+| 划词 / Getting Started / `OPEN_RECALL_SHELL` → `sidePanel.open` | ✓    |
+| 拆除 `pages/popup`；i18n / 权威路径                             | ✓    |
+
+**退出标准：** §1「Side Panel 对话式找回」可标已上线；用户主路径不再依赖失焦即关的 Popup。→ **已满足。**
+
+**禁止：** 借 Side Panel 回潮书签树/整理中心（§0.3）。
+
 ### R∞ · 框架远景（不排期）
 
 见产品文档附录 A.7。仅当 R0–R2 命题不可动摇后再议最小可售单元。
@@ -126,14 +151,12 @@
 ## 4. 建议执行顺序（近 2～4 周）
 
 ```text
-R0 文案与 must eval 收束
-  → R1 空结果 / 冷启动闭环
-    → R2 适配器契约文档化 + 差距清单
-      →（并行）倒排等 B 阶段余项按找回增益插入
-        → 外部导入仅在 R2 退出后单点试点
+R-shell 文档 Normative（已）
+  → R-shell 实现（空壳 → 迁 UI → 拆 Popup）
+    →（并行守）R0–R3 已交付命题/冷启动/适配器/检索硬化
 ```
 
-默认**先文档与验收，再大功能**；当前 WIP（Recall follow-up / enrich 等）合入时须不违反空结果契约与反助理 MUST NOT。
+默认**先文档与验收，再大功能**；当前 WIP 合入时须不违反空结果契约与反助理 MUST NOT。
 
 ---
 
@@ -150,6 +173,8 @@ R0 文案与 must eval 收束
 
 | 日期       | 变更                                                                     |
 | ---------- | ------------------------------------------------------------------------ |
+| 2026-08-21 | R-shell 落地：Recall 主壳 Side Panel；拆除 popup；`OPEN_RECALL_SHELL`    |
+| 2026-08-21 | 增 R-shell：Recall 主壳 → Side Panel；四点拍板；实现待启动               |
 | 2026-08-15 | 对齐产品文档定位纠偏：邻域非神谕；Top1=建议；AI 不作宣传招牌；差异表补行 |
 | 2026-08-11 | 初版：差异表 + R0–R∞ + 近周顺序                                          |
 | 2026-08-11 | R0 落地：must eval / 空库 / 反助理门禁与文案；进入 R1                    |

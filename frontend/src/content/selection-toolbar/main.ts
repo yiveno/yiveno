@@ -28,7 +28,7 @@ import type { MessageKey } from '@/infrastructure/i18n/message-keys'
 import {
   readExcerptCaptureCount,
   readFirstRecallOpenDone,
-  writePopupRecallPrefill
+  writeRecallPrefill
 } from '@/infrastructure/storage/first-recall-onboarding-storage'
 import {
   getMaterialSymbolPath,
@@ -637,7 +637,7 @@ async function handleOpenRecallClick(): Promise<void> {
   try {
     const response = await chrome.runtime.sendMessage({
       scope: BACKGROUND_MESSAGE_SCOPE,
-      type: 'OPEN_RECALL_POPUP'
+      type: 'OPEN_RECALL_SHELL'
     })
 
     if (!ensureLiveContext()) {
@@ -905,7 +905,7 @@ async function handleSaveClick(
     let recallAriaLabel: string | null = null
     try {
       if (prefill) {
-        await writePopupRecallPrefill(prefill)
+        await writeRecallPrefill(prefill)
       }
       const captureCount = await readExcerptCaptureCount()
       const firstDone = await readFirstRecallOpenDone()

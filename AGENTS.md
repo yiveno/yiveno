@@ -26,7 +26,7 @@
 - **业务可观测性（硬约定）**：新增或改动业务路径时，必须有**清晰中文注释（意图/边界）** + **关键步骤日志**（开始 / 分支决策 / 成功或失败原因；失败不可静默吞掉）。扩展侧优先用 `frontend/src/infrastructure/logging/flow-log.ts`（`flowStart` / `flowOk` / `flowFail`），scope 稳定可过滤（如 `Msg` / `Capture` / `Recall` / `RecallFlow` / `ClueLlm`）；core 可通过注入 `trace`，禁止 core 直连 Chrome。长文本只打 preview，避免刷屏。细则：`docs/engineering/业务日志与注释约定.md`。
 - Vue 组件必须 `defineOptions({ name: 'ComponentName' })`。
 - 需要跨层事件时再引入事件总线（当前无 mitt / emitEvent）。
-- Map 响应式更新：若引入 Map 状态，优先不可变更新模式（当前 Popup 用组件内状态即可）。
+- Map 响应式更新：若引入 Map 状态，优先不可变更新模式（当前找回主壳用组件内状态即可）。
 - VueUse 优先：`useEventListener` / `useDebounceFn` / `useTimeoutFn`（引入依赖后再用）。
 
 ## 存储决策
@@ -34,7 +34,7 @@
 - 数据量 > 1000：IndexedDB。
 - 跨页面持久化：`chrome.storage.local`。
 - 会话临时状态：`chrome.storage.session`。
-- 跨页/会话外 UI 状态：Pinia（当前 Popup 可用组件内状态）。
+- 跨页/会话外 UI 状态：Pinia（当前找回主壳可用组件内状态；P0 关 Side Panel 即丢）。
 
 ## 验证策略
 

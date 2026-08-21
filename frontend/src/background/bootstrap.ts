@@ -7,12 +7,13 @@ import { registerContextMenuListeners } from '@/background/listeners/context-men
 import { registerMemoryCloudSyncAlarmListener } from '@/background/listeners/memory-cloud-sync-alarm'
 import { registerOmniboxListeners } from '@/background/listeners/omnibox'
 import { registerSelectionToolbarKeepaliveListener } from '@/background/listeners/selection-toolbar-keepalive'
-import { logger } from '@/infrastructure/logging/logger'
+import { ensureSidePanelOpensOnActionClick } from '@/infrastructure/browser/side-panel'
 import {
   getCurrentOwnerId,
   getOrCreateLocalProfile
 } from '@/infrastructure/identity/local-profile-service'
 import { initializeMemoryDatabase } from '@/infrastructure/indexeddb/memory-db'
+import { logger } from '@/infrastructure/logging/logger'
 
 /** 扩展 reload 后延迟启动书签导入，避免与 Chrome 扩展卸载/重装窗口重叠。 */
 const CHROME_BOOKMARK_IMPORT_START_DELAY_MS = 500
@@ -27,6 +28,9 @@ let bootstrapPromise: Promise<void> | null = null
  * 右键菜单项仅在 `chrome.runtime.onInstalled` 中注册，避免 reload 时重复调用 contextMenus API。
  */
 async function bootstrapBackground(): Promise<void> {
+  // Recall 主壳：点图标开 Side Panel（须无 default_popup）
+  await ensureSidePanelOpensOnActionClick()
+
   const [profile, ownerId] = await Promise.all([getOrCreateLocalProfile(), getCurrentOwnerId()])
 
   await initializeMemoryDatabase()

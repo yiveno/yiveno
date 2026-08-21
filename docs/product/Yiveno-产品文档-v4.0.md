@@ -242,7 +242,7 @@ Chrome 书签只有标题、URL、文件夹位置——用户存一个网页时�
 | ------------ | ----------------------------------- | ------------------------------------------------------------------- |
 | **结构层**   | Chrome 原生书签树（sync 进 Yiveno） | 用户熟悉的目录、放哪都行；**不再承担「找得着」的主责任**            |
 | **个性化层** | Yiveno 记忆库书签树                 | 在同一结构上展示/编辑 `clues.note`；给未来的自己留上下文            |
-| **找回层**   | Recall（Popup / Omnibox）           | 消费标题、URL、**备注**、行为与时间线索；主路径仍是「要」，不是翻树 |
+| **找回层**   | Recall（**Side Panel** / Omnibox）  | 消费标题、URL、**备注**、行为与时间线索；主路径仍是「要」，不是翻树 |
 
 **Normative：**
 
@@ -519,7 +519,7 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 
 | 层                 | 职责                                                                          | 语言策略                             |
 | ------------------ | ----------------------------------------------------------------------------- | ------------------------------------ |
-| **UI 展示**        | Popup / Settings / 空状态 / 追问文案 / 芯片标签                               | **仅 en**；运行时不再维护其它 locale |
+| **UI 展示**        | Side Panel / Settings / 空状态 / 追问文案 / 芯片标签                          | **仅 en**；运行时不再维护其它 locale |
 | **用户输入**       | Recall composer 中的口语线索                                                  | 目标为 **American English** 自然表达 |
 | **内部 canonical** | `tags` / `keywords` / `entities`、parser 槽位、编排加权、芯片填入值、分析口径 | **统一 English canonical**           |
 
@@ -588,7 +588,7 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 
 #### 里程碑 M1 · NL → 精确检索约束（Normative · 主链）
 
-**目标：** Popup 无论输入什么，交给筛选算法的始终是**精确关键字 / 结构化约束**（`ParsedRecallClue`），而不是整句口语。**有托管 completer 时默认 LLM 理解**（见 §0.1.0）。
+**目标：** 找回主壳无论输入什么，交给筛选算法的始终是**精确关键字 / 结构化约束**（`ParsedRecallClue`），而不是整句口语。**有托管 completer 时默认 LLM 理解**（见 §0.1.0）。
 
 ```text
 线索
@@ -657,7 +657,8 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 - 偏离 §0.1 / §0.1.1：用功能堆砌、管理回潮、开放式闲聊、AI 主卖点、**生活小助手叙事**、**「好像啥都做」的平台叙事**替代「那个找东西的」。
 - 以查阅类书签找回、书签自动归文件夹/智能整理 Chrome 树为主卖点或主 demo（被 Google / 整理器逻辑压死；见 §0.1.1）。
 - 把独立空白笔记创作做成可用主路径或 UI 暗示已有笔记库（Notion 赛道；见 §0.4）。
-- 恢复旧双面板书签树、侧边栏管理页、AI 智能重构/聚类主卖点、以「管理书签」为中心的 UI。
+- 恢复旧双面板书签树、**侧边栏管理页**（书签树/整理中心）、AI 智能重构/聚类主卖点、以「管理书签」为中心的 UI。  
+  **澄清（Normative）：** 本条禁止的是「整理中心」形态，**不禁止** Chrome **Side Panel** 作为对话式 Recall **主壳**（见 §0.4 / 改版 R-shell）。
 - 以「放首歌 / 好无聊看点东西」等**零锚点助手句**做主 demo 或暗示 Yiveno 会替用户编排生活。
 - 用空结果做**偏好建档 / 人格记忆**闲聊主路径，或暗示聊天声明 = 已能回答无锚点读心题（见 §0.1.1 空结果契约）。
 - 把第三方导入做成**同步中台 / 知识库聚合器**主叙事；或在统一 Memory 契约未稳时堆多连接器冒充平台。
@@ -672,15 +673,25 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 
 **记忆库轻浏览已上线**（`library.html`；左侧类型 Tab，**默认摘录**）。摘录可软删；摘录详情、线索解释 / 空状态、Omnibox、快捷键、Settings、划词浮层已上线。对话式 Recall 语义闭环切片已上线（§7.0）。
 
-**说明：** 页内左侧类型切换 ≠ 旧「侧边栏管理页」/书签树；禁止整理中心化回潮。
+**说明：** 页内左侧类型切换 ≠ 旧「侧边栏管理页」/书签树；禁止整理中心化回潮。Chrome **Side Panel Recall 主壳** ≠ 管理页（见下「入口能力差异」）。
 
-**下一项：按 [`Yiveno-改版计划-v1.md`](./Yiveno-改版计划-v1.md) 推进（命题验收 → 空结果/冷启动 → 语料适配器契约 → 检索硬化）。**  
+**下一项：按 [`Yiveno-改版计划-v1.md`](./Yiveno-改版计划-v1.md) 推进——优先 **R-shell**（Recall 主壳 → Side Panel）；其余 R0–R3 命题/冷启动/适配器/检索硬化已落地切片。**  
 倒排索引 **Phase 1 已接线**（候选预过滤 + dirty/rebuild + 失败 fallback 全表扫；见 `docs/engineering/关键词倒排索引-Phase1.md`）。**Hybrid / embedding 与 §7.1 首批（同域软重排 / behaviorHints 加权 / 追问芯片）已接线**（召回质量不分 Free/Pro；云同步仍须 Pro）。
 
 **类型优先级（与 §0.1.1 一致）：** 主动 Capture 与体验打磨优先 **摘录 + `clues.note`**；书签继续导入/sync 但为配角；记忆库默认 Tab = 摘录。**语料适配器插头**保持可扩展；第三方连接器未经验收门槛前不上主路径。  
 **独立 `note` 类型（预留）：** 有边界需求（无出处闪念），但属辅助，**当前不接入**。未验证「无处可挂」的规模流失前，不得做成可用入口，也不得在 UI 暗示已有独立笔记库。若将来做，须极瘦（纯文本、无文件夹/富文本/双向链）。
 
-**入口能力差异（Normative）：** 共用同一 `recallService` / Filter；壳不同——Omnibox 为单次命中、无会话；快捷键找回打开 Popup（对话式找回主壳）；Popup：高置信给主答案 +「可能是这些」；低置信给候选并允许**仅围绕候选**的追问；无相关则诚实终局。**允许对话式找回，不允许开放式闲聊。** 书签 Capture：**仅** Chrome 原生加书签 + 导入/增量 sync，不提供「保存当前页」快捷键或 Popup 按钮。快捷键改绑：Settings → Chrome 原生 `chrome://extensions/shortcuts`（扩展无法自行改键）。
+**入口能力差异（Normative · 2026-08-21 拍板）：** 共用同一 `recallService` / Filter；壳不同——
+
+| 壳                              | 职责                                                                                                                                                                      |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Chrome Side Panel**           | **对话式找回主战场**（composer、邻域、追问、多轮会话）。工具栏图标与快捷键 `_execute_action`（默认 `Alt+Shift+Y`）均打开/聚焦 Side Panel；**无** `action.default_popup`。 |
+| **Omnibox**                     | **单次命中、无会话**（P0 不改；不传 `RECALL_WITH_CLUE.context`）。                                                                                                        |
+| **Action Popup**                | **不再作为对话主壳**（失焦即关，只适合 summary，不适合持续交互）。实现退役后不保留双壳抢 action。                                                                         |
+| **Library / Settings / Detail** | 整页 Tab；轻浏览与设置，不是找回主路径。                                                                                                                                  |
+
+Side Panel 内：高置信给主答案 +「可能是这些」；低置信给候选并允许**仅围绕候选**的追问；无相关则诚实终局。**允许对话式找回，不允许开放式闲聊。**  
+书签 Capture：**仅** Chrome 原生加书签 + 导入/增量 sync，不提供「保存当前页」快捷键或找回壳内按钮。快捷键改绑：Settings → Chrome 原生 `chrome://extensions/shortcuts`（扩展无法自行改键）。
 
 ### 0.5 权威路径速查
 
@@ -698,7 +709,7 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 | Command ID 契约              | `frontend/src/core/commands/command-ids.ts`                                     |
 | Settings                     | `frontend/src/pages/settings/Settings.vue`                                      |
 | Settings 分区（`?section=`） | `frontend/src/core/settings/settings-sections.ts`                               |
-| Popup                        | `frontend/src/pages/popup/Popup.vue`                                            |
+| Side Panel（Recall 主壳）    | `frontend/src/pages/sidepanel/`                                                 |
 | 通用键盘意图（↑↓←→/Enter）   | `frontend/src/core/ui/keyboard-command.ts`                                      |
 | 线性列表选中下标             | `frontend/src/core/ui/list-selection.ts`                                        |
 | 摘录详情                     | `frontend/src/pages/detail/Detail.vue`                                          |
@@ -712,7 +723,8 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 
 | 能力                             | 状态                    | 说明                                                                                                                                                 |
 | -------------------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Popup 对话式找回                 | 已上线（语义闭环切片）  | core 槽位 merge + 芯片即发 + dismiss 保留 + 缩短回滚；见 §7.0                                                                                        |
+| Side Panel 对话式找回            | 已上线（R-shell）       | 主壳；composer / 邻域 / 追问；关 Panel 丢会话（P0）；见 §7.0                                                                                         |
+| Action Popup 作对话主壳          | 已退役                  | 无 `default_popup`；`pages/popup` 已删除                                                                                                             |
 | 右键保存选区                     | 已上线                  | Text Excerpt；非书签的主动 Capture                                                                                                                   |
 | 划词保存浮层                     | 已上线                  | Content Script；可直存或「添加备注」后写入 `clues.note`；Settings 可关；默认开                                                                       |
 | 书签/摘录事后备注                | 已上线                  | `UPDATE_MEMORY_NOTE`；书签树编辑；仅本地 `clues.note`，不同步 Chrome                                                                                 |
@@ -720,15 +732,15 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 | LocalProfile / ownerId           | 已上线                  | 未登录可用；登录后 `ownerId=accountId`                                                                                                               |
 | Settings                         | 已上线（最小+账户同步） | `options_ui`；左侧分区导航（与记忆库同构）+ `?section=`；快捷键；账户/云同步；隐私/AI 占位                                                           |
 | Offscreen                        | 占位                    | 预留本地 embedding；当前 Pro 走 Worker AI，未启用 Offscreen                                                                                          |
-| Omnibox 找回                     | 已上线                  | 关键词 `yi`；共用 `recallService`；单次无会话                                                                                                        |
-| 快捷键找回                       | 已上线                  | `_execute_action`（默认 `Alt+Shift+Y`）开 Popup                                                                                                      |
+| Omnibox 找回                     | 已上线                  | 关键词 `yi`；共用 `recallService`；**单次无会话**（P0 不改为开 Side Panel）                                                                          |
+| 快捷键找回                       | 已上线                  | `_execute_action`（默认 `Alt+Shift+Y`）与点图标开 Side Panel                                                                                         |
 | 快捷键打开记忆库                 | 已上线                  | `open_library`（默认 `Alt+Shift+L`）                                                                                                                 |
 | 快捷键打开设置                   | 已上线                  | `open_settings`（无默认建议键；Chrome 最多 4 个 suggested_key，可自绑）                                                                              |
 | 快捷键保存选中文字               | 已上线                  | `save_selection`（默认 `Alt+Shift+E`）→ 划词脚本直存；`captureEntry=shortcut`                                                                        |
 | 快捷键选中文字并备注             | 已上线                  | `save_selection_with_note`（默认 `Alt+Shift+N`）→ 打开划词备注面板                                                                                   |
 | 手动「保存当前页」               | 不做                    | 与 Chrome 原生书签重复；已移除 UI/快捷键/消息                                                                                                        |
 | 结果线索解释强化                 | 已上线                  | 主因「因字段含「token」」+ 次要字段；Top Pick 线索回显                                                                                               |
-| Popup 空状态分层                 | 已上线                  | 空库 / 有库 idle 与 no_match 分文案；有库可「缩短后再试」                                                                                            |
+| 找回壳空状态分层                 | 已上线（壳迁移中）      | 空库 / 有库 idle 与 no_match 分文案；有库可「缩短后再试」；迁 Side Panel 后文案归属随壳走                                                            |
 | 摘录详情落地页                   | 已上线                  | `detail.html?id=`；摘录打开详情；书签仍直开 URL；`GET_MEMORY_ITEM`                                                                                   |
 | 记忆库轻浏览                     | 已上线                  | `library.html`；**默认摘录**；书签=Chrome 目录只读树；摘录=时间列表；`?type=` 刷新保留                                                               |
 | 摘录删除                         | 已上线                  | 软删 `deletedAt`；记忆库列表 / 详情页；`DELETE_MEMORY_ITEM`；书签不经此删                                                                            |
@@ -745,32 +757,32 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 
 口径：**单测** = Vitest（含 handler/application/core）；**eval** = `frontend/src/core/recall/eval` 的 `must`/`stretch`；**E2E** = `scripts/e2e-management.mjs` 薄冒烟；**手动** = 真机/扩展清单（发版或改到才验）。一项可多列并存。`缺口` = 尚无自动归属、仅靠偶然手测。
 
-| 能力                                      | 单测 | eval | E2E | 手动 | 备注                                                   |
-| ----------------------------------------- | ---- | ---- | --- | ---- | ------------------------------------------------------ |
-| 右键保存选区                              | ✓    | —    | —   | ✓    | `context-menu` / capture 服务；真机右键需手动          |
-| 划词保存浮层                              | ✓    | —    | —   | ✓    | `selection-toolbar-*`；页面浮层需手动                  |
-| 书签/摘录事后备注                         | ✓    | ✓    | —   | ✓    | eval：`semi-fuzzy-type-b-note`；树编辑手测             |
-| Chrome 书签导入 + 增量 sync               | ✓    | —    | —   | ✓    | import/sync 服务单测；真机 sync 手测                   |
-| LocalProfile / ownerId                    | ✓    | —    | —   | —    | `local-profile*`                                       |
-| Settings（最小）                          | ✓    | —    | ✓   | ✓    | E2E：打开 `settings.html`                              |
-| Omnibox 找回                              | ✓    | —    | —   | ✓    | 共用 `recallService`；壳与建议列表手测                 |
-| 快捷键找回（开 Popup）                    | ✓    | —    | —   | ✓    | commands registry；真机按键手测                        |
-| 快捷键打开记忆库                          | ✓    | —    | —   | ✓    | 同上                                                   |
-| 快捷键打开设置                            | ✓    | —    | —   | ✓    | 同上                                                   |
-| 快捷键保存选中文字                        | ✓    | —    | —   | ✓    | selection 命令封装单测；真机手测                       |
-| 快捷键选中文字并备注                      | ✓    | —    | —   | ✓    | 同上                                                   |
-| 结果线索解释强化                          | ✓    | —    | —   | ✓    | `explain-recall-match*`；卡面手测                      |
-| Popup 空状态分层                          | ✓    | —    | —   | ✓    | `popup-empty-copy*`；冷启动真机见 §5.8                 |
-| 冷启动存→找闭环（R1）                     | ✓    | ✓    | —   | ✓    | 空库/零锚点 eval；§5.8 A/B/C                           |
-| 摘录详情落地页                            | ✓    | —    | —   | ✓    | `GET_MEMORY_ITEM` / open-href；页手测                  |
-| 记忆库轻浏览                              | ✓    | —    | —   | ✓    | library tree/tabs；页手测                              |
-| 摘录删除                                  | ✓    | —    | —   | ✓    | delete handler；库/详情手测                            |
-| Need A Clue / 否定反馈                    | ✓    | ✓    | —   | ✓    | eval：`need-a-clue-*`；dismiss 单测；对话手测          |
-| 关键词 Recall 主路径（Filter + 口语解析） | ✓    | ✓    | ✓   | ✓    | eval=`must` 门禁；E2E=Popup 固定线索→结果卡            |
-| 关键词倒排 Phase 1                        | ✓    | ✓    | —   | ✓    | `keyword-index-repository*`；extract-tokens；真机大库  |
-| Popup 对话式壳（多轮 UI）                 | ✓    | ✓    | 薄  | ✓    | merge 单测 + eval must 多轮；E2E 薄；芯片/dismiss 手测 |
-| 多轮槽位 merge（§7.0）                    | ✓    | ✓    | —   | ✓    | `merge-recall-dialog-turn`；eval `dialog-*` must       |
-| Dodo Pro / 同步·托管门禁                  | ✓    | —    | —   | ✓    | webhook/account/sync Pro 拒绝；§5.7 手动付费全流程     |
+| 能力                                      | 单测 | eval | E2E | 手动 | 备注                                                  |
+| ----------------------------------------- | ---- | ---- | --- | ---- | ----------------------------------------------------- |
+| 右键保存选区                              | ✓    | —    | —   | ✓    | `context-menu` / capture 服务；真机右键需手动         |
+| 划词保存浮层                              | ✓    | —    | —   | ✓    | `selection-toolbar-*`；页面浮层需手动                 |
+| 书签/摘录事后备注                         | ✓    | ✓    | —   | ✓    | eval：`semi-fuzzy-type-b-note`；树编辑手测            |
+| Chrome 书签导入 + 增量 sync               | ✓    | —    | —   | ✓    | import/sync 服务单测；真机 sync 手测                  |
+| LocalProfile / ownerId                    | ✓    | —    | —   | —    | `local-profile*`                                      |
+| Settings（最小）                          | ✓    | —    | ✓   | ✓    | E2E：打开 `settings.html`                             |
+| Omnibox 找回                              | ✓    | —    | —   | ✓    | 共用 `recallService`；壳与建议列表手测                |
+| 快捷键找回（开 Side Panel）               | ✓    | —    | —   | ✓    | 真机按键/点图标开 Panel                               |
+| 快捷键打开记忆库                          | ✓    | —    | —   | ✓    | 同上                                                  |
+| 快捷键打开设置                            | ✓    | —    | —   | ✓    | 同上                                                  |
+| 快捷键保存选中文字                        | ✓    | —    | —   | ✓    | selection 命令封装单测；真机手测                      |
+| 快捷键选中文字并备注                      | ✓    | —    | —   | ✓    | 同上                                                  |
+| 结果线索解释强化                          | ✓    | —    | —   | ✓    | `explain-recall-match*`；卡面手测                     |
+| 找回壳空状态分层                          | ✓    | —    | —   | ✓    | `popup-empty-copy*`；§5.8                             |
+| 冷启动存→找闭环（R1）                     | ✓    | ✓    | —   | ✓    | 空库/零锚点 eval；§5.8 A/B/C                          |
+| 摘录详情落地页                            | ✓    | —    | —   | ✓    | `GET_MEMORY_ITEM` / open-href；页手测                 |
+| 记忆库轻浏览                              | ✓    | —    | —   | ✓    | library tree/tabs；页手测                             |
+| 摘录删除                                  | ✓    | —    | —   | ✓    | delete handler；库/详情手测                           |
+| Need A Clue / 否定反馈                    | ✓    | ✓    | —   | ✓    | eval：`need-a-clue-*`；dismiss 单测；对话手测         |
+| 关键词 Recall 主路径（Filter + 口语解析） | ✓    | ✓    | ✓   | ✓    | eval=`must` 门禁；E2E=找回壳固定线索→结果卡           |
+| 关键词倒排 Phase 1                        | ✓    | ✓    | —   | ✓    | `keyword-index-repository*`；extract-tokens；真机大库 |
+| Side Panel 对话式壳（多轮 UI）            | ✓    | ✓    | 薄  | ✓    | merge + eval；E2E `sidepanel.html`；芯片/dismiss 手测 |
+| 多轮槽位 merge（§7.0）                    | ✓    | ✓    | —   | ✓    | `merge-recall-dialog-turn`；eval `dialog-*` must      |
+| Dodo Pro / 同步·托管门禁                  | ✓    | —    | —   | ✓    | webhook/account/sync Pro 拒绝；§5.7 手动付费全流程    |
 
 **合入门禁（Normative）：**
 
@@ -778,7 +790,7 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
    - 在 `recall-eval` 增加或更新 **`must` case**，且相关单测/CI 绿；或
    - 在 §5 验收清单写明 **可复现的手动步骤**（含期望结果）。
 2. 禁止「只改代码、无验收归属」。合并后应能在本表或 §5 找到覆盖方式。
-3. **E2E 边界：** 仅薄冒烟——装载扩展 → Popup 发固定线索 → 断言出现结果卡；可保留打开 settings。**不上**全量可视化回归、大型 Playwright 套件、逐 UI 状态 E2E。
+3. **E2E 边界：** 仅薄冒烟——装载扩展 → 找回主壳（Side Panel 页或对等入口）发固定线索 → 断言出现结果卡；可保留打开 settings。**不上**全量可视化回归、大型 Playwright 套件、逐 UI 状态 E2E。
 4. 未标「已上线」的能力不得用 E2E/文案暗示可用。
 
 ---
@@ -832,14 +844,14 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 
 ### 3.1 Recall 重复折叠（Normative）
 
-- **范围：** 仅 Popup / Omnibox 共用的 Recall 结果；不写入去重、不改记忆库树/列表。
+- **范围：** 仅找回主壳 / Omnibox 共用的 Recall 结果；不写入去重、不改记忆库树/列表。
 - **书签键：** 规范化完整 URL（host 小写并去 `www.`；去默认端口；非根 path 去尾 `/`；保留 protocol / query / hash）。**不同 path 仍为不同键。** 禁止复用会去掉 hash 的 sync 归一化。
 - **摘录键：** `payload.selectedText.trim()` 全等；**不**拼 `sourceUrl`（跨页同句会折——已接受）。
 - **跨类型：** 书签 ↔ 摘录永不互折。
 - **代表项：** 组内 score 高 → 有 `clues.note` → `lastOpenedAt`/`openCount` → **`createdAt` 最晚** → `id`（完全相同时以最晚创建为唯一决胜）。
 - **stacks N：** 等于该折叠键（同规范化 URL）在本次关键词命中集中的组员数；**不是**同域名全部书签，也不是「全部含线索的命中总数」。
 - **Top / Also 互斥：** Also 不得出现与 Top 同一折叠键，或（双方均为书签时）同一规范化域名。同站其它 path 不进 Also，也**不**并入 Top 的 stacks N。过滤后回填名额。
-- **UI（Popup）：**
+- **UI（找回主壳）：**
   - N≥2 时结果卡**右上角**展示 Material Symbol `stacks` + 数量 N（图标优先；`title`/`aria-label` 经 `t()`）。
   - **主卡点击 / Enter：** 打开代表（URL 或详情），与无折叠时相同。
   - **点 `stacks` 控件：** 展开/收起同组其余条目（纵向列表）；无扑克叠/扇开动效。
@@ -922,25 +934,25 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 ### 5.2 已交付基线验收
 
-1. Popup 可开；空线索无误命中。
+1. 找回主壳（Side Panel）可开；空线索无误命中。
 2. Chrome 加书签或导入完成后，标题/域名片段可 Top Pick 找回。
 3. 右键摘录后可用摘录词找回。
 4. 书签导入有真实进度或明确失败；导入项可找回。
 5. Chrome 侧书签变更后，再次 Recall 可见一致结果。
 6. 无 Search 文案；无行级位移/缩放 hover。
-7. 无「保存当前页」用户入口（Popup / 快捷键 / 消息）。
+7. 无「保存当前页」用户入口（找回壳 / 快捷键 / 消息）。
 
 ### 5.8 冷启动手工验收（R1 · Normative）
 
 > 目标：第一天可用且可信；空库找不到是正确，乱猜才是 bug。与 §0.1.1 空结果契约一致。  
 > 预计耗时：≤ 10 分钟。失败任一步 → 不得宣称冷启动通过。
 
-**安装引导（Normative · 已上线）：** 首次 `install` 自动打开 `getting-started.html`；演示「Save this line → Popup 用自己的话找回」。未完成引导且 `excerptCaptureCount === 0` 时 Popup 展示 Capture-first 空态（即使书签已导入）。跳过或首次打开找回结果后结束引导。
+**安装引导（Normative · 已上线）：** 首次 `install` 自动打开 `getting-started.html`；演示「Save this line → 找回主壳用自己的话找回」。未完成引导且 `excerptCaptureCount === 0` 时找回壳展示 Capture-first 空态（即使书签已导入）。跳过或首次打开找回结果后结束引导。
 
 #### A. 空库诚实（不得编造）
 
 1. 使用空记忆库配置档（或 Settings → 数据 → 清除本机记忆；**确认不删 Chrome 原生书签**）。
-2. 打开 Popup：空态标题/正文须导向 **先留下痕迹**（划词 / 右键选区），**不得**出现「还不了解你 / 告诉我喜好我会记住」类助理话术。
+2. 打开找回主壳（Side Panel；迁移完成前暂为 Popup）：空态标题/正文须导向 **先留下痕迹**（划词 / 右键选区），**不得**出现「还不了解你 / 告诉我喜好我会记住」类助理话术。
 3. 输入口语如「我以前最喜欢听的歌」并发送：
    - 期望：`no_match` / 空库文案；**无** Top Pick；**无**虚构条目；**无**时间/类型追问芯片。
    - 正文导向 Capture 或诚实终局，而非偏好建档闲聊、缺槽问卷。
@@ -949,24 +961,24 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 1. 打开任意 http(s) 页面，划选一句有辨识度的原文（建议 ≥ 8 字的独特片段）。
 2. 用划词浮层或右键 **保存选区** 写入摘录（可选加一句备注）。
-3. 打开 Popup，用**自己的话**（不必整句粘贴）描述刚才那句——至少包含原文中的一个词或备注词。
+3. 打开找回主壳，用**自己的话**（不必整句粘贴）描述刚才那句——至少包含原文中的一个词或备注词。
 4. 期望：高置信 Top Pick 或短名单含该摘录；打开卡片可回到出处。
 5. （可选）Chrome 新加一枚书签 → 用标题/域名片段找回，确认书签灌库可用。
 
 #### C. 审题（反跑题）
 
-1. Popup 欢迎 / 空态 / miss 追问通读：只服务「找自己存过的东西」。
+1. 找回壳欢迎 / 空态 / miss 追问通读：只服务「找自己存过的东西」。
 2. **不得**暗示：全能助手、陪聊、替你决定听什么/看什么、啥都做的平台。
 
-**自动化对齐：** `popup-empty-copy*` + `recall-eval` 空库 / 零锚点 must；本小节为真机门禁。
+**自动化对齐：** `popup-empty-copy*`（迁壳后随 Side Panel）+ `recall-eval` 空库 / 零锚点 must；本小节为真机门禁。
 
 ### 5.3 Phase A（Omnibox / 快捷键）验收
 
-1. Omnibox 触发后策略与 Popup 一致（同一 `recallService`）。
+1. Omnibox 触发后策略与找回主壳一致（同一 `recallService`）。
 2. 不引入第二套搜索/筛选实现。
-3. Omnibox / 快捷键 §1 状态已更新为已上线。
-4. Omnibox 入口为单次命中：建议列表 → 打开 URL；无追问/会话。
-5. 快捷键找回：`_execute_action` 打开 Popup；不经 `onCommand` 自建第二套找回。
+3. Omnibox / 快捷键 §1 状态已更新（快捷键开 Side Panel = R-shell 目标）。
+4. Omnibox 入口为单次命中：建议列表 → 打开 URL；无追问/会话（P0 不改为开 Side Panel）。
+5. 快捷键找回：`_execute_action` 与点工具栏图标均打开/聚焦 **Side Panel**（无 `default_popup`）；不经 `onCommand` 自建第二套找回。R-shell 完成前真机可能仍开 Popup——以 §1「目标 · 开 Side Panel」为准。
 6. 快捷键 `open_library` / `open_settings` 分别打开记忆库与设置页（可改键）；`save_selection` / `save_selection_with_note` 对当前页选区直存或打开备注面板。
 7. 不提供「保存当前页」快捷键/消息；书签靠 Chrome 原生 + 导入/增量 sync。
 8. 新自定义命令须先改 `core/commands/command-ids.ts` + manifest，再注册 handler。
@@ -999,15 +1011,15 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 ### 5.6 扩展入口
 
-| 入口            | 现状                                                                                                                         |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `popup.html`    | 活跃；可打开 Settings                                                                                                        |
-| `background.js` | 活跃                                                                                                                         |
-| `settings.html` | 已进 `options_ui`（`open_in_tab: true`）                                                                                     |
-| content script  | 已注册；`content-selection-toolbar.js`（http/https）                                                                         |
-| offscreen 源码  | 占位；未注册 permission；embedding 接入前不启用                                                                              |
-| Omnibox         | 已注册；keyword `yi`                                                                                                         |
-| `commands`      | 已注册；找回 `Alt+Shift+Y`；记忆库 `Alt+Shift+L`；划词保存 `Alt+Shift+E`；划词备注 `Alt+Shift+N`；设置无默认建议键（均可改） |
+| 入口             | 现状                                                                                                                         |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `sidepanel.html` | **找回主壳**；权限 `sidePanel`；无 `action.default_popup`；点图标 / `_execute_action` 开 Panel                               |
+| `background.js`  | 活跃；`setPanelBehavior({ openPanelOnActionClick: true })`                                                                   |
+| `settings.html`  | 已进 `options_ui`（`open_in_tab: true`）                                                                                     |
+| content script   | 已注册；`content-selection-toolbar.js`（http/https）；「试试找回」→ `OPEN_RECALL_SHELL` + prefill                            |
+| offscreen 源码   | 占位；未注册 permission；embedding 接入前不启用                                                                              |
+| Omnibox          | 已注册；keyword `yi`；单次无会话                                                                                             |
+| `commands`       | 已注册；找回 `Alt+Shift+Y`；记忆库 `Alt+Shift+L`；划词保存 `Alt+Shift+E`；划词备注 `Alt+Shift+N`；设置无默认建议键（均可改） |
 
 ### 5.7 Dodo Pro 订阅全流程验收（手动 · Normative）
 
@@ -1030,7 +1042,7 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 Chrome API / 选区
   → Background（唯一监听者）
   → IndexedDB（indexedDBManager）
-  →（可选 Pinia；Popup 可用组件状态）
+  →（可选 Pinia；找回主壳可用组件状态；P0 关 Side Panel 即丢会话）
   → Vue（pages/；可收敛 presentation/）
   → sendMessage → Background
 ```
@@ -1075,7 +1087,8 @@ Chrome API / 选区
   - **清除本机记忆**（`CLEAR_LOCAL_MEMORY`）：硬清当前 owner 本机 IndexedDB Memory；**不得**改写/删除 Chrome 原生书签；成功后关闭书签灌库并卸载监听；若云同步开着则关闭同步并提示云端副本需另行删除。二次确认。
   - **删除云端记忆**：登录后可一键删除该账号云端 `memory_items` 与 `memory_sync_backups`；默认**不**清本机 IndexedDB；成功后关闭云同步并清定时闹钟。二次确认。
   - **删除账号**（与「仅退出」/「仅删云端」分开）：登录后强确认 → Worker 删云端 Memory/backups 并用 service role **注销 Supabase Auth 用户** → 扩展清本机当前 `accountId` 桶（**不动** `localProfileId` 身份；该桶若仍有未归并数据则保留）→ 清 session/binding/同步/隐私 ack → 打开官网 `/logout`。订阅/支付行可按法律保留、不再可登录关联（不暗示可恢复账号）。
-- **禁止回潮**：旧管理页/侧边栏/书签树编辑/AI 自动整理进 build 或 manifest。
+- **禁止回潮**：旧管理页 / **侧边栏书签整理中心** / 书签树编辑 / AI 自动整理进 build 或 manifest。  
+  **允许：** Chrome Side Panel 作对话式 Recall 主壳（§0.4）；不得借 Side Panel 回潮成管理页。
 
 新功能顺序：契约 → repository → Background 消息 → Recall/Filter → UI。
 
@@ -1114,16 +1127,17 @@ Chrome API / 选区
 - **回答的是「库里最可能是哪一条（及可能相关）」**，不是「你现在该听什么 / 看什么」。
 - **禁止**用置信百分比 / 「永远准确」话术把建议包装成神谕。
 
-### 7.0 对话式多轮语义闭环（Normative · 已上线切片）
+### 7.0 对话式多轮语义闭环（Normative · 已上线切片；主壳迁 Side Panel）
 
-**目标：** Popup 内补充线索像回消息——下一句默认 refine 上一轮约束，而不是孤立新查询。
+**目标：** 找回主壳内补充线索像回消息——下一句默认 refine 上一轮约束，而不是孤立新查询。
 
 **入口差异：**
 
-| 入口    | 会话                                                               |
-| ------- | ------------------------------------------------------------------ |
-| Popup   | 有会话：`accumulated` + `dismissedIds`；`RECALL_WITH_CLUE.context` |
-| Omnibox | **无会话**；不传 context（与单句路径一致）                         |
+| 入口                             | 会话                                                               |
+| -------------------------------- | ------------------------------------------------------------------ |
+| **Side Panel**（Normative 主壳） | 有会话：`accumulated` + `dismissedIds`；`RECALL_WITH_CLUE.context` |
+| Omnibox                          | **无会话**；不传 context（P0 不变）                                |
+| Action Popup                     | **退役**；不再承载多轮                                             |
 
 **合并权威（core 槽位 merge，非 UI 拼串）：**
 
@@ -1142,7 +1156,7 @@ Chrome API / 选区
 1. 追问芯片：**点击即发送**一轮（本轮 `clue` = chip 稳定英文 value）。
 2. 「都不是这些」：写 `RECORD_RECALL_DISMISS` + 会话 `dismissedIds` 并集；**保留** `accumulated`；本会话 Filter **硬排除** dismissedIds。
 3. **缩短再试**：只替换最近一句——`rollbackLastDialogUtterance` 丢掉 prior 末轮并重算 accumulated，再发缩短版。
-4. 会话态：Popup 组件内持有；关闭 Popup 即丢弃（P0 不持久化）。
+4. 会话态：找回主壳（Side Panel）**组件内**持有；**关闭 Side Panel 即丢弃**（P0 不持久化；与旧 Popup 关窗语义一致）。
 5. **禁止**缺槽规则问卷（`buildRecallFollowUpPlan` 类时间/类型填表已废除）。有候选时的追问由 LLM NLG（失败则静态「不够确定」文案、**无**固定芯片银行）；合并后 `parsed` 仍只服务检索，不驱动问卷。
 
 **空结果与追问原则（Normative · 三条）：**
@@ -1375,7 +1389,8 @@ Chrome API / 选区
 
 | 日期       | 变更                                                                                                                                                                                                                       |
 | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-08-18 | §A.3 / §5.7：产品欢迎信约定（CF Email Sending；须 Workers Paid；未上线不阻塞授 Pro）                                                                                                                                       |
+| 2026-08-21 | R-shell 落地：Side Panel 主壳；拆除 `pages/popup`；`OPEN_RECALL_SHELL` / `yiveno.recallPrefill`                                                                                                                            |
+| 2026-08-21 | §0.3/§0.4/§0.5/§1/§5/§6/§7.0：Recall 主壳 Normative → Chrome Side Panel；Popup 退役；关 Panel P0 仍丢会话；Omnibox P0 仍无会话；澄清禁「侧边栏管理页」≠禁 Side Panel；改版 R-shell                                         |
 | 2026-08-17 | 计费迁 Dodo Payments：Paddle 运行时移除；hosted checkout + Standard Webhooks；投影/对账/isPro 保留（§A.3.2）                                                                                                               |
 | 2026-08-15 | §0.1 / §0.1.1 / §7 / A.1 / A.4：定位纠偏——对外「那个找东西的」；找回承诺=邻域集合非神谕；Top1=建议；会话成功看邻域；AI 能力核心不作宣传招牌；仓库话术优先于知识库/记忆硬盘主 slogan；「记忆硬盘≠小助手」表对齐邻域成功标准 |
 | 2026-08-14 | 计费迁 Paddle：Gumroad 运行时移除；标准价 $7.99/月·$59.99/年；投影/对账/isPro 保留（§A.3.2）                                                                                                                               |

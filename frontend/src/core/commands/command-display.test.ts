@@ -32,7 +32,7 @@ describe('command-display', () => {
         },
         testTranslateEn
       )
-    ).toBe('Open Recall (Popup)')
+    ).toBe('Open Recall (side panel)')
     expect(
       getExtensionCommandDisplayTitle(
         {

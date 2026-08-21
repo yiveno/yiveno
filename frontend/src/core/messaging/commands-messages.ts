@@ -6,7 +6,7 @@ import type { BackgroundMessageScope } from '@/core/messaging/constants'
 export const CommandsErrorCodeSchema = z.enum([
   'COMMANDS_READ_FAILED', // 读取扩展命令失败
   'SHORTCUTS_PAGE_OPEN_FAILED', // 打开快捷键设置页失败
-  'RECALL_POPUP_OPEN_FAILED' // 打开 Recall Popup 失败
+  'RECALL_SHELL_OPEN_FAILED' // 打开 Recall Side Panel 失败
 ])
 
 export type CommandsErrorCode = z.infer<typeof CommandsErrorCodeSchema>
@@ -56,13 +56,13 @@ export type OpenChromeShortcutsPageResponse =
       error?: string
     }
 
-/** 在用户手势链上打开 Recall Popup（预填线索须已写入 session）。 */
-export type OpenRecallPopupMessage = {
+/** 在用户手势链上打开 Recall Side Panel（预填线索须已写入 session）。 */
+export type OpenRecallShellMessage = {
   scope: BackgroundMessageScope
-  type: 'OPEN_RECALL_POPUP'
+  type: 'OPEN_RECALL_SHELL'
 }
 
-export type OpenRecallPopupResponse =
+export type OpenRecallShellResponse =
   | {
       ok: true
     }
@@ -75,9 +75,9 @@ export type OpenRecallPopupResponse =
 export type CommandsBackgroundMessage =
   | GetExtensionCommandsMessage
   | OpenChromeShortcutsPageMessage
-  | OpenRecallPopupMessage
+  | OpenRecallShellMessage
 
 export type CommandsBackgroundResponse =
   | GetExtensionCommandsResponse
   | OpenChromeShortcutsPageResponse
-  | OpenRecallPopupResponse
+  | OpenRecallShellResponse

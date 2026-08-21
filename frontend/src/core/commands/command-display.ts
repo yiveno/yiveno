@@ -30,7 +30,7 @@ export function getExtensionCommandDisplayTitle(
   translate: TranslateFn
 ): string {
   if (command.name === '_execute_action') {
-    return translate('command_title_open_recall_popup')
+    return translate('command_title_open_recall')
   }
   if (command.name === 'open_library') {
     return translate('command_title_open_library')

@@ -5,8 +5,12 @@ import {
 import type {
   GetExtensionCommandsResponse,
   OpenChromeShortcutsPageResponse,
-  OpenRecallPopupResponse
+  OpenRecallShellResponse
 } from '@/core/messaging/commands-messages'
+import {
+  openRecallSidePanel,
+  type OpenRecallSidePanelOptions
+} from '@/infrastructure/browser/side-panel'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import { logger } from '@/infrastructure/logging/logger'
 
@@ -44,19 +48,21 @@ export async function handleOpenChromeShortcutsPage(): Promise<OpenChromeShortcu
   }
 }
 
-/** 在用户手势链上打开 Recall Popup。 */
-export async function handleOpenRecallPopup(): Promise<OpenRecallPopupResponse> {
-  const startedAt = flowStart('Recall', '打开 Popup')
+/** 在用户手势链上打开 Recall Side Panel。 */
+export async function handleOpenRecallShell(
+  options: OpenRecallSidePanelOptions = {}
+): Promise<OpenRecallShellResponse> {
+  const startedAt = flowStart('Recall', '打开 Side Panel')
   try {
-    await chrome.action.openPopup()
-    flowOk('Recall', '打开 Popup', startedAt, { ok: true })
+    await openRecallSidePanel(options)
+    flowOk('Recall', '打开 Side Panel', startedAt, { ok: true })
     return { ok: true }
   } catch (error) {
-    flowFail('Recall', '打开 Popup', startedAt, error)
-    logger.warn('Commands', '打开 Recall Popup 失败', error)
+    flowFail('Recall', '打开 Side Panel', startedAt, error)
+    logger.warn('Commands', '打开 Recall Side Panel 失败', error)
     return {
       ok: false,
-      errorCode: 'RECALL_POPUP_OPEN_FAILED',
+      errorCode: 'RECALL_SHELL_OPEN_FAILED',
       ...(error instanceof Error ? { error: error.message } : {})
     }
   }

@@ -53,7 +53,7 @@ const IMPORT_ERROR_MESSAGE_KEYS: Record<ImportErrorCode, MessageKey> = {
 const COMMANDS_ERROR_MESSAGE_KEYS: Record<CommandsErrorCode, MessageKey> = {
   COMMANDS_READ_FAILED: 'settings_error_load_commands',
   SHORTCUTS_PAGE_OPEN_FAILED: 'settings_error_open_shortcuts',
-  RECALL_POPUP_OPEN_FAILED: 'selection_toolbar_open_recall_failed'
+  RECALL_SHELL_OPEN_FAILED: 'selection_toolbar_open_recall_failed'
 }
 
 const IMPORT_STATE_ERROR_MESSAGE_KEYS: Record<ChromeBookmarkImportErrorCode, MessageKey> = {

@@ -25,7 +25,7 @@ import {
   recordRecallDismiss
 } from '@/infrastructure/messaging/background-client'
 import {
-  consumePopupRecallPrefill,
+  consumeRecallPrefill,
   markFirstRecallOpenDone,
   readExcerptCaptureCount
 } from '@/infrastructure/storage/first-recall-onboarding-storage'
@@ -34,19 +34,19 @@ import {
   readInstallOnboardingDone
 } from '@/infrastructure/storage/install-onboarding-storage'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
-import { type PopupRecallCardModel } from '@/pages/popup/RecallResultCard.vue'
-import RecallConversation from '@/pages/popup/components/RecallConversation.vue'
-import RecallComposer from '@/pages/popup/components/RecallComposer.vue'
-import { createAssistantTurn } from '@/pages/popup/build-assistant-turn'
+import { type RecallCardModel } from '@/pages/sidepanel/RecallResultCard.vue'
+import RecallConversation from '@/pages/sidepanel/components/RecallConversation.vue'
+import RecallComposer from '@/pages/sidepanel/components/RecallComposer.vue'
+import { createAssistantTurn } from '@/pages/sidepanel/build-assistant-turn'
 import type {
   ConversationTurn,
   AssistantTurn,
   RecallSuggestion
-} from '@/pages/popup/recall-conversation-types'
+} from '@/pages/sidepanel/recall-conversation-types'
 import type { RecallDialogState } from '@/core/recall/merge-recall-dialog-turn'
 import { rollbackLastDialogUtterance } from '@/core/recall/merge-recall-dialog-turn'
 
-defineOptions({ name: 'PopupPage' })
+defineOptions({ name: 'SidePanelPage' })
 
 const clue = ref('')
 const clueInputRef = ref<InstanceType<typeof RecallComposer> | null>(null)
@@ -60,7 +60,7 @@ const installOnboardingDone = ref(true)
 const skipOnboardingBusy = ref(false)
 const lastSentClue = ref('')
 
-/** Popup 会话：槽位 accumulated + 本会话否定 id（关闭即丢）。 */
+/** Side Panel 会话：槽位 accumulated + 本会话否定 id（关闭 Panel 即丢，P0）。 */
 const dialogState = ref<RecallDialogState>({
   priorUserUtterances: [],
   accumulated: null,
@@ -192,7 +192,7 @@ function toMatchCard(
   match: RecallMatch,
   resultClue: string,
   options: { includeSiblings?: boolean } = {}
-): PopupRecallCardModel {
+): RecallCardModel {
   const display = getMemoryItemDisplay(match.item, t)
   const highlights = buildRecallCardHighlightParts({
     clue: resultClue,
@@ -575,13 +575,13 @@ onMounted(() => {
   void loadOnboardingState()
   void (async () => {
     try {
-      const prefill = await consumePopupRecallPrefill()
+      const prefill = await consumeRecallPrefill()
       if (prefill) {
         clue.value = prefill
         await handleSendTurn()
       }
     } catch {
-      // 忽略：无预填不阻塞 Popup
+      // 忽略：无预填不阻塞 Side Panel
     }
   })()
   void probeMemoryLibrary()
@@ -669,15 +669,20 @@ onUnmounted(() => {
 
 <style scoped>
 /*
- * Chrome popup 宽度锁死 360：长 URL / flex min-content 会把文档撑宽，
- * 右侧 padding 与卡片边框被视口裁切。勿给 html/body 设 height:100%。
+ * Side Panel：随侧栏宽度伸缩；竖向占满可视高度以承载持续对话。
+ * 勿再锁 360px（那是旧 Action Popup 约束）。
  */
 :global(html),
 :global(body) {
-  width: 360px;
-  max-width: 360px;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
   margin: 0;
   overflow-x: hidden;
+}
+
+:global(#app) {
+  height: 100%;
 }
 
 .recall-shell {
@@ -687,7 +692,9 @@ onUnmounted(() => {
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  max-height: 560px;
+  height: 100%;
+  min-height: 100%;
+  max-height: none;
   padding: 16px 20px 12px;
   color: var(--on-surface);
   background: var(--surface);

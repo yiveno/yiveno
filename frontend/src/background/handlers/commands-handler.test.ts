@@ -3,19 +3,26 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   handleGetExtensionCommands,
   handleOpenChromeShortcutsPage,
-  handleOpenRecallPopup
+  handleOpenRecallShell
 } from '@/background/handlers/commands-handler'
 import { CHROME_EXTENSION_SHORTCUTS_URL } from '@/core/commands/command-display'
 
 describe('commands-handler', () => {
   const getAll = vi.fn()
   const tabsCreate = vi.fn(async () => undefined)
+  const sidePanelOpen = vi.fn(async () => undefined)
+  const windowsGetCurrent = vi.fn(async () => ({ id: 42 }))
 
   beforeEach(() => {
     vi.clearAllMocks()
     vi.stubGlobal('chrome', {
       commands: { getAll },
-      tabs: { create: tabsCreate }
+      tabs: { create: tabsCreate },
+      windows: { getCurrent: windowsGetCurrent },
+      sidePanel: {
+        setPanelBehavior: vi.fn(async () => undefined),
+        open: sidePanelOpen
+      }
     })
   })
 
@@ -50,16 +57,17 @@ describe('commands-handler', () => {
     expect(tabsCreate).toHaveBeenCalledWith({ url: CHROME_EXTENSION_SHORTCUTS_URL })
   })
 
-  it('handleOpenRecallPopup 打开 Recall Popup', async () => {
-    const openPopup = vi.fn(async () => undefined)
-    vi.stubGlobal('chrome', {
-      commands: { getAll },
-      tabs: { create: tabsCreate },
-      action: { openPopup }
-    })
-
-    const response = await handleOpenRecallPopup()
+  it('handleOpenRecallShell 打开 Side Panel（windowId）', async () => {
+    const response = await handleOpenRecallShell()
     expect(response).toEqual({ ok: true })
-    expect(openPopup).toHaveBeenCalledTimes(1)
+    expect(windowsGetCurrent).toHaveBeenCalled()
+    expect(sidePanelOpen).toHaveBeenCalledWith({ windowId: 42 })
+  })
+
+  it('handleOpenRecallShell 优先使用 tabId', async () => {
+    const response = await handleOpenRecallShell({ tabId: 7 })
+    expect(response).toEqual({ ok: true })
+    expect(sidePanelOpen).toHaveBeenCalledWith({ tabId: 7 })
+    expect(windowsGetCurrent).not.toHaveBeenCalled()
   })
 })

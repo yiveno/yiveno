@@ -3,10 +3,10 @@ import { computed } from 'vue'
 
 import type { RecallHighlightPart } from '@/core/recall/highlight-recall-text'
 import MaterialSymbolIcon from '@/infrastructure/ui/icons/MaterialSymbolIcon.vue'
-import RecallHighlightText from '@/pages/popup/RecallHighlightText.vue'
+import RecallHighlightText from '@/pages/sidepanel/RecallHighlightText.vue'
 
-/** Popup 结果卡展示模型（含可选折叠组）。 */
-export interface PopupRecallCardModel {
+/** 找回结果卡展示模型（含可选折叠组）。 */
+export interface RecallCardModel {
   id: string
   title: string
   subtitle: string
@@ -21,13 +21,13 @@ export interface PopupRecallCardModel {
   /** ≥2 时展示集合样式 */
   duplicateTotalCount?: number
   duplicateLabel?: string
-  siblings?: PopupRecallCardModel[]
+  siblings?: RecallCardModel[]
 }
 
 defineOptions({ name: 'RecallResultCard' })
 
 const props = defineProps<{
-  card: PopupRecallCardModel
+  card: RecallCardModel
   resultDomId: string
   keyboardSelected: boolean
   topPick?: boolean

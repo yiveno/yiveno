@@ -12,8 +12,12 @@
     "bookmarks",
     "contextMenus",
     "scripting",
-    "tabs"
+    "tabs",
+    "sidePanel"
   ],
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
   "host_permissions": [
     "https://*.supabase.co/*",
     "http://localhost:8787/*",
@@ -70,7 +74,6 @@
     }
   },
   "action": {
-    "default_popup": "popup.html",
     "default_title": "__MSG_app_name__",
     "default_icon": {
       "16": "images/icon16.png",

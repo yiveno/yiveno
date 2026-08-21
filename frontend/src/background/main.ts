@@ -37,6 +37,6 @@ void ensureBackgroundBootstrapped().catch(error => {
   logger.error('Background', '启动初始化失败', error)
 })
 
-chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) => {
-  return handleBackgroundMessage(message, sendResponse)
+chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
+  return handleBackgroundMessage(message, sendResponse, sender)
 })

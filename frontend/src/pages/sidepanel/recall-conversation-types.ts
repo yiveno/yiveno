@@ -1,4 +1,4 @@
-import type { PopupRecallCardModel } from '@/pages/popup/RecallResultCard.vue'
+import type { RecallCardModel } from '@/pages/sidepanel/RecallResultCard.vue'
 
 export type RecallSuggestion = {
   id: string
@@ -17,13 +17,13 @@ export type AssistantTurn = {
   role: 'assistant'
   tone: 'confident' | 'uncertain' | 'miss' | 'error'
   text: string
-  primaryCard?: PopupRecallCardModel | null
+  primaryCard?: RecallCardModel | null
   /** 最近同类猜测卡（非 Top Pick）；与 primaryCard 互斥使用场景 */
-  relatedGuessCard?: PopupRecallCardModel | null
+  relatedGuessCard?: RecallCardModel | null
   /** 猜测卡上方硬标签文案 */
   relatedGuessLabel?: string
   /** 次要相关 / 弱候选列表 */
-  candidateCards?: PopupRecallCardModel[]
+  candidateCards?: RecallCardModel[]
   /** 候选区标题（如「可能是这些」） */
   candidateSectionLabel?: string
   suggestions?: RecallSuggestion[]

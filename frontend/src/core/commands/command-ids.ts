@@ -1,6 +1,7 @@
 /**
  * 自定义命令 ID 白名单（须与 manifest.json `commands` 键名一致）。
- * 不含保留命令 `_execute_action`（由 Chrome 直接打开 Popup，不进入 onCommand）。
+ * 不含保留命令 `_execute_action`（由 Chrome 打开 action；无 default_popup 时经
+ * `sidePanel.setPanelBehavior({ openPanelOnActionClick: true })` 开 Side Panel）。
  *
  * 书签 Capture 不走快捷键：用户用 Chrome 原生加书签，Yiveno 经 bookmarks.onCreated 等增量同步。
  * Chrome 最多 4 个带 `suggested_key` 的命令（含 `_execute_action`）；划词保存/备注占用建议键，

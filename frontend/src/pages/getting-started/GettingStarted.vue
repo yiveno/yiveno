@@ -2,14 +2,14 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 import { buildRecallPrefillClue } from '@/core/recall/build-prefill-clue'
-import { captureTextExcerpt, openRecallPopup } from '@/infrastructure/messaging/background-client'
+import { captureTextExcerpt, openRecallShell } from '@/infrastructure/messaging/background-client'
 import { t } from '@/infrastructure/i18n/t'
 import {
   EXCERPT_CAPTURE_COUNT_LOCAL_KEY,
   FIRST_RECALL_OPEN_DONE_LOCAL_KEY,
   readExcerptCaptureCount,
   readFirstRecallOpenDone,
-  writePopupRecallPrefill
+  writeRecallPrefill
 } from '@/infrastructure/storage/first-recall-onboarding-storage'
 import { markInstallOnboardingDone } from '@/infrastructure/storage/install-onboarding-storage'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
@@ -68,7 +68,7 @@ async function handleSaveDemoLine(): Promise<void> {
 
     const prefill = buildRecallPrefillClue(demoLine.value)
     if (prefill) {
-      await writePopupRecallPrefill(prefill)
+      await writeRecallPrefill(prefill)
     }
   } catch {
     saveState.value = 'error'
@@ -86,9 +86,9 @@ async function handleTryRecall(): Promise<void> {
   try {
     const prefill = buildRecallPrefillClue(demoLine.value)
     if (prefill) {
-      await writePopupRecallPrefill(prefill)
+      await writeRecallPrefill(prefill)
     }
-    const response = await openRecallPopup()
+    const response = await openRecallShell()
     if (!response.ok) {
       recallError.value = t('selection_toolbar_open_recall_failed')
     }

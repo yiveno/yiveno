@@ -15,7 +15,7 @@
     "message": "No matching memory in Yiveno"
   },
   "command_open_recall": {
-    "message": "Open Yiveno Recall"
+    "message": "Open Yiveno Recall (side panel)"
   },
   "command_open_library": {
     "message": "Open Yiveno Library"
@@ -53,7 +53,7 @@
   "error_open_account": {
     "message": "Could not open the account page"
   },
-  "page_title_popup": {
+  "page_title_sidepanel": {
     "message": "Yiveno"
   },
   "page_title_settings": {
@@ -1266,8 +1266,8 @@
   "omnibox_type_excerpt": {
     "message": "Y·Excerpt"
   },
-  "command_title_open_recall_popup": {
-    "message": "Open Recall (Popup)"
+  "command_title_open_recall": {
+    "message": "Open Recall (side panel)"
   },
   "command_title_open_library": {
     "message": "Open Library"

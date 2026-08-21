@@ -115,7 +115,7 @@ async function smokePopupRecallCard(browser, ext, tag) {
   const t0 = Date.now()
   const token = `yiveno-e2e-smoke-${Date.now()}`
   try {
-    await page.goto(`chrome-extension://${ext}/popup.html`, {
+    await page.goto(`chrome-extension://${ext}/sidepanel.html`, {
       waitUntil: 'domcontentloaded',
       timeout: 20000
     })
@@ -157,9 +157,9 @@ async function smokePopupRecallCard(browser, ext, tag) {
     await page.click('.recall-send-button')
     await page.waitForSelector('.recall-card', { timeout: 15000 })
 
-    const shot = await screenshot(page, tag, 'popup_recall_card')
+    const shot = await screenshot(page, tag, 'sidepanel_recall_card')
     return {
-      name: 'popup_recall_card',
+      name: 'sidepanel_recall_card',
       status: 'passed',
       durationMs: Date.now() - t0,
       token,
@@ -168,12 +168,12 @@ async function smokePopupRecallCard(browser, ext, tag) {
   } catch (error) {
     let shot = ''
     try {
-      shot = await screenshot(page, tag, 'popup_recall_card_error')
+      shot = await screenshot(page, tag, 'sidepanel_recall_card_error')
     } catch {
       // ignore
     }
     return {
-      name: 'popup_recall_card',
+      name: 'sidepanel_recall_card',
       status: 'failed',
       durationMs: Date.now() - t0,
       token,
@@ -196,7 +196,7 @@ async function run() {
   })
 
   const steps = []
-  steps.push(await openPage(browser, `chrome-extension://${ext}/popup.html`, 'popup', tag))
+  steps.push(await openPage(browser, `chrome-extension://${ext}/sidepanel.html`, 'sidepanel', tag))
   steps.push(await openPage(browser, `chrome-extension://${ext}/settings.html`, 'settings', tag))
   steps.push(await smokePopupRecallCard(browser, ext, tag))
 

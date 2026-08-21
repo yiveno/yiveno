@@ -27,7 +27,7 @@ import {
 import {
   handleGetExtensionCommands,
   handleOpenChromeShortcutsPage,
-  handleOpenRecallPopup
+  handleOpenRecallShell
 } from '@/background/handlers/commands-handler'
 import {
   handleGetBookmarkLibraryTree,
@@ -77,7 +77,8 @@ async function handleGetLocalIdentity(): Promise<GetLocalIdentityResponse> {
 }
 
 async function dispatchBackgroundMessage(
-  message: BackgroundMessage
+  message: BackgroundMessage,
+  sender?: chrome.runtime.MessageSender
 ): Promise<BackgroundMessageResponse> {
   switch (message.type) {
     case 'PING':
@@ -148,8 +149,11 @@ async function dispatchBackgroundMessage(
       return handleGetExtensionCommands()
     case 'OPEN_CHROME_SHORTCUTS_PAGE':
       return handleOpenChromeShortcutsPage()
-    case 'OPEN_RECALL_POPUP':
-      return handleOpenRecallPopup()
+    case 'OPEN_RECALL_SHELL':
+      return handleOpenRecallShell({
+        ...(typeof sender?.tab?.id === 'number' ? { tabId: sender.tab.id } : {}),
+        ...(typeof sender?.tab?.windowId === 'number' ? { windowId: sender.tab.windowId } : {})
+      })
     case 'GET_USER_SETTINGS':
       return handleGetUserSettings()
     case 'UPDATE_USER_SETTINGS':
@@ -169,12 +173,13 @@ async function dispatchBackgroundMessage(
 }
 
 /**
- * 处理 scope=background 的扩展消息（Popup / Settings）。
+ * 处理 scope=background 的扩展消息（Side Panel / Settings 等）。
  * 异步 handler 需返回 true 以保持 sendResponse 通道。
  */
 export function handleBackgroundMessage(
   message: unknown,
-  sendResponse: (response: BackgroundMessageResponse) => void
+  sendResponse: (response: BackgroundMessageResponse) => void,
+  sender?: chrome.runtime.MessageSender
 ): boolean {
   if (!isBackgroundScopedMessage(message)) {
     return false
@@ -183,7 +188,7 @@ export function handleBackgroundMessage(
   const typed = message as BackgroundMessage
   const startedAt = flowStart('Msg', 'background 消息', { type: typed.type })
 
-  void dispatchBackgroundMessage(typed)
+  void dispatchBackgroundMessage(typed, sender)
     .then(response => {
       const ok = 'ok' in response ? response.ok : undefined
       flowOk('Msg', 'background 消息', startedAt, {

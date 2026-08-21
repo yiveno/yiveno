@@ -55,7 +55,7 @@ const EN: Record<string, string> = {
   omnibox_type_bookmark: 'Y·Bookmark',
   omnibox_type_excerpt: 'Y·Excerpt',
   omnibox_duplicate_count: '$1 total',
-  command_title_open_recall_popup: 'Open Recall (Popup)',
+  command_title_open_recall: 'Open Recall (side panel)',
   command_title_open_library: 'Open Library',
   command_title_open_settings: 'Open Settings',
   command_title_save_selection: 'Save Selected Text',

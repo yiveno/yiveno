@@ -387,7 +387,7 @@ bun run db:reset              # 重置本地数据库
 bun run e2e
 ```
 
-打开 `popup.html` / `settings.html`，再 seed 一条摘录、发固定线索并断言出现结果卡；截图到 `artifacts/`。详见 `scripts/e2e-management.mjs` 与产品文档 §1.1（不上大 Playwright）。
+打开 `sidepanel.html` / `settings.html`，再 seed 一条摘录、发固定线索并断言出现结果卡；截图到 `artifacts/`。详见 `scripts/e2e-management.mjs` 与产品文档 §1.1（不上大 Playwright）。
 
 环境变量快照（v3 `management.html` 桥接）已下线；请用 `.env.*.local` + `bun run env:sync:dev`。
 
