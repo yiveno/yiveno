@@ -32,6 +32,9 @@
   "nav_aria_label": {
     "message": "Page navigation"
   },
+  "nav_new_find": {
+    "message": "New find"
+  },
   "nav_library": {
     "message": "Memory"
   },
@@ -165,6 +168,9 @@
   "popup_filtering_status": {
     "message": "Filtering your library…"
   },
+  "popup_recall_pending": {
+    "message": "Looking through what you saved…"
+  },
   "popup_shorten_retry": {
     "message": "Shorten and retry"
   },
@@ -203,6 +209,9 @@
   },
   "popup_reply_miss": {
     "message": "Nothing in your library matches this clue. Misremembering or never saving it is a valid answer. Save a trace first if you want to find it later."
+  },
+  "popup_session_status_continuing": {
+    "message": "Still refining this find — not a new one."
   },
   "popup_reply_after_dismiss": {
     "message": "Okay, let's try a different angle. Add the site, a quote, or something you wrote."

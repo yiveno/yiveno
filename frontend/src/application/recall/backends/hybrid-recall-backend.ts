@@ -26,7 +26,8 @@ import {
   applyParsedClueScoreBoosts,
   buildSearchClueFromParsed,
   filterMatchesByParsedTimeRange,
-  recallByKeywordWithParsedClue
+  recallByKeywordWithParsedClue,
+  shouldRecallByConstraintNeighborhood
 } from '@/core/recall/orchestrate-keyword-recall'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
@@ -292,21 +293,29 @@ export class HybridRecallBackend implements RecallBackend {
     })
 
     let usedHybrid = false
-    let result =
-      (await fuseHybridMatches({
-        displayClue: normalizedClue,
-        items,
-        searchClue: buildSearchClueFromParsed(merge.merged),
-        parsed: merge.merged,
-        queryText,
-        ...(currentTabDomain !== undefined ? { currentTabDomain } : {}),
-        trace
-      })) ?? null
+    let result: RecallResult
 
-    if (result) {
-      usedHybrid = true
-    } else {
+    // 无内容词的时间+类型（如 recently collected bookmark）：近因邻域，不走关键词/向量扫虚词
+    if (shouldRecallByConstraintNeighborhood(merge.merged)) {
       result = finalizeKeywordResult(normalizedClue, items, merge.merged, currentTabDomain)
+    } else {
+      const hybrid =
+        (await fuseHybridMatches({
+          displayClue: normalizedClue,
+          items,
+          searchClue: buildSearchClueFromParsed(merge.merged),
+          parsed: merge.merged,
+          queryText,
+          ...(currentTabDomain !== undefined ? { currentTabDomain } : {}),
+          trace
+        })) ?? null
+
+      if (hybrid) {
+        usedHybrid = true
+        result = hybrid
+      } else {
+        result = finalizeKeywordResult(normalizedClue, items, merge.merged, currentTabDomain)
+      }
     }
 
     const withMeta = attachDialogMeta(result, {

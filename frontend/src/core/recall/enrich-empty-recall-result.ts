@@ -17,6 +17,12 @@ export function hasStrongRecallConstraints(parsed: ParsedRecallClue): boolean {
 }
 
 function itemRecencyMs(item: MemoryItem): number {
+  if (item.type === 'bookmark' && item.payload.chromeCreatedAt) {
+    const chromeMs = Date.parse(item.payload.chromeCreatedAt)
+    if (!Number.isNaN(chromeMs)) {
+      return chromeMs
+    }
+  }
   const updated = Date.parse(item.updatedAt)
   if (!Number.isNaN(updated)) {
     return updated

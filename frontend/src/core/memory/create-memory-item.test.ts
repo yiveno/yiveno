@@ -31,6 +31,22 @@ describe('create-memory-item', () => {
     expect(item.deletedAt).toBeNull()
   })
 
+  it('有 chromeCreatedAt 时 createdAt 用星标时间而非灌库时钟', () => {
+    const item = createBookmarkMemoryItem({
+      ...baseContext,
+      now: () => '2026-07-28T12:00:00.000Z',
+      payload: {
+        title: 'Starred earlier',
+        url: 'https://x.com/a/status/1',
+        chromeCreatedAt: '2026-07-20T08:00:00.000Z'
+      },
+      captureEntry: 'sync'
+    })
+    expect(item.createdAt).toBe('2026-07-20T08:00:00.000Z')
+    expect(item.payload.chromeCreatedAt).toBe('2026-07-20T08:00:00.000Z')
+    expect(item.updatedAt).toBe('2026-07-28T12:00:00.000Z')
+  })
+
   it('createTextExcerptMemoryItem 自动填充线索字段', () => {
     const item = createTextExcerptMemoryItem({
       ...baseContext,

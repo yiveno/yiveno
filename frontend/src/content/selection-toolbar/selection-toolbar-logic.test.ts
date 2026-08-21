@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   computeSelectionToolbarAnchor,
   resolveSelectionAnchorRect,
+  shouldHideToolbarOnEmptySelection,
   shouldShowSelectionToolbar
 } from '@/content/selection-toolbar/selection-toolbar-logic'
 
@@ -76,5 +77,39 @@ describe('selection-toolbar-logic', () => {
         getClientRects: () => []
       })
     ).toBeNull()
+  })
+
+  it('shouldHideToolbarOnEmptySelection 保护 delay 与快照撑起的浮层', () => {
+    expect(
+      shouldHideToolbarOnEmptySelection({
+        showTimerPending: true,
+        hasPendingCapture: true,
+        toolbarVisible: false
+      })
+    ).toBe(false)
+
+    expect(
+      shouldHideToolbarOnEmptySelection({
+        showTimerPending: false,
+        hasPendingCapture: true,
+        toolbarVisible: true
+      })
+    ).toBe(false)
+
+    expect(
+      shouldHideToolbarOnEmptySelection({
+        showTimerPending: false,
+        hasPendingCapture: false,
+        toolbarVisible: false
+      })
+    ).toBe(true)
+
+    expect(
+      shouldHideToolbarOnEmptySelection({
+        showTimerPending: false,
+        hasPendingCapture: true,
+        toolbarVisible: false
+      })
+    ).toBe(true)
   })
 })

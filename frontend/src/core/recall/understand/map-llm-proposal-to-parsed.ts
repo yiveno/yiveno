@@ -5,8 +5,11 @@ import {
   groundTimeLabel,
   stripGroundedSurfacesFromTerms
 } from '@/core/recall/understand/ground-llm-parse-slots'
+import { normalizeRecallText } from '@/core/recall/keyword-filter'
 import {
   extractContentTerms,
+  reinforceBookmarkObjectType,
+  reinforceRecentlySavedBehavior,
   resolveRecallClueConfidence,
   resolveRelativeTimeRange
 } from '@/core/recall/parse-recall-clue'
@@ -27,27 +30,55 @@ export function mapLlmProposalToParsedClue(
   nowMs: number
 ): ParsedRecallClue {
   const raw = clue.trim()
+  const normalized = normalizeRecallText(raw)
 
   const timeLabel = groundTimeLabel(clue, proposal.timeLabel)
   const timeRange = timeLabel ? resolveRelativeTimeRange(timeLabel, nowMs) : undefined
 
-  const objectTypes = groundObjectTypes(clue, proposal.objectTypes ?? undefined)
-  const behaviorHints = groundBehaviorHints(clue, proposal.behaviorHints ?? undefined)
+  let objectTypes = groundObjectTypes(clue, proposal.objectTypes ?? undefined) ?? []
+  let behaviorHints = groundBehaviorHints(clue, proposal.behaviorHints ?? undefined) ?? []
+  objectTypes = reinforceBookmarkObjectType(normalized, objectTypes)
+  behaviorHints = reinforceRecentlySavedBehavior(normalized, behaviorHints)
+
   const noteHint = proposal.noteHint === true ? true : undefined
 
-  const contentTerms = stripGroundedSurfacesFromTerms(
+  let contentTerms = stripGroundedSurfacesFromTerms(
     clue,
     extractContentTerms(proposal.contentTerms.join(' ')),
     {
       ...(timeLabel ? { timeLabel } : {}),
-      ...(objectTypes ? { objectTypes } : {}),
-      ...(behaviorHints ? { behaviorHints } : {})
+      ...(objectTypes.length > 0 ? { objectTypes } : {}),
+      ...(behaviorHints.length > 0 ? { behaviorHints } : {})
     }
   )
 
+  // 刚存/类型约束线索：剥掉模型常残留的虚词，避免挡约束邻域；保留真实内容词
+  const hasConstraintSlots =
+    objectTypes.length > 0 && (Boolean(timeRange) || behaviorHints.includes('recently_saved'))
+  if (hasConstraintSlots) {
+    const noise = new Set([
+      'just',
+      'saved',
+      'save',
+      'stored',
+      'store',
+      'collected',
+      'collect',
+      'bookmark',
+      'bookmarks',
+      'bookmarked',
+      'recently',
+      'newly',
+      'ago',
+      'now',
+      'ed'
+    ])
+    contentTerms = contentTerms.filter(term => !noise.has(term))
+  }
+
   const hasTime = Boolean(timeRange)
-  const hasObject = Boolean(objectTypes && objectTypes.length > 0)
-  const hasBehavior = Boolean(behaviorHints && behaviorHints.length > 0)
+  const hasObject = objectTypes.length > 0
+  const hasBehavior = behaviorHints.length > 0
   const hasNote = noteHint === true
   const hasContent = contentTerms.length > 0
 
@@ -62,8 +93,8 @@ export function mapLlmProposalToParsedClue(
       hasContent
     }),
     ...(timeRange ? { timeRange } : {}),
-    ...(objectTypes ? { objectTypes } : {}),
-    ...(behaviorHints ? { behaviorHints } : {}),
+    ...(hasObject ? { objectTypes } : {}),
+    ...(hasBehavior ? { behaviorHints } : {}),
     ...(noteHint ? { noteHint } : {})
   })
 }

@@ -110,7 +110,8 @@ export const MEMORY_OBJECT_TYPE_RECALL_KEYWORDS: Partial<Record<RecallObjectType
   poem: ['poem', 'poetry'],
   command: ['command', 'terminal', 'cli'],
   quote: ['quote', 'excerpt', 'highlight', 'passage'],
-  password: ['password', 'login', 'credentials']
+  password: ['password', 'login', 'credentials'],
+  bookmark: ['bookmark', 'bookmarked', 'saved']
 }
 
 /** 正文/标题命中特定词面时追加 recall 关键词（English canonical）。 */
@@ -213,7 +214,8 @@ function detectObjectTypesFromText(blob: string): RecallObjectType[] {
 
   for (const entry of ordered) {
     // 过泛的「页面/网页」不从正文自动打标，避免几乎全库都是 page
-    if (entry.value === 'page') {
+    // bookmark 由 MemoryItem.type 在召回侧对齐，勿因标题含 bookmark 误打
+    if (entry.value === 'page' || entry.value === 'bookmark') {
       continue
     }
     const needle = normalizeRecallText(entry.surface)
@@ -385,7 +387,12 @@ export function mergeEnrichmentIntoMemoryItem(item: MemoryItem): {
   changed: boolean
 } {
   const enrichment = enrichMemoryClues(enrichInputFromMemoryItem(item))
-  const tags = mergeUniqueStrings(item.clues.tags, enrichment.tags)
+  const tags = mergeUniqueStrings(
+    item.clues.tags,
+    enrichment.tags,
+    // 书签语料始终带 bookmark tag，便于类型词面路径与约束邻域一致
+    item.type === 'bookmark' ? ['bookmark'] : []
+  )
   const keywords = mergeUniqueStrings(item.clues.keywords, enrichment.keywords)
   const entities = mergeUniqueStrings(item.clues.entities, enrichment.entities)
 

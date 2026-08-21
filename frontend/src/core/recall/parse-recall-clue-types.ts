@@ -11,6 +11,7 @@ import { z } from 'zod'
  * - page：页面
  * - password：密码
  * - quote：引文
+ * - bookmark：书签（对应 MemoryItem.type=bookmark；非内容主题）
  */
 export const RecallObjectTypeSchema = z.enum([
   'poem', // 诗
@@ -21,7 +22,8 @@ export const RecallObjectTypeSchema = z.enum([
   'command', // 命令
   'page', // 页面
   'password', // 密码
-  'quote' // 引文
+  'quote', // 引文
+  'bookmark' // 书签
 ])
 
 export type RecallObjectType = z.infer<typeof RecallObjectTypeSchema>

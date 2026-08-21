@@ -137,7 +137,8 @@ export class MemoryItemRepository {
     const merged: MemoryItem = {
       ...next,
       id: existing.id,
-      createdAt: existing.createdAt,
+      // 以 Chrome dateAdded 校正近因；无则保留原 createdAt
+      createdAt: next.payload.chromeCreatedAt ?? existing.createdAt,
       clues: {
         ...next.clues,
         openCount: existing.clues.openCount,

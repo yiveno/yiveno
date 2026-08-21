@@ -8,7 +8,10 @@ import { scheduleAsyncMemoryLlmEnrichment } from '@/application/memory/schedule-
 import { RECALL_SCAN_LIMIT } from '@/application/recall/backends/recall-scan-limit'
 import type { CreateBookmarkInput, CreateTextExcerptInput } from '@/core/memory/create-memory-item'
 import type { MemoryItem } from '@/core/memory/memory-item'
-import { buildSearchClueFromParsed } from '@/core/recall/orchestrate-keyword-recall'
+import {
+  buildSearchClueFromParsed,
+  shouldRecallByConstraintNeighborhood
+} from '@/core/recall/orchestrate-keyword-recall'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 import { keywordIndexRepository } from '@/infrastructure/indexeddb/keyword-index-repository'
 import {
@@ -60,6 +63,8 @@ export class MemoryItemService {
 
   /**
    * Recall 候选加载：优先关键词倒排预过滤；失败 / 无查询 token 则 fallback 全表扫描。
+   * 约束邻域（无内容词 + 时间/刚存 + 类型）必须全表扫：倒排会按类型词面（如 bookmark）查 posting，
+   * 真实书签标题几乎不含该词 → 空候选误报 no_match。
    */
   async listForKeywordRecall(input: {
     rawClue: string
@@ -67,6 +72,12 @@ export class MemoryItemService {
     limit?: number
   }): Promise<{ items: MemoryItem[]; source: 'inverted' | 'scan' }> {
     const limit = input.limit ?? RECALL_SCAN_LIMIT
+
+    if (shouldRecallByConstraintNeighborhood(input.parsed)) {
+      const items = await this.repository.listByOwner({ limit })
+      return { items, source: 'scan' }
+    }
+
     const searchClue = buildSearchClueFromParsed(input.parsed) || input.rawClue
 
     try {

@@ -44,6 +44,23 @@ describe('mapLlmProposalToParsedClue', () => {
     expect(parsed.confidence).toBe('high')
   })
 
+  it('刚存书签：模型漏槽+虚词残留仍落到约束邻域槽位', () => {
+    const parsed = mapLlmProposalToParsedClue(
+      'just saved bookmark',
+      {
+        timeLabel: null,
+        objectTypes: null,
+        behaviorHints: null,
+        contentTerms: ['just', 'saved', 'bookmark'],
+        confidence: 'low'
+      },
+      PARSE_GOLD_NOW_MS
+    )
+    expect(parsed.objectTypes).toEqual(['bookmark'])
+    expect(parsed.behaviorHints).toEqual(['recently_saved'])
+    expect(parsed.contentTerms).toEqual([])
+  })
+
   it('无内容词时 confidence 与规则一致为 medium', () => {
     const parsed = mapLlmProposalToParsedClue(
       'the song I played on repeat yesterday',

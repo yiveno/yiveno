@@ -11,7 +11,6 @@ describe('popup-empty-copy', () => {
   it('empty library idle: save a trace first', () => {
     const copy = getPopupIdleEmptyCopy('empty', false, testTranslateEn)
     expect(copy?.title).toBe('Save a first trace')
-    expect(copy?.showShortenRetry).toBe(false)
     expect(copy?.body).toMatch(/highlight|save selection/i)
     expect(copy?.body).toMatch(/recall/i)
     expect(copy?.body).not.toMatch(FORBIDDEN)
@@ -44,29 +43,26 @@ describe('popup-empty-copy', () => {
     const copy = getPopupNoMatchCopy(
       {
         library: 'empty',
-        clue: 'the song I used to love',
-        canShorten: true
+        clue: 'the song I used to love'
       },
       testTranslateEn
     )
     expect(copy.title).toBe('Nothing saved yet')
-    expect(copy.showShortenRetry).toBe(false)
     expect(copy.body).toMatch(/trace|excerpt|note/i)
     expect(copy.body).not.toMatch(FORBIDDEN)
   })
 
-  it('ready library no_match: points to a clearer clue or capture', () => {
+  it('ready library no_match: honest终局，不暗示缩短再试', () => {
     const copy = getPopupNoMatchCopy(
       {
         library: 'ready',
-        clue: 'a very long clue about retention analysis',
-        canShorten: true
+        clue: 'a very long clue about retention analysis'
       },
       testTranslateEn
     )
     expect(copy.title).toContain('No match')
-    expect(copy.showShortenRetry).toBe(true)
     expect(copy.body).toMatch(/trace|save/i)
+    expect(copy.body).not.toMatch(/shorten|retry/i)
     expect(copy.body).not.toMatch(FORBIDDEN)
   })
 

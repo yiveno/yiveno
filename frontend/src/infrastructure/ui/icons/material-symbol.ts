@@ -17,6 +17,7 @@ export const MATERIAL_SYMBOL_NAMES = [
   'expand_more',
   'folder',
   'folder_open',
+  'format_quote',
   'library_books',
   'looks_one',
   'looks_two',
@@ -66,6 +67,8 @@ const MATERIAL_SYMBOL_PATHS: Record<MaterialSymbolName, string> = {
   // Material Icons · folder_open
   folder_open:
     'M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z',
+  // Material Icons · format_quote（摘录引文）
+  format_quote: 'M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z',
   // Material Icons · library_books
   library_books:
     'M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12zM10 9h8v2h-8zm0 3h8v2h-8zm0-6h8v2h-8z',

@@ -15,6 +15,7 @@ import { isSavablePageUrl } from '@/infrastructure/browser/active-tab-reader'
 import {
   computeSelectionToolbarAnchor,
   resolveSelectionAnchorRect,
+  shouldHideToolbarOnEmptySelection,
   shouldShowSelectionToolbar
 } from '@/content/selection-toolbar/selection-toolbar-logic'
 import {
@@ -1141,9 +1142,21 @@ function handleSelectionChange(): void {
     if (isStatusFeedbackLocked()) {
       return
     }
-    if (!getSelectedText()) {
-      hideToolbar()
+    if (getSelectedText()) {
+      return
     }
+    // 勿在 delay / 快照撑起展示期间因短暂空选区取消弹出（与 evaluateSelection 快照策略一致）
+    const toolbarVisible = hostElement !== null && hostElement.style.display !== 'none'
+    if (
+      !shouldHideToolbarOnEmptySelection({
+        showTimerPending: showTimer !== null,
+        hasPendingCapture: Boolean(pendingCapture?.selectedText),
+        toolbarVisible
+      })
+    ) {
+      return
+    }
+    hideToolbar()
   })
 }
 

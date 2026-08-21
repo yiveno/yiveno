@@ -19,15 +19,23 @@ const props = withDefaults(
   defineProps<{
     /** 当前页面对应导航项；该入口不展示，避免自跳。 */
     current?: 'library' | 'settings' | 'none'
+    /** Side Panel：展示「新找一轮」入口（图标 + title/aria）。 */
+    showNewFind?: boolean
+    /** 有活动线程时可点；空壳时禁用。 */
+    newFindEnabled?: boolean
   }>(),
   {
-    current: 'none'
+    current: 'none',
+    showNewFind: false,
+    newFindEnabled: false
   }
 )
 
 const emit = defineEmits<{
   /** 打开记忆库或设置失败时通知父级。 */
   navigateError: [message: string]
+  /** 用户显式开新找回线程。 */
+  newFind: []
 }>()
 
 const signedIn = ref(false)
@@ -130,6 +138,13 @@ async function handleOpenAccount() {
   }
 }
 
+function handleNewFind() {
+  if (!props.newFindEnabled) {
+    return
+  }
+  emit('newFind')
+}
+
 function handleStorageChanged(
   changes: Record<string, chrome.storage.StorageChange>,
   areaName: string
@@ -164,6 +179,16 @@ onUnmounted(() => {
       <p class="app-page-header__brand">{{ t('app_name') }}</p>
     </div>
     <nav class="app-page-header__nav" :aria-label="t('nav_aria_label')">
+      <md-icon-button
+        v-if="showNewFind"
+        type="button"
+        :title="t('nav_new_find')"
+        :aria-label="t('nav_new_find')"
+        :disabled="!newFindEnabled"
+        @click="handleNewFind"
+      >
+        <MaterialSymbolIcon name="edit_note" size="22px" />
+      </md-icon-button>
       <md-icon-button
         type="button"
         :title="accountTitle"

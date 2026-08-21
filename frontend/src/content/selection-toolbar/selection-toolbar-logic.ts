@@ -37,6 +37,28 @@ export function shouldShowSelectionToolbar(input: {
   return input.selectedText.trim().length > 0
 }
 
+/**
+ * selectionchange 空选区时是否应立刻收起浮层。
+ * mouseup 后 120ms 内许多页面 / Chrome 自带选区条会短暂清选区；
+ * 若此时 hide，会取消已排程弹出并清掉快照，表现为「开关开着也不出菜单」。
+ */
+export function shouldHideToolbarOnEmptySelection(input: {
+  /** 是否已排程延迟展示 */
+  showTimerPending: boolean
+  /** 是否仍有 mouseup 时留下的选区快照 */
+  hasPendingCapture: boolean
+  /** 浮层是否已在展示 */
+  toolbarVisible: boolean
+}): boolean {
+  if (input.showTimerPending) {
+    return false
+  }
+  if (input.hasPendingCapture && input.toolbarVisible) {
+    return false
+  }
+  return true
+}
+
 /** 选区锚点矩形（viewport 坐标）；无有效矩形时返回 null。 */
 export interface SelectionAnchorRect {
   top: number

@@ -12,7 +12,6 @@ export type PopupLibraryState =
 export interface PopupEmptyCopy {
   title: string
   body: string
-  showShortenRetry: boolean
 }
 
 /** idle 区引导（有库时不展示额外空态块，除非仍在安装引导 Capture-first 阶段）。 */
@@ -27,8 +26,7 @@ export function getPopupIdleEmptyCopy(
       title: translate('popup_capture_first_title'),
       body: importing
         ? translate('popup_capture_first_body_importing')
-        : translate('popup_capture_first_body'),
-      showShortenRetry: false
+        : translate('popup_capture_first_body')
     }
   }
 
@@ -40,17 +38,18 @@ export function getPopupIdleEmptyCopy(
     title: translate('popup_empty_no_memory_title'),
     body: importing
       ? translate('popup_empty_no_memory_body_importing')
-      : translate('popup_empty_no_memory_body'),
-    showShortenRetry: false
+      : translate('popup_empty_no_memory_body')
   }
 }
 
-/** no_match 区文案。 */
+/**
+ * no_match 区文案。
+ * 诚实终局：不附带「缩短再试」等暗示「换查询或许还有」的补救 CTA。
+ */
 export function getPopupNoMatchCopy(
   input: {
     library: PopupLibraryState
     clue: string
-    canShorten: boolean
   },
   translate: TranslateFn
 ): PopupEmptyCopy {
@@ -59,8 +58,7 @@ export function getPopupNoMatchCopy(
   if (input.library === 'empty') {
     return {
       title: translate('popup_empty_library_empty_title'),
-      body: translate('popup_empty_library_empty_body'),
-      showShortenRetry: false
+      body: translate('popup_empty_library_empty_body')
     }
   }
 
@@ -70,7 +68,6 @@ export function getPopupNoMatchCopy(
     title: clueLabel
       ? translate('popup_no_match_title_with_clue', truncated)
       : translate('popup_no_match_title'),
-    body: translate('popup_no_match_body'),
-    showShortenRetry: input.canShorten
+    body: translate('popup_no_match_body')
   }
 }

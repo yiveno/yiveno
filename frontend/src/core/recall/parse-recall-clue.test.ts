@@ -163,6 +163,24 @@ describe('parseRecallClue', () => {
     expect(parsed.confidence).toBe('medium')
   })
 
+  it('The recently collected bookmark → recent + bookmark，无 collected 内容词', () => {
+    const parsed = parseRecallClue('The recently collected bookmark', { nowMs: NOW_MS })
+    expect(parsed.timeRange?.label).toBe('recent')
+    expect(parsed.objectTypes).toEqual(['bookmark'])
+    expect(parsed.behaviorHints).toEqual(['recently_saved'])
+    expect(parsed.contentTerms).toEqual([])
+    expect(parsed.confidence).toBe('medium')
+  })
+
+  it('just saved bookmark / just bookmarked → 无虚词残留', () => {
+    for (const clue of ['just saved bookmark', 'just bookmarked']) {
+      const parsed = parseRecallClue(clue, { nowMs: NOW_MS })
+      expect(parsed.objectTypes).toEqual(['bookmark'])
+      expect(parsed.behaviorHints).toEqual(['recently_saved'])
+      expect(parsed.contentTerms).toEqual([])
+    }
+  })
+
   it('half read + article → medium（兼容旧说法）', () => {
     const parsed = parseRecallClue('half read the article', { nowMs: NOW_MS })
     expect(parsed.behaviorHints).toEqual(['half_read'])

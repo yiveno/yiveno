@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import type { ChromeBookmarkImportState } from '@/core/memory/chrome-bookmark-import-state'
 import { getChromeBookmarkImportPercent } from '@/core/memory/chrome-bookmark-import-state'
-import { shortenClueForRetry } from '@/core/recall/explain-recall-match'
 import { shouldShowCaptureFirstPopup } from '@/core/capture/install-onboarding'
 import {
   getPopupIdleEmptyCopy,
@@ -44,7 +43,6 @@ import type {
   RecallSuggestion
 } from '@/pages/sidepanel/recall-conversation-types'
 import type { RecallDialogState } from '@/core/recall/merge-recall-dialog-turn'
-import { rollbackLastDialogUtterance } from '@/core/recall/merge-recall-dialog-turn'
 
 defineOptions({ name: 'SidePanelPage' })
 
@@ -70,9 +68,84 @@ const dialogState = ref<RecallDialogState>({
 const conversationTurns = ref<ConversationTurn[]>([])
 let turnSeq = 0
 
+const recallBodyRef = ref<HTMLElement | null>(null)
+/** 靠近底部时跟随新消息；用户上翻后暂停。 */
+const stickToBottom = ref(true)
+
+/** 有气泡或 dialog 槽位时视为活动线程（可 New find）。 */
+const hasActiveFindSession = computed(() => {
+  const d = dialogState.value
+  return (
+    conversationTurns.value.length > 0 ||
+    d.priorUserUtterances.length > 0 ||
+    d.accumulated !== null ||
+    d.dismissedIds.length > 0
+  )
+})
+
+const isComposerProminent = computed(() => conversationTurns.value.length === 0)
+
+function onRecallBodyScroll(): void {
+  const el = recallBodyRef.value
+  if (!el) {
+    return
+  }
+  const distance = el.scrollHeight - el.scrollTop - el.clientHeight
+  stickToBottom.value = distance < 96
+}
+
+function scrollRecallToBottom(): void {
+  const el = recallBodyRef.value
+  if (!el || !stickToBottom.value) {
+    return
+  }
+  el.scrollTop = el.scrollHeight
+}
+
+watch(
+  () => [conversationTurns.value.length, isRecallRefreshing.value] as const,
+  async () => {
+    await nextTick()
+    scrollRecallToBottom()
+  }
+)
+
 function nextTurnId(): string {
   turnSeq += 1
   return String(turnSeq)
+}
+
+/** 续找时附带 session status；首轮 / 新会话后首轮不带。 */
+function continuingContextStatus(
+  priorUtterances: string[],
+  accumulated: RecallDialogState['accumulated'],
+  dismissedIds: string[]
+): { contextStatus?: string } {
+  const continuing = priorUtterances.length > 0 || accumulated !== null || dismissedIds.length > 0
+  return continuing ? { contextStatus: t('popup_session_status_continuing') } : {}
+}
+
+/** 用户显式开新找：清空线程与 dialog；关 Panel 仍另作丢弃。 */
+function startNewFindSession(): void {
+  if (!hasActiveFindSession.value) {
+    return
+  }
+  recallRequestId += 1
+  isRecallRefreshing.value = false
+  dialogState.value = {
+    priorUserUtterances: [],
+    accumulated: null,
+    dismissedIds: []
+  }
+  conversationTurns.value = []
+  clue.value = ''
+  lastSentClue.value = ''
+  errorMessage.value = ''
+  expandedDuplicateGroupId.value = null
+  stickToBottom.value = true
+  void nextTick(() => {
+    clueInputRef.value?.focus()
+  })
 }
 
 function buildRecallSuggestions(): RecallSuggestion[] {
@@ -114,7 +187,7 @@ function resolveMissAssistantText(input: {
       : t('popup_followup_miss_constrained_empty')
   }
   if (input.library === 'empty') {
-    const copy = getPopupNoMatchCopy({ library: 'empty', clue: input.clue, canShorten: false }, t)
+    const copy = getPopupNoMatchCopy({ library: 'empty', clue: input.clue }, t)
     return `${copy.title} ${copy.body}`
   }
   return t('popup_reply_miss')
@@ -165,26 +238,6 @@ const idleEmptyCopy = computed(() =>
   })
 )
 
-const shortenedClue = computed(() => shortenClueForRetry(lastSentClue.value))
-
-const shortenRetryLabel = computed(() => {
-  if (!shortenedClue.value) {
-    return t('popup_shorten_retry')
-  }
-  return t('popup_shorten_retry_with_clue', shortenedClue.value)
-})
-
-const noMatchCopy = computed(() =>
-  getPopupNoMatchCopy(
-    {
-      library: libraryState.value,
-      clue: lastSentClue.value,
-      canShorten: shortenedClue.value !== null
-    },
-    t
-  )
-)
-
 /** 当前展开的重复组代表 id；同时只展开一组。 */
 const expandedDuplicateGroupId = ref<string | null>(null)
 
@@ -221,6 +274,7 @@ function toMatchCard(
 
   return {
     id: match.item.id,
+    itemKind: match.item.type === 'bookmark' ? 'bookmark' : 'text_excerpt',
     title: display.title,
     subtitle: display.subtitle,
     url: getMemoryItemOpenHref(match.item, {
@@ -292,6 +346,7 @@ async function handleDismissCandidates(): Promise<void> {
     role: 'assistant',
     tone: 'miss',
     text: t('popup_reply_after_dismiss'),
+    contextStatus: t('popup_session_status_continuing'),
     suggestions: buildRecallSuggestions(),
     allowDismiss: false
   })
@@ -405,6 +460,11 @@ async function runRecall(trimmedClue: string): Promise<void> {
   const priorUserUtterances = [...dialogState.value.priorUserUtterances]
   const accumulated = dialogState.value.accumulated
   const dismissedIds = [...dialogState.value.dismissedIds]
+  const contextStatusFields = continuingContextStatus(
+    priorUserUtterances,
+    accumulated,
+    dismissedIds
+  )
 
   try {
     const response = await recallWithClue({
@@ -429,7 +489,8 @@ async function runRecall(trimmedClue: string): Promise<void> {
         createAssistantTurn({
           id: nextTurnId(),
           tone: 'error',
-          text: errorMessage.value
+          text: errorMessage.value,
+          ...contextStatusFields
         })
       )
       return
@@ -453,6 +514,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
           id: nextTurnId(),
           tone: 'confident',
           text: t('popup_reply_confident'),
+          ...contextStatusFields,
           primaryCard: response.result.topPick
             ? toMatchCard(response.result.topPick, highlightClue)
             : null,
@@ -475,6 +537,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
           id: nextTurnId(),
           tone: 'uncertain',
           text: llmFollowUp?.text ?? t('popup_reply_uncertain'),
+          ...contextStatusFields,
           candidateCards,
           candidateSectionLabel: t('popup_section_also_possible'),
           ...(llmFollowUp?.suggestions?.length ? { suggestions: llmFollowUp.suggestions } : {}),
@@ -495,6 +558,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
             library: libraryState.value,
             clue: highlightClue
           }),
+          ...contextStatusFields,
           ...(relatedGuess
             ? {
                 relatedGuessCard: toMatchCard(relatedGuess, highlightClue),
@@ -519,20 +583,11 @@ async function runRecall(trimmedClue: string): Promise<void> {
       createAssistantTurn({
         id: nextTurnId(),
         tone: 'error',
-        text: errorMessage.value
+        text: errorMessage.value,
+        ...contextStatusFields
       })
     )
   }
-}
-
-/** 缩短再试：只替换最近一句，回滚 prior 末轮后再发缩短版。 */
-function handleShortenRetry() {
-  const next = shortenedClue.value
-  if (!next || isRecallRefreshing.value) {
-    return
-  }
-  dialogState.value = rollbackLastDialogUtterance(dialogState.value)
-  void handleSendTurn(next)
 }
 
 function handleNavigateError(message: string) {
@@ -546,6 +601,9 @@ async function handleSendTurn(overrideClue?: string): Promise<void> {
   }
 
   lastSentClue.value = trimmed
+
+  // 发送后强制黏底，保证看见待回复与结果
+  stickToBottom.value = true
 
   conversationTurns.value.push({
     id: nextTurnId(),
@@ -597,7 +655,13 @@ onUnmounted(() => {
 <template>
   <main class="recall-shell">
     <header class="recall-header">
-      <AppPageHeader class="recall-header-top" @navigate-error="handleNavigateError" />
+      <AppPageHeader
+        class="recall-header-top"
+        show-new-find
+        :new-find-enabled="hasActiveFindSession"
+        @navigate-error="handleNavigateError"
+        @new-find="startNewFindSession"
+      />
 
       <section
         v-if="showImportProgress"
@@ -614,7 +678,12 @@ onUnmounted(() => {
       </section>
     </header>
 
-    <div class="recall-body" :class="{ 'recall-body--empty': conversationTurns.length === 0 }">
+    <div
+      ref="recallBodyRef"
+      class="recall-body"
+      :class="{ 'recall-body--empty': conversationTurns.length === 0 }"
+      @scroll="onRecallBodyScroll"
+    >
       <section v-if="conversationTurns.length === 0" class="recall-empty" aria-live="polite">
         <p class="recall-empty-title">
           {{ idleEmptyCopy?.title ?? t('popup_welcome_title') }}
@@ -643,25 +712,23 @@ onUnmounted(() => {
         :expandLabel="t('popup_duplicate_expand')"
         :collapseLabel="t('popup_duplicate_collapse')"
         :noteFieldLabel="t('detail_note_label')"
-        :showShortenRetry="noMatchCopy.showShortenRetry"
-        :shortenRetryLabel="shortenRetryLabel"
+        :pending="isRecallRefreshing"
+        :pendingLabel="t('popup_recall_pending')"
         @open="handleCardOpen"
         @toggle-expand="toggleDuplicateGroup"
         @dismiss="handleDismissCandidates"
-        @shorten-retry="handleShortenRetry"
         @use-suggestion="handleUseSuggestion"
       />
     </div>
 
-    <p v-if="isRecallRefreshing" class="recall-refresh-hint" role="status" aria-live="polite">
-      {{ t('popup_filtering_status') }}
-    </p>
     <RecallComposer
       ref="clueInputRef"
       v-model="clue"
       :ariaLabel="t('popup_clue_input_aria')"
       :placeholder="t('popup_clue_placeholder')"
+      :sendLabel="t('popup_submit')"
       :disabled="isRecallRefreshing"
+      :prominent="isComposerProminent"
       @send="handleSendTurn"
     />
   </main>
@@ -695,7 +762,7 @@ onUnmounted(() => {
   height: 100%;
   min-height: 100%;
   max-height: none;
-  padding: 16px 20px 12px;
+  padding: 12px 16px 14px;
   color: var(--on-surface);
   background: var(--surface);
   overflow: hidden;
@@ -704,7 +771,7 @@ onUnmounted(() => {
 .recall-header {
   flex-shrink: 0;
   min-width: 0;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .recall-header-top {
@@ -758,13 +825,6 @@ onUnmounted(() => {
   color: var(--danger);
 }
 
-.recall-refresh-hint {
-  margin: 6px 0 0;
-  font-size: 12px;
-  line-height: 1.3;
-  color: var(--on-surface-muted);
-}
-
 .recall-body {
   display: flex;
   flex-direction: column;
@@ -772,46 +832,37 @@ onUnmounted(() => {
   min-width: 0;
   min-height: 0;
   overflow: hidden auto;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
 }
 
 .recall-body--empty {
-  justify-content: center;
-}
-
-.recall-status {
-  margin: 8px 0 0;
-  font-size: 13px;
-  line-height: 1.4;
-  color: var(--on-surface-muted);
-}
-
-.recall-error {
-  margin: 8px 0 0;
-  font-size: 13px;
-  line-height: 1.4;
-  color: var(--danger);
+  justify-content: flex-end;
+  padding-bottom: 8px;
 }
 
 .recall-empty {
   display: grid;
-  justify-items: center;
-  gap: 12px;
-  padding: 8px 10px 24px;
-  text-align: center;
+  justify-items: start;
+  gap: 8px;
+  width: 100%;
+  max-width: 36ch;
+  padding: 8px 4px 20px;
+  text-align: left;
   background: transparent;
 }
 
 .recall-empty-title {
   margin: 0;
-  font-size: 28px;
-  font-weight: 700;
-  line-height: 1.2;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.25;
   letter-spacing: -0.02em;
   text-wrap: balance;
 }
 
 .recall-empty-copy {
-  max-width: 24ch;
+  max-width: 32ch;
   margin: 0;
   font-size: 14px;
   line-height: 1.5;
@@ -823,7 +874,7 @@ onUnmounted(() => {
   display: flex;
   flex-wrap: wrap;
   gap: 4px 8px;
-  justify-content: center;
+  justify-content: flex-start;
   margin-top: 4px;
 }
 

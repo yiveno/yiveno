@@ -1,6 +1,10 @@
 import type { CaptureEntry } from '@/core/memory/capture-entry'
 import type { MemoryCluesInput } from '@/core/memory/clues'
-import { enrichMemoryClues, type EnrichMemoryCluesInput } from '@/core/memory/enrich-memory-clues'
+import {
+  enrichMemoryClues,
+  mergeUniqueStrings,
+  type EnrichMemoryCluesInput
+} from '@/core/memory/enrich-memory-clues'
 import { mergeMemoryClueEnrichment } from '@/core/memory/merge-memory-clue-enrichment'
 import { type BookmarkMemoryItem, type TextExcerptMemoryItem } from '@/core/memory/memory-item'
 import {
@@ -126,6 +130,11 @@ export function createBookmarkMemoryItem(input: BookmarkBuildInput): BookmarkMem
     domain: payload.domain,
     ...(input.clues?.note !== undefined ? { note: input.clues.note } : {})
   })
+  // 书签语料始终带 bookmark tag（与 mergeEnrichmentIntoMemoryItem / 约束邻域对齐）
+  const cluesWithBookmarkType = {
+    ...clues,
+    tags: mergeUniqueStrings(clues?.tags, ['bookmark'])
+  }
 
   return {
     id: crypto.randomUUID(),
@@ -134,7 +143,7 @@ export function createBookmarkMemoryItem(input: BookmarkBuildInput): BookmarkMem
     type: 'bookmark',
     payload,
     clues: buildClues(
-      clues,
+      cluesWithBookmarkType,
       {
         title: payload.title,
         sourceUrl: payload.url,
@@ -142,7 +151,8 @@ export function createBookmarkMemoryItem(input: BookmarkBuildInput): BookmarkMem
       },
       input.captureEntry
     ),
-    createdAt: now,
+    // Chrome 书签：createdAt = 用户星标时间（dateAdded），不是灌库时刻
+    createdAt: payload.chromeCreatedAt ?? now,
     updatedAt: now,
     deletedAt: null
   }

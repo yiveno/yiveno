@@ -173,6 +173,126 @@ describe('recallByKeywordWithParsedClue', () => {
     expect(orchestrated.outcome).toBe(baseline.outcome)
   })
 
+  it('The recently collected bookmark → 近因书签邻域（不搜 collected）', () => {
+    const recent = createBookmarkMemoryItem({
+      ownerId: OWNER,
+      sourceLocalProfileId: PROFILE,
+      now: () => '2026-07-28T10:00:00.000Z',
+      payload: {
+        title: 'Interview notes on X',
+        url: 'https://x.com/example/status/1'
+      }
+    })
+    const older = createBookmarkMemoryItem({
+      ownerId: OWNER,
+      sourceLocalProfileId: PROFILE,
+      now: () => '2026-07-20T10:00:00.000Z',
+      payload: {
+        title: 'Older bookmark',
+        url: 'https://example.com/old'
+      }
+    })
+    const excerpt = createTextExcerptMemoryItem({
+      ownerId: OWNER,
+      sourceLocalProfileId: PROFILE,
+      now: () => '2026-07-28T11:00:00.000Z',
+      payload: {
+        selectedText: 'collected thoughts',
+        sourceUrl: 'https://blog.example/collected',
+        pageTitle: 'collected'
+      }
+    })
+
+    const result = recallByKeywordWithParsedClue(
+      [older, excerpt, recent],
+      'The recently collected bookmark',
+      { nowMs: NOW_MS }
+    )
+
+    expect(result.outcome).toBe('top_pick')
+    expect(result.topPick?.item.id).toBe(recent.id)
+    expect(result.topPick?.item.id).not.toBe(excerpt.id)
+    expect(result.alsoPossible.every(match => match.item.type === 'bookmark')).toBe(true)
+  })
+
+  it('just saved bookmarks：按 Chrome dateAdded 近因，不按灌库时刻', () => {
+    const recentlyStarred = createBookmarkMemoryItem({
+      ownerId: OWNER,
+      sourceLocalProfileId: PROFILE,
+      now: () => '2026-07-28T11:00:00.000Z',
+      payload: {
+        title: '码良 on X: 面试官…',
+        url: 'https://x.com/cxjwin/status/2090241406707065055',
+        chromeCreatedAt: '2026-07-28T10:30:00.000Z'
+      }
+    })
+    // 老书签：灌库时刻很新，但 Chrome 星标很久以前
+    const oldChromeButFreshIngest = createBookmarkMemoryItem({
+      ownerId: OWNER,
+      sourceLocalProfileId: PROFILE,
+      now: () => '2026-07-28T11:59:00.000Z',
+      payload: {
+        title: 'HTML Standard',
+        url: 'https://html.spec.whatwg.org/',
+        chromeCreatedAt: '2020-01-01T00:00:00.000Z'
+      }
+    })
+
+    const result = recallByKeywordWithParsedClue(
+      [oldChromeButFreshIngest, recentlyStarred],
+      'just saved bookmarks',
+      { nowMs: NOW_MS }
+    )
+
+    expect(result.outcome).toBe('top_pick')
+    expect(result.topPick?.item.id).toBe(recentlyStarred.id)
+    expect(result.alsoPossible.every(m => m.item.id !== oldChromeButFreshIngest.id)).toBe(true)
+  })
+
+  it('just saved → 无类型也出近因邻域（最新优先）', () => {
+    const recentBookmark = createBookmarkMemoryItem({
+      ownerId: OWNER,
+      sourceLocalProfileId: PROFILE,
+      now: () => '2026-07-28T10:00:00.000Z',
+      payload: {
+        title: 'Interview notes on X',
+        url: 'https://x.com/example/status/2'
+      }
+    })
+    const newerExcerpt = createTextExcerptMemoryItem({
+      ownerId: OWNER,
+      sourceLocalProfileId: PROFILE,
+      now: () => '2026-07-28T11:00:00.000Z',
+      payload: {
+        selectedText: 'a saved line',
+        sourceUrl: 'https://blog.example/line',
+        pageTitle: 'Blog'
+      }
+    })
+    const old = createBookmarkMemoryItem({
+      ownerId: OWNER,
+      sourceLocalProfileId: PROFILE,
+      now: () => '2026-06-01T10:00:00.000Z',
+      payload: {
+        title: 'Ancient',
+        url: 'https://example.com/ancient'
+      }
+    })
+
+    const result = recallByKeywordWithParsedClue(
+      [old, recentBookmark, newerExcerpt],
+      'just saved',
+      {
+        nowMs: NOW_MS
+      }
+    )
+
+    expect(result.outcome).toBe('top_pick')
+    expect(result.topPick?.item.id).toBe(newerExcerpt.id)
+    expect(result.alsoPossible.some(match => match.item.id === recentBookmark.id)).toBe(true)
+    expect(result.topPick?.item.id).not.toBe(old.id)
+  })
+
   it('备注指向且条目有 note 时更易胜出', () => {
     const withNote = createBookmarkMemoryItem({
       ownerId: OWNER,

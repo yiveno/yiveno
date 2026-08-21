@@ -9,6 +9,7 @@ export function createAssistantTurn(input: {
   id: string
   tone: AssistantTurn['tone']
   text: string
+  contextStatus?: string
   primaryCard?: RecallCardModel | null
   relatedGuessCard?: RecallCardModel | null
   relatedGuessLabel?: string
@@ -22,6 +23,7 @@ export function createAssistantTurn(input: {
     role: 'assistant',
     tone: input.tone,
     text: input.text,
+    ...(input.contextStatus === undefined ? {} : { contextStatus: input.contextStatus }),
     ...(input.primaryCard === undefined ? {} : { primaryCard: input.primaryCard }),
     ...(input.relatedGuessCard === undefined ? {} : { relatedGuessCard: input.relatedGuessCard }),
     ...(input.relatedGuessLabel === undefined

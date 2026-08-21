@@ -17,6 +17,8 @@ export type AssistantTurn = {
   role: 'assistant'
   tone: 'confident' | 'uncertain' | 'miss' | 'error'
   text: string
+  /** 续找线程时展示：标明仍在本找，非新一轮 */
+  contextStatus?: string
   primaryCard?: RecallCardModel | null
   /** 最近同类猜测卡（非 Top Pick）；与 primaryCard 互斥使用场景 */
   relatedGuessCard?: RecallCardModel | null

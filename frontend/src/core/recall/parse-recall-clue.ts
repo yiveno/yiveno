@@ -102,6 +102,22 @@ function sortLexiconBySurfaceLengthDesc<T extends string>(
   return [...entries].sort((left, right) => right.surface.length - left.surface.length)
 }
 
+function isAsciiWordChar(char: string | undefined): boolean {
+  return Boolean(char && /[a-z0-9]/.test(char))
+}
+
+/** ASCII 词典命中须近似词边界，避免 bookmark 吞掉 bookmarked。 */
+function canMatchLexiconAt(text: string, index: number, needle: string): boolean {
+  const isAsciiNeedle = /^[a-z0-9 ]+$/.test(needle)
+  if (!isAsciiNeedle) {
+    return true
+  }
+
+  const before = index > 0 ? text[index - 1] : undefined
+  const after = index + needle.length < text.length ? text[index + needle.length] : undefined
+  return !isAsciiWordChar(before) && !isAsciiWordChar(after)
+}
+
 /**
  * 在 haystack 中找所有不重叠的词典命中（更长 surface 优先）。
  * haystack 应为已 normalize 的小写文本；occupied 可跨词典共享。
@@ -129,7 +145,7 @@ function collectLexiconHits<T extends string>(
       }
       const end = index + needle.length
       const overlaps = occupied.slice(index, end).some(Boolean)
-      if (!overlaps) {
+      if (!overlaps && canMatchLexiconAt(haystack, index, needle)) {
         for (let i = index; i < end; i += 1) {
           occupied[i] = true
         }
@@ -159,21 +175,6 @@ function maskSpans(text: string, spans: MatchedSpan[]): string {
   return chars.join('')
 }
 
-function isAsciiWordChar(char: string | undefined): boolean {
-  return Boolean(char && /[a-z0-9]/.test(char))
-}
-
-function canMaskAt(text: string, index: number, needle: string): boolean {
-  const isAsciiNeedle = /^[a-z0-9 ]+$/.test(needle)
-  if (!isAsciiNeedle) {
-    return true
-  }
-
-  const before = index > 0 ? text[index - 1] : undefined
-  const after = index + needle.length < text.length ? text[index + needle.length] : undefined
-  return !isAsciiWordChar(before) && !isAsciiWordChar(after)
-}
-
 function maskFillerSurfaces(text: string): string {
   let masked = text
   const fillers = RECALL_CLUE_FILLER_SURFACES.sort((a, b) => b.length - a.length)
@@ -191,7 +192,7 @@ function maskFillerSurfaces(text: string): string {
         next += masked.slice(cursor)
         break
       }
-      if (!canMaskAt(masked, index, needle)) {
+      if (!canMatchLexiconAt(masked, index, needle)) {
         next += masked.slice(cursor, index + 1)
         cursor = index + 1
         continue
@@ -304,9 +305,14 @@ export function parseRecallClue(
 
   const timeLabel = timeHits.values[0]
   const timeRange = timeLabel ? resolveRelativeTimeRange(timeLabel, nowMs) : undefined
-  const objectTypes = objectHits.values as RecallObjectType[]
-  const behaviorHints = behaviorHits.values as RecallBehaviorHint[]
+  let objectTypes = objectHits.values as RecallObjectType[]
+  let behaviorHints = behaviorHits.values as RecallBehaviorHint[]
   const noteHint = noteHits.values.length > 0 ? true : undefined
+
+  // 「just bookmarked」整句先被行为词典占满时，仍补上 bookmark 类型意图
+  objectTypes = reinforceBookmarkObjectType(normalized, objectTypes)
+  // 「recently collected」若时间词先占 recently，仍补 recently_saved
+  behaviorHints = reinforceRecentlySavedBehavior(normalized, behaviorHints)
 
   const hasTime = Boolean(timeRange)
   const hasObject = objectTypes.length > 0
@@ -331,4 +337,37 @@ export function parseRecallClue(
   }
 
   return ParsedRecallClueSchema.parse(parsed)
+}
+
+/** 线索明示 bookmark(s)/bookmarked 时补上 objectType（行为长句可能先占满 span）。 */
+export function reinforceBookmarkObjectType(
+  normalizedClue: string,
+  objectTypes: RecallObjectType[]
+): RecallObjectType[] {
+  if (objectTypes.includes('bookmark')) {
+    return objectTypes
+  }
+  if (/\bbookmarks?\b/.test(normalizedClue) || /\bbookmarked\b/.test(normalizedClue)) {
+    return [...objectTypes, 'bookmark']
+  }
+  return objectTypes
+}
+
+/** 时间词先占 recently 时，仍识别 collected/just saved 等为 recently_saved。 */
+export function reinforceRecentlySavedBehavior(
+  normalizedClue: string,
+  behaviorHints: RecallBehaviorHint[]
+): RecallBehaviorHint[] {
+  if (behaviorHints.includes('recently_saved')) {
+    return behaviorHints
+  }
+  if (
+    /\b(recently collected|just collected|newly collected|just saved|just stored|just bookmarked|newly saved)\b/.test(
+      normalizedClue
+    ) ||
+    (/\bcollected\b/.test(normalizedClue) && /\bbookmarks?\b/.test(normalizedClue))
+  ) {
+    return [...behaviorHints, 'recently_saved']
+  }
+  return behaviorHints
 }

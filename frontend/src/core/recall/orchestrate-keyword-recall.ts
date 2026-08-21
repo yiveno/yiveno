@@ -14,10 +14,11 @@ import { collapseRecallMatches } from '@/core/recall/collapse-recall-duplicates'
 import {
   compactRecallText,
   filterMemoryItemsByKeyword,
-  normalizeRecallText
+  normalizeRecallText,
+  RECALL_TOP_PICK_MIN_SCORE
 } from '@/core/recall/keyword-filter'
 import { expandRecallContentTerms } from '@/core/memory/memory-topic-lexicon'
-import { parseRecallClue } from '@/core/recall/parse-recall-clue'
+import { parseRecallClue, resolveRelativeTimeRange } from '@/core/recall/parse-recall-clue'
 import {
   RECALL_OBJECT_TYPE_CANONICAL_SURFACES,
   RECALL_OBJECT_TYPE_LEXICON
@@ -91,7 +92,18 @@ function parseIsoMs(value: string | undefined | null): number | null {
   return Number.isNaN(ms) ? null : ms
 }
 
-/** createdAt 是否落在时间窗内。 */
+/** 条目「收藏/保存」时刻：书签优先 Chrome dateAdded，否则 createdAt。 */
+export function memoryItemSavedAtMs(item: MemoryItem): number | null {
+  if (item.type === 'bookmark') {
+    const chromeMs = parseIsoMs(item.payload.chromeCreatedAt)
+    if (chromeMs !== null) {
+      return chromeMs
+    }
+  }
+  return parseIsoMs(item.createdAt)
+}
+
+/** createdAt / chromeCreatedAt / lastOpenedAt 是否落在时间窗内。 */
 export function memoryItemInTimeRange(item: MemoryItem, timeRange: RecallTimeRange): boolean {
   const fromMs = Date.parse(timeRange.from)
   const toMs = Date.parse(timeRange.to)
@@ -99,7 +111,11 @@ export function memoryItemInTimeRange(item: MemoryItem, timeRange: RecallTimeRan
     return false
   }
 
-  const candidates = [item.createdAt, item.clues.lastOpenedAt]
+  const candidates = [
+    item.createdAt,
+    item.clues.lastOpenedAt,
+    item.type === 'bookmark' ? item.payload.chromeCreatedAt : undefined
+  ]
   for (const value of candidates) {
     const ms = parseIsoMs(value)
     if (ms !== null && ms >= fromMs && ms <= toMs) {
@@ -148,6 +164,11 @@ export function memoryItemMatchesObjectType(
   item: MemoryItem,
   objectType: RecallObjectType
 ): boolean {
+  // bookmark 是语料源类型：直接对齐 MemoryItem.type，不依赖标题里出现 "bookmark"
+  if (objectType === 'bookmark') {
+    return item.type === 'bookmark'
+  }
+
   const tags = item.clues.tags.map(tag => normalizeRecallText(tag))
   if (tags.includes(objectType)) {
     return true
@@ -156,6 +177,78 @@ export function memoryItemMatchesObjectType(
   const blob = collectItemMatchBlob(item)
   const surfaces = OBJECT_TYPE_SURFACES.get(objectType) ?? []
   return surfaces.some(surface => surface.length > 0 && blob.includes(compactRecallText(surface)))
+}
+
+/**
+ * 无内容词 + 时间/刚存/类型约束：按近因列邻域，禁止把虚词当关键词扫库。
+ * 产品：用户忘了标题才开口；「just saved」「recently collected bookmark」均须出邻域。
+ */
+export function shouldRecallByConstraintNeighborhood(parsed: ParsedRecallClue): boolean {
+  if (parsed.contentTerms.length > 0) {
+    return false
+  }
+  const hasType = Boolean(parsed.objectTypes && parsed.objectTypes.length > 0)
+  const hasRecentSaved = Boolean(parsed.behaviorHints?.includes('recently_saved'))
+  const hasTime = Boolean(parsed.timeRange)
+  // 仅「just saved」也成立：不要求再说 bookmark / article
+  return hasRecentSaved || hasTime || hasType
+}
+
+/** recently_saved 且无线性时间词时，视为 recent 窗。 */
+export function effectiveParsedTimeRange(
+  parsed: ParsedRecallClue,
+  nowMs: number
+): RecallTimeRange | undefined {
+  if (parsed.timeRange) {
+    return parsed.timeRange
+  }
+  if (parsed.behaviorHints?.includes('recently_saved')) {
+    return resolveRelativeTimeRange('recent', nowMs)
+  }
+  return undefined
+}
+
+function itemCreatedMs(item: MemoryItem): number {
+  return memoryItemSavedAtMs(item) ?? 0
+}
+
+/**
+ * 约束邻域：时间窗硬过滤 + 可选类型过滤，按 createdAt 近因打分。
+ * 最新一条须达 Top Pick 阈值（建议，非神谕）。
+ */
+export function recallMatchesByConstraintNeighborhood(
+  items: MemoryItem[],
+  parsed: ParsedRecallClue,
+  nowMs: number
+): RecallMatch[] {
+  const range = effectiveParsedTimeRange(parsed, nowMs)
+  const types = parsed.objectTypes
+
+  let pool = items
+  if (range) {
+    pool = pool.filter(item => memoryItemInTimeRange(item, range))
+  }
+  if (types && types.length > 0) {
+    pool = pool.filter(item => types.some(type => memoryItemMatchesObjectType(item, type)))
+  }
+
+  if (pool.length === 0) {
+    return []
+  }
+
+  const ranked = [...pool].sort((left, right) => itemCreatedMs(right) - itemCreatedMs(left))
+  const newestMs = itemCreatedMs(ranked[0]!)
+
+  return ranked.map((item, index) => {
+    const ageGapDays = Math.max(0, (newestMs - itemCreatedMs(item)) / (24 * 60 * 60 * 1000))
+    // 最新 = Top Pick 门槛；越旧分越低，仍可进 Also Possible
+    const score = Math.max(1, RECALL_TOP_PICK_MIN_SCORE - index - Math.floor(ageGapDays))
+    return {
+      item,
+      score,
+      matchedFields: ['constraint_neighborhood']
+    }
+  })
 }
 
 /** 在已有词面分上叠加结构化软加权（无词面命中不加）。时间已硬过滤，不再软加成。 */
@@ -185,9 +278,9 @@ export function applyParsedClueScoreBoosts(
   }
 
   if (parsed.behaviorHints?.includes('recently_saved')) {
-    const createdMs = parseIsoMs(match.item.createdAt)
+    const savedMs = memoryItemSavedAtMs(match.item)
     const nowMs = Date.now()
-    if (createdMs !== null && nowMs - createdMs <= RECENTLY_SAVED_WINDOW_MS) {
+    if (savedMs !== null && nowMs - savedMs <= RECENTLY_SAVED_WINDOW_MS) {
       boost += RECALL_ORCHESTRATION_RECENTLY_SAVED_BOOST
     }
   }
@@ -212,6 +305,7 @@ export function applyParsedClueScoreBoosts(
 /**
  * 带口语解析的关键词 Recall。
  * RecallResult.clue 仍为用户原始输入（UI 展示）；内部检索可用剥离后的 searchClue。
+ * 无内容词且具备时间+类型（或刚存）时走约束邻域，不把虚词当检索词。
  */
 export function recallByKeywordWithParsedClue(
   items: MemoryItem[],
@@ -230,8 +324,25 @@ export function recallByKeywordWithParsedClue(
 
   const nowMs = options.nowMs ?? Date.now()
   const parsed = options.parsed ?? parseRecallClue(raw, { nowMs })
-  const searchClue = buildSearchClueFromParsed(parsed)
   const slotLimit = options.candidateLimit ?? RECALL_RESULT_SLOT_LIMIT
+
+  if (shouldRecallByConstraintNeighborhood(parsed)) {
+    const constraintMatches = recallMatchesByConstraintNeighborhood(items, parsed, nowMs).map(
+      match => applyParsedClueScoreBoosts(match, parsed)
+    )
+    constraintMatches.sort((left, right) => {
+      if (right.score !== left.score) {
+        return right.score - left.score
+      }
+      return right.item.updatedAt.localeCompare(left.item.updatedAt)
+    })
+    const collapsed = collapseRecallMatches(constraintMatches, {
+      limit: slotLimit + RECALL_COLLAPSE_BACKFILL_EXTRA
+    })
+    return buildRecallResult(raw, collapsed)
+  }
+
+  const searchClue = buildSearchClueFromParsed(parsed)
 
   const matches = filterMatchesByParsedTimeRange(
     filterMemoryItemsByKeyword(items, searchClue, {

@@ -142,6 +142,65 @@
 
 **禁止：** 借 Side Panel 回潮书签树/整理中心（§0.3）。
 
+### R-shell-session · 线程 / 新会话可见边界
+
+**状态：** **已落地（2026-08-21）** — New find + session status（§7.0）。
+
+**目标：** Side Panel 持久开着时，用户能分清「还在续找」vs「新开一轮」；禁止系统猜成败/话题切换清上下文。
+
+| 交付                                   | 验收              |
+| -------------------------------------- | ----------------- |
+| Header **New find** 清空 dialog + 气泡 | ✓                 |
+| 续找助手气泡 **session status** 短句   | ✓                 |
+| 关 Panel 仍丢会话（P0）                | ✓（沿用 R-shell） |
+
+### R-shell-chat · Side Panel 对话壳能力清单（防范围膨胀）
+
+**状态：** **基线已冻结（2026-08-21）** — 壳作找回交付面；默认不再开 Chat UI 大波次。权威交互仍以产品文档 **§7.0** 为准。
+
+**定位一句：** Chat = Personal Recall 的交互语法，**不是**通用助理 / ChatGPT clone。差异化预算留给检索、线索理解、embedding、eval。
+
+**代码锚点：** `frontend/src/pages/sidepanel/`（`SidePanel.vue`、`RecallConversation`、`RecallComposer`、`recall-conversation-types`）；会话事实在组件内 `dialogState`（非气泡本身）。
+
+#### 已有（可当真）
+
+| 能力                | 说明                                                                |
+| ------------------- | ------------------------------------------------------------------- |
+| Side Panel 主壳     | 无 `default_popup`；图标 / `_execute_action` 开 Panel               |
+| 线程 + Composer     | 用户泡 / 助手块；Enter 发送、Shift+Enter 换行；空线程 composer 加重 |
+| 结果三分 UI         | `top_pick` / `need_a_clue` / `no_match`（+ error）                  |
+| 结构化助手回复      | 主卡、「可能是这些」、猜测卡、追问芯片、None of these               |
+| 多轮 refine         | 同线程传 `RECALL_WITH_CLUE.context`；core 槽位 merge                |
+| New find            | 显式清 `dialogState` + 气泡                                         |
+| Session status      | 续找时固定短句（非思维链）                                          |
+| `no_match` 诚实终局 | **无**追问芯片；**无**「缩短再试」等换查询补救 CTA                  |
+| 等待态 / 黏底       | pending 脉冲；近底跟随，上翻暂停；发送强制黏底                      |
+| 关 Panel 丢会话     | P0 不持久化                                                         |
+
+#### 明确不做（除非改 §7.0 / 本表）
+
+| 项                                                  | 原因                                                |
+| --------------------------------------------------- | --------------------------------------------------- |
+| Fork LibreChat / Open WebUI / Lobe 等完整 Chat 产品 | 产品边界会被对方定义                                |
+| 主壳换 React + assistant-ui / AI Elements           | 扩展真相源是 Vue Side Panel；换栈吃算法时间         |
+| 流式长文 Markdown 工作台、代码块主路径              | 找回以短 NL + Memory 卡为主                         |
+| 持久多会话历史侧栏 / 分支 / 编辑消息 / regenerate   | 核心对象是个人痕迹，不是 Conversation 树；P0 关即丢 |
+| 自动话题切换 / 猜成败清线程                         | 只认 New find + 关 Panel                            |
+| `no_match` 后再推销缩短/换查询                      | 与诚实终局矛盾（2026-08-21 已废）                   |
+| 借 Panel 做书签树/整理中心                          | §0.3                                                |
+
+#### 允许的薄维护（非主战场）
+
+仅当 **阻塞信任或算法手测** 时修：composer / 滚底 / pending / 空态可读性、卡片在线程内过挤等。**禁止**借「更像 ChatGPT」开无验收的大 redesign。
+
+#### 默认下一主线（壳外）
+
+```text
+检索质量 / 线索理解 / Hybrid·embed / recall-eval must
+  ↑ 护城河
+Side Panel Chat 壳（本表基线）→ 冻大改，只薄维护
+```
+
 ### R∞ · 框架远景（不排期）
 
 见产品文档附录 A.7。仅当 R0–R2 命题不可动摇后再议最小可售单元。
@@ -151,12 +210,12 @@
 ## 4. 建议执行顺序（近 2～4 周）
 
 ```text
-R-shell 文档 Normative（已）
-  → R-shell 实现（空壳 → 迁 UI → 拆 Popup）
-    →（并行守）R0–R3 已交付命题/冷启动/适配器/检索硬化
+R-shell / R-shell-session / R-shell-chat 基线（已）
+  → 默认：检索·理解·embed·eval（护城河）
+  → 并行：仅阻塞性的 Chat 壳薄维护（见 R-shell-chat「允许的薄维护」）
 ```
 
-默认**先文档与验收，再大功能**；当前 WIP 合入时须不违反空结果契约与反助理 MUST NOT。
+默认**先文档与验收，再大功能**；当前 WIP 合入时须不违反空结果契约与反助理 MUST NOT。**禁止**在未改本表 / §7.0 的情况下把「Chat UI 大波次」挤占算法排期。
 
 ---
 
@@ -166,6 +225,7 @@ R-shell 文档 Normative（已）
 2. Recall / Capture 用户可感变更 → **先有 must 或 §5 步骤**。
 3. 新增「导入某某」→ 先过 R2 准入，再写连接器。
 4. NLG / 追问 → 只服务找东西；空结果不开放偏好建档。
+5. Side Panel Chat → 先查 **R-shell-chat** 清单；已有/明确不做之外的能力须先改 §7.0 与本表。
 
 ---
 
@@ -173,6 +233,8 @@ R-shell 文档 Normative（已）
 
 | 日期       | 变更                                                                     |
 | ---------- | ------------------------------------------------------------------------ |
+| 2026-08-21 | 增 R-shell-chat：对话壳能力清单（已有/不做/薄维护）；默认下一主线=算法   |
+| 2026-08-21 | 增 R-shell-session：New find + session status（§7.0）                    |
 | 2026-08-21 | R-shell 落地：Recall 主壳 Side Panel；拆除 popup；`OPEN_RECALL_SHELL`    |
 | 2026-08-21 | 增 R-shell：Recall 主壳 → Side Panel；四点拍板；实现待启动               |
 | 2026-08-15 | 对齐产品文档定位纠偏：邻域非神谕；Top1=建议；AI 不作宣传招牌；差异表补行 |

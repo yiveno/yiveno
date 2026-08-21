@@ -13,15 +13,15 @@ const props = defineProps<{
   expandLabel: string
   collapseLabel: string
   noteFieldLabel: string
-  showShortenRetry: boolean
-  shortenRetryLabel: string
+  /** 等待本轮 Recall 结果时展示脉冲占位 */
+  pending?: boolean
+  pendingLabel: string
 }>()
 
 const emit = defineEmits<{
   open: [payload: { id: string; url: string }]
   toggleExpand: [cardId: string]
   dismiss: []
-  shortenRetry: []
   useSuggestion: [value: string]
 }>()
 
@@ -37,10 +37,6 @@ const latestDismissibleAssistantId = computed(() => {
 
 function onDismissClick(): void {
   emit('dismiss')
-}
-
-function onShortenRetryClick(): void {
-  emit('shortenRetry')
 }
 
 function onSuggestionClick(value: string): void {
@@ -71,6 +67,7 @@ function handleToggleExpand(cardId: string): void {
       <template v-else>
         <div class="assistant-turn">
           <p class="assistant-turn-name">Yiveno</p>
+          <p v-if="turn.contextStatus" class="assistant-turn-status">{{ turn.contextStatus }}</p>
           <p
             class="assistant-turn-copy"
             :class="{ 'assistant-turn-copy--error': turn.tone === 'error' }"
@@ -143,16 +140,6 @@ function handleToggleExpand(cardId: string): void {
             </md-text-button>
           </div>
 
-          <div v-if="turn.tone === 'miss' && props.showShortenRetry" class="assistant-turn-actions">
-            <button
-              type="button"
-              class="assistant-turn-pill assistant-turn-pill--secondary"
-              @click="onShortenRetryClick"
-            >
-              {{ props.shortenRetryLabel }}
-            </button>
-          </div>
-
           <div
             v-if="turn.suggestions && turn.suggestions.length > 0"
             class="assistant-turn-suggestions"
@@ -170,15 +157,32 @@ function handleToggleExpand(cardId: string): void {
         </div>
       </template>
     </div>
+
+    <div
+      v-if="pending"
+      class="conversation-turn conversation-turn--assistant"
+      role="status"
+      :aria-label="pendingLabel"
+    >
+      <div class="assistant-turn assistant-turn--pending">
+        <p class="assistant-turn-name">Yiveno</p>
+        <div class="pending-indicator">
+          <span class="pending-dot" />
+          <span class="pending-dot" />
+          <span class="pending-dot" />
+        </div>
+        <p class="pending-label">{{ pendingLabel }}</p>
+      </div>
+    </div>
   </section>
 </template>
 
 <style scoped>
 .conversation-list {
   display: grid;
-  gap: 18px;
+  gap: 22px;
   min-width: 0;
-  padding: 6px 0 2px;
+  padding: 4px 0 16px;
 }
 
 .conversation-turn {
@@ -195,11 +199,11 @@ function handleToggleExpand(cardId: string): void {
 }
 
 .conversation-bubble {
-  max-width: 80%;
-  padding: 10px 14px;
-  border-radius: 18px;
-  font-size: 14px;
-  line-height: 1.45;
+  max-width: 88%;
+  padding: 11px 15px;
+  border-radius: 20px;
+  font-size: 15px;
+  line-height: 1.5;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
@@ -211,9 +215,13 @@ function handleToggleExpand(cardId: string): void {
 
 .assistant-turn {
   display: grid;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
   min-width: 0;
+}
+
+.assistant-turn--pending {
+  gap: 10px;
 }
 
 .assistant-turn-name {
@@ -224,11 +232,20 @@ function handleToggleExpand(cardId: string): void {
   color: var(--on-surface-muted);
 }
 
-.assistant-turn-copy {
-  max-width: 30ch;
+.assistant-turn-status {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.5;
+  max-width: 40ch;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--on-surface-muted);
+  text-wrap: pretty;
+}
+
+.assistant-turn-copy {
+  max-width: 42ch;
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
   white-space: pre-wrap;
   color: var(--on-surface);
   text-wrap: pretty;
@@ -238,6 +255,7 @@ function handleToggleExpand(cardId: string): void {
   display: grid;
   gap: 6px;
   min-width: 0;
+  padding-top: 2px;
 }
 
 .assistant-turn-related-guess-label {
@@ -250,8 +268,9 @@ function handleToggleExpand(cardId: string): void {
 
 .assistant-turn-candidates-block {
   display: grid;
-  gap: 6px;
+  gap: 8px;
   min-width: 0;
+  padding-top: 2px;
 }
 
 .assistant-turn-candidates-label {
@@ -266,23 +285,23 @@ function handleToggleExpand(cardId: string): void {
   color: var(--danger);
 }
 
-.assistant-turn-primary,
-.assistant-turn-actions {
+.assistant-turn-primary {
   display: grid;
   gap: 8px;
+  padding-top: 2px;
 }
 
 .recall-feedback-actions {
   display: flex;
   justify-content: flex-end;
-  padding-top: 2px;
+  padding-top: 4px;
 }
 
 .assistant-turn-suggestions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  padding-top: 2px;
+  padding-top: 4px;
 }
 
 .assistant-turn-pill {
@@ -319,5 +338,48 @@ function handleToggleExpand(cardId: string): void {
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.pending-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 20px;
+}
+
+.pending-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--on-surface-muted);
+  opacity: 0.35;
+  animation: pending-pulse 1.1s ease-in-out infinite;
+}
+
+.pending-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.pending-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.pending-label {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--on-surface-muted);
+}
+
+@keyframes pending-pulse {
+  0%,
+  80%,
+  100% {
+    opacity: 0.28;
+  }
+
+  40% {
+    opacity: 0.9;
+  }
 }
 </style>

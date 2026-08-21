@@ -128,6 +128,34 @@ export const PARSE_GOLD_CASES: ParseGoldCase[] = [
     note: '时间+类型；read 为 filler'
   },
   {
+    id: 'p0-recently-collected-bookmark',
+    clue: 'The recently collected bookmark',
+    gate: 'must',
+    expect: {
+      timeLabel: 'recent',
+      objectTypes: ['bookmark'],
+      behaviorHints: ['recently_saved'],
+      contentTermsExact: true,
+      contentTermsMustInclude: [],
+      confidence: 'medium'
+    },
+    note: '最近书签：无内容词；不得把 collected 当检索词'
+  },
+  {
+    id: 'p0-just-saved-behavior-only',
+    clue: 'just saved',
+    gate: 'must',
+    expect: {
+      timeLabel: null,
+      objectTypes: null,
+      behaviorHints: ['recently_saved'],
+      contentTermsExact: true,
+      contentTermsMustInclude: [],
+      confidence: 'low'
+    },
+    note: '仅刚存：无类型也须能走约束邻域'
+  },
+  {
     id: 'p0-day-before-yesterday-rag',
     clue: 'day before yesterday the article about RAG',
     gate: 'must',

@@ -43,7 +43,8 @@ export const RECALL_OBJECT_TYPE_CANONICAL_SURFACES: Record<RecallObjectType, str
   command: 'command',
   page: 'page',
   password: 'password',
-  quote: 'quote'
+  quote: 'quote',
+  bookmark: 'bookmark'
 }
 
 /** 时间词：真实口语优先（长 phrase 由 parser 按长度优先匹配）。 */
@@ -137,7 +138,11 @@ export const RECALL_OBJECT_TYPE_LEXICON: RecallLexiconEntry<RecallObjectType>[] 
   { surface: 'quotation', value: 'quote' },
   { surface: 'excerpt', value: 'quote' },
   { surface: 'quote', value: 'quote' },
-  { surface: 'passage', value: 'quote' }
+  { surface: 'passage', value: 'quote' },
+
+  // bookmark（语料类型；匹配 MemoryItem.type，勿与 page/article 主题混淆）
+  { surface: 'bookmarks', value: 'bookmark' },
+  { surface: 'bookmark', value: 'bookmark' }
 ]
 
 /** 行为词：用户描述「怎么用/看到哪」时的自然说法。 */
@@ -169,11 +174,15 @@ export const RECALL_BEHAVIOR_LEXICON: RecallLexiconEntry<RecallBehaviorHint>[] =
   { surface: 'just opened', value: 'often_opened' },
 
   // recently_saved
+  { surface: 'recently collected', value: 'recently_saved' },
   { surface: 'just bookmarked', value: 'recently_saved' },
+  { surface: 'just collected', value: 'recently_saved' },
   { surface: 'saved it earlier', value: 'recently_saved' },
   { surface: 'saved earlier', value: 'recently_saved' },
   { surface: 'just saved', value: 'recently_saved' },
-  { surface: 'just stored', value: 'recently_saved' }
+  { surface: 'just stored', value: 'recently_saved' },
+  { surface: 'newly saved', value: 'recently_saved' },
+  { surface: 'newly collected', value: 'recently_saved' }
 ]
 
 /** 备注指向词：命中则 noteHint=true。 */
@@ -222,9 +231,10 @@ export const RECALL_CLUE_FILLER_SURFACES: string[] = [
   'the one',
   'that',
 
-  // 动作虚词
+  // 动作虚词（bookmark 已迁入 objectTypes，勿再当 filler 剥掉类型信号）
   'bookmarked',
-  'bookmark',
+  'collected',
+  'collect',
   'saved',
   'save',
   'store',

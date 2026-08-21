@@ -31,12 +31,38 @@ const LLM_BEHAVIOR_ALIASES: Array<{ surface: string; value: RecallBehaviorHint }
   { surface: "didn't finish", value: 'half_read' }
 ]
 
+function isAsciiWordChar(char: string | undefined): boolean {
+  return Boolean(char && /[a-z0-9]/.test(char))
+}
+
+/** ASCII surface 须词边界，避免 bookmark⊂bookmarked。 */
 function clueHasSurface(normalizedClue: string, surface: string): boolean {
   const needle = normalizeRecallText(surface)
   if (!needle) {
     return false
   }
-  return normalizedClue.includes(needle)
+  const isAsciiNeedle = /^[a-z0-9 ]+$/.test(needle)
+  if (!isAsciiNeedle) {
+    return normalizedClue.includes(needle)
+  }
+
+  let fromIndex = 0
+  while (fromIndex < normalizedClue.length) {
+    const index = normalizedClue.indexOf(needle, fromIndex)
+    if (index < 0) {
+      return false
+    }
+    const before = index > 0 ? normalizedClue[index - 1] : undefined
+    const after =
+      index + needle.length < normalizedClue.length
+        ? normalizedClue[index + needle.length]
+        : undefined
+    if (!isAsciiWordChar(before) && !isAsciiWordChar(after)) {
+      return true
+    }
+    fromIndex = index + 1
+  }
+  return false
 }
 
 /** 保留有词面支撑的行为；线索命中别名时即使模型漏提也补上。 */
@@ -60,6 +86,13 @@ export function groundBehaviorHints(
   }
 
   for (const entry of LLM_BEHAVIOR_ALIASES) {
+    if (clueHasSurface(normalized, entry.surface)) {
+      kept.add(entry.value)
+    }
+  }
+
+  // 规则词典词面命中也补上（模型漏提 recently_saved / half_read 时）
+  for (const entry of RECALL_BEHAVIOR_LEXICON) {
     if (clueHasSurface(normalized, entry.surface)) {
       kept.add(entry.value)
     }
@@ -109,6 +142,13 @@ export function groundObjectTypes(
   }
 
   for (const entry of LLM_OBJECT_TYPE_ALIASES) {
+    if (clueHasSurface(normalized, entry.surface)) {
+      kept.add(entry.value)
+    }
+  }
+
+  // 规则词典词面命中也补上（模型漏提 bookmark / article 时）
+  for (const entry of RECALL_OBJECT_TYPE_LEXICON) {
     if (clueHasSurface(normalized, entry.surface)) {
       kept.add(entry.value)
     }
