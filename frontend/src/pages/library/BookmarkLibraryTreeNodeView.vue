@@ -101,7 +101,7 @@ const bookmarkMemoKey = computed(() => {
 })
 
 function toggleFolder() {
-  if (props.node.kind !== 'folder') {
+  if (props.node.kind !== 'folder' || !treeContext) {
     return
   }
   treeContext.toggleFolder(props.node.chromeId, props.depth)
