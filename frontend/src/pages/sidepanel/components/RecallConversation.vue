@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import AppButton from '@/infrastructure/ui/AppButton.vue'
 
 import type { ConversationTurn } from '@/pages/sidepanel/recall-conversation-types'
 import RecallResultCard from '@/pages/sidepanel/RecallResultCard.vue'
@@ -135,9 +136,9 @@ function handleToggleExpand(cardId: string): void {
             v-if="turn.allowDismiss && latestDismissibleAssistantId === turn.id"
             class="recall-feedback-actions"
           >
-            <md-text-button type="button" @click="onDismissClick">
+            <AppButton type="button" @click="onDismissClick" variant="text">
               {{ t('popup_dismiss_candidates') }}
-            </md-text-button>
+            </AppButton>
           </div>
 
           <div

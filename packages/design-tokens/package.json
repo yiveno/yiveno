@@ -23,10 +23,10 @@
       "require": "./css/brand.css",
       "default": "./css/brand.css"
     },
-    "./css/md-sys-brand-alias.css": {
-      "import": "./css/md-sys-brand-alias.css",
-      "require": "./css/md-sys-brand-alias.css",
-      "default": "./css/md-sys-brand-alias.css"
+    "./css/motion.css": {
+      "import": "./css/motion.css",
+      "require": "./css/motion.css",
+      "default": "./css/motion.css"
     },
     "./css/variables.css": {
       "import": "./css/variables.css",

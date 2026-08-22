@@ -1,10 +1,9 @@
 /**
- * 扩展配套：Material Typography / Motion + 轻量全局。
- * 间距/形状权威在 brand.css；本文件不再重复定义 md-sys-spacing/shape。
- * 加载：brand.css → md-sys-brand-alias.css → 本文件 → semantic-colors.css
+ * 扩展配套：motion + 轻量全局。
+ * 间距/形状权威在 brand.css。
+ * 加载：brand.css → 本文件 → semantic-colors.css
  */
-@import url('./material-typography.css');
-@import url('./material-motion.css');
+@import url('./motion.css');
 
 html {
   -webkit-font-smoothing: antialiased;
@@ -16,6 +15,6 @@ body {
 }
 
 ::selection {
-  background-color: color-mix(in srgb, var(--accent) 30%, transparent);
   color: var(--on-accent);
+  background-color: color-mix(in srgb, var(--accent) 30%, transparent);
 }

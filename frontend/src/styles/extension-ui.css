@@ -1,11 +1,11 @@
 /**
- * 扩展 UI 样式入口：Brand + MD 兼容别名 + typography/motion + 语义色。
- * 业务样式写 Roles / --space-* / --radius-*；Material Web 经 alias。
+ * 扩展 UI 样式入口：Brand Roles + motion + 语义色。
+ * 业务样式与自研 App* 控件写 Roles / --space-* / --radius-* / --motion-*。
  */
 @import url('@yiveno/design-tokens/css/brand.css');
-@import url('@yiveno/design-tokens/css/md-sys-brand-alias.css');
 @import url('@yiveno/design-tokens/css/variables.css');
 @import url('@yiveno/design-tokens/css/semantic-colors.css');
+@import url('@yiveno/design-tokens/css/motion.css');
 
 * {
   box-sizing: border-box;
@@ -13,15 +13,13 @@
 
 :root {
   color-scheme: light;
-  font-family: var(
-    --md-ref-typeface-plain,
+  font-family:
     ui-sans-serif,
     system-ui,
     -apple-system,
     BlinkMacSystemFont,
     'Segoe UI',
-    sans-serif
-  );
+    sans-serif;
   color: var(--on-surface);
   background: var(--surface);
 }

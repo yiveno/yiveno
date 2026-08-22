@@ -69,7 +69,7 @@ grep -r "as any" frontend/src/
 
 /* ✅ 正确：使用 CSS 变量 */
 .button {
-  background-color: var(--md-sys-color-primary);
+  background-color: var(--accent);
   color: var(--color-text-primary);
 }
 ```

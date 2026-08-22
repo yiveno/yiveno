@@ -98,7 +98,7 @@ components:
 > **Normative companion (中文完整标准):** [`docs/design/Yiveno-设计标准-v1.md`](docs/design/Yiveno-设计标准-v1.md) **v1.5**  
 > **Product truth:** [`docs/product/Yiveno-产品文档-v4.0.md`](docs/product/Yiveno-产品文档-v4.0.md) §0  
 > **Brand assets:** [`docs/design/brand-assets/README.md`](docs/design/brand-assets/README.md)  
-> **Authority:** [`packages/design-tokens/css/brand.css`](packages/design-tokens/css/brand.css) — colors, roles, `--space-*`, `--radius-*`. Material Web via [`md-sys-brand-alias.css`](packages/design-tokens/css/md-sys-brand-alias.css).
+> **Authority:** [`packages/design-tokens/css/brand.css`](packages/design-tokens/css/brand.css) — colors, roles, `--space-*`, `--radius-*`. Extension UI: self-built `App*` components + [`extension-ui.css`](frontend/src/styles/extension-ui.css).
 
 ## Overview
 
@@ -153,10 +153,10 @@ Canonical CSS names in `site-critical.css`. Prefer roles over raw Brand Core in 
 
 - Brand recognition = ink + paper + sage. Do not introduce a second primary hue.
 - Forbidden as brand accents: bright purple, electric blue, neon, rainbow gradients, high-saturation coral/pink as “AI energy.”
-- **Do not** regenerate Material Theme palettes as the source of truth.
+- **Do not** regenerate third-party theme-builder palettes as the source of truth.
 - Authority path: `packages/design-tokens/css/brand.css` (color + space + radius).
-- Extension product CSS: Roles / `--space-*` / `--radius-*`. Material Web: `md-sys-brand-alias.css`.
-- MD multi-presets: removed.
+- Extension product CSS: Roles / `--space-*` / `--radius-*`. Self-built `App*` components.
+- Old multi-presets: removed.
 
 ## Typography
 
@@ -197,7 +197,7 @@ Canonical CSS names in `site-critical.css`. Prefer roles over raw Brand Core in 
 - **Secondary:** outline accent / quiet fill — never compete with primary waitlist CTA.
 - **Recall proof:** clue field + ranked list; Closest visually dominant; personal note/excerpt when showing product truth.
 - **Forms:** visible invalid/error/success; calm copy; no spinner circus.
-- Icons: prefer familiar Material Symbols in product; marketing mockups must not use magnifying-glass as the main “search” metaphor.
+- Icons: prefer familiar Lucide icons in product (inline via `AppIcon`); marketing mockups must not use magnifying-glass as the main “search” metaphor.
 
 ## Do's and Don'ts
 
@@ -205,7 +205,7 @@ Canonical CSS names in `site-critical.css`. Prefer roles over raw Brand Core in 
 
 - Lead with find / remember / closest matches / pick.
 - Keep waitlist-phase honesty (no fake Sign in / live Pricing nav when coming soon).
-- Derive product roles on the website; extension already aliases `--md-sys-color-*` to Brand Roles.
+- Derive product roles on the website; extension consumes Brand Roles directly.
 - Keep motion sparse: reveal, result stagger, cursor blink; honor `prefers-reduced-motion`.
 
 **Don't**
@@ -213,6 +213,6 @@ Canonical CSS names in `site-critical.css`. Prefer roles over raw Brand Core in 
 - Say or imply “Search” as the product noun in user-facing UI.
 - Use brain/robot/neural/glow-orb/magic-wand AI clichés.
 - Ship empty Closest/results mocks.
-- Treat Material Theme / old forest / blue–purple experiments as brand.
+- Treat old forest / blue–purple experiments as brand.
 - Redesign palette casually during polish — palette changes are brand changes.
 - Add multi-theme skin packs that dilute the single ink–paper–sage axis.

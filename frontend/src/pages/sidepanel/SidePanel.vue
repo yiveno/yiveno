@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import AppButton from '@/infrastructure/ui/AppButton.vue'
+import AppLinearProgress from '@/infrastructure/ui/AppLinearProgress.vue'
 
 import type { ChromeBookmarkImportState } from '@/core/memory/chrome-bookmark-import-state'
 import { getChromeBookmarkImportPercent } from '@/core/memory/chrome-bookmark-import-state'
@@ -9,6 +11,7 @@ import {
   getPopupNoMatchCopy,
   type PopupLibraryState
 } from '@/core/recall/popup-empty-copy'
+import { getTimeOfDayGreeting } from '@/core/recall/time-of-day-greeting'
 import type { RecallMatch } from '@/core/recall/recall-result'
 import { getMemoryItemDisplay } from '@/core/recall/recall-result'
 import { buildRecallCardHighlightParts } from '@/core/recall/highlight-recall-text'
@@ -17,6 +20,7 @@ import { tImportStateError, tRecallError } from '@/infrastructure/i18n/backgroun
 import { openGettingStartedPage } from '@/infrastructure/browser/getting-started-page'
 import { t } from '@/infrastructure/i18n/t'
 import {
+  fetchAuthState,
   fetchChromeBookmarkImportStatus,
   listMemoryItems,
   recallWithClue,
@@ -57,6 +61,8 @@ const excerptCaptureCount = ref(0)
 const installOnboardingDone = ref(true)
 const skipOnboardingBusy = ref(false)
 const lastSentClue = ref('')
+/** 登录展示名；未登录或无名则空，问候退化为仅时段。 */
+const accountDisplayName = ref('')
 
 /** Side Panel 会话：槽位 accumulated + 本会话否定 id（关闭 Panel 即丢，P0）。 */
 const dialogState = ref<RecallDialogState>({
@@ -238,6 +244,13 @@ const idleEmptyCopy = computed(() =>
   })
 )
 
+/** 空线程时占位问候：按时段，有名则带名。 */
+const idleGreeting = computed(() =>
+  getTimeOfDayGreeting(t, {
+    ...(accountDisplayName.value ? { displayName: accountDisplayName.value } : {})
+  })
+)
+
 /** 当前展开的重复组代表 id；同时只展开一组。 */
 const expandedDuplicateGroupId = ref<string | null>(null)
 
@@ -380,6 +393,27 @@ async function loadOnboardingState(): Promise<void> {
     installOnboardingDone.value = onboardingDone
   } catch {
     // 忽略：默认不展示 Capture-first，避免阻塞 Popup
+  }
+}
+
+/** 读取展示名供空态问候；无展示名时用邮箱本地段。失败不阻塞主路径。 */
+async function loadGreetingIdentity(): Promise<void> {
+  try {
+    const response = await fetchAuthState()
+    if (!response.ok) {
+      accountDisplayName.value = ''
+      return
+    }
+    const fromProfile = response.displayName?.trim() ?? ''
+    if (fromProfile) {
+      accountDisplayName.value = fromProfile
+      return
+    }
+    const email = response.email?.trim() ?? ''
+    const localPart = email.includes('@') ? email.slice(0, email.indexOf('@')).trim() : ''
+    accountDisplayName.value = localPart
+  } catch {
+    accountDisplayName.value = ''
   }
 }
 
@@ -631,6 +665,7 @@ onMounted(() => {
     clueInputRef.value?.focus()
   })
   void loadOnboardingState()
+  void loadGreetingIdentity()
   void (async () => {
     try {
       const prefill = await consumeRecallPrefill()
@@ -670,7 +705,7 @@ onUnmounted(() => {
         aria-live="polite"
       >
         <p class="recall-import-label">{{ importProgressLabel }}</p>
-        <md-linear-progress
+        <AppLinearProgress
           v-if="importState?.status === 'running'"
           :value="importProgressPercent / 100"
           :aria-label="t('popup_import_progress_aria')"
@@ -685,23 +720,29 @@ onUnmounted(() => {
       @scroll="onRecallBodyScroll"
     >
       <section v-if="conversationTurns.length === 0" class="recall-empty" aria-live="polite">
-        <p class="recall-empty-title">
-          {{ idleEmptyCopy?.title ?? t('popup_welcome_title') }}
-        </p>
-        <p class="recall-empty-copy">
-          {{ idleEmptyCopy?.body ?? t('popup_welcome_body') }}
-        </p>
-        <div v-if="captureFirstMode" class="recall-empty-actions">
-          <md-filled-tonal-button type="button" @click="handleOpenGettingStarted">
-            {{ t('popup_open_getting_started') }}
-          </md-filled-tonal-button>
-          <md-text-button
-            type="button"
-            :disabled="skipOnboardingBusy"
-            @click="handleSkipOnboarding"
-          >
-            {{ t('popup_skip_onboarding') }}
-          </md-text-button>
+        <div class="recall-greeting-slot">
+          <p class="recall-greeting">{{ idleGreeting }}</p>
+        </div>
+        <div class="recall-empty-main">
+          <p class="recall-empty-title">
+            {{ idleEmptyCopy?.title ?? t('popup_welcome_title') }}
+          </p>
+          <p class="recall-empty-copy">
+            {{ idleEmptyCopy?.body ?? t('popup_welcome_body') }}
+          </p>
+          <div v-if="captureFirstMode" class="recall-empty-actions">
+            <AppButton type="button" @click="handleOpenGettingStarted" variant="tonal">
+              {{ t('popup_open_getting_started') }}
+            </AppButton>
+            <AppButton
+              type="button"
+              :disabled="skipOnboardingBusy"
+              @click="handleSkipOnboarding"
+              variant="text"
+            >
+              {{ t('popup_skip_onboarding') }}
+            </AppButton>
+          </div>
         </div>
       </section>
 
@@ -795,7 +836,7 @@ onUnmounted(() => {
   gap: 2px;
 }
 
-.recall-header-top:deep(md-icon-button) {
+.recall-header-top:deep(.app-icon-button) {
   color: var(--on-surface-muted);
 }
 
@@ -837,24 +878,54 @@ onUnmounted(() => {
 }
 
 .recall-body--empty {
-  justify-content: flex-end;
   padding-bottom: 8px;
 }
 
 .recall-empty {
-  display: grid;
-  justify-items: start;
-  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  gap: 16px;
   width: 100%;
-  max-width: 36ch;
-  padding: 8px 4px 20px;
+  min-height: 0;
+  padding: 4px 4px 16px;
   text-align: left;
   background: transparent;
 }
 
+/* 占满中间空白，问候垂直居中，成为空态主视觉 */
+.recall-greeting-slot {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-height: 120px;
+  padding: 8px 0;
+}
+
+.recall-greeting {
+  margin: 0;
+  max-width: 18ch;
+  font-size: clamp(28px, 7vw, 36px);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: var(--on-surface);
+  text-wrap: balance;
+  animation: recall-greeting-in var(--motion-duration-medium) var(--motion-easing-emphasized) both;
+}
+
+.recall-empty-main {
+  display: grid;
+  justify-items: start;
+  flex-shrink: 0;
+  gap: 8px;
+  width: 100%;
+  max-width: 36ch;
+}
+
 .recall-empty-title {
   margin: 0;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 600;
   line-height: 1.25;
   letter-spacing: -0.02em;
@@ -876,6 +947,22 @@ onUnmounted(() => {
   gap: 4px 8px;
   justify-content: flex-start;
   margin-top: 4px;
+}
+
+@keyframes recall-greeting-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recall-greeting {
+    animation: none;
+  }
 }
 
 .recall-results {

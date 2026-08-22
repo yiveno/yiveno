@@ -4,7 +4,7 @@
 
 - Yiveno：Vue 3 + TypeScript Chrome 扩展，Backend 为 Cloudflare Workers，Website 为营销站。
 - 唯一产品/架构真相：`docs/product/Yiveno-产品文档-v4.0.md`（先读 **§0.1 核心路线** + **§0.1.1 资产/边界/隐患**（含「邻域非神谕」）+ §0 其余；附录 A 非规范）
-- **视觉/品牌标准（Normative）：** `docs/design/Yiveno-设计标准-v1.md`（完整）；摘要 `DESIGN.md`。权威 `@yiveno/design-tokens/css/brand.css`（色 + Roles + space/radius）；Material Web 经 `md-sys-brand-alias.css`；MD 多预设已删除（Symbols 可留）。
+- **视觉/品牌标准（Normative）：** `docs/design/Yiveno-设计标准-v1.md`（完整）；摘要 `DESIGN.md`。权威 `@yiveno/design-tokens/css/brand.css`（色 + Roles + space/radius）；扩展自研 `App*` 控件；图标 Lucide 按需内联。
 - Cursor 规则：`.cursor/rules/project.mdc`，不得冲突。
 - 对外心智：「那个找东西的」/ 仓库；找回 = 高置信**邻域**，Top1=建议；AI 能力核心不作宣传招牌。
 
@@ -20,7 +20,7 @@
 ## 代码约定
 
 - UI/API/文档统一用 **Filter（筛选）**；用户主动作使用 **Recall（找回）**；UI 文案禁止出现 `Search` /「搜索」。
-- **图标优先于文案**：工具操作/导航尽量用通识 Material Symbols；省略可见文字时 `title` + `aria-label` 显示完整文案（经 `t()`）。主 CTA、说明、空状态、表单标签除外。
+- **图标优先于文案**：工具操作/导航尽量用通识 Lucide 图标（内联）；省略可见文字时 `title` + `aria-label` 显示完整文案（经 `t()`）。主 CTA、说明、空状态、表单标签除外。
 - 扩展用户文案：仅 `_locales/en` + `frontend/src/infrastructure/i18n` 的 `t()`；禁止写死 UI 文案与 `|| '兜底'`。`core` 注入 `t` 或返回 message key。官网与扩展分离，产品向文案均为美式英语。
 - TypeScript 禁止 `any` / `as any`；外部数据用 Zod 校验；**注释与 JSDoc 必须中文**（标识符、API 专有名词可保留英文）。**字符串联合 / `z.enum` 每个字面量须有中文释义**（见 `docs/engineering/业务日志与注释约定.md`）。
 - **业务可观测性（硬约定）**：新增或改动业务路径时，必须有**清晰中文注释（意图/边界）** + **关键步骤日志**（开始 / 分支决策 / 成功或失败原因；失败不可静默吞掉）。扩展侧优先用 `frontend/src/infrastructure/logging/flow-log.ts`（`flowStart` / `flowOk` / `flowFail`），scope 稳定可过滤（如 `Msg` / `Capture` / `Recall` / `RecallFlow` / `ClueLlm`）；core 可通过注入 `trace`，禁止 core 直连 Chrome。长文本只打 preview，避免刷屏。细则：`docs/engineering/业务日志与注释约定.md`。

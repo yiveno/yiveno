@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import AppButton from '@/infrastructure/ui/AppButton.vue'
+import AppIconButton from '@/infrastructure/ui/AppIconButton.vue'
 
 import type { MemoryItem, TextExcerptMemoryItem } from '@/core/memory/memory-item'
 import { getUILanguage, t } from '@/infrastructure/i18n/t'
@@ -7,10 +9,11 @@ import { tMemoryError } from '@/infrastructure/i18n/memory-error'
 import {
   deleteMemoryItem,
   getMemoryItem,
-  recordMemoryOpen
+  recordMemoryOpen,
+  updateMemoryNote
 } from '@/infrastructure/messaging/background-client'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
-import MaterialSymbolIcon from '@/infrastructure/ui/icons/MaterialSymbolIcon.vue'
+import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
 
 defineOptions({ name: 'DetailPage' })
 
@@ -29,10 +32,19 @@ const item = ref<MemoryItem | null>(null)
 const deleting = ref(false)
 const libraryHref = chrome.runtime.getURL('library.html')
 
+/** 附注编辑（仅 clues.note，不改正文）。 */
+const NOTE_MAX_LENGTH = 500
+const noteEditing = ref(false)
+const noteSaving = ref(false)
+const noteDraft = ref('')
+const noteError = ref('')
+
 const excerpt = computed((): TextExcerptMemoryItem | null => {
   const current = item.value
   return current?.type === 'text_excerpt' ? current : null
 })
+
+const noteText = computed(() => excerpt.value?.clues.note?.trim() || '')
 
 const createdAtLabel = computed(() => {
   const raw = excerpt.value?.createdAt
@@ -123,6 +135,48 @@ async function handleDelete() {
   }
 }
 
+function startNoteEdit(): void {
+  noteDraft.value = noteText.value
+  noteError.value = ''
+  noteEditing.value = true
+}
+
+function cancelNoteEdit(): void {
+  if (noteSaving.value) {
+    return
+  }
+  noteEditing.value = false
+  noteDraft.value = ''
+  noteError.value = ''
+}
+
+async function saveNote(): Promise<void> {
+  const current = excerpt.value
+  if (!current || noteSaving.value) {
+    return
+  }
+
+  noteSaving.value = true
+  noteError.value = ''
+  try {
+    const note = noteDraft.value.trim().slice(0, NOTE_MAX_LENGTH)
+    const response = await updateMemoryNote({ id: current.id, note })
+    if (!response.ok || !('item' in response)) {
+      noteError.value = response.ok
+        ? t('detail_note_save_failed')
+        : tMemoryError(response.errorCode)
+      return
+    }
+    item.value = response.item
+    noteEditing.value = false
+    noteDraft.value = ''
+  } catch {
+    noteError.value = t('detail_note_save_failed')
+  } finally {
+    noteSaving.value = false
+  }
+}
+
 onMounted(() => {
   void loadDetail()
 })
@@ -153,23 +207,23 @@ onMounted(() => {
     <section v-else-if="viewState === 'deleted'" class="detail-empty" role="status">
       <p class="detail-empty-title">{{ t('detail_deleted_title') }}</p>
       <p class="detail-empty-copy">{{ t('detail_deleted_body') }}</p>
-      <md-outlined-button :href="libraryHref" :title="t('detail_open_library')">
-        <MaterialSymbolIcon slot="icon" name="library_books" size="18px" />
+      <AppButton :href="libraryHref" :title="t('detail_open_library')" variant="outlined">
+        <AppIcon name="library_books" size="18px" />
         {{ t('detail_open_library') }}
-      </md-outlined-button>
+      </AppButton>
     </section>
 
     <section v-else-if="viewState === 'error'" class="detail-empty" role="alert">
       <p class="detail-empty-title">{{ t('detail_error_title') }}</p>
       <p class="detail-empty-copy">{{ errorMessage }}</p>
-      <md-icon-button
+      <AppIconButton
         type="button"
         :title="t('detail_retry')"
         :aria-label="t('detail_retry')"
         @click="loadDetail"
       >
-        <MaterialSymbolIcon name="refresh" size="22px" />
-      </md-icon-button>
+        <AppIcon name="refresh" size="22px" />
+      </AppIconButton>
     </section>
 
     <section v-else-if="viewState === 'wrong_type' && item" class="detail-empty">
@@ -183,7 +237,7 @@ onMounted(() => {
         rel="noopener noreferrer"
         :title="t('detail_open_bookmark')"
       >
-        <MaterialSymbolIcon name="open_in_new" size="16px" />
+        <AppIcon name="open_in_new" size="16px" />
         {{ t('detail_open_bookmark') }}
       </a>
     </section>
@@ -206,37 +260,72 @@ onMounted(() => {
         {{ excerpt.payload.contextAfter }}…
       </p>
 
-      <section
-        v-if="excerpt.clues.note?.trim()"
-        class="detail-note"
-        :aria-label="t('detail_note_label')"
-      >
-        <h2 class="detail-note-label">{{ t('detail_note_label') }}</h2>
-        <p class="detail-note-body">{{ excerpt.clues.note }}</p>
+      <section class="detail-note" :aria-label="t('detail_note_label')">
+        <div class="detail-note-head">
+          <h2 class="detail-note-label">{{ t('detail_note_label') }}</h2>
+          <AppIconButton
+            v-if="!noteEditing"
+            type="button"
+            :title="noteText ? t('detail_note_edit_aria') : t('detail_note_add_aria')"
+            :aria-label="noteText ? t('detail_note_edit_aria') : t('detail_note_add_aria')"
+            @click="startNoteEdit"
+          >
+            <AppIcon name="edit_note" size="20px" />
+          </AppIconButton>
+        </div>
+
+        <template v-if="noteEditing">
+          <textarea
+            v-model="noteDraft"
+            class="detail-note-input"
+            rows="4"
+            :maxlength="NOTE_MAX_LENGTH"
+            :placeholder="t('selection_toolbar_note_placeholder')"
+            :disabled="noteSaving"
+          />
+          <p v-if="noteError" class="detail-inline-error" role="alert">{{ noteError }}</p>
+          <div class="detail-note-actions">
+            <AppButton
+              type="button"
+              variant="outlined"
+              :disabled="noteSaving"
+              @click="cancelNoteEdit"
+            >
+              {{ t('selection_toolbar_note_cancel') }}
+            </AppButton>
+            <AppButton type="button" variant="filled" :disabled="noteSaving" @click="saveNote">
+              {{ t('selection_toolbar_note_save') }}
+            </AppButton>
+          </div>
+        </template>
+        <p v-else-if="noteText" class="detail-note-body">{{ noteText }}</p>
+        <p v-else class="detail-note-empty">{{ t('detail_note_empty') }}</p>
       </section>
 
       <p v-if="errorMessage" class="detail-inline-error" role="alert">{{ errorMessage }}</p>
 
       <div class="detail-actions">
-        <md-filled-button
+        <AppButton
           :href="excerpt.payload.sourceUrl"
           target="_blank"
           rel="noopener noreferrer"
           :title="t('detail_open_source')"
+          variant="filled"
         >
-          <MaterialSymbolIcon slot="icon" name="open_in_new" size="18px" />
+          <AppIcon name="open_in_new" size="18px" />
           {{ t('detail_open_source') }}
-        </md-filled-button>
-        <md-icon-button
+        </AppButton>
+        <AppIconButton
           type="button"
           class="detail-delete"
+          tone="danger"
           :title="deleting ? t('detail_deleting') : t('detail_delete')"
           :aria-label="deleting ? t('detail_deleting') : t('detail_delete')"
           :disabled="deleting"
           @click="handleDelete"
         >
-          <MaterialSymbolIcon name="delete" size="20px" />
-        </md-icon-button>
+          <AppIcon name="delete" size="20px" />
+        </AppIconButton>
       </div>
     </article>
   </main>
@@ -347,10 +436,18 @@ onMounted(() => {
 
 .detail-note {
   display: grid;
-  gap: 6px;
+  gap: 8px;
   padding: 12px 14px;
   border-radius: var(--radius-lg);
   background: var(--surface-raised);
+}
+
+.detail-note-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
 }
 
 .detail-note-label {
@@ -368,6 +465,40 @@ onMounted(() => {
   color: var(--on-surface);
 }
 
+.detail-note-empty {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--on-surface-muted);
+}
+
+.detail-note-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 96px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--on-surface);
+  background: var(--surface-white);
+  resize: vertical;
+}
+
+.detail-note-input:focus {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.detail-note-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .detail-actions {
   display: flex;
   flex-wrap: wrap;
@@ -383,10 +514,6 @@ onMounted(() => {
 }
 
 .detail-delete {
-  --md-icon-button-icon-color: var(--danger);
-  --md-icon-button-hover-icon-color: var(--danger);
-  --md-icon-button-pressed-icon-color: var(--danger);
-  --md-icon-button-focus-icon-color: var(--danger);
 }
 
 .detail-source-link {

@@ -153,6 +153,54 @@
   "popup_welcome_body": {
     "message": "Use a clue you remember to find what you saved—a site, an excerpt, or a note."
   },
+  "popup_greeting_morning": {
+    "message": "Good morning"
+  },
+  "popup_greeting_afternoon": {
+    "message": "Good afternoon"
+  },
+  "popup_greeting_evening": {
+    "message": "Good evening"
+  },
+  "popup_greeting_night": {
+    "message": "Good night"
+  },
+  "popup_greeting_morning_named": {
+    "message": "Good morning, $NAME$",
+    "placeholders": {
+      "NAME": {
+        "content": "$1",
+        "example": "Alex"
+      }
+    }
+  },
+  "popup_greeting_afternoon_named": {
+    "message": "Good afternoon, $NAME$",
+    "placeholders": {
+      "NAME": {
+        "content": "$1",
+        "example": "Alex"
+      }
+    }
+  },
+  "popup_greeting_evening_named": {
+    "message": "Good evening, $NAME$",
+    "placeholders": {
+      "NAME": {
+        "content": "$1",
+        "example": "Alex"
+      }
+    }
+  },
+  "popup_greeting_night_named": {
+    "message": "Good night, $NAME$",
+    "placeholders": {
+      "NAME": {
+        "content": "$1",
+        "example": "Alex"
+      }
+    }
+  },
   "popup_clue_input_aria": {
     "message": "Clue"
   },
@@ -876,7 +924,7 @@
     "message": "Memory"
   },
   "library_subtitle": {
-    "message": "Bookmarks mirror Chrome folders read-only; excerpts can be browsed and deleted. Recall still uses clues."
+    "message": "Bookmarks mirror Chrome folders read-only; excerpts can be browsed, annotated, and deleted. Recall still uses clues."
   },
   "library_tabs_aria": {
     "message": "Content type"
@@ -933,7 +981,7 @@
     "message": "Edit note"
   },
   "library_note_dialog_title": {
-    "message": "Bookmark note"
+    "message": "Note"
   },
   "library_note_save_failed": {
     "message": "Could not save note"
@@ -1009,6 +1057,18 @@
   },
   "detail_note_label": {
     "message": "Note"
+  },
+  "detail_note_empty": {
+    "message": "No note yet. Add a short reminder for your future self."
+  },
+  "detail_note_add_aria": {
+    "message": "Add note"
+  },
+  "detail_note_edit_aria": {
+    "message": "Edit note"
+  },
+  "detail_note_save_failed": {
+    "message": "Could not save note"
   },
   "error_memory_not_found": {
     "message": "This memory was not found. It may have been deleted."

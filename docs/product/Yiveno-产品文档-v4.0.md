@@ -650,7 +650,7 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 7. `:hover|:focus|:active` 禁止 `translate` / `scale` / `rotate`；只用背景 / opacity / shadow / outline / state layer（浮层入场与 pop/shake 例外见 §3）。
 8. 实现范围以 **§1 状态表**为准；未标「已上线」= 不得当成已有行为，也不得在 UI 暗示已可用。
 9. 本机找回：**关键词 + Hybrid**（有 embedding 则融合；无则降级关键词）；**不分 Free/Pro**。**理解层里程碑 M1**：允许「任意线索 → 精确检索约束」；门禁后口语可走 LLM（可关；失败/配额用尽降级规则）。不得全库喂模型，不得模型返回无真实 MemoryItem id 的答案。
-10. UI 图标：**Material Symbols Outlined**；按需内联于 `frontend/src/infrastructure/ui/icons/`，经 `MaterialSymbolIcon` / `md-icon-button` 使用。禁止另引 Lucide/Font Awesome 等第二套图标体系；禁止依赖 Google Fonts CDN（扩展离线）。
+10. UI 图标：**Lucide 线框按需内联**于 `frontend/src/infrastructure/ui/icons/`（`icon-paths.ts`），经 `AppIcon` / `AppIconButton` 使用。唯一图标源；禁止另引 Font Awesome 等第二套体系；禁止依赖图标字体 / Google Fonts CDN（扩展离线）。控件用自研 `AppButton` / `AppSwitch` 等，消费 Brand Roles。
 11. **图标优先于文案**：工具操作、导航、重复出现的动作尽量用通识图标代替可见文字；hover（及键盘聚焦）用 `title`（及 `aria-label`）展示完整文案，文案仍经 `t()`。不适用于主按钮 CTA、说明性正文、空状态、表单标签等必须读字的场景。
 12. **验收先于合入**：Recall / Capture 用户可感变更须先有 `recall-eval` **`must` case** 或 §5 可复现手动步骤（详见 §1.1）；禁止无归属合入。
 
@@ -716,7 +716,7 @@ Side Panel 内：高置信给主答案 +「可能是这些」；低置信给候�
 | 线性列表选中下标             | `frontend/src/core/ui/list-selection.ts`                                        |
 | 摘录详情                     | `frontend/src/pages/detail/Detail.vue`                                          |
 | 记忆库                       | `frontend/src/pages/library/Library.vue`                                        |
-| UI 图标（Material Symbols）  | `frontend/src/infrastructure/ui/icons/`                                         |
+| UI 图标（Lucide 内联）       | `frontend/src/infrastructure/ui/icons/`                                         |
 | 扩展 i18n（`t` / locales）   | `frontend/src/infrastructure/i18n/` + `public/_locales/`                        |
 
 ---
@@ -837,7 +837,7 @@ Side Panel 内：高置信给主答案 +「可能是这些」；低置信给候�
 ## 3. UI 与术语（Normative）
 
 - 文案：筛选 / 找回；禁止 Search / 搜索。
-- **图标优先：** 工具栏/导航/行内动作等可通识表达的控件优先图标；须具备通识性（删除、设置、打开库等用常见 Material Symbol）。可见标签可省略时，**hover / focus 用 `title` 显示完整文案**，并同步 `aria-label`（同源 `t()`）。禁止晦涩自定义隐喻图标。
+- **图标优先：** 工具栏/导航/行内动作等可通识表达的控件优先图标；须具备通识性（删除、设置、打开库等用常见通识符号）。可见标签可省略时，**hover / focus 用 `title` 显示完整文案**，并同步 `aria-label`（同源 `t()`）。禁止晦涩自定义隐喻图标。
 - 交互态禁止几何变换（§0.2）；例外：浮层入场短动画；`pop`/`shake` 不可用于行 hover。
 - 空状态：无记忆时引导保存或等待导入，不空白报错。
 - 受限页（`chrome://` 等）保存失败 → 明确文案。
@@ -854,7 +854,7 @@ Side Panel 内：高置信给主答案 +「可能是这些」；低置信给候�
 - **stacks N：** 等于该折叠键（同规范化 URL）在本次关键词命中集中的组员数；**不是**同域名全部书签，也不是「全部含线索的命中总数」。
 - **Top / Also 互斥：** Also 不得出现与 Top 同一折叠键，或（双方均为书签时）同一规范化域名。同站其它 path 不进 Also，也**不**并入 Top 的 stacks N。过滤后回填名额。
 - **UI（找回主壳）：**
-  - N≥2 时结果卡**右上角**展示 Material Symbol `stacks` + 数量 N（图标优先；`title`/`aria-label` 经 `t()`）。
+  - N≥2 时结果卡**右上角**展示 Lucide `layers`（登记名 `stacks`）+ 数量 N（图标优先；`title`/`aria-label` 经 `t()`）。
   - **主卡点击 / Enter：** 打开代表（URL 或详情），与无折叠时相同。
   - **点 `stacks` 控件：** 展开/收起同组其余条目（纵向列表）；无扑克叠/扇开动效。
   - 键盘 MVP：↑↓ 只在代表行间移动；展开不改变键盘行模型。
@@ -1487,13 +1487,15 @@ Chrome API / 选区
 | 2026-07-25 | 备注：列表/Popup 展示于正文与出处之间；Filter 权重 26 + 主文加成（强线索）                                                                                                                                                 |
 | 2026-07-25 | 划词浮层增加「添加备注」；`CAPTURE_TEXT_EXCERPT.note` → `clues.note`；详情可展示                                                                                                                                           |
 | 2026-07-25 | 保存成功工具栏角标 +1；Chrome 原生新书签同步成功亦闪角标                                                                                                                                                                   |
-| 2026-07-25 | UI：图标优先于文案；通识 Material Symbol + hover `title`/`aria-label`（经 `t()`）                                                                                                                                          |
+| 2026-08-22 | UI 图标：统一 Lucide 线框按需内联；卸除旧填充 path                                                                                                                                                                         |
+| 2026-07-25 | UI：图标优先于文案；通识图标 + hover `title`/`aria-label`（经 `t()`）                                                                                                                                                      |
+| 2026-07-24 | UI 图标：按需内联；记忆库删除改为 hover 显图标按钮                                                                                                                                                                         |
 | 2026-07-25 | i18n Phase 5：清残留 UI 硬编码；CI `i18n:check`；catch 不再展示 `error.message`                                                                                                                                            |
 | 2026-07-25 | i18n Phase 4：Settings/Recall/Import/Commands/Identity 失败响应落地 `errorCode`                                                                                                                                            |
 | 2026-07-24 | i18n Phase 2：Library/Detail 文案；Memory 失败响应落地 `errorCode`                                                                                                                                                         |
 | 2026-07-24 | 扩展 i18n 契约：`chrome.i18n` + `en`/`zh_CN`；`t()`；失败响应演进为 `errorCode`                                                                                                                                            |
 | 2026-07-24 | 摘录展示：无强制标题；正文为主、页名/域名仅出处（记忆库/Popup/Omnibox/详情）                                                                                                                                               |
-| 2026-07-24 | UI 图标选型：Material Symbols Outlined 按需内联；记忆库删除改为 hover 显图标按钮                                                                                                                                           |
+| 2026-07-24 | UI 图标：按需内联；记忆库删除改为 hover 显图标按钮                                                                                                                                                                         |
 | 2026-07-24 | 摘录软删上线：`DELETE_MEMORY_ITEM`；记忆库列表 / 详情；书签不经此路径删除                                                                                                                                                  |
 | 2026-07-24 | 记忆库书签 Tab：完整映射 Chrome 目录只读树；`GET_BOOKMARK_LIBRARY_TREE`                                                                                                                                                    |
 | 2026-07-24 | 记忆库轻浏览上线：`library.html` 左侧类型 Tab（默认书签）；Popup/Settings 入口                                                                                                                                             |

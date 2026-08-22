@@ -74,9 +74,17 @@ function eslintByWorkspace(filenames) {
   return commands
 }
 
+/** design-tokens 为 token 源（含 hex 品牌色），不走 app Stylelint */
+function isDesignTokenCss(repoPath) {
+  return repoPath.startsWith('packages/design-tokens/')
+}
+
 /** 在对应 workspace 目录运行 Stylelint */
 function stylelintByWorkspace(filenames) {
-  const groups = groupByWorkspace(filenames)
+  const lintable = filenames.filter(file => !isDesignTokenCss(toRepoRelative(file)))
+  if (lintable.length === 0) return []
+
+  const groups = groupByWorkspace(lintable)
   const commands = []
 
   if (groups.frontend.length > 0) {

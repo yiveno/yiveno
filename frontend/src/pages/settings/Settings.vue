@@ -45,8 +45,9 @@ import { tMemoryError } from '@/infrastructure/i18n/memory-error'
 import { t } from '@/infrastructure/i18n/t'
 import { getWebsiteBaseUrl } from '@/infrastructure/browser/website-page'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
-import MaterialSymbolIcon from '@/infrastructure/ui/icons/MaterialSymbolIcon.vue'
-import { asMdSwitchElement } from '@/infrastructure/ui/register-material-web'
+import AppButton from '@/infrastructure/ui/AppButton.vue'
+import AppSwitch from '@/infrastructure/ui/AppSwitch.vue'
+import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
 
 defineOptions({ name: 'SettingsPage' })
 
@@ -245,27 +246,19 @@ async function loadUserSettings() {
   }
 }
 
-async function handleSelectionToolbarToggle(event: Event) {
-  const switchEl = asMdSwitchElement(event.target)
-  if (!switchEl) {
-    return
-  }
-
-  const nextValue = switchEl.selected
+async function handleSelectionToolbarToggle(nextValue: boolean) {
   savingSelectionToolbar.value = true
   settingsError.value = ''
 
   try {
     const response = await updateUserSettings({ selectionToolbarEnabled: nextValue })
     if (!response.ok) {
-      switchEl.selected = !nextValue
       settingsError.value = tSettingsError(response.errorCode)
       return
     }
 
     selectionToolbarEnabled.value = response.settings.selectionToolbarEnabled
   } catch {
-    switchEl.selected = !nextValue
     settingsError.value = t('settings_error_update')
   } finally {
     savingSelectionToolbar.value = false
@@ -273,27 +266,19 @@ async function handleSelectionToolbarToggle(event: Event) {
 }
 
 /** Chrome 书签灌库开关（bulk + 增量）。 */
-async function handleChromeBookmarkIngestToggle(event: Event) {
-  const switchEl = asMdSwitchElement(event.target)
-  if (!switchEl) {
-    return
-  }
-
-  const nextValue = switchEl.selected
+async function handleChromeBookmarkIngestToggle(nextValue: boolean) {
   savingChromeBookmarkIngest.value = true
   settingsError.value = ''
 
   try {
     const response = await updateUserSettings({ chromeBookmarkIngestEnabled: nextValue })
     if (!response.ok) {
-      switchEl.selected = !nextValue
       settingsError.value = tSettingsError(response.errorCode)
       return
     }
 
     chromeBookmarkIngestEnabled.value = response.settings.chromeBookmarkIngestEnabled
   } catch {
-    switchEl.selected = !nextValue
     settingsError.value = t('settings_error_update')
   } finally {
     savingChromeBookmarkIngest.value = false
@@ -301,27 +286,19 @@ async function handleChromeBookmarkIngestToggle(event: Event) {
 }
 
 /** AI 功能开关（线索理解 + Capture enrichment）。 */
-async function handleAiFeaturesToggle(event: Event) {
-  const switchEl = asMdSwitchElement(event.target)
-  if (!switchEl) {
-    return
-  }
-
-  const nextValue = switchEl.selected
+async function handleAiFeaturesToggle(nextValue: boolean) {
   savingAiFeatures.value = true
   settingsError.value = ''
 
   try {
     const response = await updateUserSettings({ aiFeaturesEnabled: nextValue })
     if (!response.ok) {
-      switchEl.selected = !nextValue
       settingsError.value = tSettingsError(response.errorCode)
       return
     }
 
     aiFeaturesEnabled.value = response.settings.aiFeaturesEnabled
   } catch {
-    switchEl.selected = !nextValue
     settingsError.value = t('settings_error_update')
   } finally {
     savingAiFeatures.value = false
@@ -557,23 +534,16 @@ function refreshSyncContextOnVisible() {
   void loadSyncContext().then(() => loadSubscriptionStatus(true))
 }
 
-async function handleSyncToggle(event: Event) {
-  const switchEl = asMdSwitchElement(event.target)
-  if (!switchEl) {
-    return
-  }
+async function handleSyncToggle(nextValue: boolean) {
   if (!signedIn.value) {
-    switchEl.selected = false
     syncError.value = t('settings_sync_sign_in_required')
     return
   }
-  if (switchEl.selected && !subscriptionIsPro.value) {
-    switchEl.selected = false
+  if (nextValue && !subscriptionIsPro.value) {
     syncError.value = t('settings_error_sync_pro_required')
     return
   }
 
-  const nextValue = switchEl.selected
   savingSync.value = true
   syncError.value = ''
   syncRestoreMessage.value = ''
@@ -581,12 +551,10 @@ async function handleSyncToggle(event: Event) {
   try {
     if (nextValue && !privacyNoticeAcked.value) {
       if (!window.confirm(t('settings_privacy_sync_confirm'))) {
-        switchEl.selected = false
         return
       }
       const ack = await ackPrivacyNotice()
       if (!ack.ok) {
-        switchEl.selected = false
         syncError.value = tAccountSyncError(ack.errorCode)
         return
       }
@@ -595,14 +563,12 @@ async function handleSyncToggle(event: Event) {
 
     const response = await setSyncEnabled(nextValue)
     if (!response.ok) {
-      switchEl.selected = !nextValue
       syncError.value = tAccountSyncError(response.errorCode)
       return
     }
     syncEnabled.value = response.syncPrefs.enabled
     await refreshSyncStatus()
   } catch {
-    switchEl.selected = !nextValue
     syncError.value = t('settings_error_sync_prefs')
   } finally {
     savingSync.value = false
@@ -908,11 +874,11 @@ onUnmounted(() => {
                     t('settings_toggle_selection_toolbar_hint')
                   }}</span>
                 </div>
-                <md-switch
+                <AppSwitch
                   :aria-label="t('settings_toggle_selection_toolbar')"
-                  :selected="selectionToolbarEnabled"
+                  :model-value="selectionToolbarEnabled"
                   :disabled="savingSelectionToolbar"
-                  @change="handleSelectionToolbarToggle"
+                  @update:model-value="handleSelectionToolbarToggle"
                 />
               </div>
               <div class="settings-toggle">
@@ -924,11 +890,11 @@ onUnmounted(() => {
                     t('settings_toggle_chrome_bookmark_ingest_hint')
                   }}</span>
                 </div>
-                <md-switch
+                <AppSwitch
                   :aria-label="t('settings_toggle_chrome_bookmark_ingest')"
-                  :selected="chromeBookmarkIngestEnabled"
+                  :model-value="chromeBookmarkIngestEnabled"
                   :disabled="savingChromeBookmarkIngest"
-                  @change="handleChromeBookmarkIngestToggle"
+                  @update:model-value="handleChromeBookmarkIngestToggle"
                 />
               </div>
             </template>
@@ -973,19 +939,20 @@ onUnmounted(() => {
             </ul>
 
             <div class="settings-actions">
-              <md-filled-button
+              <AppButton
                 type="button"
                 :disabled="openingShortcuts"
                 :title="
                   openingShortcuts ? t('settings_opening_shortcuts') : t('settings_open_shortcuts')
                 "
                 @click="handleOpenShortcutsPage"
+                variant="filled"
               >
-                <MaterialSymbolIcon slot="icon" name="open_in_new" size="18px" />
+                <AppIcon name="open_in_new" size="18px" />
                 {{
                   openingShortcuts ? t('settings_opening_shortcuts') : t('settings_open_shortcuts')
                 }}
-              </md-filled-button>
+              </AppButton>
             </div>
             <p v-if="openShortcutsError" class="settings-error" role="alert">
               {{ openShortcutsError }}
@@ -1007,11 +974,11 @@ onUnmounted(() => {
                 <span class="settings-toggle-title">{{ t('settings_sync_toggle') }}</span>
                 <span class="settings-toggle-hint">{{ t('settings_sync_toggle_hint') }}</span>
               </div>
-              <md-switch
+              <AppSwitch
                 :aria-label="t('settings_sync_toggle')"
-                :selected="syncEnabled"
+                :model-value="syncEnabled"
                 :disabled="savingSync || !signedIn || !subscriptionIsPro"
-                @change="handleSyncToggle"
+                @update:model-value="handleSyncToggle"
               />
             </div>
             <p v-if="signedIn && !subscriptionIsPro" class="settings-status" role="status">
@@ -1031,16 +998,17 @@ onUnmounted(() => {
             </p>
 
             <div v-if="signedIn && syncEnabled" class="settings-actions settings-actions--spaced">
-              <md-outlined-button
+              <AppButton
                 type="button"
                 :disabled="runningIncrementalSync || savingSync || signingOut || orphanWorking"
                 :title="t('settings_sync_now')"
                 @click="handleRunIncrementalSync"
+                variant="outlined"
               >
                 {{
                   runningIncrementalSync ? t('settings_sync_now_working') : t('settings_sync_now')
                 }}
-              </md-outlined-button>
+              </AppButton>
             </div>
             <p v-if="syncMessage" class="settings-status" role="status">{{ syncMessage }}</p>
 
@@ -1070,22 +1038,24 @@ onUnmounted(() => {
                   </template>
                 </p>
                 <div class="settings-actions settings-actions--spaced">
-                  <md-outlined-button
+                  <AppButton
                     v-if="!subscriptionIsPro && subscriptionUpgradeUrl"
                     type="button"
                     :title="t('settings_subscription_upgrade')"
                     @click="openExternalUrl(subscriptionUpgradeUrl)"
+                    variant="outlined"
                   >
                     {{ t('settings_subscription_upgrade') }}
-                  </md-outlined-button>
-                  <md-outlined-button
+                  </AppButton>
+                  <AppButton
                     v-if="subscriptionIsPro && subscriptionManageUrl"
                     type="button"
                     :title="t('settings_subscription_manage')"
                     @click="openExternalUrl(subscriptionManageUrl)"
+                    variant="outlined"
                   >
                     {{ t('settings_subscription_manage') }}
-                  </md-outlined-button>
+                  </AppButton>
                 </div>
               </template>
               <p v-if="subscriptionError" class="settings-error" role="alert">
@@ -1096,7 +1066,7 @@ onUnmounted(() => {
             <div v-if="signedIn" class="settings-sync-restore">
               <p class="settings-section-copy">{{ t('settings_sync_restore_backup_hint') }}</p>
               <div class="settings-actions">
-                <md-outlined-button
+                <AppButton
                   type="button"
                   :disabled="
                     restoringSyncBackup ||
@@ -1107,13 +1077,14 @@ onUnmounted(() => {
                   "
                   :title="t('settings_sync_restore_backup')"
                   @click="handleRestoreLatestSyncBackup"
+                  variant="outlined"
                 >
                   {{
                     restoringSyncBackup
                       ? t('settings_orphan_working')
                       : t('settings_sync_restore_backup')
                   }}
-                </md-outlined-button>
+                </AppButton>
               </div>
               <p v-if="syncRestoreMessage" class="settings-status" role="status">
                 {{ syncRestoreMessage }}
@@ -1128,45 +1099,49 @@ onUnmounted(() => {
                 }}
               </p>
               <div class="settings-actions">
-                <md-outlined-button
+                <AppButton
                   type="button"
                   :disabled="orphanWorking || signingOut || savingSync"
                   :title="t('settings_orphan_export')"
                   @click="handleExportOrphans"
+                  variant="outlined"
                 >
                   {{ orphanWorking ? t('settings_orphan_working') : t('settings_orphan_export') }}
-                </md-outlined-button>
-                <md-outlined-button
+                </AppButton>
+                <AppButton
                   type="button"
                   :disabled="orphanWorking || signingOut || savingSync"
                   :title="t('settings_orphan_clear')"
                   @click="handleClearOrphans"
+                  variant="outlined"
                 >
                   {{ orphanWorking ? t('settings_orphan_working') : t('settings_orphan_clear') }}
-                </md-outlined-button>
+                </AppButton>
               </div>
               <p v-if="orphanMessage" class="settings-status" role="status">{{ orphanMessage }}</p>
             </div>
 
             <div v-if="signedIn" class="settings-actions settings-actions--spaced">
-              <md-outlined-button
+              <AppButton
                 type="button"
                 :disabled="signingOut || savingSync || orphanWorking"
                 :title="t('settings_account_sign_out')"
                 @click="openSignOutDialog"
+                variant="outlined"
               >
                 {{
                   signingOut ? t('settings_account_signing_out') : t('settings_account_sign_out')
                 }}
-              </md-outlined-button>
-              <md-text-button
+              </AppButton>
+              <AppButton
                 type="button"
                 :disabled="signingOut || savingSync || orphanWorking || dataWorking"
                 :title="t('settings_account_open_delete_account')"
                 @click="selectSection('data')"
+                variant="text"
               >
                 {{ t('settings_account_open_delete_account') }}
-              </md-text-button>
+              </AppButton>
             </div>
 
             <p v-if="syncError" class="settings-error" role="alert">{{ syncError }}</p>
@@ -1186,14 +1161,15 @@ onUnmounted(() => {
               <p class="settings-toggle-title">{{ t('settings_privacy_export') }}</p>
               <p class="settings-section-copy">{{ t('settings_privacy_export_hint') }}</p>
               <div class="settings-actions">
-                <md-outlined-button
+                <AppButton
                   type="button"
                   :disabled="exportWorking || dataWorking || signingOut"
                   :title="t('settings_privacy_export')"
                   @click="handleExportLocalMemory"
+                  variant="outlined"
                 >
                   {{ exportWorking ? t('settings_privacy_working') : t('settings_privacy_export') }}
-                </md-outlined-button>
+                </AppButton>
               </div>
             </div>
 
@@ -1201,14 +1177,15 @@ onUnmounted(() => {
               <p class="settings-toggle-title">{{ t('settings_data_clear_local') }}</p>
               <p class="settings-section-copy">{{ t('settings_data_clear_local_hint') }}</p>
               <div class="settings-actions">
-                <md-outlined-button
+                <AppButton
                   type="button"
                   :disabled="dataWorking || exportWorking || signingOut"
                   :title="t('settings_data_clear_local')"
                   @click="handleClearLocalMemory"
+                  variant="outlined"
                 >
                   {{ dataWorking ? t('settings_privacy_working') : t('settings_data_clear_local') }}
-                </md-outlined-button>
+                </AppButton>
               </div>
             </div>
 
@@ -1216,16 +1193,17 @@ onUnmounted(() => {
               <p class="settings-toggle-title">{{ t('settings_privacy_delete_cloud') }}</p>
               <p class="settings-section-copy">{{ t('settings_privacy_delete_cloud_hint') }}</p>
               <div class="settings-actions">
-                <md-outlined-button
+                <AppButton
                   type="button"
                   :disabled="dataWorking || signingOut || savingSync"
                   :title="t('settings_privacy_delete_cloud')"
                   @click="handleDeleteCloudMemory"
+                  variant="outlined"
                 >
                   {{
                     dataWorking ? t('settings_privacy_working') : t('settings_privacy_delete_cloud')
                   }}
-                </md-outlined-button>
+                </AppButton>
               </div>
 
               <p class="settings-toggle-title settings-privacy-danger__title-spaced">
@@ -1233,18 +1211,19 @@ onUnmounted(() => {
               </p>
               <p class="settings-section-copy">{{ t('settings_privacy_delete_account_hint') }}</p>
               <div class="settings-actions">
-                <md-outlined-button
+                <AppButton
                   type="button"
                   :disabled="dataWorking || signingOut || savingSync"
                   :title="t('settings_privacy_delete_account')"
                   @click="handleDeleteAccount"
+                  variant="outlined"
                 >
                   {{
                     dataWorking
                       ? t('settings_privacy_working')
                       : t('settings_privacy_delete_account')
                   }}
-                </md-outlined-button>
+                </AppButton>
               </div>
             </div>
             <p v-else class="settings-status">{{ t('settings_privacy_delete_cloud_sign_in') }}</p>
@@ -1308,11 +1287,11 @@ onUnmounted(() => {
                 <span class="settings-toggle-title">{{ t('settings_ai_toggle') }}</span>
                 <span class="settings-toggle-hint">{{ t('settings_ai_toggle_hint') }}</span>
               </div>
-              <md-switch
-                :selected="aiFeaturesEnabled"
+              <AppSwitch
+                :model-value="aiFeaturesEnabled"
                 :disabled="savingAiFeatures || settingsState !== 'ready'"
-                :title="t('settings_ai_toggle')"
-                @change="handleAiFeaturesToggle"
+                :aria-label="t('settings_ai_toggle')"
+                @update:model-value="handleAiFeaturesToggle"
               />
             </div>
 
@@ -1333,7 +1312,7 @@ onUnmounted(() => {
             </p>
             <p class="settings-section-copy">{{ t('settings_ai_embedding_hint') }}</p>
             <div class="settings-actions">
-              <md-outlined-button
+              <AppButton
                 type="button"
                 :disabled="
                   embeddingBackfillWorking ||
@@ -1343,13 +1322,14 @@ onUnmounted(() => {
                 "
                 :title="t('settings_embedding_backfill')"
                 @click="handleEmbeddingBackfill"
+                variant="outlined"
               >
                 {{
                   embeddingBackfillWorking
                     ? t('settings_embedding_backfill_working')
                     : t('settings_embedding_backfill')
                 }}
-              </md-outlined-button>
+              </AppButton>
             </div>
             <p v-if="!signedIn" class="settings-status" role="status">
               {{ t('settings_embedding_backfill_auth_required') }}
@@ -1398,37 +1378,40 @@ onUnmounted(() => {
         </p>
 
         <div class="settings-sign-out-options">
-          <md-filled-button
+          <AppButton
             type="button"
             :disabled="signingOut"
             :title="t('settings_sign_out_keep_local_hint')"
             @click="confirmSignOut('keep_local')"
+            variant="filled"
           >
             {{ t('settings_sign_out_keep_local') }}
-          </md-filled-button>
+          </AppButton>
           <p class="settings-sign-out-option-hint">{{ t('settings_sign_out_keep_local_hint') }}</p>
 
           <template v-if="showSignOutDataActions">
-            <md-outlined-button
+            <AppButton
               type="button"
               :disabled="signingOut"
               :title="t('settings_sign_out_clear_local_hint')"
               @click="confirmSignOut('clear_local')"
+              variant="outlined"
             >
               {{ t('settings_sign_out_clear_local') }}
-            </md-outlined-button>
+            </AppButton>
             <p class="settings-sign-out-option-hint">
               {{ t('settings_sign_out_clear_local_hint') }}
             </p>
 
-            <md-outlined-button
+            <AppButton
               type="button"
               :disabled="signingOut"
               :title="t('settings_sign_out_sync_then_clear_hint')"
               @click="confirmSignOut('sync_then_clear_local')"
+              variant="outlined"
             >
               {{ t('settings_sign_out_sync_then_clear') }}
-            </md-outlined-button>
+            </AppButton>
             <p class="settings-sign-out-option-hint">
               {{ t('settings_sign_out_sync_then_clear_hint') }}
             </p>
@@ -1436,9 +1419,14 @@ onUnmounted(() => {
         </div>
 
         <div class="settings-actions">
-          <md-text-button type="button" :disabled="signingOut" @click="closeSignOutDialog">
+          <AppButton
+            type="button"
+            :disabled="signingOut"
+            @click="closeSignOutDialog"
+            variant="text"
+          >
             {{ t('settings_sign_out_cancel') }}
-          </md-text-button>
+          </AppButton>
         </div>
         <p v-if="signOutError" class="settings-error" role="alert">{{ signOutError }}</p>
       </div>
@@ -1732,7 +1720,7 @@ onUnmounted(() => {
   border-radius: var(--radius-lg);
   background: var(--surface-white);
   overflow: auto;
-  box-shadow: var(--md-sys-elevation-level3, 0 8px 24px rgb(0 0 0 / 18%));
+  box-shadow: var(--shadow-ink-md);
 }
 
 .settings-sign-out-dialog__title {

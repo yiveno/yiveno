@@ -121,7 +121,7 @@ Background **无** `window` / `document` / `localStorage`。用全局 `setTimeou
 - 对外：**筛选（Filter）** / **找回（Recall）**；UI **禁止**「搜索」/ `Search`。
 - 对内注释可用 search/filter。
 - 扩展用户文案：仅 `chrome.i18n` + `_locales/{en,zh_CN}/messages.json`，经 `t()`（`frontend/src/infrastructure/i18n/`）。禁止写死 UI 自然语言与 `getMessage(...) || '兜底'`。`core` 不直接调 `chrome.i18n`（注入 `t` 或返回 key）。官网不走本方案。
-- **图标优先于文案**（产品文档 §0.2 / §3）：工具操作/导航尽量用通识 Material Symbol；省略可见文字时必须有 `title` + `aria-label`（同源 `t()`）。主 CTA、说明正文、空状态、表单标签仍用文案。
+- **图标优先于文案**（产品文档 §0.2 / §3）：工具操作/导航尽量用通识 Lucide 图标（内联）；省略可见文字时必须有 `title` + `aria-label`（同源 `t()`）。主 CTA、说明正文、空状态、表单标签仍用文案。
 - 面向用户的失败：演进为稳定 `errorCode` + UI `t()`；禁止用本地化 error 字符串做分支。
 - `:hover` / `:focus` / `:active`：**禁止** `translate` / `scale` / `rotate`；只用背景 / opacity / shadow / outline / state layer（浮层入场与 pop/shake 例外见产品文档 §3）。
 

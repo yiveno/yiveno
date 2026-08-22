@@ -7,7 +7,7 @@
 | 品牌色 / Roles 权威实现 | [`packages/design-tokens/css/brand.css`](../../packages/design-tokens/css/brand.css)（官网已接入；`site-critical.css` 仅壳层） |
 | 机器可读摘要            | 仓库根目录 [`DESIGN.md`](../../DESIGN.md)                                                                                      |
 | 产品定位权威            | [`docs/product/Yiveno-产品文档-v4.0.md`](../product/Yiveno-产品文档-v4.0.md) §0                                                |
-| 冲突时                  | **产品文档 §0 > 本标准 > 旧 Material 实验色 / 历史 logo 备注色**                                                               |
+| 冲突时                  | **产品文档 §0 > 本标准 > 旧实验色 / 历史 logo 备注色**                                                                         |
 
 ---
 
@@ -18,7 +18,7 @@
 - 官网与营销落地页
 - Chrome 扩展（Popup / 记忆库 / 设置 / 详情等）
 - Logo、favicon、OG、商店图、邮件、幻灯、印刷与社交物料
-- 设计令牌（**自研 Brand Core + 产品角色**；不以 Material 主题为标准）
+- 设计令牌（**自研 Brand Core + 产品角色**；不以第三方主题生成器为标准）
 - 对内演示、对招聘/合作方的视觉呈现
 
 **本标准不替代产品功能规范。** 功能、术语（Filter / Recall）、数据流、LLM 边界仍以产品文档为准。
@@ -26,10 +26,10 @@
 ### 0.1 权威声明（必须遵守）
 
 1. **官网色彩基调 = Yiveno 品牌核。** Ink / Paper / Sage 已敲定，日常优化不得换皮。
-2. **Brand Core + Product Roles 权威在 `@yiveno/design-tokens/css/brand.css`。** Roles **v1 已冻结**。官网与扩展均已接入（扩展经 `md-sys-brand-alias.css` 兼容 `--md-sys-*`）。增补角色须先在官网验证再写入 §3.3 与 `brand.css`。
-3. **历史上的 Material `forest` 等多预设、Theme Builder 色板、蓝紫实验色 = 实验稿，决定废弃，不作标准。** 不要求再「换种子重导 MD」。
-4. **其他产品面跟进官网沉淀后的 token**，而不是反过来改官网迁就旧 `--md-sys-*`。
-5. **Material Symbols（图标字形）可保留**——与「MD 主题色体系」不是同一件事。
+2. **Brand Core + Product Roles 权威在 `@yiveno/design-tokens/css/brand.css`。** Roles **v1 已冻结**。官网与扩展均直接消费 Roles；扩展自研控件（`AppButton` 等）+ Lucide 内联图标。增补角色须先在官网验证再写入 §3.3 与 `brand.css`。
+3. **历史上的实验色板 / Theme Builder / 蓝紫实验色 = 废弃，不作标准。**
+4. **其他产品面跟进官网沉淀后的 token。**
+5. **扩展图标：Lucide 线框按需内联（`AppIcon`）**——禁止第二套图标库 / 图标字体 CDN。
 
 ---
 
@@ -115,13 +115,13 @@ Yiveno = **扔进就记着 + 想找就找得着**（Capture 低负担 + Recall �
 
 - 另选无关色相再称为「Yiveno 色」
 - 为「多皮肤」引入第二套主色宇宙（除非未来产品明确要主题市场）
-- 再引入 Material Theme 生成器作为色板权威
+- 再引入第三方 Theme 生成器作为色板权威
 
 ---
 
 ## 3. 色系演进：官网冻结 → 外推
 
-Yiveno 追求**长期维护与品牌特色**，不以 Material 的「标准快速上线」为色板路径。
+Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上色」为色板路径。
 
 ### 3.1 两层模型
 
@@ -134,7 +134,7 @@ Yiveno 追求**长期维护与品牌特色**，不以 Material 的「标准快�
 
 1. **权威实现：** [`packages/design-tokens/css/brand.css`](../../packages/design-tokens/css/brand.css)（TS：`src/brand.ts`）。
 2. 增补角色：先在官网组件验证 → 写入本标准 §3.3、`DESIGN.md`、`brand.css` → 再外推。
-3. **已完成：** Brand 进包；官网/扩展业务 CSS 写 Roles + `--space-*` / `--radius-*`；Material Web 经 alias；语义色直连 Roles；MD 多预设已删除。
+3. **已完成：** Brand 进包；官网/扩展业务 CSS 写 Roles + `--space-*` / `--radius-*`；扩展自研控件 + Lucide 内联图标；语义色直连 Roles。
 4. **维护：** 增补 token 先写 `brand.css` + §3.3，再外推。
 5. Logo / OG / 邮件跟 Brand Core。
 
@@ -173,7 +173,7 @@ Yiveno 追求**长期维护与品牌特色**，不以 Material 的「标准快�
 
 **Core 兼容别名（实现层）：** `--paper-2` → `--paper-dim`；`--line` → `--border`；`--sage-hover` → `--sage-dark`。
 
-亮色为默认。深门面用 `surface-ink` 局部切换，**不必**先上整套 Material dark scheme。扩展暗色可在外推阶段再定。
+亮色为默认。深门面用 `surface-ink` 局部切换，**不必**先上整套系统级 dark scheme。扩展暗色可在外推阶段再定。
 
 ### 3.4 明确不做什么
 
@@ -258,8 +258,8 @@ Yiveno 追求**长期维护与品牌特色**，不以 Material 的「标准快�
 
 ### 6.2 Chrome 扩展（Operate）
 
-- 色相跟 Brand Core；业务样式写 Roles；Material Web 经 `md-sys-brand-alias.css`
-- 密度高于官网；图标优先（Material Symbols）+ `title`/`aria-label`
+- 色相跟 Brand Core；业务样式写 Roles；自研控件（`AppButton` / `AppSwitch` 等）
+- 密度高于官网；图标优先（Lucide 内联）+ `title`/`aria-label`
 - 术语：Filter / Recall，禁止 Search
 - Closest / 邻域列表的视觉层级必须可读
 - 不把营销大留白硬搬进 Popup；**不在扩展侧另开一套实验色**
@@ -325,8 +325,8 @@ Yiveno 追求**长期维护与品牌特色**，不以 Material 的「标准快�
 ### 9.3 产品 UI token
 
 - [x] Roles v1 已在官网冻结（§3.3），并迁入 `@yiveno/design-tokens/css/brand.css`
-- [x] 扩展业务 CSS 写 Roles；Material Web 经 `md-sys-brand-alias.css`
-- [x] MD 多预设已删除；间距/形状自研；`semantic-colors.css` 直连 Roles
+- [x] 扩展业务 CSS 写 Roles；自研控件；Lucide 内联图标
+- [x] 间距/形状自研；`semantic-colors.css` 直连 Roles
 - [ ] 新角色仍先在官网验证，再写入 §3.3 / `brand.css` 再外推
 
 ### 9.4 营销 / 证明
@@ -346,13 +346,14 @@ Yiveno 追求**长期维护与品牌特色**，不以 Material 的「标准快�
 
 | 版本   | 日期       | 说明                                                                        |
 | ------ | ---------- | --------------------------------------------------------------------------- |
-| v1.0   | 2026-08-15 | 以官网敲定 Brand Core；宣告旧 MD 实验色非标准                               |
-| v1.1   | 2026-08-16 | 废弃 MD 色板路径；官网为色系试验场，角色层在官网补全后再外推                |
+| v1.0   | 2026-08-15 | 以官网敲定 Brand Core；宣告旧实验色非标准                                   |
+| v1.1   | 2026-08-16 | 废弃旧色板路径；官网为色系试验场，角色层在官网补全后再外推                  |
 | v1.2   | 2026-08-20 | Roles v1 冻结可外推；权威实现先落官网 `site-critical.css`；消散落业务 hex   |
 | v1.2.1 | 2026-08-20 | Brand Core + Roles 迁入 `@yiveno/design-tokens/css/brand.css`；官网消费该包 |
-| v1.3   | 2026-08-20 | 扩展接入 `md-sys-brand-alias`；停用 material-theme 多预设运行时             |
-| v1.4   | 2026-08-20 | 扩展业务 CSS 改写 Roles；删除 MD presets / material-theme.css               |
+| v1.3   | 2026-08-20 | 扩展接入 Brand Roles；停用多预设色板运行时                                  |
+| v1.4   | 2026-08-20 | 扩展业务 CSS 改写 Roles；删除旧 presets / theme 运行时                      |
 | v1.5   | 2026-08-20 | `--space-*` / `--radius-*` 进 brand；semantic 直连 Roles；variables 瘦身    |
+| v1.6   | 2026-08-22 | 扩展自研 App\* 控件；图标统一 Lucide 按需内联                               |
 
 **变更规则：**
 
@@ -368,11 +369,11 @@ Yiveno 追求**长期维护与品牌特色**，不以 Material 的「标准快�
 | ---------------------------------------------------- | --------------------------------------------------- |
 | [`DESIGN.md`](../../DESIGN.md)                       | Agent / 工具可读摘要 + YAML tokens                  |
 | `packages/design-tokens/css/brand.css`               | **Brand Core + Product Roles 权威实现（:root）**    |
-| `packages/design-tokens/css/md-sys-brand-alias.css`  | 扩展：Material Web 用的 `--md-sys-color-*` → Roles  |
+| `packages/design-tokens/css/motion.css`              | 扩展：精简 `--motion-*` 时长/缓动                   |
 | `packages/design-tokens/src/brand.ts`                | Brand Core hex（TS）                                |
 | `website/src/styles/site-critical.css`               | 官网壳：字体 / 布局 / Nav（消费 brand，无重复 hex） |
 | `website/src/styles/site.css`                        | 兼容入口（brand + critical + deferred）             |
-| `frontend/src/styles/material-ui.css`                | 扩展入口：brand + alias + variables                 |
+| `frontend/src/styles/extension-ui.css`               | 扩展入口：brand + variables + semantic              |
 | `docs/design/Yiveno-logo-asset-generation-prompt.md` | Logo 导出流程（色值须服从本标准）                   |
 | `PRODUCT.md`                                         | 产品性格（Impeccable）                              |
 | 产品文档 v4.0 §0                                     | 产品与术语 Normative                                |

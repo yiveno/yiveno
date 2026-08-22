@@ -2,7 +2,7 @@
  * Yiveno Brand Core + Product Roles + Layout tokens（v1 冻结，可外推）
  *
  * 权威：docs/design/Yiveno-设计标准-v1.md §2–§3 · DESIGN.md
- * 官网 / 扩展业务 CSS 消费本文件；Material Web 另经 md-sys-brand-alias.css。
+ * 官网 / 扩展业务 CSS 消费本文件；扩展自研 App* 控件。
  */
 :root {
   /* ── Brand Core（锁定；hex 仅此处声明一次） ── */

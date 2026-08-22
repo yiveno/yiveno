@@ -11,7 +11,8 @@ import {
   fetchAuthState,
   refreshAuthProfile
 } from '@/infrastructure/messaging/background-client'
-import MaterialSymbolIcon from '@/infrastructure/ui/icons/MaterialSymbolIcon.vue'
+import AppIconButton from '@/infrastructure/ui/AppIconButton.vue'
+import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
 
 defineOptions({ name: 'AppPageHeader' })
 
@@ -179,18 +180,16 @@ onUnmounted(() => {
       <p class="app-page-header__brand">{{ t('app_name') }}</p>
     </div>
     <nav class="app-page-header__nav" :aria-label="t('nav_aria_label')">
-      <md-icon-button
+      <AppIconButton
         v-if="showNewFind"
-        type="button"
         :title="t('nav_new_find')"
         :aria-label="t('nav_new_find')"
         :disabled="!newFindEnabled"
         @click="handleNewFind"
       >
-        <MaterialSymbolIcon name="edit_note" size="22px" />
-      </md-icon-button>
-      <md-icon-button
-        type="button"
+        <AppIcon name="message_circle_plus" size="22px" />
+      </AppIconButton>
+      <AppIconButton
         :title="accountTitle"
         :aria-label="accountTitle"
         :disabled="accountBusy"
@@ -206,26 +205,24 @@ onUnmounted(() => {
           referrerpolicy="no-referrer"
           @error="avatarBroken = true"
         />
-        <MaterialSymbolIcon v-else name="account_circle" size="22px" />
-      </md-icon-button>
-      <md-icon-button
+        <AppIcon v-else name="account_circle" size="22px" />
+      </AppIconButton>
+      <AppIconButton
         v-if="showLibrary"
-        type="button"
         :title="t('nav_library')"
         :aria-label="t('nav_library')"
         @click="handleOpenLibrary"
       >
-        <MaterialSymbolIcon name="library_books" size="22px" />
-      </md-icon-button>
-      <md-icon-button
+        <AppIcon name="library_books" size="22px" />
+      </AppIconButton>
+      <AppIconButton
         v-if="showSettings"
-        type="button"
         :title="t('nav_settings')"
         :aria-label="t('nav_settings')"
         @click="handleOpenSettings"
       >
-        <MaterialSymbolIcon name="settings" size="22px" />
-      </md-icon-button>
+        <AppIcon name="settings" size="22px" />
+      </AppIconButton>
     </nav>
   </div>
 </template>

@@ -2,8 +2,8 @@
 import { computed } from 'vue'
 
 import type { RecallHighlightPart } from '@/core/recall/highlight-recall-text'
-import type { MaterialSymbolName } from '@/infrastructure/ui/icons/material-symbol'
-import MaterialSymbolIcon from '@/infrastructure/ui/icons/MaterialSymbolIcon.vue'
+import type { AppIconName } from '@/infrastructure/ui/icons/icon-paths'
+import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
 import RecallHighlightText from '@/pages/sidepanel/RecallHighlightText.vue'
 
 /** 找回结果卡展示模型（含可选折叠组）。 */
@@ -50,7 +50,7 @@ const isCollection = computed(() => (props.card.duplicateTotalCount ?? 0) >= 2)
 
 const moreActionLabel = computed(() => (props.expanded ? props.collapseLabel : props.expandLabel))
 
-const kindIcon = computed<MaterialSymbolName>(() =>
+const kindIcon = computed<AppIconName>(() =>
   props.card.itemKind === 'bookmark' ? 'bookmark' : 'format_quote'
 )
 
@@ -67,7 +67,7 @@ const bookmarkNativeTitle = computed(() => {
   return title || path || undefined
 })
 
-function kindIconFor(kind: RecallCardModel['itemKind']): MaterialSymbolName {
+function kindIconFor(kind: RecallCardModel['itemKind']): AppIconName {
   return kind === 'bookmark' ? 'bookmark' : 'format_quote'
 }
 
@@ -119,7 +119,7 @@ function handleMoreClick(event: MouseEvent): void {
         :title="card.typeLabel"
         :aria-label="card.typeLabel"
       >
-        <MaterialSymbolIcon :name="kindIcon" size="14px" />
+        <AppIcon :name="kindIcon" size="14px" />
       </span>
 
       <a
@@ -165,7 +165,7 @@ function handleMoreClick(event: MouseEvent): void {
           class="recall-card-subtitle"
           :title="card.itemKind === 'bookmark' ? card.subtitle : undefined"
         >
-          <MaterialSymbolIcon
+          <AppIcon
             v-if="card.itemKind === 'bookmark'"
             class="recall-card-subtitle-icon"
             name="open_in_new"
@@ -186,7 +186,7 @@ function handleMoreClick(event: MouseEvent): void {
         :aria-expanded="expanded"
         @click="handleMoreClick"
       >
-        <MaterialSymbolIcon name="stacks" size="16px" />
+        <AppIcon name="stacks" size="16px" />
         <span class="recall-duplicate-more-count">{{ card.duplicateTotalCount }}</span>
       </button>
     </div>
@@ -206,7 +206,7 @@ function handleMoreClick(event: MouseEvent): void {
           :title="sibling.typeLabel"
           :aria-label="sibling.typeLabel"
         >
-          <MaterialSymbolIcon :name="kindIconFor(sibling.itemKind)" size="14px" />
+          <AppIcon :name="kindIconFor(sibling.itemKind)" size="14px" />
         </span>
         <a
           class="recall-card recall-card--sibling"
@@ -238,7 +238,7 @@ function handleMoreClick(event: MouseEvent): void {
             class="recall-card-subtitle"
             :title="sibling.itemKind === 'bookmark' ? sibling.subtitle : undefined"
           >
-            <MaterialSymbolIcon
+            <AppIcon
               v-if="sibling.itemKind === 'bookmark'"
               class="recall-card-subtitle-icon"
               name="open_in_new"

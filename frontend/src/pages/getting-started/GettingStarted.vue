@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
+import AppButton from '@/infrastructure/ui/AppButton.vue'
 
 import { buildRecallPrefillClue } from '@/core/recall/build-prefill-clue'
 import { captureTextExcerpt, openRecallShell } from '@/infrastructure/messaging/background-client'
@@ -13,7 +14,7 @@ import {
 } from '@/infrastructure/storage/first-recall-onboarding-storage'
 import { markInstallOnboardingDone } from '@/infrastructure/storage/install-onboarding-storage'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
-import MaterialSymbolIcon from '@/infrastructure/ui/icons/MaterialSymbolIcon.vue'
+import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
 
 defineOptions({ name: 'GettingStartedPage' })
 
@@ -145,7 +146,7 @@ onUnmounted(() => {
     <ol class="getting-started__steps" :aria-label="t('getting_started_steps_aria')">
       <li class="getting-started__step" :class="{ 'getting-started__step--done': captureDone }">
         <div class="getting-started__step-head">
-          <MaterialSymbolIcon
+          <AppIcon
             class="getting-started__step-icon"
             :name="captureDone ? 'check_circle' : 'looks_one'"
             size="20px"
@@ -163,7 +164,7 @@ onUnmounted(() => {
         }"
       >
         <div class="getting-started__step-head">
-          <MaterialSymbolIcon
+          <AppIcon
             class="getting-started__step-icon"
             :name="recallDone ? 'check_circle' : 'looks_two'"
             size="20px"
@@ -175,9 +176,9 @@ onUnmounted(() => {
           {{ t('getting_started_recall_hint') }}
         </p>
         <div v-if="captureDone && !recallDone" class="getting-started__recall-actions">
-          <md-filled-button type="button" :disabled="recallBusy" @click="handleTryRecall">
+          <AppButton type="button" :disabled="recallBusy" @click="handleTryRecall" variant="filled">
             {{ t('selection_toolbar_try_recall') }}
-          </md-filled-button>
+          </AppButton>
           <p v-if="recallError" class="getting-started__recall-error" role="alert">
             {{ recallError }}
           </p>
@@ -186,7 +187,7 @@ onUnmounted(() => {
     </ol>
 
     <section v-if="allDone" class="getting-started__success" aria-live="polite">
-      <MaterialSymbolIcon name="celebration" size="28px" />
+      <AppIcon name="celebration" size="28px" />
       <div>
         <h2 class="getting-started__success-title">{{ t('getting_started_recall_done_title') }}</h2>
         <p class="getting-started__success-copy">{{ t('getting_started_recall_done_body') }}</p>
@@ -207,18 +208,19 @@ onUnmounted(() => {
         <p v-else class="getting-started__demo-done" role="status">
           {{ t('getting_started_capture_done_hint') }}
         </p>
-        <md-text-button
+        <AppButton
           v-if="!captureDone"
           type="button"
           :disabled="saveState === 'saving'"
           @click="handleSaveDemoLine"
+          variant="text"
         >
           {{
             saveState === 'saving'
               ? t('getting_started_saving')
               : t('getting_started_save_demo_fallback')
           }}
-        </md-text-button>
+        </AppButton>
         <p v-if="saveState === 'error'" class="getting-started__error" role="alert">
           {{ t('getting_started_save_failed') }}
         </p>
@@ -226,9 +228,9 @@ onUnmounted(() => {
     </section>
 
     <footer class="getting-started__footer">
-      <md-text-button type="button" :disabled="skipBusy" @click="handleSkip">
+      <AppButton type="button" :disabled="skipBusy" @click="handleSkip" variant="text">
         {{ t('getting_started_skip') }}
-      </md-text-button>
+      </AppButton>
     </footer>
   </main>
 </template>

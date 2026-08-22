@@ -32,9 +32,10 @@ import {
   writeRecallPrefill
 } from '@/infrastructure/storage/first-recall-onboarding-storage'
 import {
-  getMaterialSymbolPath,
-  type MaterialSymbolName
-} from '@/infrastructure/ui/icons/material-symbol'
+  getAppIconNodes,
+  getAppIconViewBox,
+  type AppIconName
+} from '@/infrastructure/ui/icons/icon-paths'
 
 const TOOLBAR_HOST_ID = 'yiveno-selection-toolbar-host'
 const SHOW_DELAY_MS = 120
@@ -247,7 +248,7 @@ function preserveSelectionOnMouseDown(event: MouseEvent): void {
 }
 
 /** 划词浮层图标按钮：可见图标 + title/aria-label 完整文案。 */
-function createIconActionButton(icon: MaterialSymbolName, label: string): HTMLButtonElement {
+function createIconActionButton(icon: AppIconName, label: string): HTMLButtonElement {
   const button = document.createElement('button')
   button.type = 'button'
   button.className = 'action-button action-button--icon'
@@ -255,16 +256,24 @@ function createIconActionButton(icon: MaterialSymbolName, label: string): HTMLBu
   button.setAttribute('aria-label', label)
 
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-  svg.setAttribute('viewBox', '0 0 24 24')
+  svg.setAttribute('viewBox', getAppIconViewBox(icon))
   svg.setAttribute('width', '18')
   svg.setAttribute('height', '18')
+  svg.setAttribute('fill', 'none')
+  svg.setAttribute('stroke', 'currentColor')
+  svg.setAttribute('stroke-width', '2')
+  svg.setAttribute('stroke-linecap', 'round')
+  svg.setAttribute('stroke-linejoin', 'round')
   svg.setAttribute('aria-hidden', 'true')
   svg.classList.add('action-icon')
 
-  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-  path.setAttribute('d', getMaterialSymbolPath(icon))
-  path.setAttribute('fill', 'currentColor')
-  svg.appendChild(path)
+  for (const [tag, attrs] of getAppIconNodes(icon)) {
+    const el = document.createElementNS('http://www.w3.org/2000/svg', tag)
+    for (const [key, value] of Object.entries(attrs)) {
+      el.setAttribute(key, value)
+    }
+    svg.appendChild(el)
+  }
   button.appendChild(svg)
   return button
 }

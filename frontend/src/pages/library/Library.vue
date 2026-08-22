@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
+import AppButton from '@/infrastructure/ui/AppButton.vue'
+import AppIconButton from '@/infrastructure/ui/AppIconButton.vue'
 
 import type { BookmarkLibraryTreeNode } from '@/core/memory/bookmark-library-tree'
 import type { MemoryItem } from '@/core/memory/memory-item'
@@ -25,7 +27,7 @@ import {
   updateMemoryNote
 } from '@/infrastructure/messaging/background-client'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
-import MaterialSymbolIcon from '@/infrastructure/ui/icons/MaterialSymbolIcon.vue'
+import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
 import BookmarkLibraryTree from '@/pages/library/BookmarkLibraryTree.vue'
 
 defineOptions({ name: 'LibraryPage' })
@@ -41,7 +43,7 @@ const activeType = ref<SupportedMemoryItemType>(
 const loadState = ref<LoadState>('loading')
 const errorMessage = ref('')
 const items = ref<MemoryItem[]>([])
-const bookmarkRoots = ref<BookmarkLibraryTreeNode[]>([])
+const bookmarkRoots = shallowRef<BookmarkLibraryTreeNode[]>([])
 const bookmarkSyncReady = ref(false)
 const deletingId = ref<string | null>(null)
 let bookmarkTreeRefreshTimer: ReturnType<typeof setTimeout> | null = null
@@ -256,7 +258,7 @@ async function handleDeleteExcerpt(id: string) {
   }
 }
 
-function openBookmarkNoteEditor(payload: { memoryItemId: string; title: string; note: string }) {
+function openNoteEditor(payload: { memoryItemId: string; title: string; note: string }) {
   noteEditorMemoryId.value = payload.memoryItemId
   noteEditorTitle.value = payload.title
   noteEditorDraft.value = payload.note
@@ -280,7 +282,7 @@ function handleOpenBookmark(payload: {
   }
 }
 
-function closeBookmarkNoteEditor() {
+function closeNoteEditor() {
   if (noteEditorSaving.value) {
     return
   }
@@ -316,7 +318,7 @@ function patchBookmarkNoteInTree(
   })
 }
 
-async function saveBookmarkNote() {
+async function saveNote() {
   const id = noteEditorMemoryId.value
   if (!id || noteEditorSaving.value) {
     return
@@ -335,6 +337,7 @@ async function saveBookmarkNote() {
     }
     const savedNote = response.item.clues.note?.trim() || null
     bookmarkRoots.value = patchBookmarkNoteInTree(bookmarkRoots.value, id, savedNote)
+    items.value = items.value.map(item => (item.id === id ? response.item : item))
     noteEditorOpen.value = false
     noteEditorMemoryId.value = null
     noteEditorTitle.value = ''
@@ -400,14 +403,14 @@ onUnmounted(() => {
 
         <div v-else-if="loadState === 'error'" class="library-error-block" role="alert">
           <p class="library-error">{{ errorMessage }}</p>
-          <md-icon-button
+          <AppIconButton
             type="button"
             :title="t('library_retry')"
             :aria-label="t('library_retry')"
             @click="loadPanel"
           >
-            <MaterialSymbolIcon name="refresh" size="22px" />
-          </md-icon-button>
+            <AppIcon name="refresh" size="22px" />
+          </AppIconButton>
         </div>
 
         <template v-else-if="showingBookmarkTree">
@@ -419,7 +422,7 @@ onUnmounted(() => {
             v-else
             :roots="bookmarkRoots"
             :show-unsynced-flags="bookmarkSyncReady"
-            @edit-note="openBookmarkNoteEditor"
+            @edit-note="openNoteEditor"
             @open-bookmark="handleOpenBookmark"
           />
         </template>
@@ -440,20 +443,38 @@ onUnmounted(() => {
                     <span class="library-row-note-label">{{ t('detail_note_label') }}</span>
                     {{ row.note }}
                   </p>
-                  <p class="library-row-subtitle">{{ row.subtitle }}</p>
                 </div>
-                <p class="library-row-time">{{ formatUpdatedAt(row.updatedAt) }}</p>
+                <div class="library-row-meta">
+                  <p class="library-row-subtitle">{{ row.subtitle }}</p>
+                  <p class="library-row-time">{{ formatUpdatedAt(row.updatedAt) }}</p>
+                </div>
               </a>
-              <md-icon-button
+              <AppIconButton
+                type="button"
+                class="library-item-note"
+                :title="row.note ? t('library_edit_note_aria') : t('library_add_note_aria')"
+                :aria-label="row.note ? t('library_edit_note_aria') : t('library_add_note_aria')"
+                @click="
+                  openNoteEditor({
+                    memoryItemId: row.id,
+                    title: row.title || row.excerpt || row.subtitle,
+                    note: row.note ?? ''
+                  })
+                "
+              >
+                <AppIcon name="edit_note" size="20px" />
+              </AppIconButton>
+              <AppIconButton
                 type="button"
                 class="library-item-delete"
+                tone="danger"
                 :title="t('library_delete_excerpt_aria')"
                 :aria-label="t('library_delete_excerpt_aria')"
                 :disabled="deletingId === row.id"
                 @click="handleDeleteExcerpt(row.id)"
               >
-                <MaterialSymbolIcon name="delete" size="20px" />
-              </md-icon-button>
+                <AppIcon name="delete" size="20px" />
+              </AppIconButton>
             </li>
           </ul>
         </template>
@@ -482,16 +503,17 @@ onUnmounted(() => {
           {{ noteEditorError }}
         </p>
         <div class="library-note-dialog-actions">
-          <md-outlined-button
+          <AppButton
             type="button"
             :disabled="noteEditorSaving"
-            @click="closeBookmarkNoteEditor"
+            @click="closeNoteEditor"
+            variant="outlined"
           >
             {{ t('selection_toolbar_note_cancel') }}
-          </md-outlined-button>
-          <md-filled-button type="button" :disabled="noteEditorSaving" @click="saveBookmarkNote">
+          </AppButton>
+          <AppButton type="button" :disabled="noteEditorSaving" @click="saveNote" variant="filled">
             {{ t('selection_toolbar_note_save') }}
-          </md-filled-button>
+          </AppButton>
         </div>
       </div>
     </div>
@@ -622,18 +644,29 @@ onUnmounted(() => {
   position: relative;
 }
 
+.library-item-note,
 .library-item-delete {
   position: absolute;
   top: 6px;
-  right: 6px;
   z-index: 1;
-  color: var(--danger);
   opacity: 0;
   pointer-events: none;
   transition: opacity 120ms cubic-bezier(0.2, 0, 0, 1);
 }
 
+.library-item-note {
+  right: 44px;
+  color: var(--on-surface-muted);
+}
+
+.library-item-delete {
+  right: 6px;
+  color: var(--danger);
+}
+
+.library-item:hover .library-item-note,
 .library-item:hover .library-item-delete,
+.library-item:focus-within .library-item-note,
 .library-item:focus-within .library-item-delete,
 .library-item-delete[disabled] {
   opacity: 1;
@@ -641,6 +674,7 @@ onUnmounted(() => {
 }
 
 @media (hover: none) {
+  .library-item-note,
   .library-item-delete {
     opacity: 1;
     pointer-events: auto;
@@ -648,6 +682,7 @@ onUnmounted(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .library-item-note,
   .library-item-delete {
     transition: none;
   }
@@ -655,10 +690,9 @@ onUnmounted(() => {
 
 .library-row {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 12px 40px 12px 14px;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 84px 12px 14px;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   text-decoration: none;
@@ -692,7 +726,7 @@ onUnmounted(() => {
 
 .library-row-note {
   display: -webkit-box;
-  margin: 0 0 6px;
+  margin: 0;
   font-size: 13px;
   line-height: 1.45;
   color: var(--on-surface);
@@ -707,10 +741,22 @@ onUnmounted(() => {
   color: var(--accent);
 }
 
+.library-row-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
 .library-row-subtitle {
   margin: 0;
+  min-width: 0;
   font-size: 12px;
   color: var(--on-surface-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .library-row-time {

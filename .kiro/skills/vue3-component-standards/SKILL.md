@@ -120,9 +120,9 @@ const emit = defineEmits(['click'])
   font-size: var(--text-sm);
   font-weight: var(--font-medium);
   border-radius: var(--radius-md);
-  background-color: var(--md-sys-color-primary);
-  color: var(--md-sys-color-on-primary);
-  transition: all var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+  background-color: var(--accent);
+  color: var(--on-accent);
+  transition: all var(--motion-duration-fast) var(--motion-easing-standard);
 }
 
 /* ❌ 错误：硬编码数值 */
@@ -145,8 +145,8 @@ const emit = defineEmits(['click'])
 
 ```css
 /* 颜色 */
-var(--md-sys-color-primary)
-var(--md-sys-color-on-primary)
+var(--accent)
+var(--on-accent)
 var(--color-text-primary)
 var(--color-text-secondary)
 var(--color-background)
@@ -171,8 +171,8 @@ var(--radius-md)  /* 8px */
 var(--radius-lg)  /* 12px */
 
 /* 动画 */
-var(--md-sys-motion-duration-short2)  /* 100ms */
-var(--md-sys-motion-easing-standard)  /* cubic-bezier */
+var(--motion-duration-fast)  /* 100ms */
+var(--motion-easing-standard)  /* cubic-bezier */
 ```
 
 ---
@@ -337,16 +337,16 @@ const handleClick = (event: MouseEvent) => {
   font-size: var(--text-sm);
   font-weight: var(--font-medium);
   border-radius: var(--radius-md);
-  transition: all var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+  transition: all var(--motion-duration-fast) var(--motion-easing-standard);
 }
 
 .button--primary {
-  background-color: var(--md-sys-color-primary);
-  color: var(--md-sys-color-on-primary);
+  background-color: var(--accent);
+  color: var(--on-accent);
 }
 
 .button--primary:hover:not(.button--disabled) {
-  background-color: color-mix(in srgb, var(--md-sys-color-primary), black 8%);
+  background-color: color-mix(in srgb, var(--accent), black 8%);
 }
 
 .button--disabled {

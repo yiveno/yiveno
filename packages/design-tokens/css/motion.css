@@ -1,0 +1,14 @@
+/**
+ * 扩展交互时长 / 缓动（自研；供 App* 控件消费）。
+ */
+
+:root {
+  --motion-duration-fast: 100ms;
+  --motion-duration-short: 150ms;
+  --motion-duration-medium: 250ms;
+  --motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+  --motion-easing-emphasized: var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+  --state-hover-opacity: 0.08;
+  --state-focus-opacity: 0.12;
+  --state-pressed-opacity: 0.12;
+}
