@@ -6,9 +6,16 @@ import {
 } from '@/application/capture/chrome-bookmark-sync-service'
 import { flashActionBadge } from '@/infrastructure/browser/action-badge'
 import { logger } from '@/infrastructure/logging/logger'
+import { invalidateBookmarkLibraryTreeOnChromeChange } from '@/background/handlers/import-handler'
 import { notifyChromeBookmarkTreeChanged } from '@/infrastructure/messaging/notify-chrome-bookmark-tree-changed'
 
 let listenersRegistered = false
+
+/** Chrome 书签树结构/对齐可能变化：失效 SW 缓存并通知记忆库 UI。 */
+function notifyBookmarkLibraryTreeRefresh(): void {
+  invalidateBookmarkLibraryTreeOnChromeChange()
+  notifyChromeBookmarkTreeChanged()
+}
 
 function onBookmarkCreated(id: string, bookmark: chrome.bookmarks.BookmarkTreeNode): void {
   void handleChromeBookmarkCreated(bookmark)
@@ -23,7 +30,7 @@ function onBookmarkCreated(id: string, bookmark: chrome.bookmarks.BookmarkTreeNo
     })
     .finally(() => {
       // 目录改名等不进 Memory，仍须刷新记忆库只读树（仅灌库开启时本监听才挂着）
-      notifyChromeBookmarkTreeChanged()
+      notifyBookmarkLibraryTreeRefresh()
     })
 }
 
@@ -33,7 +40,7 @@ function onBookmarkChanged(id: string, changeInfo: { title?: string; url?: strin
       logger.error('ChromeBookmarkSync', 'onChanged 同步失败', { id, changeInfo, error })
     })
     .finally(() => {
-      notifyChromeBookmarkTreeChanged()
+      notifyBookmarkLibraryTreeRefresh()
     })
 }
 
@@ -46,7 +53,7 @@ function onBookmarkRemoved(
       logger.error('ChromeBookmarkSync', 'onRemoved 同步失败', { id, removeInfo, error })
     })
     .finally(() => {
-      notifyChromeBookmarkTreeChanged()
+      notifyBookmarkLibraryTreeRefresh()
     })
 }
 
@@ -59,7 +66,7 @@ function onBookmarkMoved(
       logger.error('ChromeBookmarkSync', 'onMoved 同步失败', { id, moveInfo, error })
     })
     .finally(() => {
-      notifyChromeBookmarkTreeChanged()
+      notifyBookmarkLibraryTreeRefresh()
     })
 }
 

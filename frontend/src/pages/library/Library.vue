@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
+import { computed, markRaw, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
 import AppButton from '@/infrastructure/ui/AppButton.vue'
 import AppIconButton from '@/infrastructure/ui/AppIconButton.vue'
 
-import type { BookmarkLibraryTreeNode } from '@/core/memory/bookmark-library-tree'
+import type { BookmarkLibraryIndex } from '@/core/memory/bookmark-library-index'
+import {
+  computeBookmarkLibraryStructureHash,
+  patchBookmarkNoteInIndex
+} from '@/core/memory/bookmark-library-index'
 import type { MemoryItem } from '@/core/memory/memory-item'
 import type { SupportedMemoryItemType } from '@/core/memory/memory-item-type'
 import {
@@ -43,7 +47,8 @@ const activeType = ref<SupportedMemoryItemType>(
 const loadState = ref<LoadState>('loading')
 const errorMessage = ref('')
 const items = ref<MemoryItem[]>([])
-const bookmarkRoots = shallowRef<BookmarkLibraryTreeNode[]>([])
+const bookmarkIndex = shallowRef<BookmarkLibraryIndex | null>(null)
+const bookmarkStructureHash = ref('')
 const bookmarkSyncReady = ref(false)
 const deletingId = ref<string | null>(null)
 let bookmarkTreeRefreshTimer: ReturnType<typeof setTimeout> | null = null
@@ -108,22 +113,41 @@ async function loadBookmarkTree(options: { silent?: boolean } = {}) {
   if (!options.silent) {
     loadState.value = 'loading'
   }
-  const response = await fetchBookmarkLibraryTree()
-  if (!response.ok || !('roots' in response)) {
+  const response = await fetchBookmarkLibraryTree({
+    clientHash: bookmarkStructureHash.value || undefined
+  })
+  if (!response.ok) {
     if (!options.silent || loadState.value !== 'ready') {
       loadState.value = 'error'
-      errorMessage.value = response.ok
-        ? t('library_invalid_response')
-        : tImportError(response.errorCode)
+      errorMessage.value = tImportError(response.errorCode)
     }
     if (!options.silent) {
-      bookmarkRoots.value = []
+      bookmarkIndex.value = null
+      bookmarkStructureHash.value = ''
       bookmarkSyncReady.value = false
     }
     return
   }
 
-  bookmarkRoots.value = response.roots
+  if ('unchanged' in response && response.unchanged) {
+    bookmarkSyncReady.value = response.syncReady
+    if (loadState.value !== 'ready') {
+      loadState.value = 'ready'
+    }
+    errorMessage.value = ''
+    return
+  }
+
+  if (!('index' in response)) {
+    if (!options.silent || loadState.value !== 'ready') {
+      loadState.value = 'error'
+      errorMessage.value = t('library_invalid_response')
+    }
+    return
+  }
+
+  bookmarkIndex.value = markRaw(response.index)
+  bookmarkStructureHash.value = response.structureHash
   bookmarkSyncReady.value = response.syncReady
   loadState.value = 'ready'
   errorMessage.value = ''
@@ -215,7 +239,8 @@ async function loadPanel() {
     loadState.value = 'error'
     errorMessage.value = t('library_load_failed')
     items.value = []
-    bookmarkRoots.value = []
+    bookmarkIndex.value = null
+    bookmarkStructureHash.value = ''
   }
 }
 
@@ -293,29 +318,13 @@ function closeNoteEditor() {
   noteEditorError.value = ''
 }
 
-function patchBookmarkNoteInTree(
-  nodes: BookmarkLibraryTreeNode[],
-  memoryItemId: string,
-  note: string | null
-): BookmarkLibraryTreeNode[] {
-  return nodes.map(node => {
-    if (node.kind === 'folder') {
-      return {
-        ...node,
-        children: patchBookmarkNoteInTree(node.children, memoryItemId, note)
-      }
-    }
-    if (node.memoryItemId !== memoryItemId) {
-      return node
-    }
-    const next = { ...node }
-    if (note) {
-      next.note = note
-    } else {
-      delete next.note
-    }
-    return next
-  })
+function patchBookmarkNoteInLocalIndex(memoryItemId: string, note: string | null): void {
+  if (!bookmarkIndex.value) {
+    return
+  }
+  bookmarkIndex.value = patchBookmarkNoteInIndex(bookmarkIndex.value, memoryItemId, note)
+  bookmarkStructureHash.value = computeBookmarkLibraryStructureHash(bookmarkIndex.value)
+  bookmarkIndex.value = markRaw(bookmarkIndex.value)
 }
 
 async function saveNote() {
@@ -336,7 +345,7 @@ async function saveNote() {
       return
     }
     const savedNote = response.item.clues.note?.trim() || null
-    bookmarkRoots.value = patchBookmarkNoteInTree(bookmarkRoots.value, id, savedNote)
+    patchBookmarkNoteInLocalIndex(id, savedNote)
     items.value = items.value.map(item => (item.id === id ? response.item : item))
     noteEditorOpen.value = false
     noteEditorMemoryId.value = null
@@ -414,13 +423,13 @@ onUnmounted(() => {
         </div>
 
         <template v-else-if="showingBookmarkTree">
-          <div v-if="bookmarkRoots.length === 0" class="library-empty">
+          <div v-if="!bookmarkIndex || bookmarkIndex.bookmarkCount === 0" class="library-empty">
             <p class="library-empty-title">{{ activeTab.emptyTitle }}</p>
             <p class="library-empty-copy">{{ activeTab.emptyBody }}</p>
           </div>
           <BookmarkLibraryTree
             v-else
-            :roots="bookmarkRoots"
+            :index="bookmarkIndex"
             :show-unsynced-flags="bookmarkSyncReady"
             @edit-note="openNoteEditor"
             @open-bookmark="handleOpenBookmark"

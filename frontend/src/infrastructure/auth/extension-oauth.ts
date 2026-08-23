@@ -131,6 +131,7 @@ export function classifyAuthRefreshFailure(error: unknown): 'invalid' | 'transie
     lower.includes('session_not_found') ||
     lower.includes('session_expired') ||
     lower.includes('invalid refresh token') ||
+    lower.includes('refresh token is not valid') ||
     lower.includes('refresh token not found')
   ) {
     return 'invalid'
@@ -147,6 +148,7 @@ type RefreshTokenApiResponse = {
   expires_in?: number
   user?: SupabaseUserResponse | null
   error?: string
+  error_code?: string
   error_description?: string
   msg?: string
   message?: string
@@ -198,7 +200,7 @@ async function refreshSessionViaFetch(
     const kind = classifyAuthRefreshFailure({
       status: response.status,
       message: reason,
-      code: payload.error
+      code: payload.error_code ?? payload.error
     })
     return { ok: false, kind, reason }
   }
@@ -235,31 +237,55 @@ async function refreshSessionViaFetch(
 /**
  * 详细 refresh；供 revalidate 区分 invalid / transient。
  * 使用裸 fetch，避免 Service Worker 中 supabase-js 触发 window ReferenceError。
+ * 同 refreshToken 并发合并为一次网络请求，避免 Already Used。
  */
+let refreshInflight: {
+  refreshToken: string
+  promise: Promise<RefreshAuthSessionResult>
+} | null = null
+
 export async function refreshAuthSessionDetailed(
   refreshToken: string,
   previous?: Pick<AuthSession, 'avatarUrl' | 'displayName' | 'email'> | null
 ): Promise<RefreshAuthSessionResult> {
-  try {
-    const result = await refreshSessionViaFetch(refreshToken)
-    if (!result.ok) {
-      return { status: result.kind, reason: result.reason }
-    }
-    return {
-      status: 'ok',
-      session: mapSupabaseSessionToAuthSession(result.session, previous)
-    }
-  } catch (error) {
-    const kind = classifyAuthRefreshFailure(error)
-    logger.warn('Auth', 'refreshSession 抛错（按瞬时失败保留登录态）', {
-      kind,
-      error: error instanceof Error ? error.message : String(error)
-    })
-    return {
-      status: kind,
-      reason: error instanceof Error ? error.message : 'refresh_threw'
-    }
+  const token = refreshToken.trim()
+  if (!token) {
+    return { status: 'invalid', reason: 'missing_refresh_token' }
   }
+
+  if (refreshInflight && refreshInflight.refreshToken === token) {
+    return refreshInflight.promise
+  }
+
+  const promise = (async (): Promise<RefreshAuthSessionResult> => {
+    try {
+      const result = await refreshSessionViaFetch(token)
+      if (!result.ok) {
+        return { status: result.kind, reason: result.reason }
+      }
+      return {
+        status: 'ok',
+        session: mapSupabaseSessionToAuthSession(result.session, previous)
+      }
+    } catch (error) {
+      const kind = classifyAuthRefreshFailure(error)
+      logger.warn('Auth', 'refreshSession 抛错（按瞬时失败保留登录态）', {
+        kind,
+        error: error instanceof Error ? error.message : String(error)
+      })
+      return {
+        status: kind,
+        reason: error instanceof Error ? error.message : 'refresh_threw'
+      }
+    }
+  })().finally(() => {
+    if (refreshInflight?.promise === promise) {
+      refreshInflight = null
+    }
+  })
+
+  refreshInflight = { refreshToken: token, promise }
+  return promise
 }
 
 /**

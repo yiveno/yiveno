@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 
-import { AUTH_SESSION_STORAGE_KEY } from '@/core/identity/auth-session'
+import { SUBSCRIPTION_SNAPSHOT_STORAGE_KEY } from '@/core/identity/subscription-snapshot'
+import { watchAuthSessionStorage } from '@/infrastructure/auth/watch-auth-session-storage'
 import { openExtensionLibraryPage } from '@/infrastructure/browser/library-page'
 import { openExtensionOptionsPage } from '@/infrastructure/browser/options-page'
 import { openWebsiteAccountPage } from '@/infrastructure/browser/website-page'
@@ -9,6 +10,7 @@ import { t } from '@/infrastructure/i18n/t'
 import {
   authSignIn,
   fetchAuthState,
+  fetchSubscriptionStatus,
   refreshAuthProfile
 } from '@/infrastructure/messaging/background-client'
 import AppIconButton from '@/infrastructure/ui/AppIconButton.vue'
@@ -45,6 +47,8 @@ const accountLabel = ref('')
 const accountBusy = ref(false)
 /** 头像图加载失败时回退图标，避免裂图。 */
 const avatarBroken = ref(false)
+/** 有效 Pro：头像 1px Sage 环（档位区分，非会员虚荣装饰）。 */
+const isPro = ref(false)
 
 const showLibrary = computed(() => props.current !== 'library')
 const showSettings = computed(() => props.current !== 'settings')
@@ -53,6 +57,9 @@ const showAvatarImage = computed(
   () => signedIn.value && Boolean(avatarUrl.value) && !avatarBroken.value
 )
 
+/** 已登录且 Pro 时显示档位环（含无图回退图标）。 */
+const showProRing = computed(() => signedIn.value && isPro.value)
+
 /** 扩展包内 logo mark（构建后位于 dist/images/）。 */
 const brandLogoUrl = chrome.runtime.getURL('images/logo-mark.svg')
 
@@ -60,11 +67,24 @@ const accountTitle = computed(() => {
   if (!signedIn.value) {
     return t('nav_sign_in')
   }
+  const parts = [t('nav_account')]
   if (accountLabel.value) {
-    return `${t('nav_account')} · ${accountLabel.value}`
+    parts.push(accountLabel.value)
   }
-  return t('nav_account')
+  if (isPro.value) {
+    parts.push(t('settings_subscription_tier_pro'))
+  }
+  return parts.join(' · ')
 })
+
+async function refreshProChip(): Promise<void> {
+  try {
+    const response = await fetchSubscriptionStatus()
+    isPro.value = response.ok && response.snapshot.isPro
+  } catch {
+    isPro.value = false
+  }
+}
 
 async function refreshAuthChip() {
   try {
@@ -74,6 +94,7 @@ async function refreshAuthChip() {
       avatarUrl.value = ''
       accountLabel.value = ''
       avatarBroken.value = false
+      isPro.value = false
       return
     }
     signedIn.value = response.signedIn
@@ -81,8 +102,13 @@ async function refreshAuthChip() {
     accountLabel.value = response.displayName?.trim() || response.email?.trim() || ''
     avatarBroken.value = false
 
+    if (!response.signedIn) {
+      isPro.value = false
+      return
+    }
+
     // 已登录但本地无头像：补拉一次 getUser（旧 session / refresh 冲掉后的自愈）
-    if (response.signedIn && !avatarUrl.value) {
+    if (!avatarUrl.value) {
       const refreshed = await refreshAuthProfile()
       if (refreshed.ok && refreshed.avatarUrl?.trim()) {
         avatarUrl.value = refreshed.avatarUrl.trim()
@@ -91,17 +117,20 @@ async function refreshAuthChip() {
         avatarBroken.value = false
       }
     }
+
+    void refreshProChip()
   } catch {
     signedIn.value = false
     avatarUrl.value = ''
     accountLabel.value = ''
     avatarBroken.value = false
+    isPro.value = false
   }
 }
 
-function handleOpenLibrary() {
+async function handleOpenLibrary() {
   try {
-    openExtensionLibraryPage()
+    await openExtensionLibraryPage()
   } catch {
     emit('navigateError', t('error_open_library'))
   }
@@ -146,23 +175,31 @@ function handleNewFind() {
   emit('newFind')
 }
 
-function handleStorageChanged(
+function handleSubscriptionStorageChanged(
   changes: Record<string, chrome.storage.StorageChange>,
   areaName: string
-) {
-  if (areaName !== 'local' || !(AUTH_SESSION_STORAGE_KEY in changes)) {
+): void {
+  if (areaName !== 'local' || !(SUBSCRIPTION_SNAPSHOT_STORAGE_KEY in changes)) {
     return
   }
-  void refreshAuthChip()
+  void refreshProChip()
 }
+
+/** 取消登录态 / 订阅快照订阅。 */
+let stopWatchAuthSession: (() => void) | null = null
 
 onMounted(() => {
   void refreshAuthChip()
-  chrome.storage.onChanged.addListener(handleStorageChanged)
+  stopWatchAuthSession = watchAuthSessionStorage(() => {
+    void refreshAuthChip()
+  })
+  chrome.storage.onChanged.addListener(handleSubscriptionStorageChanged)
 })
 
 onUnmounted(() => {
-  chrome.storage.onChanged.removeListener(handleStorageChanged)
+  stopWatchAuthSession?.()
+  stopWatchAuthSession = null
+  chrome.storage.onChanged.removeListener(handleSubscriptionStorageChanged)
 })
 </script>
 
@@ -195,17 +232,22 @@ onUnmounted(() => {
         :disabled="accountBusy"
         @click="handleOpenAccount"
       >
-        <img
-          v-if="showAvatarImage"
-          class="app-page-header__avatar"
-          :src="avatarUrl"
-          alt=""
-          width="22"
-          height="22"
-          referrerpolicy="no-referrer"
-          @error="avatarBroken = true"
-        />
-        <AppIcon v-else name="account_circle" size="22px" />
+        <span
+          class="app-page-header__avatar-wrap"
+          :class="{ 'app-page-header__avatar-wrap--pro': showProRing }"
+        >
+          <img
+            v-if="showAvatarImage"
+            class="app-page-header__avatar"
+            :src="avatarUrl"
+            alt=""
+            width="22"
+            height="22"
+            referrerpolicy="no-referrer"
+            @error="avatarBroken = true"
+          />
+          <AppIcon v-else name="account_circle" size="22px" />
+        </span>
       </AppIconButton>
       <AppIconButton
         v-if="showLibrary"
@@ -266,6 +308,19 @@ onUnmounted(() => {
   flex-wrap: wrap;
   align-items: center;
   gap: 0;
+}
+
+.app-page-header__avatar-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  line-height: 0;
+}
+
+/* 1px Sage 环：仅 Pro；无 glow / 无加粗描边 */
+.app-page-header__avatar-wrap--pro {
+  box-shadow: 0 0 0 1px var(--accent, var(--sage, #4b6054));
 }
 
 .app-page-header__avatar {

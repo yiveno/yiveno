@@ -123,6 +123,28 @@ describe('runAsyncMemoryLlmEnrichment', () => {
     await expect(runAsyncMemoryLlmEnrichment(item.id, repo)).resolves.toBe('skipped')
     expect(putEnrichmentClues).not.toHaveBeenCalled()
   })
+
+  it('配额耗尽时熔断：后续直接跳过且不再请求', async () => {
+    const item = createBookmarkMemoryItem({
+      ownerId: 'o',
+      sourceLocalProfileId: 'p',
+      payload: { title: 'Some long enough title for gate', url: 'https://example.com/a' }
+    })
+    const { repo, putEnrichmentClues } = createRepoMock(item)
+    vi.mocked(buildMergedMemoryEnrichment).mockResolvedValue({
+      rule: { tags: ['page'], keywords: [], entities: [] },
+      proposal: null,
+      merged: { tags: ['page'], keywords: [], entities: [] },
+      path: 'quota_exceeded'
+    })
+
+    await expect(runAsyncMemoryLlmEnrichment(item.id, repo)).resolves.toBe('failed')
+    expect(putEnrichmentClues).not.toHaveBeenCalled()
+
+    vi.mocked(buildMergedMemoryEnrichment).mockClear()
+    await expect(runAsyncMemoryLlmEnrichment(item.id, repo)).resolves.toBe('skipped')
+    expect(buildMergedMemoryEnrichment).not.toHaveBeenCalled()
+  })
 })
 
 describe('scheduleAsyncMemoryLlmEnrichment', () => {
@@ -132,5 +154,38 @@ describe('scheduleAsyncMemoryLlmEnrichment', () => {
 
   it('空 id 不入队', () => {
     expect(() => scheduleAsyncMemoryLlmEnrichment('  ')).not.toThrow()
+  })
+
+  it('配额熔断后新 schedule 会解除熔断并再跑', async () => {
+    const item = createBookmarkMemoryItem({
+      ownerId: 'o',
+      sourceLocalProfileId: 'p',
+      payload: { title: 'Some long enough title for gate', url: 'https://example.com/b' }
+    })
+    const { repo } = createRepoMock(item)
+
+    vi.mocked(buildMergedMemoryEnrichment).mockResolvedValueOnce({
+      rule: { tags: ['page'], keywords: [], entities: [] },
+      proposal: null,
+      merged: { tags: ['page'], keywords: [], entities: [] },
+      path: 'quota_exceeded'
+    })
+    await expect(runAsyncMemoryLlmEnrichment(item.id, repo)).resolves.toBe('failed')
+
+    vi.mocked(buildMergedMemoryEnrichment).mockResolvedValue({
+      rule: { tags: ['page'], keywords: ['x'], entities: [] },
+      proposal: { keywords: ['x'], summary: 'ok' },
+      merged: {
+        tags: ['page'],
+        keywords: ['x'],
+        entities: [],
+        summary: 'ok'
+      },
+      path: 'rule_plus_llm'
+    })
+
+    // schedule 应解除熔断；直接再跑一次模拟入队后执行
+    scheduleAsyncMemoryLlmEnrichment(item.id)
+    await expect(runAsyncMemoryLlmEnrichment(item.id, repo)).resolves.toBe('written')
   })
 })

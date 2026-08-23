@@ -36,6 +36,7 @@ import {
   runIncrementalMemorySync,
   updateUserSettings
 } from '@/infrastructure/messaging/background-client'
+import { watchAuthSessionStorage } from '@/infrastructure/auth/watch-auth-session-storage'
 import {
   tAccountSyncError,
   tCommandsError,
@@ -810,15 +811,24 @@ async function confirmSignOut(mode: AuthSignOutMode) {
   }
 }
 
+/** 取消登录态 storage 订阅。 */
+let stopWatchAuthSession: (() => void) | null = null
+
 onMounted(() => {
   void loadCommands()
   void loadUserSettings()
   void loadSyncContext()
+  // 官网 handoff / 扩展内登出：立即刷新 signedIn、同步与配额，不依赖切回前台
+  stopWatchAuthSession = watchAuthSessionStorage(() => {
+    void loadSyncContext()
+  })
   document.addEventListener('visibilitychange', refreshCommandsIfReturnedFromShortcuts)
   document.addEventListener('visibilitychange', refreshSyncContextOnVisible)
 })
 
 onUnmounted(() => {
+  stopWatchAuthSession?.()
+  stopWatchAuthSession = null
   document.removeEventListener('visibilitychange', refreshCommandsIfReturnedFromShortcuts)
   document.removeEventListener('visibilitychange', refreshSyncContextOnVisible)
 })

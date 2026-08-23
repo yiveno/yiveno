@@ -33,19 +33,11 @@ export class MemoryItemService {
 
   /**
    * 从 Chrome 书签 upsert Bookmark MemoryItem。
-   * 仅新建时调度异步 LLM / embedding（更新标题/URL 不重复烧配额；bulk 走 repository 不经此层）。
+   * **不**调度 LLM enrichment / embedding：sync/reconcile 可能成千上万条，与 bulk 一致不烧配额。
+   * 用户主动 Capture（{@link captureBookmark}）仍会调度。
    */
   async upsertBookmarkFromChrome(input: CreateBookmarkInput): Promise<MemoryItem> {
-    const chromeBookmarkId = input.payload.chromeBookmarkId?.trim()
-    const existed = chromeBookmarkId
-      ? await this.repository.getByChromeBookmarkId(chromeBookmarkId)
-      : null
-    const item = await this.repository.upsertBookmarkFromChrome(input)
-    if (!existed) {
-      scheduleAsyncMemoryLlmEnrichment(item.id)
-      scheduleAsyncMemoryEmbedding(item.id)
-    }
-    return item
+    return this.repository.upsertBookmarkFromChrome(input)
   }
 
   /** 捕获选中文本为 Text Excerpt MemoryItem；落库后异步稀疏 LLM enrichment + Pro embedding。 */

@@ -1,32 +1,22 @@
 <script setup lang="ts">
-import { computed, inject, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import AppIconButton from '@/infrastructure/ui/AppIconButton.vue'
 
-import type { BookmarkLibraryTreeNode } from '@/core/memory/bookmark-library-tree'
+import type { BookmarkLibraryVisibleRow } from '@/core/memory/bookmark-library-index'
+import { getBookmarkLibraryRowHeight } from '@/core/memory/bookmark-library-index'
 import { getChromeFaviconUrl } from '@/infrastructure/browser/chrome-favicon'
 import { t } from '@/infrastructure/i18n/t'
 import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
-import {
-  bookmarkLibraryTreeContextKey,
-  resolveBookmarkFolderExpanded
-} from '@/pages/library/bookmark-library-tree-context'
 
-defineOptions({ name: 'BookmarkLibraryTreeNodeView' })
+defineOptions({ name: 'BookmarkLibraryTreeRow' })
 
-const props = withDefaults(
-  defineProps<{
-    node: BookmarkLibraryTreeNode
-    depth?: number
-    /** 全量导入完成后才展示「未同步」 */
-    showUnsyncedFlags?: boolean
-  }>(),
-  {
-    depth: 0,
-    showUnsyncedFlags: false
-  }
-)
+const props = defineProps<{
+  row: BookmarkLibraryVisibleRow
+  showUnsyncedFlags?: boolean
+}>()
 
 const emit = defineEmits<{
+  toggleFolder: [chromeId: string, depth: number]
   editNote: [
     payload: {
       memoryItemId: string
@@ -34,7 +24,6 @@ const emit = defineEmits<{
       note: string
     }
   ]
-  /** 打开书签：navigate=true 时由父级 window.open；否则仅写回。 */
   openBookmark: [
     payload: {
       url: string
@@ -44,97 +33,61 @@ const emit = defineEmits<{
   ]
 }>()
 
-const treeContext = inject(bookmarkLibraryTreeContextKey)
-if (!treeContext) {
-  throw new Error('BookmarkLibraryTreeNodeView 必须在 BookmarkLibraryTree 内使用')
-}
-
-/** favicon 加载失败时回退通用书签图标。 */
 const faviconBroken = ref(false)
 
-watch(
-  () => (props.node.kind === 'bookmark' ? props.node.url : ''),
-  () => {
-    faviconBroken.value = false
-  }
-)
+const rowStyle = computed(() => ({
+  height: `${getBookmarkLibraryRowHeight(props.row)}px`,
+  paddingLeft: `${props.row.depth * 12}px`
+}))
 
-const folderExpanded = computed(() => {
-  if (props.node.kind !== 'folder') {
-    return false
+const bookmarkTooltip = computed(() => {
+  if (props.row.kind !== 'bookmark') {
+    return ''
   }
-  return resolveBookmarkFolderExpanded(
-    treeContext.expandedFolderIds.value,
-    props.node.chromeId,
-    props.depth
-  )
+  return props.row.title.trim()
 })
 
 const bookmarkFaviconUrl = computed(() => {
-  if (props.node.kind !== 'bookmark') {
+  if (props.row.kind !== 'bookmark' || !props.row.url) {
     return ''
   }
-  return getChromeFaviconUrl(props.node.url, 32)
+  return getChromeFaviconUrl(props.row.url, 32)
 })
 
-/** 悬停显示完整标题（链接 URL 由浏览器原生 tooltip 展示）。 */
-const bookmarkTooltip = computed(() => {
-  if (props.node.kind !== 'bookmark') {
-    return ''
-  }
-  return props.node.title.trim()
-})
-
-const bookmarkMemoKey = computed(() => {
-  if (props.node.kind !== 'bookmark') {
-    return null
-  }
-  return [
-    props.node.chromeId,
-    props.node.title,
-    props.node.url,
-    props.node.note ?? '',
-    props.node.memoryItemId ?? '',
-    props.showUnsyncedFlags,
-    faviconBroken.value
-  ] as const
-})
-
-function toggleFolder() {
-  if (props.node.kind !== 'folder' || !treeContext) {
+function handleToggleFolder() {
+  if (props.row.kind !== 'folder') {
     return
   }
-  treeContext.toggleFolder(props.node.chromeId, props.depth)
+  emit('toggleFolder', props.row.chromeId, props.row.depth)
 }
 
 function handleEditNote(event: Event) {
   event.preventDefault()
   event.stopPropagation()
-  if (props.node.kind !== 'bookmark' || !props.node.memoryItemId) {
+  if (props.row.kind !== 'bookmark' || !props.row.memoryItemId) {
     return
   }
   emit('editNote', {
-    memoryItemId: props.node.memoryItemId,
-    title: props.node.title,
-    note: props.node.note ?? ''
+    memoryItemId: props.row.memoryItemId,
+    title: props.row.title,
+    note: props.row.note ?? ''
   })
 }
 
 function handleOpenBookmark(event: MouseEvent) {
-  if (props.node.kind !== 'bookmark') {
+  if (props.row.kind !== 'bookmark' || !props.row.url) {
     return
   }
-  const memoryItemId = props.node.memoryItemId
-  // 中键 / 修饰键：浏览器自己开链；仍通知父级写回（若有 id）
+  const memoryItemId = props.row.memoryItemId
   if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
     if (memoryItemId) {
-      emit('openBookmark', { url: props.node.url, memoryItemId, navigate: false })
+      emit('openBookmark', { url: props.row.url, memoryItemId, navigate: false })
     }
     return
   }
   event.preventDefault()
   emit('openBookmark', {
-    url: props.node.url,
+    url: props.row.url,
     navigate: true,
     ...(memoryItemId ? { memoryItemId } : {})
   })
@@ -142,39 +95,28 @@ function handleOpenBookmark(event: MouseEvent) {
 </script>
 
 <template>
-  <li class="tree-item" :class="{ 'tree-item--bookmark': node.kind === 'bookmark' }">
-    <template v-if="node.kind === 'folder'">
+  <div class="tree-row" :style="rowStyle">
+    <template v-if="row.kind === 'folder'">
       <button
         type="button"
         class="tree-folder"
-        :aria-expanded="folderExpanded"
-        @click="toggleFolder"
+        :aria-expanded="row.expanded === true"
+        @click="handleToggleFolder"
       >
         <span class="tree-chevron" aria-hidden="true">
-          <AppIcon :name="folderExpanded ? 'expand_more' : 'chevron_right'" size="18px" />
+          <AppIcon :name="row.expanded ? 'expand_more' : 'chevron_right'" size="18px" />
         </span>
         <span class="tree-icon tree-icon--folder" aria-hidden="true">
-          <AppIcon :name="folderExpanded ? 'folder_open' : 'folder'" size="20px" />
+          <AppIcon :name="row.expanded ? 'folder_open' : 'folder'" size="20px" />
         </span>
-        <span class="tree-folder-title">{{ node.title }}</span>
+        <span class="tree-folder-title">{{ row.title }}</span>
       </button>
-      <ul v-if="folderExpanded" class="tree-children" role="group">
-        <BookmarkLibraryTreeNodeView
-          v-for="child in node.children"
-          :key="`${child.kind}-${child.chromeId}`"
-          :node="child"
-          :depth="depth + 1"
-          :show-unsynced-flags="showUnsyncedFlags"
-          @edit-note="emit('editNote', $event)"
-          @open-bookmark="emit('openBookmark', $event)"
-        />
-      </ul>
     </template>
 
-    <div v-else v-memo="bookmarkMemoKey" class="tree-bookmark-row">
+    <div v-else class="tree-bookmark-row">
       <a
         class="tree-bookmark"
-        :href="node.url"
+        :href="row.url"
         target="_blank"
         rel="noopener noreferrer"
         :title="bookmarkTooltip"
@@ -196,40 +138,35 @@ function handleOpenBookmark(event: MouseEvent) {
         </span>
         <span class="tree-bookmark-copy">
           <span class="tree-bookmark-title-row">
-            <span class="tree-bookmark-title">{{ node.title }}</span>
-            <span v-if="showUnsyncedFlags && !node.memoryItemId" class="tree-bookmark-flag">{{
+            <span class="tree-bookmark-title">{{ row.title }}</span>
+            <span v-if="showUnsyncedFlags && !row.memoryItemId" class="tree-bookmark-flag">{{
               t('library_bookmark_unsynced')
             }}</span>
           </span>
-          <span v-if="node.note" class="tree-bookmark-note">
+          <span v-if="row.note" class="tree-bookmark-note">
             <span class="tree-bookmark-note-label">{{ t('detail_note_label') }}</span>
-            {{ node.note }}
+            {{ row.note }}
           </span>
         </span>
       </a>
       <AppIconButton
-        v-if="node.memoryItemId"
+        v-if="row.memoryItemId"
         type="button"
         class="tree-bookmark-note-btn"
-        :title="node.note ? t('library_edit_note_aria') : t('library_add_note_aria')"
-        :aria-label="node.note ? t('library_edit_note_aria') : t('library_add_note_aria')"
+        :title="row.note ? t('library_edit_note_aria') : t('library_add_note_aria')"
+        :aria-label="row.note ? t('library_edit_note_aria') : t('library_add_note_aria')"
         @click="handleEditNote"
       >
         <AppIcon name="edit_note" size="20px" />
       </AppIconButton>
     </div>
-  </li>
+  </div>
 </template>
 
 <style scoped>
-.tree-item {
-  margin: 0;
-  list-style: none;
-}
-
-.tree-item--bookmark {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 52px;
+.tree-row {
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .tree-folder {
@@ -237,8 +174,9 @@ function handleOpenBookmark(event: MouseEvent) {
   align-items: center;
   gap: var(--space-2xs);
   width: 100%;
+  height: 100%;
   margin: 0;
-  padding: var(--space-2xs) var(--space-xs);
+  padding: 0 var(--space-xs) 0 0;
   border: none;
   border-radius: var(--radius-sm);
   text-align: left;
@@ -258,23 +196,28 @@ function handleOpenBookmark(event: MouseEvent) {
 }
 
 .tree-bookmark-row {
-  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  height: 100%;
 }
 
 .tree-bookmark {
   display: flex;
-  align-items: flex-start;
-  gap: var(--space-xs);
-  width: 100%;
+  align-items: center;
+  gap: var(--space-2xs);
+  flex: 1;
   min-width: 0;
+  height: 100%;
   margin: 0;
-  padding: var(--space-sm) 52px var(--space-sm) var(--space-sm);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  padding: 0 var(--space-xs) 0 0;
+  border: none;
+  border-radius: var(--radius-sm);
   text-align: left;
   text-decoration: none;
   color: inherit;
-  background: var(--surface);
+  background: transparent;
   cursor: pointer;
   font: inherit;
   transition: background var(--motion-duration-short) var(--motion-easing-standard);
@@ -290,10 +233,7 @@ function handleOpenBookmark(event: MouseEvent) {
 }
 
 .tree-bookmark-note-btn {
-  position: absolute;
-  top: var(--space-2xs);
-  right: var(--space-2xs);
-  z-index: 1;
+  flex-shrink: 0;
   color: var(--on-surface-muted);
   opacity: 0;
   pointer-events: none;
@@ -337,7 +277,6 @@ function handleOpenBookmark(event: MouseEvent) {
   align-items: center;
   width: 20px;
   height: 20px;
-  margin-top: 1px;
   color: var(--accent);
 }
 
@@ -365,8 +304,8 @@ function handleOpenBookmark(event: MouseEvent) {
 
 .tree-bookmark-title {
   min-width: 0;
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
   line-height: 1.35;
   white-space: nowrap;
   overflow: hidden;
@@ -389,8 +328,8 @@ function handleOpenBookmark(event: MouseEvent) {
 
 .tree-bookmark-note {
   display: -webkit-box;
-  font-size: 13px;
-  line-height: 1.45;
+  font-size: 12px;
+  line-height: 1.35;
   color: var(--on-surface);
   overflow: hidden;
   -webkit-line-clamp: 2;
@@ -408,14 +347,5 @@ function handleOpenBookmark(event: MouseEvent) {
   font-size: 12px;
   font-weight: 600;
   color: var(--sage-dark);
-}
-
-.tree-children {
-  display: grid;
-  gap: var(--space-xs);
-  margin: var(--space-2xs) 0 0;
-  padding: 0 0 0 var(--space-sm);
-  border-left: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
-  list-style: none;
 }
 </style>

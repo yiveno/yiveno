@@ -5,6 +5,7 @@ import { buildLoginHref } from '../services/auth-return'
 import { createCheckoutSession, createPortalSession } from '../services/billing'
 import { getSupabase } from '../services/supabase'
 import { getUserSubscription, isActiveProSnapshot } from '../services/subscription'
+import { writeNavIsProCache } from '../services/nav-pro-badge-cache'
 
 defineOptions({ name: 'PricingPage' })
 
@@ -35,6 +36,7 @@ async function refreshProFlag(): Promise<boolean> {
   if (!accessToken.value) return false
   const sub = await getUserSubscription(accessToken.value)
   isPro.value = isActiveProSnapshot(sub)
+  writeNavIsProCache(isPro.value)
   return isPro.value
 }
 

@@ -8,7 +8,7 @@
 
 import type { AuthSession } from '@/core/identity/auth-session'
 import { refreshAuthSessionDetailed } from '@/infrastructure/auth/extension-oauth'
-import { getAuthSession } from '@/infrastructure/identity/auth-session-service'
+import { getAuthSession, setAuthSession } from '@/infrastructure/identity/auth-session-service'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 
 /** chrome.storage.session：上次成功/完成校验的时间戳（ms）。 */
@@ -63,6 +63,11 @@ async function recoverSessionIfRotated(attemptedRefreshToken: string): Promise<A
   return stored
 }
 
+function isAlreadyUsedRefreshReason(reason: string): boolean {
+  const lower = reason.toLowerCase()
+  return lower.includes('already used') || lower.includes('refresh_token_already_used')
+}
+
 async function runRevalidateAuthSession(session: AuthSession): Promise<AuthRevalidateResult> {
   const startedAt = flowStart('Auth', 'revalidate session')
   let refreshed: Awaited<ReturnType<typeof refreshAuthSessionDetailed>>
@@ -89,6 +94,8 @@ async function runRevalidateAuthSession(session: AuthSession): Promise<AuthReval
   }
 
   if (refreshed.status === 'ok') {
+    // 立刻落盘，避免并发 requireAccessToken 仍读到旧 refresh
+    await setAuthSession(refreshed.session)
     await markAuthValidatedNow()
     flowOk('Auth', 'revalidate session', startedAt, { userId: refreshed.session.userId })
     return { status: 'valid', session: refreshed.session }
@@ -115,7 +122,17 @@ async function runRevalidateAuthSession(session: AuthSession): Promise<AuthReval
     return { status: 'valid', session: recovered }
   }
 
-  // 不 mark，下次打开 Popup 可再试
+  // Already Used 且本地无新 refresh：token 族已废，继续「假登录」只会拖垮订阅/embed
+  if (isAlreadyUsedRefreshReason(refreshed.reason)) {
+    await markAuthValidatedNow()
+    flowFail('Auth', 'revalidate session', startedAt, new Error(refreshed.reason), {
+      outcome: 'invalid',
+      detail: 'already_used_unrecoverable'
+    })
+    return { status: 'invalid', reason: refreshed.reason }
+  }
+
+  // 其它瞬时失败：不 mark，下次打开可再试
   flowFail('Auth', 'revalidate session', startedAt, new Error(refreshed.reason), {
     outcome: 'uncertain'
   })

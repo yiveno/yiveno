@@ -144,7 +144,16 @@ async function dispatchBackgroundMessage(
     case 'GET_CHROME_BOOKMARK_IMPORT_STATUS':
       return handleGetChromeBookmarkImportStatus()
     case 'GET_BOOKMARK_LIBRARY_TREE':
-      return handleGetBookmarkLibraryTree()
+      return handleGetBookmarkLibraryTree(
+        message.payload && typeof message.payload === 'object'
+          ? {
+              clientHash:
+                'clientHash' in message.payload && typeof message.payload.clientHash === 'string'
+                  ? message.payload.clientHash
+                  : undefined
+            }
+          : {}
+      )
     case 'GET_EXTENSION_COMMANDS':
       return handleGetExtensionCommands()
     case 'OPEN_CHROME_SHORTCUTS_PAGE':

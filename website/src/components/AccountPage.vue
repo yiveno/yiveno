@@ -17,32 +17,62 @@ import {
   resolveExtensionHandoffTargetId
 } from '../services/extension-auth-handoff'
 import { createCheckoutSession, createPortalSession } from '../services/billing'
+import { clearNavIsProCache, writeNavIsProCache } from '../services/nav-pro-badge-cache'
 
 defineOptions({ name: 'AccountPage' })
+
+/**
+ * 账户页范围（仅此四块）：
+ * 身份 · 权益（Free/Pro）· 付费与管理 · 结束会话。
+ * 扩展 handoff 仍后台执行，不在本页展示。
+ */
 
 const user = ref<User | null>(null)
 const profileAvatarUrl = ref('')
 const profileDisplayName = ref('')
 const subscription = ref<UserSubscription | null>(null)
 const accessToken = ref<string | null>(null)
-const loading = ref(true)
-const extensionSyncStatus = ref<'idle' | 'syncing' | 'ok' | 'skipped' | 'failed'>('idle')
+/** 仅挡「未拿到 session」；不因 Dodo 对账堵整页。 */
+const pageLoading = ref(true)
+/** 订阅区单独转圈（含 Worker→Dodo 对账）。 */
+const subscriptionLoading = ref(false)
 
 const isPro = computed(() => isActiveProSnapshot(subscription.value))
+
+const signInProvider = computed(() => {
+  const raw = user.value?.app_metadata?.provider
+  if (typeof raw !== 'string' || !raw.trim()) return 'Unknown'
+  const p = raw.trim().toLowerCase()
+  if (p === 'google') return 'Google'
+  if (p === 'azure' || p === 'microsoft') return 'Microsoft'
+  return raw
+})
 
 const checkoutBusy = ref(false)
 const checkoutError = ref('')
 
-/** 从 Worker 拉订阅（含对账）；进页 / 从 checkout 返回时自动调用。 */
-async function loadSubscription(): Promise<void> {
+/**
+ * 拉订阅（Worker 内强制对账，约数秒）。
+ * @param silent 已有快照时后台刷新，不把订阅区打回全量 Loading。
+ */
+async function loadSubscription(options: { silent?: boolean } = {}): Promise<void> {
   if (!accessToken.value) return
-  const sub = await getUserSubscription(accessToken.value)
-  subscription.value = sub
+  const silent = Boolean(options.silent && subscription.value)
+  if (!silent) {
+    subscriptionLoading.value = true
+  }
+  try {
+    const sub = await getUserSubscription(accessToken.value)
+    subscription.value = sub
+    writeNavIsProCache(isActiveProSnapshot(sub))
+  } finally {
+    subscriptionLoading.value = false
+  }
 }
 
 function refreshSubscriptionOnVisible(): void {
   if (document.visibilityState !== 'visible') return
-  void loadSubscription()
+  void loadSubscription({ silent: true })
 }
 
 async function startMonthlyCheckout(): Promise<void> {
@@ -50,7 +80,7 @@ async function startMonthlyCheckout(): Promise<void> {
   checkoutError.value = ''
   checkoutBusy.value = true
   try {
-    await loadSubscription()
+    await loadSubscription({ silent: true })
     if (isPro.value) {
       console.warn('[Account] 已是有效 Pro，跳过 checkout')
       checkoutError.value = 'This account already has Pro. Manage it from your subscription.'
@@ -58,7 +88,7 @@ async function startMonthlyCheckout(): Promise<void> {
     }
     const result = await createCheckoutSession(accessToken.value, 'pro_monthly')
     if (result.status === 'already_subscribed') {
-      await loadSubscription()
+      await loadSubscription({ silent: true })
       console.warn('[Account] Worker 判定已是 Pro，拒绝新 checkout')
       checkoutError.value = 'This account already has Pro. Manage it from your subscription.'
       return
@@ -79,27 +109,21 @@ async function openPortal(): Promise<void> {
   if (url) window.location.assign(url)
 }
 
-/** 官网已登录时补推 session 到扩展（账户页 / URL 带 extension_id / 上次连接过）。 */
+/** 后台回传扩展；失败只打日志，本页不展示扩展状态。 */
 async function syncSessionToExtension(session: {
   access_token: string
   refresh_token: string
   user: User
   expires_at?: number
 }): Promise<void> {
-  if (!resolveExtensionHandoffTargetId()) {
-    extensionSyncStatus.value = 'skipped'
+  if (!resolveExtensionHandoffTargetId() || !session.refresh_token) {
     return
   }
-  if (!session.refresh_token) {
-    extensionSyncStatus.value = 'failed'
-    return
-  }
-  extensionSyncStatus.value = 'syncing'
   const profile = extractProfileFromUserMetadata(
     session.user.user_metadata as Record<string, unknown> | undefined
   )
   try {
-    const ok = await handoffSessionToExtension({
+    await handoffSessionToExtension({
       accessToken: session.access_token,
       refreshToken: session.refresh_token,
       userId: session.user.id,
@@ -107,10 +131,8 @@ async function syncSessionToExtension(session: {
       ...(session.expires_at != null ? { expiresAt: session.expires_at } : {}),
       ...profile
     })
-    extensionSyncStatus.value = ok ? 'ok' : 'failed'
   } catch (error) {
     console.warn('[AccountPage] extension session handoff failed', error)
-    extensionSyncStatus.value = 'failed'
   }
 }
 
@@ -135,9 +157,9 @@ onMounted(async () => {
   )
   profileAvatarUrl.value = profile.avatarUrl ?? ''
   profileDisplayName.value = profile.displayName ?? data.session.user.email ?? ''
-  await loadSubscription()
-  loading.value = false
+  pageLoading.value = false
   document.addEventListener('visibilitychange', refreshSubscriptionOnVisible)
+  void loadSubscription()
   void syncSessionToExtension(data.session)
 })
 
@@ -148,6 +170,7 @@ onUnmounted(() => {
 async function handleSignOut() {
   const supabase = await getSupabase()
   await supabase.auth.signOut()
+  clearNavIsProCache()
   try {
     await handoffSignOutToExtension()
   } catch (error) {
@@ -158,197 +181,316 @@ async function handleSignOut() {
 </script>
 
 <template>
-  <div v-if="!loading" class="account-page page">
-    <div v-if="user" class="card">
-      <div class="user-header">
-        <img v-if="profileAvatarUrl" :src="profileAvatarUrl" class="avatar" alt="" />
-        <div>
-          <h1 class="account-title">{{ profileDisplayName || user.email }}</h1>
-          <p class="email">{{ user.email }}</p>
+  <div v-if="!pageLoading && user" class="account page">
+    <!-- 1. 身份 -->
+    <header class="account__identity">
+      <div class="account__who">
+        <img
+          v-if="profileAvatarUrl"
+          class="account__avatar"
+          :src="profileAvatarUrl"
+          alt=""
+          width="56"
+          height="56"
+          decoding="async"
+        />
+        <div v-else class="account__avatar account__avatar--fallback" aria-hidden="true">
+          {{ (profileDisplayName || user.email || '?').slice(0, 1).toUpperCase() }}
+        </div>
+        <div class="account__who-text">
+          <h1 class="account__name">{{ profileDisplayName || user.email }}</h1>
+          <p class="account__meta">
+            <span>{{ user.email }}</span>
+            <span class="account__dot" aria-hidden="true">·</span>
+            <span>{{ signInProvider }}</span>
+          </p>
         </div>
       </div>
-      <section>
-        <h2>Subscription</h2>
-        <p>
-          Plan:
-          <strong>{{ isPro ? 'Pro' : 'Free' }}</strong>
-        </p>
-        <p v-if="isPro && subscription?.status">
-          Status: {{ subscription.status }}
+      <!-- 4. 结束会话 -->
+      <button type="button" class="account__sign-out" @click="handleSignOut">Sign out</button>
+    </header>
+
+    <!-- 2. 权益 + 3. 付费与管理 -->
+    <section class="account__plan" aria-labelledby="account-plan-heading">
+      <h2 id="account-plan-heading" class="account__section-label">Plan</h2>
+
+      <div
+        v-if="subscriptionLoading && !subscription"
+        class="account__plan-panel account__plan-panel--loading"
+        role="status"
+        aria-live="polite"
+      >
+        <div class="account__skel account__skel--title" />
+        <div class="account__skel account__skel--line" />
+        <div class="account__skel account__skel--line account__skel--short" />
+        <p class="account__plan-status-text">Checking your plan…</p>
+      </div>
+
+      <div v-else class="account__plan-panel" :class="{ 'account__plan-panel--pro': isPro }">
+        <div class="account__plan-top">
+          <p class="account__plan-name">{{ isPro ? 'Pro' : 'Free' }}</p>
+          <p v-if="subscriptionLoading" class="account__plan-updating" role="status">Updating…</p>
+        </div>
+        <p v-if="isPro && subscription?.status" class="account__plan-renew">
+          <span class="account__plan-status">{{ subscription.status }}</span>
           <template v-if="subscription.currentPeriodEnd">
             · Renews / ends {{ formatDate(subscription.currentPeriodEnd) }}
           </template>
         </p>
-        <p class="hint">
-          Free and Pro share the same on-device recall quality. Pro adds cloud sync across devices
-          and a larger hosted clue-understanding quota.
-        </p>
-        <div class="actions">
+        <div class="account__plan-actions">
           <button
             v-if="!isPro"
-            class="ui-btn ui-btn--primary"
             type="button"
-            :disabled="checkoutBusy"
+            class="ui-btn ui-btn--primary"
+            :disabled="checkoutBusy || subscriptionLoading"
             @click="startMonthlyCheckout"
           >
             {{ checkoutBusy ? 'Opening…' : 'Upgrade to Pro' }}
           </button>
-          <button v-if="isPro" class="ui-btn" type="button" @click="openPortal">
+          <button
+            v-if="isPro"
+            type="button"
+            class="ui-btn"
+            :disabled="subscriptionLoading"
+            @click="openPortal"
+          >
             Manage subscription
           </button>
           <a class="ui-btn ui-btn--ghost" href="/pricing">View pricing</a>
         </div>
-        <p class="hint">
-          Need a refund or other help?
-          <a href="/support">Support</a>
-          — cancellations are in Manage subscription; refunds go through Dodo Payments.
-        </p>
-        <p v-if="checkoutError" class="hint error">{{ checkoutError }}</p>
-      </section>
-      <section>
-        <h2>Account</h2>
-        <dl>
-          <dt>Sign-in</dt>
-          <dd>{{ user.app_metadata?.provider || 'Unknown' }}</dd>
-          <dt>Joined</dt>
-          <dd>{{ formatDate(user.created_at) }}</dd>
-          <dt>Last sign-in</dt>
-          <dd>{{ formatDate(user.last_sign_in_at) }}</dd>
-        </dl>
-      </section>
-      <button class="ui-btn" @click="handleSignOut">Sign out</button>
-      <p class="sign-out-hint">
-        Extension memories stay on your device. Clear them from extension Settings if needed.
-      </p>
-      <p v-if="extensionSyncStatus === 'ok'" class="sign-out-hint extension-sync-ok">
-        Extension login synced.
-      </p>
-      <p v-else-if="extensionSyncStatus === 'failed'" class="sign-out-hint extension-sync-fail">
-        Could not sync login to the extension. Open Yiveno extension → account icon → Sign in once.
-      </p>
-      <p v-else-if="extensionSyncStatus === 'skipped'" class="sign-out-hint">
-        To sync login to the extension, open it and tap the account icon (Sign in).
-      </p>
-    </div>
+        <p v-if="checkoutError" class="account__error" role="alert">{{ checkoutError }}</p>
+      </div>
+    </section>
   </div>
   <div v-else class="ui-status">Loading…</div>
 </template>
 
 <style scoped>
-.account-page {
-  max-width: 600px;
+.account {
+  max-width: 560px;
 }
 
-.card {
-  background: var(--paper);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: clamp(24px, 3vw, 36px);
+.account__identity {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: clamp(28px, 4vw, 40px);
+  padding-bottom: clamp(24px, 3vw, 32px);
+  border-bottom: 1px solid var(--border);
 }
 
-.user-header {
+.account__who {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: 14px;
+  min-width: 0;
 }
 
-.avatar {
+.account__avatar {
   width: 56px;
   height: 56px;
   border-radius: 50%;
   object-fit: cover;
+  flex-shrink: 0;
+  background: var(--paper-dim);
 }
 
-.account-title {
+.account__avatar--fallback {
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: var(--sage);
+  border: 1px solid var(--border);
+}
+
+.account__who-text {
+  min-width: 0;
+}
+
+.account__name {
   margin: 0;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(22px, 3vw, 28px);
-  letter-spacing: -0.02em;
+  font-size: clamp(24px, 3.2vw, 30px);
+  letter-spacing: -0.025em;
+  line-height: 1.15;
   color: var(--ink);
-  line-height: 1.2;
 }
 
-.email {
-  color: var(--sage-muted);
-  margin: 0.25rem 0 0;
+.account__meta {
+  margin: 6px 0 0;
   font-size: 14px;
   font-weight: 300;
+  line-height: 1.4;
+  color: var(--sage-muted);
+  word-break: break-word;
 }
 
-section {
-  margin-bottom: 1.5rem;
+.account__dot {
+  margin: 0 0.35em;
+  opacity: 0.7;
 }
 
-h2 {
-  margin: 0 0 0.5rem;
-  font-family: var(--font-display);
+.account__sign-out {
+  flex-shrink: 0;
+  margin-top: 4px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
   font-weight: 400;
-  font-size: 18px;
-  letter-spacing: -0.015em;
-  color: var(--ink);
-}
-
-section p {
-  margin: 0.35rem 0;
-  font-size: 14.5px;
-  font-weight: 300;
-  line-height: 1.55;
   color: var(--muted);
+  cursor: pointer;
 }
 
-.hint {
-  color: var(--sage-muted);
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-
-.hint a {
-  color: var(--sage);
-}
-
-.hint.error {
-  color: var(--danger);
-}
-
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-top: 1rem;
-}
-
-dl {
-  display: grid;
-  grid-template-columns: 8rem 1fr;
-  gap: 0.5rem 1rem;
-  margin: 0;
-  font-size: 14.5px;
-  font-weight: 300;
-}
-
-dt {
-  color: var(--sage-muted);
-}
-
-dd {
-  margin: 0;
+.account__sign-out:hover {
+  background: color-mix(in srgb, var(--paper-dim) 80%, transparent);
   color: var(--charcoal);
 }
 
-.sign-out-hint {
-  margin-top: 0.75rem;
+.account__sign-out:focus-visible {
+  outline: 2px solid var(--focus-ring, color-mix(in srgb, var(--sage) 45%, transparent));
+  outline-offset: 2px;
+}
+
+.account__section-label {
+  margin: 0 0 12px;
+  font-family: var(--font-body, 'Work Sans', system-ui, sans-serif);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--sage-muted);
-  font-size: 0.85rem;
+}
+
+.account__plan {
+  margin-bottom: 0;
+}
+
+.account__plan-panel {
+  padding: clamp(20px, 3vw, 28px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--paper) 72%, white);
+}
+
+.account__plan-panel--pro {
+  border-color: color-mix(in srgb, var(--sage) 28%, var(--border));
+  background: color-mix(in srgb, var(--sage) 8%, var(--paper));
+}
+
+.account__plan-panel--loading {
+  min-height: 120px;
+}
+
+.account__plan-top {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.account__plan-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(26px, 3.5vw, 32px);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--ink);
+}
+
+.account__plan-updating {
+  margin: 0;
+  font-size: 13px;
   font-weight: 300;
+  color: var(--sage-muted);
 }
 
-.extension-sync-ok {
-  color: var(--sage);
+.account__plan-renew {
+  margin: 8px 0 0;
+  font-size: 14px;
+  font-weight: 300;
+  color: var(--muted);
 }
 
-.extension-sync-fail {
+.account__plan-status {
+  text-transform: capitalize;
+}
+
+.account__plan-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.account__plan-status-text {
+  margin: 14px 0 0;
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--sage-muted);
+}
+
+.account__error {
+  margin: 12px 0 0;
+  font-size: 13px;
   color: var(--danger);
+}
+
+.account__skel {
+  height: 12px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--border) 70%, var(--paper));
+  opacity: 0.85;
+  animation: account-skel 1.2s ease-in-out infinite;
+}
+
+.account__skel--title {
+  width: 28%;
+  height: 28px;
+  margin-bottom: 14px;
+}
+
+.account__skel--line {
+  width: 88%;
+  margin-bottom: 8px;
+}
+
+.account__skel--short {
+  width: 54%;
+}
+
+@keyframes account-skel {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .account__skel {
+    animation: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .account__identity {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .account__sign-out {
+    align-self: flex-start;
+    margin-top: 0;
+    padding-left: 0;
+  }
 }
 </style>

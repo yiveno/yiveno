@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { BookmarkLibraryTreeNode } from '@/core/memory/bookmark-library-tree'
 import { collectDefaultExpandedFolderIds } from '@/pages/library/bookmark-library-tree-expanded'
-import { resolveBookmarkFolderExpanded } from '@/pages/library/bookmark-library-tree-context'
+import { resolveBookmarkFolderExpanded } from '@/core/memory/bookmark-library-index'
 
 const sampleRoots: BookmarkLibraryTreeNode[] = [
   {

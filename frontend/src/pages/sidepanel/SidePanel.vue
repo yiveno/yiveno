@@ -3,6 +3,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import AppButton from '@/infrastructure/ui/AppButton.vue'
 import AppLinearProgress from '@/infrastructure/ui/AppLinearProgress.vue'
 
+import { watchAuthSessionStorage } from '@/infrastructure/auth/watch-auth-session-storage'
 import type { ChromeBookmarkImportState } from '@/core/memory/chrome-bookmark-import-state'
 import { getChromeBookmarkImportPercent } from '@/core/memory/chrome-bookmark-import-state'
 import { shouldShowCaptureFirstPopup } from '@/core/capture/install-onboarding'
@@ -660,12 +661,18 @@ function handleUseSuggestion(value: string): void {
   void handleSendTurn(value)
 }
 
+/** 取消登录态 storage 订阅。 */
+let stopWatchAuthSession: (() => void) | null = null
+
 onMounted(() => {
   void nextTick(() => {
     clueInputRef.value?.focus()
   })
   void loadOnboardingState()
   void loadGreetingIdentity()
+  stopWatchAuthSession = watchAuthSessionStorage(() => {
+    void loadGreetingIdentity()
+  })
   void (async () => {
     try {
       const prefill = await consumeRecallPrefill()
@@ -684,6 +691,8 @@ onMounted(() => {
 onUnmounted(() => {
   recallRequestId += 1
   stopImportPolling()
+  stopWatchAuthSession?.()
+  stopWatchAuthSession = null
 })
 </script>
 

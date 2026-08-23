@@ -17,6 +17,7 @@ import {
 } from '@/infrastructure/indexeddb/memory-item-repository'
 import { logger } from '@/infrastructure/logging/logger'
 import { getUserSettings } from '@/infrastructure/settings/user-settings-service'
+
 /** 任务间距，降低 SW / Worker 尖峰。 */
 const EMBEDDING_JOB_GAP_MS = 500
 
@@ -24,6 +25,10 @@ const EMBEDDING_JOB_GAP_MS = 500
 export const EMBEDDING_BACKFILL_BATCH_LIMIT = 40
 
 let queue: Promise<void> = Promise.resolve()
+/** 递增后丢弃已入队任务（bulk/reconcile 防刷）。 */
+let queueGeneration = 0
+/** auth 失败后暂停入队，直至 clear / 显式恢复。 */
+let authPaused = false
 
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => {
@@ -38,6 +43,38 @@ function hasCurrentModelEmbedding(item: MemoryItem): boolean {
     embedding.length > 0 &&
     item.clues.embeddingModel === WORKER_EMBEDDING_MODEL
   )
+}
+
+function isAuthEmbedError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error)
+  return (
+    message === 'invalid_token' ||
+    message === 'unauthorized' ||
+    message === 'http_401' ||
+    message.includes('invalid_token')
+  )
+}
+
+/**
+ * 清空待执行的 embed 队列（已在飞的一条会跑完后停止后续）。
+ * Chrome sync/reconcile 前调用，避免万级书签刷爆 Worker。
+ */
+export function clearAsyncMemoryEmbeddingQueue(reason = 'manual'): void {
+  queueGeneration += 1
+  queue = Promise.resolve()
+  logger.info('MemoryEmbed', '异步 embed 队列已清空', {
+    reason,
+    generation: queueGeneration
+  })
+}
+
+/** 恢复因 auth 失败暂停的入队（登录成功后可调）。 */
+export function resumeAsyncMemoryEmbeddingAfterAuth(): void {
+  if (!authPaused) {
+    return
+  }
+  authPaused = false
+  logger.info('MemoryEmbed', '异步 embed 已恢复入队（auth）')
 }
 
 /**
@@ -104,6 +141,15 @@ export async function runAsyncMemoryEmbedding(
     })
     return 'written'
   } catch (error) {
+    if (isAuthEmbedError(error)) {
+      authPaused = true
+      clearAsyncMemoryEmbeddingQueue('invalid_token')
+      logger.warn('MemoryEmbed', '异步 embed 因 auth 失败熔断并清空队列', {
+        itemId,
+        error: error instanceof Error ? error.message : String(error)
+      })
+      return 'failed'
+    }
     logger.warn('MemoryEmbed', '异步 embed 失败', {
       itemId,
       error: error instanceof Error ? error.message : String(error)
@@ -120,9 +166,17 @@ export function scheduleAsyncMemoryEmbedding(itemId: string): void {
   if (!id) {
     return
   }
+  if (authPaused) {
+    logger.info('MemoryEmbed', '异步 embed 跳过入队：auth 已熔断', { itemId: id })
+    return
+  }
 
+  const scheduledGeneration = queueGeneration
   queue = queue
     .then(async () => {
+      if (scheduledGeneration !== queueGeneration) {
+        return
+      }
       await runAsyncMemoryEmbedding(id)
       await sleep(EMBEDDING_JOB_GAP_MS)
     })
@@ -146,6 +200,7 @@ export async function enqueueMissingMemoryEmbeddings(
   if (!session?.accessToken) {
     return { enqueued: 0, scanned: 0 }
   }
+  resumeAsyncMemoryEmbeddingAfterAuth()
 
   const items = await repository.listByOwner({ limit: 500 })
   const missing = items.filter(item => !hasCurrentModelEmbedding(item)).slice(0, limit)
@@ -157,4 +212,11 @@ export async function enqueueMissingMemoryEmbeddings(
     enqueued: missing.length
   })
   return { enqueued: missing.length, scanned: items.length }
+}
+
+/** 测试用：重置串行队列与熔断。 */
+export function resetAsyncMemoryEmbeddingQueueForTests(): void {
+  queueGeneration += 1
+  queue = Promise.resolve()
+  authPaused = false
 }

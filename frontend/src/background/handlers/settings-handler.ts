@@ -5,6 +5,8 @@ import type {
 } from '@/core/messaging/settings-messages'
 import { UserSettingsSchema, type UserSettings } from '@/core/settings/user-settings'
 import { ensureChromeBookmarksImported } from '@/application/capture/import-chrome-bookmarks-service'
+import { resumeAsyncMemoryEmbeddingAfterAuth } from '@/application/memory/schedule-async-memory-embedding'
+import { resumeAsyncMemoryLlmEnrichmentAfterQuota } from '@/application/memory/schedule-async-memory-llm-enrichment'
 import { refreshClueLlmCompleterFromDevConfig } from '@/application/recall/refresh-clue-llm-completer'
 import { syncChromeBookmarkSyncListenersWithIngestSetting } from '@/background/listeners/chrome-bookmark-sync'
 import { fetchHostedQuota } from '@/infrastructure/ai/hosted-quota-api-client'
@@ -63,6 +65,11 @@ export async function handleUpdateUserSettings(
     if (typeof patch.aiFeaturesEnabled === 'boolean') {
       // AI 开关变更后立刻重挂 / 清空线索 LLM completer
       await refreshClueLlmCompleterFromDevConfig()
+      if (patch.aiFeaturesEnabled) {
+        // 重新打开 AI：解除 enrichment 配额熔断与 embed auth 熔断，允许后续 Capture 再试
+        resumeAsyncMemoryLlmEnrichmentAfterQuota()
+        resumeAsyncMemoryEmbeddingAfterAuth()
+      }
     }
     if (typeof patch.chromeBookmarkIngestEnabled === 'boolean') {
       // 关：立刻卸 bookmarks.* 监听；开：挂监听并补跑导入/reconcile

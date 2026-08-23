@@ -1,6 +1,8 @@
 import { isCodedError } from '@/core/common/coded-error'
 import { optionalProp } from '@/core/common/optional-props'
 import { isChromeBookmarkIngestEnabled } from '@/application/capture/chrome-bookmark-sync-service'
+import { invalidateBookmarkLibraryTreeOnChromeChange } from '@/background/handlers/import-handler'
+import { invalidateBookmarkSyncAlignmentCache } from '@/application/memory/bookmark-sync-alignment-cache'
 import { memoryItemService } from '@/application/memory/memory-item-service'
 import type { MemoryBackgroundResponse, MemoryErrorCode } from '@/core/messaging/memory-messages'
 import {
@@ -196,6 +198,8 @@ export async function handleUpdateMemoryNote(payload: unknown): Promise<MemoryBa
       flowOk('Memory', '更新备注', startedAt, { id: input.id, found: false })
       return toErrorResponse('MEMORY_NOT_FOUND')
     }
+    invalidateBookmarkSyncAlignmentCache()
+    invalidateBookmarkLibraryTreeOnChromeChange()
     flowOk('Memory', '更新备注', startedAt, {
       id: item.id,
       noteLength: input.note.trim().length

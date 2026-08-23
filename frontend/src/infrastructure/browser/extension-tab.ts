@@ -1,6 +1,6 @@
 /**
- * Service Worker 打开扩展 HTML 页：优先激活已有标签，避免每次快捷键堆新 Tab。
- * 用 session 记住本扩展打开的 tabId（无需 `tabs` 权限扫全表 URL）。
+ * 打开扩展 HTML 页：优先激活已有标签，避免每次堆新 Tab。
+ * 1) session 记住的 tabId  2) 按 chrome-extension URL 扫描  3) 新建
  */
 
 const LIBRARY_TAB_SESSION_KEY = 'yiveno.libraryTabId'
@@ -37,6 +37,21 @@ async function focusExistingTab(tabId: number): Promise<boolean> {
   }
 }
 
+/** 扫描是否已有该扩展页（含历史 window.open 打开、未写入 session 的情况）。 */
+async function findTabIdByExtensionPageUrl(path: string): Promise<number | null> {
+  const target = chrome.runtime.getURL(path)
+  try {
+    const tabs = await chrome.tabs.query({})
+    const hit = tabs.find(tab => {
+      const url = tab.url ?? tab.pendingUrl ?? ''
+      return url === target || url.startsWith(`${target}?`) || url.startsWith(`${target}#`)
+    })
+    return typeof hit?.id === 'number' ? hit.id : null
+  } catch {
+    return null
+  }
+}
+
 async function focusOrCreateExtensionPage(path: string, sessionKey: string): Promise<void> {
   const existingId = await readStoredTabId(sessionKey)
   if (existingId !== null && (await focusExistingTab(existingId))) {
@@ -46,13 +61,19 @@ async function focusOrCreateExtensionPage(path: string, sessionKey: string): Pro
     await clearStoredTabId(sessionKey)
   }
 
+  const byUrlId = await findTabIdByExtensionPageUrl(path)
+  if (byUrlId !== null && (await focusExistingTab(byUrlId))) {
+    await writeStoredTabId(sessionKey, byUrlId)
+    return
+  }
+
   const created = await chrome.tabs.create({ url: chrome.runtime.getURL(path) })
   if (typeof created.id === 'number') {
     await writeStoredTabId(sessionKey, created.id)
   }
 }
 
-/** 快捷键等：打开或切到记忆库页。 */
+/** 快捷键 / 顶栏：打开或切到记忆库页。 */
 export async function focusOrOpenLibraryTab(): Promise<void> {
   await focusOrCreateExtensionPage('library.html', LIBRARY_TAB_SESSION_KEY)
 }

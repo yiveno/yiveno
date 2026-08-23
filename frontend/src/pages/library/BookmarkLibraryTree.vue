@@ -1,19 +1,26 @@
 <script setup lang="ts">
-import { onMounted, provide, shallowRef } from 'vue'
+import { computed, markRaw, onMounted, onUnmounted, shallowRef, watch } from 'vue'
 
-import type { BookmarkLibraryTreeNode } from '@/core/memory/bookmark-library-tree'
-import { bookmarkLibraryTreeContextKey } from '@/pages/library/bookmark-library-tree-context'
+import type { BookmarkLibraryIndex } from '@/core/memory/bookmark-library-index'
 import {
-  collectDefaultExpandedFolderIds,
+  buildBookmarkLibraryNodeMap,
+  collectDefaultExpandedFolderIdsFromIndex,
+  flattenBookmarkLibraryVisibleRows
+} from '@/core/memory/bookmark-library-index'
+import {
+  buildBookmarkLibraryRowMetrics,
+  resolveBookmarkLibraryVisibleSlice
+} from '@/core/memory/bookmark-library-virtual-list'
+import {
   readBookmarkLibraryTreeExpandedSession,
   schedulePersistBookmarkLibraryTreeExpanded
 } from '@/pages/library/bookmark-library-tree-expanded'
-import BookmarkLibraryTreeNodeView from '@/pages/library/BookmarkLibraryTreeNodeView.vue'
+import BookmarkLibraryTreeRow from '@/pages/library/BookmarkLibraryTreeRow.vue'
 
 defineOptions({ name: 'BookmarkLibraryTree' })
 
 const props = defineProps<{
-  roots: BookmarkLibraryTreeNode[]
+  index: BookmarkLibraryIndex
   /** 全量导入完成后才展示「未同步」 */
   showUnsyncedFlags?: boolean
 }>()
@@ -35,15 +42,67 @@ defineEmits<{
   ]
 }>()
 
-/**
- * null = 尚未从 session 恢复，沿用 depth<1 默认展开；
- * Set = 用户/session 明确记录的展开文件夹集合。
- */
+const VIRTUAL_OVERSCAN = 8
+
 const expandedFolderIds = shallowRef<Set<string> | null>(null)
+const scrollContainerRef = shallowRef<HTMLElement | null>(null)
+const scrollTop = shallowRef(0)
+const viewportHeight = shallowRef(480)
+
+const nodeById = computed(() => buildBookmarkLibraryNodeMap(props.index))
+
+const visibleRows = computed(() =>
+  flattenBookmarkLibraryVisibleRows(props.index, nodeById.value, expandedFolderIds.value)
+)
+
+const rowMetrics = computed(() => buildBookmarkLibraryRowMetrics(visibleRows.value))
+
+const visibleSlice = computed(() =>
+  resolveBookmarkLibraryVisibleSlice(
+    rowMetrics.value,
+    visibleRows.value.length,
+    scrollTop.value,
+    viewportHeight.value,
+    VIRTUAL_OVERSCAN
+  )
+)
+
+const renderedRows = computed(() =>
+  visibleRows.value.slice(visibleSlice.value.start, visibleSlice.value.end)
+)
+
+let resizeObserver: ResizeObserver | null = null
 
 onMounted(async () => {
   expandedFolderIds.value = await readBookmarkLibraryTreeExpandedSession()
+
+  const container = scrollContainerRef.value
+  if (!container) {
+    return
+  }
+
+  viewportHeight.value = container.clientHeight
+  resizeObserver = new ResizeObserver(entries => {
+    const entry = entries[0]
+    if (entry) {
+      viewportHeight.value = entry.contentRect.height
+    }
+  })
+  resizeObserver.observe(container)
 })
+
+onUnmounted(() => {
+  resizeObserver?.disconnect()
+  resizeObserver = null
+})
+
+watch(
+  () => props.index,
+  rawIndex => {
+    markRaw(rawIndex)
+  },
+  { immediate: true }
+)
 
 function isFolderExpanded(chromeId: string, depth: number): boolean {
   const expanded = expandedFolderIds.value
@@ -54,9 +113,14 @@ function isFolderExpanded(chromeId: string, depth: number): boolean {
 }
 
 function toggleFolder(chromeId: string, depth: number): void {
+  const node = nodeById.value.get(chromeId)
+  if (!node || node.kind !== 'folder') {
+    return
+  }
+
   let next = expandedFolderIds.value
   if (next === null) {
-    next = collectDefaultExpandedFolderIds(props.roots)
+    next = collectDefaultExpandedFolderIdsFromIndex(props.index, nodeById.value)
   }
 
   const currentlyExpanded = isFolderExpanded(chromeId, depth)
@@ -70,32 +134,53 @@ function toggleFolder(chromeId: string, depth: number): void {
   schedulePersistBookmarkLibraryTreeExpanded(expandedFolderIds.value)
 }
 
-provide(bookmarkLibraryTreeContextKey, {
-  expandedFolderIds,
-  toggleFolder
-})
+function handleScroll(event: Event) {
+  const target = event.target
+  if (!(target instanceof HTMLElement)) {
+    return
+  }
+  scrollTop.value = target.scrollTop
+}
 </script>
 
 <template>
-  <ul v-if="roots.length > 0" class="bookmark-tree" role="tree">
-    <BookmarkLibraryTreeNodeView
-      v-for="node in roots"
-      :key="`${node.kind}-${node.chromeId}`"
-      :node="node"
-      :depth="0"
-      :show-unsynced-flags="showUnsyncedFlags"
-      @edit-note="$emit('editNote', $event)"
-      @open-bookmark="$emit('openBookmark', $event)"
-    />
-  </ul>
+  <div ref="scrollContainerRef" class="bookmark-tree-scroll" role="tree" @scroll="handleScroll">
+    <div class="bookmark-tree-spacer" :style="{ height: `${rowMetrics.totalHeight}px` }">
+      <div
+        class="bookmark-tree-window"
+        :style="{ transform: `translateY(${visibleSlice.paddingTop}px)` }"
+      >
+        <BookmarkLibraryTreeRow
+          v-for="row in renderedRows"
+          :key="`${row.kind}-${row.chromeId}`"
+          :row="row"
+          :show-unsynced-flags="showUnsyncedFlags"
+          @toggle-folder="toggleFolder"
+          @edit-note="$emit('editNote', $event)"
+          @open-bookmark="$emit('openBookmark', $event)"
+        />
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>
-.bookmark-tree {
-  display: grid;
-  gap: var(--space-xs);
-  margin: 0;
-  padding: 0;
-  list-style: none;
+.bookmark-tree-scroll {
+  max-height: min(70vh, 720px);
+  min-height: 280px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.bookmark-tree-spacer {
+  position: relative;
+  width: 100%;
+}
+
+.bookmark-tree-window {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
 }
 </style>

@@ -31,8 +31,23 @@ export type BuildMergedMemoryEnrichmentResult = {
   rule: MemoryClueEnrichment
   proposal: MemoryEnrichmentProposal | null
   merged: MergedMemoryClueEnrichment
-  /** rule_only | rule_plus_llm | llm_failed_degraded */
-  path: 'rule_only' | 'rule_plus_llm' | 'llm_failed_degraded'
+  /**
+   * rule_only：未请求 LLM；
+   * rule_plus_llm：LLM 成功合并；
+   * llm_failed_degraded：LLM 失败降级规则；
+   * quota_exceeded：日配额已满，调用方应熔断队列。
+   */
+  path: 'rule_only' | 'rule_plus_llm' | 'llm_failed_degraded' | 'quota_exceeded'
+}
+
+/** Worker 返回的 enrichment 日配额耗尽错误文案。 */
+export function isMemoryEnrichmentQuotaExceededError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error)
+  return (
+    message === 'quota_exceeded' ||
+    message.includes('quota_exceeded') ||
+    message === 'Too Many Requests'
+  )
 }
 
 /**
@@ -79,12 +94,18 @@ export async function buildMergedMemoryEnrichment(
     })
     return { rule, proposal, merged, path: 'rule_plus_llm' }
   } catch (error) {
-    logger.warn('MemoryEnrichment', 'LLM 提议失败，降级规则合并', {
-      error: error instanceof Error ? error.message : String(error)
-    })
     const merged = mergeMemoryClueEnrichment({
       existing: input.existing,
       rule
+    })
+    if (isMemoryEnrichmentQuotaExceededError(error)) {
+      logger.warn('MemoryEnrichment', 'LLM 提议因日配额耗尽，降级规则并通知熔断', {
+        error: error instanceof Error ? error.message : String(error)
+      })
+      return { rule, proposal: null, merged, path: 'quota_exceeded' }
+    }
+    logger.warn('MemoryEnrichment', 'LLM 提议失败，降级规则合并', {
+      error: error instanceof Error ? error.message : String(error)
     })
     return { rule, proposal: null, merged, path: 'llm_failed_degraded' }
   }

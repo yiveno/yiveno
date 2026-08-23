@@ -1,12 +1,22 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { getSession } from '../services/auth'
 import { extractProfileFromUserMetadata } from '../services/extension-auth-handoff'
+import { readNavIsProCache } from '../services/nav-pro-badge-cache'
+
+defineOptions({ name: 'AuthNav' })
 
 const user = ref<{ email?: string; avatarUrl?: string; name?: string } | null>(null)
+/** Pro 时顶栏头像 1px Sage 环；优先读会话缓存，不对账堵导航。 */
+const isPro = ref(false)
 const loading = ref(true)
 
-onMounted(async () => {
+function applyProFromCache(): void {
+  const cached = readNavIsProCache()
+  isPro.value = cached === true
+}
+
+async function loadAuthNav(): Promise<void> {
   const session = await getSession()
   if (session?.user) {
     const profile = extractProfileFromUserMetadata(
@@ -17,8 +27,29 @@ onMounted(async () => {
       ...(profile.avatarUrl ? { avatarUrl: profile.avatarUrl } : {}),
       name: profile.displayName || session.user.email
     }
+    applyProFromCache()
+  } else {
+    user.value = null
+    isPro.value = false
   }
   loading.value = false
+}
+
+function onVisibilityChange(): void {
+  if (document.visibilityState !== 'visible' || !user.value) {
+    return
+  }
+  // 从账户/定价回焦后缓存可能已更新
+  applyProFromCache()
+}
+
+onMounted(() => {
+  void loadAuthNav()
+  document.addEventListener('visibilitychange', onVisibilityChange)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('visibilitychange', onVisibilityChange)
 })
 </script>
 
@@ -27,7 +58,21 @@ onMounted(async () => {
     <a v-if="loading" href="/login" class="nav-link">Sign in</a>
     <a v-else-if="!user" href="/login" class="nav-link">Sign in</a>
     <a v-else href="/account" class="nav-link user-info">
-      <img v-if="user.avatarUrl" :src="user.avatarUrl" alt="" class="avatar" />
+      <img
+        v-if="user.avatarUrl"
+        :src="user.avatarUrl"
+        alt=""
+        class="avatar"
+        :class="{ 'avatar--pro': isPro }"
+      />
+      <span
+        v-else
+        class="avatar avatar--fallback"
+        :class="{ 'avatar--pro': isPro }"
+        aria-hidden="true"
+      >
+        {{ (user.name || '?').slice(0, 1).toUpperCase() }}
+      </span>
       <span>{{ user.name }}</span>
     </a>
   </div>
@@ -68,5 +113,22 @@ onMounted(async () => {
   width: 28px;
   height: 28px;
   border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.avatar--fallback {
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--sage, #4b6054);
+  background: color-mix(in srgb, var(--sage, #4b6054) 12%, transparent);
+}
+
+/* 1px Sage：档位信号，无光晕 / 无加粗 */
+.avatar--pro {
+  box-shadow: 0 0 0 1px var(--sage, #4b6054);
 }
 </style>

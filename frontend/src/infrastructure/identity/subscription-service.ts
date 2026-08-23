@@ -71,8 +71,27 @@ export async function enforceSyncRequiresPro(): Promise<void> {
  * 从 Worker 刷新订阅快照。
  * 未登录 → 写 Free；网络失败 → 保留旧快照（若有）或 Free。
  * 成功后若非 Pro 则关闭同步，并触发线索 LLM 重挂（由调用方或本函数动态 import）。
+ * 并发调用合并为一次网络请求。
  */
+let refreshSubscriptionInflight: Promise<SubscriptionSnapshot> | null = null
+
 export async function refreshSubscriptionSnapshot(options?: {
+  force?: boolean
+}): Promise<SubscriptionSnapshot> {
+  if (refreshSubscriptionInflight && !options?.force) {
+    return refreshSubscriptionInflight
+  }
+
+  const run = doRefreshSubscriptionSnapshot(options).finally(() => {
+    if (refreshSubscriptionInflight === run) {
+      refreshSubscriptionInflight = null
+    }
+  })
+  refreshSubscriptionInflight = run
+  return run
+}
+
+async function doRefreshSubscriptionSnapshot(options?: {
   force?: boolean
 }): Promise<SubscriptionSnapshot> {
   const startedAt = flowStart('Subscription', '刷新订阅快照')

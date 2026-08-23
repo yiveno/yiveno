@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import type { BookmarkLibraryTreeNode } from '@/core/memory/bookmark-library-tree'
+import type { BookmarkLibraryIndex } from '@/core/memory/bookmark-library-index'
 import type { ChromeBookmarkImportState } from '@/core/memory/chrome-bookmark-import-state'
 import type { BackgroundMessageScope } from '@/core/messaging/constants'
 
@@ -37,15 +37,32 @@ export type ChromeBookmarkImportStatusResponse =
 export type GetBookmarkLibraryTreeMessage = {
   scope: BackgroundMessageScope
   type: 'GET_BOOKMARK_LIBRARY_TREE'
+  payload?: {
+    /** UI 缓存的结构 hash；一致时 SW 可返回 unchanged。 */
+    clientHash?: string
+  }
 }
 
-export type GetBookmarkLibraryTreeSuccessResponse = {
+export type GetBookmarkLibraryTreeUnchangedResponse = {
   ok: true
-  roots: BookmarkLibraryTreeNode[]
+  unchanged: true
+  structureHash: string
   bookmarkCount: number
   /** 全量导入已完成时才应展示「未同步」标记。 */
   syncReady: boolean
 }
+
+export type GetBookmarkLibraryTreeDataResponse = {
+  ok: true
+  index: BookmarkLibraryIndex
+  structureHash: string
+  bookmarkCount: number
+  syncReady: boolean
+}
+
+export type GetBookmarkLibraryTreeSuccessResponse =
+  | GetBookmarkLibraryTreeUnchangedResponse
+  | GetBookmarkLibraryTreeDataResponse
 
 export type GetBookmarkLibraryTreeErrorResponse = {
   ok: false

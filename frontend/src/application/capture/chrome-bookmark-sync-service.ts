@@ -1,4 +1,7 @@
 import { readChromeBookmarkImportState } from '@/application/capture/chrome-bookmark-bulk-import'
+import { clearAsyncMemoryEmbeddingQueue } from '@/application/memory/schedule-async-memory-embedding'
+import { clearAsyncMemoryLlmEnrichmentQueue } from '@/application/memory/schedule-async-memory-llm-enrichment'
+import { invalidateBookmarkSyncAlignmentCache } from '@/application/memory/bookmark-sync-alignment-cache'
 import { memoryItemService } from '@/application/memory/memory-item-service'
 import {
   CHROME_BOOKMARK_SYNC_PENDING_STORAGE_KEY,
@@ -125,16 +128,19 @@ export async function syncChromeBookmarkNode(
   const leaf = toChromeBookmarkLeaf(node)
   if (!leaf) {
     await memoryItemService.softDeleteByChromeBookmarkId(node.id)
+    invalidateBookmarkSyncAlignmentCache()
     return { captured: false }
   }
 
   await memoryItemService.upsertBookmarkFromChrome(leafToUpsertInput(leaf))
+  invalidateBookmarkSyncAlignmentCache()
   return { captured: true }
 }
 
 /** Chrome 书签被删除时同步软删 MemoryItem。 */
 export async function syncChromeBookmarkRemoved(chromeBookmarkId: string): Promise<void> {
   await memoryItemService.softDeleteByChromeBookmarkId(chromeBookmarkId)
+  invalidateBookmarkSyncAlignmentCache()
 }
 
 /**
@@ -307,8 +313,11 @@ export async function reconcileChromeBookmarksWithMemory(): Promise<{
 /**
  * 导入完成或启动时：先 flush pending，再 reconcile 补洞。
  * 仅 Background 调用。
+ * 开始前清空 AI 队列，防止历史误入队的万级书签任务继续打 Worker。
  */
 export async function finalizeChromeBookmarkSyncAfterImport(): Promise<void> {
+  clearAsyncMemoryLlmEnrichmentQueue('chrome_bookmark_sync_finalize')
+  clearAsyncMemoryEmbeddingQueue('chrome_bookmark_sync_finalize')
   await flushPendingChromeBookmarkSync()
   await reconcileChromeBookmarksWithMemory()
 }

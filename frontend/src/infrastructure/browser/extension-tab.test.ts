@@ -35,6 +35,7 @@ describe('extension-tab', () => {
       },
       tabs: {
         get: vi.fn(),
+        query: vi.fn(async () => []),
         update: vi.fn(async () => undefined),
         create: vi.fn(async () => ({ id: 42 }))
       },
@@ -70,6 +71,25 @@ describe('extension-tab', () => {
     await focusOrOpenLibraryTab()
     expect(chrome.tabs.create).toHaveBeenCalledTimes(1)
     expect(sessionStore.get('yiveno.libraryTabId')).toBe(55)
+  })
+
+  it('focusOrOpenLibraryTab 无 session 时按 URL 找到已开标签', async () => {
+    vi.mocked(chrome.tabs.query).mockResolvedValue([
+      {
+        id: 77,
+        windowId: 3,
+        url: 'chrome-extension://test/library.html'
+      } as chrome.tabs.Tab
+    ])
+    vi.mocked(chrome.tabs.get).mockResolvedValue({
+      id: 77,
+      windowId: 3
+    } as chrome.tabs.Tab)
+
+    await focusOrOpenLibraryTab()
+    expect(chrome.tabs.create).not.toHaveBeenCalled()
+    expect(chrome.tabs.update).toHaveBeenCalledWith(77, { active: true })
+    expect(sessionStore.get('yiveno.libraryTabId')).toBe(77)
   })
 
   it('focusOrOpenSettingsTab 优先 openOptionsPage', async () => {

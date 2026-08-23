@@ -1,16 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { refreshAuthSessionDetailedMock, getAuthSessionMock } = vi.hoisted(() => ({
-  refreshAuthSessionDetailedMock: vi.fn(),
-  getAuthSessionMock: vi.fn()
-}))
+const { refreshAuthSessionDetailedMock, getAuthSessionMock, setAuthSessionMock } = vi.hoisted(
+  () => ({
+    refreshAuthSessionDetailedMock: vi.fn(),
+    getAuthSessionMock: vi.fn(),
+    setAuthSessionMock: vi.fn()
+  })
+)
 
 vi.mock('@/infrastructure/auth/extension-oauth', () => ({
   refreshAuthSessionDetailed: refreshAuthSessionDetailedMock
 }))
 
 vi.mock('@/infrastructure/identity/auth-session-service', () => ({
-  getAuthSession: getAuthSessionMock
+  getAuthSession: getAuthSessionMock,
+  setAuthSession: setAuthSessionMock
 }))
 
 vi.mock('@/infrastructure/logging/flow-log', () => ({
@@ -35,6 +39,7 @@ describe('auth-session-revalidate', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     getAuthSessionMock.mockResolvedValue(null)
+    setAuthSessionMock.mockResolvedValue(undefined)
     const sessionStore: Record<string, unknown> = {}
     vi.stubGlobal('chrome', {
       storage: {
@@ -108,6 +113,19 @@ describe('auth-session-revalidate', () => {
         refreshToken: 'rt-new',
         userId: baseSession.userId
       }
+    })
+  })
+
+  it('Already Used 且本地无新 token → invalid（避免假登录）', async () => {
+    refreshAuthSessionDetailedMock.mockResolvedValue({
+      status: 'transient',
+      reason: 'Invalid Refresh Token: Already Used'
+    })
+    getAuthSessionMock.mockResolvedValue(baseSession)
+    const result = await revalidateAuthSession(baseSession, { force: true })
+    expect(result).toEqual({
+      status: 'invalid',
+      reason: 'Invalid Refresh Token: Already Used'
     })
   })
 

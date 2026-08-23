@@ -270,9 +270,12 @@ export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
   try {
     const [binding, syncPrefs] = await Promise.all([getAccountBinding(), getSyncPrefs()])
     let session = await getAuthSession()
+    /** 本次 revalidate 结果；无 binding/session 时不拉订阅。 */
+    let authRevalidateStatus: 'skipped' | 'valid' | 'invalid' | 'uncertain' | 'none' = 'none'
 
     if (binding && session) {
       const revalidated = await revalidateAuthSession(session)
+      authRevalidateStatus = revalidated.status
       if (revalidated.status === 'valid') {
         if (
           revalidated.session.accessToken !== session.accessToken ||
@@ -308,8 +311,10 @@ export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
     // 已登录会话兜底：历史登录若未归并，打开 Popup/设置时补一次（幂等）
     if (stillBound && session) {
       await absorbLocalProfileIntoAccount(stillBound.accountId)
-      // 登录态有效时后台刷新订阅（失败不阻塞 GET_AUTH_STATE）
-      void refreshSubscriptionSnapshot().catch(() => undefined)
+      // 仅 token 可信时后台刷新订阅，避免 uncertain 用旧 access 刷 invalid_token
+      if (authRevalidateStatus === 'valid' || authRevalidateStatus === 'skipped') {
+        void refreshSubscriptionSnapshot().catch(() => undefined)
+      }
     } else if (!stillBound || !session) {
       await clearSubscriptionSnapshot()
     }

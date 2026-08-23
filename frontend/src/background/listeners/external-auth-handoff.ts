@@ -42,7 +42,7 @@ function isAllowedExternalSender(url: string | undefined): boolean {
 
 /**
  * 应用官网登录 handoff 的 session。
- * 成功后 Settings / 顶栏可通过 GET_AUTH_STATE 看到已登录。
+ * 成功后写入 chrome.storage.local；UI 经 watchAuthSessionStorage 即时刷新。
  */
 export async function applyExternalAuthSessionHandoff(
   message: unknown

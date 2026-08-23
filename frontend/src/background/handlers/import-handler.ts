@@ -1,12 +1,18 @@
 import {
-  countBookmarkLibraryLeaves,
-  mapChromeBookmarkTreeToLibraryForest,
-  type ChromeBookmarkTreeInput
-} from '@/core/memory/bookmark-library-tree'
-import type { GetBookmarkLibraryTreeResponse } from '@/core/messaging/import-messages'
-import { memoryItemService } from '@/application/memory/memory-item-service'
+  computeBookmarkLibraryStructureHash,
+  mapChromeBookmarkTreeToLibraryIndex
+} from '@/core/memory/bookmark-library-index'
+import type {
+  ChromeBookmarkImportStatusResponse,
+  GetBookmarkLibraryTreeResponse
+} from '@/core/messaging/import-messages'
 import { getChromeBookmarkImportStatus } from '@/application/capture/import-chrome-bookmarks-service'
-import type { ChromeBookmarkImportStatusResponse } from '@/core/messaging/import-messages'
+import {
+  getLastBuiltBookmarkLibraryTree,
+  invalidateBookmarkLibraryTreeCache,
+  rememberBookmarkLibraryTreeBuild
+} from '@/application/memory/bookmark-library-tree-cache'
+import { getBookmarkSyncAlignmentCached } from '@/application/memory/bookmark-sync-alignment-cache'
 import { t } from '@/infrastructure/i18n/t'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 
@@ -31,7 +37,12 @@ export async function handleGetChromeBookmarkImportStatus(): Promise<ChromeBookm
   }
 }
 
-function toChromeTreeInput(node: chrome.bookmarks.BookmarkTreeNode): ChromeBookmarkTreeInput {
+function toChromeTreeInput(node: chrome.bookmarks.BookmarkTreeNode): {
+  id: string
+  title?: string
+  url?: string
+  children?: ReturnType<typeof toChromeTreeInput>[]
+} {
   return {
     id: node.id,
     ...(node.title !== undefined ? { title: node.title } : {}),
@@ -40,17 +51,23 @@ function toChromeTreeInput(node: chrome.bookmarks.BookmarkTreeNode): ChromeBookm
   }
 }
 
-/** 读取 Chrome 书签目录树并与 Memory 书签对齐（只读）。 */
-export async function handleGetBookmarkLibraryTree(): Promise<GetBookmarkLibraryTreeResponse> {
+export interface GetBookmarkLibraryTreeOptions {
+  clientHash?: string
+}
+
+/** 读取 Chrome 书签扁平索引并与 Memory 对齐（只读）。 */
+export async function handleGetBookmarkLibraryTree(
+  options: GetBookmarkLibraryTreeOptions = {}
+): Promise<GetBookmarkLibraryTreeResponse> {
   const startedAt = flowStart('Import', '读取书签目录树')
   try {
     const [chromeTree, alignment, importState] = await Promise.all([
       chrome.bookmarks.getTree(),
-      memoryItemService.listBookmarkSyncAlignment(),
+      getBookmarkSyncAlignmentCached(),
       getChromeBookmarkImportStatus()
     ])
 
-    const roots = mapChromeBookmarkTreeToLibraryForest(
+    const index = mapChromeBookmarkTreeToLibraryIndex(
       chromeTree.map(node => toChromeTreeInput(node)),
       alignment.byChromeBookmarkId,
       {
@@ -60,23 +77,53 @@ export async function handleGetBookmarkLibraryTree(): Promise<GetBookmarkLibrary
       }
     )
 
-    const bookmarkCount = countBookmarkLibraryLeaves(roots)
+    const structureHash = computeBookmarkLibraryStructureHash(index)
+    const syncReady = importState?.status === 'completed'
+
+    if (options.clientHash && options.clientHash === structureHash) {
+      const last = getLastBuiltBookmarkLibraryTree()
+      if (last && last.structureHash === structureHash) {
+        flowOk('Import', '读取书签目录树', startedAt, {
+          bookmarkCount: index.bookmarkCount,
+          syncReady,
+          unchanged: true
+        })
+        return {
+          ok: true,
+          unchanged: true,
+          structureHash,
+          bookmarkCount: index.bookmarkCount,
+          syncReady
+        }
+      }
+    }
+
+    rememberBookmarkLibraryTreeBuild(index, structureHash)
+
     flowOk('Import', '读取书签目录树', startedAt, {
-      bookmarkCount,
-      syncReady: importState?.status === 'completed'
+      bookmarkCount: index.bookmarkCount,
+      syncReady,
+      unchanged: false
     })
     return {
       ok: true,
-      roots,
-      bookmarkCount,
-      syncReady: importState?.status === 'completed'
+      index,
+      structureHash,
+      bookmarkCount: index.bookmarkCount,
+      syncReady
     }
   } catch (error) {
     flowFail('Import', '读取书签目录树', startedAt, error)
+    invalidateBookmarkLibraryTreeCache()
     return {
       ok: false,
       errorCode: 'LIBRARY_TREE_READ_FAILED',
       ...(error instanceof Error ? { error: error.message } : {})
     }
   }
+}
+
+/** Chrome 书签树结构变更：失效 SW 侧索引缓存。 */
+export function invalidateBookmarkLibraryTreeOnChromeChange(): void {
+  invalidateBookmarkLibraryTreeCache()
 }

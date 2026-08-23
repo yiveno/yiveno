@@ -71,6 +71,17 @@ describe('classifyAuthRefreshFailure', () => {
     expect(classifyAuthRefreshFailure({ message: 'invalid_grant' })).toBe('invalid')
   })
 
+  it('Supabase validation_failed / Refresh token is not valid → invalid', () => {
+    expect(
+      classifyAuthRefreshFailure({
+        status: 400,
+        message: 'Refresh token is not valid',
+        code: 'validation_failed'
+      })
+    ).toBe('invalid')
+    expect(classifyAuthRefreshFailure({ message: 'Refresh token is not valid' })).toBe('invalid')
+  })
+
   it('Already Used → transient（并发轮换，不得误踢）', () => {
     expect(classifyAuthRefreshFailure({ message: 'Invalid Refresh Token: Already Used' })).toBe(
       'transient'

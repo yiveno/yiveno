@@ -77,4 +77,28 @@ describe('buildMergedMemoryEnrichment', () => {
     expect(result.path).toBe('llm_failed_degraded')
     expect(result.merged.tags).toContain('video')
   })
+
+  it('日配额耗尽时返回 quota_exceeded', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ error: 'quota_exceeded', used: 80, limit: 80 }), {
+            status: 429,
+            headers: { 'content-type': 'application/json' }
+          })
+      )
+    )
+
+    const result = await buildMergedMemoryEnrichment({
+      source: {
+        title: 'Some long enough bookmark title',
+        url: 'https://example.com/a',
+        domain: 'example.com'
+      },
+      requestLlmProposal: true
+    })
+    expect(result.path).toBe('quota_exceeded')
+    expect(result.proposal).toBeNull()
+  })
 })

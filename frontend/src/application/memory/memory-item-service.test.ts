@@ -26,6 +26,7 @@ vi.mock('@/infrastructure/indexeddb/keyword-index-repository', () => ({
 }))
 
 import { MemoryItemService } from '@/application/memory/memory-item-service'
+import { scheduleAsyncMemoryEmbedding } from '@/application/memory/schedule-async-memory-embedding'
 import { scheduleAsyncMemoryLlmEnrichment } from '@/application/memory/schedule-async-memory-llm-enrichment'
 import { createBookmarkMemoryItem } from '@/core/memory/create-memory-item'
 import { parseRecallClue } from '@/core/recall/parse-recall-clue'
@@ -57,7 +58,7 @@ describe('MemoryItemService LLM enrichment 调度', () => {
     expect(scheduleAsyncMemoryLlmEnrichment).toHaveBeenCalledWith(item.id)
   })
 
-  it('upsertBookmarkFromChrome 仅新建时调度', async () => {
+  it('upsertBookmarkFromChrome 不调度 AI（与 bulk 一致，防万级书签刷配额）', async () => {
     const created = createBookmarkMemoryItem({
       ownerId: 'o',
       sourceLocalProfileId: 'p',
@@ -67,7 +68,6 @@ describe('MemoryItemService LLM enrichment 调度', () => {
         chromeBookmarkId: 'cb-1'
       }
     })
-    vi.mocked(memoryItemRepository.getByChromeBookmarkId).mockResolvedValue(null)
     vi.mocked(memoryItemRepository.upsertBookmarkFromChrome).mockResolvedValue(created)
 
     const service = new MemoryItemService(memoryItemRepository)
@@ -80,20 +80,8 @@ describe('MemoryItemService LLM enrichment 调度', () => {
         chromeBookmarkId: 'cb-1'
       }
     })
-    expect(scheduleAsyncMemoryLlmEnrichment).toHaveBeenCalledWith(created.id)
-
-    vi.mocked(scheduleAsyncMemoryLlmEnrichment).mockClear()
-    vi.mocked(memoryItemRepository.getByChromeBookmarkId).mockResolvedValue(created)
-    await service.upsertBookmarkFromChrome({
-      ownerId: 'o',
-      sourceLocalProfileId: 'p',
-      payload: {
-        title: 'Updated title',
-        url: 'https://example.com/n',
-        chromeBookmarkId: 'cb-1'
-      }
-    })
     expect(scheduleAsyncMemoryLlmEnrichment).not.toHaveBeenCalled()
+    expect(scheduleAsyncMemoryEmbedding).not.toHaveBeenCalled()
   })
 })
 
