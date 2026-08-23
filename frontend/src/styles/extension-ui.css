@@ -22,6 +22,12 @@
     sans-serif;
   color: var(--on-surface);
   background: var(--surface);
+
+  /* 扩展页面壳 composite（由 spacing 阶梯 calc，避免魔法数散落） */
+  --page-shell-padding-top: calc(var(--space-lg) + var(--space-2xs));
+  --page-shell-padding-x: var(--space-lg);
+  --page-shell-padding-bottom: calc(var(--space-xl) + var(--space-xs));
+  --page-shell-padding-bottom-compact: var(--space-lg);
 }
 
 body {
@@ -54,6 +60,14 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface-raised);
+}
+
+/** 白底内容面板（Library / Settings 主区等） */
+.surface-panel-white {
+  padding: var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-white);
 }
 
 .muted-text {

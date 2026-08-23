@@ -181,9 +181,10 @@ function handleToggleExpand(cardId: string): void {
 <style scoped>
 .conversation-list {
   display: grid;
+  /* turn 间节奏：对话区个性化间距 */
   gap: 22px;
   min-width: 0;
-  padding: 4px 0 16px;
+  padding: var(--space-2xs) 0 var(--space-md);
 }
 
 .conversation-turn {
@@ -216,13 +217,13 @@ function handleToggleExpand(cardId: string): void {
 
 .assistant-turn {
   display: grid;
-  gap: 8px;
+  gap: var(--space-xs);
   width: 100%;
   min-width: 0;
 }
 
 .assistant-turn--pending {
-  gap: 10px;
+  gap: var(--space-sm);
 }
 
 .assistant-turn-name {
@@ -254,7 +255,7 @@ function handleToggleExpand(cardId: string): void {
 
 .assistant-turn-related-guess {
   display: grid;
-  gap: 6px;
+  gap: var(--space-xs);
   min-width: 0;
   padding-top: 2px;
 }
@@ -269,7 +270,7 @@ function handleToggleExpand(cardId: string): void {
 
 .assistant-turn-candidates-block {
   display: grid;
-  gap: 8px;
+  gap: var(--space-xs);
   min-width: 0;
   padding-top: 2px;
 }
@@ -288,30 +289,30 @@ function handleToggleExpand(cardId: string): void {
 
 .assistant-turn-primary {
   display: grid;
-  gap: 8px;
+  gap: var(--space-xs);
   padding-top: 2px;
 }
 
 .recall-feedback-actions {
   display: flex;
   justify-content: flex-end;
-  padding-top: 4px;
+  padding-top: var(--space-2xs);
 }
 
 .assistant-turn-suggestions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding-top: 4px;
+  gap: var(--space-xs);
+  padding-top: var(--space-2xs);
 }
 
 .assistant-turn-pill {
   display: inline-flex;
   align-items: center;
   min-height: 32px;
-  padding: 0 12px;
+  padding: 0 var(--space-sm);
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   font: inherit;
   font-size: 13px;
   line-height: 1;
@@ -335,7 +336,7 @@ function handleToggleExpand(cardId: string): void {
 
 .assistant-turn-candidates {
   display: grid;
-  gap: 8px;
+  gap: var(--space-xs);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -351,7 +352,7 @@ function handleToggleExpand(cardId: string): void {
 .pending-dot {
   width: 7px;
   height: 7px;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   background: var(--on-surface-muted);
   opacity: 0.35;
   animation: pending-pulse 1.1s ease-in-out infinite;

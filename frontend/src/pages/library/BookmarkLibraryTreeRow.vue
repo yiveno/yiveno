@@ -337,7 +337,7 @@ function handleOpenBookmark(event: MouseEvent) {
 }
 
 .tree-bookmark-note-label {
-  margin-right: 6px;
+  margin-right: var(--space-xs);
   font-weight: 600;
   color: var(--accent);
 }

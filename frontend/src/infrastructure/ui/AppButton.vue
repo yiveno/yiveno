@@ -9,6 +9,8 @@ withDefaults(
   defineProps<{
     /** filled=主强调；tonal=次强调；outlined=描边；text=文字按钮 */
     variant?: 'filled' | 'tonal' | 'outlined' | 'text'
+    /** danger=危险/不可逆操作着色（配合 outlined 等 variant） */
+    tone?: 'default' | 'danger'
     type?: 'button' | 'submit' | 'reset'
     disabled?: boolean
     href?: string
@@ -19,6 +21,7 @@ withDefaults(
   }>(),
   {
     variant: 'filled',
+    tone: 'default',
     type: 'button',
     disabled: false
   }
@@ -29,7 +32,7 @@ withDefaults(
   <a
     v-if="href && !disabled"
     class="app-button"
-    :class="`app-button--${variant}`"
+    :class="[`app-button--${variant}`, { 'app-button--danger': tone === 'danger' }]"
     :href="href"
     :title="title"
     :target="target"
@@ -40,7 +43,7 @@ withDefaults(
   <button
     v-else
     class="app-button"
-    :class="`app-button--${variant}`"
+    :class="[`app-button--${variant}`, { 'app-button--danger': tone === 'danger' }]"
     :type="type"
     :disabled="disabled"
     :title="title"
@@ -151,5 +154,54 @@ withDefaults(
     var(--accent) calc(var(--state-pressed-opacity) * 100%),
     transparent
   );
+}
+
+.app-button--outlined.app-button--danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.app-button--outlined.app-button--danger:hover:not(:disabled) {
+  background: color-mix(
+    in srgb,
+    var(--danger) calc(var(--state-hover-opacity) * 100%),
+    transparent
+  );
+}
+
+.app-button--outlined.app-button--danger:active:not(:disabled) {
+  background: color-mix(
+    in srgb,
+    var(--danger) calc(var(--state-pressed-opacity) * 100%),
+    transparent
+  );
+}
+
+.app-button--outlined.app-button--danger:focus-visible {
+  outline-color: var(--danger-ring);
+}
+
+.app-button--text.app-button--danger {
+  color: var(--danger);
+}
+
+.app-button--text.app-button--danger:hover:not(:disabled) {
+  background: color-mix(
+    in srgb,
+    var(--danger) calc(var(--state-hover-opacity) * 100%),
+    transparent
+  );
+}
+
+.app-button--text.app-button--danger:active:not(:disabled) {
+  background: color-mix(
+    in srgb,
+    var(--danger) calc(var(--state-pressed-opacity) * 100%),
+    transparent
+  );
+}
+
+.app-button--text.app-button--danger:focus-visible {
+  outline-color: var(--danger-ring);
 }
 </style>

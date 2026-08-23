@@ -257,7 +257,7 @@ function handleMoreClick(event: MouseEvent): void {
 <style scoped>
 .recall-card-group {
   display: grid;
-  gap: 6px;
+  gap: var(--space-xs);
   min-width: 0;
   max-width: 100%;
 }
@@ -311,7 +311,7 @@ function handleMoreClick(event: MouseEvent): void {
   display: block;
   min-width: 0;
   max-width: 100%;
-  padding: 12px;
+  padding: var(--space-sm);
   text-decoration: none;
   color: inherit;
   background: transparent;
@@ -319,13 +319,13 @@ function handleMoreClick(event: MouseEvent): void {
 
 .recall-card--excerpt {
   /* 引文感：正文略内缩，左侧 1px accent（不超过 craft 对粗色条的禁令） */
-  padding-left: 14px;
+  padding-left: var(--space-md);
   border-left: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
 }
 
 /* 书签：标题 / URL 单行省略；完整内容靠原生 title */
 .recall-card--bookmark .recall-card-title {
-  margin: 0 0 4px;
+  margin: 0 0 var(--space-2xs);
   overflow: hidden;
   font-weight: 700;
   letter-spacing: -0.015em;
@@ -352,7 +352,7 @@ function handleMoreClick(event: MouseEvent): void {
 }
 
 .recall-card--sibling {
-  padding: 10px;
+  padding: var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface-white);
@@ -388,15 +388,15 @@ function handleMoreClick(event: MouseEvent): void {
   width: 24px;
   height: 24px;
   padding: 0;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   line-height: 1;
 }
 
 /* 角落种类标记：不占文档流高度 */
 .recall-type-chip--corner {
   position: absolute;
-  top: 8px;
-  left: 8px;
+  top: var(--space-xs);
+  left: var(--space-xs);
   z-index: 1;
   pointer-events: none;
 }
@@ -423,7 +423,7 @@ function handleMoreClick(event: MouseEvent): void {
 }
 
 .recall-card-title {
-  margin: 0 0 4px;
+  margin: 0 0 var(--space-2xs);
   font-size: 16px;
   font-weight: 600;
   line-height: 1.35;
@@ -460,7 +460,7 @@ function handleMoreClick(event: MouseEvent): void {
 
 .recall-card-note {
   display: -webkit-box;
-  margin: 0 0 4px;
+  margin: 0 0 var(--space-2xs);
   font-size: 13px;
   line-height: 1.4;
   color: var(--on-surface);
@@ -477,7 +477,7 @@ function handleMoreClick(event: MouseEvent): void {
 }
 
 .recall-card-note-label {
-  margin-right: 4px;
+  margin-right: var(--space-2xs);
   font-weight: 600;
   color: var(--accent);
 }
@@ -485,7 +485,7 @@ function handleMoreClick(event: MouseEvent): void {
 .recall-card-subtitle {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-2xs);
   margin: 0;
   font-size: 12px;
   color: var(--on-surface-muted);
@@ -504,8 +504,8 @@ function handleMoreClick(event: MouseEvent): void {
 
 .recall-duplicate-more {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: var(--space-xs);
+  right: var(--space-xs);
   z-index: 1;
   display: inline-flex;
   flex-direction: column;
@@ -544,10 +544,10 @@ function handleMoreClick(event: MouseEvent): void {
 
 .recall-duplicate-siblings {
   display: grid;
-  gap: 6px;
+  gap: var(--space-xs);
 
   /* 约 5 条 sibling；超出内部滚动，避免撑破 Popup */
-  max-height: calc(5 * 5.25rem + 4 * 6px);
+  max-height: calc(5 * 5.25rem + 4 * var(--space-xs));
   margin: 0;
   padding: 0;
   overflow: hidden auto;

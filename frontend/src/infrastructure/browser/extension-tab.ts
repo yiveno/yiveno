@@ -5,6 +5,7 @@
 
 const LIBRARY_TAB_SESSION_KEY = 'yiveno.libraryTabId'
 const SETTINGS_TAB_SESSION_KEY = 'yiveno.settingsTabId'
+const GETTING_STARTED_TAB_SESSION_KEY = 'yiveno.gettingStartedTabId'
 
 async function readStoredTabId(key: string): Promise<number | null> {
   const result = await chrome.storage.session.get(key)
@@ -79,15 +80,14 @@ export async function focusOrOpenLibraryTab(): Promise<void> {
 }
 
 /**
- * 快捷键等：打开或切到设置页。
- * 优先 `openOptionsPage`（Chrome 会对 options 去重）；失败时回退到 tabs。
+ * 快捷键 / 顶栏：打开或切到设置页。
+ * 与记忆库同路径：session → URL 扫描 → 新建；避免 openOptionsPage 重复开 Tab。
  */
 export async function focusOrOpenSettingsTab(): Promise<void> {
-  try {
-    await chrome.runtime.openOptionsPage()
-    return
-  } catch {
-    // 个别环境 openOptionsPage 失败时回退
-  }
   await focusOrCreateExtensionPage('settings.html', SETTINGS_TAB_SESSION_KEY)
+}
+
+/** Side Panel / 安装引导：打开或切到 Getting Started 页。 */
+export async function focusOrOpenGettingStartedTab(): Promise<void> {
+  await focusOrCreateExtensionPage('getting-started.html', GETTING_STARTED_TAB_SESSION_KEY)
 }

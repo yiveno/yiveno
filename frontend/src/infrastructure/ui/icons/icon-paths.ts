@@ -14,6 +14,7 @@ export const APP_ICON_NAMES = [
   'celebration',
   'check_circle',
   'chevron_right',
+  'chevron_up',
   'delete',
   'edit_note',
   'expand_more',
@@ -44,6 +45,7 @@ export const APP_ICON_LUCIDE_SOURCE: Record<AppIconName, string> = {
   celebration: 'PartyPopper',
   check_circle: 'CircleCheck',
   chevron_right: 'ChevronRight',
+  chevron_up: 'ChevronUp',
   delete: 'Trash2',
   edit_note: 'NotebookPen',
   expand_more: 'ChevronDown',
@@ -118,6 +120,7 @@ export const APP_ICON_NODES: Record<AppIconName, readonly AppIconNode[]> = {
     ['path', { d: 'm9 12 2 2 4-4' }]
   ] as const,
   chevron_right: [['path', { d: 'm9 18 6-6-6-6' }]] as const,
+  chevron_up: [['path', { d: 'm18 15-6-6-6 6' }]] as const,
   delete: [
     ['path', { d: 'M10 11v6' }],
     ['path', { d: 'M14 11v6' }],

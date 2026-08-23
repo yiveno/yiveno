@@ -432,7 +432,7 @@ async function handleSkipOnboarding(): Promise<void> {
 }
 
 function handleOpenGettingStarted(): void {
-  openGettingStartedPage()
+  void openGettingStartedPage()
 }
 
 async function probeMemoryLibrary() {
@@ -812,7 +812,8 @@ onUnmounted(() => {
   height: 100%;
   min-height: 100%;
   max-height: none;
-  padding: 12px 16px 14px;
+  /* 顶栏非对称内边距：略紧于标准 page shell */
+  padding: var(--space-sm) var(--space-md) var(--space-md);
   color: var(--on-surface);
   background: var(--surface);
   overflow: hidden;
@@ -821,7 +822,7 @@ onUnmounted(() => {
 .recall-header {
   flex-shrink: 0;
   min-width: 0;
-  margin-bottom: 10px;
+  margin-bottom: var(--space-sm);
 }
 
 .recall-header-top {
@@ -850,9 +851,9 @@ onUnmounted(() => {
 }
 
 .recall-import {
-  margin-top: 8px;
+  margin-top: var(--space-xs);
   margin-bottom: 0;
-  padding: 10px 12px;
+  padding: var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface-white);
@@ -864,7 +865,7 @@ onUnmounted(() => {
 }
 
 .recall-import-label {
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-xs);
   font-size: 12px;
   line-height: 1.4;
   color: var(--on-surface-muted);
@@ -887,17 +888,17 @@ onUnmounted(() => {
 }
 
 .recall-body--empty {
-  padding-bottom: 8px;
+  padding-bottom: var(--space-xs);
 }
 
 .recall-empty {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
-  gap: 16px;
+  gap: var(--space-md);
   width: 100%;
   min-height: 0;
-  padding: 4px 4px 16px;
+  padding: var(--space-2xs) var(--space-2xs) var(--space-md);
   text-align: left;
   background: transparent;
 }
@@ -908,7 +909,7 @@ onUnmounted(() => {
   align-items: center;
   flex: 1 1 auto;
   min-height: 120px;
-  padding: 8px 0;
+  padding: var(--space-xs) 0;
 }
 
 .recall-greeting {
@@ -927,7 +928,7 @@ onUnmounted(() => {
   display: grid;
   justify-items: start;
   flex-shrink: 0;
-  gap: 8px;
+  gap: var(--space-xs);
   width: 100%;
   max-width: 36ch;
 }
@@ -953,9 +954,9 @@ onUnmounted(() => {
 .recall-empty-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 8px;
+  gap: var(--space-2xs) var(--space-xs);
   justify-content: flex-start;
-  margin-top: 4px;
+  margin-top: var(--space-2xs);
 }
 
 @keyframes recall-greeting-in {
@@ -977,7 +978,7 @@ onUnmounted(() => {
 .recall-results {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--space-md);
   min-width: 0;
   max-width: 100%;
   min-height: 0;
@@ -985,7 +986,7 @@ onUnmounted(() => {
 
 .recall-need-clue {
   display: grid;
-  gap: 4px;
+  gap: var(--space-2xs);
 }
 
 .recall-need-clue-title {
@@ -1003,7 +1004,7 @@ onUnmounted(() => {
 }
 
 .recall-section-label {
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-xs);
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
@@ -1020,7 +1021,7 @@ onUnmounted(() => {
 .recall-top-pick {
   display: grid;
   flex-shrink: 0;
-  gap: 8px;
+  gap: var(--space-xs);
   min-width: 0;
 }
 
@@ -1040,11 +1041,11 @@ onUnmounted(() => {
 .recall-also-list {
   display: grid;
   flex: 0 1 auto;
-  gap: 8px;
+  gap: var(--space-xs);
   min-width: 0;
   min-height: 0;
   margin: 0;
-  padding: 0 0 4px;
+  padding: 0 0 var(--space-2xs);
   overflow: hidden auto;
   overscroll-behavior: contain;
   list-style: none;

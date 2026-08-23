@@ -1,7 +1,8 @@
 /**
- * 打开扩展 Getting Started 页（Popup / 引导页内复用）。
+ * 打开或聚焦 Getting Started 页（与安装引导同路径）。
  */
-export function openGettingStartedPage(): void {
-  const url = chrome.runtime.getURL('getting-started.html')
-  window.open(url, '_blank', 'noopener,noreferrer')
+import { focusOrOpenGettingStartedTab } from '@/infrastructure/browser/extension-tab'
+
+export async function openGettingStartedPage(): Promise<void> {
+  await focusOrOpenGettingStartedTab()
 }

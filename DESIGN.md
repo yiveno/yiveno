@@ -98,7 +98,7 @@ components:
 > **Normative companion (中文完整标准):** [`docs/design/Yiveno-设计标准-v1.md`](docs/design/Yiveno-设计标准-v1.md) **v1.5**  
 > **Product truth:** [`docs/product/Yiveno-产品文档-v4.0.md`](docs/product/Yiveno-产品文档-v4.0.md) §0  
 > **Brand assets:** [`docs/design/brand-assets/README.md`](docs/design/brand-assets/README.md)  
-> **Authority:** [`packages/design-tokens/css/brand.css`](packages/design-tokens/css/brand.css) — colors, roles, `--space-*`, `--radius-*`. Extension UI: self-built `App*` components + [`extension-ui.css`](frontend/src/styles/extension-ui.css).
+> **Authority:** [`packages/design-tokens/css/brand.css`](packages/design-tokens/css/brand.css) — colors, roles, `--space-*`, `--radius-*`. Extension UI: self-built `App*` components (`AppButton`, `AppModal`, …) + [`extension-ui.css`](frontend/src/styles/extension-ui.css).
 
 ## Overview
 
@@ -155,7 +155,9 @@ Canonical CSS names in `site-critical.css`. Prefer roles over raw Brand Core in 
 - Forbidden as brand accents: bright purple, electric blue, neon, rainbow gradients, high-saturation coral/pink as “AI energy.”
 - **Do not** regenerate third-party theme-builder palettes as the source of truth.
 - Authority path: `packages/design-tokens/css/brand.css` (color + space + radius).
-- Extension product CSS: Roles / `--space-*` / `--radius-*`. Self-built `App*` components.
+- Extension product CSS: Roles / `--space-*` / `--radius-*`. Self-built `App*` components (`AppButton`, `AppModal`, `AppSectionTabs`, …).
+- **Modal Dialog:** Use `AppModal` for blocking confirms/forms; Esc + focus trap required; no `window.confirm`. Binary confirms use `AppConfirmModal`. See design standard §6.2.1.
+- **Section Tabs:** In-page panel switching (Settings / Library) uses `AppSectionTabs` (ARIA tabs), not Nav. Cross-page nav stays in `AppPageHeader`. See §6.2.2.
 - Old multi-presets: removed.
 
 ## Typography

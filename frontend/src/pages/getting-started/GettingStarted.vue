@@ -240,19 +240,19 @@ onUnmounted(() => {
   box-sizing: border-box;
   max-width: 720px;
   margin: 0 auto;
-  padding: 24px 24px 40px;
+  padding: var(--space-lg) var(--space-lg) var(--page-shell-padding-bottom);
   color: var(--on-surface);
   background: var(--surface);
 }
 
 .getting-started__header {
-  margin-bottom: 20px;
+  margin-bottom: var(--space-lg);
 }
 
 .getting-started__hero {
   display: grid;
-  gap: 10px;
-  margin-bottom: 28px;
+  gap: var(--space-sm);
+  margin-bottom: var(--page-shell-padding-top);
 }
 
 .getting-started__title {
@@ -273,14 +273,14 @@ onUnmounted(() => {
 
 .getting-started__steps {
   display: grid;
-  gap: 16px;
-  margin: 0 0 24px;
+  gap: var(--space-md);
+  margin: 0 0 var(--space-lg);
   padding: 0;
   list-style: none;
 }
 
 .getting-started__step {
-  padding: 14px 16px;
+  padding: var(--space-md);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface-white);
@@ -298,8 +298,8 @@ onUnmounted(() => {
 .getting-started__step-head {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-xs);
 }
 
 .getting-started__step-icon {
@@ -321,8 +321,8 @@ onUnmounted(() => {
 }
 
 .getting-started__recall-hint {
-  margin-top: 10px;
-  padding: 10px 12px;
+  margin-top: var(--space-sm);
+  padding: var(--space-sm);
   border-radius: var(--radius-sm);
   background: var(--surface-chrome);
   color: var(--on-surface);
@@ -330,9 +330,9 @@ onUnmounted(() => {
 
 .getting-started__recall-actions {
   display: grid;
-  gap: 8px;
+  gap: var(--space-xs);
   justify-items: start;
-  margin-top: 10px;
+  margin-top: var(--space-sm);
 }
 
 .getting-started__recall-error {
@@ -343,8 +343,8 @@ onUnmounted(() => {
 
 .getting-started__demo {
   display: grid;
-  gap: 16px;
-  padding: 18px 18px 20px;
+  gap: var(--space-md);
+  padding: var(--space-md);
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
   background: var(--surface-white);
@@ -359,14 +359,14 @@ onUnmounted(() => {
 
 .getting-started__demo-mark {
   padding: 0 2px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   background: color-mix(in srgb, var(--accent) 18%, transparent);
   color: inherit;
 }
 
 .getting-started__demo-actions {
   display: grid;
-  gap: 8px;
+  gap: var(--space-xs);
   justify-items: start;
 }
 
@@ -391,16 +391,16 @@ onUnmounted(() => {
 
 .getting-started__success {
   display: flex;
-  gap: 12px;
+  gap: var(--space-sm);
   align-items: flex-start;
-  padding: 16px 18px;
+  padding: var(--space-md);
   border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
   border-radius: var(--radius-xl);
   background: var(--surface-raised);
 }
 
 .getting-started__success-title {
-  margin: 0 0 6px;
+  margin: 0 0 var(--space-xs);
   font-size: 18px;
   font-weight: 600;
 }
@@ -415,6 +415,6 @@ onUnmounted(() => {
 .getting-started__footer {
   display: flex;
   justify-content: flex-end;
-  margin-top: 20px;
+  margin-top: var(--space-lg);
 }
 </style>

@@ -108,8 +108,8 @@ defineExpose({ focus })
 <style scoped>
 .recall-form {
   flex-shrink: 0;
-  margin-top: 8px;
-  padding-top: 4px;
+  margin-top: var(--space-xs);
+  padding-top: var(--space-2xs);
 }
 
 .recall-form--prominent {
@@ -120,13 +120,13 @@ defineExpose({ focus })
 .recall-composer-shell {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-xs);
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
   /* 固定下限：约两行线索 + 内边距，空/有字/是否 prominent 一致 */
   min-height: 76px;
-  padding: 10px 10px 10px 16px;
+  padding: var(--space-sm) var(--space-sm) var(--space-sm) var(--space-md);
   border: 1px solid var(--border);
   border-radius: 28px;
   background: var(--surface-white);
@@ -155,7 +155,7 @@ defineExpose({ focus })
   width: auto;
   min-height: 52px;
   max-height: 160px;
-  padding: 4px 0;
+  padding: var(--space-2xs) 0;
   border: 0;
   outline: none;
   font-family: inherit;
@@ -185,7 +185,7 @@ defineExpose({ focus })
   margin: 0;
   padding: 0;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   color: var(--on-accent);
   background: var(--accent);
   cursor: pointer;

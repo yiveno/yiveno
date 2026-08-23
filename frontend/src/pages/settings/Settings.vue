@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, useId, watch } from 'vue'
 
 import {
   formatExtensionCommandShortcut,
@@ -47,8 +47,12 @@ import { t } from '@/infrastructure/i18n/t'
 import { getWebsiteBaseUrl } from '@/infrastructure/browser/website-page'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
 import AppButton from '@/infrastructure/ui/AppButton.vue'
+import AppModal from '@/infrastructure/ui/AppModal.vue'
+import AppConfirmModal from '@/infrastructure/ui/AppConfirmModal.vue'
+import AppSectionTabs from '@/infrastructure/ui/AppSectionTabs.vue'
 import AppSwitch from '@/infrastructure/ui/AppSwitch.vue'
 import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
+import SettingsActionRow from '@/pages/settings/SettingsActionRow.vue'
 
 defineOptions({ name: 'SettingsPage' })
 
@@ -118,6 +122,19 @@ const privacyPolicyUrl = `${getWebsiteBaseUrl()}/privacy`
 const termsOfServiceUrl = `${getWebsiteBaseUrl()}/terms`
 
 const signOutDialogOpen = ref(false)
+const deleteAccountDialogOpen = ref(false)
+/** 通用危险/确认弹窗（替代 window.confirm） */
+type SettingsConfirmAction =
+  | 'clear_local'
+  | 'delete_cloud'
+  | 'clear_orphans'
+  | 'privacy_sync'
+  | 'restore_backup'
+
+const confirmDialogAction = ref<SettingsConfirmAction | null>(null)
+const confirmDialogError = ref('')
+/** privacy_sync 确认后继续执行的开关目标值 */
+const pendingSyncEnable = ref<boolean | null>(null)
 const signingOut = ref(false)
 const signOutError = ref('')
 
@@ -146,13 +163,16 @@ const commandRows = computed(() =>
 const activeSectionTab = computed(() => resolveSettingsSectionTab(activeSection.value))
 const activeSectionLabel = computed(() => t(activeSectionTab.value.labelKey))
 
-/** 切换左侧分区。 */
-function selectSection(section: SettingsSectionId) {
-  if (activeSection.value === section) {
-    return
-  }
-  activeSection.value = section
-}
+const settingsSectionTabsId = useId()
+const settingsPanelId = `${settingsSectionTabsId}-panel`
+const settingsActiveTabId = computed(() => `${settingsSectionTabsId}-tab-${activeSection.value}`)
+
+const settingsSectionTabItems = computed(() =>
+  SETTINGS_SECTION_TABS.map(tab => ({
+    id: tab.id,
+    label: t(tab.labelKey)
+  }))
+)
 
 /** 将当前分区同步到 `?section=`（默认 usage 不写 query）。 */
 function syncActiveSectionToUrl(section: SettingsSectionId) {
@@ -495,32 +515,32 @@ async function handleExportOrphans() {
 }
 
 async function handleClearOrphans() {
-  const confirmed = window.confirm(
-    t('settings_orphan_clear_confirm', [
-      String(orphanBucketCount.value),
-      String(orphanActiveCount.value)
-    ])
-  )
-  if (!confirmed) {
+  if (orphanWorking.value || signingOut.value || savingSync.value) {
     return
   }
+  confirmDialogError.value = ''
+  confirmDialogAction.value = 'clear_orphans'
+}
 
+async function executeClearOrphans(): Promise<boolean> {
   orphanWorking.value = true
   orphanMessage.value = ''
   syncError.value = ''
   try {
     const response = await clearOrphanOwners()
     if (!response.ok) {
-      syncError.value = tAccountSyncError(response.errorCode)
-      return
+      confirmDialogError.value = tAccountSyncError(response.errorCode)
+      return false
     }
     orphanMessage.value = t('settings_orphan_cleared', [
       String(response.clearedBuckets),
       String(response.clearedItems)
     ])
     await refreshSyncStatus()
+    return true
   } catch {
-    syncError.value = t('settings_error_orphan_clear')
+    confirmDialogError.value = t('settings_error_orphan_clear')
+    return false
   } finally {
     orphanWorking.value = false
   }
@@ -551,15 +571,10 @@ async function handleSyncToggle(nextValue: boolean) {
   syncMessage.value = ''
   try {
     if (nextValue && !privacyNoticeAcked.value) {
-      if (!window.confirm(t('settings_privacy_sync_confirm'))) {
-        return
-      }
-      const ack = await ackPrivacyNotice()
-      if (!ack.ok) {
-        syncError.value = tAccountSyncError(ack.errorCode)
-        return
-      }
-      privacyNoticeAcked.value = true
+      pendingSyncEnable.value = nextValue
+      confirmDialogError.value = ''
+      confirmDialogAction.value = 'privacy_sync'
+      return
     }
 
     const response = await setSyncEnabled(nextValue)
@@ -577,39 +592,55 @@ async function handleSyncToggle(nextValue: boolean) {
 }
 
 /** 删除云端记忆（不动本机）。 */
-async function handleDeleteCloudMemory() {
+function handleDeleteCloudMemory() {
   if (!signedIn.value || dataWorking.value) {
     return
   }
-  if (!window.confirm(t('settings_privacy_delete_cloud_confirm'))) {
-    return
-  }
+  confirmDialogError.value = ''
+  confirmDialogAction.value = 'delete_cloud'
+}
 
+async function executeDeleteCloudMemory(): Promise<boolean> {
   dataWorking.value = true
   dataError.value = ''
   dataMessage.value = ''
   try {
     const response = await deleteCloudMemory()
     if (!response.ok) {
-      dataError.value = tAccountSyncError(response.errorCode)
-      return
+      confirmDialogError.value = tAccountSyncError(response.errorCode)
+      return false
     }
     dataMessage.value = t('settings_privacy_delete_cloud_done', [String(response.deletedItems)])
     syncEnabled.value = false
     await refreshSyncStatus()
+    return true
   } catch {
-    dataError.value = t('settings_error_cloud_delete')
+    confirmDialogError.value = t('settings_error_cloud_delete')
+    return false
   } finally {
     dataWorking.value = false
   }
 }
 
-/** 删除账号：云 + Auth + 本机账号桶 + 退登。 */
-async function handleDeleteAccount() {
+/** 打开删除账号确认弹窗。 */
+function openDeleteAccountDialog() {
   if (!signedIn.value || dataWorking.value || signingOut.value) {
     return
   }
-  if (!window.confirm(t('settings_privacy_delete_account_confirm'))) {
+  dataError.value = ''
+  deleteAccountDialogOpen.value = true
+}
+
+function closeDeleteAccountDialog() {
+  if (dataWorking.value) {
+    return
+  }
+  deleteAccountDialogOpen.value = false
+}
+
+/** 删除账号：云 + Auth + 本机账号桶 + 退登。 */
+async function confirmDeleteAccount() {
+  if (!signedIn.value || dataWorking.value || signingOut.value) {
     return
   }
 
@@ -622,6 +653,7 @@ async function handleDeleteAccount() {
       dataError.value = tAccountSyncError(response.errorCode)
       return
     }
+    deleteAccountDialogOpen.value = false
     dataMessage.value = t('settings_privacy_delete_account_done', [
       String(response.deletedItems),
       String(response.clearedLocalCount)
@@ -636,6 +668,159 @@ async function handleDeleteAccount() {
     dataError.value = t('settings_error_account_delete')
   } finally {
     dataWorking.value = false
+  }
+}
+
+/** Plan 行标题：档位 + 续费/到期日 */
+const subscriptionPlanRowTitle = computed(() => {
+  if (!signedIn.value) {
+    return ''
+  }
+  const parts = [subscriptionTierLabel.value]
+  if (subscriptionPeriodEnd.value) {
+    parts.push(
+      t('settings_subscription_period_end', [
+        new Date(subscriptionPeriodEnd.value).toLocaleDateString()
+      ])
+    )
+  }
+  return parts.join(' · ')
+})
+
+const confirmDialogOpen = computed(() => confirmDialogAction.value !== null)
+
+const confirmDialogTitle = computed(() => {
+  switch (confirmDialogAction.value) {
+    case 'clear_local':
+      return t('settings_data_clear_local')
+    case 'delete_cloud':
+      return t('settings_privacy_delete_cloud')
+    case 'clear_orphans':
+      return t('settings_orphan_clear')
+    case 'privacy_sync':
+      return t('settings_sync_toggle')
+    case 'restore_backup':
+      return t('settings_sync_restore_backup')
+    default:
+      return ''
+  }
+})
+
+const confirmDialogBody = computed(() => {
+  switch (confirmDialogAction.value) {
+    case 'clear_local':
+      return t('settings_data_clear_local_confirm')
+    case 'delete_cloud':
+      return t('settings_privacy_delete_cloud_confirm')
+    case 'clear_orphans':
+      return t('settings_orphan_clear_confirm', [
+        String(orphanBucketCount.value),
+        String(orphanActiveCount.value)
+      ])
+    case 'privacy_sync':
+      return t('settings_privacy_sync_confirm')
+    case 'restore_backup':
+      return t('settings_sync_restore_backup_confirm')
+    default:
+      return ''
+  }
+})
+
+const confirmDialogTone = computed<'default' | 'danger'>(() => {
+  const action = confirmDialogAction.value
+  return action === 'clear_local' || action === 'delete_cloud' || action === 'clear_orphans'
+    ? 'danger'
+    : 'default'
+})
+
+const confirmDialogLoading = computed(() => {
+  switch (confirmDialogAction.value) {
+    case 'clear_local':
+    case 'delete_cloud':
+      return dataWorking.value
+    case 'clear_orphans':
+      return orphanWorking.value
+    case 'privacy_sync':
+      return savingSync.value
+    case 'restore_backup':
+      return restoringSyncBackup.value
+    default:
+      return false
+  }
+})
+
+function closeConfirmDialog() {
+  if (confirmDialogLoading.value) {
+    return
+  }
+  confirmDialogAction.value = null
+  confirmDialogError.value = ''
+  pendingSyncEnable.value = null
+}
+
+async function executePrivacySyncEnable(): Promise<boolean> {
+  const nextValue = pendingSyncEnable.value
+  if (nextValue === null) {
+    return false
+  }
+
+  savingSync.value = true
+  syncError.value = ''
+  syncRestoreMessage.value = ''
+  syncMessage.value = ''
+  try {
+    const ack = await ackPrivacyNotice()
+    if (!ack.ok) {
+      confirmDialogError.value = tAccountSyncError(ack.errorCode)
+      return false
+    }
+    privacyNoticeAcked.value = true
+
+    const response = await setSyncEnabled(nextValue)
+    if (!response.ok) {
+      confirmDialogError.value = tAccountSyncError(response.errorCode)
+      return false
+    }
+    syncEnabled.value = response.syncPrefs.enabled
+    await refreshSyncStatus()
+    return true
+  } catch {
+    confirmDialogError.value = t('settings_error_sync_prefs')
+    return false
+  } finally {
+    savingSync.value = false
+  }
+}
+
+async function runConfirmDialog() {
+  if (!confirmDialogAction.value || confirmDialogLoading.value) {
+    return
+  }
+
+  confirmDialogError.value = ''
+  let ok = false
+  switch (confirmDialogAction.value) {
+    case 'clear_local':
+      ok = await executeClearLocalMemory()
+      break
+    case 'delete_cloud':
+      ok = await executeDeleteCloudMemory()
+      break
+    case 'clear_orphans':
+      ok = await executeClearOrphans()
+      break
+    case 'privacy_sync':
+      ok = await executePrivacySyncEnable()
+      break
+    case 'restore_backup':
+      ok = await executeRestoreLatestSyncBackup()
+      break
+    default:
+      break
+  }
+
+  if (ok) {
+    closeConfirmDialog()
   }
 }
 
@@ -663,22 +848,23 @@ async function handleExportLocalMemory() {
 }
 
 /** 清除本机记忆（不动 Chrome 原生书签）。 */
-async function handleClearLocalMemory() {
+function handleClearLocalMemory() {
   if (dataWorking.value || exportWorking.value || signingOut.value) {
     return
   }
-  if (!window.confirm(t('settings_data_clear_local_confirm'))) {
-    return
-  }
+  confirmDialogError.value = ''
+  confirmDialogAction.value = 'clear_local'
+}
 
+async function executeClearLocalMemory(): Promise<boolean> {
   dataWorking.value = true
   dataError.value = ''
   dataMessage.value = ''
   try {
     const response = await clearLocalMemory()
     if (!response.ok) {
-      dataError.value = tAccountSyncError(response.errorCode)
-      return
+      confirmDialogError.value = tAccountSyncError(response.errorCode)
+      return false
     }
     chromeBookmarkIngestEnabled.value = false
     if (response.syncDisabled) {
@@ -690,8 +876,10 @@ async function handleClearLocalMemory() {
       dataMessage.value = t('settings_data_clear_local_done', [String(response.clearedCount)])
     }
     await refreshSyncStatus()
+    return true
   } catch {
-    dataError.value = t('settings_error_local_clear')
+    confirmDialogError.value = t('settings_error_local_clear')
+    return false
   } finally {
     dataWorking.value = false
   }
@@ -726,29 +914,32 @@ async function handleRunIncrementalSync() {
 }
 
 /** 用云端最近一次 replace 前备份救回，并拉回本机。 */
-async function handleRestoreLatestSyncBackup() {
+function handleRestoreLatestSyncBackup() {
   if (!signedIn.value || restoringSyncBackup.value) {
     return
   }
-  if (!window.confirm(t('settings_sync_restore_backup_confirm'))) {
-    return
-  }
+  confirmDialogError.value = ''
+  confirmDialogAction.value = 'restore_backup'
+}
 
+async function executeRestoreLatestSyncBackup(): Promise<boolean> {
   restoringSyncBackup.value = true
   syncError.value = ''
   syncRestoreMessage.value = ''
   try {
     const response = await restoreLatestSyncBackup()
     if (!response.ok) {
-      syncError.value = response.error
+      confirmDialogError.value = response.error
         ? `${tAccountSyncError(response.errorCode)}（${response.error}）`
         : tAccountSyncError(response.errorCode)
-      return
+      return false
     }
     syncRestoreMessage.value = t('settings_sync_restore_backup_done', [String(response.restored)])
     await refreshSyncStatus()
+    return true
   } catch {
-    syncError.value = t('settings_error_sync_restore_backup')
+    confirmDialogError.value = t('settings_error_sync_restore_backup')
+    return false
   } finally {
     restoringSyncBackup.value = false
   }
@@ -843,21 +1034,23 @@ onUnmounted(() => {
     </header>
 
     <div class="settings-layout">
-      <nav class="settings-tabs" :aria-label="t('settings_tabs_aria')">
-        <button
-          v-for="tab in SETTINGS_SECTION_TABS"
-          :key="tab.id"
-          type="button"
-          class="settings-tab"
-          :class="{ 'settings-tab--active': activeSection === tab.id }"
-          :aria-current="activeSection === tab.id ? 'page' : undefined"
-          @click="selectSection(tab.id)"
-        >
-          {{ t(tab.labelKey) }}
-        </button>
-      </nav>
+      <AppSectionTabs
+        v-model="activeSection"
+        class="settings-section-tabs"
+        :items="settingsSectionTabItems"
+        :aria-label="t('settings_tabs_aria')"
+        :panel-id="settingsPanelId"
+        :id-prefix="settingsSectionTabsId"
+      />
 
-      <section class="settings-panel" :aria-label="activeSectionLabel">
+      <section
+        :id="settingsPanelId"
+        class="settings-panel surface-panel-white"
+        role="tabpanel"
+        :aria-labelledby="settingsActiveTabId"
+        :aria-label="activeSectionLabel"
+        tabindex="0"
+      >
         <template v-if="activeSection === 'capture'">
           <div class="settings-block" aria-labelledby="settings-capture-heading">
             <div class="settings-section-head">
@@ -875,37 +1068,39 @@ onUnmounted(() => {
             </p>
 
             <template v-else>
-              <div class="settings-toggle">
-                <div class="settings-toggle-copy">
-                  <span class="settings-toggle-title">{{
-                    t('settings_toggle_selection_toolbar')
-                  }}</span>
-                  <span class="settings-toggle-hint">{{
-                    t('settings_toggle_selection_toolbar_hint')
-                  }}</span>
+              <div class="settings-card-stack">
+                <div class="settings-toggle">
+                  <div class="settings-toggle-copy">
+                    <span class="settings-toggle-title">{{
+                      t('settings_toggle_selection_toolbar')
+                    }}</span>
+                    <span class="settings-toggle-hint">{{
+                      t('settings_toggle_selection_toolbar_hint')
+                    }}</span>
+                  </div>
+                  <AppSwitch
+                    :aria-label="t('settings_toggle_selection_toolbar')"
+                    :model-value="selectionToolbarEnabled"
+                    :disabled="savingSelectionToolbar"
+                    @update:model-value="handleSelectionToolbarToggle"
+                  />
                 </div>
-                <AppSwitch
-                  :aria-label="t('settings_toggle_selection_toolbar')"
-                  :model-value="selectionToolbarEnabled"
-                  :disabled="savingSelectionToolbar"
-                  @update:model-value="handleSelectionToolbarToggle"
-                />
-              </div>
-              <div class="settings-toggle">
-                <div class="settings-toggle-copy">
-                  <span class="settings-toggle-title">{{
-                    t('settings_toggle_chrome_bookmark_ingest')
-                  }}</span>
-                  <span class="settings-toggle-hint">{{
-                    t('settings_toggle_chrome_bookmark_ingest_hint')
-                  }}</span>
+                <div class="settings-toggle">
+                  <div class="settings-toggle-copy">
+                    <span class="settings-toggle-title">{{
+                      t('settings_toggle_chrome_bookmark_ingest')
+                    }}</span>
+                    <span class="settings-toggle-hint">{{
+                      t('settings_toggle_chrome_bookmark_ingest_hint')
+                    }}</span>
+                  </div>
+                  <AppSwitch
+                    :aria-label="t('settings_toggle_chrome_bookmark_ingest')"
+                    :model-value="chromeBookmarkIngestEnabled"
+                    :disabled="savingChromeBookmarkIngest"
+                    @update:model-value="handleChromeBookmarkIngestToggle"
+                  />
                 </div>
-                <AppSwitch
-                  :aria-label="t('settings_toggle_chrome_bookmark_ingest')"
-                  :model-value="chromeBookmarkIngestEnabled"
-                  :disabled="savingChromeBookmarkIngest"
-                  @update:model-value="handleChromeBookmarkIngestToggle"
-                />
               </div>
             </template>
             <p
@@ -934,36 +1129,40 @@ onUnmounted(() => {
               {{ commandsError }}
             </p>
 
-            <ul v-else class="settings-command-list">
-              <li v-for="row in commandRows" :key="row.name" class="settings-command-row">
-                <div class="settings-command-meta">
-                  <p class="settings-command-title">{{ row.title }}</p>
-                </div>
-                <p
-                  class="settings-command-shortcut"
-                  :class="{ 'settings-command-shortcut--unbound': row.unbound }"
-                >
-                  {{ row.shortcutLabel }}
-                </p>
-              </li>
-            </ul>
+            <template v-else>
+              <ul class="settings-command-list">
+                <li v-for="row in commandRows" :key="row.name" class="settings-command-row">
+                  <div class="settings-command-meta">
+                    <p class="settings-command-title">{{ row.title }}</p>
+                  </div>
+                  <p
+                    class="settings-command-shortcut"
+                    :class="{ 'settings-command-shortcut--unbound': row.unbound }"
+                  >
+                    {{ row.shortcutLabel }}
+                  </p>
+                </li>
+              </ul>
 
-            <div class="settings-actions">
-              <AppButton
-                type="button"
-                :disabled="openingShortcuts"
-                :title="
-                  openingShortcuts ? t('settings_opening_shortcuts') : t('settings_open_shortcuts')
-                "
-                @click="handleOpenShortcutsPage"
-                variant="filled"
+              <SettingsActionRow
+                :title="t('settings_open_shortcuts')"
+                :subtitle="t('settings_shortcuts_open_hint')"
               >
-                <AppIcon name="open_in_new" size="18px" />
-                {{
-                  openingShortcuts ? t('settings_opening_shortcuts') : t('settings_open_shortcuts')
-                }}
-              </AppButton>
-            </div>
+                <AppButton
+                  type="button"
+                  :disabled="openingShortcuts"
+                  :title="t('settings_open_shortcuts')"
+                  @click="handleOpenShortcutsPage"
+                  variant="outlined"
+                >
+                  {{
+                    openingShortcuts
+                      ? t('settings_opening_shortcuts')
+                      : t('settings_open_shortcuts_action')
+                  }}
+                </AppButton>
+              </SettingsActionRow>
+            </template>
             <p v-if="openShortcutsError" class="settings-error" role="alert">
               {{ openShortcutsError }}
             </p>
@@ -995,19 +1194,27 @@ onUnmounted(() => {
               {{ t('settings_sync_pro_required_hint') }}
             </p>
 
-            <p v-if="signedIn" class="settings-sync-counts">
-              {{ t('settings_sync_local_count', [String(syncLocalCount)]) }}
-              ·
-              {{ t('settings_sync_remote_count', [String(syncRemoteCount)]) }}
-            </p>
-            <p v-if="signedIn && syncEnabled && syncLastPulledAt" class="settings-status">
-              {{ t('settings_sync_last_pulled', [syncLastPulledAt]) }}
-            </p>
-            <p v-else-if="!signedIn" class="settings-status">
-              {{ t('settings_sync_sign_in_required') }}
-            </p>
+            <div v-if="signedIn" class="settings-status-strip">
+              <p class="settings-status-strip__line">
+                {{ t('settings_sync_local_count', [String(syncLocalCount)]) }}
+                ·
+                {{ t('settings_sync_remote_count', [String(syncRemoteCount)]) }}
+                <template v-if="syncEnabled && syncLastPulledAt">
+                  ·
+                  {{ t('settings_sync_last_pulled', [syncLastPulledAt]) }}
+                </template>
+              </p>
+              <p
+                v-if="accountDisplayName || accountEmail"
+                class="settings-status-strip__line settings-status-strip__line--account"
+              >
+                {{ accountDisplayName || accountEmail }}
+                <template v-if="accountDisplayName && accountEmail"> · {{ accountEmail }}</template>
+              </p>
+            </div>
+            <p v-else class="settings-status">{{ t('settings_sync_sign_in_required') }}</p>
 
-            <div v-if="signedIn && syncEnabled" class="settings-actions settings-actions--spaced">
+            <div v-if="signedIn && syncEnabled" class="settings-actions">
               <AppButton
                 type="button"
                 :disabled="runningIncrementalSync || savingSync || signingOut || orphanWorking"
@@ -1022,113 +1229,116 @@ onUnmounted(() => {
             </div>
             <p v-if="syncMessage" class="settings-status" role="status">{{ syncMessage }}</p>
 
-            <p v-if="signedIn && (accountDisplayName || accountEmail)" class="settings-status">
-              {{ accountDisplayName || accountEmail }}
-              <template v-if="accountDisplayName && accountEmail"> · {{ accountEmail }}</template>
-            </p>
-
-            <div class="settings-subscription" aria-labelledby="settings-subscription-heading">
-              <p id="settings-subscription-heading" class="settings-toggle-title">
+            <div class="settings-subsection" aria-labelledby="settings-subscription-heading">
+              <h3 id="settings-subscription-heading" class="settings-subsection-title">
                 {{ t('settings_subscription_title') }}
-              </p>
-              <p class="settings-section-copy">{{ t('settings_subscription_hybrid_hint') }}</p>
-              <p v-if="!signedIn" class="settings-status">
-                {{ t('settings_subscription_sign_in_hint') }}
-              </p>
-              <template v-else>
-                <p class="settings-status">
-                  <strong>{{ subscriptionTierLabel }}</strong>
-                  <template v-if="subscriptionPeriodEnd">
-                    ·
-                    {{
-                      t('settings_subscription_period_end', [
-                        new Date(subscriptionPeriodEnd).toLocaleDateString()
-                      ])
-                    }}
-                  </template>
-                </p>
-                <div class="settings-actions settings-actions--spaced">
-                  <AppButton
-                    v-if="!subscriptionIsPro && subscriptionUpgradeUrl"
-                    type="button"
-                    :title="t('settings_subscription_upgrade')"
-                    @click="openExternalUrl(subscriptionUpgradeUrl)"
-                    variant="outlined"
-                  >
-                    {{ t('settings_subscription_upgrade') }}
-                  </AppButton>
-                  <AppButton
-                    v-if="subscriptionIsPro && subscriptionManageUrl"
-                    type="button"
-                    :title="t('settings_subscription_manage')"
-                    @click="openExternalUrl(subscriptionManageUrl)"
-                    variant="outlined"
-                  >
-                    {{ t('settings_subscription_manage') }}
-                  </AppButton>
-                </div>
-              </template>
+              </h3>
+              <SettingsActionRow
+                v-if="signedIn"
+                :title="subscriptionPlanRowTitle"
+                :subtitle="t('settings_subscription_hybrid_hint')"
+              >
+                <AppButton
+                  v-if="!subscriptionIsPro && subscriptionUpgradeUrl"
+                  type="button"
+                  :title="t('settings_subscription_upgrade')"
+                  @click="openExternalUrl(subscriptionUpgradeUrl)"
+                  variant="outlined"
+                >
+                  {{ t('settings_subscription_upgrade') }}
+                </AppButton>
+                <AppButton
+                  v-else-if="subscriptionIsPro && subscriptionManageUrl"
+                  type="button"
+                  :title="t('settings_subscription_manage')"
+                  @click="openExternalUrl(subscriptionManageUrl)"
+                  variant="outlined"
+                >
+                  {{ t('settings_subscription_manage') }}
+                </AppButton>
+              </SettingsActionRow>
+              <p v-else class="settings-status">{{ t('settings_subscription_sign_in_hint') }}</p>
               <p v-if="subscriptionError" class="settings-error" role="alert">
                 {{ subscriptionError }}
               </p>
             </div>
 
-            <div v-if="signedIn" class="settings-sync-restore">
-              <p class="settings-section-copy">{{ t('settings_sync_restore_backup_hint') }}</p>
-              <div class="settings-actions">
-                <AppButton
-                  type="button"
-                  :disabled="
-                    restoringSyncBackup ||
-                    savingSync ||
-                    signingOut ||
-                    orphanWorking ||
-                    runningIncrementalSync
-                  "
+            <div
+              v-if="signedIn"
+              class="settings-subsection"
+              aria-labelledby="settings-advanced-heading"
+            >
+              <h3 id="settings-advanced-heading" class="settings-subsection-title">
+                {{ t('settings_section_advanced') }}
+              </h3>
+              <div class="settings-card-stack">
+                <SettingsActionRow
                   :title="t('settings_sync_restore_backup')"
-                  @click="handleRestoreLatestSyncBackup"
-                  variant="outlined"
+                  :subtitle="t('settings_sync_restore_backup_hint')"
                 >
-                  {{
-                    restoringSyncBackup
-                      ? t('settings_orphan_working')
-                      : t('settings_sync_restore_backup')
-                  }}
-                </AppButton>
+                  <AppButton
+                    type="button"
+                    :disabled="
+                      restoringSyncBackup ||
+                      savingSync ||
+                      signingOut ||
+                      orphanWorking ||
+                      runningIncrementalSync
+                    "
+                    :title="t('settings_sync_restore_backup')"
+                    @click="handleRestoreLatestSyncBackup"
+                    variant="outlined"
+                  >
+                    {{
+                      restoringSyncBackup
+                        ? t('settings_orphan_working')
+                        : t('settings_sync_restore_backup_action')
+                    }}
+                  </AppButton>
+                </SettingsActionRow>
+
+                <div v-if="hasOrphanOwners" class="settings-orphan">
+                  <p class="settings-orphan-title">{{ t('settings_orphan_title') }}</p>
+                  <p class="settings-section-copy settings-orphan-copy">
+                    {{
+                      t('settings_orphan_copy', [
+                        String(orphanBucketCount),
+                        String(orphanActiveCount)
+                      ])
+                    }}
+                  </p>
+                  <div class="settings-actions">
+                    <AppButton
+                      type="button"
+                      :disabled="orphanWorking || signingOut || savingSync"
+                      :title="t('settings_orphan_export')"
+                      @click="handleExportOrphans"
+                      variant="outlined"
+                    >
+                      {{
+                        orphanWorking ? t('settings_orphan_working') : t('settings_orphan_export')
+                      }}
+                    </AppButton>
+                    <AppButton
+                      type="button"
+                      :disabled="orphanWorking || signingOut || savingSync"
+                      :title="t('settings_orphan_clear')"
+                      @click="handleClearOrphans"
+                      variant="outlined"
+                    >
+                      {{
+                        orphanWorking ? t('settings_orphan_working') : t('settings_orphan_clear')
+                      }}
+                    </AppButton>
+                  </div>
+                  <p v-if="orphanMessage" class="settings-status" role="status">
+                    {{ orphanMessage }}
+                  </p>
+                </div>
               </div>
               <p v-if="syncRestoreMessage" class="settings-status" role="status">
                 {{ syncRestoreMessage }}
               </p>
-            </div>
-
-            <div v-if="hasOrphanOwners" class="settings-orphan">
-              <p class="settings-toggle-title">{{ t('settings_orphan_title') }}</p>
-              <p class="settings-section-copy">
-                {{
-                  t('settings_orphan_copy', [String(orphanBucketCount), String(orphanActiveCount)])
-                }}
-              </p>
-              <div class="settings-actions">
-                <AppButton
-                  type="button"
-                  :disabled="orphanWorking || signingOut || savingSync"
-                  :title="t('settings_orphan_export')"
-                  @click="handleExportOrphans"
-                  variant="outlined"
-                >
-                  {{ orphanWorking ? t('settings_orphan_working') : t('settings_orphan_export') }}
-                </AppButton>
-                <AppButton
-                  type="button"
-                  :disabled="orphanWorking || signingOut || savingSync"
-                  :title="t('settings_orphan_clear')"
-                  @click="handleClearOrphans"
-                  variant="outlined"
-                >
-                  {{ orphanWorking ? t('settings_orphan_working') : t('settings_orphan_clear') }}
-                </AppButton>
-              </div>
-              <p v-if="orphanMessage" class="settings-status" role="status">{{ orphanMessage }}</p>
             </div>
 
             <div v-if="signedIn" class="settings-actions settings-actions--spaced">
@@ -1143,17 +1353,10 @@ onUnmounted(() => {
                   signingOut ? t('settings_account_signing_out') : t('settings_account_sign_out')
                 }}
               </AppButton>
-              <AppButton
-                type="button"
-                :disabled="signingOut || savingSync || orphanWorking || dataWorking"
-                :title="t('settings_account_open_delete_account')"
-                @click="selectSection('data')"
-                variant="text"
-              >
-                {{ t('settings_account_open_delete_account') }}
-              </AppButton>
             </div>
 
+            <p v-if="dataMessage" class="settings-status" role="status">{{ dataMessage }}</p>
+            <p v-if="dataError" class="settings-error" role="alert">{{ dataError }}</p>
             <p v-if="syncError" class="settings-error" role="alert">{{ syncError }}</p>
           </div>
         </template>
@@ -1167,10 +1370,11 @@ onUnmounted(() => {
               <p class="settings-section-copy">{{ t('settings_data_intro') }}</p>
             </div>
 
-            <div class="settings-privacy-danger">
-              <p class="settings-toggle-title">{{ t('settings_privacy_export') }}</p>
-              <p class="settings-section-copy">{{ t('settings_privacy_export_hint') }}</p>
-              <div class="settings-actions">
+            <div class="settings-card-stack">
+              <SettingsActionRow
+                :title="t('settings_privacy_export')"
+                :subtitle="t('settings_privacy_export_hint')"
+              >
                 <AppButton
                   type="button"
                   :disabled="exportWorking || dataWorking || signingOut"
@@ -1178,15 +1382,18 @@ onUnmounted(() => {
                   @click="handleExportLocalMemory"
                   variant="outlined"
                 >
-                  {{ exportWorking ? t('settings_privacy_working') : t('settings_privacy_export') }}
+                  {{
+                    exportWorking
+                      ? t('settings_privacy_working')
+                      : t('settings_privacy_export_action')
+                  }}
                 </AppButton>
-              </div>
-            </div>
+              </SettingsActionRow>
 
-            <div class="settings-privacy-danger">
-              <p class="settings-toggle-title">{{ t('settings_data_clear_local') }}</p>
-              <p class="settings-section-copy">{{ t('settings_data_clear_local_hint') }}</p>
-              <div class="settings-actions">
+              <SettingsActionRow
+                :title="t('settings_data_clear_local')"
+                :subtitle="t('settings_data_clear_local_hint')"
+              >
                 <AppButton
                   type="button"
                   :disabled="dataWorking || exportWorking || signingOut"
@@ -1194,49 +1401,61 @@ onUnmounted(() => {
                   @click="handleClearLocalMemory"
                   variant="outlined"
                 >
-                  {{ dataWorking ? t('settings_privacy_working') : t('settings_data_clear_local') }}
-                </AppButton>
-              </div>
-            </div>
-
-            <div v-if="signedIn" class="settings-privacy-danger">
-              <p class="settings-toggle-title">{{ t('settings_privacy_delete_cloud') }}</p>
-              <p class="settings-section-copy">{{ t('settings_privacy_delete_cloud_hint') }}</p>
-              <div class="settings-actions">
-                <AppButton
-                  type="button"
-                  :disabled="dataWorking || signingOut || savingSync"
-                  :title="t('settings_privacy_delete_cloud')"
-                  @click="handleDeleteCloudMemory"
-                  variant="outlined"
-                >
-                  {{
-                    dataWorking ? t('settings_privacy_working') : t('settings_privacy_delete_cloud')
-                  }}
-                </AppButton>
-              </div>
-
-              <p class="settings-toggle-title settings-privacy-danger__title-spaced">
-                {{ t('settings_privacy_delete_account') }}
-              </p>
-              <p class="settings-section-copy">{{ t('settings_privacy_delete_account_hint') }}</p>
-              <div class="settings-actions">
-                <AppButton
-                  type="button"
-                  :disabled="dataWorking || signingOut || savingSync"
-                  :title="t('settings_privacy_delete_account')"
-                  @click="handleDeleteAccount"
-                  variant="outlined"
-                >
                   {{
                     dataWorking
                       ? t('settings_privacy_working')
-                      : t('settings_privacy_delete_account')
+                      : t('settings_data_clear_local_action')
                   }}
                 </AppButton>
-              </div>
+              </SettingsActionRow>
+
+              <template v-if="signedIn">
+                <SettingsActionRow
+                  :title="t('settings_privacy_delete_cloud')"
+                  :subtitle="t('settings_privacy_delete_cloud_hint')"
+                  tone="danger"
+                >
+                  <AppButton
+                    type="button"
+                    :disabled="dataWorking || signingOut || savingSync"
+                    :title="t('settings_privacy_delete_cloud')"
+                    @click="handleDeleteCloudMemory"
+                    variant="outlined"
+                    tone="danger"
+                  >
+                    {{
+                      dataWorking
+                        ? t('settings_privacy_working')
+                        : t('settings_privacy_delete_cloud_action')
+                    }}
+                  </AppButton>
+                </SettingsActionRow>
+
+                <SettingsActionRow
+                  :title="t('settings_privacy_delete_account')"
+                  :subtitle="t('settings_privacy_delete_account_hint')"
+                  tone="danger"
+                >
+                  <AppButton
+                    type="button"
+                    tone="danger"
+                    :disabled="dataWorking || signingOut || savingSync"
+                    :title="t('settings_privacy_delete_account')"
+                    @click="openDeleteAccountDialog"
+                    variant="outlined"
+                  >
+                    {{
+                      dataWorking
+                        ? t('settings_privacy_working')
+                        : t('settings_privacy_delete_account_action')
+                    }}
+                  </AppButton>
+                </SettingsActionRow>
+              </template>
             </div>
-            <p v-else class="settings-status">{{ t('settings_privacy_delete_cloud_sign_in') }}</p>
+            <p v-if="!signedIn" class="settings-status">
+              {{ t('settings_privacy_delete_cloud_sign_in') }}
+            </p>
 
             <p v-if="dataMessage" class="settings-status" role="status">{{ dataMessage }}</p>
             <p v-if="dataError" class="settings-error" role="alert">{{ dataError }}</p>
@@ -1252,33 +1471,62 @@ onUnmounted(() => {
               <p class="settings-section-copy">{{ t('settings_privacy_intro') }}</p>
             </div>
 
-            <ul class="settings-privacy-list">
-              <li>{{ t('settings_privacy_bullet_local') }}</li>
-              <li>{{ t('settings_privacy_bullet_cloud') }}</li>
-              <li>{{ t('settings_privacy_bullet_account') }}</li>
-              <li>{{ t('settings_privacy_bullet_ai') }}</li>
-              <li>{{ t('settings_privacy_bullet_not_collected') }}</li>
-            </ul>
+            <details class="settings-details">
+              <summary class="settings-details__summary">
+                <span class="settings-details__summary-label">
+                  {{ t('settings_privacy_details_summary') }}
+                </span>
+                <span class="settings-details__chevrons" aria-hidden="true">
+                  <AppIcon
+                    class="settings-details__chevron settings-details__chevron--down"
+                    name="expand_more"
+                    size="18px"
+                  />
+                  <AppIcon
+                    class="settings-details__chevron settings-details__chevron--up"
+                    name="chevron_up"
+                    size="18px"
+                  />
+                </span>
+              </summary>
+              <ul class="settings-details__list">
+                <li>{{ t('settings_privacy_bullet_local') }}</li>
+                <li>{{ t('settings_privacy_bullet_cloud') }}</li>
+                <li>{{ t('settings_privacy_bullet_account') }}</li>
+                <li>{{ t('settings_privacy_bullet_ai') }}</li>
+                <li>{{ t('settings_privacy_bullet_not_collected') }}</li>
+              </ul>
+            </details>
 
-            <div class="settings-actions">
-              <a
-                class="settings-privacy-policy-link"
-                :href="privacyPolicyUrl"
-                target="_blank"
-                rel="noopener noreferrer"
+            <div class="settings-card-stack settings-card-stack--spaced">
+              <SettingsActionRow
                 :title="t('settings_privacy_open_policy')"
+                :subtitle="t('settings_privacy_open_policy_hint')"
               >
-                {{ t('settings_privacy_open_policy') }}
-              </a>
-              <a
-                class="settings-privacy-policy-link"
-                :href="termsOfServiceUrl"
-                target="_blank"
-                rel="noopener noreferrer"
+                <AppButton
+                  :href="privacyPolicyUrl"
+                  :title="t('settings_privacy_open_policy')"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  variant="outlined"
+                >
+                  {{ t('settings_privacy_open_policy_action') }}
+                </AppButton>
+              </SettingsActionRow>
+              <SettingsActionRow
                 :title="t('settings_privacy_open_terms')"
+                :subtitle="t('settings_privacy_open_terms_hint')"
               >
-                {{ t('settings_privacy_open_terms') }}
-              </a>
+                <AppButton
+                  :href="termsOfServiceUrl"
+                  :title="t('settings_privacy_open_terms')"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  variant="outlined"
+                >
+                  {{ t('settings_privacy_open_terms_action') }}
+                </AppButton>
+              </SettingsActionRow>
             </div>
           </div>
         </template>
@@ -1305,142 +1553,198 @@ onUnmounted(() => {
               />
             </div>
 
-            <p class="settings-section-copy">{{ t('settings_ai_model_note') }}</p>
-            <ul class="settings-privacy-list">
-              <li>{{ t('settings_ai_bullet_clue') }}</li>
-              <li>{{ t('settings_ai_bullet_enrichment') }}</li>
-              <li>{{ t('settings_ai_bullet_boundary') }}</li>
-            </ul>
-            <p v-if="hostedQuotaLoading" class="settings-section-copy" role="status">
-              {{ t('settings_ai_quota_loading') }}
-            </p>
-            <p v-else-if="hostedQuotaText" class="settings-section-copy" role="status">
-              {{ hostedQuotaText }}
-            </p>
-            <p v-if="hostedQuotaError" class="settings-error" role="alert">
-              {{ hostedQuotaError }}
-            </p>
-            <p class="settings-section-copy">{{ t('settings_ai_embedding_hint') }}</p>
-            <div class="settings-actions">
-              <AppButton
-                type="button"
-                :disabled="
-                  embeddingBackfillWorking ||
-                  !signedIn ||
-                  !aiFeaturesEnabled ||
-                  settingsState !== 'ready'
-                "
-                :title="t('settings_embedding_backfill')"
-                @click="handleEmbeddingBackfill"
-                variant="outlined"
+            <details class="settings-details">
+              <summary class="settings-details__summary">
+                <span class="settings-details__summary-label">
+                  {{ t('settings_ai_details_summary') }}
+                </span>
+                <span class="settings-details__chevrons" aria-hidden="true">
+                  <AppIcon
+                    class="settings-details__chevron settings-details__chevron--down"
+                    name="expand_more"
+                    size="18px"
+                  />
+                  <AppIcon
+                    class="settings-details__chevron settings-details__chevron--up"
+                    name="chevron_up"
+                    size="18px"
+                  />
+                </span>
+              </summary>
+              <p class="settings-details__lead">{{ t('settings_ai_model_note') }}</p>
+              <ul class="settings-details__list">
+                <li>{{ t('settings_ai_bullet_clue') }}</li>
+                <li>{{ t('settings_ai_bullet_enrichment') }}</li>
+                <li>{{ t('settings_ai_bullet_boundary') }}</li>
+              </ul>
+            </details>
+
+            <div
+              v-if="hostedQuotaLoading || hostedQuotaText || hostedQuotaError"
+              class="settings-status-strip settings-status-strip--spaced"
+            >
+              <p v-if="hostedQuotaLoading" class="settings-status-strip__line" role="status">
+                {{ t('settings_ai_quota_loading') }}
+              </p>
+              <p v-else-if="hostedQuotaText" class="settings-status-strip__line" role="status">
+                {{ hostedQuotaText }}
+              </p>
+              <p
+                v-if="hostedQuotaError"
+                class="settings-status-strip__line settings-error"
+                role="alert"
               >
-                {{
-                  embeddingBackfillWorking
-                    ? t('settings_embedding_backfill_working')
-                    : t('settings_embedding_backfill')
-                }}
-              </AppButton>
+                {{ hostedQuotaError }}
+              </p>
+            </div>
+
+            <div class="settings-card-stack settings-card-stack--spaced">
+              <SettingsActionRow
+                :title="t('settings_embedding_backfill')"
+                :subtitle="t('settings_ai_embedding_hint')"
+              >
+                <AppButton
+                  type="button"
+                  :disabled="
+                    embeddingBackfillWorking ||
+                    !signedIn ||
+                    !aiFeaturesEnabled ||
+                    settingsState !== 'ready'
+                  "
+                  :title="t('settings_embedding_backfill')"
+                  @click="handleEmbeddingBackfill"
+                  variant="outlined"
+                >
+                  {{
+                    embeddingBackfillWorking
+                      ? t('settings_embedding_backfill_working')
+                      : t('settings_embedding_backfill_action')
+                  }}
+                </AppButton>
+              </SettingsActionRow>
+
+              <SettingsActionRow
+                :title="t('settings_privacy_open_policy')"
+                :subtitle="t('settings_privacy_open_policy_hint')"
+              >
+                <AppButton
+                  :href="privacyPolicyUrl"
+                  :title="t('settings_privacy_open_policy')"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  variant="outlined"
+                >
+                  {{ t('settings_privacy_open_policy_action') }}
+                </AppButton>
+              </SettingsActionRow>
             </div>
             <p v-if="!signedIn" class="settings-status" role="status">
               {{ t('settings_embedding_backfill_auth_required') }}
             </p>
-            <p v-if="embeddingBackfillMessage" class="settings-section-copy" role="status">
+            <p v-if="embeddingBackfillMessage" class="settings-status" role="status">
               {{ embeddingBackfillMessage }}
             </p>
-            <a
-              class="settings-privacy-policy-link"
-              :href="privacyPolicyUrl"
-              target="_blank"
-              rel="noopener noreferrer"
-              :title="t('settings_privacy_open_policy')"
-            >
-              {{ t('settings_privacy_open_policy') }}
-            </a>
+
             <p v-if="settingsError" class="settings-error" role="alert">{{ settingsError }}</p>
           </div>
         </template>
       </section>
     </div>
 
-    <div
-      v-if="signOutDialogOpen"
-      class="settings-sign-out-backdrop"
-      role="presentation"
-      @click.self="closeSignOutDialog"
+    <AppModal
+      :open="signOutDialogOpen"
+      :title="t('settings_sign_out_dialog_title')"
+      :loading="signingOut"
+      close-on-backdrop
+      size="md"
+      @close="closeSignOutDialog"
     >
-      <div
-        class="settings-sign-out-dialog"
-        role="dialog"
-        aria-modal="true"
-        :aria-label="t('settings_sign_out_dialog_title')"
-      >
-        <h2 class="settings-sign-out-dialog__title">{{ t('settings_sign_out_dialog_title') }}</h2>
-        <p v-if="accountEmail" class="settings-section-copy">{{ accountEmail }}</p>
-        <p class="settings-section-copy">{{ t('settings_sign_out_dialog_copy') }}</p>
-        <p class="settings-sync-counts">
-          {{
-            t('settings_sign_out_dialog_counts', [
-              String(syncAccountOwnerCount),
-              String(syncLocalProfileOwnerCount),
-              String(syncRemoteCount)
-            ])
-          }}
-        </p>
+      <p v-if="accountEmail" class="settings-section-copy">{{ accountEmail }}</p>
+      <p class="settings-section-copy">{{ t('settings_sign_out_dialog_copy') }}</p>
+      <p class="settings-sync-counts">
+        {{
+          t('settings_sign_out_dialog_counts', [
+            String(syncAccountOwnerCount),
+            String(syncLocalProfileOwnerCount),
+            String(syncRemoteCount)
+          ])
+        }}
+      </p>
 
-        <div class="settings-sign-out-options">
+      <div class="settings-sign-out-options">
+        <AppButton
+          type="button"
+          :disabled="signingOut"
+          @click="confirmSignOut('keep_local')"
+          variant="filled"
+        >
+          {{ t('settings_sign_out_keep_local') }}
+        </AppButton>
+        <p class="settings-sign-out-option-hint">{{ t('settings_sign_out_keep_local_hint') }}</p>
+
+        <template v-if="showSignOutDataActions">
           <AppButton
             type="button"
             :disabled="signingOut"
-            :title="t('settings_sign_out_keep_local_hint')"
-            @click="confirmSignOut('keep_local')"
-            variant="filled"
+            @click="confirmSignOut('clear_local')"
+            variant="outlined"
           >
-            {{ t('settings_sign_out_keep_local') }}
+            {{ t('settings_sign_out_clear_local') }}
           </AppButton>
-          <p class="settings-sign-out-option-hint">{{ t('settings_sign_out_keep_local_hint') }}</p>
+          <p class="settings-sign-out-option-hint">
+            {{ t('settings_sign_out_clear_local_hint') }}
+          </p>
 
-          <template v-if="showSignOutDataActions">
-            <AppButton
-              type="button"
-              :disabled="signingOut"
-              :title="t('settings_sign_out_clear_local_hint')"
-              @click="confirmSignOut('clear_local')"
-              variant="outlined"
-            >
-              {{ t('settings_sign_out_clear_local') }}
-            </AppButton>
-            <p class="settings-sign-out-option-hint">
-              {{ t('settings_sign_out_clear_local_hint') }}
-            </p>
-
-            <AppButton
-              type="button"
-              :disabled="signingOut"
-              :title="t('settings_sign_out_sync_then_clear_hint')"
-              @click="confirmSignOut('sync_then_clear_local')"
-              variant="outlined"
-            >
-              {{ t('settings_sign_out_sync_then_clear') }}
-            </AppButton>
-            <p class="settings-sign-out-option-hint">
-              {{ t('settings_sign_out_sync_then_clear_hint') }}
-            </p>
-          </template>
-        </div>
-
-        <div class="settings-actions">
           <AppButton
             type="button"
             :disabled="signingOut"
-            @click="closeSignOutDialog"
-            variant="text"
+            @click="confirmSignOut('sync_then_clear_local')"
+            variant="outlined"
           >
-            {{ t('settings_sign_out_cancel') }}
+            {{ t('settings_sign_out_sync_then_clear') }}
           </AppButton>
-        </div>
-        <p v-if="signOutError" class="settings-error" role="alert">{{ signOutError }}</p>
+          <p class="settings-sign-out-option-hint">
+            {{ t('settings_sign_out_sync_then_clear_hint') }}
+          </p>
+        </template>
       </div>
-    </div>
+
+      <template v-if="signOutError" #error>{{ signOutError }}</template>
+
+      <template #actions>
+        <AppButton type="button" :disabled="signingOut" @click="closeSignOutDialog" variant="text">
+          {{ t('settings_sign_out_cancel') }}
+        </AppButton>
+      </template>
+    </AppModal>
+
+    <AppConfirmModal
+      :open="deleteAccountDialogOpen"
+      :title="t('settings_privacy_delete_account')"
+      :description="t('settings_privacy_delete_account_hint')"
+      :body="t('settings_privacy_delete_account_confirm')"
+      :cancel-label="t('settings_sign_out_cancel')"
+      :confirm-label="t('settings_privacy_delete_account')"
+      :confirm-loading-label="t('settings_privacy_working')"
+      confirm-tone="danger"
+      :error="dataError || undefined"
+      :loading="dataWorking"
+      @close="closeDeleteAccountDialog"
+      @confirm="confirmDeleteAccount"
+    />
+
+    <AppConfirmModal
+      :open="confirmDialogOpen"
+      :title="confirmDialogTitle"
+      :body="confirmDialogBody"
+      :cancel-label="t('settings_sign_out_cancel')"
+      :confirm-label="confirmDialogTitle"
+      :confirm-tone="confirmDialogTone"
+      :error="confirmDialogError || undefined"
+      :loading="confirmDialogLoading"
+      @close="closeConfirmDialog"
+      @confirm="runConfirmDialog"
+    />
   </main>
 </template>
 
@@ -1452,22 +1756,23 @@ onUnmounted(() => {
   max-width: 960px;
   height: 100%;
   margin: 0 auto;
-  padding: 28px 24px 24px;
+  padding: var(--page-shell-padding-top) var(--page-shell-padding-x)
+    var(--page-shell-padding-bottom-compact);
   color: var(--on-surface);
   overflow: hidden;
 }
 
 .settings-header {
   flex-shrink: 0;
-  margin-bottom: 24px;
+  margin-bottom: var(--space-lg);
 }
 
 .settings-header-top {
-  margin-bottom: 4px;
+  margin-bottom: var(--space-2xs);
 }
 
 .settings-title {
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-xs);
   font-size: 28px;
   line-height: 1.2;
 }
@@ -1483,72 +1788,39 @@ onUnmounted(() => {
   display: grid;
   flex: 1;
   align-items: stretch;
-  gap: 20px;
+  gap: var(--space-lg);
   grid-template-columns: 160px minmax(0, 1fr);
   min-height: 0;
 }
 
-.settings-tabs {
-  display: grid;
+.settings-section-tabs {
   align-self: start;
-  gap: 6px;
-  padding: 8px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--surface-raised);
-}
-
-.settings-tab {
-  margin: 0;
-  padding: 10px 12px;
-  border: none;
-  border-radius: var(--radius-sm);
-  font: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  text-align: left;
-  color: var(--on-surface-muted);
-  background: transparent;
-  cursor: pointer;
-}
-
-.settings-tab:hover {
-  background: color-mix(in srgb, var(--on-surface) 6%, transparent);
-}
-
-.settings-tab--active {
-  color: var(--on-surface);
-  background: var(--surface-chrome);
 }
 
 .settings-panel {
   min-width: 0;
   min-height: 0;
-  padding: 18px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--surface-white);
   overflow: hidden auto;
 }
 
 .settings-block + .settings-block {
-  margin-top: 28px;
-  padding-top: 24px;
+  margin-top: var(--page-shell-padding-top);
+  padding-top: var(--space-lg);
   border-top: 1px solid var(--border);
 }
 
 .settings-section-head {
-  margin-bottom: 14px;
+  margin-bottom: var(--space-md);
 }
 
 .settings-section-title {
-  margin: 0 0 6px;
+  margin: 0 0 var(--space-2xs);
   font-size: 16px;
   line-height: 1.3;
 }
 
 .settings-block--placeholder .settings-section-title {
-  margin-bottom: 8px;
+  margin-bottom: var(--space-xs);
 }
 
 .settings-section-copy {
@@ -1558,20 +1830,35 @@ onUnmounted(() => {
   color: var(--on-surface-muted);
 }
 
-.settings-toggle {
+/** 设置页卡片纵向堆叠：块间距统一用 --space-sm */
+.settings-card-stack {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.settings-card-stack--spaced {
+  margin-top: var(--space-md);
+}
+
+.settings-toggle,
+.settings-orphan {
+  padding: var(--space-sm) var(--space-md);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface-raised);
 }
 
+.settings-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
 .settings-toggle-copy {
   display: grid;
-  gap: 4px;
+  gap: var(--space-2xs);
 }
 
 .settings-toggle-title {
@@ -1586,13 +1873,13 @@ onUnmounted(() => {
 }
 
 .settings-status {
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-sm);
   font-size: 13px;
   color: var(--on-surface-muted);
 }
 
 .settings-error {
-  margin: 12px 0 0;
+  margin: var(--space-sm) 0 0;
   font-size: 13px;
   line-height: 1.4;
   color: var(--danger);
@@ -1600,8 +1887,8 @@ onUnmounted(() => {
 
 .settings-command-list {
   display: grid;
-  gap: 10px;
-  margin: 0 0 16px;
+  gap: var(--space-sm);
+  margin: 0 0 var(--space-md);
   padding: 0;
   list-style: none;
 }
@@ -1610,8 +1897,8 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
-  padding: 12px 14px;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface-raised);
@@ -1630,7 +1917,7 @@ onUnmounted(() => {
 .settings-command-shortcut {
   flex-shrink: 0;
   margin: 0;
-  padding: 6px 10px;
+  padding: var(--space-xs) var(--space-sm);
   border-radius: var(--radius-sm);
   font-size: 13px;
   font-weight: 600;
@@ -1648,105 +1935,148 @@ onUnmounted(() => {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-sm);
 }
 
 .settings-actions--spaced {
-  margin-top: 14px;
+  margin-top: var(--space-md);
+}
+
+.settings-subsection {
+  margin-top: var(--space-lg);
+}
+
+.settings-subsection-title {
+  margin: 0 0 var(--space-sm);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.settings-status-strip {
+  margin-top: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+}
+
+.settings-status-strip__line {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--on-surface-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.settings-status-strip__line + .settings-status-strip__line {
+  margin-top: var(--space-2xs);
+}
+
+.settings-status-strip__line--account {
+  color: var(--on-surface);
+}
+
+.settings-status-strip--spaced {
+  margin-top: var(--space-md);
+}
+
+.settings-details {
+  margin-top: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+}
+
+.settings-details__summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--on-surface);
+  cursor: pointer;
+  list-style: none;
+}
+
+.settings-details__summary-label {
+  min-width: 0;
+}
+
+.settings-details__summary::-webkit-details-marker {
+  display: none;
+}
+
+.settings-details__chevrons {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  color: var(--on-surface-muted);
+}
+
+.settings-details__chevron--up {
+  display: none;
+}
+
+.settings-details[open] .settings-details__chevron--down {
+  display: none;
+}
+
+.settings-details[open] .settings-details__chevron--up {
+  display: inline-flex;
+}
+
+.settings-details__summary:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.settings-details__lead {
+  margin: var(--space-xs) 0 var(--space-2xs);
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--on-surface-muted);
+}
+
+.settings-details__list {
+  margin: var(--space-xs) 0 0;
+  padding-left: 1.15rem;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--on-surface-muted);
+}
+
+.settings-orphan-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.settings-orphan-copy {
+  margin: var(--space-2xs) 0 var(--space-sm);
 }
 
 .settings-sync-counts {
-  margin: 12px 0 0;
+  margin: var(--space-sm) 0 0;
   font-size: 13px;
+  line-height: 1.45;
   color: var(--on-surface-muted);
-}
-
-.settings-sync-restore {
-  margin-top: 14px;
-}
-
-.settings-privacy-list {
-  margin: 12px 0 0;
-  padding-left: 1.25rem;
-  font-size: 13px;
-  line-height: 1.55;
-  color: var(--on-surface-muted);
-}
-
-.settings-privacy-danger {
-  margin-top: 18px;
-  padding: 12px 14px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--surface-raised);
-}
-
-.settings-privacy-danger__title-spaced {
-  margin-top: 16px;
-}
-
-.settings-privacy-policy-link {
-  display: inline-flex;
-  align-items: center;
-  min-height: 40px;
-  padding: 0 12px;
-  font-size: 14px;
-  line-height: 1.4;
-  text-decoration: underline;
-  color: var(--accent);
-  text-underline-offset: 2px;
-}
-
-.settings-privacy-policy-link:hover,
-.settings-privacy-policy-link:focus-visible {
-  outline: none;
-  color: var(--ink);
-}
-
-.settings-orphan {
-  margin-top: 14px;
-  padding: 12px 14px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--surface-raised);
-}
-
-.settings-sign-out-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 24px;
-  background: color-mix(in srgb, var(--ink) 42%, transparent);
-}
-
-.settings-sign-out-dialog {
-  width: min(100%, 420px);
-  max-height: min(90vh, 640px);
-  padding: 20px 18px 16px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--surface-white);
-  overflow: auto;
-  box-shadow: var(--shadow-ink-md);
-}
-
-.settings-sign-out-dialog__title {
-  margin: 0 0 10px;
-  font-size: 18px;
-  line-height: 1.3;
 }
 
 .settings-sign-out-options {
   display: grid;
-  gap: 6px;
-  margin: 16px 0 12px;
+  gap: var(--space-xs);
+  margin: var(--space-sm) 0 0;
 }
 
 .settings-sign-out-option-hint {
-  margin: 0 0 10px;
+  margin: 0 0 var(--space-sm);
   font-size: 12px;
   line-height: 1.4;
   color: var(--on-surface-muted);
@@ -1756,15 +2086,6 @@ onUnmounted(() => {
   .settings-layout {
     grid-template-columns: 1fr;
     grid-template-rows: auto minmax(0, 1fr);
-  }
-
-  .settings-tabs {
-    grid-auto-columns: 1fr;
-    grid-auto-flow: column;
-  }
-
-  .settings-tab {
-    text-align: center;
   }
 }
 </style>

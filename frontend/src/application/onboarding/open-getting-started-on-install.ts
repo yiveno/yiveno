@@ -1,4 +1,5 @@
 import { shouldOpenGettingStartedOnInstall } from '@/core/capture/install-onboarding'
+import { focusOrOpenGettingStartedTab } from '@/infrastructure/browser/extension-tab'
 import { readInstallOnboardingDone } from '@/infrastructure/storage/install-onboarding-storage'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 
@@ -18,7 +19,7 @@ export async function openGettingStartedOnInstall(reason: string): Promise<void>
       return
     }
 
-    await chrome.tabs.create({ url: chrome.runtime.getURL('getting-started.html') })
+    await focusOrOpenGettingStartedTab()
     flowOk('Onboarding', '安装后打开引导页', startedAt, { opened: true })
   } catch (error) {
     flowFail('Onboarding', '安装后打开引导页', startedAt, error)

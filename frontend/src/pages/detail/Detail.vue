@@ -2,6 +2,8 @@
 import { computed, onMounted, ref } from 'vue'
 import AppButton from '@/infrastructure/ui/AppButton.vue'
 import AppIconButton from '@/infrastructure/ui/AppIconButton.vue'
+import AppConfirmModal from '@/infrastructure/ui/AppConfirmModal.vue'
+import AppTextarea from '@/infrastructure/ui/AppTextarea.vue'
 
 import type { MemoryItem, TextExcerptMemoryItem } from '@/core/memory/memory-item'
 import { getUILanguage, t } from '@/infrastructure/i18n/t'
@@ -12,6 +14,7 @@ import {
   recordMemoryOpen,
   updateMemoryNote
 } from '@/infrastructure/messaging/background-client'
+import { openExtensionLibraryPage } from '@/infrastructure/browser/library-page'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
 import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
 
@@ -30,7 +33,9 @@ const viewState = ref<DetailViewState>('loading')
 const errorMessage = ref('')
 const item = ref<MemoryItem | null>(null)
 const deleting = ref(false)
-const libraryHref = chrome.runtime.getURL('library.html')
+const deleteConfirmOpen = ref(false)
+const deleteConfirmError = ref('')
+const libraryOpenError = ref('')
 
 /** 附注编辑（仅 clues.note，不改正文）。 */
 const NOTE_MAX_LENGTH = 500
@@ -67,6 +72,15 @@ const createdAtLabel = computed(() => {
 function readMemoryIdFromLocation(): string | null {
   const id = new URLSearchParams(window.location.search).get('id')?.trim()
   return id && id.length > 0 ? id : null
+}
+
+async function handleOpenLibrary() {
+  libraryOpenError.value = ''
+  try {
+    await openExtensionLibraryPage()
+  } catch {
+    libraryOpenError.value = t('error_open_library')
+  }
 }
 
 async function loadDetail() {
@@ -109,30 +123,49 @@ async function loadDetail() {
   }
 }
 
-async function handleDelete() {
+function openDeleteConfirm() {
+  if (deleting.value || !excerpt.value) {
+    return
+  }
+  deleteConfirmError.value = ''
+  deleteConfirmOpen.value = true
+}
+
+function closeDeleteConfirm() {
+  if (deleting.value) {
+    return
+  }
+  deleteConfirmOpen.value = false
+  deleteConfirmError.value = ''
+}
+
+async function confirmDelete() {
   const current = excerpt.value
   if (!current || deleting.value) {
     return
   }
-  if (!window.confirm(t('detail_delete_confirm'))) {
-    return
-  }
 
   deleting.value = true
+  deleteConfirmError.value = ''
   errorMessage.value = ''
   try {
     const response = await deleteMemoryItem({ id: current.id })
     if (!response.ok) {
-      errorMessage.value = tMemoryError(response.errorCode)
+      deleteConfirmError.value = tMemoryError(response.errorCode)
       return
     }
     item.value = null
     viewState.value = 'deleted'
+    deleteConfirmOpen.value = false
   } catch {
-    errorMessage.value = t('detail_delete_failed')
+    deleteConfirmError.value = t('detail_delete_failed')
   } finally {
     deleting.value = false
   }
+}
+
+function handleDelete() {
+  openDeleteConfirm()
 }
 
 function startNoteEdit(): void {
@@ -207,10 +240,16 @@ onMounted(() => {
     <section v-else-if="viewState === 'deleted'" class="detail-empty" role="status">
       <p class="detail-empty-title">{{ t('detail_deleted_title') }}</p>
       <p class="detail-empty-copy">{{ t('detail_deleted_body') }}</p>
-      <AppButton :href="libraryHref" :title="t('detail_open_library')" variant="outlined">
+      <AppButton
+        type="button"
+        :title="t('detail_open_library')"
+        @click="handleOpenLibrary"
+        variant="outlined"
+      >
         <AppIcon name="library_books" size="18px" />
         {{ t('detail_open_library') }}
       </AppButton>
+      <p v-if="libraryOpenError" class="detail-empty-copy" role="alert">{{ libraryOpenError }}</p>
     </section>
 
     <section v-else-if="viewState === 'error'" class="detail-empty" role="alert">
@@ -275,10 +314,8 @@ onMounted(() => {
         </div>
 
         <template v-if="noteEditing">
-          <textarea
+          <AppTextarea
             v-model="noteDraft"
-            class="detail-note-input"
-            rows="4"
             :maxlength="NOTE_MAX_LENGTH"
             :placeholder="t('selection_toolbar_note_placeholder')"
             :disabled="noteSaving"
@@ -328,6 +365,20 @@ onMounted(() => {
         </AppIconButton>
       </div>
     </article>
+
+    <AppConfirmModal
+      :open="deleteConfirmOpen"
+      :title="t('detail_delete')"
+      :body="t('detail_delete_confirm')"
+      :cancel-label="t('selection_toolbar_note_cancel')"
+      :confirm-label="t('detail_delete')"
+      :confirm-loading-label="t('detail_deleting')"
+      confirm-tone="danger"
+      :error="deleteConfirmError || undefined"
+      :loading="deleting"
+      @close="closeDeleteConfirm"
+      @confirm="confirmDelete"
+    />
   </main>
 </template>
 
@@ -335,20 +386,21 @@ onMounted(() => {
 .detail-shell {
   max-width: 720px;
   margin: 0 auto;
-  padding: 28px 24px 40px;
+  padding: var(--page-shell-padding-top) var(--page-shell-padding-x)
+    var(--page-shell-padding-bottom);
   color: var(--on-surface);
 }
 
 .detail-header {
-  margin-bottom: 24px;
+  margin-bottom: var(--space-lg);
 }
 
 .detail-header-top {
-  margin-bottom: 4px;
+  margin-bottom: var(--space-2xs);
 }
 
 .detail-title {
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-xs);
   font-size: 28px;
   line-height: 1.2;
 }
@@ -368,8 +420,8 @@ onMounted(() => {
 
 .detail-empty {
   display: grid;
-  gap: 10px;
-  padding: 18px;
+  gap: var(--space-sm);
+  padding: var(--space-md);
   border: 1px dashed var(--border-strong);
   border-radius: var(--radius-lg);
   background: var(--surface-raised);
@@ -390,8 +442,8 @@ onMounted(() => {
 
 .detail-article {
   display: grid;
-  gap: 14px;
-  padding: 18px;
+  gap: var(--space-md);
+  padding: var(--space-md);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface-white);
@@ -400,7 +452,7 @@ onMounted(() => {
 .detail-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 12px;
+  gap: var(--space-xs) var(--space-sm);
   font-size: 12px;
   color: var(--on-surface-muted);
 }
@@ -426,7 +478,7 @@ onMounted(() => {
 
 .detail-excerpt {
   margin: 0;
-  padding: 16px 18px;
+  padding: var(--space-md);
   border-radius: var(--radius-lg);
   font-size: 16px;
   line-height: 1.65;
@@ -436,8 +488,8 @@ onMounted(() => {
 
 .detail-note {
   display: grid;
-  gap: 8px;
-  padding: 12px 14px;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-lg);
   background: var(--surface-raised);
 }
@@ -446,7 +498,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--space-xs);
   min-width: 0;
 }
 
@@ -472,38 +524,18 @@ onMounted(() => {
   color: var(--on-surface-muted);
 }
 
-.detail-note-input {
-  box-sizing: border-box;
-  width: 100%;
-  min-height: 96px;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  font: inherit;
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--on-surface);
-  background: var(--surface-white);
-  resize: vertical;
-}
-
-.detail-note-input:focus {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 1px;
-}
-
 .detail-note-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-xs);
   justify-content: flex-end;
 }
 
 .detail-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 4px;
+  gap: var(--space-sm);
+  margin-top: var(--space-2xs);
 }
 
 .detail-inline-error {
@@ -519,7 +551,7 @@ onMounted(() => {
 .detail-source-link {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-xs);
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;

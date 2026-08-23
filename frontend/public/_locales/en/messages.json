@@ -349,13 +349,16 @@
     "message": "Privacy options are not available yet. This page will not pretend they are."
   },
   "settings_data_intro": {
-    "message": "Export or clear local memory, or delete the cloud copy and account. These actions only affect Yiveno memory and never change your Chrome bookmarks."
+    "message": "Export, clear local memory, or delete cloud data and your account. Never changes Chrome bookmarks."
   },
   "settings_data_clear_local": {
     "message": "Clear local memory"
   },
   "settings_data_clear_local_hint": {
-    "message": "Permanently delete all local memories for the current identity (excerpts and bookmark traces). Chrome bookmarks are not changed. Bookmark ingest will be turned off. If cloud sync is on, it will be turned off too (delete the cloud copy separately if needed)."
+    "message": "Permanently delete local memories for this identity. Chrome bookmarks unchanged."
+  },
+  "settings_data_clear_local_action": {
+    "message": "Clear"
   },
   "settings_data_clear_local_confirm": {
     "message": "This permanently clears Yiveno local memory and will not change Chrome bookmarks. Bookmark ingest will turn off; if sync is on it will turn off too. Export first if you need a backup. Continue?"
@@ -380,22 +383,25 @@
     "message": "Failed to clear local memory"
   },
   "settings_privacy_intro": {
-    "message": "Learn how Yiveno handles on-device memory, optional cloud sync, and AI. You will confirm this notice again when enabling cloud sync."
+    "message": "How Yiveno handles on-device memory, optional sync, and AI."
+  },
+  "settings_privacy_details_summary": {
+    "message": "What Yiveno stores and sends"
   },
   "settings_privacy_bullet_local": {
-    "message": "On this device: excerpts, bookmark traces, and notes in IndexedDB. Uninstalling the extension removes the local library."
+    "message": "On device: excerpts, bookmark traces, and notes in IndexedDB."
   },
   "settings_privacy_bullet_cloud": {
-    "message": "Cloud (optional): uploaded only after you turn on sync. Turning sync off does not automatically delete cloud data."
+    "message": "Cloud (optional): uploaded only after you turn sync on."
   },
   "settings_privacy_bullet_account": {
-    "message": "Account: sign-in for identity and optional sync (email/avatar come from the identity provider)."
+    "message": "Account: sign-in for identity and optional sync."
   },
   "settings_privacy_bullet_ai": {
-    "message": "AI: clue understanding may call a model via Cloudflare Workers; your full library is not sent by default."
+    "message": "AI: clue understanding may call a model; your full library is not sent by default."
   },
   "settings_privacy_bullet_not_collected": {
-    "message": "Not collected: browsing history, always-on clipboard reads, or full pages you did not capture."
+    "message": "Not collected: browsing history, clipboard reads, or pages you did not capture."
   },
   "settings_privacy_ack": {
     "message": "I understand this notice"
@@ -418,14 +424,29 @@
   "settings_privacy_open_policy": {
     "message": "Read full privacy policy"
   },
+  "settings_privacy_open_policy_hint": {
+    "message": "Full notice on the Yiveno website."
+  },
+  "settings_privacy_open_policy_action": {
+    "message": "Read"
+  },
   "settings_privacy_open_terms": {
     "message": "Read terms of service"
+  },
+  "settings_privacy_open_terms_hint": {
+    "message": "Terms on the Yiveno website."
+  },
+  "settings_privacy_open_terms_action": {
+    "message": "Read"
   },
   "settings_privacy_export": {
     "message": "Export local memories"
   },
   "settings_privacy_export_hint": {
-    "message": "Download all memories for the current identity (including soft-deleted items) as JSON. Orphan owner buckets are exported separately under Account & Sync."
+    "message": "Download all local memories as JSON."
+  },
+  "settings_privacy_export_action": {
+    "message": "Export"
   },
   "settings_privacy_export_done": {
     "message": "Exported $COUNT$ local item(s)",
@@ -439,7 +460,10 @@
     "message": "Delete cloud memories"
   },
   "settings_privacy_delete_cloud_hint": {
-    "message": "Permanently deletes this account’s cloud memories and sync backups. Local data stays by default, and sync is turned off."
+    "message": "Deletes cloud memories and backups. Local data stays; sync turns off."
+  },
+  "settings_privacy_delete_cloud_action": {
+    "message": "Delete"
   },
   "settings_privacy_delete_cloud_confirm": {
     "message": "This permanently deletes cloud memories and backups (not recoverable from backup). Local data stays by default. Continue?"
@@ -459,7 +483,10 @@
     "message": "Delete account"
   },
   "settings_privacy_delete_account_hint": {
-    "message": "Permanently closes this account: deletes cloud memories and backups, removes the login identity, and clears this account’s local memories. The anonymous local profile remains. This cannot be undone."
+    "message": "Closes account and deletes cloud and local memories for this identity."
+  },
+  "settings_privacy_delete_account_action": {
+    "message": "Delete"
   },
   "settings_privacy_delete_account_confirm": {
     "message": "This permanently deletes your account (cloud memories, login identity, and this account’s local memories). It cannot be undone. To sign out only, use Account & Sync. Continue?"
@@ -497,31 +524,34 @@
     "message": "AI options are not available yet. This page will not pretend they are."
   },
   "settings_ai_intro": {
-    "message": "AI only helps understand clues and enrich structured fields. IndexedDB MemoryItems remain the source of truth. On by default; you can turn it off anytime."
+    "message": "Helps understand clues and enrich fields. MemoryItems remain the source of truth."
+  },
+  "settings_ai_details_summary": {
+    "message": "How AI is used"
   },
   "settings_ai_toggle": {
     "message": "Enable AI assistance"
   },
   "settings_ai_toggle_hint": {
-    "message": "When off: clue understanding falls back to rules; Capture enrichment no longer calls a model."
+    "message": "Off: rules-only clue understanding; no Capture enrichment calls."
   },
   "settings_ai_model_note": {
     "message": "Current model path:"
   },
   "settings_ai_bullet_clue": {
-    "message": "Clue understanding: when signed in, model calls go through a Cloudflare Worker (no API key in the extension); quota exhaustion or failures fall back to rules. Signed-out uses rules only."
+    "message": "Clue understanding: signed-in calls go through a Cloudflare Worker; quota exhaustion or failures fall back to rules."
   },
   "settings_ai_bullet_enrichment": {
-    "message": "Capture enrichment: sparse async requests; proposals are validated before writing tags/keywords/entities; never overwrites your note."
+    "message": "Capture enrichment: sparse async requests; proposals are validated before writing; never overwrites your note."
   },
   "settings_ai_bullet_boundary": {
-    "message": "Boundary: we do not send your entire library to a model by default; models must not directly create/read/update/delete the memory store."
+    "message": "Boundary: we do not send your entire library to a model by default; models must not directly read/write the memory store."
   },
   "settings_section_capture": {
     "message": "Capture"
   },
   "settings_section_capture_copy": {
-    "message": "Control the selection save chip and whether Chrome bookmarks are written into local memory."
+    "message": "Control the selection save chip and Chrome bookmark ingest."
   },
   "settings_loading": {
     "message": "Loading settings…"
@@ -536,13 +566,19 @@
     "message": "Write Chrome bookmarks to memory"
   },
   "settings_toggle_chrome_bookmark_ingest_hint": {
-    "message": "When off, listeners are removed: no import or live updates; existing bookmark memories are kept"
+    "message": "When off, stops import and live updates; keeps existing memories."
   },
   "settings_section_shortcuts": {
     "message": "Shortcuts"
   },
   "settings_section_shortcuts_copy": {
-    "message": "This page cannot change keys directly. Review current bindings, then edit them in Chrome’s shortcuts page."
+    "message": "Review bindings here; change keys in Chrome."
+  },
+  "settings_shortcuts_open_hint": {
+    "message": "Opens Chrome’s extension shortcuts page for Yiveno."
+  },
+  "settings_open_shortcuts_action": {
+    "message": "Open"
   },
   "settings_commands_loading": {
     "message": "Loading shortcuts…"
@@ -645,13 +681,16 @@
     "message": "Sync"
   },
   "settings_section_sync_copy": {
-    "message": "Cloud sync is off by default. Turning it on first merges this device and the cloud (same id keeps the newer), then syncs about every 15 minutes. You can also sync now."
+    "message": "Off by default. When on, merges this device with the cloud, then syncs about every 15 minutes."
+  },
+  "settings_section_advanced": {
+    "message": "Advanced"
   },
   "settings_sync_toggle": {
     "message": "Sync memories to the cloud"
   },
   "settings_sync_toggle_hint": {
-    "message": "Sign in from the account icon in the header first. Local memories stay on this device if you sign out on the website."
+    "message": "Sign in from the header account icon first."
   },
   "settings_sync_now": {
     "message": "Sync now"
@@ -671,7 +710,7 @@
     }
   },
   "settings_sync_last_pulled": {
-    "message": "Last sync watermark: $TIME$",
+    "message": "Last sync: $TIME$",
     "placeholders": {
       "TIME": {
         "content": "$1"
@@ -748,8 +787,11 @@
   "settings_sync_restore_backup": {
     "message": "Restore from cloud backup"
   },
+  "settings_sync_restore_backup_action": {
+    "message": "Restore"
+  },
   "settings_sync_restore_backup_hint": {
-    "message": "If cloud count dropped after turning sync on, restore the largest pre-overwrite backup, then pull it to this device."
+    "message": "Restore the largest pre-overwrite backup if cloud count dropped."
   },
   "settings_sync_restore_backup_confirm": {
     "message": "Overwrite the cloud with the largest sync backup, then pull it to this device. Continue?"
@@ -795,19 +837,22 @@
     "message": "Manage subscription"
   },
   "settings_subscription_sign_in_hint": {
-    "message": "Sign in to check Pro status. Cloud sync and a larger hosted LLM quota require Pro."
+    "message": "Sign in to check Pro status."
   },
   "settings_subscription_hybrid_hint": {
-    "message": "Local recall quality is the same on Free and Pro (keyword + Hybrid). Pro mainly unlocks cloud sync and a larger hosted clue-understanding quota."
+    "message": "Recall quality is the same on Free and Pro. Pro unlocks cloud sync and more LLM quota."
   },
   "settings_sync_pro_required_hint": {
-    "message": "Cloud sync is a Pro feature. Upgrade to keep memories aligned across devices."
+    "message": "Cloud sync requires Pro."
   },
   "settings_ai_embedding_hint": {
-    "message": "When signed in with AI on, short text from your memories is sent to the Yiveno Worker to build embeddings. Embeddings stay on this device; cloud sync does not upload vectors in this release. Free and Pro have different daily caps."
+    "message": "Rebuilds on-device embeddings from memory text."
   },
   "settings_embedding_backfill": {
     "message": "Rebuild semantic index"
+  },
+  "settings_embedding_backfill_action": {
+    "message": "Rebuild"
   },
   "settings_embedding_backfill_working": {
     "message": "Indexing…"

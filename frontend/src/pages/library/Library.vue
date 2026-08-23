@@ -1,7 +1,11 @@
 <script setup lang="ts">
-import { computed, markRaw, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
+import { computed, markRaw, onMounted, onUnmounted, ref, shallowRef, useId, watch } from 'vue'
 import AppButton from '@/infrastructure/ui/AppButton.vue'
 import AppIconButton from '@/infrastructure/ui/AppIconButton.vue'
+import AppModal from '@/infrastructure/ui/AppModal.vue'
+import AppConfirmModal from '@/infrastructure/ui/AppConfirmModal.vue'
+import AppSectionTabs from '@/infrastructure/ui/AppSectionTabs.vue'
+import AppTextarea from '@/infrastructure/ui/AppTextarea.vue'
 
 import type { BookmarkLibraryIndex } from '@/core/memory/bookmark-library-index'
 import {
@@ -62,6 +66,9 @@ const noteEditorError = ref('')
 const noteEditorMemoryId = ref<string | null>(null)
 const noteEditorTitle = ref('')
 const noteEditorDraft = ref('')
+const deleteConfirmOpen = ref(false)
+const pendingDeleteId = ref<string | null>(null)
+const deleteConfirmError = ref('')
 
 const activeTabDef = computed(() => resolveLibraryTypeTab(activeType.value))
 const activeTab = computed(() => {
@@ -73,6 +80,17 @@ const activeTab = computed(() => {
     emptyBody: t(def.emptyBodyKey)
   }
 })
+
+const librarySectionTabsId = useId()
+const libraryPanelId = `${librarySectionTabsId}-panel`
+const libraryActiveTabId = computed(() => `${librarySectionTabsId}-tab-${activeType.value}`)
+const libraryTypeTabItems = computed(() =>
+  LIBRARY_TYPE_TABS.map(tab => ({
+    id: tab.type,
+    label: t(tab.labelKey)
+  }))
+)
+
 const showingBookmarkTree = computed(() => activeType.value === 'bookmark')
 
 const listRows = computed(() => {
@@ -244,13 +262,6 @@ async function loadPanel() {
   }
 }
 
-function selectType(type: SupportedMemoryItemType) {
-  if (activeType.value === type) {
-    return
-  }
-  activeType.value = type
-}
-
 function syncActiveTypeToUrl(type: SupportedMemoryItemType) {
   const nextSearch = buildLibraryTypeLocationSearch(type, window.location.search)
   const nextUrl = `${window.location.pathname}${nextSearch}${window.location.hash}`
@@ -260,27 +271,49 @@ function syncActiveTypeToUrl(type: SupportedMemoryItemType) {
   }
 }
 
-async function handleDeleteExcerpt(id: string) {
+function openDeleteConfirm(id: string) {
   if (deletingId.value) {
     return
   }
-  if (!window.confirm(t('library_delete_confirm'))) {
+  pendingDeleteId.value = id
+  deleteConfirmError.value = ''
+  deleteConfirmOpen.value = true
+}
+
+function closeDeleteConfirm() {
+  if (deletingId.value) {
+    return
+  }
+  deleteConfirmOpen.value = false
+  pendingDeleteId.value = null
+  deleteConfirmError.value = ''
+}
+
+async function confirmDeleteExcerpt() {
+  const id = pendingDeleteId.value
+  if (!id || deletingId.value) {
     return
   }
 
   deletingId.value = id
+  deleteConfirmError.value = ''
   try {
     const response = await deleteMemoryItem({ id })
     if (!response.ok) {
-      window.alert(tMemoryError(response.errorCode))
+      deleteConfirmError.value = tMemoryError(response.errorCode)
       return
     }
     items.value = items.value.filter(item => item.id !== id)
+    closeDeleteConfirm()
   } catch {
-    window.alert(t('library_delete_failed'))
+    deleteConfirmError.value = t('library_delete_failed')
   } finally {
     deletingId.value = null
   }
+}
+
+async function handleDeleteExcerpt(id: string) {
+  openDeleteConfirm(id)
 }
 
 function openNoteEditor(payload: { memoryItemId: string; title: string; note: string }) {
@@ -391,21 +424,22 @@ onUnmounted(() => {
     </header>
 
     <div class="library-layout">
-      <nav class="library-tabs" :aria-label="t('library_tabs_aria')">
-        <button
-          v-for="tab in LIBRARY_TYPE_TABS"
-          :key="tab.type"
-          type="button"
-          class="library-tab"
-          :class="{ 'library-tab--active': activeType === tab.type }"
-          :aria-current="activeType === tab.type ? 'page' : undefined"
-          @click="selectType(tab.type)"
-        >
-          {{ t(tab.labelKey) }}
-        </button>
-      </nav>
+      <AppSectionTabs
+        v-model="activeType"
+        :items="libraryTypeTabItems"
+        :aria-label="t('library_tabs_aria')"
+        :panel-id="libraryPanelId"
+        :id-prefix="librarySectionTabsId"
+      />
 
-      <section class="library-panel" :aria-label="activeTab.label">
+      <section
+        :id="libraryPanelId"
+        class="library-panel surface-panel-white"
+        role="tabpanel"
+        :aria-labelledby="libraryActiveTabId"
+        :aria-label="activeTab.label"
+        tabindex="0"
+      >
         <p v-if="loadState === 'loading'" class="library-status" role="status">
           {{ t('library_loading') }}
         </p>
@@ -490,42 +524,49 @@ onUnmounted(() => {
       </section>
     </div>
 
-    <div
-      v-if="noteEditorOpen"
-      class="library-note-dialog"
-      role="dialog"
-      aria-modal="true"
-      :aria-label="t('library_note_dialog_title')"
+    <AppModal
+      :open="noteEditorOpen"
+      :title="t('library_note_dialog_title')"
+      :loading="noteEditorSaving"
+      @close="closeNoteEditor"
     >
-      <div class="library-note-dialog-card">
-        <h2 class="library-note-dialog-title">{{ t('library_note_dialog_title') }}</h2>
-        <p class="library-note-dialog-target">{{ noteEditorTitle }}</p>
-        <textarea
-          v-model="noteEditorDraft"
-          class="library-note-dialog-input"
-          rows="4"
-          :maxlength="NOTE_MAX_LENGTH"
-          :placeholder="t('selection_toolbar_note_placeholder')"
+      <p class="library-note-dialog-target">{{ noteEditorTitle }}</p>
+      <AppTextarea
+        v-model="noteEditorDraft"
+        :maxlength="NOTE_MAX_LENGTH"
+        :placeholder="t('selection_toolbar_note_placeholder')"
+        :disabled="noteEditorSaving"
+      />
+
+      <template v-if="noteEditorError" #error>{{ noteEditorError }}</template>
+
+      <template #actions>
+        <AppButton
+          type="button"
           :disabled="noteEditorSaving"
-        />
-        <p v-if="noteEditorError" class="library-note-dialog-error" role="alert">
-          {{ noteEditorError }}
-        </p>
-        <div class="library-note-dialog-actions">
-          <AppButton
-            type="button"
-            :disabled="noteEditorSaving"
-            @click="closeNoteEditor"
-            variant="outlined"
-          >
-            {{ t('selection_toolbar_note_cancel') }}
-          </AppButton>
-          <AppButton type="button" :disabled="noteEditorSaving" @click="saveNote" variant="filled">
-            {{ t('selection_toolbar_note_save') }}
-          </AppButton>
-        </div>
-      </div>
-    </div>
+          @click="closeNoteEditor"
+          variant="outlined"
+        >
+          {{ t('selection_toolbar_note_cancel') }}
+        </AppButton>
+        <AppButton type="button" :disabled="noteEditorSaving" @click="saveNote" variant="filled">
+          {{ t('selection_toolbar_note_save') }}
+        </AppButton>
+      </template>
+    </AppModal>
+
+    <AppConfirmModal
+      :open="deleteConfirmOpen"
+      :title="t('library_delete_excerpt_aria')"
+      :body="t('library_delete_confirm')"
+      :cancel-label="t('selection_toolbar_note_cancel')"
+      :confirm-label="t('library_delete_excerpt_aria')"
+      confirm-tone="danger"
+      :error="deleteConfirmError || undefined"
+      :loading="deletingId !== null"
+      @close="closeDeleteConfirm"
+      @confirm="confirmDeleteExcerpt"
+    />
   </main>
 </template>
 
@@ -533,20 +574,21 @@ onUnmounted(() => {
 .library-shell {
   max-width: 960px;
   margin: 0 auto;
-  padding: 28px 24px 40px;
+  padding: var(--page-shell-padding-top) var(--page-shell-padding-x)
+    var(--page-shell-padding-bottom);
   color: var(--on-surface);
 }
 
 .library-header {
-  margin-bottom: 24px;
+  margin-bottom: var(--space-lg);
 }
 
 .library-header-top {
-  margin-bottom: 4px;
+  margin-bottom: var(--space-2xs);
 }
 
 .library-title {
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-xs);
   font-size: 28px;
   line-height: 1.2;
 }
@@ -561,48 +603,12 @@ onUnmounted(() => {
 .library-layout {
   display: grid;
   align-items: start;
-  gap: 20px;
+  gap: var(--space-lg);
   grid-template-columns: 140px minmax(0, 1fr);
-}
-
-.library-tabs {
-  display: grid;
-  gap: 6px;
-  padding: 8px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--surface-raised);
-}
-
-.library-tab {
-  margin: 0;
-  padding: 10px 12px;
-  border: none;
-  border-radius: var(--radius-sm);
-  font: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  text-align: left;
-  color: var(--on-surface-muted);
-  background: transparent;
-  cursor: pointer;
-}
-
-.library-tab:hover {
-  background: color-mix(in srgb, var(--on-surface) 6%, transparent);
-}
-
-.library-tab--active {
-  color: var(--on-surface);
-  background: var(--surface-chrome);
 }
 
 .library-panel {
   min-height: 280px;
-  padding: 16px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--surface-white);
 }
 
 .library-status,
@@ -618,14 +624,14 @@ onUnmounted(() => {
 
 .library-error-block {
   display: grid;
-  gap: 8px;
+  gap: var(--space-xs);
   justify-items: start;
 }
 
 .library-empty {
   display: grid;
-  gap: 6px;
-  padding: 20px 8px;
+  gap: var(--space-xs);
+  padding: var(--space-lg) var(--space-xs);
 }
 
 .library-empty-title {
@@ -643,7 +649,7 @@ onUnmounted(() => {
 
 .library-list {
   display: grid;
-  gap: 8px;
+  gap: var(--space-xs);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -656,11 +662,11 @@ onUnmounted(() => {
 .library-item-note,
 .library-item-delete {
   position: absolute;
-  top: 6px;
+  top: var(--space-xs);
   z-index: 1;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 120ms cubic-bezier(0.2, 0, 0, 1);
+  transition: opacity var(--motion-duration-short) var(--motion-easing-standard);
 }
 
 .library-item-note {
@@ -669,7 +675,7 @@ onUnmounted(() => {
 }
 
 .library-item-delete {
-  right: 6px;
+  right: var(--space-xs);
   color: var(--danger);
 }
 
@@ -700,8 +706,9 @@ onUnmounted(() => {
 .library-row {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px 84px 12px 14px;
+  gap: var(--space-xs);
+  /* 右侧为行内操作钮预留宽度 */
+  padding: var(--space-sm) 84px var(--space-sm) var(--space-md);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   text-decoration: none;
@@ -719,7 +726,7 @@ onUnmounted(() => {
 
 .library-row-title,
 .library-row-body {
-  margin: 0 0 4px;
+  margin: 0 0 var(--space-2xs);
   font-size: 15px;
   font-weight: 600;
   line-height: 1.35;
@@ -745,7 +752,7 @@ onUnmounted(() => {
 }
 
 .library-row-note-label {
-  margin-right: 6px;
+  margin-right: var(--space-xs);
   font-weight: 600;
   color: var(--accent);
 }
@@ -754,7 +761,7 @@ onUnmounted(() => {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-sm);
   min-width: 0;
 }
 
@@ -775,32 +782,6 @@ onUnmounted(() => {
   color: var(--border-strong);
 }
 
-.library-note-dialog {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  background: rgb(15 23 42 / 36%);
-}
-
-.library-note-dialog-card {
-  display: grid;
-  gap: 12px;
-  width: min(420px, 100%);
-  padding: 18px;
-  border-radius: var(--radius-lg);
-  background: var(--surface-white);
-  box-shadow: 0 12px 40px rgb(15 23 42 / 18%);
-}
-
-.library-note-dialog-title {
-  margin: 0;
-  font-size: 18px;
-  line-height: 1.3;
-}
-
 .library-note-dialog-target {
   margin: 0;
   font-size: 13px;
@@ -811,51 +792,9 @@ onUnmounted(() => {
   text-overflow: ellipsis;
 }
 
-.library-note-dialog-input {
-  box-sizing: border-box;
-  width: 100%;
-  margin: 0;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  resize: vertical;
-  font: inherit;
-  font-size: 14px;
-  line-height: 1.45;
-  color: var(--on-surface);
-  background: var(--surface);
-}
-
-.library-note-dialog-input:focus {
-  outline: 2px solid color-mix(in srgb, var(--accent) 35%, transparent);
-  outline-offset: 1px;
-}
-
-.library-note-dialog-error {
-  margin: 0;
-  font-size: 13px;
-  color: var(--danger);
-}
-
-.library-note-dialog-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
 @media (width <= 640px) {
   .library-layout {
     grid-template-columns: 1fr;
-  }
-
-  .library-tabs {
-    grid-auto-columns: 1fr;
-    grid-auto-flow: column;
-  }
-
-  .library-tab {
-    text-align: center;
   }
 }
 </style>

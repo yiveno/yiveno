@@ -274,7 +274,7 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-sm);
   min-width: 0;
   max-width: 100%;
 }
@@ -282,7 +282,7 @@ onUnmounted(() => {
 .app-page-header__brand-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-xs);
   min-width: 0;
 }
 
@@ -320,7 +320,7 @@ onUnmounted(() => {
 
 /* 1px Sage 环：仅 Pro；无 glow / 无加粗描边 */
 .app-page-header__avatar-wrap--pro {
-  box-shadow: 0 0 0 1px var(--accent, var(--sage, #4b6054));
+  box-shadow: 0 0 0 1px var(--accent);
 }
 
 .app-page-header__avatar {

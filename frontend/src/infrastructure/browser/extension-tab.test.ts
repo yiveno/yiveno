@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
+  focusOrOpenGettingStartedTab,
   focusOrOpenLibraryTab,
   focusOrOpenSettingsTab
 } from '@/infrastructure/browser/extension-tab'
@@ -92,9 +93,51 @@ describe('extension-tab', () => {
     expect(sessionStore.get('yiveno.libraryTabId')).toBe(77)
   })
 
-  it('focusOrOpenSettingsTab 优先 openOptionsPage', async () => {
+  it('focusOrOpenSettingsTab 无已有标签时创建并记住 tabId', async () => {
     await focusOrOpenSettingsTab()
-    expect(chrome.runtime.openOptionsPage).toHaveBeenCalledTimes(1)
+    expect(chrome.runtime.openOptionsPage).not.toHaveBeenCalled()
+    expect(chrome.tabs.create).toHaveBeenCalledWith({
+      url: 'chrome-extension://test/settings.html'
+    })
+    expect(sessionStore.get('yiveno.settingsTabId')).toBe(42)
+  })
+
+  it('focusOrOpenSettingsTab 按 URL 聚焦已开设置页（含 query）', async () => {
+    vi.mocked(chrome.tabs.query).mockResolvedValue([
+      {
+        id: 88,
+        windowId: 2,
+        url: 'chrome-extension://test/settings.html?section=data'
+      } as chrome.tabs.Tab
+    ])
+    vi.mocked(chrome.tabs.get).mockResolvedValue({
+      id: 88,
+      windowId: 2
+    } as chrome.tabs.Tab)
+
+    await focusOrOpenSettingsTab()
+    expect(chrome.runtime.openOptionsPage).not.toHaveBeenCalled()
     expect(chrome.tabs.create).not.toHaveBeenCalled()
+    expect(chrome.tabs.update).toHaveBeenCalledWith(88, { active: true })
+    expect(sessionStore.get('yiveno.settingsTabId')).toBe(88)
+  })
+
+  it('focusOrOpenGettingStartedTab 按 URL 聚焦已开引导页', async () => {
+    vi.mocked(chrome.tabs.query).mockResolvedValue([
+      {
+        id: 91,
+        windowId: 4,
+        url: 'chrome-extension://test/getting-started.html'
+      } as chrome.tabs.Tab
+    ])
+    vi.mocked(chrome.tabs.get).mockResolvedValue({
+      id: 91,
+      windowId: 4
+    } as chrome.tabs.Tab)
+
+    await focusOrOpenGettingStartedTab()
+    expect(chrome.tabs.create).not.toHaveBeenCalled()
+    expect(chrome.tabs.update).toHaveBeenCalledWith(91, { active: true })
+    expect(sessionStore.get('yiveno.gettingStartedTabId')).toBe(91)
   })
 })

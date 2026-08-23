@@ -258,11 +258,51 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
 
 ### 6.2 Chrome 扩展（Operate）
 
-- 色相跟 Brand Core；业务样式写 Roles；自研控件（`AppButton` / `AppSwitch` 等）
+- 色相跟 Brand Core；业务样式写 Roles；自研控件（`AppButton` / `AppSwitch` / `AppModal` / `AppConfirmModal` / `AppTextarea` / `AppSectionTabs` 等）
 - 密度高于官网；图标优先（Lucide 内联）+ `title`/`aria-label`
 - 术语：Filter / Recall，禁止 Search
 - Closest / 邻域列表的视觉层级必须可读
 - 不把营销大留白硬搬进 Popup；**不在扩展侧另开一套实验色**
+
+#### 6.2.1 Modal Dialog（`AppModal`）
+
+**何时用：** 需打断主流程的确认、表单、不可逆操作（删除记忆/账号、退出登录选项等）。
+
+**何时不用：** 能用 inline 编辑、toast、侧栏说明解决的，不弹 Modal。
+
+**结构（固定）：** 遮罩（`--ink` 42% scrim）→ 白卡片（`--surface-white` + `--shadow-ink-md`）→ 标题 → 可选说明 → 内容 slot → 错误 → actions（`AppButton`）。
+
+**尺寸：** `sm` = 420px（默认）；`md` = 520px（多选项，如 Sign out）。
+
+**交互（必须）：**
+
+| 行为           | 默认                                                 |
+| -------------- | ---------------------------------------------------- |
+| Esc 关闭       | ✅（`loading` 时禁用）                               |
+| Tab 焦点陷阱   | ✅                                                   |
+| 关闭后焦点还原 | ✅                                                   |
+| 点遮罩关闭     | ❌（表单/危险操作）；Sign out 等可 `closeOnBackdrop` |
+| 危险主操作     | `AppButton tone="danger"` + outlined                 |
+
+**禁止：** `window.confirm` / `window.alert` 作为用户面向确认；遮罩用 slate 等非 `--ink` 色；hover/focus 几何变换。
+
+**实现：** `frontend/src/infrastructure/ui/AppModal.vue`；业务页只填 slot，不复制 overlay CSS。
+
+**确认类（`AppConfirmModal`）：** Cancel + Confirm 双按钮的薄封装；`confirmTone="danger"` 用于删除等不可逆操作。正文用 `body` prop 或 default slot；多按钮/表单仍直接用 `AppModal`。
+
+#### 6.2.2 页内分区 Tab（`AppSectionTabs`）
+
+**何时用：** 同一整页内切换右侧面板（Settings 分区、Library 类型 Tab 等）。
+
+**何时不用：** 跨页跳转（`AppPageHeader` nav）；Modal 内分段；纯装饰分组标题。
+
+**语义：** WAI-ARIA Tabs（`tablist` / `tab` / `tabpanel`）；**不叫 Nav**——Nav 保留给应用级跨页导航。
+
+**布局：** `layout="responsive"`（默认）= 宽屏侧栏竖排、≤640px 顶栏横排 chips；`side` / `top` 固定方向。
+
+**选中态：** 轨道 `--surface-raised`；当前项 `--surface-accent-soft` + `--on-surface`。禁止纯 `#fff` 块（与纸色底反差过强）；右侧面板仍用 `--surface-white`。
+
+**实现：** `frontend/src/infrastructure/ui/AppSectionTabs.vue`；`items[].label` 由页面经 `t()` 解析；`panelId` + `idPrefix`（`useId()`）关联右侧 `role="tabpanel"`。
 
 ### 6.3 Logo 与图标物料
 
@@ -344,16 +384,17 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
 
 ## 10. 版本与变更
 
-| 版本   | 日期       | 说明                                                                        |
-| ------ | ---------- | --------------------------------------------------------------------------- |
-| v1.0   | 2026-08-15 | 以官网敲定 Brand Core；宣告旧实验色非标准                                   |
-| v1.1   | 2026-08-16 | 废弃旧色板路径；官网为色系试验场，角色层在官网补全后再外推                  |
-| v1.2   | 2026-08-20 | Roles v1 冻结可外推；权威实现先落官网 `site-critical.css`；消散落业务 hex   |
-| v1.2.1 | 2026-08-20 | Brand Core + Roles 迁入 `@yiveno/design-tokens/css/brand.css`；官网消费该包 |
-| v1.3   | 2026-08-20 | 扩展接入 Brand Roles；停用多预设色板运行时                                  |
-| v1.4   | 2026-08-20 | 扩展业务 CSS 改写 Roles；删除旧 presets / theme 运行时                      |
-| v1.5   | 2026-08-20 | `--space-*` / `--radius-*` 进 brand；semantic 直连 Roles；variables 瘦身    |
-| v1.6   | 2026-08-22 | 扩展自研 App\* 控件；图标统一 Lucide 按需内联                               |
+| 版本   | 日期       | 说明                                                                          |
+| ------ | ---------- | ----------------------------------------------------------------------------- |
+| v1.0   | 2026-08-15 | 以官网敲定 Brand Core；宣告旧实验色非标准                                     |
+| v1.1   | 2026-08-16 | 废弃旧色板路径；官网为色系试验场，角色层在官网补全后再外推                    |
+| v1.2   | 2026-08-20 | Roles v1 冻结可外推；权威实现先落官网 `site-critical.css`；消散落业务 hex     |
+| v1.2.1 | 2026-08-20 | Brand Core + Roles 迁入 `@yiveno/design-tokens/css/brand.css`；官网消费该包   |
+| v1.3   | 2026-08-20 | 扩展接入 Brand Roles；停用多预设色板运行时                                    |
+| v1.4   | 2026-08-20 | 扩展业务 CSS 改写 Roles；删除旧 presets / theme 运行时                        |
+| v1.5   | 2026-08-20 | `--space-*` / `--radius-*` 进 brand；semantic 直连 Roles；variables 瘦身      |
+| v1.7   | 2026-08-23 | 扩展 `AppModal` Modal Dialog 规范（§6.2.1）；禁止 `window.confirm` 作用户确认 |
+| v1.6   | 2026-08-22 | 扩展自研 App\* 控件；图标统一 Lucide 按需内联                                 |
 
 **变更规则：**
 
