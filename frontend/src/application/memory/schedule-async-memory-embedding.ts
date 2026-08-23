@@ -213,10 +213,3 @@ export async function enqueueMissingMemoryEmbeddings(
   })
   return { enqueued: missing.length, scanned: items.length }
 }
-
-/** 测试用：重置串行队列与熔断。 */
-export function resetAsyncMemoryEmbeddingQueueForTests(): void {
-  queueGeneration += 1
-  queue = Promise.resolve()
-  authPaused = false
-}
