@@ -196,10 +196,35 @@
 #### 默认下一主线（壳外）
 
 ```text
+R4 证据与复用（Explain ECS · TTE · evidence pack · MCP · 迁移导入）
+  ↑ 与市场研究对齐的可验证差异化
 检索质量 / 线索理解 / Hybrid·embed / recall-eval must
-  ↑ 护城河
-Side Panel Chat 壳（本表基线）→ 冻大改，只薄维护
+  ↑ 护城河（与 R4 并行，R4 未达 §5.9 门槛时不扩连接器/Agent）
+Side Panel Chat 壳（R-shell-chat 基线）→ 冻大改，只薄维护
 ```
+
+### R4 · 证据与复用（Phase E · 2026-08 市场对齐）
+
+**状态：** **Normative 已写入产品文档 §0.1.1 / §5.9 / §8 Phase E**；实现待启动。
+
+**目标：** 把「找对了」变成**可测量、可验证、可交给任意 AI**——补全 Capture→Reuse 闭环的后半段；**不**借 R4 开 Agent 或 history 抓取。
+
+**来源：** 仓库 `yiveno_research/` 结论已回写产品文档；本波为执行计划。
+
+| 交付                                    | 验收                 | 依赖                                           |
+| --------------------------------------- | -------------------- | ---------------------------------------------- |
+| Explain 全要素 UI（ECS 五要素上结果卡） | §5.10.1–2 手工绿     | 现有 `explain-recall-match` core               |
+| TTE / Verified Retrieval 最小埋点       | §5.10.3；§5.9 七事件 | `docs/engineering/R4-Phase-E-验收与eval.md` §4 |
+| evidence pack（多选 → Markdown/JSON）   | §5.10.4              | 工程旁挂 §5 JSON schema 草案                   |
+| 只读 MCP beta                           | §5.10.5              | 新 message type 须先改 schema                  |
+| Raindrop / Pocket 导入适配器            | §5.10.6 + R2 准入    | `corpus-adapter-contract`                      |
+| recall-eval 扩展                        | §5.11.2 全部 must 绿 | `recall-eval-cases.ts`                         |
+
+**明确不做（R4 内）：** 自主 Agent 行动；默认 history；知识图谱 UI；全文 archive + content hash（可单列 E+ backlog）；Researcher 定价档。
+
+**退出标准：** §5.9 Beta 行 TTE-V / Success@180 / ECS 合格率达标 + 90 天种子验证 31–60 天阈值通过 → 才进入付费/分发实验或 MCP 对外宣传。
+
+**退出失败：** 优先 parser / rerank / Explain UI；**禁止**加连接器 Logo 墙或 memory 叙事扩张。
 
 ### R∞ · 框架远景（不排期）
 
@@ -211,11 +236,11 @@ Side Panel Chat 壳（本表基线）→ 冻大改，只薄维护
 
 ```text
 R-shell / R-shell-session / R-shell-chat 基线（已）
-  → 默认：检索·理解·embed·eval（护城河）
+  → 默认：R4 证据与复用（Explain · TTE · evidence pack）与检索·eval 并行
   → 并行：仅阻塞性的 Chat 壳薄维护（见 R-shell-chat「允许的薄维护」）
 ```
 
-默认**先文档与验收，再大功能**；当前 WIP 合入时须不违反空结果契约与反助理 MUST NOT。**禁止**在未改本表 / §7.0 的情况下把「Chat UI 大波次」挤占算法排期。
+默认**先文档与验收，再大功能**；R4 每项合入须满足 §5.9 与 §1.1 归属。**禁止**在未达 §5.9 门槛时扩 MCP 宣传、多连接器或 Agent。
 
 ---
 
@@ -231,20 +256,22 @@ R-shell / R-shell-session / R-shell-chat 基线（已）
 
 ## 6. 修订记录
 
-| 日期       | 变更                                                                     |
-| ---------- | ------------------------------------------------------------------------ |
-| 2026-08-21 | 增 R-shell-chat：对话壳能力清单（已有/不做/薄维护）；默认下一主线=算法   |
-| 2026-08-21 | 增 R-shell-session：New find + session status（§7.0）                    |
-| 2026-08-21 | R-shell 落地：Recall 主壳 Side Panel；拆除 popup；`OPEN_RECALL_SHELL`    |
-| 2026-08-21 | 增 R-shell：Recall 主壳 → Side Panel；四点拍板；实现待启动               |
-| 2026-08-15 | 对齐产品文档定位纠偏：邻域非神谕；Top1=建议；AI 不作宣传招牌；差异表补行 |
-| 2026-08-11 | 初版：差异表 + R0–R∞ + 近周顺序                                          |
-| 2026-08-11 | R0 落地：must eval / 空库 / 反助理门禁与文案；进入 R1                    |
-| 2026-08-11 | R1 落地：§5.8 冷启动脚本；空库先存文案；进入 R2                          |
-| 2026-08-11 | R2 落地：语料适配器工程契约 + G1–G7 + 准入清单；R3 有条件                |
-| 2026-08-11 | R3 切片：G3 弱锚点召回降权；倒排/外部源仍待                              |
-| 2026-08-11 | R3：倒排 Phase 1 预过滤落地；外部源仍待                                  |
-| 2026-08-11 | 倒排：单条 put 健康索引下增量维护 posting                                |
-| 2026-08-11 | 倒排：putMany ≤500 健康索引批内增量 posting                              |
-| 2026-08-11 | 倒排：候选 cap 按 posting 稀有度加权截断                                 |
-| 2026-08-11 | 交互：废除缺槽问卷；miss 终局；仅候选追问；主次分列                      |
+| 日期       | 变更                                                                                                                       |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------- |
+| 2026-08-24 | **R4 验收规格：** 产品文档 §5.10/§5.11；工程旁挂 `R4-Phase-E-验收与eval.md`                                                |
+| 2026-08-24 | **R4 证据与复用：** 对齐 `yiveno_research/`；Normative 写入产品文档 §5.9/Phase E；默认下一主线含 Explain·TTE·evidence pack |
+| 2026-08-21 | 增 R-shell-chat：对话壳能力清单（已有/不做/薄维护）；默认下一主线=算法                                                     |
+| 2026-08-21 | 增 R-shell-session：New find + session status（§7.0）                                                                      |
+| 2026-08-21 | R-shell 落地：Recall 主壳 Side Panel；拆除 popup；`OPEN_RECALL_SHELL`                                                      |
+| 2026-08-21 | 增 R-shell：Recall 主壳 → Side Panel；四点拍板；实现待启动                                                                 |
+| 2026-08-15 | 对齐产品文档定位纠偏：邻域非神谕；Top1=建议；AI 不作宣传招牌；差异表补行                                                   |
+| 2026-08-11 | 初版：差异表 + R0–R∞ + 近周顺序                                                                                            |
+| 2026-08-11 | R0 落地：must eval / 空库 / 反助理门禁与文案；进入 R1                                                                      |
+| 2026-08-11 | R1 落地：§5.8 冷启动脚本；空库先存文案；进入 R2                                                                            |
+| 2026-08-11 | R2 落地：语料适配器工程契约 + G1–G7 + 准入清单；R3 有条件                                                                  |
+| 2026-08-11 | R3 切片：G3 弱锚点召回降权；倒排/外部源仍待                                                                                |
+| 2026-08-11 | R3：倒排 Phase 1 预过滤落地；外部源仍待                                                                                    |
+| 2026-08-11 | 倒排：单条 put 健康索引下增量维护 posting                                                                                  |
+| 2026-08-11 | 倒排：putMany ≤500 健康索引批内增量 posting                                                                                |
+| 2026-08-11 | 倒排：候选 cap 按 posting 稀有度加权截断                                                                                   |
+| 2026-08-11 | 交互：废除缺槽问卷；miss 终局；仅候选追问；主次分列                                                                        |

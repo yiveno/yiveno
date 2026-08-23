@@ -1,0 +1,5 @@
+task_id,annotator,ecs_source,ecs_reachable,ecs_anchor,ecs_time_context,ecs_explain,ecs_total,gold_match,notes
+P001-T01,A,1,1,1,1,1,5,yes,primary card rank1
+P001-T01,B,1,1,1,1,0,4,yes,disagree on explain line visibility
+P001-T02,A,1,1,1,1,1,5,yes,note field shown
+P001-T02,B,1,1,1,1,1,5,yes,

@@ -1491,6 +1491,8 @@ onUnmounted(() => {
               </summary>
               <ul class="settings-details__list">
                 <li>{{ t('settings_privacy_bullet_local') }}</li>
+                <li>{{ t('settings_privacy_bullet_ownership') }}</li>
+                <li>{{ t('settings_privacy_bullet_export') }}</li>
                 <li>{{ t('settings_privacy_bullet_cloud') }}</li>
                 <li>{{ t('settings_privacy_bullet_account') }}</li>
                 <li>{{ t('settings_privacy_bullet_ai') }}</li>

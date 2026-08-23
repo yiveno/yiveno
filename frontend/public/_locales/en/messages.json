@@ -349,7 +349,7 @@
     "message": "Privacy options are not available yet. This page will not pretend they are."
   },
   "settings_data_intro": {
-    "message": "Export, clear local memory, or delete cloud data and your account. Never changes Chrome bookmarks."
+    "message": "Full backup export, clear local memory, or delete cloud data and your account. Export includes your full library state. Never changes Chrome bookmarks."
   },
   "settings_data_clear_local": {
     "message": "Clear local memory"
@@ -383,13 +383,19 @@
     "message": "Failed to clear local memory"
   },
   "settings_privacy_intro": {
-    "message": "How Yiveno handles on-device memory, optional sync, and AI."
+    "message": "How Yiveno handles your memories, ownership, optional sync, and AI."
   },
   "settings_privacy_details_summary": {
-    "message": "What Yiveno stores and sends"
+    "message": "What Yiveno stores, who owns it, and what we send"
   },
   "settings_privacy_bullet_local": {
-    "message": "On device: excerpts, bookmark traces, and notes in IndexedDB."
+    "message": "On device: excerpts, notes, bookmark traces, open/dismiss signals, and per-item recall helpers (tags, embeddings) in IndexedDB."
+  },
+  "settings_privacy_bullet_ownership": {
+    "message": "You own what you Capture and your in-library usage history; per-item recall helpers stay with your items, not as separate Yiveno assets."
+  },
+  "settings_privacy_bullet_export": {
+    "message": "Full backup export (Data section) is always available — a product responsibility, not a paid feature."
   },
   "settings_privacy_bullet_cloud": {
     "message": "Cloud (optional): uploaded only after you turn sync on."
@@ -401,7 +407,7 @@
     "message": "AI: clue understanding may call a model; your full library is not sent by default."
   },
   "settings_privacy_bullet_not_collected": {
-    "message": "Not collected: browsing history, clipboard reads, or pages you did not capture."
+    "message": "Not collected: browsing history, clipboard reads, pages you did not capture, or de-identified aggregate product analytics as your personal export."
   },
   "settings_privacy_ack": {
     "message": "I understand this notice"
@@ -440,10 +446,10 @@
     "message": "Read"
   },
   "settings_privacy_export": {
-    "message": "Export local memories"
+    "message": "Export full backup"
   },
   "settings_privacy_export_hint": {
-    "message": "Download all local memories as JSON."
+    "message": "Download all local memories as JSON — content, usage signals, and per-item recall helpers."
   },
   "settings_privacy_export_action": {
     "message": "Export"

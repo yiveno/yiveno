@@ -6,7 +6,7 @@
 import MainLayout from '../layouts/MainLayout.astro'
 import '../styles/pages.css'
 
-const effectiveDate = '2026-08-15'
+const effectiveDate = '2026-08-24'
 const contactEmail = 'privacy@yiveno.com'
 ---
 
@@ -47,7 +47,7 @@ const contactEmail = 'privacy@yiveno.com'
       <p>
         Only after you explicitly enable cloud sync in the extension do we store Memory items and sync backups in our
         cloud database (currently Supabase), scoped to your account. Turning sync off does <strong>not</strong>
-        automatically delete cloud copies; you can delete cloud memories or delete your account from Settings → Privacy.
+        automatically delete cloud copies; you can delete cloud memories or delete your account from Settings → Data.
       </p>
       <h3>2.4 AI / language features</h3>
       <p>
@@ -67,6 +67,19 @@ const contactEmail = 'privacy@yiveno.com'
         <li>Full webpage content you did not actively Capture</li>
         <li>Uploading memories to the cloud without enabling sync</li>
       </ul>
+      <h3>2.7 Usage signals on your library</h3>
+      <p>
+        To improve Recall ordering on <strong>your</strong> device, Yiveno may store how you interact with saved
+        items — for example how often you open a result, or when you dismiss “none of these.” These signals describe
+        your relationship with <strong>your</strong> library; they are not sold as a separate product asset.
+      </p>
+      <h3>2.8 Per-item derived recall helpers</h3>
+      <p>
+        Yiveno may compute recall helpers bound to a specific saved item — for example tags or keywords inferred from
+        its title or excerpt, or an embedding vector used for hybrid recall. These are stored with the item in your
+        local library (and in your cloud bucket if sync is on). They help retrieve <strong>your</strong> content; we
+        do not treat them as Yiveno-owned secrets you cannot export.
+      </p>
 
       <h2>3. How we use information</h2>
       <ul>
@@ -96,38 +109,68 @@ const contactEmail = 'privacy@yiveno.com'
           For example, sync backups keep only the most recent snapshots (currently up to 5 per account), and soft-deleted subscription/payment history is removed after 180 days.
         </li>
         <li><strong>Waitlist emails</strong> are kept until we have notified you, you ask us to remove the address, or we no longer need the list.</li>
-        <li><strong>Delete account</strong> (Settings → Privacy) removes cloud Memory and backups, closes the auth user, clears this account’s local Memory bucket on that device, and signs you out. Billing records may be retained in anonymized or legally required form and are not a recoverable login.</li>
+        <li><strong>Delete account</strong> (Settings → Data) removes cloud Memory and backups, closes the auth user, clears this account’s local Memory bucket on that device, and signs you out. Billing records may be retained in anonymized or legally required form and are not a recoverable login.</li>
       </ul>
 
-      <h2>6. Your choices</h2>
+      <h2>6. Data ownership and export</h2>
+      <p>
+        Yiveno is local-first: you should be able to <strong>take, clear, and leave</strong> with your library.
+        Export is a product responsibility, not a paid perk.
+      </p>
+      <ul>
+        <li>
+          <strong>Your content</strong> — excerpts, notes, URLs, and bookmark traces you chose to save — belongs to
+          you.
+        </li>
+        <li>
+          <strong>Your in-library usage</strong> — open/dismiss signals and timestamps on your items — belongs to you
+          as part of your library history.
+        </li>
+        <li>
+          <strong>Per-item recall helpers</strong> — inferred tags/keywords and embedding vectors stored on an item —
+          stay with that item in your backup; they are not withheld as separate Yiveno property.
+        </li>
+        <li>
+          <strong>Yiveno service layer</strong> — de-identified aggregate statistics or non-individualized models used
+          to improve the product for everyone — is not included in your personal export and is cut off from you when you
+          delete your account, to the extent we store individual links.
+        </li>
+      </ul>
+      <p>
+        <strong>Full backup export</strong> (Settings → Data) downloads your current identity’s local Memory as JSON,
+        including soft-deleted items and the fields above. A lighter “portable” export for moving to other tools may be
+        added later; it would not replace full backup.
+      </p>
+
+      <h2>7. Your choices</h2>
       <ul>
         <li>Use Yiveno without signing in (local profile)</li>
         <li>Sign in without enabling cloud sync</li>
         <li>Enable or disable cloud sync</li>
-        <li>Delete cloud memories or delete your account from the extension Settings → Privacy</li>
-        <li>Review a short privacy notice in Settings before enabling sync</li>
+        <li>Export a full backup, delete cloud memories, or delete your account from Settings → Data</li>
+        <li>Review a short privacy notice in Settings → Privacy before enabling sync</li>
       </ul>
 
-      <h2>7. Children</h2>
+      <h2>8. Children</h2>
       <p>
         Yiveno is not directed to children under 13 (or the minimum age required in your jurisdiction). Do not use the
         service if you are under that age.
       </p>
 
-      <h2>8. International users</h2>
+      <h2>9. International users</h2>
       <p>
         We may process data in regions where our providers operate (including the United States and other locations).
         If you enable cloud sync or sign in, you understand your account and synced data may be stored outside your
         country of residence.
       </p>
 
-      <h2>9. Changes</h2>
+      <h2>10. Changes</h2>
       <p>
         We may update this Policy as the product changes. We will update the effective date on this page. Material
         changes to the in-extension sync notice may require you to re-confirm before turning sync on again.
       </p>
 
-      <h2>10. Contact</h2>
+      <h2>11. Contact</h2>
       <p>
         Privacy questions: <a href={`mailto:${contactEmail}`}>{contactEmail}</a>. Product help and complaints:
         <a href="/support">Support</a>.

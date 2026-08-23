@@ -108,6 +108,8 @@ export const MESSAGE_KEYS = [
   'settings_privacy_intro',
   'settings_privacy_details_summary',
   'settings_privacy_bullet_local',
+  'settings_privacy_bullet_ownership',
+  'settings_privacy_bullet_export',
   'settings_privacy_bullet_cloud',
   'settings_privacy_bullet_account',
   'settings_privacy_bullet_ai',

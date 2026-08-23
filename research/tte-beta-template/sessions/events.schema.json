@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yiveno.com/schemas/tte-session-event/v1",
+  "title": "TTE Session Event (research · 非运行时)",
+  "description": "种子研究事件日志单行 schema；对齐产品文档 §5.9。",
+  "type": "object",
+  "required": ["type", "at", "sessionId", "taskId"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "query_submitted",
+        "result_rendered",
+        "evidence_visible",
+        "source_opened",
+        "user_confirmed",
+        "query_refined",
+        "task_timeout"
+      ]
+    },
+    "at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 · 会话单调时钟或 wall clock"
+    },
+    "sessionId": { "type": "string" },
+    "taskId": { "type": "string", "description": "例 P001-T01" },
+    "participantId": { "type": "string" },
+    "product": {
+      "type": "string",
+      "enum": ["yiveno", "control"],
+      "description": "对照 arm 标记"
+    },
+    "traceId": { "type": "string", "format": "uuid" },
+    "cluePreview": {
+      "type": "string",
+      "maxLength": 120,
+      "description": "query 截断；勿存全文若含敏感信息"
+    },
+    "memoryItemId": { "type": "string", "format": "uuid" },
+    "rank": { "type": "integer", "minimum": 0 },
+    "ecs": { "type": "integer", "minimum": 0, "maximum": 5 },
+    "reasonCodes": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "confirmed": {
+      "type": "string",
+      "enum": ["yes", "no", "unsure"]
+    },
+    "elapsedMsFromT0": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "相对 query_submitted 的毫秒数"
+    },
+    "meta": {
+      "type": "object",
+      "description": "扩展：build 版本、壳 sidepanel/omnibox"
+    }
+  },
+  "additionalProperties": false
+}

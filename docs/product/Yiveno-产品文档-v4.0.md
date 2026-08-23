@@ -2,7 +2,8 @@
 
 > **唯一**产品/架构规格正文。主要读者：AI 编程工具与维护者。  
 > **Normative（必须遵守）**= §0–§7。**Non-normative（背景，勿当实现范围）**= 附录 A。  
-> 工程细则可旁挂 `.cursor/rules/project.mdc` / `AGENTS.md`；与本文冲突时以**本文 Normative**为准，并回写 rules。
+> 工程细则可旁挂 `.cursor/rules/project.mdc` / `AGENTS.md`；与本文冲突时以**本文 Normative**为准，并回写 rules。  
+> **市场研究：** 竞品与 TTE 一手研究见 `yiveno_research/`；**已吸收进 Normative 的章节**见 §0.1、§0.1.1、§5.9、§8 Phase E / R4、附录 A.6。
 
 ---
 
@@ -15,6 +16,8 @@
 **Yiveno 是那个找东西的。**  
 看到好东西，划一下、存一下，**扔进你的仓库**；过阵子只记得一点点，**找 Yiveno 要就行**。  
 （工程口径仍称「个人信息寻回系统」；对外心智优先 **「那个找东西的」** / 「帮你在仓库找东西」。**「记忆硬盘」仅作对内隐喻**，不得当作对外主 slogan，也不得暗示每次替用户做终审、零失误神谕。）
+
+**工程/市场等价表述（对内 · Normative）：** 与竞品、投资人沟通时可等价称为 **Personal Knowledge Retrieval（个人知识召回）**——用户**主动 Capture** 的个人痕迹，经口语线索被**可靠找回并带可验证来源**，不是 AI 书签管理器、不是 PKM 编辑器、不是生活助理。长期平台形态（仅在本品命题与留存验证后）可演进为 **User-authorized Context Layer for AI（用户授权的 AI 上下文层）**；**当前不得**当作对外主 slogan 或 sprint 范围。竞争与市场的一手研究见仓库 **`yiveno_research/`**（证据与坐标为 Non-normative；**已吸收进本文 Normative 的结论以本文为准**）。
 
 **对外最短印象（Normative · 防跑题）：** 用户心里只应留下一句——**「那个找东西的」**。  
 不是个人助理、不是整理器、不是第二大脑全能壳、不是「好像啥都做」、不是「永远押中那一条的 AI」。做产品最忌写跑题：印象一散，用户既记不住你，也不再信任找回承诺。  
@@ -38,8 +41,11 @@ Yiveno 卖的就是这份 **超轻心智负担 + 永久踏实感**：扔进来�
 前期用体验买数据与习惯；后期用数据与习惯锁体验。做功能、接模型、上云同步、接第三方语料，都只能服务「找东西」；反过来用功能堆砌、管理回潮、开放式闲聊、助理人设、同步中台叙事来「显得完整」，就是偏航。
 
 一句话（给实现与文案用）：Yiveno = **扔进就记着 + 想找就找得着**（工程分解：**Capture 低负担 + Recall 高置信邻域**）。  
-**北极星（Normative · 2026-08 纠偏）：** 模糊线索 → 第一屏进入**正确邻域**；**Top1 是建议不是神谕**；最终选择在用户。会话成功 = 用户在这一屏（含短名单）拿到了想要的；Top1 命中是 delight，**不是唯一 KPI**。  
-**资产与隐患细则见 §0.1.1**（摘录/个人痕迹为主角；书签配角；**竞品上**勿与 Google/Notion 硬碰；**语料上**允许未来经适配器导入第三方，见「语料源可插拔」）。
+**北极星（Normative · 2026-08 纠偏）：** 模糊线索 → 第一屏进入**正确邻域**；**Top1 是建议不是神谕**；最终选择在用户。会话成功 = 用户在这一屏（含短名单）拿到了想要的；Top1 命中是 delight，**不是唯一 KPI**。
+
+**体验质量共指标（Normative · 2026-08 市场对齐）：** 邻域命中仍是**会话履约**主尺；须并列追踪 **Verified Retrievals per WAU**（每周活跃用户中，经**打开来源/原文/保存副本**确认找回成功的次数）与 **TTE-V**（从提交模糊线索到**首次看见可自验证据单元**的时间；定义见 §5.9）。**禁止**用「模型更快说完一句话」替代 verified retrieval。**Normative 纪律：** verified retrieval / TTE 未持续改善前，不得扩大 memory、自主 Agent 或连接器面。
+
+**资产与隐患细则见 §0.1.1**（摘录/个人痕迹为主角；书签配角；**竞品上**勿与 Google/Notion/浏览器原生记忆硬碰；**语料上**允许未来经适配器导入第三方，见「语料源可插拔」）。
 
 ### 0.1.0 为何选 Yiveno（Normative · 唯一理由 · 纠偏硬句）
 
@@ -190,6 +196,31 @@ Yiveno 解决的**不是**「某一类内容找不到」的单点痛点，而是
 - Notion / 飞书：**帮你建更好的知识空间**
 - Yiveno：**让你可以不再靠整理来换取可找回性** — Save first. Recall later—even with a vague clue.
 
+#### 竞争边界与市场坐标（Normative · 2026-08 市场对齐）
+
+> 背景证据与竞品坐标见 `yiveno_research/`；本节为**产品边界**，不是功能清单。
+
+个人信息再利用市场可粗分为五层；Yiveno **不抢** L1/L5 默认入口，**必须兼容** L1，在 **L2–L4 之间的「可靠 retrieval → 可授权复用」** 桥梁上立身：
+
+| 层级                   | 代表                                         | 用户主任务              | 对 Yiveno                                                 |
+| ---------------------- | -------------------------------------------- | ----------------------- | --------------------------------------------------------- |
+| L1 书签卫生            | Chrome 书签、Anybox                          | 存、分、备份            | 兼容；**不得**停在此层当品类                              |
+| L2 阅读与归档          | Raindrop、Readwise Reader                    | 正文归档、标注、全文找  | 近期**最直接替代集合**；勿复制阅读器/复习系统             |
+| L3 无感个人知识        | mymind、Recall                               | 自动关联、联想再发现    | 须在**检索正确性 + 来源解释**上胜出，而非「无文件夹」卖点 |
+| L4 个人上下文 / Agent  | Mem、Fabric、Trove MCP                       | 资料作 AI 上下文        | **长期方向**；须先证明 retrieval，再做只读 evidence / MCP |
+| L5 浏览器/平台原生记忆 | Chrome AI History、ChatGPT Memory、Dia/Comet | 历史/标签/连接应用进 AI | **最大捆绑威胁**；不做单浏览器 history search             |
+
+**不应竞争的层（Normative）：**
+
+| 不做                              | 原因            | Yiveno 上移到的层                                   |
+| --------------------------------- | --------------- | --------------------------------------------------- |
+| 单浏览器、单设备 history 语义搜索 | 平台默认入口    | 跨来源、**用户保存意图**、可迁移资料层              |
+| 单一模型聊天记忆                  | 平台锁定        | **模型中立**、带来源、可撤销授权的资料库            |
+| 浏览器内通用 Agent 行动           | 高权限 + 强分发 | 先 **只读、最小必要、可审计** 的 evidence retrieval |
+| 「AI 自动分类」当唯一差异化       | 已商品化        | **内容 + 时间 + 行为 + 项目** 的可解释排序          |
+
+**Normative：** 「保存」已商品化；**验证式召回**（来源、原文锚点、保存时间、命中理由、用户能一次点击自验）才是 wedge。用户拥有与隐私是**入场券**，不是充分差异化——须同时提供透明导出（§5.5.1）、源级删除、最小权限，以及**比本地文件夹更好的检索质量**。
+
 **Normative 铁律：**
 
 - 不得把「先分类再存」「维护整齐目录」设计为 Capture 的默认路径或爽点。
@@ -296,6 +327,18 @@ Yiveno 的不可替代资产 **不是** Chrome 书签 URL，**也不是**用户�
 
 可走宽度 ≈ **会持续 Capture 的人 × 发生 B 的次数**，不是全体网民平均数。早期用户必须是「本来就会存/划」的人。
 
+#### 首发用户与种子验证（Normative · 2026-08 市场对齐）
+
+**Normative：** 不服务「所有想整理书签的人」。首发收束为 **会持续跨来源保存、并在数周/数月后用模糊线索找回、且对来源准确性有要求** 的**英语为主**个人用户（与「市场语言策略」一致）。职业标签只是表象，共同点是 **Job：我记得存过/见过，现在要原文与证据**。
+
+| 首发分群            | 高价值 Job                                         | 现有拼装方案的弱点                  | Yiveno 须交付                                  | 当前**不**作首发承诺       |
+| ------------------- | -------------------------------------------------- | ----------------------------------- | ---------------------------------------------- | -------------------------- |
+| 跨来源研究者        | 「几个月前那篇/那段；给我原文和为什么是它」        | 书签、稍后读、搜索、笔记分散        | 短名单含目标 + **来源 + 摘录/锚点 + 命中理由** | 自动代写研究、企业知识搜索 |
+| 创作者 / 设计研究者 | 「按主题、时间、过去收藏找可复用灵感」             | 素材散在 Pin/网页/截图/文章         | 邻域 + 视觉/文本线索 + **可引用 evidence**     | 做设计编辑器或社交网络     |
+| 开发者 / 产品人     | 「把 GitHub/X/文档里已存的证据交给 Claude/Cursor」 | 手动复制、Obsidian 文件夹、多聊天窗 | **只读、带来源**的最小上下文包                 | 默认读 cookie、代替 IDE    |
+
+**种子验证门槛（Normative · 流程，非实现状态）：** 每群 10–15 次 problem interview + 可选 2 周 diary。合格信号：**60 秒内完成首次跨来源保存**；第 14 天至少 **3 次主动检索**；至少一次检索结果用于写作/决策/交给 AI；愿意导入旧收藏并持续 sync。90 天阶段阈值见 §5.9 与改版计划 **R4**。
+
 #### 真实口语需求（Normative）
 
 Yiveno 的高频真实请求，**不是**标题 / URL / 精确词查询，而是**生活口语中的记忆线索**。
@@ -386,6 +429,34 @@ Yiveno 的高频真实请求，**不是**标题 / URL / 精确词查询，而是
 | **C** | 零锚点读心、一次开口类人稳定命中、开放总结「你当时想的是…」   | **不承诺；禁主卖点** |
 
 现有技术足以支撑 A + 受控 B；不得把 C 写成当前可交付体验。
+
+#### 可信召回闭环（Normative · 2026-08 市场对齐）
+
+产品交付单位不是功能清单，而是 **Capture → Preserve → Retrieve → Explain → Reuse** 闭环。Yiveno 以 **摘录 + 附注** 为 Preserve 主角（非 Raindrop 级全文 archive 优先）；各环 Normative 如下：
+
+| 环           | Yiveno 含义             | 必须交付（Normative）                                                                        | 质量门槛                                                                      |
+| ------------ | ----------------------- | -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| **Capture**  | 极低负担留下个人痕迹    | 划词/右键/Chrome 书签 sync；未来经**适配器**的第三方导入（Raindrop/Pocket 等排队，见 R2/R4） | 保存即反馈；失败可见；**原 URL、时间、来源**恒久保留                          |
+| **Preserve** | 可证明「当时那版证据」  | 摘录正文 + 出处 + `createdAt` + 可选 `clues.note`；书签 URL + 备注层                         | 用户能导出/打开；**不得**静默丢失；动态页失效时仍保留 Capture 时选区          |
+| **Retrieve** | 口语 → 邻域 + Top1 建议 | keyword + full-text + semantic Hybrid；时间/行为/类型约束                                    | **钉死一条**任务：目标进 top-3；**逛一簇**任务：邻域含目标（§0.1.1 两种意图） |
+| **Explain**  | **可验证**，非仅排序    | 每条候选：**来源身份、保存时间、原文/摘录锚点、命中理由**；一次点击打开自验                  | 无来源的 LLM 总结**不算**找回成功；不确定须显式表达                           |
+| **Reuse**    | 找完之后交给任意 AI     | 选中条目的 **evidence pack**；Markdown/JSON；**只读 MCP**（P1 目标，未上线不得暗示）         | 每条材料有 source reference；**默认不全库**暴露给 Agent                       |
+
+**Normative 次序：** 先找到并**验证**正确资料 → 再**复用** → 最后 AI 在**明确授权**下使用。**主动 Agent**（发信、下单、改网页）**后置**，见 §0.3。
+
+#### 证据可验证（Explain · Normative）
+
+Recall 结果须满足 **Evidence Completeness（ECS）** 五要素；产品以**五要素齐全**为 Explain 达标：
+
+| 要素          | 产品落点                                                |
+| ------------- | ------------------------------------------------------- |
+| 来源身份      | 域名、页名、类型（摘录/书签）、MemoryItem id（对内）    |
+| 可达原文      | 打开源站 URL 或 `detail.html` 保存副本                  |
+| 内容锚点      | 摘录正文高亮 / 命中字段片段                             |
+| 时间/来源语境 | `createdAt`（及书签 `chromeCreatedAt` 若可用）          |
+| 命中理由      | 主因字段 + token + 可选次要字段（`explainRecallMatch`） |
+
+**Normative：** 找回主壳 / Omnibox 结果卡、Detail 页须让用户**一次交互内**可自验；TTE 以「看见 ECS 达标单元」为停表点，见 §5.9。
 
 #### 语料源可插拔（Corpus Adapter · Normative）
 
@@ -611,23 +682,26 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 
 #### 隐患清单与规避（决策自检）
 
-| 隐患                           | 若放任的后果               | 规避                                                   |
-| ------------------------------ | -------------------------- | ------------------------------------------------------ |
-| 用查阅类书签当主 demo / 主叙事 | 被 Google 压死，价值证伪   | demo 与文案主角 = 摘录或「自己的话」                   |
-| 叙事滑成「完全失忆」(A)        | 需求显得极窄               | 对外坚持 B：残缺线索找回个人痕迹                       |
-| 早期做书签自动整理             | 滑入管理器，稀释寻回       | 已否决；爽点做在抓住感与找回承诺                       |
-| 推独立笔记创作                 | 进 Notion 红海             | 只做附着标记；独立 `note` 维持 §0.4                    |
-| 无线索体感、只堆无形 clues     | 用户当下无正向反馈         | 存侧可感知反馈与尽早一次找回成功                       |
-| 过早 LLM / AI 主卖点           | 战场错位、伤信任           | 先反馈排序；LLM 可关且非主体                           |
-| 把对话做成开放式闲聊           | 主任务失焦、成本失控       | 只允许围绕 Recall 线索澄清与结果推进                   |
-| 滑成「生活小助手」             | 范围无限、偏离「找东西的」 | 只找回库内痕迹；禁零锚点助手 demo                      |
-| 全库喂 LLM 当检索              | 成本/幻觉/隐私/不可测      | 先检索候选再（可选）喂模型；答案必须有 id              |
-| LLM 直接执行查插改删           | 幻觉当事务、不可测、难回滚 | 只允提议→Zod/门禁→确定性代码；见数据平面边界           |
-| 服务「几乎不 Capture」的大众   | 库空，找回无燃料           | 先打会存的人；验证存意愿先于功能堆砌                   |
-| 第一次模糊找回失败             | 信任杀死飞轮               | 空状态诚实终局、线索解释；命中体验优先；禁矛盾补救 CTA |
-| 空结果改偏好建档闲聊           | 滑成助理；能力幻觉         | 空结果只导向 Capture/追问；见空结果契约                |
-| 过早多源同步 / 连接器堆砌      | 变同步中台；找回质量假象   | 适配器按「能否提高找回成功率」排队；契约先行           |
-| 过早开放检索框架 / 平台化      | 印象分裂；复杂度淹没主题   | 自有场景命题验死后才谈有限嵌入（附录 A.7）             |
+| 隐患                           | 若放任的后果                         | 规避                                                   |
+| ------------------------------ | ------------------------------------ | ------------------------------------------------------ |
+| 用查阅类书签当主 demo / 主叙事 | 被 Google 压死，价值证伪             | demo 与文案主角 = 摘录或「自己的话」                   |
+| 叙事滑成「完全失忆」(A)        | 需求显得极窄                         | 对外坚持 B：残缺线索找回个人痕迹                       |
+| 早期做书签自动整理             | 滑入管理器，稀释寻回                 | 已否决；爽点做在抓住感与找回承诺                       |
+| 推独立笔记创作                 | 进 Notion 红海                       | 只做附着标记；独立 `note` 维持 §0.4                    |
+| 无线索体感、只堆无形 clues     | 用户当下无正向反馈                   | 存侧可感知反馈与尽早一次找回成功                       |
+| 过早 LLM / AI 主卖点           | 战场错位、伤信任                     | 先反馈排序；LLM 可关且非主体                           |
+| 把对话做成开放式闲聊           | 主任务失焦、成本失控                 | 只允许围绕 Recall 线索澄清与结果推进                   |
+| 滑成「生活小助手」             | 范围无限、偏离「找东西的」           | 只找回库内痕迹；禁零锚点助手 demo                      |
+| 全库喂 LLM 当检索              | 成本/幻觉/隐私/不可测                | 先检索候选再（可选）喂模型；答案必须有 id              |
+| LLM 直接执行查插改删           | 幻觉当事务、不可测、难回滚           | 只允提议→Zod/门禁→确定性代码；见数据平面边界           |
+| 服务「几乎不 Capture」的大众   | 库空，找回无燃料                     | 先打会存的人；验证存意愿先于功能堆砌                   |
+| 第一次模糊找回失败             | 信任杀死飞轮                         | 空状态诚实终局、线索解释；命中体验优先；禁矛盾补救 CTA |
+| 空结果改偏好建档闲聊           | 滑成助理；能力幻觉                   | 空结果只导向 Capture/追问；见空结果契约                |
+| 过早多源同步 / 连接器堆砌      | 变同步中台；找回质量假象             | 适配器按「能否提高找回成功率」排队；契约先行           |
+| 过早开放检索框架 / 平台化      | 印象分裂；复杂度淹没主题             | 自有场景命题验死后才谈有限嵌入（附录 A.7）             |
+| 主动 Agent 先于可靠 retrieval  | 高权限错误成本；Comet/Mem 占行动入口 | 先只读 evidence / MCP；见 §0.1.1 闭环次序              |
+| 定位膨胀成「个人全能记忆」     | 与平台 history/memory 硬碰；隐私成本 | 固守「用户主动 Capture 的痕迹」直到 TTE/留存验证       |
+| 卖 AI token 而非找回质量       | 与 ChatGPT 配额竞争；价值锚模糊      | 卖更快、更可信的**再利用**；召回质量不分 Free/Pro      |
 
 **立项/加功能前三问：**
 
@@ -670,6 +744,10 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 - 在 Service Worker 使用 `window` / `document` / `localStorage`。
 - 把附录 A（愿景/商业化/品牌）当成要立刻实现的功能列表。
 - 默认上传用户内容到云端或第三方 AI。
+- **主动 Agent 代办**（发信、下单、改网页、代替用户编排生活）先于可靠 retrieval 与 evidence 授权体系上线。
+- **默认抓取**浏览 history、邮箱、日历、私信或全站自动存档（与用户主动 Capture 边界冲突；见 §7.1 噪声分级）。
+- 以**知识图谱可视化**或 quiz/间隔复习替代找回主路径（Recall/Capacities 已商品化展示层）。
+- 自研基础大模型或「记忆模型」当作产品差异化叙事（瓶颈在资料层与排序，不在模型品牌）。
 
 ### 0.4 当前优先实现项（Phase A）
 
@@ -677,8 +755,8 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 
 **说明：** 页内左侧类型切换 ≠ 旧「侧边栏管理页」/书签树；禁止整理中心化回潮。Chrome **Side Panel Recall 主壳** ≠ 管理页（见下「入口能力差异」）。
 
-**下一项：按 [`Yiveno-改版计划-v1.md`](./Yiveno-改版计划-v1.md) 推进——优先 **R-shell**（Recall 主壳 → Side Panel）；其余 R0–R3 命题/冷启动/适配器/检索硬化已落地切片。**  
-倒排索引 **Phase 1 已接线**（候选预过滤 + dirty/rebuild + 失败 fallback 全表扫；见 `docs/engineering/关键词倒排索引-Phase1.md`）。**Hybrid / embedding 与 §7.1 首批（同域软重排 / behaviorHints 加权 / 追问芯片）已接线**（召回质量不分 Free/Pro；云同步仍须 Pro）。
+**下一项：按 [`Yiveno-改版计划-v1.md`](./Yiveno-改版计划-v1.md) 推进——**R4 证据与复用**（Explain 全要素 UI、TTE 埋点、evidence pack、只读 MCP、竞品迁移导入）与既有 R0–R3 / R-shell 收束并行；详见 §8 **Phase E**。  
+倒排索引 **Phase 1 已接线**（候选预过滤 + dirty/rebuild + 失败 fallback 全表扫；见 `docs/engineering/关键词倒排索引-Phase1.md`）。**Hybrid / embedding 与 §7.1 首批（同域软重排 / behaviorHints 加权 / 追问芯片）已接线\*\*（召回质量不分 Free/Pro；云同步仍须 Pro）。
 
 **类型优先级（与 §0.1.1 一致）：** 主动 Capture 与体验打磨优先 **摘录 + `clues.note`**；书签继续导入/sync 但为配角；记忆库默认 Tab = 摘录。**语料适配器插头**保持可扩展；第三方连接器未经验收门槛前不上主路径。  
 **独立 `note` 类型（预留）：** 有边界需求（无出处闪念），但属辅助，**当前不接入**。未验证「无处可挂」的规模流失前，不得做成可用入口，也不得在 UI 暗示已有独立笔记库。若将来做，须极瘦（纯文本、无文件夹/富文本/双向链）。
@@ -697,27 +775,30 @@ Side Panel 内：高置信给主答案 +「可能是这些」；低置信给候�
 
 ### 0.5 权威路径速查
 
-| 主题                         | 路径                                                                            |
-| ---------------------------- | ------------------------------------------------------------------------------- |
-| MemoryItem / clues / payload | `frontend/src/core/memory/`                                                     |
-| 语料适配器契约（R2）         | `docs/engineering/语料适配器契约.md` + `core/memory/corpus-adapter-contract.ts` |
-| 关键词倒排 Phase 1           | `docs/engineering/关键词倒排索引-Phase1.md` + `keyword-index-repository.ts`     |
-| Background 消息联合类型      | `frontend/src/core/messaging/background-messages.ts`                            |
-| UI 发消息                    | `frontend/src/infrastructure/messaging/background-client.ts`                    |
-| SW 分发                      | `frontend/src/background/handlers/message-handler.ts`                           |
-| Recall                       | `frontend/src/application/recall/recall-service.ts`                             |
-| Omnibox                      | `frontend/src/background/listeners/omnibox.ts`                                  |
-| Commands（快捷键）           | `frontend/src/background/listeners/commands.ts`                                 |
-| Command ID 契约              | `frontend/src/core/commands/command-ids.ts`                                     |
-| Settings                     | `frontend/src/pages/settings/Settings.vue`                                      |
-| Settings 分区（`?section=`） | `frontend/src/core/settings/settings-sections.ts`                               |
-| Side Panel（Recall 主壳）    | `frontend/src/pages/sidepanel/`                                                 |
-| 通用键盘意图（↑↓←→/Enter）   | `frontend/src/core/ui/keyboard-command.ts`                                      |
-| 线性列表选中下标             | `frontend/src/core/ui/list-selection.ts`                                        |
-| 摘录详情                     | `frontend/src/pages/detail/Detail.vue`                                          |
-| 记忆库                       | `frontend/src/pages/library/Library.vue`                                        |
-| UI 图标（Lucide 内联）       | `frontend/src/infrastructure/ui/icons/`                                         |
-| 扩展 i18n（`t` / locales）   | `frontend/src/infrastructure/i18n/` + `public/_locales/`                        |
+| 主题                           | 路径                                                                            |
+| ------------------------------ | ------------------------------------------------------------------------------- |
+| **R4 Phase E 验收与 eval**     | `docs/engineering/R4-Phase-E-验收与eval.md`；Normative 摘要 §5.10 / §5.11       |
+| **TTE 种子用户研究 checklist** | `docs/engineering/TTE-种子用户研究-checklist.md`；Normative 门槛 §5.9           |
+| **TTE 研究包模板**             | `research/tte-beta-template/`；复制后本地填数据，勿 commit PII                  |
+| MemoryItem / clues / payload   | `frontend/src/core/memory/`                                                     |
+| 语料适配器契约（R2）           | `docs/engineering/语料适配器契约.md` + `core/memory/corpus-adapter-contract.ts` |
+| 关键词倒排 Phase 1             | `docs/engineering/关键词倒排索引-Phase1.md` + `keyword-index-repository.ts`     |
+| Background 消息联合类型        | `frontend/src/core/messaging/background-messages.ts`                            |
+| UI 发消息                      | `frontend/src/infrastructure/messaging/background-client.ts`                    |
+| SW 分发                        | `frontend/src/background/handlers/message-handler.ts`                           |
+| Recall                         | `frontend/src/application/recall/recall-service.ts`                             |
+| Omnibox                        | `frontend/src/background/listeners/omnibox.ts`                                  |
+| Commands（快捷键）             | `frontend/src/background/listeners/commands.ts`                                 |
+| Command ID 契约                | `frontend/src/core/commands/command-ids.ts`                                     |
+| Settings                       | `frontend/src/pages/settings/Settings.vue`                                      |
+| Settings 分区（`?section=`）   | `frontend/src/core/settings/settings-sections.ts`                               |
+| Side Panel（Recall 主壳）      | `frontend/src/pages/sidepanel/`                                                 |
+| 通用键盘意图（↑↓←→/Enter）     | `frontend/src/core/ui/keyboard-command.ts`                                      |
+| 线性列表选中下标               | `frontend/src/core/ui/list-selection.ts`                                        |
+| 摘录详情                       | `frontend/src/pages/detail/Detail.vue`                                          |
+| 记忆库                         | `frontend/src/pages/library/Library.vue`                                        |
+| UI 图标（Lucide 内联）         | `frontend/src/infrastructure/ui/icons/`                                         |
+| 扩展 i18n（`t` / locales）     | `frontend/src/infrastructure/i18n/` + `public/_locales/`                        |
 
 ---
 
@@ -741,7 +822,7 @@ Side Panel 内：高置信给主答案 +「可能是这些」；低置信给候�
 | 快捷键保存选中文字               | 已上线                  | `save_selection`（默认 `Alt+Shift+E`）→ 划词脚本直存；`captureEntry=shortcut`                                                                        |
 | 快捷键选中文字并备注             | 已上线                  | `save_selection_with_note`（默认 `Alt+Shift+N`）→ 打开划词备注面板                                                                                   |
 | 手动「保存当前页」               | 不做                    | 与 Chrome 原生书签重复；已移除 UI/快捷键/消息                                                                                                        |
-| 结果线索解释强化                 | 已上线                  | 主因「因字段含「token」」+ 次要字段；Top Pick 线索回显                                                                                               |
+| 结果线索解释强化                 | 已上线（core）          | 主因字段 + token + 次要字段；**ECS 五要素卡面展示 → Phase E**                                                                                        |
 | 找回壳空状态分层                 | 已上线（壳迁移中）      | 空库 / 有库 idle 与 no_match 分文案；`no_match` 诚实终局、不附缩短再试；迁 Side Panel 后文案归属随壳走                                               |
 | 摘录详情落地页                   | 已上线                  | `detail.html?id=`；摘录打开详情；书签仍直开 URL；`GET_MEMORY_ITEM`                                                                                   |
 | 记忆库轻浏览                     | 已上线                  | `library.html`；**默认摘录**；书签=Chrome 目录只读树；摘录=时间列表；`?type=` 刷新保留                                                               |
@@ -753,6 +834,11 @@ Side Panel 内：高置信给主答案 +「可能是这些」；低置信给候�
 | Dodo Pro / 订阅快照              | 已上线                  | Free+**仅 Pro**；投影+对账（§A.3.2）；`GET /api/account/subscription`；Settings/官网升级；**sync + hosted 大配额**门禁；embed 登录即可（日配额分档） |
 | 云同步 / 账号 UI                 | 已上线（Phase C + Pro） | Supabase `memory_items`；Worker `/api/memory/sync/*` **需有效 Pro**；开同步并集 + **15 分钟增量**；登录≠自动上传                                     |
 | 分享                             | 目标 · Phase C          |                                                                                                                                                      |
+| 证据卡 Explain 全要素（ECS）     | 目标 · Phase E          | 来源 + 保存时间 + 锚点 + 命中理由；Side Panel / Omnibox 结果卡；见 §0.1.1                                                                            |
+| Evidence pack / copy-for-AI      | 目标 · Phase E          | 多选导出 Markdown/JSON；非整库；见 R4                                                                                                                |
+| 只读 MCP                         | 目标 · Phase E          | 最小 scope query → evidence；默认不全库；未上线不得暗示                                                                                              |
+| Raindrop / Pocket 迁移导入       | 目标 · Phase E          | 经 R2 准入 + corpus adapter；Pocket 用户迁移叙事                                                                                                     |
+| TTE / Verified Retrieval 埋点    | 目标 · Phase E          | §5.9 七事件 + 北极星共指标                                                                                                                           |
 | 轻管理余项（标签/失效链接/统计） | 目标 · Phase D          | 摘录删除已提前上线；书签仍只经 Chrome 同步软删                                                                                                       |
 
 ### 1.1 「已上线」验证归属（Normative）
@@ -785,6 +871,12 @@ Side Panel 内：高置信给主答案 +「可能是这些」；低置信给候�
 | Side Panel 对话式壳（多轮 UI）            | ✓    | ✓    | 薄  | ✓    | merge + eval；E2E `sidepanel.html`；芯片/dismiss 手测 |
 | 多轮槽位 merge（§7.0）                    | ✓    | ✓    | —   | ✓    | `merge-recall-dialog-turn`；eval `dialog-*` must      |
 | Dodo Pro / 同步·托管门禁                  | ✓    | —    | —   | ✓    | webhook/account/sync Pro 拒绝；§5.7 手动付费全流程    |
+| 证据卡 ECS（Phase E）                     | —    | —    | —   | ✓    | §5.10.1–2；Explain 单测                               |
+| Evidence pack 导出（Phase E）             | —    | ✓    | —   | ✓    | §5.10.4；导出 schema 单测                             |
+| TTE 埋点（Phase E）                       | ✓    | —    | —   | ✓    | §5.10.3；七事件 schema                                |
+| R4 semi_fuzzy / 逛一簇 must               | —    | ✓    | —   | —    | §5.11.2；合入 Phase E 前必绿                          |
+| 只读 MCP（Phase E）                       | —    | —    | —   | ✓    | §5.10.5；未上线不得列 eval                            |
+| Raindrop/Pocket 导入（Phase E）           | ✓    | ✓    | —   | ✓    | §5.10.6；R2 准入                                      |
 
 **合入门禁（Normative）：**
 
@@ -924,6 +1016,8 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 冲突时以本表为准：**召回质量不分 Free/Pro**；云同步与 LLM 配额分档。对外只讲 Free 与 Pro。
 
+**价值锚点（Normative · 2026-08 市场对齐）：** 出售 **更快、更可信地找回与再利用个人痕迹**（含 export / 未来 evidence pack / MCP），**不是**不限量 AI token 或「更聪明的聊天」。定价须与 Raindrop（~$29/年）、深度阅读工具（~$80–120/年）形成可解释阶梯；详见 `docs/pricing.md` 与 Dodo 实际结账价。
+
 **托管 LLM 配额（Normative · 起步值，env 可调）：**
 
 | 档位      | Clue LLM（口语理解） | 日软盖        | 用尽                         |
@@ -993,23 +1087,244 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 - **P1 / Phase B**：Hybrid/embedding（召回不分档）+ §7.1 首批 **已接线**；**倒排 Phase 1（候选预过滤）已接线**；选区预填仍待
 - **P2 / Phase C**：账户 UI + 云同步铺路 **已完成切片**；隐私 P0（说明 + 开同步确认 + **官网 `/privacy`**）**已上线**；隐私 P1（**关 AI / ToS**）**已上线**；**数据**分区（整库导出 / 清除本机 / 删云端 / 删账号）**已上线**；**书签灌库开关**已上线；分享仍待
 - **P3 / Phase D**：标签/失效链接/统计等轻管理余项（摘录删除已提前上线）
+- **Phase E / R4**：**证据与复用**——见 **§5.10** 手工 + **§5.11** eval must + §5.9 TTE 门槛；工程旁挂 `docs/engineering/R4-Phase-E-验收与eval.md`
 
 **禁止重做**：双面板重组、复杂拖拽整理、AI 聚类主卖点、大规模书签树编辑。
+
+### 5.9 体验质量指标（Normative · 2026-08 市场对齐）
+
+> **协议细则**（ECS 打分表、任务模板、四周实验流程）见 `yiveno_research/TTE_指标框架与测试协议.md`（Non-normative）；**可执行 checklist** 见 [`docs/engineering/TTE-种子用户研究-checklist.md`](../engineering/TTE-种子用户研究-checklist.md)；**本文指标名为 Normative 门禁**。
+
+#### 北极星与共指标
+
+| 指标                          | 定义                                                        | Normative 用途                   |
+| ----------------------------- | ----------------------------------------------------------- | -------------------------------- |
+| **邻域命中（会话履约）**      | 短名单（含 Top Pick + alsoPossible）含用户认定目标          | 主 KPI；**逛一簇**意图优先       |
+| **Top1 命中**                 | Top Pick = 用户目标                                         | Delight；**不得**作唯一 must     |
+| **Verified Retrievals / WAU** | 用户**打开来源/原文/详情**后确认找回成功的次数 / 周活       | 共北极星；防「看起来快但不可验」 |
+| **TTE-V**                     | 从 `query_submitted` 到首次看见 **ECS 五要素齐全** 证据单元 | 体验速度主尺；见下表             |
+| **TTE-C**                     | 到用户打开原文并确认相关                                    | 长尾与误点成本                   |
+
+#### TTE 子指标与护栏
+
+| 指标                            | 报告量          | 防错误优化                         |
+| ------------------------------- | --------------- | ---------------------------------- |
+| TTE-F                           | P50/P75/P90     | 只优化首屏输出                     |
+| **TTE-V**                       | **P50/P75/P90** | 无来源总结冒充找回                 |
+| TTE-C                           | P50/P75/P90     | 忽略点击后追查成本                 |
+| Success@180                     | 比例 + 95% CI   | 180s 内取得合格证据的任务占比      |
+| ECS 合格率                      | 比例            | 快速结果不可复核                   |
+| Top-3 Evidence Precision        | 比例            | **钉死一条**任务；用大量无关卡掩盖 |
+| Interaction Burden / Wrong-path | 中位数          | 让用户反复改写/误点                |
+
+**Normative 护栏（产品目标阶段，随版本收紧）：** `Top-3 Evidence Precision ≥ 0.70`（钉死一条任务集）；`Median Interaction Burden ≤ 2`；`Wrong-path Penalty P50 ≤ 1`。若 2s 内只返回无来源 LLM 文案，**TTE-V 未达成**。
+
+| 阶段     | TTE-V P50 | TTE-V P90 | Success@180 | ECS 合格率 | 启用条件         |
+| -------- | --------: | --------: | ----------: | ---------: | ---------------- |
+| Alpha    |      ≤15s |      ≤60s |        ≥70% |       ≥90% | 内部语料         |
+| Beta     |      ≤12s |      ≤45s |        ≥75% |       ≥92% | 种子用户真实库   |
+| PMF 探索 |       ≤8s |      ≤30s |        ≥80% |       ≥95% | 30/90/180 天资料 |
+
+#### 最小埋点事件（Normative）
+
+合入 Phase E 须至少：`query_submitted`、`result_rendered`、`evidence_visible`、`source_opened`、`user_confirmed`、`query_refined`、`task_timeout`。每条证据结果须可关联 `source_id`（MemoryItem id）、anchor、ECS、reason codes、rank、trace id。
+
+#### eval 对齐
+
+- **must case 完整清单：** §5.11.2（R4）；既有 case 见 `recall-eval-cases.ts`。
+- **钉死一条** → `in_topk` k=3 或 `top1`；**逛一簇** → `in_topk` k=6 或多 case。
+- 新增/变更 Recall 卡 Explain 或 Reuse → 须更新 §1.1 归属 + §5.11.4 检查表。
+
+#### 90 天种子验证（Normative · 流程）
+
+| 时段     | 目标                      | 通过阈值                                                 |
+| -------- | ------------------------- | -------------------------------------------------------- |
+| 0–30 天  | Capture 低摩擦 + 首次检索 | ≥70% 首次会话 5 次保存；≥60% 7 日内至少 1 次检索         |
+| 31–60 天 | 真实「我以前见过」任务    | ≥60% 任务 Yiveno top-3 优于现有拼装；中位 TTE-V 低于对照 |
+| 61–90 天 | 重复使用与付费意向        | ≥35% 周活种子用户每周检索≥2 次；≥15% 明确 Pro 付费意向   |
+
+未达 31–60 天阈值 → **优先** parser / full-text / rerank / Explain，**不加** Agent 或连接器。
+
+### 5.10 Phase E 手工验收（R4 · Normative）
+
+> 目标：证明 **Explain → Reuse** 闭环可手测、可复现；与 §5.8 冷启动互补。  
+> 预计耗时：§5.10.1–2 约 15 分钟；全量含导入/MCP 约 45 分钟。  
+> **工程旁挂（实现锚点 / eval case id）：** [`docs/engineering/R4-Phase-E-验收与eval.md`](../engineering/R4-Phase-E-验收与eval.md)
+
+**合入门禁：** R4 任一子项标「已上线」前，须对应小节 **全绿** + §5.11 相关 must 绿（若适用）+ §1.1 归属已填。
+
+#### 5.10.0 前置
+
+1. 开发构建或 staging 扩展已加载；登录可选（测 hosted LLM 时须登录）。
+2. 准备 **≥5 条** 可区分摘录（含 1 条带 `clues.note`）+ **≥2 枚** 书签；保存时间跨度建议 ≥7 天（可手改 `createdAt` 仅 dev 测时允许）。
+3. Side Panel 开；DevTools → Application → IndexedDB 可选手动核对 MemoryItem id。
+
+#### 5.10.1 Explain · ECS 五要素（Side Panel）
+
+1. 对一条**半模糊**线索发起 Recall（例：`release checklist` 或 `note about deployment`），须触发 `top_pick` 或 `need_a_clue` 且短名单非空。
+2. 检查 **Top Pick** 与 **alsoPossible** 每张卡是否**同时可见**：
+   - **来源身份**：类型 chip + 域名/页名（摘录为出处行，书签为标题+路径）。
+   - **保存时间**：相对或绝对 `createdAt`（书签优先 `chromeCreatedAt` 若存在）。
+   - **内容锚点**：摘录正文片段或高亮命中段；书签至少标题。
+   - **命中理由**：可读一句（字段 + token / 相关说明），非仅高亮无文案。
+   - **可达原文**：点击卡 → 打开 `detail.html` 或源站 URL。
+3. **负例：** 助手气泡**不得**用无 MemoryItem 绑定的长段 AI 总结替代结果卡。
+4. **Omnibox：** 对同一库用固定关键词触发建议 → 打开条目；ECS 要求与 Side Panel **一致**（允许布局差异，五要素不可缺）。
+
+**通过：** 3/3 随机线索（1 具体 + 1 半模糊 + 1 行为/时间）在 Top Pick 或 top-3 卡上 ECS 五要素齐全。
+
+#### 5.10.2 Explain · 钉死一条 vs 逛一簇
+
+| 意图         | 测试线索（示例）               | 通过标准                                    |
+| ------------ | ------------------------------ | ------------------------------------------- |
+| **钉死一条** | `the deploy checklist excerpt` | 目标在 **top-3**；Top Pick 可为建议非唯一   |
+| **逛一簇**   | `articles about Yiveno`        | 短名单 **≥2** 条同簇相关；Top1 仍显式为建议 |
+
+**禁止：** 为假装唯一而隐藏合理次优（§0.1.1 邻域承诺）。
+
+#### 5.10.3 TTE · Verified Retrieval（内测 / 种子）
+
+1. 选 5 条 **≥14 天前** 保存的资料，写 gold card（目标 id + 允许替代 + 关键锚点）。
+2. 对每条输入**模糊口语**（不得粘贴完整标题/URL）。
+3. 计时：`query_submitted` → 首次看见 **ECS 五要素齐全** 的卡 = **TTE-V**；点击打开并确认 = **TTE-C**。
+4. **通过（Alpha 内测）：** 5 任务中 ≥4 在 180s 内 Success；TTE-V P50 ≤15s（手停表或埋点均可）；无「2s 内仅 LLM 文案无卡」。
+
+**完整种子 study（20–30 人 · 2 周）：** 见 [`docs/engineering/TTE-种子用户研究-checklist.md`](../engineering/TTE-种子用户研究-checklist.md)。
+
+#### 5.10.4 Evidence pack（多选导出）
+
+1. 在 **Library** 或 Recall 结果区多选 **2–5** 条 MemoryItem（含摘录+书签各至少 1）。
+2. 导出 **Markdown** 与 **JSON** 各一次。
+3. 检查每条含：`source_id`（或 id）、`url`/`sourceUrl`、`createdAt`、摘录正文或书签 title、可选 `clues.note`。
+4. **禁止：** 导出整库冒充 evidence pack；不得含未选条目。
+
+**通过：** 粘贴到外部编辑器后，第三方可仅凭导出内容理解「哪条是证据、从哪来、何时存」。
+
+#### 5.10.5 只读 MCP beta（若标已上线）
+
+1. 用文档公布的 MCP 工具/schema 发起 **scope 内** query（例：「deployment checklist」）。
+2. 响应须为 **evidence pack 形态**（带来源条目列表），**不得**返回全库 dump 或可写操作。
+3. 撤销/关闭 MCP 后，同 query 须失败或空，且 Settings/隐私可说明 scope。
+
+**未上线：** 跳过；UI/官网**不得**暗示 MCP 可用。
+
+#### 5.10.6 第三方导入 · Raindrop / Pocket（若标已上线）
+
+1. 准备 **脱敏** 导出文件（HTML/JSON，≤50 条）。
+2. Settings → 保存/数据 → 导入 → 进度可见；失败有 `errorCode`。
+3. 随机 3 条用 **口语线索** Recall → top-3 含导入项；Detail 可打开。
+4. **准入：** 须过 R2 `THIRD_PARTY_CORPUS_ADMISSION_CHECKS`；导入后走同一 `recallService`。
+
+**未上线：** 跳过。
+
+#### 5.10.7 反跑题（R4）
+
+1. evidence pack / MCP **不得**含助理人设、偏好建档字段。
+2. Explain 理由**不得**用置信百分比或「AI 认为」替代字段级解释。
+3. 仍遵守 §5.8 C：无 Agent、无「帮你决定现在干嘛」。
+
+---
+
+### 5.11 recall-eval must 规格（R4 · Normative）
+
+> **实现位置：** `frontend/src/core/recall/eval/`；旁挂 [`docs/engineering/R4-Phase-E-验收与eval.md`](../engineering/R4-Phase-E-验收与eval.md)
+
+#### 5.11.1 期望形态（与代码对齐）
+
+| 产品口径                   | `RecallEvalExpectation`                                        | 适用意图                                               |
+| -------------------------- | -------------------------------------------------------------- | ------------------------------------------------------ |
+| Top Pick 命中              | `{ kind: 'top1', expectedId }`                                 | 具体锚点；delight 指标                                 |
+| **Top-3 命中（钉死一条）** | `{ kind: 'in_topk', expectedId, k: 3 }`                        | 半模糊 / 行为+时间；**R4 起 semi_fuzzy must 默认 k=3** |
+| 邻域命中（逛一簇）         | `{ kind: 'in_topk', expectedId, k: 6 }` 或多样本 `in_topk` k=3 | 同簇多条须**分别**有 case                              |
+| 弱命中追问                 | `{ kind: 'need_a_clue', expectedId }`                          | 候选内收窄                                             |
+| 诚实空                     | `{ kind: 'no_match' }`                                         | 负例 / 强约束库空                                      |
+
+**Normative：** 「钉死一条」会话成功 = `top1` **或** `in_topk` k≤3；「逛一簇」= 短名单含目标（k≤6，与 `RECALL_RESULT_SLOT_LIMIT` 一致）。
+
+#### 5.11.2 R4 新增 must case 清单（合入 Phase E 前须实现）
+
+下列 case **id** 为 Normative 命名；实现时写入 `recall-eval-cases.ts`，corpus 项写入 `recall-eval-ids.ts` / `recall-eval-corpus.ts`。
+
+| id                           | clueClass  | clue（示例）                                 | expectation                            | 意图 / 说明                                    |
+| ---------------------------- | ---------- | -------------------------------------------- | -------------------------------------- | ---------------------------------------------- |
+| `r4-semi-fuzzy-time-excerpt` | semi_fuzzy | `article I didn't finish last week`          | `in_topk` k=3 · half-read 摘录         | 行为+时间 · 钉死一条                           |
+| `r4-semi-fuzzy-note-anchor`  | semi_fuzzy | `page where I left a note about deploy`      | `in_topk` k=3 · 带 note 条目           | 备注指向 · R4/Explain                          |
+| `r4-vague-recently-saved`    | vague      | `just saved something about i18n`            | `in_topk` k=3 · 近因摘录               | recently_saved 邻域                            |
+| `r4-vague-often-opened`      | vague      | `the Yiveno page I kept opening`             | `top1` 或 `in_topk` k=3 · 高 openCount | 行为排序                                       |
+| `r4-cluster-yiveno-docs`     | semi_fuzzy | `Yiveno docs I saved`                        | **两条** `in_topk` k=6 各 expectedId   | **逛一簇**；须两条都进名单                     |
+| `r4-negative-zero-anchor`    | negative   | `play some songs I like`                     | `no_match`                             | 零锚点 · 禁助手路径                            |
+| `r4-constrained-time-empty`  | semi_fuzzy | `poem I saved yesterday`（库中无 poem+昨天） | `no_match` + `constrained_none` 语义   | 强约束诚实空（eval 断言 emptyKind 若 exposed） |
+
+**已有 must 须保持绿：** 全部现有 `gate: 'must'` case；R4 **不得**为抬 TTE 牺牲 `negative-*` / `r0-zero-anchor-*`。
+
+#### 5.11.3 Explain / ECS 的 eval 归属
+
+| 层级                          | 归属                                | 门禁         |
+| ----------------------------- | ----------------------------------- | ------------ |
+| `explainRecallMatch` 文案逻辑 | 单测 `explain-recall-match.test.ts` | CI 必绿      |
+| 结果卡五要素 UI               | §5.10.1 手工 + §1.1「证据卡 ECS」行 | 发版前手测   |
+| TTE 埋点字段完整              | 单测或 dev 脚本断言七事件 schema    | Phase E 合入 |
+| evidence pack schema          | 单测：导出 JSON Zod                 | 合入时必加   |
+
+**不做：** 全量 TTE 进 CI（手测/种子 study）；竞品公开秒数对比（研究禁止）。
+
+#### 5.11.4 Phase E 合入检查表
+
+- [ ] §5.11.2 全部 must case 绿
+- [ ] §5.10.1–2 手工绿
+- [ ] §5.10.4 若上线 evidence pack
+- [ ] §5.10.5–6 若上线 MCP / 导入
+- [ ] §1.1 对应行已填 eval / 手动归属
+- [ ] §5.9 Beta 行 TTE 未宣称达标除非种子数据支持
 
 ### 5.5 Settings IA（最小已上线）
 
 **布局（Normative）：** 与记忆库同构——**左侧竖导航 + 右侧单面板切换**；窄屏降级为顶部横排 chips。深链 `settings.html?section=<id>`（默认 `capture` 不写 query；旧 `usage` 映射到 `capture`）。
 
-| 分区（侧栏） | `section` id   | 状态            | 说明                                                                                                                   |
-| ------------ | -------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| 保存         | `capture`      | 已上线          | 划词浮层开关（默认开）；**Chrome 书签灌库**开关（默认开；关后卸监听/停 bulk，不删已有）                                |
-| 快捷键       | `shortcuts`    | 已上线          | 展示绑定；改键跳转 `chrome://extensions/shortcuts`                                                                     |
-| 账户与同步   | `account_sync` | 已上线          | 顶栏头像登录；**同步 = Pro+登录+开关**；订阅升级（回焦自动对账）；禁止缩量盖云；孤儿桶；退出三选一；默认同步关         |
-| 数据         | `data`         | 已上线          | **本机导出**；**清除本机记忆**（不动 Chrome 原生书签；并关书签灌库；若同步开着则关同步）；**删云端记忆**；**删除账号** |
-| 隐私         | `privacy`      | 已上线（P0+P1） | 数据说明摘要；开同步前确认；链到 `/privacy` 与 `/terms`（操作型入口在「数据」）                                        |
-| AI           | `ai`           | 已上线          | **关 AI**；模型路径说明（线索理解 + enrichment；不碰数据平面）                                                         |
+| 分区（侧栏） | `section` id   | 状态            | 说明                                                                                                                                    |
+| ------------ | -------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| 保存         | `capture`      | 已上线          | 划词浮层开关（默认开）；**Chrome 书签灌库**开关（默认开；关后卸监听/停 bulk，不删已有）                                                 |
+| 快捷键       | `shortcuts`    | 已上线          | 展示绑定；改键跳转 `chrome://extensions/shortcuts`                                                                                      |
+| 账户与同步   | `account_sync` | 已上线          | 顶栏头像登录；**同步 = Pro+登录+开关**；订阅升级（回焦自动对账）；禁止缩量盖云；孤儿桶；退出三选一；默认同步关                          |
+| 数据         | `data`         | 已上线          | **Backup 整库导出**（§5.5.1）；**清除本机记忆**（不动 Chrome 原生书签；并关书签灌库；若同步开着则关同步）；**删云端记忆**；**删除账号** |
+| 隐私         | `privacy`      | 已上线（P0+P1） | 数据说明摘要；开同步前确认；链到 `/privacy` 与 `/terms`（操作型入口在「数据」）                                                         |
+| AI           | `ai`           | 已上线          | **关 AI**；模型路径说明（线索理解 + enrichment；不碰数据平面）                                                                          |
 
 **数据 vs 隐私（Normative）：** 「隐私」= 政策、同意与说明；「数据」= 用户处置本机/云端 Memory 的操作。清除本机记忆**永远不得**调用 `chrome.bookmarks` 删除或改写用户原生书签。
+
+### 5.5.1 数据归属与导出（Normative）
+
+**导出是产品责任，不是差异化特性。** local-first 下用户须能带走、清空、换工具；与 §0 竞争边界「用户拥有与隐私是**入场券**」一致。不得用「扣住派生数据」建护城河；护城河在召回质量、Capture→Recall 习惯与验证式体验（§0 / §5.9）。
+
+#### 三层数据归属
+
+| 层                  | 范围                                                                                                                         | 归属                                                          | 导出 / 删除                                           |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------- |
+| **L1 用户内容**     | Capture 摘录、`clues.note`、来源 URL / 标题 / 域名；经用户授权开启的书签灌库条目                                             | **用户**                                                      | Backup 必含；Portable 必含核心字段                    |
+| **L2 库内行为**     | `openCount` / `lastOpenedAt`、`dismissCount` / `lastDismissedAt`；条目 `createdAt` / `updatedAt` / 软删标记                  | **用户**（用户与自家资料库的交互史，非 Yiveno 独立知识资产）  | Backup 含；Portable **默认不含**                      |
+| **L3 条目级派生**   | 规则 / LLM enrichment（`tags` / `keywords` / `entities` / `summary`）；条目 `embedding` 及 `embeddingModel` / `embeddingDim` | **随条目走**（该条记忆的可检索形态，存于用户本机 / 用户云桶） | Backup 含；Portable **默认不含**（竞品可重算）        |
+| **— Yiveno 服务层** | 去标识化聚合统计；不可个体化的全站模型；未持久化的一次性 LLM 推理产物                                                        | **Yiveno**                                                    | **不属于**用户 export；删账号时切断与个体的可关联副本 |
+
+**Normative 铁律：**
+
+- **禁止**以「派生数据属 Yiveno」为由拒绝 Backup 全量导出，或在删账号 / 删云端后仍保留**可关联到该用户**的条目级派生副本。
+- **未来库级 personal ranker（若上线）：** 权重仅存用户桶 → 随 Backup 导出或删账号即毁；仅存 Yiveno 全局 → 不写进用户 export，删账号时切断个体关联。
+- L3 虽由 Yiveno 模型 / 规则计算，语义上仍是「用户那条摘录在本库内的检索索引」——跟用户内容的备份权一致，**不是**可单独扣留的服务器-side secret。
+
+#### 两层导出
+
+| 层           | 名称       | 状态                                                  | 用途                             | 字段原则                                                                                           |
+| ------------ | ---------- | ----------------------------------------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------- |
+| **Backup**   | 整库备份   | **已上线**（Settings「数据」· `EXPORT_LOCAL_MEMORY`） | 换机、灾备、换号恢复、用户主权   | 当前 owner 全部 `MemoryItem`（含软删、`clues` 全字段）；**不含**孤儿桶（孤儿仍走账户与同步区导出） |
+| **Portable** | 可迁移原料 | **目标 · 未上线**                                     | 迁到其他工具；减轻跨产品搬运体积 | L1 核心（摘录 + note + 来源 + 时间戳等）；**默认不含** L2 行为、L3 embedding；enrichment 可选剥离  |
+
+**Normative：**
+
+- Portable **不得替代** Backup；两者并存时 **Backup 始终为一等公民**。
+- **Evidence pack**（§5.10.4）= 多选证据包，**不是**整库 Portable，**不能**冒充 Backup。
+- 护城河 **不得**建立在拒绝 Backup；须用「同份 Portable 在竞品侧 Recall 是否仍明显更差」+ 习惯入口验证（§0 竞争边界）。
+
+Settings「隐私」摘要与官网 `/privacy` 须与本节 L1–L3 口径一致；正文重大变更时同步更新 `privacyNoticeVersion` ack 文案（见 §6 隐私 P0）。
 
 ### 5.6 扩展入口
 
@@ -1080,12 +1395,12 @@ Chrome API / 选区
 - **隐私 P0（Normative）**：
   - Settings「隐私」展示数据说明摘要（本机 Memory / 可选云同步 / 账号 Auth / AI 经 Worker；不收集 History、未 Capture 全文、默认不上云）。
   - **开同步前**须确认当前隐私说明版本（`privacyNoticeVersion` ack）；未确认不得开启同步。关同步 ≠ 自动删云端。
-  - **官网隐私政策（Normative）**：`https://yiveno.com/privacy`（及同源部署的 `/privacy`）提供与当前实现对齐的英/中正文；官网页脚与登录页、扩展 Settings「隐私」须外链至此。正文重大变更时更新日期；扩展内同步确认文案重大变更时递增 `privacyNoticeVersion`。本页**不是**律师意见书；未上线能力不得写入为已提供。
+  - **官网隐私政策（Normative）**：`https://yiveno.com/privacy`（及同源部署的 `/privacy`）提供与当前实现对齐的**美式英语**正文；官网页脚与登录页、扩展 Settings「隐私」须外链至此。正文重大变更时更新日期；扩展内同步确认文案重大变更时递增 `privacyNoticeVersion`。本页**不是**律师意见书；未上线能力不得写入为已提供。
   - **关 AI + 模型说明（Normative）**：Settings「AI」提供 `aiFeaturesEnabled`（默认开）；关闭后线索 LLM completer 清空、Capture LLM enrichment 跳过；页内说明 Worker 路径与数据平面边界。
-  - **服务条款（Normative）**：官网 `/terms`（英/中）；页脚 / 登录 / Settings 可外链。
+  - **服务条款（Normative）**：官网 `/terms`（美式英语）；页脚 / 登录 / Settings 可外链。
   - **书签灌库开关（Normative）**：Settings「保存」提供 `chromeBookmarkIngestEnabled`（默认开）；关闭后**卸载** `bookmarks.on*` 监听、跳过 bulk 导入与增量写入，并拒绝 `CAPTURE_BOOKMARK`；**不删除**已灌入的书签 Memory；重新开启后重新挂监听并补跑 / 续跑 bulk（含 reconcile 补洞）。
 - **数据处置（Normative · Settings「数据」）**：
-  - **整库导出**：导出当前 owner 本机全部 Memory（含软删）为 JSON（`EXPORT_LOCAL_MEMORY`）；不含孤儿桶（孤儿仍走账户与同步导出）。
+  - **Backup 整库导出**（§5.5.1）：导出当前 owner 本机全部 Memory（含软删、`clues` 全字段，即 L1+L2+L3）为 JSON（`EXPORT_LOCAL_MEMORY`）；不含孤儿桶（孤儿仍走账户与同步导出）。**Portable 可迁移原料未上线前，本条即用户主权导出的唯一必需路径。**
   - **清除本机记忆**（`CLEAR_LOCAL_MEMORY`）：硬清当前 owner 本机 IndexedDB Memory；**不得**改写/删除 Chrome 原生书签；成功后关闭书签灌库并卸载监听；若云同步开着则关闭同步并提示云端副本需另行删除。二次确认。
   - **删除云端记忆**：登录后可一键删除该账号云端 `memory_items` 与 `memory_sync_backups`；默认**不**清本机 IndexedDB；成功后关闭云同步并清定时闹钟。二次确认。
   - **删除账号**（与「仅退出」/「仅删云端」分开）：登录后强确认 → Worker 删云端 Memory/backups 并用 service role **注销 Supabase Auth 用户** → 扩展清本机当前 `accountId` 桶（**不动** `localProfileId` 身份；该桶若仍有未归并数据则保留）→ 清 session/binding/同步/隐私 ack → 打开官网 `/logout`。订阅/支付行可按法律保留、不再可登录关联（不暗示可恢复账号）。
@@ -1237,17 +1552,19 @@ Chrome API / 选区
 
 > **改版执行细节**（差异收束、阶段验收、不做清单）见 [`Yiveno-改版计划-v1.md`](./Yiveno-改版计划-v1.md)。与本表冲突时：先改本文再改计划。
 
-| Phase  | 内容                                                                                                                            |
-| ------ | ------------------------------------------------------------------------------------------------------------------------------- |
-| **A**  | 线索解释/空状态、摘录详情、记忆库轻浏览 **已完成**；其余并入改版计划 R 波次                                                     |
-| B      | Hybrid/embedding（召回不分档）+ §7.1 首批 **已接线**；Need A Clue **已上线**；**倒排 Phase 1 已接线**；选区预填仍待             |
-| C      | 账户 UI + 云同步 + 增量定时 + **隐私 P0/P1**（删账号、`/privacy`、整库导出、关 AI、`/terms`）+ **书签灌库开关**已上线；分享仍待 |
-| D      | 轻管理余项（标签/失效链接/统计；摘录删除已提前）                                                                                |
-| **R0** | **命题先验**：口语↔内容 must eval / 金标收束；空结果诚实语义对齐 §0.1.1（禁偏好建档闲聊）                                       |
-| **R1** | **冷启动不破题**：第一天可用路径（导入/划存 → 一次成功找回）；空结果只导向 Capture/追问                                         |
-| **R2** | **语料适配器契约**：统一 Memory 映射边界文档化；摘录/书签作为参考实现收齐；第三方连接器排队但不提前堆砌                         |
-| **R3** | **检索硬化**：弱锚点门禁（G3）**已接线**；**倒排 Phase 1（预过滤）已接线**；外部语料适配器有条件（过准入清单）                  |
-| **R∞** | **框架远景（Non-normative）**：个性化检索运行时有限开放——仅当 R0–R2 命题不可动摇后（附录 A.7）                                  |
+| Phase  | 内容                                                                                                                                                |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **A**  | 线索解释/空状态、摘录详情、记忆库轻浏览 **已完成**；其余并入改版计划 R 波次                                                                         |
+| B      | Hybrid/embedding（召回不分档）+ §7.1 首批 **已接线**；Need A Clue **已上线**；**倒排 Phase 1 已接线**；选区预填仍待                                 |
+| C      | 账户 UI + 云同步 + 增量定时 + **隐私 P0/P1**（删账号、`/privacy`、整库导出、关 AI、`/terms`）+ **书签灌库开关**已上线；分享仍待                     |
+| D      | 轻管理余项（标签/失效链接/统计；摘录删除已提前）                                                                                                    |
+| **E**  | **证据与复用（R4）**：Explain 全要素（ECS）UI；TTE/Verified Retrieval 埋点；evidence pack；只读 MCP beta；Raindrop/Pocket 导入；门槛 §5.9           |
+| **R0** | **命题先验**：口语↔内容 must eval / 金标收束；空结果诚实语义对齐 §0.1.1（禁偏好建档闲聊）                                                           |
+| **R1** | **冷启动不破题**：第一天可用路径（导入/划存 → 一次成功找回）；空结果只导向 Capture/追问                                                             |
+| **R2** | **语料适配器契约**：统一 Memory 映射边界文档化；摘录/书签作为参考实现收齐；第三方连接器排队但不提前堆砌                                             |
+| **R3** | **检索硬化**：弱锚点门禁（G3）**已接线**；**倒排 Phase 1（预过滤）已接线**；外部语料适配器有条件（过准入清单）                                      |
+| **R4** | **证据与复用（Phase E）**：Explain 全要素 UI；TTE/Verified Retrieval 埋点；evidence pack；只读 MCP beta；Raindrop/Pocket 导入（过 R2）；门槛见 §5.9 |
+| **R∞** | **框架远景（Non-normative）**：个性化检索运行时有限开放——仅当 R0–R2 命题不可动摇且 R4 留存验证后（附录 A.7）                                        |
 
 ---
 
@@ -1263,8 +1580,8 @@ Chrome API / 选区
 - **资产：** 附着在互联网原文上的个人增量（摘录/附注）为主；书签配角；空白创作非目标。
 - **立身：** 业务简单（存 + 找）；体验必须精打细磨。无爽点 = 无护城河。履约看邻域，delight 看 Top1。
 - **发育：** 靠用户长期使用慢慢长厚；开头最难，越往后越稳。前期体验买习惯与语料，后期习惯与语料锁体验。
-- **目标用户：** 会主动划存/标注的知识工作者、开发者/设计师、学生等（不是「几乎不 Capture」的大众平均）；话术须让不同圈子也能立刻听懂「干啥用」。
-- **MVP 验证：** 是否更愿划存摘录、是否优先打开 Yiveno 找回个人痕迹、是否稳定进入正确邻域、是否愿为语义/同步付费；并能回答「为何不用 Google」。
+- **目标用户：** 会主动划存/标注的**跨来源网络研究者、创作者/设计研究者、开发者/产品人**（不是「几乎不 Capture」的大众）；话术仍对外统一「那个找东西的」。详见 §0.1.1「首发用户与种子验证」。
+- **MVP 验证：** 是否更愿划存摘录、是否优先打开 Yiveno 找回个人痕迹、是否稳定进入正确邻域、**Verified Retrievals 与 TTE-V 是否改善**、是否愿为语义/同步付费；并能回答「为何不用 Google」。
 
 ### A.1.1 当前 AI 能力判断（背景共识）
 
@@ -1288,7 +1605,9 @@ Chrome API / 选区
 默认：只处理主动保存 + 授权同步的书签；不默认浏览历史/全文快照/上传第三方。  
 逐步提供：本地/云端开关、删云端、导出、关 AI、模型说明。云端/语义上线前补隐私政策与同意流。
 
-**P0+P1 已落地切片：** Settings 隐私摘要 + 开同步确认 + 官网 `/privacy` + **数据**分区（整库导出 / 清除本机记忆 / 删云端 / 删账号）+ **关 AI / 模型说明** + 官网 `/terms` + **书签灌库开关**（Settings「保存」）。
+**数据 ownership（Normative · 详见 §5.5.1）：** 用户内容（L1）与库内行为（L2）归用户；条目级派生（L3）随条目走、须随 Backup 可带走；仅去标识化聚合 / 不可个体化的 Yiveno 服务层资产不属于用户 export。**导出是产品责任（Backup 一等公民），不是可砍的差异化特性。**
+
+**P0+P1 已落地切片：** Settings 隐私摘要 + 开同步确认 + 官网 `/privacy` + **数据**分区（Backup 整库导出 / 清除本机记忆 / 删云端 / 删账号）+ **关 AI / 模型说明** + 官网 `/terms` + **书签灌库开关**（Settings「保存」）。
 
 ### A.3 商业化方向（配额另定）
 
@@ -1364,19 +1683,21 @@ Chrome API / 选区
 ### A.4 品牌
 
 禁：AI Bookmark Manager、管理你的书签、自动整理一切、永久保存看过的所有内容、更好的书签搜索（易被理解成打 Google）、你的 AI 生活助手、帮你决定听什么/看什么、零锚点「放首歌/好无聊看点东西」主 demo、**永远准确的那一条 / AI-powered 主 slogan / 模型·架构名词当招牌 / 置信百分比神谕**。  
-荐：那个找东西的；帮你在仓库找东西；看到好东西扔进来；想找的时候找它要；Find what you saved.；记得一点 → 最像的 + 附近几条；Google 找不到的是你的痕迹；Save what matters. Recall it later.（「记忆硬盘」仅对内，勿作官网主句）
+荐：那个找东西的；帮你在仓库找东西；看到好东西扔进来；想找的时候找它要；Find what you saved.；记得一点 → 最像的 + 附近几条；Google 找不到的是你的痕迹；Save what matters. Recall it later.（「记忆硬盘」仅对内，勿作官网主句）。对内/投资人可补充 **Personal Knowledge Retrieval**，但**不得**替代对外主句。
 
 ### A.5 Text Excerpt 明确不做
 
 富文本高亮、完整网页快照、自动保存全部阅读、类 Readwise 复习系统。
 
-### A.6 市场调研（背景 · 方向决策输入）
+### A.6 市场与竞品研究（背景 · 方向决策输入）
 
-**权威调研文档：** [`Yiveno-市场调研-v1.md`](./Yiveno-市场调研-v1.md)（Non-normative）。
+**一手竞品与市场研究（2026-08-23）：** 仓库 **`yiveno_research/`**（Manus AI；证据 log + 战略分析 + TTE 协议 + 建议）。**Normative 结论已回写本文 §0.1 / §0.1.1 / §5.9 / §8 R4**；细节坐标、定价锚点、竞品秒数**不得**从研究文档直接抄作已测性能。
 
-- v1 为二手资料综合 + **待验证假设**；一手访谈 / CWS 漏斗数据尚未纳入。
-- **语言与区域 Tier、竞品楔子、继续开发前门槛** 以调研文档 §4、§6、§11 为准；与 §0.1.1「市场语言策略」冲突时，**先更新调研与产品文档再改代码**。
-- 在 §11 门槛（访谈、Recall benchmark、分发漏斗等）未过前，**暂缓**扩大多语言 parser、LLM 主路径与新品类功能；可继续 bugfix 与 benchmark 所需小改。
+**早期调研 v1：** [`Yiveno-市场调研-v1.md`](./Yiveno-市场调研-v1.md)（2026-07-29；二手综合 + 待验证假设）。**竞品格局、五层栈、TTE、种子用户分群** 以 `yiveno_research/` 为准；v1 的「继续开发前门槛」中与本文冲突者，**以本文 Normative 为准**。
+
+- **语言与区域：** 以 §0.1.1「市场语言策略」为准（当前 American English only P0）。
+- **暂缓（除非 §5.9 门槛已过）：** 扩大非英语 parser、自主 Agent、默认 history 抓取、知识图谱首发、多连接器 Logo 墙。
+- **可并行：** bugfix、Explain/Reuse/TTE 等 **R4 / Phase E** 项、recall-eval must 扩充。
 
 ### A.7 远景：个性化检索框架（Non-normative · 勿当当前 sprint）
 
@@ -1401,112 +1722,117 @@ Chrome API / 选区
 
 ## 修订记录
 
-| 日期       | 变更                                                                                                                                                                                                                       |
-| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-08-21 | 改版计划增 R-shell-chat：Side Panel 对话壳能力清单（已有/明确不做/薄维护）；默认排期回算法                                                                                                                                 |
-| 2026-08-21 | §7.0：`no_match` 废「缩短再试」CTA——诚实终局不暗示换查询仍可救                                                                                                                                                             |
-| 2026-08-21 | §7.0：Side Panel 线程默认 refine；New find 显式新会话；助手 session status；不自动猜会话结束                                                                                                                               |
-| 2026-08-21 | R-shell 落地：Side Panel 主壳；拆除 `pages/popup`；`OPEN_RECALL_SHELL` / `yiveno.recallPrefill`                                                                                                                            |
-| 2026-08-21 | §0.3/§0.4/§0.5/§1/§5/§6/§7.0：Recall 主壳 Normative → Chrome Side Panel；Popup 退役；关 Panel P0 仍丢会话；Omnibox P0 仍无会话；澄清禁「侧边栏管理页」≠禁 Side Panel；改版 R-shell                                         |
-| 2026-08-17 | 计费迁 Dodo Payments：Paddle 运行时移除；hosted checkout + Standard Webhooks；投影/对账/isPro 保留（§A.3.2）                                                                                                               |
-| 2026-08-15 | §0.1 / §0.1.1 / §7 / A.1 / A.4：定位纠偏——对外「那个找东西的」；找回承诺=邻域集合非神谕；Top1=建议；会话成功看邻域；AI 能力核心不作宣传招牌；仓库话术优先于知识库/记忆硬盘主 slogan；「记忆硬盘≠小助手」表对齐邻域成功标准 |
-| 2026-08-14 | 计费迁 Paddle：Gumroad 运行时移除；标准价 $7.99/月·$59.99/年；投影/对账/isPro 保留（§A.3.2）                                                                                                                               |
-| 2026-08-11 | §7 / §0.1.1：废除缺槽规则问卷；no_match 诚实终局；追问仅候选收窄；top_pick 主次分列（可能是这些）                                                                                                                          |
-| 2026-08-11 | 倒排 Phase 1：IDB v4 posting 预过滤 + dirty/rebuild + Hybrid fallback 全表扫；弱锚点之后的检索硬化                                                                                                                         |
-| 2026-08-11 | R3 切片：弱锚点质量评估 + 关键词降权（空壳书签去高权 title）                                                                                                                                                               |
-| 2026-08-11 | R2：语料适配器工程契约 + 差距 G1–G7 + 准入清单；类型旁挂 `corpus-adapter-contract`                                                                                                                                         |
-| 2026-08-11 | R1：§5.8 冷启动手工验收；空库 idle「先留下痕迹」；欢迎/miss 文案收束找东西；改版计划 R1 落地                                                                                                                               |
-| 2026-08-11 | 收束产品对话共识：对外印象「那个找东西的」；命题先验；空结果契约；可达档位 A/B/C；语料适配器 Normative；§8 R0–R∞；附录 A.7 框架远景；改版计划 v1                                                                           |
-| 2026-08-10 | §0.1.0 纠偏：听懂=唯一理由；LLM 理解默认主链；规则仅降级；删词面 Gate 挡口语与 miss 双扫                                                                                                                                   |
-| 2026-08-07 | 「数据」分区 + `CLEAR_LOCAL_MEMORY`；LLM 配额 Normative（Free 60/月·日盖 10，Pro 2000/月·日盖 120）；召回质量不分档；Hybrid/hosted/embed 解 Pro 硬门禁（同步仍须 Pro）                                                     |
-| 2026-08-06 | §A.3.2 订阅投影与对账：Gumroad 计费权威；24h TTL / 48h grace；ended 立刻降级；webhook token + events + Refresh/Cron 对账                                                                                                   |
-| 2026-08-06 | 订阅全流程收口：展示锚点 $5.99/月·$59/年；Gumroad 为结账权威；A.3.1 上线清单；Power User/Team 仅路线图                                                                                                                     |
-| 2026-08-06 | 付费方案拍板：Free+仅 Pro；同步/托管 LLM 进 Pro；官网定价与账户升级；website 订阅鉴权；`premium` 预留不售                                                                                                                  |
-| 2026-08-05 | §7.0 对话式 Recall 语义闭环切片上线：槽位 merge、芯片即发、dismiss 保留、缩短回滚、eval/handler 覆盖                                                                                                                       |
-| 2026-08-05 | §7.0 对话式 Recall 语义闭环：core 槽位 merge；芯片即发；dismiss 保留 accumulated + dismissedIds 硬排除                                                                                                                     |
-| 2026-08-05 | 隐私 P1：整库导出；Settings 关 AI + 模型说明；官网 `/terms`                                                                                                                                                                |
-| 2026-08-05 | 官网 `/privacy` 隐私政策（英/中）；Settings / 登录 / 页脚外链                                                                                                                                                              |
-| 2026-08-05 | 隐私：删除账号（Worker 注销 Auth + 清云端 Memory；扩展清本机账号桶并退登）                                                                                                                                                 |
-| 2026-08-05 | 隐私 P0：Settings 数据说明；开同步前 ack；删除云端 Memory（+backups），默认不动本机                                                                                                                                        |
-| 2026-08-04 | 增量/定时 sync：`chrome.alarms`≈15min + `pull(since)`/`push` 水位；设置「立即同步」；不走定时 replace                                                                                                                      |
-| 2026-08-04 | 同步防呆：禁止缩量 replace（409）+ 合并 pull 空/丢条中止；设置页可从最近 backup 恢复云端并拉回本机                                                                                                                         |
-| 2026-08-04 | 根因修复：`rowToMemoryItem` 归一化 Supabase timestamptz（偏移/非 3 位小数），避免 pull 静默丢光导致 454→5                                                                                                                  |
-| 2026-08-04 | Auth revalidate：瞬时 refresh 失败不踢登录；仅 invalid_grant 等明确作废才 keep_local 退登                                                                                                                                  |
-| 2026-08-04 | 开同步：两边都有时按 id 并集（`updatedAt` LWW）写回两侧；移除整侧 A/B 冲突 UI                                                                                                                                              |
-| 2026-08-04 | 头像收口：缺图时 Header 自动 `REFRESH_AUTH_PROFILE`；不设用户手动刷新按钮；官网兼容 picture                                                                                                                                |
-| 2026-08-04 | Settings：左侧分区导航（保存 / 快捷键 / 账户与同步 / 隐私 / AI）+ `?section=`；与记忆库同构                                                                                                                                |
-| 2026-08-04 | 多 owner 孤儿桶：设置页盘点 + 导出 JSON + 显式清除；退出不静默清历史账号                                                                                                                                                   |
-| 2026-08-04 | 空本机不得盖非空云：扩展 `SYNC_REPLACE_LOCAL_EMPTY` + Worker `empty_local_replace_denied`（409）                                                                                                                           |
-| 2026-08-04 | 登录后归并 localProfile→accountId（仅本机 remap，解决 Recall 隐身）                                                                                                                                                        |
-| 2026-08-05 | Phase B Pro：Worker `POST /api/ai/embed`（bge-m3）+ 本机异步 embedding；Hybrid RRF；§7.1 同域软重排 / behaviorHints / 芯片；云同步剥离向量                                                                                 |
-| 2026-08-04 | 退出弹窗方案 B：本机有数固定三按钮；无数直接退出；不做已同步启发式                                                                                                                                                         |
-| 2026-08-04 | 扩展退出后打开官网 `/logout?from_extension=1` 对称清网站 session                                                                                                                                                           |
-| 2026-08-04 | 登录态 A+B：官网退出 `SIGN_OUT_HANDOFF`；扩展 `GET_AUTH_STATE` 节流 refresh 失效则 keep_local 退登                                                                                                                         |
-| 2026-08-04 | 退出登录三选一：仅退出 / 清本机账号桶 / 先覆盖云端再清；设置页对话框；官网退出不清理扩展 Memory                                                                                                                            |
-| 2026-08-03 | 账户登录改官网主路径：扩展打开官网登录，session 经 external handoff 回传；扩展不做 OAuth 弹窗                                                                                                                              |
-| 2026-08-03 | Phase C 切片：账户登录（Supabase Auth）+ `memory_items` 云库 + Worker sync；登录≠同步；冲突仅 A/B                                                                                                                          |
-| 2026-08-03 | Capture 新建后异步稀疏 LLM enrichment（`scheduleAsyncMemoryLlmEnrichment`；bulk 不烧配额；失败降级规则）                                                                                                                   |
-| 2026-08-03 | LLM enrichment 插座：`MemoryEnrichmentProposal` + `mergeMemoryClueEnrichment` + `POST /api/ai/enrichment/complete`                                                                                                         |
-| 2026-08-02 | Capture enrichment v3：`video` 对象类型；YouTube/Bilibili≠song；主题/实体规则（WWII·城市经济）；回填 v3                                                                                                                    |
-| 2026-08-01 | M1：Gate B 中文短口语/相对时间升 semantic；lexical no_match 有条件升一次 LLM 再 Filter                                                                                                                                     |
-| 2026-07-29 | §1.1 已上线验证归属 + 合入门禁（must/验收先于合入）；E2E 薄冒烟边界（禁大 Playwright）                                                                                                                                     |
-| 2026-07-29 | §7.1 多源线索与权重：收集要宽、采信要窄；Chrome 环境为弱上下文；按模块渐进（产品内→选区→芯片→重排）                                                                                                                        |
-| 2026-07-29 | §0.1.1 知识库习惯重置：文件夹型 KB 双重隐性成本；人创造/机器索引分工                                                                                                                                                       |
-| 2026-07-31 | M1：线索 LLM 改经 Cloudflare `POST /api/ai/clue/complete`（Worker 持 DEEPSEEK Secret；扩展不持 key）                                                                                                                       |
-| 2026-07-31 | M1：理解层前增加「是否处理」网关（reject_noise｜proceed）；与 lexical/semantic 门禁拆开；硬噪音不扫库                                                                                                                      |
-| 2026-07-31 | §0.1.1 / §0.3：钉死 LLM 与数据平面边界（NLU·NLG 可；禁止直接写库；提议→Zod→确定性执行）                                                                                                                                    |
-| 2026-07-29 | 新增 [`Yiveno-市场调研-v1.md`](./Yiveno-市场调研-v1.md)；附录 A.6；暂停扩大功能直至 §11 验证门槛                                                                                                                           |
-| 2026-07-29 | P0：enrichment recall keywords（类型补充词 + 正文词面规则）；回填版本 v2                                                                                                                                                   |
-| 2026-07-29 | §0.1.1 典型英语 P0 语料表 + enrichment recall keywords 验收口径；口语词典对齐真实表达                                                                                                                                      |
-| 2026-07-29 | §0.1.1 市场语言与 Recall Language Strategy：T1 英语优先、canonical/UI/parser 三层分离、芯片 value 稳定英文                                                                                                                 |
-| 2026-07-29 | P0：存量 enrichment 回填（bootstrap 延迟执行，storage 版本幂等）                                                                                                                                                           |
-| 2026-07-29 | P0：模板化追问（缺槽位 reply + 芯片）；建议追加到上一轮线索                                                                                                                                                                |
-| 2026-07-29 | P0：Capture enrichment（域名/类型词/实体 → tags·keywords·entities）；upsert 合并扩展位                                                                                                                                     |
-| 2026-07-28 | P0：`parseRecallClue` + `recallByKeywordWithParsedClue` 接入主链路（规则解析/软加权，无 LLM）                                                                                                                              |
-| 2026-07-28 | §0.1.1 记忆硬盘≠小助手；LLM/embedding 分工；P0 有锚点场景收窄；禁全库喂 LLM / 零锚点助手 demo                                                                                                                              |
-| 2026-07-28 | §0.1.1 记忆库书签树：Chrome 结构 + Yiveno 私人备注层；非整理器、非纯浏览壳                                                                                                                                                 |
-| 2026-07-28 | §0.1.1 肆无忌惮存：旧书签惩罚乱存；整齐目录贬值；Capture+Recall 成对习惯                                                                                                                                                   |
-| 2026-07-28 | §0.1.1 兴趣鸿沟：用户自带兴趣筛选；随便存/随时找得着 = 超轻负担 + 踏实感 = 立身之本                                                                                                                                        |
-| 2026-07-28 | 定位升级：「记忆硬盘」心智（扔进就记着 / 想找就找它要）；§0.1.1 补用户心智表                                                                                                                                               |
-| 2026-07-28 | 写入口语记忆需求 / 对象理解与记忆索引 / 当前 AI 能力边界；明确“记忆可问”路线                                                                                                                                               |
-| 2026-07-28 | 记忆库默认 Tab=摘录；空状态文案对齐摘录主角（§0.1.1）                                                                                                                                                                      |
-| 2026-07-28 | P0：Omnibox/库打开写回；摘录存成抓住感+预填线索；首次找回引导                                                                                                                                                              |
-| 2026-07-28 | §0.1.1 定位精细化：核心资产/Google·Notion 边界/需求 A·B·C/隐患清单；MUST NOT 对齐                                                                                                                                          |
-| 2026-07-28 | §0.1 写入核心路线（寻回、体验立身、前期发育后期变强）；A.1 对齐勿另起故事                                                                                                                                                  |
-| 2026-07-26 | Recall 折叠：书签按规范化 URL 计 N；Also 同域名互斥；勿按域名吞并 stacks                                                                                                                                                   |
-| 2026-07-26 | Recall 折叠：书签按规范化域名；stacks N=同站命中数；Also 与 Top 同键互斥                                                                                                                                                   |
-| 2026-07-26 | 重复组代表：完全相同时以 `createdAt` 最晚为唯一时间决胜                                                                                                                                                                    |
-| 2026-07-26 | Recall 集合：放弃扑克叠；改用 `stacks` 图标 + N 展开同组                                                                                                                                                                   |
-| 2026-07-26 | Recall 集合卡：右侧扑克叠；主卡打开代表；「更多」hover 扇开 / 点击展开                                                                                                                                                     |
-| 2026-07-26 | Recall 重复折叠：书签域名 / 摘录正文；结果层集合卡；库内仍允许并存（键规则已修订）                                                                                                                                         |
-| 2026-07-26 | 独立 `note` 类型：有边界需求、当前不接入；优先书签/摘录/`clues.note` 核心闭环                                                                                                                                              |
-| 2026-07-25 | Popup：打开聚焦线索框；移除提交按钮；停输防抖自动找回；↑↓/Enter 键盘打开结果                                                                                                                                               |
-| 2026-07-25 | 快捷键：划词保存 `Alt+Shift+E`、备注 `Alt+Shift+N`；设置让出 suggested_key 槽位                                                                                                                                            |
-| 2026-07-25 | 快捷键：记忆库 `Alt+Shift+L`、设置 `Alt+Shift+S`（`open_library` / `open_settings`）                                                                                                                                       |
-| 2026-07-25 | 书签事后备注：`UPDATE_MEMORY_NOTE`；树展示/编辑；sync upsert 保留 note                                                                                                                                                     |
-| 2026-07-25 | 备注：列表/Popup 展示于正文与出处之间；Filter 权重 26 + 主文加成（强线索）                                                                                                                                                 |
-| 2026-07-25 | 划词浮层增加「添加备注」；`CAPTURE_TEXT_EXCERPT.note` → `clues.note`；详情可展示                                                                                                                                           |
-| 2026-07-25 | 保存成功工具栏角标 +1；Chrome 原生新书签同步成功亦闪角标                                                                                                                                                                   |
-| 2026-08-22 | UI 图标：统一 Lucide 线框按需内联；卸除旧填充 path                                                                                                                                                                         |
-| 2026-07-25 | UI：图标优先于文案；通识图标 + hover `title`/`aria-label`（经 `t()`）                                                                                                                                                      |
-| 2026-07-24 | UI 图标：按需内联；记忆库删除改为 hover 显图标按钮                                                                                                                                                                         |
-| 2026-07-25 | i18n Phase 5：清残留 UI 硬编码；CI `i18n:check`；catch 不再展示 `error.message`                                                                                                                                            |
-| 2026-07-25 | i18n Phase 4：Settings/Recall/Import/Commands/Identity 失败响应落地 `errorCode`                                                                                                                                            |
-| 2026-07-24 | i18n Phase 2：Library/Detail 文案；Memory 失败响应落地 `errorCode`                                                                                                                                                         |
-| 2026-07-24 | 扩展 i18n 契约：`chrome.i18n` + `en`/`zh_CN`；`t()`；失败响应演进为 `errorCode`                                                                                                                                            |
-| 2026-07-24 | 摘录展示：无强制标题；正文为主、页名/域名仅出处（记忆库/Popup/Omnibox/详情）                                                                                                                                               |
-| 2026-07-24 | UI 图标：按需内联；记忆库删除改为 hover 显图标按钮                                                                                                                                                                         |
-| 2026-07-24 | 摘录软删上线：`DELETE_MEMORY_ITEM`；记忆库列表 / 详情；书签不经此路径删除                                                                                                                                                  |
-| 2026-07-24 | 记忆库书签 Tab：完整映射 Chrome 目录只读树；`GET_BOOKMARK_LIBRARY_TREE`                                                                                                                                                    |
-| 2026-07-24 | 记忆库轻浏览上线：`library.html` 左侧类型 Tab（默认书签）；Popup/Settings 入口                                                                                                                                             |
-| 2026-07-24 | 摘录详情落地页上线：`detail.html?id=` + `GET_MEMORY_ITEM`；Popup/Omnibox 分流                                                                                                                                              |
-| 2026-07-24 | Phase A：线索解释强化 + Popup 空状态分层（空库/有库 + 缩短再试）                                                                                                                                                           |
-| 2026-07-24 | 摘录保存成功/失败：工具栏临时 badge（+1 / !）；划词与右键共用                                                                                                                                                              |
-| 2026-07-24 | 划词保存浮层上线；Settings 开关默认开启；`captureEntry=selection_toolbar`                                                                                                                                                  |
-| 2026-07-24 | Settings 最小可用进 manifest：快捷键查看+跳转原生改键；Popup 入口                                                                                                                                                          |
-| 2026-07-24 | 移除「保存当前页」；书签仅 Chrome 原生+sync；快捷键只保留找回开 Popup                                                                                                                                                      |
-| 2026-07-24 | 快捷键已上线：命令契约+registry；找回 Alt+Shift+Y 开 Popup                                                                                                                                                                 |
-| 2026-07-24 | Popup 移除「保存当前页」UI；保存改快捷键入口；Omnibox keyword `yi`                                                                                                                                                         |
-| 2026-07-24 | Omnibox 已上线（keyword `yi`）；§0.4 入口能力差异；Phase A 下一项改为快捷键                                                                                                                                                |
-| 2026-07-23 | 确立唯一正文；现状矩阵、契约、验收、UI 约束、Hybrid 边界                                                                                                                                                                   |
-| 2026-07-23 | AI 优先重排：Quick Contract、Normative/附录分离、消息 type 表、Phase A 单一优先项                                                                                                                                          |
+| 日期       | 变更                                                                                                                                                                                                                                                   |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-08-24 | **隐私对齐 §5.5.1：** `/privacy` 增 L2/L3/归属与 Backup 导出（美式英语）；Settings 隐私摘要 i18n；`PRIVACY_NOTICE_VERSION`→2                                                                                                                           |
+| 2026-08-24 | **数据归属与导出：** §5.5.1 三层归属（L1 内容 / L2 库内行为 / L3 条目派生 / Yiveno 服务层）+ 两层导出（Backup 已上线、Portable 目标）；§6 数据处置与 Settings「数据」对齐 Backup；A.2 摘要                                                             |
+| 2026-08-24 | **R4 验收：** §5.10 Phase E 手工步骤；§5.11 recall-eval must 清单；§1.1 Phase E 归属行；工程旁挂 `R4-Phase-E-验收与eval.md`                                                                                                                            |
+| 2026-08-24 | **TTE 种子 study：** 工程 checklist `TTE-种子用户研究-checklist.md`；§5.9/§5.10.3 回链                                                                                                                                                                 |
+| 2026-08-24 | **市场对齐：** 吸收 `yiveno_research/`——§0.1 工程/市场等价表述 + Verified Retrievals/TTE 共指标；§0.1.1 五层竞争边界、首发用户、可信召回闭环、ECS Explain；§0.3 禁 Agent/history/图谱优先；§1 Phase E 目标；§5.9 体验质量指标；§8 R4；A.6 研究权威指向 |
+| 2026-08-21 | 改版计划增 R-shell-chat：Side Panel 对话壳能力清单（已有/明确不做/薄维护）；默认排期回算法                                                                                                                                                             |
+| 2026-08-21 | §7.0：`no_match` 废「缩短再试」CTA——诚实终局不暗示换查询仍可救                                                                                                                                                                                         |
+| 2026-08-21 | §7.0：Side Panel 线程默认 refine；New find 显式新会话；助手 session status；不自动猜会话结束                                                                                                                                                           |
+| 2026-08-21 | R-shell 落地：Side Panel 主壳；拆除 `pages/popup`；`OPEN_RECALL_SHELL` / `yiveno.recallPrefill`                                                                                                                                                        |
+| 2026-08-21 | §0.3/§0.4/§0.5/§1/§5/§6/§7.0：Recall 主壳 Normative → Chrome Side Panel；Popup 退役；关 Panel P0 仍丢会话；Omnibox P0 仍无会话；澄清禁「侧边栏管理页」≠禁 Side Panel；改版 R-shell                                                                     |
+| 2026-08-17 | 计费迁 Dodo Payments：Paddle 运行时移除；hosted checkout + Standard Webhooks；投影/对账/isPro 保留（§A.3.2）                                                                                                                                           |
+| 2026-08-15 | §0.1 / §0.1.1 / §7 / A.1 / A.4：定位纠偏——对外「那个找东西的」；找回承诺=邻域集合非神谕；Top1=建议；会话成功看邻域；AI 能力核心不作宣传招牌；仓库话术优先于知识库/记忆硬盘主 slogan；「记忆硬盘≠小助手」表对齐邻域成功标准                             |
+| 2026-08-14 | 计费迁 Paddle：Gumroad 运行时移除；标准价 $7.99/月·$59.99/年；投影/对账/isPro 保留（§A.3.2）                                                                                                                                                           |
+| 2026-08-11 | §7 / §0.1.1：废除缺槽规则问卷；no_match 诚实终局；追问仅候选收窄；top_pick 主次分列（可能是这些）                                                                                                                                                      |
+| 2026-08-11 | 倒排 Phase 1：IDB v4 posting 预过滤 + dirty/rebuild + Hybrid fallback 全表扫；弱锚点之后的检索硬化                                                                                                                                                     |
+| 2026-08-11 | R3 切片：弱锚点质量评估 + 关键词降权（空壳书签去高权 title）                                                                                                                                                                                           |
+| 2026-08-11 | R2：语料适配器工程契约 + 差距 G1–G7 + 准入清单；类型旁挂 `corpus-adapter-contract`                                                                                                                                                                     |
+| 2026-08-11 | R1：§5.8 冷启动手工验收；空库 idle「先留下痕迹」；欢迎/miss 文案收束找东西；改版计划 R1 落地                                                                                                                                                           |
+| 2026-08-11 | 收束产品对话共识：对外印象「那个找东西的」；命题先验；空结果契约；可达档位 A/B/C；语料适配器 Normative；§8 R0–R∞；附录 A.7 框架远景；改版计划 v1                                                                                                       |
+| 2026-08-10 | §0.1.0 纠偏：听懂=唯一理由；LLM 理解默认主链；规则仅降级；删词面 Gate 挡口语与 miss 双扫                                                                                                                                                               |
+| 2026-08-07 | 「数据」分区 + `CLEAR_LOCAL_MEMORY`；LLM 配额 Normative（Free 60/月·日盖 10，Pro 2000/月·日盖 120）；召回质量不分档；Hybrid/hosted/embed 解 Pro 硬门禁（同步仍须 Pro）                                                                                 |
+| 2026-08-06 | §A.3.2 订阅投影与对账：Gumroad 计费权威；24h TTL / 48h grace；ended 立刻降级；webhook token + events + Refresh/Cron 对账                                                                                                                               |
+| 2026-08-06 | 订阅全流程收口：展示锚点 $5.99/月·$59/年；Gumroad 为结账权威；A.3.1 上线清单；Power User/Team 仅路线图                                                                                                                                                 |
+| 2026-08-06 | 付费方案拍板：Free+仅 Pro；同步/托管 LLM 进 Pro；官网定价与账户升级；website 订阅鉴权；`premium` 预留不售                                                                                                                                              |
+| 2026-08-05 | §7.0 对话式 Recall 语义闭环切片上线：槽位 merge、芯片即发、dismiss 保留、缩短回滚、eval/handler 覆盖                                                                                                                                                   |
+| 2026-08-05 | §7.0 对话式 Recall 语义闭环：core 槽位 merge；芯片即发；dismiss 保留 accumulated + dismissedIds 硬排除                                                                                                                                                 |
+| 2026-08-05 | 隐私 P1：整库导出；Settings 关 AI + 模型说明；官网 `/terms`                                                                                                                                                                                            |
+| 2026-08-05 | 官网 `/privacy` 隐私政策（英/中）；Settings / 登录 / 页脚外链                                                                                                                                                                                          |
+| 2026-08-05 | 隐私：删除账号（Worker 注销 Auth + 清云端 Memory；扩展清本机账号桶并退登）                                                                                                                                                                             |
+| 2026-08-05 | 隐私 P0：Settings 数据说明；开同步前 ack；删除云端 Memory（+backups），默认不动本机                                                                                                                                                                    |
+| 2026-08-04 | 增量/定时 sync：`chrome.alarms`≈15min + `pull(since)`/`push` 水位；设置「立即同步」；不走定时 replace                                                                                                                                                  |
+| 2026-08-04 | 同步防呆：禁止缩量 replace（409）+ 合并 pull 空/丢条中止；设置页可从最近 backup 恢复云端并拉回本机                                                                                                                                                     |
+| 2026-08-04 | 根因修复：`rowToMemoryItem` 归一化 Supabase timestamptz（偏移/非 3 位小数），避免 pull 静默丢光导致 454→5                                                                                                                                              |
+| 2026-08-04 | Auth revalidate：瞬时 refresh 失败不踢登录；仅 invalid_grant 等明确作废才 keep_local 退登                                                                                                                                                              |
+| 2026-08-04 | 开同步：两边都有时按 id 并集（`updatedAt` LWW）写回两侧；移除整侧 A/B 冲突 UI                                                                                                                                                                          |
+| 2026-08-04 | 头像收口：缺图时 Header 自动 `REFRESH_AUTH_PROFILE`；不设用户手动刷新按钮；官网兼容 picture                                                                                                                                                            |
+| 2026-08-04 | Settings：左侧分区导航（保存 / 快捷键 / 账户与同步 / 隐私 / AI）+ `?section=`；与记忆库同构                                                                                                                                                            |
+| 2026-08-04 | 多 owner 孤儿桶：设置页盘点 + 导出 JSON + 显式清除；退出不静默清历史账号                                                                                                                                                                               |
+| 2026-08-04 | 空本机不得盖非空云：扩展 `SYNC_REPLACE_LOCAL_EMPTY` + Worker `empty_local_replace_denied`（409）                                                                                                                                                       |
+| 2026-08-04 | 登录后归并 localProfile→accountId（仅本机 remap，解决 Recall 隐身）                                                                                                                                                                                    |
+| 2026-08-05 | Phase B Pro：Worker `POST /api/ai/embed`（bge-m3）+ 本机异步 embedding；Hybrid RRF；§7.1 同域软重排 / behaviorHints / 芯片；云同步剥离向量                                                                                                             |
+| 2026-08-04 | 退出弹窗方案 B：本机有数固定三按钮；无数直接退出；不做已同步启发式                                                                                                                                                                                     |
+| 2026-08-04 | 扩展退出后打开官网 `/logout?from_extension=1` 对称清网站 session                                                                                                                                                                                       |
+| 2026-08-04 | 登录态 A+B：官网退出 `SIGN_OUT_HANDOFF`；扩展 `GET_AUTH_STATE` 节流 refresh 失效则 keep_local 退登                                                                                                                                                     |
+| 2026-08-04 | 退出登录三选一：仅退出 / 清本机账号桶 / 先覆盖云端再清；设置页对话框；官网退出不清理扩展 Memory                                                                                                                                                        |
+| 2026-08-03 | 账户登录改官网主路径：扩展打开官网登录，session 经 external handoff 回传；扩展不做 OAuth 弹窗                                                                                                                                                          |
+| 2026-08-03 | Phase C 切片：账户登录（Supabase Auth）+ `memory_items` 云库 + Worker sync；登录≠同步；冲突仅 A/B                                                                                                                                                      |
+| 2026-08-03 | Capture 新建后异步稀疏 LLM enrichment（`scheduleAsyncMemoryLlmEnrichment`；bulk 不烧配额；失败降级规则）                                                                                                                                               |
+| 2026-08-03 | LLM enrichment 插座：`MemoryEnrichmentProposal` + `mergeMemoryClueEnrichment` + `POST /api/ai/enrichment/complete`                                                                                                                                     |
+| 2026-08-02 | Capture enrichment v3：`video` 对象类型；YouTube/Bilibili≠song；主题/实体规则（WWII·城市经济）；回填 v3                                                                                                                                                |
+| 2026-08-01 | M1：Gate B 中文短口语/相对时间升 semantic；lexical no_match 有条件升一次 LLM 再 Filter                                                                                                                                                                 |
+| 2026-07-29 | §1.1 已上线验证归属 + 合入门禁（must/验收先于合入）；E2E 薄冒烟边界（禁大 Playwright）                                                                                                                                                                 |
+| 2026-07-29 | §7.1 多源线索与权重：收集要宽、采信要窄；Chrome 环境为弱上下文；按模块渐进（产品内→选区→芯片→重排）                                                                                                                                                    |
+| 2026-07-29 | §0.1.1 知识库习惯重置：文件夹型 KB 双重隐性成本；人创造/机器索引分工                                                                                                                                                                                   |
+| 2026-07-31 | M1：线索 LLM 改经 Cloudflare `POST /api/ai/clue/complete`（Worker 持 DEEPSEEK Secret；扩展不持 key）                                                                                                                                                   |
+| 2026-07-31 | M1：理解层前增加「是否处理」网关（reject_noise｜proceed）；与 lexical/semantic 门禁拆开；硬噪音不扫库                                                                                                                                                  |
+| 2026-07-31 | §0.1.1 / §0.3：钉死 LLM 与数据平面边界（NLU·NLG 可；禁止直接写库；提议→Zod→确定性执行）                                                                                                                                                                |
+| 2026-07-29 | 新增 [`Yiveno-市场调研-v1.md`](./Yiveno-市场调研-v1.md)；附录 A.6；暂停扩大功能直至 §11 验证门槛                                                                                                                                                       |
+| 2026-07-29 | P0：enrichment recall keywords（类型补充词 + 正文词面规则）；回填版本 v2                                                                                                                                                                               |
+| 2026-07-29 | §0.1.1 典型英语 P0 语料表 + enrichment recall keywords 验收口径；口语词典对齐真实表达                                                                                                                                                                  |
+| 2026-07-29 | §0.1.1 市场语言与 Recall Language Strategy：T1 英语优先、canonical/UI/parser 三层分离、芯片 value 稳定英文                                                                                                                                             |
+| 2026-07-29 | P0：存量 enrichment 回填（bootstrap 延迟执行，storage 版本幂等）                                                                                                                                                                                       |
+| 2026-07-29 | P0：模板化追问（缺槽位 reply + 芯片）；建议追加到上一轮线索                                                                                                                                                                                            |
+| 2026-07-29 | P0：Capture enrichment（域名/类型词/实体 → tags·keywords·entities）；upsert 合并扩展位                                                                                                                                                                 |
+| 2026-07-28 | P0：`parseRecallClue` + `recallByKeywordWithParsedClue` 接入主链路（规则解析/软加权，无 LLM）                                                                                                                                                          |
+| 2026-07-28 | §0.1.1 记忆硬盘≠小助手；LLM/embedding 分工；P0 有锚点场景收窄；禁全库喂 LLM / 零锚点助手 demo                                                                                                                                                          |
+| 2026-07-28 | §0.1.1 记忆库书签树：Chrome 结构 + Yiveno 私人备注层；非整理器、非纯浏览壳                                                                                                                                                                             |
+| 2026-07-28 | §0.1.1 肆无忌惮存：旧书签惩罚乱存；整齐目录贬值；Capture+Recall 成对习惯                                                                                                                                                                               |
+| 2026-07-28 | §0.1.1 兴趣鸿沟：用户自带兴趣筛选；随便存/随时找得着 = 超轻负担 + 踏实感 = 立身之本                                                                                                                                                                    |
+| 2026-07-28 | 定位升级：「记忆硬盘」心智（扔进就记着 / 想找就找它要）；§0.1.1 补用户心智表                                                                                                                                                                           |
+| 2026-07-28 | 写入口语记忆需求 / 对象理解与记忆索引 / 当前 AI 能力边界；明确“记忆可问”路线                                                                                                                                                                           |
+| 2026-07-28 | 记忆库默认 Tab=摘录；空状态文案对齐摘录主角（§0.1.1）                                                                                                                                                                                                  |
+| 2026-07-28 | P0：Omnibox/库打开写回；摘录存成抓住感+预填线索；首次找回引导                                                                                                                                                                                          |
+| 2026-07-28 | §0.1.1 定位精细化：核心资产/Google·Notion 边界/需求 A·B·C/隐患清单；MUST NOT 对齐                                                                                                                                                                      |
+| 2026-07-28 | §0.1 写入核心路线（寻回、体验立身、前期发育后期变强）；A.1 对齐勿另起故事                                                                                                                                                                              |
+| 2026-07-26 | Recall 折叠：书签按规范化 URL 计 N；Also 同域名互斥；勿按域名吞并 stacks                                                                                                                                                                               |
+| 2026-07-26 | Recall 折叠：书签按规范化域名；stacks N=同站命中数；Also 与 Top 同键互斥                                                                                                                                                                               |
+| 2026-07-26 | 重复组代表：完全相同时以 `createdAt` 最晚为唯一时间决胜                                                                                                                                                                                                |
+| 2026-07-26 | Recall 集合：放弃扑克叠；改用 `stacks` 图标 + N 展开同组                                                                                                                                                                                               |
+| 2026-07-26 | Recall 集合卡：右侧扑克叠；主卡打开代表；「更多」hover 扇开 / 点击展开                                                                                                                                                                                 |
+| 2026-07-26 | Recall 重复折叠：书签域名 / 摘录正文；结果层集合卡；库内仍允许并存（键规则已修订）                                                                                                                                                                     |
+| 2026-07-26 | 独立 `note` 类型：有边界需求、当前不接入；优先书签/摘录/`clues.note` 核心闭环                                                                                                                                                                          |
+| 2026-07-25 | Popup：打开聚焦线索框；移除提交按钮；停输防抖自动找回；↑↓/Enter 键盘打开结果                                                                                                                                                                           |
+| 2026-07-25 | 快捷键：划词保存 `Alt+Shift+E`、备注 `Alt+Shift+N`；设置让出 suggested_key 槽位                                                                                                                                                                        |
+| 2026-07-25 | 快捷键：记忆库 `Alt+Shift+L`、设置 `Alt+Shift+S`（`open_library` / `open_settings`）                                                                                                                                                                   |
+| 2026-07-25 | 书签事后备注：`UPDATE_MEMORY_NOTE`；树展示/编辑；sync upsert 保留 note                                                                                                                                                                                 |
+| 2026-07-25 | 备注：列表/Popup 展示于正文与出处之间；Filter 权重 26 + 主文加成（强线索）                                                                                                                                                                             |
+| 2026-07-25 | 划词浮层增加「添加备注」；`CAPTURE_TEXT_EXCERPT.note` → `clues.note`；详情可展示                                                                                                                                                                       |
+| 2026-07-25 | 保存成功工具栏角标 +1；Chrome 原生新书签同步成功亦闪角标                                                                                                                                                                                               |
+| 2026-08-22 | UI 图标：统一 Lucide 线框按需内联；卸除旧填充 path                                                                                                                                                                                                     |
+| 2026-07-25 | UI：图标优先于文案；通识图标 + hover `title`/`aria-label`（经 `t()`）                                                                                                                                                                                  |
+| 2026-07-24 | UI 图标：按需内联；记忆库删除改为 hover 显图标按钮                                                                                                                                                                                                     |
+| 2026-07-25 | i18n Phase 5：清残留 UI 硬编码；CI `i18n:check`；catch 不再展示 `error.message`                                                                                                                                                                        |
+| 2026-07-25 | i18n Phase 4：Settings/Recall/Import/Commands/Identity 失败响应落地 `errorCode`                                                                                                                                                                        |
+| 2026-07-24 | i18n Phase 2：Library/Detail 文案；Memory 失败响应落地 `errorCode`                                                                                                                                                                                     |
+| 2026-07-24 | 扩展 i18n 契约：`chrome.i18n` + `en`/`zh_CN`；`t()`；失败响应演进为 `errorCode`                                                                                                                                                                        |
+| 2026-07-24 | 摘录展示：无强制标题；正文为主、页名/域名仅出处（记忆库/Popup/Omnibox/详情）                                                                                                                                                                           |
+| 2026-07-24 | UI 图标：按需内联；记忆库删除改为 hover 显图标按钮                                                                                                                                                                                                     |
+| 2026-07-24 | 摘录软删上线：`DELETE_MEMORY_ITEM`；记忆库列表 / 详情；书签不经此路径删除                                                                                                                                                                              |
+| 2026-07-24 | 记忆库书签 Tab：完整映射 Chrome 目录只读树；`GET_BOOKMARK_LIBRARY_TREE`                                                                                                                                                                                |
+| 2026-07-24 | 记忆库轻浏览上线：`library.html` 左侧类型 Tab（默认书签）；Popup/Settings 入口                                                                                                                                                                         |
+| 2026-07-24 | 摘录详情落地页上线：`detail.html?id=` + `GET_MEMORY_ITEM`；Popup/Omnibox 分流                                                                                                                                                                          |
+| 2026-07-24 | Phase A：线索解释强化 + Popup 空状态分层（空库/有库 + 缩短再试）                                                                                                                                                                                       |
+| 2026-07-24 | 摘录保存成功/失败：工具栏临时 badge（+1 / !）；划词与右键共用                                                                                                                                                                                          |
+| 2026-07-24 | 划词保存浮层上线；Settings 开关默认开启；`captureEntry=selection_toolbar`                                                                                                                                                                              |
+| 2026-07-24 | Settings 最小可用进 manifest：快捷键查看+跳转原生改键；Popup 入口                                                                                                                                                                                      |
+| 2026-07-24 | 移除「保存当前页」；书签仅 Chrome 原生+sync；快捷键只保留找回开 Popup                                                                                                                                                                                  |
+| 2026-07-24 | 快捷键已上线：命令契约+registry；找回 Alt+Shift+Y 开 Popup                                                                                                                                                                                             |
+| 2026-07-24 | Popup 移除「保存当前页」UI；保存改快捷键入口；Omnibox keyword `yi`                                                                                                                                                                                     |
+| 2026-07-24 | Omnibox 已上线（keyword `yi`）；§0.4 入口能力差异；Phase A 下一项改为快捷键                                                                                                                                                                            |
+| 2026-07-23 | 确立唯一正文；现状矩阵、契约、验收、UI 约束、Hybrid 边界                                                                                                                                                                                               |
+| 2026-07-23 | AI 优先重排：Quick Contract、Normative/附录分离、消息 type 表、Phase A 单一优先项                                                                                                                                                                      |
