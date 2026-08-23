@@ -427,7 +427,7 @@ onUnmounted(() => {
       <AppSectionTabs
         v-model="activeType"
         :items="libraryTypeTabItems"
-        :aria-label="t('library_tabs_aria')"
+        :ariaLabel="t('library_tabs_aria')"
         :panel-id="libraryPanelId"
         :id-prefix="librarySectionTabsId"
       />

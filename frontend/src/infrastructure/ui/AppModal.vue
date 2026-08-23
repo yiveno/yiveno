@@ -15,7 +15,7 @@ const props = withDefaults(
     /** 标题（aria-labelledby） */
     title: string
     /** 副文案（aria-describedby） */
-    description?: string
+    description?: string | undefined
     /** sm=420px；md=520px（多选项弹层） */
     size?: 'sm' | 'md'
     /** 点遮罩关闭；表单/危险操作默认 false */

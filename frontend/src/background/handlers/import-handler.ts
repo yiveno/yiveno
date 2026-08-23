@@ -52,7 +52,7 @@ function toChromeTreeInput(node: chrome.bookmarks.BookmarkTreeNode): {
 }
 
 export interface GetBookmarkLibraryTreeOptions {
-  clientHash?: string
+  clientHash?: string | undefined
 }
 
 /** 读取 Chrome 书签扁平索引并与 Memory 对齐（只读）。 */

@@ -178,7 +178,7 @@ export async function fetchChromeBookmarkImportStatus(): Promise<ChromeBookmarkI
 
 /** 读取记忆库书签目录树（Chrome 结构 + Memory 对齐）。 */
 export async function fetchBookmarkLibraryTree(options?: {
-  clientHash?: string
+  clientHash?: string | undefined
 }): Promise<GetBookmarkLibraryTreeResponse> {
   const message: GetBookmarkLibraryTreeMessage = {
     scope: 'background',

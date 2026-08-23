@@ -30,6 +30,9 @@ export function handleTabTrap(event: KeyboardEvent, container: HTMLElement): voi
 
   const first = focusable[0]
   const last = focusable[focusable.length - 1]
+  if (!first || !last) {
+    return
+  }
   const active = document.activeElement
 
   if (event.shiftKey) {

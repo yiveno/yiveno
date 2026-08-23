@@ -1038,7 +1038,7 @@ onUnmounted(() => {
         v-model="activeSection"
         class="settings-section-tabs"
         :items="settingsSectionTabItems"
-        :aria-label="t('settings_tabs_aria')"
+        :ariaLabel="t('settings_tabs_aria')"
         :panel-id="settingsPanelId"
         :id-prefix="settingsSectionTabsId"
       />

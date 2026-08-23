@@ -37,7 +37,11 @@ export function findBookmarkLibraryRowIndexAtOffset(
   let high = offsets.length - 2
   while (low < high) {
     const mid = Math.floor((low + high + 1) / 2)
-    if (offsets[mid] <= pixel) {
+    const midOffset = offsets[mid]
+    if (midOffset === undefined) {
+      break
+    }
+    if (midOffset <= pixel) {
       low = mid
     } else {
       high = mid - 1
@@ -69,7 +73,7 @@ export function resolveBookmarkLibraryVisibleSlice(
   const start = findBookmarkLibraryRowIndexAtOffset(offsets, scrollTop)
   let end = start
   const bottom = scrollTop + viewportHeight
-  while (end < rowCount && offsets[end] < bottom) {
+  while (end < rowCount && (offsets[end] ?? Number.POSITIVE_INFINITY) < bottom) {
     end += 1
   }
 

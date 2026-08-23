@@ -257,8 +257,8 @@ export function flattenBookmarkLibraryVisibleRows(
         chromeId: id,
         depth,
         title: node.title,
-        url: node.url,
         hasNote: node.hasNote,
+        ...(node.url !== undefined ? { url: node.url } : {}),
         ...(node.memoryItemId ? { memoryItemId: node.memoryItemId } : {}),
         ...(node.note ? { note: node.note } : {})
       })

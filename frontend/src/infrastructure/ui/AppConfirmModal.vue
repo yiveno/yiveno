@@ -14,15 +14,15 @@ withDefaults(
     /** 标题 */
     title: string
     /** 标题下副文案（aria-describedby） */
-    description?: string
+    description?: string | undefined
     /** 正文（与 default slot 二选一） */
-    body?: string
+    body?: string | undefined
     /** 确认按钮文案 */
     confirmLabel: string
     /** 取消按钮文案 */
     cancelLabel: string
     /** loading 时确认按钮文案；缺省同 confirmLabel */
-    confirmLoadingLabel?: string
+    confirmLoadingLabel?: string | undefined
     /** 确认按钮着色 */
     confirmTone?: 'default' | 'danger'
     /** 确认按钮 variant */
@@ -32,7 +32,7 @@ withDefaults(
     /** 进行中：禁止关闭 */
     loading?: boolean
     /** 错误文案（显示在 actions 上方） */
-    error?: string
+    error?: string | undefined
     /** 点遮罩关闭 */
     closeOnBackdrop?: boolean
     /** Esc 关闭 */
