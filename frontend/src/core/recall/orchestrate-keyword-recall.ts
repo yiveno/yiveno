@@ -36,7 +36,7 @@ export const RECALL_ORCHESTRATION_OBJECT_TYPE_BOOST = 8
 /** 备注指向且条目有 note 时的软加成。 */
 export const RECALL_ORCHESTRATION_NOTE_HINT_BOOST = 6
 
-/** often_opened 且 openCount 较高时的软加成。 */
+/** often_opened 且 settledCount 较高时的软加成（§7.2：不吃裸 openCount）。 */
 export const RECALL_ORCHESTRATION_OFTEN_OPENED_BOOST = 4
 
 /** recently_saved：近 7 天内创建的软加成。 */
@@ -272,7 +272,7 @@ export function applyParsedClueScoreBoosts(
 
   if (
     parsed.behaviorHints?.includes('often_opened') &&
-    (match.item.clues.openCount ?? 0) >= OFTEN_OPENED_MIN_COUNT
+    (match.item.clues.settledCount ?? 0) >= OFTEN_OPENED_MIN_COUNT
   ) {
     boost += RECALL_ORCHESTRATION_OFTEN_OPENED_BOOST
   }

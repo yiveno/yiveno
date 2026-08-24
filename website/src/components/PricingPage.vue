@@ -4,8 +4,8 @@ import { getPaidTiers, type Tier } from '../billing/tiers'
 import { buildLoginHref } from '../services/auth-return'
 import { createCheckoutSession, createPortalSession } from '../services/billing'
 import { getSupabase } from '../services/supabase'
-import { getUserSubscription, isActiveProSnapshot } from '../services/subscription'
-import { writeNavIsProCache } from '../services/nav-pro-badge-cache'
+import { loadUserSubscription } from '../services/subscription'
+import { writeNavIsProCacheOnVerified } from '../services/nav-pro-badge-cache'
 
 defineOptions({ name: 'PricingPage' })
 
@@ -31,12 +31,16 @@ function currentPlanId(): 'pro_monthly' | 'pro_annual' | null {
   return proTier.value ? proTier.value.planId[cycle.value] : null
 }
 
-/** 对账后刷新 isPro；失败时保持原值。 */
+/** 对账后刷新 isPro；失败时保持原值且不写 nav 假 Free。 */
 async function refreshProFlag(): Promise<boolean> {
   if (!accessToken.value) return false
-  const sub = await getUserSubscription(accessToken.value)
-  isPro.value = isActiveProSnapshot(sub)
-  writeNavIsProCache(isPro.value)
+  const result = await loadUserSubscription(accessToken.value)
+  if (result.status === 'ok') {
+    isPro.value = result.isPro
+    writeNavIsProCacheOnVerified(result.isPro)
+    return result.isPro
+  }
+  console.warn('[Pricing] subscription load failed', result.errorCode)
   return isPro.value
 }
 
@@ -121,8 +125,11 @@ onMounted(async () => {
     customerUserId.value = data.session?.user.id ?? null
     accessToken.value = data.session?.access_token ?? null
     if (data.session?.access_token) {
-      const sub = await getUserSubscription(data.session.access_token)
-      isPro.value = isActiveProSnapshot(sub)
+      const result = await loadUserSubscription(data.session.access_token)
+      if (result.status === 'ok') {
+        isPro.value = result.isPro
+        writeNavIsProCacheOnVerified(result.isPro)
+      }
     }
   } catch (err) {
     console.warn('[Pricing] session load skipped', err)

@@ -48,6 +48,13 @@ import type {
   RecallSuggestion
 } from '@/pages/sidepanel/recall-conversation-types'
 import type { RecallDialogState } from '@/core/recall/merge-recall-dialog-turn'
+import {
+  commitRecallOutcome,
+  createRecallOutcomeSessionState,
+  shouldOfferRecallOutcomeExitPrompt,
+  withFinalizedLastOpenDwell,
+  type RecallOutcomeSessionState
+} from '@/application/recall/commit-recall-outcome'
 
 defineOptions({ name: 'SidePanelPage' })
 
@@ -71,6 +78,11 @@ const dialogState = ref<RecallDialogState>({
   accumulated: null,
   dismissedIds: []
 })
+
+/** §7.2 Outcome 会话信号（与 dialog 同寿；关 Panel / New find 结算后重置）。 */
+const outcomeSession = ref<RecallOutcomeSessionState>(createRecallOutcomeSessionState())
+/** 出口条（通道 D）：New find 前可选 Found / None / Skip。 */
+const showOutcomeExitStrip = ref(false)
 
 const conversationTurns = ref<ConversationTurn[]>([])
 let turnSeq = 0
@@ -132,11 +144,26 @@ function continuingContextStatus(
   return continuing ? { contextStatus: t('popup_session_status_continuing') } : {}
 }
 
-/** 用户显式开新找：清空线程与 dialog；关 Panel 仍另作丢弃。 */
+/** 用户显式开新找：若需出口条则先出示；否则结算并清空。 */
 function startNewFindSession(): void {
   if (!hasActiveFindSession.value) {
     return
   }
+  if (showOutcomeExitStrip.value) {
+    return
+  }
+  finalizeOpenDwell()
+  if (shouldOfferRecallOutcomeExitPrompt(outcomeSession.value)) {
+    showOutcomeExitStrip.value = true
+    return
+  }
+  void completeNewFindSession('new_find')
+}
+
+/** 结算 Outcome 并重置会话 UI。 */
+async function completeNewFindSession(reason: string): Promise<void> {
+  showOutcomeExitStrip.value = false
+  await flushOutcomeSession(reason, true)
   recallRequestId += 1
   isRecallRefreshing.value = false
   dialogState.value = {
@@ -144,6 +171,7 @@ function startNewFindSession(): void {
     accumulated: null,
     dismissedIds: []
   }
+  outcomeSession.value = createRecallOutcomeSessionState()
   conversationTurns.value = []
   clue.value = ''
   lastSentClue.value = ''
@@ -153,6 +181,114 @@ function startNewFindSession(): void {
   void nextTick(() => {
     clueInputRef.value?.focus()
   })
+}
+
+/** 出口条：Found it（默认最后一次 open）。 */
+function handleOutcomeExitFound(): void {
+  const opens = outcomeSession.value.opens
+  const lastId = opens.length > 0 ? opens[opens.length - 1]?.id : null
+  if (!lastId) {
+    void completeNewFindSession('exit_skip')
+    return
+  }
+  outcomeSession.value = {
+    ...outcomeSession.value,
+    exitChoice: 'found',
+    exitFoundId: lastId
+  }
+  void completeNewFindSession('exit_found')
+}
+
+/** 出口条：None of these。 */
+function handleOutcomeExitNone(): void {
+  outcomeSession.value = {
+    ...outcomeSession.value,
+    exitChoice: 'none',
+    exitFoundId: null
+  }
+  void completeNewFindSession('exit_none')
+}
+
+/** 出口条：跳过 → unknown。 */
+function handleOutcomeExitSkip(): void {
+  void completeNewFindSession('exit_skip')
+}
+
+/** §7.2 Mark：钉死本会话答案。 */
+function handleMarkMeant(id: string): void {
+  finalizeOpenDwell()
+  outcomeSession.value = {
+    ...outcomeSession.value,
+    markedTargetId: id,
+    dismissedPending: false,
+    sawNoMatchFinal: false
+  }
+  showOutcomeExitStrip.value = false
+  void commitRecallOutcome({
+    state: outcomeSession.value,
+    reason: 'mark'
+  })
+    .then(result => {
+      if (result.settleWritten) {
+        outcomeSession.value = {
+          ...outcomeSession.value,
+          settleWriteDone: true
+        }
+      }
+    })
+    .catch(() => {
+      // 忽略
+    })
+}
+
+/** 给最后一次 explore open 补 dwell（C1/C2）。 */
+function finalizeOpenDwell(): void {
+  outcomeSession.value = {
+    ...outcomeSession.value,
+    opens: withFinalizedLastOpenDwell(outcomeSession.value.opens)
+  }
+}
+
+/** §7.2：结算当前 Outcome 会话（best-effort）。 */
+async function flushOutcomeSession(reason: string, sessionStopped: boolean): Promise<void> {
+  finalizeOpenDwell()
+  const state = outcomeSession.value
+  const hasSignal =
+    state.resultIds.length > 0 ||
+    state.opens.length > 0 ||
+    state.dismissedPending ||
+    state.sawNoMatchFinal ||
+    state.markedTargetId !== null ||
+    state.exitChoice !== null ||
+    state.effectiveClue.trim().length > 0
+  if (!hasSignal) {
+    return
+  }
+  try {
+    const result = await commitRecallOutcome({ state, sessionStopped, reason })
+    if (result.settleWritten) {
+      outcomeSession.value = {
+        ...outcomeSession.value,
+        settleWriteDone: true
+      }
+    }
+  } catch {
+    // 忽略：结算失败不挡 New find / 关 Panel
+  }
+}
+
+function collectResultIdsFromRecall(result: {
+  topPick: RecallMatch | null
+  alsoPossible: RecallMatch[]
+}): string[] {
+  const ids: string[] = []
+  if (result.topPick) {
+    ids.push(result.topPick.item.id)
+  }
+  for (const match of result.alsoPossible) {
+    ids.push(match.item.id)
+  }
+  return [...new Set(ids)]
 }
 
 function buildRecallSuggestions(): RecallSuggestion[] {
@@ -337,9 +473,30 @@ async function handleDismissCandidates(): Promise<void> {
       ...dialogState.value,
       dismissedIds: [...new Set([...dialogState.value.dismissedIds, ...ids])]
     }
+    outcomeSession.value = {
+      ...outcomeSession.value,
+      dismissedPending: true,
+      sawNoMatchFinal: false,
+      resultIds: ids
+    }
     void recordRecallDismiss({ ids }).catch(() => {
       // 忽略：反馈失败不阻塞继续补线索
     })
+    void commitRecallOutcome({
+      state: outcomeSession.value,
+      reason: 'dismiss'
+    })
+      .then(result => {
+        if (result.settleWritten) {
+          outcomeSession.value = {
+            ...outcomeSession.value,
+            settleWriteDone: true
+          }
+        }
+      })
+      .catch(() => {
+        // 忽略：Outcome 日志失败不挡 dismiss
+      })
   }
 
   conversationTurns.value = conversationTurns.value.map(turn => {
@@ -371,11 +528,16 @@ async function handleDismissCandidates(): Promise<void> {
   clueInputRef.value?.focus()
 }
 
-/** 打开结果时写行为信号；摘录进详情页由 Detail 记，避免双计。 */
+/** 打开结果时写 explore open（§7.2：≠ settled）；摘录进详情页由 Detail 记，避免双计。 */
 function handleRecallResultOpen(memoryItemId: string, openUrl: string): void {
   void markFirstRecallOpenDone().catch(() => {
     // 忽略：引导标记失败不影响打开
   })
+  finalizeOpenDwell()
+  outcomeSession.value = {
+    ...outcomeSession.value,
+    opens: [...outcomeSession.value.opens, { id: memoryItemId, at: new Date().toISOString() }]
+  }
   if (openUrl.includes('/detail.html')) {
     return
   }
@@ -541,6 +703,41 @@ async function runRecall(trimmedClue: string): Promise<void> {
     }
 
     const highlightClue = response.result.effectiveClue ?? response.result.clue
+    const resultIds = collectResultIdsFromRecall(response.result)
+
+    if (response.result.outcome === 'top_pick' || response.result.outcome === 'need_a_clue') {
+      outcomeSession.value = {
+        ...outcomeSession.value,
+        effectiveClue: highlightClue,
+        resultIds,
+        // 新候选短名单出现后，清掉「待处理 dismiss」，避免后续找着了仍被 sticky none 盖住
+        dismissedPending: false,
+        sawNoMatchFinal: false
+      }
+    } else {
+      outcomeSession.value = {
+        ...outcomeSession.value,
+        effectiveClue: highlightClue,
+        resultIds,
+        sawNoMatchFinal: true,
+        dismissedPending: false
+      }
+      void commitRecallOutcome({
+        state: outcomeSession.value,
+        reason: 'no_match'
+      })
+        .then(result => {
+          if (result.settleWritten) {
+            outcomeSession.value = {
+              ...outcomeSession.value,
+              settleWriteDone: true
+            }
+          }
+        })
+        .catch(() => {
+          // 忽略
+        })
+    }
 
     if (response.result.outcome === 'top_pick') {
       const alsoCards = response.result.alsoPossible.map(match => toMatchCard(match, highlightClue))
@@ -689,6 +886,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  void flushOutcomeSession('panel_close', true)
   recallRequestId += 1
   stopImportPolling()
   stopWatchAuthSession?.()
@@ -762,13 +960,37 @@ onUnmounted(() => {
         :expandLabel="t('popup_duplicate_expand')"
         :collapseLabel="t('popup_duplicate_collapse')"
         :noteFieldLabel="t('detail_note_label')"
+        :marked-target-id="outcomeSession.markedTargetId"
+        :mark-label="t('popup_mark_as_meant')"
+        :marked-label="t('popup_mark_as_meant_done')"
         :pending="isRecallRefreshing"
         :pendingLabel="t('popup_recall_pending')"
         @open="handleCardOpen"
         @toggle-expand="toggleDuplicateGroup"
         @dismiss="handleDismissCandidates"
+        @mark="handleMarkMeant"
         @use-suggestion="handleUseSuggestion"
       />
+    </div>
+
+    <div
+      v-if="showOutcomeExitStrip"
+      class="recall-outcome-exit"
+      role="group"
+      :aria-label="t('popup_outcome_exit_prompt')"
+    >
+      <p class="recall-outcome-exit__prompt">{{ t('popup_outcome_exit_prompt') }}</p>
+      <div class="recall-outcome-exit__actions">
+        <AppButton type="button" variant="filled" @click="handleOutcomeExitFound">
+          {{ t('popup_outcome_exit_found') }}
+        </AppButton>
+        <AppButton type="button" variant="outlined" @click="handleOutcomeExitNone">
+          {{ t('popup_outcome_exit_none') }}
+        </AppButton>
+        <AppButton type="button" variant="text" @click="handleOutcomeExitSkip">
+          {{ t('popup_outcome_exit_skip') }}
+        </AppButton>
+      </div>
     </div>
 
     <RecallComposer
@@ -817,6 +1039,30 @@ onUnmounted(() => {
   color: var(--on-surface);
   background: var(--surface);
   overflow: hidden;
+}
+
+.recall-outcome-exit {
+  display: grid;
+  gap: var(--space-xs);
+  flex-shrink: 0;
+  margin-bottom: var(--space-sm);
+  padding: var(--space-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-chrome);
+}
+
+.recall-outcome-exit__prompt {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--on-surface);
+}
+
+.recall-outcome-exit__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
 }
 
 .recall-header {

@@ -1,12 +1,13 @@
 /**
  * Supabase Access Token 认证中间件
  *
- * 验证扩展端传来的 Supabase session access token。
+ * 验证扩展端 / 官网传来的 Supabase session access token。
  */
 
-import { createClient } from '@supabase/supabase-js'
 import type { MiddlewareHandler } from 'hono'
 import type { Env } from '../types/env'
+import { verifySupabaseAccessToken } from '../services/auth/verify-supabase-access-token'
+import { warn } from '../utils/logger'
 
 interface SupabaseAuthEnv {
   Bindings: Env
@@ -38,30 +39,25 @@ export function supabaseAuth(): MiddlewareHandler<SupabaseAuthEnv> {
       return c.json({ error: 'supabase_not_configured' }, 500)
     }
 
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      },
-      global: {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      }
+    const verified = await verifySupabaseAccessToken(env.SUPABASE_URL, token, {
+      anonKey: env.SUPABASE_ANON_KEY
     })
 
-    const {
-      data: { user },
-      error
-    } = await supabase.auth.getUser()
-
-    if (error || !user) {
+    if (!verified.ok) {
+      if (verified.reason === 'auth_unreachable') {
+        warn('[SupabaseAuth] Auth/JWKS 不可达，优先检查本地 Node TLS 信任链')
+        return c.json({ error: 'auth_unreachable' }, 503)
+      }
+      if (verified.reason === 'malformed_response') {
+        warn('[SupabaseAuth] Auth 响应格式异常')
+        return c.json({ error: 'invalid_token' }, 401)
+      }
       return c.json({ error: 'invalid_token' }, 401)
     }
 
-    c.set('supabaseUserId', user.id)
+    c.set('supabaseUserId', verified.user.id)
     c.set('supabaseAccessToken', token)
-    c.set('supabaseUserEmail', user.email ?? null)
+    c.set('supabaseUserEmail', verified.user.email)
     return await next()
   }
 }

@@ -52,6 +52,53 @@ const DAY_MS = 24 * 60 * 60 * 1000
 
 const PRIMARY_CONTENT_FIELDS = new Set(['title', 'textExcerpt', 'note'])
 
+/**
+ * 口语泛词：单独出现时不具唯一锚点，不得仅凭 pageTitle 抬 Top1。
+ * 产品面仅英文；非语种停用词表，只挡 Recall 假阳性。
+ */
+export const RECALL_GENERIC_CLUE_TERMS = new Set([
+  'review',
+  'reviews',
+  'movie',
+  'movies',
+  'film',
+  'films',
+  'saved',
+  'save',
+  'note',
+  'notes',
+  'article',
+  'articles',
+  'page',
+  'site',
+  'link',
+  'links',
+  'bookmark',
+  'bookmarks',
+  'morning',
+  'evening',
+  'today',
+  'yesterday',
+  'week',
+  'thing',
+  'things',
+  'stuff',
+  'something',
+  'anything',
+  'post',
+  'posts',
+  'blog',
+  'video',
+  'videos',
+  'read',
+  'reading',
+  'just',
+  'recent',
+  'recently',
+  'last',
+  'latest'
+])
+
 interface SearchableField {
   field: string
   text: string
@@ -81,6 +128,57 @@ export function normalizeRecallText(text: string): string {
 /** 去掉空白，便于「Yiveno产品」对上「Yiveno 产品」。 */
 export function compactRecallText(text: string): string {
   return normalizeRecallText(text).replace(/\s+/g, '')
+}
+
+/** 是否像 host / URL 线索 token（含 TLD 或路径）。 */
+export function looksLikeRecallHostClue(token: string): boolean {
+  const host = normalizeRecallText(token).split('/')[0] ?? ''
+  return /^[a-z0-9][a-z0-9.-]*\.[a-z]{2,}$/i.test(host)
+}
+
+/** 去掉 host 前缀 www.（仅 host 对齐，不改路径）。 */
+export function stripRecallHostWwwPrefix(host: string): string {
+  const normalized = normalizeRecallText(host)
+  return normalized.startsWith('www.') ? normalized.slice(4) : normalized
+}
+
+/**
+ * host 线索变体：裸域 ↔ www.，便于 domain/url 字段对齐。
+ * 例：rottentomatoes.com ↔ www.rottentomatoes.com
+ */
+export function expandRecallHostClueVariants(token: string): string[] {
+  const normalized = normalizeRecallText(token).trim()
+  if (!normalized || !looksLikeRecallHostClue(normalized)) {
+    return normalized ? [normalized] : []
+  }
+
+  const variants = new Set<string>([normalized])
+  const slashIndex = normalized.indexOf('/')
+  const host = slashIndex >= 0 ? normalized.slice(0, slashIndex) : normalized
+  const pathSuffix = slashIndex >= 0 ? normalized.slice(slashIndex) : ''
+
+  if (host.startsWith('www.')) {
+    const bareHost = host.slice(4)
+    variants.add(`${bareHost}${pathSuffix}`)
+  } else {
+    variants.add(`www.${host}${pathSuffix}`)
+  }
+
+  return [...variants]
+}
+
+function pushRecallHostClueVariants(sink: Map<string, TokenKind>): void {
+  for (const [token, kind] of [...sink.entries()]) {
+    if (kind === 'ngram') {
+      continue
+    }
+    for (const variant of expandRecallHostClueVariants(token)) {
+      if (!isUsableRecallToken(variant) || sink.has(variant)) {
+        continue
+      }
+      sink.set(variant, kind === 'phrase' ? 'term' : kind)
+    }
+  }
 }
 
 /** 短字符串编辑距离（仅用于短 token 模糊）。 */
@@ -242,6 +340,8 @@ export function tokenizeRecallClueDetailed(clue: string): RecallToken[] {
     pushUnspacedScriptTokens(match, byToken)
   }
 
+  pushRecallHostClueVariants(byToken)
+
   return [...byToken.entries()].map(([token, kind]) => ({ token, kind }))
 }
 
@@ -329,7 +429,21 @@ function exactTokenHit(
   if (fieldText.includes(token) || compactField.includes(token)) {
     return true
   }
-  return compactToken.length >= 2 && compactField.includes(compactToken)
+  if (compactToken.length >= 2 && compactField.includes(compactToken)) {
+    return true
+  }
+  // host 对齐：www. 与裸域等价（domain / url 字段常见形态差）
+  if (looksLikeRecallHostClue(compactToken)) {
+    const tokenHost = stripRecallHostWwwPrefix(compactToken.split('/')[0] ?? compactToken)
+    const fieldHost = stripRecallHostWwwPrefix(compactField.split('/')[0] ?? compactField)
+    if (tokenHost.length >= 4 && fieldHost.includes(tokenHost)) {
+      return true
+    }
+    if (tokenHost.length >= 4 && stripRecallHostWwwPrefix(compactField).includes(tokenHost)) {
+      return true
+    }
+  }
+  return false
 }
 
 function scoreFactorForKind(kind: TokenKind): number {
@@ -341,11 +455,13 @@ function scoreFactorForKind(kind: TokenKind): number {
 
 /**
  * 行为加权：仅在已有词面命中时使用。
- * openCount 用 log2 压缩；近 7/30 天打开给近因分；总和封顶。
+ * openCount = explore「看过」（§7.2 P0 暂降权，系数 1.5；often_opened 走 settledCount）。
+ * 近 7/30 天打开给近因分；总和封顶。
  */
 export function computeBehaviorBoost(item: MemoryItem, options: RecallScoreOptions = {}): number {
   const openCount = item.clues.openCount
-  const openBoost = openCount > 0 ? Math.min(8, Math.floor(Math.log2(openCount + 1) * 3)) : 0
+  // §7.2：裸 open 易被连环排查污染；P0 暂降权，正例以 settledCount 为准
+  const openBoost = openCount > 0 ? Math.min(4, Math.floor(Math.log2(openCount + 1) * 1.5)) : 0
 
   let recencyBoost = 0
   const lastOpenedAt = item.clues.lastOpenedAt
@@ -565,7 +681,64 @@ export function scoreMemoryItem(
 }
 
 function hasPrimaryContentMatch(matchedFields: string[]): boolean {
-  return matchedFields.includes('title') || matchedFields.includes('textExcerpt')
+  return matchedFields.some(field => PRIMARY_CONTENT_FIELDS.has(field))
+}
+
+/** 是否为主内容字段命中（title / 摘录正文 / 用户附注）。 */
+export function hasRecallPrimaryContentMatch(matchedFields: readonly string[]): boolean {
+  return hasPrimaryContentMatch([...matchedFields])
+}
+
+/** token 是否为泛词（host 线索不算泛词）。 */
+function isGenericRecallToken(token: string, kind: TokenKind): boolean {
+  if (kind === 'ngram') {
+    return true
+  }
+  if (looksLikeRecallHostClue(token)) {
+    return false
+  }
+  const normalized = normalizeRecallText(token)
+  if (!normalized) {
+    return true
+  }
+  if (normalized.includes(' ')) {
+    const words = normalized.split(/\s+/).filter(part => isUsableRecallToken(part))
+    return words.length > 0 && words.every(word => RECALL_GENERIC_CLUE_TERMS.has(word))
+  }
+  return RECALL_GENERIC_CLUE_TERMS.has(normalized)
+}
+
+/**
+ * 线索是否「全泛词」：分词后无 host / 非泛词锚点。
+ * 例：`movie review I saved` → true；`weekly review` → false（weekly 为锚点）。
+ */
+export function isGenericRecallClue(clue: string): boolean {
+  const termTokens = tokenizeRecallClueDetailed(clue).filter(entry => entry.kind === 'term')
+  if (termTokens.length > 0) {
+    return termTokens.every(entry => isGenericRecallToken(entry.token, entry.kind))
+  }
+
+  const fallback = tokenizeRecallClueDetailed(clue).filter(entry => entry.kind !== 'ngram')
+  if (fallback.length === 0) {
+    return true
+  }
+  return fallback.every(entry => isGenericRecallToken(entry.token, entry.kind))
+}
+
+/**
+ * 泛词 clue 且命中字段无主内容、仅 pageTitle 沾边 → 禁止 Top Pick。
+ */
+export function recallTopPickBlockedByGenericPageTitleGate(
+  clue: string,
+  matchedFields: readonly string[]
+): boolean {
+  if (!isGenericRecallClue(clue)) {
+    return false
+  }
+  if (hasRecallPrimaryContentMatch(matchedFields)) {
+    return false
+  }
+  return matchedFields.includes('pageTitle')
 }
 
 /** 对 MemoryItem 列表执行关键词 Filter 并排序。 */

@@ -70,9 +70,10 @@ function purgeNonExtensionAssets() {
   }
 }
 
-function finalizeExtensionDist() {
+/** 同步 manifest / _locales / images 等 public 白名单到 dist（不依赖 Vite 图）。 */
+function syncExtensionPublicAssets() {
   if (!fs.existsSync(distDir)) {
-    console.warn('[clean-dist] dist/ 不存在，跳过')
+    console.warn('[clean-dist] dist/ 不存在，跳过 public 同步')
     return
   }
 
@@ -92,6 +93,15 @@ function finalizeExtensionDist() {
       console.warn(`[clean-dist] 已移除非 en locale 目录: _locales/${entry.name}`)
     }
   }
+}
+
+function finalizeExtensionDist() {
+  if (!fs.existsSync(distDir)) {
+    console.warn('[clean-dist] dist/ 不存在，跳过')
+    return
+  }
+
+  syncExtensionPublicAssets()
 
   flattenPageHtml('sidepanel')
   flattenPageHtml('settings')
@@ -114,7 +124,7 @@ function finalizeExtensionDist() {
   )
 }
 
-module.exports = { finalizeExtensionDist }
+module.exports = { finalizeExtensionDist, syncExtensionPublicAssets }
 
 if (require.main === module) {
   finalizeExtensionDist()

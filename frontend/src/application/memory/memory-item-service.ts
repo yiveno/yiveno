@@ -111,6 +111,11 @@ export class MemoryItemService {
     return this.repository.recordOpen(id)
   }
 
+  /** 记录 settled 正例：递增 settledCount（§7.2；不改 updatedAt）。 */
+  async recordSettle(id: string): Promise<MemoryItem | null> {
+    return this.repository.recordSettle(id)
+  }
+
   /** 否定反馈：递增 dismissCount（不改 updatedAt）。 */
   async recordDismiss(ids: string[]): Promise<number> {
     return this.repository.recordDismiss(ids)

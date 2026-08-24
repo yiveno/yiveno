@@ -52,6 +52,11 @@ const recordRecallDismissPayloadSchema = z.object({
   ids: z.array(z.string().uuid()).min(1).max(20)
 })
 
+/** §7.2：写入 settledCount（Mark / 经校准的 medium target），非裸 open。 */
+const recordRecallSettlePayloadSchema = z.object({
+  id: z.string().uuid()
+})
+
 /** Memory 操作面向 UI 的稳定错误码。 */
 export const MemoryErrorCodeSchema = z.enum([
   'MEMORY_NOT_FOUND', // 条目不存在
@@ -121,6 +126,13 @@ export type RecordRecallDismissMessage = {
   payload: z.infer<typeof recordRecallDismissPayloadSchema>
 }
 
+/** 记录 Recall settled 正例（§7.2 settledCount）。 */
+export type RecordRecallSettleMessage = {
+  scope: BackgroundMessageScope
+  type: 'RECORD_RECALL_SETTLE'
+  payload: z.infer<typeof recordRecallSettlePayloadSchema>
+}
+
 /** Pro：回填本机缺失的 embedding（限量入队）。 */
 export type BackfillMemoryEmbeddingsMessage = {
   scope: BackgroundMessageScope
@@ -136,6 +148,7 @@ export type MemoryBackgroundMessage =
   | UpdateMemoryNoteMessage
   | RecordMemoryOpenMessage
   | RecordRecallDismissMessage
+  | RecordRecallSettleMessage
   | BackfillMemoryEmbeddingsMessage
 
 export type MemoryItemSuccessResponse = {
@@ -204,4 +217,8 @@ export function parseRecordMemoryOpenPayload(value: unknown) {
 
 export function parseRecordRecallDismissPayload(value: unknown) {
   return recordRecallDismissPayloadSchema.parse(value)
+}
+
+export function parseRecordRecallSettlePayload(value: unknown) {
+  return recordRecallSettlePayloadSchema.parse(value)
 }

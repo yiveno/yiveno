@@ -57,6 +57,8 @@ function buildClues(
     domain: base?.domain ?? defaults.domain,
     captureEntry: base?.captureEntry ?? captureEntry ?? defaults.captureEntry,
     lastOpenedAt: base?.lastOpenedAt ?? defaults.lastOpenedAt,
+    settledCount: base?.settledCount ?? defaults.settledCount ?? 0,
+    lastSettledAt: base?.lastSettledAt ?? defaults.lastSettledAt,
     dismissCount: base?.dismissCount ?? defaults.dismissCount ?? 0,
     lastDismissedAt: base?.lastDismissedAt ?? defaults.lastDismissedAt,
     note: base?.note ?? defaults.note

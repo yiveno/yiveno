@@ -13,12 +13,16 @@ import { SRC_DIR } from './constants'
 import { buildContentScriptIifes, CONTENT_SCRIPT_ENTRIES } from './content-scripts-iife'
 
 const require = createRequire(import.meta.url)
-const { finalizeExtensionDist } = require('../scripts/clean-dist.cjs') as {
-  finalizeExtensionDist: () => void
-}
+const { finalizeExtensionDist, syncExtensionPublicAssets } =
+  require('../scripts/clean-dist.cjs') as {
+    finalizeExtensionDist: () => void
+    syncExtensionPublicAssets: () => void
+  }
 
 const isWatchBuild = process.argv.includes('--watch')
 const CONTENT_REBUILD_DEBOUNCE_MS = 150
+const PUBLIC_SYNC_DEBOUNCE_MS = 120
+const frontendPublicDir = resolve(SRC_DIR, '..', 'public')
 
 /** 上一轮 buildStart→closeBundle 全流程完成前，阻塞下一轮 watch 重建。 */
 let buildGate: Promise<void> = Promise.resolve()
@@ -30,6 +34,31 @@ let contentScriptsDirty = true
 /** 仅 content 变更时的防抖重打包定时器。 */
 let contentOnlyRebuildTimer: ReturnType<typeof setTimeout> | null = null
 let contentOnlyRebuildRunning = false
+
+/** messages.json 等 public 变更：只同步 _locales/manifest，不必等整包 rebuild。 */
+let publicSyncTimer: ReturnType<typeof setTimeout> | null = null
+
+function isPublicExtensionAssetPath(id: string): boolean {
+  const normalized = id.replace(/\\/g, '/')
+  return normalized.includes('/frontend/public/') || normalized.includes('/public/_locales/')
+}
+
+function schedulePublicAssetSync(reason: string): void {
+  if (!isWatchBuild) {
+    return
+  }
+  if (publicSyncTimer !== null) {
+    clearTimeout(publicSyncTimer)
+  }
+  publicSyncTimer = setTimeout(() => {
+    publicSyncTimer = null
+    console.log(`[extension-post-build] 同步 public 资产（${reason}）`)
+    syncExtensionPublicAssets()
+    console.log(
+      '[extension-post-build] _locales 已同步 → chrome://extensions 刷新本扩展后生效（MV3 无热替换）'
+    )
+  }, PUBLIC_SYNC_DEBOUNCE_MS)
+}
 
 function isContentScriptPath(id: string): boolean {
   const normalized = id.replace(/\\/g, '/')
@@ -122,12 +151,18 @@ export function extensionPostBuildPlugin(): Plugin {
         for (const file of listSourceFilesRecursive(resolve(SRC_DIR, 'content'))) {
           this.addWatchFile(file)
         }
+        // i18n / manifest 不在 Vite graph：watch public 白名单，改 messages 即同步 dist/_locales
+        this.addWatchFile(resolve(frontendPublicDir, 'manifest.json'))
+        this.addWatchFile(resolve(frontendPublicDir, '_locales/en/messages.json'))
       }
     },
     watchChange(id) {
       if (isContentScriptPath(id)) {
         // 主包未纳入 content 时，仅改划词不会走到完整依赖图；防抖直接重打 IIFE
         scheduleContentOnlyRebuild('watchChange')
+      }
+      if (isPublicExtensionAssetPath(id)) {
+        schedulePublicAssetSync('watchChange')
       }
     },
     buildEnd(error) {

@@ -75,6 +75,28 @@ describe('external auth handoff', () => {
     )
   })
 
+  it('session 写入后立即 ok，不阻塞本地档归并', async () => {
+    let resolveAbsorb: ((count: number) => void) | undefined
+    vi.mocked(absorbLocalProfileIntoAccount).mockReturnValue(
+      new Promise(resolve => {
+        resolveAbsorb = resolve
+      })
+    )
+
+    const result = await applyExternalAuthSessionHandoff({
+      type: 'YIVENO_AUTH_SESSION_HANDOFF',
+      payload: {
+        accessToken: 'at',
+        refreshToken: 'rt',
+        userId: '22222222-2222-4222-8222-222222222222'
+      }
+    })
+
+    expect(result).toEqual({ ok: true })
+    expect(resolveAbsorb).toBeTypeOf('function')
+    resolveAbsorb?.(1)
+  })
+
   it('sign-out handoff 清登录态', async () => {
     const result = await applyExternalAuthHandoff({
       type: 'YIVENO_AUTH_SIGN_OUT_HANDOFF',

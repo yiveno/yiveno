@@ -39,11 +39,18 @@ const props = defineProps<{
   expandLabel: string
   collapseLabel: string
   noteFieldLabel: string
+  /** §7.2 Mark：是否显示勾选 */
+  showMark?: boolean
+  /** 当前是否已 Mark 为本会话答案 */
+  marked?: boolean
+  markLabel: string
+  markedLabel: string
 }>()
 
 const emit = defineEmits<{
   open: [payload: { id: string; url: string }]
   toggleExpand: []
+  mark: [id: string]
 }>()
 
 const isCollection = computed(() => (props.card.duplicateTotalCount ?? 0) >= 2)
@@ -91,6 +98,15 @@ function handleMoreClick(event: MouseEvent): void {
   event.preventDefault()
   event.stopPropagation()
   emit('toggleExpand')
+}
+
+function handleMarkClick(event: MouseEvent): void {
+  event.preventDefault()
+  event.stopPropagation()
+  if (props.marked) {
+    return
+  }
+  emit('mark', props.card.id)
 }
 </script>
 
@@ -176,6 +192,19 @@ function handleMoreClick(event: MouseEvent): void {
           </span>
         </p>
       </a>
+
+      <button
+        v-if="showMark"
+        type="button"
+        class="recall-mark"
+        :class="{ 'recall-mark--done': marked, 'recall-mark--with-more': isCollection }"
+        :title="marked ? markedLabel : markLabel"
+        :aria-label="marked ? markedLabel : markLabel"
+        :aria-pressed="marked"
+        @click="handleMarkClick"
+      >
+        <AppIcon name="check_circle" size="18px" />
+      </button>
 
       <button
         v-if="isCollection"
@@ -349,6 +378,54 @@ function handleMoreClick(event: MouseEvent): void {
 .recall-card--has-more {
   /* 给右上角 stacks 控件留空，避免与类型/标题重叠 */
   padding-right: 2.75rem;
+}
+
+.recall-card-shell:has(> .recall-mark) > .recall-card {
+  padding-right: 2.5rem;
+}
+
+.recall-card-shell:has(> .recall-mark.recall-mark--with-more) > .recall-card {
+  padding-right: 4.75rem;
+}
+
+.recall-mark {
+  position: absolute;
+  top: var(--space-xs);
+  right: var(--space-xs);
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--on-surface-muted);
+  background: var(--surface-chrome);
+  cursor: pointer;
+}
+
+.recall-mark--with-more {
+  right: calc(var(--space-xs) + 2.1rem);
+}
+
+.recall-mark:hover {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--surface-chrome) 80%, var(--sage-muted) 20%);
+}
+
+.recall-mark:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.recall-mark--done {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+  background: var(--surface-accent-soft);
+  cursor: default;
 }
 
 .recall-card--sibling {

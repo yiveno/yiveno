@@ -4,6 +4,7 @@
  */
 
 import { memoryItemService } from '@/application/memory/memory-item-service'
+import { applyStoredOutcomePairsToMatches } from '@/application/recall/apply-stored-outcome-pairs'
 import { createRecallFlowTrace } from '@/application/recall/create-recall-flow-trace'
 import { getClueLlmCompleter } from '@/application/recall/clue-llm-completer-registry'
 import type { RecallBackend, RecallWithClueOptions } from '@/application/recall/recall-backend'
@@ -52,12 +53,13 @@ function attachDialogMeta(
   }
 }
 
-function finalizeKeywordResult(
+async function finalizeKeywordResult(
   displayClue: string,
   items: Awaited<ReturnType<typeof memoryItemService.list>>,
   parsed: ParsedRecallClue,
-  currentTabDomain: string | undefined
-): RecallResult {
+  currentTabDomain: string | undefined,
+  pairClue: string
+): Promise<RecallResult> {
   const base = recallByKeywordWithParsedClue(items, displayClue, {
     candidateLimit: 6,
     parsed
@@ -72,7 +74,9 @@ function finalizeKeywordResult(
     }
     return b.item.updatedAt.localeCompare(a.item.updatedAt)
   })
-  return buildRecallResult(displayClue, matches)
+  // §7.2 P3：本机 Outcome 对软调整（指纹对齐 effectiveClue）
+  const withPairs = await applyStoredOutcomePairsToMatches(matches, pairClue)
+  return buildRecallResult(displayClue, withPairs)
 }
 
 /**
@@ -125,6 +129,8 @@ async function attachLlmFollowUpIfNeeded(
 
 async function fuseHybridMatches(input: {
   displayClue: string
+  /** 与会话 Outcome 对指纹对齐（通常为 merge.effectiveRaw） */
+  pairClue: string
   items: Awaited<ReturnType<typeof memoryItemService.list>>
   searchClue: string
   parsed: ParsedRecallClue
@@ -213,7 +219,10 @@ async function fuseHybridMatches(input: {
     return right.item.updatedAt.localeCompare(left.item.updatedAt)
   })
 
-  const collapsed = collapseRecallMatches(boosted, {
+  // §7.2 P3：本机 Outcome 对软调整后再折叠
+  const withPairs = await applyStoredOutcomePairsToMatches(boosted, input.pairClue)
+
+  const collapsed = collapseRecallMatches(withPairs, {
     limit: 6 + RECALL_COLLAPSE_BACKFILL_EXTRA
   })
   input.trace('info', 'Hybrid：RRF 融合完成', {
@@ -295,13 +304,22 @@ export class HybridRecallBackend implements RecallBackend {
     let usedHybrid = false
     let result: RecallResult
 
+    const pairClue = merge.effectiveRaw
+
     // 无内容词的时间+类型（如 recently collected bookmark）：近因邻域，不走关键词/向量扫虚词
     if (shouldRecallByConstraintNeighborhood(merge.merged)) {
-      result = finalizeKeywordResult(normalizedClue, items, merge.merged, currentTabDomain)
+      result = await finalizeKeywordResult(
+        normalizedClue,
+        items,
+        merge.merged,
+        currentTabDomain,
+        pairClue
+      )
     } else {
       const hybrid =
         (await fuseHybridMatches({
           displayClue: normalizedClue,
+          pairClue,
           items,
           searchClue: buildSearchClueFromParsed(merge.merged),
           parsed: merge.merged,
@@ -314,7 +332,13 @@ export class HybridRecallBackend implements RecallBackend {
         usedHybrid = true
         result = hybrid
       } else {
-        result = finalizeKeywordResult(normalizedClue, items, merge.merged, currentTabDomain)
+        result = await finalizeKeywordResult(
+          normalizedClue,
+          items,
+          merge.merged,
+          currentTabDomain,
+          pairClue
+        )
       }
     }
 

@@ -63,11 +63,22 @@ export async function applyExternalAuthSessionHandoff(
     })
     // 刚写入的 token 视为有效，避免立刻 refresh 与官网抢 refresh_token 被踢成未登录
     await markAuthValidatedNow()
-    // 登录后立刻归并未登录期间的本地档，避免 Recall 只看见 accountId 桶而「隐身」
-    const remapped = await absorbLocalProfileIntoAccount(session.userId)
+    // 归并不阻塞官网 sendMessage：全库 remap 可能很慢，否则「Connecting to the extension…」会卡住。
+    void absorbLocalProfileIntoAccount(session.userId)
+      .then(remapped => {
+        flowOk('Auth', '官网 session handoff 本地档归并', startedAt, {
+          userId: session.userId,
+          remappedLocalProfileItems: remapped
+        })
+      })
+      .catch(error => {
+        flowFail('Auth', '官网 session handoff 本地档归并', startedAt, error, {
+          userId: session.userId
+        })
+      })
     flowOk('Auth', '官网 session handoff', startedAt, {
       userId: session.userId,
-      remappedLocalProfileItems: remapped
+      absorbDeferred: true
     })
     return { ok: true }
   } catch (error) {

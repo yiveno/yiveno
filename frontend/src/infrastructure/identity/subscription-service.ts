@@ -4,6 +4,7 @@
 
 import {
   SUBSCRIPTION_SNAPSHOT_STORAGE_KEY,
+  SubscriptionRefreshError,
   SubscriptionSnapshotSchema,
   createFreeSubscriptionSnapshot,
   type SubscriptionSnapshot
@@ -59,6 +60,11 @@ export async function enforceSyncRequiresPro(): Promise<void> {
   if (!syncPrefs.enabled) {
     return
   }
+  const snapshot = await getSubscriptionSnapshot()
+  if (!snapshot) {
+    // 无本地快照：可能尚未拉取成功，勿因 unknown 误关同步
+    return
+  }
   if (await isProActiveFromSnapshot()) {
     return
   }
@@ -69,7 +75,7 @@ export async function enforceSyncRequiresPro(): Promise<void> {
 
 /**
  * 从 Worker 刷新订阅快照。
- * 未登录 → 写 Free；网络失败 → 保留旧快照（若有）或 Free。
+ * 未登录 → 写 Free；网络失败 → 保留旧快照（若有），否则抛错（不写 Free）。
  * 成功后若非 Pro 则关闭同步，并触发线索 LLM 重挂（由调用方或本函数动态 import）。
  * 并发调用合并为一次网络请求。
  */
@@ -129,10 +135,13 @@ async function doRefreshSubscriptionSnapshot(options?: {
     flowFail('Subscription', '刷新订阅快照', startedAt, error)
     const existing = await getSubscriptionSnapshot()
     if (existing) {
+      logger.warn('Subscription', '拉取失败，沿用本地快照', {
+        isPro: existing.isPro,
+        fetchedAt: existing.fetchedAt
+      })
       return existing
     }
-    const free = createFreeSubscriptionSnapshot()
-    await setSubscriptionSnapshot(free)
-    return free
+    const code = error instanceof Error ? error.message : 'subscription_fetch_failed'
+    throw new SubscriptionRefreshError(code)
   }
 }

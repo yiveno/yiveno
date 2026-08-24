@@ -59,6 +59,14 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
     note: 'R0/A：域名+路径片段应直接定位仓库书签'
   },
   {
+    id: 'concrete-host-rottentomatoes',
+    clue: 'rottentomatoes.com',
+    clueClass: 'concrete',
+    gate: 'must',
+    expectation: { kind: 'top1', expectedId: RECALL_EVAL_IDS.oppenheimerRtExcerpt },
+    note: '纯 host 线索应对齐 www.rottentomatoes.com 摘录'
+  },
+  {
     id: 'concrete-title-retention',
     clue: 'retention analysis',
     clueClass: 'concrete',
@@ -113,6 +121,22 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
     gate: 'must',
     expectation: { kind: 'top1', expectedId: RECALL_EVAL_IDS.weeklyReviewNote },
     note: '摘录正文短语'
+  },
+  {
+    id: 'concrete-page-title-weekly',
+    clue: 'weekly review',
+    clueClass: 'concrete',
+    gate: 'must',
+    expectation: { kind: 'top1', expectedId: RECALL_EVAL_IDS.weeklyReviewNote },
+    note: '具体页名短语仍可通过 pageTitle 直中'
+  },
+  {
+    id: 'negative-generic-page-title-only',
+    clue: 'movie review I saved',
+    clueClass: 'vague',
+    gate: 'must',
+    expectation: { kind: 'need_a_clue', expectedId: RECALL_EVAL_IDS.weeklyReviewNote },
+    note: '全泛词 clue 不得仅凭 pageTitle 升 Top1；Weekly review 可作弱候选'
   },
 
   {

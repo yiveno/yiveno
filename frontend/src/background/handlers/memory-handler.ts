@@ -14,6 +14,7 @@ import {
   parseListMemoryItemsPayload,
   parseRecordMemoryOpenPayload,
   parseRecordRecallDismissPayload,
+  parseRecordRecallSettlePayload,
   parseUpdateMemoryNotePayload
 } from '@/core/messaging/memory-messages'
 import { flashActionBadge } from '@/infrastructure/browser/action-badge'
@@ -247,6 +248,29 @@ export async function handleRecordRecallDismiss(
     return { ok: true, updated }
   } catch (error) {
     flowFail('Memory', '记录否定反馈', startedAt, error)
+    return toErrorResponse('MEMORY_OPERATION_FAILED', error)
+  }
+}
+
+/** 记录 settled 正例（settledCount · §7.2）。 */
+export async function handleRecordRecallSettle(
+  payload: unknown
+): Promise<MemoryBackgroundResponse> {
+  const startedAt = flowStart('Memory', '记录 settled')
+  try {
+    const input = parseRecordRecallSettlePayload(payload)
+    const item = await memoryItemService.recordSettle(input.id)
+    if (!item) {
+      flowOk('Memory', '记录 settled', startedAt, { reason: 'not_found', id: input.id })
+      return toErrorResponse('MEMORY_NOT_FOUND')
+    }
+    flowOk('Memory', '记录 settled', startedAt, {
+      id: item.id,
+      settledCount: item.clues.settledCount ?? null
+    })
+    return { ok: true, item }
+  } catch (error) {
+    flowFail('Memory', '记录 settled', startedAt, error)
     return toErrorResponse('MEMORY_OPERATION_FAILED', error)
   }
 }

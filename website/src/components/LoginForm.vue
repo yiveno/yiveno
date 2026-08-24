@@ -30,12 +30,12 @@ async function tryHandoffCurrentSession(): Promise<boolean> {
   if (!resolveExtensionHandoffTargetId()) {
     return false
   }
+  const session = await getSession()
+  if (!session?.access_token || !session.refresh_token || !session.user?.id) {
+    return false
+  }
   connectingExtension.value = true
   try {
-    const session = await getSession()
-    if (!session?.access_token || !session.refresh_token || !session.user?.id) {
-      return false
-    }
     const profile = extractProfileFromUserMetadata(
       session.user.user_metadata as Record<string, unknown> | undefined
     )

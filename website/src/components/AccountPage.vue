@@ -3,8 +3,8 @@ import type { User } from '@supabase/supabase-js'
 import { onMounted, onUnmounted, ref, computed } from 'vue'
 import { getSupabase } from '../services/supabase'
 import {
-  getUserSubscription,
   isActiveProSnapshot,
+  loadUserSubscription,
   type UserSubscription
 } from '../services/subscription'
 import { formatDate } from '../services/date'
@@ -17,7 +17,7 @@ import {
   resolveExtensionHandoffTargetId
 } from '../services/extension-auth-handoff'
 import { createCheckoutSession, createPortalSession } from '../services/billing'
-import { clearNavIsProCache, writeNavIsProCache } from '../services/nav-pro-badge-cache'
+import { clearNavIsProCache, writeNavIsProCacheOnVerified } from '../services/nav-pro-badge-cache'
 
 defineOptions({ name: 'AccountPage' })
 
@@ -32,12 +32,19 @@ const profileAvatarUrl = ref('')
 const profileDisplayName = ref('')
 const subscription = ref<UserSubscription | null>(null)
 const accessToken = ref<string | null>(null)
+/** Worker 对账成功后才为 true；失败时不得把 unknown 当 Free。 */
+const subscriptionVerified = ref(false)
+const subscriptionLoadError = ref<string | null>(null)
 /** 仅挡「未拿到 session」；不因 Dodo 对账堵整页。 */
 const pageLoading = ref(true)
 /** 订阅区单独转圈（含 Worker→Dodo 对账）。 */
 const subscriptionLoading = ref(false)
 
 const isPro = computed(() => isActiveProSnapshot(subscription.value))
+const showConfirmedFree = computed(() => subscriptionVerified.value && !isPro.value)
+const showVerifyError = computed(
+  () => Boolean(subscriptionLoadError.value) && !subscriptionVerified.value && !isPro.value
+)
 
 const signInProvider = computed(() => {
   const raw = user.value?.app_metadata?.provider
@@ -55,16 +62,24 @@ const checkoutError = ref('')
  * 拉订阅（Worker 内强制对账，约数秒）。
  * @param silent 已有快照时后台刷新，不把订阅区打回全量 Loading。
  */
-async function loadSubscription(options: { silent?: boolean } = {}): Promise<void> {
-  if (!accessToken.value) return
+async function loadSubscription(options: { silent?: boolean } = {}): Promise<boolean> {
+  if (!accessToken.value) return false
   const silent = Boolean(options.silent && subscription.value)
   if (!silent) {
     subscriptionLoading.value = true
   }
   try {
-    const sub = await getUserSubscription(accessToken.value)
-    subscription.value = sub
-    writeNavIsProCache(isActiveProSnapshot(sub))
+    const result = await loadUserSubscription(accessToken.value)
+    if (result.status === 'ok') {
+      subscription.value = result.subscription
+      subscriptionVerified.value = true
+      subscriptionLoadError.value = null
+      writeNavIsProCacheOnVerified(result.isPro)
+      return result.isPro
+    }
+    subscriptionLoadError.value = result.errorCode
+    console.warn('[Account] subscription load failed', result.errorCode)
+    return isPro.value
   } finally {
     subscriptionLoading.value = false
   }
@@ -80,8 +95,8 @@ async function startMonthlyCheckout(): Promise<void> {
   checkoutError.value = ''
   checkoutBusy.value = true
   try {
-    await loadSubscription({ silent: true })
-    if (isPro.value) {
+    const proNow = await loadSubscription({ silent: true })
+    if (proNow) {
       console.warn('[Account] 已是有效 Pro，跳过 checkout')
       checkoutError.value = 'This account already has Pro. Manage it from your subscription.'
       return
@@ -228,10 +243,16 @@ async function handleSignOut() {
 
       <div v-else class="account__plan-panel" :class="{ 'account__plan-panel--pro': isPro }">
         <div class="account__plan-top">
-          <p class="account__plan-name">{{ isPro ? 'Pro' : 'Free' }}</p>
+          <p class="account__plan-name">
+            {{ isPro ? 'Pro' : showVerifyError ? 'Plan unavailable' : 'Free' }}
+          </p>
           <p v-if="subscriptionLoading" class="account__plan-updating" role="status">Updating…</p>
         </div>
-        <p v-if="isPro && subscription?.status" class="account__plan-renew">
+        <p v-if="showVerifyError" class="account__plan-renew" role="alert">
+          We couldn’t verify your plan right now. Your paid access is unchanged if you already
+          subscribe.
+        </p>
+        <p v-else-if="isPro && subscription?.status" class="account__plan-renew">
           <span class="account__plan-status">{{ subscription.status }}</span>
           <template v-if="subscription.currentPeriodEnd">
             · Renews / ends {{ formatDate(subscription.currentPeriodEnd) }}
@@ -239,7 +260,16 @@ async function handleSignOut() {
         </p>
         <div class="account__plan-actions">
           <button
-            v-if="!isPro"
+            v-if="showVerifyError"
+            type="button"
+            class="ui-btn ui-btn--primary"
+            :disabled="subscriptionLoading"
+            @click="loadSubscription()"
+          >
+            Retry
+          </button>
+          <button
+            v-if="showConfirmedFree"
             type="button"
             class="ui-btn ui-btn--primary"
             :disabled="checkoutBusy || subscriptionLoading"

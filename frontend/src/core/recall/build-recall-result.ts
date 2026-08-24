@@ -1,4 +1,8 @@
-import { RECALL_TOP_PICK_MIN_SCORE, filterMemoryItemsByKeyword } from '@/core/recall/keyword-filter'
+import {
+  RECALL_TOP_PICK_MIN_SCORE,
+  filterMemoryItemsByKeyword,
+  recallTopPickBlockedByGenericPageTitleGate
+} from '@/core/recall/keyword-filter'
 import {
   collapseRecallMatches,
   recallMatchConflictsWithTopPick
@@ -41,6 +45,16 @@ export function buildRecallResult(clue: string, collapsedGroups: RecallMatch[]):
 
   // 有词面命中但未达 Top Pick：Need A Clue（展示弱候选，请用户再补线索）
   if (best.score < RECALL_TOP_PICK_MIN_SCORE) {
+    return {
+      outcome: 'need_a_clue',
+      topPick: null,
+      alsoPossible: collapsedGroups.slice(0, RECALL_RESULT_SLOT_LIMIT),
+      clue
+    }
+  }
+
+  // 泛词 clue 不得仅凭出处页名（pageTitle）当 Top1，降级为弱候选追问
+  if (recallTopPickBlockedByGenericPageTitleGate(clue, best.matchedFields)) {
     return {
       outcome: 'need_a_clue',
       topPick: null,

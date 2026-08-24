@@ -121,6 +121,9 @@ function getChromeRuntime(): ChromeRuntimeMessenger | null {
   return chromeApi?.runtime ?? null
 }
 
+/** 官网 UI 不应无限等 SW 唤醒 / 扩展内部归并。 */
+const SEND_TO_EXTENSION_TIMEOUT_MS = 2500
+
 function sendToExtension(extensionId: string, message: unknown): Promise<boolean> {
   const runtime = getChromeRuntime()
   if (!runtime?.sendMessage) {
@@ -128,12 +131,27 @@ function sendToExtension(extensionId: string, message: unknown): Promise<boolean
   }
 
   return new Promise(resolve => {
+    let settled = false
+    const finish = (ok: boolean): void => {
+      if (settled) {
+        return
+      }
+      settled = true
+      resolve(ok)
+    }
+
+    const timer = window.setTimeout(() => {
+      console.warn('[ExtensionHandoff] sendMessage timed out', SEND_TO_EXTENSION_TIMEOUT_MS)
+      finish(false)
+    }, SEND_TO_EXTENSION_TIMEOUT_MS)
+
     try {
       runtime.sendMessage(extensionId, message, response => {
+        window.clearTimeout(timer)
         const err = runtime.lastError
         if (err) {
           console.warn('[ExtensionHandoff] sendMessage lastError', err.message)
-          resolve(false)
+          finish(false)
           return
         }
         const ok =
@@ -141,11 +159,12 @@ function sendToExtension(extensionId: string, message: unknown): Promise<boolean
           response !== null &&
           'ok' in response &&
           (response as { ok: unknown }).ok === true
-        resolve(ok)
+        finish(ok)
       })
     } catch (error) {
+      window.clearTimeout(timer)
       console.warn('[ExtensionHandoff] sendMessage failed', error)
-      resolve(false)
+      finish(false)
     }
   })
 }

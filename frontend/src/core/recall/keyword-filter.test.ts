@@ -9,7 +9,10 @@ import {
   compactRecallText,
   computeBehaviorBoost,
   computeDismissPenalty,
+  expandRecallHostClueVariants,
   filterMemoryItemsByKeyword,
+  isGenericRecallClue,
+  recallTopPickBlockedByGenericPageTitleGate,
   scoreMemoryItem,
   tokenizeRecallClue
 } from '@/core/recall/keyword-filter'
@@ -299,5 +302,75 @@ describe('keyword-filter', () => {
     const ranked = filterMemoryItemsByKeyword([byBody, byNote], 'red white')
     expect(ranked[0]?.item.id).toBe(byNote.id)
     expect(ranked[0]?.matchedFields).toContain('note')
+  })
+
+  it('expandRecallHostClueVariants 补 www 与裸域', () => {
+    expect(expandRecallHostClueVariants('rottentomatoes.com')).toEqual(
+      expect.arrayContaining(['rottentomatoes.com', 'www.rottentomatoes.com'])
+    )
+    expect(expandRecallHostClueVariants('www.rottentomatoes.com')).toEqual(
+      expect.arrayContaining(['www.rottentomatoes.com', 'rottentomatoes.com'])
+    )
+  })
+
+  it('纯 host 线索命中 www 域摘录', () => {
+    const excerpt = createTextExcerptMemoryItem({
+      ...baseContext,
+      payload: {
+        selectedText:
+          'A powerful, visually spectacular drama that demands your full concentration, Oppenheimer is unmistakably the work of writer-director Christopher Nolan.',
+        sourceUrl: 'https://www.rottentomatoes.com/m/oppenheimer_2023',
+        pageTitle: 'Oppenheimer (2023) | Rotten Tomatoes'
+      }
+    })
+
+    const result = recallByKeyword([excerpt], 'rottentomatoes.com')
+    expect(result.topPick?.item.id).toBe(excerpt.id)
+    expect(result.topPick?.matchedFields).toEqual(expect.arrayContaining(['domain']))
+  })
+
+  it('isGenericRecallClue 识别全泛词与带锚点 clue', () => {
+    expect(isGenericRecallClue('movie review I saved')).toBe(true)
+    expect(isGenericRecallClue('weekly review')).toBe(false)
+    expect(isGenericRecallClue('rottentomatoes.com')).toBe(false)
+  })
+
+  it('泛词 clue 仅凭 pageTitle 命中时阻断 Top Pick', () => {
+    expect(recallTopPickBlockedByGenericPageTitleGate('movie review I saved', ['pageTitle'])).toBe(
+      true
+    )
+    expect(recallTopPickBlockedByGenericPageTitleGate('weekly review', ['pageTitle'])).toBe(false)
+    expect(
+      recallTopPickBlockedByGenericPageTitleGate('movie review I saved', ['textExcerpt'])
+    ).toBe(false)
+  })
+
+  it('movie review I saved 不得仅凭 Weekly review 页名升 Top1', () => {
+    const weekly = createTextExcerptMemoryItem({
+      ...baseContext,
+      payload: {
+        selectedText: 'This week: popup empty-state tiers and library browse.',
+        sourceUrl: 'https://notes.example.com/weekly-review',
+        pageTitle: 'Weekly review'
+      }
+    })
+    const oppenheimer = createTextExcerptMemoryItem({
+      ...baseContext,
+      payload: {
+        selectedText:
+          'A powerful, visually spectacular drama that demands your full concentration, Oppenheimer is unmistakably the work of writer-director Christopher Nolan.',
+        sourceUrl: 'https://www.rottentomatoes.com/m/oppenheimer_2023',
+        pageTitle: 'Oppenheimer (2023) | Rotten Tomatoes'
+      }
+    })
+
+    const vague = recallByKeyword([weekly, oppenheimer], 'movie review I saved')
+    expect(vague.outcome).toBe('need_a_clue')
+    expect(vague.topPick).toBeNull()
+    expect(vague.alsoPossible.some(match => match.item.id === weekly.id)).toBe(true)
+
+    const specific = recallByKeyword([weekly], 'weekly review')
+    expect(specific.outcome).toBe('top_pick')
+    expect(specific.topPick?.item.id).toBe(weekly.id)
   })
 })

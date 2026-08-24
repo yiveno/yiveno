@@ -205,20 +205,21 @@ Side Panel Chat 壳（R-shell-chat 基线）→ 冻大改，只薄维护
 
 ### R4 · 证据与复用（Phase E · 2026-08 市场对齐）
 
-**状态：** **Normative 已写入产品文档 §0.1.1 / §5.9 / §8 Phase E**；实现待启动。
+**状态：** **Normative 已写入产品文档 §0.1.1 / §5.9 / §7.2 / §8 Phase E**；实现待启动。
 
-**目标：** 把「找对了」变成**可测量、可验证、可交给任意 AI**——补全 Capture→Reuse 闭环的后半段；**不**借 R4 开 Agent 或 history 抓取。
+**目标：** 把「找对了」变成**可测量、可验证、可交给任意 AI**——补全 Capture→Reuse 闭环的后半段；并用 **§7.2 Outcome Labeling** 高概率知道「本次答案是哪条 / 都不是」；**不**借 R4 开 Agent 或 history 抓取。
 
 **来源：** 仓库 `yiveno_research/` 结论已回写产品文档；本波为执行计划。
 
-| 交付                                    | 验收                 | 依赖                                           |
-| --------------------------------------- | -------------------- | ---------------------------------------------- |
-| Explain 全要素 UI（ECS 五要素上结果卡） | §5.10.1–2 手工绿     | 现有 `explain-recall-match` core               |
-| TTE / Verified Retrieval 最小埋点       | §5.10.3；§5.9 七事件 | `docs/engineering/R4-Phase-E-验收与eval.md` §4 |
-| evidence pack（多选 → Markdown/JSON）   | §5.10.4              | 工程旁挂 §5 JSON schema 草案                   |
-| 只读 MCP beta                           | §5.10.5              | 新 message type 须先改 schema                  |
-| Raindrop / Pocket 导入适配器            | §5.10.6 + R2 准入    | `corpus-adapter-contract`                      |
-| recall-eval 扩展                        | §5.11.2 全部 must 绿 | `recall-eval-cases.ts`                         |
+| 交付                                    | 验收                                         | 依赖                                           |
+| --------------------------------------- | -------------------------------------------- | ---------------------------------------------- |
+| Explain 全要素 UI（ECS 五要素上结果卡） | §5.10.1–2 手工绿                             | 现有 `explain-recall-match` core               |
+| TTE / Verified Retrieval 最小埋点       | §5.10.3；§5.9 七事件                         | `docs/engineering/R4-Phase-E-验收与eval.md` §4 |
+| **Outcome Labeling（§7.2 P0+）**        | 会话标签结算；open≠settled；Mark/出口条按 P1 | 产品文档 §7.2；与 `user_confirmed` 同源        |
+| evidence pack（多选 → Markdown/JSON）   | §5.10.4                                      | 工程旁挂 §5 JSON schema 草案                   |
+| 只读 MCP beta                           | §5.10.5                                      | 新 message type 须先改 schema                  |
+| Raindrop / Pocket 导入适配器            | §5.10.6 + R2 准入                            | `corpus-adapter-contract`                      |
+| recall-eval 扩展                        | §5.11.2 全部 must 绿                         | `recall-eval-cases.ts`                         |
 
 **明确不做（R4 内）：** 自主 Agent 行动；默认 history；知识图谱 UI；全文 archive + content hash（可单列 E+ backlog）；Researcher 定价档。
 
@@ -258,6 +259,7 @@ R-shell / R-shell-session / R-shell-chat 基线（已）
 
 | 日期       | 变更                                                                                                                       |
 | ---------- | -------------------------------------------------------------------------------------------------------------------------- |
+| 2026-08-24 | **§7.2 Outcome Labeling：** 改版计划 R4 交付表增加提问↔答案对照（对齐产品文档）                                            |
 | 2026-08-24 | **R4 验收规格：** 产品文档 §5.10/§5.11；工程旁挂 `R4-Phase-E-验收与eval.md`                                                |
 | 2026-08-24 | **R4 证据与复用：** 对齐 `yiveno_research/`；Normative 写入产品文档 §5.9/Phase E；默认下一主线含 Explain·TTE·evidence pack |
 | 2026-08-21 | 增 R-shell-chat：对话壳能力清单（已有/不做/薄维护）；默认下一主线=算法                                                     |

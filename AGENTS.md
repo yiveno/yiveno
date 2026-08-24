@@ -8,6 +8,13 @@
 - Cursor 规则：`.cursor/rules/project.mdc`，不得冲突。
 - 对外心智：「那个找东西的」/ 仓库；找回 = 高置信**邻域**，Top1=建议；AI 能力核心不作宣传招牌。
 
+### 产品语言（硬规则）
+
+**Yiveno 是彻底的英文产品（美式英语）。** 除开发者向材料外，与中文无关。
+
+- **产品面（仅英文）：** 扩展 UI、官网、隐私/营销、用户可见错误与空态、对外 slogan、用户线索与召回质检用例文案、产品向示例。禁止中文市场、`zh_CN` locale、中文产品文案；禁止把「中文线索 / 中英互译召回」当产品能力或必测项。
+- **开发者面（中文 OK）：** 与开发者对话回复、git commit message、代码注释 / JSDoc、工程文档备注、业务日志文案。
+
 ## 架构硬规则
 
 - 数据流：Chrome API → Background Script → IndexedDB →（可选 Pinia / 组件状态）→ Vue UI。详见产品文档 §5.1。
@@ -19,9 +26,9 @@
 
 ## 代码约定
 
-- UI/API/文档统一用 **Filter（筛选）**；用户主动作使用 **Recall（找回）**；UI 文案禁止出现 `Search` /「搜索」。
+- UI/API 统一用 **Filter** / **Recall**；用户可见文案禁止 `Search`（对内注释可用 search；中文「筛选/找回」仅开发者沟通）。
 - **图标优先于文案**：工具操作/导航尽量用通识 Lucide 图标（内联）；省略可见文字时 `title` + `aria-label` 显示完整文案（经 `t()`）。主 CTA、说明、空状态、表单标签除外。
-- 扩展用户文案：仅 `_locales/en` + `frontend/src/infrastructure/i18n` 的 `t()`；禁止写死 UI 文案与 `|| '兜底'`。`core` 注入 `t` 或返回 message key。官网与扩展分离，产品向文案均为美式英语。
+- 扩展用户文案：仅 `_locales/en` + `frontend/src/infrastructure/i18n` 的 `t()`；禁止写死 UI 文案与 `|| 'fallback'`；禁止新增非 en 产品 locale。`core` 注入 `t` 或返回 message key。官网与扩展分离，产品向文案均为美式英语。
 - TypeScript 禁止 `any` / `as any`；外部数据用 Zod 校验；**注释与 JSDoc 必须中文**（标识符、API 专有名词可保留英文）。**字符串联合 / `z.enum` 每个字面量须有中文释义**（见 `docs/engineering/业务日志与注释约定.md`）。
 - **业务可观测性（硬约定）**：新增或改动业务路径时，必须有**清晰中文注释（意图/边界）** + **关键步骤日志**（开始 / 分支决策 / 成功或失败原因；失败不可静默吞掉）。扩展侧优先用 `frontend/src/infrastructure/logging/flow-log.ts`（`flowStart` / `flowOk` / `flowFail`），scope 稳定可过滤（如 `Msg` / `Capture` / `Recall` / `RecallFlow` / `ClueLlm`）；core 可通过注入 `trace`，禁止 core 直连 Chrome。长文本只打 preview，避免刷屏。细则：`docs/engineering/业务日志与注释约定.md`。
 - Vue 组件必须 `defineOptions({ name: 'ComponentName' })`。
@@ -39,6 +46,10 @@
 ## 验证策略
 
 权威归属与合入门禁见产品文档 **§1.1**（已上线 → 单测 / eval / E2E / 手动；Recall/Capture 变更须先有 `must` case 或 §5 手动步骤）。E2E 仅薄冒烟，不上全量可视化 / 大 Playwright。
+
+**AI 改扩展代码：** 单测不够，还须 **Chrome DevTools MCP** 真机实测（build → reload → Side Panel UI 路径）；细则见 `.cursor/rules/project.mdc`「MCP 真机实测」。
+
+**AI 排查问题：** **优先 MCP Chrome 真机**还原真实场景、收集 snapshot/控制台等证据，再读码或改码；细则见 `.cursor/rules/project.mdc`「MCP 排查优先」。
 
 ### 质量门禁三层职责
 
@@ -71,6 +82,10 @@ pre-push **不跑** ESLint、全仓 typecheck、全仓 frontend test；`.vue` li
 - 默认只跑与本次改动直接相关的最小验证。
 - 禁止每次改动后自动跑全仓 `typecheck:force` / `lint` / `format`，除非用户明确要求或大范围改动。
 - Recall / Capture 用户可感变更：合入前补 `recall-eval` **must** 或产品文档 §5 可复现手动步骤（§1.1）。
+- **MCP 真机实测（硬规则）：** 改扩展用户可感代码后，单测/ typecheck 之外**必须**调用 **Chrome DevTools MCP**（`user-chrome-devtools`）做真机验证；`build`（或确认 watch 产物）→ `chrome://extensions` 重新加载 → Side Panel **UI 路径**（`fill`/`click`，禁止 `evaluate_script` 直调 background 消息冒充 UI 测试）；报完成须含 MCP 结论。细则见 `.cursor/rules/project.mdc`「MCP 真机实测」。
+- **MCP 排查优先（硬规则）：** 排查 bug/回归/行为问题时，**优先** MCP Chrome 真机按真实 UI 路径复现，用 snapshot、控制台等拿够证据后再推断根因或改代码；细则见 `.cursor/rules/project.mdc`「MCP 排查优先」。
+- **MCP · SW Console：** `--autoConnect` 与 `--categoryExtensions` 互斥（与 Chrome 版本无关，≥0.20.3 硬互斥）；SW 日志用 extensions 错误页 + 消息复现；细则见 `.cursor/rules/project.mdc`。
+- **目标任务必选 vs 可选（与 `.cursor/rules/project.mdc` 一致）：** 可排优先级，但须先分清相对当前目标哪些必选、哪些可选。**必选**（缺则效果变差 / 不可用）→ 不问意见、按序做完；**可选** → 先问再做。禁止把必选当可砍项。
 
 ## Token / 工具输出预算
 
@@ -91,7 +106,7 @@ pre-push **不跑** ESLint、全仓 typecheck、全仓 frontend test；`.vue` li
 
 ## 回复
 
-- 全部中文。
+- 与开发者对话：**全部中文**（属开发者面；产品面仍仅英文，见上「产品语言」）。
 - 精简、工程化、少 token；避免客套和重复。
 - **git commit message 必须中文**（可用 `feat:` / `fix:` 等 Conventional 前缀，说明正文用中文）。
 - **代码注释 / JSDoc 必须中文**（专有名词可保留英文）；**字符串联合 / `z.enum` 每个成员须有中文释义**。

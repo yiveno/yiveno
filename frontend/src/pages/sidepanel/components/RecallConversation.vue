@@ -14,6 +14,10 @@ const props = defineProps<{
   expandLabel: string
   collapseLabel: string
   noteFieldLabel: string
+  /** §7.2 当前会话已 Mark 的 MemoryItem id */
+  markedTargetId: string | null
+  markLabel: string
+  markedLabel: string
   /** 等待本轮 Recall 结果时展示脉冲占位 */
   pending?: boolean
   pendingLabel: string
@@ -23,6 +27,7 @@ const emit = defineEmits<{
   open: [payload: { id: string; url: string }]
   toggleExpand: [cardId: string]
   dismiss: []
+  mark: [id: string]
   useSuggestion: [value: string]
 }>()
 
@@ -46,6 +51,10 @@ function onSuggestionClick(value: string): void {
 
 function handleOpen(payload: { id: string; url: string }): void {
   emit('open', payload)
+}
+
+function handleMark(id: string): void {
+  emit('mark', id)
 }
 
 function handleToggleExpand(cardId: string): void {
@@ -86,7 +95,12 @@ function handleToggleExpand(cardId: string): void {
               :expand-label="expandLabel"
               :collapse-label="collapseLabel"
               :note-field-label="noteFieldLabel"
+              show-mark
+              :marked="markedTargetId === turn.primaryCard.id"
+              :mark-label="markLabel"
+              :marked-label="markedLabel"
               @open="handleOpen"
+              @mark="handleMark"
               @toggle-expand="() => handleToggleExpand(turn.primaryCard!.id)"
             />
           </div>
@@ -102,6 +116,10 @@ function handleToggleExpand(cardId: string): void {
               :expand-label="expandLabel"
               :collapse-label="collapseLabel"
               :note-field-label="noteFieldLabel"
+              :show-mark="false"
+              :marked="false"
+              :mark-label="markLabel"
+              :marked-label="markedLabel"
               @open="handleOpen"
               @toggle-expand="() => handleToggleExpand(turn.relatedGuessCard!.id)"
             />
@@ -125,7 +143,12 @@ function handleToggleExpand(cardId: string): void {
                   :expand-label="expandLabel"
                   :collapse-label="collapseLabel"
                   :note-field-label="noteFieldLabel"
+                  show-mark
+                  :marked="markedTargetId === item.id"
+                  :mark-label="markLabel"
+                  :marked-label="markedLabel"
                   @open="handleOpen"
+                  @mark="handleMark"
                   @toggle-expand="() => handleToggleExpand(item.id)"
                 />
               </li>

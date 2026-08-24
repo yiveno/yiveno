@@ -249,6 +249,24 @@
   "popup_dismiss_candidates": {
     "message": "None of these"
   },
+  "popup_mark_as_meant": {
+    "message": "Mark as what I meant"
+  },
+  "popup_mark_as_meant_done": {
+    "message": "Marked as what you meant"
+  },
+  "popup_outcome_exit_prompt": {
+    "message": "Did you find what you were looking for?"
+  },
+  "popup_outcome_exit_found": {
+    "message": "Found it"
+  },
+  "popup_outcome_exit_none": {
+    "message": "None of these"
+  },
+  "popup_outcome_exit_skip": {
+    "message": "Skip"
+  },
   "popup_reply_confident": {
     "message": "This is the most likely match."
   },

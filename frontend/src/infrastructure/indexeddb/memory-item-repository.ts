@@ -143,6 +143,8 @@ export class MemoryItemRepository {
         ...next.clues,
         openCount: existing.clues.openCount,
         lastOpenedAt: existing.clues.lastOpenedAt,
+        settledCount: existing.clues.settledCount,
+        lastSettledAt: existing.clues.lastSettledAt,
         dismissCount: existing.clues.dismissCount,
         lastDismissedAt: existing.clues.lastDismissedAt,
         tags: mergeUniqueStrings(existing.clues.tags, next.clues.tags),
@@ -400,6 +402,30 @@ export class MemoryItemRepository {
         ...existing.clues,
         openCount: existing.clues.openCount + 1,
         lastOpenedAt: openedAt
+      }
+    }
+
+    await this.put(next)
+    return next
+  }
+
+  /**
+   * 记录 Recall settled 正例（§7.2）。
+   * 只更新 settledCount / lastSettledAt，不改 updatedAt（结算 ≠ 内容变更）。
+   */
+  async recordSettle(id: string, settledAt = new Date().toISOString()): Promise<MemoryItem | null> {
+    const ownerId = await getCurrentOwnerId()
+    const existing = await this.getById(id, ownerId)
+    if (!existing) {
+      return null
+    }
+
+    const next: MemoryItem = {
+      ...existing,
+      clues: {
+        ...existing.clues,
+        settledCount: (existing.clues.settledCount ?? 0) + 1,
+        lastSettledAt: settledAt
       }
     }
 

@@ -47,7 +47,9 @@ export function buildRecallEvalCorpus(): MemoryItem[] {
         },
         clues: {
           openCount: 20,
-          lastOpenedAt: '2026-07-24T10:00:00.000Z'
+          settledCount: 20,
+          lastOpenedAt: '2026-07-24T10:00:00.000Z',
+          lastSettledAt: '2026-07-24T10:00:00.000Z'
         },
         now: () => '2026-07-19T08:00:00.000Z'
       }),
@@ -177,7 +179,9 @@ export function buildRecallEvalCorpus(): MemoryItem[] {
         },
         clues: {
           openCount: 30,
-          lastOpenedAt: '2026-07-24T18:00:00.000Z'
+          settledCount: 30,
+          lastOpenedAt: '2026-07-24T18:00:00.000Z',
+          lastSettledAt: '2026-07-24T18:00:00.000Z'
         },
         now: () => '2026-07-25T08:00:00.000Z'
       }),
@@ -250,11 +254,26 @@ export function buildRecallEvalCorpus(): MemoryItem[] {
           pageTitle: 'Growth notes'
         },
         // 对齐 RECALL_EVAL_NOW（2026-07-25）的 yesterday，供多轮补时间 must 用例硬过滤命中
-        clues: { note: 'retention note for the leadership review' },
+        clues: { note: 'retention note for the leadership sync' },
         now: () => '2026-07-24T10:00:00.000Z'
       }),
       RECALL_EVAL_IDS.typeBRetentionNote,
       '2026-07-24T10:00:00.000Z'
+    ),
+    withStableIdentity(
+      createTextExcerptMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          selectedText:
+            'A powerful, visually spectacular drama that demands your full concentration, Oppenheimer is unmistakably the work of writer-director Christopher Nolan.',
+          sourceUrl: 'https://www.rottentomatoes.com/m/oppenheimer_2023',
+          pageTitle: 'Oppenheimer (2023) | Rotten Tomatoes'
+        },
+        now: () => '2026-08-24T08:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.oppenheimerRtExcerpt,
+      '2026-08-24T08:00:00.000Z'
     )
   ]
 }

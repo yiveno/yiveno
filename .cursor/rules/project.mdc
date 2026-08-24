@@ -13,6 +13,24 @@ alwaysApply: true
 
 ---
 
+## 产品语言（硬规则）
+
+**Yiveno 是彻底的英文产品（美式英语）。** 除开发者向材料外，与中文无关。
+
+| 面 | 语言 | 范围 |
+| --- | --- | --- |
+| **产品面** | **仅英文** | 扩展 UI、官网、隐私/营销、用户可见错误与空态、对外 slogan、用户线索/召回质检用例文案、产品向示例 |
+| **开发者面** | **中文 OK** | 与开发者对话回复、git commit message、代码注释 / JSDoc、工程文档备注、业务日志文案 |
+
+```
+❌ 禁止：产品文案 / locale / 市场走中文或 zh_CN
+❌ 禁止：把「中文线索」「中英互译召回」当产品能力或必测项
+❌ 禁止：为中文市场加 UI 文案、隐私摘要、官网段落
+✅ 允许：开发者协作用中文（注释、日志、文档备注、commit、本对话）
+```
+
+---
+
 ## AI 行为
 
 ```
@@ -24,7 +42,21 @@ alwaysApply: true
 ✅ 用户要求 commit 时：message **必须中文**（可用 Conventional 前缀如 `feat:` / `fix:`，说明正文用中文）
 ✅ 代码注释 / JSDoc：**必须中文**（标识符、API 专有名词可保留英文）
 ✅ 新增业务逻辑：**必须**有清晰 log + 中文注释（见 docs/engineering/业务日志与注释约定.md）
+✅ 扩展用户可感改动：相关单测通过后 **必须 MCP 真机实测**（见下「MCP 真机实测」），再报完成
+✅ 排查问题：**优先 MCP Chrome 真机**还原复现场景、拿够证据，再读码/改码（见下「MCP 排查优先」）
 ```
+
+### 目标任务：必选 vs 可选（硬规则）
+
+允许给任务排优先级，但必须先分清相对**当前目标**哪些是必选、哪些是可选。
+
+| 类型 | 判定 | 执行 |
+| --- | --- | --- |
+| **必选** | 缺了会导致目标效果变差、链路断裂或根本不可用（含文档 Normative 落地链上的 P0/P1/… 质检关） | **不问用户意见**，按序逐个做完；优先级只影响顺序，不决定可否跳过 |
+| **可选** | 增强项、旁路体验、可延后不影响主链路成立 | **先询问**用户是否现在做 |
+
+一句话：**目标的必选任务不用问意见、逐个完成；可选任务先问再做。**  
+禁止把必选当成「低优先级可砍」；禁止在必选未完成时用可选工作充数报完成。
 
 ### 验证（与 AGENTS.md 一致）
 
@@ -33,6 +65,49 @@ alwaysApply: true
 - **大范围改动或用户要求时**：`bun run typecheck:force`；frontend 用 `cd frontend && bun run lint:check`（根目录无 `lint:check:force` / `stylelint:force`）。
 - 有错误 → 修到通过再报完成；不确定 → 说明并等待指示。
 - Recall / Capture 用户可感变更：合入前补 `recall-eval` **must** 或产品文档 §5 手动步骤（§1.1）；E2E 仅薄冒烟，不上大 Playwright。
+
+### MCP 真机实测（硬规则）
+
+改代码后**不能**只跑单测就报完成；触及扩展用户可感路径时，**必须**再跑 **Chrome DevTools MCP**（`user-chrome-devtools`）真机验证。
+
+| 范围 | MCP |
+| --- | --- |
+| **必选** | `frontend/**`（pages / background / i18n / Recall / Capture / 扩展 UI）、`public/_locales/**`、manifest / post-build 同步 |
+| **可跳过** | 纯 `backend/**`、纯 `core` 且无 UI/SW 接线、仅文档 / 注释 |
+
+**流程（扩展改动）：**
+
+1. 相关单测 + 必要 `typecheck` 通过。
+2. `cd frontend && bun run build`（或确认 `build:watch` 已产出最新 `dist/`；改 `_locales` / manifest 须确认 post-build 已同步）。
+3. MCP：`chrome://extensions` → 重新加载 Yiveno → 打开 Side Panel（`chrome-extension://<id>/sidepanel.html` 或真实 Side Panel 入口）。
+4. **UI 路径**复现：用 `fill` / `click` / `wait_for` / `take_snapshot`；**禁止**用 `evaluate_script` 直调 `RECALL_WITH_CLUE` 等消息冒充 UI 测试。
+5. 报完成时简述 MCP 结论（测了什么、通过/失败、若失败是否已修并重测）。
+
+**Recall 改动**：至少 1 条与改动相关的 clue UI 召回（含修复 case）；i18n 改动须查 a11y 树 / `getMessage` 无 raw key 露出。
+
+### MCP 排查优先（硬规则）
+
+排查**任何问题**（bug、回归、行为不符、用户截图/描述）时，**优先**用 **Chrome DevTools MCP**（`user-chrome-devtools`）在真实 Chrome 上复现，拿到足够信息后再静态读码、猜根因或改代码。
+
+| 原则 | 说明 |
+| --- | --- |
+| **先复现、后推断** | 按用户/产品真实路径（Side Panel、Capture、Settings、Omnibox 等）走 **UI 操作**，勿只靠读代码或单测结论 |
+| **证据优先** | 用 `take_snapshot`（a11y 树）、`list_console_messages`、`wait_for`、必要时 `take_screenshot`；扩展问题先 `chrome://extensions` 重新加载 |
+| **信息够再动手** | 能稳定复现或能明确「无法复现 + 已试步骤」后再提修复方案；禁止信息不足就报「已修好」 |
+| **UI vs 旁路** | 验收/排查用户可见行为走 `fill`/`click`；`evaluate_script` 仅作**辅助**（查 i18n、console、DOM），不可替代 UI 复现 |
+
+**扩展相关排查最低动作：** 确认 `dist/` 与改动一致 → reload 扩展 → 打开相关页面 → 按报告步骤复现 → 记录 snapshot/控制台结论。
+
+### MCP · Service Worker Console
+
+**限制（2026-08）：** `chrome-devtools-mcp`（≥0.20.3）把 `--categoryExtensions` 与 `--autoConnect` / `--browserUrl` / `--wsEndpoint` **标为互斥**——与 Chrome 版本无关（README「149 后合并」已过时；WebSocket attach 下扩展类 CDP 会 `Method not allowed`）。日常开发用 **`--autoConnect`** 连日常 Profile（含已装 Yiveno），**不要**加 `--categoryExtensions=true`——会卡在 Cursor「Loading tools」。
+
+| 场景 | 做法 |
+| --- | --- |
+| **读 SW 报错** | `chrome://extensions/?errors=<扩展id>`；Side Panel `evaluate_script` 复现；`list_console_messages` **读不到** SW（仅 tab 目标） |
+| **隔离调试 SW（可选）** | 第二 MCP：去掉 `--autoConnect`，加 `--categoryExtensions=true`（pipe 启动 Chrome），用 `install_extension` 加载 `dist/`（**不是你的日常 Profile**） |
+
+改 `mcp.json` 后：Cursor → MCP → 关再开 `chrome-devtools`；仍卡则 **Reload Window**。
 
 ### 工具预算
 
@@ -118,9 +193,9 @@ Background **无** `window` / `document` / `localStorage`。用全局 `setTimeou
 
 ## 术语与 UI
 
-- 对外：**筛选（Filter）** / **找回（Recall）**；UI **禁止**「搜索」/ `Search`。
-- 对内注释可用 search/filter。
-- 扩展用户文案：仅 `chrome.i18n` + `_locales/{en,zh_CN}/messages.json`，经 `t()`（`frontend/src/infrastructure/i18n/`）。禁止写死 UI 自然语言与 `getMessage(...) || '兜底'`。`core` 不直接调 `chrome.i18n`（注入 `t` 或返回 key）。官网不走本方案。
+- 对外英文心智：**Filter** / **Recall**；UI **禁止** `Search`（对内注释可用 search/filter；中文「筛选/找回」仅开发者沟通）。
+- 扩展用户文案：仅 `chrome.i18n` + **`_locales/en/messages.json`**（美式英语），经 `t()`（`frontend/src/infrastructure/i18n/`）。禁止写死 UI 自然语言与 `getMessage(...) || 'fallback'`。`core` 不直接调 `chrome.i18n`（注入 `t` 或返回 key）。官网不走本方案，文案同样仅英文。
+- **禁止**新增 `zh_CN` 或其它非 en 产品 locale。
 - **图标优先于文案**（产品文档 §0.2 / §3）：工具操作/导航尽量用通识 Lucide 图标（内联）；省略可见文字时必须有 `title` + `aria-label`（同源 `t()`）。主 CTA、说明正文、空状态、表单标签仍用文案。
 - 面向用户的失败：演进为稳定 `errorCode` + UI `t()`；禁止用本地化 error 字符串做分支。
 - `:hover` / `:focus` / `:active`：**禁止** `translate` / `scale` / `rotate`；只用背景 / opacity / shadow / outline / state layer（浮层入场与 pop/shake 例外见产品文档 §3）。
@@ -159,7 +234,8 @@ Background **无** `window` / `document` / `localStorage`。用全局 `setTimeou
 - [ ] 分层是否正确？Chrome API 是否只在 background / browser 封装？
 - [ ] IndexedDB 是否只经 `indexedDBManager`？
 - [ ] 新消息 type 是否已先改 messaging schema？
-- [ ] UI 文案是否无「搜索」且经 `t()` / `_locales`？可图标化操作是否用通识图标 + `title`/`aria-label`？交互态是否无几何变换？
+- [ ] UI 文案是否无 `Search`、是否均为英文且经 `t()` / `_locales/en`？可图标化操作是否用通识图标 + `title`/`aria-label`？交互态是否无几何变换？
+- [ ] 是否误加中文产品文案 / 非 en locale / 把中文线索当产品必测？
 - [ ] SW 代码是否避开 `window` / `document` / `localStorage`？
 - [ ] 是否在做未上线能力并暗示可用？
 
@@ -168,7 +244,7 @@ Background **无** `window` / `document` / `localStorage`。用全局 `setTimeou
 ```bash
 bun run typecheck              # 快（workspaces 并行，含 packages/*）
 bun run typecheck:force        # 全量子项目强制
-bun run i18n:check             # en / zh_CN / MESSAGE_KEYS 对称
+bun run i18n:check             # en messages ↔ MESSAGE_KEYS 对称
 cd frontend && bun run lint:check
 cd frontend && bun run test:run
 bun run knip:fe                # frontend 未使用代码（勿给死文件加假 entry）

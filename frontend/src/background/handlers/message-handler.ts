@@ -42,6 +42,7 @@ import {
   handleBackfillMemoryEmbeddings,
   handleRecordMemoryOpen,
   handleRecordRecallDismiss,
+  handleRecordRecallSettle,
   handleUpdateMemoryNote
 } from '@/background/handlers/memory-handler'
 import { handleRecallWithClue } from '@/background/handlers/recall-handler'
@@ -137,6 +138,8 @@ async function dispatchBackgroundMessage(
       return handleRecordMemoryOpen(message.payload)
     case 'RECORD_RECALL_DISMISS':
       return handleRecordRecallDismiss(message.payload)
+    case 'RECORD_RECALL_SETTLE':
+      return handleRecordRecallSettle(message.payload)
     case 'BACKFILL_MEMORY_EMBEDDINGS':
       return handleBackfillMemoryEmbeddings()
     case 'RECALL_WITH_CLUE':

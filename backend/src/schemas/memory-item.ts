@@ -30,6 +30,9 @@ const MemoryCluesSchema = z.object({
   captureEntry: CaptureEntrySchema.optional(),
   openCount: z.number().int().nonnegative().default(0),
   lastOpenedAt: z.string().datetime().nullable().optional(),
+  /** §7.2 settled 正例次数；often_opened 只读此字段 */
+  settledCount: z.number().int().nonnegative().default(0),
+  lastSettledAt: z.string().datetime().nullable().optional(),
   dismissCount: z.number().int().nonnegative().default(0),
   lastDismissedAt: z.string().datetime().nullable().optional(),
   tags: z.array(z.string()).default([]),

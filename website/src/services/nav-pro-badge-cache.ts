@@ -26,6 +26,11 @@ export function writeNavIsProCache(isPro: boolean): void {
   }
 }
 
+/** 仅订阅拉取成功时写入；失败时勿写 false，避免假降级顶栏。 */
+export function writeNavIsProCacheOnVerified(isPro: boolean): void {
+  writeNavIsProCache(isPro)
+}
+
 /** 退出登录时清掉，避免假 Pro 环。 */
 export function clearNavIsProCache(): void {
   try {

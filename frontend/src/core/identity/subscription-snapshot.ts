@@ -45,7 +45,18 @@ export type SubscriptionSnapshot = z.infer<typeof SubscriptionSnapshotSchema>
 
 export const SUBSCRIPTION_SNAPSHOT_STORAGE_KEY = 'yiveno.subscriptionSnapshot'
 
-/** 未登录 / 拉取失败时的默认 Free 快照。 */
+/** 刷新订阅快照失败（已登录但 Worker 不可用等）。 */
+export class SubscriptionRefreshError extends Error {
+  readonly code: string
+
+  constructor(code: string) {
+    super(code)
+    this.name = 'SubscriptionRefreshError'
+    this.code = code
+  }
+}
+
+/** 未登录时的默认 Free 快照（signed_out；非 transient failure）。 */
 export function createFreeSubscriptionSnapshot(
   nowIso = new Date().toISOString()
 ): SubscriptionSnapshot {

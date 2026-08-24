@@ -1,6 +1,6 @@
 # R4 · Phase E 验收与 recall-eval（工程旁挂）
 
-> **Normative 摘要：** [`Yiveno-产品文档-v4.0.md`](../product/Yiveno-产品文档-v4.0.md) **§5.10**（手工）、**§5.11**（eval must）。  
+> **Normative 摘要：** [`Yiveno-产品文档-v4.0.md`](../product/Yiveno-产品文档-v4.0.md) **§5.10**（手工）、**§5.11**（eval must）、**§7.2**（Outcome Labeling）。  
 > **改版计划：** [`Yiveno-改版计划-v1.md`](../product/Yiveno-改版计划-v1.md) **R4**。  
 > 冲突时先改产品文档再改本文。
 
@@ -8,14 +8,15 @@
 
 ## 1. 实现锚点
 
-| R4 交付         | 预期路径                                                                             | 验收                  |
-| --------------- | ------------------------------------------------------------------------------------ | --------------------- |
-| Explain ECS UI  | `pages/sidepanel/SidePanel.vue` · `RecallResultCard.vue` · `explain-recall-match.ts` | §5.10.1               |
-| Omnibox ECS     | `background/listeners/omnibox.ts` + 建议 UI                                          | §5.10.1               |
-| TTE 埋点        | 新模块建议 `infrastructure/analytics/` 或 `application/recall/recall-telemetry.ts`   | §5.10.3 · §5.9 七事件 |
-| evidence pack   | Settings 或 Library 多选 + 新 message type（先 schema）                              | §5.10.4               |
-| 只读 MCP        | 新 Worker 路由或 extension MCP server（scope 设计先写产品文档）                      | §5.10.5               |
-| Raindrop/Pocket | `application/capture/` 新 adapter + `import-handler`                                 | §5.10.6 · R2 准入     |
+| R4 交付          | 预期路径                                                                             | 验收                                                          |
+| ---------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------- |
+| Explain ECS UI   | `pages/sidepanel/SidePanel.vue` · `RecallResultCard.vue` · `explain-recall-match.ts` | §5.10.1                                                       |
+| Omnibox ECS      | `background/listeners/omnibox.ts` + 建议 UI                                          | §5.10.1                                                       |
+| TTE 埋点         | 新模块建议 `infrastructure/analytics/` 或 `application/recall/recall-telemetry.ts`   | §5.10.3 · §5.9 七事件                                         |
+| Outcome Labeling | `recall-outcome*` + pairs storage + Hybrid 消费；C2 默认不进 settled                 | §7.2 P0–P3；开 C2 settled 见 `R4-Outcome-Labeling-P2-校准.md` |
+| evidence pack    | Settings 或 Library 多选 + 新 message type（先 schema）                              | §5.10.4                                                       |
+| 只读 MCP         | 新 Worker 路由或 extension MCP server（scope 设计先写产品文档）                      | §5.10.5                                                       |
+| Raindrop/Pocket  | `application/capture/` 新 adapter + `import-handler`                                 | §5.10.6 · R2 准入                                             |
 
 **消息 type：** 禁止发明字符串；evidence export / MCP 须先改 `core/messaging/*`。
 

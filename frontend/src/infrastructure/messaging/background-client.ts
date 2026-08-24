@@ -42,6 +42,7 @@ import type {
   UpdateMemoryNoteMessage,
   RecordMemoryOpenMessage,
   RecordRecallDismissMessage,
+  RecordRecallSettleMessage,
   CaptureTextExcerptMessage,
   MemoryBackgroundResponse
 } from '@/core/messaging/memory-messages'
@@ -154,6 +155,18 @@ export async function recordRecallDismiss(
   const message: RecordRecallDismissMessage = {
     scope: 'background',
     type: 'RECORD_RECALL_DISMISS',
+    payload
+  }
+  return sendBackgroundMessage<MemoryBackgroundResponse>(message)
+}
+
+/** 记录 settled 正例（settledCount · §7.2）。 */
+export async function recordRecallSettle(
+  payload: RecordRecallSettleMessage['payload']
+): Promise<MemoryBackgroundResponse> {
+  const message: RecordRecallSettleMessage = {
+    scope: 'background',
+    type: 'RECORD_RECALL_SETTLE',
     payload
   }
   return sendBackgroundMessage<MemoryBackgroundResponse>(message)
