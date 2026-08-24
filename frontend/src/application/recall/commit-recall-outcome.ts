@@ -2,6 +2,7 @@
  * 提交 Recall Outcome 事件（§7.2）：打业务日志；settled 写库；P3 持久化 clue 对。
  */
 
+import { optionalProp } from '@/core/common/optional-props'
 import {
   buildRecallOutcomeEvent,
   resolveRecallOutcome,
@@ -65,8 +66,8 @@ export function toResolveRecallOutcomeInput(
     sawNoMatchFinal: state.sawNoMatchFinal,
     opens: state.opens,
     copiedOrPackedId: state.copiedOrPackedId,
-    sessionStopped: options?.sessionStopped,
-    dwellThresholdMs: options?.dwellThresholdMs
+    ...optionalProp('sessionStopped', options?.sessionStopped),
+    ...optionalProp('dwellThresholdMs', options?.dwellThresholdMs)
   }
 }
 
@@ -86,7 +87,7 @@ export async function commitRecallOutcome(input: {
 
   const resolved = resolveRecallOutcome(
     toResolveRecallOutcomeInput(input.state, {
-      sessionStopped: input.sessionStopped,
+      ...optionalProp('sessionStopped', input.sessionStopped),
       dwellThresholdMs: getRecallOutcomeSettlePolicy().dwellThresholdMs
     })
   )
