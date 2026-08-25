@@ -1,8 +1,8 @@
 /**
- * 会话内 enrichment / embedding 去重复用缓存（SW 生命周期）。
- * 同键第二条起跳过 Worker 请求。
+ * 会话内 enrichment / embedding / 域名基座去重复用缓存（SW 生命周期）。
  */
 
+import type { DomainEnrichmentProfile } from '@/core/memory/domain-enrichment-profile'
 import type { ReusableEnrichmentFields } from '@/core/memory/reusable-enrichment-fields'
 
 export type CachedEmbeddingVector = {
@@ -12,6 +12,7 @@ export type CachedEmbeddingVector = {
 }
 
 const enrichmentReuseByKey = new Map<string, ReusableEnrichmentFields>()
+const domainProfileByKey = new Map<string, DomainEnrichmentProfile>()
 const embeddingReuseByKey = new Map<string, CachedEmbeddingVector>()
 
 export function getCachedEnrichmentReuse(key: string): ReusableEnrichmentFields | null {
@@ -31,6 +32,27 @@ export function setCachedEnrichmentReuse(key: string, fields: ReusableEnrichment
     tags: [...fields.tags],
     keywords: [...fields.keywords],
     entities: [...fields.entities]
+  })
+}
+
+export function getCachedDomainEnrichmentProfile(key: string): DomainEnrichmentProfile | null {
+  const hit = domainProfileByKey.get(key)
+  if (!hit) {
+    return null
+  }
+  return {
+    tags: [...hit.tags],
+    entities: [...hit.entities]
+  }
+}
+
+export function setCachedDomainEnrichmentProfile(
+  key: string,
+  profile: DomainEnrichmentProfile
+): void {
+  domainProfileByKey.set(key, {
+    tags: [...profile.tags],
+    entities: [...profile.entities]
   })
 }
 
@@ -57,5 +79,11 @@ export function setCachedEmbeddingReuse(key: string, vector: CachedEmbeddingVect
 /** 队列清空 / 测试重置时调用。 */
 export function clearMemoryDuplicateReuseCaches(): void {
   enrichmentReuseByKey.clear()
+  domainProfileByKey.clear()
   embeddingReuseByKey.clear()
+}
+
+/** 测试专用。 */
+export function resetMemoryDuplicateReuseCachesForTests(): void {
+  clearMemoryDuplicateReuseCaches()
 }

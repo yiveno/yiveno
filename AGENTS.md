@@ -7,6 +7,7 @@
 - **视觉/品牌标准（Normative）：** `docs/design/Yiveno-设计标准-v1.md`（完整）；摘要 `DESIGN.md`。权威 `@yiveno/design-tokens/css/brand.css`（色 + Roles + space/radius）；扩展自研 `App*` 控件；图标 Lucide 按需内联。
 - Cursor 规则：`.cursor/rules/project.mdc`，不得冲突。
 - 对外心智：「那个找东西的」/ 仓库；找回 = 高置信**邻域**，Top1=建议；AI 能力核心不作宣传招牌。
+- **文档 ↔ 代码同步（铁律）：** 任何代码改动若与权威文档脱节或有差异，**必须同批更新对应文档**（产品 / 设计 / 工程 / `AGENTS.md`·`project.mdc`）；报完成 = 代码与文档可对照。禁止「先改代码、文档以后再补」。纯重构且契约不变、或 bugfix 且行为已与文档一致，可不改文档。细则见 `.cursor/rules/project.mdc`「文档 ↔ 代码同步」。
 
 ### 产品语言（硬规则）
 
@@ -81,6 +82,7 @@ pre-push **不跑** ESLint、全仓 typecheck、全仓 frontend test；`.vue` li
 
 - 默认只跑与本次改动直接相关的最小验证。
 - 禁止每次改动后自动跑全仓 `typecheck:force` / `lint` / `format`，除非用户明确要求或大范围改动。
+- **文档 ↔ 代码同步（铁律）：** 契约/行为相对权威文档有差异时，**同批更新文档**再报完成；细则见 `.cursor/rules/project.mdc`。
 - Recall / Capture 用户可感变更：合入前补 `recall-eval` **must** 或产品文档 §5 可复现手动步骤（§1.1）。
 - **MCP 真机实测（硬规则）：** 改扩展用户可感代码后，单测/ typecheck 之外**必须**调用 **Chrome DevTools MCP**（`user-chrome-devtools`）做真机验证；`build`（或确认 watch 产物）→ `chrome://extensions` 重新加载 → Side Panel **UI 路径**（`fill`/`click`，禁止 `evaluate_script` 直调 background 消息冒充 UI 测试）；报完成须含 MCP 结论。细则见 `.cursor/rules/project.mdc`「MCP 真机实测」。
 - **MCP 排查优先（硬规则）：** 排查 bug/回归/行为问题时，**优先** MCP Chrome 真机按真实 UI 路径复现，用 snapshot、控制台等拿够证据后再推断根因或改代码；细则见 `.cursor/rules/project.mdc`「MCP 排查优先」。

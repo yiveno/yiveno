@@ -3,11 +3,18 @@ import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/application/memory/schedule-async-memory-llm-enrichment', () => ({
-  scheduleAsyncMemoryLlmEnrichment: vi.fn()
+  scheduleAsyncMemoryLlmEnrichment: vi.fn(),
+  clearAsyncMemoryLlmEnrichmentQueue: vi.fn()
 }))
 
 vi.mock('@/application/memory/schedule-async-memory-embedding', () => ({
-  scheduleAsyncMemoryEmbedding: vi.fn()
+  scheduleAsyncMemoryEmbedding: vi.fn(),
+  clearAsyncMemoryEmbeddingQueue: vi.fn()
+}))
+
+vi.mock('@/application/memory/ensure-memory-embedding-maintenance', () => ({
+  scheduleSilentMemoryEmbeddingMaintenance: vi.fn(),
+  EMBEDDING_MAINTENANCE_AFTER_SYNC_DELAY_MS: 3500
 }))
 
 import {

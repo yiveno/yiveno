@@ -869,49 +869,6 @@
   "settings_sync_pro_required_hint": {
     "message": "Cloud sync requires Pro."
   },
-  "settings_ai_embedding_hint": {
-    "message": "Rebuilds on-device embeddings from memory text."
-  },
-  "settings_embedding_backfill": {
-    "message": "Rebuild semantic index"
-  },
-  "settings_embedding_backfill_action": {
-    "message": "Rebuild"
-  },
-  "settings_embedding_backfill_working": {
-    "message": "Indexing…"
-  },
-  "settings_embedding_backfill_done": {
-    "message": "Wrote embeddings for $COUNT$ items",
-    "placeholders": {
-      "COUNT": {
-        "content": "$1"
-      }
-    }
-  },
-  "settings_embedding_backfill_partial": {
-    "message": "Wrote embeddings for $WRITTEN$ of $ATTEMPTED$ items. $FAILED$ failed.",
-    "placeholders": {
-      "WRITTEN": {
-        "content": "$1"
-      },
-      "ATTEMPTED": {
-        "content": "$2"
-      },
-      "FAILED": {
-        "content": "$3"
-      }
-    }
-  },
-  "settings_embedding_backfill_quota": {
-    "message": "Storage is full. Could not write embeddings. Turn off Chrome bookmark ingest or free disk space, then try again."
-  },
-  "settings_embedding_backfill_none": {
-    "message": "No embeddings written. Check that you are signed in and the API is reachable."
-  },
-  "settings_embedding_backfill_auth_required": {
-    "message": "Sign in to rebuild the semantic index."
-  },
   "settings_ai_quota_loading": {
     "message": "Loading hosted clue quota…"
   },

@@ -23,10 +23,11 @@ vi.mock('@/infrastructure/settings/user-settings-service', () => ({
 import { buildMergedMemoryEnrichment } from '@/application/memory/build-merged-memory-enrichment'
 import { getUserSettings } from '@/infrastructure/settings/user-settings-service'
 
-function createRepoMock(item: MemoryItem | null) {
+function createRepoMock(item: MemoryItem | null, listItems: MemoryItem[] = []) {
   const putEnrichmentClues = vi.fn(async () => undefined)
   const repo = {
     getById: vi.fn(async () => item),
+    listByOwner: vi.fn(async () => listItems),
     putEnrichmentClues
   } as unknown as MemoryItemRepository
   return { repo, putEnrichmentClues }
@@ -122,6 +123,68 @@ describe('runAsyncMemoryLlmEnrichment', () => {
 
     await expect(runAsyncMemoryLlmEnrichment(item.id, repo)).resolves.toBe('skipped')
     expect(putEnrichmentClues).not.toHaveBeenCalled()
+  })
+
+  it('同 URL 书签复用 donor enrichment，跳过 LLM', async () => {
+    const donor = createBookmarkMemoryItem({
+      ownerId: 'o',
+      sourceLocalProfileId: 'p',
+      payload: { title: 'Donor', url: 'https://example.com/same' },
+      clues: { keywords: ['cached-kw'], entities: ['Entity'] }
+    })
+    const item = createBookmarkMemoryItem({
+      ownerId: 'o',
+      sourceLocalProfileId: 'p',
+      payload: { title: 'Sibling', url: 'https://www.example.com/same/' }
+    })
+    const { repo, putEnrichmentClues } = createRepoMock(item, [donor, item])
+
+    await expect(runAsyncMemoryLlmEnrichment(item.id, repo)).resolves.toBe('written')
+    expect(buildMergedMemoryEnrichment).not.toHaveBeenCalled()
+    expect(putEnrichmentClues).toHaveBeenCalledTimes(1)
+    const written = putEnrichmentClues.mock.calls[0]?.[0] as MemoryItem
+    expect(written.clues.keywords).toEqual(expect.arrayContaining(['cached-kw']))
+    expect(written.clues.summary).toBeUndefined()
+  })
+
+  it('同域名不同 path：注入域名基座后仍请求页面 LLM', async () => {
+    const donor = createBookmarkMemoryItem({
+      ownerId: 'o',
+      sourceLocalProfileId: 'p',
+      payload: { title: 'About', url: 'https://github.com/about' },
+      clues: {
+        tags: ['code', 'page'],
+        keywords: ['about-page-only'],
+        entities: ['GitHub']
+      }
+    })
+    const item = createBookmarkMemoryItem({
+      ownerId: 'o',
+      sourceLocalProfileId: 'p',
+      payload: { title: 'Pricing seats', url: 'https://github.com/pricing' }
+    })
+    const { repo, putEnrichmentClues } = createRepoMock(item, [donor, item])
+
+    vi.mocked(buildMergedMemoryEnrichment).mockResolvedValue({
+      rule: { tags: ['page'], keywords: [], entities: [] },
+      proposal: { keywords: ['pricing', 'seats'], summary: 'GitHub pricing page' },
+      merged: {
+        tags: ['code', 'page'],
+        keywords: ['pricing', 'seats'],
+        entities: ['GitHub'],
+        summary: 'GitHub pricing page'
+      },
+      path: 'rule_plus_llm'
+    })
+
+    await expect(runAsyncMemoryLlmEnrichment(item.id, repo)).resolves.toBe('written')
+    expect(buildMergedMemoryEnrichment).toHaveBeenCalledTimes(1)
+    const call = vi.mocked(buildMergedMemoryEnrichment).mock.calls[0]?.[0]
+    expect(call?.existing?.entities).toEqual(expect.arrayContaining(['GitHub']))
+    expect(call?.existing?.tags).toEqual(expect.arrayContaining(['code', 'page']))
+    // 页面级 keywords 不得从 donor 整包灌入 existing
+    expect(call?.existing?.keywords ?? []).not.toContain('about-page-only')
+    expect(putEnrichmentClues).toHaveBeenCalledTimes(1)
   })
 
   it('配额耗尽时熔断：后续直接跳过且不再请求', async () => {

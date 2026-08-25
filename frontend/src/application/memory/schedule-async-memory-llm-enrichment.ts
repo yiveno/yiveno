@@ -1,13 +1,38 @@
 /**
  * Capture 成功后异步稀疏 LLM enrichment：提议 → merge → 写回 clues。
- * 不阻塞 Capture；串行队列；失败降级（保留规则层已有字段）。
+ * 组装：domainProfile(host) ∪ pageOverlay(LLM/规则) ∪ 既有 clues。
+ * 不阻塞 Capture；串行队列；失败降级（保留规则层 + 可选域名基座）。
  */
 
-import { enrichInputFromMemoryItem } from '@/core/memory/enrich-memory-clues'
-import { applyMergedEnrichmentToClues } from '@/core/memory/merge-memory-clue-enrichment'
+import { enrichInputFromMemoryItem, enrichMemoryClues } from '@/core/memory/enrich-memory-clues'
+import { getEnrichmentReuseKey } from '@/core/memory/derive-memory-duplicate-key'
+import {
+  extractDomainEnrichmentProfile,
+  getDomainEnrichmentReuseKey,
+  hasDomainEnrichmentProfileSignal,
+  mergeDomainProfileIntoExisting,
+  type DomainEnrichmentProfile
+} from '@/core/memory/domain-enrichment-profile'
+import {
+  applyMergedEnrichmentToClues,
+  mergeMemoryClueEnrichment,
+  type ExistingMemoryClueFields
+} from '@/core/memory/merge-memory-clue-enrichment'
+import { extractReusableEnrichmentFields } from '@/core/memory/reusable-enrichment-fields'
 import { shouldRequestLlmMemoryEnrichment } from '@/core/memory/should-request-llm-memory-enrichment'
 import type { MemoryItem } from '@/core/memory/memory-item'
 import { buildMergedMemoryEnrichment } from '@/application/memory/build-merged-memory-enrichment'
+import {
+  findMemoryDomainEnrichmentProfile,
+  findMemoryEnrichmentDonor
+} from '@/application/memory/find-memory-enrichment-donor'
+import {
+  clearMemoryDuplicateReuseCaches,
+  getCachedDomainEnrichmentProfile,
+  getCachedEnrichmentReuse,
+  setCachedDomainEnrichmentProfile,
+  setCachedEnrichmentReuse
+} from '@/application/memory/memory-duplicate-reuse-cache'
 import {
   memoryItemRepository,
   type MemoryItemRepository
@@ -49,6 +74,102 @@ function sameStringListIgnoreCase(left: string[], right: string[]): boolean {
   return a.every((value, index) => value === b[index])
 }
 
+function baseExistingFromItem(item: MemoryItem): ExistingMemoryClueFields {
+  return {
+    tags: item.clues.tags,
+    keywords: item.clues.keywords,
+    entities: item.clues.entities,
+    ...(item.clues.summary !== undefined ? { summary: item.clues.summary } : {})
+  }
+}
+
+/** 解析域名基座：会话 cache → IDB 同 host donor。 */
+async function resolveDomainEnrichmentProfile(
+  item: MemoryItem,
+  repository: MemoryItemRepository
+): Promise<{ profile: DomainEnrichmentProfile | null; domainKey: string | null }> {
+  const domainKey = getDomainEnrichmentReuseKey(item)
+  if (!domainKey) {
+    return { profile: null, domainKey: null }
+  }
+  const cached = getCachedDomainEnrichmentProfile(domainKey)
+  if (cached && hasDomainEnrichmentProfileSignal(cached)) {
+    return { profile: cached, domainKey }
+  }
+  const fromDonor = await findMemoryDomainEnrichmentProfile(item, repository)
+  if (fromDonor) {
+    setCachedDomainEnrichmentProfile(domainKey, fromDonor)
+    return { profile: fromDonor, domainKey }
+  }
+  return { profile: null, domainKey }
+}
+
+function rememberDomainProfileFromItem(item: MemoryItem, domainKey: string | null): void {
+  if (!domainKey) {
+    return
+  }
+  const profile = extractDomainEnrichmentProfile(item)
+  if (profile) {
+    setCachedDomainEnrichmentProfile(domainKey, profile)
+  }
+}
+
+async function applyReusedEnrichmentFields(
+  item: MemoryItem,
+  repository: MemoryItemRepository,
+  reusedFields: { tags: string[]; keywords: string[]; entities: string[] },
+  reuseKey: string,
+  reuseSource: 'cache' | 'donor'
+): Promise<'written' | 'unchanged'> {
+  const source = enrichInputFromMemoryItem(item)
+  const rule = enrichMemoryClues(source)
+  const merged = mergeMemoryClueEnrichment({
+    existing: baseExistingFromItem(item),
+    rule,
+    proposal: {
+      tags: reusedFields.tags,
+      keywords: reusedFields.keywords,
+      entities: reusedFields.entities
+    }
+  })
+
+  const nextClues = applyMergedEnrichmentToClues(item.clues, merged)
+  const changed =
+    !sameStringListIgnoreCase(nextClues.tags ?? [], item.clues.tags) ||
+    !sameStringListIgnoreCase(nextClues.keywords ?? [], item.clues.keywords) ||
+    !sameStringListIgnoreCase(nextClues.entities ?? [], item.clues.entities)
+
+  if (!changed) {
+    logger.info('MemoryEnrichment', '复用 enrichment 无新增字段', {
+      itemId: item.id,
+      reuseKey,
+      reuseSource
+    })
+    return 'unchanged'
+  }
+
+  const nextItem: MemoryItem = {
+    ...item,
+    clues: nextClues
+  }
+  await repository.putEnrichmentClues(nextItem)
+  setCachedEnrichmentReuse(reuseKey, {
+    tags: merged.tags,
+    keywords: merged.keywords,
+    entities: merged.entities
+  })
+  rememberDomainProfileFromItem(nextItem, getDomainEnrichmentReuseKey(nextItem))
+  logger.info('MemoryEnrichment', '复用 enrichment 已写回（跳过 LLM）', {
+    itemId: item.id,
+    reuseKey,
+    reuseSource,
+    tagCount: merged.tags.length,
+    keywordCount: merged.keywords.length,
+    entityCount: merged.entities.length
+  })
+  return 'written'
+}
+
 /** 配额熔断是否仍有效（跨 UTC 日后自动解除）。 */
 function isEnrichmentQuotaPauseActive(): boolean {
   if (!quotaPaused) {
@@ -80,6 +201,7 @@ function tripEnrichmentQuotaCircuit(): void {
 export function clearAsyncMemoryLlmEnrichmentQueue(reason = 'manual'): void {
   queueGeneration += 1
   queue = Promise.resolve()
+  clearMemoryDuplicateReuseCaches()
   logger.info('MemoryEnrichment', '异步 LLM 队列已清空', {
     reason,
     generation: queueGeneration
@@ -140,16 +262,39 @@ export async function runAsyncMemoryLlmEnrichment(
     type: item.type
   })
 
+  const reuseKey = getEnrichmentReuseKey(item)
+  if (reuseKey) {
+    const cached = getCachedEnrichmentReuse(reuseKey)
+    if (cached) {
+      return applyReusedEnrichmentFields(item, repository, cached, reuseKey, 'cache')
+    }
+
+    const donor = await findMemoryEnrichmentDonor(item, repository)
+    const donorFields = donor ? extractReusableEnrichmentFields(donor) : null
+    if (donorFields) {
+      return applyReusedEnrichmentFields(item, repository, donorFields, reuseKey, 'donor')
+    }
+  }
+
+  const { profile: domainProfile, domainKey } = await resolveDomainEnrichmentProfile(
+    item,
+    repository
+  )
+  const existing = mergeDomainProfileIntoExisting(baseExistingFromItem(item), domainProfile)
+  if (domainProfile) {
+    logger.info('MemoryEnrichment', '已注入域名基座（继续页面 overlay）', {
+      itemId,
+      domainKey,
+      domainTagCount: domainProfile.tags.length,
+      domainEntityCount: domainProfile.entities.length
+    })
+  }
+
   try {
     const source = enrichInputFromMemoryItem(item)
     const result = await buildMergedMemoryEnrichment({
       source,
-      existing: {
-        tags: item.clues.tags,
-        keywords: item.clues.keywords,
-        entities: item.clues.entities,
-        ...(item.clues.summary !== undefined ? { summary: item.clues.summary } : {})
-      },
+      existing,
       requestLlmProposal: true
     })
 
@@ -158,7 +303,12 @@ export async function runAsyncMemoryLlmEnrichment(
       return 'failed'
     }
 
-    if (result.path !== 'rule_plus_llm') {
+    // LLM 成功，或失败但已有域名基座：仍写回组装结果（域名 ∪ 规则 [∪ 提议]）
+    const shouldWrite =
+      result.path === 'rule_plus_llm' ||
+      (result.path === 'llm_failed_degraded' && Boolean(domainProfile))
+
+    if (!shouldWrite) {
       logger.info('MemoryEnrichment', '异步 LLM 未产生可用提议，不写回', {
         itemId,
         path: result.path
@@ -185,8 +335,19 @@ export async function runAsyncMemoryLlmEnrichment(
     }
     await repository.putEnrichmentClues(nextItem)
 
+    if (reuseKey && result.path === 'rule_plus_llm') {
+      setCachedEnrichmentReuse(reuseKey, {
+        tags: nextClues.tags ?? [],
+        keywords: nextClues.keywords ?? [],
+        entities: nextClues.entities ?? []
+      })
+    }
+    rememberDomainProfileFromItem(nextItem, domainKey)
+
     logger.info('MemoryEnrichment', '异步 LLM enrichment 已写回', {
       itemId,
+      path: result.path,
+      usedDomainProfile: Boolean(domainProfile),
       tagCount: nextClues.tags?.length ?? 0,
       keywordCount: nextClues.keywords?.length ?? 0,
       entityCount: nextClues.entities?.length ?? 0,
@@ -242,4 +403,5 @@ export function resetAsyncMemoryLlmEnrichmentQueueForTests(): void {
   queue = Promise.resolve()
   quotaPaused = false
   quotaPausedUtcDay = null
+  clearMemoryDuplicateReuseCaches()
 }

@@ -11,6 +11,29 @@ alwaysApply: true
 `docs/product/Yiveno-产品文档-v4.0.md`（Normative §0–§7）> **视觉/品牌** `docs/design/Yiveno-设计标准-v1.md`（≈ 根目录 `DESIGN.md`）> 本文件 ≈ `AGENTS.md` > 其它 steering。  
 改架构/消息协议/UI 硬约束 → **先改产品文档再改代码与本文件**；改品牌色/字体/物料气质 → **先改设计标准再改官网 CSS / MD token / logo**。附录 A 非实现范围。
 
+### 文档 ↔ 代码同步（铁律）
+
+**任何代码改动，但凡与现有文档有脱节或差异，必须在同一次交付内更新对应文档**，始终让文档与代码可对照、可审计。报完成 = 代码 + 相关文档已对齐。
+
+| 改动面 | 必须同步的文档 |
+| --- | --- |
+| 产品行为 / Recall / Capture / 配额 / 折叠键 / 消息协议 / 分层边界 | `docs/product/Yiveno-产品文档-v4.0.md`（Normative） |
+| 视觉 / 品牌 / token / 控件气质 | `docs/design/Yiveno-设计标准-v1.md`（及根 `DESIGN.md` 摘要若受影响） |
+| 环境变量 / 部署 / Worker 绑定 | `docs/ENVIRONMENT.md` 等既有工程文档 |
+| 工程约定（日志、倒排、语料适配器等） | 对应 `docs/engineering/*` |
+| AI 行为 / 架构硬规则 | 本文件 + `AGENTS.md`（与产品文档冲突时仍以产品文档为准） |
+
+```
+❌ 禁止：只改代码、文档仍写旧行为 / 旧键 / 旧配额 / 未上线状态
+❌ 禁止：用「以后再补文档」「对话里说过了」代替落盘
+❌ 禁止：为过文档而发明未实现能力，或文档声称已上线但代码未接线
+✅ 允许：小 bugfix 若行为与文档一致 → 可不改文档
+✅ 允许：纯重构 / 注释 / 测试且对外契约不变 → 可不改文档
+✅ 必选：行为、契约、键定义、门禁、配额、消息 type、分层边界任一变化 → 同批改文档
+```
+
+与下方「禁止主动写总结文档 / CHANGELOG / Spec」不冲突：**禁止**无需求地新开总结类 Spec；**必须**维护既有 Normative / 工程权威文档与代码同步。
+
 ---
 
 ## 产品语言（硬规则）
@@ -37,8 +60,9 @@ alwaysApply: true
 ❌ 禁止：擅自 git commit / push
 ❌ 禁止：用 git checkout/restore/reset --hard 静默丢弃工作区 WIP（详见 git-workdir-safety.mdc）
 ❌ 禁止：主动写总结文档、CHANGELOG、Spec（除非用户明确要求）
-✅ bug / 小需求：直接改代码，不写 Spec
-✅ 允许：改代码 + 对话内简述改动
+❌ 禁止：代码与权威文档脱节仍报完成（见上「文档 ↔ 代码同步」铁律）
+✅ bug / 小需求：直接改代码，不写新 Spec；若行为相对文档有差异 → **同批改权威文档**
+✅ 允许：改代码 + 对话内简述改动（文档同步仍必选）
 ✅ 用户要求 commit 时：message **必须中文**（可用 Conventional 前缀如 `feat:` / `fix:`，说明正文用中文）
 ✅ 代码注释 / JSDoc：**必须中文**（标识符、API 专有名词可保留英文）
 ✅ 新增业务逻辑：**必须**有清晰 log + 中文注释（见 docs/engineering/业务日志与注释约定.md）
@@ -238,6 +262,7 @@ Background **无** `window` / `document` / `localStorage`。用全局 `setTimeou
 - [ ] 是否误加中文产品文案 / 非 en locale / 把中文线索当产品必测？
 - [ ] SW 代码是否避开 `window` / `document` / `localStorage`？
 - [ ] 是否在做未上线能力并暗示可用？
+- [ ] 行为/契约相对权威文档是否有差异？有 → **同批改文档**（见「文档 ↔ 代码同步」）
 
 ## 常用命令（真实存在）
 

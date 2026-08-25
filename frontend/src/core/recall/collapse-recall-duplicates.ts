@@ -1,51 +1,22 @@
 /**
  * Recall 结果层重复折叠（库内仍允许并存）。
- * 书签键 = 规范化完整 URL；摘录键 = trim 后正文；跨类型不互折。
- * Also 相对 Top：同键或同规范化域名互斥（避免只显示域名时看起来重复）。
+ * 折叠键定义见 {@link getMemoryFoldKey}；Also 相对 Top 互斥规则在本模块。
  */
 
+import {
+  canonicalizeBookmarkDuplicateUrl,
+  getMemoryFoldKey,
+  normalizeDuplicateHostname,
+  serializeMemoryFoldKey,
+  type MemoryFoldKey
+} from '@/core/memory/derive-memory-duplicate-key'
 import type { MemoryItem } from '@/core/memory/memory-item'
 import type { RecallDuplicateGroup, RecallMatch } from '@/core/recall/recall-result'
 
-/** 折叠键（序列化前）。 */
-export type RecallDuplicateKey =
-  | { kind: 'bookmark'; url: string }
-  | { kind: 'excerpt'; text: string }
-  | { kind: 'singleton'; id: string }
+/** @deprecated 使用 MemoryFoldKey；保留 Recall 模块别名。 */
+export type RecallDuplicateKey = MemoryFoldKey
 
-/** 主机名规范化：小写，去掉前导 www。 */
-export function normalizeDuplicateHostname(hostname: string): string {
-  const lower = hostname.trim().toLowerCase()
-  return lower.startsWith('www.') ? lower.slice(4) : lower
-}
-
-/**
- * 书签折叠用 URL 规范化（展示 URL 仍用原值）。
- * - host 小写、去 www
- * - 去掉默认端口
- * - 非根 path 去尾部 /
- * - 保留 protocol / query / hash
- */
-export function canonicalizeBookmarkDuplicateUrl(url: string): string {
-  try {
-    const parsed = new URL(url.trim())
-    parsed.username = ''
-    parsed.password = ''
-    parsed.hostname = normalizeDuplicateHostname(parsed.hostname)
-    if (
-      (parsed.protocol === 'http:' && parsed.port === '80') ||
-      (parsed.protocol === 'https:' && parsed.port === '443')
-    ) {
-      parsed.port = ''
-    }
-    if (parsed.pathname.length > 1 && parsed.pathname.endsWith('/')) {
-      parsed.pathname = parsed.pathname.replace(/\/+$/, '') || '/'
-    }
-    return parsed.href
-  } catch {
-    return url.trim()
-  }
-}
+export { canonicalizeBookmarkDuplicateUrl, normalizeDuplicateHostname }
 
 /** 书签折叠互斥用域名（与 canonicalize 主机规则一致）。 */
 export function getBookmarkDuplicateDomain(item: MemoryItem): string | null {
@@ -65,34 +36,12 @@ export function getBookmarkDuplicateDomain(item: MemoryItem): string | null {
 
 /** 取折叠键；无法建键时退化为 singleton。 */
 export function getRecallDuplicateKey(item: MemoryItem): RecallDuplicateKey {
-  switch (item.type) {
-    case 'bookmark': {
-      const url = item.payload.url.trim()
-      if (!url) {
-        return { kind: 'singleton', id: item.id }
-      }
-      return { kind: 'bookmark', url: canonicalizeBookmarkDuplicateUrl(url) }
-    }
-    case 'text_excerpt': {
-      const text = item.payload.selectedText.trim()
-      if (!text) {
-        return { kind: 'singleton', id: item.id }
-      }
-      return { kind: 'excerpt', text }
-    }
-  }
+  return getMemoryFoldKey(item)
 }
 
 /** 折叠键稳定序列化（Map / Set 用）。 */
 export function serializeRecallDuplicateKey(key: RecallDuplicateKey): string {
-  switch (key.kind) {
-    case 'bookmark':
-      return `b:${key.url}`
-    case 'excerpt':
-      return `e:${key.text}`
-    case 'singleton':
-      return `id:${key.id}`
-  }
+  return serializeMemoryFoldKey(key)
 }
 
 /**

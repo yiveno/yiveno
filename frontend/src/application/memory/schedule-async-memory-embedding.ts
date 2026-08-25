@@ -8,7 +8,14 @@ import {
   isIndexedDbQuotaExceededError,
   markIndexedDbWriteQuotaExhausted
 } from '@/application/memory/indexeddb-write-quota'
+import { findMemoryEmbeddingDonor } from '@/application/memory/find-memory-enrichment-donor'
+import {
+  clearMemoryDuplicateReuseCaches,
+  getCachedEmbeddingReuse,
+  setCachedEmbeddingReuse
+} from '@/application/memory/memory-duplicate-reuse-cache'
 import { buildEmbeddingTextFromMemoryItem } from '@/core/memory/build-embedding-text'
+import { getEmbedReuseKey } from '@/core/memory/derive-memory-duplicate-key'
 import type { MemoryItem } from '@/core/memory/memory-item'
 import {
   requestWorkerEmbeddings,
@@ -72,6 +79,7 @@ function isAuthEmbedError(error: unknown): boolean {
 export function clearAsyncMemoryEmbeddingQueue(reason = 'manual'): void {
   queueGeneration += 1
   queue = Promise.resolve()
+  clearMemoryDuplicateReuseCaches()
   logger.info('MemoryEmbed', '异步 embed 队列已清空', {
     reason,
     generation: queueGeneration
@@ -190,6 +198,55 @@ export async function runAsyncMemoryEmbedding(
     return 'skipped'
   }
 
+  const reuseKey = getEmbedReuseKey(item)
+  if (reuseKey) {
+    let vectorSource = getCachedEmbeddingReuse(reuseKey)
+    let reuseSource: 'cache' | 'donor' | null = vectorSource ? 'cache' : null
+
+    if (!vectorSource) {
+      const donor = await findMemoryEmbeddingDonor(item, repository, hasCurrentModelEmbedding)
+      const donorEmbedding = donor?.clues.embedding
+      if (
+        donor &&
+        Array.isArray(donorEmbedding) &&
+        donorEmbedding.length > 0 &&
+        donor.clues.embeddingModel === WORKER_EMBEDDING_MODEL
+      ) {
+        vectorSource = {
+          embedding: [...donorEmbedding],
+          embeddingModel: donor.clues.embeddingModel,
+          embeddingDim: donor.clues.embeddingDim ?? donorEmbedding.length
+        }
+        reuseSource = 'donor'
+      }
+    }
+
+    if (vectorSource && reuseSource) {
+      const nextItem: MemoryItem = {
+        ...item,
+        clues: {
+          ...item.clues,
+          embedding: [...vectorSource.embedding],
+          embeddingModel: vectorSource.embeddingModel,
+          embeddingDim: vectorSource.embeddingDim || vectorSource.embedding.length
+        }
+      }
+      const putResult = await putEmbeddingWithQuotaRetry(repository, nextItem)
+      if (!putResult.ok) {
+        logger.warn('MemoryEmbed', '复用 embed 写回失败：IndexedDB 配额耗尽', { itemId })
+        return 'quota'
+      }
+      setCachedEmbeddingReuse(reuseKey, vectorSource)
+      logger.info('MemoryEmbed', '复用 embed 已写回（跳过 Worker）', {
+        itemId,
+        reuseKey,
+        dim: vectorSource.embedding.length,
+        reuseSource
+      })
+      return 'written'
+    }
+  }
+
   const text = buildEmbeddingTextFromMemoryItem(item)
   if (!text.trim()) {
     logger.info('MemoryEmbed', '异步 embed 跳过：无可嵌入文本', { itemId })
@@ -226,6 +283,13 @@ export async function runAsyncMemoryEmbedding(
       dim: vector.length,
       model: nextItem.clues.embeddingModel
     })
+    if (reuseKey) {
+      setCachedEmbeddingReuse(reuseKey, {
+        embedding: vector,
+        embeddingModel: nextItem.clues.embeddingModel ?? WORKER_EMBEDDING_MODEL,
+        embeddingDim: nextItem.clues.embeddingDim ?? vector.length
+      })
+    }
     return 'written'
   } catch (error) {
     if (isAuthEmbedError(error)) {
@@ -348,9 +412,10 @@ export type MemoryEmbedBackfillResult = {
 }
 
 /**
- * Settings Rebuild：同步写回 embedding（不经 fire-and-forget 队列）。
+ * Settings / 内部消息：同步写回 embedding（不经 fire-and-forget 队列）。
  * 避免被 chrome_bookmark_sync_finalize 的 clearAsyncMemoryEmbeddingQueue 清掉。
- * 默认只回填摘录（核心资产）；书签仍可由 bootstrap 异步入队。
+ * 默认只回填摘录（核心资产）；书签仍可由无感维护异步入队。
+ * 用户面已无 Rebuild 按钮；由 {@link scheduleSilentMemoryEmbeddingMaintenance} 调用。
  * 失败不抛，计入 failed。
  */
 export async function backfillMissingMemoryEmbeddings(

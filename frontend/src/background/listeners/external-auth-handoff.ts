@@ -3,7 +3,7 @@
  */
 
 import { absorbLocalProfileIntoAccount } from '@/application/identity/absorb-local-profile-into-account'
-import { enqueueMissingMemoryEmbeddings } from '@/application/memory/schedule-async-memory-embedding'
+import { scheduleSilentMemoryEmbeddingMaintenance } from '@/application/memory/ensure-memory-embedding-maintenance'
 import {
   ExternalAuthHandoffMessageSchema,
   type ExternalAuthHandoffResponse
@@ -77,23 +77,12 @@ export async function applyExternalAuthSessionHandoff(
           userId: session.userId
         })
       })
-    // Hybrid 依赖存量 embedding；不阻塞官网 sendMessage。
-    void enqueueMissingMemoryEmbeddings()
-      .then(result => {
-        flowOk('Auth', '官网 session handoff embedding 回填入队', startedAt, {
-          userId: session.userId,
-          enqueued: result.enqueued,
-          scanned: result.scanned
-        })
-      })
-      .catch(error => {
-        flowFail('Auth', '官网 session handoff embedding 回填入队', startedAt, error, {
-          userId: session.userId
-        })
-      })
+    // Hybrid 依赖存量 embedding；不阻塞官网 sendMessage。无感维护（摘录优先）。
+    scheduleSilentMemoryEmbeddingMaintenance('auth_handoff', 800)
     flowOk('Auth', '官网 session handoff', startedAt, {
       userId: session.userId,
-      absorbDeferred: true
+      absorbDeferred: true,
+      embeddingMaintenanceScheduled: true
     })
     return { ok: true }
   } catch (error) {

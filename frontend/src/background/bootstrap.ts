@@ -1,6 +1,6 @@
 import { ensureChromeBookmarksImported } from '@/application/capture/import-chrome-bookmarks-service'
 import { ensureMemoryEnrichmentBackfilled } from '@/application/memory/ensure-memory-enrichment-backfill'
-import { enqueueMissingMemoryEmbeddings } from '@/application/memory/schedule-async-memory-embedding'
+import { scheduleSilentMemoryEmbeddingMaintenance } from '@/application/memory/ensure-memory-embedding-maintenance'
 import { refreshClueLlmCompleterFromDevConfig } from '@/application/recall/refresh-clue-llm-completer'
 import { syncChromeBookmarkSyncListenersWithIngestSetting } from '@/background/listeners/chrome-bookmark-sync'
 import { registerCommandListeners } from '@/background/listeners/commands'
@@ -22,7 +22,7 @@ const CHROME_BOOKMARK_IMPORT_START_DELAY_MS = 500
 /** enrichment 回填略晚于书签导入启动，降低启动尖峰。 */
 const MEMORY_ENRICHMENT_BACKFILL_START_DELAY_MS = 1500
 
-/** 存量 embedding 回填再晚一拍，避免与 enrichment 抢 Worker 配额。 */
+/** 存量 embedding 无感维护再晚一拍，避免与 enrichment 抢 Worker 配额。 */
 const MEMORY_EMBEDDING_BACKFILL_START_DELAY_MS = 2800
 
 let bootstrapPromise: Promise<void> | null = null
@@ -79,11 +79,7 @@ function scheduleMemoryEnrichmentBackfill(): void {
 }
 
 function scheduleMemoryEmbeddingBackfill(): void {
-  setTimeout(() => {
-    void enqueueMissingMemoryEmbeddings().catch(error => {
-      logger.error('Background', '存量 embedding 回填入队失败（下次启动将重试）', error)
-    })
-  }, MEMORY_EMBEDDING_BACKFILL_START_DELAY_MS)
+  scheduleSilentMemoryEmbeddingMaintenance('bootstrap', MEMORY_EMBEDDING_BACKFILL_START_DELAY_MS)
 }
 
 /** 幂等启动 Background；并发调用合并为一次 bootstrap。 */

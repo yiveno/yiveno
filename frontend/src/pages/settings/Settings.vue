@@ -29,7 +29,6 @@ import {
   fetchSyncStatus,
   fetchUserSettings,
   openChromeShortcutsPage,
-  backfillMemoryEmbeddings,
   fetchAiHostedQuota,
   restoreLatestSyncBackup,
   setSyncEnabled,
@@ -42,7 +41,6 @@ import {
   tCommandsError,
   tSettingsError
 } from '@/infrastructure/i18n/background-error'
-import { tMemoryError } from '@/infrastructure/i18n/memory-error'
 import { t } from '@/infrastructure/i18n/t'
 import { getWebsiteBaseUrl } from '@/infrastructure/browser/website-page'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
@@ -79,8 +77,6 @@ const settingsError = ref('')
 const savingSelectionToolbar = ref(false)
 const savingChromeBookmarkIngest = ref(false)
 const savingAiFeatures = ref(false)
-const embeddingBackfillWorking = ref(false)
-const embeddingBackfillMessage = ref('')
 const hostedQuotaLoading = ref(false)
 const hostedQuotaText = ref('')
 const hostedQuotaError = ref('')
@@ -323,44 +319,6 @@ async function handleAiFeaturesToggle(nextValue: boolean) {
     settingsError.value = t('settings_error_update')
   } finally {
     savingAiFeatures.value = false
-  }
-}
-
-/** 将缺 embedding 的本机记忆入队回填（须登录）。 */
-async function handleEmbeddingBackfill() {
-  embeddingBackfillWorking.value = true
-  embeddingBackfillMessage.value = ''
-  settingsError.value = ''
-  try {
-    const response = await backfillMemoryEmbeddings()
-    if (!response.ok) {
-      settingsError.value = tMemoryError(response.errorCode)
-      return
-    }
-    if (!('enqueued' in response)) {
-      settingsError.value = t('settings_error_update')
-      return
-    }
-    const written = response.enqueued
-    const failed = response.failed ?? 0
-    const attempted = written + failed
-    if (response.quotaHit && written === 0) {
-      embeddingBackfillMessage.value = t('settings_embedding_backfill_quota')
-    } else if (written === 0 && attempted > 0) {
-      embeddingBackfillMessage.value = t('settings_embedding_backfill_none')
-    } else if (failed > 0) {
-      embeddingBackfillMessage.value = t('settings_embedding_backfill_partial', [
-        String(written),
-        String(attempted),
-        String(failed)
-      ])
-    } else {
-      embeddingBackfillMessage.value = t('settings_embedding_backfill_done', [String(written)])
-    }
-  } catch {
-    settingsError.value = t('settings_error_update')
-  } finally {
-    embeddingBackfillWorking.value = false
   }
 }
 
@@ -1615,30 +1573,6 @@ onUnmounted(() => {
 
             <div class="settings-card-stack settings-card-stack--spaced">
               <SettingsActionRow
-                :title="t('settings_embedding_backfill')"
-                :subtitle="t('settings_ai_embedding_hint')"
-              >
-                <AppButton
-                  type="button"
-                  :disabled="
-                    embeddingBackfillWorking ||
-                    !signedIn ||
-                    !aiFeaturesEnabled ||
-                    settingsState !== 'ready'
-                  "
-                  :title="t('settings_embedding_backfill')"
-                  @click="handleEmbeddingBackfill"
-                  variant="outlined"
-                >
-                  {{
-                    embeddingBackfillWorking
-                      ? t('settings_embedding_backfill_working')
-                      : t('settings_embedding_backfill_action')
-                  }}
-                </AppButton>
-              </SettingsActionRow>
-
-              <SettingsActionRow
                 :title="t('settings_privacy_open_policy')"
                 :subtitle="t('settings_privacy_open_policy_hint')"
               >
@@ -1653,12 +1587,6 @@ onUnmounted(() => {
                 </AppButton>
               </SettingsActionRow>
             </div>
-            <p v-if="!signedIn" class="settings-status" role="status">
-              {{ t('settings_embedding_backfill_auth_required') }}
-            </p>
-            <p v-if="embeddingBackfillMessage" class="settings-status" role="status">
-              {{ embeddingBackfillMessage }}
-            </p>
 
             <p v-if="settingsError" class="settings-error" role="alert">{{ settingsError }}</p>
           </div>
