@@ -82,8 +82,3 @@ export function clearMemoryDuplicateReuseCaches(): void {
   domainProfileByKey.clear()
   embeddingReuseByKey.clear()
 }
-
-/** 测试专用。 */
-export function resetMemoryDuplicateReuseCachesForTests(): void {
-  clearMemoryDuplicateReuseCaches()
-}

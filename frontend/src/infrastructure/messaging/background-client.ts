@@ -172,14 +172,6 @@ export async function recordRecallSettle(
   return sendBackgroundMessage<MemoryBackgroundResponse>(message)
 }
 
-/** 回填本机缺失 embedding（须登录；Worker 日配额分档）。 */
-export async function backfillMemoryEmbeddings(): Promise<MemoryBackgroundResponse> {
-  return sendBackgroundMessage<MemoryBackgroundResponse>({
-    scope: 'background',
-    type: 'BACKFILL_MEMORY_EMBEDDINGS'
-  })
-}
-
 /** 查询 Chrome 书签导入进度。 */
 export async function fetchChromeBookmarkImportStatus(): Promise<ChromeBookmarkImportStatusResponse> {
   const message: GetChromeBookmarkImportStatusMessage = {
