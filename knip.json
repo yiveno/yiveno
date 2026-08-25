@@ -43,7 +43,7 @@
       "project": ["src/**/*.ts"]
     },
     "website": {
-      "entry": ["src/pages/**/*.astro", "src/**/*.vue"],
+      "entry": ["src/pages/**/*.astro", "src/**/*.vue", "src/**/*.test.ts"],
       "project": ["src/**/*.{astro,vue,ts}"]
     },
     "packages/*": {

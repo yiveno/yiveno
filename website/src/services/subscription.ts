@@ -64,14 +64,3 @@ export async function loadUserSubscription(accessToken: string): Promise<Subscri
     return { status: 'error', errorCode: 'network_error' }
   }
 }
-
-/**
- * @deprecated 优先用 `loadUserSubscription`；失败时返回 null 会丢失 error 语义。
- */
-export async function getUserSubscription(accessToken: string): Promise<UserSubscription | null> {
-  const result = await loadUserSubscription(accessToken)
-  if (result.status === 'ok') {
-    return result.subscription
-  }
-  return null
-}
