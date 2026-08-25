@@ -13,6 +13,8 @@ import {
   shouldRecallByConstraintNeighborhood
 } from '@/core/recall/orchestrate-keyword-recall'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
+import { filterMemoryItemsByKeyword } from '@/core/recall/keyword-filter'
+import { logger } from '@/infrastructure/logging/logger'
 import { keywordIndexRepository } from '@/infrastructure/indexeddb/keyword-index-repository'
 import {
   memoryItemRepository,
@@ -54,6 +56,21 @@ export class MemoryItemService {
   }
 
   /**
+   * 倒排候选并入摘录：书签 posting 常漏摘录 token，而摘录才是核心资产。
+   * 摘录放前面，避免 inverted 已达 cap 时被 slice 丢掉。
+   */
+  private async mergeExcerptsIntoCandidates(items: MemoryItem[]): Promise<MemoryItem[]> {
+    const excerpts = await this.repository.listByOwner({ type: 'text_excerpt', limit: 500 })
+    if (excerpts.length === 0) {
+      return items
+    }
+    const excerptIds = new Set(excerpts.map(item => item.id))
+    const trailing = items.filter(item => !excerptIds.has(item.id))
+    // 摘录优先，避免倒排已达 cap 时 slice 截断掉核心资产
+    return [...excerpts, ...trailing]
+  }
+
+  /**
    * Recall 候选加载：优先关键词倒排预过滤；失败 / 无查询 token 则 fallback 全表扫描。
    * 约束邻域（无内容词 + 时间/刚存 + 类型）必须全表扫：倒排会按类型词面（如 bookmark）查 posting，
    * 真实书签标题几乎不含该词 → 空候选误报 no_match。
@@ -66,24 +83,57 @@ export class MemoryItemService {
     const limit = input.limit ?? RECALL_SCAN_LIMIT
 
     if (shouldRecallByConstraintNeighborhood(input.parsed)) {
-      const items = await this.repository.listByOwner({ limit })
-      return { items, source: 'scan' }
+      const items = await this.mergeExcerptsIntoCandidates(
+        await this.repository.listByOwner({ limit })
+      )
+      return { items: items.slice(0, limit), source: 'scan' }
     }
 
     const searchClue = buildSearchClueFromParsed(input.parsed) || input.rawClue
 
     try {
       const lookup = await keywordIndexRepository.lookupCandidateIds(searchClue)
-      if (lookup != null) {
+      // 空 id 不能当「库内无命中」：登录 remap 后 posting 可能与 Memory 不一致，
+      // 否则整库仍在 IndexedDB 却每条线索都 no_match。
+      if (lookup != null && lookup.ids.length > 0) {
         const items = await this.repository.getManyByIds(lookup.ids)
-        return { items: items.slice(0, limit), source: 'inverted' }
+        if (items.length > 0) {
+          const merged = await this.mergeExcerptsIntoCandidates(items)
+          const keywordProbe = filterMemoryItemsByKeyword(merged, searchClue, { limit: 1 })
+          if (keywordProbe.length === 0) {
+            logger.info('Memory', 'Recall 候选：倒排预过滤无关键词命中，降级全表扫', {
+              invertedCount: items.length,
+              mergedCount: merged.length,
+              rebuilt: lookup.rebuilt
+            })
+          } else {
+            logger.info('Memory', 'Recall 候选：倒排预过滤', {
+              candidateCount: merged.length,
+              excerptCount: merged.length - items.length,
+              rebuilt: lookup.rebuilt
+            })
+            return { items: merged.slice(0, limit), source: 'inverted' }
+          }
+        }
+        logger.info('Memory', 'Recall 候选：倒排 id 无法读回条目，降级全表扫', {
+          lookupCount: lookup.ids.length
+        })
+      } else if (lookup != null) {
+        logger.info('Memory', 'Recall 候选：倒排无命中，降级全表扫', {
+          rebuilt: lookup.rebuilt
+        })
       }
-    } catch {
-      // 倒排异常时降级全表扫，不阻断找回
+    } catch (error) {
+      logger.warn('Memory', 'Recall 候选：倒排查询失败，降级全表扫', {
+        error: error instanceof Error ? error.message : String(error)
+      })
     }
 
-    const items = await this.repository.listByOwner({ limit })
-    return { items, source: 'scan' }
+    const items = await this.mergeExcerptsIntoCandidates(
+      await this.repository.listByOwner({ limit })
+    )
+    logger.info('Memory', 'Recall 候选：全表扫描', { candidateCount: items.length })
+    return { items: items.slice(0, limit), source: 'scan' }
   }
 
   /** 按 id 读取当前用户的 MemoryItem。 */

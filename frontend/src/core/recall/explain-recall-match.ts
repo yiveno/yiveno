@@ -20,7 +20,9 @@ const FIELD_LABEL_KEYS: Record<string, string> = {
   url: 'explain_field_url',
   keywords: 'explain_field_keywords',
   tags: 'explain_field_tags',
-  note: 'explain_field_note'
+  note: 'explain_field_note',
+  embedding: 'explain_field_embedding',
+  hybridRrf: 'explain_field_hybrid_rrf'
 }
 
 const FIELD_SHORT_LABEL_KEYS: Record<string, string> = {
@@ -33,7 +35,9 @@ const FIELD_SHORT_LABEL_KEYS: Record<string, string> = {
   url: 'explain_field_short_url',
   keywords: 'explain_field_short_keywords',
   tags: 'explain_field_short_tags',
-  note: 'explain_field_short_note'
+  note: 'explain_field_short_note',
+  embedding: 'explain_field_short_embedding',
+  hybridRrf: 'explain_field_short_hybrid_rrf'
 }
 
 /** 与 keyword-filter 一致的字段权重，用于选择主因字段。 */
@@ -47,7 +51,11 @@ const FIELD_PRIORITY: Record<string, number> = {
   url: 10,
   keywords: 12,
   tags: 12,
-  note: 26
+  note: 26,
+  /** 语义近邻：弱于主文词面，但仍可作唯一主因。 */
+  embedding: 15,
+  /** RRF 标记字段：解释时不作主因。 */
+  hybridRrf: 0
 }
 
 const TOKEN_QUOTE_MAX = 12

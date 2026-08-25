@@ -26,7 +26,9 @@ export const RECALL_EVAL_IDS = {
   /** Type B：正文泛化，靠 clues.note 找回 */
   typeBRetentionNote: '11111111-1111-4111-8111-111111111116',
   /** RT 影评摘录：host 线索对齐 */
-  oppenheimerRtExcerpt: '11111111-1111-4111-8111-111111111117'
+  oppenheimerRtExcerpt: '11111111-1111-4111-8111-111111111117',
+  /** Gregory Peck / Million Pound Note 英文摘录 */
+  millionPoundPeckExcerpt: '11111111-1111-4111-8111-111111111118'
 } as const
 
 export type RecallEvalItemId = (typeof RECALL_EVAL_IDS)[keyof typeof RECALL_EVAL_IDS]

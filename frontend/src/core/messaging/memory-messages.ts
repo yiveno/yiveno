@@ -169,8 +169,13 @@ export type MemoryDismissSuccessResponse = {
 
 export type MemoryEmbeddingBackfillSuccessResponse = {
   ok: true
+  /** 已成功写回 embedding 的条数（Settings 文案沿用 enqueued 字段名） */
   enqueued: number
   scanned: number
+  /** 失败条数（含配额中断） */
+  failed?: number
+  /** IndexedDB 配额耗尽导致中断 */
+  quotaHit?: boolean
 }
 
 export type MemoryItemErrorResponse = {

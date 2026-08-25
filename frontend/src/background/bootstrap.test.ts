@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const {
   ensureChromeBookmarksImportedMock,
   ensureMemoryEnrichmentBackfilledMock,
+  enqueueMissingMemoryEmbeddingsMock,
   ensureSidePanelOpensOnActionClickMock,
   getCurrentOwnerIdMock,
   getOrCreateLocalProfileMock,
@@ -20,6 +21,7 @@ const {
     updated: 0,
     version: 1
   })),
+  enqueueMissingMemoryEmbeddingsMock: vi.fn(async () => ({ enqueued: 0, scanned: 0 })),
   ensureSidePanelOpensOnActionClickMock: vi.fn(async () => undefined),
   getCurrentOwnerIdMock: vi.fn(async () => 'owner-1'),
   getOrCreateLocalProfileMock: vi.fn(async () => ({
@@ -41,6 +43,10 @@ vi.mock('@/application/capture/import-chrome-bookmarks-service', () => ({
 
 vi.mock('@/application/memory/ensure-memory-enrichment-backfill', () => ({
   ensureMemoryEnrichmentBackfilled: ensureMemoryEnrichmentBackfilledMock
+}))
+
+vi.mock('@/application/memory/schedule-async-memory-embedding', () => ({
+  enqueueMissingMemoryEmbeddings: enqueueMissingMemoryEmbeddingsMock
 }))
 
 vi.mock('@/infrastructure/browser/side-panel', () => ({
@@ -119,5 +125,15 @@ describe('ensureBackgroundBootstrapped', () => {
     await vi.advanceTimersByTimeAsync(1500)
 
     expect(ensureMemoryEnrichmentBackfilledMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('延迟启动存量 embedding 回填入队', async () => {
+    await ensureBackgroundBootstrapped()
+
+    expect(enqueueMissingMemoryEmbeddingsMock).not.toHaveBeenCalled()
+
+    await vi.advanceTimersByTimeAsync(2800)
+
+    expect(enqueueMissingMemoryEmbeddingsMock).toHaveBeenCalledTimes(1)
   })
 })

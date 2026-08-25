@@ -5,7 +5,7 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
-    "dev": "bun ../scripts/dev-env.mjs sync --profile=development --target=backend --quiet && NODE_EXTRA_CA_CERTS=/etc/ssl/cert.pem wrangler dev --local --port 8787",
+    "dev": "bun ../scripts/dev-env.mjs sync --profile=development --target=backend --quiet && NODE_EXTRA_CA_CERTS=/etc/ssl/cert.pem wrangler dev --port 8787",
     "build": "echo 'Backend: Cloudflare Worker 无需构建'",
     "typecheck": "tsc --noEmit --skipLibCheck",
     "typecheck:force": "tsc --noEmit --skipLibCheck",

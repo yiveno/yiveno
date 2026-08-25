@@ -308,9 +308,15 @@ export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
     }
 
     const stillBound = await getAccountBinding()
-    // 已登录会话兜底：历史登录若未归并，打开 Popup/设置时补一次（幂等）
+    // 已登录会话兜底：历史登录若未归并，读状态时补一次（幂等）。
+    // 归并不阻塞 / 不抛穿 GET_AUTH_STATE：全库 remap 遇 IDB 配额失败时，
+    // 若 await 会导致 AUTH_STATE_READ_FAILED，Header 误判为未登录。
     if (stillBound && session) {
-      await absorbLocalProfileIntoAccount(stillBound.accountId)
+      void absorbLocalProfileIntoAccount(stillBound.accountId).catch(error => {
+        flowFail('Auth', 'GET_AUTH_STATE 本地档归并', startedAt, error, {
+          accountId: stillBound.accountId
+        })
+      })
       // 仅 token 可信时后台刷新订阅，避免 uncertain 用旧 access 刷 invalid_token
       if (authRevalidateStatus === 'valid' || authRevalidateStatus === 'skipped') {
         void refreshSubscriptionSnapshot().catch(() => undefined)

@@ -2,6 +2,12 @@ import { readChromeBookmarkImportState } from '@/application/capture/chrome-book
 import { clearAsyncMemoryEmbeddingQueue } from '@/application/memory/schedule-async-memory-embedding'
 import { clearAsyncMemoryLlmEnrichmentQueue } from '@/application/memory/schedule-async-memory-llm-enrichment'
 import { invalidateBookmarkSyncAlignmentCache } from '@/application/memory/bookmark-sync-alignment-cache'
+import {
+  isIndexedDbQuotaExceededError,
+  isIndexedDbWriteQuotaExhausted,
+  markIndexedDbWriteQuotaExhausted,
+  resetIndexedDbWriteQuotaExhaustedForTests
+} from '@/application/memory/indexeddb-write-quota'
 import { memoryItemService } from '@/application/memory/memory-item-service'
 import {
   CHROME_BOOKMARK_SYNC_PENDING_STORAGE_KEY,
@@ -223,6 +229,12 @@ export async function handleChromeBookmarkRemoved(chromeBookmarkId: string): Pro
  */
 export async function flushPendingChromeBookmarkSync(): Promise<void> {
   await ensurePendingHydrated()
+
+  if (isIndexedDbWriteQuotaExhausted()) {
+    logger.warn('ChromeBookmarkSync', '冲刷 pending 已跳过（本会话 IndexedDB 配额已耗尽）')
+    return
+  }
+
   const removeIds = [...pendingRemoveIds]
   const upsertIds = [...pendingUpsertIds]
   logger.info('ChromeBookmarkSync', '冲刷 pending 开始', {
@@ -242,8 +254,9 @@ export async function flushPendingChromeBookmarkSync(): Promise<void> {
     }
   }
 
-  for (const chromeBookmarkId of upsertIds) {
-    if (removeIds.includes(chromeBookmarkId)) {
+  for (let index = 0; index < upsertIds.length; index += 1) {
+    const chromeBookmarkId = upsertIds[index]
+    if (!chromeBookmarkId || removeIds.includes(chromeBookmarkId)) {
       continue
     }
 
@@ -255,6 +268,21 @@ export async function flushPendingChromeBookmarkSync(): Promise<void> {
       }
       await syncChromeBookmarkNode(node)
     } catch (error) {
+      if (isIndexedDbQuotaExceededError(error)) {
+        for (let rest = index; rest < upsertIds.length; rest += 1) {
+          const remainingId = upsertIds[rest]
+          if (remainingId && !removeIds.includes(remainingId)) {
+            pendingUpsertIds.add(remainingId)
+          }
+        }
+        await persistPendingQueue()
+        markIndexedDbWriteQuotaExhausted('chrome_bookmark_flush')
+        logger.error('ChromeBookmarkSync', '冲刷因 IndexedDB 配额耗尽中止，后续本会话不再灌库', {
+          chromeBookmarkId,
+          remainingUpserts: upsertIds.length - index
+        })
+        break
+      }
       logger.error('ChromeBookmarkSync', '冲刷 upsert 事件失败', { chromeBookmarkId, error })
     }
   }
@@ -283,19 +311,38 @@ export async function reconcileChromeBookmarksWithMemory(): Promise<{
     return { upserted: 0, skipped: true }
   }
 
+  if (isIndexedDbWriteQuotaExhausted()) {
+    logger.warn('ChromeBookmarkSync', 'reconcile 已跳过（本会话 IndexedDB 配额已耗尽）')
+    return { upserted: 0, skipped: true }
+  }
+
   logger.info('ChromeBookmarkSync', 'reconcile 开始')
   const leaves = await readChromeBookmarkLeaves()
   const alignment = await memoryItemService.listBookmarkSyncAlignment()
   let upserted = 0
 
-  for (const leaf of leaves) {
-    if (alignment.byChromeBookmarkId.has(leaf.chromeBookmarkId)) {
+  for (let index = 0; index < leaves.length; index += 1) {
+    const leaf = leaves[index]
+    if (!leaf || alignment.byChromeBookmarkId.has(leaf.chromeBookmarkId)) {
       continue
     }
     try {
       await memoryItemService.upsertBookmarkFromChrome(leafToUpsertInput(leaf))
       upserted += 1
     } catch (error) {
+      if (isIndexedDbQuotaExceededError(error)) {
+        markIndexedDbWriteQuotaExhausted('chrome_bookmark_reconcile')
+        logger.error(
+          'ChromeBookmarkSync',
+          'reconcile 因 IndexedDB 配额耗尽中止，后续本会话不再灌库',
+          {
+            chromeBookmarkId: leaf.chromeBookmarkId,
+            skippedRemaining: leaves.length - index - 1,
+            leafCount: leaves.length
+          }
+        )
+        break
+      }
       logger.error('ChromeBookmarkSync', 'reconcile upsert 失败', {
         chromeBookmarkId: leaf.chromeBookmarkId,
         error
@@ -305,7 +352,8 @@ export async function reconcileChromeBookmarksWithMemory(): Promise<{
 
   logger.info('ChromeBookmarkSync', 'reconcile 完成', {
     leafCount: leaves.length,
-    upserted
+    upserted,
+    quotaExhausted: isIndexedDbWriteQuotaExhausted()
   })
   return { upserted, skipped: false }
 }
@@ -328,4 +376,7 @@ export function resetPendingChromeBookmarkSyncForTests(): void {
   pendingRemoveIds.clear()
   pendingHydrated = false
   pendingHydratePromise = null
+  resetIndexedDbWriteQuotaExhaustedForTests()
 }
+
+export { isIndexedDbQuotaExceededError }

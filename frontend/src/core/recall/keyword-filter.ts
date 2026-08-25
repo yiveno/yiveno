@@ -741,6 +741,39 @@ export function recallTopPickBlockedByGenericPageTitleGate(
   return matchedFields.includes('pageTitle')
 }
 
+/**
+ * clue 含非泛词锚点（如 atomic/bomb），但条目词面只沾到泛词（如 review）→ 真假阳性。
+ * Hybrid 关键词池应丢弃，避免压过语义近邻（#4 Oppenheimer）。
+ */
+export function isGenericOnlyHitAgainstSpecificClue(clue: string, item: MemoryItem): boolean {
+  const termTokens = tokenizeRecallClueDetailed(clue).filter(
+    entry => entry.kind === 'term' || entry.kind === 'phrase'
+  )
+  const specificTokens = termTokens
+    .map(entry => entry.token)
+    .filter(token => !isGenericRecallToken(token, token.includes(' ') ? 'phrase' : 'term'))
+  if (specificTokens.length === 0) {
+    return false
+  }
+
+  const haystack = collectSearchableFields(item)
+    .map(field => normalizeRecallText(field.text))
+    .join('\n')
+  const compactHay = compactRecallText(haystack)
+  const hitSpecific = specificTokens.some(token => {
+    const normalized = normalizeRecallText(token)
+    if (!normalized) {
+      return false
+    }
+    if (haystack.includes(normalized)) {
+      return true
+    }
+    const compact = compactRecallText(token)
+    return compact.length > 0 && compactHay.includes(compact)
+  })
+  return !hitSpecific
+}
+
 /** 对 MemoryItem 列表执行关键词 Filter 并排序。 */
 export function filterMemoryItemsByKeyword(
   items: MemoryItem[],

@@ -8,27 +8,28 @@ workers_dev = true
 # 每天北京时间 03:17（UTC 19:17）业务数据清理；每小时 :07 订阅对账（§A.3.2）
 crons = ["17 19 * * *", "7 * * * *"]
 
-# ===================== 可观测性配置 =====================
-# 用于监控 Worker 的运行状况、性能和错误
-# logs 与 traces 可同时开启（各自采样率独立配置）
+# ===================== 可观测性配置（默认 / 非 production 部署）=====================
+# 本地 `wrangler deploy`（无 --env）与开发：100% 采样，便于排障。
+# 生产见下方 `[env.production.observability]`（更低采样控成本）。
+# 注意：head sampling 按「整次调用」抽样；未抽中的请求（含失败）不会落 Workers Logs。
 [observability]
 enabled = true
-head_sampling_rate = 1  # 采样率：1 = 100%（开发阶段），生产环境可降低到 0.1
+head_sampling_rate = 1
 
-# 日志配置（已启用）
 [observability.logs]
 enabled = true
 head_sampling_rate = 1
-persist = true           # 持久化存储日志
-invocation_logs = true   # 记录每次调用的详细信息
+persist = true
+invocation_logs = true
 
-# 追踪：可与 logs 并存；生产可按需开启并降低采样
+# 追踪：单体 Worker 阶段默认关；流量大或跨服务排障再开
 [observability.traces]
 enabled = false
 persist = false
 head_sampling_rate = 0
 
-# 本地 `wrangler dev` / 默认部署用。生产见 [env.production]
+# 本地 `wrangler dev`：Worker 代码在本机跑；binding 见各块 `remote`（勿用 `--local`，否则 Workers AI 不可用）。
+# 默认部署用本段；生产见 [env.production]
 # name 必须是 yiveno：`--env production` → 脚本名 yiveno-production。
 # 若写成 yiveno-production 再加 --env production，会变成 yiveno-production-production。
 [vars]
@@ -54,9 +55,13 @@ BILLING_FOUNDING_ENABLED = "false"
 binding = "AI_USAGE_KV"
 id = "7e3a0b3f52654b7194ed21015f1779c5"
 preview_id = "1bc22ced5a424d55ad14ca9f748ba900"
+# 开发：连 preview KV（配额/用量与线上一致）；生产 deploy 忽略此字段
+remote = true
 
 [ai]
 binding = "AI"
+# Workers AI 无本地模拟；`wrangler dev` 默认走远程（勿配合 `--local`）
+remote = true
 
 # 产品欢迎信（§A.3）；不限制 destination，以便发给付款用户
 [[send_email]]
@@ -67,6 +72,23 @@ name = "EMAIL"
 [env.production]
 workers_dev = true
 routes = [{ pattern = "api.yiveno.com", custom_domain = true }]
+
+# 生产：25% 采样（早期流量低、兼顾 webhook/对账排障；量上来可再降到 0.1）
+# Metrics（请求量/错误率/延迟）仍全量，不受此影响。
+[env.production.observability]
+enabled = true
+head_sampling_rate = 0.25
+
+[env.production.observability.logs]
+enabled = true
+head_sampling_rate = 0.25
+persist = true
+invocation_logs = true
+
+[env.production.observability.traces]
+enabled = false
+persist = false
+head_sampling_rate = 0
 
 [env.production.vars]
 SUPABASE_URL = "https://ugxgxytykxblctsyulsg.supabase.co"

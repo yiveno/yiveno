@@ -4,6 +4,8 @@ import { isChromeBookmarkIngestEnabled } from '@/application/capture/chrome-book
 import { invalidateBookmarkLibraryTreeOnChromeChange } from '@/background/handlers/import-handler'
 import { invalidateBookmarkSyncAlignmentCache } from '@/application/memory/bookmark-sync-alignment-cache'
 import { memoryItemService } from '@/application/memory/memory-item-service'
+import { backfillMissingMemoryEmbeddings } from '@/application/memory/schedule-async-memory-embedding'
+import { getAuthSession } from '@/infrastructure/identity/auth-session-service'
 import type { MemoryBackgroundResponse, MemoryErrorCode } from '@/core/messaging/memory-messages'
 import {
   MemoryErrorCodeSchema,
@@ -275,20 +277,24 @@ export async function handleRecordRecallSettle(
   }
 }
 
-/** 将缺失 embedding 的本机条目入队回填（须登录；Worker 日配额分档）。 */
+/** Settings Rebuild：同步写回缺失 embedding（须登录；避免被书签 sync 清队列）。 */
 export async function handleBackfillMemoryEmbeddings(): Promise<MemoryBackgroundResponse> {
   const startedAt = flowStart('Memory', '回填 embedding')
   try {
-    const { getAuthSession } = await import('@/infrastructure/identity/auth-session-service')
     if (!(await getAuthSession())?.accessToken) {
       flowOk('Memory', '回填 embedding', startedAt, { reason: 'not_signed_in' })
       return toErrorResponse('EMBEDDING_BACKFILL_AUTH_REQUIRED')
     }
-    const { enqueueMissingMemoryEmbeddings } =
-      await import('@/application/memory/schedule-async-memory-embedding')
-    const result = await enqueueMissingMemoryEmbeddings()
+    const result = await backfillMissingMemoryEmbeddings()
     flowOk('Memory', '回填 embedding', startedAt, result)
-    return { ok: true, enqueued: result.enqueued, scanned: result.scanned }
+    // enqueued 对外表示「已写入条数」
+    return {
+      ok: true,
+      enqueued: result.written,
+      scanned: result.scanned,
+      failed: result.failed,
+      quotaHit: result.quotaHit
+    }
   } catch (error) {
     flowFail('Memory', '回填 embedding', startedAt, error)
     return toErrorResponse('MEMORY_OPERATION_FAILED', error)

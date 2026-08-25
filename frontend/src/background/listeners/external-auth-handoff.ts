@@ -3,6 +3,7 @@
  */
 
 import { absorbLocalProfileIntoAccount } from '@/application/identity/absorb-local-profile-into-account'
+import { enqueueMissingMemoryEmbeddings } from '@/application/memory/schedule-async-memory-embedding'
 import {
   ExternalAuthHandoffMessageSchema,
   type ExternalAuthHandoffResponse
@@ -73,6 +74,20 @@ export async function applyExternalAuthSessionHandoff(
       })
       .catch(error => {
         flowFail('Auth', '官网 session handoff 本地档归并', startedAt, error, {
+          userId: session.userId
+        })
+      })
+    // Hybrid 依赖存量 embedding；不阻塞官网 sendMessage。
+    void enqueueMissingMemoryEmbeddings()
+      .then(result => {
+        flowOk('Auth', '官网 session handoff embedding 回填入队', startedAt, {
+          userId: session.userId,
+          enqueued: result.enqueued,
+          scanned: result.scanned
+        })
+      })
+      .catch(error => {
+        flowFail('Auth', '官网 session handoff embedding 回填入队', startedAt, error, {
           userId: session.userId
         })
       })

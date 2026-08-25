@@ -54,3 +54,41 @@ export function sortIdsByRrf(lists: string[][], k = 60): string[] {
     })
     .map(([id]) => id)
 }
+
+/** Hybrid 语义近邻：从全扫描集取 Top-K（不限关键词池）。 */
+export const HYBRID_SEMANTIC_NEIGHBOR_LIMIT = 24
+
+/** 过低余弦视为噪声，不进入融合。 */
+export const HYBRID_MIN_COSINE_SIMILARITY = 0.28
+
+/** 无词面命中时，用余弦映射到 RecallMatch.score 的系数（0.4 → 20，可过 Top Pick 下限）。 */
+export const HYBRID_SEMANTIC_SCORE_SCALE = 50
+
+/**
+ * 按 query 向量对已有 embedding 的条目排序，取过阈值的近邻。
+ * 供 Hybrid 与关键词池并集；关键词为空时仍可单独成结果。
+ */
+export function rankIdsByCosineToQuery(
+  queryVector: number[],
+  candidates: { id: string; embedding: number[] }[],
+  options?: { limit?: number; minSimilarity?: number }
+): { id: string; similarity: number }[] {
+  const limit = options?.limit ?? HYBRID_SEMANTIC_NEIGHBOR_LIMIT
+  const minSimilarity = options?.minSimilarity ?? HYBRID_MIN_COSINE_SIMILARITY
+  return candidates
+    .map(candidate => ({
+      id: candidate.id,
+      similarity: cosineSimilarity(queryVector, candidate.embedding)
+    }))
+    .filter(entry => entry.similarity >= minSimilarity)
+    .sort((left, right) => right.similarity - left.similarity)
+    .slice(0, Math.max(0, limit))
+}
+
+/** 语义-only 命中的词面分：四舍五入后的余弦 × 系数。 */
+export function scoreFromCosineSimilarity(
+  similarity: number,
+  scale = HYBRID_SEMANTIC_SCORE_SCALE
+): number {
+  return Math.round(similarity * scale)
+}

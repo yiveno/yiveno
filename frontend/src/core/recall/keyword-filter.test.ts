@@ -12,6 +12,7 @@ import {
   expandRecallHostClueVariants,
   filterMemoryItemsByKeyword,
   isGenericRecallClue,
+  isGenericOnlyHitAgainstSpecificClue,
   recallTopPickBlockedByGenericPageTitleGate,
   scoreMemoryItem,
   tokenizeRecallClue
@@ -335,6 +336,29 @@ describe('keyword-filter', () => {
     expect(isGenericRecallClue('rottentomatoes.com')).toBe(false)
   })
 
+  it('含锚点 clue 时，仅泛词沾边的条目视为假阳性', () => {
+    const weekly = createTextExcerptMemoryItem({
+      ...baseContext,
+      payload: {
+        selectedText: 'This week: popup empty-state tiers and library browse.',
+        sourceUrl: 'https://notes.example.com/weekly-review',
+        pageTitle: 'Weekly review'
+      }
+    })
+    const oppenheimer = createTextExcerptMemoryItem({
+      ...baseContext,
+      payload: {
+        selectedText:
+          'A powerful, visually spectacular drama about the atomic bomb and Oppenheimer.',
+        sourceUrl: 'https://www.rottentomatoes.com/m/oppenheimer_2023',
+        pageTitle: 'Oppenheimer (2023) | Rotten Tomatoes'
+      }
+    })
+    const clue = 'atomic bomb movie review'
+    expect(isGenericOnlyHitAgainstSpecificClue(clue, weekly)).toBe(true)
+    expect(isGenericOnlyHitAgainstSpecificClue(clue, oppenheimer)).toBe(false)
+  })
+
   it('泛词 clue 仅凭 pageTitle 命中时阻断 Top Pick', () => {
     expect(recallTopPickBlockedByGenericPageTitleGate('movie review I saved', ['pageTitle'])).toBe(
       true
@@ -372,5 +396,21 @@ describe('keyword-filter', () => {
     const specific = recallByKeyword([weekly], 'weekly review')
     expect(specific.outcome).toBe('top_pick')
     expect(specific.topPick?.item.id).toBe(weekly.id)
+  })
+
+  it('Gregory Peck million pound note 1954 应 Top1 英文摘录', () => {
+    const peck = createTextExcerptMemoryItem({
+      ...baseContext,
+      payload: {
+        selectedText:
+          'The Million Pound Note (1954) is a classic Gregory Peck comedy about a man handed a banknote he cannot spend.',
+        sourceUrl: 'https://en.wikipedia.org/wiki/The_Million_Pound_Note',
+        pageTitle: 'The Million Pound Note - Wikipedia'
+      }
+    })
+
+    const result = recallByKeyword([peck], 'Gregory Peck million pound note 1954')
+    expect(result.outcome).toBe('top_pick')
+    expect(result.topPick?.item.id).toBe(peck.id)
   })
 })

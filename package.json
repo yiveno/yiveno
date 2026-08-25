@@ -13,7 +13,7 @@
   "engines": {
     "bun": ">=1.0.0"
   },
-  "packageManager": "bun@1.2.21",
+  "packageManager": "bun@1.4.0",
   "resolutions": {
     "zod": "^3.25.76",
     "@types/node": "^24.3.0",

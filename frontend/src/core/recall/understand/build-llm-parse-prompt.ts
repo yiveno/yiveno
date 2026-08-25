@@ -22,6 +22,7 @@ export function buildLlmParseClueMessages(clue: string): Array<{
         '- half_read covers unfinished reading even without the word \"reading\".',
         '- recently_saved covers just saved/stored/bookmarked/collected.',
         '- often_opened covers kept opening / on repeat / listened a lot.',
+        '- Four-digit years (1900–2099) in titles/names (e.g. a 1954 film) are contentTerms only; timeLabel must be null unless the clue also says today/yesterday/recent/long ago/etc.',
         '- Keep residual content words like \"like\" when present in the clue and not a type/time word.',
         '- Zero-anchor assistant requests (e.g. \"i feel bored\") → empty types/behavior; residual contentTerms ok.',
         '- Do not invent memory ids or database operations. JSON proposal only.'

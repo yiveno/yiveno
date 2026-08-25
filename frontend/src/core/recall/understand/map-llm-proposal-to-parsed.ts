@@ -1,5 +1,6 @@
 import type { LlmParsedClueProposal } from '@/core/recall/understand/llm-parsed-clue-proposal'
 import {
+  dropMisleadingNoteContentTerm,
   groundBehaviorHints,
   groundObjectTypes,
   groundTimeLabel,
@@ -51,6 +52,7 @@ export function mapLlmProposalToParsedClue(
       ...(behaviorHints.length > 0 ? { behaviorHints } : {})
     }
   )
+  contentTerms = dropMisleadingNoteContentTerm(normalized, contentTerms)
 
   // 刚存/类型约束线索：剥掉模型常残留的虚词，避免挡约束邻域；保留真实内容词
   const hasConstraintSlots =

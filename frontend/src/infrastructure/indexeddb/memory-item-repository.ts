@@ -659,6 +659,47 @@ export class MemoryItemRepository {
     await this.put(item)
   }
 
+  /**
+   * 物理删除若干条目（腾配额；软删不释放磁盘）。
+   * 同步更新倒排；失败标 dirty。
+   */
+  async hardDeleteMany(ids: string[]): Promise<number> {
+    const uniqueIds = [...new Set(ids.map(id => id.trim()).filter(Boolean))]
+    if (uniqueIds.length === 0) {
+      return 0
+    }
+
+    await this.ensureReady()
+    const ownerId = await getCurrentOwnerId()
+    let deleted = 0
+
+    for (const id of uniqueIds) {
+      const existing = await this.getById(id, ownerId, { includeDeleted: true })
+      if (!existing || existing.ownerId !== ownerId) {
+        continue
+      }
+      const previousTokens = extractDocumentIndexTokens(existing)
+      await indexedDBManager.withTransaction(MEMORY_ITEM_STORE, 'readwrite', async transaction => {
+        const store = transaction.objectStore(MEMORY_ITEM_STORE)
+        await requestToPromise(store.delete(id))
+      })
+      deleted += 1
+      if (previousTokens.length > 0) {
+        const applied = await keywordIndexRepository.applyItemTokenDiff({
+          ownerId,
+          itemId: id,
+          previousTokens,
+          nextTokens: []
+        })
+        if (!applied.applied) {
+          await keywordIndexRepository.markDirty(ownerId)
+        }
+      }
+    }
+
+    return deleted
+  }
+
   private async put(item: MemoryItem): Promise<void> {
     await this.ensureReady()
     const validated = MemoryItemSchema.parse(item)

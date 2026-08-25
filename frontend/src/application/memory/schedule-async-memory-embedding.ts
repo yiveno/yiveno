@@ -4,6 +4,10 @@
  * Free/Pro 均可（Worker 日配额分档）；未登录跳过。
  */
 
+import {
+  isIndexedDbQuotaExceededError,
+  markIndexedDbWriteQuotaExhausted
+} from '@/application/memory/indexeddb-write-quota'
 import { buildEmbeddingTextFromMemoryItem } from '@/core/memory/build-embedding-text'
 import type { MemoryItem } from '@/core/memory/memory-item'
 import {
@@ -11,6 +15,7 @@ import {
   WORKER_EMBEDDING_MODEL
 } from '@/infrastructure/ai/embed-api-client'
 import { getAuthSession } from '@/infrastructure/identity/auth-session-service'
+import { getWorkerApiAccessToken } from '@/infrastructure/identity/worker-api-access-token'
 import {
   memoryItemRepository,
   type MemoryItemRepository
@@ -24,11 +29,16 @@ const EMBEDDING_JOB_GAP_MS = 500
 /** 回填单次最多入队条数。 */
 export const EMBEDDING_BACKFILL_BATCH_LIMIT = 40
 
+/** 配额满时一次最多物理删掉的无备注 sync 书签数（腾出写 embedding 空间）。 */
+const QUOTA_FREE_BOOKMARK_BATCH = 200
+
 let queue: Promise<void> = Promise.resolve()
 /** 递增后丢弃已入队任务（bulk/reconcile 防刷）。 */
 let queueGeneration = 0
 /** auth 失败后暂停入队，直至 clear / 显式恢复。 */
 let authPaused = false
+/** 本会话已因配额停止后续 embed 写库。 */
+let quotaPaused = false
 
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => {
@@ -78,20 +88,93 @@ export function resumeAsyncMemoryEmbeddingAfterAuth(): void {
 }
 
 /**
+ * 物理删除无备注的 sync 书签，腾 IndexedDB 配额给摘录 embedding。
+ * 书签仍在 Chrome；用户开着 ingest 时下次 reconcile 会再灌。
+ */
+async function freeQuotaByDroppingSyncBookmarks(
+  repository: MemoryItemRepository,
+  limit = QUOTA_FREE_BOOKMARK_BATCH
+): Promise<number> {
+  const bookmarks = await repository.listByOwner({ type: 'bookmark', limit: 500 })
+  const victims = bookmarks
+    .filter(item => {
+      if (item.clues.note?.trim()) {
+        return false
+      }
+      const entry = item.clues.captureEntry
+      return entry === 'sync' || entry === undefined
+    })
+    .sort((a, b) => a.updatedAt.localeCompare(b.updatedAt))
+    .slice(0, limit)
+  if (victims.length === 0) {
+    return 0
+  }
+  const dropped = await repository.hardDeleteMany(victims.map(item => item.id))
+  logger.warn('MemoryEmbed', '配额满：已物理删除无备注 sync 书签以腾空间', {
+    dropped,
+    candidate: victims.length
+  })
+  return dropped
+}
+
+async function putEmbeddingWithQuotaRetry(
+  repository: MemoryItemRepository,
+  nextItem: MemoryItem
+): Promise<{ ok: true } | { ok: false; quota: boolean }> {
+  try {
+    await repository.putEnrichmentClues(nextItem)
+    return { ok: true }
+  } catch (error) {
+    if (!isIndexedDbQuotaExceededError(error)) {
+      throw error
+    }
+    markIndexedDbWriteQuotaExhausted('memory_embed_put')
+    const dropped = await freeQuotaByDroppingSyncBookmarks(repository)
+    if (dropped === 0) {
+      quotaPaused = true
+      clearAsyncMemoryEmbeddingQueue('quota_exceeded')
+      return { ok: false, quota: true }
+    }
+    try {
+      await repository.putEnrichmentClues(nextItem)
+      return { ok: true }
+    } catch (retryError) {
+      if (isIndexedDbQuotaExceededError(retryError)) {
+        quotaPaused = true
+        clearAsyncMemoryEmbeddingQueue('quota_exceeded')
+        return { ok: false, quota: true }
+      }
+      throw retryError
+    }
+  }
+}
+
+export type MemoryEmbedOutcome =
+  | 'written' // 已写回
+  | 'skipped' // 跳过（关 AI / 未登录 / 已有向量等）
+  | 'failed' // API 或其它失败
+  | 'quota' // IndexedDB 配额耗尽
+
+/**
  * 对单条 MemoryItem 生成 embedding 并写回（不改 updatedAt）。
  */
 export async function runAsyncMemoryEmbedding(
   itemId: string,
   repository: MemoryItemRepository = memoryItemRepository
-): Promise<'written' | 'skipped' | 'failed'> {
+): Promise<MemoryEmbedOutcome> {
   const settings = await getUserSettings()
   if (!settings.aiFeaturesEnabled) {
     logger.info('MemoryEmbed', '异步 embed 跳过：用户已关闭 AI', { itemId })
     return 'skipped'
   }
 
-  const session = await getAuthSession()
-  if (!session?.accessToken) {
+  if (quotaPaused) {
+    logger.info('MemoryEmbed', '异步 embed 跳过：IndexedDB 配额已熔断', { itemId })
+    return 'quota'
+  }
+
+  const accessToken = await getWorkerApiAccessToken()
+  if (!accessToken) {
     logger.info('MemoryEmbed', '异步 embed 跳过：未登录', { itemId })
     return 'skipped'
   }
@@ -116,7 +199,7 @@ export async function runAsyncMemoryEmbedding(
   logger.info('MemoryEmbed', '异步 embed 开始', { itemId, type: item.type })
 
   try {
-    const result = await requestWorkerEmbeddings(session.accessToken, [text])
+    const result = await requestWorkerEmbeddings(accessToken, [text])
     const vector = result.embeddings[0]
     if (!vector || vector.length === 0) {
       throw new Error('empty_embedding')
@@ -132,7 +215,11 @@ export async function runAsyncMemoryEmbedding(
       }
       // 不改 updatedAt：embedding ≠ 用户内容变更
     }
-    await repository.putEnrichmentClues(nextItem)
+    const putResult = await putEmbeddingWithQuotaRetry(repository, nextItem)
+    if (!putResult.ok) {
+      logger.warn('MemoryEmbed', '异步 embed 写回失败：IndexedDB 配额耗尽', { itemId })
+      return 'quota'
+    }
 
     logger.info('MemoryEmbed', '异步 embed 已写回', {
       itemId,
@@ -170,6 +257,10 @@ export function scheduleAsyncMemoryEmbedding(itemId: string): void {
     logger.info('MemoryEmbed', '异步 embed 跳过入队：auth 已熔断', { itemId: id })
     return
   }
+  if (quotaPaused) {
+    logger.info('MemoryEmbed', '异步 embed 跳过入队：配额已熔断', { itemId: id })
+    return
+  }
 
   const scheduledGeneration = queueGeneration
   queue = queue
@@ -189,8 +280,38 @@ export function scheduleAsyncMemoryEmbedding(itemId: string): void {
 }
 
 /**
- * 回填：扫描缺 embedding 的条目并入队（限量；须登录，由 Worker 日配额约束）。
- * @returns 入队条数
+ * 选出待回填条目：摘录优先，再用书签补满 limit。
+ * 全量按 updatedAt 扫会被海量书签挤掉 excerpt。
+ */
+async function collectMissingEmbeddingItems(
+  repository: MemoryItemRepository,
+  limit: number
+): Promise<{ missing: MemoryItem[]; scanned: number; excerptEnqueued: number }> {
+  const excerptCandidates = await repository.listByOwner({
+    type: 'text_excerpt',
+    limit
+  })
+  const excerptMissing = excerptCandidates.filter(item => !hasCurrentModelEmbedding(item))
+  const remaining = Math.max(0, limit - excerptMissing.length)
+  let otherMissing: MemoryItem[] = []
+  if (remaining > 0) {
+    const items = await repository.listByOwner({ limit: 500 })
+    otherMissing = items
+      .filter(item => item.type !== 'text_excerpt' && !hasCurrentModelEmbedding(item))
+      .slice(0, remaining)
+  }
+  return {
+    missing: [...excerptMissing, ...otherMissing],
+    scanned: excerptCandidates.length + (remaining > 0 ? 500 : 0),
+    excerptEnqueued: excerptMissing.length
+  }
+}
+
+/**
+ * 回填：扫描缺 embedding 的条目并入队（限量；须登录）。
+ * 供 bootstrap / auth handoff：fire-and-forget。
+ * 注意：书签 sync finalize 会 clearAsyncMemoryEmbeddingQueue，可能丢弃未跑完的队列任务；
+ * Settings「Rebuild」须走 {@link backfillMissingMemoryEmbeddings}（同步 await）。
  */
 export async function enqueueMissingMemoryEmbeddings(
   repository: MemoryItemRepository = memoryItemRepository,
@@ -202,14 +323,81 @@ export async function enqueueMissingMemoryEmbeddings(
   }
   resumeAsyncMemoryEmbeddingAfterAuth()
 
-  const items = await repository.listByOwner({ limit: 500 })
-  const missing = items.filter(item => !hasCurrentModelEmbedding(item)).slice(0, limit)
+  const { missing, scanned, excerptEnqueued } = await collectMissingEmbeddingItems(
+    repository,
+    limit
+  )
   for (const item of missing) {
     scheduleAsyncMemoryEmbedding(item.id)
   }
   logger.info('MemoryEmbed', '回填入队', {
-    scanned: items.length,
-    enqueued: missing.length
+    scanned,
+    enqueued: missing.length,
+    excerptEnqueued
   })
-  return { enqueued: missing.length, scanned: items.length }
+  return { enqueued: missing.length, scanned }
+}
+
+export type MemoryEmbedBackfillResult = {
+  attempted: number
+  written: number
+  failed: number
+  scanned: number
+  /** 任一条因 IDB 配额失败 */
+  quotaHit: boolean
+}
+
+/**
+ * Settings Rebuild：同步写回 embedding（不经 fire-and-forget 队列）。
+ * 避免被 chrome_bookmark_sync_finalize 的 clearAsyncMemoryEmbeddingQueue 清掉。
+ * 默认只回填摘录（核心资产）；书签仍可由 bootstrap 异步入队。
+ * 失败不抛，计入 failed。
+ */
+export async function backfillMissingMemoryEmbeddings(
+  repository: MemoryItemRepository = memoryItemRepository,
+  limit = EMBEDDING_BACKFILL_BATCH_LIMIT
+): Promise<MemoryEmbedBackfillResult> {
+  const accessToken = await getWorkerApiAccessToken()
+  if (!accessToken) {
+    return { attempted: 0, written: 0, failed: 0, scanned: 0, quotaHit: false }
+  }
+  resumeAsyncMemoryEmbeddingAfterAuth()
+  // Rebuild 主动重试：用户可能已腾磁盘
+  quotaPaused = false
+
+  // Rebuild 只盯摘录：快、且不被海量书签拖死；书签不阻塞用户点 Rebuild
+  const excerptCandidates = await repository.listByOwner({
+    type: 'text_excerpt',
+    limit
+  })
+  const missing = excerptCandidates.filter(item => !hasCurrentModelEmbedding(item))
+  const scanned = excerptCandidates.length
+  let written = 0
+  let failed = 0
+  let quotaHit = false
+  logger.info('MemoryEmbed', '同步回填开始（摘录）', {
+    scanned,
+    attempted: missing.length
+  })
+  for (const item of missing) {
+    const outcome = await runAsyncMemoryEmbedding(item.id, repository)
+    if (outcome === 'written') {
+      written += 1
+    } else if (outcome === 'failed') {
+      failed += 1
+    } else if (outcome === 'quota') {
+      failed += 1
+      quotaHit = true
+      // 配额熔断后继续扫只会空转
+      break
+    }
+    await sleep(EMBEDDING_JOB_GAP_MS)
+  }
+  logger.info('MemoryEmbed', '同步回填结束', {
+    attempted: missing.length,
+    written,
+    failed,
+    quotaHit
+  })
+  return { attempted: missing.length, written, failed, scanned, quotaHit }
 }

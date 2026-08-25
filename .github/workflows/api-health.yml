@@ -1,0 +1,32 @@
+# 生产 API 探活：失败则 workflow 红，GitHub 可配邮件/通知
+# 不替代 Cloudflare Health Checks；作仓库内最小可用性哨兵
+
+name: API Health
+
+on:
+  schedule:
+    # 每 15 分钟（UTC）
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Probe api.yiveno.com
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: GET /api/health
+        run: |
+          set -euo pipefail
+          URL='https://api.yiveno.com/api/health'
+          echo "Probing $URL"
+          BODY="$(curl -fsS --max-time 15 -w '\n%{http_code}' "$URL")"
+          CODE="$(echo "$BODY" | tail -n1)"
+          JSON="$(echo "$BODY" | sed '$d')"
+          echo "HTTP $CODE"
+          echo "$JSON"
+          test "$CODE" = '200'
+          echo "$JSON" | grep -q '"status"[[:space:]]*:[[:space:]]*"ok"'

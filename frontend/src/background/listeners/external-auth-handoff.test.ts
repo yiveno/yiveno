@@ -4,11 +4,16 @@ vi.mock('@/application/identity/absorb-local-profile-into-account', () => ({
   absorbLocalProfileIntoAccount: vi.fn(async () => 0)
 }))
 
+vi.mock('@/application/memory/schedule-async-memory-embedding', () => ({
+  enqueueMissingMemoryEmbeddings: vi.fn(async () => ({ enqueued: 0, scanned: 0 }))
+}))
+
 import {
   applyExternalAuthHandoff,
   applyExternalAuthSessionHandoff
 } from '@/background/listeners/external-auth-handoff'
 import { absorbLocalProfileIntoAccount } from '@/application/identity/absorb-local-profile-into-account'
+import { enqueueMissingMemoryEmbeddings } from '@/application/memory/schedule-async-memory-embedding'
 import { AUTH_SESSION_STORAGE_KEY } from '@/core/identity/auth-session'
 import { ACCOUNT_BINDING_STORAGE_KEY } from '@/core/identity/local-profile'
 
@@ -73,6 +78,7 @@ describe('external auth handoff', () => {
     expect(absorbLocalProfileIntoAccount).toHaveBeenCalledWith(
       '22222222-2222-4222-8222-222222222222'
     )
+    expect(enqueueMissingMemoryEmbeddings).toHaveBeenCalled()
   })
 
   it('session 写入后立即 ok，不阻塞本地档归并', async () => {
@@ -80,6 +86,11 @@ describe('external auth handoff', () => {
     vi.mocked(absorbLocalProfileIntoAccount).mockReturnValue(
       new Promise(resolve => {
         resolveAbsorb = resolve
+      })
+    )
+    vi.mocked(enqueueMissingMemoryEmbeddings).mockReturnValue(
+      new Promise(() => {
+        /* 故意永不 resolve，确认不阻塞 handoff */
       })
     )
 

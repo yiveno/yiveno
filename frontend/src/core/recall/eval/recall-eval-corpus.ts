@@ -274,6 +274,21 @@ export function buildRecallEvalCorpus(): MemoryItem[] {
       }),
       RECALL_EVAL_IDS.oppenheimerRtExcerpt,
       '2026-08-24T08:00:00.000Z'
+    ),
+    withStableIdentity(
+      createTextExcerptMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          selectedText:
+            'The Million Pound Note (1954) is a classic Gregory Peck comedy about a man handed a banknote he cannot spend.',
+          sourceUrl: 'https://en.wikipedia.org/wiki/The_Million_Pound_Note',
+          pageTitle: 'The Million Pound Note - Wikipedia'
+        },
+        now: () => '2026-08-20T08:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.millionPoundPeckExcerpt,
+      '2026-08-20T08:00:00.000Z'
     )
   ]
 }

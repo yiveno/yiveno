@@ -18,6 +18,8 @@ import {
   reconcileChromeBookmarksWithMemory,
   resetPendingChromeBookmarkSyncForTests
 } from '@/application/capture/chrome-bookmark-sync-service'
+import { memoryItemService } from '@/application/memory/memory-item-service'
+import { logger } from '@/infrastructure/logging/logger'
 import { CHROME_BOOKMARK_IMPORT_STORAGE_KEY } from '@/core/memory/chrome-bookmark-import-state'
 import { CHROME_BOOKMARK_SYNC_PENDING_STORAGE_KEY } from '@/core/memory/chrome-bookmark-sync-pending'
 import { LOCAL_PROFILE_STORAGE_KEY, type LocalProfile } from '@/core/identity/local-profile'
@@ -335,5 +337,39 @@ describe('chrome-bookmark-sync-service', () => {
       .map(item => (item.type === 'bookmark' ? item.payload.chromeBookmarkId : undefined))
       .sort()
     expect(chromeIds).toEqual(['10', '20'])
+  })
+
+  it('reconcile 配额耗尽时只记一次并中止后续 upsert', async () => {
+    const chromeMock = createChromeMock({
+      [LOCAL_PROFILE_STORAGE_KEY]: localProfile,
+      [CHROME_BOOKMARK_IMPORT_STORAGE_KEY]: completedImportState
+    })
+    for (let index = 30; index < 35; index += 1) {
+      chromeMock.__bookmarks.set(String(index), {
+        id: String(index),
+        title: `Quota leaf ${index}`,
+        url: `https://example.com/${index}`,
+        parentId: '1'
+      })
+    }
+    vi.stubGlobal('chrome', chromeMock)
+
+    const quota = new DOMException('The quota has been exceeded.', 'QuotaExceededError')
+    const upsertSpy = vi
+      .spyOn(memoryItemService, 'upsertBookmarkFromChrome')
+      .mockRejectedValue(quota)
+    const errorSpy = vi.spyOn(logger, 'error')
+
+    const first = await reconcileChromeBookmarksWithMemory()
+    expect(first.skipped).toBe(false)
+    expect(upsertSpy).toHaveBeenCalledTimes(1)
+    expect(errorSpy.mock.calls.filter(call => String(call[1]).includes('配额耗尽')).length).toBe(1)
+
+    const second = await reconcileChromeBookmarksWithMemory()
+    expect(second.skipped).toBe(true)
+    expect(upsertSpy).toHaveBeenCalledTimes(1)
+
+    upsertSpy.mockRestore()
+    errorSpy.mockRestore()
   })
 })

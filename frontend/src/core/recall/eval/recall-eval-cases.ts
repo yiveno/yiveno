@@ -268,6 +268,14 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
     expectation: { kind: 'in_topk', expectedId: RECALL_EVAL_IDS.yivenoDesignPrinciples, k: 3 },
     note: '会话 dismissedIds 硬排除产品文档后，设计原则书签应进入候选'
   },
+  {
+    id: 'concrete-gregory-peck-million-pound',
+    clue: 'Gregory Peck million pound note 1954',
+    clueClass: 'concrete',
+    gate: 'must',
+    expectation: { kind: 'top1', expectedId: RECALL_EVAL_IDS.millionPoundPeckExcerpt },
+    note: '英文摘录含 Peck / Million Pound / 1954 时应稳定 Top1（非 no_match）'
+  },
 
   // —— stretch：仍需同义/语义层 ——
   {
@@ -277,5 +285,13 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
     gate: 'stretch',
     expectation: { kind: 'in_topk', expectedId: RECALL_EVAL_IDS.vectorIndexExcerpt, k: 3 },
     note: '意图接近「embedding Phase B」，词面重叠极弱；留给 Hybrid'
+  },
+  {
+    id: 'stretch-atomic-bomb-movie-review',
+    clue: 'the atomic bomb movie review I saved',
+    clueClass: 'semi_fuzzy',
+    gate: 'stretch',
+    expectation: { kind: 'in_topk', expectedId: RECALL_EVAL_IDS.oppenheimerRtExcerpt, k: 3 },
+    note: '词面几乎无重叠；须 Hybrid 全库语义近邻（关键词池为空仍可融合）'
   }
 ]

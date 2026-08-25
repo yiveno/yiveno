@@ -341,9 +341,22 @@ async function handleEmbeddingBackfill() {
       settingsError.value = t('settings_error_update')
       return
     }
-    embeddingBackfillMessage.value = t('settings_embedding_backfill_done', [
-      String(response.enqueued)
-    ])
+    const written = response.enqueued
+    const failed = response.failed ?? 0
+    const attempted = written + failed
+    if (response.quotaHit && written === 0) {
+      embeddingBackfillMessage.value = t('settings_embedding_backfill_quota')
+    } else if (written === 0 && attempted > 0) {
+      embeddingBackfillMessage.value = t('settings_embedding_backfill_none')
+    } else if (failed > 0) {
+      embeddingBackfillMessage.value = t('settings_embedding_backfill_partial', [
+        String(written),
+        String(attempted),
+        String(failed)
+      ])
+    } else {
+      embeddingBackfillMessage.value = t('settings_embedding_backfill_done', [String(written)])
+    }
   } catch {
     settingsError.value = t('settings_error_update')
   } finally {

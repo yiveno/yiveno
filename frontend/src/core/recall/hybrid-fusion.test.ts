@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
-import { cosineSimilarity, reciprocalRankFusion, sortIdsByRrf } from '@/core/recall/hybrid-fusion'
+import {
+  cosineSimilarity,
+  rankIdsByCosineToQuery,
+  reciprocalRankFusion,
+  scoreFromCosineSimilarity,
+  sortIdsByRrf
+} from '@/core/recall/hybrid-fusion'
 
 describe('cosineSimilarity', () => {
   it('相同单位向量 → 1', () => {
@@ -32,5 +38,34 @@ describe('reciprocalRankFusion', () => {
       ['y', 'x']
     ])
     expect(ordered[0]).toBe('x')
+  })
+
+  it('关键词池为空时仍保留语义近邻 id', () => {
+    expect(sortIdsByRrf([[], ['semantic-only']])).toEqual(['semantic-only'])
+  })
+})
+
+describe('rankIdsByCosineToQuery', () => {
+  it('收入不在关键词池里、但更贴近 query 的条目', () => {
+    const query = [1, 0]
+    const ranked = rankIdsByCosineToQuery(query, [
+      { id: 'keyword-hit', embedding: [0.2, 0.98] },
+      { id: 'semantic-only', embedding: [0.99, 0.1] }
+    ])
+    expect(ranked[0]?.id).toBe('semantic-only')
+    expect(ranked.map(entry => entry.id)).toContain('semantic-only')
+  })
+
+  it('低于阈值的噪声不入近邻', () => {
+    const ranked = rankIdsByCosineToQuery([1, 0], [{ id: 'noise', embedding: [0, 1] }], {
+      minSimilarity: 0.28
+    })
+    expect(ranked).toEqual([])
+  })
+})
+
+describe('scoreFromCosineSimilarity', () => {
+  it('0.4 余弦映射到可过 Top Pick 下限的分数', () => {
+    expect(scoreFromCosineSimilarity(0.4)).toBe(20)
   })
 })

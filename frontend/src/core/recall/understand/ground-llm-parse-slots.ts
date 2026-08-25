@@ -101,9 +101,41 @@ export function groundBehaviorHints(
   return kept.size > 0 ? [...kept] : undefined
 }
 
+/** 电影/书名等固定短语里的 note（如 million pound note）不是检索词，避免误命中 NotebookLM。 */
+export function dropMisleadingNoteContentTerm(normalizedClue: string, terms: string[]): string[] {
+  if (!terms.includes('note')) {
+    return terms
+  }
+  const titlePhrases = ['million pound note', 'pound note', 'bank note']
+  if (titlePhrases.some(phrase => normalizedClue.includes(phrase))) {
+    return terms.filter(term => term !== 'note')
+  }
+  return terms
+}
+
+/** 线索中的四位公历年份 token（1900–2099），作内容词而非「我何时保存」。 */
+function extractCalendarYearTokens(normalizedClue: string): string[] {
+  return normalizedClue
+    .split(/[^a-z0-9\u3400-\u9fff]+/)
+    .filter(token => /^(19|20)\d{2}$/.test(token))
+}
+
+/**
+ * 模型常把电影/书名年份（如 1954）误映射为 long_ago；无相对时间词面时不得采纳。
+ */
+function shouldRejectProposedTimeLabelWithoutLexicon(
+  normalizedClue: string,
+  proposed: RecallRelativeTimeLabel | null | undefined
+): boolean {
+  if (!proposed) {
+    return false
+  }
+  return extractCalendarYearTokens(normalizedClue).length > 0
+}
+
 /**
  * 时间标签：若线索命中词典词面，优先用最长 surface 对应 label（纠偏 LLM 的 recent/a_while_ago 混淆）。
- * 无线索词面时才回退模型提议。
+ * 无线索词面时才回退模型提议；但若仅有公历年份（无 yesterday/recent 等词面），丢弃模型 timeLabel。
  */
 export function groundTimeLabel(
   clue: string,
@@ -115,6 +147,9 @@ export function groundTimeLabel(
   )
   if (hits[0]) {
     return hits[0].value
+  }
+  if (shouldRejectProposedTimeLabelWithoutLexicon(normalized, proposed)) {
+    return undefined
   }
   return proposed ?? undefined
 }

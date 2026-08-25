@@ -16,8 +16,15 @@ import {
   RECALL_COLLAPSE_BACKFILL_EXTRA
 } from '@/core/recall/build-recall-result'
 import { collapseRecallMatches } from '@/core/recall/collapse-recall-duplicates'
-import { cosineSimilarity, sortIdsByRrf } from '@/core/recall/hybrid-fusion'
-import { filterMemoryItemsByKeyword } from '@/core/recall/keyword-filter'
+import {
+  rankIdsByCosineToQuery,
+  scoreFromCosineSimilarity,
+  sortIdsByRrf
+} from '@/core/recall/hybrid-fusion'
+import {
+  filterMemoryItemsByKeyword,
+  isGenericOnlyHitAgainstSpecificClue
+} from '@/core/recall/keyword-filter'
 import {
   excludeDismissedMemoryItems,
   mergeRecallDialogTurn
@@ -149,18 +156,17 @@ async function fuseHybridMatches(input: {
       limit: HYBRID_KEYWORD_POOL
     }).map(match => applyParsedClueScoreBoosts(match, input.parsed)),
     input.parsed
-  )
+  ).filter(match => !isGenericOnlyHitAgainstSpecificClue(input.searchClue, match.item))
 
-  if (keywordMatches.length === 0) {
-    input.trace('info', 'Hybrid：时间硬过滤后无候选，跳过融合')
-    return null
-  }
-
-  const embedded = keywordMatches.filter(
-    match => Array.isArray(match.item.clues.embedding) && match.item.clues.embedding.length > 0
-  )
-  if (embedded.length === 0) {
-    input.trace('info', 'Hybrid：候选无 embedding，跳过融合')
+  const embeddedCandidates = input.items.flatMap(item => {
+    const embedding = item.clues.embedding
+    if (!Array.isArray(embedding) || embedding.length === 0) {
+      return []
+    }
+    return [{ id: item.id, embedding }]
+  })
+  if (embeddedCandidates.length === 0) {
+    input.trace('info', 'Hybrid：扫描集无 embedding，跳过融合')
     return null
   }
 
@@ -179,17 +185,59 @@ async function fuseHybridMatches(input: {
     return null
   }
 
-  const keywordOrder = keywordMatches.map(match => match.item.id)
-  const semanticOrder = [...embedded]
-    .map(match => ({
-      id: match.item.id,
-      sim: cosineSimilarity(queryVector, match.item.clues.embedding ?? [])
-    }))
-    .sort((a, b) => b.sim - a.sim)
-    .map(entry => entry.id)
+  const itemsById = new Map(input.items.map(item => [item.id, item]))
+  const semanticMatches = rankIdsByCosineToQuery(queryVector, embeddedCandidates).flatMap(
+    neighbor => {
+      const item = itemsById.get(neighbor.id)
+      if (!item) {
+        return []
+      }
+      return [
+        applyParsedClueScoreBoosts(
+          {
+            item,
+            score: scoreFromCosineSimilarity(neighbor.similarity),
+            matchedFields: ['embedding']
+          },
+          input.parsed
+        )
+      ]
+    }
+  )
+  const timedSemantic = filterMatchesByParsedTimeRange(semanticMatches, input.parsed)
 
-  const fusedIds = sortIdsByRrf([keywordOrder, semanticOrder])
+  if (timedSemantic.length === 0) {
+    input.trace('info', 'Hybrid：无过阈值语义近邻，降级关键词', {
+      keywordCount: keywordMatches.length
+    })
+    return null
+  }
+
+  if (keywordMatches.length === 0) {
+    input.trace('info', 'Hybrid：关键词池为空，仅用全库语义近邻', {
+      semanticCount: timedSemantic.length
+    })
+  }
+
+  const keywordOrder = keywordMatches.map(match => match.item.id)
+  const semanticOrder = timedSemantic.map(match => match.item.id)
+  const fusedIds = sortIdsByRrf([keywordOrder, semanticOrder].filter(list => list.length > 0))
   const byId = new Map(keywordMatches.map(match => [match.item.id, match]))
+  for (const match of timedSemantic) {
+    const existing = byId.get(match.item.id)
+    if (!existing) {
+      byId.set(match.item.id, match)
+      continue
+    }
+    // 取词面/语义较高分，避免弱关键词（泛词残留）压住强语义
+    byId.set(match.item.id, {
+      ...existing,
+      score: Math.max(existing.score, match.score),
+      matchedFields: existing.matchedFields.includes('embedding')
+        ? existing.matchedFields
+        : [...existing.matchedFields, 'embedding']
+    })
+  }
 
   const fusedMatches: RecallMatch[] = []
   fusedIds.forEach((id, index) => {
@@ -227,7 +275,7 @@ async function fuseHybridMatches(input: {
   })
   input.trace('info', 'Hybrid：RRF 融合完成', {
     keywordCount: keywordMatches.length,
-    embeddedCount: embedded.length,
+    semanticCount: timedSemantic.length,
     fusedCount: collapsed.length
   })
   return buildRecallResult(input.displayClue, collapsed)

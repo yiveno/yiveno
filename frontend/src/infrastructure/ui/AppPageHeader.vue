@@ -89,12 +89,8 @@ async function refreshProChip(): Promise<void> {
 async function refreshAuthChip() {
   try {
     const response = await fetchAuthState()
+    // 读失败勿当未登录：否则 absorb/IDB 瞬时错误会把已登录头像打成访客图标
     if (!response.ok) {
-      signedIn.value = false
-      avatarUrl.value = ''
-      accountLabel.value = ''
-      avatarBroken.value = false
-      isPro.value = false
       return
     }
     signedIn.value = response.signedIn

@@ -104,6 +104,25 @@ describe('mapLlmProposalToParsedClue', () => {
     expect(bareProduct.confidence).toBe('low')
   })
 
+  it('公历年份（1954）不得被 LLM 误采纳为 long_ago timeLabel', () => {
+    const parsed = mapLlmProposalToParsedClue(
+      'Gregory Peck million pound note 1954',
+      {
+        timeLabel: 'long_ago',
+        objectTypes: null,
+        behaviorHints: null,
+        contentTerms: ['gregory', 'peck', 'million', 'pound', 'note', '1954'],
+        confidence: 'medium'
+      },
+      PARSE_GOLD_NOW_MS
+    )
+    expect(parsed.timeRange).toBeUndefined()
+    expect(parsed.contentTerms).toEqual(
+      expect.arrayContaining(['gregory', 'peck', 'million', 'pound', '1954'])
+    )
+    expect(parsed.contentTerms).not.toContain('note')
+  })
+
   it('verse 别名可支撑 poem，并从 contentTerms 剥离', () => {
     const parsed = mapLlmProposalToParsedClue(
       'that Li Bai verse from the other day',

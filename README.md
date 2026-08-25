@@ -2,7 +2,7 @@
 
 > 🎯 那个找东西的 · Chrome 扩展 Monorepo（Capture + Recall 邻域）
 
-[![Bun](https://img.shields.io/badge/Bun-1.2.21-black?logo=bun)](https://bun.sh)
+[![Bun](https://img.shields.io/badge/Bun-1.4.0-black?logo=bun)](https://bun.sh)
 [![Vue 3](https://img.shields.io/badge/Vue-3.5-42b883?logo=vue.js)](https://vuejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178c6?logo=typescript)](https://www.typescriptlang.org)
 [![Cloudflare](https://img.shields.io/badge/Cloudflare-Worker-f38020?logo=cloudflare)](https://workers.cloudflare.com)
@@ -240,7 +240,7 @@ Yiveno/                             # Monorepo 根目录
 
 | 类别          | 技术           | 版本   | 说明                     |
 | ------------- | -------------- | ------ | ------------------------ |
-| **包管理器**  | Bun Workspaces | 1.2.21 | 高性能依赖管理           |
+| **包管理器**  | Bun Workspaces | 1.4.0  | 高性能依赖管理           |
 | **代码检查**  | ESLint         | 9.35.0 | Flat Config + TypeScript |
 | **样式检查**  | Stylelint      | 16.9.0 | CSS/SCSS/Vue             |
 | **代码格式**  | Prettier       | -      | 统一格式化               |
