@@ -27,6 +27,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
-    "esbuild": "^0.28.2"
+    "esbuild": "^0.28.2",
+    "vitest": "^4.0.17"
   }
 }
