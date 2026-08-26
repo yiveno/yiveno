@@ -25,7 +25,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  open: [payload: { id: string; url: string }]
+  open: [payload: { id: string; url: string; openInNewTab: boolean }]
   toggleExpand: [cardId: string]
   dismiss: []
   showMore: [turnId: string, mode: ShowMoreMode]
@@ -50,7 +50,7 @@ function onSuggestionClick(value: string): void {
   emit('useSuggestion', value)
 }
 
-function handleOpen(payload: { id: string; url: string }): void {
+function handleOpen(payload: { id: string; url: string; openInNewTab: boolean }): void {
   emit('open', payload)
 }
 

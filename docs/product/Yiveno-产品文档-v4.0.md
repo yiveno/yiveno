@@ -955,7 +955,7 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 - **UI（找回主壳）：**
   - 书签结果卡**左上角**种类标记：Chrome 缓存 **favicon**（与 Memory 库树同路径 `getChromeFaviconUrl`）；加载失败回退 Lucide `bookmark`。摘录仍用 quote 图标。
   - N≥2 时结果卡**右上角**展示 Lucide `layers`（登记名 `stacks`）+ 数量 N（图标优先；`title`/`aria-label` 经 `t()`）。
-  - **主卡点击 / Enter：** 打开代表（URL 或详情），与无折叠时相同。
+  - **主卡点击 / Enter：** 在**当前活动标签页**打开代表（URL 或详情），**默认不**新开标签，便于邻域内连点预览而不堆 Tab；⌘/Ctrl+点击可新开。
   - **点 `stacks` 控件：** 展开/收起同组其余条目（纵向列表）；无扑克叠/扇开动效。
   - 键盘 MVP：↑↓ 只在代表行间移动；展开不改变键盘行模型。
 - **Also 名额：** 折叠后按互斥规则回填；排序池软顶 **≤50 互异组**（`RECALL_RESULT_POOL_LIMIT`）；**首屏 / 每批 Show more = 5**（`RECALL_RESULT_PAGE_SIZE`）。UI 须告知 `totalRankedCount`，并提供 **Show 5 more** 与 **Show all K**（K=剩余，一次展完）；禁止默默截断装成「只有 5 条」。
@@ -1020,6 +1020,8 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 | `GET_BOOKMARK_LIBRARY_TREE`         | 记忆库书签目录树（只读）                    |
 | `GET_EXTENSION_COMMANDS`            | 读取命令与快捷键绑定                        |
 | `OPEN_CHROME_SHORTCUTS_PAGE`        | 打开 Chrome 快捷键设置页                    |
+| `OPEN_RECALL_SHELL`                 | 打开/聚焦 Recall Side Panel                 |
+| `NAVIGATE_ACTIVE_TAB`               | 结果卡打开：默认当前活动标签；可新开        |
 | `GET_USER_SETTINGS`                 | 读取用户设置                                |
 | `UPDATE_USER_SETTINGS`              | 更新用户设置                                |
 
@@ -1088,11 +1090,13 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 > 与 §7.0 Composer 双通道对齐；工程旁挂 [`Recall-Placeholder与追问芯片-双通道.md`](../engineering/Recall-Placeholder与追问芯片-双通道.md)。  
 > 预计 ≤ 5 分钟。正式包 **未登录** 时 LLM 芯片不可用；可用 **当前站环境弱芯片** 验让位（窄结果 N&lt;6 或 `need_a_clue`；宽邻域 top_pick 不挂环境芯片，留给 Narrow）。
 
-1. **Idle：** 新会话 / New find 后，composer placeholder 为 Idle 模板（`e.g. that article…` 类），无芯片。
-2. **宽邻域 Narrow：** 输入可召回 ≥6 互异组的线索（例：`javascript`）→ 无芯片；placeholder 含 `Still a bit broad`（或同等温暖 Narrow 句）且举例词可在结果卡字段中核验（或 generic 无举例句）。
-3. **有芯片让位：** 出现追问芯片（登录后 LLM，或窄结果下的 **Related to this site**）→ placeholder 为中性短句（`Or add another detail…`），**无** `like "…"` 举例。宽邻域 top_pick **不**挂环境芯片。
-4. **Dismiss：** None of these 后 **无** site/quote/note/type 固定四芯片；placeholder 中性。
-5. **产品语言：** placeholder / 芯片 label 均为美式英语。
+1. **Idle：** 新会话 / New find 后，composer placeholder 为 Idle 模板（`e.g. that article…` 类），无芯片；**无**会话标题。
+2. **宽邻域 Narrow：** 输入可召回 ≥6 互异组的线索（例：`javascript`）→ 无芯片；composer **上方**出现**会话标题**（首轮线索字面，无 `Narrowing:` 前缀）+ 可见 **New find**；placeholder **点名标题**（`Add detail to "…"`）且举例词可在结果卡字段中核验（或 generic 无举例句）。
+3. **有芯片让位：** 出现追问芯片（登录后 LLM，或窄结果下的 **Related to this site**）→ placeholder 为点名标题的中性短句，**无** `like "…"` 举例。宽邻域 top_pick **不**挂环境芯片。
+4. **Dismiss：** None of these 后 **无** site/quote/note/type 固定四芯片；placeholder 中性（有标题则点名）。
+5. **软岔路口：** 在 `javascript` 线程下输入明显无关长线索（例：`The movie I watched yesterday`）→ 发送前出现 Keep refining / Start new；**不**静默清线程。点 Keep → 仍带 context；点 Start new → 清空线程后以该线索首轮召回。短收窄词（例：`history`）**不**弹确认。
+6. **标题旁 New find：** 会话标题旁有**可见文案**「New find」（可配同款图标）；点之 = Header New find（可先走出口条）。**禁止**仅用 ✕ / 关闭图标冒充该动作。
+7. **产品语言：** placeholder / 芯片 / 标题 / 确认条均为美式英语。
 
 ### 5.8 冷启动手工验收（R1 · Normative）
 
@@ -1533,12 +1537,13 @@ Chrome API / 选区
 
 **会话边界（Normative · 不自动猜成败）：**
 
-| 规则           | 说明                                                                                                                                                 |
-| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **同一线程**   | 用户继续在 composer 打字或点追问芯片 → **默认 refine**（传 `RECALL_WITH_CLUE.context`）。系统**不**根据「是否找对 / 是否失望」自动清上下文。         |
-| **新会话**     | Header **New find**（图标 + `title`/`aria-label`）由用户显式开新线程 → 清空 `accumulated` / `priorUserUtterances` / `dismissedIds` / 对话气泡。      |
-| **关 Panel**   | P0：关闭 Side Panel → 丢弃组件内会话（不持久化）。                                                                                                   |
-| **上下文可见** | 当本轮请求带着既有线程约束时，助手气泡须带一句短 **session status**（固定模板即可）：标明「仍在本线程续找，不是新一轮」。禁止长思维链 / 助理腔炫技。 |
+| 规则           | 说明                                                                                                                                                                                                                                                                                                             |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **同一线程**   | 用户继续在 composer 打字或点追问芯片 → **默认 refine**（传 `RECALL_WITH_CLUE.context`）。系统**不**根据「是否找对 / 是否失望」自动清上下文。                                                                                                                                                                     |
+| **新会话**     | Header **New find**、composer 会话标题旁可见 **New find**、或软岔路口 **Start new** 由用户显式开新线程 → 清空 `accumulated` / `priorUserUtterances` / `dismissedIds` / 对话气泡。                                                                                                                                |
+| **关 Panel**   | P0：关闭 Side Panel → 丢弃组件内会话（不持久化）。                                                                                                                                                                                                                                                               |
+| **上下文可见** | 有活动线程时：**①** composer 上方常驻 **会话标题**（来自首轮用户句或 `contentTerms` 字面提炼，**无** `Narrowing:` 过程前缀；a11y 可用 `This find: …`）+ 旁路可见 **New find**；**②** 带 context 的助手气泡须带一句短 **session status**（可插值标题）：标明「仍在本场找，不是新找」。禁止长思维链 / 助理腔炫技。 |
+| **软岔路口**   | 发送前若启发式判定「更像新找」→ **确认条**（Keep refining / Start new），**不**静默清线程。触发须保守、可单测：与锚点 `contentTerms` **无字面重叠**，且（线索足够「像一整句新找」**或**距上次提交已冷却）。追问芯片点击**跳过**确认。禁止开放式话题分类器 / LLM 猜切换。                                         |
 
 **入口差异：**
 
@@ -1567,19 +1572,20 @@ Chrome API / 选区
 3. ~~**缩短再试**~~（**已废 · 2026-08-21**）：`no_match` 诚实终局后**不得**再提示「缩短线索再试」——会与「没有对上」矛盾，暗示检索仍可救。用户若要换说法，自行在 composer 续打或点 New find。
 4. 会话态：找回主壳（Side Panel）**组件内**持有；**关闭 Side Panel 即丢弃**（P0 不持久化）。**新会话**亦丢弃并清空气泡。
 5. **禁止**缺槽规则问卷（`buildRecallFollowUpPlan` 类时间/类型填表已废除）。有候选时的追问由 LLM NLG（失败则静态「不够确定」文案、**无**固定芯片银行）；合并后 `parsed` 仍只服务检索，不驱动问卷。
-6. **禁止**用自动话题检测 / 打开结果 / `no_match` 静默清线程代替「新会话」（避免误清 refine；成败不做会话边界裁判）。
+6. **禁止**用自动话题检测 / 打开结果 / `no_match` **静默**清线程代替「新会话」（避免误清 refine；成败不做会话边界裁判）。允许上表 **软岔路口确认条**（用户点选后才清或续）。
 7. **「都不是这些」之后：** 保留线程约束；**不得**再挂 site/quote/note/type 等固定追问芯片银行；composer 用中性 placeholder，由用户自由续打。
+8. **会话标题（Normative · 2026-08-26）：** 有 `priorUserUtterances` / `accumulated` 时 composer **上方**展示本场找回**标题**（首轮用户句优先，否则 `contentTerms`；截断展示）。标题是**身份标签**（类 ChatGPT 会话名），不是过程说明；**禁止**前缀 `Narrowing:`；P0 **禁止** LLM 开放摘要造题（日后可选润色须 fold/字面门禁）。旁路 **可见「New find」文案**（可配与 Header 同款图标），与 Header New find **同路径**（含出口条）。**禁止**仅用 ✕ 表示开新找。有标题时 Narrow/Neutral placeholder **须点名标题**（`Add detail to “…”`），避免听起来像全新搜索框。
 
 **Composer 双通道（Normative · Placeholder × 追问芯片 · 2026-08-26）：**
 
 同一目标：帮下一轮在**本轮邻域内**收窄。Yiveno 掌控的是邻域**可切割结构**，不是用户真值答案。工程旁挂（实现分期）：[`Recall-Placeholder与追问芯片-双通道.md`](../engineering/Recall-Placeholder与追问芯片-双通道.md)。
 
-| 通道            | 硬度               | 职责                                                                                                                         |
-| --------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
-| **Placeholder** | 软引导             | composer **对话承载体**；常驻有英文文案；带举例的收窄句必须 **grounded 本轮候选**（类型 / 字面 token / host）；禁止主题 seed |
-| **追问芯片**    | 硬输入（点击即发） | 仅白名单：① `need_a_clue` + LLM suggestions；② §7.1 环境弱芯片。**禁止**无候选缺槽问卷与 dismiss 固定银行                    |
+| 通道            | 硬度               | 职责                                                                                                                                                     |
+| --------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Placeholder** | 软引导             | composer **对话承载体**；常驻有英文文案；带举例的收窄句必须 **grounded 本轮候选**（类型 / 字面 token / host）；禁止主题 seed；**有会话标题时须点名标题** |
+| **追问芯片**    | 硬输入（点击即发） | 仅白名单：① `need_a_clue` + LLM suggestions；② §7.1 环境弱芯片。**禁止**无候选缺槽问卷与 dismiss 固定芯片银行；点击**不**走软岔路口                      |
 
-**优先级：** 当前 turn **有白名单芯片展示** → 以芯片为主；placeholder **退中性短句、不带举例**。  
+**优先级：** 当前 turn **有白名单芯片展示** → 以芯片为主；placeholder **退中性短句、不带举例**（有会话标题时中性句仍点名标题）。  
 **宽邻域 `top_pick`（报 N）：** 默认 **只走动态 placeholder**，不上内容芯片。  
 **气泡：** 只报结果状态（N / 不够确定 / miss）；**不**与 placeholder 抢收窄举例清单。
 
@@ -1966,6 +1972,10 @@ RecallOutcomeEvent {
 
 | 日期       | 变更                                                                                                                                                                                                                                                   |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-08-26 | **会话标题：** composer 上方用首轮线索字面作本场标题（去 `Narrowing:`）；a11y `This find:`；status/软岔路口改 Still on；§7.0 / §5.2.1                                                                                                                  |
+| 2026-08-26 | **线程锚点 New find 可见文案：** 锚点旁「New find」+ 同款图标，禁止仅用 ✕；§7.0 / §5.2.1                                                                                                                                                               |
+| 2026-08-26 | **线程锚点 + 软岔路口：** composer 上方可关锚点；有会话 placeholder/session status 点名锚点；发送前保守启发式确认条（Keep refining / Start new），禁止静默清线程；§7.0 / §5.2.1                                                                        |
+| 2026-08-26 | **Side Panel 结果卡打开：** 默认在当前活动标签导航（`NAVIGATE_ACTIVE_TAB`），避免预览堆 Tab；⌘/Ctrl+点击可新开；去掉 `open_in_new` 误导图标                                                                                                            |
 | 2026-08-26 | **Composer Narrow 文案语气：** Narrow/Neutral placeholder 改为北美口语温度（`Still a bit broad — try something like…`）；产品语言补「勿官方腔」Normative                                                                                               |
 | 2026-08-26 | **Composer Narrow LLM 润色：** 宽邻域无芯片时对已选定举例仅改展示形态；fold 门禁禁止造词；失败回退原词                                                                                                                                                 |
 | 2026-08-26 | **Composer Narrow P1：** 切割力调参——部分覆盖优先、类型统治门槛 0.8、页壳弱词过滤；宽邻域门槛仍 ≥6                                                                                                                                                     |

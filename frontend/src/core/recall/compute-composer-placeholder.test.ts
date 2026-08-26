@@ -88,4 +88,37 @@ describe('computeComposerPlaceholder', () => {
       }).mode
     ).toBe('neutral')
   })
+
+  it('有线程锚点 → narrow 点名文案', () => {
+    expect(
+      computeComposerPlaceholder({
+        isIdle: false,
+        assistantTone: 'confident',
+        rankedTotalCount: 11,
+        chipsPresent: false,
+        narrowExamples: ['history', 'eloquent'],
+        threadLabel: 'JavaScript'
+      })
+    ).toEqual({
+      mode: 'narrow',
+      messageKey: 'popup_clue_placeholder_narrow_threaded',
+      messageArgs: ['JavaScript', 'history', 'eloquent']
+    })
+  })
+
+  it('有线程锚点 + 芯片 → neutral 点名', () => {
+    expect(
+      computeComposerPlaceholder({
+        isIdle: false,
+        assistantTone: 'uncertain',
+        rankedTotalCount: 3,
+        chipsPresent: true,
+        threadLabel: 'JavaScript'
+      })
+    ).toEqual({
+      mode: 'neutral',
+      messageKey: 'popup_clue_placeholder_neutral_threaded',
+      messageArgs: ['JavaScript']
+    })
+  })
 })

@@ -12,10 +12,17 @@ const props = defineProps<{
   disabled?: boolean
   /** 空线程时加重阴影（高度与有字态一致，避免跳变） */
   prominent?: boolean
+  /** 本场找回会话标题（字面展示，无 Narrowing 前缀） */
+  threadTitle?: string | null
+  /** 标题 a11y（This find: …） */
+  threadTitleAria?: string | null
+  /** 可见「New find」文案 */
+  threadNewFindLabel?: string
 }>()
 
 const emit = defineEmits<{
   send: []
+  clearThread: []
 }>()
 const model = defineModel<string>({ required: true })
 const inputRef = ref<HTMLTextAreaElement | null>(null)
@@ -80,6 +87,20 @@ defineExpose({ focus })
 
 <template>
   <div class="recall-form" :class="{ 'recall-form--prominent': prominent }">
+    <div v-if="props.threadTitle" class="recall-thread-bar">
+      <p class="recall-thread-title" role="status" :aria-label="props.threadTitleAria || undefined">
+        {{ props.threadTitle }}
+      </p>
+      <button
+        type="button"
+        class="recall-thread-new-find"
+        :disabled="props.disabled"
+        @click="emit('clearThread')"
+      >
+        <AppIcon name="message_circle_plus" size="14px" />
+        <span>{{ props.threadNewFindLabel }}</span>
+      </button>
+    </div>
     <div class="recall-composer-shell">
       <textarea
         ref="inputRef"
@@ -115,6 +136,71 @@ defineExpose({ focus })
 .recall-form--prominent {
   margin-top: 0;
   padding-top: 0;
+}
+
+.recall-thread-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  margin: 0 0 var(--space-xs) var(--space-2xs);
+}
+
+.recall-thread-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding: 5px var(--space-sm);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: var(--surface-chrome);
+  color: var(--on-surface);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.recall-thread-new-find {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 5px var(--space-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  color: var(--on-surface);
+  background: var(--surface-white);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 140ms ease-out,
+    border-color 140ms ease-out,
+    color 140ms ease-out;
+}
+
+.recall-thread-new-find:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface-white));
+}
+
+.recall-thread-new-find:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.recall-thread-new-find:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 .recall-composer-shell {

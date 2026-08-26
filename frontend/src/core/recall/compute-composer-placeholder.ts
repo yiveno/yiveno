@@ -1,12 +1,12 @@
 /**
- * Composer placeholder 双通道状态机（§7.0 · P0a 骨架）。
- * Narrow 带 grounded 举例在 P0b；本文件先定模式与让位规则。
+ * Composer placeholder 双通道状态机（§7.0）。
+ * 有线程锚点时 Narrow/Neutral 点名锚点，避免听起来像全新搜索框。
  */
 
 /** Placeholder 模式：空闲 / 收窄邀请 / 中性让位。 */
 export type ComposerPlaceholderMode =
   | 'idle' // 空闲或新会话
-  | 'narrow' // 宽邻域软收窄（P0a 尚无举例词）
+  | 'narrow' // 宽邻域软收窄
   | 'neutral' // 有芯片让位、miss、dismiss、抽不出举例
 
 /** 宽邻域收窄型 placeholder 的互异组数下限（与方案稿一致，可调）。 */
@@ -22,18 +22,42 @@ export type ComputeComposerPlaceholderInput = {
   /** 当前 turn 是否展示白名单追问芯片 */
   chipsPresent: boolean
   /**
-   * P0b：grounded 举例词（已校验出现在候选中）。
-   * P0a 传空 → narrow 用无举例模板。
+   * grounded 举例词（已校验出现在候选中）。
+   * 空 → narrow 用无举例模板。
    */
   narrowExamples?: string[]
+  /** 活动线程锚点标签；有则 Narrow/Neutral 走点名文案 */
+  threadLabel?: string | null
 }
 
 export type ComputeComposerPlaceholderResult = {
   mode: ComposerPlaceholderMode
   /** i18n message key（不含举例插值时由 UI 直接 t(key)） */
   messageKey: string
-  /** 传给 t() 的占位参数（P0b 举例） */
+  /** 传给 t() 的占位参数 */
   messageArgs: string[]
+}
+
+function withThreadLabel(
+  mode: ComposerPlaceholderMode,
+  threadLabel: string | null | undefined,
+  baseKey: string,
+  threadedKey: string,
+  restArgs: string[]
+): ComputeComposerPlaceholderResult {
+  const label = threadLabel?.trim()
+  if (label) {
+    return {
+      mode,
+      messageKey: threadedKey,
+      messageArgs: [label, ...restArgs]
+    }
+  }
+  return {
+    mode,
+    messageKey: baseKey,
+    messageArgs: restArgs
+  }
 }
 
 /**
@@ -47,20 +71,26 @@ export function computeComposerPlaceholder(
     return { mode: 'idle', messageKey: 'popup_clue_placeholder', messageArgs: [] }
   }
 
+  const threadLabel = input.threadLabel?.trim() || null
+
   if (input.chipsPresent) {
-    return {
-      mode: 'neutral',
-      messageKey: 'popup_clue_placeholder_neutral',
-      messageArgs: []
-    }
+    return withThreadLabel(
+      'neutral',
+      threadLabel,
+      'popup_clue_placeholder_neutral',
+      'popup_clue_placeholder_neutral_threaded',
+      []
+    )
   }
 
   if (input.assistantTone === 'miss' || input.assistantTone === 'error') {
-    return {
-      mode: 'neutral',
-      messageKey: 'popup_clue_placeholder_neutral',
-      messageArgs: []
-    }
+    return withThreadLabel(
+      'neutral',
+      threadLabel,
+      'popup_clue_placeholder_neutral',
+      'popup_clue_placeholder_neutral_threaded',
+      []
+    )
   }
 
   const canNarrow =
@@ -70,30 +100,37 @@ export function computeComposerPlaceholder(
   if (canNarrow) {
     const examples = (input.narrowExamples ?? []).map(s => s.trim()).filter(Boolean)
     if (examples.length >= 2) {
-      return {
-        mode: 'narrow',
-        messageKey: 'popup_clue_placeholder_narrow',
-        messageArgs: [examples[0]!, examples[1]!]
-      }
+      return withThreadLabel(
+        'narrow',
+        threadLabel,
+        'popup_clue_placeholder_narrow',
+        'popup_clue_placeholder_narrow_threaded',
+        [examples[0]!, examples[1]!]
+      )
     }
     if (examples.length === 1) {
-      return {
-        mode: 'narrow',
-        messageKey: 'popup_clue_placeholder_narrow_one',
-        messageArgs: [examples[0]!]
-      }
+      return withThreadLabel(
+        'narrow',
+        threadLabel,
+        'popup_clue_placeholder_narrow_one',
+        'popup_clue_placeholder_narrow_one_threaded',
+        [examples[0]!]
+      )
     }
-    // P0a：尚无抽取器 → 无举例收窄邀请；P0b 有举例走插值 key
-    return {
-      mode: 'narrow',
-      messageKey: 'popup_clue_placeholder_narrow_generic',
-      messageArgs: []
-    }
+    return withThreadLabel(
+      'narrow',
+      threadLabel,
+      'popup_clue_placeholder_narrow_generic',
+      'popup_clue_placeholder_narrow_generic_threaded',
+      []
+    )
   }
 
-  return {
-    mode: 'neutral',
-    messageKey: 'popup_clue_placeholder_neutral',
-    messageArgs: []
-  }
+  return withThreadLabel(
+    'neutral',
+    threadLabel,
+    'popup_clue_placeholder_neutral',
+    'popup_clue_placeholder_neutral_threaded',
+    []
+  )
 }

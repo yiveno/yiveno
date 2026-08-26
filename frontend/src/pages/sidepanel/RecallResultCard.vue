@@ -43,7 +43,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  open: [payload: { id: string; url: string }]
+  open: [payload: { id: string; url: string; openInNewTab: boolean }]
   toggleExpand: []
 }>()
 
@@ -104,8 +104,14 @@ function siblingNativeTitle(sibling: RecallCardModel): string | undefined {
   return title || path || undefined
 }
 
-function handleOpen(id: string, url: string): void {
-  emit('open', { id, url })
+function handleOpen(event: MouseEvent, id: string, url: string): void {
+  // 一律经 SW 导航：默认当前活动标签；⌘/Ctrl+点击新开，避免 Side Panel 自身跳转
+  event.preventDefault()
+  emit('open', {
+    id,
+    url,
+    openInNewTab: event.metaKey || event.ctrlKey
+  })
 }
 
 function handleMoreClick(event: MouseEvent): void {
@@ -165,9 +171,8 @@ function handleMoreClick(event: MouseEvent): void {
         }"
         :href="card.url"
         :title="bookmarkNativeTitle"
-        target="_blank"
         rel="noopener noreferrer"
-        @click="handleOpen(card.id, card.url)"
+        @click="handleOpen($event, card.id, card.url)"
       >
         <p
           v-if="card.excerpt"
@@ -197,12 +202,6 @@ function handleMoreClick(event: MouseEvent): void {
           class="recall-card-subtitle"
           :title="card.itemKind === 'bookmark' ? card.subtitle : undefined"
         >
-          <AppIcon
-            v-if="card.itemKind === 'bookmark'"
-            class="recall-card-subtitle-icon"
-            name="open_in_new"
-            size="12px"
-          />
           <span class="recall-card-subtitle-text">
             <RecallHighlightText :parts="card.subtitleParts" />
           </span>
@@ -259,9 +258,8 @@ function handleMoreClick(event: MouseEvent): void {
           }"
           :href="sibling.url"
           :title="siblingNativeTitle(sibling)"
-          target="_blank"
           rel="noopener noreferrer"
-          @click="handleOpen(sibling.id, sibling.url)"
+          @click="handleOpen($event, sibling.id, sibling.url)"
         >
           <p v-if="sibling.excerpt" class="recall-card-body recall-card-body--compact">
             <RecallHighlightText :parts="sibling.excerptParts" />
@@ -281,12 +279,6 @@ function handleMoreClick(event: MouseEvent): void {
             class="recall-card-subtitle"
             :title="sibling.itemKind === 'bookmark' ? sibling.subtitle : undefined"
           >
-            <AppIcon
-              v-if="sibling.itemKind === 'bookmark'"
-              class="recall-card-subtitle-icon"
-              name="open_in_new"
-              size="12px"
-            />
             <span class="recall-card-subtitle-text">
               <RecallHighlightText :parts="sibling.subtitleParts" />
             </span>
@@ -540,12 +532,6 @@ function handleMoreClick(event: MouseEvent): void {
   font-size: 12px;
   color: var(--on-surface-muted);
   overflow-wrap: anywhere;
-}
-
-.recall-card-subtitle-icon {
-  flex-shrink: 0;
-  color: var(--on-surface-muted);
-  opacity: 0.85;
 }
 
 .recall-card-subtitle-text {

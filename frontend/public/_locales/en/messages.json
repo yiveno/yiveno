@@ -313,8 +313,26 @@
   "popup_clue_placeholder_neutral": {
     "message": "Or add another detail…"
   },
+  "popup_clue_placeholder_neutral_threaded": {
+    "message": "Add another detail to “$1”…",
+    "placeholders": {
+      "label": {
+        "content": "$1",
+        "example": "JavaScript"
+      }
+    }
+  },
   "popup_clue_placeholder_narrow_generic": {
     "message": "Still a bit broad — add another detail you remember…"
+  },
+  "popup_clue_placeholder_narrow_generic_threaded": {
+    "message": "Add another detail to “$1”…",
+    "placeholders": {
+      "label": {
+        "content": "$1",
+        "example": "JavaScript"
+      }
+    }
   },
   "popup_clue_placeholder_narrow": {
     "message": "Still a bit broad — try something like “$1” or “$2”.",
@@ -329,6 +347,23 @@
       }
     }
   },
+  "popup_clue_placeholder_narrow_threaded": {
+    "message": "Add detail to “$1” — try “$2” or “$3”.",
+    "placeholders": {
+      "label": {
+        "content": "$1",
+        "example": "JavaScript"
+      },
+      "a": {
+        "content": "$2",
+        "example": "history"
+      },
+      "b": {
+        "content": "$3",
+        "example": "eloquent"
+      }
+    }
+  },
   "popup_clue_placeholder_narrow_one": {
     "message": "Still a bit broad — try something like “$1”.",
     "placeholders": {
@@ -337,6 +372,46 @@
         "example": "code"
       }
     }
+  },
+  "popup_clue_placeholder_narrow_one_threaded": {
+    "message": "Add detail to “$1” — try “$2”.",
+    "placeholders": {
+      "label": {
+        "content": "$1",
+        "example": "JavaScript"
+      },
+      "a": {
+        "content": "$2",
+        "example": "history"
+      }
+    }
+  },
+  "popup_thread_title_aria": {
+    "message": "This find: $1",
+    "placeholders": {
+      "title": {
+        "content": "$1",
+        "example": "JavaScript"
+      }
+    }
+  },
+  "popup_thread_anchor_clear": {
+    "message": "New find"
+  },
+  "popup_thread_pivot_prompt": {
+    "message": "Looks like a new find. Still on “$1”?",
+    "placeholders": {
+      "label": {
+        "content": "$1",
+        "example": "JavaScript"
+      }
+    }
+  },
+  "popup_thread_pivot_continue": {
+    "message": "Keep refining"
+  },
+  "popup_thread_pivot_new": {
+    "message": "Start new"
   },
   "popup_env_chip_current_site": {
     "message": "Related to this site"
@@ -460,6 +535,15 @@
   "popup_session_status_continuing": {
     "message": "Still refining this find — not a new one."
   },
+  "popup_session_status_continuing_threaded": {
+    "message": "Still on “$1” — not a new find.",
+    "placeholders": {
+      "label": {
+        "content": "$1",
+        "example": "JavaScript"
+      }
+    }
+  },
   "popup_reply_after_dismiss": {
     "message": "Okay, let's try a different angle. Add the site, a quote, or something you wrote."
   },
@@ -516,6 +600,9 @@
   },
   "popup_recall_failed": {
     "message": "Recall failed. Try again later."
+  },
+  "popup_navigate_tab_failed": {
+    "message": "Couldn't open that page. Try again."
   },
   "settings_title": {
     "message": "Settings"

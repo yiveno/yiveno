@@ -4,9 +4,12 @@ import {
 } from '@/core/commands/command-display'
 import type {
   GetExtensionCommandsResponse,
+  NavigateActiveTabPayload,
+  NavigateActiveTabResponse,
   OpenChromeShortcutsPageResponse,
   OpenRecallShellResponse
 } from '@/core/messaging/commands-messages'
+import { navigateTabToUrl } from '@/infrastructure/browser/navigate-tab'
 import {
   openRecallSidePanel,
   type OpenRecallSidePanelOptions
@@ -63,6 +66,27 @@ export async function handleOpenRecallShell(
     return {
       ok: false,
       errorCode: 'RECALL_SHELL_OPEN_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
+    }
+  }
+}
+
+/** Side Panel 等：在活动标签（或新标签）打开可导航 URL。 */
+export async function handleNavigateActiveTab(
+  payload: NavigateActiveTabPayload
+): Promise<NavigateActiveTabResponse> {
+  const disposition = payload.disposition ?? 'currentTab'
+  const startedAt = flowStart('Nav', '标签导航', { disposition })
+  try {
+    await navigateTabToUrl(payload.url, disposition)
+    flowOk('Nav', '标签导航', startedAt, { disposition, ok: true })
+    return { ok: true }
+  } catch (error) {
+    flowFail('Nav', '标签导航', startedAt, error, { disposition })
+    logger.warn('Commands', '标签导航失败', error)
+    return {
+      ok: false,
+      errorCode: 'NAVIGATE_TAB_FAILED',
       ...(error instanceof Error ? { error: error.message } : {})
     }
   }

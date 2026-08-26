@@ -4,6 +4,7 @@ import type {
   GetLocalIdentityResponse
 } from '@/core/messaging/background-messages'
 import { isBackgroundScopedMessage } from '@/core/messaging/background-messages'
+import { parseNavigateActiveTabPayload } from '@/core/messaging/commands-messages'
 import {
   handleAuthSignIn,
   handleAuthSignOut,
@@ -26,6 +27,7 @@ import {
 } from '@/background/handlers/account-sync-handler'
 import {
   handleGetExtensionCommands,
+  handleNavigateActiveTab,
   handleOpenChromeShortcutsPage,
   handleOpenRecallShell
 } from '@/background/handlers/commands-handler'
@@ -167,6 +169,8 @@ async function dispatchBackgroundMessage(
         ...(typeof sender?.tab?.id === 'number' ? { tabId: sender.tab.id } : {}),
         ...(typeof sender?.tab?.windowId === 'number' ? { windowId: sender.tab.windowId } : {})
       })
+    case 'NAVIGATE_ACTIVE_TAB':
+      return handleNavigateActiveTab(parseNavigateActiveTabPayload(message.payload))
     case 'GET_USER_SETTINGS':
       return handleGetUserSettings()
     case 'UPDATE_USER_SETTINGS':

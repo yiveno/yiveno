@@ -24,6 +24,9 @@ import type {
 import type {
   GetExtensionCommandsMessage,
   GetExtensionCommandsResponse,
+  NavigateActiveTabMessage,
+  NavigateActiveTabPayload,
+  NavigateActiveTabResponse,
   OpenChromeShortcutsPageMessage,
   OpenChromeShortcutsPageResponse,
   OpenRecallShellMessage,
@@ -229,6 +232,18 @@ export async function openRecallShell(): Promise<OpenRecallShellResponse> {
     type: 'OPEN_RECALL_SHELL'
   }
   return sendBackgroundMessage<OpenRecallShellResponse>(message)
+}
+
+/** 在活动标签（或新标签）打开 URL；Side Panel 结果卡默认复用当前页。 */
+export async function navigateActiveTab(
+  payload: NavigateActiveTabPayload
+): Promise<NavigateActiveTabResponse> {
+  const message: NavigateActiveTabMessage = {
+    scope: 'background',
+    type: 'NAVIGATE_ACTIVE_TAB',
+    payload
+  }
+  return sendBackgroundMessage<NavigateActiveTabResponse>(message)
 }
 
 /** 读取用户设置。 */

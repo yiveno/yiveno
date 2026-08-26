@@ -22,6 +22,11 @@ import { getMemoryItemDisplay } from '@/core/recall/recall-result'
 import { RECALL_RESULT_PAGE_SIZE } from '@/core/recall/build-recall-result'
 import { computeComposerPlaceholder } from '@/core/recall/compute-composer-placeholder'
 import { extractComposerNarrowExamples } from '@/core/recall/extract-composer-narrow-examples'
+import { resolveThreadFindTitle } from '@/core/recall/resolve-thread-anchor-label'
+import {
+  collectThreadAnchorTerms,
+  shouldOfferThreadPivotConfirm
+} from '@/core/recall/should-offer-thread-pivot-confirm'
 import { buildRecallCardHighlightParts } from '@/core/recall/highlight-recall-text'
 import { getMemoryItemOpenHref } from '@/core/recall/memory-open-href'
 import { tImportStateError, tRecallError } from '@/infrastructure/i18n/background-error'
@@ -32,6 +37,7 @@ import {
   fetchChromeBookmarkImportStatus,
   fetchColdStartStatus,
   listMemoryItems,
+  navigateActiveTab,
   recallWithClue,
   recordMemoryOpen,
   recordRecallDismiss
@@ -90,6 +96,13 @@ const outcomeSession = ref<RecallOutcomeSessionState>(createRecallOutcomeSession
 /** 出口条（通道 D）：New find 前可选 Found / None / Skip。 */
 const showOutcomeExitStrip = ref(false)
 
+/** 软岔路口：发送前确认 Keep refining / Start new。 */
+const showThreadPivotStrip = ref(false)
+/** 待确认的线索（确认条出示期间暂存）。 */
+const pendingPivotClue = ref<string | null>(null)
+/** 上次成功提交线索的时间（冷却启发式）。 */
+const lastSubmitAtMs = ref<number | null>(null)
+
 const conversationTurns = ref<ConversationTurn[]>([])
 let turnSeq = 0
 
@@ -109,6 +122,19 @@ const hasActiveFindSession = computed(() => {
 })
 
 const isComposerProminent = computed(() => conversationTurns.value.length === 0)
+
+/** 本场找回会话标题（composer 锚点 / status / 软岔路口共用）。 */
+const threadFindTitle = computed(() =>
+  resolveThreadFindTitle({
+    priorUserUtterances: dialogState.value.priorUserUtterances,
+    contentTerms: dialogState.value.accumulated?.contentTerms ?? []
+  })
+)
+
+const threadTitleAria = computed(() => {
+  const title = threadFindTitle.value
+  return title ? t('popup_thread_title_aria', title) : null
+})
 
 /** §7.0 双通道：按最新助手轮 + grounded 举例选择 placeholder。 */
 const composerPlaceholder = computed(() => {
@@ -145,7 +171,8 @@ const composerPlaceholder = computed(() => {
     rankedTotalCount: latestAssistant?.rankedTotalCount ?? 0,
     chipsPresent,
     ...(latestAssistant?.tone !== undefined ? { assistantTone: latestAssistant.tone } : {}),
-    ...(narrowExamples.length > 0 ? { narrowExamples } : {})
+    ...(narrowExamples.length > 0 ? { narrowExamples } : {}),
+    ...(threadFindTitle.value ? { threadLabel: threadFindTitle.value } : {})
   })
 
   if (result.messageArgs.length === 0) {
@@ -191,7 +218,24 @@ function continuingContextStatus(
   dismissedIds: string[]
 ): { contextStatus?: string } {
   const continuing = priorUtterances.length > 0 || accumulated !== null || dismissedIds.length > 0
-  return continuing ? { contextStatus: t('popup_session_status_continuing') } : {}
+  if (!continuing) {
+    return {}
+  }
+  const label = resolveThreadFindTitle({
+    priorUserUtterances: priorUtterances,
+    contentTerms: accumulated?.contentTerms ?? []
+  })
+  return {
+    contextStatus: label
+      ? t('popup_session_status_continuing_threaded', label)
+      : t('popup_session_status_continuing')
+  }
+}
+
+/** 关闭软岔路口确认条并丢弃暂存线索。 */
+function clearThreadPivotStrip(): void {
+  showThreadPivotStrip.value = false
+  pendingPivotClue.value = null
 }
 
 /** 用户显式开新找：若需出口条则先出示；否则结算并清空。 */
@@ -213,6 +257,7 @@ function startNewFindSession(): void {
 /** 结算 Outcome 并重置会话 UI。 */
 async function completeNewFindSession(reason: string): Promise<void> {
   showOutcomeExitStrip.value = false
+  clearThreadPivotStrip()
   await flushOutcomeSession(reason, true)
   recallRequestId += 1
   isRecallRefreshing.value = false
@@ -225,6 +270,7 @@ async function completeNewFindSession(reason: string): Promise<void> {
   conversationTurns.value = []
   clue.value = ''
   lastSentClue.value = ''
+  lastSubmitAtMs.value = null
   errorMessage.value = ''
   expandedDuplicateGroupId.value = null
   stickToBottom.value = true
@@ -545,8 +591,8 @@ function toggleDuplicateGroup(cardId: string): void {
   expandedDuplicateGroupId.value = expandedDuplicateGroupId.value === cardId ? null : cardId
 }
 
-function handleCardOpen(payload: { id: string; url: string }): void {
-  handleRecallResultOpen(payload.id, payload.url)
+function handleCardOpen(payload: { id: string; url: string; openInNewTab: boolean }): void {
+  handleRecallResultOpen(payload.id, payload.url, payload.openInNewTab)
 }
 
 /** 「都不是这些」：写否定反馈，保留 accumulated，会话 dismissedIds 并集后再请补线索。 */
@@ -613,7 +659,9 @@ async function handleDismissCandidates(): Promise<void> {
     role: 'assistant',
     tone: 'miss',
     text: t('popup_reply_after_dismiss'),
-    contextStatus: t('popup_session_status_continuing'),
+    contextStatus: threadFindTitle.value
+      ? t('popup_session_status_continuing_threaded', threadFindTitle.value)
+      : t('popup_session_status_continuing'),
     allowDismiss: false
   })
 
@@ -623,8 +671,8 @@ async function handleDismissCandidates(): Promise<void> {
   clueInputRef.value?.focus()
 }
 
-/** 打开结果时写 explore open（§7.2：≠ settled）；摘录进详情页由 Detail 记，避免双计。 */
-function handleRecallResultOpen(memoryItemId: string, openUrl: string): void {
+/** 打开结果：默认当前活动标签；⌘/Ctrl+点击新开。写 explore open（§7.2：≠ settled）。 */
+function handleRecallResultOpen(memoryItemId: string, openUrl: string, openInNewTab = false): void {
   void markFirstRecallOpenDone().catch(() => {
     // 忽略：引导标记失败不影响打开
   })
@@ -633,6 +681,12 @@ function handleRecallResultOpen(memoryItemId: string, openUrl: string): void {
     ...outcomeSession.value,
     opens: [...outcomeSession.value.opens, { id: memoryItemId, at: new Date().toISOString() }]
   }
+  void navigateActiveTab({
+    url: openUrl,
+    disposition: openInNewTab ? 'newForegroundTab' : 'currentTab'
+  }).catch(() => {
+    // 忽略：导航失败不打断会话；用户可再点
+  })
   if (openUrl.includes('/detail.html')) {
     return
   }
@@ -966,13 +1020,54 @@ function handleNavigateError(message: string) {
   errorMessage.value = message
 }
 
-async function handleSendTurn(overrideClue?: string): Promise<void> {
+async function handleSendTurn(
+  overrideClue?: string,
+  options?: { skipPivotCheck?: boolean }
+): Promise<void> {
   const trimmed = (overrideClue ?? clue.value).trim()
+  if (!trimmed || isRecallRefreshing.value || showOutcomeExitStrip.value) {
+    return
+  }
+
+  // 确认条已开：再发送只更新暂存线索，仍等用户点选
+  if (showThreadPivotStrip.value && !options?.skipPivotCheck) {
+    pendingPivotClue.value = trimmed
+    clue.value = ''
+    return
+  }
+
+  if (!options?.skipPivotCheck && hasActiveFindSession.value) {
+    const anchorTerms = collectThreadAnchorTerms({
+      contentTerms: dialogState.value.accumulated?.contentTerms ?? [],
+      priorUserUtterances: dialogState.value.priorUserUtterances
+    })
+    if (
+      shouldOfferThreadPivotConfirm({
+        clue: trimmed,
+        anchorTerms,
+        lastSubmitAtMs: lastSubmitAtMs.value,
+        nowMs: Date.now()
+      })
+    ) {
+      pendingPivotClue.value = trimmed
+      showThreadPivotStrip.value = true
+      clue.value = ''
+      return
+    }
+  }
+
+  await commitSendTurn(trimmed)
+}
+
+/** 真正推入用户气泡并召回（已过软岔路口或芯片跳过）。 */
+async function commitSendTurn(trimmedClue: string): Promise<void> {
+  const trimmed = trimmedClue.trim()
   if (!trimmed || isRecallRefreshing.value) {
     return
   }
 
   lastSentClue.value = trimmed
+  lastSubmitAtMs.value = Date.now()
 
   // 发送后强制黏底，保证看见待回复与结果
   stickToBottom.value = true
@@ -990,12 +1085,33 @@ async function handleSendTurn(overrideClue?: string): Promise<void> {
   await runRecall(trimmed)
 }
 
-/** 追问芯片：点击即发送一轮（稳定英文 value / 当前 locale label）。 */
+/** 软岔路口：继续 refine 当前线程。 */
+function handleThreadPivotContinue(): void {
+  const pending = pendingPivotClue.value?.trim() ?? ''
+  clearThreadPivotStrip()
+  if (!pending) {
+    return
+  }
+  void commitSendTurn(pending)
+}
+
+/** 软岔路口：开新找后再以暂存线索首轮召回（跳过出口条，避免打断发送）。 */
+async function handleThreadPivotNew(): Promise<void> {
+  const pending = pendingPivotClue.value?.trim() ?? ''
+  clearThreadPivotStrip()
+  await completeNewFindSession('thread_pivot_new')
+  if (!pending) {
+    return
+  }
+  await commitSendTurn(pending)
+}
+
+/** 追问芯片：点击即发送一轮（稳定英文 value / 当前 locale label）；跳过软岔路口。 */
 function handleUseSuggestion(value: string): void {
   if (!value.trim() || isRecallRefreshing.value) {
     return
   }
-  void handleSendTurn(value)
+  void handleSendTurn(value, { skipPivotCheck: true })
 }
 
 /** 取消登录态 storage 订阅。 */
@@ -1134,15 +1250,38 @@ onUnmounted(() => {
       </div>
     </div>
 
+    <div
+      v-if="showThreadPivotStrip && threadFindTitle"
+      class="recall-thread-pivot"
+      role="group"
+      :aria-label="t('popup_thread_pivot_prompt', threadFindTitle)"
+    >
+      <p class="recall-thread-pivot__prompt">
+        {{ t('popup_thread_pivot_prompt', threadFindTitle) }}
+      </p>
+      <div class="recall-thread-pivot__actions">
+        <AppButton type="button" variant="filled" @click="handleThreadPivotContinue">
+          {{ t('popup_thread_pivot_continue') }}
+        </AppButton>
+        <AppButton type="button" variant="outlined" @click="handleThreadPivotNew">
+          {{ t('popup_thread_pivot_new') }}
+        </AppButton>
+      </div>
+    </div>
+
     <RecallComposer
       ref="clueInputRef"
       v-model="clue"
       :ariaLabel="t('popup_clue_input_aria')"
       :placeholder="composerPlaceholder"
       :sendLabel="t('popup_submit')"
-      :disabled="isRecallRefreshing"
+      :disabled="isRecallRefreshing || showOutcomeExitStrip"
       :prominent="isComposerProminent"
+      :thread-title="threadFindTitle"
+      :thread-title-aria="threadTitleAria"
+      :thread-new-find-label="t('popup_thread_anchor_clear')"
       @send="handleSendTurn"
+      @clear-thread="startNewFindSession"
     />
   </main>
 </template>
@@ -1187,11 +1326,37 @@ onUnmounted(() => {
   display: grid;
   gap: var(--space-xs);
   flex-shrink: 0;
+  margin-top: var(--space-xs);
   margin-bottom: var(--space-sm);
   padding: var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface-chrome);
+}
+
+.recall-thread-pivot {
+  display: grid;
+  gap: var(--space-xs);
+  flex-shrink: 0;
+  margin-top: var(--space-xs);
+  margin-bottom: var(--space-sm);
+  padding: var(--space-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-white);
+}
+
+.recall-thread-pivot__prompt {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--on-surface);
+}
+
+.recall-thread-pivot__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
 }
 
 .recall-outcome-exit__prompt {
