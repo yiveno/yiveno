@@ -13,6 +13,7 @@ import type { MemoryItem } from '@/core/memory/memory-item'
 /**
  * 第一屏 / 每批「Show more」条数（互异组）。
  * 产品：默认短名单，可续展；不是结果全集上限。
+ * eval `in_topk` k≤5 对齐本常量。
  */
 export const RECALL_RESULT_PAGE_SIZE = 5
 
@@ -21,20 +22,6 @@ export const RECALL_RESULT_PAGE_SIZE = 5
  * 超过此数仍截断；文案用 totalRankedCount 告知用户池内条数。
  */
 export const RECALL_RESULT_POOL_LIMIT = 50
-
-/**
- * @deprecated 语义改为「首屏条数」；请优先用 {@link RECALL_RESULT_PAGE_SIZE}。
- * eval `in_topk` k≤5 仍对齐本常量。
- */
-export const RECALL_RESULT_SLOT_LIMIT = RECALL_RESULT_PAGE_SIZE
-
-/**
- * 折叠前关键词打分上限（历史常量）。
- * **禁止**再当作「折叠前截断」：重复书签会占满额度、挤掉其它互异组。
- * 打分应对已裁候选全量保留命中，再 {@link collapseRecallMatches}。
- * @deprecated 保留供旧调用方/注释对照；新代码用 {@link filterKeywordMatchesBeforeCollapse}。
- */
-export const RECALL_MATCH_FETCH_LIMIT = 500
 
 /** 折叠时多取的余量（供域名互斥过滤后补位到池上限）。 */
 export const RECALL_COLLAPSE_BACKFILL_EXTRA = 24
@@ -146,11 +133,6 @@ export function buildRecallResult(clue: string, collapsedGroups: RecallMatch[]):
     totalRankedCount: pool.length,
     clue
   }
-}
-
-/** 展平结果为排序列表（头名 + 其余）。 */
-export function getRecallRankedMatches(result: RecallResult): RecallMatch[] {
-  return [...(result.topPick ? [result.topPick] : []), ...result.alsoPossible]
 }
 
 /** 对 MemoryItem 列表执行关键词 Recall（含重复折叠与排序池）。 */

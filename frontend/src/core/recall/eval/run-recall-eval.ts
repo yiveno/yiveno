@@ -1,4 +1,4 @@
-import { RECALL_RESULT_SLOT_LIMIT } from '@/core/recall/build-recall-result'
+import { RECALL_RESULT_PAGE_SIZE } from '@/core/recall/build-recall-result'
 import type { RecallEvalCase } from '@/core/recall/eval/recall-eval-cases'
 import { buildRecallEvalCorpus } from '@/core/recall/eval/recall-eval-corpus'
 import { RECALL_EVAL_NOW_MS } from '@/core/recall/eval/recall-eval-now'
@@ -57,7 +57,7 @@ export function judgeRecallEvalCase(
   }
 
   if (expectation.kind === 'need_a_clue') {
-    const ids = candidateIds(result, RECALL_RESULT_SLOT_LIMIT)
+    const ids = candidateIds(result, RECALL_RESULT_PAGE_SIZE)
     const passed =
       result.outcome === 'need_a_clue' &&
       result.topPick === null &&
