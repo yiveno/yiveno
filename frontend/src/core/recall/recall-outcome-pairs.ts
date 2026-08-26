@@ -11,7 +11,7 @@ import type {
   RecallOutcomeSource
 } from '@/core/recall/recall-outcome'
 
-/** 指纹命中正例（曾 Mark/settled 为答案）软加成。 */
+/** 指纹命中正例（曾 settled / 出口 Found 为答案）软加成。 */
 export const RECALL_OUTCOME_PAIR_POSITIVE_BOOST = 12
 
 /** 指纹命中硬负例（该 clue 下曾「都不是这些」）降权。 */

@@ -2,12 +2,14 @@ import { z } from 'zod'
 
 import type { BookmarkLibraryIndex } from '@/core/memory/bookmark-library-index'
 import type { ChromeBookmarkImportState } from '@/core/memory/chrome-bookmark-import-state'
+import type { ColdStartPipelineState } from '@/core/memory/cold-start-pipeline-state'
 import type { BackgroundMessageScope } from '@/core/messaging/constants'
 
 /** Import / 书签树面向 UI 的稳定错误码。 */
 export const ImportErrorCodeSchema = z.enum([
   'IMPORT_STATUS_READ_FAILED', // 读取导入状态失败
-  'LIBRARY_TREE_READ_FAILED' // 读取书签树失败
+  'LIBRARY_TREE_READ_FAILED', // 读取书签树失败
+  'COLD_START_STATUS_READ_FAILED' // 读取冷启动门禁状态失败
 ])
 
 export type ImportErrorCode = z.infer<typeof ImportErrorCodeSchema>
@@ -74,10 +76,31 @@ export type GetBookmarkLibraryTreeResponse =
   | GetBookmarkLibraryTreeSuccessResponse
   | GetBookmarkLibraryTreeErrorResponse
 
+/** 查询冷启动三阶段门禁进度。 */
+export type GetColdStartStatusMessage = {
+  scope: BackgroundMessageScope
+  type: 'GET_COLD_START_STATUS'
+}
+
+export type ColdStartStatusSuccessResponse = {
+  ok: true
+  state: ColdStartPipelineState | null
+}
+
+export type ColdStartStatusErrorResponse = {
+  ok: false
+  errorCode: ImportErrorCode
+  error?: string
+}
+
+export type ColdStartStatusResponse = ColdStartStatusSuccessResponse | ColdStartStatusErrorResponse
+
 export type ImportBackgroundMessage =
   | GetChromeBookmarkImportStatusMessage
   | GetBookmarkLibraryTreeMessage
+  | GetColdStartStatusMessage
 
 export type ImportBackgroundResponse =
   | ChromeBookmarkImportStatusResponse
   | GetBookmarkLibraryTreeResponse
+  | ColdStartStatusResponse

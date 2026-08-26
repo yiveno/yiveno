@@ -1,6 +1,4 @@
-import { ensureChromeBookmarksImported } from '@/application/capture/import-chrome-bookmarks-service'
-import { ensureMemoryEnrichmentBackfilled } from '@/application/memory/ensure-memory-enrichment-backfill'
-import { scheduleSilentMemoryEmbeddingMaintenance } from '@/application/memory/ensure-memory-embedding-maintenance'
+import { scheduleColdStartPipeline } from '@/application/onboarding/cold-start-pipeline-service'
 import { refreshClueLlmCompleterFromDevConfig } from '@/application/recall/refresh-clue-llm-completer'
 import { syncChromeBookmarkSyncListenersWithIngestSetting } from '@/background/listeners/chrome-bookmark-sync'
 import { registerCommandListeners } from '@/background/listeners/commands'
@@ -16,19 +14,10 @@ import {
 import { initializeMemoryDatabase } from '@/infrastructure/indexeddb/memory-db'
 import { logger } from '@/infrastructure/logging/logger'
 
-/** 扩展 reload 后延迟启动书签导入，避免与 Chrome 扩展卸载/重装窗口重叠。 */
-const CHROME_BOOKMARK_IMPORT_START_DELAY_MS = 500
-
-/** enrichment 回填略晚于书签导入启动，降低启动尖峰。 */
-const MEMORY_ENRICHMENT_BACKFILL_START_DELAY_MS = 1500
-
-/** 存量 embedding 无感维护再晚一拍，避免与 enrichment 抢 Worker 配额。 */
-const MEMORY_EMBEDDING_BACKFILL_START_DELAY_MS = 2800
-
 let bootstrapPromise: Promise<void> | null = null
 
 /**
- * Background 启动时初始化本地身份、Memory DB，并异步导入 Chrome 书签。
+ * Background 启动时初始化本地身份、Memory DB，并调度冷启动三阶段门禁。
  * 右键菜单项仅在 `chrome.runtime.onInstalled` 中注册，避免 reload 时重复调用 contextMenus API。
  */
 async function bootstrapBackground(): Promise<void> {
@@ -57,29 +46,8 @@ async function bootstrapBackground(): Promise<void> {
     database: 'YivenoMemoryDB'
   })
 
-  scheduleChromeBookmarkImport()
-  scheduleMemoryEnrichmentBackfill()
-  scheduleMemoryEmbeddingBackfill()
-}
-
-function scheduleChromeBookmarkImport(): void {
-  setTimeout(() => {
-    void ensureChromeBookmarksImported().catch(error => {
-      logger.error('Background', 'Chrome 书签导入失败（下次启动将重试）', error)
-    })
-  }, CHROME_BOOKMARK_IMPORT_START_DELAY_MS)
-}
-
-function scheduleMemoryEnrichmentBackfill(): void {
-  setTimeout(() => {
-    void ensureMemoryEnrichmentBackfilled().catch(error => {
-      logger.error('Background', '存量 enrichment 回填失败（下次启动将重试）', error)
-    })
-  }, MEMORY_ENRICHMENT_BACKFILL_START_DELAY_MS)
-}
-
-function scheduleMemoryEmbeddingBackfill(): void {
-  scheduleSilentMemoryEmbeddingMaintenance('bootstrap', MEMORY_EMBEDDING_BACKFILL_START_DELAY_MS)
+  // import → rules → AI 尽力；存量已导入则迁移 ready 并静默补缺口
+  scheduleColdStartPipeline()
 }
 
 /** 幂等启动 Background；并发调用合并为一次 bootstrap。 */

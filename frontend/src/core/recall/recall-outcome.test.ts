@@ -4,9 +4,10 @@ import { buildRecallOutcomeEvent, resolveRecallOutcome } from '@/core/recall/rec
 import { recallOutcomeCountsAsSettled } from '@/core/recall/recall-outcome-calibration'
 
 describe('resolveRecallOutcome', () => {
-  it('Mark 优先于 dismiss / no_match', () => {
+  it('出口 Found 优先于 dismiss / no_match', () => {
     const resolved = resolveRecallOutcome({
-      markedTargetId: 'a',
+      exitChoice: 'found',
+      exitFoundId: 'a',
       dismissedPending: true,
       sawNoMatchFinal: true
     })
@@ -14,7 +15,7 @@ describe('resolveRecallOutcome', () => {
       label: 'target',
       targetId: 'a',
       confidence: 'strong',
-      source: 'mark'
+      source: 'exit_prompt'
     })
   })
 

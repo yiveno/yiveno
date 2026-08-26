@@ -3,18 +3,14 @@
  * 未过 gold 门前 C2（settled_last / medium_low）不得写入 settledCount / often_opened。
  */
 
-import {
-  resolveRecallOutcome,
-  type RecallOutcomeOpen,
-  type ResolvedRecallOutcome
-} from '@/core/recall/recall-outcome'
+import { type ResolvedRecallOutcome } from '@/core/recall/recall-outcome'
 
 /** 默认 dwell 阈值（ms）。种子 study 可改；改前须记入校准旁挂。 */
 export const RECALL_OUTCOME_DWELL_THRESHOLD_MS = 10_000
 
 /**
  * C2 是否允许写入 settled 正例。
- * Normative：默认 false；仅当 Mark↔C2 一致率与 False target 过门后改为 true。
+ * Normative：默认 false；仅当相对 gold / 出口 Found 的 False target 过门后改为 true。
  * @see docs/engineering/R4-Outcome-Labeling-P2-校准.md
  */
 export const RECALL_OUTCOME_C2_SETTLE_ENABLED = false
@@ -57,29 +53,4 @@ export function recallOutcomeCountsAsSettled(
     return policy.allowSettledLast
   }
   return false
-}
-
-/**
- * 在已有 Mark 时，仅用 opens+stop 重算隐式结算，用于 Mark↔Settled 一致率观测。
- * 无隐式 target 时 agrees=null（不计入一致率分母）。
- */
-export function compareMarkWithImplicitSettle(input: {
-  markedTargetId: string
-  opens: RecallOutcomeOpen[]
-  dwellThresholdMs?: number
-}): {
-  implicit: ResolvedRecallOutcome
-  /** true=同 id；false=冲突；null=隐式非 target，不配对 */
-  agrees: boolean | null
-} {
-  const marked = input.markedTargetId.trim()
-  const implicit = resolveRecallOutcome({
-    opens: input.opens,
-    sessionStopped: true,
-    dwellThresholdMs: input.dwellThresholdMs ?? RECALL_OUTCOME_DWELL_THRESHOLD_MS
-  })
-  if (implicit.label !== 'target' || !implicit.targetId) {
-    return { implicit, agrees: null }
-  }
-  return { implicit, agrees: implicit.targetId === marked }
 }

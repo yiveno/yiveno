@@ -6,6 +6,10 @@ import AppLinearProgress from '@/infrastructure/ui/AppLinearProgress.vue'
 import { watchAuthSessionStorage } from '@/infrastructure/auth/watch-auth-session-storage'
 import type { ChromeBookmarkImportState } from '@/core/memory/chrome-bookmark-import-state'
 import { getChromeBookmarkImportPercent } from '@/core/memory/chrome-bookmark-import-state'
+import {
+  shouldShowColdStartGate,
+  type ColdStartPipelineState
+} from '@/core/memory/cold-start-pipeline-state'
 import { shouldShowCaptureFirstPopup } from '@/core/capture/install-onboarding'
 import {
   getPopupIdleEmptyCopy,
@@ -23,6 +27,7 @@ import { t } from '@/infrastructure/i18n/t'
 import {
   fetchAuthState,
   fetchChromeBookmarkImportStatus,
+  fetchColdStartStatus,
   listMemoryItems,
   recallWithClue,
   recordMemoryOpen,
@@ -41,6 +46,7 @@ import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
 import { type RecallCardModel } from '@/pages/sidepanel/RecallResultCard.vue'
 import RecallConversation from '@/pages/sidepanel/components/RecallConversation.vue'
 import RecallComposer from '@/pages/sidepanel/components/RecallComposer.vue'
+import ColdStartGate from '@/pages/sidepanel/components/ColdStartGate.vue'
 import { createAssistantTurn } from '@/pages/sidepanel/build-assistant-turn'
 import type {
   ConversationTurn,
@@ -64,6 +70,7 @@ const clueInputRef = ref<InstanceType<typeof RecallComposer> | null>(null)
 const isRecallRefreshing = ref(false)
 const errorMessage = ref('')
 const importState = ref<ChromeBookmarkImportState | null>(null)
+const coldStartState = ref<ColdStartPipelineState | null>(null)
 const libraryState = ref<PopupLibraryState>('unknown')
 const excerptCaptureCount = ref(0)
 const installOnboardingDone = ref(true)
@@ -214,33 +221,6 @@ function handleOutcomeExitSkip(): void {
   void completeNewFindSession('exit_skip')
 }
 
-/** §7.2 Mark：钉死本会话答案。 */
-function handleMarkMeant(id: string): void {
-  finalizeOpenDwell()
-  outcomeSession.value = {
-    ...outcomeSession.value,
-    markedTargetId: id,
-    dismissedPending: false,
-    sawNoMatchFinal: false
-  }
-  showOutcomeExitStrip.value = false
-  void commitRecallOutcome({
-    state: outcomeSession.value,
-    reason: 'mark'
-  })
-    .then(result => {
-      if (result.settleWritten) {
-        outcomeSession.value = {
-          ...outcomeSession.value,
-          settleWriteDone: true
-        }
-      }
-    })
-    .catch(() => {
-      // 忽略
-    })
-}
-
 /** 给最后一次 explore open 补 dwell（C1/C2）。 */
 function finalizeOpenDwell(): void {
   outcomeSession.value = {
@@ -258,7 +238,6 @@ async function flushOutcomeSession(reason: string, sessionStopped: boolean): Pro
     state.opens.length > 0 ||
     state.dismissedPending ||
     state.sawNoMatchFinal ||
-    state.markedTargetId !== null ||
     state.exitChoice !== null ||
     state.effectiveClue.trim().length > 0
   if (!hasSignal) {
@@ -337,6 +316,7 @@ function resolveMissAssistantText(input: {
 }
 
 let importPollTimer: ReturnType<typeof setInterval> | null = null
+let coldStartPollTimer: ReturnType<typeof setInterval> | null = null
 /** 递增以丢弃过期找回响应，避免慢请求覆盖新线索结果。 */
 let recallRequestId = 0
 
@@ -347,7 +327,63 @@ const importProgressPercent = computed(() => {
   return getChromeBookmarkImportPercent(importState.value)
 })
 
+const showColdStartGate = computed(() => {
+  if (coldStartState.value?.status === 'ready') {
+    return false
+  }
+  if (shouldShowColdStartGate(coldStartState.value)) {
+    return true
+  }
+  // 首次引导未完成且门禁未就绪：pipeline 尚未落盘时也先挡主壳（修复重装后只见 Capture-first）
+  if (!installOnboardingDone.value && coldStartState.value === null) {
+    return true
+  }
+  // pipeline 尚未落盘时：导入已在跑则仍挡主壳
+  const importStatus = importState.value?.status
+  return coldStartState.value === null && (importStatus === 'running' || importStatus === 'pending')
+})
+
+/** 门禁展示用状态：优先 pipeline；否则用 import / 首装占位。 */
+const coldStartGateState = computed((): ColdStartPipelineState | null => {
+  if (coldStartState.value) {
+    return coldStartState.value
+  }
+  const imp = importState.value
+  if (imp && (imp.status === 'running' || imp.status === 'pending')) {
+    return {
+      version: 1,
+      status: 'running',
+      stage: 'import',
+      importImportedCount: imp.importedCount,
+      ...(imp.totalCount !== undefined ? { importTotalCount: imp.totalCount } : {}),
+      rulesScanned: 0,
+      rulesUpdated: 0,
+      aiEmbedAttempted: 0,
+      aiEmbedWritten: 0,
+      aiLlmEnqueued: 0
+    }
+  }
+  if (showColdStartGate.value) {
+    return {
+      version: 1,
+      status: 'pending',
+      stage: 'idle',
+      importImportedCount: 0,
+      rulesScanned: 0,
+      rulesUpdated: 0,
+      aiEmbedAttempted: 0,
+      aiEmbedWritten: 0,
+      aiLlmEnqueued: 0
+    }
+  }
+  return null
+})
+
 const showImportProgress = computed(() => {
+  // 全屏门禁已覆盖导入进度时不重复显示顶栏细条
+  if (showColdStartGate.value) {
+    return false
+  }
   const status = importState.value?.status
   return status === 'running' || status === 'failed'
 })
@@ -642,6 +678,37 @@ function stopImportPolling() {
   }
 }
 
+async function refreshColdStartStatus() {
+  const response = await fetchColdStartStatus()
+  if (!response.ok) {
+    return
+  }
+  coldStartState.value = response.state
+  if (response.state?.status === 'ready' || response.state?.status === 'failed') {
+    stopColdStartPolling()
+    if (response.state.status === 'ready') {
+      void probeMemoryLibrary()
+    }
+  }
+}
+
+function startColdStartPolling() {
+  if (coldStartPollTimer) {
+    return
+  }
+  void refreshColdStartStatus()
+  coldStartPollTimer = setInterval(() => {
+    void refreshColdStartStatus()
+  }, 400)
+}
+
+function stopColdStartPolling() {
+  if (coldStartPollTimer) {
+    clearInterval(coldStartPollTimer)
+    coldStartPollTimer = null
+  }
+}
+
 async function runRecall(trimmedClue: string): Promise<void> {
   const trimmed = trimmedClue.trim()
   if (!trimmed) {
@@ -883,12 +950,14 @@ onMounted(() => {
   })()
   void probeMemoryLibrary()
   startImportPolling()
+  startColdStartPolling()
 })
 
 onUnmounted(() => {
   void flushOutcomeSession('panel_close', true)
   recallRequestId += 1
   stopImportPolling()
+  stopColdStartPolling()
   stopWatchAuthSession?.()
   stopWatchAuthSession = null
 })
@@ -896,6 +965,8 @@ onUnmounted(() => {
 
 <template>
   <main class="recall-shell">
+    <ColdStartGate v-if="showColdStartGate && coldStartGateState" :state="coldStartGateState" />
+
     <header class="recall-header">
       <AppPageHeader
         class="recall-header-top"
@@ -960,15 +1031,11 @@ onUnmounted(() => {
         :expandLabel="t('popup_duplicate_expand')"
         :collapseLabel="t('popup_duplicate_collapse')"
         :noteFieldLabel="t('detail_note_label')"
-        :marked-target-id="outcomeSession.markedTargetId"
-        :mark-label="t('popup_mark_as_meant')"
-        :marked-label="t('popup_mark_as_meant_done')"
         :pending="isRecallRefreshing"
         :pendingLabel="t('popup_recall_pending')"
         @open="handleCardOpen"
         @toggle-expand="toggleDuplicateGroup"
         @dismiss="handleDismissCandidates"
-        @mark="handleMarkMeant"
         @use-suggestion="handleUseSuggestion"
       />
     </div>
@@ -1025,6 +1092,7 @@ onUnmounted(() => {
 }
 
 .recall-shell {
+  position: relative;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;

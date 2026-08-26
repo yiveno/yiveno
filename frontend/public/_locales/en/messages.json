@@ -147,6 +147,109 @@
   "popup_import_progress_aria": {
     "message": "Bookmark import progress"
   },
+  "cold_start_eyebrow": {
+    "message": "First-time setup"
+  },
+  "cold_start_progress_aria": {
+    "message": "First-time setup progress"
+  },
+  "cold_start_stage_idle_title": {
+    "message": "Getting your library ready"
+  },
+  "cold_start_stage_idle_body": {
+    "message": "Yiveno is preparing your bookmarks so you can find them with fuzzy clues."
+  },
+  "cold_start_stage_import_title": {
+    "message": "Importing your bookmarks"
+  },
+  "cold_start_stage_import_body": {
+    "message": "Copying Chrome bookmarks into your local Yiveno library. This is the raw material Recall searches."
+  },
+  "cold_start_stage_rules_title": {
+    "message": "Indexing for keyword recall"
+  },
+  "cold_start_stage_rules_body": {
+    "message": "Building local tags and keywords so exact words and sites match quickly—no cloud wait for this step."
+  },
+  "cold_start_stage_ai_title": {
+    "message": "Strengthening semantic recall"
+  },
+  "cold_start_stage_ai_body": {
+    "message": "Best-effort AI enrichment for fuzzier clues—works without signing in. Sign in later for optional embeddings. Large libraries may finish in the background."
+  },
+  "cold_start_stage_done_title": {
+    "message": "Ready to recall"
+  },
+  "cold_start_stage_done_body": {
+    "message": "Your local library is ready to recall. Sign in later if you want optional semantic embeddings."
+  },
+  "cold_start_detail_import": {
+    "message": "Imported $imported$ of $total$ bookmarks",
+    "placeholders": {
+      "imported": {
+        "content": "$1",
+        "example": "3"
+      },
+      "total": {
+        "content": "$2",
+        "example": "120"
+      }
+    }
+  },
+  "cold_start_detail_import_indeterminate": {
+    "message": "Reading your Chrome bookmark tree…"
+  },
+  "cold_start_detail_rules": {
+    "message": "Scanned $scanned$ items · updated $updated$",
+    "placeholders": {
+      "scanned": {
+        "content": "$1",
+        "example": "200"
+      },
+      "updated": {
+        "content": "$2",
+        "example": "40"
+      }
+    }
+  },
+  "cold_start_detail_ai": {
+    "message": "Embeddings $written$ / $attempted$ · AI enrich queued $queued$",
+    "placeholders": {
+      "written": {
+        "content": "$1",
+        "example": "8"
+      },
+      "attempted": {
+        "content": "$2",
+        "example": "12"
+      },
+      "queued": {
+        "content": "$3",
+        "example": "20"
+      }
+    }
+  },
+  "cold_start_detail_ai_indeterminate": {
+    "message": "Starting AI enrichment…"
+  },
+  "cold_start_detail_enrichment": {
+    "message": "AI enrich queued $queued$",
+    "placeholders": {
+      "queued": {
+        "content": "$1",
+        "example": "20"
+      }
+    }
+  },
+  "cold_start_step_import": {
+    "message": "1 · Import bookmarks"
+  },
+  "cold_start_step_rules": {
+    "message": "2 · Keyword index"
+  },
+  "cold_start_step_ai": {
+    "message": "3 · Enrich recall fields (best effort)"
+  },
   "popup_welcome_title": {
     "message": "What do you want to recall?"
   },
@@ -248,12 +351,6 @@
   },
   "popup_dismiss_candidates": {
     "message": "None of these"
-  },
-  "popup_mark_as_meant": {
-    "message": "Mark as what I meant"
-  },
-  "popup_mark_as_meant_done": {
-    "message": "Marked as what you meant"
   },
   "popup_outcome_exit_prompt": {
     "message": "Did you find what you were looking for?"
@@ -1136,6 +1233,9 @@
   },
   "error_import_status_read_failed": {
     "message": "Could not read bookmark import status"
+  },
+  "error_cold_start_status_read_failed": {
+    "message": "Could not read first-time setup status"
   },
   "action_retry": {
     "message": "Retry"

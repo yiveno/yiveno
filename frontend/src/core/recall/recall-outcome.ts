@@ -23,7 +23,7 @@ export type RecallOutcomeLabel = z.infer<typeof RecallOutcomeLabelSchema>
 
 /**
  * 标签置信。
- * - strong：Mark / dismiss / no_match / 出口条
+ * - strong：dismiss / no_match / 出口条
  * - medium_high：单条 reuse（copy / pack）
  * - medium：C1 单开即停
  * - medium_low：C2 多开后停（须 dwell）
@@ -39,7 +39,7 @@ export type RecallOutcomeConfidence = z.infer<typeof RecallOutcomeConfidenceSche
 
 /**
  * 标签来源通道。
- * - mark：显式勾选
+ * - mark：兼容旧落盘（UI Mark 通道已下线，不再产生新事件）
  * - dismiss：都不是这些
  * - no_match：诚实无相关
  * - exit_prompt：出口双按钮
@@ -49,7 +49,7 @@ export type RecallOutcomeConfidence = z.infer<typeof RecallOutcomeConfidenceSche
  * - unresolved：unknown
  */
 export const RecallOutcomeSourceSchema = z.enum([
-  'mark', // Mark
+  'mark', // 兼容旧落盘；不再由 UI 产生
   'dismiss', // dismiss
   'no_match', // no_match
   'exit_prompt', // 出口条
@@ -73,8 +73,6 @@ export interface RecallOutcomeOpen {
 
 /** 结算输入（会话可结算时）。 */
 export interface ResolveRecallOutcomeInput {
-  /** 通道 A：显式钉死的 id */
-  markedTargetId?: string | null
   /** 通道 D：出口选择 */
   exitChoice?: 'found' | 'none' | null
   /** 通道 D：Found it 时默认/选中的 id */
@@ -146,19 +144,10 @@ function meetsDwell(open: RecallOutcomeOpen | null, thresholdMs: number): boolea
 
 /**
  * 按 §7.2 决策树结算会话标签。
- * 优先级：A Mark > D 出口 > B dismiss / B′ no_match > C1 > C5 > C2 > unknown。
+ * 优先级：D 出口 > B dismiss / B′ no_match > C1 > C5 > C2 > unknown。
+ * （通道 A Mark 已下线，不再参与结算。）
  */
 export function resolveRecallOutcome(input: ResolveRecallOutcomeInput): ResolvedRecallOutcome {
-  const marked = input.markedTargetId?.trim() || null
-  if (marked) {
-    return {
-      label: 'target',
-      targetId: marked,
-      confidence: 'strong',
-      source: 'mark'
-    }
-  }
-
   if (input.exitChoice === 'found') {
     const foundId = input.exitFoundId?.trim() || null
     if (foundId) {

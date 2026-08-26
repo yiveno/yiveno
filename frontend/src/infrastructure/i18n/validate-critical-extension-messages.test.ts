@@ -29,22 +29,14 @@ describe('warnIfCriticalExtensionMessagesMissing', () => {
     })
   })
 
-  it('Mark 文案齐全时不告警', () => {
-    getMessage.mockImplementation((key: string) => {
-      if (key === 'popup_mark_as_meant') {
-        return 'Mark as what I meant'
-      }
-      if (key === 'popup_mark_as_meant_done') {
-        return 'Marked as what you meant'
-      }
-      return `resolved:${key}`
-    })
+  it('出口条文案齐全时不告警', () => {
+    getMessage.mockImplementation((key: string) => `resolved:${key}`)
     const warnSpy = vi.spyOn(logger, 'warn')
     warnIfCriticalExtensionMessagesMissing()
     expect(warnSpy).not.toHaveBeenCalled()
   })
 
-  it('缺 Mark 文案时打 warn 并列出 key', () => {
+  it('缺关键文案时打 warn 并列出 key', () => {
     getMessage.mockReturnValue('')
     const warnSpy = vi.spyOn(logger, 'warn')
     warnIfCriticalExtensionMessagesMissing()
@@ -52,7 +44,10 @@ describe('warnIfCriticalExtensionMessagesMissing', () => {
       'i18n',
       '关键 Side Panel 文案未解析（将露出 message key）',
       expect.objectContaining({
-        missingKeys: expect.arrayContaining(['popup_mark_as_meant', 'popup_mark_as_meant_done'])
+        missingKeys: expect.arrayContaining([
+          'popup_dismiss_candidates',
+          'popup_outcome_exit_prompt'
+        ])
       })
     )
   })

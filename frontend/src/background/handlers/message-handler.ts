@@ -31,7 +31,8 @@ import {
 } from '@/background/handlers/commands-handler'
 import {
   handleGetBookmarkLibraryTree,
-  handleGetChromeBookmarkImportStatus
+  handleGetChromeBookmarkImportStatus,
+  handleGetColdStartStatus
 } from '@/background/handlers/import-handler'
 import {
   handleCaptureBookmark,
@@ -146,6 +147,8 @@ async function dispatchBackgroundMessage(
       return handleRecallWithClue(message.payload)
     case 'GET_CHROME_BOOKMARK_IMPORT_STATUS':
       return handleGetChromeBookmarkImportStatus()
+    case 'GET_COLD_START_STATUS':
+      return handleGetColdStartStatus()
     case 'GET_BOOKMARK_LIBRARY_TREE':
       return handleGetBookmarkLibraryTree(
         message.payload &&

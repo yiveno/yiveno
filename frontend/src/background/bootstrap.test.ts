@@ -1,9 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const {
-  ensureChromeBookmarksImportedMock,
-  ensureMemoryEnrichmentBackfilledMock,
-  scheduleSilentMemoryEmbeddingMaintenanceMock,
+  scheduleColdStartPipelineMock,
   ensureSidePanelOpensOnActionClickMock,
   getCurrentOwnerIdMock,
   getOrCreateLocalProfileMock,
@@ -14,14 +12,7 @@ const {
   registerCommandListenersMock,
   registerSelectionToolbarKeepaliveListenerMock
 } = vi.hoisted(() => ({
-  ensureChromeBookmarksImportedMock: vi.fn(async () => ({ status: 'completed' as const })),
-  ensureMemoryEnrichmentBackfilledMock: vi.fn(async () => ({
-    status: 'skipped' as const,
-    scanned: 0,
-    updated: 0,
-    version: 1
-  })),
-  scheduleSilentMemoryEmbeddingMaintenanceMock: vi.fn(),
+  scheduleColdStartPipelineMock: vi.fn(),
   ensureSidePanelOpensOnActionClickMock: vi.fn(async () => undefined),
   getCurrentOwnerIdMock: vi.fn(async () => 'owner-1'),
   getOrCreateLocalProfileMock: vi.fn(async () => ({
@@ -37,16 +28,8 @@ const {
   registerSelectionToolbarKeepaliveListenerMock: vi.fn()
 }))
 
-vi.mock('@/application/capture/import-chrome-bookmarks-service', () => ({
-  ensureChromeBookmarksImported: ensureChromeBookmarksImportedMock
-}))
-
-vi.mock('@/application/memory/ensure-memory-enrichment-backfill', () => ({
-  ensureMemoryEnrichmentBackfilled: ensureMemoryEnrichmentBackfilledMock
-}))
-
-vi.mock('@/application/memory/ensure-memory-embedding-maintenance', () => ({
-  scheduleSilentMemoryEmbeddingMaintenance: scheduleSilentMemoryEmbeddingMaintenanceMock
+vi.mock('@/application/onboarding/cold-start-pipeline-service', () => ({
+  scheduleColdStartPipeline: scheduleColdStartPipelineMock
 }))
 
 vi.mock('@/infrastructure/browser/side-panel', () => ({
@@ -83,6 +66,14 @@ vi.mock('@/infrastructure/indexeddb/memory-db', () => ({
   initializeMemoryDatabase: initializeMemoryDatabaseMock
 }))
 
+vi.mock('@/background/listeners/memory-cloud-sync-alarm', () => ({
+  registerMemoryCloudSyncAlarmListener: vi.fn()
+}))
+
+vi.mock('@/application/recall/refresh-clue-llm-completer', () => ({
+  refreshClueLlmCompleterFromDevConfig: vi.fn(async () => undefined)
+}))
+
 import {
   ensureBackgroundBootstrapped,
   resetBackgroundBootstrapForTests
@@ -91,7 +82,6 @@ import {
 describe('ensureBackgroundBootstrapped', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.useFakeTimers()
     resetBackgroundBootstrapForTests()
   })
 
@@ -107,29 +97,8 @@ describe('ensureBackgroundBootstrapped', () => {
     expect(registerSelectionToolbarKeepaliveListenerMock).toHaveBeenCalledTimes(1)
   })
 
-  it('延迟启动 Chrome 书签导入', async () => {
+  it('启动时调度冷启动 pipeline', async () => {
     await ensureBackgroundBootstrapped()
-
-    expect(ensureChromeBookmarksImportedMock).not.toHaveBeenCalled()
-
-    await vi.advanceTimersByTimeAsync(500)
-
-    expect(ensureChromeBookmarksImportedMock).toHaveBeenCalledTimes(1)
-  })
-
-  it('延迟启动存量 enrichment 回填', async () => {
-    await ensureBackgroundBootstrapped()
-
-    expect(ensureMemoryEnrichmentBackfilledMock).not.toHaveBeenCalled()
-
-    await vi.advanceTimersByTimeAsync(1500)
-
-    expect(ensureMemoryEnrichmentBackfilledMock).toHaveBeenCalledTimes(1)
-  })
-
-  it('启动时调度无感 embedding 维护', async () => {
-    await ensureBackgroundBootstrapped()
-
-    expect(scheduleSilentMemoryEmbeddingMaintenanceMock).toHaveBeenCalledWith('bootstrap', 2800)
+    expect(scheduleColdStartPipelineMock).toHaveBeenCalledTimes(1)
   })
 })

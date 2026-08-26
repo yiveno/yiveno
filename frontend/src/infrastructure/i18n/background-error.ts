@@ -47,7 +47,8 @@ const RECALL_ERROR_MESSAGE_KEYS: Record<RecallErrorCode, MessageKey> = {
 
 const IMPORT_ERROR_MESSAGE_KEYS: Record<ImportErrorCode, MessageKey> = {
   IMPORT_STATUS_READ_FAILED: 'error_import_status_read_failed',
-  LIBRARY_TREE_READ_FAILED: 'library_load_failed'
+  LIBRARY_TREE_READ_FAILED: 'library_load_failed',
+  COLD_START_STATUS_READ_FAILED: 'error_cold_start_status_read_failed'
 }
 
 const COMMANDS_ERROR_MESSAGE_KEYS: Record<CommandsErrorCode, MessageKey> = {

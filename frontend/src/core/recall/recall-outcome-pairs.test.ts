@@ -41,7 +41,7 @@ describe('buildRecallOutcomePairRecord', () => {
         label: 'target',
         targetId: 'a',
         resultIds: ['a'],
-        source: 'mark',
+        source: 'exit_prompt',
         confidence: 'strong',
         countsAsSettled: false
       })
@@ -53,7 +53,7 @@ describe('buildRecallOutcomePairRecord', () => {
         label: 'target',
         targetId: 'a',
         resultIds: ['a'],
-        source: 'mark',
+        source: 'exit_prompt',
         confidence: 'strong',
         countsAsSettled: true
       })
@@ -87,7 +87,7 @@ describe('applyOutcomePairScoreAdjustments', () => {
         cluePreview: 'peck fable',
         label: 'target',
         targetId: 'pos',
-        source: 'mark',
+        source: 'exit_prompt',
         confidence: 'strong',
         createdAt: '2026-08-24T00:00:00.000Z'
       },

@@ -4,8 +4,6 @@ import { logger } from '@/infrastructure/logging/logger'
 
 /** Side Panel / Outcome 关键文案：缺 dist/_locales 同步时会露出 key。 */
 const CRITICAL_SIDE_PANEL_MESSAGE_KEYS: MessageKey[] = [
-  'popup_mark_as_meant',
-  'popup_mark_as_meant_done',
   'popup_dismiss_candidates',
   'popup_outcome_exit_prompt',
   'popup_outcome_exit_found',

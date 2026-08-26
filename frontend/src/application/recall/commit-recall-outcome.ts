@@ -11,7 +11,6 @@ import {
   type ResolveRecallOutcomeInput
 } from '@/core/recall/recall-outcome'
 import {
-  compareMarkWithImplicitSettle,
   getRecallOutcomeSettlePolicy,
   recallOutcomeCountsAsSettled
 } from '@/core/recall/recall-outcome-calibration'
@@ -26,13 +25,12 @@ export interface RecallOutcomeSessionState {
   effectiveClue: string
   resultIds: string[]
   opens: RecallOutcomeOpen[]
-  markedTargetId: string | null
   exitChoice: 'found' | 'none' | null
   exitFoundId: string | null
   dismissedPending: boolean
   sawNoMatchFinal: boolean
   copiedOrPackedId: string | null
-  /** 本会话是否已对 target 写过 settledCount（防 Mark + 终局双计） */
+  /** 本会话是否已对 target 写过 settledCount（防出口 + 终局双计） */
   settleWriteDone: boolean
 }
 
@@ -43,7 +41,6 @@ export function createRecallOutcomeSessionState(): RecallOutcomeSessionState {
     effectiveClue: '',
     resultIds: [],
     opens: [],
-    markedTargetId: null,
     exitChoice: null,
     exitFoundId: null,
     dismissedPending: false,
@@ -59,7 +56,6 @@ export function toResolveRecallOutcomeInput(
   options?: { sessionStopped?: boolean; dwellThresholdMs?: number }
 ): ResolveRecallOutcomeInput {
   return {
-    markedTargetId: state.markedTargetId,
     exitChoice: state.exitChoice,
     exitFoundId: state.exitFoundId,
     dismissedPending: state.dismissedPending,
@@ -110,18 +106,6 @@ export async function commitRecallOutcome(input: {
     cluePreview: event.effectiveClue.slice(0, 80)
   }
 
-  // Mark 时对拍隐式 C1/C2，供 P2 一致率观测（不改标签）
-  if (input.reason === 'mark' && input.state.markedTargetId) {
-    const pair = compareMarkWithImplicitSettle({
-      markedTargetId: input.state.markedTargetId,
-      opens: input.state.opens,
-      dwellThresholdMs: getRecallOutcomeSettlePolicy().dwellThresholdMs
-    })
-    logData.implicitSource = pair.implicit.source
-    logData.implicitTargetId = pair.implicit.targetId ?? null
-    logData.markImplicitAgrees = pair.agrees
-  }
-
   // §7.2 P3：本机持久化 (clue→target) / none 硬负例，供后续重排
   let pairPersisted = false
   try {
@@ -161,18 +145,14 @@ export async function commitRecallOutcome(input: {
 
 /**
  * 是否应在 New find / 关 Panel 前出示出口条（§7.2 通道 D）。
- * 条件：曾 explore open，且尚无 A/B 强标签。
+ * 条件：曾 explore open，且尚无 B 强标签 / 出口选择。
  */
 export function shouldOfferRecallOutcomeExitPrompt(state: {
-  markedTargetId: string | null
   exitChoice: 'found' | 'none' | null
   dismissedPending: boolean
   sawNoMatchFinal: boolean
   opens: { id: string }[]
 }): boolean {
-  if (state.markedTargetId) {
-    return false
-  }
   if (state.exitChoice) {
     return false
   }

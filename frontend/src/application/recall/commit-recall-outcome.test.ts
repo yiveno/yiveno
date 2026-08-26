@@ -7,7 +7,6 @@ import {
 
 describe('shouldOfferRecallOutcomeExitPrompt', () => {
   const base = {
-    markedTargetId: null as string | null,
     exitChoice: null as 'found' | 'none' | null,
     dismissedPending: false,
     sawNoMatchFinal: false,
@@ -18,8 +17,7 @@ describe('shouldOfferRecallOutcomeExitPrompt', () => {
     expect(shouldOfferRecallOutcomeExitPrompt(base)).toBe(true)
   })
 
-  it('已 Mark / dismiss / no_match / 出口选择时不出示', () => {
-    expect(shouldOfferRecallOutcomeExitPrompt({ ...base, markedTargetId: 'a' })).toBe(false)
+  it('已 dismiss / no_match / 出口选择时不出示', () => {
     expect(shouldOfferRecallOutcomeExitPrompt({ ...base, dismissedPending: true })).toBe(false)
     expect(shouldOfferRecallOutcomeExitPrompt({ ...base, sawNoMatchFinal: true })).toBe(false)
     expect(shouldOfferRecallOutcomeExitPrompt({ ...base, exitChoice: 'found' })).toBe(false)

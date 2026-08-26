@@ -4,9 +4,11 @@ import {
 } from '@/core/memory/bookmark-library-index'
 import type {
   ChromeBookmarkImportStatusResponse,
+  ColdStartStatusResponse,
   GetBookmarkLibraryTreeResponse
 } from '@/core/messaging/import-messages'
 import { getChromeBookmarkImportStatus } from '@/application/capture/import-chrome-bookmarks-service'
+import { readColdStartPipelineState } from '@/application/onboarding/cold-start-pipeline-service'
 import {
   getLastBuiltBookmarkLibraryTree,
   invalidateBookmarkLibraryTreeCache,
@@ -32,6 +34,26 @@ export async function handleGetChromeBookmarkImportStatus(): Promise<ChromeBookm
     return {
       ok: false,
       errorCode: 'IMPORT_STATUS_READ_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
+    }
+  }
+}
+
+/** 返回冷启动三阶段门禁进度。 */
+export async function handleGetColdStartStatus(): Promise<ColdStartStatusResponse> {
+  const startedAt = flowStart('ColdStart', '读取冷启动门禁状态')
+  try {
+    const state = await readColdStartPipelineState()
+    flowOk('ColdStart', '读取冷启动门禁状态', startedAt, {
+      status: state?.status ?? null,
+      stage: state?.stage ?? null
+    })
+    return { ok: true, state }
+  } catch (error) {
+    flowFail('ColdStart', '读取冷启动门禁状态', startedAt, error)
+    return {
+      ok: false,
+      errorCode: 'COLD_START_STATUS_READ_FAILED',
       ...(error instanceof Error ? { error: error.message } : {})
     }
   }

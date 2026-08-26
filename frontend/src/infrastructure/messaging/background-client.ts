@@ -31,8 +31,10 @@ import type {
 } from '@/core/messaging/commands-messages'
 import type {
   ChromeBookmarkImportStatusResponse,
+  ColdStartStatusResponse,
   GetBookmarkLibraryTreeResponse,
   GetChromeBookmarkImportStatusMessage,
+  GetColdStartStatusMessage,
   GetBookmarkLibraryTreeMessage
 } from '@/core/messaging/import-messages'
 import type {
@@ -179,6 +181,15 @@ export async function fetchChromeBookmarkImportStatus(): Promise<ChromeBookmarkI
     type: 'GET_CHROME_BOOKMARK_IMPORT_STATUS'
   }
   return sendBackgroundMessage<ChromeBookmarkImportStatusResponse>(message)
+}
+
+/** 查询冷启动三阶段门禁进度。 */
+export async function fetchColdStartStatus(): Promise<ColdStartStatusResponse> {
+  const message: GetColdStartStatusMessage = {
+    scope: 'background',
+    type: 'GET_COLD_START_STATUS'
+  }
+  return sendBackgroundMessage<ColdStartStatusResponse>(message)
 }
 
 /** 读取记忆库书签目录树（Chrome 结构 + Memory 对齐）。 */

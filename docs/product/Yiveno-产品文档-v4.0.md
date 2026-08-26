@@ -984,7 +984,8 @@ Side Panel 内：高置信给主答案 +「可能是这些」；低置信给候�
 - **同 URL 多书签：** 整包复用，不打 LLM。
 - **同域名不同 path（如 google.com/a 与 google.com/b）：** 共享域名基座；仍请求页面 overlay 补 keywords/summary。
 - **顺序：** URL 整包 cache/donor → 域名基座 cache/donor → Worker。
-- **Bulk 书签 sync：** 仍不调度 LLM enrichment（与既有一致）。
+- **Bulk 书签 sync / 增量 upsert：** 日常路径仍**不**按条调度 LLM enrichment（与既有一致，防日盖打爆）。
+- **冷启动门禁例外（Normative · §5.8.1）：** 冷启动在规则全量后对缺 summary 条目做 **LLM best-effort 限量入队**（Worker IP 日配额 / 已登录账号配额；有日盖/超时）；**未登录亦跑 LLM enrichment**（无须 Bearer）。**Embed 仅已登录**时进入。日常 sync 仍不烧配额。
 - **跨类型：** 书签 ↔ 摘录永不互为 URL 整包 / embed donor；域名基座可跨书签与摘录同 host 共享站级字段。
 
 ---
@@ -994,23 +995,24 @@ Side Panel 内：高置信给主答案 +「可能是这些」；低置信给候�
 - `scope` 必须为 `'background'`（`BACKGROUND_MESSAGE_SCOPE`）。
 - **已登记 type（禁止擅自增删拼写）：**
 
-| type                                | 用途                                   |
-| ----------------------------------- | -------------------------------------- |
-| `PING`                              | 探活                                   |
-| `GET_LOCAL_IDENTITY`                | 本地身份 + ownerId                     |
-| `CAPTURE_BOOKMARK`                  | 写入书签记忆（sync/内部）              |
-| `CAPTURE_TEXT_EXCERPT`              | 写入摘录                               |
-| `LIST_MEMORY_ITEMS`                 | 列表                                   |
-| `GET_MEMORY_ITEM`                   | 按 id 读取单条 MemoryItem              |
-| `DELETE_MEMORY_ITEM`                | 软删 MemoryItem（当前仅摘录）          |
-| `UPDATE_MEMORY_NOTE`                | 更新 `clues.note`（书签/摘录事后补注） |
-| `RECALL_WITH_CLUE`                  | 线索找回                               |
-| `GET_CHROME_BOOKMARK_IMPORT_STATUS` | 导入进度                               |
-| `GET_BOOKMARK_LIBRARY_TREE`         | 记忆库书签目录树（只读）               |
-| `GET_EXTENSION_COMMANDS`            | 读取命令与快捷键绑定                   |
-| `OPEN_CHROME_SHORTCUTS_PAGE`        | 打开 Chrome 快捷键设置页               |
-| `GET_USER_SETTINGS`                 | 读取用户设置                           |
-| `UPDATE_USER_SETTINGS`              | 更新用户设置                           |
+| type                                | 用途                                        |
+| ----------------------------------- | ------------------------------------------- |
+| `PING`                              | 探活                                        |
+| `GET_LOCAL_IDENTITY`                | 本地身份 + ownerId                          |
+| `CAPTURE_BOOKMARK`                  | 写入书签记忆（sync/内部）                   |
+| `CAPTURE_TEXT_EXCERPT`              | 写入摘录                                    |
+| `LIST_MEMORY_ITEMS`                 | 列表                                        |
+| `GET_MEMORY_ITEM`                   | 按 id 读取单条 MemoryItem                   |
+| `DELETE_MEMORY_ITEM`                | 软删 MemoryItem（当前仅摘录）               |
+| `UPDATE_MEMORY_NOTE`                | 更新 `clues.note`（书签/摘录事后补注）      |
+| `RECALL_WITH_CLUE`                  | 线索找回                                    |
+| `GET_CHROME_BOOKMARK_IMPORT_STATUS` | 导入进度                                    |
+| `GET_COLD_START_STATUS`             | 冷启动三阶段门禁进度（import / rules / AI） |
+| `GET_BOOKMARK_LIBRARY_TREE`         | 记忆库书签目录树（只读）                    |
+| `GET_EXTENSION_COMMANDS`            | 读取命令与快捷键绑定                        |
+| `OPEN_CHROME_SHORTCUTS_PAGE`        | 打开 Chrome 快捷键设置页                    |
+| `GET_USER_SETTINGS`                 | 读取用户设置                                |
+| `UPDATE_USER_SETTINGS`              | 更新用户设置                                |
 
 新增能力：先改 `frontend/src/core/messaging/*` + handler，再改 UI。
 
@@ -1079,6 +1081,27 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 **安装引导（Normative · 已上线）：** 首次 `install` 自动打开 `getting-started.html`；演示「Save this line → 找回主壳用自己的话找回」。未完成引导且 `excerptCaptureCount === 0` 时找回壳展示 Capture-first 空态（即使书签已导入）。跳过或首次打开找回结果后结束引导。
 
+#### 5.8.1 冷启动双表面与进度门禁（Normative · 2026-08）
+
+**产品前提：** 多数用户已被官网/社媒吸引而来体验；**第一次 Recall 质量是生死关**，不得用「发育型」合理化半生不熟的首召。书签量不可预测（数十～上万）；量越大往往越刚需。
+
+**双表面（目标不同，不可互相替代）：**
+
+| 表面                                | 目标                        | 可跳过？                                  | 与灌库关系                         |
+| ----------------------------------- | --------------------------- | ----------------------------------------- | ---------------------------------- |
+| **Getting Started / Capture-first** | 教育与吸引；占用等待时间    | **是**（随时 Skip）                       | 顺带争取时间，**不是**工程门禁     |
+| **Side Panel 全屏进度门禁**         | 工程就绪兜底 + 减轻等待焦虑 | **否**（就绪或 best-effort 放行前挡主壳） | **正式门禁**；引导关掉后仍靠此兜底 |
+
+**开门契约（方案 A · 本地质量门禁 + 可选云端加厚）：**
+
+1. **规则 enrichment 全量**（本地，无 Worker）— **硬保证**；构成「本地可用、无须登录」的首召质量底线（关键词 / 标题 / 域名邻域）。
+2. **LLM enrichment 尽力** — **未登录亦跑**（Worker `/api/ai/enrichment/complete` IP 日配额；无须 Bearer）；**Embed 仅已登录**时进入。有配额/超时占位；加厚模糊语义 / Hybrid，**不**要求全库绿，**不是**首召质量前提，**禁止**暗示必须登录才能用好 Recall。
+3. 未登录 → 规则 + LLM 短窗尽力后以 `local_ready` 放行（无 embed）；已登录则 embed + LLM 短窗尽力后放行。超时/配额触顶仍放行。具体秒数与文案为**可调占位**。
+
+**进度 UX（须精细）：** 展示 Import → Keyword index → Enrich recall fields（best effort）。未登录第三步为 LLM enrichment（无 embed）；已登录第三步含 embed + LLM。说明时间花在哪；禁止一根假平滑条假装「AI 全库齐」。小库可快进。
+
+**实现：** `application/onboarding/cold-start-pipeline-service.ts`；状态 `core/memory/cold-start-pipeline-state.ts`；UI `ColdStartGate.vue`；消息 `GET_COLD_START_STATUS`。存量已完成书签导入**且**安装引导已完成的用户迁移为 `ready`（`migrated_existing`），**不**重弹门禁。**首次 install / 重装**（引导未完成）绝不迁移，Side Panel 在 pipeline 落盘前也先显示门禁占位。
+
 #### A. 空库诚实（不得编造）
 
 1. 使用空记忆库配置档（或 Settings → 数据 → 清除本机记忆；**确认不删 Chrome 原生书签**）。
@@ -1131,13 +1154,13 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 #### 北极星与共指标
 
-| 指标                          | 定义                                                                                                  | Normative 用途                              |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| **邻域命中（会话履约）**      | 短名单（含 Top Pick + alsoPossible）含用户认定目标                                                    | 主 KPI；**逛一簇**意图优先                  |
-| **Top1 命中**                 | Top Pick = 用户目标                                                                                   | Delight；**不得**作唯一 must                |
-| **Verified Retrievals / WAU** | 用户经 **§7.2 strong `target`**（Mark / 出口 Found / 等价确认）且打开来源/原文/详情 的成功次数 / 周活 | 共北极星；**裸 open ≠ verified**（见 §7.2） |
-| **TTE-V**                     | 从 `query_submitted` 到首次看见 **ECS 五要素齐全** 证据单元                                           | 体验速度主尺；见下表                        |
-| **TTE-C**                     | 到用户打开原文并 **确认相关**（对齐 §7.2 `user_confirmed` / strong target）                           | 长尾与误点成本                              |
+| 指标                          | 定义                                                                                           | Normative 用途                              |
+| ----------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| **邻域命中（会话履约）**      | 短名单（含 Top Pick + alsoPossible）含用户认定目标                                             | 主 KPI；**逛一簇**意图优先                  |
+| **Top1 命中**                 | Top Pick = 用户目标                                                                            | Delight；**不得**作唯一 must                |
+| **Verified Retrievals / WAU** | 用户经 **§7.2 strong `target`**（出口 Found / 等价确认）且打开来源/原文/详情 的成功次数 / 周活 | 共北极星；**裸 open ≠ verified**（见 §7.2） |
+| **TTE-V**                     | 从 `query_submitted` 到首次看见 **ECS 五要素齐全** 证据单元                                    | 体验速度主尺；见下表                        |
+| **TTE-C**                     | 到用户打开原文并 **确认相关**（对齐 §7.2 `user_confirmed` / strong target）                    | 长尾与误点成本                              |
 
 #### TTE 子指标与护栏
 
@@ -1163,7 +1186,7 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 合入 Phase E 须至少：`query_submitted`、`result_rendered`、`evidence_visible`、`source_opened`、`user_confirmed`、`query_refined`、`task_timeout`。每条证据结果须可关联 `source_id`（MemoryItem id）、anchor、ECS、reason codes、rank、trace id。
 
-**与 §7.2 对齐（Normative）：** `source_opened` = explore；`user_confirmed` = strong `target`（Mark / 出口 Found / 经校准的等价确认）。会话还应能结算 `none_in_results` / `absent` / `unknown`（详见 §7.2）；不得用 last-click 伪造 `user_confirmed`。
+**与 §7.2 对齐（Normative）：** `source_opened` = explore；`user_confirmed` = strong `target`（出口 Found / 经校准的等价确认）。会话还应能结算 `none_in_results` / `absent` / `unknown`（详见 §7.2）；不得用 last-click 伪造 `user_confirmed`。
 
 #### eval 对齐
 
@@ -1402,7 +1425,8 @@ Chrome API / 选区
 
 - 依赖：`pages|presentation → application → core`；`application` → `infrastructure`。
 - UI 访问 Background：**仅** messaging client。
-- 导入 = 核心业务（真实进度）。embedding = 辅助（Offscreen/队列，不阻塞关键词 Recall）。
+- 导入 = 核心业务（真实进度）。embedding / LLM = 辅助加厚。
+- **冷启动例外（§5.8.1）：** Side Panel 全屏门禁在「规则全量 + LLM 尽力」（及**已登录时** embed 尽力）前可挡主壳；**未登录亦可完成首召质量门禁**（`local_ready`）。日常增量 sync **不**再弹门禁。登录后可无感补 embed。
 - 目标规模指导：2 万 MemoryItem；当前全量扫描上限约 10000；**倒排 Phase 1 作候选预过滤**（不健康则 fallback 扫描）；向量索引仍可继续加厚。
 - 长期：Cloud Memory DB（当前实现为 **Supabase `memory_items`**）为云端事实源；本地 IndexedDB 变缓存——**不提前重写本地日常读写链路**。
 - Phase C 切片：扩展经 Supabase Auth 登录写入 `AccountBinding`；同步默认关；经 Worker `/api/memory/sync/*` push/pull/replace。
@@ -1606,19 +1630,20 @@ Chrome API / 选区
 1. **多通道抢标签，单通道不独占** —— 显式最准；隐式补覆盖；结构动作（dismiss / no_match / New find）补「都不是 / 没有」。
 2. **用户动作即投票，不问卷** —— 禁止逐条追问「这是你要的吗？」；「钉死 / 都不是」做成自然动作。
 3. **explore ≠ settle** —— `RECORD_MEMORY_OPEN` 只表示看过；不得单独当 `target`。
-4. **一会话至多一个 `target`** —— 多开只保留 settled / mark；其余最多记 explore。
+4. **一会话至多一个 `target`** —— 多开只保留 settled / 出口 Found；其余最多记 explore。
 5. **「都不是」与「没存过」分轨** —— dismiss → `none_in_results`；`no_match` 终局 → `absent`。
 6. **置信分级消费** —— 仅 strong / 经校准的 medium 进排序与 eval；弱信号只监控。
 
-#### 四通道（按置信）
+#### 通道（按置信）
 
-| 通道             | 用户动作                                                                               | 标签                         | 置信                       | 状态                                                                                                       |
-| ---------------- | -------------------------------------------------------------------------------------- | ---------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| **A Mark**       | 结果卡或详情 **Mark as what I meant**（图标勾；`title`/`aria-label` 完整英文）         | `target(id)`                 | **strong**                 | **结果卡已接线（P1）**；详情页 Mark 仍待                                                                   |
-| **B Dismiss**    | 「都不是这些」（现有）                                                                 | `none_in_results`            | **strong**                 | 行为已上线；**会话标签结算已接线（P0 · Side Panel）**                                                      |
-| **B′ no_match**  | 诚实无相关终局                                                                         | `absent`                     | **strong**                 | outcome 已上线；**会话标签结算已接线（P0）**                                                               |
-| **C Settled**    | 隐式「停下来」（见下）                                                                 | `target(id)`                 | medium / medium-low        | **C1 可写 settled**；**C2 可结算标签、默认不写 settled**（`RECALL_OUTCOME_C2_SETTLE_ENABLED`，见 P2 旁挂） |
-| **D Exit strip** | **仅** New find 且尚未有 A/B 标签时，非阻塞双按钮：Found it / None of these（可 Skip） | `target` / `none_in_results` | **strong**（用户点了才算） | **New find 出口条已接线（P1）**；关 Panel 仍直接结算（无条）                                               |
+| 通道             | 用户动作                                                                             | 标签                         | 置信                       | 状态                                                                                                       |
+| ---------------- | ------------------------------------------------------------------------------------ | ---------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| **B Dismiss**    | 「都不是这些」（现有）                                                               | `none_in_results`            | **strong**                 | 行为已上线；**会话标签结算已接线（P0 · Side Panel）**                                                      |
+| **B′ no_match**  | 诚实无相关终局                                                                       | `absent`                     | **strong**                 | outcome 已上线；**会话标签结算已接线（P0）**                                                               |
+| **C Settled**    | 隐式「停下来」（见下）                                                               | `target(id)`                 | medium / medium-low        | **C1 可写 settled**；**C2 可结算标签、默认不写 settled**（`RECALL_OUTCOME_C2_SETTLE_ENABLED`，见 P2 旁挂） |
+| **D Exit strip** | **仅** New find 且尚未有 B 标签时，非阻塞双按钮：Found it / None of these（可 Skip） | `target` / `none_in_results` | **strong**（用户点了才算） | **New find 出口条已接线（P1）**；关 Panel 仍直接结算（无条）                                               |
+
+> **2026-08-26：** 通道 **A Mark**（结果卡「Mark as what I meant」）**已下线**——显式勾选不符合「找到就走」心智，用户不会主动标记帮产品。strong 正例改靠出口 Found + 隐式 C1；`source: mark` 仅兼容旧落盘，不再由 UI 产生。
 
 **Settled（C）细则：**
 
@@ -1627,7 +1652,7 @@ Chrome API / 选区
 | **C1** | 本会话只 open **1** 条 + dwell≥T + 无新 clue / 无 dismiss | medium                                              |
 | **C2** | 多 open，最后一条 dwell≥T 且 stop（关 Panel / 空闲）      | medium-low；**无 dwell 的 last-open 不得升 medium** |
 | **C5** | 复制摘录 / 单条 evidence pack 等 reuse                    | medium-high                                         |
-| **C4** | 多 open、无 dwell、无 Mark、无 dismiss                    | → `unknown`                                         |
+| **C4** | 多 open、无 dwell、无 dismiss                             | → `unknown`                                         |
 
 **唯一允许的出口轻提示（D）：** 非逐条审人；忽略 → `unknown`。不得在每次 open 后弹出。
 
@@ -1636,16 +1661,15 @@ Chrome API / 选区
 ```text
 会话可结算时（New find / 关 Panel / 明确终局）：
 
-若 Mark (A)                         → target(id) · strong
-否则若 出口条选 Found / None (D)    → target / none_in_results · strong
-否则若 dismiss 且未再 Mark          → none_in_results · strong
-否则若 outcome 为 no_match 终局     → absent · strong
-否则若 C1 或 C5                     → target · medium / medium-high
-否则若 C2（dwell+stop）             → target · medium-low
-否则                                → unknown
+若 出口条选 Found / None (D)    → target / none_in_results · strong
+否则若 dismiss                  → none_in_results · strong
+否则若 outcome 为 no_match 终局 → absent · strong
+否则若 C1 或 C5                 → target · medium / medium-high
+否则若 C2（dwell+stop）         → target · medium-low
+否则                            → unknown
 ```
 
-**优先级：** A > D > B/B′ > C1 > C5 > C2。  
+**优先级：** D > B/B′ > C1 > C5 > C2。  
 同会话若随后 **整轮 dismiss** → 撤销尚未 strong 的隐式 `target`。
 
 #### 数据与排序消费
@@ -1665,14 +1689,16 @@ RecallOutcomeEvent {
 }
 ```
 
+> `source: mark`：**仅兼容旧落盘**；2026-08-26 起 UI 不再产生。
+
 **与 §5.9 埋点对齐：**
 
-| Outcome                                       | TTE / Verified 事件                           |
-| --------------------------------------------- | --------------------------------------------- |
-| Mark / 出口 Found / strong settled + 打开证据 | `user_confirmed`；计入 **Verified Retrieval** |
-| `source_opened`                               | 仍记 explore open；**不**单独等于 confirmed   |
-| dismiss → `none_in_results`                   | 可另记（不得算 Verified）                     |
-| `absent`                                      | 对齐 `no_match` 终局；非 verified             |
+| Outcome                                | TTE / Verified 事件                           |
+| -------------------------------------- | --------------------------------------------- |
+| 出口 Found / strong settled + 打开证据 | `user_confirmed`；计入 **Verified Retrieval** |
+| `source_opened`                        | 仍记 explore open；**不**单独等于 confirmed   |
+| dismiss → `none_in_results`            | 可另记（不得算 Verified）                     |
+| `absent`                               | 对齐 `no_match` 终局；非 verified             |
 
 **条目字段：**
 
@@ -1680,33 +1706,33 @@ RecallOutcomeEvent {
 - **目标：** `settledCount` / `lastSettledAt`（或等价）——仅 strong / 经校准的 medium `target` 递增。
 - `dismissCount`：保持；与会话 `none_in_results` 并存。
 
-**Normative 铁律：** behaviorHints **`often_opened` 软加权只消费 settled / Mark（及等价强正例）**，**不得**再把裸 `openCount` 当作「就是答案」的充分统计。未上线 settled 前：实现须在改排序前完成 P0 分离，或暂时降低 open 加权权重并文档标明技术债——**禁止**在已知污染下加大 open 权重。
+**Normative 铁律：** behaviorHints **`often_opened` 软加权只消费 settled / 出口 Found（及等价强正例）**，**不得**再把裸 `openCount` 当作「就是答案」的充分统计。未上线 settled 前：实现须在改排序前完成 P0 分离，或暂时降低 open 加权权重并文档标明技术债——**禁止**在已知污染下加大 open 权重。
 
 #### 反馈系统 KPI（与会话履约 KPI 分开）
 
-| 指标                    | 定义                       | 用途                         |
-| ----------------------- | -------------------------- | ---------------------------- |
-| **Label rate**          | 非 `unknown` 会话 / 总会话 | 覆盖                         |
-| **Strong share**        | strong / 已标注            | 质量                         |
-| **Mark↔Settled 一致率** | 有 A 时 C 与 A 同 id 比例  | 校准隐式；过低则 C2 不进排序 |
-| **False target 率**     | 种子 gold 对照             | 护栏                         |
+| 指标                | 定义                          | 用途                    |
+| ------------------- | ----------------------------- | ----------------------- |
+| **Label rate**      | 非 `unknown` 会话 / 总会话    | 覆盖                    |
+| **Strong share**    | strong / 已标注               | 质量                    |
+| **Exit↔C1 一致率**  | 有出口 Found 时 C1 同 id 比例 | 校准隐式；过低则收紧 C1 |
+| **False target 率** | 种子 gold 对照                | 护栏                    |
 
-阶段目标（产品内参考，可随种子 study 收紧）：Label rate Alpha ≥40%、Beta ≥60%；有 A 样本后 Mark↔Settled 一致率不足则禁用 C2 进排序。
+阶段目标（产品内参考，可随种子 study 收紧）：Label rate Alpha ≥40%、Beta ≥60%；相对 gold 的 False target 过高则禁用 C2 进排序。
 
 #### 落地顺序（Normative）
 
-| 阶段   | 内容                                                                                                                              | 未完成不得                                  |
-| ------ | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| **P0** | 会话结算 + 标签枚举；dismiss / no_match → strong 标签事件；open 与 settle 语义分离；`often_opened` 改吃 settled（或暂降 open 权） | 加大裸 open 排序权；宣称 Verified=任意 open |
-| **P1** | 卡/详情 Mark；C1 settled；出口双按钮（D）                                                                                         | 把出口条做成每次 open 问卷                  |
-| **P2** | dwell 校准；C2；与种子 gold 对拍                                                                                                  | 未校准的 C2 进 must 训练                    |
-| **P3** | strong/medium `(clue→target)` 用于重排或 eval；`none_in_results` 作 hard negative                                                 | 用人设/偏好建档替代 outcome 标签            |
+| 阶段   | 内容                                                                                                                              | 未完成不得                                   |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| **P0** | 会话结算 + 标签枚举；dismiss / no_match → strong 标签事件；open 与 settle 语义分离；`often_opened` 改吃 settled（或暂降 open 权） | 加大裸 open 排序权；宣称 Verified=任意 open  |
+| **P1** | C1 settled；出口双按钮（D）                                                                                                       | 把出口条做成每次 open 问卷；结果卡 Mark 问卷 |
+| **P2** | dwell 校准；C2；与种子 gold / 出口 Found 对拍                                                                                     | 未校准的 C2 进 must 训练                     |
+| **P3** | strong/medium `(clue→target)` 用于重排或 eval；`none_in_results` 作 hard negative                                                 | 用人设/偏好建档替代 outcome 标签             |
 
 **P0 实现切片（2026-08-24）：** `resolveRecallOutcome` + Side Panel 结算（dismiss / no_match / New find / 关 Panel）；`clues.settledCount` + `RECORD_RECALL_SETTLE`；`often_opened` 只读 `settledCount`；裸 `openCount` 行为加权已暂降。
 
-**P1 实现切片（2026-08-24）：** 结果卡 Mark；New find 出口条（Found / None / Skip）；open dwell 粗测（供 C1）；Mark/出口写 settled 防双计。详情页 Mark、关 Panel 出口条仍待。
+**P1 实现切片（2026-08-24）：** New find 出口条（Found / None / Skip）；open dwell 粗测（供 C1）；出口写 settled 防双计。关 Panel 出口条仍待。**（2026-08-26：结果卡 Mark 已下线。）**
 
-**P2 实现切片（2026-08-24）：** `recall-outcome-calibration`：`RECALL_OUTCOME_C2_SETTLE_ENABLED=false`（C2 可解析、**不写** settled）；Mark 结算打 `markImplicitAgrees`；工程旁挂 [`R4-Outcome-Labeling-P2-校准.md`](../engineering/R4-Outcome-Labeling-P2-校准.md)。**开 C2 进 settled 须过旁挂 gold 门后再改常量。**
+**P2 实现切片（2026-08-24）：** `recall-outcome-calibration`：`RECALL_OUTCOME_C2_SETTLE_ENABLED=false`（C2 可解析、**不写** settled）；工程旁挂 [`R4-Outcome-Labeling-P2-校准.md`](../engineering/R4-Outcome-Labeling-P2-校准.md)。**开 C2 进 settled 须过旁挂 gold 门后再改常量。**（2026-08-26：去掉 Mark↔隐式对拍；改以出口 Found / gold 为准。）
 
 **P3 实现切片（2026-08-24）：** 本机 `chrome.storage.local` ring buffer 持久化 settled `(clue fingerprint → target)` 与 `none_in_results` 硬负例；Hybrid / 关键词 finalize 路径软升权 / 降权重排（`applyOutcomePairScoreAdjustments`）；**禁止**用人设建档。eval 纯关键词路径不读 storage（保持确定性）。
 
@@ -1896,6 +1922,7 @@ RecallOutcomeEvent {
 
 | 日期       | 变更                                                                                                                                                                                                                                                   |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-08-26 | **§7.2 下线通道 A Mark：** 结果卡「Mark as what I meant」移除；结算树改 D > B/B′ > C1 > C5 > C2；`source: mark` 仅兼容旧落盘；strong 正例靠出口 Found + C1                                                                                             |
 | 2026-08-24 | **§7.2 P3 实现：** 本机 Outcome 对 ring buffer；Hybrid 正例升权 / none 硬负例降权；eval 不读 storage                                                                                                                                                   |
 | 2026-08-24 | **§7.2 P2 实现：** C2 校准门（默认不进 settled）；Mark↔隐式对拍日志；旁挂 `R4-Outcome-Labeling-P2-校准.md`                                                                                                                                             |
 | 2026-08-24 | **§7.2 P1 实现：** 结果卡 Mark；New find 出口条；dwell 粗测；settled 防双计                                                                                                                                                                            |
