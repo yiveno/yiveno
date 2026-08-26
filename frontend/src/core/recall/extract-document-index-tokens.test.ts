@@ -51,6 +51,38 @@ describe('extract-document-index-tokens', () => {
     expect(extractDocumentIndexTokens(deleted)).toEqual([])
   })
 
+  it('文档 token 含形态缩写 js；查询 js 直接查 posting（无别名扩写）', () => {
+    const item = createBookmarkMemoryItem({
+      ownerId,
+      sourceLocalProfileId,
+      payload: {
+        title: '现代 JavaScript 教程',
+        url: 'https://zh.javascript.info/',
+        domain: 'zh.javascript.info'
+      }
+    })
+    const tokens = new Set(extractDocumentIndexTokens(item))
+    expect(tokens.has('javascript')).toBe(true)
+    expect(tokens.has('js')).toBe(true)
+    expect(pickPostingLookupTokens('js')).toEqual(['js'])
+    expect(pickPostingLookupTokens('js').some(token => tokens.has(token))).toBe(true)
+  })
+
+  it('多词标题 React Native 写入 rn', () => {
+    const item = createBookmarkMemoryItem({
+      ownerId,
+      sourceLocalProfileId,
+      payload: {
+        title: 'React Native docs',
+        url: 'https://reactnative.dev/',
+        domain: 'reactnative.dev'
+      }
+    })
+    expect(extractDocumentIndexTokens(item)).toEqual(
+      expect.arrayContaining(['rn', 'react', 'native'])
+    )
+  })
+
   it('unionPostingItemIds 保序去重', () => {
     expect(unionPostingItemIds([['a', 'b'], ['b', 'c'], ['a']])).toEqual(['a', 'b', 'c'])
   })

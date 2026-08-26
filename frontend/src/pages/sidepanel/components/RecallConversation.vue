@@ -2,11 +2,16 @@
 import { computed } from 'vue'
 import AppButton from '@/infrastructure/ui/AppButton.vue'
 
-import type { ConversationTurn } from '@/pages/sidepanel/recall-conversation-types'
+import { RECALL_RESULT_PAGE_SIZE } from '@/core/recall/build-recall-result'
+import type { ConversationTurn, AssistantTurn } from '@/pages/sidepanel/recall-conversation-types'
+import type { RecallCardModel } from '@/pages/sidepanel/RecallResultCard.vue'
 import RecallResultCard from '@/pages/sidepanel/RecallResultCard.vue'
 import { t } from '@/infrastructure/i18n/t'
 
 defineOptions({ name: 'RecallConversation' })
+
+/** Show more 续展模式：再展一页 / 展开剩余全部。 */
+export type ShowMoreMode = 'page' | 'all'
 
 const props = defineProps<{
   turns: ConversationTurn[]
@@ -23,6 +28,7 @@ const emit = defineEmits<{
   open: [payload: { id: string; url: string }]
   toggleExpand: [cardId: string]
   dismiss: []
+  showMore: [turnId: string, mode: ShowMoreMode]
   useSuggestion: [value: string]
 }>()
 
@@ -50,6 +56,40 @@ function handleOpen(payload: { id: string; url: string }): void {
 
 function handleToggleExpand(cardId: string): void {
   emit('toggleExpand', cardId)
+}
+
+function onShowMoreClick(turnId: string, mode: ShowMoreMode): void {
+  emit('showMore', turnId, mode)
+}
+
+/** 当前轮次可见候选。 */
+function visibleCardsFor(turn: AssistantTurn): RecallCardModel[] {
+  const cards = turn.candidateCards ?? []
+  const limit = turn.visibleCount ?? cards.length
+  return cards.slice(0, Math.max(0, limit))
+}
+
+function remainingCount(turn: AssistantTurn): number {
+  const total = turn.candidateCards?.length ?? 0
+  const visible = turn.visibleCount ?? total
+  return Math.max(0, total - visible)
+}
+
+function canShowMore(turn: AssistantTurn): boolean {
+  return remainingCount(turn) > 0
+}
+
+/** 剩余多于一页时才出「再展 N 条」；否则只出「展开剩余全部」。 */
+function canShowMorePage(turn: AssistantTurn): boolean {
+  return remainingCount(turn) > RECALL_RESULT_PAGE_SIZE
+}
+
+function showMoreCountLabel(count: number): string {
+  return t('popup_show_more_count', String(count))
+}
+
+function showAllCountLabel(count: number): string {
+  return t('popup_show_all_count', String(count))
 }
 </script>
 
@@ -114,13 +154,14 @@ function handleToggleExpand(cardId: string): void {
             <p v-if="turn.candidateSectionLabel" class="assistant-turn-candidates-label">
               {{ turn.candidateSectionLabel }}
             </p>
-            <ul class="assistant-turn-candidates">
-              <li v-for="(item, index) in turn.candidateCards" :key="item.id">
+            <ol class="assistant-turn-candidates">
+              <li v-for="(item, index) in visibleCardsFor(turn)" :key="item.id">
                 <RecallResultCard
                   :card="item"
                   :result-dom-id="`conversation-candidate-${turn.id}-${index}`"
                   :keyboard-selected="false"
-                  compact
+                  :top-pick="turn.tone === 'confident' && index === 0"
+                  :compact="!(turn.tone === 'confident' && index === 0)"
                   :expanded="expandedDuplicateGroupId === item.id"
                   :expand-label="expandLabel"
                   :collapse-label="collapseLabel"
@@ -129,7 +170,20 @@ function handleToggleExpand(cardId: string): void {
                   @toggle-expand="() => handleToggleExpand(item.id)"
                 />
               </li>
-            </ul>
+            </ol>
+            <div v-if="canShowMore(turn)" class="assistant-turn-show-more">
+              <AppButton
+                v-if="canShowMorePage(turn)"
+                type="button"
+                variant="text"
+                @click="onShowMoreClick(turn.id, 'page')"
+              >
+                {{ showMoreCountLabel(RECALL_RESULT_PAGE_SIZE) }}
+              </AppButton>
+              <AppButton type="button" variant="text" @click="onShowMoreClick(turn.id, 'all')">
+                {{ showAllCountLabel(remainingCount(turn)) }}
+              </AppButton>
+            </div>
           </div>
 
           <div
@@ -340,6 +394,14 @@ function handleToggleExpand(cardId: string): void {
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.assistant-turn-show-more {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs) var(--space-sm);
+  justify-content: flex-start;
+  padding-top: var(--space-2xs);
 }
 
 .pending-indicator {

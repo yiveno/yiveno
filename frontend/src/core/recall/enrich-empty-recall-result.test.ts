@@ -48,6 +48,7 @@ describe('enrichEmptyRecallResult', () => {
         outcome: 'no_match',
         topPick: null,
         alsoPossible: [],
+        totalRankedCount: 0,
         clue: parsed.raw
       },
       [older],
@@ -65,6 +66,7 @@ describe('enrichEmptyRecallResult', () => {
         outcome: 'no_match',
         topPick: null,
         alsoPossible: [],
+        totalRankedCount: 0,
         clue: parsed.raw
       },
       [inWindow],

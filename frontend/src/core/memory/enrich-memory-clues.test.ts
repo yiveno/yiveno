@@ -46,30 +46,27 @@ describe('enrichMemoryClues', () => {
     expect(result.keywords).toEqual(expect.arrayContaining(['video', 'youtube', 'watch', 'clip']))
   })
 
-  it('Hitler YouTube bookmark -> video + WWII topic + Hitler entity', () => {
+  it('YouTube bookmark keeps video tags without topic/entity seed keywords', () => {
     const result = enrichMemoryClues({
       title: 'Why Hitler still casts a shadow after 80 years - BBC News',
       url: 'https://www.youtube.com/watch?v=hitler',
       domain: 'youtube.com'
     })
     expect(result.tags).toEqual(['video'])
-    expect(result.entities).toEqual(expect.arrayContaining(['Hitler', 'BBC']))
-    expect(result.keywords).toEqual(
-      expect.arrayContaining(['video', 'wwii', 'world war ii', 'Hitler', 'BBC'])
-    )
+    expect(result.entities).toEqual([])
+    expect(result.keywords).not.toEqual(expect.arrayContaining(['wwii', 'Hitler', 'BBC']))
+    expect(result.keywords).toEqual(expect.arrayContaining(['video', 'youtube', 'watch']))
   })
 
-  it('Changchun economy YouTube bookmark -> video + Changchun + economy topic', () => {
+  it('city title does not invent economy topic keywords', () => {
     const result = enrichMemoryClues({
       title: 'Will Changchun become a bankrupt capital city as growth slows?',
       url: 'https://www.youtube.com/watch?v=_weXNUQ5NS4',
       domain: 'www.youtube.com'
     })
     expect(result.tags).toContain('video')
-    expect(result.entities).toContain('Changchun')
-    expect(result.keywords).toEqual(
-      expect.arrayContaining(['video', 'economy', 'city', 'growth', 'Changchun'])
-    )
+    expect(result.entities).toEqual([])
+    expect(result.keywords).not.toEqual(expect.arrayContaining(['economy', 'Changchun']))
   })
 
   it('GitHub -> code + repo keywords', () => {
@@ -113,23 +110,24 @@ describe('enrichMemoryClues', () => {
     expect(result.keywords).toEqual(expect.arrayContaining(['auth', 'authentication']))
   })
 
-  it('body contains poem and Li Bai → poem + entity', () => {
+  it('body contains poem → poem tag; no entity allowlist', () => {
     const result = enrichMemoryClues({
       title: 'Li Bai poem',
       text: 'This is a poem by Li Bai. It mentions moon and home.'
     })
     expect(result.tags).toContain('poem')
-    expect(result.entities).toContain('Li Bai')
-    expect(result.keywords).toEqual(expect.arrayContaining(['poem', 'Li Bai']))
+    expect(result.entities).toEqual([])
+    expect(result.keywords).toEqual(expect.arrayContaining(['poem']))
+    expect(result.keywords).not.toContain('Li Bai')
   })
 
-  it('body contains Li Bai -> entities stay canonical', () => {
+  it('proper names in title are not rule-enriched into entities', () => {
     const result = enrichMemoryClues({
       title: 'Tang poetry',
       text: 'Moonlight by the bed. A poem written by Li Bai.'
     })
-    expect(result.entities).toContain('Li Bai')
-    expect(result.keywords).toContain('Li Bai')
+    expect(result.entities).toEqual([])
+    expect(result.keywords).not.toContain('Li Bai')
   })
 
   it('GitHub bookmark gets code tag from domain', () => {
@@ -168,7 +166,7 @@ describe('create-memory-item enrichment', () => {
     expect(item.clues.keywords).toEqual(expect.arrayContaining(['music', 'song', 'listen']))
   })
 
-  it('creating excerpt detects entity and type', () => {
+  it('creating excerpt detects poem type without entity allowlist', () => {
     const item = createTextExcerptMemoryItem({
       ...baseContext,
       payload: {
@@ -178,7 +176,7 @@ describe('create-memory-item enrichment', () => {
       }
     })
     expect(item.clues.tags).toContain('poem')
-    expect(item.clues.entities).toContain('Li Bai')
+    expect(item.clues.entities).toEqual([])
   })
 
   it('caller-provided tags merge with enrichment tags', () => {
@@ -235,5 +233,35 @@ describe('mergeEnrichmentIntoMemoryItem', () => {
     })
     const merged = mergeEnrichmentIntoMemoryItem(item)
     expect(merged.changed).toBe(false)
+  })
+
+  it('scrubs retired topic/entity seeds from legacy clues', () => {
+    const item = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: {
+        title: 'Why Hitler still casts a shadow - BBC News',
+        url: 'https://www.youtube.com/watch?v=x'
+      }
+    })
+    const polluted = {
+      ...item,
+      clues: {
+        ...item.clues,
+        keywords: mergeUniqueStrings(item.clues.keywords, [
+          'wwii',
+          'world war ii',
+          'Hitler',
+          'BBC'
+        ]),
+        entities: ['Hitler', 'BBC']
+      }
+    }
+    const merged = mergeEnrichmentIntoMemoryItem(polluted)
+    expect(merged.changed).toBe(true)
+    expect(merged.item.clues.entities).toEqual([])
+    expect(merged.item.clues.keywords).not.toEqual(
+      expect.arrayContaining(['wwii', 'Hitler', 'BBC', 'world war ii'])
+    )
+    expect(merged.item.clues.keywords).toEqual(expect.arrayContaining(['video', 'youtube']))
   })
 })

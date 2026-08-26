@@ -33,9 +33,9 @@ describe('buildSearchClueFromParsed', () => {
     expect(buildSearchClueFromParsed(parsed)).toBe('article')
   })
 
-  it('topic alias expansion keeps wwii canonical surfaces', () => {
+  it('content terms pass through without topic alias expansion', () => {
     const parsed = parseRecallClue('wwii related video', { nowMs: NOW_MS })
-    expect(buildSearchClueFromParsed(parsed)).toBe('wwii world war ii')
+    expect(buildSearchClueFromParsed(parsed)).toBe('wwii')
   })
 })
 
@@ -385,17 +385,17 @@ describe('recallByKeywordWithParsedClue', () => {
     expect(result.topPick?.item.id ?? result.alsoPossible[0]?.item.id).toBe(item.id)
   })
 
-  it('enrichment keeps wwii related video recallable', () => {
+  it('literal WWII in title is recallable without topic seed', () => {
     const item = createBookmarkMemoryItem({
       ownerId: OWNER,
       sourceLocalProfileId: PROFILE,
       payload: {
-        title: 'Why Hitler still casts a shadow after 80 years - BBC News',
-        url: 'https://www.youtube.com/watch?v=hitler80'
+        title: 'WWII documentary — BBC News',
+        url: 'https://www.youtube.com/watch?v=wwii-doc'
       }
     })
     expect(item.clues.tags).toContain('video')
-    expect(item.clues.keywords).toEqual(expect.arrayContaining(['wwii', 'video']))
+    expect(item.clues.keywords).not.toEqual(expect.arrayContaining(['wwii']))
 
     const english = recallByKeywordWithParsedClue([item], 'wwii related video', {
       nowMs: NOW_MS
@@ -404,7 +404,7 @@ describe('recallByKeywordWithParsedClue', () => {
     expect(english.topPick?.item.id ?? english.alsoPossible[0]?.item.id).toBe(item.id)
   })
 
-  it('enrichment keeps city economy video recallable', () => {
+  it('literal Changchun in title is recallable without economy topic seed', () => {
     const item = createBookmarkMemoryItem({
       ownerId: OWNER,
       sourceLocalProfileId: PROFILE,
@@ -413,7 +413,7 @@ describe('recallByKeywordWithParsedClue', () => {
         url: 'https://www.youtube.com/watch?v=_weXNUQ5NS4'
       }
     })
-    const result = recallByKeywordWithParsedClue([item], 'changchun economy video', {
+    const result = recallByKeywordWithParsedClue([item], 'changchun city video', {
       nowMs: NOW_MS
     })
     expect(result.outcome).not.toBe('no_match')

@@ -44,7 +44,16 @@ export type RecallEmptyKind =
 export interface RecallResult {
   outcome: RecallOutcome
   topPick: RecallMatch | null
+  /**
+   * 排序池中除头名外的其余项（可多于首屏；UI 用 totalRankedCount + 分页展示）。
+   * need_a_clue 时头名为空，本数组即完整弱候选池。
+   */
   alsoPossible: RecallMatch[]
+  /**
+   * 折叠+互斥后的相关条数（互异组），供 UI「有 N 条相关」。
+   * = (topPick ? 1 : 0) + alsoPossible.length；受池软顶约束。
+   */
+  totalRankedCount: number
   /** 本轮用户输入（对话气泡展示）。 */
   clue: string
   /** 合并后（或单轮）解析结果；供追问模板；噪音拒绝时可能缺省。 */
@@ -59,11 +68,12 @@ export interface RecallResult {
    */
   relatedGuess?: RecallMatch | null
   /**
-   * LLM 追问 NLG（已门禁）；缺省时 UI 降级规则模板。
-   * source 恒为 llm（规则路径不写本字段）。
+   * 追问 NLG / 弱芯片；缺省时 UI 降级静态不确定文案。
+   * - llm：模型生成（经 Zod/门禁）
+   * - environment：§7.1 环境弱芯片（无 LLM 芯片时才挂）
    */
   assistantFollowUp?: {
-    source: 'llm' // 模型生成（经 Zod/门禁）
+    source: 'llm' | 'environment' // 模型生成 | 环境弱芯片
     text: string
     suggestions: Array<{
       id: string
@@ -71,6 +81,11 @@ export interface RecallResult {
       value: string
     }>
   }
+  /**
+   * 宽邻域 Narrow placeholder 的 grounded 举例（可选经 LLM 润色展示形态）。
+   * 缺省时 UI 可本端再抽；有芯片让位时通常不附。
+   */
+  composerNarrowExamples?: string[]
 }
 
 /** UI 展示用的 MemoryItem 摘要。 */

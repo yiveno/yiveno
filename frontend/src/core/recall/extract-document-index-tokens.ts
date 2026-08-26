@@ -7,6 +7,7 @@ import type { MemoryItem } from '@/core/memory/memory-item'
 import {
   collectSearchableFields,
   compactRecallText,
+  extractOrthographicAcronyms,
   isUsableRecallToken,
   normalizeRecallText,
   tokenizeRecallClueDetailed
@@ -21,6 +22,7 @@ const CJK_NGRAM_CHAR_CAP = 120
 /**
  * 从一段文本写入倒排用 token。
  * - 拉丁词（小写）
+ * - 原文形态缩写（JavaScript→js；React Native→rn）
  * - 紧凑串上的汉字等 1-gram / 2-gram（截断）
  * - 与查询侧一致的 tokenizeRecallClueDetailed
  */
@@ -35,6 +37,11 @@ export function addDocumentIndexTokensFromText(text: string, sink: Set<string>):
     if (isUsableRecallToken(token)) {
       sink.add(token)
     }
+  }
+
+  // 形态缩写：必须用原文（保留大小写），不能只靠小写整词
+  for (const acronym of extractOrthographicAcronyms(text)) {
+    sink.add(acronym)
   }
 
   const compact = compactRecallText(text)
@@ -75,7 +82,7 @@ export function extractDocumentIndexTokens(item: MemoryItem): string[] {
   return [...sink].slice(0, DOCUMENT_INDEX_TOKEN_CAP)
 }
 
-/** 查询侧：用于查 posting 的 token（与精排同一分词入口）。 */
+/** 查询侧：用于查 posting 的 token（与精排同一分词入口；形态缩写已在建索引时写入）。 */
 export function pickPostingLookupTokens(clue: string): string[] {
   const seen = new Set<string>()
   const tokens: string[] = []

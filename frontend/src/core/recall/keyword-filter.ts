@@ -45,8 +45,20 @@ const PRIMARY_MATCH_QUALITY_CAP = 30
 /** 行为信号（打开次数/近因）对关键词分的最大加成，避免压过强词面命中。 */
 export const RECALL_BEHAVIOR_BOOST_CAP = 12
 
+/**
+ * 大小写贴合软加权上限。
+ * 仅微调并列顺序；不得压过主文/域名等词面差。命中门槛仍忽略大小写。
+ */
+export const RECALL_CASE_FIT_BOOST_CAP = 6
+
 /** 否定反馈（dismiss）对分数的最大扣减。 */
 export const RECALL_DISMISS_PENALTY_CAP = 10
+
+/**
+ * 形态缩写（CamelCase / 多词首字母）写入倒排与精排命中的长度上限。
+ * 过长缩写噪声大，不入库、不参与短词形态命中。
+ */
+export const RECALL_ORTHOGRAPHIC_ACRONYM_MAX_LEN = 3
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -424,12 +436,18 @@ function exactTokenHit(
   compactField: string,
   token: string,
   /** 预计算的 compact，避免同一 token 对每字段重复 compactRecallText。 */
-  compactToken: string
+  compactToken: string,
+  /** 原文（保留大小写）；供 CamelCase 缩写匹配 */
+  originalField = ''
 ): boolean {
   if (fieldText.includes(token) || compactField.includes(token)) {
     return true
   }
   if (compactToken.length >= 2 && compactField.includes(compactToken)) {
+    return true
+  }
+  // 短词：原文形态缩写（JavaScript→js；React Native→rn）
+  if (shortLatinTokenHitsField(originalField || fieldText, token)) {
     return true
   }
   // host 对齐：www. 与裸域等价（domain / url 字段常见形态差）
@@ -444,6 +462,72 @@ function exactTokenHit(
     }
   }
   return false
+}
+
+/** 从 CamelCase / PascalCase 词抽取首字母缩写（JavaScript → js）。 */
+export function camelCaseAcronym(word: string): string {
+  const parts = word.split(/(?=[A-Z])/).filter(part => part.length > 0)
+  if (parts.length < 2) {
+    return ''
+  }
+  return parts.map(part => part[0]?.toLowerCase() ?? '').join('')
+}
+
+/**
+ * 从原文抽取形态缩写（无词典）：
+ * - 单词语 CamelCase / PascalCase / 连续大写（JavaScript→js，CSS→css）
+ * - 连续 2–3 个拉丁词的首字母（React Native→rn）
+ * 仅保留长度 ∈ [2, {@link RECALL_ORTHOGRAPHIC_ACRONYM_MAX_LEN}]。
+ */
+export function extractOrthographicAcronyms(text: string): string[] {
+  const seen = new Set<string>()
+  const out: string[] = []
+  const push = (acronym: string): void => {
+    if (
+      acronym.length < 2 ||
+      acronym.length > RECALL_ORTHOGRAPHIC_ACRONYM_MAX_LEN ||
+      seen.has(acronym)
+    ) {
+      return
+    }
+    seen.add(acronym)
+    out.push(acronym)
+  }
+
+  const words = text.match(/[A-Za-z][A-Za-z0-9]*/g) ?? []
+  for (const word of words) {
+    push(camelCaseAcronym(word))
+  }
+  for (let index = 0; index < words.length; index += 1) {
+    for (const windowSize of [2, 3] as const) {
+      if (index + windowSize > words.length) {
+        continue
+      }
+      const acronym = words
+        .slice(index, index + windowSize)
+        .map(word => word[0]?.toLowerCase() ?? '')
+        .join('')
+      push(acronym)
+    }
+  }
+  return out
+}
+
+/**
+ * 短拉丁 token 是否命中字段原文形态缩写（JavaScript→js；React Native→rn）。
+ * 不做民间缩写词典；全小写整词推不出的残差交给字面 / Hybrid。
+ */
+function shortLatinTokenHitsField(originalField: string, token: string): boolean {
+  if (token.length < 2 || token.length > RECALL_ORTHOGRAPHIC_ACRONYM_MAX_LEN) {
+    return false
+  }
+  if (!/^[a-z][a-z0-9]*$/i.test(token)) {
+    return false
+  }
+  const needle = token.toLowerCase()
+  return extractOrthographicAcronyms(originalField).some(
+    acronym => acronym === needle || acronym.startsWith(needle)
+  )
 }
 
 function scoreFactorForKind(kind: TokenKind): number {
@@ -478,6 +562,77 @@ export function computeBehaviorBoost(item: MemoryItem, options: RecallScoreOptio
   }
 
   return Math.min(RECALL_BEHAVIOR_BOOST_CAP, openBoost + recencyBoost)
+}
+
+/**
+ * 从线索抽出「带大小写偏好」的拉丁词。
+ * 全小写 token 不收录——用户未表达大小写偏好，不加分。
+ */
+export function extractCasedClueTokens(clue: string): string[] {
+  const trimmed = clue.trim()
+  if (!trimmed) {
+    return []
+  }
+
+  const matches = trimmed.match(/[A-Za-z][A-Za-z0-9._:+-]{1,47}/g) ?? []
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const match of matches) {
+    if (match === match.toLowerCase()) {
+      continue
+    }
+    const key = match.toLowerCase()
+    if (seen.has(key)) {
+      continue
+    }
+    seen.add(key)
+    out.push(match)
+  }
+  return out
+}
+
+/**
+ * 大小写贴合软加权：词面已命中后，主文原文与线索大小写一致则微抬。
+ * - 忽略大小写仍负责能否命中
+ * - 线索全小写 → 0（无偏好）
+ * - 仅看 title / 摘录正文 / note
+ */
+export function computeCaseFitBoost(
+  clue: string,
+  primaryFieldOriginals: readonly string[]
+): number {
+  const casedTokens = extractCasedClueTokens(clue)
+  if (casedTokens.length === 0 || primaryFieldOriginals.length === 0) {
+    return 0
+  }
+
+  let total = 0
+  for (const token of casedTokens) {
+    let tokenGain = 0
+    const tokenLower = token.toLowerCase()
+    for (const field of primaryFieldOriginals) {
+      const fieldLower = field.toLowerCase()
+      let from = 0
+      while (from < fieldLower.length) {
+        const idx = fieldLower.indexOf(tokenLower, from)
+        if (idx < 0) {
+          break
+        }
+        const slice = field.slice(idx, idx + token.length)
+        if (slice === token) {
+          // 完整大小写一致：长度略加权，单 token 上限 6
+          tokenGain = Math.max(
+            tokenGain,
+            Math.min(6, 3 + Math.min(3, Math.max(0, token.length - 2)))
+          )
+        }
+        from = idx + 1
+      }
+    }
+    total += tokenGain
+  }
+
+  return Math.min(RECALL_CASE_FIT_BOOST_CAP, total)
 }
 
 /**
@@ -559,11 +714,13 @@ interface PreparedRecallToken extends RecallToken {
 /**
  * 对单个 MemoryItem 用已拆好的 token 打分（列表 Filter 时只 tokenize 一次）。
  * 语义与 {@link scoreMemoryItem} 相同。
+ * @param originalClue 原始线索（保留大小写；供 case-fit 软加权）
  */
 function scoreMemoryItemWithTokens(
   item: MemoryItem,
   tokens: RecallToken[],
-  options: RecallScoreOptions = {}
+  options: RecallScoreOptions = {},
+  originalClue = ''
 ): RecallMatch {
   const matchedFields = new Set<string>()
   let score = 0
@@ -579,8 +736,11 @@ function scoreMemoryItemWithTokens(
 
   const fields = collectSearchableFields(item).map(entry => ({
     field: entry.field,
+    /** 规范化后用于忽略大小写命中 */
     text: normalizeRecallText(entry.text),
     compact: compactRecallText(entry.text),
+    /** 原文：大小写贴合加权 */
+    original: entry.text,
     weight: fieldWeight(entry.field)
   }))
 
@@ -594,7 +754,7 @@ function scoreMemoryItemWithTokens(
     let tokenHit = false
 
     for (const field of fields) {
-      if (!exactTokenHit(field.text, field.compact, token, compactToken)) {
+      if (!exactTokenHit(field.text, field.compact, token, compactToken, field.original)) {
         continue
       }
 
@@ -651,6 +811,10 @@ function scoreMemoryItemWithTokens(
   }
 
   if (score > 0) {
+    const primaryOriginals = fields
+      .filter(field => PRIMARY_CONTENT_FIELDS.has(field.field))
+      .map(field => field.original)
+    score += computeCaseFitBoost(originalClue, primaryOriginals)
     score += computeBehaviorBoost(item, options)
     score -= computeDismissPenalty(item)
     // 弱锚点（空壳书签等）降权：避免「只有 URL 回显标题」假装高置信可找回
@@ -670,14 +834,14 @@ function scoreMemoryItemWithTokens(
 /**
  * 对单个 MemoryItem 计算关键词分数。
  * 先精确/ngram 命中；仅当已有精确分时，再补短 token 的编辑距离模糊，降低乱召回。
- * 词面分 > 0 时再叠加主文贴合度与行为加权。
+ * 词面分 > 0 时再叠加主文贴合度、大小写贴合与行为加权。
  */
 export function scoreMemoryItem(
   item: MemoryItem,
   clue: string,
   options: RecallScoreOptions = {}
 ): RecallMatch {
-  return scoreMemoryItemWithTokens(item, tokenizeRecallClueDetailed(clue), options)
+  return scoreMemoryItemWithTokens(item, tokenizeRecallClueDetailed(clue), options, clue)
 }
 
 function hasPrimaryContentMatch(matchedFields: string[]): boolean {
@@ -789,7 +953,7 @@ export function filterMemoryItemsByKeyword(
   const tokens = tokenizeRecallClueDetailed(clue)
 
   return items
-    .map(item => scoreMemoryItemWithTokens(item, tokens, scoreOptions))
+    .map(item => scoreMemoryItemWithTokens(item, tokens, scoreOptions, clue))
     .filter(match => match.score >= minScore)
     .sort((left, right) => {
       if (right.score !== left.score) {

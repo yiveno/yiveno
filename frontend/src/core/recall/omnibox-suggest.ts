@@ -1,4 +1,5 @@
 import type { TranslateFn } from '@/core/i18n/translate'
+import { RECALL_RESULT_PAGE_SIZE } from '@/core/recall/build-recall-result'
 import { getRecallMatchFieldShortLabel } from '@/core/recall/explain-recall-match'
 import { getMemoryItemOpenHref, getOmniboxSuggestContent } from '@/core/recall/memory-open-href'
 import {
@@ -125,7 +126,7 @@ export function recallMatchToOmniboxSuggest(
 
 /**
  * 将 Recall 结果映射为 Omnibox 建议列表。
- * Top Pick + Also Possible；content 必须与用户输入不同才会显示。
+ * 仅首屏 PAGE_SIZE（避免宽线索把 omnibox 刷满）；content 须与用户输入不同才会显示。
  */
 export function recallResultToOmniboxSuggests(
   result: RecallResult,
@@ -140,7 +141,7 @@ export function recallResultToOmniboxSuggests(
   const seenContents = new Set<string>()
   const suggests: OmniboxSuggestItem[] = []
 
-  for (const match of matches) {
+  for (const match of matches.slice(0, RECALL_RESULT_PAGE_SIZE)) {
     const suggest = recallMatchToOmniboxSuggest(match, options)
     if (!suggest || seenContents.has(suggest.content)) {
       continue

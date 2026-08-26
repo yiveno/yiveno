@@ -310,6 +310,43 @@
   "popup_clue_placeholder": {
     "message": "e.g. that article about AI agents and memory from last week"
   },
+  "popup_clue_placeholder_neutral": {
+    "message": "Or add another detail…"
+  },
+  "popup_clue_placeholder_narrow_generic": {
+    "message": "Still a bit broad — add another detail you remember…"
+  },
+  "popup_clue_placeholder_narrow": {
+    "message": "Still a bit broad — try something like “$1” or “$2”.",
+    "placeholders": {
+      "a": {
+        "content": "$1",
+        "example": "code"
+      },
+      "b": {
+        "content": "$2",
+        "example": "video"
+      }
+    }
+  },
+  "popup_clue_placeholder_narrow_one": {
+    "message": "Still a bit broad — try something like “$1”.",
+    "placeholders": {
+      "a": {
+        "content": "$1",
+        "example": "code"
+      }
+    }
+  },
+  "popup_env_chip_current_site": {
+    "message": "Related to this site"
+  },
+  "popup_env_chip_just_saved": {
+    "message": "Just saved"
+  },
+  "popup_env_chip_just_opened": {
+    "message": "Opened recently"
+  },
   "popup_submit": {
     "message": "Start recall"
   },
@@ -335,13 +372,13 @@
     }
   },
   "popup_section_top_pick": {
-    "message": "Most likely"
+    "message": "Closest"
   },
   "popup_section_also_possible": {
-    "message": "Maybe these"
+    "message": "Also nearby"
   },
   "popup_section_possible_matches": {
-    "message": "Possible matches"
+    "message": "Closest matches"
   },
   "popup_need_a_clue_title": {
     "message": "Add one more clue"
@@ -365,10 +402,57 @@
     "message": "Skip"
   },
   "popup_reply_confident": {
-    "message": "This is the most likely match."
+    "message": "Closest matches in your library, ranked by fit:"
+  },
+  "popup_reply_ranked_all": {
+    "message": "$total$ related matches, ranked by fit:",
+    "placeholders": {
+      "total": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "popup_reply_ranked_partial": {
+    "message": "$total$ related matches · showing $from$–$to$:",
+    "placeholders": {
+      "total": {
+        "content": "$1",
+        "example": "12"
+      },
+      "from": {
+        "content": "$2",
+        "example": "1"
+      },
+      "to": {
+        "content": "$3",
+        "example": "5"
+      }
+    }
+  },
+  "popup_show_more_matches": {
+    "message": "Show more"
+  },
+  "popup_show_more_count": {
+    "message": "Show $1 more",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "popup_show_all_count": {
+    "message": "Show all $1",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
   },
   "popup_reply_uncertain": {
-    "message": "These might be related, but none is strong enough yet. Add a word that distinguishes them, or say none of these."
+    "message": "These might be related, but the fit is weak. Refine the clue above, or say none of these."
   },
   "popup_reply_miss": {
     "message": "Nothing in your library matches this clue. Misremembering or never saving it is a valid answer. Save a trace first if you want to find it later."

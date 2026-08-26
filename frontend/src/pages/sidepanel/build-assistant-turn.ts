@@ -14,8 +14,11 @@ export function createAssistantTurn(input: {
   relatedGuessCard?: RecallCardModel | null
   relatedGuessLabel?: string
   candidateCards?: RecallCardModel[]
+  visibleCount?: number
+  rankedTotalCount?: number
   candidateSectionLabel?: string
   suggestions?: RecallSuggestion[]
+  composerNarrowExamples?: string[]
   allowDismiss?: boolean
 }): ConversationTurn {
   return {
@@ -30,10 +33,15 @@ export function createAssistantTurn(input: {
       ? {}
       : { relatedGuessLabel: input.relatedGuessLabel }),
     ...(input.candidateCards === undefined ? {} : { candidateCards: input.candidateCards }),
+    ...(input.visibleCount === undefined ? {} : { visibleCount: input.visibleCount }),
+    ...(input.rankedTotalCount === undefined ? {} : { rankedTotalCount: input.rankedTotalCount }),
     ...(input.candidateSectionLabel === undefined
       ? {}
       : { candidateSectionLabel: input.candidateSectionLabel }),
     ...(input.suggestions === undefined ? {} : { suggestions: input.suggestions }),
+    ...(input.composerNarrowExamples === undefined
+      ? {}
+      : { composerNarrowExamples: input.composerNarrowExamples }),
     allowDismiss: input.allowDismiss ?? false
   }
 }

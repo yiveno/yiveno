@@ -13,7 +13,7 @@ export const KEYWORD_POSTING_STORE = 'keyword_postings' as const
 export const KEYWORD_INDEX_META_STORE = 'keyword_index_meta' as const
 
 /** 倒排 meta.schemaVersion；与 posting 格式联动，升则强制 rebuild。 */
-export const KEYWORD_INDEX_SCHEMA_VERSION = 1 as const
+export const KEYWORD_INDEX_SCHEMA_VERSION = 2 as const
 
 /** 仅 ownerId，按归属枚举（登录后 remap / 同步计数）。 */
 export const MEMORY_ITEM_INDEX_BY_OWNER = 'by_owner' as const

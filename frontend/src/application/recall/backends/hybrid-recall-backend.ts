@@ -10,21 +10,26 @@ import { getClueLlmCompleter } from '@/application/recall/clue-llm-completer-reg
 import type { RecallBackend, RecallWithClueOptions } from '@/application/recall/recall-backend'
 import { applyCurrentTabDomainBoost } from '@/application/recall/apply-current-tab-domain-boost'
 import { RECALL_SCAN_LIMIT } from '@/application/recall/backends/recall-scan-limit'
+import { buildEnvironmentRecallSuggestions } from '@/core/recall/build-environment-recall-suggestions'
 import { buildQueryEmbeddingText } from '@/core/recall/build-query-embedding-text'
 import {
   buildRecallResult,
-  RECALL_COLLAPSE_BACKFILL_EXTRA
+  filterKeywordMatchesBeforeCollapse,
+  RECALL_COLLAPSE_BACKFILL_EXTRA,
+  RECALL_RESULT_POOL_LIMIT
 } from '@/core/recall/build-recall-result'
 import { collapseRecallMatches } from '@/core/recall/collapse-recall-duplicates'
+import { COMPOSER_PLACEHOLDER_NARROW_MIN_RANKED } from '@/core/recall/compute-composer-placeholder'
+import {
+  extractComposerNarrowExamples,
+  type NarrowExampleSource
+} from '@/core/recall/extract-composer-narrow-examples'
 import {
   rankIdsByCosineToQuery,
   scoreFromCosineSimilarity,
   sortIdsByRrf
 } from '@/core/recall/hybrid-fusion'
-import {
-  filterMemoryItemsByKeyword,
-  isGenericOnlyHitAgainstSpecificClue
-} from '@/core/recall/keyword-filter'
+import { isGenericOnlyHitAgainstSpecificClue } from '@/core/recall/keyword-filter'
 import {
   excludeDismissedMemoryItems,
   mergeRecallDialogTurn
@@ -40,10 +45,12 @@ import {
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
 import { getMemoryItemDisplay } from '@/core/recall/recall-result'
+import { completeComposerNarrowExamplePolishWithLlm } from '@/core/recall/understand/complete-composer-narrow-example-polish'
 import { completeRecallFollowUpWithLlm } from '@/core/recall/understand/complete-recall-follow-up'
 import { understandRecallClue } from '@/core/recall/understand/understand-recall-clue'
 import { requestWorkerEmbeddings } from '@/infrastructure/ai/embed-api-client'
 import { getAuthSession } from '@/infrastructure/identity/auth-session-service'
+import { t } from '@/infrastructure/i18n/t'
 
 /** Hybrid 关键词召回池（再与向量融合）。 */
 const HYBRID_KEYWORD_POOL = 100
@@ -68,7 +75,7 @@ async function finalizeKeywordResult(
   pairClue: string
 ): Promise<RecallResult> {
   const base = recallByKeywordWithParsedClue(items, displayClue, {
-    candidateLimit: 6,
+    candidateLimit: RECALL_RESULT_POOL_LIMIT,
     parsed
   })
   const matches = applyCurrentTabDomainBoost(
@@ -134,6 +141,178 @@ async function attachLlmFollowUpIfNeeded(
   }
 }
 
+/**
+ * §7.1：无 LLM 芯片时挂环境弱芯片（有信号才出）。
+ * - need_a_clue：可挂
+ * - top_pick 且 N 未达宽邻域门槛：可挂（窄结果；与 Narrow placeholder 不抢）
+ * - top_pick 宽邻域：不挂，留给动态 Narrow placeholder
+ * 有 LLM suggestions → 不抢主。
+ */
+function attachEnvironmentFollowUpIfNeeded(
+  result: RecallResult,
+  input: {
+    clue: string
+    currentTabDomain?: string
+    trace: ReturnType<typeof createRecallFlowTrace>
+  }
+): RecallResult {
+  if (result.outcome === 'no_match') {
+    return result
+  }
+  const hasCandidates =
+    result.topPick !== null || result.alsoPossible.length > 0 || result.totalRankedCount > 0
+  if (!hasCandidates) {
+    return result
+  }
+  if (
+    result.outcome === 'top_pick' &&
+    result.totalRankedCount >= COMPOSER_PLACEHOLDER_NARROW_MIN_RANKED
+  ) {
+    input.trace('info', '环境芯片：宽邻域 top_pick，留给 Narrow placeholder', {
+      rankedTotalCount: result.totalRankedCount
+    })
+    return result
+  }
+  if (result.assistantFollowUp?.suggestions && result.assistantFollowUp.suggestions.length > 0) {
+    input.trace('info', '环境芯片：已有 LLM 芯片，跳过', {
+      llmChipCount: result.assistantFollowUp.suggestions.length
+    })
+    return result
+  }
+
+  const specs = buildEnvironmentRecallSuggestions({
+    clueText: input.clue,
+    ...(input.currentTabDomain !== undefined ? { currentTabDomain: input.currentTabDomain } : {})
+  })
+  if (specs.length === 0) {
+    input.trace('info', '环境芯片：无可用信号')
+    return result
+  }
+
+  const suggestions = specs.map(spec => ({
+    id: spec.id,
+    label: t(spec.labelKey),
+    value: spec.value
+  }))
+  input.trace('info', '环境芯片：已挂弱芯片', {
+    ids: suggestions.map(item => item.id),
+    outcome: result.outcome,
+    rankedTotalCount: result.totalRankedCount,
+    currentTabDomain: input.currentTabDomain ?? null
+  })
+
+  return {
+    ...result,
+    assistantFollowUp: {
+      source: 'environment',
+      // 气泡仍用 UI 静态文案；空 text 时 Side Panel 回退 formatRankedReplyText
+      text: result.assistantFollowUp?.text ?? '',
+      suggestions
+    }
+  }
+}
+
+function collectPoolMatches(result: RecallResult): RecallMatch[] {
+  return [...(result.topPick ? [result.topPick] : []), ...result.alsoPossible]
+}
+
+function matchToNarrowExampleSource(match: RecallMatch): NarrowExampleSource {
+  const display = getMemoryItemDisplay(match.item, () => '')
+  return {
+    itemKind: match.item.type === 'bookmark' ? 'bookmark' : 'text_excerpt',
+    title: display.title,
+    subtitle: display.subtitle,
+    url: display.url,
+    ...(display.excerpt !== undefined ? { excerpt: display.excerpt } : {}),
+    ...(display.note !== undefined ? { note: display.note } : {})
+  }
+}
+
+/**
+ * 宽邻域且无芯片时：抽取 grounded Narrow 举例；有 completer 则仅润色展示形态。
+ * 失败静默回退原词；有芯片让位时跳过（placeholder 走 Neutral）。
+ */
+async function attachComposerNarrowExamplesIfNeeded(
+  result: RecallResult,
+  input: {
+    clue: string
+    complete?: NonNullable<ReturnType<typeof getClueLlmCompleter>>
+    trace: ReturnType<typeof createRecallFlowTrace>
+  }
+): Promise<RecallResult> {
+  if (result.outcome !== 'top_pick' && result.outcome !== 'need_a_clue') {
+    return result
+  }
+  if (result.totalRankedCount < COMPOSER_PLACEHOLDER_NARROW_MIN_RANKED) {
+    input.trace('info', 'Narrow 举例：邻域未达宽门槛，跳过', {
+      rankedTotalCount: result.totalRankedCount
+    })
+    return result
+  }
+  if (result.assistantFollowUp?.suggestions && result.assistantFollowUp.suggestions.length > 0) {
+    input.trace('info', 'Narrow 举例：已有芯片让位，跳过', {
+      chipCount: result.assistantFollowUp.suggestions.length
+    })
+    return result
+  }
+
+  const sources = collectPoolMatches(result).map(matchToNarrowExampleSource)
+  const selected = extractComposerNarrowExamples({
+    candidates: sources,
+    clueText: input.clue
+  })
+  if (selected.length === 0) {
+    input.trace('info', 'Narrow 举例：抽不出合格词')
+    return result
+  }
+
+  let examples = selected
+  if (input.complete) {
+    const corpusTexts = sources.flatMap(source =>
+      [source.title, source.subtitle, source.url, source.excerpt ?? '', source.note ?? ''].filter(
+        Boolean
+      )
+    )
+    const candidateTextPreviews = sources
+      .slice(0, 6)
+      .map(source =>
+        [source.title, source.subtitle, source.excerpt ?? '']
+          .filter(Boolean)
+          .join(' · ')
+          .slice(0, 120)
+      )
+      .filter(Boolean)
+    try {
+      examples = await completeComposerNarrowExamplePolishWithLlm({
+        selectedExamples: selected,
+        candidateTextPreviews,
+        candidateCorpusTexts: corpusTexts,
+        complete: input.complete,
+        trace: input.trace
+      })
+      input.trace('info', 'Narrow 举例：LLM 润色完成', {
+        selected,
+        examples
+      })
+    } catch (error) {
+      input.trace('warn', 'Narrow 举例：LLM 润色失败，回退选定原词', {
+        error: error instanceof Error ? error.message : String(error),
+        selected
+      })
+      examples = selected
+    }
+  } else {
+    input.trace('info', 'Narrow 举例：无 completer，使用选定原词', {
+      selected
+    })
+  }
+
+  return {
+    ...result,
+    composerNarrowExamples: examples
+  }
+}
+
 async function fuseHybridMatches(input: {
   displayClue: string
   /** 与会话 Outcome 对指纹对齐（通常为 merge.effectiveRaw） */
@@ -151,12 +330,16 @@ async function fuseHybridMatches(input: {
     return null
   }
 
-  const keywordMatches = filterMatchesByParsedTimeRange(
-    filterMemoryItemsByKeyword(input.items, input.searchClue, {
-      limit: HYBRID_KEYWORD_POOL
-    }).map(match => applyParsedClueScoreBoosts(match, input.parsed)),
-    input.parsed
-  ).filter(match => !isGenericOnlyHitAgainstSpecificClue(input.searchClue, match.item))
+  // 先全量打分再折叠到 Hybrid 关键词池，避免重复书签占满 HYBRID_KEYWORD_POOL
+  const keywordMatches = collapseRecallMatches(
+    filterMatchesByParsedTimeRange(
+      filterKeywordMatchesBeforeCollapse(input.items, input.searchClue).map(match =>
+        applyParsedClueScoreBoosts(match, input.parsed)
+      ),
+      input.parsed
+    ).filter(match => !isGenericOnlyHitAgainstSpecificClue(input.searchClue, match.item)),
+    { limit: HYBRID_KEYWORD_POOL }
+  )
 
   const embeddedCandidates = input.items.flatMap(item => {
     const embedding = item.clues.embedding
@@ -271,7 +454,7 @@ async function fuseHybridMatches(input: {
   const withPairs = await applyStoredOutcomePairsToMatches(boosted, input.pairClue)
 
   const collapsed = collapseRecallMatches(withPairs, {
-    limit: 6 + RECALL_COLLAPSE_BACKFILL_EXTRA
+    limit: RECALL_RESULT_POOL_LIMIT + RECALL_COLLAPSE_BACKFILL_EXTRA
   })
   input.trace('info', 'Hybrid：RRF 融合完成', {
     keywordCount: keywordMatches.length,
@@ -297,6 +480,7 @@ export class HybridRecallBackend implements RecallBackend {
         outcome: 'no_match',
         topPick: null,
         alsoPossible: [],
+        totalRankedCount: 0,
         clue: ''
       }
     }
@@ -319,6 +503,7 @@ export class HybridRecallBackend implements RecallBackend {
         outcome: 'no_match',
         topPick: null,
         alsoPossible: [],
+        totalRankedCount: 0,
         clue: normalizedClue
       }
     }
@@ -396,7 +581,7 @@ export class HybridRecallBackend implements RecallBackend {
       effectiveClue: merge.effectiveRaw
     })
     const enriched = enrichEmptyRecallResult(withMeta, items, merge.merged)
-    const withFollowUp = complete
+    const withLlmFollowUp = complete
       ? await attachLlmFollowUpIfNeeded(enriched, {
           complete,
           clue: normalizedClue,
@@ -405,18 +590,31 @@ export class HybridRecallBackend implements RecallBackend {
         })
       : enriched
 
+    const withFollowUp = attachEnvironmentFollowUpIfNeeded(withLlmFollowUp, {
+      clue: normalizedClue,
+      trace,
+      ...(currentTabDomain !== undefined ? { currentTabDomain } : {})
+    })
+
+    const withNarrowExamples = await attachComposerNarrowExamplesIfNeeded(withFollowUp, {
+      clue: normalizedClue,
+      trace,
+      ...(complete ? { complete } : {})
+    })
+
     trace('info', 'Hybrid Recall：流水线结束', {
       durationMs: Date.now() - pipelineStartedAt,
       usedHybrid,
       understandSource: understood.source,
       understandMode: understood.mode,
-      outcome: withFollowUp.outcome,
-      emptyKind: withFollowUp.emptyKind ?? null,
-      relatedGuessId: withFollowUp.relatedGuess?.item.id ?? null,
-      followUpSource: withFollowUp.assistantFollowUp?.source ?? 'rules',
-      topPickId: withFollowUp.topPick?.item.id ?? null
+      outcome: withNarrowExamples.outcome,
+      emptyKind: withNarrowExamples.emptyKind ?? null,
+      relatedGuessId: withNarrowExamples.relatedGuess?.item.id ?? null,
+      followUpSource: withNarrowExamples.assistantFollowUp?.source ?? 'rules',
+      topPickId: withNarrowExamples.topPick?.item.id ?? null,
+      narrowExampleCount: withNarrowExamples.composerNarrowExamples?.length ?? 0
     })
 
-    return withFollowUp
+    return withNarrowExamples
   }
 }

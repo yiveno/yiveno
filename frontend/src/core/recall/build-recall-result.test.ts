@@ -31,6 +31,7 @@ describe('build-recall-result Top/Also 互斥', () => {
       matches[2]?.item.id
     ])
     expect(result.alsoPossible.some(m => m.item.id === result.topPick?.item.id)).toBe(false)
+    expect(result.totalRankedCount).toBe(3)
   })
 
   it('分数未达 Top Pick 阈值时为 need_a_clue，无 topPick、弱候选进 alsoPossible', () => {
@@ -52,6 +53,21 @@ describe('build-recall-result Top/Also 互斥', () => {
       matches[0]?.item.id,
       matches[1]?.item.id
     ])
+    expect(result.totalRankedCount).toBe(2)
+  })
+
+  it('排序池可超过首屏 PAGE_SIZE，totalRankedCount 反映全池', () => {
+    const matches: RecallMatch[] = Array.from({ length: 12 }, (_, i) => {
+      const item = createBookmarkMemoryItem({
+        ...baseContext,
+        payload: { title: `池${i}`, url: `https://pool-${i}.example/${i}` }
+      })
+      return { item, score: 40 - i, matchedFields: ['title'] }
+    })
+    const result = buildRecallResult('池', matches)
+    expect(result.outcome).toBe('top_pick')
+    expect(result.totalRankedCount).toBe(12)
+    expect(result.alsoPossible).toHaveLength(11)
   })
 
   it('stacks N=同 URL 重复数（含写法差异），不是全部含 AI 的命中', () => {
@@ -136,5 +152,38 @@ describe('build-recall-result Top/Also 互斥', () => {
         expect(also.item.payload.domain).not.toBe('ai-bot.cn')
       }
     }
+  })
+
+  it('大量同 URL 重复书签不得在折叠前挤掉其它互异组（js→JavaScript）', () => {
+    // 复现：499+ js-cookie 占满旧 FETCH_LIMIT=500，挡住「现代 JavaScript 教程」
+    const cookieFlood = Array.from({ length: 520 }, (_, i) =>
+      createBookmarkMemoryItem({
+        ...baseContext,
+        now: () => `2026-07-22T06:00:${String(i % 60).padStart(2, '0')}.000Z`,
+        payload: {
+          title: 'js-cookie - npm',
+          url: 'https://www.npmjs.com/package/js-cookie'
+        }
+      })
+    )
+    const jsTutorial = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: {
+        title: '现代 JavaScript 教程',
+        url: 'https://zh.javascript.info/'
+      }
+    })
+    const result = recallByKeyword([...cookieFlood, jsTutorial], 'js')
+    expect(result.outcome).toBe('top_pick')
+    const rankedTitles = [...(result.topPick ? [result.topPick] : []), ...result.alsoPossible].map(
+      m => (m.item.type === 'bookmark' ? m.item.payload.title : m.item.clues.title)
+    )
+    expect(rankedTitles).toContain('现代 JavaScript 教程')
+    expect(rankedTitles).toContain('js-cookie - npm')
+    expect(result.totalRankedCount).toBeGreaterThanOrEqual(2)
+    const cookie = [...(result.topPick ? [result.topPick] : []), ...result.alsoPossible].find(
+      m => m.item.type === 'bookmark' && m.item.payload.title === 'js-cookie - npm'
+    )
+    expect(cookie?.duplicateGroup?.totalCount).toBe(520)
   })
 })

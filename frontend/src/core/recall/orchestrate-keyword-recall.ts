@@ -6,18 +6,16 @@
 import type { MemoryItem } from '@/core/memory/memory-item'
 import {
   RECALL_COLLAPSE_BACKFILL_EXTRA,
-  RECALL_MATCH_FETCH_LIMIT,
-  RECALL_RESULT_SLOT_LIMIT,
-  buildRecallResult
+  RECALL_RESULT_POOL_LIMIT,
+  buildRecallResult,
+  filterKeywordMatchesBeforeCollapse
 } from '@/core/recall/build-recall-result'
 import { collapseRecallMatches } from '@/core/recall/collapse-recall-duplicates'
 import {
   compactRecallText,
-  filterMemoryItemsByKeyword,
   normalizeRecallText,
   RECALL_TOP_PICK_MIN_SCORE
 } from '@/core/recall/keyword-filter'
-import { expandRecallContentTerms } from '@/core/memory/memory-topic-lexicon'
 import { parseRecallClue, resolveRelativeTimeRange } from '@/core/recall/parse-recall-clue'
 import {
   RECALL_OBJECT_TYPE_CANONICAL_SURFACES,
@@ -66,10 +64,10 @@ const OBJECT_TYPE_SURFACES = (() => {
   return map
 })()
 
-/** 由解析结果决定交给 keyword-filter 的检索串。 */
+/** 由解析结果决定交给 keyword-filter 的检索串（不做内容别名扩词）。 */
 export function buildSearchClueFromParsed(parsed: ParsedRecallClue): string {
   if (parsed.contentTerms.length > 0) {
-    return expandRecallContentTerms(parsed.contentTerms).join(' ')
+    return parsed.contentTerms.join(' ')
   }
 
   if (parsed.objectTypes && parsed.objectTypes.length > 0) {
@@ -318,13 +316,14 @@ export function recallByKeywordWithParsedClue(
       outcome: 'no_match',
       topPick: null,
       alsoPossible: [],
+      totalRankedCount: 0,
       clue: ''
     }
   }
 
   const nowMs = options.nowMs ?? Date.now()
   const parsed = options.parsed ?? parseRecallClue(raw, { nowMs })
-  const slotLimit = options.candidateLimit ?? RECALL_RESULT_SLOT_LIMIT
+  const poolLimit = options.candidateLimit ?? RECALL_RESULT_POOL_LIMIT
 
   if (shouldRecallByConstraintNeighborhood(parsed)) {
     const constraintMatches = recallMatchesByConstraintNeighborhood(items, parsed, nowMs).map(
@@ -337,7 +336,7 @@ export function recallByKeywordWithParsedClue(
       return right.item.updatedAt.localeCompare(left.item.updatedAt)
     })
     const collapsed = collapseRecallMatches(constraintMatches, {
-      limit: slotLimit + RECALL_COLLAPSE_BACKFILL_EXTRA
+      limit: poolLimit + RECALL_COLLAPSE_BACKFILL_EXTRA
     })
     return buildRecallResult(raw, collapsed)
   }
@@ -345,10 +344,9 @@ export function recallByKeywordWithParsedClue(
   const searchClue = buildSearchClueFromParsed(parsed)
 
   const matches = filterMatchesByParsedTimeRange(
-    filterMemoryItemsByKeyword(items, searchClue, {
-      limit: RECALL_MATCH_FETCH_LIMIT,
-      nowMs
-    }).map(match => applyParsedClueScoreBoosts(match, parsed)),
+    filterKeywordMatchesBeforeCollapse(items, searchClue, { nowMs }).map(match =>
+      applyParsedClueScoreBoosts(match, parsed)
+    ),
     parsed
   )
 
@@ -360,7 +358,7 @@ export function recallByKeywordWithParsedClue(
   })
 
   const collapsed = collapseRecallMatches(matches, {
-    limit: slotLimit + RECALL_COLLAPSE_BACKFILL_EXTRA
+    limit: poolLimit + RECALL_COLLAPSE_BACKFILL_EXTRA
   })
   return buildRecallResult(raw, collapsed)
 }

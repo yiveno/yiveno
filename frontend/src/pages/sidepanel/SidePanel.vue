@@ -19,6 +19,9 @@ import {
 import { getTimeOfDayGreeting } from '@/core/recall/time-of-day-greeting'
 import type { RecallMatch } from '@/core/recall/recall-result'
 import { getMemoryItemDisplay } from '@/core/recall/recall-result'
+import { RECALL_RESULT_PAGE_SIZE } from '@/core/recall/build-recall-result'
+import { computeComposerPlaceholder } from '@/core/recall/compute-composer-placeholder'
+import { extractComposerNarrowExamples } from '@/core/recall/extract-composer-narrow-examples'
 import { buildRecallCardHighlightParts } from '@/core/recall/highlight-recall-text'
 import { getMemoryItemOpenHref } from '@/core/recall/memory-open-href'
 import { tImportStateError, tRecallError } from '@/infrastructure/i18n/background-error'
@@ -48,11 +51,7 @@ import RecallConversation from '@/pages/sidepanel/components/RecallConversation.
 import RecallComposer from '@/pages/sidepanel/components/RecallComposer.vue'
 import ColdStartGate from '@/pages/sidepanel/components/ColdStartGate.vue'
 import { createAssistantTurn } from '@/pages/sidepanel/build-assistant-turn'
-import type {
-  ConversationTurn,
-  AssistantTurn,
-  RecallSuggestion
-} from '@/pages/sidepanel/recall-conversation-types'
+import type { ConversationTurn, AssistantTurn } from '@/pages/sidepanel/recall-conversation-types'
 import type { RecallDialogState } from '@/core/recall/merge-recall-dialog-turn'
 import {
   commitRecallOutcome,
@@ -110,6 +109,50 @@ const hasActiveFindSession = computed(() => {
 })
 
 const isComposerProminent = computed(() => conversationTurns.value.length === 0)
+
+/** §7.0 双通道：按最新助手轮 + grounded 举例选择 placeholder。 */
+const composerPlaceholder = computed(() => {
+  const turns = conversationTurns.value
+  let latestAssistant: AssistantTurn | null = null
+  for (let i = turns.length - 1; i >= 0; i -= 1) {
+    const turn = turns[i]
+    if (turn && turn.role === 'assistant') {
+      latestAssistant = turn
+      break
+    }
+  }
+
+  const isIdle = latestAssistant === null
+  const chipsPresent = Boolean(
+    latestAssistant?.suggestions && latestAssistant.suggestions.length > 0
+  )
+  const pool = latestAssistant?.candidateCards ?? []
+  const fromResult = latestAssistant?.composerNarrowExamples
+  const narrowExamples =
+    !isIdle && !chipsPresent
+      ? fromResult && fromResult.length > 0
+        ? fromResult
+        : pool.length > 0
+          ? extractComposerNarrowExamples({
+              candidates: pool,
+              clueText: lastSentClue.value
+            })
+          : []
+      : []
+
+  const result = computeComposerPlaceholder({
+    isIdle,
+    rankedTotalCount: latestAssistant?.rankedTotalCount ?? 0,
+    chipsPresent,
+    ...(latestAssistant?.tone !== undefined ? { assistantTone: latestAssistant.tone } : {}),
+    ...(narrowExamples.length > 0 ? { narrowExamples } : {})
+  })
+
+  if (result.messageArgs.length === 0) {
+    return t(result.messageKey)
+  }
+  return t(result.messageKey, result.messageArgs)
+})
 
 function onRecallBodyScroll(): void {
   const el = recallBodyRef.value
@@ -270,32 +313,6 @@ function collectResultIdsFromRecall(result: {
   return [...new Set(ids)]
 }
 
-function buildRecallSuggestions(): RecallSuggestion[] {
-  return [
-    {
-      id: 'site',
-      label: t('popup_suggest_site'),
-      // 稳定英文，避免 locale 文案进 parser
-      value: 'site'
-    },
-    {
-      id: 'quote',
-      label: t('popup_suggest_quote'),
-      value: 'quote'
-    },
-    {
-      id: 'note',
-      label: t('popup_suggest_note'),
-      value: 'my note'
-    },
-    {
-      id: 'type',
-      label: t('popup_suggest_type'),
-      value: 'article'
-    }
-  ]
-}
-
 /** 无候选 miss：诚实终局文案（无问卷芯片）。 */
 function resolveMissAssistantText(input: {
   emptyKind?: string
@@ -427,6 +444,48 @@ const idleGreeting = computed(() =>
 /** 当前展开的重复组代表 id；同时只展开一组。 */
 const expandedDuplicateGroupId = ref<string | null>(null)
 
+/** 助手轮次当前可见的候选卡（Show more 截取）。 */
+function visibleCandidateCards(turn: AssistantTurn): RecallCardModel[] {
+  const cards = turn.candidateCards ?? []
+  const limit = turn.visibleCount ?? cards.length
+  return cards.slice(0, Math.max(0, limit))
+}
+
+/** 排序短名单回复文案：报总数 N，并标明当前展示区间。 */
+function formatRankedReplyText(total: number, visible: number): string {
+  if (total <= 0) {
+    return t('popup_reply_confident')
+  }
+  const shown = Math.min(visible, total)
+  if (shown >= total) {
+    return t('popup_reply_ranked_all', [String(total)])
+  }
+  return t('popup_reply_ranked_partial', [String(total), '1', String(shown)])
+}
+
+/** Show more：再展一页或展开剩余全部，并刷新文案区间。 */
+function handleShowMoreMatches(turnId: string, mode: 'page' | 'all' = 'page'): void {
+  conversationTurns.value = conversationTurns.value.map(turn => {
+    if (turn.role !== 'assistant' || turn.id !== turnId) {
+      return turn
+    }
+    const total = turn.candidateCards?.length ?? 0
+    if (total === 0) {
+      return turn
+    }
+    const currentVisible = turn.visibleCount ?? RECALL_RESULT_PAGE_SIZE
+    const nextVisible =
+      mode === 'all' ? total : Math.min(total, currentVisible + RECALL_RESULT_PAGE_SIZE)
+    return {
+      ...turn,
+      visibleCount: nextVisible,
+      ...(turn.tone === 'confident'
+        ? { text: formatRankedReplyText(turn.rankedTotalCount ?? total, nextVisible) }
+        : {})
+    }
+  })
+}
+
 function toMatchCard(
   match: RecallMatch,
   resultClue: string,
@@ -500,9 +559,10 @@ async function handleDismissCandidates(): Promise<void> {
     return
   }
 
-  const ids = lastAssistant.primaryCard?.id
-    ? [lastAssistant.primaryCard.id]
-    : (lastAssistant.candidateCards?.map(c => c.id) ?? [])
+  const ids = [
+    ...(lastAssistant.primaryCard ? [lastAssistant.primaryCard.id] : []),
+    ...visibleCandidateCards(lastAssistant).map(c => c.id)
+  ]
 
   if (ids.length > 0) {
     dialogState.value = {
@@ -554,7 +614,6 @@ async function handleDismissCandidates(): Promise<void> {
     tone: 'miss',
     text: t('popup_reply_after_dismiss'),
     contextStatus: t('popup_session_status_continuing'),
-    suggestions: buildRecallSuggestions(),
     allowDismiss: false
   })
 
@@ -807,23 +866,29 @@ async function runRecall(trimmedClue: string): Promise<void> {
     }
 
     if (response.result.outcome === 'top_pick') {
-      const alsoCards = response.result.alsoPossible.map(match => toMatchCard(match, highlightClue))
+      const rankedCards = [
+        ...(response.result.topPick ? [toMatchCard(response.result.topPick, highlightClue)] : []),
+        ...response.result.alsoPossible.map(match => toMatchCard(match, highlightClue))
+      ]
+      const total = response.result.totalRankedCount || rankedCards.length
+      const visibleCount = Math.min(RECALL_RESULT_PAGE_SIZE, rankedCards.length)
+      const envOrLlmFollowUp = response.result.assistantFollowUp
       conversationTurns.value.push(
         createAssistantTurn({
           id: nextTurnId(),
           tone: 'confident',
-          text: t('popup_reply_confident'),
+          text: formatRankedReplyText(total, visibleCount),
           ...contextStatusFields,
-          primaryCard: response.result.topPick
-            ? toMatchCard(response.result.topPick, highlightClue)
-            : null,
-          ...(alsoCards.length > 0
-            ? {
-                candidateCards: alsoCards,
-                candidateSectionLabel: t('popup_section_also_possible')
-              }
+          candidateCards: rankedCards,
+          visibleCount,
+          rankedTotalCount: total,
+          ...(envOrLlmFollowUp?.suggestions?.length
+            ? { suggestions: envOrLlmFollowUp.suggestions }
             : {}),
-          allowDismiss: response.result.topPick !== null || alsoCards.length > 0
+          ...(response.result.composerNarrowExamples?.length
+            ? { composerNarrowExamples: response.result.composerNarrowExamples }
+            : {}),
+          allowDismiss: rankedCards.length > 0
         })
       )
     } else if (response.result.outcome === 'need_a_clue') {
@@ -831,15 +896,23 @@ async function runRecall(trimmedClue: string): Promise<void> {
       const candidateCards = response.result.alsoPossible.map(match =>
         toMatchCard(match, highlightClue)
       )
+      const total = response.result.totalRankedCount || candidateCards.length
+      const visibleCount = Math.min(RECALL_RESULT_PAGE_SIZE, candidateCards.length)
       conversationTurns.value.push(
         createAssistantTurn({
           id: nextTurnId(),
           tone: 'uncertain',
-          text: llmFollowUp?.text ?? t('popup_reply_uncertain'),
+          text: llmFollowUp?.text?.trim()
+            ? llmFollowUp.text
+            : formatRankedReplyText(total, visibleCount),
           ...contextStatusFields,
           candidateCards,
-          candidateSectionLabel: t('popup_section_also_possible'),
+          visibleCount,
+          rankedTotalCount: total,
           ...(llmFollowUp?.suggestions?.length ? { suggestions: llmFollowUp.suggestions } : {}),
+          ...(response.result.composerNarrowExamples?.length
+            ? { composerNarrowExamples: response.result.composerNarrowExamples }
+            : {}),
           allowDismiss: candidateCards.length > 0
         })
       )
@@ -1036,6 +1109,7 @@ onUnmounted(() => {
         @open="handleCardOpen"
         @toggle-expand="toggleDuplicateGroup"
         @dismiss="handleDismissCandidates"
+        @show-more="handleShowMoreMatches"
         @use-suggestion="handleUseSuggestion"
       />
     </div>
@@ -1064,7 +1138,7 @@ onUnmounted(() => {
       ref="clueInputRef"
       v-model="clue"
       :ariaLabel="t('popup_clue_input_aria')"
-      :placeholder="t('popup_clue_placeholder')"
+      :placeholder="composerPlaceholder"
       :sendLabel="t('popup_submit')"
       :disabled="isRecallRefreshing"
       :prominent="isComposerProminent"

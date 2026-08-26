@@ -1,6 +1,7 @@
 /**
- * 存量 MemoryItem enrichment 回填（规则合并 tags/keywords/entities）。
+ * 存量 MemoryItem enrichment 回填（规则合并 tags/keywords/entities + 退役 seed scrub）。
  * 按 chrome.storage.local 版本号幂等；失败下次启动重试。
+ * putMany 会增量更新倒排 token（keywords/entities 变更会进索引 diff）。
  */
 
 import { mergeEnrichmentIntoMemoryItem } from '@/core/memory/enrich-memory-clues'

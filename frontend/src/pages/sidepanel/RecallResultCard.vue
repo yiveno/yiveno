@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 import type { RecallHighlightPart } from '@/core/recall/highlight-recall-text'
+import { getChromeFaviconUrl } from '@/infrastructure/browser/chrome-favicon'
 import type { AppIconName } from '@/infrastructure/ui/icons/icon-paths'
 import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
 import RecallHighlightText from '@/pages/sidepanel/RecallHighlightText.vue'
@@ -50,6 +51,9 @@ const isCollection = computed(() => (props.card.duplicateTotalCount ?? 0) >= 2)
 
 const moreActionLabel = computed(() => (props.expanded ? props.collapseLabel : props.expandLabel))
 
+/** 书签角标用 Chrome 缓存 favicon；失败回退 Lucide bookmark。 */
+const brokenFaviconIds = ref(new Set<string>())
+
 const kindIcon = computed<AppIconName>(() =>
   props.card.itemKind === 'bookmark' ? 'bookmark' : 'format_quote'
 )
@@ -69,6 +73,23 @@ const bookmarkNativeTitle = computed(() => {
 
 function kindIconFor(kind: RecallCardModel['itemKind']): AppIconName {
   return kind === 'bookmark' ? 'bookmark' : 'format_quote'
+}
+
+function bookmarkFaviconSrc(url: string): string {
+  return getChromeFaviconUrl(url, 32)
+}
+
+function isFaviconBroken(id: string): boolean {
+  return brokenFaviconIds.value.has(id)
+}
+
+function markFaviconBroken(id: string): void {
+  if (brokenFaviconIds.value.has(id)) {
+    return
+  }
+  const next = new Set(brokenFaviconIds.value)
+  next.add(id)
+  brokenFaviconIds.value = next
 }
 
 function siblingNativeTitle(sibling: RecallCardModel): string | undefined {
@@ -119,7 +140,18 @@ function handleMoreClick(event: MouseEvent): void {
         :title="card.typeLabel"
         :aria-label="card.typeLabel"
       >
-        <AppIcon :name="kindIcon" size="14px" />
+        <img
+          v-if="card.itemKind === 'bookmark' && card.url && !isFaviconBroken(card.id)"
+          class="recall-card-favicon"
+          :src="bookmarkFaviconSrc(card.url)"
+          alt=""
+          width="14"
+          height="14"
+          loading="lazy"
+          decoding="async"
+          @error="markFaviconBroken(card.id)"
+        />
+        <AppIcon v-else :name="kindIcon" size="14px" />
       </span>
 
       <a
@@ -206,7 +238,18 @@ function handleMoreClick(event: MouseEvent): void {
           :title="sibling.typeLabel"
           :aria-label="sibling.typeLabel"
         >
-          <AppIcon :name="kindIconFor(sibling.itemKind)" size="14px" />
+          <img
+            v-if="sibling.itemKind === 'bookmark' && sibling.url && !isFaviconBroken(sibling.id)"
+            class="recall-card-favicon"
+            :src="bookmarkFaviconSrc(sibling.url)"
+            alt=""
+            width="14"
+            height="14"
+            loading="lazy"
+            decoding="async"
+            @error="markFaviconBroken(sibling.id)"
+          />
+          <AppIcon v-else :name="kindIconFor(sibling.itemKind)" size="14px" />
         </span>
         <a
           class="recall-card recall-card--sibling"
@@ -318,9 +361,8 @@ function handleMoreClick(event: MouseEvent): void {
 }
 
 .recall-card--excerpt {
-  /* 引文感：正文略内缩，左侧 1px accent（不超过 craft 对粗色条的禁令） */
+  /* 引文感：正文略内缩；左侧靠 shell--excerpt 描边区分，勿再加内层 border-left（会叠成双线） */
   padding-left: var(--space-md);
-  border-left: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
 }
 
 /* 书签：标题 / URL 单行省略；完整内容靠原生 title */
@@ -405,6 +447,14 @@ function handleMoreClick(event: MouseEvent): void {
   color: var(--on-surface);
   background: color-mix(in srgb, var(--surface-chrome) 88%, var(--surface-white));
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--border) 80%, transparent);
+}
+
+.recall-card-favicon {
+  display: block;
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  border-radius: 2px;
 }
 
 .recall-type-chip--excerpt {

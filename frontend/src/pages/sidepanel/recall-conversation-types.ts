@@ -24,11 +24,22 @@ export type AssistantTurn = {
   relatedGuessCard?: RecallCardModel | null
   /** 猜测卡上方硬标签文案 */
   relatedGuessLabel?: string
-  /** 次要相关 / 弱候选列表 */
+  /**
+   * 排序池全量卡片（可多于首屏；展示用 visibleCount 截取）。
+   */
   candidateCards?: RecallCardModel[]
-  /** 候选区标题（如「可能是这些」） */
+  /** 当前可见条数（首屏 PAGE_SIZE，Show more 递增） */
+  visibleCount?: number
+  /** 相关总数（与 candidateCards.length 对齐；文案报 N） */
+  rankedTotalCount?: number
+  /** 可选列表眉题；高置信排序列表通常省略，由 reply 文案承担 */
   candidateSectionLabel?: string
   suggestions?: RecallSuggestion[]
+  /**
+   * SW 返回的 grounded Narrow 举例（可选经 LLM 润色）。
+   * 缺省时 Side Panel 对本轮 candidateCards 再抽。
+   */
+  composerNarrowExamples?: string[]
   allowDismiss: boolean
 }
 

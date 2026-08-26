@@ -6,10 +6,14 @@ import {
 } from '@/core/memory/create-memory-item'
 import { recallByKeyword } from '@/core/recall/build-recall-result'
 import {
+  camelCaseAcronym,
   compactRecallText,
   computeBehaviorBoost,
+  computeCaseFitBoost,
   computeDismissPenalty,
   expandRecallHostClueVariants,
+  extractCasedClueTokens,
+  extractOrthographicAcronyms,
   filterMemoryItemsByKeyword,
   isGenericRecallClue,
   isGenericOnlyHitAgainstSpecificClue,
@@ -93,6 +97,138 @@ describe('keyword-filter', () => {
     expect(ranked[0]?.item.id).toBe(hot.id)
 
     expect(scoreMemoryItem(hot, 'totally unrelated', { nowMs }).score).toBe(0)
+  })
+
+  it('extractOrthographicAcronyms：CamelCase 与多词首字母（无词典）', () => {
+    expect(extractOrthographicAcronyms('现代 JavaScript 教程')).toEqual(
+      expect.arrayContaining(['js'])
+    )
+    expect(extractOrthographicAcronyms('React Native')).toEqual(expect.arrayContaining(['rn']))
+    expect(extractOrthographicAcronyms('CSS: Cascading Style Sheets')).toEqual(
+      expect.arrayContaining(['css'])
+    )
+    expect(extractOrthographicAcronyms('javascript handbook')).not.toContain('js')
+  })
+
+  it('精排短词：js 经形态缩写命中 JavaScript（非字面子串、无别名表）', () => {
+    expect(camelCaseAcronym('JavaScript')).toBe('js')
+    // 回归：全小写 javascript 既不含连续「js」，也不以「js」开头——形态通解依赖原文大小写
+    expect('javascript'.includes('js')).toBe(false)
+    expect('javascript'.startsWith('js')).toBe(false)
+
+    const jsCookie = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: { title: 'js-cookie - npm', url: 'https://www.npmjs.com/package/js-cookie' }
+    })
+    const javascriptTutorial = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: {
+        title: '现代 JavaScript 教程',
+        url: 'https://zh.javascript.info/'
+      }
+    })
+    const mdn = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: {
+        title: 'JavaScript | MDN',
+        url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript'
+      }
+    })
+    const lowerOnly = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: {
+        title: 'javascript handbook',
+        url: 'https://handbook.example.com/javascript'
+      }
+    })
+    const reactNative = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: {
+        title: 'React Native docs',
+        url: 'https://reactnative.dev/'
+      }
+    })
+    const unrelated = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: { title: 'Python tutorial', url: 'https://docs.python.org/' }
+    })
+
+    const ranked = filterMemoryItemsByKeyword(
+      [jsCookie, javascriptTutorial, mdn, lowerOnly, reactNative, unrelated],
+      'js',
+      { minScore: 1, limit: 10 }
+    )
+    const ids = ranked.map(match => match.item.id)
+    expect(ids).toContain(jsCookie.id)
+    expect(ids).toContain(javascriptTutorial.id)
+    expect(ids).toContain(mdn.id)
+    // 全小写无形态边界：不靠硬编码别名表命中
+    expect(ids).not.toContain(lowerOnly.id)
+    expect(ids).not.toContain(reactNative.id)
+    expect(ids).not.toContain(unrelated.id)
+
+    const rnRanked = filterMemoryItemsByKeyword([reactNative, unrelated], 'rn', {
+      minScore: 1,
+      limit: 5
+    })
+    expect(rnRanked.map(match => match.item.id)).toContain(reactNative.id)
+  })
+
+  it('精排子串：css 可命中 Cascading Style Sheets 标题中的 CSS', () => {
+    const mdnCss = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: {
+        title: 'CSS: Cascading Style Sheets | MDN',
+        url: 'https://developer.mozilla.org/en-US/docs/Web/CSS'
+      }
+    })
+    const match = scoreMemoryItem(mdnCss, 'css')
+    expect(match.score).toBeGreaterThan(0)
+    expect(match.matchedFields).toContain('title')
+  })
+
+  it('大小写贴合：线索含大写时，原文大小写一致高于乱写；全小写线索不加分', () => {
+    expect(extractCasedClueTokens('javascript')).toEqual([])
+    expect(extractCasedClueTokens('JavaScript')).toEqual(['JavaScript'])
+    expect(computeCaseFitBoost('javascript', ['JavaScript | MDN'])).toBe(0)
+    expect(computeCaseFitBoost('JavaScript', ['JavaScript | MDN'])).toBeGreaterThan(0)
+    expect(computeCaseFitBoost('JavaScript', ['JAVASCRIPT GUIDE'])).toBe(0)
+
+    const exactCase = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: {
+        title: 'JavaScript | MDN',
+        url: 'https://mdn.example.com/docs'
+      }
+    })
+    const upperCase = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: {
+        title: 'JAVASCRIPT GUIDE',
+        url: 'https://upper.example.com/docs'
+      }
+    })
+    const lowerCase = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: {
+        title: 'javascript tutorial',
+        url: 'https://lower.example.com/docs'
+      }
+    })
+
+    const clueCased = 'JavaScript'
+    const exactScore = scoreMemoryItem(exactCase, clueCased).score
+    const upperScore = scoreMemoryItem(upperCase, clueCased).score
+    const lowerScore = scoreMemoryItem(lowerCase, clueCased).score
+    expect(exactScore).toBeGreaterThan(upperScore)
+    expect(exactScore).toBeGreaterThan(lowerScore)
+
+    // 全小写线索：均可命中，case-fit 为 0
+    const plain = 'javascript'
+    expect(scoreMemoryItem(exactCase, plain).score).toBeGreaterThan(0)
+    expect(scoreMemoryItem(upperCase, plain).score).toBeGreaterThan(0)
+    expect(scoreMemoryItem(lowerCase, plain).score).toBeGreaterThan(0)
+    expect(computeCaseFitBoost(plain, ['JavaScript | MDN'])).toBe(0)
   })
 
   it('否定反馈 dismissCount 降权；多次封顶', () => {

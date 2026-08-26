@@ -41,7 +41,7 @@ Yiveno 卖的就是这份 **超轻心智负担 + 永久踏实感**：扔进来�
 前期用体验买数据与习惯；后期用数据与习惯锁体验。做功能、接模型、上云同步、接第三方语料，都只能服务「找东西」；反过来用功能堆砌、管理回潮、开放式闲聊、助理人设、同步中台叙事来「显得完整」，就是偏航。
 
 一句话（给实现与文案用）：Yiveno = **扔进就记着 + 想找就找得着**（工程分解：**Capture 低负担 + Recall 高置信邻域**）。  
-**北极星（Normative · 2026-08 纠偏）：** 模糊线索 → 第一屏进入**正确邻域**；**Top1 是建议不是神谕**；最终选择在用户。会话成功 = 用户在这一屏（含短名单）拿到了想要的；Top1 命中是 delight，**不是唯一 KPI**。
+**北极星（Normative · 2026-08 纠偏）：** 模糊线索 → 第一屏进入**正确邻域**；交付是**按符合度排序的相关集合**（告知总数 N；**首屏默认 ≤5**，可 Show more），**不是**神谕式唯一 Top1。最终选择在用户。会话成功 = 用户在邻域（含续展）里拿到了想要的；头名命中是 delight，**不是唯一 KPI**，也**不得**因目标在第 2/3 名而判产品失败。
 
 **体验质量共指标（Normative · 2026-08 市场对齐）：** 邻域命中仍是**会话履约**主尺；须并列追踪 **Verified Retrievals per WAU**（每周活跃用户中，经**打开来源/原文/保存副本**确认找回成功的次数）与 **TTE-V**（从提交模糊线索到**首次看见可自验证据单元**的时间；定义见 §5.9）。**禁止**用「模型更快说完一句话」替代 verified retrieval。**Normative 纪律：** verified retrieval / TTE 未持续改善前，不得扩大 memory、自主 Agent 或连接器面。
 
@@ -78,38 +78,39 @@ Yiveno 卖的就是这份 **超轻心智负担 + 永久踏实感**：扔进来�
 对外承诺的一句话：**Yiveno 是那个找东西的**（仓库里帮你找；记得一点就能要）。  
 「记忆硬盘」可作对内/工程隐喻，**不得**写成对外唯一承诺句，也不得暗示零失误回忆。
 
-| 阶段     | 用户感受                           | 产品职责                                                      |
-| -------- | ---------------------------------- | ------------------------------------------------------------- |
-| **看到** | 这东西不错，但我不一定能记住       | 接住瞬间，Capture 极低负担                                    |
-| **存入** | 不用想放哪、不用整理，扔进去就好   | 抓住感 + 出处锚 + 个人增量落库（仓库可以厚、可以乱）          |
-| **遗忘** | 细节模糊了，但记得「有过这么回事」 | 替你记着；用户不必背标题/路径/精确词                          |
-| **找回** | 像跟熟人描述记忆一样开口要         | 口语线索 → 对话式 Recall → **正确邻域 + Top1 建议**；用户来挑 |
+| 阶段     | 用户感受                           | 产品职责                                                                     |
+| -------- | ---------------------------------- | ---------------------------------------------------------------------------- |
+| **看到** | 这东西不错，但我不一定能记住       | 接住瞬间，Capture 极低负担                                                   |
+| **存入** | 不用想放哪、不用整理，扔进去就好   | 抓住感 + 出处锚 + 个人增量落库（仓库可以厚、可以乱）                         |
+| **遗忘** | 细节模糊了，但记得「有过这么回事」 | 替你记着；用户不必背标题/路径/精确词                                         |
+| **找回** | 像跟熟人描述记忆一样开口要         | 口语线索 → 对话式 Recall → **排序邻域（报 N · 首屏 ≤5 · 可续展）**；用户来挑 |
 
 **Normative：** 「替你记着」指 Yiveno 持久保存**用户主动 Capture 的个人痕迹**，并在 Recall 时尽量还原用户脑中的记忆对象；**不是**承诺记住用户看过的一切、也不是替代人脑记忆。  
 文案可用「一直记着」作感性表达，但不得暗示无限制快照、全站自动存档或零失误回忆。
 
 #### 找回承诺：邻域集合，非神谕（Normative · 2026-08 纠偏）
 
-> **纠偏对象：** 把「口语线索 → 准答案」从**能力目标**误写成**对外承诺「每次押中那一条」**。能力仍要拼命提高 Top1；承诺必须瘦。
+> **纠偏对象：** 把「口语线索 → 准答案」从**能力目标**误写成**对外承诺「每次押中那一条」**。能力仍要拼命提高头名命中；承诺必须瘦。  
+> **2026-08-26 再纠偏：** UI 不得再拆成「神谕 Top1 + Also 保险」两段心智。目标落在第 2/3 名仍是 **Yiveno 给的答案包内履约**，不得让用户觉得「推荐错了、我自己翻到的」。
 
-**危险模型（禁止）：** 神谕产品——成功是魔法，失败是「降智了」。单一答案是**二元信任**：对了全赢，错了全输。连续几次 Top1 不准，用户第一反应往往是放弃，而不是「差一点点」。
+**危险模型（禁止）：** 神谕产品——成功是魔法，失败是「降智了」。单一答案是**二元信任**：对了全赢，错了全输。连续几次头名不准，用户第一反应往往是放弃，而不是「差一点点」。把头名单独标成「most likely / 就是它」会把邻域命中也变成信任负债。
 
-**正确交付（Normative）：** 系统真相是**排序后的集合（邻域）**；Top1 是 Yiveno 的建议，不是终审；最终选择权在用户。
+**正确交付（Normative）：** 系统真相是**排序后的相关集合**；**首屏默认展示 ≤5 条**（`RECALL_RESULT_PAGE_SIZE`），并**告知相关总数 N**（折叠+互斥后的互异组；`totalRankedCount`）；用户可续看——**Show 5 more**（再展一页）与 **Show all K**（K=剩余条数，一次展完、其后无更多）。头名仅可**视觉略强调**，**禁止**文案判决「这就是最可能的一条」。最终选择权在用户。
 
-| 层         | 含义                              | 产品落点                                           |
-| ---------- | --------------------------------- | -------------------------------------------------- |
-| **信任层** | 邻域要对；用户觉得「就是这附近」  | 第一屏短名单含目标；错了仍有退路                   |
-| **爽点层** | Top1 经常就是那条，且视觉上是建议 | 主答案 / Closest 强调，不装唯一神谕                |
-| **选择权** | 用户在邻域里点，不在空白里猜      | 「可能是这些」/ nearby；禁止为假装唯一藏掉合理次优 |
+| 层         | 含义                             | 产品落点                                        |
+| ---------- | -------------------------------- | ----------------------------------------------- |
+| **信任层** | 邻域要对；用户觉得「就是这附近」 | 报 N + 首屏短名单含目标；可续看；错了仍有退路   |
+| **爽点层** | 头名经常就是那条，且只是列表首位 | 排序 + 轻强调；不装唯一神谕                     |
+| **选择权** | 用户在邻域里点，不在空白里猜     | 统一排序列表 + Show more；禁止假装全集只有 5 条 |
 
-「对，就是这个」仍然要发生，但它发生在**第一屏的邻域里**，不一定发生在唯一那张卡上。**邻域命中才是履约；Top1 命中是奖励。**
+「对，就是这个」仍然要发生，但它发生在**第一屏的邻域里**，不一定发生在唯一那张卡上。**邻域命中才是履约；头名命中是奖励。**
 
 **两种找回意图（须都能服务，禁止只优化第一种）：**
 
-| 意图         | 用户心里                    | 正确交付                                            |
-| ------------ | --------------------------- | --------------------------------------------------- |
-| **钉死一条** | 「上周那篇讲 X 的」         | Top1 很大；其余当保险，别抢戏                       |
-| **逛一簇**   | 「看看以前存的博客 / 那类」 | 邻域更均势；Top1 仍是建议；勿逼问「你到底要哪一篇」 |
+| 意图         | 用户心里                    | 正确交付                                 |
+| ------------ | --------------------------- | ---------------------------------------- |
+| **钉死一条** | 「上周那篇讲 X 的」         | 短名单仍整包交付；头名可略强调，勿藏次优 |
+| **逛一簇**   | 「看看以前存的博客 / 那类」 | 邻域更均势；勿逼问「你到底要哪一篇」     |
 
 「肆无忌惮地存」养成后，第二种会越来越多——相似兴趣被反复收藏是 Capture 成功的自然后果。若产品只按「每次都有唯一真值」设计，库越厚越错位。
 
@@ -119,9 +120,9 @@ Yiveno 卖的就是这份 **超轻心智负担 + 永久踏实感**：扔进来�
 2. **翻文件夹的变体**——「相似」变成「你所有博客」式巡库 → 又在浏览结构。
 3. **推荐助手**——集合必须是用户自己存过的 MemoryItem；没存过则诚实 no_match；联想只在库内邻域，不得凭空塞「你可能还想看」。
 
-**验收 / eval（Normative）：** 会话成功优先看**邻域命中（短名单含目标）**；Top1 命中单独记为 delight 指标，**不得**把 Top1 当作唯一 must 尺子而合理化「藏掉次优」。
+**验收 / eval（Normative）：** 会话成功优先看**邻域命中（短名单含目标）**；头名命中单独记为 delight 指标，**不得**把头名当作唯一 must 尺子而合理化「藏掉次优」。
 
-**文案禁令（对外 / 官网 / demo）：** 禁止承诺「永远准确的那一条」「AI 替你决定就是它」；禁止用置信百分比（如 96%）把建议装成神谕分数。
+**文案禁令（对外 / 官网 / demo / 扩展 UI）：** 禁止承诺「永远准确的那一条」「AI 替你决定就是它」；禁止「This is the most likely match」类终审句；禁止用置信百分比（如 96%）把建议装成神谕分数。
 
 #### 兴趣鸿沟（Normative · 立身之本）
 
@@ -144,10 +145,10 @@ Yiveno 卖的就是这份 **超轻心智负担 + 永久踏实感**：扔进来�
 
 Yiveno 要兑现的就是这份组合爽点：
 
-| 组成             | 含义                         | 产品落点                                                             |
-| ---------------- | ---------------------------- | -------------------------------------------------------------------- |
-| **超轻心智负担** | 存时不用想分类、不用维护结构 | Capture 极低摩擦；**禁止**把「整理文件夹」当存侧爽点                 |
-| **永久踏实感**   | 相信扔进去的东西以后找得着   | Recall 高置信**邻域** + Top1 建议 + 必要时追问；越用越懂你的记忆线索 |
+| 组成             | 含义                         | 产品落点                                                     |
+| ---------------- | ---------------------------- | ------------------------------------------------------------ |
+| **超轻心智负担** | 存时不用想分类、不用维护结构 | Capture 极低摩擦；**禁止**把「整理文件夹」当存侧爽点         |
+| **永久踏实感**   | 相信扔进去的东西以后找得着   | Recall 高置信**排序邻域** + 必要时追问；越用越懂你的记忆线索 |
 
 **Normative：** 兴趣筛选是用户自带能力；Yiveno **不教用户什么值得存**，只解决 **存了以后找得着**。若 Capture 仍逼用户「想好放哪」，或 Recall 仍像翻文件夹，就是在鸿沟上搭桥失败——**没有立身之本**。
 
@@ -422,11 +423,11 @@ Yiveno 的高频真实请求，**不是**标题 / URL / 精确词查询，而是
 
 #### 技术可达档位（Normative · 承诺边界）
 
-| 档位  | 含义                                                          | 产品态度             |
-| ----- | ------------------------------------------------------------- | -------------------- |
-| **A** | 有可区分线索 → 听懂 → 约束检索 → 主答案 + 可选次要列表        | **必达主路径**       |
-| **B** | 有弱/多候选 → 1～2 轮**围绕候选收窄**的追问（无候选则不进 B） | **设计内能力**       |
-| **C** | 零锚点读心、一次开口类人稳定命中、开放总结「你当时想的是…」   | **不承诺；禁主卖点** |
+| 档位  | 含义                                                                     | 产品态度             |
+| ----- | ------------------------------------------------------------------------ | -------------------- |
+| **A** | 有可区分线索 → 听懂 → 约束检索 → **排序邻域（报 N · 首屏 ≤5 · 可续展）** | **必达主路径**       |
+| **B** | 有弱/多候选 → 1～2 轮**围绕候选收窄**的追问（无候选则不进 B）            | **设计内能力**       |
+| **C** | 零锚点读心、一次开口类人稳定命中、开放总结「你当时想的是…」              | **不承诺；禁主卖点** |
 
 现有技术足以支撑 A + 受控 B；不得把 C 写成当前可交付体验。
 
@@ -434,13 +435,13 @@ Yiveno 的高频真实请求，**不是**标题 / URL / 精确词查询，而是
 
 产品交付单位不是功能清单，而是 **Capture → Preserve → Retrieve → Explain → Reuse** 闭环。Yiveno 以 **摘录 + 附注** 为 Preserve 主角（非 Raindrop 级全文 archive 优先）；各环 Normative 如下：
 
-| 环           | Yiveno 含义             | 必须交付（Normative）                                                                        | 质量门槛                                                                      |
-| ------------ | ----------------------- | -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| **Capture**  | 极低负担留下个人痕迹    | 划词/右键/Chrome 书签 sync；未来经**适配器**的第三方导入（Raindrop/Pocket 等排队，见 R2/R4） | 保存即反馈；失败可见；**原 URL、时间、来源**恒久保留                          |
-| **Preserve** | 可证明「当时那版证据」  | 摘录正文 + 出处 + `createdAt` + 可选 `clues.note`；书签 URL + 备注层                         | 用户能导出/打开；**不得**静默丢失；动态页失效时仍保留 Capture 时选区          |
-| **Retrieve** | 口语 → 邻域 + Top1 建议 | keyword + full-text + semantic Hybrid；时间/行为/类型约束                                    | **钉死一条**任务：目标进 top-3；**逛一簇**任务：邻域含目标（§0.1.1 两种意图） |
-| **Explain**  | **可验证**，非仅排序    | 每条候选：**来源身份、保存时间、原文/摘录锚点、命中理由**；一次点击打开自验                  | 无来源的 LLM 总结**不算**找回成功；不确定须显式表达                           |
-| **Reuse**    | 找完之后交给任意 AI     | 选中条目的 **evidence pack**；Markdown/JSON；**只读 MCP**（P1 目标，未上线不得暗示）         | 每条材料有 source reference；**默认不全库**暴露给 Agent                       |
+| 环           | Yiveno 含义                                   | 必须交付（Normative）                                                                        | 质量门槛                                                                      |
+| ------------ | --------------------------------------------- | -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| **Capture**  | 极低负担留下个人痕迹                          | 划词/右键/Chrome 书签 sync；未来经**适配器**的第三方导入（Raindrop/Pocket 等排队，见 R2/R4） | 保存即反馈；失败可见；**原 URL、时间、来源**恒久保留                          |
+| **Preserve** | 可证明「当时那版证据」                        | 摘录正文 + 出处 + `createdAt` + 可选 `clues.note`；书签 URL + 备注层                         | 用户能导出/打开；**不得**静默丢失；动态页失效时仍保留 Capture 时选区          |
+| **Retrieve** | 口语 → 排序邻域（报 N · 首屏 ≤5 · Show more） | keyword + full-text + semantic Hybrid；时间/行为/类型约束                                    | **钉死一条**任务：目标进 top-3；**逛一簇**任务：邻域含目标（§0.1.1 两种意图） |
+| **Explain**  | **可验证**，非仅排序                          | 每条候选：**来源身份、保存时间、原文/摘录锚点、命中理由**；一次点击打开自验                  | 无来源的 LLM 总结**不算**找回成功；不确定须显式表达                           |
+| **Reuse**    | 找完之后交给任意 AI                           | 选中条目的 **evidence pack**；Markdown/JSON；**只读 MCP**（P1 目标，未上线不得暗示）         | 每条材料有 source reference；**默认不全库**暴露给 Agent                       |
 
 **Normative 次序：** 先找到并**验证**正确资料 → 再**复用** → 最后 AI 在**明确授权**下使用。**主动 Agent**（发信、下单、改网页）**后置**，见 §0.3。
 
@@ -586,6 +587,10 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 
 **Normative 结论：** Yiveno 当前不是“多语言产品，英语优先”；而是 **American English only** 的产品切片。非英文输入、非英文 UI、非英文 Recall 语料均**不在 P0 目标能力内**。
 
+**文案语气（Normative · 面向用户）：** 站在**北美用户**习惯写美式英语。口语、清楚、有一点温度；像帮忙找东西的人，不像公文或系统报错。  
+禁止：官方腔、空话套话、工程师黑话当主文案（如无必要勿堆 `matches` / `candidates` 判决感）、冷硬命令句堆砌。  
+允许：短、自然、略带鼓励（如 Narrow placeholder：`Still a bit broad — try something like “…”`）。
+
 **三层语言分离（必须遵守）：**
 
 | 层                 | 职责                                                                          | 语言策略                             |
@@ -598,7 +603,7 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 
 1. **对象类型**：内部 slug 与主检索词面用英文（`poem` / `article` / `song` / `code` / `video` …），不用「诗 / 文章 / 歌 / 视频」等本地化词当 canonical。
 2. **时间 / 行为 / 备注指向**：parser 词典仅维护英文 surface（`yesterday` / `last week` / `half read` / `my note` …）；不再为中文等 locale 保留 alias。
-3. **实体 enrichment**：写入库的 canonical 统一为英文（如 `Li Bai`）；不维护中文 Recall alias 识别链路。
+3. **实体**：规则 enrichment **不**写专名 allowlist；`entities` 仅来自 LLM enrichment 提议、用户备注或其它明示路径；写入时 canonical 仍统一英文（如 `Li Bai`）。禁止主题/实体硬编码 seed 冒充通解。
 4. **追问芯片**：`label` 本地化展示；**点击填入 composer 的 `value` 用稳定英文**（或稳定 canonical token），保证跨 locale 下 parser 行为一致。
 5. **单测与验收语料**：以**英语真实口语**为唯一主路径；不再保留中文 Recall alias 回归用例。
 
@@ -627,8 +632,8 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 - **视频站（YouTube / Bilibili 等）** → `video`（**不得**再标成 `song`）+ `youtube` `watch` `clip`
 - 文章 / 教程 / 文档 → `article` `reading` `tutorial` `guide` `docs` `story`
 - 代码 / 仓库 → `code` `repo` `snippet` `development` `programming`
-- 正文含 `tutorial` / `readme` / `auth` / `deploy` 等 → 写入对应 recall 别名关键词
-- **主题 / 实体（规则词典）**：标题命中别名后写入 English canonical（如 `希特勒`→实体 `Hitler` + 主题词 `wwii`；`长春`+经济信号→实体 `Changchun` + `economy` `city`）；只服务库内可问，不做开放推荐
+- 正文含 `tutorial` / `readme` / `auth` / `deploy` 等 → 写入对应 recall 导向关键词（闭合产品词面启发式，非开放同义词典）
+- **禁止**：主题/实体硬编码规则词典（如 WWII·Hitler·Changchun seed）；专名与主题靠字面、形态通解、LLM enrichment，不装灰名单通解
 
 **改词典/ enrichment / 追问前的自检三问：**
 
@@ -644,10 +649,10 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 
 **P0 做（有记忆锚点）：**
 
-- 数据：规则 enrichment（高频站/标题类型/主题·实体）+ 用户备注 + **recall 导向英文 keywords**；写回 `tags` / `keywords` / `entities` — **新建已接入**；**存量经 `ensureMemoryEnrichmentBackfilled` 启动回填（版本幂等，当前 v3）**
+- 数据：规则 enrichment（高频站 / 标题类型词面 / recall 导向英文 keywords；**无**主题·实体 seed）+ 用户备注；写回 `tags` / `keywords`（`entities` 规则层为空，可由 LLM enrichment 补）— **新建已接入**；**存量经 `ensureMemoryEnrichmentBackfilled` 启动回填（版本幂等，当前 v4：合并时 scrub 退役 seed）**
 - 编排：约束软加权 + **`timeRange` 硬过滤** + keyword-filter + 置信度决策 — **`recallByKeywordWithParsedClue` 已接入 Hybrid 降级路径**；**追问：仅 `need_a_clue` 走 LLM NLG（`assistantFollowUp`）；`no_match` 诚实终局、无规则缺槽问卷**
 - Query：时间词、对象类型词、备注指向、弱行为词 → 结构化约束；内容实体先当关键词 — **`parseRecallClue` 已落地**（词典以真实英语口语为主，见「市场语言策略」典型语料）
-- Enrichment：域名 / 类型 / 实体 + **recall 导向英文 keywords**（如 `listen` `tutorial` `repo`）；写回 `tags` / `keywords` / `entities`
+- Enrichment：域名 / 对象类型词面 + **recall 导向英文 keywords**（如 `listen` `tutorial` `repo`）；写回 `tags` / `keywords`；**规则层不写专名 `entities`**
 - **LLM enrichment 插座（已接线·稀疏异步）**：提议 Zod（`MemoryEnrichmentProposal`）+ merge（`mergeMemoryClueEnrichment`：existing → rule → proposal；`summary` 仅空槽；永不写 `note`/`embedding`）+ Worker `POST /api/ai/enrichment/complete`；Capture 经 `memoryItemService` **新建**落库后 `scheduleAsyncMemoryLlmEnrichment`（串行队列；已有 summary / 信号过短跳过；bulk `putMany`/repository 续传不经 service 故不烧配额）；失败降级保留规则层；**不改 `updatedAt`**
 
 **P0 明确不做：**
@@ -770,35 +775,36 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 | **Action Popup**                | **不再作为对话主壳**（失焦即关，只适合 summary，不适合持续交互）。实现退役后不保留双壳抢 action。                                                                         |
 | **Library / Settings / Detail** | 整页 Tab；轻浏览与设置，不是找回主路径。                                                                                                                                  |
 
-Side Panel 内：高置信给主答案 +「可能是这些」；低置信给候选并允许**仅围绕候选**的追问；无相关则诚实终局。**允许对话式找回，不允许开放式闲聊。**  
+Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**首屏 ≤5**，可 **Show more** 续展；弱命中给候选并允许**仅围绕候选**的追问；无相关则诚实终局。**允许对话式找回，不允许开放式闲聊。** 禁止「most likely」终审句、假装全集只有 5 条、以及「主答案 / Also」两段神谕心智。
 书签 Capture：**仅** Chrome 原生加书签 + 导入/增量 sync，不提供「保存当前页」快捷键或找回壳内按钮。快捷键改绑：Settings → Chrome 原生 `chrome://extensions/shortcuts`（扩展无法自行改键）。
 
 ### 0.5 权威路径速查
 
-| 主题                           | 路径                                                                            |
-| ------------------------------ | ------------------------------------------------------------------------------- |
-| **R4 Phase E 验收与 eval**     | `docs/engineering/R4-Phase-E-验收与eval.md`；Normative 摘要 §5.10 / §5.11       |
-| **TTE 种子用户研究 checklist** | `docs/engineering/TTE-种子用户研究-checklist.md`；Normative 门槛 §5.9           |
-| **TTE 研究包模板**             | `research/tte-beta-template/`；复制后本地填数据，勿 commit PII                  |
-| MemoryItem / clues / payload   | `frontend/src/core/memory/`                                                     |
-| 语料适配器契约（R2）           | `docs/engineering/语料适配器契约.md` + `core/memory/corpus-adapter-contract.ts` |
-| 关键词倒排 Phase 1             | `docs/engineering/关键词倒排索引-Phase1.md` + `keyword-index-repository.ts`     |
-| Background 消息联合类型        | `frontend/src/core/messaging/background-messages.ts`                            |
-| UI 发消息                      | `frontend/src/infrastructure/messaging/background-client.ts`                    |
-| SW 分发                        | `frontend/src/background/handlers/message-handler.ts`                           |
-| Recall                         | `frontend/src/application/recall/recall-service.ts`                             |
-| Omnibox                        | `frontend/src/background/listeners/omnibox.ts`                                  |
-| Commands（快捷键）             | `frontend/src/background/listeners/commands.ts`                                 |
-| Command ID 契约                | `frontend/src/core/commands/command-ids.ts`                                     |
-| Settings                       | `frontend/src/pages/settings/Settings.vue`                                      |
-| Settings 分区（`?section=`）   | `frontend/src/core/settings/settings-sections.ts`                               |
-| Side Panel（Recall 主壳）      | `frontend/src/pages/sidepanel/`                                                 |
-| 通用键盘意图（↑↓←→/Enter）     | `frontend/src/core/ui/keyboard-command.ts`                                      |
-| 线性列表选中下标               | `frontend/src/core/ui/list-selection.ts`                                        |
-| 摘录详情                       | `frontend/src/pages/detail/Detail.vue`                                          |
-| 记忆库                         | `frontend/src/pages/library/Library.vue`                                        |
-| UI 图标（Lucide 内联）         | `frontend/src/infrastructure/ui/icons/`                                         |
-| 扩展 i18n（`t` / locales）     | `frontend/src/infrastructure/i18n/` + `public/_locales/`                        |
+| 主题                           | 路径                                                                                  |
+| ------------------------------ | ------------------------------------------------------------------------------------- |
+| **R4 Phase E 验收与 eval**     | `docs/engineering/R4-Phase-E-验收与eval.md`；Normative 摘要 §5.10 / §5.11             |
+| **TTE 种子用户研究 checklist** | `docs/engineering/TTE-种子用户研究-checklist.md`；Normative 门槛 §5.9                 |
+| **TTE 研究包模板**             | `research/tte-beta-template/`；复制后本地填数据，勿 commit PII                        |
+| MemoryItem / clues / payload   | `frontend/src/core/memory/`                                                           |
+| 语料适配器契约（R2）           | `docs/engineering/语料适配器契约.md` + `core/memory/corpus-adapter-contract.ts`       |
+| 关键词倒排 Phase 1             | `docs/engineering/关键词倒排索引-Phase1.md` + `keyword-index-repository.ts`           |
+| Background 消息联合类型        | `frontend/src/core/messaging/background-messages.ts`                                  |
+| UI 发消息                      | `frontend/src/infrastructure/messaging/background-client.ts`                          |
+| SW 分发                        | `frontend/src/background/handlers/message-handler.ts`                                 |
+| Recall                         | `frontend/src/application/recall/recall-service.ts`                                   |
+| Omnibox                        | `frontend/src/background/listeners/omnibox.ts`                                        |
+| Commands（快捷键）             | `frontend/src/background/listeners/commands.ts`                                       |
+| Command ID 契约                | `frontend/src/core/commands/command-ids.ts`                                           |
+| Settings                       | `frontend/src/pages/settings/Settings.vue`                                            |
+| Settings 分区（`?section=`）   | `frontend/src/core/settings/settings-sections.ts`                                     |
+| Side Panel（Recall 主壳）      | `frontend/src/pages/sidepanel/`                                                       |
+| Placeholder × 追问芯片双通道   | `docs/engineering/Recall-Placeholder与追问芯片-双通道.md`（实现分期；Normative §7.0） |
+| 通用键盘意图（↑↓←→/Enter）     | `frontend/src/core/ui/keyboard-command.ts`                                            |
+| 线性列表选中下标               | `frontend/src/core/ui/list-selection.ts`                                              |
+| 摘录详情                       | `frontend/src/pages/detail/Detail.vue`                                                |
+| 记忆库                         | `frontend/src/pages/library/Library.vue`                                              |
+| UI 图标（Lucide 内联）         | `frontend/src/infrastructure/ui/icons/`                                               |
+| 扩展 i18n（`t` / locales）     | `frontend/src/infrastructure/i18n/` + `public/_locales/`                              |
 
 ---
 
@@ -828,9 +834,9 @@ Side Panel 内：高置信给主答案 +「可能是这些」；低置信给候�
 | 记忆库轻浏览                     | 已上线                  | `library.html`；**默认摘录**；书签=Chrome 目录只读树；摘录=时间列表；`?type=` 刷新保留                                                                                      |
 | 摘录删除                         | 已上线                  | 软删 `deletedAt`；记忆库列表 / 详情页；`DELETE_MEMORY_ITEM`；书签不经此删                                                                                                   |
 | Need A Clue / 否定反馈           | 已上线（并入对话）      | 低置信 outcome + dismiss；会话内 dismissedIds 硬排除；追问模板基于合并后 parsed                                                                                             |
-| 多源线索与权重（§7.1）           | 已上线（首批）          | 同域软重排；`recently_saved`/`half_read`/`often_opened` 软加权；追问芯片（刚存/刚打开/当前站）                                                                              |
+| 多源线索与权重（§7.1）           | 已上线（首批）          | 同域软重排；`recently_saved`/`half_read`/`often_opened` 软加权；环境弱芯片（当前站已接线；刚存/刚打开待信号）                                                               |
 | Hybrid Filter                    | 已上线                  | 本机 Hybrid（RRF）；**不分 Free/Pro**；无向量时降级关键词；云同步剥离 embedding；**embedding 无感维护**（启动/登录/书签 sync 后自动补摘录向量，**无** Settings Rebuild UI） |
-| 关键词倒排 Phase 1               | 已上线                  | IDB v4 posting 预过滤；dirty/rebuild；失败 fallback `list(10000)`；打分仍 keyword-filter                                                                                    |
+| 关键词倒排 Phase 1               | 已上线                  | IDB v4 posting 预过滤；**形态缩写入倒排**（CamelCase/多词首字母，无硬编码别名表；schemaVersion=2）+ 精排同算法；折叠前全量打分                                              |
 | Dodo Pro / 订阅快照              | 已上线                  | Free+**仅 Pro**；投影+对账（§A.3.2）；`GET /api/account/subscription`；Settings/官网升级；**sync + hosted 大配额**门禁；embed 登录即可（日配额分档）                        |
 | 云同步 / 账号 UI                 | 已上线（Phase C + Pro） | Supabase `memory_items`；Worker `/api/memory/sync/*` **需有效 Pro**；开同步并集 + **15 分钟增量**；登录≠自动上传                                                            |
 | 分享                             | 目标 · Phase C          |                                                                                                                                                                             |
@@ -869,6 +875,7 @@ Side Panel 内：高置信给主答案 +「可能是这些」；低置信给候�
 | 关键词 Recall 主路径（Filter + 口语解析） | ✓    | ✓    | ✓   | ✓    | eval=`must` 门禁；E2E=找回壳固定线索→结果卡           |
 | 关键词倒排 Phase 1                        | ✓    | ✓    | —   | ✓    | `keyword-index-repository*`；extract-tokens；真机大库 |
 | Side Panel 对话式壳（多轮 UI）            | ✓    | ✓    | 薄  | ✓    | merge + eval；E2E `sidepanel.html`；芯片/dismiss 手测 |
+| Composer 双通道（§7.0 Placeholder×芯片）  | ✓    | —    | —   | ✓    | `compute-composer-placeholder*`；§5.2.1；旁挂工程文档 |
 | 多轮槽位 merge（§7.0）                    | ✓    | ✓    | —   | ✓    | `merge-recall-dialog-turn`；eval `dialog-*` must      |
 | Dodo Pro / 同步·托管门禁                  | ✓    | —    | —   | ✓    | webhook/account/sync Pro 拒绝；§5.7 手动付费全流程    |
 | 证据卡 ECS（Phase E）                     | —    | —    | —   | ✓    | §5.10.1–2；Explain 单测                               |
@@ -946,11 +953,13 @@ Side Panel 内：高置信给主答案 +「可能是这些」；低置信给候�
 - **stacks N：** 等于该折叠键（同规范化 URL）在本次关键词命中集中的组员数；**不是**同域名全部书签，也不是「全部含线索的命中总数」。
 - **Top / Also 互斥：** Also 不得出现与 Top 同一折叠键，或（双方均为书签时）同一规范化域名。同站其它 path 不进 Also，也**不**并入 Top 的 stacks N。过滤后回填名额。
 - **UI（找回主壳）：**
+  - 书签结果卡**左上角**种类标记：Chrome 缓存 **favicon**（与 Memory 库树同路径 `getChromeFaviconUrl`）；加载失败回退 Lucide `bookmark`。摘录仍用 quote 图标。
   - N≥2 时结果卡**右上角**展示 Lucide `layers`（登记名 `stacks`）+ 数量 N（图标优先；`title`/`aria-label` 经 `t()`）。
   - **主卡点击 / Enter：** 打开代表（URL 或详情），与无折叠时相同。
   - **点 `stacks` 控件：** 展开/收起同组其余条目（纵向列表）；无扑克叠/扇开动效。
   - 键盘 MVP：↑↓ 只在代表行间移动；展开不改变键盘行模型。
-- **Also 名额：** 折叠后按互斥规则回填，目标仍约 Top1 + Also≤5 **互异组**。
+- **Also 名额：** 折叠后按互斥规则回填；排序池软顶 **≤50 互异组**（`RECALL_RESULT_POOL_LIMIT`）；**首屏 / 每批 Show more = 5**（`RECALL_RESULT_PAGE_SIZE`）。UI 须告知 `totalRankedCount`，并提供 **Show 5 more** 与 **Show all K**（K=剩余，一次展完）；禁止默默截断装成「只有 5 条」。
+- **折叠前打分：** 对已裁候选**全量**保留关键词命中再折叠（`filterKeywordMatchesBeforeCollapse`）。**禁止**在折叠前按固定条数截断——大量同 URL 重复书签会占满名额，挤掉其它互异组（例：`js-cookie`×N 挡住「现代 JavaScript 教程」）。
 - **Omnibox：** 静默折叠；description 可带「共 N 条」；无展开 UI。
 - **实现：** 折叠键单一真相源为 `frontend/src/core/memory/derive-memory-duplicate-key.ts`（`getMemoryFoldKey`）；Recall 模块 `collapse-recall-duplicates` 仅再导出。
 
@@ -1074,6 +1083,17 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 6. 无 Search 文案；无行级位移/缩放 hover。
 7. 无「保存当前页」用户入口（找回壳 / 快捷键 / 消息）。
 
+#### 5.2.1 Composer 双通道手工验收（Placeholder × 追问芯片 · Normative）
+
+> 与 §7.0 Composer 双通道对齐；工程旁挂 [`Recall-Placeholder与追问芯片-双通道.md`](../engineering/Recall-Placeholder与追问芯片-双通道.md)。  
+> 预计 ≤ 5 分钟。正式包 **未登录** 时 LLM 芯片不可用；可用 **当前站环境弱芯片** 验让位（窄结果 N&lt;6 或 `need_a_clue`；宽邻域 top_pick 不挂环境芯片，留给 Narrow）。
+
+1. **Idle：** 新会话 / New find 后，composer placeholder 为 Idle 模板（`e.g. that article…` 类），无芯片。
+2. **宽邻域 Narrow：** 输入可召回 ≥6 互异组的线索（例：`javascript`）→ 无芯片；placeholder 含 `Still a bit broad`（或同等温暖 Narrow 句）且举例词可在结果卡字段中核验（或 generic 无举例句）。
+3. **有芯片让位：** 出现追问芯片（登录后 LLM，或窄结果下的 **Related to this site**）→ placeholder 为中性短句（`Or add another detail…`），**无** `like "…"` 举例。宽邻域 top_pick **不**挂环境芯片。
+4. **Dismiss：** None of these 后 **无** site/quote/note/type 固定四芯片；placeholder 中性。
+5. **产品语言：** placeholder / 芯片 label 均为美式英语。
+
 ### 5.8 冷启动手工验收（R1 · Normative）
 
 > 目标：第一天可用且可信；空库找不到是正确，乱猜才是 bug。与 §0.1.1 空结果契约一致。  
@@ -1156,8 +1176,8 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 | 指标                          | 定义                                                                                           | Normative 用途                              |
 | ----------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| **邻域命中（会话履约）**      | 短名单（含 Top Pick + alsoPossible）含用户认定目标                                             | 主 KPI；**逛一簇**意图优先                  |
-| **Top1 命中**                 | Top Pick = 用户目标                                                                            | Delight；**不得**作唯一 must                |
+| **邻域命中（会话履约）**      | 排序池（`totalRankedCount`；内部 topPick + alsoPossible）含用户认定目标；首屏优先、续展可计    | 主 KPI；**逛一簇**意图优先                  |
+| **头名命中**                  | 短名单第 1 = 用户目标                                                                          | Delight；**不得**作唯一 must                |
 | **Verified Retrievals / WAU** | 用户经 **§7.2 strong `target`**（出口 Found / 等价确认）且打开来源/原文/详情 的成功次数 / 周活 | 共北极星；**裸 open ≠ verified**（见 §7.2） |
 | **TTE-V**                     | 从 `query_submitted` 到首次看见 **ECS 五要素齐全** 证据单元                                    | 体验速度主尺；见下表                        |
 | **TTE-C**                     | 到用户打开原文并 **确认相关**（对齐 §7.2 `user_confirmed` / strong target）                    | 长尾与误点成本                              |
@@ -1234,10 +1254,10 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 #### 5.10.2 Explain · 钉死一条 vs 逛一簇
 
-| 意图         | 测试线索（示例）               | 通过标准                                    |
-| ------------ | ------------------------------ | ------------------------------------------- |
-| **钉死一条** | `the deploy checklist excerpt` | 目标在 **top-3**；Top Pick 可为建议非唯一   |
-| **逛一簇**   | `articles about Yiveno`        | 短名单 **≥2** 条同簇相关；Top1 仍显式为建议 |
+| 意图         | 测试线索（示例）               | 通过标准                                 |
+| ------------ | ------------------------------ | ---------------------------------------- |
+| **钉死一条** | `the deploy checklist excerpt` | 目标在 **top-3**；头名可为列表首位非唯一 |
+| **逛一簇**   | `articles about Yiveno`        | 短名单 **≥2** 条同簇相关；整包即答案     |
 
 **禁止：** 为假装唯一而隐藏合理次优（§0.1.1 邻域承诺）。
 
@@ -1294,11 +1314,11 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 | -------------------------- | -------------------------------------------------------------- | ------------------------------------------------------ |
 | Top Pick 命中              | `{ kind: 'top1', expectedId }`                                 | 具体锚点；delight 指标                                 |
 | **Top-3 命中（钉死一条）** | `{ kind: 'in_topk', expectedId, k: 3 }`                        | 半模糊 / 行为+时间；**R4 起 semi_fuzzy must 默认 k=3** |
-| 邻域命中（逛一簇）         | `{ kind: 'in_topk', expectedId, k: 6 }` 或多样本 `in_topk` k=3 | 同簇多条须**分别**有 case                              |
+| 邻域命中（逛一簇）         | `{ kind: 'in_topk', expectedId, k: 5 }` 或多样本 `in_topk` k=3 | 同簇多条须**分别**有 case                              |
 | 弱命中追问                 | `{ kind: 'need_a_clue', expectedId }`                          | 候选内收窄                                             |
 | 诚实空                     | `{ kind: 'no_match' }`                                         | 负例 / 强约束库空                                      |
 
-**Normative：** 「钉死一条」会话成功 = `top1` **或** `in_topk` k≤3；「逛一簇」= 短名单含目标（k≤6，与 `RECALL_RESULT_SLOT_LIMIT` 一致）。
+**Normative：** 「钉死一条」会话成功 = `top1` **或** `in_topk` k≤3；「逛一簇」= 排序池含目标（eval 默认看首屏 k≤`RECALL_RESULT_PAGE_SIZE`；产品交付可经 Show more 续看池内其余项）。
 
 #### 5.11.2 R4 新增 must case 清单（合入 Phase E 前须实现）
 
@@ -1478,31 +1498,32 @@ Chrome API / 选区
 ```text
 用户给出残缺线索
   →（MVP 规范化）→ 关键词 Filter → 排序
-  → 高置信：主答案（建议 / Closest）+ 若有相关则「可能是这些」邻域列表
-  → 低置信（有候选）：展示候选邻域 + 可选追问以收窄范围
+  → 有命中：告知相关总数 N；按符合度排序；首屏 ≤5；可 Show more 续展
+  → 低置信（有候选）：同为排序列表 + 可选追问以收窄范围
   → 无相关候选：诚实 no_match → 本轮结束（可轻提示 Capture）
   → 反馈写回（打开 / 否定）→ 再排序
 ```
 
-| 形态           | Normative                                                                                      |
-| -------------- | ---------------------------------------------------------------------------------------------- |
-| 高置信主答案   | 给出最自信的一条为**建议**；**同时**展示互不冲突的次要相关（「可能是这些」）；禁止装成唯一神谕 |
-| 低置信排序候选 | 有候选才进此态；明确“不够确定”；追问**只为在候选内收窄**，禁止缺槽填表                         |
-| 多轮补充线索   | 仅在有候选 / 用户主动再发时推进；补充句 refine 上一轮约束，不是孤立新查询                      |
-| No Match       | 诚实承认没对上即终局；空库导向 Capture；**禁止**无候选时的时间/类型问卷                        |
+| 形态           | Normative                                                                                                               |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| 排序短名单     | 报 N；首屏 ≤5；**Show 5 more** / **Show all K**（K=剩余）；头名仅视觉略强调；**禁止**「most likely」与假装全集只有 5 条 |
+| 书签结果卡角标 | Chrome 缓存 **favicon**（`chrome://favicon` / `_favicon/`）；失败回退 Lucide `bookmark`；摘录仍用 quote                 |
+| 低置信排序候选 | 有候选才进此态；明确“不够确定”；追问**只为在候选内收窄**，禁止缺槽填表                                                  |
+| 多轮补充线索   | 仅在有候选 / 用户主动再发时推进；补充句 refine 上一轮约束，不是孤立新查询                                               |
+| No Match       | 诚实承认没对上即终局；空库导向 Capture；**禁止**无候选时的时间/类型问卷                                                 |
 
 原则：
 
 - **统一为对话式找回主路径**，不再并存第二套“搜索框心智”主交互。
-- **主次分列 / 邻域履约**：头名标主建议；其余相关进「可能是这些」——**不为「假装唯一」藏掉合理次优**。邻域命中 = 履约；Top1 = delight。
+- **排序邻域履约**：整包短名单即答案；**不为「假装唯一」藏掉合理次优**。邻域命中 = 履约；头名命中 = delight。
 - **钉死一条 vs 逛一簇**：理解与 UI 都应能服务两种意图；逛簇时勿用问卷逼唯一真值。
 - **追问前提**：库内已有可展示的真实候选 id；无候选 → 不追问。
 - **补充线索应像回消息**：有会话时下一句默认承接上一轮（Side Panel 线程）；要开新找 → 用户点 **New find**（见 §7.0），系统不猜话题切换。
 - **允许多轮澄清**，但范围只围绕 Recall 推进；不得滑向开放式闲聊。
 - 卡片要有线索，不只标题/URL；系统回复需帮助用户理解“为什么是它”或（有候选时）“怎样收窄”。
 - 用户输入首先被视为**记忆线索表达**，而不只是关键词；Recall 应尽量消费时间、行为、主观感受、对象类型等线索。
-- **回答的是「库里最可能是哪一条（及可能相关）」**，不是「你现在该听什么 / 看什么」。
-- **禁止**用置信百分比 / 「永远准确」话术把建议包装成神谕。
+- **回答的是「库里最靠近的几条」**，不是「你现在该听什么 / 看什么」，也不是「唯一正确答案」。
+- **禁止**用置信百分比 / 「永远准确」/ 「most likely match」话术把建议包装成神谕。
 
 ### 7.0 对话式多轮语义闭环（Normative · 已上线切片；主壳迁 Side Panel）
 
@@ -1547,6 +1568,28 @@ Chrome API / 选区
 4. 会话态：找回主壳（Side Panel）**组件内**持有；**关闭 Side Panel 即丢弃**（P0 不持久化）。**新会话**亦丢弃并清空气泡。
 5. **禁止**缺槽规则问卷（`buildRecallFollowUpPlan` 类时间/类型填表已废除）。有候选时的追问由 LLM NLG（失败则静态「不够确定」文案、**无**固定芯片银行）；合并后 `parsed` 仍只服务检索，不驱动问卷。
 6. **禁止**用自动话题检测 / 打开结果 / `no_match` 静默清线程代替「新会话」（避免误清 refine；成败不做会话边界裁判）。
+7. **「都不是这些」之后：** 保留线程约束；**不得**再挂 site/quote/note/type 等固定追问芯片银行；composer 用中性 placeholder，由用户自由续打。
+
+**Composer 双通道（Normative · Placeholder × 追问芯片 · 2026-08-26）：**
+
+同一目标：帮下一轮在**本轮邻域内**收窄。Yiveno 掌控的是邻域**可切割结构**，不是用户真值答案。工程旁挂（实现分期）：[`Recall-Placeholder与追问芯片-双通道.md`](../engineering/Recall-Placeholder与追问芯片-双通道.md)。
+
+| 通道            | 硬度               | 职责                                                                                                                         |
+| --------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| **Placeholder** | 软引导             | composer **对话承载体**；常驻有英文文案；带举例的收窄句必须 **grounded 本轮候选**（类型 / 字面 token / host）；禁止主题 seed |
+| **追问芯片**    | 硬输入（点击即发） | 仅白名单：① `need_a_clue` + LLM suggestions；② §7.1 环境弱芯片。**禁止**无候选缺槽问卷与 dismiss 固定银行                    |
+
+**优先级：** 当前 turn **有白名单芯片展示** → 以芯片为主；placeholder **退中性短句、不带举例**。  
+**宽邻域 `top_pick`（报 N）：** 默认 **只走动态 placeholder**，不上内容芯片。  
+**气泡：** 只报结果状态（N / 不够确定 / miss）；**不**与 placeholder 抢收窄举例清单。
+
+| Placeholder 模式 | 何时                                                                                      |
+| ---------------- | ----------------------------------------------------------------------------------------- |
+| Idle             | 空闲 / 新会话                                                                             |
+| Narrow           | `top_pick` 或无芯片的 `need_a_clue`，且邻域偏宽、能抽出 grounded 举例（否则降级 Neutral） |
+| Neutral          | 有芯片让位；miss；dismiss 后；抽不出举例                                                  |
+
+**Narrow 举例 LLM 润色（已接线）：** 仅在宽邻域且无芯片时，对**已选定** grounded 词面润色展示形态（大小写 / 语料中已有的空格形态）；经 fold identity 门禁，**禁止造词**；无 completer 或失败 → 用选定原词。与 clue 理解同配额桶。
 
 **空结果与追问原则（Normative · 三条）：**
 
@@ -1556,11 +1599,11 @@ Chrome API / 选区
 
 **结果三分（实现与产品共用）：**
 
-| 形态                                            | 条件（摘要）     | UI 态度                                                   |
-| ----------------------------------------------- | ---------------- | --------------------------------------------------------- |
-| 命中（`top_pick`）                              | 高置信头名       | **建议**主答案 + 互不冲突的「可能是这些」邻域；禁神谕分数 |
-| 弱命中（`need_a_clue`）                         | 有候选但不够确定 | 候选邻域 + 可选收窄追问（LLM）；禁缺槽问卷                |
-| **无相关**（`no_match`，含 `constrained_none`） | 无可点选相关候选 | 诚实终局；可选猜测卡；**无**追问芯片；**无**缩短再试      |
+| 形态                                            | 条件（摘要）     | UI 态度                                                                     |
+| ----------------------------------------------- | ---------------- | --------------------------------------------------------------------------- |
+| 命中（`top_pick`）                              | 高置信头名       | **报 N · 首屏 ≤5 · Show more**（头名轻强调）；禁神谕分数与「most likely」句 |
+| 弱命中（`need_a_clue`）                         | 有候选但不够确定 | 候选邻域 + 可选收窄追问（LLM）；禁缺槽问卷                                  |
+| **无相关**（`no_match`，含 `constrained_none`） | 无可点选相关候选 | 诚实终局；可选猜测卡；**无**追问芯片；**无**缩短再试                        |
 
 **流水线：**
 
@@ -1603,8 +1646,9 @@ Chrome API / 选区
 
 1. 产品内信号（最近存 / 开 / 上次线索）— **behaviorHints 软加权已上线**；会话「最近打开」信号仍可加厚
 2. 选区预填 — 仍待
-3. 追问芯片（刚存的 / 刚打开过的 / 跟当前站有关）— **已上线（模板芯片）**
+3. 追问芯片（刚存的 / 刚打开过的 / 跟当前站有关）— **当前站：已上线**（有 `currentTabDomain` 时；挂在 `need_a_clue` 或 **窄** `top_pick`（N&lt;宽邻域门槛）；宽邻域 top_pick **不挂**，留给 Narrow placeholder）。刚存/刚打开：**有信号才挂**（信号接线渐进）。属 **弱通道**。与 LLM 芯片同屏时 **不抢主**。**禁止** dismiss 后 site/quote/note/type 固定银行（已废）。
 4. 重排软分（当前 Tab 同域）— **已上线**
+5. 关键词打分内：**忽略大小写命中**；线索含大写时，主文原文大小写一致给 **case-fit 软加权**（封顶小，仅微调并列；全小写线索不加）— **已上线**
 
 ### 7.2 Recall Outcome Labeling（Normative · 提问 ↔ 答案对照）
 
@@ -1776,7 +1820,7 @@ RecallOutcomeEvent {
 - **信念：** 用户浏览时会自己筛兴趣，产品不培养这个；**Yiveno 只填「这次感兴趣 → 下次找回来」的鸿沟**；长期应养成「interesting → 按快捷键、不担心乱存」——这在旧书签体系下不可能，因 Yiveno 才成立；要的是未来能用，不是整理；**对话式找回是主路径，但开放式闲聊与生活小助手不是目标**；AI 是寻回引擎的能力核心，**不是对外宣传招牌**；**LLM 是强理解器，不是可扩展的记忆硬盘，更不是每次替用户做终审的神谕**。
 - **对外话术：** 优先「找东西 / 仓库 / Find what you saved」；「记忆硬盘」「知识库」勿作主 slogan；禁止「永远押中那一条」。
 - **资产：** 附着在互联网原文上的个人增量（摘录/附注）为主；书签配角；空白创作非目标。
-- **立身：** 业务简单（存 + 找）；体验必须精打细磨。无爽点 = 无护城河。履约看邻域，delight 看 Top1。
+- **立身：** 业务简单（存 + 找）；体验必须精打细磨。无爽点 = 无护城河。履约看邻域，delight 看头名。
 - **发育：** 靠用户长期使用慢慢长厚；开头最难，越往后越稳。前期体验买习惯与语料，后期习惯与语料锁体验。
 - **目标用户：** 会主动划存/标注的**跨来源网络研究者、创作者/设计研究者、开发者/产品人**（不是「几乎不 Capture」的大众）；话术仍对外统一「那个找东西的」。详见 §0.1.1「首发用户与种子验证」。
 - **MVP 验证：** 是否更愿划存摘录、是否优先打开 Yiveno 找回个人痕迹、是否稳定进入正确邻域、**Verified Retrievals 与 TTE-V 是否改善**、是否愿为语义/同步付费；并能回答「为何不用 Google」。
@@ -1922,6 +1966,21 @@ RecallOutcomeEvent {
 
 | 日期       | 变更                                                                                                                                                                                                                                                   |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-08-26 | **Composer Narrow 文案语气：** Narrow/Neutral placeholder 改为北美口语温度（`Still a bit broad — try something like…`）；产品语言补「勿官方腔」Normative                                                                                               |
+| 2026-08-26 | **Composer Narrow LLM 润色：** 宽邻域无芯片时对已选定举例仅改展示形态；fold 门禁禁止造词；失败回退原词                                                                                                                                                 |
+| 2026-08-26 | **Composer Narrow P1：** 切割力调参——部分覆盖优先、类型统治门槛 0.8、页壳弱词过滤；宽邻域门槛仍 ≥6                                                                                                                                                     |
+| 2026-08-26 | **Composer P0c + §7.1 当前站弱芯片：** `need_a_clue` 无 LLM 芯片时挂 Related to this site（有域名信号）；placeholder 有芯片让位；§5.2.1 手工验收；纠正「环境模板芯片已全上线」口径                                                                     |
+| 2026-08-26 | **Composer Narrow P0b：** 本轮候选 grounded 举例（类型/跨文档 token/host）写入动态 placeholder；禁止主题 seed                                                                                                                                          |
+| 2026-08-26 | **Composer 双通道 Normative：** Placeholder（软）× 追问芯片（硬）；宽邻域默认只走 placeholder；有芯片则 placeholder 让位；废除 dismiss 固定芯片银行；旁挂工程方案已确认                                                                                |
+| 2026-08-26 | **Show more 双入口：** 「Show 5 more」+「Show all K」（K=剩余，明示一次展完）；摘录卡去掉内层左边线（避免与 shell 描边叠成双线）                                                                                                                       |
+| 2026-08-26 | **存量 seed scrub：** enrichment 回填 v4；合并时剔除已退役主题/实体词面（`retired-enrichment-seeds`）；倒排随 putMany diff 更新                                                                                                                        |
+| 2026-08-26 | **禁止灰名单冒充通解：** 拆除主题/实体规则词典与查询 `expandRecallContentTerms`；规则 enrichment 不再写专名 `entities`；§0.1.1 与 AGENTS「全量用户能力」对齐                                                                                           |
+| 2026-08-26 | **形态缩写通解：** 删硬编码 js/ts/… 别名表；建索引写 CamelCase/多词首字母；查询直接查缩写 posting；schemaVersion=2；工程 Phase1 同步                                                                                                                   |
+| 2026-08-26 | **折叠前勿按条数截断：** 全量打分再折叠（`filterKeywordMatchesBeforeCollapse`）；修复重复书签占满旧 FETCH_LIMIT=500 挤掉互异组（`js` 漏「现代 JavaScript 教程」）；§3.1 同步                                                                           |
+| 2026-08-26 | **关键词 case-fit 软加权：** 命中仍忽略大小写；线索含大写且主文原文一致时微抬分（`RECALL_CASE_FIT_BOOST_CAP`）；§7.1 同步                                                                                                                              |
+| 2026-08-26 | **Recall 书签卡 favicon：** Side Panel 结果卡角标用 Chrome 缓存站点图标（与 Memory 库树同路径）；失败回退 Lucide bookmark；§7 同步                                                                                                                     |
+| 2026-08-26 | **找回短名单可续展：** 报 `totalRankedCount`；首屏 5 + Show more；池软顶 50；§0.1.1 / §7 同步——首屏截断≠结果全集                                                                                                                                       |
+| 2026-08-26 | **找回呈现：排序短名单 ≤5**：Side Panel 去掉「most likely」神谕句与主/Also 两段心智；`RECALL_RESULT_SLOT_LIMIT=5`；§0.1.1 / §7 同步                                                                                                                    |
 | 2026-08-26 | **§7.2 下线通道 A Mark：** 结果卡「Mark as what I meant」移除；结算树改 D > B/B′ > C1 > C5 > C2；`source: mark` 仅兼容旧落盘；strong 正例靠出口 Found + C1                                                                                             |
 | 2026-08-24 | **§7.2 P3 实现：** 本机 Outcome 对 ring buffer；Hybrid 正例升权 / none 硬负例降权；eval 不读 storage                                                                                                                                                   |
 | 2026-08-24 | **§7.2 P2 实现：** C2 校准门（默认不进 settled）；Mark↔隐式对拍日志；旁挂 `R4-Outcome-Labeling-P2-校准.md`                                                                                                                                             |

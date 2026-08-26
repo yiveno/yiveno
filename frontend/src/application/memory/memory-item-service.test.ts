@@ -199,6 +199,116 @@ describe('MemoryItemService listForKeywordRecall', () => {
     expect(result.items.map(item => item.id)).toEqual([excerpt.id, bookmark.id])
   })
 
+  it('短词 js：倒排查 js posting（形态缩写已在建索引写入）', async () => {
+    const jsCookie = createBookmarkMemoryItem({
+      ownerId: 'o',
+      sourceLocalProfileId: 'p',
+      payload: { title: 'js-cookie - npm', url: 'https://www.npmjs.com/package/js-cookie' }
+    })
+    const javascriptTutorial = createBookmarkMemoryItem({
+      ownerId: 'o',
+      sourceLocalProfileId: 'p',
+      payload: {
+        title: '现代 JavaScript 教程',
+        url: 'https://zh.javascript.info/'
+      }
+    })
+    const mdn = createBookmarkMemoryItem({
+      ownerId: 'o',
+      sourceLocalProfileId: 'p',
+      payload: {
+        title: 'JavaScript | MDN',
+        url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript'
+      }
+    })
+    // 索引重建后 posting「js」含字面 js-cookie + 形态缩写自 JavaScript 标题的条目
+    vi.mocked(keywordIndexRepository.lookupCandidateIds).mockResolvedValue({
+      ids: [jsCookie.id, javascriptTutorial.id, mdn.id],
+      rebuilt: false
+    })
+    vi.mocked(memoryItemRepository.getManyByIds).mockResolvedValue([
+      jsCookie,
+      javascriptTutorial,
+      mdn
+    ])
+    vi.mocked(memoryItemRepository.listByOwner).mockImplementation(async options => {
+      if (options?.type === 'text_excerpt') {
+        return []
+      }
+      return []
+    })
+    const service = new MemoryItemService(memoryItemRepository)
+    const parsed = parseRecallClue('js')
+
+    const result = await service.listForKeywordRecall({ rawClue: 'js', parsed })
+
+    expect(result.source).toBe('inverted')
+    expect(keywordIndexRepository.lookupCandidateIds).toHaveBeenCalledWith('js')
+    const ids = result.items.map(item => item.id)
+    expect(ids).toEqual(expect.arrayContaining([jsCookie.id, javascriptTutorial.id, mdn.id]))
+  })
+
+  it('短词 css：走倒排（形态缩写入索引后不再盲扫）', async () => {
+    const cssBookmark = createBookmarkMemoryItem({
+      ownerId: 'o',
+      sourceLocalProfileId: 'p',
+      payload: {
+        title: 'CSS: Cascading Style Sheets | MDN',
+        url: 'https://developer.mozilla.org/en-US/docs/Web/CSS'
+      }
+    })
+    vi.mocked(keywordIndexRepository.lookupCandidateIds).mockResolvedValue({
+      ids: [cssBookmark.id],
+      rebuilt: false
+    })
+    vi.mocked(memoryItemRepository.getManyByIds).mockResolvedValue([cssBookmark])
+    vi.mocked(memoryItemRepository.listByOwner).mockImplementation(async options => {
+      if (options?.type === 'text_excerpt') {
+        return []
+      }
+      return []
+    })
+    const service = new MemoryItemService(memoryItemRepository)
+
+    const result = await service.listForKeywordRecall({
+      rawClue: 'css',
+      parsed: parseRecallClue('css')
+    })
+    expect(result.source).toBe('inverted')
+    expect(keywordIndexRepository.lookupCandidateIds).toHaveBeenCalledWith('css')
+  })
+
+  it('长词 javascript：仍可走倒排预过滤', async () => {
+    const javascriptTutorial = createBookmarkMemoryItem({
+      ownerId: 'o',
+      sourceLocalProfileId: 'p',
+      payload: {
+        title: '现代 JavaScript 教程',
+        url: 'https://zh.javascript.info/'
+      }
+    })
+    vi.mocked(keywordIndexRepository.lookupCandidateIds).mockResolvedValue({
+      ids: [javascriptTutorial.id],
+      rebuilt: false
+    })
+    vi.mocked(memoryItemRepository.getManyByIds).mockResolvedValue([javascriptTutorial])
+    vi.mocked(memoryItemRepository.listByOwner).mockImplementation(async options => {
+      if (options?.type === 'text_excerpt') {
+        return []
+      }
+      return []
+    })
+    const service = new MemoryItemService(memoryItemRepository)
+    const result = await service.listForKeywordRecall({
+      rawClue: 'javascript',
+      parsed: parseRecallClue('javascript')
+    })
+
+    expect(result.source).toBe('inverted')
+    expect(keywordIndexRepository.lookupCandidateIds).toHaveBeenCalled()
+    expect(result.items.map(item => item.id)).toEqual([javascriptTutorial.id])
+  })
+
   it('倒排有 id 但关键词探针无命中时降级全表扫', async () => {
     const wrongBookmark = createBookmarkMemoryItem({
       ownerId: 'o',

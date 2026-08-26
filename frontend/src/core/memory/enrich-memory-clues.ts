@@ -1,11 +1,12 @@
 /**
- * Capture-time 规则 enrichment：从标题/正文/域名推断 tags / keywords / entities。
+ * Capture-time 规则 enrichment：从标题/正文/域名推断 tags / keywords。
  * 无 LLM；与 parse-recall-clue 对象类型 slug 对齐。
- * 实体输出 English canonical（别名仅用于识别），见产品文档 §0.1.1「市场语言与 Recall Language Strategy」。
+ * **禁止**内容/专名硬编码别名表（主题·实体 seed）；实体留给 LLM enrichment / 用户备注 / 字面线索。
+ * 见产品文档 §0.1.1「市场语言与 Recall Language Strategy」与 AGENTS「全量用户能力」。
  */
 
 import type { MemoryItem } from '@/core/memory/memory-item'
-import { detectTopicsFromText } from '@/core/memory/memory-topic-lexicon'
+import { scrubRetiredEnrichmentSeedTokens } from '@/core/memory/retired-enrichment-seeds'
 import { normalizeRecallText } from '@/core/recall/keyword-filter'
 import {
   RECALL_OBJECT_TYPE_CANONICAL_SURFACES,
@@ -120,36 +121,16 @@ export type TextRecallKeywordRule = {
   keywords: string[]
 }
 
+/**
+ * 正文词面 → recall 导向关键词（闭合产品启发式，非开放同义词典）。
+ * 仅通用英文槽位词面；禁止专名/主题 seed。
+ */
 export const MEMORY_TEXT_RECALL_KEYWORD_RULES: TextRecallKeywordRule[] = [
   { surfaces: ['tutorial', 'how-to', 'how to'], keywords: ['tutorial', 'guide'] },
   { surfaces: ['readme'], keywords: ['readme', 'docs'] },
   { surfaces: ['playlist'], keywords: ['playlist', 'listen'] },
   { surfaces: ['authentication', 'authorize'], keywords: ['auth', 'authentication'] },
   { surfaces: ['deployment', 'deploy'], keywords: ['deploy', 'deployment'] }
-]
-
-/** P0 实体词典（人名/作品/专有名词）；输出统一写入 English canonical。 */
-export type MemoryEntityLexiconEntry = {
-  canonical: string
-  aliases: string[]
-}
-
-export const MEMORY_ENTITY_LEXICON: MemoryEntityLexiconEntry[] = [
-  { canonical: 'Li Bai', aliases: [] },
-  { canonical: 'Du Fu', aliases: [] },
-  { canonical: 'Su Shi', aliases: [] },
-  { canonical: 'Wang Wei', aliases: [] },
-  { canonical: 'Bai Juyi', aliases: [] },
-
-  // 技术名词：canonical 自身即可视为最佳匹配
-  { canonical: 'React', aliases: [] },
-  { canonical: 'Vue', aliases: [] },
-  { canonical: 'TypeScript', aliases: [] },
-  { canonical: 'Cloudflare', aliases: [] },
-  { canonical: 'Workers', aliases: [] },
-  { canonical: 'IndexedDB', aliases: [] },
-  { canonical: 'Manifest V3', aliases: [] },
-  { canonical: 'RAG', aliases: [] }
 ]
 
 /** 合并去重（保序）。 */
@@ -245,32 +226,6 @@ function detectObjectTypesFromText(blob: string): RecallObjectType[] {
   return types
 }
 
-function detectEntities(blob: string): string[] {
-  const normalized = normalizeRecallText(blob)
-  if (!normalized) {
-    return []
-  }
-  const hits: string[] = []
-  const ordered = [...MEMORY_ENTITY_LEXICON].sort((left, right) => {
-    const leftMax = Math.max(left.canonical.length, ...left.aliases.map(a => a.length))
-    const rightMax = Math.max(right.canonical.length, ...right.aliases.map(a => a.length))
-    return rightMax - leftMax
-  })
-
-  for (const entry of ordered) {
-    const surfaces = [entry.canonical, ...entry.aliases]
-    for (const surface of surfaces) {
-      const needle = normalizeRecallText(surface)
-      if (needle && normalized.includes(needle)) {
-        hits.push(entry.canonical)
-        break
-      }
-    }
-  }
-
-  return hits
-}
-
 /** 从正文词面推断 recall 导向关键词。 */
 function detectRecallKeywordsFromText(blob: string): string[] {
   const normalized = normalizeRecallText(blob)
@@ -333,16 +288,11 @@ export function enrichMemoryClues(input: EnrichMemoryCluesInput): MemoryClueEnri
 
   keywords.push(...detectRecallKeywordsFromText(textBlob))
 
-  const topic = detectTopicsFromText(textBlob)
-  keywords.push(...topic.keywords)
-
-  const entities = mergeUniqueStrings(detectEntities(textBlob), topic.entities)
-  keywords.push(...entities)
-
+  // 规则层不写 entities：禁止专名 allowlist；实体由 LLM enrichment / 用户备注承接
   return {
     tags: mergeUniqueStrings(tags),
     keywords: mergeUniqueStrings(keywords),
-    entities: mergeUniqueStrings(entities)
+    entities: []
   }
 }
 
@@ -379,7 +329,7 @@ function sameStringListIgnoreCase(left: string[], right: string[]): boolean {
 
 /**
  * 将规则 enrichment 合并进已有 MemoryItem（不改 createdAt/updatedAt）。
- * 无新增字段时 changed=false。
+ * 合并后剔除已退役主题/实体 seed（存量 scrub）；无实质变更则 changed=false。
  * LLM 提议请用 mergeMemoryClueEnrichment 后再写回。
  */
 export function mergeEnrichmentIntoMemoryItem(item: MemoryItem): {
@@ -393,8 +343,12 @@ export function mergeEnrichmentIntoMemoryItem(item: MemoryItem): {
     // 书签语料始终带 bookmark tag，便于类型词面路径与约束邻域一致
     item.type === 'bookmark' ? ['bookmark'] : []
   )
-  const keywords = mergeUniqueStrings(item.clues.keywords, enrichment.keywords)
-  const entities = mergeUniqueStrings(item.clues.entities, enrichment.entities)
+  const keywords = scrubRetiredEnrichmentSeedTokens(
+    mergeUniqueStrings(item.clues.keywords, enrichment.keywords)
+  )
+  const entities = scrubRetiredEnrichmentSeedTokens(
+    mergeUniqueStrings(item.clues.entities, enrichment.entities)
+  )
 
   const changed =
     !sameStringListIgnoreCase(tags, item.clues.tags) ||

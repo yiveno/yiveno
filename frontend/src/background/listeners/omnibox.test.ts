@@ -107,6 +107,7 @@ describe('omnibox listeners', () => {
         matchedFields: ['title']
       },
       alsoPossible: [],
+      totalRankedCount: 0,
       clue: 'retention'
     })
 
@@ -169,6 +170,7 @@ describe('omnibox listeners', () => {
         matchedFields: ['title']
       },
       alsoPossible: [],
+      totalRankedCount: 0,
       clue: 'retention'
     })
 

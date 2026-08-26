@@ -19,7 +19,7 @@ describe('buildMergedMemoryEnrichment', () => {
     expect(result.path).toBe('rule_only')
     expect(result.proposal).toBeNull()
     expect(result.merged.tags).toContain('video')
-    expect(result.merged.entities).toEqual(expect.arrayContaining(['Hitler', 'BBC']))
+    expect(result.merged.entities).toEqual([])
   })
 
   it('LLM 成功时走 rule_plus_llm', async () => {
@@ -54,7 +54,8 @@ describe('buildMergedMemoryEnrichment', () => {
     })
     expect(result.path).toBe('rule_plus_llm')
     expect(result.proposal?.keywords).toEqual(expect.arrayContaining(['war', 'documentary']))
-    expect(result.merged.keywords).toEqual(expect.arrayContaining(['war', 'wwii']))
+    expect(result.merged.keywords).toEqual(expect.arrayContaining(['war', 'documentary', 'video']))
+    expect(result.merged.entities).toEqual(expect.arrayContaining(['BBC']))
     expect(result.merged.summary).toBe('WWII related BBC video')
   })
 

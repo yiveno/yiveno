@@ -72,4 +72,37 @@ describe('ensureMemoryEnrichmentBackfilled', () => {
       expect.objectContaining({ version: MEMORY_ENRICHMENT_BACKFILL_VERSION })
     )
   })
+
+  it('v4 scrub：剔除存量 seed keywords/entities', async () => {
+    readChromeStorageLocalMock.mockResolvedValue({ version: 3 })
+    const fresh = createBookmarkMemoryItem({
+      ownerId: '11111111-1111-4111-8111-111111111111',
+      sourceLocalProfileId: '22222222-2222-4222-8222-222222222222',
+      now: () => '2026-07-22T06:00:00.000Z',
+      payload: {
+        title: 'WWII clip',
+        url: 'https://www.youtube.com/watch?v=1'
+      }
+    })
+    const polluted = {
+      ...fresh,
+      clues: {
+        ...fresh.clues,
+        keywords: [...fresh.clues.keywords, 'wwii', 'Hitler'],
+        entities: ['Hitler', 'BBC']
+      }
+    }
+    listByOwnerMock.mockResolvedValue([polluted])
+
+    const result = await ensureMemoryEnrichmentBackfilled({
+      listByOwner: listByOwnerMock,
+      putMany: putManyMock
+    } as never)
+
+    expect(result.status).toBe('completed')
+    expect(result.updated).toBe(1)
+    const written = putManyMock.mock.calls[0]?.[0] as (typeof polluted)[]
+    expect(written[0]?.clues.entities).toEqual([])
+    expect(written[0]?.clues.keywords).not.toEqual(expect.arrayContaining(['wwii', 'Hitler']))
+  })
 })
