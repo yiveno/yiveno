@@ -10,9 +10,6 @@ export type ResolveThreadFindTitleInput = {
   contentTerms?: readonly string[]
 }
 
-/** @deprecated 使用 ResolveThreadFindTitleInput；保留别名以免外部误用旧名时无感。 */
-export type ResolveThreadAnchorLabelInput = ResolveThreadFindTitleInput
-
 /** 截断展示标题（保留可读尾省略）。 */
 export function truncateThreadFindTitle(
   raw: string,
@@ -27,9 +24,6 @@ export function truncateThreadFindTitle(
   }
   return `${trimmed.slice(0, maxChars - 1).trimEnd()}…`
 }
-
-/** @deprecated 使用 truncateThreadFindTitle */
-export const truncateThreadAnchorLabel = truncateThreadFindTitle
 
 /**
  * 解析本场找回标题；无活动线索时返回 null。
@@ -50,6 +44,3 @@ export function resolveThreadFindTitle(input: ResolveThreadFindTitleInput): stri
   }
   return truncateThreadFindTitle(terms.join(' '))
 }
-
-/** @deprecated 使用 resolveThreadFindTitle */
-export const resolveThreadAnchorLabel = resolveThreadFindTitle
