@@ -61,6 +61,9 @@ export async function handleUpdateUserSettings(
     if (typeof parsed.chromeBookmarkIngestEnabled === 'boolean') {
       patch.chromeBookmarkIngestEnabled = parsed.chromeBookmarkIngestEnabled
     }
+    if (typeof parsed.mcpReadOnlyEnabled === 'boolean') {
+      patch.mcpReadOnlyEnabled = parsed.mcpReadOnlyEnabled
+    }
     const settings = await updateUserSettings(patch)
     if (typeof patch.aiFeaturesEnabled === 'boolean') {
       // AI 开关变更后立刻重挂 / 清空线索 LLM completer
@@ -86,7 +89,8 @@ export async function handleUpdateUserSettings(
       patchKeys: Object.keys(patch),
       selectionToolbarEnabled: settings.selectionToolbarEnabled,
       aiFeaturesEnabled: settings.aiFeaturesEnabled,
-      chromeBookmarkIngestEnabled: settings.chromeBookmarkIngestEnabled
+      chromeBookmarkIngestEnabled: settings.chromeBookmarkIngestEnabled,
+      mcpReadOnlyEnabled: settings.mcpReadOnlyEnabled
     })
     return { ok: true, settings }
   } catch (error) {

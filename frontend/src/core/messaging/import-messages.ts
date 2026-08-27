@@ -3,6 +3,11 @@ import { z } from 'zod'
 import type { BookmarkLibraryIndex } from '@/core/memory/bookmark-library-index'
 import type { ChromeBookmarkImportState } from '@/core/memory/chrome-bookmark-import-state'
 import type { ColdStartPipelineState } from '@/core/memory/cold-start-pipeline-state'
+import {
+  ThirdPartyCorpusImportErrorCodeSchema,
+  type ThirdPartyCorpusImportState
+} from '@/core/memory/third-party-corpus-import-state'
+import { ThirdPartyCorpusSourceSchema } from '@/core/memory/third-party-corpus-source'
 import type { BackgroundMessageScope } from '@/core/messaging/constants'
 
 /** Import / 书签树面向 UI 的稳定错误码。 */
@@ -95,12 +100,69 @@ export type ColdStartStatusErrorResponse = {
 
 export type ColdStartStatusResponse = ColdStartStatusSuccessResponse | ColdStartStatusErrorResponse
 
+const importThirdPartyCorpusPayloadSchema = z.object({
+  source: ThirdPartyCorpusSourceSchema,
+  content: z.string().min(1).max(5_000_000),
+  format: z.enum(['html', 'csv', 'json']).optional()
+})
+
+/** 导入 Raindrop / Pocket 导出文件（§5.10.6）。 */
+export type ImportThirdPartyCorpusMessage = {
+  scope: BackgroundMessageScope
+  type: 'IMPORT_THIRD_PARTY_CORPUS'
+  payload: z.infer<typeof importThirdPartyCorpusPayloadSchema>
+}
+
+export type ImportThirdPartyCorpusSuccessResponse = {
+  ok: true
+  importedCount: number
+}
+
+export type ImportThirdPartyCorpusErrorResponse = {
+  ok: false
+  errorCode: z.infer<typeof ThirdPartyCorpusImportErrorCodeSchema>
+  error?: string
+}
+
+export type ImportThirdPartyCorpusResponse =
+  | ImportThirdPartyCorpusSuccessResponse
+  | ImportThirdPartyCorpusErrorResponse
+
+/** 查询第三方语料导入进度。 */
+export type GetThirdPartyCorpusImportStatusMessage = {
+  scope: BackgroundMessageScope
+  type: 'GET_THIRD_PARTY_CORPUS_IMPORT_STATUS'
+}
+
+export type ThirdPartyCorpusImportStatusSuccessResponse = {
+  ok: true
+  state: ThirdPartyCorpusImportState | null
+}
+
+export type ThirdPartyCorpusImportStatusErrorResponse = {
+  ok: false
+  errorCode: ImportErrorCode
+  error?: string
+}
+
+export type ThirdPartyCorpusImportStatusResponse =
+  | ThirdPartyCorpusImportStatusSuccessResponse
+  | ThirdPartyCorpusImportStatusErrorResponse
+
 export type ImportBackgroundMessage =
   | GetChromeBookmarkImportStatusMessage
   | GetBookmarkLibraryTreeMessage
   | GetColdStartStatusMessage
+  | ImportThirdPartyCorpusMessage
+  | GetThirdPartyCorpusImportStatusMessage
 
 export type ImportBackgroundResponse =
   | ChromeBookmarkImportStatusResponse
   | GetBookmarkLibraryTreeResponse
   | ColdStartStatusResponse
+  | ImportThirdPartyCorpusResponse
+  | ThirdPartyCorpusImportStatusResponse
+
+export function parseImportThirdPartyCorpusPayload(value: unknown) {
+  return importThirdPartyCorpusPayloadSchema.parse(value)
+}

@@ -32,14 +32,17 @@ import {
   fetchAiHostedQuota,
   restoreLatestSyncBackup,
   setSyncEnabled,
+  setMcpReadOnly,
   runIncrementalMemorySync,
-  updateUserSettings
+  updateUserSettings,
+  importThirdPartyCorpus
 } from '@/infrastructure/messaging/background-client'
 import { watchAuthSessionStorage } from '@/infrastructure/auth/watch-auth-session-storage'
 import {
   tAccountSyncError,
   tCommandsError,
-  tSettingsError
+  tSettingsError,
+  tThirdPartyImportError
 } from '@/infrastructure/i18n/background-error'
 import { t } from '@/infrastructure/i18n/t'
 import { getWebsiteBaseUrl } from '@/infrastructure/browser/website-page'
@@ -72,11 +75,13 @@ const awaitingShortcutsReturn = ref(false)
 const selectionToolbarEnabled = ref(true)
 const chromeBookmarkIngestEnabled = ref(true)
 const aiFeaturesEnabled = ref(true)
+const mcpReadOnlyEnabled = ref(false)
 const settingsState = ref<LoadState>('loading')
 const settingsError = ref('')
 const savingSelectionToolbar = ref(false)
 const savingChromeBookmarkIngest = ref(false)
 const savingAiFeatures = ref(false)
+const savingMcpReadOnly = ref(false)
 const hostedQuotaLoading = ref(false)
 const hostedQuotaText = ref('')
 const hostedQuotaError = ref('')
@@ -112,6 +117,9 @@ const dataWorking = ref(false)
 const dataError = ref('')
 const dataMessage = ref('')
 const exportWorking = ref(false)
+const thirdPartyImportWorking = ref(false)
+const raindropFileInputRef = ref<HTMLInputElement | null>(null)
+const pocketFileInputRef = ref<HTMLInputElement | null>(null)
 
 /** 官网隐私政策 / 服务条款全文 URL。 */
 const privacyPolicyUrl = `${getWebsiteBaseUrl()}/privacy`
@@ -256,6 +264,7 @@ async function loadUserSettings() {
     selectionToolbarEnabled.value = response.settings.selectionToolbarEnabled
     chromeBookmarkIngestEnabled.value = response.settings.chromeBookmarkIngestEnabled
     aiFeaturesEnabled.value = response.settings.aiFeaturesEnabled
+    mcpReadOnlyEnabled.value = response.settings.mcpReadOnlyEnabled
     settingsState.value = 'ready'
   } catch {
     settingsState.value = 'error'
@@ -319,6 +328,31 @@ async function handleAiFeaturesToggle(nextValue: boolean) {
     settingsError.value = t('settings_error_update')
   } finally {
     savingAiFeatures.value = false
+  }
+}
+
+/** 只读 MCP beta 开关（§5.10.5）；关闭后本机与云端 MCP 均拒绝。 */
+async function handleMcpReadOnlyToggle(nextValue: boolean) {
+  savingMcpReadOnly.value = true
+  settingsError.value = ''
+  dataError.value = ''
+  try {
+    const response = await updateUserSettings({ mcpReadOnlyEnabled: nextValue })
+    if (!response.ok) {
+      settingsError.value = tSettingsError(response.errorCode)
+      return
+    }
+    mcpReadOnlyEnabled.value = response.settings.mcpReadOnlyEnabled
+    if (signedIn.value) {
+      const sync = await setMcpReadOnly(nextValue)
+      if (!sync.ok) {
+        settingsError.value = tAccountSyncError(sync.errorCode)
+      }
+    }
+  } catch {
+    settingsError.value = t('settings_error_update')
+  } finally {
+    savingMcpReadOnly.value = false
   }
 }
 
@@ -795,7 +829,6 @@ async function runConfirmDialog() {
   }
 }
 
-/** 导出当前 owner 本机记忆。 */
 async function handleExportLocalMemory() {
   if (exportWorking.value || dataWorking.value) {
     return
@@ -818,9 +851,79 @@ async function handleExportLocalMemory() {
   }
 }
 
+/** 触发 Raindrop 导出文件选择。 */
+function handlePickRaindropImportFile(): void {
+  if (thirdPartyImportWorking.value || dataWorking.value || exportWorking.value) {
+    return
+  }
+  raindropFileInputRef.value?.click()
+}
+
+/** 触发 Pocket 导出文件选择。 */
+function handlePickPocketImportFile(): void {
+  if (thirdPartyImportWorking.value || dataWorking.value || exportWorking.value) {
+    return
+  }
+  pocketFileInputRef.value?.click()
+}
+
+/** 读取所选文件并导入为第三方语料（§5.10.6）。 */
+async function runThirdPartyCorpusImport(
+  source: 'raindrop' | 'pocket',
+  file: File | undefined
+): Promise<void> {
+  if (!file || thirdPartyImportWorking.value) {
+    return
+  }
+  thirdPartyImportWorking.value = true
+  dataError.value = ''
+  dataMessage.value = ''
+  try {
+    const content = await file.text()
+    const response = await importThirdPartyCorpus({ source, content })
+    if (!response.ok) {
+      dataError.value = tThirdPartyImportError(response.errorCode)
+      return
+    }
+    dataMessage.value = t('settings_data_third_party_import_done', [
+      String(response.importedCount),
+      source === 'raindrop' ? 'Raindrop' : 'Pocket'
+    ])
+  } catch {
+    dataError.value = t('error_third_party_import_failed')
+  } finally {
+    thirdPartyImportWorking.value = false
+  }
+}
+
+async function handleRaindropFileSelected(event: Event): Promise<void> {
+  const input = event.target
+  if (!(input instanceof HTMLInputElement)) {
+    return
+  }
+  const file = input.files?.[0]
+  input.value = ''
+  await runThirdPartyCorpusImport('raindrop', file)
+}
+
+async function handlePocketFileSelected(event: Event): Promise<void> {
+  const input = event.target
+  if (!(input instanceof HTMLInputElement)) {
+    return
+  }
+  const file = input.files?.[0]
+  input.value = ''
+  await runThirdPartyCorpusImport('pocket', file)
+}
+
 /** 清除本机记忆（不动 Chrome 原生书签）。 */
 function handleClearLocalMemory() {
-  if (dataWorking.value || exportWorking.value || signingOut.value) {
+  if (
+    dataWorking.value ||
+    exportWorking.value ||
+    thirdPartyImportWorking.value ||
+    signingOut.value
+  ) {
     return
   }
   confirmDialogError.value = ''
@@ -1348,7 +1451,7 @@ onUnmounted(() => {
               >
                 <AppButton
                   type="button"
-                  :disabled="exportWorking || dataWorking || signingOut"
+                  :disabled="exportWorking || dataWorking || thirdPartyImportWorking || signingOut"
                   :title="t('settings_privacy_export')"
                   @click="handleExportLocalMemory"
                   variant="outlined"
@@ -1362,12 +1465,66 @@ onUnmounted(() => {
               </SettingsActionRow>
 
               <SettingsActionRow
+                :title="t('settings_data_import_raindrop')"
+                :subtitle="t('settings_data_import_raindrop_hint')"
+              >
+                <input
+                  ref="raindropFileInputRef"
+                  type="file"
+                  class="settings-file-input"
+                  accept=".html,.htm,.csv,.json,text/html,text/csv,application/json"
+                  :aria-label="t('settings_data_import_raindrop')"
+                  @change="handleRaindropFileSelected"
+                />
+                <AppButton
+                  type="button"
+                  :disabled="thirdPartyImportWorking || dataWorking || exportWorking || signingOut"
+                  :title="t('settings_data_import_raindrop')"
+                  @click="handlePickRaindropImportFile"
+                  variant="outlined"
+                >
+                  {{
+                    thirdPartyImportWorking
+                      ? t('settings_privacy_working')
+                      : t('settings_data_import_action')
+                  }}
+                </AppButton>
+              </SettingsActionRow>
+
+              <SettingsActionRow
+                :title="t('settings_data_import_pocket')"
+                :subtitle="t('settings_data_import_pocket_hint')"
+              >
+                <input
+                  ref="pocketFileInputRef"
+                  type="file"
+                  class="settings-file-input"
+                  accept=".html,.htm,text/html"
+                  :aria-label="t('settings_data_import_pocket')"
+                  @change="handlePocketFileSelected"
+                />
+                <AppButton
+                  type="button"
+                  :disabled="thirdPartyImportWorking || dataWorking || exportWorking || signingOut"
+                  :title="t('settings_data_import_pocket')"
+                  @click="handlePickPocketImportFile"
+                  variant="outlined"
+                >
+                  {{
+                    thirdPartyImportWorking
+                      ? t('settings_privacy_working')
+                      : t('settings_data_import_action')
+                  }}
+                </AppButton>
+              </SettingsActionRow>
+
+              <SettingsActionRow
                 :title="t('settings_data_clear_local')"
                 :subtitle="t('settings_data_clear_local_hint')"
               >
                 <AppButton
                   type="button"
-                  :disabled="dataWorking || exportWorking || signingOut"
+                  :disabled="dataWorking || exportWorking || thirdPartyImportWorking || signingOut"
                   :title="t('settings_data_clear_local')"
                   @click="handleClearLocalMemory"
                   variant="outlined"
@@ -1470,6 +1627,25 @@ onUnmounted(() => {
                 <li>{{ t('settings_privacy_bullet_not_collected') }}</li>
               </ul>
             </details>
+
+            <div class="settings-toggle settings-card-stack--spaced">
+              <div class="settings-toggle-copy">
+                <span class="settings-toggle-title">{{ t('settings_mcp_toggle') }}</span>
+                <span class="settings-toggle-hint">{{ t('settings_mcp_toggle_hint') }}</span>
+              </div>
+              <AppSwitch
+                :model-value="mcpReadOnlyEnabled"
+                :disabled="savingMcpReadOnly || settingsState !== 'ready'"
+                :aria-label="t('settings_mcp_toggle')"
+                @update:model-value="handleMcpReadOnlyToggle"
+              />
+            </div>
+
+            <p v-if="mcpReadOnlyEnabled" class="settings-section-copy">
+              {{ t('settings_mcp_howto') }}
+            </p>
+
+            <p v-if="settingsError" class="settings-error" role="alert">{{ settingsError }}</p>
 
             <div class="settings-card-stack settings-card-stack--spaced">
               <SettingsActionRow
@@ -1778,6 +1954,18 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
+}
+
+.settings-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .settings-card-stack--spaced {

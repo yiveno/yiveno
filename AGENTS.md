@@ -96,7 +96,7 @@ pre-push **不跑** ESLint、全仓 typecheck、全仓 frontend test；`.vue` li
 - **MCP 真机实测（硬规则）：** 改扩展用户可感代码后，单测/ typecheck 之外**必须**调用 **Chrome DevTools MCP**（`user-chrome-devtools`）做真机验证；`build`（或确认 watch 产物）→ `chrome://extensions` 重新加载 → Side Panel **UI 路径**（`fill`/`click`，禁止 `evaluate_script` 直调 background 消息冒充 UI 测试）；报完成须含 MCP 结论。细则见 `.cursor/rules/project.mdc`「MCP 真机实测」。
 - **MCP 排查优先（硬规则）：** 排查 bug/回归/行为问题时，**优先** MCP Chrome 真机按真实 UI 路径复现，用 snapshot、控制台等拿够证据后再推断根因或改代码；细则见 `.cursor/rules/project.mdc`「MCP 排查优先」。
 - **MCP · SW Console：** `--autoConnect` 与 `--categoryExtensions` 互斥（与 Chrome 版本无关，≥0.20.3 硬互斥）；SW 日志用 extensions 错误页 + 消息复现；细则见 `.cursor/rules/project.mdc`。
-- **目标任务必选 vs 可选（与 `.cursor/rules/project.mdc` 一致）：** 可排优先级，但须先分清相对当前目标哪些必选、哪些可选。**必选**（缺则效果变差 / 不可用）→ 不问意见、按序做完；**可选** → 先问再做。禁止把必选当可砍项。
+- **目标任务必选 vs 可选（与 `.cursor/rules/project.mdc` 一致）：** 可排优先级，但须先分清相对当前目标哪些必选、哪些可选。**必选**（缺则效果变差 / 不可用）→ 不问意见、按序做完。**可选** → 按**收益/成本**默认决策：收益明显大于成本 → 默认做不问；持平/有争议 → 先问；成本明显更大 → 不做。禁止把必选当可砍项；must 夹具宜少而硬，禁止整库探针默认塞进 must。
 
 ## Token / 工具输出预算
 

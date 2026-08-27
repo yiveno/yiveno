@@ -28,7 +28,20 @@ export const RECALL_EVAL_IDS = {
   /** RT 影评摘录：host 线索对齐 */
   oppenheimerRtExcerpt: '11111111-1111-4111-8111-111111111117',
   /** Gregory Peck / Million Pound Note 英文摘录 */
-  millionPoundPeckExcerpt: '11111111-1111-4111-8111-111111111118'
+  millionPoundPeckExcerpt: '11111111-1111-4111-8111-111111111118',
+  /**
+   * 备注屈折 + 多词锚点：note「disagree with section 3」；
+   * 线索用 disagreed，且库内有 newsletter 共享词对手。
+   */
+  noteAnchorDisagreeSection: '11111111-1111-4111-8111-111111111119',
+  /** 共享词对手：note 含 newsletter，正文无关 */
+  noteSharedWordNewsletterRival: '11111111-1111-4111-8111-111111111120',
+  /** 弱标题靠备注：title=Untitled document，note 含 grant narrative */
+  weakTitleNoteGrant: '11111111-1111-4111-8111-111111111121',
+  /** 近几天 + URL 含 privacy（few days ago → recent 窗） */
+  recentPrivacyArticle: '11111111-1111-4111-8111-111111111122',
+  /** 旧稿 + 强内容锚（soft old 不得硬时间过滤） */
+  oldDensePassagePaper: '11111111-1111-4111-8111-111111111123'
 } as const
 
 export type RecallEvalItemId = (typeof RECALL_EVAL_IDS)[keyof typeof RECALL_EVAL_IDS]

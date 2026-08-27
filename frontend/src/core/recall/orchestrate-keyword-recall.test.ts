@@ -419,4 +419,155 @@ describe('recallByKeywordWithParsedClue', () => {
     expect(result.outcome).not.toBe('no_match')
     expect(result.topPick?.item.id ?? result.alsoPossible[0]?.item.id).toBe(item.id)
   })
+
+  it('零锚点助手发令（play songs I like）无歌类痕迹 → 诚实 no_match', () => {
+    const noise = createBookmarkMemoryItem({
+      ownerId: OWNER,
+      sourceLocalProfileId: PROFILE,
+      payload: {
+        title: 'Notes on gardening tips',
+        url: 'https://www.smithsonianmag.com/probe/excerpt/21'
+      }
+    })
+    const result = recallByKeywordWithParsedClue(
+      [noise],
+      'play some songs I like from my playlist',
+      { nowMs: NOW_MS }
+    )
+    expect(result.outcome).toBe('no_match')
+    expect(result.topPick).toBeNull()
+  })
+
+  it('零锚点：bored / recommend movie → 诚实 no_match（禁当推荐引擎）', () => {
+    const noise = createBookmarkMemoryItem({
+      ownerId: OWNER,
+      sourceLocalProfileId: PROFILE,
+      payload: {
+        title: 'Font pairing ideas for editorial sites',
+        url: 'https://www.typewolf.com/tips/font-pairing-editorial'
+      }
+    })
+    const video = createBookmarkMemoryItem({
+      ownerId: OWNER,
+      sourceLocalProfileId: PROFILE,
+      payload: {
+        title: 'Design critique rituals',
+        url: 'https://www.youtube.com/watch?v=yivenoDesignCritique01'
+      },
+      clues: { tags: ['video'] }
+    })
+    expect(
+      recallByKeywordWithParsedClue([noise, video], 'i feel bored pick something fun for me', {
+        nowMs: NOW_MS
+      }).outcome
+    ).toBe('no_match')
+    expect(
+      recallByKeywordWithParsedClue(
+        [noise, video],
+        'recommend a good movie I should watch tonight',
+        { nowMs: NOW_MS }
+      ).outcome
+    ).toBe('no_match')
+  })
+
+  it('非找回生活助手：天气 / 点餐 → no_match；有记忆锚的 weather 线索仍可扫', () => {
+    const attention = createBookmarkMemoryItem({
+      ownerId: OWNER,
+      sourceLocalProfileId: PROFILE,
+      payload: {
+        title: 'The Attention Economy Is a Lie',
+        url: 'https://www.theatlantic.com/technology/archive/2024/01/attention-economy-myth/677000/'
+      }
+    })
+    const cooking = createBookmarkMemoryItem({
+      ownerId: OWNER,
+      sourceLocalProfileId: PROFILE,
+      payload: {
+        title: 'campfire cooking (#330)',
+        url: 'https://www.bbc.com/probe/329'
+      }
+    })
+    const weatherArticle = createBookmarkMemoryItem({
+      ownerId: OWNER,
+      sourceLocalProfileId: PROFILE,
+      payload: {
+        title: 'Climate weather patterns research notes',
+        url: 'https://www.nature.com/articles/weather-patterns-probe'
+      }
+    })
+    expect(
+      recallByKeywordWithParsedClue(
+        [attention, cooking],
+        'what is the weather going to be like tomorrow',
+        { nowMs: NOW_MS }
+      ).outcome
+    ).toBe('no_match')
+    expect(
+      recallByKeywordWithParsedClue([attention, cooking], 'order me some pizza for dinner', {
+        nowMs: NOW_MS
+      }).outcome
+    ).toBe('no_match')
+    const savedWeather = recallByKeywordWithParsedClue(
+      [weatherArticle],
+      'weather patterns article I saved',
+      { nowMs: NOW_MS }
+    )
+    expect(savedWeather.outcome).not.toBe('no_match')
+    expect(savedWeather.topPick?.item.id ?? savedWeather.alsoPossible[0]?.item.id).toBe(
+      weatherArticle.id
+    )
+  })
+
+  it('非找回：摘要 / 行程 / 写码 → no_match；有记忆锚仍可扫', () => {
+    const hiking = createBookmarkMemoryItem({
+      ownerId: OWNER,
+      sourceLocalProfileId: PROFILE,
+      payload: {
+        title: 'Notes on weekend hiking trails',
+        url: 'https://www.example.com/probe/hiking'
+      }
+    })
+    const promises = createBookmarkMemoryItem({
+      ownerId: OWNER,
+      sourceLocalProfileId: PROFILE,
+      payload: {
+        title: 'Using promises - JavaScript | MDN',
+        url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises'
+      }
+    })
+    const newsClip = createBookmarkMemoryItem({
+      ownerId: OWNER,
+      sourceLocalProfileId: PROFILE,
+      payload: {
+        title: 'Latest news roundup I clipped',
+        url: 'https://www.example.com/probe/news-roundup'
+      }
+    })
+    expect(
+      recallByKeywordWithParsedClue(
+        [hiking, promises, newsClip],
+        'summarize the latest news for me',
+        {
+          nowMs: NOW_MS
+        }
+      ).outcome
+    ).toBe('no_match')
+    expect(
+      recallByKeywordWithParsedClue([hiking, promises], 'plan a weekend trip to seattle for me', {
+        nowMs: NOW_MS
+      }).outcome
+    ).toBe('no_match')
+    expect(
+      recallByKeywordWithParsedClue(
+        [hiking, promises],
+        'write a python script that renames my files',
+        { nowMs: NOW_MS }
+      ).outcome
+    ).toBe('no_match')
+    const savedNews = recallByKeywordWithParsedClue([newsClip], 'latest news roundup I saved', {
+      nowMs: NOW_MS
+    })
+    expect(savedNews.outcome).not.toBe('no_match')
+    expect(savedNews.topPick?.item.id ?? savedNews.alsoPossible[0]?.item.id).toBe(newsClip.id)
+  })
 })

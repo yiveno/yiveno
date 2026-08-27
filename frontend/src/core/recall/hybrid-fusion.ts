@@ -92,3 +92,49 @@ export function scoreFromCosineSimilarity(
 ): number {
   return Math.round(similarity * scale)
 }
+
+/**
+ * 词面领先者保护：关键词 Top1 相对次名分差够大时，禁止融合结果把它挤出首位。
+ * 避免「单共享词 + 强语义近邻」压过「多词备注 / 强词面」锚点。
+ */
+export const HYBRID_KEYWORD_LEADER_MARGIN = 18
+
+/** 领先者至少达到 Top Pick 词面门槛才启用保护。 */
+export const HYBRID_KEYWORD_LEADER_MIN_SCORE = 18
+
+export function preferKeywordLeaderInHybridFusion<T extends { id: string; score: number }>(
+  fusedOrdered: readonly T[],
+  keywordOrdered: readonly T[],
+  options?: { margin?: number; minLeaderScore?: number }
+): T[] {
+  if (fusedOrdered.length === 0 || keywordOrdered.length === 0) {
+    return [...fusedOrdered]
+  }
+
+  const margin = options?.margin ?? HYBRID_KEYWORD_LEADER_MARGIN
+  const minLeaderScore = options?.minLeaderScore ?? HYBRID_KEYWORD_LEADER_MIN_SCORE
+  const leader = keywordOrdered[0]!
+  const runnerUp = keywordOrdered[1]
+  const leadMargin = runnerUp ? leader.score - runnerUp.score : leader.score
+
+  if (leader.score < minLeaderScore || leadMargin < margin) {
+    return [...fusedOrdered]
+  }
+
+  const leaderIndex = fusedOrdered.findIndex(entry => entry.id === leader.id)
+  if (leaderIndex <= 0) {
+    return [...fusedOrdered]
+  }
+
+  const next = [...fusedOrdered]
+  const [moved] = next.splice(leaderIndex, 1)
+  if (!moved) {
+    return [...fusedOrdered]
+  }
+  const head = next[0]
+  const guarded = {
+    ...moved,
+    score: head ? Math.max(moved.score, head.score + 1) : moved.score
+  }
+  return [guarded, ...next]
+}

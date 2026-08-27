@@ -34,7 +34,7 @@
 ### 第 1 周 · 准备（研究负责人）
 
 - [ ] **2.1** 确认扩展版本号 `vX.Y` 与构建渠道（dev / 内测包）。
-- [ ] **2.2** 埋点就绪检查（§5.9 七事件；无埋点则**仅**手停表 + 录屏，并在报告中注明）。
+- [ ] **2.2** 埋点就绪检查（§5.9 七事件；无埋点则**仅**手停表 + 录屏，并在报告中注明）。**Dev 自检：** Side Panel 走一条 Recall → DevTools → Application → `chrome.storage.local` → `yiveno.recallTelemetry` 应含 `query_submitted` / `result_rendered`（含 `pipelineTiming`）/ `evidence_visible`；点击卡后应有 `source_opened`。
 - [ ] **2.3** 编写 **Gold Task 模板**（§6）并预填 10 条**内部** gold（团队自己的库）。
 - [ ] **2.4** 准备 **ECS 标注指南**（§7）+ 双标注表格。
 - [ ] **2.5** 准备 **知情同意** 要点：录屏范围、数据存本地/导出、可随时退出、不收集 Chrome 全站 history。

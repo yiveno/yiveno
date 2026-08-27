@@ -289,6 +289,76 @@ export function buildRecallEvalCorpus(): MemoryItem[] {
       }),
       RECALL_EVAL_IDS.millionPoundPeckExcerpt,
       '2026-08-20T08:00:00.000Z'
+    ),
+    withStableIdentity(
+      createBookmarkMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          title: 'Why note-taking apps fail researchers',
+          url: 'https://notes.example.com/note-taking-apps-fail'
+        },
+        clues: { note: 'disagree with section 3' },
+        now: () => '2026-08-18T08:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.noteAnchorDisagreeSection,
+      '2026-08-18T08:00:00.000Z'
+    ),
+    withStableIdentity(
+      createTextExcerptMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          selectedText:
+            'Boredom is not empty time; it is unstructured time that still belongs to you.',
+          sourceUrl: 'https://essays.example.com/joy-of-being-bored',
+          pageTitle: 'The joy of being bored'
+        },
+        clues: { note: 'use in newsletter opener' },
+        now: () => '2026-08-17T08:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.noteSharedWordNewsletterRival,
+      '2026-08-17T08:00:00.000Z'
+    ),
+    withStableIdentity(
+      createBookmarkMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          title: 'Untitled document',
+          url: 'https://docs.example.com/d/eval-grant-notes'
+        },
+        clues: { note: 'NSF grant narrative outline — revise budget table' },
+        now: () => '2026-08-16T08:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.weakTitleNoteGrant,
+      '2026-08-16T08:00:00.000Z'
+    ),
+    withStableIdentity(
+      createBookmarkMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          title: 'Phones listening for ads',
+          url: 'https://news.example.com/story/phone-listening-ads-privacy/'
+        },
+        now: () => '2026-07-22T12:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.recentPrivacyArticle,
+      '2026-07-22T12:00:00.000Z'
+    ),
+    withStableIdentity(
+      createBookmarkMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          title: 'Dense Passage Retrieval for Open-Domain QA',
+          url: 'https://papers.example.com/abs/2004.04906-dpr'
+        },
+        now: () => '2025-06-01T12:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.oldDensePassagePaper,
+      '2025-06-01T12:00:00.000Z'
     )
   ]
 }

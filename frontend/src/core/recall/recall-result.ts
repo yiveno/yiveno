@@ -2,6 +2,7 @@ import type { TranslateFn } from '@/core/i18n/translate'
 import type { MemoryItem } from '@/core/memory/memory-item'
 import { explainRecallMatch, getRecallMatchFieldLabel } from '@/core/recall/explain-recall-match'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
+import type { RecallPipelineTiming } from '@/core/recall/recall-telemetry'
 
 /** 单次召回命中项。 */
 export interface RecallMatch {
@@ -86,6 +87,8 @@ export interface RecallResult {
    * 缺省时 UI 可本端再抽；有芯片让位时通常不附。
    */
   composerNarrowExamples?: string[]
+  /** 理解 vs 检索分段耗时（TTE / 性能观测；§5.9）。 */
+  pipelineTiming?: RecallPipelineTiming
 }
 
 /** UI 展示用的 MemoryItem 摘要。 */

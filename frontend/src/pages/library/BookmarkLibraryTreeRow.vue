@@ -13,6 +13,8 @@ defineOptions({ name: 'BookmarkLibraryTreeRow' })
 const props = defineProps<{
   row: BookmarkLibraryVisibleRow
   showUnsyncedFlags?: boolean
+  evidenceSelected?: boolean
+  evidenceSelectionDisabled?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -31,6 +33,7 @@ const emit = defineEmits<{
       memoryItemId?: string
     }
   ]
+  toggleEvidenceSelection: [memoryItemId: string]
 }>()
 
 const faviconBroken = ref(false)
@@ -92,6 +95,14 @@ function handleOpenBookmark(event: MouseEvent) {
     ...(memoryItemId ? { memoryItemId } : {})
   })
 }
+function handleToggleEvidenceSelection(event: Event): void {
+  event.preventDefault()
+  event.stopPropagation()
+  if (props.row.kind !== 'bookmark' || !props.row.memoryItemId) {
+    return
+  }
+  emit('toggleEvidenceSelection', props.row.memoryItemId)
+}
 </script>
 
 <template>
@@ -114,6 +125,16 @@ function handleOpenBookmark(event: MouseEvent) {
     </template>
 
     <div v-else class="tree-bookmark-row">
+      <label v-if="row.memoryItemId" class="tree-bookmark-select" @click.stop>
+        <input
+          type="checkbox"
+          class="tree-evidence-checkbox"
+          :checked="evidenceSelected === true"
+          :disabled="evidenceSelectionDisabled === true"
+          :aria-label="t('evidence_pack_select_item_aria')"
+          @change="handleToggleEvidenceSelection"
+        />
+      </label>
       <a
         class="tree-bookmark"
         :href="row.url"
@@ -201,6 +222,26 @@ function handleOpenBookmark(event: MouseEvent) {
   gap: 2px;
   width: 100%;
   height: 100%;
+}
+
+.tree-bookmark-select {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  padding-left: 2px;
+}
+
+.tree-evidence-checkbox {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.tree-evidence-checkbox:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
 .tree-bookmark {

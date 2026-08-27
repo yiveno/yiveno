@@ -22,6 +22,7 @@ import {
   handleRestoreLatestSyncBackup,
   handleIncrementalMemorySync,
   handleSetSyncEnabled,
+  handleSetMcpReadOnly,
   handleSyncReplaceWithLocal,
   handleSyncReplaceWithRemote
 } from '@/background/handlers/account-sync-handler'
@@ -34,8 +35,11 @@ import {
 import {
   handleGetBookmarkLibraryTree,
   handleGetChromeBookmarkImportStatus,
-  handleGetColdStartStatus
+  handleGetColdStartStatus,
+  handleGetThirdPartyCorpusImportStatus,
+  handleImportThirdPartyCorpus
 } from '@/background/handlers/import-handler'
+import { handleMcpRecallEvidence } from '@/background/handlers/mcp-handler'
 import {
   handleCaptureBookmark,
   handleCaptureTextExcerpt,
@@ -43,6 +47,7 @@ import {
   handleGetMemoryItem,
   handleListMemoryItems,
   handleBackfillMemoryEmbeddings,
+  handleExportEvidencePack,
   handleRecordMemoryOpen,
   handleRecordRecallDismiss,
   handleRecordRecallSettle,
@@ -54,6 +59,11 @@ import {
   handleGetUserSettings,
   handleUpdateUserSettings
 } from '@/background/handlers/settings-handler'
+import {
+  parseSeedRecallProbePayload,
+  type DevSeedRecallProbeResponse
+} from '@/core/messaging/debug-messages'
+import { seedRecallProbeCorpus } from '@/infrastructure/debug/recall-probe-seed-service'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import { logger } from '@/infrastructure/logging/logger'
 import {
@@ -103,6 +113,8 @@ async function dispatchBackgroundMessage(
       return handleGetSyncStatus()
     case 'SET_SYNC_ENABLED':
       return handleSetSyncEnabled(message.payload.enabled)
+    case 'SET_MCP_READ_ONLY':
+      return handleSetMcpReadOnly(message.payload.enabled)
     case 'RUN_INCREMENTAL_MEMORY_SYNC':
       return handleIncrementalMemorySync()
     case 'SYNC_REPLACE_WITH_LOCAL':
@@ -145,12 +157,20 @@ async function dispatchBackgroundMessage(
       return handleRecordRecallSettle(message.payload)
     case 'BACKFILL_MEMORY_EMBEDDINGS':
       return handleBackfillMemoryEmbeddings()
+    case 'EXPORT_EVIDENCE_PACK':
+      return handleExportEvidencePack(message.payload)
     case 'RECALL_WITH_CLUE':
       return handleRecallWithClue(message.payload)
+    case 'MCP_RECALL_EVIDENCE':
+      return handleMcpRecallEvidence(message.payload)
     case 'GET_CHROME_BOOKMARK_IMPORT_STATUS':
       return handleGetChromeBookmarkImportStatus()
     case 'GET_COLD_START_STATUS':
       return handleGetColdStartStatus()
+    case 'IMPORT_THIRD_PARTY_CORPUS':
+      return handleImportThirdPartyCorpus(message.payload)
+    case 'GET_THIRD_PARTY_CORPUS_IMPORT_STATUS':
+      return handleGetThirdPartyCorpusImportStatus()
     case 'GET_BOOKMARK_LIBRARY_TREE':
       return handleGetBookmarkLibraryTree(
         message.payload &&
@@ -177,6 +197,29 @@ async function dispatchBackgroundMessage(
       return handleUpdateUserSettings(message.payload)
     case 'GET_AI_HOSTED_QUOTA':
       return handleGetAiHostedQuota()
+    case 'DEV_SEED_RECALL_PROBE': {
+      if (!import.meta.env.DEV) {
+        const denied: DevSeedRecallProbeResponse = {
+          ok: false,
+          errorCode: 'DEV_ONLY',
+          error: 'DEV_SEED_RECALL_PROBE 仅开发构建可用'
+        }
+        return denied
+      }
+      try {
+        const parsed = parseSeedRecallProbePayload(message.payload)
+        const result = await seedRecallProbeCorpus(parsed)
+        const ok: DevSeedRecallProbeResponse = { ok: true, ...result }
+        return ok
+      } catch (error) {
+        const failed: DevSeedRecallProbeResponse = {
+          ok: false,
+          errorCode: 'DEV_SEED_FAILED',
+          ...(error instanceof Error ? { error: error.message } : {})
+        }
+        return failed
+      }
+    }
     default:
       logger.warn('Msg', '未知消息类型', {
         type: (message as { type: string }).type

@@ -158,6 +158,69 @@ export class MemoryItemRepository {
     return merged
   }
 
+  /**
+   * 从第三方语料导出 upsert Bookmark（corpusSource + remoteId 幂等）。
+   * 保留已有 note / 行为字段。
+   */
+  async upsertBookmarkFromThirdPartyCorpus(input: CreateBookmarkInput): Promise<MemoryItem> {
+    const corpusSource = input.payload.corpusSource
+    const remoteId = input.payload.remoteId
+    if (!corpusSource || !remoteId) {
+      return this.createBookmark({
+        ...input,
+        captureEntry: input.captureEntry ?? 'import'
+      })
+    }
+
+    const ownerId = await getCurrentOwnerId()
+    const existingItems = await this.listByOwner({ type: 'bookmark', limit: 5000 })
+    const existing = existingItems.find(
+      item =>
+        item.type === 'bookmark' &&
+        item.payload.corpusSource === corpusSource &&
+        item.payload.remoteId === remoteId &&
+        item.deletedAt == null
+    )
+
+    if (!existing || existing.type !== 'bookmark') {
+      return this.createBookmark({
+        ...input,
+        captureEntry: input.captureEntry ?? 'import'
+      })
+    }
+
+    const [profile] = await Promise.all([getOrCreateLocalProfile()])
+    const next = createBookmarkMemoryItem({
+      ...input,
+      ownerId,
+      sourceLocalProfileId: profile.localProfileId,
+      captureEntry: input.captureEntry ?? existing.clues.captureEntry ?? 'import',
+      now: () => new Date().toISOString()
+    })
+
+    const merged: MemoryItem = {
+      ...next,
+      id: existing.id,
+      createdAt: next.payload.sourceCreatedAt ?? existing.createdAt,
+      clues: {
+        ...next.clues,
+        openCount: existing.clues.openCount,
+        lastOpenedAt: existing.clues.lastOpenedAt,
+        settledCount: existing.clues.settledCount,
+        lastSettledAt: existing.clues.lastSettledAt,
+        dismissCount: existing.clues.dismissCount,
+        lastDismissedAt: existing.clues.lastDismissedAt,
+        tags: mergeUniqueStrings(existing.clues.tags, next.clues.tags),
+        keywords: mergeUniqueStrings(existing.clues.keywords, next.clues.keywords),
+        entities: mergeUniqueStrings(existing.clues.entities, next.clues.entities),
+        note: existing.clues.note ?? next.clues.note
+      }
+    }
+
+    await this.put(merged)
+    return merged
+  }
+
   /** 批量写入 MemoryItem（同一事务）。 */
   async putMany(items: MemoryItem[]): Promise<void> {
     if (items.length === 0) {

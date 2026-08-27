@@ -42,6 +42,11 @@ export class MemoryItemService {
     return this.repository.upsertBookmarkFromChrome(input)
   }
 
+  /** 第三方语料导出 upsert（§5.10.6；不调度 LLM，与 bulk 书签一致）。 */
+  async upsertBookmarkFromThirdPartyCorpus(input: CreateBookmarkInput): Promise<MemoryItem> {
+    return this.repository.upsertBookmarkFromThirdPartyCorpus(input)
+  }
+
   /** 捕获选中文本为 Text Excerpt MemoryItem；落库后异步稀疏 LLM enrichment + Pro embedding。 */
   async captureTextExcerpt(input: CreateTextExcerptInput): Promise<MemoryItem> {
     const item = await this.repository.createTextExcerpt(input)

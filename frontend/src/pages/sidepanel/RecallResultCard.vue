@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 import type { RecallHighlightPart } from '@/core/recall/highlight-recall-text'
+import { scoreRecallEvidenceEcs } from '@/core/recall/recall-telemetry'
 import { getChromeFaviconUrl } from '@/infrastructure/browser/chrome-favicon'
+import { t } from '@/infrastructure/i18n/t'
 import type { AppIconName } from '@/infrastructure/ui/icons/icon-paths'
 import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
 import RecallHighlightText from '@/pages/sidepanel/RecallHighlightText.vue'
@@ -26,6 +28,18 @@ export interface RecallCardModel {
   duplicateTotalCount?: number
   duplicateLabel?: string
   siblings?: RecallCardModel[]
+  /** ISO 保存时间（TTE ECS 打分） */
+  savedAtIso?: string
+  /** 保存时间展示（相对，经 i18n） */
+  savedAtLabel?: string
+  /** 保存时间绝对值（title / 读屏） */
+  savedAtTitle?: string
+  /** 命中理由单行（Explain；TTE ECS） */
+  reasonLine?: string
+  /** 匹配字段键（TTE reason codes） */
+  reasonCodes?: string[]
+  /** 候选排序位（TTE rank） */
+  telemetryRank?: number
 }
 
 defineOptions({ name: 'RecallResultCard' })
@@ -40,16 +54,38 @@ const props = defineProps<{
   expandLabel: string
   collapseLabel: string
   noteFieldLabel: string
+  /** 展示 evidence pack 多选框 */
+  showEvidenceSelection?: boolean
+  evidenceSelected?: boolean
+  evidenceSelectionDisabled?: boolean
 }>()
 
 const emit = defineEmits<{
-  open: [payload: { id: string; url: string; openInNewTab: boolean }]
+  open: [payload: { id: string; url: string; openInNewTab: boolean; rank?: number }]
   toggleExpand: []
+  evidenceVisible: [
+    payload: {
+      memoryItemId: string
+      rank: number
+      ecs: number
+      reasonCodes?: string[]
+      anchor?: string
+    }
+  ]
+  toggleEvidenceSelection: [memoryItemId: string]
 }>()
 
 const isCollection = computed(() => (props.card.duplicateTotalCount ?? 0) >= 2)
 
 const moreActionLabel = computed(() => (props.expanded ? props.collapseLabel : props.expandLabel))
+
+const reasonAriaLabel = computed(() => {
+  const reason = props.card.reasonLine?.trim()
+  if (!reason) {
+    return undefined
+  }
+  return t('recall_card_match_reason_aria', reason)
+})
 
 /** 书签角标用 Chrome 缓存 favicon；失败回退 Lucide bookmark。 */
 const brokenFaviconIds = ref(new Set<string>())
@@ -104,20 +140,52 @@ function siblingNativeTitle(sibling: RecallCardModel): string | undefined {
   return title || path || undefined
 }
 
-function handleOpen(event: MouseEvent, id: string, url: string): void {
+function handleOpen(event: MouseEvent, id: string, url: string, rank?: number): void {
   // 一律经 SW 导航：默认当前活动标签；⌘/Ctrl+点击新开，避免 Side Panel 自身跳转
   event.preventDefault()
   emit('open', {
     id,
     url,
-    openInNewTab: event.metaKey || event.ctrlKey
+    openInNewTab: event.metaKey || event.ctrlKey,
+    ...(rank !== undefined ? { rank } : {})
   })
 }
+
+onMounted(() => {
+  const rank = props.card.telemetryRank
+  if (rank === undefined) {
+    return
+  }
+  const ecs = scoreRecallEvidenceEcs({
+    typeLabel: props.card.typeLabel,
+    subtitle: props.card.subtitle,
+    title: props.card.title,
+    url: props.card.url,
+    ...(props.card.excerpt !== undefined ? { excerpt: props.card.excerpt } : {}),
+    ...(props.card.savedAtIso !== undefined ? { savedAtIso: props.card.savedAtIso } : {}),
+    ...(props.card.reasonLine !== undefined ? { reasonLine: props.card.reasonLine } : {})
+  })
+  emit('evidenceVisible', {
+    memoryItemId: props.card.id,
+    rank,
+    ecs,
+    ...(props.card.reasonCodes?.length ? { reasonCodes: props.card.reasonCodes } : {}),
+    ...(props.card.excerpt?.trim() || props.card.title.trim()
+      ? { anchor: props.card.excerpt?.trim() || props.card.title.trim() }
+      : {})
+  })
+})
 
 function handleMoreClick(event: MouseEvent): void {
   event.preventDefault()
   event.stopPropagation()
   emit('toggleExpand')
+}
+
+function handleToggleEvidenceSelection(event: Event): void {
+  event.preventDefault()
+  event.stopPropagation()
+  emit('toggleEvidenceSelection', props.card.id)
 }
 </script>
 
@@ -138,6 +206,16 @@ function handleMoreClick(event: MouseEvent): void {
         'is-keyboard-selected': keyboardSelected
       }"
     >
+      <label v-if="showEvidenceSelection" class="recall-card-select" @click.stop>
+        <input
+          type="checkbox"
+          class="recall-evidence-checkbox"
+          :checked="evidenceSelected === true"
+          :disabled="evidenceSelectionDisabled === true"
+          :aria-label="t('evidence_pack_select_item_aria')"
+          @change="handleToggleEvidenceSelection"
+        />
+      </label>
       <span
         class="recall-type-chip recall-type-chip--corner"
         :class="
@@ -172,7 +250,7 @@ function handleMoreClick(event: MouseEvent): void {
         :href="card.url"
         :title="bookmarkNativeTitle"
         rel="noopener noreferrer"
-        @click="handleOpen($event, card.id, card.url)"
+        @click="handleOpen($event, card.id, card.url, card.telemetryRank)"
       >
         <p
           v-if="card.excerpt"
@@ -199,12 +277,25 @@ function handleMoreClick(event: MouseEvent): void {
           <RecallHighlightText :parts="card.noteParts" />
         </p>
         <p
+          v-if="card.reasonLine"
+          class="recall-card-reason"
+          :class="{ 'recall-card-reason--compact': compact }"
+          :aria-label="reasonAriaLabel"
+        >
+          {{ card.reasonLine }}
+        </p>
+        <p
           class="recall-card-subtitle"
           :title="card.itemKind === 'bookmark' ? card.subtitle : undefined"
         >
           <span class="recall-card-subtitle-text">
             <RecallHighlightText :parts="card.subtitleParts" />
           </span>
+        </p>
+        <p v-if="card.savedAtLabel" class="recall-card-saved">
+          <time :datetime="card.savedAtIso" :title="card.savedAtTitle">{{
+            card.savedAtLabel
+          }}</time>
         </p>
       </a>
 
@@ -259,7 +350,7 @@ function handleMoreClick(event: MouseEvent): void {
           :href="sibling.url"
           :title="siblingNativeTitle(sibling)"
           rel="noopener noreferrer"
-          @click="handleOpen($event, sibling.id, sibling.url)"
+          @click="handleOpen($event, sibling.id, sibling.url, sibling.telemetryRank)"
         >
           <p v-if="sibling.excerpt" class="recall-card-body recall-card-body--compact">
             <RecallHighlightText :parts="sibling.excerptParts" />
@@ -276,12 +367,28 @@ function handleMoreClick(event: MouseEvent): void {
             <RecallHighlightText :parts="sibling.noteParts" />
           </p>
           <p
+            v-if="sibling.reasonLine"
+            class="recall-card-reason recall-card-reason--compact"
+            :aria-label="
+              sibling.reasonLine
+                ? t('recall_card_match_reason_aria', sibling.reasonLine)
+                : undefined
+            "
+          >
+            {{ sibling.reasonLine }}
+          </p>
+          <p
             class="recall-card-subtitle"
             :title="sibling.itemKind === 'bookmark' ? sibling.subtitle : undefined"
           >
             <span class="recall-card-subtitle-text">
               <RecallHighlightText :parts="sibling.subtitleParts" />
             </span>
+          </p>
+          <p v-if="sibling.savedAtLabel" class="recall-card-saved recall-card-saved--compact">
+            <time :datetime="sibling.savedAtIso" :title="sibling.savedAtTitle">
+              {{ sibling.savedAtLabel }}
+            </time>
           </p>
         </a>
       </li>
@@ -304,6 +411,32 @@ function handleMoreClick(event: MouseEvent): void {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface-white);
+}
+
+.recall-card-select {
+  position: absolute;
+  top: var(--space-xs);
+  left: var(--space-xs);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+}
+
+.recall-evidence-checkbox {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.recall-evidence-checkbox:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.recall-card-shell:has(.recall-card-select) .recall-card {
+  padding-left: calc(var(--space-md) + 18px);
 }
 
 /* 书签：干净白底 + 略强描边，像「可打开的链接页」 */
@@ -524,6 +657,24 @@ function handleMoreClick(event: MouseEvent): void {
   color: var(--accent);
 }
 
+.recall-card-reason {
+  display: -webkit-box;
+  margin: 0 0 var(--space-2xs);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--on-surface-muted);
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.recall-card-reason--compact {
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+}
+
 .recall-card-subtitle {
   display: flex;
   align-items: center;
@@ -536,6 +687,22 @@ function handleMoreClick(event: MouseEvent): void {
 
 .recall-card-subtitle-text {
   min-width: 0;
+}
+
+.recall-card-saved {
+  margin: var(--space-2xs) 0 0;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--on-surface-muted);
+}
+
+.recall-card-saved--compact {
+  font-size: 10px;
+}
+
+.recall-card-saved time {
+  font: inherit;
+  color: inherit;
 }
 
 .recall-duplicate-more {

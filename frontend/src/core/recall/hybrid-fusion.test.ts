@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   cosineSimilarity,
+  preferKeywordLeaderInHybridFusion,
   rankIdsByCosineToQuery,
   reciprocalRankFusion,
   scoreFromCosineSimilarity,
@@ -67,5 +68,33 @@ describe('rankIdsByCosineToQuery', () => {
 describe('scoreFromCosineSimilarity', () => {
   it('0.4 余弦映射到可过 Top Pick 下限的分数', () => {
     expect(scoreFromCosineSimilarity(0.4)).toBe(20)
+  })
+})
+
+describe('preferKeywordLeaderInHybridFusion', () => {
+  it('词面领先分差够大时拉回融合首位', () => {
+    const fused = [
+      { id: 'semantic-rival', score: 100 },
+      { id: 'keyword-leader', score: 95 }
+    ]
+    const keyword = [
+      { id: 'keyword-leader', score: 92 },
+      { id: 'semantic-rival', score: 66 }
+    ]
+    const ordered = preferKeywordLeaderInHybridFusion(fused, keyword)
+    expect(ordered[0]?.id).toBe('keyword-leader')
+    expect(ordered[0]!.score).toBeGreaterThan(ordered[1]!.score)
+  })
+
+  it('分差不足时不改序', () => {
+    const fused = [
+      { id: 'a', score: 80 },
+      { id: 'b', score: 78 }
+    ]
+    const keyword = [
+      { id: 'b', score: 50 },
+      { id: 'a', score: 48 }
+    ]
+    expect(preferKeywordLeaderInHybridFusion(fused, keyword).map(e => e.id)).toEqual(['a', 'b'])
   })
 })

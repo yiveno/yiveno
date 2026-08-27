@@ -8,15 +8,15 @@
 
 ## 1. 实现锚点
 
-| R4 交付          | 预期路径                                                                             | 验收                                                          |
-| ---------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------- |
-| Explain ECS UI   | `pages/sidepanel/SidePanel.vue` · `RecallResultCard.vue` · `explain-recall-match.ts` | §5.10.1                                                       |
-| Omnibox ECS      | `background/listeners/omnibox.ts` + 建议 UI                                          | §5.10.1                                                       |
-| TTE 埋点         | 新模块建议 `infrastructure/analytics/` 或 `application/recall/recall-telemetry.ts`   | §5.10.3 · §5.9 七事件                                         |
-| Outcome Labeling | `recall-outcome*` + pairs storage + Hybrid 消费；C2 默认不进 settled                 | §7.2 P0–P3；开 C2 settled 见 `R4-Outcome-Labeling-P2-校准.md` |
-| evidence pack    | Settings 或 Library 多选 + 新 message type（先 schema）                              | §5.10.4                                                       |
-| 只读 MCP         | 新 Worker 路由或 extension MCP server（scope 设计先写产品文档）                      | §5.10.5                                                       |
-| Raindrop/Pocket  | `application/capture/` 新 adapter + `import-handler`                                 | §5.10.6 · R2 准入                                             |
+| R4 交付          | 预期路径                                                                                                                  | 验收                                                          |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Explain ECS UI   | `pages/sidepanel/SidePanel.vue` · `RecallResultCard.vue` · `explain-recall-match.ts`                                      | §5.10.1                                                       |
+| Omnibox ECS      | `background/listeners/omnibox.ts` + 建议 UI                                                                               | §5.10.1                                                       |
+| TTE 埋点         | 新模块建议 `infrastructure/analytics/` 或 `application/recall/recall-telemetry.ts`                                        | §5.10.3 · §5.9 七事件                                         |
+| Outcome Labeling | `recall-outcome*` + pairs storage + Hybrid 消费；C2 默认不进 settled                                                      | §7.2 P0–P3；开 C2 settled 见 `R4-Outcome-Labeling-P2-校准.md` |
+| evidence pack    | `core/recall/evidence-pack.ts` · `EXPORT_EVIDENCE_PACK` · Library + Side Panel 多选 UI                                    | §5.10.4（已上线）                                             |
+| 只读 MCP         | Settings `mcpReadOnlyEnabled` · `MCP_RECALL_EVIDENCE` · Worker `PUT /api/account/mcp` + `/api/mcp/tools*` · `@yiveno/mcp` | §5.10.5（已上线 beta）                                        |
+| Raindrop/Pocket  | `parse-*-export` · `import-third-party-corpus-service` · Settings 数据区 · `IMPORT_THIRD_PARTY_CORPUS`                    | §5.10.6（已上线 · R2 准入）                                   |
 
 **消息 type：** 禁止发明字符串；evidence export / MCP 须先改 `core/messaging/*`。
 
@@ -62,13 +62,22 @@ frontend/src/core/recall/explain-recall-match.test.ts
 frontend/src/core/recall/recall-result.test.ts  # formatMatchedFields
 ```
 
-R4 UI 合入后**不强制** snapshot 测 Vue；§5.10.1 手工 + reasonLine wired 在 `toMatchCard` 为门禁。
+R4 UI 合入后**不强制** snapshot 测 Vue；§5.10.1 手工 + `RecallResultCard` / Omnibox suggest 五要素为门禁。
+
+**ECS 卡面（2026-08-27）：** `RecallResultCard` 展示 `reasonLine` + `Saved $time$`；`format-recall-saved-time.ts`；Omnibox description 含保存时间与 Explain 理由。
 
 ---
 
-## 4. TTE 事件 schema（实现草案）
+## 4. TTE 事件 schema（实现）
 
-与 §5.9 / `yiveno_research/TTE_指标框架与测试协议.md` 对齐。建议 Zod：
+与 §5.9 / `yiveno_research/TTE_指标框架与测试协议.md` 对齐。权威实现：
+
+| 模块                                           | 路径                                                                                                |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Zod 七事件 + `RecallPipelineTiming` + ECS 打分 | `frontend/src/core/recall/recall-telemetry.ts`                                                      |
+| 本机环形缓冲                                   | `frontend/src/infrastructure/analytics/recall-telemetry-store.ts`                                   |
+| Side Panel 录制器                              | `frontend/src/infrastructure/analytics/recall-telemetry-recorder.ts`                                |
+| 流水线分段计时                                 | `frontend/src/application/recall/backends/hybrid-recall-backend.ts` → `RecallResult.pipelineTiming` |
 
 ```typescript
 // 示意；合入时放在 core/recall/ 或 infrastructure/analytics/
@@ -90,7 +99,9 @@ RecallTelemetryEventSchema = z.discriminatedUnion('type', [
 ])
 ```
 
-**存储：** P0 可 `chrome.storage.local` 环形缓冲 + dev 导出；不上云除非隐私文档更新。
+**存储：** P0 `chrome.storage.local` 键 `yiveno.recallTelemetry`（最多 500 条）；dev 可读 `listRecallTelemetryEvents()`；不上云除非隐私文档更新。
+
+**单测：** `frontend/src/core/recall/recall-telemetry.test.ts`（七事件 parse + ECS 0–5）。
 
 ---
 
@@ -117,6 +128,8 @@ RecallTelemetryEventSchema = z.discriminatedUnion('type', [
 
 合入时须 Zod 校验；Markdown 为人类可读视图，与 JSON **同源**生成。
 
+**实现（2026-08）：** `frontend/src/core/recall/evidence-pack.ts` · `application/recall/export-evidence-pack-service.ts` · `EXPORT_EVIDENCE_PACK` · Library / Side Panel `EvidencePackExportBar`。
+
 ---
 
 ## 6. 合入顺序建议
@@ -134,6 +147,9 @@ RecallTelemetryEventSchema = z.discriminatedUnion('type', [
 
 ## 修订记录
 
-| 日期       | 变更                                                                |
-| ---------- | ------------------------------------------------------------------- |
-| 2026-08-24 | **TTE 种子 study：** 工程 checklist `TTE-种子用户研究-checklist.md` |
+| 日期       | 变更                                                                                 |
+| ---------- | ------------------------------------------------------------------------------------ |
+| 2026-08-27 | **Raindrop/Pocket 文件导入已上线：** Settings 数据区；§5.10.6；解析 HTML/CSV/JSON    |
+| 2026-08-27 | **Evidence pack 已上线：** Library + Side Panel 多选导出；`EXPORT_EVIDENCE_PACK`；§5 |
+| 2026-08-27 | **TTE 埋点 P0：** 七事件 + `pipelineTiming` + ECS 打分 + 本机缓冲；见 §4 模块表      |
+| 2026-08-24 | **TTE 种子 study：** 工程 checklist `TTE-种子用户研究-checklist.md`                  |

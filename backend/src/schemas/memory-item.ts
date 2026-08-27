@@ -46,7 +46,11 @@ const BookmarkPayloadSchema = z.object({
   faviconUrl: z.string().url().optional(),
   chromeBookmarkId: z.string().optional(),
   parentFolderId: z.string().optional(),
-  chromeCreatedAt: z.string().datetime().optional()
+  chromeCreatedAt: z.string().datetime().optional(),
+  /** 第三方语料源（与扩展 payload 对齐） */
+  corpusSource: z.enum(['raindrop', 'pocket']).optional(),
+  remoteId: z.string().min(1).optional(),
+  sourceCreatedAt: z.string().datetime().optional()
 })
 
 const TextExcerptPayloadSchema = z.object({

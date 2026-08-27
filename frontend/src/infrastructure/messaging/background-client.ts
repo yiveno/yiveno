@@ -19,7 +19,8 @@ import type {
   RestoreLatestSyncBackupResponse,
   AckPrivacyNoticeResponse,
   RunIncrementalMemorySyncResponse,
-  SetSyncEnabledResponse
+  SetSyncEnabledResponse,
+  SetMcpReadOnlyResponse
 } from '@/core/messaging/account-sync-messages'
 import type {
   GetExtensionCommandsMessage,
@@ -38,7 +39,11 @@ import type {
   GetBookmarkLibraryTreeResponse,
   GetChromeBookmarkImportStatusMessage,
   GetColdStartStatusMessage,
-  GetBookmarkLibraryTreeMessage
+  GetBookmarkLibraryTreeMessage,
+  ImportThirdPartyCorpusMessage,
+  ImportThirdPartyCorpusResponse,
+  GetThirdPartyCorpusImportStatusMessage,
+  ThirdPartyCorpusImportStatusResponse
 } from '@/core/messaging/import-messages'
 import type {
   ListMemoryItemsMessage,
@@ -48,6 +53,7 @@ import type {
   RecordMemoryOpenMessage,
   RecordRecallDismissMessage,
   RecordRecallSettleMessage,
+  ExportEvidencePackMessage,
   CaptureTextExcerptMessage,
   MemoryBackgroundResponse
 } from '@/core/messaging/memory-messages'
@@ -55,6 +61,7 @@ import type {
   RecallBackgroundResponse,
   RecallWithClueMessage
 } from '@/core/messaging/recall-messages'
+import type { McpBackgroundResponse, McpRecallEvidenceMessage } from '@/core/messaging/mcp-messages'
 import type {
   GetAiHostedQuotaResponse,
   GetUserSettingsResponse,
@@ -79,6 +86,18 @@ export async function recallWithClue(
     payload
   }
   return sendBackgroundMessage<RecallBackgroundResponse>(message)
+}
+
+/** 只读 MCP：本机 Hybrid → evidence pack（须 Settings 开启）。 */
+export async function mcpRecallEvidence(
+  payload: McpRecallEvidenceMessage['payload']
+): Promise<McpBackgroundResponse> {
+  const message: McpRecallEvidenceMessage = {
+    scope: 'background',
+    type: 'MCP_RECALL_EVIDENCE',
+    payload
+  }
+  return sendBackgroundMessage<McpBackgroundResponse>(message)
 }
 
 /** 列出 MemoryItem（探活可用 limit: 1）。 */
@@ -177,6 +196,18 @@ export async function recordRecallSettle(
   return sendBackgroundMessage<MemoryBackgroundResponse>(message)
 }
 
+/** 多选导出 evidence pack（§5.10.4；2–5 条）。 */
+export async function exportEvidencePack(
+  payload: ExportEvidencePackMessage['payload']
+): Promise<MemoryBackgroundResponse> {
+  const message: ExportEvidencePackMessage = {
+    scope: 'background',
+    type: 'EXPORT_EVIDENCE_PACK',
+    payload
+  }
+  return sendBackgroundMessage<MemoryBackgroundResponse>(message)
+}
+
 /** 查询 Chrome 书签导入进度。 */
 export async function fetchChromeBookmarkImportStatus(): Promise<ChromeBookmarkImportStatusResponse> {
   const message: GetChromeBookmarkImportStatusMessage = {
@@ -184,6 +215,27 @@ export async function fetchChromeBookmarkImportStatus(): Promise<ChromeBookmarkI
     type: 'GET_CHROME_BOOKMARK_IMPORT_STATUS'
   }
   return sendBackgroundMessage<ChromeBookmarkImportStatusResponse>(message)
+}
+
+/** 导入 Raindrop / Pocket 导出文件（§5.10.6）。 */
+export async function importThirdPartyCorpus(
+  payload: ImportThirdPartyCorpusMessage['payload']
+): Promise<ImportThirdPartyCorpusResponse> {
+  const message: ImportThirdPartyCorpusMessage = {
+    scope: 'background',
+    type: 'IMPORT_THIRD_PARTY_CORPUS',
+    payload
+  }
+  return sendBackgroundMessage<ImportThirdPartyCorpusResponse>(message)
+}
+
+/** 查询第三方语料导入进度。 */
+export async function fetchThirdPartyCorpusImportStatus(): Promise<ThirdPartyCorpusImportStatusResponse> {
+  const message: GetThirdPartyCorpusImportStatusMessage = {
+    scope: 'background',
+    type: 'GET_THIRD_PARTY_CORPUS_IMPORT_STATUS'
+  }
+  return sendBackgroundMessage<ThirdPartyCorpusImportStatusResponse>(message)
 }
 
 /** 查询冷启动三阶段门禁进度。 */
@@ -319,6 +371,15 @@ export async function setSyncEnabled(enabled: boolean): Promise<SetSyncEnabledRe
   return sendBackgroundMessage<SetSyncEnabledResponse>({
     scope: 'background',
     type: 'SET_SYNC_ENABLED',
+    payload: { enabled }
+  })
+}
+
+/** 同步只读 MCP 开关到 Worker（未登录时仅本机生效）。 */
+export async function setMcpReadOnly(enabled: boolean): Promise<SetMcpReadOnlyResponse> {
+  return sendBackgroundMessage<SetMcpReadOnlyResponse>({
+    scope: 'background',
+    type: 'SET_MCP_READ_ONLY',
     payload: { enabled }
   })
 }

@@ -42,6 +42,27 @@ const PRIMARY_CONTENT_HIT_BONUS = 16
 /** 主文贴合度加成上限（密度 / 起首 / 近全等，语言无关）。 */
 const PRIMARY_MATCH_QUALITY_CAP = 30
 
+/**
+ * 同一 note 字段命中 ≥2 个「内容向」term（长度≥5）时，每多一词的抬升。
+ * 让「disagree + section」类多锚点备注压过单共享词（如 newsletter）沾边。
+ */
+export const NOTE_MULTI_TERM_HIT_BONUS = 16
+
+/** 计入 note 多词覆盖的最小 term 长度（避开 with/from 等短粘着词）。 */
+const NOTE_COVERAGE_TERM_MIN_LEN = 5
+
+/**
+ * 全字段内容词覆盖：线索 ≥2 个内容 term 且条目命中 ≥2 时抬升。
+ * 防「paper」单泛词 + 强语义压过「dpr+arxiv」多锚（通解，非专名表）。
+ */
+export const CONTENT_MULTI_TERM_HIT_BONUS = 16
+
+/** 覆盖率加成上限尺度：hitCount/queryCount * 本值。 */
+export const CONTENT_COVERAGE_RATIO_SCALE = 30
+
+/** 计入全字段覆盖的最小 term 长度（含 dpr 类 3 字母缩写）。 */
+const CONTENT_COVERAGE_TERM_MIN_LEN = 3
+
 /** 行为信号（打开次数/近因）对关键词分的最大加成，避免压过强词面命中。 */
 export const RECALL_BEHAVIOR_BOOST_CAP = 12
 
@@ -431,6 +452,44 @@ function fieldWeight(field: string): number {
   return FIELD_WEIGHTS[field] ?? 8
 }
 
+/**
+ * 拉丁词轻量屈折变体（无词典）：disagreed↔disagree、clients↔client。
+ * 仅 ASCII 字母；变体过短则丢弃。
+ */
+export function latinInflectionVariants(token: string): string[] {
+  const normalized = normalizeRecallText(token)
+  if (normalized.length < 4 || !/^[a-z]+$/.test(normalized)) {
+    return normalized ? [normalized] : []
+  }
+
+  const variants = new Set<string>([normalized])
+  if (normalized.endsWith('ies') && normalized.length >= 5) {
+    variants.add(`${normalized.slice(0, -3)}y`)
+  }
+  if (normalized.endsWith('es') && normalized.length >= 5 && !normalized.endsWith('ss')) {
+    variants.add(normalized.slice(0, -2))
+  }
+  if (normalized.endsWith('s') && !normalized.endsWith('ss') && normalized.length >= 4) {
+    variants.add(normalized.slice(0, -1))
+  }
+  if (normalized.endsWith('ing') && normalized.length >= 6) {
+    const base = normalized.slice(0, -3)
+    variants.add(base)
+    variants.add(`${base}e`)
+    if (base.length >= 2 && base[base.length - 1] === base[base.length - 2]) {
+      variants.add(base.slice(0, -1))
+    }
+  }
+  if (normalized.endsWith('ed') && normalized.length >= 5) {
+    // disagreed → disagree（去 d）；liked → like（去 ed + e）
+    variants.add(normalized.slice(0, -1))
+    variants.add(normalized.slice(0, -2))
+    variants.add(`${normalized.slice(0, -2)}e`)
+  }
+
+  return [...variants].filter(variant => variant.length >= 3)
+}
+
 function exactTokenHit(
   fieldText: string,
   compactField: string,
@@ -449,6 +508,15 @@ function exactTokenHit(
   // 短词：原文形态缩写（JavaScript→js；React Native→rn）
   if (shortLatinTokenHitsField(originalField || fieldText, token)) {
     return true
+  }
+  // 拉丁屈折：线索 disagreed 对齐字段 disagree（通解，非专名表）
+  for (const variant of latinInflectionVariants(token)) {
+    if (variant === token) {
+      continue
+    }
+    if (fieldText.includes(variant) || compactField.includes(compactRecallText(variant))) {
+      return true
+    }
   }
   // host 对齐：www. 与裸域等价（domain / url 字段常见形态差）
   if (looksLikeRecallHostClue(compactToken)) {
@@ -748,10 +816,23 @@ function scoreMemoryItemWithTokens(
   const fuzzyCandidates: PreparedRecallToken[] = []
   const ngramHitFields = new Set<string>()
   let primaryContentHit = false
+  /** note 上命中的内容向 term 数（用于多锚点备注抬升）。 */
+  let noteContentTermHits = 0
+  /** 全字段命中的内容向 term 数（用于多锚点覆盖抬升）。 */
+  let contentTermHits = 0
+  let queryContentTermCount = 0
 
   for (const prepared of preparedTokens) {
     const { token, kind, compactToken } = prepared
     let tokenHit = false
+    let hitNote = false
+    const countsForCoverage =
+      kind !== 'ngram' &&
+      token.length >= CONTENT_COVERAGE_TERM_MIN_LEN &&
+      /^[a-z0-9]+$/i.test(token)
+    if (countsForCoverage) {
+      queryContentTermCount += 1
+    }
 
     for (const field of fields) {
       if (!exactTokenHit(field.text, field.compact, token, compactToken, field.original)) {
@@ -760,6 +841,9 @@ function scoreMemoryItemWithTokens(
 
       matchedFields.add(field.field)
       tokenHit = true
+      if (field.field === 'note') {
+        hitNote = true
+      }
       if (kind === 'ngram') {
         ngramHitFields.add(field.field)
       } else if (PRIMARY_CONTENT_FIELDS.has(field.field)) {
@@ -778,6 +862,19 @@ function scoreMemoryItemWithTokens(
       exactScore += gain
     }
 
+    if (
+      hitNote &&
+      kind !== 'ngram' &&
+      token.length >= NOTE_COVERAGE_TERM_MIN_LEN &&
+      /^[a-z0-9]+$/i.test(token)
+    ) {
+      noteContentTermHits += 1
+    }
+
+    if (tokenHit && countsForCoverage) {
+      contentTermHits += 1
+    }
+
     if (!tokenHit && kind !== 'ngram' && token.length >= 2 && token.length <= 8) {
       fuzzyCandidates.push(prepared)
     }
@@ -785,6 +882,17 @@ function scoreMemoryItemWithTokens(
 
   if (ngramHitFields.size > 0 && exactScore > 0) {
     exactScore += ngramHitFields.size * NGRAM_FIELD_BONUS
+  }
+
+  if (noteContentTermHits >= 2) {
+    exactScore += (noteContentTermHits - 1) * NOTE_MULTI_TERM_HIT_BONUS
+  }
+
+  if (queryContentTermCount >= 2 && contentTermHits >= 2) {
+    exactScore += (contentTermHits - 1) * CONTENT_MULTI_TERM_HIT_BONUS
+    exactScore += Math.round(
+      (contentTermHits / queryContentTermCount) * CONTENT_COVERAGE_RATIO_SCALE
+    )
   }
 
   if (primaryContentHit) {

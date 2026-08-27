@@ -123,7 +123,7 @@ describe('mapLlmProposalToParsedClue', () => {
     expect(parsed.contentTerms).not.toContain('note')
   })
 
-  it('verse 别名可支撑 poem，并从 contentTerms 剥离', () => {
+  it('verse 别名可支撑 poem，并从 contentTerms 剥离；the other day→recent', () => {
     const parsed = mapLlmProposalToParsedClue(
       'that Li Bai verse from the other day',
       {
@@ -134,9 +134,25 @@ describe('mapLlmProposalToParsedClue', () => {
       },
       PARSE_GOLD_NOW_MS
     )
+    expect(parsed.timeRange?.label).toBe('recent')
     expect(parsed.objectTypes).toEqual(['poem'])
     expect(parsed.contentTerms).toEqual(['li', 'bai'])
     expect(parsed.confidence).toBe('high')
+  })
+
+  it('soft「old」无相对时间词面时不得采纳 LLM timeLabel', () => {
+    const parsed = mapLlmProposalToParsedClue(
+      'that old DPR paper on arxiv',
+      {
+        timeLabel: 'a_while_ago',
+        objectTypes: ['article'],
+        contentTerms: ['dpr', 'paper', 'arxiv'],
+        confidence: 'medium'
+      },
+      PARSE_GOLD_NOW_MS
+    )
+    expect(parsed.timeRange).toBeUndefined()
+    expect(parsed.contentTerms).toEqual(expect.arrayContaining(['dpr', 'arxiv']))
   })
 })
 
@@ -148,7 +164,7 @@ describe('parseRecallClueWithLlm + compare（mock）', () => {
 
       if (clue.includes('verse')) {
         return JSON.stringify({
-          timeLabel: 'a_while_ago',
+          timeLabel: 'recent',
           objectTypes: ['poem'],
           behaviorHints: null,
           noteHint: false,
@@ -194,7 +210,7 @@ describe('parseRecallClueWithLlm + compare（mock）', () => {
         clue: 'that Li Bai verse from the other day',
         gate: 'stretch' as const,
         expect: {
-          timeLabel: 'a_while_ago' as const,
+          timeLabel: 'recent' as const,
           objectTypes: ['poem' as const],
           contentTermsMustInclude: ['li', 'bai'],
           contentTermsMustExclude: ['verse'],

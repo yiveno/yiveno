@@ -200,6 +200,62 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
     note: 'R0/C：零锚点助手发令；库无歌类痕迹 → 诚实 no_match，不得当推荐命中'
   },
   {
+    id: 'r0-zero-anchor-bored-pick',
+    clue: 'i feel bored pick something fun for me',
+    clueClass: 'negative',
+    gate: 'must',
+    expectation: { kind: 'no_match' },
+    note: 'R0：无聊助手发令 → 诚实空，禁扫库编造'
+  },
+  {
+    id: 'r0-zero-anchor-recommend-movie',
+    clue: 'recommend a good movie I should watch tonight',
+    clueClass: 'negative',
+    gate: 'must',
+    expectation: { kind: 'no_match' },
+    note: 'R0：推荐电影 ≠ 找回；有 video 类型词也不得当娱乐推荐'
+  },
+  {
+    id: 'r0-non-recall-weather',
+    clue: 'what is the weather going to be like tomorrow',
+    clueClass: 'negative',
+    gate: 'must',
+    expectation: { kind: 'no_match' },
+    note: 'R0：天气问答非找回；禁扫库沾边'
+  },
+  {
+    id: 'r0-non-recall-order-food',
+    clue: 'order me some pizza for dinner',
+    clueClass: 'negative',
+    gate: 'must',
+    expectation: { kind: 'no_match' },
+    note: 'R0：点餐非找回；禁扫烹饪噪声'
+  },
+  {
+    id: 'r0-non-recall-summarize',
+    clue: 'summarize the latest news for me',
+    clueClass: 'negative',
+    gate: 'must',
+    expectation: { kind: 'no_match' },
+    note: 'R0：摘要助手非找回；禁扫 news/diversity 噪声'
+  },
+  {
+    id: 'r0-non-recall-plan-trip',
+    clue: 'plan a weekend trip to seattle for me',
+    clueClass: 'negative',
+    gate: 'must',
+    expectation: { kind: 'no_match' },
+    note: 'R0：行程规划非找回；禁扫 weekend/hiking 噪声'
+  },
+  {
+    id: 'r0-non-recall-codegen',
+    clue: 'write a python script that renames my files',
+    clueClass: 'negative',
+    gate: 'must',
+    expectation: { kind: 'no_match' },
+    note: 'R0：写码助手非找回；禁扫 MDN/script 词面'
+  },
+  {
     id: 'negative-too-generic-noise',
     clue: 'braised pork belly',
     clueClass: 'negative',
@@ -275,6 +331,38 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
     gate: 'must',
     expectation: { kind: 'top1', expectedId: RECALL_EVAL_IDS.millionPoundPeckExcerpt },
     note: '英文摘录含 Peck / Million Pound / 1954 时应稳定 Top1（非 no_match）'
+  },
+  {
+    id: 'semi-fuzzy-note-inflection-over-shared-word',
+    clue: 'newsletter where I disagreed with section 3',
+    clueClass: 'semi_fuzzy',
+    gate: 'must',
+    expectation: { kind: 'top1', expectedId: RECALL_EVAL_IDS.noteAnchorDisagreeSection },
+    note: '屈折 disagreed→disagree + note 多词覆盖；须压过仅共享 newsletter 的对手摘录'
+  },
+  {
+    id: 'semi-fuzzy-weak-title-note-anchor',
+    clue: 'the untitled doc where I noted NSF grant narrative',
+    clueClass: 'semi_fuzzy',
+    gate: 'must',
+    expectation: { kind: 'top1', expectedId: RECALL_EVAL_IDS.weakTitleNoteGrant },
+    note: '弱标题 Untitled，靠 clues.note（grant narrative）钉死 Top1'
+  },
+  {
+    id: 'semi-fuzzy-few-days-ago-privacy',
+    clue: 'the privacy article from a few days ago',
+    clueClass: 'semi_fuzzy',
+    gate: 'must',
+    expectation: { kind: 'top1', expectedId: RECALL_EVAL_IDS.recentPrivacyArticle },
+    note: 'a few days ago→recent（含近 3 天）；勿误入 a_while_ago 硬排除'
+  },
+  {
+    id: 'semi-fuzzy-old-adjective-dense-passage',
+    clue: 'that old DPR paper on arxiv',
+    clueClass: 'semi_fuzzy',
+    gate: 'must',
+    expectation: { kind: 'top1', expectedId: RECALL_EVAL_IDS.oldDensePassagePaper },
+    note: 'soft old 不作时间硬窗；靠 DPR/arxiv 内容锚 Top1'
   },
 
   // —— stretch：仍需同义/语义层 ——

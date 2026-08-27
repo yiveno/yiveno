@@ -30,15 +30,17 @@ import type {
   AckPrivacyNoticeResponse,
   RunIncrementalMemorySyncResponse,
   SetSyncEnabledResponse,
+  SetMcpReadOnlyResponse,
   SyncReplaceWithLocalResponse,
   SyncReplaceWithRemoteResponse
 } from '@/core/messaging/account-sync-messages'
 import { MemoryItemSchema, type MemoryItem } from '@/core/memory/memory-item'
-import { refreshAuthSession, refreshAuthProfileFields } from '@/infrastructure/auth/extension-oauth'
+import { putMcpReadOnlyRemote } from '@/infrastructure/mcp/mcp-api-client'
 import {
   clearAuthValidationTimestamp,
   revalidateAuthSession
 } from '@/infrastructure/auth/auth-session-revalidate'
+import { refreshAuthProfileFields, refreshAuthSession } from '@/infrastructure/auth/extension-oauth'
 import {
   clearAuthSession,
   getAuthSession,
@@ -482,6 +484,36 @@ export async function handleGetSyncStatus(): Promise<GetSyncStatusResponse> {
     return {
       ok: false,
       errorCode: 'SYNC_STATUS_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
+    }
+  }
+}
+
+/** SET_MCP_READ_ONLY：本机已由 Settings 写入；此处同步云端 KV 门禁。 */
+export async function handleSetMcpReadOnly(enabled: boolean): Promise<SetMcpReadOnlyResponse> {
+  const startedAt = flowStart('Mcp', 'SET_MCP_READ_ONLY', { enabled })
+  try {
+    const session = await getAuthSession()
+    if (!session?.accessToken) {
+      flowOk('Mcp', 'SET_MCP_READ_ONLY', startedAt, { reason: 'not_signed_in', enabled })
+      // 未登录仅本机门禁；云端 MCP 不可用
+      return { ok: true, enabled }
+    }
+    const remote = await putMcpReadOnlyRemote({
+      accessToken: session.accessToken,
+      enabled
+    })
+    if (!remote.ok) {
+      flowFail('Mcp', 'SET_MCP_READ_ONLY', startedAt, new Error(remote.error))
+      return { ok: false, errorCode: 'MCP_REMOTE_UPDATE_FAILED', error: remote.error }
+    }
+    flowOk('Mcp', 'SET_MCP_READ_ONLY', startedAt, { enabled })
+    return { ok: true, enabled }
+  } catch (error) {
+    flowFail('Mcp', 'SET_MCP_READ_ONLY', startedAt, error)
+    return {
+      ok: false,
+      errorCode: 'MCP_REMOTE_UPDATE_FAILED',
       ...(error instanceof Error ? { error: error.message } : {})
     }
   }

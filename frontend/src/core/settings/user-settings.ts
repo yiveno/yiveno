@@ -16,7 +16,11 @@ export const UserSettingsSchema = z.object({
    * 是否把 Chrome 书签灌入本机 Memory（首次 bulk + 原生增删改增量）。
    * 关闭后卸载 bookmarks.* 监听、停止新写入与增量同步，不删除已灌入条目。
    */
-  chromeBookmarkIngestEnabled: z.boolean().default(true)
+  chromeBookmarkIngestEnabled: z.boolean().default(true),
+  /**
+   * 只读 MCP beta（§5.10.5）：关闭后本机 MCP_RECALL_EVIDENCE 与云端 /api/mcp 均拒绝。
+   */
+  mcpReadOnlyEnabled: z.boolean().default(false)
 })
 
 export type UserSettings = z.infer<typeof UserSettingsSchema>
@@ -25,7 +29,8 @@ export type UserSettings = z.infer<typeof UserSettingsSchema>
 export const DEFAULT_USER_SETTINGS: UserSettings = {
   selectionToolbarEnabled: true,
   aiFeaturesEnabled: true,
-  chromeBookmarkIngestEnabled: true
+  chromeBookmarkIngestEnabled: true,
+  mcpReadOnlyEnabled: false
 }
 
 /** 合并局部更新并校验。 */

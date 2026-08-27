@@ -5,9 +5,17 @@ import {
 import type {
   ChromeBookmarkImportStatusResponse,
   ColdStartStatusResponse,
-  GetBookmarkLibraryTreeResponse
+  GetBookmarkLibraryTreeResponse,
+  ImportThirdPartyCorpusResponse,
+  ThirdPartyCorpusImportStatusResponse
 } from '@/core/messaging/import-messages'
+import { parseImportThirdPartyCorpusPayload } from '@/core/messaging/import-messages'
 import { getChromeBookmarkImportStatus } from '@/application/capture/import-chrome-bookmarks-service'
+import {
+  ThirdPartyCorpusImportError,
+  getThirdPartyCorpusImportStatus,
+  importThirdPartyCorpusExport
+} from '@/application/capture/import-third-party-corpus-service'
 import { readColdStartPipelineState } from '@/application/onboarding/cold-start-pipeline-service'
 import {
   getLastBuiltBookmarkLibraryTree,
@@ -148,4 +156,56 @@ export async function handleGetBookmarkLibraryTree(
 /** Chrome 书签树结构变更：失效 SW 侧索引缓存。 */
 export function invalidateBookmarkLibraryTreeOnChromeChange(): void {
   invalidateBookmarkLibraryTreeCache()
+}
+
+/** 导入 Raindrop / Pocket 导出（§5.10.6）。 */
+export async function handleImportThirdPartyCorpus(
+  payload: unknown
+): Promise<ImportThirdPartyCorpusResponse> {
+  const startedAt = flowStart('Import', '第三方语料导入')
+  try {
+    const input = parseImportThirdPartyCorpusPayload(payload)
+    const result = await importThirdPartyCorpusExport({
+      source: input.source,
+      content: input.content,
+      ...(input.format ? { format: input.format } : {})
+    })
+    invalidateBookmarkLibraryTreeOnChromeChange()
+    flowOk('Import', '第三方语料导入', startedAt, {
+      source: input.source,
+      importedCount: result.importedCount
+    })
+    return { ok: true, importedCount: result.importedCount }
+  } catch (error) {
+    if (error instanceof ThirdPartyCorpusImportError) {
+      flowFail('Import', '第三方语料导入', startedAt, error)
+      return { ok: false, errorCode: error.errorCode, error: error.message }
+    }
+    flowFail('Import', '第三方语料导入', startedAt, error)
+    return {
+      ok: false,
+      errorCode: 'THIRD_PARTY_IMPORT_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
+    }
+  }
+}
+
+/** 读取第三方语料导入进度。 */
+export async function handleGetThirdPartyCorpusImportStatus(): Promise<ThirdPartyCorpusImportStatusResponse> {
+  const startedAt = flowStart('Import', '读取第三方导入状态')
+  try {
+    const state = await getThirdPartyCorpusImportStatus()
+    flowOk('Import', '读取第三方导入状态', startedAt, {
+      status: state?.status ?? null,
+      source: state?.source ?? null
+    })
+    return { ok: true, state }
+  } catch (error) {
+    flowFail('Import', '读取第三方导入状态', startedAt, error)
+    return {
+      ok: false,
+      errorCode: 'IMPORT_STATUS_READ_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
+    }
+  }
 }

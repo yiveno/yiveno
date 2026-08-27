@@ -25,6 +25,7 @@ import {
   type NarrowExampleSource
 } from '@/core/recall/extract-composer-narrow-examples'
 import {
+  preferKeywordLeaderInHybridFusion,
   rankIdsByCosineToQuery,
   scoreFromCosineSimilarity,
   sortIdsByRrf
@@ -40,11 +41,13 @@ import {
   buildSearchClueFromParsed,
   filterMatchesByParsedTimeRange,
   recallByKeywordWithParsedClue,
-  shouldRecallByConstraintNeighborhood
+  shouldRecallByConstraintNeighborhood,
+  shouldSkipRecallAsZeroAnchor
 } from '@/core/recall/orchestrate-keyword-recall'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
 import { getMemoryItemDisplay } from '@/core/recall/recall-result'
+import type { RecallPipelineTiming } from '@/core/recall/recall-telemetry'
 import { completeComposerNarrowExamplePolishWithLlm } from '@/core/recall/understand/complete-composer-narrow-example-polish'
 import { completeRecallFollowUpWithLlm } from '@/core/recall/understand/complete-recall-follow-up'
 import { understandRecallClue } from '@/core/recall/understand/understand-recall-clue'
@@ -438,8 +441,34 @@ async function fuseHybridMatches(input: {
     })
   })
 
+  // 词面分差够大时，禁止 RRF/语义把关键词领先者挤出融合首位
+  const keywordScoreOrder = [...keywordMatches].sort((left, right) => {
+    if (right.score !== left.score) {
+      return right.score - left.score
+    }
+    return right.item.updatedAt.localeCompare(left.item.updatedAt)
+  })
+  const guardedFused = preferKeywordLeaderInHybridFusion(
+    fusedMatches.map(match => ({
+      id: match.item.id,
+      score: match.score,
+      match
+    })),
+    keywordScoreOrder.map(match => ({
+      id: match.item.id,
+      score: match.score,
+      match
+    }))
+  ).map(entry => {
+    const base = entry.match
+    if (base.score === entry.score) {
+      return base
+    }
+    return { ...base, score: entry.score }
+  })
+
   const boosted = applyCurrentTabDomainBoost(
-    fusedMatches.map(match => applyParsedClueScoreBoosts(match, input.parsed)),
+    guardedFused.map(match => applyParsedClueScoreBoosts(match, input.parsed)),
     input.currentTabDomain
   )
 
@@ -493,18 +522,28 @@ export class HybridRecallBackend implements RecallBackend {
     })
 
     const complete = getClueLlmCompleter() ?? undefined
+    const understandStartedAt = Date.now()
     const understood = await understandRecallClue(normalizedClue, {
       ...(complete ? { complete } : {}),
       trace
     })
+    const understandMs = Date.now() - understandStartedAt
 
     if (understood.disposition === 'reject_noise') {
+      const pipelineTiming: RecallPipelineTiming = {
+        understandMs,
+        candidateLoadMs: 0,
+        retrieveMs: 0,
+        totalMs: Date.now() - pipelineStartedAt,
+        understandSource: understood.source
+      }
       return {
         outcome: 'no_match',
         topPick: null,
         alsoPossible: [],
         totalRankedCount: 0,
-        clue: normalizedClue
+        clue: normalizedClue,
+        pipelineTiming
       }
     }
 
@@ -515,11 +554,13 @@ export class HybridRecallBackend implements RecallBackend {
       currentUtterance: normalizedClue
     })
 
+    const candidateLoadStartedAt = Date.now()
     const listedResult = await memoryItemService.listForKeywordRecall({
       rawClue: normalizedClue,
       parsed: merge.merged,
       limit: RECALL_SCAN_LIMIT
     })
+    const candidateLoadMs = Date.now() - candidateLoadStartedAt
     const listed = listedResult.items
     const items = excludeDismissedMemoryItems(listed, dismissedIds)
 
@@ -536,11 +577,21 @@ export class HybridRecallBackend implements RecallBackend {
 
     let usedHybrid = false
     let result: RecallResult
+    const retrieveStartedAt = Date.now()
 
     const pairClue = merge.effectiveRaw
 
-    // 无内容词的时间+类型（如 recently collected bookmark）：近因邻域，不走关键词/向量扫虚词
-    if (shouldRecallByConstraintNeighborhood(merge.merged)) {
+    // 零锚点助手发令 / 无内容且无约束：诚实空，禁止 raw 整句或类型邻域冒充推荐
+    if (shouldSkipRecallAsZeroAnchor(normalizedClue, merge.merged)) {
+      result = {
+        outcome: 'no_match',
+        topPick: null,
+        alsoPossible: [],
+        totalRankedCount: 0,
+        clue: normalizedClue
+      }
+    } else if (shouldRecallByConstraintNeighborhood(merge.merged)) {
+      // 无内容词的时间+类型（如 recently collected bookmark）：近因邻域，不走关键词/向量扫虚词
       result = await finalizeKeywordResult(
         normalizedClue,
         items,
@@ -575,6 +626,9 @@ export class HybridRecallBackend implements RecallBackend {
       }
     }
 
+    const retrieveMs = Date.now() - retrieveStartedAt
+    const postProcessStartedAt = Date.now()
+
     const withMeta = attachDialogMeta(result, {
       clue: normalizedClue,
       parsed: merge.merged,
@@ -602,8 +656,23 @@ export class HybridRecallBackend implements RecallBackend {
       ...(complete ? { complete } : {})
     })
 
+    const postProcessMs = Date.now() - postProcessStartedAt
+    const pipelineTiming: RecallPipelineTiming = {
+      understandMs,
+      candidateLoadMs,
+      retrieveMs,
+      postProcessMs,
+      totalMs: Date.now() - pipelineStartedAt,
+      understandSource: understood.source,
+      usedHybrid
+    }
+
     trace('info', 'Hybrid Recall：流水线结束', {
-      durationMs: Date.now() - pipelineStartedAt,
+      durationMs: pipelineTiming.totalMs,
+      understandMs: pipelineTiming.understandMs,
+      candidateLoadMs: pipelineTiming.candidateLoadMs,
+      retrieveMs: pipelineTiming.retrieveMs,
+      postProcessMs: pipelineTiming.postProcessMs,
       usedHybrid,
       understandSource: understood.source,
       understandMode: understood.mode,
@@ -615,6 +684,9 @@ export class HybridRecallBackend implements RecallBackend {
       narrowExampleCount: withNarrowExamples.composerNarrowExamples?.length ?? 0
     })
 
-    return withNarrowExamples
+    return {
+      ...withNarrowExamples,
+      pipelineTiming
+    }
   }
 }

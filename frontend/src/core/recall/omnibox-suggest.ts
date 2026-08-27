@@ -1,6 +1,10 @@
 import type { TranslateFn } from '@/core/i18n/translate'
 import { RECALL_RESULT_PAGE_SIZE } from '@/core/recall/build-recall-result'
-import { getRecallMatchFieldShortLabel } from '@/core/recall/explain-recall-match'
+import {
+  explainRecallMatch,
+  getRecallMatchFieldShortLabel
+} from '@/core/recall/explain-recall-match'
+import { formatRecallSavedTime } from '@/core/recall/format-recall-saved-time'
 import { getMemoryItemOpenHref, getOmniboxSuggestContent } from '@/core/recall/memory-open-href'
 import {
   getMemoryItemDisplay,
@@ -18,6 +22,8 @@ export interface OmniboxSuggestItem {
 export interface OmniboxSuggestOptions {
   detailPageUrl: string
   translate: TranslateFn
+  /** 用户线索（Explain 命中理由；缺省则降级字段短标签）。 */
+  clue?: string
 }
 
 /** Omnibox 摘录预览最大字符数。 */
@@ -104,7 +110,27 @@ export function recallMatchToOmniboxSuggest(
     parts.push('<dim>·</dim>', `<url>${provenance}</url>`)
   }
 
-  if (match.item.type !== 'text_excerpt') {
+  const savedLabels = formatRecallSavedTime(match.item.createdAt, {
+    justSavedLabel: translate('recall_card_saved_just_now')
+  })
+  if (savedLabels) {
+    parts.push(
+      '<dim>·</dim>',
+      `<dim>${escapeOmniboxXml(translate('recall_card_saved', savedLabels.relative))}</dim>`
+    )
+  }
+
+  const clue = options.clue?.trim() ?? ''
+  const reasonLine = clue
+    ? explainRecallMatch({ clue, matchedFields: match.matchedFields, item: match.item }, translate)
+        .reasonLine
+    : null
+  if (reasonLine) {
+    parts.push(
+      '<dim>·</dim>',
+      `<dim>${escapeOmniboxXml(truncateOmniboxText(reasonLine, 36))}</dim>`
+    )
+  } else if (match.item.type !== 'text_excerpt') {
     const primaryMatch = formatOmniboxPrimaryMatch(match.matchedFields, translate)
     if (primaryMatch) {
       parts.push(`<dim>· ${escapeOmniboxXml(primaryMatch)}</dim>`)

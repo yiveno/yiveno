@@ -121,7 +121,18 @@ function extractCalendarYearTokens(normalizedClue: string): string[] {
 }
 
 /**
+ * 软年龄形容词（old / ancient）：口语修饰内容，不是相对时间窗词面。
+ * 无 yesterday/recent/long ago 等词典命中时，不得采纳模型 timeLabel（否则会硬过滤掉「很久以前存的论文」）。
+ */
+const SOFT_AGE_ADJECTIVE_SURFACES = ['ancient', 'older', 'old'] as const
+
+function clueHasSoftAgeAdjectiveOnly(normalizedClue: string): boolean {
+  return SOFT_AGE_ADJECTIVE_SURFACES.some(surface => clueHasSurface(normalizedClue, surface))
+}
+
+/**
  * 模型常把电影/书名年份（如 1954）误映射为 long_ago；无相对时间词面时不得采纳。
+ * 同样拒纳仅靠 soft「old」臆造的 a_while_ago / long_ago。
  */
 function shouldRejectProposedTimeLabelWithoutLexicon(
   normalizedClue: string,
@@ -130,12 +141,15 @@ function shouldRejectProposedTimeLabelWithoutLexicon(
   if (!proposed) {
     return false
   }
-  return extractCalendarYearTokens(normalizedClue).length > 0
+  if (extractCalendarYearTokens(normalizedClue).length > 0) {
+    return true
+  }
+  return clueHasSoftAgeAdjectiveOnly(normalizedClue)
 }
 
 /**
  * 时间标签：若线索命中词典词面，优先用最长 surface 对应 label（纠偏 LLM 的 recent/a_while_ago 混淆）。
- * 无线索词面时才回退模型提议；但若仅有公历年份（无 yesterday/recent 等词面），丢弃模型 timeLabel。
+ * 无线索词面时才回退模型提议；但若仅有公历年份或 soft「old」、无相对时间词面，丢弃模型 timeLabel。
  */
 export function groundTimeLabel(
   clue: string,

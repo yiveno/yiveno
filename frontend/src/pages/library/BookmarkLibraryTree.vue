@@ -15,6 +15,7 @@ import {
   readBookmarkLibraryTreeExpandedSession,
   schedulePersistBookmarkLibraryTreeExpanded
 } from '@/pages/library/bookmark-library-tree-expanded'
+import { EVIDENCE_PACK_MAX_ITEMS } from '@/infrastructure/recall/evidence-pack-selection'
 import BookmarkLibraryTreeRow from '@/pages/library/BookmarkLibraryTreeRow.vue'
 
 defineOptions({ name: 'BookmarkLibraryTree' })
@@ -23,6 +24,8 @@ const props = defineProps<{
   index: BookmarkLibraryIndex
   /** 全量导入完成后才展示「未同步」 */
   showUnsyncedFlags?: boolean
+  /** evidence pack 多选 id 集合 */
+  selectedEvidenceIds?: Set<string>
 }>()
 
 defineEmits<{
@@ -40,6 +43,7 @@ defineEmits<{
       memoryItemId?: string
     }
   ]
+  toggleEvidenceSelection: [memoryItemId: string]
 }>()
 
 const VIRTUAL_OVERSCAN = 8
@@ -155,9 +159,21 @@ function handleScroll(event: Event) {
           :key="`${row.kind}-${row.chromeId}`"
           :row="row"
           :show-unsynced-flags="showUnsyncedFlags"
+          :evidence-selected="
+            row.kind === 'bookmark' && row.memoryItemId
+              ? selectedEvidenceIds?.has(row.memoryItemId) === true
+              : false
+          "
+          :evidence-selection-disabled="
+            row.kind === 'bookmark' && row.memoryItemId
+              ? !selectedEvidenceIds?.has(row.memoryItemId) &&
+                (selectedEvidenceIds?.size ?? 0) >= EVIDENCE_PACK_MAX_ITEMS
+              : true
+          "
           @toggle-folder="toggleFolder"
           @edit-note="$emit('editNote', $event)"
           @open-bookmark="$emit('openBookmark', $event)"
+          @toggle-evidence-selection="$emit('toggleEvidenceSelection', $event)"
         />
       </div>
     </div>

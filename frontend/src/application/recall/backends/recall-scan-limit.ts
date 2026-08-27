@@ -1,5 +1,5 @@
 /**
- * 本机 Hybrid 召回扫描上限（与历史关键词后端共用同一量级）。
- * 独立常量，避免 Hybrid 依赖已下线的 KeywordRecallBackend 文件。
+ * 本机 Hybrid / 关键词召回扫描上限（全表扫与 list 候选 cap）。
+ * 对齐产品质量→压力档（~20k）；倒排命中仍受 KEYWORD_INDEX_CANDIDATE_ID_CAP 约束。
  */
-export const RECALL_SCAN_LIMIT = 10000
+export const RECALL_SCAN_LIMIT = 20000

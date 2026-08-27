@@ -3,7 +3,12 @@ import { z } from 'zod'
 import { CaptureEntrySchema } from '@/core/memory/capture-entry'
 import { SupportedMemoryItemTypeSchema } from '@/core/memory/memory-item-type'
 import type { MemoryItem } from '@/core/memory/memory-item'
+import type { EvidencePack } from '@/core/recall/evidence-pack'
 import type { BackgroundMessageScope } from '@/core/messaging/constants'
+
+const exportEvidencePackPayloadSchema = z.object({
+  ids: z.array(z.string().uuid()).min(2).max(5)
+})
 
 const captureBookmarkPayloadSchema = z.object({
   title: z.string().min(1),
@@ -65,7 +70,10 @@ export const MemoryErrorCodeSchema = z.enum([
   'CAPTURE_UNSAVABLE_PAGE', // 当前页不可存
   'CAPTURE_EMPTY_SELECTION', // 无有效选区
   'BOOKMARK_INGEST_DISABLED', // 用户关闭了书签灌库
-  'EMBEDDING_BACKFILL_AUTH_REQUIRED' // 回填 embedding 须登录
+  'EMBEDDING_BACKFILL_AUTH_REQUIRED', // 回填 embedding 须登录
+  'EVIDENCE_PACK_INVALID_COUNT', // evidence pack 条数须 2–5
+  'EVIDENCE_PACK_ITEM_NOT_FOUND', // 所选条目不存在或已删
+  'EVIDENCE_PACK_OPERATION_FAILED' // evidence pack 导出失败
 ])
 
 export type MemoryErrorCode = z.infer<typeof MemoryErrorCodeSchema>
@@ -139,6 +147,13 @@ export type BackfillMemoryEmbeddingsMessage = {
   type: 'BACKFILL_MEMORY_EMBEDDINGS'
 }
 
+/** 多选导出 evidence pack（§5.10.4；2–5 条）。 */
+export type ExportEvidencePackMessage = {
+  scope: BackgroundMessageScope
+  type: 'EXPORT_EVIDENCE_PACK'
+  payload: z.infer<typeof exportEvidencePackPayloadSchema>
+}
+
 export type MemoryBackgroundMessage =
   | CaptureBookmarkMessage
   | CaptureTextExcerptMessage
@@ -150,6 +165,7 @@ export type MemoryBackgroundMessage =
   | RecordRecallDismissMessage
   | RecordRecallSettleMessage
   | BackfillMemoryEmbeddingsMessage
+  | ExportEvidencePackMessage
 
 export type MemoryItemSuccessResponse = {
   ok: true
@@ -178,6 +194,12 @@ export type MemoryEmbeddingBackfillSuccessResponse = {
   quotaHit?: boolean
 }
 
+export type ExportEvidencePackSuccessResponse = {
+  ok: true
+  pack: EvidencePack
+  markdown: string
+}
+
 export type MemoryItemErrorResponse = {
   ok: false
   errorCode: MemoryErrorCode
@@ -190,6 +212,7 @@ export type MemoryBackgroundResponse =
   | MemoryItemListSuccessResponse
   | MemoryDismissSuccessResponse
   | MemoryEmbeddingBackfillSuccessResponse
+  | ExportEvidencePackSuccessResponse
   | MemoryItemErrorResponse
 
 export function parseCaptureBookmarkPayload(value: unknown) {
@@ -226,4 +249,8 @@ export function parseRecordRecallDismissPayload(value: unknown) {
 
 export function parseRecordRecallSettlePayload(value: unknown) {
   return recordRecallSettlePayloadSchema.parse(value)
+}
+
+export function parseExportEvidencePackPayload(value: unknown) {
+  return exportEvidencePackPayloadSchema.parse(value)
 }

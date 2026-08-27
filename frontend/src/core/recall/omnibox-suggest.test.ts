@@ -67,10 +67,33 @@ describe('omnibox-suggest', () => {
     const suggest = recallMatchToOmniboxSuggest(match, suggestOptions)
     expect(suggest?.content).toContain('/omnibox-open.html?id=')
     expect(suggest?.content).toContain(match.item.id)
-    expect(suggest?.description).toBe(
-      '<dim>Y·Bookmark</dim> <match>Retention analysis</match> <dim>·</dim> <url>example.com</url> <dim>· title</dim>'
-    )
+    expect(suggest?.description).toContain('<dim>Y·Bookmark</dim>')
+    expect(suggest?.description).toContain('<match>Retention analysis</match>')
+    expect(suggest?.description).toContain('example.com')
+    expect(suggest?.description).toContain('Saved')
     expect(suggest?.description).not.toContain('匹配：')
+  })
+
+  it('摘录建议含保存时间与 Explain 理由', () => {
+    const match: RecallMatch = {
+      item: createTextExcerptMemoryItem({
+        ...baseContext,
+        payload: {
+          selectedText: 'Key retention metrics overview for day-one and day-seven return visits.',
+          sourceUrl: 'https://notes.example.com/post',
+          pageTitle: 'Growth notes'
+        }
+      }),
+      score: 36,
+      matchedFields: ['textExcerpt']
+    }
+
+    const suggest = recallMatchToOmniboxSuggest(match, {
+      ...suggestOptions,
+      clue: 'retention metrics'
+    })
+    expect(suggest?.description).toContain('Saved')
+    expect(suggest?.description).toContain('excerpt contains')
   })
 
   it('摘录建议 content 指向详情页', () => {

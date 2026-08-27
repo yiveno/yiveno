@@ -50,8 +50,10 @@ export const RECALL_OBJECT_TYPE_CANONICAL_SURFACES: Record<RecallObjectType, str
 /** 时间词：真实口语优先（长 phrase 由 parser 按长度优先匹配）。 */
 export const RECALL_TIME_LEXICON: RecallLexiconEntry<RecallRelativeTimeLabel>[] = [
   { surface: 'day before yesterday', value: 'day_before_yesterday' },
-  { surface: 'a few days ago', value: 'a_while_ago' },
-  { surface: 'the other day', value: 'a_while_ago' },
+  // 「几天前 / 那天」在英语里常指近几天（含 2–5 天），对齐 recent 窗，勿误入 a_while_ago（排除近 3 天）
+  { surface: 'a few days ago', value: 'recent' },
+  { surface: 'few days ago', value: 'recent' },
+  { surface: 'the other day', value: 'recent' },
   { surface: 'earlier this week', value: 'recent' },
   { surface: 'last few days', value: 'recent' },
   { surface: 'yesterday', value: 'yesterday' },

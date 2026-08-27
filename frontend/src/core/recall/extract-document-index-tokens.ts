@@ -9,6 +9,7 @@ import {
   compactRecallText,
   extractOrthographicAcronyms,
   isUsableRecallToken,
+  latinInflectionVariants,
   normalizeRecallText,
   tokenizeRecallClueDetailed
 } from '@/core/recall/keyword-filter'
@@ -36,6 +37,9 @@ export function addDocumentIndexTokensFromText(text: string, sink: Set<string>):
     const token = match.toLowerCase()
     if (isUsableRecallToken(token)) {
       sink.add(token)
+      for (const variant of latinInflectionVariants(token)) {
+        sink.add(variant)
+      }
     }
   }
 
@@ -86,12 +90,18 @@ export function extractDocumentIndexTokens(item: MemoryItem): string[] {
 export function pickPostingLookupTokens(clue: string): string[] {
   const seen = new Set<string>()
   const tokens: string[] = []
-  for (const entry of tokenizeRecallClueDetailed(clue)) {
-    if (!isUsableRecallToken(entry.token) || seen.has(entry.token)) {
-      continue
+  const push = (token: string): void => {
+    if (!isUsableRecallToken(token) || seen.has(token)) {
+      return
     }
-    seen.add(entry.token)
-    tokens.push(entry.token)
+    seen.add(token)
+    tokens.push(token)
+  }
+  for (const entry of tokenizeRecallClueDetailed(clue)) {
+    push(entry.token)
+    for (const variant of latinInflectionVariants(entry.token)) {
+      push(variant)
+    }
   }
   return tokens
 }

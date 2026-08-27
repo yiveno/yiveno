@@ -11,11 +11,7 @@ import {
   filterKeywordMatchesBeforeCollapse
 } from '@/core/recall/build-recall-result'
 import { collapseRecallMatches } from '@/core/recall/collapse-recall-duplicates'
-import {
-  compactRecallText,
-  normalizeRecallText,
-  RECALL_TOP_PICK_MIN_SCORE
-} from '@/core/recall/keyword-filter'
+import { normalizeRecallText, RECALL_TOP_PICK_MIN_SCORE } from '@/core/recall/keyword-filter'
 import { parseRecallClue, resolveRelativeTimeRange } from '@/core/recall/parse-recall-clue'
 import {
   RECALL_OBJECT_TYPE_CANONICAL_SURFACES,
@@ -64,10 +60,189 @@ const OBJECT_TYPE_SURFACES = (() => {
   return map
 })()
 
+/**
+ * 助手发令 / 偏好残留词：有对象类型时不当内容锚（否则「play songs I like」会扫库编造命中）。
+ * 闭合产品词表，非内容别名灰名单。
+ */
+const WEAK_PREFERENCE_RESIDUAL_TERMS = new Set([
+  'play',
+  'put',
+  'like',
+  'love',
+  'want',
+  'some',
+  'from',
+  'feel',
+  'bored',
+  'please',
+  'me',
+  'pick',
+  'something',
+  'fun',
+  'for',
+  'recommend',
+  'suggest',
+  'good',
+  'should',
+  'tonight',
+  'watch',
+  'watching'
+])
+
+/**
+ * 零锚点助手发令词面（闭合产品枚举）：无真实记忆锚时须诚实 no_match，禁止当推荐引擎。
+ */
+const ASSISTANT_IMPERATIVE_SURFACES = [
+  'i feel bored',
+  "i'm bored",
+  'feel bored',
+  'recommend a',
+  'recommend me',
+  'suggest a',
+  'suggest me',
+  'pick something',
+  'something fun',
+  'for me',
+  'play some',
+  'put on some'
+] as const
+
+/**
+ * 生活助手 / 非找回意图（闭合产品枚举）。
+ * Yiveno 不是天气/点餐/摘要/行程/写码助理；无线索记忆锚时一律诚实空。
+ * 须先于「有内容词则放行」判定，否则 summarize/plan/write 会被 LLM 残留词扫库。
+ */
+const NON_RECALL_LIFE_SURFACES = [
+  'what is the weather',
+  'whats the weather',
+  "what's the weather",
+  'weather going to be',
+  'weather tomorrow',
+  'order me some',
+  'order me a',
+  'order some pizza',
+  'order a pizza',
+  'for dinner',
+  'what time is it',
+  'translate this',
+  'write me an email',
+  'send an email',
+  // 摘要 / 行程规划 / 写码：助手任务，不是找回
+  'summarize the',
+  'summarize this',
+  'summarize latest',
+  'summarize for me',
+  'plan a trip',
+  'plan a weekend',
+  'plan me a',
+  'write a python',
+  'write a script',
+  'write me a script',
+  'write a program',
+  'generate a script',
+  'generate code'
+] as const
+
+/**
+ * 记忆找回锚词面：出现则不作「生活助手」拦截（如「weather article I saved」仍可找回）。
+ */
+const MEMORY_RECALL_ANCHOR_SURFACES = [
+  'saved',
+  'bookmarked',
+  'bookmark',
+  'I noted',
+  'i noted',
+  'my note',
+  'left a note',
+  'excerpt',
+  'clip I',
+  'I highlighted',
+  'i highlighted',
+  'I bookmarked',
+  'i bookmarked',
+  'from last',
+  'a while ago',
+  'few days ago',
+  'the other day',
+  'I read',
+  'i read'
+] as const
+
+function isAsciiWordCharForSurface(char: string | undefined): boolean {
+  return Boolean(char && /[a-z0-9]/.test(char))
+}
+
+/** 规范化线索是否含某 surface（ASCII 词边界）。 */
+function normalizedClueHasSurface(normalized: string, surface: string): boolean {
+  const needle = normalizeRecallText(surface)
+  if (!needle) {
+    return false
+  }
+  let fromIndex = 0
+  while (fromIndex < normalized.length) {
+    const index = normalized.indexOf(needle, fromIndex)
+    if (index < 0) {
+      return false
+    }
+    const before = normalized[index - 1]
+    const after = normalized[index + needle.length]
+    if (!isAsciiWordCharForSurface(before) && !isAsciiWordCharForSurface(after)) {
+      return true
+    }
+    fromIndex = index + 1
+  }
+  return false
+}
+
+function clueHasAnySurface(clue: string, surfaces: readonly string[]): boolean {
+  const normalized = normalizeRecallText(clue)
+  return surfaces.some(surface => normalizedClueHasSurface(normalized, surface))
+}
+
+/** 线索是否含助手发令词面（ASCII 词边界）。 */
+export function looksLikeAssistantImperativeClue(clue: string): boolean {
+  return clueHasAnySurface(clue, ASSISTANT_IMPERATIVE_SURFACES)
+}
+
+/**
+ * 生活助手请求（天气/点餐/摘要/行程/写码等）且无线索记忆锚 → 非 Recall。
+ * 有 saved/bookmarked/note 等锚时放行，避免误伤「weather article I saved」。
+ */
+export function looksLikeNonRecallLifeRequest(clue: string): boolean {
+  if (clueHasAnySurface(clue, MEMORY_RECALL_ANCHOR_SURFACES)) {
+    return false
+  }
+  return clueHasAnySurface(clue, NON_RECALL_LIFE_SURFACES)
+}
+
+/**
+ * 检索用内容词：剥掉弱偏好残留；若剥完为空且有类型/时间约束，走约束邻域或诚实空。
+ */
+export function effectiveContentTermsForRecall(parsed: ParsedRecallClue): string[] {
+  return parsed.contentTerms.filter(term => !WEAK_PREFERENCE_RESIDUAL_TERMS.has(term))
+}
+
+/**
+ * 零锚点 / 非找回：生活助手意图，或无有效内容词时的助手发令/无约束 → 不扫库。
+ */
+export function shouldSkipRecallAsZeroAnchor(clue: string, parsed: ParsedRecallClue): boolean {
+  if (looksLikeNonRecallLifeRequest(clue)) {
+    return true
+  }
+  if (effectiveContentTermsForRecall(parsed).length > 0) {
+    return false
+  }
+  if (looksLikeAssistantImperativeClue(clue)) {
+    return true
+  }
+  return !shouldRecallByConstraintNeighborhood(parsed)
+}
+
 /** 由解析结果决定交给 keyword-filter 的检索串（不做内容别名扩词）。 */
 export function buildSearchClueFromParsed(parsed: ParsedRecallClue): string {
-  if (parsed.contentTerms.length > 0) {
-    return parsed.contentTerms.join(' ')
+  const contentTerms = effectiveContentTermsForRecall(parsed)
+  if (contentTerms.length > 0) {
+    return contentTerms.join(' ')
   }
 
   if (parsed.objectTypes && parsed.objectTypes.length > 0) {
@@ -154,7 +329,39 @@ function collectItemMatchBlob(item: MemoryItem): string {
       : [item.payload.selectedText, item.payload.pageTitle, item.payload.sourceUrl])
   ].filter((value): value is string => Boolean(value))
 
-  return compactRecallText(parts.join(' '))
+  // 保留空格：compact 会把 notes+on+g 粘成 notesong，伪命中 song
+  return normalizeRecallText(parts.join(' '))
+}
+
+function isAsciiWordChar(char: string | undefined): boolean {
+  return Boolean(char && /[a-z0-9]/.test(char))
+}
+
+/** 条目文本是否含类型词面（ASCII 须词边界，避免 notesong⊂song）。 */
+function itemBlobHasSurface(normalizedBlob: string, surface: string): boolean {
+  const needle = normalizeRecallText(surface)
+  if (!needle) {
+    return false
+  }
+  const isAsciiNeedle = /^[a-z0-9 ]+$/.test(needle)
+  if (!isAsciiNeedle) {
+    return normalizedBlob.includes(needle)
+  }
+
+  let fromIndex = 0
+  while (fromIndex < normalizedBlob.length) {
+    const index = normalizedBlob.indexOf(needle, fromIndex)
+    if (index < 0) {
+      return false
+    }
+    const before = normalizedBlob[index - 1]
+    const after = normalizedBlob[index + needle.length]
+    if (!isAsciiWordChar(before) && !isAsciiWordChar(after)) {
+      return true
+    }
+    fromIndex = index + 1
+  }
+  return false
 }
 
 /** 条目是否像指定对象类型（tags slug 或正文含类型词面）。 */
@@ -174,7 +381,7 @@ export function memoryItemMatchesObjectType(
 
   const blob = collectItemMatchBlob(item)
   const surfaces = OBJECT_TYPE_SURFACES.get(objectType) ?? []
-  return surfaces.some(surface => surface.length > 0 && blob.includes(compactRecallText(surface)))
+  return surfaces.some(surface => surface.length > 0 && itemBlobHasSurface(blob, surface))
 }
 
 /**
@@ -182,7 +389,8 @@ export function memoryItemMatchesObjectType(
  * 产品：用户忘了标题才开口；「just saved」「recently collected bookmark」均须出邻域。
  */
 export function shouldRecallByConstraintNeighborhood(parsed: ParsedRecallClue): boolean {
-  if (parsed.contentTerms.length > 0) {
+  // 用检索有效内容词：play/like 等弱残留不得挡约束邻域（R0 助手发令）
+  if (effectiveContentTermsForRecall(parsed).length > 0) {
     return false
   }
   const hasType = Boolean(parsed.objectTypes && parsed.objectTypes.length > 0)
@@ -324,6 +532,16 @@ export function recallByKeywordWithParsedClue(
   const nowMs = options.nowMs ?? Date.now()
   const parsed = options.parsed ?? parseRecallClue(raw, { nowMs })
   const poolLimit = options.candidateLimit ?? RECALL_RESULT_POOL_LIMIT
+
+  if (shouldSkipRecallAsZeroAnchor(raw, parsed)) {
+    return {
+      outcome: 'no_match',
+      topPick: null,
+      alsoPossible: [],
+      totalRankedCount: 0,
+      clue: raw
+    }
+  }
 
   if (shouldRecallByConstraintNeighborhood(parsed)) {
     const constraintMatches = recallMatchesByConstraintNeighborhood(items, parsed, nowMs).map(

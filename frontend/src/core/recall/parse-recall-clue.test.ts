@@ -69,6 +69,15 @@ describe('parseRecallClue', () => {
     expect(parsed.confidence).toBe('medium')
   })
 
+  it('a few days ago / the other day → recent（含近几天，勿误入 a_while_ago）', () => {
+    expect(
+      parseRecallClue('the privacy article from a few days ago', { nowMs: NOW_MS }).timeRange?.label
+    ).toBe('recent')
+    expect(
+      parseRecallClue('that poem from the other day', { nowMs: NOW_MS }).timeRange?.label
+    ).toBe('recent')
+  })
+
   it('left a note + page + deployment → high', () => {
     const parsed = parseRecallClue('yesterday left a note about the deployment page', {
       nowMs: NOW_MS

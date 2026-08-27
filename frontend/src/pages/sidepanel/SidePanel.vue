@@ -28,6 +28,8 @@ import {
   shouldOfferThreadPivotConfirm
 } from '@/core/recall/should-offer-thread-pivot-confirm'
 import { buildRecallCardHighlightParts } from '@/core/recall/highlight-recall-text'
+import { explainRecallMatch } from '@/core/recall/explain-recall-match'
+import { formatRecallSavedTime } from '@/core/recall/format-recall-saved-time'
 import { getMemoryItemOpenHref } from '@/core/recall/memory-open-href'
 import { tImportStateError, tRecallError } from '@/infrastructure/i18n/background-error'
 import { openGettingStartedPage } from '@/infrastructure/browser/getting-started-page'
@@ -52,6 +54,13 @@ import {
   readInstallOnboardingDone
 } from '@/infrastructure/storage/install-onboarding-storage'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
+import EvidencePackExportBar from '@/infrastructure/ui/EvidencePackExportBar.vue'
+import { downloadEvidencePackExport } from '@/infrastructure/recall/download-evidence-pack'
+import {
+  EVIDENCE_PACK_MAX_ITEMS,
+  toggleEvidencePackSelection
+} from '@/infrastructure/recall/evidence-pack-selection'
+import { tMemoryError } from '@/infrastructure/i18n/memory-error'
 import { type RecallCardModel } from '@/pages/sidepanel/RecallResultCard.vue'
 import RecallConversation from '@/pages/sidepanel/components/RecallConversation.vue'
 import RecallComposer from '@/pages/sidepanel/components/RecallComposer.vue'
@@ -66,6 +75,7 @@ import {
   withFinalizedLastOpenDwell,
   type RecallOutcomeSessionState
 } from '@/application/recall/commit-recall-outcome'
+import { createRecallTelemetryRecorder } from '@/infrastructure/analytics/recall-telemetry-recorder'
 
 defineOptions({ name: 'SidePanelPage' })
 
@@ -93,6 +103,8 @@ const dialogState = ref<RecallDialogState>({
 
 /** §7.2 Outcome 会话信号（与 dialog 同寿；关 Panel / New find 结算后重置）。 */
 const outcomeSession = ref<RecallOutcomeSessionState>(createRecallOutcomeSessionState())
+/** §5.9 TTE 七事件本机录制（与 Outcome 会话同寿）。 */
+const recallTelemetry = createRecallTelemetryRecorder()
 /** 出口条（通道 D）：New find 前可选 Found / None / Skip。 */
 const showOutcomeExitStrip = ref(false)
 
@@ -267,12 +279,14 @@ async function completeNewFindSession(reason: string): Promise<void> {
     dismissedIds: []
   }
   outcomeSession.value = createRecallOutcomeSessionState()
+  recallTelemetry.clearActiveTask()
   conversationTurns.value = []
   clue.value = ''
   lastSentClue.value = ''
   lastSubmitAtMs.value = null
   errorMessage.value = ''
   expandedDuplicateGroupId.value = null
+  clearEvidenceSelection()
   stickToBottom.value = true
   void nextTick(() => {
     clueInputRef.value?.focus()
@@ -340,6 +354,12 @@ async function flushOutcomeSession(reason: string, sessionStopped: boolean): Pro
         settleWriteDone: true
       }
     }
+    recallTelemetry.recordUserConfirmed({
+      label: result.event.label,
+      source: result.event.source,
+      ...(result.event.confidence ? { confidence: result.event.confidence } : {}),
+      ...(result.event.targetId ? { memoryItemId: result.event.targetId } : {})
+    })
   } catch {
     // 忽略：结算失败不挡 New find / 关 Panel
   }
@@ -490,6 +510,61 @@ const idleGreeting = computed(() =>
 /** 当前展开的重复组代表 id；同时只展开一组。 */
 const expandedDuplicateGroupId = ref<string | null>(null)
 
+const selectedEvidenceIds = ref<Set<string>>(new Set())
+const evidencePackExporting = ref(false)
+const evidencePackError = ref('')
+const evidencePackSuccess = ref('')
+
+const evidencePackSelectedCount = computed(() => selectedEvidenceIds.value.size)
+const showEvidencePackBar = computed(() => evidencePackSelectedCount.value > 0)
+
+function toggleEvidenceSelection(id: string): void {
+  evidencePackSuccess.value = ''
+  evidencePackError.value = ''
+  const before = selectedEvidenceIds.value
+  const after = toggleEvidencePackSelection(before, id)
+  if (after === before && !before.has(id)) {
+    evidencePackError.value = t('evidence_pack_max_selected', [String(EVIDENCE_PACK_MAX_ITEMS)])
+    return
+  }
+  selectedEvidenceIds.value = after
+}
+
+function clearEvidenceSelection(): void {
+  selectedEvidenceIds.value = new Set()
+  evidencePackError.value = ''
+  evidencePackSuccess.value = ''
+}
+
+async function handleEvidencePackExport(format: 'json' | 'markdown'): Promise<void> {
+  if (evidencePackExporting.value) {
+    return
+  }
+  evidencePackExporting.value = true
+  evidencePackError.value = ''
+  evidencePackSuccess.value = ''
+  try {
+    const ids = [...selectedEvidenceIds.value]
+    const result = await downloadEvidencePackExport(ids, format)
+    if (!result.ok) {
+      evidencePackError.value = tMemoryError(result.errorCode)
+      return
+    }
+    evidencePackSuccess.value = t('evidence_pack_export_success')
+    const firstId = ids[0]
+    if (firstId) {
+      outcomeSession.value = {
+        ...outcomeSession.value,
+        copiedOrPackedId: firstId
+      }
+    }
+  } catch {
+    evidencePackError.value = t('error_evidence_pack_operation_failed')
+  } finally {
+    evidencePackExporting.value = false
+  }
+}
+
 /** 助手轮次当前可见的候选卡（Show more 截取）。 */
 function visibleCandidateCards(turn: AssistantTurn): RecallCardModel[] {
   const cards = turn.candidateCards ?? []
@@ -535,9 +610,17 @@ function handleShowMoreMatches(turnId: string, mode: 'page' | 'all' = 'page'): v
 function toMatchCard(
   match: RecallMatch,
   resultClue: string,
-  options: { includeSiblings?: boolean } = {}
+  options: { includeSiblings?: boolean; rank?: number } = {}
 ): RecallCardModel {
   const display = getMemoryItemDisplay(match.item, t)
+  const explanation = explainRecallMatch(
+    {
+      clue: resultClue,
+      matchedFields: match.matchedFields,
+      item: match.item
+    },
+    t
+  )
   const highlights = buildRecallCardHighlightParts({
     clue: resultClue,
     matchedFields: match.matchedFields,
@@ -556,6 +639,10 @@ function toMatchCard(
         : t('popup_duplicate_group_excerpt', String(duplicateTotalCount))
       : undefined
 
+  const savedLabels = formatRecallSavedTime(match.item.createdAt, {
+    justSavedLabel: t('recall_card_saved_just_now')
+  })
+
   const siblings =
     options.includeSiblings !== false && match.duplicateGroup
       ? match.duplicateGroup.siblings.map(sibling =>
@@ -572,6 +659,15 @@ function toMatchCard(
       detailPageUrl: chrome.runtime.getURL('detail.html')
     }),
     typeLabel: display.typeLabel,
+    savedAtIso: match.item.createdAt,
+    reasonLine: explanation.reasonLine,
+    reasonCodes: [...new Set(match.matchedFields)],
+    ...(savedLabels
+      ? {
+          savedAtLabel: t('recall_card_saved', savedLabels.relative),
+          savedAtTitle: savedLabels.absolute
+        }
+      : {}),
     titleParts: highlights.titleParts,
     subtitleParts: highlights.subtitleParts,
     excerptParts: highlights.excerptParts,
@@ -583,7 +679,8 @@ function toMatchCard(
     duplicateLabel !== undefined
       ? { duplicateTotalCount, duplicateLabel }
       : {}),
-    ...(siblings && siblings.length > 0 ? { siblings } : {})
+    ...(siblings && siblings.length > 0 ? { siblings } : {}),
+    ...(options.rank !== undefined ? { telemetryRank: options.rank } : {})
   }
 }
 
@@ -591,8 +688,23 @@ function toggleDuplicateGroup(cardId: string): void {
   expandedDuplicateGroupId.value = expandedDuplicateGroupId.value === cardId ? null : cardId
 }
 
-function handleCardOpen(payload: { id: string; url: string; openInNewTab: boolean }): void {
-  handleRecallResultOpen(payload.id, payload.url, payload.openInNewTab)
+function handleCardOpen(payload: {
+  id: string
+  url: string
+  openInNewTab: boolean
+  rank?: number
+}): void {
+  handleRecallResultOpen(payload.id, payload.url, payload.openInNewTab, payload.rank)
+}
+
+function handleEvidenceVisible(payload: {
+  memoryItemId: string
+  rank: number
+  ecs: number
+  reasonCodes?: string[]
+  anchor?: string
+}): void {
+  recallTelemetry.recordEvidenceVisible(payload)
 }
 
 /** 「都不是这些」：写否定反馈，保留 accumulated，会话 dismissedIds 并集后再请补线索。 */
@@ -635,6 +747,12 @@ async function handleDismissCandidates(): Promise<void> {
             settleWriteDone: true
           }
         }
+        recallTelemetry.recordUserConfirmed({
+          label: result.event.label,
+          source: result.event.source,
+          ...(result.event.confidence ? { confidence: result.event.confidence } : {}),
+          ...(result.event.targetId ? { memoryItemId: result.event.targetId } : {})
+        })
       })
       .catch(() => {
         // 忽略：Outcome 日志失败不挡 dismiss
@@ -672,7 +790,16 @@ async function handleDismissCandidates(): Promise<void> {
 }
 
 /** 打开结果：默认当前活动标签；⌘/Ctrl+点击新开。写 explore open（§7.2：≠ settled）。 */
-function handleRecallResultOpen(memoryItemId: string, openUrl: string, openInNewTab = false): void {
+function handleRecallResultOpen(
+  memoryItemId: string,
+  openUrl: string,
+  openInNewTab = false,
+  rank?: number
+): void {
+  recallTelemetry.recordSourceOpened({
+    memoryItemId,
+    ...(rank !== undefined ? { rank } : {})
+  })
   void markFirstRecallOpenDone().catch(() => {
     // 忽略：引导标记失败不影响打开
   })
@@ -843,6 +970,13 @@ async function runRecall(trimmedClue: string): Promise<void> {
     dismissedIds
   )
 
+  const priorCluePreview =
+    priorUserUtterances.length > 0 ? priorUserUtterances[priorUserUtterances.length - 1] : undefined
+  recallTelemetry.beginQuery({
+    clue: trimmed,
+    ...(priorUserUtterances.length > 0 && priorCluePreview ? { priorCluePreview } : {})
+  })
+
   try {
     const response = await recallWithClue({
       clue: trimmed,
@@ -913,6 +1047,12 @@ async function runRecall(trimmedClue: string): Promise<void> {
               settleWriteDone: true
             }
           }
+          recallTelemetry.recordUserConfirmed({
+            label: result.event.label,
+            source: result.event.source,
+            ...(result.event.confidence ? { confidence: result.event.confidence } : {}),
+            ...(result.event.targetId ? { memoryItemId: result.event.targetId } : {})
+          })
         })
         .catch(() => {
           // 忽略
@@ -921,8 +1061,14 @@ async function runRecall(trimmedClue: string): Promise<void> {
 
     if (response.result.outcome === 'top_pick') {
       const rankedCards = [
-        ...(response.result.topPick ? [toMatchCard(response.result.topPick, highlightClue)] : []),
-        ...response.result.alsoPossible.map(match => toMatchCard(match, highlightClue))
+        ...(response.result.topPick
+          ? [toMatchCard(response.result.topPick, highlightClue, { rank: 0 })]
+          : []),
+        ...response.result.alsoPossible.map((match, index) =>
+          toMatchCard(match, highlightClue, {
+            rank: (response.result.topPick ? 1 : 0) + index
+          })
+        )
       ]
       const total = response.result.totalRankedCount || rankedCards.length
       const visibleCount = Math.min(RECALL_RESULT_PAGE_SIZE, rankedCards.length)
@@ -947,8 +1093,8 @@ async function runRecall(trimmedClue: string): Promise<void> {
       )
     } else if (response.result.outcome === 'need_a_clue') {
       const llmFollowUp = response.result.assistantFollowUp
-      const candidateCards = response.result.alsoPossible.map(match =>
-        toMatchCard(match, highlightClue)
+      const candidateCards = response.result.alsoPossible.map((match, index) =>
+        toMatchCard(match, highlightClue, { rank: index })
       )
       const total = response.result.totalRankedCount || candidateCards.length
       const visibleCount = Math.min(RECALL_RESULT_PAGE_SIZE, candidateCards.length)
@@ -987,13 +1133,25 @@ async function runRecall(trimmedClue: string): Promise<void> {
           ...contextStatusFields,
           ...(relatedGuess
             ? {
-                relatedGuessCard: toMatchCard(relatedGuess, highlightClue),
+                relatedGuessCard: toMatchCard(relatedGuess, highlightClue, { rank: 0 }),
                 relatedGuessLabel: t('popup_related_guess_label')
               }
             : {})
         })
       )
     }
+
+    const renderedCount =
+      response.result.outcome === 'no_match'
+        ? response.result.relatedGuess
+          ? 1
+          : 0
+        : response.result.totalRankedCount
+    recallTelemetry.recordResultRendered({
+      outcome: response.result.outcome,
+      resultCount: renderedCount,
+      ...(response.result.pipelineTiming ? { pipelineTiming: response.result.pipelineTiming } : {})
+    })
 
     void probeMemoryLibrary()
     void nextTick(() => {
@@ -1144,6 +1302,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   void flushOutcomeSession('panel_close', true)
+  recallTelemetry.clearActiveTask()
   recallRequestId += 1
   stopImportPolling()
   stopColdStartPolling()
@@ -1222,7 +1381,10 @@ onUnmounted(() => {
         :noteFieldLabel="t('detail_note_label')"
         :pending="isRecallRefreshing"
         :pendingLabel="t('popup_recall_pending')"
+        :selected-evidence-ids="selectedEvidenceIds"
         @open="handleCardOpen"
+        @evidence-visible="handleEvidenceVisible"
+        @toggle-evidence-selection="toggleEvidenceSelection"
         @toggle-expand="toggleDuplicateGroup"
         @dismiss="handleDismissCandidates"
         @show-more="handleShowMoreMatches"
@@ -1268,6 +1430,18 @@ onUnmounted(() => {
         </AppButton>
       </div>
     </div>
+
+    <EvidencePackExportBar
+      v-if="showEvidencePackBar"
+      class="recall-evidence-bar"
+      :selected-count="evidencePackSelectedCount"
+      :exporting="evidencePackExporting"
+      :error-message="evidencePackError"
+      :success-message="evidencePackSuccess"
+      @export-json="handleEvidencePackExport('json')"
+      @export-markdown="handleEvidencePackExport('markdown')"
+      @clear="clearEvidenceSelection"
+    />
 
     <RecallComposer
       ref="clueInputRef"
@@ -1320,6 +1494,14 @@ onUnmounted(() => {
   color: var(--on-surface);
   background: var(--surface);
   overflow: hidden;
+}
+
+.recall-evidence-bar {
+  flex-shrink: 0;
+  margin-top: var(--space-xs);
+  margin-bottom: var(--space-xs);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
 }
 
 .recall-outcome-exit {

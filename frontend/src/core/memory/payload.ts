@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+import { ThirdPartyCorpusSourceSchema } from '@/core/memory/third-party-corpus-source'
+
 /** Bookmark MemoryItem 载荷。 */
 export const BookmarkPayloadSchema = z.object({
   title: z.string().min(1),
@@ -8,7 +10,13 @@ export const BookmarkPayloadSchema = z.object({
   faviconUrl: z.string().url().optional(),
   chromeBookmarkId: z.string().optional(),
   parentFolderId: z.string().optional(),
-  chromeCreatedAt: z.string().datetime().optional()
+  chromeCreatedAt: z.string().datetime().optional(),
+  /** 第三方语料源（Raindrop / Pocket · §5.10.6） */
+  corpusSource: ThirdPartyCorpusSourceSchema.optional(),
+  /** 源系统稳定 id（与 corpusSource 成对） */
+  remoteId: z.string().min(1).optional(),
+  /** 导出文件中的原始保存时间 */
+  sourceCreatedAt: z.string().datetime().optional()
 })
 
 export type BookmarkPayload = z.infer<typeof BookmarkPayloadSchema>

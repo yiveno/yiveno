@@ -94,7 +94,8 @@ async function handleOmniboxInputChanged(
 
   const suggests = recallResultToOmniboxSuggests(result, {
     detailPageUrl: getDetailPageUrl(),
-    translate: t
+    translate: t,
+    clue: result.effectiveClue ?? clue
   })
   if (suggests.length === 0) {
     chrome.omnibox.setDefaultSuggestion({ description: getNoMatchSuggestionDescription() })

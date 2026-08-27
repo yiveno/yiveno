@@ -5,6 +5,10 @@ import { invalidateBookmarkLibraryTreeOnChromeChange } from '@/background/handle
 import { invalidateBookmarkSyncAlignmentCache } from '@/application/memory/bookmark-sync-alignment-cache'
 import { memoryItemService } from '@/application/memory/memory-item-service'
 import { backfillMissingMemoryEmbeddings } from '@/application/memory/schedule-async-memory-embedding'
+import {
+  exportEvidencePack,
+  EvidencePackExportError
+} from '@/application/recall/export-evidence-pack-service'
 import { getAuthSession } from '@/infrastructure/identity/auth-session-service'
 import type { MemoryBackgroundResponse, MemoryErrorCode } from '@/core/messaging/memory-messages'
 import {
@@ -17,6 +21,7 @@ import {
   parseRecordMemoryOpenPayload,
   parseRecordRecallDismissPayload,
   parseRecordRecallSettlePayload,
+  parseExportEvidencePackPayload,
   parseUpdateMemoryNotePayload
 } from '@/core/messaging/memory-messages'
 import { flashActionBadge } from '@/infrastructure/browser/action-badge'
@@ -298,5 +303,27 @@ export async function handleBackfillMemoryEmbeddings(): Promise<MemoryBackground
   } catch (error) {
     flowFail('Memory', '回填 embedding', startedAt, error)
     return toErrorResponse('MEMORY_OPERATION_FAILED', error)
+  }
+}
+
+/** 多选导出 evidence pack（§5.10.4；2–5 条）。 */
+export async function handleExportEvidencePack(
+  payload: unknown
+): Promise<MemoryBackgroundResponse> {
+  const startedAt = flowStart('Memory', '导出 evidence pack')
+  try {
+    const input = parseExportEvidencePackPayload(payload)
+    const result = await exportEvidencePack(input.ids)
+    flowOk('Memory', '导出 evidence pack', startedAt, {
+      itemCount: result.pack.items.length
+    })
+    return { ok: true, pack: result.pack, markdown: result.markdown }
+  } catch (error) {
+    if (error instanceof EvidencePackExportError) {
+      flowFail('Memory', '导出 evidence pack', startedAt, error)
+      return toErrorResponse(error.errorCode, error)
+    }
+    flowFail('Memory', '导出 evidence pack', startedAt, error)
+    return toErrorResponse('EVIDENCE_PACK_OPERATION_FAILED', error)
   }
 }

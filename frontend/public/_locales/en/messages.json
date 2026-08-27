@@ -568,6 +568,27 @@
   "popup_related_guess_label": {
     "message": "Guess (not the answer)"
   },
+  "recall_card_saved": {
+    "message": "Saved $time$",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "3 weeks ago"
+      }
+    }
+  },
+  "recall_card_saved_just_now": {
+    "message": "Just saved"
+  },
+  "recall_card_match_reason_aria": {
+    "message": "Why this match: $reason$",
+    "placeholders": {
+      "reason": {
+        "content": "$1",
+        "example": "Your note contains \"checklist\""
+      }
+    }
+  },
   "popup_duplicate_group_bookmark": {
     "message": "$1 identical bookmarks",
     "placeholders": {
@@ -635,7 +656,44 @@
     "message": "Privacy options are not available yet. This page will not pretend they are."
   },
   "settings_data_intro": {
-    "message": "Full backup export, clear local memory, or delete cloud data and your account. Export includes your full library state. Never changes Chrome bookmarks."
+    "message": "Full backup export, import Raindrop/Pocket exports (up to 50), clear local memory, or delete cloud data and your account. Export includes your full library state. Never changes Chrome bookmarks."
+  },
+  "settings_data_import_raindrop": {
+    "message": "Import from Raindrop"
+  },
+  "settings_data_import_raindrop_hint": {
+    "message": "Upload a Raindrop HTML, CSV, or JSON export (max 50 bookmarks). Upserts by source id; keeps your notes."
+  },
+  "settings_data_import_pocket": {
+    "message": "Import from Pocket"
+  },
+  "settings_data_import_pocket_hint": {
+    "message": "Upload a Pocket HTML export (Netscape bookmarks, max 50). Upserts by URL; keeps your notes."
+  },
+  "settings_data_import_action": {
+    "message": "Choose file"
+  },
+  "settings_data_third_party_import_done": {
+    "message": "Imported $COUNT$ items from $SOURCE$",
+    "placeholders": {
+      "COUNT": { "content": "$1" },
+      "SOURCE": { "content": "$2" }
+    }
+  },
+  "error_third_party_import_invalid_format": {
+    "message": "That file doesn’t look like a Raindrop or Pocket export we can read"
+  },
+  "error_third_party_import_empty": {
+    "message": "No bookmarks found in that file"
+  },
+  "error_third_party_import_too_many": {
+    "message": "Pick an export with 50 bookmarks or fewer"
+  },
+  "error_third_party_import_in_progress": {
+    "message": "An import is already running—wait for it to finish"
+  },
+  "error_third_party_import_failed": {
+    "message": "Could not import that file"
   },
   "settings_data_clear_local": {
     "message": "Clear local memory"
@@ -670,6 +728,18 @@
   },
   "settings_privacy_intro": {
     "message": "How Yiveno handles your memories, ownership, optional sync, and AI."
+  },
+  "settings_mcp_toggle": {
+    "message": "Read-only MCP (beta)"
+  },
+  "settings_mcp_toggle_hint": {
+    "message": "Let Cursor or other MCP clients recall scoped evidence from your library. Off = blocked locally and in the cloud."
+  },
+  "settings_mcp_howto": {
+    "message": "Tool: yiveno_recall_evidence. Pass a natural-language clue; you get 1–5 evidence items with sources—never a full-library dump. Cloud path needs sign-in, Pro sync data, and this switch on."
+  },
+  "settings_mcp_remote_sync_failed": {
+    "message": "Couldn't sync the MCP switch to the cloud. Local setting still saved—try again when you're online."
   },
   "settings_privacy_details_summary": {
     "message": "What Yiveno stores, who owns it, and what we send"
@@ -1299,6 +1369,47 @@
   },
   "library_note_save_failed": {
     "message": "Could not save note"
+  },
+  "evidence_pack_selection_status": {
+    "message": "$count$ selected · pick $min$–$max$ to export",
+    "placeholders": {
+      "count": { "content": "$1" },
+      "min": { "content": "$2" },
+      "max": { "content": "$3" }
+    }
+  },
+  "evidence_pack_export_json": {
+    "message": "Export JSON"
+  },
+  "evidence_pack_export_markdown": {
+    "message": "Export Markdown"
+  },
+  "evidence_pack_clear_selection": {
+    "message": "Clear"
+  },
+  "evidence_pack_export_bar_aria": {
+    "message": "Evidence pack export"
+  },
+  "evidence_pack_select_item_aria": {
+    "message": "Select for evidence pack"
+  },
+  "evidence_pack_export_success": {
+    "message": "Evidence pack downloaded"
+  },
+  "evidence_pack_max_selected": {
+    "message": "You can pick up to $max$ items",
+    "placeholders": {
+      "max": { "content": "$1" }
+    }
+  },
+  "error_evidence_pack_invalid_count": {
+    "message": "Pick 2 to 5 items to export"
+  },
+  "error_evidence_pack_item_not_found": {
+    "message": "One of the selected items is missing or was removed"
+  },
+  "error_evidence_pack_operation_failed": {
+    "message": "Could not export evidence pack"
   },
   "detail_title": {
     "message": "Excerpt detail"

@@ -31,7 +31,8 @@ export const AccountSyncErrorCodeSchema = z.enum([
   'ORPHAN_EXPORT_FAILED', // 导出孤儿桶失败
   'ORPHAN_CLEAR_FAILED', // 清除孤儿桶失败
   'LOCAL_CLEAR_FAILED', // 清除本机记忆失败
-  'SUBSCRIPTION_STATUS_FAILED' // 拉取订阅状态失败
+  'SUBSCRIPTION_STATUS_FAILED', // 拉取订阅状态失败
+  'MCP_REMOTE_UPDATE_FAILED' // 同步 MCP 开关到云端失败
 ])
 
 export type AccountSyncErrorCode = z.infer<typeof AccountSyncErrorCodeSchema>
@@ -181,6 +182,23 @@ export type SetSyncEnabledResponse =
       localCount: number
       remoteCount: number
     }
+  | {
+      ok: false
+      errorCode: AccountSyncErrorCode
+      error?: string
+    }
+
+/** 同步只读 MCP 开关到 Worker（KV；供云端 /api/mcp 门禁）。 */
+export type SetMcpReadOnlyMessage = {
+  scope: BackgroundMessageScope
+  type: 'SET_MCP_READ_ONLY'
+  payload: {
+    enabled: boolean
+  }
+}
+
+export type SetMcpReadOnlyResponse =
+  | { ok: true; enabled: boolean }
   | {
       ok: false
       errorCode: AccountSyncErrorCode
@@ -429,6 +447,7 @@ export type AccountSyncBackgroundMessage =
   | RefreshAuthProfileMessage
   | GetSyncStatusMessage
   | SetSyncEnabledMessage
+  | SetMcpReadOnlyMessage
   | RunIncrementalMemorySyncMessage
   | SyncReplaceWithLocalMessage
   | SyncReplaceWithRemoteMessage
@@ -449,6 +468,7 @@ export type AccountSyncBackgroundResponse =
   | RefreshAuthProfileResponse
   | GetSyncStatusResponse
   | SetSyncEnabledResponse
+  | SetMcpReadOnlyResponse
   | RunIncrementalMemorySyncResponse
   | SyncReplaceWithLocalResponse
   | SyncReplaceWithRemoteResponse

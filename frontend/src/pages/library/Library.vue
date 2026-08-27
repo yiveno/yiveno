@@ -37,6 +37,13 @@ import {
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
 import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
 import BookmarkLibraryTree from '@/pages/library/BookmarkLibraryTree.vue'
+import EvidencePackExportBar from '@/infrastructure/ui/EvidencePackExportBar.vue'
+import { downloadEvidencePackExport } from '@/infrastructure/recall/download-evidence-pack'
+import {
+  canSelectMoreEvidencePackItems,
+  EVIDENCE_PACK_MAX_ITEMS,
+  toggleEvidencePackSelection
+} from '@/infrastructure/recall/evidence-pack-selection'
 
 defineOptions({ name: 'LibraryPage' })
 
@@ -69,6 +76,14 @@ const noteEditorDraft = ref('')
 const deleteConfirmOpen = ref(false)
 const pendingDeleteId = ref<string | null>(null)
 const deleteConfirmError = ref('')
+
+const selectedEvidenceIds = ref<Set<string>>(new Set())
+const evidencePackExporting = ref(false)
+const evidencePackError = ref('')
+const evidencePackSuccess = ref('')
+
+const evidencePackSelectedCount = computed(() => selectedEvidenceIds.value.size)
+const showEvidencePackBar = computed(() => evidencePackSelectedCount.value > 0)
 
 const activeTabDef = computed(() => resolveLibraryTypeTab(activeType.value))
 const activeTab = computed(() => {
@@ -109,6 +124,54 @@ const listRows = computed(() => {
     }
   })
 })
+
+function isEvidenceSelected(id: string): boolean {
+  return selectedEvidenceIds.value.has(id)
+}
+
+function canSelectEvidenceItem(id: string): boolean {
+  return isEvidenceSelected(id) || canSelectMoreEvidencePackItems(selectedEvidenceIds.value)
+}
+
+function toggleEvidenceSelection(id: string): void {
+  evidencePackSuccess.value = ''
+  evidencePackError.value = ''
+  const before = selectedEvidenceIds.value
+  const after = toggleEvidencePackSelection(before, id)
+  if (after === before && !before.has(id)) {
+    evidencePackError.value = t('evidence_pack_max_selected', [String(EVIDENCE_PACK_MAX_ITEMS)])
+    return
+  }
+  selectedEvidenceIds.value = after
+}
+
+function clearEvidenceSelection(): void {
+  selectedEvidenceIds.value = new Set()
+  evidencePackError.value = ''
+  evidencePackSuccess.value = ''
+}
+
+async function handleEvidencePackExport(format: 'json' | 'markdown'): Promise<void> {
+  if (evidencePackExporting.value) {
+    return
+  }
+  evidencePackExporting.value = true
+  evidencePackError.value = ''
+  evidencePackSuccess.value = ''
+  try {
+    const ids = [...selectedEvidenceIds.value]
+    const result = await downloadEvidencePackExport(ids, format)
+    if (!result.ok) {
+      evidencePackError.value = tMemoryError(result.errorCode)
+      return
+    }
+    evidencePackSuccess.value = t('evidence_pack_export_success')
+  } catch {
+    evidencePackError.value = t('error_evidence_pack_operation_failed')
+  } finally {
+    evidencePackExporting.value = false
+  }
+}
 
 function formatUpdatedAt(iso: string): string {
   const date = new Date(iso)
@@ -416,7 +479,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <main class="library-shell">
+  <main class="library-shell" :class="{ 'library-shell--export-bar': showEvidencePackBar }">
     <header class="library-header">
       <AppPageHeader current="library" class="library-header-top" />
       <h1 class="library-title">{{ t('library_title') }}</h1>
@@ -465,8 +528,10 @@ onUnmounted(() => {
             v-else
             :index="bookmarkIndex"
             :show-unsynced-flags="bookmarkSyncReady"
+            :selected-evidence-ids="selectedEvidenceIds"
             @edit-note="openNoteEditor"
             @open-bookmark="handleOpenBookmark"
+            @toggle-evidence-selection="toggleEvidenceSelection"
           />
         </template>
 
@@ -478,46 +543,58 @@ onUnmounted(() => {
 
           <ul v-else class="library-list">
             <li v-for="row in listRows" :key="row.id" class="library-item">
-              <a class="library-row" :href="row.href" target="_blank" rel="noopener noreferrer">
-                <div class="library-row-main">
-                  <p v-if="row.excerpt" class="library-row-body">{{ row.excerpt }}</p>
-                  <p v-else-if="row.title" class="library-row-title">{{ row.title }}</p>
-                  <p v-if="row.note" class="library-row-note">
-                    <span class="library-row-note-label">{{ t('detail_note_label') }}</span>
-                    {{ row.note }}
-                  </p>
-                </div>
-                <div class="library-row-meta">
-                  <p class="library-row-subtitle">{{ row.subtitle }}</p>
-                  <p class="library-row-time">{{ formatUpdatedAt(row.updatedAt) }}</p>
-                </div>
-              </a>
-              <AppIconButton
-                type="button"
-                class="library-item-note"
-                :title="row.note ? t('library_edit_note_aria') : t('library_add_note_aria')"
-                :aria-label="row.note ? t('library_edit_note_aria') : t('library_add_note_aria')"
-                @click="
-                  openNoteEditor({
-                    memoryItemId: row.id,
-                    title: row.title || row.excerpt || row.subtitle,
-                    note: row.note ?? ''
-                  })
-                "
-              >
-                <AppIcon name="edit_note" size="20px" />
-              </AppIconButton>
-              <AppIconButton
-                type="button"
-                class="library-item-delete"
-                tone="danger"
-                :title="t('library_delete_excerpt_aria')"
-                :aria-label="t('library_delete_excerpt_aria')"
-                :disabled="deletingId === row.id"
-                @click="handleDeleteExcerpt(row.id)"
-              >
-                <AppIcon name="delete" size="20px" />
-              </AppIconButton>
+              <label class="library-item-select">
+                <input
+                  type="checkbox"
+                  class="library-evidence-checkbox"
+                  :checked="isEvidenceSelected(row.id)"
+                  :disabled="!canSelectEvidenceItem(row.id)"
+                  :aria-label="t('evidence_pack_select_item_aria')"
+                  @change="toggleEvidenceSelection(row.id)"
+                />
+              </label>
+              <div class="library-item-body">
+                <a class="library-row" :href="row.href" target="_blank" rel="noopener noreferrer">
+                  <div class="library-row-main">
+                    <p v-if="row.excerpt" class="library-row-body">{{ row.excerpt }}</p>
+                    <p v-else-if="row.title" class="library-row-title">{{ row.title }}</p>
+                    <p v-if="row.note" class="library-row-note">
+                      <span class="library-row-note-label">{{ t('detail_note_label') }}</span>
+                      {{ row.note }}
+                    </p>
+                  </div>
+                  <div class="library-row-meta">
+                    <p class="library-row-subtitle">{{ row.subtitle }}</p>
+                    <p class="library-row-time">{{ formatUpdatedAt(row.updatedAt) }}</p>
+                  </div>
+                </a>
+                <AppIconButton
+                  type="button"
+                  class="library-item-note"
+                  :title="row.note ? t('library_edit_note_aria') : t('library_add_note_aria')"
+                  :aria-label="row.note ? t('library_edit_note_aria') : t('library_add_note_aria')"
+                  @click="
+                    openNoteEditor({
+                      memoryItemId: row.id,
+                      title: row.title || row.excerpt || row.subtitle,
+                      note: row.note ?? ''
+                    })
+                  "
+                >
+                  <AppIcon name="edit_note" size="20px" />
+                </AppIconButton>
+                <AppIconButton
+                  type="button"
+                  class="library-item-delete"
+                  tone="danger"
+                  :title="t('library_delete_excerpt_aria')"
+                  :aria-label="t('library_delete_excerpt_aria')"
+                  :disabled="deletingId === row.id"
+                  @click="handleDeleteExcerpt(row.id)"
+                >
+                  <AppIcon name="delete" size="20px" />
+                </AppIconButton>
+              </div>
             </li>
           </ul>
         </template>
@@ -567,6 +644,18 @@ onUnmounted(() => {
       @close="closeDeleteConfirm"
       @confirm="confirmDeleteExcerpt"
     />
+
+    <EvidencePackExportBar
+      v-if="showEvidencePackBar"
+      class="library-evidence-bar"
+      :selected-count="evidencePackSelectedCount"
+      :exporting="evidencePackExporting"
+      :error-message="evidencePackError"
+      :success-message="evidencePackSuccess"
+      @export-json="handleEvidencePackExport('json')"
+      @export-markdown="handleEvidencePackExport('markdown')"
+      @clear="clearEvidenceSelection"
+    />
   </main>
 </template>
 
@@ -577,6 +666,21 @@ onUnmounted(() => {
   padding: var(--page-shell-padding-top) var(--page-shell-padding-x)
     var(--page-shell-padding-bottom);
   color: var(--on-surface);
+}
+
+.library-shell--export-bar {
+  padding-bottom: calc(var(--page-shell-padding-bottom) + 88px);
+}
+
+.library-evidence-bar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 2;
+  max-width: 960px;
+  margin: 0 auto;
+  box-shadow: 0 -4px 16px rgb(0 0 0 / 6%);
 }
 
 .library-header {
@@ -657,6 +761,35 @@ onUnmounted(() => {
 
 .library-item {
   position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-xs);
+  align-items: start;
+}
+
+.library-item-select {
+  display: flex;
+  align-items: flex-start;
+  padding-top: calc(var(--space-sm) + 2px);
+  padding-left: var(--space-2xs);
+}
+
+.library-evidence-checkbox {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.library-evidence-checkbox:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.library-item-body {
+  position: relative;
+  min-width: 0;
 }
 
 .library-item-note,
@@ -708,7 +841,7 @@ onUnmounted(() => {
   flex-direction: column;
   gap: var(--space-xs);
   /* 右侧为行内操作钮预留宽度 */
-  padding: var(--space-sm) 84px var(--space-sm) var(--space-md);
+  padding: var(--space-sm) 84px var(--space-sm) var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   text-decoration: none;

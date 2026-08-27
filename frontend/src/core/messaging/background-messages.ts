@@ -11,9 +11,14 @@ import type {
   CommandsBackgroundResponse
 } from '@/core/messaging/commands-messages'
 import type {
+  DebugBackgroundMessage,
+  DebugBackgroundResponse
+} from '@/core/messaging/debug-messages'
+import type {
   ImportBackgroundMessage,
   ImportBackgroundResponse
 } from '@/core/messaging/import-messages'
+import type { McpBackgroundMessage, McpBackgroundResponse } from '@/core/messaging/mcp-messages'
 import type {
   MemoryBackgroundMessage,
   MemoryBackgroundResponse
@@ -84,20 +89,24 @@ export type BackgroundMessage =
   | PingBackgroundMessage
   | MemoryBackgroundMessage
   | RecallBackgroundMessage
+  | McpBackgroundMessage
   | ImportBackgroundMessage
   | CommandsBackgroundMessage
   | SettingsBackgroundMessage
   | AccountSyncBackgroundMessage
+  | DebugBackgroundMessage
 
 export type BackgroundMessageResponse =
   | GetLocalIdentityResponse
   | PingBackgroundResponse
   | MemoryBackgroundResponse
   | RecallBackgroundResponse
+  | McpBackgroundResponse
   | ImportBackgroundResponse
   | CommandsBackgroundResponse
   | SettingsBackgroundResponse
   | AccountSyncBackgroundResponse
+  | DebugBackgroundResponse
   | BackgroundDispatchErrorResponse
 
 /** 判断是否为 Background scope 消息。 */

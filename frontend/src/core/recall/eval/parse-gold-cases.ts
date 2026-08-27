@@ -357,13 +357,13 @@ export const PARSE_GOLD_CASES: ParseGoldCase[] = [
     clue: 'that Li Bai verse from the other day',
     gate: 'stretch',
     expect: {
-      timeLabel: 'a_while_ago',
+      timeLabel: 'recent',
       objectTypes: ['poem'],
       contentTermsMustInclude: ['li', 'bai'],
       contentTermsMustExclude: ['verse'],
       confidence: 'high'
     },
-    note: 'verse→poem 理想映射；规则无 verse 词面'
+    note: 'verse→poem 理想映射；the other day→recent（近几天）'
   },
   {
     id: 'stretch-never-finished-writeup',

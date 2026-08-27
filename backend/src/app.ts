@@ -21,6 +21,7 @@ import { billingRouter } from './routes/billing'
 import { dodoWebhookRouter } from './routes/webhooks-dodo'
 import { accountRouter } from './routes/account'
 import { memorySyncRouter } from './routes/memory-sync'
+import { mcpRouter } from './routes/mcp'
 import { websiteRouter } from './routes/website'
 
 /** 创建 Hono 应用实例 */
@@ -40,7 +41,7 @@ export function createApp() {
         }
         return null
       },
-      allowMethods: ['GET', 'POST', 'OPTIONS'],
+      allowMethods: ['GET', 'POST', 'PUT', 'OPTIONS'],
       allowHeaders: ['content-type', 'authorization'],
       credentials: true,
       maxAge: 86400
@@ -82,6 +83,9 @@ export function createApp() {
 
   // 账户：删除账号等（Supabase Auth Bearer）
   app.route('/api/account', accountRouter)
+
+  // 只读 MCP beta（Supabase Auth Bearer + KV 门禁）
+  app.route('/api/mcp', mcpRouter)
 
   app.route('/api/billing', billingRouter)
   app.route('/api/webhooks/dodo', dodoWebhookRouter)

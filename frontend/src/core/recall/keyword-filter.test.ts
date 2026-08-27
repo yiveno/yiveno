@@ -17,6 +17,7 @@ import {
   filterMemoryItemsByKeyword,
   isGenericRecallClue,
   isGenericOnlyHitAgainstSpecificClue,
+  latinInflectionVariants,
   recallTopPickBlockedByGenericPageTitleGate,
   scoreMemoryItem,
   tokenizeRecallClue
@@ -270,6 +271,25 @@ describe('keyword-filter', () => {
     expect(match.matchedFields).toContain('title')
   })
 
+  it('多内容词覆盖：dpr+arxiv 压过仅命中泛词 paper 的 Working Paper', () => {
+    const dpr = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: {
+        title: 'Dense Passage Retrieval for Open-Domain QA',
+        url: 'https://arxiv.org/abs/2004.04906'
+      }
+    })
+    const working = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: {
+        title: 'Working Paper: Measuring Trust in News',
+        url: 'https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1234567'
+      }
+    })
+    const clue = 'dpr paper arxiv'
+    expect(scoreMemoryItem(dpr, clue).score).toBeGreaterThan(scoreMemoryItem(working, clue).score)
+  })
+
   it('filterMemoryItemsByKeyword 按分数排序并截断', () => {
     const items = [
       createBookmarkMemoryItem({
@@ -439,6 +459,39 @@ describe('keyword-filter', () => {
     const ranked = filterMemoryItemsByKeyword([byBody, byNote], 'red white')
     expect(ranked[0]?.item.id).toBe(byNote.id)
     expect(ranked[0]?.matchedFields).toContain('note')
+  })
+
+  it('latinInflectionVariants：disagreed → disagree', () => {
+    expect(latinInflectionVariants('disagreed')).toEqual(
+      expect.arrayContaining(['disagreed', 'disagree'])
+    )
+  })
+
+  it('备注屈折对齐 + 多词覆盖：压过单共享词 newsletter 沾边', () => {
+    const target = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: {
+        title: 'Why note-taking apps fail researchers',
+        url: 'https://example.substack.com/p/why-note-taking-apps-fail',
+        domain: 'example.substack.com'
+      },
+      clues: { note: 'disagree with section 3' }
+    })
+    const rival = createTextExcerptMemoryItem({
+      ...baseContext,
+      payload: {
+        selectedText:
+          'Boredom is not empty time; it is unstructured time that still belongs to you.',
+        sourceUrl: 'https://aeon.co/essays/the-joy-of-being-bored',
+        pageTitle: 'The joy of being bored'
+      },
+      clues: { note: 'use in newsletter opener' }
+    })
+
+    const clue = 'newsletter where I disagreed with section 3'
+    const ranked = filterMemoryItemsByKeyword([rival, target], clue)
+    expect(ranked[0]?.item.id).toBe(target.id)
+    expect(scoreMemoryItem(target, clue).score).toBeGreaterThan(scoreMemoryItem(rival, clue).score)
   })
 
   it('expandRecallHostClueVariants 补 www 与裸域', () => {

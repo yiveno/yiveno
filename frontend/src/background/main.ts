@@ -5,6 +5,7 @@ import { syncChromeBookmarkSyncListenersWithIngestSetting } from '@/background/l
 import { registerContextMenuItems } from '@/background/listeners/context-menu'
 import { registerExternalAuthHandoffListener } from '@/background/listeners/external-auth-handoff'
 import { exposeClueGatewayDebug } from '@/infrastructure/debug/expose-clue-gateway-debug'
+import { exposeRecallProbeSeedDebug } from '@/infrastructure/debug/expose-recall-probe-seed-debug'
 import { logger } from '@/infrastructure/logging/logger'
 
 /**
@@ -15,6 +16,7 @@ import { logger } from '@/infrastructure/logging/logger'
  * 禁止恢复旧书签管理器行为。
  */
 exposeClueGatewayDebug()
+exposeRecallProbeSeedDebug()
 registerExternalAuthHandoffListener()
 // 尽早按灌库开关挂监听（关则不挂）；开时尽量早于 DB await，降低 MV3 丢 onCreated
 void syncChromeBookmarkSyncListenersWithIngestSetting().catch(error => {

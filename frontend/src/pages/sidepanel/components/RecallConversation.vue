@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import AppButton from '@/infrastructure/ui/AppButton.vue'
 
 import { RECALL_RESULT_PAGE_SIZE } from '@/core/recall/build-recall-result'
+import { EVIDENCE_PACK_MAX_ITEMS } from '@/infrastructure/recall/evidence-pack-selection'
 import type { ConversationTurn, AssistantTurn } from '@/pages/sidepanel/recall-conversation-types'
 import type { RecallCardModel } from '@/pages/sidepanel/RecallResultCard.vue'
 import RecallResultCard from '@/pages/sidepanel/RecallResultCard.vue'
@@ -22,14 +23,25 @@ const props = defineProps<{
   /** 等待本轮 Recall 结果时展示脉冲占位 */
   pending?: boolean
   pendingLabel: string
+  selectedEvidenceIds?: Set<string>
 }>()
 
 const emit = defineEmits<{
-  open: [payload: { id: string; url: string; openInNewTab: boolean }]
+  open: [payload: { id: string; url: string; openInNewTab: boolean; rank?: number }]
+  evidenceVisible: [
+    payload: {
+      memoryItemId: string
+      rank: number
+      ecs: number
+      reasonCodes?: string[]
+      anchor?: string
+    }
+  ]
   toggleExpand: [cardId: string]
   dismiss: []
   showMore: [turnId: string, mode: ShowMoreMode]
   useSuggestion: [value: string]
+  toggleEvidenceSelection: [memoryItemId: string]
 }>()
 
 const latestDismissibleAssistantId = computed(() => {
@@ -50,8 +62,23 @@ function onSuggestionClick(value: string): void {
   emit('useSuggestion', value)
 }
 
-function handleOpen(payload: { id: string; url: string; openInNewTab: boolean }): void {
+function handleOpen(payload: {
+  id: string
+  url: string
+  openInNewTab: boolean
+  rank?: number
+}): void {
   emit('open', payload)
+}
+
+function handleEvidenceVisible(payload: {
+  memoryItemId: string
+  rank: number
+  ecs: number
+  reasonCodes?: string[]
+  anchor?: string
+}): void {
+  emit('evidenceVisible', payload)
 }
 
 function handleToggleExpand(cardId: string): void {
@@ -91,6 +118,21 @@ function showMoreCountLabel(count: number): string {
 function showAllCountLabel(count: number): string {
   return t('popup_show_all_count', String(count))
 }
+
+function isEvidenceSelected(id: string): boolean {
+  return props.selectedEvidenceIds?.has(id) === true
+}
+
+function isEvidenceSelectionDisabled(id: string): boolean {
+  if (isEvidenceSelected(id)) {
+    return false
+  }
+  return (props.selectedEvidenceIds?.size ?? 0) >= EVIDENCE_PACK_MAX_ITEMS
+}
+
+function handleToggleEvidenceSelection(id: string): void {
+  emit('toggleEvidenceSelection', id)
+}
 </script>
 
 <template>
@@ -122,11 +164,16 @@ function showAllCountLabel(count: number): string {
               result-dom-id="conversation-primary-card"
               :keyboard-selected="false"
               top-pick
+              show-evidence-selection
+              :evidence-selected="isEvidenceSelected(turn.primaryCard.id)"
+              :evidence-selection-disabled="isEvidenceSelectionDisabled(turn.primaryCard.id)"
               :expanded="expandedDuplicateGroupId === turn.primaryCard.id"
               :expand-label="expandLabel"
               :collapse-label="collapseLabel"
               :note-field-label="noteFieldLabel"
               @open="handleOpen"
+              @evidence-visible="handleEvidenceVisible"
+              @toggle-evidence-selection="handleToggleEvidenceSelection"
               @toggle-expand="() => handleToggleExpand(turn.primaryCard!.id)"
             />
           </div>
@@ -138,11 +185,16 @@ function showAllCountLabel(count: number): string {
               result-dom-id="conversation-related-guess-card"
               :keyboard-selected="false"
               compact
+              show-evidence-selection
+              :evidence-selected="isEvidenceSelected(turn.relatedGuessCard.id)"
+              :evidence-selection-disabled="isEvidenceSelectionDisabled(turn.relatedGuessCard.id)"
               :expanded="expandedDuplicateGroupId === turn.relatedGuessCard.id"
               :expand-label="expandLabel"
               :collapse-label="collapseLabel"
               :note-field-label="noteFieldLabel"
               @open="handleOpen"
+              @evidence-visible="handleEvidenceVisible"
+              @toggle-evidence-selection="handleToggleEvidenceSelection"
               @toggle-expand="() => handleToggleExpand(turn.relatedGuessCard!.id)"
             />
           </div>
@@ -162,11 +214,16 @@ function showAllCountLabel(count: number): string {
                   :keyboard-selected="false"
                   :top-pick="turn.tone === 'confident' && index === 0"
                   :compact="!(turn.tone === 'confident' && index === 0)"
+                  show-evidence-selection
+                  :evidence-selected="isEvidenceSelected(item.id)"
+                  :evidence-selection-disabled="isEvidenceSelectionDisabled(item.id)"
                   :expanded="expandedDuplicateGroupId === item.id"
                   :expand-label="expandLabel"
                   :collapse-label="collapseLabel"
                   :note-field-label="noteFieldLabel"
                   @open="handleOpen"
+                  @evidence-visible="handleEvidenceVisible"
+                  @toggle-evidence-selection="handleToggleEvidenceSelection"
                   @toggle-expand="() => handleToggleExpand(item.id)"
                 />
               </li>

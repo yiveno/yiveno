@@ -2,6 +2,7 @@ import type { AccountSyncErrorCode } from '@/core/messaging/account-sync-message
 import type { CommandsErrorCode } from '@/core/messaging/commands-messages'
 import type { ImportErrorCode } from '@/core/messaging/import-messages'
 import type { ChromeBookmarkImportErrorCode } from '@/core/memory/chrome-bookmark-import-state'
+import type { ThirdPartyCorpusImportErrorCode } from '@/core/memory/third-party-corpus-import-state'
 import type { RecallErrorCode } from '@/core/messaging/recall-messages'
 import type { SettingsErrorCode } from '@/core/messaging/settings-messages'
 import type { MessageKey } from '@/infrastructure/i18n/message-keys'
@@ -38,7 +39,8 @@ const ACCOUNT_SYNC_ERROR_MESSAGE_KEYS: Record<AccountSyncErrorCode, MessageKey> 
   LOCAL_CLEAR_FAILED: 'settings_error_local_clear',
   ORPHAN_EXPORT_FAILED: 'settings_error_orphan_export',
   ORPHAN_CLEAR_FAILED: 'settings_error_orphan_clear',
-  SUBSCRIPTION_STATUS_FAILED: 'settings_error_subscription_status'
+  SUBSCRIPTION_STATUS_FAILED: 'settings_error_subscription_status',
+  MCP_REMOTE_UPDATE_FAILED: 'settings_mcp_remote_sync_failed'
 }
 
 const RECALL_ERROR_MESSAGE_KEYS: Record<RecallErrorCode, MessageKey> = {
@@ -60,6 +62,14 @@ const COMMANDS_ERROR_MESSAGE_KEYS: Record<CommandsErrorCode, MessageKey> = {
 
 const IMPORT_STATE_ERROR_MESSAGE_KEYS: Record<ChromeBookmarkImportErrorCode, MessageKey> = {
   BOOKMARK_IMPORT_FAILED: 'popup_import_failed_fallback'
+}
+
+const THIRD_PARTY_IMPORT_ERROR_MESSAGE_KEYS: Record<ThirdPartyCorpusImportErrorCode, MessageKey> = {
+  THIRD_PARTY_IMPORT_INVALID_FORMAT: 'error_third_party_import_invalid_format',
+  THIRD_PARTY_IMPORT_EMPTY: 'error_third_party_import_empty',
+  THIRD_PARTY_IMPORT_TOO_MANY_ITEMS: 'error_third_party_import_too_many',
+  THIRD_PARTY_IMPORT_IN_PROGRESS: 'error_third_party_import_in_progress',
+  THIRD_PARTY_IMPORT_FAILED: 'error_third_party_import_failed'
 }
 
 /** Settings errorCode → 用户文案。 */
@@ -90,4 +100,9 @@ export function tCommandsError(errorCode: CommandsErrorCode): string {
 /** 书签导入状态 errorCode → 用户文案。 */
 export function tImportStateError(errorCode: ChromeBookmarkImportErrorCode): string {
   return t(IMPORT_STATE_ERROR_MESSAGE_KEYS[errorCode])
+}
+
+/** 第三方语料导入 errorCode → 用户文案。 */
+export function tThirdPartyImportError(errorCode: ThirdPartyCorpusImportErrorCode): string {
+  return t(THIRD_PARTY_IMPORT_ERROR_MESSAGE_KEYS[errorCode])
 }
