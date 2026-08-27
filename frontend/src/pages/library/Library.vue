@@ -78,12 +78,34 @@ const pendingDeleteId = ref<string | null>(null)
 const deleteConfirmError = ref('')
 
 const selectedEvidenceIds = ref<Set<string>>(new Set())
+/** Evidence pack 多选模式：点 Export 后才显示勾选框。 */
+const evidencePackMode = ref(false)
 const evidencePackExporting = ref(false)
 const evidencePackError = ref('')
 const evidencePackSuccess = ref('')
 
 const evidencePackSelectedCount = computed(() => selectedEvidenceIds.value.size)
-const showEvidencePackBar = computed(() => evidencePackSelectedCount.value > 0)
+const showEvidencePackBar = computed(() => evidencePackMode.value)
+
+const hasExportableLibraryItems = computed(() => {
+  if (showingBookmarkTree.value) {
+    return (bookmarkIndex.value?.bookmarkCount ?? 0) > 0
+  }
+  return listRows.value.length > 0
+})
+
+function enterEvidencePackMode(): void {
+  evidencePackMode.value = true
+  evidencePackError.value = ''
+  evidencePackSuccess.value = ''
+}
+
+function exitEvidencePackMode(): void {
+  evidencePackMode.value = false
+  selectedEvidenceIds.value = new Set()
+  evidencePackError.value = ''
+  evidencePackSuccess.value = ''
+}
 
 const activeTabDef = computed(() => resolveLibraryTypeTab(activeType.value))
 const activeTab = computed(() => {
@@ -146,9 +168,7 @@ function toggleEvidenceSelection(id: string): void {
 }
 
 function clearEvidenceSelection(): void {
-  selectedEvidenceIds.value = new Set()
-  evidencePackError.value = ''
-  evidencePackSuccess.value = ''
+  exitEvidencePackMode()
 }
 
 async function handleEvidencePackExport(format: 'json' | 'markdown'): Promise<void> {
@@ -495,6 +515,15 @@ onUnmounted(() => {
         :id-prefix="librarySectionTabsId"
       />
 
+      <div
+        v-if="loadState === 'ready' && hasExportableLibraryItems && !evidencePackMode"
+        class="library-evidence-entry"
+      >
+        <AppButton type="button" variant="text" @click="enterEvidencePackMode">
+          {{ t('evidence_pack_start_export') }}
+        </AppButton>
+      </div>
+
       <section
         :id="libraryPanelId"
         class="library-panel surface-panel-white"
@@ -528,6 +557,7 @@ onUnmounted(() => {
             v-else
             :index="bookmarkIndex"
             :show-unsynced-flags="bookmarkSyncReady"
+            :show-evidence-selection="evidencePackMode"
             :selected-evidence-ids="selectedEvidenceIds"
             @edit-note="openNoteEditor"
             @open-bookmark="handleOpenBookmark"
@@ -543,7 +573,7 @@ onUnmounted(() => {
 
           <ul v-else class="library-list">
             <li v-for="row in listRows" :key="row.id" class="library-item">
-              <label class="library-item-select">
+              <label v-if="evidencePackMode" class="library-item-select">
                 <input
                   type="checkbox"
                   class="library-evidence-checkbox"
@@ -670,6 +700,13 @@ onUnmounted(() => {
 
 .library-shell--export-bar {
   padding-bottom: calc(var(--page-shell-padding-bottom) + 88px);
+}
+
+.library-evidence-entry {
+  display: flex;
+  justify-content: flex-end;
+  margin: calc(-1 * var(--space-2xs)) 0 var(--space-xs);
+  padding: 0 var(--space-2xs);
 }
 
 .library-evidence-bar {

@@ -26,6 +26,8 @@ const props = defineProps<{
   showUnsyncedFlags?: boolean
   /** evidence pack 多选 id 集合 */
   selectedEvidenceIds?: Set<string>
+  /** 为 true 时书签行才显示勾选框 */
+  showEvidenceSelection?: boolean
 }>()
 
 defineEmits<{
@@ -159,6 +161,7 @@ function handleScroll(event: Event) {
           :key="`${row.kind}-${row.chromeId}`"
           :row="row"
           :show-unsynced-flags="showUnsyncedFlags"
+          :show-evidence-selection="showEvidenceSelection === true"
           :evidence-selected="
             row.kind === 'bookmark' && row.memoryItemId
               ? selectedEvidenceIds?.has(row.memoryItemId) === true

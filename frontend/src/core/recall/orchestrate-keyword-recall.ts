@@ -49,10 +49,13 @@ export interface OrchestrateKeywordRecallOptions {
   parsed?: ParsedRecallClue
 }
 
-/** 对象类型 → 词典词面（用于条目文本弱匹配与无 contentTerms 时的回退检索）。 */
+/** 对象类型 → 条目证据词面（跳过 clueOnly；用于 MemoryItem 类型弱匹配）。 */
 const OBJECT_TYPE_SURFACES = (() => {
   const map = new Map<RecallObjectType, string[]>()
   for (const entry of RECALL_OBJECT_TYPE_LEXICON) {
+    if (entry.clueOnly) {
+      continue
+    }
     const list = map.get(entry.value) ?? []
     list.push(normalizeRecallText(entry.surface))
     map.set(entry.value, list)
@@ -460,7 +463,8 @@ export function recallMatchesByConstraintNeighborhood(
 /** 在已有词面分上叠加结构化软加权（无词面命中不加）。时间已硬过滤，不再软加成。 */
 export function applyParsedClueScoreBoosts(
   match: RecallMatch,
-  parsed: ParsedRecallClue
+  parsed: ParsedRecallClue,
+  nowMs: number = Date.now()
 ): RecallMatch {
   if (match.score <= 0) {
     return match
@@ -485,7 +489,6 @@ export function applyParsedClueScoreBoosts(
 
   if (parsed.behaviorHints?.includes('recently_saved')) {
     const savedMs = memoryItemSavedAtMs(match.item)
-    const nowMs = Date.now()
     if (savedMs !== null && nowMs - savedMs <= RECENTLY_SAVED_WINDOW_MS) {
       boost += RECALL_ORCHESTRATION_RECENTLY_SAVED_BOOST
     }
@@ -545,7 +548,7 @@ export function recallByKeywordWithParsedClue(
 
   if (shouldRecallByConstraintNeighborhood(parsed)) {
     const constraintMatches = recallMatchesByConstraintNeighborhood(items, parsed, nowMs).map(
-      match => applyParsedClueScoreBoosts(match, parsed)
+      match => applyParsedClueScoreBoosts(match, parsed, nowMs)
     )
     constraintMatches.sort((left, right) => {
       if (right.score !== left.score) {
@@ -563,7 +566,7 @@ export function recallByKeywordWithParsedClue(
 
   const matches = filterMatchesByParsedTimeRange(
     filterKeywordMatchesBeforeCollapse(items, searchClue, { nowMs }).map(match =>
-      applyParsedClueScoreBoosts(match, parsed)
+      applyParsedClueScoreBoosts(match, parsed, nowMs)
     ),
     parsed
   )

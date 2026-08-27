@@ -78,6 +78,20 @@ describe('explain-recall-match', () => {
     })
   })
 
+  it('约束邻域不作「字段含 clue token」误导', () => {
+    const explanation = explainRecallMatch(
+      {
+        clue: 'video',
+        matchedFields: ['constraint_neighborhood', 'outcomePair']
+      },
+      testTranslateEn
+    )
+    expect(explanation.primary).toBe('Matched as this type in your library')
+    expect(explanation.primary).not.toMatch(/containing/)
+    expect(explanation.secondary).toContain('outcomePair')
+    expect(getRecallMatchFieldShortLabel('constraint_neighborhood', testTranslateEn)).toBe('type')
+  })
+
   it('findMatchedClueToken 在字段文本中找更长命中 token', () => {
     const item = createBookmarkMemoryItem({
       ...baseContext,

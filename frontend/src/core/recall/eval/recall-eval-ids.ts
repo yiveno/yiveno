@@ -41,7 +41,13 @@ export const RECALL_EVAL_IDS = {
   /** 近几天 + URL 含 privacy（few days ago → recent 窗） */
   recentPrivacyArticle: '11111111-1111-4111-8111-111111111122',
   /** 旧稿 + 强内容锚（soft old 不得硬时间过滤） */
-  oldDensePassagePaper: '11111111-1111-4111-8111-111111111123'
+  oldDensePassagePaper: '11111111-1111-4111-8111-111111111123',
+  /** R4：未读完 + last week 窗内摘录 */
+  halfReadArticleExcerpt: '11111111-1111-4111-8111-111111111124',
+  /** R4：备注含 deploy checklist */
+  deployNoteExcerpt: '11111111-1111-4111-8111-111111111125',
+  /** R4：近因刚存 + i18n 锚点 */
+  recentI18nExcerpt: '11111111-1111-4111-8111-111111111126'
 } as const
 
 export type RecallEvalItemId = (typeof RECALL_EVAL_IDS)[keyof typeof RECALL_EVAL_IDS]

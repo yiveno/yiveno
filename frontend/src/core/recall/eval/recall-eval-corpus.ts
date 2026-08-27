@@ -43,7 +43,8 @@ export function buildRecallEvalCorpus(): MemoryItem[] {
         sourceLocalProfileId,
         payload: {
           title: 'Yiveno Design Principles',
-          url: 'https://docs.yiveno.com/design'
+          // 与 product 不同 host，避免同域互斥把逛一簇挤成一条代表
+          url: 'https://design.yiveno.com/principles'
         },
         clues: {
           openCount: 20,
@@ -359,6 +360,51 @@ export function buildRecallEvalCorpus(): MemoryItem[] {
       }),
       RECALL_EVAL_IDS.oldDensePassagePaper,
       '2025-06-01T12:00:00.000Z'
+    ),
+    // RECALL_EVAL_NOW = 2026-07-25 → last_week ≈ 7–13 天前
+    withStableIdentity(
+      createTextExcerptMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          selectedText:
+            "Long article on remote work habits. I didn't finish reading past the third section about deep work.",
+          sourceUrl: 'https://essays.example.com/remote-work-habits-half',
+          pageTitle: 'Remote work habits (draft)'
+        },
+        now: () => '2026-07-20T09:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.halfReadArticleExcerpt,
+      '2026-07-20T09:00:00.000Z'
+    ),
+    withStableIdentity(
+      createTextExcerptMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          selectedText: 'Ops page for staging rollouts and rollback steps.',
+          sourceUrl: 'https://notes.example.com/ops-staging-page',
+          pageTitle: 'Staging ops page'
+        },
+        clues: { note: 'deploy checklist reminder' },
+        now: () => '2026-07-18T11:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.deployNoteExcerpt,
+      '2026-07-18T11:00:00.000Z'
+    ),
+    withStableIdentity(
+      createTextExcerptMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          selectedText: 'Remember to run i18n:check before shipping locale strings.',
+          sourceUrl: 'https://notes.example.com/i18n-ship-check',
+          pageTitle: 'Locale ship notes'
+        },
+        now: () => '2026-07-25T08:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.recentI18nExcerpt,
+      '2026-07-25T08:00:00.000Z'
     )
   ]
 }

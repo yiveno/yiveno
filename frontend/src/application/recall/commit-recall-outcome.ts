@@ -144,7 +144,8 @@ export async function commitRecallOutcome(input: {
 }
 
 /**
- * 是否应在 New find / 关 Panel 前出示出口条（§7.2 通道 D）。
+ * 是否应在同场 New find 前出示出口条（§7.2 通道 D）。
+ * 关 Panel 不补问（无会话上下文）；仅 New find 路径调用。
  * 条件：曾 explore open，且尚无 B 强标签 / 出口选择。
  */
 export function shouldOfferRecallOutcomeExitPrompt(state: {

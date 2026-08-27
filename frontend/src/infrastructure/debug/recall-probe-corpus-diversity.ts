@@ -32,7 +32,7 @@ const PACKS: Record<RecallProbePersonaId, DiversityHostPack> = {
       'Field notes on',
       'Lab memo:',
       'Long read:',
-      'Archive clip:',
+      'Archive scrap:',
       'Survey of',
       'Briefing:',
       'Essay draft:',
@@ -187,12 +187,12 @@ export function buildDiversityExcerptSeeds(
     const note = withNote ? `${pick(pack.noteTemplates, i + 2)} excerpt ${i + 1}` : undefined
     const pageTitle = weakPage
       ? pick(WEAK_TITLES, i + 1)
-      : `${pick(pack.titlePrefixes, i + 3)} clip ${i + 1}`
+      : `${pick(pack.titlePrefixes, i + 3)} item ${i + 1}`
     const suggestedClues =
       withNote && note
         ? [
             `excerpt I annotated: ${note.split(' excerpt')[0]}`,
-            `clip about ${snippet.slice(0, 32).toLowerCase()}…`
+            `piece about ${snippet.slice(0, 32).toLowerCase()}…`
           ]
         : []
     out.push({

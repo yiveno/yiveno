@@ -22,8 +22,8 @@ import {
   writeChromeStorageLocal
 } from '@/infrastructure/storage/chrome-storage-local'
 
-/** 与 Recall 扫描上限对齐，避免一次回填拖垮 SW。 */
-const MEMORY_ENRICHMENT_BACKFILL_SCAN_LIMIT = 10000
+/** 与 Recall 扫描上限对齐，覆盖压力轮 ~20k 库的一次 scrub。 */
+const MEMORY_ENRICHMENT_BACKFILL_SCAN_LIMIT = 20000
 
 export type MemoryEnrichmentBackfillResult = {
   status: 'skipped' | 'completed'

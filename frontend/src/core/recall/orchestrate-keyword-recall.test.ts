@@ -84,6 +84,41 @@ describe('memoryItemInTimeRange / objectType', () => {
     expect(memoryItemMatchesObjectType(tagged, 'poem')).toBe(true)
     expect(memoryItemMatchesObjectType(titled, 'poem')).toBe(true)
   })
+
+  it('clip 仅线索侧认 video；标题/关键词里的 clip 不作条目证据', () => {
+    const clipTitled = createTextExcerptMemoryItem({
+      ownerId: OWNER,
+      sourceLocalProfileId: PROFILE,
+      payload: {
+        selectedText: 'Retries without a stable request key',
+        sourceUrl: 'https://linear.app/blog/x',
+        pageTitle: 'Perf checklist: clip 1201',
+        domain: 'linear.app'
+      },
+      clues: { keywords: ['clip'] }
+    })
+    const youtube = createBookmarkMemoryItem({
+      ownerId: OWNER,
+      sourceLocalProfileId: PROFILE,
+      payload: {
+        title: 'Design critique rituals',
+        url: 'https://www.youtube.com/watch?v=abc',
+        domain: 'youtube.com'
+      },
+      clues: { tags: ['video'], keywords: ['video', 'youtube', 'watch', 'clip'] }
+    })
+
+    expect(parseRecallClue('that clip I saved', { nowMs: NOW_MS }).objectTypes).toEqual(['video'])
+    expect(memoryItemMatchesObjectType(clipTitled, 'video')).toBe(false)
+    expect(memoryItemMatchesObjectType(youtube, 'video')).toBe(true)
+
+    const result = recallByKeywordWithParsedClue([clipTitled, youtube], 'video', {
+      nowMs: NOW_MS
+    })
+    const ids = [result.topPick, ...result.alsoPossible].filter(Boolean).map(m => m!.item.id)
+    expect(ids).toContain(youtube.id)
+    expect(ids).not.toContain(clipTitled.id)
+  })
 })
 
 describe('applyParsedClueScoreBoosts', () => {

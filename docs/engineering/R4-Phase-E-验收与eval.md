@@ -8,15 +8,15 @@
 
 ## 1. 实现锚点
 
-| R4 交付          | 预期路径                                                                                                                  | 验收                                                          |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| Explain ECS UI   | `pages/sidepanel/SidePanel.vue` · `RecallResultCard.vue` · `explain-recall-match.ts`                                      | §5.10.1                                                       |
-| Omnibox ECS      | `background/listeners/omnibox.ts` + 建议 UI                                                                               | §5.10.1                                                       |
-| TTE 埋点         | 新模块建议 `infrastructure/analytics/` 或 `application/recall/recall-telemetry.ts`                                        | §5.10.3 · §5.9 七事件                                         |
-| Outcome Labeling | `recall-outcome*` + pairs storage + Hybrid 消费；C2 默认不进 settled                                                      | §7.2 P0–P3；开 C2 settled 见 `R4-Outcome-Labeling-P2-校准.md` |
-| evidence pack    | `core/recall/evidence-pack.ts` · `EXPORT_EVIDENCE_PACK` · Library + Side Panel 多选 UI                                    | §5.10.4（已上线）                                             |
-| 只读 MCP         | Settings `mcpReadOnlyEnabled` · `MCP_RECALL_EVIDENCE` · Worker `PUT /api/account/mcp` + `/api/mcp/tools*` · `@yiveno/mcp` | §5.10.5（已上线 beta）                                        |
-| Raindrop/Pocket  | `parse-*-export` · `import-third-party-corpus-service` · Settings 数据区 · `IMPORT_THIRD_PARTY_CORPUS`                    | §5.10.6（已上线 · R2 准入）                                   |
+| R4 交付          | 预期路径                                                                                                                  | 验收                                                  |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Explain ECS UI   | `pages/sidepanel/SidePanel.vue` · `RecallResultCard.vue` · `explain-recall-match.ts`                                      | §5.10.1                                               |
+| Omnibox ECS      | `background/listeners/omnibox.ts` + 建议 UI                                                                               | §5.10.1                                               |
+| TTE 埋点         | 新模块建议 `infrastructure/analytics/` 或 `application/recall/recall-telemetry.ts`                                        | §5.10.3 · §5.9 七事件                                 |
+| Outcome Labeling | `recall-outcome*` + pairs；C2 默认不进 settled；关 Panel 静默结算（无 exit park）                                         | §7.2 P0–P3；开 C2 见 `R4-Outcome-Labeling-P2-校准.md` |
+| evidence pack    | `core/recall/evidence-pack.ts` · `EXPORT_EVIDENCE_PACK` · Library + Side Panel 多选 UI                                    | §5.10.4（已上线）                                     |
+| 只读 MCP         | Settings `mcpReadOnlyEnabled` · `MCP_RECALL_EVIDENCE` · Worker `PUT /api/account/mcp` + `/api/mcp/tools*` · `@yiveno/mcp` | §5.10.5（已上线 beta）                                |
+| Raindrop/Pocket  | `parse-*-export` · `import-third-party-corpus-service` · Settings 数据区 · `IMPORT_THIRD_PARTY_CORPUS`                    | §5.10.6（已上线 · R2 准入）                           |
 
 **消息 type：** 禁止发明字符串；evidence export / MCP 须先改 `core/messaging/*`。
 
@@ -135,21 +135,22 @@ RecallTelemetryEventSchema = z.discriminatedUnion('type', [
 ## 6. 合入顺序建议
 
 ```text
-1. Explain ECS UI（§5.10.1）+ explain 接线
-2. §5.11.2 must case 补齐 + CI 绿
-3. TTE 埋点（本地聚合即可）→ 再跑 `TTE-种子用户研究-checklist.md` 第 1–2 周
-4. evidence pack
-5. Raindrop/Pocket adapter（单点，过 R2）
-6. 只读 MCP（最后；未达 §5.9 Beta 不对外宣传）
+1. Explain ECS UI（§5.10.1）+ explain 接线          ✅
+2. §5.11.2 must case 补齐 + CI 绿                   ✅（含 r4-*；cluster 拆 case）
+3. TTE 埋点（本地聚合即可）→ 再跑种子 study 第 1–2 周  ✅ P0 埋点；种子 study 未跑、不宣称 Beta
+4. evidence pack                                    ✅
+5. Raindrop/Pocket adapter（单点，过 R2）           ✅
+6. 只读 MCP（最后；未达 §5.9 Beta 不对外宣传）      ✅ beta 已接线、不营销
 ```
 
 ---
 
 ## 修订记录
 
-| 日期       | 变更                                                                                 |
-| ---------- | ------------------------------------------------------------------------------------ |
-| 2026-08-27 | **Raindrop/Pocket 文件导入已上线：** Settings 数据区；§5.10.6；解析 HTML/CSV/JSON    |
-| 2026-08-27 | **Evidence pack 已上线：** Library + Side Panel 多选导出；`EXPORT_EVIDENCE_PACK`；§5 |
-| 2026-08-27 | **TTE 埋点 P0：** 七事件 + `pipelineTiming` + ECS 打分 + 本机缓冲；见 §4 模块表      |
-| 2026-08-24 | **TTE 种子 study：** 工程 checklist `TTE-种子用户研究-checklist.md`                  |
+| 日期       | 变更                                                                                                                   |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------- |
+| 2026-08-27 | **撤 exit park：** 关 Panel 不再停放/下次打开补问出口条；仅同场 New find 出示通道 D；删 `yiveno.recallOutcomeExitPark` |
+| 2026-08-27 | **Raindrop/Pocket 文件导入已上线：** Settings 数据区；§5.10.6；解析 HTML/CSV/JSON                                      |
+| 2026-08-27 | **Evidence pack 已上线：** Library + Side Panel 多选导出；`EXPORT_EVIDENCE_PACK`；§5                                   |
+| 2026-08-27 | **TTE 埋点 P0：** 七事件 + `pipelineTiming` + ECS 打分 + 本机缓冲；见 §4 模块表                                        |
+| 2026-08-24 | **TTE 种子 study：** 工程 checklist `TTE-种子用户研究-checklist.md`                                                    |

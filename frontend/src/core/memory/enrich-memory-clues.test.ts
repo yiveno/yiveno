@@ -46,6 +46,48 @@ describe('enrichMemoryClues', () => {
     expect(result.keywords).toEqual(expect.arrayContaining(['video', 'youtube', 'watch', 'clip']))
   })
 
+  it('标题仅含 clip 不打 video（clueOnly；防 diversity 假阳性）', () => {
+    const result = enrichMemoryClues({
+      title: 'Perf checklist: clip 1201',
+      text: 'Retries without a stable request key',
+      url: 'https://linear.app/blog/x',
+      domain: 'linear.app'
+    })
+    expect(result.tags).not.toContain('video')
+    expect(result.keywords).not.toEqual(expect.arrayContaining(['video', 'youtube']))
+  })
+
+  it('merge 会 scrub 旧版 clip→video 误标（非视频站）', () => {
+    const item = createTextExcerptMemoryItem({
+      ownerId: '11111111-1111-4111-8111-111111111111',
+      sourceLocalProfileId: '22222222-2222-4222-8222-222222222222',
+      payload: {
+        selectedText: 'Retries without a stable request key',
+        sourceUrl: 'https://linear.app/blog/x',
+        pageTitle: 'Perf checklist: clip 1201',
+        domain: 'linear.app'
+      },
+      clues: {
+        tags: ['video'],
+        keywords: ['video', 'youtube', 'watch', 'clip', 'retries']
+      }
+    })
+    // 构造函数会再 enrich；强制写回旧误标以模拟存量
+    const stale = {
+      ...item,
+      clues: {
+        ...item.clues,
+        tags: ['video'],
+        keywords: ['video', 'youtube', 'watch', 'clip', 'retries']
+      }
+    }
+    const { item: merged, changed } = mergeEnrichmentIntoMemoryItem(stale)
+    expect(changed).toBe(true)
+    expect(merged.clues.tags).not.toContain('video')
+    expect(merged.clues.keywords).not.toEqual(expect.arrayContaining(['video', 'youtube', 'watch']))
+    expect(merged.clues.keywords).toEqual(expect.arrayContaining(['retries']))
+  })
+
   it('YouTube bookmark keeps video tags without topic/entity seed keywords', () => {
     const result = enrichMemoryClues({
       title: 'Why Hitler still casts a shadow after 80 years - BBC News',

@@ -196,7 +196,8 @@ function detectObjectTypesFromText(blob: string): RecallObjectType[] {
   for (const entry of ordered) {
     // 过泛的「页面/网页」不从正文自动打标，避免几乎全库都是 page
     // bookmark 由 MemoryItem.type 在召回侧对齐，勿因标题含 bookmark 误打
-    if (entry.value === 'page' || entry.value === 'bookmark') {
+    // clueOnly（如 clip→video）仅线索解析，正文打标会假阳性（diversity「clip 1201」）
+    if (entry.value === 'page' || entry.value === 'bookmark' || entry.clueOnly) {
       continue
     }
     const needle = normalizeRecallText(entry.surface)
@@ -327,25 +328,68 @@ function sameStringListIgnoreCase(left: string[], right: string[]): boolean {
   return a.every((value, index) => value === b[index])
 }
 
+const VIDEO_RECALL_KEYWORD_SET = new Set(
+  (MEMORY_OBJECT_TYPE_RECALL_KEYWORDS.video ?? []).map(token => token.toLowerCase())
+)
+
+/**
+ * 去掉「仅因旧版 clip 正文打标」留下的 video tag/keywords。
+ * 当前 enrichment 已不再主张 video、且非视频站时 scrub。
+ */
+function scrubStaleVideoEnrichment(input: {
+  tags: string[]
+  keywords: string[]
+  enrichmentTags: string[]
+  domain?: string
+  url?: string
+}): { tags: string[]; keywords: string[] } {
+  const enrichmentHasVideo = input.enrichmentTags.some(tag => tag.trim().toLowerCase() === 'video')
+  if (enrichmentHasVideo) {
+    return { tags: input.tags, keywords: input.keywords }
+  }
+
+  const host = normalizeHost(input.domain) ?? normalizeHost(input.url)
+  const videoHost = Boolean(host && matchDomainRule(host)?.objectType === 'video')
+  if (videoHost) {
+    return { tags: input.tags, keywords: input.keywords }
+  }
+
+  const tags = input.tags.filter(tag => tag.trim().toLowerCase() !== 'video')
+  const keywords = input.keywords.filter(
+    token => !VIDEO_RECALL_KEYWORD_SET.has(token.trim().toLowerCase())
+  )
+  return { tags, keywords }
+}
+
 /**
  * 将规则 enrichment 合并进已有 MemoryItem（不改 createdAt/updatedAt）。
- * 合并后剔除已退役主题/实体 seed（存量 scrub）；无实质变更则 changed=false。
+ * 合并后剔除已退役主题/实体 seed（存量 scrub）；并 scrub 旧版 clip→video 误标。
  * LLM 提议请用 mergeMemoryClueEnrichment 后再写回。
  */
 export function mergeEnrichmentIntoMemoryItem(item: MemoryItem): {
   item: MemoryItem
   changed: boolean
 } {
-  const enrichment = enrichMemoryClues(enrichInputFromMemoryItem(item))
-  const tags = mergeUniqueStrings(
+  const enrichInput = enrichInputFromMemoryItem(item)
+  const enrichment = enrichMemoryClues(enrichInput)
+  const mergedTags = mergeUniqueStrings(
     item.clues.tags,
     enrichment.tags,
     // 书签语料始终带 bookmark tag，便于类型词面路径与约束邻域一致
     item.type === 'bookmark' ? ['bookmark'] : []
   )
-  const keywords = scrubRetiredEnrichmentSeedTokens(
+  const mergedKeywords = scrubRetiredEnrichmentSeedTokens(
     mergeUniqueStrings(item.clues.keywords, enrichment.keywords)
   )
+  const scrubbed = scrubStaleVideoEnrichment({
+    tags: mergedTags,
+    keywords: mergedKeywords,
+    enrichmentTags: enrichment.tags,
+    ...(enrichInput.domain !== undefined ? { domain: enrichInput.domain } : {}),
+    ...(enrichInput.url !== undefined ? { url: enrichInput.url } : {})
+  })
+  const tags = scrubbed.tags
+  const keywords = scrubbed.keywords
   const entities = scrubRetiredEnrichmentSeedTokens(
     mergeUniqueStrings(item.clues.entities, enrichment.entities)
   )

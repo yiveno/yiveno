@@ -12,6 +12,11 @@ import type { RecallBehaviorHint, RecallObjectType } from '@/core/recall/parse-r
 export type RecallLexiconEntry<T extends string> = {
   surface: string
   value: T
+  /**
+   * 仅用于线索解析；条目类型匹配不用。
+   * 歧义口语（如 clip）查询侧要认，正文/标题扫到则易假阳性。
+   */
+  clueOnly?: boolean
 }
 
 /**
@@ -104,7 +109,8 @@ export const RECALL_OBJECT_TYPE_LEXICON: RecallLexiconEntry<RecallObjectType>[] 
   { surface: 'videos', value: 'video' },
   { surface: 'video', value: 'video' },
   { surface: 'youtube', value: 'video' },
-  { surface: 'clip', value: 'video' },
+  // clip：口语线索可指视频；条目侧不用（标题 “clip 1201” 等假阳性）
+  { surface: 'clip', value: 'video', clueOnly: true },
 
   // code
   { surface: 'source code', value: 'code' },
@@ -152,6 +158,8 @@ export const RECALL_BEHAVIOR_LEXICON: RecallLexiconEntry<RecallBehaviorHint>[] =
   // half_read
   { surface: "didn't finish reading", value: 'half_read' },
   { surface: 'didnt finish reading', value: 'half_read' },
+  { surface: "didn't finish", value: 'half_read' },
+  { surface: 'didnt finish', value: 'half_read' },
   { surface: 'never finished reading', value: 'half_read' },
   { surface: 'stopped halfway through', value: 'half_read' },
   { surface: 'only got halfway through', value: 'half_read' },

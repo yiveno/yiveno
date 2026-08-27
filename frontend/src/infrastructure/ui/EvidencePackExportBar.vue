@@ -75,7 +75,7 @@ const showSuccess = computed(() => Boolean(props.successMessage?.trim()))
         {{ t('evidence_pack_export_markdown') }}
       </AppButton>
       <AppButton type="button" variant="text" :disabled="exporting" @click="emit('clear')">
-        {{ t('evidence_pack_clear_selection') }}
+        {{ t('evidence_pack_cancel_export') }}
       </AppButton>
     </div>
   </div>

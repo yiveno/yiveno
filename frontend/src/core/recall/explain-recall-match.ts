@@ -22,7 +22,8 @@ const FIELD_LABEL_KEYS: Record<string, string> = {
   tags: 'explain_field_tags',
   note: 'explain_field_note',
   embedding: 'explain_field_embedding',
-  hybridRrf: 'explain_field_hybrid_rrf'
+  hybridRrf: 'explain_field_hybrid_rrf',
+  constraint_neighborhood: 'explain_field_constraint_neighborhood'
 }
 
 const FIELD_SHORT_LABEL_KEYS: Record<string, string> = {
@@ -37,7 +38,8 @@ const FIELD_SHORT_LABEL_KEYS: Record<string, string> = {
   tags: 'explain_field_short_tags',
   note: 'explain_field_short_note',
   embedding: 'explain_field_short_embedding',
-  hybridRrf: 'explain_field_short_hybrid_rrf'
+  hybridRrf: 'explain_field_short_hybrid_rrf',
+  constraint_neighborhood: 'explain_field_short_constraint_neighborhood'
 }
 
 /** 与 keyword-filter 一致的字段权重，用于选择主因字段。 */
@@ -54,6 +56,8 @@ const FIELD_PRIORITY: Record<string, number> = {
   note: 26,
   /** 语义近邻：弱于主文词面，但仍可作唯一主因。 */
   embedding: 15,
+  /** 约束邻域（仅类型/时间/刚存）：专用解释，不作「正文含 token」。 */
+  constraint_neighborhood: 22,
   /** RRF 标记字段：解释时不作主因。 */
   hybridRrf: 0
 }
@@ -164,19 +168,24 @@ export function explainRecallMatch(
     }
   }
 
-  const fieldLabel = getRecallMatchFieldLabel(primaryField, translate)
-  const token = findMatchedClueToken({
-    clue: input.clue,
-    primaryField,
-    ...optionalItem(input.item)
-  })
-
-  const primary = token
-    ? translate('explain_reason_field_contains', [
-        fieldLabel,
-        truncateRecallExplainText(token, TOKEN_QUOTE_MAX)
-      ])
-    : translate('explain_reason_field_related', fieldLabel)
+  // 约束邻域：类型/时间邻域，禁止写成「字段含 clue token」误导
+  const primary =
+    primaryField === 'constraint_neighborhood'
+      ? translate('explain_reason_constraint_neighborhood')
+      : (() => {
+          const fieldLabel = getRecallMatchFieldLabel(primaryField, translate)
+          const token = findMatchedClueToken({
+            clue: input.clue,
+            primaryField,
+            ...optionalItem(input.item)
+          })
+          return token
+            ? translate('explain_reason_field_contains', [
+                fieldLabel,
+                truncateRecallExplainText(token, TOKEN_QUOTE_MAX)
+              ])
+            : translate('explain_reason_field_related', fieldLabel)
+        })()
 
   const secondaryFields = uniqueFields.filter(field => field !== primaryField)
   const secondary =

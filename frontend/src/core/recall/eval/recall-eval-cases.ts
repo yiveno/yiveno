@@ -365,6 +365,72 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
     note: 'soft old 不作时间硬窗；靠 DPR/arxiv 内容锚 Top1'
   },
 
+  // —— must：§5.11.2 R4 新增（Normative id） ——
+  {
+    id: 'r4-semi-fuzzy-time-excerpt',
+    clue: "article I didn't finish last week",
+    clueClass: 'semi_fuzzy',
+    gate: 'must',
+    expectation: { kind: 'in_topk', expectedId: RECALL_EVAL_IDS.halfReadArticleExcerpt, k: 3 },
+    note: 'R4：half_read + last_week · 钉死未读完摘录'
+  },
+  {
+    id: 'r4-semi-fuzzy-note-anchor',
+    clue: 'page where I left a note about deploy',
+    clueClass: 'semi_fuzzy',
+    gate: 'must',
+    expectation: { kind: 'in_topk', expectedId: RECALL_EVAL_IDS.deployNoteExcerpt, k: 3 },
+    note: 'R4：备注指向 deploy checklist reminder'
+  },
+  {
+    id: 'r4-vague-recently-saved',
+    clue: 'just saved something about i18n',
+    clueClass: 'vague',
+    gate: 'must',
+    expectation: { kind: 'in_topk', expectedId: RECALL_EVAL_IDS.recentI18nExcerpt, k: 3 },
+    note: 'R4：recently_saved 邻域 · 近因 i18n 摘录'
+  },
+  {
+    id: 'r4-vague-often-opened',
+    clue: 'the Yiveno page I kept opening',
+    clueClass: 'vague',
+    gate: 'must',
+    expectation: { kind: 'in_topk', expectedId: RECALL_EVAL_IDS.yivenoDesignPrinciples, k: 3 },
+    note: 'R4：often_opened · 高 settledCount 设计原则页'
+  },
+  {
+    id: 'r4-cluster-yiveno-docs-product',
+    clue: 'Yiveno docs I saved',
+    clueClass: 'semi_fuzzy',
+    gate: 'must',
+    expectation: { kind: 'in_topk', expectedId: RECALL_EVAL_IDS.yivenoProductDoc, k: 6 },
+    note: 'R4 逛一簇：同 clue 须含产品文档（与 design 拆两条）'
+  },
+  {
+    id: 'r4-cluster-yiveno-docs-design',
+    clue: 'Yiveno docs I saved',
+    clueClass: 'semi_fuzzy',
+    gate: 'must',
+    expectation: { kind: 'in_topk', expectedId: RECALL_EVAL_IDS.yivenoDesignPrinciples, k: 6 },
+    note: 'R4 逛一簇：同 clue 须含设计原则（与 product 拆两条）'
+  },
+  {
+    id: 'r4-negative-zero-anchor',
+    clue: 'play some songs I like',
+    clueClass: 'negative',
+    gate: 'must',
+    expectation: { kind: 'no_match' },
+    note: 'R4/Normative id：与 r0-zero-anchor-assistant-command 同线索 · 零锚点禁助手路径'
+  },
+  {
+    id: 'r4-constrained-time-empty',
+    clue: 'poem I saved yesterday',
+    clueClass: 'semi_fuzzy',
+    gate: 'must',
+    expectation: { kind: 'no_match' },
+    note: 'R4：poem + yesterday 强约束库空 → 诚实 no_match'
+  },
+
   // —— stretch：仍需同义/语义层 ——
   {
     id: 'stretch-synonym-recall',

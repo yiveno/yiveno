@@ -15,6 +15,8 @@ const props = defineProps<{
   showUnsyncedFlags?: boolean
   evidenceSelected?: boolean
   evidenceSelectionDisabled?: boolean
+  /** 为 true 时显示 evidence pack 勾选框 */
+  showEvidenceSelection?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -125,7 +127,11 @@ function handleToggleEvidenceSelection(event: Event): void {
     </template>
 
     <div v-else class="tree-bookmark-row">
-      <label v-if="row.memoryItemId" class="tree-bookmark-select" @click.stop>
+      <label
+        v-if="row.memoryItemId && showEvidenceSelection"
+        class="tree-bookmark-select"
+        @click.stop
+      >
         <input
           type="checkbox"
           class="tree-evidence-checkbox"

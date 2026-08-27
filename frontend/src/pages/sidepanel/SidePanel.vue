@@ -105,8 +105,12 @@ const dialogState = ref<RecallDialogState>({
 const outcomeSession = ref<RecallOutcomeSessionState>(createRecallOutcomeSessionState())
 /** §5.9 TTE 七事件本机录制（与 Outcome 会话同寿）。 */
 const recallTelemetry = createRecallTelemetryRecorder()
-/** 出口条（通道 D）：New find 前可选 Found / None / Skip。 */
+/** 出口条（通道 D）：仅同场 New find 前出示（不跨次打开补问）。 */
 const showOutcomeExitStrip = ref(false)
+/** 出口条出示期间暂存的 Omnibox 预填线索。 */
+const pendingPrefillAfterExit = ref<string | null>(null)
+/** 关 Panel 结算只做一次（onUnmounted）。 */
+let outcomeCloseHandled = false
 
 /** 软岔路口：发送前确认 Keep refining / Start new。 */
 const showThreadPivotStrip = ref(false)
@@ -288,9 +292,15 @@ async function completeNewFindSession(reason: string): Promise<void> {
   expandedDuplicateGroupId.value = null
   clearEvidenceSelection()
   stickToBottom.value = true
+  const pendingPrefill = pendingPrefillAfterExit.value
+  pendingPrefillAfterExit.value = null
   void nextTick(() => {
     clueInputRef.value?.focus()
   })
+  if (pendingPrefill) {
+    clue.value = pendingPrefill
+    void handleSendTurn(pendingPrefill, { skipPivotCheck: true })
+  }
 }
 
 /** 出口条：Found it（默认最后一次 open）。 */
@@ -511,12 +521,39 @@ const idleGreeting = computed(() =>
 const expandedDuplicateGroupId = ref<string | null>(null)
 
 const selectedEvidenceIds = ref<Set<string>>(new Set())
+/** Evidence pack 多选模式：默认关，点 Export 后才显示勾选框。 */
+const evidencePackMode = ref(false)
 const evidencePackExporting = ref(false)
 const evidencePackError = ref('')
 const evidencePackSuccess = ref('')
 
 const evidencePackSelectedCount = computed(() => selectedEvidenceIds.value.size)
-const showEvidencePackBar = computed(() => evidencePackSelectedCount.value > 0)
+const showEvidencePackBar = computed(() => evidencePackMode.value)
+
+/** 当前线程是否有可导出的结果卡（非空态 / 纯追问）。 */
+const hasRecallResultCards = computed(() =>
+  conversationTurns.value.some(turn => {
+    if (turn.role !== 'assistant') {
+      return false
+    }
+    return Boolean(
+      turn.primaryCard || turn.relatedGuessCard || (turn.candidateCards?.length ?? 0) > 0
+    )
+  })
+)
+
+function enterEvidencePackMode(): void {
+  evidencePackMode.value = true
+  evidencePackError.value = ''
+  evidencePackSuccess.value = ''
+}
+
+function exitEvidencePackMode(): void {
+  evidencePackMode.value = false
+  selectedEvidenceIds.value = new Set()
+  evidencePackError.value = ''
+  evidencePackSuccess.value = ''
+}
 
 function toggleEvidenceSelection(id: string): void {
   evidencePackSuccess.value = ''
@@ -531,9 +568,7 @@ function toggleEvidenceSelection(id: string): void {
 }
 
 function clearEvidenceSelection(): void {
-  selectedEvidenceIds.value = new Set()
-  evidencePackError.value = ''
-  evidencePackSuccess.value = ''
+  exitEvidencePackMode()
 }
 
 async function handleEvidencePackExport(format: 'json' | 'markdown'): Promise<void> {
@@ -1272,6 +1307,19 @@ function handleUseSuggestion(value: string): void {
   void handleSendTurn(value, { skipPivotCheck: true })
 }
 
+/**
+ * 关 Side Panel：静默结算 Outcome（不跨次打开补问出口条）。
+ * Chrome 无法拦截原生关闭；跨次问「上次找没找到」无上下文、易错愕。
+ */
+async function handlePanelCloseOutcome(): Promise<void> {
+  if (outcomeCloseHandled) {
+    return
+  }
+  outcomeCloseHandled = true
+  finalizeOpenDwell()
+  await flushOutcomeSession('panel_close', true)
+}
+
 /** 取消登录态 storage 订阅。 */
 let stopWatchAuthSession: (() => void) | null = null
 
@@ -1287,10 +1335,11 @@ onMounted(() => {
   void (async () => {
     try {
       const prefill = await consumeRecallPrefill()
-      if (prefill) {
-        clue.value = prefill
-        await handleSendTurn()
+      if (!prefill) {
+        return
       }
+      clue.value = prefill
+      await handleSendTurn()
     } catch {
       // 忽略：无预填不阻塞 Side Panel
     }
@@ -1301,7 +1350,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  void flushOutcomeSession('panel_close', true)
+  void handlePanelCloseOutcome()
   recallTelemetry.clearActiveTask()
   recallRequestId += 1
   stopImportPolling()
@@ -1382,6 +1431,7 @@ onUnmounted(() => {
         :pending="isRecallRefreshing"
         :pendingLabel="t('popup_recall_pending')"
         :selected-evidence-ids="selectedEvidenceIds"
+        :evidence-pack-selection-active="evidencePackMode"
         @open="handleCardOpen"
         @evidence-visible="handleEvidenceVisible"
         @toggle-evidence-selection="toggleEvidenceSelection"
@@ -1393,12 +1443,25 @@ onUnmounted(() => {
     </div>
 
     <div
+      v-if="
+        hasRecallResultCards && !evidencePackMode && !showOutcomeExitStrip && !showThreadPivotStrip
+      "
+      class="recall-evidence-entry"
+    >
+      <AppButton type="button" variant="text" @click="enterEvidencePackMode">
+        {{ t('evidence_pack_start_export') }}
+      </AppButton>
+    </div>
+
+    <div
       v-if="showOutcomeExitStrip"
       class="recall-outcome-exit"
       role="group"
       :aria-label="t('popup_outcome_exit_prompt')"
     >
-      <p class="recall-outcome-exit__prompt">{{ t('popup_outcome_exit_prompt') }}</p>
+      <p class="recall-outcome-exit__prompt">
+        {{ t('popup_outcome_exit_prompt') }}
+      </p>
       <div class="recall-outcome-exit__actions">
         <AppButton type="button" variant="filled" @click="handleOutcomeExitFound">
           {{ t('popup_outcome_exit_found') }}
@@ -1494,6 +1557,15 @@ onUnmounted(() => {
   color: var(--on-surface);
   background: var(--surface);
   overflow: hidden;
+}
+
+.recall-evidence-entry {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: calc(-1 * var(--space-2xs));
+  margin-bottom: var(--space-xs);
+  padding: 0 var(--space-2xs);
 }
 
 .recall-evidence-bar {

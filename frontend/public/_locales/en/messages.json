@@ -1387,6 +1387,12 @@
   "evidence_pack_clear_selection": {
     "message": "Clear"
   },
+  "evidence_pack_start_export": {
+    "message": "Export evidence"
+  },
+  "evidence_pack_cancel_export": {
+    "message": "Cancel"
+  },
   "evidence_pack_export_bar_aria": {
     "message": "Evidence pack export"
   },
@@ -1669,6 +1675,9 @@
   "explain_field_hybrid_rrf": {
     "message": "combined ranking"
   },
+  "explain_field_constraint_neighborhood": {
+    "message": "type neighborhood"
+  },
   "explain_field_short_title": {
     "message": "title"
   },
@@ -1705,8 +1714,14 @@
   "explain_field_short_hybrid_rrf": {
     "message": "ranking"
   },
+  "explain_field_short_constraint_neighborhood": {
+    "message": "type"
+  },
   "explain_content_related": {
     "message": "Related to your clue"
+  },
+  "explain_reason_constraint_neighborhood": {
+    "message": "Matched as this type in your library"
   },
   "explain_reason_field_contains": {
     "message": "Matched $field$ containing “$token$”",

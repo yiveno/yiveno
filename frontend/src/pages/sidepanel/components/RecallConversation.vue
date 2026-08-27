@@ -24,6 +24,8 @@ const props = defineProps<{
   pending?: boolean
   pendingLabel: string
   selectedEvidenceIds?: Set<string>
+  /** 为 true 时结果卡才显示 evidence pack 勾选框 */
+  evidencePackSelectionActive?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -164,7 +166,7 @@ function handleToggleEvidenceSelection(id: string): void {
               result-dom-id="conversation-primary-card"
               :keyboard-selected="false"
               top-pick
-              show-evidence-selection
+              :show-evidence-selection="evidencePackSelectionActive === true"
               :evidence-selected="isEvidenceSelected(turn.primaryCard.id)"
               :evidence-selection-disabled="isEvidenceSelectionDisabled(turn.primaryCard.id)"
               :expanded="expandedDuplicateGroupId === turn.primaryCard.id"
@@ -185,7 +187,7 @@ function handleToggleEvidenceSelection(id: string): void {
               result-dom-id="conversation-related-guess-card"
               :keyboard-selected="false"
               compact
-              show-evidence-selection
+              :show-evidence-selection="evidencePackSelectionActive === true"
               :evidence-selected="isEvidenceSelected(turn.relatedGuessCard.id)"
               :evidence-selection-disabled="isEvidenceSelectionDisabled(turn.relatedGuessCard.id)"
               :expanded="expandedDuplicateGroupId === turn.relatedGuessCard.id"
@@ -214,7 +216,7 @@ function handleToggleEvidenceSelection(id: string): void {
                   :keyboard-selected="false"
                   :top-pick="turn.tone === 'confident' && index === 0"
                   :compact="!(turn.tone === 'confident' && index === 0)"
-                  show-evidence-selection
+                  :show-evidence-selection="evidencePackSelectionActive === true"
                   :evidence-selected="isEvidenceSelected(item.id)"
                   :evidence-selection-disabled="isEvidenceSelectionDisabled(item.id)"
                   :expanded="expandedDuplicateGroupId === item.id"
