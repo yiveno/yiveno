@@ -205,5 +205,3 @@ export function createRecallTelemetryRecorder() {
     getActiveTaskId
   }
 }
-
-export type RecallTelemetryRecorder = ReturnType<typeof createRecallTelemetryRecorder>

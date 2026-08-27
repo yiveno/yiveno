@@ -13,8 +13,6 @@ export const RecallProbePersonaSchema = z.enum([
   'developer' // 开发者 / PM
 ])
 
-export type RecallProbePersona = z.infer<typeof RecallProbePersonaSchema>
-
 const seedRecallProbePayloadSchema = z.object({
   /** 要种入的画像；默认三画像全开（质量量级轮）。 */
   personas: z

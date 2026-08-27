@@ -45,10 +45,6 @@
     "website": {
       "entry": ["src/pages/**/*.astro", "src/**/*.vue", "src/**/*.test.ts"],
       "project": ["src/**/*.{astro,vue,ts}"]
-    },
-    "packages/*": {
-      "entry": ["src/cli.ts", "src/index.ts"],
-      "project": ["src/**/*.ts"]
     }
   }
 }

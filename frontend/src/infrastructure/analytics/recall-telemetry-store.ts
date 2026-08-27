@@ -43,14 +43,3 @@ export async function appendRecallTelemetryEvent(event: RecallTelemetryEvent): P
     flowFail('RecallTelemetry', '追加事件', startedAt, error)
   }
 }
-
-/** 读取全部 TTE 事件（损坏则空）。 */
-export async function listRecallTelemetryEvents(): Promise<RecallTelemetryEvent[]> {
-  const store = await readChromeStorageLocal(RECALL_TELEMETRY_LOCAL_KEY, StoreSchema)
-  return store?.events ?? []
-}
-
-/** Dev：清空本机 TTE 缓冲。 */
-export async function clearRecallTelemetryEvents(): Promise<void> {
-  await writeChromeStorageLocal(RECALL_TELEMETRY_LOCAL_KEY, { events: [] })
-}

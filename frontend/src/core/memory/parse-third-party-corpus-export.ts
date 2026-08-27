@@ -83,5 +83,3 @@ export function parseThirdPartyCorpusExport(input: {
   }
   return parsed
 }
-
-export { detectFormat as detectThirdPartyCorpusExportFormatForTests }

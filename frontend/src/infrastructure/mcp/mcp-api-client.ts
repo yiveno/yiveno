@@ -29,7 +29,3 @@ export async function putMcpReadOnlyRemote(input: {
     return { ok: false, error: error instanceof Error ? error.message : String(error) }
   }
 }
-
-export function getYivenoApiBaseUrlForMcp(): string {
-  return getApiBaseUrl()
-}

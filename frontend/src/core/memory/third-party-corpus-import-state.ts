@@ -12,8 +12,6 @@ export const ThirdPartyCorpusImportStatusSchema = z.enum([
   'failed' // 失败
 ])
 
-export type ThirdPartyCorpusImportStatus = z.infer<typeof ThirdPartyCorpusImportStatusSchema>
-
 export const ThirdPartyCorpusImportStateSchema = z.object({
   status: ThirdPartyCorpusImportStatusSchema,
   source: ThirdPartyCorpusSourceSchema,

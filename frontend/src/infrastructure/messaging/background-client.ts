@@ -41,9 +41,7 @@ import type {
   GetColdStartStatusMessage,
   GetBookmarkLibraryTreeMessage,
   ImportThirdPartyCorpusMessage,
-  ImportThirdPartyCorpusResponse,
-  GetThirdPartyCorpusImportStatusMessage,
-  ThirdPartyCorpusImportStatusResponse
+  ImportThirdPartyCorpusResponse
 } from '@/core/messaging/import-messages'
 import type {
   ListMemoryItemsMessage,
@@ -61,7 +59,6 @@ import type {
   RecallBackgroundResponse,
   RecallWithClueMessage
 } from '@/core/messaging/recall-messages'
-import type { McpBackgroundResponse, McpRecallEvidenceMessage } from '@/core/messaging/mcp-messages'
 import type {
   GetAiHostedQuotaResponse,
   GetUserSettingsResponse,
@@ -86,18 +83,6 @@ export async function recallWithClue(
     payload
   }
   return sendBackgroundMessage<RecallBackgroundResponse>(message)
-}
-
-/** 只读 MCP：本机 Hybrid → evidence pack（须 Settings 开启）。 */
-export async function mcpRecallEvidence(
-  payload: McpRecallEvidenceMessage['payload']
-): Promise<McpBackgroundResponse> {
-  const message: McpRecallEvidenceMessage = {
-    scope: 'background',
-    type: 'MCP_RECALL_EVIDENCE',
-    payload
-  }
-  return sendBackgroundMessage<McpBackgroundResponse>(message)
 }
 
 /** 列出 MemoryItem（探活可用 limit: 1）。 */
@@ -227,15 +212,6 @@ export async function importThirdPartyCorpus(
     payload
   }
   return sendBackgroundMessage<ImportThirdPartyCorpusResponse>(message)
-}
-
-/** 查询第三方语料导入进度。 */
-export async function fetchThirdPartyCorpusImportStatus(): Promise<ThirdPartyCorpusImportStatusResponse> {
-  const message: GetThirdPartyCorpusImportStatusMessage = {
-    scope: 'background',
-    type: 'GET_THIRD_PARTY_CORPUS_IMPORT_STATUS'
-  }
-  return sendBackgroundMessage<ThirdPartyCorpusImportStatusResponse>(message)
 }
 
 /** 查询冷启动三阶段门禁进度。 */

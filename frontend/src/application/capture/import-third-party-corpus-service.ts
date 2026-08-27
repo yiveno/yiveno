@@ -153,5 +153,3 @@ async function runImport(input: {
     throw mapped
   }
 }
-
-export { mapParseError as mapThirdPartyCorpusImportErrorForTests }

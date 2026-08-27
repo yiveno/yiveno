@@ -79,5 +79,3 @@ export async function exportEvidencePack(ids: string[]): Promise<{
     throw new EvidencePackExportError(code, error instanceof Error ? error.message : String(error))
   }
 }
-
-export { assertExportErrorCode as resolveEvidencePackExportErrorCodeForTests }
