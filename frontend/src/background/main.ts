@@ -6,6 +6,7 @@ import { registerContextMenuItems } from '@/background/listeners/context-menu'
 import { registerExternalAuthHandoffListener } from '@/background/listeners/external-auth-handoff'
 import { exposeClueGatewayDebug } from '@/infrastructure/debug/expose-clue-gateway-debug'
 import { exposeRecallProbeSeedDebug } from '@/infrastructure/debug/expose-recall-probe-seed-debug'
+import { exposeRecallTelemetryDebug } from '@/infrastructure/debug/expose-recall-telemetry-debug'
 import { logger } from '@/infrastructure/logging/logger'
 
 /**
@@ -17,6 +18,7 @@ import { logger } from '@/infrastructure/logging/logger'
  */
 exposeClueGatewayDebug()
 exposeRecallProbeSeedDebug()
+exposeRecallTelemetryDebug()
 registerExternalAuthHandoffListener()
 // 尽早按灌库开关挂监听（关则不挂）；开时尽量早于 DB await，降低 MV3 丢 onCreated
 void syncChromeBookmarkSyncListenersWithIngestSetting().catch(error => {

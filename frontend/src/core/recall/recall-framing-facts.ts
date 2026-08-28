@@ -16,17 +16,7 @@ export const RecallFramingStanceSchema = z.enum([
   'weak_candidates' // need_a_clue
 ])
 
-export type RecallFramingStance = z.infer<typeof RecallFramingStanceSchema>
-
-/** 分桶 id（闭集；domain 用 domain:host）。 */
-export const RecallFramingBucketIdSchema = z.enum([
-  'excerpt',
-  'bookmark',
-  'with_note',
-  'constraint_neighborhood'
-])
-
-export type RecallFramingBucketId = z.infer<typeof RecallFramingBucketIdSchema>
+/** 分桶 id 闭集：excerpt · bookmark · with_note · constraint_neighborhood · 或 `domain:host`。 */
 
 export const RecallFramingBucketSchema = z.object({
   /** 闭集桶 id 或 `domain:example.com`。 */
@@ -65,8 +55,6 @@ export const RecallFramingCountsSchema = z.object({
   shown: z.number().int().nonnegative()
 })
 
-export type RecallFramingCounts = z.infer<typeof RecallFramingCountsSchema>
-
 /** 候选列表 framing（top_pick / need_a_clue）。 */
 export const RecallFramingCandidateFactsSchema = z.object({
   kind: z.literal('candidates'),
@@ -87,8 +75,6 @@ export const RecallFramingGuessFactsSchema = z.object({
   understood: RecallFramingUnderstoodSchema,
   emptyKind: z.enum(['constrained_none', 'unconstrained']).optional()
 })
-
-export type RecallFramingGuessFacts = z.infer<typeof RecallFramingGuessFactsSchema>
 
 export const RecallFramingFactsSchema = z.discriminatedUnion('kind', [
   RecallFramingCandidateFactsSchema,
