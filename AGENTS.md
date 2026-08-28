@@ -106,7 +106,7 @@ pre-push **不跑** ESLint、全仓 typecheck；FE 变更时跑 **build + test:r
 - 日常：`bun run typecheck`（快，含 `packages/*`）、`bun run lint:check`、`bun run i18n:check`、目标单测
 - 三端并行：`bun run watch` / `bun run dev`（mprocs）或 `bun run watch:stream`（混流）；扩展重建后需 `chrome://extensions` 刷新
 - 合并前 / 发布前：`bun run typecheck:force`、`bun run lint:check`、`bun run i18n:check`、`bun run doc:check`、`bun run test:run`、`bun run knip`
-- 品牌视觉发版：改 `docs/design/brand-assets/` → `bun run sync:brand-assets`（见 `docs/design/brand-asset-release-checklist.md`）
+- 品牌视觉发版：改 `docs/design/brand-assets/` → `bun run sync:brand-assets`（见 `docs/design/brand-asset-release-checklist.md`）；母本走 Git LFS，clone 后 `bun run setup:git-lfs`（ADR-006）
 - Knip 分 workspace：`knip:fe` / `knip:be` / `knip:web`；仅结构项：`knip:fast`；全量报告：`knip:report`
 - Knip 版本写在根 `package.json` → `yiveno.knip`；`scripts/knip-runner.mjs` 在 `.cache/knip-runner` 隔离安装（规避 monorepo `zod@3` 与 knip `zod/mini`）。根目录勿直接 `bunx knip`；待 `bunx knip -D .` 不再报 `./mini` 后再打回根依赖。
 

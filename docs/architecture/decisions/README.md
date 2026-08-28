@@ -11,5 +11,6 @@
 | [ADR-003](./ADR-003-neighborhood-not-oracle.md)      | 交付邻域集合；Top1=建议，非神谕唯一答案            | 已接受 |
 | [ADR-004](./ADR-004-llm-data-plane-boundary.md)      | LLM 不直接执行数据平面读写                         | 已接受 |
 | [ADR-005](./ADR-005-no-graylist-universal-recall.md) | 禁止内容别名灰名单冒充全用户通解                   | 已接受 |
+| [ADR-006](./ADR-006-brand-assets-git-lfs.md)         | 品牌母本/归档走 Git LFS（主仓内，非卫星仓）        | 已接受 |
 
 **新增 ADR：** 先写本文目录 + 文件，再在产品文档 / `CURRENT.md` 引用。

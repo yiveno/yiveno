@@ -1,27 +1,3 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
-<defs>
-  <linearGradient id="forest" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#192420"/><stop offset="1" stop-color="#4B6054"/></linearGradient>
-  <linearGradient id="sage" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#9BB3A6"/><stop offset="1" stop-color="#CFE2D7"/></linearGradient>
-</defs>
-<rect width="1600" height="1000" fill="#F4F5F0"/>
-<text x="120" y="130" font-family="Arial, sans-serif" font-size="54" font-weight="700" fill="#192420">Yiveno core assets</text>
-<text x="120" y="180" font-family="Arial, sans-serif" font-size="22" fill="#4B6054">Organic precision / calm intelligence / meaningful connection</text>
-<g transform="translate(120 280)">
-  <ellipse cx="150" cy="500" rx="150" ry="40" fill="none" stroke="#CED8CB" stroke-opacity=".25" stroke-width="4"/>
-  <ellipse cx="150" cy="500" rx="102" ry="27" fill="none" stroke="#CED8CB" stroke-opacity=".38" stroke-width="3"/>
-  <ellipse cx="150" cy="500" rx="60" ry="16" fill="none" stroke="#CED8CB" stroke-opacity=".56" stroke-width="3"/>
-  <path d="M150 228L72 150M150 228L226 150M150 228V500" stroke="url(#forest)" stroke-width="38" stroke-linecap="round"/>
-  <circle cx="150" cy="75" r="26" fill="url(#sage)"/>
-  <text x="300" y="90" font-family="Arial, sans-serif" font-size="24" fill="#4B6054">Primary mark</text>
-  <text x="300" y="135" font-family="Arial, sans-serif" font-size="48" font-weight="700" fill="#192420">yiveno</text>
-  <text x="300" y="178" font-family="Arial, sans-serif" font-size="19" fill="#4B6054">Mark + lowercase wordmark</text>
-</g>
-<g transform="translate(850 280)">
-  <rect x="0" y="0" width="120" height="120" rx="18" fill="#192420"/><text x="0" y="165" font-family="Arial" font-size="21" fill="#192420">Forest Ink</text><text x="0" y="195" font-family="Arial" font-size="18" fill="#4B6054">#192420</text>
-  <rect x="180" y="0" width="120" height="120" rx="18" fill="#4B6054"/><text x="180" y="165" font-family="Arial" font-size="21" fill="#192420">Deep Moss</text><text x="180" y="195" font-family="Arial" font-size="18" fill="#4B6054">#4B6054</text>
-  <rect x="360" y="0" width="120" height="120" rx="18" fill="#9BB3A6"/><text x="360" y="165" font-family="Arial" font-size="21" fill="#192420">Sage Mist</text><text x="360" y="195" font-family="Arial" font-size="18" fill="#4B6054">#9BB3A6</text>
-  <rect x="0" y="260" width="120" height="120" rx="18" fill="#CFE2D7"/><text x="0" y="425" font-family="Arial" font-size="21" fill="#192420">Soft Dew</text><text x="0" y="455" font-family="Arial" font-size="18" fill="#4B6054">#CFE2D7</text>
-  <rect x="180" y="260" width="120" height="120" rx="18" fill="#CED8CB"/><text x="180" y="425" font-family="Arial" font-size="21" fill="#192420">Ring Veil</text><text x="180" y="455" font-family="Arial" font-size="18" fill="#4B6054">#CED8CB</text>
-  <rect x="360" y="260" width="120" height="120" rx="18" fill="#F4F5F0" stroke="#CED8CB" stroke-width="2"/><text x="360" y="425" font-family="Arial" font-size="21" fill="#192420">Warm Porcelain</text><text x="360" y="455" font-family="Arial" font-size="18" fill="#4B6054">#F4F5F0</text>
-</g>
-</svg>
+version https://git-lfs.github.com/spec/v1
+oid sha256:89041243080f3779349e930430ece7630b5bee53a02a77777fe9f09194bcfabc
+size 3179

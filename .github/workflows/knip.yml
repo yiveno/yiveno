@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: 📥 检出代码仓库
         uses: actions/checkout@v4
+        with:
+          lfs: true
 
       - name: 🔧 设置 Bun
         uses: oven-sh/setup-bun@v1

@@ -1,7 +1,7 @@
 # Yiveno Brand Kit（原始交付 · 归档）
 
 > **⚠️ 发版勿改本目录。** 仓内发版母本为 [`docs/design/brand-assets/`](../docs/design/brand-assets/README.md)；流程见 [`brand-asset-release-checklist.md`](../docs/design/brand-asset-release-checklist.md)。  
-> **治理：** [yiveno/yiveno#30](https://github.com/yiveno/yiveno/issues/30)（未来可迁 Org 卫星仓或 Git LFS，流程不变）。
+> **治理：** [yiveno/yiveno#30](https://github.com/yiveno/yiveno/issues/30)（二进制走 Git LFS，见 [ADR-006](../docs/architecture/decisions/ADR-006-brand-assets-git-lfs.md)）。
 
 这是一套基于现有 Yiveno logo 建立的第一版完整品牌系统。核心方向为 **organic precision / calm intelligence / meaningful connection**，适用于数字产品、官网、社交媒体、包装与基础商务物料。
 

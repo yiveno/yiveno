@@ -4,6 +4,7 @@
 
 **发版流程：** [`brand-asset-release-checklist.md`](../brand-asset-release-checklist.md)  
 **自动同步：** `bun run sync:brand-assets`（根目录）  
+**存储：** 本目录二进制走 **Git LFS**（[ADR-006](../../architecture/decisions/ADR-006-brand-assets-git-lfs.md)）；clone 后 `bun run setup:git-lfs`  
 **治理：** [Issue #30](https://github.com/yiveno/yiveno/issues/30)
 
 ## 目录约定

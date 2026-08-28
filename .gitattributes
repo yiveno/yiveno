@@ -1,0 +1,12 @@
+docs/design/brand-assets/**/*.png filter=lfs diff=lfs merge=lfs -text
+yiveno-brand-kit/**/*.png filter=lfs diff=lfs merge=lfs -text
+docs/design/brand-assets/**/*.jpg filter=lfs diff=lfs merge=lfs -text
+yiveno-brand-kit/**/*.jpg filter=lfs diff=lfs merge=lfs -text
+docs/design/brand-assets/**/*.jpeg filter=lfs diff=lfs merge=lfs -text
+yiveno-brand-kit/**/*.jpeg filter=lfs diff=lfs merge=lfs -text
+docs/design/brand-assets/**/*.svg filter=lfs diff=lfs merge=lfs -text
+yiveno-brand-kit/**/*.svg filter=lfs diff=lfs merge=lfs -text
+docs/design/brand-assets/**/*.ico filter=lfs diff=lfs merge=lfs -text
+yiveno-brand-kit/**/*.ico filter=lfs diff=lfs merge=lfs -text
+docs/design/brand-assets/**/*.webp filter=lfs diff=lfs merge=lfs -text
+yiveno-brand-kit/**/*.webp filter=lfs diff=lfs merge=lfs -text

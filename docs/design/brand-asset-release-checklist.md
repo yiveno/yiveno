@@ -101,7 +101,17 @@ bun run sync:brand-assets --check
 
 ---
 
-## 6. 后续（Issue #30 · 工程轨道）
+## 6. Git LFS（Issue #30 · 工程轨道 · ADR-006）
 
-- 大图迁 **Git LFS** 或 Org 卫星仓 `yiveno/brand-assets` 时，**本 Checklist 流程不变**，只改母本物理位置。
-- `yiveno_research/` 保持归档；Normative 结论只进 `docs/product/`。
+品牌母本与 `yiveno-brand-kit/` 归档中的 **PNG/JPG/SVG/ICO/WebP** 走 **Git LFS**（见根目录 `.gitattributes`）。**本 Checklist 流程不变**；运行时 `frontend/public/`、`website/public/` 仍为普通 Git。
+
+**首次 clone / 换机：**
+
+```bash
+brew install git-lfs          # macOS；其它平台见 https://git-lfs.com
+bun run setup:git-lfs         # 配置本仓 LFS filter + git lfs pull（勿 git lfs install --force，会盖 Husky）
+```
+
+**注意：** 勿对母本路径只提交 LFS 指针却未 `git push` 上传 LFS 对象；Husky `pre-push` 会调用 `git lfs pre-push`。
+
+`yiveno_research/` 保持归档；Normative 结论只进 `docs/product/`。

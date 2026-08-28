@@ -30,6 +30,7 @@ Yiveno：**那个找东西的**（Capture 低负担 + Recall 高置信邻域；T
 ### 前置要求
 
 - **Bun** >= 1.0.0 ([安装指南](https://bun.sh))
+- **Git LFS**（品牌母本大图；[ADR-006](docs/architecture/decisions/ADR-006-brand-assets-git-lfs.md)）
 - **Chrome** / **Edge** 浏览器 (Manifest V3支持)
 
 ### 安装依赖
@@ -38,6 +39,10 @@ Yiveno：**那个找东西的**（Capture 低负担 + Recall 高置信邻域；T
 # 克隆仓库
 git clone https://github.com/yiveno/yiveno.git
 cd Yiveno
+
+# Git LFS（品牌资产母本；勿 git lfs install --force，见 ADR-006）
+brew install git-lfs   # macOS
+bun run setup:git-lfs
 
 # 安装所有依赖 (使用Bun Workspaces)
 bun install

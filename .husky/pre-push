@@ -106,6 +106,23 @@ else
   echo "⏭️  无 docs / rules / scripts 变更，跳过 doc:check"
 fi
 
+# 品牌母本变更：校验运行时 public/ 已同步
+BRAND_TRIGGER=$(echo "$CHANGED_FILES" | grep -E '^docs/design/brand-assets/' || true)
+
+if [ -n "$BRAND_TRIGGER" ]; then
+  echo "🎨 sync:brand-assets --check（母本 → public）..."
+  BRAND_OUTPUT=$(bun run sync:brand-assets --check 2>&1)
+  BRAND_STATUS=$?
+  if [ "$BRAND_STATUS" -eq 0 ]; then
+    echo "✅ brand-assets 与 public 同步"
+  else
+    echo "❌ brand-assets 与 public 不同步"
+    ERRORS="${ERRORS}\n❌ sync:brand-assets --check 失败:\n${BRAND_OUTPUT}\n\n"
+  fi
+else
+  echo "⏭️  无 brand-assets 变更，跳过 sync:brand-assets --check"
+fi
+
 # 按变更目录跑分 workspace Knip（knip.json / 根依赖变更时跑全仓）
 KNIP_FULL_TRIGGER=$(echo "$CHANGED_FILES" | grep -E '^knip\.json$|^package\.json$|^scripts/knip-runner\.mjs$' || true)
 KNIP_FE_TRIGGER=$(echo "$CHANGED_FILES" | grep -E '^frontend/' || true)
@@ -156,8 +173,14 @@ if [ -n "$ERRORS" ]; then
   echo "   bun run lint:check        # 代码质量检查（CI 也会跑）"
   echo "   bun run doc:check         # 文档漂移 / session-boot 同步（docs·rules·scripts 变更时）"
   echo "   bun run sync:ide-boot     # CURRENT → session-boot 当下块"
+  echo "   bun run sync:brand-assets # 母本 → frontend/website public"
   echo ""
   exit 1
+fi
+
+# Git LFS：推送前上传 LFS 对象（与 Husky 共存；勿 git lfs install --force）
+if command -v git-lfs >/dev/null 2>&1; then
+  git lfs pre-push "$@"
 fi
 
 echo ""
