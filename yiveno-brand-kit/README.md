@@ -1,4 +1,7 @@
-# Yiveno Brand Kit
+# Yiveno Brand Kit（原始交付 · 归档）
+
+> **⚠️ 发版勿改本目录。** 仓内发版母本为 [`docs/design/brand-assets/`](../docs/design/brand-assets/README.md)；流程见 [`brand-asset-release-checklist.md`](../docs/design/brand-asset-release-checklist.md)。  
+> **治理：** [yiveno/yiveno#30](https://github.com/yiveno/yiveno/issues/30)（未来可迁 Org 卫星仓或 Git LFS，流程不变）。
 
 这是一套基于现有 Yiveno logo 建立的第一版完整品牌系统。核心方向为 **organic precision / calm intelligence / meaningful connection**，适用于数字产品、官网、社交媒体、包装与基础商务物料。
 
@@ -18,20 +21,22 @@
 
 ## Chrome 扩展资产
 
-Chrome 扩展专用资产已经放在 `chrome-extension/` 目录，包括 `16 / 32 / 48 / 128 / 256 / 512 px` 图标、`favicon.ico`、浅色与深色主题 logo，以及 Chrome Web Store 小型推广图和宽幅宣传图。详细使用方式请查看 `chrome-extension/README.md`。
+Chrome 扩展专用资产已经放在 `chrome-extension/` 目录，包括 `16 / 32 / 48 / 128 / 256 / 512 px` 多种尺寸。详细使用方式请查看 `chrome-extension/README.md`。
+
+**运行时实际加载路径**在 `frontend/public/images/` 与 `website/public/`——由 `docs/design/brand-assets/` 经 `bun run sync:brand-assets` 同步，不要从本目录直链进构建。
 
 ## 使用建议
 
-正式发布时，Logo 应优先使用 `yiveno-primary.svg`，PNG 仅用于不支持 SVG 的场景。背景色建议优先使用 Warm Porcelain `#F4F5F0` 或 Forest Ink `#192420`。在深色背景上，使用反白或浅色单色版本时应保持轨道线足够清晰，但不要增加额外描边。
+正式发布时，Logo 应优先使用 `yiveno-primary.svg`，PNG 仅用于不支持 SVG 的场景。背景色建议优先使用 Warm Porcelain `#F4F5F0` 或 Forest Ink `#192420`。
 
-网页和 App 的基础 UI 可采用 8 px 网格、20–28 px 卡片圆角、14 px 按钮圆角，并以 Manrope / Noto Sans SC 作为字体组合。若需要印刷生产，下一步应补充 CMYK、Pantone、出血、专色与纸张打样规范。
+规范正文以 [`docs/design/Yiveno-设计标准-v1.md`](../docs/design/Yiveno-设计标准-v1.md) 与 [`packages/design-tokens`](../packages/design-tokens/) 为准；本目录为历史交付快照。
 
 ## 品牌语句
 
 推荐主标语：`Grow with intention.`
 
-推荐辅助语句：`Built for meaningful connection.`、`A calmer way forward.`、`从连接开始。`、`让成长更有意识。`
+**产品面（扩展 + 官网）仅美式英语**；中文辅助语句仅供品牌包内部参考，不得直接用作产品 UI 或商店主文案（见产品文档 §0）。
 
 ## 交付边界
 
-本版本保持现有图形标志的几何结构不变，并为字标、色彩、版式、图形、图像与应用场景建立了统一规则。由图像生成的应用场景图属于概念展示资产；如果需要直接用于印刷或生产，应在最终设计软件中以矢量 logo 和经过校对的文字重新排版。
+本版本保持现有图形标志的几何结构不变。由图像生成的应用场景图属于概念展示资产；印刷生产前应在设计软件中以矢量 logo 重新排版。

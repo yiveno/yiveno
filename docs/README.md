@@ -1,5 +1,7 @@
 # `docs/` 目录入口
 
+**仓库归属：** GitHub Organization [`yiveno`](https://github.com/yiveno) · [`yiveno/yiveno`](https://github.com/yiveno/yiveno) — 品牌产品 [`yiveno.com`](https://yiveno.com) 的主交付仓，非个人 side project。
+
 **新 Agent 会话开机（自动）：**
 
 1. `.cursor/rules/session-boot.mdc` — **alwaysApply** 当下 + 冻结（**当下**由 `CURRENT` + `sync:ide-boot` 生成）
@@ -26,6 +28,11 @@
 - [`engineering/业务日志与注释约定.md`](./engineering/业务日志与注释约定.md) — 中文注释与 flow log
 - [`AUTH_GUIDE.md`](./AUTH_GUIDE.md) — OAuth 使用说明
 - [`ENVIRONMENT.md`](./ENVIRONMENT.md) — 环境变量分层、同步与校验规则
+
+**设计 / 品牌（发版）：**
+
+- [`design/brand-asset-release-checklist.md`](./design/brand-asset-release-checklist.md) — 母本 → `public/` → 商店/官网；`bun run sync:brand-assets`
+- [`design/brand-assets/README.md`](./design/brand-assets/README.md) — 仓内母本；`yiveno-brand-kit/` 为归档
 
 `frontend/docs/` 已清空；i18n 方案定稿前不在此目录维护占位文档。
 

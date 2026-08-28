@@ -4,6 +4,7 @@ backend/.cache/
 backend/.wrangler/
 dist/
 .DS_Store
+**/.DS_Store
 artifacts/
 .lighthouseci/
 # Cursor 本地状态忽略；项目规则需入库共享
@@ -69,6 +70,7 @@ backend/.dev.vars
 .impeccable/config.local.json
 .impeccable/hook.cache.json
 .impeccable/live/
+.impeccable/critique/
 
 # Impeccable 技能包：各宿主本地 `npx impeccable` 安装，内容几乎相同，禁止入库
 # （.cursor/skills、.agents 已由上面规则覆盖；.kiro 仅忽略 impeccable，保留项目自有 skills）
@@ -150,5 +152,4 @@ frontend/public/models/Xenova/
 frontend/public/models/**/.model-ready.json
 tmp/yiveno-make-preview-1.png
 tmp/yiveno-make-preview-2.png
-.impeccable/critique/2026-08-15T09-40-56Z__figma-make-ns77vwebld8gofjrrd2euk.md
 tmp/*

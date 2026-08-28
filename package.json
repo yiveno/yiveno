@@ -55,6 +55,7 @@
     "i18n:check": "bun run --cwd frontend i18n:check",
     "doc:check": "bun ./scripts/check-doc-drift.mjs",
     "sync:ide-boot": "bun ./scripts/sync-ide-boot.mjs",
+    "sync:brand-assets": "bun ./scripts/sync-brand-assets.mjs",
     "typecheck:be": "bun run --cwd backend typecheck",
     "typecheck:web": "bun run --cwd website typecheck",
     "typecheck:ci": "bun run --filter './packages/*' --filter backend --filter yiveno-website typecheck",

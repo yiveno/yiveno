@@ -1,6 +1,7 @@
 # `.cursor/rules/` — Agent 规则分层
 
-> **Cursor 每会话自动加载** `alwaysApply: true` 的 `.mdc` 文件。维护时勿与 `.kiro/` 长文重复。
+> **Cursor 每会话自动加载** `alwaysApply: true` 的 `.mdc` 文件。维护时勿与 `.kiro/` 长文重复。  
+> **仓库：** GitHub Org [`yiveno/yiveno`](https://github.com/yiveno/yiveno) · 品牌 [`yiveno.com`](https://yiveno.com)。
 
 | 文件                     | 角色                                       | 何时改                                    |
 | ------------------------ | ------------------------------------------ | ----------------------------------------- |

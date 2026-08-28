@@ -1,6 +1,8 @@
 # Yiveno 市场与竞品研究（2026-08-23）
 
-> **文档性质：** Non-normative 背景研究。  
+> **归档性质：** Non-normative 背景研究；**不参与**扩展/官网构建与品牌发版。Normative 结论已写入 `docs/product/`。  
+> **品牌发版：** 见 [`docs/design/brand-asset-release-checklist.md`](../docs/design/brand-asset-release-checklist.md)。  
+> **未来：** 可迁 Org 卫星仓 `yiveno/research`；迁出前仍以本目录索引为准。  
 > **Normative 产品规格：** [`docs/product/Yiveno-产品文档-v4.0.md`](../docs/product/Yiveno-产品文档-v4.0.md)（2026-08-24 已吸收本目录结论）。  
 > **术语：** [`docs/product/Yiveno-术语表.md`](../docs/product/Yiveno-术语表.md)（Yiveno 用户输入 = **clue**；`clues.note` = **附注**；竞品「搜索/query」表述保留第三方语境）。
 > **执行计划：** [`docs/product/Yiveno-改版计划-v1.md`](../docs/product/Yiveno-改版计划-v1.md) **R4 · 证据与复用**。

@@ -1,27 +1,40 @@
-# Yiveno 品牌资产目录
+# Yiveno 品牌资产目录（仓内母本）
 
-此目录存放项目内长期保留的品牌成品素材，不直接参与运行时打包。
+此目录是 **GitHub Org `yiveno/yiveno` 主仓内** 长期维护的品牌成品母本，不直接参与 Vite/Astro 打包；发版前同步到运行时 `public/`。
+
+**发版流程：** [`brand-asset-release-checklist.md`](../brand-asset-release-checklist.md)  
+**自动同步：** `bun run sync:brand-assets`（根目录）  
+**治理：** [Issue #30](https://github.com/yiveno/yiveno/issues/30)
 
 ## 目录约定
 
-- `logo/`：主标、参考图、深浅背景 logo 版本
-- `chrome-extension/`：扩展图标、favicon、扩展 icon 源
-- `chrome-web-store/`：Chrome Web Store 宣传图
-- `applications/`：官网主视觉、社媒图、包装场景图
+| 子目录              | 内容                                              |
+| ------------------- | ------------------------------------------------- |
+| `logo/`             | 主标、参考图、深浅背景 logo 版本                  |
+| `chrome-extension/` | 扩展图标、favicon、扩展 icon 矢量源               |
+| `chrome-web-store/` | Chrome Web Store 宣传图（仅上传后台，不进扩展包） |
+| `applications/`     | 官网主视觉、社媒图、包装场景图                    |
 
 ## 与运行时目录的关系
 
-- 扩展运行时使用：`frontend/public/images/`
-- 官网运行时使用：`website/public/`
-- 本目录作为项目内常驻母本，便于后续替换、导出和运营取用
+| 运行时 | 路径                                        |
+| ------ | ------------------------------------------- |
+| 扩展   | `frontend/public/images/`                   |
+| 官网   | `website/public/`、`website/public/images/` |
 
-## 当前映射
+完整文件级映射见 Checklist §3；默认用 `bun run sync:brand-assets` 执行 §2 映射。
 
-- `frontend/public/images/icon16.png` 等图标来自 `chrome-extension/`
-- `frontend/public/images/logo-mark.svg` 与 `website/public/images/logo-mark.svg` 来自 `logo/yiveno-primary.svg`
-- `website/public/favicon.*` 与 `website/public/apple-touch-icon.png` 来自 `chrome-extension/`
-- `website/public/og-image.jpg` 来自 `applications/yiveno-product-hero.jpg`
+## 与 `yiveno-brand-kit/` 的分工
 
-## 说明
+|           | `docs/design/brand-assets/` | `yiveno-brand-kit/`       |
+| --------- | --------------------------- | ------------------------- |
+| **角色**  | **发版母本**（改这里）      | 设计师原始交付 **归档**   |
+| **体积**  | 已整理、与运行时对齐        | ~42MB，含概念稿与冗余导出 |
+| **Agent** | 品牌发版时读                | 仅溯源；勿当运行时入口    |
 
-`yiveno-brand-kit/` 仍保留为原始交付目录；本目录是面向仓库长期维护的整理版结构。
+新设计交付：导入/整理进本目录 → `sync:brand-assets` → 按 Checklist 验收。`yiveno-brand-kit/` 可保留只读副本，不必每次双写。
+
+## 规范引用
+
+- 视觉 Normative：[`Yiveno-设计标准-v1.md`](../Yiveno-设计标准-v1.md)
+- 导出尺寸与 prompt：[`Yiveno-logo-asset-generation-prompt.md`](../Yiveno-logo-asset-generation-prompt.md)

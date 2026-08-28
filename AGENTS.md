@@ -2,7 +2,8 @@
 
 ## 项目
 
-- Yiveno：Vue 3 + TypeScript Chrome 扩展，Backend 为 Cloudflare Workers，Website 为营销站。
+- Yiveno：**独立品牌产品**（[`yiveno.com`](https://yiveno.com)），非个人 side project。代码主仓为 GitHub **Organization** [`yiveno/yiveno`](https://github.com/yiveno/yiveno)（私有 monorepo）；Issue/PR 作者显示个人 GitHub 账号属正常，**不以作者判断仓库归属**。
+- 技术栈：Vue 3 + TypeScript Chrome 扩展，Backend 为 Cloudflare Workers，Website 为营销站。
 - **新会话先读：** `.cursor/rules/session-boot.mdc`（alwaysApply 开机层）· 详版 `docs/product/CURRENT.md`（**只改 CURRENT** → `bun run sync:ide-boot`）
 - **术语唯一权威：** `docs/product/Yiveno-术语表.md`（clue、Recall、邻域、附注等；改术语先改此文）。
 - **架构决策（勿重议）：** `docs/architecture/decisions/`（ADR）。
@@ -84,13 +85,13 @@
 
 ### 质量门禁三层职责
 
-| 层级           | 触发时机     | 职责                                                                   | 命令                                                                                                                                                        |
-| -------------- | ------------ | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **pre-commit** | `git commit` | 暂存区快修：ESLint fix + Stylelint + Prettier（含 `.vue`）             | `lint-staged`（`max-warnings 0`；忽略 `backend/worker-configuration.d.ts`）                                                                                 |
-| **pre-push**   | `git push`   | 按变更：FE 构建 + **test:run** / BE typecheck+test / 分 workspace Knip | `build:fe` + `cd frontend && bun run test:run`（frontend/共享包）；`typecheck:be` + `bun test`（backend）；`knip:fe` / `knip:be` / `knip:web`（按变更目录） |
-| **CI**         | PR / push    | 权威只读门禁：typecheck、lint、i18n、test、build                       | 见下表                                                                                                                                                      |
+| 层级           | 触发时机     | 职责                                                                                                                         | 命令                                                                                                                                                                                                   |
+| -------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **pre-commit** | `git commit` | 暂存区快修：ESLint fix + Stylelint + Prettier（含 `.vue`）                                                                   | `lint-staged`（`max-warnings 0`；忽略 `backend/worker-configuration.d.ts`）                                                                                                                            |
+| **pre-push**   | `git push`   | 按变更：FE 构建 + **test:run** / BE typecheck+test / **doc:check**（`docs/`·`.cursor/rules/`·`scripts/`）/ 分 workspace Knip | `build:fe` + `cd frontend && bun run test:run`（frontend/共享包）；`typecheck:be` + `bun test`（backend）；`bun run doc:check`（文档/开机层/script）；`knip:fe` / `knip:be` / `knip:web`（按变更目录） |
+| **CI**         | PR / push    | 权威只读门禁：typecheck、lint、i18n、test、build                                                                             | 见下表                                                                                                                                                                                                 |
 
-pre-push **不跑** ESLint、全仓 typecheck；FE 变更时跑 **build + test:run**（含 recall-eval must）。`.vue` lint 由 pre-commit 与 CI 覆盖。`knip.json` / 根 `package.json` 变更时 pre-push 跑全仓 `knip`。
+pre-push **不跑** ESLint、全仓 typecheck；FE 变更时跑 **build + test:run**（含 recall-eval must）；`docs/` / `.cursor/rules/` / `scripts/` 变更时跑 **doc:check**（含 `sync:ide-boot --check`）。`.vue` lint 由 pre-commit 与 CI 覆盖。`knip.json` / 根 `package.json` 变更时 pre-push 跑全仓 `knip`。
 
 ### CI 检查矩阵
 
@@ -105,6 +106,7 @@ pre-push **不跑** ESLint、全仓 typecheck；FE 变更时跑 **build + test:r
 - 日常：`bun run typecheck`（快，含 `packages/*`）、`bun run lint:check`、`bun run i18n:check`、目标单测
 - 三端并行：`bun run watch` / `bun run dev`（mprocs）或 `bun run watch:stream`（混流）；扩展重建后需 `chrome://extensions` 刷新
 - 合并前 / 发布前：`bun run typecheck:force`、`bun run lint:check`、`bun run i18n:check`、`bun run doc:check`、`bun run test:run`、`bun run knip`
+- 品牌视觉发版：改 `docs/design/brand-assets/` → `bun run sync:brand-assets`（见 `docs/design/brand-asset-release-checklist.md`）
 - Knip 分 workspace：`knip:fe` / `knip:be` / `knip:web`；仅结构项：`knip:fast`；全量报告：`knip:report`
 - Knip 版本写在根 `package.json` → `yiveno.knip`；`scripts/knip-runner.mjs` 在 `.cache/knip-runner` 隔离安装（规避 monorepo `zod@3` 与 knip `zod/mini`）。根目录勿直接 `bunx knip`；待 `bunx knip -D .` 不再报 `./mini` 后再打回根依赖。
 

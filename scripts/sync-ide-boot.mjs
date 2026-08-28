@@ -24,7 +24,9 @@ function parseCurrent(md) {
 
   const wave = md.match(/## 当前波次[\s\S]*?(?=\n## )/)?.[0] ?? ''
   const pickRow = label => {
-    const m = wave.match(new RegExp(`\\| \\*\\*${label}\\*\\* \\| ([^|]+) \\|`))
+    const m = wave.match(
+      new RegExp(`\\|\\s*\\*\\*${label}\\*\\*\\s*\\|\\s*([^|\\n]+?)\\s*\\|`)
+    )
     return m?.[1]?.trim() ?? ''
   }
 

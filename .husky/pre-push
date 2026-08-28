@@ -89,6 +89,23 @@ else
   echo "⏭️  无 backend 变更，跳过 typecheck / test"
 fi
 
+# 文档 / 开机层 / 漂移脚本：doc:check（CURRENT ↔ session-boot、message registry）
+DOC_CHECK_TRIGGER=$(echo "$CHANGED_FILES" | grep -E '^docs/|^\.cursor/rules/|^scripts/' || true)
+
+if [ -n "$DOC_CHECK_TRIGGER" ]; then
+  echo "📄 doc:check（文档漂移 / session-boot 同步）..."
+  DOC_OUTPUT=$(bun run doc:check 2>&1)
+  DOC_STATUS=$?
+  if [ "$DOC_STATUS" -eq 0 ]; then
+    echo "✅ doc:check 通过"
+  else
+    echo "❌ doc:check 失败"
+    ERRORS="${ERRORS}\n❌ doc:check 失败:\n${DOC_OUTPUT}\n\n"
+  fi
+else
+  echo "⏭️  无 docs / rules / scripts 变更，跳过 doc:check"
+fi
+
 # 按变更目录跑分 workspace Knip（knip.json / 根依赖变更时跑全仓）
 KNIP_FULL_TRIGGER=$(echo "$CHANGED_FILES" | grep -E '^knip\.json$|^package\.json$|^scripts/knip-runner\.mjs$' || true)
 KNIP_FE_TRIGGER=$(echo "$CHANGED_FILES" | grep -E '^frontend/' || true)
@@ -137,6 +154,8 @@ if [ -n "$ERRORS" ]; then
   echo "   bun run knip:be           # 仅 backend Knip"
   echo "   bun run typecheck         # 类型检查（CI 也会跑）"
   echo "   bun run lint:check        # 代码质量检查（CI 也会跑）"
+  echo "   bun run doc:check         # 文档漂移 / session-boot 同步（docs·rules·scripts 变更时）"
+  echo "   bun run sync:ide-boot     # CURRENT → session-boot 当下块"
   echo ""
   exit 1
 fi

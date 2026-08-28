@@ -26,6 +26,7 @@ alwaysApply: true
 
 ## 冻结（勿重议 · ADR-001–005）
 
+- **GitHub Org `yiveno`** · 主仓 `yiveno/yiveno`（品牌产品交付仓，非个人实验项目）；对外站点 `yiveno.com`
 - Recall **主壳 = Side Panel**；`pages/popup` 已退役；关 Panel 丢会话；**New find** 清线程
 - 用户 Recall 输入 = **clue**（线索）；`MemoryItem.clues.note` = **附注**；产品面 **禁止 Search**
 - 交付 **邻域集合**；`top_pick` = 建议，**非**神谕唯一答案；`no_match` 诚实终局

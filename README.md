@@ -9,6 +9,8 @@
 
 Yiveno：**那个找东西的**（Capture 低负担 + Recall 高置信邻域；Top1=建议）。基于 Vue 3 + TypeScript + Cloudflare Worker 的 Monorepo。产品规格以 [`docs/product/Yiveno-产品文档-v4.0.md`](docs/product/Yiveno-产品文档-v4.0.md) 为准；**术语**见 [`docs/product/Yiveno-术语表.md`](docs/product/Yiveno-术语表.md)。
 
+**仓库与品牌：** 本仓归 GitHub Organization **[`yiveno`](https://github.com/yiveno)**（[`yiveno/yiveno`](https://github.com/yiveno/yiveno)），对应独立产品 **[yiveno.com](https://yiveno.com)**，不是维护者个人名下的 side project。
+
 ---
 
 ## ✨ 特性
@@ -125,7 +127,9 @@ bun run build:fe:prod
 
 - 视觉规范：`docs/design/Yiveno-设计标准-v1.md`
 - 设计摘要：`DESIGN.md`
+- **品牌发版母本：** `docs/design/brand-assets/` → [`brand-asset-release-checklist.md`](docs/design/brand-asset-release-checklist.md)（`bun run sync:brand-assets`）
 - 项目内正式品牌资产目录：`docs/design/brand-assets/README.md`
+- 历史交付归档：`yiveno-brand-kit/`（只读；勿直接发版）
 - 历史导出流程参考：`docs/design/Yiveno-logo-asset-generation-prompt.md`
 
 运行时使用中的资产位置：
@@ -168,25 +172,48 @@ Yiveno/                             # Monorepo 根目录
 │
 ├── packages/                       # 共享包
 │   ├── design-tokens/             # 品牌/设计令牌 (@yiveno/design-tokens)
-│   └── types/                     # 跨 workspace 类型 (@yiveno/types)
+│   ├── types/                     # 跨 workspace 类型 (@yiveno/types)
+│   └── yiveno-mcp/                # MCP 相关共享代码
 │
 ├── scripts/                        # 跨 workspace 脚本
 │   ├── dev-env.mjs                # 环境变量同步/校验
+│   ├── check-doc-drift.mjs        # doc:check（registry、CURRENT、session-boot）
+│   ├── sync-ide-boot.mjs          # CURRENT → session-boot 当下块
 │   ├── e2e-management.mjs         # E2E 测试
 │   └── knip-runner.mjs            # Dead code 检测
 │
-├── docs/                           # 项目文档
-│   ├── product/                   # 产品文档（v4.0 为唯一正文）
-│   └── design/                    # 设计规范与品牌资产索引
+├── docs/                           # 权威文档（规格 / ADR / 工程）
+│   ├── product/                   # 产品文档、CURRENT、术语表
+│   ├── design/                    # 设计规范与品牌资产索引
+│   ├── architecture/              # 运行时架构、ADR
+│   └── engineering/               # 工程约定、message registry
+│
+├── research/                       # TTE Beta 等可复用研究模板（非 Normative）
+├── yiveno_research/                # 市场/竞品研究归档（背景材料，已部分写入 docs/product）
+├── yiveno-brand-kit/               # 品牌大图/商店图导出包（运行时见 frontend/public、docs/design）
 │
 ├── supabase/                       # 数据库迁移 (Supabase CLI)
-├── dist/                           # 扩展构建产物 (gitignore)
+│
+├── .cursor/rules/                  # Cursor Agent 规则（session-boot alwaysApply）
+├── .github/                        # CI、PR 模板
+├── .husky/                         # pre-commit / pre-push 门禁
+├── .kiro/                          # Kiro hooks/skills（规则权威仍指向 .cursor/rules）
+├── .claude/                        # Claude Code 薄指针（根 CLAUDE.md 为入口）
+├── .codex/                         # Codex 环境配置
+│
+├── dist/                           # 扩展构建产物 (gitignore，由 frontend build 生成)
+├── node_modules/                   # 依赖 (gitignore)
+├── artifacts/                      # 本地调试日志/截图 (gitignore)
+│
+├── AGENTS.md / CLAUDE.md / GEMINI.md  # 各 AI IDE 开机索引
 ├── eslint.config.js                # 统一 ESLint 配置
 ├── tsconfig.base.json              # 共享 TypeScript 配置
 ├── knip.json                       # Dead code 检测配置
 ├── package.json                    # Workspaces 根配置
 └── bun.lock                        # 依赖锁文件
 ```
+
+**本地可删、会再生成：** `dist/`、`artifacts/`、`.cache/`、`.astro/`、`.env.runtime/`（见 `docs/ENVIRONMENT.md`）。**不进构建主链路：** `yiveno_research/`、`research/`（研究归档）；`yiveno-brand-kit/`（设计交付归档，发版走 [`brand-asset-release-checklist.md`](docs/design/brand-asset-release-checklist.md) · [#30](https://github.com/yiveno/yiveno/issues/30)）。
 
 ### 架构分层 (Frontend)
 

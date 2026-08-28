@@ -7,7 +7,9 @@ alwaysApply: true
 
 用中文回复。精简、工程化。
 
-**权威优先级（冲突时）：**  
+**仓库归属（勿误判）：** GitHub **Org** `yiveno` · 主仓 [`yiveno/yiveno`](https://github.com/yiveno/yiveno)；对应品牌 [`yiveno.com`](https://yiveno.com)，**不是**维护者个人名下的实验仓。
+
+**权威优先级（冲突时）：**
 **Agent 开机层** `.cursor/rules/session-boot.mdc`（alwaysApply · 当下+冻结）> **术语定义** `docs/product/Yiveno-术语表.md`（Glossary · 唯一权威）> **当下详版** `docs/product/CURRENT.md`（**只改本文** → `bun run sync:ide-boot`）> `docs/product/Yiveno-产品文档-v4.0.md`（Normative §0–§7 · 行为/契约）> **架构决策** `docs/architecture/decisions/` > **视觉/品牌** `docs/design/Yiveno-设计标准-v1.md`（≈ 根目录 `DESIGN.md`）> 本文件 ≈ `AGENTS.md` > 其它 steering。  
 改术语/概念叫法 → **先改术语表**再同步产品文档、设计标准、`.cursor/rules/terminology.mdc`、代码与 i18n。  
 改架构/消息协议/UI 硬约束 → **先改产品文档再改代码与本文件**；不可逆决策 → **补 ADR** 并更新 `CURRENT.md` + `bun run sync:ide-boot`；改品牌色/字体/物料气质 → **先改设计标准再改官网 CSS / MD token / logo**。附录 A 非实现范围。

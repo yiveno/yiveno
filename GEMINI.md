@@ -1,6 +1,7 @@
 # GEMINI.md（Gemini CLI · 薄指针）
 
-> **纪律与真相以仓库权威文件为准**；本文件只做 Gemini 开机索引。冲突时：`docs/product/Yiveno-术语表.md` > 产品文档 §0–§7 > `AGENTS.md` > 本文件。
+> **纪律与真相以仓库权威文件为准**；本文件只做 Gemini 开机索引。冲突时：`docs/product/Yiveno-术语表.md` > 产品文档 §0–§7 > `AGENTS.md` > 本文件。  
+> **仓库：** GitHub Org [`yiveno/yiveno`](https://github.com/yiveno/yiveno) · 品牌 [`yiveno.com`](https://yiveno.com)（非个人实验仓）。
 
 ## 开机必读（按序）
 

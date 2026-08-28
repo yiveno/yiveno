@@ -15,6 +15,7 @@
 - [ ] 换波次/焦点有变 → 已更新 [`CURRENT.md`](docs/product/CURRENT.md) 并运行 `bun run sync:ide-boot`
 - [ ] 不可逆分叉 → 已写/更新 [`docs/architecture/decisions/`](docs/architecture/decisions/) ADR
 - [ ] 术语/禁用词有变 → 已更新 [`Yiveno-术语表.md`](docs/product/Yiveno-术语表.md)
+- [ ] 品牌视觉有变 → 已改 [`docs/design/brand-assets/`](docs/design/brand-assets/) 并运行 `bun run sync:brand-assets`（见 [Checklist](docs/design/brand-asset-release-checklist.md)）
 
 ## 验收归属（§1.1 · 至少勾一项）
 
