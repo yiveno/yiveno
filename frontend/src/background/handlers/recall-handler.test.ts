@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto'
 
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { LOCAL_PROFILE_STORAGE_KEY, type LocalProfile } from '@/core/identity/local-profile'
 import { handleRecallWithClue } from '@/background/handlers/recall-handler'
@@ -33,6 +33,13 @@ function createChromeStorageMock(initial: StorageMap = {}) {
         }),
         remove: vi.fn(async () => undefined)
       }
+    },
+    i18n: {
+      getMessage: vi.fn((key: string) => key),
+      getUILanguage: vi.fn(() => 'en')
+    },
+    tabs: {
+      query: vi.fn(async () => [])
     }
   }
 }
@@ -45,6 +52,7 @@ const localProfile: LocalProfile = {
 
 describe('recall-handler', () => {
   beforeEach(async () => {
+    vi.useRealTimers()
     resetMemoryDatabaseInitializationForTests()
     vi.stubGlobal(
       'chrome',
@@ -58,6 +66,10 @@ describe('recall-handler', () => {
         indexedDB.deleteDatabase(database.name)
       }
     }
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it('handleRecallWithClue 返回 Top Pick', async () => {
@@ -127,37 +139,49 @@ describe('recall-handler', () => {
   })
 
   it('多轮 context：短补充 yesterday 承接 prior 内容词', async () => {
-    await handleCaptureBookmark({
-      title: 'Li Bai poem notes',
-      url: 'https://example.com/li-bai'
-    })
+    const recallNowMs = Date.parse('2026-08-28T12:00:00.000Z')
+    const captureYesterdayMs = Date.parse('2026-08-27T10:00:00.000Z')
 
-    const first = await handleRecallWithClue({ clue: 'poem about Li Bai' })
-    expect(first.ok).toBe(true)
-    if (!first.ok) {
-      return
-    }
-    expect(first.result.parsed).toBeTruthy()
+    vi.useFakeTimers({ toFake: ['Date'] })
+    try {
+      vi.setSystemTime(captureYesterdayMs)
 
-    const second = await handleRecallWithClue({
-      clue: 'yesterday',
-      context: {
-        priorUserUtterances: ['poem about Li Bai'],
-        ...(first.result.parsed ? { accumulated: first.result.parsed } : {})
+      await handleCaptureBookmark({
+        title: 'Li Bai poem notes',
+        url: 'https://example.com/li-bai'
+      })
+
+      vi.setSystemTime(recallNowMs)
+
+      const first = await handleRecallWithClue({ clue: 'poem about Li Bai' })
+      expect(first.ok).toBe(true)
+      if (!first.ok) {
+        return
       }
-    })
-    expect(second.ok).toBe(true)
-    if (!second.ok) {
-      return
-    }
+      expect(first.result.parsed).toBeTruthy()
 
-    expect(second.result.effectiveClue).toContain('poem about Li Bai')
-    expect(second.result.parsed?.objectTypes).toContain('poem')
-    expect(second.result.parsed?.timeRange?.label).toBe('yesterday')
-    expect(second.result.outcome).toBe('top_pick')
-    expect(second.result.topPick?.item.payload).toMatchObject({
-      title: 'Li Bai poem notes'
-    })
+      const second = await handleRecallWithClue({
+        clue: 'yesterday',
+        context: {
+          priorUserUtterances: ['poem about Li Bai'],
+          ...(first.result.parsed ? { accumulated: first.result.parsed } : {})
+        }
+      })
+      expect(second.ok).toBe(true)
+      if (!second.ok) {
+        return
+      }
+
+      expect(second.result.effectiveClue).toContain('poem about Li Bai')
+      expect(second.result.parsed?.objectTypes).toContain('poem')
+      expect(second.result.parsed?.timeRange?.label).toBe('yesterday')
+      expect(second.result.outcome).toBe('top_pick')
+      expect(second.result.topPick?.item.payload).toMatchObject({
+        title: 'Li Bai poem notes'
+      })
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('context.dismissedIds 硬排除候选', async () => {
