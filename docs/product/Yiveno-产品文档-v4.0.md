@@ -852,39 +852,39 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 
 口径：**单测** = Vitest（含 handler/application/core）；**eval** = `frontend/src/core/recall/eval` 的 `must`/`stretch`；**E2E** = `scripts/e2e-management.mjs` 薄冒烟；**手动** = 真机/扩展清单（发版或改到才验）。一项可多列并存。`缺口` = 尚无自动归属、仅靠偶然手测。
 
-| 能力                                      | 单测 | eval | E2E | 手动 | 说明                                                        |
-| ----------------------------------------- | ---- | ---- | --- | ---- | ----------------------------------------------------------- |
-| 右键保存选区                              | ✓    | —    | —   | ✓    | `context-menu` / capture 服务；真机右键需手动               |
-| 划词保存浮层                              | ✓    | —    | —   | ✓    | `selection-toolbar-*`；页面浮层需手动                       |
-| 书签/摘录事后附注                         | ✓    | ✓    | —   | ✓    | eval：`semi-fuzzy-type-b-note`；树编辑手测                  |
-| Chrome 书签导入 + 增量 sync               | ✓    | —    | —   | ✓    | import/sync 服务单测；真机 sync 手测                        |
-| LocalProfile / ownerId                    | ✓    | —    | —   | —    | `local-profile*`                                            |
-| Settings（最小）                          | ✓    | —    | ✓   | ✓    | E2E：打开 `settings.html`                                   |
-| Omnibox 找回                              | ✓    | —    | —   | ✓    | 共用 `recallService`；壳与建议列表手测                      |
-| 快捷键找回（开 Side Panel）               | ✓    | —    | —   | ✓    | 真机按键/点图标开 Panel                                     |
-| 快捷键打开记忆库                          | ✓    | —    | —   | ✓    | 同上                                                        |
-| 快捷键打开设置                            | ✓    | —    | —   | ✓    | 同上                                                        |
-| 快捷键保存选中文字                        | ✓    | —    | —   | ✓    | selection 命令封装单测；真机手测                            |
-| 快捷键选中文字并附注                      | ✓    | —    | —   | ✓    | 同上                                                        |
-| 结果线索解释强化                          | ✓    | —    | —   | ✓    | `explain-recall-match*`；卡面手测                           |
-| 找回壳空状态分层                          | ✓    | —    | —   | ✓    | `popup-empty-copy*`；§5.8                                   |
-| 冷启动存→找闭环（R1）                     | ✓    | ✓    | —   | ✓    | 空库/零锚点 eval；§5.8 A/B/C                                |
-| 摘录详情落地页                            | ✓    | —    | —   | ✓    | `GET_MEMORY_ITEM` / open-href；页手测                       |
-| 记忆库轻浏览                              | ✓    | —    | —   | ✓    | library tree/tabs；页手测                                   |
-| 摘录删除                                  | ✓    | —    | —   | ✓    | delete handler；库/详情手测                                 |
-| Need A Clue / 否定反馈                    | ✓    | ✓    | —   | ✓    | eval：`need-a-clue-*`；dismiss 单测；对话手测               |
-| 关键词 Recall 主路径（Filter + 口语解析） | ✓    | ✓    | ✓   | ✓    | eval=`must` 门禁；E2E=找回壳固定线索→结果卡                 |
-| 关键词倒排 Phase 1                        | ✓    | ✓    | —   | ✓    | `keyword-index-repository*`；extract-tokens；真机大库       |
-| Side Panel 对话式壳（多轮 UI）            | ✓    | ✓    | 薄  | ✓    | merge + eval；E2E `sidepanel.html`；芯片/dismiss 手测       |
-| Composer 双通道（§7.0 Placeholder×芯片）  | ✓    | —    | —   | ✓    | `compute-composer-placeholder*`；§5.2.1；旁挂工程文档       |
-| 多轮槽位 merge（§7.0）                    | ✓    | ✓    | —   | ✓    | `merge-recall-dialog-turn`；eval `dialog-*` must            |
-| Dodo Pro / 同步·托管门禁                  | ✓    | —    | —   | ✓    | webhook/account/sync Pro 拒绝；§5.7 手动付费全流程          |
-| 证据卡 ECS（Phase E）                     | ✓    | —    | —   | ✓    | §5.10.1–2；`explain-recall-match` + Side Panel/Omnibox 卡面 |
-| Evidence pack 导出（Phase E）             | —    | ✓    | —   | ✓    | §5.10.4；`evidence-pack.ts` + Library/Side Panel UI         |
-| TTE 埋点（Phase E）                       | ✓    | —    | —   | ✓    | §5.10.3；七事件 schema                                      |
-| R4 semi_fuzzy / 逛一簇 must               | —    | ✓    | —   | ✓    | §5.11.2 `r4-*` must 已绿；cluster 拆 product/design         |
-| 只读 MCP（Phase E）                       | ✓    | —    | —   | ✓    | §5.10.5；本机 Hybrid + 云端关键词；未达 §5.9 不对外宣传     |
-| Raindrop/Pocket 导入（Phase E）           | ✓    | ✓    | —   | ✓    | §5.10.6；解析单测 + Settings 文件导入                       |
+| 能力                                      | 单测 | eval | E2E | 手动 | 说明                                                         |
+| ----------------------------------------- | ---- | ---- | --- | ---- | ------------------------------------------------------------ |
+| 右键保存选区                              | ✓    | —    | —   | ✓    | `context-menu` / capture 服务；真机右键需手动                |
+| 划词保存浮层                              | ✓    | —    | —   | ✓    | `selection-toolbar-*`；页面浮层需手动                        |
+| 书签/摘录事后附注                         | ✓    | ✓    | —   | ✓    | eval：`semi-fuzzy-type-b-note`；树编辑手测                   |
+| Chrome 书签导入 + 增量 sync               | ✓    | —    | —   | ✓    | import/sync 服务单测；真机 sync 手测                         |
+| LocalProfile / ownerId                    | ✓    | —    | —   | —    | `local-profile*`                                             |
+| Settings（最小）                          | ✓    | —    | ✓   | ✓    | E2E：打开 `settings.html`                                    |
+| Omnibox 找回                              | ✓    | —    | —   | ✓    | 共用 `recallService`；壳与建议列表手测                       |
+| 快捷键找回（开 Side Panel）               | ✓    | —    | —   | ✓    | 真机按键/点图标开 Panel                                      |
+| 快捷键打开记忆库                          | ✓    | —    | —   | ✓    | 同上                                                         |
+| 快捷键打开设置                            | ✓    | —    | —   | ✓    | 同上                                                         |
+| 快捷键保存选中文字                        | ✓    | —    | —   | ✓    | selection 命令封装单测；真机手测                             |
+| 快捷键选中文字并附注                      | ✓    | —    | —   | ✓    | 同上                                                         |
+| 结果线索解释强化                          | ✓    | —    | —   | ✓    | `explain-recall-match*`；卡面手测                            |
+| 找回壳空状态分层                          | ✓    | —    | —   | ✓    | `recall-shell-empty-copy.ts` + `popup_*` 遗留 i18n key；§5.8 |
+| 冷启动存→找闭环（R1）                     | ✓    | ✓    | —   | ✓    | 空库/零锚点 eval；§5.8 A/B/C                                 |
+| 摘录详情落地页                            | ✓    | —    | —   | ✓    | `GET_MEMORY_ITEM` / open-href；页手测                        |
+| 记忆库轻浏览                              | ✓    | —    | —   | ✓    | library tree/tabs；页手测                                    |
+| 摘录删除                                  | ✓    | —    | —   | ✓    | delete handler；库/详情手测                                  |
+| Need A Clue / 否定反馈                    | ✓    | ✓    | —   | ✓    | eval：`need-a-clue-*`；dismiss 单测；对话手测                |
+| 关键词 Recall 主路径（Filter + 口语解析） | ✓    | ✓    | ✓   | ✓    | eval=`must` 门禁；E2E=找回壳固定线索→结果卡                  |
+| 关键词倒排 Phase 1                        | ✓    | ✓    | —   | ✓    | `keyword-index-repository*`；extract-tokens；真机大库        |
+| Side Panel 对话式壳（多轮 UI）            | ✓    | ✓    | 薄  | ✓    | merge + eval；E2E `sidepanel.html`；芯片/dismiss 手测        |
+| Composer 双通道（§7.0 Placeholder×芯片）  | ✓    | —    | —   | ✓    | `compute-composer-placeholder*`；§5.2.1；旁挂工程文档        |
+| 多轮槽位 merge（§7.0）                    | ✓    | ✓    | —   | ✓    | `merge-recall-dialog-turn`；eval `dialog-*` must             |
+| Dodo Pro / 同步·托管门禁                  | ✓    | —    | —   | ✓    | webhook/account/sync Pro 拒绝；§5.7 手动付费全流程           |
+| 证据卡 ECS（Phase E）                     | ✓    | —    | —   | ✓    | §5.10.1–2；`explain-recall-match` + Side Panel/Omnibox 卡面  |
+| Evidence pack 导出（Phase E）             | —    | ✓    | —   | ✓    | §5.10.4；`evidence-pack.ts` + Library/Side Panel UI          |
+| TTE 埋点（Phase E）                       | ✓    | —    | —   | ✓    | §5.10.3；七事件 schema                                       |
+| R4 semi_fuzzy / 逛一簇 must               | —    | ✓    | —   | ✓    | §5.11.2 `r4-*` must 已绿；cluster 拆 product/design          |
+| 只读 MCP（Phase E）                       | ✓    | —    | —   | ✓    | §5.10.5；本机 Hybrid + 云端关键词；未达 §5.9 不对外宣传      |
+| Raindrop/Pocket 导入（Phase E）           | ✓    | ✓    | —   | ✓    | §5.10.6；解析单测 + Settings 文件导入                        |
 
 **合入门禁（Normative）：**
 
@@ -912,7 +912,7 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 `id`, `ownerId`, `sourceLocalProfileId`, `clues`, `createdAt`, `updatedAt`, `deletedAt?`
 
 - `ownerId` = `accountId ?? localProfileId`
-- `CaptureEntry` = `popup` | `context_menu` | `selection_toolbar` | `omnibox` | `shortcut` | `sync` | `import`
+- `CaptureEntry` = `popup`（**遗留枚举 id**，原 Action Popup 时代默认 capture 来源；≠ 现行找回主壳）| `context_menu` | `selection_toolbar` | `omnibox` | `shortcut` | `sync` | `import`
 
 ### 2.3 Payload（必填摘要）
 
@@ -1136,7 +1136,7 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 #### A. 空库诚实（不得编造）
 
 1. 使用空记忆库配置档（或 Settings → 数据 → 清除本机记忆；**确认不删 Chrome 原生书签**）。
-2. 打开找回主壳（Side Panel；迁移完成前暂为 Popup）：空态标题/正文须导向 **先留下痕迹**（划词 / 右键选区），**不得**出现「还不了解你 / 告诉我喜好我会记住」类助理话术。
+2. 打开找回主壳（**Side Panel**）：空态标题/正文须导向 **先留下痕迹**（划词 / 右键选区），**不得**出现「还不了解你 / 告诉我喜好我会记住」类助理话术。
 3. 输入口语如「我以前最喜欢听的歌」并发送：
    - 期望：`no_match` / 空库文案；**无** Top Pick；**无**虚构条目；**无**时间/类型追问芯片。
    - 正文导向 Capture 或诚实终局，而非偏好建档闲聊、缺槽问卷。
@@ -1154,7 +1154,7 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 1. 找回壳欢迎 / 空态 / miss 追问通读：只服务「找自己存过的东西」。
 2. **不得**暗示：全能助手、陪聊、替你决定听什么/看什么、啥都做的平台。
 
-**自动化对齐：** `popup-empty-copy*`（迁壳后随 Side Panel）+ `recall-eval` 空库 / 零锚点 must；本小节为真机门禁。
+**自动化对齐：** `recall-shell-empty-copy` 单测 + `popup_*` 遗留 i18n key + `recall-eval` 空库 / 零锚点 must；本小节为真机门禁。
 
 ### 5.3 Phase A（Omnibox / 快捷键）验收
 
@@ -1162,7 +1162,7 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 2. 不引入第二套搜索/筛选实现。
 3. Omnibox / 快捷键 §1 状态已更新（快捷键开 Side Panel = R-shell 目标）。
 4. Omnibox 入口为单次命中：建议列表 → 打开 URL；无追问/会话（P0 不改为开 Side Panel）。
-5. 快捷键找回：`_execute_action` 与点工具栏图标均打开/聚焦 **Side Panel**（无 `default_popup`）；不经 `onCommand` 自建第二套找回。R-shell 完成前真机可能仍开 Popup——以 §1「目标 · 开 Side Panel」为准。
+5. 快捷键找回：`_execute_action` 与点工具栏图标均打开/聚焦 **Side Panel**（无 `default_popup`）；不经 `onCommand` 自建第二套找回。
 6. 快捷键 `open_library` / `open_settings` 分别打开记忆库与设置页（可改键）；`save_selection` / `save_selection_with_note` 对当前页选区直存或打开附注面板。
 7. 不提供「保存当前页」快捷键/消息；书签靠 Chrome 原生 + 导入/增量 sync。
 8. 新自定义命令须先改 `core/commands/command-ids.ts` + manifest，再注册 handler。
@@ -2097,6 +2097,8 @@ RecallOutcomeEvent {
 
 ## 修订记录
 
+> **考古说明（Action Popup）：** 2026-08-21（R-shell）起 Recall **对话主壳**为 Chrome **Side Panel**；`pages/popup` 已拆除。本表 **2026-08-20 及更早** 条目中「原 Action Popup 主壳」仅记录当时 UI，**不作**现行 Normative。遗留标识符：`CaptureEntry=popup`、`popup_clue_*` / `popup_*` i18n key 前缀（模块已迁至 `recall-shell-empty-copy`）。
+
 | 日期       | 变更                                                                                                                                                                                                                                                   |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 2026-08-27 | **压力轮完结：** 扩检 11/11；diversity 去撞车（Working paper / Manifest V3 等）后 MV3·EXPLAIN·SSRN·disagreed 复测 Top1；§5.11.1a 标关闭；质量→压力主线完结                                                                                             |
@@ -2227,11 +2229,11 @@ RecallOutcomeEvent {
 | 2026-07-26 | Recall 集合卡：右侧扑克叠；主卡打开代表；「更多」hover 扇开 / 点击展开                                                                                                                                                                                 |
 | 2026-07-26 | Recall 重复折叠：书签域名 / 摘录正文；结果层集合卡；库内仍允许并存（键规则已修订）                                                                                                                                                                     |
 | 2026-07-26 | 独立 `note` 类型：有边界需求、当前不接入；优先书签/摘录/`clues.note` 核心闭环                                                                                                                                                                          |
-| 2026-07-25 | Popup：打开聚焦线索框；移除提交按钮；停输防抖自动找回；↑↓/Enter 键盘打开结果                                                                                                                                                                           |
+| 2026-07-25 | 原 Action Popup 主壳：打开聚焦线索框；移除提交按钮；停输防抖自动找回；↑↓/Enter 键盘打开结果                                                                                                                                                            |
 | 2026-07-25 | 快捷键：划词保存 `Alt+Shift+E`、附注 `Alt+Shift+N`；设置让出 suggested_key 槽位                                                                                                                                                                        |
 | 2026-07-25 | 快捷键：记忆库 `Alt+Shift+L`、设置 `Alt+Shift+S`（`open_library` / `open_settings`）                                                                                                                                                                   |
 | 2026-07-25 | 书签事后附注：`UPDATE_MEMORY_NOTE`；树展示/编辑；sync upsert 保留 note                                                                                                                                                                                 |
-| 2026-07-25 | 附注：列表/Popup 展示于正文与出处之间；Filter 权重 26 + 主文加成（强线索）                                                                                                                                                                             |
+| 2026-07-25 | 附注：列表 / 原 Action Popup 主壳展示于正文与出处之间；Filter 权重 26 + 主文加成（强线索）                                                                                                                                                             |
 | 2026-07-25 | 划词浮层增加「添加附注」；`CAPTURE_TEXT_EXCERPT.note` → `clues.note`；详情可展示                                                                                                                                                                       |
 | 2026-07-25 | 保存成功工具栏角标 +1；Chrome 原生新书签同步成功亦闪角标                                                                                                                                                                                               |
 | 2026-08-22 | UI 图标：统一 Lucide 线框按需内联；卸除旧填充 path                                                                                                                                                                                                     |
@@ -2240,20 +2242,20 @@ RecallOutcomeEvent {
 | 2026-07-25 | i18n Phase 5：清残留 UI 硬编码；CI `i18n:check`；catch 不再展示 `error.message`                                                                                                                                                                        |
 | 2026-07-25 | i18n Phase 4：Settings/Recall/Import/Commands/Identity 失败响应落地 `errorCode`                                                                                                                                                                        |
 | 2026-07-24 | i18n Phase 2：Library/Detail 文案；Memory 失败响应落地 `errorCode`                                                                                                                                                                                     |
-| 2026-07-24 | 扩展 i18n 契约：`chrome.i18n` + `en`/`zh_CN`；`t()`；失败响应演进为 `errorCode`                                                                                                                                                                        |
-| 2026-07-24 | 摘录展示：无强制标题；正文为主、页名/域名仅出处（记忆库/Popup/Omnibox/详情）                                                                                                                                                                           |
+| 2026-07-24 | 扩展 i18n 契约：`chrome.i18n` + 仅 `en`（`_locales/en`）；`t()`；失败响应演进为 `errorCode`（当时曾含 `zh_CN`，已下线）                                                                                                                                |
+| 2026-07-24 | 摘录展示：无强制标题；正文为主、页名/域名仅出处（记忆库 / 原 Action Popup 主壳 / Omnibox / 详情）                                                                                                                                                      |
 | 2026-07-24 | UI 图标：按需内联；记忆库删除改为 hover 显图标按钮                                                                                                                                                                                                     |
 | 2026-07-24 | 摘录软删上线：`DELETE_MEMORY_ITEM`；记忆库列表 / 详情；书签不经此路径删除                                                                                                                                                                              |
 | 2026-07-24 | 记忆库书签 Tab：完整映射 Chrome 目录只读树；`GET_BOOKMARK_LIBRARY_TREE`                                                                                                                                                                                |
-| 2026-07-24 | 记忆库轻浏览上线：`library.html` 左侧类型 Tab（默认书签）；Popup/Settings 入口                                                                                                                                                                         |
-| 2026-07-24 | 摘录详情落地页上线：`detail.html?id=` + `GET_MEMORY_ITEM`；Popup/Omnibox 分流                                                                                                                                                                          |
-| 2026-07-24 | Phase A：线索解释强化 + Popup 空状态分层（空库/有库 + 缩短再试）                                                                                                                                                                                       |
+| 2026-07-24 | 记忆库轻浏览上线：`library.html` 左侧类型 Tab（默认书签）；原 Action Popup 主壳 / Settings 入口                                                                                                                                                        |
+| 2026-07-24 | 摘录详情落地页上线：`detail.html?id=` + `GET_MEMORY_ITEM`；原 Action Popup 主壳 / Omnibox 分流                                                                                                                                                         |
+| 2026-07-24 | Phase A：线索解释强化 + 原 Action Popup 主壳空状态分层（空库/有库 + 缩短再试）                                                                                                                                                                         |
 | 2026-07-24 | 摘录保存成功/失败：工具栏临时 badge（+1 / !）；划词与右键共用                                                                                                                                                                                          |
 | 2026-07-24 | 划词保存浮层上线；Settings 开关默认开启；`captureEntry=selection_toolbar`                                                                                                                                                                              |
-| 2026-07-24 | Settings 最小可用进 manifest：快捷键查看+跳转原生改键；Popup 入口                                                                                                                                                                                      |
-| 2026-07-24 | 移除「保存当前页」；书签仅 Chrome 原生+sync；快捷键只保留找回开 Popup                                                                                                                                                                                  |
-| 2026-07-24 | 快捷键已上线：命令契约+registry；找回 Alt+Shift+Y 开 Popup                                                                                                                                                                                             |
-| 2026-07-24 | Popup 移除「保存当前页」UI；保存改快捷键入口；Omnibox keyword `yi`                                                                                                                                                                                     |
+| 2026-07-24 | Settings 最小可用进 manifest：快捷键查看+跳转原生改键；原 Action Popup 主壳入口                                                                                                                                                                        |
+| 2026-07-24 | 移除「保存当前页」；书签仅 Chrome 原生+sync；快捷键只保留找回开原 Action Popup 主壳                                                                                                                                                                    |
+| 2026-07-24 | 快捷键已上线：命令契约+registry；找回 Alt+Shift+Y 开原 Action Popup 主壳                                                                                                                                                                               |
+| 2026-07-24 | 原 Action Popup 主壳移除「保存当前页」UI；保存改快捷键入口；Omnibox keyword `yi`                                                                                                                                                                       |
 | 2026-07-24 | Omnibox 已上线（keyword `yi`）；§0.4 入口能力差异；Phase A 下一项改为快捷键                                                                                                                                                                            |
 | 2026-07-23 | 确立唯一正文；现状矩阵、契约、验收、UI 约束、Hybrid 边界                                                                                                                                                                                               |
 | 2026-07-23 | AI 优先重排：Quick Contract、Normative/附录分离、消息 type 表、Phase A 单一优先项                                                                                                                                                                      |

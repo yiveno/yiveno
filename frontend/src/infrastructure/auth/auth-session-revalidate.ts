@@ -14,7 +14,7 @@ import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 /** chrome.storage.session：上次成功/完成校验的时间戳（ms）。 */
 export const AUTH_LAST_VALIDATED_AT_KEY = 'yiveno:auth_last_validated_at' as const
 
-/** 两次网络校验最小间隔，避免 Popup/storage 连环触发。 */
+/** 两次网络校验最小间隔，避免 Side Panel / storage 连环触发。 */
 export const AUTH_REVALIDATE_MIN_INTERVAL_MS = 5 * 60 * 1000
 
 /** 进行中的 revalidate（同 refreshToken 合并为一次网络调用）。 */

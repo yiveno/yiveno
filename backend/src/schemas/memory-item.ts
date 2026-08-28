@@ -6,7 +6,7 @@
 import { z } from 'zod'
 
 const CaptureEntrySchema = z.enum([
-  'popup', // Popup
+  'popup', // 遗留 capture 入口（原 Action Popup 时代）
   'context_menu', // 右键菜单
   'selection_toolbar', // 划词浮层
   'omnibox', // 地址栏

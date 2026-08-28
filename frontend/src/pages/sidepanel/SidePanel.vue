@@ -10,12 +10,12 @@ import {
   shouldShowColdStartGate,
   type ColdStartPipelineState
 } from '@/core/memory/cold-start-pipeline-state'
-import { shouldShowCaptureFirstPopup } from '@/core/capture/install-onboarding'
+import { shouldShowCaptureFirstRecallShell } from '@/core/capture/install-onboarding'
 import {
-  getPopupIdleEmptyCopy,
-  getPopupNoMatchCopy,
-  type PopupLibraryState
-} from '@/core/recall/popup-empty-copy'
+  getRecallShellIdleEmptyCopy,
+  getRecallShellNoMatchCopy,
+  type RecallShellLibraryState
+} from '@/core/recall/recall-shell-empty-copy'
 import { getTimeOfDayGreeting } from '@/core/recall/time-of-day-greeting'
 import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
 import { getMemoryItemDisplay } from '@/core/recall/recall-result'
@@ -88,7 +88,7 @@ const isRecallRefreshing = ref(false)
 const errorMessage = ref('')
 const importState = ref<ChromeBookmarkImportState | null>(null)
 const coldStartState = ref<ColdStartPipelineState | null>(null)
-const libraryState = ref<PopupLibraryState>('unknown')
+const libraryState = ref<RecallShellLibraryState>('unknown')
 const excerptCaptureCount = ref(0)
 const installOnboardingDone = ref(true)
 const skipOnboardingBusy = ref(false)
@@ -395,7 +395,7 @@ function collectResultIdsFromRecall(result: {
 function resolveMissAssistantText(input: {
   emptyKind?: string
   hasRelatedGuess: boolean
-  library: PopupLibraryState
+  library: RecallShellLibraryState
   clue: string
 }): string {
   if (input.emptyKind === 'constrained_none') {
@@ -404,7 +404,7 @@ function resolveMissAssistantText(input: {
       : t('popup_followup_miss_constrained_empty')
   }
   if (input.library === 'empty') {
-    const copy = getPopupNoMatchCopy({ library: 'empty', clue: input.clue }, t)
+    const copy = getRecallShellNoMatchCopy({ library: 'empty', clue: input.clue }, t)
     return `${copy.title} ${copy.body}`
   }
   return t('popup_reply_miss')
@@ -500,14 +500,14 @@ const importProgressLabel = computed(() => {
 })
 
 const captureFirstMode = computed(() =>
-  shouldShowCaptureFirstPopup({
+  shouldShowCaptureFirstRecallShell({
     excerptCaptureCount: excerptCaptureCount.value,
     installOnboardingDone: installOnboardingDone.value
   })
 )
 
 const idleEmptyCopy = computed(() =>
-  getPopupIdleEmptyCopy(libraryState.value, isImporting.value, t, {
+  getRecallShellIdleEmptyCopy(libraryState.value, isImporting.value, t, {
     captureFirst: captureFirstMode.value
   })
 )
@@ -915,7 +915,7 @@ async function loadOnboardingState(): Promise<void> {
     excerptCaptureCount.value = captureCount
     installOnboardingDone.value = onboardingDone
   } catch {
-    // 忽略：默认不展示 Capture-first，避免阻塞 Popup
+    // 忽略：默认不展示 Capture-first，避免阻塞 Side Panel 首屏
   }
 }
 

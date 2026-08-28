@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 /**
  * MemoryItem 捕获入口。
- * - popup：Popup
+ * - popup：遗留 capture 入口枚举（原 Action Popup 时代默认来源；≠ 现行 Side Panel 主壳）
  * - context_menu：右键菜单
  * - selection_toolbar：划词浮层
  * - omnibox：地址栏
@@ -12,7 +12,7 @@ import { z } from 'zod'
  * - getting_started：安装引导演示页
  */
 export const CaptureEntrySchema = z.enum([
-  'popup', // Popup
+  'popup', // 遗留 capture 入口（原 Action Popup 时代）
   'context_menu', // 右键菜单
   'selection_toolbar', // 划词浮层
   'omnibox', // 地址栏 Omnibox

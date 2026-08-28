@@ -35,6 +35,17 @@
 - DDD 依赖方向：`pages|presentation → application → core`；`application` 可依赖 `infrastructure`；UI 经 `background-client` 发消息，不得直连 IndexedDB。细节见产品文档 v4.0。
 - Service Worker 环境无 `window` / `document` / `localStorage`；用 `setTimeout`、`fetch`、`chrome.storage.*`、`ReturnType<typeof setTimeout>`。
 
+### 权威路径（改功能前先看）
+
+| 主题              | 路径                                                  |
+| ----------------- | ----------------------------------------------------- |
+| Recall 主壳       | `frontend/src/pages/sidepanel/`（Chrome Side Panel）  |
+| Recall 壳空态文案 | `frontend/src/core/recall/recall-shell-empty-copy.ts` |
+| Action Popup      | **已退役**（原对话主壳；`pages/popup` 已删除）        |
+| Memory / clues    | `frontend/src/core/memory/`                           |
+| 消息联合类型      | `frontend/src/core/messaging/background-messages.ts`  |
+| Recall 服务       | `frontend/src/application/recall/recall-service.ts`   |
+
 ## 代码约定
 
 - UI/API 统一用 **Filter** / **Recall**；用户可见文案禁止 `Search`（对内注释可用 search；中文「筛选/找回」仅开发者沟通）。

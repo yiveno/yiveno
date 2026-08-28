@@ -16,7 +16,7 @@ export type RecallDialogMergeMode =
   | 'initial' // 首轮：无 accumulated
   | 'refine' // 补充：槽位 merge
 
-/** Popup 会话内持有的寻回约束（不入 IndexedDB）。 */
+/** Side Panel 会话内持有的寻回约束（不入 IndexedDB）。 */
 export type RecallDialogState = {
   /** 已发送的用户轮次原文（有序；最多由调用方截断）。 */
   priorUserUtterances: string[]

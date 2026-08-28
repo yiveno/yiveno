@@ -4,7 +4,7 @@ import { ParsedRecallClueSchema } from '@/core/recall/parse-recall-clue-types'
 import type { RecallResult } from '@/core/recall/recall-result'
 import type { BackgroundMessageScope } from '@/core/messaging/constants'
 
-/** Popup 多轮会话上下文（Omnibox 不传）。 */
+/** Side Panel 多轮会话上下文（Omnibox 不传）。 */
 export const recallDialogContextSchema = z.object({
   /** 本轮之前已发送的用户原文（有序；最多 5）。 */
   priorUserUtterances: z.array(z.string().max(2000)).max(5).optional(),

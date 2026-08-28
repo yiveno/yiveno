@@ -3,8 +3,8 @@
  * 存储读写见 infrastructure/storage/install-onboarding-storage。
  */
 
-/** Popup 是否应展示 Capture-first 空态（即使书签已导入）。 */
-export function shouldShowCaptureFirstPopup(input: {
+/** Side Panel 是否应展示 Capture-first 空态（即使书签已导入）。 */
+export function shouldShowCaptureFirstRecallShell(input: {
   excerptCaptureCount: number
   installOnboardingDone: boolean
 }): boolean {

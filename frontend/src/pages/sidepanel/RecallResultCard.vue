@@ -749,7 +749,7 @@ function handleToggleEvidenceSelection(event: Event): void {
   display: grid;
   gap: var(--space-xs);
 
-  /* 约 5 条 sibling；超出内部滚动，避免撑破 Popup */
+  /* 约 5 条 sibling；超出内部滚动，避免撑破 Side Panel 可视区 */
   max-height: calc(5 * 5.25rem + 4 * var(--space-xs));
   margin: 0;
   padding: 0;

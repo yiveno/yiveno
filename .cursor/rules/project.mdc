@@ -292,8 +292,9 @@ Background **无** `window` / `document` / `localStorage`。用全局 `setTimeou
 | Omnibox | `frontend/src/background/listeners/omnibox.ts` |
 | Commands | `frontend/src/core/commands/command-ids.ts` + `background/listeners/commands.ts` |
 | Settings | `frontend/src/pages/settings/Settings.vue` |
-| Popup | （已退役；原对话主壳） |
+| Action Popup | **已退役**（原对话主壳；`pages/popup` 已删除） |
 | Side Panel | `frontend/src/pages/sidepanel/`（Recall 主壳） |
+| Recall 壳空态 | `frontend/src/core/recall/recall-shell-empty-copy.ts` |
 | 扩展 i18n | `frontend/src/infrastructure/i18n/` + `public/_locales/` |
 
 ---

@@ -125,9 +125,9 @@ MemoryItem.clues.note      →  附注 · 存时写的私有提示
 
 ### 4.4 Capture 入口
 
-| 概念         | 英文           | 定义                                                                                        |
-| ------------ | -------------- | ------------------------------------------------------------------------------------------- |
-| **捕获入口** | `captureEntry` | `popup` · `context_menu` · `selection_toolbar` · `omnibox` · `shortcut` · `sync` · `import` |
+| 概念         | 英文           | 定义                                                                                                                                                               |
+| ------------ | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **捕获入口** | `captureEntry` | `popup`（**遗留枚举 id**，原 Action Popup 时代默认来源；≠ Side Panel 找回主壳）· `context_menu` · `selection_toolbar` · `omnibox` · `shortcut` · `sync` · `import` |
 
 ---
 
@@ -279,6 +279,10 @@ MemoryItem.clues.note      →  附注 · 存时写的私有提示
 | `collectFilterIndexFields`                     | 收集条目可索引字段（供 Filter / 倒排）       |
 | `clueSubmittedAt`                              | 遥测任务 t0 时间戳（`beginClue`）            |
 | `beginClue`                                    | Side Panel 提交 clue 时开启 TTE 任务         |
+| `recall-shell-empty-copy`                      | Recall 壳空态 / no_match 文案纯函数模块      |
+| `RecallShellLibraryState`                      | Recall 壳侧记忆库空/就绪状态                 |
+| `shouldShowCaptureFirstRecallShell`            | 安装引导 Capture-first 空态门禁              |
+| `popup_clue_*` / `popup_*`（i18n）             | **遗留 i18n key 前缀**（语义为 clue / 空态） |
 | `URLSearchParams` / `location.search`          | URL 查询参数（与 Recall clue 无关）          |
 
 ---

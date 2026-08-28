@@ -1,5 +1,5 @@
 /**
- * 安装引导完成标记（Popup / Getting Started 共用）。
+ * 安装引导完成标记（Side Panel / Getting Started 共用）。
  */
 
 export const INSTALL_ONBOARDING_DONE_LOCAL_KEY = 'yiveno.installOnboardingDone'

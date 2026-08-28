@@ -16,7 +16,7 @@ export type RecallHighlightSurface =
   | 'note' // 用户附注（clues.note）
 
 /**
- * 主因字段 → 卡片展示面（与 Popup 展示结构对齐）。
+ * 主因字段 → 卡片展示面（与 Side Panel 展示结构对齐）。
  * excerptContext 等无直接展示面时返回 null（仍保留文案解释）。
  */
 export function resolveRecallHighlightSurface(

@@ -8,7 +8,7 @@ import type { RecallResult } from '@/core/recall/recall-result'
  * 仅新增 backend，不改 UI / handlers / core 的主链路。
  */
 export type RecallWithClueOptions = {
-  /** Popup 多轮上下文；Omnibox / 单测可省略。 */
+  /** Side Panel 多轮上下文；Omnibox / 单测可省略。 */
   context?: RecallDialogContext
 }
 

@@ -2,22 +2,22 @@ import { describe, expect, it } from 'vitest'
 
 import {
   shouldOpenGettingStartedOnInstall,
-  shouldShowCaptureFirstPopup
+  shouldShowCaptureFirstRecallShell
 } from '@/core/capture/install-onboarding'
 
 describe('install-onboarding', () => {
   it('Capture-first：未完成引导且无摘录时展示', () => {
     expect(
-      shouldShowCaptureFirstPopup({ excerptCaptureCount: 0, installOnboardingDone: false })
+      shouldShowCaptureFirstRecallShell({ excerptCaptureCount: 0, installOnboardingDone: false })
     ).toBe(true)
   })
 
   it('Capture-first：已有摘录或已完成引导时不展示', () => {
     expect(
-      shouldShowCaptureFirstPopup({ excerptCaptureCount: 1, installOnboardingDone: false })
+      shouldShowCaptureFirstRecallShell({ excerptCaptureCount: 1, installOnboardingDone: false })
     ).toBe(false)
     expect(
-      shouldShowCaptureFirstPopup({ excerptCaptureCount: 0, installOnboardingDone: true })
+      shouldShowCaptureFirstRecallShell({ excerptCaptureCount: 0, installOnboardingDone: true })
     ).toBe(false)
   })
 

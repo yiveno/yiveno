@@ -599,7 +599,7 @@ function showStatus(state: 'saving' | 'saved' | 'error', label: string): void {
   )
 }
 
-/** 展示存成抓住感：预览正文 + 可选找回引导与一键打开 Popup。 */
+/** 展示存成抓住感：预览正文 + 可选找回引导与一键打开 Side Panel。 */
 function showSavedFeedback(input: {
   preview: string
   hint: string | null
