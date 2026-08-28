@@ -1,0 +1,57 @@
+---
+description: Yiveno Agent 会话开机契约（alwaysApply · 当下块由 CURRENT 同步）
+alwaysApply: true
+---
+
+# Session Boot（Agent 开机层）
+
+> **本文件 = Cursor 每会话自动注入的「当下事实」。** 「当下」块由 `docs/product/CURRENT.md` 生成；改焦点时 **只改 CURRENT**，再 `bun run sync:ide-boot`（`doc:check` 会校验）。
+
+<!-- SYNC:IDE_BOOT:START -->
+**最后更新：** 2026-08-28
+
+> **每会话首条：** 用户应粘贴 [`AGENT-TASK-BRIEF.template.md`](../../docs/product/AGENT-TASK-BRIEF.template.md)（In/Out/验收/禁止）。
+
+## 当下
+
+| 项 | 内容 |
+| --- | --- |
+| **主线** | R4 收尾 + 检索/理解护城河（`recall-eval` must、Outcome Labeling §7.2、§5.9 门槛） |
+| **并行** | Side Panel / Recall 壳薄维护（空态、划词、Getting Started）；**禁止** Chat 大改 |
+| **本周做** | Recall 壳空态与 onboarding 文案收束（`recall-shell-empty-copy`、Side Panel）；文档↔代码同步；行为变更补 must 或 §5 手动步骤；Outcome Labeling §7.2 按 P0→P1 推进（见 `R4-Outcome-Labeling-P2-校准.md`） |
+| **本周不做** | 新连接器 / Agent / history 抓取 / 知识图谱 UI；未达 §5.9 门槛前扩 MCP 对外宣传；内容别名灰名单冒充全库通解；Side Panel 持久多会话 / 分支 / regenerate 等 Chat 产品化 |
+
+**能力速查：** Side Panel Recall、Hybrid、倒排 Phase 1、ECS 卡面、evidence pack、只读 MCP beta、Raindrop/Pocket 导入、TTE 本机埋点、Dodo Pro 门禁等（详表 `产品文档 §1`）。§5.9 Beta（TTE-V / Success@180 / ECS 合格率）；MCP **不对用户主宣传**。进行中：Outcome Labeling §7.2（P0+）；R4 `recall-eval` must 增补与校准。
+<!-- SYNC:IDE_BOOT:END -->
+
+## 冻结（勿重议 · ADR-001–005）
+
+- Recall **主壳 = Side Panel**；`pages/popup` 已退役；关 Panel 丢会话；**New find** 清线程
+- 用户 Recall 输入 = **clue**（线索）；`MemoryItem.clues.note` = **附注**；产品面 **禁止 Search**
+- 交付 **邻域集合**；`top_pick` = 建议，**非**神谕唯一答案；`no_match` 诚实终局
+- **LLM** 只做理解/NLG；数据平面仅「提议 → Zod/门禁 → 确定性执行」
+- **禁止**内容别名灰名单冒充全用户通解；残差留给字面/Hybrid
+
+## 架构铁律（开机必记）
+
+- UI → `background-client` → SW handler → application → core；**禁止** UI 直连 IndexedDB/Chrome API
+- 新 `message type`：先 `core/messaging/*` + registry + handler，再 UI
+- 产品面文案：**仅 en** + `t()`；开发者回复可用中文
+
+## 深读（仅当任务需要时再 `@`，禁止会话开头通读）
+
+| 主题 | 路径 |
+| --- | --- |
+| 改版计划 / 市场调研 | **禁止**会话开头通读；仅任务明确需要时 `@` 对应章节 |
+| 术语 | `docs/product/Yiveno-术语表.md` |
+| 行为契约 | `docs/product/Yiveno-产品文档-v4.0.md` §0–§7 |
+| 当下详版 | `docs/product/CURRENT.md` |
+| ADR 全文 | `docs/architecture/decisions/` |
+| 完整纪律 | `.cursor/rules/project.mdc` |
+
+## 任务纪律
+
+- **用户首条应含 Task Brief**（模板 `docs/product/AGENT-TASK-BRIEF.template.md`）：In/Out/验收/禁止；**以 Brief 的 scope 为准**
+- **默认小 scope**；用户未声明范围不得跨模块大改
+- 行为/契约变更 → 同批改 Normative 文档 +（Recall/Capture 用户可感）must eval 或 §5 步骤
+- **报完成 =** 代码 + 文档 + 相关单测/`doc:check` + 扩展用户可感路径 **MCP UI 抽测 ≥1**

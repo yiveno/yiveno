@@ -8,9 +8,9 @@ alwaysApply: true
 用中文回复。精简、工程化。
 
 **权威优先级（冲突时）：**  
-**术语定义** `docs/product/Yiveno-术语表.md`（Glossary · 唯一权威）> `docs/product/Yiveno-产品文档-v4.0.md`（Normative §0–§7 · 行为/契约）> **视觉/品牌** `docs/design/Yiveno-设计标准-v1.md`（≈ 根目录 `DESIGN.md`）> 本文件 ≈ `AGENTS.md` > 其它 steering。  
+**Agent 开机层** `.cursor/rules/session-boot.mdc`（alwaysApply · 当下+冻结）> **术语定义** `docs/product/Yiveno-术语表.md`（Glossary · 唯一权威）> **当下详版** `docs/product/CURRENT.md`（**只改本文** → `bun run sync:ide-boot`）> `docs/product/Yiveno-产品文档-v4.0.md`（Normative §0–§7 · 行为/契约）> **架构决策** `docs/architecture/decisions/` > **视觉/品牌** `docs/design/Yiveno-设计标准-v1.md`（≈ 根目录 `DESIGN.md`）> 本文件 ≈ `AGENTS.md` > 其它 steering。  
 改术语/概念叫法 → **先改术语表**再同步产品文档、设计标准、`.cursor/rules/terminology.mdc`、代码与 i18n。  
-改架构/消息协议/UI 硬约束 → **先改产品文档再改代码与本文件**；改品牌色/字体/物料气质 → **先改设计标准再改官网 CSS / MD token / logo**。附录 A 非实现范围。
+改架构/消息协议/UI 硬约束 → **先改产品文档再改代码与本文件**；不可逆决策 → **补 ADR** 并更新 `CURRENT.md` + `bun run sync:ide-boot`；改品牌色/字体/物料气质 → **先改设计标准再改官网 CSS / MD token / logo**。附录 A 非实现范围。
 
 ### 文档 ↔ 代码同步（铁律）
 
@@ -19,10 +19,13 @@ alwaysApply: true
 | 改动面 | 必须同步的文档 |
 | --- | --- |
 | 术语 / 概念叫法 / 禁用词 | `docs/product/Yiveno-术语表.md`（Glossary · 唯一权威） |
+| **换波次 / 本周焦点** | `docs/product/CURRENT.md` → `bun run sync:ide-boot` |
+| **不可逆架构/产品分叉** | `docs/architecture/decisions/`（ADR）+ 产品文档 |
 | 产品行为 / Recall / Capture / 配额 / 折叠键 / 消息协议 / 分层边界 | `docs/product/Yiveno-产品文档-v4.0.md`（Normative） |
 | 视觉 / 品牌 / token / 控件气质 | `docs/design/Yiveno-设计标准-v1.md`（及根 `DESIGN.md` 摘要若受影响） |
 | 环境变量 / 部署 / Worker 绑定 | `docs/ENVIRONMENT.md` 等既有工程文档 |
 | 工程约定（日志、倒排、语料适配器等） | 对应 `docs/engineering/*` |
+| 新增 Background `message type` | `docs/engineering/background-message-types.registry` + `core/messaging/*` + handler +（核心表）产品文档 §4 |
 | AI 行为 / 架构硬规则 | 本文件 + `AGENTS.md`（与产品文档冲突时仍以产品文档为准） |
 
 ```
@@ -100,6 +103,16 @@ alwaysApply: true
 ✅ 扩展用户可感改动：相关单测通过后 **必须 MCP 真机实测**（见下「MCP 真机实测」），再报完成
 ✅ 排查问题：**优先 MCP Chrome 真机**还原复现场景、拿够证据，再读码/改码（见下「MCP 排查优先」）
 ```
+
+### 多会话纪律（防决策漂移）
+
+- **开机已注入：** `.cursor/rules/session-boot.mdc`（当下 + 冻结 + 深读索引）；详版 `docs/product/CURRENT.md`。
+- **用户首条：** 应用 `docs/product/AGENT-TASK-BRIEF.template.md` 填 scope；**以 Brief 的 In/Out 为准**。
+- **默认小 scope：** 单次任务聚焦用户声明范围；未要求不得「顺手」跨模块大改或广泛重构。
+- **换焦点：** 只改 `docs/product/CURRENT.md` → `bun run sync:ide-boot`；不可逆分叉写 ADR。
+- **报完成 =** 代码 + 相关权威文档 +（Recall/Capture 用户可感）must eval 或 §5 步骤 + MCP 结论。
+- **合入 PR：** 使用 `.github/pull_request_template.md` 勾选 §1.1 验收归属。
+- **Hooks：** `.cursor/hooks.json` 拦截破坏性 git；`sessionStart` 尽力注入 CURRENT（仍以 `@CURRENT.md` 为准）。
 
 ### 目标任务：必选 vs 可选（硬规则）
 
@@ -283,6 +296,9 @@ Background **无** `window` / `document` / `localStorage`。用全局 `setTimeou
 
 | 主题 | 路径 |
 |------|------|
+| **Agent 开机层（alwaysApply）** | `.cursor/rules/session-boot.mdc` |
+| **当下焦点（源）** | `docs/product/CURRENT.md` → `bun run sync:ide-boot` |
+| **架构决策 ADR** | `docs/architecture/decisions/` |
 | 视觉/品牌标准 | `docs/design/Yiveno-设计标准-v1.md` + 根目录 `DESIGN.md` |
 | Memory / clues | `frontend/src/core/memory/` |
 | 消息联合类型 | `frontend/src/core/messaging/background-messages.ts` |

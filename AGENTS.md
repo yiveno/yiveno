@@ -3,10 +3,16 @@
 ## 项目
 
 - Yiveno：Vue 3 + TypeScript Chrome 扩展，Backend 为 Cloudflare Workers，Website 为营销站。
+- **新会话先读：** `.cursor/rules/session-boot.mdc`（alwaysApply 开机层）· 详版 `docs/product/CURRENT.md`（**只改 CURRENT** → `bun run sync:ide-boot`）
 - **术语唯一权威：** `docs/product/Yiveno-术语表.md`（clue、Recall、邻域、附注等；改术语先改此文）。
+- **架构决策（勿重议）：** `docs/architecture/decisions/`（ADR）。
 - 产品/架构行为契约：`docs/product/Yiveno-产品文档-v4.0.md`（先读 **§0.1 核心路线** + **§0.1.1 资产/边界/隐患**（含「邻域非神谕」）+ §0 其余；附录 A 非规范）
 - **视觉/品牌标准（Normative）：** `docs/design/Yiveno-设计标准-v1.md`（完整）；摘要 `DESIGN.md`。权威 `@yiveno/design-tokens/css/brand.css`（色 + Roles + space/radius）；扩展自研 `App*` 控件；图标 Lucide 按需内联。
-- Cursor 规则：`.cursor/rules/project.mdc`、`.cursor/rules/terminology.mdc`，不得冲突。
+- Cursor 规则：`.cursor/rules/`（**开机** `session-boot.mdc`）· 索引见 [`.cursor/rules/README.md`](.cursor/rules/README.md)
+- **每会话 Task Brief：** [`docs/product/AGENT-TASK-BRIEF.template.md`](docs/product/AGENT-TASK-BRIEF.template.md)
+- **PR 合入清单：** `.github/pull_request_template.md`（§1.1 验收归属勾选）。
+- **Cursor Hooks：** `.cursor/hooks.json`（拦截破坏性 git）— 见 `.cursor/hooks/README.md`。
+- **跨 IDE 薄指针：** 根目录 [`CLAUDE.md`](CLAUDE.md)（Claude Code）· `bun run sync:ide-boot` 同步开机「当下」块
 - 对外心智：「那个找东西的」/ 仓库；找回 = 高置信**邻域**，Top1=建议；AI 能力核心不作宣传招牌。
 - **文档 ↔ 代码同步（铁律）：** 任何代码改动若与权威文档脱节或有差异，**必须同批更新对应文档**（产品 / 设计 / 工程 / `AGENTS.md`·`project.mdc`）；报完成 = 代码与文档可对照。禁止「先改代码、文档以后再补」。纯重构且契约不变、或 bugfix 且行为已与文档一致，可不改文档。细则见 `.cursor/rules/project.mdc`「文档 ↔ 代码同步」。
 
@@ -37,14 +43,17 @@
 
 ### 权威路径（改功能前先看）
 
-| 主题              | 路径                                                  |
-| ----------------- | ----------------------------------------------------- |
-| Recall 主壳       | `frontend/src/pages/sidepanel/`（Chrome Side Panel）  |
-| Recall 壳空态文案 | `frontend/src/core/recall/recall-shell-empty-copy.ts` |
-| Action Popup      | **已退役**（原对话主壳；`pages/popup` 已删除）        |
-| Memory / clues    | `frontend/src/core/memory/`                           |
-| 消息联合类型      | `frontend/src/core/messaging/background-messages.ts`  |
-| Recall 服务       | `frontend/src/application/recall/recall-service.ts`   |
+| 主题               | 路径                                                         |
+| ------------------ | ------------------------------------------------------------ |
+| **当下焦点（源）** | `docs/product/CURRENT.md` → `bun run sync:ide-boot`          |
+| **Agent 开机层**   | `.cursor/rules/session-boot.mdc`（alwaysApply · 当下块同步） |
+| **架构决策 ADR**   | `docs/architecture/decisions/`                               |
+| Recall 主壳        | `frontend/src/pages/sidepanel/`（Chrome Side Panel）         |
+| Recall 壳空态文案  | `frontend/src/core/recall/recall-shell-empty-copy.ts`        |
+| Action Popup       | **已退役**（原对话主壳；`pages/popup` 已删除）               |
+| Memory / clues     | `frontend/src/core/memory/`                                  |
+| 消息联合类型       | `frontend/src/core/messaging/background-messages.ts`         |
+| Recall 服务        | `frontend/src/application/recall/recall-service.ts`          |
 
 ## 代码约定
 
@@ -75,27 +84,27 @@
 
 ### 质量门禁三层职责
 
-| 层级           | 触发时机     | 职责                                                       | 命令                                                                                                                    |
-| -------------- | ------------ | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| **pre-commit** | `git commit` | 暂存区快修：ESLint fix + Stylelint + Prettier（含 `.vue`） | `lint-staged`（`max-warnings 0`；忽略 `backend/worker-configuration.d.ts`）                                             |
-| **pre-push**   | `git push`   | 按变更：FE 构建 / BE typecheck+test / 分 workspace Knip    | `build:fe`（frontend/共享包）；`typecheck:be` + `bun test`（backend）；`knip:fe` / `knip:be` / `knip:web`（按变更目录） |
-| **CI**         | PR / push    | 权威只读门禁：typecheck、lint、i18n、test、build           | 见下表                                                                                                                  |
+| 层级           | 触发时机     | 职责                                                                   | 命令                                                                                                                                                        |
+| -------------- | ------------ | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **pre-commit** | `git commit` | 暂存区快修：ESLint fix + Stylelint + Prettier（含 `.vue`）             | `lint-staged`（`max-warnings 0`；忽略 `backend/worker-configuration.d.ts`）                                                                                 |
+| **pre-push**   | `git push`   | 按变更：FE 构建 + **test:run** / BE typecheck+test / 分 workspace Knip | `build:fe` + `cd frontend && bun run test:run`（frontend/共享包）；`typecheck:be` + `bun test`（backend）；`knip:fe` / `knip:be` / `knip:web`（按变更目录） |
+| **CI**         | PR / push    | 权威只读门禁：typecheck、lint、i18n、test、build                       | 见下表                                                                                                                                                      |
 
-pre-push **不跑** ESLint、全仓 typecheck、全仓 frontend test；`.vue` lint 由 pre-commit 与 CI 覆盖。`knip.json` / 根 `package.json` 变更时 pre-push 跑全仓 `knip`。
+pre-push **不跑** ESLint、全仓 typecheck；FE 变更时跑 **build + test:run**（含 recall-eval must）。`.vue` lint 由 pre-commit 与 CI 覆盖。`knip.json` / 根 `package.json` 变更时 pre-push 跑全仓 `knip`。
 
 ### CI 检查矩阵
 
-| 场景          | TypeScript                             | Lint         | i18n         | Knip                | 前端测试                    | Lighthouse      |
-| ------------- | -------------------------------------- | ------------ | ------------ | ------------------- | --------------------------- | --------------- |
-| **PR**        | `typecheck:ci` + build 内 `vue-tsc -b` | `lint:check` | `i18n:check` | `knip`              | `test:run` + backend `test` | 不跑（v4 下线） |
-| **push main** | 同上                                   | 同上         | `i18n:check` | `knip`              | `test:run` + backend `test` | 不跑（v4 下线） |
-| **每周一**    | —                                      | —            | —            | `knip.yml` 定时复检 | —                           | —               |
+| 场景          | TypeScript                             | Lint         | i18n                       | Knip                | 前端测试                    | Lighthouse      |
+| ------------- | -------------------------------------- | ------------ | -------------------------- | ------------------- | --------------------------- | --------------- |
+| **PR**        | `typecheck:ci` + build 内 `vue-tsc -b` | `lint:check` | `i18n:check` + `doc:check` | `knip`              | `test:run` + backend `test` | 不跑（v4 下线） |
+| **push main** | 同上                                   | 同上         | `i18n:check` + `doc:check` | `knip`              | `test:run` + backend `test` | 不跑（v4 下线） |
+| **每周一**    | —                                      | —            | —                          | `knip.yml` 定时复检 | —                           | —               |
 
 ### 本地命令
 
 - 日常：`bun run typecheck`（快，含 `packages/*`）、`bun run lint:check`、`bun run i18n:check`、目标单测
 - 三端并行：`bun run watch` / `bun run dev`（mprocs）或 `bun run watch:stream`（混流）；扩展重建后需 `chrome://extensions` 刷新
-- 合并前 / 发布前：`bun run typecheck:force`、`bun run lint:check`、`bun run i18n:check`、`bun run test:run`、`bun run knip`
+- 合并前 / 发布前：`bun run typecheck:force`、`bun run lint:check`、`bun run i18n:check`、`bun run doc:check`、`bun run test:run`、`bun run knip`
 - Knip 分 workspace：`knip:fe` / `knip:be` / `knip:web`；仅结构项：`knip:fast`；全量报告：`knip:report`
 - Knip 版本写在根 `package.json` → `yiveno.knip`；`scripts/knip-runner.mjs` 在 `.cache/knip-runner` 隔离安装（规避 monorepo `zod@3` 与 knip `zod/mini`）。根目录勿直接 `bunx knip`；待 `bunx knip -D .` 不再报 `./mini` 后再打回根依赖。
 

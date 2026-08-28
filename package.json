@@ -53,6 +53,8 @@
     "typecheck": "bun run --workspaces --if-present typecheck",
     "typecheck:fe": "bun run --cwd frontend typecheck",
     "i18n:check": "bun run --cwd frontend i18n:check",
+    "doc:check": "bun ./scripts/check-doc-drift.mjs",
+    "sync:ide-boot": "bun ./scripts/sync-ide-boot.mjs",
     "typecheck:be": "bun run --cwd backend typecheck",
     "typecheck:web": "bun run --cwd website typecheck",
     "typecheck:ci": "bun run --filter './packages/*' --filter backend --filter yiveno-website typecheck",

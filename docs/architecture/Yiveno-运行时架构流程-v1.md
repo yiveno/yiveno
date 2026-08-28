@@ -7,6 +7,8 @@
 ### 0.1 权威来源（不冲突）
 
 - [`Yiveno-术语表.md`](../product/Yiveno-术语表.md)：概念叫法唯一权威（clue、Recall、附注、邻域等）。
+- [`CURRENT.md`](../product/CURRENT.md)：当下焦点与本周 scope（新会话先读）。
+- [`architecture/decisions/`](../architecture/decisions/)：不可逆架构决策（ADR）。
 - `docs/product/Yiveno-产品文档-v4.0.md`：核心路线、资产/边界/隐患、找回体验规范（尤其 §0.1 / §0.1.1 / §7）。
 - `.cursor/rules/project.mdc` + `AGENTS.md`：分层与代码硬约束（唯一监听者、IndexedDB 唯一入口、消息契约先于实现等）。
 

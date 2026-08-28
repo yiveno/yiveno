@@ -46,6 +46,18 @@ if [ -n "$FRONTEND_BUILD_TRIGGER" ]; then
     echo "❌ frontend 构建失败"
     ERRORS="${ERRORS}\n❌ frontend 构建失败:\n${BUILD_OUTPUT}\n\n"
   fi
+
+  if [ "$BUILD_STATUS" -eq 0 ]; then
+    echo "🧪 frontend test:run（含 recall-eval must）..."
+    FE_TEST_OUTPUT=$(cd frontend && bun run test:run 2>&1)
+    FE_TEST_STATUS=$?
+    if [ "$FE_TEST_STATUS" -eq 0 ]; then
+      echo "✅ frontend test:run 通过"
+    else
+      echo "❌ frontend test:run 失败"
+      ERRORS="${ERRORS}\n❌ frontend test:run 失败:\n${FE_TEST_OUTPUT}\n\n"
+    fi
+  fi
 else
   echo "⏭️  无 frontend 构建相关变更，跳过构建验证"
 fi
@@ -117,6 +129,7 @@ if [ -n "$ERRORS" ]; then
   echo ""
   echo "🛠️  可用的修复命令："
   echo "   bun run build:fe          # frontend 构建验证"
+  echo "   cd frontend && bun run test:run  # frontend 单测（含 recall-eval must）"
   echo "   bun run typecheck:be      # backend 类型检查"
   echo "   cd backend && bun test    # backend 单测"
   echo "   bun run knip              # 全仓 Knip"

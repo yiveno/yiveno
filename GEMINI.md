@@ -1,23 +1,24 @@
-# Yiveno — Gemini CLI 项目上下文
+# GEMINI.md（Gemini CLI · 薄指针）
 
-Chrome 扩展：**那个找东西的**（Capture 低负担 + Recall 高置信邻域；Top1=建议非神谕）。不是书签管理器 / 笔记工具 / 聊天机器人 / AI 宣传壳。
+> **纪律与真相以仓库权威文件为准**；本文件只做 Gemini 开机索引。冲突时：`docs/product/Yiveno-术语表.md` > 产品文档 §0–§7 > `AGENTS.md` > 本文件。
 
-## 审查时优先关注
+## 开机必读（按序）
 
-- 单向数据流：Chrome API → Background → IndexedDB → UI；UI 经 `background-client`，禁止直连 IndexedDB / `chrome.bookmarks|tabs`。
-- 新 message `type` 必须先改 `frontend/src/core/messaging/*`。
-- UI 文案：禁止「搜索」/ `Search`；用 **筛选（Filter）** / **找回（Recall）**；文案经 `t()` + `_locales`。
-- 找回承诺：邻域集合非神谕；禁止「永远押中那一条」/ 置信百分比神谕话术。
-- LLM 不直接查插改删数据平面；事实源是 IndexedDB MemoryItem；AI 是能力核心不作宣传招牌。
-- Free：关键词 Filter；勿暗示未上线 Hybrid/embedding 可用。
+1. [`AGENTS.md`](./AGENTS.md) — 工程纪律、验证、分层
+2. [`.cursor/rules/session-boot.mdc`](./.cursor/rules/session-boot.mdc) — **当下焦点 + 冻结决策**（由 [`docs/product/CURRENT.md`](./docs/product/CURRENT.md) 同步）
+3. [`.cursor/rules/project.mdc`](./.cursor/rules/project.mdc) + [`.cursor/rules/terminology.mdc`](./.cursor/rules/terminology.mdc) — 完整硬规则
 
-## 仓库结构
+## 每会话首条
 
-- `frontend/` — Vue 扩展（pages / application / core / infrastructure / background）
-- `backend/` — Cloudflare Worker
-- `website/` — 营销站
-- 权威产品文档：`docs/product/Yiveno-产品文档-v4.0.md`
+复制填写 [`docs/product/AGENT-TASK-BRIEF.template.md`](./docs/product/AGENT-TASK-BRIEF.template.md)（In / Out / 验收 / 禁止）。
 
-## 协作约定
+## 深读（仅任务需要时）
 
-- 注释 / commit message 用中文；质量门禁以 `ci.yml` 为准，本助手不替代 typecheck/lint/test。
+- 术语：`docs/product/Yiveno-术语表.md`
+- 行为契约：`docs/product/Yiveno-产品文档-v4.0.md` §0
+- ADR：`docs/architecture/decisions/`
+
+## 维护
+
+- 换波次：**只改** `docs/product/CURRENT.md` → `bun run sync:ide-boot`
+- 跨 IDE 索引：`.cursor/rules/README.md` · `docs/README.md` · [`CLAUDE.md`](./CLAUDE.md)

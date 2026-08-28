@@ -42,6 +42,9 @@ jobs:
       - name: i18n key check
         run: bun run i18n:check
 
+      - name: Doc drift check
+        run: bun run doc:check
+
       - name: Knip
         run: bun run knip
 
