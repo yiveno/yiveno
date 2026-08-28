@@ -33,12 +33,16 @@ const BOOKMARK_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 const bookmarkItem = {
   id: BOOKMARK_ID,
   type: 'bookmark' as const,
+  createdAt: '2026-08-01T12:00:00.000Z',
   payload: {
     title: 'Retention analysis',
     url: 'https://example.com/retention',
     domain: 'example.com'
   },
-  clues: {}
+  clues: {
+    keywords: [],
+    tags: []
+  }
 }
 
 describe('omnibox listeners', () => {
@@ -55,7 +59,7 @@ describe('omnibox listeners', () => {
 
     vi.stubGlobal('chrome', {
       i18n: {
-        getMessage: vi.fn((key: string) => {
+        getMessage: vi.fn((key: string, ...args: string[]) => {
           if (key === 'omnibox_default_suggestion') {
             return 'Recall with Yiveno...'
           }
@@ -70,6 +74,12 @@ describe('omnibox listeners', () => {
           }
           if (key === 'explain_field_short_title') {
             return 'title'
+          }
+          if (key === 'recall_card_saved_just_now') {
+            return 'Just saved'
+          }
+          if (key === 'recall_card_saved') {
+            return `Saved ${String(args?.[0] ?? '')}`
           }
           return ''
         })

@@ -17,7 +17,8 @@ describe('user-settings', () => {
     expect(mergeUserSettings(DEFAULT_USER_SETTINGS, { selectionToolbarEnabled: false })).toEqual({
       selectionToolbarEnabled: false,
       aiFeaturesEnabled: true,
-      chromeBookmarkIngestEnabled: true
+      chromeBookmarkIngestEnabled: true,
+      mcpReadOnlyEnabled: false
     })
   })
 
@@ -25,7 +26,8 @@ describe('user-settings', () => {
     expect(parseUserSettings({ selectionToolbarEnabled: false })).toEqual({
       selectionToolbarEnabled: false,
       aiFeaturesEnabled: true,
-      chromeBookmarkIngestEnabled: true
+      chromeBookmarkIngestEnabled: true,
+      mcpReadOnlyEnabled: false
     })
     expect(parseUserSettings({ selectionToolbarEnabled: 'yes' })).toEqual(DEFAULT_USER_SETTINGS)
   })

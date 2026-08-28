@@ -11,6 +11,7 @@ const {
   deleteRemoteAccountMock,
   clearPrivacyPrefsMock,
   ensureMemoryCloudSyncAlarmMock,
+  clearSubscriptionSnapshotMock,
   openWebsiteLogoutFromExtensionMock
 } = vi.hoisted(() => ({
   clearAuthSessionMock: vi.fn(),
@@ -23,6 +24,7 @@ const {
   deleteRemoteAccountMock: vi.fn(),
   clearPrivacyPrefsMock: vi.fn(),
   ensureMemoryCloudSyncAlarmMock: vi.fn(),
+  clearSubscriptionSnapshotMock: vi.fn(),
   openWebsiteLogoutFromExtensionMock: vi.fn()
 }))
 
@@ -60,6 +62,16 @@ vi.mock('@/infrastructure/indexeddb/memory-item-repository', () => ({
   }
 }))
 
+vi.mock('@/infrastructure/identity/subscription-service', () => ({
+  clearSubscriptionSnapshot: clearSubscriptionSnapshotMock,
+  getSubscriptionSnapshot: vi.fn(),
+  refreshSubscriptionSnapshot: vi.fn()
+}))
+
+vi.mock('@/infrastructure/sync/memory-cloud-sync-alarm', () => ({
+  ensureMemoryCloudSyncAlarm: ensureMemoryCloudSyncAlarmMock
+}))
+
 vi.mock('@/infrastructure/messaging/memory-sync-api-client', () => ({
   deleteRemoteAccount: deleteRemoteAccountMock,
   deleteRemoteCloudMemory: vi.fn(),
@@ -68,10 +80,6 @@ vi.mock('@/infrastructure/messaging/memory-sync-api-client', () => ({
   pushRemoteMemoryItems: vi.fn(),
   replaceRemoteWithLocalItems: vi.fn(),
   restoreRemoteFromLatestBackup: vi.fn()
-}))
-
-vi.mock('@/infrastructure/sync/memory-cloud-sync-alarm', () => ({
-  ensureMemoryCloudSyncAlarm: ensureMemoryCloudSyncAlarmMock
 }))
 
 vi.mock('@/infrastructure/auth/extension-oauth', () => ({
@@ -125,6 +133,7 @@ describe('handleDeleteAccount', () => {
     clearAccountBindingMock.mockResolvedValue(undefined)
     patchSyncPrefsMock.mockResolvedValue({ enabled: false })
     ensureMemoryCloudSyncAlarmMock.mockResolvedValue(undefined)
+    clearSubscriptionSnapshotMock.mockResolvedValue(undefined)
     openWebsiteLogoutFromExtensionMock.mockResolvedValue(undefined)
   })
 

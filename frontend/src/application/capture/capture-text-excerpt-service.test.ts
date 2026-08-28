@@ -99,6 +99,6 @@ describe('capture-text-excerpt-service', () => {
         sourceUrl: 'chrome://extensions',
         pageTitle: 'Extensions'
       })
-    ).rejects.toThrow('Cannot save a selection from this page')
+    ).rejects.toThrow('CAPTURE_UNSAVABLE_PAGE')
   })
 })

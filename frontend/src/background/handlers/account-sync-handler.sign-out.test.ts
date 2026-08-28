@@ -13,7 +13,9 @@ const {
   getAuthSessionMock,
   setAuthSessionMock,
   setAccountBindingMock,
-  refreshAuthSessionMock
+  refreshAuthSessionMock,
+  clearSubscriptionSnapshotMock,
+  ensureMemoryCloudSyncAlarmMock
 } = vi.hoisted(() => ({
   clearAuthSessionMock: vi.fn(),
   getAccountBindingMock: vi.fn(),
@@ -27,7 +29,9 @@ const {
   getAuthSessionMock: vi.fn(),
   setAuthSessionMock: vi.fn(),
   setAccountBindingMock: vi.fn(),
-  refreshAuthSessionMock: vi.fn()
+  refreshAuthSessionMock: vi.fn(),
+  clearSubscriptionSnapshotMock: vi.fn(),
+  ensureMemoryCloudSyncAlarmMock: vi.fn()
 }))
 
 vi.mock('@/infrastructure/identity/auth-session-service', () => ({
@@ -54,6 +58,16 @@ vi.mock('@/infrastructure/indexeddb/memory-item-repository', () => ({
     listAllByOwnerId: listAllByOwnerIdMock,
     replaceOwnerItems: replaceOwnerItemsMock
   }
+}))
+
+vi.mock('@/infrastructure/identity/subscription-service', () => ({
+  clearSubscriptionSnapshot: clearSubscriptionSnapshotMock,
+  getSubscriptionSnapshot: vi.fn(),
+  refreshSubscriptionSnapshot: vi.fn()
+}))
+
+vi.mock('@/infrastructure/sync/memory-cloud-sync-alarm', () => ({
+  ensureMemoryCloudSyncAlarm: ensureMemoryCloudSyncAlarmMock
 }))
 
 vi.mock('@/infrastructure/messaging/memory-sync-api-client', () => ({
@@ -115,6 +129,8 @@ describe('handleAuthSignOut', () => {
       userId: accountId,
       expiresAt: Math.floor(Date.now() / 1000) + 3600
     })
+    clearSubscriptionSnapshotMock.mockResolvedValue(undefined)
+    ensureMemoryCloudSyncAlarmMock.mockResolvedValue(undefined)
   })
 
   it('keep_local 只清 session，不删 Memory', async () => {
