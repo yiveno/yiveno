@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
-import { buildQueryEmbeddingText } from '@/core/recall/build-query-embedding-text'
+import { buildClueEmbeddingText } from '@/core/recall/build-clue-embedding-text'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 
-describe('buildQueryEmbeddingText', () => {
+describe('buildClueEmbeddingText', () => {
   it('有锚点词时只拼锚点 + movie 提示，不拼整句口语', () => {
     const parsed = {
       raw: 'the atomic bomb movie review I saved',
@@ -12,7 +12,7 @@ describe('buildQueryEmbeddingText', () => {
       confidence: 'medium'
     } as ParsedRecallClue
     expect(
-      buildQueryEmbeddingText({
+      buildClueEmbeddingText({
         effectiveClue: 'the atomic bomb movie review I saved',
         parsed,
         rawClue: 'the atomic bomb movie review I saved'
@@ -22,7 +22,7 @@ describe('buildQueryEmbeddingText', () => {
 
   it('无 contentTerms 时退回 effectiveClue', () => {
     expect(
-      buildQueryEmbeddingText({
+      buildClueEmbeddingText({
         effectiveClue: 'gregory peck million pound',
         rawClue: 'fallback'
       })

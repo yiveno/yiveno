@@ -1,6 +1,10 @@
 # `docs/` 目录入口
 
-**规格唯一正文**（产品、架构、数据流、交互与开发约定）：
+**术语唯一权威：**
+
+- [`product/Yiveno-术语表.md`](./product/Yiveno-术语表.md) — clue、Recall、邻域、附注等概念叫法；**所有文档与沟通以此为准**
+
+**规格正文**（产品行为、架构、数据流、交互与开发约定）：
 
 - [`product/Yiveno-产品文档-v4.0.md`](./product/Yiveno-产品文档-v4.0.md) — AI 先读 **§0 Quick Contract**；附录 A 为背景非规范
 - [`product/Yiveno-改版计划-v1.md`](./product/Yiveno-改版计划-v1.md) — 执行计划（R0–R∞）；与正文冲突时先改产品文档

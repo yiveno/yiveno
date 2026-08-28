@@ -17,21 +17,21 @@ export const SELECTION_TOOLBAR_KEEPALIVE_PORT = 'yiveno-selection-toolbar' as co
 /**
  * 划词浮层命令 type。
  * - SELECTION_SAVE：保存选区
- * - SELECTION_OPEN_NOTE：打开备注面板
+ * - SELECTION_OPEN_NOTE：打开附注面板
  */
 export type SelectionToolbarCommandType =
   | 'SELECTION_SAVE' // 保存选区
-  | 'SELECTION_OPEN_NOTE' // 打开备注
+  | 'SELECTION_OPEN_NOTE' // 打开附注
 
 const contentSelectionCommandSchema = z.object({
   scope: z.literal(CONTENT_MESSAGE_SCOPE),
   type: z.enum([
     'SELECTION_SAVE', // 保存选区
-    'SELECTION_OPEN_NOTE' // 打开备注
+    'SELECTION_OPEN_NOTE' // 打开附注
   ])
 })
 
-/** SW → 划词浮层：快捷键触发保存 / 打开备注面板。 */
+/** SW → 划词浮层：快捷键触发保存 / 打开附注面板。 */
 export type ContentSelectionCommandMessage = z.infer<typeof contentSelectionCommandSchema>
 
 export type ContentSelectionCommandSuccessResponse = {

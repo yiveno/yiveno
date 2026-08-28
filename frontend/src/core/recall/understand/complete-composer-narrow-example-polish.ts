@@ -1,5 +1,5 @@
 /**
- * LLM 润色已选定的 Narrow 举例词：prompt → completer → JSON → Zod → 门禁。
+ * LLM 润色已选定的 Narrow 举例词：LLM prompt → completer → JSON → Zod → 门禁。
  * 失败抛错由上层捕获后回退选定原词；不碰数据平面。
  */
 

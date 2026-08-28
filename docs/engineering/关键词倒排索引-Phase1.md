@@ -1,6 +1,7 @@
 # 关键词倒排索引（Phase 1）
 
 > 工程备注。产品 Normative 见产品文档 §0.4 / §8 R3。  
+> **术语：** [`Yiveno-术语表.md`](../product/Yiveno-术语表.md)。  
 > 冲突时先改产品文档。
 
 ## 目标
@@ -8,8 +9,8 @@
 在 **不改变** `keyword-filter` 打分语义的前提下，用倒排 **预过滤候选**，避免每次 Recall 全表加载 ≤10k 条再逐条扫。
 
 ```text
-口语 → 理解 / 门禁
-  → 查询 token（复用 tokenizeRecallClueDetailed）
+clue → 理解 / 门禁
+  → clue 分词 token（复用 tokenizeRecallClueDetailed）
   → 倒排 union(postings) → 批量 getById
   → 现有 Filter / Hybrid / 追问
 ```
@@ -19,7 +20,7 @@
 **形态缩写（2026-08-26，无硬编码别名表）：**
 
 1. **建索引**：`extractDocumentIndexTokens` 对原文调用 `extractOrthographicAcronyms`——CamelCase/连续大写首字母（`JavaScript`→`js`，`CSS`→`css`）与连续 2–3 个拉丁词首字母（`React Native`→`rn`），写入 posting。
-2. **查询**：`pickPostingLookupTokens` 只返回分词 token（如 `js`），直接查 posting；**不**维护 js→javascript 对照表。
+2. **查询侧**：`pickPostingLookupTokens` 只返回 clue 分词 token（如 `js`），直接查 posting；**不**维护 js→javascript 对照表。
 3. **精排**：同一套形态缩写命中。注意：全小写 `javascript` **既不含**连续子串 `js`、**也不以** `js` 开头——无大小写/分词边界时残差靠字面 / Hybrid，不写死民间缩写词典。
 4. **schemaVersion = 2**：升版强制 rebuild，否则旧 posting 无缩写 token。
 
@@ -38,7 +39,7 @@
 
 ## 文档 token
 
-`extractDocumentIndexTokens(item)`：对 `collectSearchableFields` 各字段提取 **查询 token 超集**（拉丁词 + **形态缩写** + CJK 1/2-gram 截断 + `tokenizeRecallClueDetailed`），单条上限防爆。
+`extractDocumentIndexTokens(item)`：对 `collectFilterIndexFields` 各字段提取 **查询 token 超集**（拉丁词 + **形态缩写** + CJK 1/2-gram 截断 + `tokenizeRecallClueDetailed`），单条上限防爆。
 
 软删：`deletedAt != null` 的条目不进 posting。
 

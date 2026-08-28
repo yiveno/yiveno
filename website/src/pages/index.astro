@@ -28,27 +28,27 @@ const contentTypes = [
 
 const recallExamples = [
   {
-    query: 'that article about why batteries degrade faster in winter',
+    clue: 'that article about why batteries degrade faster in winter',
     result: 'Why lithium-ion batteries lose capacity in the cold',
     meta: 'Saved 8 months ago'
   },
   {
-    query: 'the GitHub repo I saved for building an AI agent',
+    clue: 'the GitHub repo I saved for building an AI agent',
     result: 'Minimal agent architecture — a walkthrough from scratch',
     meta: 'Saved 3 months ago'
   },
   {
-    query: 'that video explaining how transformers actually work',
+    clue: 'that video explaining how transformers actually work',
     result: 'The illustrated transformer — a visual deep dive',
     meta: 'Saved last year'
   },
   {
-    query: 'the product I wanted to try for recording meetings',
+    clue: 'the product I wanted to try for recording meetings',
     result: 'Grain — meeting recordings with automatic highlights',
     meta: 'Saved 5 months ago'
   },
   {
-    query: 'that travel guide I saved for Japan',
+    clue: 'that travel guide I saved for Japan',
     result: 'Two weeks in Japan — practical notes from a first visit',
     meta: 'Saved last spring'
   }
@@ -292,7 +292,7 @@ const proofSteps = [
         {
           recallExamples.map((ex, i) => (
             <li class:list={['examples__row', 'reveal', `d${Math.min(i, 4)}`]}>
-              <p class="examples__q">"{ex.query}"</p>
+              <p class="examples__q">"{ex.clue}"</p>
               <div>
                 <p class="examples__a-title">{ex.result}</p>
                 <p class="examples__a-meta">{ex.meta}</p>

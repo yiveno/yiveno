@@ -2,6 +2,7 @@ import type { TranslateFn } from '@/core/i18n/translate'
 import type { MemoryItem } from '@/core/memory/memory-item'
 import { explainRecallMatch, getRecallMatchFieldLabel } from '@/core/recall/explain-recall-match'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
+import type { RecallFramingFacts } from '@/core/recall/recall-framing-facts'
 import type { RecallPipelineTiming } from '@/core/recall/recall-telemetry'
 
 /** 单次召回命中项。 */
@@ -55,7 +56,7 @@ export interface RecallResult {
    * = (topPick ? 1 : 0) + alsoPossible.length；受池软顶约束。
    */
   totalRankedCount: number
-  /** 本轮用户输入（对话气泡展示）。 */
+  /** 本轮 clue（对话气泡展示）。 */
   clue: string
   /** 合并后（或单轮）解析结果；供追问模板；噪音拒绝时可能缺省。 */
   parsed?: ParsedRecallClue
@@ -83,6 +84,15 @@ export interface RecallResult {
     }>
   }
   /**
+   * 列表级邻域说明（Framing）；卡片级 Explain 见 reasonLine。
+   * Phase A：规则模板；facts 供 UI 续展时重渲染计数。
+   */
+  recallFraming?: {
+    source: 'rules' | 'llm' // 规则模板 | LLM 润色
+    text: string
+    facts: RecallFramingFacts
+  }
+  /**
    * 宽邻域 Narrow placeholder 的 grounded 举例（可选经 LLM 润色展示形态）。
    * 缺省时 UI 可本端再抽；有芯片让位时通常不附。
    */
@@ -106,7 +116,7 @@ export interface MemoryItemDisplay {
   url: string
   /** 摘录正文（主内容）；书签无。 */
   excerpt?: string
-  /** 用户自拟备注；无则省略。 */
+  /** 用户自拟附注（`clues.note`）；无则省略。 */
   note?: string
   typeLabel: string
 }

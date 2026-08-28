@@ -2,19 +2,19 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://yiveno.com/schemas/tte-session-event/v1",
   "title": "TTE Session Event (research · 非运行时)",
-  "description": "种子研究事件日志单行 schema；对齐产品文档 §5.9。",
+  "description": "种子研究事件日志单行 schema；对齐产品文档 §5.9。术语：用户输入=clue；事件 type 见 Yiveno-术语表 §10.1。",
   "type": "object",
   "required": ["type", "at", "sessionId", "taskId"],
   "properties": {
     "type": {
       "type": "string",
       "enum": [
-        "query_submitted",
+        "clue_submitted",
         "result_rendered",
         "evidence_visible",
         "source_opened",
         "user_confirmed",
-        "query_refined",
+        "clue_refined",
         "task_timeout"
       ]
     },
@@ -35,7 +35,7 @@
     "cluePreview": {
       "type": "string",
       "maxLength": 120,
-      "description": "query 截断；勿存全文若含敏感信息"
+      "description": "clue 截断预览；勿存全文若含敏感信息"
     },
     "memoryItemId": { "type": "string", "format": "uuid" },
     "rank": { "type": "integer", "minimum": 0 },
@@ -51,7 +51,7 @@
     "elapsedMsFromT0": {
       "type": "integer",
       "minimum": 0,
-      "description": "相对 query_submitted 的毫秒数"
+      "description": "相对 clue_submitted（提交 clue）的毫秒数"
     },
     "meta": {
       "type": "object",

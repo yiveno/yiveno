@@ -20,7 +20,7 @@ const FIELD_WEIGHTS: Record<string, number> = {
   url: 10,
   keywords: 12,
   tags: 12,
-  /** 用户自拟备注：寻回意图强信号，权重大于标题。 */
+  /** 用户自拟附注：寻回意图强信号，权重大于标题。 */
   note: 26
 }
 
@@ -44,7 +44,7 @@ const PRIMARY_MATCH_QUALITY_CAP = 30
 
 /**
  * 同一 note 字段命中 ≥2 个「内容向」term（长度≥5）时，每多一词的抬升。
- * 让「disagree + section」类多锚点备注压过单共享词（如 newsletter）沾边。
+ * 让「disagree + section」类多锚点附注压过单共享词（如 newsletter）沾边。
  */
 export const NOTE_MULTI_TERM_HIT_BONUS = 16
 
@@ -132,7 +132,7 @@ export const RECALL_GENERIC_CLUE_TERMS = new Set([
   'latest'
 ])
 
-interface SearchableField {
+interface FilterIndexField {
   field: string
   text: string
 }
@@ -384,8 +384,8 @@ export function tokenizeRecallClue(clue: string): string[] {
 }
 
 /** 收集 MemoryItem 的可匹配字段（关键词 Filter）；按 field+紧凑文本去重。 */
-export function collectSearchableFields(item: MemoryItem): SearchableField[] {
-  const fields: SearchableField[] = []
+export function collectFilterIndexFields(item: MemoryItem): FilterIndexField[] {
+  const fields: FilterIndexField[] = []
   const seen = new Set<string>()
   const { clues } = item
 
@@ -802,7 +802,7 @@ function scoreMemoryItemWithTokens(
     compactToken: compactRecallText(entry.token)
   }))
 
-  const fields = collectSearchableFields(item).map(entry => ({
+  const fields = collectFilterIndexFields(item).map(entry => ({
     field: entry.field,
     /** 规范化后用于忽略大小写命中 */
     text: normalizeRecallText(entry.text),
@@ -816,7 +816,7 @@ function scoreMemoryItemWithTokens(
   const fuzzyCandidates: PreparedRecallToken[] = []
   const ngramHitFields = new Set<string>()
   let primaryContentHit = false
-  /** note 上命中的内容向 term 数（用于多锚点备注抬升）。 */
+  /** note 上命中的内容向 term 数（用于多锚点附注抬升）。 */
   let noteContentTermHits = 0
   /** 全字段命中的内容向 term 数（用于多锚点覆盖抬升）。 */
   let contentTermHits = 0
@@ -1028,7 +1028,7 @@ export function isGenericOnlyHitAgainstSpecificClue(clue: string, item: MemoryIt
     return false
   }
 
-  const haystack = collectSearchableFields(item)
+  const haystack = collectFilterIndexFields(item)
     .map(field => normalizeRecallText(field.text))
     .join('\n')
   const compactHay = compactRecallText(haystack)

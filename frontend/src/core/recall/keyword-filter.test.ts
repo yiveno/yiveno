@@ -437,7 +437,7 @@ describe('keyword-filter', () => {
     expect(result.topPick?.item.id).toBe(excerpt.id)
   })
 
-  it('用户备注命中权重大于正文，可作强线索找回', () => {
+  it('用户附注命中权重大于正文，可作强线索找回', () => {
     const byBody = createTextExcerptMemoryItem({
       ...baseContext,
       payload: {
@@ -467,7 +467,7 @@ describe('keyword-filter', () => {
     )
   })
 
-  it('备注屈折对齐 + 多词覆盖：压过单共享词 newsletter 沾边', () => {
+  it('附注屈折对齐 + 多词覆盖：压过单共享词 newsletter 沾边', () => {
     const target = createBookmarkMemoryItem({
       ...baseContext,
       payload: {

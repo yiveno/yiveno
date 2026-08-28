@@ -20,7 +20,7 @@ function clip(value: string | undefined, max: number): string {
 }
 
 /**
- * 从 MemoryItem 拼可嵌入文本：标题 / 摘录 / 备注 / keywords。
+ * 从 MemoryItem 拼可嵌入文本：标题 / 摘录 / 附注 / keywords。
  */
 export function buildEmbeddingTextFromMemoryItem(item: MemoryItem): string {
   const title =

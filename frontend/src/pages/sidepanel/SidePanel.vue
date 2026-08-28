@@ -17,7 +17,7 @@ import {
   type PopupLibraryState
 } from '@/core/recall/popup-empty-copy'
 import { getTimeOfDayGreeting } from '@/core/recall/time-of-day-greeting'
-import type { RecallMatch } from '@/core/recall/recall-result'
+import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
 import { getMemoryItemDisplay } from '@/core/recall/recall-result'
 import { RECALL_RESULT_PAGE_SIZE } from '@/core/recall/build-recall-result'
 import { computeComposerPlaceholder } from '@/core/recall/compute-composer-placeholder'
@@ -29,6 +29,8 @@ import {
 } from '@/core/recall/should-offer-thread-pivot-confirm'
 import { buildRecallCardHighlightParts } from '@/core/recall/highlight-recall-text'
 import { explainRecallMatch } from '@/core/recall/explain-recall-match'
+import { renderRecallFraming } from '@/core/recall/render-recall-framing'
+import type { RecallFramingFacts } from '@/core/recall/recall-framing-facts'
 import { formatRecallSavedTime } from '@/core/recall/format-recall-saved-time'
 import { getMemoryItemOpenHref } from '@/core/recall/memory-open-href'
 import { tImportStateError, tRecallError } from '@/infrastructure/i18n/background-error'
@@ -619,6 +621,46 @@ function formatRankedReplyText(total: number, visible: number): string {
   return t('popup_reply_ranked_partial', [String(total), '1', String(shown)])
 }
 
+/** 列表级 Framing 文案；无 framing 时回退静态计数句。 */
+function resolveListReplyText(
+  result: RecallResult,
+  total: number,
+  visibleCount: number,
+  fallback: string
+): { text: string; recallFramingFacts?: RecallFramingFacts } {
+  const facts = result.recallFraming?.facts
+  if (facts) {
+    return {
+      text: renderFramingWithShownCount(facts, total, visibleCount),
+      recallFramingFacts: facts
+    }
+  }
+  if (result.recallFraming?.text.trim()) {
+    return {
+      text: result.recallFraming.text,
+      recallFramingFacts: result.recallFraming.facts
+    }
+  }
+  return { text: fallback }
+}
+
+function renderFramingWithShownCount(
+  facts: RecallFramingFacts,
+  total: number,
+  shown: number
+): string {
+  if (facts.kind !== 'candidates') {
+    return renderRecallFraming(facts, t)
+  }
+  return renderRecallFraming(
+    {
+      ...facts,
+      counts: { total, shown: Math.min(shown, total) }
+    },
+    t
+  )
+}
+
 /** Show more：再展一页或展开剩余全部，并刷新文案区间。 */
 function handleShowMoreMatches(turnId: string, mode: 'page' | 'all' = 'page'): void {
   conversationTurns.value = conversationTurns.value.map(turn => {
@@ -632,11 +674,18 @@ function handleShowMoreMatches(turnId: string, mode: 'page' | 'all' = 'page'): v
     const currentVisible = turn.visibleCount ?? RECALL_RESULT_PAGE_SIZE
     const nextVisible =
       mode === 'all' ? total : Math.min(total, currentVisible + RECALL_RESULT_PAGE_SIZE)
+    const rankedTotal = turn.rankedTotalCount ?? total
+    const nextText =
+      turn.recallFramingFacts !== undefined
+        ? renderFramingWithShownCount(turn.recallFramingFacts, rankedTotal, nextVisible)
+        : turn.tone === 'confident'
+          ? formatRankedReplyText(rankedTotal, nextVisible)
+          : turn.text
     return {
       ...turn,
       visibleCount: nextVisible,
-      ...(turn.tone === 'confident'
-        ? { text: formatRankedReplyText(turn.rankedTotalCount ?? total, nextVisible) }
+      ...(turn.tone === 'confident' || turn.recallFramingFacts !== undefined
+        ? { text: nextText }
         : {})
     }
   })
@@ -1007,7 +1056,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
 
   const priorCluePreview =
     priorUserUtterances.length > 0 ? priorUserUtterances[priorUserUtterances.length - 1] : undefined
-  recallTelemetry.beginQuery({
+  recallTelemetry.beginClue({
     clue: trimmed,
     ...(priorUserUtterances.length > 0 && priorCluePreview ? { priorCluePreview } : {})
   })
@@ -1108,15 +1157,24 @@ async function runRecall(trimmedClue: string): Promise<void> {
       const total = response.result.totalRankedCount || rankedCards.length
       const visibleCount = Math.min(RECALL_RESULT_PAGE_SIZE, rankedCards.length)
       const envOrLlmFollowUp = response.result.assistantFollowUp
+      const listReply = resolveListReplyText(
+        response.result,
+        total,
+        visibleCount,
+        formatRankedReplyText(total, visibleCount)
+      )
       conversationTurns.value.push(
         createAssistantTurn({
           id: nextTurnId(),
           tone: 'confident',
-          text: formatRankedReplyText(total, visibleCount),
+          text: listReply.text,
           ...contextStatusFields,
           candidateCards: rankedCards,
           visibleCount,
           rankedTotalCount: total,
+          ...(listReply.recallFramingFacts !== undefined
+            ? { recallFramingFacts: listReply.recallFramingFacts }
+            : {}),
           ...(envOrLlmFollowUp?.suggestions?.length
             ? { suggestions: envOrLlmFollowUp.suggestions }
             : {}),
@@ -1133,17 +1191,24 @@ async function runRecall(trimmedClue: string): Promise<void> {
       )
       const total = response.result.totalRankedCount || candidateCards.length
       const visibleCount = Math.min(RECALL_RESULT_PAGE_SIZE, candidateCards.length)
+      const listReply = resolveListReplyText(
+        response.result,
+        total,
+        visibleCount,
+        formatRankedReplyText(total, visibleCount)
+      )
       conversationTurns.value.push(
         createAssistantTurn({
           id: nextTurnId(),
           tone: 'uncertain',
-          text: llmFollowUp?.text?.trim()
-            ? llmFollowUp.text
-            : formatRankedReplyText(total, visibleCount),
+          text: listReply.text,
           ...contextStatusFields,
           candidateCards,
           visibleCount,
           rankedTotalCount: total,
+          ...(listReply.recallFramingFacts !== undefined
+            ? { recallFramingFacts: listReply.recallFramingFacts }
+            : {}),
           ...(llmFollowUp?.suggestions?.length ? { suggestions: llmFollowUp.suggestions } : {}),
           ...(response.result.composerNarrowExamples?.length
             ? { composerNarrowExamples: response.result.composerNarrowExamples }
@@ -1153,19 +1218,29 @@ async function runRecall(trimmedClue: string): Promise<void> {
       )
     } else {
       const relatedGuess = response.result.relatedGuess ?? null
+      const missFallback = resolveMissAssistantText({
+        ...(response.result.emptyKind !== undefined
+          ? { emptyKind: response.result.emptyKind }
+          : {}),
+        hasRelatedGuess: relatedGuess !== null,
+        library: libraryState.value,
+        clue: highlightClue
+      })
+      const missReply = response.result.recallFraming?.text.trim()
+        ? {
+            text: response.result.recallFraming.text,
+            recallFramingFacts: response.result.recallFraming.facts
+          }
+        : { text: missFallback }
       conversationTurns.value.push(
         createAssistantTurn({
           id: nextTurnId(),
           tone: 'miss',
-          text: resolveMissAssistantText({
-            ...(response.result.emptyKind !== undefined
-              ? { emptyKind: response.result.emptyKind }
-              : {}),
-            hasRelatedGuess: relatedGuess !== null,
-            library: libraryState.value,
-            clue: highlightClue
-          }),
+          text: missReply.text,
           ...contextStatusFields,
+          ...(missReply.recallFramingFacts !== undefined
+            ? { recallFramingFacts: missReply.recallFramingFacts }
+            : {}),
           ...(relatedGuess
             ? {
                 relatedGuessCard: toMatchCard(relatedGuess, highlightClue, { rank: 0 }),
@@ -1515,6 +1590,7 @@ onUnmounted(() => {
       :disabled="isRecallRefreshing || showOutcomeExitStrip"
       :prominent="isComposerProminent"
       :thread-title="threadFindTitle"
+      :thread-title-label="t('popup_thread_title_label')"
       :thread-title-aria="threadTitleAria"
       :thread-new-find-label="t('popup_thread_anchor_clear')"
       @send="handleSendTurn"

@@ -1,6 +1,7 @@
 # §7.2 P2 · Outcome 隐式标签校准
 
 > **Normative：** [`Yiveno-产品文档-v4.0.md`](../product/Yiveno-产品文档-v4.0.md) **§7.2** 落地顺序 P2。  
+> **术语：** [`Yiveno-术语表.md`](../product/Yiveno-术语表.md)。  
 > **代码：** `frontend/src/core/recall/recall-outcome-calibration.ts`
 
 ## 目标

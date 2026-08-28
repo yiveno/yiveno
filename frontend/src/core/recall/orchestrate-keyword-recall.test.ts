@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   RECALL_ORCHESTRATION_OBJECT_TYPE_BOOST,
   applyParsedClueScoreBoosts,
-  buildSearchClueFromParsed,
+  buildFilterClueFromParsed,
   memoryItemInTimeRange,
   memoryItemMatchesObjectType,
   recallByKeywordWithParsedClue
@@ -19,10 +19,10 @@ const OWNER = '11111111-1111-4111-8111-111111111111'
 const PROFILE = '22222222-2222-4222-8222-222222222222'
 const NOW_MS = Date.parse('2026-07-28T12:00:00.000Z')
 
-describe('buildSearchClueFromParsed', () => {
+describe('buildFilterClueFromParsed', () => {
   it('优先用 contentTerms', () => {
     const parsed = parseRecallClue('yesterday saved a poem about Li Bai', { nowMs: NOW_MS })
-    expect(buildSearchClueFromParsed(parsed)).toBe('li bai')
+    expect(buildFilterClueFromParsed(parsed)).toBe('li bai')
   })
 
   it('无 contentTerms 时回退到对象类型词面（canonical English）', () => {
@@ -30,12 +30,12 @@ describe('buildSearchClueFromParsed', () => {
       nowMs: NOW_MS
     })
     expect(parsed.contentTerms).toEqual([])
-    expect(buildSearchClueFromParsed(parsed)).toBe('article')
+    expect(buildFilterClueFromParsed(parsed)).toBe('article')
   })
 
   it('content terms pass through without topic alias expansion', () => {
     const parsed = parseRecallClue('wwii related video', { nowMs: NOW_MS })
-    expect(buildSearchClueFromParsed(parsed)).toBe('wwii')
+    expect(buildFilterClueFromParsed(parsed)).toBe('wwii')
   })
 })
 
@@ -328,7 +328,7 @@ describe('recallByKeywordWithParsedClue', () => {
     expect(result.topPick?.item.id).not.toBe(old.id)
   })
 
-  it('备注指向且条目有 note 时更易胜出', () => {
+  it('附注指向且条目有 note 时更易胜出', () => {
     const withNote = createBookmarkMemoryItem({
       ownerId: OWNER,
       sourceLocalProfileId: PROFILE,

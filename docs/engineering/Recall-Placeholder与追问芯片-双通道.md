@@ -1,6 +1,7 @@
 # Recall · Placeholder × 追问芯片（双通道）
 
 > **状态：** 方案已确认（2026-08-26）并合入产品文档 **§7.0 Composer 双通道**。  
+> **术语：** [`Yiveno-术语表.md`](../product/Yiveno-术语表.md)（clue · 邻域 · 芯片）。  
 > **实现：** P0a–P0c 已接线；**P1 切割力调参已落地**；**LLM 仅润色已选定举例已接线**（失败回退原词）。  
 > **范围：** Side Panel composer 的 placeholder 与会话内追问芯片；不含 Omnibox。
 

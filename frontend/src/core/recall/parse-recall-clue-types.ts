@@ -76,7 +76,7 @@ export const ParsedRecallClueSchema = z.object({
   objectTypes: z.array(RecallObjectTypeSchema).optional(),
   behaviorHints: z.array(RecallBehaviorHintSchema).optional(),
   noteHint: z.boolean().optional(),
-  /** 剥掉时间/类型/行为/备注词与填充词后的检索词。 */
+  /** 剥掉时间/类型/行为/附注指向词与填充词后的检索词。 */
   contentTerms: z.array(z.string()),
   confidence: RecallClueConfidenceSchema
 })

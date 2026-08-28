@@ -14,6 +14,8 @@ const props = defineProps<{
   prominent?: boolean
   /** 本场找回会话标题（字面展示，无 Narrowing 前缀） */
   threadTitle?: string | null
+  /** 标题前缀文案（可见 "This find"） */
+  threadTitleLabel?: string | null
   /** 标题 a11y（This find: …） */
   threadTitleAria?: string | null
   /** 可见「New find」文案 */
@@ -88,8 +90,15 @@ defineExpose({ focus })
 <template>
   <div class="recall-form" :class="{ 'recall-form--prominent': prominent }">
     <div v-if="props.threadTitle" class="recall-thread-bar">
-      <p class="recall-thread-title" role="status" :aria-label="props.threadTitleAria || undefined">
-        {{ props.threadTitle }}
+      <p
+        class="recall-thread-heading"
+        role="status"
+        :aria-label="props.threadTitleAria || undefined"
+      >
+        <span v-if="props.threadTitleLabel" class="recall-thread-heading__label">
+          {{ props.threadTitleLabel }}
+        </span>
+        <span class="recall-thread-heading__title">{{ props.threadTitle }}</span>
       </p>
       <button
         type="button"
@@ -148,19 +157,29 @@ defineExpose({ focus })
   margin: 0 0 var(--space-xs) var(--space-2xs);
 }
 
-.recall-thread-title {
+.recall-thread-heading {
+  display: flex;
   flex: 1 1 auto;
+  align-items: baseline;
+  gap: 6px;
   min-width: 0;
   margin: 0;
-  padding: 5px var(--space-sm);
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-full);
-  background: var(--surface-chrome);
-  color: var(--on-surface);
+  padding: 2px 0;
+  line-height: 1.35;
+}
+
+.recall-thread-heading__label {
+  flex-shrink: 0;
+  color: var(--on-surface-muted);
   font-size: 12px;
   font-weight: 500;
-  line-height: 1.3;
+}
+
+.recall-thread-heading__title {
+  overflow: hidden;
+  color: var(--on-surface);
+  font-size: 13px;
+  font-weight: 600;
   white-space: nowrap;
   text-overflow: ellipsis;
 }

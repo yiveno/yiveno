@@ -1,5 +1,5 @@
 /**
- * P0 口语线索词典：时间 / 对象类型 / 行为 / 备注指向。
+ * P0 口语线索词典：时间 / 对象类型 / 行为 / 附注指向。
  *
  * 规范见产品文档 §0.1.1「市场语言与 Recall Language Strategy」：
  * T1 英语为 parser 一级语料；surface 优先真实用户口语，而非开发者/技术文档用语。
@@ -195,7 +195,7 @@ export const RECALL_BEHAVIOR_LEXICON: RecallLexiconEntry<RecallBehaviorHint>[] =
   { surface: 'newly collected', value: 'recently_saved' }
 ]
 
-/** 备注指向词：命中则 noteHint=true。 */
+/** 附注指向词：命中则 noteHint=true。 */
 export const RECALL_NOTE_HINT_LEXICON: RecallLexiconEntry<'note'>[] = [
   { surface: 'left a note', value: 'note' },
   { surface: 'made a note', value: 'note' },

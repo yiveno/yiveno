@@ -1,5 +1,5 @@
 /**
- * 从口语线索 / ParsedRecallClue 拼 query embedding 文本。
+ * 从口语 clue / ParsedRecallClue 拼 embedding 请求文本。
  */
 
 import { RECALL_GENERIC_CLUE_TERMS } from '@/core/recall/keyword-filter'
@@ -13,7 +13,7 @@ const MOVIE_HINT_TERMS = new Set(['movie', 'movies', 'film', 'films', 'video', '
  * 有非泛词 contentTerms 时：只用锚点词（+ 可选 movie 类型提示），不拼整句口语。
  * 整句含 review/saved 等会把向量拉向无关「Weekly review」/小品影评，冲淡 atomic/bomb。
  */
-export function buildQueryEmbeddingText(input: {
+export function buildClueEmbeddingText(input: {
   effectiveClue?: string
   parsed?: ParsedRecallClue
   rawClue: string

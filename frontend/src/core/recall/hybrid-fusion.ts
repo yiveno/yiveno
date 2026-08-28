@@ -95,7 +95,7 @@ export function scoreFromCosineSimilarity(
 
 /**
  * 词面领先者保护：关键词 Top1 相对次名分差够大时，禁止融合结果把它挤出首位。
- * 避免「单共享词 + 强语义近邻」压过「多词备注 / 强词面」锚点。
+ * 避免「单共享词 + 强语义近邻」压过「多词附注 / 强词面」锚点。
  */
 export const HYBRID_KEYWORD_LEADER_MARGIN = 18
 

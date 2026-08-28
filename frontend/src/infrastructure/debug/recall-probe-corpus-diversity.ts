@@ -1,6 +1,6 @@
 /**
  * 质量轮多样性语料：画像风味、可复现、多数无 suggestedClues；
- * 每隔若干条带备注 + 口语线索，供覆盖面探针（非 runtime 灰名单）。
+ * 每隔若干条带附注 + 口语线索，供覆盖面探针（非 runtime 灰名单）。
  */
 
 import type { RecallProbePersonaId } from '@/infrastructure/debug/recall-probe-corpus-types'
@@ -128,7 +128,7 @@ function pick<T>(list: readonly T[], index: number): T {
 }
 
 /**
- * 生成多样性书签（含少量弱标题 + 备注探针）。
+ * 生成多样性书签（含少量弱标题 + 附注探针）。
  * @param persona 画像风味
  * @param count 条数
  * @param keyPrefix 稳定 key 前缀
@@ -169,7 +169,7 @@ export function buildDiversityBookmarkSeeds(
 }
 
 /**
- * 生成多样性摘录（含纯备注弱页名）。
+ * 生成多样性摘录（含纯附注弱页名）。
  */
 export function buildDiversityExcerptSeeds(
   persona: RecallProbePersonaId,

@@ -9,7 +9,7 @@ import { RECALL_SCAN_LIMIT } from '@/application/recall/backends/recall-scan-lim
 import type { CreateBookmarkInput, CreateTextExcerptInput } from '@/core/memory/create-memory-item'
 import type { MemoryItem } from '@/core/memory/memory-item'
 import {
-  buildSearchClueFromParsed,
+  buildFilterClueFromParsed,
   shouldRecallByConstraintNeighborhood
 } from '@/core/recall/orchestrate-keyword-recall'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
@@ -94,17 +94,17 @@ export class MemoryItemService {
       return { items: items.slice(0, limit), source: 'scan' }
     }
 
-    const searchClue = buildSearchClueFromParsed(input.parsed) || input.rawClue
+    const filterClue = buildFilterClueFromParsed(input.parsed) || input.rawClue
 
     try {
-      const lookup = await keywordIndexRepository.lookupCandidateIds(searchClue)
+      const lookup = await keywordIndexRepository.lookupCandidateIds(filterClue)
       // 空 id 不能当「库内无命中」：登录 remap 后 posting 可能与 Memory 不一致，
       // 否则整库仍在 IndexedDB 却每条线索都 no_match。
       if (lookup != null && lookup.ids.length > 0) {
         const items = await this.repository.getManyByIds(lookup.ids)
         if (items.length > 0) {
           const merged = await this.mergeExcerptsIntoCandidates(items)
-          const keywordProbe = filterMemoryItemsByKeyword(merged, searchClue, { limit: 1 })
+          const keywordProbe = filterMemoryItemsByKeyword(merged, filterClue, { limit: 1 })
           if (keywordProbe.length === 0) {
             logger.info('Memory', 'Recall 候选：倒排预过滤无关键词命中，降级全表扫', {
               invertedCount: items.length,
@@ -156,7 +156,7 @@ export class MemoryItemService {
     return this.repository.updateNote(id, note)
   }
 
-  /** 书签树对齐表（chromeId / URL → Memory id；含备注）。 */
+  /** 书签树对齐表（chromeId / URL → Memory id；含附注）。 */
   async listBookmarkSyncAlignment() {
     return this.repository.listBookmarkSyncAlignment()
   }

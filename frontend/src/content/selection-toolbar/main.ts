@@ -48,7 +48,7 @@ const SAVED_RECALL_CTA_HIDE_MS = 12000
 /** 划词浮层 UI 模式。 */
 type ToolbarUiMode =
   | 'actions' // 操作按钮
-  | 'note' // 备注输入
+  | 'note' // 附注输入
 
 /** 划词浮层主按钮状态。 */
 type ToolbarButtonState =
@@ -57,7 +57,7 @@ type ToolbarButtonState =
   | 'saved' // 已保存
   | 'error' // 失败
 
-/** 打开浮层/备注时快照的选区；textarea 聚焦后页内选区会丢，保存必须用这份。 */
+/** 打开浮层/附注时快照的选区；textarea 聚焦后页内选区会丢，保存必须用这份。 */
 interface PendingSelectionCapture {
   selectedText: string
   contextBefore?: string
@@ -967,7 +967,7 @@ function clearPageSelection(): void {
   }
 }
 
-/** 快捷键：保存当前选区（无备注）。无选区则静默忽略。 */
+/** 快捷键：保存当前选区（无附注）。无选区则静默忽略。 */
 async function handleShortcutSave(): Promise<ContentSelectionCommandResponse> {
   if (!ensureLiveContext()) {
     return { ok: false, errorCode: 'SELECTION_COMMAND_FAILED' }
@@ -988,7 +988,7 @@ async function handleShortcutSave(): Promise<ContentSelectionCommandResponse> {
   return saved ? { ok: true } : { ok: false, errorCode: 'SELECTION_COMMAND_FAILED' }
 }
 
-/** 快捷键：打开备注面板（先快照选区）。无选区则静默忽略。 */
+/** 快捷键：打开附注面板（先快照选区）。无选区则静默忽略。 */
 async function handleShortcutOpenNote(): Promise<ContentSelectionCommandResponse> {
   if (!ensureLiveContext()) {
     return { ok: false, errorCode: 'SELECTION_COMMAND_FAILED' }
@@ -1144,7 +1144,7 @@ function handleScroll(): void {
 
 function handleSelectionChange(): void {
   runGuarded(() => {
-    // 备注输入聚焦时 selectionchange 可能抖动；有打开的备注面板时不因空选区立刻关掉
+    // 附注输入聚焦时 selectionchange 可能抖动；有打开的附注面板时不因空选区立刻关掉
     if (uiMode === 'note') {
       return
     }
@@ -1257,7 +1257,7 @@ function handlePageShow(event: PageTransitionEvent): void {
 
 /**
  * 同页防重复挂载。值存当前 `chrome.runtime.id`：扩展 Reload 后 id 变化，
- * 旧实例留下的布尔/旧 id 不会挡住新注入（否则备注快捷键会「注入后仍无接收端」）。
+ * 旧实例留下的布尔/旧 id 不会挡住新注入（否则附注快捷键会「注入后仍无接收端」）。
  */
 const BOOT_FLAG = '__yivenoSelectionToolbarBootId' as const
 

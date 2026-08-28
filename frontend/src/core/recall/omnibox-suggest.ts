@@ -152,7 +152,7 @@ export function recallMatchToOmniboxSuggest(
 
 /**
  * 将 Recall 结果映射为 Omnibox 建议列表。
- * 仅首屏 PAGE_SIZE（避免宽线索把 omnibox 刷满）；content 须与用户输入不同才会显示。
+ * 仅首屏 PAGE_SIZE（避免宽 clue 把 omnibox 刷满）；content 须与 clue 不同才会显示。
  */
 export function recallResultToOmniboxSuggests(
   result: RecallResult,

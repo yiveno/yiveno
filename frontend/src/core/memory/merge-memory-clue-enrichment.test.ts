@@ -37,7 +37,7 @@ describe('parseMemoryEnrichmentProposal', () => {
     expect(parseMemoryEnrichmentProposal({ keywords: ['a'], note: 'hack' })).toBeNull()
   })
 
-  it('JSON shape 常量可供 prompt 引用', () => {
+  it('JSON shape 常量可供 LLM prompt 引用', () => {
     expect(MEMORY_ENRICHMENT_PROPOSAL_JSON_SHAPE).toContain('"keywords"')
   })
 })

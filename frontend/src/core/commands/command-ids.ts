@@ -4,7 +4,7 @@
  * `sidePanel.setPanelBehavior({ openPanelOnActionClick: true })` 开 Side Panel）。
  *
  * 书签 Capture 不走快捷键：用户用 Chrome 原生加书签，Yiveno 经 bookmarks.onCreated 等增量同步。
- * Chrome 最多 4 个带 `suggested_key` 的命令（含 `_execute_action`）；划词保存/备注占用建议键，
+ * Chrome 最多 4 个带 `suggested_key` 的命令（含 `_execute_action`）；划词保存/附注占用建议键，
  * `open_settings` 仅注册、不设默认（可在 chrome://extensions/shortcuts 自绑）。
  * 新增自定义命令时：先追加本数组与 manifest，再 `registerExtensionCommandHandler`。
  */

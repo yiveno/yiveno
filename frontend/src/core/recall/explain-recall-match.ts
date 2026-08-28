@@ -4,7 +4,7 @@
  */
 import type { TranslateFn } from '@/core/i18n/translate'
 import {
-  collectSearchableFields,
+  collectFilterIndexFields,
   normalizeRecallText,
   tokenizeRecallClue
 } from '@/core/recall/keyword-filter'
@@ -132,7 +132,7 @@ export function findMatchedClueToken(input: {
   const sortedTokens = [...tokens].sort((a, b) => b.length - a.length)
 
   if (input.item) {
-    const fieldTexts = collectSearchableFields(input.item)
+    const fieldTexts = collectFilterIndexFields(input.item)
       .filter(entry => entry.field === input.primaryField)
       .map(entry => normalizeRecallText(entry.text))
       .filter(text => text.length > 0)

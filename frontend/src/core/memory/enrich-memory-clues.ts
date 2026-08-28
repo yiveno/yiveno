@@ -1,7 +1,7 @@
 /**
  * Capture-time 规则 enrichment：从标题/正文/域名推断 tags / keywords。
  * 无 LLM；与 parse-recall-clue 对象类型 slug 对齐。
- * **禁止**内容/专名硬编码别名表（主题·实体 seed）；实体留给 LLM enrichment / 用户备注 / 字面线索。
+ * **禁止**内容/专名硬编码别名表（主题·实体 seed）；实体留给 LLM enrichment / 用户附注 / 字面线索。
  * 见产品文档 §0.1.1「市场语言与 Recall Language Strategy」与 AGENTS「全量用户能力」。
  */
 
@@ -289,7 +289,7 @@ export function enrichMemoryClues(input: EnrichMemoryCluesInput): MemoryClueEnri
 
   keywords.push(...detectRecallKeywordsFromText(textBlob))
 
-  // 规则层不写 entities：禁止专名 allowlist；实体由 LLM enrichment / 用户备注承接
+  // 规则层不写 entities：禁止专名 allowlist；实体由 LLM enrichment / 用户附注承接
   return {
     tags: mergeUniqueStrings(tags),
     keywords: mergeUniqueStrings(keywords),

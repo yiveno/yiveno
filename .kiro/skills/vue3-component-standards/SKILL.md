@@ -25,7 +25,7 @@ defineOptions({ name: 'YivenoButton' })
 
 - ✅ 使用 PascalCase（如 `YivenoButton`、`BookmarkTree`）
 - ✅ 基础组件加 `Yiveno` 前缀（如 `YivenoButton`、`YivenoInput`）
-- ✅ 业务组件使用描述性名称（如 `BookmarkSearchInput`）
+- ✅ 业务组件使用描述性名称（如 `RecallComposer`）
 
 ---
 

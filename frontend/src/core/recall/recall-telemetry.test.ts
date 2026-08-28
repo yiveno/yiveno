@@ -22,9 +22,9 @@ describe('recall-telemetry', () => {
 
   it('七事件 schema 可解析', () => {
     const events = [
-      { type: 'query_submitted', cluePreview: 'deploy checklist', ...baseIds },
+      { type: 'clue_submitted', cluePreview: 'deploy checklist', ...baseIds },
       {
-        type: 'query_refined',
+        type: 'clue_refined',
         cluePreview: 'checklist',
         priorCluePreview: 'deploy',
         ...baseIds

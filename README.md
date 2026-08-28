@@ -7,7 +7,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178c6?logo=typescript)](https://www.typescriptlang.org)
 [![Cloudflare](https://img.shields.io/badge/Cloudflare-Worker-f38020?logo=cloudflare)](https://workers.cloudflare.com)
 
-Yiveno：**那个找东西的**（Capture 低负担 + Recall 高置信邻域；Top1=建议）。基于 Vue 3 + TypeScript + Cloudflare Worker 的 Monorepo。产品规格以 [`docs/product/Yiveno-产品文档-v4.0.md`](docs/product/Yiveno-产品文档-v4.0.md) 为准。
+Yiveno：**那个找东西的**（Capture 低负担 + Recall 高置信邻域；Top1=建议）。基于 Vue 3 + TypeScript + Cloudflare Worker 的 Monorepo。产品规格以 [`docs/product/Yiveno-产品文档-v4.0.md`](docs/product/Yiveno-产品文档-v4.0.md) 为准；**术语**见 [`docs/product/Yiveno-术语表.md`](docs/product/Yiveno-术语表.md)。
 
 ---
 
@@ -326,6 +326,7 @@ bun run db:reset              # 重置本地数据库
 
 ### 📦 产品文档（唯一正文）
 
+- [Yiveno 术语表](docs/product/Yiveno-术语表.md)（概念叫法唯一权威）
 - [Yiveno 产品文档 v4.0](docs/product/Yiveno-产品文档-v4.0.md)
 - [`docs/` 目录说明](docs/README.md)
 - [环境变量方案](docs/ENVIRONMENT.md)

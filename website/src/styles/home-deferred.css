@@ -186,7 +186,7 @@
   min-width: 0;
 }
 
-.closest-strip__query {
+.closest-strip__clue {
   margin: 0 0 20px;
   font-family: var(--font-display);
   font-style: italic;

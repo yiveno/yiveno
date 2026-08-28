@@ -23,7 +23,7 @@ export interface ParseRecallClueWithLlmOptions {
 
 /**
  * LLM 口语 → ParsedRecallClue。
- * 流程：prompt → 文本 → JSON → Zod 提议 → 确定性映射。不碰数据平面。
+ * 流程：LLM prompt → 文本 → JSON → Zod 提议 → 确定性映射。不碰数据平面。
  */
 export async function parseRecallClueWithLlm(
   clue: string,

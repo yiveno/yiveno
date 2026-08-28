@@ -198,23 +198,23 @@ export async function handleDeleteMemoryItem(payload: unknown): Promise<MemoryBa
 
 /** 更新 clues.note（书签/摘录事后补注）。 */
 export async function handleUpdateMemoryNote(payload: unknown): Promise<MemoryBackgroundResponse> {
-  const startedAt = flowStart('Memory', '更新备注')
+  const startedAt = flowStart('Memory', '更新附注')
   try {
     const input = parseUpdateMemoryNotePayload(payload)
     const item = await memoryItemService.updateNote(input.id, input.note)
     if (!item) {
-      flowOk('Memory', '更新备注', startedAt, { id: input.id, found: false })
+      flowOk('Memory', '更新附注', startedAt, { id: input.id, found: false })
       return toErrorResponse('MEMORY_NOT_FOUND')
     }
     invalidateBookmarkSyncAlignmentCache()
     invalidateBookmarkLibraryTreeOnChromeChange()
-    flowOk('Memory', '更新备注', startedAt, {
+    flowOk('Memory', '更新附注', startedAt, {
       id: item.id,
       noteLength: input.note.trim().length
     })
     return { ok: true, item }
   } catch (error) {
-    flowFail('Memory', '更新备注', startedAt, error)
+    flowFail('Memory', '更新附注', startedAt, error)
     return toErrorResponse('MEMORY_OPERATION_FAILED', error)
   }
 }

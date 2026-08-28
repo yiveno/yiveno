@@ -4,8 +4,9 @@ Claude Code guidance for the Yiveno monorepo. Prefer **`AGENTS.md`** and **`.cur
 
 ## Single source of truth
 
+- **Terminology (Glossary):** `docs/product/Yiveno-术语表.md` — clue, Recall, neighborhood, note (`clues.note`); highest authority for naming
 - **Product + architecture (Chinese):** `docs/product/Yiveno-产品文档-v4.0.md` — read **§0 AI Quick Contract** first; Appendix A is non-normative
-- **Cursor / IDE enforcement:** `.cursor/rules/project.mdc`
+- **Cursor / IDE enforcement:** `.cursor/rules/project.mdc` + `.cursor/rules/terminology.mdc`
 - **Human + AI ops:** `AGENTS.md`
 
 ## Project overview
@@ -63,7 +64,7 @@ supabase/     # database migrations
 3. **No direct Chrome API in UI:** `chrome.bookmarks.*` / `chrome.tabs.*` only in `frontend/src/background/`.
 4. **DDD direction:** `presentation/ → application/ → core/ → infrastructure/` (layers being rebuilt in v4).
 5. **Service Worker:** no `window` / `document` / `localStorage` in background code.
-6. **Terminology:** UI uses **Filter (筛选)** and **Recall (找回)**; never **Search** in UI copy.
+6. **Terminology:** User input in Recall = **clue** (not query/search/prompt). UI uses **Filter** and **Recall**; never **Search** in UI copy. See `docs/product/Yiveno-术语表.md`.
 
 ## Environment variables
 

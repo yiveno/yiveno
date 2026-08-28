@@ -121,7 +121,7 @@
   color: var(--sage-muted);
 }
 
-.recall-popup__query {
+.recall-popup__clue {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -132,7 +132,7 @@
   border-radius: var(--radius-sm);
 }
 
-.recall-popup__query-text {
+.recall-popup__clue-text {
   font-family: var(--font-display);
   font-weight: 300;
   font-style: italic;

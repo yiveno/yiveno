@@ -122,7 +122,7 @@ describe('collapse-recall-duplicates', () => {
     const low = bookmarkMatch({
       url: 'https://example.com/same',
       score: 10,
-      note: '有备注'
+      note: 'with a note'
     })
     const high = bookmarkMatch({
       url: 'https://example.com/same',
@@ -134,18 +134,18 @@ describe('collapse-recall-duplicates', () => {
     const withNote = bookmarkMatch({
       url: 'https://example.com/same2',
       score: 20,
-      note: '备注'
+      note: 'note'
     })
     const plain = bookmarkMatch({
       url: 'https://example.com/same2',
       score: 20,
-      title: '无备注'
+      title: 'no note'
     })
     expect(compareRecallDuplicateMembers(withNote, plain)).toBeLessThan(0)
     expect(pickDuplicateRepresentative([plain, withNote]).item.id).toBe(withNote.item.id)
   })
 
-  it('score/备注/行为都相同时取 createdAt 最晚', () => {
+  it('score/附注/行为都相同时取 createdAt 最晚', () => {
     const older = bookmarkMatch({
       url: 'https://example.com/same-time',
       score: 20,

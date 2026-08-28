@@ -34,11 +34,11 @@ const telemetryBaseSchema = z.object({
 /** TTE 七事件 discriminated union（§5.9 最小埋点）。 */
 export const RecallTelemetryEventSchema = z.discriminatedUnion('type', [
   telemetryBaseSchema.extend({
-    type: z.literal('query_submitted'),
+    type: z.literal('clue_submitted'),
     cluePreview: z.string().max(120)
   }),
   telemetryBaseSchema.extend({
-    type: z.literal('query_refined'),
+    type: z.literal('clue_refined'),
     cluePreview: z.string().max(120),
     priorCluePreview: z.string().max(120).optional()
   }),

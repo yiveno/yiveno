@@ -39,7 +39,7 @@ export interface ListMemoryItemsOptions {
 export interface BookmarkSyncAlignment {
   byChromeBookmarkId: Map<string, string>
   byUrl: Map<string, string>
-  /** MemoryItem.id → 非空备注 */
+  /** MemoryItem.id → 非空附注 */
   noteByMemoryId: Map<string, string>
 }
 
@@ -400,7 +400,7 @@ export class MemoryItemRepository {
 
   /**
    * 更新 clues.note（书签/摘录事后补注）。
-   * 空字符串清除备注；会更新 updatedAt。
+   * 空字符串清除附注；会更新 updatedAt。
    */
   async updateNote(id: string, note: string): Promise<MemoryItem | null> {
     const ownerId = await getCurrentOwnerId()

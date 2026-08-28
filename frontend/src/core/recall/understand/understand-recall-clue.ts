@@ -4,7 +4,7 @@
  * 不碰数据平面。见产品 §0.1.0。
  */
 
-import { buildSearchClueFromParsed } from '@/core/recall/orchestrate-keyword-recall'
+import { buildFilterClueFromParsed } from '@/core/recall/orchestrate-keyword-recall'
 import { parseRecallClue } from '@/core/recall/parse-recall-clue'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 import { type ClueFlowTrace, noopClueFlowTrace } from '@/core/recall/understand/clue-flow-trace'
@@ -43,8 +43,8 @@ export interface UnderstandRecallClueResult {
   mode: ClueUnderstandingMode
   source: ClueUnderstandingSource
   parsed: ParsedRecallClue
-  /** 交给 keyword-filter 的检索串（由 contentTerms 等拼出，供调试）。 */
-  searchClue: string
+  /** Filter 检索词面（`buildFilterClueFromParsed`；供调试）。 */
+  filterClue: string
 }
 
 export interface UnderstandRecallClueOptions {
@@ -105,7 +105,7 @@ export async function understandRecallClue(
       mode: 'lexical',
       source: 'rejected_noise',
       parsed: emptyRejectedParsed(raw),
-      searchClue: ''
+      filterClue: ''
     }
   }
 
@@ -125,11 +125,11 @@ export async function understandRecallClue(
   if (!options.complete || mode === 'lexical') {
     const reason = !options.complete ? 'no_llm_completer' : 'mode_lexical'
     const parsed = parseRecallClue(raw, { nowMs })
-    const searchClue = buildSearchClueFromParsed(parsed)
+    const filterClue = buildFilterClueFromParsed(parsed)
     trace('info', '理解层：走规则', {
       reason,
       source: 'rules',
-      searchClue,
+      filterClue,
       ...summarizeParsed(parsed)
     })
     return {
@@ -138,7 +138,7 @@ export async function understandRecallClue(
       mode,
       source: 'rules',
       parsed,
-      searchClue
+      filterClue
     }
   }
 
@@ -149,10 +149,10 @@ export async function understandRecallClue(
       complete: options.complete,
       trace
     })
-    const searchClue = buildSearchClueFromParsed(parsed)
+    const filterClue = buildFilterClueFromParsed(parsed)
     trace('info', '理解层：LLM 成功', {
       source: 'llm',
-      searchClue,
+      filterClue,
       ...summarizeParsed(parsed)
     })
     return {
@@ -161,16 +161,16 @@ export async function understandRecallClue(
       mode,
       source: 'llm',
       parsed,
-      searchClue
+      filterClue
     }
   } catch (error) {
     const parsed = parseRecallClue(raw, { nowMs })
-    const searchClue = buildSearchClueFromParsed(parsed)
+    const filterClue = buildFilterClueFromParsed(parsed)
     trace('warn', '理解层：LLM 失败，降级规则', {
       source: 'rules_fallback',
       error: error instanceof Error ? error.message : String(error),
       errorName: error instanceof Error ? error.name : typeof error,
-      searchClue,
+      filterClue,
       ...summarizeParsed(parsed)
     })
     return {
@@ -179,7 +179,7 @@ export async function understandRecallClue(
       mode,
       source: 'rules_fallback',
       parsed,
-      searchClue
+      filterClue
     }
   }
 }

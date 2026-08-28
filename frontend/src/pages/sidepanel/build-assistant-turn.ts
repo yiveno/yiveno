@@ -1,3 +1,4 @@
+import type { RecallFramingFacts } from '@/core/recall/recall-framing-facts'
 import type {
   ConversationTurn,
   AssistantTurn,
@@ -19,6 +20,7 @@ export function createAssistantTurn(input: {
   candidateSectionLabel?: string
   suggestions?: RecallSuggestion[]
   composerNarrowExamples?: string[]
+  recallFramingFacts?: RecallFramingFacts
   allowDismiss?: boolean
 }): ConversationTurn {
   return {
@@ -42,6 +44,9 @@ export function createAssistantTurn(input: {
     ...(input.composerNarrowExamples === undefined
       ? {}
       : { composerNarrowExamples: input.composerNarrowExamples }),
+    ...(input.recallFramingFacts === undefined
+      ? {}
+      : { recallFramingFacts: input.recallFramingFacts }),
     allowDismiss: input.allowDismiss ?? false
   }
 }

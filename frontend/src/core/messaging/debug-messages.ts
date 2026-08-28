@@ -1,6 +1,6 @@
 /**
  * DEV 召回探针消息（仅 import.meta.env.DEV 受理）。
- * 用于本地种书签/摘录/备注语料，禁止生产路径调用。
+ * 用于本地种书签/摘录/附注语料，禁止生产路径调用。
  */
 
 import { z } from 'zod'
@@ -29,7 +29,7 @@ const seedRecallProbePayloadSchema = z.object({
   noiseBookmarkCount: z.number().int().min(0).max(15000).default(400),
   /** 噪声摘录。 */
   noiseExcerptCount: z.number().int().min(0).max(8000).default(150),
-  /** 画像风味多样性书签（非精选、可含少量备注探针）。 */
+  /** 画像风味多样性书签（非精选、可含少量附注探针）。 */
   diversityBookmarkCount: z.number().int().min(0).max(12000).default(350),
   /** 画像风味多样性摘录。 */
   diversityExcerptCount: z.number().int().min(0).max(8000).default(150),

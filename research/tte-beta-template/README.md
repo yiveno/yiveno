@@ -2,6 +2,7 @@
 
 > **用途：** 复制本目录启动一次种子用户 TTE study；**不要**直接在模板里填真实用户数据后 commit。  
 > **流程：** [`docs/engineering/TTE-种子用户研究-checklist.md`](../docs/engineering/TTE-种子用户研究-checklist.md)  
+> **术语：** [`Yiveno-术语表.md`](../docs/product/Yiveno-术语表.md)（任务朗读稿 = **fuzzy clue**；勿称 prompt/query）。  
 > **Normative 门槛：** [`Yiveno-产品文档-v4.0.md`](../docs/product/Yiveno-产品文档-v4.0.md) §5.9
 
 ## 如何使用

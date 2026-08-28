@@ -3,9 +3,10 @@
 ## 项目
 
 - Yiveno：Vue 3 + TypeScript Chrome 扩展，Backend 为 Cloudflare Workers，Website 为营销站。
-- 唯一产品/架构真相：`docs/product/Yiveno-产品文档-v4.0.md`（先读 **§0.1 核心路线** + **§0.1.1 资产/边界/隐患**（含「邻域非神谕」）+ §0 其余；附录 A 非规范）
+- **术语唯一权威：** `docs/product/Yiveno-术语表.md`（clue、Recall、邻域、附注等；改术语先改此文）。
+- 产品/架构行为契约：`docs/product/Yiveno-产品文档-v4.0.md`（先读 **§0.1 核心路线** + **§0.1.1 资产/边界/隐患**（含「邻域非神谕」）+ §0 其余；附录 A 非规范）
 - **视觉/品牌标准（Normative）：** `docs/design/Yiveno-设计标准-v1.md`（完整）；摘要 `DESIGN.md`。权威 `@yiveno/design-tokens/css/brand.css`（色 + Roles + space/radius）；扩展自研 `App*` 控件；图标 Lucide 按需内联。
-- Cursor 规则：`.cursor/rules/project.mdc`，不得冲突。
+- Cursor 规则：`.cursor/rules/project.mdc`、`.cursor/rules/terminology.mdc`，不得冲突。
 - 对外心智：「那个找东西的」/ 仓库；找回 = 高置信**邻域**，Top1=建议；AI 能力核心不作宣传招牌。
 - **文档 ↔ 代码同步（铁律）：** 任何代码改动若与权威文档脱节或有差异，**必须同批更新对应文档**（产品 / 设计 / 工程 / `AGENTS.md`·`project.mdc`）；报完成 = 代码与文档可对照。禁止「先改代码、文档以后再补」。纯重构且契约不变、或 bugfix 且行为已与文档一致，可不改文档。细则见 `.cursor/rules/project.mdc`「文档 ↔ 代码同步」。
 

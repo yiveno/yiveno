@@ -1,6 +1,7 @@
 # R4 · Phase E 验收与 recall-eval（工程旁挂）
 
 > **Normative 摘要：** [`Yiveno-产品文档-v4.0.md`](../product/Yiveno-产品文档-v4.0.md) **§5.10**（手工）、**§5.11**（eval must）、**§7.2**（Outcome Labeling）。  
+> **术语：** [`Yiveno-术语表.md`](../product/Yiveno-术语表.md)（clue · 遥测事件 §10.1）。  
 > **改版计划：** [`Yiveno-改版计划-v1.md`](../product/Yiveno-改版计划-v1.md) **R4**。  
 > 冲突时先改产品文档再改本文。
 
@@ -8,15 +9,16 @@
 
 ## 1. 实现锚点
 
-| R4 交付          | 预期路径                                                                                                                  | 验收                                                  |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| Explain ECS UI   | `pages/sidepanel/SidePanel.vue` · `RecallResultCard.vue` · `explain-recall-match.ts`                                      | §5.10.1                                               |
-| Omnibox ECS      | `background/listeners/omnibox.ts` + 建议 UI                                                                               | §5.10.1                                               |
-| TTE 埋点         | 新模块建议 `infrastructure/analytics/` 或 `application/recall/recall-telemetry.ts`                                        | §5.10.3 · §5.9 七事件                                 |
-| Outcome Labeling | `recall-outcome*` + pairs；C2 默认不进 settled；关 Panel 静默结算（无 exit park）                                         | §7.2 P0–P3；开 C2 见 `R4-Outcome-Labeling-P2-校准.md` |
-| evidence pack    | `core/recall/evidence-pack.ts` · `EXPORT_EVIDENCE_PACK` · Library + Side Panel 多选 UI                                    | §5.10.4（已上线）                                     |
-| 只读 MCP         | Settings `mcpReadOnlyEnabled` · `MCP_RECALL_EVIDENCE` · Worker `PUT /api/account/mcp` + `/api/mcp/tools*` · `@yiveno/mcp` | §5.10.5（已上线 beta）                                |
-| Raindrop/Pocket  | `parse-*-export` · `import-third-party-corpus-service` · Settings 数据区 · `IMPORT_THIRD_PARTY_CORPUS`                    | §5.10.6（已上线 · R2 准入）                           |
+| R4 交付          | 预期路径                                                                                                                                                                     | 验收                                                  |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Explain ECS UI   | `pages/sidepanel/SidePanel.vue` · `RecallResultCard.vue` · `explain-recall-match.ts`                                                                                         | §5.10.1                                               |
+| Omnibox ECS      | `background/listeners/omnibox.ts` + 建议 UI                                                                                                                                  | §5.10.1                                               |
+| TTE 埋点         | 新模块建议 `infrastructure/analytics/` 或 `application/recall/recall-telemetry.ts`                                                                                           | §5.10.3 · §5.9 七事件                                 |
+| Outcome Labeling | `recall-outcome*` + pairs；C2 默认不进 settled；关 Panel 静默结算（无 exit park）                                                                                            | §7.2 P0–P3；开 C2 见 `R4-Outcome-Labeling-P2-校准.md` |
+| evidence pack    | `core/recall/evidence-pack.ts` · `EXPORT_EVIDENCE_PACK` · Library + Side Panel 多选 UI                                                                                       | §5.10.4（已上线）                                     |
+| Recall Framing   | `build-recall-framing-facts.ts` · `render-recall-framing.ts` · `complete-recall-framing-nlg.ts` · `hybrid-recall-backend` attachRecallFraming + attachRecallFramingLlmPolish | §7.0 · `recall-framing-eval` must                     |
+| 只读 MCP         | Settings `mcpReadOnlyEnabled` · `MCP_RECALL_EVIDENCE` · Worker `PUT /api/account/mcp` + `/api/mcp/tools*` · `@yiveno/mcp`                                                    | §5.10.5（已上线 beta）                                |
+| Raindrop/Pocket  | `parse-*-export` · `import-third-party-corpus-service` · Settings 数据区 · `IMPORT_THIRD_PARTY_CORPUS`                                                                       | §5.10.6（已上线 · R2 准入）                           |
 
 **消息 type：** 禁止发明字符串；evidence export / MCP 须先改 `core/messaging/*`。
 
@@ -83,7 +85,7 @@ R4 UI 合入后**不强制** snapshot 测 Vue；§5.10.1 手工 + `RecallResultC
 // 示意；合入时放在 core/recall/ 或 infrastructure/analytics/
 RecallTelemetryEventSchema = z.discriminatedUnion('type', [
   z.object({
-    type: z.literal('query_submitted'),
+    type: z.literal('clue_submitted'),
     taskId: z.string().uuid(),
     cluePreview: z.string(),
     at: z.string().datetime()
@@ -95,9 +97,11 @@ RecallTelemetryEventSchema = z.discriminatedUnion('type', [
     ecs: z.number().int().min(0).max(5),
     at: z.string().datetime()
   })
-  // … source_opened, user_confirmed, query_refined, task_timeout, result_rendered
+  // … source_opened, user_confirmed, clue_refined, task_timeout, result_rendered
 ])
 ```
+
+> **术语：** 事件 `type` 为 `clue_submitted` / `clue_refined`；旧版 `query_*` 在 `recall-telemetry-store` 读取时迁移。见术语表 §10.1。
 
 **存储：** P0 `chrome.storage.local` 键 `yiveno.recallTelemetry`（最多 500 条）；dev 可读 `listRecallTelemetryEvents()`；不上云除非隐私文档更新。
 

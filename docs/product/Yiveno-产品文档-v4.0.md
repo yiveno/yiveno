@@ -2,7 +2,8 @@
 
 > **唯一**产品/架构规格正文。主要读者：AI 编程工具与维护者。  
 > **Normative（必须遵守）**= §0–§7。**Non-normative（背景，勿当实现范围）**= 附录 A。  
-> 工程细则可旁挂 `.cursor/rules/project.mdc` / `AGENTS.md`；与本文冲突时以**本文 Normative**为准，并回写 rules。  
+> **术语唯一权威：** `Yiveno-术语表.md`（同目录）——所有概念叫法与边界以术语表为准；本文写行为/契约时可引用词条，**不得**与术语表异义重复定义。  
+> 工程细则可旁挂 `.cursor/rules/project.mdc` / `AGENTS.md`；**术语冲突**以术语表为准，**行为/契约冲突**以本文 Normative 为准，并回写 rules。  
 > **市场研究：** 竞品与 TTE 一手研究见 `yiveno_research/`；**已吸收进 Normative 的章节**见 §0.1、§0.1.1、§5.9、§8 Phase E / R4、附录 A.6。
 
 ---
@@ -593,11 +594,11 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 
 **三层语言分离（必须遵守）：**
 
-| 层                 | 职责                                                                          | 语言策略                             |
-| ------------------ | ----------------------------------------------------------------------------- | ------------------------------------ |
-| **UI 展示**        | Side Panel / Settings / 空状态 / 追问文案 / 芯片标签                          | **仅 en**；运行时不再维护其它 locale |
-| **用户输入**       | Recall composer 中的口语线索                                                  | 目标为 **American English** 自然表达 |
-| **内部 canonical** | `tags` / `keywords` / `entities`、parser 槽位、编排加权、芯片填入值、分析口径 | **统一 English canonical**           |
+| 层                   | 职责                                                                          | 语言策略                             |
+| -------------------- | ----------------------------------------------------------------------------- | ------------------------------------ |
+| **UI 展示**          | Side Panel / Settings / 空状态 / 追问文案 / 芯片标签                          | **仅 en**；运行时不再维护其它 locale |
+| **clue（用户线索）** | Recall composer 中的自然语言记忆描述                                          | 目标为 **American English** 自然表达 |
+| **内部 canonical**   | `tags` / `keywords` / `entities`、parser 槽位、编排加权、芯片填入值、分析口径 | **统一 English canonical**           |
 
 **Canonical 规则（Normative · 实现约束）：**
 
@@ -675,7 +676,7 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
   → 有 completer：默认 LLM → Zod → 锚定映射 → ParsedRecallClue（失败降级规则）
        例外：纯 URL 等可走规则（省配额）
   → 无 completer：规则 parseRecallClue
-  → buildSearchClueFromParsed → keyword Filter；**有 timeRange 则硬过滤**；类型等可软排
+  → buildFilterClueFromParsed → keyword Filter；**有 timeRange 则硬过滤**；类型等可软排
   → Hybrid（有向量则 RRF）
 ```
 
@@ -936,7 +937,9 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 
 ## 3. UI 与术语（Normative）
 
-- 文案：筛选 / 找回；禁止 Search / 搜索。
+> **术语定义：** 见同目录 **`Yiveno-术语表.md`**（Glossary · 唯一权威）。本节只列 UI/交互硬约束；概念叫法（clue、邻域、附注、Outcome 等）以术语表为准。
+
+- 文案：筛选 / 找回；禁止 Search / 搜索（详见术语表 §2、§9）。
 - **图标优先：** 工具栏/导航/行内动作等可通识表达的控件优先图标；须具备通识性（删除、设置、打开库等用常见通识符号）。可见标签可省略时，**hover / focus 用 `title` 显示完整文案**，并同步 `aria-label`（同源 `t()`）。禁止晦涩自定义隐喻图标。
 - 交互态禁止几何变换（§0.2）；例外：浮层入场短动画；`pop`/`shake` 不可用于行 hover。
 - 空状态：无记忆时引导保存或等待导入，不空白报错。
@@ -1098,6 +1101,9 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 5. **软岔路口：** 在 `javascript` 线程下输入明显无关长线索（例：`The movie I watched yesterday`）→ 发送前出现 Keep refining / Start new；**不**静默清线程。点 Keep → 仍带 context；点 Start new → 清空线程后以该线索首轮召回。短收窄词（例：`history`）**不**弹确认。
 6. **标题旁 New find：** 会话标题旁有**可见文案**「New find」（可配同款图标）；点之 = Header New find（可先走出口条）。**禁止**仅用 ✕ / 关闭图标冒充该动作。
 7. **产品语言：** placeholder / 芯片 / 标题 / 确认条均为美式英语。
+8. **Recall Framing · 宽 `top_pick`：** 输入 `javascript`（或等价 ≥6 互异组线索）→ 助手气泡含邻域说明（听懂 + 为何有列表 + 计数 `N · showing 1–5`）；**非**纯计数句；与首卡 Explain 不矛盾。
+9. **Recall Framing · `need_a_clue`：** 输入弱命中线索（例：`movie review I saved`）→ 气泡含把握度（弱命中）+ **至多一问**澄清；可有 LLM 芯片；禁止类型问卷 / 偏好建档。
+10. **Recall Framing · `no_match`+guess：** 输入强约束但库空线索（例：`poem I saved yesterday`）→ 诚实无命中 + 若有猜测卡则气泡说明猜测性质；**无**追问芯片。
 
 ### 5.8 冷启动手工验收（R1 · Normative）
 
@@ -1184,7 +1190,7 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 | **邻域命中（会话履约）**      | 排序池（`totalRankedCount`；内部 topPick + alsoPossible）含用户认定目标；首屏优先、续展可计    | 主 KPI；**逛一簇**意图优先                  |
 | **头名命中**                  | 短名单第 1 = 用户目标                                                                          | Delight；**不得**作唯一 must                |
 | **Verified Retrievals / WAU** | 用户经 **§7.2 strong `target`**（出口 Found / 等价确认）且打开来源/原文/详情 的成功次数 / 周活 | 共北极星；**裸 open ≠ verified**（见 §7.2） |
-| **TTE-V**                     | 从 `query_submitted` 到首次看见 **ECS 五要素齐全** 证据单元                                    | 体验速度主尺；见下表                        |
+| **TTE-V**                     | 从提交 **clue**（事件 `clue_submitted`）到首次看见 **ECS 五要素齐全** 证据单元                 | 体验速度主尺；见下表                        |
 | **TTE-C**                     | 到用户打开原文并 **确认相关**（对齐 §7.2 `user_confirmed` / strong target）                    | 长尾与误点成本                              |
 
 #### TTE 子指标与护栏
@@ -1209,7 +1215,7 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 #### 最小埋点事件（Normative）
 
-合入 Phase E 须至少：`query_submitted`、`result_rendered`、`evidence_visible`、`source_opened`、`user_confirmed`、`query_refined`、`task_timeout`。每条证据结果须可关联 `source_id`（MemoryItem id）、anchor、ECS、reason codes、rank、trace id。
+合入 Phase E 须至少：`clue_submitted`（提交 clue）、`result_rendered`、`evidence_visible`、`source_opened`、`user_confirmed`、`clue_refined`（refine clue）、`task_timeout`。每条证据结果须可关联 `source_id`（MemoryItem id）、anchor、ECS、reason codes、rank、trace id。事件 type 命名见术语表 §10.1。
 
 **实现（P0 · 本机）：** `core/recall/recall-telemetry.ts`（Zod 七事件 + `RecallPipelineTiming` + ECS 打分）；`infrastructure/analytics/recall-telemetry-store.ts`（`chrome.storage.local` 环形缓冲，键 `yiveno.recallTelemetry`）；Hybrid 后端回传 `RecallResult.pipelineTiming`（`understandMs` / `candidateLoadMs` / `retrieveMs` / `postProcessMs` / `totalMs`）；Side Panel 经 `recall-telemetry-recorder` 写入七事件。**不上云**除非隐私文档更新。
 
@@ -1272,7 +1278,7 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 1. 选 5 条 **≥14 天前** 保存的资料，写 gold card（目标 id + 允许替代 + 关键锚点）。
 2. 对每条输入**模糊口语**（不得粘贴完整标题/URL）。
-3. 计时：`query_submitted` → 首次看见 **ECS 五要素齐全** 的卡 = **TTE-V**；点击打开并确认 = **TTE-C**。
+3. 计时：提交 clue（`clue_submitted`）→ 首次看见 **ECS 五要素齐全** 的卡 = **TTE-V**；点击打开并确认 = **TTE-C**。
 4. **通过（Alpha 内测）：** 5 任务中 ≥4 在 180s 内 Success；TTE-V P50 ≤15s（手停表或埋点均可）；无「2s 内仅 LLM 文案无卡」。
 
 **完整种子 study（20–30 人 · 2 周）：** 见 [`docs/engineering/TTE-种子用户研究-checklist.md`](../engineering/TTE-种子用户研究-checklist.md)。
@@ -1302,9 +1308,9 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 | 云端      | `GET /api/mcp/tools` · `POST /api/mcp/tools/call`                                                  | Bearer + KV 开关 + **Pro**；召回为云端关键词扫描（非 Hybrid） |
 | Cursor 等 | 可选包 `@yiveno/mcp`（stdio）转发到 Worker；环境变量 `YIVENO_API_BASE_URL` + `YIVENO_ACCESS_TOKEN` | 同上                                                          |
 
-1. Settings 打开只读 MCP；用文档公布的工具/schema 发起 **scope 内** query（例：「deployment checklist」）。
+1. Settings 打开只读 MCP；用文档公布的工具/schema 发起 **scope 内** clue（例：`deployment checklist`）。
 2. 响应须为 **evidence pack 形态**（带来源条目列表），**不得**返回全库 dump 或可写操作。
-3. 撤销/关闭 MCP 后，同 query 须失败（本机 `MCP_DISABLED` / 云端 `mcp_disabled`），且 Settings/隐私可说明 scope。
+3. 撤销/关闭 MCP 后，同 clue 须失败（本机 `MCP_DISABLED` / 云端 `mcp_disabled`），且 Settings/隐私可说明 scope。
 
 **未达 §5.9 Beta 前：** 不得对外宣传 MCP 为正式卖点；产品面文案须标明 beta。
 
@@ -1602,7 +1608,7 @@ Chrome API / 选区
 - **补充线索应像回消息**：有会话时下一句默认承接上一轮（Side Panel 线程）；要开新找 → 用户点 **New find**（见 §7.0），系统不猜话题切换。
 - **允许多轮澄清**，但范围只围绕 Recall 推进；不得滑向开放式闲聊。
 - 卡片要有线索，不只标题/URL；系统回复需帮助用户理解“为什么是它”或（有候选时）“怎样收窄”。
-- 用户输入首先被视为**记忆线索表达**，而不只是关键词；Recall 应尽量消费时间、行为、主观感受、对象类型等线索。
+- 用户提交的 **clue** 首先被视为**记忆线索表达**，而不只是关键词；Recall 应尽量消费时间、行为、主观感受、对象类型等线索。
 - **回答的是「库里最靠近的几条」**，不是「你现在该听什么 / 看什么」，也不是「唯一正确答案」。
 - **禁止**用置信百分比 / 「永远准确」/ 「most likely match」话术把建议包装成神谕。
 
@@ -1664,7 +1670,7 @@ Chrome API / 选区
 
 **优先级：** 当前 turn **有白名单芯片展示** → 以芯片为主；placeholder **退中性短句、不带举例**（有会话标题时中性句仍点名标题）。  
 **宽邻域 `top_pick`（报 N）：** 默认 **只走动态 placeholder**，不上内容芯片。  
-**气泡：** 只报结果状态（N / 不够确定 / miss）；**不**与 placeholder 抢收窄举例清单。
+**气泡（列表级）：** 见下 **Recall Framing**；**不**与 placeholder 抢收窄举例清单；**不**重复卡片级 Explain 逐条复述。
 
 | Placeholder 模式 | 何时                                                                                      |
 | ---------------- | ----------------------------------------------------------------------------------------- |
@@ -1673,6 +1679,50 @@ Chrome API / 选区
 | Neutral          | 有芯片让位；miss；dismiss 后；抽不出举例                                                  |
 
 **Narrow 举例 LLM 润色（已接线）：** 仅在宽邻域且无芯片时，对**已选定** grounded 词面润色展示形态（大小写 / 语料中已有的空格形态）；经 fold identity 门禁，**禁止造词**；无 completer 或失败 → 用选定原词。与 clue 理解同配额桶。
+
+#### Recall Framing（邻域说明 · Normative · 2026-08-28）
+
+**定位：** 助手气泡的**列表级**说明层，回答「Yiveno 为什么给出这一屏候选、还困惑什么」——可审计的**邻域说明书**，不是 LLM 内心独白、不是生活助理、不是神谕分数。与 **§5.10.1 卡片级 Explain（ECS）** 分工：Framing = 整批；Explain = 单条。
+
+**工程旁挂：** [`Recall-Framing-邻域说明.md`](../engineering/Recall-Framing-邻域说明.md)。
+
+**触发（凡产出可点选候选列表）：**
+
+| outcome                     | 须带 Framing                       |
+| --------------------------- | ---------------------------------- |
+| `top_pick`                  | ✓                                  |
+| `need_a_clue`               | ✓（完整度最高）                    |
+| `no_match` + `relatedGuess` | ✓（说明为何无命中 + 猜测为何出现） |
+| `no_match` 无猜测           | miss 文案即 framing，不另起 LLM    |
+
+**内容优先级（气泡内按序呈现；靠前者优先完整，靠后者可省略）：**
+
+| 级     | 块             | 含义                                                             | 数据来源（须可核对）                                                         |
+| ------ | -------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| **P1** | **听懂**       | 本轮约束摘要（类型 / 时间 / 词面 / 备注信号）                    | `parsed` merged                                                              |
+| **P2** | **为何有列表** | 检索路径一句话（字面命中 / 类型邻域 / Hybrid 语义 / 行为软加权） | 池内主因字段分布 + `outcome`                                                 |
+| **P3** | **邻域形状**   | 候选大致分几类（例：YouTube 书签 · 设计摘录 · 带 note）          | **确定性分桶**（域名、bookmark vs excerpt、note、主因字段）；禁止 LLM 发明簇 |
+| **P4** | **把握度**     | 高置信邻域 vs 弱命中不够钉死                                     | `top_pick` / `need_a_clue` + N                                               |
+| **P5** | **还困惑什么** | 一句诚实澄清（区分候选的唯一维度）                               | 仅 `need_a_clue` 或宽邻域 `top_pick`（N≥宽门槛）；**至多一问**               |
+| **P6** | **计数**       | `N related · showing 1–k`                                        | 现有 `totalRankedCount` / 分页                                               |
+
+**按 outcome 的默认覆盖（实现默认；可单测）：**
+
+| 形态                    | P1  | P2  | P3   | P4  | P5   | P6  |
+| ----------------------- | --- | --- | ---- | --- | ---- | --- |
+| `top_pick` 窄（N&lt;6） | ✓   | ✓   | 可选 | ✓   | —    | ✓   |
+| `top_pick` 宽（N≥6）    | ✓   | ✓   | ✓    | ✓   | 可选 | ✓   |
+| `need_a_clue`           | ✓   | ✓   | ✓    | ✓   | ✓    | ✓   |
+| `no_match` + guess      | ✓   | ✓   | —    | ✓   | —    | —   |
+
+**NLG 边界：**
+
+- **先事实后措辞：** `core` 产出 `RecallFramingFacts`（Zod）；UI 默认 **规则模板** 可渲染；有 LLM 时仅 **润色/串联** 已选定块，**禁止**新增事实、禁止偏好建档、禁止置信百分比。
+- **与现有 LLM 追问合并：** 原 `assistantFollowUp.text`（`need_a_clue`）升格为 Framing 的 P5 载体，不再单独发明第二套气泡逻辑。
+- **配额：** 与 clue 理解 / 追问 **同 hosted 桶**；未登录 / 关 AI / 配额尽 / 门禁拒收 → **静态模板**（仍须含 P1–P4 规则句，不得只剩 P6 计数）。
+- **禁令：** 链式 think 外露；「AI 认为」；编造库内条目/簇；无候选追问；替代卡片 Explain 复述每条理由。
+
+**验收：** §5.2.1 增 3 步（宽 `top_pick` / `need_a_clue` / `no_match`+guess 各 1）；`recall-eval` 增 `framing-*` must（见工程旁挂）；MCP 气泡可读且与卡面 Explain 不矛盾。
 
 **空结果与追问原则（Normative · 三条）：**
 
@@ -1697,11 +1747,11 @@ Chrome API / 选区
   → merge(accumulated, current) → ParsedRecallClue_merged
   → 排除 dismissedIds → keyword Filter + 软加权；有 timeRange 则硬过滤
   → 若 no_match：判定 emptyKind；可选 relatedGuess（真实条目）；不附追问
-  → 仅 need_a_clue：LLM 追问 NLG（Zod/门禁；计入托管 clue 配额）→ 失败则静态文案无规则芯片
-  → 返回 outcome + parsed(merged) + effectiveClue（+ emptyKind / relatedGuess / assistantFollowUp）
+  → 有候选：build RecallFramingFacts → 规则模板气泡；宽邻域 top_pick / need_a_clue 可 LLM 润色 P1–P5（同 clue 配额桶）+ 规则 P6 计数；芯片仍仅 need_a_clue
+  → 返回 outcome + parsed(merged) + effectiveClue（+ emptyKind / relatedGuess / recallFraming / assistantFollowUp）
 ```
 
-**LLM 追问（Normative · 已接线）：** **仅**在有候选的弱命中时生成下一句与可选芯片；`chip.value` 须为稳定英文；计入 `POST /api/ai/hosted/complete` 同桶；禁令（无候选追问、编造库内事实、全局类型/时间问卷、偏好建档）不过门则整段降级为静态文案。未登录 / 关 AI / 配额尽 → 同降级。
+**LLM Framing 润色（Normative · 已接线）：** 宽邻域 `top_pick`（N≥6）或 `need_a_clue` 时，在规则 Framing 事实之上润色 P1–P5；`chip.value` 须为稳定英文；计入 `POST /api/ai/hosted/complete` 同桶；门禁不过 → 规则模板。未登录 / 关 AI / 配额尽 → 同降级。**窄** `top_pick` 跳过 LLM 以省配额。
 
 **本切片不做：** 开放闲聊；无候选时的规则缺槽问卷。§7.1 环境芯片 / Hybrid 已另见 Phase B 接线说明。
 
@@ -1713,7 +1763,7 @@ Chrome API / 选区
 
 1. **收集要宽，采信要窄**：每个信号先判断「多像用户此刻的寻回意图」，再决定：进入主线索 / 仅重排软分 / 变成可选追问芯片 / 直接丢弃。
 2. **用户开口优先于环境**：用户刚输入的字、主动点的芯片、页内选区 = 强线索；Chrome 停留页、开着的标签 = 弱上下文。**不得**默认假设「当前浏览页 = 要找的东西相关」（例如正在看 YouTube 不等于要找回 YouTube 相关痕迹）。
-3. **环境信号默认不自动注入线索框**：适合低置信时的可选芯片（如「跟当前站有关」「刚才看过的」）或候选重排；自动写入主 query 易放大噪声、伤害第一次模糊找回信任。
+3. **环境信号默认不自动注入线索框**：适合低置信时的可选芯片（如「跟当前站有关」「刚才看过的」）或候选重排；自动写入 composer 主线索易放大噪声、伤害第一次模糊找回信任。
 4. **不得滑成环境搜索 / History 搜索**：长尾 History、剪贴板默认读取、常驻高频站环境等属噪声或高隐私成本，默认忽略。
 
 **信号分级（实现与产品共用口径）：**
@@ -2080,6 +2130,7 @@ RecallOutcomeEvent {
 | 2026-08-26 | **关键词 case-fit 软加权：** 命中仍忽略大小写；线索含大写且主文原文一致时微抬分（`RECALL_CASE_FIT_BOOST_CAP`）；§7.1 同步                                                                                                                              |
 | 2026-08-26 | **Recall 书签卡 favicon：** Side Panel 结果卡角标用 Chrome 缓存站点图标（与 Memory 库树同路径）；失败回退 Lucide bookmark；§7 同步                                                                                                                     |
 | 2026-08-26 | **找回短名单可续展：** 报 `totalRankedCount`；首屏 5 + Show more；池软顶 50；§0.1.1 / §7 同步——首屏截断≠结果全集                                                                                                                                       |
+| 2026-08-28 | **Recall Framing 计划：** §7.0 列表级邻域说明（P1–P6 优先级）；凡有候选须说明原因；工程旁挂 `Recall-Framing-邻域说明.md`；合并原 `need_a_clue` LLM 气泡为 P5 载体                                                                                      |
 | 2026-08-27 | **video/clip 假阳性：** `clip` 标 `clueOnly`（线索可认、条目/enrichment 正文不打 video）；回填 v5 scrub 存量误标；diversity 标题去 clip；约束邻域 Explain 改「Matched as this type…」                                                                  |
 | 2026-08-27 | **撤 Outcome exit park：** 关 Panel 静默结算，不再下次打开「Last find」补问；仅同场 New find 出口条；删 `yiveno.recallOutcomeExitPark`                                                                                                                 |
 | 2026-08-27 | **R4 must + ECS 手验：** §5.11.2 `r4-*` 全绿（cluster 拆 product/design；`didn't finish`→half_read）；§5.10.1–2 MCP 3/3 五要素 + detail 可达；合入检查表勾除 Beta TTE 宣称                                                                             |

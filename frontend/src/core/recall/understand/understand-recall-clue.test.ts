@@ -33,7 +33,7 @@ describe('understandRecallClue', () => {
     expect(result.mode).toBe('semantic')
     expect(result.source).toBe('llm')
     expect(called).toBe(1)
-    expect(result.searchClue.toLowerCase()).toContain('cloudflare')
+    expect(result.filterClue.toLowerCase()).toContain('cloudflare')
   })
 
   it('semantic + LLM → 精确 contentTerms', async () => {
@@ -54,7 +54,7 @@ describe('understandRecallClue', () => {
     expect(result.source).toBe('llm')
     expect(result.parsed.objectTypes).toEqual(['article'])
     expect(result.parsed.contentTerms).toEqual(expect.arrayContaining(['news', 'legal', 'case']))
-    expect(result.searchClue.split(/\s+/)).toEqual(
+    expect(result.filterClue.split(/\s+/)).toEqual(
       expect.arrayContaining(['news', 'legal', 'case'])
     )
   })
@@ -87,7 +87,7 @@ describe('understandRecallClue', () => {
     expect(result.parsed.timeRange?.label).toBe('day_before_yesterday')
   })
 
-  it('网关拒绝噪音：不调 LLM，空 searchClue', async () => {
+  it('网关拒绝噪音：不调 LLM，空 filterClue', async () => {
     let called = 0
     const complete: LlmChatCompleter = async () => {
       called += 1
@@ -99,7 +99,7 @@ describe('understandRecallClue', () => {
     expect(result.disposition).toBe('reject_noise')
     expect(result.rejectReason).toBe('keyboard_mash')
     expect(result.source).toBe('rejected_noise')
-    expect(result.searchClue).toBe('')
+    expect(result.filterClue).toBe('')
     expect(result.parsed.contentTerms).toEqual([])
     expect(called).toBe(0)
   })

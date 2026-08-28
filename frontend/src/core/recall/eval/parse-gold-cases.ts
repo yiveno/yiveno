@@ -112,7 +112,7 @@ export const PARSE_GOLD_CASES: ParseGoldCase[] = [
       contentTermsMustInclude: ['deployment'],
       confidence: 'high'
     },
-    note: '备注+类型+内容'
+    note: '附注+类型+内容'
   },
   {
     id: 'p0-article-last-week-filler-read',

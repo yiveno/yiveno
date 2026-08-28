@@ -59,7 +59,7 @@ describe('corpus-quality-gate', () => {
     expect(assessCorpusAnchorQuality(short).decision).toBe('accept')
   })
 
-  it('书签有备注 → accept；空壳标题无备注 → weak', () => {
+  it('书签有附注 → accept；空壳标题无附注 → weak', () => {
     const noted = createBookmarkMemoryItem({
       ownerId,
       sourceLocalProfileId,

@@ -12,7 +12,7 @@
 | Min ECS         | 5                                                        |
 | Difficulty      | easy / medium / hard                                     |
 
-## Fuzzy prompt（英文 · 朗读稿）
+## Fuzzy clue（英文 · 向受试者朗读）
 
 > “…”
 

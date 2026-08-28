@@ -36,7 +36,7 @@ const EMBEDDING_JOB_GAP_MS = 500
 /** 回填单次最多入队条数。 */
 export const EMBEDDING_BACKFILL_BATCH_LIMIT = 40
 
-/** 配额满时一次最多物理删掉的无备注 sync 书签数（腾出写 embedding 空间）。 */
+/** 配额满时一次最多物理删掉的无附注 sync 书签数（腾出写 embedding 空间）。 */
 const QUOTA_FREE_BOOKMARK_BATCH = 200
 
 let queue: Promise<void> = Promise.resolve()
@@ -96,7 +96,7 @@ export function resumeAsyncMemoryEmbeddingAfterAuth(): void {
 }
 
 /**
- * 物理删除无备注的 sync 书签，腾 IndexedDB 配额给摘录 embedding。
+ * 物理删除无附注的 sync 书签，腾 IndexedDB 配额给摘录 embedding。
  * 书签仍在 Chrome；用户开着 ingest 时下次 reconcile 会再灌。
  */
 async function freeQuotaByDroppingSyncBookmarks(
@@ -118,7 +118,7 @@ async function freeQuotaByDroppingSyncBookmarks(
     return 0
   }
   const dropped = await repository.hardDeleteMany(victims.map(item => item.id))
-  logger.warn('MemoryEmbed', '配额满：已物理删除无备注 sync 书签以腾空间', {
+  logger.warn('MemoryEmbed', '配额满：已物理删除无附注 sync 书签以腾空间', {
     dropped,
     candidate: victims.length
   })

@@ -18,7 +18,7 @@ import { appendRecallTelemetryEvent } from '@/infrastructure/analytics/recall-te
 interface ActiveRecallTelemetryTask {
   taskId: string
   traceId: string
-  querySubmittedAt: number
+  clueSubmittedAt: number
   timeoutTimer: ReturnType<typeof setTimeout> | null
 }
 
@@ -69,8 +69,8 @@ export function createRecallTelemetryRecorder() {
     }, RECALL_TTE_TASK_TIMEOUT_MS)
   }
 
-  /** 用户提交线索；若为多轮 refine 则先发 query_refined。 */
-  function beginQuery(input: { clue: string; priorCluePreview?: string }): {
+  /** 用户提交 clue；若为多轮 refine 则先发 clue_refined。 */
+  function beginClue(input: { clue: string; priorCluePreview?: string }): {
     taskId: string
     traceId: string
   } {
@@ -82,7 +82,7 @@ export function createRecallTelemetryRecorder() {
 
     if (input.priorCluePreview?.trim()) {
       emit({
-        type: 'query_refined',
+        type: 'clue_refined',
         taskId,
         traceId,
         cluePreview,
@@ -92,7 +92,7 @@ export function createRecallTelemetryRecorder() {
     }
 
     emit({
-      type: 'query_submitted',
+      type: 'clue_submitted',
       taskId,
       traceId,
       cluePreview,
@@ -102,7 +102,7 @@ export function createRecallTelemetryRecorder() {
     active = {
       taskId,
       traceId,
-      querySubmittedAt: Date.now(),
+      clueSubmittedAt: Date.now(),
       timeoutTimer: null
     }
     scheduleTaskTimeout(active)
@@ -196,7 +196,7 @@ export function createRecallTelemetryRecorder() {
   }
 
   return {
-    beginQuery,
+    beginClue,
     recordResultRendered,
     recordEvidenceVisible,
     recordSourceOpened,

@@ -1,6 +1,6 @@
 /**
  * Composer placeholder 双通道状态机（§7.0）。
- * 有线程锚点时 Narrow/Neutral 点名锚点，避免听起来像全新搜索框。
+ * 有线程锚点时 Narrow/Neutral 点名锚点，避免听起来像开一场全新 Recall（新 clue 框）。
  */
 
 /** Placeholder 模式：空闲 / 收窄邀请 / 中性让位。 */

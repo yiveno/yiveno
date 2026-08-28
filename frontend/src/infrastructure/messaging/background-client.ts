@@ -133,7 +133,7 @@ export async function deleteMemoryItem(
   return sendBackgroundMessage<MemoryBackgroundResponse>(message)
 }
 
-/** 更新 MemoryItem 备注（书签/摘录）。 */
+/** 更新 MemoryItem 附注（`clues.note`；书签/摘录）。 */
 export async function updateMemoryNote(
   payload: UpdateMemoryNoteMessage['payload']
 ): Promise<MemoryBackgroundResponse> {

@@ -45,7 +45,7 @@ const deleteMemoryItemPayloadSchema = z.object({
 
 const updateMemoryNotePayloadSchema = z.object({
   id: z.string().uuid(),
-  /** 空字符串表示清除备注。 */
+  /** 空字符串表示清除附注。 */
   note: z.string().trim().max(500)
 })
 

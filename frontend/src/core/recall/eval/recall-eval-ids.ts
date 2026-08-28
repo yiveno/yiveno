@@ -30,13 +30,13 @@ export const RECALL_EVAL_IDS = {
   /** Gregory Peck / Million Pound Note 英文摘录 */
   millionPoundPeckExcerpt: '11111111-1111-4111-8111-111111111118',
   /**
-   * 备注屈折 + 多词锚点：note「disagree with section 3」；
+   * 附注屈折 + 多词锚点：note「disagree with section 3」；
    * 线索用 disagreed，且库内有 newsletter 共享词对手。
    */
   noteAnchorDisagreeSection: '11111111-1111-4111-8111-111111111119',
   /** 共享词对手：note 含 newsletter，正文无关 */
   noteSharedWordNewsletterRival: '11111111-1111-4111-8111-111111111120',
-  /** 弱标题靠备注：title=Untitled document，note 含 grant narrative */
+  /** 弱标题靠附注：title=Untitled document，note 含 grant narrative */
   weakTitleNoteGrant: '11111111-1111-4111-8111-111111111121',
   /** 近几天 + URL 含 privacy（few days ago → recent 窗） */
   recentPrivacyArticle: '11111111-1111-4111-8111-111111111122',
@@ -44,7 +44,7 @@ export const RECALL_EVAL_IDS = {
   oldDensePassagePaper: '11111111-1111-4111-8111-111111111123',
   /** R4：未读完 + last week 窗内摘录 */
   halfReadArticleExcerpt: '11111111-1111-4111-8111-111111111124',
-  /** R4：备注含 deploy checklist */
+  /** R4：附注含 deploy checklist */
   deployNoteExcerpt: '11111111-1111-4111-8111-111111111125',
   /** R4：近因刚存 + i18n 锚点 */
   recentI18nExcerpt: '11111111-1111-4111-8111-111111111126'

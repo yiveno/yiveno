@@ -1,6 +1,7 @@
 # TTE 种子用户研究 · 执行 Checklist
 
 > **性质：** 可打印/可勾选的**操作流程**（Non-normative 细节；**门禁阈值以产品文档 Normative 为准**）。  
+> **术语：** [`Yiveno-术语表.md`](../product/Yiveno-术语表.md)（clue · 附注 · 邻域；遥测事件见 §10.1）。  
 > **Normative：** [`Yiveno-产品文档-v4.0.md`](../product/Yiveno-产品文档-v4.0.md) **§5.9**、**§5.10.3**、§0.1.1「首发用户与种子验证」。  
 > **协议原文：** `yiveno_research/TTE_指标框架与测试协议.md`。  
 > **R4 工程：** [`R4-Phase-E-验收与eval.md`](./R4-Phase-E-验收与eval.md)
@@ -34,12 +35,12 @@
 ### 第 1 周 · 准备（研究负责人）
 
 - [ ] **2.1** 确认扩展版本号 `vX.Y` 与构建渠道（dev / 内测包）。
-- [ ] **2.2** 埋点就绪检查（§5.9 七事件；无埋点则**仅**手停表 + 录屏，并在报告中注明）。**Dev 自检：** Side Panel 走一条 Recall → DevTools → Application → `chrome.storage.local` → `yiveno.recallTelemetry` 应含 `query_submitted` / `result_rendered`（含 `pipelineTiming`）/ `evidence_visible`；点击卡后应有 `source_opened`。
+- [ ] **2.2** 埋点就绪检查（§5.9 七事件；无埋点则**仅**手停表 + 录屏，并在报告中注明）。**Dev 自检：** Side Panel 走一条 Recall → DevTools → Application → `chrome.storage.local` → `yiveno.recallTelemetry` 应含 `clue_submitted` / `result_rendered`（含 `pipelineTiming`）/ `evidence_visible`；点击卡后应有 `source_opened`。
 - [ ] **2.3** 编写 **Gold Task 模板**（§6）并预填 10 条**内部** gold（团队自己的库）。
 - [ ] **2.4** 准备 **ECS 标注指南**（§7）+ 双标注表格。
 - [ ] **2.5** 准备 **知情同意** 要点：录屏范围、数据存本地/导出、可随时退出、不收集 Chrome 全站 history。
 - [ ] **2.6** 招募文案：对准 §0.1.1 三群（研究者 / 创作者 / 开发者），强调「找自己存过的东西」非助理。
-- [ ] **2.7** 内部试跑 3 任务 → 修正 prompt 歧义、计时 SOP。
+- [ ] **2.7** 内部试跑 3 任务 → 修正 **fuzzy clue** 歧义、计时 SOP。
 
 **本周退出：** 内部 3/3 任务可复现记录 t0→TTE-V→TTE-C。
 
@@ -47,7 +48,7 @@
 
 ### 第 2 周 · Alpha 基准（6–10 人，可含团队）
 
-- [ ] **2.8** 每人库内 **≥30** 条可用 Memory（摘录优先；含 2+ 带 note）。
+- [ ] **2.8** 每人库内 **≥30** 条可用 Memory（摘录优先；含 2+ 带附注）。
 - [ ] **2.9** 研究员据库生成 **10 gold tasks / 人**（冷却 ≥14 天的条目 ≥5）。
 - [ ] **2.10** 每人完成 **10 任务 × Yiveno only**（或 +1 对照，若时间够）。
 - [ ] **2.11** 双标注 ECS + gold match；分歧第三人仲裁。
@@ -100,7 +101,7 @@
 
 ### 第 5–8 周（可选）· 交叉对照与分群
 
-- [ ] **2.25** 按来源分层报告：仅摘录 / 仅书签 / 混合 / 有 note。
+- [ ] **2.25** 按来源分层报告：仅摘录 / 仅书签 / 混合 / 有附注。
 - [ ] **2.26** 按资料年龄：7–30d / 31–90d / 90d+。
 - [ ] **2.27** 按分群：研究者 vs 创作者 vs 开发者（n 小则只做方向性）。
 - [ ] **2.28** 5–8 人 **付费意向**深访（§5.9 61–90 天：≥15% 明确 Pro 意向）。
@@ -128,24 +129,24 @@
 ## 4. 单次任务执行 SOP（研究员 / 受试者）
 
 ```
-[准备] 读出任务 ID + 模糊 prompt（不得补充提示）
+[准备] 读出任务 ID + 模糊 clue（向受试者朗读；不得补充提示）
   ↓
-[t0] 受试者提交 query → 记录 query_submitted
+[t0] 受试者提交 clue → 记录 `clue_submitted`
   ↓
-[观察] 等待结果卡；记录 result_rendered / evidence_visible
+[观察] 等待结果卡；记录 `result_rendered` / `evidence_visible`
   ↓
 [判定 ECS] 五要素是否齐全？齐全 → 停 TTE-V 表
   ↓
-[点击] 受试者打开原文/详情 → source_opened
+[点击] 受试者打开原文/详情 → `source_opened`
   ↓
-[确认] 「是你要的吗？」→ user_confirmed
+[确认] 「是你要的吗？」→ `user_confirmed`
   ↓
-[若否] 允许 query_refined；IB+1；Wrong-path 若误开无关卡
+[若否] 允许 refine clue（`clue_refined`）；IB+1；Wrong-path 若误开无关卡
   ↓
-[180s 到] 仍未 ECS 达标 → task_timeout，记 censored
+[180s 到] 仍未 ECS 达标 → `task_timeout`，记 censored
 ```
 
-**Interaction Burden（IB）计数：** 每次 `query_refined`、换筛选、滚动超过一屏找卡、误点无关结果各 +1。
+**Interaction Burden（IB）计数：** 每次 `clue_refined`（refine clue）、换筛选、滚动超过一屏找卡、误点无关结果各 +1。
 
 ---
 
@@ -153,15 +154,15 @@
 
 从**该参与者自己的库**选 gold 条目，**不得**用公共维基/官网凑数。
 
-| 类型            | 模糊 prompt 模板（英）                                                             | Gold 须预填                 |
+| 类型            | 模糊 clue 模板（英 · 向受试者朗读）                                                | Gold 须预填                 |
 | --------------- | ---------------------------------------------------------------------------------- | --------------------------- |
 | **内容+时间**   | “I saved something about `{concept}` a few weeks ago, maybe mentioned `{detail}`.” | target id, 14–90d, 关键句   |
 | **来源+概念**   | “Something I saved from `{domain}` about `{topic}`.”                               | url/domain 匹配             |
-| **备注锚点**    | “The page where I left myself a note about `{note_token}`.”                        | `clues.note` 含 token       |
+| **附注锚点**    | “The page where I left myself a note about `{note_token}`.”                        | `clues.note` 含 token       |
 | **行为+未完成** | “That article I didn’t finish reading…”                                            | half_read / 长摘录          |
 | **钉死一条**    | “That `{type}` I `{behavior}` last `{time}`.”                                      | song/article + opened/saved |
 
-**禁止作 prompt：** 完整标题、完整 URL、连续 10+ 字原文粘贴。
+**禁止作 clue：** 完整标题、完整 URL、连续 10+ 字原文粘贴。
 
 ---
 
@@ -175,7 +176,7 @@
 - **Participant:**
 - **Save age (days):**
 - **Intent:** pin-down | browse-cluster
-- **Fuzzy prompt (read aloud):**
+- **Fuzzy clue (read aloud):**
 - **Primary gold MemoryItem id:**
 - **Acceptable alternates:** id1, id2（可为空）
 - **Key anchor (quote ≤20 words):**

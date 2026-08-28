@@ -213,6 +213,7 @@ Canonical CSS names in `site-critical.css`. Prefer roles over raw Brand Core in 
 **Don't**
 
 - Say or imply “Search” as the product noun in user-facing UI.
+- Call user Recall input “query” or “prompt” — use **clue** (see `docs/product/Yiveno-术语表.md`).
 - Use brain/robot/neural/glow-orb/magic-wand AI clichés.
 - Ship empty Closest/results mocks.
 - Treat old forest / blue–purple experiments as brand.

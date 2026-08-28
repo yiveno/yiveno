@@ -1,5 +1,7 @@
 # TTE 基准结论与 Yiveno 目标
 
+> **Yiveno 术语：** 用户输入 = **clue**；见 [`docs/product/Yiveno-术语表.md`](../docs/product/Yiveno-术语表.md)。
+
 ## 结论先行
 
 目前**不能诚实地给出“Raindrop 是 X 秒、Reader 是 Y 秒、Recall 是 Z 秒”的公开排行榜**。原因不是这些产品没有搜索能力，而是未发现它们披露在相同个人资料库、相同模糊任务、相同设备和相同“可验证证据”终点下的可复现实测数据。官方材料显示 Raindrop、Reader 和 Recall 都能把用户带到全文、保存内容或可验证引用，但“快”“fast”“blazingly fast”等表述不是可比性能数据。[1] [2] [3]
@@ -8,7 +10,7 @@
 
 ## 1. 统一定义
 
-> **TTE-V（Verified Time-to-Evidence）** = 从用户提交模糊需求，到首次看见一个任务相关、ECS≥4 的来源级证据单元所经历的时间。
+> **TTE-V（Verified Time-to-Evidence）** = 从用户提交模糊 **clue**（或对照产品的等价模糊检索请求），到首次看见一个任务相关、ECS≥4 的来源级证据单元所经历的时间。
 
 合格证据单元必须同时提供原始来源身份、可打开原文/保存副本、相关内容锚点、至少一个时间或来源语境，并解释命中原因。只有 AI 总结、不可点击标题、topic cluster 或“模型记得”都不算证据到达。
 
@@ -24,16 +26,16 @@
 
 ## 2. 各类产品的“可比较部分”
 
-| 产品类别           | 可公开确认的证据路径                                                                             | 能否给出公开 TTE 秒数 | 应在实测中重点观察                                                        |
-| ------------------ | ------------------------------------------------------------------------------------------------ | --------------------- | ------------------------------------------------------------------------- |
-| 原生浏览器历史     | Chrome 的 AI History Search 可用自然语言从已启用后的本地浏览历史找网页。 [4]                     | 否                    | 单浏览器范围内的 query → best-match → open-source；观察跨来源任务的失败。 |
-| folder/tag 书签    | 以 keyword、folder、tag 和链接打开为主。                                                         | 否                    | 精确词任务和用户能否回忆分类。                                            |
-| archive/read-later | Raindrop 提供网页/PDF/YouTube 全文搜索和保存副本；Reader 提供离线全文搜索与完整文档库。 [1] [2]  | 否                    | 正文抓取完整度、关键词/语义任务、打开原文路径。                           |
-| AI-native 知识库   | Recall 宣称基于保存内容的 chat 给出可回到原文段落验证的 citations。 [3]                          | 否                    | “答案出现”到“citation/原文段落可见”之间的差距。                           |
-| PKM / graph        | 多靠对象、链接、笔记或全文搜索回到来源。                                                         | 否                    | 是否需要预先手动结构化；多跳导航成本。                                    |
-| 平台 AI memory     | ChatGPT/Claude/Gemini 可跨聊天、文件或连接应用记忆/检索。 [5] [6] [7]                            | 否                    | 是否真的能打开与任务相关的原始证据，而不只显示生成回答。                  |
-| 浏览器 AI / Agent  | Dia/Comet 利用标签页、历史或连接工具辅助问答/行动；Comet 说明当前标签和相关历史可参与请求。 [8]  | 否                    | action 和 evidence 是否混淆；用户是否能审计模型选材。                     |
-| **Yiveno（目标）** | 模糊 query → hybrid candidates → evidence card（原文/锚点/理由）→ 一击确认或 MCP evidence pack。 | 尚无实测              | 把来源级解释、保存意图、时间/行为语境和跨来源完整度转化为 TTE 优势。      |
+| 产品类别           | 可公开确认的证据路径                                                                            | 能否给出公开 TTE 秒数 | 应在实测中重点观察                                                        |
+| ------------------ | ----------------------------------------------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------- |
+| 原生浏览器历史     | Chrome 的 AI History Search 可用自然语言从已启用后的本地浏览历史找网页。 [4]                    | 否                    | 单浏览器范围内的 query → best-match → open-source；观察跨来源任务的失败。 |
+| folder/tag 书签    | 以 keyword、folder、tag 和链接打开为主。                                                        | 否                    | 精确词任务和用户能否回忆分类。                                            |
+| archive/read-later | Raindrop 提供网页/PDF/YouTube 全文搜索和保存副本；Reader 提供离线全文搜索与完整文档库。 [1] [2] | 否                    | 正文抓取完整度、关键词/语义任务、打开原文路径。                           |
+| AI-native 知识库   | Recall 宣称基于保存内容的 chat 给出可回到原文段落验证的 citations。 [3]                         | 否                    | “答案出现”到“citation/原文段落可见”之间的差距。                           |
+| PKM / graph        | 多靠对象、链接、笔记或全文搜索回到来源。                                                        | 否                    | 是否需要预先手动结构化；多跳导航成本。                                    |
+| 平台 AI memory     | ChatGPT/Claude/Gemini 可跨聊天、文件或连接应用记忆/检索。 [5] [6] [7]                           | 否                    | 是否真的能打开与任务相关的原始证据，而不只显示生成回答。                  |
+| 浏览器 AI / Agent  | Dia/Comet 利用标签页、历史或连接工具辅助问答/行动；Comet 说明当前标签和相关历史可参与请求。 [8] | 否                    | action 和 evidence 是否混淆；用户是否能审计模型选材。                     |
+| **Yiveno（目标）** | 模糊 clue → hybrid candidates → evidence card（原文/锚点/理由）→ 一击确认或 MCP evidence pack。 | 尚无实测              | 把来源级解释、保存意图、时间/行为语境和跨来源完整度转化为 TTE 优势。      |
 
 ## 3. Yiveno 应采用的目标阈值
 
@@ -57,7 +59,7 @@
 
 ## 5. 需要新增到产品的数据事件
 
-`query_submitted`、`result_rendered`、`evidence_visible`、`source_opened`、`user_confirmed`、`query_refined` 和 `task_timeout` 是最小集合。每个证据结果都应保存 `source_id`、原文 anchor、ECS、reason codes、rank 和 trace ID。没有这些数据，团队只能测模型耗时，而无法测用户的 Time-to-Evidence。
+`clue_submitted`（提交 clue）、`result_rendered`、`evidence_visible`、`source_opened`、`user_confirmed`、`clue_refined`（refine clue）和 `task_timeout` 是最小集合。每个证据结果都应保存 `source_id`、原文 anchor、ECS、reason codes、rank 和 trace ID。没有这些数据，团队只能测模型耗时，而无法测用户的 Time-to-Evidence。
 
 ## 一句话决策
 

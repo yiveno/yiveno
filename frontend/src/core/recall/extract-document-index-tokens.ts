@@ -5,7 +5,7 @@
 
 import type { MemoryItem } from '@/core/memory/memory-item'
 import {
-  collectSearchableFields,
+  collectFilterIndexFields,
   compactRecallText,
   extractOrthographicAcronyms,
   isUsableRecallToken,
@@ -73,7 +73,7 @@ export function extractDocumentIndexTokens(item: MemoryItem): string[] {
   }
 
   const sink = new Set<string>()
-  for (const field of collectSearchableFields(item)) {
+  for (const field of collectFilterIndexFields(item)) {
     addDocumentIndexTokensFromText(field.text, sink)
     if (sink.size >= DOCUMENT_INDEX_TOKEN_CAP) {
       break

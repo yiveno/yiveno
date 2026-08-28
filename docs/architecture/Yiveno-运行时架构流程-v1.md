@@ -6,6 +6,7 @@
 
 ### 0.1 权威来源（不冲突）
 
+- [`Yiveno-术语表.md`](../product/Yiveno-术语表.md)：概念叫法唯一权威（clue、Recall、附注、邻域等）。
 - `docs/product/Yiveno-产品文档-v4.0.md`：核心路线、资产/边界/隐患、找回体验规范（尤其 §0.1 / §0.1.1 / §7）。
 - `.cursor/rules/project.mdc` + `AGENTS.md`：分层与代码硬约束（唯一监听者、IndexedDB 唯一入口、消息契约先于实现等）。
 
@@ -368,7 +369,7 @@ Omnibox 是“单次命中”入口：输入变化只生成原生建议，不做
     - `open_library` → `focusOrOpenLibraryTab()`
     - `open_settings` → `focusOrOpenSettingsTab()`
     - `save_selection` / `save_selection_with_note`
-      - 通过 `dispatchSelectionToolbarCommand(...)` 让划词脚本执行保存/写备注
+      - 通过 `dispatchSelectionToolbarCommand(...)` 让划词脚本执行保存/写附注
 
 - `frontend/src/core/ui/keyboard-command.ts`
   - 只负责“解释键盘意图”（上/下/Enter confirm 等）
@@ -476,7 +477,7 @@ Omnibox 是“单次命中”入口：输入变化只生成原生建议，不做
 | 打开结果行为          | `recordMemoryOpen()`         | `handleRecordMemoryOpen()`    | `memoryItemService.recordOpen`                       | 写 `openCount`/`lastOpenedAt`             |
 | 列出记忆库            | `listMemoryItems()`          | `handleListMemoryItems()`     | `memoryItemService.list()`                           | 读 MemoryItems                            |
 | 读取详情              | `getMemoryItem()`            | `handleGetMemoryItem()`       | `memoryItemService.getById()`                        | 读 MemoryItem                             |
-| 备注更新              | `updateMemoryNote()`         | `handleUpdateMemoryNote()`    | `memoryItemService.updateNote()`                     | 写 `clues.note`                           |
+| 附注更新              | `updateMemoryNote()`         | `handleUpdateMemoryNote()`    | `memoryItemService.updateNote()`                     | 写 `clues.note`                           |
 | 捕获（摘录）          | `CAPTURE_TEXT_EXCERPT`       | `handleCaptureTextExcerpt()`  | `memoryItemService.captureTextExcerpt()`             | 写 MemoryItem                             |
 | 捕获（书签）          | `CAPTURE_BOOKMARK`           | `handleCaptureBookmark()`     | `memoryItemService.captureBookmark()`                | 写 MemoryItem                             |
 | 删除摘录              | `deleteMemoryItem()`         | `handleDeleteMemoryItem()`    | `memoryItemService.softDelete()`                     | 软删 `text_excerpt`                       |

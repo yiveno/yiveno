@@ -1,5 +1,5 @@
 /**
- * LLM 追问 NLG：prompt → completer → JSON → Zod → 门禁映射。
+ * LLM 追问 NLG：LLM prompt → completer → JSON → Zod → 门禁映射。
  * 仅 need_a_clue；失败抛错由上层捕获后降级静态文案；不碰数据平面。
  */
 

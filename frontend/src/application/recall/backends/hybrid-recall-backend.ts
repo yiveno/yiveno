@@ -11,7 +11,9 @@ import type { RecallBackend, RecallWithClueOptions } from '@/application/recall/
 import { applyCurrentTabDomainBoost } from '@/application/recall/apply-current-tab-domain-boost'
 import { RECALL_SCAN_LIMIT } from '@/application/recall/backends/recall-scan-limit'
 import { buildEnvironmentRecallSuggestions } from '@/core/recall/build-environment-recall-suggestions'
-import { buildQueryEmbeddingText } from '@/core/recall/build-query-embedding-text'
+import { buildRecallFramingFacts } from '@/core/recall/build-recall-framing-facts'
+import { RECALL_RESULT_PAGE_SIZE } from '@/core/recall/build-recall-result'
+import { buildClueEmbeddingText } from '@/core/recall/build-clue-embedding-text'
 import {
   buildRecallResult,
   filterKeywordMatchesBeforeCollapse,
@@ -38,7 +40,7 @@ import {
 import { enrichEmptyRecallResult } from '@/core/recall/enrich-empty-recall-result'
 import {
   applyParsedClueScoreBoosts,
-  buildSearchClueFromParsed,
+  buildFilterClueFromParsed,
   filterMatchesByParsedTimeRange,
   recallByKeywordWithParsedClue,
   shouldRecallByConstraintNeighborhood,
@@ -47,9 +49,15 @@ import {
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
 import { getMemoryItemDisplay } from '@/core/recall/recall-result'
+import {
+  renderRecallFraming,
+  renderRecallFramingCounts,
+  renderRecallFramingRulesBody,
+  joinRecallFramingSentences
+} from '@/core/recall/render-recall-framing'
 import type { RecallPipelineTiming } from '@/core/recall/recall-telemetry'
 import { completeComposerNarrowExamplePolishWithLlm } from '@/core/recall/understand/complete-composer-narrow-example-polish'
-import { completeRecallFollowUpWithLlm } from '@/core/recall/understand/complete-recall-follow-up'
+import { completeRecallFramingNlgWithLlm } from '@/core/recall/understand/complete-recall-framing-nlg'
 import { understandRecallClue } from '@/core/recall/understand/understand-recall-clue'
 import { requestWorkerEmbeddings } from '@/infrastructure/ai/embed-api-client'
 import { getAuthSession } from '@/infrastructure/identity/auth-session-service'
@@ -67,6 +75,26 @@ function attachDialogMeta(
     clue: meta.clue,
     parsed: meta.parsed,
     effectiveClue: meta.effectiveClue
+  }
+}
+
+/** 列表级邻域说明（规则模板；Phase A）。 */
+function attachRecallFraming(result: RecallResult): RecallResult {
+  const facts = buildRecallFramingFacts(result, { shownCount: RECALL_RESULT_PAGE_SIZE })
+  if (!facts) {
+    return result
+  }
+  const text = renderRecallFraming(facts, t).trim()
+  if (!text) {
+    return result
+  }
+  return {
+    ...result,
+    recallFraming: {
+      source: 'rules',
+      text,
+      facts
+    }
   }
 }
 
@@ -96,11 +124,33 @@ async function finalizeKeywordResult(
   return buildRecallResult(displayClue, withPairs)
 }
 
+function collectWeakCandidateTitles(result: RecallResult): string[] {
+  const pool = [...(result.topPick ? [result.topPick] : []), ...result.alsoPossible]
+  return pool.slice(0, 3).map(match => {
+    const display = getMemoryItemDisplay(match.item, () => '')
+    return display.title || display.excerpt || display.subtitle || match.item.id
+  })
+}
+
+/** 宽邻域 top_pick 或 need_a_clue 才尝试 LLM 润色（窄 top_pick 省配额）。 */
+function shouldPolishFramingWithLlm(result: RecallResult): boolean {
+  if (!result.recallFraming?.facts || result.recallFraming.facts.kind !== 'candidates') {
+    return false
+  }
+  if (result.outcome === 'need_a_clue') {
+    return result.topPick !== null || result.alsoPossible.length > 0
+  }
+  if (result.outcome === 'top_pick') {
+    return result.totalRankedCount >= COMPOSER_PLACEHOLDER_NARROW_MIN_RANKED
+  }
+  return false
+}
+
 /**
- * need_a_clue 时尝试 LLM 追问（仅用于在已有候选内收窄）；失败静默降级。
- * no_match 不追问。计入与理解层同一 hosted/clue completer 配额桶。
+ * Phase B：LLM 润色 P1–P5；P6 计数仍规则拼接；芯片仅 need_a_clue。
+ * 失败静默降级 rules framing。
  */
-async function attachLlmFollowUpIfNeeded(
+async function attachRecallFramingLlmPolish(
   result: RecallResult,
   input: {
     complete: NonNullable<ReturnType<typeof getClueLlmCompleter>>
@@ -109,34 +159,47 @@ async function attachLlmFollowUpIfNeeded(
     trace: ReturnType<typeof createRecallFlowTrace>
   }
 ): Promise<RecallResult> {
-  if (result.outcome !== 'need_a_clue' || result.alsoPossible.length === 0) {
+  if (!shouldPolishFramingWithLlm(result) || !result.recallFraming) {
     return result
   }
 
-  const weakCandidateTitles = result.alsoPossible.slice(0, 3).map(match => {
-    const display = getMemoryItemDisplay(match.item, () => '')
-    return display.title || display.excerpt || display.subtitle || match.item.id
-  })
+  const facts = result.recallFraming.facts
+  const rulesBaseline = renderRecallFramingRulesBody(facts, t)
 
   try {
-    const followUp = await completeRecallFollowUpWithLlm({
+    const mapped = await completeRecallFramingNlgWithLlm({
       clue: input.clue,
       parsed: input.parsed,
-      outcome: 'need_a_clue',
-      weakCandidateTitles,
+      outcome: result.outcome,
+      facts,
+      rulesBaseline,
+      weakCandidateTitles: collectWeakCandidateTitles(result),
       complete: input.complete,
       trace: input.trace
     })
+
+    const countsPart = facts.kind === 'candidates' ? renderRecallFramingCounts(facts, t) : ''
+    const text = joinRecallFramingSentences(countsPart ? [mapped.text, countsPart] : [mapped.text])
+
     return {
       ...result,
-      assistantFollowUp: {
+      recallFraming: {
         source: 'llm',
-        text: followUp.text,
-        suggestions: followUp.suggestions
-      }
+        text,
+        facts
+      },
+      ...(mapped.suggestions.length > 0
+        ? {
+            assistantFollowUp: {
+              source: 'llm' as const,
+              text: '',
+              suggestions: mapped.suggestions
+            }
+          }
+        : {})
     }
   } catch (error) {
-    input.trace('warn', 'LLM 追问：失败，降级静态文案', {
+    input.trace('warn', 'LLM Framing：失败，降级规则模板', {
       outcome: result.outcome,
       error: error instanceof Error ? error.message : String(error)
     })
@@ -321,9 +384,10 @@ async function fuseHybridMatches(input: {
   /** 与会话 Outcome 对指纹对齐（通常为 merge.effectiveRaw） */
   pairClue: string
   items: Awaited<ReturnType<typeof memoryItemService.list>>
-  searchClue: string
+  filterClue: string
   parsed: ParsedRecallClue
-  queryText: string
+  /** embedding 请求文本 */
+  clueEmbeddingText: string
   currentTabDomain?: string
   trace: ReturnType<typeof createRecallFlowTrace>
 }): Promise<RecallResult | null> {
@@ -336,11 +400,11 @@ async function fuseHybridMatches(input: {
   // 先全量打分再折叠到 Hybrid 关键词池，避免重复书签占满 HYBRID_KEYWORD_POOL
   const keywordMatches = collapseRecallMatches(
     filterMatchesByParsedTimeRange(
-      filterKeywordMatchesBeforeCollapse(input.items, input.searchClue).map(match =>
+      filterKeywordMatchesBeforeCollapse(input.items, input.filterClue).map(match =>
         applyParsedClueScoreBoosts(match, input.parsed)
       ),
       input.parsed
-    ).filter(match => !isGenericOnlyHitAgainstSpecificClue(input.searchClue, match.item)),
+    ).filter(match => !isGenericOnlyHitAgainstSpecificClue(input.filterClue, match.item)),
     { limit: HYBRID_KEYWORD_POOL }
   )
 
@@ -358,14 +422,14 @@ async function fuseHybridMatches(input: {
 
   let queryVector: number[]
   try {
-    const embed = await requestWorkerEmbeddings(session.accessToken, [input.queryText])
+    const embed = await requestWorkerEmbeddings(session.accessToken, [input.clueEmbeddingText])
     const vector = embed.embeddings[0]
     if (!vector?.length) {
       return null
     }
     queryVector = vector
   } catch (error) {
-    input.trace('info', 'Hybrid：query embed 失败，降级关键词', {
+    input.trace('info', 'Hybrid：clue embed 失败，降级关键词', {
       error: error instanceof Error ? error.message : String(error)
     })
     return null
@@ -564,7 +628,7 @@ export class HybridRecallBackend implements RecallBackend {
     const listed = listedResult.items
     const items = excludeDismissedMemoryItems(listed, dismissedIds)
 
-    const queryText = buildQueryEmbeddingText({
+    const clueEmbeddingText = buildClueEmbeddingText({
       effectiveClue: merge.effectiveRaw,
       parsed: merge.merged,
       rawClue: normalizedClue
@@ -605,9 +669,9 @@ export class HybridRecallBackend implements RecallBackend {
           displayClue: normalizedClue,
           pairClue,
           items,
-          searchClue: buildSearchClueFromParsed(merge.merged),
+          filterClue: buildFilterClueFromParsed(merge.merged),
           parsed: merge.merged,
-          queryText,
+          clueEmbeddingText,
           ...(currentTabDomain !== undefined ? { currentTabDomain } : {}),
           trace
         })) ?? null
@@ -635,25 +699,28 @@ export class HybridRecallBackend implements RecallBackend {
       effectiveClue: merge.effectiveRaw
     })
     const enriched = enrichEmptyRecallResult(withMeta, items, merge.merged)
-    const withLlmFollowUp = complete
-      ? await attachLlmFollowUpIfNeeded(enriched, {
+
+    const withNarrowExamples = await attachComposerNarrowExamplesIfNeeded(enriched, {
+      clue: normalizedClue,
+      trace,
+      ...(complete ? { complete } : {})
+    })
+
+    const withFraming = attachRecallFraming(withNarrowExamples)
+
+    const withFramingLlm = complete
+      ? await attachRecallFramingLlmPolish(withFraming, {
           complete,
           clue: normalizedClue,
           parsed: merge.merged,
           trace
         })
-      : enriched
+      : withFraming
 
-    const withFollowUp = attachEnvironmentFollowUpIfNeeded(withLlmFollowUp, {
+    const withFollowUp = attachEnvironmentFollowUpIfNeeded(withFramingLlm, {
       clue: normalizedClue,
       trace,
       ...(currentTabDomain !== undefined ? { currentTabDomain } : {})
-    })
-
-    const withNarrowExamples = await attachComposerNarrowExamplesIfNeeded(withFollowUp, {
-      clue: normalizedClue,
-      trace,
-      ...(complete ? { complete } : {})
     })
 
     const postProcessMs = Date.now() - postProcessStartedAt
@@ -676,16 +743,17 @@ export class HybridRecallBackend implements RecallBackend {
       usedHybrid,
       understandSource: understood.source,
       understandMode: understood.mode,
-      outcome: withNarrowExamples.outcome,
-      emptyKind: withNarrowExamples.emptyKind ?? null,
-      relatedGuessId: withNarrowExamples.relatedGuess?.item.id ?? null,
-      followUpSource: withNarrowExamples.assistantFollowUp?.source ?? 'rules',
-      topPickId: withNarrowExamples.topPick?.item.id ?? null,
-      narrowExampleCount: withNarrowExamples.composerNarrowExamples?.length ?? 0
+      outcome: withFollowUp.outcome,
+      emptyKind: withFollowUp.emptyKind ?? null,
+      relatedGuessId: withFollowUp.relatedGuess?.item.id ?? null,
+      followUpSource: withFollowUp.assistantFollowUp?.source ?? 'rules',
+      topPickId: withFollowUp.topPick?.item.id ?? null,
+      narrowExampleCount: withFollowUp.composerNarrowExamples?.length ?? 0,
+      framingSource: withFollowUp.recallFraming?.source ?? null
     })
 
     return {
-      ...withNarrowExamples,
+      ...withFollowUp,
       pipelineTiming
     }
   }

@@ -228,7 +228,8 @@ grep -r "document\." frontend/src/background/
 
 - [项目架构规范](../../.kiro/steering/project.md)
 - [AGENTS.md](../../AGENTS.md)
-- [产品文档 v4.0](../../docs/product/Yiveno-产品文档-v4.0.md)（唯一产品规格正文）
+- [Yiveno 术语表](../../docs/product/Yiveno-术语表.md)（概念叫法唯一权威）
+- [产品文档 v4.0](../../docs/product/Yiveno-产品文档-v4.0.md)（产品/架构行为契约）
 
 ---
 

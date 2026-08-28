@@ -1,3 +1,4 @@
+import type { RecallFramingFacts } from '@/core/recall/recall-framing-facts'
 import type { RecallCardModel } from '@/pages/sidepanel/RecallResultCard.vue'
 
 export type RecallSuggestion = {
@@ -40,6 +41,8 @@ export type AssistantTurn = {
    * 缺省时 Side Panel 对本轮 candidateCards 再抽。
    */
   composerNarrowExamples?: string[]
+  /** 列表级 Framing 事实；Show more 时重渲染 P6 计数。 */
+  recallFramingFacts?: RecallFramingFacts
   allowDismiss: boolean
 }
 

@@ -163,7 +163,7 @@
     "message": "Importing your bookmarks"
   },
   "cold_start_stage_import_body": {
-    "message": "Copying Chrome bookmarks into your local Yiveno library. This is the raw material Recall searches."
+    "message": "Copying Chrome bookmarks into your local Yiveno library. This is the raw material you'll recall with clues."
   },
   "cold_start_stage_rules_title": {
     "message": "Indexing for keyword recall"
@@ -385,6 +385,9 @@
         "example": "history"
       }
     }
+  },
+  "popup_thread_title_label": {
+    "message": "This find"
   },
   "popup_thread_title_aria": {
     "message": "This find: $1",
@@ -1775,6 +1778,210 @@
       "fields": {
         "content": "$1",
         "example": "title"
+      }
+    }
+  },
+  "framing_list_sep": {
+    "message": ", "
+  },
+  "framing_p1_object_types": {
+    "message": "Looking for $1 traces in your library.",
+    "placeholders": {
+      "types": {
+        "content": "$1",
+        "example": "video"
+      }
+    }
+  },
+  "framing_p1_time": {
+    "message": "Within $1,",
+    "placeholders": {
+      "label": {
+        "content": "$1",
+        "example": "last week"
+      }
+    }
+  },
+  "framing_p1_terms": {
+    "message": "Based on \"$1\" in your library.",
+    "placeholders": {
+      "terms": {
+        "content": "$1",
+        "example": "deploy"
+      }
+    }
+  },
+  "framing_p1_generic": {
+    "message": "Looking through your saved traces."
+  },
+  "framing_p1_note_hint": {
+    "message": "You hinted there was a note."
+  },
+  "framing_p2_literal": {
+    "message": "These ranked by wording in your saved text."
+  },
+  "framing_p2_constraint": {
+    "message": "These match the type you pointed at in your library."
+  },
+  "framing_p2_hybrid": {
+    "message": "Wording and related meaning shaped this list."
+  },
+  "framing_p2_mixed": {
+    "message": "Type neighborhood and wording both shaped this list."
+  },
+  "framing_p3_prefix": {
+    "message": "Mostly: $1.",
+    "placeholders": {
+      "buckets": {
+        "content": "$1",
+        "example": "excerpts (12), bookmarks (8)"
+      }
+    }
+  },
+  "framing_bucket_excerpt": {
+    "message": "excerpts ($1)",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "framing_bucket_bookmark": {
+    "message": "bookmarks ($1)",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "8"
+      }
+    }
+  },
+  "framing_bucket_with_note": {
+    "message": "items with notes ($1)",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "framing_bucket_constraint": {
+    "message": "type-neighborhood hits ($1)",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "15"
+      }
+    }
+  },
+  "framing_bucket_domain": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "www.youtube.com"
+      },
+      "count": {
+        "content": "$2",
+        "example": "6"
+      }
+    }
+  },
+  "framing_p4_confident": {
+    "message": "This looks like a solid neighborhood to start from."
+  },
+  "framing_p4_weak": {
+    "message": "Nothing here is strong enough to pin down yet."
+  },
+  "framing_ambiguity_site": {
+    "message": "Which site or platform were you thinking of?"
+  },
+  "framing_ambiguity_note": {
+    "message": "Do you remember what you wrote in a note?"
+  },
+  "framing_ambiguity_type_mix": {
+    "message": "Several kinds of $1-related traces — what narrows it down?",
+    "placeholders": {
+      "type": {
+        "content": "$1",
+        "example": "video"
+      }
+    }
+  },
+  "framing_ambiguity_token": {
+    "message": "A distinctive word from the page or note would help."
+  },
+  "framing_p6_all": {
+    "message": "$1 related matches, ranked by fit:",
+    "placeholders": {
+      "total": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "framing_p6_partial": {
+    "message": "$1 related matches · showing $2–$3:",
+    "placeholders": {
+      "total": {
+        "content": "$1",
+        "example": "32"
+      },
+      "from": {
+        "content": "$2",
+        "example": "1"
+      },
+      "to": {
+        "content": "$3",
+        "example": "5"
+      }
+    }
+  },
+  "framing_guess_constrained_none": {
+    "message": "Nothing in your library matched those constraints."
+  },
+  "framing_guess_unconstrained": {
+    "message": "Nothing in your library matched this clue."
+  },
+  "framing_guess_disclaimer": {
+    "message": "The item below is only a guess — not an answer."
+  },
+  "framing_object_poem": {
+    "message": "poem"
+  },
+  "framing_object_article": {
+    "message": "article"
+  },
+  "framing_object_song": {
+    "message": "song"
+  },
+  "framing_object_video": {
+    "message": "video"
+  },
+  "framing_object_code": {
+    "message": "code"
+  },
+  "framing_object_command": {
+    "message": "command"
+  },
+  "framing_object_page": {
+    "message": "page"
+  },
+  "framing_object_password": {
+    "message": "password"
+  },
+  "framing_object_quote": {
+    "message": "quote"
+  },
+  "framing_object_bookmark": {
+    "message": "bookmark"
+  },
+  "framing_object_generic": {
+    "message": "$1",
+    "placeholders": {
+      "type": {
+        "content": "$1",
+        "example": "video"
       }
     }
   },

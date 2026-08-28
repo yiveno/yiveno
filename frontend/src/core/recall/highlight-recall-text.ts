@@ -13,7 +13,7 @@ export type RecallHighlightSurface =
   | 'title' // 标题
   | 'excerpt' // 摘录正文
   | 'subtitle' // 副信息 / 出处
-  | 'note' // 用户备注
+  | 'note' // 用户附注（clues.note）
 
 /**
  * 主因字段 → 卡片展示面（与 Popup 展示结构对齐）。

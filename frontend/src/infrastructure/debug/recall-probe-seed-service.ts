@@ -1,5 +1,5 @@
 /**
- * DEV：种入召回探针语料（Chrome 书签 + Memory 摘录/备注）。
+ * DEV：种入召回探针语料（Chrome 书签 + Memory 摘录/附注）。
  * 仅 background / import.meta.env.DEV；禁止生产构建调用。
  */
 

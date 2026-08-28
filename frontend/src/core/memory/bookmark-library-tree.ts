@@ -17,7 +17,7 @@ export interface BookmarkLibraryLeafNode {
   title: string
   url: string
   memoryItemId?: string
-  /** Yiveno 本地备注（不同步 Chrome） */
+  /** Yiveno 本地附注（不同步 Chrome） */
   note?: string
 }
 
@@ -65,7 +65,7 @@ export interface MapChromeBookmarkTreeOptions {
   unnamedFolderTitle: string
   /** URL → MemoryItem.id；chromeId 未命中时回退 */
   memoryIdByUrl?: ReadonlyMap<string, string>
-  /** MemoryItem.id → 备注 */
+  /** MemoryItem.id → 附注 */
   noteByMemoryId?: ReadonlyMap<string, string>
 }
 

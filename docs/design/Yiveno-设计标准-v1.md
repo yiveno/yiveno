@@ -21,7 +21,7 @@
 - 设计令牌（**自研 Brand Core + 产品角色**；不以第三方主题生成器为标准）
 - 对内演示、对招聘/合作方的视觉呈现
 
-**本标准不替代产品功能规范。** 功能、术语（Filter / Recall）、数据流、LLM 边界仍以产品文档为准。
+**本标准不替代产品功能规范。** 功能、数据流、LLM 边界以产品文档为准；**术语（Filter / Recall / clue 等）唯一权威**见 `docs/product/Yiveno-术语表.md`。
 
 ### 0.1 权威声明（必须遵守）
 
@@ -417,4 +417,5 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
 | `frontend/src/styles/extension-ui.css`               | 扩展入口：brand + variables + semantic              |
 | `docs/design/Yiveno-logo-asset-generation-prompt.md` | Logo 导出流程（色值须服从本标准）                   |
 | `PRODUCT.md`                                         | 产品性格（Impeccable）                              |
-| 产品文档 v4.0 §0                                     | 产品与术语 Normative                                |
+| `docs/product/Yiveno-术语表.md`                      | 术语唯一权威（Glossary）                            |
+| 产品文档 v4.0 §0                                     | 产品行为/契约 Normative                             |

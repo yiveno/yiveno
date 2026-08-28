@@ -31,7 +31,7 @@ export type RecallEvalGate =
 
 export interface RecallEvalCase {
   id: string
-  /** 模拟用户输入的线索（单轮；多轮时等于 dialogTurns 最后一句） */
+  /** 模拟用户提交的 clue（单轮；多轮时等于 dialogTurns 最后一句） */
   clue: string
   /**
    * 多轮对话：按顺序补充；最后一句为本轮。
@@ -286,7 +286,7 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
     clueClass: 'semi_fuzzy',
     gate: 'must',
     expectation: { kind: 'top1', expectedId: RECALL_EVAL_IDS.typeBRetentionNote },
-    note: 'Type B：正文泛化，靠个人备注 clues.note 找回'
+    note: 'Type B：正文泛化，靠个人附注 clues.note 找回'
   },
   {
     id: 'concrete-typo-yiveno-doc',
@@ -313,7 +313,7 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
     clueClass: 'semi_fuzzy',
     gate: 'must',
     expectation: { kind: 'top1', expectedId: RECALL_EVAL_IDS.typeBRetentionNote },
-    note: 'R0/B：T1 备注锚点 + T2 只补 yesterday；槽位 merge 后仍应 Top1 命中备注项'
+    note: 'R0/B：T1 附注锚点 + T2 只补 yesterday；槽位 merge 后仍应 Top1 命中附注项'
   },
   {
     id: 'dialog-dismiss-excludes-top',
@@ -380,7 +380,7 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
     clueClass: 'semi_fuzzy',
     gate: 'must',
     expectation: { kind: 'in_topk', expectedId: RECALL_EVAL_IDS.deployNoteExcerpt, k: 3 },
-    note: 'R4：备注指向 deploy checklist reminder'
+    note: 'R4：附注指向 deploy checklist reminder'
   },
   {
     id: 'r4-vague-recently-saved',

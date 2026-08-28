@@ -1,6 +1,6 @@
 /**
  * P0 关键词 Recall 编排：口语解析 → 检索词选择 → 约束软加权 → 折叠出结果。
- * 不改变 Filter 内核；只在候选分上叠加时间/类型/备注/行为信号。
+ * 不改变 Filter 内核；只在候选分上叠加时间/类型/附注/行为信号。
  */
 
 import type { MemoryItem } from '@/core/memory/memory-item'
@@ -27,7 +27,7 @@ import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
 /** 对象类型命中软加成。 */
 export const RECALL_ORCHESTRATION_OBJECT_TYPE_BOOST = 8
 
-/** 备注指向且条目有 note 时的软加成。 */
+/** 附注指向且条目有 note 时的软加成。 */
 export const RECALL_ORCHESTRATION_NOTE_HINT_BOOST = 6
 
 /** often_opened 且 settledCount 较高时的软加成（§7.2：不吃裸 openCount）。 */
@@ -241,8 +241,8 @@ export function shouldSkipRecallAsZeroAnchor(clue: string, parsed: ParsedRecallC
   return !shouldRecallByConstraintNeighborhood(parsed)
 }
 
-/** 由解析结果决定交给 keyword-filter 的检索串（不做内容别名扩词）。 */
-export function buildSearchClueFromParsed(parsed: ParsedRecallClue): string {
+/** 由解析结果拼 Filter 检索词面（`filterClue`）。不做内容别名扩词。 */
+export function buildFilterClueFromParsed(parsed: ParsedRecallClue): string {
   const contentTerms = effectiveContentTermsForRecall(parsed)
   if (contentTerms.length > 0) {
     return contentTerms.join(' ')
@@ -513,7 +513,7 @@ export function applyParsedClueScoreBoosts(
 
 /**
  * 带口语解析的关键词 Recall。
- * RecallResult.clue 仍为用户原始输入（UI 展示）；内部检索可用剥离后的 searchClue。
+ * RecallResult.clue 仍为用户原始 clue（UI 展示）；内部 Filter 可用剥离槽位后的 `filterClue`。
  * 无内容词且具备时间+类型（或刚存）时走约束邻域，不把虚词当检索词。
  */
 export function recallByKeywordWithParsedClue(
@@ -562,10 +562,10 @@ export function recallByKeywordWithParsedClue(
     return buildRecallResult(raw, collapsed)
   }
 
-  const searchClue = buildSearchClueFromParsed(parsed)
+  const filterClue = buildFilterClueFromParsed(parsed)
 
   const matches = filterMatchesByParsedTimeRange(
-    filterKeywordMatchesBeforeCollapse(items, searchClue, { nowMs }).map(match =>
+    filterKeywordMatchesBeforeCollapse(items, filterClue, { nowMs }).map(match =>
       applyParsedClueScoreBoosts(match, parsed, nowMs)
     ),
     parsed
