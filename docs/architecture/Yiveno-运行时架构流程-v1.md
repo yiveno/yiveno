@@ -32,7 +32,7 @@
 flowchart LR
   subgraph Input["输入入口（浏览器侧）"]
     I1["Chrome API：书签 / 页面 / 事件<br/>（捕获、导入、同步、打开）"]
-    I2["用户交互：Popup / Library / Detail / 划词浮层 / 快捷键 / Omnibox"]
+    I2["用户交互：Side Panel / Library / Detail / 划词浮层 / 快捷键 / Omnibox"]
   end
 
   subgraph BG["Background（Service Worker）"]
@@ -49,7 +49,7 @@ flowchart LR
   end
 
   subgraph UI["Vue UI（pages/* / content/*）"]
-    U1["Popup / Library / Detail / Settings"]
+    U1["Side Panel / Library / Detail / Settings"]
     U2["content/selection-toolbar：划词浮层逻辑"]
     U3["background-client.ts：UI 唯一访问 Background 的消息客户端"]
   end
@@ -235,12 +235,12 @@ clue → 关键词 Filter → 排序 → 折叠（duplicates）→ Top Pick / Al
 
 当“最佳候选得分未达阈值”时触发 `Need A Clue`。
 
-**Recall 端到端链路（以 Popup 为例）**
+**Recall 端到端链路（以 Side Panel 为例）**
 
 ```mermaid
 sequenceDiagram
   participant U as 用户
-  participant UI as Popup / Library UI
+  participant UI as Side Panel / Library UI
   participant BC as background-client
   participant MH as handlers/message-handler
   participant RH as handlers/recall-handler
@@ -251,7 +251,7 @@ sequenceDiagram
   participant KF as core/recall/keyword-filter
   participant BR as core/recall/build-recall-result
 
-  U->>UI: 输入线索（Popup clue）
+  U->>UI: 提交 clue（Side Panel composer）
   UI->>BC: RECALL_WITH_CLUE { clue }
   BC->>MH: sendMessage
   MH->>RH: handleRecallWithClue
@@ -274,7 +274,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-  participant UI as Popup/Card 或 Library
+  participant UI as Side Panel/Card 或 Library
   participant BC as background-client
   participant MH as handlers/message-handler
   participant MHB as handlers/memory-handler
@@ -291,7 +291,7 @@ sequenceDiagram
   MHB-->>BC: ok + item
 ```
 
-> 注意：若打开的是 `detail.html`，详情页写“线索/行为/计数”的细节由各自页面负责（以现有实现为准），不要在 Popup 重复计数。
+> 注意：若打开的是 `detail.html`，详情页写「线索/行为/计数」的细节由各自页面负责（以现有实现为准），不要在 Side Panel 重复计数。
 
 ### 3.4 Feedback：Need A Clue & dismiss（“这些都不对”）
 
@@ -308,7 +308,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
   participant U as 用户
-  participant UI as Popup
+  participant UI as Side Panel
   participant BC as background-client
   participant MH as handlers/message-handler
   participant MHB as handlers/memory-handler
@@ -340,7 +340,7 @@ Omnibox 是“单次命中”入口：输入变化只生成原生建议，不做
 
 **关键点（产品边界）**
 
-- 无追问会话（不复用 Popup 的 Need A Clue 交互态）
+- 无追问会话（不复用 Side Panel 的 Need A Clue 多轮交互态）
 - 避免落进“placeholder URL 后忘记记录/跳转”的状态：书签通过 `recordMemoryOpen` 写行为信号；摘录进 `detail.html` 由详情页记录
 
 **代码链路（Background listener 内部直跑，无 UI messaging）**
@@ -357,10 +357,10 @@ Omnibox 是“单次命中”入口：输入变化只生成原生建议，不做
 
 ### 3.6 快捷键命令入口（开壳/激活功能）
 
-用户的“找回 Popup / 打开记忆库 / 打开设置 / 保存选区”主要通过两层完成：
+用户的「打开 Recall Side Panel / 打开记忆库 / 打开设置 / 保存选区」主要通过两层完成：
 
-1. **Chrome 原生 `_execute_action`**：默认直接打开 Popup（不进入你们的 `onCommand` 路径）
-2. **Yiveno 自定义 commands**：由 Background 注册后执行对应动作
+1. **Chrome 工具栏 action + `sidePanel.openPanelOnActionClick`**：无 `default_popup`；点击图标打开 Side Panel（`ensureSidePanelOpensOnActionClick`）
+2. **Yiveno 自定义 commands**：由 Background 注册后执行对应动作（`open_recall` 等经 `handleOpenRecallShell`）
 
 **代码链路**
 
@@ -373,7 +373,7 @@ Omnibox 是“单次命中”入口：输入变化只生成原生建议，不做
 
 - `frontend/src/core/ui/keyboard-command.ts`
   - 只负责“解释键盘意图”（上/下/Enter confirm 等）
-  - 具体页面把意图映射到自己的状态机（比如 Popup 的列表选中逻辑）
+  - 具体页面把意图映射到自己的状态机（比如 Side Panel 的结果列表键盘导航）
 
 ### 3.7 Library / Detail 打开链路（行为记录落点）
 
@@ -508,7 +508,7 @@ Omnibox 是“单次命中”入口：输入变化只生成原生建议，不做
 当前阶段不要在 UI 或 core 随意改扫描策略；如需改，必须同步：
 
 - `recall-eval` 的基线
-- 性能实测（尤其 Popup/Omnibox 的延迟）
+- 性能实测（尤其 Side Panel / Omnibox 的延迟）
 
 ## 7. 测试与评测：怎么用来“避免回归”
 

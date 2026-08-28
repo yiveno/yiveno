@@ -97,6 +97,7 @@ components:
 
 > **Normative companion (中文完整标准):** [`docs/design/Yiveno-设计标准-v1.md`](docs/design/Yiveno-设计标准-v1.md) **v1.5**  
 > **Product truth:** [`docs/product/Yiveno-产品文档-v4.0.md`](docs/product/Yiveno-产品文档-v4.0.md) §0  
+> **Terminology (Glossary):** [`docs/product/Yiveno-术语表.md`](docs/product/Yiveno-术语表.md) — user Recall input = **clue**; `clues.note` = **note** (附注)
 > **Brand assets:** [`docs/design/brand-assets/README.md`](docs/design/brand-assets/README.md)  
 > **Authority:** [`packages/design-tokens/css/brand.css`](packages/design-tokens/css/brand.css) — colors, roles, `--space-*`, `--radius-*`. Extension UI: self-built `App*` components (`AppButton`, `AppModal`, …) + [`extension-ui.css`](frontend/src/styles/extension-ui.css).
 

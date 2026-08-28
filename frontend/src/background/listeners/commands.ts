@@ -14,7 +14,7 @@ let listenersRegistered = false
 
 /**
  * 注册自定义命令处理器与 chrome.commands.onCommand 监听。
- * `_execute_action` 由 Chrome 直接打开 Popup（找回），不进入本路径。
+ * `_execute_action` / 工具栏点击由 `ensureSidePanelOpensOnActionClick` 打开 Side Panel，不进入本 `onCommand` 路径。
  * 书签写入靠 Chrome 原生书签 + sync 监听，不提供「保存当前页」快捷键。
  */
 export function registerCommandListeners(): void {
