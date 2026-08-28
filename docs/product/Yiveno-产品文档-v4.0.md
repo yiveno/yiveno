@@ -185,7 +185,7 @@ Yiveno 解决的**不是**「某一类内容找不到」的单点痛点，而是
 | 维度       | 文件夹 / 大纲型知识库  | Yiveno                                            |
 | ---------- | ---------------------- | ------------------------------------------------- |
 | 存的前提   | 往往先想好「放哪一类」 | **interesting → 快捷键 → 完**                     |
-| 结构的角色 | 找回的主路径           | **可选备注层**；找回主路径是 **「要」**（Recall） |
+| 结构的角色 | 找回的主路径           | **可选附注层**；找回主路径是 **「要」**（Recall） |
 | 人脑记忆   | 内容 + 目录结构        | **内容线索 + 模糊口语**即可                       |
 | 机器职责   | 多为被动容器           | **索引、加权、候选、必要时追问**                  |
 
@@ -249,7 +249,7 @@ Yiveno 解决的**不是**「某一类内容找不到」的单点痛点，而是
 | **存的目的**       | 放进正确目录，方便以后翻       | **只有一个目的：用时能拿到**                                           |
 | **存时决策**       | 放哪、叫什么、要不要整理       | interesting → 按快捷键，完                                             |
 | **对「乱」的焦虑** | 书签树乱 = 失败                | 库可以厚、结构可以平；**找得着 ≠ 目录整齐**                            |
-| **整齐目录的意义** | 找回的主路径                   | **作为整理手段大幅贬值**；但作为**挂私人备注的载体**价值上升（见下节） |
+| **整齐目录的意义** | 找回的主路径                   | **作为整理手段大幅贬值**；但作为**挂私人附注的载体**价值上升（见下节） |
 
 **Normative：**
 
@@ -269,26 +269,26 @@ Chrome 书签只有标题、URL、文件夹位置——用户存一个网页时�
 - 为啥要保存？
 - 有什么用 / 什么时候会用到？
 
-这类需求像**给好友加备注**：对象（网页/书签）还在 Chrome 那套结构里，但**私人语义**只能挂在 Yiveno 侧。工程落点即 **`clues.note` 附注**（仅存 Yiveno，不同步 Chrome）。
+这类需求像**给好友加附注**：对象（网页/书签）还在 Chrome 那套结构里，但**私人语义**只能挂在 Yiveno 侧。工程落点即 **`clues.note` 附注**（仅存 Yiveno，不同步 Chrome）。
 
 | 层           | 谁提供                              | 职责                                                                |
 | ------------ | ----------------------------------- | ------------------------------------------------------------------- |
 | **结构层**   | Chrome 原生书签树（sync 进 Yiveno） | 用户熟悉的目录、放哪都行；**不再承担「找得着」的主责任**            |
 | **个性化层** | Yiveno 记忆库书签树                 | 在同一结构上展示/编辑 `clues.note`；给未来的自己留上下文            |
-| **找回层**   | Recall（**Side Panel** / Omnibox）  | 消费标题、URL、**备注**、行为与时间线索；主路径仍是「要」，不是翻树 |
+| **找回层**   | Recall（**Side Panel** / Omnibox）  | 消费标题、URL、**附注**、行为与时间线索；主路径仍是「要」，不是翻树 |
 
 **Normative：**
 
-- 书签树的主价值 = **私人备注载体 + 轻浏览**，不是文件夹整理器。
-- 鼓励用户在存书签后（或事后）补一句「给以后自己的提示」；备注同时是 Recall **强线索**（见 §2.3）。
-- 不得把书签树做成第二套「必须维护整齐才能用」的管理中心；**乱存 + 有备注 + 找得着** 优于 **整齐无备注**。
-- Capture 侧可逐步降低「写备注」的摩擦（如存书签后轻量补注入口），但**不得**退回「存前必选文件夹/分类」的旧负担。
+- 书签树的主价值 = **私人附注载体 + 轻浏览**，不是文件夹整理器。
+- 鼓励用户在存书签后（或事后）补一句「给以后自己的提示」；附注同时是 Recall **强线索**（见 §2.3）。
+- 不得把书签树做成第二套「必须维护整齐才能用」的管理中心；**乱存 + 有附注 + 找得着** 优于 **整齐无附注**。
+- Capture 侧可逐步降低「写附注」的摩擦（如存书签后轻量补注入口），但**不得**退回「存前必选文件夹/分类」的旧负担。
 
 #### 核心资产（谁是主角）
 
 Yiveno 的不可替代资产 **不是** Chrome 书签 URL，**也不是**用户从零写的长文笔记。
 
-**核心资产 = 用户在消费互联网信息时，附着在原文上的个人痕迹**（摘录、短备注/`clues.note`、以及将来极瘦的标记类能力）：
+**核心资产 = 用户在消费互联网信息时，附着在原文上的个人痕迹**（摘录、短附注/`clues.note`、以及将来极瘦的标记类能力）：
 
 - 有**出处锚**（页面 / URL / 域 / 上下文）；
 - 有**个人增量**（划下的句子、自己的话）——Google 索引里没有「你的那条」；
@@ -299,8 +299,8 @@ Yiveno 的不可替代资产 **不是** Chrome 书签 URL，**也不是**用户�
 | 知识形态                | 角色                  | 说明                                                                                                    |
 | ----------------------- | --------------------- | ------------------------------------------------------------------------------------------------------- |
 | **摘录 `text_excerpt`** | **主角**              | 主动 Capture；对 Google 有非对称优势；存/找叙事与 demo 优先用它                                         |
-| **`clues.note` 附注**   | **强线索 / 私有增量** | 可挂在摘录或书签上；是「自己的话」，不是独立笔记库；**书签侧经记忆库树编辑，像给好友加备注**            |
-| **书签 `bookmark`**     | **配角**              | 导入 + 原生 sync 灌库；价值在 URL + **私人备注层**；冷门/私有 URL 偶发有用；**不得**当知识主力与主 demo |
+| **`clues.note` 附注**   | **强线索 / 私有增量** | 可挂在摘录或书签上；是「自己的话」，不是独立笔记库；**书签侧经记忆库树编辑，像给好友加附注**            |
+| **书签 `bookmark`**     | **配角**              | 导入 + 原生 sync 灌库；价值在 URL + **私人附注层**；冷门/私有 URL 偶发有用；**不得**当知识主力与主 demo |
 | **独立 `note` 类型**    | **禁区（当前）**      | 空白创作 → Notion 赛道；见 §0.4；未验证前不得暗示已有                                                   |
 
 #### 价值边界（两个替代品）
@@ -308,7 +308,7 @@ Yiveno 的不可替代资产 **不是** Chrome 书签 URL，**也不是**用户�
 **对 Google（公开查阅类 URL）：**
 
 - 普通公开文档/官网（如 React 文档）：用户模糊记得「存过书签」时，**重搜 Google 往往更短**。用「找回查阅类书签」证明产品价值 = **结构性劣势**。
-- Google **搜不到**的是：用户划过的原文、个人备注、登录墙/内网、已改版或长尾页、以及「我当时选中的那一版」。
+- Google **搜不到**的是：用户划过的原文、个人附注、登录墙/内网、已改版或长尾页、以及「我当时选中的那一版」。
 - 对外/对内证明价值时：**必须能说清「为何不用 Google」**——答案里要出现摘录或自己的话，不能只出现书签。
 
 **对 Notion / 笔记：**
@@ -350,7 +350,7 @@ Yiveno 的高频真实请求，**不是**标题 / URL / 精确词查询，而是
 - `the song I played on repeat yesterday` / `前天有一首听起来很嗨，我循环了好几遍的歌`
 - `the article I didn't finish reading a while ago` / `前段时间看了一半的那篇文章`
 - `the poem by Li Bai I saved yesterday` / `我昨天保存的一首李白的诗`
-- `the page where I left a note about deployment` / `那个我自己写过一句很绝备注的页面`
+- `the page where I left a note about deployment` / `那个我自己写过一句很绝附注的页面`
 
 这些请求调动的不是纯内容词，而是用户脑中的混合记忆点：
 
@@ -367,7 +367,7 @@ Yiveno 的高频真实请求，**不是**标题 / URL / 精确词查询，而是
 
 | 类型                 | 例子                                                                           | 态度                             |
 | -------------------- | ------------------------------------------------------------------------------ | -------------------------------- |
-| **有锚点的记忆口述** | `昨天保存的李白的诗`；`前段时间看了一半的那篇文章`；`我备注过很实用的那个页面` | **主目标**                       |
+| **有锚点的记忆口述** | `昨天保存的李白的诗`；`前段时间看了一半的那篇文章`；`我附注过很实用的那个页面` | **主目标**                       |
 | **零锚点的助手发令** | `放几首我喜欢的歌吧`；`好无聊看个电影吧`                                       | **非目标 / 禁主 demo**（见下节） |
 
 前者在复述「库里某条东西」；后者在要求系统「替我决定现在干嘛」。技术上可能碰巧命中某条书签，但产品不得按助手叙事扩张。
@@ -412,7 +412,7 @@ Yiveno 的高频真实请求，**不是**标题 / URL / 精确词查询，而是
 **允许的空结果走向：**
 
 1. 说明：还没有能对上这条线索的**记录**（说「库里的痕迹」，不要演「我不了解你这个人」的泛助理人设）。
-2. **诚实终局：** 记错或没存过也是合法答案；本轮 Recall **结束**，不得用缺槽问卷（时间/类型/备注）硬拖会话。
+2. **诚实终局：** 记错或没存过也是合法答案；本轮 Recall **结束**，不得用缺槽问卷（时间/类型/附注）硬拖会话。
 3. 低负担下一步（非追问填表）：可轻提示 **Capture / 补锚点**；**仅当已有可展示候选**时，才允许用追问/芯片**在候选内收窄**。
 4. 若用户当场口述一条可保存内容：允许写入**可找回的 MemoryItem**（须带可解释出处或明确为用户授权写入），且**不得**暗示「记住偏好以后就能回答无锚点读心题」。
 
@@ -439,7 +439,7 @@ Yiveno 的高频真实请求，**不是**标题 / URL / 精确词查询，而是
 | 环           | Yiveno 含义                                   | 必须交付（Normative）                                                                                | 质量门槛                                                                      |
 | ------------ | --------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
 | **Capture**  | 极低负担留下个人痕迹                          | 划词/右键/Chrome 书签 sync；未来经**适配器**的第三方导入（Raindrop/Pocket 等排队，见 R2/R4）         | 保存即反馈；失败可见；**原 URL、时间、来源**恒久保留                          |
-| **Preserve** | 可证明「当时那版证据」                        | 摘录正文 + 出处 + `createdAt` + 可选 `clues.note`；书签 URL + 备注层                                 | 用户能导出/打开；**不得**静默丢失；动态页失效时仍保留 Capture 时选区          |
+| **Preserve** | 可证明「当时那版证据」                        | 摘录正文 + 出处 + `createdAt` + 可选 `clues.note`；书签 URL + 附注层                                 | 用户能导出/打开；**不得**静默丢失；动态页失效时仍保留 Capture 时选区          |
 | **Retrieve** | 口语 → 排序邻域（报 N · 首屏 ≤5 · Show more） | keyword + full-text + semantic Hybrid；时间/行为/类型约束                                            | **钉死一条**任务：目标进 top-3；**逛一簇**任务：邻域含目标（§0.1.1 两种意图） |
 | **Explain**  | **可验证**，非仅排序                          | 每条候选：**来源身份、保存时间、原文/摘录锚点、命中理由**；一次点击打开自验                          | 无来源的 LLM 总结**不算**找回成功；不确定须显式表达                           |
 | **Reuse**    | 找完之后交给任意 AI                           | 选中条目的 **evidence pack**；Markdown/JSON；**只读 MCP**（Settings 开关；本机 Hybrid / 云端关键词） | 每条材料有 source reference；**默认不全库**暴露给 Agent                       |
@@ -603,8 +603,8 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 **Canonical 规则（Normative · 实现约束）：**
 
 1. **对象类型**：内部 slug 与主检索词面用英文（`poem` / `article` / `song` / `code` / `video` …），不用「诗 / 文章 / 歌 / 视频」等本地化词当 canonical。
-2. **时间 / 行为 / 备注指向**：parser 词典仅维护英文 surface（`yesterday` / `last week` / `half read` / `my note` …）；不再为中文等 locale 保留 alias。
-3. **实体**：规则 enrichment **不**写专名 allowlist；`entities` 仅来自 LLM enrichment 提议、用户备注或其它明示路径；写入时 canonical 仍统一英文（如 `Li Bai`）。禁止主题/实体硬编码 seed 冒充通解。
+2. **时间 / 行为 / 附注指向**：parser 词典仅维护英文 surface（`yesterday` / `last week` / `half read` / `my note` …）；不再为中文等 locale 保留 alias。
+3. **实体**：规则 enrichment **不**写专名 allowlist；`entities` 仅来自 LLM enrichment 提议、用户附注或其它明示路径；写入时 canonical 仍统一英文（如 `Li Bai`）。禁止主题/实体硬编码 seed 冒充通解。
 4. **追问芯片**：`label` 本地化展示；**点击填入 composer 的 `value` 用稳定英文**（或稳定 canonical token），保证跨 locale 下 parser 行为一致。
 5. **单测与验收语料**：以**英语真实口语**为唯一主路径；不再保留中文 Recall alias 回归用例。
 
@@ -621,7 +621,7 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 | 时间 + 类型 + 内容        | `last week the code snippet about auth`           | last_week · code · auth                            |
 | 行为 + 类型 + 时间        | `the song I played on repeat yesterday`           | often_opened · song · yesterday                    |
 | 行为 + 类型               | `the article I didn't finish reading`             | half_read · article                                |
-| 备注 + 类型 + 内容        | `yesterday left a note about the deployment page` | note · page · deployment                           |
+| 附注 + 类型 + 内容        | `yesterday left a note about the deployment page` | note · page · deployment                           |
 | 仅类型 + 时间（无内容词） | `the article I read last week`                    | last_week · article（`read` 为 filler）            |
 | 最近书签（无内容词）      | `The recently collected bookmark`                 | recent · bookmark · recently_saved；约束邻域按近因 |
 | 仅刚存（无类型）          | `just saved`                                      | recently_saved；近因邻域（书签+摘录）              |
@@ -650,9 +650,9 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 
 **P0 做（有记忆锚点）：**
 
-- 数据：规则 enrichment（高频站 / 标题类型词面 / recall 导向英文 keywords；**无**主题·实体 seed）+ 用户备注；写回 `tags` / `keywords`（`entities` 规则层为空，可由 LLM enrichment 补）— **新建已接入**；**存量经 `ensureMemoryEnrichmentBackfilled` 启动回填（版本幂等，当前 v5：`clip` 仅线索侧；正文不因 clip 打 video；scrub 存量误标）**
+- 数据：规则 enrichment（高频站 / 标题类型词面 / recall 导向英文 keywords；**无**主题·实体 seed）+ 用户附注；写回 `tags` / `keywords`（`entities` 规则层为空，可由 LLM enrichment 补）— **新建已接入**；**存量经 `ensureMemoryEnrichmentBackfilled` 启动回填（版本幂等，当前 v5：`clip` 仅线索侧；正文不因 clip 打 video；scrub 存量误标）**
 - 编排：约束软加权 + **`timeRange` 硬过滤** + keyword-filter + 置信度决策 — **`recallByKeywordWithParsedClue` 已接入 Hybrid 降级路径**；**追问：仅 `need_a_clue` 走 LLM NLG（`assistantFollowUp`）；`no_match` 诚实终局、无规则缺槽问卷**
-- Query：时间词、对象类型词、备注指向、弱行为词 → 结构化约束；内容实体先当关键词 — **`parseRecallClue` 已落地**（词典以真实英语口语为主，见「市场语言策略」典型语料）
+- Query：时间词、对象类型词、附注指向、弱行为词 → 结构化约束；内容实体先当关键词 — **`parseRecallClue` 已落地**（词典以真实英语口语为主，见「市场语言策略」典型语料）
 - Enrichment：域名 / 对象类型词面 + **recall 导向英文 keywords**（如 `listen` `tutorial` `repo`）；写回 `tags` / `keywords`；**规则层不写专名 `entities`**
 - **LLM enrichment 插座（已接线·稀疏异步）**：提议 Zod（`MemoryEnrichmentProposal`）+ merge（`mergeMemoryClueEnrichment`：existing → rule → proposal；`summary` 仅空槽；永不写 `note`/`embedding`）+ Worker `POST /api/ai/enrichment/complete`；Capture 经 `memoryItemService` **新建**落库后 `scheduleAsyncMemoryLlmEnrichment`（串行队列；已有 summary / 信号过短跳过；bulk `putMany`/repository 续传不经 service 故不烧配额）；失败降级保留规则层；**不改 `updatedAt`**
 
@@ -816,8 +816,8 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 | Side Panel 对话式找回            | 已上线（R-shell）                              | 主壳；composer / 邻域 / 追问；关 Panel 丢会话（P0）；见 §7.0                                                                                                                |
 | Action Popup 作对话主壳          | 已退役                                         | 无 `default_popup`；`pages/popup` 已删除                                                                                                                                    |
 | 右键保存选区                     | 已上线                                         | Text Excerpt；非书签的主动 Capture                                                                                                                                          |
-| 划词保存浮层                     | 已上线                                         | Content Script；可直存或「添加备注」后写入 `clues.note`；Settings 可关；默认开                                                                                              |
-| 书签/摘录事后备注                | 已上线                                         | `UPDATE_MEMORY_NOTE`；书签树编辑；仅本地 `clues.note`，不同步 Chrome                                                                                                        |
+| 划词保存浮层                     | 已上线                                         | Content Script；可直存或「添加附注」后写入 `clues.note`；Settings 可关；默认开                                                                                              |
+| 书签/摘录事后附注                | 已上线                                         | `UPDATE_MEMORY_NOTE`；书签树编辑；仅本地 `clues.note`，不同步 Chrome                                                                                                        |
 | Chrome 书签导入 + 增量 sync      | 已上线                                         | 书签唯一写入主路径；原生加书签 → onCreated 同步；upsert 保留 note                                                                                                           |
 | LocalProfile / ownerId           | 已上线                                         | 未登录可用；登录后 `ownerId=accountId`                                                                                                                                      |
 | Settings                         | 已上线（最小+账户同步）                        | `options_ui`；左侧分区导航（与记忆库同构）+ `?section=`；快捷键；账户/云同步；隐私/AI 占位                                                                                  |
@@ -827,7 +827,7 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 | 快捷键打开记忆库                 | 已上线                                         | `open_library`（默认 `Alt+Shift+L`）                                                                                                                                        |
 | 快捷键打开设置                   | 已上线                                         | `open_settings`（无默认建议键；Chrome 最多 4 个 suggested_key，可自绑）                                                                                                     |
 | 快捷键保存选中文字               | 已上线                                         | `save_selection`（默认 `Alt+Shift+E`）→ 划词脚本直存；`captureEntry=shortcut`                                                                                               |
-| 快捷键选中文字并备注             | 已上线                                         | `save_selection_with_note`（默认 `Alt+Shift+N`）→ 打开划词备注面板                                                                                                          |
+| 快捷键选中文字并附注             | 已上线                                         | `save_selection_with_note`（默认 `Alt+Shift+N`）→ 打开划词附注面板                                                                                                          |
 | 手动「保存当前页」               | 不做                                           | 与 Chrome 原生书签重复；已移除 UI/快捷键/消息                                                                                                                               |
 | 结果线索解释强化                 | 已上线（core + Side Panel / Omnibox 卡面 ECS） | 主因字段 + token + 次要字段；五要素卡面 §5.10.1                                                                                                                             |
 | 找回壳空状态分层                 | 已上线（壳迁移中）                             | 空库 / 有库 idle 与 no_match 分文案；`no_match` 诚实终局、不附缩短再试；迁 Side Panel 后文案归属随壳走                                                                      |
@@ -852,11 +852,11 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 
 口径：**单测** = Vitest（含 handler/application/core）；**eval** = `frontend/src/core/recall/eval` 的 `must`/`stretch`；**E2E** = `scripts/e2e-management.mjs` 薄冒烟；**手动** = 真机/扩展清单（发版或改到才验）。一项可多列并存。`缺口` = 尚无自动归属、仅靠偶然手测。
 
-| 能力                                      | 单测 | eval | E2E | 手动 | 备注                                                        |
+| 能力                                      | 单测 | eval | E2E | 手动 | 说明                                                        |
 | ----------------------------------------- | ---- | ---- | --- | ---- | ----------------------------------------------------------- |
 | 右键保存选区                              | ✓    | —    | —   | ✓    | `context-menu` / capture 服务；真机右键需手动               |
 | 划词保存浮层                              | ✓    | —    | —   | ✓    | `selection-toolbar-*`；页面浮层需手动                       |
-| 书签/摘录事后备注                         | ✓    | ✓    | —   | ✓    | eval：`semi-fuzzy-type-b-note`；树编辑手测                  |
+| 书签/摘录事后附注                         | ✓    | ✓    | —   | ✓    | eval：`semi-fuzzy-type-b-note`；树编辑手测                  |
 | Chrome 书签导入 + 增量 sync               | ✓    | —    | —   | ✓    | import/sync 服务单测；真机 sync 手测                        |
 | LocalProfile / ownerId                    | ✓    | —    | —   | —    | `local-profile*`                                            |
 | Settings（最小）                          | ✓    | —    | ✓   | ✓    | E2E：打开 `settings.html`                                   |
@@ -865,7 +865,7 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 | 快捷键打开记忆库                          | ✓    | —    | —   | ✓    | 同上                                                        |
 | 快捷键打开设置                            | ✓    | —    | —   | ✓    | 同上                                                        |
 | 快捷键保存选中文字                        | ✓    | —    | —   | ✓    | selection 命令封装单测；真机手测                            |
-| 快捷键选中文字并备注                      | ✓    | —    | —   | ✓    | 同上                                                        |
+| 快捷键选中文字并附注                      | ✓    | —    | —   | ✓    | 同上                                                        |
 | 结果线索解释强化                          | ✓    | —    | —   | ✓    | `explain-recall-match*`；卡面手测                           |
 | 找回壳空状态分层                          | ✓    | —    | —   | ✓    | `popup-empty-copy*`；§5.8                                   |
 | 冷启动存→找闭环（R1）                     | ✓    | ✓    | —   | ✓    | 空库/零锚点 eval；§5.8 A/B/C                                |
@@ -917,11 +917,11 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 ### 2.3 Payload（必填摘要）
 
 - **Bookmark**：`title`, `url`, `domain`；可选 favicon / chromeBookmarkId / parentFolderId / chromeCreatedAt / **`corpusSource` + `remoteId`**（第三方导入幂等；Raindrop / Pocket）/ `sourceCreatedAt`
-  - **备注（Normative）**：可事后写入 `clues.note`（仅存 Yiveno，不同步 Chrome）；记忆库书签树可展示/编辑——**给以后的自己留「这是干啥的 / 为啥存」**；Chrome sync upsert **必须保留**已有 note。
+  - **附注（Normative）**：可事后写入 `clues.note`（仅存 Yiveno，不同步 Chrome）；记忆库书签树可展示/编辑——**给以后的自己留「这是干啥的 / 为啥存」**；Chrome sync upsert **必须保留**已有 note。
   - **召回**：与摘录共用 `clues.note` 强线索权重。
   - **第三方导入（§5.10.6）**：Settings → 数据 → Raindrop / Pocket 导出文件；`captureEntry: import`；upsert 保留 note / 行为字段。
 - **TextExcerpt**：`selectedText`, `sourceUrl`, `pageTitle`, `domain`；可选 contextBefore/After；捕获可选 `note` → `clues.note`（附注，≠ 独立 `note` 类型）；亦可事后 `UPDATE_MEMORY_NOTE`
-  - **展示（Normative）**：无强制标题；`selectedText` 为主内容；有备注时列表/详情在正文与出处之间展示 `clues.note`；`pageTitle` / `domain` 仅作出处。用户自拟备注标题属后续能力，未上线前不得用页名冒充标题。
+  - **展示（Normative）**：无强制标题；`selectedText` 为主内容；有附注时列表/详情在正文与出处之间展示 `clues.note`；`pageTitle` / `domain` 仅作出处。用户自拟附注标题属后续能力，未上线前不得用页名冒充标题。
   - **召回（Normative）**：`clues.note` 为强线索字段（权重大于标题，计入主文命中加成）。
 
 ### 2.4 Clues
@@ -1144,8 +1144,8 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 #### B. 最短「存 → 找」闭环
 
 1. 打开任意 http(s) 页面，划选一句有辨识度的原文（建议 ≥ 8 字的独特片段）。
-2. 用划词浮层或右键 **保存选区** 写入摘录（可选加一句备注）。
-3. 打开找回主壳，用**自己的话**（不必整句粘贴）描述刚才那句——至少包含原文中的一个词或备注词。
+2. 用划词浮层或右键 **保存选区** 写入摘录（可选加一句附注）。
+3. 打开找回主壳，用**自己的话**（不必整句粘贴）描述刚才那句——至少包含原文中的一个词或附注词。
 4. 期望：高置信 Top Pick 或短名单含该摘录；打开卡片可回到出处。
 5. （可选）Chrome 新加一枚书签 → 用标题/域名片段找回，确认书签灌库可用。
 
@@ -1163,7 +1163,7 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 3. Omnibox / 快捷键 §1 状态已更新（快捷键开 Side Panel = R-shell 目标）。
 4. Omnibox 入口为单次命中：建议列表 → 打开 URL；无追问/会话（P0 不改为开 Side Panel）。
 5. 快捷键找回：`_execute_action` 与点工具栏图标均打开/聚焦 **Side Panel**（无 `default_popup`）；不经 `onCommand` 自建第二套找回。R-shell 完成前真机可能仍开 Popup——以 §1「目标 · 开 Side Panel」为准。
-6. 快捷键 `open_library` / `open_settings` 分别打开记忆库与设置页（可改键）；`save_selection` / `save_selection_with_note` 对当前页选区直存或打开备注面板。
+6. 快捷键 `open_library` / `open_settings` 分别打开记忆库与设置页（可改键）；`save_selection` / `save_selection_with_note` 对当前页选区直存或打开附注面板。
 7. 不提供「保存当前页」快捷键/消息；书签靠 Chrome 原生 + 导入/增量 sync。
 8. 新自定义命令须先改 `core/commands/command-ids.ts` + manifest，再注册 handler。
 9. Chrome 最多 4 个带 `suggested_key` 的命令（含 `_execute_action`）；超出仅注册不设默认。
@@ -1373,10 +1373,10 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 | 退出条件                                    | 结果                                                           |
 | ------------------------------------------- | -------------------------------------------------------------- |
-| 种库达质量量级（~800–2000，书签+摘录+备注） | ✅ 默认三画像 + diversity/noise 千级                           |
+| 种库达质量量级（~800–2000，书签+摘录+附注） | ✅ 默认三画像 + diversity/noise 千级                           |
 | 画像覆盖：研究者 → 创作者 → 开发者          | ✅ 覆盖批 + 刁批均过                                           |
 | 邻域履约（目标在排序池）为主尺              | ✅ 覆盖批 18+18+14；刁批 19/19；窄残差 6/6                     |
-| 硬坑机制化 + 匿名 must（非灰名单）          | ✅ 时间词 / 零锚点 / 非找回闭集 / 备注覆盖 / Hybrid 领先保护等 |
+| 硬坑机制化 + 匿名 must（非灰名单）          | ✅ 时间词 / 零锚点 / 非找回闭集 / 附注覆盖 / Hybrid 领先保护等 |
 | 同库再开广度覆盖收益                        | ❌ 判定不足，跳过                                              |
 
 **已知非阻塞残差（不挡质量轮退出）：** 纯语义强改写（如 fetch-then-read ↔ DPR）偶发 **邻域命中、Top1 被 diversity「Working paper」抢走**。履约仍成立；Top1 delight 加固留给压力轮后或单独立项，**禁止**为此加内容别名表。
@@ -1402,9 +1402,9 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 | id                                            | clueClass  | clue（示例）                                         | expectation                                               | 意图 / 说明                                                                   |
 | --------------------------------------------- | ---------- | ---------------------------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------- |
 | `r4-semi-fuzzy-time-excerpt`                  | semi_fuzzy | `article I didn't finish last week`                  | `in_topk` k=3 · half-read 摘录                            | 行为+时间 · 钉死一条                                                          |
-| `r4-semi-fuzzy-note-anchor`                   | semi_fuzzy | `page where I left a note about deploy`              | `in_topk` k=3 · 带 note 条目                              | 备注指向 · R4/Explain                                                         |
-| `semi-fuzzy-note-inflection-over-shared-word` | semi_fuzzy | `newsletter where I disagreed with section 3`        | `top1` · note「disagree with section 3」                  | 屈折+多词备注压过共享词 newsletter 对手                                       |
-| `semi-fuzzy-weak-title-note-anchor`           | semi_fuzzy | `the untitled doc where I noted NSF grant narrative` | `top1` · 弱标题+备注                                      | 弱标题靠 note 钉死                                                            |
+| `r4-semi-fuzzy-note-anchor`                   | semi_fuzzy | `page where I left a note about deploy`              | `in_topk` k=3 · 带 note 条目                              | 附注指向 · R4/Explain                                                         |
+| `semi-fuzzy-note-inflection-over-shared-word` | semi_fuzzy | `newsletter where I disagreed with section 3`        | `top1` · note「disagree with section 3」                  | 屈折+多词附注压过共享词 newsletter 对手                                       |
+| `semi-fuzzy-weak-title-note-anchor`           | semi_fuzzy | `the untitled doc where I noted NSF grant narrative` | `top1` · 弱标题+附注                                      | 弱标题靠 note 钉死                                                            |
 | `semi-fuzzy-few-days-ago-privacy`             | semi_fuzzy | `the privacy article from a few days ago`            | `top1` · URL 含 privacy 近几天项                          | `a few days ago`/`the other day`→`recent`（勿误入 `a_while_ago` 排除近 3 天） |
 | `semi-fuzzy-old-adjective-dense-passage`      | semi_fuzzy | `that old DPR paper on arxiv`                        | `top1` · 旧稿+内容锚                                      | soft「old」不作时间硬窗；靠内容词                                             |
 | `r4-vague-recently-saved`                     | vague      | `just saved something about i18n`                    | `in_topk` k=3 · 近因摘录                                  | recently_saved 邻域                                                           |
@@ -1502,7 +1502,7 @@ Settings「隐私」摘要与官网 `/privacy` 须与本节 L1–L3 口径一致
 | content script   | 已注册；`content-selection-toolbar.js`（http/https）；「试试找回」→ `OPEN_RECALL_SHELL` + prefill                            |
 | offscreen 源码   | 占位；未注册 permission；embedding 接入前不启用                                                                              |
 | Omnibox          | 已注册；keyword `yi`；单次无会话                                                                                             |
-| `commands`       | 已注册；找回 `Alt+Shift+Y`；记忆库 `Alt+Shift+L`；划词保存 `Alt+Shift+E`；划词备注 `Alt+Shift+N`；设置无默认建议键（均可改） |
+| `commands`       | 已注册；找回 `Alt+Shift+Y`；记忆库 `Alt+Shift+L`；划词保存 `Alt+Shift+E`；划词附注 `Alt+Shift+N`；设置无默认建议键（均可改） |
 
 ### 5.7 Dodo Pro 订阅全流程验收（手动 · Normative）
 
@@ -1699,7 +1699,7 @@ Chrome API / 选区
 
 | 级     | 块             | 含义                                                             | 数据来源（须可核对）                                                         |
 | ------ | -------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| **P1** | **听懂**       | 本轮约束摘要（类型 / 时间 / 词面 / 备注信号）                    | `parsed` merged                                                              |
+| **P1** | **听懂**       | 本轮约束摘要（类型 / 时间 / 词面 / 附注信号）                    | `parsed` merged                                                              |
 | **P2** | **为何有列表** | 检索路径一句话（字面命中 / 类型邻域 / Hybrid 语义 / 行为软加权） | 池内主因字段分布 + `outcome`                                                 |
 | **P3** | **邻域形状**   | 候选大致分几类（例：YouTube 书签 · 设计摘录 · 带 note）          | **确定性分桶**（域名、bookmark vs excerpt、note、主因字段）；禁止 LLM 发明簇 |
 | **P4** | **把握度**     | 高置信邻域 vs 弱命中不够钉死                                     | `top_pick` / `need_a_clue` + N                                               |
@@ -2103,15 +2103,15 @@ RecallOutcomeEvent {
 | 2026-08-27 | **压力轮首通：** ~20k Memory（`curated_only` 快写）；`RECALL_SCAN_LIMIT=20000`；种库≈11s；抽检 6/6 邻域不塌；E2E 召回墙钟 p50≈8s / max≈26s（含 LLM）；§5.11.1a                                                                                         |
 | 2026-08-27 | **质量轮完结：** §5.11.1a 退出条件全绿（千级种库 + 三画像覆盖/刁/窄残差邻域履约 + must 钉坑）；同库广度覆盖不再默认；已知 soft：纯语义偶发 Top1 被 diversity Working paper 抢走（不挡退出）；下一档 = 压力 ~20k                                        |
 | 2026-08-27 | **刁探针批：** 正例 16/16；负例摘要/行程/写码漏网 → 扩 `NON_RECALL_LIFE_SURFACES` 闭集；must：summarize、plan-trip、codegen                                                                                                                            |
-| 2026-08-27 | **覆盖批续跑：** 批1创作者/开发者 18/18；批2改写+天气/点餐负例 18/18；批3备注/多样性+translate/email 负例 14/14；MCP 可自助 `/login?connect_extension=1` handoff 恢复扩展登录                                                                          |
+| 2026-08-27 | **覆盖批续跑：** 批1创作者/开发者 18/18；批2改写+天气/点餐负例 18/18；批3附注/多样性+translate/email 负例 14/14；MCP 可自助 `/login?connect_extension=1` handoff 恢复扩展登录                                                                          |
 | 2026-08-27 | **非找回生活助手门禁：** 天气/点餐等闭集词面 + 无记忆锚 → `no_match`（有 saved/note 等锚仍可找回）；must：weather、order-food；覆盖批2 正例 16/16                                                                                                      |
 | 2026-08-27 | **覆盖轮 · 零锚点助手：** 弱残留扩 recommend/fun/tonight 等；`shouldSkipRecallAsZeroAnchor` 禁 raw 胡搜与类型邻域冒充推荐；must：bored-pick、recommend-movie；创作者/开发者覆盖探针 16/18→修负例                                                       |
 | 2026-08-27 | **时间词/零锚点/覆盖：** `a few days ago`/`the other day`→`recent`；soft「old」不硬过滤；弱偏好残留不挡约束邻域；类型词面词边界（防 notesong⊂song）；全字段多内容词覆盖抬升（防泛词 paper 压过 dpr+arxiv）；must：few-days privacy、old DPR            |
 | 2026-08-27 | **质量量级 seeder：** 默认三画像 + diversity/noise 抬到约千级；§5.11.1a                                                                                                                                                                                |
 | 2026-08-27 | **协作约定入 rules：** 可选/旁路项按收益成本默认做（≫则不问、持平再问）；`project.mdc` + `AGENTS.md`                                                                                                                                                   |
-| 2026-08-27 | **recall-eval must：** 备注屈折压共享词、弱标题靠 note（匿名夹具）；约定收益≫成本默认可加 must、持平再问                                                                                                                                               |
-| 2026-08-27 | **召回词面/融合：** 拉丁轻量屈折（disagreed↔disagree）；note 多内容词覆盖抬升；Hybrid 词面领先者保护（防单共享词+语义翻盘）；§5.11.1a 探针语料扩弱标题/纯备注                                                                                          |
-| 2026-08-27 | **本地 DEV 召回探针 seeder：** `DEV_SEED_RECALL_PROBE` + 画像语料（书签/摘录/备注）；先质量后压力；通过=邻域含目标；§5.11.1a                                                                                                                           |
+| 2026-08-27 | **recall-eval must：** 附注屈折压共享词、弱标题靠 note（匿名夹具）；约定收益≫成本默认可加 must、持平再问                                                                                                                                               |
+| 2026-08-27 | **召回词面/融合：** 拉丁轻量屈折（disagreed↔disagree）；note 多内容词覆盖抬升；Hybrid 词面领先者保护（防单共享词+语义翻盘）；§5.11.1a 探针语料扩弱标题/纯附注                                                                                          |
+| 2026-08-27 | **本地 DEV 召回探针 seeder：** `DEV_SEED_RECALL_PROBE` + 画像语料（书签/摘录/附注）；先质量后压力；通过=邻域含目标；§5.11.1a                                                                                                                           |
 | 2026-08-26 | **会话标题：** composer 上方用首轮线索字面作本场标题（去 `Narrowing:`）；a11y `This find:`；status/软岔路口改 Still on；§7.0 / §5.2.1                                                                                                                  |
 | 2026-08-26 | **线程锚点 New find 可见文案：** 锚点旁「New find」+ 同款图标，禁止仅用 ✕；§7.0 / §5.2.1                                                                                                                                                               |
 | 2026-08-26 | **线程锚点 + 软岔路口：** composer 上方可关锚点；有会话 placeholder/session status 点名锚点；发送前保守启发式确认条（Keep refining / Start new），禁止静默清线程；§7.0 / §5.2.1                                                                        |
@@ -2211,7 +2211,7 @@ RecallOutcomeEvent {
 | 2026-07-29 | P0：Capture enrichment（域名/类型词/实体 → tags·keywords·entities）；upsert 合并扩展位                                                                                                                                                                 |
 | 2026-07-28 | P0：`parseRecallClue` + `recallByKeywordWithParsedClue` 接入主链路（规则解析/软加权，无 LLM）                                                                                                                                                          |
 | 2026-07-28 | §0.1.1 记忆硬盘≠小助手；LLM/embedding 分工；P0 有锚点场景收窄；禁全库喂 LLM / 零锚点助手 demo                                                                                                                                                          |
-| 2026-07-28 | §0.1.1 记忆库书签树：Chrome 结构 + Yiveno 私人备注层；非整理器、非纯浏览壳                                                                                                                                                                             |
+| 2026-07-28 | §0.1.1 记忆库书签树：Chrome 结构 + Yiveno 私人附注层；非整理器、非纯浏览壳                                                                                                                                                                             |
 | 2026-07-28 | §0.1.1 肆无忌惮存：旧书签惩罚乱存；整齐目录贬值；Capture+Recall 成对习惯                                                                                                                                                                               |
 | 2026-07-28 | §0.1.1 兴趣鸿沟：用户自带兴趣筛选；随便存/随时找得着 = 超轻负担 + 踏实感 = 立身之本                                                                                                                                                                    |
 | 2026-07-28 | 定位升级：「记忆硬盘」心智（扔进就记着 / 想找就找它要）；§0.1.1 补用户心智表                                                                                                                                                                           |
@@ -2228,11 +2228,11 @@ RecallOutcomeEvent {
 | 2026-07-26 | Recall 重复折叠：书签域名 / 摘录正文；结果层集合卡；库内仍允许并存（键规则已修订）                                                                                                                                                                     |
 | 2026-07-26 | 独立 `note` 类型：有边界需求、当前不接入；优先书签/摘录/`clues.note` 核心闭环                                                                                                                                                                          |
 | 2026-07-25 | Popup：打开聚焦线索框；移除提交按钮；停输防抖自动找回；↑↓/Enter 键盘打开结果                                                                                                                                                                           |
-| 2026-07-25 | 快捷键：划词保存 `Alt+Shift+E`、备注 `Alt+Shift+N`；设置让出 suggested_key 槽位                                                                                                                                                                        |
+| 2026-07-25 | 快捷键：划词保存 `Alt+Shift+E`、附注 `Alt+Shift+N`；设置让出 suggested_key 槽位                                                                                                                                                                        |
 | 2026-07-25 | 快捷键：记忆库 `Alt+Shift+L`、设置 `Alt+Shift+S`（`open_library` / `open_settings`）                                                                                                                                                                   |
-| 2026-07-25 | 书签事后备注：`UPDATE_MEMORY_NOTE`；树展示/编辑；sync upsert 保留 note                                                                                                                                                                                 |
-| 2026-07-25 | 备注：列表/Popup 展示于正文与出处之间；Filter 权重 26 + 主文加成（强线索）                                                                                                                                                                             |
-| 2026-07-25 | 划词浮层增加「添加备注」；`CAPTURE_TEXT_EXCERPT.note` → `clues.note`；详情可展示                                                                                                                                                                       |
+| 2026-07-25 | 书签事后附注：`UPDATE_MEMORY_NOTE`；树展示/编辑；sync upsert 保留 note                                                                                                                                                                                 |
+| 2026-07-25 | 附注：列表/Popup 展示于正文与出处之间；Filter 权重 26 + 主文加成（强线索）                                                                                                                                                                             |
+| 2026-07-25 | 划词浮层增加「添加附注」；`CAPTURE_TEXT_EXCERPT.note` → `clues.note`；详情可展示                                                                                                                                                                       |
 | 2026-07-25 | 保存成功工具栏角标 +1；Chrome 原生新书签同步成功亦闪角标                                                                                                                                                                                               |
 | 2026-08-22 | UI 图标：统一 Lucide 线框按需内联；卸除旧填充 path                                                                                                                                                                                                     |
 | 2026-07-25 | UI：图标优先于文案；通识图标 + hover `title`/`aria-label`（经 `t()`）                                                                                                                                                                                  |
