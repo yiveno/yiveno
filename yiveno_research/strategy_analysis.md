@@ -2,6 +2,8 @@
 
 **研究参考日：2026-08-23（GMT+8）**。本文件把已收集的产品事实转化为可审计的战略判断。所有产品能力事实须回链至 `evidence_log.md`；坐标、评分与优先级是分析师推断，不是厂商自报数据。
 
+> **Yiveno 术语：** [`docs/product/Yiveno-术语表.md`](../docs/product/Yiveno-术语表.md)（用户输入 = **clue**；坐标轴「搜索工具」指竞品品类，非 Yiveno 用户面文案）。
+
 ## 1. 市场边界
 
 > **Yiveno 所在的实际市场是“以用户主动保存的互联网内容为起点的个人信息召回（personal information retrieval）”，并向个人上下文/Agent retrieval layer 演化。**

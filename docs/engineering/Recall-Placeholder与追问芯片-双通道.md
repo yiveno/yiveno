@@ -120,7 +120,7 @@
 
 | 键角色                                | 文案方向                            | 例                                                                                          |
 | ------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------- |
-| Idle                                  | 一条高质量口语 e.g. **或** 中性邀请 | 可保留现 `popup_clue_placeholder` 作 Idle                                                   |
+| Idle                                  | 一条高质量口语 e.g. **或** 中性邀请 | 可保留现 `popup_clue_placeholder` 作 Idle（**遗留 i18n key 前缀**，语义为 clue）            |
 | Narrow                                | 邀请补一个来自结果的细节            | `Still a bit broad — try something like “{a}” or “{b}”.`                                    |
 | Neutral (chips present)               | 短、无举例                          | `Or add another detail…`                                                                    |
 | Neutral (narrow fail / after dismiss) | 不装懂                              | `Still a bit broad — add another detail you remember…`（generic）                           |

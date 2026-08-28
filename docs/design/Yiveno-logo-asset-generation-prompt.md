@@ -71,18 +71,18 @@
 ### 交付清单 A — Chrome 扩展（必做）
 
 > 目标目录：`frontend/public/images/`  
-> 用途：`manifest.json` 的 `icons` / `action.default_icon`；Popup / Settings 顶栏。
+> 用途：`manifest.json` 的 `icons` / `action.default_icon`；Side Panel / Settings 顶栏。
 
-| #   | 文件名                     | 尺寸 (px)                    | 格式 | 背景 | 源           | 说明                                          |
-| --- | -------------------------- | ---------------------------- | ---- | ---- | ------------ | --------------------------------------------- |
-| A1  | `icon16.png`               | **16×16**                    | PNG  | 透明 | logo-mark    | 工具栏等极小场景；可 simplified               |
-| A2  | `icon32.png`               | **32×32**                    | PNG  | 透明 | logo-mark    | 扩展页 `<link rel="icon">`                    |
-| A3  | `icon48.png`               | **48×48**                    | PNG  | 透明 | logo-mark    | `chrome://extensions` 列表                    |
-| A4  | `icon128.png`              | **128×128**                  | PNG  | 透明 | logo-mark    | **Chrome Web Store 主图标**；须清晰           |
-| A5  | `logo-mark.svg`            | 矢量                         | SVG  | 透明 | 源文件优化版 | Popup 顶栏 24px 高显示；优化路径，≤ 20KB 为宜 |
-| A6  | `logo-mark.png`            | **48×48** 与 **96×96** (@2x) | PNG  | 透明 | logo-mark    | 可选备用；若只做一张则 96×96                  |
-| A7  | `logo-mark-mono-light.svg` | 矢量                         | SVG  | 透明 | mono 源      | 有 mono 源才做                                |
-| A8  | `logo-mark-mono-dark.svg`  | 矢量                         | SVG  | 透明 | mono 源      | 有 mono 源才做                                |
+| #   | 文件名                     | 尺寸 (px)                    | 格式 | 背景 | 源           | 说明                                               |
+| --- | -------------------------- | ---------------------------- | ---- | ---- | ------------ | -------------------------------------------------- |
+| A1  | `icon16.png`               | **16×16**                    | PNG  | 透明 | logo-mark    | 工具栏等极小场景；可 simplified                    |
+| A2  | `icon32.png`               | **32×32**                    | PNG  | 透明 | logo-mark    | 扩展页 `<link rel="icon">`                         |
+| A3  | `icon48.png`               | **48×48**                    | PNG  | 透明 | logo-mark    | `chrome://extensions` 列表                         |
+| A4  | `icon128.png`              | **128×128**                  | PNG  | 透明 | logo-mark    | **Chrome Web Store 主图标**；须清晰                |
+| A5  | `logo-mark.svg`            | 矢量                         | SVG  | 透明 | 源文件优化版 | Side Panel 顶栏 24px 高显示；优化路径，≤ 20KB 为宜 |
+| A6  | `logo-mark.png`            | **48×48** 与 **96×96** (@2x) | PNG  | 透明 | logo-mark    | 可选备用；若只做一张则 96×96                       |
+| A7  | `logo-mark-mono-light.svg` | 矢量                         | SVG  | 透明 | mono 源      | 有 mono 源才做                                     |
+| A8  | `logo-mark-mono-dark.svg`  | 矢量                         | SVG  | 透明 | mono 源      | 有 mono 源才做                                     |
 
 **Manifest 约束：** Chrome MV3 仅使用 PNG path `images/icon{16,32,48,128}.png`，不可用 SVG 替代 A1–A4。
 
@@ -175,7 +175,7 @@ yiveno-brand-assets/
 - [ ] 16×16 在白色 / `#1E2640` / `#F0FBFD` 三种背景下均可辨认
 - [ ] 128×128 与 16×16 视觉同一品牌，非两套设计
 - [ ] 全部 PNG icon **alpha 透明**（除 B5、B6、C2、C3 允许底色）
-- [ ] SVG 在 24px 高（Popup 顶栏）渲染清晰，无 hairline 消失
+- [ ] SVG 在 24px 高（Side Panel 顶栏）渲染清晰，无 hairline 消失
 - [ ] `favicon.ico` 在浏览器 tab 测试通过
 - [ ] `og-image.png` 1200×630，Facebook Sharing Debugger / Twitter Card 比例正确
 - [ ] 未引入 SVG 外嵌字体；路径数量合理

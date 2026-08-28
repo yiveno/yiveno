@@ -2,6 +2,7 @@
 
 > **文档性质：** Non-normative 背景研究。  
 > **Normative 产品规格：** [`docs/product/Yiveno-产品文档-v4.0.md`](../docs/product/Yiveno-产品文档-v4.0.md)（2026-08-24 已吸收本目录结论）。  
+> **术语：** [`docs/product/Yiveno-术语表.md`](../docs/product/Yiveno-术语表.md)（Yiveno 用户输入 = **clue**；`clues.note` = **附注**；竞品「搜索/query」表述保留第三方语境）。
 > **执行计划：** [`docs/product/Yiveno-改版计划-v1.md`](../docs/product/Yiveno-改版计划-v1.md) **R4 · 证据与复用**。
 
 ## 文件索引
