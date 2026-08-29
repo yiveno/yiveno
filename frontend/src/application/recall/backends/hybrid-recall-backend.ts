@@ -562,7 +562,9 @@ export class HybridRecallBackend implements RecallBackend {
     const trace = createRecallFlowTrace()
     const pipelineStartedAt = Date.now()
     const normalizedClue = clue.trim()
-    const context = options?.context
+    const entry = options?.entry ?? 'sidepanel'
+    const isOmniboxEntry = entry === 'omnibox'
+    const context = isOmniboxEntry ? undefined : options?.context
     const priorUserUtterances = context?.priorUserUtterances ?? []
     const accumulated = context?.accumulated ?? null
     const dismissedIds = context?.dismissedIds ?? []
@@ -579,16 +581,18 @@ export class HybridRecallBackend implements RecallBackend {
     }
 
     trace('info', 'Hybrid Recall：流水线开始', {
+      entry,
       clue: normalizedClue,
       priorCount: priorUserUtterances.length,
       dismissedCount: dismissedIds.length,
       currentTabDomain: currentTabDomain ?? null
     })
 
-    const complete = getClueLlmCompleter() ?? undefined
+    const complete = isOmniboxEntry ? undefined : (getClueLlmCompleter() ?? undefined)
     const understandStartedAt = Date.now()
     const understood = await understandRecallClue(normalizedClue, {
       ...(complete ? { complete } : {}),
+      ...(isOmniboxEntry ? { forceMode: 'lexical' as const } : {}),
       trace
     })
     const understandMs = Date.now() - understandStartedAt
@@ -698,6 +702,29 @@ export class HybridRecallBackend implements RecallBackend {
       parsed: merge.merged,
       effectiveClue: merge.effectiveRaw
     })
+
+    if (isOmniboxEntry) {
+      const pipelineTiming: RecallPipelineTiming = {
+        understandMs,
+        candidateLoadMs,
+        retrieveMs,
+        totalMs: Date.now() - pipelineStartedAt,
+        understandSource: understood.source,
+        usedHybrid
+      }
+      trace('info', 'Omnibox 离线查找：流水线结束', {
+        durationMs: pipelineTiming.totalMs,
+        usedHybrid,
+        understandSource: understood.source,
+        outcome: withMeta.outcome,
+        topPickId: withMeta.topPick?.item.id ?? null
+      })
+      return {
+        ...withMeta,
+        pipelineTiming
+      }
+    }
+
     const enriched = enrichEmptyRecallResult(withMeta, items, merge.merged)
 
     const withNarrowExamples = await attachComposerNarrowExamplesIfNeeded(enriched, {

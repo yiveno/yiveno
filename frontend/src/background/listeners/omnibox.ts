@@ -60,7 +60,7 @@ async function recordOpenBestEffort(memoryItemId: string | null | undefined): Pr
   }
 }
 
-/** 输入变化：共用 recallService，映射为原生建议（无多轮）。 */
+/** Omnibox 输入变化：离线查找轨（规则 parse + Filter ± embedding），映射为原生建议。 */
 async function handleOmniboxInputChanged(
   text: string,
   suggest: (suggestResults: chrome.omnibox.SuggestResult[]) => void
@@ -79,7 +79,7 @@ async function handleOmniboxInputChanged(
     requestId,
     clueLength: clue.length
   })
-  const result = await recallService.recallWithClue(clue)
+  const result = await recallService.recallWithClue(clue, { entry: 'omnibox' })
 
   if (requestId !== inputChangedRequestId) {
     logger.info('Omnibox', 'inputChanged：结果已过期，丢弃', { requestId })
@@ -145,7 +145,7 @@ async function handleOmniboxInputEntered(
     return
   }
 
-  const result = await recallService.recallWithClue(clue)
+  const result = await recallService.recallWithClue(clue, { entry: 'omnibox' })
   const topPick = result.topPick
   const topHref = topPick ? getMemoryItemOpenHref(topPick.item, { detailPageUrl }) : ''
   const url = tryParseNavigableUrl(topHref)

@@ -9,16 +9,17 @@
 
 ## 1. 实现锚点
 
-| R4 交付          | 预期路径                                                                                                                                                                     | 验收                                                  |
-| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| Explain ECS UI   | `pages/sidepanel/SidePanel.vue` · `RecallResultCard.vue` · `explain-recall-match.ts`                                                                                         | §5.10.1                                               |
-| Omnibox ECS      | `background/listeners/omnibox.ts` + 建议 UI                                                                                                                                  | §5.10.1                                               |
-| TTE 埋点         | 新模块建议 `infrastructure/analytics/` 或 `application/recall/recall-telemetry.ts`                                                                                           | §5.10.3 · §5.9 七事件                                 |
-| Outcome Labeling | `recall-outcome*` + pairs；C2 默认不进 settled；关 Panel 静默结算（无 exit park）                                                                                            | §7.2 P0–P3；开 C2 见 `R4-Outcome-Labeling-P2-校准.md` |
-| evidence pack    | `core/recall/evidence-pack.ts` · `EXPORT_EVIDENCE_PACK` · Library + Side Panel 多选 UI                                                                                       | §5.10.4（已上线）                                     |
-| Recall Framing   | `build-recall-framing-facts.ts` · `render-recall-framing.ts` · `complete-recall-framing-nlg.ts` · `hybrid-recall-backend` attachRecallFraming + attachRecallFramingLlmPolish | §7.0 · `recall-framing-eval` must                     |
-| 只读 MCP         | Settings `mcpReadOnlyEnabled` · `MCP_RECALL_EVIDENCE` · Worker `PUT /api/account/mcp` + `/api/mcp/tools*` · `@yiveno/mcp`                                                    | §5.10.5（已上线 beta）                                |
-| Raindrop/Pocket  | `parse-*-export` · `import-third-party-corpus-service` · Settings 数据区 · `IMPORT_THIRD_PARTY_CORPUS`                                                                       | §5.10.6（已上线 · R2 准入）                           |
+| R4 交付           | 预期路径                                                                                                                                                                     | 验收                                                     |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| Explain ECS UI    | `pages/sidepanel/SidePanel.vue` · `RecallResultCard.vue` · `explain-recall-match.ts`                                                                                         | §5.10.1                                                  |
+| Omnibox ECS       | `background/listeners/omnibox.ts` + 建议 UI                                                                                                                                  | §5.10.1 · §5.10.8                                        |
+| Omnibox must eval | `omnibox-eval-cases.ts` · `run-omnibox-eval.ts` · `omnibox-eval.test.ts`                                                                                                     | §5.11.5 · [`Omnibox-手测步骤.md`](./Omnibox-手测步骤.md) |
+| TTE 埋点          | 新模块建议 `infrastructure/analytics/` 或 `application/recall/recall-telemetry.ts`                                                                                           | §5.10.3 · §5.9 七事件                                    |
+| Outcome Labeling  | `recall-outcome*` + pairs；C2 默认不进 settled；关 Panel 静默结算（无 exit park）                                                                                            | §7.2 P0–P3；开 C2 见 `R4-Outcome-Labeling-P2-校准.md`    |
+| evidence pack     | `core/recall/evidence-pack.ts` · `EXPORT_EVIDENCE_PACK` · Library + Side Panel 多选 UI                                                                                       | §5.10.4（已上线）                                        |
+| Recall Framing    | `build-recall-framing-facts.ts` · `render-recall-framing.ts` · `complete-recall-framing-nlg.ts` · `hybrid-recall-backend` attachRecallFraming + attachRecallFramingLlmPolish | §7.0 · `recall-framing-eval` must                        |
+| 只读 MCP          | Settings `mcpReadOnlyEnabled` · `MCP_RECALL_EVIDENCE` · Worker `PUT /api/account/mcp` + `/api/mcp/tools*` · `@yiveno/mcp`                                                    | §5.10.5（已上线 beta）                                   |
+| Raindrop/Pocket   | `parse-*-export` · `import-third-party-corpus-service` · Settings 数据区 · `IMPORT_THIRD_PARTY_CORPUS`                                                                       | §5.10.6（已上线 · R2 准入）                              |
 
 **消息 type：** 禁止发明字符串；evidence export / MCP 须先改 `core/messaging/*`。
 

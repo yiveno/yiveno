@@ -134,7 +134,7 @@ describe('omnibox listeners', () => {
       expect(suggest).toHaveBeenCalled()
     })
 
-    expect(recallWithClueMock).toHaveBeenCalledWith('retention')
+    expect(recallWithClueMock).toHaveBeenCalledWith('retention', { entry: 'omnibox' })
     expect(suggest.mock.calls[0]?.[0]?.[0]?.content).toBe(
       `chrome-extension://testid/omnibox-open.html?id=${BOOKMARK_ID}`
     )
@@ -195,7 +195,7 @@ describe('omnibox listeners', () => {
     await vi.waitFor(() => {
       expect(tabsCreate).toHaveBeenCalledWith({ url: 'https://example.com/retention' })
     })
-    expect(recallWithClueMock).toHaveBeenCalledWith('retention')
+    expect(recallWithClueMock).toHaveBeenCalledWith('retention', { entry: 'omnibox' })
     expect(recordOpenMock).toHaveBeenCalledWith(BOOKMARK_ID)
   })
 })
