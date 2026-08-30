@@ -4,10 +4,21 @@ const FOCUSABLE_SELECTOR =
 
 let previousFocus: HTMLElement | null = null
 
+/** 元素是否应参与 Modal 焦点陷阱。 */
+export function isElementFocusableVisible(element: HTMLElement): boolean {
+  if (element.hidden || element.getAttribute('aria-hidden') === 'true') {
+    return false
+  }
+  if (element.hasAttribute('disabled') || element.tabIndex === -1) {
+    return false
+  }
+  return true
+}
+
 /** 收集容器内可见且可聚焦的元素 */
 export function getFocusableElements(container: HTMLElement): HTMLElement[] {
   return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
-    element => !element.hasAttribute('disabled') && element.tabIndex !== -1
+    isElementFocusableVisible
   )
 }
 

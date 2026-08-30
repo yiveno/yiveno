@@ -12,6 +12,12 @@ import { logger } from '@/infrastructure/logging/logger'
 
 let registered = false
 
+/** 定时同步写 IDB 前须等 bootstrap（动态 import 避免与 bootstrap 循环依赖）。 */
+async function ensureBootstrapReady(): Promise<void> {
+  const { ensureBackgroundBootstrapped } = await import('@/background/bootstrap')
+  await ensureBackgroundBootstrapped()
+}
+
 /** 注册 alarms.onAlarm；启动时按偏好对齐闹钟状态。 */
 export function registerMemoryCloudSyncAlarmListener(): void {
   if (registered) {
@@ -26,7 +32,8 @@ export function registerMemoryCloudSyncAlarmListener(): void {
     if (alarm.name !== MEMORY_CLOUD_SYNC_ALARM_NAME) {
       return
     }
-    void handleIncrementalMemorySync()
+    void ensureBootstrapReady()
+      .then(() => handleIncrementalMemorySync())
       .then(result => {
         if (!result.ok) {
           logger.warn('MemorySync', '定时增量同步未成功', {
@@ -48,4 +55,14 @@ export function registerMemoryCloudSyncAlarmListener(): void {
     .catch(error => {
       logger.warn('MemorySync', '启动时对齐定时闹钟失败', error)
     })
+}
+
+/** 当前是否已挂上闹钟监听（测试 / 诊断用）。 */
+export function isMemoryCloudSyncAlarmListenerRegistered(): boolean {
+  return registered
+}
+
+/** 测试用：重置监听器注册状态（不调用 Chrome remove，需配合 mock）。 */
+export function resetMemoryCloudSyncAlarmListenerForTests(): void {
+  registered = false
 }

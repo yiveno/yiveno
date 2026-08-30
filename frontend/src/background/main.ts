@@ -1,9 +1,17 @@
 import { openGettingStartedOnInstall } from '@/application/onboarding/open-getting-started-on-install'
 import { ensureBackgroundBootstrapped } from '@/background/bootstrap'
 import { handleBackgroundMessage } from '@/background/handlers/message-handler'
+import { ensureSidePanelOpensOnActionClick } from '@/infrastructure/browser/side-panel'
 import { syncChromeBookmarkSyncListenersWithIngestSetting } from '@/background/listeners/chrome-bookmark-sync'
-import { registerContextMenuItems } from '@/background/listeners/context-menu'
+import {
+  registerContextMenuItems,
+  registerContextMenuListeners
+} from '@/background/listeners/context-menu'
 import { registerExternalAuthHandoffListener } from '@/background/listeners/external-auth-handoff'
+import { registerCommandListeners } from '@/background/listeners/commands'
+import { registerMemoryCloudSyncAlarmListener } from '@/background/listeners/memory-cloud-sync-alarm'
+import { registerOmniboxListeners } from '@/background/listeners/omnibox'
+import { registerSelectionToolbarKeepaliveListener } from '@/background/listeners/selection-toolbar-keepalive'
 import { exposeClueGatewayDebug } from '@/infrastructure/debug/expose-clue-gateway-debug'
 import { exposeRecallProbeSeedDebug } from '@/infrastructure/debug/expose-recall-probe-seed-debug'
 import { exposeRecallTelemetryDebug } from '@/infrastructure/debug/expose-recall-telemetry-debug'
@@ -20,12 +28,27 @@ exposeClueGatewayDebug()
 exposeRecallProbeSeedDebug()
 exposeRecallTelemetryDebug()
 registerExternalAuthHandoffListener()
+// 下列监听器须在 bootstrap/IDB 前同步挂上，避免 SW 冷启动丢事件（与 A2/A3/A6 同模式）
+registerSelectionToolbarKeepaliveListener()
+registerCommandListeners()
+registerOmniboxListeners()
+registerContextMenuListeners()
+registerMemoryCloudSyncAlarmListener()
+
+// SW 冷启动：尽早配置图标开 Side Panel，不等待 DB/bootstrap（chrome-extensions Rule 2）
+void ensureSidePanelOpensOnActionClick().catch(error => {
+  logger.error('SidePanel', 'SW 入口 setPanelBehavior 失败', error)
+})
 // 尽早按灌库开关挂监听（关则不挂）；开时尽量早于 DB await，降低 MV3 丢 onCreated
 void syncChromeBookmarkSyncListenersWithIngestSetting().catch(error => {
   logger.warn('Background', '启动时同步书签监听失败，将由 bootstrap 重试', error)
 })
 
 chrome.runtime.onInstalled.addListener(details => {
+  // install/update 后再次幂等配置，避免仅依赖 bootstrap 时序
+  void ensureSidePanelOpensOnActionClick().catch(error => {
+    logger.error('SidePanel', 'onInstalled setPanelBehavior 失败', error)
+  })
   void ensureBackgroundBootstrapped()
     .then(async () => {
       await registerContextMenuItems()

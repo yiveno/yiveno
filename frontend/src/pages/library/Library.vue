@@ -12,7 +12,6 @@ import {
   computeBookmarkLibraryStructureHash,
   patchBookmarkNoteInIndex
 } from '@/core/memory/bookmark-library-index'
-import { resolveMemoryItemSavedAtIso } from '@/core/memory/memory-item-saved-at'
 import type { MemoryItem } from '@/core/memory/memory-item'
 import type { SupportedMemoryItemType } from '@/core/memory/memory-item-type'
 import {
@@ -23,11 +22,8 @@ import {
   resolveLibraryTypeTab
 } from '@/core/memory/library-tabs'
 import { parseChromeBookmarkTreeChangedMessage } from '@/core/messaging/ui-messages'
-import { getMemoryItemOpenHref } from '@/core/recall/memory-open-href'
-import { getMemoryItemDisplay } from '@/core/recall/recall-result'
 import { tImportError } from '@/infrastructure/i18n/background-error'
 import { t } from '@/infrastructure/i18n/t'
-import { formatLibrarySavedAt } from '@/infrastructure/i18n/format-library-saved-at'
 import { tMemoryError } from '@/infrastructure/i18n/memory-error'
 import {
   deleteMemoryItem,
@@ -40,8 +36,12 @@ import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
 import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
 import type { AppIconName } from '@/infrastructure/ui/icons/icon-paths'
 import BookmarkLibraryTree from '@/pages/library/BookmarkLibraryTree.vue'
-import AppLibraryItemCard from '@/infrastructure/ui/AppLibraryItemCard.vue'
-import AppLibraryItemFavicon from '@/infrastructure/ui/AppLibraryItemFavicon.vue'
+import ExcerptLibraryList from '@/pages/library/ExcerptLibraryList.vue'
+import {
+  buildExcerptLibraryListRows,
+  collectBookmarkExportableMemoryIds,
+  type ExcerptLibraryListRow
+} from '@/pages/library/library-excerpt-list-rows'
 import DetailExportBar from '@/infrastructure/ui/DetailExportBar.vue'
 import DetailExportBarDock from '@/infrastructure/ui/DetailExportBarDock.vue'
 import AppToastHost from '@/infrastructure/ui/AppToastHost.vue'
@@ -71,7 +71,8 @@ const activeType = ref<SupportedMemoryItemType>(
 )
 const loadState = ref<LoadState>('loading')
 const errorMessage = ref('')
-const items = ref<MemoryItem[]>([])
+const items = shallowRef<MemoryItem[]>([])
+const listRows = shallowRef<ExcerptLibraryListRow[]>([])
 const bookmarkIndex = shallowRef<BookmarkLibraryIndex | null>(null)
 const bookmarkStructureHash = ref('')
 const bookmarkSyncReady = ref(false)
@@ -91,7 +92,10 @@ const deleteConfirmOpen = ref(false)
 const pendingDeleteId = ref<string | null>(null)
 const deleteConfirmError = ref('')
 
-const selectedDetailExportIds = ref<Set<string>>(new Set())
+const selectedDetailExportIds = shallowRef<Set<string>>(new Set())
+/** detail export 多选 revision：配合子列表 v-memo，避免整表重绘。 */
+const detailExportSelectionRevision = ref(0)
+const bookmarkExportableIds = shallowRef<string[]>([])
 /** Detail export 多选模式：点 Export 后才显示勾选框。 */
 const detailExportMode = ref(false)
 const detailExportBulkAction = ref<DetailExportBulkAction>('selectAll')
@@ -110,13 +114,19 @@ const hasExportableLibraryItems = computed(() => {
 })
 
 const exportableDetailExportIds = computed(() => {
-  if (showingBookmarkTree.value && bookmarkIndex.value) {
-    return bookmarkIndex.value.nodes
-      .filter(node => node.kind === 'bookmark' && node.memoryItemId)
-      .map(node => node.memoryItemId as string)
+  if (showingBookmarkTree.value) {
+    return bookmarkExportableIds.value
   }
   return listRows.value.map(row => row.id)
 })
+
+function rebuildListRows(): void {
+  listRows.value = buildExcerptLibraryListRows(items.value)
+}
+
+function bumpDetailExportSelectionRevision(): void {
+  detailExportSelectionRevision.value += 1
+}
 
 const detailExportHeaderIcon = computed((): AppIconName => {
   if (!detailExportMode.value) {
@@ -153,6 +163,7 @@ function exitDetailExportMode(): void {
   detailExportMode.value = false
   detailExportBulkAction.value = 'selectAll'
   selectedDetailExportIds.value = new Set()
+  bumpDetailExportSelectionRevision()
 }
 
 function handleDetailExportHeaderAction(): void {
@@ -165,11 +176,13 @@ function handleDetailExportHeaderAction(): void {
   if (detailExportBulkAction.value === 'selectAll') {
     selectedDetailExportIds.value = selectAllDetailExportItems(ids)
     detailExportBulkAction.value = 'invert'
+    bumpDetailExportSelectionRevision()
     return
   }
 
   selectedDetailExportIds.value = invertDetailExportSelection(ids, selectedDetailExportIds.value)
   detailExportBulkAction.value = 'selectAll'
+  bumpDetailExportSelectionRevision()
 }
 
 const activeTabDef = computed(() => resolveLibraryTypeTab(activeType.value))
@@ -195,27 +208,16 @@ const libraryTypeTabItems = computed(() =>
 
 const showingBookmarkTree = computed(() => activeType.value === 'bookmark')
 
-const listRows = computed(() => {
-  const detailPageUrl = chrome.runtime.getURL('detail.html')
-  return items.value.map(item => {
-    const display = getMemoryItemDisplay(item, t)
-    return {
-      id: item.id,
-      typeLabel: display.typeLabel,
-      title: display.title,
-      subtitle: display.subtitle,
-      excerpt: display.excerpt,
-      note: item.clues.note?.trim() || null,
-      href: getMemoryItemOpenHref(item, { detailPageUrl }),
-      savedAt: resolveMemoryItemSavedAtIso(item),
-      sourceUrl: item.type === 'text_excerpt' ? item.payload.sourceUrl : undefined
-    }
-  })
+/** 列表由子组件内部滚动时，外层 panel 不再叠第二层 overflow。 */
+const libraryPanelUsesInnerScroll = computed(() => {
+  if (loadState.value !== 'ready') {
+    return false
+  }
+  if (showingBookmarkTree.value) {
+    return (bookmarkIndex.value?.bookmarkCount ?? 0) > 0
+  }
+  return listRows.value.length > 0
 })
-
-function isDetailExportSelected(id: string): boolean {
-  return selectedDetailExportIds.value.has(id)
-}
 
 function canSelectDetailExportItem(_id: string): boolean {
   return true
@@ -223,6 +225,7 @@ function canSelectDetailExportItem(_id: string): boolean {
 
 function handleToggleDetailExportSelection(id: string): void {
   selectedDetailExportIds.value = toggleDetailExportSelectionSet(selectedDetailExportIds.value, id)
+  bumpDetailExportSelectionRevision()
 }
 
 function handleLibraryRowActivate(
@@ -293,6 +296,7 @@ async function loadBookmarkTree(options: { silent?: boolean } = {}) {
       bookmarkIndex.value = null
       bookmarkStructureHash.value = ''
       bookmarkSyncReady.value = false
+      bookmarkExportableIds.value = []
     }
     return
   }
@@ -317,6 +321,7 @@ async function loadBookmarkTree(options: { silent?: boolean } = {}) {
   bookmarkIndex.value = markRaw(response.index)
   bookmarkStructureHash.value = response.structureHash
   bookmarkSyncReady.value = response.syncReady
+  bookmarkExportableIds.value = collectBookmarkExportableMemoryIds(response.index.nodes)
   loadState.value = 'ready'
   errorMessage.value = ''
 }
@@ -380,16 +385,19 @@ async function loadExcerptList() {
     loadState.value = 'error'
     errorMessage.value = tMemoryError(response.errorCode)
     items.value = []
+    listRows.value = []
     return
   }
   if (!('items' in response)) {
     loadState.value = 'error'
     errorMessage.value = t('library_invalid_response')
     items.value = []
+    listRows.value = []
     return
   }
 
   items.value = response.items
+  rebuildListRows()
   loadState.value = 'ready'
 }
 
@@ -407,8 +415,10 @@ async function loadPanel() {
     loadState.value = 'error'
     errorMessage.value = t('library_load_failed')
     items.value = []
+    listRows.value = []
     bookmarkIndex.value = null
     bookmarkStructureHash.value = ''
+    bookmarkExportableIds.value = []
   }
 }
 
@@ -454,6 +464,7 @@ async function confirmDeleteExcerpt() {
       return
     }
     items.value = items.value.filter(item => item.id !== id)
+    rebuildListRows()
     closeDeleteConfirm()
   } catch {
     deleteConfirmError.value = t('library_delete_failed')
@@ -530,6 +541,7 @@ async function saveNote() {
     const savedNote = response.item.clues.note?.trim() || null
     patchBookmarkNoteInLocalIndex(id, savedNote)
     items.value = items.value.map(item => (item.id === id ? response.item : item))
+    rebuildListRows()
     noteEditorOpen.value = false
     noteEditorMemoryId.value = null
     noteEditorTitle.value = ''
@@ -609,7 +621,10 @@ onUnmounted(() => {
           </AppIconButton>
         </header>
 
-        <div class="library-panel-body">
+        <div
+          class="library-panel-body"
+          :class="{ 'library-panel-body--inner-scroll': libraryPanelUsesInnerScroll }"
+        >
           <p v-if="loadState === 'loading'" class="library-status" role="status">
             {{ t('library_loading') }}
           </p>
@@ -631,16 +646,18 @@ onUnmounted(() => {
               <p class="library-empty-title">{{ activeTab.emptyTitle }}</p>
               <p class="library-empty-copy">{{ activeTab.emptyBody }}</p>
             </div>
-            <BookmarkLibraryTree
-              v-else
-              :index="bookmarkIndex"
-              :show-unsynced-flags="bookmarkSyncReady"
-              :show-detail-export-selection="detailExportMode"
-              :selected-detail-export-ids="selectedDetailExportIds"
-              @edit-note="openNoteEditor"
-              @open-bookmark="handleOpenBookmark"
-              @toggle-detail-export-selection="handleToggleDetailExportSelection"
-            />
+            <div v-else class="library-bookmark-tree-host">
+              <BookmarkLibraryTree
+                :index="bookmarkIndex"
+                :show-unsynced-flags="bookmarkSyncReady"
+                :show-detail-export-selection="detailExportMode"
+                :selected-detail-export-ids="selectedDetailExportIds"
+                :detail-export-selection-revision="detailExportSelectionRevision"
+                @edit-note="openNoteEditor"
+                @open-bookmark="handleOpenBookmark"
+                @toggle-detail-export-selection="handleToggleDetailExportSelection"
+              />
+            </div>
           </template>
 
           <template v-else>
@@ -649,64 +666,18 @@ onUnmounted(() => {
               <p class="library-empty-copy">{{ activeTab.emptyBody }}</p>
             </div>
 
-            <ul v-else class="library-list">
-              <li v-for="row in listRows" :key="row.id" class="library-item">
-                <AppLibraryItemCard
-                  :href="row.href"
-                  :detail-export-active="detailExportMode"
-                  :detail-export-selected="isDetailExportSelected(row.id)"
-                  @activate="handleLibraryRowActivate($event, row)"
-                >
-                  <template v-if="row.sourceUrl" #leading>
-                    <AppLibraryItemFavicon :page-url="row.sourceUrl" fallback-icon="format_quote" />
-                  </template>
-                  <template #title>
-                    <p v-if="row.excerpt" class="lib-item-body">{{ row.excerpt }}</p>
-                    <p v-else-if="row.title" class="lib-item-title">{{ row.title }}</p>
-                  </template>
-                  <template v-if="row.note" #note>
-                    <p class="lib-item-note">
-                      <span class="lib-item-note-label">{{ t('detail_note_label') }}</span>
-                      {{ row.note }}
-                    </p>
-                  </template>
-                  <template #footer>
-                    <p class="lib-item-subtitle">{{ row.subtitle }}</p>
-                  </template>
-                  <template #time>
-                    <p class="lib-item-time">{{ formatLibrarySavedAt(row.savedAt) }}</p>
-                  </template>
-                  <template #actions>
-                    <AppIconButton
-                      type="button"
-                      :title="row.note ? t('library_edit_note_aria') : t('library_add_note_aria')"
-                      :aria-label="
-                        row.note ? t('library_edit_note_aria') : t('library_add_note_aria')
-                      "
-                      @click="
-                        openNoteEditor({
-                          memoryItemId: row.id,
-                          title: row.title || row.excerpt || row.subtitle,
-                          note: row.note ?? ''
-                        })
-                      "
-                    >
-                      <AppIcon name="edit_note" size="20px" />
-                    </AppIconButton>
-                    <AppIconButton
-                      type="button"
-                      tone="danger"
-                      :title="t('library_delete_excerpt_aria')"
-                      :aria-label="t('library_delete_excerpt_aria')"
-                      :disabled="deletingId === row.id"
-                      @click="handleDeleteExcerpt(row.id)"
-                    >
-                      <AppIcon name="delete" size="20px" />
-                    </AppIconButton>
-                  </template>
-                </AppLibraryItemCard>
-              </li>
-            </ul>
+            <div v-else class="library-list-scroll-host">
+              <ExcerptLibraryList
+                :rows="listRows"
+                :detail-export-mode="detailExportMode"
+                :selected-detail-export-ids="selectedDetailExportIds"
+                :detail-export-selection-revision="detailExportSelectionRevision"
+                :deleting-id="deletingId"
+                @activate="handleLibraryRowActivate"
+                @edit-note="openNoteEditor"
+                @delete-excerpt="handleDeleteExcerpt"
+              />
+            </div>
           </template>
         </div>
       </section>
@@ -898,6 +869,18 @@ onUnmounted(() => {
   overflow-y: auto;
 }
 
+.library-panel-body--inner-scroll {
+  overflow: hidden;
+}
+
+.library-bookmark-tree-host,
+.library-list-scroll-host {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .library-status,
 .library-error {
   margin: 0;
@@ -932,19 +915,6 @@ onUnmounted(() => {
   font-size: 13px;
   line-height: 1.5;
   color: var(--on-surface-muted);
-}
-
-.library-list {
-  display: grid;
-  gap: var(--library-list-row-gap);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.library-item {
-  position: relative;
-  min-width: 0;
 }
 
 .library-note-dialog-target {

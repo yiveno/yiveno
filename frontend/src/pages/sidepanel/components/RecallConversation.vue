@@ -6,6 +6,7 @@ import { RECALL_RESULT_PAGE_SIZE } from '@/core/recall/build-recall-result'
 import type { ConversationTurn, AssistantTurn } from '@/pages/sidepanel/recall-conversation-types'
 import type { RecallCardModel } from '@/pages/sidepanel/RecallResultCard.vue'
 import RecallResultCard from '@/pages/sidepanel/RecallResultCard.vue'
+import { recallResultCardMemoDeps } from '@/pages/sidepanel/recall-result-card-memo'
 import { t } from '@/infrastructure/i18n/t'
 
 defineOptions({ name: 'RecallConversation' })
@@ -131,6 +132,26 @@ function isDetailExportSelectionDisabled(_id: string): boolean {
 function handleToggleDetailExportSelection(id: string): void {
   emit('toggleDetailExportSelection', id)
 }
+
+function cardMemoDeps(
+  card: RecallCardModel,
+  options: {
+    expanded: boolean
+    topPick?: boolean
+    compact?: boolean
+    keyboardSelected: boolean
+  }
+): unknown[] {
+  return recallResultCardMemoDeps({
+    card,
+    expanded: options.expanded,
+    detailExportSelectionActive: props.detailExportSelectionActive === true,
+    detailExportSelected: isDetailExportSelected(card.id),
+    keyboardSelected: options.keyboardSelected,
+    ...(options.topPick !== undefined ? { topPick: options.topPick } : {}),
+    ...(options.compact !== undefined ? { compact: options.compact } : {})
+  })
+}
 </script>
 
 <template>
@@ -158,6 +179,13 @@ function handleToggleDetailExportSelection(id: string): void {
 
           <div v-if="turn.primaryCard" class="assistant-turn-primary">
             <RecallResultCard
+              v-memo="
+                cardMemoDeps(turn.primaryCard, {
+                  expanded: expandedDuplicateGroupId === turn.primaryCard.id,
+                  topPick: true,
+                  keyboardSelected: false
+                })
+              "
               :card="turn.primaryCard"
               result-dom-id="conversation-primary-card"
               :keyboard-selected="false"
@@ -179,6 +207,13 @@ function handleToggleDetailExportSelection(id: string): void {
           <div v-if="turn.relatedGuessCard" class="assistant-turn-related-guess">
             <p class="assistant-turn-related-guess-label">{{ turn.relatedGuessLabel }}</p>
             <RecallResultCard
+              v-memo="
+                cardMemoDeps(turn.relatedGuessCard, {
+                  expanded: expandedDuplicateGroupId === turn.relatedGuessCard.id,
+                  compact: true,
+                  keyboardSelected: false
+                })
+              "
               :card="turn.relatedGuessCard"
               result-dom-id="conversation-related-guess-card"
               :keyboard-selected="false"
@@ -205,7 +240,18 @@ function handleToggleDetailExportSelection(id: string): void {
               {{ turn.candidateSectionLabel }}
             </p>
             <ol class="assistant-turn-candidates">
-              <li v-for="(item, index) in visibleCardsFor(turn)" :key="item.id">
+              <li
+                v-for="(item, index) in visibleCardsFor(turn)"
+                :key="item.id"
+                v-memo="
+                  cardMemoDeps(item, {
+                    expanded: expandedDuplicateGroupId === item.id,
+                    topPick: turn.tone === 'confident' && index === 0,
+                    compact: !(turn.tone === 'confident' && index === 0),
+                    keyboardSelected: false
+                  })
+                "
+              >
                 <RecallResultCard
                   :card="item"
                   :result-dom-id="`conversation-candidate-${turn.id}-${index}`"
@@ -299,6 +345,8 @@ function handleToggleDetailExportSelection(id: string): void {
 .conversation-turn {
   display: flex;
   min-width: 0;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 120px;
 }
 
 .conversation-turn--user {

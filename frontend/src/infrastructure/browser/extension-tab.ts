@@ -3,6 +3,8 @@
  * 1) session 记住的 tabId  2) 按 chrome-extension URL 扫描  3) 新建
  */
 
+import { EXTENSION_OPTIONS_PAGE } from '@/core/extension/extension-options-contract'
+
 const LIBRARY_TAB_SESSION_KEY = 'yiveno.libraryTabId'
 const SETTINGS_TAB_SESSION_KEY = 'yiveno.settingsTabId'
 const GETTING_STARTED_TAB_SESSION_KEY = 'yiveno.gettingStartedTabId'
@@ -84,7 +86,7 @@ export async function focusOrOpenLibraryTab(): Promise<void> {
  * 与记忆库同路径：session → URL 扫描 → 新建；避免 openOptionsPage 重复开 Tab。
  */
 export async function focusOrOpenSettingsTab(): Promise<void> {
-  await focusOrCreateExtensionPage('settings.html', SETTINGS_TAB_SESSION_KEY)
+  await focusOrCreateExtensionPage(EXTENSION_OPTIONS_PAGE, SETTINGS_TAB_SESSION_KEY)
 }
 
 /** Side Panel / 安装引导：打开或切到 Getting Started 页。 */

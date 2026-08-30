@@ -16,6 +16,7 @@ import {
   schedulePersistBookmarkLibraryTreeExpanded
 } from '@/pages/library/bookmark-library-tree-expanded'
 import BookmarkLibraryTreeRow from '@/pages/library/BookmarkLibraryTreeRow.vue'
+import { createLibraryVirtualScrollHandler } from '@/pages/library/use-library-virtual-scroll'
 
 defineOptions({ name: 'BookmarkLibraryTree' })
 
@@ -27,6 +28,8 @@ const props = defineProps<{
   selectedDetailExportIds?: Set<string>
   /** 为 true 时书签行进入 detail export 多选（点行切换） */
   showDetailExportSelection?: boolean
+  /** 多选 revision，配合 v-memo 减少无关行重绘。 */
+  detailExportSelectionRevision?: number
 }>()
 
 defineEmits<{
@@ -139,12 +142,22 @@ function toggleFolder(chromeId: string, depth: number): void {
   schedulePersistBookmarkLibraryTreeExpanded(expandedFolderIds.value)
 }
 
-function handleScroll(event: Event) {
-  const target = event.target
-  if (!(target instanceof HTMLElement)) {
-    return
-  }
-  scrollTop.value = target.scrollTop
+const handleScroll = createLibraryVirtualScrollHandler(scrollTop)
+
+function bookmarkRowMemoDeps(row: (typeof renderedRows.value)[number]): unknown[] {
+  const exportSelected =
+    row.kind === 'bookmark' && row.memoryItemId
+      ? props.selectedDetailExportIds?.has(row.memoryItemId) === true
+      : false
+  return [
+    row.kind,
+    row.chromeId,
+    row.depth,
+    props.showDetailExportSelection === true,
+    props.detailExportSelectionRevision ?? 0,
+    exportSelected,
+    row.kind === 'bookmark' && !row.memoryItemId
+  ]
 }
 </script>
 
@@ -158,6 +171,7 @@ function handleScroll(event: Event) {
         <BookmarkLibraryTreeRow
           v-for="row in renderedRows"
           :key="`${row.kind}-${row.chromeId}`"
+          v-memo="bookmarkRowMemoDeps(row)"
           :row="row"
           :show-unsynced-flags="showUnsyncedFlags"
           :show-detail-export-selection="showDetailExportSelection === true"
@@ -180,8 +194,8 @@ function handleScroll(event: Event) {
 <style scoped>
 .bookmark-tree-scroll {
   --library-list-row-gap: var(--space-xs);
-  max-height: min(70vh, 720px);
-  min-height: 280px;
+  flex: 1;
+  min-height: 0;
   overflow: auto;
   overscroll-behavior: contain;
 }

@@ -1,5 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+const ensureBackgroundBootstrappedMock = vi.hoisted(() => vi.fn(async () => undefined))
+
+vi.mock('@/background/bootstrap', () => ({
+  ensureBackgroundBootstrapped: ensureBackgroundBootstrappedMock
+}))
+
 vi.mock('@/application/identity/absorb-local-profile-into-account', () => ({
   absorbLocalProfileIntoAccount: vi.fn(async () => 0)
 }))
@@ -10,7 +16,10 @@ vi.mock('@/application/memory/ensure-memory-embedding-maintenance', () => ({
 
 import {
   applyExternalAuthHandoff,
-  applyExternalAuthSessionHandoff
+  applyExternalAuthSessionHandoff,
+  isExternalAuthHandoffListenerRegistered,
+  registerExternalAuthHandoffListener,
+  resetExternalAuthHandoffListenerForTests
 } from '@/background/listeners/external-auth-handoff'
 import { absorbLocalProfileIntoAccount } from '@/application/identity/absorb-local-profile-into-account'
 import { scheduleSilentMemoryEmbeddingMaintenance } from '@/application/memory/ensure-memory-embedding-maintenance'
@@ -50,6 +59,8 @@ function createChromeStorageMock(initial: StorageMap = {}) {
 
 describe('external auth handoff', () => {
   beforeEach(() => {
+    resetExternalAuthHandoffListenerForTests()
+    ensureBackgroundBootstrappedMock.mockClear()
     vi.stubGlobal('chrome', createChromeStorageMock())
   })
 
@@ -75,10 +86,13 @@ describe('external auth handoff', () => {
     expect(flattened[ACCOUNT_BINDING_STORAGE_KEY]).toMatchObject({
       accountId: '22222222-2222-4222-8222-222222222222'
     })
-    expect(absorbLocalProfileIntoAccount).toHaveBeenCalledWith(
-      '22222222-2222-4222-8222-222222222222'
-    )
-    expect(scheduleSilentMemoryEmbeddingMaintenance).toHaveBeenCalledWith('auth_handoff', 800)
+    await vi.waitFor(() => {
+      expect(ensureBackgroundBootstrappedMock).toHaveBeenCalled()
+      expect(absorbLocalProfileIntoAccount).toHaveBeenCalledWith(
+        '22222222-2222-4222-8222-222222222222'
+      )
+      expect(scheduleSilentMemoryEmbeddingMaintenance).toHaveBeenCalledWith('auth_handoff', 800)
+    })
   })
 
   it('session 写入后立即 ok，不阻塞本地档归并', async () => {
@@ -99,8 +113,11 @@ describe('external auth handoff', () => {
     })
 
     expect(result).toEqual({ ok: true })
-    expect(scheduleSilentMemoryEmbeddingMaintenance).toHaveBeenCalled()
     expect(resolveAbsorb).toBeTypeOf('function')
+    await vi.waitFor(() => {
+      expect(ensureBackgroundBootstrappedMock).toHaveBeenCalled()
+      expect(scheduleSilentMemoryEmbeddingMaintenance).toHaveBeenCalled()
+    })
     resolveAbsorb?.(1)
   })
 
@@ -116,5 +133,74 @@ describe('external auth handoff', () => {
   it('非法 payload 返回失败', async () => {
     const result = await applyExternalAuthHandoff({ type: 'NOPE' })
     expect(result.ok).toBe(false)
+  })
+})
+
+describe('registerExternalAuthHandoffListener', () => {
+  beforeEach(() => {
+    resetExternalAuthHandoffListenerForTests()
+    ensureBackgroundBootstrappedMock.mockClear()
+    vi.stubGlobal('chrome', {
+      ...createChromeStorageMock(),
+      runtime: {
+        onMessageExternal: { addListener: vi.fn() }
+      }
+    })
+  })
+
+  it('幂等注册 onMessageExternal', () => {
+    registerExternalAuthHandoffListener()
+    registerExternalAuthHandoffListener()
+
+    expect(chrome.runtime.onMessageExternal.addListener).toHaveBeenCalledTimes(1)
+    expect(isExternalAuthHandoffListenerRegistered()).toBe(true)
+  })
+
+  it('拒绝非白名单 origin', async () => {
+    registerExternalAuthHandoffListener()
+
+    const handler = (chrome.runtime.onMessageExternal.addListener as ReturnType<typeof vi.fn>).mock
+      .calls[0]?.[0] as (
+      message: unknown,
+      sender: { url?: string },
+      sendResponse: (response: unknown) => void
+    ) => boolean
+
+    const sendResponse = vi.fn()
+    const keepChannelOpen = handler(
+      { type: 'YIVENO_AUTH_SESSION_HANDOFF', payload: {} },
+      { url: 'https://evil.com/callback' },
+      sendResponse
+    )
+
+    expect(keepChannelOpen).toBe(false)
+    expect(sendResponse).toHaveBeenCalledWith({ ok: false, error: 'forbidden_origin' })
+  })
+
+  it('白名单 origin 异步回传 handoff 结果', async () => {
+    registerExternalAuthHandoffListener()
+
+    const handler = (chrome.runtime.onMessageExternal.addListener as ReturnType<typeof vi.fn>).mock
+      .calls[0]?.[0] as (
+      message: unknown,
+      sender: { url?: string },
+      sendResponse: (response: unknown) => void
+    ) => boolean
+
+    const sendResponse = vi.fn()
+    const keepChannelOpen = handler(
+      {
+        type: 'YIVENO_AUTH_SIGN_OUT_HANDOFF',
+        payload: { reason: 'website_sign_out' }
+      },
+      { url: 'https://yiveno.com/account' },
+      sendResponse
+    )
+
+    expect(keepChannelOpen).toBe(true)
+
+    await vi.waitFor(() => {
+      expect(sendResponse).toHaveBeenCalledWith({ ok: true })
+    })
   })
 })

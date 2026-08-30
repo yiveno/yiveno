@@ -1,12 +1,17 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 import type { RecallHighlightPart } from '@/core/recall/highlight-recall-text'
-import { scoreRecallEvidenceEcs } from '@/core/recall/recall-telemetry'
 import { getChromeFaviconUrl } from '@/infrastructure/browser/chrome-favicon'
 import { t } from '@/infrastructure/i18n/t'
 import type { AppIconName } from '@/infrastructure/ui/icons/icon-paths'
 import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
+import {
+  buildRecallEvidencePayload,
+  scheduleRecallEvidenceWhenVisible
+} from '@/pages/sidepanel/recall-result-card-evidence'
+import { isFaviconBroken, withBrokenFavicon } from '@/pages/sidepanel/recall-result-card-favicon'
+import { resolveRecallCardClickAction } from '@/pages/sidepanel/recall-result-card-interaction'
 import RecallHighlightText from '@/pages/sidepanel/RecallHighlightText.vue'
 
 /** 找回结果卡展示模型（含可选折叠组）。 */
@@ -88,7 +93,7 @@ const reasonAriaLabel = computed(() => {
 })
 
 /** 书签角标用 Chrome 缓存 favicon；失败回退 Lucide bookmark。 */
-const brokenFaviconIds = ref(new Set<string>())
+const brokenFaviconIds = ref<ReadonlySet<string>>(new Set())
 
 const kindIcon = computed<AppIconName>(() =>
   props.card.itemKind === 'bookmark' ? 'bookmark' : 'format_quote'
@@ -115,17 +120,12 @@ function bookmarkFaviconSrc(url: string): string {
   return getChromeFaviconUrl(url, 32)
 }
 
-function isFaviconBroken(id: string): boolean {
-  return brokenFaviconIds.value.has(id)
+function isCardFaviconBroken(id: string): boolean {
+  return isFaviconBroken(brokenFaviconIds.value, id)
 }
 
 function markFaviconBroken(id: string): void {
-  if (brokenFaviconIds.value.has(id)) {
-    return
-  }
-  const next = new Set(brokenFaviconIds.value)
-  next.add(id)
-  brokenFaviconIds.value = next
+  brokenFaviconIds.value = withBrokenFavicon(brokenFaviconIds.value, id)
 }
 
 function siblingNativeTitle(sibling: RecallCardModel): string | undefined {
@@ -141,23 +141,25 @@ function siblingNativeTitle(sibling: RecallCardModel): string | undefined {
 }
 
 function handleOpen(event: MouseEvent, id: string, url: string, rank?: number): void {
-  if (props.showDetailExportSelection) {
-    event.preventDefault()
-    if (isDetailExportItemDisabled(id)) {
-      return
-    }
-    emit('toggleDetailExportSelection', id)
+  event.preventDefault()
+  const action = resolveRecallCardClickAction({
+    showDetailExportSelection: props.showDetailExportSelection,
+    detailExportDisabled: isDetailExportItemDisabled(id),
+    memoryItemId: id,
+    url,
+    ...(rank !== undefined ? { rank } : {}),
+    metaKey: event.metaKey,
+    ctrlKey: event.ctrlKey
+  })
+
+  if (action.type === 'noop') {
     return
   }
-
-  // 一律经 SW 导航：默认当前活动标签；⌘/Ctrl+点击新开，避免 Side Panel 自身跳转
-  event.preventDefault()
-  emit('open', {
-    id,
-    url,
-    openInNewTab: event.metaKey || event.ctrlKey,
-    ...(rank !== undefined ? { rank } : {})
-  })
+  if (action.type === 'toggle-export') {
+    emit('toggleDetailExportSelection', action.memoryItemId)
+    return
+  }
+  emit('open', action.payload)
 }
 
 function isDetailExportItemSelected(id: string): boolean {
@@ -168,29 +170,23 @@ function isDetailExportItemDisabled(id: string): boolean {
   return props.detailExportItemDisabled?.(id) === true
 }
 
+const cardGroupRef = ref<HTMLElement | null>(null)
+let stopEvidenceObserver: (() => void) | undefined
+
 onMounted(() => {
-  const rank = props.card.telemetryRank
-  if (rank === undefined) {
-    return
-  }
-  const ecs = scoreRecallEvidenceEcs({
-    typeLabel: props.card.typeLabel,
-    subtitle: props.card.subtitle,
-    title: props.card.title,
-    url: props.card.url,
-    ...(props.card.excerpt !== undefined ? { excerpt: props.card.excerpt } : {}),
-    ...(props.card.savedAtIso !== undefined ? { savedAtIso: props.card.savedAtIso } : {}),
-    ...(props.card.reasonLine !== undefined ? { reasonLine: props.card.reasonLine } : {})
-  })
-  emit('evidenceVisible', {
-    memoryItemId: props.card.id,
-    rank,
-    ecs,
-    ...(props.card.reasonCodes?.length ? { reasonCodes: props.card.reasonCodes } : {}),
-    ...(props.card.excerpt?.trim() || props.card.title.trim()
-      ? { anchor: props.card.excerpt?.trim() || props.card.title.trim() }
-      : {})
-  })
+  stopEvidenceObserver = scheduleRecallEvidenceWhenVisible(
+    () => cardGroupRef.value,
+    () => {
+      const payload = buildRecallEvidencePayload(props.card)
+      if (payload) {
+        emit('evidenceVisible', payload)
+      }
+    }
+  )
+})
+
+onUnmounted(() => {
+  stopEvidenceObserver?.()
 })
 
 function handleMoreClick(event: MouseEvent): void {
@@ -202,6 +198,7 @@ function handleMoreClick(event: MouseEvent): void {
 
 <template>
   <div
+    ref="cardGroupRef"
     class="recall-card-group"
     :class="{
       'is-collection': isCollection,
@@ -236,7 +233,7 @@ function handleMoreClick(event: MouseEvent): void {
         :aria-label="card.typeLabel"
       >
         <img
-          v-if="card.itemKind === 'bookmark' && card.url && !isFaviconBroken(card.id)"
+          v-if="card.itemKind === 'bookmark' && card.url && !isCardFaviconBroken(card.id)"
           class="recall-card-favicon"
           :src="bookmarkFaviconSrc(card.url)"
           alt=""
@@ -350,7 +347,9 @@ function handleMoreClick(event: MouseEvent): void {
           :aria-label="sibling.typeLabel"
         >
           <img
-            v-if="sibling.itemKind === 'bookmark' && sibling.url && !isFaviconBroken(sibling.id)"
+            v-if="
+              sibling.itemKind === 'bookmark' && sibling.url && !isCardFaviconBroken(sibling.id)
+            "
             class="recall-card-favicon"
             :src="bookmarkFaviconSrc(sibling.url)"
             alt=""
@@ -427,6 +426,8 @@ function handleMoreClick(event: MouseEvent): void {
   gap: var(--space-xs);
   min-width: 0;
   max-width: 100%;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 5.25rem;
 }
 
 .recall-card-shell {

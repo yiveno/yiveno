@@ -361,7 +361,7 @@ Omnibox 是“单次命中”入口：输入变化只生成原生建议，不做
 
 用户的「打开 Recall Side Panel / 打开记忆库 / 打开设置 / 保存选区」主要通过两层完成：
 
-1. **Chrome 工具栏 action + `sidePanel.openPanelOnActionClick`**：无 `default_popup`；点击图标打开 Side Panel（`ensureSidePanelOpensOnActionClick`）
+1. **Chrome 工具栏 action + `sidePanel.setPanelBehavior({ openPanelOnActionClick: true })`**：无 `default_popup`；点击图标打开 Side Panel（`ensureSidePanelOpensOnActionClick`）
 2. **Yiveno 自定义 commands**：由 Background 注册后执行对应动作（`open_recall` 等经 `handleOpenRecallShell`）
 
 **代码链路**

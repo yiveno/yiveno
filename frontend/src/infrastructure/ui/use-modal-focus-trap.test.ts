@@ -29,6 +29,32 @@ describe('use-modal-focus-trap', () => {
     expect(focusable[0]?.textContent).toBe('A')
   })
 
+  it('getFocusableElements 忽略 hidden 与 aria-hidden', () => {
+    const container = document.createElement('div')
+    container.innerHTML =
+      '<button type="button">A</button><button type="button" hidden>B</button><button type="button" aria-hidden="true">C</button>'
+    document.body.appendChild(container)
+
+    const focusable = getFocusableElements(container)
+    expect(focusable).toHaveLength(1)
+    expect(focusable[0]?.textContent).toBe('A')
+  })
+
+  it('Shift+Tab 在首项时循环到末项', () => {
+    const container = document.createElement('div')
+    container.innerHTML = '<button type="button">A</button><button type="button">B</button>'
+    document.body.appendChild(container)
+    const [first, last] = getFocusableElements(container)
+    first?.focus()
+
+    const event = new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true })
+    const preventDefault = vi.spyOn(event, 'preventDefault')
+    handleTabTrap(event, container)
+
+    expect(preventDefault).toHaveBeenCalled()
+    expect(document.activeElement).toBe(last)
+  })
+
   it('Tab 在末项时循环到首项', () => {
     const container = document.createElement('div')
     container.innerHTML = '<button type="button">A</button><button type="button">B</button>'

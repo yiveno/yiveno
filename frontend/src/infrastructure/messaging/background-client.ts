@@ -70,7 +70,23 @@ import type {
 export async function sendBackgroundMessage<TResponse extends BackgroundMessageResponse>(
   message: BackgroundMessage
 ): Promise<TResponse> {
-  return (await chrome.runtime.sendMessage(message)) as TResponse
+  try {
+    const response = await chrome.runtime.sendMessage(message)
+    if (response === undefined) {
+      return {
+        ok: false,
+        errorCode: 'MESSAGE_DISPATCH_FAILED',
+        error: 'Background 无响应'
+      } as TResponse
+    }
+    return response as TResponse
+  } catch (error) {
+    return {
+      ok: false,
+      errorCode: 'MESSAGE_DISPATCH_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
+    } as TResponse
+  }
 }
 
 /** 根据线索执行 Recall。 */

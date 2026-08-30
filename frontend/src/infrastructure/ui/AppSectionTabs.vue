@@ -5,6 +5,8 @@
  */
 import { computed } from 'vue'
 
+import { resolveAppSectionTabIndex } from '@/infrastructure/ui/app-section-tabs-keyboard'
+
 defineOptions({ name: 'AppSectionTabs' })
 
 const props = withDefaults(
@@ -59,29 +61,13 @@ function selectTab(id: string): void {
 
 /** 方向键 / Home / End 在 tab 间移动焦点与选中态。 */
 function onTabKeyDown(event: KeyboardEvent, index: number): void {
-  const lastIndex = props.items.length - 1
-  if (lastIndex < 0) {
+  const nextIndex = resolveAppSectionTabIndex({
+    key: event.key,
+    currentIndex: index,
+    lastIndex: props.items.length - 1
+  })
+  if (nextIndex === null) {
     return
-  }
-
-  let nextIndex: number | null = null
-  switch (event.key) {
-    case 'Home':
-      nextIndex = 0
-      break
-    case 'End':
-      nextIndex = lastIndex
-      break
-    case 'ArrowRight':
-    case 'ArrowDown':
-      nextIndex = index >= lastIndex ? 0 : index + 1
-      break
-    case 'ArrowLeft':
-    case 'ArrowUp':
-      nextIndex = index <= 0 ? lastIndex : index - 1
-      break
-    default:
-      return
   }
 
   event.preventDefault()

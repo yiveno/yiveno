@@ -1,10 +1,11 @@
 import { CodedError } from '@/core/common/coded-error'
-import { t } from '@/infrastructure/i18n/t'
 import { optionalProp } from '@/core/common/optional-props'
 import { captureTextExcerptFromContextMenu } from '@/application/capture/capture-text-excerpt-service'
+import { ensureBackgroundBootstrapped } from '@/background/bootstrap'
 import { flashActionBadge } from '@/infrastructure/browser/action-badge'
 import { isSavablePageUrl } from '@/infrastructure/browser/active-tab-reader'
 import { logger } from '@/infrastructure/logging/logger'
+import { t } from '@/infrastructure/i18n/t'
 
 /** 右键菜单：保存选区到 Yiveno。 */
 export const CONTEXT_MENU_SAVE_SELECTION_ID = 'yiveno-save-selection' as const
@@ -121,10 +122,12 @@ export function registerContextMenuListeners(): void {
   listenersRegistered = true
 
   chrome.contextMenus.onClicked.addListener((info, tab) => {
-    void handleContextMenuClick(info, tab).catch(error => {
-      logger.error('ContextMenu', '保存选区失败', error)
-      void flashActionBadge('error')
-    })
+    void ensureBackgroundBootstrapped()
+      .then(() => handleContextMenuClick(info, tab))
+      .catch(error => {
+        logger.error('ContextMenu', '保存选区失败', error)
+        void flashActionBadge('error')
+      })
   })
 
   logger.info('ContextMenu', '右键选区菜单监听器已注册')

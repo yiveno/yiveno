@@ -1,3 +1,6 @@
+/** mouseup 后延迟展示，避开 Chrome / 站点自带选区条的短暂空选区。 */
+export const SELECTION_TOOLBAR_SHOW_DELAY_MS = 120
+
 /** 划词浮层定位与可见性纯函数（无 DOM 依赖）。 */
 
 export interface SelectionToolbarAnchor {

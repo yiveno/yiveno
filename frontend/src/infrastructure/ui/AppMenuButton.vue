@@ -6,6 +6,10 @@ import { onBeforeUnmount, ref, watch } from 'vue'
 
 import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
 import type { AppIconName } from '@/infrastructure/ui/icons/icon-paths'
+import {
+  APP_HOVER_MENU_CLOSE_MS,
+  APP_HOVER_MENU_OPEN_MS
+} from '@/infrastructure/ui/app-hover-menu-timing'
 
 defineOptions({ name: 'AppMenuButton' })
 
@@ -44,8 +48,8 @@ const rootRef = ref<HTMLElement | null>(null)
 let openTimer: ReturnType<typeof setTimeout> | null = null
 let closeTimer: ReturnType<typeof setTimeout> | null = null
 
-const HOVER_OPEN_MS = 120
-const HOVER_CLOSE_MS = 180
+const HOVER_OPEN_MS = APP_HOVER_MENU_OPEN_MS
+const HOVER_CLOSE_MS = APP_HOVER_MENU_CLOSE_MS
 
 function clearTimers(): void {
   if (openTimer) {

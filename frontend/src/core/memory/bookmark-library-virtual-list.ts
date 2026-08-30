@@ -9,20 +9,28 @@ export interface BookmarkLibraryRowMetrics {
   totalHeight: number
 }
 
-/** 预计算每行 offset，供虚拟滚动 O(log n) 定位。 */
-export function buildBookmarkLibraryRowMetrics(
-  rows: readonly BookmarkLibraryVisibleRow[]
+/** 预计算每行 offset（通用 stride 回调），供书签树 / 摘录列表复用。 */
+export function buildStrideRowMetrics(
+  rowCount: number,
+  strideAt: (index: number) => number
 ): BookmarkLibraryRowMetrics {
   const offsets: number[] = [0]
   const heights: number[] = []
   let total = 0
-  for (const row of rows) {
-    const height = getBookmarkLibraryRowStride(row)
+  for (let index = 0; index < rowCount; index += 1) {
+    const height = strideAt(index)
     heights.push(height)
     total += height
     offsets.push(total)
   }
   return { offsets, heights, totalHeight: total }
+}
+
+/** 预计算每行 offset，供虚拟滚动 O(log n) 定位。 */
+export function buildBookmarkLibraryRowMetrics(
+  rows: readonly BookmarkLibraryVisibleRow[]
+): BookmarkLibraryRowMetrics {
+  return buildStrideRowMetrics(rows.length, index => getBookmarkLibraryRowStride(rows[index]!))
 }
 
 /** 在 offsets 中查找 scrollTop 对应的首行索引。 */

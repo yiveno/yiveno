@@ -42,8 +42,9 @@ describe('warnIfCriticalExtensionMessagesMissing', () => {
     warnIfCriticalExtensionMessagesMissing()
     expect(warnSpy).toHaveBeenCalledWith(
       'i18n',
-      '关键 Side Panel 文案未解析（将露出 message key）',
+      '关键扩展页文案未解析（将露出 message key）',
       expect.objectContaining({
+        page: 'sidepanel',
         missingKeys: expect.arrayContaining([
           'popup_dismiss_candidates',
           'popup_outcome_exit_prompt'

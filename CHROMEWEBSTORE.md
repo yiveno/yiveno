@@ -1,6 +1,6 @@
 # Chrome Web Store Listing — Yiveno
 
-> Last Updated: 2026-08-29
+> Last Updated: 2026-08-30
 
 <!-- 开发者向：上架草稿本，与 frontend/public/manifest.json 同步维护。商店用户向文案仅美式英语。 -->
 
@@ -46,16 +46,16 @@ English
 
 ## Graphics & Assets
 
-| Asset                          | Dimensions          | Status          | Filename                                                             |
-| ------------------------------ | ------------------- | --------------- | -------------------------------------------------------------------- |
-| Store Icon [REQUIRED]          | 128×128 PNG         | 🟡 Needs update | `frontend/public/images/icon128.png` (verify 128×128 for store tile) |
-| Screenshot 1 [REQUIRED]        | 1280×800 or 640×400 | ⬜ Not created  |                                                                      |
-| Screenshot 2 [RECOMMENDED]     | 1280×800 or 640×400 | ⬜ Not created  |                                                                      |
-| Screenshot 3 [RECOMMENDED]     | 1280×800 or 640×400 | ⬜ Not created  |                                                                      |
-| Screenshot 4                   | 1280×800 or 640×400 | ⬜ Not created  |                                                                      |
-| Screenshot 5                   | 1280×800 or 640×400 | ⬜ Not created  |                                                                      |
-| Small Promo Tile [RECOMMENDED] | 440×280             | ⬜ Not created  |                                                                      |
-| Marquee Promo Tile             | 1400×560            | ⬜ Not created  |                                                                      |
+| Asset                          | Dimensions          | Status         | Filename                                                                                     |
+| ------------------------------ | ------------------- | -------------- | -------------------------------------------------------------------------------------------- |
+| Store Icon [REQUIRED]          | 128×128 PNG         | ✅ Verified    | `frontend/public/images/icon128.png` (128×128 PNG, manifest `icons` + `action.default_icon`) |
+| Screenshot 1 [REQUIRED]        | 1280×800 or 640×400 | ⬜ Not created |                                                                                              |
+| Screenshot 2 [RECOMMENDED]     | 1280×800 or 640×400 | ⬜ Not created |                                                                                              |
+| Screenshot 3 [RECOMMENDED]     | 1280×800 or 640×400 | ⬜ Not created |                                                                                              |
+| Screenshot 4                   | 1280×800 or 640×400 | ⬜ Not created |                                                                                              |
+| Screenshot 5                   | 1280×800 or 640×400 | ⬜ Not created |                                                                                              |
+| Small Promo Tile [RECOMMENDED] | 440×280             | ⬜ Not created |                                                                                              |
+| Marquee Promo Tile             | 1400×560            | ⬜ Not created |                                                                                              |
 
 ### Screenshot Notes
 
@@ -92,11 +92,11 @@ English
 
 ### Other manifest capabilities
 
-| Capability                                                   | Justification                                                                                                                                |
-| ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `omnibox` keyword `yi`                                       | Lets users type a remembered keyword in the address bar for quick jump suggestions from their saved library, without opening the side panel. |
-| `externally_connectable` (yiveno.com, localhost website dev) | Allows the Yiveno website sign-in flow to hand auth back to the extension after the user completes OAuth in a browser tab.                   |
-| `options_ui` → Settings                                      | Full-page settings for privacy, sync, imports, and account data controls.                                                                    |
+| Capability                                                   | Justification                                                                                                                                                                                                |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `omnibox` keyword `yi`                                       | Lets users type a remembered keyword in the address bar for quick jump suggestions from their saved library, without opening the side panel.                                                                 |
+| `externally_connectable` (yiveno.com, localhost website dev) | Allows the Yiveno website sign-in flow to hand auth back to the extension after the user completes OAuth in a browser tab. Dev builds also allow `localhost:3001` / `localhost:3002` for the marketing site. |
+| `options_ui` → Settings                                      | Full-page settings for privacy, sync, imports, and account data controls.                                                                                                                                    |
 
 ## Privacy & Data Use
 
@@ -160,7 +160,7 @@ https://yiveno.com
 
 | Version | Date       | Changes                                                                            | Status |
 | ------- | ---------- | ---------------------------------------------------------------------------------- | ------ |
-| 4.0.0   | 2026-08-29 | Side Panel Recall shell, Library, Capture, optional cloud sync, omnibox quick jump | Draft  |
+| 4.0.0   | 2026-08-30 | Side Panel Recall shell, Library, Capture, optional cloud sync, omnibox quick jump | Draft  |
 
 ## Review Notes
 

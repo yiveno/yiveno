@@ -6,6 +6,7 @@ import {
   tryParseOmniboxOpenMemoryId
 } from '@/core/recall/memory-open-href'
 import { escapeOmniboxXml, recallResultToOmniboxSuggests } from '@/core/recall/omnibox-suggest'
+import { navigateTabToUrl } from '@/infrastructure/browser/navigate-tab'
 import { t } from '@/infrastructure/i18n/t'
 import { logger } from '@/infrastructure/logging/logger'
 
@@ -44,17 +45,15 @@ async function openUrlByDisposition(
   url: string,
   disposition: 'currentTab' | 'newBackgroundTab' | 'newForegroundTab'
 ): Promise<void> {
-  switch (disposition) {
-    case 'currentTab':
-      await chrome.tabs.update({ url })
-      return
-    case 'newBackgroundTab':
-      await chrome.tabs.create({ url, active: false })
-      return
-    case 'newForegroundTab':
-    default:
-      await chrome.tabs.create({ url })
+  if (disposition === 'newBackgroundTab') {
+    await chrome.tabs.create({ url, active: false })
+    return
   }
+
+  await navigateTabToUrl(
+    url,
+    disposition === 'newForegroundTab' ? 'newForegroundTab' : 'currentTab'
+  )
 }
 
 /** 尽力记录打开；失败不影响导航。 */

@@ -6,8 +6,6 @@ import { buildRecallPrefillClue } from '@/core/recall/build-prefill-clue'
 import { captureTextExcerpt, openRecallShell } from '@/infrastructure/messaging/background-client'
 import { t } from '@/infrastructure/i18n/t'
 import {
-  EXCERPT_CAPTURE_COUNT_LOCAL_KEY,
-  FIRST_RECALL_OPEN_DONE_LOCAL_KEY,
   readExcerptCaptureCount,
   readFirstRecallOpenDone,
   writeRecallPrefill
@@ -15,10 +13,19 @@ import {
 import { markInstallOnboardingDone } from '@/infrastructure/storage/install-onboarding-storage'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
 import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
+import {
+  canSaveGettingStartedDemo,
+  canTryGettingStartedRecall,
+  type GettingStartedSaveState
+} from '@/pages/getting-started/getting-started-actions'
+import {
+  deriveGettingStartedProgress,
+  shouldRefreshGettingStartedProgress
+} from '@/pages/getting-started/getting-started-progress'
 
 defineOptions({ name: 'GettingStartedPage' })
 
-type SaveState = 'idle' | 'saving' | 'saved' | 'error'
+type SaveState = GettingStartedSaveState
 
 const saveState = ref<SaveState>('idle')
 const captureDone = ref(false)
@@ -38,12 +45,16 @@ async function refreshProgress(): Promise<void> {
     readExcerptCaptureCount(),
     readFirstRecallOpenDone()
   ])
-  captureDone.value = captureCount > 0
-  recallDone.value = firstRecallOpenDone
+  const progress = deriveGettingStartedProgress({
+    excerptCaptureCount: captureCount,
+    firstRecallOpenDone
+  })
+  captureDone.value = progress.captureDone
+  recallDone.value = progress.recallDone
 }
 
 async function handleSaveDemoLine(): Promise<void> {
-  if (saveState.value === 'saving' || captureDone.value) {
+  if (!canSaveGettingStartedDemo({ saveState: saveState.value, captureDone: captureDone.value })) {
     return
   }
 
@@ -77,7 +88,13 @@ async function handleSaveDemoLine(): Promise<void> {
 }
 
 async function handleTryRecall(): Promise<void> {
-  if (recallBusy.value || !captureDone.value || recallDone.value) {
+  if (
+    !canTryGettingStartedRecall({
+      recallBusy: recallBusy.value,
+      captureDone: captureDone.value,
+      recallDone: recallDone.value
+    })
+  ) {
     return
   }
 
@@ -116,10 +133,14 @@ function handleStorageChanged(
   changes: Record<string, chrome.storage.StorageChange>,
   areaName: string
 ): void {
-  if (areaName !== 'local') {
+  if (!shouldRefreshGettingStartedProgress(changes, areaName)) {
     return
   }
-  if (EXCERPT_CAPTURE_COUNT_LOCAL_KEY in changes || FIRST_RECALL_OPEN_DONE_LOCAL_KEY in changes) {
+  void refreshProgress()
+}
+
+function handleDocumentVisibilityChange(): void {
+  if (document.visibilityState === 'visible') {
     void refreshProgress()
   }
 }
@@ -127,10 +148,12 @@ function handleStorageChanged(
 onMounted(() => {
   void refreshProgress()
   chrome.storage.onChanged.addListener(handleStorageChanged)
+  document.addEventListener('visibilitychange', handleDocumentVisibilityChange)
 })
 
 onUnmounted(() => {
   chrome.storage.onChanged.removeListener(handleStorageChanged)
+  document.removeEventListener('visibilitychange', handleDocumentVisibilityChange)
 })
 </script>
 
@@ -284,6 +307,8 @@ onUnmounted(() => {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface-white);
+  content-visibility: auto;
+  contain-intrinsic-size: auto 120px;
 }
 
 .getting-started__step--active {

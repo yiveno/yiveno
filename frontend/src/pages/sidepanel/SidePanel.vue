@@ -72,6 +72,10 @@ import RecallComposer from '@/pages/sidepanel/components/RecallComposer.vue'
 import ColdStartGate from '@/pages/sidepanel/components/ColdStartGate.vue'
 import { createAssistantTurn } from '@/pages/sidepanel/build-assistant-turn'
 import type { ConversationTurn, AssistantTurn } from '@/pages/sidepanel/recall-conversation-types'
+import {
+  createRecallShellScrollListener,
+  scheduleRecallShellScrollToBottom
+} from '@/pages/sidepanel/recall-shell-scroll'
 import type { RecallDialogState } from '@/core/recall/merge-recall-dialog-turn'
 import {
   commitRecallOutcome,
@@ -202,21 +206,15 @@ const composerPlaceholder = computed(() => {
   return t(result.messageKey, result.messageArgs)
 })
 
-function onRecallBodyScroll(): void {
-  const el = recallBodyRef.value
-  if (!el) {
-    return
-  }
-  const distance = el.scrollHeight - el.scrollTop - el.clientHeight
-  stickToBottom.value = distance < 96
-}
+const recallShellScrollListener = createRecallShellScrollListener(nearBottom => {
+  stickToBottom.value = nearBottom
+})
 
 function scrollRecallToBottom(): void {
-  const el = recallBodyRef.value
-  if (!el || !stickToBottom.value) {
-    return
-  }
-  el.scrollTop = el.scrollHeight
+  scheduleRecallShellScrollToBottom(
+    () => recallBodyRef.value,
+    () => stickToBottom.value
+  )
 }
 
 watch(
@@ -1465,7 +1463,7 @@ onUnmounted(() => {
       ref="recallBodyRef"
       class="recall-body"
       :class="{ 'recall-body--empty': conversationTurns.length === 0 }"
-      @scroll="onRecallBodyScroll"
+      @scroll="recallShellScrollListener"
     >
       <section v-if="conversationTurns.length === 0" class="recall-empty" aria-live="polite">
         <div class="recall-greeting-slot">

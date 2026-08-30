@@ -30,6 +30,7 @@ async function bootstrapBackground(): Promise<void> {
 
   // 按灌库开关挂/卸书签监听（关则完全不听 Chrome bookmarks.*）
   await syncChromeBookmarkSyncListenersWithIngestSetting()
+  // 与 main.ts 入口重复注册；幂等，确保 bootstrap 路径也挂上
   registerContextMenuListeners()
   registerOmniboxListeners()
   registerCommandListeners()

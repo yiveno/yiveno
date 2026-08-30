@@ -19,3 +19,8 @@ const MEMORY_ERROR_MESSAGE_KEYS: Record<MemoryErrorCode, MessageKey> = {
 export function tMemoryError(errorCode: MemoryErrorCode): string {
   return t(MEMORY_ERROR_MESSAGE_KEYS[errorCode])
 }
+
+/** 是否为 Memory 业务 errorCode（排除 MESSAGE_DISPATCH_FAILED 等传输层码）。 */
+export function isMemoryErrorCode(code: string): code is MemoryErrorCode {
+  return Object.prototype.hasOwnProperty.call(MEMORY_ERROR_MESSAGE_KEYS, code)
+}

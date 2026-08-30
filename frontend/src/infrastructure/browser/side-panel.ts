@@ -53,9 +53,9 @@ export async function ensureSidePanelOpensOnActionClick(): Promise<void> {
     flowOk('SidePanel', '配置 openPanelOnActionClick', startedAt, { openPanelOnActionClick: true })
   } catch (error) {
     flowFail('SidePanel', '配置 openPanelOnActionClick', startedAt, error)
-    logger.warn(
+    logger.error(
       'SidePanel',
-      'setPanelBehavior 失败（扩展页可能仍可经 side_panel.default_path 打开）',
+      'setPanelBehavior 失败（工具栏图标路径可能不可用；扩展页仍可经 OPEN_RECALL_SHELL 打开）',
       error
     )
   }

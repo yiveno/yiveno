@@ -1,5 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+const ensureBackgroundBootstrappedMock = vi.hoisted(() => vi.fn(async () => undefined))
+
+vi.mock('@/background/bootstrap', () => ({
+  ensureBackgroundBootstrapped: ensureBackgroundBootstrappedMock
+}))
+
 import * as syncService from '@/application/capture/chrome-bookmark-sync-service'
 import {
   areChromeBookmarkSyncListenersRegistered,
@@ -15,6 +21,7 @@ describe('chrome-bookmark-sync listener', () => {
   beforeEach(() => {
     resetChromeBookmarkSyncListenersForTests()
     syncService.resetPendingChromeBookmarkSyncForTests()
+    vi.mocked(ensureBackgroundBootstrappedMock).mockClear()
     vi.stubGlobal('chrome', {
       bookmarks: {
         onCreated: { addListener: vi.fn(), removeListener: vi.fn() },
@@ -68,6 +75,30 @@ describe('chrome-bookmark-sync listener', () => {
     expect(chrome.bookmarks.onCreated.addListener).toHaveBeenCalled()
   })
 
+  it('onCreated 前先 await bootstrap', async () => {
+    const createdSpy = vi
+      .spyOn(syncService, 'handleChromeBookmarkCreated')
+      .mockResolvedValue({ captured: false })
+    vi.spyOn(notifyTree, 'notifyChromeBookmarkTreeChanged').mockImplementation(() => undefined)
+
+    registerChromeBookmarkSyncListeners()
+
+    const createdHandler = (chrome.bookmarks.onCreated.addListener as ReturnType<typeof vi.fn>).mock
+      .calls[0]?.[0] as (id: string, bookmark: chrome.bookmarks.BookmarkTreeNode) => void
+
+    createdHandler('10', {
+      id: '10',
+      title: 'Retention',
+      url: 'https://example.com'
+    })
+
+    await vi.waitFor(() => {
+      expect(ensureBackgroundBootstrappedMock).toHaveBeenCalledTimes(1)
+      expect(createdSpy).toHaveBeenCalled()
+    })
+    createdSpy.mockRestore()
+  })
+
   it('onCreated 捕获成功时闪 +1 角标', async () => {
     const createdSpy = vi
       .spyOn(syncService, 'handleChromeBookmarkCreated')
@@ -87,13 +118,12 @@ describe('chrome-bookmark-sync listener', () => {
       title: 'Retention',
       url: 'https://example.com'
     })
-    await Promise.resolve()
-    await Promise.resolve()
-    await Promise.resolve()
 
-    expect(createdSpy).toHaveBeenCalled()
-    expect(badgeSpy).toHaveBeenCalledWith('success')
-    expect(notifySpy).toHaveBeenCalled()
+    await vi.waitFor(() => {
+      expect(createdSpy).toHaveBeenCalled()
+      expect(badgeSpy).toHaveBeenCalledWith('success')
+      expect(notifySpy).toHaveBeenCalled()
+    })
     createdSpy.mockRestore()
     badgeSpy.mockRestore()
     notifySpy.mockRestore()
@@ -113,11 +143,11 @@ describe('chrome-bookmark-sync listener', () => {
       .calls[0]?.[0] as (id: string, changeInfo: { title?: string }) => void
 
     changedHandler('folder-1', { title: 'Leisure 1' })
-    await Promise.resolve()
-    await Promise.resolve()
 
-    expect(changedSpy).toHaveBeenCalledWith('folder-1')
-    expect(notifySpy).toHaveBeenCalled()
+    await vi.waitFor(() => {
+      expect(changedSpy).toHaveBeenCalledWith('folder-1')
+      expect(notifySpy).toHaveBeenCalled()
+    })
     changedSpy.mockRestore()
     notifySpy.mockRestore()
   })
@@ -136,11 +166,11 @@ describe('chrome-bookmark-sync listener', () => {
       .calls[0]?.[0] as (id: string, moveInfo: unknown) => void
 
     movedHandler('10', { parentId: '2', index: 0 })
-    await Promise.resolve()
-    await Promise.resolve()
 
-    expect(changedSpy).toHaveBeenCalledWith('10')
-    expect(notifySpy).toHaveBeenCalled()
+    await vi.waitFor(() => {
+      expect(changedSpy).toHaveBeenCalledWith('10')
+      expect(notifySpy).toHaveBeenCalled()
+    })
     changedSpy.mockRestore()
     notifySpy.mockRestore()
   })

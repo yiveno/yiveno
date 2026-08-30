@@ -8,7 +8,6 @@ import {
 import type { ExtensionCommandInfo } from '@/core/messaging/commands-messages'
 import type { AuthSignOutMode } from '@/core/messaging/account-sync-messages'
 import {
-  buildSettingsSectionLocationSearch,
   parseSettingsSectionFromLocationSearch,
   resolveSettingsSectionTab,
   SETTINGS_SECTION_TABS,
@@ -56,6 +55,15 @@ import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
 import AppToastHost from '@/infrastructure/ui/AppToastHost.vue'
 import { useAppToast } from '@/infrastructure/ui/use-app-toast'
 import SettingsActionRow from '@/pages/settings/SettingsActionRow.vue'
+import {
+  buildSettingsPageUrl,
+  readSettingsSectionFromLocation,
+  shouldReplaceSettingsHistoryUrl
+} from '@/pages/settings/settings-page-url-sync'
+import {
+  shouldRefreshExtensionCommandsOnVisibility,
+  shouldRefreshSyncContextOnVisibility
+} from '@/pages/settings/settings-visibility-refresh'
 
 defineOptions({ name: 'SettingsPage' })
 
@@ -177,13 +185,20 @@ const settingsSectionTabItems = computed(() =>
   }))
 )
 
-/** 将当前分区同步到 `?section=`（默认 usage 不写 query）。 */
+/** 将当前分区同步到 `?section=`（默认 capture 不写 query）。 */
 function syncActiveSectionToUrl(section: SettingsSectionId) {
-  const nextSearch = buildSettingsSectionLocationSearch(section, window.location.search)
-  const nextUrl = `${window.location.pathname}${nextSearch}${window.location.hash}`
+  const nextUrl = buildSettingsPageUrl(section, window.location)
   const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`
-  if (nextUrl !== currentUrl) {
+  if (shouldReplaceSettingsHistoryUrl(currentUrl, nextUrl)) {
     window.history.replaceState(null, '', nextUrl)
+  }
+}
+
+/** 浏览器后退/前进：从 URL 恢复侧栏选中态（A13 P1 → B5 接线）。 */
+function handlePopState() {
+  const next = readSettingsSectionFromLocation(window.location)
+  if (next !== activeSection.value) {
+    activeSection.value = next
   }
 }
 
@@ -223,7 +238,12 @@ async function loadCommands(options?: { quiet?: boolean }) {
 
 /** 从 Chrome 快捷键页回到本页时刷新绑定展示。 */
 function refreshCommandsIfReturnedFromShortcuts() {
-  if (document.visibilityState !== 'visible' || !awaitingShortcutsReturn.value) {
+  if (
+    !shouldRefreshExtensionCommandsOnVisibility({
+      documentVisible: document.visibilityState === 'visible',
+      awaitingShortcutsReturn: awaitingShortcutsReturn.value
+    })
+  ) {
     return
   }
   awaitingShortcutsReturn.value = false
@@ -543,11 +563,16 @@ async function executeClearOrphans(): Promise<boolean> {
 
 /** 从其它标签（如官网登录）返回时刷新同步相关登录态。 */
 function refreshSyncContextOnVisible() {
-  if (document.visibilityState !== 'visible') {
+  if (!shouldRefreshSyncContextOnVisibility(document.visibilityState === 'visible')) {
     return
   }
   // 从官网定价返回时强制刷新订阅快照
   void loadSyncContext().then(() => loadSubscriptionStatus(true))
+}
+
+function handleDocumentVisibilityChange() {
+  refreshCommandsIfReturnedFromShortcuts()
+  refreshSyncContextOnVisible()
 }
 
 async function handleSyncToggle(nextValue: boolean) {
@@ -1064,15 +1089,15 @@ onMounted(() => {
   stopWatchAuthSession = watchAuthSessionStorage(() => {
     void loadSyncContext()
   })
-  document.addEventListener('visibilitychange', refreshCommandsIfReturnedFromShortcuts)
-  document.addEventListener('visibilitychange', refreshSyncContextOnVisible)
+  window.addEventListener('popstate', handlePopState)
+  document.addEventListener('visibilitychange', handleDocumentVisibilityChange)
 })
 
 onUnmounted(() => {
   stopWatchAuthSession?.()
   stopWatchAuthSession = null
-  document.removeEventListener('visibilitychange', refreshCommandsIfReturnedFromShortcuts)
-  document.removeEventListener('visibilitychange', refreshSyncContextOnVisible)
+  window.removeEventListener('popstate', handlePopState)
+  document.removeEventListener('visibilitychange', handleDocumentVisibilityChange)
 })
 </script>
 
@@ -1884,6 +1909,11 @@ onUnmounted(() => {
   min-width: 0;
   min-height: 0;
   overflow: hidden auto;
+}
+
+.settings-block {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 320px;
 }
 
 .settings-block + .settings-block {

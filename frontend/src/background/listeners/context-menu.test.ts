@@ -1,6 +1,12 @@
-import 'fake-indexeddb/auto'
-
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+const ensureBackgroundBootstrappedMock = vi.hoisted(() => vi.fn(async () => undefined))
+
+vi.mock('@/background/bootstrap', () => ({
+  ensureBackgroundBootstrapped: ensureBackgroundBootstrappedMock
+}))
+
+import 'fake-indexeddb/auto'
 
 import { LOCAL_PROFILE_STORAGE_KEY, type LocalProfile } from '@/core/identity/local-profile'
 import {
@@ -19,6 +25,7 @@ function createChromeMock(initial: StorageMap = {}) {
   const store: StorageMap = { ...initial }
   let menuExists = false
   let lastError: { message: string } | undefined
+  let onClickedHandler: ((info: unknown, tab?: unknown) => void) | null = null
 
   return {
     storage: {
@@ -57,7 +64,11 @@ function createChromeMock(initial: StorageMap = {}) {
         lastError = undefined
         done?.()
       }),
-      onClicked: { addListener: vi.fn() }
+      onClicked: {
+        addListener: vi.fn((handler: (info: unknown, tab?: unknown) => void) => {
+          onClickedHandler = handler
+        })
+      }
     },
     i18n: {
       getMessage: vi.fn(() => 'Save to Yiveno')
@@ -79,6 +90,9 @@ function createChromeMock(initial: StorageMap = {}) {
     },
     __setMenuExists(value: boolean) {
       menuExists = value
+    },
+    __getOnClickedHandler() {
+      return onClickedHandler
     }
   }
 }
@@ -93,6 +107,8 @@ describe('context-menu listener', () => {
   beforeEach(async () => {
     resetContextMenuListenersForTests()
     resetMemoryDatabaseInitializationForTests()
+    ensureBackgroundBootstrappedMock.mockResolvedValue(undefined)
+    vi.clearAllMocks()
     vi.stubGlobal(
       'chrome',
       createChromeMock({
@@ -159,5 +175,34 @@ describe('context-menu listener', () => {
     registerContextMenuListeners()
     registerContextMenuListeners()
     expect(chrome.contextMenus.onClicked.addListener).toHaveBeenCalledTimes(1)
+  })
+
+  it('onClicked 回调先 await bootstrap', async () => {
+    registerContextMenuListeners()
+    const handler = (chrome as ReturnType<typeof createChromeMock>).__getOnClickedHandler()
+    expect(handler).not.toBeNull()
+
+    handler?.(
+      {
+        menuItemId: CONTEXT_MENU_SAVE_SELECTION_ID,
+        selectionText: 'retention analysis',
+        pageUrl: 'https://example.com/post'
+      },
+      { id: 1, title: 'Growth notes', url: 'https://example.com/post' }
+    )
+
+    await vi.waitFor(() => {
+      expect(ensureBackgroundBootstrappedMock).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  it('不可保存页抛出 CAPTURE_UNSAVABLE_PAGE', async () => {
+    await expect(
+      handleContextMenuClick({
+        menuItemId: CONTEXT_MENU_SAVE_SELECTION_ID,
+        selectionText: 'secret',
+        pageUrl: 'chrome://extensions'
+      })
+    ).rejects.toMatchObject({ errorCode: 'CAPTURE_UNSAVABLE_PAGE' })
   })
 })

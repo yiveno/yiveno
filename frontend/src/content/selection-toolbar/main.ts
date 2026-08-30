@@ -1,4 +1,21 @@
-import { BACKGROUND_MESSAGE_SCOPE } from '@/core/messaging/constants'
+import type { CaptureEntry } from '@/core/memory/capture-entry'
+import { buildCaptureSavedPreview, buildRecallPrefillClue } from '@/core/recall/build-prefill-clue'
+import { shouldShowFirstRecallHint } from '@/core/recall/first-recall-onboarding'
+import { extractSelectionContextOnPage } from '@/infrastructure/browser/selection-context-page'
+import { isSavablePageUrl } from '@/infrastructure/browser/active-tab-reader'
+import { captureTextExcerpt, openRecallShell } from '@/infrastructure/messaging/background-client'
+import {
+  computeSelectionToolbarAnchor,
+  resolveSelectionAnchorRect,
+  SELECTION_TOOLBAR_SHOW_DELAY_MS,
+  shouldHideToolbarOnEmptySelection,
+  shouldShowSelectionToolbar
+} from '@/content/selection-toolbar/selection-toolbar-logic'
+import {
+  isSelectionToolbarStatusLocked,
+  type SelectionToolbarButtonState
+} from '@/content/selection-toolbar/selection-toolbar-guards'
+import { createSelectionToolbarScrollDismissHandler } from '@/content/selection-toolbar/selection-toolbar-scroll'
 import {
   parseContentSelectionCommandMessage,
   SELECTION_TOOLBAR_KEEPALIVE_PORT,
@@ -7,24 +24,13 @@ import {
   type SelectionToolbarCommandType,
   type SelectionToolbarPageApi
 } from '@/core/messaging/content-messages'
-import type { CaptureEntry } from '@/core/memory/capture-entry'
-import { buildCaptureSavedPreview, buildRecallPrefillClue } from '@/core/recall/build-prefill-clue'
-import { shouldShowFirstRecallHint } from '@/core/recall/first-recall-onboarding'
-import { extractSelectionContextOnPage } from '@/infrastructure/browser/selection-context-page'
-import { isSavablePageUrl } from '@/infrastructure/browser/active-tab-reader'
-import {
-  computeSelectionToolbarAnchor,
-  resolveSelectionAnchorRect,
-  shouldHideToolbarOnEmptySelection,
-  shouldShowSelectionToolbar
-} from '@/content/selection-toolbar/selection-toolbar-logic'
 import {
   DEFAULT_USER_SETTINGS,
   parseUserSettings,
   USER_SETTINGS_STORAGE_KEY
 } from '@/core/settings/user-settings'
 import { t } from '@/infrastructure/i18n/t'
-import { tMemoryError } from '@/infrastructure/i18n/memory-error'
+import { isMemoryErrorCode, tMemoryError } from '@/infrastructure/i18n/memory-error'
 import type { MessageKey } from '@/infrastructure/i18n/message-keys'
 import {
   readExcerptCaptureCount,
@@ -38,7 +44,6 @@ import {
 } from '@/infrastructure/ui/icons/icon-paths'
 
 const TOOLBAR_HOST_ID = 'yiveno-selection-toolbar-host'
-const SHOW_DELAY_MS = 120
 const NOTE_MAX_LENGTH = 500
 /** 存成抓住感展示时长（无找回 CTA）。 */
 const SAVED_FEEDBACK_HIDE_MS = 2400
@@ -51,11 +56,7 @@ type ToolbarUiMode =
   | 'note' // 附注输入
 
 /** 划词浮层主按钮状态。 */
-type ToolbarButtonState =
-  | 'idle' // 空闲
-  | 'saving' // 保存中
-  | 'saved' // 已保存
-  | 'error' // 失败
+type ToolbarButtonState = SelectionToolbarButtonState
 
 /** 打开浮层/附注时快照的选区；textarea 聚焦后页内选区会丢，保存必须用这份。 */
 interface PendingSelectionCapture {
@@ -458,6 +459,8 @@ function ensureToolbarHost(): void {
 
   actionsRow = document.createElement('div')
   actionsRow.className = 'toolbar'
+  actionsRow.setAttribute('role', 'toolbar')
+  actionsRow.setAttribute('aria-label', `${saveLabel}. ${noteLabel}`)
 
   saveButton = createIconActionButton('bookmark_add', saveLabel)
   saveButton.addEventListener('mousedown', preserveSelectionOnMouseDown)
@@ -645,10 +648,7 @@ async function handleOpenRecallClick(): Promise<void> {
   savedRecallButton.disabled = true
 
   try {
-    const response = await chrome.runtime.sendMessage({
-      scope: BACKGROUND_MESSAGE_SCOPE,
-      type: 'OPEN_RECALL_SHELL'
-    })
+    const response = await openRecallShell()
 
     if (!ensureLiveContext()) {
       return
@@ -862,18 +862,14 @@ async function handleSaveClick(
     }
     showStatus('saving', saving)
 
-    const response = await chrome.runtime.sendMessage({
-      scope: BACKGROUND_MESSAGE_SCOPE,
-      type: 'CAPTURE_TEXT_EXCERPT',
-      payload: {
-        selectedText,
-        sourceUrl: window.location.href,
-        pageTitle: document.title,
-        ...(capture?.contextBefore ? { contextBefore: capture.contextBefore } : {}),
-        ...(capture?.contextAfter ? { contextAfter: capture.contextAfter } : {}),
-        ...(note === undefined ? {} : { note }),
-        captureEntry: options.captureEntry ?? 'selection_toolbar'
-      }
+    const response = await captureTextExcerpt({
+      selectedText,
+      sourceUrl: window.location.href,
+      pageTitle: document.title,
+      ...(capture?.contextBefore ? { contextBefore: capture.contextBefore } : {}),
+      ...(capture?.contextAfter ? { contextAfter: capture.contextAfter } : {}),
+      ...(note === undefined ? {} : { note }),
+      captureEntry: options.captureEntry ?? 'selection_toolbar'
     })
 
     if (!ensureLiveContext()) {
@@ -885,7 +881,7 @@ async function handleSaveClick(
       if (message === null) {
         return false
       }
-      if (response && 'errorCode' in response && response.errorCode) {
+      if (response && 'errorCode' in response && isMemoryErrorCode(response.errorCode)) {
         try {
           message = tMemoryError(response.errorCode)
         } catch (error) {
@@ -1081,7 +1077,7 @@ function evaluateSelectionAndMaybeShow(): void {
         new DOMRect(anchorRect.left, anchorRect.top, anchorRect.width, anchorRect.height)
       )
     })
-  }, SHOW_DELAY_MS)
+  }, SELECTION_TOOLBAR_SHOW_DELAY_MS)
 }
 
 function isEventInsideToolbar(event: Event): boolean {
@@ -1090,7 +1086,19 @@ function isEventInsideToolbar(event: Event): boolean {
 
 /** 保存中 / 结果提示期间锁定浮层，避免滚动、点页、Esc 拆掉反馈。 */
 function isStatusFeedbackLocked(): boolean {
-  return buttonState === 'saving' || buttonState === 'saved' || buttonState === 'error'
+  return isSelectionToolbarStatusLocked(buttonState)
+}
+
+const scrollDismiss = createSelectionToolbarScrollDismissHandler({
+  getUiMode: () => uiMode,
+  getButtonState: () => buttonState,
+  onDismiss: () => hideToolbar()
+})
+
+function handleScroll(): void {
+  runGuarded(() => {
+    scrollDismiss.onScroll()
+  })
 }
 
 function handleMouseUp(event: MouseEvent): void {
@@ -1127,15 +1135,6 @@ function handleKeyDown(event: KeyboardEvent): void {
     }
     if (uiMode === 'note') {
       closeNotePanel()
-      return
-    }
-    hideToolbar()
-  })
-}
-
-function handleScroll(): void {
-  runGuarded(() => {
-    if (isStatusFeedbackLocked()) {
       return
     }
     hideToolbar()
@@ -1340,6 +1339,7 @@ function teardown(): void {
   tornDown = true
   clearBootFlagIfOwned()
   uninstallPageApi()
+  scrollDismiss.cancel()
   clearShowTimer()
   clearHideTimer()
 

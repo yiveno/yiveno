@@ -4,6 +4,7 @@ import type {
   GetLocalIdentityResponse
 } from '@/core/messaging/background-messages'
 import { isBackgroundScopedMessage } from '@/core/messaging/background-messages'
+import { ensureBackgroundBootstrapped } from '@/background/bootstrap'
 import { parseNavigateActiveTabPayload } from '@/core/messaging/commands-messages'
 import {
   handleAuthSignIn,
@@ -94,6 +95,11 @@ async function dispatchBackgroundMessage(
   message: BackgroundMessage,
   sender?: chrome.runtime.MessageSender
 ): Promise<BackgroundMessageResponse> {
+  // 探活 PING 不阻塞；其余消息须等 bootstrap（IDB / 身份）完成，避免冷启动竞态
+  if (message.type !== 'PING') {
+    await ensureBackgroundBootstrapped()
+  }
+
   switch (message.type) {
     case 'PING':
       return { ok: true }

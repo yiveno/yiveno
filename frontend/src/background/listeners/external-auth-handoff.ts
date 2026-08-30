@@ -4,6 +4,7 @@
 
 import { absorbLocalProfileIntoAccount } from '@/application/identity/absorb-local-profile-into-account'
 import { scheduleSilentMemoryEmbeddingMaintenance } from '@/application/memory/ensure-memory-embedding-maintenance'
+import { isExternallyConnectableOrigin } from '@/core/extension/externally-connectable-origins'
 import {
   ExternalAuthHandoffMessageSchema,
   type ExternalAuthHandoffResponse
@@ -21,24 +22,12 @@ import {
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import { logger } from '@/infrastructure/logging/logger'
 
-/** 允许回传的官网来源（与 manifest externally_connectable 对齐）。 */
-function isAllowedExternalSender(url: string | undefined): boolean {
-  if (!url) {
-    return false
-  }
-  try {
-    const { origin } = new URL(url)
-    return (
-      origin === 'https://yiveno.com' ||
-      origin === 'https://www.yiveno.com' ||
-      origin === 'http://localhost:3001' ||
-      origin === 'https://localhost:3001' ||
-      origin === 'http://localhost:3002' ||
-      origin === 'https://localhost:3002'
-    )
-  } catch {
-    return false
-  }
+let listenerRegistered = false
+
+/** IDB 归并 / embedding 维护前须等 bootstrap（动态 import 避免循环依赖）。 */
+async function ensureBootstrapReady(): Promise<void> {
+  const { ensureBackgroundBootstrapped } = await import('@/background/bootstrap')
+  await ensureBackgroundBootstrapped()
 }
 
 /**
@@ -65,8 +54,10 @@ export async function applyExternalAuthSessionHandoff(
     // 刚写入的 token 视为有效，避免立刻 refresh 与官网抢 refresh_token 被踢成未登录
     await markAuthValidatedNow()
     // 归并不阻塞官网 sendMessage：全库 remap 可能很慢，否则「Connecting to the extension…」会卡住。
-    void absorbLocalProfileIntoAccount(session.userId)
+    void ensureBootstrapReady()
+      .then(() => absorbLocalProfileIntoAccount(session.userId))
       .then(remapped => {
+        scheduleSilentMemoryEmbeddingMaintenance('auth_handoff', 800)
         flowOk('Auth', '官网 session handoff 本地档归并', startedAt, {
           userId: session.userId,
           remappedLocalProfileItems: remapped
@@ -77,8 +68,6 @@ export async function applyExternalAuthSessionHandoff(
           userId: session.userId
         })
       })
-    // Hybrid 依赖存量 embedding；不阻塞官网 sendMessage。无感维护（摘录优先）。
-    scheduleSilentMemoryEmbeddingMaintenance('auth_handoff', 800)
     flowOk('Auth', '官网 session handoff', startedAt, {
       userId: session.userId,
       absorbDeferred: true,
@@ -141,8 +130,13 @@ export async function applyExternalAuthHandoff(
 
 /** 注册 chrome.runtime.onMessageExternal。 */
 export function registerExternalAuthHandoffListener(): void {
+  if (listenerRegistered) {
+    return
+  }
+  listenerRegistered = true
+
   chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
-    if (!isAllowedExternalSender(sender.url)) {
+    if (!isExternallyConnectableOrigin(sender.url)) {
       logger.warn('Auth', '拒绝非官网来源的 external 消息', {
         url: sender.url ?? null
       })
@@ -153,4 +147,14 @@ export function registerExternalAuthHandoffListener(): void {
     void applyExternalAuthHandoff(message).then(sendResponse)
     return true
   })
+}
+
+/** 当前是否已挂上 external handoff 监听（测试 / 诊断用）。 */
+export function isExternalAuthHandoffListenerRegistered(): boolean {
+  return listenerRegistered
+}
+
+/** 测试用：重置监听器注册状态（不调用 Chrome remove，需配合 mock）。 */
+export function resetExternalAuthHandoffListenerForTests(): void {
+  listenerRegistered = false
 }

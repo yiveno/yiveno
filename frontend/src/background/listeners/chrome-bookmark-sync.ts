@@ -11,6 +11,12 @@ import { notifyChromeBookmarkTreeChanged } from '@/infrastructure/messaging/noti
 
 let listenersRegistered = false
 
+/** 书签同步写 Memory 前须等 bootstrap（动态 import 避免与 bootstrap 循环依赖）。 */
+async function ensureBootstrapReady(): Promise<void> {
+  const { ensureBackgroundBootstrapped } = await import('@/background/bootstrap')
+  await ensureBackgroundBootstrapped()
+}
+
 /** Chrome 书签树结构/对齐可能变化：失效 SW 缓存并通知记忆库 UI。 */
 function notifyBookmarkLibraryTreeRefresh(): void {
   invalidateBookmarkLibraryTreeOnChromeChange()
@@ -18,7 +24,8 @@ function notifyBookmarkLibraryTreeRefresh(): void {
 }
 
 function onBookmarkCreated(id: string, bookmark: chrome.bookmarks.BookmarkTreeNode): void {
-  void handleChromeBookmarkCreated(bookmark)
+  void ensureBootstrapReady()
+    .then(() => handleChromeBookmarkCreated(bookmark))
     .then(result => {
       if (result.captured) {
         void flashActionBadge('success')
@@ -35,7 +42,8 @@ function onBookmarkCreated(id: string, bookmark: chrome.bookmarks.BookmarkTreeNo
 }
 
 function onBookmarkChanged(id: string, changeInfo: { title?: string; url?: string }): void {
-  void handleChromeBookmarkChanged(id)
+  void ensureBootstrapReady()
+    .then(() => handleChromeBookmarkChanged(id))
     .catch(error => {
       logger.error('ChromeBookmarkSync', 'onChanged 同步失败', { id, changeInfo, error })
     })
@@ -48,7 +56,8 @@ function onBookmarkRemoved(
   id: string,
   removeInfo: { parentId: string; index: number; node: chrome.bookmarks.BookmarkTreeNode }
 ): void {
-  void handleChromeBookmarkRemoved(id)
+  void ensureBootstrapReady()
+    .then(() => handleChromeBookmarkRemoved(id))
     .catch(error => {
       logger.error('ChromeBookmarkSync', 'onRemoved 同步失败', { id, removeInfo, error })
     })
@@ -61,7 +70,8 @@ function onBookmarkMoved(
   id: string,
   moveInfo: { parentId: string; index: number; oldParentId: string; oldIndex: number }
 ): void {
-  void handleChromeBookmarkChanged(id)
+  void ensureBootstrapReady()
+    .then(() => handleChromeBookmarkChanged(id))
     .catch(error => {
       logger.error('ChromeBookmarkSync', 'onMoved 同步失败', { id, moveInfo, error })
     })

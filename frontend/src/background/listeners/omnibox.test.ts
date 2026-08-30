@@ -23,6 +23,12 @@ vi.mock('@/background/bootstrap', () => ({
   ensureBackgroundBootstrapped: vi.fn(async () => undefined)
 }))
 
+vi.mock('@/infrastructure/browser/navigate-tab', () => ({
+  navigateTabToUrl: vi.fn(async () => undefined)
+}))
+
+import { ensureBackgroundBootstrapped } from '@/background/bootstrap'
+import { navigateTabToUrl } from '@/infrastructure/browser/navigate-tab'
 import {
   registerOmniboxListeners,
   resetOmniboxListenersForTests
@@ -49,7 +55,6 @@ describe('omnibox listeners', () => {
   const setDefaultSuggestion = vi.fn()
   const onInputChangedAddListener = vi.fn()
   const onInputEnteredAddListener = vi.fn()
-  const tabsUpdate = vi.fn(async () => undefined)
   const tabsCreate = vi.fn(async () => undefined)
 
   beforeEach(() => {
@@ -93,7 +98,6 @@ describe('omnibox listeners', () => {
         onInputEntered: { addListener: onInputEnteredAddListener }
       },
       tabs: {
-        update: tabsUpdate,
         create: tabsCreate
       }
     })
@@ -319,7 +323,7 @@ describe('omnibox listeners', () => {
     onEntered(`chrome-extension://testid/omnibox-open.html?id=${BOOKMARK_ID}`, 'currentTab')
 
     await vi.waitFor(() => {
-      expect(tabsUpdate).toHaveBeenCalledWith({ url: 'https://example.com/retention' })
+      expect(navigateTabToUrl).toHaveBeenCalledWith('https://example.com/retention', 'currentTab')
     })
     expect(recordOpenMock).toHaveBeenCalledWith(BOOKMARK_ID)
     expect(getByIdMock).toHaveBeenCalledWith(BOOKMARK_ID)
@@ -335,7 +339,7 @@ describe('omnibox listeners', () => {
     onEntered('https://example.com/retention', 'currentTab')
 
     await vi.waitFor(() => {
-      expect(tabsUpdate).toHaveBeenCalledWith({ url: 'https://example.com/retention' })
+      expect(navigateTabToUrl).toHaveBeenCalledWith('https://example.com/retention', 'currentTab')
     })
     expect(recordOpenMock).not.toHaveBeenCalled()
   })
@@ -362,9 +366,26 @@ describe('omnibox listeners', () => {
     onEntered('retention', 'newForegroundTab')
 
     await vi.waitFor(() => {
-      expect(tabsCreate).toHaveBeenCalledWith({ url: 'https://example.com/retention' })
+      expect(navigateTabToUrl).toHaveBeenCalledWith(
+        'https://example.com/retention',
+        'newForegroundTab'
+      )
     })
     expect(recallWithClueMock).toHaveBeenCalledWith('retention', { entry: 'omnibox' })
     expect(recordOpenMock).toHaveBeenCalledWith(BOOKMARK_ID)
+  })
+
+  it('inputEntered 前先 await bootstrap', async () => {
+    registerOmniboxListeners()
+    const onEntered = onInputEnteredAddListener.mock.calls[0]?.[0] as (
+      text: string,
+      disposition: chrome.omnibox.OnInputEnteredDisposition
+    ) => void
+
+    onEntered('https://example.com/retention', 'currentTab')
+
+    await vi.waitFor(() => {
+      expect(ensureBackgroundBootstrapped).toHaveBeenCalledTimes(1)
+    })
   })
 })
