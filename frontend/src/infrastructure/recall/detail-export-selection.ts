@@ -9,11 +9,6 @@ export function toggleDetailExportSelection(selected: Set<string>, id: string): 
   return next
 }
 
-/** UI 多选始终可继续勾选。 */
-export function canSelectMoreDetailExportItems(_selected: Set<string>): boolean {
-  return true
-}
-
 /** 全选：按 exportable 顺序勾选全部。 */
 export function selectAllDetailExportItems(exportableIds: readonly string[]): Set<string> {
   return new Set(exportableIds)

@@ -5,20 +5,24 @@
 
 import { z } from 'zod'
 
-import { DetailExportItemSchema, type DetailExportItem } from '@/core/recall/detail-export'
+import {
+  DetailExportItemSchema,
+  MCP_DETAIL_EXPORT_MAX_ITEMS,
+  type DetailExportItem
+} from '@/core/recall/detail-export'
 
 export const McpRecallEvidenceArgsSchema = z.object({
   /** 口语线索 */
   clue: z.string().trim().min(1).max(500),
   /** 返回条数；默认 3，硬顶 5 */
-  limit: z.number().int().min(1).max(5).optional()
+  limit: z.number().int().min(1).max(MCP_DETAIL_EXPORT_MAX_ITEMS).optional()
 })
 
 /** MCP 响应：detail export 形态，允许 1–5（单次 clue 可仅 Top1）。 */
 export const McpDetailExportSchema = z.object({
   version: z.literal(1),
   exportedAt: z.string().datetime(),
-  items: z.array(DetailExportItemSchema).min(1).max(5)
+  items: z.array(DetailExportItemSchema).min(1).max(MCP_DETAIL_EXPORT_MAX_ITEMS)
 })
 
 export type McpDetailExport = z.infer<typeof McpDetailExportSchema>
@@ -30,6 +34,6 @@ export function buildMcpDetailExport(
   return McpDetailExportSchema.parse({
     version: 1,
     exportedAt,
-    items: items.slice(0, 5)
+    items: items.slice(0, MCP_DETAIL_EXPORT_MAX_ITEMS)
   })
 }

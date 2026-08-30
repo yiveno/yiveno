@@ -1,11 +1,12 @@
 import { z } from 'zod'
 
+import { MCP_DETAIL_EXPORT_MAX_ITEMS } from '@/core/recall/detail-export'
 import type { McpDetailExport } from '@/core/recall/mcp-tool-schema'
 import type { BackgroundMessageScope } from '@/core/messaging/constants'
 
 const mcpRecallEvidencePayloadSchema = z.object({
   clue: z.string().trim().min(1).max(500),
-  limit: z.number().int().min(1).max(5).optional()
+  limit: z.number().int().min(1).max(MCP_DETAIL_EXPORT_MAX_ITEMS).optional()
 })
 
 export const McpErrorCodeSchema = z.enum([
