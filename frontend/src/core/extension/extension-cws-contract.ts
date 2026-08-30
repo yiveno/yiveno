@@ -14,15 +14,11 @@ export const EXTENSION_CWS_PERMISSIONS = [
   'favicon'
 ] as const
 
-export type ExtensionCwsPermission = (typeof EXTENSION_CWS_PERMISSIONS)[number]
-
 export const EXTENSION_CWS_HOST_PERMISSIONS = [
   'https://*.supabase.co/*',
   'http://localhost:8787/*',
   'https://api.yiveno.com/*'
 ] as const
-
-export type ExtensionCwsHostPermission = (typeof EXTENSION_CWS_HOST_PERMISSIONS)[number]
 
 /** content_scripts 产物名（须与 CHROMEWEBSTORE「Content scripts」表一致）。 */
 export const EXTENSION_CWS_CONTENT_SCRIPT_JS = 'content-selection-toolbar.js' as const
