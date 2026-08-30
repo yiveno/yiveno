@@ -16,7 +16,7 @@
 | Omnibox must eval | `omnibox-eval-cases.ts` · `run-omnibox-eval.ts` · `omnibox-eval.test.ts`                                                                                                     | §5.11.5 · [`Omnibox-手测步骤.md`](./Omnibox-手测步骤.md) |
 | TTE 埋点          | 新模块建议 `infrastructure/analytics/` 或 `application/recall/recall-telemetry.ts`                                                                                           | §5.10.3 · §5.9 七事件                                    |
 | Outcome Labeling  | `recall-outcome*` + pairs；C2 默认不进 settled；关 Panel 静默结算（无 exit park）                                                                                            | §7.2 P0–P3；开 C2 见 `R4-Outcome-Labeling-P2-校准.md`    |
-| evidence pack     | `core/recall/evidence-pack.ts` · `EXPORT_EVIDENCE_PACK` · Library + Side Panel 多选 UI                                                                                       | §5.10.4（已上线）                                        |
+| detail export     | `core/recall/detail-export.ts` · `EXPORT_DETAIL_EXPORT` · Library + Side Panel 多选 UI                                                                                       | §5.10.4 · ADR-008                                        |
 | Recall Framing    | `build-recall-framing-facts.ts` · `render-recall-framing.ts` · `complete-recall-framing-nlg.ts` · `hybrid-recall-backend` attachRecallFraming + attachRecallFramingLlmPolish | §7.0 · `recall-framing-eval` must                        |
 | 只读 MCP          | Settings `mcpReadOnlyEnabled` · `MCP_RECALL_EVIDENCE` · Worker `PUT /api/account/mcp` + `/api/mcp/tools*` · `@yiveno/mcp`                                                    | §5.10.5（已上线 beta）                                   |
 | Raindrop/Pocket   | `parse-*-export` · `import-third-party-corpus-service` · Settings 数据区 · `IMPORT_THIRD_PARTY_CORPUS`                                                                       | §5.10.6（已上线 · R2 准入）                              |
@@ -104,13 +104,13 @@ RecallTelemetryEventSchema = z.discriminatedUnion('type', [
 
 > **术语：** 事件 `type` 为 `clue_submitted` / `clue_refined`；旧版 `query_*` 在 `recall-telemetry-store` 读取时迁移。见术语表 §10.1。
 
-**存储：** P0 `chrome.storage.local` 键 `yiveno.recallTelemetry`（最多 500 条）；dev 可读 `listRecallTelemetryEvents()`；不上云除非隐私文档更新。
+**存储：** P0 `chrome.storage.local` 键 `yiveno.recallTelemetry`（最多 500 条）；dev 可读 `yiveno.listRecallTelemetryEvents()`（见 [`DEV-调试API.md`](./DEV-调试API.md) §4.3）；不上云除非隐私文档更新。
 
 **单测：** `frontend/src/core/recall/recall-telemetry.test.ts`（七事件 parse + ECS 0–5）。
 
 ---
 
-## 5. evidence pack JSON 形状（Normative 草案）
+## 5. Detail export JSON 形状（Normative · ADR-008）
 
 ```json
 {
@@ -133,7 +133,22 @@ RecallTelemetryEventSchema = z.discriminatedUnion('type', [
 
 合入时须 Zod 校验；Markdown 为人类可读视图，与 JSON **同源**生成。
 
-**实现（2026-08）：** `frontend/src/core/recall/evidence-pack.ts` · `application/recall/export-evidence-pack-service.ts` · `EXPORT_EVIDENCE_PACK` · Library / Side Panel `EvidencePackExportBar`。
+**实现：** `frontend/src/core/recall/detail-export.ts` · `export-detail-export-service.ts` · `EXPORT_DETAIL_EXPORT` · `AppMenuButton` · Library / Side Panel 底栏（Copy / Download 菜单 → Markdown / JSON）。
+
+### 5.1 多选手测（条目即选择器）
+
+**前置：** `cd frontend && bun run build` → `chrome://extensions` 重新加载 Yiveno。
+
+| 步骤 | Library 摘录                                       | Library 书签树       | Side Panel Recall                            |
+| ---- | -------------------------------------------------- | -------------------- | -------------------------------------------- |
+| 1    | 打开 `library.html` → 摘录 Tab                     | 书签 Tab             | 提交 clue 出结果                             |
+| 2    | 点头像区 **Detail export** 图标进入多选            | 同左                 | 点结果区 **Detail export** 图标              |
+| 3    | **点条目卡片**切换选中（无左侧勾选列、列表不横跳） | **点书签行**切换选中 | **点结果卡**切换选中；展开集合后可点 sibling |
+| 4    | 选中态 = 描边 + 角标勾；再点取消                   | 同左                 | 同左                                         |
+| 5    | 底栏 Copy Markdown → toast「Copied…」              | 同左                 | 同左                                         |
+| 6    | Cancel 退出 → 点条目恢复打开链接                   | 同左                 | 同左                                         |
+
+**通过：** 无 checkbox 列；摘录三行布局（标题+操作 / 附注 / 来源+时间右对齐）；摘录与书签时间均为**保存/创建时刻**（非 `updatedAt`）；常态下行内附注/删除**悬停才显**（多选模式隐藏）；导出 JSON 仅含已选 id。
 
 ---
 
@@ -143,7 +158,7 @@ RecallTelemetryEventSchema = z.discriminatedUnion('type', [
 1. Explain ECS UI（§5.10.1）+ explain 接线          ✅
 2. §5.11.2 must case 补齐 + CI 绿                   ✅（含 r4-*；cluster 拆 case）
 3. TTE 埋点（本地聚合即可）→ 再跑种子 study 第 1–2 周  ✅ P0 埋点；种子 study 未跑、不宣称 Beta
-4. evidence pack                                    ✅
+4. detail export                                    ✅
 5. Raindrop/Pocket adapter（单点，过 R2）           ✅
 6. 只读 MCP（最后；未达 §5.9 Beta 不对外宣传）      ✅ beta 已接线、不营销
 ```
@@ -156,6 +171,6 @@ RecallTelemetryEventSchema = z.discriminatedUnion('type', [
 | ---------- | ---------------------------------------------------------------------------------------------------------------------- |
 | 2026-08-27 | **撤 exit park：** 关 Panel 不再停放/下次打开补问出口条；仅同场 New find 出示通道 D；删 `yiveno.recallOutcomeExitPark` |
 | 2026-08-27 | **Raindrop/Pocket 文件导入已上线：** Settings 数据区；§5.10.6；解析 HTML/CSV/JSON                                      |
-| 2026-08-27 | **Evidence pack 已上线：** Library + Side Panel 多选导出；`EXPORT_EVIDENCE_PACK`；§5                                   |
+| 2026-08-27 | **Detail export 已上线：** Library + Side Panel 多选导出；`EXPORT_DETAIL_EXPORT`；§5                                   |
 | 2026-08-27 | **TTE 埋点 P0：** 七事件 + `pipelineTiming` + ECS 打分 + 本机缓冲；见 §4 模块表                                        |
 | 2026-08-24 | **TTE 种子 study：** 工程 checklist `TTE-种子用户研究-checklist.md`                                                    |

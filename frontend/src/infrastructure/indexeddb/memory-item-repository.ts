@@ -8,6 +8,7 @@ import {
   type CreateTextExcerptInput
 } from '@/core/memory/create-memory-item'
 import { mergeUniqueStrings } from '@/core/memory/enrich-memory-clues'
+import { resolveMemoryItemSavedAtIso } from '@/core/memory/memory-item-saved-at'
 import { MemoryItemSchema, safeParseMemoryItem, type MemoryItem } from '@/core/memory/memory-item'
 import {
   getCurrentOwnerId,
@@ -41,6 +42,8 @@ export interface BookmarkSyncAlignment {
   byUrl: Map<string, string>
   /** MemoryItem.id → 非空附注 */
   noteByMemoryId: Map<string, string>
+  /** MemoryItem.id → 保存/创建时刻 ISO（书签 chromeCreatedAt 优先） */
+  savedAtByMemoryId: Map<string, string>
 }
 
 export class MemoryItemRepository {
@@ -376,6 +379,7 @@ export class MemoryItemRepository {
     const byChromeBookmarkId = new Map<string, string>()
     const byUrl = new Map<string, string>()
     const noteByMemoryId = new Map<string, string>()
+    const savedAtByMemoryId = new Map<string, string>()
 
     for (const item of items) {
       if (item.type !== 'bookmark') {
@@ -393,9 +397,10 @@ export class MemoryItemRepository {
       if (note) {
         noteByMemoryId.set(item.id, note)
       }
+      savedAtByMemoryId.set(item.id, resolveMemoryItemSavedAtIso(item))
     }
 
-    return { byChromeBookmarkId, byUrl, noteByMemoryId }
+    return { byChromeBookmarkId, byUrl, noteByMemoryId, savedAtByMemoryId }
   }
 
   /**

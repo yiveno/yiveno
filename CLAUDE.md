@@ -18,6 +18,7 @@
 - 术语：`docs/product/Yiveno-术语表.md`
 - 行为契约：`docs/product/Yiveno-产品文档-v4.0.md` §0
 - ADR：`docs/architecture/decisions/`
+- Chrome 扩展 skills：`.agents/skills/`（`chrome-extensions` · `modern-web-guidance`）；上架元数据：根目录 `CHROMEWEBSTORE.md`
 
 ## 维护
 

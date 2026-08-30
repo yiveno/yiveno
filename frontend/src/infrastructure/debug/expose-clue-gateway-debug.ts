@@ -5,6 +5,8 @@
  * 用法（chrome://extensions → 本扩展 → Service Worker「检查」）：
  *   checkClueGateway('asdasd')
  *   yiveno.checkClueGateway('poem')
+ *
+ * 总索引：docs/engineering/DEV-调试API.md
  */
 
 import { selectClueProcessingDisposition } from '@/core/recall/understand/select-clue-processing-disposition'

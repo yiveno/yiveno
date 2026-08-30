@@ -28,6 +28,7 @@ alwaysApply: true
 | 环境变量 / 部署 / Worker 绑定 | `docs/ENVIRONMENT.md` 等既有工程文档 |
 | 工程约定（日志、倒排、语料适配器等） | 对应 `docs/engineering/*` |
 | 新增 Background `message type` | `docs/engineering/background-message-types.registry` + `core/messaging/*` + handler +（核心表）产品文档 §4 |
+| manifest 权限 / `host_permissions` / CWS 上架披露 | 根目录 `CHROMEWEBSTORE.md` |
 | AI 行为 / 架构硬规则 | 本文件 + `AGENTS.md`（与产品文档冲突时仍以产品文档为准） |
 
 ```
@@ -104,7 +105,25 @@ alwaysApply: true
 ✅ 新增业务逻辑：**必须**有清晰 log + 中文注释（见 docs/engineering/业务日志与注释约定.md）
 ✅ 扩展用户可感改动：相关单测通过后 **必须 MCP 真机实测**（见下「MCP 真机实测」），再报完成
 ✅ 排查问题：**优先 MCP Chrome 真机**还原复现场景、拿够证据，再读码/改码（见下「MCP 排查优先」）
+✅ 扩展改动：维护根目录 `CHROMEWEBSTORE.md`（manifest 权限/上架/审核）；格式见 `chrome-extensions` skill
 ```
+
+### Chrome 扩展 Agent Skills（Modern Web Guidance）
+
+- **安装：** `npx modern-web-guidance@latest install --choose` → 选 `chrome-extensions` + `modern-web-guidance`；本机路径 `.agents/skills/`（gitignore）；锁 `skills-lock.json`。
+- **`chrome-extensions`：** MV3、Service Worker、Side Panel、消息传递、权限与 Chrome Web Store 合规。
+- **`modern-web-guidance`：** 现代 Web/CSS/性能/无障碍；扩展 Vue UI 改动时可检索。
+- **优先级：** 与 Yiveno 术语表、产品文档、本文件分层/消息协议冲突时，**以本仓权威文档为准**。
+
+### `CHROMEWEBSTORE.md`（上架元数据 · 硬规则）
+
+创建或改动 Chrome 扩展时（含 `frontend/public/manifest.json` 权限、`host_permissions`、准备上架、审核被拒、隐私披露），**创建并维护**根目录 `CHROMEWEBSTORE.md`。模板：`chrome-extensions` skill → `references/webstore/chromewebstore-template.md`。
+
+Agent 指令（原文）：
+
+> Whenever you are creating or making changes to a Chrome extension, create and manage a CHROMEWEBSTORE.md file. You can use the chrome-extensions skill to learn about the format of this file.
+
+改 manifest 权限 → 同批更新权限理由表与隐私披露；商店用户向文案仅 en。
 
 ### 多会话纪律（防决策漂移）
 
@@ -314,6 +333,9 @@ Background **无** `window` / `document` / `localStorage`。用全局 `setTimeou
 | Side Panel | `frontend/src/pages/sidepanel/`（Recall 主壳） |
 | Recall 壳空态 | `frontend/src/core/recall/recall-shell-empty-copy.ts` |
 | 扩展 i18n | `frontend/src/infrastructure/i18n/` + `public/_locales/` |
+| 扩展 manifest | `frontend/public/manifest.json` |
+| CWS 上架元数据 | 根目录 `CHROMEWEBSTORE.md` |
+| Chrome 扩展 Agent Skills | `.agents/skills/`（`skills-lock.json`） |
 
 ---
 
@@ -328,6 +350,7 @@ Background **无** `window` / `document` / `localStorage`。用全局 `setTimeou
 - [ ] SW 代码是否避开 `window` / `document` / `localStorage`？
 - [ ] 是否在做未上线能力并暗示可用？
 - [ ] 行为/契约相对权威文档是否有差异？有 → **同批改文档**（见「文档 ↔ 代码同步」）
+- [ ] 改 manifest 权限/host_permissions 是否已同步 `CHROMEWEBSTORE.md`？
 
 ## 常用命令（真实存在）
 

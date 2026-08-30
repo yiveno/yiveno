@@ -4,6 +4,8 @@
  *
  * 用法（SW 控制台或经消息桥）：
  *   await yiveno.listRecallTelemetryEvents()
+ *
+ * 总索引：docs/engineering/DEV-调试API.md
  */
 
 import type { RecallTelemetryEvent } from '@/core/recall/recall-telemetry'

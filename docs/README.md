@@ -22,6 +22,7 @@
 
 **运维 / 工程（非规格，与正文冲突时以正文为准）**：
 
+- [`engineering/DEV-调试API.md`](./engineering/DEV-调试API.md) — SW `yiveno.*` 调试 API 总索引与维护约定（探针种库、Omnibox 冒烟、TTE 读取等）
 - [`engineering/语料适配器契约.md`](./engineering/语料适配器契约.md) — Corpus Adapter 边界、差距清单、第三方准入 checklist（R2）
 - [`engineering/background-message-types.registry`](./engineering/background-message-types.registry) — Background `message type` 登记册（`bun run doc:check`）
 - [`engineering/关键词倒排索引-Phase1.md`](./engineering/关键词倒排索引-Phase1.md) — 倒排预过滤设计（R3）

@@ -6,9 +6,9 @@ import { invalidateBookmarkSyncAlignmentCache } from '@/application/memory/bookm
 import { memoryItemService } from '@/application/memory/memory-item-service'
 import { backfillMissingMemoryEmbeddings } from '@/application/memory/schedule-async-memory-embedding'
 import {
-  exportEvidencePack,
-  EvidencePackExportError
-} from '@/application/recall/export-evidence-pack-service'
+  exportDetailExport,
+  DetailExportError
+} from '@/application/recall/export-detail-export-service'
 import { getAuthSession } from '@/infrastructure/identity/auth-session-service'
 import type { MemoryBackgroundResponse, MemoryErrorCode } from '@/core/messaging/memory-messages'
 import {
@@ -21,7 +21,7 @@ import {
   parseRecordMemoryOpenPayload,
   parseRecordRecallDismissPayload,
   parseRecordRecallSettlePayload,
-  parseExportEvidencePackPayload,
+  parseExportDetailExportPayload,
   parseUpdateMemoryNotePayload
 } from '@/core/messaging/memory-messages'
 import { flashActionBadge } from '@/infrastructure/browser/action-badge'
@@ -306,24 +306,24 @@ export async function handleBackfillMemoryEmbeddings(): Promise<MemoryBackground
   }
 }
 
-/** 多选导出 evidence pack（§5.10.4；2–5 条）。 */
-export async function handleExportEvidencePack(
+/** 多选导出 detail export（§5.10.4；≥1 条）。 */
+export async function handleExportDetailExport(
   payload: unknown
 ): Promise<MemoryBackgroundResponse> {
-  const startedAt = flowStart('Memory', '导出 evidence pack')
+  const startedAt = flowStart('Memory', '导出 detail export')
   try {
-    const input = parseExportEvidencePackPayload(payload)
-    const result = await exportEvidencePack(input.ids)
-    flowOk('Memory', '导出 evidence pack', startedAt, {
+    const input = parseExportDetailExportPayload(payload)
+    const result = await exportDetailExport(input.ids)
+    flowOk('Memory', '导出 detail export', startedAt, {
       itemCount: result.pack.items.length
     })
     return { ok: true, pack: result.pack, markdown: result.markdown }
   } catch (error) {
-    if (error instanceof EvidencePackExportError) {
-      flowFail('Memory', '导出 evidence pack', startedAt, error)
+    if (error instanceof DetailExportError) {
+      flowFail('Memory', '导出 detail export', startedAt, error)
       return toErrorResponse(error.errorCode, error)
     }
-    flowFail('Memory', '导出 evidence pack', startedAt, error)
-    return toErrorResponse('EVIDENCE_PACK_OPERATION_FAILED', error)
+    flowFail('Memory', '导出 detail export', startedAt, error)
+    return toErrorResponse('DETAIL_EXPORT_OPERATION_FAILED', error)
   }
 }

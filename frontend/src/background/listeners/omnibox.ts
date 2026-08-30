@@ -12,6 +12,15 @@ import { logger } from '@/infrastructure/logging/logger'
 let listenersRegistered = false
 let inputChangedRequestId = 0
 
+/** 为一次 onInputChanged 分配序号，供过期丢弃与错误兜底使用。 */
+function beginOmniboxInputChangedRequest(): number {
+  return ++inputChangedRequestId
+}
+
+function isStaleOmniboxInputChangedRequest(requestId: number): boolean {
+  return requestId !== inputChangedRequestId
+}
+
 /** 确保 Background 已启动（动态 import，避免与 bootstrap 循环依赖）。 */
 async function ensureReady(): Promise<void> {
   const { ensureBackgroundBootstrapped } = await import('@/background/bootstrap')
@@ -62,10 +71,10 @@ async function recordOpenBestEffort(memoryItemId: string | null | undefined): Pr
 
 /** Omnibox 输入变化：离线查找轨（规则 parse + Filter ± embedding），映射为原生建议。 */
 async function handleOmniboxInputChanged(
+  requestId: number,
   text: string,
   suggest: (suggestResults: chrome.omnibox.SuggestResult[]) => void
 ): Promise<void> {
-  const requestId = ++inputChangedRequestId
   const clue = text.trim()
 
   if (!clue) {
@@ -74,14 +83,23 @@ async function handleOmniboxInputChanged(
     return
   }
 
+  // 新线索到达时立即清空上一轮建议，避免召回完成前仍展示旧列表（Chrome 不会自动清）。
+  chrome.omnibox.setDefaultSuggestion({ description: getDefaultSuggestionDescription() })
+  suggest([])
+
   await ensureReady()
+  if (isStaleOmniboxInputChangedRequest(requestId)) {
+    logger.info('Omnibox', 'inputChanged：bootstrap 后已过期，丢弃', { requestId })
+    return
+  }
+
   logger.info('Omnibox', 'inputChanged：开始 Recall', {
     requestId,
     clueLength: clue.length
   })
   const result = await recallService.recallWithClue(clue, { entry: 'omnibox' })
 
-  if (requestId !== inputChangedRequestId) {
+  if (isStaleOmniboxInputChangedRequest(requestId)) {
     logger.info('Omnibox', 'inputChanged：结果已过期，丢弃', { requestId })
     return
   }
@@ -172,7 +190,11 @@ export function registerOmniboxListeners(): void {
   chrome.omnibox.setDefaultSuggestion({ description: getDefaultSuggestionDescription() })
 
   chrome.omnibox.onInputChanged.addListener((text, suggest) => {
-    void handleOmniboxInputChanged(text, suggest).catch(error => {
+    const requestId = beginOmniboxInputChangedRequest()
+    void handleOmniboxInputChanged(requestId, text, suggest).catch(error => {
+      if (isStaleOmniboxInputChangedRequest(requestId)) {
+        return
+      }
       logger.error('Omnibox', '输入变化处理失败', error)
       suggest([])
     })

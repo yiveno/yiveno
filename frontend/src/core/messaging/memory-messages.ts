@@ -3,11 +3,11 @@ import { z } from 'zod'
 import { CaptureEntrySchema } from '@/core/memory/capture-entry'
 import { SupportedMemoryItemTypeSchema } from '@/core/memory/memory-item-type'
 import type { MemoryItem } from '@/core/memory/memory-item'
-import type { EvidencePack } from '@/core/recall/evidence-pack'
+import type { DetailExport } from '@/core/recall/detail-export'
 import type { BackgroundMessageScope } from '@/core/messaging/constants'
 
-const exportEvidencePackPayloadSchema = z.object({
-  ids: z.array(z.string().uuid()).min(2).max(5)
+const exportDetailExportPayloadSchema = z.object({
+  ids: z.array(z.string().uuid()).min(1)
 })
 
 const captureBookmarkPayloadSchema = z.object({
@@ -71,9 +71,9 @@ export const MemoryErrorCodeSchema = z.enum([
   'CAPTURE_EMPTY_SELECTION', // 无有效选区
   'BOOKMARK_INGEST_DISABLED', // 用户关闭了书签灌库
   'EMBEDDING_BACKFILL_AUTH_REQUIRED', // 回填 embedding 须登录
-  'EVIDENCE_PACK_INVALID_COUNT', // evidence pack 条数须 2–5
-  'EVIDENCE_PACK_ITEM_NOT_FOUND', // 所选条目不存在或已删
-  'EVIDENCE_PACK_OPERATION_FAILED' // evidence pack 导出失败
+  'DETAIL_EXPORT_INVALID_COUNT', // detail export 至少 1 条
+  'DETAIL_EXPORT_ITEM_NOT_FOUND', // 所选条目不存在或已删
+  'DETAIL_EXPORT_OPERATION_FAILED' // detail export 导出失败
 ])
 
 export type MemoryErrorCode = z.infer<typeof MemoryErrorCodeSchema>
@@ -147,11 +147,11 @@ export type BackfillMemoryEmbeddingsMessage = {
   type: 'BACKFILL_MEMORY_EMBEDDINGS'
 }
 
-/** 多选导出 evidence pack（§5.10.4；2–5 条）。 */
-export type ExportEvidencePackMessage = {
+/** 多选导出 detail export（§5.10.4；≥1 条）。 */
+export type ExportDetailExportMessage = {
   scope: BackgroundMessageScope
-  type: 'EXPORT_EVIDENCE_PACK'
-  payload: z.infer<typeof exportEvidencePackPayloadSchema>
+  type: 'EXPORT_DETAIL_EXPORT'
+  payload: z.infer<typeof exportDetailExportPayloadSchema>
 }
 
 export type MemoryBackgroundMessage =
@@ -165,7 +165,7 @@ export type MemoryBackgroundMessage =
   | RecordRecallDismissMessage
   | RecordRecallSettleMessage
   | BackfillMemoryEmbeddingsMessage
-  | ExportEvidencePackMessage
+  | ExportDetailExportMessage
 
 export type MemoryItemSuccessResponse = {
   ok: true
@@ -194,9 +194,9 @@ export type MemoryEmbeddingBackfillSuccessResponse = {
   quotaHit?: boolean
 }
 
-export type ExportEvidencePackSuccessResponse = {
+export type ExportDetailExportSuccessResponse = {
   ok: true
-  pack: EvidencePack
+  pack: DetailExport
   markdown: string
 }
 
@@ -212,7 +212,7 @@ export type MemoryBackgroundResponse =
   | MemoryItemListSuccessResponse
   | MemoryDismissSuccessResponse
   | MemoryEmbeddingBackfillSuccessResponse
-  | ExportEvidencePackSuccessResponse
+  | ExportDetailExportSuccessResponse
   | MemoryItemErrorResponse
 
 export function parseCaptureBookmarkPayload(value: unknown) {
@@ -251,6 +251,6 @@ export function parseRecordRecallSettlePayload(value: unknown) {
   return recordRecallSettlePayloadSchema.parse(value)
 }
 
-export function parseExportEvidencePackPayload(value: unknown) {
-  return exportEvidencePackPayloadSchema.parse(value)
+export function parseExportDetailExportPayload(value: unknown) {
+  return exportDetailExportPayloadSchema.parse(value)
 }

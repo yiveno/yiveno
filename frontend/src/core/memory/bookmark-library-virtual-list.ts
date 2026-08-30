@@ -1,5 +1,5 @@
 import {
-  getBookmarkLibraryRowHeight,
+  getBookmarkLibraryRowStride,
   type BookmarkLibraryVisibleRow
 } from '@/core/memory/bookmark-library-index'
 
@@ -17,7 +17,7 @@ export function buildBookmarkLibraryRowMetrics(
   const heights: number[] = []
   let total = 0
   for (const row of rows) {
-    const height = getBookmarkLibraryRowHeight(row)
+    const height = getBookmarkLibraryRowStride(row)
     heights.push(height)
     total += height
     offsets.push(total)

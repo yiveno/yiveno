@@ -58,7 +58,7 @@ export async function runOmniboxEval(
     } else if (shouldSkipRecallAsZeroAnchor(clue, understood.parsed)) {
       result = emptyNoMatch(clue)
     } else {
-      const items = excludeDismissedMemoryItems(corpus)
+      const items = excludeDismissedMemoryItems(corpus, undefined)
       result = recallByKeywordWithParsedClue(items, clue, {
         nowMs: RECALL_EVAL_NOW_MS,
         parsed: understood.parsed

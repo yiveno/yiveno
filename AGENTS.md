@@ -14,6 +14,7 @@
 - **PR 合入清单：** `.github/pull_request_template.md`（§1.1 验收归属勾选）。
 - **Cursor Hooks：** `.cursor/hooks.json`（拦截破坏性 git）— 见 `.cursor/hooks/README.md`。
 - **跨 IDE 薄指针：** 根目录 [`CLAUDE.md`](CLAUDE.md)（Claude Code）· `bun run sync:ide-boot` 同步开机「当下」块
+- **Chrome 扩展 Agent Skills（Modern Web Guidance）：** 本机 `.agents/skills/`（`npx modern-web-guidance@latest install --choose`，选 `chrome-extensions` + `modern-web-guidance`）；锁文件 `skills-lock.json`。MV3 / 扩展 API / 上架合规见 `chrome-extensions`；现代 Web/CSS/性能见 `modern-web-guidance`。与 Yiveno 产品文档、分层规则冲突时**以本仓权威文档为准**。
 - 对外心智：「那个找东西的」/ 仓库；找回 = 高置信**邻域**，Top1=建议；AI 能力核心不作宣传招牌。
 - **文档 ↔ 代码同步（铁律）：** 任何代码改动若与权威文档脱节或有差异，**必须同批更新对应文档**（产品 / 设计 / 工程 / `AGENTS.md`·`project.mdc`）；报完成 = 代码与文档可对照。禁止「先改代码、文档以后再补」。纯重构且契约不变、或 bugfix 且行为已与文档一致，可不改文档。细则见 `.cursor/rules/project.mdc`「文档 ↔ 代码同步」。
 
@@ -55,6 +56,20 @@
 | Memory / clues     | `frontend/src/core/memory/`                                  |
 | 消息联合类型       | `frontend/src/core/messaging/background-messages.ts`         |
 | Recall 服务        | `frontend/src/application/recall/recall-service.ts`          |
+| 扩展 manifest      | `frontend/public/manifest.json`                              |
+| CWS 上架元数据     | 根目录 `CHROMEWEBSTORE.md`（见下节）                         |
+
+### Chrome Web Store 元数据（`CHROMEWEBSTORE.md`）
+
+创建或改动 Chrome 扩展（含 `frontend/public/manifest.json` 的 `permissions` / `host_permissions`、上架准备、审核被拒、隐私披露变更）时，**创建并维护**根目录 `CHROMEWEBSTORE.md`。格式与模板见 `chrome-extensions` skill（`references/webstore/chromewebstore-template.md`）。
+
+Agent 硬规则（原文，勿改措辞）：
+
+> Whenever you are creating or making changes to a Chrome extension, create and manage a CHROMEWEBSTORE.md file. You can use the chrome-extensions skill to learn about the format of this file.
+
+- 改 manifest 权限 → 同批更新 `CHROMEWEBSTORE.md` 权限理由表与隐私披露。
+- 产品面文案（商店描述等）仅美式英语；开发者备注可用中文。
+- 参考：[使用编码智能体构建扩展程序](https://developer.chrome.com/docs/extensions/ai/build-with-ai#modern_web_guidance)
 
 ## 代码约定
 

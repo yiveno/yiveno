@@ -1,11 +1,11 @@
 /**
  * 只读 MCP 工具契约（§5.10.5 · Normative 旁挂）。
- * 响应形态 = evidence pack；禁止写操作 / 全库 dump。
+ * 响应形态 = detail export 条目列表；禁止写操作 / 全库 dump。
  */
 
 import { z } from 'zod'
 
-import { EvidencePackItemSchema, type EvidencePackItem } from '@/core/recall/evidence-pack'
+import { DetailExportItemSchema, type DetailExportItem } from '@/core/recall/detail-export'
 
 export const McpRecallEvidenceArgsSchema = z.object({
   /** 口语线索 */
@@ -14,20 +14,20 @@ export const McpRecallEvidenceArgsSchema = z.object({
   limit: z.number().int().min(1).max(5).optional()
 })
 
-/** MCP 响应：evidence pack 形态，允许 1–5（单次 query 可仅 Top1）。 */
-export const McpEvidencePackSchema = z.object({
+/** MCP 响应：detail export 形态，允许 1–5（单次 clue 可仅 Top1）。 */
+export const McpDetailExportSchema = z.object({
   version: z.literal(1),
   exportedAt: z.string().datetime(),
-  items: z.array(EvidencePackItemSchema).min(1).max(5)
+  items: z.array(DetailExportItemSchema).min(1).max(5)
 })
 
-export type McpEvidencePack = z.infer<typeof McpEvidencePackSchema>
+export type McpDetailExport = z.infer<typeof McpDetailExportSchema>
 
-export function buildMcpEvidencePack(
-  items: EvidencePackItem[],
+export function buildMcpDetailExport(
+  items: DetailExportItem[],
   exportedAt: string = new Date().toISOString()
-): McpEvidencePack {
-  return McpEvidencePackSchema.parse({
+): McpDetailExport {
+  return McpDetailExportSchema.parse({
     version: 1,
     exportedAt,
     items: items.slice(0, 5)

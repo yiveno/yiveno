@@ -54,10 +54,10 @@ const props = defineProps<{
   expandLabel: string
   collapseLabel: string
   noteFieldLabel: string
-  /** 展示 evidence pack 多选框 */
-  showEvidenceSelection?: boolean
-  evidenceSelected?: boolean
-  evidenceSelectionDisabled?: boolean
+  /** detail export 多选：点卡面切换选中 */
+  showDetailExportSelection?: boolean
+  detailExportItemSelected?: (memoryItemId: string) => boolean
+  detailExportItemDisabled?: (memoryItemId: string) => boolean
 }>()
 
 const emit = defineEmits<{
@@ -72,7 +72,7 @@ const emit = defineEmits<{
       anchor?: string
     }
   ]
-  toggleEvidenceSelection: [memoryItemId: string]
+  toggleDetailExportSelection: [memoryItemId: string]
 }>()
 
 const isCollection = computed(() => (props.card.duplicateTotalCount ?? 0) >= 2)
@@ -141,6 +141,15 @@ function siblingNativeTitle(sibling: RecallCardModel): string | undefined {
 }
 
 function handleOpen(event: MouseEvent, id: string, url: string, rank?: number): void {
+  if (props.showDetailExportSelection) {
+    event.preventDefault()
+    if (isDetailExportItemDisabled(id)) {
+      return
+    }
+    emit('toggleDetailExportSelection', id)
+    return
+  }
+
   // 一律经 SW 导航：默认当前活动标签；⌘/Ctrl+点击新开，避免 Side Panel 自身跳转
   event.preventDefault()
   emit('open', {
@@ -149,6 +158,14 @@ function handleOpen(event: MouseEvent, id: string, url: string, rank?: number): 
     openInNewTab: event.metaKey || event.ctrlKey,
     ...(rank !== undefined ? { rank } : {})
   })
+}
+
+function isDetailExportItemSelected(id: string): boolean {
+  return props.detailExportItemSelected?.(id) === true
+}
+
+function isDetailExportItemDisabled(id: string): boolean {
+  return props.detailExportItemDisabled?.(id) === true
 }
 
 onMounted(() => {
@@ -181,12 +198,6 @@ function handleMoreClick(event: MouseEvent): void {
   event.stopPropagation()
   emit('toggleExpand')
 }
-
-function handleToggleEvidenceSelection(event: Event): void {
-  event.preventDefault()
-  event.stopPropagation()
-  emit('toggleEvidenceSelection', props.card.id)
-}
 </script>
 
 <template>
@@ -203,19 +214,19 @@ function handleToggleEvidenceSelection(event: Event): void {
         'recall-card-shell--top': topPick,
         'recall-card-shell--excerpt': card.itemKind === 'text_excerpt',
         'recall-card-shell--bookmark': card.itemKind === 'bookmark',
+        'recall-card-shell--detail-export-mode': showDetailExportSelection,
+        'recall-card-shell--detail-export-selected':
+          showDetailExportSelection && isDetailExportItemSelected(card.id),
         'is-keyboard-selected': keyboardSelected
       }"
     >
-      <label v-if="showEvidenceSelection" class="recall-card-select" @click.stop>
-        <input
-          type="checkbox"
-          class="recall-evidence-checkbox"
-          :checked="evidenceSelected === true"
-          :disabled="evidenceSelectionDisabled === true"
-          :aria-label="t('evidence_pack_select_item_aria')"
-          @change="handleToggleEvidenceSelection"
-        />
-      </label>
+      <span
+        v-if="showDetailExportSelection && isDetailExportItemSelected(card.id)"
+        class="recall-card-selected-mark"
+        aria-hidden="true"
+      >
+        <AppIcon name="check_circle" size="16px" />
+      </span>
       <span
         class="recall-type-chip recall-type-chip--corner"
         :class="
@@ -245,11 +256,13 @@ function handleToggleEvidenceSelection(event: Event): void {
           'recall-card--compact': compact,
           'recall-card--has-more': isCollection,
           'recall-card--excerpt': card.itemKind === 'text_excerpt',
-          'recall-card--bookmark': card.itemKind === 'bookmark'
+          'recall-card--bookmark': card.itemKind === 'bookmark',
+          'recall-card--detail-export-mode': showDetailExportSelection
         }"
         :href="card.url"
         :title="bookmarkNativeTitle"
         rel="noopener noreferrer"
+        :aria-selected="showDetailExportSelection ? isDetailExportItemSelected(card.id) : undefined"
         @click="handleOpen($event, card.id, card.url, card.telemetryRank)"
       >
         <p
@@ -317,7 +330,15 @@ function handleToggleEvidenceSelection(event: Event): void {
       v-if="expanded && isCollection && card.siblings && card.siblings.length > 0"
       class="recall-duplicate-siblings"
     >
-      <li v-for="sibling in card.siblings" :key="sibling.id" class="recall-sibling-item">
+      <li
+        v-for="sibling in card.siblings"
+        :key="sibling.id"
+        class="recall-sibling-item"
+        :class="{
+          'recall-sibling-item--detail-export-selected':
+            showDetailExportSelection && isDetailExportItemSelected(sibling.id)
+        }"
+      >
         <span
           class="recall-type-chip recall-type-chip--corner"
           :class="
@@ -345,11 +366,15 @@ function handleToggleEvidenceSelection(event: Event): void {
           class="recall-card recall-card--sibling"
           :class="{
             'recall-card--excerpt': sibling.itemKind === 'text_excerpt',
-            'recall-card--bookmark': sibling.itemKind === 'bookmark'
+            'recall-card--bookmark': sibling.itemKind === 'bookmark',
+            'recall-card--detail-export-mode': showDetailExportSelection
           }"
           :href="sibling.url"
           :title="siblingNativeTitle(sibling)"
           rel="noopener noreferrer"
+          :aria-selected="
+            showDetailExportSelection ? isDetailExportItemSelected(sibling.id) : undefined
+          "
           @click="handleOpen($event, sibling.id, sibling.url, sibling.telemetryRank)"
         >
           <p v-if="sibling.excerpt" class="recall-card-body recall-card-body--compact">
@@ -413,30 +438,30 @@ function handleToggleEvidenceSelection(event: Event): void {
   background: var(--surface-white);
 }
 
-.recall-card-select {
-  position: absolute;
-  top: var(--space-xs);
-  left: var(--space-xs);
-  z-index: 2;
-  display: flex;
-  align-items: center;
-}
-
-.recall-evidence-checkbox {
-  width: 16px;
-  height: 16px;
-  margin: 0;
-  accent-color: var(--accent);
+.recall-card-shell--detail-export-mode .recall-card {
   cursor: pointer;
 }
 
-.recall-evidence-checkbox:disabled {
-  cursor: not-allowed;
-  opacity: 0.45;
+.recall-card-shell--detail-export-selected {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
 }
 
-.recall-card-shell:has(.recall-card-select) .recall-card {
-  padding-left: calc(var(--space-md) + 18px);
+.recall-card-shell--detail-export-selected.recall-card-shell--excerpt {
+  background: color-mix(in srgb, var(--surface-accent-soft) 88%, var(--surface-white));
+}
+
+.recall-card-shell--detail-export-selected.recall-card-shell--bookmark {
+  background: var(--surface-accent-soft);
+}
+
+.recall-card-selected-mark {
+  position: absolute;
+  top: var(--space-xs);
+  right: var(--space-xs);
+  z-index: 2;
+  display: inline-flex;
+  color: var(--yiveno-semantic-success);
 }
 
 /* 书签：干净白底 + 略强描边，像「可打开的链接页」 */
@@ -546,6 +571,11 @@ function handleToggleEvidenceSelection(event: Event): void {
 .recall-sibling-item {
   position: relative;
   min-width: 0;
+}
+
+.recall-sibling-item--detail-export-selected > .recall-card {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
 }
 
 .recall-type-chip {

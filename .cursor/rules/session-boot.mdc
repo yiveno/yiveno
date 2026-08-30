@@ -21,7 +21,7 @@ alwaysApply: true
 | **本周做** | Recall 壳空态与 onboarding 文案收束（`recall-shell-empty-copy`、Side Panel）；文档↔代码同步；行为变更补 must 或 §5 手动步骤；Outcome Labeling §7.2 按 P0→P1 推进（见 `R4-Outcome-Labeling-P2-校准.md`） |
 | **本周不做** | 新连接器 / Agent / history 抓取 / 知识图谱 UI；未达 §5.9 门槛前扩 MCP 对外宣传；内容别名灰名单冒充全库通解；Side Panel 持久多会话 / 分支 / regenerate 等 Chat 产品化 |
 
-**能力速查：** Side Panel Recall、Hybrid、倒排 Phase 1、ECS 卡面、evidence pack、只读 MCP beta、Raindrop/Pocket 导入、TTE 本机埋点、Dodo Pro 门禁等（详表 `产品文档 §1`）。§5.9 Beta（TTE-V / Success@180 / ECS 合格率）；MCP **不对用户主宣传**。进行中：Outcome Labeling §7.2（P0+）；R4 `recall-eval` must 增补与校准。
+**能力速查：** Side Panel Recall、Hybrid、倒排 Phase 1、ECS 卡面、detail export、只读 MCP beta、Raindrop/Pocket 导入、TTE 本机埋点、Dodo Pro 门禁等（详表 `产品文档 §1`）。§5.9 Beta（TTE-V / Success@180 / ECS 合格率）；MCP **不对用户主宣传**。进行中：Outcome Labeling §7.2（P0+）；R4 `recall-eval` must 增补与校准。
 <!-- SYNC:IDE_BOOT:END -->
 
 ## 冻结（勿重议 · ADR-001–005）

@@ -56,12 +56,15 @@ import {
   readInstallOnboardingDone
 } from '@/infrastructure/storage/install-onboarding-storage'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
-import EvidencePackExportBar from '@/infrastructure/ui/EvidencePackExportBar.vue'
-import { downloadEvidencePackExport } from '@/infrastructure/recall/download-evidence-pack'
+import DetailExportBar from '@/infrastructure/ui/DetailExportBar.vue'
+import DetailExportBarDock from '@/infrastructure/ui/DetailExportBarDock.vue'
+import AppToastHost from '@/infrastructure/ui/AppToastHost.vue'
+import { useAppToast } from '@/infrastructure/ui/use-app-toast'
 import {
-  EVIDENCE_PACK_MAX_ITEMS,
-  toggleEvidencePackSelection
-} from '@/infrastructure/recall/evidence-pack-selection'
+  copyDetailExportToClipboard,
+  downloadDetailExport
+} from '@/infrastructure/recall/detail-export-client'
+import { toggleDetailExportSelection as toggleDetailExportSelectionSet } from '@/infrastructure/recall/detail-export-selection'
 import { tMemoryError } from '@/infrastructure/i18n/memory-error'
 import { type RecallCardModel } from '@/pages/sidepanel/RecallResultCard.vue'
 import RecallConversation from '@/pages/sidepanel/components/RecallConversation.vue'
@@ -292,7 +295,7 @@ async function completeNewFindSession(reason: string): Promise<void> {
   lastSubmitAtMs.value = null
   errorMessage.value = ''
   expandedDuplicateGroupId.value = null
-  clearEvidenceSelection()
+  clearDetailExportSelection()
   stickToBottom.value = true
   const pendingPrefill = pendingPrefillAfterExit.value
   pendingPrefillAfterExit.value = null
@@ -522,15 +525,15 @@ const idleGreeting = computed(() =>
 /** 当前展开的重复组代表 id；同时只展开一组。 */
 const expandedDuplicateGroupId = ref<string | null>(null)
 
-const selectedEvidenceIds = ref<Set<string>>(new Set())
-/** Evidence pack 多选模式：默认关，点 Export 后才显示勾选框。 */
-const evidencePackMode = ref(false)
-const evidencePackExporting = ref(false)
-const evidencePackError = ref('')
-const evidencePackSuccess = ref('')
+const selectedDetailExportIds = ref<Set<string>>(new Set())
+/** Detail export 多选模式：默认关，点 Export 后才显示勾选框。 */
+const detailExportMode = ref(false)
+const detailExportExporting = ref(false)
 
-const evidencePackSelectedCount = computed(() => selectedEvidenceIds.value.size)
-const showEvidencePackBar = computed(() => evidencePackMode.value)
+const { success: showToastSuccess, error: showToastError } = useAppToast()
+
+const detailExportSelectedCount = computed(() => selectedDetailExportIds.value.size)
+const showDetailExportBar = computed(() => detailExportMode.value)
 
 /** 当前线程是否有可导出的结果卡（非空态 / 纯追问）。 */
 const hasRecallResultCards = computed(() =>
@@ -544,50 +547,44 @@ const hasRecallResultCards = computed(() =>
   })
 )
 
-function enterEvidencePackMode(): void {
-  evidencePackMode.value = true
-  evidencePackError.value = ''
-  evidencePackSuccess.value = ''
+function enterDetailExportMode(): void {
+  detailExportMode.value = true
 }
 
-function exitEvidencePackMode(): void {
-  evidencePackMode.value = false
-  selectedEvidenceIds.value = new Set()
-  evidencePackError.value = ''
-  evidencePackSuccess.value = ''
+function exitDetailExportMode(): void {
+  detailExportMode.value = false
+  selectedDetailExportIds.value = new Set()
 }
 
-function toggleEvidenceSelection(id: string): void {
-  evidencePackSuccess.value = ''
-  evidencePackError.value = ''
-  const before = selectedEvidenceIds.value
-  const after = toggleEvidencePackSelection(before, id)
-  if (after === before && !before.has(id)) {
-    evidencePackError.value = t('evidence_pack_max_selected', [String(EVIDENCE_PACK_MAX_ITEMS)])
+function handleToggleDetailExportSelection(id: string): void {
+  selectedDetailExportIds.value = toggleDetailExportSelectionSet(selectedDetailExportIds.value, id)
+}
+
+function clearDetailExportSelection(): void {
+  exitDetailExportMode()
+}
+
+async function runDetailExportAction(
+  format: 'json' | 'markdown',
+  channel: 'copy' | 'download'
+): Promise<void> {
+  if (detailExportExporting.value) {
     return
   }
-  selectedEvidenceIds.value = after
-}
-
-function clearEvidenceSelection(): void {
-  exitEvidencePackMode()
-}
-
-async function handleEvidencePackExport(format: 'json' | 'markdown'): Promise<void> {
-  if (evidencePackExporting.value) {
-    return
-  }
-  evidencePackExporting.value = true
-  evidencePackError.value = ''
-  evidencePackSuccess.value = ''
+  detailExportExporting.value = true
   try {
-    const ids = [...selectedEvidenceIds.value]
-    const result = await downloadEvidencePackExport(ids, format)
+    const ids = [...selectedDetailExportIds.value]
+    const result =
+      channel === 'copy'
+        ? await copyDetailExportToClipboard(ids, format)
+        : await downloadDetailExport(ids, format)
     if (!result.ok) {
-      evidencePackError.value = tMemoryError(result.errorCode)
+      showToastError(tMemoryError(result.errorCode))
       return
     }
-    evidencePackSuccess.value = t('evidence_pack_export_success')
+    showToastSuccess(
+      channel === 'copy' ? t('detail_export_copy_success') : t('detail_export_download_success')
+    )
     const firstId = ids[0]
     if (firstId) {
       outcomeSession.value = {
@@ -596,9 +593,9 @@ async function handleEvidencePackExport(format: 'json' | 'markdown'): Promise<vo
       }
     }
   } catch {
-    evidencePackError.value = t('error_evidence_pack_operation_failed')
+    showToastError(t('error_detail_export_operation_failed'))
   } finally {
-    evidencePackExporting.value = false
+    detailExportExporting.value = false
   }
 }
 
@@ -1436,6 +1433,7 @@ onUnmounted(() => {
 </script>
 
 <template>
+  <AppToastHost />
   <main class="recall-shell">
     <ColdStartGate v-if="showColdStartGate && coldStartGateState" :state="coldStartGateState" />
 
@@ -1505,11 +1503,11 @@ onUnmounted(() => {
         :noteFieldLabel="t('detail_note_label')"
         :pending="isRecallRefreshing"
         :pendingLabel="t('popup_recall_pending')"
-        :selected-evidence-ids="selectedEvidenceIds"
-        :evidence-pack-selection-active="evidencePackMode"
+        :selected-detail-export-ids="selectedDetailExportIds"
+        :detail-export-selection-active="detailExportMode"
         @open="handleCardOpen"
         @evidence-visible="handleEvidenceVisible"
-        @toggle-evidence-selection="toggleEvidenceSelection"
+        @toggle-detail-export-selection="handleToggleDetailExportSelection"
         @toggle-expand="toggleDuplicateGroup"
         @dismiss="handleDismissCandidates"
         @show-more="handleShowMoreMatches"
@@ -1519,12 +1517,12 @@ onUnmounted(() => {
 
     <div
       v-if="
-        hasRecallResultCards && !evidencePackMode && !showOutcomeExitStrip && !showThreadPivotStrip
+        hasRecallResultCards && !detailExportMode && !showOutcomeExitStrip && !showThreadPivotStrip
       "
-      class="recall-evidence-entry"
+      class="recall-detail-export-entry"
     >
-      <AppButton type="button" variant="text" @click="enterEvidencePackMode">
-        {{ t('evidence_pack_start_export') }}
+      <AppButton type="button" variant="text" @click="enterDetailExportMode">
+        {{ t('detail_export_start') }}
       </AppButton>
     </div>
 
@@ -1569,17 +1567,18 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <EvidencePackExportBar
-      v-if="showEvidencePackBar"
-      class="recall-evidence-bar"
-      :selected-count="evidencePackSelectedCount"
-      :exporting="evidencePackExporting"
-      :error-message="evidencePackError"
-      :success-message="evidencePackSuccess"
-      @export-json="handleEvidencePackExport('json')"
-      @export-markdown="handleEvidencePackExport('markdown')"
-      @clear="clearEvidenceSelection"
-    />
+    <DetailExportBarDock :visible="showDetailExportBar">
+      <DetailExportBar
+        class="recall-detail-export-bar"
+        :selected-count="detailExportSelectedCount"
+        :exporting="detailExportExporting"
+        @copy-json="runDetailExportAction('json', 'copy')"
+        @copy-markdown="runDetailExportAction('markdown', 'copy')"
+        @download-json="runDetailExportAction('json', 'download')"
+        @download-markdown="runDetailExportAction('markdown', 'download')"
+        @clear="clearDetailExportSelection"
+      />
+    </DetailExportBarDock>
 
     <RecallComposer
       ref="clueInputRef"
@@ -1635,7 +1634,7 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-.recall-evidence-entry {
+.recall-detail-export-entry {
   flex-shrink: 0;
   display: flex;
   justify-content: flex-end;
@@ -1644,10 +1643,11 @@ onUnmounted(() => {
   padding: 0 var(--space-2xs);
 }
 
-.recall-evidence-bar {
+.recall-detail-export-bar {
   flex-shrink: 0;
   margin-top: var(--space-xs);
   margin-bottom: var(--space-xs);
+  overflow: visible;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
 }

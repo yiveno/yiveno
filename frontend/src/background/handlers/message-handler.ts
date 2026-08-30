@@ -47,7 +47,7 @@ import {
   handleGetMemoryItem,
   handleListMemoryItems,
   handleBackfillMemoryEmbeddings,
-  handleExportEvidencePack,
+  handleExportDetailExport,
   handleRecordMemoryOpen,
   handleRecordRecallDismiss,
   handleRecordRecallSettle,
@@ -157,8 +157,8 @@ async function dispatchBackgroundMessage(
       return handleRecordRecallSettle(message.payload)
     case 'BACKFILL_MEMORY_EMBEDDINGS':
       return handleBackfillMemoryEmbeddings()
-    case 'EXPORT_EVIDENCE_PACK':
-      return handleExportEvidencePack(message.payload)
+    case 'EXPORT_DETAIL_EXPORT':
+      return handleExportDetailExport(message.payload)
     case 'RECALL_WITH_CLUE':
       return handleRecallWithClue(message.payload)
     case 'MCP_RECALL_EVIDENCE':

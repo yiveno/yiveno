@@ -1,18 +1,18 @@
 /**
- * 只读 MCP：本机 Hybrid 召回 → evidence pack（§5.10.5）。
+ * 只读 MCP：本机 Hybrid 召回 → detail export（§5.10.5）。
  */
 
 import { memoryItemService } from '@/application/memory/memory-item-service'
 import { recallService } from '@/application/recall/recall-service'
 import {
-  mapMemoryItemToEvidencePackItem,
-  renderEvidencePackMarkdown,
-  type EvidencePack
-} from '@/core/recall/evidence-pack'
+  mapMemoryItemToDetailExportItem,
+  renderDetailExportMarkdown,
+  type DetailExport
+} from '@/core/recall/detail-export'
 import {
-  buildMcpEvidencePack,
+  buildMcpDetailExport,
   McpRecallEvidenceArgsSchema,
-  type McpEvidencePack
+  type McpDetailExport
 } from '@/core/recall/mcp-tool-schema'
 import { getUserSettings } from '@/infrastructure/settings/user-settings-service'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
@@ -32,7 +32,7 @@ export class McpRecallError extends Error {
 
 /** 本机 MCP 召回：须 Settings 开启；走同一 recallService。 */
 export async function mcpRecallEvidenceLocal(rawArgs: unknown): Promise<{
-  pack: McpEvidencePack
+  pack: McpDetailExport
   markdown: string
   backend: 'local_hybrid'
 }> {
@@ -74,11 +74,10 @@ export async function mcpRecallEvidenceLocal(rawArgs: unknown): Promise<{
       throw new McpRecallError('MCP_NO_MATCH')
     }
 
-    const pack = buildMcpEvidencePack(items.map(mapMemoryItemToEvidencePackItem))
-    // Markdown 复用：临时包成 EvidencePack 形状（≥2 时）或手写简版
+    const pack = buildMcpDetailExport(items.map(mapMemoryItemToDetailExportItem))
     const markdown =
       pack.items.length >= 2
-        ? renderEvidencePackMarkdown(pack as EvidencePack)
+        ? renderDetailExportMarkdown(pack as DetailExport)
         : renderSingleItemMarkdown(pack)
 
     flowOk('Mcp', '本机召回', startedAt, {
@@ -98,14 +97,14 @@ export async function mcpRecallEvidenceLocal(rawArgs: unknown): Promise<{
   }
 }
 
-function renderSingleItemMarkdown(pack: McpEvidencePack): string {
+function renderSingleItemMarkdown(pack: McpDetailExport): string {
   const item = pack.items[0]
   if (!item) {
-    return '# Yiveno Evidence Pack\n\n(empty)\n'
+    return '# Yiveno detail export\n\n(empty)\n'
   }
   if (item.type === 'text_excerpt') {
     return [
-      '# Yiveno Evidence Pack',
+      '# Yiveno detail export',
       '',
       `Exported: ${pack.exportedAt}`,
       '',
@@ -119,7 +118,7 @@ function renderSingleItemMarkdown(pack: McpEvidencePack): string {
     ].join('\n')
   }
   return [
-    '# Yiveno Evidence Pack',
+    '# Yiveno detail export',
     '',
     `Exported: ${pack.exportedAt}`,
     '',

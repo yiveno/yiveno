@@ -41,13 +41,13 @@ export const McpEvidenceItemSchema = z.discriminatedUnion('type', [
 
 export type McpEvidenceItem = z.infer<typeof McpEvidenceItemSchema>
 
-export const McpCloudEvidencePackSchema = z.object({
+export const McpCloudDetailExportSchema = z.object({
   version: z.literal(1),
   exportedAt: z.string().datetime(),
   items: z.array(McpEvidenceItemSchema).min(1).max(5)
 })
 
-export type McpCloudEvidencePack = z.infer<typeof McpCloudEvidencePackSchema>
+export type McpCloudDetailExport = z.infer<typeof McpCloudDetailExportSchema>
 
 export const McpRecallArgsSchema = z.object({
   clue: z.string().trim().min(1).max(500),
@@ -125,9 +125,9 @@ function toEvidenceItem(item: MemoryItem): McpEvidenceItem {
   })
 }
 
-/** 渲染 Markdown（与扩展 evidence pack 语气一致）。 */
-export function renderMcpEvidenceMarkdown(pack: McpCloudEvidencePack): string {
-  const lines = ['# Yiveno Evidence Pack', '', `Exported: ${pack.exportedAt}`, '']
+/** 渲染 Markdown（与扩展 detail export 语气一致）。 */
+export function renderMcpDetailExportMarkdown(pack: McpCloudDetailExport): string {
+  const lines = ['# Yiveno detail export', '', `Exported: ${pack.exportedAt}`, '']
   pack.items.forEach((item, index) => {
     const n = index + 1
     if (item.type === 'text_excerpt') {
@@ -168,7 +168,7 @@ export async function recallCloudKeywordEvidence(
   ownerId: string,
   clue: string,
   limit: number
-): Promise<McpCloudEvidencePack | null> {
+): Promise<McpCloudDetailExport | null> {
   const tokens = tokenizeMcpClue(clue)
   const items = await pullMemoryItems(env, ownerId, MCP_CLOUD_SCAN_LIMIT)
   const active = items.filter(item => !item.deletedAt)
@@ -190,7 +190,7 @@ export async function recallCloudKeywordEvidence(
     return null
   }
 
-  return McpCloudEvidencePackSchema.parse({
+  return McpCloudDetailExportSchema.parse({
     version: 1,
     exportedAt: new Date().toISOString(),
     items: ranked.map(row => toEvidenceItem(row.item))

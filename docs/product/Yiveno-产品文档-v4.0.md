@@ -436,15 +436,15 @@ Yiveno 的高频真实请求，**不是**标题 / URL / 精确词查询，而是
 
 产品交付单位不是功能清单，而是 **Capture → Preserve → Retrieve → Explain → Reuse** 闭环。Yiveno 以 **摘录 + 附注** 为 Preserve 主角（非 Raindrop 级全文 archive 优先）；各环 Normative 如下：
 
-| 环           | Yiveno 含义                                   | 必须交付（Normative）                                                                                | 质量门槛                                                                      |
-| ------------ | --------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| **Capture**  | 极低负担留下个人痕迹                          | 划词/右键/Chrome 书签 sync；未来经**适配器**的第三方导入（Raindrop/Pocket 等排队，见 R2/R4）         | 保存即反馈；失败可见；**原 URL、时间、来源**恒久保留                          |
-| **Preserve** | 可证明「当时那版证据」                        | 摘录正文 + 出处 + `createdAt` + 可选 `clues.note`；书签 URL + 附注层                                 | 用户能导出/打开；**不得**静默丢失；动态页失效时仍保留 Capture 时选区          |
-| **Retrieve** | 口语 → 排序邻域（报 N · 首屏 ≤5 · Show more） | keyword + full-text + semantic Hybrid；时间/行为/类型约束                                            | **钉死一条**任务：目标进 top-3；**逛一簇**任务：邻域含目标（§0.1.1 两种意图） |
-| **Explain**  | **可验证**，非仅排序                          | 每条候选：**来源身份、保存时间、原文/摘录锚点、命中理由**；一次点击打开自验                          | 无来源的 LLM 总结**不算**找回成功；不确定须显式表达                           |
-| **Reuse**    | 找完之后交给任意 AI                           | 选中条目的 **evidence pack**；Markdown/JSON；**只读 MCP**（Settings 开关；本机 Hybrid / 云端关键词） | 每条材料有 source reference；**默认不全库**暴露给 Agent                       |
+| 环           | Yiveno 含义                                   | 必须交付（Normative）                                                                        | 质量门槛                                                                      |
+| ------------ | --------------------------------------------- | -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| **Capture**  | 极低负担留下个人痕迹                          | 划词/右键/Chrome 书签 sync；未来经**适配器**的第三方导入（Raindrop/Pocket 等排队，见 R2/R4） | 保存即反馈；失败可见；**原 URL、时间、来源**恒久保留                          |
+| **Preserve** | 可证明「当时那版证据」                        | 摘录正文 + 出处 + `createdAt` + 可选 `clues.note`；书签 URL + 附注层                         | 用户能导出/打开；**不得**静默丢失；动态页失效时仍保留 Capture 时选区          |
+| **Retrieve** | 口语 → 排序邻域（报 N · 首屏 ≤5 · Show more） | keyword + full-text + semantic Hybrid；时间/行为/类型约束                                    | **钉死一条**任务：目标进 top-3；**逛一簇**任务：邻域含目标（§0.1.1 两种意图） |
+| **Explain**  | **可验证**，非仅排序                          | 每条候选：**来源身份、保存时间、原文/摘录锚点、命中理由**；一次点击打开自验                  | 无来源的 LLM 总结**不算**找回成功；不确定须显式表达                           |
+| **Reuse**    | 已认下条目可带出 Yiveno 壳使用                | **Detail export**（复制/下载带来源详情）；**只读 MCP**（Settings；Agent 场景 1–5 条）        | 每条含 source reference；**禁止**整库 dump；**不预设**用户下游用途            |
 
-**Normative 次序：** 先找到并**验证**正确资料 → 再**复用** → 最后 AI 在**明确授权**下使用。**主动 Agent**（发信、下单、改网页）**后置**，见 §0.3。
+**Normative 次序：** 先找到并**验证**正确资料 → 再**带走详情**（Detail export）→ 下游如何使用不在产品承诺内。**主动 Agent**（发信、下单、改网页）**后置**，见 §0.3。
 
 #### 证据可验证（Explain · Normative）
 
@@ -761,7 +761,7 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 
 **说明：** 页内左侧类型切换 ≠ 旧「侧边栏管理页」/书签树；禁止整理中心化回潮。Chrome **Side Panel Recall 主壳** ≠ 管理页（见下「入口能力差异」）。
 
-**下一项：按 [`Yiveno-改版计划-v1.md`](./Yiveno-改版计划-v1.md) 推进——**R4 证据与复用**（Explain 全要素 UI、TTE 埋点、evidence pack、只读 MCP、竞品迁移导入）与既有 R0–R3 / R-shell 收束并行；详见 §8 **Phase E**。  
+**下一项：按 [`Yiveno-改版计划-v1.md`](./Yiveno-改版计划-v1.md) 推进——**R4 证据与复用**（Explain 全要素 UI、TTE 埋点、detail export、只读 MCP、竞品迁移导入）与既有 R0–R3 / R-shell 收束并行；详见 §8 **Phase E**。  
 倒排索引 **Phase 1 已接线**（候选预过滤 + dirty/rebuild + 失败 fallback 全表扫；见 `docs/engineering/关键词倒排索引-Phase1.md`）。**Hybrid / embedding 与 §7.1 首批（同域软重排 / behaviorHints 加权 / 追问芯片）已接线\*\*（召回质量不分 Free/Pro；云同步仍须 Pro）。
 
 **类型优先级（与 §0.1.1 一致）：** 主动 Capture 与体验打磨优先 **摘录 + `clues.note`**；书签继续导入/sync 但为配角；记忆库默认 Tab = 摘录。**语料适配器插头**保持可扩展；第三方连接器未经验收门槛前不上主路径。  
@@ -832,7 +832,7 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 | 结果线索解释强化                 | 已上线（core + Side Panel / Omnibox 卡面 ECS） | 主因字段 + token + 次要字段；五要素卡面 §5.10.1                                                                                                                             |
 | 找回壳空状态分层                 | 已上线（壳迁移中）                             | 空库 / 有库 idle 与 no_match 分文案；`no_match` 诚实终局、不附缩短再试；迁 Side Panel 后文案归属随壳走                                                                      |
 | 摘录详情落地页                   | 已上线                                         | `detail.html?id=`；摘录打开详情；书签仍直开 URL；`GET_MEMORY_ITEM`                                                                                                          |
-| 记忆库轻浏览                     | 已上线                                         | `library.html`；**默认摘录**；书签=Chrome 目录只读树；摘录=时间列表；`?type=` 刷新保留                                                                                      |
+| 记忆库轻浏览                     | 已上线                                         | `library.html`；**默认摘录**；书签=Chrome 目录只读树；摘录/书签列表均展示**保存时间**（`createdAt` / `chromeCreatedAt`）；`?type=` 刷新保留                                 |
 | 摘录删除                         | 已上线                                         | 软删 `deletedAt`；记忆库列表 / 详情页；`DELETE_MEMORY_ITEM`；书签不经此删                                                                                                   |
 | Need A Clue / 否定反馈           | 已上线（并入对话）                             | 低置信 outcome + dismiss；会话内 dismissedIds 硬排除；追问模板基于合并后 parsed                                                                                             |
 | 多源线索与权重（§7.1）           | 已上线（首批）                                 | 同域软重排；`recently_saved`/`half_read`/`often_opened` 软加权；环境弱芯片（当前站已接线；刚存/刚打开待信号）                                                               |
@@ -842,8 +842,8 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 | 云同步 / 账号 UI                 | 已上线（Phase C + Pro）                        | Supabase `memory_items`；Worker `/api/memory/sync/*` **需有效 Pro**；开同步并集 + **15 分钟增量**；登录≠自动上传                                                            |
 | 分享                             | 目标 · Phase C                                 |                                                                                                                                                                             |
 | 证据卡 Explain 全要素（ECS）     | 已上线（Side Panel + Omnibox）                 | 来源 + 保存时间 + 锚点 + 命中理由；见 §5.10.1                                                                                                                               |
-| Evidence pack / copy-for-AI      | 已上线（Library + Side Panel）                 | Library / Recall 结果区多选 2–5 条 → `EXPORT_EVIDENCE_PACK` → JSON + Markdown 下载；§5.10.4                                                                                 |
-| 只读 MCP                         | 已上线（beta）                                 | Settings → 隐私开关；工具 `yiveno_recall_evidence` → evidence pack（1–5）；本机 `MCP_RECALL_EVIDENCE` / 云端 `GET\|POST /api/mcp/*`；关闭后本机与云端均拒绝；§5.10.5        |
+| Detail export / copy-for-AI      | 已上线（Library + Side Panel）                 | Library / Recall 多选 ≥1 条 → 复制或下载 JSON + Markdown；§5.10.4 · ADR-008                                                                                                 |
+| 只读 MCP                         | 已上线（beta）                                 | Settings → 隐私开关；工具 `yiveno_recall_evidence` → detail export（1–5）；本机 `MCP_RECALL_EVIDENCE` / 云端 `GET\|POST /api/mcp/*`；关闭后本机与云端均拒绝；§5.10.5        |
 | Raindrop / Pocket 迁移导入       | 已上线（文件导入）                             | Settings → 数据：Raindrop（HTML/CSV/JSON）与 Pocket（HTML）导出，≤50 条；`IMPORT_THIRD_PARTY_CORPUS`；§5.10.6 · R2 准入                                                     |
 | TTE / Verified Retrieval 埋点    | 已上线（P0 本机）                              | 七事件 + `pipelineTiming` + ECS 打分 + `yiveno.recallTelemetry`；**未**达 §5.9 Beta 门槛、不对外宣称                                                                        |
 | 轻管理余项（标签/失效链接/统计） | 目标 · Phase D                                 | 摘录删除已提前上线；书签仍只经 Chrome 同步软删                                                                                                                              |
@@ -880,7 +880,7 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 | 多轮槽位 merge（§7.0）                    | ✓    | ✓    | —   | ✓    | `merge-recall-dialog-turn`；eval `dialog-*` must                              |
 | Dodo Pro / 同步·托管门禁                  | ✓    | —    | —   | ✓    | webhook/account/sync Pro 拒绝；§5.7 手动付费全流程                            |
 | 证据卡 ECS（Phase E）                     | ✓    | —    | —   | ✓    | §5.10.1–2；`explain-recall-match` + Side Panel/Omnibox 卡面                   |
-| Evidence pack 导出（Phase E）             | —    | ✓    | —   | ✓    | §5.10.4；`evidence-pack.ts` + Library/Side Panel UI                           |
+| Detail export（Phase E）                  | —    | ✓    | —   | ✓    | §5.10.4；`detail-export.ts` + Library/Side Panel UI                           |
 | TTE 埋点（Phase E）                       | ✓    | —    | —   | ✓    | §5.10.3；七事件 schema                                                        |
 | R4 semi_fuzzy / 逛一簇 must               | —    | ✓    | —   | ✓    | §5.11.2 `r4-*` must 已绿；cluster 拆 product/design                           |
 | 只读 MCP（Phase E）                       | ✓    | —    | —   | ✓    | §5.10.5；本机 Hybrid + 云端关键词；未达 §5.9 不对外宣传                       |
@@ -1067,7 +1067,7 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 冲突时以本表为准：**召回质量不分 Free/Pro**；云同步与 LLM 配额分档。对外只讲 Free 与 Pro。
 
-**价值锚点（Normative · 2026-08 市场对齐）：** 出售 **更快、更可信地找回与再利用个人痕迹**（含 export / 未来 evidence pack / MCP），**不是**不限量 AI token 或「更聪明的聊天」。定价须与 Raindrop（~$29/年）、深度阅读工具（~$80–120/年）形成可解释阶梯；详见 `docs/pricing.md` 与 Dodo 实际结账价。
+**价值锚点（Normative · 2026-08 市场对齐）：** 出售 **更快、更可信地找回与再利用个人痕迹**（含 detail export / MCP），**不是**不限量 AI token 或「更聪明的聊天」。定价须与 Raindrop（~$29/年）、深度阅读工具（~$80–120/年）形成可解释阶梯；详见 `docs/pricing.md` 与 Dodo 实际结账价。
 
 **托管 LLM 配额（Normative · 起步值，env 可调）：**
 
@@ -1283,16 +1283,24 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 **完整种子 study（20–30 人 · 2 周）：** 见 [`docs/engineering/TTE-种子用户研究-checklist.md`](../engineering/TTE-种子用户研究-checklist.md)。
 
-#### 5.10.4 Evidence pack（多选导出）
+#### 5.10.4 Detail export（详情导出 · 多选复制/下载）
 
-**入口（已上线）：** **Library**（摘录列表 + 书签树，跨 Tab 共享选择）或 **Side Panel Recall 结果卡**多选 **2–5** 条 MemoryItem；底栏 **Export JSON** / **Export Markdown**。经 Background `EXPORT_EVIDENCE_PACK`；禁止整库 dump。**默认不显示勾选框**——用户点 **Export evidence** 进入多选模式后再勾选；**Cancel** 退出。
+**定位（Normative · ADR-008）：** 用户在 **Library** 或 **Side Panel Recall** 认下条目后，除在 Chrome 打开外，可将**带来源的完整详情**一键 **复制到剪贴板** 或 **下载**（Markdown / JSON）。**不预设**用户后续用途（写作、邮件、外部 AI 等）；**禁止**整库 dump。
 
-1. 在 **Library** 或 Recall 结果区多选 **2–5** 条 MemoryItem（含摘录+书签各至少 1）。
-2. 导出 **Markdown** 与 **JSON** 各一次。
-3. 检查每条含：`source_id`（或 id）、`url`/`sourceUrl`、`createdAt`、摘录正文或书签 title、可选 `clues.note`。
-4. **禁止：** 导出整库冒充 evidence pack；不得含未选条目。
+**入口（已上线）：** Library（摘录 + 书签树）或 Recall 结果卡 → 多选模式 → 底栏 **Copy** / **Download**（各展开选 Markdown 或 JSON）+ **Cancel**；经 Background `EXPORT_DETAIL_EXPORT`。
 
-**通过：** 粘贴到外部编辑器后，第三方可仅凭导出内容理解「哪条是证据、从哪来、何时存」。
+**条数：** 多选 **无上限**；复制/下载须 **≥1** 条已选 MemoryItem。
+
+**默认不进入多选**——点详情导出入口后**点条目本身**切换选中（无额外勾选列、不产生布局偏移）；附注/删除等行内操作仍独立可点；**Cancel** 退出。
+
+1. 在 Library 或 Recall 结果区进入多选后，**点条目本身**切换选中（≥1 条 MemoryItem）。
+2. **复制**与**下载**各测 Markdown、JSON 至少一次。
+3. 检查每条含：`id`、`url`/`sourceUrl`、`createdAt`、摘录正文或书签 title、可选 `clues.note`。
+4. **禁止：** 导出整库；不得含未选条目。
+
+**通过：** 粘贴到外部编辑器后，仍能看出每条出处、时间与正文/标题（无需假设用户交给 AI）。
+
+> **旧称 Evidence pack** 已废弃作产品名词；JSON `version: 1` 形状不变。MCP §5.10.5 单次 clue 仍 1–5 条，与 UI 分轨。
 
 #### 5.10.5 只读 MCP beta（已上线）
 
@@ -1300,7 +1308,7 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 **工具（闭集）：** `yiveno_recall_evidence`  
 **参数：** `{ clue: string, limit?: 1–5 }`（默认 3）  
-**响应：** evidence pack 形态（`version: 1` + 1–5 条带来源字段）+ Markdown；**禁止**写操作 / 全库 dump。
+**响应：** Detail export 同构 JSON（`version: 1` + 1–5 条带来源字段）+ Markdown；**禁止**写操作 / 全库 dump。
 
 | 路径      | 后端                                                                                               | 门禁                                                          |
 | --------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
@@ -1309,7 +1317,7 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 | Cursor 等 | 可选包 `@yiveno/mcp`（stdio）转发到 Worker；环境变量 `YIVENO_API_BASE_URL` + `YIVENO_ACCESS_TOKEN` | 同上                                                          |
 
 1. Settings 打开只读 MCP；用文档公布的工具/schema 发起 **scope 内** clue（例：`deployment checklist`）。
-2. 响应须为 **evidence pack 形态**（带来源条目列表），**不得**返回全库 dump 或可写操作。
+2. 响应须为 **detail export 形态**（带来源条目列表），**不得**返回全库 dump 或可写操作。
 3. 撤销/关闭 MCP 后，同 clue 须失败（本机 `MCP_DISABLED` / 云端 `mcp_disabled`），且 Settings/隐私可说明 scope。
 
 **未达 §5.9 Beta 前：** 不得对外宣传 MCP 为正式卖点；产品面文案须标明 beta。
@@ -1327,27 +1335,24 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 #### 5.10.7 反跑题（R4）
 
-1. evidence pack / MCP **不得**含助理人设、偏好建档字段。
+1. detail export / MCP **不得**含助理人设、偏好建档字段。
 2. Explain 理由**不得**用置信百分比或「AI 认为」替代字段级解释。
 3. 仍遵守 §5.8 C：无 Agent、无「帮你决定现在干嘛」。
 
 #### 5.10.8 Omnibox 离线快跳（ADR-007）
 
-> **工程详版：** [`docs/engineering/Omnibox-手测步骤.md`](../engineering/Omnibox-手测步骤.md)  
+> **复制即用输入表：** [`docs/engineering/Omnibox-手测步骤.md`](../engineering/Omnibox-手测步骤.md) **§4**（对齐本地探针种库）  
 > **自动化 must：** `omnibox-eval.test.ts`（§5.11.5）
 
-**入口：** 地址栏关键字 `yi` → 输入**具体关键字**（标题词、host、摘录 token、附注词面）；**非**口语模糊找回主路径。
+**入口：** 地址栏 `yi` + 普通人会敲的**关键字碎片**（记得的标题词、站点名、当时备注里的词）；**非** Side Panel 口语找回主路径。
 
-1. **前置：** 扩展已加载；库内 ≥1 条可区分锚点（例：标题含 Manifest V3、摘录含 `i18n:check`、附注含 deploy）。
-2. **具体锚点（3 条）：** `yi manifest v3` · `yi i18n:check` · `yi github.com/...`（或你库中等价 host）
-   - 下拉建议 **ECS 五要素**齐全（§5.10.1）；回车可达目标 URL 或 `detail.html`。
-   - **禁止**出现 Side Panel 式 framing 长段气泡（Omnibox 无会话轨）。
-3. **R0 负例（2 条）：** `yi play some songs I like` · `yi summarize the latest news for me`
-   - 无假装命中；默认建议为 `omnibox_no_match`（引导 Side Panel `Alt+Shift+Y`）。
-4. **分轨对照（1 条）：** 同库 `Manifest V3` — Omnibox 走规则快跳；Side Panel 可有 LLM framing。两者**允许**排序不一致。
-5. **开发者（可选）：** SW 日志 `understandSource: rules`；`Omnibox 离线查找：流水线结束`；无 framing NLG。
+1. **前置：** 扩展已加载；本地多为 DEV 探针三画像种库（见工程文档 §2）。
+2. **具体锚点（3 条）：** 从工程文档 §4.1 复制，例：`yi chrome extension migration` · `yi stripe idempotent` · `yi remote work science` → ECS 齐全、回车可达；**无** framing 气泡。
+3. **R0 负例（2 条）：** 复制 `yi play some songs I like` · `yi summarize the latest news for me` → 诚实空 + `omnibox_no_match`。
+4. **分轨对照（1 组）：** Omnibox `yi chrome extension migration` vs Side Panel `that chrome extension migration guide I bookmarked`（§4.4）。
+5. **开发者（可选）：** SW `understandSource: rules`；无 framing NLG。
 
-**通过：** 3/3 具体锚点可达 + 2/2 负例诚实空 + 1 条分轨对照无 Omnibox framing；`omnibox_must` CI 绿。
+**通过：** §4.1 任选 3/3 + §4.3 2/2 + §4.4 1 组 + `omnibox_must` CI 绿。
 
 ---
 
@@ -1380,8 +1385,9 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 | 压力种库         | 精选仍写 Chrome；diversity/noise **直写 Memory**（`chromeBookmarkSync: 'curated_only'`）；例：diversity 8k/4k + noise 5.5k/2.45k ≈ 20k；种完 `ensureReadyForOwner` 重建倒排 |
 | 扫描上限         | `RECALL_SCAN_LIMIT` = **20000**（与压力档对齐；倒排候选仍受 posting cap）                                                                                                   |
 | 通过口径         | 与上表一致：目标在排序邻域（含 Show more 池）即会话成功；Top1 仅 delight；压力轮另记 p50/p95 召回耗时                                                                       |
-| 调用             | SW：`yiveno.seedRecallProbe({ replace: true })`；或 Side Panel `sendMessage` 同 type                                                                                        |
+| 调用             | SW：`yiveno.seedRecallProbe({ replace: true })`；种库后 `yiveno.runProbeOmniboxSmoke()` 验 §4.1–4.2；或 Side Panel `sendMessage` 同 type                                    |
 | 实现             | `frontend/src/infrastructure/debug/recall-probe-*`；精选可调度 LLM enrichment / embedding；多样性与噪声不烧配额                                                             |
+| 工程索引         | [`docs/engineering/DEV-调试API.md`](../engineering/DEV-调试API.md) — SW `yiveno.*` 调试 API 总表与维护约定                                                                  |
 
 有价值的失败 case → **匿名化**写入 `recall-eval` must / corpus；不得把个人专名 alias 写进召回主路径。
 
@@ -1447,7 +1453,7 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 | `explainRecallMatch` 文案逻辑 | 单测 `explain-recall-match.test.ts`                     | CI 必绿                           |
 | 结果卡五要素 UI               | §5.10.1 手工 + `RecallResultCard` / Omnibox suggest     | 发版前手测                        |
 | TTE 埋点字段完整              | 单测 `recall-telemetry.test.ts` 断言七事件 schema + ECS | Phase E 合入（P0 本机缓冲已接线） |
-| evidence pack schema          | 单测：导出 JSON Zod                                     | 合入时必加                        |
+| detail export schema          | 单测：导出 JSON Zod                                     | 合入时必加                        |
 
 **不做：** 全量 TTE 进 CI（手测/种子 study）；竞品公开秒数对比（研究禁止）。
 
@@ -1486,7 +1492,7 @@ Omnibox **离线快跳轨**专用 must（与 Side Panel `recall-eval` 正交）�
 
 - [x] §5.11.2 全部 must case 绿（含 `r4-*`；cluster 拆 `…-product` / `…-design`）
 - [x] §5.10.1–2 手工绿（2026-08-27 MCP：具体 / 半模糊 note / 近因行为各 1；卡面五要素齐全；detail 可达）
-- [x] §5.10.4 evidence pack（Library + Side Panel）
+- [x] §5.10.4 detail export（Library + Side Panel）
 - [x] §5.10.6 Raindrop / Pocket 文件导入
 - [x] §5.10.5 只读 MCP beta（Settings 开关 + 本机消息 + Worker `/api/mcp`）
 - [x] §1.1 对应行已填 eval / 手动归属
@@ -1536,7 +1542,7 @@ Omnibox **离线快跳轨**专用 must（与 Side Panel `recall-eval` 正交）�
 **Normative：**
 
 - Portable **不得替代** Backup；两者并存时 **Backup 始终为一等公民**。
-- **Evidence pack**（§5.10.4）= 多选证据包，**不是**整库 Portable，**不能**冒充 Backup。
+- **Detail export**（§5.10.4）= 多选带来源详情导出，**不是**整库 Portable，**不能**冒充 Backup。
 - 护城河 **不得**建立在拒绝 Backup；须用「同份 Portable 在竞品侧 Recall 是否仍明显更差」+ 习惯入口验证（§0 竞争边界）。
 
 Settings「隐私」摘要与官网 `/privacy` 须与本节 L1–L3 口径一致；正文重大变更时同步更新 `privacyNoticeVersion` ack 文案（见 §6 隐私 P0）。
@@ -1877,7 +1883,7 @@ Chrome API / 选区
 | ------ | --------------------------------------------------------- | --------------------------------------------------- |
 | **C1** | 本会话只 open **1** 条 + dwell≥T + 无新 clue / 无 dismiss | medium                                              |
 | **C2** | 多 open，最后一条 dwell≥T 且 stop（关 Panel / 空闲）      | medium-low；**无 dwell 的 last-open 不得升 medium** |
-| **C5** | 复制摘录 / 单条 evidence pack 等 reuse                    | medium-high                                         |
+| **C5** | 复制摘录 / 单条 detail export 等 reuse                    | medium-high                                         |
 | **C4** | 多 open、无 dwell、无 dismiss                             | → `unknown`                                         |
 
 **唯一允许的出口轻提示（D）：** 非逐条审人；忽略 → `unknown`。不得在每次 open 后弹出。
@@ -1982,12 +1988,12 @@ RecallOutcomeEvent {
 | B      | Hybrid/embedding（召回不分档）+ §7.1 首批 **已接线**；Need A Clue **已上线**；**倒排 Phase 1 已接线**；选区预填仍待                                                            |
 | C      | 账户 UI + 云同步 + 增量定时 + **隐私 P0/P1**（删账号、`/privacy`、整库导出、关 AI、`/terms`）+ **书签灌库开关**已上线；分享仍待                                                |
 | D      | 轻管理余项（标签/失效链接/统计；摘录删除已提前）                                                                                                                               |
-| **E**  | **证据与复用（R4）**：Explain 全要素（ECS）UI；TTE/Verified Retrieval 埋点；**§7.2 Outcome Labeling（P0+）**；evidence pack；只读 MCP beta；Raindrop/Pocket 导入；门槛 §5.9    |
+| **E**  | **证据与复用（R4）**：Explain 全要素（ECS）UI；TTE/Verified Retrieval 埋点；**§7.2 Outcome Labeling（P0+）**；detail export；只读 MCP beta；Raindrop/Pocket 导入；门槛 §5.9    |
 | **R0** | **命题先验**：口语↔内容 must eval / 金标收束；空结果诚实语义对齐 §0.1.1（禁偏好建档闲聊）                                                                                      |
 | **R1** | **冷启动不破题**：第一天可用路径（导入/划存 → 一次成功找回）；空结果只导向 Capture/追问                                                                                        |
 | **R2** | **语料适配器契约**：统一 Memory 映射边界文档化；摘录/书签作为参考实现收齐；第三方连接器排队但不提前堆砌                                                                        |
 | **R3** | **检索硬化**：弱锚点门禁（G3）**已接线**；**倒排 Phase 1（预过滤）已接线**；外部语料适配器有条件（过准入清单）                                                                 |
-| **R4** | **证据与复用（Phase E）**：Explain 全要素 UI；TTE/Verified Retrieval 埋点；**§7.2 Outcome Labeling**；evidence pack；只读 MCP beta；Raindrop/Pocket 导入（过 R2）；门槛见 §5.9 |
+| **R4** | **证据与复用（Phase E）**：Explain 全要素 UI；TTE/Verified Retrieval 埋点；**§7.2 Outcome Labeling**；detail export；只读 MCP beta；Raindrop/Pocket 导入（过 R2）；门槛见 §5.9 |
 | **R∞** | **框架远景（Non-normative）**：个性化检索运行时有限开放——仅当 R0–R2 命题不可动摇且 R4 留存验证后（附录 A.7）                                                                   |
 
 ---

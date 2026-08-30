@@ -1373,52 +1373,80 @@
   "library_note_save_failed": {
     "message": "Could not save note"
   },
-  "evidence_pack_selection_status": {
-    "message": "$count$ selected · pick $min$–$max$ to export",
+  "detail_export_selection_status": {
+    "message": "$count$ selected",
     "placeholders": {
-      "count": { "content": "$1" },
-      "min": { "content": "$2" },
-      "max": { "content": "$3" }
+      "count": { "content": "$1" }
     }
   },
-  "evidence_pack_export_json": {
-    "message": "Export JSON"
+  "detail_export_copy_markdown": {
+    "message": "Copy Markdown"
   },
-  "evidence_pack_export_markdown": {
-    "message": "Export Markdown"
+  "detail_export_copy": {
+    "message": "Copy"
   },
-  "evidence_pack_clear_selection": {
-    "message": "Clear"
+  "detail_export_download": {
+    "message": "Download"
   },
-  "evidence_pack_start_export": {
-    "message": "Export evidence"
+  "detail_export_format_markdown": {
+    "message": "Markdown"
   },
-  "evidence_pack_cancel_export": {
+  "detail_export_format_json": {
+    "message": "JSON"
+  },
+  "detail_export_copy_menu_aria": {
+    "message": "Copy, choose format"
+  },
+  "detail_export_download_menu_aria": {
+    "message": "Download, choose format"
+  },
+  "detail_export_copy_json": {
+    "message": "Copy JSON"
+  },
+  "detail_export_download_markdown": {
+    "message": "Download Markdown"
+  },
+  "detail_export_download_json": {
+    "message": "Download JSON"
+  },
+  "detail_export_cancel": {
     "message": "Cancel"
   },
-  "evidence_pack_export_bar_aria": {
-    "message": "Evidence pack export"
+  "detail_export_start": {
+    "message": "Detail export"
   },
-  "evidence_pack_select_item_aria": {
-    "message": "Select for evidence pack"
+  "detail_export_select_all": {
+    "message": "Select all"
   },
-  "evidence_pack_export_success": {
-    "message": "Evidence pack downloaded"
+  "detail_export_select_all_hint": {
+    "message": "Select all items in this list"
   },
-  "evidence_pack_max_selected": {
-    "message": "You can pick up to $max$ items",
-    "placeholders": {
-      "max": { "content": "$1" }
-    }
+  "detail_export_invert_selection": {
+    "message": "Invert selection"
   },
-  "error_evidence_pack_invalid_count": {
-    "message": "Pick 2 to 5 items to export"
+  "detail_export_invert_selection_hint": {
+    "message": "Flip which items are selected"
   },
-  "error_evidence_pack_item_not_found": {
+  "detail_export_start_hint": {
+    "message": "Pick items to copy or download with sources"
+  },
+  "detail_export_bar_aria": {
+    "message": "Detail export"
+  },
+  "detail_export_copy_success": {
+    "message": "Copied to clipboard"
+  },
+  "detail_export_download_success": {
+    "message": "Download started"
+  },
+  "error_detail_export_invalid_count": {
+    "message": "Pick at least one item"
+  },
+  "error_detail_export_item_not_found": {
     "message": "One of the selected items is missing or was removed"
   },
-  "error_evidence_pack_operation_failed": {
-    "message": "Could not export evidence pack"
+  "error_detail_export_operation_failed": {
+    "message": "Could not copy or download details"
   },
   "detail_title": {
     "message": "Excerpt detail"

@@ -1,19 +1,18 @@
 /**
- * Evidence pack：多选 MemoryItem → JSON + Markdown（§5.10.4 · R4）。
- * 纯函数 + Zod；禁止整库 dump。
+ * Detail export（详情导出）：多选 MemoryItem → JSON + Markdown（§5.10.4 · ADR-008）。
  */
 
 import { z } from 'zod'
 
 import type { MemoryItem } from '@/core/memory/memory-item'
 
-/** 可选条目数下限（Normative · §5.10.4）。 */
-export const EVIDENCE_PACK_MIN_ITEMS = 2
+/** Detail export 至少 1 条（Normative · §5.10.4）。 */
+export const DETAIL_EXPORT_MIN_ITEMS = 1
 
-/** 可选条目数上限（Normative · §5.10.4）。 */
-export const EVIDENCE_PACK_MAX_ITEMS = 5
+/** MCP 单次 clue 响应条数上限（§5.10.5；与 UI 分轨）。 */
+export const MCP_DETAIL_EXPORT_MAX_ITEMS = 5
 
-const evidencePackExcerptItemSchema = z.object({
+const detailExportExcerptItemSchema = z.object({
   id: z.string().uuid(),
   type: z.literal('text_excerpt'),
   createdAt: z.string().datetime(),
@@ -24,7 +23,7 @@ const evidencePackExcerptItemSchema = z.object({
   note: z.string().optional()
 })
 
-const evidencePackBookmarkItemSchema = z.object({
+const detailExportBookmarkItemSchema = z.object({
   id: z.string().uuid(),
   type: z.literal('bookmark'),
   createdAt: z.string().datetime(),
@@ -34,28 +33,28 @@ const evidencePackBookmarkItemSchema = z.object({
   note: z.string().optional()
 })
 
-export const EvidencePackItemSchema = z.discriminatedUnion('type', [
-  evidencePackExcerptItemSchema,
-  evidencePackBookmarkItemSchema
+export const DetailExportItemSchema = z.discriminatedUnion('type', [
+  detailExportExcerptItemSchema,
+  detailExportBookmarkItemSchema
 ])
 
-export type EvidencePackItem = z.infer<typeof EvidencePackItemSchema>
+export type DetailExportItem = z.infer<typeof DetailExportItemSchema>
 
-export const EvidencePackSchema = z.object({
+export const DetailExportSchema = z.object({
   version: z.literal(1),
   exportedAt: z.string().datetime(),
-  items: z.array(EvidencePackItemSchema).min(EVIDENCE_PACK_MIN_ITEMS).max(EVIDENCE_PACK_MAX_ITEMS)
+  items: z.array(DetailExportItemSchema).min(DETAIL_EXPORT_MIN_ITEMS)
 })
 
-export type EvidencePack = z.infer<typeof EvidencePackSchema>
+export type DetailExport = z.infer<typeof DetailExportSchema>
 
-/** 校验条目 id 数量是否合法。 */
-export function validateEvidencePackSelectionCount(count: number): boolean {
-  return count >= EVIDENCE_PACK_MIN_ITEMS && count <= EVIDENCE_PACK_MAX_ITEMS
+/** 校验导出条数是否合法（≥1）。 */
+export function validateDetailExportSelectionCount(count: number): boolean {
+  return count >= DETAIL_EXPORT_MIN_ITEMS
 }
 
-/** 单条 MemoryItem → evidence pack 条目。 */
-export function mapMemoryItemToEvidencePackItem(item: MemoryItem): EvidencePackItem {
+/** 单条 MemoryItem → Detail export 条目。 */
+export function mapMemoryItemToDetailExportItem(item: MemoryItem): DetailExportItem {
   const note = item.clues.note?.trim() || undefined
   if (item.type === 'text_excerpt') {
     return {
@@ -80,13 +79,13 @@ export function mapMemoryItemToEvidencePackItem(item: MemoryItem): EvidencePackI
   }
 }
 
-/** 由已选 MemoryItem 构建 evidence pack（调用方须保证 2–5 条且未软删）。 */
-export function buildEvidencePack(
+/** 由已选 MemoryItem 构建 Detail export（调用方须保证 ≥1 条且未软删）。 */
+export function buildDetailExport(
   items: MemoryItem[],
   exportedAt: string = new Date().toISOString()
-): EvidencePack {
-  const mapped = items.map(mapMemoryItemToEvidencePackItem)
-  return EvidencePackSchema.parse({
+): DetailExport {
+  const mapped = items.map(mapMemoryItemToDetailExportItem)
+  return DetailExportSchema.parse({
     version: 1,
     exportedAt,
     items: mapped
@@ -109,7 +108,7 @@ function formatIsoForMarkdown(iso: string): string {
 }
 
 function renderExcerptMarkdown(
-  item: EvidencePackItem & { type: 'text_excerpt' },
+  item: DetailExportItem & { type: 'text_excerpt' },
   index: number
 ): string {
   const lines = [
@@ -128,7 +127,7 @@ function renderExcerptMarkdown(
 }
 
 function renderBookmarkMarkdown(
-  item: EvidencePackItem & { type: 'bookmark' },
+  item: DetailExportItem & { type: 'bookmark' },
   index: number
 ): string {
   const lines = [
@@ -148,9 +147,9 @@ function renderBookmarkMarkdown(
 }
 
 /** 与 JSON 同源的 Markdown 视图（美式英语固定文案）。 */
-export function renderEvidencePackMarkdown(pack: EvidencePack): string {
+export function renderDetailExportMarkdown(pack: DetailExport): string {
   const header = [
-    '# Yiveno Evidence Pack',
+    '# Yiveno detail export',
     '',
     `Exported: ${formatIsoForMarkdown(pack.exportedAt)}`,
     '',
@@ -166,7 +165,7 @@ export function renderEvidencePackMarkdown(pack: EvidencePack): string {
   return [...header, ...body].join('\n').trimEnd() + '\n'
 }
 
-/** 解析并校验 evidence pack JSON。 */
-export function parseEvidencePack(value: unknown): EvidencePack {
-  return EvidencePackSchema.parse(value)
+/** 解析并校验 Detail export JSON。 */
+export function parseDetailExport(value: unknown): DetailExport {
+  return DetailExportSchema.parse(value)
 }

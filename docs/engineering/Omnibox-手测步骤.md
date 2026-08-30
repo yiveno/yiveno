@@ -2,7 +2,8 @@
 
 > **Normative 摘要：** [`Yiveno-产品文档-v4.0.md`](../product/Yiveno-产品文档-v4.0.md) **§5.10.8**。  
 > **架构：** [`ADR-007`](../architecture/decisions/ADR-007-omnibox-offline-lookup.md)。  
-> **自动化 must：** `frontend/src/core/recall/eval/omnibox-eval.test.ts`（`omnibox_must`）。
+> **自动化 must：** `frontend/src/core/recall/eval/omnibox-eval.test.ts`（`omnibox_must`）。  
+> **DEV API 总索引：** [`DEV-调试API.md`](./DEV-调试API.md)（`yiveno.seedRecallProbe` · `yiveno.runProbeOmniboxSmoke` 等）。
 
 ---
 
@@ -22,75 +23,147 @@
 ## 2. 前置
 
 1. `cd frontend && bun run build` → `chrome://extensions` 重新加载 Yiveno。
-2. 库内至少有可区分条目（开发可用探针库；日常可用下列锚点之一）：
-   - 书签标题含 **Manifest V3** 或 **Cloudflare Workers**
-   - 摘录正文含独特 token（如 `i18n:check`）
-   - 附注含 **deploy checklist** 类短语
+2. **库来源（你本地多为探针种库）：** 若曾跑过 `yiveno.seedRecallProbe({ replace: true })` 或默认三画像种库，精选条目来自 `recall-probe-corpus-{researcher,creator,developer}.ts`（Manifest V3、Stripe 幂等、远程办公、字体配对等）。**压力 ~20k 库**时部分线索可能被 filler 顶掉——下文「压力库备注」有说明。
 3. 可选：Side Panel 已打开（`Alt+Shift+Y`），便于对照。
-4. 打开 SW 错误页备查：`chrome://extensions/?errors=<扩展id>`（日志级错误，非必红）。
+4. SW 日志备查：`chrome://extensions/?errors=<扩展id>`。
+
+### 2.1 种库后全无命中？（常见误用）
+
+| 现象                                                                       | 原因                                                          | 处理                                                                                       |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| 输入 `yi i18n:check` / `yi Cloudflare Workers` 无结果                      | **旧版手测**对齐的是 `recall-eval` 内存夹具，**不是**探针种库 | 改用下文 §4.1 复制块；勿混用 eval 专用 token                                               |
+| 库里有 **Migrate to Manifest V3**，但 clue 是 `chrome extension migration` | 正常：靠 **URL / 标题碎片 / 附注** 匹配，不是标题逐字相同     | 仍应 Top1；在 SW 跑 `await yiveno.runProbeOmniboxSmoke()` 验 11 条                         |
+| `seedRecallProbe` 后立刻测，全空                                           | 种库未 `await` 完或 `indexRebuilt: false`                     | `await yiveno.seedRecallProbe({ replace: true })` 看返回；`chrome://extensions` 重载后再测 |
+| 压力 ~20k 库部分线索被顶掉                                                 | 噪声 filler 挤排序                                            | 质量档默认即可；或改测 §4.1 的 1–4                                                         |
+
+**SW 一键验库（种库后）：**
+
+```js
+await yiveno.runProbeOmniboxSmoke()
+// passed === total → 与 §4.1–4.2 对齐；失败项见 console.warn
+```
+
+**说明：** `cd frontend && bun run test:run -- omnibox-eval` 测的是 **eval 内存语料**（`Manifest V3` / `i18n:check` 等），与探针种库手测 **相互独立**；两者都应绿，但线索表不同。
 
 ---
 
 ## 3. 基本触发
 
-1. 焦点在**地址栏**（`Cmd+L` / `Ctrl+L`）。
-2. 输入关键字前缀 **`yi`**（manifest 中 `omnibox.keyword`）。
-3. 空格后继续输入 clue，例如：`yi manifest v3`。
-4. 观察下拉建议（Chrome Omnibox suggest）：
-   - 有命中：条目 description 含类型、域名、保存时间、命中理由等。
-   - 无命中：默认行应为 `omnibox_no_match` 文案（引导 Side Panel）。
-5. **回车**或选中第一条：
-   - 书签 → 经 `omnibox-open.html?id=` 打开真实 URL。
-   - 摘录 → `detail.html?id=` 或直链（以实现为准）。
+1. `Cmd+L` / `Ctrl+L` 聚焦地址栏。
+2. **整行粘贴**下方「复制即用」块（已含 `yi ` 前缀），或先打 `yi` 再粘贴后半段。
+3. 看下拉建议 → 回车或点第一条。
+4. 书签 → 真实 URL；摘录 → `detail.html` 或源站。
 
 ---
 
-## 4. 必测用例（与 `omnibox_must` 对齐）
+## 4. 复制即用 · 建议测试输入
 
-在**含 eval 同级锚点**的库上测；个人库可替换为等价关键字，通过标准不变。
+> **用法：** 每行 = 地址栏**整行**输入（`yi` + 空格 + 你记得的碎片）。  
+> **语气：** 模拟普通人记得一半标题/站点/当时备注时的敲法，**不是** eval 专用 token。  
+> **期望：** 「大概会打开」= 探针精选条目；压力库见备注。
 
-| #   | 地址栏输入（`yi` 后）              | 通过标准                                                |
-| --- | ---------------------------------- | ------------------------------------------------------- |
-| 1   | `manifest v3`                      | Top 建议为目标书签/摘录；description ECS 齐全；回车可达 |
-| 2   | `i18n:check`                       | 命中含该 token 的摘录（或你库中等价条目）               |
-| 3   | `github.com/...` 或已知 host       | host 对齐的条目在建议首位或前 3                         |
-| 4   | `play some songs I like`           | **无**有效条目建议；默认文案提示 Side Panel             |
-| 5   | `summarize the latest news for me` | 同上，诚实无快跳                                        |
+### 4.1 具体锚点（应能快跳 · 建议 6 条里抽 3 条测）
 
-**ECS 五要素（建议行 / 卡面）：** 来源身份 · 保存时间 · 内容锚点 · 命中理由 · 可达原文（§5.10.1）。
+| #   | 地址栏整行（复制）              | 你大概会打开（探针精选）                                                       |
+| --- | ------------------------------- | ------------------------------------------------------------------------------ |
+| 1   | `yi chrome extension migration` | 书签 **Migrate to Manifest V3**（developer.chrome.com）                        |
+| 2   | `yi stripe idempotent`          | 书签 **Idempotent requests**（Stripe 文档；附注 payments incident）            |
+| 3   | `yi postgres explain`           | 书签 **Using EXPLAIN - PostgreSQL**                                            |
+| 4   | `yi github actions cache`       | 书签 **Caching dependencies to speed up workflows**                            |
+| 5   | `yi remote work science`        | 书签 **The surprising science of remote work**（FT）                           |
+| 6   | `yi font pairing editorial`     | 书签 **Font pairing ideas for editorial sites**（Typewolf）                    |
+| 7   | `yi note taking apps`           | 书签 **Why note-taking apps fail researchers**（附注 disagree with section 3） |
+| 8   | `yi reading list useful`        | 书签 **Ask HN: How do you keep a reading list useful?**                        |
+
+**一次性复制（逐行测，不要合并成一行）：**
+
+```text
+yi chrome extension migration
+yi stripe idempotent
+yi postgres explain
+yi github actions cache
+yi remote work science
+yi font pairing editorial
+yi note taking apps
+yi reading list useful
+```
+
+**通过：** 每条 Top 建议与上表「大概会打开」一致或极接近；description **ECS 五要素**齐全；回车可达。
+
+**压力库备注：** `yi chrome extension migration` 仍应稳；`yi deploy checklist` / `yi release checklist` 类输入在 ~20k filler 库上**可能**被噪声顶掉——压力验收请改测上表 1–4，或先用质量档探针库。
+
+### 4.2 摘录 / 附注碎片（可选加测 2 条）
+
+| #   | 地址栏整行（复制）       | 你大概会打开                                                          |
+| --- | ------------------------ | --------------------------------------------------------------------- |
+| 9   | `yi promise all settled` | 摘录：MDN promises 里 **Promise.allSettled** 那段                     |
+| 10  | `yi payments incident`   | 摘录或书签：Stripe **idempotency key** 相关（附注 payments incident） |
+| 11  | `yi hug contents`        | 摘录：Figma auto layout **Hug contents first** 那段                   |
+
+```text
+yi promise all settled
+yi payments incident
+yi hug contents
+```
+
+### 4.3 R0 负例（应无快跳 · 必测 2 条）
+
+普通人会把地址栏当「问一句」——Omnibox 须诚实空，并引导 Side Panel。
+
+| #   | 地址栏整行（复制）                    | 通过标准                                 |
+| --- | ------------------------------------- | ---------------------------------------- |
+| N1  | `yi play some songs I like`           | 无假装命中；默认 `omnibox_no_match` 文案 |
+| N2  | `yi summarize the latest news for me` | 同上                                     |
+| N3  | `yi recommend a movie tonight`        | 同上（推荐≠找回）                        |
+
+```text
+yi play some songs I like
+yi summarize the latest news for me
+yi recommend a movie tonight
+```
+
+### 4.4 Side Panel 对照（同库 · 各复制一行）
+
+**Omnibox** 用短碎片；**Side Panel** 用稍长的口语（仍像真人，不是工程师 token）。
+
+| 场景                    | Omnibox（地址栏整行）           | Side Panel（Clue 框整行粘贴）                             |
+| ----------------------- | ------------------------------- | --------------------------------------------------------- |
+| 分轨 · 具体             | `yi chrome extension migration` | `that chrome extension migration guide I bookmarked`      |
+| 分轨 · 负例             | `yi play some songs I like`     | `play some songs I like`                                  |
+| 半模糊（仅 Panel 必中） | `yi remote work`（可弱）        | `that article on remote work science I saved with a note` |
+
+```text
+yi chrome extension migration
+```
+
+Side Panel：
+
+```text
+that chrome extension migration guide I bookmarked
+```
+
+**通过：** Omnibox **无** framing 长段；Side Panel 可有 framing / LLM；负例两侧均诚实空。
 
 ---
 
-## 5. Side Panel 对照（分轨验收）
+## 5. SW 日志核对（开发者 · 可选）
 
-同一库、同一 clue，对比 **Omnibox vs Side Panel**：
+复现 `yi chrome extension migration` 后，在 `chrome://extensions/?errors=<id>` 或 SW 控制台查找：
 
-| clue                              | Omnibox 预期                            | Side Panel 预期                        |
-| --------------------------------- | --------------------------------------- | -------------------------------------- |
-| `Manifest V3`                     | `rules` 快跳，**无** framing 气泡       | 可有 framing + `understandSource: llm` |
-| `play some songs I like`          | 无建议 / no_match 文案                  | 诚实空（可无 framing）                 |
-| `articles about Yiveno`（半模糊） | 可能弱命中或空；**不**要求与 Panel 一致 | 可返回多卡邻域                         |
-
-**通过：** Omnibox 不出现 Side Panel 式 framing 段落；模糊 clue 时 Omnibox 文案引导 `Alt+Shift+Y`。
-
-### 5.1 SW 日志核对（开发者）
-
-1. `chrome://extensions/?errors=<id>` → 重新加载后复现一次 `yi manifest v3`。
-2. 在错误页或 DevTools（若已 attach SW）查找：
-   - `[Yiveno:Recall]` 或 `Omnibox 离线查找：流水线结束`
-   - `understandSource: rules`（非 `llm`）
-   - `outcome: top_pick`（具体锚点）
-   - **无** `RecallFraming` / framing NLG 相关成功路径日志
+- `Omnibox 离线查找：流水线结束`
+- `understandSource: rules`（非 `llm`）
+- `outcome: top_pick`（具体锚点）
+- **无** framing NLG 成功路径
 
 ---
 
 ## 6. 回归检查表
 
-- [ ] 默认占位文案为 `omnibox_default_suggestion`（含 Quick jump + Side Panel 引导）
-- [ ] 无命中时为 `omnibox_no_match`
-- [ ] 具体锚点 3/3 可打开目标
-- [ ] R0 负例 2/2 无假装命中
-- [ ] Side Panel 对照 1 条：Omnibox 无 framing
+- [ ] 默认占位 = `omnibox_default_suggestion`（Quick jump + Side Panel 引导）
+- [ ] 无命中 = `omnibox_no_match`
+- [ ] §4.1 具体锚点 **3/3**（从上表 8 条里任选 3 条）
+- [ ] §4.3 负例 **2/2**（N1 + N2 最少）
+- [ ] §4.4 Side Panel 对照 **1 组**（具体锚点）
 - [ ] `cd frontend && bun run test:run -- omnibox-eval` 绿
 
 ---
@@ -99,6 +172,8 @@
 
 | 模块                    | 路径                                                                |
 | ----------------------- | ------------------------------------------------------------------- |
+| **DEV API 总索引**      | [`DEV-调试API.md`](./DEV-调试API.md)                                |
+| 探针语料（精选条目）    | `frontend/src/infrastructure/debug/recall-probe-corpus-*.ts`        |
 | Omnibox 监听            | `frontend/src/background/listeners/omnibox.ts`                      |
 | `entry: 'omnibox'` 分支 | `frontend/src/application/recall/backends/hybrid-recall-backend.ts` |
 | suggest 文案 / ECS      | `frontend/src/core/recall/omnibox-suggest.ts`                       |

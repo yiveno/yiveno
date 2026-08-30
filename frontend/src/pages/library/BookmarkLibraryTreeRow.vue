@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import AppIconButton from '@/infrastructure/ui/AppIconButton.vue'
 
 import type { BookmarkLibraryVisibleRow } from '@/core/memory/bookmark-library-index'
-import { getBookmarkLibraryRowHeight } from '@/core/memory/bookmark-library-index'
-import { getChromeFaviconUrl } from '@/infrastructure/browser/chrome-favicon'
+import { getBookmarkLibraryRowStride } from '@/core/memory/bookmark-library-index'
+import { extractDomainFromUrl } from '@/core/memory/payload'
+import { formatLibrarySavedAt } from '@/infrastructure/i18n/format-library-saved-at'
 import { t } from '@/infrastructure/i18n/t'
+import AppLibraryItemCard from '@/infrastructure/ui/AppLibraryItemCard.vue'
+import AppLibraryItemFavicon from '@/infrastructure/ui/AppLibraryItemFavicon.vue'
 import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
 
 defineOptions({ name: 'BookmarkLibraryTreeRow' })
@@ -13,10 +16,10 @@ defineOptions({ name: 'BookmarkLibraryTreeRow' })
 const props = defineProps<{
   row: BookmarkLibraryVisibleRow
   showUnsyncedFlags?: boolean
-  evidenceSelected?: boolean
-  evidenceSelectionDisabled?: boolean
-  /** 为 true 时显示 evidence pack 勾选框 */
-  showEvidenceSelection?: boolean
+  detailExportSelected?: boolean
+  detailExportSelectionDisabled?: boolean
+  /** 为 true 时点书签行切换 detail export 选中 */
+  showDetailExportSelection?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -35,13 +38,11 @@ const emit = defineEmits<{
       memoryItemId?: string
     }
   ]
-  toggleEvidenceSelection: [memoryItemId: string]
+  toggleDetailExportSelection: [memoryItemId: string]
 }>()
 
-const faviconBroken = ref(false)
-
 const rowStyle = computed(() => ({
-  height: `${getBookmarkLibraryRowHeight(props.row)}px`,
+  height: `${getBookmarkLibraryRowStride(props.row)}px`,
   paddingLeft: `${props.row.depth * 12}px`
 }))
 
@@ -52,11 +53,15 @@ const bookmarkTooltip = computed(() => {
   return props.row.title.trim()
 })
 
-const bookmarkFaviconUrl = computed(() => {
+const bookmarkDomain = computed(() => {
   if (props.row.kind !== 'bookmark' || !props.row.url) {
     return ''
   }
-  return getChromeFaviconUrl(props.row.url, 32)
+  try {
+    return extractDomainFromUrl(props.row.url)
+  } catch {
+    return props.row.url
+  }
 })
 
 function handleToggleFolder() {
@@ -79,11 +84,31 @@ function handleEditNote(event: Event) {
   })
 }
 
-function handleOpenBookmark(event: MouseEvent) {
+function handleBookmarkActivate(event: MouseEvent | KeyboardEvent) {
   if (props.row.kind !== 'bookmark' || !props.row.url) {
     return
   }
+
   const memoryItemId = props.row.memoryItemId
+  if (props.showDetailExportSelection && memoryItemId) {
+    event.preventDefault()
+    if (props.detailExportSelectionDisabled === true) {
+      return
+    }
+    emit('toggleDetailExportSelection', memoryItemId)
+    return
+  }
+
+  if (event instanceof KeyboardEvent) {
+    event.preventDefault()
+    emit('openBookmark', {
+      url: props.row.url,
+      navigate: true,
+      ...(memoryItemId ? { memoryItemId } : {})
+    })
+    return
+  }
+
   if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
     if (memoryItemId) {
       emit('openBookmark', { url: props.row.url, memoryItemId, navigate: false })
@@ -97,18 +122,14 @@ function handleOpenBookmark(event: MouseEvent) {
     ...(memoryItemId ? { memoryItemId } : {})
   })
 }
-function handleToggleEvidenceSelection(event: Event): void {
-  event.preventDefault()
-  event.stopPropagation()
-  if (props.row.kind !== 'bookmark' || !props.row.memoryItemId) {
-    return
-  }
-  emit('toggleEvidenceSelection', props.row.memoryItemId)
-}
 </script>
 
 <template>
-  <div class="tree-row" :style="rowStyle">
+  <div
+    class="tree-row"
+    :class="row.kind === 'bookmark' ? 'tree-row--bookmark' : 'tree-row--folder'"
+    :style="rowStyle"
+  >
     <template v-if="row.kind === 'folder'">
       <button
         type="button"
@@ -126,74 +147,66 @@ function handleToggleEvidenceSelection(event: Event): void {
       </button>
     </template>
 
-    <div v-else class="tree-bookmark-row">
-      <label
-        v-if="row.memoryItemId && showEvidenceSelection"
-        class="tree-bookmark-select"
-        @click.stop
-      >
-        <input
-          type="checkbox"
-          class="tree-evidence-checkbox"
-          :checked="evidenceSelected === true"
-          :disabled="evidenceSelectionDisabled === true"
-          :aria-label="t('evidence_pack_select_item_aria')"
-          @change="handleToggleEvidenceSelection"
-        />
-      </label>
-      <a
-        class="tree-bookmark"
-        :href="row.url"
-        target="_blank"
-        rel="noopener noreferrer"
-        :title="bookmarkTooltip"
-        @click="handleOpenBookmark"
-      >
-        <span class="tree-icon tree-icon--bookmark" aria-hidden="true">
-          <img
-            v-if="!faviconBroken"
-            class="tree-favicon"
-            :src="bookmarkFaviconUrl"
-            alt=""
-            width="16"
-            height="16"
-            loading="lazy"
-            decoding="async"
-            @error="faviconBroken = true"
-          />
-          <AppIcon v-else name="bookmark" size="20px" />
+    <AppLibraryItemCard
+      v-else
+      fill-height
+      :href="row.url"
+      :link-title="bookmarkTooltip"
+      :detail-export-active="showDetailExportSelection === true"
+      :detail-export-selected="detailExportSelected === true"
+      @activate="handleBookmarkActivate"
+    >
+      <template v-if="row.url" #leading>
+        <AppLibraryItemFavicon :page-url="row.url" fallback-icon="bookmark" />
+      </template>
+      <template #title>
+        <span class="lib-item-title-with-flag">
+          <span class="lib-item-title lib-item-title--single-line">{{ row.title }}</span>
+          <span v-if="showUnsyncedFlags && !row.memoryItemId" class="lib-item-flag">{{
+            t('library_bookmark_unsynced')
+          }}</span>
         </span>
-        <span class="tree-bookmark-copy">
-          <span class="tree-bookmark-title-row">
-            <span class="tree-bookmark-title">{{ row.title }}</span>
-            <span v-if="showUnsyncedFlags && !row.memoryItemId" class="tree-bookmark-flag">{{
-              t('library_bookmark_unsynced')
-            }}</span>
-          </span>
-          <span v-if="row.note" class="tree-bookmark-note">
-            <span class="tree-bookmark-note-label">{{ t('detail_note_label') }}</span>
-            {{ row.note }}
-          </span>
-        </span>
-      </a>
-      <AppIconButton
-        v-if="row.memoryItemId"
-        type="button"
-        class="tree-bookmark-note-btn"
-        :title="row.note ? t('library_edit_note_aria') : t('library_add_note_aria')"
-        :aria-label="row.note ? t('library_edit_note_aria') : t('library_add_note_aria')"
-        @click="handleEditNote"
-      >
-        <AppIcon name="edit_note" size="20px" />
-      </AppIconButton>
-    </div>
+      </template>
+      <template v-if="row.note" #note>
+        <p class="lib-item-note">
+          <span class="lib-item-note-label">{{ t('detail_note_label') }}</span>
+          {{ row.note }}
+        </p>
+      </template>
+      <template v-if="bookmarkDomain" #footer>
+        <p class="lib-item-subtitle">{{ bookmarkDomain }}</p>
+      </template>
+      <template v-if="row.savedAt" #time>
+        <p class="lib-item-time">{{ formatLibrarySavedAt(row.savedAt) }}</p>
+      </template>
+      <template v-if="row.memoryItemId" #actions>
+        <AppIconButton
+          type="button"
+          :title="row.note ? t('library_edit_note_aria') : t('library_add_note_aria')"
+          :aria-label="row.note ? t('library_edit_note_aria') : t('library_add_note_aria')"
+          @click="handleEditNote"
+        >
+          <AppIcon name="edit_note" size="20px" />
+        </AppIconButton>
+      </template>
+    </AppLibraryItemCard>
   </div>
 </template>
 
 <style scoped>
 .tree-row {
   box-sizing: border-box;
-  overflow: hidden;
+  padding-bottom: var(--library-list-row-gap, var(--space-xs));
+  overflow: visible;
+}
+
+.tree-row--folder {
+  display: flex;
+  align-items: flex-start;
+}
+
+.tree-row--bookmark {
+  display: block;
 }
 
 .tree-folder {
@@ -222,91 +235,6 @@ function handleToggleEvidenceSelection(event: Event): void {
   outline-offset: 2px;
 }
 
-.tree-bookmark-row {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  width: 100%;
-  height: 100%;
-}
-
-.tree-bookmark-select {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  padding-left: 2px;
-}
-
-.tree-evidence-checkbox {
-  width: 16px;
-  height: 16px;
-  margin: 0;
-  accent-color: var(--accent);
-  cursor: pointer;
-}
-
-.tree-evidence-checkbox:disabled {
-  cursor: not-allowed;
-  opacity: 0.45;
-}
-
-.tree-bookmark {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2xs);
-  flex: 1;
-  min-width: 0;
-  height: 100%;
-  margin: 0;
-  padding: 0 var(--space-xs) 0 0;
-  border: none;
-  border-radius: var(--radius-sm);
-  text-align: left;
-  text-decoration: none;
-  color: inherit;
-  background: transparent;
-  cursor: pointer;
-  font: inherit;
-  transition: background var(--motion-duration-short) var(--motion-easing-standard);
-}
-
-.tree-bookmark:hover {
-  background: var(--surface-chrome);
-}
-
-.tree-bookmark:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
-}
-
-.tree-bookmark-note-btn {
-  flex-shrink: 0;
-  color: var(--on-surface-muted);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--motion-duration-short) var(--motion-easing-standard);
-}
-
-.tree-bookmark-row:hover .tree-bookmark-note-btn,
-.tree-bookmark-row:focus-within .tree-bookmark-note-btn {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-@media (hover: none) {
-  .tree-bookmark-note-btn {
-    opacity: 1;
-    pointer-events: auto;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .tree-bookmark,
-  .tree-bookmark-note-btn {
-    transition: none;
-  }
-}
-
 .tree-chevron {
   display: inline-flex;
   flex-shrink: 0;
@@ -331,14 +259,6 @@ function handleToggleEvidenceSelection(event: Event): void {
   color: var(--sage-dark);
 }
 
-.tree-favicon {
-  display: block;
-  width: 16px;
-  height: 16px;
-  border-radius: var(--radius-xs);
-  object-fit: contain;
-}
-
 .tree-folder-title {
   min-width: 0;
   font-size: 14px;
@@ -347,52 +267,5 @@ function handleToggleEvidenceSelection(event: Event): void {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.tree-bookmark-title {
-  min-width: 0;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.35;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.tree-bookmark-copy {
-  display: grid;
-  flex: 1;
-  gap: var(--space-2xs);
-  min-width: 0;
-}
-
-.tree-bookmark-title-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  min-width: 0;
-}
-
-.tree-bookmark-note {
-  display: -webkit-box;
-  font-size: 12px;
-  line-height: 1.35;
-  color: var(--on-surface);
-  overflow: hidden;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-
-.tree-bookmark-note-label {
-  margin-right: var(--space-xs);
-  font-weight: 600;
-  color: var(--accent);
-}
-
-.tree-bookmark-flag {
-  flex-shrink: 0;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--sage-dark);
 }
 </style>

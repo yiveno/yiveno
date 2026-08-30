@@ -15,7 +15,6 @@ import {
   readBookmarkLibraryTreeExpandedSession,
   schedulePersistBookmarkLibraryTreeExpanded
 } from '@/pages/library/bookmark-library-tree-expanded'
-import { EVIDENCE_PACK_MAX_ITEMS } from '@/infrastructure/recall/evidence-pack-selection'
 import BookmarkLibraryTreeRow from '@/pages/library/BookmarkLibraryTreeRow.vue'
 
 defineOptions({ name: 'BookmarkLibraryTree' })
@@ -24,10 +23,10 @@ const props = defineProps<{
   index: BookmarkLibraryIndex
   /** 全量导入完成后才展示「未同步」 */
   showUnsyncedFlags?: boolean
-  /** evidence pack 多选 id 集合 */
-  selectedEvidenceIds?: Set<string>
-  /** 为 true 时书签行才显示勾选框 */
-  showEvidenceSelection?: boolean
+  /** detail export 多选 id 集合 */
+  selectedDetailExportIds?: Set<string>
+  /** 为 true 时书签行进入 detail export 多选（点行切换） */
+  showDetailExportSelection?: boolean
 }>()
 
 defineEmits<{
@@ -45,7 +44,7 @@ defineEmits<{
       memoryItemId?: string
     }
   ]
-  toggleEvidenceSelection: [memoryItemId: string]
+  toggleDetailExportSelection: [memoryItemId: string]
 }>()
 
 const VIRTUAL_OVERSCAN = 8
@@ -161,22 +160,17 @@ function handleScroll(event: Event) {
           :key="`${row.kind}-${row.chromeId}`"
           :row="row"
           :show-unsynced-flags="showUnsyncedFlags"
-          :show-evidence-selection="showEvidenceSelection === true"
-          :evidence-selected="
+          :show-detail-export-selection="showDetailExportSelection === true"
+          :detail-export-selected="
             row.kind === 'bookmark' && row.memoryItemId
-              ? selectedEvidenceIds?.has(row.memoryItemId) === true
+              ? selectedDetailExportIds?.has(row.memoryItemId) === true
               : false
           "
-          :evidence-selection-disabled="
-            row.kind === 'bookmark' && row.memoryItemId
-              ? !selectedEvidenceIds?.has(row.memoryItemId) &&
-                (selectedEvidenceIds?.size ?? 0) >= EVIDENCE_PACK_MAX_ITEMS
-              : true
-          "
+          :detail-export-selection-disabled="row.kind === 'bookmark' && !row.memoryItemId"
           @toggle-folder="toggleFolder"
           @edit-note="$emit('editNote', $event)"
           @open-bookmark="$emit('openBookmark', $event)"
-          @toggle-evidence-selection="$emit('toggleEvidenceSelection', $event)"
+          @toggle-detail-export-selection="$emit('toggleDetailExportSelection', $event)"
         />
       </div>
     </div>
@@ -185,6 +179,7 @@ function handleScroll(event: Event) {
 
 <style scoped>
 .bookmark-tree-scroll {
+  --library-list-row-gap: var(--space-xs);
   max-height: min(70vh, 720px);
   min-height: 280px;
   overflow: auto;

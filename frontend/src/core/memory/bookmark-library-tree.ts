@@ -8,6 +8,8 @@ export interface ChromeBookmarkTreeInput {
   id: string
   title?: string
   url?: string
+  /** Chrome `dateAdded`（epoch ms）；未同步 Memory 时作保存时间回退 */
+  dateAdded?: number
   children?: ChromeBookmarkTreeInput[]
 }
 
@@ -67,6 +69,8 @@ export interface MapChromeBookmarkTreeOptions {
   memoryIdByUrl?: ReadonlyMap<string, string>
   /** MemoryItem.id → 附注 */
   noteByMemoryId?: ReadonlyMap<string, string>
+  /** MemoryItem.id → 保存/创建时刻 ISO */
+  savedAtByMemoryId?: ReadonlyMap<string, string>
 }
 
 export function mapChromeBookmarkTreeToLibraryForest(

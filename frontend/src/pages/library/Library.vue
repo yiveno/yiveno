@@ -12,6 +12,7 @@ import {
   computeBookmarkLibraryStructureHash,
   patchBookmarkNoteInIndex
 } from '@/core/memory/bookmark-library-index'
+import { resolveMemoryItemSavedAtIso } from '@/core/memory/memory-item-saved-at'
 import type { MemoryItem } from '@/core/memory/memory-item'
 import type { SupportedMemoryItemType } from '@/core/memory/memory-item-type'
 import {
@@ -25,7 +26,8 @@ import { parseChromeBookmarkTreeChangedMessage } from '@/core/messaging/ui-messa
 import { getMemoryItemOpenHref } from '@/core/recall/memory-open-href'
 import { getMemoryItemDisplay } from '@/core/recall/recall-result'
 import { tImportError } from '@/infrastructure/i18n/background-error'
-import { getUILanguage, t } from '@/infrastructure/i18n/t'
+import { t } from '@/infrastructure/i18n/t'
+import { formatLibrarySavedAt } from '@/infrastructure/i18n/format-library-saved-at'
 import { tMemoryError } from '@/infrastructure/i18n/memory-error'
 import {
   deleteMemoryItem,
@@ -36,18 +38,30 @@ import {
 } from '@/infrastructure/messaging/background-client'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
 import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
+import type { AppIconName } from '@/infrastructure/ui/icons/icon-paths'
 import BookmarkLibraryTree from '@/pages/library/BookmarkLibraryTree.vue'
-import EvidencePackExportBar from '@/infrastructure/ui/EvidencePackExportBar.vue'
-import { downloadEvidencePackExport } from '@/infrastructure/recall/download-evidence-pack'
+import AppLibraryItemCard from '@/infrastructure/ui/AppLibraryItemCard.vue'
+import AppLibraryItemFavicon from '@/infrastructure/ui/AppLibraryItemFavicon.vue'
+import DetailExportBar from '@/infrastructure/ui/DetailExportBar.vue'
+import DetailExportBarDock from '@/infrastructure/ui/DetailExportBarDock.vue'
+import AppToastHost from '@/infrastructure/ui/AppToastHost.vue'
+import { useAppToast } from '@/infrastructure/ui/use-app-toast'
 import {
-  canSelectMoreEvidencePackItems,
-  EVIDENCE_PACK_MAX_ITEMS,
-  toggleEvidencePackSelection
-} from '@/infrastructure/recall/evidence-pack-selection'
+  copyDetailExportToClipboard,
+  downloadDetailExport
+} from '@/infrastructure/recall/detail-export-client'
+import {
+  invertDetailExportSelection,
+  selectAllDetailExportItems,
+  toggleDetailExportSelection as toggleDetailExportSelectionSet
+} from '@/infrastructure/recall/detail-export-selection'
 
 defineOptions({ name: 'LibraryPage' })
 
 type LoadState = 'loading' | 'ready' | 'error'
+
+/** Detail export 顶栏批量操作：全选 ↔ 反选。 */
+type DetailExportBulkAction = 'selectAll' | 'invert'
 
 /** 书签树静默刷新防抖（Chrome 批量改动时避免连打 getTree）。 */
 const BOOKMARK_TREE_REFRESH_DEBOUNCE_MS = 300
@@ -77,15 +91,16 @@ const deleteConfirmOpen = ref(false)
 const pendingDeleteId = ref<string | null>(null)
 const deleteConfirmError = ref('')
 
-const selectedEvidenceIds = ref<Set<string>>(new Set())
-/** Evidence pack 多选模式：点 Export 后才显示勾选框。 */
-const evidencePackMode = ref(false)
-const evidencePackExporting = ref(false)
-const evidencePackError = ref('')
-const evidencePackSuccess = ref('')
+const selectedDetailExportIds = ref<Set<string>>(new Set())
+/** Detail export 多选模式：点 Export 后才显示勾选框。 */
+const detailExportMode = ref(false)
+const detailExportBulkAction = ref<DetailExportBulkAction>('selectAll')
+const detailExportExporting = ref(false)
 
-const evidencePackSelectedCount = computed(() => selectedEvidenceIds.value.size)
-const showEvidencePackBar = computed(() => evidencePackMode.value)
+const { success: showToastSuccess, error: showToastError } = useAppToast()
+
+const detailExportSelectedCount = computed(() => selectedDetailExportIds.value.size)
+const showDetailExportBar = computed(() => detailExportMode.value)
 
 const hasExportableLibraryItems = computed(() => {
   if (showingBookmarkTree.value) {
@@ -94,17 +109,67 @@ const hasExportableLibraryItems = computed(() => {
   return listRows.value.length > 0
 })
 
-function enterEvidencePackMode(): void {
-  evidencePackMode.value = true
-  evidencePackError.value = ''
-  evidencePackSuccess.value = ''
+const exportableDetailExportIds = computed(() => {
+  if (showingBookmarkTree.value && bookmarkIndex.value) {
+    return bookmarkIndex.value.nodes
+      .filter(node => node.kind === 'bookmark' && node.memoryItemId)
+      .map(node => node.memoryItemId as string)
+  }
+  return listRows.value.map(row => row.id)
+})
+
+const detailExportHeaderIcon = computed((): AppIconName => {
+  if (!detailExportMode.value) {
+    return 'package'
+  }
+  return detailExportBulkAction.value === 'selectAll' ? 'list_checks' : 'flip_vertical'
+})
+
+/** 悬浮提示：说明按钮具体用途。 */
+const detailExportHeaderTitle = computed(() => {
+  if (!detailExportMode.value) {
+    return t('detail_export_start_hint')
+  }
+  return detailExportBulkAction.value === 'selectAll'
+    ? t('detail_export_select_all_hint')
+    : t('detail_export_invert_selection_hint')
+})
+
+const detailExportHeaderAriaLabel = computed(() => {
+  if (!detailExportMode.value) {
+    return t('detail_export_start')
+  }
+  return detailExportBulkAction.value === 'selectAll'
+    ? t('detail_export_select_all')
+    : t('detail_export_invert_selection')
+})
+
+function enterDetailExportMode(): void {
+  detailExportMode.value = true
+  detailExportBulkAction.value = 'selectAll'
 }
 
-function exitEvidencePackMode(): void {
-  evidencePackMode.value = false
-  selectedEvidenceIds.value = new Set()
-  evidencePackError.value = ''
-  evidencePackSuccess.value = ''
+function exitDetailExportMode(): void {
+  detailExportMode.value = false
+  detailExportBulkAction.value = 'selectAll'
+  selectedDetailExportIds.value = new Set()
+}
+
+function handleDetailExportHeaderAction(): void {
+  if (!detailExportMode.value) {
+    enterDetailExportMode()
+    return
+  }
+
+  const ids = exportableDetailExportIds.value
+  if (detailExportBulkAction.value === 'selectAll') {
+    selectedDetailExportIds.value = selectAllDetailExportItems(ids)
+    detailExportBulkAction.value = 'invert'
+    return
+  }
+
+  selectedDetailExportIds.value = invertDetailExportSelection(ids, selectedDetailExportIds.value)
+  detailExportBulkAction.value = 'selectAll'
 }
 
 const activeTabDef = computed(() => resolveLibraryTypeTab(activeType.value))
@@ -142,68 +207,70 @@ const listRows = computed(() => {
       excerpt: display.excerpt,
       note: item.clues.note?.trim() || null,
       href: getMemoryItemOpenHref(item, { detailPageUrl }),
-      updatedAt: item.updatedAt
+      savedAt: resolveMemoryItemSavedAtIso(item),
+      sourceUrl: item.type === 'text_excerpt' ? item.payload.sourceUrl : undefined
     }
   })
 })
 
-function isEvidenceSelected(id: string): boolean {
-  return selectedEvidenceIds.value.has(id)
+function isDetailExportSelected(id: string): boolean {
+  return selectedDetailExportIds.value.has(id)
 }
 
-function canSelectEvidenceItem(id: string): boolean {
-  return isEvidenceSelected(id) || canSelectMoreEvidencePackItems(selectedEvidenceIds.value)
+function canSelectDetailExportItem(_id: string): boolean {
+  return true
 }
 
-function toggleEvidenceSelection(id: string): void {
-  evidencePackSuccess.value = ''
-  evidencePackError.value = ''
-  const before = selectedEvidenceIds.value
-  const after = toggleEvidencePackSelection(before, id)
-  if (after === before && !before.has(id)) {
-    evidencePackError.value = t('evidence_pack_max_selected', [String(EVIDENCE_PACK_MAX_ITEMS)])
-    return
-  }
-  selectedEvidenceIds.value = after
+function handleToggleDetailExportSelection(id: string): void {
+  selectedDetailExportIds.value = toggleDetailExportSelectionSet(selectedDetailExportIds.value, id)
 }
 
-function clearEvidenceSelection(): void {
-  exitEvidencePackMode()
-}
-
-async function handleEvidencePackExport(format: 'json' | 'markdown'): Promise<void> {
-  if (evidencePackExporting.value) {
-    return
-  }
-  evidencePackExporting.value = true
-  evidencePackError.value = ''
-  evidencePackSuccess.value = ''
-  try {
-    const ids = [...selectedEvidenceIds.value]
-    const result = await downloadEvidencePackExport(ids, format)
-    if (!result.ok) {
-      evidencePackError.value = tMemoryError(result.errorCode)
+function handleLibraryRowActivate(
+  event: MouseEvent | KeyboardEvent,
+  row: { id: string; href: string }
+): void {
+  if (detailExportMode.value) {
+    event.preventDefault()
+    if (!canSelectDetailExportItem(row.id)) {
       return
     }
-    evidencePackSuccess.value = t('evidence_pack_export_success')
-  } catch {
-    evidencePackError.value = t('error_evidence_pack_operation_failed')
-  } finally {
-    evidencePackExporting.value = false
+    handleToggleDetailExportSelection(row.id)
+    return
   }
+  event.preventDefault()
+  window.open(row.href, '_blank', 'noopener,noreferrer')
 }
 
-function formatUpdatedAt(iso: string): string {
-  const date = new Date(iso)
-  if (Number.isNaN(date.getTime())) {
-    return ''
+function clearDetailExportSelection(): void {
+  exitDetailExportMode()
+}
+
+async function runDetailExportAction(
+  format: 'json' | 'markdown',
+  channel: 'copy' | 'download'
+): Promise<void> {
+  if (detailExportExporting.value) {
+    return
   }
-  return date.toLocaleString(getUILanguage(), {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
+  detailExportExporting.value = true
+  try {
+    const ids = [...selectedDetailExportIds.value]
+    const result =
+      channel === 'copy'
+        ? await copyDetailExportToClipboard(ids, format)
+        : await downloadDetailExport(ids, format)
+    if (!result.ok) {
+      showToastError(tMemoryError(result.errorCode))
+      return
+    }
+    showToastSuccess(
+      channel === 'copy' ? t('detail_export_copy_success') : t('detail_export_download_success')
+    )
+  } catch {
+    showToastError(t('error_detail_export_operation_failed'))
+  } finally {
+    detailExportExporting.value = false
+  }
 }
 
 /**
@@ -477,6 +544,7 @@ async function saveNote() {
 watch(
   activeType,
   type => {
+    exitDetailExportMode()
     syncActiveTypeToUrl(type)
     void loadPanel()
   },
@@ -499,7 +567,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <main class="library-shell" :class="{ 'library-shell--export-bar': showEvidencePackBar }">
+  <AppToastHost />
+  <main class="library-shell">
     <header class="library-header">
       <AppPageHeader current="library" class="library-header-top" />
       <h1 class="library-title">{{ t('library_title') }}</h1>
@@ -513,16 +582,9 @@ onUnmounted(() => {
         :ariaLabel="t('library_tabs_aria')"
         :panel-id="libraryPanelId"
         :id-prefix="librarySectionTabsId"
+        layout="side"
+        class="library-tabs"
       />
-
-      <div
-        v-if="loadState === 'ready' && hasExportableLibraryItems && !evidencePackMode"
-        class="library-evidence-entry"
-      >
-        <AppButton type="button" variant="text" @click="enterEvidencePackMode">
-          {{ t('evidence_pack_start_export') }}
-        </AppButton>
-      </div>
 
       <section
         :id="libraryPanelId"
@@ -532,102 +594,121 @@ onUnmounted(() => {
         :aria-label="activeTab.label"
         tabindex="0"
       >
-        <p v-if="loadState === 'loading'" class="library-status" role="status">
-          {{ t('library_loading') }}
-        </p>
-
-        <div v-else-if="loadState === 'error'" class="library-error-block" role="alert">
-          <p class="library-error">{{ errorMessage }}</p>
+        <header
+          v-if="loadState === 'ready' && hasExportableLibraryItems"
+          class="library-panel-header"
+        >
           <AppIconButton
             type="button"
-            :title="t('library_retry')"
-            :aria-label="t('library_retry')"
-            @click="loadPanel"
+            class="library-detail-export-header-btn"
+            :title="detailExportHeaderTitle"
+            :aria-label="detailExportHeaderAriaLabel"
+            @click="handleDetailExportHeaderAction"
           >
-            <AppIcon name="refresh" size="22px" />
+            <AppIcon :name="detailExportHeaderIcon" size="22px" />
           </AppIconButton>
-        </div>
+        </header>
 
-        <template v-else-if="showingBookmarkTree">
-          <div v-if="!bookmarkIndex || bookmarkIndex.bookmarkCount === 0" class="library-empty">
-            <p class="library-empty-title">{{ activeTab.emptyTitle }}</p>
-            <p class="library-empty-copy">{{ activeTab.emptyBody }}</p>
-          </div>
-          <BookmarkLibraryTree
-            v-else
-            :index="bookmarkIndex"
-            :show-unsynced-flags="bookmarkSyncReady"
-            :show-evidence-selection="evidencePackMode"
-            :selected-evidence-ids="selectedEvidenceIds"
-            @edit-note="openNoteEditor"
-            @open-bookmark="handleOpenBookmark"
-            @toggle-evidence-selection="toggleEvidenceSelection"
-          />
-        </template>
+        <div class="library-panel-body">
+          <p v-if="loadState === 'loading'" class="library-status" role="status">
+            {{ t('library_loading') }}
+          </p>
 
-        <template v-else>
-          <div v-if="listRows.length === 0" class="library-empty">
-            <p class="library-empty-title">{{ activeTab.emptyTitle }}</p>
-            <p class="library-empty-copy">{{ activeTab.emptyBody }}</p>
+          <div v-else-if="loadState === 'error'" class="library-error-block" role="alert">
+            <p class="library-error">{{ errorMessage }}</p>
+            <AppIconButton
+              type="button"
+              :title="t('library_retry')"
+              :aria-label="t('library_retry')"
+              @click="loadPanel"
+            >
+              <AppIcon name="refresh" size="22px" />
+            </AppIconButton>
           </div>
 
-          <ul v-else class="library-list">
-            <li v-for="row in listRows" :key="row.id" class="library-item">
-              <label v-if="evidencePackMode" class="library-item-select">
-                <input
-                  type="checkbox"
-                  class="library-evidence-checkbox"
-                  :checked="isEvidenceSelected(row.id)"
-                  :disabled="!canSelectEvidenceItem(row.id)"
-                  :aria-label="t('evidence_pack_select_item_aria')"
-                  @change="toggleEvidenceSelection(row.id)"
-                />
-              </label>
-              <div class="library-item-body">
-                <a class="library-row" :href="row.href" target="_blank" rel="noopener noreferrer">
-                  <div class="library-row-main">
-                    <p v-if="row.excerpt" class="library-row-body">{{ row.excerpt }}</p>
-                    <p v-else-if="row.title" class="library-row-title">{{ row.title }}</p>
-                    <p v-if="row.note" class="library-row-note">
-                      <span class="library-row-note-label">{{ t('detail_note_label') }}</span>
+          <template v-else-if="showingBookmarkTree">
+            <div v-if="!bookmarkIndex || bookmarkIndex.bookmarkCount === 0" class="library-empty">
+              <p class="library-empty-title">{{ activeTab.emptyTitle }}</p>
+              <p class="library-empty-copy">{{ activeTab.emptyBody }}</p>
+            </div>
+            <BookmarkLibraryTree
+              v-else
+              :index="bookmarkIndex"
+              :show-unsynced-flags="bookmarkSyncReady"
+              :show-detail-export-selection="detailExportMode"
+              :selected-detail-export-ids="selectedDetailExportIds"
+              @edit-note="openNoteEditor"
+              @open-bookmark="handleOpenBookmark"
+              @toggle-detail-export-selection="handleToggleDetailExportSelection"
+            />
+          </template>
+
+          <template v-else>
+            <div v-if="listRows.length === 0" class="library-empty">
+              <p class="library-empty-title">{{ activeTab.emptyTitle }}</p>
+              <p class="library-empty-copy">{{ activeTab.emptyBody }}</p>
+            </div>
+
+            <ul v-else class="library-list">
+              <li v-for="row in listRows" :key="row.id" class="library-item">
+                <AppLibraryItemCard
+                  :href="row.href"
+                  :detail-export-active="detailExportMode"
+                  :detail-export-selected="isDetailExportSelected(row.id)"
+                  @activate="handleLibraryRowActivate($event, row)"
+                >
+                  <template v-if="row.sourceUrl" #leading>
+                    <AppLibraryItemFavicon :page-url="row.sourceUrl" fallback-icon="format_quote" />
+                  </template>
+                  <template #title>
+                    <p v-if="row.excerpt" class="lib-item-body">{{ row.excerpt }}</p>
+                    <p v-else-if="row.title" class="lib-item-title">{{ row.title }}</p>
+                  </template>
+                  <template v-if="row.note" #note>
+                    <p class="lib-item-note">
+                      <span class="lib-item-note-label">{{ t('detail_note_label') }}</span>
                       {{ row.note }}
                     </p>
-                  </div>
-                  <div class="library-row-meta">
-                    <p class="library-row-subtitle">{{ row.subtitle }}</p>
-                    <p class="library-row-time">{{ formatUpdatedAt(row.updatedAt) }}</p>
-                  </div>
-                </a>
-                <AppIconButton
-                  type="button"
-                  class="library-item-note"
-                  :title="row.note ? t('library_edit_note_aria') : t('library_add_note_aria')"
-                  :aria-label="row.note ? t('library_edit_note_aria') : t('library_add_note_aria')"
-                  @click="
-                    openNoteEditor({
-                      memoryItemId: row.id,
-                      title: row.title || row.excerpt || row.subtitle,
-                      note: row.note ?? ''
-                    })
-                  "
-                >
-                  <AppIcon name="edit_note" size="20px" />
-                </AppIconButton>
-                <AppIconButton
-                  type="button"
-                  class="library-item-delete"
-                  tone="danger"
-                  :title="t('library_delete_excerpt_aria')"
-                  :aria-label="t('library_delete_excerpt_aria')"
-                  :disabled="deletingId === row.id"
-                  @click="handleDeleteExcerpt(row.id)"
-                >
-                  <AppIcon name="delete" size="20px" />
-                </AppIconButton>
-              </div>
-            </li>
-          </ul>
-        </template>
+                  </template>
+                  <template #footer>
+                    <p class="lib-item-subtitle">{{ row.subtitle }}</p>
+                  </template>
+                  <template #time>
+                    <p class="lib-item-time">{{ formatLibrarySavedAt(row.savedAt) }}</p>
+                  </template>
+                  <template #actions>
+                    <AppIconButton
+                      type="button"
+                      :title="row.note ? t('library_edit_note_aria') : t('library_add_note_aria')"
+                      :aria-label="
+                        row.note ? t('library_edit_note_aria') : t('library_add_note_aria')
+                      "
+                      @click="
+                        openNoteEditor({
+                          memoryItemId: row.id,
+                          title: row.title || row.excerpt || row.subtitle,
+                          note: row.note ?? ''
+                        })
+                      "
+                    >
+                      <AppIcon name="edit_note" size="20px" />
+                    </AppIconButton>
+                    <AppIconButton
+                      type="button"
+                      tone="danger"
+                      :title="t('library_delete_excerpt_aria')"
+                      :aria-label="t('library_delete_excerpt_aria')"
+                      :disabled="deletingId === row.id"
+                      @click="handleDeleteExcerpt(row.id)"
+                    >
+                      <AppIcon name="delete" size="20px" />
+                    </AppIconButton>
+                  </template>
+                </AppLibraryItemCard>
+              </li>
+            </ul>
+          </template>
+        </div>
       </section>
     </div>
 
@@ -675,53 +756,63 @@ onUnmounted(() => {
       @confirm="confirmDeleteExcerpt"
     />
 
-    <EvidencePackExportBar
-      v-if="showEvidencePackBar"
-      class="library-evidence-bar"
-      :selected-count="evidencePackSelectedCount"
-      :exporting="evidencePackExporting"
-      :error-message="evidencePackError"
-      :success-message="evidencePackSuccess"
-      @export-json="handleEvidencePackExport('json')"
-      @export-markdown="handleEvidencePackExport('markdown')"
-      @clear="clearEvidenceSelection"
-    />
+    <DetailExportBarDock :visible="showDetailExportBar" class="library-detail-export-slot">
+      <DetailExportBar
+        class="library-detail-export-bar"
+        :selected-count="detailExportSelectedCount"
+        :exporting="detailExportExporting"
+        @copy-json="runDetailExportAction('json', 'copy')"
+        @copy-markdown="runDetailExportAction('markdown', 'copy')"
+        @download-json="runDetailExportAction('json', 'download')"
+        @download-markdown="runDetailExportAction('markdown', 'download')"
+        @clear="clearDetailExportSelection"
+      />
+    </DetailExportBarDock>
   </main>
 </template>
 
 <style scoped>
 .library-shell {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: var(--page-shell-padding-top) var(--page-shell-padding-x)
-    var(--page-shell-padding-bottom);
+  --library-detail-export-slot-height: 4.25rem;
+  --detail-export-bar-height: var(--library-detail-export-slot-height);
+  --detail-export-bar-wrap: nowrap;
+
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+  min-height: 100vh;
+  padding: var(--page-shell-padding-top) 0 0;
+  overflow: hidden;
   color: var(--on-surface);
 }
 
-.library-shell--export-bar {
-  padding-bottom: calc(var(--page-shell-padding-bottom) + 88px);
-}
-
-.library-evidence-entry {
+.library-detail-export-slot {
   display: flex;
-  justify-content: flex-end;
-  margin: calc(-1 * var(--space-2xs)) 0 var(--space-xs);
-  padding: 0 var(--space-2xs);
+  flex-shrink: 0;
+  align-items: stretch;
+  box-sizing: border-box;
+  height: var(--library-detail-export-slot-height);
+  min-height: var(--library-detail-export-slot-height);
+  max-height: var(--library-detail-export-slot-height);
+  overflow: hidden;
+  z-index: 2;
+  border-top: 1px solid var(--border);
+  background: var(--surface-white);
 }
 
-.library-evidence-bar {
-  position: fixed;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 2;
-  max-width: 960px;
-  margin: 0 auto;
+.library-detail-export-bar {
+  width: 100%;
+  height: var(--library-detail-export-slot-height);
+  min-height: var(--library-detail-export-slot-height);
+  max-height: var(--library-detail-export-slot-height);
   box-shadow: 0 -4px 16px rgb(0 0 0 / 6%);
 }
 
 .library-header {
-  margin-bottom: var(--space-lg);
+  flex-shrink: 0;
+  margin-bottom: var(--space-md);
+  padding-inline: var(--space-md);
 }
 
 .library-header-top {
@@ -743,13 +834,68 @@ onUnmounted(() => {
 
 .library-layout {
   display: grid;
-  align-items: start;
-  gap: var(--space-lg);
-  grid-template-columns: 140px minmax(0, 1fr);
+  flex: 1;
+  align-items: stretch;
+  min-height: 0;
+  grid-template-columns: minmax(10.5rem, 12rem) minmax(0, 1fr);
+  border-top: 1px solid var(--border);
+}
+
+.library-tabs {
+  align-self: stretch;
+  width: 100%;
+  min-height: 0;
+  padding: var(--space-sm);
+  border: none;
+  border-right: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--surface);
+  grid-auto-flow: row;
+  align-content: start;
+  overflow-y: auto;
 }
 
 .library-panel {
-  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: var(--surface-white);
+}
+
+.library-panel-header {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: flex-end;
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--border);
+}
+
+.library-detail-export-header-btn {
+  border: 1px solid var(--border-strong);
+  color: var(--accent);
+}
+
+.library-detail-export-header-btn:hover:not(:disabled) {
+  color: var(--accent);
+  background: color-mix(
+    in srgb,
+    var(--accent) calc(var(--state-hover-opacity) * 100%),
+    transparent
+  );
+}
+
+.library-panel-body {
+  --library-list-row-gap: var(--space-xs);
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding: var(--space-md);
+  overflow-y: auto;
 }
 
 .library-status,
@@ -790,7 +936,7 @@ onUnmounted(() => {
 
 .library-list {
   display: grid;
-  gap: var(--space-xs);
+  gap: var(--library-list-row-gap);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -798,158 +944,7 @@ onUnmounted(() => {
 
 .library-item {
   position: relative;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: var(--space-xs);
-  align-items: start;
-}
-
-.library-item-select {
-  display: flex;
-  align-items: flex-start;
-  padding-top: calc(var(--space-sm) + 2px);
-  padding-left: var(--space-2xs);
-}
-
-.library-evidence-checkbox {
-  width: 16px;
-  height: 16px;
-  margin: 0;
-  accent-color: var(--accent);
-  cursor: pointer;
-}
-
-.library-evidence-checkbox:disabled {
-  cursor: not-allowed;
-  opacity: 0.45;
-}
-
-.library-item-body {
-  position: relative;
   min-width: 0;
-}
-
-.library-item-note,
-.library-item-delete {
-  position: absolute;
-  top: var(--space-xs);
-  z-index: 1;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--motion-duration-short) var(--motion-easing-standard);
-}
-
-.library-item-note {
-  right: 44px;
-  color: var(--on-surface-muted);
-}
-
-.library-item-delete {
-  right: var(--space-xs);
-  color: var(--danger);
-}
-
-.library-item:hover .library-item-note,
-.library-item:hover .library-item-delete,
-.library-item:focus-within .library-item-note,
-.library-item:focus-within .library-item-delete,
-.library-item-delete[disabled] {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-@media (hover: none) {
-  .library-item-note,
-  .library-item-delete {
-    opacity: 1;
-    pointer-events: auto;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .library-item-note,
-  .library-item-delete {
-    transition: none;
-  }
-}
-
-.library-row {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-  /* 右侧为行内操作钮预留宽度 */
-  padding: var(--space-sm) 84px var(--space-sm) var(--space-sm);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  text-decoration: none;
-  color: inherit;
-  background: var(--surface);
-}
-
-.library-row:hover {
-  background: var(--surface-chrome);
-}
-
-.library-row-main {
-  min-width: 0;
-}
-
-.library-row-title,
-.library-row-body {
-  margin: 0 0 var(--space-2xs);
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 1.35;
-}
-
-.library-row-body {
-  display: -webkit-box;
-  font-weight: 500;
-  overflow: hidden;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-}
-
-.library-row-note {
-  display: -webkit-box;
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.45;
-  color: var(--on-surface);
-  overflow: hidden;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-
-.library-row-note-label {
-  margin-right: var(--space-xs);
-  font-weight: 600;
-  color: var(--accent);
-}
-
-.library-row-meta {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-sm);
-  min-width: 0;
-}
-
-.library-row-subtitle {
-  margin: 0;
-  min-width: 0;
-  font-size: 12px;
-  color: var(--on-surface-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.library-row-time {
-  flex-shrink: 0;
-  margin: 0;
-  font-size: 12px;
-  color: var(--border-strong);
 }
 
 .library-note-dialog-target {
@@ -965,6 +960,12 @@ onUnmounted(() => {
 @media (width <= 640px) {
   .library-layout {
     grid-template-columns: 1fr;
+  }
+
+  .library-tabs {
+    min-height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
   }
 }
 </style>

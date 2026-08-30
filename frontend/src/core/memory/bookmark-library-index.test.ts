@@ -2,12 +2,16 @@ import { describe, expect, it } from 'vitest'
 
 import { buildSyntheticChromeBookmarkTree } from '@/core/memory/bookmark-library-fixture'
 import {
+  BOOKMARK_LIBRARY_ROW_GAP_PX,
   buildBookmarkLibraryNodeMap,
   computeBookmarkLibraryStructureHash,
   flattenBookmarkLibraryVisibleRows,
+  getBookmarkLibraryRowHeight,
+  getBookmarkLibraryRowStride,
   mapChromeBookmarkTreeToLibraryIndex,
   resolveBookmarkFolderExpanded
 } from '@/core/memory/bookmark-library-index'
+import { LIBRARY_LIST_ROW_GAP_PX } from '@/pages/library/library-list-tokens'
 import {
   buildBookmarkLibraryRowMetrics,
   resolveBookmarkLibraryVisibleSlice
@@ -39,7 +43,8 @@ describe('bookmark-library-index', () => {
       new Map([['100', memoryId]]),
       {
         unnamedFolderTitle: 'Unnamed folder',
-        noteByMemoryId: new Map([[memoryId, 'plan for review']])
+        noteByMemoryId: new Map([[memoryId, 'plan for review']]),
+        savedAtByMemoryId: new Map([[memoryId, '2026-07-20T08:00:00.000Z']])
       }
     )
 
@@ -50,8 +55,26 @@ describe('bookmark-library-index', () => {
       chromeId: '100',
       memoryItemId: memoryId,
       hasNote: true,
-      note: 'plan for review'
+      note: 'plan for review',
+      savedAt: '2026-07-20T08:00:00.000Z'
     })
+  })
+
+  it('未同步 Memory 时回退 Chrome dateAdded 作为 savedAt', () => {
+    const index = mapChromeBookmarkTreeToLibraryIndex(
+      [
+        {
+          id: '10',
+          title: 'Example',
+          url: 'https://example.com/a',
+          dateAdded: Date.parse('2026-01-15T10:00:00.000Z')
+        }
+      ],
+      new Map(),
+      { unnamedFolderTitle: 'Unnamed' }
+    )
+    const bookmark = index.nodes.find(node => node.kind === 'bookmark')
+    expect(bookmark?.savedAt).toBe('2026-01-15T10:00:00.000Z')
   })
 
   it('flatten：默认仅展开顶层文件夹', () => {
@@ -130,5 +153,21 @@ describe('bookmark-library-index', () => {
 
     expect(mapMs).toBeLessThan(500)
     expect(flattenMs).toBeLessThan(200)
+  })
+
+  it('书签 stride 含与摘录列表一致的行间距', () => {
+    expect(LIBRARY_LIST_ROW_GAP_PX).toBe(BOOKMARK_LIBRARY_ROW_GAP_PX)
+    expect(BOOKMARK_LIBRARY_ROW_GAP_PX).toBe(8)
+    const bookmarkRow = {
+      kind: 'bookmark' as const,
+      chromeId: 'b1',
+      depth: 1,
+      title: 'Example',
+      url: 'https://example.com',
+      hasNote: false
+    }
+    expect(getBookmarkLibraryRowStride(bookmarkRow)).toBe(
+      getBookmarkLibraryRowHeight(bookmarkRow) + BOOKMARK_LIBRARY_ROW_GAP_PX
+    )
   })
 })

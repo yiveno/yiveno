@@ -71,12 +71,14 @@ function toChromeTreeInput(node: chrome.bookmarks.BookmarkTreeNode): {
   id: string
   title?: string
   url?: string
+  dateAdded?: number
   children?: ReturnType<typeof toChromeTreeInput>[]
 } {
   return {
     id: node.id,
     ...(node.title !== undefined ? { title: node.title } : {}),
     ...(node.url !== undefined ? { url: node.url } : {}),
+    ...(typeof node.dateAdded === 'number' ? { dateAdded: node.dateAdded } : {}),
     ...(node.children ? { children: node.children.map(child => toChromeTreeInput(child)) } : {})
   }
 }
@@ -103,7 +105,8 @@ export async function handleGetBookmarkLibraryTree(
       {
         unnamedFolderTitle: t('library_folder_unnamed'),
         memoryIdByUrl: alignment.byUrl,
-        noteByMemoryId: alignment.noteByMemoryId
+        noteByMemoryId: alignment.noteByMemoryId,
+        savedAtByMemoryId: alignment.savedAtByMemoryId
       }
     )
 

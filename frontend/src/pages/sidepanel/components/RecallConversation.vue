@@ -3,7 +3,6 @@ import { computed } from 'vue'
 import AppButton from '@/infrastructure/ui/AppButton.vue'
 
 import { RECALL_RESULT_PAGE_SIZE } from '@/core/recall/build-recall-result'
-import { EVIDENCE_PACK_MAX_ITEMS } from '@/infrastructure/recall/evidence-pack-selection'
 import type { ConversationTurn, AssistantTurn } from '@/pages/sidepanel/recall-conversation-types'
 import type { RecallCardModel } from '@/pages/sidepanel/RecallResultCard.vue'
 import RecallResultCard from '@/pages/sidepanel/RecallResultCard.vue'
@@ -23,9 +22,9 @@ const props = defineProps<{
   /** 等待本轮 Recall 结果时展示脉冲占位 */
   pending?: boolean
   pendingLabel: string
-  selectedEvidenceIds?: Set<string>
-  /** 为 true 时结果卡才显示 evidence pack 勾选框 */
-  evidencePackSelectionActive?: boolean
+  selectedDetailExportIds?: Set<string>
+  /** 为 true 时结果卡才显示 detail export 勾选框 */
+  detailExportSelectionActive?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -43,7 +42,7 @@ const emit = defineEmits<{
   dismiss: []
   showMore: [turnId: string, mode: ShowMoreMode]
   useSuggestion: [value: string]
-  toggleEvidenceSelection: [memoryItemId: string]
+  toggleDetailExportSelection: [memoryItemId: string]
 }>()
 
 const latestDismissibleAssistantId = computed(() => {
@@ -121,19 +120,16 @@ function showAllCountLabel(count: number): string {
   return t('popup_show_all_count', String(count))
 }
 
-function isEvidenceSelected(id: string): boolean {
-  return props.selectedEvidenceIds?.has(id) === true
+function isDetailExportSelected(id: string): boolean {
+  return props.selectedDetailExportIds?.has(id) === true
 }
 
-function isEvidenceSelectionDisabled(id: string): boolean {
-  if (isEvidenceSelected(id)) {
-    return false
-  }
-  return (props.selectedEvidenceIds?.size ?? 0) >= EVIDENCE_PACK_MAX_ITEMS
+function isDetailExportSelectionDisabled(_id: string): boolean {
+  return false
 }
 
-function handleToggleEvidenceSelection(id: string): void {
-  emit('toggleEvidenceSelection', id)
+function handleToggleDetailExportSelection(id: string): void {
+  emit('toggleDetailExportSelection', id)
 }
 </script>
 
@@ -166,16 +162,16 @@ function handleToggleEvidenceSelection(id: string): void {
               result-dom-id="conversation-primary-card"
               :keyboard-selected="false"
               top-pick
-              :show-evidence-selection="evidencePackSelectionActive === true"
-              :evidence-selected="isEvidenceSelected(turn.primaryCard.id)"
-              :evidence-selection-disabled="isEvidenceSelectionDisabled(turn.primaryCard.id)"
+              :show-detail-export-selection="detailExportSelectionActive === true"
+              :detail-export-item-selected="isDetailExportSelected"
+              :detail-export-item-disabled="isDetailExportSelectionDisabled"
               :expanded="expandedDuplicateGroupId === turn.primaryCard.id"
               :expand-label="expandLabel"
               :collapse-label="collapseLabel"
               :note-field-label="noteFieldLabel"
               @open="handleOpen"
               @evidence-visible="handleEvidenceVisible"
-              @toggle-evidence-selection="handleToggleEvidenceSelection"
+              @toggle-detail-export-selection="handleToggleDetailExportSelection"
               @toggle-expand="() => handleToggleExpand(turn.primaryCard!.id)"
             />
           </div>
@@ -187,16 +183,16 @@ function handleToggleEvidenceSelection(id: string): void {
               result-dom-id="conversation-related-guess-card"
               :keyboard-selected="false"
               compact
-              :show-evidence-selection="evidencePackSelectionActive === true"
-              :evidence-selected="isEvidenceSelected(turn.relatedGuessCard.id)"
-              :evidence-selection-disabled="isEvidenceSelectionDisabled(turn.relatedGuessCard.id)"
+              :show-detail-export-selection="detailExportSelectionActive === true"
+              :detail-export-item-selected="isDetailExportSelected"
+              :detail-export-item-disabled="isDetailExportSelectionDisabled"
               :expanded="expandedDuplicateGroupId === turn.relatedGuessCard.id"
               :expand-label="expandLabel"
               :collapse-label="collapseLabel"
               :note-field-label="noteFieldLabel"
               @open="handleOpen"
               @evidence-visible="handleEvidenceVisible"
-              @toggle-evidence-selection="handleToggleEvidenceSelection"
+              @toggle-detail-export-selection="handleToggleDetailExportSelection"
               @toggle-expand="() => handleToggleExpand(turn.relatedGuessCard!.id)"
             />
           </div>
@@ -216,16 +212,16 @@ function handleToggleEvidenceSelection(id: string): void {
                   :keyboard-selected="false"
                   :top-pick="turn.tone === 'confident' && index === 0"
                   :compact="!(turn.tone === 'confident' && index === 0)"
-                  :show-evidence-selection="evidencePackSelectionActive === true"
-                  :evidence-selected="isEvidenceSelected(item.id)"
-                  :evidence-selection-disabled="isEvidenceSelectionDisabled(item.id)"
+                  :show-detail-export-selection="detailExportSelectionActive === true"
+                  :detail-export-item-selected="isDetailExportSelected"
+                  :detail-export-item-disabled="isDetailExportSelectionDisabled"
                   :expanded="expandedDuplicateGroupId === item.id"
                   :expand-label="expandLabel"
                   :collapse-label="collapseLabel"
                   :note-field-label="noteFieldLabel"
                   @open="handleOpen"
                   @evidence-visible="handleEvidenceVisible"
-                  @toggle-evidence-selection="handleToggleEvidenceSelection"
+                  @toggle-detail-export-selection="handleToggleDetailExportSelection"
                   @toggle-expand="() => handleToggleExpand(item.id)"
                 />
               </li>

@@ -39,7 +39,7 @@
 
 ## 能力真相（速查）
 
-**已上线（§1）：** Side Panel Recall、Hybrid、倒排 Phase 1、ECS 卡面、evidence pack、只读 MCP beta、Raindrop/Pocket 导入、TTE 本机埋点、Dodo Pro 门禁等——**完整表见产品文档 §1**。
+**已上线（§1）：** Side Panel Recall、Hybrid、倒排 Phase 1、ECS 卡面、detail export、只读 MCP beta、Raindrop/Pocket 导入、TTE 本机埋点、Dodo Pro 门禁等——**完整表见产品文档 §1**。
 
 **未达对外门槛：** §5.9 Beta（TTE-V / Success@180 / ECS 合格率）；MCP **不对用户主宣传**。
 

@@ -10,7 +10,7 @@ import type { McpBackgroundResponse } from '@/core/messaging/mcp-messages'
 import { parseMcpRecallEvidencePayload } from '@/core/messaging/mcp-messages'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 
-/** MCP_RECALL_EVIDENCE：本机 Hybrid → evidence pack。 */
+/** MCP_RECALL_EVIDENCE：本机 Hybrid → detail export。 */
 export async function handleMcpRecallEvidence(payload: unknown): Promise<McpBackgroundResponse> {
   const startedAt = flowStart('Mcp', '消息分发')
   try {

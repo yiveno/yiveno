@@ -1,0 +1,114 @@
+/**
+ * AppLibraryItemCard 三行布局排版（摘录 / 书签共用）。
+ *
+ * 行 1：标题 + 操作（space-between）
+ * 行 2：附注（可选）
+ * 行 3：来源等信息 + 时间（space-between）
+ */
+
+.lib-item-row {
+  width: 100%;
+  min-width: 0;
+}
+
+.lib-item-row--split {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.lib-item-row__start {
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  gap: var(--space-2xs);
+  min-width: 0;
+}
+
+.lib-item-row__end {
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.lib-item-title,
+.lib-item-body {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.lib-item-body {
+  display: -webkit-box;
+  font-weight: 500;
+  overflow: hidden;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.lib-item-title--single-line {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lib-item-note {
+  display: -webkit-box;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--on-surface);
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.lib-item-note-label {
+  margin-right: var(--space-xs);
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.lib-item-subtitle {
+  margin: 0;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--on-surface-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lib-item-time {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--border-strong);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.lib-item-flag {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--sage-dark);
+}
+
+.lib-item-favicon {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-xs);
+  object-fit: contain;
+}
+
+.lib-item-title-with-flag {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
+}

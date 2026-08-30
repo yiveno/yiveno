@@ -51,7 +51,7 @@ import type {
   RecordMemoryOpenMessage,
   RecordRecallDismissMessage,
   RecordRecallSettleMessage,
-  ExportEvidencePackMessage,
+  ExportDetailExportMessage,
   CaptureTextExcerptMessage,
   MemoryBackgroundResponse
 } from '@/core/messaging/memory-messages'
@@ -181,13 +181,13 @@ export async function recordRecallSettle(
   return sendBackgroundMessage<MemoryBackgroundResponse>(message)
 }
 
-/** 多选导出 evidence pack（§5.10.4；2–5 条）。 */
-export async function exportEvidencePack(
-  payload: ExportEvidencePackMessage['payload']
+/** 多选导出 detail export（§5.10.4；≥1 条）。 */
+export async function exportDetailExport(
+  payload: ExportDetailExportMessage['payload']
 ): Promise<MemoryBackgroundResponse> {
-  const message: ExportEvidencePackMessage = {
+  const message: ExportDetailExportMessage = {
     scope: 'background',
-    type: 'EXPORT_EVIDENCE_PACK',
+    type: 'EXPORT_DETAIL_EXPORT',
     payload
   }
   return sendBackgroundMessage<MemoryBackgroundResponse>(message)

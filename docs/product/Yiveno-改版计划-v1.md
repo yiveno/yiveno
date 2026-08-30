@@ -197,7 +197,7 @@
 #### 默认下一主线（壳外）
 
 ```text
-R4 证据与复用（Explain ECS · TTE · evidence pack · MCP · 迁移导入）
+R4 证据与复用（Explain ECS · TTE · detail export · MCP · 迁移导入）
   ↑ 与市场研究对齐的可验证差异化
 检索质量 / 线索理解 / Hybrid·embed / recall-eval must
   ↑ 护城河（与 R4 并行，R4 未达 §5.9 门槛时不扩连接器/Agent）
@@ -206,7 +206,7 @@ Side Panel Chat 壳（R-shell-chat 基线）→ 冻大改，只薄维护
 
 ### R4 · 证据与复用（Phase E · 2026-08 市场对齐）
 
-**状态：** **核心交付已大部分落地（2026-08）** — Explain ECS、TTE 本机埋点、evidence pack、只读 MCP beta、Raindrop/Pocket 导入、R4 `recall-eval` must 基线已绿；**Outcome Labeling §7.2 P0+ 进行中**；**§5.9 Beta 对外门槛未达标**（禁止扩 MCP 主宣传 / 新连接器）。
+**状态：** **核心交付已大部分落地（2026-08）** — Explain ECS、TTE 本机埋点、detail export、只读 MCP beta、Raindrop/Pocket 导入、R4 `recall-eval` must 基线已绿；**Outcome Labeling §7.2 P0+ 进行中**；**§5.9 Beta 对外门槛未达标**（禁止扩 MCP 主宣传 / 新连接器）。
 
 **目标：** 把「找对了」变成**可测量、可验证、可交给任意 AI**——补全 Capture→Reuse 闭环的后半段；并用 **§7.2 Outcome Labeling** 高概率知道「本次答案是哪条 / 都不是」；**不**借 R4 开 Agent 或 history 抓取。
 
@@ -217,7 +217,7 @@ Side Panel Chat 壳（R-shell-chat 基线）→ 冻大改，只薄维护
 | Explain 全要素 UI（ECS 五要素上结果卡） | §5.10.1–2 手工绿                             | ✓ Side Panel + Omnibox 卡面                 |
 | TTE / Verified Retrieval 最小埋点       | §5.10.3；§5.9 七事件                         | ✓ 本机 P0；**未**达 §5.9 Beta 对外宣称门槛  |
 | **Outcome Labeling（§7.2 P0+）**        | 会话标签结算；open≠settled；Mark/出口条按 P1 | 进行中 · `R4-Outcome-Labeling-P2-校准.md`   |
-| evidence pack（多选 → Markdown/JSON）   | §5.10.4                                      | ✓                                           |
+| detail export（多选 → Markdown/JSON）   | §5.10.4                                      | ✓                                           |
 | 只读 MCP beta                           | §5.10.5                                      | ✓ Settings 开关；**未**达 §5.9 不对外主宣传 |
 | Raindrop / Pocket 导入适配器            | §5.10.6 + R2 准入                            | ✓                                           |
 | recall-eval 扩展                        | §5.11.2 全部 must 绿                         | ✓ 基线 must 已绿；新增 case 随 R4 项合入    |
@@ -238,7 +238,7 @@ Side Panel Chat 壳（R-shell-chat 基线）→ 冻大改，只薄维护
 
 ```text
 R-shell / R-shell-session / R-shell-chat 基线（已）
-  → 默认：R4 证据与复用（Explain · TTE · evidence pack）与检索·eval 并行
+  → 默认：R4 证据与复用（Explain · TTE · detail export）与检索·eval 并行
   → 并行：仅阻塞性的 Chat 壳薄维护（见 R-shell-chat「允许的薄维护」）
 ```
 
@@ -263,7 +263,7 @@ R-shell / R-shell-session / R-shell-chat 基线（已）
 | 2026-08-28 | **CURRENT + ADR：** 新增 `CURRENT.md` 与 `architecture/decisions/`；R4 状态对齐产品文档 §1（核心已落地，Outcome Labeling 进行中） |
 | 2026-08-24 | **§7.2 Outcome Labeling：** 改版计划 R4 交付表增加提问↔答案对照（对齐产品文档）                                                   |
 | 2026-08-24 | **R4 验收规格：** 产品文档 §5.10/§5.11；工程旁挂 `R4-Phase-E-验收与eval.md`                                                       |
-| 2026-08-24 | **R4 证据与复用：** 对齐 `yiveno_research/`；Normative 写入产品文档 §5.9/Phase E；默认下一主线含 Explain·TTE·evidence pack        |
+| 2026-08-24 | **R4 证据与复用：** 对齐 `yiveno_research/`；Normative 写入产品文档 §5.9/Phase E；默认下一主线含 Explain·TTE·detail export        |
 | 2026-08-21 | 增 R-shell-chat：对话壳能力清单（已有/不做/薄维护）；默认下一主线=算法                                                            |
 | 2026-08-21 | 增 R-shell-session：New find + session status（§7.0）                                                                             |
 | 2026-08-21 | R-shell 落地：Recall 主壳 Side Panel；拆除 popup；`OPEN_RECALL_SHELL`                                                             |

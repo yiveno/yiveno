@@ -11,7 +11,7 @@ import { isActiveProUser } from '../services/ai/require-pro-user'
 import {
   McpRecallArgsSchema,
   recallCloudKeywordEvidence,
-  renderMcpEvidenceMarkdown
+  renderMcpDetailExportMarkdown
 } from '../services/mcp/cloud-keyword-recall'
 import { getMcpReadOnlyEnabled } from '../services/mcp/mcp-preference-kv'
 import type { Env } from '../types/env'
@@ -36,7 +36,7 @@ const toolDescriptors = [
   {
     name: MCP_TOOL_NAME,
     description:
-      'Recall personal traces from the user Yiveno cloud library as a scoped evidence pack (1–5 items). Read-only. Never dumps the full library. Cloud path is keyword-only (not Hybrid).',
+      'Recall personal traces from the user Yiveno cloud library as a scoped detail export (1–5 items). Read-only. Never dumps the full library. Cloud path is keyword-only (not Hybrid).',
     inputSchema: {
       type: 'object',
       properties: {
@@ -86,7 +86,7 @@ const ToolsCallBodySchema = z.object({
 
 /**
  * POST /api/mcp/tools/call
- * 调用 yiveno_recall_evidence → evidence pack + markdown。
+ * 调用 yiveno_recall_evidence → detail export + markdown。
  */
 mcpRouter.post('/tools/call', async c => {
   const userId = c.get('supabaseUserId')
@@ -119,7 +119,7 @@ mcpRouter.post('/tools/call', async c => {
       info('[Mcp] tools/call 无命中', { userId })
       return c.json({ error: 'mcp_no_match' }, 404)
     }
-    const markdown = renderMcpEvidenceMarkdown(pack)
+    const markdown = renderMcpDetailExportMarkdown(pack)
     info('[Mcp] tools/call 成功', { userId, itemCount: pack.items.length })
     return c.json({
       success: true,

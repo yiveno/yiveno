@@ -4,6 +4,7 @@
  */
 
 import type { MemoryItem } from '@/core/memory/memory-item'
+import { resolveMemoryItemSavedAtMs } from '@/core/memory/memory-item-saved-at'
 import {
   RECALL_COLLAPSE_BACKFILL_EXTRA,
   RECALL_RESULT_POOL_LIMIT,
@@ -270,13 +271,7 @@ function parseIsoMs(value: string | undefined | null): number | null {
 
 /** 条目「收藏/保存」时刻：书签优先 Chrome dateAdded，否则 createdAt。 */
 export function memoryItemSavedAtMs(item: MemoryItem): number | null {
-  if (item.type === 'bookmark') {
-    const chromeMs = parseIsoMs(item.payload.chromeCreatedAt)
-    if (chromeMs !== null) {
-      return chromeMs
-    }
-  }
-  return parseIsoMs(item.createdAt)
+  return resolveMemoryItemSavedAtMs(item)
 }
 
 /** createdAt / chromeCreatedAt / lastOpenedAt 是否落在时间窗内。 */

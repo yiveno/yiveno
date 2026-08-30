@@ -53,9 +53,13 @@ import AppConfirmModal from '@/infrastructure/ui/AppConfirmModal.vue'
 import AppSectionTabs from '@/infrastructure/ui/AppSectionTabs.vue'
 import AppSwitch from '@/infrastructure/ui/AppSwitch.vue'
 import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
+import AppToastHost from '@/infrastructure/ui/AppToastHost.vue'
+import { useAppToast } from '@/infrastructure/ui/use-app-toast'
 import SettingsActionRow from '@/pages/settings/SettingsActionRow.vue'
 
 defineOptions({ name: 'SettingsPage' })
+
+const { success: showToastSuccess, error: showToastError } = useAppToast()
 
 type LoadState = 'loading' | 'ready' | 'error'
 
@@ -104,18 +108,13 @@ const syncRemoteCount = ref(0)
 const orphanBucketCount = ref(0)
 const orphanActiveCount = ref(0)
 const orphanWorking = ref(false)
-const orphanMessage = ref('')
 const savingSync = ref(false)
 const runningIncrementalSync = ref(false)
 const restoringSyncBackup = ref(false)
-const syncError = ref('')
-const syncRestoreMessage = ref('')
 const syncLastPulledAt = ref<string | null>(null)
-const syncMessage = ref('')
 const privacyNoticeAcked = ref(false)
 const dataWorking = ref(false)
 const dataError = ref('')
-const dataMessage = ref('')
 const exportWorking = ref(false)
 const thirdPartyImportWorking = ref(false)
 const raindropFileInputRef = ref<HTMLInputElement | null>(null)
@@ -388,10 +387,9 @@ async function loadHostedQuota(): Promise<void> {
 }
 
 async function refreshSyncStatus() {
-  syncError.value = ''
   const response = await fetchSyncStatus()
   if (!response.ok) {
-    syncError.value = tAccountSyncError(response.errorCode)
+    showToastError(tAccountSyncError(response.errorCode))
     return
   }
   syncEnabled.value = response.syncEnabled
@@ -406,13 +404,10 @@ async function refreshSyncStatus() {
 }
 
 async function loadSyncContext() {
-  syncError.value = ''
-  orphanMessage.value = ''
-
   try {
     const response = await fetchAuthState()
     if (!response.ok) {
-      syncError.value = tAccountSyncError(response.errorCode)
+      showToastError(tAccountSyncError(response.errorCode))
       return
     }
 
@@ -428,7 +423,7 @@ async function loadSyncContext() {
       await loadHostedQuota()
     }
   } catch {
-    syncError.value = t('settings_error_auth_state')
+    showToastError(t('settings_error_auth_state'))
   }
 }
 
@@ -502,18 +497,16 @@ function downloadLocalMemoryExportJson(ownerId: string, items: unknown[]): void 
 
 async function handleExportOrphans() {
   orphanWorking.value = true
-  orphanMessage.value = ''
-  syncError.value = ''
   try {
     const response = await exportOrphanOwners()
     if (!response.ok) {
-      syncError.value = tAccountSyncError(response.errorCode)
+      showToastError(tAccountSyncError(response.errorCode))
       return
     }
     downloadOrphanExportJson(response.items)
-    orphanMessage.value = t('settings_orphan_exported', [String(response.items.length)])
+    showToastSuccess(t('settings_orphan_exported', [String(response.items.length)]))
   } catch {
-    syncError.value = t('settings_error_orphan_export')
+    showToastError(t('settings_error_orphan_export'))
   } finally {
     orphanWorking.value = false
   }
@@ -529,18 +522,15 @@ async function handleClearOrphans() {
 
 async function executeClearOrphans(): Promise<boolean> {
   orphanWorking.value = true
-  orphanMessage.value = ''
-  syncError.value = ''
   try {
     const response = await clearOrphanOwners()
     if (!response.ok) {
       confirmDialogError.value = tAccountSyncError(response.errorCode)
       return false
     }
-    orphanMessage.value = t('settings_orphan_cleared', [
-      String(response.clearedBuckets),
-      String(response.clearedItems)
-    ])
+    showToastSuccess(
+      t('settings_orphan_cleared', [String(response.clearedBuckets), String(response.clearedItems)])
+    )
     await refreshSyncStatus()
     return true
   } catch {
@@ -562,18 +552,15 @@ function refreshSyncContextOnVisible() {
 
 async function handleSyncToggle(nextValue: boolean) {
   if (!signedIn.value) {
-    syncError.value = t('settings_sync_sign_in_required')
+    showToastError(t('settings_sync_sign_in_required'))
     return
   }
   if (nextValue && !subscriptionIsPro.value) {
-    syncError.value = t('settings_error_sync_pro_required')
+    showToastError(t('settings_error_sync_pro_required'))
     return
   }
 
   savingSync.value = true
-  syncError.value = ''
-  syncRestoreMessage.value = ''
-  syncMessage.value = ''
   try {
     if (nextValue && !privacyNoticeAcked.value) {
       pendingSyncEnable.value = nextValue
@@ -584,13 +571,13 @@ async function handleSyncToggle(nextValue: boolean) {
 
     const response = await setSyncEnabled(nextValue)
     if (!response.ok) {
-      syncError.value = tAccountSyncError(response.errorCode)
+      showToastError(tAccountSyncError(response.errorCode))
       return
     }
     syncEnabled.value = response.syncPrefs.enabled
     await refreshSyncStatus()
   } catch {
-    syncError.value = t('settings_error_sync_prefs')
+    showToastError(t('settings_error_sync_prefs'))
   } finally {
     savingSync.value = false
   }
@@ -608,14 +595,13 @@ function handleDeleteCloudMemory() {
 async function executeDeleteCloudMemory(): Promise<boolean> {
   dataWorking.value = true
   dataError.value = ''
-  dataMessage.value = ''
   try {
     const response = await deleteCloudMemory()
     if (!response.ok) {
       confirmDialogError.value = tAccountSyncError(response.errorCode)
       return false
     }
-    dataMessage.value = t('settings_privacy_delete_cloud_done', [String(response.deletedItems)])
+    showToastSuccess(t('settings_privacy_delete_cloud_done', [String(response.deletedItems)]))
     syncEnabled.value = false
     await refreshSyncStatus()
     return true
@@ -651,7 +637,6 @@ async function confirmDeleteAccount() {
 
   dataWorking.value = true
   dataError.value = ''
-  dataMessage.value = ''
   try {
     const response = await deleteAccount()
     if (!response.ok) {
@@ -659,10 +644,12 @@ async function confirmDeleteAccount() {
       return
     }
     deleteAccountDialogOpen.value = false
-    dataMessage.value = t('settings_privacy_delete_account_done', [
-      String(response.deletedItems),
-      String(response.clearedLocalCount)
-    ])
+    showToastSuccess(
+      t('settings_privacy_delete_account_done', [
+        String(response.deletedItems),
+        String(response.clearedLocalCount)
+      ])
+    )
     signedIn.value = false
     accountEmail.value = ''
     accountDisplayName.value = ''
@@ -770,9 +757,6 @@ async function executePrivacySyncEnable(): Promise<boolean> {
   }
 
   savingSync.value = true
-  syncError.value = ''
-  syncRestoreMessage.value = ''
-  syncMessage.value = ''
   try {
     const ack = await ackPrivacyNotice()
     if (!ack.ok) {
@@ -834,18 +818,16 @@ async function handleExportLocalMemory() {
     return
   }
   exportWorking.value = true
-  dataError.value = ''
-  dataMessage.value = ''
   try {
     const response = await exportLocalMemory()
     if (!response.ok) {
-      dataError.value = tAccountSyncError(response.errorCode)
+      showToastError(tAccountSyncError(response.errorCode))
       return
     }
     downloadLocalMemoryExportJson(response.ownerId, response.items)
-    dataMessage.value = t('settings_privacy_export_done', [String(response.items.length)])
+    showToastSuccess(t('settings_privacy_export_done', [String(response.items.length)]))
   } catch {
-    dataError.value = t('settings_error_local_export')
+    showToastError(t('settings_error_local_export'))
   } finally {
     exportWorking.value = false
   }
@@ -876,21 +858,21 @@ async function runThirdPartyCorpusImport(
     return
   }
   thirdPartyImportWorking.value = true
-  dataError.value = ''
-  dataMessage.value = ''
   try {
     const content = await file.text()
     const response = await importThirdPartyCorpus({ source, content })
     if (!response.ok) {
-      dataError.value = tThirdPartyImportError(response.errorCode)
+      showToastError(tThirdPartyImportError(response.errorCode))
       return
     }
-    dataMessage.value = t('settings_data_third_party_import_done', [
-      String(response.importedCount),
-      source === 'raindrop' ? 'Raindrop' : 'Pocket'
-    ])
+    showToastSuccess(
+      t('settings_data_third_party_import_done', [
+        String(response.importedCount),
+        source === 'raindrop' ? 'Raindrop' : 'Pocket'
+      ])
+    )
   } catch {
-    dataError.value = t('error_third_party_import_failed')
+    showToastError(t('error_third_party_import_failed'))
   } finally {
     thirdPartyImportWorking.value = false
   }
@@ -932,8 +914,6 @@ function handleClearLocalMemory() {
 
 async function executeClearLocalMemory(): Promise<boolean> {
   dataWorking.value = true
-  dataError.value = ''
-  dataMessage.value = ''
   try {
     const response = await clearLocalMemory()
     if (!response.ok) {
@@ -943,11 +923,11 @@ async function executeClearLocalMemory(): Promise<boolean> {
     chromeBookmarkIngestEnabled.value = false
     if (response.syncDisabled) {
       syncEnabled.value = false
-      dataMessage.value = t('settings_data_clear_local_done_sync_off', [
-        String(response.clearedCount)
-      ])
+      showToastSuccess(
+        t('settings_data_clear_local_done_sync_off', [String(response.clearedCount)])
+      )
     } else {
-      dataMessage.value = t('settings_data_clear_local_done', [String(response.clearedCount)])
+      showToastSuccess(t('settings_data_clear_local_done', [String(response.clearedCount)]))
     }
     await refreshSyncStatus()
     return true
@@ -965,23 +945,22 @@ async function handleRunIncrementalSync() {
     return
   }
   runningIncrementalSync.value = true
-  syncError.value = ''
-  syncMessage.value = ''
   try {
     const response = await runIncrementalMemorySync()
     if (!response.ok) {
-      syncError.value = response.error
-        ? `${tAccountSyncError(response.errorCode)}（${response.error}）`
-        : tAccountSyncError(response.errorCode)
+      showToastError(
+        response.error
+          ? `${tAccountSyncError(response.errorCode)}（${response.error}）`
+          : tAccountSyncError(response.errorCode)
+      )
       return
     }
-    syncMessage.value = t('settings_sync_now_done', [
-      String(response.pulled),
-      String(response.pushed)
-    ])
+    showToastSuccess(
+      t('settings_sync_now_done', [String(response.pulled), String(response.pushed)])
+    )
     await refreshSyncStatus()
   } catch {
-    syncError.value = t('settings_error_sync_incremental')
+    showToastError(t('settings_error_sync_incremental'))
   } finally {
     runningIncrementalSync.value = false
   }
@@ -998,8 +977,6 @@ function handleRestoreLatestSyncBackup() {
 
 async function executeRestoreLatestSyncBackup(): Promise<boolean> {
   restoringSyncBackup.value = true
-  syncError.value = ''
-  syncRestoreMessage.value = ''
   try {
     const response = await restoreLatestSyncBackup()
     if (!response.ok) {
@@ -1008,7 +985,7 @@ async function executeRestoreLatestSyncBackup(): Promise<boolean> {
         : tAccountSyncError(response.errorCode)
       return false
     }
-    syncRestoreMessage.value = t('settings_sync_restore_backup_done', [String(response.restored)])
+    showToastSuccess(t('settings_sync_restore_backup_done', [String(response.restored)]))
     await refreshSyncStatus()
     return true
   } catch {
@@ -1100,6 +1077,7 @@ onUnmounted(() => {
 </script>
 
 <template>
+  <AppToastHost />
   <main class="settings-shell">
     <header class="settings-header">
       <AppPageHeader current="settings" class="settings-header-top" />
@@ -1301,7 +1279,6 @@ onUnmounted(() => {
                 }}
               </AppButton>
             </div>
-            <p v-if="syncMessage" class="settings-status" role="status">{{ syncMessage }}</p>
 
             <div class="settings-subsection" aria-labelledby="settings-subscription-heading">
               <h3 id="settings-subscription-heading" class="settings-subsection-title">
@@ -1405,14 +1382,8 @@ onUnmounted(() => {
                       }}
                     </AppButton>
                   </div>
-                  <p v-if="orphanMessage" class="settings-status" role="status">
-                    {{ orphanMessage }}
-                  </p>
                 </div>
               </div>
-              <p v-if="syncRestoreMessage" class="settings-status" role="status">
-                {{ syncRestoreMessage }}
-              </p>
             </div>
 
             <div v-if="signedIn" class="settings-actions settings-actions--spaced">
@@ -1428,10 +1399,6 @@ onUnmounted(() => {
                 }}
               </AppButton>
             </div>
-
-            <p v-if="dataMessage" class="settings-status" role="status">{{ dataMessage }}</p>
-            <p v-if="dataError" class="settings-error" role="alert">{{ dataError }}</p>
-            <p v-if="syncError" class="settings-error" role="alert">{{ syncError }}</p>
           </div>
         </template>
 
@@ -1584,9 +1551,6 @@ onUnmounted(() => {
             <p v-if="!signedIn" class="settings-status">
               {{ t('settings_privacy_delete_cloud_sign_in') }}
             </p>
-
-            <p v-if="dataMessage" class="settings-status" role="status">{{ dataMessage }}</p>
-            <p v-if="dataError" class="settings-error" role="alert">{{ dataError }}</p>
           </div>
         </template>
 

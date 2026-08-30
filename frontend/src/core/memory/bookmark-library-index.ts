@@ -10,7 +10,7 @@ import type {
 import { normalizeBookmarkSyncUrl } from '@/core/memory/bookmark-library-tree'
 
 /** 扁平索引版本号（协议变更时递增）。 */
-export const BOOKMARK_LIBRARY_INDEX_VERSION = 1 as const
+export const BOOKMARK_LIBRARY_INDEX_VERSION = 2 as const
 
 export interface BookmarkLibraryIndexNode {
   chromeId: string
@@ -22,6 +22,8 @@ export interface BookmarkLibraryIndexNode {
   memoryItemId?: string
   hasNote: boolean
   note?: string
+  /** 保存/创建时刻 ISO（书签 chromeCreatedAt 或 Chrome dateAdded） */
+  savedAt?: string
   /** 仅 folder：有序子节点 chromeId */
   childIds: string[]
 }
@@ -43,12 +45,20 @@ export interface BookmarkLibraryVisibleRow {
   memoryItemId?: string
   hasNote: boolean
   note?: string
+  savedAt?: string
   /** 仅 folder */
   expanded?: boolean
 }
 
-export const BOOKMARK_LIBRARY_ROW_HEIGHT = 44
-export const BOOKMARK_LIBRARY_ROW_HEIGHT_WITH_NOTE = 76
+export const BOOKMARK_LIBRARY_ROW_HEIGHT = 76
+export const BOOKMARK_LIBRARY_ROW_HEIGHT_WITH_NOTE = 108
+/** 文件夹行内容高（树节点，非卡片） */
+export const BOOKMARK_LIBRARY_FOLDER_ROW_HEIGHT = 32
+/**
+ * 书签行间距（px）；与 `LIBRARY_LIST_ROW_GAP_PX` / `--space-xs` 一致。
+ * 虚拟列表 stride = getBookmarkLibraryRowHeight + 本值。
+ */
+export const BOOKMARK_LIBRARY_ROW_GAP_PX = 8
 
 function isHttpUrl(url: string): boolean {
   try {
@@ -79,6 +89,23 @@ interface MapIndexContext {
   options: MapChromeBookmarkTreeOptions
 }
 
+function resolveBookmarkSavedAt(
+  memoryItemId: string | undefined,
+  dateAdded: number | undefined,
+  savedAtByMemoryId: ReadonlyMap<string, string> | undefined
+): string | undefined {
+  if (memoryItemId) {
+    const fromMemory = savedAtByMemoryId?.get(memoryItemId)
+    if (fromMemory) {
+      return fromMemory
+    }
+  }
+  if (typeof dateAdded === 'number' && !Number.isNaN(dateAdded)) {
+    return new Date(dateAdded).toISOString()
+  }
+  return undefined
+}
+
 function mapChromeNodeToIndex(
   node: ChromeBookmarkTreeInput,
   parentId: string | null,
@@ -96,6 +123,11 @@ function mapChromeNodeToIndex(
       ctx.options.memoryIdByUrl
     )
     const note = memoryItemId ? ctx.options.noteByMemoryId?.get(memoryItemId)?.trim() : undefined
+    const savedAt = resolveBookmarkSavedAt(
+      memoryItemId,
+      node.dateAdded,
+      ctx.options.savedAtByMemoryId
+    )
     const bookmark: BookmarkLibraryIndexNode = {
       chromeId: node.id,
       parentId,
@@ -105,7 +137,8 @@ function mapChromeNodeToIndex(
       childIds: [],
       hasNote: Boolean(note),
       ...(memoryItemId ? { memoryItemId } : {}),
-      ...(note ? { note } : {})
+      ...(note ? { note } : {}),
+      ...(savedAt ? { savedAt } : {})
     }
     ctx.nodes.set(node.id, bookmark)
     ctx.bookmarkCount += 1
@@ -190,7 +223,8 @@ export function computeBookmarkLibraryStructureHash(index: BookmarkLibraryIndex)
       node.childIds.join(','),
       node.memoryItemId ?? '',
       node.hasNote ? '1' : '0',
-      node.note ?? ''
+      node.note ?? '',
+      node.savedAt ?? ''
     ].join('|')
     for (let i = 0; i < part.length; i += 1) {
       hash = (hash * 33) ^ part.charCodeAt(i)
@@ -260,7 +294,8 @@ export function flattenBookmarkLibraryVisibleRows(
         hasNote: node.hasNote,
         ...(node.url !== undefined ? { url: node.url } : {}),
         ...(node.memoryItemId ? { memoryItemId: node.memoryItemId } : {}),
-        ...(node.note ? { note: node.note } : {})
+        ...(node.note ? { note: node.note } : {}),
+        ...(node.savedAt ? { savedAt: node.savedAt } : {})
       })
     }
   }
@@ -269,12 +304,20 @@ export function flattenBookmarkLibraryVisibleRows(
   return rows
 }
 
-/** 虚拟列表行高：有附注的书签更高。 */
+/** 虚拟列表行高：文件夹紧凑行；有附注的书签更高（不含行间距）。 */
 export function getBookmarkLibraryRowHeight(row: BookmarkLibraryVisibleRow): number {
-  if (row.kind === 'bookmark' && row.note) {
+  if (row.kind === 'folder') {
+    return BOOKMARK_LIBRARY_FOLDER_ROW_HEIGHT
+  }
+  if (row.note) {
     return BOOKMARK_LIBRARY_ROW_HEIGHT_WITH_NOTE
   }
   return BOOKMARK_LIBRARY_ROW_HEIGHT
+}
+
+/** 虚拟列表 stride（内容高 + 行间距，与摘录列表 `gap: --space-xs` 对齐）。 */
+export function getBookmarkLibraryRowStride(row: BookmarkLibraryVisibleRow): number {
+  return getBookmarkLibraryRowHeight(row) + BOOKMARK_LIBRARY_ROW_GAP_PX
 }
 
 /** 单点更新附注，避免全树重建。 */

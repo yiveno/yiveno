@@ -15,20 +15,28 @@ export const APP_ICON_NAMES = [
   'check_circle',
   'chevron_right',
   'chevron_up',
+  'circle_alert',
+  'content_copy',
   'delete',
+  'download',
   'edit_note',
   'expand_more',
+  'flip_vertical',
   'folder',
   'folder_open',
   'format_quote',
+  'info',
   'library_books',
+  'list_checks',
   'looks_one',
   'looks_two',
   'message_circle_plus',
   'open_in_new',
+  'package',
   'refresh',
   'settings',
-  'stacks'
+  'stacks',
+  'triangle_alert'
 ] as const
 
 export type AppIconName = (typeof APP_ICON_NAMES)[number]
@@ -46,20 +54,28 @@ export const APP_ICON_LUCIDE_SOURCE: Record<AppIconName, string> = {
   check_circle: 'CircleCheck',
   chevron_right: 'ChevronRight',
   chevron_up: 'ChevronUp',
+  circle_alert: 'CircleAlert',
+  content_copy: 'Copy',
   delete: 'Trash2',
+  download: 'Download',
   edit_note: 'NotebookPen',
   expand_more: 'ChevronDown',
+  flip_vertical: 'FlipVertical2',
   folder: 'Folder',
   folder_open: 'FolderOpen',
   format_quote: 'Quote',
+  info: 'Info',
   library_books: 'Library',
+  list_checks: 'ListChecks',
   looks_one: 'custom-step-1',
   looks_two: 'custom-step-2',
   message_circle_plus: 'MessageCirclePlus',
   open_in_new: 'ExternalLink',
+  package: 'Package',
   refresh: 'RefreshCw',
   settings: 'Settings',
-  stacks: 'Layers'
+  stacks: 'Layers',
+  triangle_alert: 'TriangleAlert'
 }
 
 /**
@@ -121,12 +137,26 @@ export const APP_ICON_NODES: Record<AppIconName, readonly AppIconNode[]> = {
   ] as const,
   chevron_right: [['path', { d: 'm9 18 6-6-6-6' }]] as const,
   chevron_up: [['path', { d: 'm18 15-6-6-6 6' }]] as const,
+  circle_alert: [
+    ['circle', { cx: '12', cy: '12', r: '10' }],
+    ['line', { x1: '12', x2: '12', y1: '8', y2: '12' }],
+    ['line', { x1: '12', x2: '12.01', y1: '16', y2: '16' }]
+  ] as const,
+  content_copy: [
+    ['rect', { width: '8', height: '4', x: '8', y: '2', rx: '1', ry: '1' }],
+    ['path', { d: 'M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2' }]
+  ] as const,
   delete: [
     ['path', { d: 'M10 11v6' }],
     ['path', { d: 'M14 11v6' }],
     ['path', { d: 'M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6' }],
     ['path', { d: 'M3 6h18' }],
     ['path', { d: 'M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2' }]
+  ] as const,
+  download: [
+    ['path', { d: 'M12 15V3' }],
+    ['path', { d: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4' }],
+    ['path', { d: 'm7 10 5 5 5-5' }]
   ] as const,
   edit_note: [
     ['path', { d: 'M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4' }],
@@ -142,6 +172,11 @@ export const APP_ICON_NODES: Record<AppIconName, readonly AppIconNode[]> = {
     ]
   ] as const,
   expand_more: [['path', { d: 'm6 9 6 6 6-6' }]] as const,
+  flip_vertical: [
+    ['path', { d: 'M12 3v18' }],
+    ['path', { d: 'm16 7-4-4-4 4' }],
+    ['path', { d: 'M8 17l4 4 4-4' }]
+  ] as const,
   folder: [
     [
       'path',
@@ -172,11 +207,24 @@ export const APP_ICON_NODES: Record<AppIconName, readonly AppIconNode[]> = {
       }
     ]
   ] as const,
+  info: [
+    ['circle', { cx: '12', cy: '12', r: '10' }],
+    ['path', { d: 'M12 16v-4' }],
+    ['path', { d: 'M12 8h.01' }]
+  ] as const,
   library_books: [
     ['path', { d: 'm16 6 4 14' }],
     ['path', { d: 'M12 6v14' }],
     ['path', { d: 'M8 8v12' }],
     ['path', { d: 'M4 4v16' }]
+  ] as const,
+  list_checks: [
+    ['path', { d: 'M11 18H3' }],
+    ['path', { d: 'M11 12H3' }],
+    ['path', { d: 'M11 6H3' }],
+    ['path', { d: 'm15 18 2 2 4-4' }],
+    ['path', { d: 'm15 12 2 2 4-4' }],
+    ['path', { d: 'm15 6 2 2 4-4' }]
   ] as const,
   looks_one: [
     ['circle', { cx: '12', cy: '12', r: '10' }],
@@ -202,6 +250,17 @@ export const APP_ICON_NODES: Record<AppIconName, readonly AppIconNode[]> = {
     ['path', { d: 'M10 14 21 3' }],
     ['path', { d: 'M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6' }]
   ] as const,
+  package: [
+    [
+      'path',
+      {
+        d: 'M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z'
+      }
+    ],
+    ['path', { d: 'M12 22V12' }],
+    ['path', { d: 'm3.3 7 8.7 5 8.7-5' }],
+    ['path', { d: 'M7.5 4.27 16.5 9.63' }]
+  ] as const,
   refresh: [
     ['path', { d: 'M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8' }],
     ['path', { d: 'M21 3v5h-5' }],
@@ -226,6 +285,11 @@ export const APP_ICON_NODES: Record<AppIconName, readonly AppIconNode[]> = {
     ],
     ['path', { d: 'M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12' }],
     ['path', { d: 'M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17' }]
+  ] as const,
+  triangle_alert: [
+    ['path', { d: 'm21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3' }],
+    ['path', { d: 'M12 9v4' }],
+    ['path', { d: 'M12 17h.01' }]
   ] as const
 }
 

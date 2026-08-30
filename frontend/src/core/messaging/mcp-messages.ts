@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import type { McpEvidencePack } from '@/core/recall/mcp-tool-schema'
+import type { McpDetailExport } from '@/core/recall/mcp-tool-schema'
 import type { BackgroundMessageScope } from '@/core/messaging/constants'
 
 const mcpRecallEvidencePayloadSchema = z.object({
@@ -26,7 +26,7 @@ export type McpRecallEvidenceMessage = {
 
 export type McpRecallEvidenceSuccessResponse = {
   ok: true
-  pack: McpEvidencePack
+  pack: McpDetailExport
   markdown: string
   backend: 'local_hybrid'
 }

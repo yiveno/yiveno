@@ -304,6 +304,58 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
 
 **实现：** `frontend/src/infrastructure/ui/AppSectionTabs.vue`；`items[].label` 由页面经 `t()` 解析；`panelId` + `idPrefix`（`useId()`）关联右侧 `role="tabpanel"`。
 
+#### 6.2.3 轻提示 Toast（`AppToast` / `AppToastHost`）
+
+**何时用：** 非阻断操作反馈（复制/下载完成、同步成功、可自动消失的失败提示等）。
+
+**何时不用：** 需用户确认 → `AppModal`；持久错误区块 → 页内 `role="alert"`；Recall 结果 → 邻域卡面。
+
+**结构：** 页面根挂载 `<AppToastHost />`（`Teleport` 到 `body`）→ 顶部居中浮层 → `AppToast`（图标 + 文案）；无手动关闭钮，默认自动消失。
+
+**语气：** `info` / `success` / `warning` / `error`；各态左侧 Lucide 图标（语义色）；文案经 `t()`；默认 ~3.2s 自动消失；`error` 用 `aria-live="assertive"`。
+
+**尺寸：** 宽度随文案收缩（`fit-content`），`max-width` 约 420px（窄屏留边距）；长文案换行，短文案不留大片空白。
+
+**交互：** 仅 opacity 入场；**禁止** hover/focus/active 几何变换；`pointer-events: none`（不挡底层操作）。
+
+**API：** `useAppToast().success(message)` / `.warning()` / `.error()` / `.info()`；同一扩展页单例队列（最多 3 条）。
+
+**实现：** `AppToast.vue` · `AppToastHost.vue` · `use-app-toast.ts`。
+
+**已接入（P0）：** Library / Side Panel Detail export（copy & download）；Settings 导出/导入/同步/清库等操作完成反馈。
+
+#### 6.2.4 Detail export 多选（条目即选择器）
+
+**交互：** 进入多选后点**条目主体**切换选中；**禁止**左侧插入勾选列导致布局横跳。选中态 = 描边/浅底 + 角标勾（overlay，不占流式宽度）。退出多选恢复「点即打开」。附注/删除/展开集合等行内钮仍独立可点。
+
+**范围：** Library 摘录列表 · 书签树 · Side Panel Recall 结果卡（含 sibling）。
+
+**底栏动效：** 进入多选时 `DetailExportBar` 经 `DetailExportBarDock` **自下而上滑入**（~280ms emphasized easing）；Cancel 离场 **向下滑出**（~220ms）。`prefers-reduced-motion` 时仅 opacity 淡入淡出。
+
+#### 6.2.5 Library 列表 rhythm（摘录 + 书签）
+
+**条目壳：** `AppLibraryItemCard` 固定**三行**：
+
+1. **标题 + 操作**（`space-between`；`#title` + `#actions`）
+2. **附注**（`#note`，可选）
+3. **来源等信息 + 时间**（`space-between`；`#footer` + `#time`；书签第三行展示域名 + **保存时间**）
+
+**保存时间（Normative）：** 摘录与书签列表均展示 **创建/收藏时刻**（非 `updatedAt`）。摘录 = `createdAt`；书签 = `payload.chromeCreatedAt`（Chrome `dateAdded`），未同步 Memory 时回退 Chrome `dateAdded`。格式化经 `formatLibrarySavedAt()`。
+
+**行首图标（Normative）：** `#leading` 为源站 favicon（`getChromeFaviconUrl` / Chrome `/_favicon/` 缓存）。摘录用 `sourceUrl`，失败回退 Lucide `format_quote`；书签用 `url`，失败回退 `bookmark`。Recall 结果卡仍保持摘录角标 `format_quote`、书签角标 favicon（类型分工不变）。
+
+**插槽排版：** `library-item-card-content.css` 内 `.lib-item-*`；页面禁止再写第二套 row 样式。
+
+**行间距：** `--library-list-row-gap` = `--space-xs`（摘录 `grid gap`；书签虚拟列表 stride 含同等间距）。
+
+**卡片内边距：** 四向 `--space-sm`；操作钮在行内流式布局，**禁止**再预留 84px 右 padding。
+
+**操作钮显隐：** 指针设备（`hover: hover`）默认隐藏 `#actions`，悬停条目或 `focus-within` 时淡入；触屏无 hover 时保持常显。detail export 多选模式仍不渲染操作钮。
+
+**圆角/描边：** `--radius-lg` + `--border`；背景 `--surface`。文件夹行非 `AppLibraryItemCard`。
+
+**实现：** `AppLibraryItemCard.vue` · `library-item-card-content.css` · `library-list-tokens.ts` · `bookmark-library-index.ts`。
+
 ### 6.3 Logo 与图标物料
 
 - 主色：Ink / Sage；浅底用 Ink 或 Sage；深底用 Sage On / Paper 系浅色
