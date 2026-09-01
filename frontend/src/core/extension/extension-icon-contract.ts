@@ -31,17 +31,3 @@ export function extensionPageFaviconHref(
   const path = EXTENSION_ICON_FILES[size]
   return options.rootRelative === false ? `./${path}` : `/${path}`
 }
-
-/** 生成扩展页 head 内 favicon link 标签（用于文档 / 人工同步 HTML）。 */
-export function buildExtensionPageFaviconLinkMarkup(
-  options: { rootRelative?: boolean } = {}
-): string {
-  const sizeAttr: Record<(typeof EXTENSION_PAGE_FAVICON_SIZES)[number], string> = {
-    '32': '32x32',
-    '16': '16x16'
-  }
-  return EXTENSION_PAGE_FAVICON_SIZES.map(size => {
-    const href = extensionPageFaviconHref(size, options)
-    return `<link rel="icon" type="image/png" sizes="${sizeAttr[size]}" href="${href}" />`
-  }).join('\n    ')
-}

@@ -28,9 +28,6 @@ export function shouldWriteSettingsHistoryUrl(currentUrl: string, nextUrl: strin
   return currentUrl !== nextUrl
 }
 
-/** @deprecated 使用 shouldWriteSettingsHistoryUrl */
-export const shouldReplaceSettingsHistoryUrl = shouldWriteSettingsHistoryUrl
-
 /** 决定 tab 切换时如何写 history（popstate 恢复时 skip）。 */
 export function resolveSettingsHistoryWriteMode(input: {
   isInitialSync: boolean
