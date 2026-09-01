@@ -81,6 +81,15 @@ function onBookmarkMoved(
 }
 
 /**
+ * SW 入口同步挂上书签监听，消除异步读 Settings 前的空窗。
+ * 灌库关闭时由 {@link syncChromeBookmarkSyncListenersWithIngestSetting} 再卸下；
+ * 写入路径仍经 {@link handleChromeBookmarkCreated} 内门禁。
+ */
+export function attachChromeBookmarkSyncListenersAtStartup(): void {
+  registerChromeBookmarkSyncListeners()
+}
+
+/**
  * 注册 Chrome 书签增量同步监听器。
  * 灌库关闭时应调用 {@link unregisterChromeBookmarkSyncListeners}，不得常驻监听。
  */

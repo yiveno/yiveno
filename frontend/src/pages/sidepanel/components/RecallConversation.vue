@@ -1,8 +1,15 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import AppButton from '@/infrastructure/ui/AppButton.vue'
 
 import { RECALL_RESULT_PAGE_SIZE } from '@/core/recall/build-recall-result'
+import { recallRemainingVisibleCount } from '@/core/recall/recall-result-visible-count'
+import {
+  RECALL_CONVERSATION_TURN_PAGE_SIZE,
+  recallHiddenEarlierTurnCount,
+  resolveNextEarlierTurnReveal,
+  sliceVisibleConversationTurns
+} from '@/pages/sidepanel/recall-conversation-turn-window'
 import type { ConversationTurn, AssistantTurn } from '@/pages/sidepanel/recall-conversation-types'
 import type { RecallCardModel } from '@/pages/sidepanel/RecallResultCard.vue'
 import RecallResultCard from '@/pages/sidepanel/RecallResultCard.vue'
@@ -45,6 +52,30 @@ const emit = defineEmits<{
   useSuggestion: [value: string]
   toggleDetailExportSelection: [memoryItemId: string]
 }>()
+
+/** 用户已展开的更早 turn 数（超出默认尾部窗口）。 */
+const earlierRevealedCount = ref(0)
+
+watch(
+  () => props.turns.length,
+  (nextLength, previousLength) => {
+    if (nextLength > previousLength) {
+      earlierRevealedCount.value = 0
+    }
+  }
+)
+
+const visibleTurns = computed(() =>
+  sliceVisibleConversationTurns(props.turns, earlierRevealedCount.value)
+)
+
+const hiddenEarlierTurnCount = computed(() =>
+  recallHiddenEarlierTurnCount(props.turns.length, earlierRevealedCount.value)
+)
+
+const canShowEarlierPage = computed(
+  () => hiddenEarlierTurnCount.value > RECALL_CONVERSATION_TURN_PAGE_SIZE
+)
 
 const latestDismissibleAssistantId = computed(() => {
   for (let i = props.turns.length - 1; i >= 0; i -= 1) {
@@ -101,7 +132,7 @@ function visibleCardsFor(turn: AssistantTurn): RecallCardModel[] {
 function remainingCount(turn: AssistantTurn): number {
   const total = turn.candidateCards?.length ?? 0
   const visible = turn.visibleCount ?? total
-  return Math.max(0, total - visible)
+  return recallRemainingVisibleCount(visible, total)
 }
 
 function canShowMore(turn: AssistantTurn): boolean {
@@ -119,6 +150,22 @@ function showMoreCountLabel(count: number): string {
 
 function showAllCountLabel(count: number): string {
   return t('popup_show_all_count', String(count))
+}
+
+function showEarlierCountLabel(count: number): string {
+  return t('recall_show_earlier_turns_count', String(count))
+}
+
+function showAllEarlierCountLabel(count: number): string {
+  return t('recall_show_all_earlier_turns_count', String(count))
+}
+
+function onShowEarlierClick(mode: 'page' | 'all'): void {
+  earlierRevealedCount.value = resolveNextEarlierTurnReveal(
+    earlierRevealedCount.value,
+    props.turns.length,
+    mode
+  )
 }
 
 function isDetailExportSelected(id: string): boolean {
@@ -156,8 +203,22 @@ function cardMemoDeps(
 
 <template>
   <section class="conversation-list" aria-live="polite">
+    <div v-if="hiddenEarlierTurnCount > 0" class="conversation-show-earlier">
+      <AppButton
+        v-if="canShowEarlierPage"
+        type="button"
+        variant="text"
+        @click="onShowEarlierClick('page')"
+      >
+        {{ showEarlierCountLabel(RECALL_CONVERSATION_TURN_PAGE_SIZE) }}
+      </AppButton>
+      <AppButton type="button" variant="text" @click="onShowEarlierClick('all')">
+        {{ showAllEarlierCountLabel(hiddenEarlierTurnCount) }}
+      </AppButton>
+    </div>
+
     <div
-      v-for="turn in turns"
+      v-for="turn in visibleTurns"
       :key="turn.id"
       class="conversation-turn"
       :class="turn.role === 'user' ? 'conversation-turn--user' : 'conversation-turn--assistant'"
@@ -334,6 +395,14 @@ function cardMemoDeps(
 </template>
 
 <style scoped>
+.conversation-show-earlier {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs) var(--space-sm);
+  justify-content: center;
+  padding-bottom: var(--space-2xs);
+}
+
 .conversation-list {
   display: grid;
   /* turn 间节奏：对话区个性化间距 */

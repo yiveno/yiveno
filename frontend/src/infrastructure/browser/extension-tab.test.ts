@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
+  buildExtensionPageTabQueryPattern,
   focusOrOpenGettingStartedTab,
   focusOrOpenLibraryTab,
   focusOrOpenSettingsTab
@@ -46,8 +47,14 @@ describe('extension-tab', () => {
     })
   })
 
+  it('buildExtensionPageTabQueryPattern 用 url 通配符匹配 query/hash', () => {
+    expect(buildExtensionPageTabQueryPattern('library.html')).toBe(
+      'chrome-extension://test/library.html*'
+    )
+  })
+
   it('focusOrOpenLibraryTab 首次创建并记住 tabId；再次则聚焦', async () => {
-    await focusOrOpenLibraryTab()
+    await expect(focusOrOpenLibraryTab()).resolves.toBe(true)
     expect(chrome.tabs.create).toHaveBeenCalledWith({
       url: 'chrome-extension://test/library.html'
     })
@@ -88,6 +95,9 @@ describe('extension-tab', () => {
     } as chrome.tabs.Tab)
 
     await focusOrOpenLibraryTab()
+    expect(chrome.tabs.query).toHaveBeenCalledWith({
+      url: 'chrome-extension://test/library.html*'
+    })
     expect(chrome.tabs.create).not.toHaveBeenCalled()
     expect(chrome.tabs.update).toHaveBeenCalledWith(77, { active: true })
     expect(sessionStore.get('yiveno.libraryTabId')).toBe(77)
@@ -116,10 +126,19 @@ describe('extension-tab', () => {
     } as chrome.tabs.Tab)
 
     await focusOrOpenSettingsTab()
+    expect(chrome.tabs.query).toHaveBeenCalledWith({
+      url: 'chrome-extension://test/settings.html*'
+    })
     expect(chrome.runtime.openOptionsPage).not.toHaveBeenCalled()
     expect(chrome.tabs.create).not.toHaveBeenCalled()
     expect(chrome.tabs.update).toHaveBeenCalledWith(88, { active: true })
     expect(sessionStore.get('yiveno.settingsTabId')).toBe(88)
+  })
+
+  it('focusOrOpenLibraryTab tabs.create 失败时返回 false', async () => {
+    vi.mocked(chrome.tabs.create).mockRejectedValue(new Error('quota'))
+
+    await expect(focusOrOpenLibraryTab()).resolves.toBe(false)
   })
 
   it('focusOrOpenGettingStartedTab 按 URL 聚焦已开引导页', async () => {

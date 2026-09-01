@@ -30,6 +30,7 @@ import {
   USER_SETTINGS_STORAGE_KEY
 } from '@/core/settings/user-settings'
 import { t } from '@/infrastructure/i18n/t'
+import { warnIfContentScriptMessagesMissing } from '@/infrastructure/i18n/extension-i18n-boot'
 import { isMemoryErrorCode, tMemoryError } from '@/infrastructure/i18n/memory-error'
 import type { MessageKey } from '@/infrastructure/i18n/message-keys'
 import {
@@ -42,6 +43,7 @@ import {
   getAppIconViewBox,
   type AppIconName
 } from '@/infrastructure/ui/icons/icon-paths'
+import { getSelectionToolbarShadowStyles } from '@/content/selection-toolbar/selection-toolbar-shadow-styles'
 
 const TOOLBAR_HOST_ID = 'yiveno-selection-toolbar-host'
 const NOTE_MAX_LENGTH = 500
@@ -308,154 +310,7 @@ function ensureToolbarHost(): void {
   shadowRoot = hostElement.attachShadow({ mode: 'closed' })
 
   const style = document.createElement('style')
-  style.textContent = `
-    .shell {
-      pointer-events: auto;
-      transform: translateX(-50%);
-      display: grid;
-      gap: 6px;
-      max-width: min(320px, calc(100vw - 16px));
-    }
-    .toolbar {
-      display: inline-flex;
-      align-items: center;
-      padding: 2px;
-      border: 1px solid #99d5df;
-      border-radius: 999px;
-      background: #f0fbfd;
-      box-shadow: 0 4px 16px rgb(15 23 42 / 12%);
-    }
-    .action-button,
-    .status-button {
-      margin: 0;
-      padding: 6px 12px;
-      border: none;
-      border-radius: 999px;
-      font: 600 13px/1.2 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      color: #0e7490;
-      background: transparent;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    .action-button--icon {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 34px;
-      height: 34px;
-      padding: 0;
-    }
-    .action-icon {
-      display: block;
-      flex-shrink: 0;
-    }
-    .action-button:hover:not(:disabled),
-    .status-button:hover:not(:disabled) {
-      background: rgb(8 145 178 / 12%);
-    }
-    .action-button:disabled,
-    .status-button:disabled,
-    .note-input:disabled {
-      cursor: wait;
-      opacity: 0.75;
-    }
-    .divider {
-      width: 1px;
-      align-self: stretch;
-      margin: 4px 0;
-      background: #99d5df;
-    }
-    .status-button--saved {
-      color: #0f766e;
-      cursor: default;
-      opacity: 1;
-    }
-    .status-button--error {
-      color: #b42318;
-    }
-    .saved-feedback {
-      display: none;
-      min-width: 200px;
-      max-width: min(300px, calc(100vw - 16px));
-      padding: 8px 10px;
-      border: 1px solid #99d5df;
-      border-radius: 14px;
-      background: #f0fbfd;
-      box-shadow: 0 4px 16px rgb(15 23 42 / 12%);
-    }
-    .saved-feedback.is-open {
-      display: grid;
-      gap: 4px;
-    }
-    .saved-preview {
-      margin: 0;
-      font: 500 12px/1.35 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
-        sans-serif;
-      color: #164e63;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      word-break: break-word;
-    }
-    .saved-hint {
-      margin: 0;
-      font: 500 11px/1.35 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
-        sans-serif;
-      color: #0e7490;
-    }
-    .saved-recall-button {
-      justify-self: start;
-      margin-top: 2px;
-      padding: 6px 12px;
-      border: none;
-      border-radius: 999px;
-      font: 600 12px/1.2 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
-        sans-serif;
-      color: #fff;
-      background: #0891b2;
-      cursor: pointer;
-    }
-    .saved-recall-button:hover {
-      background: #0e7490;
-    }
-    .saved-recall-button:disabled {
-      cursor: wait;
-      opacity: 0.75;
-    }
-    .note-panel {
-      display: none;
-      min-width: 220px;
-      padding: 8px;
-      border: 1px solid #99d5df;
-      border-radius: 14px;
-      background: #f0fbfd;
-      box-shadow: 0 4px 16px rgb(15 23 42 / 12%);
-    }
-    .note-panel.is-open {
-      display: block;
-    }
-    .note-input {
-      box-sizing: border-box;
-      width: 100%;
-      min-height: 56px;
-      margin: 0;
-      padding: 8px 10px;
-      border: 1px solid #99d5df;
-      border-radius: 10px;
-      resize: vertical;
-      font: 13px/1.4 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      color: #0f172a;
-      background: #fff;
-    }
-    .note-input:focus {
-      outline: 2px solid rgb(8 145 178 / 35%);
-      outline-offset: 1px;
-    }
-    .is-hidden {
-      display: none !important;
-    }
-  `
+  style.textContent = getSelectionToolbarShadowStyles()
 
   actionsRow = document.createElement('div')
   actionsRow.className = 'toolbar'
@@ -1413,6 +1268,7 @@ function registerListeners(): void {
 }
 
 if (shouldBootThisInstance()) {
+  warnIfContentScriptMessagesMissing('selection_toolbar')
   writeBootFlag(bootRuntimeId)
   // 接管旧实例时清掉残留 host，避免双浮层
   document.getElementById(TOOLBAR_HOST_ID)?.remove()

@@ -4,6 +4,7 @@
  */
 
 import { EXTENSION_OPTIONS_PAGE } from '@/core/extension/extension-options-contract'
+import { logger } from '@/infrastructure/logging/logger'
 
 const LIBRARY_TAB_SESSION_KEY = 'yiveno.libraryTabId'
 const SETTINGS_TAB_SESSION_KEY = 'yiveno.settingsTabId'
@@ -40,56 +41,66 @@ async function focusExistingTab(tabId: number): Promise<boolean> {
   }
 }
 
+/** chrome.tabs.query url 过滤：匹配扩展页及其 query/hash 变体，避免全量 tabs.query({})。 */
+export function buildExtensionPageTabQueryPattern(path: string): string {
+  return `${chrome.runtime.getURL(path)}*`
+}
+
 /** 扫描是否已有该扩展页（含历史 window.open 打开、未写入 session 的情况）。 */
 async function findTabIdByExtensionPageUrl(path: string): Promise<number | null> {
-  const target = chrome.runtime.getURL(path)
   try {
-    const tabs = await chrome.tabs.query({})
-    const hit = tabs.find(tab => {
-      const url = tab.url ?? tab.pendingUrl ?? ''
-      return url === target || url.startsWith(`${target}?`) || url.startsWith(`${target}#`)
-    })
-    return typeof hit?.id === 'number' ? hit.id : null
+    const tabs = await chrome.tabs.query({ url: buildExtensionPageTabQueryPattern(path) })
+    const hit = tabs.find(tab => typeof tab.id === 'number')
+    return hit?.id ?? null
   } catch {
     return null
   }
 }
 
-async function focusOrCreateExtensionPage(path: string, sessionKey: string): Promise<void> {
-  const existingId = await readStoredTabId(sessionKey)
-  if (existingId !== null && (await focusExistingTab(existingId))) {
-    return
-  }
-  if (existingId !== null) {
-    await clearStoredTabId(sessionKey)
-  }
+async function focusOrCreateExtensionPage(path: string, sessionKey: string): Promise<boolean> {
+  try {
+    const existingId = await readStoredTabId(sessionKey)
+    if (existingId !== null && (await focusExistingTab(existingId))) {
+      return true
+    }
+    if (existingId !== null) {
+      await clearStoredTabId(sessionKey)
+    }
 
-  const byUrlId = await findTabIdByExtensionPageUrl(path)
-  if (byUrlId !== null && (await focusExistingTab(byUrlId))) {
-    await writeStoredTabId(sessionKey, byUrlId)
-    return
-  }
+    const byUrlId = await findTabIdByExtensionPageUrl(path)
+    if (byUrlId !== null && (await focusExistingTab(byUrlId))) {
+      await writeStoredTabId(sessionKey, byUrlId)
+      return true
+    }
 
-  const created = await chrome.tabs.create({ url: chrome.runtime.getURL(path) })
-  if (typeof created.id === 'number') {
-    await writeStoredTabId(sessionKey, created.id)
+    const created = await chrome.tabs.create({ url: chrome.runtime.getURL(path) })
+    if (typeof created.id === 'number') {
+      await writeStoredTabId(sessionKey, created.id)
+      return true
+    }
+
+    logger.warn('ExtensionTab', '扩展页标签创建未返回 tabId', { path })
+    return false
+  } catch (error) {
+    logger.error('ExtensionTab', '打开扩展页失败', { path, error })
+    return false
   }
 }
 
 /** 快捷键 / 顶栏：打开或切到记忆库页。 */
-export async function focusOrOpenLibraryTab(): Promise<void> {
-  await focusOrCreateExtensionPage('library.html', LIBRARY_TAB_SESSION_KEY)
+export async function focusOrOpenLibraryTab(): Promise<boolean> {
+  return focusOrCreateExtensionPage('library.html', LIBRARY_TAB_SESSION_KEY)
 }
 
 /**
  * 快捷键 / 顶栏：打开或切到设置页。
  * 与记忆库同路径：session → URL 扫描 → 新建；避免 openOptionsPage 重复开 Tab。
  */
-export async function focusOrOpenSettingsTab(): Promise<void> {
-  await focusOrCreateExtensionPage(EXTENSION_OPTIONS_PAGE, SETTINGS_TAB_SESSION_KEY)
+export async function focusOrOpenSettingsTab(): Promise<boolean> {
+  return focusOrCreateExtensionPage(EXTENSION_OPTIONS_PAGE, SETTINGS_TAB_SESSION_KEY)
 }
 
 /** Side Panel / 安装引导：打开或切到 Getting Started 页。 */
-export async function focusOrOpenGettingStartedTab(): Promise<void> {
-  await focusOrCreateExtensionPage('getting-started.html', GETTING_STARTED_TAB_SESSION_KEY)
+export async function focusOrOpenGettingStartedTab(): Promise<boolean> {
+  return focusOrCreateExtensionPage('getting-started.html', GETTING_STARTED_TAB_SESSION_KEY)
 }

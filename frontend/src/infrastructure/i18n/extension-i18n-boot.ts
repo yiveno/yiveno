@@ -6,6 +6,9 @@ import { logger } from '@/infrastructure/logging/logger'
 /** 扩展 HTML 页面入口 id（与 Vite 多页入口一一对应）。 */
 export type ExtensionPageId = 'sidepanel' | 'settings' | 'library' | 'detail' | 'getting_started'
 
+/** Content script bundle id（独立入口，无 document title）。 */
+export type ContentScriptBundleId = 'selection_toolbar'
+
 const EXTENSION_PAGE_TITLE_KEYS: Record<ExtensionPageId, MessageKey> = {
   sidepanel: 'page_title_sidepanel',
   settings: 'page_title_settings',
@@ -32,11 +35,44 @@ const CRITICAL_MESSAGE_KEYS_BY_PAGE: Record<ExtensionPageId, readonly MessageKey
   getting_started: ['getting_started_hero_title', 'getting_started_steps_aria', 'nav_aria_label']
 }
 
+/** 划词浮层首屏关键文案（Save / Note / Try recall / 错误态）。 */
+export const SELECTION_TOOLBAR_CRITICAL_MESSAGE_KEYS: readonly MessageKey[] = [
+  'context_menu_save_selection',
+  'selection_toolbar_add_note',
+  'selection_toolbar_note_placeholder',
+  'selection_toolbar_note_cancel',
+  'selection_toolbar_note_save',
+  'selection_toolbar_try_recall',
+  'selection_toolbar_try_recall_aria',
+  'selection_toolbar_try_recall_aria_generic',
+  'selection_toolbar_open_recall_failed',
+  'selection_toolbar_selection_gone',
+  'selection_toolbar_saving',
+  'selection_toolbar_failed',
+  'selection_toolbar_saved',
+  'selection_toolbar_saved_hint',
+  'selection_toolbar_saved_hint_generic'
+]
+
+const CRITICAL_MESSAGE_KEYS_BY_CONTENT_SCRIPT: Record<
+  ContentScriptBundleId,
+  readonly MessageKey[]
+> = {
+  selection_toolbar: SELECTION_TOOLBAR_CRITICAL_MESSAGE_KEYS
+}
+
 /** 合并页面 title 与首屏关键 key，供启动门禁使用。 */
 export function getCriticalMessageKeysForPage(page: ExtensionPageId): readonly MessageKey[] {
   const titleKey = EXTENSION_PAGE_TITLE_KEYS[page]
   const pageKeys = CRITICAL_MESSAGE_KEYS_BY_PAGE[page]
   return [titleKey, ...pageKeys]
+}
+
+/** 合并 content script bundle 关键 key，供启动门禁使用。 */
+export function getCriticalMessageKeysForContentScript(
+  bundle: ContentScriptBundleId
+): readonly MessageKey[] {
+  return CRITICAL_MESSAGE_KEYS_BY_CONTENT_SCRIPT[bundle]
 }
 
 /** 返回 `t(key) === key` 的 key 列表（未解析或缺文案）。 */
@@ -61,6 +97,21 @@ export function warnIfExtensionPageMessagesMissing(page: ExtensionPageId): void 
   }
   logger.warn('i18n', '关键扩展页文案未解析（将露出 message key）', {
     page,
+    missingKeys: missing,
+    hint: '运行 frontend build/build:watch 同步 dist/_locales，并在 chrome://extensions 刷新 Yiveno'
+  })
+}
+
+/**
+ * Content script 冷启动门禁：校验浮层关键文案是否已由 chrome.i18n 解析。
+ */
+export function warnIfContentScriptMessagesMissing(bundle: ContentScriptBundleId): void {
+  const missing = findMissingExtensionMessages(getCriticalMessageKeysForContentScript(bundle))
+  if (missing.length === 0) {
+    return
+  }
+  logger.warn('i18n', '关键 content script 文案未解析（将露出 message key）', {
+    bundle,
     missingKeys: missing,
     hint: '运行 frontend build/build:watch 同步 dist/_locales，并在 chrome://extensions 刷新 Yiveno'
   })

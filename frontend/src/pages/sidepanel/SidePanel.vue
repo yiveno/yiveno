@@ -18,8 +18,8 @@ import {
 } from '@/core/recall/recall-shell-empty-copy'
 import { getTimeOfDayGreeting } from '@/core/recall/time-of-day-greeting'
 import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
-import { getMemoryItemDisplay } from '@/core/recall/recall-result'
 import { RECALL_RESULT_PAGE_SIZE } from '@/core/recall/build-recall-result'
+import { resolveNextRecallVisibleCount } from '@/core/recall/recall-result-visible-count'
 import { computeComposerPlaceholder } from '@/core/recall/compute-composer-placeholder'
 import { extractComposerNarrowExamples } from '@/core/recall/extract-composer-narrow-examples'
 import { resolveThreadFindTitle } from '@/core/recall/resolve-thread-anchor-label'
@@ -27,12 +27,8 @@ import {
   collectThreadAnchorTerms,
   shouldOfferThreadPivotConfirm
 } from '@/core/recall/should-offer-thread-pivot-confirm'
-import { buildRecallCardHighlightParts } from '@/core/recall/highlight-recall-text'
-import { explainRecallMatch } from '@/core/recall/explain-recall-match'
 import { renderRecallFraming } from '@/core/recall/render-recall-framing'
 import type { RecallFramingFacts } from '@/core/recall/recall-framing-facts'
-import { formatRecallSavedTime } from '@/core/recall/format-recall-saved-time'
-import { getMemoryItemOpenHref } from '@/core/recall/memory-open-href'
 import { tImportStateError, tRecallError } from '@/infrastructure/i18n/background-error'
 import { openGettingStartedPage } from '@/infrastructure/browser/getting-started-page'
 import { t } from '@/infrastructure/i18n/t'
@@ -85,8 +81,11 @@ import {
   type RecallOutcomeSessionState
 } from '@/application/recall/commit-recall-outcome'
 import { createRecallTelemetryRecorder } from '@/infrastructure/analytics/recall-telemetry-recorder'
+import { toRecallMatchCard } from '@/pages/sidepanel/recall-match-card'
 
 defineOptions({ name: 'SidePanelPage' })
+
+const recallDetailPageUrl = chrome.runtime.getURL('detail.html')
 
 const clue = ref('')
 const clueInputRef = ref<InstanceType<typeof RecallComposer> | null>(null)
@@ -667,8 +666,7 @@ function handleShowMoreMatches(turnId: string, mode: 'page' | 'all' = 'page'): v
       return turn
     }
     const currentVisible = turn.visibleCount ?? RECALL_RESULT_PAGE_SIZE
-    const nextVisible =
-      mode === 'all' ? total : Math.min(total, currentVisible + RECALL_RESULT_PAGE_SIZE)
+    const nextVisible = resolveNextRecallVisibleCount(currentVisible, total, mode)
     const rankedTotal = turn.rankedTotalCount ?? total
     const nextText =
       turn.recallFramingFacts !== undefined
@@ -691,76 +689,10 @@ function toMatchCard(
   resultClue: string,
   options: { includeSiblings?: boolean; rank?: number } = {}
 ): RecallCardModel {
-  const display = getMemoryItemDisplay(match.item, t)
-  const explanation = explainRecallMatch(
-    {
-      clue: resultClue,
-      matchedFields: match.matchedFields,
-      item: match.item
-    },
-    t
-  )
-  const highlights = buildRecallCardHighlightParts({
-    clue: resultClue,
-    matchedFields: match.matchedFields,
-    item: match.item,
-    title: display.title,
-    subtitle: display.subtitle,
-    ...(display.excerpt === undefined ? {} : { excerpt: display.excerpt }),
-    ...(display.note === undefined ? {} : { note: display.note })
+  return toRecallMatchCard(match, resultClue, t, {
+    ...options,
+    detailPageUrl: recallDetailPageUrl
   })
-
-  const duplicateTotalCount = match.duplicateGroup?.totalCount
-  const duplicateLabel =
-    duplicateTotalCount !== undefined && duplicateTotalCount >= 2
-      ? match.item.type === 'bookmark'
-        ? t('popup_duplicate_group_bookmark', String(duplicateTotalCount))
-        : t('popup_duplicate_group_excerpt', String(duplicateTotalCount))
-      : undefined
-
-  const savedLabels = formatRecallSavedTime(match.item.createdAt, {
-    justSavedLabel: t('recall_card_saved_just_now')
-  })
-
-  const siblings =
-    options.includeSiblings !== false && match.duplicateGroup
-      ? match.duplicateGroup.siblings.map(sibling =>
-          toMatchCard(sibling, resultClue, { includeSiblings: false })
-        )
-      : undefined
-
-  return {
-    id: match.item.id,
-    itemKind: match.item.type === 'bookmark' ? 'bookmark' : 'text_excerpt',
-    title: display.title,
-    subtitle: display.subtitle,
-    url: getMemoryItemOpenHref(match.item, {
-      detailPageUrl: chrome.runtime.getURL('detail.html')
-    }),
-    typeLabel: display.typeLabel,
-    savedAtIso: match.item.createdAt,
-    reasonLine: explanation.reasonLine,
-    reasonCodes: [...new Set(match.matchedFields)],
-    ...(savedLabels
-      ? {
-          savedAtLabel: t('recall_card_saved', savedLabels.relative),
-          savedAtTitle: savedLabels.absolute
-        }
-      : {}),
-    titleParts: highlights.titleParts,
-    subtitleParts: highlights.subtitleParts,
-    excerptParts: highlights.excerptParts,
-    noteParts: highlights.noteParts,
-    ...(display.excerpt === undefined ? {} : { excerpt: display.excerpt }),
-    ...(display.note === undefined ? {} : { note: display.note }),
-    ...(duplicateTotalCount !== undefined &&
-    duplicateTotalCount >= 2 &&
-    duplicateLabel !== undefined
-      ? { duplicateTotalCount, duplicateLabel }
-      : {}),
-    ...(siblings && siblings.length > 0 ? { siblings } : {}),
-    ...(options.rank !== undefined ? { telemetryRank: options.rank } : {})
-  }
 }
 
 function toggleDuplicateGroup(cardId: string): void {

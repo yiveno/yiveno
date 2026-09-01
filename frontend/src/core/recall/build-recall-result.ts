@@ -18,6 +18,12 @@ import type { MemoryItem } from '@/core/memory/memory-item'
 export const RECALL_RESULT_PAGE_SIZE = 5
 
 /**
+ * 单轮 Recall UI 同时挂载的结果卡软顶（Show all 不超过此值，防长邻域撑爆 DOM）。
+ * 排序池仍可大于此值；Framing 文案用 rankedTotalCount 诚实披露。
+ */
+export const RECALL_RESULT_MAX_VISIBLE_DOM = 20
+
+/**
  * 交给 UI 的排序池软顶（折叠+互斥后）。
  * 超过此数仍截断；文案用 totalRankedCount 告知用户池内条数。
  */

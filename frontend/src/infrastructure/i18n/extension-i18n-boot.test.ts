@@ -3,7 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   bootExtensionPage,
   findMissingExtensionMessages,
+  getCriticalMessageKeysForContentScript,
   getCriticalMessageKeysForPage,
+  warnIfContentScriptMessagesMissing,
   warnIfExtensionPageMessagesMissing
 } from '@/infrastructure/i18n/extension-i18n-boot'
 import { logger } from '@/infrastructure/logging/logger'
@@ -90,5 +92,25 @@ describe('extension-i18n-boot', () => {
     bootExtensionPage('detail')
     expect(document.documentElement.lang).toBe('en-US')
     expect(document.title).toBe('resolved:page_title_detail')
+  })
+
+  it('划词浮层关键 key 含 Save / Try recall', () => {
+    const keys = getCriticalMessageKeysForContentScript('selection_toolbar')
+    expect(keys).toContain('context_menu_save_selection')
+    expect(keys).toContain('selection_toolbar_try_recall')
+  })
+
+  it('content script 缺关键文案时打 warn 并带上 bundle', () => {
+    getMessage.mockReturnValue('')
+    const warnSpy = vi.spyOn(logger, 'warn')
+    warnIfContentScriptMessagesMissing('selection_toolbar')
+    expect(warnSpy).toHaveBeenCalledWith(
+      'i18n',
+      '关键 content script 文案未解析（将露出 message key）',
+      expect.objectContaining({
+        bundle: 'selection_toolbar',
+        missingKeys: expect.arrayContaining(['selection_toolbar_try_recall'])
+      })
+    )
   })
 })

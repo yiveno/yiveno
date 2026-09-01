@@ -198,6 +198,8 @@ function handleBookmarkActivate(event: MouseEvent | KeyboardEvent) {
   box-sizing: border-box;
   padding-bottom: var(--library-list-row-gap, var(--space-xs));
   overflow: visible;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 80px;
 }
 
 .tree-row--folder {

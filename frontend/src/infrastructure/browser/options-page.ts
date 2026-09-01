@@ -4,5 +4,8 @@
 import { focusOrOpenSettingsTab } from '@/infrastructure/browser/extension-tab'
 
 export async function openExtensionOptionsPage(): Promise<void> {
-  await focusOrOpenSettingsTab()
+  const ok = await focusOrOpenSettingsTab()
+  if (!ok) {
+    throw new Error('OPEN_SETTINGS_FAILED')
+  }
 }

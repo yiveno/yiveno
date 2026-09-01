@@ -6,24 +6,47 @@ import {
 } from '@/pages/getting-started/getting-started-progress'
 import {
   EXCERPT_CAPTURE_COUNT_LOCAL_KEY,
-  FIRST_RECALL_OPEN_DONE_LOCAL_KEY
+  FIRST_RECALL_OPEN_DONE_LOCAL_KEY,
+  GETTING_STARTED_RECALL_SHELL_OPENED_LOCAL_KEY
 } from '@/infrastructure/storage/first-recall-onboarding-storage'
 
 describe('getting-started-progress', () => {
   it('deriveGettingStartedProgress 两步皆完成时 allDone', () => {
     expect(
-      deriveGettingStartedProgress({ excerptCaptureCount: 2, firstRecallOpenDone: true })
+      deriveGettingStartedProgress({
+        excerptCaptureCount: 2,
+        firstRecallOpenDone: true,
+        gettingStartedRecallShellOpened: false
+      })
     ).toEqual({
       captureDone: true,
       recallDone: true,
       allDone: true
     })
     expect(
-      deriveGettingStartedProgress({ excerptCaptureCount: 0, firstRecallOpenDone: false })
+      deriveGettingStartedProgress({
+        excerptCaptureCount: 0,
+        firstRecallOpenDone: false,
+        gettingStartedRecallShellOpened: false
+      })
     ).toEqual({
       captureDone: false,
       recallDone: false,
       allDone: false
+    })
+  })
+
+  it('deriveGettingStartedProgress 打开 Recall 主壳即 recallDone', () => {
+    expect(
+      deriveGettingStartedProgress({
+        excerptCaptureCount: 1,
+        firstRecallOpenDone: false,
+        gettingStartedRecallShellOpened: true
+      })
+    ).toEqual({
+      captureDone: true,
+      recallDone: true,
+      allDone: true
     })
   })
 
@@ -37,6 +60,12 @@ describe('getting-started-progress', () => {
     expect(
       shouldRefreshGettingStartedProgress(
         { [FIRST_RECALL_OPEN_DONE_LOCAL_KEY]: { newValue: true } },
+        'local'
+      )
+    ).toBe(true)
+    expect(
+      shouldRefreshGettingStartedProgress(
+        { [GETTING_STARTED_RECALL_SHELL_OPENED_LOCAL_KEY]: { newValue: true } },
         'local'
       )
     ).toBe(true)

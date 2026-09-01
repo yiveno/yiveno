@@ -212,5 +212,7 @@ function excerptRowMemoDeps(row: ExcerptLibraryListRow): unknown[] {
 
 .excerpt-library-item {
   min-width: 0;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 80px;
 }
 </style>

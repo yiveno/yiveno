@@ -13,6 +13,11 @@ import {
   EXTENSION_CWS_PERMISSIONS,
   EXTENSION_CWS_SHORT_DESCRIPTION
 } from '@/core/extension/extension-cws-contract'
+import {
+  applyExtensionManifestHostPermissions,
+  EXTENSION_CWS_HOST_PERMISSIONS_PRODUCTION,
+  EXTENSION_LOCAL_DEV_API_HOST_PERMISSION
+} from '@/core/extension/extension-manifest-profile'
 
 interface ExtensionManifest {
   version?: string
@@ -100,5 +105,16 @@ describe('CHROMEWEBSTORE ↔ manifest 契约', () => {
   it('CHROMEWEBSTORE 文档路径常量可解析', () => {
     expect(CHROMEWEBSTORE_DOC_PATH).toBe('CHROMEWEBSTORE.md')
     expect(readFileSync(cwsDocPath, 'utf8').length).toBeGreaterThan(0)
+  })
+
+  it('production manifest profile 剔除 localhost API host', () => {
+    const manifest = readManifest()
+    expect(manifest.host_permissions).toContain(EXTENSION_LOCAL_DEV_API_HOST_PERMISSION)
+
+    const production = applyExtensionManifestHostPermissions(manifest, 'production')
+    expect(production.host_permissions).not.toContain(EXTENSION_LOCAL_DEV_API_HOST_PERMISSION)
+    expect([...(production.host_permissions ?? [])]).toEqual([
+      ...EXTENSION_CWS_HOST_PERMISSIONS_PRODUCTION
+    ])
   })
 })

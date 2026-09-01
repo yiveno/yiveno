@@ -12,6 +12,19 @@ import { logger } from '@/infrastructure/logging/logger'
 
 let listenersRegistered = false
 
+/** 打开库/设置失败时闪 action badge，与划词 no_receiver 一致。 */
+async function runOpenExtensionPageCommand(
+  openPage: () => Promise<boolean>,
+  commandId: 'open_library' | 'open_settings'
+): Promise<void> {
+  const ok = await openPage()
+  if (ok) {
+    return
+  }
+  logger.warn('Commands', '打开扩展页失败', { commandId })
+  await flashActionBadge('error')
+}
+
 /**
  * 注册自定义命令处理器与 chrome.commands.onCommand 监听。
  * `_execute_action` / 工具栏点击由 `ensureSidePanelOpensOnActionClick` 打开 Side Panel，不进入本 `onCommand` 路径。
@@ -24,11 +37,11 @@ export function registerCommandListeners(): void {
   listenersRegistered = true
 
   registerExtensionCommandHandler('open_library', async () => {
-    await focusOrOpenLibraryTab()
+    await runOpenExtensionPageCommand(focusOrOpenLibraryTab, 'open_library')
   })
 
   registerExtensionCommandHandler('open_settings', async () => {
-    await focusOrOpenSettingsTab()
+    await runOpenExtensionPageCommand(focusOrOpenSettingsTab, 'open_settings')
   })
 
   registerExtensionCommandHandler('save_selection', async () => {

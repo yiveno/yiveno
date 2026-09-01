@@ -6,8 +6,10 @@ import { buildRecallPrefillClue } from '@/core/recall/build-prefill-clue'
 import { captureTextExcerpt, openRecallShell } from '@/infrastructure/messaging/background-client'
 import { t } from '@/infrastructure/i18n/t'
 import {
+  markGettingStartedRecallShellOpened,
   readExcerptCaptureCount,
   readFirstRecallOpenDone,
+  readGettingStartedRecallShellOpened,
   writeRecallPrefill
 } from '@/infrastructure/storage/first-recall-onboarding-storage'
 import { markInstallOnboardingDone } from '@/infrastructure/storage/install-onboarding-storage'
@@ -41,13 +43,15 @@ const demoContextAfter = computed(() => t('getting_started_demo_context_after'))
 const allDone = computed(() => captureDone.value && recallDone.value)
 
 async function refreshProgress(): Promise<void> {
-  const [captureCount, firstRecallOpenDone] = await Promise.all([
+  const [captureCount, firstRecallOpenDone, gettingStartedRecallShellOpened] = await Promise.all([
     readExcerptCaptureCount(),
-    readFirstRecallOpenDone()
+    readFirstRecallOpenDone(),
+    readGettingStartedRecallShellOpened()
   ])
   const progress = deriveGettingStartedProgress({
     excerptCaptureCount: captureCount,
-    firstRecallOpenDone
+    firstRecallOpenDone,
+    gettingStartedRecallShellOpened
   })
   captureDone.value = progress.captureDone
   recallDone.value = progress.recallDone
@@ -109,7 +113,10 @@ async function handleTryRecall(): Promise<void> {
     const response = await openRecallShell()
     if (!response.ok) {
       recallError.value = t('selection_toolbar_open_recall_failed')
+      return
     }
+    await markGettingStartedRecallShellOpened()
+    recallDone.value = true
   } catch {
     recallError.value = t('selection_toolbar_open_recall_failed')
   } finally {

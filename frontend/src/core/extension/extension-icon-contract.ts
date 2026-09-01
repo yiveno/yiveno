@@ -13,3 +13,35 @@ export const EXTENSION_ICON_FILES: Record<ExtensionIconSize, string> = {
   '48': 'images/icon48.png',
   '128': 'images/icon128.png'
 }
+
+/** 扩展页 HTML `<link rel="icon">` 使用的尺寸（与商店 icon 同源 PNG）。 */
+export const EXTENSION_PAGE_FAVICON_SIZES = [
+  '32',
+  '16'
+] as const satisfies readonly ExtensionIconSize[]
+
+/**
+ * 扩展页 favicon href（Vite 页用 `/images/...`，clean-dist 会改为 `./images/...`）。
+ * offscreen 等 public 直出页请用 `./${EXTENSION_ICON_FILES[size]}`。
+ */
+export function extensionPageFaviconHref(
+  size: (typeof EXTENSION_PAGE_FAVICON_SIZES)[number],
+  options: { rootRelative?: boolean } = {}
+): string {
+  const path = EXTENSION_ICON_FILES[size]
+  return options.rootRelative === false ? `./${path}` : `/${path}`
+}
+
+/** 生成扩展页 head 内 favicon link 标签（用于文档 / 人工同步 HTML）。 */
+export function buildExtensionPageFaviconLinkMarkup(
+  options: { rootRelative?: boolean } = {}
+): string {
+  const sizeAttr: Record<(typeof EXTENSION_PAGE_FAVICON_SIZES)[number], string> = {
+    '32': '32x32',
+    '16': '16x16'
+  }
+  return EXTENSION_PAGE_FAVICON_SIZES.map(size => {
+    const href = extensionPageFaviconHref(size, options)
+    return `<link rel="icon" type="image/png" sizes="${sizeAttr[size]}" href="${href}" />`
+  }).join('\n    ')
+}

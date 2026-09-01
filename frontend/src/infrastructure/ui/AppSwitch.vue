@@ -86,10 +86,11 @@ function onToggle() {
   border-radius: var(--radius-full);
   background: var(--surface-raised);
   box-shadow: var(--shadow-ink-sm);
-  transition: left var(--motion-duration-short) var(--motion-easing-standard);
+  transform: translateX(0);
+  transition: transform var(--motion-duration-short) var(--motion-easing-standard);
 }
 
 .app-switch[aria-checked='true'] .app-switch__thumb {
-  left: 24px;
+  transform: translateX(20px);
 }
 </style>

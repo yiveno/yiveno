@@ -5,5 +5,8 @@
 import { focusOrOpenLibraryTab } from '@/infrastructure/browser/extension-tab'
 
 export async function openExtensionLibraryPage(): Promise<void> {
-  await focusOrOpenLibraryTab()
+  const ok = await focusOrOpenLibraryTab()
+  if (!ok) {
+    throw new Error('OPEN_LIBRARY_FAILED')
+  }
 }

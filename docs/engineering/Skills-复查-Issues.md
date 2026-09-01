@@ -20,10 +20,132 @@
 
 | 严重度 | 未关闭 |
 | ------ | -----: |
-| P1     |     18 |
-| P2     |     14 |
+| P1     |      0 |
+| P2     |      0 |
 
-> 统计口径：下表状态为 **延后** 或 **不采纳** 的条目（2026-08-31）。
+> 统计口径：状态为 **延后** 的条目（2026-09-01）。收益序非上架项已全部结案。
+
+## 待办收益排序（不含上架 · 2026-08-31）
+
+1. ~~A9-6 书签监听空窗~~ ✅
+2. ~~A4-6 bootstrap 失败可观测/可重试~~ ✅
+3. ~~A5-6 `GET_BOOKMARK_LIBRARY_TREE` Zod~~ ✅
+4. ~~B3-6 / B2-7 Show more DOM 软顶（20）~~ ✅
+5. ~~B2-6 会话线程未虚拟化~~ ✅
+6. ~~B8-8 content script boot 门禁~~ ✅
+7. ~~B6-6 Getting Started 成功态~~ ✅
+8. ~~B5-6 Settings pushState 历史栈~~ ✅
+9. ~~A3-6 打开库/设置失败无 badge~~ ✅
+10. ~~B8-7 全量 en 扫禁用词~~ ✅
+11. ~~A10-6 storage.quota 监控~~ ✅
+12. ~~A3-7 extension-tab 全量 query~~ ✅
+13. ~~B5-7 Settings.vue 过大~~ ✅
+14. ~~B3-7 toMatchCard 抽测~~ ✅
+15. ~~A5-7 offscreen PING~~ ✅
+16. ~~B1-6 Library content-visibility~~ ✅
+17. ~~B4-5 Shadow 品牌色~~ ✅
+18. ~~A12-6 HTML favicon~~ ✅
+19. ~~B7-7 AppSwitch thumb~~ ✅
+20. ~~B7-8 Storybook~~（不采纳）
+21. ~~A14-6 商店截图（上架 · 最低）~~ ✅
+22. ~~A14-7 localhost 生产包策略~~ ✅
+
+## 落实进度（Backlog 批次 1 · 2026-08-31）
+
+| ID    | 改动摘要                                                                 |
+| ----- | ------------------------------------------------------------------------ |
+| A9-6  | `attachChromeBookmarkSyncListenersAtStartup()` + `main.ts` 同步挂监听    |
+| A4-6  | `bootstrap` `flowStart/flowOk/flowFail`；失败清空 promise 可重试（单测） |
+| A5-6  | `parseGetBookmarkLibraryTreePayload` + `message-handler` 接入            |
+| B3/B2 | `RECALL_RESULT_MAX_VISIBLE_DOM=20` + `resolveNextRecallVisibleCount`     |
+
+## 落实进度（Backlog 批次 2 · 2026-08-31）
+
+| ID   | 改动摘要                                                                       |
+| ---- | ------------------------------------------------------------------------------ |
+| B2-6 | `recall-conversation-turn-window.ts` 尾部 14 turn 软顶 + Show earlier          |
+| B8-8 | `warnIfContentScriptMessagesMissing('selection_toolbar')` + 划词入口调用       |
+| B6-6 | `gettingStartedRecallShellOpened` storage；`openRecallShell` 成功即 recallDone |
+
+## 落实进度（Backlog 批次 3 · 2026-08-31）
+
+| ID   | 改动摘要                                                   |
+| ---- | ---------------------------------------------------------- |
+| B5-6 | tab 切换 `pushState`；首屏 `replace`；`popstate` 恢复 skip |
+
+## 落实进度（Backlog 批次 4 · 2026-08-31）
+
+| ID   | 改动摘要                                                                       |
+| ---- | ------------------------------------------------------------------------------ |
+| A3-6 | `focusOrOpen*` 返回 boolean；`open_library`/`open_settings` 失败闪 error badge |
+
+## 落实进度（Backlog 批次 5 · 2026-08-31）
+
+| ID   | 改动摘要                                                              |
+| ---- | --------------------------------------------------------------------- |
+| B8-7 | `product-surface-label-policy.ts` + `i18n:check` 全量扫 Search 禁用词 |
+
+## 落实进度（Backlog 批次 6 · 2026-08-31）
+
+| ID    | 改动摘要                                               |
+| ----- | ------------------------------------------------------ |
+| A10-6 | `chrome-storage-quota.ts` bootstrap 采样；≥80% 打 warn |
+
+## 落实进度（Backlog 批次 7 · 2026-08-31）
+
+| ID   | 改动摘要                                               |
+| ---- | ------------------------------------------------------ |
+| A3-7 | `tabs.query({ url: getURL(path)+'*' })` 替代全量扫标签 |
+
+## 落实进度（Backlog 批次 8 · 2026-08-31）
+
+| ID   | 改动摘要                                                                                                             |
+| ---- | -------------------------------------------------------------------------------------------------------------------- |
+| B5-7 | `use-settings-page.ts` + `SettingsSectionPanels` / `SettingsPageDialogs` + `settings-panel.css`；`Settings.vue` 瘦壳 |
+
+## 落实进度（Backlog 批次 9 · 2026-08-31）
+
+| ID   | 改动摘要                                                                          |
+| ---- | --------------------------------------------------------------------------------- |
+| B3-7 | `recall-match-card.ts` 抽出 `toRecallMatchCard`；`recall-match-card.test.ts` 8 条 |
+
+## 落实进度（Backlog 批次 10 · 2026-08-31）
+
+| ID   | 改动摘要                                                               |
+| ---- | ---------------------------------------------------------------------- |
+| A5-7 | `offscreen-message.ts` PING `return true`；`offscreen-message.test.ts` |
+| B1-6 | 书签行 / 摘录行 `content-visibility: auto`（虚拟列表叠加优化）         |
+
+## 落实进度（Backlog 批次 11 · 2026-08-31）
+
+| ID   | 改动摘要                                                                                  |
+| ---- | ----------------------------------------------------------------------------------------- |
+| B4-5 | `selection-toolbar-shadow-styles.ts`：Shadow 注入 brand/semantic token + `var()` 组件样式 |
+
+## 落实进度（Backlog 批次 12 · 2026-08-31）
+
+| ID    | 改动摘要                                                                                    |
+| ----- | ------------------------------------------------------------------------------------------- |
+| A12-6 | `extension-icon-contract` favicon 辅助；五页已有链；`offscreen.html` 补 icon16/32；契约单测 |
+
+## 落实进度（Backlog 批次 13 · 2026-08-31）
+
+| ID   | 改动摘要                                                         |
+| ---- | ---------------------------------------------------------------- |
+| B7-7 | `AppSwitch` thumb `left` → `transform: translateX`；样式契约单测 |
+
+## 落实进度（Backlog 批次 14 · 2026-09-01）
+
+| ID    | 改动摘要                                                                                |
+| ----- | --------------------------------------------------------------------------------------- |
+| A14-7 | `extension-manifest-profile.ts`；`build:prod` / `clean-dist` 剔除 `localhost:8787` host |
+| B7-8  | Storybook 标 **不采纳**（台账结案）                                                     |
+
+## 落实进度（Backlog 批次 15 · 2026-09-01）
+
+| ID    | 改动摘要                                                                                                                                |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| A14-6 | CWS 截图/promo 母本落盘 `brand-assets/chrome-web-store/`；`extension-cws-graphics-contract` + 单测；`CHROMEWEBSTORE.md` Graphics 表更新 |
 
 ---
 
@@ -61,15 +183,15 @@
 
 **模块状态：** 🔧 · 审计 2026-08-30
 
-| #   | 项                                                              | 严重 | 状态   | 处置 / 备注                                 |
-| --- | --------------------------------------------------------------- | ---- | ------ | ------------------------------------------- |
-| 1   | `_execute_action` 无 popup → Side Panel                         | —    | 已合规 | A2 已覆盖；契约单测加固                     |
-| 2   | 自定义命令经 registry 白名单                                    | —    | 已合规 | 保持                                        |
-| 3   | `registerCommandListeners` 仅在 bootstrap，冷启动首按快捷键丢失 | P0   | 已修   | `main.ts` 入口提前注册                      |
-| 4   | manifest `commands` 与 `EXTENSION_COMMAND_IDS` 无对齐门禁       | P0   | 已修   | `manifest-action-commands-contract.test.ts` |
-| 5   | `suggested_key` 数量 / i18n `__MSG_`                            | —    | 已合规 | 单测锁定 ≤4                                 |
-| 6   | `open_library` / `open_settings` 失败无 action badge            | P1   | 延后   | 仅划词 `no_receiver` 闪错                   |
-| 7   | `extension-tab` 全量 `tabs.query({})` 扫库页                    | P2   | 延后   | 后续优化                                    |
+| #   | 项                                                              | 严重 | 状态   | 处置 / 备注                                         |
+| --- | --------------------------------------------------------------- | ---- | ------ | --------------------------------------------------- |
+| 1   | `_execute_action` 无 popup → Side Panel                         | —    | 已合规 | A2 已覆盖；契约单测加固                             |
+| 2   | 自定义命令经 registry 白名单                                    | —    | 已合规 | 保持                                                |
+| 3   | `registerCommandListeners` 仅在 bootstrap，冷启动首按快捷键丢失 | P0   | 已修   | `main.ts` 入口提前注册                              |
+| 4   | manifest `commands` 与 `EXTENSION_COMMAND_IDS` 无对齐门禁       | P0   | 已修   | `manifest-action-commands-contract.test.ts`         |
+| 5   | `suggested_key` 数量 / i18n `__MSG_`                            | —    | 已合规 | 单测锁定 ≤4                                         |
+| 6   | `open_library` / `open_settings` 失败无 action badge            | P1   | 已修   | `runOpenExtensionPageCommand` + badge（2026-08-31） |
+| 7   | `extension-tab` 全量 `tabs.query({})` 扫库页                    | P2   | 已修   | `buildExtensionPageTabQueryPattern`（2026-08-31）   |
 
 ---
 
@@ -84,7 +206,7 @@
 | 3   | `ensureBackgroundBootstrapped` 幂等、并发合并                   | —    | 已合规 | 保持                                          |
 | 4   | A2/A3/A6 冷启动监听模式统一                                     | —    | 已合规 | 已形成模式                                    |
 | 5   | 无 `runtime.onStartup`                                          | P1   | 不采纳 | 每次 SW wake 已 bootstrap，可接受             |
-| 6   | bootstrap 首次失败仅打日志                                      | P2   | 延后   | 靠下次消息重试                                |
+| 6   | bootstrap 首次失败仅打日志                                      | P2   | 已修   | `flowFail` + 失败可重试单测（2026-08-31）     |
 
 ---
 
@@ -92,15 +214,15 @@
 
 **模块状态：** 🔧 · 审计 2026-08-30
 
-| #   | 项                                                     | 严重 | 状态    | 处置 / 备注               |
-| --- | ------------------------------------------------------ | ---- | ------- | ------------------------- |
-| 1   | 单向数据流：UI → `background-client` → SW              | —    | 已合规  | 保持                      |
-| 2   | `scope` 分流 background / ui / content                 | —    | 已合规  | 补 `message-handler` 单测 |
-| 3   | registry ↔ handler `doc:check`                         | —    | 已合规  | 保持                      |
-| 4   | `sendBackgroundMessage` 无 try/catch，传输失败直接抛错 | P0   | 已修    | `MESSAGE_DISPATCH_FAILED` |
-| 5   | content script 直调 `sendMessage` 未走 client          | P1   | 已修·A6 | A6 改 `background-client` |
-| 6   | `GET_BOOKMARK_LIBRARY_TREE` payload 内联解析未走 Zod   | P1   | 延后    | handler 内联              |
-| 7   | offscreen `PING` listener 未 `return true`             | P2   | 延后    | 同步场景可工作            |
+| #   | 项                                                     | 严重 | 状态    | 处置 / 备注                                        |
+| --- | ------------------------------------------------------ | ---- | ------- | -------------------------------------------------- |
+| 1   | 单向数据流：UI → `background-client` → SW              | —    | 已合规  | 保持                                               |
+| 2   | `scope` 分流 background / ui / content                 | —    | 已合规  | 补 `message-handler` 单测                          |
+| 3   | registry ↔ handler `doc:check`                         | —    | 已合规  | 保持                                               |
+| 4   | `sendBackgroundMessage` 无 try/catch，传输失败直接抛错 | P0   | 已修    | `MESSAGE_DISPATCH_FAILED`                          |
+| 5   | content script 直调 `sendMessage` 未走 client          | P1   | 已修·A6 | A6 改 `background-client`                          |
+| 6   | `GET_BOOKMARK_LIBRARY_TREE` payload 内联解析未走 Zod   | P1   | 已修    | `parseGetBookmarkLibraryTreePayload`（2026-08-31） |
+| 7   | offscreen `PING` listener 未 `return true`             | P2   | 已修    | `offscreen-message.ts`（2026-08-31）               |
 
 ---
 
@@ -154,14 +276,14 @@
 
 **模块状态：** 🔧 · 审计 2026-08-30
 
-| #   | 项                                                  | 严重 | 状态   | 处置 / 备注                           |
-| --- | --------------------------------------------------- | ---- | ------ | ------------------------------------- |
-| 1   | 书签四事件写 IDB 前未 await bootstrap               | P0   | 已修   | `chrome-bookmark-sync.ts`             |
-| 2   | 灌库开关控制挂/卸监听                               | —    | 已合规 | 保持                                  |
-| 3   | pending 队列等 bulk import                          | —    | 已合规 | 保持                                  |
-| 4   | manifest `bookmarks` 无契约单测                     | P0   | 已修   | `manifest-bookmarks-contract.test.ts` |
-| 5   | `GET_BOOKMARK_LIBRARY_TREE` 经 handler 已 bootstrap | —    | 已合规 | 保持                                  |
-| 6   | SW 入口读设置前短暂无监听窗口                       | P1   | 延后   | 异步读 ingest 设置                    |
+| #   | 项                                                  | 严重 | 状态   | 处置 / 备注                                                |
+| --- | --------------------------------------------------- | ---- | ------ | ---------------------------------------------------------- |
+| 1   | 书签四事件写 IDB 前未 await bootstrap               | P0   | 已修   | `chrome-bookmark-sync.ts`                                  |
+| 2   | 灌库开关控制挂/卸监听                               | —    | 已合规 | 保持                                                       |
+| 3   | pending 队列等 bulk import                          | —    | 已合规 | 保持                                                       |
+| 4   | manifest `bookmarks` 无契约单测                     | P0   | 已修   | `manifest-bookmarks-contract.test.ts`                      |
+| 5   | `GET_BOOKMARK_LIBRARY_TREE` 经 handler 已 bootstrap | —    | 已合规 | 保持                                                       |
+| 6   | SW 入口读设置前短暂无监听窗口                       | P1   | 已修   | `attachChromeBookmarkSyncListenersAtStartup`（2026-08-31） |
 
 ---
 
@@ -169,14 +291,14 @@
 
 **模块状态：** 🔧 · 审计 2026-08-30
 
-| #   | 项                                          | 严重 | 状态   | 处置 / 备注                  |
-| --- | ------------------------------------------- | ---- | ------ | ---------------------------- |
-| 1   | `onAlarm` 增量同步未 await bootstrap        | P0   | 已修   | `memory-cloud-sync-alarm.ts` |
-| 2   | `storage`/`alarms` manifest + CWS 披露      | —    | 已合规 | 保持                         |
-| 3   | local/session Zod；sync 关则 `alarms.clear` | —    | 已合规 | 保持                         |
-| 4   | alarm 监听 A4 已提前                        | —    | 已合规 | 保持                         |
-| 5   | external handoff 归并 IDB 异步不阻塞官网    | P1   | 不采纳 | 设计如此                     |
-| 6   | 无 `storage.quota` 监控                     | P2   | 延后   | —                            |
+| #   | 项                                          | 严重 | 状态   | 处置 / 备注                                       |
+| --- | ------------------------------------------- | ---- | ------ | ------------------------------------------------- |
+| 1   | `onAlarm` 增量同步未 await bootstrap        | P0   | 已修   | `memory-cloud-sync-alarm.ts`                      |
+| 2   | `storage`/`alarms` manifest + CWS 披露      | —    | 已合规 | 保持                                              |
+| 3   | local/session Zod；sync 关则 `alarms.clear` | —    | 已合规 | 保持                                              |
+| 4   | alarm 监听 A4 已提前                        | —    | 已合规 | 保持                                              |
+| 5   | external handoff 归并 IDB 异步不阻塞官网    | P1   | 不采纳 | 设计如此                                          |
+| 6   | 无 `storage.quota` 监控                     | P2   | 已修   | `chrome-storage-quota.ts` bootstrap（2026-08-31） |
 
 ---
 
@@ -198,15 +320,15 @@
 
 **模块状态：** 🔧 · 审计 2026-08-30
 
-| #   | 项                                | 严重 | 状态    | 处置 / 备注         |
-| --- | --------------------------------- | ---- | ------- | ------------------- |
-| 1   | icon16/32/48/128 存在且尺寸正确   | —    | 已合规  | PNG IHDR 校验       |
-| 2   | `icons` ↔ `action.default_icon`   | —    | 已合规  | 权威表              |
-| 3   | 无自定义放宽 CSP / sandbox        | —    | 已合规  | MV3 默认            |
-| 4   | 扩展页仅 `type=module`；无 `eval` | —    | 已合规  | 契约单测            |
-| 5   | content_scripts 无远程/内联 CSS   | —    | 已合规  | 保持                |
-| 6   | 各页 HTML favicon 链 icon16/32    | P1   | 延后    | 非商店阻塞          |
-| 7   | `node:fs` 打进扩展包（构建阻断）  | P0   | 已修·B2 | icon 契约移回测试侧 |
+| #   | 项                                | 严重 | 状态    | 处置 / 备注                                                               |
+| --- | --------------------------------- | ---- | ------- | ------------------------------------------------------------------------- |
+| 1   | icon16/32/48/128 存在且尺寸正确   | —    | 已合规  | PNG IHDR 校验                                                             |
+| 2   | `icons` ↔ `action.default_icon`   | —    | 已合规  | 权威表                                                                    |
+| 3   | 无自定义放宽 CSP / sandbox        | —    | 已合规  | MV3 默认                                                                  |
+| 4   | 扩展页仅 `type=module`；无 `eval` | —    | 已合规  | 契约单测                                                                  |
+| 5   | content_scripts 无远程/内联 CSS   | —    | 已合规  | 保持                                                                      |
+| 6   | 各页 HTML favicon 链 icon16/32    | P1   | 已修    | 五页 + offscreen；`extension-page-favicon-contract.test.ts`（2026-08-31） |
+| 7   | `node:fs` 打进扩展包（构建阻断）  | P0   | 已修·B2 | icon 契约移回测试侧                                                       |
 
 ---
 
@@ -228,17 +350,17 @@
 
 ### A14 · CWS 合规全文
 
-**模块状态：** 🔧 · 审计 2026-08-30
+**模块状态：** ✅ · 审计 2026-08-30；母本图形 2026-09-01
 
-| #   | 项                                                        | 严重 | 状态   | 处置 / 备注                                |
-| --- | --------------------------------------------------------- | ---- | ------ | ------------------------------------------ |
-| 1   | permissions + host 均在 CWS 有理由                        | —    | 已合规 | 契约单测                                   |
-| 2   | content_scripts / omnibox / externally_connectable 已披露 | —    | 已合规 | 补 localhost 端口说明                      |
-| 3   | 短描述 ↔ `app_description`                                | —    | 已合规 | 单测锁定                                   |
-| 4   | `icon128` 128×128                                         | —    | 已合规 | A12 已验                                   |
-| 5   | manifest ↔ CWS 无自动门禁                                 | P0   | 已修   | `chromewebstore-manifest-contract.test.ts` |
-| 6   | 商店截图 / promo 未产出                                   | P1   | 延后   | 上架物料                                   |
-| 7   | `localhost:8787` 上架前生产包策略                         | P2   | 延后   | 发布前确认                                 |
+| #   | 项                                                        | 严重 | 状态   | 处置 / 备注                                                                    |
+| --- | --------------------------------------------------------- | ---- | ------ | ------------------------------------------------------------------------------ |
+| 1   | permissions + host 均在 CWS 有理由                        | —    | 已合规 | 契约单测                                                                       |
+| 2   | content_scripts / omnibox / externally_connectable 已披露 | —    | 已合规 | 补 localhost 端口说明                                                          |
+| 3   | 短描述 ↔ `app_description`                                | —    | 已合规 | 单测锁定                                                                       |
+| 4   | `icon128` 128×128                                         | —    | 已合规 | A12 已验                                                                       |
+| 5   | manifest ↔ CWS 无自动门禁                                 | P0   | 已修   | `chromewebstore-manifest-contract.test.ts`                                     |
+| 6   | 商店截图 / promo 未产出                                   | P1   | 已修   | 母本 + `chromewebstore-graphics-contract`（2026-09-01）；产品 UI 截图 3–5 待补 |
+| 7   | `localhost:8787` 上架前生产包策略                         | P2   | 已修   | `extension-manifest-profile` + `clean-dist` production 剥离（2026-09-01）      |
 
 ---
 
@@ -255,7 +377,7 @@
 | 3   | 摘录 Tab 全量 `v-for` 无虚拟化  | P0   | 已修   | `ExcerptLibraryList.vue`           |
 | 4   | detail export 多选触发全表重绘  | P1   | 已修   | `shallowRef` + `v-memo` + 行预计算 |
 | 5   | 书签树已有虚拟列表              | —    | 已合规 | 复用 stride 基建                   |
-| 6   | `content-visibility` 作叠加优化 | P2   | 延后   | 虚拟化已覆盖主路径                 |
+| 6   | `content-visibility` 作叠加优化 | P2   | 已修   | 书签行 / 摘录虚拟行（2026-08-31）  |
 
 ---
 
@@ -263,15 +385,15 @@
 
 **模块状态：** 🔧 · 审计 2026-08-30
 
-| #   | 项                                  | 严重 | 状态   | 处置 / 备注                  |
-| --- | ----------------------------------- | ---- | ------ | ---------------------------- |
-| 1   | 单层 flex 滚动                      | —    | 已合规 | 保持                         |
-| 2   | `background-client` 合规            | —    | 已合规 | 保持                         |
-| 3   | 空态 / composer a11y                | —    | 已合规 | 无 `Search` 文案             |
-| 4   | `scroll` 同步读布局                 | P0   | 已修   | `recall-shell-scroll.ts` rAF |
-| 5   | 长对话 turn 无 `content-visibility` | P0   | 已修   | `RecallConversation.vue`     |
-| 6   | 会话线程未虚拟化                    | P1   | 延后   | 会话通常短                   |
-| 7   | Show more 仍全量 DOM                | P2   | 延后   | 与 B3 重叠                   |
+| #   | 项                                  | 严重 | 状态    | 处置 / 备注                                        |
+| --- | ----------------------------------- | ---- | ------- | -------------------------------------------------- |
+| 1   | 单层 flex 滚动                      | —    | 已合规  | 保持                                               |
+| 2   | `background-client` 合规            | —    | 已合规  | 保持                                               |
+| 3   | 空态 / composer a11y                | —    | 已合规  | 无 `Search` 文案                                   |
+| 4   | `scroll` 同步读布局                 | P0   | 已修    | `recall-shell-scroll.ts` rAF                       |
+| 5   | 长对话 turn 无 `content-visibility` | P0   | 已修    | `RecallConversation.vue`                           |
+| 6   | 会话线程未虚拟化                    | P1   | 已修    | `recall-conversation-turn-window.ts`（2026-08-31） |
+| 7   | Show more 仍全量 DOM                | P2   | 已修·B3 | `RECALL_RESULT_MAX_VISIBLE_DOM`（2026-08-31）      |
 
 ---
 
@@ -279,15 +401,15 @@
 
 **模块状态：** 🔧 · 审计 2026-08-30
 
-| #   | 项                                        | 严重 | 状态   | 处置 / 备注                  |
-| --- | ----------------------------------------- | ---- | ------ | ---------------------------- |
-| 1   | TTE `evidenceVisible` 在 `onMounted` 即发 | P0   | 已修   | IO 可见后再发                |
-| 2   | 候选列表无 `v-memo`                       | P0   | 已修   | `recall-result-card-memo.ts` |
-| 3   | 长列表卡无 `content-visibility`           | P0   | 已修   | card group                   |
-| 4   | 点击 / evidence / favicon 内联无单测      | P0   | 已修   | 抽纯函数 + 单测              |
-| 5   | hover 无几何变换                          | —    | 已合规 | 保持                         |
-| 6   | 长 Show more 列表仍全量 DOM               | P1   | 延后   | —                            |
-| 7   | `toMatchCard` 仍在 `SidePanel.vue`        | P2   | 延后   | 未抽测                       |
+| #   | 项                                        | 严重 | 状态   | 处置 / 备注                                    |
+| --- | ----------------------------------------- | ---- | ------ | ---------------------------------------------- |
+| 1   | TTE `evidenceVisible` 在 `onMounted` 即发 | P0   | 已修   | IO 可见后再发                                  |
+| 2   | 候选列表无 `v-memo`                       | P0   | 已修   | `recall-result-card-memo.ts`                   |
+| 3   | 长列表卡无 `content-visibility`           | P0   | 已修   | card group                                     |
+| 4   | 点击 / evidence / favicon 内联无单测      | P0   | 已修   | 抽纯函数 + 单测                                |
+| 5   | hover 无几何变换                          | —    | 已合规 | 保持                                           |
+| 6   | 长 Show more 列表仍全量 DOM               | P1   | 已修   | `recall-result-visible-count.ts`（2026-08-31） |
+| 7   | `toMatchCard` 仍在 `SidePanel.vue`        | P2   | 已修   | `recall-match-card.ts` + 单测（2026-08-31）    |
 
 ---
 
@@ -295,14 +417,14 @@
 
 **模块状态：** 🔧 · 审计 2026-08-30
 
-| #   | 项                                          | 严重 | 状态   | 处置 / 备注                       |
-| --- | ------------------------------------------- | ---- | ------ | --------------------------------- |
-| 1   | `selection-toolbar-guards` 未接入 `main.ts` | P0   | 已修   | 附注模式滚动不误关                |
-| 2   | `handleScroll` 无 rAF                       | P0   | 已修   | `selection-toolbar-scroll.ts`     |
-| 3   | `SHOW_DELAY_MS` 重复常量                    | P0   | 已修   | `SELECTION_TOOLBAR_SHOW_DELAY_MS` |
-| 4   | 操作行无 `role=toolbar` / aria              | P0   | 已修   | Save + Add note 拼 label          |
-| 5   | Shadow 硬编码品牌色                         | P2   | 延后   | content 隔离                      |
-| 6   | 滚动仅收起不重锚                            | P1   | 不采纳 | 产品既定                          |
+| #   | 项                                          | 严重 | 状态   | 处置 / 备注                                        |
+| --- | ------------------------------------------- | ---- | ------ | -------------------------------------------------- |
+| 1   | `selection-toolbar-guards` 未接入 `main.ts` | P0   | 已修   | 附注模式滚动不误关                                 |
+| 2   | `handleScroll` 无 rAF                       | P0   | 已修   | `selection-toolbar-scroll.ts`                      |
+| 3   | `SHOW_DELAY_MS` 重复常量                    | P0   | 已修   | `SELECTION_TOOLBAR_SHOW_DELAY_MS`                  |
+| 4   | 操作行无 `role=toolbar` / aria              | P0   | 已修   | Save + Add note 拼 label                           |
+| 5   | Shadow 硬编码品牌色                         | P2   | 已修   | `selection-toolbar-shadow-styles.ts`（2026-08-31） |
+| 6   | 滚动仅收起不重锚                            | P1   | 不采纳 | 产品既定                                           |
 
 ---
 
@@ -310,15 +432,15 @@
 
 **模块状态：** 🔧 · 审计 2026-08-30
 
-| #   | 项                                 | 严重 | 状态   | 处置 / 备注                              |
-| --- | ---------------------------------- | ---- | ------ | ---------------------------------------- |
-| 1   | 浏览器后退/前进后分区不同步        | P0   | 已修   | `popstate` + `settings-page-url-sync.ts` |
-| 2   | 两个 `visibilitychange` 重复       | P0   | 已修   | `settings-visibility-refresh.ts`         |
-| 3   | URL 同步逻辑无单测                 | P0   | 已修   | 纯函数单测                               |
-| 4   | 长分区无 `content-visibility`      | P0   | 已修   | `.settings-block`                        |
-| 5   | 单层 panel + `background-client`   | —    | 已合规 | 保持                                     |
-| 6   | tab 切换仅 `replaceState` 无历史栈 | P1   | 延后   | —                                        |
-| 7   | `Settings.vue` 单体过大            | P2   | 延后   | —                                        |
+| #   | 项                               | 严重 | 状态   | 处置 / 备注                                   |
+| --- | -------------------------------- | ---- | ------ | --------------------------------------------- |
+| 1   | 浏览器后退/前进后分区不同步      | P0   | 已修   | `popstate` + `settings-page-url-sync.ts`      |
+| 2   | 两个 `visibilitychange` 重复     | P0   | 已修   | `settings-visibility-refresh.ts`              |
+| 3   | URL 同步逻辑无单测               | P0   | 已修   | 纯函数单测                                    |
+| 4   | 长分区无 `content-visibility`    | P0   | 已修   | `.settings-block`                             |
+| 5   | 单层 panel + `background-client` | —    | 已合规 | 保持                                          |
+| 6   | tab 切换 pushState 历史栈        | P1   | 已修   | `writeSettingsSectionToHistory`（2026-08-31） |
+| 7   | `Settings.vue` 单体过大          | P2   | 已修   | composable + 分区/弹窗子组件（2026-08-31）    |
 
 ---
 
@@ -326,15 +448,15 @@
 
 **模块状态：** 🔧 · 审计 2026-08-30
 
-| #   | 项                                   | 严重 | 状态   | 处置 / 备注                   |
-| --- | ------------------------------------ | ---- | ------ | ----------------------------- |
-| 1   | 进度推导内联无单测                   | P0   | 已修   | `getting-started-progress.ts` |
-| 2   | Save / Try Recall 门禁内联           | P0   | 已修   | `getting-started-actions.ts`  |
-| 3   | 回前台可能漏刷新进度                 | P0   | 已修   | `visibilitychange`            |
-| 4   | 步骤卡片无 `content-visibility`      | P0   | 已修   | 对齐 B5                       |
-| 5   | `install-onboarding` 已有单测        | —    | 已合规 | 保持                          |
-| 6   | 成功态依赖 storage 非即时 recallDone | P1   | 延后   | —                             |
-| 7   | 无独立 manifest 契约                 | P2   | 不采纳 | icons-csp 已覆盖 HTML         |
+| #   | 项                                   | 严重 | 状态   | 处置 / 备注                                     |
+| --- | ------------------------------------ | ---- | ------ | ----------------------------------------------- |
+| 1   | 进度推导内联无单测                   | P0   | 已修   | `getting-started-progress.ts`                   |
+| 2   | Save / Try Recall 门禁内联           | P0   | 已修   | `getting-started-actions.ts`                    |
+| 3   | 回前台可能漏刷新进度                 | P0   | 已修   | `visibilitychange`                              |
+| 4   | 步骤卡片无 `content-visibility`      | P0   | 已修   | 对齐 B5                                         |
+| 5   | `install-onboarding` 已有单测        | —    | 已合规 | 保持                                            |
+| 6   | 成功态依赖 storage 非即时 recallDone | P1   | 已修   | `gettingStartedRecallShellOpened`（2026-08-31） |
+| 7   | 无独立 manifest 契约                 | P2   | 不采纳 | icons-csp 已覆盖 HTML                           |
 
 ---
 
@@ -342,16 +464,16 @@
 
 **模块状态：** 🔧 · 审计 2026-08-30
 
-| #   | 项                                       | 严重 | 状态   | 处置 / 备注                    |
-| --- | ---------------------------------------- | ---- | ------ | ------------------------------ |
-| 1   | `AppSectionTabs` 键盘逻辑内联无单测      | P0   | 已修   | `app-section-tabs-keyboard.ts` |
-| 2   | Modal trap 未过滤 hidden / `aria-hidden` | P0   | 已修   | `isElementFocusableVisible`    |
-| 3   | trap 缺 Shift+Tab 回归                   | P0   | 已修   | 单测                           |
-| 4   | hover 延迟 magic number                  | P0   | 已修   | `APP_HOVER_MENU_*`             |
-| 5   | AppButton/Switch/Tabs hover 无几何变换   | —    | 已合规 | 保持                           |
-| 6   | Menu chevron `rotate`、Dock `translateY` | P2   | 不采纳 | open 态 / 浮层入场例外         |
-| 7   | AppSwitch thumb 用 `left` 过渡           | P1   | 延后   | —                              |
-| 8   | 无 Storybook                             | P2   | 延后   | —                              |
+| #   | 项                                       | 严重 | 状态   | 处置 / 备注                                      |
+| --- | ---------------------------------------- | ---- | ------ | ------------------------------------------------ |
+| 1   | `AppSectionTabs` 键盘逻辑内联无单测      | P0   | 已修   | `app-section-tabs-keyboard.ts`                   |
+| 2   | Modal trap 未过滤 hidden / `aria-hidden` | P0   | 已修   | `isElementFocusableVisible`                      |
+| 3   | trap 缺 Shift+Tab 回归                   | P0   | 已修   | 单测                                             |
+| 4   | hover 延迟 magic number                  | P0   | 已修   | `APP_HOVER_MENU_*`                               |
+| 5   | AppButton/Switch/Tabs hover 无几何变换   | —    | 已合规 | 保持                                             |
+| 6   | Menu chevron `rotate`、Dock `translateY` | P2   | 不采纳 | open 态 / 浮层入场例外                           |
+| 7   | AppSwitch thumb 用 `left` 过渡           | P1   | 已修   | `translateX` + `AppSwitch.test.ts`（2026-08-31） |
+| 8   | 无 Storybook                             | P2   | 不采纳 | ROI 低；组件契约靠单测 + 扩展页真机抽测          |
 
 ---
 
@@ -359,46 +481,22 @@
 
 **模块状态：** 🔧 · 审计 2026-08-30
 
-| #   | 项                                      | 严重 | 状态                      | 处置 / 备注                        |
-| --- | --------------------------------------- | ---- | ------------------------- | ---------------------------------- | ------ | ---- |
-| 1   | 关键 i18n 门禁仅 Side Panel             | P0   | 已修                      | `bootExtensionPage` 五页统一       |
-| 2   | 各页 `main.ts` 仅 `applyDocumentLocale` | P0   | 已修                      | lang/title + 关键 key warn         |
-| 3   | 图标控件 title/aria 无共享契约          | P0   | 已修                      | `icon-only-control-a11y.ts`        |
-| 4   | 产品面 Search 禁用无门禁                | P0   | 已修                      | `assertProductSurfaceLabelAllowed` |
-| 5   | `t()` 无 `                              |      | `兜底、无直连`getMessage` | —                                  | 已合规 | 保持 |
-| 6   | en messages 无 Search                   | —    | 已合规                    | `i18n:check` 521 key               |
-| 7   | 全量 en messages 未扫禁用词             | P1   | 延后                      | 仅关键页启动门禁                   |
-| 8   | content script 浮层未接 boot 门禁       | P2   | 延后                      | 独立 bundle                        |
+| #   | 项                                        | 严重 | 状态   | 处置 / 备注                                        |
+| --- | ----------------------------------------- | ---- | ------ | -------------------------------------------------- |
+| 1   | 关键 i18n 门禁仅 Side Panel               | P0   | 已修   | `bootExtensionPage` 五页统一                       |
+| 2   | 各页 `main.ts` 仅 `applyDocumentLocale`   | P0   | 已修   | lang/title + 关键 key warn                         |
+| 3   | 图标控件 title/aria 无共享契约            | P0   | 已修   | `icon-only-control-a11y.ts`                        |
+| 4   | 产品面 Search 禁用无门禁                  | P0   | 已修   | `assertProductSurfaceLabelAllowed`                 |
+| 5   | `t()` 无 `\|\|` 兜底、无直连 `getMessage` | —    | 已合规 | 保持                                               |
+| 6   | en messages 无 Search                     | —    | 已合规 | `i18n:check` 全量禁用词扫描                        |
+| 7   | 全量 en messages 未扫禁用词               | P1   | 已修   | `product-surface-label-policy`（2026-08-31）       |
+| 8   | content script 浮层未接 boot 门禁         | P2   | 已修   | `warnIfContentScriptMessagesMissing`（2026-08-31） |
 
 ---
 
 ## 跨模块待办索引（P1/P2 · 延后）
 
-| 模块 | #   | 项                                            | 严重 |
-| ---- | --- | --------------------------------------------- | ---- |
-| A3   | 6   | `open_library` / `open_settings` 失败无 badge | P1   |
-| A3   | 7   | `extension-tab` 全量 tabs.query               | P2   |
-| A4   | 6   | bootstrap 失败仅打日志                        | P2   |
-| A5   | 6   | `GET_BOOKMARK_LIBRARY_TREE` 内联解析          | P1   |
-| A5   | 7   | offscreen PING `return true`                  | P2   |
-| A9   | 6   | 读 ingest 设置前短暂无监听                    | P1   |
-| A10  | 6   | 无 storage.quota 监控                         | P2   |
-| A12  | 6   | HTML favicon                                  | P1   |
-| A14  | 6   | 商店截图 / promo                              | P1   |
-| A14  | 7   | localhost:8787 生产包策略                     | P2   |
-| B1   | 6   | Library content-visibility 叠加               | P2   |
-| B2   | 6   | 会话线程未虚拟化                              | P1   |
-| B2   | 7   | Show more 全量 DOM                            | P2   |
-| B3   | 6   | Show more 全量 DOM                            | P1   |
-| B3   | 7   | `toMatchCard` 未抽测                          | P2   |
-| B4   | 5   | Shadow 硬编码品牌色                           | P2   |
-| B5   | 6   | tab 无 pushState 历史栈                       | P1   |
-| B5   | 7   | Settings.vue 过大                             | P2   |
-| B6   | 6   | 成功态依赖 storage                            | P1   |
-| B7   | 7   | AppSwitch thumb `left`                        | P1   |
-| B7   | 8   | 无 Storybook                                  | P2   |
-| B8   | 7   | 全量 en 扫禁用词                              | P1   |
-| B8   | 8   | content script boot 门禁                      | P2   |
+_（无未关闭项 · 2026-09-01）_
 
 ---
 

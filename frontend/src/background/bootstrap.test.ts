@@ -101,4 +101,12 @@ describe('ensureBackgroundBootstrapped', () => {
     await ensureBackgroundBootstrapped()
     expect(scheduleColdStartPipelineMock).toHaveBeenCalledTimes(1)
   })
+
+  it('bootstrap 失败后清空 promise，下次调用可重试', async () => {
+    initializeMemoryDatabaseMock.mockRejectedValueOnce(new Error('idb_open_failed'))
+    await expect(ensureBackgroundBootstrapped()).rejects.toThrow('idb_open_failed')
+    initializeMemoryDatabaseMock.mockResolvedValueOnce(undefined)
+    await ensureBackgroundBootstrapped()
+    expect(initializeMemoryDatabaseMock).toHaveBeenCalledTimes(2)
+  })
 })

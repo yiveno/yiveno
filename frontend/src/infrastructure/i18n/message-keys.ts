@@ -117,6 +117,8 @@ export const MESSAGE_KEYS = [
   'popup_show_more_matches',
   'popup_show_more_count',
   'popup_show_all_count',
+  'recall_show_earlier_turns_count',
+  'recall_show_all_earlier_turns_count',
   'popup_reply_uncertain',
   'popup_reply_miss',
   'popup_reply_after_dismiss',

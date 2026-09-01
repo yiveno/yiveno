@@ -1,10 +1,12 @@
 #!/usr/bin/env bun
 /**
- * Validate en messages.json keys against MESSAGE_KEYS.
+ * Validate en messages.json keys against MESSAGE_KEYS and product-surface forbidden labels.
  */
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+
+import { scanEnMessagesForProductSurfaceViolations } from '../src/infrastructure/i18n/product-surface-label-policy.ts'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const enPath = join(root, 'public/_locales/en/messages.json')
@@ -34,6 +36,7 @@ function diff(a, b) {
 
 const en = loadMessageKeys(enPath)
 const declared = loadDeclaredKeys(keysTsPath)
+const enMessages = JSON.parse(readFileSync(enPath, 'utf8'))
 
 const errors = []
 
@@ -46,6 +49,17 @@ if (onlyLocale.length > 0) {
   errors.push(`messages.json 有但 MESSAGE_KEYS 缺: ${onlyLocale.join(', ')}`)
 }
 
+const forbiddenViolations = scanEnMessagesForProductSurfaceViolations(enMessages)
+if (forbiddenViolations.length > 0) {
+  const preview = forbiddenViolations
+    .slice(0, 8)
+    .map(v => `${v.key} (${v.matched})`)
+    .join(', ')
+  const suffix =
+    forbiddenViolations.length > 8 ? ` …共 ${forbiddenViolations.length} 条` : ''
+  errors.push(`产品面禁用词 Search: ${preview}${suffix}`)
+}
+
 if (errors.length > 0) {
   console.error('❌ i18n key 校验失败:')
   for (const line of errors) {
@@ -54,4 +68,4 @@ if (errors.length > 0) {
   process.exit(1)
 }
 
-console.log(`✅ i18n keys aligned (en / MESSAGE_KEYS, ${en.size} keys)`)
+console.log(`✅ i18n keys aligned (en / MESSAGE_KEYS, ${en.size} keys, forbidden-label scan ok)`)

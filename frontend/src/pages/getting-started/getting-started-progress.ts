@@ -1,6 +1,7 @@
 import {
   EXCERPT_CAPTURE_COUNT_LOCAL_KEY,
-  FIRST_RECALL_OPEN_DONE_LOCAL_KEY
+  FIRST_RECALL_OPEN_DONE_LOCAL_KEY,
+  GETTING_STARTED_RECALL_SHELL_OPENED_LOCAL_KEY
 } from '@/infrastructure/storage/first-recall-onboarding-storage'
 
 export interface GettingStartedProgress {
@@ -13,9 +14,10 @@ export interface GettingStartedProgress {
 export function deriveGettingStartedProgress(input: {
   excerptCaptureCount: number
   firstRecallOpenDone: boolean
+  gettingStartedRecallShellOpened: boolean
 }): GettingStartedProgress {
   const captureDone = input.excerptCaptureCount > 0
-  const recallDone = input.firstRecallOpenDone
+  const recallDone = input.firstRecallOpenDone || input.gettingStartedRecallShellOpened
   return {
     captureDone,
     recallDone,
@@ -31,5 +33,9 @@ export function shouldRefreshGettingStartedProgress(
   if (areaName !== 'local') {
     return false
   }
-  return EXCERPT_CAPTURE_COUNT_LOCAL_KEY in changes || FIRST_RECALL_OPEN_DONE_LOCAL_KEY in changes
+  return (
+    EXCERPT_CAPTURE_COUNT_LOCAL_KEY in changes ||
+    FIRST_RECALL_OPEN_DONE_LOCAL_KEY in changes ||
+    GETTING_STARTED_RECALL_SHELL_OPENED_LOCAL_KEY in changes
+  )
 }

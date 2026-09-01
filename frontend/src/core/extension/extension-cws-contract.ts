@@ -2,6 +2,10 @@
  * Chrome Web Store 披露 ↔ manifest 权威对照表。
  * 改 manifest 权限/host_permissions 须同批更新 `CHROMEWEBSTORE.md` 与本文件。
  */
+import { EXTENSION_CWS_HOST_PERMISSIONS_DEVELOPMENT } from '@/core/extension/extension-manifest-profile'
+
+export { EXTENSION_CWS_HOST_PERMISSIONS_PRODUCTION } from '@/core/extension/extension-manifest-profile'
+
 export const EXTENSION_CWS_PERMISSIONS = [
   'storage',
   'alarms',
@@ -14,11 +18,8 @@ export const EXTENSION_CWS_PERMISSIONS = [
   'favicon'
 ] as const
 
-export const EXTENSION_CWS_HOST_PERMISSIONS = [
-  'https://*.supabase.co/*',
-  'http://localhost:8787/*',
-  'https://api.yiveno.com/*'
-] as const
+/** public/manifest.json 开发源（含 localhost API）。 */
+export const EXTENSION_CWS_HOST_PERMISSIONS = EXTENSION_CWS_HOST_PERMISSIONS_DEVELOPMENT
 
 /** content_scripts 产物名（须与 CHROMEWEBSTORE「Content scripts」表一致）。 */
 export const EXTENSION_CWS_CONTENT_SCRIPT_JS = 'content-selection-toolbar.js' as const

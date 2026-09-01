@@ -2,7 +2,10 @@ import { openGettingStartedOnInstall } from '@/application/onboarding/open-getti
 import { ensureBackgroundBootstrapped } from '@/background/bootstrap'
 import { handleBackgroundMessage } from '@/background/handlers/message-handler'
 import { ensureSidePanelOpensOnActionClick } from '@/infrastructure/browser/side-panel'
-import { syncChromeBookmarkSyncListenersWithIngestSetting } from '@/background/listeners/chrome-bookmark-sync'
+import {
+  attachChromeBookmarkSyncListenersAtStartup,
+  syncChromeBookmarkSyncListenersWithIngestSetting
+} from '@/background/listeners/chrome-bookmark-sync'
 import {
   registerContextMenuItems,
   registerContextMenuListeners
@@ -39,7 +42,8 @@ registerMemoryCloudSyncAlarmListener()
 void ensureSidePanelOpensOnActionClick().catch(error => {
   logger.error('SidePanel', 'SW 入口 setPanelBehavior 失败', error)
 })
-// 尽早按灌库开关挂监听（关则不挂）；开时尽量早于 DB await，降低 MV3 丢 onCreated
+// 同步挂上监听，消除读 Settings 前的空窗；关灌库时 sync 会再卸下
+attachChromeBookmarkSyncListenersAtStartup()
 void syncChromeBookmarkSyncListenersWithIngestSetting().catch(error => {
   logger.warn('Background', '启动时同步书签监听失败，将由 bootstrap 重试', error)
 })

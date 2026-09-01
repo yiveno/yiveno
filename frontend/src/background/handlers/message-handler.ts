@@ -40,6 +40,7 @@ import {
   handleGetThirdPartyCorpusImportStatus,
   handleImportThirdPartyCorpus
 } from '@/background/handlers/import-handler'
+import { parseGetBookmarkLibraryTreePayload } from '@/core/messaging/import-messages'
 import { handleMcpRecallEvidence } from '@/background/handlers/mcp-handler'
 import {
   handleCaptureBookmark,
@@ -178,14 +179,7 @@ async function dispatchBackgroundMessage(
     case 'GET_THIRD_PARTY_CORPUS_IMPORT_STATUS':
       return handleGetThirdPartyCorpusImportStatus()
     case 'GET_BOOKMARK_LIBRARY_TREE':
-      return handleGetBookmarkLibraryTree(
-        message.payload &&
-          typeof message.payload === 'object' &&
-          'clientHash' in message.payload &&
-          typeof message.payload.clientHash === 'string'
-          ? { clientHash: message.payload.clientHash }
-          : {}
-      )
+      return handleGetBookmarkLibraryTree(parseGetBookmarkLibraryTreePayload(message.payload))
     case 'GET_EXTENSION_COMMANDS':
       return handleGetExtensionCommands()
     case 'OPEN_CHROME_SHORTCUTS_PAGE':

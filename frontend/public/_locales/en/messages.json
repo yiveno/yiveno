@@ -529,6 +529,24 @@
       }
     }
   },
+  "recall_show_earlier_turns_count": {
+    "message": "Show $1 earlier",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
+  },
+  "recall_show_all_earlier_turns_count": {
+    "message": "Show all $1 earlier",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
   "popup_reply_uncertain": {
     "message": "These might be related, but the fit is weak. Refine the clue above, or say none of these."
   },

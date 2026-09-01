@@ -95,6 +95,26 @@ function syncExtensionPublicAssets() {
   }
 }
 
+/** production dist：剔除 localhost Worker host（与 extension-manifest-profile.ts 同步）。 */
+const EXTENSION_CWS_HOST_PERMISSIONS_PRODUCTION = [
+  'https://*.supabase.co/*',
+  'https://api.yiveno.com/*'
+]
+
+function applyDistManifestHostProfile(distManifestPath) {
+  if (process.env.NODE_ENV !== 'production') {
+    return
+  }
+  if (!fs.existsSync(distManifestPath)) {
+    return
+  }
+
+  const manifest = JSON.parse(fs.readFileSync(distManifestPath, 'utf8'))
+  manifest.host_permissions = [...EXTENSION_CWS_HOST_PERMISSIONS_PRODUCTION]
+  fs.writeFileSync(distManifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8')
+  console.log('[clean-dist] production manifest: 已移除 localhost API host_permissions')
+}
+
 function finalizeExtensionDist() {
   if (!fs.existsSync(distDir)) {
     console.warn('[clean-dist] dist/ 不存在，跳过')
@@ -102,6 +122,7 @@ function finalizeExtensionDist() {
   }
 
   syncExtensionPublicAssets()
+  applyDistManifestHostProfile(path.join(distDir, 'manifest.json'))
 
   flattenPageHtml('sidepanel')
   flattenPageHtml('settings')
@@ -124,7 +145,7 @@ function finalizeExtensionDist() {
   )
 }
 
-module.exports = { finalizeExtensionDist, syncExtensionPublicAssets }
+module.exports = { finalizeExtensionDist, syncExtensionPublicAssets, applyDistManifestHostProfile }
 
 if (require.main === module) {
   finalizeExtensionDist()

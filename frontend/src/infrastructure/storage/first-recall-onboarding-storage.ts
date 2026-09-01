@@ -12,6 +12,9 @@ const LEGACY_POPUP_RECALL_PREFILL_SESSION_KEY = 'yiveno.popupRecallPrefill'
 
 export const EXCERPT_CAPTURE_COUNT_LOCAL_KEY = 'yiveno.excerptCaptureCount'
 export const FIRST_RECALL_OPEN_DONE_LOCAL_KEY = 'yiveno.firstRecallOpenDone'
+/** Getting Started 已成功打开 Recall 主壳（不等同于打开结果卡）。 */
+export const GETTING_STARTED_RECALL_SHELL_OPENED_LOCAL_KEY =
+  'yiveno.gettingStartedRecallShellOpened'
 
 /** 写入 Side Panel 打开时要预填的线索（覆盖旧值）。 */
 export async function writeRecallPrefill(clue: string): Promise<void> {
@@ -66,6 +69,17 @@ export async function bumpExcerptCaptureCount(): Promise<number> {
 export async function readFirstRecallOpenDone(): Promise<boolean> {
   const result = await chrome.storage.local.get(FIRST_RECALL_OPEN_DONE_LOCAL_KEY)
   return result[FIRST_RECALL_OPEN_DONE_LOCAL_KEY] === true
+}
+
+/** 是否已在 Getting Started 成功打开 Recall 主壳。 */
+export async function readGettingStartedRecallShellOpened(): Promise<boolean> {
+  const result = await chrome.storage.local.get(GETTING_STARTED_RECALL_SHELL_OPENED_LOCAL_KEY)
+  return result[GETTING_STARTED_RECALL_SHELL_OPENED_LOCAL_KEY] === true
+}
+
+/** 标记 Getting Started 已成功打开 Recall 主壳。 */
+export async function markGettingStartedRecallShellOpened(): Promise<void> {
+  await chrome.storage.local.set({ [GETTING_STARTED_RECALL_SHELL_OPENED_LOCAL_KEY]: true })
 }
 
 /** 标记已完成首次找回打开（同时结束安装引导）。 */

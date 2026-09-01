@@ -166,3 +166,20 @@ export type ImportBackgroundResponse =
 export function parseImportThirdPartyCorpusPayload(value: unknown) {
   return importThirdPartyCorpusPayloadSchema.parse(value)
 }
+
+const getBookmarkLibraryTreePayloadSchema = z
+  .object({
+    /** UI 缓存的结构 hash；一致时 SW 可返回 unchanged。 */
+    clientHash: z.string().min(1).optional()
+  })
+  .strict()
+
+/** 解析 GET_BOOKMARK_LIBRARY_TREE payload；非法 shape 抛 ZodError。 */
+export function parseGetBookmarkLibraryTreePayload(value: unknown): {
+  clientHash?: string
+} {
+  if (value === undefined) {
+    return {}
+  }
+  return getBookmarkLibraryTreePayloadSchema.parse(value) as { clientHash?: string }
+}

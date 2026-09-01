@@ -1,6 +1,6 @@
 # Chrome Web Store Listing — Yiveno
 
-> Last Updated: 2026-08-30
+> Last Updated: 2026-09-01
 
 <!-- 开发者向：上架草稿本，与 frontend/public/manifest.json 同步维护。商店用户向文案仅美式英语。 -->
 
@@ -46,16 +46,19 @@ English
 
 ## Graphics & Assets
 
-| Asset                          | Dimensions          | Status         | Filename                                                                                     |
-| ------------------------------ | ------------------- | -------------- | -------------------------------------------------------------------------------------------- |
-| Store Icon [REQUIRED]          | 128×128 PNG         | ✅ Verified    | `frontend/public/images/icon128.png` (128×128 PNG, manifest `icons` + `action.default_icon`) |
-| Screenshot 1 [REQUIRED]        | 1280×800 or 640×400 | ⬜ Not created |                                                                                              |
-| Screenshot 2 [RECOMMENDED]     | 1280×800 or 640×400 | ⬜ Not created |                                                                                              |
-| Screenshot 3 [RECOMMENDED]     | 1280×800 or 640×400 | ⬜ Not created |                                                                                              |
-| Screenshot 4                   | 1280×800 or 640×400 | ⬜ Not created |                                                                                              |
-| Screenshot 5                   | 1280×800 or 640×400 | ⬜ Not created |                                                                                              |
-| Small Promo Tile [RECOMMENDED] | 440×280             | ⬜ Not created |                                                                                              |
-| Marquee Promo Tile             | 1400×560            | ⬜ Not created |                                                                                              |
+| Asset                          | Dimensions          | Status                | Filename                                                                                     |
+| ------------------------------ | ------------------- | --------------------- | -------------------------------------------------------------------------------------------- |
+| Store Icon [REQUIRED]          | 128×128 PNG         | ✅ Verified           | `frontend/public/images/icon128.png` (128×128 PNG, manifest `icons` + `action.default_icon`) |
+| Screenshot 1 [REQUIRED]        | 1280×800 or 640×400 | ✅ Ready (interim)    | `docs/design/brand-assets/chrome-web-store/screenshot-01-brand-focus-1280x800.png`           |
+| Screenshot 2 [RECOMMENDED]     | 1280×800 or 640×400 | ✅ Ready (interim)    | `docs/design/brand-assets/chrome-web-store/screenshot-02-brand-connect-1280x800.png`         |
+| Screenshot 3 [RECOMMENDED]     | 1280×800 or 640×400 | ⬜ Product UI pending | Recall Side Panel — see Screenshot Notes #1                                                  |
+| Screenshot 4                   | 1280×800 or 640×400 | ⬜ Product UI pending | Capture — see Screenshot Notes #2                                                            |
+| Screenshot 5                   | 1280×800 or 640×400 | ⬜ Product UI pending | Library — see Screenshot Notes #3                                                            |
+| Small Promo Tile [RECOMMENDED] | 440×280             | ✅ Verified           | `docs/design/brand-assets/chrome-web-store/chrome-web-store-small-promo-440x280.png`         |
+| Marquee Promo Tile             | 1400×560            | ✅ Verified           | `docs/design/brand-assets/chrome-web-store/chrome-web-store-marquee-1400x560.png`            |
+
+**母本目录：** `docs/design/brand-assets/chrome-web-store/`（不进扩展包；契约见 `extension-cws-graphics-contract.ts`）。  
+**Interim：** Screenshot 1–2 当前为品牌 hero（自 `yiveno-brand-kit` 整理）；公开发布前建议替换为真实产品 UI（见该目录 `README.md`）。
 
 ### Screenshot Notes
 
@@ -169,7 +172,7 @@ https://yiveno.com
 - **Local-first:** Memories stay in IndexedDB until the user enables cloud sync.
 - **Not a bookmark manager primary pitch:** Bookmark import is optional; core value is Capture + Recall from personal traces.
 - **Recall delivers a neighborhood, not a single oracle answer:** Store copy must not promise “always picks the right one.”
-- **`localhost:8787` host permission:** Present in dev manifest; confirm store build strips or justifies before submission.
+- **`localhost:8787` host permission:** Present in dev `public/manifest.json` only. **`bun run build:fe:prod`** (`NODE_ENV=production`) strips it from `dist/manifest.json` via `clean-dist` before store upload.
 - **Store screenshots / promo tiles:** Not yet produced (see Graphics table).
 - **MCP beta:** Read-only MCP exists; not marketed as a primary user feature in the listing.
 

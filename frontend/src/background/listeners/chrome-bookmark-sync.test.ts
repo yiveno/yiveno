@@ -8,6 +8,7 @@ vi.mock('@/background/bootstrap', () => ({
 
 import * as syncService from '@/application/capture/chrome-bookmark-sync-service'
 import {
+  attachChromeBookmarkSyncListenersAtStartup,
   areChromeBookmarkSyncListenersRegistered,
   registerChromeBookmarkSyncListeners,
   resetChromeBookmarkSyncListenersForTests,
@@ -37,6 +38,12 @@ describe('chrome-bookmark-sync listener', () => {
         sendMessage: vi.fn(async () => undefined)
       }
     })
+  })
+
+  it('attachChromeBookmarkSyncListenersAtStartup 同步注册监听', () => {
+    attachChromeBookmarkSyncListenersAtStartup()
+    expect(areChromeBookmarkSyncListenersRegistered()).toBe(true)
+    expect(chrome.bookmarks.onCreated.addListener).toHaveBeenCalledTimes(1)
   })
 
   it('registerChromeBookmarkSyncListeners 注册四个监听器', () => {
