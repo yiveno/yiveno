@@ -27,7 +27,6 @@
       "project": ["scripts/**/*.{js,mjs,ts}"]
     },
     "frontend": {
-      "ignoreDependencies": ["@yiveno/design-tokens"],
       "entry": [
         "src/pages/*/main.ts",
         "src/background/main.ts",
