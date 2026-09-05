@@ -41,14 +41,16 @@
 
 ## 3. `globalThis.yiveno` API 总表
 
-| API                                  | 类型                | 干什么                                                | 实现                                                                 | 专题文档                                                           |
-| ------------------------------------ | ------------------- | ----------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `yiveno.seedRecallProbe(payload?)`   | `async`             | 种入召回探针语料（书签 + Memory + 倒排重建）          | `expose-recall-probe-seed-debug.ts` → `recall-probe-seed-service.ts` | 产品文档 §5.11.1a；[Omnibox-手测步骤](./Omnibox-手测步骤.md) §2    |
-| `yiveno.runProbeOmniboxSmoke()`      | `async`             | 对当前库跑 11 条 Omnibox 轨冒烟（§4.1–4.2 线索）      | `recall-probe-omnibox-smoke.ts`                                      | [Omnibox-手测步骤](./Omnibox-手测步骤.md) §2.1                     |
-| `yiveno.probeOmniboxCopyPaste`       | `readonly string[]` | 手测地址栏复制块（含 `yi ` 前缀）                     | `recall-probe-omnibox-smoke.ts`                                      | 同上 §4.1–4.2                                                      |
-| `yiveno.listRecallTelemetryEvents()` | `async`             | 读本机 TTE 七事件环形缓冲                             | `expose-recall-telemetry-debug.ts` → `recall-telemetry-store.ts`     | [R4-Phase-E-验收与eval](./R4-Phase-E-验收与eval.md)；产品文档 §5.9 |
-| `yiveno.checkClueGateway(clue)`      | sync                | 测噪音网关 + 放行时理解模式（`lexical` / `semantic`） | `expose-clue-gateway-debug.ts`                                       | —                                                                  |
-| `checkClueGateway(clue)`             | sync                | 同上（历史兼容，挂 SW 顶层）                          | 同上                                                                 | —                                                                  |
+| API                                   | 类型                | 干什么                                                       | 实现                                                                  | 专题文档                                                           |
+| ------------------------------------- | ------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `yiveno.seedRecallProbe(payload?)`    | `async`             | 种入召回探针语料（书签 + Memory + 倒排重建）                 | `expose-recall-probe-seed-debug.ts` → `recall-probe-seed-service.ts`  | 产品文档 §5.11.1a；[Omnibox-手测步骤](./Omnibox-手测步骤.md) §2    |
+| `yiveno.purgeProbeNoise()`            | `async`             | 清除噪声/多样性层；保留精选语料；移除 Chrome 探针文件夹      | `expose-recall-probe-seed-debug.ts` → `recall-probe-purge-service.ts` | [TTE checklist](./TTE-种子用户研究-checklist.md) · 单人 SOP        |
+| `yiveno.backdateMemorySavedAt(input)` | `async`             | 回溯 Memory 保存时刻（`createdAt` / 书签 `chromeCreatedAt`） | `expose-memory-dev-debug.ts` → `memory-dev-backdate-saved-at.ts`      | TTE 冷却手测；**禁止**冒充 Beta 达标                               |
+| `yiveno.runProbeOmniboxSmoke()`       | `async`             | 对当前库跑 11 条 Omnibox 轨冒烟（§4.1–4.2 线索）             | `recall-probe-omnibox-smoke.ts`                                       | [Omnibox-手测步骤](./Omnibox-手测步骤.md) §2.1                     |
+| `yiveno.probeOmniboxCopyPaste`        | `readonly string[]` | 手测地址栏复制块（含 `yi ` 前缀）                            | `recall-probe-omnibox-smoke.ts`                                       | 同上 §4.1–4.2                                                      |
+| `yiveno.listRecallTelemetryEvents()`  | `async`             | 读本机 TTE 七事件环形缓冲                                    | `expose-recall-telemetry-debug.ts` → `recall-telemetry-store.ts`      | [R4-Phase-E-验收与eval](./R4-Phase-E-验收与eval.md)；产品文档 §5.9 |
+| `yiveno.checkClueGateway(clue)`       | sync                | 测噪音网关 + 放行时理解模式（`lexical` / `semantic`）        | `expose-clue-gateway-debug.ts`                                        | —                                                                  |
+| `checkClueGateway(clue)`              | sync                | 同上（历史兼容，挂 SW 顶层）                                 | 同上                                                                  | —                                                                  |
 
 **门禁：** 上表全部仅 DEV 构建；`vite build --mode production` 不挂载。
 
@@ -128,11 +130,47 @@ yiveno.checkClueGateway('chrome extension migration')
 
 ---
 
+### 4.5 `yiveno.backdateMemorySavedAt`
+
+**作用：** 将指定 MemoryItem 的**保存时刻**回溯（摘录改 `createdAt`；书签同时改 `chromeCreatedAt`）。用于 TTE **冷却 / 时间窗**手测，避免真等 14 天。
+
+```js
+// 单条：回溯 21 天
+await yiveno.backdateMemorySavedAt({
+  ids: ['16e2db0d-0cb2-4018-8b9c-2cbf09cfb63a'],
+  daysAgo: 21
+})
+
+// 批量 + 绝对时间
+await yiveno.backdateMemorySavedAt({
+  ids: ['uuid-a', 'uuid-b'],
+  savedAtIso: '2026-08-01T12:00:00.000Z'
+})
+```
+
+| 字段         | 说明                                            |
+| ------------ | ----------------------------------------------- |
+| `ids`        | 1–100 条 UUID                                   |
+| `daysAgo`    | 相对今天 UTC 正午回溯（与 `savedAtIso` 二选一） |
+| `savedAtIso` | 绝对 ISO datetime                               |
+
+**边界：**
+
+- 仅 DEV；生产构建不挂载。
+- **禁止**用回溯后的库对外宣称 §5.9 Beta 达标；报告须标 `savedAt dev-adjusted`。
+- 不改 `updatedAt`；不重建倒排（Recall 时间窗读运行时字段）。
+
+**等价消息：** `{ scope: 'background', type: 'DEV_BACKDATE_MEMORY_SAVED_AT', payload: { ids, daysAgo } }`
+
+---
+
 ## 5. Background 消息（DEV）
 
-| type                    | payload                           | 响应                         | 说明                                                              |
-| ----------------------- | --------------------------------- | ---------------------------- | ----------------------------------------------------------------- |
-| `DEV_SEED_RECALL_PROBE` | `Partial<SeedRecallProbePayload>` | `DevSeedRecallProbeResponse` | 与 `yiveno.seedRecallProbe` 同实现；schema 见 `debug-messages.ts` |
+| type                           | payload                           | 响应                               | 说明                                                                    |
+| ------------------------------ | --------------------------------- | ---------------------------------- | ----------------------------------------------------------------------- |
+| `DEV_SEED_RECALL_PROBE`        | `Partial<SeedRecallProbePayload>` | `DevSeedRecallProbeResponse`       | 与 `yiveno.seedRecallProbe` 同实现                                      |
+| `DEV_PURGE_PROBE_NOISE`        | —                                 | `DevPurgeProbeNoiseResponse`       | 与 `yiveno.purgeProbeNoise` 同实现                                      |
+| `DEV_BACKDATE_MEMORY_SAVED_AT` | `BackdateMemorySavedAtPayload`    | `DevBackdateMemorySavedAtResponse` | 与 `yiveno.backdateMemorySavedAt` 同实现；schema 见 `debug-messages.ts` |
 
 生产构建：`errorCode: 'DEV_ONLY'`。
 

@@ -24,7 +24,46 @@
 
 ### 备注（可选）
 - （例：延续上次关于划词菜单的讨论；或贴 issue/截图要点）
+
+### Handoff（新会话延续时填写）
+- **工作区基线：**分支；是否有未提交 WIP（列路径，**不**为交接而 commit）
+- **上一步：**上一会话结果（一句）
+- **本步：**本会话目标（一句）
 ```
+
+---
+
+## 会话收尾（当前会话 · 上下文过长时）
+
+在**当前会话最后一条**粘贴（Agent 只产出 Handoff，**不**默认 commit / push / stash）：
+
+```text
+## 会话收尾 · Handoff（不 commit / 不 push）
+
+请在本条回复内完成交接，不要开新代码任务：
+
+1. **工作区快照**：`git status` 结论（仅描述；禁止 restore/checkout 丢 WIP）
+2. **交付摘要**：≤10 条 bullet（路径级；test/MCP 过没过）
+3. **文档**：改了哪些权威文档；`CURRENT` 是否需 `bun run sync:ide-boot`（只提醒，不替我提交）
+4. **未完成**：下一动作 1～3 条 + 禁止项
+5. **Handoff 块**：单独一个 fenced 代码块，含完整 Task Brief + Handoff 三行 + 建议 @（≤3）
+
+纪律：未经我明确要求，不要 commit / push / stash。
+```
+
+---
+
+## 新会话首条（接续上一会话）
+
+**做法：** 新建 Cursor 会话 → **首条只粘贴**上一会话输出的 **Handoff 代码块**（可再加一句执行指令，见下）。
+
+**最短开场（粘贴 Handoff 后可选加一行）：**
+
+```text
+请按上方 Task Brief 执行；开始前先 `git status` 确认 WIP，不要 restore/checkout。
+```
+
+**无需**复述旧对话、无需 @CURRENT（`session-boot` 已注入；焦点以 Handoff 与 `docs/product/CURRENT.md` 为准）。
 
 ---
 

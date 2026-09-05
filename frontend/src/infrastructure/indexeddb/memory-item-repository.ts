@@ -432,6 +432,65 @@ export class MemoryItemRepository {
     return updated
   }
 
+  /**
+   * 断开 Bookmark 与 Chrome 书签 id 的链接（清探针文件夹前保留 Memory）。
+   */
+  async detachChromeBookmarkLink(id: string): Promise<MemoryItem | null> {
+    const ownerId = await getCurrentOwnerId()
+    const existing = await this.getById(id, ownerId)
+    if (!existing || existing.type !== 'bookmark') {
+      return null
+    }
+    if (!existing.payload.chromeBookmarkId?.trim()) {
+      return existing
+    }
+
+    const { chromeBookmarkId: _removed, parentFolderId: _parent, ...payloadRest } = existing.payload
+    const updated: MemoryItem = {
+      ...existing,
+      payload: payloadRest,
+      updatedAt: new Date().toISOString()
+    }
+    await this.put(updated)
+    return updated
+  }
+
+  /**
+   * DEV：回溯保存时刻（createdAt；书签同步 chromeCreatedAt）。
+   * 不改 updatedAt（内容未变）；供 TTE 冷却手测。
+   */
+  async setSavedAtForDev(
+    id: string,
+    savedAtIso: string,
+    ownerId?: string
+  ): Promise<MemoryItem | null> {
+    const resolvedOwnerId = ownerId ?? (await getCurrentOwnerId())
+    const existing = await this.getById(id, resolvedOwnerId, { includeDeleted: true })
+    if (!existing || existing.deletedAt != null) {
+      return null
+    }
+
+    if (existing.type === 'bookmark') {
+      const updated: MemoryItem = {
+        ...existing,
+        createdAt: savedAtIso,
+        payload: {
+          ...existing.payload,
+          chromeCreatedAt: savedAtIso
+        }
+      }
+      await this.put(updated)
+      return updated
+    }
+
+    const updated: MemoryItem = {
+      ...existing,
+      createdAt: savedAtIso
+    }
+    await this.put(updated)
+    return updated
+  }
+
   /** 软删除 MemoryItem。 */
   async softDelete(id: string): Promise<MemoryItem | null> {
     const ownerId = await getCurrentOwnerId()

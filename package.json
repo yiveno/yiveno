@@ -54,6 +54,7 @@
     "typecheck:fe": "bun run --cwd frontend typecheck",
     "i18n:check": "bun run --cwd frontend i18n:check",
     "doc:check": "bun ./scripts/check-doc-drift.mjs",
+    "tte:summarize": "bun ./scripts/tte-summarize-telemetry.mjs",
     "sync:ide-boot": "bun ./scripts/sync-ide-boot.mjs",
     "sync:brand-assets": "bun ./scripts/sync-brand-assets.mjs",
     "setup:git-lfs": "sh ./scripts/setup-git-lfs.sh",

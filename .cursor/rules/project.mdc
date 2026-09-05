@@ -129,6 +129,7 @@ Agent 指令（原文）：
 
 - **开机已注入：** `.cursor/rules/session-boot.mdc`（当下 + 冻结 + 深读索引）；详版 `docs/product/CURRENT.md`。
 - **用户首条：** 应用 `docs/product/AGENT-TASK-BRIEF.template.md` 填 scope；**以 Brief 的 In/Out 为准**。
+- **长会话收尾：** 当前会话发模板内「会话收尾 · Handoff」→ 复制输出的 Handoff 块 → **新会话首条粘贴**；**交接不绑定** commit/push；WIP 用 `git status` 交接。
 - **默认小 scope：** 单次任务聚焦用户声明范围；未要求不得「顺手」跨模块大改或广泛重构。
 - **换焦点：** 只改 `docs/product/CURRENT.md` → `bun run sync:ide-boot`；不可逆分叉写 ADR。
 - **报完成 =** 代码 + 相关权威文档 +（Recall/Capture 用户可感）must eval 或 §5 步骤 + MCP 结论。

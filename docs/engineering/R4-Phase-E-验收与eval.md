@@ -52,6 +52,12 @@ Normative case id 见产品文档 §5.11.2。实现时：
 
 当前 Normative 允许 A；B 未批准前不得擅自加 expectation kind。
 
+### 2.4 英文贴合度探针语料（折叠键）
+
+`excerptMatchPrefixTightEn` / `excerptMatchEmbeddedEn` 的 `selectedText` **不得**与中文探针（`excerptMatchPrefixTight` / `excerptMatchEmbedded`）逐字相同——摘录折叠键按正文归一化，同文会吞掉英文项，导致 `match-quality-prefix-density-en` 假红。英文探针用独立正文（如 `red white pigment swatch` vs `deep red white pigment blend`），机制仍测起首+短密压过夹心。
+
+---
+
 ### 2.3 `r4-constrained-time-empty` 说明
 
 若 eval runner 不暴露 `emptyKind`，则断言 `no_match` + `topPick === null` + `alsoPossible` 为空或不含 poem 类条目即可；`emptyKind=constrained_none` 为 stretch 单测可选。
@@ -167,10 +173,11 @@ RecallTelemetryEventSchema = z.discriminatedUnion('type', [
 
 ## 修订记录
 
-| 日期       | 变更                                                                                                                   |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------- |
-| 2026-08-27 | **撤 exit park：** 关 Panel 不再停放/下次打开补问出口条；仅同场 New find 出示通道 D；删 `yiveno.recallOutcomeExitPark` |
-| 2026-08-27 | **Raindrop/Pocket 文件导入已上线：** Settings 数据区；§5.10.6；解析 HTML/CSV/JSON                                      |
-| 2026-08-27 | **Detail export 已上线：** Library + Side Panel 多选导出；`EXPORT_DETAIL_EXPORT`；§5                                   |
-| 2026-08-27 | **TTE 埋点 P0：** 七事件 + `pipelineTiming` + ECS 打分 + 本机缓冲；见 §4 模块表                                        |
-| 2026-08-24 | **TTE 种子 study：** 工程 checklist `TTE-种子用户研究-checklist.md`                                                    |
+| 日期       | 变更                                                                                                                                               |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-01 | **eval 语料校准：** 英文贴合度探针与中文正文分离（防折叠键碰撞）；`match-quality-prefix-density-en` 升为 must；`r4-vague-often-opened` 收紧为 top1 |
+| 2026-08-27 | **撤 exit park：** 关 Panel 不再停放/下次打开补问出口条；仅同场 New find 出示通道 D；删 `yiveno.recallOutcomeExitPark`                             |
+| 2026-08-27 | **Raindrop/Pocket 文件导入已上线：** Settings 数据区；§5.10.6；解析 HTML/CSV/JSON                                                                  |
+| 2026-08-27 | **Detail export 已上线：** Library + Side Panel 多选导出；`EXPORT_DETAIL_EXPORT`；§5                                                               |
+| 2026-08-27 | **TTE 埋点 P0：** 七事件 + `pipelineTiming` + ECS 打分 + 本机缓冲；见 §4 模块表                                                                    |
+| 2026-08-24 | **TTE 种子 study：** 工程 checklist `TTE-种子用户研究-checklist.md`                                                                                |

@@ -77,9 +77,80 @@ export type DevSeedRecallProbeResponse =
       error?: string
     }
 
-export type DebugBackgroundMessage = DevSeedRecallProbeMessage
-export type DebugBackgroundResponse = DevSeedRecallProbeResponse
+/** DEV：清除探针噪声 / 多样性层（保留精选语料）。 */
+export type DevPurgeProbeNoiseMessage = {
+  scope: BackgroundMessageScope
+  type: 'DEV_PURGE_PROBE_NOISE'
+}
+
+export type DevPurgeProbeNoiseResponse =
+  | {
+      ok: true
+      scannedCount: number
+      purgedExcerptCount: number
+      purgedBookmarkCount: number
+      detachedCuratedBookmarkCount: number
+      removedChromeProbeFolder: boolean
+      removedChromeBookmarkNodes: number
+      keptCount: number
+      indexRebuilt: boolean
+    }
+  | {
+      ok: false
+      errorCode: 'DEV_ONLY' | 'DEV_PURGE_FAILED' // DEV_ONLY=生产构建拒绝；DEV_PURGE_FAILED=清除异常
+      error?: string
+    }
+
+const backdateMemorySavedAtPayloadSchema = z
+  .object({
+    ids: z.array(z.string().uuid()).min(1).max(100),
+    /** 相对今天 UTC 正午回溯天数；与 savedAtIso 二选一 */
+    daysAgo: z.number().int().min(0).max(3650).optional(),
+    /** 绝对 ISO datetime；与 daysAgo 二选一 */
+    savedAtIso: z.string().datetime().optional()
+  })
+  .refine(
+    value =>
+      (value.daysAgo !== undefined && value.savedAtIso === undefined) ||
+      (value.daysAgo === undefined && value.savedAtIso !== undefined),
+    { message: '须指定 daysAgo 或 savedAtIso 之一，且不可同时指定' }
+  )
+
+export type BackdateMemorySavedAtPayload = z.infer<typeof backdateMemorySavedAtPayloadSchema>
+
+/** DEV：回溯 MemoryItem 保存时刻（TTE 冷却手测）。 */
+export type DevBackdateMemorySavedAtMessage = {
+  scope: BackgroundMessageScope
+  type: 'DEV_BACKDATE_MEMORY_SAVED_AT'
+  payload: BackdateMemorySavedAtPayload
+}
+
+export type DevBackdateMemorySavedAtResponse =
+  | {
+      ok: true
+      savedAtIso: string
+      updated: Array<{ id: string; type: string; savedAtIso: string }>
+      notFound: string[]
+    }
+  | {
+      ok: false
+      errorCode: 'DEV_ONLY' | 'DEV_BACKDATE_FAILED'
+      error?: string
+    }
+
+export type DebugBackgroundMessage =
+  | DevSeedRecallProbeMessage
+  | DevPurgeProbeNoiseMessage
+  | DevBackdateMemorySavedAtMessage
+export type DebugBackgroundResponse =
+  | DevSeedRecallProbeResponse
+  | DevPurgeProbeNoiseResponse
+  | DevBackdateMemorySavedAtResponse
 
 export function parseSeedRecallProbePayload(value: unknown): SeedRecallProbePayload {
   return seedRecallProbePayloadSchema.parse(value ?? {})
+}
+
+export function parseBackdateMemorySavedAtPayload(value: unknown): BackdateMemorySavedAtPayload {
+  return backdateMemorySavedAtPayloadSchema.parse(value)
 }

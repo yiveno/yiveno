@@ -1,0 +1,19 @@
+# 当次 study 副本：勿提交含 PII 的原始数据
+sessions/*.mp4
+sessions/*.webm
+sessions/*.mov
+sessions/*-events.jsonl
+!sessions/*-events.jsonl.example
+sessions/P001-telemetry-export.json
+sessions/capture-cooldown-log.md
+sessions/*.json
+
+# 标注与报告若含可识别摘录，默认也不提交
+annotations/*.csv
+report-*.md
+!report-vX.Y-beta.md
+
+# 复制后的 gold-cards 若含真实 MemoryItem id，勿提交
+gold-cards/P*.md
+!gold-cards/P001-T0*.md
+!gold-cards/_TEMPLATE.md

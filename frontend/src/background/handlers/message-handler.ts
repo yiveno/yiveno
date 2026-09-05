@@ -62,9 +62,17 @@ import {
   handleUpdateUserSettings
 } from '@/background/handlers/settings-handler'
 import {
+  parseBackdateMemorySavedAtPayload,
   parseSeedRecallProbePayload,
+  type DevBackdateMemorySavedAtResponse,
+  type DevPurgeProbeNoiseResponse,
   type DevSeedRecallProbeResponse
 } from '@/core/messaging/debug-messages'
+import {
+  backdateMemorySavedAt,
+  type BackdateMemorySavedAtInput
+} from '@/infrastructure/debug/memory-dev-backdate-saved-at'
+import { purgeProbeNoiseFromLibrary } from '@/infrastructure/debug/recall-probe-purge-service'
 import { seedRecallProbeCorpus } from '@/infrastructure/debug/recall-probe-seed-service'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import { logger } from '@/infrastructure/logging/logger'
@@ -215,6 +223,57 @@ async function dispatchBackgroundMessage(
         const failed: DevSeedRecallProbeResponse = {
           ok: false,
           errorCode: 'DEV_SEED_FAILED',
+          ...(error instanceof Error ? { error: error.message } : {})
+        }
+        return failed
+      }
+    }
+    case 'DEV_PURGE_PROBE_NOISE': {
+      if (!import.meta.env.DEV) {
+        const denied: DevPurgeProbeNoiseResponse = {
+          ok: false,
+          errorCode: 'DEV_ONLY',
+          error: 'DEV_PURGE_PROBE_NOISE 仅开发构建可用'
+        }
+        return denied
+      }
+      try {
+        const result = await purgeProbeNoiseFromLibrary()
+        const ok: DevPurgeProbeNoiseResponse = { ok: true, ...result }
+        return ok
+      } catch (error) {
+        const failed: DevPurgeProbeNoiseResponse = {
+          ok: false,
+          errorCode: 'DEV_PURGE_FAILED',
+          ...(error instanceof Error ? { error: error.message } : {})
+        }
+        return failed
+      }
+    }
+    case 'DEV_BACKDATE_MEMORY_SAVED_AT': {
+      if (!import.meta.env.DEV) {
+        const denied: DevBackdateMemorySavedAtResponse = {
+          ok: false,
+          errorCode: 'DEV_ONLY',
+          error: 'DEV_BACKDATE_MEMORY_SAVED_AT 仅开发构建可用'
+        }
+        return denied
+      }
+      try {
+        const parsed = parseBackdateMemorySavedAtPayload(message.payload)
+        const input: BackdateMemorySavedAtInput = { ids: parsed.ids }
+        if (parsed.daysAgo !== undefined) {
+          input.daysAgo = parsed.daysAgo
+        } else if (parsed.savedAtIso !== undefined) {
+          input.savedAtIso = parsed.savedAtIso
+        }
+        const result = await backdateMemorySavedAt(input)
+        const ok: DevBackdateMemorySavedAtResponse = { ok: true, ...result }
+        return ok
+      } catch (error) {
+        const failed: DevBackdateMemorySavedAtResponse = {
+          ok: false,
+          errorCode: 'DEV_BACKDATE_FAILED',
           ...(error instanceof Error ? { error: error.message } : {})
         }
         return failed

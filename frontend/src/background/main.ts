@@ -16,6 +16,7 @@ import { registerMemoryCloudSyncAlarmListener } from '@/background/listeners/mem
 import { registerOmniboxListeners } from '@/background/listeners/omnibox'
 import { registerSelectionToolbarKeepaliveListener } from '@/background/listeners/selection-toolbar-keepalive'
 import { exposeClueGatewayDebug } from '@/infrastructure/debug/expose-clue-gateway-debug'
+import { exposeMemoryDevDebug } from '@/infrastructure/debug/expose-memory-dev-debug'
 import { exposeRecallProbeSeedDebug } from '@/infrastructure/debug/expose-recall-probe-seed-debug'
 import { exposeRecallTelemetryDebug } from '@/infrastructure/debug/expose-recall-telemetry-debug'
 import { logger } from '@/infrastructure/logging/logger'
@@ -28,6 +29,7 @@ import { logger } from '@/infrastructure/logging/logger'
  * 禁止恢复旧书签管理器行为。
  */
 exposeClueGatewayDebug()
+exposeMemoryDevDebug()
 exposeRecallProbeSeedDebug()
 exposeRecallTelemetryDebug()
 registerExternalAuthHandoffListener()

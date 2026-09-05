@@ -1,0 +1,26 @@
+---
+description: 测试默认使用维护者个人真实库；数据操作无需逐次询问
+alwaysApply: true
+---
+
+# 测试 · 个人真实库（硬偏好）
+
+**维护者明示（2026-09-01）：** 以后所有测试均使用其**个人真实 Chrome 库**（IndexedDB Memory、真实书签/摘录/附注）；Agent **可直接操作测试相关数据，无需每次再询问**。
+
+## 默认做法
+
+- **Recall / Capture / TTE / MCP 真机**：连维护者日常 Profile（`chrome-devtools-mcp --autoConnect`），用**真实库**走 UI 路径。
+- **需要读库时**：经 Background / DEV API / MCP snapshot，不要改用 `recall-eval` 内存语料冒充「用户库」结论。
+- **可自主执行**：在本机扩展上提交 clue、打开 Side Panel、读 `yiveno.recallTelemetry`、导出/分析本机会话数据、写 gold card 草稿（基于真实条目 id）。
+
+## 禁止（即使用户未再问）
+
+- **`yiveno.seedRecallProbe({ replace: true })` 或等价清空重种**——会抹掉真实库；仅当用户**点名**要探针/压力种库时可用，且须先说明会清空。
+- 用 eval corpus / 探针种库数字冒充 §5.9 种子 TTE / Beta 达标。
+- 伪造 `user_confirmed` 或批量生成假参与者数据。
+
+## 与其它规则的关系
+
+- **git 工作区**：仍遵守 `git-workdir-safety.mdc`（禁止未经同意 `restore`/`checkout` 丢 WIP）。
+- **commit / push**：仍须用户明确要求。
+- **种子验证口径**：真实库 + 真人主观确认才算 TTE；自动化只辅助计时与 gold id 对拍。

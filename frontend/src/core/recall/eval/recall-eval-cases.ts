@@ -159,9 +159,9 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
     id: 'match-quality-prefix-density-en',
     clue: 'red white',
     clueClass: 'concrete',
-    gate: 'stretch',
+    gate: 'must',
     expectation: { kind: 'in_topk', expectedId: RECALL_EVAL_IDS.excerptMatchPrefixTightEn, k: 3 },
-    note: '英文同样：起首+更短密优先于夹心长句'
+    note: '英文同样：起首+更短密优先于夹心长句（语料须与中文探针正文分离，避免折叠吞项）'
   },
 
   // —— must：半模糊但仍有共享子串 ——
@@ -395,8 +395,8 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
     clue: 'the Yiveno page I kept opening',
     clueClass: 'vague',
     gate: 'must',
-    expectation: { kind: 'in_topk', expectedId: RECALL_EVAL_IDS.yivenoDesignPrinciples, k: 3 },
-    note: 'R4：often_opened · 高 settledCount 设计原则页'
+    expectation: { kind: 'top1', expectedId: RECALL_EVAL_IDS.yivenoDesignPrinciples },
+    note: 'R4：often_opened · 高 settledCount 设计原则页应 Top1（非仅进邻域）'
   },
   {
     id: 'r4-cluster-yiveno-docs-product',

@@ -222,7 +222,8 @@ export function buildRecallEvalCorpus(): MemoryItem[] {
         ownerId,
         sourceLocalProfileId,
         payload: {
-          selectedText: 'deep red white tone',
+          // 与中文夹心摘录同词面会触发折叠键碰撞；英文探针用独立正文
+          selectedText: 'deep red white pigment blend',
           sourceUrl: 'https://notes.example.com/embedded-en',
           pageTitle: 'Palette notes'
         },
@@ -236,7 +237,8 @@ export function buildRecallEvalCorpus(): MemoryItem[] {
         ownerId,
         sourceLocalProfileId,
         payload: {
-          selectedText: 'red white ok',
+          // 与中文起首摘录同词面会触发折叠键碰撞；英文探针用独立正文
+          selectedText: 'red white pigment swatch',
           sourceUrl: 'https://notes.example.com/prefix-en',
           pageTitle: 'Palette notes'
         },
