@@ -1,5 +1,5 @@
 /**
- * DEV：探针噪声 / 多样性层指纹分类（保留精选语料 + 真实 Capture）。
+ * DEV：探针半仿真 / 无关干扰 / 手写精选层指纹分类（按 URL/正文形态分层，供清理用）。
  * 仅 seeder 形态；禁止进召回 runtime。
  */
 
@@ -71,5 +71,40 @@ export function isProbeNoiseOrDiversityItem(item: MemoryItem): boolean {
     return false
   }
 
+  return false
+}
+
+function itemPrimaryUrl(item: MemoryItem): string {
+  return item.type === 'bookmark' ? item.payload.url : item.payload.sourceUrl
+}
+
+/**
+ * 精选探针（非噪声层）：语料 URL 表 / yiveno-probe 指纹 /
+ * 或仍挂在种库主题文件夹 / 历史「Yiveno Probe」夹内的 Chrome 节点。
+ * 不含半仿真/无关干扰（那些走 isProbeNoiseOrDiversityItem）。
+ */
+export function isCuratedProbeItem(
+  item: MemoryItem,
+  options: {
+    curatedUrls: ReadonlySet<string>
+    probeChromeIds: ReadonlySet<string>
+  }
+): boolean {
+  if (isProbeNoiseOrDiversityItem(item)) {
+    return false
+  }
+  const url = itemPrimaryUrl(item)
+  if (/yiveno-probe/i.test(url)) {
+    return true
+  }
+  if (options.curatedUrls.has(url)) {
+    return true
+  }
+  if (item.type === 'bookmark') {
+    const chromeId = item.payload.chromeBookmarkId?.trim()
+    if (chromeId && options.probeChromeIds.has(chromeId)) {
+      return true
+    }
+  }
   return false
 }

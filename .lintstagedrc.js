@@ -79,6 +79,11 @@ function isDesignTokenCss(repoPath) {
   return repoPath.startsWith('packages/design-tokens/')
 }
 
+/** @yiveno/probe Console 为 DEV 工具台；Stylelint 用 website 宽松档（无扩展 token 硬规则） */
+function isProbePackage(repoPath) {
+  return repoPath.startsWith('packages/yiveno-probe/')
+}
+
 /** 在对应 workspace 目录运行 Stylelint */
 function stylelintByWorkspace(filenames) {
   const lintable = filenames.filter(file => !isDesignTokenCss(toRepoRelative(file)))
@@ -93,8 +98,18 @@ function stylelintByWorkspace(filenames) {
   if (groups.website.length > 0) {
     commands.push(`cd website && ${STYLELINT_CMD} ${groups.website.map(quotePath).join(' ')}`)
   }
-  if (groups.root.length > 0) {
-    commands.push(`${STYLELINT_CMD} ${groups.root.map(quotePath).join(' ')}`)
+
+  const probeFromRoot = groups.root.filter(isProbePackage)
+  const otherRoot = groups.root.filter(file => !isProbePackage(file))
+  if (probeFromRoot.length > 0) {
+    commands.push(
+      `cd website && ${STYLELINT_CMD} --config ./stylelint.config.js ${probeFromRoot
+        .map(file => quotePath(`../${file}`))
+        .join(' ')}`
+    )
+  }
+  if (otherRoot.length > 0) {
+    commands.push(`${STYLELINT_CMD} ${otherRoot.map(quotePath).join(' ')}`)
   }
 
   return commands

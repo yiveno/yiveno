@@ -23,7 +23,8 @@
 ## 2. 前置
 
 1. `cd frontend && bun run build` → `chrome://extensions` 重新加载 Yiveno。
-2. **库来源（你本地多为探针种库）：** 若曾跑过 `yiveno.seedRecallProbe({ replace: true })` 或默认三画像种库，精选条目来自 `recall-probe-corpus-{researcher,creator,developer}.ts`（Manifest V3、Stripe 幂等、远程办公、字体配对等）。**压力 ~20k 库**时部分线索可能被 filler 顶掉——下文「压力库备注」有说明。
+2. **库来源（你本地多为探针种库）：** 若曾跑过 `yiveno.seedRecallProbe({ replace: true })` 或默认三主题包种库，**手写精选**条目来自 `@yiveno/probe` 的 researcher / creator / developer 语料（Manifest V3、Stripe 幂等、远程办公、字体配对等）。**压力 ~20k 库**时部分线索可能被**无关干扰**顶掉——下文「压力库备注」有说明。  
+   （「种库」= 写入测试数据，≠ §5.9 种子验证；见术语表 §8.1。）
 3. 可选：Side Panel 已打开（`Alt+Shift+Y`），便于对照。
 4. SW 日志备查：`chrome://extensions/?errors=<扩展id>`。
 
@@ -34,7 +35,7 @@
 | 输入 `yi i18n:check` / `yi Cloudflare Workers` 无结果                      | **旧版手测**对齐的是 `recall-eval` 内存夹具，**不是**探针种库 | 改用下文 §4.1 复制块；勿混用 eval 专用 token                                               |
 | 库里有 **Migrate to Manifest V3**，但 clue 是 `chrome extension migration` | 正常：靠 **URL / 标题碎片 / 附注** 匹配，不是标题逐字相同     | 仍应 Top1；在 SW 跑 `await yiveno.runProbeOmniboxSmoke()` 验 11 条                         |
 | `seedRecallProbe` 后立刻测，全空                                           | 种库未 `await` 完或 `indexRebuilt: false`                     | `await yiveno.seedRecallProbe({ replace: true })` 看返回；`chrome://extensions` 重载后再测 |
-| 压力 ~20k 库部分线索被顶掉                                                 | 噪声 filler 挤排序                                            | 质量档默认即可；或改测 §4.1 的 1–4                                                         |
+| 压力 ~20k 库部分线索被顶掉                                                 | 无关干扰条目挤排序                                            | 用默认质量种库（约千条完整测试库）即可；或改测 §4.1 的 1–4                                 |
 
 **SW 一键验库（种库后）：**
 
@@ -60,11 +61,11 @@ await yiveno.runProbeOmniboxSmoke()
 
 > **用法：** 每行 = 地址栏**整行**输入（`yi` + 空格 + 你记得的碎片）。  
 > **语气：** 模拟普通人记得一半标题/站点/当时备注时的敲法，**不是** eval 专用 token。  
-> **期望：** 「大概会打开」= 探针精选条目；压力库见备注。
+> **期望：** 「大概会打开」= 探针**手写精选**条目；压力库见备注。
 
 ### 4.1 具体锚点（应能快跳 · 建议 6 条里抽 3 条测）
 
-| #   | 地址栏整行（复制）              | 你大概会打开（探针精选）                                                       |
+| #   | 地址栏整行（复制）              | 你大概会打开（手写精选）                                                       |
 | --- | ------------------------------- | ------------------------------------------------------------------------------ |
 | 1   | `yi chrome extension migration` | 书签 **Migrate to Manifest V3**（developer.chrome.com）                        |
 | 2   | `yi stripe idempotent`          | 书签 **Idempotent requests**（Stripe 文档；附注 payments incident）            |
@@ -90,7 +91,7 @@ yi reading list useful
 
 **通过：** 每条 Top 建议与上表「大概会打开」一致或极接近；description **ECS 五要素**齐全；回车可达。
 
-**压力库备注：** `yi chrome extension migration` 仍应稳；`yi deploy checklist` / `yi release checklist` 类输入在 ~20k filler 库上**可能**被噪声顶掉——压力验收请改测上表 1–4，或先用质量档探针库。
+**压力库备注：** `yi chrome extension migration` 仍应稳；`yi deploy checklist` / `yi release checklist` 类输入在 ~20k（半仿真+无关干扰）库上**可能**被顶掉——压力验收请改测上表 1–4，或先用默认质量种库（约千条完整测试库）。
 
 ### 4.2 摘录 / 附注碎片（可选加测 2 条）
 
@@ -170,12 +171,12 @@ that chrome extension migration guide I bookmarked
 
 ## 7. 实现锚点
 
-| 模块                    | 路径                                                                |
-| ----------------------- | ------------------------------------------------------------------- |
-| **DEV API 总索引**      | [`DEV-调试API.md`](./DEV-调试API.md)                                |
-| 探针语料（精选条目）    | `frontend/src/infrastructure/debug/recall-probe-corpus-*.ts`        |
-| Omnibox 监听            | `frontend/src/background/listeners/omnibox.ts`                      |
-| `entry: 'omnibox'` 分支 | `frontend/src/application/recall/backends/hybrid-recall-backend.ts` |
-| suggest 文案 / ECS      | `frontend/src/core/recall/omnibox-suggest.ts`                       |
-| i18n                    | `omnibox_default_suggestion` · `omnibox_no_match`                   |
-| `omnibox_must`          | `omnibox-eval-cases.ts` · `run-omnibox-eval.ts`                     |
+| 模块                     | 路径                                                                |
+| ------------------------ | ------------------------------------------------------------------- |
+| **DEV API 总索引**       | [`DEV-调试API.md`](./DEV-调试API.md)                                |
+| 探针语料（手写精选条目） | `@yiveno/probe`（`packages/yiveno-probe/src/corpus/`）              |
+| Omnibox 监听             | `frontend/src/background/listeners/omnibox.ts`                      |
+| `entry: 'omnibox'` 分支  | `frontend/src/application/recall/backends/hybrid-recall-backend.ts` |
+| suggest 文案 / ECS       | `frontend/src/core/recall/omnibox-suggest.ts`                       |
+| i18n                     | `omnibox_default_suggestion` · `omnibox_no_match`                   |
+| `omnibox_must`           | `omnibox-eval-cases.ts` · `run-omnibox-eval.ts`                     |

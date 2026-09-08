@@ -211,7 +211,10 @@ function excerptRowMemoDeps(row: ExcerptLibraryListRow): unknown[] {
 }
 
 .excerpt-library-item {
+  box-sizing: border-box;
   min-width: 0;
+  /* 与书签树 .tree-row 一致：stride 含 gap，padding 留缝，卡片不填满间距 */
+  padding-bottom: var(--library-list-row-gap, var(--space-xs));
   content-visibility: auto;
   contain-intrinsic-size: auto 80px;
 }

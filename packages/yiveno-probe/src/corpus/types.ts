@@ -24,7 +24,12 @@ export type RecallProbeExcerptSeed = {
   suggestedClues: string[]
 }
 
-export type RecallProbePersonaId = 'researcher' | 'creator' | 'developer'
+export type RecallProbePersonaId =
+  | 'researcher' // 跨来源研究者（首发优先）
+  | 'creator' // 创作者 / 设计研究者
+  | 'developer' // 开发者 / PM
+  | 'student' // 学生 / 终身学习者（扩展覆盖）
+  | 'knowledge_worker' // 知识工作者 / 非工程职场（扩展覆盖）
 
 export type RecallProbePersonaCorpus = {
   persona: RecallProbePersonaId

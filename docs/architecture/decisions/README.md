@@ -13,5 +13,7 @@
 | [ADR-005](./ADR-005-no-graylist-universal-recall.md) | 禁止内容别名灰名单冒充全用户通解                   | 已接受 |
 | [ADR-006](./ADR-006-brand-assets-git-lfs.md)         | 品牌母本/归档走 Git LFS（主仓内，非卫星仓）        | 已接受 |
 | [ADR-007](./ADR-007-omnibox-offline-lookup.md)       | Omnibox = 离线字段快跳；Side Panel = 完整 Recall   | 已接受 |
+| [ADR-008](./ADR-008-detail-export-naming.md)         | Detail export（详情导出）定位与命名                | 已接受 |
+| [ADR-009](./ADR-009-yiveno-probe-package.md)         | 召回探针 / 测试数据工作台独立为 `@yiveno/probe`    | 已接受 |
 
 **新增 ADR：** 先写本文目录 + 文件，再在产品文档 / `CURRENT.md` 引用。

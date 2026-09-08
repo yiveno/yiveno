@@ -52,6 +52,8 @@ const isPro = ref(false)
 
 const showLibrary = computed(() => props.current !== 'library')
 const showSettings = computed(() => props.current !== 'settings')
+/** DEV-only：测试工作台入口；生产构建为 false，按钮不渲染。 */
+const showProbeConsole = import.meta.env.DEV
 
 const showAvatarImage = computed(
   () => signedIn.value && Boolean(avatarUrl.value) && !avatarBroken.value
@@ -137,6 +139,19 @@ async function handleOpenSettings() {
     await openExtensionOptionsPage()
   } catch {
     emit('navigateError', t('error_open_settings'))
+  }
+}
+
+/** 打开 DEV 测试工作台；动态 import，避免生产包静态依赖 src/dev。 */
+async function handleOpenProbeConsole() {
+  if (!import.meta.env.DEV) {
+    return
+  }
+  try {
+    const { openProbeConsolePage } = await import('@/dev/probe-console/open-probe-console-page')
+    await openProbeConsolePage()
+  } catch {
+    emit('navigateError', 'Could not open the DEV test workbench.')
   }
 }
 
@@ -260,6 +275,14 @@ onUnmounted(() => {
         @click="handleOpenSettings"
       >
         <AppIcon name="settings" size="22px" />
+      </AppIconButton>
+      <AppIconButton
+        v-if="showProbeConsole"
+        title="Test workbench (DEV)"
+        aria-label="Test workbench (DEV)"
+        @click="handleOpenProbeConsole"
+      >
+        <AppIcon name="package" size="22px" />
       </AppIconButton>
     </nav>
   </div>

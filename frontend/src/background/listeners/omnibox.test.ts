@@ -19,7 +19,7 @@ vi.mock('@/application/memory/memory-item-service', () => ({
   }
 }))
 
-vi.mock('@/background/bootstrap', () => ({
+vi.mock('@/background/bootstrap-ready', () => ({
   ensureBackgroundBootstrapped: vi.fn(async () => undefined)
 }))
 
@@ -27,7 +27,7 @@ vi.mock('@/infrastructure/browser/navigate-tab', () => ({
   navigateTabToUrl: vi.fn(async () => undefined)
 }))
 
-import { ensureBackgroundBootstrapped } from '@/background/bootstrap'
+import { ensureBackgroundBootstrapped } from '@/background/bootstrap-ready'
 import { navigateTabToUrl } from '@/infrastructure/browser/navigate-tab'
 import {
   registerOmniboxListeners,

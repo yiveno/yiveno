@@ -87,6 +87,17 @@ async function focusOrCreateExtensionPage(path: string, sessionKey: string): Pro
   }
 }
 
+/**
+ * 打开或聚焦扩展包内任意 HTML 页（记忆库 / 设置 / DEV probe-console 等）。
+ * sessionKey 用于记住 tabId，避免重复堆 Tab。
+ */
+export async function focusOrOpenExtensionHtmlPage(
+  path: string,
+  sessionKey: string
+): Promise<boolean> {
+  return focusOrCreateExtensionPage(path, sessionKey)
+}
+
 /** 快捷键 / 顶栏：打开或切到记忆库页。 */
 export async function focusOrOpenLibraryTab(): Promise<boolean> {
   return focusOrCreateExtensionPage('library.html', LIBRARY_TAB_SESSION_KEY)

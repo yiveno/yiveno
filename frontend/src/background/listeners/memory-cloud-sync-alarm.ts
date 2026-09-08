@@ -2,6 +2,7 @@
  * 注册云 Memory 定时同步监听：闹钟触发 → 增量 sync。
  */
 
+import { ensureBackgroundBootstrapped } from '@/background/bootstrap-ready'
 import { handleIncrementalMemorySync } from '@/background/handlers/account-sync-handler'
 import {
   MEMORY_CLOUD_SYNC_ALARM_NAME,
@@ -12,9 +13,8 @@ import { logger } from '@/infrastructure/logging/logger'
 
 let registered = false
 
-/** 定时同步写 IDB 前须等 bootstrap（动态 import 避免与 bootstrap 循环依赖）。 */
+/** 定时同步写 IDB 前须等 bootstrap（SW 禁止动态 import）。 */
 async function ensureBootstrapReady(): Promise<void> {
-  const { ensureBackgroundBootstrapped } = await import('@/background/bootstrap')
   await ensureBackgroundBootstrapped()
 }
 

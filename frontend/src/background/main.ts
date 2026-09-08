@@ -17,8 +17,8 @@ import { registerOmniboxListeners } from '@/background/listeners/omnibox'
 import { registerSelectionToolbarKeepaliveListener } from '@/background/listeners/selection-toolbar-keepalive'
 import { exposeClueGatewayDebug } from '@/infrastructure/debug/expose-clue-gateway-debug'
 import { exposeMemoryDevDebug } from '@/infrastructure/debug/expose-memory-dev-debug'
-import { exposeRecallProbeSeedDebug } from '@/infrastructure/debug/expose-recall-probe-seed-debug'
 import { exposeRecallTelemetryDebug } from '@/infrastructure/debug/expose-recall-telemetry-debug'
+import { exposeRecallProbeSeedDebug } from '@/dev/probe/expose-recall-probe-seed-debug'
 import { logger } from '@/infrastructure/logging/logger'
 
 /**
@@ -28,10 +28,17 @@ import { logger } from '@/infrastructure/logging/logger'
  * 在此注册 runtime 消息与 onInstalled（含右键菜单）。
  * 禁止恢复旧书签管理器行为。
  */
-exposeClueGatewayDebug()
-exposeMemoryDevDebug()
-exposeRecallProbeSeedDebug()
-exposeRecallTelemetryDebug()
+if (import.meta.env.DEV) {
+  // 扩展 SW 禁止动态 import()；DEV expose 须静态 import（prod 由 vite alias 指到 stub）。
+  exposeClueGatewayDebug()
+  exposeMemoryDevDebug()
+  exposeRecallProbeSeedDebug()
+  exposeRecallTelemetryDebug()
+  const id = chrome.runtime.id
+  console.info(
+    `[yiveno] DEV Probe Console → chrome-extension://${id}/probe-console.html（权威 UI；SW yiveno.* 为辅）`
+  )
+}
 registerExternalAuthHandoffListener()
 // 下列监听器须在 bootstrap/IDB 前同步挂上，避免 SW 冷启动丢事件（与 A2/A3/A6 同模式）
 registerSelectionToolbarKeepaliveListener()

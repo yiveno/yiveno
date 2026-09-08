@@ -25,7 +25,9 @@
     /* Path mapping (TS#62508): remove baseUrl and use relative path mapping */
     "paths": {
       "@/*": ["./src/*"],
-      "@yiveno/types": ["../packages/types/src/index.ts"]
+      "@yiveno/types": ["../packages/types/src/index.ts"],
+      "@yiveno/probe": ["../packages/yiveno-probe/src/index.ts"],
+      "@yiveno/probe/console": ["../packages/yiveno-probe/src/console/index.ts"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"],

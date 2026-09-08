@@ -22,6 +22,7 @@ alwaysApply: true
 | 建议首项 | **Top Pick** / `top_pick` | 正确答案 · 押中 |
 | 遥测事件 type | `clue_submitted` / `clue_refined` | 文档里把用户输入叫 query |
 | 内部实现名 | `filterClue` · `buildFilterClueFromParsed` · `clueEmbeddingText` | 当产品名词使用；见术语表 §10.2 |
+| **种子 / seed（易混）** | 按术语表 **§8.1** 加限定：种子用户(§5.9) · 种库(`seedRecallProbe`) · 随机种子(`fillerSeed`) · 禁主题 seed | 裸写「种子」；用探针库冒充 §5.9 |
 
 ## 最易混三组（必须分清）
 

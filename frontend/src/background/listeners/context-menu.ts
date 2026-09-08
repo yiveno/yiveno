@@ -1,7 +1,7 @@
 import { CodedError } from '@/core/common/coded-error'
 import { optionalProp } from '@/core/common/optional-props'
 import { captureTextExcerptFromContextMenu } from '@/application/capture/capture-text-excerpt-service'
-import { ensureBackgroundBootstrapped } from '@/background/bootstrap'
+import { ensureBackgroundBootstrapped } from '@/background/bootstrap-ready'
 import { flashActionBadge } from '@/infrastructure/browser/action-badge'
 import { isSavablePageUrl } from '@/infrastructure/browser/active-tab-reader'
 import { logger } from '@/infrastructure/logging/logger'

@@ -10,15 +10,17 @@ import type { BackgroundMessageScope } from '@/core/messaging/constants'
 export const RecallProbePersonaSchema = z.enum([
   'researcher', // 跨来源研究者（首发优先）
   'creator', // 创作者 / 设计研究者
-  'developer' // 开发者 / PM
+  'developer', // 开发者 / PM
+  'student', // 学生 / 终身学习者（扩展覆盖；默认种库不含）
+  'knowledge_worker' // 知识工作者 / 非工程职场（扩展覆盖；默认种库不含）
 ])
 
 const seedRecallProbePayloadSchema = z.object({
-  /** 要种入的画像；默认三画像全开（质量量级轮）。 */
+  /** 要种入的画像；默认仍为质量轮三画像（扩展画像须显式传入）。 */
   personas: z
     .array(RecallProbePersonaSchema)
     .min(1)
-    .max(3)
+    .max(5)
     .default(['researcher', 'creator', 'developer']),
   /**
    * true：清空当前 owner 的 Memory + 清空 Chrome 书签栏下全部子树，再种语料。
@@ -43,7 +45,12 @@ const seedRecallProbePayloadSchema = z.object({
    * 是否对精选条调度 LLM enrichment（烧配额；质量轮默认开）。
    * 噪声 / 多样性条永不调度。
    */
-  enrichCurated: z.boolean().default(true)
+  enrichCurated: z.boolean().default(true),
+  /**
+   * diversity / noise 过程随机种子（可复现）。
+   * 缺省由 seeder 使用包内 DEFAULT_PROBE_FILLER_SEED。
+   */
+  fillerSeed: z.number().int().min(0).max(0xffff_ffff).optional()
 })
 
 export type SeedRecallProbePayload = z.infer<typeof seedRecallProbePayloadSchema>
@@ -89,10 +96,11 @@ export type DevPurgeProbeNoiseResponse =
       scannedCount: number
       purgedExcerptCount: number
       purgedBookmarkCount: number
-      detachedCuratedBookmarkCount: number
+      keptCount: number
       removedChromeProbeFolder: boolean
       removedChromeBookmarkNodes: number
-      keptCount: number
+      wipedChromeFolders: number
+      clearedAllMemory: boolean
       indexRebuilt: boolean
     }
   | {
@@ -100,6 +108,41 @@ export type DevPurgeProbeNoiseResponse =
       errorCode: 'DEV_ONLY' | 'DEV_PURGE_FAILED' // DEV_ONLY=生产构建拒绝；DEV_PURGE_FAILED=清除异常
       error?: string
     }
+
+const probeCleanupPayloadSchema = z
+  .object({
+    /** 清噪声 / 多样性层 */
+    noiseOrDiversity: z.boolean().default(false),
+    /** 清精选探针（语料 URL / yiveno-probe / Chrome Probe 文件夹内书签） */
+    curatedProbe: z.boolean().default(false),
+    /** 清当前 owner 全部 Memory（优先于上两层） */
+    allMemory: z.boolean().default(false),
+    /** 类型过滤 */
+    types: z.enum(['all', 'bookmark', 'text_excerpt']).default('all'),
+    /** 移除种库主题文件夹（含历史「Yiveno Probe」；wipe 开启时可不设） */
+    removeProbeFolder: z.boolean().default(false),
+    /** 清空 Chrome 各书签根下全部子树（危险；整库清理常用） */
+    wipeChromeBookmarkChildren: z.boolean().default(false)
+  })
+  .superRefine((value, ctx) => {
+    if (!value.allMemory && !value.noiseOrDiversity && !value.curatedProbe) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '须至少选择 noiseOrDiversity / curatedProbe / allMemory 之一'
+      })
+    }
+  })
+
+export type ProbeCleanupPayload = z.infer<typeof probeCleanupPayloadSchema>
+
+/** DEV：按选项批量清理探针 / Memory。 */
+export type DevProbeCleanupMessage = {
+  scope: BackgroundMessageScope
+  type: 'DEV_PROBE_CLEANUP'
+  payload: Partial<ProbeCleanupPayload>
+}
+
+export type DevProbeCleanupResponse = DevPurgeProbeNoiseResponse
 
 const backdateMemorySavedAtPayloadSchema = z
   .object({
@@ -138,19 +181,96 @@ export type DevBackdateMemorySavedAtResponse =
       error?: string
     }
 
+/** DEV：当前库盘点快照（Probe Console）。 */
+export type DevProbeLibrarySnapshotMessage = {
+  scope: BackgroundMessageScope
+  type: 'DEV_PROBE_LIBRARY_SNAPSHOT'
+}
+
+export type DevProbeLibrarySnapshotResponse =
+  | {
+      ok: true
+      scannedCount: number
+      truncated: boolean
+      byType: { bookmark: number; text_excerpt: number; other: number }
+      byLayer: { probe_noise_or_diversity: number; other: number }
+      recentOther: Array<{
+        id: string
+        type: string
+        title: string
+        url: string
+        notePreview: string | null
+        savedAtIso: string
+        layer: string
+      }>
+    }
+  | {
+      ok: false
+      errorCode: 'DEV_ONLY' | 'DEV_SNAPSHOT_FAILED'
+      error?: string
+    }
+
+const listProbeFixturesPayloadSchema = z
+  .object({
+    personas: z.array(RecallProbePersonaSchema).min(1).max(5).optional()
+  })
+  .optional()
+
+export type ListProbeFixturesPayload = z.infer<typeof listProbeFixturesPayloadSchema>
+
+/** DEV：探针精选夹具目录（不写库）。 */
+export type DevListProbeFixturesMessage = {
+  scope: BackgroundMessageScope
+  type: 'DEV_LIST_PROBE_FIXTURES'
+  payload?: ListProbeFixturesPayload
+}
+
+export type DevListProbeFixturesResponse =
+  | {
+      ok: true
+      defaultPersonas: string[]
+      personaOrder: string[]
+      rows: Array<{
+        persona: string
+        kind: 'bookmark' | 'excerpt'
+        key: string
+        label: string
+        suggestedClues: string[]
+      }>
+    }
+  | {
+      ok: false
+      errorCode: 'DEV_ONLY' | 'DEV_FIXTURES_FAILED'
+      error?: string
+    }
+
 export type DebugBackgroundMessage =
   | DevSeedRecallProbeMessage
   | DevPurgeProbeNoiseMessage
+  | DevProbeCleanupMessage
   | DevBackdateMemorySavedAtMessage
+  | DevProbeLibrarySnapshotMessage
+  | DevListProbeFixturesMessage
 export type DebugBackgroundResponse =
   | DevSeedRecallProbeResponse
   | DevPurgeProbeNoiseResponse
+  | DevProbeCleanupResponse
   | DevBackdateMemorySavedAtResponse
+  | DevProbeLibrarySnapshotResponse
+  | DevListProbeFixturesResponse
 
 export function parseSeedRecallProbePayload(value: unknown): SeedRecallProbePayload {
   return seedRecallProbePayloadSchema.parse(value ?? {})
 }
 
+export function parseProbeCleanupPayload(value: unknown): ProbeCleanupPayload {
+  return probeCleanupPayloadSchema.parse(value ?? {})
+}
+
 export function parseBackdateMemorySavedAtPayload(value: unknown): BackdateMemorySavedAtPayload {
   return backdateMemorySavedAtPayloadSchema.parse(value)
+}
+
+export function parseListProbeFixturesPayload(value: unknown): ListProbeFixturesPayload {
+  return listProbeFixturesPayloadSchema.parse(value ?? {})
 }

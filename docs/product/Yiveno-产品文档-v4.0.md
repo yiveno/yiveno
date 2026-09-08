@@ -1374,20 +1374,21 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 #### 5.11.1a 本地质量探针语料（DEV · 非 CI）
 
-> **用途：** 真机 MCP / 手工用英语口语线索压测邻域质量；**不是** `recall-eval` 替身，也**禁止**把探针词面做成 runtime 灰名单。
+> **用途：** 真机 MCP / 手工用英语口语线索压测邻域质量；**不是** `recall-eval` 替身，也**禁止**把探针词面做成 runtime 灰名单。  
+> **术语：** 探针「种库」≠ §5.9 种子验证；文案口径见术语表 §8.1 与 [`DEV-调试API.md`](../engineering/DEV-调试API.md)（手写精选 / 半仿真 / 无关干扰 / 随机种子）。
 
-| 项               | 约定                                                                                                                                                                        |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 门禁             | 仅 `import.meta.env.DEV`；消息 `DEV_SEED_RECALL_PROBE`；生产构建拒绝                                                                                                        |
-| 语料范围         | Chrome 书签 + Memory 摘录 + `clues.note`；画像优先：研究者 → 创作者 → 开发者                                                                                                |
-| 量级策略         | **先质量**：精选 + 画像多样性 + 噪声，目标约 **800–2000**；**再压力**：Memory ≈ **~20k**（测耗时/倒排/邻域抽检）                                                            |
-| 默认种库（质量） | 三画像精选 + diversity≈350/150 + noise≈400/150；`chromeBookmarkSync: 'all'`                                                                                                 |
-| 压力种库         | 精选仍写 Chrome；diversity/noise **直写 Memory**（`chromeBookmarkSync: 'curated_only'`）；例：diversity 8k/4k + noise 5.5k/2.45k ≈ 20k；种完 `ensureReadyForOwner` 重建倒排 |
-| 扫描上限         | `RECALL_SCAN_LIMIT` = **20000**（与压力档对齐；倒排候选仍受 posting cap）                                                                                                   |
-| 通过口径         | 与上表一致：目标在排序邻域（含 Show more 池）即会话成功；Top1 仅 delight；压力轮另记 p50/p95 召回耗时                                                                       |
-| 调用             | SW：`yiveno.seedRecallProbe({ replace: true })`；种库后 `yiveno.runProbeOmniboxSmoke()` 验 §4.1–4.2；或 Side Panel `sendMessage` 同 type                                    |
-| 实现             | `frontend/src/infrastructure/debug/recall-probe-*`；精选可调度 LLM enrichment / embedding；多样性与噪声不烧配额                                                             |
-| 工程索引         | [`docs/engineering/DEV-调试API.md`](../engineering/DEV-调试API.md) — SW `yiveno.*` 调试 API 总表与维护约定                                                                  |
+| 项               | 约定                                                                                                                                                                                                                                                              |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 门禁             | 仅 `import.meta.env.DEV`；消息 `DEV_SEED_RECALL_PROBE`；生产构建拒绝                                                                                                                                                                                              |
+| 语料范围         | Chrome 书签 + Memory 摘录 + `clues.note`；**默认主题包**：研究者 → 创作者 → 开发者；**扩展（须显式 `personas`）**：学生、知识工作者                                                                                                                               |
+| 量级策略         | **先质量**：手写精选 + 半仿真 + 无关干扰，目标约 **800–2000**；**再压力**：Memory ≈ **~20k**（测耗时/倒排/邻域抽检）                                                                                                                                              |
+| 默认种库（质量） | 三主题包手写精选 + 半仿真≈350/150（`diversity*`）+ 无关干扰≈400/150（`noise*`）；`chromeBookmarkSync: 'all'`                                                                                                                                                      |
+| 压力种库         | 手写精选仍写 Chrome；半仿真/无关干扰 **直写 Memory**（`chromeBookmarkSync: 'curated_only'`）；例：半仿真 8k/4k + 干扰 5.5k/2.45k ≈ 20k；种完 `ensureReadyForOwner` 重建倒排                                                                                       |
+| 扫描上限         | `RECALL_SCAN_LIMIT` = **20000**（与压力档对齐；倒排候选仍受 posting cap）                                                                                                                                                                                         |
+| 通过口径         | 与上表一致：目标在排序邻域（含 Show more 池）即会话成功；Top1 仅 delight；压力轮另记 p50/p95 召回耗时                                                                                                                                                             |
+| 调用             | SW：`yiveno.seedRecallProbe({ replace: true })`；扩展主题包例：`personas: ['student','knowledge_worker']`；种库后 `yiveno.runProbeOmniboxSmoke()` 验 Omnibox 手测 §4.1–4.2（仅覆盖默认三主题包线索表）；或 Side Panel `sendMessage` 同 type                       |
+| 实现             | `@yiveno/probe` 语料 + `frontend/src/dev/probe/` 桥；手写精选可调度 LLM enrichment / embedding；半仿真与无关干扰不烧配额（本地过程随机，`fillerSeed`）；Chrome 写入**真实主题文件夹**（非「Yiveno Probe」沙盒夹）；**扩展主题包默认不种**，勿与质量轮退出口径混谈 |
+| 工程索引         | [`docs/engineering/DEV-调试API.md`](../engineering/DEV-调试API.md) — **Probe Console**（`probe-console.html`，DEV-only）权威 **写入测试数据** UI；SW `yiveno.*` 为辅；不进 CWS                                                                                    |
 
 有价值的失败 case → **匿名化**写入 `recall-eval` must / corpus；不得把个人专名 alias 写进召回主路径。
 
@@ -1397,23 +1398,23 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 | 退出条件                                    | 结果                                                           |
 | ------------------------------------------- | -------------------------------------------------------------- |
-| 种库达质量量级（~800–2000，书签+摘录+附注） | ✅ 默认三画像 + diversity/noise 千级                           |
-| 画像覆盖：研究者 → 创作者 → 开发者          | ✅ 覆盖批 + 刁批均过                                           |
+| 种库达质量量级（~800–2000，书签+摘录+附注） | ✅ 默认三主题包 + 半仿真/无关干扰千级                          |
+| 主题包覆盖：研究者 → 创作者 → 开发者        | ✅ 覆盖批 + 刁批均过                                           |
 | 邻域履约（目标在排序池）为主尺              | ✅ 覆盖批 18+18+14；刁批 19/19；窄残差 6/6                     |
 | 硬坑机制化 + 匿名 must（非灰名单）          | ✅ 时间词 / 零锚点 / 非找回闭集 / 附注覆盖 / Hybrid 领先保护等 |
 | 同库再开广度覆盖收益                        | ❌ 判定不足，跳过                                              |
 
-**已知非阻塞残差（不挡质量轮退出）：** 纯语义强改写（如 fetch-then-read ↔ DPR）偶发 **邻域命中、Top1 被 diversity「Working paper」抢走**。履约仍成立；Top1 delight 加固留给压力轮后或单独立项，**禁止**为此加内容别名表。
+**已知非阻塞残差（不挡质量轮退出）：** 纯语义强改写（如 fetch-then-read ↔ DPR）偶发 **邻域命中、Top1 被半仿真条目（旧 diversity「Working paper」模板）抢走**。履约仍成立；Top1 delight 加固留给压力轮后或单独立项，**禁止**为此加内容别名表。
 
 ##### 压力轮（2026-08-27 · 已完结）
 
-| 项                      | 结果                                                                                                                                                       |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 种库                    | ≈ **19998** Memory（精选 48 + diversity 8k/4k + noise 5.5k/2.45k）；`chromeBookmarkSync: 'curated_only'`；种库墙钟 ≈ **11–22s**；倒排 `indexRebuilt: true` |
-| 邻域抽检                | 首轮 6/6 + 扩检 11/11；撞车复测（MV3 / EXPLAIN / SSRN / disagreed）**4/4 Top1**                                                                            |
-| 召回墙钟（含 LLM 理解） | 典型数秒～二十余秒；单条最慢可见 ~28s（含 hosted clue LLM）                                                                                                |
-| 扫描上限                | `RECALL_SCAN_LIMIT` = **20000**                                                                                                                            |
-| 探针语料修正            | diversity **禁止**与精选撞专用词面（曾用 `Working paper:` / `Manifest V3` / `Seq scans` / `idempotency` 淹没精选；已改中性模板）                           |
+| 项                      | 结果                                                                                                                                                           |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 种库                    | ≈ **19998** Memory（手写精选 48 + 半仿真 8k/4k + 无关干扰 5.5k/2.45k）；`chromeBookmarkSync: 'curated_only'`；种库墙钟 ≈ **11–22s**；倒排 `indexRebuilt: true` |
+| 邻域抽检                | 首轮 6/6 + 扩检 11/11；撞车复测（MV3 / EXPLAIN / SSRN / disagreed）**4/4 Top1**                                                                                |
+| 召回墙钟（含 LLM 理解） | 典型数秒～二十余秒；单条最慢可见 ~28s（含 hosted clue LLM）                                                                                                    |
+| 扫描上限                | `RECALL_SCAN_LIMIT` = **20000**                                                                                                                                |
+| 探针语料修正            | 半仿真 **禁止**与手写精选撞专用词面（曾用 `Working paper:` / `Manifest V3` / `Seq scans` / `idempotency` 淹没精选；已改中性模板）                              |
 
 **说明：** 压力轮验收以「万级库邻域不塌 + 可观测耗时」为主；端到端秒级延迟含 hosted clue LLM，不等于纯倒排/关键词路径。**理解 vs 检索分拆埋点**已接线（`RecallResult.pipelineTiming` + TTE 七事件本机缓冲）；**ECS 五要素卡面**已接线（Side Panel + Omnibox，§5.10.1）。
 
@@ -2156,6 +2157,11 @@ RecallOutcomeEvent {
 
 | 日期       | 变更                                                                                                                                                                                                                                                   |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-09-07 | **术语消歧：** 术语表 §8.1「种子」四义；§5.11.1a / DEV-调试API / Omnibox 手测对齐 Console 文案（手写精选 / 半仿真 / 无关干扰 / 随机种子）；探针词非产品面                                                                                              |
+| 2026-09-06 | **Probe Console：** 去掉 replace 确认勾选；新增一键清理（`DEV_PROBE_CLEANUP`：噪声/精选/整库 + 类型 + Chrome）                                                                                                                                         |
+| 2026-09-06 | **Probe Console 收窄：** UI 仅造数（配方种库 / 清噪）；盘点与对拍撤出页面；DEV-调试API / ADR-009 同步                                                                                                                                                  |
+| 2026-09-05 | **Probe Console：** DEV-only `probe-console.html`（`src/dev/`，不进 CWS）；聚合盘点/种库/对拍；§5.11.1a / DEV-调试API 收敛；`student`/`knowledge_worker` 扩展画像                                                                                      |
+| 2026-09-05 | **探针扩展画像：** `student` / `knowledge_worker` 精选+diversity；默认种库仍三画像；§5.11.1a / DEV-调试API 标明非 §5.9                                                                                                                                 |
 | 2026-08-27 | **压力轮完结：** 扩检 11/11；diversity 去撞车（Working paper / Manifest V3 等）后 MV3·EXPLAIN·SSRN·disagreed 复测 Top1；§5.11.1a 标关闭；质量→压力主线完结                                                                                             |
 | 2026-08-27 | **压力轮首通：** ~20k Memory（`curated_only` 快写）；`RECALL_SCAN_LIMIT=20000`；种库≈11s；抽检 6/6 邻域不塌；E2E 召回墙钟 p50≈8s / max≈26s（含 LLM）；§5.11.1a                                                                                         |
 | 2026-08-27 | **质量轮完结：** §5.11.1a 退出条件全绿（千级种库 + 三画像覆盖/刁/窄残差邻域履约 + must 钉坑）；同库广度覆盖不再默认；已知 soft：纯语义偶发 Top1 被 diversity Working paper 抢走（不挡退出）；下一档 = 压力 ~20k                                        |

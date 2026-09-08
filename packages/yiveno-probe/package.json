@@ -1,0 +1,48 @@
+{
+  "name": "@yiveno/probe",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Yiveno recall probe corpora + Probe Console (DEV test-data workbench; not shipped to CWS)",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./corpus": {
+      "types": "./src/corpus/index.ts",
+      "import": "./src/corpus/index.ts",
+      "default": "./src/corpus/index.ts"
+    },
+    "./console": {
+      "types": "./src/console/index.ts",
+      "import": "./src/console/index.ts",
+      "default": "./src/console/index.ts"
+    }
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "typecheck:force": "tsc --noEmit",
+    "test": "vitest run",
+    "test:run": "vitest run"
+  },
+  "peerDependencies": {
+    "vue": "^3.5.0"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.1.4",
+    "typescript": "~5.8.3",
+    "vitest": "^4.0.17",
+    "vue": "^3.5.18"
+  },
+  "engines": {
+    "bun": ">=1.0.0"
+  }
+}

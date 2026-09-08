@@ -9,8 +9,44 @@ import { createPlugins } from './vite/plugins'
 import { createBuildConfig } from './vite/build'
 import { createServerConfig } from './vite/server'
 
-export default defineConfig(() => {
+export default defineConfig(({ mode }) => {
   logBuildConfig()
+
+  const probeConsoleEntry = resolve(SRC_DIR, 'dev/probe-console/index.html')
+  const pageEntries = [
+    resolve(SRC_DIR, 'pages/sidepanel/index.html'),
+    resolve(SRC_DIR, 'pages/settings/index.html'),
+    resolve(SRC_DIR, 'pages/detail/index.html'),
+    resolve(SRC_DIR, 'pages/library/index.html'),
+    resolve(SRC_DIR, 'pages/getting-started/index.html'),
+    ...(mode !== 'production' ? [probeConsoleEntry] : [])
+  ]
+
+  const prodDevStubs =
+    mode === 'production'
+      ? {
+          '@/dev/probe/debug-dev-handler': resolve(
+            SRC_DIR,
+            'dev/probe/debug-dev-handler.prod-stub.ts'
+          ),
+          '@/dev/probe/expose-recall-probe-seed-debug': resolve(
+            SRC_DIR,
+            'dev/probe/expose-recall-probe-seed-debug.prod-stub.ts'
+          ),
+          '@/infrastructure/debug/expose-clue-gateway-debug': resolve(
+            SRC_DIR,
+            'infrastructure/debug/expose-clue-gateway-debug.prod-stub.ts'
+          ),
+          '@/infrastructure/debug/expose-memory-dev-debug': resolve(
+            SRC_DIR,
+            'infrastructure/debug/expose-memory-dev-debug.prod-stub.ts'
+          ),
+          '@/infrastructure/debug/expose-recall-telemetry-debug': resolve(
+            SRC_DIR,
+            'infrastructure/debug/expose-recall-telemetry-debug.prod-stub.ts'
+          )
+        }
+      : {}
 
   return {
     base: './',
@@ -20,20 +56,20 @@ export default defineConfig(() => {
     plugins: createPlugins(),
     resolve: {
       alias: {
-        '@': SRC_DIR
+        '@': SRC_DIR,
+        '@yiveno/probe/console': resolve(
+          PROJECT_ROOT,
+          'packages/yiveno-probe/src/console/index.ts'
+        ),
+        '@yiveno/probe': resolve(PROJECT_ROOT, 'packages/yiveno-probe/src/index.ts'),
+        ...prodDevStubs
       }
     },
 
-    build: createBuildConfig(),
+    build: createBuildConfig(mode),
 
     optimizeDeps: {
-      entries: [
-        resolve(SRC_DIR, 'pages/sidepanel/index.html'),
-        resolve(SRC_DIR, 'pages/settings/index.html'),
-        resolve(SRC_DIR, 'pages/detail/index.html'),
-        resolve(SRC_DIR, 'pages/library/index.html'),
-        resolve(SRC_DIR, 'pages/getting-started/index.html')
-      ],
+      entries: pageEntries,
       include: ['vue'],
       force: false,
       holdUntilCrawlEnd: true

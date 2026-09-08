@@ -13,11 +13,13 @@ const isWatchBuild = process.argv.includes('--watch')
 export const WATCH_BUILD_DELAY_MS = 400
 
 /** 创建扩展打包构建配置（popup / settings / background / offscreen）。 */
-export function createBuildConfig(): BuildOptions {
+export function createBuildConfig(mode: string): BuildOptions {
+  const includeProbeConsole = mode !== 'production'
   return {
     outDir: OUT_DIR,
     // watch 不清空 dist，避免与收尾竞态删掉仍被 HTML 引用的 CSS
     emptyOutDir: !isWatchBuild,
+    // SW 无 document：必须关 polyfill，否则动态 import 预加载会抛 window/document is not defined
     modulePreload: false,
     // watch 不 minify：重建更快、扩展调试更易读；正式 build 仍走 terser
     minify: isWatchBuild ? false : 'terser',
@@ -28,7 +30,7 @@ export function createBuildConfig(): BuildOptions {
     reportCompressedSize: false,
     sourcemap: DEBUG_MODE,
     assetsInlineLimit: 4096,
-    rolldownOptions: createBuildOptions(),
+    rolldownOptions: createBuildOptions({ includeProbeConsole }),
     ...(isWatchBuild
       ? {
           watch: {

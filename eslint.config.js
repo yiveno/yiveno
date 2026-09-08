@@ -13,6 +13,7 @@ import unusedImports from 'eslint-plugin-unused-imports'
 const repoRoot = fileURLToPath(new URL('.', import.meta.url))
 const frontendRoot = fileURLToPath(new URL('./frontend', import.meta.url))
 const websiteRoot = fileURLToPath(new URL('./website', import.meta.url))
+const probeRoot = fileURLToPath(new URL('./packages/yiveno-probe', import.meta.url))
 const isFrontendCwd = process.cwd().endsWith('/frontend')
 const isBackendCwd = process.cwd().endsWith('/backend')
 const isWebsiteCwd = process.cwd().endsWith('/website')
@@ -61,6 +62,8 @@ const frontendScriptTsFiles = eslintScopePaths('frontend/scripts/**/*.ts')
 const backendTsFiles = eslintScopePaths('backend/src/**/*.ts')
 const websiteTsFiles = isWebsiteCwd ? ['**/*.{ts,tsx}'] : ['website/src/**/*.{ts,tsx}']
 const websiteVueFiles = isWebsiteCwd ? ['**/*.vue'] : ['website/src/**/*.vue']
+/** @yiveno/probe：DEV Console Vue（根目录 lint / lint-staged 须能解析 SFC + import type） */
+const probeVueFiles = ['packages/yiveno-probe/src/**/*.vue']
 const testFiles = eslintScopePaths(
   'frontend/src/tests/**/*.{ts,tsx,js}',
   'frontend/src/**/*.test.{ts,tsx,js}',
@@ -451,6 +454,19 @@ export default [
   },
 
   {
+    files: probeVueFiles,
+    plugins: {
+      'unused-imports': unusedImports,
+      '@typescript-eslint': tseslint.plugin
+    },
+    rules: {
+      ...typescriptCodeQualityRules,
+      ...vueCommonRules,
+      ...typescriptCommonRules
+    }
+  },
+
+  {
     files: frontendTsFiles,
     languageOptions: {
       parser: tseslint.parser,
@@ -751,6 +767,10 @@ export default [
   {
     files: websiteVueFiles,
     languageOptions: createVueLanguageOptions(websiteRoot)
+  },
+  {
+    files: probeVueFiles,
+    languageOptions: createVueLanguageOptions(probeRoot)
   },
 
   // 破坏性操作当前用 window.confirm/alert；自定义对话框落地前放行

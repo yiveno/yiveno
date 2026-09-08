@@ -12,7 +12,7 @@ export type ProbeOmniboxSmokeCase = {
   clue: string
   /** 期望 Top Pick 展示标题含此子串（不区分大小写） */
   expectTitleIncludes: string
-  /** 探针语料 `key`，便于对照 `recall-probe-corpus-*.ts` */
+  /** 探针语料 `key`，便于对照 `@yiveno/probe` corpus */
   probeKey: string
 }
 

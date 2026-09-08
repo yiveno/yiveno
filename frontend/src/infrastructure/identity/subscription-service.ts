@@ -2,6 +2,7 @@
  * 本机订阅快照读写 + 刷新（Background 唯一写入口）。
  */
 
+import { refreshClueLlmCompleterFromDevConfig } from '@/application/recall/refresh-clue-llm-completer'
 import {
   SUBSCRIPTION_SNAPSHOT_STORAGE_KEY,
   SubscriptionRefreshError,
@@ -108,9 +109,7 @@ async function doRefreshSubscriptionSnapshot(options?: {
     await setSubscriptionSnapshot(free)
     await enforceSyncRequiresPro()
     flowOk('Subscription', '刷新订阅快照', startedAt, { reason: 'signed_out', isPro: false })
-    void import('@/application/recall/refresh-clue-llm-completer').then(m =>
-      m.refreshClueLlmCompleterFromDevConfig().catch(() => undefined)
-    )
+    void refreshClueLlmCompleterFromDevConfig().catch(() => undefined)
     return free
   }
 
@@ -127,9 +126,7 @@ async function doRefreshSubscriptionSnapshot(options?: {
       tier: snapshot.tier,
       force: Boolean(options?.force)
     })
-    void import('@/application/recall/refresh-clue-llm-completer').then(m =>
-      m.refreshClueLlmCompleterFromDevConfig().catch(() => undefined)
-    )
+    void refreshClueLlmCompleterFromDevConfig().catch(() => undefined)
     return snapshot
   } catch (error) {
     flowFail('Subscription', '刷新订阅快照', startedAt, error)

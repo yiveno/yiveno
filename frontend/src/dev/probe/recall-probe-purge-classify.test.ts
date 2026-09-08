@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  isCuratedProbeItem,
   isProbeNoiseOrDiversityItem,
   isProbeNoiseOrDiversityUrl
-} from '@/infrastructure/debug/recall-probe-purge-classify'
+} from '@/dev/probe/recall-probe-purge-classify'
 import type { MemoryItem } from '@/core/memory/memory-item'
 
 function excerpt(partial: { sourceUrl: string; selectedText: string; note?: string }): MemoryItem {
@@ -112,6 +113,60 @@ describe('isProbeNoiseOrDiversityItem', () => {
           title: 'Caching dependencies to speed up workflows',
           note: 'cut CI minutes'
         })
+      )
+    ).toBe(false)
+  })
+})
+
+describe('isCuratedProbeItem', () => {
+  const curatedUrls = new Set([
+    'https://www.theatlantic.com/technology/archive/2024/01/attention-economy-myth/677000/'
+  ])
+
+  it('命中语料 URL', () => {
+    expect(
+      isCuratedProbeItem(
+        bookmark({
+          url: 'https://www.theatlantic.com/technology/archive/2024/01/attention-economy-myth/677000/',
+          title: 'The Attention Economy Is a Lie'
+        }),
+        { curatedUrls, probeChromeIds: new Set() }
+      )
+    ).toBe(true)
+  })
+
+  it('命中 yiveno-probe 指纹', () => {
+    expect(
+      isCuratedProbeItem(
+        bookmark({
+          url: 'https://notion.so/yiveno-probe-interview-notes',
+          title: 'Notes'
+        }),
+        { curatedUrls, probeChromeIds: new Set() }
+      )
+    ).toBe(true)
+  })
+
+  it('噪声层不算精选', () => {
+    expect(
+      isCuratedProbeItem(
+        bookmark({
+          url: 'https://medium.com/probe/12',
+          title: 'gardening tips (#13)'
+        }),
+        { curatedUrls, probeChromeIds: new Set() }
+      )
+    ).toBe(false)
+  })
+
+  it('真实 Capture 不算精选', () => {
+    expect(
+      isCuratedProbeItem(
+        excerpt({
+          sourceUrl: 'https://example.com/',
+          selectedText: 'This domain is for use in documentation examples.'
+        }),
+        { curatedUrls, probeChromeIds: new Set() }
       )
     ).toBe(false)
   })

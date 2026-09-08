@@ -9,17 +9,15 @@ import { recallByKeywordWithParsedClue } from '@/core/recall/orchestrate-keyword
 import { understandRecallClue } from '@/core/recall/understand/understand-recall-clue'
 import {
   buildDiversityBookmarkSeeds,
-  buildDiversityExcerptSeeds
-} from '@/infrastructure/debug/recall-probe-corpus-diversity'
-import {
+  buildDiversityExcerptSeeds,
   buildNoiseBookmarkSeeds,
-  buildNoiseExcerptSeeds
-} from '@/infrastructure/debug/recall-probe-corpus-noise'
-import { resolveProbeCorpora } from '@/infrastructure/debug/recall-probe-corpora'
+  buildNoiseExcerptSeeds,
+  resolveProbeCorpora
+} from '@yiveno/probe'
 import {
   PROBE_OMNIBOX_SMOKE_CASES,
   type ProbeOmniboxSmokeCase
-} from '@/infrastructure/debug/recall-probe-omnibox-smoke'
+} from '@/dev/probe/recall-probe-omnibox-smoke'
 
 const ownerId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 const profileId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'

@@ -4,7 +4,8 @@ import type {
   GetLocalIdentityResponse
 } from '@/core/messaging/background-messages'
 import { isBackgroundScopedMessage } from '@/core/messaging/background-messages'
-import { ensureBackgroundBootstrapped } from '@/background/bootstrap'
+import { ensureBackgroundBootstrapped } from '@/background/bootstrap-ready'
+import { handleDebugBackgroundMessage } from '@/dev/probe/debug-dev-handler'
 import { parseNavigateActiveTabPayload } from '@/core/messaging/commands-messages'
 import {
   handleAuthSignIn,
@@ -61,19 +62,6 @@ import {
   handleGetUserSettings,
   handleUpdateUserSettings
 } from '@/background/handlers/settings-handler'
-import {
-  parseBackdateMemorySavedAtPayload,
-  parseSeedRecallProbePayload,
-  type DevBackdateMemorySavedAtResponse,
-  type DevPurgeProbeNoiseResponse,
-  type DevSeedRecallProbeResponse
-} from '@/core/messaging/debug-messages'
-import {
-  backdateMemorySavedAt,
-  type BackdateMemorySavedAtInput
-} from '@/infrastructure/debug/memory-dev-backdate-saved-at'
-import { purgeProbeNoiseFromLibrary } from '@/infrastructure/debug/recall-probe-purge-service'
-import { seedRecallProbeCorpus } from '@/infrastructure/debug/recall-probe-seed-service'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import { logger } from '@/infrastructure/logging/logger'
 import {
@@ -205,79 +193,21 @@ async function dispatchBackgroundMessage(
       return handleUpdateUserSettings(message.payload)
     case 'GET_AI_HOSTED_QUOTA':
       return handleGetAiHostedQuota()
-    case 'DEV_SEED_RECALL_PROBE': {
+    case 'DEV_SEED_RECALL_PROBE':
+    case 'DEV_PURGE_PROBE_NOISE':
+    case 'DEV_PROBE_CLEANUP':
+    case 'DEV_BACKDATE_MEMORY_SAVED_AT':
+    case 'DEV_PROBE_LIBRARY_SNAPSHOT':
+    case 'DEV_LIST_PROBE_FIXTURES': {
+      // 扩展 SW 禁止动态 import()（HTML 规范）；须静态 import + prod stub。
       if (!import.meta.env.DEV) {
-        const denied: DevSeedRecallProbeResponse = {
+        return {
           ok: false,
           errorCode: 'DEV_ONLY',
-          error: 'DEV_SEED_RECALL_PROBE 仅开发构建可用'
+          error: `${message.type} 仅开发构建可用`
         }
-        return denied
       }
-      try {
-        const parsed = parseSeedRecallProbePayload(message.payload)
-        const result = await seedRecallProbeCorpus(parsed)
-        const ok: DevSeedRecallProbeResponse = { ok: true, ...result }
-        return ok
-      } catch (error) {
-        const failed: DevSeedRecallProbeResponse = {
-          ok: false,
-          errorCode: 'DEV_SEED_FAILED',
-          ...(error instanceof Error ? { error: error.message } : {})
-        }
-        return failed
-      }
-    }
-    case 'DEV_PURGE_PROBE_NOISE': {
-      if (!import.meta.env.DEV) {
-        const denied: DevPurgeProbeNoiseResponse = {
-          ok: false,
-          errorCode: 'DEV_ONLY',
-          error: 'DEV_PURGE_PROBE_NOISE 仅开发构建可用'
-        }
-        return denied
-      }
-      try {
-        const result = await purgeProbeNoiseFromLibrary()
-        const ok: DevPurgeProbeNoiseResponse = { ok: true, ...result }
-        return ok
-      } catch (error) {
-        const failed: DevPurgeProbeNoiseResponse = {
-          ok: false,
-          errorCode: 'DEV_PURGE_FAILED',
-          ...(error instanceof Error ? { error: error.message } : {})
-        }
-        return failed
-      }
-    }
-    case 'DEV_BACKDATE_MEMORY_SAVED_AT': {
-      if (!import.meta.env.DEV) {
-        const denied: DevBackdateMemorySavedAtResponse = {
-          ok: false,
-          errorCode: 'DEV_ONLY',
-          error: 'DEV_BACKDATE_MEMORY_SAVED_AT 仅开发构建可用'
-        }
-        return denied
-      }
-      try {
-        const parsed = parseBackdateMemorySavedAtPayload(message.payload)
-        const input: BackdateMemorySavedAtInput = { ids: parsed.ids }
-        if (parsed.daysAgo !== undefined) {
-          input.daysAgo = parsed.daysAgo
-        } else if (parsed.savedAtIso !== undefined) {
-          input.savedAtIso = parsed.savedAtIso
-        }
-        const result = await backdateMemorySavedAt(input)
-        const ok: DevBackdateMemorySavedAtResponse = { ok: true, ...result }
-        return ok
-      } catch (error) {
-        const failed: DevBackdateMemorySavedAtResponse = {
-          ok: false,
-          errorCode: 'DEV_BACKDATE_FAILED',
-          ...(error instanceof Error ? { error: error.message } : {})
-        }
-        return failed
-      }
+      return handleDebugBackgroundMessage(message)
     }
     default:
       logger.warn('Msg', '未知消息类型', {

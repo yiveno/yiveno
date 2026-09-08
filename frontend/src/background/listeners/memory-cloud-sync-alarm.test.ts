@@ -5,7 +5,7 @@ const handleIncrementalMemorySyncMock = vi.hoisted(() => vi.fn(async () => ({ ok
 const getSyncPrefsMock = vi.hoisted(() => vi.fn(async () => ({ enabled: false })))
 const ensureMemoryCloudSyncAlarmMock = vi.hoisted(() => vi.fn(async () => undefined))
 
-vi.mock('@/background/bootstrap', () => ({
+vi.mock('@/background/bootstrap-ready', () => ({
   ensureBackgroundBootstrapped: ensureBackgroundBootstrappedMock
 }))
 

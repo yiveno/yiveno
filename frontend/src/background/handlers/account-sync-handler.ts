@@ -56,8 +56,11 @@ import { getSyncPrefs, patchSyncPrefs } from '@/infrastructure/identity/sync-pre
 import {
   clearSubscriptionSnapshot,
   getSubscriptionSnapshot,
+  isProActiveFromSnapshot,
   refreshSubscriptionSnapshot
 } from '@/infrastructure/identity/subscription-service'
+import { updateUserSettings } from '@/infrastructure/settings/user-settings-service'
+import { syncChromeBookmarkSyncListenersWithIngestSetting } from '@/background/listeners/chrome-bookmark-sync'
 import {
   ackCurrentPrivacyNotice,
   clearPrivacyPrefs,
@@ -530,8 +533,6 @@ export async function handleSetSyncEnabled(enabled: boolean): Promise<SetSyncEna
 
     // 开同步须有效 Pro（Normative：同步 = Pro + 登录 + 开关）
     if (enabled) {
-      const { isProActiveFromSnapshot } =
-        await import('@/infrastructure/identity/subscription-service')
       if (!(await isProActiveFromSnapshot())) {
         flowFail('MemorySync', 'SET_SYNC_ENABLED', startedAt, new Error('SYNC_PRO_REQUIRED'))
         return { ok: false, errorCode: 'SYNC_PRO_REQUIRED' }
@@ -1159,10 +1160,7 @@ export async function handleClearLocalMemory(): Promise<ClearLocalMemoryResponse
 
     await memoryItemRepository.replaceOwnerItems(ownerId, [])
 
-    const { updateUserSettings } = await import('@/infrastructure/settings/user-settings-service')
     await updateUserSettings({ chromeBookmarkIngestEnabled: false })
-    const { syncChromeBookmarkSyncListenersWithIngestSetting } =
-      await import('@/background/listeners/chrome-bookmark-sync')
     await syncChromeBookmarkSyncListenersWithIngestSetting(false)
 
     const syncPrefs = await getSyncPrefs()

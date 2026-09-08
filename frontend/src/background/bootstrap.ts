@@ -1,5 +1,10 @@
 import { scheduleColdStartPipeline } from '@/application/onboarding/cold-start-pipeline-service'
 import { refreshClueLlmCompleterFromDevConfig } from '@/application/recall/refresh-clue-llm-completer'
+import {
+  bindBackgroundBootstrapRunner,
+  ensureBackgroundBootstrapped,
+  resetBackgroundBootstrapForTests
+} from '@/background/bootstrap-ready'
 import { syncChromeBookmarkSyncListenersWithIngestSetting } from '@/background/listeners/chrome-bookmark-sync'
 import { registerCommandListeners } from '@/background/listeners/commands'
 import { registerContextMenuListeners } from '@/background/listeners/context-menu'
@@ -15,8 +20,6 @@ import { initializeMemoryDatabase } from '@/infrastructure/indexeddb/memory-db'
 import { logger } from '@/infrastructure/logging/logger'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import { logChromeStorageQuotaSample } from '@/infrastructure/storage/chrome-storage-quota'
-
-let bootstrapPromise: Promise<void> | null = null
 
 /**
  * Background 启动时初始化本地身份、Memory DB，并调度冷启动三阶段门禁。
@@ -61,19 +64,6 @@ async function bootstrapBackground(): Promise<void> {
   }
 }
 
-/** 幂等启动 Background；并发调用合并为一次 bootstrap。 */
-export function ensureBackgroundBootstrapped(): Promise<void> {
-  if (!bootstrapPromise) {
-    bootstrapPromise = bootstrapBackground().catch(error => {
-      bootstrapPromise = null
-      throw error
-    })
-  }
+bindBackgroundBootstrapRunner(bootstrapBackground)
 
-  return bootstrapPromise
-}
-
-/** 测试用：重置 bootstrap 状态。 */
-export function resetBackgroundBootstrapForTests(): void {
-  bootstrapPromise = null
-}
+export { ensureBackgroundBootstrapped, resetBackgroundBootstrapForTests }

@@ -1,8 +1,22 @@
 /**
  * DEV：种入召回探针语料（Chrome 书签 + Memory 摘录/附注）。
  * 仅 background / import.meta.env.DEV；禁止生产构建调用。
+ *
+ * Chrome 布局：模拟真实用户书签栏（主题文件夹 + 少量栏上散落），
+ * 不再集中塞进「Yiveno Probe」沙盒夹。维护者本机即测试场。
  */
 
+import {
+  buildDiversityBookmarkSeeds,
+  buildDiversityExcerptSeeds,
+  buildNoiseBookmarkSeeds,
+  buildNoiseExcerptSeeds,
+  DEFAULT_PROBE_FILLER_SEED,
+  resolveProbeCorpora,
+  type RecallProbeBookmarkSeed,
+  type RecallProbeExcerptSeed,
+  type RecallProbePersonaId
+} from '@yiveno/probe'
 import { scheduleAsyncMemoryEmbedding } from '@/application/memory/schedule-async-memory-embedding'
 import { scheduleAsyncMemoryLlmEnrichment } from '@/application/memory/schedule-async-memory-llm-enrichment'
 import { memoryItemService } from '@/application/memory/memory-item-service'
@@ -11,20 +25,6 @@ import {
   createTextExcerptMemoryItem
 } from '@/core/memory/create-memory-item'
 import type { SeedRecallProbePayload } from '@/core/messaging/debug-messages'
-import { resolveProbeCorpora } from '@/infrastructure/debug/recall-probe-corpora'
-import {
-  buildDiversityBookmarkSeeds,
-  buildDiversityExcerptSeeds
-} from '@/infrastructure/debug/recall-probe-corpus-diversity'
-import {
-  buildNoiseBookmarkSeeds,
-  buildNoiseExcerptSeeds
-} from '@/infrastructure/debug/recall-probe-corpus-noise'
-import type {
-  RecallProbeBookmarkSeed,
-  RecallProbeExcerptSeed,
-  RecallProbePersonaId
-} from '@/infrastructure/debug/recall-probe-corpus-types'
 import {
   getCurrentOwnerId,
   getOrCreateLocalProfile
@@ -35,8 +35,39 @@ import { memoryItemRepository } from '@/infrastructure/indexeddb/memory-item-rep
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import { logger } from '@/infrastructure/logging/logger'
 
-/** Chrome 书签栏下探针文件夹标题。 */
+/**
+ * 历史沙盒夹标题（仅清理兼容；种库不再创建）。
+ * @deprecated 新种库使用真实主题文件夹
+ */
 export const RECALL_PROBE_BOOKMARK_FOLDER_TITLE = 'Yiveno Probe'
+
+/** 主题包 → 书签栏下常见英文文件夹名（模拟真实用户结构）。 */
+export const PROBE_PERSONA_BOOKMARK_FOLDERS: Readonly<
+  Record<RecallProbePersonaId, readonly string[]>
+> = {
+  researcher: ['Research', 'Reading list'],
+  creator: ['Design', 'Inspiration'],
+  developer: ['Dev docs', 'Engineering'],
+  student: ['Courses', 'Study'],
+  knowledge_worker: ['Work', 'Ops']
+}
+
+/** 半仿真/干扰散落用的杂项夹。 */
+export const PROBE_FILLER_BOOKMARK_FOLDERS = ['Later', 'Misc', 'Archive'] as const
+
+/** 种库可能创建的全部文件夹标题（含历史沙盒夹，供清理识别）。 */
+export function listProbeSeedChromeFolderTitles(): readonly string[] {
+  const titles = new Set<string>([
+    RECALL_PROBE_BOOKMARK_FOLDER_TITLE,
+    ...PROBE_FILLER_BOOKMARK_FOLDERS
+  ])
+  for (const folders of Object.values(PROBE_PERSONA_BOOKMARK_FOLDERS)) {
+    for (const title of folders) {
+      titles.add(title)
+    }
+  }
+  return [...titles]
+}
 
 function daysAgoIso(daysAgo: number): string {
   const d = new Date()
@@ -53,7 +84,7 @@ function yieldToEventLoop(): Promise<void> {
 }
 
 /** 清空书签栏与其它书签根下的全部子树（保留根节点本身）。 */
-async function wipeAllChromeBookmarkChildren(): Promise<number> {
+export async function wipeAllChromeBookmarkChildren(): Promise<number> {
   const tree = await chrome.bookmarks.getTree()
   const roots = tree[0]?.children ?? []
   let wipedFolders = 0
@@ -67,34 +98,75 @@ async function wipeAllChromeBookmarkChildren(): Promise<number> {
   return wipedFolders
 }
 
-/** 在书签栏下创建或复用探针文件夹。 */
-async function ensureProbeFolder(): Promise<string> {
+/** 书签栏根 id。 */
+async function getBookmarkBarId(): Promise<string> {
   const tree = await chrome.bookmarks.getTree()
   const bar = tree[0]?.children?.[0]
   if (!bar) {
     throw new Error('找不到 Chrome 书签栏根节点')
   }
-  const existing = (bar.children ?? []).find(
-    node => node.title === RECALL_PROBE_BOOKMARK_FOLDER_TITLE && !node.url
-  )
+  return bar.id
+}
+
+/** 在指定父节点下创建或复用同名文件夹。 */
+async function ensureChildFolder(parentId: string, title: string): Promise<string> {
+  const children = await chrome.bookmarks.getChildren(parentId)
+  const existing = children.find(node => node.title === title && !node.url)
   if (existing) {
     return existing.id
   }
-  const created = await chrome.bookmarks.create({
-    parentId: bar.id,
-    title: RECALL_PROBE_BOOKMARK_FOLDER_TITLE
-  })
+  const created = await chrome.bookmarks.create({ parentId, title })
   return created.id
 }
 
+/**
+ * 为已选主题包准备真实感文件夹；返回栏 id、主题夹、散落用夹池。
+ */
+async function ensureRealisticChromeFolders(personas: readonly RecallProbePersonaId[]): Promise<{
+  barId: string
+  foldersByPersona: Map<RecallProbePersonaId, string[]>
+  scatterFolderIds: string[]
+}> {
+  const barId = await getBookmarkBarId()
+  const foldersByPersona = new Map<RecallProbePersonaId, string[]>()
+  const scatterFolderIds: string[] = []
+
+  for (const persona of personas) {
+    const titles = PROBE_PERSONA_BOOKMARK_FOLDERS[persona]
+    const ids: string[] = []
+    for (const title of titles) {
+      const id = await ensureChildFolder(barId, title)
+      ids.push(id)
+      scatterFolderIds.push(id)
+    }
+    foldersByPersona.set(persona, ids)
+  }
+
+  for (const title of PROBE_FILLER_BOOKMARK_FOLDERS) {
+    scatterFolderIds.push(await ensureChildFolder(barId, title))
+  }
+
+  return { barId, foldersByPersona, scatterFolderIds }
+}
+
+/**
+ * 选父节点：约 1/6 散落在书签栏，其余轮询主题夹（像真用户夹 + 栏上零散书签）。
+ */
+function pickBookmarkParentId(index: number, barId: string, folderIds: readonly string[]): string {
+  if (folderIds.length === 0 || index % 6 === 0) {
+    return barId
+  }
+  return folderIds[index % folderIds.length]!
+}
+
 async function seedBookmark(
-  folderId: string,
+  parentId: string,
   seed: RecallProbeBookmarkSeed,
   options: { enrich: boolean }
 ): Promise<string> {
   const chromeCreatedAt = daysAgoIso(seed.daysAgo)
   const node = await chrome.bookmarks.create({
-    parentId: folderId,
+    parentId,
     title: seed.title,
     url: seed.url
   })
@@ -288,7 +360,8 @@ export async function seedRecallProbeCorpus(payload: SeedRecallProbePayload): Pr
     diversityBookmarkCount: payload.diversityBookmarkCount,
     diversityExcerptCount: payload.diversityExcerptCount,
     noiseBookmarkCount: payload.noiseBookmarkCount,
-    noiseExcerptCount: payload.noiseExcerptCount
+    noiseExcerptCount: payload.noiseExcerptCount,
+    fillerSeed: payload.fillerSeed ?? DEFAULT_PROBE_FILLER_SEED
   })
 
   try {
@@ -309,16 +382,27 @@ export async function seedRecallProbeCorpus(payload: SeedRecallProbePayload): Pr
       })
     }
 
-    const folderId = await ensureProbeFolder()
     const corpora = resolveProbeCorpora(payload.personas)
+    const personaIds = corpora.map(c => c.persona)
+    const { barId, foldersByPersona, scatterFolderIds } =
+      await ensureRealisticChromeFolders(personaIds)
+    logger.info('DevProbe', 'Chrome 书签按真实主题文件夹写入（非 Yiveno Probe 沙盒夹）', {
+      personas: personaIds,
+      scatterFolders: scatterFolderIds.length
+    })
+
     const probeKeys: string[] = []
     let bookmarkCount = 0
     let excerptCount = 0
     const memoryOnlyFill = payload.chromeBookmarkSync === 'curated_only'
 
     for (const corpus of corpora) {
+      const personaFolders = foldersByPersona.get(corpus.persona) ?? []
+      let curatedBmIndex = 0
       for (const bm of corpus.bookmarks) {
-        probeKeys.push(await seedBookmark(folderId, bm, { enrich: payload.enrichCurated }))
+        const parentId = pickBookmarkParentId(curatedBmIndex, barId, personaFolders)
+        curatedBmIndex += 1
+        probeKeys.push(await seedBookmark(parentId, bm, { enrich: payload.enrichCurated }))
         bookmarkCount += 1
       }
       for (const ex of corpus.excerpts) {
@@ -329,7 +413,7 @@ export async function seedRecallProbeCorpus(payload: SeedRecallProbePayload): Pr
       }
     }
 
-    const personaIds = corpora.map(c => c.persona)
+    const fillerSeed = payload.fillerSeed ?? DEFAULT_PROBE_FILLER_SEED
     const bmSplits = splitCountAcrossPersonas(payload.diversityBookmarkCount, personaIds)
     const exSplits = splitCountAcrossPersonas(payload.diversityExcerptCount, personaIds)
 
@@ -337,25 +421,33 @@ export async function seedRecallProbeCorpus(payload: SeedRecallProbePayload): Pr
     const diversityExcerpts: RecallProbeExcerptSeed[] = []
     for (let i = 0; i < personaIds.length; i += 1) {
       const persona = personaIds[i]!
-      diversityBookmarks.push(...buildDiversityBookmarkSeeds(persona, bmSplits[i] ?? 0))
-      diversityExcerpts.push(...buildDiversityExcerptSeeds(persona, exSplits[i] ?? 0))
+      diversityBookmarks.push(
+        ...buildDiversityBookmarkSeeds(persona, bmSplits[i] ?? 0, { seed: fillerSeed })
+      )
+      diversityExcerpts.push(
+        ...buildDiversityExcerptSeeds(persona, exSplits[i] ?? 0, { seed: fillerSeed })
+      )
     }
 
-    const noiseBookmarks = buildNoiseBookmarkSeeds(payload.noiseBookmarkCount)
-    const noiseExcerpts = buildNoiseExcerptSeeds(payload.noiseExcerptCount)
+    const noiseBookmarks = buildNoiseBookmarkSeeds(payload.noiseBookmarkCount, {
+      seed: fillerSeed
+    })
+    const noiseExcerpts = buildNoiseExcerptSeeds(payload.noiseExcerptCount, {
+      seed: fillerSeed
+    })
 
     if (memoryOnlyFill) {
       await seedBookmarksBulkMemoryOnly([...diversityBookmarks, ...noiseBookmarks])
       await seedExcerptsBulkQuiet([...diversityExcerpts, ...noiseExcerpts])
     } else {
-      for (const bm of diversityBookmarks) {
-        await seedBookmark(folderId, bm, { enrich: false })
+      let fillerBmIndex = 0
+      for (const bm of [...diversityBookmarks, ...noiseBookmarks]) {
+        const parentId = pickBookmarkParentId(fillerBmIndex, barId, scatterFolderIds)
+        fillerBmIndex += 1
+        await seedBookmark(parentId, bm, { enrich: false })
       }
       for (const ex of diversityExcerpts) {
         await seedExcerptQuiet(ex)
-      }
-      for (const bm of noiseBookmarks) {
-        await seedBookmark(folderId, bm, { enrich: false })
       }
       for (const ex of noiseExcerpts) {
         await seedExcerptQuiet(ex)

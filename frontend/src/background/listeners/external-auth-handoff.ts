@@ -4,6 +4,7 @@
 
 import { absorbLocalProfileIntoAccount } from '@/application/identity/absorb-local-profile-into-account'
 import { scheduleSilentMemoryEmbeddingMaintenance } from '@/application/memory/ensure-memory-embedding-maintenance'
+import { ensureBackgroundBootstrapped } from '@/background/bootstrap-ready'
 import { isExternallyConnectableOrigin } from '@/core/extension/externally-connectable-origins'
 import {
   ExternalAuthHandoffMessageSchema,
@@ -24,9 +25,8 @@ import { logger } from '@/infrastructure/logging/logger'
 
 let listenerRegistered = false
 
-/** IDB 归并 / embedding 维护前须等 bootstrap（动态 import 避免循环依赖）。 */
+/** IDB 归并 / embedding 维护前须等 bootstrap（SW 禁止动态 import）。 */
 async function ensureBootstrapReady(): Promise<void> {
-  const { ensureBackgroundBootstrapped } = await import('@/background/bootstrap')
   await ensureBackgroundBootstrapped()
 }
 

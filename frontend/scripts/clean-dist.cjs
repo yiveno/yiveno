@@ -28,9 +28,19 @@ function removeIfPresent(target) {
 function flattenPageHtml(page) {
   const source = path.join(distDir, 'src', 'pages', page, 'index.html')
   const destination = path.join(distDir, `${page}.html`)
+  flattenHtmlFile(source, destination, page)
+}
 
+/** DEV-only：`src/dev/<name>/index.html` → dist 根 `<name>.html`。 */
+function flattenDevHtml(name) {
+  const source = path.join(distDir, 'src', 'dev', name, 'index.html')
+  const destination = path.join(distDir, `${name}.html`)
+  flattenHtmlFile(source, destination, name)
+}
+
+function flattenHtmlFile(source, destination, label) {
   if (!fs.existsSync(source)) {
-    console.warn(`[clean-dist] 跳过 ${page}：未找到 ${source}`)
+    console.warn(`[clean-dist] 跳过 ${label}：未找到 ${source}`)
     return
   }
 
@@ -46,7 +56,7 @@ function flattenPageHtml(page) {
 
   if (missingCss.length > 0) {
     console.warn(
-      `[clean-dist] 跳过平铺 ${page}.html：缺少 ${missingCss.join(', ')}（保留上一版，避免坏链）`
+      `[clean-dist] 跳过平铺 ${label}.html：缺少 ${missingCss.join(', ')}（保留上一版，避免坏链）`
     )
     return
   }
@@ -129,6 +139,17 @@ function finalizeExtensionDist() {
   flattenPageHtml('detail')
   flattenPageHtml('library')
   flattenPageHtml('getting-started')
+
+  const isProduction = process.env.NODE_ENV === 'production'
+  if (isProduction) {
+    // CWS / production：确保无 DEV Probe Console 残留
+    removeIfPresent(path.join(distDir, 'probe-console.html'))
+    removeIfPresent(path.join(distDir, 'probe_console.js'))
+    removeIfPresent(path.join(distDir, 'probe-console.js'))
+  } else {
+    flattenDevHtml('probe-console')
+  }
+
   purgeNonExtensionAssets()
 
   const nestedSrcDir = path.join(distDir, 'src')
@@ -140,9 +161,18 @@ function finalizeExtensionDist() {
   removeIfPresent(path.join(distDir, 'popup.html'))
   removeIfPresent(path.join(distDir, 'popup.js'))
 
-  console.log(
-    '[clean-dist] 扩展产物已就绪：sidepanel.html / settings.html / detail.html / library.html / getting-started.html / manifest.json'
-  )
+  const readyParts = [
+    'sidepanel.html',
+    'settings.html',
+    'detail.html',
+    'library.html',
+    'getting-started.html',
+    'manifest.json'
+  ]
+  if (!isProduction) {
+    readyParts.splice(5, 0, 'probe-console.html')
+  }
+  console.log(`[clean-dist] 扩展产物已就绪：${readyParts.join(' / ')}`)
 }
 
 module.exports = { finalizeExtensionDist, syncExtensionPublicAssets, applyDistManifestHostProfile }

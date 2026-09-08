@@ -4,6 +4,7 @@ import {
   handleChromeBookmarkRemoved,
   isChromeBookmarkIngestEnabled
 } from '@/application/capture/chrome-bookmark-sync-service'
+import { ensureBackgroundBootstrapped } from '@/background/bootstrap-ready'
 import { flashActionBadge } from '@/infrastructure/browser/action-badge'
 import { logger } from '@/infrastructure/logging/logger'
 import { invalidateBookmarkLibraryTreeOnChromeChange } from '@/background/handlers/import-handler'
@@ -11,9 +12,11 @@ import { notifyChromeBookmarkTreeChanged } from '@/infrastructure/messaging/noti
 
 let listenersRegistered = false
 
-/** 书签同步写 Memory 前须等 bootstrap（动态 import 避免与 bootstrap 循环依赖）。 */
+/**
+ * 书签同步写 Memory 前须等 bootstrap。
+ * 扩展 SW 禁止动态 import()；经 bootstrap-ready 静态门闩，避免与 bootstrap 实现环。
+ */
 async function ensureBootstrapReady(): Promise<void> {
-  const { ensureBackgroundBootstrapped } = await import('@/background/bootstrap')
   await ensureBackgroundBootstrapped()
 }
 

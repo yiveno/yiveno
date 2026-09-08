@@ -25,6 +25,7 @@
 - **不**替代产品文档中的行为契约、配额、消息协议、验收步骤——见 `Yiveno-产品文档-v4.0.md`。
 - **不**定义色板、控件气质——见 `Yiveno-设计标准-v1.md`。
 - **不**收录实现细节（函数名、阈值常量）——见代码与工程文档；本文只给**概念锚点**与**禁止误用**。
+- **不**把探针工作台专有词条（手写精选 / 半仿真 / 无关干扰等）收成产品面术语——见 [`DEV-调试API.md`](../engineering/DEV-调试API.md) · [ADR-009](../architecture/decisions/ADR-009-yiveno-probe-package.md)；本文仅在 §8.1 **消歧「种子 / seed」**，避免与 §5.9 混读。
 
 ---
 
@@ -235,21 +236,45 @@ MemoryItem.clues.note      →  附注 · 存时写的私有提示
 | **TTE-V**              | time-to-evidence (verified) | 提交 clue → 首次看见可自验证据单元的时间 |
 | **会话成功**           | session success             | 用户在邻域（含续展）拿到想要的           |
 
+### 8.1 种子 / seed（四义消歧）★
+
+> **同一英文 stem 在本仓至少四义；禁止裸写「种子 / seed」不加限定。**
+
+| 说法                    | 英文 / 标识                                 | 语境        | 是什么                                            | 不是什么                                       |
+| ----------------------- | ------------------------------------------- | ----------- | ------------------------------------------------- | ---------------------------------------------- |
+| **种子用户 / 种子验证** | seed users · §5.9                           | 产品 / 研究 | 真人 + **真实库**上的 TTE / Beta 口径             | 探针写入的测试库                               |
+| **写入测试数据 / 种库** | `seedRecallProbe` · `DEV_SEED_RECALL_PROBE` | DEV 工作台  | 往本机库灌测试条目                                | §5.9 达标；产品功能                            |
+| **随机种子**            | `fillerSeed`                                | DEV 工作台  | 仅控制**半仿真 / 无关干扰**本地过程随机（可复现） | 手写精选内容；§5.9                             |
+| **主题 seed**（禁止）   | content / entity seed                       | 召回主路径  | —                                                 | 灰名单专名表冒充通解（见产品文档全量能力铁律） |
+
+**DEV 工作台条目分层（非产品词；与 API 对照）：**
+
+| Console / 文档说法 | API 字段（实现）            | 含义                             |
+| ------------------ | --------------------------- | -------------------------------- |
+| 手写精选           | curated · `personas` 语料包 | 固定主题语料                     |
+| 半仿真书签/摘录    | `diversity*Count`           | 本地随机、略像真用户             |
+| 无关干扰书签/摘录  | `noise*Count`               | 本地随机、偏糊无关               |
+| 随机种子           | `fillerSeed`                | 上两行可复现；**不影响**手写精选 |
+
+权威 UI / 参数说明：[`DEV-调试API.md`](../engineering/DEV-调试API.md) · [ADR-009](../architecture/decisions/ADR-009-yiveno-probe-package.md)。
+
 ---
 
 ## 9. 禁用与慎用对照表
 
-| 禁用/慎用          | 应改用                       | 场景                   |
-| ------------------ | ---------------------------- | ---------------------- |
-| Search / 搜索      | Recall / find                | 一切用户可见文案       |
-| query（产品名词）  | clue                         | 描述用户输入           |
-| prompt（产品名词） | clue / understanding         | 非 LLM 实现讨论        |
-| 笔记（指附注时）   | note / 附注 / `clues.note`   | 避免与 `note` 类型混淆 |
-| 知识库             | library / your saves         | 对外心智               |
-| 助理 / 聊天        | Recall / find what you saved | 品类定位               |
-| 唯一答案 / 押中    | neighborhood / suggestion    | 体验承诺               |
-| 输入（作领域名）   | clue                         | 领域讨论               |
-| 筛选（对用户）     | find / recall                | 用户面；Filter 仅对内  |
+| 禁用/慎用                                      | 应改用                                                         | 场景                               |
+| ---------------------------------------------- | -------------------------------------------------------------- | ---------------------------------- |
+| Search / 搜索                                  | Recall / find                                                  | 一切用户可见文案                   |
+| query（产品名词）                              | clue                                                           | 描述用户输入                       |
+| prompt（产品名词）                             | clue / understanding                                           | 非 LLM 实现讨论                    |
+| 笔记（指附注时）                               | note / 附注 / `clues.note`                                     | 避免与 `note` 类型混淆             |
+| 知识库                                         | library / your saves                                           | 对外心智                           |
+| 助理 / 聊天                                    | Recall / find what you saved                                   | 品类定位                           |
+| 唯一答案 / 押中                                | neighborhood / suggestion                                      | 体验承诺                           |
+| 输入（作领域名）                               | clue                                                           | 领域讨论                           |
+| 筛选（对用户）                                 | find / recall                                                  | 用户面；Filter 仅对内              |
+| 裸写「种子 / seed」                            | 按 §8.1 四义加限定（种子用户 / 种库 / 随机种子 / 禁主题 seed） | 文档、对话、Console 文案           |
+| bm · ex · noise/div · filler seed（维护者 UI） | 书签 · 摘录 · 半仿真/无关干扰 · 随机种子                       | Probe Console / DEV 文档对人可读处 |
 
 ---
 
@@ -309,14 +334,16 @@ MemoryItem.clues.note      →  附注 · 存时写的私有提示
 
 ## 12. 相关文档
 
-| 文档                                            | 关系                               |
-| ----------------------------------------------- | ---------------------------------- |
-| `Yiveno-产品文档-v4.0.md`                       | 行为/契约/验收；术语含义以本文为准 |
-| `Yiveno-设计标准-v1.md`                         | 视觉；术语引用本文                 |
-| `.cursor/rules/terminology.mdc`                 | AI 协作速查；指向本文              |
-| `docs/engineering/Recall-Framing-邻域说明.md`   | Recall Framing 工程细则            |
-| `docs/architecture/Yiveno-运行时架构流程-v1.md` | 运行时流程；术语服从本文           |
+| 文档                                            | 关系                                       |
+| ----------------------------------------------- | ------------------------------------------ |
+| `Yiveno-产品文档-v4.0.md`                       | 行为/契约/验收；术语含义以本文为准         |
+| `Yiveno-设计标准-v1.md`                         | 视觉；术语引用本文                         |
+| `.cursor/rules/terminology.mdc`                 | AI 协作速查；指向本文                      |
+| `docs/engineering/Recall-Framing-邻域说明.md`   | Recall Framing 工程细则                    |
+| `docs/architecture/Yiveno-运行时架构流程-v1.md` | 运行时流程；术语服从本文                   |
+| `docs/engineering/DEV-调试API.md`               | DEV 工作台 / 种库 API；§8.1 探针词权威文案 |
+| `docs/architecture/decisions/ADR-009-*.md`      | `@yiveno/probe` 隔离；探针词非产品面       |
 
 ---
 
-_最后更新：2026-08-28 · 初版落盘_
+_最后更新：2026-09-07 · §8.1 种子四义消歧；探针词指向 DEV-调试API / ADR-009_

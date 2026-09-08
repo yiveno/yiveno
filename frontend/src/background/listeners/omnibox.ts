@@ -1,5 +1,6 @@
 import { recallService } from '@/application/recall/recall-service'
 import { memoryItemService } from '@/application/memory/memory-item-service'
+import { ensureBackgroundBootstrapped } from '@/background/bootstrap-ready'
 import {
   getMemoryItemOpenHref,
   tryParseNavigableUrl,
@@ -22,9 +23,8 @@ function isStaleOmniboxInputChangedRequest(requestId: number): boolean {
   return requestId !== inputChangedRequestId
 }
 
-/** 确保 Background 已启动（动态 import，避免与 bootstrap 循环依赖）。 */
+/** 确保 Background 已启动（SW 禁止动态 import；经 bootstrap-ready 门闩）。 */
 async function ensureReady(): Promise<void> {
-  const { ensureBackgroundBootstrapped } = await import('@/background/bootstrap')
   await ensureBackgroundBootstrapped()
 }
 

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const ensureBackgroundBootstrappedMock = vi.hoisted(() => vi.fn(async () => undefined))
 
-vi.mock('@/background/bootstrap', () => ({
+vi.mock('@/background/bootstrap-ready', () => ({
   ensureBackgroundBootstrapped: ensureBackgroundBootstrappedMock
 }))
 

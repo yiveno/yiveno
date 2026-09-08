@@ -3,7 +3,7 @@
  * 每条带 suggestedClues（英语母语口语），供 MCP 探针；禁止当作 runtime 灰名单。
  */
 
-import type { RecallProbePersonaCorpus } from '@/infrastructure/debug/recall-probe-corpus-types'
+import type { RecallProbePersonaCorpus } from './types'
 
 /** 研究者画像：文章 / 论文页 / 长文站点 + 摘录附注。 */
 export const RESEARCHER_PROBE_CORPUS: RecallProbePersonaCorpus = {

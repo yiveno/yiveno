@@ -2,7 +2,7 @@
  * DEV 召回探针语料 · 创作者 / 设计研究者画像（分群第二优先）。
  */
 
-import type { RecallProbePersonaCorpus } from '@/infrastructure/debug/recall-probe-corpus-types'
+import type { RecallProbePersonaCorpus } from './types'
 
 export const CREATOR_PROBE_CORPUS: RecallProbePersonaCorpus = {
   persona: 'creator',

@@ -4,20 +4,24 @@
  *
  * 用法（Side Panel evaluate 发消息，或 SW 控制台）：
  *   await yiveno.seedRecallProbe({ replace: true, personas: ['researcher','creator','developer'] })
+ *   await yiveno.cleanupProbe({ noiseOrDiversity: true, removeProbeFolder: true })
  *
  * 总索引：docs/engineering/DEV-调试API.md
  */
 
 import {
+  parseProbeCleanupPayload,
   parseSeedRecallProbePayload,
+  type ProbeCleanupPayload,
   type SeedRecallProbePayload
 } from '@/core/messaging/debug-messages'
+import { cleanupProbeLibrary } from '@/dev/probe/recall-probe-cleanup-service'
 import {
   PROBE_OMNIBOX_COPY_PASTE_LINES,
   runProbeOmniboxSmoke
-} from '@/infrastructure/debug/recall-probe-omnibox-smoke'
-import { purgeProbeNoiseFromLibrary } from '@/infrastructure/debug/recall-probe-purge-service'
-import { seedRecallProbeCorpus } from '@/infrastructure/debug/recall-probe-seed-service'
+} from '@/dev/probe/recall-probe-omnibox-smoke'
+import { purgeProbeNoiseFromLibrary } from '@/dev/probe/recall-probe-purge-service'
+import { seedRecallProbeCorpus } from '@/dev/probe/recall-probe-seed-service'
 
 type ProbeDebugHost = {
   yiveno?: {
@@ -25,6 +29,9 @@ type ProbeDebugHost = {
       payload?: Partial<SeedRecallProbePayload>
     ) => Promise<Awaited<ReturnType<typeof seedRecallProbeCorpus>>>
     purgeProbeNoise?: () => Promise<Awaited<ReturnType<typeof purgeProbeNoiseFromLibrary>>>
+    cleanupProbe?: (
+      payload?: Partial<ProbeCleanupPayload>
+    ) => Promise<Awaited<ReturnType<typeof cleanupProbeLibrary>>>
     runProbeOmniboxSmoke?: () => Promise<Awaited<ReturnType<typeof runProbeOmniboxSmoke>>>
     /** 手测文档 §4 复制块（含 `yi ` 前缀） */
     probeOmniboxCopyPaste?: readonly string[]
@@ -56,6 +63,12 @@ export function exposeRecallProbeSeedDebug(): void {
       console.info('[yiveno] 探针噪声层已清除', result)
       return result
     },
+    cleanupProbe: async (payload?: Partial<ProbeCleanupPayload>) => {
+      const parsed = parseProbeCleanupPayload(payload ?? {})
+      const result = await cleanupProbeLibrary(parsed)
+      console.info('[yiveno] 探针清理完成', result)
+      return result
+    },
     runProbeOmniboxSmoke: async () => {
       const report = await runProbeOmniboxSmoke()
       if (report.failed.length === 0) {
@@ -71,6 +84,6 @@ export function exposeRecallProbeSeedDebug(): void {
     probeOmniboxCopyPaste: PROBE_OMNIBOX_COPY_PASTE_LINES
   }
   console.info(
-    '[yiveno] DEV：SW 可用 yiveno.seedRecallProbe · yiveno.purgeProbeNoise · yiveno.backdateMemorySavedAt · yiveno.runProbeOmniboxSmoke()'
+    '[yiveno] DEV：优先打开 Probe Console；SW 可用 yiveno.seedRecallProbe · cleanupProbe · purgeProbeNoise · runProbeOmniboxSmoke()'
   )
 }
