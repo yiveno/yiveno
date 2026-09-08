@@ -162,13 +162,13 @@ const PACKS: Record<RecallProbePersonaId, DiversityHostPack> = {
     subjects: [
       'idempotent payment retries',
       'EXPLAIN that lied about seq scans',
-      'Actions cache misses across forks',
+      'workflow artifact retention windows',
       'Manifest V3 service worker sleep',
       'roadmap review rituals',
       'promise chains that swallow errors',
       'reading list hygiene on HN',
       'HTTP semantics edge cases',
-      'branch-scoped dependency caches',
+      'matrix job disk quotas on runners',
       'alarm handlers after SW restart',
       'stable request keys under timeout',
       'hot-set reads that beat fancy plans'
