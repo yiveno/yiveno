@@ -31,7 +31,12 @@
         "src/pages/*/main.ts",
         "src/dev/probe-console/main.ts",
         "src/dev/probe/debug-dev-handler.ts",
+        "src/dev/probe/debug-dev-handler.prod-stub.ts",
         "src/dev/probe/expose-recall-probe-seed-debug.ts",
+        "src/dev/probe/expose-recall-probe-seed-debug.prod-stub.ts",
+        "src/infrastructure/debug/expose-clue-gateway-debug.prod-stub.ts",
+        "src/infrastructure/debug/expose-memory-dev-debug.prod-stub.ts",
+        "src/infrastructure/debug/expose-recall-telemetry-debug.prod-stub.ts",
         "src/background/main.ts",
         "src/content/**/main.ts",
         "src/offscreen/main.ts",
@@ -41,7 +46,7 @@
       "project": ["src/**/*.{ts,vue}", "vite/**/*.ts", "scripts/**/*.{js,ts,cjs}"]
     },
     "packages/yiveno-probe": {
-      "entry": ["src/index.ts", "src/console/index.ts", "src/**/*.test.ts"],
+      "entry": ["src/**/*.test.ts"],
       "project": ["src/**/*.{ts,vue}"]
     },
     "backend": {
