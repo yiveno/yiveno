@@ -344,8 +344,8 @@ export function scheduleAsyncMemoryEmbedding(itemId: string): void {
 }
 
 /**
- * 选出待回填条目：摘录优先，再用书签补满 limit。
- * 全量按 updatedAt 扫会被海量书签挤掉 excerpt。
+ * 选出待回填条目：摘录优先，再用**缺向量书签**补满 limit。
+ * 书签按 createdAt 新→旧，优先补刚同步入库的缺口（避免被旧缺口或其它类型挤掉）。
  */
 async function collectMissingEmbeddingItems(
   repository: MemoryItemRepository,
@@ -357,25 +357,37 @@ async function collectMissingEmbeddingItems(
   })
   const excerptMissing = excerptCandidates.filter(item => !hasCurrentModelEmbedding(item))
   const remaining = Math.max(0, limit - excerptMissing.length)
-  let otherMissing: MemoryItem[] = []
+  let bookmarkMissing: MemoryItem[] = []
+  let bookmarkScanned = 0
   if (remaining > 0) {
-    const items = await repository.listByOwner({ limit: 500 })
-    otherMissing = items
-      .filter(item => item.type !== 'text_excerpt' && !hasCurrentModelEmbedding(item))
+    const bookmarks = await repository.listByOwner({ type: 'bookmark', limit: 500 })
+    bookmarkScanned = bookmarks.length
+    bookmarkMissing = bookmarks
+      .filter(item => !hasCurrentModelEmbedding(item))
+      .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
       .slice(0, remaining)
   }
   return {
-    missing: [...excerptMissing, ...otherMissing],
-    scanned: excerptCandidates.length + (remaining > 0 ? 500 : 0),
+    missing: [...excerptMissing, ...bookmarkMissing],
+    scanned: excerptCandidates.length + bookmarkScanned,
     excerptEnqueued: excerptMissing.length
   }
+}
+
+/** 测试用：暴露缺向量扫描顺序（摘录优先 + 新书签优先）。 */
+export async function collectMissingEmbeddingItemsForTests(
+  repository: MemoryItemRepository,
+  limit: number
+): Promise<{ missing: MemoryItem[]; scanned: number; excerptEnqueued: number }> {
+  return collectMissingEmbeddingItems(repository, limit)
 }
 
 /**
  * 回填：扫描缺 embedding 的条目并入队（限量；须登录）。
  * 供 bootstrap / auth handoff：fire-and-forget。
  * 注意：书签 sync finalize 会 clearAsyncMemoryEmbeddingQueue，可能丢弃未跑完的队列任务；
- * Settings「Rebuild」须走 {@link backfillMissingMemoryEmbeddings}（同步 await）。
+ * 增量 created/changed 会单条入队，并由无感维护再扫缺口（新书签优先）。
+ * Settings「Rebuild」须走 {@link backfillMissingMemoryEmbeddings}（同步 await · 仅摘录）。
  */
 export async function enqueueMissingMemoryEmbeddings(
   repository: MemoryItemRepository = memoryItemRepository,

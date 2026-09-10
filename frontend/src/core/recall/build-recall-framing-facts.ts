@@ -30,6 +30,7 @@ function buildUnderstood(parsed: ParsedRecallClue | undefined): RecallFramingUnd
   return {
     objectTypes: parsed?.objectTypes ?? [],
     ...(parsed?.timeRange?.label ? { timeLabel: parsed.timeRange.label } : {}),
+    ...(parsed?.timeConfidence ? { timeConfidence: parsed.timeConfidence } : {}),
     contentTerms: parsed?.contentTerms ?? [],
     behaviorHints: parsed?.behaviorHints ?? [],
     noteHint: parsed?.noteHint === true

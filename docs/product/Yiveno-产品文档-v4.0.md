@@ -615,17 +615,39 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 
 **典型英语 P0 语料（验收参考，非穷举；与 `parse-recall-clue-lexicon` 对齐）：**
 
-| 场景                      | 示例线索                                          | 期望解析信号                                       |
-| ------------------------- | ------------------------------------------------- | -------------------------------------------------- |
-| 时间 + 类型 + 实体        | `yesterday saved a poem about Li Bai`             | yesterday · poem · Li Bai                          |
-| 时间 + 类型 + 内容        | `last week the code snippet about auth`           | last_week · code · auth                            |
-| 行为 + 类型 + 时间        | `the song I played on repeat yesterday`           | often_opened · song · yesterday                    |
-| 行为 + 类型               | `the article I didn't finish reading`             | half_read · article                                |
-| 附注 + 类型 + 内容        | `yesterday left a note about the deployment page` | note · page · deployment                           |
-| 仅类型 + 时间（无内容词） | `the article I read last week`                    | last_week · article（`read` 为 filler）            |
-| 最近书签（无内容词）      | `The recently collected bookmark`                 | recent · bookmark · recently_saved；约束邻域按近因 |
-| 仅刚存（无类型）          | `just saved`                                      | recently_saved；近因邻域（书签+摘录）              |
-| 零锚点（禁主 demo）       | `i feel bored` / `put a few songs i like`         | 无可靠记忆锚点；不得当助手推荐                     |
+| 场景                      | 示例线索                                          | 期望解析信号                                        |
+| ------------------------- | ------------------------------------------------- | --------------------------------------------------- |
+| 时间 + 类型 + 实体        | `yesterday saved a poem about Li Bai`             | yesterday · poem · Li Bai                           |
+| 时间 + 类型 + 内容        | `last week the code snippet about auth`           | last_week · code · auth                             |
+| 行为 + 类型 + 时间        | `the song I played on repeat yesterday`           | often_opened · song · yesterday                     |
+| 行为 + 类型               | `the article I didn't finish reading`             | half_read · article                                 |
+| 附注 + 类型 + 内容        | `yesterday left a note about the deployment page` | note · page · deployment                            |
+| 仅类型 + 时间（无内容词） | `the article I read last week`                    | last_week · article（`read` 为 filler）             |
+| 数月前口语                | `something … i saved a few months back`           | few_months_ago · contentTerms（勿并入 a_while_ago） |
+| 大约一个月前              | `an article i saved last month about …`           | last_month · article · contentTerms                 |
+| 最近书签（无内容词）      | `The recently collected bookmark`                 | recent · bookmark · recently_saved；约束邻域按近因  |
+| 仅刚存（无类型）          | `just saved`                                      | recently_saved；近因邻域（书签+摘录）               |
+| 零锚点（禁主 demo）       | `i feel bored` / `put a few songs i like`         | 无可靠记忆锚点；不得当助手推荐                      |
+
+**相对时间标签闭集（Normative · 与 `RecallRelativeTimeLabel` / lexicon 对齐 · ADR-011）：**
+
+| label                                          | 口语例（非穷举）                        | 滚动窗（相对「今天」UTC 日界） | **timeConfidence** | Filter                       |
+| ---------------------------------------------- | --------------------------------------- | ------------------------------ | ------------------ | ---------------------------- |
+| `today` / `yesterday` / `day_before_yesterday` | today, yesterday, day before yesterday  | 单日                           | **high**           | **硬筛**                     |
+| `last_week`                                    | last week                               | 近 7 日（不含今天）            | **high**           | **硬筛**                     |
+| `last_month`                                   | last month, a month ago                 | 约 14–60 日前                  | **high**           | **硬筛**                     |
+| `recent`                                       | recently, a few days ago, the other day | 近 7 日含此刻                  | **low**            | **软排**（窗内加分；不硬空） |
+| `a_while_ago`                                  | a while ago, some time ago              | 约 3–30 日前（数周）           | **low**            | **软排**                     |
+| `few_months_ago`                               | a few months back/ago, a while back     | 约 45–180 日前                 | **low**            | **软排**                     |
+| `long_ago`                                     | long ago, a long time ago               | 约 30–365 日前                 | **low**            | **软排**                     |
+
+**时间置信度（Normative · ADR-011）：** 置信由 label **确定性派生**（写入 `ParsedRecallClue.timeConfidence`）；禁止 LLM 自报 confidence。
+
+- **high**：日历级口语 → `timeRange` **硬排除**窗外命中（keyword / 约束邻域 / Hybrid 同规）。
+- **low**：糊时间印象 → **禁止**仅因时间硬切导致邻域空 / 轻易 `no_match`；中心窗内软加分，窗外可留在邻域。Framing：high 用 Within；low 用 Around。
+- **刚存**（`recently_saved` 且无显式 timeLabel）：合成 `recent` 窗时按 **high** 处理（用户在说「刚存」，非糊远距）。
+
+NA 分立：`a while ago` / `some time ago` → 数周；`a while back` → `few_months_ago`（常偏数月）。改窗宽、confidence 表或增 label → 同批改 lexicon + LLM enum + 本表 + ADR-011。
 
 **Capture enrichment 应能承接的 recall 关键词（English canonical 示例）：**
 
@@ -651,7 +673,7 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 **P0 做（有记忆锚点）：**
 
 - 数据：规则 enrichment（高频站 / 标题类型词面 / recall 导向英文 keywords；**无**主题·实体 seed）+ 用户附注；写回 `tags` / `keywords`（`entities` 规则层为空，可由 LLM enrichment 补）— **新建已接入**；**存量经 `ensureMemoryEnrichmentBackfilled` 启动回填（版本幂等，当前 v5：`clip` 仅线索侧；正文不因 clip 打 video；scrub 存量误标）**
-- 编排：约束软加权 + **`timeRange` 硬过滤** + keyword-filter + 置信度决策 — **`recallByKeywordWithParsedClue` 已接入 Hybrid 降级路径**；**追问：仅 `need_a_clue` 走 LLM NLG（`assistantFollowUp`）；`no_match` 诚实终局、无规则缺槽问卷**
+- 编排：约束软加权 + **`timeRange` 按 timeConfidence 硬筛或软排（ADR-011）** + keyword-filter + 线索置信度决策 — **`recallByKeywordWithParsedClue` 已接入 Hybrid 降级路径**；**追问：仅 `need_a_clue` 走 LLM NLG（`assistantFollowUp`）；`no_match` 诚实终局、无规则缺槽问卷**
 - Query：时间词、对象类型词、附注指向、弱行为词 → 结构化约束；内容实体先当关键词 — **`parseRecallClue` 已落地**（词典以真实英语口语为主，见「市场语言策略」典型语料）
 - Enrichment：域名 / 对象类型词面 + **recall 导向英文 keywords**（如 `listen` `tutorial` `repo`）；写回 `tags` / `keywords`；**规则层不写专名 `entities`**
 - **LLM enrichment 插座（已接线·稀疏异步）**：提议 Zod（`MemoryEnrichmentProposal`）+ merge（`mergeMemoryClueEnrichment`：existing → rule → proposal；`summary` 仅空槽；永不写 `note`/`embedding`）+ Worker `POST /api/ai/enrichment/complete`；Capture 经 `memoryItemService` **新建**落库后 `scheduleAsyncMemoryLlmEnrichment`（串行队列；已有 summary / 信号过短跳过；bulk `putMany`/repository 续传不经 service 故不烧配额）；失败降级保留规则层；**不改 `updatedAt`**
@@ -673,10 +695,11 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 线索
   → 网关（确定性·cheap）：是否处理（reject_noise | proceed）
        reject → 空态 / no_match，不调 LLM、不扫全库
-  → 有 completer：默认 LLM → Zod → 锚定映射 → ParsedRecallClue（失败降级规则）
+  → 有 completer：默认**单次** LLM → Zod → 锚定映射 → ParsedRecallClue（失败降级规则）
        例外：纯 URL 等可走规则（省配额）
+       条件二次 LLM：仅 ADR-010 门禁触发（host 归一 / gist 重抽 / Zod 重试）；**非默认**
   → 无 completer：规则 parseRecallClue
-  → buildFilterClueFromParsed → keyword Filter；**有 timeRange 则硬过滤**；类型等可软排
+  → buildFilterClueFromParsed → keyword Filter；**timeConfidence=high 则硬过滤；low 则软排不硬空**；类型等可软排
   → Hybrid（有向量则 RRF）
 ```
 
@@ -811,42 +834,42 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 
 ## 1. 现状 vs 目标（Normative）
 
-| 能力                             | 状态                                           | 说明                                                                                                                                                                        |
-| -------------------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Side Panel 对话式找回            | 已上线（R-shell）                              | 主壳；composer / 邻域 / 追问；关 Panel 丢会话（P0）；见 §7.0                                                                                                                |
-| Action Popup 作对话主壳          | 已退役                                         | 无 `default_popup`；`pages/popup` 已删除                                                                                                                                    |
-| 右键保存选区                     | 已上线                                         | Text Excerpt；非书签的主动 Capture                                                                                                                                          |
-| 划词保存浮层                     | 已上线                                         | Content Script；可直存或「添加附注」后写入 `clues.note`；Settings 可关；默认开                                                                                              |
-| 书签/摘录事后附注                | 已上线                                         | `UPDATE_MEMORY_NOTE`；书签树编辑；仅本地 `clues.note`，不同步 Chrome                                                                                                        |
-| Chrome 书签导入 + 增量 sync      | 已上线                                         | 书签唯一写入主路径；原生加书签 → onCreated 同步；upsert 保留 note                                                                                                           |
-| LocalProfile / ownerId           | 已上线                                         | 未登录可用；登录后 `ownerId=accountId`                                                                                                                                      |
-| Settings                         | 已上线（最小+账户同步）                        | `options_ui`；左侧分区导航（与记忆库同构）+ `?section=`；快捷键；账户/云同步；隐私/AI 占位                                                                                  |
-| Offscreen                        | 占位                                           | 预留本地 embedding；当前 Pro 走 Worker AI，未启用 Offscreen                                                                                                                 |
-| Omnibox 找回                     | 已上线                                         | 关键词 `yi`；`entry: omnibox` 离线快跳（规则 + Filter ± embedding）；**单次无会话**；模糊线索引导 Side Panel                                                                |
-| 快捷键找回                       | 已上线                                         | `_execute_action`（默认 `Alt+Shift+Y`）与点图标开 Side Panel                                                                                                                |
-| 快捷键打开记忆库                 | 已上线                                         | `open_library`（默认 `Alt+Shift+L`）                                                                                                                                        |
-| 快捷键打开设置                   | 已上线                                         | `open_settings`（无默认建议键；Chrome 最多 4 个 suggested_key，可自绑）                                                                                                     |
-| 快捷键保存选中文字               | 已上线                                         | `save_selection`（默认 `Alt+Shift+E`）→ 划词脚本直存；`captureEntry=shortcut`                                                                                               |
-| 快捷键选中文字并附注             | 已上线                                         | `save_selection_with_note`（默认 `Alt+Shift+N`）→ 打开划词附注面板                                                                                                          |
-| 手动「保存当前页」               | 不做                                           | 与 Chrome 原生书签重复；已移除 UI/快捷键/消息                                                                                                                               |
-| 结果线索解释强化                 | 已上线（core + Side Panel / Omnibox 卡面 ECS） | 主因字段 + token + 次要字段；五要素卡面 §5.10.1                                                                                                                             |
-| 找回壳空状态分层                 | 已上线（壳迁移中）                             | 空库 / 有库 idle 与 no_match 分文案；`no_match` 诚实终局、不附缩短再试；迁 Side Panel 后文案归属随壳走                                                                      |
-| 摘录详情落地页                   | 已上线                                         | `detail.html?id=`；摘录打开详情；书签仍直开 URL；`GET_MEMORY_ITEM`                                                                                                          |
-| 记忆库轻浏览                     | 已上线                                         | `library.html`；**默认摘录**；书签=Chrome 目录只读树；摘录/书签列表均展示**保存时间**（`createdAt` / `chromeCreatedAt`）；`?type=` 刷新保留                                 |
-| 摘录删除                         | 已上线                                         | 软删 `deletedAt`；记忆库列表 / 详情页；`DELETE_MEMORY_ITEM`；书签不经此删                                                                                                   |
-| Need A Clue / 否定反馈           | 已上线（并入对话）                             | 低置信 outcome + dismiss；会话内 dismissedIds 硬排除；追问模板基于合并后 parsed                                                                                             |
-| 多源线索与权重（§7.1）           | 已上线（首批）                                 | 同域软重排；`recently_saved`/`half_read`/`often_opened` 软加权；环境弱芯片（当前站已接线；刚存/刚打开待信号）                                                               |
-| Hybrid Filter                    | 已上线                                         | 本机 Hybrid（RRF）；**不分 Free/Pro**；无向量时降级关键词；云同步剥离 embedding；**embedding 无感维护**（启动/登录/书签 sync 后自动补摘录向量，**无** Settings Rebuild UI） |
-| 关键词倒排 Phase 1               | 已上线                                         | IDB v4 posting 预过滤；**形态缩写入倒排**（CamelCase/多词首字母，无硬编码别名表；schemaVersion=2）+ 精排同算法；折叠前全量打分                                              |
-| Dodo Pro / 订阅快照              | 已上线                                         | Free+**仅 Pro**；投影+对账（§A.3.2）；`GET /api/account/subscription`；Settings/官网升级；**sync + hosted 大配额**门禁；embed 登录即可（日配额分档）                        |
-| 云同步 / 账号 UI                 | 已上线（Phase C + Pro）                        | Supabase `memory_items`；Worker `/api/memory/sync/*` **需有效 Pro**；开同步并集 + **15 分钟增量**；登录≠自动上传                                                            |
-| 分享                             | 目标 · Phase C                                 |                                                                                                                                                                             |
-| 证据卡 Explain 全要素（ECS）     | 已上线（Side Panel + Omnibox）                 | 来源 + 保存时间 + 锚点 + 命中理由；见 §5.10.1                                                                                                                               |
-| Detail export / copy-for-AI      | 已上线（Library + Side Panel）                 | Library / Recall 多选 ≥1 条 → 复制或下载 JSON + Markdown；§5.10.4 · ADR-008                                                                                                 |
-| 只读 MCP                         | 已上线（beta）                                 | Settings → 隐私开关；工具 `yiveno_recall_evidence` → detail export（1–5）；本机 `MCP_RECALL_EVIDENCE` / 云端 `GET\|POST /api/mcp/*`；关闭后本机与云端均拒绝；§5.10.5        |
-| Raindrop / Pocket 迁移导入       | 已上线（文件导入）                             | Settings → 数据：Raindrop（HTML/CSV/JSON）与 Pocket（HTML）导出，≤50 条；`IMPORT_THIRD_PARTY_CORPUS`；§5.10.6 · R2 准入                                                     |
-| TTE / Verified Retrieval 埋点    | 已上线（P0 本机）                              | 七事件 + `pipelineTiming` + ECS 打分 + `yiveno.recallTelemetry`；**未**达 §5.9 Beta 门槛、不对外宣称                                                                        |
-| 轻管理余项（标签/失效链接/统计） | 目标 · Phase D                                 | 摘录删除已提前上线；书签仍只经 Chrome 同步软删                                                                                                                              |
+| 能力                             | 状态                                           | 说明                                                                                                                                                                                                                            |
+| -------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Side Panel 对话式找回            | 已上线（R-shell）                              | 主壳；composer / 邻域 / 追问；关 Panel 丢会话（P0）；见 §7.0                                                                                                                                                                    |
+| Action Popup 作对话主壳          | 已退役                                         | 无 `default_popup`；`pages/popup` 已删除                                                                                                                                                                                        |
+| 右键保存选区                     | 已上线                                         | Text Excerpt；非书签的主动 Capture                                                                                                                                                                                              |
+| 划词保存浮层                     | 已上线                                         | Content Script；可直存或「添加附注」后写入 `clues.note`；Settings 可关；默认开                                                                                                                                                  |
+| 书签/摘录事后附注                | 已上线                                         | `UPDATE_MEMORY_NOTE`；书签树编辑；仅本地 `clues.note`，不同步 Chrome                                                                                                                                                            |
+| Chrome 书签导入 + 增量 sync      | 已上线                                         | 书签唯一写入主路径；原生加书签 → onCreated 同步；upsert 保留 note                                                                                                                                                               |
+| LocalProfile / ownerId           | 已上线                                         | 未登录可用；登录后 `ownerId=accountId`                                                                                                                                                                                          |
+| Settings                         | 已上线（最小+账户同步）                        | `options_ui`；左侧分区导航（与记忆库同构）+ `?section=`；快捷键；账户/云同步；隐私/AI 占位                                                                                                                                      |
+| Offscreen                        | 占位                                           | 预留本地 embedding；当前 Pro 走 Worker AI，未启用 Offscreen                                                                                                                                                                     |
+| Omnibox 找回                     | 已上线                                         | 关键词 `yi`；`entry: omnibox` 离线快跳（规则 + Filter ± embedding）；**单次无会话**；模糊线索引导 Side Panel                                                                                                                    |
+| 快捷键找回                       | 已上线                                         | `_execute_action`（默认 `Alt+Shift+Y`）与点图标开 Side Panel                                                                                                                                                                    |
+| 快捷键打开记忆库                 | 已上线                                         | `open_library`（默认 `Alt+Shift+L`）                                                                                                                                                                                            |
+| 快捷键打开设置                   | 已上线                                         | `open_settings`（无默认建议键；Chrome 最多 4 个 suggested_key，可自绑）                                                                                                                                                         |
+| 快捷键保存选中文字               | 已上线                                         | `save_selection`（默认 `Alt+Shift+E`）→ 划词脚本直存；`captureEntry=shortcut`                                                                                                                                                   |
+| 快捷键选中文字并附注             | 已上线                                         | `save_selection_with_note`（默认 `Alt+Shift+N`）→ 打开划词附注面板                                                                                                                                                              |
+| 手动「保存当前页」               | 不做                                           | 与 Chrome 原生书签重复；已移除 UI/快捷键/消息                                                                                                                                                                                   |
+| 结果线索解释强化                 | 已上线（core + Side Panel / Omnibox 卡面 ECS） | 主因字段 + token + 次要字段；五要素卡面 §5.10.1                                                                                                                                                                                 |
+| 找回壳空状态分层                 | 已上线（壳迁移中）                             | 空库 / 有库 idle 与 no_match 分文案；`no_match` 诚实终局、不附缩短再试；迁 Side Panel 后文案归属随壳走                                                                                                                          |
+| 摘录详情落地页                   | 已上线                                         | `detail.html?id=`；摘录打开详情；书签仍直开 URL；`GET_MEMORY_ITEM`                                                                                                                                                              |
+| 记忆库轻浏览                     | 已上线                                         | `library.html`；**默认摘录**；书签=Chrome 目录只读树；摘录/书签列表均展示**保存时间**（`createdAt` / `chromeCreatedAt`）；`?type=` 刷新保留                                                                                     |
+| 摘录删除                         | 已上线                                         | 软删 `deletedAt`；记忆库列表 / 详情页；`DELETE_MEMORY_ITEM`；书签不经此删                                                                                                                                                       |
+| Need A Clue / 否定反馈           | 已上线（并入对话）                             | 低置信 outcome + dismiss；会话内 dismissedIds 硬排除；追问模板基于合并后 parsed                                                                                                                                                 |
+| 多源线索与权重（§7.1）           | 已上线（首批）                                 | 同域软重排；`recently_saved`/`half_read`/`often_opened` 软加权；环境弱芯片（当前站已接线；刚存/刚打开待信号）                                                                                                                   |
+| Hybrid Filter                    | 已上线                                         | 本机 Hybrid（RRF）；**不分 Free/Pro**；无向量时降级关键词；云同步剥离 embedding；**embedding 无感维护**（启动/登录/书签 sync 后：同步补摘录 + 限量异步补缺向量书签；**增量新建/改书签**另单条入队；**无** Settings Rebuild UI） |
+| 关键词倒排 Phase 1               | 已上线                                         | IDB v4 posting 预过滤；**形态缩写入倒排**（CamelCase/多词首字母，无硬编码别名表；schemaVersion=2）+ 精排同算法；折叠前全量打分                                                                                                  |
+| Dodo Pro / 订阅快照              | 已上线                                         | Free+**仅 Pro**；投影+对账（§A.3.2）；`GET /api/account/subscription`；Settings/官网升级；**sync + hosted 大配额**门禁；embed 登录即可（日配额分档）                                                                            |
+| 云同步 / 账号 UI                 | 已上线（Phase C + Pro）                        | Supabase `memory_items`；Worker `/api/memory/sync/*` **需有效 Pro**；开同步并集 + **15 分钟增量**；登录≠自动上传                                                                                                                |
+| 分享                             | 目标 · Phase C                                 |                                                                                                                                                                                                                                 |
+| 证据卡 Explain 全要素（ECS）     | 已上线（Side Panel + Omnibox）                 | 来源 + 保存时间 + 锚点 + 命中理由；见 §5.10.1                                                                                                                                                                                   |
+| Detail export / copy-for-AI      | 已上线（Library + Side Panel）                 | Library / Recall 多选 ≥1 条 → 复制或下载 JSON + Markdown；§5.10.4 · ADR-008                                                                                                                                                     |
+| 只读 MCP                         | 已上线（beta）                                 | Settings → 隐私开关；工具 `yiveno_recall_evidence` → detail export（1–5）；本机 `MCP_RECALL_EVIDENCE` / 云端 `GET\|POST /api/mcp/*`；关闭后本机与云端均拒绝；§5.10.5                                                            |
+| Raindrop / Pocket 迁移导入       | 已上线（文件导入）                             | Settings → 数据：Raindrop（HTML/CSV/JSON）与 Pocket（HTML）导出，≤50 条；`IMPORT_THIRD_PARTY_CORPUS`；§5.10.6 · R2 准入                                                                                                         |
+| TTE / Verified Retrieval 埋点    | 已上线（P0 本机）                              | 七事件 + `pipelineTiming` + ECS 打分 + `yiveno.recallTelemetry`；**未**达 §5.9 Beta 门槛、不对外宣称                                                                                                                            |
+| 轻管理余项（标签/失效链接/统计） | 目标 · Phase D                                 | 摘录删除已提前上线；书签仍只经 Chrome 同步软删                                                                                                                                                                                  |
 
 ### 1.1 「已上线」验证归属（Normative）
 
@@ -958,6 +981,7 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 - **Top / Also 互斥：** Also 不得出现与 Top 同一折叠键，或（双方均为书签时）同一规范化域名。同站其它 path 不进 Also，也**不**并入 Top 的 stacks N。过滤后回填名额。
 - **UI（找回主壳）：**
   - 书签结果卡**左上角**种类标记：Chrome 缓存 **favicon**（与 Memory 库树同路径 `getChromeFaviconUrl`）；加载失败回退 Lucide `bookmark`。摘录仍用 quote 图标。
+  - **卡壳视觉（Normative · 2026-09-10）：** 书签与摘录**同底、同描边、同 hover**（禁止整卡分色造成斑马纹与双套交互态）。类型靠角标 + 内容形区分；摘录可另加 **≤1px** 左侧 accent（非整卡铺色）。选中 / 键盘焦点共用 accent 描边与浅底。
   - N≥2 时结果卡**右上角**展示 Lucide `layers`（登记名 `stacks`）+ 数量 N（图标优先；`title`/`aria-label` 经 `t()`）。
   - **主卡点击 / Enter：** 在**当前活动标签页**打开代表（URL 或详情），**默认不**新开标签，便于邻域内连点预览而不堆 Tab；⌘/Ctrl+点击可新开。
   - **点 `stacks` 控件：** 展开/收起同组其余条目（纵向列表）；无扑克叠/扇开动效。
@@ -1647,13 +1671,14 @@ Chrome API / 选区
   → 反馈写回（打开 / 否定）→ 再排序
 ```
 
-| 形态           | Normative                                                                                                               |
-| -------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| 排序短名单     | 报 N；首屏 ≤5；**Show 5 more** / **Show all K**（K=剩余）；头名仅视觉略强调；**禁止**「most likely」与假装全集只有 5 条 |
-| 书签结果卡角标 | Chrome 缓存 **favicon**（`chrome://favicon` / `_favicon/`）；失败回退 Lucide `bookmark`；摘录仍用 quote                 |
-| 低置信排序候选 | 有候选才进此态；明确“不够确定”；追问**只为在候选内收窄**，禁止缺槽填表                                                  |
-| 多轮补充线索   | 仅在有候选 / 用户主动再发时推进；补充句 refine 上一轮约束，不是孤立新查询                                               |
-| No Match       | 诚实承认没对上即终局；空库导向 Capture；**禁止**无候选时的时间/类型问卷                                                 |
+| 形态             | Normative                                                                                                               |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| 排序短名单       | 报 N；首屏 ≤5；**Show 5 more** / **Show all K**（K=剩余）；头名仅视觉略强调；**禁止**「most likely」与假装全集只有 5 条 |
+| 书签结果卡角标   | Chrome 缓存 **favicon**（`chrome://favicon` / `_favicon/`）；失败回退 Lucide `bookmark`；摘录仍用 quote                 |
+| 结果卡壳（类型） | 书签/摘录**同底同 hover**；类型靠角标与内容形；摘录可选 ≤1px 左侧 accent；**禁止**整卡分色斑马纹                        |
+| 低置信排序候选   | 有候选才进此态；明确“不够确定”；追问**只为在候选内收窄**，禁止缺槽填表                                                  |
+| 多轮补充线索     | 仅在有候选 / 用户主动再发时推进；补充句 refine 上一轮约束，不是孤立新查询                                               |
+| No Match         | 诚实承认没对上即终局；空库导向 Capture；**禁止**无候选时的时间/类型问卷                                                 |
 
 原则：
 
@@ -1713,7 +1738,7 @@ Chrome API / 选区
 5. **禁止**缺槽规则问卷（`buildRecallFollowUpPlan` 类时间/类型填表已废除）。有候选时的追问由 LLM NLG（失败则静态「不够确定」文案、**无**固定芯片银行）；合并后 `parsed` 仍只服务检索，不驱动问卷。
 6. **禁止**用自动话题检测 / 打开结果 / `no_match` **静默**清线程代替「新会话」（避免误清 refine；成败不做会话边界裁判）。允许上表 **软岔路口确认条**（用户点选后才清或续）。
 7. **「都不是这些」之后：** 保留线程约束；**不得**再挂 site/quote/note/type 等固定追问芯片银行；composer 用中性 placeholder，由用户自由续打。
-8. **会话标题（Normative · 2026-08-26）：** 有 `priorUserUtterances` / `accumulated` 时 composer **上方**展示本场找回**标题**（首轮用户句优先，否则 `contentTerms`；截断展示）。标题是**身份标签**（类 ChatGPT 会话名），不是过程说明；**禁止**前缀 `Narrowing:`；P0 **禁止** LLM 开放摘要造题（日后可选润色须 fold/字面门禁）。旁路 **可见「New find」文案**（可配与 Header 同款图标），与 Header New find **同路径**（含出口条）。**禁止**仅用 ✕ 表示开新找。有标题时 Narrow/Neutral placeholder **须点名标题**（`Add detail to “…”`），避免听起来像全新搜索框。
+8. **会话标题（Normative · 2026-08-26；宽度自适应 · 2026-09-08）：** 有 `priorUserUtterances` / `accumulated` 时 composer **上方**展示本场找回**标题**（首轮用户句优先，否则 `contentTerms`）。标题是**身份标签**（类 ChatGPT 会话名），不是过程说明；**禁止**前缀 `Narrowing:`；P0 **禁止** LLM 开放摘要造题（日后可选润色须 fold/字面门禁）。**可见截断**用 CSS ellipsis，随 Side Panel / 壳宽度增减多露或少露字；**禁止**固定字符数硬截成短标题再展示（病态超长串可另设安全上限）。旁路 **可见「New find」文案**（可配与 Header 同款图标），与 Header New find **同路径**（含出口条）。**禁止**仅用 ✕ 表示开新找。有标题时 Narrow/Neutral placeholder **须点名标题**（`Add detail to “…”`），避免听起来像全新搜索框。
 
 **Composer 双通道（Normative · Placeholder × 追问芯片 · 2026-08-26）：**
 
@@ -2157,6 +2182,7 @@ RecallOutcomeEvent {
 
 | 日期       | 变更                                                                                                                                                                                                                                                   |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-09-08 | **ADR-010 接受**（理解层默认单次 LLM；条件 Stage 2）；**相对时间闭集**增 `last_month` / `few_months_ago`（含 `a while back`→数月）；语料表 + M1 拓扑同步                                                                                               |
 | 2026-09-07 | **术语消歧：** 术语表 §8.1「种子」四义；§5.11.1a / DEV-调试API / Omnibox 手测对齐 Console 文案（手写精选 / 半仿真 / 无关干扰 / 随机种子）；探针词非产品面                                                                                              |
 | 2026-09-06 | **Probe Console：** 去掉 replace 确认勾选；新增一键清理（`DEV_PROBE_CLEANUP`：噪声/精选/整库 + 类型 + Chrome）                                                                                                                                         |
 | 2026-09-06 | **Probe Console 收窄：** UI 仅造数（配方种库 / 清噪）；盘点与对拍撤出页面；DEV-调试API / ADR-009 同步                                                                                                                                                  |

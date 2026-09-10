@@ -446,13 +446,6 @@ function handleMoreClick(event: MouseEvent): void {
 .recall-card-shell--detail-export-selected {
   border-color: var(--accent);
   box-shadow: inset 0 0 0 1px var(--accent);
-}
-
-.recall-card-shell--detail-export-selected.recall-card-shell--excerpt {
-  background: color-mix(in srgb, var(--surface-accent-soft) 88%, var(--surface-white));
-}
-
-.recall-card-shell--detail-export-selected.recall-card-shell--bookmark {
   background: var(--surface-accent-soft);
 }
 
@@ -465,17 +458,21 @@ function handleMoreClick(event: MouseEvent): void {
   color: var(--yiveno-semantic-success);
 }
 
-/* 书签：干净白底 + 略强描边，像「可打开的链接页」 */
-.recall-card-shell--bookmark {
-  border-color: color-mix(in srgb, var(--border) 70%, var(--charcoal) 30%);
+/*
+ * 邻域卡壳：书签/摘录同底同描边同 hover，避免类型染色造成斑马纹与双套交互态。
+ * 类型区分靠角标（quote / favicon）+ 内容形；摘录另加 1px 左侧 accent（非整卡铺色）。
+ */
+.recall-card-shell--bookmark,
+.recall-card-shell--excerpt {
+  border-color: var(--border);
   background: var(--surface-white);
   box-shadow: 0 1px 2px color-mix(in srgb, var(--ink) 6%, transparent);
 }
 
-/* 摘录：浅 sage 底，像「从页里撕下的引文」 */
 .recall-card-shell--excerpt {
-  border-color: color-mix(in srgb, var(--accent) 22%, var(--border));
-  background: var(--surface-accent-soft);
+  box-shadow:
+    inset 1px 0 0 color-mix(in srgb, var(--accent) 55%, var(--border)),
+    0 1px 2px color-mix(in srgb, var(--ink) 6%, transparent);
 }
 
 .recall-card-shell--top {
@@ -489,12 +486,9 @@ function handleMoreClick(event: MouseEvent): void {
   background: var(--surface-accent-soft);
 }
 
-.recall-card-shell--bookmark:hover {
-  background: var(--surface-chrome);
-}
-
+.recall-card-shell--bookmark:hover,
 .recall-card-shell--excerpt:hover {
-  background: color-mix(in srgb, var(--surface-accent-soft) 72%, var(--surface-white));
+  background: var(--surface-chrome);
 }
 
 .recall-card-shell.is-keyboard-selected:hover {
@@ -512,7 +506,7 @@ function handleMoreClick(event: MouseEvent): void {
 }
 
 .recall-card--excerpt {
-  /* 引文感：正文略内缩；左侧靠 shell--excerpt 描边区分，勿再加内层 border-left（会叠成双线） */
+  /* 引文感：正文略内缩；左侧类型靠角标 + shell 1px accent */
   padding-left: var(--space-md);
 }
 
@@ -549,24 +543,18 @@ function handleMoreClick(event: MouseEvent): void {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface-white);
-}
-
-.recall-card--sibling.recall-card--excerpt {
-  border-color: color-mix(in srgb, var(--accent) 22%, var(--border));
-  background: var(--surface-accent-soft);
-}
-
-.recall-card--sibling.recall-card--bookmark {
-  border-color: color-mix(in srgb, var(--border) 70%, var(--charcoal) 30%);
   box-shadow: 0 1px 2px color-mix(in srgb, var(--ink) 5%, transparent);
 }
 
-.recall-card--sibling:hover {
-  background: var(--surface-chrome);
+.recall-card--sibling.recall-card--excerpt {
+  box-shadow:
+    inset 1px 0 0 color-mix(in srgb, var(--accent) 55%, var(--border)),
+    0 1px 2px color-mix(in srgb, var(--ink) 5%, transparent);
 }
 
+.recall-card--sibling:hover,
 .recall-card--sibling.recall-card--excerpt:hover {
-  background: color-mix(in srgb, var(--surface-accent-soft) 72%, var(--surface-white));
+  background: var(--surface-chrome);
 }
 
 .recall-sibling-item {

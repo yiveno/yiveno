@@ -33,6 +33,18 @@ Console：选预设 → 写入；参数可调 **半仿真/干扰随机种子**�
 
 手写精选语料仍为固定包；**仅**半仿真 / 无关干扰走本地过程随机（不上网、不烧 LLM）。
 
+## 精选 URL 纪律（硬规则）
+
+探针书签/摘录要**看起来像真站点**，但**不得**撞上出版商真实 CMS 文章 id，否则会 302 到无关真文（Chrome 星标空心、Memory 标题与落地页错位）。历史事故：`…/attention-economy-myth/677000/` → Atlantic 跳到 _My Father, the Giant_。
+
+| 允许                                                              | 禁止                                               |
+| ----------------------------------------------------------------- | -------------------------------------------------- |
+| `https://www.theatlantic.com/yiveno-probe/<slug>/`                | `…/archive/…/<五位及以上数字>/`（假 slug + 真 id） |
+| `…/yiveno-div` · `…/probe`（半仿真/干扰已用）                     | 把真实文章 URL 改几个词却保留数字 id               |
+| 明确选用的**真实**落地 URL（标题与正文一致，如 Stratechery 真文） | 只改标题、URL 仍指向别的真文                       |
+
+守卫：`src/corpus/corpus-url-safety.test.ts`（出版商主机 + trailing CMS id）。
+
 ## 使用
 
 ```ts

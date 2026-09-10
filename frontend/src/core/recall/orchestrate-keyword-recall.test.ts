@@ -399,6 +399,30 @@ describe('recallByKeywordWithParsedClue', () => {
     expect(noTime.topPick?.item.id ?? noTime.alsoPossible[0]?.item.id).toBe(outOfRange.id)
   })
 
+  it('low 置信时间不硬空：窗外仍可因字面进邻域（ADR-011）', () => {
+    // NOW=2026-07-28；a_while_ago ≈ 3–30 日前 → 窗外用更旧条目
+    const outOfRange = createBookmarkMemoryItem({
+      ownerId: OWNER,
+      sourceLocalProfileId: PROFILE,
+      now: () => '2026-01-15T09:00:00.000Z',
+      payload: {
+        title: 'Postgres EXPLAIN deep dive',
+        url: 'https://www.postgresql.org/docs/current/using-explain.html'
+      },
+      clues: { tags: ['article'] }
+    })
+
+    const clue = 'something about postgres explain from a while ago'
+    const parsed = parseRecallClue(clue, { nowMs: NOW_MS })
+    expect(parsed.timeRange?.label).toBe('a_while_ago')
+    expect(parsed.timeConfidence).toBe('low')
+    expect(memoryItemInTimeRange(outOfRange, parsed.timeRange!)).toBe(false)
+
+    const result = recallByKeywordWithParsedClue([outOfRange], clue, { nowMs: NOW_MS })
+    expect(result.outcome).not.toBe('no_match')
+    expect(result.topPick?.item.id ?? result.alsoPossible[0]?.item.id).toBe(outOfRange.id)
+  })
+
   it('lastOpenedAt 落在时间窗内也算命中（watched）', () => {
     const item = createBookmarkMemoryItem({
       ownerId: OWNER,
@@ -511,7 +535,7 @@ describe('recallByKeywordWithParsedClue', () => {
       sourceLocalProfileId: PROFILE,
       payload: {
         title: 'The Attention Economy Is a Lie',
-        url: 'https://www.theatlantic.com/technology/archive/2024/01/attention-economy-myth/677000/'
+        url: 'https://www.theatlantic.com/yiveno-probe/attention-economy-myth/'
       }
     })
     const cooking = createBookmarkMemoryItem({

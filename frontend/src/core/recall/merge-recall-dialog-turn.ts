@@ -105,6 +105,7 @@ export function mergeParsedRecallClues(
 
   const contentTerms = unionUniqueStrings(accumulated.contentTerms, current.contentTerms)
   const timeRange = current.timeRange ?? accumulated.timeRange
+  const timeConfidence = current.timeRange ? current.timeConfidence : accumulated.timeConfidence
   const objectTypes: RecallObjectType[] | undefined =
     current.objectTypes && current.objectTypes.length > 0
       ? current.objectTypes
@@ -129,6 +130,7 @@ export function mergeParsedRecallClues(
       hasContent
     }),
     ...(timeRange ? { timeRange } : {}),
+    ...(timeRange && timeConfidence ? { timeConfidence } : {}),
     ...(objectTypes && objectTypes.length > 0 ? { objectTypes } : {}),
     ...(behaviorHints ? { behaviorHints } : {}),
     ...(noteHint ? { noteHint } : {})

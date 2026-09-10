@@ -26,7 +26,9 @@ export type RecallLexiconEntry<T extends string> = {
  * - day_before_yesterday：前天
  * - last_week：上周
  * - recent：最近
- * - a_while_ago：前一阵
+ * - a_while_ago：前一阵（约数周；口语 a while ago）
+ * - last_month：大约一个月前
+ * - few_months_ago：几个月前（a few months back 等）
  * - long_ago：很久以前
  */
 export type RecallRelativeTimeLabel =
@@ -35,7 +37,9 @@ export type RecallRelativeTimeLabel =
   | 'day_before_yesterday' // 前天
   | 'last_week' // 上周
   | 'recent' // 最近
-  | 'a_while_ago' // 前一阵
+  | 'a_while_ago' // 前一阵（约数周）
+  | 'last_month' // 大约一个月前
+  | 'few_months_ago' // 几个月前
   | 'long_ago' // 很久以前
 
 /** 各对象类型的 canonical 英文词面。 */
@@ -61,10 +65,27 @@ export const RECALL_TIME_LEXICON: RecallLexiconEntry<RecallRelativeTimeLabel>[] 
   { surface: 'the other day', value: 'recent' },
   { surface: 'earlier this week', value: 'recent' },
   { surface: 'last few days', value: 'recent' },
+  // month 级：须长于「a while ago」，避免 few months 被短 surface 抢走
+  { surface: 'a couple of months ago', value: 'few_months_ago' },
+  { surface: 'couple of months ago', value: 'few_months_ago' },
+  { surface: 'a few months ago', value: 'few_months_ago' },
+  { surface: 'a few months back', value: 'few_months_ago' },
+  { surface: 'couple months ago', value: 'few_months_ago' },
+  { surface: 'couple months back', value: 'few_months_ago' },
+  { surface: 'few months ago', value: 'few_months_ago' },
+  { surface: 'few months back', value: 'few_months_ago' },
+  { surface: 'about a month ago', value: 'last_month' },
+  { surface: 'a month ago', value: 'last_month' },
+  { surface: 'last month', value: 'last_month' },
+  // NA：「a while back」常偏数月；与「a while ago」（数周）分立
+  { surface: 'a while back', value: 'few_months_ago' },
   { surface: 'yesterday', value: 'yesterday' },
   { surface: 'today', value: 'today' },
   { surface: 'last week', value: 'last_week' },
   { surface: 'recently', value: 'recent' },
+  // 糊远距：须长于「a while ago」/「long ago」，避免短 surface 抢先
+  { surface: 'a long time ago', value: 'long_ago' },
+  { surface: 'some time ago', value: 'a_while_ago' },
   { surface: 'a while ago', value: 'a_while_ago' },
   { surface: 'long ago', value: 'long_ago' }
 ]
@@ -144,6 +165,7 @@ export const RECALL_OBJECT_TYPE_LEXICON: RecallLexiconEntry<RecallObjectType>[] 
   // quote
   { surface: 'highlight', value: 'quote' },
   { surface: 'quotation', value: 'quote' },
+  { surface: 'excerpts', value: 'quote' },
   { surface: 'excerpt', value: 'quote' },
   { surface: 'quote', value: 'quote' },
   { surface: 'passage', value: 'quote' },

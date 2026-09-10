@@ -356,6 +356,20 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
 
 **实现：** `AppLibraryItemCard.vue` · `library-item-card-content.css` · `library-list-tokens.ts` · `bookmark-library-index.ts`。
 
+#### 6.2.6 Recall 邻域结果卡壳（类型区分）
+
+**目标：** 列表先可扫可读可点；类型可辨，但不抢主阅读。
+
+| 层          | Normative                                                                                                      |
+| ----------- | -------------------------------------------------------------------------------------------------------------- |
+| 卡壳        | 书签 / 摘录 **同** `--surface-white` 底、同 `--border`、**同 hover**（`--surface-chrome`）                     |
+| 类型        | 角标（quote / favicon）+ 内容形（引文正文 vs 页标题）；摘录可 **≤1px** 左侧 accent（`inset` 阴影，非整卡铺色） |
+| 选中 / 键盘 | 共用 accent 描边 + `--surface-accent-soft`；不跟类型底色纠缠                                                   |
+
+**禁止：** 用整卡分色区分书签/摘录（易成斑马纹 + 双套 hover）。
+
+**实现：** `RecallResultCard.vue`。
+
 ### 6.3 Logo 与图标物料
 
 - 主色：Ink / Sage；浅底用 Ink 或 Sage；深底用 Sage On / Paper 系浅色

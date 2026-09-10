@@ -43,6 +43,8 @@ export type RecallFramingAmbiguity = z.infer<typeof RecallFramingAmbiguitySchema
 export const RecallFramingUnderstoodSchema = z.object({
   objectTypes: z.array(z.string()),
   timeLabel: z.string().optional(),
+  /** high=Within；low=Around（ADR-011） */
+  timeConfidence: z.enum(['high', 'low']).optional(),
   contentTerms: z.array(z.string()),
   behaviorHints: z.array(z.string()),
   noteHint: z.boolean()

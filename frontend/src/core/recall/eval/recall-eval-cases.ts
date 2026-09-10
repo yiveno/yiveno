@@ -364,6 +364,14 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
     expectation: { kind: 'top1', expectedId: RECALL_EVAL_IDS.oldDensePassagePaper },
     note: 'soft old 不作时间硬窗；靠 DPR/arxiv 内容锚 Top1'
   },
+  {
+    id: 'adr011-low-time-soft-while-ago-dense-passage',
+    clue: 'something about dense passage from a while ago',
+    clueClass: 'semi_fuzzy',
+    gate: 'must',
+    expectation: { kind: 'in_topk', expectedId: RECALL_EVAL_IDS.oldDensePassagePaper, k: 5 },
+    note: 'ADR-011：a_while_ago=low · 窗外旧稿不得硬空；字面 dense passage 仍进邻域'
+  },
 
   // —— must：§5.11.2 R4 新增（Normative id） ——
   {

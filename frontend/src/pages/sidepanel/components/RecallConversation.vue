@@ -462,11 +462,13 @@ function cardMemoDeps(
 
 .assistant-turn-status {
   margin: 0;
-  max-width: 40ch;
+  max-width: 100%;
+  min-width: 0;
   font-size: 12px;
   line-height: 1.4;
   color: var(--on-surface-muted);
   text-wrap: pretty;
+  overflow-wrap: anywhere;
 }
 
 .assistant-turn-copy {

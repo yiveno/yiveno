@@ -22,6 +22,19 @@ const OBJECT_TYPE_LABEL_KEYS: Record<string, string> = {
   bookmark: 'framing_object_bookmark'
 }
 
+/** 内部 timeLabel → 用户可见美式英语短语（经 i18n；禁止把 snake_case 原样露出）。 */
+const TIME_LABEL_MESSAGE_KEYS: Record<string, string> = {
+  today: 'framing_time_today',
+  yesterday: 'framing_time_yesterday',
+  day_before_yesterday: 'framing_time_day_before_yesterday',
+  last_week: 'framing_time_last_week',
+  recent: 'framing_time_recent',
+  a_while_ago: 'framing_time_a_while_ago',
+  last_month: 'framing_time_last_month',
+  few_months_ago: 'framing_time_few_months_ago',
+  long_ago: 'framing_time_long_ago'
+}
+
 function joinSentences(parts: string[]): string {
   return parts.filter(part => part.trim().length > 0).join(' ')
 }
@@ -44,7 +57,11 @@ function renderUnderstood(understood: RecallFramingUnderstood, translate: Transl
   }
 
   if (understood.timeLabel) {
-    segments.push(translate('framing_p1_time', [understood.timeLabel]))
+    const timeKey = TIME_LABEL_MESSAGE_KEYS[understood.timeLabel]
+    const timePhrase = timeKey ? translate(timeKey) : understood.timeLabel.split('_').join(' ')
+    const timeFrameKey =
+      understood.timeConfidence === 'low' ? 'framing_p1_time_soft' : 'framing_p1_time'
+    segments.push(translate(timeFrameKey, [timePhrase]))
   }
 
   if (understood.contentTerms.length > 0) {

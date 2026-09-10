@@ -62,8 +62,11 @@ const FIELD_PRIORITY: Record<string, number> = {
   hybridRrf: 0
 }
 
-const TOKEN_QUOTE_MAX = 12
-const CLUE_ECHO_MAX = 24
+/**
+ * 解释文案插值病态安全上限（非布局宽度）。
+ * 卡片 reason 可见截断交给 `.recall-card-reason` line-clamp。
+ */
+const EXPLAIN_INTERPOLATION_SAFETY_MAX = 120
 
 export interface RecallMatchExplanation {
   /** 主因。 */
@@ -106,7 +109,10 @@ export function pickPrimaryMatchedField(matchedFields: string[]): string | null 
   return best
 }
 
-/** 截断展示用文本。 */
+/**
+ * 归一空白；仅在显式 maxLength / 安全上限时尾省略。
+ * 禁止用本函数代替 CSS ellipsis 做布局宽度截断。
+ */
 export function truncateRecallExplainText(text: string, maxLength: number): string {
   const compact = text.replace(/\s+/g, ' ').trim()
   if (compact.length <= maxLength) {
@@ -182,7 +188,7 @@ export function explainRecallMatch(
           return token
             ? translate('explain_reason_field_contains', [
                 fieldLabel,
-                truncateRecallExplainText(token, TOKEN_QUOTE_MAX)
+                truncateRecallExplainText(token, EXPLAIN_INTERPOLATION_SAFETY_MAX)
               ])
             : translate('explain_reason_field_related', fieldLabel)
         })()
@@ -205,13 +211,16 @@ export function explainRecallMatch(
   }
 }
 
-/** 结果卡线索回显。 */
+/** 结果卡线索回显（可见省略交给宿主 CSS；此处仅安全上限）。 */
 export function formatRecallClueEcho(clue: string, translate: TranslateFn): string {
   const trimmed = clue.trim()
   if (!trimmed) {
     return ''
   }
-  return translate('explain_clue_echo', truncateRecallExplainText(trimmed, CLUE_ECHO_MAX))
+  return translate(
+    'explain_clue_echo',
+    truncateRecallExplainText(trimmed, EXPLAIN_INTERPOLATION_SAFETY_MAX)
+  )
 }
 
 /**

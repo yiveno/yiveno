@@ -25,6 +25,8 @@ import {
   reconcileChromeBookmarksWithMemory,
   resetPendingChromeBookmarkSyncForTests
 } from '@/application/capture/chrome-bookmark-sync-service'
+import { scheduleAsyncMemoryEmbedding } from '@/application/memory/schedule-async-memory-embedding'
+import { scheduleSilentMemoryEmbeddingMaintenance } from '@/application/memory/ensure-memory-embedding-maintenance'
 import { memoryItemService } from '@/application/memory/memory-item-service'
 import { logger } from '@/infrastructure/logging/logger'
 import { CHROME_BOOKMARK_IMPORT_STORAGE_KEY } from '@/core/memory/chrome-bookmark-import-state'
@@ -142,6 +144,7 @@ describe('chrome-bookmark-sync-service', () => {
   beforeEach(async () => {
     resetPendingChromeBookmarkSyncForTests()
     resetMemoryDatabaseInitializationForTests()
+    vi.clearAllMocks()
     vi.stubGlobal(
       'chrome',
       createChromeMock({
@@ -171,15 +174,23 @@ describe('chrome-bookmark-sync-service', () => {
     if (items[0]?.type === 'bookmark') {
       expect(items[0].payload.chromeBookmarkId).toBe('10')
     }
+    expect(scheduleAsyncMemoryEmbedding).toHaveBeenCalledWith(items[0]!.id)
+    expect(scheduleSilentMemoryEmbeddingMaintenance).toHaveBeenCalledWith(
+      'chrome_bookmark_created',
+      3500
+    )
   })
 
   it('handleChromeBookmarkCreated 对文件夹不标记 captured', async () => {
+    vi.mocked(scheduleAsyncMemoryEmbedding).mockClear()
+    vi.mocked(scheduleSilentMemoryEmbeddingMaintenance).mockClear()
     const result = await handleChromeBookmarkCreated({
       id: 'folder-1',
       title: 'Work',
       parentId: '1'
     })
     expect(result.captured).toBe(false)
+    expect(scheduleAsyncMemoryEmbedding).not.toHaveBeenCalled()
   })
 
   it('handleChromeBookmarkChanged 更新已有书签', async () => {
@@ -205,6 +216,11 @@ describe('chrome-bookmark-sync-service', () => {
     if (items[0]?.type === 'bookmark') {
       expect(items[0].payload.title).toBe('New title')
     }
+    expect(scheduleAsyncMemoryEmbedding).toHaveBeenCalledWith(items[0]!.id)
+    expect(scheduleSilentMemoryEmbeddingMaintenance).toHaveBeenCalledWith(
+      'chrome_bookmark_changed',
+      3500
+    )
   })
 
   it('handleChromeBookmarkRemoved 软删除 MemoryItem', async () => {

@@ -1,8 +1,13 @@
 /**
  * Recall 壳空状态 / 恢复文案选择（纯函数；文案经注入的 translate）。
  * i18n key 仍用 `popup_*` 前缀（遗留）；现行消费方为 Side Panel。
+ *
+ * 可见截断（宽度 / 省略号）交给 UI CSS；此处只归一空白与病态安全上限。
  */
 import type { TranslateFn } from '@/core/i18n/translate'
+
+/** 空态标题插值病态安全上限（非布局宽度）。 */
+const NO_MATCH_CLUE_SAFETY_MAX = 200
 
 /** Recall 壳侧记忆库是否已有可检内容。 */
 export type RecallShellLibraryState =
@@ -13,6 +18,15 @@ export type RecallShellLibraryState =
 export interface RecallShellEmptyCopy {
   title: string
   body: string
+}
+
+/** 归一空白；超安全上限才尾省略。 */
+function normalizeClueForCopy(clue: string): string {
+  const trimmed = clue.trim().replace(/\s+/g, ' ')
+  if (trimmed.length <= NO_MATCH_CLUE_SAFETY_MAX) {
+    return trimmed
+  }
+  return `${trimmed.slice(0, NO_MATCH_CLUE_SAFETY_MAX - 1).trimEnd()}…`
 }
 
 /** idle 区引导（有库时不展示额外空态块，除非仍在安装引导 Capture-first 阶段）。 */
@@ -54,7 +68,7 @@ export function getRecallShellNoMatchCopy(
   },
   translate: TranslateFn
 ): RecallShellEmptyCopy {
-  const clueLabel = input.clue.trim()
+  const clueLabel = normalizeClueForCopy(input.clue)
 
   if (input.library === 'empty') {
     return {
@@ -63,11 +77,9 @@ export function getRecallShellNoMatchCopy(
     }
   }
 
-  const truncated = clueLabel.length > 16 ? `${clueLabel.slice(0, 16)}…` : clueLabel
-
   return {
     title: clueLabel
-      ? translate('popup_no_match_title_with_clue', truncated)
+      ? translate('popup_no_match_title_with_clue', clueLabel)
       : translate('popup_no_match_title'),
     body: translate('popup_no_match_body')
   }

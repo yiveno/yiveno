@@ -3,7 +3,10 @@ import {
   EMBEDDING_MAINTENANCE_AFTER_SYNC_DELAY_MS,
   scheduleSilentMemoryEmbeddingMaintenance
 } from '@/application/memory/ensure-memory-embedding-maintenance'
-import { clearAsyncMemoryEmbeddingQueue } from '@/application/memory/schedule-async-memory-embedding'
+import {
+  clearAsyncMemoryEmbeddingQueue,
+  scheduleAsyncMemoryEmbedding
+} from '@/application/memory/schedule-async-memory-embedding'
 import { clearAsyncMemoryLlmEnrichmentQueue } from '@/application/memory/schedule-async-memory-llm-enrichment'
 import { invalidateBookmarkSyncAlignmentCache } from '@/application/memory/bookmark-sync-alignment-cache'
 import {
@@ -131,10 +134,20 @@ function leafToUpsertInput(leaf: ChromeBookmarkLeaf) {
   }
 }
 
+/**
+ * 增量书签落库后：为该条入队 embedding，并防抖调度无感维护（补其它缺口）。
+ * 不在 bulk upsert / reconcile 路径调用——避免万级书签刷 Worker。
+ */
+function scheduleEmbeddingAfterIncrementalBookmarkSync(itemId: string, reason: string): void {
+  scheduleAsyncMemoryEmbedding(itemId)
+  scheduleSilentMemoryEmbeddingMaintenance(reason, EMBEDDING_MAINTENANCE_AFTER_SYNC_DELAY_MS)
+  logger.info('ChromeBookmarkSync', '已调度增量书签 embedding', { itemId, reason })
+}
+
 /** 将 Chrome 书签节点同步到 IndexedDB（upsert 或软删）。返回是否写入可找回书签。 */
 export async function syncChromeBookmarkNode(
   node: chrome.bookmarks.BookmarkTreeNode
-): Promise<{ captured: boolean }> {
+): Promise<{ captured: boolean; itemId?: string }> {
   const leaf = toChromeBookmarkLeaf(node)
   if (!leaf) {
     await memoryItemService.softDeleteByChromeBookmarkId(node.id)
@@ -142,9 +155,9 @@ export async function syncChromeBookmarkNode(
     return { captured: false }
   }
 
-  await memoryItemService.upsertBookmarkFromChrome(leafToUpsertInput(leaf))
+  const item = await memoryItemService.upsertBookmarkFromChrome(leafToUpsertInput(leaf))
   invalidateBookmarkSyncAlignmentCache()
-  return { captured: true }
+  return { captured: true, itemId: item.id }
 }
 
 /** Chrome 书签被删除时同步软删 MemoryItem。 */
@@ -176,9 +189,13 @@ export async function handleChromeBookmarkCreated(
   }
 
   const result = await syncChromeBookmarkNode(node)
+  if (result.captured && result.itemId) {
+    scheduleEmbeddingAfterIncrementalBookmarkSync(result.itemId, 'chrome_bookmark_created')
+  }
   logger.info('ChromeBookmarkSync', 'created 已处理', {
     chromeBookmarkId: node.id,
-    captured: result.captured
+    captured: result.captured,
+    itemId: result.itemId ?? null
   })
   return result
 }
@@ -204,9 +221,14 @@ export async function handleChromeBookmarkChanged(chromeBookmarkId: string): Pro
   }
 
   const result = await syncChromeBookmarkNode(node)
+  if (result.captured && result.itemId) {
+    // 标题/URL 变更后语义也可能变；已有同模型向量时 runAsync 会 skip（残差：不强制重算）
+    scheduleEmbeddingAfterIncrementalBookmarkSync(result.itemId, 'chrome_bookmark_changed')
+  }
   logger.info('ChromeBookmarkSync', 'changed 已处理', {
     chromeBookmarkId,
-    captured: result.captured
+    captured: result.captured,
+    itemId: result.itemId ?? null
   })
 }
 
@@ -366,7 +388,8 @@ export async function reconcileChromeBookmarksWithMemory(): Promise<{
  * 导入完成或启动时：先 flush pending，再 reconcile 补洞。
  * 仅 Background 调用。
  * 开始前清空 AI 队列，防止历史误入队的万级书签任务继续打 Worker；
- * 结束后调度无感 embedding 维护（摘录优先），用户无需点 Rebuild。
+ * 结束后调度无感 embedding 维护（摘录优先同步写回 + 缺向量书签限量入队）；增量 created/changed 另单条入队。
+ * 用户无需点 Rebuild。
  */
 export async function finalizeChromeBookmarkSyncAfterImport(): Promise<void> {
   clearAsyncMemoryLlmEnrichmentQueue('chrome_bookmark_sync_finalize')

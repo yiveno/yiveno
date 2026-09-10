@@ -19,6 +19,7 @@ import {
   type RecallBehaviorHint,
   type RecallClueConfidence,
   type RecallObjectType,
+  type RecallTimeConfidence,
   type RecallTimeRange
 } from '@/core/recall/parse-recall-clue-types'
 
@@ -82,9 +83,24 @@ export function resolveRelativeTimeRange(
         label
       }
     case 'a_while_ago':
+      // 约数周：排除近 3 天，上界约 30 天
       return {
         from: toIso(todayStart - 30 * DAY_MS),
         to: toIso(todayStart - 3 * DAY_MS - 1),
+        label
+      }
+    case 'last_month':
+      // 大约一个月前：偏宽窗，避免硬过滤误杀（约 2–6 周）
+      return {
+        from: toIso(todayStart - 60 * DAY_MS),
+        to: toIso(todayStart - 14 * DAY_MS - 1),
+        label
+      }
+    case 'few_months_ago':
+      // 几个月前：偏宽窗（约 1.5–6 个月），服务 a few months back 等口语
+      return {
+        from: toIso(todayStart - 180 * DAY_MS),
+        to: toIso(todayStart - 45 * DAY_MS - 1),
         label
       }
     case 'long_ago':
@@ -93,6 +109,31 @@ export function resolveRelativeTimeRange(
         to: toIso(todayStart - 30 * DAY_MS - 1),
         label
       }
+  }
+}
+
+/**
+ * 相对时间 label → 硬筛/软排置信（ADR-011 · 确定性闭集）。
+ * 日历级 = high；糊远距/模糊近因 = low。
+ */
+export function timeConfidenceForRelativeLabel(
+  label: RecallRelativeTimeLabel | string
+): RecallTimeConfidence {
+  switch (label) {
+    case 'today':
+    case 'yesterday':
+    case 'day_before_yesterday':
+    case 'last_week':
+    case 'last_month':
+      return 'high'
+    case 'recent':
+    case 'a_while_ago':
+    case 'few_months_ago':
+    case 'long_ago':
+      return 'low'
+    default:
+      // 未知 label 保守走软排，避免误硬空
+      return 'low'
   }
 }
 
@@ -305,6 +346,7 @@ export function parseRecallClue(
 
   const timeLabel = timeHits.values[0]
   const timeRange = timeLabel ? resolveRelativeTimeRange(timeLabel, nowMs) : undefined
+  const timeConfidence = timeLabel ? timeConfidenceForRelativeLabel(timeLabel) : undefined
   let objectTypes = objectHits.values as RecallObjectType[]
   let behaviorHints = behaviorHits.values as RecallBehaviorHint[]
   const noteHint = noteHits.values.length > 0 ? true : undefined
@@ -331,6 +373,7 @@ export function parseRecallClue(
       hasContent
     }),
     ...(timeRange ? { timeRange } : {}),
+    ...(timeConfidence ? { timeConfidence } : {}),
     ...(hasObject ? { objectTypes } : {}),
     ...(hasBehavior ? { behaviorHints } : {}),
     ...(noteHint ? { noteHint } : {})

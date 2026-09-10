@@ -13,7 +13,11 @@ import {
 } from '@/core/recall/build-recall-result'
 import { collapseRecallMatches } from '@/core/recall/collapse-recall-duplicates'
 import { normalizeRecallText, RECALL_TOP_PICK_MIN_SCORE } from '@/core/recall/keyword-filter'
-import { parseRecallClue, resolveRelativeTimeRange } from '@/core/recall/parse-recall-clue'
+import {
+  parseRecallClue,
+  resolveRelativeTimeRange,
+  timeConfidenceForRelativeLabel
+} from '@/core/recall/parse-recall-clue'
 import {
   RECALL_OBJECT_TYPE_CANONICAL_SURFACES,
   RECALL_OBJECT_TYPE_LEXICON
@@ -21,6 +25,7 @@ import {
 import type {
   ParsedRecallClue,
   RecallObjectType,
+  RecallTimeConfidence,
   RecallTimeRange
 } from '@/core/recall/parse-recall-clue-types'
 import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
@@ -39,6 +44,12 @@ export const RECALL_ORCHESTRATION_RECENTLY_SAVED_BOOST = 5
 
 /** half_read：摘录类或低 openCount 书签的软加成。 */
 export const RECALL_ORCHESTRATION_HALF_READ_BOOST = 3
+
+/** 低置信时间：落在中心窗内的软加成（ADR-011）。 */
+export const RECALL_ORCHESTRATION_TIME_SOFT_IN_RANGE_BOOST = 12
+
+/** 约束邻域：低置信窗外条目相对窗内的分差（仍可进邻域）。 */
+const CONSTRAINT_OUT_OF_RANGE_SCORE_PENALTY = 20
 
 const OFTEN_OPENED_MIN_COUNT = 3
 const RECENTLY_SAVED_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
@@ -297,14 +308,51 @@ export function memoryItemInTimeRange(item: MemoryItem, timeRange: RecallTimeRan
 }
 
 /**
- * 有 timeRange 时硬排除窗外命中（产品：时间约束须生效，不能只靠软加权）。
- * 无 timeRange 时原样返回。
+ * 解析后的时间约束是否应硬筛（ADR-011）。
+ * - 显式 timeConfidence 优先
+ * - 无字段时按 label 派生
+ * - recently_saved 合成 recent 窗（无显式 timeLabel）按 high
+ */
+export function resolveEffectiveTimeConfidence(
+  parsed: ParsedRecallClue,
+  range: RecallTimeRange | undefined
+): RecallTimeConfidence | undefined {
+  if (!range) {
+    return undefined
+  }
+  if (parsed.timeConfidence) {
+    return parsed.timeConfidence
+  }
+  if (parsed.timeRange) {
+    return timeConfidenceForRelativeLabel(parsed.timeRange.label)
+  }
+  // effectiveParsedTimeRange 合成的 recent（刚存）→ 硬筛近窗
+  if (parsed.behaviorHints?.includes('recently_saved') && range.label === 'recent') {
+    return 'high'
+  }
+  return timeConfidenceForRelativeLabel(range.label)
+}
+
+/** 是否应对命中列表做时间硬排除。 */
+export function shouldHardFilterByTime(
+  parsed: ParsedRecallClue,
+  range: RecallTimeRange | undefined = parsed.timeRange
+): boolean {
+  return resolveEffectiveTimeConfidence(parsed, range) === 'high'
+}
+
+/**
+ * 有 timeRange 且 high 置信时硬排除窗外命中。
+ * low 置信不硬切（软加分见 applyParsedClueScoreBoosts）。
  */
 export function filterMatchesByParsedTimeRange(
   matches: RecallMatch[],
   parsed: ParsedRecallClue
 ): RecallMatch[] {
   if (!parsed.timeRange) {
+    return matches
+  }
+  if (!shouldHardFilterByTime(parsed, parsed.timeRange)) {
     return matches
   }
   const range = parsed.timeRange
@@ -417,7 +465,7 @@ function itemCreatedMs(item: MemoryItem): number {
 }
 
 /**
- * 约束邻域：时间窗硬过滤 + 可选类型过滤，按 createdAt 近因打分。
+ * 约束邻域：时间按置信硬筛或软排 + 可选类型过滤，按 createdAt 近因打分。
  * 最新一条须达 Top Pick 阈值（建议，非神谕）。
  */
 export function recallMatchesByConstraintNeighborhood(
@@ -427,26 +475,39 @@ export function recallMatchesByConstraintNeighborhood(
 ): RecallMatch[] {
   const range = effectiveParsedTimeRange(parsed, nowMs)
   const types = parsed.objectTypes
+  const timeConfidence = resolveEffectiveTimeConfidence(parsed, range)
 
   let pool = items
-  if (range) {
-    pool = pool.filter(item => memoryItemInTimeRange(item, range))
-  }
   if (types && types.length > 0) {
     pool = pool.filter(item => types.some(type => memoryItemMatchesObjectType(item, type)))
+  }
+  if (range && timeConfidence === 'high') {
+    pool = pool.filter(item => memoryItemInTimeRange(item, range))
   }
 
   if (pool.length === 0) {
     return []
   }
 
-  const ranked = [...pool].sort((left, right) => itemCreatedMs(right) - itemCreatedMs(left))
+  const ranked = [...pool].sort((left, right) => {
+    if (range && timeConfidence === 'low') {
+      const leftIn = memoryItemInTimeRange(left, range) ? 1 : 0
+      const rightIn = memoryItemInTimeRange(right, range) ? 1 : 0
+      if (rightIn !== leftIn) {
+        return rightIn - leftIn
+      }
+    }
+    return itemCreatedMs(right) - itemCreatedMs(left)
+  })
   const newestMs = itemCreatedMs(ranked[0]!)
 
   return ranked.map((item, index) => {
     const ageGapDays = Math.max(0, (newestMs - itemCreatedMs(item)) / (24 * 60 * 60 * 1000))
     // 最新 = Top Pick 门槛；越旧分越低，仍可进 Also Possible
-    const score = Math.max(1, RECALL_TOP_PICK_MIN_SCORE - index - Math.floor(ageGapDays))
+    let score = Math.max(1, RECALL_TOP_PICK_MIN_SCORE - index - Math.floor(ageGapDays))
+    if (range && timeConfidence === 'low' && !memoryItemInTimeRange(item, range)) {
+      score = Math.max(1, score - CONSTRAINT_OUT_OF_RANGE_SCORE_PENALTY)
+    }
     return {
       item,
       score,
@@ -455,7 +516,7 @@ export function recallMatchesByConstraintNeighborhood(
   })
 }
 
-/** 在已有词面分上叠加结构化软加权（无词面命中不加）。时间已硬过滤，不再软加成。 */
+/** 在已有词面分上叠加结构化软加权（无词面命中不加）。high 时间已硬过滤；low 时间窗内另加 soft boost。 */
 export function applyParsedClueScoreBoosts(
   match: RecallMatch,
   parsed: ParsedRecallClue,
@@ -494,6 +555,15 @@ export function applyParsedClueScoreBoosts(
     if (match.item.type === 'text_excerpt' || openCount <= 1) {
       boost += RECALL_ORCHESTRATION_HALF_READ_BOOST
     }
+  }
+
+  const softTimeRange = parsed.timeRange
+  if (
+    softTimeRange &&
+    resolveEffectiveTimeConfidence(parsed, softTimeRange) === 'low' &&
+    memoryItemInTimeRange(match.item, softTimeRange)
+  ) {
+    boost += RECALL_ORCHESTRATION_TIME_SOFT_IN_RANGE_BOOST
   }
 
   if (boost === 0) {

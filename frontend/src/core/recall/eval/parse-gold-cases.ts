@@ -182,6 +182,51 @@ export const PARSE_GOLD_CASES: ParseGoldCase[] = [
     note: '一段时间前+看一半'
   },
   {
+    id: 'p0-few-months-back-libraries',
+    clue: 'something about public libraries i saved a few months back',
+    gate: 'must',
+    expect: {
+      timeLabel: 'few_months_ago',
+      contentTermsMustInclude: ['public', 'libraries'],
+      confidence: 'medium'
+    },
+    note: 'NA 口语 few months back → few_months_ago（勿并入 a_while_ago）'
+  },
+  {
+    id: 'p0-last-month-article',
+    clue: 'an article i saved last month about remote work',
+    gate: 'must',
+    expect: {
+      timeLabel: 'last_month',
+      objectTypes: ['article'],
+      contentTermsMustInclude: ['remote', 'work'],
+      confidence: 'high'
+    },
+    note: 'last month → last_month'
+  },
+  {
+    id: 'p0-some-time-ago-excerpts',
+    clue: 'the excerpts i saved some time ago',
+    gate: 'must',
+    expect: {
+      timeLabel: 'a_while_ago',
+      objectTypes: ['quote'],
+      confidence: 'medium'
+    },
+    note: 'ADR-011：some time ago → a_while_ago'
+  },
+  {
+    id: 'p0-long-time-ago-bookmark',
+    clue: 'a bookmark from a long time ago',
+    gate: 'must',
+    expect: {
+      timeLabel: 'long_ago',
+      objectTypes: ['bookmark'],
+      confidence: 'high'
+    },
+    note: 'ADR-011：a long time ago → long_ago；time+type → high 线索置信'
+  },
+  {
     id: 'p0-full-english-li-bai-short',
     clue: 'yesterday poem about Li Bai',
     gate: 'must',

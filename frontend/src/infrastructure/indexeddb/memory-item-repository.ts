@@ -591,13 +591,42 @@ export class MemoryItemRepository {
     return updated
   }
 
-  /** 按 Chrome 书签 ID 软删除 Bookmark MemoryItem。 */
+  /**
+   * 按 Chrome 书签 ID 软删除全部匹配的 Bookmark MemoryItem。
+   * 索引非唯一时可能残留多行（种库+同步叠写）；只删一条会留下脏 URL。
+   */
   async softDeleteByChromeBookmarkId(chromeBookmarkId: string): Promise<MemoryItem | null> {
-    const existing = await this.getByChromeBookmarkId(chromeBookmarkId)
-    if (!existing) {
+    await this.ensureReady()
+    const ownerId = await getCurrentOwnerId()
+    const matches = await indexedDBManager.withTransaction(
+      MEMORY_ITEM_STORE,
+      'readonly',
+      async transaction => {
+        const index = transaction
+          .objectStore(MEMORY_ITEM_STORE)
+          .index(MEMORY_ITEM_INDEX_BY_OWNER_CHROME_BOOKMARK)
+        const raws = await requestToPromise(index.getAll([ownerId, chromeBookmarkId]))
+        const list = Array.isArray(raws) ? raws : raws == null ? [] : [raws]
+        return list
+          .map(raw => safeParseMemoryItem(raw))
+          .filter((item): item is MemoryItem => {
+            return (
+              item != null &&
+              item.ownerId === ownerId &&
+              item.deletedAt == null &&
+              item.type === 'bookmark'
+            )
+          })
+      }
+    )
+    if (matches.length === 0) {
       return null
     }
-    return this.softDelete(existing.id)
+    let last: MemoryItem | null = null
+    for (const item of matches) {
+      last = await this.softDelete(item.id)
+    }
+    return last
   }
 
   /** 统计当前用户未删除的 MemoryItem 数量。 */

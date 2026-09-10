@@ -107,9 +107,10 @@ describe('explain-recall-match', () => {
     ).toBe('product retention')
   })
 
-  it('formatRecallClueEcho 截断线索', () => {
+  it('formatRecallClueEcho 保留中长线索（布局省略交给 CSS）', () => {
     expect(formatRecallClueEcho('retention', testTranslateEn)).toBe('Based on "retention"')
-    expect(formatRecallClueEcho('a'.repeat(30), testTranslateEn).length).toBeLessThan(40)
+    const mid = 'product retention analysis'
+    expect(formatRecallClueEcho(mid, testTranslateEn)).toBe(`Based on "${mid}"`)
   })
 
   it('shortenClueForRetry 缩短线索', () => {
@@ -118,8 +119,26 @@ describe('explain-recall-match', () => {
     expect(shortenClueForRetry('x')).toBeNull()
   })
 
-  it('truncate 与短标签', () => {
+  it('truncate 工具与短标签（显式 max，非默认布局截断）', () => {
     expect(truncateRecallExplainText('a b  c', 10)).toBe('a b c')
+    expect(truncateRecallExplainText('a'.repeat(20), 10).endsWith('…')).toBe(true)
     expect(getRecallMatchFieldShortLabel('textExcerpt', testTranslateEn)).toBe('excerpt')
+  })
+
+  it('explain 主因引用完整命中 token（不固定 12 字截断）', () => {
+    const item = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: { title: 'Product retention analysis', url: 'https://example.com/x' }
+    })
+    const explanation = explainRecallMatch(
+      {
+        clue: 'product retention',
+        matchedFields: ['title'],
+        item
+      },
+      testTranslateEn
+    )
+    expect(explanation.primary).toContain('product retention')
+    expect(explanation.primary).not.toMatch(/…/)
   })
 })

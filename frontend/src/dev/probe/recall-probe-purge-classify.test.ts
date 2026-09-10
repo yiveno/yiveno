@@ -119,15 +119,13 @@ describe('isProbeNoiseOrDiversityItem', () => {
 })
 
 describe('isCuratedProbeItem', () => {
-  const curatedUrls = new Set([
-    'https://www.theatlantic.com/technology/archive/2024/01/attention-economy-myth/677000/'
-  ])
+  const curatedUrls = new Set(['https://www.theatlantic.com/yiveno-probe/attention-economy-myth/'])
 
   it('命中语料 URL', () => {
     expect(
       isCuratedProbeItem(
         bookmark({
-          url: 'https://www.theatlantic.com/technology/archive/2024/01/attention-economy-myth/677000/',
+          url: 'https://www.theatlantic.com/yiveno-probe/attention-economy-myth/',
           title: 'The Attention Economy Is a Lie'
         }),
         { curatedUrls, probeChromeIds: new Set() }

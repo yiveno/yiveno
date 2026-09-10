@@ -35,8 +35,8 @@ export class MemoryItemService {
 
   /**
    * 从 Chrome 书签 upsert Bookmark MemoryItem。
-   * **不**调度 LLM enrichment / embedding：sync/reconcile 可能成千上万条，与 bulk 一致不烧配额。
-   * 用户主动 Capture（{@link captureBookmark}）仍会调度。
+   * **不**调度 LLM enrichment / embedding：sync/reconcile / bulk 可能成千上万条。
+   * 增量 created/changed 由 `chrome-bookmark-sync-service` 单条入队；用户主动 Capture 仍经 {@link captureBookmark} 调度。
    */
   async upsertBookmarkFromChrome(input: CreateBookmarkInput): Promise<MemoryItem> {
     return this.repository.upsertBookmarkFromChrome(input)

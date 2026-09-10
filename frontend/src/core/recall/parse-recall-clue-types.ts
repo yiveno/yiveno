@@ -56,6 +56,18 @@ export const RecallClueConfidenceSchema = z.enum([
 
 export type RecallClueConfidence = z.infer<typeof RecallClueConfidenceSchema>
 
+/**
+ * 相对时间约束置信度（ADR-011 · 由 timeLabel 确定性派生）。
+ * - high：日历级口语 → 硬筛 timeRange
+ * - low：糊时间印象 → 软排加分，禁止仅因时间硬空
+ */
+export const RecallTimeConfidenceSchema = z.enum([
+  'high', // 高置信：硬筛
+  'low' // 低置信：软排
+])
+
+export type RecallTimeConfidence = z.infer<typeof RecallTimeConfidenceSchema>
+
 /** 相对时间窗（ISO 8601），闭区间 [from, to]。 */
 export const RecallTimeRangeSchema = z.object({
   from: z.string().datetime(),
@@ -73,6 +85,8 @@ export type RecallTimeRange = z.infer<typeof RecallTimeRangeSchema>
 export const ParsedRecallClueSchema = z.object({
   raw: z.string(),
   timeRange: RecallTimeRangeSchema.optional(),
+  /** 有 timeRange 时必有；high=硬筛，low=软排（ADR-011）。 */
+  timeConfidence: RecallTimeConfidenceSchema.optional(),
   objectTypes: z.array(RecallObjectTypeSchema).optional(),
   behaviorHints: z.array(RecallBehaviorHintSchema).optional(),
   noteHint: z.boolean().optional(),

@@ -41,9 +41,10 @@ const emit = defineEmits<{
   toggleDetailExportSelection: [memoryItemId: string]
 }>()
 
+/** 行高留给虚拟列表 stride；缩进步长交给 CSS（--library-tree-indent-step × --tree-depth）。 */
 const rowStyle = computed(() => ({
   height: `${getBookmarkLibraryRowStride(props.row)}px`,
-  paddingLeft: `${props.row.depth * 12}px`
+  '--tree-depth': String(props.row.depth)
 }))
 
 const bookmarkTooltip = computed(() => {
@@ -195,7 +196,10 @@ function handleBookmarkActivate(event: MouseEvent | KeyboardEvent) {
 
 <style scoped>
 .tree-row {
+  --library-tree-indent-step: 12px;
   box-sizing: border-box;
+  /* 嵌套缩进：展示布局归 CSS；depth 仅作数据注入 */
+  padding-left: calc(var(--tree-depth, 0) * var(--library-tree-indent-step));
   padding-bottom: var(--library-list-row-gap, var(--space-xs));
   overflow: visible;
   content-visibility: auto;

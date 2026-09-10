@@ -13,7 +13,9 @@ import {
  * - day_before_yesterday：前天
  * - last_week：上周
  * - recent：最近
- * - a_while_ago：前一阵
+ * - a_while_ago：前一阵（约数周）
+ * - last_month：大约一个月前
+ * - few_months_ago：几个月前
  * - long_ago：很久以前
  */
 export const RecallRelativeTimeLabelSchema = z.enum([
@@ -22,7 +24,9 @@ export const RecallRelativeTimeLabelSchema = z.enum([
   'day_before_yesterday', // 前天
   'last_week', // 上周
   'recent', // 最近
-  'a_while_ago', // 前一阵
+  'a_while_ago', // 前一阵（约数周）
+  'last_month', // 大约一个月前
+  'few_months_ago', // 几个月前
   'long_ago' // 很久以前
 ])
 

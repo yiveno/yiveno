@@ -11,7 +11,8 @@
 ## 0. 这份 checklist 解决什么
 
 - **不**替代产品文档；只把 §5.9 的 90 天验证 + TTE 协议落成**可执行步骤**。
-- **单人维护者：** 见 [`research/tte-beta-2026-09/solo-researcher-sop.md`](../../research/tte-beta-2026-09/solo-researcher-sop.md)（真实库 · 无团队精简流程）。
+- **单人维护者：** 见 [`research/tte-beta-2026-09/solo-researcher-sop.md`](../../research/tte-beta-2026-09/solo-researcher-sop.md)（真实库 · 无团队精简流程）。  
+  **自然 clue 采样（决策 must / 优先级）：** [`research/tte-beta-2026-09/natural-clue-sampling.md`](../../research/tte-beta-2026-09/natural-clue-sampling.md)。
 - **不测**竞品公开秒数排行榜（研究禁止）；只测 **Yiveno vs 用户现有拼装方案**（浏览器 书签/Raindrop/搜索 等）在**同一语料、同一模糊任务**下的 TTE。
 - **成功定义：** 用户更快拿到**可自验的原始证据**（ECS 五要素齐全），而不只是「AI 说找到了」。
 
@@ -164,6 +165,8 @@
 | **钉死一条**    | “That `{type}` I `{behavior}` last `{time}`.”                                      | song/article + opened/saved |
 
 **禁止作 clue：** 完整标题、完整 URL、连续 10+ 字原文粘贴。
+
+**口语习惯（与单人 SOP 对齐 · 2026-09-08）：** clue 须像真人随口找东西——约 **6–18 词**、**最多两锚**、日常含糊说法；禁止刊名+术语+附注原词堆叠、禁止为抬 Top1 逆向写 clue。分档 Easy/Medium/Hard 默认混搭 **2/2/1**。细则见 [`research/tte-beta-2026-09/solo-researcher-sop.md`](../../research/tte-beta-2026-09/solo-researcher-sop.md) **§2.1**。
 
 ---
 

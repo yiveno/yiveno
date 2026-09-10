@@ -176,6 +176,9 @@ defineExpose({ focus })
 }
 
 .recall-thread-heading__title {
+  /* 吃满标题区剩余宽度；窄栏 CSS 省略，宽栏自动多露字 */
+  flex: 1 1 auto;
+  min-width: 0;
   overflow: hidden;
   color: var(--on-surface);
   font-size: 13px;

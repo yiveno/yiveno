@@ -41,6 +41,7 @@ export function buildLlmFramingSystemPrompt(): string {
     '- Rewrite the provided framingFacts into 1–2 short sentences in the SAME language as userClue.',
     '- Cover: what we understood, why these candidates appear, cluster shape if any, confidence stance, and ONE honest clarification if ambiguity is present.',
     '- Use ONLY facts in framingFacts / rulesBaseline / weakCandidateTitles. Never invent titles, URLs, sites, or memory items.',
+    '- timeLabel in framingFacts is an internal slug (e.g. few_months_ago). Never show snake_case to the user; say natural English (a few months ago, last week, …). Prefer the wording already in rulesBaseline.',
     '- Do NOT include match counts or "showing 1–5" — the app appends counts separately.',
     '- No preference profiling; no questionnaire; no markdown; no extra keys.',
     '- chips: 0–5 only when outcome is need_a_clue; empty array for top_pick. label matches reply language; value MUST be stable English phrases.'

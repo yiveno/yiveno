@@ -3,7 +3,8 @@ import { describe, expect, it } from 'vitest'
 import {
   extractContentTerms,
   parseRecallClue,
-  resolveRelativeTimeRange
+  resolveRelativeTimeRange,
+  timeConfidenceForRelativeLabel
 } from '@/core/recall/parse-recall-clue'
 
 /** 固定时钟：2026-07-28 正午 UTC，便于断言时间窗。 */
@@ -24,6 +25,37 @@ describe('resolveRelativeTimeRange', () => {
       to: '2026-07-26T23:59:59.999Z',
       label: 'day_before_yesterday'
     })
+  })
+
+  it('last_month 约 2–6 周滚动窗', () => {
+    expect(resolveRelativeTimeRange('last_month', NOW_MS)).toEqual({
+      from: '2026-05-29T00:00:00.000Z',
+      to: '2026-07-13T23:59:59.999Z',
+      label: 'last_month'
+    })
+  })
+
+  it('few_months_ago 约 1.5–6 个月滚动窗', () => {
+    expect(resolveRelativeTimeRange('few_months_ago', NOW_MS)).toEqual({
+      from: '2026-01-29T00:00:00.000Z',
+      to: '2026-06-12T23:59:59.999Z',
+      label: 'few_months_ago'
+    })
+  })
+})
+
+describe('timeConfidenceForRelativeLabel', () => {
+  it('日历级 label 为 high', () => {
+    expect(timeConfidenceForRelativeLabel('yesterday')).toBe('high')
+    expect(timeConfidenceForRelativeLabel('last_week')).toBe('high')
+    expect(timeConfidenceForRelativeLabel('last_month')).toBe('high')
+  })
+
+  it('糊时间 label 为 low', () => {
+    expect(timeConfidenceForRelativeLabel('a_while_ago')).toBe('low')
+    expect(timeConfidenceForRelativeLabel('few_months_ago')).toBe('low')
+    expect(timeConfidenceForRelativeLabel('long_ago')).toBe('low')
+    expect(timeConfidenceForRelativeLabel('recent')).toBe('low')
   })
 })
 
@@ -76,6 +108,38 @@ describe('parseRecallClue', () => {
     expect(
       parseRecallClue('that poem from the other day', { nowMs: NOW_MS }).timeRange?.label
     ).toBe('recent')
+  })
+
+  it('a few months back / last month → month 级标签（勿并入 a_while_ago）', () => {
+    expect(
+      parseRecallClue('something about public libraries i saved a few months back', {
+        nowMs: NOW_MS
+      }).timeRange?.label
+    ).toBe('few_months_ago')
+    expect(
+      parseRecallClue('an article i saved last month about remote work', {
+        nowMs: NOW_MS
+      }).timeRange?.label
+    ).toBe('last_month')
+    expect(
+      parseRecallClue('that page from a while back about caching', {
+        nowMs: NOW_MS
+      }).timeRange?.label
+    ).toBe('few_months_ago')
+  })
+
+  it('some time ago / a long time ago → 闭集 label + low confidence', () => {
+    const whileAgo = parseRecallClue('the excerpts i saved some time ago', { nowMs: NOW_MS })
+    expect(whileAgo.timeRange?.label).toBe('a_while_ago')
+    expect(whileAgo.timeConfidence).toBe('low')
+
+    const longAgo = parseRecallClue('a bookmark from a long time ago', { nowMs: NOW_MS })
+    expect(longAgo.timeRange?.label).toBe('long_ago')
+    expect(longAgo.timeConfidence).toBe('low')
+
+    const lastWeek = parseRecallClue('the bookmarks i saved last week', { nowMs: NOW_MS })
+    expect(lastWeek.timeRange?.label).toBe('last_week')
+    expect(lastWeek.timeConfidence).toBe('high')
   })
 
   it('left a note + page + deployment → high', () => {

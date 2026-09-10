@@ -1608,9 +1608,11 @@ onUnmounted(() => {
 
 .recall-thread-pivot__prompt {
   margin: 0;
+  min-width: 0;
   font-size: 13px;
   line-height: 1.4;
   color: var(--on-surface);
+  overflow-wrap: anywhere;
 }
 
 .recall-thread-pivot__actions {

@@ -12,7 +12,8 @@ import {
   reinforceBookmarkObjectType,
   reinforceRecentlySavedBehavior,
   resolveRecallClueConfidence,
-  resolveRelativeTimeRange
+  resolveRelativeTimeRange,
+  timeConfidenceForRelativeLabel
 } from '@/core/recall/parse-recall-clue'
 import {
   ParsedRecallClueSchema,
@@ -35,6 +36,7 @@ export function mapLlmProposalToParsedClue(
 
   const timeLabel = groundTimeLabel(clue, proposal.timeLabel)
   const timeRange = timeLabel ? resolveRelativeTimeRange(timeLabel, nowMs) : undefined
+  const timeConfidence = timeLabel ? timeConfidenceForRelativeLabel(timeLabel) : undefined
 
   let objectTypes = groundObjectTypes(clue, proposal.objectTypes ?? undefined) ?? []
   let behaviorHints = groundBehaviorHints(clue, proposal.behaviorHints ?? undefined) ?? []
@@ -95,6 +97,7 @@ export function mapLlmProposalToParsedClue(
       hasContent
     }),
     ...(timeRange ? { timeRange } : {}),
+    ...(timeConfidence ? { timeConfidence } : {}),
     ...(hasObject ? { objectTypes } : {}),
     ...(hasBehavior ? { behaviorHints } : {}),
     ...(noteHint ? { noteHint } : {})

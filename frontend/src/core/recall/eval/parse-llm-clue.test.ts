@@ -154,6 +154,22 @@ describe('mapLlmProposalToParsedClue', () => {
     expect(parsed.timeRange).toBeUndefined()
     expect(parsed.contentTerms).toEqual(expect.arrayContaining(['dpr', 'arxiv']))
   })
+
+  it('词典命中 few months back 时纠偏错误 LLM timeLabel', () => {
+    const parsed = mapLlmProposalToParsedClue(
+      'something about public libraries i saved a few months back',
+      {
+        timeLabel: 'a_while_ago',
+        objectTypes: null,
+        behaviorHints: null,
+        contentTerms: ['public', 'libraries'],
+        confidence: 'medium'
+      },
+      PARSE_GOLD_NOW_MS
+    )
+    expect(parsed.timeRange?.label).toBe('few_months_ago')
+    expect(parsed.contentTerms).toEqual(expect.arrayContaining(['public', 'libraries']))
+  })
 })
 
 describe('parseRecallClueWithLlm + compare（mock）', () => {

@@ -8,7 +8,7 @@ alwaysApply: true
 > **本文件 = Cursor 每会话自动注入的「当下事实」。** 「当下」块由 `docs/product/CURRENT.md` 生成；改焦点时 **只改 CURRENT**，再 `bun run sync:ide-boot`（`doc:check` 会校验）。
 
 <!-- SYNC:IDE_BOOT:START -->
-**最后更新：** 2026-09-01
+**最后更新：** 2026-09-10
 
 > **每会话首条：** 用户应粘贴 [`AGENT-TASK-BRIEF.template.md`](../../docs/product/AGENT-TASK-BRIEF.template.md)（In/Out/验收/禁止）。
 
@@ -16,21 +16,22 @@ alwaysApply: true
 
 | 项 | 内容 |
 | --- | --- |
-| **主线** | **§5.9 种子验证 + Recall 质量闭环**（`recall-eval` must 校准、Outcome Labeling §7.2、TTE 研究） |
-| **并行** | CWS 软上架包装（真实产品 UI 截图、商店文案）；Side Panel / Capture **仅 bugfix** |
+| **主线** | **§5.9 种子验证 + Recall 质量闭环**（自然 clue 采样决策 + `recall-eval` / TTE / Outcome §7.2） |
+| **并行** | **ADR-011 时间置信度分层**（糊时间软排，禁止硬空）；CWS 软上架包装；Side Panel / Capture **仅 bugfix** |
 | **本周做** | CWS 产品 UI 截图 3–5（母本 `docs/design/brand-assets/chrome-web-store/`）；Recall 壳空态 / onboarding 文案薄维护（`recall-shell-empty-copy`） |
-| **本周不做** | 把 Skills 复查当主任务（已结案）；新连接器 / Agent / history 抓取 / 知识图谱 UI；未达 §5.9 门槛前扩 MCP 对外宣传；内容别名灰名单冒充全库通解；Side Panel 持久多会话 / 分支 / regenerate 等 Chat 产品化；用 CWS 上架或功能堆砌替代命题验收（§0.1 命题先验） |
+| **本周不做** | 把 Skills 复查当主任务（已结案）；新连接器 / Agent / history 抓取 / 知识图谱 UI；未达 §5.9 门槛前扩 MCP 对外宣传；内容别名灰名单冒充全库通解；为糊时间堆开放同义词表；Side Panel 持久多会话 / 分支 /tokenize 等 Chat 产品化；用 CWS 上架或功能堆砌替代命题验收（§0.1 命题先验） |
 
-**能力速查：** Side Panel Recall、Hybrid、倒排 Phase 1、ECS 卡面、detail export、只读 MCP beta、Raindrop/Pocket 导入、TTE 本机埋点、Dodo Pro 门禁等（详表 `产品文档 §1`）。§5.9 **Beta**（种子用户真实库：TTE-V P50≤12s / Success@180≥75% / ECS≥92% 等）；**无种子 study 数据前不得对外宣称 Beta 达标**；MCP **不对用户主宣传**。进行中：`recall-eval` must 校准；Outcome Labeling §7.2（P0+）；TTE 种子研究启动。
+**能力速查：** Side Panel Recall、Hybrid、倒排 Phase 1、ECS 卡面、detail export、只读 MCP beta、Raindrop/Pocket 导入、TTE 本机埋点、Dodo Pro 门禁等（详表 `产品文档 §1`）。§5.9 **Beta**（种子用户真实库：TTE-V P50≤12s / Success@180≥75% / ECS≥92% 等）；**无种子 study 数据前不得对外宣称 Beta 达标**；MCP **不对用户主宣传**。进行中：自然 clue 采样；ADR-011 时间置信度；`recall-eval` must；Outcome Labeling §7.2；TTE 种子研究。
 <!-- SYNC:IDE_BOOT:END -->
 
-## 冻结（勿重议 · ADR-001–005）
+## 冻结（勿重议 · ADR-001–005 · ADR-010–011）
 
 - **GitHub Org `yiveno`** · 主仓 `yiveno/yiveno`（品牌产品交付仓，非个人实验项目）；对外站点 `yiveno.com`
 - Recall **主壳 = Side Panel**；`pages/popup` 已退役；关 Panel 丢会话；**New find** 清线程
 - 用户 Recall 输入 = **clue**（线索）；`MemoryItem.clues.note` = **附注**；产品面 **禁止 Search**
 - 交付 **邻域集合**；`top_pick` = 建议，**非**神谕唯一答案；`no_match` 诚实终局
-- **LLM** 只做理解/NLG；数据平面仅「提议 → Zod/门禁 → 确定性执行」
+- **LLM** 只做理解/NLG；数据平面仅「提议 → Zod/门禁 → 确定性执行」；理解层**默认单次** LLM（ADR-010；条件 Stage 2）
+- **相对时间** high 硬筛 / low 软排（ADR-011）；禁止糊时间单独硬空
 - **禁止**内容别名灰名单冒充全用户通解；残差留给字面/Hybrid
 
 ## 架构铁律（开机必记）

@@ -13,7 +13,8 @@ export const RESEARCHER_PROBE_CORPUS: RecallProbePersonaCorpus = {
     {
       key: 'atlantic-attention',
       title: 'The Attention Economy Is a Lie',
-      url: 'https://www.theatlantic.com/technology/archive/2024/01/attention-economy-myth/677000/',
+      // 禁止假 slug + 真 CMS 数字 id（会 302 到无关真文，如 /677000/ → My Father, the Giant）
+      url: 'https://www.theatlantic.com/yiveno-probe/attention-economy-myth/',
       daysAgo: 45,
       note: 'use for intro on focus vs metrics',
       suggestedClues: [
@@ -155,8 +156,7 @@ export const RESEARCHER_PROBE_CORPUS: RecallProbePersonaCorpus = {
     {
       key: 'excerpt-attention-quote',
       pageTitle: 'The Attention Economy Is a Lie',
-      sourceUrl:
-        'https://www.theatlantic.com/technology/archive/2024/01/attention-economy-myth/677000/',
+      sourceUrl: 'https://www.theatlantic.com/yiveno-probe/attention-economy-myth/',
       selectedText:
         'What we call the attention economy is often just a metrics economy wearing a psychological costume.',
       daysAgo: 44,

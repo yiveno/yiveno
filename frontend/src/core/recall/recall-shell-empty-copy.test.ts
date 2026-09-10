@@ -57,15 +57,18 @@ describe('recall-shell-empty-copy', () => {
     expect(copy.body).not.toMatch(FORBIDDEN)
   })
 
-  it('ready library no_match: honest终局，不暗示缩短再试', () => {
+  it('ready library no_match: 诚实终局，不暗示缩短再试；线索全文保留', () => {
+    const clue = 'a very long clue about retention analysis for public libraries'
     const copy = getRecallShellNoMatchCopy(
       {
         library: 'ready',
-        clue: 'a very long clue about retention analysis'
+        clue
       },
       testTranslateEn
     )
     expect(copy.title).toContain('No match')
+    expect(copy.title).toContain(clue)
+    expect(copy.title).not.toMatch(/…/)
     expect(copy.body).toMatch(/trace|save/i)
     expect(copy.body).not.toMatch(/shorten|retry/i)
     expect(copy.body).not.toMatch(FORBIDDEN)

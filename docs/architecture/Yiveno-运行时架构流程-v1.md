@@ -159,6 +159,7 @@ flowchart LR
    - 否 → 进入第 5 步
 5. **我在改的是 UI 交互与展示？**
    - 是 → 放 `pages/` 或 `content/`，且只经 background-client
+   - **可见截断 / 自适应宽度 / 行数 clamp → CSS**（`text-overflow`、`line-clamp`）；`core` 不要用固定字符数硬截标题/标签/preview 冒充布局省略。JS 只保留业务截断（预填短线索、omnibox、embedding、表单 max、telemetry preview）与病态安全上限。
 
 补充硬规则：
 

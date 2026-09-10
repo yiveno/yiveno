@@ -1848,6 +1848,42 @@
       }
     }
   },
+  "framing_p1_time_soft": {
+    "message": "Around $1,",
+    "placeholders": {
+      "label": {
+        "content": "$1",
+        "example": "a while ago"
+      }
+    }
+  },
+  "framing_time_today": {
+    "message": "today"
+  },
+  "framing_time_yesterday": {
+    "message": "yesterday"
+  },
+  "framing_time_day_before_yesterday": {
+    "message": "the day before yesterday"
+  },
+  "framing_time_last_week": {
+    "message": "last week"
+  },
+  "framing_time_recent": {
+    "message": "recently"
+  },
+  "framing_time_a_while_ago": {
+    "message": "a while ago"
+  },
+  "framing_time_last_month": {
+    "message": "last month"
+  },
+  "framing_time_few_months_ago": {
+    "message": "a few months ago"
+  },
+  "framing_time_long_ago": {
+    "message": "a long time ago"
+  },
   "framing_p1_terms": {
     "message": "Based on \"$1\" in your library.",
     "placeholders": {
