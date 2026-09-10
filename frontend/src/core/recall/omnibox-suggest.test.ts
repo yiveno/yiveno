@@ -93,7 +93,7 @@ describe('omnibox-suggest', () => {
       clue: 'retention metrics'
     })
     expect(suggest?.description).toContain('Saved')
-    expect(suggest?.description).toContain('excerpt contains')
+    expect(suggest?.description).toContain('Found “retention metrics” in excerpt')
   })
 
   it('摘录建议 content 指向详情页', () => {
