@@ -19,12 +19,14 @@ const baseContext = {
 
 describe('formatMatchedFields', () => {
   it('无线索时退化为字段名列表', () => {
-    expect(formatMatchedFields(['title', 'domain'], testTranslateEn)).toBe('Matched: title, domain')
-    expect(formatMatchedFields([], testTranslateEn)).toBe('content-related')
+    expect(formatMatchedFields(['title', 'domain'], testTranslateEn)).toBe(
+      'Found in: title, domain'
+    )
+    expect(formatMatchedFields([], testTranslateEn)).toBe('Related to your clue')
   })
 
   it('有线索时委托 explainRecallMatch', () => {
-    expect(formatMatchedFields(['title'], testTranslateEn, 'retention')).toContain('title contains')
+    expect(formatMatchedFields(['title'], testTranslateEn, 'retention')).toContain('Found')
   })
 })
 

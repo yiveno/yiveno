@@ -54,7 +54,7 @@ async function tryHandoffCurrentSession(): Promise<boolean> {
   }
 }
 
-/** 将回调失败的 query 展示到页面，便于排查 OAuth / Azure 配置 */
+/** 将回调失败映射为用户可读错误（细节仅打 console，避免暴露 OAuth 栈） */
 function applyLoginErrorFromUrl(): void {
   const params = new URLSearchParams(window.location.search)
   const code = params.get('error')
@@ -63,13 +63,16 @@ function applyLoginErrorFromUrl(): void {
   }
   const detail = params.get('detail')
   const labels: Record<string, string> = {
-    no_token: 'Sign-in callback did not return credentials',
+    no_token: "Sign-in didn't finish. Please try again.",
     session_error: 'Could not save your sign-in session',
     auth_error: 'Sign-in failed unexpectedly',
-    oauth_error: 'OAuth provider or Supabase rejected sign-in'
+    oauth_error: "We couldn't finish sign-in with that provider. Try again or use the other option."
   }
-  const label = labels[code] || code
-  error.value = detail ? `${label}: ${detail}` : label
+  const label = labels[code] || 'Sign-in failed. Please try again.'
+  if (detail) {
+    console.warn('[login]', code, detail)
+  }
+  error.value = label
 }
 
 /**

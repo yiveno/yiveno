@@ -42,9 +42,9 @@ describe('explain-recall-match', () => {
       testTranslateEn
     )
 
-    expect(explanation.primary).toBe('title contains "retention"')
-    expect(explanation.secondary).toBe('also matched: domain')
-    expect(explanation.reasonLine).toBe('title contains "retention"; also matched: domain')
+    expect(explanation.primary).toBe('Found “retention” in title')
+    expect(explanation.secondary).toBe('Also: domain')
+    expect(explanation.reasonLine).toBe('Found “retention” in title; Also: domain')
   })
 
   it('摘录命中出处页名时解释为页名而非标题', () => {
@@ -66,15 +66,15 @@ describe('explain-recall-match', () => {
       testTranslateEn
     )
 
-    expect(explanation.primary).toBe('page title contains "poetry"')
-    expect(explanation.primary).not.toBe('title contains "poetry"')
+    expect(explanation.primary).toBe('Found “poetry” in page title')
+    expect(explanation.primary).not.toBe('Found “poetry” in title')
   })
 
   it('无匹配字段时回退内容相关', () => {
     expect(explainRecallMatch({ clue: 'retention', matchedFields: [] }, testTranslateEn)).toEqual({
-      primary: 'content-related',
+      primary: 'Related to your clue',
       secondary: null,
-      reasonLine: 'content-related'
+      reasonLine: 'Related to your clue'
     })
   })
 
@@ -86,7 +86,7 @@ describe('explain-recall-match', () => {
       },
       testTranslateEn
     )
-    expect(explanation.primary).toBe('Matched as this type in your library')
+    expect(explanation.primary).toBe('Fits this type in your library')
     expect(explanation.primary).not.toMatch(/containing/)
     expect(explanation.secondary).toContain('outcomePair')
     expect(getRecallMatchFieldShortLabel('constraint_neighborhood', testTranslateEn)).toBe('type')

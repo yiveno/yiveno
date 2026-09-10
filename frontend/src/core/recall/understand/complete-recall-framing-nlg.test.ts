@@ -36,7 +36,7 @@ describe('completeRecallFramingNlgWithLlm', () => {
       parsed,
       outcome: 'need_a_clue',
       facts: baseFacts,
-      rulesBaseline: 'Looking for video traces.',
+      rulesBaseline: 'Looking for video in your library.',
       weakCandidateTitles: ['Design systems talk', 'Figma tips'],
       complete
     })
@@ -53,7 +53,7 @@ describe('completeRecallFramingNlgWithLlm', () => {
       parsed,
       outcome: 'top_pick',
       facts: baseFacts,
-      rulesBaseline: 'Looking for video traces.',
+      rulesBaseline: 'Looking for video in your library.',
       complete: async () =>
         JSON.stringify({
           reply: 'These are video-related saves from your library.',

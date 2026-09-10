@@ -143,9 +143,9 @@ onMounted(async () => {
     <header class="pricing-page__hero">
       <h1 class="page__title">Pricing</h1>
       <p class="page__lede">
-        Find what you saved: capture lightly, get a short list of closest matches — you pick. Free
-        and Pro share the same on-device recall quality; Pro keeps your library across devices and
-        gives a larger hosted clue-understanding quota.
+        Find what you saved: capture lightly, get a short list of closest fits — you pick. Free and
+        Pro find just as well on your device; Pro syncs your library and gives you more room for
+        cloud help with your clues.
       </p>
 
       <div class="billing-toggle" role="group" aria-label="Pro billing period">
@@ -174,12 +174,12 @@ onMounted(async () => {
       <section class="plan" aria-labelledby="plan-free">
         <p class="plan__tier" id="plan-free">Free</p>
         <p class="plan__price">$0</p>
-        <p class="plan__desc">Full on-device recall. No cloud sync.</p>
+        <p class="plan__desc">Find from what you saved — on your device. No cloud sync.</p>
         <ul class="plan__features">
           <li>Capture excerpts &amp; bookmarks</li>
-          <li>On-device closest matches</li>
+          <li>Find closest fits on your device</li>
           <li>Local library, notes, export</li>
-          <li>Sign in: small hosted clue quota</li>
+          <li>Sign in: a little cloud clue help each month</li>
         </ul>
         <div class="plan__cta">
           <a class="ui-btn ui-btn--block" href="/login">Sign in</a>
@@ -220,7 +220,7 @@ onMounted(async () => {
 
     <p class="pricing-page__footnote">
       Roadmap only (not for sale): Power User, Team. Displayed totals are list prices before tax.
-      Checkout happens on Dodo hosted checkout after you sign in.
+      Checkout happens on our secure checkout page after you sign in.
     </p>
   </div>
 </template>

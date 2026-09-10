@@ -18,12 +18,12 @@ export function getPaidTiers(): Tier[] {
     {
       name: 'Pro',
       description:
-        'Same on-device recall quality as Free, plus cloud sync and a larger hosted clue-understanding quota.',
+        'Same find quality as Free, plus sync across devices and a higher limit for cloud help with your clues.',
       features: [
-        'Same on-device Hybrid recall as Free',
+        'Same find quality as Free',
         'Cloud sync across devices',
-        'Larger hosted clue understanding quota',
-        'Higher embedding daily cap'
+        'Higher limit for cloud clue help',
+        'Higher daily limit for smarter matching in the cloud'
       ],
       displayUsd: { month: '7.99', year: '59.99' },
       planId: { month: 'pro_monthly', year: 'pro_annual' }

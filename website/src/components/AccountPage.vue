@@ -244,7 +244,7 @@ async function handleSignOut() {
       <div v-else class="account__plan-panel" :class="{ 'account__plan-panel--pro': isPro }">
         <div class="account__plan-top">
           <p class="account__plan-name">
-            {{ isPro ? 'Pro' : showVerifyError ? 'Plan unavailable' : 'Free' }}
+            {{ isPro ? 'Pro' : showVerifyError ? "Couldn't load plan" : 'Free' }}
           </p>
           <p v-if="subscriptionLoading" class="account__plan-updating" role="status">Updating…</p>
         </div>

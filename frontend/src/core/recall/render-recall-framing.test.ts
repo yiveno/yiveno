@@ -6,15 +6,15 @@ import type { RecallFramingCandidateFacts } from '@/core/recall/recall-framing-f
 const translate = (key: string, subs?: string | string[]) => {
   const table: Record<string, string> = {
     framing_list_sep: ', ',
-    framing_p1_object_types: 'Looking for $1 traces in your library.',
+    framing_p1_object_types: 'Looking for $1 in your library.',
     framing_p1_time: 'Within $1,',
     framing_p1_time_soft: 'Around $1,',
     framing_time_few_months_ago: 'a few months ago',
     framing_time_last_week: 'last week',
     framing_time_a_while_ago: 'a while ago',
-    framing_p2_constraint: 'These match the type you pointed at in your library.',
+    framing_p2_constraint: 'These match the kind you pointed at.',
     framing_p4_weak: 'Nothing here is strong enough to pin down yet.',
-    framing_p6_partial: '$1 related matches · showing $2–$3:',
+    framing_p6_partial: '$1 related · showing $2–$3:',
     framing_object_video: 'video'
   }
   let text = table[key] ?? key
@@ -44,7 +44,7 @@ describe('renderRecallFraming', () => {
 
     const text = renderRecallFraming(facts, translate)
     expect(text).toContain('video')
-    expect(text).toContain('12 related matches')
+    expect(text).toContain('12 related')
     expect(text).toContain('showing 1–5')
   })
 
