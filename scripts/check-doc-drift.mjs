@@ -68,7 +68,8 @@ function extractProductDocSection4Types(source) {
     throw new Error('产品文档缺少 §4 消息协议')
   }
   const slice = source.slice(start, start + 4000)
-  const tableStart = slice.indexOf('| type                                | 用途')
+  // 表头列宽随 prettier 可能变化；只锚定 type / 用途 列名
+  const tableStart = slice.search(/\|\s*type\s*\|\s*用途/)
   if (tableStart < 0) {
     throw new Error('产品文档 §4 缺少 type 表')
   }
